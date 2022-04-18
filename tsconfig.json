@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": "./packages",
+    "paths": {
+      "@rytass/payments": [
+        "payments/src"
+      ],
+      "@rytass/payments-adapter-ecpay": [
+        "payments-adapter-ecpay/src"
+      ],
+    }
+  },
+  "references": [
+    {
+      "path": "./tsconfig.dev.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    }
+  ]
+}
