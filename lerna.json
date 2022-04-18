@@ -22,7 +22,7 @@
       "yes": true
     },
     "publish": {
-      "contents": "dist"
+      "contents": "lib"
     }
   }
 }
