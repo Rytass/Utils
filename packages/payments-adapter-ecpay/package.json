@@ -6,7 +6,6 @@
     "rytass",
     "payment"
   ],
-  "type": "module",
   "author": "Chia Yu Pai <fantasyatelier@gmail.com>",
   "homepage": "https://github.com/Rytass/Utils#readme",
   "license": "MIT",
