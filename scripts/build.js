@@ -47,6 +47,11 @@ function getPackagesInfos() {
           const name = [rootPackageName, ...dirs].join('/');
 
           if (packageJson.name !== name) {
+            // Resolve version conflict
+            if (~dirs.indexOf('node_modules')) {
+              return acc;
+            }
+
             reject(`Package name '${name}' should equal '${packageJson.name}'`);
           }
 
