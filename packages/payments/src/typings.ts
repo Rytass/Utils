@@ -77,10 +77,19 @@ export enum OrderState {
   INITED = 'INITED',
   PRE_COMMIT = 'PRE_COMMIT', // Created
   COMMITTED = 'COMMITTED', // Fulfilled
+  FAILED = 'FAILED',
 }
 
 export enum PaymentEvents {
   SERVER_LISTENED = 'LISTENED',
   ORDER_PRE_COMMIT = 'PRE_COMMIT',
   ORDER_COMMITTED = 'COMMITTED',
+}
+
+export interface ECPayQueryOrderPayload extends Record<string, string> {
+  MerchantID: string;
+  MerchantTradeNo: string;
+  TimeStamp: string;
+  PlatformID: string;
+  CheckMacValue: string;
 }

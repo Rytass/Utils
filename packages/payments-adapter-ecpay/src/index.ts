@@ -1,11 +1,12 @@
 import { createHash, randomBytes } from 'crypto';
-import { PaymentGateway, Channel, PaymentEvents } from '@rytass/payments';
+import { PaymentGateway, Channel, PaymentEvents, ECPayQueryOrderPayload } from '@rytass/payments';
 import { DateTime } from 'luxon';
 import LRUCache from 'lru-cache';
+import axios from 'axios';
 import { createServer, IncomingMessage, ServerResponse, Server } from 'http';
 import debug from 'debug';
 import { EventEmitter } from 'events';
-import { ECPayCallbackPayload, ECPayCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayOrderInput } from './typings';
+import { ECPayCallbackPayload, ECPayCallbackPaymentType, ECPayCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayOrderInput, ECPayQueryResultPayload, ECPayQueryResultStatus } from './typings';
 import { ECPayChannel, NUMERIC_CALLBACK_KEYS } from './constants';
 import { ECPayOrder } from './ecpay-order';
 
@@ -90,13 +91,13 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayCommit
     } as unknown as T;
   }
 
-  private checkMac(payload: ECPayCallbackPayload): boolean {
+  private checkMac<T extends { CheckMacValue: string }>(payload: T): boolean {
     const { CheckMacValue: mac, ...res } = payload;
     const { CheckMacValue: computedMac } = this.addMac(
       Object.entries(res)
         .reduce((vars, [key, value]) => ({
           ...vars,
-          [key]: value.toString(),
+          [key]: (value as unknown as (string | number)).toString(),
         }),
         {}),
     );
@@ -163,7 +164,7 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayCommit
           {},
       ) as ECPayCallbackPayload;
 
-      if (!this.checkMac(payload)) {
+      if (!this.checkMac<ECPayCallbackPayload>(payload)) {
         res.writeHead(400, {
           'Content-Type': 'text/plain',
         });
@@ -220,7 +221,7 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayCommit
       TradeDesc: orderInput.description || '-',
       ItemName: orderInput.items.map((item) => `${item.name} x${item.quantity}`).join('#'),
       ReturnURL: `${this.serverHost}${this.callbackPath}`,
-      ChoosePayment: orderInput.channel ? ECPayChannel[orderInput.channel] : ECPayChannel[Channel.CREDIT_CARD],
+      ChoosePayment: orderInput.channel ? ECPayChannel[orderInput.channel] : 'ALL',
       NeedExtraPaidInfo: 'Y',
       EncryptType: '1',
       ClientBackURL: orderInput.clientBackUrl || '',
@@ -239,7 +240,41 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayCommit
   }
 
   async query<T extends ECPayOrder<ECPayCommitMessage>>(id: string): Promise<T> {
-    return Promise.resolve({} as T);
+    const date = new Date();
+
+    const payload = this.addMac<ECPayQueryOrderPayload>({
+      MerchantID: this.merchantId,
+      MerchantTradeNo: id,
+      PlatformID: '',
+      TimeStamp: Math.round(date.getTime() / 1000).toString(),
+    });
+
+    const result = await axios.post<string>(`${this.baseUrl}/Cashier/QueryTradeInfo/V5`, new URLSearchParams(payload).toString());
+
+    const response = Array.from(new URLSearchParams(result.data).entries())
+      .reduce((vars, [key, value]) => ({
+        ...vars,
+        [key]: value,
+      }), {}) as ECPayQueryResultPayload;
+
+    if (!this.checkMac<ECPayQueryResultPayload>(response)) {
+      throw new Error('Invalid CheckSum');
+    }
+
+    return new ECPayOrder({
+      id: response.MerchantTradeNo,
+      items: [{
+        name: ECPayOrder.FAKE_ITEM,
+        unitPrice: response.TradeAmt,
+        quantity: 1,
+      }],
+      gateway: this,
+      createdAt: DateTime.fromFormat(response.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+      committedAt: response.PaymentDate ? DateTime.fromFormat(response.PaymentDate, 'yyyy/MM/dd HH:mm:ss').toJSDate() : null,
+      platformTradeNumber: response.MerchantTradeNo,
+      paymentType: response.PaymentType,
+      status: response.TradeStatus,
+    }) as T;
   }
 
   getCheckoutUrl(order: ECPayOrder<ECPayCommitMessage>) {

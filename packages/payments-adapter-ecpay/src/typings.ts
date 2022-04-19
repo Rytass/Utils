@@ -30,8 +30,25 @@ export interface ECPayOrderInput extends PrepareOrderInput {
 export interface OrderInit {
   id: string;
   items: PaymentItem[];
+  gateway: ECPayPayment;
+}
+
+export interface OrderCreateInit extends OrderInit {
+  id: string;
+  items: PaymentItem[];
   form: ECPayOrderForm;
-  gateway: ECPayPayment,
+  gateway: ECPayPayment;
+}
+
+export interface OrderFromServerInit extends OrderInit {
+  id: string;
+  items: PaymentItem[];
+  gateway: ECPayPayment;
+  createdAt: Date;
+  committedAt: Date | null;
+  platformTradeNumber: string;
+  paymentType: ECPayCallbackPaymentType;
+  status: ECPayQueryResultStatus;
 }
 
 enum ECPayOrderFormKey {
@@ -105,4 +122,30 @@ export interface ECPayCommitMessage extends OrderCommitMessage {
   tradeNumber: string;
   tradeDate: Date;
   paymentType: ECPayCallbackPaymentType;
+}
+
+export enum ECPayQueryResultStatus {
+  PRE_COMMIT = '0',
+  COMMITTED = '1',
+  FAILED = '10200095',
+}
+
+export interface ECPayQueryResultPayload {
+  MerchantID: string;
+  MerchantTradeNo: string;
+  StoreID: string;
+  TradeNo: string;
+  TradeAmt: number;
+  PaymentDate: string;
+  PaymentType: ECPayCallbackPaymentType;
+  HandlingCharge: number;
+  PaymentTypeChargeFee: number;
+  TradeDate: string;
+  TradeStatus: ECPayQueryResultStatus;
+  ItemName: string;
+  CustomField1: string;
+  CustomField2: string;
+  CustomField3: string;
+  CustomField4: string;
+  CheckMacValue: string;
 }

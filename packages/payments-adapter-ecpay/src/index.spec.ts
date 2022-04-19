@@ -8,6 +8,7 @@ import { IncomingMessage, ServerResponse } from 'http';
 import { ECPayPayment } from '.';
 import { ECPayOrder } from './ecpay-order';
 import { ECPayCommitMessage } from './typings';
+import { Channel } from '@rytass/payments';
 
 function addMac(payload: Record<string, string>) {
   const mac = createHash('sha256')
@@ -41,6 +42,7 @@ describe('ECPayPayment', () => {
     const payment = new ECPayPayment();
 
     const order = payment.prepare({
+      channel: Channel.CREDIT_CARD,
       items: [{
         name: 'Test',
         unitPrice: 10,
@@ -86,6 +88,7 @@ describe('ECPayPayment', () => {
 
     it('should serve checkout url', (done) => {
       const order = payment.prepare({
+        channel: Channel.CREDIT_CARD,
         items: [{
           name: 'Test',
           unitPrice: 10,
@@ -118,6 +121,7 @@ describe('ECPayPayment', () => {
         serverHost: 'http://localhost:3005',
         onServerListen: () => {
           const order = payment.prepare({
+            channel: Channel.CREDIT_CARD,
             items: [{
               name: 'Test',
               unitPrice: 10,
@@ -176,6 +180,7 @@ describe('ECPayPayment', () => {
         serverHost: 'http://localhost:3005',
         onServerListen: () => {
           const order = payment.prepare({
+            channel: Channel.CREDIT_CARD,
             items: [{
               name: 'Test',
               unitPrice: 10,
@@ -243,6 +248,7 @@ describe('ECPayPayment', () => {
         serverHost: 'http://localhost:3005',
         onServerListen: () => {
           const order = payment.prepare({
+            channel: Channel.CREDIT_CARD,
             items: [{
               name: 'Test',
               unitPrice: 10,
@@ -348,6 +354,7 @@ describe('ECPayPayment', () => {
         onCommit: mockedOnCommit,
         onServerListen: () => {
           const order = payment.prepare({
+            channel: Channel.CREDIT_CARD,
             items: [{
               name: 'Test',
               unitPrice: 10,
@@ -424,6 +431,7 @@ describe('ECPayPayment', () => {
 
     it('should provide custom server listener', (done) => {
       const order = payment.prepare({
+        channel: Channel.CREDIT_CARD,
         items: [{
           name: 'Test',
           unitPrice: 10,

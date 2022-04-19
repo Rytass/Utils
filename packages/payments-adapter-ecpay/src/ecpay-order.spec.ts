@@ -1,4 +1,4 @@
-import { CreditCardECI, OrderState } from '@rytass/payments';
+import { Channel, CreditCardECI, OrderState } from '@rytass/payments';
 import { ECPayPayment } from '.';
 import { ECPayCallbackPaymentType } from './typings';
 
@@ -6,6 +6,7 @@ describe('ECPayOrder', () => {
   const payment = new ECPayPayment();
 
   const order = payment.prepare({
+    channel: Channel.CREDIT_CARD,
     items: [{
       name: 'Test',
       unitPrice: 10,
@@ -23,6 +24,23 @@ describe('ECPayOrder', () => {
 
   it('should get checkout url throw error when no server', () => {
     expect(() => order.checkoutURL).toThrowError();
+  });
+
+  it('should fallback channel to all', () => {
+    const allOrder = payment.prepare({
+      items: [{
+        name: 'Test',
+        unitPrice: 10,
+        quantity: 1
+      }, {
+        name: '中文',
+        unitPrice: 15,
+        quantity: 4
+      }],
+    });
+
+    expect(allOrder.paymentType).toBeUndefined();
+    expect(allOrder.form.ChoosePayment).toBe('ALL');
   });
 
   it('should get valid checkout url', (done) => {
@@ -43,6 +61,7 @@ describe('ECPayOrder', () => {
     });
 
     const withServerOrder = paymentWithServer.prepare({
+      channel: Channel.CREDIT_CARD,
       items: [{
         name: 'Test',
         unitPrice: 10,
@@ -104,12 +123,47 @@ describe('ECPayOrder', () => {
       expect(order.state).toBe(OrderState.COMMITTED);
     });
 
+    it('should block form getter after committed', () => {
+      const payment = new ECPayPayment({
+        merchantId: 'mid',
+      });
+
+      const order = payment.prepare({
+        channel: Channel.CREDIT_CARD,
+        items: [{
+          name: 'Test',
+          unitPrice: 10,
+          quantity: 1
+        }, {
+          name: '中文',
+          unitPrice: 15,
+          quantity: 4
+        }],
+      });
+
+      const html = order.formHTML;
+
+      order.commit({
+        id: order.id,
+        totalPrice: order.totalPrice,
+        committedAt: new Date(),
+        tradeDate: new Date(),
+        tradeNumber: 'fakeid',
+        merchantId: 'mid',
+        paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
+      });
+
+      expect(() => order.form).toThrowError();
+      expect(() => order.formHTML).toThrowError();
+    });
+
     it('should get commit message after committed', () => {
       const payment = new ECPayPayment({
         merchantId: 'mid',
       });
 
       const order = payment.prepare({
+        channel: Channel.CREDIT_CARD,
         items: [{
           name: 'Test',
           unitPrice: 10,
@@ -153,6 +207,7 @@ describe('ECPayOrder', () => {
       expect(order.createdAt).toBe(createdAt);
       expect(order.creditCardAuthInfo).toBe(creditCardAuthInfo);
       expect(order.platformTradeNumber).toBe(platformTradeNumber);
+      expect(order.paymentType).toBe(ECPayCallbackPaymentType.CREDIT_CARD);
     });
 
     it('should reject commit if message data not match', () => {
@@ -161,6 +216,7 @@ describe('ECPayOrder', () => {
       });
 
       const order = payment.prepare({
+        channel: Channel.CREDIT_CARD,
         items: [{
           name: 'Test',
           unitPrice: 10,
@@ -217,6 +273,7 @@ describe('ECPayOrder', () => {
       });
 
       const order = payment.prepare({
+        channel: Channel.CREDIT_CARD,
         items: [{
           name: 'Test',
           unitPrice: 10,

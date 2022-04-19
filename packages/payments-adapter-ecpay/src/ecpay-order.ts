@@ -1,15 +1,16 @@
-import { CreditCardAuthInfo, Order, OrderCommitAdditionalInformation, OrderCommitMessage, OrderState, PaymentEvents } from '@rytass/payments';
-import { DateTime } from 'luxon';
+import { CreditCardAuthInfo, Order, OrderCommitAdditionalInformation, OrderState, PaymentEvents } from '@rytass/payments';
 import { ECPayPayment } from '.';
 import { ECPayOrderItem } from './ecpay-order-item';
-import { ECPayCommitMessage, ECPayOrderForm, OrderInit } from './typings';
+import { ECPayCallbackPaymentType, ECPayCommitMessage, ECPayOrderForm, ECPayQueryResultStatus, OrderCreateInit, OrderFromServerInit } from './typings';
 
 export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
+  static FAKE_ITEM = 'RP_FAKE_ITEM';
+
   private readonly _id: string;
 
   private readonly _items: ECPayOrderItem[];
 
-  private readonly _form: ECPayOrderForm;
+  private readonly _form: ECPayOrderForm | undefined;
 
   private readonly gateway: ECPayPayment;
 
@@ -23,12 +24,46 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
 
   private _state: OrderState;
 
-  constructor(options: OrderInit) {
+  private _paymentType: ECPayCallbackPaymentType | undefined;
+
+  constructor(options: OrderCreateInit | OrderFromServerInit) {
     this._id = options.id;
     this._items = options.items.map((item) => new ECPayOrderItem(item));
-    this._form = options.form;
     this.gateway = options.gateway;
     this._state = OrderState.INITED;
+
+    if ((options as OrderCreateInit).form) {
+      this._form = (options as OrderCreateInit).form;
+      this._paymentType = (() => {
+        switch ((options as OrderCreateInit).form.ChoosePayment) {
+          case 'Credit':
+            return ECPayCallbackPaymentType.CREDIT_CARD;
+
+          default:
+            return undefined;
+        }
+      })();
+    } else if ((options as OrderFromServerInit).platformTradeNumber) {
+      this._createdAt = (options as OrderFromServerInit).createdAt;
+      this._committedAt = (options as OrderFromServerInit).committedAt;
+      this._platformTradeNumber = (options as OrderFromServerInit).platformTradeNumber;
+      this._paymentType = (options as OrderFromServerInit).paymentType;
+      this._state = (() => {
+        switch ((options as OrderFromServerInit).status) {
+          case ECPayQueryResultStatus.COMMITTED:
+            return OrderState.COMMITTED;
+
+          case ECPayQueryResultStatus.FAILED:
+            return OrderState.FAILED;
+
+          case ECPayQueryResultStatus.PRE_COMMIT:
+            return OrderState.PRE_COMMIT;
+
+          default:
+            return OrderState.INITED;
+        };
+      })();
+    }
   }
 
   get id() {
@@ -46,12 +81,20 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
   }
 
   get form(): ECPayOrderForm {
+    if (~[OrderState.COMMITTED, OrderState.FAILED].indexOf(this._state)) {
+      throw new Error('Finished order cannot get submit form data');
+    }
+
     this._state = OrderState.PRE_COMMIT;
 
-    return this._form;
+    return this._form!;
   }
 
   get formHTML(): string {
+    if (~[OrderState.COMMITTED, OrderState.FAILED].indexOf(this._state)) {
+      throw new Error('Finished order cannot get submit form url');
+    }
+
     this._state = OrderState.PRE_COMMIT;
 
     return `<!DOCTYPE html>
@@ -104,6 +147,10 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
     return this._platformTradeNumber;
   }
 
+  get paymentType(): ECPayCallbackPaymentType | undefined {
+    return this._paymentType;
+  }
+
   commit<T extends OCM>(message: T, additionalInfo?: OrderCommitAdditionalInformation) {
     if (this._state !== OrderState.PRE_COMMIT) throw new Error(`Only pre-commit order can commit, now: ${this._state}`);
 
@@ -111,17 +158,18 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
       throw new Error(`Order ID not matched, given: ${message.id} actual: ${this._id}`);
     }
 
-    if (this._form.MerchantID !== message.merchantId) {
-      throw new Error(`Merchant ID not matched, given: ${message.merchantId} actual: ${this._form.MerchantID}`);
+    if (this._form!.MerchantID !== message.merchantId) {
+      throw new Error(`Merchant ID not matched, given: ${message.merchantId} actual: ${this._form!.MerchantID}`);
     }
 
-    if (Number(this._form.TotalAmount) !== message.totalPrice) {
-      throw new Error(`Total amount not matched, given: ${message.totalPrice} actual: ${this._form.TotalAmount}`);
+    if (Number(this._form!.TotalAmount) !== message.totalPrice) {
+      throw new Error(`Total amount not matched, given: ${message.totalPrice} actual: ${this._form!.TotalAmount}`);
     }
 
     this._committedAt = message.committedAt;
     this._createdAt = message.tradeDate;
     this._platformTradeNumber = message.tradeNumber;
+    this._paymentType = message.paymentType;
 
     if (additionalInfo?.creditCardAuthInfo) {
       this._creditCardAuthInfo = additionalInfo.creditCardAuthInfo;
