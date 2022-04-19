@@ -55,6 +55,7 @@ export enum OrderState {
 }
 
 export enum PaymentEvents {
+  SERVER_LISTENED = 'LISTENED',
   ORDER_PRE_COMMIT = 'PRE_COMMIT',
   ORDER_COMMITTED = 'COMMITTED',
 }

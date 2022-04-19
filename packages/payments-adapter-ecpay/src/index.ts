@@ -50,7 +50,12 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayOrder>
       this.emitter.on(PaymentEvents.ORDER_COMMITTED, options.onCommit);
     }
 
+    if (typeof options?.onServerListen === 'function') {
+      this.emitter.on(PaymentEvents.SERVER_LISTENED, options.onServerListen);
+    }
+
     this.pendingOrdersCache = new LRUCache({
+      ttlAutopurge: true,
       ttl: options?.ttl ?? 10 * 60 * 1000 // default: 10 mins
     });
   }
@@ -107,6 +112,8 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayOrder>
     this._server = createServer((req, res) => this.serverListener(req, res));
 
     this._server.listen(Number(url.port || 80), '0.0.0.0', () => {
+      this.emitter.emit(PaymentEvents.SERVER_LISTENED);
+
       debugPayment(`ECPayment Callback Server Listen on port ${url.port || 80}`);
     });
   }

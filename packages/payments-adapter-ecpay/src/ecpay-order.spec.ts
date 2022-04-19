@@ -24,9 +24,21 @@ describe('ECPayOrder', () => {
     expect(() => order.checkoutURL).toThrowError();
   });
 
-  it('should get valid checkout url', () => {
+  it('should get valid checkout url', (done) => {
+    let finishable = false;
+
     const paymentWithServer = new ECPayPayment({
       withServer: true,
+      serverHost: 'http://localhost:3001',
+      onServerListen: () => {
+        if (finishable) {
+          paymentWithServer._server?.close(() => {
+            done();
+          });
+        } else {
+          finishable = true;
+        }
+      },
     });
 
     const withServerOrder = paymentWithServer.prepare({
@@ -45,6 +57,12 @@ describe('ECPayOrder', () => {
 
     expect(withServerOrder.checkoutURL).toMatch(re);
 
-    paymentWithServer._server?.close();
+    if (finishable) {
+      paymentWithServer._server?.close(() => {
+        done();
+      });
+    }
+
+    finishable = true;
   });
 });
