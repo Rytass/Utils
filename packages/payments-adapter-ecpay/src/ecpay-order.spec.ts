@@ -135,12 +135,14 @@ describe('ECPayOrder', () => {
         card6Number: '222222',
       };
 
+      const platformTradeNumber = '517079903259023';
+
       order.commit({
         id: order.id,
         totalPrice: order.totalPrice,
         committedAt,
         tradeDate: createdAt,
-        tradeNumber: 'fakeid',
+        tradeNumber: platformTradeNumber,
         merchantId: 'mid',
         paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
       }, {
@@ -150,6 +152,7 @@ describe('ECPayOrder', () => {
       expect(order.committedAt).toBe(committedAt);
       expect(order.createdAt).toBe(createdAt);
       expect(order.creditCardAuthInfo).toBe(creditCardAuthInfo);
+      expect(order.platformTradeNumber).toBe(platformTradeNumber);
     });
 
     it('should reject commit if message data not match', () => {

@@ -100,6 +100,10 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
     return this._creditCardAuthInfo;
   }
 
+  get platformTradeNumber(): string | null {
+    return this._platformTradeNumber;
+  }
+
   commit<T extends OCM>(message: T, additionalInfo?: OrderCommitAdditionalInformation) {
     if (this._state !== OrderState.PRE_COMMIT) throw new Error(`Only pre-commit order can commit, now: ${this._state}`);
 
