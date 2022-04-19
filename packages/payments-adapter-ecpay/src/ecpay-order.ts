@@ -1,10 +1,10 @@
-import { CreditCardAuthInfo, Order, OrderState, PaymentEvents } from '@rytass/payments';
+import { CreditCardAuthInfo, Order, OrderCommitAdditionalInformation, OrderCommitMessage, OrderState, PaymentEvents } from '@rytass/payments';
 import { DateTime } from 'luxon';
 import { ECPayPayment } from '.';
 import { ECPayOrderItem } from './ecpay-order-item';
 import { ECPayCommitMessage, ECPayOrderForm, OrderInit } from './typings';
 
-export class ECPayOrder implements Order {
+export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
   private readonly _id: string;
 
   private readonly _items: ECPayOrderItem[];
@@ -51,7 +51,7 @@ export class ECPayOrder implements Order {
     return this._form;
   }
 
-  get formHTML() {
+  get formHTML(): string {
     this._state = OrderState.PRE_COMMIT;
 
     return `<!DOCTYPE html>
@@ -70,7 +70,7 @@ export class ECPayOrder implements Order {
 </html>`;
   }
 
-  get checkoutURL() {
+  get checkoutURL(): string {
     this._state = OrderState.PRE_COMMIT;
 
     if (!this.gateway._server) {
@@ -80,28 +80,48 @@ export class ECPayOrder implements Order {
     return this.gateway.getCheckoutUrl(this);
   }
 
-  get commitable() {
+  get commitable(): boolean {
     return this._state === OrderState.PRE_COMMIT;
   }
 
-  commit(message: ECPayCommitMessage) {
+  get state(): OrderState {
+    return this._state;
+  }
+
+  get createdAt(): Date | null {
+    return this._createdAt;
+  }
+
+  get committedAt(): Date | null {
+    return this._committedAt;
+  }
+
+  get creditCardAuthInfo(): CreditCardAuthInfo | undefined {
+    return this._creditCardAuthInfo;
+  }
+
+  commit<T extends OCM>(message: T, additionalInfo?: OrderCommitAdditionalInformation) {
     if (this._state !== OrderState.PRE_COMMIT) throw new Error(`Only pre-commit order can commit, now: ${this._state}`);
 
-    if (this._id !== message.merchantTradeNumber) {
-      throw new Error(`Order ID not matched, given: ${message.merchantTradeNumber} actual: ${this._id}`);
+    if (this._id !== message.id) {
+      throw new Error(`Order ID not matched, given: ${message.id} actual: ${this._id}`);
     }
 
     if (this._form.MerchantID !== message.merchantId) {
       throw new Error(`Merchant ID not matched, given: ${message.merchantId} actual: ${this._form.MerchantID}`);
     }
 
-    if (Number(this._form.TotalAmount) !== message.tradeAmount) {
-      throw new Error(`Total amount not matched, given: ${message.tradeAmount} actual: ${this._form.TotalAmount}`);
+    if (Number(this._form.TotalAmount) !== message.totalPrice) {
+      throw new Error(`Total amount not matched, given: ${message.totalPrice} actual: ${this._form.TotalAmount}`);
     }
 
-    this._committedAt = message.paymentDate;
+    this._committedAt = message.committedAt;
     this._createdAt = message.tradeDate;
     this._platformTradeNumber = message.tradeNumber;
+
+    if (additionalInfo?.creditCardAuthInfo) {
+      this._creditCardAuthInfo = additionalInfo.creditCardAuthInfo;
+    }
 
     this._state = OrderState.COMMITTED;
 

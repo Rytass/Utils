@@ -11,7 +11,7 @@ import { ECPayOrder } from './ecpay-order';
 
 const debugPayment = debug('Rytass:Payment:ECPay');
 
-export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayOrder> {
+export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayCommitMessage, ECPayOrder<ECPayCommitMessage>> {
   readonly baseUrl: string = 'https://payment-stage.ecpay.com.tw';
 
   private merchantId = '2000132';
@@ -26,11 +26,11 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayOrder>
 
   private serverListener: (req: IncomingMessage, res: ServerResponse) => void = (req, res) => this.defaultServerListener(req, res);
 
-  private pendingOrdersCache: LRUCache<string, ECPayOrder>;
+  private pendingOrdersCache: LRUCache<string, ECPayOrder<ECPayCommitMessage>>;
 
   _server?: Server;
 
-  constructor(options?: ECPayInitOptions) {
+  constructor(options?: ECPayInitOptions<ECPayOrder<ECPayCommitMessage>>) {
     this.baseUrl = options?.baseUrl || this.baseUrl;
     this.merchantId = options?.merchantId || this.merchantId;
     this.merchantCheckCode = options?.merchantCheckCode || this.merchantCheckCode;
@@ -186,12 +186,12 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayOrder>
       }
 
       order.commit({
+        id: payload.MerchantTradeNo,
+        totalPrice: payload.TradeAmt,
+        committedAt: DateTime.fromFormat(payload.PaymentDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
         merchantId: payload.MerchantID,
-        merchantTradeNumber: payload.MerchantTradeNo,
         tradeNumber: payload.TradeNo,
-        tradeAmount: payload.TradeAmt,
         tradeDate: DateTime.fromFormat(payload.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
-        paymentDate: DateTime.fromFormat(payload.PaymentDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
         paymentType: payload.PaymentType,
       });
 
@@ -203,7 +203,7 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayOrder>
     });
   }
 
-  prepare<T extends ECPayOrderInput, P extends ECPayOrder>(orderInput: T): P {
+  prepare<T extends ECPayOrderInput, P extends ECPayOrder<ECPayCommitMessage>>(orderInput: T): P {
     const orderId = orderInput.id || this.getOrderId();
     const now = new Date();
 
@@ -226,7 +226,7 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayOrder>
       ClientBackURL: orderInput.clientBackUrl || '',
     } as Omit<ECPayOrderForm, 'CheckMacValue'>;
 
-    const order = new ECPayOrder({
+    const order = new ECPayOrder<ECPayCommitMessage>({
       id: orderId,
       items: orderInput.items,
       form: this.addMac<ECPayOrderForm>(payload),
@@ -238,11 +238,11 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayOrder>
     return order;
   }
 
-  async query<T extends ECPayOrder>(id: string): Promise<T> {
+  async query<T extends ECPayOrder<ECPayCommitMessage>>(id: string): Promise<T> {
     return Promise.resolve({} as T);
   }
 
-  getCheckoutUrl(order: ECPayOrder) {
+  getCheckoutUrl(order: ECPayOrder<ECPayCommitMessage>) {
     return `${this.serverHost}${this.checkoutPath}/${order.id}`;
   }
 }

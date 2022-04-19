@@ -10,14 +10,39 @@ export interface PrepareOrderInput {
   items: PaymentItem[];
 }
 
-export interface Order extends PrepareOrderInput {
+export interface OrderCommitMessage {
+  id: string;
+  totalPrice: number;
+  committedAt: Date;
+}
+
+export interface OrderCommitAdditionalInformation {
+  creditCardAuthInfo?: CreditCardAuthInfo;
+}
+
+export interface Order<OCM extends OrderCommitMessage> extends PrepareOrderInput {
+  // Order State
+  state: OrderState;
+
+  // Order created at (send to gateway time)
+  createdAt: Date | null;
+
+  // Order committed at
+  committedAt: Date | null;
+
+  // Credit card auth info
+  creditCardAuthInfo?: CreditCardAuthInfo;
+
   id: string;
   items: PaymentItem[];
+  commitable: boolean;
+  commit<T extends OCM>(message: T): void;
 }
 
 export interface PaymentGateway<
   OInput extends PrepareOrderInput,
-  O extends Order,
+  OCM extends OrderCommitMessage,
+  O extends Order<OCM>,
 > {
   emitter: EventEmitter;
 
@@ -40,12 +65,12 @@ export enum CreditCardECI {
 }
 
 export interface CreditCardAuthInfo {
-  process_date: string;
-  auth_code: string; // Credit Card Auth Code (6 digits)
+  processDate: Date;
+  authCode: string; // Credit Card Auth Code (6 digits)
   amount: number;
   eci: CreditCardECI;
-  card4no: string;
-  card6no: string;
+  card4Number: string;
+  card6Number: string;
 }
 
 export enum OrderState {

@@ -1,5 +1,6 @@
+import { CreditCardECI, OrderState } from '@rytass/payments';
 import { ECPayPayment } from '.';
-import { ECPayOrder } from './ecpay-order';
+import { ECPayCallbackPaymentType } from './typings';
 
 describe('ECPayOrder', () => {
   const payment = new ECPayPayment();
@@ -64,5 +65,177 @@ describe('ECPayOrder', () => {
     }
 
     finishable = true;
+  });
+
+  describe('Order Commit', () => {
+    it('should represent pre commit state', () => {
+      const payment = new ECPayPayment({
+        merchantId: 'mid',
+      });
+
+      const order = payment.prepare({
+        items: [{
+          name: 'Test',
+          unitPrice: 10,
+          quantity: 1
+        }, {
+          name: '中文',
+          unitPrice: 15,
+          quantity: 4
+        }],
+      });
+
+      expect(order.state).toBe(OrderState.INITED);
+
+      const html = order.formHTML;
+
+      expect(order.state).toBe(OrderState.PRE_COMMIT);
+
+      order.commit({
+        id: order.id,
+        totalPrice: order.totalPrice,
+        committedAt: new Date(),
+        tradeDate: new Date(),
+        tradeNumber: 'fakeid',
+        merchantId: 'mid',
+        paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
+      });
+
+      expect(order.state).toBe(OrderState.COMMITTED);
+    });
+
+    it('should get commit message after committed', () => {
+      const payment = new ECPayPayment({
+        merchantId: 'mid',
+      });
+
+      const order = payment.prepare({
+        items: [{
+          name: 'Test',
+          unitPrice: 10,
+          quantity: 1
+        }, {
+          name: '中文',
+          unitPrice: 15,
+          quantity: 4
+        }],
+      });
+
+      const html = order.formHTML;
+
+      const createdAt = new Date();
+      const committedAt = new Date();
+
+      const creditCardAuthInfo = {
+        processDate: new Date(),
+        authCode: '470293',
+        amount: order.totalPrice,
+        eci: CreditCardECI.MASTER_3D,
+        card4Number: '4311',
+        card6Number: '222222',
+      };
+
+      order.commit({
+        id: order.id,
+        totalPrice: order.totalPrice,
+        committedAt,
+        tradeDate: createdAt,
+        tradeNumber: 'fakeid',
+        merchantId: 'mid',
+        paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
+      }, {
+        creditCardAuthInfo,
+      });
+
+      expect(order.committedAt).toBe(committedAt);
+      expect(order.createdAt).toBe(createdAt);
+      expect(order.creditCardAuthInfo).toBe(creditCardAuthInfo);
+    });
+
+    it('should reject commit if message data not match', () => {
+      const payment = new ECPayPayment({
+        merchantId: 'mid',
+      });
+
+      const order = payment.prepare({
+        items: [{
+          name: 'Test',
+          unitPrice: 10,
+          quantity: 1
+        }, {
+          name: '中文',
+          unitPrice: 15,
+          quantity: 4
+        }],
+      });
+
+      const html = order.formHTML;
+
+      expect(() => {
+        order.commit({
+          id: order.id,
+          totalPrice: order.totalPrice,
+          committedAt: new Date(),
+          tradeDate: new Date(),
+          tradeNumber: 'fakeid',
+          merchantId: 'wrongMerchantId',
+          paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
+        });
+      }).toThrowError();
+
+      expect(() => {
+        order.commit({
+          id: order.id,
+          totalPrice: order.totalPrice + 1,
+          committedAt: new Date(),
+          tradeDate: new Date(),
+          tradeNumber: 'fakeid',
+          merchantId: 'mid',
+          paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
+        });
+      }).toThrowError();
+
+      expect(() => {
+        order.commit({
+          id: 'wrongId',
+          totalPrice: order.totalPrice,
+          committedAt: new Date(),
+          tradeDate: new Date(),
+          tradeNumber: 'fakeid',
+          merchantId: 'mid',
+          paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
+        });
+      }).toThrowError();
+    });
+
+    it('should reject invalid state order', () => {
+      const payment = new ECPayPayment({
+        merchantId: 'mid',
+      });
+
+      const order = payment.prepare({
+        items: [{
+          name: 'Test',
+          unitPrice: 10,
+          quantity: 1
+        }, {
+          name: '中文',
+          unitPrice: 15,
+          quantity: 4
+        }],
+      });
+
+      expect(() => {
+        order.commit({
+          id: order.id,
+          totalPrice: order.totalPrice,
+          committedAt: new Date(),
+          tradeDate: new Date(),
+          tradeNumber: 'fakeid',
+          merchantId: 'mid',
+          paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
+        });
+      }).toThrowError();
+    });
   });
 });

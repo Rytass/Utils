@@ -6,6 +6,7 @@ import request from 'supertest';
 import { createHash } from 'crypto';
 import { ECPayPayment } from '.';
 import { ECPayOrder } from './ecpay-order';
+import { ECPayCommitMessage } from './typings';
 
 function addMac(payload: Record<string, string>) {
   const mac = createHash('sha256')
@@ -213,7 +214,7 @@ describe('ECPayPayment', () => {
     });
 
     it('should order commit with callback server', (done) => {
-      const mockedOnCommit = jest.fn<void, [ECPayOrder]>((order) => { });
+      const mockedOnCommit = jest.fn<void, [ECPayOrder<ECPayCommitMessage>]>((order) => { });
 
       const payment = new ECPayPayment({
         withServer: true,
@@ -265,7 +266,7 @@ describe('ECPayPayment', () => {
             .send(new URLSearchParams(successfulResponse).toString())
             .then((res) => {
               expect(mockedOnCommit.mock.calls.length).toBe(1);
-              expect((mockedOnCommit.mock.calls[0][0] as unknown as ECPayOrder).id).toBe(order.id);
+              expect((mockedOnCommit.mock.calls[0][0] as unknown as ECPayOrder<ECPayCommitMessage>).id).toBe(order.id);
 
               payment._server?.close(done);
             });

@@ -1,9 +1,9 @@
-import { PaymentItem, PrepareOrderInput, Channel, CreditCardECI } from '@rytass/payments';
+import { PaymentItem, PrepareOrderInput, Channel, CreditCardECI, OrderCommitMessage } from '@rytass/payments';
 import { IncomingMessage, ServerResponse } from 'http';
 import { ECPayPayment } from '.';
 import { ECPayOrder } from './ecpay-order';
 
-export interface ECPayInitOptions {
+export interface ECPayInitOptions<O> {
   baseUrl?: string;
   merchantId?: string;
   merchantCheckCode?: string;
@@ -15,7 +15,7 @@ export interface ECPayInitOptions {
   withServer?: boolean;
   serverListener?: (req: IncomingMessage, res: ServerResponse) => void;
   ttl?: number; // Order Expire Time is ms
-  onCommit?: (order: ECPayOrder) => void;
+  onCommit?: (order: O) => void;
   onServerListen?: () => void;
 }
 
@@ -97,12 +97,12 @@ export interface ECPayCallbackPayload {
   card6no: string;
 };
 
-export interface ECPayCommitMessage {
+export interface ECPayCommitMessage extends OrderCommitMessage {
+  id: string;
+  totalPrice: number;
+  committedAt: Date;
   merchantId: string;
-  merchantTradeNumber: string;
   tradeNumber: string;
-  tradeAmount: number;
   tradeDate: Date;
-  paymentDate: Date;
   paymentType: ECPayCallbackPaymentType;
 }
