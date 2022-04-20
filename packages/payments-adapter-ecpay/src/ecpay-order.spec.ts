@@ -1,11 +1,11 @@
 import { Channel, CreditCardECI, OrderState } from '@rytass/payments';
 import { ECPayPayment } from '.';
-import { ECPayCallbackPaymentType } from './typings';
+import { ECPayCallbackPaymentType, ECPayChannelCreditCard, ECPayChannelVirtualAccount } from './typings';
 
 describe('ECPayOrder', () => {
   const payment = new ECPayPayment();
 
-  const order = payment.prepare({
+  const order = payment.prepare<ECPayChannelCreditCard>({
     channel: Channel.CREDIT_CARD,
     items: [{
       name: 'Test',
@@ -27,7 +27,7 @@ describe('ECPayOrder', () => {
   });
 
   it('should fallback channel to all', () => {
-    const allOrder = payment.prepare({
+    const allOrder = payment.prepare<ECPayChannelCreditCard>({
       items: [{
         name: 'Test',
         unitPrice: 10,
@@ -60,7 +60,7 @@ describe('ECPayOrder', () => {
       },
     });
 
-    const withServerOrder = paymentWithServer.prepare({
+    const withServerOrder = paymentWithServer.prepare<ECPayChannelCreditCard>({
       channel: Channel.CREDIT_CARD,
       items: [{
         name: 'Test',
@@ -92,7 +92,7 @@ describe('ECPayOrder', () => {
         merchantId: 'mid',
       });
 
-      const order = payment.prepare({
+      const order = payment.prepare<ECPayChannelCreditCard>({
         items: [{
           name: 'Test',
           unitPrice: 10,
@@ -129,7 +129,7 @@ describe('ECPayOrder', () => {
         merchantId: 'mid',
       });
 
-      const order = payment.prepare({
+      const order = payment.prepare<ECPayChannelCreditCard>({
         channel: Channel.CREDIT_CARD,
         items: [{
           name: 'Test',
@@ -164,7 +164,7 @@ describe('ECPayOrder', () => {
         merchantId: 'mid',
       });
 
-      const order = payment.prepare({
+      const order = payment.prepare<ECPayChannelCreditCard>({
         channel: Channel.CREDIT_CARD,
         items: [{
           name: 'Test',
@@ -202,19 +202,17 @@ describe('ECPayOrder', () => {
         tradeNumber: platformTradeNumber,
         merchantId: 'mid',
         paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
-      }, {
-        creditCardAuthInfo,
-      });
+      }, creditCardAuthInfo);
 
       expect(order.committedAt).toBe(committedAt);
       expect(order.createdAt).toBe(createdAt);
-      expect(order.creditCardAuthInfo).toBe(creditCardAuthInfo);
+      expect(order.additionalInfo).toBe(creditCardAuthInfo);
       expect(order.platformTradeNumber).toBe(platformTradeNumber);
       expect(order.paymentType).toBe(ECPayCallbackPaymentType.CREDIT_CARD);
     });
 
     it('should reject commit if message data not match', () => {
-      const payment = new ECPayPayment({
+      const payment = new ECPayPayment<ECPayChannelCreditCard>({
         merchantId: 'mid',
       });
 
@@ -272,7 +270,7 @@ describe('ECPayOrder', () => {
     });
 
     it('should reject invalid state order', () => {
-      const payment = new ECPayPayment({
+      const payment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
         merchantId: 'mid',
       });
 

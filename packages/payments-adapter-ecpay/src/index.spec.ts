@@ -7,7 +7,7 @@ import { createHash } from 'crypto';
 import { IncomingMessage, ServerResponse } from 'http';
 import { ECPayPayment } from '.';
 import { ECPayOrder } from './ecpay-order';
-import { ECPayCallbackPaymentType, ECPayCommitMessage } from './typings';
+import { ECPayCallbackPaymentType, ECPayChannelCreditCard, ECPayChannelVirtualAccount, ECPayCommitMessage } from './typings';
 import { Channel, OrderState, PaymentPeriodType } from '@rytass/payments';
 
 function addMac(payload: Record<string, string>) {
@@ -41,7 +41,7 @@ describe('ECPayPayment', () => {
   describe('Generate Form Page HTML', () => {
     const payment = new ECPayPayment();
 
-    const order = payment.prepare({
+    const order = payment.prepare<ECPayChannelCreditCard>({
       channel: Channel.CREDIT_CARD,
       items: [{
         name: 'Test',
@@ -74,7 +74,7 @@ describe('ECPayPayment', () => {
   });
 
   describe('Serve checkout server', () => {
-    let payment: ECPayPayment;
+    let payment: ECPayPayment<ECPayChannelCreditCard>;
 
     beforeAll(() => {
       return new Promise<void>((resolve) => {
@@ -131,7 +131,7 @@ describe('ECPayPayment', () => {
     });
 
     it('should handle successful request', (done) => {
-      const payment = new ECPayPayment({
+      const payment = new ECPayPayment<ECPayChannelCreditCard>({
         withServer: true,
         serverHost: 'http://localhost:3005',
         onServerListen: () => {
@@ -191,7 +191,7 @@ describe('ECPayPayment', () => {
     });
 
     it('should reject committed order', (done) => {
-      const payment = new ECPayPayment({
+      const payment = new ECPayPayment<ECPayChannelCreditCard>({
         withServer: true,
         serverHost: 'http://localhost:3005',
         onServerListen: () => {
@@ -260,7 +260,7 @@ describe('ECPayPayment', () => {
     });
 
     it('should reject not found order', (done) => {
-      const payment = new ECPayPayment({
+      const payment = new ECPayPayment<ECPayChannelCreditCard>({
         withServer: true,
         serverHost: 'http://localhost:3005',
         onServerListen: () => {
@@ -366,7 +366,7 @@ describe('ECPayPayment', () => {
     it('should order commit with callback server', (done) => {
       const mockedOnCommit = jest.fn<void, [ECPayOrder<ECPayCommitMessage>]>(() => { });
 
-      const payment = new ECPayPayment({
+      const payment = new ECPayPayment<ECPayChannelCreditCard>({
         withServer: true,
         serverHost: 'http://localhost:3003',
         onCommit: mockedOnCommit,
@@ -427,7 +427,7 @@ describe('ECPayPayment', () => {
   });
 
   describe('Custom server listener', () => {
-    let payment: ECPayPayment;
+    let payment: ECPayPayment<ECPayChannelCreditCard>;
 
     const serverListenerMock = jest.fn<void, [IncomingMessage, ServerResponse]>((req, res) => {
       res.writeHead(200, {
@@ -507,11 +507,12 @@ describe('ECPayPayment', () => {
   });
 
   describe('Memory cards', () => {
-    const payment = new ECPayPayment();
+    const payment = new ECPayPayment<ECPayChannelCreditCard>();
 
     it('should memory card only works on credit channel', () => {
       expect(() => {
         payment.prepare({
+          // @ts-ignore: Unreachable code error
           channel: Channel.VIRTUAL_ACCOUNT,
           memory: true,
           items: [{
@@ -555,11 +556,12 @@ describe('ECPayPayment', () => {
   });
 
   describe('Union Pay', () => {
-    const payment = new ECPayPayment();
+    const payment = new ECPayPayment<ECPayChannelCreditCard>();
 
     it('should throw on not credit card channel allow union pay', () => {
       expect(() => {
         payment.prepare({
+          // @ts-ignore: Unreachable code error
           channel: Channel.VIRTUAL_ACCOUNT,
           allowUnionPay: true,
           items: [{
@@ -587,11 +589,12 @@ describe('ECPayPayment', () => {
   });
 
   describe('Credit Card Redeem', () => {
-    const payment = new ECPayPayment();
+    const payment = new ECPayPayment<ECPayChannelCreditCard>();
 
     it('should throw on not credit card channel allow redeem', () => {
       expect(() => {
         payment.prepare({
+          // @ts-ignore: Unreachable code error
           channel: Channel.VIRTUAL_ACCOUNT,
           allowCreditCardRedeem: true,
           items: [{
@@ -604,7 +607,7 @@ describe('ECPayPayment', () => {
     });
 
     it('should allow union pay represent on form data', () => {
-      const order = payment.prepare({
+      const order = payment.prepare<ECPayChannelCreditCard>({
         channel: Channel.CREDIT_CARD,
         allowCreditCardRedeem: true,
         items: [{
@@ -619,11 +622,12 @@ describe('ECPayPayment', () => {
   });
 
   describe('Credit Card Installments', () => {
-    const payment = new ECPayPayment();
+    const payment = new ECPayPayment<ECPayChannelCreditCard>();
 
     it('should throw on not credit card channel use installments', () => {
       expect(() => {
         payment.prepare({
+          // @ts-ignore: Unreachable code error
           channel: Channel.VIRTUAL_ACCOUNT,
           installments: '3,6',
           items: [{
@@ -710,7 +714,7 @@ describe('ECPayPayment', () => {
   });
 
   describe('Credit Card Period Payments', () => {
-    const payment = new ECPayPayment({
+    const payment = new ECPayPayment<ECPayChannelCreditCard>({
       serverHost: 'http://localhost:9999',
       callbackPath: '/callback',
     });
@@ -718,6 +722,7 @@ describe('ECPayPayment', () => {
     it('should throw on not credit card channel use period', () => {
       expect(() => {
         payment.prepare({
+          // @ts-ignore: Unreachable code error
           channel: Channel.VIRTUAL_ACCOUNT,
           period: {
             amountPerPeriod: 100,
@@ -969,7 +974,7 @@ describe('ECPayPayment', () => {
   });
 
   describe('Invalid Payment Type', () => {
-    let testPayment: ECPayPayment;
+    let testPayment: ECPayPayment<ECPayChannelCreditCard>;
 
     beforeAll(() => new Promise<void>((resolve) => {
       testPayment = new ECPayPayment({
@@ -1029,7 +1034,7 @@ describe('ECPayPayment', () => {
   });
 
   describe('Virtual account', () => {
-    const payment = new ECPayPayment({
+    const payment = new ECPayPayment<ECPayChannelVirtualAccount | ECPayChannelCreditCard>({
       serverHost: 'http://localhost:9999',
       callbackPath: '/callback',
     });
@@ -1038,6 +1043,7 @@ describe('ECPayPayment', () => {
       expect(() => {
         payment.prepare({
           channel: Channel.CREDIT_CARD,
+          // @ts-ignore: Unreachable code error
           virtualAccountExpireDays: 9,
           items: [{
             name: 'Test',
@@ -1117,7 +1123,7 @@ describe('ECPayPayment', () => {
     });
 
     describe('Vistual Account Banks', () => {
-      let testPayment: ECPayPayment;
+      let testPayment: ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>;
 
       beforeAll(() => new Promise<void>((resolve) => {
         testPayment = new ECPayPayment({
@@ -1172,7 +1178,7 @@ describe('ECPayPayment', () => {
       });
 
       it('should default callback handler commit TAISHIN virtual account order', (done) => {
-        const order = testPayment.prepare({
+        const order = testPayment.prepare<ECPayChannelVirtualAccount>({
           channel: Channel.VIRTUAL_ACCOUNT,
           virtualAccountExpireDays: 7,
           items: [{
@@ -1213,8 +1219,8 @@ describe('ECPayPayment', () => {
           .then((res) => {
             expect(res.text).toEqual('1|OK');
             expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.virtualAccountInfo?.bankCode).toBe('806');
-            expect(order.virtualAccountInfo?.account).toBe('3453721178769211');
+            expect(order.additionalInfo?.bankCode).toBe('806');
+            expect(order.additionalInfo?.account).toBe('3453721178769211');
             expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_TAISHIN);
 
             done();
@@ -1222,7 +1228,7 @@ describe('ECPayPayment', () => {
       });
 
       it('should default callback handler commit ESUN virtual account order', (done) => {
-        const order = testPayment.prepare({
+        const order = testPayment.prepare<ECPayChannelVirtualAccount>({
           channel: Channel.VIRTUAL_ACCOUNT,
           virtualAccountExpireDays: 7,
           items: [{
@@ -1263,8 +1269,8 @@ describe('ECPayPayment', () => {
           .then((res) => {
             expect(res.text).toEqual('1|OK');
             expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.virtualAccountInfo?.bankCode).toBe('806');
-            expect(order.virtualAccountInfo?.account).toBe('3453721178769211');
+            expect(order.additionalInfo?.bankCode).toBe('806');
+            expect(order.additionalInfo?.account).toBe('3453721178769211');
             expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_ESUN);
 
             done();
@@ -1272,7 +1278,7 @@ describe('ECPayPayment', () => {
       });
 
       it('should default callback handler commit BOT virtual account order', (done) => {
-        const order = testPayment.prepare({
+        const order = testPayment.prepare<ECPayChannelVirtualAccount>({
           channel: Channel.VIRTUAL_ACCOUNT,
           virtualAccountExpireDays: 7,
           items: [{
@@ -1313,8 +1319,8 @@ describe('ECPayPayment', () => {
           .then((res) => {
             expect(res.text).toEqual('1|OK');
             expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.virtualAccountInfo?.bankCode).toBe('806');
-            expect(order.virtualAccountInfo?.account).toBe('3453721178769211');
+            expect(order.additionalInfo?.bankCode).toBe('806');
+            expect(order.additionalInfo?.account).toBe('3453721178769211');
             expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_BOT);
 
             done();
@@ -1322,7 +1328,7 @@ describe('ECPayPayment', () => {
       });
 
       it('should default callback handler commit FUBON virtual account order', (done) => {
-        const order = testPayment.prepare({
+        const order = testPayment.prepare<ECPayChannelVirtualAccount>({
           channel: Channel.VIRTUAL_ACCOUNT,
           virtualAccountExpireDays: 7,
           items: [{
@@ -1363,8 +1369,8 @@ describe('ECPayPayment', () => {
           .then((res) => {
             expect(res.text).toEqual('1|OK');
             expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.virtualAccountInfo?.bankCode).toBe('806');
-            expect(order.virtualAccountInfo?.account).toBe('3453721178769211');
+            expect(order.additionalInfo?.bankCode).toBe('806');
+            expect(order.additionalInfo?.account).toBe('3453721178769211');
             expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_FUBON);
 
             done();
@@ -1372,7 +1378,7 @@ describe('ECPayPayment', () => {
       });
 
       it('should default callback handler commit CHINATRUST virtual account order', (done) => {
-        const order = testPayment.prepare({
+        const order = testPayment.prepare<ECPayChannelVirtualAccount>({
           channel: Channel.VIRTUAL_ACCOUNT,
           virtualAccountExpireDays: 7,
           items: [{
@@ -1413,8 +1419,8 @@ describe('ECPayPayment', () => {
           .then((res) => {
             expect(res.text).toEqual('1|OK');
             expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.virtualAccountInfo?.bankCode).toBe('806');
-            expect(order.virtualAccountInfo?.account).toBe('3453721178769211');
+            expect(order.additionalInfo?.bankCode).toBe('806');
+            expect(order.additionalInfo?.account).toBe('3453721178769211');
             expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_CHINATRUST);
 
             done();
@@ -1422,7 +1428,7 @@ describe('ECPayPayment', () => {
       });
 
       it('should default callback handler commit FIRST virtual account order', (done) => {
-        const order = testPayment.prepare({
+        const order = testPayment.prepare<ECPayChannelVirtualAccount>({
           channel: Channel.VIRTUAL_ACCOUNT,
           virtualAccountExpireDays: 7,
           items: [{
@@ -1463,8 +1469,8 @@ describe('ECPayPayment', () => {
           .then((res) => {
             expect(res.text).toEqual('1|OK');
             expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.virtualAccountInfo?.bankCode).toBe('806');
-            expect(order.virtualAccountInfo?.account).toBe('3453721178769211');
+            expect(order.additionalInfo?.bankCode).toBe('806');
+            expect(order.additionalInfo?.account).toBe('3453721178769211');
             expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_FIRST);
 
             done();
@@ -1472,7 +1478,7 @@ describe('ECPayPayment', () => {
       });
 
       it('should default callback handler commit LAND virtual account order', (done) => {
-        const order = testPayment.prepare({
+        const order = testPayment.prepare<ECPayChannelVirtualAccount>({
           channel: Channel.VIRTUAL_ACCOUNT,
           virtualAccountExpireDays: 7,
           items: [{
@@ -1513,8 +1519,8 @@ describe('ECPayPayment', () => {
           .then((res) => {
             expect(res.text).toEqual('1|OK');
             expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.virtualAccountInfo?.bankCode).toBe('806');
-            expect(order.virtualAccountInfo?.account).toBe('3453721178769211');
+            expect(order.additionalInfo?.bankCode).toBe('806');
+            expect(order.additionalInfo?.account).toBe('3453721178769211');
             expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_LAND);
 
             done();
@@ -1522,7 +1528,7 @@ describe('ECPayPayment', () => {
       });
 
       it('should default callback handler commit CATHAY virtual account order', (done) => {
-        const order = testPayment.prepare({
+        const order = testPayment.prepare<ECPayChannelVirtualAccount>({
           channel: Channel.VIRTUAL_ACCOUNT,
           virtualAccountExpireDays: 7,
           items: [{
@@ -1563,8 +1569,8 @@ describe('ECPayPayment', () => {
           .then((res) => {
             expect(res.text).toEqual('1|OK');
             expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.virtualAccountInfo?.bankCode).toBe('806');
-            expect(order.virtualAccountInfo?.account).toBe('3453721178769211');
+            expect(order.additionalInfo?.bankCode).toBe('806');
+            expect(order.additionalInfo?.account).toBe('3453721178769211');
             expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_CATHAY);
 
             done();
@@ -1572,7 +1578,7 @@ describe('ECPayPayment', () => {
       });
 
       it('should default callback handler commit TACHONG virtual account order', (done) => {
-        const order = testPayment.prepare({
+        const order = testPayment.prepare<ECPayChannelVirtualAccount>({
           channel: Channel.VIRTUAL_ACCOUNT,
           virtualAccountExpireDays: 7,
           items: [{
@@ -1613,8 +1619,8 @@ describe('ECPayPayment', () => {
           .then((res) => {
             expect(res.text).toEqual('1|OK');
             expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.virtualAccountInfo?.bankCode).toBe('806');
-            expect(order.virtualAccountInfo?.account).toBe('3453721178769211');
+            expect(order.additionalInfo?.bankCode).toBe('806');
+            expect(order.additionalInfo?.account).toBe('3453721178769211');
             expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_TACHONG);
 
             done();
@@ -1622,7 +1628,7 @@ describe('ECPayPayment', () => {
       });
 
       it('should default callback handler commit PANHSIN virtual account order', (done) => {
-        const order = testPayment.prepare({
+        const order = testPayment.prepare<ECPayChannelVirtualAccount>({
           channel: Channel.VIRTUAL_ACCOUNT,
           virtualAccountExpireDays: 7,
           items: [{
@@ -1663,8 +1669,8 @@ describe('ECPayPayment', () => {
           .then((res) => {
             expect(res.text).toEqual('1|OK');
             expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.virtualAccountInfo?.bankCode).toBe('806');
-            expect(order.virtualAccountInfo?.account).toBe('3453721178769211');
+            expect(order.additionalInfo?.bankCode).toBe('806');
+            expect(order.additionalInfo?.account).toBe('3453721178769211');
             expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_PANHSIN);
 
             done();

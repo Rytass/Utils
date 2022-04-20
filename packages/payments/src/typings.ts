@@ -10,16 +10,31 @@ export interface PrepareOrderInput {
   items: PaymentItem[];
 }
 
+export interface OrderCreditCardCommitMessage extends OrderCommitMessage {
+  id: string;
+  totalPrice: number;
+  committedAt: Date;
+}
+
+export interface OrderVirtualAccountCommitMessage extends OrderCommitMessage {
+  id: string;
+  totalPrice: number;
+  committedAt: Date | null;
+}
+
 export interface OrderCommitMessage {
   id: string;
   totalPrice: number;
   committedAt: Date | null;
 }
 
-export interface OrderCommitAdditionalInformation {
-  creditCardAuthInfo?: CreditCardAuthInfo;
-  virtualAccountInfo?: VirtualAccountInfo;
-}
+type IsExtends<OCM, CheckTarget, Result> = OCM extends CheckTarget ? Result : never;
+
+export type AdditionalInfo<OCM extends OrderCommitMessage> = IsExtends<OCM, OrderCreditCardCommitMessage, CreditCardAuthInfo> extends never
+  ? IsExtends<OCM, OrderVirtualAccountCommitMessage, VirtualAccountInfo> extends never
+  ? never
+  : VirtualAccountInfo
+  : CreditCardAuthInfo;
 
 export interface Order<OCM extends OrderCommitMessage> extends PrepareOrderInput {
   // Order State
@@ -31,11 +46,8 @@ export interface Order<OCM extends OrderCommitMessage> extends PrepareOrderInput
   // Order committed at
   committedAt: Date | null;
 
-  // Credit card auth info
-  creditCardAuthInfo?: CreditCardAuthInfo;
-
-  // Virtual account info
-  virtualAccountInfo?: VirtualAccountInfo;
+  // Additional info
+  additionalInfo?: AdditionalInfo<OCM>;
 
   id: string;
   items: PaymentItem[];
@@ -43,16 +55,20 @@ export interface Order<OCM extends OrderCommitMessage> extends PrepareOrderInput
   commit<T extends OCM>(message: T): void;
 }
 
+type InputTypeCheck<OCM extends OrderCommitMessage, CheckTarget extends OrderCommitMessage, Result extends PrepareOrderInput> = OCM extends (infer U) ? U extends CheckTarget ? Result : never : never;
+type InputTypeCheck2<OCM extends OrderCommitMessage, CheckTarget extends OrderCommitMessage, Result extends PrepareOrderInput> = OCM extends (infer U) ? U extends CheckTarget ? Result : never : never;
+
+type InputFromOrderCommitMessage<OCM extends OrderCommitMessage> = PrepareOrderInput;
+
 export interface PaymentGateway<
-  OInput extends PrepareOrderInput,
   OCM extends OrderCommitMessage,
   O extends Order<OCM>,
 > {
   emitter: EventEmitter;
 
-  prepare<T extends OInput, P extends O>(orderInput: T): P;
+  prepare<N extends OCM>(input: InputFromOrderCommitMessage<OCM>): Order<N>;
 
-  query<T extends O>(id: string): Promise<T>;
+  query<Order extends O>(id: string): Promise<Order>;
 }
 
 export enum Channel {

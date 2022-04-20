@@ -1,8 +1,9 @@
-import { PaymentItem, PrepareOrderInput, Channel, CreditCardECI, OrderCommitMessage, PaymentPeriod } from '@rytass/payments';
+import { PaymentItem, PrepareOrderInput, Channel, CreditCardECI, OrderCommitMessage, PaymentPeriod, OrderCreditCardCommitMessage, OrderVirtualAccountCommitMessage, CreditCardAuthInfo, VirtualAccountInfo } from '@rytass/payments';
 import { IncomingMessage, ServerResponse } from 'http';
 import { ECPayPayment } from '.';
+import { ECPayOrder } from './ecpay-order';
 
-export interface ECPayInitOptions<O> {
+export interface ECPayInitOptions<O extends ECPayOrder<ECPayCommitMessage>> {
   language?: Language;
   baseUrl?: string;
   merchantId?: string;
@@ -21,6 +22,29 @@ export interface ECPayInitOptions<O> {
 
 type ECPayChannel = Channel.CREDIT_CARD | Channel.VIRTUAL_ACCOUNT;
 
+export interface ECPayCreditCardOrderInput extends PrepareOrderInput {
+  id?: string;
+  items: PaymentItem[];
+  description?: string;
+  clientBackUrl?: string;
+  channel?: Channel.CREDIT_CARD;
+  memory?: boolean;
+  memberId?: string;
+  allowCreditCardRedeem?: boolean;
+  allowUnionPay?: boolean;
+  installments?: string;
+  period?: PaymentPeriod;
+}
+
+export interface ECPayVirtualAccountOrderInput extends PrepareOrderInput {
+  id?: string;
+  items: PaymentItem[];
+  description?: string;
+  clientBackUrl?: string;
+  channel?: Channel.VIRTUAL_ACCOUNT;
+  virtualAccountExpireDays?: number;
+}
+
 export interface ECPayOrderInput extends PrepareOrderInput {
   id?: string;
   items: PaymentItem[];
@@ -36,23 +60,23 @@ export interface ECPayOrderInput extends PrepareOrderInput {
   virtualAccountExpireDays?: number;
 }
 
-export interface OrderInit {
+export interface OrderInit<OCM extends ECPayCommitMessage> {
   id: string;
   items: PaymentItem[];
-  gateway: ECPayPayment;
+  gateway: ECPayPayment<OCM>;
 }
 
-export interface OrderCreateInit extends OrderInit {
+export interface OrderCreateInit<OCM extends ECPayCommitMessage> extends OrderInit<OCM> {
   id: string;
   items: PaymentItem[];
   form: ECPayOrderForm;
-  gateway: ECPayPayment;
+  gateway: ECPayPayment<OCM>;
 }
 
-export interface OrderFromServerInit extends OrderInit {
+export interface OrderFromServerInit<OCM extends ECPayCommitMessage> extends OrderInit<OCM> {
   id: string;
   items: PaymentItem[];
-  gateway: ECPayPayment;
+  gateway: ECPayPayment<OCM>;
   createdAt: Date;
   committedAt: Date | null;
   platformTradeNumber: string;
@@ -186,6 +210,38 @@ export interface ECPayCallbackVirtualAccountPayload extends ECPayCallbackPayload
   vAccount: string;
 }
 
+export interface ECPayOrderCreditCardCommitMessage extends OrderCreditCardCommitMessage {
+  id: string;
+  totalPrice: number;
+  committedAt: Date;
+  merchantId: string;
+  tradeNumber: string;
+  tradeDate: Date;
+  paymentType: ECPayCallbackPaymentType.CREDIT_CARD;
+}
+
+export interface ECPayOrderVirtualAccountCommitMessage extends OrderVirtualAccountCommitMessage {
+  id: string;
+  totalPrice: number;
+  committedAt: Date | null;
+  merchantId: string;
+  tradeNumber: string;
+  tradeDate: Date;
+  paymentType: Extract<
+    ECPayCallbackPaymentType,
+    ECPayCallbackPaymentType.ATM_TAISHIN |
+    ECPayCallbackPaymentType.ATM_ESUN |
+    ECPayCallbackPaymentType.ATM_BOT |
+    ECPayCallbackPaymentType.ATM_FUBON |
+    ECPayCallbackPaymentType.ATM_CHINATRUST |
+    ECPayCallbackPaymentType.ATM_FIRST |
+    ECPayCallbackPaymentType.ATM_LAND |
+    ECPayCallbackPaymentType.ATM_CATHAY |
+    ECPayCallbackPaymentType.ATM_TACHONG |
+    ECPayCallbackPaymentType.ATM_PANHSIN
+  >;
+}
+
 export interface ECPayCommitMessage extends OrderCommitMessage {
   id: string;
   totalPrice: number;
@@ -229,3 +285,12 @@ export enum Language {
   SIMPLIFIED_CHINESE = 'CHI',
   TRADITIONAL_CHINESE = '',
 }
+
+export type GetOrderInput<CM extends ECPayCommitMessage> = CM extends ECPayOrderCreditCardCommitMessage
+  ? ECPayCreditCardOrderInput
+  : CM extends ECPayOrderVirtualAccountCommitMessage
+    ? ECPayVirtualAccountOrderInput
+    : never;
+
+export type ECPayChannelCreditCard = ECPayOrderCreditCardCommitMessage;
+export type ECPayChannelVirtualAccount = ECPayOrderVirtualAccountCommitMessage;
