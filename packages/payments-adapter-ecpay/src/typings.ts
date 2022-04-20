@@ -1,4 +1,4 @@
-import { PaymentItem, PrepareOrderInput, Channel, CreditCardECI, OrderCommitMessage } from '@rytass/payments';
+import { PaymentItem, PrepareOrderInput, Channel, CreditCardECI, OrderCommitMessage, PaymentPeriod } from '@rytass/payments';
 import { IncomingMessage, ServerResponse } from 'http';
 import { ECPayPayment } from '.';
 import { ECPayOrder } from './ecpay-order';
@@ -28,6 +28,10 @@ export interface ECPayOrderInput extends PrepareOrderInput {
   channel?: Channel.CREDIT_CARD;
   memory?: boolean;
   memberId?: string;
+  allowCreditCardRedeem?: boolean;
+  allowUnionPay?: boolean;
+  installments?: string;
+  period?: PaymentPeriod;
 }
 
 export interface OrderInit {
@@ -70,6 +74,14 @@ enum ECPayOrderFormKey {
   Language = 'Language',
   BindingCard = 'BindingCard',
   MerchantMemberID = 'MerchantMemberID',
+  Redeem = 'Redeem',
+  UnionPay = 'UnionPay',
+  CreditInstallment = 'CreditInstallment',
+  PeriodAmount = 'PeriodAmount',
+  PeriodType = 'PeriodType',
+  Frequency = 'Frequency',
+  ExecTimes = 'ExecTimes',
+  PeriodReturnURL = 'PeriodReturnURL',
   CheckMacValue = 'CheckMacValue',
 }
 

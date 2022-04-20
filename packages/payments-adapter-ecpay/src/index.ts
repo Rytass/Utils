@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from 'crypto';
-import { PaymentGateway, PaymentEvents, ECPayQueryOrderPayload, Channel } from '@rytass/payments';
+import { PaymentGateway, PaymentEvents, ECPayQueryOrderPayload, Channel, PaymentPeriodType } from '@rytass/payments';
 import { DateTime } from 'luxon';
 import LRUCache from 'lru-cache';
 import axios from 'axios';
@@ -213,6 +213,88 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayCommit
       throw new Error('Memory card should provide `memberId`.');
     }
 
+    if (orderInput.allowUnionPay && (orderInput.channel
+      && orderInput.channel !== Channel.CREDIT_CARD)) {
+      throw new Error('Union Pay should use credit card channel');
+    }
+
+    if (orderInput.allowCreditCardRedeem
+      && (orderInput.channel && orderInput.channel !== Channel.CREDIT_CARD)) {
+      throw new Error('`allowCreditCardRedeem` should use credit card channel');
+    }
+
+    if (orderInput.installments) {
+      if (orderInput.channel && orderInput.channel !== Channel.CREDIT_CARD) {
+        throw new Error('`installments` should use credit card channel');
+      }
+
+      if (orderInput.allowCreditCardRedeem) {
+        throw new Error('`installments` should not working with `allowCreditCardRedeem`');
+      }
+
+      if (orderInput.period) {
+        throw new Error('`installments` should not working with `period`');
+      }
+
+      if (orderInput.installments.match(/[^,0-9]/)) {
+        throw new Error('`installments` format invalid, example: 3,6,9,12');
+      }
+
+      const installments = orderInput.installments.split(/,/g);
+
+      if (installments.some(period => Number.isNaN(Number(period)))) {
+        throw new Error('`installments` format invalid, example: 3,6,9,12');
+      }
+    }
+
+    if (orderInput.period) {
+      if (orderInput.channel && orderInput.channel !== Channel.CREDIT_CARD) {
+        throw new Error('`period` should use credit card channel');
+      }
+
+      if (orderInput.period.frequency) {
+        switch (orderInput.period.type) {
+          case PaymentPeriodType.DAY:
+            if (orderInput.period.frequency < 1) throw new Error('`period.frequency` should between 1 and 365 when `period.type` set to DAY');
+            if (orderInput.period.frequency > 365) throw new Error('`period.frequency` should between 1 and 365 when `period.type` set to DAY');
+            break;
+
+          case PaymentPeriodType.MONTH:
+            if (orderInput.period.frequency < 1) throw new Error('`period.frequency` should between 1 and 12 when `period.type` set to MONTH');
+            if (orderInput.period.frequency > 12) throw new Error('`period.frequency` should between 1 and 12 when `period.type` set to MONTH');
+            break;
+
+          case PaymentPeriodType.YEAR:
+            if (orderInput.period.frequency !== 1) throw new Error('`period.frequency` should be 1 when `period.type` set to YEAR');
+            break;
+
+          default:
+            break;
+        }
+      }
+
+      if (orderInput.period.times < 1) {
+        throw new Error('Invalid `period.times`, should >= 1');
+      }
+
+      switch (orderInput.period.type) {
+        case PaymentPeriodType.DAY:
+          if (orderInput.period.times > 999) throw new Error('`period.times` should below 999 when `period.type` set to DAY');
+          break;
+
+        case PaymentPeriodType.MONTH:
+          if (orderInput.period.times > 99) throw new Error('`period.times` should below 99 when `period.type` set to MONTH');
+          break;
+
+        case PaymentPeriodType.YEAR:
+          if (orderInput.period.times > 9) throw new Error('`period.times` should below 9 when `period.type` set to YEAR');
+          break;
+
+        default:
+          break;
+      }
+    }
+
     const orderId = orderInput.id || this.getOrderId();
     const now = new Date();
 
@@ -236,9 +318,31 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayCommit
       Language: this.language,
     } as Omit<ECPayOrderForm, 'CheckMacValue'>;
 
-    if ((!orderInput.channel || orderInput.channel === Channel.CREDIT_CARD) && orderInput.memory) {
-      payload.BindingCard = '1';
-      payload.MerchantMemberID = orderInput.memberId as string;
+    if ((!orderInput.channel || orderInput.channel === Channel.CREDIT_CARD)) {
+      if (orderInput.memory) {
+        payload.BindingCard = '1';
+        payload.MerchantMemberID = orderInput.memberId as string;
+      }
+
+      if (orderInput.allowCreditCardRedeem) {
+        payload.Redeem = 'Y';
+      }
+
+      if (orderInput.allowUnionPay) {
+        payload.UnionPay = '0';
+      }
+
+      if (orderInput.installments) {
+        payload.CreditInstallment = orderInput.installments;
+      }
+
+      if (orderInput.period) {
+        payload.PeriodAmount = orderInput.period.amountPerPeriod.toString();
+        payload.PeriodType = orderInput.period.type;
+        payload.Frequency = (orderInput.period.frequency || 1).toString();
+        payload.ExecTimes = orderInput.period.times.toString();
+        payload.PeriodReturnURL = `${this.serverHost}${this.callbackPath}`;
+      }
     }
 
     const order = new ECPayOrder<ECPayCommitMessage>({

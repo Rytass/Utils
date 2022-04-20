@@ -93,3 +93,16 @@ export interface ECPayQueryOrderPayload extends Record<string, string> {
   PlatformID: string;
   CheckMacValue: string;
 }
+
+export enum PaymentPeriodType {
+  DAY = 'D',
+  MONTH = 'M',
+  YEAR = 'Y',
+}
+
+export interface PaymentPeriod {
+  amountPerPeriod: number;
+  type: PaymentPeriodType;
+  frequency?: number;
+  times: number;
+}
