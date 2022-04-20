@@ -55,9 +55,6 @@ export interface Order<OCM extends OrderCommitMessage> extends PrepareOrderInput
   commit<T extends OCM>(message: T): void;
 }
 
-type InputTypeCheck<OCM extends OrderCommitMessage, CheckTarget extends OrderCommitMessage, Result extends PrepareOrderInput> = OCM extends (infer U) ? U extends CheckTarget ? Result : never : never;
-type InputTypeCheck2<OCM extends OrderCommitMessage, CheckTarget extends OrderCommitMessage, Result extends PrepareOrderInput> = OCM extends (infer U) ? U extends CheckTarget ? Result : never : never;
-
 type InputFromOrderCommitMessage<OCM extends OrderCommitMessage> = PrepareOrderInput;
 
 export interface PaymentGateway<
