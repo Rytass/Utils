@@ -6,7 +6,7 @@ import axios from 'axios';
 import { createServer, IncomingMessage, ServerResponse, Server } from 'http';
 import debug from 'debug';
 import { EventEmitter } from 'events';
-import { ECPayCallbackPayload, ECPayCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayOrderInput, ECPayQueryResultPayload } from './typings';
+import { ECPayCallbackPayload, ECPayCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayOrderInput, ECPayQueryResultPayload, Language } from './typings';
 import { ECPayChannel, NUMERIC_CALLBACK_KEYS } from './constants';
 import { ECPayOrder } from './ecpay-order';
 
@@ -15,6 +15,7 @@ const debugPayment = debug('Rytass:Payment:ECPay');
 export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayCommitMessage, ECPayOrder<ECPayCommitMessage>> {
   readonly baseUrl: string = 'https://payment-stage.ecpay.com.tw';
 
+  private language = Language.TRADITIONAL_CHINESE;
   private merchantId = '2000132';
   private merchantCheckCode = '59997889'; // Production Only
   private hashKey = '5294y06JbISpM5x9';
@@ -32,6 +33,7 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayCommit
   _server?: Server;
 
   constructor(options?: ECPayInitOptions<ECPayOrder<ECPayCommitMessage>>) {
+    this.language = options?.language || this.language;
     this.baseUrl = options?.baseUrl || this.baseUrl;
     this.merchantId = options?.merchantId || this.merchantId;
     this.merchantCheckCode = options?.merchantCheckCode || this.merchantCheckCode;
@@ -226,6 +228,7 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayCommit
       NeedExtraPaidInfo: 'Y',
       EncryptType: '1',
       ClientBackURL: orderInput.clientBackUrl || '',
+      Language: this.language,
     } as Omit<ECPayOrderForm, 'CheckMacValue'>;
 
     const order = new ECPayOrder<ECPayCommitMessage>({

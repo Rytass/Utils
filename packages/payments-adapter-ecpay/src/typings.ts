@@ -149,3 +149,11 @@ export interface ECPayQueryResultPayload {
   CustomField4: string;
   CheckMacValue: string;
 }
+
+export enum Language {
+  ENGLISH = 'ENG',
+  KOREAN = 'KOR',
+  JAPANESE = 'JPN',
+  SIMPLIFIED_CHINESE = 'CHI',
+  TRADITIONAL_CHINESE = '',
+}
