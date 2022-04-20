@@ -112,18 +112,10 @@ export enum PaymentEvents {
   ORDER_COMMITTED = 'COMMITTED',
 }
 
-export interface ECPayQueryOrderPayload extends Record<string, string> {
-  MerchantID: string;
-  MerchantTradeNo: string;
-  TimeStamp: string;
-  PlatformID: string;
-  CheckMacValue: string;
-}
-
 export enum PaymentPeriodType {
-  DAY = 'D',
-  MONTH = 'M',
-  YEAR = 'Y',
+  DAY = 'DAY',
+  MONTH = 'MONTH',
+  YEAR = 'YEAR',
 }
 
 export interface PaymentPeriod {

@@ -1,13 +1,13 @@
 import { createHash, randomBytes } from 'crypto';
-import { PaymentGateway, PaymentEvents, ECPayQueryOrderPayload, Channel, PaymentPeriodType } from '@rytass/payments';
+import { PaymentGateway, PaymentEvents, Channel, PaymentPeriodType } from '@rytass/payments';
 import { DateTime } from 'luxon';
 import LRUCache from 'lru-cache';
 import axios from 'axios';
 import { createServer, IncomingMessage, ServerResponse, Server } from 'http';
 import debug from 'debug';
 import { EventEmitter } from 'events';
-import { ECPayCallbackCreditPayload, ECPayCallbackPayload, ECPayCallbackPaymentType, ECPayCallbackVirtualAccountPayload, ECPayChannelVirtualAccount, ECPayCommitMessage, ECPayOrderCreditCardCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayOrderInput, ECPayQueryResultPayload, ECPayOrderVirtualAccountCommitMessage, Language, ECPayChannelCreditCard, GetOrderInput, ECPayVirtualAccountOrderInput, ECPayCreditCardOrderInput } from './typings';
-import { ECPayChannel, NUMERIC_CALLBACK_KEYS } from './constants';
+import { ECPayCallbackCreditPayload, ECPayCallbackPayload, ECPayCallbackPaymentType, ECPayCallbackVirtualAccountPayload, ECPayChannelVirtualAccount, ECPayCommitMessage, ECPayOrderCreditCardCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayOrderInput, ECPayQueryResultPayload, ECPayOrderVirtualAccountCommitMessage, Language, ECPayChannelCreditCard, GetOrderInput, ECPayVirtualAccountOrderInput, ECPayCreditCardOrderInput, ECPayQueryOrderPayload } from './typings';
+import { ECPayChannel, ECPayPaymentPeriodType, NUMERIC_CALLBACK_KEYS } from './constants';
 import { ECPayOrder } from './ecpay-order';
 
 export type {
@@ -407,7 +407,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
 
       if ((orderInput as ECPayCreditCardOrderInput).period) {
         payload.PeriodAmount = (orderInput as ECPayCreditCardOrderInput).period!.amountPerPeriod.toString();
-        payload.PeriodType = (orderInput as ECPayCreditCardOrderInput).period!.type;
+        payload.PeriodType = ECPayPaymentPeriodType[(orderInput as ECPayCreditCardOrderInput).period!.type];
         payload.Frequency = ((orderInput as ECPayCreditCardOrderInput).period!.frequency || 1).toString();
         payload.ExecTimes = (orderInput as ECPayCreditCardOrderInput).period!.times.toString();
         payload.PeriodReturnURL = `${this.serverHost}${this.callbackPath}`;

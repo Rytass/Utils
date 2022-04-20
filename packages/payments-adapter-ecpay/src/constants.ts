@@ -1,4 +1,10 @@
-import { Channel } from '@rytass/payments';
+import { Channel, PaymentPeriodType } from '@rytass/payments';
+
+export const ECPayPaymentPeriodType: Record<PaymentPeriodType, string> = {
+  [PaymentPeriodType.DAY]: 'D',
+  [PaymentPeriodType.MONTH]: 'M',
+  [PaymentPeriodType.YEAR]: 'Y',
+};
 
 export const ECPayChannel: Record<Channel, string> = {
   [Channel.CREDIT_CARD]: 'Credit',

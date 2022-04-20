@@ -286,6 +286,14 @@ export enum Language {
   TRADITIONAL_CHINESE = '',
 }
 
+export interface ECPayQueryOrderPayload extends Record<string, string> {
+  MerchantID: string;
+  MerchantTradeNo: string;
+  TimeStamp: string;
+  PlatformID: string;
+  CheckMacValue: string;
+}
+
 export type GetOrderInput<CM extends ECPayCommitMessage> = CM extends ECPayOrderCreditCardCommitMessage
   ? ECPayCreditCardOrderInput
   : CM extends ECPayOrderVirtualAccountCommitMessage
