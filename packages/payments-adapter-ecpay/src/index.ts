@@ -1,12 +1,12 @@
 import { createHash, randomBytes } from 'crypto';
-import { PaymentGateway, Channel, PaymentEvents, ECPayQueryOrderPayload } from '@rytass/payments';
+import { PaymentGateway, PaymentEvents, ECPayQueryOrderPayload } from '@rytass/payments';
 import { DateTime } from 'luxon';
 import LRUCache from 'lru-cache';
 import axios from 'axios';
 import { createServer, IncomingMessage, ServerResponse, Server } from 'http';
 import debug from 'debug';
 import { EventEmitter } from 'events';
-import { ECPayCallbackPayload, ECPayCallbackPaymentType, ECPayCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayOrderInput, ECPayQueryResultPayload, ECPayQueryResultStatus } from './typings';
+import { ECPayCallbackPayload, ECPayCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayOrderInput, ECPayQueryResultPayload } from './typings';
 import { ECPayChannel, NUMERIC_CALLBACK_KEYS } from './constants';
 import { ECPayOrder } from './ecpay-order';
 
@@ -57,7 +57,7 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayCommit
 
     this.pendingOrdersCache = new LRUCache({
       ttlAutopurge: true,
-      ttl: options?.ttl ?? 10 * 60 * 1000 // default: 10 mins
+      ttl: options?.ttl ?? 10 * 60 * 1000, // default: 10 mins
     });
   }
 
@@ -120,7 +120,7 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayCommit
   }
 
   private defaultServerListener(req: IncomingMessage, res: ServerResponse) {
-    const checkoutRe = new RegExp(`^${this.checkoutPath}\/([^/]+)$`);
+    const checkoutRe = new RegExp(`^${this.checkoutPath}/([^/]+)$`);
 
     if (req.method === 'GET' && req.url && checkoutRe.test(req.url)) {
       const orderId = RegExp.$1;
@@ -134,6 +134,7 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayCommit
           });
 
           res.end(order.formHTML);
+
           return;
         }
       }
@@ -162,7 +163,7 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayCommit
             [key]: ~NUMERIC_CALLBACK_KEYS.indexOf(key) ? Number(value) : value,
           }),
           {},
-      ) as ECPayCallbackPayload;
+        ) as ECPayCallbackPayload;
 
       if (!this.checkMac<ECPayCallbackPayload>(payload)) {
         res.writeHead(400, {
@@ -219,7 +220,7 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayCommit
       PaymentType: 'aio',
       TotalAmount: totalAmount.toString(),
       TradeDesc: orderInput.description || '-',
-      ItemName: orderInput.items.map((item) => `${item.name} x${item.quantity}`).join('#'),
+      ItemName: orderInput.items.map(item => `${item.name} x${item.quantity}`).join('#'),
       ReturnURL: `${this.serverHost}${this.callbackPath}`,
       ChoosePayment: orderInput.channel ? ECPayChannel[orderInput.channel] : 'ALL',
       NeedExtraPaidInfo: 'Y',

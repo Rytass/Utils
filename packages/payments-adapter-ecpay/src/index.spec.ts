@@ -46,11 +46,11 @@ describe('ECPayPayment', () => {
       items: [{
         name: 'Test',
         unitPrice: 10,
-        quantity: 1
+        quantity: 1,
       }, {
         name: '中文',
         unitPrice: 15,
-        quantity: 4
+        quantity: 4,
       }],
     });
 
@@ -92,11 +92,11 @@ describe('ECPayPayment', () => {
         items: [{
           name: 'Test',
           unitPrice: 10,
-          quantity: 1
+          quantity: 1,
         }, {
           name: '中文',
           unitPrice: 15,
-          quantity: 4
+          quantity: 4,
         }],
       });
 
@@ -111,7 +111,7 @@ describe('ECPayPayment', () => {
         });
     });
 
-    afterAll(() => new Promise((resolve) => payment._server?.close(resolve)));
+    afterAll(() => new Promise(resolve => payment._server?.close(resolve)));
   });
 
   describe('Serve callback handler server', () => {
@@ -125,15 +125,16 @@ describe('ECPayPayment', () => {
             items: [{
               name: 'Test',
               unitPrice: 10,
-              quantity: 1
+              quantity: 1,
             }, {
               name: '中文',
               unitPrice: 15,
-              quantity: 4
+              quantity: 4,
             }],
           });
 
           // Get HTML to trigger pre commit
+          // eslint-disable-next-line no-unused-vars
           const html = order.formHTML;
 
           const successfulResponse = addMac({
@@ -184,15 +185,16 @@ describe('ECPayPayment', () => {
             items: [{
               name: 'Test',
               unitPrice: 10,
-              quantity: 1
+              quantity: 1,
             }, {
               name: '中文',
               unitPrice: 15,
-              quantity: 4
+              quantity: 4,
             }],
           });
 
           // Get HTML to trigger pre commit
+          // eslint-disable-next-line no-unused-vars
           const html = order.formHTML;
 
           const successfulResponse = addMac({
@@ -252,15 +254,16 @@ describe('ECPayPayment', () => {
             items: [{
               name: 'Test',
               unitPrice: 10,
-              quantity: 1
+              quantity: 1,
             }, {
               name: '中文',
               unitPrice: 15,
-              quantity: 4
+              quantity: 4,
             }],
           });
 
           // Get HTML to trigger pre commit
+          // eslint-disable-next-line no-unused-vars
           const html = order.formHTML;
 
           const successfulResponse = addMac({
@@ -328,7 +331,7 @@ describe('ECPayPayment', () => {
             TradeAmt: '70',
             TradeDate: '2022/04/18 19:14:51',
             TradeNo: '2204181914513433',
-            CheckMacValue: '3CD5424E742BF5AB43D52A9E43F30F176A655F271730E1F5DBC13A03B346CBDCCCC' // Wrong
+            CheckMacValue: '3CD5424E742BF5AB43D52A9E43F30F176A655F271730E1F5DBC13A03B346CBDCCCC', // Wrong
           };
 
           request(payment._server)
@@ -346,7 +349,7 @@ describe('ECPayPayment', () => {
     });
 
     it('should order commit with callback server', (done) => {
-      const mockedOnCommit = jest.fn<void, [ECPayOrder<ECPayCommitMessage>]>((order) => { });
+      const mockedOnCommit = jest.fn<void, [ECPayOrder<ECPayCommitMessage>]>(() => { });
 
       const payment = new ECPayPayment({
         withServer: true,
@@ -358,15 +361,16 @@ describe('ECPayPayment', () => {
             items: [{
               name: 'Test',
               unitPrice: 10,
-              quantity: 1
+              quantity: 1,
             }, {
               name: '中文',
               unitPrice: 15,
-              quantity: 4
+              quantity: 4,
             }],
           });
 
           // Get HTML to trigger pre commit
+          // eslint-disable-next-line no-unused-vars
           const html = order.formHTML;
 
           const successfulResponse = addMac({
@@ -396,7 +400,7 @@ describe('ECPayPayment', () => {
           request(payment._server)
             .post('/payments/ecpay/checkout')
             .send(new URLSearchParams(successfulResponse).toString())
-            .then((res) => {
+            .then(() => {
               expect(mockedOnCommit.mock.calls.length).toBe(1);
               expect((mockedOnCommit.mock.calls[0][0] as unknown as ECPayOrder<ECPayCommitMessage>).id).toBe(order.id);
 
@@ -435,11 +439,11 @@ describe('ECPayPayment', () => {
         items: [{
           name: 'Test',
           unitPrice: 10,
-          quantity: 1
+          quantity: 1,
         }, {
           name: '中文',
           unitPrice: 15,
-          quantity: 4
+          quantity: 4,
         }],
       });
 
@@ -470,13 +474,13 @@ describe('ECPayPayment', () => {
       request(payment._server)
         .get(`/payments/ecpay/callback/${order.id}`)
         .expect(200)
-        .then((res) => {
+        .then(() => {
           expect(serverListenerMock.mock.calls.length).toBe(1);
 
           request(payment._server)
             .post('/payments/ecpay/checkout')
             .send(new URLSearchParams(successfulResponse).toString())
-            .then(async (res) => {
+            .then(async () => {
               expect(serverListenerMock.mock.calls.length).toBe(2);
 
               done();
@@ -484,6 +488,6 @@ describe('ECPayPayment', () => {
         });
     });
 
-    afterAll(() => new Promise((resolve) => payment._server?.close(resolve)));
+    afterAll(() => new Promise(resolve => payment._server?.close(resolve)));
   });
 });

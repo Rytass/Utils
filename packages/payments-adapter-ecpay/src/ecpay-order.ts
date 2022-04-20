@@ -28,7 +28,7 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
 
   constructor(options: OrderCreateInit | OrderFromServerInit) {
     this._id = options.id;
-    this._items = options.items.map((item) => new ECPayOrderItem(item));
+    this._items = options.items.map(item => new ECPayOrderItem(item));
     this.gateway = options.gateway;
     this._state = OrderState.INITED;
 
@@ -61,7 +61,7 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
 
           default:
             return OrderState.INITED;
-        };
+        }
       })();
     }
   }

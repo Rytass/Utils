@@ -16,6 +16,8 @@ module.exports = {
     sourceType: 'module',
   },
   rules: {
+    indent: 0,
+    'no-unused-vars': 0,
     'arrow-parens': [
       2,
       'as-needed',
@@ -33,7 +35,6 @@ module.exports = {
         functions: 'only-multiline',
       },
     ],
-    indent: [2, 2],
     'import/prefer-default-export': 0,
     'no-async-promise-executor': 0,
     'no-bitwise': [
@@ -167,21 +168,6 @@ module.exports = {
   overrides: [
     {
       files: [
-        './**/*.js',
-      ],
-      rules: {
-        'no-unused-vars': [
-          2,
-          {
-            varsIgnorePattern: '^_',
-            argsIgnorePattern: '^_',
-            ignoreRestSiblings: true,
-          },
-        ],
-      },
-    },
-    {
-      files: [
         './**/*.{ts}',
       ],
       extends: [
@@ -195,31 +181,7 @@ module.exports = {
         project: './tsconfig.*?.json',
       },
       rules: {
-        'consistent-return': 0,
-        'guard-for-in': 0,
-        'import/no-extraneous-dependencies': 0,
-        'import/prefer-default-export': 0,
-        indent: 0,
-        'max-len': [
-          2,
-          {
-            code: 120,
-            ignoreComments: true,
-          },
-        ],
-        'no-param-reassign': 0,
-        'no-restricted-syntax': 0,
-        'prefer-arrow-callback': [
-          2,
-          {
-            allowNamedFunctions: true,
-          },
-        ],
-        '@typescript-eslint/explicit-function-return-type': 0,
-        '@typescript-eslint/explicit-module-boundary-types': 0,
         '@typescript-eslint/indent': [2, 2],
-        '@typescript-eslint/no-explicit-any': 0,
-        '@typescript-eslint/no-shadow': 0,
         '@typescript-eslint/no-unused-vars': [
           2,
           {
@@ -236,16 +198,6 @@ module.exports = {
       ],
       rules: {
         '@typescript-eslint/ban-ts-ignore': 0,
-      },
-    },
-    {
-      files: [
-        './__fixtures__/**',
-        './__mocks__/**',
-        './stories/**',
-        './**/*.spec.{ts,tsx}',
-      ],
-      rules: {
         'import/no-extraneous-dependencies': 0,
       },
     },

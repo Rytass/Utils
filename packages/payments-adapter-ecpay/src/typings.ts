@@ -112,7 +112,7 @@ export interface ECPayCallbackPayload {
   eci: CreditCardECI;
   card4no: string;
   card6no: string;
-};
+}
 
 export interface ECPayCommitMessage extends OrderCommitMessage {
   id: string;

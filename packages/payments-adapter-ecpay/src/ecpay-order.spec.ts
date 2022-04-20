@@ -10,11 +10,11 @@ describe('ECPayOrder', () => {
     items: [{
       name: 'Test',
       unitPrice: 10,
-      quantity: 1
+      quantity: 1,
     }, {
       name: '中文',
       unitPrice: 15,
-      quantity: 4
+      quantity: 4,
     }],
   });
 
@@ -31,11 +31,11 @@ describe('ECPayOrder', () => {
       items: [{
         name: 'Test',
         unitPrice: 10,
-        quantity: 1
+        quantity: 1,
       }, {
         name: '中文',
         unitPrice: 15,
-        quantity: 4
+        quantity: 4,
       }],
     });
 
@@ -65,11 +65,11 @@ describe('ECPayOrder', () => {
       items: [{
         name: 'Test',
         unitPrice: 10,
-        quantity: 1
+        quantity: 1,
       }, {
         name: '中文',
         unitPrice: 15,
-        quantity: 4
+        quantity: 4,
       }],
     });
 
@@ -96,16 +96,17 @@ describe('ECPayOrder', () => {
         items: [{
           name: 'Test',
           unitPrice: 10,
-          quantity: 1
+          quantity: 1,
         }, {
           name: '中文',
           unitPrice: 15,
-          quantity: 4
+          quantity: 4,
         }],
       });
 
       expect(order.state).toBe(OrderState.INITED);
 
+      // eslint-disable-next-line no-unused-vars
       const html = order.formHTML;
 
       expect(order.state).toBe(OrderState.PRE_COMMIT);
@@ -133,14 +134,15 @@ describe('ECPayOrder', () => {
         items: [{
           name: 'Test',
           unitPrice: 10,
-          quantity: 1
+          quantity: 1,
         }, {
           name: '中文',
           unitPrice: 15,
-          quantity: 4
+          quantity: 4,
         }],
       });
 
+      // eslint-disable-next-line no-unused-vars
       const html = order.formHTML;
 
       order.commit({
@@ -167,14 +169,15 @@ describe('ECPayOrder', () => {
         items: [{
           name: 'Test',
           unitPrice: 10,
-          quantity: 1
+          quantity: 1,
         }, {
           name: '中文',
           unitPrice: 15,
-          quantity: 4
+          quantity: 4,
         }],
       });
 
+      // eslint-disable-next-line no-unused-vars
       const html = order.formHTML;
 
       const createdAt = new Date();
@@ -220,14 +223,15 @@ describe('ECPayOrder', () => {
         items: [{
           name: 'Test',
           unitPrice: 10,
-          quantity: 1
+          quantity: 1,
         }, {
           name: '中文',
           unitPrice: 15,
-          quantity: 4
+          quantity: 4,
         }],
       });
 
+      // eslint-disable-next-line no-unused-vars
       const html = order.formHTML;
 
       expect(() => {
@@ -277,11 +281,11 @@ describe('ECPayOrder', () => {
         items: [{
           name: 'Test',
           unitPrice: 10,
-          quantity: 1
+          quantity: 1,
         }, {
           name: '中文',
           unitPrice: 15,
-          quantity: 4
+          quantity: 4,
         }],
       });
 

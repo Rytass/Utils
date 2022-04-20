@@ -3,11 +3,11 @@
  */
 
 import { OrderState } from '@rytass/payments';
-import axios, { AxiosRequestConfig } from 'axios';
+import axios from 'axios';
 import { createHash } from 'crypto';
 import { ECPayPayment } from '.';
 import { ECPayOrder } from './ecpay-order';
-import { ECPayCommitMessage, ECPayQueryResultStatus } from './typings';
+import { ECPayCommitMessage } from './typings';
 
 function addMac(payload: Record<string, string>) {
   const mac = createHash('sha256')
@@ -42,8 +42,7 @@ function checkMac(payload: Record<string, string>): boolean {
       .reduce((vars, [key, value]) => ({
         ...vars,
         [key]: (value as unknown as (string | number)).toString(),
-      }),
-        {}),
+      }), {}),
   );
 
   if (computedMac !== mac) return false;
@@ -59,7 +58,7 @@ describe('ECPayPayment', () => {
     const payment = new ECPayPayment();
 
     it('should order query response data', (done) => {
-      post.mockImplementation(async (url: string, data: unknown, config?: AxiosRequestConfig<unknown> | undefined) => {
+      post.mockImplementation(async (url: string, data: unknown) => {
         expect(url).toEqual('https://payment-stage.ecpay.com.tw/Cashier/QueryTradeInfo/V5');
 
         const params = Array.from(new URLSearchParams(data as string).entries())
@@ -137,7 +136,7 @@ describe('ECPayPayment', () => {
     });
 
     it('should order query failed record can be found', (done) => {
-      post.mockImplementation(async (url: string, data: unknown, config?: AxiosRequestConfig<unknown> | undefined) => {
+      post.mockImplementation(async (url: string, data: unknown) => {
         expect(url).toEqual('https://payment-stage.ecpay.com.tw/Cashier/QueryTradeInfo/V5');
 
         const params = Array.from(new URLSearchParams(data as string).entries())
@@ -215,7 +214,7 @@ describe('ECPayPayment', () => {
     });
 
     it('should order query not finished record can be found', (done) => {
-      post.mockImplementation(async (url: string, data: unknown, config?: AxiosRequestConfig<unknown> | undefined) => {
+      post.mockImplementation(async (url: string, data: unknown) => {
         expect(url).toEqual('https://payment-stage.ecpay.com.tw/Cashier/QueryTradeInfo/V5');
 
         const params = Array.from(new URLSearchParams(data as string).entries())
@@ -293,7 +292,7 @@ describe('ECPayPayment', () => {
     });
 
     it('should order query invalid record can be found', (done) => {
-      post.mockImplementation(async (url: string, data: unknown, config?: AxiosRequestConfig<unknown> | undefined) => {
+      post.mockImplementation(async (url: string, data: unknown) => {
         expect(url).toEqual('https://payment-stage.ecpay.com.tw/Cashier/QueryTradeInfo/V5');
 
         const params = Array.from(new URLSearchParams(data as string).entries())
