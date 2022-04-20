@@ -208,8 +208,11 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayCommit
   }
 
   prepare<T extends ECPayOrderInput, P extends ECPayOrder<ECPayCommitMessage>>(orderInput: T): P {
-    if ((!orderInput.channel || orderInput.channel === Channel.CREDIT_CARD)
-      && orderInput.memory && !orderInput.memberId) {
+    if (orderInput.channel && orderInput.channel !== Channel.CREDIT_CARD && orderInput.memory) {
+      throw new Error('`memory` only use on credit card channel');
+    }
+
+    if (orderInput.memory && !orderInput.memberId) {
       throw new Error('Memory card should provide `memberId`.');
     }
 
@@ -242,7 +245,7 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayCommit
 
       const installments = orderInput.installments.split(/,/g);
 
-      if (installments.some(period => Number.isNaN(Number(period)))) {
+      if (installments.some(period => !period || Number.isNaN(Number(period)))) {
         throw new Error('`installments` format invalid, example: 3,6,9,12');
       }
     }
@@ -252,13 +255,8 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayCommit
         throw new Error('`period` should use credit card channel');
       }
 
-      if (orderInput.period.frequency) {
+      if (orderInput.period.frequency !== undefined) {
         switch (orderInput.period.type) {
-          case PaymentPeriodType.DAY:
-            if (orderInput.period.frequency < 1) throw new Error('`period.frequency` should between 1 and 365 when `period.type` set to DAY');
-            if (orderInput.period.frequency > 365) throw new Error('`period.frequency` should between 1 and 365 when `period.type` set to DAY');
-            break;
-
           case PaymentPeriodType.MONTH:
             if (orderInput.period.frequency < 1) throw new Error('`period.frequency` should between 1 and 12 when `period.type` set to MONTH');
             if (orderInput.period.frequency > 12) throw new Error('`period.frequency` should between 1 and 12 when `period.type` set to MONTH');
@@ -268,7 +266,10 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayCommit
             if (orderInput.period.frequency !== 1) throw new Error('`period.frequency` should be 1 when `period.type` set to YEAR');
             break;
 
+          case PaymentPeriodType.DAY:
           default:
+            if (orderInput.period.frequency < 1) throw new Error('`period.frequency` should between 1 and 365 when `period.type` set to DAY');
+            if (orderInput.period.frequency > 365) throw new Error('`period.frequency` should between 1 and 365 when `period.type` set to DAY');
             break;
         }
       }
@@ -278,10 +279,6 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayCommit
       }
 
       switch (orderInput.period.type) {
-        case PaymentPeriodType.DAY:
-          if (orderInput.period.times > 999) throw new Error('`period.times` should below 999 when `period.type` set to DAY');
-          break;
-
         case PaymentPeriodType.MONTH:
           if (orderInput.period.times > 99) throw new Error('`period.times` should below 99 when `period.type` set to MONTH');
           break;
@@ -290,7 +287,9 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayCommit
           if (orderInput.period.times > 9) throw new Error('`period.times` should below 9 when `period.type` set to YEAR');
           break;
 
+        case PaymentPeriodType.DAY:
         default:
+          if (orderInput.period.times > 999) throw new Error('`period.times` should below 999 when `period.type` set to DAY');
           break;
       }
     }

@@ -8,7 +8,7 @@ import { IncomingMessage, ServerResponse } from 'http';
 import { ECPayPayment } from '.';
 import { ECPayOrder } from './ecpay-order';
 import { ECPayCommitMessage } from './typings';
-import { Channel } from '@rytass/payments';
+import { Channel, PaymentPeriodType } from '@rytass/payments';
 
 function addMac(payload: Record<string, string>) {
   const mac = createHash('sha256')
@@ -80,7 +80,7 @@ describe('ECPayPayment', () => {
       return new Promise<void>((resolve) => {
         payment = new ECPayPayment({
           withServer: true,
-          serverHost: 'http://localhost:3004',
+          serverHost: 'http://localhost',
           onServerListen: resolve,
         });
       });
@@ -115,6 +115,21 @@ describe('ECPayPayment', () => {
   });
 
   describe('Serve callback handler server', () => {
+    it('should response 404 on undefined path request', (done) => {
+      const payment = new ECPayPayment({
+        withServer: true,
+        serverHost: 'http://localhost:3005',
+        onServerListen: () => {
+          request(payment._server)
+            .get('/payments/ecpay/notAPath')
+            .expect(404)
+            .then(() => {
+              payment._server?.close(done);
+            });
+        },
+      });
+    });
+
     it('should handle successful request', (done) => {
       const payment = new ECPayPayment({
         withServer: true,
@@ -489,5 +504,467 @@ describe('ECPayPayment', () => {
     });
 
     afterAll(() => new Promise(resolve => payment._server?.close(resolve)));
+  });
+
+  describe('Memory cards', () => {
+    const payment = new ECPayPayment();
+
+    it('should memory card only works on credit channel', () => {
+      expect(() => {
+        payment.prepare({
+          channel: Channel.WEB_ATM,
+          memory: true,
+          items: [{
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          }],
+        });
+      }).toThrowError();
+    });
+
+    it('should reject if no memberId', () => {
+      expect(() => {
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          memory: true,
+          items: [{
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          }],
+        });
+      }).toThrowError();
+    });
+
+    it('should memory provide form key', () => {
+      const order = payment.prepare({
+        channel: Channel.CREDIT_CARD,
+        memory: true,
+        memberId: 'M_ID',
+        items: [{
+          name: 'Test',
+          unitPrice: 10,
+          quantity: 1,
+        }],
+      });
+
+      expect(order.form.BindingCard).toBe('1');
+      expect(order.form.MerchantMemberID).toBe('M_ID');
+    });
+  });
+
+  describe('Union Pay', () => {
+    const payment = new ECPayPayment();
+
+    it('should throw on not credit card channel allow union pay', () => {
+      expect(() => {
+        payment.prepare({
+          channel: Channel.WEB_ATM,
+          allowUnionPay: true,
+          items: [{
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          }],
+        });
+      }).toThrowError();
+    });
+
+    it('should allow union pay represent on form data', () => {
+      const order = payment.prepare({
+        channel: Channel.CREDIT_CARD,
+        allowUnionPay: true,
+        items: [{
+          name: 'Test',
+          unitPrice: 10,
+          quantity: 1,
+        }],
+      });
+
+      expect(order.form.UnionPay).toBe('0');
+    });
+  });
+
+  describe('Credit Card Redeem', () => {
+    const payment = new ECPayPayment();
+
+    it('should throw on not credit card channel allow redeem', () => {
+      expect(() => {
+        payment.prepare({
+          channel: Channel.WEB_ATM,
+          allowCreditCardRedeem: true,
+          items: [{
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          }],
+        });
+      }).toThrowError();
+    });
+
+    it('should allow union pay represent on form data', () => {
+      const order = payment.prepare({
+        channel: Channel.CREDIT_CARD,
+        allowCreditCardRedeem: true,
+        items: [{
+          name: 'Test',
+          unitPrice: 10,
+          quantity: 1,
+        }],
+      });
+
+      expect(order.form.Redeem).toBe('Y');
+    });
+  });
+
+  describe('Credit Card Installments', () => {
+    const payment = new ECPayPayment();
+
+    it('should throw on not credit card channel use installments', () => {
+      expect(() => {
+        payment.prepare({
+          channel: Channel.WEB_ATM,
+          installments: '3,6',
+          items: [{
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          }],
+        });
+      }).toThrowError();
+    });
+
+    it('should throw if allow redeem or period when using installments', () => {
+      expect(() => {
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          allowCreditCardRedeem: true,
+          installments: '3,6',
+          items: [{
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          }],
+        });
+      }).toThrowError();
+
+      expect(() => {
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          period: {
+            amountPerPeriod: 100,
+            type: PaymentPeriodType.DAY,
+            frequency: 1,
+            times: 3,
+          },
+          installments: '3,6',
+          items: [{
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          }],
+        });
+      }).toThrowError();
+    });
+
+    it('should reject invalid installments format', () => {
+      expect(() => {
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          installments: '3,6y',
+          items: [{
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          }],
+        });
+      }).toThrowError();
+
+      expect(() => {
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          installments: '3,',
+          items: [{
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          }],
+        });
+      }).toThrowError();
+    });
+
+    it('should installments config represent on form data', () => {
+      const order = payment.prepare({
+        channel: Channel.CREDIT_CARD,
+        installments: '3,6',
+        items: [{
+          name: 'Test',
+          unitPrice: 10,
+          quantity: 1,
+        }],
+      });
+
+      expect(order.form.CreditInstallment).toBe('3,6');
+    });
+  });
+
+  describe('Credit Card Period Payments', () => {
+    const payment = new ECPayPayment({
+      serverHost: 'http://localhost:9999',
+      callbackPath: '/callback',
+    });
+
+    it('should throw on not credit card channel use period', () => {
+      expect(() => {
+        payment.prepare({
+          channel: Channel.WEB_ATM,
+          period: {
+            amountPerPeriod: 100,
+            type: PaymentPeriodType.DAY,
+            frequency: 1,
+            times: 3,
+          },
+          items: [{
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          }],
+        });
+      }).toThrowError();
+    });
+
+    it('should represent period form data', () => {
+      const order5Days = payment.prepare({
+        channel: Channel.CREDIT_CARD,
+        period: {
+          amountPerPeriod: 100,
+          type: PaymentPeriodType.DAY,
+          times: 3,
+        },
+        items: [{
+          name: 'Test',
+          unitPrice: 10,
+          quantity: 1,
+        }],
+      });
+
+      expect(order5Days.form.PeriodAmount).toBe('100');
+      expect(order5Days.form.PeriodType).toBe('D');
+      expect(order5Days.form.Frequency).toBe('1');
+      expect(order5Days.form.ExecTimes).toBe('3');
+      expect(order5Days.form.PeriodReturnURL).toBe('http://localhost:9999/callback');
+      expect(order5Days.form.PeriodReturnURL).toBe(order5Days.form.ReturnURL);
+
+      const order5Months = payment.prepare({
+        channel: Channel.CREDIT_CARD,
+        period: {
+          amountPerPeriod: 100,
+          type: PaymentPeriodType.MONTH,
+          frequency: 5,
+          times: 3,
+        },
+        items: [{
+          name: 'Test',
+          unitPrice: 10,
+          quantity: 1,
+        }],
+      });
+
+      expect(order5Months.form.PeriodType).toBe('M');
+      expect(order5Months.form.Frequency).toBe('5');
+
+      const orderYear = payment.prepare({
+        channel: Channel.CREDIT_CARD,
+        period: {
+          amountPerPeriod: 100,
+          type: PaymentPeriodType.YEAR,
+          frequency: 1,
+          times: 3,
+        },
+        items: [{
+          name: 'Test',
+          unitPrice: 10,
+          quantity: 1,
+        }],
+      });
+
+      expect(orderYear.form.PeriodType).toBe('Y');
+      expect(orderYear.form.Frequency).toBe('1');
+    });
+
+    it('should throw on invalid times provided', () => {
+      expect(() => {
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          period: {
+            amountPerPeriod: 100,
+            type: PaymentPeriodType.DAY,
+            frequency: 4,
+            times: 0,
+          },
+          items: [{
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          }],
+        });
+      }).toThrowError();
+
+      expect(() => {
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          period: {
+            amountPerPeriod: 100,
+            type: PaymentPeriodType.DAY,
+            frequency: 4,
+            times: 1000,
+          },
+          items: [{
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          }],
+        });
+      }).toThrowError();
+
+      expect(() => {
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          period: {
+            amountPerPeriod: 100,
+            type: PaymentPeriodType.MONTH,
+            frequency: 4,
+            times: 100,
+          },
+          items: [{
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          }],
+        });
+      }).toThrowError();
+
+      expect(() => {
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          period: {
+            amountPerPeriod: 100,
+            type: PaymentPeriodType.YEAR,
+            frequency: 1,
+            times: 10,
+          },
+          items: [{
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          }],
+        });
+      }).toThrowError();
+    });
+
+    it('should throw on invalid frequency provided', () => {
+      expect(() => {
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          period: {
+            amountPerPeriod: 100,
+            type: PaymentPeriodType.DAY,
+            frequency: 0,
+            times: 3,
+          },
+          items: [{
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          }],
+        });
+      }).toThrowError();
+
+      expect(() => {
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          period: {
+            amountPerPeriod: 100,
+            type: PaymentPeriodType.DAY,
+            frequency: 366,
+            times: 3,
+          },
+          items: [{
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          }],
+        });
+      }).toThrowError();
+
+      expect(() => {
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          period: {
+            amountPerPeriod: 100,
+            type: PaymentPeriodType.MONTH,
+            frequency: 0,
+            times: 3,
+          },
+          items: [{
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          }],
+        });
+      }).toThrowError();
+
+      expect(() => {
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          period: {
+            amountPerPeriod: 100,
+            type: PaymentPeriodType.MONTH,
+            frequency: 13,
+            times: 3,
+          },
+          items: [{
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          }],
+        });
+      }).toThrowError();
+
+      expect(() => {
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          period: {
+            amountPerPeriod: 100,
+            type: PaymentPeriodType.YEAR,
+            frequency: 0,
+            times: 3,
+          },
+          items: [{
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          }],
+        });
+      }).toThrowError();
+
+      expect(() => {
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          period: {
+            amountPerPeriod: 100,
+            type: PaymentPeriodType.YEAR,
+            frequency: 2,
+            times: 3,
+          },
+          items: [{
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          }],
+        });
+      }).toThrowError();
+    });
   });
 });

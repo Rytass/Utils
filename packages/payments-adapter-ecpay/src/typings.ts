@@ -1,7 +1,6 @@
 import { PaymentItem, PrepareOrderInput, Channel, CreditCardECI, OrderCommitMessage, PaymentPeriod } from '@rytass/payments';
 import { IncomingMessage, ServerResponse } from 'http';
 import { ECPayPayment } from '.';
-import { ECPayOrder } from './ecpay-order';
 
 export interface ECPayInitOptions<O> {
   language?: Language;
@@ -25,7 +24,7 @@ export interface ECPayOrderInput extends PrepareOrderInput {
   items: PaymentItem[];
   description?: string;
   clientBackUrl?: string;
-  channel?: Channel.CREDIT_CARD;
+  channel?: Channel;
   memory?: boolean;
   memberId?: string;
   allowCreditCardRedeem?: boolean;

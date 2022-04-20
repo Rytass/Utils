@@ -53,6 +53,10 @@ export interface PaymentGateway<
 
 export enum Channel {
   CREDIT_CARD = 'CREDIT_CARD',
+  WEB_ATM = 'WEB_ATM',
+  VIRTUAL_ACCOUNT = 'VIRTUAL_ACCOUNT',
+  CVS_KIOSK = 'CVS_KIOSK',
+  CVS_BARCODE = 'CVS_BARCODE',
 }
 
 export enum CreditCardECI {
