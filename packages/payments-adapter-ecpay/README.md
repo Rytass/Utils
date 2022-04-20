@@ -6,7 +6,7 @@
 - [x] Checkout (Credit Card)
 - [x] Checkout (Credit Card Installments)
 - [ ] Checkout (WebATM)
-- [ ] Checkout (ATM)
+- [ ] Checkout (ATM/Virtual Account)
 - [ ] Checkout (CVS)
 - [ ] Checkout (Barcode)
 - [ ] Checkout (Apple Pay)

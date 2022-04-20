@@ -94,6 +94,19 @@ export type ECPayOrderForm = Record<ECPayOrderFormKey, string>;
 
 export enum ECPayCallbackPaymentType {
   CREDIT_CARD = 'Credit_CreditCard',
+  VIRTUAL_ACCOUNT_WAITING = 'VIRTAL_ACCOUNT_WAITING',
+
+  // ATM (Vistual Account)
+  ATM_TAISHIN = 'ATM_TAISHIN',
+  ATM_ESUN = 'ATM_ESUN',
+  ATM_BOT = 'ATM_BOT',
+  ATM_FUBON = 'ATM_FUBON',
+  ATM_CHINATRUST = 'ATM_CHINATRUST',
+  ATM_FIRST = 'ATM_FIRST',
+  ATM_LAND = 'ATM_LAND',
+  ATM_CATHAY = 'ATM_CATHAY',
+  ATM_TACHONG = 'ATM_TACHONG',
+  ATM_PANHSIN = 'ATM_PANHSIN',
 }
 
 export enum ECPayCallbackSimulatePaidState {
@@ -119,6 +132,23 @@ export interface ECPayCallbackPayload {
   RtnMsg: ECPayCallbackReturnMessage;
   TradeNo: string;
   TradeAmt: number;
+  PaymentType: ECPayCallbackPaymentType;
+  TradeDate: string;
+  CustomField1: string;
+  CustomField2: string;
+  CustomField3: string;
+  CustomField4: string;
+  CheckMacValue: string;
+}
+
+export interface ECPayCallbackCreditPayload extends ECPayCallbackPayload {
+  MerchantID: string;
+  MerchantTradeNo: string;
+  StoreID: string;
+  RtnCode: ECPayCallbackReturnCode | number;
+  RtnMsg: ECPayCallbackReturnMessage;
+  TradeNo: string;
+  TradeAmt: number;
   PaymentDate: string;
   PaymentType: ECPayCallbackPaymentType;
   TradeDate: string;
@@ -137,14 +167,33 @@ export interface ECPayCallbackPayload {
   card6no: string;
 }
 
+export interface ECPayCallbackVirtualAccountPayload extends ECPayCallbackPayload {
+  MerchantID: string;
+  MerchantTradeNo: string;
+  StoreID: string;
+  RtnCode: ECPayCallbackReturnCode | number;
+  RtnMsg: ECPayCallbackReturnMessage;
+  TradeNo: string;
+  TradeAmt: number;
+  PaymentType: ECPayCallbackPaymentType;
+  TradeDate: string;
+  CustomField1: string;
+  CustomField2: string;
+  CustomField3: string;
+  CustomField4: string;
+  CheckMacValue: string;
+  BankCode: string;
+  vAccount: string;
+}
+
 export interface ECPayCommitMessage extends OrderCommitMessage {
   id: string;
   totalPrice: number;
-  committedAt: Date;
+  committedAt: Date | null;
   merchantId: string;
   tradeNumber: string;
   tradeDate: Date;
-  paymentType: ECPayCallbackPaymentType;
+  paymentType: Exclude<ECPayCallbackPaymentType, ECPayCallbackPaymentType.VIRTUAL_ACCOUNT_WAITING>;
 }
 
 export enum ECPayQueryResultStatus {

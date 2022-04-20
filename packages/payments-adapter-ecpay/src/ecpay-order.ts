@@ -1,5 +1,6 @@
-import { CreditCardAuthInfo, Order, OrderCommitAdditionalInformation, OrderState, PaymentEvents } from '@rytass/payments';
+import { Channel, CreditCardAuthInfo, Order, OrderCommitAdditionalInformation, OrderState, PaymentEvents, VirtualAccountInfo } from '@rytass/payments';
 import { ECPayPayment } from '.';
+import { ECPayChannel } from './constants';
 import { ECPayOrderItem } from './ecpay-order-item';
 import { ECPayCallbackPaymentType, ECPayCommitMessage, ECPayOrderForm, ECPayQueryResultStatus, OrderCreateInit, OrderFromServerInit } from './typings';
 
@@ -15,6 +16,8 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
   private readonly gateway: ECPayPayment;
 
   private _creditCardAuthInfo?: CreditCardAuthInfo;
+
+  private _virtualAccountInfo?: VirtualAccountInfo;
 
   private _committedAt: Date | null = null;
 
@@ -36,8 +39,11 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
       this._form = (options as OrderCreateInit).form;
       this._paymentType = (() => {
         switch ((options as OrderCreateInit).form.ChoosePayment) {
-          case 'Credit':
+          case ECPayChannel[Channel.CREDIT_CARD]:
             return ECPayCallbackPaymentType.CREDIT_CARD;
+
+          case ECPayChannel[Channel.VIRTUAL_ACCOUNT]:
+            return ECPayCallbackPaymentType.VIRTUAL_ACCOUNT_WAITING;
 
           default:
             return undefined;
@@ -139,16 +145,21 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
     return this._committedAt;
   }
 
-  get creditCardAuthInfo(): CreditCardAuthInfo | undefined {
-    return this._creditCardAuthInfo;
-  }
-
   get platformTradeNumber(): string | null {
     return this._platformTradeNumber;
   }
 
   get paymentType(): ECPayCallbackPaymentType | undefined {
     return this._paymentType;
+  }
+
+  // Additional infomation
+  get creditCardAuthInfo(): CreditCardAuthInfo | undefined {
+    return this._creditCardAuthInfo;
+  }
+
+  get virtualAccountInfo(): VirtualAccountInfo | undefined {
+    return this._virtualAccountInfo;
   }
 
   commit<T extends OCM>(message: T, additionalInfo?: OrderCommitAdditionalInformation) {
@@ -166,15 +177,35 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
       throw new Error(`Total amount not matched, given: ${message.totalPrice} actual: ${this._form!.TotalAmount}`);
     }
 
+    switch (message.paymentType) {
+      case ECPayCallbackPaymentType.ATM_TAISHIN:
+      case ECPayCallbackPaymentType.ATM_ESUN:
+      case ECPayCallbackPaymentType.ATM_BOT:
+      case ECPayCallbackPaymentType.ATM_FUBON:
+      case ECPayCallbackPaymentType.ATM_CHINATRUST:
+      case ECPayCallbackPaymentType.ATM_FIRST:
+      case ECPayCallbackPaymentType.ATM_LAND:
+      case ECPayCallbackPaymentType.ATM_CATHAY:
+      case ECPayCallbackPaymentType.ATM_TACHONG:
+      case ECPayCallbackPaymentType.ATM_PANHSIN:
+        if (additionalInfo?.virtualAccountInfo) {
+          this._virtualAccountInfo = additionalInfo.virtualAccountInfo;
+        }
+
+        break;
+
+      case ECPayCallbackPaymentType.CREDIT_CARD:
+        if (additionalInfo?.creditCardAuthInfo) {
+          this._creditCardAuthInfo = additionalInfo.creditCardAuthInfo;
+        }
+
+        break;
+    }
+
     this._committedAt = message.committedAt;
     this._createdAt = message.tradeDate;
     this._platformTradeNumber = message.tradeNumber;
     this._paymentType = message.paymentType;
-
-    if (additionalInfo?.creditCardAuthInfo) {
-      this._creditCardAuthInfo = additionalInfo.creditCardAuthInfo;
-    }
-
     this._state = OrderState.COMMITTED;
 
     this.gateway.emitter.emit(PaymentEvents.ORDER_COMMITTED, this);

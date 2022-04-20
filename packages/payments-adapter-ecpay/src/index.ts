@@ -6,7 +6,7 @@ import axios from 'axios';
 import { createServer, IncomingMessage, ServerResponse, Server } from 'http';
 import debug from 'debug';
 import { EventEmitter } from 'events';
-import { ECPayCallbackPayload, ECPayCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayOrderInput, ECPayQueryResultPayload, Language } from './typings';
+import { ECPayCallbackCreditPayload, ECPayCallbackPayload, ECPayCallbackPaymentType, ECPayCallbackVirtualAccountPayload, ECPayCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayOrderInput, ECPayQueryResultPayload, Language } from './typings';
 import { ECPayChannel, NUMERIC_CALLBACK_KEYS } from './constants';
 import { ECPayOrder } from './ecpay-order';
 
@@ -189,15 +189,75 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayCommit
         return;
       }
 
-      order.commit({
-        id: payload.MerchantTradeNo,
-        totalPrice: payload.TradeAmt,
-        committedAt: DateTime.fromFormat(payload.PaymentDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
-        merchantId: payload.MerchantID,
-        tradeNumber: payload.TradeNo,
-        tradeDate: DateTime.fromFormat(payload.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
-        paymentType: payload.PaymentType,
-      });
+      switch (payload.PaymentType) {
+        case ECPayCallbackPaymentType.ATM_TAISHIN:
+        case ECPayCallbackPaymentType.ATM_ESUN:
+        case ECPayCallbackPaymentType.ATM_BOT:
+        case ECPayCallbackPaymentType.ATM_FUBON:
+        case ECPayCallbackPaymentType.ATM_CHINATRUST:
+        case ECPayCallbackPaymentType.ATM_FIRST:
+        case ECPayCallbackPaymentType.ATM_LAND:
+        case ECPayCallbackPaymentType.ATM_CATHAY:
+        case ECPayCallbackPaymentType.ATM_TACHONG:
+        case ECPayCallbackPaymentType.ATM_PANHSIN:
+          if (order.paymentType && order.paymentType !== ECPayCallbackPaymentType.VIRTUAL_ACCOUNT_WAITING) {
+            res.writeHead(400, {
+              'Content-Type': 'text/plain',
+            });
+
+            res.end('0|OrderNotFound');
+
+            return;
+          }
+
+          order.commit({
+            id: payload.MerchantTradeNo,
+            totalPrice: payload.TradeAmt,
+            committedAt: null,
+            merchantId: payload.MerchantID,
+            tradeNumber: payload.TradeNo,
+            tradeDate: DateTime.fromFormat(payload.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+            paymentType: payload.PaymentType,
+          }, {
+            virtualAccountInfo: {
+              bankCode: (payload as ECPayCallbackVirtualAccountPayload).BankCode,
+              account: (payload as ECPayCallbackVirtualAccountPayload).vAccount,
+            },
+          });
+
+          break;
+
+        case ECPayCallbackPaymentType.CREDIT_CARD:
+          order.commit({
+            id: payload.MerchantTradeNo,
+            totalPrice: payload.TradeAmt,
+            committedAt: DateTime.fromFormat((payload as ECPayCallbackCreditPayload).PaymentDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+            merchantId: payload.MerchantID,
+            tradeNumber: payload.TradeNo,
+            tradeDate: DateTime.fromFormat(payload.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+            paymentType: payload.PaymentType,
+          }, {
+            creditCardAuthInfo: {
+              processDate: DateTime.fromFormat((payload as ECPayCallbackCreditPayload).process_date, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+              authCode: (payload as ECPayCallbackCreditPayload).auth_code,
+              amount: (payload as ECPayCallbackCreditPayload).amount,
+              eci: (payload as ECPayCallbackCreditPayload).eci,
+              card4Number: (payload as ECPayCallbackCreditPayload).card4no,
+              card6Number: (payload as ECPayCallbackCreditPayload).card6no,
+            },
+          });
+
+          break;
+
+        default:
+          res.writeHead(400, {
+            'Content-Type': 'text/plain',
+          });
+
+          res.end('0|OrderNotFound');
+
+          return;
+      }
 
       res.writeHead(200, {
         'Content-Type': 'text/plain',

@@ -13,11 +13,12 @@ export interface PrepareOrderInput {
 export interface OrderCommitMessage {
   id: string;
   totalPrice: number;
-  committedAt: Date;
+  committedAt: Date | null;
 }
 
 export interface OrderCommitAdditionalInformation {
   creditCardAuthInfo?: CreditCardAuthInfo;
+  virtualAccountInfo?: VirtualAccountInfo;
 }
 
 export interface Order<OCM extends OrderCommitMessage> extends PrepareOrderInput {
@@ -32,6 +33,9 @@ export interface Order<OCM extends OrderCommitMessage> extends PrepareOrderInput
 
   // Credit card auth info
   creditCardAuthInfo?: CreditCardAuthInfo;
+
+  // Virtual account info
+  virtualAccountInfo?: VirtualAccountInfo;
 
   id: string;
   items: PaymentItem[];
@@ -75,6 +79,11 @@ export interface CreditCardAuthInfo {
   eci: CreditCardECI;
   card4Number: string;
   card6Number: string;
+}
+
+export interface VirtualAccountInfo {
+  bankCode: string;
+  account: string;
 }
 
 export enum OrderState {
