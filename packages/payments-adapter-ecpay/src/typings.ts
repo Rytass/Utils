@@ -19,18 +19,21 @@ export interface ECPayInitOptions<O> {
   onServerListen?: () => void;
 }
 
+type ECPayChannel = Channel.CREDIT_CARD | Channel.VIRTUAL_ACCOUNT;
+
 export interface ECPayOrderInput extends PrepareOrderInput {
   id?: string;
   items: PaymentItem[];
   description?: string;
   clientBackUrl?: string;
-  channel?: Channel;
+  channel?: ECPayChannel;
   memory?: boolean;
   memberId?: string;
   allowCreditCardRedeem?: boolean;
   allowUnionPay?: boolean;
   installments?: string;
   period?: PaymentPeriod;
+  virtualAccountExpireDays?: number;
 }
 
 export interface OrderInit {
@@ -81,6 +84,9 @@ enum ECPayOrderFormKey {
   Frequency = 'Frequency',
   ExecTimes = 'ExecTimes',
   PeriodReturnURL = 'PeriodReturnURL',
+  ExpireDate = 'ExpireDate',
+  PaymentInfoURL = 'PaymentInfoURL',
+  ClientRedirectURL = 'ClientRedirectURL',
   CheckMacValue = 'CheckMacValue',
 }
 

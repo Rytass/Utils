@@ -512,7 +512,7 @@ describe('ECPayPayment', () => {
     it('should memory card only works on credit channel', () => {
       expect(() => {
         payment.prepare({
-          channel: Channel.WEB_ATM,
+          channel: Channel.VIRTUAL_ACCOUNT,
           memory: true,
           items: [{
             name: 'Test',
@@ -560,7 +560,7 @@ describe('ECPayPayment', () => {
     it('should throw on not credit card channel allow union pay', () => {
       expect(() => {
         payment.prepare({
-          channel: Channel.WEB_ATM,
+          channel: Channel.VIRTUAL_ACCOUNT,
           allowUnionPay: true,
           items: [{
             name: 'Test',
@@ -592,7 +592,7 @@ describe('ECPayPayment', () => {
     it('should throw on not credit card channel allow redeem', () => {
       expect(() => {
         payment.prepare({
-          channel: Channel.WEB_ATM,
+          channel: Channel.VIRTUAL_ACCOUNT,
           allowCreditCardRedeem: true,
           items: [{
             name: 'Test',
@@ -624,7 +624,7 @@ describe('ECPayPayment', () => {
     it('should throw on not credit card channel use installments', () => {
       expect(() => {
         payment.prepare({
-          channel: Channel.WEB_ATM,
+          channel: Channel.VIRTUAL_ACCOUNT,
           installments: '3,6',
           items: [{
             name: 'Test',
@@ -718,7 +718,7 @@ describe('ECPayPayment', () => {
     it('should throw on not credit card channel use period', () => {
       expect(() => {
         payment.prepare({
-          channel: Channel.WEB_ATM,
+          channel: Channel.VIRTUAL_ACCOUNT,
           period: {
             amountPerPeriod: 100,
             type: PaymentPeriodType.DAY,
@@ -965,6 +965,95 @@ describe('ECPayPayment', () => {
           }],
         });
       }).toThrowError();
+    });
+  });
+
+  describe('Virtual account', () => {
+    const payment = new ECPayPayment({
+      serverHost: 'http://localhost:9999',
+      callbackPath: '/callback',
+    });
+
+    it('should throw error on invalid channel', () => {
+      expect(() => {
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          virtualAccountExpireDays: 9,
+          items: [{
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          }],
+        });
+      }).toThrowError();
+    });
+
+    it('should `virtualAccountExpireDays` between 1 and 60', () => {
+      expect(() => {
+        payment.prepare({
+          channel: Channel.VIRTUAL_ACCOUNT,
+          virtualAccountExpireDays: 0,
+          items: [{
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          }],
+        });
+      }).toThrowError();
+
+      expect(() => {
+        payment.prepare({
+          channel: Channel.VIRTUAL_ACCOUNT,
+          virtualAccountExpireDays: 99,
+          items: [{
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          }],
+        });
+      }).toThrowError();
+    });
+
+    it('should default virtual expire day is 3', () => {
+      const order = payment.prepare({
+        channel: Channel.VIRTUAL_ACCOUNT,
+        items: [{
+          name: 'Test',
+          unitPrice: 10,
+          quantity: 1,
+        }],
+      });
+
+      expect(order.form.ExpireDate).toBe('3');
+    });
+
+    it('should represent virtual account config on form data', () => {
+      const order = payment.prepare({
+        channel: Channel.VIRTUAL_ACCOUNT,
+        virtualAccountExpireDays: 7,
+        items: [{
+          name: 'Test',
+          unitPrice: 10,
+          quantity: 1,
+        }],
+      });
+
+      expect(order.form.ExpireDate).toBe('7');
+      expect(order.form.PaymentInfoURL).toBe('http://localhost:9999/callback');
+      expect(order.form.ClientRedirectURL).toBe('');
+
+      const clientOrder = payment.prepare({
+        channel: Channel.VIRTUAL_ACCOUNT,
+        virtualAccountExpireDays: 7,
+        items: [{
+          name: 'Test',
+          unitPrice: 10,
+          quantity: 1,
+        }],
+        clientBackUrl: 'https://rytass.com',
+      });
+
+      expect(clientOrder.form.ClientRedirectURL).toBe('https://rytass.com');
     });
   });
 });

@@ -208,6 +208,15 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayCommit
   }
 
   prepare<T extends ECPayOrderInput, P extends ECPayOrder<ECPayCommitMessage>>(orderInput: T): P {
+    if (orderInput.virtualAccountExpireDays && orderInput.channel && orderInput.channel !== Channel.VIRTUAL_ACCOUNT) {
+      throw new Error('`virtualAccountExpireDays` only work on virtual account channel');
+    }
+
+    if (orderInput.virtualAccountExpireDays !== undefined) {
+      if (orderInput.virtualAccountExpireDays < 1) throw new Error('`virtualAccountExpireDays` should between 1 and 60 days');
+      if (orderInput.virtualAccountExpireDays > 60) throw new Error('`virtualAccountExpireDays` should between 1 and 60 days');
+    }
+
     if (orderInput.channel && orderInput.channel !== Channel.CREDIT_CARD && orderInput.memory) {
       throw new Error('`memory` only use on credit card channel');
     }
@@ -342,6 +351,17 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayCommit
         payload.ExecTimes = orderInput.period.times.toString();
         payload.PeriodReturnURL = `${this.serverHost}${this.callbackPath}`;
       }
+    }
+
+    if ((!orderInput.channel || orderInput.channel === Channel.VIRTUAL_ACCOUNT)) {
+      if (orderInput.virtualAccountExpireDays) {
+        payload.ExpireDate = orderInput.virtualAccountExpireDays.toString();
+      } else if (orderInput.channel === Channel.VIRTUAL_ACCOUNT) {
+        payload.ExpireDate = '3';
+      }
+
+      payload.PaymentInfoURL = `${this.serverHost}${this.callbackPath}`;
+      payload.ClientRedirectURL = orderInput.clientBackUrl || '';
     }
 
     const order = new ECPayOrder<ECPayCommitMessage>({
