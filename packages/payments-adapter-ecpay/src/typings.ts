@@ -4,6 +4,7 @@ import { ECPayPayment } from '.';
 import { ECPayOrder } from './ecpay-order';
 
 export interface ECPayInitOptions<O> {
+  language?: Language;
   baseUrl?: string;
   merchantId?: string;
   merchantCheckCode?: string;
@@ -25,6 +26,8 @@ export interface ECPayOrderInput extends PrepareOrderInput {
   description?: string;
   clientBackUrl?: string;
   channel?: Channel.CREDIT_CARD;
+  memory?: boolean;
+  memberId?: string;
 }
 
 export interface OrderInit {
@@ -63,7 +66,10 @@ enum ECPayOrderFormKey {
   ChoosePayment = 'ChoosePayment',
   NeedExtraPaidInfo = 'NeedExtraPaidInfo',
   EncryptType = 'EncryptType',
-  ClientBackURL = 'ClientBackURL',
+  OrderResultURL = 'OrderResultURL',
+  Language = 'Language',
+  BindingCard = 'BindingCard',
+  MerchantMemberID = 'MerchantMemberID',
   CheckMacValue = 'CheckMacValue',
 }
 

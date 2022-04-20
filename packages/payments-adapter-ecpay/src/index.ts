@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from 'crypto';
-import { PaymentGateway, PaymentEvents, ECPayQueryOrderPayload } from '@rytass/payments';
+import { PaymentGateway, PaymentEvents, ECPayQueryOrderPayload, Channel } from '@rytass/payments';
 import { DateTime } from 'luxon';
 import LRUCache from 'lru-cache';
 import axios from 'axios';
@@ -208,6 +208,11 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayCommit
   }
 
   prepare<T extends ECPayOrderInput, P extends ECPayOrder<ECPayCommitMessage>>(orderInput: T): P {
+    if ((!orderInput.channel || orderInput.channel === Channel.CREDIT_CARD)
+      && orderInput.memory && !orderInput.memberId) {
+      throw new Error('Memory card should provide `memberId`.');
+    }
+
     const orderId = orderInput.id || this.getOrderId();
     const now = new Date();
 
@@ -227,9 +232,14 @@ export class ECPayPayment implements PaymentGateway<ECPayOrderInput, ECPayCommit
       ChoosePayment: orderInput.channel ? ECPayChannel[orderInput.channel] : 'ALL',
       NeedExtraPaidInfo: 'Y',
       EncryptType: '1',
-      ClientBackURL: orderInput.clientBackUrl || '',
+      OrderResultURL: orderInput.clientBackUrl || '',
       Language: this.language,
     } as Omit<ECPayOrderForm, 'CheckMacValue'>;
+
+    if ((!orderInput.channel || orderInput.channel === Channel.CREDIT_CARD) && orderInput.memory) {
+      payload.BindingCard = '1';
+      payload.MerchantMemberID = orderInput.memberId as string;
+    }
 
     const order = new ECPayOrder<ECPayCommitMessage>({
       id: orderId,
