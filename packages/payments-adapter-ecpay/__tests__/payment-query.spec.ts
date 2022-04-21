@@ -5,8 +5,7 @@
 import { OrderState } from '@rytass/payments';
 import axios from 'axios';
 import { createHash } from 'crypto';
-import { ECPayPayment, ECPayOrder } from '.';
-import { ECPayCommitMessage } from './typings';
+import { ECPayCommitMessage, ECPayPayment, ECPayOrder } from '../src';
 
 function addMac(payload: Record<string, string>) {
   const mac = createHash('sha256')

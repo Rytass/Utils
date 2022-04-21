@@ -1,5 +1,5 @@
 import { Channel, CreditCardECI, OrderState } from '@rytass/payments';
-import { ECPayPayment, ECPayOrderItem, ECPayCallbackPaymentType, ECPayChannelCreditCard, ECPayChannelVirtualAccount } from '.';
+import { ECPayPayment, ECPayOrderItem, ECPayCallbackPaymentType, ECPayChannelCreditCard, ECPayChannelVirtualAccount } from '../src';
 
 describe('ECPayOrder', () => {
   const payment = new ECPayPayment();
