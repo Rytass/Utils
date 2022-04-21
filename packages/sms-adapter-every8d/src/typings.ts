@@ -8,6 +8,7 @@ export interface Every8DSMSRequestInit {
 }
 
 export enum Every8DError {
+  FORMAT_ERROR = -306,
   UNKNOWN = -99,
 }
 

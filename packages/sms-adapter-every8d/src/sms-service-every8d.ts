@@ -1,4 +1,4 @@
-import { SMSRequestResult, SMSService } from '@rytass/sms';
+import { normalizedTaiwanMobilePhoneNumber, SMSRequestResult, SMSService, TAIWAN_PHONE_NUMBER_RE } from '@rytass/sms';
 import axios from 'axios';
 import { Every8DError, Every8DSMSMultiTargetRequest, Every8DSMSRequest, Every8DSMSRequestInit, Every8DSMSSendResponse } from '.';
 
@@ -15,18 +15,13 @@ export class SMSServiceEvery8D implements SMSService<Every8DSMSRequest, Every8DS
     this.onlyTaiwanMobileNumber = options.onlyTaiwanMobileNumber || this.onlyTaiwanMobileNumber;
   }
 
-  static TAIWAN_PHONE_NUMBER_RE = /^(0|\+?886)9\d{2}-?\d{3}-?\d{3}$/;
-
-  private getNormalizedTaiwanMobilePhoneNumber(mobile: string) {
-    return mobile.replace(/[^0-9]/g, '').replace(/^886/, '0');
-  }
-
   async send(requests: Every8DSMSRequest[]): Promise<Every8DSMSSendResponse[]>;
   async send(request: Every8DSMSRequest): Promise<Every8DSMSSendResponse>;
   async send(request: Every8DSMSMultiTargetRequest): Promise<Every8DSMSSendResponse[]>;
 
   async send(requests: Every8DSMSMultiTargetRequest | Every8DSMSRequest | Every8DSMSRequest[]): Promise<Every8DSMSSendResponse | Every8DSMSSendResponse[]> {
-    if (Array.isArray(requests) && !requests.length) {
+    if ((Array.isArray(requests) && !requests.length)
+      || ((requests as Every8DSMSMultiTargetRequest).mobileList && !(requests as Every8DSMSMultiTargetRequest).mobileList?.length)) {
       throw new Error('No target provided.');
     }
 
@@ -35,10 +30,10 @@ export class SMSServiceEvery8D implements SMSService<Every8DSMSRequest, Every8DS
         if ((request as Every8DSMSMultiTargetRequest).mobileList) {
           return (request as Every8DSMSMultiTargetRequest).mobileList
             .reduce<Map<string, string[]>>((batch, mobile) => {
-              if (SMSServiceEvery8D.TAIWAN_PHONE_NUMBER_RE.test(mobile)) {
-                const taiwanMobile = this.getNormalizedTaiwanMobilePhoneNumber(mobile);
+              const targetBatch = batch.get((request as Every8DSMSMultiTargetRequest).text) || [];
 
-                const targetBatch = batch.get((request as Every8DSMSMultiTargetRequest).text) || [];
+              if (TAIWAN_PHONE_NUMBER_RE.test(mobile)) {
+                const taiwanMobile = normalizedTaiwanMobilePhoneNumber(mobile);
 
                 batch.set((request as Every8DSMSMultiTargetRequest).text, [
                   ...targetBatch,
@@ -50,14 +45,19 @@ export class SMSServiceEvery8D implements SMSService<Every8DSMSRequest, Every8DS
                 throw new Error(`${mobile} is not taiwan mobile phone (\`onlyTaiwanMobileNumber\` option is true)`);
               }
 
+              batch.set((request as Every8DSMSMultiTargetRequest).text, [
+                ...targetBatch,
+                mobile,
+              ]);
+
               return batch;
             }, batchMap);
         }
 
         const targetBatch = batchMap.get((request as Every8DSMSRequest).text) || [];
 
-        if (SMSServiceEvery8D.TAIWAN_PHONE_NUMBER_RE.test((request as Every8DSMSRequest).mobile)) {
-          const taiwanMobile = this.getNormalizedTaiwanMobilePhoneNumber((request as Every8DSMSRequest).mobile);
+        if (TAIWAN_PHONE_NUMBER_RE.test((request as Every8DSMSRequest).mobile)) {
+          const taiwanMobile = normalizedTaiwanMobilePhoneNumber((request as Every8DSMSRequest).mobile);
 
           batchMap.set((request as Every8DSMSMultiTargetRequest).text, [
             ...targetBatch,
@@ -95,7 +95,7 @@ export class SMSServiceEvery8D implements SMSService<Every8DSMSRequest, Every8DS
 
         if (batchId) {
           return mobileList.reduce((map, mobile, index) => {
-            const sent = (index < Number(sended));
+            const sent = (index < (mobileList.length - Number(unsend)));
 
             map.set(`${message}:${mobile}`, {
               messageId: batchId,
@@ -123,8 +123,8 @@ export class SMSServiceEvery8D implements SMSService<Every8DSMSRequest, Every8DS
 
     if ((requests as Every8DSMSMultiTargetRequest).mobileList) {
       return (requests as Every8DSMSMultiTargetRequest).mobileList.map((mobile) => {
-        const sendMobile = SMSServiceEvery8D.TAIWAN_PHONE_NUMBER_RE.test(mobile) ?
-          this.getNormalizedTaiwanMobilePhoneNumber(mobile) : mobile;
+        const sendMobile = TAIWAN_PHONE_NUMBER_RE.test(mobile) ?
+          normalizedTaiwanMobilePhoneNumber(mobile) : mobile;
 
         return result.get(`${(requests as Every8DSMSMultiTargetRequest).text}:${sendMobile}`)!;
       });
@@ -132,8 +132,8 @@ export class SMSServiceEvery8D implements SMSService<Every8DSMSRequest, Every8DS
 
     if (Array.isArray(requests)) {
       return requests.map((request) => {
-        const sendMobile = SMSServiceEvery8D.TAIWAN_PHONE_NUMBER_RE.test(request.mobile) ?
-          this.getNormalizedTaiwanMobilePhoneNumber(request.mobile) : request.mobile;
+        const sendMobile = TAIWAN_PHONE_NUMBER_RE.test(request.mobile) ?
+          normalizedTaiwanMobilePhoneNumber(request.mobile) : request.mobile;
 
         return result.get(`${request.text}:${sendMobile}`)!;
       });
