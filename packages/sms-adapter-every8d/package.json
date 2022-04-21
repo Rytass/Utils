@@ -1,6 +1,6 @@
 {
   "name": "@rytass/sms-adapter-every8d",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "description": "Rytass Utils SMS every8d adapter",
   "keywords": [
     "rytass",
@@ -10,22 +10,20 @@
   "author": "Chia Yu Pai <fantasyatelier@gmail.com>",
   "homepage": "https://github.com/Rytass/Utils",
   "license": "MIT",
-  "main": "lib/sms-adapter-every8d.js",
-  "directories": {
-    "lib": "lib",
-    "test": "__tests__"
-  },
-  "files": [
-    "lib"
-  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Rytass/Utils.git"
   },
   "scripts": {
-    "test": "echo \"Error: run tests from root\" && exit 1"
+    "clean": "npm run build:clean",
+    "build:clean": "node ../../scripts/cleanBuild.js",
+    "build": "npm run build:clean && node ../../scripts/build.js",
+    "release": "lerna version patch && npm run build && lerna publish from-package"
   },
   "bugs": {
     "url": "https://github.com/Rytass/Utils/issues"
+  },
+  "dependencies": {
+    "@rytass/sms": "0.0.5"
   }
 }
