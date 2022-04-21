@@ -119,10 +119,10 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
 
     this._server = createServer((req, res) => this.serverListener(req, res));
 
-    this._server.listen(Number(url.port || 80), '0.0.0.0', () => {
+    this._server.listen(Number(url.port || 3000), '0.0.0.0', () => {
       this.emitter.emit(PaymentEvents.SERVER_LISTENED);
 
-      debugPayment(`ECPayment Callback Server Listen on port ${url.port || 80}`);
+      debugPayment(`ECPayment Callback Server Listen on port ${url.port || 3000}`);
     });
   }
 
