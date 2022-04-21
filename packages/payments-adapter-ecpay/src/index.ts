@@ -18,6 +18,8 @@ export type {
 export { ECPayOrder } from './ecpay-order';
 export { ECPayOrderItem } from './ecpay-order-item';
 
+export * from '@rytass/payments';
+
 const debugPayment = debug('Rytass:Payment:ECPay');
 
 export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGateway<CM, ECPayOrder<CM>> {
