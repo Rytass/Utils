@@ -9,6 +9,12 @@
       "@rytass/payments-adapter-ecpay": [
         "payments-adapter-ecpay/src"
       ],
+      "@rytass/sms": [
+        "sms/src"
+      ],
+      "@rytass/sms-adapter-every8d": [
+        "sms-adapter-every8d/src"
+      ],
     }
   },
   "references": [

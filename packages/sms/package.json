@@ -1,0 +1,30 @@
+{
+  "name": "@rytass/sms",
+  "version": "0.0.1",
+  "description": "Rytass Utils SMS Gateway",
+  "keywords": [
+    "rytass",
+    "sms"
+  ],
+  "author": "Chia Yu Pai <fantasyatelier@gmail.com>",
+  "homepage": "https://github.com/Rytass/Utils",
+  "license": "MIT",
+  "main": "lib/sms.js",
+  "directories": {
+    "lib": "lib",
+    "test": "__tests__"
+  },
+  "files": [
+    "lib"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rytass/Utils.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: run tests from root\" && exit 1"
+  },
+  "bugs": {
+    "url": "https://github.com/Rytass/Utils/issues"
+  }
+}

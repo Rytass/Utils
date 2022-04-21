@@ -17,6 +17,7 @@ module.exports = {
   },
   rules: {
     indent: 0,
+    'no-dupe-class-members': 0,
     'no-unused-vars': 0,
     'arrow-parens': [
       2,
