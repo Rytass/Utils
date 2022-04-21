@@ -5,9 +5,7 @@
 import request from 'supertest';
 import { createHash } from 'crypto';
 import { IncomingMessage, ServerResponse } from 'http';
-import { ECPayPayment } from '.';
-import { ECPayOrder } from './ecpay-order';
-import { ECPayCallbackPaymentType, ECPayChannelCreditCard, ECPayChannelVirtualAccount, ECPayCommitMessage } from './typings';
+import { ECPayOrder, ECPayPayment, ECPayCallbackPaymentType, ECPayChannelCreditCard, ECPayChannelVirtualAccount, ECPayCommitMessage } from '.';
 import { Channel, OrderState, PaymentPeriodType } from '@rytass/payments';
 
 function addMac(payload: Record<string, string>) {

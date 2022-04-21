@@ -1,12 +1,6 @@
-import { AdditionalInfo, Channel, CreditCardAuthInfo, Order, OrderCreditCardCommitMessage, OrderState, OrderVirtualAccountCommitMessage, PaymentEvents, VirtualAccountInfo } from '@rytass/payments';
-import { ECPayPayment } from '.';
+import { AdditionalInfo, Channel, Order, OrderState, PaymentEvents } from '@rytass/payments';
+import { ECPayPayment, ECPayOrderItem, ECPayCallbackPaymentType, ECPayCommitMessage, ECPayOrderForm, ECPayQueryResultStatus, OrderCreateInit, OrderFromServerInit } from '.';
 import { ECPayChannel } from './constants';
-import { ECPayOrderItem } from './ecpay-order-item';
-import { ECPayCallbackPaymentType, ECPayCommitMessage, ECPayOrderCreditCardCommitMessage, ECPayOrderForm, ECPayQueryResultStatus, ECPayOrderVirtualAccountCommitMessage, OrderCreateInit, OrderFromServerInit } from './typings';
-
-type A<OCM> = OCM extends (infer U) ? U extends OrderCreditCardCommitMessage ? CreditCardAuthInfo : OCM extends (infer U) ? U extends OrderVirtualAccountCommitMessage ? VirtualAccountInfo : never : never : never;
-
-type a = A<ECPayOrderCreditCardCommitMessage>;
 
 export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
   static FAKE_ITEM = 'RP_FAKE_ITEM';

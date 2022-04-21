@@ -1,21 +1,20 @@
 import { Channel, CreditCardECI, OrderState } from '@rytass/payments';
-import { ECPayPayment } from '.';
-import { ECPayCallbackPaymentType, ECPayChannelCreditCard, ECPayChannelVirtualAccount } from './typings';
+import { ECPayPayment, ECPayOrderItem, ECPayCallbackPaymentType, ECPayChannelCreditCard, ECPayChannelVirtualAccount } from '.';
 
 describe('ECPayOrder', () => {
   const payment = new ECPayPayment();
 
   const order = payment.prepare<ECPayChannelCreditCard>({
     channel: Channel.CREDIT_CARD,
-    items: [{
+    items: [new ECPayOrderItem({
       name: 'Test',
       unitPrice: 10,
       quantity: 1,
-    }, {
+    }), new ECPayOrderItem({
       name: '中文',
       unitPrice: 15,
       quantity: 4,
-    }],
+    })],
   });
 
   it('should calculate total price', () => {

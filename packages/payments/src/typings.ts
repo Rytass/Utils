@@ -63,9 +63,9 @@ export interface PaymentGateway<
 > {
   emitter: EventEmitter;
 
-  prepare<N extends OCM>(input: InputFromOrderCommitMessage<OCM>): Order<N>;
+  prepare<N extends OCM>(input: InputFromOrderCommitMessage<N>): Order<N>;
 
-  query<Order extends O>(id: string): Promise<Order>;
+  query<OO extends O>(id: string): Promise<OO>;
 }
 
 export enum Channel {

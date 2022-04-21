@@ -14,6 +14,6 @@ module.exports = {
   },
   modulePathIgnorePatterns: ['/lib/'],
   testPathIgnorePatterns: ['/node_modules/'],
-  collectCoverageFrom: ['packages/*/src/**/*'],
+  collectCoverageFrom: ['packages/*/src/**/*', '!**/index.ts'],
   coveragePathIgnorePatterns: ['/node_modules/'],
 };
