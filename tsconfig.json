@@ -15,6 +15,12 @@
       "@rytass/sms-adapter-every8d": [
         "sms-adapter-every8d/src"
       ],
+      "@rytass/secret": [
+        "secret/src"
+      ],
+      "@rytass/secret-adapter-vault": [
+        "secret-adapter-vault/src"
+      ],
     }
   },
   "references": [

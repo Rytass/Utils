@@ -1,0 +1,29 @@
+{
+  "name": "@rytass/secret-adapter-vault",
+  "version": "0.0.6",
+  "description": "Rytass Secret Vault adapter",
+  "keywords": [
+    "rytass",
+    "secret",
+    "vault"
+  ],
+  "author": "Chia Yu Pai <fantasyatelier@gmail.com>",
+  "homepage": "https://github.com/Rytass/Utils#readme",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/Rytass/Utils.git"
+  },
+  "scripts": {
+    "clean": "npm run build:clean",
+    "build:clean": "node ../../scripts/cleanBuild.js",
+    "build": "npm run build:clean && node ../../scripts/build.js"
+  },
+  "bugs": {
+    "url": "https://github.com/Rytass/Utils/issues"
+  },
+  "dependencies": {
+    "@rytass/secret": "0.0.6",
+    "axios": "^0.26.1"
+  }
+}
