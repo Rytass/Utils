@@ -1,6 +1,6 @@
 {
   "name": "@rytass/sms",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Rytass Utils SMS Gateway",
   "keywords": [
     "rytass",
