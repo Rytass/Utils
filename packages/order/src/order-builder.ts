@@ -1,51 +1,93 @@
 import { OrderCalculator } from './order-calculator';
-import { OrderManager } from './order-manager';
-import { OrderOperation } from './typings';
+import { OrderOperation, OrderRecord, OrderRecordBase } from './typings';
 
-export class OrderBuilder {
+export class OrderBuilder<
+MessageType extends string = string,
+ORT extends OrderRecord<MessageType> = OrderRecord<MessageType>> {
   private _isLocked: boolean = false;
   private _initValue: number;
-  private _operations: OrderOperation[] = [];
+  private _operations: OrderOperation<MessageType>[] = [];
 
   constructor(initialValue?: number) {
     this._initValue = initialValue || 0;
   }
 
-  plus(v: number): OrderBuilder {
+  plus(v: number, message?: MessageType): OrderBuilder<MessageType> {
     if (this._isLocked) return this;
 
     this._operations.push((originalValue: number) =>
-      OrderCalculator.plus(originalValue, v)
+      ({
+        message,
+        originalValue,
+        value: v,
+        accumulatedValue: OrderCalculator.plus(originalValue, v),
+      }) as ORT
     );
 
     return this;
   }
 
-  minus(v: number): OrderBuilder {
+  minus(v: number, message?: MessageType): OrderBuilder<MessageType> {
     if (this._isLocked) return this;
 
     this._operations.push((originalValue: number) =>
-      OrderCalculator.minus(originalValue, v)
+      ({
+        message,
+        originalValue,
+        value: v,
+        accumulatedValue: OrderCalculator.minus(originalValue, v),
+      }) as ORT
     );
 
     return this;
   }
 
-  times(v: number): OrderBuilder {
+  times(v: number, message?: MessageType): OrderBuilder<MessageType> {
     if (this._isLocked) return this;
 
     this._operations.push((originalValue: number) =>
-      OrderCalculator.times(originalValue, v)
+      ({
+        message,
+        originalValue,
+        value: v,
+        accumulatedValue: OrderCalculator.times(originalValue, v),
+      }) as ORT,
     );
 
     return this;
   }
 
-  divided(v: number): OrderBuilder {
+  divided(v: number, message?: MessageType): OrderBuilder<MessageType> {
     if (this._isLocked) return this;
 
     this._operations.push((originalValue: number) =>
-      OrderCalculator.divided(originalValue, v)
+      ({
+        message,
+        originalValue,
+        value: v,
+        accumulatedValue: OrderCalculator.divided(originalValue, v),
+      }) as ORT,
+    );
+
+    return this;
+  }
+
+  /**
+   * discount n% in that moment total value.
+   * @param rate in %
+   * @param message MessageType
+   * @returns OrderBuilder<MessageType>
+   */
+  discount(rate: number, message?: MessageType): OrderBuilder<MessageType> {
+    if (this._isLocked) return this;
+
+    this._operations.push((originalValue: number) =>
+      ({
+        message,
+        originalValue,
+        value: rate,
+        accumulatedValue: OrderCalculator.discount(originalValue, rate),
+      }) as ORT,
     );
 
     return this;
@@ -56,7 +98,19 @@ export class OrderBuilder {
    * @returns Number
    */
   getValue(): number {
-    return this._operations.reduce((total, cur) => cur(total), this._initValue);
+    return this._operations.reduce((curTotal, operate) => (
+      operate(curTotal).accumulatedValue
+    ), this._initValue);
+  }
+
+  getRecords(): OrderRecordBase<MessageType>[] {
+    return this._operations.reduce((records, operate) => {
+      const { message, value } = operate(0);
+
+      records.push({ message, value });
+
+      return records;
+    }, [] as OrderRecordBase<MessageType>[]);
   }
 
   /**
@@ -82,6 +136,18 @@ export class OrderBuilder {
    */
   unLock(): OrderBuilder {
     this._isLocked = false;
+
+    return this;
+  }
+
+  /**
+   * Un-Do the mutations by size times.
+   * @return OrderBuilder
+   */
+  undo(size = 1): OrderBuilder {
+    Array.from(Array(Math.round(size))).forEach(() => {
+      this._operations.pop();
+    });
 
     return this;
   }

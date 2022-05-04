@@ -24,7 +24,7 @@ export class OrderCalculator {
    * @param b Number
    * @returns Number
    * @example
-   * multiplier(1.23, 1.3450) // 10^4 = 100001
+   * multiplier(1.23, 1.3450) // 10^4 = 10000
    */
   static multiplier(a: number, b: number) {
     return Math.pow(
@@ -70,13 +70,14 @@ export class OrderCalculator {
    * 200.30 * 3 // 600.9
    */
   static times(a: number, b: number): number {
-    if (Number.isInteger(a) && Number.isInteger(b)) return a * b;
+    const aIsInt = Number.isInteger(a);
+    const bIsInt = Number.isInteger(b);
 
-    const aIsFloat = this.countDecimals(a) > 0;
-    const bIsFloat = this.countDecimals(b) > 0;
+    if (aIsInt && bIsInt) return a * b;
+
     const m = this.multiplier(a, b);
-    const am = aIsFloat ? Math.round(a * m) : a;
-    const bm = !aIsFloat && bIsFloat ? Math.round(b * m) : b;
+    const am = aIsInt ? a : Math.round(a * m);
+    const bm = aIsInt && !bIsInt ? Math.round(b * m) : b;
 
     return (am * bm) / m;
   }
@@ -92,6 +93,19 @@ export class OrderCalculator {
    static divided(a: number, b: number) {
     const m = this.multiplier(a, b);
 
-    return ((a * m) / (b * m));
+    return (a * m) / (b * m);
+  }
+
+  /**
+   * @param a Number
+   * @param rate Number unit: %
+   * @returns Number
+   * @example
+   * 600.90 / 3 // 200.3
+   */
+   static discount(a: number, rate: number) {
+    const r = this.divided(rate, 100);
+
+    return this.times(a, this.minus(1, r));
   }
 }

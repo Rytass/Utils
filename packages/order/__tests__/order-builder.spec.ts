@@ -1,7 +1,17 @@
 
 import { OrderBuilder } from '../src/order-builder';
 
+enum TestOrderBuilderMessageEnum {
+  ADD_TO_SHOPPING_CART = 'ADD_TO_SHOPPING_CART',
+  BONUS_DISCOUNT_1 = 'BONUS_DISCOUNT_1',
+  BONUS_DISCOUNT_2 = 'BONUS_DISCOUNT_2',
+}
+
 describe('OrderBuilder', () => {
+  function objectIsEqual(a: Record<any, any>, b: Record<any, any>) {
+      return JSON.stringify(a) === JSON.stringify(b);
+  }
+
   it('should create be an instance of OrderBuilder', () => {
     const orderBuilder = new OrderBuilder();
 
@@ -166,6 +176,7 @@ describe('OrderBuilder', () => {
     orderBuilder.minus(0.3);
     orderBuilder.times(0.3);
     orderBuilder.divided(0.3);
+    orderBuilder.discount(10);
     expect(orderBuilder.getValue()).toEqual(99);
     orderBuilder.unLock();
     expect(orderBuilder.locked).toEqual(false);
@@ -197,4 +208,65 @@ describe('OrderBuilder', () => {
     expect(orderBuilder.isLessThan(96.58536585365854)).toEqual(false);
     expect(orderBuilder.isLessEqualThan(96.58536585365854)).toEqual(true);
   })
+
+  describe('undo', () => {
+    const orderBuilder = new OrderBuilder();
+
+    orderBuilder.plus(10).minus(1);
+    expect(orderBuilder.getValue()).toEqual(9);
+    orderBuilder.undo();
+    expect(orderBuilder.getValue()).toEqual(10);
+    orderBuilder.undo();
+    expect(orderBuilder.getValue()).toEqual(0);
+
+    orderBuilder.plus(10).times(0.35279).times(2).plus(1);
+    expect(orderBuilder.getValue()).toEqual(8.0558);
+    orderBuilder.undo(2);
+    expect(orderBuilder.getValue()).toEqual(3.5279);
+  });
+
+  describe('getRecords', () => {
+    const orderBuilder = new OrderBuilder<TestOrderBuilderMessageEnum>();
+
+    orderBuilder
+      .plus(200, TestOrderBuilderMessageEnum.ADD_TO_SHOPPING_CART)
+      .plus(15, TestOrderBuilderMessageEnum.ADD_TO_SHOPPING_CART)
+      .minus(50, TestOrderBuilderMessageEnum.BONUS_DISCOUNT_1)
+      .discount(20, TestOrderBuilderMessageEnum.BONUS_DISCOUNT_2); // 20% off === 打八折
+
+    expect(orderBuilder.getValue()).toEqual(132);
+
+    // 再打 66.6 折
+    orderBuilder.discount(33.4, TestOrderBuilderMessageEnum.BONUS_DISCOUNT_2);
+
+    expect(orderBuilder.getValue()).toEqual(87.912);
+
+    const orderRecords = orderBuilder.getRecords();
+
+    expect(objectIsEqual(
+      orderRecords,
+      [
+        {
+          message: TestOrderBuilderMessageEnum.ADD_TO_SHOPPING_CART,
+          value: 200,
+        },
+        {
+          message: TestOrderBuilderMessageEnum.ADD_TO_SHOPPING_CART,
+          value: 15,
+        },
+        {
+          message: TestOrderBuilderMessageEnum.BONUS_DISCOUNT_1,
+          value: 50,
+        },
+        {
+          message: TestOrderBuilderMessageEnum.BONUS_DISCOUNT_2,
+          value: 20,
+        },
+        {
+          message: TestOrderBuilderMessageEnum.BONUS_DISCOUNT_2,
+          value: 33.4,
+        },
+      ],
+    )).toEqual(true);
+  });
 });

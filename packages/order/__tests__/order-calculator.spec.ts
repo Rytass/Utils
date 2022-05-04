@@ -192,4 +192,24 @@ describe('OrderCalculator', () => {
       expect(result).toEqual(200.3);
     });
   });
+
+  describe('discount', () => {
+    it('should return a number', () => {
+      const result = OrderCalculator.discount(100, 20); // 20% off
+
+      expect(typeof result).toEqual('number');
+    });
+
+    it('should be 80', () => {
+      const result = OrderCalculator.discount(100, 20); // 20% off
+
+      expect(result).toEqual(80);
+    });
+
+    it('should be 140', () => {
+      const result = OrderCalculator.discount(175, 20); // 20% off
+
+      expect(result).toEqual(140);
+    });
+  });
 });
