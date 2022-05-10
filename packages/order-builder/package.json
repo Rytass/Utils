@@ -23,7 +23,6 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@types/decimal.js": "^7.4.0",
-    "decimal.js": "^10.3.1"
+    "decimal.js": "^10.2.1"
   }
 }

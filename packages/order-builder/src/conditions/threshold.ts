@@ -6,15 +6,19 @@ export type ThresholdDescription = {
   value: number;
 };
 
+/**
+ * Price threshold condition
+ * @description Check whether price of order has reach the give threshold value.
+ */
 export class PriceThreshold implements Condition<ThresholdDescription> {
-  value!: number;
-  type = 'THRESHOLD' as const;
+  readonly type = 'THRESHOLD' as const;
+  readonly value: number;
 
   constructor(value: number) {
     this.value = value;
   }
 
-  resolve<O extends Order = Order>(order: O) {
-    return order.getItemsValue() >= this.value;
+  resolve(order: Order) {
+    return order.itemValue >= this.value;
   }
 }

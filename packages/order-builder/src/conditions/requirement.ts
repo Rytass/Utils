@@ -1,5 +1,4 @@
 import { Order } from '../order-builder';
-import { OrderItem } from '../typings';
 import { Condition } from './typings';
 
 export enum Requirement {
@@ -7,7 +6,7 @@ export enum Requirement {
 }
 
 export type RequirementDescription<
-  T extends Record<string, any> | string = Record<string, any> | string,
+  T extends Record<string, any> | string = Record<string, any> | string
 > = {
   type: Requirement;
   items: T[];
@@ -18,25 +17,27 @@ export type ItemRequiredInput = {
   quantity: number;
 };
 
+/**
+ * Item requirement condition
+ * @description To check whether an order has all given items.
+ */
 export class ItemRequired implements Condition {
-  type = Requirement.ITEM;
-  items: ItemRequiredInput[];
+  readonly type = Requirement.ITEM;
+  readonly items: ItemRequiredInput[];
 
   constructor(items: (ItemRequiredInput | string)[]) {
-    this.items = items.map(i => (
-      typeof i === 'string'
-        ? { id: i, quantity: 1 }
-        : i
-    ));
+    this.items = items.map(item =>
+      typeof item === 'string' ? { id: item, quantity: 1 } : item
+    );
   }
 
   resolve(order: Order) {
-    const itemMap = new Map(order?.items.map(i => ([i.id, i])));
+    const orderItemMap = new Map<string, ItemRequiredInput>(
+      order?.items.map(item => [item.id, item])
+    );
 
-    return this.items.every((item) => {
-      const fromOrder = itemMap?.get(item.id);
-
-      return !!fromOrder && fromOrder.quantity >= item.quantity;
-    });
+    return this.items.every(
+      item => (orderItemMap.get(item.id)?.quantity || -1) >= item.quantity
+    );
   }
 }

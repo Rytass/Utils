@@ -3,53 +3,51 @@ import { OrderItem } from './typings';
 import { minus, plus, times } from './utils/decimal';
 
 /**
- * OrderBuilderOptions
+ * Initial policies configuration in order-builder
+ * @param {Array} policies Policy[]
  */
 class OrderBuilderOptions {
-  policies!: Policy<any>[];
+  policies!: Policy[];
 }
 
 /**
  * OrderPolicyManager
  */
-class OrderPolicyManager<P extends Policy<any> = Policy<any>> {
-  private _ps: P[];
-  private _policyMap: Map<string, P>;
+class OrderPolicyManager {
+  private _policies: Policy[];
 
-  constructor(policies: P[]) {
-    this._ps = policies;
-
-    this._policyMap = new Map(
-      policies.map((p, index) => [p?.id || `${index + 1}`, p])
-    );
+  get policies(): Policy[] {
+    return this._policies;
   }
 
-  get policies(): P[] {
-    return this._ps;
+  constructor(policies: Policy[]) {
+    this._policies = policies;
   }
 
-  addPolicy(p: P): void;
-  addPolicy(ps: P[]): void;
-  addPolicy(arg0: P | P[]): void;
-  addPolicy(arg0: P | P[]): any {
-    const addOne = (p: P) => {
-      this._ps.push(p);
-      this._policyMap.set(p?.id || `${this._policyMap.size + 1}`, p);
+  addPolicy(policy: Policy): void;
+  addPolicy(policies: Policy[]): void;
+  addPolicy(arg0: Policy | Policy[]): void;
+  addPolicy(arg0: Policy | Policy[]): any {
+    const addOne = (policy: Policy) => {
+      this._policies = [...this._policies, policy];
     };
 
     Array.isArray(arg0) ? arg0.forEach(addOne) : addOne(arg0);
   }
 
-  removePolicy<PT extends P | string = P | string>(p: PT): void;
-  removePolicy<PT extends P | string = P | string>(ps: PT[]): void;
-  removePolicy<PT extends P | string = P | string>(arg0: PT | PT[]): void;
-  removePolicy<PT extends P | string = P | string>(arg0: PT | PT[]): void {
-    const removeOne = (pOrPId: P | string) => {
-      const id = typeof pOrPId === 'string' ? pOrPId : pOrPId?.id;
+  removePolicy<PT extends Policy | string = Policy | string>(policy: PT): void;
+  removePolicy<PT extends Policy | string = Policy | string>(policies: PT[]): void;
+  removePolicy<PT extends Policy | string = Policy | string>(
+    arg0: PT | PT[]
+  ): void;
+  removePolicy<PT extends Policy | string = Policy | string>(
+    arg0: PT | PT[]
+  ): void {
+    const removeOne = (policyOrPId: Policy | string) => {
+      const id = typeof policyOrPId === 'string' ? policyOrPId : policyOrPId?.id;
 
       if (id) {
-        this._ps = this._ps.filter(p => p.id !== id);
-        this._policyMap.delete(id);
+        this._policies = this._policies.filter(policy => policy.id !== id);
       }
     };
 
@@ -76,17 +74,29 @@ export class Order<
   Coupon extends string = string
 > {
   private _items: Item[];
-  private _coupons: Set<Coupon>;
-  private _policyManager: OrderPolicyManager;
+  private readonly _coupons: Set<Coupon>;
+  private readonly _policyManager: OrderPolicyManager;
 
+  /**
+   * All items in order.
+   * @returns {Array} OrderItem[]
+   */
   get items() {
     return this._items;
   }
 
+  /**
+   * All coupons in order.
+   * @returns {Array} String[]
+   */
   get coupons() {
     return Array.from(this._coupons.values());
   }
 
+  /**
+   * All policies config based on its builder.
+   * @returns {Array} Policy[]
+   */
   get policies() {
     return this._policyManager.policies;
   }
@@ -106,43 +116,50 @@ export class Order<
     this._coupons = new Set(coupons);
   }
 
-  addCoupon(id: Coupon) {
-    this._coupons.add(id);
-
-    return this;
+  /**
+   * Activated discount-policies in this order.
+   * @returns {Array<PolicyDiscountDescription>} PolicyDiscountDescription[]
+   */
+  get discounts() {
+    return this.policies.reduce(
+      (discounts, discountPolicy) => discountPolicy.resolve(this, discounts),
+      [] as PolicyDiscountDescription[]
+    );
   }
 
-  removeItem(id: string, quantity: number) {
-    this._items = this._items.reduce((acc, cur) => {
-      if (cur.id !== id) {
-        acc.push(cur);
-      } else {
-        const predictQuantity = minus(cur.quantity, quantity);
-
-        if (predictQuantity > 0) {
-          acc.push({
-            ...cur,
-            quantity: predictQuantity,
-          });
-        }
-      }
-
-      return acc;
-    }, [] as Item[]);
-
-    return this;
+  /**
+   * Total value of `activated` discount-policies.
+   * @description Policies `will not be included` if own conditions were not satisfied.
+   * @returns {Number} Number
+   */
+  get discountValue() {
+    return this.discounts.reduce(
+      (totalDiscountValue, discountDescription) =>
+        plus(totalDiscountValue, discountDescription.discount),
+      0
+    );
   }
 
-  getItemsValue() {
+  /**
+   * Total value of items in order.
+   * @description sum of all `quantity` * `unitPrice`.
+   * @returns {Number} Number
+   */
+  get itemValue() {
     return this.items.reduce(
       (total, item) => plus(total, times(item.quantity, item.unitPrice)),
       0
     );
   }
 
-  getPrice() {
-    const itemValue = this.getItemsValue();
-    const totalDiscount = this.getDiscounts().reduce(
+  /**
+   * Price after all activated policies applied in `order`.`items`.
+   * @description To equal `this.itemValue` - `this.discountValue`.
+   * @returns {Number} Number
+   */
+  get price() {
+    const itemValue = this.itemValue;
+    const totalDiscount = this.discounts.reduce(
       (total, policy) => plus(total, policy.discount),
       0
     );
@@ -150,46 +167,81 @@ export class Order<
     return minus(itemValue, totalDiscount);
   }
 
-  getDiscountValue() {
-    return this.getDiscounts().reduce(
-      (total, policy) => plus(total, policy.discount),
-      0
-    );
+  /**
+   * Push couponId into `order`.`coupons`
+   * @param {String} id couponId
+   * @returns {Order} Order
+   */
+  addCoupon(id: Coupon) {
+    this._coupons.add(id);
+
+    return this;
   }
 
-  getDiscounts<
-    T extends PolicyDiscountDescription = PolicyDiscountDescription
-  >() {
-    return this.policies.reduce(
-      (total, p) => p.resolve(this, total),
-      [] as T[]
-    );
+  /**
+   * Remove item from `order`.`items`
+   * @param {String} id itemId
+   * @param {Number} quantity quantity of item to remove
+   * @returns {Order} Order
+   */
+  removeItem(id: string, quantity: number) {
+    this._items = this._items.reduce((items, item) => {
+      if (item.id !== id) return [...items, item];
+
+      const predictQuantity = minus(item.quantity, quantity);
+
+      return predictQuantity > 0
+        ? [
+          ...items,
+          {
+            ...item,
+            quantity: predictQuantity,
+          },
+        ]
+        : items;
+    }, [] as Item[]);
+
+    return this;
   }
 }
 
 /**
  * OrderBuilder
  */
-export class OrderBuilder<P extends Policy<any> = Policy<any>> {
-  private _hasBuilt: boolean = false;
-  private _policyManager: OrderPolicyManager;
+export class OrderBuilder {
+  private _hasBuiltOrders: boolean = false;
+  private readonly _policyManager: OrderPolicyManager;
 
-  get hasBuilt() {
-    return this._hasBuilt;
+  /**
+   * Check whether `builder`.`build` was called.
+   * @returns {Boolean} Boolean
+   */
+  get hasBuiltOrders() {
+    return this._hasBuiltOrders;
   }
 
+  /**
+   * All policies config.
+   * @returns {Array} Policy[]
+   */
   get policies() {
     return this._policyManager.policies;
   }
 
   constructor(options: OrderBuilderOptions);
-  constructor(builder: OrderBuilder<P>);
-  constructor(arg0: OrderBuilder<P> | OrderBuilderOptions) {
+  constructor(builder: OrderBuilder);
+  constructor(arg0: OrderBuilder | OrderBuilderOptions) {
     this._policyManager = new OrderPolicyManager(arg0.policies);
   }
 
+  /**
+   * Create an Order instance and make policies `readonly`
+   * @param {OrderBuilderInput} OrderBuilderInput
+   * @description `builder`.`policies` will be immutable after this method be called.
+   * @returns {Order} Order
+   */
   build({ items, coupons = [] }: OrderBuilderInput): Order {
-    this._hasBuilt = true;
+    this._hasBuiltOrders = true;
 
     return new Order(this._policyManager, {
       items,
@@ -197,32 +249,57 @@ export class OrderBuilder<P extends Policy<any> = Policy<any>> {
     });
   }
 
-  /** @param policy Policy */
-  addPolicy(policy: P): OrderBuilder<P>;
-  /** @param policies Policy[] */
-  addPolicy(policies: P[]): OrderBuilder<P>;
-  addPolicy(arg0: P | P[]): any {
-    this._throwErrorIfHasBuilt(); // Policy is immutable if builder.build was called.
+  /**
+   * Add Policy.
+   * @description will be forbidden once `builder`.`order` instance be built.
+   * @param policy Policy
+   * @returns {Order} Order
+   */
+  addPolicy(policy: Policy): OrderBuilder;
+  /**
+   * Add Policy.
+   * @description will be forbidden once `builder`.`order` instance be built.
+   * @param policies Policy[]
+   * @returns {Order} Order
+   */
+  addPolicy(policies: Policy[]): OrderBuilder;
+  addPolicy(arg0: Policy | Policy[]): any {
+    if (this.hasBuiltOrders) {
+      throw new Error('Policy is immutable if builder.build was called.');
+    }
+
     this._policyManager.addPolicy(arg0);
 
     return this;
   }
 
-  /** @param id String */
-  removePolicy<T extends P['id'] = string>(id: T): OrderBuilder<P>;
-  /** @param policy Policy */
-  removePolicy<PT extends P | string = P | string>(policy: PT): OrderBuilder<P>;
-  removePolicy<PT extends P | string = P | string>(policies: PT[]): OrderBuilder<P>;
-  removePolicy<PT extends P | string = P | string>(arg0: PT | PT[]): any {
-    this._throwErrorIfHasBuilt(); // Policy is immutable if builder.build was called.
+  /**
+   * Remove Policy.
+   * @description will be forbidden once `builder`.`order` instance be built.
+   * @param {Policy} policy Policy
+   * @returns {Order} Order
+   */
+  removePolicy<PT extends Policy | string = Policy | string>(
+    policy: PT
+  ): OrderBuilder;
+  /**
+   * Remove Policies.
+   * @description will be forbidden once `builder`.`order` instance be built.
+   * @param {Array<Policy>} policies Policy[]
+   * @returns {Order} Order
+   */
+  removePolicy<PT extends Policy | string = Policy | string>(
+    policies: PT[]
+  ): OrderBuilder;
+  removePolicy<PT extends Policy | string = Policy | string>(
+    arg0: PT | PT[]
+  ): any {
+    if (this.hasBuiltOrders) {
+      throw new Error('Policy is immutable if builder.build was called.');
+    }
+
     this._policyManager.removePolicy(arg0);
 
     return this;
-  }
-
-  private _throwErrorIfHasBuilt() {
-    if (this.hasBuilt) {
-      throw new Error('Policy is immutable if builder.build was called.');
-    }
   }
 }

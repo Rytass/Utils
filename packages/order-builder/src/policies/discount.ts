@@ -1,23 +1,23 @@
-import { Policy, PolicyResult } from './typings';
 import { Condition } from '../conditions';
-import { minus, times } from '../utils/decimal';
 import { Order } from '../order-builder';
+import { Policy, PolicyResult } from './typings';
+import { minus, times } from '../utils/decimal';
 
 export enum Discount {
+  BASE = 'BASE',
   PERCENTAGE = 'PERCENTAGE',
   VALUE = 'VALUE',
 }
 
-type PP<C extends Condition<any> = Condition<any>> = {
+export type PolicyDiscountDescription = PolicyResult<{
   type: Discount;
   value: number;
   discount: number;
-  conditions: C[];
-};
+  conditions: Condition[];
+}>;
 
-export type PolicyDiscountDescription = PolicyResult<PP>;
-
-export interface PolicyDiscountResult extends Policy<PolicyDiscountDescription> {
+export interface PolicyDiscountResult
+  extends Policy<PolicyDiscountDescription> {
   discount(...p: any[]): number;
   description(p: number, o?: Order): PolicyDiscountDescription;
 }
@@ -27,25 +27,39 @@ class DiscountOptions<ID extends string = string> {
 }
 
 export abstract class BaseDiscount implements PolicyDiscountResult {
-  id?: string;
-  type!: Discount;
-  private _order: Order | undefined;
-  private _value: number;
-  private _conditions: Condition[];
+  type: Discount = Discount.BASE;
+  readonly id?: string;
+  private readonly _value: number;
+  private readonly _conditions: Condition[];
 
+  /**
+   * @param {Number} value discount-policy value
+   * @param {Array} conditions Condition[]
+   * @param {DiscountOptions} options DiscountOptions
+   * @returns {PolicyDiscountResult} PolicyDiscountResult
+   */
   constructor(
     value: number,
     conditions: Condition[],
-    options?: DiscountOptions,
+    options?: DiscountOptions
   );
+  /**
+   * @param {Number} value discount-policy value
+   * @param {DiscountOptions} options DiscountOptions
+   * @returns {PolicyDiscountResult} PolicyDiscountResult
+   */
   constructor(value: number, options: DiscountOptions);
+  /**
+   * @param {Number} value discount-policy value
+   * @returns {PolicyDiscountResult} PolicyDiscountResult
+   */
   constructor(value: number);
   constructor(
     value: number,
     arg1?: DiscountOptions | Condition[],
-    arg2?: DiscountOptions,
+    arg2?: DiscountOptions
   ) {
-    this.id = !Array.isArray(arg1) ? arg1?.id : arg2?.id;
+    this.id = Array.isArray(arg1) ? arg2?.id : arg1?.id;
     this._value = value;
     this._conditions = Array.isArray(arg1) ? [...arg1] : [];
   }
@@ -70,7 +84,7 @@ export abstract class BaseDiscount implements PolicyDiscountResult {
 
   description(price: number) {
     return {
-      id: this?.id || '',
+      id: this.id || '',
       value: this.value,
       type: this.type,
       discount: this.discount(price),
@@ -78,31 +92,36 @@ export abstract class BaseDiscount implements PolicyDiscountResult {
     };
   }
 
-  resolve(
+  resolve<PolicyDiscountDescription>(
     order: Order,
-    policies: PolicyDiscountDescription[],
+    policies: PolicyDiscountDescription[]
   ): PolicyDiscountDescription[] {
-    const num = order.getItemsValue();
+    const num = order.itemValue;
 
     if (this.valid(order)) {
       return [
         ...policies,
         this.description(num),
-      ]
+      ] as PolicyDiscountDescription[];
     }
 
-    return policies;
+    return policies as PolicyDiscountDescription[];
   }
 }
 
+/** @param {Number} value `fixed-discount` */
 export class ValueDiscount extends BaseDiscount {
-  type = Discount.VALUE;
+  readonly type = Discount.VALUE;
 }
 
+/**
+ * @param {Number} value `percentage-discount rate`
+ * @description `value: 0.8` <-> `20% off`
+ */
 export class PercentageDiscount extends BaseDiscount {
-  type = Discount.PERCENTAGE;
+  readonly type = Discount.PERCENTAGE;
 
   discount(price: number) {
-    return times(price, minus(1, this.value))
+    return times(price, minus(1, this.value));
   }
 }

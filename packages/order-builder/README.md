@@ -1,42 +1,128 @@
 # `OrderBuilder`
 
-> TODO: other common order-related methods.
+## An `Order` builder API makes business-logic development more easier.
+
+## Features
+
+  - Arbitrary-precision order-calculating based on [decimal.js](https://github.com/MikeMcl/decimal.js/).
+  - Common `Pipe-line` pattern API.
+
+Core Concepts
+
+1. Policy
+    - Configuration for OrderBuilder instance.
+    - Is mutable `before` OrderBuilder create an `Order` instance.
+    - discount
+      1. `ValueDiscount`
+      2. `PercentageDiscount`
+
+2. Condition
+    - A function that resolve to `Boolean` to validate whether its policy will be activated.
+    - threshold
+      - `PriceThreshold`
+    - requirement
+      - `ItemRequired`
+    - validator
+      - `CouponValidator`
+
+3. Coupon
+    - Can binding with Policy.
+
+## Load
+
+```typescript
+import { OrderBuilder } from '@rytass/order-builder';
+```
 
 ## Usage
 
 ```typescript
+import { OrderBuilder, ValueDiscount, PercentageDiscount } from '@rytass/order-builder';
 
-import { OrderManager } from '@rytass/order-builder';
+const builder = new OrderBuilder({
+  policies: [
+    new PercentageDiscount(0.8, { id: 'MEMBER_DISCOUNT' }),
+    new ValueDiscount(
+      100, 
+      [
+        new PriceThreshold(500),
+      ],
+      {
+        id: 'SEASONAL_DISCOUNT',
+      },
+    ),
+    new ValueDiscount(
+      500, 
+      [
+        new PriceThreshold(300),
+        new ItemsRequired([{
+          id: 'ItemA',
+          quantity: 2,
+        }, 'ItemB']),
+      ],
+    ),
+  ],
+});
 
-const orderBuilder = OrderManager.createOrderBuilder(); // current value: 0
+builder.addPolicy(new ValueDiscount(50, [new CouponValidator('DISCOUNT_50')]));
 
-// Basic Operations
-orderBuilder
-  .plus(200) // current value: 200
-  .minus(198.9) // current value 1.1 (not 1.0999999999999943)
-  .plus(0.1); // current value 1.2 (not 1.2000000000000002)
+const order1 = builder.build({
+  items: [{
+    id: 'ItemB',
+    name: 'Hello',
+    unitPrice: 100,
+    quantity: 10,
+  }],
+});
 
-orderBuilder.getValue(); // 1.2
+builder.addPolicy(new ValueDiscount(10, [new CouponValidator('DISCOUNT_10')])); // throw error "Policy is immutable if builder.build was called."
 
-orderBuilder
-  .times(2.5) // 3
-  .divided(0.3) // 10
+order1.price; // 1000 * 0.8 - 100 = 700
 
-orderBuilder.getValue(); // 10;
+order1.addCoupon('DISCOUNT_50');
 
-// will omit any mutations after this method been called
-orderBuilder.lock();
+order1.price; // 1000 * 0.8 - 100 - 50 = 650
 
-// will unlock the mutations
-orderBuilder.unLock();
+const order2 = builder.build({
+  items: [{
+    id: 'ItemA',
+    name: 'Hello',
+    unitPrice: 100,
+    quantity: 10,
+  }, {
+    id: 'ItemB',
+    name: 'Foo',
+    unitPrice: 70,
+    quantity: 1,
+  }],
+  coupons: [],
+});
 
-// check value status
-orderBuilder.isGreaterThan(10); // false -> 10 is not greater than 10
+order2.price; // 1070 * 0.8 - 100 - 500 = 256
 
-orderBuilder.isGreaterEqualThan(10); // true -> 10 >= 10
+order2.discountValue; // 1070 * 0.2 + 100 + 500 = 814
 
-orderBuilder.isLessThan(10); // false -> 10 is not less than 10
+orders.discounts; // [{ type: 'PERCENTAGE', conditions: [], value: 0.8, discount: 214, id: 'MEMBER_DISCOUNT' }, { type: 'VALUE', conditions: [{ type: 'THRESHOLD', value: 500 }] value: 100, discount: 100, id: 'SEASONAL_DISCOUNT' }, { type: 'VALUE', conditions: [{ type: 'THRESHOLD', value: 300 }, { type: 'ITEM_REQUIRED', items: [{ id: 'ItemA', quantity: 2 }, { id: 'ItemB', quantity: 1 }] }] value: 500, discount: 500 }]
 
-orderBuilder.isLessEqualThan(10); // true -> 10 <= 10
+// On Refund
+order2.removeItem('ItemB', 1);
 
+order2.price; // 1000 * 0.8 - 100 = 700
+
+const builder2 = new OrderBuilder(builder);
+
+builder2.addPolicy(new ValueDiscount(10, [new CouponValidator('DISCOUNT_10')]));
+builder2.removePolicy('MEMBER_DISCOUNT');
+
+const order3 = builder2.build({
+  items: [{
+    id: 'ItemB',
+    name: 'Hello',
+    unitPrice: 100,
+    quantity: 10,
+  }],
+  coupons: ['DISCOUNT_10'],
+});
+
+order3.price; // 1000 - 100 - 10 = 890
 ```

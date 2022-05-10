@@ -9,9 +9,13 @@ export type ValidatorDescription = {
   type: Validator;
 };
 
+/**
+ * Check whether coupon is in order.
+ * @param {String} couponId String
+ */
 export class CouponValidator implements Condition<ValidatorDescription> {
-  type = Validator.COUPON;
-  couponId: string;
+  readonly type = Validator.COUPON;
+  readonly couponId: string;
 
   constructor(couponId: string) {
     this.couponId = couponId;

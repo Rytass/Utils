@@ -107,7 +107,7 @@ describe('OrderBuilder', () => {
       }],
     });
 
-    expect(order3.getPrice()).toEqual(722); // 1140 * 0.8 - 100 - 80 - 10 = 722
+    expect(order3.price).toEqual(722); // 1140 * 0.8 - 100 - 80 - 10 = 722
 
     const builder4 = new OrderBuilder(builder3);
 
@@ -115,17 +115,30 @@ describe('OrderBuilder', () => {
       .removePolicy([testDiscount, memberDiscount])
       .build({ items: order3.items });
 
-    expect(order4.getPrice()).toEqual(960); // 1140 - 100 - 80 = 960
+    expect(JSON.stringify(order3.items)).toEqual(JSON.stringify([{
+      id: 'ItemA',
+      name: 'Hello',
+      unitPrice: 100,
+      quantity: 10,
+    }, {
+      id: 'ItemB',
+      name: 'Foo',
+      unitPrice: 70,
+      quantity: 2,
+    }]));
+
+    expect(JSON.stringify(order4.items)).toEqual(JSON.stringify(order4.items));
+    expect(order4.price).toEqual(960); // 1140 - 100 - 80 = 960
 
     order4.removeItem('ItemB', 1);
 
-    expect(order4.getPrice()).toEqual(890) // 1070 - 100 - 80 = 890
+    expect(order4.price).toEqual(890) // 1070 - 100 - 80 = 890
   });
 
   describe([
     '1. [會員優惠:MEMBER_DISCOUNT]: 八折',
     '2. [季度優惠:SEASONAL_DISCOUNT]: 滿500元折抵100元',
-    '3. (滿額 300元) 或是 (購買 ItemA(*2) 和 ItemB(*1)) 可以折抵500元',
+    '3. (滿額 300元) 及 (購買 ItemA(*2) 和 ItemB(*1)) 可以折抵500元',
     '4. [折價卷]: 該會員使用折價卷 50 元',
   ].join('\n'), () => {
     const builder = new OrderBuilder({
@@ -163,11 +176,11 @@ describe('OrderBuilder', () => {
       );
     }
 
-    expect(order1.getPrice()).toEqual(700); // 1000 * 0.8 - 100 = 700
+    expect(order1.price).toEqual(700); // 1000 * 0.8 - 100 = 700
 
     order1.addCoupon('DISCOUNT_50');
 
-    expect(order1.getPrice()).toEqual(650); // 1000 * 0.8 - 100 - 50 = 650
+    expect(order1.price).toEqual(650); // 1000 * 0.8 - 100 - 50 = 650
 
     const order2 = builder.build({
       items: [{
@@ -184,20 +197,20 @@ describe('OrderBuilder', () => {
     });
 
     expect(order1 === order2).toEqual(false);
-    expect(order2.getPrice()).toEqual(256); // 1070 * 0.8 - 100 - 500 = 256
-    expect(order2.getDiscountValue()).toEqual(814) // 1070 * 0.2 + 100 + 500 = 814
+    expect(order2.price).toEqual(256); // 1070 * 0.8 - 100 - 500 = 256
+    expect(order2.discountValue).toEqual(814) // 1070 * 0.2 + 100 + 500 = 814
 
     // check discount records
-    expect(JSON.stringify(order2.getDiscounts())).toEqual(JSON.stringify([
+    expect(JSON.stringify(order2.discounts)).toEqual(JSON.stringify([
       { id: 'MEMBER_DISCOUNT', value: 0.8, type: 'PERCENTAGE', discount: 214, conditions: [] },
-      { id: 'SEASONAL_DISCOUNT', value: 100, type: 'VALUE', discount: 100, conditions: [{ value: 500, type: 'THRESHOLD' }] },
-      { id: '', value: 500, type: 'VALUE', discount: 500, conditions: [{ value: 300, type: 'THRESHOLD' }, { type: 'ITEM_REQUIRED', items: [{ id: 'ItemA', quantity: 2 }, { id: 'ItemB', quantity: 1 }] }] },
+      { id: 'SEASONAL_DISCOUNT', value: 100, type: 'VALUE', discount: 100, conditions: [{ type: 'THRESHOLD', value: 500 }] },
+      { id: '', value: 500, type: 'VALUE', discount: 500, conditions: [{ type: 'THRESHOLD', value: 300 }, { type: 'ITEM_REQUIRED', items: [{ id: 'ItemA', quantity: 2 }, { id: 'ItemB', quantity: 1 }] }] },
     ]));
 
     // On Refund
     order2.removeItem('ItemB', 1);
 
-    expect(order2.getPrice()).toEqual(700); // 1000 * 0.8 - 100 = 700
+    expect(order2.price).toEqual(700); // 1000 * 0.8 - 100 = 700
 
     const builder2 = new OrderBuilder(builder);
 
@@ -218,6 +231,6 @@ describe('OrderBuilder', () => {
       coupons: ['DISCOUNT_10'],
     });
 
-    expect(order3.getPrice()).toEqual(890); // 1000 - 100 - 10 = 890
+    expect(order3.price).toEqual(890); // 1000 - 100 - 10 = 890
   })
 });
