@@ -133,6 +133,33 @@ describe('OrderBuilder', () => {
     order4.removeItem('ItemB', 1);
 
     expect(order4.price).toEqual(890) // 1070 - 100 - 80 = 890
+
+    const builder5 = new OrderBuilder(builder4);
+
+    builder5
+      .addPolicy(
+        new PercentageDiscount(0.5, [
+          new PriceThreshold(1000),
+          new ItemRequired([{ id: 'ItemB', quantity: 1 }]),
+        ])
+      )
+      .addPolicy(
+        new PercentageDiscount(0.5, [
+          new PriceThreshold(2000),
+          new ItemRequired([{ id: 'ItemC', quantity: 1 }]),
+        ])
+      )
+
+    const order5 = builder5.build({
+      items: [{
+        id: 'ItemB',
+        name: 'Foo',
+        unitPrice: 100,
+        quantity: 15,
+      }],
+    });
+
+    expect(order5.price).toEqual(570); // 1500 * 0.5 - 100 - 80 = 570
   });
 
   describe([

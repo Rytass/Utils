@@ -15,22 +15,27 @@ export type PolicyDiscountDescription = PolicyResult<{
   discount: number;
   conditions: Condition[];
 }>;
-
-export interface PolicyDiscountResult
-  extends Policy<PolicyDiscountDescription> {
-  discount(...p: any[]): number;
-  description(p: number, o?: Order): PolicyDiscountDescription;
+class DiscountOptions {
+  id!: string;
 }
 
-class DiscountOptions<ID extends string = string> {
-  id!: ID;
-}
-
-export abstract class BaseDiscount implements PolicyDiscountResult {
-  type: Discount = Discount.BASE;
+export abstract class BaseDiscount implements Policy<PolicyDiscountDescription> {
+  readonly type!: Discount;
   readonly id?: string;
-  private readonly _value: number;
-  private readonly _conditions: Condition[];
+  readonly value!: number;
+  readonly conditions!: Condition[];
+  valid!: (o: Order) => boolean;
+  discount!: (..._:any[]) => number;
+  description!: (..._:any[]) => PolicyDiscountDescription;
+  resolve!: <PolicyDiscountDescription>(..._:any[]) => PolicyDiscountDescription[];
+}
+
+/** @param {Number} value `fixed-discount` */
+export class ValueDiscount implements BaseDiscount {
+  readonly type = Discount.VALUE;
+  readonly id?: string;
+  readonly value: number;
+  readonly conditions: Condition[];
 
   /**
    * @param {Number} value discount-policy value
@@ -38,7 +43,7 @@ export abstract class BaseDiscount implements PolicyDiscountResult {
    * @param {DiscountOptions} options DiscountOptions
    * @returns {PolicyDiscountResult} PolicyDiscountResult
    */
-  constructor(
+   constructor(
     value: number,
     conditions: Condition[],
     options?: DiscountOptions
@@ -60,34 +65,26 @@ export abstract class BaseDiscount implements PolicyDiscountResult {
     arg2?: DiscountOptions
   ) {
     this.id = Array.isArray(arg1) ? arg2?.id : arg1?.id;
-    this._value = value;
-    this._conditions = Array.isArray(arg1) ? [...arg1] : [];
+    this.value = value;
+    this.conditions = Array.isArray(arg1) ? [...arg1] : [];
   }
 
-  get value() {
-    return this._value;
-  }
-
-  get conditions() {
-    return this._conditions;
-  }
-
-  valid(o: Order) {
+  valid(order: Order) {
     if (!this.conditions.length) return true;
 
-    return this.conditions.every(condition => condition.resolve?.(o));
+    return this.conditions.every(condition => condition.resolve?.(order));
   }
 
-  discount(_: number): number {
+  discount() {
     return this.value;
   }
 
-  description(price: number) {
+  description() {
     return {
       id: this.id || '',
       value: this.value,
       type: this.type,
-      discount: this.discount(price),
+      discount: this.discount(),
       conditions: this.conditions,
     };
   }
@@ -95,13 +92,11 @@ export abstract class BaseDiscount implements PolicyDiscountResult {
   resolve<PolicyDiscountDescription>(
     order: Order,
     policies: PolicyDiscountDescription[]
-  ): PolicyDiscountDescription[] {
-    const num = order.itemValue;
-
+  ) {
     if (this.valid(order)) {
       return [
         ...policies,
-        this.description(num),
+        this.description(),
       ] as PolicyDiscountDescription[];
     }
 
@@ -109,17 +104,77 @@ export abstract class BaseDiscount implements PolicyDiscountResult {
   }
 }
 
-/** @param {Number} value `fixed-discount` */
-export class ValueDiscount extends BaseDiscount {
-  readonly type = Discount.VALUE;
-}
-
 /**
  * @param {Number} value `percentage-discount rate`
  * @description `value: 0.8` <-> `20% off`
  */
-export class PercentageDiscount extends BaseDiscount {
+export class PercentageDiscount implements BaseDiscount {
   readonly type = Discount.PERCENTAGE;
+  readonly id?: string;
+  readonly value: number;
+  readonly conditions: Condition[];
+
+  /**
+   * @param {Number} value discount-policy value
+   * @param {Array} conditions Condition[]
+   * @param {DiscountOptions} options DiscountOptions
+   * @returns {PolicyDiscountResult} PolicyDiscountResult
+   */
+   constructor(
+    value: number,
+    conditions: Condition[],
+    options?: DiscountOptions
+  );
+  /**
+   * @param {Number} value discount-policy value
+   * @param {DiscountOptions} options DiscountOptions
+   * @returns {PolicyDiscountResult} PolicyDiscountResult
+   */
+  constructor(value: number, options: DiscountOptions);
+  /**
+   * @param {Number} value discount-policy value
+   * @returns {PolicyDiscountResult} PolicyDiscountResult
+   */
+  constructor(value: number);
+  constructor(
+    value: number,
+    arg1?: DiscountOptions | Condition[],
+    arg2?: DiscountOptions
+  ) {
+    this.id = Array.isArray(arg1) ? arg2?.id : arg1?.id;
+    this.value = value;
+    this.conditions = Array.isArray(arg1) ? [...arg1] : [];
+  }
+
+  valid(order: Order) {
+    if (!this.conditions.length) return true;
+
+    return this.conditions.every(condition => condition.resolve?.(order));
+  }
+
+  description(itemValue: number) {
+    return {
+      id: this.id || '',
+      value: this.value,
+      type: this.type,
+      discount: this.discount(itemValue),
+      conditions: this.conditions,
+    };
+  }
+
+  resolve<PolicyDiscountDescription>(
+    order: Order,
+    policies: PolicyDiscountDescription[]
+  ) {
+    if (this.valid(order)) {
+      return [
+        ...policies,
+        this.description(order.itemValue),
+      ] as PolicyDiscountDescription[];
+    }
+
+    return policies as PolicyDiscountDescription[];
+  }
 
   discount(price: number) {
     return times(price, minus(1, this.value));

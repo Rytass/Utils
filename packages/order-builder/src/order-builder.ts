@@ -28,11 +28,11 @@ class OrderPolicyManager {
   addPolicy(policies: Policy[]): void;
   addPolicy(arg0: Policy | Policy[]): void;
   addPolicy(arg0: Policy | Policy[]): any {
-    const addOne = (policy: Policy) => {
-      this._policies = [...this._policies, policy];
-    };
+    const policies = Array.isArray(arg0) ? arg0 : [arg0];
 
-    Array.isArray(arg0) ? arg0.forEach(addOne) : addOne(arg0);
+    policies.forEach((policy) => {
+      this._policies = [...this._policies, policy];
+    });
   }
 
   removePolicy<PT extends Policy | string = Policy | string>(policy: PT): void;
@@ -43,15 +43,15 @@ class OrderPolicyManager {
   removePolicy<PT extends Policy | string = Policy | string>(
     arg0: PT | PT[]
   ): void {
-    const removeOne = (policyOrPId: Policy | string) => {
-      const id = typeof policyOrPId === 'string' ? policyOrPId : policyOrPId?.id;
+    const policies = Array.isArray(arg0) ? arg0 : [arg0];
+
+    policies.forEach((policy) => {
+      const id = typeof policy === 'string' ? policy : policy?.id;
 
       if (id) {
         this._policies = this._policies.filter(policy => policy.id !== id);
       }
-    };
-
-    Array.isArray(arg0) ? arg0.forEach(removeOne) : removeOne(arg0);
+    })
   }
 }
 

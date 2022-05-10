@@ -1,9 +1,6 @@
-export interface OrderItem<
-  T extends string = string,
-  N extends string = string
-> {
-  id: T;
-  name: N;
+export interface OrderItem<Id extends string = string> {
+  id: Id;
+  name: string;
   unitPrice: number;
   quantity: number;
 }
