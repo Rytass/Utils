@@ -4,6 +4,6 @@ export type PolicyResult<T extends Record<string, any>> = {
 
 export interface Policy<T extends Record<string, any> = Record<string, any>> {
   id?: string;
-  resolve<TT extends T = T>(...a: any[]): TT[];
-  description(...a: any[]): PolicyResult<T>;
+  resolve<TT extends T = T>(..._: any[]): TT[];
+  description(..._: any[]): PolicyResult<T>;
 }

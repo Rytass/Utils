@@ -1,4 +1,4 @@
-import { Order } from '../order-builder';
+import { Order } from '../core/order';
 import { Condition } from './typings';
 
 export enum Requirement {
@@ -12,26 +12,36 @@ export type RequirementDescription<
   items: T[];
 };
 
-export type ItemRequiredInput = {
+type ItemRequiredInput = {
   id: string;
   quantity: number;
 };
 
-/**
- * Item requirement condition
- * @description To check whether an order has all given items.
- */
-export class ItemRequired implements Condition {
+export class ItemRequired implements Condition<RequirementDescription<ItemRequiredInput>> {
   readonly type = Requirement.ITEM;
   readonly items: ItemRequiredInput[];
 
-  constructor(items: (ItemRequiredInput | string)[]) {
+  /**
+   * Item requirement condition
+   * @description To check whether an order has all given items.
+   * @param {ItemRequiredInput|String} item ItemRequiredInput | String
+   */
+  constructor(item: ItemRequiredInput | string);
+  /**
+   * Item requirement condition
+   * @description To check whether an order has all given items.
+   * @param {Array} items (ItemRequiredInput | String)[]
+   */
+  constructor(items: (ItemRequiredInput | string)[]);
+  constructor(arg0: (ItemRequiredInput | string) | (ItemRequiredInput | string)[]) {
+    const items = Array.isArray(arg0) ? arg0 : [arg0];
+
     this.items = items.map(item =>
       typeof item === 'string' ? { id: item, quantity: 1 } : item
     );
   }
 
-  resolve(order: Order) {
+  satisfy(order: Order) {
     const orderItemMap = new Map<string, ItemRequiredInput>(
       order?.items.map(item => [item.id, item])
     );
