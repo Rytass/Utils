@@ -1,7 +1,13 @@
-import { OrderBuilder } from '../src/core';
+import {
+  OrderBuilder,
+  Discount,
+  PercentageDiscount,
+  ValueDiscount,
+  CouponValidator,
+  ItemRequired,
+  PriceThreshold,
+} from '../src';
 import { Order } from '../src/core/order';
-import { Discount, PercentageDiscount, ValueDiscount } from '../src/policies';
-import { CouponValidator, ItemRequired, PriceThreshold } from '../src/conditions';
 
 /** OrderBuilder */
 describe('OrderBuilder', () => {
