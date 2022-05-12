@@ -194,7 +194,7 @@ export class Order<
               : arg0.id,
             quantity: typeof arg0 !== 'string'
               ? arg0.quantity
-              : Math.max(Number(arg1), 0),
+              : typeof arg1 === 'number' ? Math.max(arg1, 0) : 0,
           } as RemoveItem,
         ];
 

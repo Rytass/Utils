@@ -246,6 +246,7 @@ describe('OrderBuilder', () => {
 
     // On Refund
     order2.removeItem('ItemB', 1);
+    order2.removeItem('ItemB', '' as unknown as number); // test if developer given wrong input in a forced way.
 
     expect(order2.price).toEqual(700); // 1000 * 0.8 - 100 = 700
 
