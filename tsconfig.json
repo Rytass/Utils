@@ -21,6 +21,9 @@
       "@rytass/secret-adapter-vault": [
         "secret-adapter-vault/src"
       ],
+      "@rytass/order-builder": [
+        "order-builder/src"
+      ],
     }
   },
   "references": [
