@@ -1,6 +1,6 @@
 {
   "name": "@rytass/secret-adapter-vault",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Rytass Secret Vault adapter",
   "keywords": [
     "rytass",
@@ -23,7 +23,7 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/secret": "^0.0.7",
+    "@rytass/secret": "^0.0.8",
     "axios": "^0.26.1"
   }
 }
