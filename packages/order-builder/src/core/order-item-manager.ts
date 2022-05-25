@@ -49,7 +49,7 @@ Item extends OrderItem = OrderItem> {
     return this.flattenItems.filter(item => (
       minus(
         item.unitPrice,
-        this._collectionMap.get(item.uuid)?.discountValue || 0,
+        this.getItemCurrentDiscount(item.uuid),
       ) > 0
     ))
   }

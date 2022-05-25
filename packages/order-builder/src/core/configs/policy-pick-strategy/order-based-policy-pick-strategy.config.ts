@@ -23,15 +23,14 @@ export class OrderBasedPolicyPickStrategy implements PolicyPickStrategy {
   }
 
   pickMulti(order: Order, policies: Policy[]): PolicyDiscountDescription[] {
-    const bestDescription = policies
+    return  policies
       .filter(isDiscountPolicy)
       .reduce(
         (candidates, candidate) =>
           candidate.resolve<PolicyDiscountDescription>(order, candidates),
         [] as PolicyDiscountDescription[]
       )
-      .sort((a, b) => b.discount - a.discount);
-
-    return bestDescription.slice(0, 1);
+      .sort((a, b) => b.discount - a.discount)
+      .slice(0, 1);
   }
 }

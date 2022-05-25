@@ -16,7 +16,7 @@ export class PriceWeightedAverageDiscountMethod implements DiscountMethod {
           total,
           minus(
             times(item.quantity, item.unitPrice),
-            order.itemManager.collectionMap.get(item.uuid)?.discountValue || 0
+            order.itemManager.getItemCurrentDiscount(item.uuid)
           )
         ),
       0
@@ -26,14 +26,11 @@ export class PriceWeightedAverageDiscountMethod implements DiscountMethod {
       // Core concept.
       order.itemManager.updateCollection(item, (storedRecord) => {
         // Discount shared-rate calculated by price-weighted-average method.
-        const discountSplitRate = divided(
-          storedRecord.currentValue,
-          itemValue
-        );
+        const discountSplitRate = divided(storedRecord.currentValue, itemValue);
 
         const itemDiscountValue = order.config.roundStrategy.round(
           times(description.discount, discountSplitRate),
-          'EVERY_CALCULATION',
+          'EVERY_CALCULATION'
         );
 
         storedRecord.addDiscountRecord({
@@ -41,9 +38,8 @@ export class PriceWeightedAverageDiscountMethod implements DiscountMethod {
           // SubOrder need to be considered.
           discountValue: plus(
             itemDiscountValue,
-            order.parent?.itemManager.collectionMap
-              ?.get(item.uuid)
-              ?.discountValue || 0,
+            order.parent?.itemManager.collectionMap?.get(item.uuid)
+              ?.discountValue || 0
           ),
         });
 
@@ -56,17 +52,16 @@ export class PriceWeightedAverageDiscountMethod implements DiscountMethod {
     order.itemManager.initCollectionMap();
 
     return order.policies.reduce((descriptions, policy) => {
-      const appendDescriptions = order.config.policyPickStrategy.pick(order, policy);
-
-      appendDescriptions.forEach(description => this.handleOneDescription(
+      const appendDescriptions = order.config.policyPickStrategy.pick(
         order,
-        description,
-      ));
+        policy
+      );
 
-      return [
-        ...descriptions,
-        ...appendDescriptions,
-      ];
+      appendDescriptions.forEach(description =>
+        this.handleOneDescription(order, description)
+      );
+
+      return [...descriptions, ...appendDescriptions];
     }, [] as PolicyDiscountDescription[]);
   }
 }
