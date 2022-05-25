@@ -8,10 +8,10 @@ import { BaseDiscount } from './base-discount';
 import { Discount, DiscountOptions, PolicyDiscountDescription } from './typings';
 import { getConditionsByDiscountConstructor, getOnlyMatchedItems, getOptionsByDiscountConstructor } from './utils';
 
-export type ItemGiveawayStrategy = 'LOW_PRICE_FIRST' | 'HIGH_PRICE_FIRST';
+type ItemGiveawayStrategy = 'LOW_PRICE_FIRST' | 'HIGH_PRICE_FIRST';
 
 interface ItemGiveawayDiscountOptions extends DiscountOptions {
-  strategy?: 'LOW_PRICE_FIRST' | 'HIGH_PRICE_FIRST';
+  strategy?: ItemGiveawayStrategy;
 }
 
 /**
@@ -76,6 +76,12 @@ export class ItemGiveawayDiscount implements BaseDiscount {
     this.conditions = getConditionsByDiscountConstructor(arg1);
   }
 
+  matchedItems(order: Order): FlattenOrderItem[] {
+    return this.options?.onlyMatched
+      ? getOnlyMatchedItems(order, this.conditions)
+      : order.itemManager.withStockItems;
+  }
+
   valid(order: Order): boolean {
     return this.conditions.length
       ? this.conditions.every(condition => condition.satisfy?.(order))
@@ -106,10 +112,7 @@ export class ItemGiveawayDiscount implements BaseDiscount {
     policies: PolicyDiscountDescription[]
   ): PolicyDiscountDescription[] {
     if (this.valid(order)) {
-      const matchedItems: FlattenOrderItem[] = this.options?.onlyMatched
-        ? getOnlyMatchedItems(order, this.conditions)
-        : order.itemManager.withStockItems;
-
+      const matchedItems: FlattenOrderItem[] = this.matchedItems(order);
       const giveawayItems = matchedItems
         // sort by giveaway strategy
         .sort((a, b) => {
@@ -130,7 +133,7 @@ export class ItemGiveawayDiscount implements BaseDiscount {
           total,
           minus(
             item.unitPrice,
-            order.itemManager.collectionMap.get(item.uuid)?.discountValue || 0,
+            order.itemManager.getItemCurrentDiscount(item.uuid),
           ),
         ), 0),
         'FINAL_PRICE_ONLY',

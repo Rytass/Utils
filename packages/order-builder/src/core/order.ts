@@ -7,7 +7,7 @@ import {
 import { OrderConfig } from './configs/order-config';
 import { OrderItemManager } from './order-item-manager';
 import { OrderPolicyManager } from './order-policy-manager';
-import { PolicyDiscountDescription } from '../policies';
+import { Policies, PolicyDiscountDescription } from '../policies';
 import { minus, plus, times } from '../utils/decimal';
 import { OrderBuilder } from './order-builder';
 
@@ -38,6 +38,8 @@ export type SubOrderResolveFn<
 export interface SubOrderCondition {
   subItems?: (string | FlattenOrderItem)[];
   subCoupons?: string[];
+  subPolicies?: Policies;
+  itemScope?: 'id' | 'uuid';
 }
 
 /**
@@ -47,6 +49,7 @@ export class Order<
   Item extends OrderItem = OrderItem,
   Coupon extends string = string
 > {
+  readonly parent: Order | null;
   private readonly _builder: OrderBuilder;
   private readonly _policyManager: OrderPolicyManager;
   private readonly _itemManager: OrderItemManager<Item>;
@@ -93,11 +96,13 @@ export class Order<
   constructor(
     builder: OrderBuilder,
     policyManager: OrderPolicyManager,
-    { items, coupons }: OrderConstructor<Item, Coupon>
+    { items, coupons }: OrderConstructor<Item, Coupon>,
+    parent?: Order
   ) {
+    this.parent = parent || null;
     this._builder = builder;
     this._policyManager = policyManager;
-    this._itemManager = new OrderItemManager<Item>(items);
+    this._itemManager = new OrderItemManager<Item>(this, items);
     this._coupons = new Set(coupons);
   }
 
@@ -126,7 +131,7 @@ export class Order<
    * @description Policies `will not be included` if own conditions were not satisfied.
    * @returns {Number} Number
    */
-  get discountValue() {
+  get discountValue(): number {
     return this.discounts.reduce(
       (totalDiscountValue, discountDescription) =>
         plus(totalDiscountValue, discountDescription.discount),
@@ -139,7 +144,7 @@ export class Order<
    * @description sum of all `quantity` * `unitPrice`.
    * @returns {Number} Number
    */
-  get itemValue() {
+  get itemValue(): number {
     return this.items.reduce(
       (total, item) => plus(total, times(item.quantity, item.unitPrice)),
       0
@@ -151,7 +156,7 @@ export class Order<
    * @description sum of all `quantity`.
    * @returns {Number} Number
    */
-  get itemQuantity() {
+  get itemQuantity(): number {
     return this.items.reduce((total, item) => plus(total, item.quantity), 0);
   }
 
@@ -160,7 +165,7 @@ export class Order<
    * @description To equal `this.itemValue` - `this.discountValue`.
    * @returns {Number} Number
    */
-  get price() {
+  get price(): number {
     return minus(this.itemValue, this.discountValue);
   }
 
@@ -173,18 +178,51 @@ export class Order<
   subOrder({
     subItems = [],
     subCoupons = [],
+    subPolicies,
+    itemScope = 'id',
   }: SubOrderCondition): Order<Item, Coupon> {
     const couponFilterSet = new Set(subCoupons);
     const itemFilterSet = new Set(
       subItems.map(subItem =>
-        typeof subItem === 'string' ? subItem : subItem.id
+        typeof subItem === 'string' ? subItem : subItem[itemScope]
       )
     );
 
-    return new Order<Item, Coupon>(this._builder, this._policyManager, {
-      items: this.items.filter(item => itemFilterSet.has(item.id)),
-      coupons: this.coupons.filter(coupon => couponFilterSet.has(coupon)),
-    });
+    const policyManager = subPolicies
+      ? new OrderPolicyManager([subPolicies])
+      : this._policyManager;
+
+    const items =
+      itemScope === 'id'
+        ? this.items.filter(item => itemFilterSet.has(item.id))
+        : Array.from<Item>(
+            this._itemManager.flattenItems
+              .filter(item => itemFilterSet.has(item.uuid))
+              .reduce((total, { uuid, ...item }) => {
+                const record: Item = total.get(item.id) || {
+                  ...item,
+                  quantity: 0,
+                };
+
+                total.set(item.id, {
+                  ...record,
+                  quantity: record.quantity + item.quantity,
+                });
+
+                return total;
+              }, new Map())
+              .values()
+          );
+
+    return new Order<Item, Coupon>(
+      this._builder,
+      policyManager,
+      {
+        items,
+        coupons: this.coupons.filter(coupon => couponFilterSet.has(coupon)),
+      },
+      this
+    );
   }
 
   /**
@@ -257,7 +295,7 @@ export class Order<
    * @param {OrderItem} item OrderItem
    * @returns {Order} Order
    */
-  removeItem<RemoveItem extends BaseOrderItem = BaseOrderItem>(
+  removeItem<RemoveItem extends BaseOrderItem>(
     item: RemoveItem
   ): Order<Item, Coupon>;
   /**
@@ -265,10 +303,10 @@ export class Order<
    * @param {Array} items OrderItem[]
    * @returns {Order} Order
    */
-  removeItem<RemoveItem extends BaseOrderItem = BaseOrderItem>(
+  removeItem<RemoveItem extends BaseOrderItem>(
     items: RemoveItem[]
   ): Order<Item, Coupon>;
-  removeItem<RemoveItem extends BaseOrderItem = BaseOrderItem>(
+  removeItem<RemoveItem extends BaseOrderItem>(
     arg0: string | RemoveItem | RemoveItem[],
     arg1?: number
   ): Order<Item, Coupon> {

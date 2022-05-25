@@ -1,9 +1,9 @@
-import { BaseDiscount } from './base-discount';
 import { Condition } from '../../conditions';
-import { DiscountOptions } from './typings';
 import { FlattenOrderItem } from '../../core';
 import { Order } from '../../core/order';
 import { Policy, PolicyPrefix } from '../typings';
+import { BaseDiscount } from './base-discount';
+import { DiscountOptions } from './typings';
 
 export function isDiscountPolicy(policy: Policy) {
   return policy.prefix === PolicyPrefix.DISCOUNT;

@@ -718,6 +718,7 @@ describe('Order', () => {
 
     // Initialize a order-builder.
     const builder = new OrderBuilder({
+      policyPickStrategy: 'ITEM_BASED',
       discountMethod: 'PRICE_WEIGHTED_AVERAGE',
       roundStrategy: 'EVERY_CALCULATION',
       policies: [policy1],

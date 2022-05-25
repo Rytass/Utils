@@ -1,4 +1,6 @@
 import { ObjRecord } from '../typings';
+import { Order } from '../core/order';
+import { FlattenOrderItem } from '../core';
 
 export enum PolicyPrefix {
   DISCOUNT = 'DISCOUNT',
@@ -9,9 +11,11 @@ export type PolicyResult<T extends ObjRecord> = {
 } & T;
 
 export interface Policy<T extends ObjRecord = ObjRecord> {
-  id?: string;
+  id: string;
   prefix: PolicyPrefix;
-  resolve<TT extends T = T>(..._: any[]): TT[];
+  matchedItems(order: Order): FlattenOrderItem[];
+  valid(order: Order): boolean;
+  resolve<TT extends T>(order: Order, ..._: any[]): TT[];
   description(..._: any[]): PolicyResult<T>;
 }
 

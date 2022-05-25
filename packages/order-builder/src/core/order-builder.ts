@@ -1,4 +1,4 @@
-import { Optional } from '../typings';
+import { OptionalKeys } from '../typings';
 import { Order } from './order';
 import { OrderConfig, OrderConfigOption } from './configs/order-config';
 import { OrderItem } from './typings';
@@ -23,7 +23,7 @@ Coupon extends string = string,
  * @param {Array} policies Policy[]
  * @param {OrderConfigOption} config OrderConfigOption
  */
-interface OrderBuilderConstructor extends Optional<OrderConfigOption> {
+interface OrderBuilderConstructor extends OptionalKeys<OrderConfigOption> {
   policies: Policies[];
 }
 
@@ -46,7 +46,7 @@ Coupon extends string = string,
    * Check whether `builder`.`build` was called.
    * @returns {Boolean} Boolean
    */
-  get hasBuiltOrders() {
+  get hasBuiltOrders(): boolean {
     return this._hasBuiltOrders;
   }
 
@@ -54,7 +54,7 @@ Coupon extends string = string,
    * Get all policies.
    * @returns {Array} Policies[]
    */
-  get policies() {
+  get policies(): Policies[] {
     return this._policyManager.policies;
   }
 
