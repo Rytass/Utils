@@ -1,11 +1,11 @@
-import { BaseDiscount } from './base-discount';
 import { Condition } from '../../conditions';
-import { Discount, DiscountOptions, PolicyDiscountDescription } from './typings';
-import { Order } from '../../core/order';
-import { generateNewPolicyId } from '../utils';
-import { getConditionsByDiscountConstructor, getOptionsByDiscountConstructor, getOnlyMatchedItems } from './utils';
-import { PolicyPrefix } from '../typings';
 import { FlattenOrderItem } from '../../core';
+import { Order } from '../../core/order';
+import { PolicyPrefix } from '../typings';
+import { generateNewPolicyId } from '../utils';
+import { BaseDiscount } from './base-discount';
+import { Discount, DiscountOptions, PolicyDiscountDescription } from './typings';
+import { getConditionsByDiscountConstructor, getOnlyMatchedItems, getOptionsByDiscountConstructor, getOrderItems } from './utils';
 
 /**
  * A policy on `discounting a fixed value` on itemValue
@@ -64,6 +64,12 @@ export class ValueDiscount implements BaseDiscount {
     this.conditions = getConditionsByDiscountConstructor(arg1);
   }
 
+  matchedItems(order: Order): FlattenOrderItem[] {
+    return this.options?.onlyMatched
+      ? getOnlyMatchedItems(order, this.conditions)
+      : getOrderItems(order);
+  }
+
   valid(order: Order): boolean {
     return this.conditions.length
       ? this.conditions.every(condition => condition.satisfy?.(order))
@@ -93,10 +99,7 @@ export class ValueDiscount implements BaseDiscount {
     policies: PolicyDiscountDescription[]
   ): PolicyDiscountDescription[] {
     if (this.valid(order)) {
-      const itemManager = order.itemManager;
-      const matchedItems: FlattenOrderItem[] = this.options?.onlyMatched
-        ? getOnlyMatchedItems(order, this.conditions)
-        : itemManager.withStockItems;
+      const matchedItems: FlattenOrderItem[] = this.matchedItems(order);
 
       return [
         ...policies,

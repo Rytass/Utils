@@ -718,6 +718,7 @@ describe('Order', () => {
 
     // Initialize a order-builder.
     const builder = new OrderBuilder({
+      policyPickStrategy: 'ITEM_BASED',
       discountMethod: 'PRICE_WEIGHTED_AVERAGE',
       roundStrategy: 'EVERY_CALCULATION',
       policies: [policy1],
@@ -754,7 +755,7 @@ describe('Order', () => {
         initialValue: 100,
         discountValue: 20,
         finalPrice: 80,
-        discountRecords: [{ policyId: 'DISCOUNT_2', discountValue: 20 }],
+        discountRecords: [{ policyId: 'DISCOUNT_2', itemId: 'ItemA-1', discountValue: 20 }],
         appliedPolicies: [policy2],
       },
       {
@@ -763,7 +764,7 @@ describe('Order', () => {
         initialValue: 100,
         discountValue: 20,
         finalPrice: 80,
-        discountRecords: [{ policyId: 'DISCOUNT_2', discountValue: 20 }],
+        discountRecords: [{ policyId: 'DISCOUNT_2', itemId: 'ItemA-2', discountValue: 20 }],
         appliedPolicies: [policy2],
       },
       {
@@ -772,7 +773,7 @@ describe('Order', () => {
         initialValue: 50,
         discountValue: 10,
         finalPrice: 40,
-        discountRecords: [{ policyId: 'DISCOUNT_2', discountValue: 10 }],
+        discountRecords: [{ policyId: 'DISCOUNT_2', itemId: 'ItemB-1', discountValue: 10 }],
         appliedPolicies: [policy2],
       },
     ]));

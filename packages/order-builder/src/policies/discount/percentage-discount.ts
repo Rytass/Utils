@@ -6,7 +6,7 @@ import { PolicyPrefix } from '../typings';
 import { generateNewPolicyId } from '../utils';
 import { BaseDiscount } from './base-discount';
 import { Discount, DiscountOptions, PolicyDiscountDescription } from './typings';
-import { getConditionsByDiscountConstructor, getOnlyMatchedItems, getOptionsByDiscountConstructor } from './utils';
+import { getConditionsByDiscountConstructor, getOnlyMatchedItems, getOptionsByDiscountConstructor, getOrderItems } from './utils';
 
 /**
  * A policy on `discounting a percentage value` on itemValue.
@@ -71,6 +71,12 @@ export class PercentageDiscount implements BaseDiscount {
     this.conditions = getConditionsByDiscountConstructor(arg1);
   }
 
+  matchedItems(order: Order): FlattenOrderItem[] {
+    return this.options?.onlyMatched
+      ? getOnlyMatchedItems(order, this.conditions)
+      : getOrderItems(order);
+  }
+
   valid(order: Order): boolean {
     return this.conditions.length
       ? this.conditions.every(condition => condition.satisfy?.(order))
@@ -113,18 +119,12 @@ export class PercentageDiscount implements BaseDiscount {
     policies: PolicyDiscountDescription[]
   ): PolicyDiscountDescription[] {
     if (this.valid(order)) {
-      const itemManager = order.itemManager;
-      const matchedItems: FlattenOrderItem[] = this.options?.onlyMatched
-        ? getOnlyMatchedItems(order, this.conditions)
-        : itemManager.withStockItems;
+      const matchedItems: FlattenOrderItem[] = this.matchedItems(order);
 
       const itemValue = order.config.roundStrategy.round(
         matchedItems.reduce((total, item) => plus(
           total,
-          minus(
-            item.unitPrice,
-            itemManager.collectionMap.get(item.uuid)?.discountValue || 0,
-          ),
+          item.unitPrice,
         ), 0),
         'EVERY_CALCULATION',
       );

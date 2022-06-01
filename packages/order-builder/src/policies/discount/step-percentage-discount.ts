@@ -6,7 +6,7 @@ import { PolicyPrefix } from '../typings';
 import { generateNewPolicyId } from '../utils';
 import { BaseDiscount } from './base-discount';
 import { Discount, PolicyDiscountDescription, StepDiscountOptions } from './typings';
-import { getConditionsByDiscountConstructor, getOnlyMatchedItems, getOptionsByDiscountConstructor } from './utils';
+import { getConditionsByDiscountConstructor, getOnlyMatchedItems, getOptionsByDiscountConstructor, getOrderItems } from './utils';
 
 /**
  * A policy on `discounting value based on stepped discount-rate` on itemValue
@@ -80,6 +80,16 @@ export class StepPercentageDiscount implements BaseDiscount {
     this.conditions = getConditionsByDiscountConstructor(arg1);
   }
 
+  get stepLimit() {
+    return this.options?.stepLimit || Number.MAX_SAFE_INTEGER;
+  }
+
+  matchedItems(order: Order): FlattenOrderItem[] {
+    return this.options?.onlyMatched
+      ? getOnlyMatchedItems(order, this.conditions)
+      : getOrderItems(order);
+  }
+
   valid(order: Order): boolean {
     return this.conditions.length
       ? this.conditions.every(condition => condition.satisfy?.(order))
@@ -89,7 +99,10 @@ export class StepPercentageDiscount implements BaseDiscount {
   discount(itemValue: number, multiplier: number): number {
     const discountRate = pow(
       this.value,
-      Math.floor(divided(multiplier, this.step))
+      Math.min(
+        this.stepLimit,
+        Math.floor(divided(multiplier, this.step)),
+      ),
     );
 
     return times(itemValue, minus(1, discountRate))
@@ -115,32 +128,30 @@ export class StepPercentageDiscount implements BaseDiscount {
     };
   }
 
+  getMultiplier(itemValue: number, items: FlattenOrderItem[]) {
+    return this.options?.stepUnit === 'quantity'
+    ? items.reduce((total, item) => (
+        plus(total, item.quantity)
+      ), 0)
+    : itemValue;
+  }
+
   resolve<PolicyDiscountDescription>(
     order: Order,
     policies: PolicyDiscountDescription[],
   ): PolicyDiscountDescription[] {
     if (this.valid(order)) {
-      const itemManager = order.itemManager;
-      const matchedItems: FlattenOrderItem[] = this.options?.onlyMatched
-        ? getOnlyMatchedItems(order, this.conditions)
-        : itemManager.withStockItems;
+      const matchedItems: FlattenOrderItem[] = this.matchedItems(order);
 
       const itemValue = order.config.roundStrategy.round(
         matchedItems.reduce((total, item) => plus(
           total,
-          minus(
-            item.unitPrice,
-            itemManager.collectionMap.get(item.uuid)?.discountValue || 0,
-          ),
+          item.unitPrice,
         ), 0),
         'EVERY_CALCULATION',
       );
 
-      const multiplier = this.options?.stepUnit === 'quantity'
-        ? matchedItems.reduce((total, item) => (
-            plus(total, item.quantity)
-          ), 0)
-        : itemValue;
+      const multiplier = this.getMultiplier(itemValue, matchedItems);
 
       return [
         ...policies,

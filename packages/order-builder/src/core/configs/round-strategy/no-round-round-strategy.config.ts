@@ -1,4 +1,4 @@
-import { RoundPrecision, RoundStrategy, RoundStrategyType } from './typings';
+import { RoundPrecision, RoundStrategy, RoundStrategyType } from '../typings';
 
 /**
  * NoRoundRoundStrategy.

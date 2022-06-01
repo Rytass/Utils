@@ -156,6 +156,7 @@ const policy2 = new PercentageDiscount(0.8, { id: 'DISCOUNT_2' });
 
 // Initialize an order-builder.
 const builder = new OrderBuilder({
+  policyPickStrategy: 'ITEM_BASED',
   discountMethod: 'PRICE_WEIGHTED_AVERAGE',
   roundStrategy: 'EVERY_CALCULATION',
   policies: [policy1],
@@ -321,11 +322,13 @@ const items: TestOrderItem[] = [
 ];
 ```
 
-### Scenario 1
+### Scenario 1 - 1
 
 ```typescript
 /**
  * 情境編號：甲
+ * 
+ * 決策法：擇優取一 (ORDER_BASED)
  *
  * 情境敘述：
  * 1. 指定商品（Ａ～Ｆ）滿3件 打9折
@@ -385,6 +388,7 @@ const policy4 = new StepPercentageDiscount(
 
 // 擇優 (1|2) & (3|4)
 const builder = new OrderBuilder({
+  policyPickStrategy: 'ORDER_BASED',
   policies: [
     [policy1, policy2],
     [policy3, policy4],
@@ -401,6 +405,8 @@ order.price // 24856
 ```typescript
 /**
  * 情境編號：乙
+ * 
+ * 決策法：擇優取一 (ORDER_BASED)
  *
  * 情境敘述：
  * 1. 指定商品（Ｂ～Ｅ）無條件 送最低價商品
@@ -473,6 +479,7 @@ const policy6 = new ItemGiveawayDiscount(1, new QuantityThreshold(6));
 
 // 擇優 (1|2) & (3|4|5) & 6
 const builder = new OrderBuilder({
+  policyPickStrategy: 'ORDER_BASED',
   policies: [
     [policy1, policy2],
     [policy3, policy4, policy5],
@@ -490,6 +497,8 @@ order.price // 24868
 ```typescript
 /**
  * 情境編號：丙 - 1
+ * 
+ * 決策法：擇優取一 (ORDER_BASED)
  *
  * 情境敘述：
  * 1. 全館 滿6件 送最低價商品
@@ -551,6 +560,7 @@ const policy5 = new ItemGiveawayDiscount(
 );
 
 const builder = new OrderBuilder({
+  policyPickStrategy: 'ORDER_BASED',
   policies: [
     policy1,
     policy2,
@@ -570,6 +580,8 @@ order.price // 24677
 ```typescript
 /**
  * 情境編號：丙 - 2
+ * 
+ * 決策法：擇優取一 (ORDER_BASED)
  *
  * 情境敘述：
  * 1. 全館 滿14000元 贈最低價品
@@ -638,6 +650,7 @@ const policy6 = new StepValueDiscount(
 );
 
 const builder = new OrderBuilder({
+  policyPickStrategy: 'ORDER_BASED',
   discountMethod: 'PRICE_WEIGHTED_AVERAGE',
   policies: [
     policy1,
@@ -659,6 +672,8 @@ order.price // 26250
 ```typescript
 /**
   * 情境編號：丁
+  * 
+  * 決策法：擇優取一 (ORDER_BASED)
   *
   * 情境敘述：
   * 1. 指定分類（飾品）無條件 折1,000 元
@@ -719,6 +734,7 @@ const policy5 = new PercentageDiscount(
 );
 
 const builder1 = new OrderBuilder({
+  policyPickStrategy: 'ORDER_BASED',
   policies: [
     policy1,
     policy2,
@@ -727,6 +743,7 @@ const builder1 = new OrderBuilder({
 });
 
 const builder2 = new OrderBuilder({
+  policyPickStrategy: 'ORDER_BASED',
   policies: [
     policy4,
     policy5,
@@ -745,6 +762,8 @@ order2.price // 28765
 ```typescript
 /**
  * 情境編號：戊
+ *
+ * 決策法：擇優取一 (ORDER_BASED)
  *
  * 情境敘述：
  * 1. 指定商品（Ｂ～Ｅ）無條件 送最低價商品
@@ -813,6 +832,7 @@ const policy6 = new ItemGiveawayDiscount(
 );
 
 const builder1 = new OrderBuilder({
+  policyPickStrategy: 'ORDER_BASED',
   policies: [
     policy1,
     policy2,
@@ -821,6 +841,7 @@ const builder1 = new OrderBuilder({
 });
 
 const builder2 = new OrderBuilder({
+  policyPickStrategy: 'ORDER_BASED',
   policies: [
     policy4,
     policy5,
@@ -833,4 +854,578 @@ const order2 = builder2.build({ items });
 
 order1.price // 24915
 order2.price // 27850
+```
+
+### Scenario 1 - 2
+
+```typescript
+/**
+ * 情境編號：甲 - 2
+ *
+ * 決策法：最適組合 (ITEM_BASED)
+ *
+ * 情境敘述：
+ * 1. 指定商品（Ａ～Ｆ）滿3件 打9折
+ * 2. 指定商品（Ｃ～Ｉ）每5000元 折600元
+ * 3. 指定分類（鞋子）滿4000元 送最低價商品
+ * 4. 指定分類（Swell）每1件 打9折
+ * 5. 全館 滿6件 贈紅利點數1000點
+ * 6. 全館 滿6000元 免運
+ *
+ * 預期結果：
+ * 取最優排列組合：2+4
+ * 購物車顯示金額 24856
+ */
+
+// 指定商品（Ａ～Ｆ）滿3件 打9折
+const policy1 = new PercentageDiscount(
+  0.9,
+  new ItemIncluded({
+    items: ['A', 'B', 'C', 'D', 'E', 'F'],
+    threshold: 3,
+  }),
+  { id: 'SPECIFIED_A_F', onlyMatched: true }
+);
+
+// 2. 指定商品（Ｃ～Ｉ）每5000元 折600元
+const policy2 = new StepValueDiscount(
+  5000,
+  600,
+  new ItemIncluded<TestOrderItem>({
+    items: ['C', 'D', 'E', 'F', 'G', 'H', 'I'],
+  }),
+  { id: 'SPECIFIED_C_I', stepUnit: 'price', onlyMatched: true }
+);
+
+// 3. 指定分類（鞋子）滿4000元 送最低價商品
+const policy3 = new ItemGiveawayDiscount(
+  1,
+  new ItemIncluded<TestOrderItem>({
+    scope: 'category',
+    items: ['shoes'],
+    conditions: [new PriceThreshold(4000)],
+  }),
+  { id: 'GIVEAWAY_BY_SHOES_1', onlyMatched: true }
+);
+
+// * 4. 指定分類（Swell）每1件 打9折
+const policy4 = new StepPercentageDiscount(
+  1,
+  0.9,
+  new ItemIncluded<TestOrderItem>({
+    scope: 'brand',
+    items: ['Swell'],
+  }),
+  {
+    id: 'SPECIFIED_BRAND_BY_Swell_1',
+    stepUnit: 'quantity',
+    onlyMatched: true,
+  }
+);
+
+// (1|2)&(3|4)
+const builder1 = new OrderBuilder<TestOrderItem>({
+  policyPickStrategy: 'ITEM_BASED',
+  policies: [
+    [policy1, policy2],
+    [policy3, policy4],
+  ],
+});
+
+const order1 = builder1.build({ items });
+
+const builder2 = new OrderBuilder<TestOrderItem>({
+  policyPickStrategy: 'ITEM_BASED',
+  policies: [
+    [policy1, policy2],
+    policy3,
+    policy4,
+  ],
+});
+
+const order2 = builder2.build({ items });
+
+order1.price === order2.price // true
+order1.price // 22491
+order2.price // 22491
+
+order1.itemRecords
+// [ 
+//   {
+//     itemId: 'A-1',
+//     originItem: {
+//       id: 'A',
+//       name: '外套A',
+//       unitPrice: 1000,
+//       category: 'jacket',
+//       brand: 'AJE',
+//     },
+//     initialValue: 1000,
+//     discountValue: 100,
+//     finalPrice: 900,
+//     discountRecords: [
+//       {
+//         policyId: 'SPECIFIED_A_F',
+//         discountValue: 100,
+//       },
+//     ],
+//     appliedPolicies: [
+//       {
+//         prefix: 'DISCOUNT',
+//         type: 'PERCENTAGE',
+//         id: 'SPECIFIED_A_F',
+//         value: 0.9,
+//         conditions: [
+//           {
+//             type: 'QUANTITY',
+//             items: ['A', 'B', 'C', 'D', 'E', 'F'],
+//             threshold: 3,
+//             conditions: [],
+//             scope: 'id',
+//           },
+//         ],
+//         options: {
+//           id: 'SPECIFIED_A_F',
+//           onlyMatched: true,
+//         },
+//       },
+//     ],
+//   },
+//   {
+//     itemId: 'B-1',
+//     originItem: {
+//       id: 'B',
+//       name: '外套B',
+//       unitPrice: 1500,
+//       category: 'jacket',
+//       brand: 'N21',
+//     },
+//     initialValue: 1500,
+//     discountValue: 150,
+//     finalPrice: 1350,
+//     discountRecords: [
+//       {
+//         policyId: 'SPECIFIED_A_F',
+//         discountValue: 150,
+//       },
+//     ],
+//     appliedPolicies: [
+//       {
+//         prefix: 'DISCOUNT',
+//         type: 'PERCENTAGE',
+//         id: 'SPECIFIED_A_F',
+//         value: 0.9,
+//         conditions: [
+//           {
+//             type: 'QUANTITY',
+//             items: ['A', 'B', 'C', 'D', 'E', 'F'],
+//             threshold: 3,
+//             conditions: [],
+//             scope: 'id',
+//           },
+//         ],
+//         options: {
+//           id: 'SPECIFIED_A_F',
+//           onlyMatched: true,
+//         },
+//       },
+//     ],
+//   },
+//   {
+//     itemId: 'C-1',
+//     originItem: {
+//       id: 'C',
+//       name: '鞋子C',
+//       unitPrice: 2000,
+//       category: 'shoes',
+//       brand: 'N21',
+//     },
+//     initialValue: 2000,
+//     discountValue: 2000,
+//     finalPrice: 0,
+//     discountRecords: [
+//       {
+//         policyId: 'SPECIFIED_C_I',
+//         discountValue: 240,
+//       },
+//       {
+//         policyId: 'GIVEAWAY_BY_SHOES_1',
+//         discountValue: 1760,
+//       },
+//     ],
+//     appliedPolicies: [
+//       {
+//         prefix: 'DISCOUNT',
+//         type: 'STEP_VALUE',
+//         id: 'SPECIFIED_C_I',
+//         step: 5000,
+//         value: 600,
+//         conditions: [
+//           {
+//             type: 'QUANTITY',
+//             items: ['C', 'D', 'E', 'F', 'G', 'H', 'I'],
+//             threshold: 1,
+//             conditions: [],
+//             scope: 'id',
+//           },
+//         ],
+//         options: {
+//           id: 'SPECIFIED_C_I',
+//           stepUnit: 'price',
+//           onlyMatched: true,
+//         },
+//       },
+//       {
+//         prefix: 'DISCOUNT',
+//         type: 'ITEM_GIVEAWAY',
+//         id: 'GIVEAWAY_BY_SHOES_1',
+//         value: 1,
+//         strategy: 'LOW_PRICE_FIRST',
+//         conditions: [
+//           {
+//             type: 'QUANTITY',
+//             items: ['shoes'],
+//             threshold: 1,
+//             conditions: [
+//               {
+//                 type: 'PRICE_THRESHOLD',
+//                 value: 4000,
+//               },
+//             ],
+//             scope: 'category',
+//           },
+//         ],
+//         options: {
+//           id: 'GIVEAWAY_BY_SHOES_1',
+//           onlyMatched: true,
+//         },
+//       },
+//     ],
+//   },
+//   {
+//     itemId: 'D-1',
+//     originItem: {
+//       id: 'D',
+//       name: '鞋子D',
+//       unitPrice: 2500,
+//       category: 'shoes',
+//       brand: 'Preen',
+//     },
+//     initialValue: 2500,
+//     discountValue: 300,
+//     finalPrice: 2200,
+//     discountRecords: [
+//       {
+//         policyId: 'SPECIFIED_C_I',
+//         discountValue: 300,
+//       },
+//     ],
+//     appliedPolicies: [
+//       {
+//         prefix: 'DISCOUNT',
+//         type: 'STEP_VALUE',
+//         id: 'SPECIFIED_C_I',
+//         step: 5000,
+//         value: 600,
+//         conditions: [
+//           {
+//             type: 'QUANTITY',
+//             items: ['C', 'D', 'E', 'F', 'G', 'H', 'I'],
+//             threshold: 1,
+//             conditions: [],
+//             scope: 'id',
+//           },
+//         ],
+//         options: {
+//           id: 'SPECIFIED_C_I',
+//           stepUnit: 'price',
+//           onlyMatched: true,
+//         },
+//       },
+//     ],
+//   },
+//   {
+//     itemId: 'E-1',
+//     originItem: {
+//       id: 'E',
+//       name: '鞋子E',
+//       unitPrice: 3000,
+//       category: 'shoes',
+//       brand: 'Preen',
+//     },
+//     initialValue: 3000,
+//     discountValue: 360,
+//     finalPrice: 2640,
+//     discountRecords: [
+//       {
+//         policyId: 'SPECIFIED_C_I',
+//         discountValue: 360,
+//       },
+//     ],
+//     appliedPolicies: [
+//       {
+//         prefix: 'DISCOUNT',
+//         type: 'STEP_VALUE',
+//         id: 'SPECIFIED_C_I',
+//         step: 5000,
+//         value: 600,
+//         conditions: [
+//           {
+//             type: 'QUANTITY',
+//             items: ['C', 'D', 'E', 'F', 'G', 'H', 'I'],
+//             threshold: 1,
+//             conditions: [],
+//             scope: 'id',
+//           },
+//         ],
+//         options: {
+//           id: 'SPECIFIED_C_I',
+//           stepUnit: 'price',
+//           onlyMatched: true,
+//         },
+//       },
+//     ],
+//   },
+//   {
+//     itemId: 'F-1',
+//     originItem: {
+//       id: 'F',
+//       name: '飾品F',
+//       unitPrice: 4000,
+//       category: 'accessory',
+//       brand: 'Swell',
+//     },
+//     initialValue: 4000,
+//     discountValue: 1376,
+//     finalPrice: 2624,
+//     discountRecords: [
+//       {
+//         policyId: 'SPECIFIED_A_F',
+//         discountValue: 400,
+//       },
+//       {
+//         policyId: 'SPECIFIED_BRAND_BY_Swell_1',
+//         discountValue: 976,
+//       },
+//     ],
+//     appliedPolicies: [
+//       {
+//         prefix: 'DISCOUNT',
+//         type: 'PERCENTAGE',
+//         id: 'SPECIFIED_A_F',
+//         value: 0.9,
+//         conditions: [
+//           {
+//             type: 'QUANTITY',
+//             items: ['A', 'B', 'C', 'D', 'E', 'F'],
+//             threshold: 3,
+//             conditions: [],
+//             scope: 'id',
+//           },
+//         ],
+//         options: {
+//           id: 'SPECIFIED_A_F',
+//           onlyMatched: true,
+//         },
+//       },
+//       {
+//         prefix: 'DISCOUNT',
+//         type: 'STEP_PERCENTAGE',
+//         id: 'SPECIFIED_BRAND_BY_Swell_1',
+//         step: 1,
+//         value: 0.9,
+//         conditions: [
+//           {
+//             type: 'QUANTITY',
+//             items: ['Swell'],
+//             threshold: 1,
+//             conditions: [],
+//             scope: 'brand',
+//           },
+//         ],
+//         options: {
+//           id: 'SPECIFIED_BRAND_BY_Swell_1',
+//           stepUnit: 'quantity',
+//           onlyMatched: true,
+//         },
+//       },
+//     ],
+//   },
+//   {
+//     itemId: 'G-1',
+//     originItem: {
+//       id: 'G',
+//       name: '飾品G',
+//       unitPrice: 5000,
+//       category: 'accessory',
+//       brand: 'Swell',
+//     },
+//     initialValue: 5000,
+//     discountValue: 1792,
+//     finalPrice: 3208,
+//     discountRecords: [
+//       {
+//         policyId: 'SPECIFIED_C_I',
+//         discountValue: 600,
+//       },
+//       {
+//         policyId: 'SPECIFIED_BRAND_BY_Swell_1',
+//         discountValue: 1192,
+//       },
+//     ],
+//     appliedPolicies: [
+//       {
+//         prefix: 'DISCOUNT',
+//         type: 'STEP_VALUE',
+//         id: 'SPECIFIED_C_I',
+//         step: 5000,
+//         value: 600,
+//         conditions: [
+//           {
+//             type: 'QUANTITY',
+//             items: ['C', 'D', 'E', 'F', 'G', 'H', 'I'],
+//             threshold: 1,
+//             conditions: [],
+//             scope: 'id',
+//           },
+//         ],
+//         options: {
+//           id: 'SPECIFIED_C_I',
+//           stepUnit: 'price',
+//           onlyMatched: true,
+//         },
+//       },
+//       {
+//         prefix: 'DISCOUNT',
+//         type: 'STEP_PERCENTAGE',
+//         id: 'SPECIFIED_BRAND_BY_Swell_1',
+//         step: 1,
+//         value: 0.9,
+//         conditions: [
+//           {
+//             type: 'QUANTITY',
+//             items: ['Swell'],
+//             threshold: 1,
+//             conditions: [],
+//             scope: 'brand',
+//           },
+//         ],
+//         options: {
+//           id: 'SPECIFIED_BRAND_BY_Swell_1',
+//           stepUnit: 'quantity',
+//           onlyMatched: true,
+//         },
+//       },
+//     ],
+//   },
+//   {
+//     itemId: 'H-1',
+//     originItem: {
+//       id: 'H',
+//       name: '飾品H',
+//       unitPrice: 6000,
+//       category: 'accessory',
+//       brand: 'Swell',
+//     },
+//     initialValue: 6000,
+//     discountValue: 2151,
+//     finalPrice: 3849,
+//     discountRecords: [
+//       {
+//         policyId: 'SPECIFIED_C_I',
+//         discountValue: 720,
+//       },
+//       {
+//         policyId: 'SPECIFIED_BRAND_BY_Swell_1',
+//         discountValue: 1431,
+//       },
+//     ],
+//     appliedPolicies: [
+//       {
+//         prefix: 'DISCOUNT',
+//         type: 'STEP_VALUE',
+//         id: 'SPECIFIED_C_I',
+//         step: 5000,
+//         value: 600,
+//         conditions: [
+//           {
+//             type: 'QUANTITY',
+//             items: ['C', 'D', 'E', 'F', 'G', 'H', 'I'],
+//             threshold: 1,
+//             conditions: [],
+//             scope: 'id',
+//           },
+//         ],
+//         options: {
+//           id: 'SPECIFIED_C_I',
+//           stepUnit: 'price',
+//           onlyMatched: true,
+//         },
+//       },
+//       {
+//         prefix: 'DISCOUNT',
+//         type: 'STEP_PERCENTAGE',
+//         id: 'SPECIFIED_BRAND_BY_Swell_1',
+//         step: 1,
+//         value: 0.9,
+//         conditions: [
+//           {
+//             type: 'QUANTITY',
+//             items: ['Swell'],
+//             threshold: 1,
+//             conditions: [],
+//             scope: 'brand',
+//           },
+//         ],
+//         options: {
+//           id: 'SPECIFIED_BRAND_BY_Swell_1',
+//           stepUnit: 'quantity',
+//           onlyMatched: true,
+//         },
+//       },
+//     ],
+//   },
+//   {
+//     itemId: 'I-1',
+//     originItem: {
+//       id: 'I',
+//       name: '飾品I',
+//       unitPrice: 6500,
+//       category: 'accessory',
+//       brand: 'Boyy',
+//     },
+//     initialValue: 6500,
+//     discountValue: 780,
+//     finalPrice: 5720,
+//     discountRecords: [
+//       {
+//         policyId: 'SPECIFIED_C_I',
+//         discountValue: 780,
+//       },
+//     ],
+//     appliedPolicies: [
+//       {
+//         prefix: 'DISCOUNT',
+//         type: 'STEP_VALUE',
+//         id: 'SPECIFIED_C_I',
+//         step: 5000,
+//         value: 600,
+//         conditions: [
+//           {
+//             type: 'QUANTITY',
+//             items: ['C', 'D', 'E', 'F', 'G', 'H', 'I'],
+//             threshold: 1,
+//             conditions: [],
+//             scope: 'id',
+//           },
+//         ],
+//         options: {
+//           id: 'SPECIFIED_C_I',
+//           stepUnit: 'price',
+//           onlyMatched: true,
+//         },
+//       },
+//     ],
+//   },
+// ]
 ```

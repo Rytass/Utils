@@ -33,7 +33,7 @@ export class ItemRequired implements Condition<RequirementDescription<ItemRequir
 
   satisfy(order: Order) {
     const orderItemMap = new Map<string, ItemRequiredInput>(
-      order?.items.map(item => [item.id, item])
+      order.items.map(item => [item.id, item])
     );
 
     return this.items.every(

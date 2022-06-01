@@ -3,6 +3,7 @@ import { minus, plus } from '../utils/decimal';
 
 export interface ItemDiscountRecord {
   policyId: string,
+  itemId: string,
   discountValue: number,
 }
 
@@ -16,11 +17,11 @@ Item extends OrderItem = OrderItem> {
   readonly originItem: Omit<FlattenOrderItem<Item>, 'uuid' | 'quantity'> | Item;
   private _discountRecords: ItemDiscountRecord[] = [];
 
-  get discountRecords() {
+  get discountRecords(): ItemDiscountRecord[] {
     return this._discountRecords;
   }
 
-  get discountValue() {
+  get discountValue(): number {
     return this.discountRecords.reduce((total, discount) => (
       plus(
         total,
@@ -29,7 +30,7 @@ Item extends OrderItem = OrderItem> {
     ), 0);
   }
 
-  get currentValue() {
+  get currentValue(): number {
     return minus(this.initialValue, this.discountValue);
   }
 
@@ -41,7 +42,7 @@ Item extends OrderItem = OrderItem> {
     this.initialValue = item.unitPrice;
   }
 
-  addDiscountRecord(discount: ItemDiscountRecord) {
-    this._discountRecords = [...this._discountRecords, discount];
+  addDiscountRecord(discount: ItemDiscountRecord): void {
+    this._discountRecords.push(discount);
   }
 }
