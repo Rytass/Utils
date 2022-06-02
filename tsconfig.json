@@ -30,17 +30,20 @@
       "@rytass/invoice-adapter-ecpay": [
         "invoice-adapter-ecpay/src"
       ],
-      "@rytass/logistics-adapter-tcat": [
-        "logistics-adapter-tcat/src"
-      ],
       "@rytass/storages": [
         "storages/src"
       ],
       "@rytass/storages-adapter-local": [
         "storages-adapter-local/src"
-      ], 
+      ],
       "@rytass/storages-images-converter": [
         "storages-images-converter/src"
+      ],
+      "@rytass/logistics": [
+        "logistics/src"
+      ],
+      "@rytass/logistics-adapter-tcat": [
+        "logistics-adapter-tcat/src"
       ]
     }
   },
