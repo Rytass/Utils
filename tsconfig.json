@@ -24,6 +24,12 @@
       "@rytass/order-builder": [
         "order-builder/src"
       ],
+      "@rytass/logistics": [
+        "logistics/src"
+      ],
+      "@rytass/logistics-adapter-tcat": [
+        "logistics-adapter-tcat/src"
+      ]
     }
   },
   "references": [
