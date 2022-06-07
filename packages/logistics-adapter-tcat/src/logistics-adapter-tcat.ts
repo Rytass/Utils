@@ -1,16 +1,18 @@
 import {
   Logistics,
   LogisticsService,
+  LogisticsStatus,
   LogisticsTraceResponse,
 } from '@rytass/logistics';
 import axios from 'axios';
+import { TCatLogistics } from '.';
 
-export class TCatLogisticsService<T extends Logistics<T>>
+export class TCatLogisticsService<T extends Logistics<LogisticsStatus<T>>>
   implements LogisticsService<T>
 {
   private readonly configuration: T
 
-  constructor(configuration: T extends Logistics<unknown> ? T : never) {
+  constructor(configuration: T extends Logistics<LogisticsStatus<T>> ? T : never) {
     this.configuration = configuration
   }
   private getTraceUrl(logisticId: string) {
@@ -50,3 +52,5 @@ export class TCatLogisticsService<T extends Logistics<T>>
     return logistics;
   }
 }
+
+const test = new TCatLogisticsService(TCatLogistics)
