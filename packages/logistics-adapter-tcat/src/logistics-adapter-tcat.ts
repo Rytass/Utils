@@ -10,7 +10,7 @@ export class TCatLogisticsService<T extends Logistics<T>>
 {
   private readonly configuration: T
 
-  constructor(configuration: T) {
+  constructor(configuration: T extends Logistics<unknown> ? T : never) {
     this.configuration = configuration
   }
   private getTraceUrl(logisticId: string) {
