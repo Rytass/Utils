@@ -1,22 +1,23 @@
-export type LogisticsStatus<T = any> = 'DELIVERED' | 'DELIVERING' | 'SHELVED' | keyof T
+export type LogisticsStatus<T> = 'DELIVERED' | 'DELIVERING' | 'SHELVED' | keyof T
 
-export interface Logistics<Status = LogisticsStatus> {
-  referenceSelector: string;
-  statusMap: (reference: string) => LogisticsStatusHistory<Status>;
+export interface Logistics<T> {
+  url: string,
+  statusMap: (reference: any) => LogisticsStatusHistory<T>[];
 }
 
-export interface LogisticsStatusHistory<Status = unknown> {
+export interface LogisticsStatusHistory<T> {
   businessPremise: string;
-  date: Date;
-  status: Status;
+  date: string;
+  status: T;
 }
 
-export interface LogisticsTraceResponse<LogisticsType extends Logistics> {
+export interface LogisticsTraceResponse<K extends Logistics<unknown>> {
   logisticsId: string;
-  statusHistory: LogisticsStatusHistory<ReturnType<LogisticsType['statusMap']>>[];
+  statusHistory: ReturnType<K['statusMap']>
 }
 
-export interface LogisticsService<LogisticsType extends Logistics> {
+export interface LogisticsService<LogisticsType extends Logistics<unknown>> {
   trace(request: string): Promise<LogisticsTraceResponse<LogisticsType>[]>;
   trace(request: string[]): Promise<LogisticsTraceResponse<LogisticsType>[]>;
 }
+
