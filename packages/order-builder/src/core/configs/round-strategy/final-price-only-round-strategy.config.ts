@@ -1,11 +1,11 @@
-import { RoundPrecision, RoundStrategy, RoundStrategyType } from './typings';
-import { round } from '../../utils/decimal';
+import { RoundPrecision, RoundStrategy, RoundStrategyType } from '../typings';
+import { round } from '../../../utils/decimal';
 
 /**
- * EveryCalculationRoundStrategy.
+ * FinalPriceOnlyRoundStrategy.
  */
-export class EveryCalculationRoundStrategy implements RoundStrategy {
-  readonly type: RoundStrategyType = 'EVERY_CALCULATION';
+export class FinalPriceOnlyRoundStrategy implements RoundStrategy {
+  readonly type: RoundStrategyType = 'FINAL_PRICE_ONLY';
   readonly precision: RoundPrecision;
 
   constructor(precision: RoundPrecision) {

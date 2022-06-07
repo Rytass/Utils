@@ -1,3 +1,5 @@
+import { CartesianProduct } from '../src/utils/combinatorics';
+import { groupBy } from '../src/utils/collection';
 import { plus, minus, times, divided, pow, round } from '../src/utils/decimal';
 
 describe('Decimal', () => {
@@ -161,3 +163,68 @@ describe('Decimal', () => {
     })
   });
 });
+
+describe('Collection', () => {
+  it('groupBy', () => {
+    const dictionary = groupBy(
+      [
+        {
+          id: 1,
+          name: '1',
+        },
+        {
+          id: 1,
+          name: '2',
+        },
+        {
+          id: 2,
+          name: '3',
+        },
+      ],
+      obj => obj.id,
+    );
+
+    expect(JSON.stringify(
+      Object.entries(dictionary).map(([_, v]) => v)
+    )).toEqual(JSON.stringify(
+      [
+        [{
+          id: 1,
+          name: '1',
+        },
+        {
+          id: 1,
+          name: '2',
+        }],
+        [{
+          id: 2,
+          name: '3',
+        }],
+      ]
+    ))
+  })
+})
+
+describe('Combinatorics', () => {
+  it('CartesianProduct', () => {
+    const it = new CartesianProduct('012','abc','xyz');
+
+    expect(it.length).toEqual(27);
+    expect(JSON.stringify(it.toArray())).toEqual(JSON.stringify([
+      [ '0', 'a', 'x' ], [ '1', 'a', 'x' ],
+      [ '2', 'a', 'x' ], [ '0', 'b', 'x' ],
+      [ '1', 'b', 'x' ], [ '2', 'b', 'x' ],
+      [ '0', 'c', 'x' ], [ '1', 'c', 'x' ],
+      [ '2', 'c', 'x' ], [ '0', 'a', 'y' ],
+      [ '1', 'a', 'y' ], [ '2', 'a', 'y' ],
+      [ '0', 'b', 'y' ], [ '1', 'b', 'y' ],
+      [ '2', 'b', 'y' ], [ '0', 'c', 'y' ],
+      [ '1', 'c', 'y' ], [ '2', 'c', 'y' ],
+      [ '0', 'a', 'z' ], [ '1', 'a', 'z' ],
+      [ '2', 'a', 'z' ], [ '0', 'b', 'z' ],
+      [ '1', 'b', 'z' ], [ '2', 'b', 'z' ],
+      [ '0', 'c', 'z' ], [ '1', 'c', 'z' ],
+      [ '2', 'c', 'z' ],
+    ]));
+  })
+})

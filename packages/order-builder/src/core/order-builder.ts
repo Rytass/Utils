@@ -1,4 +1,4 @@
-import { Optional } from '../typings';
+import { OptionalKeys } from '../typings';
 import { Order } from './order';
 import { OrderConfig, OrderConfigOption } from './configs/order-config';
 import { OrderItem } from './typings';
@@ -14,6 +14,7 @@ interface OrderBuilderBuildInputs<
 Item extends OrderItem = OrderItem,
 Coupon extends string = string,
 > {
+  id?: string;
   items: Item[];
   coupons?: Coupon[];
 }
@@ -23,7 +24,7 @@ Coupon extends string = string,
  * @param {Array} policies Policy[]
  * @param {OrderConfigOption} config OrderConfigOption
  */
-interface OrderBuilderConstructor extends Optional<OrderConfigOption> {
+interface OrderBuilderConstructor extends OptionalKeys<OrderConfigOption> {
   policies: Policies[];
 }
 
@@ -46,7 +47,7 @@ Coupon extends string = string,
    * Check whether `builder`.`build` was called.
    * @returns {Boolean} Boolean
    */
-  get hasBuiltOrders() {
+  get hasBuiltOrders(): boolean {
     return this._hasBuiltOrders;
   }
 
@@ -54,7 +55,7 @@ Coupon extends string = string,
    * Get all policies.
    * @returns {Array} Policies[]
    */
-  get policies() {
+  get policies(): Policies[] {
     return this._policyManager.policies;
   }
 
@@ -82,12 +83,14 @@ Coupon extends string = string,
    * @returns {Order} Order
    */
   build<I extends Item, C extends Coupon>({
+    id,
     items,
     coupons = [],
   }: OrderBuilderBuildInputs<I, C>): Order<I, C> {
     this._hasBuiltOrders = true;
 
     return new Order<I, C>(this, this._policyManager, {
+      id,
       items,
       coupons,
     });

@@ -1,11 +1,12 @@
-import { BaseDiscount } from './base-discount';
 import { Condition } from '../../conditions';
-import { DiscountOptions } from './typings';
 import { FlattenOrderItem } from '../../core';
 import { Order } from '../../core/order';
 import { Policy, PolicyPrefix } from '../typings';
+import { BaseDiscount } from './base-discount';
+import { DiscountOptions } from './typings';
+import { minus, plus, times } from '../../utils/decimal';
 
-export function isDiscountPolicy(policy: Policy) {
+export function isDiscountPolicy(policy: Policy): policy is BaseDiscount {
   return policy.prefix === PolicyPrefix.DISCOUNT;
 }
 
@@ -45,4 +46,14 @@ export function getOnlyMatchedItems(
 
     return items;
   }, [] as FlattenOrderItem[]);
+}
+
+export function getOrderItems(order: Order) {
+  return order.itemManager.flattenItems.filter(item => times(
+    item.quantity,
+    minus(
+      item.unitPrice,
+      order.parent?.itemManager.collectionMap.get(item.uuid)?.discountValue || 0,
+    ),
+  ) > 0)
 }

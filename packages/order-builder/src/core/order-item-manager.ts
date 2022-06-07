@@ -1,13 +1,15 @@
-import { BaseOrderItem, OrderItem, FlattenOrderItem } from './typings';
+import { BaseOrderItem, OrderItem, FlattenOrderItem, OrderItemRecord } from './typings';
 import { OrderItemRecordCollection } from './order-item-record-collection';
 import { Policy } from '../policies';
-import { minus } from '../utils/decimal';
+import { minus, plus, times } from '../utils/decimal';
+import { Order } from './order';
 
 /**
  * OrderItemManager
  */
 export class OrderItemManager<
 Item extends OrderItem = OrderItem> {
+  private readonly _order: Order;
   private _collectionMap: Map<string, OrderItemRecordCollection> = new Map();
   private _items: Item[];
 
@@ -21,7 +23,7 @@ Item extends OrderItem = OrderItem> {
   /**
    * Get item record collection map.
    */
-   get collectionMap() {
+   get collectionMap(): Map<string, OrderItemRecordCollection> {
     return this._collectionMap;
   }
 
@@ -31,35 +33,34 @@ Item extends OrderItem = OrderItem> {
   get flattenItems(): FlattenOrderItem<Item>[] {
     return this._items.reduce((total, item) => [
       ...total,
-      ...Array.from(Array(item.quantity)).map((_, index) => ({
-        ...item,
-        uuid: `${item.id}-${index + 1}`,
-        quantity: 1,
-      }) as FlattenOrderItem<Item>),
+      ...Array.from(Array(item.quantity))
+        .map((_, index) => {
+          const uuid = `${item.id}-${index + 1}`;
+          const unitPrice = minus(
+            item.unitPrice,
+            this._collectionMap.get(`${item.id}-${index + 1}`)?.discountValue || 0,
+          );
+
+          return ({
+            ...item,
+            unitPrice,
+            uuid,
+            quantity: unitPrice ? 1 : 0,
+          }) as FlattenOrderItem<Item>
+        }),
     ], [] as FlattenOrderItem<Item>[]);
   }
 
-  /**
-   * Get all of the item which current quantity > 0.
-   */
-  get withStockItems(): FlattenOrderItem[] {
-    return this.flattenItems.filter(item => (
-      minus(
-        item.unitPrice,
-        this._collectionMap.get(item.uuid)?.discountValue || 0,
-      ) > 0
-    ))
-  }
-
-  constructor(items: Item[]) {
+  constructor(order: Order, items: Item[]) {
+    this._order = order;
     this._items = items;
   }
 
-  initCollectionMap() {
-    this._collectionMap = new Map();
+  initCollectionMap(): void {
+    this._collectionMap.clear();
   }
 
-  getCurrentItemRecords(policyMap: Map<string, Policy>) {
+  getCurrentItemRecords(policyMap: Map<string, Policy>): OrderItemRecord<Item>[] {
     return this.flattenItems.map(flattenItem => (
       this.collectionMap.get(flattenItem.uuid)
       || new OrderItemRecordCollection(flattenItem)
@@ -79,7 +80,7 @@ Item extends OrderItem = OrderItem> {
   updateCollection<T extends FlattenOrderItem<OrderItem>>(
     item: T,
     resolve: (record: OrderItemRecordCollection) => OrderItemRecordCollection,
-  ) {
+  ): void {
     const storedRecord = this._collectionMap.get(item.uuid) || new OrderItemRecordCollection(item);
 
     this._collectionMap.set(item.uuid, resolve(storedRecord));

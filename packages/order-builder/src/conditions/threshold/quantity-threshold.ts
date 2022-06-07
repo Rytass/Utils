@@ -1,5 +1,5 @@
-import { divided, minus, plus, times } from '../../utils/decimal';
 import { Order } from '../../core/order';
+import { divided, plus, times } from '../../utils/decimal';
 import { Condition } from '../typings';
 import { Threshold, ThresholdDescription } from './typings';
 
@@ -20,10 +20,7 @@ export class QuantityThreshold implements Condition<ThresholdDescription> {
       plus(
         total,
         Math.ceil(divided(
-          minus(
-            times(item.quantity, item.unitPrice),
-            order.itemManager.collectionMap.get(item.uuid)?.discountValue || 0,
-          ),
+          times(item.quantity, item.unitPrice),
           item.unitPrice,
         )),
       )

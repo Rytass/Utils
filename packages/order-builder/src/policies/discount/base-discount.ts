@@ -2,6 +2,7 @@ import { Order } from '../../core/order';
 import { Condition } from '../../conditions';
 import { Policy, PolicyPrefix } from '../typings';
 import { Discount, DiscountOptions, PolicyDiscountDescription } from './typings';
+import { FlattenOrderItem } from '../../core';
 
 /**
  * Implement this abstract class to create a new Discount variant.
@@ -15,6 +16,7 @@ export abstract class BaseDiscount
   readonly value!: number;
   readonly conditions!: Condition[];
   readonly options?: DiscountOptions;
+  matchedItems!: (order: Order) => FlattenOrderItem[];
   valid!: (order: Order) => boolean;
   discount!: (..._: any[]) => number;
   description!: (..._: any[]) => PolicyDiscountDescription;

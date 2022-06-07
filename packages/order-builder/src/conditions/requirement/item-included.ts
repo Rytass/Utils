@@ -1,9 +1,9 @@
-import { Condition } from '../typings';
-import { ObjRecord } from './../../typings';
 import { Order } from '../../core/order';
 import { FlattenOrderItem, OrderItem } from '../../core/typings';
+import { plus } from '../../utils/decimal';
+import { Condition } from '../typings';
+import { ObjRecord } from './../../typings';
 import { Requirement, RequirementDescription } from './typings';
-import { minus, plus } from '../../utils/decimal';
 
 type ItemIncludedScope<T extends ObjRecord = ObjRecord> = keyof T;
 type OmitItemIncludeScope<O extends OrderItem> = Omit<O, 'conditionRef' | 'unitPrice' | 'quantity'>;
@@ -17,6 +17,7 @@ export class ItemIncluded
   readonly threshold: number;
   readonly conditions: Condition[];
   private readonly scope: keyof Item;
+  private readonly itemSet: Set<string>;
 
   /**
    * Item included condition.
@@ -30,6 +31,7 @@ export class ItemIncluded
     conditions?: Condition[]
   }) {
     this.items = itemIncludedInput.items;
+    this.itemSet = new Set(this.items);
     this.threshold = itemIncludedInput.threshold || 1;
     this.scope = itemIncludedInput.scope || 'id' as keyof Item;
     this.conditions = itemIncludedInput.conditions || [];
@@ -40,14 +42,10 @@ export class ItemIncluded
 
     const scope = this.scope as string;
 
-    const validItemClusterMap = new Set(this.items);
-
     return order.itemManager.flattenItems.filter(item => (
       item?.[scope]
-      && validItemClusterMap.has(item[scope])
-      && minus( // is not out of stock.
-        item.unitPrice,
-        order.itemManager.collectionMap.get(item.uuid)?.discountValue || 0) > 0
+      && this.itemSet.has(item[scope])
+      && item.unitPrice > 0 // is not out of stock.
     ));
   }
 
