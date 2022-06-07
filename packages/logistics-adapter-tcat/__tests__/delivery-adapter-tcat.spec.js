@@ -1,4 +1,4 @@
-import { TCatLogisticsService, TCatLogistics } from '@rytass/logistics-adapter-tcat/src/index'
+import { TCatLogisticsService } from '@rytass/logistics-adapter-tcat/src/index'
 
 describe('delivery-adapter-tcat', () => {
     const logistics = new TCatLogisticsService()
