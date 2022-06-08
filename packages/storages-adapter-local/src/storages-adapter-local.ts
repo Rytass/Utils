@@ -122,18 +122,22 @@ export class StorageLocalService implements StorageService {
   async find(directory: string): Promise<string[]> {
     if (!fs.existsSync(directory))
       throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
-    const searchSubDirectory = async (directory: string, found: string[]) => {
+    var searchSubDirectory = async (directory: string, found: string[]) => {
       const subs = await fs.promises.readdir(directory);
 
-      subs.map(async (sub) => {
-        (await fs.promises.stat(sub)).isDirectory()
-          ? found.concat(await searchSubDirectory(sub, []))
-          : found.push(sub);
-      });
+      await Promise.all(
+        subs.map(async (sub) => {
+          (await fs.promises.stat(resolve(directory, sub))).isDirectory()
+            ? found.concat(
+                await searchSubDirectory(resolve(directory, sub), [])
+              )
+            : found.push(sub);
+        })
+      );
 
       return found;
     };
 
-    return searchSubDirectory(directory, [])
+    return searchSubDirectory(directory, []);
   }
 }
