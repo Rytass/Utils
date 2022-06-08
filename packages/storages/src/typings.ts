@@ -1,40 +1,38 @@
-export type PathLike = string | Buffer | URL;
+export type WriteFileInput = string | Buffer
+export type FileName = string | ((data: FileType) => string | string);
 
-export interface File {
-  fileName: string;
-  mime: string;
-  buffer: Buffer;
-  size: number;
+export interface FileType {
+  readonly buffer: Buffer;
+  readonly size: number;
+  extension?: string;
+  mime?: string;
 }
 
-export interface StorageError {
+export interface StorageErrorInterface {
   code: string;
-  message: string;
+  message?: string;
 }
 
-export interface StorageUploadOptions {
+export interface StorageWriteOptions {
   maxSize?: number;
-  mimeFilter?: string[];
-  useFileName?: string | ((data: File) => string);
+  fileName?: FileName
+  directory?: string;
 }
 
-export interface StorageDownloadOptions {
-  destination?: string;
+export interface StorageReadOptions {
+  directory?: string;
 }
 
 export interface StorageAsyncCallback {
-  callback?: (error: StorageError, data: File) => void;
+  callback?: (error?: StorageErrorInterface, data?: FileType) => void;
 }
 
 export interface StorageService {
-  upload(
-    input: PathLike,
-    options: StorageUploadOptions & StorageAsyncCallback
+  write(
+    input: Required<FileType>,
+    options: StorageWriteOptions & StorageAsyncCallback
   ): void;
-  download(
-    input: string,
-    options: StorageDownloadOptions & StorageAsyncCallback
-  ): void;
-  uploadSync(input: PathLike, options: StorageUploadOptions): Promise<File>;
-  downloadSync(input: string, options: StorageDownloadOptions): Promise<File>;
+  read(input: string, options: StorageReadOptions): Promise<FileType>;
+  writeSync(input: Required<FileType>, options: StorageWriteOptions): void;
+  find(input: string): Promise<string[]>;
 }
