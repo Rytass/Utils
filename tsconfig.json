@@ -29,6 +29,12 @@
       ],
       "@rytass/logistics-adapter-tcat": [
         "logistics-adapter-tcat/src"
+      ],
+      "@rytass/storages": [
+        "storages/src"
+      ],
+      "@rytass/storages-adapter-local": [
+        "storages-adapter-local/src"
       ]
     }
   },

@@ -1,10 +1,11 @@
 {
-  "name": "@rytass/storages",
+  "name": "@rytass/storages-adapter-local",
   "version": "0.0.8",
-  "description": "Rytass Utils Storages",
+  "description": "Rytass Utils Storages local adapter",
   "keywords": [
     "rytass",
-    "storages"
+    "storages",
+    "local"
   ],
   "author": "MarshallChiang <ambrosia8286@gmail.com>",
   "homepage": "https://github.com/Rytass/Utils#readme",
@@ -21,5 +22,10 @@
   },
   "bugs": {
     "url": "https://github.com/Rytass/Utils/issues"
+  },
+  "dependencies": {
+    "@rytass/storages": "^0.0.8",
+    "file-type": "^17.1.2",
+    "lru-cache": "^7.10.1"
   }
 }
