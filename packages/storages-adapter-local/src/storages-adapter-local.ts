@@ -84,6 +84,7 @@ export class StorageLocalService implements StorageService {
     file: Required<FileType>,
     { directory = this.defaultDirectory, ...options }: StorageWriteOptions
   ): void {
+
     if (!directory || !fs.existsSync(directory))
       throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
 
@@ -111,8 +112,10 @@ export class StorageLocalService implements StorageService {
       directory = this.defaultDirectory,
     }: StorageReadOptions & Required<StorageAsyncCallback>
   ): Promise<FileType> {
+
     if (!directory || !fs.existsSync(directory))
       throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
+
     const buffer = await fs.promises.readFile(join(fileName, directory));
     const file = await this.createFile(buffer);
 
@@ -120,16 +123,19 @@ export class StorageLocalService implements StorageService {
   }
 
   async find(directory: string): Promise<string[]> {
+
     if (!fs.existsSync(directory))
       throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
-    var searchSubDirectory = async (directory: string, found: string[]) => {
+
+    const searchSubDirectory = async (directory: string) => {
+      const found: string[] = [];
       const subs = await fs.promises.readdir(directory);
 
       await Promise.all(
         subs.map(async (sub) => {
           (await fs.promises.stat(resolve(directory, sub))).isDirectory()
-            ? found.concat(
-                await searchSubDirectory(resolve(directory, sub), [])
+            ? (await searchSubDirectory(resolve(directory, sub))).map(sub =>
+                found.push(sub)
               )
             : found.push(sub);
         })
@@ -138,6 +144,6 @@ export class StorageLocalService implements StorageService {
       return found;
     };
 
-    return searchSubDirectory(directory, []);
+    return searchSubDirectory(directory);
   }
 }
