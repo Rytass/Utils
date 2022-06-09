@@ -28,13 +28,14 @@ export const TCatLogistics: Logistics<TCatLogisticsStatus> = {
     traceDOM.map((_index, dom) => {
       const innerText = $(dom).text();
       const statusArray = innerText.split(' ').filter(e => e != '');
+
       const status =
-        TCatLogisticsStatusMap[statusArray[statusArray.length - 3]];
+        TCatLogisticsStatusMap[statusArray[statusArray.length - 4]];
 
         if (status)
             statusHistory.push({
                 businessPremise: statusArray[statusArray.length - 1],
-                date: statusArray[statusArray.length - 2],
+                date: `${statusArray[statusArray.length - 3]} ${statusArray[statusArray.length - 2]}`,
                 status: status,
             })
     });

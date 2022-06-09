@@ -23,6 +23,7 @@ export class TCatLogisticsService<T extends Logistics<LogisticsStatus<T>>>
     id: string,
     html: string
   ): LogisticsTraceResponse<T> {
+
     return {
       logisticsId: id,
       statusHistory: this.configuration.statusMap(html) as ReturnType<T['statusMap']>,
@@ -52,5 +53,3 @@ export class TCatLogisticsService<T extends Logistics<LogisticsStatus<T>>>
     return logistics;
   }
 }
-
-const test = new TCatLogisticsService(TCatLogistics)
