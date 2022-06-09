@@ -5,6 +5,6 @@
     "outDir": "./lib",
     "declaration": true
   },
-  "exclude": ["**/*.spec.*"],
+  "exclude": [],
   "include": ["./src"]
 }
