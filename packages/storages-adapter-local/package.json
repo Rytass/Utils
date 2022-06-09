@@ -25,7 +25,12 @@
   },
   "dependencies": {
     "@rytass/storages": "^0.0.8",
-    "file-type": "^17.1.2",
-    "lru-cache": "^7.10.1"
+    "lru-cache": "^7.10.1",
+    "mime-types": "^2.1.35",
+    "mmmagic": "^0.5.3"
+  }, 
+  "devDependencies": {
+    "@types/mime-types": "^2.1.1",
+    "@types/mmmagic": "^0.4.30"
   }
 }

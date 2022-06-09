@@ -8,7 +8,7 @@ module.exports = {
       tsconfig: '<rootDir>/tsconfig.spec.json',
     },
   },
-  moduleFileExtensions: ['js', 'json', 'ts', 'tsx'],
+  moduleFileExtensions: ['js', 'json', 'ts', 'tsx', 'node'],
   moduleNameMapper: {
     '@rytass/([a-zA-Z-_/]*)$': '<rootDir>/packages/$1/src',
   },
