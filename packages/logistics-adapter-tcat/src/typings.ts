@@ -17,5 +17,6 @@ export type TCatLogisticsStatus =
   | 'AWAY_HOME';
 
 export interface TCatLogisticsInterface<T> extends LogisticsInterface<T> {
+  ignoreNotFound: boolean
   statusMap: (html: string, id: string) => LogisticsStatusHistory<T>[];
 }
