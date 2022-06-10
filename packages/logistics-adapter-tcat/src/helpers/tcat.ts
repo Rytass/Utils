@@ -1,5 +1,5 @@
-import { Logistics, LogisticsStatusHistory } from '@rytass/logistics';
-import { TCatLogisticsStatus } from '..';
+import { LogisticsStatusHistory } from '@rytass/logistics';
+import { TCatLogisticsInterface, TCatLogisticsStatus } from '..';
 import cheerio from 'cheerio';
 
 export const TCatLogisticsStatusMap: { [key: string]: TCatLogisticsStatus } = {
@@ -16,14 +16,16 @@ export const TCatLogisticsStatusMap: { [key: string]: TCatLogisticsStatus } = {
   '不在家.公司行號休息': 'AWAY_HOME',
 } as const;
 
-export const TCatLogistics: Logistics<TCatLogisticsStatus> = {
+export const TCatLogistics: TCatLogisticsInterface<TCatLogisticsStatus> = {
   url: 'https://www.t-cat.com.tw/Inquire/TraceDetail.aspx',
-  statusMap: (reference: string) => {
+  statusMap: (reference: string, logisticId: string) => {
     const statusHistory: LogisticsStatusHistory<TCatLogisticsStatus>[] = [];
     const $ = cheerio.load(reference);
     const traceDOM = $(
       '#main > div.contentsArea > div > div > div > div > table > tbody > tr'
     );
+
+    let isMatch = false;
 
     traceDOM.map((_index, dom) => {
       const innerText = $(dom).text();
@@ -32,14 +34,19 @@ export const TCatLogistics: Logistics<TCatLogisticsStatus> = {
       const status =
         TCatLogisticsStatusMap[statusArray[statusArray.length - 4]];
 
-        if (status)
-            statusHistory.push({
-                businessPremise: statusArray[statusArray.length - 1],
-                date: `${statusArray[statusArray.length - 3]} ${statusArray[statusArray.length - 2]}`,
-                status: status,
-            })
+      const foundId = statusArray[0];
+
+      if (foundId === logisticId) isMatch = true;
+      if (status)
+        statusHistory.push({
+          businessPremise: statusArray[statusArray.length - 1],
+          date: `${statusArray[statusArray.length - 3]} ${
+            statusArray[statusArray.length - 2]
+          }`,
+          status: status,
+        });
     });
 
-    return statusHistory;
+    return isMatch ? statusHistory : [];
   },
 };

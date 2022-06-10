@@ -1,11 +1,11 @@
 export type LogisticsBaseStatus = 'DELIVERED' | 'DELIVERING' | 'SHELVED'
 
-export type LogisticsStatus<T extends Logistics<unknown>> = LogisticsBaseStatus extends T['reference'] ? T['reference'] : never
+export type LogisticsStatus<T extends LogisticsInterface<unknown>> = LogisticsBaseStatus extends T['reference'] ? T['reference'] : never
 
-export interface Logistics<T = LogisticsBaseStatus> {
+export interface LogisticsInterface<T = LogisticsBaseStatus> {
   reference? : T,
   url: string,
-  statusMap: (reference: any) => LogisticsStatusHistory<T>[];
+  statusMap: (...reference: any) => LogisticsStatusHistory<T>[];
 }
 
 export interface LogisticsStatusHistory<T> {
@@ -14,12 +14,12 @@ export interface LogisticsStatusHistory<T> {
   status: T;
 }
 
-export interface LogisticsTraceResponse<K extends Logistics<LogisticsStatus<K>>> {
+export interface LogisticsTraceResponse<K extends LogisticsInterface<LogisticsStatus<K>>> {
   logisticsId: string;
   statusHistory: ReturnType<K['statusMap']>
 }
 
-export interface LogisticsService<LogisticsType extends Logistics<LogisticsStatus<LogisticsType>>> {
+export interface LogisticsService<LogisticsType extends LogisticsInterface<LogisticsStatus<LogisticsType>>> {
   trace(request: string): Promise<LogisticsTraceResponse<LogisticsType>[]>;
   trace(request: string[]): Promise<LogisticsTraceResponse<LogisticsType>[]>;
 }

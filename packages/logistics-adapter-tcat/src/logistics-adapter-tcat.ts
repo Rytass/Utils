@@ -1,22 +1,21 @@
 import {
-  Logistics,
+  LogisticsInterface,
   LogisticsService,
   LogisticsStatus,
   LogisticsTraceResponse,
 } from '@rytass/logistics';
 import axios from 'axios';
-import { TCatLogistics } from '.';
 
-export class TCatLogisticsService<T extends Logistics<LogisticsStatus<T>>>
+export class TCatLogisticsService<T extends LogisticsInterface<LogisticsStatus<T>>>
   implements LogisticsService<T>
 {
   private readonly configuration: T
 
-  constructor(configuration: T extends Logistics<LogisticsStatus<T>> ? T : never) {
+  constructor(configuration: T extends LogisticsInterface<LogisticsStatus<T>> ? T : never) {
     this.configuration = configuration
   }
   private getTraceUrl(logisticId: string) {
-    return this.configuration.url + `?BillID=${logisticId}`;
+    return this.configuration.url + `?BillID=${logisticId}&ReturnUrl=Trace.aspx`;
   }
 
   private getLogisticsStatuses(
@@ -26,7 +25,7 @@ export class TCatLogisticsService<T extends Logistics<LogisticsStatus<T>>>
 
     return {
       logisticsId: id,
-      statusHistory: this.configuration.statusMap(html) as ReturnType<T['statusMap']>,
+      statusHistory: this.configuration.statusMap(html, id) as ReturnType<T['statusMap']>,
     };
   }
 
