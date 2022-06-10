@@ -603,9 +603,9 @@ describe('OrderBuilderE2E', () => {
     const order1 = builder1.build({ id: '24915', items });
     const order2 = builder2.build({ items });
 
-    expect(order1.price).toEqual(25915);
+    expect(order1.price).toEqual(24915);
     expect(order2.price).toEqual(27850);
-    expect(Math.min(order1.price, order2.price)).toEqual(25915);
+    expect(Math.min(order1.price, order2.price)).toEqual(24915);
   });
 
   /**
@@ -865,8 +865,6 @@ describe('TAST v0.0.2', () => {
     const builder = new OrderBuilder({
       policies: [
         [policy1, policy2],
-        // [policy3, policy4, policy5],
-        // [policy6, policy7],
       ],
     });
 
@@ -890,8 +888,8 @@ describe('TAST v0.0.2', () => {
     //   .addPolicy([
     //     [policy6, policy7],
     //   ])
-    //   .build({ items });
+    //   .build({ id: 'TDD3', items });
 
-    // expect(order3.price).toEqual(33291);
+    // expect(order3.price).toEqual(34261);
   })
 })

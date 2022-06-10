@@ -1,3 +1,4 @@
+import { getOrderItems } from '../../policies/discount/utils';
 import { Order } from '../../core/order';
 import { divided, plus, times } from '../../utils/decimal';
 import { Condition } from '../typings';
@@ -16,7 +17,7 @@ export class QuantityThreshold implements Condition<ThresholdDescription> {
   }
 
   satisfy(order: Order) {
-    return order.itemManager.flattenItems.reduce((total, item) => (
+    return getOrderItems(order).reduce((total, item) => (
       plus(
         total,
         Math.ceil(divided(

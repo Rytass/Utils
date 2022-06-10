@@ -135,6 +135,8 @@ export class StepValueDiscount
     if (this.valid(order)) {
       const matchedItems: FlattenOrderItem[] = this.matchedItems(order);
 
+      if (this.options?.stepUnit === 'quantity' && matchedItems.length < this.step) return policies;
+
       const itemValue = this.options?.stepUnit === 'quantity'
         ? matchedItems.reduce((total, item) => (
             plus(total, item.quantity)
