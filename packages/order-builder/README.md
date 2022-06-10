@@ -11,6 +11,9 @@ Core API
 
 1. OrderBuilder
     - config
+      - PolicyPickStrategy
+        - `ItemBasedPolicyPickStrategy`
+        - `OrderBasedPolicyPickStrategy`
       - DiscountMethod
         - `PriceWeightedAverageDiscountMethod`
         - `QuantityWeightedAverageDiscountMethod`
@@ -73,7 +76,7 @@ Core API
 | `addPolicy(policy: Policies)`            | this              | Push policy instance(s) into **builder.policies** (can active as `builder.hasBuiltOrders` is `false`). |
 | `addPolicy(policies: Policies[])`        |                   | |
 | `removePolicy(policy: Policy)`           | this              | Remove policy instance(s) from **builder.policies** based on instance reference or **policy.id** (can active as `builder.hasBuiltOrders` is `false`) |
-| `removePolicy(policy: string)`           | this              | Remove policy instance(s) from **builder.policies** based on instance reference or **policy.id** (can active as `builder.hasBuiltOrders` is `false`) |
+| `removePolicy(policy: string)`           | | |
 | `removePolicy(policies: Policy[])`       | | |
 | `removePolicy(policies: string[])`       | | |
 | `getPolicy(policyId: string)`            | Policy \| undefined | Get the specified policy instance by **policy.id** |
@@ -94,6 +97,7 @@ Core API
 | `Order`                                  | Return            | Description |
 | ---------------------------------------- | ----------------- | ----------- |
 | **Properties**                           |                   |             |
+| `builder`                                | OrderBuilder      | Get the the owner of current order. |
 | `config`                                 | OrderConfig       | Get the configuration from its builder. |
 | `policies`                               | Policies[]        | Get all the policies from its builder. |
 | `coupons`                                | string[]          | Get all the coupons from current order. |
