@@ -96,7 +96,7 @@ export class StorageLocalService implements StorageService {
   }
 
   writeSync(
-    file: Required<FileType>,
+    file: FileType,
     { directory = this.defaultDirectory, ...options }: StorageWriteOptions
   ): void {
     if (!directory || !fs.existsSync(directory))
@@ -110,7 +110,7 @@ export class StorageLocalService implements StorageService {
           ? options.fileName
           : options.fileName(file);
 
-    const [name, extension] = fileName.split(',');
+    const [name, extension] = fileName.split('.');
 
     if (!extension) fileName = [name, file.extension].join('.');
 
@@ -126,11 +126,19 @@ export class StorageLocalService implements StorageService {
       directory = this.defaultDirectory,
     }: StorageReadOptions & Required<StorageAsyncCallback>
   ): Promise<FileType> {
+
     if (!directory || !fs.existsSync(directory))
       throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
+    const fullPath = join(fileName, directory)
 
-    const buffer = await fs.promises.readFile(join(fileName, directory));
+    if (this.cache)
+      this.cache.get(fullPath)
+
+    const buffer = await fs.promises.readFile(fullPath);
     const file =  await this.createFile(buffer);
+
+    if (this.cache)
+      this.cache.set(fullPath, file)
 
     return file;
   }
