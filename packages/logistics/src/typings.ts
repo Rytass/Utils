@@ -24,3 +24,7 @@ export interface LogisticsService<LogisticsType extends LogisticsInterface<Logis
   trace(request: string[]): Promise<LogisticsTraceResponse<LogisticsType>[]>;
 }
 
+export interface LogisticsErrorInterface {
+  readonly code: string;
+  readonly message?: string;
+}

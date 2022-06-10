@@ -17,24 +17,28 @@ export const TCatLogisticsStatusMap: { [key: string]: TCatLogisticsStatus } = {
 } as const;
 
 export const TCatLogistics: TCatLogisticsInterface<TCatLogisticsStatus> = {
+  ignoreNotFound: false,
   url: 'https://www.t-cat.com.tw/Inquire/TraceDetail.aspx',
-  statusMap: (reference: string, logisticId: string) => {
+  statusMap: (
+    reference: string,
+    logisticId: string
+  ): LogisticsStatusHistory<TCatLogisticsStatus>[] => {
     const statusHistory: LogisticsStatusHistory<TCatLogisticsStatus>[] = [];
     const $ = cheerio.load(reference);
     const traceDOM = $(
       '#main > div.contentsArea > div > div > div > div > table > tbody > tr'
     );
 
-    let isMatch = false;
+    let isMatch: boolean = false;
 
     traceDOM.map((_index, dom) => {
-      const innerText = $(dom).text();
-      const statusArray = innerText.split(' ').filter(e => e != '');
+      const innerText: string = $(dom).text();
+      const statusArray: string[] = innerText.split(' ').filter(e => e != '');
 
-      const status =
+      const status: TCatLogisticsStatus =
         TCatLogisticsStatusMap[statusArray[statusArray.length - 4]];
 
-      const foundId = statusArray[0];
+      const foundId: string = statusArray[0];
 
       if (foundId === logisticId) isMatch = true;
       if (status)
