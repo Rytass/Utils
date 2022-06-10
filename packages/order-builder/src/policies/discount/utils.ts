@@ -1,10 +1,10 @@
 import { Condition } from '../../conditions';
 import { FlattenOrderItem } from '../../core';
 import { Order } from '../../core/order';
+import { minus, times } from '../../utils/decimal';
 import { Policy, PolicyPrefix } from '../typings';
 import { BaseDiscount } from './base-discount';
 import { DiscountOptions } from './typings';
-import { minus, plus, times } from '../../utils/decimal';
 
 export function isDiscountPolicy(policy: Policy): policy is BaseDiscount {
   return policy.prefix === PolicyPrefix.DISCOUNT;
@@ -39,13 +39,20 @@ export function getOnlyMatchedItems(
   order: Order,
   conditions: Condition[],
 ) {
-  return conditions.reduce((items, condition) => {
+  let hasSubConstrain = false;
+
+  const filteredItems = conditions.reduce((items, condition) => {
     if (typeof condition?.matchedItems === 'function') {
-      return [...items, ...condition.matchedItems(order)];
+      hasSubConstrain = true;
+      condition.matchedItems(order).forEach(item => items.add(item));
+
+      return items;
     }
 
     return items;
-  }, [] as FlattenOrderItem[]);
+  }, new Set<FlattenOrderItem>());
+
+  return hasSubConstrain && filteredItems.size ? Array.from(filteredItems.values()) : getOrderItems(order);
 }
 
 export function getOrderItems(order: Order) {
