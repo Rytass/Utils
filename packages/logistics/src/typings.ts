@@ -5,7 +5,6 @@ export type LogisticsStatus<T extends LogisticsInterface<unknown>> = LogisticsBa
 export interface LogisticsInterface<T = LogisticsBaseStatus> {
   reference? : T,
   url: string,
-  statusMap: (...reference: any) => LogisticsStatusHistory<T>[];
 }
 
 export interface LogisticsStatusHistory<T> {
@@ -16,7 +15,7 @@ export interface LogisticsStatusHistory<T> {
 
 export interface LogisticsTraceResponse<K extends LogisticsInterface<LogisticsStatus<K>>> {
   logisticsId: string;
-  statusHistory: ReturnType<K['statusMap']>
+  statusHistory: LogisticsStatusHistory<K['reference']>[];
 }
 
 export interface LogisticsService<LogisticsType extends LogisticsInterface<LogisticsStatus<LogisticsType>>> {
@@ -28,3 +27,4 @@ export interface LogisticsErrorInterface {
   readonly code: string;
   readonly message?: string;
 }
+
