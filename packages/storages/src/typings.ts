@@ -1,5 +1,6 @@
 export type WriteFileInput = string | Buffer
 export type FileName = string | ((data: FileType) => string | string);
+export type ErrorCallback = (error: StorageErrorInterface) => void
 
 export interface FileType {
   readonly buffer: Buffer;
@@ -17,6 +18,7 @@ export interface StorageWriteOptions {
   maxSize?: number;
   fileName?: FileName
   directory?: string;
+  autoMkdir?: boolean
 }
 
 export interface StorageReadOptions {
@@ -34,5 +36,6 @@ export interface StorageService {
   ): void;
   read(input: string, options: StorageReadOptions): Promise<FileType>;
   writeSync(input: Required<FileType>, options: StorageWriteOptions): void;
-  find(input: string): Promise<string[]>;
+  search(directory: string): Promise<string[]>;
+  remove(directory: string, callback?: ErrorCallback): Promise<void>
 }
