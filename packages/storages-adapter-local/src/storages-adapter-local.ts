@@ -38,12 +38,12 @@ export class StorageLocalService implements StorageService {
     const magic = new Magic(MAGIC_MIME_TYPE);
 
     return new Promise((resolve, reject) => {
-      magic.detect(input, (error: Error, result: string| string[]) => {
+      magic.detect(input, (error: Error, result: string | string[]) => {
         if (error) reject(error);
-        const mime = result instanceof Array? result[0] : result
-        const extension = mimes.extension(mime)
+        const mime = result instanceof Array ? result[0] : result;
+        const extension = mimes.extension(mime);
 
-        resolve({mime: mime, extension: extension ? extension: undefined});
+        resolve({ mime: mime, extension: extension ? extension : undefined });
       });
     });
   }
@@ -51,7 +51,7 @@ export class StorageLocalService implements StorageService {
   async createFile(input: WriteFileInput): Promise<FileType> {
     const buffer = input instanceof Buffer ? input : Buffer.from(input);
     const size = Buffer.byteLength(buffer);
-    const { mime, extension } =  await this.detectFileType(buffer)
+    const { mime, extension } = await this.detectFileType(buffer);
 
     return { buffer, size, mime: mime, extension: extension };
   }
@@ -126,26 +126,29 @@ export class StorageLocalService implements StorageService {
       directory = this.defaultDirectory,
     }: StorageReadOptions & Required<StorageAsyncCallback>
   ): Promise<FileType> {
-
     if (!directory || !fs.existsSync(directory))
       throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
-    const fullPath = join(fileName, directory)
+    const fullPath = join(fileName, directory);
 
-    if (this.cache)
-      this.cache.get(fullPath)
+    if (this.cache) this.cache.get(fullPath);
 
     const buffer = await fs.promises.readFile(fullPath);
-    const file =  await this.createFile(buffer);
+    const file = await this.createFile(buffer);
 
-    if (this.cache)
-      this.cache.set(fullPath, file)
+    if (this.cache) this.cache.set(fullPath, file);
 
     return file;
   }
-
+  /**
+   * Search every files in given directory
+   * @param {String} directory Path like string.
+   * @returns {String[]} File names found in directory.
+   */
   async find(directory: string): Promise<string[]> {
     if (!fs.existsSync(directory))
       throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
+
+    if ((await fs.promises.stat(directory)).isFile()) return [directory];
 
     const searchSubDirectory = async (directory: string) => {
       const found: string[] = [];
