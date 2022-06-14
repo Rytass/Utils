@@ -8,9 +8,10 @@ import {
   StorageWriteOptions,
   ErrorCode,
   StorageErrorInterface,
+  ErrorCallback,
 } from '@rytass/storages';
 import { DetectLocalFileType, StorageLocalOptions } from '.';
-import { join, resolve } from 'path';
+import { resolve } from 'path';
 import { createHash } from 'crypto';
 import LRU from 'lru-cache';
 import { Magic, MAGIC_MIME_TYPE } from 'mmmagic';
@@ -64,8 +65,12 @@ export class StorageLocalService implements StorageService {
     }: StorageWriteOptions & StorageAsyncCallback
   ): void {
     try {
-      if (!directory || !fs.existsSync(directory))
-        throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
+      if (!directory) throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
+
+      if (!fs.existsSync(directory)) {
+        if (options.autoMkdir) fs.promises.mkdir(directory, { recursive: true });
+        else throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
+      }
 
       let fileName = this.createFileName(file.buffer);
 
@@ -80,7 +85,7 @@ export class StorageLocalService implements StorageService {
       if (!extension) fileName = [name, file.extension].join('.');
 
       fs.writeFile(
-        join(directory, fileName),
+        resolve(directory, fileName),
         new Uint8Array(file.buffer), //ASCII
         (error) => {
           if (options.callback) {
@@ -99,8 +104,12 @@ export class StorageLocalService implements StorageService {
     file: FileType,
     { directory = this.defaultDirectory, ...options }: StorageWriteOptions
   ): void {
-    if (!directory || !fs.existsSync(directory))
-      throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
+    if (!directory) throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
+
+    if (!fs.existsSync(directory)) {
+      if (options.autoMkdir) fs.promises.mkdir(directory, { recursive: true });
+      else throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
+    }
 
     let fileName = this.createFileName(file.buffer);
 
@@ -115,22 +124,22 @@ export class StorageLocalService implements StorageService {
     if (!extension) fileName = [name, file.extension].join('.');
 
     return fs.writeFileSync(
-      join(directory, fileName),
+      resolve(directory, fileName),
       new Uint8Array(file.buffer)
     );
   }
 
   async read(
     fileName: string,
-    {
-      directory = this.defaultDirectory,
-    }: StorageReadOptions & Required<StorageAsyncCallback>
+    { directory = this.defaultDirectory }: StorageReadOptions
   ): Promise<FileType> {
     if (!directory || !fs.existsSync(directory))
       throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
-    const fullPath = join(fileName, directory);
+    const fullPath = resolve(directory, fileName);
 
-    if (this.cache) this.cache.get(fullPath);
+    const cache = this.cache?.get(fullPath);
+
+    if (cache) return cache;
 
     const buffer = await fs.promises.readFile(fullPath);
     const file = await this.createFile(buffer);
@@ -144,7 +153,7 @@ export class StorageLocalService implements StorageService {
    * @param {String} directory Path like string.
    * @returns {String[]} File names found in directory.
    */
-  async find(directory: string): Promise<string[]> {
+  async search(directory: string): Promise<string[]> {
     if (!fs.existsSync(directory))
       throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
 
@@ -160,7 +169,7 @@ export class StorageLocalService implements StorageService {
             ? (await searchSubDirectory(resolve(directory, sub))).map(sub =>
                 found.push(sub)
               )
-            : found.push(sub);
+            : found.push(resolve(directory, sub));
         })
       );
 
@@ -168,5 +177,18 @@ export class StorageLocalService implements StorageService {
     };
 
     return searchSubDirectory(directory);
+  }
+
+  async remove(directory: string, callback?: ErrorCallback) {
+    if (!fs.existsSync(directory)) return;
+
+    try {
+      (await fs.promises.stat(directory)).isDirectory()
+        ? fs.promises.rmdir(directory)
+        : fs.promises.unlink(directory);
+    } catch (error) {
+      if (callback)
+        callback(new StorageError(ErrorCode.REMOVE_ERROR, error as string));
+    }
   }
 }

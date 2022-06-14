@@ -3,29 +3,34 @@
  */
 
 import { StorageLocalService } from '../src';
-import fs from 'fs';
-import { join } from 'path';
+import { resolve } from 'path';
 
 describe('StorageLocalService', () => {
   const storage = new StorageLocalService();
   const fileName = 'unit_test.txt';
   const unitTestString = 'test_string';
 
-  it('should write file', async () => {
+  it('should write and search file', async () => {
     const file = await storage.createFile(Buffer.from(unitTestString));
 
     storage.writeSync(file, { directory: __dirname, fileName });
-    const directoryFiles = await storage.find(__dirname);
+    const directoryFiles = await storage.search(__dirname);
 
-    expect(directoryFiles.includes(fileName)).toBeTruthy();
+    expect(directoryFiles.includes(resolve(__dirname, fileName))).toBeTruthy();
   });
 
   it('should read file', async () => {
-    const storageFile = await storage.createFile(
-      fs.readFileSync(join(__dirname, fileName))
-    );
+    const storageFile = await storage.read(fileName, {directory: __dirname})
 
     expect(storageFile.mime).toBe('text/plain');
     expect(storageFile.extension).toBe('txt');
   });
+
+  it('should remove file', async() => {
+    await storage.remove(resolve(__dirname, fileName))
+    const directoryFiles = await storage.search(__dirname);
+
+    expect(directoryFiles.includes(resolve(__dirname, fileName))).toBeFalsy()
+
+  })
 });

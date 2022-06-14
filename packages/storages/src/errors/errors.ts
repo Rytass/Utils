@@ -13,4 +13,5 @@ export enum ErrorCode {
   WRITE_FILE_ERROR = '101',
   READ_FILE_ERROR = '102',
   DIRECTORY_NOT_FOUND = '201',
+  REMOVE_ERROR = '301'
 }
