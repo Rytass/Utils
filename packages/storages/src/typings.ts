@@ -1,12 +1,15 @@
-export type WriteFileInput = string | Buffer
-export type FileName = string | ((data: FileType) => string | string);
-export type ErrorCallback = (error: StorageErrorInterface) => void
+import { ConvertableStatus, Converter, ConverterManager } from './converter/typings';
 
-export interface FileType {
+export type WriteFileInput = string | Buffer;
+export type FileName = string | ((data: FileType) => string | string);
+export type ErrorCallback = (error: StorageErrorInterface) => void;
+
+export interface FileType<T = string> {
   readonly buffer: Buffer;
   readonly size: number;
   extension?: string;
   mime?: string;
+  to: (extension: T) => Buffer | undefined;
 }
 
 export interface StorageErrorInterface {
@@ -16,9 +19,9 @@ export interface StorageErrorInterface {
 
 export interface StorageWriteOptions {
   maxSize?: number;
-  fileName?: FileName
+  fileName?: FileName;
   directory?: string;
-  autoMkdir?: boolean
+  autoMkdir?: boolean;
 }
 
 export interface StorageReadOptions {
@@ -29,13 +32,25 @@ export interface StorageAsyncCallback {
   callback?: (error?: StorageErrorInterface, data?: FileType) => void;
 }
 
-export interface StorageService {
+export interface StorageOptions {
+  converters?: Converter[];
+}
+
+export interface StorageService<T extends StorageOptions, K = T['converters']> {
+  converterManager?: ConverterManager<
+    K extends Converter[] ? K : never
+  >;
   write(
     input: Required<FileType>,
     options: StorageWriteOptions & StorageAsyncCallback
   ): void;
-  read(input: string, options: StorageReadOptions): Promise<FileType>;
+  read(
+    input: string,
+    options: StorageReadOptions
+  ): Promise<
+    FileType<ConvertableStatus<T['converters']>>
+  >;
   writeSync(input: Required<FileType>, options: StorageWriteOptions): void;
   search(directory: string): Promise<string[]>;
-  remove(directory: string, callback?: ErrorCallback): Promise<void>
+  remove(directory: string, callback?: ErrorCallback): Promise<void>;
 }

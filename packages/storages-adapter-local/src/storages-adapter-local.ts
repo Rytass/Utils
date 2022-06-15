@@ -9,6 +9,9 @@ import {
   ErrorCode,
   StorageErrorInterface,
   ErrorCallback,
+  ConverterManager,
+  Converter,
+  ConvertableStatus,
 } from '@rytass/storages';
 import { DetectLocalFileType, StorageLocalOptions } from '.';
 import { resolve } from 'path';
@@ -18,11 +21,18 @@ import { Magic, MAGIC_MIME_TYPE } from 'mmmagic';
 import * as mimes from 'mime-types';
 import * as fs from 'fs';
 
-export class StorageLocalService implements StorageService {
+export class StorageLocalService<T extends StorageLocalOptions>
+  implements StorageService<T>
+{
   readonly defaultDirectory?: string;
-  private readonly cache?: LRU<string, FileType>;
+  readonly converterManager?: ConverterManager<
+    T['converters'] extends Converter[]
+      ? T['converters']
+      : never
+  >;
+  private readonly cache?: LRU<string, FileType<ConvertableStatus<T['converters']>>>;
 
-  constructor(options?: StorageLocalOptions) {
+  constructor(options?: T extends StorageLocalOptions ? T : never) {
     if (options?.defaultDirectory)
       this.defaultDirectory = options.defaultDirectory;
     if (options?.cache) this.cache = new LRU(options.cache);
@@ -49,26 +59,33 @@ export class StorageLocalService implements StorageService {
     });
   }
 
-  async createFile(input: WriteFileInput): Promise<FileType> {
+  async createFile(input: WriteFileInput): Promise<FileType<ConvertableStatus<T['converters']>>> {
     const buffer = input instanceof Buffer ? input : Buffer.from(input);
     const size = Buffer.byteLength(buffer);
     const { mime, extension } = await this.detectFileType(buffer);
 
-    return { buffer, size, mime: mime, extension: extension };
+    return {
+      buffer,
+      size,
+      mime: mime,
+      extension: extension,
+      to: extension => this.converterManager?.convert(extension, buffer),
+    };
   }
 
-  write(
+  async write(
     file: Required<FileType>,
     {
       directory = this.defaultDirectory,
       ...options
     }: StorageWriteOptions & StorageAsyncCallback
-  ): void {
+  ): Promise<void> {
     try {
       if (!directory) throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
 
       if (!fs.existsSync(directory)) {
-        if (options.autoMkdir) fs.promises.mkdir(directory, { recursive: true });
+        if (options.autoMkdir)
+          await fs.promises.mkdir(directory, { recursive: true });
         else throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
       }
 
@@ -80,7 +97,7 @@ export class StorageLocalService implements StorageService {
             ? options.fileName
             : options.fileName(file);
 
-      const [name, extension] = fileName.split(',');
+      const [name, extension] = fileName.split('.');
 
       if (!extension) fileName = [name, file.extension].join('.');
 
@@ -107,7 +124,7 @@ export class StorageLocalService implements StorageService {
     if (!directory) throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
 
     if (!fs.existsSync(directory)) {
-      if (options.autoMkdir) fs.promises.mkdir(directory, { recursive: true });
+      if (options.autoMkdir) fs.mkdirSync(directory, {recursive: true})
       else throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
     }
 
@@ -132,7 +149,7 @@ export class StorageLocalService implements StorageService {
   async read(
     fileName: string,
     { directory = this.defaultDirectory }: StorageReadOptions
-  ): Promise<FileType> {
+  ): Promise<FileType<ConvertableStatus<T['converters']>>> {
     if (!directory || !fs.existsSync(directory))
       throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
     const fullPath = resolve(directory, fileName);
