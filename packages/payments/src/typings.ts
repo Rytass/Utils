@@ -31,6 +31,13 @@ export interface OrderCVSCommitMessage extends OrderCommitMessage {
   committedAt: Date | null;
 }
 
+export interface OrderBarcodeCommitMessage extends OrderCommitMessage {
+  type?: Channel.CVS_BARCODE;
+  id: string;
+  totalPrice: number;
+  committedAt: Date | null;
+}
+
 export interface OrderCommitMessage {
   id: string;
   totalPrice: number;
@@ -43,7 +50,9 @@ export type AdditionalInfo<OCM extends OrderCommitMessage> =
   IsExtends<OCM, OrderCreditCardCommitMessage, CreditCardAuthInfo> extends never
   ? IsExtends<OCM, OrderVirtualAccountCommitMessage, VirtualAccountInfo> extends never
   ? IsExtends<OCM, OrderCVSCommitMessage, CVSInfo> extends never
+  ? IsExtends<OCM, OrderBarcodeCommitMessage, BarcodeInfo> extends never
   ? never
+  : BarcodeInfo
   : CVSInfo
   : VirtualAccountInfo
   : CreditCardAuthInfo;
@@ -113,8 +122,12 @@ export interface VirtualAccountInfo {
 }
 
 export interface CVSInfo {
-  paymentURL: string;
   paymentCode: string;
+  expiredAt: string;
+}
+
+export interface BarcodeInfo {
+  barcodes: [string, string, string];
   expiredAt: string;
 }
 

@@ -7,9 +7,9 @@ import { OrderState } from '@rytass/payments';
 import { addMac } from '../__utils__/add-mac';
 import { Channel, ECPayCallbackPaymentType, ECPayPayment } from '@rytass/payments-adapter-ecpay';
 import http, { createServer } from 'http';
-import { ECPayChannelCVS } from 'payments-adapter-ecpay/src/typings';
+import { ECPayChannelBarcode, ECPayChannelCVS } from 'payments-adapter-ecpay/src/typings';
 
-describe('ECPayPayment (CVS)', () => {
+describe('ECPayPayment (Barcode)', () => {
   const originCreateServer = createServer;
   const mockedCreateServer = jest.spyOn(http, 'createServer');
 
@@ -35,22 +35,23 @@ describe('ECPayPayment (CVS)', () => {
     return mockServer;
   });
 
-  describe('CVS', () => {
-    let payment: ECPayPayment<ECPayChannelCVS>;
+  describe('Barcode', () => {
+    let payment: ECPayPayment<ECPayChannelBarcode>;
 
     beforeAll(() => new Promise<void>((resolve) => {
-      payment = new ECPayPayment<ECPayChannelCVS>({
+      payment = new ECPayPayment<ECPayChannelBarcode>({
+        serverHost: 'https://7d44-203-69-123-207.ngrok.io',
         withServer: true,
         onServerListen: resolve,
       });
     }));
 
-    it('should throw on not cvs channel set cvsExpireMinutes', () => {
+    it('should throw on not barcode channel set cvsBarcodeExpireDays', () => {
       expect(() => {
         payment.prepare({
           // @ts-ignore: Unreachable code error
           channel: Channel.VIRTUAL_ACCOUNT,
-          cvsExpireMinutes: 1100,
+          cvsBarcodeExpireDays: 1100,
           items: [{
             name: 'Test',
             unitPrice: 100,
@@ -60,11 +61,11 @@ describe('ECPayPayment (CVS)', () => {
       }).toThrowError();
     });
 
-    it('should `cvsExpireMinutes` between 1 and 43200', () => {
+    it('should `cvsBarcodeExpireDays` between 1 and 7', () => {
       expect(() => {
         payment.prepare({
-          channel: Channel.CVS_KIOSK,
-          cvsExpireMinutes: 0,
+          channel: Channel.CVS_BARCODE,
+          cvsBarcodeExpireDays: 0,
           items: [{
             name: 'Test',
             unitPrice: 100,
@@ -75,8 +76,8 @@ describe('ECPayPayment (CVS)', () => {
 
       expect(() => {
         payment.prepare({
-          channel: Channel.CVS_KIOSK,
-          cvsExpireMinutes: 99999,
+          channel: Channel.CVS_BARCODE,
+          cvsBarcodeExpireDays: 99999,
           items: [{
             name: 'Test',
             unitPrice: 100,
@@ -86,9 +87,9 @@ describe('ECPayPayment (CVS)', () => {
       }).toThrowError();
     });
 
-    it('should default virtual expire minutes is 10080', () => {
+    it('should default virtual expire days is 7', () => {
       const order = payment.prepare({
-        channel: Channel.CVS_KIOSK,
+        channel: Channel.CVS_BARCODE,
         items: [{
           name: 'Test',
           unitPrice: 100,
@@ -96,13 +97,13 @@ describe('ECPayPayment (CVS)', () => {
         }],
       });
 
-      expect(order.form.StoreExpireDate).toBe('10080');
+      expect(order.form.StoreExpireDate).toBe('7');
     });
 
-    it('should throw if total aomunt between 33 and 6000', () => {
+    it('should throw if total aomunt between 17 and 20000', () => {
       expect(() => {
         payment.prepare({
-          channel: Channel.CVS_KIOSK,
+          channel: Channel.CVS_BARCODE,
           items: [{
             name: 'Test',
             unitPrice: 10,
@@ -113,10 +114,10 @@ describe('ECPayPayment (CVS)', () => {
 
       expect(() => {
         payment.prepare({
-          channel: Channel.CVS_KIOSK,
+          channel: Channel.CVS_BARCODE,
           items: [{
             name: 'Test',
-            unitPrice: 9990,
+            unitPrice: 99900,
             quantity: 1,
           }],
         });
@@ -125,8 +126,8 @@ describe('ECPayPayment (CVS)', () => {
 
     it('should represent virtual account config on form data', () => {
       const order = payment.prepare({
-        channel: Channel.CVS_KIOSK,
-        cvsExpireMinutes: 19999,
+        channel: Channel.CVS_BARCODE,
+        cvsBarcodeExpireDays: 3,
         items: [{
           name: 'Test',
           unitPrice: 1000,
@@ -134,12 +135,12 @@ describe('ECPayPayment (CVS)', () => {
         }],
       });
 
-      expect(order.form.StoreExpireDate).toBe('19999');
-      expect(order.form.PaymentInfoURL).toBe('http://localhost:3000/payments/ecpay/callback');
+      expect(order.form.StoreExpireDate).toBe('3');
+      expect(order.form.PaymentInfoURL).toBe('https://7d44-203-69-123-207.ngrok.io/payments/ecpay/callback');
       expect(order.form.ClientRedirectURL).toBe('');
 
       const clientOrder = payment.prepare({
-        channel: Channel.CVS_KIOSK,
+        channel: Channel.CVS_BARCODE,
         items: [{
           name: 'Test',
           unitPrice: 1000,
@@ -153,7 +154,8 @@ describe('ECPayPayment (CVS)', () => {
 
     it('should default callback handler commit order', (done) => {
       const order = payment.prepare({
-        channel: Channel.CVS_KIOSK,
+        channel: Channel.CVS_BARCODE,
+        cvsBarcodeExpireDays: 1,
         items: [{
           name: 'Test',
           unitPrice: 1000,
@@ -168,14 +170,14 @@ describe('ECPayPayment (CVS)', () => {
       const html = order.formHTML;
 
       const successfulResponse = addMac({
-        Barcode1: '',
-        Barcode2: '',
-        Barcode3: '',
+        Barcode1: '1106176EA',
+        Barcode2: '3453010377039404',
+        Barcode3: '061616000001000',
         ExpireDate: '2022/06/30 20:26:59',
         MerchantID: '2000132',
         MerchantTradeNo: order.id,
-        PaymentNo: 'LLL22167774958',
-        PaymentType: ECPayCallbackPaymentType.CVS,
+        PaymentNo: '',
+        PaymentType: ECPayCallbackPaymentType.BARCODE,
         RtnCode: '10100073',
         RtnMsg: 'Get CVS Code Succeeded.',
         TradeAmt: order.totalPrice.toString(),
@@ -198,17 +200,21 @@ describe('ECPayPayment (CVS)', () => {
         .then((res) => {
           expect(res.text).toEqual('1|OK');
           expect(order.state).toBe(OrderState.COMMITTED);
-          expect(order.additionalInfo?.paymentCode).toBe('LLL22167774958');
+          expect(order.additionalInfo?.barcodes.length).toBe(3);
+          expect(order.additionalInfo?.barcodes[0]).toBe('1106176EA');
+          expect(order.additionalInfo?.barcodes[1]).toBe('3453010377039404');
+          expect(order.additionalInfo?.barcodes[2]).toBe('061616000001000');
           expect(order.additionalInfo?.expiredAt).toBe('2022/06/30 20:26:59');
-          expect(order.paymentType).toBe(ECPayCallbackPaymentType.CVS);
+          expect(order.paymentType).toBe(ECPayCallbackPaymentType.BARCODE);
 
           done();
         });
     });
 
-    it('should default callback handler keep status if get code failed', (done) => {
+    it('should default callback handler keep order status when get barcode failed', (done) => {
       const order = payment.prepare({
-        channel: Channel.CVS_KIOSK,
+        channel: Channel.CVS_BARCODE,
+        cvsBarcodeExpireDays: 1,
         items: [{
           name: 'Test',
           unitPrice: 1000,
@@ -223,15 +229,15 @@ describe('ECPayPayment (CVS)', () => {
       const html = order.formHTML;
 
       const successfulResponse = addMac({
-        Barcode1: '',
-        Barcode2: '',
-        Barcode3: '',
+        Barcode1: '1106176EA',
+        Barcode2: '3453010377039404',
+        Barcode3: '061616000001000',
         ExpireDate: '2022/06/30 20:26:59',
-        MerchantID: '1',
+        MerchantID: '2000132',
         MerchantTradeNo: order.id,
-        PaymentNo: 'LLL22167774958',
-        PaymentType: ECPayCallbackPaymentType.CVS,
-        RtnCode: '0',
+        PaymentNo: '',
+        PaymentType: ECPayCallbackPaymentType.BARCODE,
+        RtnCode: '1010007322',
         RtnMsg: 'Get CVS Code Failed.',
         TradeAmt: order.totalPrice.toString(),
         TradeDate: '2022/06/16 23:07:58',
@@ -253,6 +259,7 @@ describe('ECPayPayment (CVS)', () => {
         .then((res) => {
           expect(res.text).toEqual('1|OK');
           expect(order.state).toBe(OrderState.PRE_COMMIT);
+          expect(order.additionalInfo).toBeUndefined();
 
           done();
         });

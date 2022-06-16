@@ -8,7 +8,7 @@
 - [ ] Checkout (WebATM)
 - [x] Checkout (ATM/Virtual Account)
 - [x] Checkout (CVS)
-- [ ] Checkout (Barcode)
+- [x] Checkout (Barcode)
 - [ ] Checkout (Apple Pay)
 - [ ] Checkout (Line Pay)
 - [x] Query

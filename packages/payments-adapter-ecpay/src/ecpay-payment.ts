@@ -1,12 +1,12 @@
 import { createHash, randomBytes } from 'crypto';
-import { PaymentGateway, PaymentEvents, Channel, PaymentPeriodType, CVSInfo, VirtualAccountInfo, CreditCardAuthInfo } from '@rytass/payments';
+import { PaymentGateway, PaymentEvents, Channel, PaymentPeriodType, CVSInfo, VirtualAccountInfo, CreditCardAuthInfo, BarcodeInfo } from '@rytass/payments';
 import { DateTime } from 'luxon';
 import LRUCache from 'lru-cache';
 import axios from 'axios';
 import { createServer, IncomingMessage, ServerResponse, Server } from 'http';
 import debug from 'debug';
 import { EventEmitter } from 'events';
-import { ECPayCallbackCreditPayload, ECPayCallbackPayload, ECPayCallbackPaymentType, ECPayCallbackVirtualAccountPayload, ECPayChannelVirtualAccount, ECPayCommitMessage, ECPayOrderCreditCardCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayOrderInput, ECPayQueryResultPayload, ECPayOrderVirtualAccountCommitMessage, Language, ECPayChannelCreditCard, GetOrderInput, ECPayVirtualAccountOrderInput, ECPayCreditCardOrderInput, ECPayQueryOrderPayload, ECPayCVSOrderInput, ECPayOrderCVSCommitMessage, ECPayCallbackCVSPayload } from './typings';
+import { ECPayCallbackCreditPayload, ECPayCallbackPayload, ECPayCallbackPaymentType, ECPayCallbackVirtualAccountPayload, ECPayCommitMessage, ECPayOrderCreditCardCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayQueryResultPayload, ECPayOrderVirtualAccountCommitMessage, Language, GetOrderInput, ECPayCreditCardOrderInput, ECPayQueryOrderPayload, ECPayOrderCVSCommitMessage, ECPayCallbackCVSPayload, ECPayOrderBarcodeCommitMessage, ECPayCallbackBarcodePayload } from './typings';
 import { ECPayChannel, ECPayPaymentPeriodType, NUMERIC_CALLBACK_KEYS } from './constants';
 import { ECPayOrder } from './ecpay-order';
 
@@ -190,24 +190,51 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
       }
 
       switch (payload.PaymentType) {
+        case ECPayCallbackPaymentType.BARCODE:
+          if (payload.RtnCode === 10100073) {
+            order.commit<ECPayOrderBarcodeCommitMessage>({
+              id: payload.MerchantTradeNo,
+              totalPrice: payload.TradeAmt,
+              committedAt: null,
+              merchantId: payload.MerchantID,
+              tradeNumber: payload.TradeNo,
+              tradeDate: DateTime.fromFormat(payload.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+              paymentType: payload.PaymentType,
+            }, {
+              barcodes: [
+                (payload as ECPayCallbackBarcodePayload).Barcode1,
+                (payload as ECPayCallbackBarcodePayload).Barcode2,
+                (payload as ECPayCallbackBarcodePayload).Barcode3,
+              ],
+              expiredAt: (payload as ECPayCallbackBarcodePayload).ExpireDate,
+            } as BarcodeInfo);
+          } else {
+            debugPayment(`Get barcode number failed: ${order.id}`);
+          }
+
+          break;
+
         case ECPayCallbackPaymentType.CVS:
         case ECPayCallbackPaymentType.CVS_FAMILY:
         case ECPayCallbackPaymentType.CVS_HILIFE:
         case ECPayCallbackPaymentType.CVS_IBON:
         case ECPayCallbackPaymentType.CVS_OK:
-          order.commit<ECPayOrderCVSCommitMessage>({
-            id: payload.MerchantTradeNo,
-            totalPrice: payload.TradeAmt,
-            committedAt: null,
-            merchantId: payload.MerchantID,
-            tradeNumber: payload.TradeNo,
-            tradeDate: DateTime.fromFormat(payload.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
-            paymentType: payload.PaymentType,
-          }, {
-            paymentURL: (payload as ECPayCallbackCVSPayload).PaymentURL,
-            paymentCode: (payload as ECPayCallbackCVSPayload).PaymentNo,
-            expiredAt: (payload as ECPayCallbackCVSPayload).ExpireDate,
-          } as CVSInfo);
+          if (payload.RtnCode === 10100073) {
+            order.commit<ECPayOrderCVSCommitMessage>({
+              id: payload.MerchantTradeNo,
+              totalPrice: payload.TradeAmt,
+              committedAt: null,
+              merchantId: payload.MerchantID,
+              tradeNumber: payload.TradeNo,
+              tradeDate: DateTime.fromFormat(payload.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+              paymentType: payload.PaymentType,
+            }, {
+              paymentCode: (payload as ECPayCallbackCVSPayload).PaymentNo,
+              expiredAt: (payload as ECPayCallbackCVSPayload).ExpireDate,
+            } as CVSInfo);
+          } else {
+            debugPayment(`Get cvs kiosk number failed: ${order.id}`);
+          }
 
           break;
 
@@ -227,19 +254,23 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
             return;
           }
 
-          order.commit<ECPayOrderVirtualAccountCommitMessage>({
-            id: payload.MerchantTradeNo,
-            totalPrice: payload.TradeAmt,
-            committedAt: null,
-            merchantId: payload.MerchantID,
-            tradeNumber: payload.TradeNo,
-            tradeDate: DateTime.fromFormat(payload.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
-            paymentType: payload.PaymentType,
-          }, {
-            bankCode: (payload as ECPayCallbackVirtualAccountPayload).BankCode,
-            account: (payload as ECPayCallbackVirtualAccountPayload).vAccount,
-            expiredAt: (payload as ECPayCallbackVirtualAccountPayload).ExpireDate,
-          } as VirtualAccountInfo);
+          if (payload.RtnCode === 2) {
+            order.commit<ECPayOrderVirtualAccountCommitMessage>({
+              id: payload.MerchantTradeNo,
+              totalPrice: payload.TradeAmt,
+              committedAt: null,
+              merchantId: payload.MerchantID,
+              tradeNumber: payload.TradeNo,
+              tradeDate: DateTime.fromFormat(payload.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+              paymentType: payload.PaymentType,
+            }, {
+              bankCode: (payload as ECPayCallbackVirtualAccountPayload).BankCode,
+              account: (payload as ECPayCallbackVirtualAccountPayload).vAccount,
+              expiredAt: (payload as ECPayCallbackVirtualAccountPayload).ExpireDate,
+            } as VirtualAccountInfo);
+          } else {
+            debugPayment(`Get virutal account failed: ${order.id}`);
+          }
 
           break;
 
@@ -284,6 +315,10 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
   prepare<P extends CM>(orderInput: GetOrderInput<P>): ECPayOrder<P> {
     if (orderInput.channel && orderInput.channel !== Channel.CREDIT_CARD && (orderInput as ECPayCreditCardOrderInput).memory) {
       throw new Error('`memory` only use on credit card channel');
+    }
+
+    if ('cvsBarcodeExpireDays' in orderInput && orderInput.channel !== Channel.CVS_BARCODE) {
+      throw new Error('`cvsBarcodeExpireDays` only work on virtual account channel');
     }
 
     if ('cvsExpireMinutes' in orderInput && orderInput.channel !== Channel.CVS_KIOSK) {
@@ -453,14 +488,39 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
       }
 
       if (orderInput.cvsExpireMinutes !== undefined) {
-        if (orderInput.cvsExpireMinutes < 1) throw new Error('`cvsExpireMinutes` should between 1 and 43200 days');
-        if (orderInput.cvsExpireMinutes > 43200) throw new Error('`cvsExpireMinutes` should between 1 and 43200 days');
+        if (orderInput.cvsExpireMinutes < 1) throw new Error('`cvsExpireMinutes` should between 1 and 43200 miuntes');
+        if (orderInput.cvsExpireMinutes > 43200) throw new Error('`cvsExpireMinutes` should between 1 and 43200 miuntes');
       }
 
       if (orderInput.cvsExpireMinutes) {
         payload.StoreExpireDate = orderInput.cvsExpireMinutes!.toString();
       } else {
         payload.StoreExpireDate = '10080';
+      }
+
+      payload.PaymentInfoURL = `${this.serverHost}${this.callbackPath}`;
+      payload.ClientRedirectURL = orderInput.clientBackUrl || '';
+    }
+
+    if (orderInput.channel === Channel.CVS_BARCODE) {
+      if (totalAmount < 17) {
+        throw new Error('CVS barcode channel minimum amount is 17');
+      }
+
+      if (totalAmount > 20000) {
+        throw new Error('CVS barcode channel maximum amount is 20000');
+      }
+
+      if (orderInput.cvsBarcodeExpireDays !== undefined) {
+        // Not documented
+        if (orderInput.cvsBarcodeExpireDays < 1) throw new Error('`cvsBarcodeExpireDays` should between 1 and 7 days');
+        if (orderInput.cvsBarcodeExpireDays > 7) throw new Error('`cvsBarcodeExpireDays` should between 1 and 7 days');
+      }
+
+      if (orderInput.cvsBarcodeExpireDays) {
+        payload.StoreExpireDate = orderInput.cvsBarcodeExpireDays!.toString();
+      } else {
+        payload.StoreExpireDate = '7';
       }
 
       payload.PaymentInfoURL = `${this.serverHost}${this.callbackPath}`;
