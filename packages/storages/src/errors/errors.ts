@@ -12,6 +12,7 @@ export class StorageError implements StorageErrorInterface {
 export enum ErrorCode {
   WRITE_FILE_ERROR = '101',
   READ_FILE_ERROR = '102',
+  REMOVE_FILE_ERROR = '103',
+  UNRECOGNIZED_ERROR = '104',
   DIRECTORY_NOT_FOUND = '201',
-  REMOVE_ERROR = '301'
 }

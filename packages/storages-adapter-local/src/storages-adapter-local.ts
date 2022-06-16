@@ -9,9 +9,10 @@ import {
   ErrorCode,
   StorageErrorInterface,
   ErrorCallback,
-  ConverterManager,
+  ConverterManagerInterface,
   Converter,
   ConvertableStatus,
+  ConverterManager,
 } from '@rytass/storages';
 import { DetectLocalFileType, StorageLocalOptions } from '.';
 import { resolve } from 'path';
@@ -20,22 +21,27 @@ import LRU from 'lru-cache';
 import { Magic, MAGIC_MIME_TYPE } from 'mmmagic';
 import * as mimes from 'mime-types';
 import * as fs from 'fs';
+import { ImagesConverter } from 'storages-images-converter/src/typings';
 
 export class StorageLocalService<T extends StorageLocalOptions>
   implements StorageService<T>
 {
   readonly defaultDirectory?: string;
-  readonly converterManager?: ConverterManager<
-    T['converters'] extends Converter[]
-      ? T['converters']
-      : never
+  readonly converterManager?: ConverterManagerInterface<
+    T['converters'] extends Converter[] ? T['converters'] : never
   >;
-  private readonly cache?: LRU<string, FileType<ConvertableStatus<T['converters']>>>;
+  private readonly cache?: LRU<string, FileType<ConvertableStatus<T>>>;
 
   constructor(options?: T extends StorageLocalOptions ? T : never) {
     if (options?.defaultDirectory)
       this.defaultDirectory = options.defaultDirectory;
     if (options?.cache) this.cache = new LRU(options.cache);
+
+    const converters = options?.converters?.length
+      ? options.converters
+      : [ImagesConverter];
+
+    this.converterManager = new ConverterManager(converters);
   }
 
   private createFileName(input: Buffer): string {
@@ -59,7 +65,9 @@ export class StorageLocalService<T extends StorageLocalOptions>
     });
   }
 
-  async createFile(input: WriteFileInput): Promise<FileType<ConvertableStatus<T['converters']>>> {
+  private async createFile(
+    input: WriteFileInput
+  ): Promise<FileType<ConvertableStatus<T>>> {
     const buffer = input instanceof Buffer ? input : Buffer.from(input);
     const size = Buffer.byteLength(buffer);
     const { mime, extension } = await this.detectFileType(buffer);
@@ -69,7 +77,15 @@ export class StorageLocalService<T extends StorageLocalOptions>
       size,
       mime: mime,
       extension: extension,
-      to: extension => this.converterManager?.convert(extension, buffer),
+      to: async (target, callback) => {
+        try {
+          if (!extension) throw new StorageError(ErrorCode.UNRECOGNIZED_ERROR);
+
+          return this.converterManager?.convert(target, { buffer, extension });
+        } catch (error) {
+          if (callback) callback(error as StorageError);
+        }
+      },
     };
   }
 
@@ -124,7 +140,7 @@ export class StorageLocalService<T extends StorageLocalOptions>
     if (!directory) throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
 
     if (!fs.existsSync(directory)) {
-      if (options.autoMkdir) fs.mkdirSync(directory, {recursive: true})
+      if (options.autoMkdir) fs.mkdirSync(directory, { recursive: true });
       else throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
     }
 
@@ -149,7 +165,7 @@ export class StorageLocalService<T extends StorageLocalOptions>
   async read(
     fileName: string,
     { directory = this.defaultDirectory }: StorageReadOptions
-  ): Promise<FileType<ConvertableStatus<T['converters']>>> {
+  ): Promise<FileType<ConvertableStatus<T>>> {
     if (!directory || !fs.existsSync(directory))
       throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
     const fullPath = resolve(directory, fileName);
@@ -165,6 +181,13 @@ export class StorageLocalService<T extends StorageLocalOptions>
 
     return file;
   }
+
+  async readRaw(
+    input: WriteFileInput
+  ): Promise<FileType<ConvertableStatus<T>>> {
+    return this.createFile(input);
+  }
+
   /**
    * Search every files in given directory
    * @param {String} directory Path like string.
@@ -201,11 +224,13 @@ export class StorageLocalService<T extends StorageLocalOptions>
 
     try {
       (await fs.promises.stat(directory)).isDirectory()
-        ? fs.promises.rmdir(directory)
+        ? fs.promises.rm(directory, { recursive: true })
         : fs.promises.unlink(directory);
     } catch (error) {
       if (callback)
-        callback(new StorageError(ErrorCode.REMOVE_ERROR, error as string));
+        callback(
+          new StorageError(ErrorCode.REMOVE_FILE_ERROR, error as string)
+        );
     }
   }
 }

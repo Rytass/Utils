@@ -1,16 +1,18 @@
-import { ConvertableStatus, Converter, ConverterManager } from './converter/typings';
+import { ConvertableStatus, Converter, ConverterManagerInterface } from './converter/typings';
 
 export type WriteFileInput = string | Buffer;
 export type FileName = string | ((data: FileType) => string | string);
 export type ErrorCallback = (error: StorageErrorInterface) => void;
 
-export interface FileType<T = string> {
+export interface FileType<T extends string = any> {
   readonly buffer: Buffer;
   readonly size: number;
   extension?: string;
   mime?: string;
-  to: (extension: T) => Buffer | undefined;
+  to: (extension: T, error?: ErrorCallback) => Buffer | undefined | Promise<Buffer | undefined>;
 }
+
+export interface FileStats extends Required<Pick<FileType, 'extension' | 'buffer'>> {}
 
 export interface StorageErrorInterface {
   code: string;
@@ -37,7 +39,7 @@ export interface StorageOptions {
 }
 
 export interface StorageService<T extends StorageOptions, K = T['converters']> {
-  converterManager?: ConverterManager<
+  converterManager?: ConverterManagerInterface<
     K extends Converter[] ? K : never
   >;
   write(
