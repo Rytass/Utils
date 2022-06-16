@@ -1,0 +1,32 @@
+import {
+  ConvertableStatus,
+  Converter,
+  ConverterManagerInterface,
+  ErrorCode,
+  FileStats,
+  StorageError,
+} from '..';
+
+export class ConverterManager<T extends Converter[]>
+  implements ConverterManagerInterface<T>
+{
+  private readonly converters: Converter[];
+
+  constructor(converters: T extends Converter[] ? T : never) {
+    this.converters = converters;
+  }
+  convert(extension: ConvertableStatus<T>, stats: FileStats) {
+    const [converter] = this.converters.filter(
+      converter =>
+        converter.from.includes(stats.extension) &&
+        converter.to.includes(extension)
+    );
+
+    if (converter) return converter.load(extension, stats.buffer);
+
+    throw new StorageError(
+      ErrorCode.UNRECOGNIZED_ERROR,
+      `Undefined convert attempt: ${stats.extension} to ${extension}`
+    );
+  }
+}

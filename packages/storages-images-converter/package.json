@@ -1,11 +1,12 @@
 {
-  "name": "@rytass/storages-adapter-local",
+  "name": "@rytass/storages-images-converter",
   "version": "0.0.8",
-  "description": "Rytass Utils Storages local adapter",
+  "description": "Rytass Utils Storages Images Converter",
   "keywords": [
     "rytass",
     "storages",
-    "local"
+    "images",
+    "converter"
   ],
   "author": "MarshallChiang <ambrosia8286@gmail.com>",
   "homepage": "https://github.com/Rytass/Utils#readme",
@@ -25,13 +26,9 @@
   },
   "dependencies": {
     "@rytass/storages": "^0.0.8",
-    "@rytass/storages-images-converter": "^0.0.8",
-    "lru-cache": "^7.10.1",
-    "mime-types": "^2.1.35",
-    "mmmagic": "^0.5.3"
-  }, 
+    "sharp": "^0.30.6"
+  },
   "devDependencies": {
-    "@types/mime-types": "^2.1.1",
-    "@types/mmmagic": "^0.4.30"
+    "@types/sharp": "^0.30.4"
   }
 }

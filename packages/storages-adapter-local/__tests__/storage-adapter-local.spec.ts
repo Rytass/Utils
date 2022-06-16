@@ -3,35 +3,44 @@
  */
 
 import { StorageLocalService } from '../src';
+import { ImagesConverter } from '@rytass/storages-images-converter';
 import { resolve } from 'path';
 
 describe('StorageLocalService', () => {
-  const storage = new StorageLocalService();
-  const fileName = 'unit_test.txt';
-  const unitTestString = 'test_string';
-  const fullPath = resolve(__dirname, 'test')
+  const storage = new StorageLocalService({ converters: [ImagesConverter] });
+  const fullPath = resolve(__dirname, 'test');
 
-  it('should write and search file', async () => {
-    const file = await storage.createFile(Buffer.from(unitTestString));
+  const textFileName = 'test.txt';
 
-    storage.writeSync(file, { directory: fullPath, fileName, autoMkdir: true });
+  it('should write and search text file', async () => {
+    const file = await storage.readRaw(Buffer.from('test string'));
+
+    storage.writeSync(file, {
+      directory: fullPath,
+      fileName: textFileName,
+      autoMkdir: true,
+    });
+
     const directoryFiles = await storage.search(fullPath);
 
-    expect(directoryFiles.includes(resolve(fullPath, fileName))).toBeTruthy();
+    expect(
+      directoryFiles.includes(resolve(fullPath, textFileName))
+    ).toBeTruthy();
   });
 
-  it('should read file', async () => {
-    const storageFile = await storage.read(fileName, {directory: fullPath})
+  it('should read text file with mime and extension', async () => {
+    const storageFile = await storage.read(textFileName, {
+      directory: fullPath,
+    });
 
     expect(storageFile.mime).toBe('text/plain');
     expect(storageFile.extension).toBe('txt');
   });
 
-  it('should remove file', async() => {
-    await storage.remove(fullPath)
-    const directoryFiles = await storage.search(fullPath);
+  it('should remove files', async () => {
+    await storage.remove(fullPath);
+    const directoryFiles = await storage.search(__dirname);
 
-    expect(directoryFiles.includes(resolve(fullPath, fileName))).toBeFalsy()
-
-  })
+    expect(directoryFiles.includes(fullPath)).toBeFalsy();
+  });
 });

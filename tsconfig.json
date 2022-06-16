@@ -38,6 +38,9 @@
       ],
       "@rytass/storages-adapter-local": [
         "storages-adapter-local/src"
+      ], 
+      "@rytass/storages-images-converter": [
+        "storages-images-converter/src"
       ]
     }
   },
