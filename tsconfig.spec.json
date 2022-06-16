@@ -5,5 +5,5 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false
   },
-  "include": ["**/*.spec.*"]
+  "include": ["**/*.spec.*", "./packages"]
 }

@@ -12,6 +12,8 @@
 - [ ] Checkout (Apple Pay)
 - [ ] Checkout (Line Pay)
 - [x] Query
+- [ ] Refund
+- [ ] Refund (Installments)
 
 ## Getting Started
 
