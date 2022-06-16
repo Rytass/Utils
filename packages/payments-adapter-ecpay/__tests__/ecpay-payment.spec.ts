@@ -4,7 +4,7 @@
 
 import request from 'supertest';
 import { createHash } from 'crypto';
-import { IncomingMessage, ServerResponse } from 'http';
+import http, { createServer, IncomingMessage, ServerResponse } from 'http';
 import { ECPayOrder, ECPayPayment, ECPayCallbackPaymentType, ECPayChannelCreditCard, ECPayChannelVirtualAccount, ECPayCommitMessage } from '../src';
 import { Channel, OrderState, PaymentPeriodType } from '@rytass/payments';
 
@@ -35,6 +35,31 @@ function addMac(payload: Record<string, string>) {
 }
 
 describe('ECPayPayment', () => {
+  const originCreateServer = createServer;
+  const mockedCreateServer = jest.spyOn(http, 'createServer');
+
+  mockedCreateServer.mockImplementation((requestHandler) => {
+    const mockServer = originCreateServer(requestHandler);
+
+    const mockedListen = jest.spyOn(mockServer, 'listen');
+
+    mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
+      mockServer.listen(0, listeningListener);
+
+      return mockServer;
+    });
+
+    const mockedClose = jest.spyOn(mockServer, 'close');
+
+    mockedClose.mockImplementationOnce((onClosed) => {
+      mockServer.close(onClosed);
+
+      return mockServer;
+    });
+
+    return mockServer;
+  });
+
   // Form Page HTML
   describe('Generate Form Page HTML', () => {
     const payment = new ECPayPayment();
