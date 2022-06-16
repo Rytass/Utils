@@ -42,6 +42,7 @@ export interface ECPayVirtualAccountOrderInput extends PrepareOrderInput {
   description?: string;
   clientBackUrl?: string;
   channel?: Channel.VIRTUAL_ACCOUNT;
+  bank?: ECPayATMBank;
   virtualAccountExpireDays?: number;
 }
 
@@ -112,23 +113,29 @@ enum ECPayOrderFormKey {
   PaymentInfoURL = 'PaymentInfoURL',
   ClientRedirectURL = 'ClientRedirectURL',
   CheckMacValue = 'CheckMacValue',
+  ChooseSubPayment = 'ChooseSubPayment',
 }
 
 export type ECPayOrderForm = Record<ECPayOrderFormKey, string>;
+
+export enum ECPayATMBank {
+  BOT = 'BOT',
+  CHINATRUST = 'CHINATRUST',
+  FIRST = 'FIRST',
+  LAND = 'LAND',
+  TACHONG = 'TACHONG',
+  PANHSIN = 'PANHSIN',
+}
 
 export enum ECPayCallbackPaymentType {
   CREDIT_CARD = 'Credit_CreditCard',
   VIRTUAL_ACCOUNT_WAITING = 'VIRTAL_ACCOUNT_WAITING',
 
   // ATM (Vistual Account)
-  ATM_TAISHIN = 'ATM_TAISHIN',
-  ATM_ESUN = 'ATM_ESUN',
   ATM_BOT = 'ATM_BOT',
-  ATM_FUBON = 'ATM_FUBON',
   ATM_CHINATRUST = 'ATM_CHINATRUST',
   ATM_FIRST = 'ATM_FIRST',
   ATM_LAND = 'ATM_LAND',
-  ATM_CATHAY = 'ATM_CATHAY',
   ATM_TACHONG = 'ATM_TACHONG',
   ATM_PANHSIN = 'ATM_PANHSIN',
 }
@@ -229,14 +236,10 @@ export interface ECPayOrderVirtualAccountCommitMessage extends OrderVirtualAccou
   tradeDate: Date;
   paymentType: Extract<
     ECPayCallbackPaymentType,
-    ECPayCallbackPaymentType.ATM_TAISHIN |
-    ECPayCallbackPaymentType.ATM_ESUN |
     ECPayCallbackPaymentType.ATM_BOT |
-    ECPayCallbackPaymentType.ATM_FUBON |
     ECPayCallbackPaymentType.ATM_CHINATRUST |
     ECPayCallbackPaymentType.ATM_FIRST |
     ECPayCallbackPaymentType.ATM_LAND |
-    ECPayCallbackPaymentType.ATM_CATHAY |
     ECPayCallbackPaymentType.ATM_TACHONG |
     ECPayCallbackPaymentType.ATM_PANHSIN
   >;

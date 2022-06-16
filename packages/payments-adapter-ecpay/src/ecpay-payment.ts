@@ -190,14 +190,10 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
       }
 
       switch (payload.PaymentType) {
-        case ECPayCallbackPaymentType.ATM_TAISHIN:
-        case ECPayCallbackPaymentType.ATM_ESUN:
         case ECPayCallbackPaymentType.ATM_BOT:
-        case ECPayCallbackPaymentType.ATM_FUBON:
         case ECPayCallbackPaymentType.ATM_CHINATRUST:
         case ECPayCallbackPaymentType.ATM_FIRST:
         case ECPayCallbackPaymentType.ATM_LAND:
-        case ECPayCallbackPaymentType.ATM_CATHAY:
         case ECPayCallbackPaymentType.ATM_TACHONG:
         case ECPayCallbackPaymentType.ATM_PANHSIN:
           if (order.paymentType && order.paymentType !== ECPayCallbackPaymentType.VIRTUAL_ACCOUNT_WAITING) {
@@ -416,6 +412,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
         payload.ExpireDate = '3';
       }
 
+      payload.ChooseSubPayment = (orderInput as ECPayVirtualAccountOrderInput).bank?.toString() ?? '';
       payload.PaymentInfoURL = `${this.serverHost}${this.callbackPath}`;
       payload.ClientRedirectURL = orderInput.clientBackUrl || '';
     }
