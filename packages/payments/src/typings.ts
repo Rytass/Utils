@@ -38,6 +38,13 @@ export interface OrderBarcodeCommitMessage extends OrderCommitMessage {
   committedAt: Date | null;
 }
 
+export interface OrderApplePayCommitMessage extends OrderCommitMessage {
+  type?: Channel.APPLE_PAY;
+  id: string;
+  totalPrice: number;
+  committedAt: Date | null;
+}
+
 export interface OrderCommitMessage {
   id: string;
   totalPrice: number;
@@ -51,7 +58,9 @@ export type AdditionalInfo<OCM extends OrderCommitMessage> =
   ? IsExtends<OCM, OrderVirtualAccountCommitMessage, VirtualAccountInfo> extends never
   ? IsExtends<OCM, OrderCVSCommitMessage, CVSInfo> extends never
   ? IsExtends<OCM, OrderBarcodeCommitMessage, BarcodeInfo> extends never
+  ? IsExtends<OCM, OrderApplePayCommitMessage, undefined> extends never
   ? never
+  : undefined
   : BarcodeInfo
   : CVSInfo
   : VirtualAccountInfo
@@ -95,6 +104,7 @@ export enum Channel {
   VIRTUAL_ACCOUNT = 'VIRTUAL_ACCOUNT',
   CVS_KIOSK = 'CVS_KIOSK',
   CVS_BARCODE = 'CVS_BARCODE',
+  APPLE_PAY = 'APPLE_PAY',
 }
 
 export enum CreditCardECI {

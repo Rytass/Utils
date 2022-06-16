@@ -1,4 +1,4 @@
-import { PaymentItem, PrepareOrderInput, Channel, CreditCardECI, OrderCommitMessage, PaymentPeriod, OrderCreditCardCommitMessage, OrderVirtualAccountCommitMessage, OrderCVSCommitMessage, OrderBarcodeCommitMessage } from '@rytass/payments';
+import { PaymentItem, PrepareOrderInput, Channel, CreditCardECI, OrderCommitMessage, PaymentPeriod, OrderCreditCardCommitMessage, OrderVirtualAccountCommitMessage, OrderCVSCommitMessage, OrderBarcodeCommitMessage, OrderApplePayCommitMessage } from '@rytass/payments';
 import { IncomingMessage, ServerResponse } from 'http';
 import { ECPayPayment } from '.';
 import { ECPayOrder } from './ecpay-order';
@@ -60,6 +60,14 @@ export interface ECPayBarcodeOrderInput extends PrepareOrderInput {
   clientBackUrl?: string;
   channel: Channel.CVS_BARCODE;
   cvsBarcodeExpireDays?: number;
+}
+
+export interface ECPayApplePayOrderInput extends PrepareOrderInput {
+  id?: string;
+  items: PaymentItem[];
+  description?: string;
+  clientBackUrl?: string;
+  channel: Channel.APPLE_PAY;
 }
 
 export interface OrderInit<OCM extends ECPayCommitMessage> {
@@ -150,6 +158,9 @@ export enum ECPayCallbackPaymentType {
 
   // CVS Barcode
   BARCODE = 'BARCODE_BARCODE',
+
+  // Apple Pay
+  APPLY_PAY = 'ApplePay',
 }
 
 export enum ECPayCallbackSimulatePaidState {
@@ -329,6 +340,16 @@ export interface ECPayOrderBarcodeCommitMessage extends OrderBarcodeCommitMessag
   paymentType: ECPayCallbackPaymentType.BARCODE;
 }
 
+export interface ECPayOrderApplePayCommitMessage extends OrderApplePayCommitMessage {
+  id: string;
+  totalPrice: number;
+  committedAt: Date | null;
+  merchantId: string;
+  tradeNumber: string;
+  tradeDate: Date;
+  paymentType: ECPayCallbackPaymentType.APPLY_PAY;
+}
+
 export interface ECPayCommitMessage extends OrderCommitMessage {
   id: string;
   totalPrice: number;
@@ -389,9 +410,12 @@ export type GetOrderInput<CM extends ECPayCommitMessage> = CM extends ECPayOrder
   ? ECPayCVSOrderInput
   : CM extends ECPayOrderBarcodeCommitMessage
   ? ECPayBarcodeOrderInput
+  : CM extends ECPayOrderApplePayCommitMessage
+  ? ECPayApplePayOrderInput
   : never;
 
 export type ECPayChannelCreditCard = ECPayOrderCreditCardCommitMessage;
 export type ECPayChannelVirtualAccount = ECPayOrderVirtualAccountCommitMessage;
 export type ECPayChannelCVS = ECPayOrderCVSCommitMessage;
 export type ECPayChannelBarcode = ECPayOrderBarcodeCommitMessage;
+export type ECPayChannelApplePay = ECPayOrderApplePayCommitMessage;

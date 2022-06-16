@@ -12,6 +12,7 @@ export const ECPayChannel: Record<Channel, string> = {
   [Channel.VIRTUAL_ACCOUNT]: 'ATM',
   [Channel.CVS_KIOSK]: 'CVS',
   [Channel.CVS_BARCODE]: 'BARCODE',
+  [Channel.APPLE_PAY]: 'ApplePay',
 };
 
 export const NUMERIC_CALLBACK_KEYS = [

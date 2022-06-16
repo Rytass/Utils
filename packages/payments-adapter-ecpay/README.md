@@ -9,7 +9,7 @@
 - [x] Checkout (ATM/Virtual Account)
 - [x] Checkout (CVS)
 - [x] Checkout (Barcode)
-- [ ] Checkout (Apple Pay)
+- [x] Checkout (Apple Pay)
 - [ ] Checkout (Line Pay)
 - [x] Query
 - [ ] Refund

@@ -123,7 +123,7 @@ describe('ECPayPayment (CVS)', () => {
       }).toThrowError();
     });
 
-    it('should represent virtual account config on form data', () => {
+    it('should represent cvs config on form data', () => {
       const order = payment.prepare({
         channel: Channel.CVS_KIOSK,
         cvsExpireMinutes: 19999,

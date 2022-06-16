@@ -7,7 +7,7 @@ import { OrderState } from '@rytass/payments';
 import { addMac } from '../__utils__/add-mac';
 import { Channel, ECPayCallbackPaymentType, ECPayPayment } from '@rytass/payments-adapter-ecpay';
 import http, { createServer } from 'http';
-import { ECPayChannelBarcode, ECPayChannelCVS } from 'payments-adapter-ecpay/src/typings';
+import { ECPayChannelBarcode } from 'payments-adapter-ecpay/src/typings';
 
 describe('ECPayPayment (Barcode)', () => {
   const originCreateServer = createServer;
@@ -40,7 +40,6 @@ describe('ECPayPayment (Barcode)', () => {
 
     beforeAll(() => new Promise<void>((resolve) => {
       payment = new ECPayPayment<ECPayChannelBarcode>({
-        serverHost: 'https://7d44-203-69-123-207.ngrok.io',
         withServer: true,
         onServerListen: resolve,
       });
@@ -124,7 +123,7 @@ describe('ECPayPayment (Barcode)', () => {
       }).toThrowError();
     });
 
-    it('should represent virtual account config on form data', () => {
+    it('should represent barcode config on form data', () => {
       const order = payment.prepare({
         channel: Channel.CVS_BARCODE,
         cvsBarcodeExpireDays: 3,
@@ -136,7 +135,7 @@ describe('ECPayPayment (Barcode)', () => {
       });
 
       expect(order.form.StoreExpireDate).toBe('3');
-      expect(order.form.PaymentInfoURL).toBe('https://7d44-203-69-123-207.ngrok.io/payments/ecpay/callback');
+      expect(order.form.PaymentInfoURL).toBe('http://localhost:3000/payments/ecpay/callback');
       expect(order.form.ClientRedirectURL).toBe('');
 
       const clientOrder = payment.prepare({
