@@ -5,7 +5,7 @@
 import request from 'supertest';
 import { addMac } from '../__utils__/add-mac';
 import http, { createServer, IncomingMessage, ServerResponse } from 'http';
-import { ECPayOrder, ECPayPayment, ECPayCallbackPaymentType, ECPayChannelCreditCard, ECPayChannelVirtualAccount, ECPayCommitMessage } from '@rytass/payments-adapter-ecpay';
+import { ECPayOrder, ECPayPayment, ECPayChannelCreditCard, ECPayCommitMessage } from '@rytass/payments-adapter-ecpay';
 import { Channel, PaymentPeriodType } from '@rytass/payments';
 
 describe('ECPayPayment', () => {

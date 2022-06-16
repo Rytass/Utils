@@ -5,7 +5,7 @@
 import request from 'supertest';
 import { OrderState } from '@rytass/payments';
 import { addMac } from '../__utils__/add-mac';
-import { Channel, ECPayATMBank, ECPayCallbackPaymentType, ECPayChannelCreditCard, ECPayChannelVirtualAccount, ECPayPayment } from '@rytass/payments-adapter-ecpay';
+import { Channel, ECPayCallbackPaymentType, ECPayChannelCreditCard, ECPayChannelVirtualAccount, ECPayPayment } from '@rytass/payments-adapter-ecpay';
 import http, { createServer } from 'http';
 
 describe('ECPayPayment (Virtual Account)', () => {
@@ -622,6 +622,7 @@ describe('ECPayPayment (Virtual Account)', () => {
             expect(order.state).toBe(OrderState.COMMITTED);
             expect(order.additionalInfo?.bankCode).toBe('806');
             expect(order.additionalInfo?.account).toBe('3453721178769211');
+            expect(order.additionalInfo?.expiredAt).toBe('2022/04/27');
             expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_TACHONG);
 
             done();

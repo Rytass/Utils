@@ -1,4 +1,4 @@
-import { PaymentItem, PrepareOrderInput, Channel, CreditCardECI, OrderCommitMessage, PaymentPeriod, OrderCreditCardCommitMessage, OrderVirtualAccountCommitMessage, CreditCardAuthInfo, VirtualAccountInfo } from '@rytass/payments';
+import { PaymentItem, PrepareOrderInput, Channel, CreditCardECI, OrderCommitMessage, PaymentPeriod, OrderCreditCardCommitMessage, OrderVirtualAccountCommitMessage, CreditCardAuthInfo, VirtualAccountInfo, OrderCVSCommitMessage } from '@rytass/payments';
 import { IncomingMessage, ServerResponse } from 'http';
 import { ECPayPayment } from '.';
 import { ECPayOrder } from './ecpay-order';
@@ -41,9 +41,18 @@ export interface ECPayVirtualAccountOrderInput extends PrepareOrderInput {
   items: PaymentItem[];
   description?: string;
   clientBackUrl?: string;
-  channel?: Channel.VIRTUAL_ACCOUNT;
+  channel: Channel.VIRTUAL_ACCOUNT;
   bank?: ECPayATMBank;
   virtualAccountExpireDays?: number;
+}
+
+export interface ECPayCVSOrderInput extends PrepareOrderInput {
+  id?: string;
+  items: PaymentItem[];
+  description?: string;
+  clientBackUrl?: string;
+  channel: Channel.CVS_KIOSK;
+  cvsExpireMinutes?: number;
 }
 
 export interface ECPayOrderInput extends PrepareOrderInput {
@@ -114,6 +123,7 @@ enum ECPayOrderFormKey {
   ClientRedirectURL = 'ClientRedirectURL',
   CheckMacValue = 'CheckMacValue',
   ChooseSubPayment = 'ChooseSubPayment',
+  StoreExpireDate = 'StoreExpireDate',
 }
 
 export type ECPayOrderForm = Record<ECPayOrderFormKey, string>;
@@ -138,6 +148,12 @@ export enum ECPayCallbackPaymentType {
   ATM_LAND = 'ATM_LAND',
   ATM_TACHONG = 'ATM_TACHONG',
   ATM_PANHSIN = 'ATM_PANHSIN',
+
+  CVS = 'CVS_CVS',
+  CVS_OK = 'CVS_OK',
+  CVS_FAMILY = 'CVS_FAMILY',
+  CVS_HILIFE = 'CVS_HILIFE',
+  CVS_IBON = 'CVS_IBON',
 }
 
 export enum ECPayCallbackSimulatePaidState {
@@ -215,6 +231,27 @@ export interface ECPayCallbackVirtualAccountPayload extends ECPayCallbackPayload
   CheckMacValue: string;
   BankCode: string;
   vAccount: string;
+  ExpireDate: string;
+}
+
+export interface ECPayCallbackCVSPayload extends ECPayCallbackPayload {
+  MerchantID: string;
+  MerchantTradeNo: string;
+  StoreID: string;
+  RtnCode: ECPayCallbackReturnCode | number;
+  RtnMsg: ECPayCallbackReturnMessage;
+  TradeNo: string;
+  TradeAmt: number;
+  PaymentType: ECPayCallbackPaymentType;
+  TradeDate: string;
+  CustomField1: string;
+  CustomField2: string;
+  CustomField3: string;
+  CustomField4: string;
+  CheckMacValue: string;
+  ExpireDate: string;
+  PaymentNo: string;
+  PaymentURL: string;
 }
 
 export interface ECPayOrderCreditCardCommitMessage extends OrderCreditCardCommitMessage {
@@ -242,6 +279,23 @@ export interface ECPayOrderVirtualAccountCommitMessage extends OrderVirtualAccou
     ECPayCallbackPaymentType.ATM_LAND |
     ECPayCallbackPaymentType.ATM_TACHONG |
     ECPayCallbackPaymentType.ATM_PANHSIN
+  >;
+}
+
+export interface ECPayOrderCVSCommitMessage extends OrderCVSCommitMessage {
+  id: string;
+  totalPrice: number;
+  committedAt: Date | null;
+  merchantId: string;
+  tradeNumber: string;
+  tradeDate: Date;
+  paymentType: Extract<
+    ECPayCallbackPaymentType,
+    ECPayCallbackPaymentType.CVS |
+    ECPayCallbackPaymentType.CVS_OK |
+    ECPayCallbackPaymentType.CVS_FAMILY |
+    ECPayCallbackPaymentType.CVS_HILIFE |
+    ECPayCallbackPaymentType.CVS_IBON
   >;
 }
 
@@ -300,8 +354,11 @@ export interface ECPayQueryOrderPayload extends Record<string, string> {
 export type GetOrderInput<CM extends ECPayCommitMessage> = CM extends ECPayOrderCreditCardCommitMessage
   ? ECPayCreditCardOrderInput
   : CM extends ECPayOrderVirtualAccountCommitMessage
-    ? ECPayVirtualAccountOrderInput
-    : never;
+  ? ECPayVirtualAccountOrderInput
+  : CM extends ECPayOrderCVSCommitMessage
+  ? ECPayCVSOrderInput
+  : never;
 
 export type ECPayChannelCreditCard = ECPayOrderCreditCardCommitMessage;
 export type ECPayChannelVirtualAccount = ECPayOrderVirtualAccountCommitMessage;
+export type ECPayChannelCVS = ECPayOrderCVSCommitMessage;

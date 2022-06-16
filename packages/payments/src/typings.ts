@@ -11,12 +11,21 @@ export interface PrepareOrderInput {
 }
 
 export interface OrderCreditCardCommitMessage extends OrderCommitMessage {
+  type?: Channel.CREDIT_CARD;
   id: string;
   totalPrice: number;
   committedAt: Date;
 }
 
 export interface OrderVirtualAccountCommitMessage extends OrderCommitMessage {
+  type?: Channel.VIRTUAL_ACCOUNT;
+  id: string;
+  totalPrice: number;
+  committedAt: Date | null;
+}
+
+export interface OrderCVSCommitMessage extends OrderCommitMessage {
+  type?: Channel.CVS_KIOSK;
   id: string;
   totalPrice: number;
   committedAt: Date | null;
@@ -30,9 +39,12 @@ export interface OrderCommitMessage {
 
 type IsExtends<OCM, CheckTarget, Result> = OCM extends CheckTarget ? Result : never;
 
-export type AdditionalInfo<OCM extends OrderCommitMessage> = IsExtends<OCM, OrderCreditCardCommitMessage, CreditCardAuthInfo> extends never
+export type AdditionalInfo<OCM extends OrderCommitMessage> =
+  IsExtends<OCM, OrderCreditCardCommitMessage, CreditCardAuthInfo> extends never
   ? IsExtends<OCM, OrderVirtualAccountCommitMessage, VirtualAccountInfo> extends never
+  ? IsExtends<OCM, OrderCVSCommitMessage, CVSInfo> extends never
   ? never
+  : CVSInfo
   : VirtualAccountInfo
   : CreditCardAuthInfo;
 
@@ -97,6 +109,13 @@ export interface CreditCardAuthInfo {
 export interface VirtualAccountInfo {
   bankCode: string;
   account: string;
+  expiredAt: string;
+}
+
+export interface CVSInfo {
+  paymentURL: string;
+  paymentCode: string;
+  expiredAt: string;
 }
 
 export enum OrderState {

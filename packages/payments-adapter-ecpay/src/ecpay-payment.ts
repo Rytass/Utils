@@ -1,12 +1,12 @@
 import { createHash, randomBytes } from 'crypto';
-import { PaymentGateway, PaymentEvents, Channel, PaymentPeriodType } from '@rytass/payments';
+import { PaymentGateway, PaymentEvents, Channel, PaymentPeriodType, CVSInfo, VirtualAccountInfo, CreditCardAuthInfo } from '@rytass/payments';
 import { DateTime } from 'luxon';
 import LRUCache from 'lru-cache';
 import axios from 'axios';
 import { createServer, IncomingMessage, ServerResponse, Server } from 'http';
 import debug from 'debug';
 import { EventEmitter } from 'events';
-import { ECPayCallbackCreditPayload, ECPayCallbackPayload, ECPayCallbackPaymentType, ECPayCallbackVirtualAccountPayload, ECPayChannelVirtualAccount, ECPayCommitMessage, ECPayOrderCreditCardCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayOrderInput, ECPayQueryResultPayload, ECPayOrderVirtualAccountCommitMessage, Language, ECPayChannelCreditCard, GetOrderInput, ECPayVirtualAccountOrderInput, ECPayCreditCardOrderInput, ECPayQueryOrderPayload } from './typings';
+import { ECPayCallbackCreditPayload, ECPayCallbackPayload, ECPayCallbackPaymentType, ECPayCallbackVirtualAccountPayload, ECPayChannelVirtualAccount, ECPayCommitMessage, ECPayOrderCreditCardCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayOrderInput, ECPayQueryResultPayload, ECPayOrderVirtualAccountCommitMessage, Language, ECPayChannelCreditCard, GetOrderInput, ECPayVirtualAccountOrderInput, ECPayCreditCardOrderInput, ECPayQueryOrderPayload, ECPayCVSOrderInput, ECPayOrderCVSCommitMessage, ECPayCallbackCVSPayload } from './typings';
 import { ECPayChannel, ECPayPaymentPeriodType, NUMERIC_CALLBACK_KEYS } from './constants';
 import { ECPayOrder } from './ecpay-order';
 
@@ -190,6 +190,27 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
       }
 
       switch (payload.PaymentType) {
+        case ECPayCallbackPaymentType.CVS:
+        case ECPayCallbackPaymentType.CVS_FAMILY:
+        case ECPayCallbackPaymentType.CVS_HILIFE:
+        case ECPayCallbackPaymentType.CVS_IBON:
+        case ECPayCallbackPaymentType.CVS_OK:
+          order.commit<ECPayOrderCVSCommitMessage>({
+            id: payload.MerchantTradeNo,
+            totalPrice: payload.TradeAmt,
+            committedAt: null,
+            merchantId: payload.MerchantID,
+            tradeNumber: payload.TradeNo,
+            tradeDate: DateTime.fromFormat(payload.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+            paymentType: payload.PaymentType,
+          }, {
+            paymentURL: (payload as ECPayCallbackCVSPayload).PaymentURL,
+            paymentCode: (payload as ECPayCallbackCVSPayload).PaymentNo,
+            expiredAt: (payload as ECPayCallbackCVSPayload).ExpireDate,
+          } as CVSInfo);
+
+          break;
+
         case ECPayCallbackPaymentType.ATM_BOT:
         case ECPayCallbackPaymentType.ATM_CHINATRUST:
         case ECPayCallbackPaymentType.ATM_FIRST:
@@ -217,7 +238,8 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
           }, {
             bankCode: (payload as ECPayCallbackVirtualAccountPayload).BankCode,
             account: (payload as ECPayCallbackVirtualAccountPayload).vAccount,
-          });
+            expiredAt: (payload as ECPayCallbackVirtualAccountPayload).ExpireDate,
+          } as VirtualAccountInfo);
 
           break;
 
@@ -237,7 +259,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
             eci: (payload as ECPayCallbackCreditPayload).eci,
             card4Number: (payload as ECPayCallbackCreditPayload).card4no,
             card6Number: (payload as ECPayCallbackCreditPayload).card6no,
-          });
+          } as CreditCardAuthInfo);
 
           break;
 
@@ -260,99 +282,34 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
   }
 
   prepare<P extends CM>(orderInput: GetOrderInput<P>): ECPayOrder<P> {
-    if ((orderInput as ECPayVirtualAccountOrderInput).virtualAccountExpireDays && orderInput.channel && orderInput.channel !== Channel.VIRTUAL_ACCOUNT) {
-      throw new Error('`virtualAccountExpireDays` only work on virtual account channel');
-    }
-
-    if ((orderInput as ECPayVirtualAccountOrderInput).virtualAccountExpireDays !== undefined) {
-      if ((orderInput as ECPayVirtualAccountOrderInput).virtualAccountExpireDays! < 1) throw new Error('`virtualAccountExpireDays` should between 1 and 60 days');
-      if ((orderInput as ECPayVirtualAccountOrderInput).virtualAccountExpireDays! > 60) throw new Error('`virtualAccountExpireDays` should between 1 and 60 days');
-    }
-
     if (orderInput.channel && orderInput.channel !== Channel.CREDIT_CARD && (orderInput as ECPayCreditCardOrderInput).memory) {
       throw new Error('`memory` only use on credit card channel');
     }
 
-    if ((orderInput as ECPayCreditCardOrderInput).memory && !(orderInput as ECPayCreditCardOrderInput).memberId) {
-      throw new Error('Memory card should provide `memberId`.');
+    if ('cvsExpireMinutes' in orderInput && orderInput.channel !== Channel.CVS_KIOSK) {
+      throw new Error('`cvsExpireMinutes` only work on virtual account channel');
     }
 
-    if ((orderInput as ECPayCreditCardOrderInput).allowUnionPay && (orderInput.channel
+    if ('virtualAccountExpireDays' in orderInput && orderInput.channel !== Channel.VIRTUAL_ACCOUNT) {
+      throw new Error('`virtualAccountExpireDays` only work on virtual account channel');
+    }
+
+    if ('allowUnionPay' in orderInput && (orderInput.channel
       && orderInput.channel !== Channel.CREDIT_CARD)) {
       throw new Error('Union Pay should use credit card channel');
     }
 
-    if ((orderInput as ECPayCreditCardOrderInput).allowCreditCardRedeem
+    if ('allowCreditCardRedeem' in orderInput
       && (orderInput.channel && orderInput.channel !== Channel.CREDIT_CARD)) {
       throw new Error('`allowCreditCardRedeem` should use credit card channel');
     }
 
-    if ((orderInput as ECPayCreditCardOrderInput).installments) {
-      if (orderInput.channel && orderInput.channel !== Channel.CREDIT_CARD) {
-        throw new Error('`installments` should use credit card channel');
-      }
-
-      if ((orderInput as ECPayCreditCardOrderInput).allowCreditCardRedeem) {
-        throw new Error('`installments` should not working with `allowCreditCardRedeem`');
-      }
-
-      if ((orderInput as ECPayCreditCardOrderInput).period) {
-        throw new Error('`installments` should not working with `period`');
-      }
-
-      if ((orderInput as ECPayCreditCardOrderInput).installments!.match(/[^,0-9]/)) {
-        throw new Error('`installments` format invalid, example: 3,6,9,12');
-      }
-
-      const installments = (orderInput as ECPayCreditCardOrderInput).installments!.split(/,/g);
-
-      if (installments.some(period => !period || Number.isNaN(Number(period)))) {
-        throw new Error('`installments` format invalid, example: 3,6,9,12');
-      }
+    if ('installments' in orderInput && orderInput.channel !== Channel.CREDIT_CARD) {
+      throw new Error('`installments` should use credit card channel');
     }
 
-    if ((orderInput as ECPayCreditCardOrderInput).period) {
-      if (orderInput.channel && orderInput.channel !== Channel.CREDIT_CARD) {
-        throw new Error('`period` should use credit card channel');
-      }
-
-      if ((orderInput as ECPayCreditCardOrderInput).period!.frequency !== undefined) {
-        switch ((orderInput as ECPayCreditCardOrderInput).period!.type) {
-          case PaymentPeriodType.MONTH:
-            if ((orderInput as ECPayCreditCardOrderInput).period!.frequency! < 1) throw new Error('`period.frequency` should between 1 and 12 when `period.type` set to MONTH');
-            if ((orderInput as ECPayCreditCardOrderInput).period!.frequency! > 12) throw new Error('`period.frequency` should between 1 and 12 when `period.type` set to MONTH');
-            break;
-
-          case PaymentPeriodType.YEAR:
-            if ((orderInput as ECPayCreditCardOrderInput).period!.frequency !== 1) throw new Error('`period.frequency` should be 1 when `period.type` set to YEAR');
-            break;
-
-          case PaymentPeriodType.DAY:
-          default:
-            if ((orderInput as ECPayCreditCardOrderInput).period!.frequency! < 1) throw new Error('`period.frequency` should between 1 and 365 when `period.type` set to DAY');
-            if ((orderInput as ECPayCreditCardOrderInput).period!.frequency! > 365) throw new Error('`period.frequency` should between 1 and 365 when `period.type` set to DAY');
-            break;
-        }
-      }
-
-      if ((orderInput as ECPayCreditCardOrderInput).period!.times < 1) {
-        throw new Error('Invalid `period.times`, should >= 1');
-      }
-
-      switch ((orderInput as ECPayCreditCardOrderInput).period!.type) {
-        case PaymentPeriodType.MONTH:
-          if ((orderInput as ECPayCreditCardOrderInput).period!.times > 99) throw new Error('`period.times` should below 99 when `period.type` set to MONTH');
-          break;
-
-        case PaymentPeriodType.YEAR:
-          if ((orderInput as ECPayCreditCardOrderInput).period!.times > 9) throw new Error('`period.times` should below 9 when `period.type` set to YEAR');
-          break;
-
-        case PaymentPeriodType.DAY:
-        default:
-          if ((orderInput as ECPayCreditCardOrderInput).period!.times > 999) throw new Error('`period.times` should below 999 when `period.type` set to DAY');
-          break;
-      }
+    if ('period' in orderInput && orderInput.channel !== Channel.CREDIT_CARD) {
+      throw new Error('`period` should use credit card channel');
     }
 
     const orderId = orderInput.id || this.getOrderId();
@@ -379,40 +336,133 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
     } as Omit<ECPayOrderForm, 'CheckMacValue'>;
 
     if ((!orderInput.channel || orderInput.channel === Channel.CREDIT_CARD)) {
-      if ((orderInput as ECPayCreditCardOrderInput).memory) {
-        payload.BindingCard = '1';
-        payload.MerchantMemberID = (orderInput as ECPayCreditCardOrderInput).memberId as string;
+      if (orderInput.memory && !orderInput.memberId) {
+        throw new Error('Memory card should provide `memberId`.');
       }
 
-      if ((orderInput as ECPayCreditCardOrderInput).allowCreditCardRedeem) {
+      if (orderInput.installments) {
+        if (orderInput.allowCreditCardRedeem) {
+          throw new Error('`installments` should not working with `allowCreditCardRedeem`');
+        }
+
+        if (orderInput.period) {
+          throw new Error('`installments` should not working with `period`');
+        }
+
+        if (orderInput.installments!.match(/[^,0-9]/)) {
+          throw new Error('`installments` format invalid, example: 3,6,9,12');
+        }
+
+        const installments = orderInput.installments!.split(/,/g);
+
+        if (installments.some(period => !period || Number.isNaN(Number(period)))) {
+          throw new Error('`installments` format invalid, example: 3,6,9,12');
+        }
+      }
+
+      if (orderInput.period) {
+        if (orderInput.period.frequency !== undefined) {
+          switch (orderInput.period.type) {
+            case PaymentPeriodType.MONTH:
+              if (orderInput.period.frequency < 1) throw new Error('`period.frequency` should between 1 and 12 when `period.type` set to MONTH');
+              if (orderInput.period.frequency > 12) throw new Error('`period.frequency` should between 1 and 12 when `period.type` set to MONTH');
+              break;
+
+            case PaymentPeriodType.YEAR:
+              if (orderInput.period.frequency !== 1) throw new Error('`period.frequency` should be 1 when `period.type` set to YEAR');
+              break;
+
+            case PaymentPeriodType.DAY:
+            default:
+              if (orderInput.period.frequency < 1) throw new Error('`period.frequency` should between 1 and 365 when `period.type` set to DAY');
+              if (orderInput.period.frequency > 365) throw new Error('`period.frequency` should between 1 and 365 when `period.type` set to DAY');
+              break;
+          }
+        }
+
+        if (orderInput.period!.times < 1) {
+          throw new Error('Invalid `period.times`, should >= 1');
+        }
+
+        switch (orderInput.period!.type) {
+          case PaymentPeriodType.MONTH:
+            if (orderInput.period!.times > 99) throw new Error('`period.times` should below 99 when `period.type` set to MONTH');
+            break;
+
+          case PaymentPeriodType.YEAR:
+            if (orderInput.period!.times > 9) throw new Error('`period.times` should below 9 when `period.type` set to YEAR');
+            break;
+
+          case PaymentPeriodType.DAY:
+          default:
+            if (orderInput.period!.times > 999) throw new Error('`period.times` should below 999 when `period.type` set to DAY');
+            break;
+        }
+      }
+
+      if (orderInput.memory) {
+        payload.BindingCard = '1';
+        payload.MerchantMemberID = orderInput.memberId as string;
+      }
+
+      if (orderInput.allowCreditCardRedeem) {
         payload.Redeem = 'Y';
       }
 
-      if ((orderInput as ECPayCreditCardOrderInput).allowUnionPay) {
+      if (orderInput.allowUnionPay) {
         payload.UnionPay = '0';
       }
 
-      if ((orderInput as ECPayCreditCardOrderInput).installments) {
-        payload.CreditInstallment = (orderInput as ECPayCreditCardOrderInput).installments!;
+      if (orderInput.installments) {
+        payload.CreditInstallment = orderInput.installments!;
       }
 
-      if ((orderInput as ECPayCreditCardOrderInput).period) {
-        payload.PeriodAmount = (orderInput as ECPayCreditCardOrderInput).period!.amountPerPeriod.toString();
-        payload.PeriodType = ECPayPaymentPeriodType[(orderInput as ECPayCreditCardOrderInput).period!.type];
-        payload.Frequency = ((orderInput as ECPayCreditCardOrderInput).period!.frequency || 1).toString();
-        payload.ExecTimes = (orderInput as ECPayCreditCardOrderInput).period!.times.toString();
+      if (orderInput.period) {
+        payload.PeriodAmount = orderInput.period.amountPerPeriod.toString();
+        payload.PeriodType = ECPayPaymentPeriodType[orderInput.period.type];
+        payload.Frequency = (orderInput.period.frequency || 1).toString();
+        payload.ExecTimes = orderInput.period.times.toString();
         payload.PeriodReturnURL = `${this.serverHost}${this.callbackPath}`;
       }
     }
 
-    if ((!orderInput.channel || orderInput.channel === Channel.VIRTUAL_ACCOUNT)) {
-      if ((orderInput as ECPayVirtualAccountOrderInput).virtualAccountExpireDays) {
-        payload.ExpireDate = (orderInput as ECPayVirtualAccountOrderInput).virtualAccountExpireDays!.toString();
-      } else if (orderInput.channel === Channel.VIRTUAL_ACCOUNT) {
+    if (orderInput.channel === Channel.VIRTUAL_ACCOUNT) {
+      if (orderInput.virtualAccountExpireDays !== undefined) {
+        if (orderInput.virtualAccountExpireDays < 1) throw new Error('`virtualAccountExpireDays` should between 1 and 60 days');
+        if (orderInput.virtualAccountExpireDays > 60) throw new Error('`virtualAccountExpireDays` should between 1 and 60 days');
+      }
+
+      if (orderInput.virtualAccountExpireDays) {
+        payload.ExpireDate = orderInput.virtualAccountExpireDays!.toString();
+      } else {
         payload.ExpireDate = '3';
       }
 
-      payload.ChooseSubPayment = (orderInput as ECPayVirtualAccountOrderInput).bank?.toString() ?? '';
+      payload.ChooseSubPayment = orderInput.bank?.toString() ?? '';
+      payload.PaymentInfoURL = `${this.serverHost}${this.callbackPath}`;
+      payload.ClientRedirectURL = orderInput.clientBackUrl || '';
+    }
+
+    if (orderInput.channel === Channel.CVS_KIOSK) {
+      if (totalAmount < 33) {
+        throw new Error('CVS channel minimum amount is 33');
+      }
+
+      if (totalAmount > 6000) {
+        throw new Error('CVS channel maximum amount is 6000');
+      }
+
+      if (orderInput.cvsExpireMinutes !== undefined) {
+        if (orderInput.cvsExpireMinutes < 1) throw new Error('`cvsExpireMinutes` should between 1 and 43200 days');
+        if (orderInput.cvsExpireMinutes > 43200) throw new Error('`cvsExpireMinutes` should between 1 and 43200 days');
+      }
+
+      if (orderInput.cvsExpireMinutes) {
+        payload.StoreExpireDate = orderInput.cvsExpireMinutes!.toString();
+      } else {
+        payload.StoreExpireDate = '10080';
+      }
+
       payload.PaymentInfoURL = `${this.serverHost}${this.callbackPath}`;
       payload.ClientRedirectURL = orderInput.clientBackUrl || '';
     }
