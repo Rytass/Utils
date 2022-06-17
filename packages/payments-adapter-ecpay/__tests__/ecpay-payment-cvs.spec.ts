@@ -3,7 +3,7 @@
  */
 
 import request from 'supertest';
-import { OrderState } from '@rytass/payments';
+import { CVS, OrderState } from '@rytass/payments';
 import { addMac } from '../__utils__/add-mac';
 import { Channel, ECPayCallbackPaymentType, ECPayPayment } from '@rytass/payments-adapter-ecpay';
 import http, { createServer } from 'http';
@@ -135,7 +135,7 @@ describe('ECPayPayment (CVS)', () => {
       });
 
       expect(order.form.StoreExpireDate).toBe('19999');
-      expect(order.form.PaymentInfoURL).toBe('http://localhost:3000/payments/ecpay/callback');
+      expect(order.form.PaymentInfoURL).toBe('http://localhost:3000/payments/ecpay/async-informations');
       expect(order.form.ClientRedirectURL).toBe('');
 
       const clientOrder = payment.prepare({
@@ -191,16 +191,15 @@ describe('ECPayPayment (CVS)', () => {
       expect(order.state).toBe(OrderState.PRE_COMMIT);
 
       request(payment._server)
-        .post('/payments/ecpay/callback')
+        .post('/payments/ecpay/async-informations')
         .send(new URLSearchParams(successfulResponse).toString())
         .expect('Content-Type', 'text/plain')
         .expect(200)
         .then((res) => {
           expect(res.text).toEqual('1|OK');
-          expect(order.state).toBe(OrderState.COMMITTED);
-          expect(order.additionalInfo?.paymentCode).toBe('LLL22167774958');
-          expect(order.additionalInfo?.expiredAt).toBe('2022/06/30 20:26:59');
-          expect(order.paymentType).toBe(ECPayCallbackPaymentType.CVS);
+          expect(order.state).toBe(OrderState.ASYNC_INFO_RETRIEVED);
+          expect(order.asyncInfo?.paymentCode).toBe('LLL22167774958');
+          expect(order.asyncInfo?.expiredAt).toBe('2022/06/30 20:26:59');
 
           done();
         });
@@ -246,15 +245,126 @@ describe('ECPayPayment (CVS)', () => {
       expect(order.state).toBe(OrderState.PRE_COMMIT);
 
       request(payment._server)
-        .post('/payments/ecpay/callback')
+        .post('/payments/ecpay/async-informations')
         .send(new URLSearchParams(successfulResponse).toString())
         .expect('Content-Type', 'text/plain')
         .expect(200)
         .then((res) => {
           expect(res.text).toEqual('1|OK');
-          expect(order.state).toBe(OrderState.PRE_COMMIT);
+          expect(order.state).toBe(OrderState.FAILED);
+          expect(order.failedMessage?.code).toBe(0)
+          expect(order.failedMessage?.message).toBe('Get CVS Code Failed.');
+          expect(order.asyncInfo).toBeUndefined();
 
           done();
+        });
+    });
+
+    it('should received callback of cvs payments', (done) => {
+      const order = payment.prepare<ECPayChannelCVS>({
+        channel: Channel.CVS_KIOSK,
+        items: [{
+          name: 'Test',
+          unitPrice: 99,
+          quantity: 1,
+        }],
+      });
+
+      // Get HTML to trigger pre commit
+      // eslint-disable-next-line no-unused-vars
+      const html = order.formHTML;
+
+      const successfulResponse = addMac({
+        Barcode1: '',
+        Barcode2: '',
+        Barcode3: '',
+        ExpireDate: '2022/06/30 20:26:59',
+        MerchantID: '2000132',
+        MerchantTradeNo: order.id,
+        PaymentNo: 'LLL22167774958',
+        PaymentType: ECPayCallbackPaymentType.CVS,
+        RtnCode: '10100073',
+        RtnMsg: 'Get CVS Code Succeeded.',
+        TradeAmt: order.totalPrice.toString(),
+        TradeDate: '2022/06/16 23:07:58',
+        TradeNo: '2204201729498436',
+        StoreID: '',
+        CustomField1: '',
+        CustomField2: '',
+        CustomField3: '',
+        CustomField4: '',
+      });
+
+      request(payment._server)
+        .post('/payments/ecpay/async-informations')
+        .send(new URLSearchParams(successfulResponse).toString())
+        .expect('Content-Type', 'text/plain')
+        .expect(200)
+        .then((res) => {
+          expect(res.text).toEqual('1|OK');
+          expect(order.state).toBe(OrderState.ASYNC_INFO_RETRIEVED);
+
+          const callbackResponse = addMac({
+            TotalSuccessTimes: '',
+            PaymentNo: 'LLL22167774958',
+            red_dan: '',
+            red_yet: '',
+            gwsr: '',
+            red_ok_amt: '',
+            PeriodType: '',
+            SimulatePaid: '1',
+            AlipayTradeNo: '',
+            MerchantID: '2000132',
+            TenpayTradeNo: '',
+            WebATMAccNo: '',
+            TradeDate: '2022/06/17 14:20:09',
+            PaymentTypeChargeFee: '0',
+            RtnMsg: '付款成功',
+            CustomField4: '',
+            PayFrom: 'family',
+            ATMAccBank: '',
+            PaymentType: ECPayCallbackPaymentType.CVS,
+            TotalSuccessAmount: '',
+            MerchantTradeNo: order.id,
+            StoreID: '',
+            stage: '',
+            WebATMAccBank: '',
+            CustomField1: '',
+            PeriodAmount: '',
+            TradeNo: '2204201729498436',
+            card4no: '',
+            card6no: '',
+            auth_code: '',
+            stast: '',
+            PaymentDate: '2022/06/17 14:21:09',
+            RtnCode: '1',
+            eci: '',
+            TradeAmt: order.totalPrice.toString(),
+            Frequency: '',
+            red_de_amt: '',
+            process_date: '',
+            amount: '',
+            CustomField2: '',
+            ATMAccNo: '',
+            ExecTimes: '',
+            CustomField3: '',
+            staed: '',
+            WebATMBankName: '',
+            AlipayID: '',
+          });
+
+          request(payment._server)
+            .post('/payments/ecpay/callback')
+            .send(new URLSearchParams(callbackResponse).toString())
+            .expect('Content-Type', 'text/plain')
+            .expect(200)
+            .then((res) => {
+              expect(res.text).toEqual('1|OK');
+              expect(order.state).toBe(OrderState.COMMITTED);
+              expect(order.additionalInfo?.cvsPayFrom).toBe(CVS.FAMILY_MART);
+
+              done();
+            });
         });
     });
 

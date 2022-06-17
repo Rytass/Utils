@@ -53,17 +53,26 @@ export interface OrderCommitMessage {
 
 type IsExtends<OCM, CheckTarget, Result> = OCM extends CheckTarget ? Result : never;
 
+export type AsyncOrderInformation<OCM extends OrderCommitMessage> =
+  IsExtends<OCM, OrderVirtualAccountCommitMessage, VirtualAccountInfo> extends never
+  ? IsExtends<OCM, OrderCVSCommitMessage, CVSInfo> extends never
+  ? IsExtends<OCM, OrderBarcodeCommitMessage, BarcodeInfo> extends never
+  ? never
+  : BarcodeInfo
+  : CVSInfo
+  : VirtualAccountInfo;
+
 export type AdditionalInfo<OCM extends OrderCommitMessage> =
   IsExtends<OCM, OrderCreditCardCommitMessage, CreditCardAuthInfo> extends never
-  ? IsExtends<OCM, OrderVirtualAccountCommitMessage, VirtualAccountInfo> extends never
-  ? IsExtends<OCM, OrderCVSCommitMessage, CVSInfo> extends never
+  ? IsExtends<OCM, OrderVirtualAccountCommitMessage, VistualAccountPaymentInfo> extends never
+  ? IsExtends<OCM, OrderCVSCommitMessage, CVSPaymentInfo> extends never
   ? IsExtends<OCM, OrderBarcodeCommitMessage, BarcodeInfo> extends never
   ? IsExtends<OCM, OrderApplePayCommitMessage, undefined> extends never
   ? never
   : undefined
-  : BarcodeInfo
-  : CVSInfo
-  : VirtualAccountInfo
+  : undefined
+  : CVSPaymentInfo
+  : VistualAccountPaymentInfo
   : CreditCardAuthInfo;
 
 export interface Order<OCM extends OrderCommitMessage> extends PrepareOrderInput {
@@ -79,10 +88,18 @@ export interface Order<OCM extends OrderCommitMessage> extends PrepareOrderInput
   // Additional info
   additionalInfo?: AdditionalInfo<OCM>;
 
+  // Async info
+  asyncInfo?: AsyncOrderInformation<OCM>;
+
+  failedMessage: OrderFailMessage | null;
+
   id: string;
   items: PaymentItem[];
   commitable: boolean;
-  commit<T extends OCM>(message: T): void;
+
+  infoRetrieved<T extends OCM>(asyncInformation: AsyncOrderInformation<T>): void;
+  fail(code: number, message: string): void;
+  commit<T extends OCM>(message: T, additionalInfo?: AdditionalInfo<T>): void;
 }
 
 type InputFromOrderCommitMessage<OCM extends OrderCommitMessage> = PrepareOrderInput;
@@ -116,6 +133,13 @@ export enum CreditCardECI {
   VISA_AE_JCB_3D_FAILED = '7',
 }
 
+export enum CVS {
+  FAMILY_MART = 'FAMILY_MART',
+  HILIFE = 'HILIFE',
+  OK_MART = 'OK_MART',
+  SEVEN_ELEVEN = 'SEVEN_ELEVEN',
+}
+
 export interface CreditCardAuthInfo {
   processDate: Date;
   authCode: string; // Credit Card Auth Code (6 digits)
@@ -125,10 +149,19 @@ export interface CreditCardAuthInfo {
   card6Number: string;
 }
 
+export interface VistualAccountPaymentInfo {
+  buyerAccountNumber: string;
+  buyerBankCode: string;
+}
+
 export interface VirtualAccountInfo {
   bankCode: string;
   account: string;
   expiredAt: string;
+}
+
+export interface CVSPaymentInfo {
+  cvsPayFrom: CVS;
 }
 
 export interface CVSInfo {
@@ -144,8 +177,14 @@ export interface BarcodeInfo {
 export enum OrderState {
   INITED = 'INITED',
   PRE_COMMIT = 'PRE_COMMIT', // Created
+  ASYNC_INFO_RETRIEVED = 'ASYNC_INFO_RETRIEVED', // Async Payment Infomation Retrived (ATM/CVS/Barcode...)
   COMMITTED = 'COMMITTED', // Fulfilled
   FAILED = 'FAILED',
+}
+
+export interface OrderFailMessage {
+  code: number;
+  message: string;
 }
 
 export enum PaymentEvents {

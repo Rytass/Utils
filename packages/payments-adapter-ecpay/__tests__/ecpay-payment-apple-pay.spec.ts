@@ -2,12 +2,9 @@
  * @jest-environment jsdom
  */
 
-import request from 'supertest';
-import { OrderState } from '@rytass/payments';
-import { addMac } from '../__utils__/add-mac';
-import { Channel, ECPayCallbackPaymentType, ECPayPayment } from '@rytass/payments-adapter-ecpay';
+import { Channel, ECPayPayment } from '@rytass/payments-adapter-ecpay';
 import http, { createServer } from 'http';
-import { ECPayChannelApplePay, ECPayChannelBarcode, ECPayChannelCVS } from 'payments-adapter-ecpay/src/typings';
+import { ECPayChannelApplePay } from 'payments-adapter-ecpay/src/typings';
 
 describe('ECPayPayment (Apple Pay)', () => {
   const originCreateServer = createServer;

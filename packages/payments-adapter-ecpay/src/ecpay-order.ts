@@ -1,4 +1,4 @@
-import { AdditionalInfo, Channel, Order, OrderState, PaymentEvents } from '@rytass/payments';
+import { AdditionalInfo, AsyncOrderInformation, Channel, Order, OrderFailMessage, OrderState, PaymentEvents } from '@rytass/payments';
 import { ECPayPayment, ECPayOrderItem, ECPayCallbackPaymentType, ECPayCommitMessage, ECPayOrderForm, ECPayQueryResultStatus, OrderCreateInit, OrderFromServerInit } from '.';
 import { ECPayChannel } from './constants';
 
@@ -13,6 +13,8 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
 
   private readonly gateway: ECPayPayment<OCM>;
 
+  private _asyncInfo?: AsyncOrderInformation<OCM>;
+
   private _additionalInfo?: AdditionalInfo<OCM>;
 
   private _committedAt: Date | null = null;
@@ -24,6 +26,10 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
   private _state: OrderState;
 
   private _paymentType: ECPayCallbackPaymentType | undefined;
+
+  private _failedCode: number | undefined;
+
+  private _failedMessage: string | undefined;
 
   constructor(options: OrderCreateInit<OCM> | OrderFromServerInit<OCM>) {
     this._id = options.id;
@@ -126,7 +132,7 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
   }
 
   get commitable(): boolean {
-    return this._state === OrderState.PRE_COMMIT;
+    return !!~[OrderState.PRE_COMMIT, OrderState.ASYNC_INFO_RETRIEVED].indexOf(this._state);
   }
 
   get state(): OrderState {
@@ -149,13 +155,43 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
     return this._paymentType;
   }
 
+  // Async order infomation
+  get asyncInfo() {
+    return this._asyncInfo;
+  }
+
   // Additional infomation
   get additionalInfo() {
     return this._additionalInfo;
   }
 
-  commit<T extends OCM>(message: T, additionalInfo?: AdditionalInfo<T>) {
+  get failedMessage() {
+    if (this._state !== OrderState.FAILED) return null;
+
+    return {
+      code: this._failedCode as number,
+      message: this._failedMessage as string,
+    };
+  }
+
+  infoRetrieved<T extends OCM>(asyncInformation: AsyncOrderInformation<T>, paymentType?: ECPayCallbackPaymentType) {
     if (this._state !== OrderState.PRE_COMMIT) throw new Error(`Only pre-commit order can commit, now: ${this._state}`);
+
+    this._asyncInfo = asyncInformation;
+    this._paymentType = paymentType || this._paymentType;
+
+    this._state = OrderState.ASYNC_INFO_RETRIEVED;
+  }
+
+  fail(returnCode: number, message: string) {
+    this._failedCode = returnCode;
+    this._failedMessage = message;
+
+    this._state = OrderState.FAILED;
+  }
+
+  commit<T extends OCM>(message: T, additionalInfo?: AdditionalInfo<T>) {
+    if (!this.commitable) throw new Error(`Only pre-commit, info-retrieved order can commit, now: ${this._state}`);
 
     if (this._id !== message.id) {
       throw new Error(`Order ID not matched, given: ${message.id} actual: ${this._id}`);

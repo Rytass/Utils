@@ -37,7 +37,7 @@ describe('ECPayPayment (Virtual Account)', () => {
   describe('Virtual account', () => {
     const payment = new ECPayPayment<ECPayChannelVirtualAccount | ECPayChannelCreditCard>({
       serverHost: 'http://localhost:9999',
-      callbackPath: '/callback',
+      asyncInfoPath: '/callback',
     });
 
     it('should throw error on invalid channel', () => {
@@ -48,7 +48,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           virtualAccountExpireDays: 9,
           items: [{
             name: 'Test',
-            unitPrice: 10,
+            unitPrice: 15,
             quantity: 1,
           }],
         });
@@ -62,7 +62,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           virtualAccountExpireDays: 0,
           items: [{
             name: 'Test',
-            unitPrice: 10,
+            unitPrice: 15,
             quantity: 1,
           }],
         });
@@ -74,7 +74,31 @@ describe('ECPayPayment (Virtual Account)', () => {
           virtualAccountExpireDays: 99,
           items: [{
             name: 'Test',
+            unitPrice: 15,
+            quantity: 1,
+          }],
+        });
+      }).toThrowError();
+    });
+
+    it('should throw if total aomunt between 11 and 49999', () => {
+      expect(() => {
+        payment.prepare({
+          channel: Channel.VIRTUAL_ACCOUNT,
+          items: [{
+            name: 'Test',
             unitPrice: 10,
+            quantity: 1,
+          }],
+        });
+      }).toThrowError();
+
+      expect(() => {
+        payment.prepare({
+          channel: Channel.VIRTUAL_ACCOUNT,
+          items: [{
+            name: 'Test',
+            unitPrice: 99990,
             quantity: 1,
           }],
         });
@@ -86,7 +110,7 @@ describe('ECPayPayment (Virtual Account)', () => {
         channel: Channel.VIRTUAL_ACCOUNT,
         items: [{
           name: 'Test',
-          unitPrice: 10,
+          unitPrice: 15,
           quantity: 1,
         }],
       });
@@ -100,7 +124,7 @@ describe('ECPayPayment (Virtual Account)', () => {
         virtualAccountExpireDays: 7,
         items: [{
           name: 'Test',
-          unitPrice: 10,
+          unitPrice: 15,
           quantity: 1,
         }],
       });
@@ -114,7 +138,7 @@ describe('ECPayPayment (Virtual Account)', () => {
         virtualAccountExpireDays: 7,
         items: [{
           name: 'Test',
-          unitPrice: 10,
+          unitPrice: 15,
           quantity: 1,
         }],
         clientBackUrl: 'https://rytass.com',
@@ -138,7 +162,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           channel: Channel.CREDIT_CARD,
           items: [{
             name: 'Test',
-            unitPrice: 10,
+            unitPrice: 15,
             quantity: 1,
           }],
         });
@@ -167,7 +191,7 @@ describe('ECPayPayment (Virtual Account)', () => {
         });
 
         request(testPayment._server)
-          .post('/payments/ecpay/callback')
+          .post('/payments/ecpay/async-informations')
           .send(new URLSearchParams(successfulResponse).toString())
           .expect('Content-Type', 'text/plain')
           .expect(400)
@@ -184,7 +208,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           virtualAccountExpireDays: 7,
           items: [{
             name: 'Test',
-            unitPrice: 10,
+            unitPrice: 15,
             quantity: 1,
           }],
         });
@@ -213,16 +237,15 @@ describe('ECPayPayment (Virtual Account)', () => {
         });
 
         request(testPayment._server)
-          .post('/payments/ecpay/callback')
+          .post('/payments/ecpay/async-informations')
           .send(new URLSearchParams(successfulResponse).toString())
           .expect('Content-Type', 'text/plain')
           .expect(200)
           .then((res) => {
             expect(res.text).toEqual('1|OK');
-            expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.additionalInfo?.bankCode).toBe('806');
-            expect(order.additionalInfo?.account).toBe('3453721178769211');
-            expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_PANHSIN);
+            expect(order.state).toBe(OrderState.ASYNC_INFO_RETRIEVED);
+            expect(order.asyncInfo?.bankCode).toBe('806');
+            expect(order.asyncInfo?.account).toBe('3453721178769211');
 
             done();
           });
@@ -234,7 +257,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           virtualAccountExpireDays: 7,
           items: [{
             name: 'Test',
-            unitPrice: 10,
+            unitPrice: 15,
             quantity: 1,
           }],
         });
@@ -263,16 +286,15 @@ describe('ECPayPayment (Virtual Account)', () => {
         });
 
         request(testPayment._server)
-          .post('/payments/ecpay/callback')
+          .post('/payments/ecpay/async-informations')
           .send(new URLSearchParams(successfulResponse).toString())
           .expect('Content-Type', 'text/plain')
           .expect(200)
           .then((res) => {
             expect(res.text).toEqual('1|OK');
-            expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.additionalInfo?.bankCode).toBe('806');
-            expect(order.additionalInfo?.account).toBe('3453721178769211');
-            expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_LAND);
+            expect(order.state).toBe(OrderState.ASYNC_INFO_RETRIEVED);
+            expect(order.asyncInfo?.bankCode).toBe('806');
+            expect(order.asyncInfo?.account).toBe('3453721178769211');
 
             done();
           });
@@ -284,7 +306,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           virtualAccountExpireDays: 7,
           items: [{
             name: 'Test',
-            unitPrice: 10,
+            unitPrice: 1000,
             quantity: 1,
           }],
         });
@@ -313,16 +335,15 @@ describe('ECPayPayment (Virtual Account)', () => {
         });
 
         request(testPayment._server)
-          .post('/payments/ecpay/callback')
+          .post('/payments/ecpay/async-informations')
           .send(new URLSearchParams(successfulResponse).toString())
           .expect('Content-Type', 'text/plain')
           .expect(200)
           .then((res) => {
             expect(res.text).toEqual('1|OK');
-            expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.additionalInfo?.bankCode).toBe('806');
-            expect(order.additionalInfo?.account).toBe('3453721178769211');
-            expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_BOT);
+            expect(order.state).toBe(OrderState.ASYNC_INFO_RETRIEVED);
+            expect(order.asyncInfo?.bankCode).toBe('806');
+            expect(order.asyncInfo?.account).toBe('3453721178769211');
 
             done();
           });
@@ -334,7 +355,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           virtualAccountExpireDays: 7,
           items: [{
             name: 'Test',
-            unitPrice: 10,
+            unitPrice: 15,
             quantity: 1,
           }],
         });
@@ -363,16 +384,15 @@ describe('ECPayPayment (Virtual Account)', () => {
         });
 
         request(testPayment._server)
-          .post('/payments/ecpay/callback')
+          .post('/payments/ecpay/async-informations')
           .send(new URLSearchParams(successfulResponse).toString())
           .expect('Content-Type', 'text/plain')
           .expect(200)
           .then((res) => {
             expect(res.text).toEqual('1|OK');
-            expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.additionalInfo?.bankCode).toBe('806');
-            expect(order.additionalInfo?.account).toBe('3453721178769211');
-            expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_FIRST);
+            expect(order.state).toBe(OrderState.ASYNC_INFO_RETRIEVED);
+            expect(order.asyncInfo?.bankCode).toBe('806');
+            expect(order.asyncInfo?.account).toBe('3453721178769211');
 
             done();
           });
@@ -384,7 +404,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           virtualAccountExpireDays: 7,
           items: [{
             name: 'Test',
-            unitPrice: 10,
+            unitPrice: 15,
             quantity: 1,
           }],
         });
@@ -413,16 +433,15 @@ describe('ECPayPayment (Virtual Account)', () => {
         });
 
         request(testPayment._server)
-          .post('/payments/ecpay/callback')
+          .post('/payments/ecpay/async-informations')
           .send(new URLSearchParams(successfulResponse).toString())
           .expect('Content-Type', 'text/plain')
           .expect(200)
           .then((res) => {
             expect(res.text).toEqual('1|OK');
-            expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.additionalInfo?.bankCode).toBe('806');
-            expect(order.additionalInfo?.account).toBe('3453721178769211');
-            expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_CHINATRUST);
+            expect(order.state).toBe(OrderState.ASYNC_INFO_RETRIEVED);
+            expect(order.asyncInfo?.bankCode).toBe('806');
+            expect(order.asyncInfo?.account).toBe('3453721178769211');
 
             done();
           });
@@ -434,7 +453,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           virtualAccountExpireDays: 7,
           items: [{
             name: 'Test',
-            unitPrice: 10,
+            unitPrice: 15,
             quantity: 1,
           }],
         });
@@ -463,16 +482,15 @@ describe('ECPayPayment (Virtual Account)', () => {
         });
 
         request(testPayment._server)
-          .post('/payments/ecpay/callback')
+          .post('/payments/ecpay/async-informations')
           .send(new URLSearchParams(successfulResponse).toString())
           .expect('Content-Type', 'text/plain')
           .expect(200)
           .then((res) => {
             expect(res.text).toEqual('1|OK');
-            expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.additionalInfo?.bankCode).toBe('806');
-            expect(order.additionalInfo?.account).toBe('3453721178769211');
-            expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_FIRST);
+            expect(order.state).toBe(OrderState.ASYNC_INFO_RETRIEVED);
+            expect(order.asyncInfo?.bankCode).toBe('806');
+            expect(order.asyncInfo?.account).toBe('3453721178769211');
 
             done();
           });
@@ -484,7 +502,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           virtualAccountExpireDays: 7,
           items: [{
             name: 'Test',
-            unitPrice: 10,
+            unitPrice: 15,
             quantity: 1,
           }],
         });
@@ -513,16 +531,15 @@ describe('ECPayPayment (Virtual Account)', () => {
         });
 
         request(testPayment._server)
-          .post('/payments/ecpay/callback')
+          .post('/payments/ecpay/async-informations')
           .send(new URLSearchParams(successfulResponse).toString())
           .expect('Content-Type', 'text/plain')
           .expect(200)
           .then((res) => {
             expect(res.text).toEqual('1|OK');
-            expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.additionalInfo?.bankCode).toBe('806');
-            expect(order.additionalInfo?.account).toBe('3453721178769211');
-            expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_LAND);
+            expect(order.state).toBe(OrderState.ASYNC_INFO_RETRIEVED);
+            expect(order.asyncInfo?.bankCode).toBe('806');
+            expect(order.asyncInfo?.account).toBe('3453721178769211');
 
             done();
           });
@@ -534,7 +551,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           virtualAccountExpireDays: 7,
           items: [{
             name: 'Test',
-            unitPrice: 10,
+            unitPrice: 15,
             quantity: 1,
           }],
         });
@@ -563,16 +580,15 @@ describe('ECPayPayment (Virtual Account)', () => {
         });
 
         request(testPayment._server)
-          .post('/payments/ecpay/callback')
+          .post('/payments/ecpay/async-informations')
           .send(new URLSearchParams(successfulResponse).toString())
           .expect('Content-Type', 'text/plain')
           .expect(200)
           .then((res) => {
             expect(res.text).toEqual('1|OK');
-            expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.additionalInfo?.bankCode).toBe('806');
-            expect(order.additionalInfo?.account).toBe('3453721178769211');
-            expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_CHINATRUST);
+            expect(order.state).toBe(OrderState.ASYNC_INFO_RETRIEVED);
+            expect(order.asyncInfo?.bankCode).toBe('806');
+            expect(order.asyncInfo?.account).toBe('3453721178769211');
 
             done();
           });
@@ -584,7 +600,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           virtualAccountExpireDays: 7,
           items: [{
             name: 'Test',
-            unitPrice: 10,
+            unitPrice: 15,
             quantity: 1,
           }],
         });
@@ -613,17 +629,16 @@ describe('ECPayPayment (Virtual Account)', () => {
         });
 
         request(testPayment._server)
-          .post('/payments/ecpay/callback')
+          .post('/payments/ecpay/async-informations')
           .send(new URLSearchParams(successfulResponse).toString())
           .expect('Content-Type', 'text/plain')
           .expect(200)
           .then((res) => {
             expect(res.text).toEqual('1|OK');
-            expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.additionalInfo?.bankCode).toBe('806');
-            expect(order.additionalInfo?.account).toBe('3453721178769211');
-            expect(order.additionalInfo?.expiredAt).toBe('2022/04/27');
-            expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_TACHONG);
+            expect(order.state).toBe(OrderState.ASYNC_INFO_RETRIEVED);
+            expect(order.asyncInfo?.bankCode).toBe('806');
+            expect(order.asyncInfo?.account).toBe('3453721178769211');
+            expect(order.asyncInfo?.expiredAt).toBe('2022/04/27');
 
             done();
           });
@@ -635,7 +650,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           virtualAccountExpireDays: 7,
           items: [{
             name: 'Test',
-            unitPrice: 10,
+            unitPrice: 15,
             quantity: 1,
           }],
         });
@@ -664,28 +679,45 @@ describe('ECPayPayment (Virtual Account)', () => {
         });
 
         request(testPayment._server)
-          .post('/payments/ecpay/callback')
+          .post('/payments/ecpay/async-informations')
           .send(new URLSearchParams(successfulResponse).toString())
           .expect('Content-Type', 'text/plain')
           .expect(200)
           .then((res) => {
             expect(res.text).toEqual('1|OK');
-            expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.additionalInfo?.bankCode).toBe('806');
-            expect(order.additionalInfo?.account).toBe('3453721178769211');
-            expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_PANHSIN);
+            expect(order.state).toBe(OrderState.ASYNC_INFO_RETRIEVED);
+            expect(order.asyncInfo?.bankCode).toBe('806');
+            expect(order.asyncInfo?.account).toBe('3453721178769211');
 
             done();
           });
       });
 
-      it('should default callback handler not change status when failed', (done) => {
+      it('should reject info retrived if order not pre-commited', () => {
         const order = testPayment.prepare<ECPayChannelVirtualAccount>({
           channel: Channel.VIRTUAL_ACCOUNT,
           virtualAccountExpireDays: 7,
           items: [{
             name: 'Test',
-            unitPrice: 10,
+            unitPrice: 15,
+            quantity: 1,
+          }],
+        });
+
+        expect(() => order.infoRetrieved({
+          bankCode: '806',
+          account: '3453721178769211',
+          expiredAt: '2022/04/27',
+        }, ECPayCallbackPaymentType.ATM_PANHSIN)).toThrowError();
+      });
+
+      it('should default async information handler not change status when failed', (done) => {
+        const order = testPayment.prepare<ECPayChannelVirtualAccount>({
+          channel: Channel.VIRTUAL_ACCOUNT,
+          virtualAccountExpireDays: 7,
+          items: [{
+            name: 'Test',
+            unitPrice: 15,
             quantity: 1,
           }],
         });
@@ -714,15 +746,313 @@ describe('ECPayPayment (Virtual Account)', () => {
         });
 
         request(testPayment._server)
-          .post('/payments/ecpay/callback')
+          .post('/payments/ecpay/async-informations')
           .send(new URLSearchParams(successfulResponse).toString())
           .expect('Content-Type', 'text/plain')
           .expect(200)
           .then((res) => {
             expect(res.text).toEqual('1|OK');
-            expect(order.state).toBe(OrderState.PRE_COMMIT);
+            expect(order.state).toBe(OrderState.FAILED);
+            expect(order.failedMessage?.code).toBe(44444)
+            expect(order.failedMessage?.message).toBe('Get VirtualAccount Failed');
+            expect(order.asyncInfo).toBeUndefined();
 
             done();
+          });
+      });
+
+      it('should received callback of virtual account payments', (done) => {
+        const order = testPayment.prepare<ECPayChannelVirtualAccount>({
+          channel: Channel.VIRTUAL_ACCOUNT,
+          virtualAccountExpireDays: 7,
+          items: [{
+            name: 'Test',
+            unitPrice: 15,
+            quantity: 1,
+          }],
+        });
+
+        // Get HTML to trigger pre commit
+        // eslint-disable-next-line no-unused-vars
+        const html = order.formHTML;
+
+        const successfulResponse = addMac({
+          BankCode: '806',
+          ExpireDate: '2022/04/27',
+          MerchantID: '2000132',
+          MerchantTradeNo: order.id,
+          PaymentType: ECPayCallbackPaymentType.ATM_PANHSIN,
+          RtnCode: '2',
+          RtnMsg: 'Get VirtualAccount Succeeded',
+          TradeAmt: order.totalPrice.toString(),
+          TradeDate: '2022/04/20 17:30:52',
+          TradeNo: '2204201729498436',
+          vAccount: '3453721178769211',
+          StoreID: '',
+          CustomField1: '',
+          CustomField2: '',
+          CustomField3: '',
+          CustomField4: '',
+        });
+
+        request(testPayment._server)
+          .post('/payments/ecpay/async-informations')
+          .send(new URLSearchParams(successfulResponse).toString())
+          .expect('Content-Type', 'text/plain')
+          .expect(200)
+          .then((res) => {
+            expect(res.text).toEqual('1|OK');
+            expect(order.state).toBe(OrderState.ASYNC_INFO_RETRIEVED);
+            expect(order.asyncInfo?.bankCode).toBe('806');
+            expect(order.asyncInfo?.account).toBe('3453721178769211');
+
+            const callbackResponse = addMac({
+              TotalSuccessTimes: '',
+              PaymentNo: '',
+              red_dan: '',
+              red_yet: '',
+              gwsr: '',
+              red_ok_amt: '',
+              PeriodType: '',
+              SimulatePaid: '1',
+              AlipayTradeNo: '',
+              MerchantID: '2000132',
+              TenpayTradeNo: '',
+              WebATMAccNo: '',
+              TradeDate: '2022/06/17 14:20:09',
+              PaymentTypeChargeFee: '0',
+              RtnMsg: '付款成功',
+              CustomField4: '',
+              PayFrom: '',
+              ATMAccBank: '987',
+              PaymentType: ECPayCallbackPaymentType.ATM_PANHSIN,
+              TotalSuccessAmount: '',
+              MerchantTradeNo: order.id,
+              StoreID: '',
+              stage: '',
+              WebATMAccBank: '',
+              CustomField1: '',
+              PeriodAmount: '',
+              TradeNo: '2204201729498436',
+              card4no: '',
+              card6no: '',
+              auth_code: '',
+              stast: '',
+              PaymentDate: '2022/06/17 14:21:09',
+              RtnCode: '1',
+              eci: '',
+              TradeAmt: order.totalPrice.toString(),
+              Frequency: '',
+              red_de_amt: '',
+              process_date: '',
+              amount: '',
+              CustomField2: '',
+              ATMAccNo: '1111111111',
+              ExecTimes: '',
+              CustomField3: '',
+              staed: '',
+              WebATMBankName: '',
+              AlipayID: '',
+            });
+
+            request(testPayment._server)
+              .post('/payments/ecpay/callback')
+              .send(new URLSearchParams(callbackResponse).toString())
+              .expect('Content-Type', 'text/plain')
+              .expect(200)
+              .then((res) => {
+                expect(res.text).toEqual('1|OK');
+                expect(order.state).toBe(OrderState.COMMITTED);
+                expect(order.additionalInfo?.buyerAccountNumber).toBe('1111111111');
+                expect(order.additionalInfo?.buyerBankCode).toBe('987');
+
+                done();
+              });
+          });
+      });
+
+      it('should async information duplicate received be ignored', (done) => {
+        const order = testPayment.prepare<ECPayChannelVirtualAccount>({
+          channel: Channel.VIRTUAL_ACCOUNT,
+          virtualAccountExpireDays: 7,
+          items: [{
+            name: 'Test',
+            unitPrice: 15,
+            quantity: 1,
+          }],
+        });
+
+        // Get HTML to trigger pre commit
+        // eslint-disable-next-line no-unused-vars
+        const html = order.formHTML;
+
+        const successfulResponse = addMac({
+          BankCode: '806',
+          ExpireDate: '2022/04/27',
+          MerchantID: '2000132',
+          MerchantTradeNo: order.id,
+          PaymentType: ECPayCallbackPaymentType.ATM_PANHSIN,
+          RtnCode: '2',
+          RtnMsg: 'Get VirtualAccount Success',
+          TradeAmt: order.totalPrice.toString(),
+          TradeDate: '2022/04/20 17:30:52',
+          TradeNo: '2204201729498436',
+          vAccount: '3453721178769211',
+          StoreID: '',
+          CustomField1: '',
+          CustomField2: '',
+          CustomField3: '',
+          CustomField4: '',
+        });
+
+        request(testPayment._server)
+          .post('/payments/ecpay/async-informations')
+          .send(new URLSearchParams(successfulResponse).toString())
+          .expect('Content-Type', 'text/plain')
+          .expect(200)
+          .then((res) => {
+            expect(res.text).toEqual('1|OK');
+            expect(order.state).toBe(OrderState.ASYNC_INFO_RETRIEVED);
+
+            const successfulResponse2 = addMac({
+              BankCode: '806',
+              ExpireDate: '2022/04/27',
+              MerchantID: '2000132',
+              MerchantTradeNo: order.id,
+              PaymentType: ECPayCallbackPaymentType.ATM_PANHSIN,
+              RtnCode: '2',
+              RtnMsg: 'Get VirtualAccount Success',
+              TradeAmt: order.totalPrice.toString(),
+              TradeDate: '2022/04/20 17:30:52',
+              TradeNo: '2204201729498436',
+              vAccount: '3453721178769212',
+              StoreID: '',
+              CustomField1: '',
+              CustomField2: '',
+              CustomField3: '',
+              CustomField4: '',
+            });
+
+            request(testPayment._server)
+              .post('/payments/ecpay/async-informations')
+              .send(new URLSearchParams(successfulResponse2).toString())
+              .expect('Content-Type', 'text/plain')
+              .expect(200)
+              .then((res) => {
+                expect(res.text).toEqual('1|OK');
+                expect(order.state).toBe(OrderState.ASYNC_INFO_RETRIEVED);
+                expect(order.asyncInfo?.account).toBe('3453721178769211');
+
+                done();
+              });
+          });
+      });
+
+      it('should reject if virtual account bank not matched', (done) => {
+        const order = testPayment.prepare<ECPayChannelVirtualAccount>({
+          channel: Channel.VIRTUAL_ACCOUNT,
+          virtualAccountExpireDays: 7,
+          items: [{
+            name: 'Test',
+            unitPrice: 15,
+            quantity: 1,
+          }],
+        });
+
+        // Get HTML to trigger pre commit
+        // eslint-disable-next-line no-unused-vars
+        const html = order.formHTML;
+
+        const successfulResponse = addMac({
+          BankCode: '806',
+          ExpireDate: '2022/04/27',
+          MerchantID: '2000132',
+          MerchantTradeNo: order.id,
+          PaymentType: ECPayCallbackPaymentType.ATM_PANHSIN,
+          RtnCode: '2',
+          RtnMsg: 'Get VirtualAccount Success',
+          TradeAmt: order.totalPrice.toString(),
+          TradeDate: '2022/04/20 17:30:52',
+          TradeNo: '2204201729498436',
+          vAccount: '3453721178769211',
+          StoreID: '',
+          CustomField1: '',
+          CustomField2: '',
+          CustomField3: '',
+          CustomField4: '',
+        });
+
+        request(testPayment._server)
+          .post('/payments/ecpay/async-informations')
+          .send(new URLSearchParams(successfulResponse).toString())
+          .expect('Content-Type', 'text/plain')
+          .expect(200)
+          .then((res) => {
+            expect(res.text).toEqual('1|OK');
+            expect(order.state).toBe(OrderState.ASYNC_INFO_RETRIEVED);
+
+            const callbackResponse = addMac({
+              TotalSuccessTimes: '',
+              PaymentNo: '',
+              red_dan: '',
+              red_yet: '',
+              gwsr: '',
+              red_ok_amt: '',
+              PeriodType: '',
+              SimulatePaid: '1',
+              AlipayTradeNo: '',
+              MerchantID: '2000132',
+              TenpayTradeNo: '',
+              WebATMAccNo: '',
+              TradeDate: '2022/06/17 14:20:09',
+              PaymentTypeChargeFee: '0',
+              RtnMsg: '付款成功',
+              CustomField4: '',
+              PayFrom: '',
+              ATMAccBank: '987',
+              PaymentType: ECPayCallbackPaymentType.ATM_BOT,
+              TotalSuccessAmount: '',
+              MerchantTradeNo: order.id,
+              StoreID: '',
+              stage: '',
+              WebATMAccBank: '',
+              CustomField1: '',
+              PeriodAmount: '',
+              TradeNo: '2204201729498436',
+              card4no: '',
+              card6no: '',
+              auth_code: '',
+              stast: '',
+              PaymentDate: '2022/06/17 14:21:09',
+              RtnCode: '1',
+              eci: '',
+              TradeAmt: order.totalPrice.toString(),
+              Frequency: '',
+              red_de_amt: '',
+              process_date: '',
+              amount: '',
+              CustomField2: '',
+              ATMAccNo: '1111111111',
+              ExecTimes: '',
+              CustomField3: '',
+              staed: '',
+              WebATMBankName: '',
+              AlipayID: '',
+            });
+
+            request(testPayment._server)
+              .post('/payments/ecpay/callback')
+              .send(new URLSearchParams(callbackResponse).toString())
+              .expect('Content-Type', 'text/plain')
+              .expect(400)
+              .then((res) => {
+                expect(res.text).toEqual('0|OrderNotFound');
+                expect(order.state).toBe(OrderState.ASYNC_INFO_RETRIEVED);
+                expect(order.asyncInfo?.account).toBe('3453721178769211');
+                expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_PANHSIN);
+
+                done();
+              });
           });
       });
 

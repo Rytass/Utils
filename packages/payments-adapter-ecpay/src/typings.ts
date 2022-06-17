@@ -12,6 +12,7 @@ export interface ECPayInitOptions<O extends ECPayOrder<ECPayCommitMessage>> {
   hashIv?: string;
   serverHost?: string;
   callbackPath?: string;
+  asyncInfoPath?: string;
   checkoutPath?: string;
   withServer?: boolean;
   serverListener?: (req: IncomingMessage, res: ServerResponse) => void;
@@ -204,7 +205,7 @@ export interface ECPayCallbackCreditPayload extends ECPayCallbackPayload {
   TradeNo: string;
   TradeAmt: number;
   PaymentDate: string;
-  PaymentType: ECPayCallbackPaymentType;
+  PaymentType: ECPayCallbackPaymentType.CREDIT_CARD;
   TradeDate: string;
   SimulatePaid: ECPayCallbackSimulatePaidState;
   CustomField1: string;
@@ -229,7 +230,108 @@ export interface ECPayCallbackVirtualAccountPayload extends ECPayCallbackPayload
   RtnMsg: ECPayCallbackReturnMessage;
   TradeNo: string;
   TradeAmt: number;
+  PaymentDate: string;
+  PaymentType: Extract<
+    ECPayCallbackPaymentType,
+    ECPayCallbackPaymentType.ATM_BOT |
+    ECPayCallbackPaymentType.ATM_CHINATRUST |
+    ECPayCallbackPaymentType.ATM_FIRST |
+    ECPayCallbackPaymentType.ATM_LAND |
+    ECPayCallbackPaymentType.ATM_PANHSIN |
+    ECPayCallbackPaymentType.ATM_TACHONG
+  >;
+  TradeDate: string;
+  SimulatePaid: ECPayCallbackSimulatePaidState;
+  CustomField1: string;
+  CustomField2: string;
+  CustomField3: string;
+  CustomField4: string;
+  CheckMacValue: string;
+  ATMAccBank: string;
+  ATMAccNo: string;
+}
+
+export interface ECPayCallbackCVSPayload extends ECPayCallbackPayload {
+  MerchantID: string;
+  MerchantTradeNo: string;
+  StoreID: string;
+  RtnCode: ECPayCallbackReturnCode | number;
+  RtnMsg: ECPayCallbackReturnMessage;
+  TradeNo: string;
+  TradeAmt: number;
+  PaymentDate: string;
+  PaymentType: Extract<
+    ECPayCallbackPaymentType,
+    ECPayCallbackPaymentType.CVS |
+    ECPayCallbackPaymentType.CVS_FAMILY |
+    ECPayCallbackPaymentType.CVS_HILIFE |
+    ECPayCallbackPaymentType.CVS_IBON |
+    ECPayCallbackPaymentType.CVS_OK
+  >;
+  TradeDate: string;
+  SimulatePaid: ECPayCallbackSimulatePaidState;
+  CustomField1: string;
+  CustomField2: string;
+  CustomField3: string;
+  CustomField4: string;
+  CheckMacValue: string;
+  PaymentNo: string;
+  PayFrom: string;
+}
+
+export interface ECPayCallbackBarcodePayload extends ECPayCallbackPayload {
+  MerchantID: string;
+  MerchantTradeNo: string;
+  StoreID: string;
+  RtnCode: ECPayCallbackReturnCode | number;
+  RtnMsg: ECPayCallbackReturnMessage;
+  TradeNo: string;
+  TradeAmt: number;
+  PaymentDate: string;
+  PaymentType: ECPayCallbackPaymentType.BARCODE;
+  TradeDate: string;
+  SimulatePaid: ECPayCallbackSimulatePaidState;
+  CustomField1: string;
+  CustomField2: string;
+  CustomField3: string;
+  CustomField4: string;
+  CheckMacValue: string;
+}
+
+export interface ECPayAsyncInformationPayload {
+  MerchantID: string;
+  MerchantTradeNo: string;
+  StoreID: string;
+  RtnCode: ECPayCallbackReturnCode | number;
+  RtnMsg: ECPayCallbackReturnMessage;
+  TradeNo: string;
+  TradeAmt: number;
   PaymentType: ECPayCallbackPaymentType;
+  TradeDate: string;
+  CustomField1: string;
+  CustomField2: string;
+  CustomField3: string;
+  CustomField4: string;
+  CheckMacValue: string;
+}
+
+export interface ECPayAsyncInformationVirtualAccountPayload extends ECPayAsyncInformationPayload {
+  MerchantID: string;
+  MerchantTradeNo: string;
+  StoreID: string;
+  RtnCode: ECPayCallbackReturnCode | number;
+  RtnMsg: ECPayCallbackReturnMessage;
+  TradeNo: string;
+  TradeAmt: number;
+  PaymentType: Extract<
+    ECPayCallbackPaymentType,
+    ECPayCallbackPaymentType.ATM_BOT |
+    ECPayCallbackPaymentType.ATM_CHINATRUST |
+    ECPayCallbackPaymentType.ATM_FIRST |
+    ECPayCallbackPaymentType.ATM_LAND |
+    ECPayCallbackPaymentType.ATM_PANHSIN |
+    ECPayCallbackPaymentType.ATM_TACHONG
+  >;
   TradeDate: string;
   CustomField1: string;
   CustomField2: string;
@@ -241,7 +343,7 @@ export interface ECPayCallbackVirtualAccountPayload extends ECPayCallbackPayload
   ExpireDate: string;
 }
 
-export interface ECPayCallbackCVSPayload extends ECPayCallbackPayload {
+export interface ECPayAsyncInformationCVSPayload extends ECPayAsyncInformationPayload {
   MerchantID: string;
   MerchantTradeNo: string;
   StoreID: string;
@@ -249,7 +351,14 @@ export interface ECPayCallbackCVSPayload extends ECPayCallbackPayload {
   RtnMsg: ECPayCallbackReturnMessage;
   TradeNo: string;
   TradeAmt: number;
-  PaymentType: ECPayCallbackPaymentType;
+  PaymentType: Extract<
+    ECPayCallbackPaymentType,
+    ECPayCallbackPaymentType.CVS |
+    ECPayCallbackPaymentType.CVS_FAMILY |
+    ECPayCallbackPaymentType.CVS_HILIFE |
+    ECPayCallbackPaymentType.CVS_IBON |
+    ECPayCallbackPaymentType.CVS_OK
+  >;
   TradeDate: string;
   CustomField1: string;
   CustomField2: string;
@@ -263,7 +372,7 @@ export interface ECPayCallbackCVSPayload extends ECPayCallbackPayload {
   Barcode3: string;
 }
 
-export interface ECPayCallbackBarcodePayload extends ECPayCallbackPayload {
+export interface ECPayAsyncInformationBarcodePayload extends ECPayAsyncInformationPayload {
   MerchantID: string;
   MerchantTradeNo: string;
   StoreID: string;
@@ -271,7 +380,7 @@ export interface ECPayCallbackBarcodePayload extends ECPayCallbackPayload {
   RtnMsg: ECPayCallbackReturnMessage;
   TradeNo: string;
   TradeAmt: number;
-  PaymentType: ECPayCallbackPaymentType;
+  PaymentType: ECPayCallbackPaymentType.BARCODE;
   TradeDate: string;
   CustomField1: string;
   CustomField2: string;

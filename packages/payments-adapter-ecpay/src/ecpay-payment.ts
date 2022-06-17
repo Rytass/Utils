@@ -1,13 +1,13 @@
 import { createHash, randomBytes } from 'crypto';
-import { PaymentGateway, PaymentEvents, Channel, PaymentPeriodType, CVSInfo, VirtualAccountInfo, CreditCardAuthInfo, BarcodeInfo } from '@rytass/payments';
+import { PaymentGateway, PaymentEvents, Channel, PaymentPeriodType, CVSInfo, VirtualAccountInfo, CreditCardAuthInfo, BarcodeInfo, VistualAccountPaymentInfo, OrderState, CVSPaymentInfo } from '@rytass/payments';
 import { DateTime } from 'luxon';
 import LRUCache from 'lru-cache';
 import axios from 'axios';
 import { createServer, IncomingMessage, ServerResponse, Server } from 'http';
 import debug from 'debug';
 import { EventEmitter } from 'events';
-import { ECPayCallbackCreditPayload, ECPayCallbackPayload, ECPayCallbackPaymentType, ECPayCallbackVirtualAccountPayload, ECPayCommitMessage, ECPayOrderCreditCardCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayQueryResultPayload, ECPayOrderVirtualAccountCommitMessage, Language, GetOrderInput, ECPayCreditCardOrderInput, ECPayQueryOrderPayload, ECPayOrderCVSCommitMessage, ECPayCallbackCVSPayload, ECPayOrderBarcodeCommitMessage, ECPayCallbackBarcodePayload } from './typings';
-import { ECPayChannel, ECPayPaymentPeriodType, NUMERIC_CALLBACK_KEYS } from './constants';
+import { ECPayCallbackCreditPayload, ECPayCallbackPayload, ECPayCallbackPaymentType, ECPayCommitMessage, ECPayOrderCreditCardCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayQueryResultPayload, ECPayOrderVirtualAccountCommitMessage, Language, GetOrderInput, ECPayCreditCardOrderInput, ECPayQueryOrderPayload, ECPayOrderCVSCommitMessage, ECPayOrderBarcodeCommitMessage, ECPayAsyncInformationBarcodePayload, ECPayAsyncInformationCVSPayload, ECPayAsyncInformationVirtualAccountPayload, ECPayAsyncInformationPayload, ECPayCallbackVirtualAccountPayload, ECPayCallbackCVSPayload, ECPayCallbackBarcodePayload } from './typings';
+import { ECPayChannel, ECPayCVS, ECPayPaymentPeriodType, NUMERIC_CALLBACK_KEYS } from './constants';
 import { ECPayOrder } from './ecpay-order';
 
 const debugPayment = debug('Rytass:Payment:ECPay');
@@ -22,6 +22,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
   private hashIv = 'v77hoKGq4kWxNNIS';
   private serverHost = 'http://localhost:3000';
   private callbackPath = '/payments/ecpay/callback';
+  private asyncInfoPath = '/payments/ecpay/async-informations';
   private checkoutPath = '/payments/ecpay/checkout';
 
   readonly emitter = new EventEmitter();
@@ -41,6 +42,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
     this.hashIv = options?.hashIv || this.hashIv;
     this.serverHost = options?.serverHost || this.serverHost;
     this.callbackPath = options?.callbackPath || this.callbackPath;
+    this.asyncInfoPath = options?.asyncInfoPath || this.asyncInfoPath;
     this.checkoutPath = options?.checkoutPath || this.checkoutPath;
 
     if (options?.withServer) {
@@ -142,7 +144,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
       }
     }
 
-    if (req.url !== this.callbackPath && req.method !== 'POST') {
+    if (!req.url || req.method !== 'POST' || !~[this.asyncInfoPath, this.callbackPath].indexOf(req.url)) {
       res.writeHead(404);
       res.end();
 
@@ -162,7 +164,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
         .reduce(
           (vars, [key, value]) => ({
             ...vars,
-            [key]: ~NUMERIC_CALLBACK_KEYS.indexOf(key) ? Number(value) : value,
+            [key]: (value !== '' && ~NUMERIC_CALLBACK_KEYS.indexOf(key)) ? Number(value) : value,
           }),
           {},
         ) as ECPayCallbackPayload;
@@ -189,127 +191,210 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
         return;
       }
 
-      switch (payload.PaymentType) {
-        case ECPayCallbackPaymentType.BARCODE:
-          if (payload.RtnCode === 10100073) {
-            order.commit<ECPayOrderBarcodeCommitMessage>({
-              id: payload.MerchantTradeNo,
-              totalPrice: payload.TradeAmt,
-              committedAt: null,
-              merchantId: payload.MerchantID,
-              tradeNumber: payload.TradeNo,
-              tradeDate: DateTime.fromFormat(payload.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
-              paymentType: payload.PaymentType,
-            }, {
-              barcodes: [
-                (payload as ECPayCallbackBarcodePayload).Barcode1,
-                (payload as ECPayCallbackBarcodePayload).Barcode2,
-                (payload as ECPayCallbackBarcodePayload).Barcode3,
-              ],
-              expiredAt: (payload as ECPayCallbackBarcodePayload).ExpireDate,
-            } as BarcodeInfo);
-          } else {
-            debugPayment(`Get barcode number failed: ${order.id}`);
-          }
+      try {
+        switch (req.url) {
+          case this.asyncInfoPath:
+            this.handleAsyncInformation(order, payload);
+            break;
 
-          break;
+          case this.callbackPath:
+            this.handlePaymentResult(order, payload);
+            break;
+        }
 
-        case ECPayCallbackPaymentType.CVS:
-        case ECPayCallbackPaymentType.CVS_FAMILY:
-        case ECPayCallbackPaymentType.CVS_HILIFE:
-        case ECPayCallbackPaymentType.CVS_IBON:
-        case ECPayCallbackPaymentType.CVS_OK:
-          if (payload.RtnCode === 10100073) {
-            order.commit<ECPayOrderCVSCommitMessage>({
-              id: payload.MerchantTradeNo,
-              totalPrice: payload.TradeAmt,
-              committedAt: null,
-              merchantId: payload.MerchantID,
-              tradeNumber: payload.TradeNo,
-              tradeDate: DateTime.fromFormat(payload.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
-              paymentType: payload.PaymentType,
-            }, {
-              paymentCode: (payload as ECPayCallbackCVSPayload).PaymentNo,
-              expiredAt: (payload as ECPayCallbackCVSPayload).ExpireDate,
-            } as CVSInfo);
-          } else {
-            debugPayment(`Get cvs kiosk number failed: ${order.id}`);
-          }
+        res.writeHead(200, {
+          'Content-Type': 'text/plain',
+        });
 
-          break;
+        res.end('1|OK');
+      } catch (ex) {
+        res.writeHead(400, {
+          'Content-Type': 'text/plain',
+        });
 
-        case ECPayCallbackPaymentType.ATM_BOT:
-        case ECPayCallbackPaymentType.ATM_CHINATRUST:
-        case ECPayCallbackPaymentType.ATM_FIRST:
-        case ECPayCallbackPaymentType.ATM_LAND:
-        case ECPayCallbackPaymentType.ATM_TACHONG:
-        case ECPayCallbackPaymentType.ATM_PANHSIN:
-          if (order.paymentType && order.paymentType !== ECPayCallbackPaymentType.VIRTUAL_ACCOUNT_WAITING) {
-            res.writeHead(400, {
-              'Content-Type': 'text/plain',
-            });
+        res.end('0|OrderNotFound');
+      }
+    });
+  }
 
-            res.end('0|OrderNotFound');
+  private handlePaymentResult(order: ECPayOrder<ECPayCommitMessage>, payload: ECPayCallbackPayload) {
+    if (payload.RtnCode !== 1) {
+      order.fail(payload.RtnCode, payload.RtnMsg);
 
-            return;
-          }
+      return;
+    }
 
-          if (payload.RtnCode === 2) {
-            order.commit<ECPayOrderVirtualAccountCommitMessage>({
-              id: payload.MerchantTradeNo,
-              totalPrice: payload.TradeAmt,
-              committedAt: null,
-              merchantId: payload.MerchantID,
-              tradeNumber: payload.TradeNo,
-              tradeDate: DateTime.fromFormat(payload.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
-              paymentType: payload.PaymentType,
-            }, {
-              bankCode: (payload as ECPayCallbackVirtualAccountPayload).BankCode,
-              account: (payload as ECPayCallbackVirtualAccountPayload).vAccount,
-              expiredAt: (payload as ECPayCallbackVirtualAccountPayload).ExpireDate,
-            } as VirtualAccountInfo);
-          } else {
-            debugPayment(`Get virutal account failed: ${order.id}`);
-          }
+    switch (payload.PaymentType) {
+      case ECPayCallbackPaymentType.BARCODE: {
+        const barcodePayload = payload as ECPayCallbackBarcodePayload;
 
-          break;
+        order.commit<ECPayOrderBarcodeCommitMessage>({
+          id: payload.MerchantTradeNo,
+          totalPrice: payload.TradeAmt,
+          committedAt: DateTime.fromFormat(barcodePayload.PaymentDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+          merchantId: payload.MerchantID,
+          tradeNumber: payload.TradeNo,
+          tradeDate: DateTime.fromFormat(payload.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+          paymentType: payload.PaymentType,
+        });
 
-        case ECPayCallbackPaymentType.CREDIT_CARD:
-          order.commit<ECPayOrderCreditCardCommitMessage>({
-            id: payload.MerchantTradeNo,
-            totalPrice: payload.TradeAmt,
-            committedAt: DateTime.fromFormat((payload as ECPayCallbackCreditPayload).PaymentDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
-            merchantId: payload.MerchantID,
-            tradeNumber: payload.TradeNo,
-            tradeDate: DateTime.fromFormat(payload.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
-            paymentType: payload.PaymentType,
-          }, {
-            processDate: DateTime.fromFormat((payload as ECPayCallbackCreditPayload).process_date, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
-            authCode: (payload as ECPayCallbackCreditPayload).auth_code,
-            amount: (payload as ECPayCallbackCreditPayload).amount,
-            eci: (payload as ECPayCallbackCreditPayload).eci,
-            card4Number: (payload as ECPayCallbackCreditPayload).card4no,
-            card6Number: (payload as ECPayCallbackCreditPayload).card6no,
-          } as CreditCardAuthInfo);
-
-          break;
-
-        default:
-          res.writeHead(400, {
-            'Content-Type': 'text/plain',
-          });
-
-          res.end('0|OrderNotFound');
-
-          return;
+        break;
       }
 
-      res.writeHead(200, {
-        'Content-Type': 'text/plain',
-      });
+      case ECPayCallbackPaymentType.CVS:
+      case ECPayCallbackPaymentType.CVS_FAMILY:
+      case ECPayCallbackPaymentType.CVS_HILIFE:
+      case ECPayCallbackPaymentType.CVS_IBON:
+      case ECPayCallbackPaymentType.CVS_OK: {
+        const cvsInfo = payload as ECPayCallbackCVSPayload;
 
-      res.end('1|OK');
-    });
+        order.commit<ECPayOrderCVSCommitMessage>({
+          id: payload.MerchantTradeNo,
+          totalPrice: payload.TradeAmt,
+          committedAt: DateTime.fromFormat(cvsInfo.PaymentDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+          merchantId: payload.MerchantID,
+          tradeNumber: payload.TradeNo,
+          tradeDate: DateTime.fromFormat(payload.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+          paymentType: payload.PaymentType,
+        }, {
+          cvsPayFrom: ECPayCVS[cvsInfo.PayFrom],
+        });
+
+        break;
+      }
+
+      case ECPayCallbackPaymentType.ATM_BOT:
+      case ECPayCallbackPaymentType.ATM_CHINATRUST:
+      case ECPayCallbackPaymentType.ATM_FIRST:
+      case ECPayCallbackPaymentType.ATM_LAND:
+      case ECPayCallbackPaymentType.ATM_TACHONG:
+      case ECPayCallbackPaymentType.ATM_PANHSIN: {
+        const virtualAccountInfo = payload as ECPayCallbackVirtualAccountPayload;
+
+        if (order.paymentType !== payload.PaymentType) {
+          throw new Error('Order Not Found');
+        }
+
+        order.commit<ECPayOrderVirtualAccountCommitMessage>({
+          id: payload.MerchantTradeNo,
+          totalPrice: payload.TradeAmt,
+          committedAt: DateTime.fromFormat(virtualAccountInfo.PaymentDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+          merchantId: payload.MerchantID,
+          tradeNumber: payload.TradeNo,
+          tradeDate: DateTime.fromFormat(payload.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+          paymentType: payload.PaymentType,
+        }, {
+          buyerAccountNumber: virtualAccountInfo.ATMAccNo,
+          buyerBankCode: virtualAccountInfo.ATMAccBank,
+        } as VistualAccountPaymentInfo);
+
+        break;
+      }
+
+      case ECPayCallbackPaymentType.CREDIT_CARD: {
+        const creditCardInfo = payload as ECPayCallbackCreditPayload;
+
+        order.commit<ECPayOrderCreditCardCommitMessage>({
+          id: payload.MerchantTradeNo,
+          totalPrice: payload.TradeAmt,
+          committedAt: DateTime.fromFormat(creditCardInfo.PaymentDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+          merchantId: payload.MerchantID,
+          tradeNumber: payload.TradeNo,
+          tradeDate: DateTime.fromFormat(payload.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+          paymentType: payload.PaymentType,
+        }, {
+          processDate: DateTime.fromFormat(creditCardInfo.process_date, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+          authCode: creditCardInfo.auth_code,
+          amount: creditCardInfo.amount,
+          eci: creditCardInfo.eci,
+          card4Number: creditCardInfo.card4no,
+          card6Number: creditCardInfo.card6no,
+        } as CreditCardAuthInfo);
+
+        break;
+      }
+
+      default:
+        throw new Error('Order Not Found');
+    }
+  }
+
+  private handleAsyncInformation(order: ECPayOrder<ECPayCommitMessage>, payload: ECPayAsyncInformationPayload) {
+    if (order.state !== OrderState.PRE_COMMIT) {
+      return;
+    }
+
+    switch (payload.PaymentType) {
+      case ECPayCallbackPaymentType.BARCODE:
+        if (payload.RtnCode === 10100073) {
+          const asyncInfo = payload as ECPayAsyncInformationBarcodePayload;
+
+          order.infoRetrieved<ECPayOrderBarcodeCommitMessage>({
+            barcodes: [
+              asyncInfo.Barcode1,
+              asyncInfo.Barcode2,
+              asyncInfo.Barcode3,
+            ],
+            expiredAt: asyncInfo.ExpireDate,
+          } as BarcodeInfo);
+        } else {
+          order.fail(payload.RtnCode, payload.RtnMsg);
+
+          debugPayment(`Get barcode number failed: ${order.id}`);
+        }
+
+        break;
+
+      case ECPayCallbackPaymentType.CVS:
+      case ECPayCallbackPaymentType.CVS_FAMILY:
+      case ECPayCallbackPaymentType.CVS_HILIFE:
+      case ECPayCallbackPaymentType.CVS_IBON:
+      case ECPayCallbackPaymentType.CVS_OK:
+        if (payload.RtnCode === 10100073) {
+          const asyncInfo = payload as ECPayAsyncInformationCVSPayload;
+
+          order.infoRetrieved<ECPayOrderCVSCommitMessage>({
+            paymentType: payload.PaymentType,
+            paymentCode: asyncInfo.PaymentNo,
+            expiredAt: asyncInfo.ExpireDate,
+          } as CVSInfo);
+        } else {
+          order.fail(payload.RtnCode, payload.RtnMsg);
+
+          debugPayment(`Get cvs kiosk number failed: ${order.id}`);
+        }
+
+        break;
+
+      case ECPayCallbackPaymentType.ATM_BOT:
+      case ECPayCallbackPaymentType.ATM_CHINATRUST:
+      case ECPayCallbackPaymentType.ATM_FIRST:
+      case ECPayCallbackPaymentType.ATM_LAND:
+      case ECPayCallbackPaymentType.ATM_TACHONG:
+      case ECPayCallbackPaymentType.ATM_PANHSIN:
+        if (order.paymentType !== ECPayCallbackPaymentType.VIRTUAL_ACCOUNT_WAITING) {
+          throw new Error('Order Not Found');
+        }
+
+        if (payload.RtnCode === 2) {
+          const asyncInfo = payload as ECPayAsyncInformationVirtualAccountPayload;
+
+          order.infoRetrieved<ECPayOrderVirtualAccountCommitMessage>({
+            bankCode: asyncInfo.BankCode,
+            account: asyncInfo.vAccount,
+            expiredAt: asyncInfo.ExpireDate,
+          } as VirtualAccountInfo, payload.PaymentType);
+        } else {
+          order.fail(payload.RtnCode, payload.RtnMsg);
+
+          debugPayment(`Get virutal account failed: ${order.id}`);
+        }
+
+        break;
+
+      default:
+        throw new Error('Order Not Found');
+    }
   }
 
   prepare<P extends CM>(orderInput: GetOrderInput<P>): ECPayOrder<P> {
@@ -371,6 +456,14 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
     } as Omit<ECPayOrderForm, 'CheckMacValue'>;
 
     if ((!orderInput.channel || orderInput.channel === Channel.CREDIT_CARD)) {
+      if (totalAmount < 5) {
+        throw new Error('Credit card channel minimum amount is 5');
+      }
+
+      if (totalAmount > 199999) {
+        throw new Error('Credit card channel maximum amount is 199999');
+      }
+
       if (orderInput.memory && !orderInput.memberId) {
         throw new Error('Memory card should provide `memberId`.');
       }
@@ -462,6 +555,14 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
     }
 
     if (orderInput.channel === Channel.VIRTUAL_ACCOUNT) {
+      if (totalAmount < 11) {
+        throw new Error('Virtual account channel minimum amount is 11');
+      }
+
+      if (totalAmount > 49999) {
+        throw new Error('Virtual account channel maximum amount is 49999');
+      }
+
       if (orderInput.virtualAccountExpireDays !== undefined) {
         if (orderInput.virtualAccountExpireDays < 1) throw new Error('`virtualAccountExpireDays` should between 1 and 60 days');
         if (orderInput.virtualAccountExpireDays > 60) throw new Error('`virtualAccountExpireDays` should between 1 and 60 days');
@@ -474,7 +575,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
       }
 
       payload.ChooseSubPayment = orderInput.bank?.toString() ?? '';
-      payload.PaymentInfoURL = `${this.serverHost}${this.callbackPath}`;
+      payload.PaymentInfoURL = `${this.serverHost}${this.asyncInfoPath}`;
       payload.ClientRedirectURL = orderInput.clientBackUrl || '';
     }
 
@@ -498,7 +599,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
         payload.StoreExpireDate = '10080';
       }
 
-      payload.PaymentInfoURL = `${this.serverHost}${this.callbackPath}`;
+      payload.PaymentInfoURL = `${this.serverHost}${this.asyncInfoPath}`;
       payload.ClientRedirectURL = orderInput.clientBackUrl || '';
     }
 
@@ -523,7 +624,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
         payload.StoreExpireDate = '7';
       }
 
-      payload.PaymentInfoURL = `${this.serverHost}${this.callbackPath}`;
+      payload.PaymentInfoURL = `${this.serverHost}${this.asyncInfoPath}`;
       payload.ClientRedirectURL = orderInput.clientBackUrl || '';
     }
 
