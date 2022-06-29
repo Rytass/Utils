@@ -24,6 +24,12 @@
       "@rytass/order-builder": [
         "order-builder/src"
       ],
+      "@rytass/invoice": [
+        "invoice/src"
+      ],
+      "@rytass/invoice-adapter-ecpay": [
+        "invoice-adapter-ecpay/src"
+      ],
     }
   },
   "references": [
