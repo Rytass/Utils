@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.11](https://github.com/Rytass/Utils/compare/@rytass/payments@0.0.10...@rytass/payments@0.0.11) (2022-06-30)
+
+
+### Features
+
+* **payments-adapter-ecpay:** add onInfoRetrieved listener for payment gateway ([0277dc7](https://github.com/Rytass/Utils/commit/0277dc72f1c14bc7112f8040ff3fb79708e2eaac))
+
+
+
+
+
 ## 0.0.10 (2022-06-17)
 
 
