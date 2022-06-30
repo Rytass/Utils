@@ -55,6 +55,10 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
       this.emitter.on(PaymentEvents.ORDER_COMMITTED, options.onCommit);
     }
 
+    if (typeof options?.onInfoRetrieved === 'function') {
+      this.emitter.on(PaymentEvents.ORDER_INFO_RETRIEVED, options.onInfoRetrieved);
+    }
+
     if (typeof options?.onServerListen === 'function') {
       this.emitter.on(PaymentEvents.SERVER_LISTENED, options.onServerListen);
     }

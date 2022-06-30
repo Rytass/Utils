@@ -18,6 +18,7 @@ export interface ECPayInitOptions<O extends ECPayOrder<ECPayCommitMessage>> {
   serverListener?: (req: IncomingMessage, res: ServerResponse) => void;
   ttl?: number; // Order Expire Time is ms
   onCommit?: (order: O) => void;
+  onInfoRetrieved?: (order: O) => void;
   onServerListen?: () => void;
 }
 

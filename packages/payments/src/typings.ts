@@ -189,6 +189,7 @@ export interface OrderFailMessage {
 
 export enum PaymentEvents {
   SERVER_LISTENED = 'LISTENED',
+  ORDER_INFO_RETRIEVED = 'INFO_RETRIEVED',
   ORDER_PRE_COMMIT = 'PRE_COMMIT',
   ORDER_COMMITTED = 'COMMITTED',
 }

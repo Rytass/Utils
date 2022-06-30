@@ -5,7 +5,7 @@
 import request from 'supertest';
 import { OrderState } from '@rytass/payments';
 import { addMac } from '../__utils__/add-mac';
-import { Channel, ECPayCallbackPaymentType, ECPayChannelCreditCard, ECPayChannelVirtualAccount, ECPayPayment } from '@rytass/payments-adapter-ecpay';
+import { Channel, ECPayCallbackPaymentType, ECPayChannelCreditCard, ECPayChannelVirtualAccount, ECPayCommitMessage, ECPayOrder, ECPayPayment } from '@rytass/payments-adapter-ecpay';
 import http, { createServer } from 'http';
 
 describe('ECPayPayment (Virtual Account)', () => {
@@ -150,10 +150,13 @@ describe('ECPayPayment (Virtual Account)', () => {
     describe('Vistual Account Banks', () => {
       let testPayment: ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>;
 
+      const mockedOnInfoRetrieved = jest.fn<void, [ECPayOrder<ECPayCommitMessage>]>(() => { });
+
       beforeAll(() => new Promise<void>((resolve) => {
         testPayment = new ECPayPayment({
           withServer: true,
           onServerListen: resolve,
+          onInfoRetrieved: mockedOnInfoRetrieved,
         });
       }));
 
@@ -246,6 +249,9 @@ describe('ECPayPayment (Virtual Account)', () => {
             expect(order.state).toBe(OrderState.ASYNC_INFO_RETRIEVED);
             expect(order.asyncInfo?.bankCode).toBe('806');
             expect(order.asyncInfo?.account).toBe('3453721178769211');
+
+            expect(mockedOnInfoRetrieved.mock.calls.length).toBe(1);
+            expect((mockedOnInfoRetrieved.mock.calls[0][0] as unknown as ECPayOrder<ECPayCommitMessage>).id).toBe(order.id);
 
             done();
           });

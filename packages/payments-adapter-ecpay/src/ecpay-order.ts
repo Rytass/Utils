@@ -181,6 +181,8 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
     this._paymentType = paymentType || this._paymentType;
 
     this._state = OrderState.ASYNC_INFO_RETRIEVED;
+
+    this.gateway.emitter.emit(PaymentEvents.ORDER_INFO_RETRIEVED, this);
   }
 
   fail(returnCode: number, message: string) {
