@@ -711,6 +711,7 @@ describe('ECPayPayment (Virtual Account)', () => {
         });
 
         expect(() => order.infoRetrieved({
+          channel: Channel.VIRTUAL_ACCOUNT,
           bankCode: '806',
           account: '3453721178769211',
           expiredAt: '2022/04/27',

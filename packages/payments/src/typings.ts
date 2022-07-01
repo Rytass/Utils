@@ -141,6 +141,7 @@ export enum CVS {
 }
 
 export interface CreditCardAuthInfo {
+  channel: Channel.CREDIT_CARD;
   processDate: Date;
   authCode: string; // Credit Card Auth Code (6 digits)
   amount: number;
@@ -150,26 +151,31 @@ export interface CreditCardAuthInfo {
 }
 
 export interface VistualAccountPaymentInfo {
+  channel: Channel.VIRTUAL_ACCOUNT;
   buyerAccountNumber: string;
   buyerBankCode: string;
 }
 
 export interface VirtualAccountInfo {
+  channel: Channel.VIRTUAL_ACCOUNT;
   bankCode: string;
   account: string;
   expiredAt: string;
 }
 
 export interface CVSPaymentInfo {
+  channel: Channel.CVS_KIOSK;
   cvsPayFrom: CVS;
 }
 
 export interface CVSInfo {
+  channel: Channel.CVS_KIOSK;
   paymentCode: string;
   expiredAt: string;
 }
 
 export interface BarcodeInfo {
+  channel: Channel.CVS_BARCODE;
   barcodes: [string, string, string];
   expiredAt: string;
 }

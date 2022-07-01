@@ -261,6 +261,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
           tradeDate: DateTime.fromFormat(payload.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
           paymentType: payload.PaymentType,
         }, {
+          channel: Channel.CVS_KIOSK,
           cvsPayFrom: ECPayCVS[cvsInfo.PayFrom],
         });
 
@@ -288,6 +289,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
           tradeDate: DateTime.fromFormat(payload.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
           paymentType: payload.PaymentType,
         }, {
+          channel: Channel.VIRTUAL_ACCOUNT,
           buyerAccountNumber: virtualAccountInfo.ATMAccNo,
           buyerBankCode: virtualAccountInfo.ATMAccBank,
         } as VistualAccountPaymentInfo);
@@ -307,6 +309,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
           tradeDate: DateTime.fromFormat(payload.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
           paymentType: payload.PaymentType,
         }, {
+          channel: Channel.CREDIT_CARD,
           processDate: DateTime.fromFormat(creditCardInfo.process_date, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
           authCode: creditCardInfo.auth_code,
           amount: creditCardInfo.amount,
@@ -334,6 +337,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
           const asyncInfo = payload as ECPayAsyncInformationBarcodePayload;
 
           order.infoRetrieved<ECPayOrderBarcodeCommitMessage>({
+            channel: Channel.CVS_BARCODE,
             barcodes: [
               asyncInfo.Barcode1,
               asyncInfo.Barcode2,
@@ -358,6 +362,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
           const asyncInfo = payload as ECPayAsyncInformationCVSPayload;
 
           order.infoRetrieved<ECPayOrderCVSCommitMessage>({
+            channel: Channel.CVS_KIOSK,
             paymentType: payload.PaymentType,
             paymentCode: asyncInfo.PaymentNo,
             expiredAt: asyncInfo.ExpireDate,
@@ -384,6 +389,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
           const asyncInfo = payload as ECPayAsyncInformationVirtualAccountPayload;
 
           order.infoRetrieved<ECPayOrderVirtualAccountCommitMessage>({
+            channel: Channel.VIRTUAL_ACCOUNT,
             bankCode: asyncInfo.BankCode,
             account: asyncInfo.vAccount,
             expiredAt: asyncInfo.ExpireDate,
