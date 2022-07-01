@@ -11,7 +11,7 @@ import {
   ErrorCallback,
   ConverterManagerInterface,
   Converter,
-  ConvertableStatus,
+  Convertable,
   ConverterManager,
 } from '@rytass/storages';
 import { DetectLocalFileType, StorageLocalOptions } from '.';
@@ -21,7 +21,7 @@ import LRU from 'lru-cache';
 import { Magic, MAGIC_MIME_TYPE } from 'mmmagic';
 import * as mimes from 'mime-types';
 import * as fs from 'fs';
-import { ImagesConverter } from 'storages-images-converter/src/typings';
+import { ImagesConverter } from '@rytass/storages-images-converter';
 
 export class StorageLocalService<T extends StorageLocalOptions>
   implements StorageService<T>
@@ -30,7 +30,7 @@ export class StorageLocalService<T extends StorageLocalOptions>
   readonly converterManager?: ConverterManagerInterface<
     T['converters'] extends Converter[] ? T['converters'] : never
   >;
-  private readonly cache?: LRU<string, FileType<ConvertableStatus<T>>>;
+  private readonly cache?: LRU<string, FileType<Convertable<T>>>;
 
   constructor(options?: T extends StorageLocalOptions ? T : never) {
     if (options?.defaultDirectory)
@@ -67,7 +67,7 @@ export class StorageLocalService<T extends StorageLocalOptions>
 
   private async createFile(
     input: WriteFileInput
-  ): Promise<FileType<ConvertableStatus<T>>> {
+  ): Promise<FileType<Convertable<T>>> {
     const buffer = input instanceof Buffer ? input : Buffer.from(input);
     const size = Buffer.byteLength(buffer);
     const { mime, extension } = await this.detectFileType(buffer);
@@ -165,7 +165,7 @@ export class StorageLocalService<T extends StorageLocalOptions>
   async read(
     fileName: string,
     { directory = this.defaultDirectory }: StorageReadOptions
-  ): Promise<FileType<ConvertableStatus<T>>> {
+  ): Promise<FileType<Convertable<T>>> {
     if (!directory || !fs.existsSync(directory))
       throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
     const fullPath = resolve(directory, fileName);
@@ -182,9 +182,7 @@ export class StorageLocalService<T extends StorageLocalOptions>
     return file;
   }
 
-  async readRaw(
-    input: WriteFileInput
-  ): Promise<FileType<ConvertableStatus<T>>> {
+  async readRaw(input: WriteFileInput): Promise<FileType<Convertable<T>>> {
     return this.createFile(input);
   }
 
@@ -205,11 +203,13 @@ export class StorageLocalService<T extends StorageLocalOptions>
 
       await Promise.all(
         subs.map(async (sub) => {
-          (await fs.promises.stat(resolve(directory, sub))).isDirectory()
-            ? (await searchSubDirectory(resolve(directory, sub))).map(sub =>
+          const path = resolve(directory, sub);
+
+          (await fs.promises.stat(path)).isDirectory()
+            ? (await searchSubDirectory(path)).map(sub =>
                 found.push(sub)
               )
-            : found.push(resolve(directory, sub));
+            : found.push(path);
         })
       );
 
