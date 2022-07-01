@@ -8,11 +8,11 @@ export interface Converter<T extends string = any, K extends string = any> {
 
 export interface ConverterManagerInterface<T extends Converter[]> {
   convert: (
-    extension: ConvertableStatus<T>,
+    extension: Convertable<T>,
     stats: FileStats
   ) => Buffer | Promise<Buffer> | undefined | Promise<undefined>;
 }
 
-export type ConvertableStatus<T> = T extends Converter[]
+export type Convertable<T> = T extends Converter[]
   ? T[number]['to'][number]
-  : T extends StorageOptions ? ConvertableStatus<T['converters']> : never
+  : T extends StorageOptions ? Convertable<T['converters']> : never

@@ -7,7 +7,7 @@ import { ImagesConverter } from '@rytass/storages-images-converter';
 import { resolve } from 'path';
 
 describe('StorageLocalService', () => {
-  const storage = new StorageLocalService({ converters: [ImagesConverter] });
+  const storage = new StorageLocalService({converters: [ImagesConverter]});
   const fullPath = resolve(__dirname, 'test');
 
   const textFileName = 'test.txt';

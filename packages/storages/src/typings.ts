@@ -1,4 +1,4 @@
-import { ConvertableStatus, Converter, ConverterManagerInterface } from './converter/typings';
+import { Convertable, Converter, ConverterManagerInterface } from './converter/typings';
 
 export type WriteFileInput = string | Buffer;
 export type FileName = string | ((data: FileType) => string | string);
@@ -50,9 +50,8 @@ export interface StorageService<T extends StorageOptions, K = T['converters']> {
     input: string,
     options: StorageReadOptions
   ): Promise<
-    FileType<ConvertableStatus<T['converters']>>
+    FileType<Convertable<T['converters']>>
   >;
   writeSync(input: Required<FileType>, options: StorageWriteOptions): void;
-  search(directory: string): Promise<string[]>;
   remove(directory: string, callback?: ErrorCallback): Promise<void>;
 }

@@ -1,5 +1,5 @@
 import {
-  ConvertableStatus,
+  Convertable,
   Converter,
   ConverterManagerInterface,
   ErrorCode,
@@ -15,7 +15,7 @@ export class ConverterManager<T extends Converter[]>
   constructor(converters: T extends Converter[] ? T : never) {
     this.converters = converters;
   }
-  convert(extension: ConvertableStatus<T>, stats: FileStats) {
+  convert(extension: Convertable<T>, stats: FileStats) {
     const [converter] = this.converters.filter(
       converter =>
         converter.from.includes(stats.extension) &&
