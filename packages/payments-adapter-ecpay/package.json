@@ -1,6 +1,6 @@
 {
   "name": "@rytass/payments-adapter-ecpay",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "Rytass Payment Gateway",
   "keywords": [
     "rytass",
@@ -23,7 +23,7 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/payments": "^0.0.11",
+    "@rytass/payments": "^0.0.12",
     "axios": "^0.26.1",
     "debug": "^4.3.4",
     "lru-cache": "^7.8.1",

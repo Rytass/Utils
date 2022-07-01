@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.12](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.0.11...@rytass/payments-adapter-ecpay@0.0.12) (2022-07-01)
+
+
+### Features
+
+* **payments-adapter-ecpay:** add channel on additionalInfo and asyncInformations for type infer ([e6ff2ac](https://github.com/Rytass/Utils/commit/e6ff2ac0200dfc201e03d01d3ea2e37717d31bd4))
+
+
+
+
+
 ## [0.0.11](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.0.10...@rytass/payments-adapter-ecpay@0.0.11) (2022-06-30)
 
 
