@@ -18,13 +18,21 @@ const ConvertImageExtension: ConvertImageExtensionType[] = [
   'tiff',
 ];
 
+export interface ImageConverterOptions {
+  resize?: {
+    width?: number, height?: number
+  },
+  quality?: number
+}
+
 export const ImagesConverter: Converter<
   ConvertImageExtensionType,
-  ConvertImageExtensionType
+  ConvertImageExtensionType,
+  ImageConverterOptions
 > = {
   from: ConvertImageExtension,
   to: ConvertImageExtension,
-  load: (extension, buffer) => {
+  load: (extension, buffer, options) => {
     if (!ConvertImageExtension.includes(extension))
       throw new StorageError(
         ErrorCode.UNRECOGNIZED_ERROR,
@@ -32,21 +40,23 @@ export const ImagesConverter: Converter<
       );
     const input = sharp(buffer);
 
+    if (options?.resize)
+        input.resize(options.resize)
     switch (extension) {
       case 'png':
-        input.png();
+        input.png({quality: options?.quality});
         break;
       case 'webp':
-        input.webp();
+        input.webp({quality: options?.quality});
         break;
       case 'avif':
-        input.avif();
+        input.avif({quality: options?.quality});
         break;
       case 'gif':
         input.gif();
         break;
       case 'tiff':
-        input.tiff();
+        input.tiff({quality: options?.quality});
         break;
     }
 

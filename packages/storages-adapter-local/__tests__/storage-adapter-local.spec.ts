@@ -15,12 +15,6 @@ describe('StorageLocalService', () => {
   it('should write and search text file', async () => {
     const file = await storage.readRaw(Buffer.from('test string'));
 
-    storage.writeSync(file, {
-      directory: fullPath,
-      fileName: textFileName,
-      autoMkdir: true,
-    });
-
     const directoryFiles = await storage.search(fullPath);
 
     expect(

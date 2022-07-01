@@ -30,7 +30,7 @@ export class StorageLocalService<T extends StorageLocalOptions>
   readonly converterManager?: ConverterManagerInterface<
     T['converters'] extends Converter[] ? T['converters'] : never
   >;
-  private readonly cache?: LRU<string, FileType<Convertable<T>>>;
+  private readonly cache?: LRU<string, FileType<T>>;
 
   constructor(options?: T extends StorageLocalOptions ? T : never) {
     if (options?.defaultDirectory)
@@ -67,7 +67,7 @@ export class StorageLocalService<T extends StorageLocalOptions>
 
   private async createFile(
     input: WriteFileInput
-  ): Promise<FileType<Convertable<T>>> {
+  ): Promise<FileType<T>> {
     const buffer = input instanceof Buffer ? input : Buffer.from(input);
     const size = Buffer.byteLength(buffer);
     const { mime, extension } = await this.detectFileType(buffer);
@@ -77,13 +77,16 @@ export class StorageLocalService<T extends StorageLocalOptions>
       size,
       mime: mime,
       extension: extension,
-      to: async (target, callback) => {
+      to: async (target, options) => {
         try {
           if (!extension) throw new StorageError(ErrorCode.UNRECOGNIZED_ERROR);
 
-          return this.converterManager?.convert(target, { buffer, extension });
+          return this.converterManager?.convert(target, { buffer, extension }, options);
         } catch (error) {
-          if (callback) callback(error as StorageError);
+          if (options) {
+            if (options.errors)
+              options.errors(error as StorageError);
+          }
         }
       },
     };
@@ -164,8 +167,10 @@ export class StorageLocalService<T extends StorageLocalOptions>
 
   async read(
     fileName: string,
-    { directory = this.defaultDirectory }: StorageReadOptions
-  ): Promise<FileType<Convertable<T>>> {
+    options?: StorageReadOptions
+  ): Promise<FileType<T>> {
+    const directory = options?.directory ?? this.defaultDirectory
+
     if (!directory || !fs.existsSync(directory))
       throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
     const fullPath = resolve(directory, fileName);
@@ -182,7 +187,7 @@ export class StorageLocalService<T extends StorageLocalOptions>
     return file;
   }
 
-  async readRaw(input: WriteFileInput): Promise<FileType<Convertable<T>>> {
+  async readRaw(input: WriteFileInput): Promise<FileType<T>> {
     return this.createFile(input);
   }
 
