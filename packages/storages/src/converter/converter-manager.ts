@@ -15,14 +15,14 @@ export class ConverterManager<T extends Converter[]>
   constructor(converters: T extends Converter[] ? T : never) {
     this.converters = converters;
   }
-  convert(extension: Convertable<T>, stats: FileStats) {
+  convert(extension: Convertable<T>, stats: FileStats, options: Convertable<T>['options']) {
     const [converter] = this.converters.filter(
       converter =>
         converter.from.includes(stats.extension) &&
         converter.to.includes(extension)
     );
 
-    if (converter) return converter.load(extension, stats.buffer);
+    if (converter) return converter.load(extension, stats.buffer, options);
 
     throw new StorageError(
       ErrorCode.UNRECOGNIZED_ERROR,
