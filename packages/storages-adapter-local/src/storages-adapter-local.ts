@@ -35,7 +35,11 @@ export class StorageLocalService<T extends StorageLocalOptions>
   constructor(options?: T extends StorageLocalOptions ? T : never) {
     if (options?.defaultDirectory)
       this.defaultDirectory = options.defaultDirectory;
-    if (options?.cache) this.cache = new LRU(options.cache);
+    if (options?.cache)
+      this.cache = new LRU({
+        ...options.cache,
+        sizeCalculation: value => value?.buffer.length,
+      });
 
     const converters = options?.converters?.length
       ? options.converters
@@ -81,11 +85,14 @@ export class StorageLocalService<T extends StorageLocalOptions>
         try {
           if (!extension) throw new StorageError(ErrorCode.UNRECOGNIZED_ERROR);
 
-          return this.converterManager?.convert(target, { buffer, extension }, options);
+          return this.converterManager?.convert(
+            target,
+            { buffer, extension },
+            options
+          );
         } catch (error) {
           if (options) {
-            if (options.errors)
-              options.errors(error as StorageError);
+            if (options.errors) options.errors(error as StorageError);
           }
         }
       },
@@ -95,25 +102,24 @@ export class StorageLocalService<T extends StorageLocalOptions>
 
   async write(
     input: WriteFileInput,
-    {
-      directory = this.defaultDirectory,
-      ...options
-    }: StorageWriteOptions & StorageAsyncCallback
+    options?: StorageWriteOptions & StorageAsyncCallback
   ): Promise<void> {
     try {
+      const directory = options?.directory ?? this.defaultDirectory;
+
       if (!directory) throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
 
       if (!fs.existsSync(directory)) {
-        if (options.autoMkdir)
+        if (options?.autoMkdir)
           await fs.promises.mkdir(directory, { recursive: true });
         else throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
       }
 
-      const file = await this.createFile(input) as FileType<T>
+      const file = (await this.createFile(input)) as FileType<T>;
 
       let fileName = this.createFileName(file.buffer);
 
-      if (options.fileName)
+      if (options?.fileName)
         fileName =
           typeof options.fileName === 'string'
             ? options.fileName
@@ -127,7 +133,7 @@ export class StorageLocalService<T extends StorageLocalOptions>
         resolve(directory, fileName),
         new Uint8Array(file.buffer), //ASCII
         (error) => {
-          if (options.callback) {
+          if (options?.callback) {
             if (error)
               options.callback(new StorageError(ErrorCode.WRITE_FILE_ERROR));
             else options.callback(undefined, file);
@@ -135,7 +141,7 @@ export class StorageLocalService<T extends StorageLocalOptions>
         }
       );
     } catch (error) {
-      if (options.callback) options.callback(error as StorageErrorInterface);
+      if (options?.callback) options.callback(error as StorageErrorInterface);
     }
   }
 
@@ -143,7 +149,7 @@ export class StorageLocalService<T extends StorageLocalOptions>
     fileName: string,
     options?: StorageReadOptions
   ): Promise<StorageLocalFile<T>> {
-    const directory = options?.directory ?? this.defaultDirectory
+    const directory = options?.directory ?? this.defaultDirectory;
 
     if (!directory || !fs.existsSync(directory))
       throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
@@ -185,9 +191,7 @@ export class StorageLocalService<T extends StorageLocalOptions>
           const path = resolve(directory, sub);
 
           (await fs.promises.stat(path)).isDirectory()
-            ? (await searchSubDirectory(path)).map(sub =>
-                found.push(sub)
-              )
+            ? (await searchSubDirectory(path)).map(sub => found.push(sub))
             : found.push(path);
         })
       );
