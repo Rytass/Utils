@@ -7,34 +7,55 @@ import { ImagesConverter } from '@rytass/storages-images-converter';
 import { resolve } from 'path';
 
 describe('StorageLocalService', () => {
-  const storage = new StorageLocalService({converters: [ImagesConverter]});
-  const fullPath = resolve(__dirname, 'test');
-
-  const textFileName = 'test.txt';
+  const storage = new StorageLocalService({ converters: [ImagesConverter] });
+  const workingDirectory = resolve(__dirname, 'test');
 
   it('should write and search text file', async () => {
-    const file = await storage.readRaw(Buffer.from('test string'));
+    const fileName = 'testFile.txt';
 
-    const directoryFiles = await storage.search(fullPath);
-
-    expect(
-      directoryFiles.includes(resolve(fullPath, textFileName))
-    ).toBeTruthy();
-  });
-
-  it('should read text file with mime and extension', async () => {
-    const storageFile = await storage.read(textFileName, {
-      directory: fullPath,
+    await storage.write('test string', {
+      fileName: fileName,
+      directory: workingDirectory,
+      autoMkdir: true,
     });
 
-    expect(storageFile.mime).toBe('text/plain');
-    expect(storageFile.extension).toBe('txt');
+    const files = await storage.search(workingDirectory);
+
+    expect(files.includes(resolve(workingDirectory, fileName))).toBeTruthy();
+
+    await storage.remove(resolve(workingDirectory));
   });
 
-  it('should remove files', async () => {
-    await storage.remove(fullPath);
-    const directoryFiles = await storage.search(__dirname);
+  it('should read image file', async () => {
+    const fileName = 'test.png';
+    const file = await storage.read(fileName, {
+      directory: resolve(__dirname, 'statics'),
+    });
 
-    expect(directoryFiles.includes(fullPath)).toBeFalsy();
+    expect(file.mime).toEqual('image/png');
+    expect(file.extension).toEqual('png');
+  });
+
+  it('should read image buffer with mime and saved', async () => {
+    const fileName = 'testTruncated.png';
+    const buffer = Buffer.from([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
+      0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x02,
+    ]);
+
+    const file = await storage.readRaw(buffer);
+
+    expect(file.mime).toEqual('image/png');
+
+    await file.write({
+      directory: __dirname,
+      fileName: fileName,
+      callback: (error, data) => console.log(error, data),
+    });
+
+    const files = await storage.search(__dirname);
+
+    expect(files.includes(resolve(__dirname, fileName))).toBeTruthy();
+    await storage.remove(resolve(__dirname, fileName))
   });
 });

@@ -52,10 +52,9 @@ export interface StorageService<T extends StorageOptions, K = T['converters']> {
     K extends Converter[] ? K : never
   >;
   write(
-    input: Required<FileType>,
+    input: WriteFileInput,
     options?: StorageWriteOptions & StorageAsyncCallback
   ): void;
   read(input: string, options?: StorageReadOptions): Promise<FileType<T>>;
-  writeSync(input: Required<FileType>, options?: StorageWriteOptions): void;
   remove(directory: string, callback?: ErrorCallback): Promise<void>;
 }
