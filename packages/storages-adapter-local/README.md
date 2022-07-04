@@ -14,7 +14,7 @@ File storage utility, covering basic I/O and metadata guessing, and with plugged
 - - [ ] Stream
 - - [ ] Text
 
-## APIs
+## Storages APIs
 
 ---
 
@@ -176,3 +176,59 @@ const fileName = 'test.png'
 await storage.remove(resolve(__dirname, fileName))
 ```
 ---
+
+## Storages Converter APIs
+> ### **_StorageLocalFile.to(extension: string, options):Promise\<Buffer>_**
+#### **Description**
+convert file and advanced manipulation provided by converter
+
+#### **Arguments**
+
+#### `[ImagesConverter]`
+
+| Parameter | Type   | Required | Description                                                                 |
+| --------- | ------ | -------- | --------------------------------------------------------------------------- |
+| resize | object | false    | resize image with `width: number` and `height: number` |
+| quality | number | false | value of converted image quality |
+
+#### **Snippet**
+```typescript
+import { StorageLocalService } from "@rytass/storage-adapter-local";
+import { ImagesConverter } from '@rytass/storages-images-converter';
+
+const storage = new StorageLocalService({ converters: [ImagesConverter] });
+
+const file = await storage.read('test.png', {
+      directory: __dirname,
+});
+const buf = await file.to('jpeg', {resize: { width: 50 }})
+if (buf) {
+    const convertedFile = await storage.readRaw(buf);
+    convertedFile.write({ directory: __dirname });
+}
+```
+---
+> ### **_StorageLocalFile.write(options):Promise\<void>_**
+#### **Description**
+
+write file from StorageLocalFileType
+
+#### **Arguments**
+
+| Parameter | Type               | Required | Description                                                                                                                                                                                      |
+| --------- | ------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| maxSize   | number             | false    | size limit of writing input                                                                                                                                                                      |
+| fileName  | string \| function | false    | name of the file, could also be a callback function with metadata as arguement and string as return, if fileName field is not provided, will use input buffer to generate `sha1` hash by default |
+| directory | string             | false    | directory of the file                                                                                                                                                                            |
+| autoMkdir | boolean            | false    | auto create directory if the given directory is not existed                                                                                                                                      |
+| callback  | function           | false    | callback function for either error occured or metadata of writing file |
+
+```typescript
+const file = await storage.read('test.png', {
+      directory: __dirname
+});
+file.write({
+    directory: workingDirectory,
+    fileName: 'test_copy.jpeg',
+})
+```
