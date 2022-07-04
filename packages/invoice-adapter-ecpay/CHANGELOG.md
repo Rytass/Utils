@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.10](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ecpay@0.1.9...@rytass/invoice-adapter-ecpay@0.1.10) (2022-07-04)
+
+
+### Bug Fixes
+
+* **invoice-adapter-ecpay:** correct error message on customer.address field missing ([b25021f](https://github.com/Rytass/Utils/commit/b25021f3ab8d61ee2985d4450995c826179ae621))
+
+
+
+
+
 ## [0.1.9](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ecpay@0.1.8...@rytass/invoice-adapter-ecpay@0.1.9) (2022-07-04)
 
 
