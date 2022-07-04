@@ -67,7 +67,7 @@ describe('ECPayInvoiceGateway', () => {
                 RtnCode: 1,
                 RtnMsg: '開立發票成功',
                 InvoiceNo: 'YA88888888',
-                InvoiceDate: '2022/06/17+14:29:59',
+                InvoiceDate: '2022-06-17+14:29:59',
                 RandomNumber: '2358',
               })), 'utf8', 'base64'),
               cipher.final('base64'),
@@ -147,7 +147,7 @@ describe('ECPayInvoiceGateway', () => {
     }
 
     it('should issue common invoice', (done) => {
-      const invoiceDate = '2022/06/17+14:29:59';
+      const invoiceDate = '2022-06-17+14:29:59';
 
       post.mockImplementation(async (url: string, data: unknown) => ({
         data: generateIssueResponse({
@@ -166,13 +166,13 @@ describe('ECPayInvoiceGateway', () => {
         },
         items: [{
           name: '橡皮擦',
-          quantity: 1,
+          quantity: 2,
           unitPrice: 10,
         }],
       }).then((invoice) => {
         expect(invoice.randomCode).toBe('2358');
         expect(invoice.invoiceNumber).toBe('YA88888888');
-        expect(invoice.issuedAmount).toBe(10);
+        expect(invoice.issuedAmount).toBe(20);
         expect(DateTime.fromJSDate(invoice.issuedOn).toFormat('yyyy-MM-dd HH:mm:ss')).toBe('2022-06-17 14:29:59');
 
         done();
@@ -180,7 +180,7 @@ describe('ECPayInvoiceGateway', () => {
     });
 
     it('should issue failed by ecpay', () => {
-      const invoiceDate = '2022/06/17+14:29:59';
+      const invoiceDate = '2022-06-17+14:29:59';
 
       post.mockImplementation(async (url: string, data: unknown) => ({
         data: generateIssueResponse({
@@ -206,7 +206,7 @@ describe('ECPayInvoiceGateway', () => {
     });
 
     it('should issue failed by ecpay gateway', () => {
-      const invoiceDate = '2022/06/17+14:29:59';
+      const invoiceDate = '2022-06-17+14:29:59';
 
       post.mockImplementation(async (url: string, data: unknown) => {
         const cipher = createCipheriv('aes-128-cbc', AES_KEY, AES_IV);
@@ -255,8 +255,10 @@ describe('ECPayInvoiceGateway', () => {
         expect(plainPayload.Print).toBe('1');
         expect(plainPayload.CarrierType).toBe('');
         expect(plainPayload.CarrierNum).toBe('');
+        expect(plainPayload.Items[0].ItemAmount).toBe(10);
+        expect(plainPayload.Items[1].ItemAmount).toBe(16);
 
-        const invoiceDate = '2022/06/17+14:29:59';
+        const invoiceDate = '2022-06-17+14:29:59';
 
         const cipher = createCipheriv('aes-128-cbc', AES_KEY, AES_IV);
 
@@ -286,6 +288,10 @@ describe('ECPayInvoiceGateway', () => {
           quantity: 1,
           unitPrice: 10,
           taxType: TaxType.TAXED,
+        }, {
+          name: 'Pencil',
+          quantity: 2,
+          unitPrice: 8,
         }],
       }).then(() => {
         done();
@@ -301,7 +307,7 @@ describe('ECPayInvoiceGateway', () => {
         expect(plainPayload.TaxType).toBe('2');
         expect(plainPayload.SpecialTaxType).toBe(0);
 
-        const invoiceDate = '2022/06/17+14:29:59';
+        const invoiceDate = '2022-06-17+14:29:59';
 
         const cipher = createCipheriv('aes-128-cbc', AES_KEY, AES_IV);
 
@@ -346,7 +352,7 @@ describe('ECPayInvoiceGateway', () => {
         expect(plainPayload.TaxType).toBe('3');
         expect(plainPayload.SpecialTaxType).toBe(8);
 
-        const invoiceDate = '2022/06/17+14:29:59';
+        const invoiceDate = '2022-06-17+14:29:59';
 
         const cipher = createCipheriv('aes-128-cbc', AES_KEY, AES_IV);
 
@@ -391,7 +397,7 @@ describe('ECPayInvoiceGateway', () => {
         expect(plainPayload.TaxType).toBe('9');
         expect(plainPayload.SpecialTaxType).toBe(0);
 
-        const invoiceDate = '2022/06/17+14:29:59';
+        const invoiceDate = '2022-06-17+14:29:59';
 
         const cipher = createCipheriv('aes-128-cbc', AES_KEY, AES_IV);
 
@@ -440,7 +446,7 @@ describe('ECPayInvoiceGateway', () => {
         expect(plainPayload.TaxType).toBe('9');
         expect(plainPayload.SpecialTaxType).toBe(0);
 
-        const invoiceDate = '2022/06/17+14:29:59';
+        const invoiceDate = '2022-06-17+14:29:59';
 
         const cipher = createCipheriv('aes-128-cbc', AES_KEY, AES_IV);
 
@@ -488,7 +494,7 @@ describe('ECPayInvoiceGateway', () => {
         expect(plainPayload.TaxType).toBe('4');
         expect(plainPayload.SpecialTaxType).toBe(2);
 
-        const invoiceDate = '2022/06/17+14:29:59';
+        const invoiceDate = '2022-06-17+14:29:59';
 
         const cipher = createCipheriv('aes-128-cbc', AES_KEY, AES_IV);
 
@@ -538,7 +544,7 @@ describe('ECPayInvoiceGateway', () => {
         expect(plainPayload.TaxType).toBe('4');
         expect(plainPayload.SpecialTaxType).toBe(2);
 
-        const invoiceDate = '2022/06/17+14:29:59';
+        const invoiceDate = '2022-06-17+14:29:59';
 
         const cipher = createCipheriv('aes-128-cbc', AES_KEY, AES_IV);
 
@@ -585,7 +591,7 @@ describe('ECPayInvoiceGateway', () => {
         expect(plainPayload.TaxType).toBe('4');
         expect(plainPayload.SpecialTaxType).toBe(2);
 
-        const invoiceDate = '2022/06/17+14:29:59';
+        const invoiceDate = '2022-06-17+14:29:59';
 
         const cipher = createCipheriv('aes-128-cbc', AES_KEY, AES_IV);
 
@@ -628,7 +634,7 @@ describe('ECPayInvoiceGateway', () => {
 
         expect(plainPayload.CustomerEmail).toBe('');
 
-        const invoiceDate = '2022/06/17+14:29:59';
+        const invoiceDate = '2022-06-17+14:29:59';
 
         const cipher = createCipheriv('aes-128-cbc', AES_KEY, AES_IV);
 
@@ -670,7 +676,7 @@ describe('ECPayInvoiceGateway', () => {
         expect(plainPayload.CarrierType).toBe('2');
         expect(plainPayload.CarrierNum).toBe('HR12345678901234');
 
-        const invoiceDate = '2022/06/17+14:29:59';
+        const invoiceDate = '2022-06-17+14:29:59';
 
         const cipher = createCipheriv('aes-128-cbc', AES_KEY, AES_IV);
 
@@ -730,7 +736,7 @@ describe('ECPayInvoiceGateway', () => {
         expect(plainPayload.CarrierType).toBe('');
         expect(plainPayload.CarrierNum).toBe('');
 
-        const invoiceDate = '2022/06/17+14:29:59';
+        const invoiceDate = '2022-06-17+14:29:59';
 
         const cipher = createCipheriv('aes-128-cbc', AES_KEY, AES_IV);
 
@@ -872,7 +878,7 @@ describe('ECPayInvoiceGateway', () => {
         expect(plainPayload.CarrierType).toBe('3');
         expect(plainPayload.CarrierNum).toBe(VALID_MOBILE_BARCODE);
 
-        const invoiceDate = '2022/06/17+14:29:59';
+        const invoiceDate = '2022-06-17+14:29:59';
 
         const cipher = createCipheriv('aes-128-cbc', AES_KEY, AES_IV);
 

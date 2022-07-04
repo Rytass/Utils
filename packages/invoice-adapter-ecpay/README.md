@@ -53,4 +53,20 @@ invoiceGateway.issue({
     unitPrice: 20, // Taxed Price
   }],
 });
+
+// With VAT number
+invoiceGateway.issue({
+  orderId: '2022062900002',
+  vatNumber: '54366906',
+  carrier: InvoiceCarriers.PRINT, // Always PRINT if vatNumber mode
+  customer: {
+    name: '八拍子股份有限公司',
+    email: 'test@fake.com',
+  },
+  items: [{
+    name: 'Pencil',
+    quantity: 1,
+    unitPrice: 20,
+  }],
+});
 ```

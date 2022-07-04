@@ -204,7 +204,7 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayInvoice> {
           ItemWord: item.unit ?? '個',
           ItemPrice: item.unitPrice,
           ItemTaxType: !item.taxType || item.taxType === TaxType.SPECIAL ? ECPayTaxTypeCode[TaxType.TAXED] : ECPayTaxTypeCode[item.taxType],
-          ItemAmount: item.quantity && item.unitPrice,
+          ItemAmount: item.quantity * item.unitPrice,
           ItemRemark: item.remark ?? null,
         })),
         InvType: taxType === TaxType.SPECIAL ? '08' : '07',
@@ -221,7 +221,7 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayInvoice> {
 
       return new ECPayInvoice({
         items: options.items,
-        issuedOn: DateTime.fromFormat(payload.InvoiceDate, 'yyyy/MM/dd+HH:mm:ss').toJSDate(),
+        issuedOn: DateTime.fromFormat(payload.InvoiceDate, 'yyyy-MM-dd+HH:mm:ss').toJSDate(),
         invoiceNumber: payload.InvoiceNo,
         randomCode: payload.RandomNumber,
       });
