@@ -8,6 +8,7 @@ import { resolve } from 'path';
 
 describe('StorageLocalService', () => {
   const storage = new StorageLocalService({ converters: [ImagesConverter] });
+
   const workingDirectory = resolve(__dirname, 'test');
 
   it('should write and search text file', async () => {
@@ -50,12 +51,11 @@ describe('StorageLocalService', () => {
     await file.write({
       directory: __dirname,
       fileName: fileName,
-      callback: (error, data) => console.log(error, data),
     });
 
     const files = await storage.search(__dirname);
 
     expect(files.includes(resolve(__dirname, fileName))).toBeTruthy();
-    await storage.remove(resolve(__dirname, fileName))
+    await storage.remove(resolve(__dirname, fileName));
   });
 });
