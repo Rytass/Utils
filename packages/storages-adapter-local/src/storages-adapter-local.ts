@@ -11,7 +11,6 @@ import {
   ErrorCallback,
   ConverterManagerInterface,
   Converter,
-  Convertable,
   ConverterManager,
 } from '@rytass/storages';
 import { DetectLocalFileType, StorageLocalOptions } from '.';
@@ -22,6 +21,7 @@ import { Magic, MAGIC_MIME_TYPE } from 'mmmagic';
 import * as mimes from 'mime-types';
 import * as fs from 'fs';
 import { ImagesConverter } from '@rytass/storages-images-converter';
+import { StorageLocalFile } from './storage-adapter-file';
 
 export class StorageLocalService<T extends StorageLocalOptions>
   implements StorageService<T>
@@ -30,7 +30,7 @@ export class StorageLocalService<T extends StorageLocalOptions>
   readonly converterManager?: ConverterManagerInterface<
     T['converters'] extends Converter[] ? T['converters'] : never
   >;
-  private readonly cache?: LRU<string, FileType<T>>;
+  private readonly cache?: LRU<string, StorageLocalFile<T>>;
 
   constructor(options?: T extends StorageLocalOptions ? T : never) {
     if (options?.defaultDirectory)
@@ -67,12 +67,12 @@ export class StorageLocalService<T extends StorageLocalOptions>
 
   private async createFile(
     input: WriteFileInput
-  ): Promise<FileType<T>> {
+  ): Promise<StorageLocalFile<T>> {
     const buffer = input instanceof Buffer ? input : Buffer.from(input);
     const size = Buffer.byteLength(buffer);
     const { mime, extension } = await this.detectFileType(buffer);
 
-    return {
+    return new StorageLocalFile({
       buffer,
       size,
       mime: mime,
@@ -89,11 +89,12 @@ export class StorageLocalService<T extends StorageLocalOptions>
           }
         }
       },
-    };
+      write: options => this.write(buffer, options),
+    });
   }
 
   async write(
-    file: Required<FileType>,
+    input: WriteFileInput,
     {
       directory = this.defaultDirectory,
       ...options
@@ -107,6 +108,8 @@ export class StorageLocalService<T extends StorageLocalOptions>
           await fs.promises.mkdir(directory, { recursive: true });
         else throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
       }
+
+      const file = await this.createFile(input) as FileType<T>
 
       let fileName = this.createFileName(file.buffer);
 
@@ -136,39 +139,10 @@ export class StorageLocalService<T extends StorageLocalOptions>
     }
   }
 
-  writeSync(
-    file: FileType,
-    { directory = this.defaultDirectory, ...options }: StorageWriteOptions
-  ): void {
-    if (!directory) throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
-
-    if (!fs.existsSync(directory)) {
-      if (options.autoMkdir) fs.mkdirSync(directory, { recursive: true });
-      else throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
-    }
-
-    let fileName = this.createFileName(file.buffer);
-
-    if (options.fileName)
-      fileName =
-        typeof options.fileName === 'string'
-          ? options.fileName
-          : options.fileName(file);
-
-    const [name, extension] = fileName.split('.');
-
-    if (!extension) fileName = [name, file.extension].join('.');
-
-    return fs.writeFileSync(
-      resolve(directory, fileName),
-      new Uint8Array(file.buffer)
-    );
-  }
-
   async read(
     fileName: string,
     options?: StorageReadOptions
-  ): Promise<FileType<T>> {
+  ): Promise<StorageLocalFile<T>> {
     const directory = options?.directory ?? this.defaultDirectory
 
     if (!directory || !fs.existsSync(directory))
@@ -187,7 +161,7 @@ export class StorageLocalService<T extends StorageLocalOptions>
     return file;
   }
 
-  async readRaw(input: WriteFileInput): Promise<FileType<T>> {
+  async readRaw(input: WriteFileInput): Promise<StorageLocalFile<T>> {
     return this.createFile(input);
   }
 

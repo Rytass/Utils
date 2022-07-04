@@ -43,6 +43,9 @@ export const ImagesConverter: Converter<
     if (options?.resize)
         input.resize(options.resize)
     switch (extension) {
+      case 'jpeg':
+        input.jpeg({quality: options?.quality});
+        break;
       case 'png':
         input.png({quality: options?.quality});
         break;

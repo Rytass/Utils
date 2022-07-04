@@ -1,4 +1,10 @@
-import { StorageOptions } from 'storages/src/typings';
+import { Convertable } from 'storages/src/converter';
+import {
+  ErrorCallback,
+  StorageAsyncCallback,
+  StorageOptions,
+  StorageWriteOptions,
+} from 'storages/src/typings';
 
 export interface StorageLocalCacheOptions {
   maxSize: number;
@@ -13,4 +19,19 @@ export interface StorageLocalOptions extends StorageOptions {
 export interface DetectLocalFileType {
   mime: string;
   extension?: string;
+}
+
+export interface StorageLocalFileOptions<T extends StorageLocalOptions> {
+  buffer: Buffer;
+  size: number;
+  extension?: string;
+  defaultDirectory?: string;
+  mime?: string;
+  to: (
+    extension: Convertable<T['converters']>['extension'],
+    options?: Convertable<T['converters']>['options'] & {
+      errors?: ErrorCallback;
+    }
+  ) => Buffer | undefined | Promise<Buffer | undefined>;
+  write: (options: StorageWriteOptions & StorageAsyncCallback) => Promise<void>;
 }
