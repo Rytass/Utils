@@ -151,7 +151,7 @@ console.log(file)
 //     }
 ```
 ---
-> ### **_StorageLocalService.search(input: string):Promise\<StorageLocalFile>_**
+> ### **_StorageLocalService.search(input: string):Promise\<string[]>_**
 
 #### **Description**
 
@@ -163,7 +163,7 @@ search files within given directory
 const files = await storage.search(__dirname);
 ```
 ---
-> ### **_StorageLocalService.remove(input: string):Promise\<StorageLocalFile>_**
+> ### **_StorageLocalService.remove(input: string):Promise\<void>_**
 
 #### **Description**
 
