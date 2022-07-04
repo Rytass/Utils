@@ -61,6 +61,7 @@ invoiceGateway.issue({
   carrier: InvoiceCarriers.PRINT, // Always PRINT if vatNumber mode
   customer: {
     name: '八拍子股份有限公司',
+    address: '台北市中山區中山北路二段72巷21號',
     email: 'test@fake.com',
   },
   items: [{

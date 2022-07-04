@@ -123,7 +123,7 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayInvoice> {
 
     if (options.carrier?.type === InvoiceCarrierType.PRINT) {
       if (!options.customer.name) throw new Error('`customer.name` is required if invoice printed');
-      if (!options.customer.address) throw new Error('`customer.name` is required if invoice printed');
+      if (!options.customer.address) throw new Error('`customer.address` is required if invoice printed');
     }
 
     if (options.customer.email && !isEmail(options.customer.email)) {
