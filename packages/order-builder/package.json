@@ -1,6 +1,6 @@
 {
   "name": "@rytass/order-builder",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Rytass Utils OrderBuilder",
   "keywords": [
     "rytass",
@@ -16,8 +16,7 @@
   "scripts": {
     "clean": "npm run build:clean",
     "build:clean": "node ../../scripts/cleanBuild.js",
-    "build": "npm run build:clean && node ../../scripts/build.js",
-    "release": "lerna version patch && npm run build && lerna publish from-package"
+    "build": "npm run build:clean && node ../../scripts/build.js"
   },
   "bugs": {
     "url": "https://github.com/Rytass/Utils/issues"
