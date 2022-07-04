@@ -17,7 +17,7 @@
     "test:coverage": "jest --coverage",
     "test": "jest",
     "prepare": "husky install",
-    "release": "lerna version patch && npm run build && lerna publish from-package"
+    "release": "lerna version patch && npm run build && lerna publish from-package --contents lib"
   },
   "devDependencies": {
     "@commitlint/cli": "^17.0.2",
