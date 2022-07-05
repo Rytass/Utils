@@ -3,7 +3,7 @@ const fse = require('fs-extra');
 const { execSync } = require('child_process');
 const glob = require('glob');
 const { rollup } = require('rollup');
-const ts = require('rollup-plugin-typescript2');
+const { swc } = require('rollup-plugin-swc3');
 
 const { PWD } = process.env;
 const rootPackagePath = PWD;
@@ -115,15 +115,8 @@ async function build(packageSymbol, packageInfos) {
         },
       ],
       plugins: [
-        ts({
-          check: false,
-          cacheRoot: tsPluginCachePath,
+        swc({
           tsconfig,
-          tsconfigOverride: {
-            compilerOptions: {
-              declaration: false,
-            },
-          },
         }),
       ],
     });
