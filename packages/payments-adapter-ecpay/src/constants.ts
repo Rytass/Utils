@@ -1,4 +1,4 @@
-import { Channel, PaymentPeriodType } from '@rytass/payments';
+import { Channel, CVS, PaymentPeriodType } from '@rytass/payments';
 
 export const ECPayPaymentPeriodType: Record<PaymentPeriodType, string> = {
   [PaymentPeriodType.DAY]: 'D',
@@ -12,6 +12,7 @@ export const ECPayChannel: Record<Channel, string> = {
   [Channel.VIRTUAL_ACCOUNT]: 'ATM',
   [Channel.CVS_KIOSK]: 'CVS',
   [Channel.CVS_BARCODE]: 'BARCODE',
+  [Channel.APPLE_PAY]: 'ApplePay',
 };
 
 export const NUMERIC_CALLBACK_KEYS = [
@@ -22,3 +23,10 @@ export const NUMERIC_CALLBACK_KEYS = [
   'amount',
   'eci',
 ];
+
+export const ECPayCVS: Record<string, CVS> = {
+  family: CVS.FAMILY_MART,
+  hilife: CVS.HILIFE,
+  okmart: CVS.OK_MART,
+  ibon: CVS.SEVEN_ELEVEN,
+};

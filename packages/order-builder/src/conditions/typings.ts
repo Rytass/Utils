@@ -5,5 +5,5 @@ import { ObjRecord } from '../typings';
 
 export type Condition<T extends ObjRecord = ObjRecord> = {
   satisfy(order: Order, ..._: any[]): boolean;
-  matchedItems?: <Item extends OrderItem>(order: Order<Item>) => FlattenOrderItem<Item>[];
+  matchedItems?: (order: Order) => FlattenOrderItem[];
 } & T;

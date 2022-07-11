@@ -1,4 +1,4 @@
-import { Channel, CreditCardECI, OrderState } from '@rytass/payments';
+import { Channel, CreditCardAuthInfo, CreditCardECI, OrderState } from '@rytass/payments';
 import { ECPayPayment, ECPayOrderItem, ECPayCallbackPaymentType, ECPayChannelCreditCard, ECPayChannelVirtualAccount } from '../src';
 
 describe('ECPayOrder', () => {
@@ -183,13 +183,14 @@ describe('ECPayOrder', () => {
       const committedAt = new Date();
 
       const creditCardAuthInfo = {
+        channel: Channel.CREDIT_CARD,
         processDate: new Date(),
         authCode: '470293',
         amount: order.totalPrice,
         eci: CreditCardECI.MASTER_3D,
         card4Number: '4311',
         card6Number: '222222',
-      };
+      } as CreditCardAuthInfo;
 
       const platformTradeNumber = '517079903259023';
 

@@ -1,11 +1,12 @@
-import { BaseDiscount } from './base-discount';
 import { Condition } from '../../conditions';
-import { DiscountOptions } from './typings';
 import { FlattenOrderItem } from '../../core';
 import { Order } from '../../core/order';
+import { minus, times } from '../../utils/decimal';
 import { Policy, PolicyPrefix } from '../typings';
+import { BaseDiscount } from './base-discount';
+import { DiscountOptions } from './typings';
 
-export function isDiscountPolicy(policy: Policy) {
+export function isDiscountPolicy(policy: Policy): policy is BaseDiscount {
   return policy.prefix === PolicyPrefix.DISCOUNT;
 }
 
@@ -38,11 +39,28 @@ export function getOnlyMatchedItems(
   order: Order,
   conditions: Condition[],
 ) {
-  return conditions.reduce((items, condition) => {
+  let hasSubConstrain = false;
+
+  const filteredItems = conditions.reduce((items, condition) => {
     if (typeof condition?.matchedItems === 'function') {
-      return [...items, ...condition.matchedItems(order)];
+      hasSubConstrain = true;
+      condition.matchedItems(order).forEach(item => items.add(item));
+
+      return items;
     }
 
     return items;
-  }, [] as FlattenOrderItem[]);
+  }, new Set<FlattenOrderItem>());
+
+  return hasSubConstrain && filteredItems.size ? Array.from(filteredItems.values()) : getOrderItems(order);
+}
+
+export function getOrderItems(order: Order) {
+  return order.itemManager.flattenItems.filter(item => times(
+    item.quantity,
+    minus(
+      item.unitPrice,
+      order.parent?.itemManager.collectionMap.get(item.uuid)?.discountValue || 0,
+    ),
+  ) > 0)
 }

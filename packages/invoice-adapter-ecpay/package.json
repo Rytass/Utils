@@ -1,0 +1,34 @@
+{
+  "name": "@rytass/invoice-adapter-ecpay",
+  "version": "0.1.10",
+  "description": "Rytass Invoice Gateway - ECPay",
+  "keywords": [
+    "rytass",
+    "invoice",
+    "ecpay"
+  ],
+  "author": "Chia Yu Pai <fantasyatelier@gmail.com>",
+  "homepage": "https://github.com/Rytass/Utils#readme",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rytass/Utils.git"
+  },
+  "scripts": {
+    "clean": "npm run build:clean",
+    "build:clean": "node ../../scripts/cleanBuild.js",
+    "build": "npm run build:clean && node ../../scripts/build.js"
+  },
+  "bugs": {
+    "url": "https://github.com/Rytass/Utils/issues"
+  },
+  "dependencies": {
+    "@rytass/invoice": "^0.1.7",
+    "axios": "^0.27.2",
+    "luxon": "^2.4.0",
+    "validator": "^13.7.0"
+  },
+  "devDependencies": {
+    "@types/validator": "^13.7.4"
+  }
+}

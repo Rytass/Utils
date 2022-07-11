@@ -38,6 +38,12 @@
       ], 
       "@rytass/storages-images-converter": [
         "storages-images-converter/src"
+      ],
+      "@rytass/invoice": [
+        "invoice/src"
+      ],
+      "@rytass/invoice-adapter-ecpay": [
+        "invoice-adapter-ecpay/src"
       ]
     }
   },

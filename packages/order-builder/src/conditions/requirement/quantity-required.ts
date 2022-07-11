@@ -50,13 +50,13 @@ export class QuantityRequired
         : order.items.map(item => [item.id, { id: item.id, leastQuantity: 0 }]) // if not cluster limit then choose all.
     );
 
-    const validItems = order.items.filter((item) => {
+    const toCheckItems = order.items.filter((item) => {
       const matchedItem = validItemClusterMap.get(item.id);
 
       return matchedItem && item.quantity >= matchedItem.leastQuantity;
     });
 
-    return validItems.reduce((totalQuantity, item) => (
+    return toCheckItems.reduce((totalQuantity, item) => (
       totalQuantity + item.quantity
     ), 0) >= this.leastQuantity;
   }

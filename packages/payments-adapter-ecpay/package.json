@@ -1,6 +1,6 @@
 {
   "name": "@rytass/payments-adapter-ecpay",
-  "version": "0.0.8",
+  "version": "0.0.14",
   "description": "Rytass Payment Gateway",
   "keywords": [
     "rytass",
@@ -16,22 +16,21 @@
   "scripts": {
     "clean": "npm run build:clean",
     "build:clean": "node ../../scripts/cleanBuild.js",
-    "build": "npm run build:clean && node ../../scripts/build.js",
-    "release": "lerna version patch && npm run build && lerna publish from-package"
+    "build": "npm run build:clean && node ../../scripts/build.js"
   },
   "bugs": {
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/payments": "^0.0.8",
-    "axios": "^0.26.1",
+    "@rytass/payments": "^0.0.13",
+    "axios": "^0.27.2",
     "debug": "^4.3.4",
-    "lru-cache": "^7.8.1",
-    "luxon": "^2.3.1"
+    "lru-cache": "^7.12.0",
+    "luxon": "^2.4.0"
   },
   "devDependencies": {
     "@types/debug": "^4.1.7",
-    "@types/lru-cache": "^7.6.1",
-    "@types/luxon": "^2.3.1"
+    "@types/lru-cache": "^7.10.9",
+    "@types/luxon": "^2.3.2"
   }
 }

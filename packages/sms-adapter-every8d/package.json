@@ -1,6 +1,6 @@
 {
   "name": "@rytass/sms-adapter-every8d",
-  "version": "0.0.8",
+  "version": "0.1.0",
   "description": "Rytass Utils SMS every8d adapter",
   "keywords": [
     "rytass",
@@ -17,13 +17,12 @@
   "scripts": {
     "clean": "npm run build:clean",
     "build:clean": "node ../../scripts/cleanBuild.js",
-    "build": "npm run build:clean && node ../../scripts/build.js",
-    "release": "lerna version patch && npm run build && lerna publish from-package"
+    "build": "npm run build:clean && node ../../scripts/build.js"
   },
   "bugs": {
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/sms": "^0.0.8"
+    "@rytass/sms": "^0.1.0"
   }
 }

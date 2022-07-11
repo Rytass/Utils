@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { VaultSecret, VaultSecretState } from '../src';
+import { VaultSecret, VaultSecretState } from '@rytass/secret-adapter-vault';
 
 const VAULT_HOST = 'https://vault.yourserver.com';
 const VAULT_ACCOUNT = 'utils';

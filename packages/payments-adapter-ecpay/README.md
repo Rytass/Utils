@@ -6,12 +6,14 @@
 - [x] Checkout (Credit Card)
 - [x] Checkout (Credit Card Installments)
 - [ ] Checkout (WebATM)
-- [ ] Checkout (ATM/Virtual Account)
-- [ ] Checkout (CVS)
-- [ ] Checkout (Barcode)
-- [ ] Checkout (Apple Pay)
+- [x] Checkout (ATM/Virtual Account)
+- [x] Checkout (CVS)
+- [x] Checkout (Barcode)
+- [x] Checkout (Apple Pay)
 - [ ] Checkout (Line Pay)
 - [x] Query
+- [ ] Refund
+- [ ] Refund (Installments)
 
 ## Getting Started
 

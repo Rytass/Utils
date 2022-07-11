@@ -3,38 +3,37 @@
  */
 
 import request from 'supertest';
-import { createHash } from 'crypto';
-import { IncomingMessage, ServerResponse } from 'http';
-import { ECPayOrder, ECPayPayment, ECPayCallbackPaymentType, ECPayChannelCreditCard, ECPayChannelVirtualAccount, ECPayCommitMessage } from '../src';
+import { addMac } from '../__utils__/add-mac';
+import http, { createServer, IncomingMessage, ServerResponse } from 'http';
+import { ECPayOrder, ECPayPayment, ECPayChannelCreditCard, ECPayCommitMessage, ECPayCallbackPaymentType } from '@rytass/payments-adapter-ecpay';
 import { Channel, OrderState, PaymentPeriodType } from '@rytass/payments';
 
-function addMac(payload: Record<string, string>) {
-  const mac = createHash('sha256')
-    .update(
-      encodeURIComponent(
-        [
-          ['HashKey', '5294y06JbISpM5x9'],
-          ...Object.entries(payload).sort(([aKey], [bKey]) => (aKey.toLowerCase() < bKey.toLowerCase() ? -1 : 1)),
-          ['HashIV', 'v77hoKGq4kWxNNIS'],
-        ]
-          .map(([key, value]) => `${key}=${value}`)
-          .join('&'),
-      )
-        .toLowerCase()
-        .replace(/'/g, '%27')
-        .replace(/~/g, '%7e')
-        .replace(/%20/g, '+'),
-    )
-    .digest('hex')
-    .toUpperCase();
-
-  return {
-    ...payload,
-    CheckMacValue: mac,
-  } as Record<string, string>;
-}
-
 describe('ECPayPayment', () => {
+  const originCreateServer = createServer;
+  const mockedCreateServer = jest.spyOn(http, 'createServer');
+
+  mockedCreateServer.mockImplementation((requestHandler) => {
+    const mockServer = originCreateServer(requestHandler);
+
+    const mockedListen = jest.spyOn(mockServer, 'listen');
+
+    mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
+      mockServer.listen(0, listeningListener);
+
+      return mockServer;
+    });
+
+    const mockedClose = jest.spyOn(mockServer, 'close');
+
+    mockedClose.mockImplementationOnce((onClosed) => {
+      mockServer.close(onClosed);
+
+      return mockServer;
+    });
+
+    return mockServer;
+  });
+
   // Form Page HTML
   describe('Generate Form Page HTML', () => {
     const payment = new ECPayPayment();
@@ -68,6 +67,52 @@ describe('ECPayPayment', () => {
       const method = document.forms[0].getAttribute('method');
 
       expect(method).toBe('POST');
+    });
+  });
+
+  describe('Price amount range', () => {
+    it('should throw if total aomunt between 5 and 199999', () => {
+      const payment = new ECPayPayment<ECPayChannelCreditCard>();
+
+      expect(() => {
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          items: [{
+            name: 'Test',
+            unitPrice: 3,
+            quantity: 1,
+          }],
+        });
+      }).toThrowError();
+
+      expect(() => {
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          items: [{
+            name: 'Test',
+            unitPrice: 200000,
+            quantity: 1,
+          }],
+        });
+      }).toThrowError();
+    });
+  });
+
+  describe('Failed message', () => {
+    it('should return null if not failed', () => {
+      const payment = new ECPayPayment<ECPayChannelCreditCard>();
+
+      const order = payment.prepare({
+        channel: Channel.CREDIT_CARD,
+        items: [{
+          name: 'Test',
+          unitPrice: 500,
+          quantity: 1,
+        }],
+      });
+
+      expect(order.state).toBe(OrderState.INITED);
+      expect(order.failedMessage).toBeNull();
     });
   });
 
@@ -175,7 +220,7 @@ describe('ECPayPayment', () => {
           });
 
           request(payment._server)
-            .post('/payments/ecpay/checkout')
+            .post('/payments/ecpay/callback')
             .send(new URLSearchParams(successfulResponse).toString())
             .expect('Content-Type', 'text/plain')
             .expect(200)
@@ -235,7 +280,7 @@ describe('ECPayPayment', () => {
           });
 
           request(payment._server)
-            .post('/payments/ecpay/checkout')
+            .post('/payments/ecpay/callback')
             .send(new URLSearchParams(successfulResponse).toString())
             .expect('Content-Type', 'text/plain')
             .expect(200)
@@ -243,7 +288,7 @@ describe('ECPayPayment', () => {
               expect(res.text).toEqual('1|OK');
 
               request(payment._server)
-                .post('/payments/ecpay/checkout')
+                .post('/payments/ecpay/callback')
                 .send(new URLSearchParams(successfulResponse).toString())
                 .expect('Content-Type', 'text/plain')
                 .expect(400)
@@ -304,7 +349,7 @@ describe('ECPayPayment', () => {
           });
 
           request(payment._server)
-            .post('/payments/ecpay/checkout')
+            .post('/payments/ecpay/callback')
             .send(new URLSearchParams(successfulResponse).toString())
             .expect('Content-Type', 'text/plain')
             .expect(400)
@@ -348,7 +393,7 @@ describe('ECPayPayment', () => {
           };
 
           request(payment._server)
-            .post('/payments/ecpay/checkout')
+            .post('/payments/ecpay/callback')
             .send(new URLSearchParams(successfulResponse).toString())
             .expect('Content-Type', 'text/plain')
             .expect(400)
@@ -411,7 +456,7 @@ describe('ECPayPayment', () => {
           });
 
           request(payment._server)
-            .post('/payments/ecpay/checkout')
+            .post('/payments/ecpay/callback')
             .send(new URLSearchParams(successfulResponse).toString())
             .then(() => {
               expect(mockedOnCommit.mock.calls.length).toBe(1);
@@ -491,7 +536,7 @@ describe('ECPayPayment', () => {
           expect(serverListenerMock.mock.calls.length).toBe(1);
 
           request(payment._server)
-            .post('/payments/ecpay/checkout')
+            .post('/payments/ecpay/callback')
             .send(new URLSearchParams(successfulResponse).toString())
             .then(async () => {
               expect(serverListenerMock.mock.calls.length).toBe(2);
@@ -1001,7 +1046,7 @@ describe('ECPayPayment', () => {
         MerchantID: '2000132',
         MerchantTradeNo: order.id,
         PaymentType: 'INVALID_PAYMENT_TYPE',
-        RtnCode: '2',
+        RtnCode: '1',
         RtnMsg: 'Get VirtualAccount Succeeded',
         TradeAmt: order.totalPrice.toString(),
         TradeDate: '2022/04/20 17:30:52',
@@ -1031,56 +1076,19 @@ describe('ECPayPayment', () => {
     }));
   });
 
-  describe('Virtual account', () => {
-    const payment = new ECPayPayment<ECPayChannelVirtualAccount | ECPayChannelCreditCard>({
-      serverHost: 'http://localhost:9999',
-      callbackPath: '/callback',
-    });
+  describe('Payment Result Default Handler', () => {
+    let testPayment: ECPayPayment<ECPayChannelCreditCard>;
 
-    it('should throw error on invalid channel', () => {
-      expect(() => {
-        payment.prepare({
-          channel: Channel.CREDIT_CARD,
-          // @ts-ignore: Unreachable code error
-          virtualAccountExpireDays: 9,
-          items: [{
-            name: 'Test',
-            unitPrice: 10,
-            quantity: 1,
-          }],
-        });
-      }).toThrowError();
-    });
+    beforeAll(() => new Promise<void>((resolve) => {
+      testPayment = new ECPayPayment({
+        withServer: true,
+        onServerListen: resolve,
+      });
+    }));
 
-    it('should `virtualAccountExpireDays` between 1 and 60', () => {
-      expect(() => {
-        payment.prepare({
-          channel: Channel.VIRTUAL_ACCOUNT,
-          virtualAccountExpireDays: 0,
-          items: [{
-            name: 'Test',
-            unitPrice: 10,
-            quantity: 1,
-          }],
-        });
-      }).toThrowError();
-
-      expect(() => {
-        payment.prepare({
-          channel: Channel.VIRTUAL_ACCOUNT,
-          virtualAccountExpireDays: 99,
-          items: [{
-            name: 'Test',
-            unitPrice: 10,
-            quantity: 1,
-          }],
-        });
-      }).toThrowError();
-    });
-
-    it('should default virtual expire day is 3', () => {
-      const order = payment.prepare({
-        channel: Channel.VIRTUAL_ACCOUNT,
+    it('should no effect if duplicate result callback', (done) => {
+      const order = testPayment.prepare({
+        channel: Channel.CREDIT_CARD,
         items: [{
           name: 'Test',
           unitPrice: 10,
@@ -1088,13 +1096,52 @@ describe('ECPayPayment', () => {
         }],
       });
 
-      expect(order.form.ExpireDate).toBe('3');
+      // Get HTML to trigger pre commit
+      // eslint-disable-next-line no-unused-vars
+      const html = order.formHTML;
+
+      const successfulResponse = addMac({
+        amount: '70',
+        auth_code: '777777',
+        card4no: '2222',
+        card6no: '431195',
+        CustomField1: '',
+        CustomField2: '',
+        CustomField3: '',
+        CustomField4: '',
+        eci: '0',
+        gwsr: '11943076',
+        MerchantID: '2000132',
+        MerchantTradeNo: order.id,
+        PaymentDate: '2022/04/18 19:15:33',
+        PaymentType: ECPayCallbackPaymentType.CREDIT_CARD,
+        process_date: '2022/04/18 19:15:33',
+        RtnCode: '2',
+        RtnMsg: '交易失敗',
+        SimulatePaid: '0',
+        TradeAmt: order.totalPrice.toString(),
+        TradeDate: '2022/04/18 19:14:51',
+        TradeNo: '2204181914513433',
+      });
+
+      request(testPayment._server)
+        .post('/payments/ecpay/callback')
+        .send(new URLSearchParams(successfulResponse).toString())
+        .expect('Content-Type', 'text/plain')
+        .expect(200)
+        .then((res) => {
+          expect(res.text).toEqual('1|OK');
+          expect(order.state).toBe(OrderState.FAILED);
+          expect(order.failedMessage?.code).toBe(2);
+          expect(order.failedMessage?.message).toBe('交易失敗');
+
+          done();
+        });
     });
 
-    it('should represent virtual account config on form data', () => {
-      const order = payment.prepare({
-        channel: Channel.VIRTUAL_ACCOUNT,
-        virtualAccountExpireDays: 7,
+    it('should reject if invalid payment type call async info', (done) => {
+      const order = testPayment.prepare({
+        channel: Channel.CREDIT_CARD,
         items: [{
           name: 'Test',
           unitPrice: 10,
@@ -1102,582 +1149,49 @@ describe('ECPayPayment', () => {
         }],
       });
 
-      expect(order.form.ExpireDate).toBe('7');
-      expect(order.form.PaymentInfoURL).toBe('http://localhost:9999/callback');
-      expect(order.form.ClientRedirectURL).toBe('');
+      // Get HTML to trigger pre commit
+      // eslint-disable-next-line no-unused-vars
+      const html = order.formHTML;
 
-      const clientOrder = payment.prepare({
-        channel: Channel.VIRTUAL_ACCOUNT,
-        virtualAccountExpireDays: 7,
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
-        clientBackUrl: 'https://rytass.com',
+      const successfulResponse = addMac({
+        amount: '70',
+        auth_code: '777777',
+        card4no: '2222',
+        card6no: '431195',
+        CustomField1: '',
+        CustomField2: '',
+        CustomField3: '',
+        CustomField4: '',
+        eci: '0',
+        gwsr: '11943076',
+        MerchantID: '2000132',
+        MerchantTradeNo: order.id,
+        PaymentDate: '2022/04/18 19:15:33',
+        PaymentType: ECPayCallbackPaymentType.CREDIT_CARD,
+        process_date: '2022/04/18 19:15:33',
+        RtnCode: '2',
+        RtnMsg: '交易失敗',
+        SimulatePaid: '0',
+        TradeAmt: order.totalPrice.toString(),
+        TradeDate: '2022/04/18 19:14:51',
+        TradeNo: '2204181914513433',
       });
 
-      expect(clientOrder.form.ClientRedirectURL).toBe('https://rytass.com');
+      request(testPayment._server)
+        .post('/payments/ecpay/async-informations')
+        .send(new URLSearchParams(successfulResponse).toString())
+        .expect('Content-Type', 'text/plain')
+        .expect(400)
+        .then((res) => {
+          expect(res.text).toEqual('0|OrderNotFound');
+          expect(order.state).toBe(OrderState.PRE_COMMIT);
+
+          done();
+        });
     });
 
-    describe('Vistual Account Banks', () => {
-      let testPayment: ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>;
-
-      beforeAll(() => new Promise<void>((resolve) => {
-        testPayment = new ECPayPayment({
-          withServer: true,
-          onServerListen: resolve,
-        });
-      }));
-
-      it('should reject invalid channel type', (done) => {
-        const order = testPayment.prepare({
-          channel: Channel.CREDIT_CARD,
-          items: [{
-            name: 'Test',
-            unitPrice: 10,
-            quantity: 1,
-          }],
-        });
-
-        // Get HTML to trigger pre commit
-        // eslint-disable-next-line no-unused-vars
-        const html = order.formHTML;
-
-        const successfulResponse = addMac({
-          BankCode: '806',
-          ExpireDate: '2022/04/27',
-          MerchantID: '2000132',
-          MerchantTradeNo: order.id,
-          PaymentType: ECPayCallbackPaymentType.ATM_TAISHIN,
-          RtnCode: '2',
-          RtnMsg: 'Get VirtualAccount Succeeded',
-          TradeAmt: order.totalPrice.toString(),
-          TradeDate: '2022/04/20 17:30:52',
-          TradeNo: '2204201729498436',
-          vAccount: '3453721178769211',
-          StoreID: '',
-          CustomField1: '',
-          CustomField2: '',
-          CustomField3: '',
-          CustomField4: '',
-        });
-
-        request(testPayment._server)
-          .post('/payments/ecpay/callback')
-          .send(new URLSearchParams(successfulResponse).toString())
-          .expect('Content-Type', 'text/plain')
-          .expect(400)
-          .then((res) => {
-            expect(res.text).toEqual('0|OrderNotFound');
-
-            done();
-          });
-      });
-
-      it('should default callback handler commit TAISHIN virtual account order', (done) => {
-        const order = testPayment.prepare<ECPayChannelVirtualAccount>({
-          channel: Channel.VIRTUAL_ACCOUNT,
-          virtualAccountExpireDays: 7,
-          items: [{
-            name: 'Test',
-            unitPrice: 10,
-            quantity: 1,
-          }],
-        });
-
-        // Get HTML to trigger pre commit
-        // eslint-disable-next-line no-unused-vars
-        const html = order.formHTML;
-
-        const successfulResponse = addMac({
-          BankCode: '806',
-          ExpireDate: '2022/04/27',
-          MerchantID: '2000132',
-          MerchantTradeNo: order.id,
-          PaymentType: ECPayCallbackPaymentType.ATM_TAISHIN,
-          RtnCode: '2',
-          RtnMsg: 'Get VirtualAccount Succeeded',
-          TradeAmt: order.totalPrice.toString(),
-          TradeDate: '2022/04/20 17:30:52',
-          TradeNo: '2204201729498436',
-          vAccount: '3453721178769211',
-          StoreID: '',
-          CustomField1: '',
-          CustomField2: '',
-          CustomField3: '',
-          CustomField4: '',
-        });
-
-        request(testPayment._server)
-          .post('/payments/ecpay/callback')
-          .send(new URLSearchParams(successfulResponse).toString())
-          .expect('Content-Type', 'text/plain')
-          .expect(200)
-          .then((res) => {
-            expect(res.text).toEqual('1|OK');
-            expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.additionalInfo?.bankCode).toBe('806');
-            expect(order.additionalInfo?.account).toBe('3453721178769211');
-            expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_TAISHIN);
-
-            done();
-          });
-      });
-
-      it('should default callback handler commit ESUN virtual account order', (done) => {
-        const order = testPayment.prepare<ECPayChannelVirtualAccount>({
-          channel: Channel.VIRTUAL_ACCOUNT,
-          virtualAccountExpireDays: 7,
-          items: [{
-            name: 'Test',
-            unitPrice: 10,
-            quantity: 1,
-          }],
-        });
-
-        // Get HTML to trigger pre commit
-        // eslint-disable-next-line no-unused-vars
-        const html = order.formHTML;
-
-        const successfulResponse = addMac({
-          BankCode: '806',
-          ExpireDate: '2022/04/27',
-          MerchantID: '2000132',
-          MerchantTradeNo: order.id,
-          PaymentType: ECPayCallbackPaymentType.ATM_ESUN,
-          RtnCode: '2',
-          RtnMsg: 'Get VirtualAccount Succeeded',
-          TradeAmt: order.totalPrice.toString(),
-          TradeDate: '2022/04/20 17:30:52',
-          TradeNo: '2204201729498436',
-          vAccount: '3453721178769211',
-          StoreID: '',
-          CustomField1: '',
-          CustomField2: '',
-          CustomField3: '',
-          CustomField4: '',
-        });
-
-        request(testPayment._server)
-          .post('/payments/ecpay/callback')
-          .send(new URLSearchParams(successfulResponse).toString())
-          .expect('Content-Type', 'text/plain')
-          .expect(200)
-          .then((res) => {
-            expect(res.text).toEqual('1|OK');
-            expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.additionalInfo?.bankCode).toBe('806');
-            expect(order.additionalInfo?.account).toBe('3453721178769211');
-            expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_ESUN);
-
-            done();
-          });
-      });
-
-      it('should default callback handler commit BOT virtual account order', (done) => {
-        const order = testPayment.prepare<ECPayChannelVirtualAccount>({
-          channel: Channel.VIRTUAL_ACCOUNT,
-          virtualAccountExpireDays: 7,
-          items: [{
-            name: 'Test',
-            unitPrice: 10,
-            quantity: 1,
-          }],
-        });
-
-        // Get HTML to trigger pre commit
-        // eslint-disable-next-line no-unused-vars
-        const html = order.formHTML;
-
-        const successfulResponse = addMac({
-          BankCode: '806',
-          ExpireDate: '2022/04/27',
-          MerchantID: '2000132',
-          MerchantTradeNo: order.id,
-          PaymentType: ECPayCallbackPaymentType.ATM_BOT,
-          RtnCode: '2',
-          RtnMsg: 'Get VirtualAccount Succeeded',
-          TradeAmt: order.totalPrice.toString(),
-          TradeDate: '2022/04/20 17:30:52',
-          TradeNo: '2204201729498436',
-          vAccount: '3453721178769211',
-          StoreID: '',
-          CustomField1: '',
-          CustomField2: '',
-          CustomField3: '',
-          CustomField4: '',
-        });
-
-        request(testPayment._server)
-          .post('/payments/ecpay/callback')
-          .send(new URLSearchParams(successfulResponse).toString())
-          .expect('Content-Type', 'text/plain')
-          .expect(200)
-          .then((res) => {
-            expect(res.text).toEqual('1|OK');
-            expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.additionalInfo?.bankCode).toBe('806');
-            expect(order.additionalInfo?.account).toBe('3453721178769211');
-            expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_BOT);
-
-            done();
-          });
-      });
-
-      it('should default callback handler commit FUBON virtual account order', (done) => {
-        const order = testPayment.prepare<ECPayChannelVirtualAccount>({
-          channel: Channel.VIRTUAL_ACCOUNT,
-          virtualAccountExpireDays: 7,
-          items: [{
-            name: 'Test',
-            unitPrice: 10,
-            quantity: 1,
-          }],
-        });
-
-        // Get HTML to trigger pre commit
-        // eslint-disable-next-line no-unused-vars
-        const html = order.formHTML;
-
-        const successfulResponse = addMac({
-          BankCode: '806',
-          ExpireDate: '2022/04/27',
-          MerchantID: '2000132',
-          MerchantTradeNo: order.id,
-          PaymentType: ECPayCallbackPaymentType.ATM_FUBON,
-          RtnCode: '2',
-          RtnMsg: 'Get VirtualAccount Succeeded',
-          TradeAmt: order.totalPrice.toString(),
-          TradeDate: '2022/04/20 17:30:52',
-          TradeNo: '2204201729498436',
-          vAccount: '3453721178769211',
-          StoreID: '',
-          CustomField1: '',
-          CustomField2: '',
-          CustomField3: '',
-          CustomField4: '',
-        });
-
-        request(testPayment._server)
-          .post('/payments/ecpay/callback')
-          .send(new URLSearchParams(successfulResponse).toString())
-          .expect('Content-Type', 'text/plain')
-          .expect(200)
-          .then((res) => {
-            expect(res.text).toEqual('1|OK');
-            expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.additionalInfo?.bankCode).toBe('806');
-            expect(order.additionalInfo?.account).toBe('3453721178769211');
-            expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_FUBON);
-
-            done();
-          });
-      });
-
-      it('should default callback handler commit CHINATRUST virtual account order', (done) => {
-        const order = testPayment.prepare<ECPayChannelVirtualAccount>({
-          channel: Channel.VIRTUAL_ACCOUNT,
-          virtualAccountExpireDays: 7,
-          items: [{
-            name: 'Test',
-            unitPrice: 10,
-            quantity: 1,
-          }],
-        });
-
-        // Get HTML to trigger pre commit
-        // eslint-disable-next-line no-unused-vars
-        const html = order.formHTML;
-
-        const successfulResponse = addMac({
-          BankCode: '806',
-          ExpireDate: '2022/04/27',
-          MerchantID: '2000132',
-          MerchantTradeNo: order.id,
-          PaymentType: ECPayCallbackPaymentType.ATM_CHINATRUST,
-          RtnCode: '2',
-          RtnMsg: 'Get VirtualAccount Succeeded',
-          TradeAmt: order.totalPrice.toString(),
-          TradeDate: '2022/04/20 17:30:52',
-          TradeNo: '2204201729498436',
-          vAccount: '3453721178769211',
-          StoreID: '',
-          CustomField1: '',
-          CustomField2: '',
-          CustomField3: '',
-          CustomField4: '',
-        });
-
-        request(testPayment._server)
-          .post('/payments/ecpay/callback')
-          .send(new URLSearchParams(successfulResponse).toString())
-          .expect('Content-Type', 'text/plain')
-          .expect(200)
-          .then((res) => {
-            expect(res.text).toEqual('1|OK');
-            expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.additionalInfo?.bankCode).toBe('806');
-            expect(order.additionalInfo?.account).toBe('3453721178769211');
-            expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_CHINATRUST);
-
-            done();
-          });
-      });
-
-      it('should default callback handler commit FIRST virtual account order', (done) => {
-        const order = testPayment.prepare<ECPayChannelVirtualAccount>({
-          channel: Channel.VIRTUAL_ACCOUNT,
-          virtualAccountExpireDays: 7,
-          items: [{
-            name: 'Test',
-            unitPrice: 10,
-            quantity: 1,
-          }],
-        });
-
-        // Get HTML to trigger pre commit
-        // eslint-disable-next-line no-unused-vars
-        const html = order.formHTML;
-
-        const successfulResponse = addMac({
-          BankCode: '806',
-          ExpireDate: '2022/04/27',
-          MerchantID: '2000132',
-          MerchantTradeNo: order.id,
-          PaymentType: ECPayCallbackPaymentType.ATM_FIRST,
-          RtnCode: '2',
-          RtnMsg: 'Get VirtualAccount Succeeded',
-          TradeAmt: order.totalPrice.toString(),
-          TradeDate: '2022/04/20 17:30:52',
-          TradeNo: '2204201729498436',
-          vAccount: '3453721178769211',
-          StoreID: '',
-          CustomField1: '',
-          CustomField2: '',
-          CustomField3: '',
-          CustomField4: '',
-        });
-
-        request(testPayment._server)
-          .post('/payments/ecpay/callback')
-          .send(new URLSearchParams(successfulResponse).toString())
-          .expect('Content-Type', 'text/plain')
-          .expect(200)
-          .then((res) => {
-            expect(res.text).toEqual('1|OK');
-            expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.additionalInfo?.bankCode).toBe('806');
-            expect(order.additionalInfo?.account).toBe('3453721178769211');
-            expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_FIRST);
-
-            done();
-          });
-      });
-
-      it('should default callback handler commit LAND virtual account order', (done) => {
-        const order = testPayment.prepare<ECPayChannelVirtualAccount>({
-          channel: Channel.VIRTUAL_ACCOUNT,
-          virtualAccountExpireDays: 7,
-          items: [{
-            name: 'Test',
-            unitPrice: 10,
-            quantity: 1,
-          }],
-        });
-
-        // Get HTML to trigger pre commit
-        // eslint-disable-next-line no-unused-vars
-        const html = order.formHTML;
-
-        const successfulResponse = addMac({
-          BankCode: '806',
-          ExpireDate: '2022/04/27',
-          MerchantID: '2000132',
-          MerchantTradeNo: order.id,
-          PaymentType: ECPayCallbackPaymentType.ATM_LAND,
-          RtnCode: '2',
-          RtnMsg: 'Get VirtualAccount Succeeded',
-          TradeAmt: order.totalPrice.toString(),
-          TradeDate: '2022/04/20 17:30:52',
-          TradeNo: '2204201729498436',
-          vAccount: '3453721178769211',
-          StoreID: '',
-          CustomField1: '',
-          CustomField2: '',
-          CustomField3: '',
-          CustomField4: '',
-        });
-
-        request(testPayment._server)
-          .post('/payments/ecpay/callback')
-          .send(new URLSearchParams(successfulResponse).toString())
-          .expect('Content-Type', 'text/plain')
-          .expect(200)
-          .then((res) => {
-            expect(res.text).toEqual('1|OK');
-            expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.additionalInfo?.bankCode).toBe('806');
-            expect(order.additionalInfo?.account).toBe('3453721178769211');
-            expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_LAND);
-
-            done();
-          });
-      });
-
-      it('should default callback handler commit CATHAY virtual account order', (done) => {
-        const order = testPayment.prepare<ECPayChannelVirtualAccount>({
-          channel: Channel.VIRTUAL_ACCOUNT,
-          virtualAccountExpireDays: 7,
-          items: [{
-            name: 'Test',
-            unitPrice: 10,
-            quantity: 1,
-          }],
-        });
-
-        // Get HTML to trigger pre commit
-        // eslint-disable-next-line no-unused-vars
-        const html = order.formHTML;
-
-        const successfulResponse = addMac({
-          BankCode: '806',
-          ExpireDate: '2022/04/27',
-          MerchantID: '2000132',
-          MerchantTradeNo: order.id,
-          PaymentType: ECPayCallbackPaymentType.ATM_CATHAY,
-          RtnCode: '2',
-          RtnMsg: 'Get VirtualAccount Succeeded',
-          TradeAmt: order.totalPrice.toString(),
-          TradeDate: '2022/04/20 17:30:52',
-          TradeNo: '2204201729498436',
-          vAccount: '3453721178769211',
-          StoreID: '',
-          CustomField1: '',
-          CustomField2: '',
-          CustomField3: '',
-          CustomField4: '',
-        });
-
-        request(testPayment._server)
-          .post('/payments/ecpay/callback')
-          .send(new URLSearchParams(successfulResponse).toString())
-          .expect('Content-Type', 'text/plain')
-          .expect(200)
-          .then((res) => {
-            expect(res.text).toEqual('1|OK');
-            expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.additionalInfo?.bankCode).toBe('806');
-            expect(order.additionalInfo?.account).toBe('3453721178769211');
-            expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_CATHAY);
-
-            done();
-          });
-      });
-
-      it('should default callback handler commit TACHONG virtual account order', (done) => {
-        const order = testPayment.prepare<ECPayChannelVirtualAccount>({
-          channel: Channel.VIRTUAL_ACCOUNT,
-          virtualAccountExpireDays: 7,
-          items: [{
-            name: 'Test',
-            unitPrice: 10,
-            quantity: 1,
-          }],
-        });
-
-        // Get HTML to trigger pre commit
-        // eslint-disable-next-line no-unused-vars
-        const html = order.formHTML;
-
-        const successfulResponse = addMac({
-          BankCode: '806',
-          ExpireDate: '2022/04/27',
-          MerchantID: '2000132',
-          MerchantTradeNo: order.id,
-          PaymentType: ECPayCallbackPaymentType.ATM_TACHONG,
-          RtnCode: '2',
-          RtnMsg: 'Get VirtualAccount Succeeded',
-          TradeAmt: order.totalPrice.toString(),
-          TradeDate: '2022/04/20 17:30:52',
-          TradeNo: '2204201729498436',
-          vAccount: '3453721178769211',
-          StoreID: '',
-          CustomField1: '',
-          CustomField2: '',
-          CustomField3: '',
-          CustomField4: '',
-        });
-
-        request(testPayment._server)
-          .post('/payments/ecpay/callback')
-          .send(new URLSearchParams(successfulResponse).toString())
-          .expect('Content-Type', 'text/plain')
-          .expect(200)
-          .then((res) => {
-            expect(res.text).toEqual('1|OK');
-            expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.additionalInfo?.bankCode).toBe('806');
-            expect(order.additionalInfo?.account).toBe('3453721178769211');
-            expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_TACHONG);
-
-            done();
-          });
-      });
-
-      it('should default callback handler commit PANHSIN virtual account order', (done) => {
-        const order = testPayment.prepare<ECPayChannelVirtualAccount>({
-          channel: Channel.VIRTUAL_ACCOUNT,
-          virtualAccountExpireDays: 7,
-          items: [{
-            name: 'Test',
-            unitPrice: 10,
-            quantity: 1,
-          }],
-        });
-
-        // Get HTML to trigger pre commit
-        // eslint-disable-next-line no-unused-vars
-        const html = order.formHTML;
-
-        const successfulResponse = addMac({
-          BankCode: '806',
-          ExpireDate: '2022/04/27',
-          MerchantID: '2000132',
-          MerchantTradeNo: order.id,
-          PaymentType: ECPayCallbackPaymentType.ATM_PANHSIN,
-          RtnCode: '2',
-          RtnMsg: 'Get VirtualAccount Succeeded',
-          TradeAmt: order.totalPrice.toString(),
-          TradeDate: '2022/04/20 17:30:52',
-          TradeNo: '2204201729498436',
-          vAccount: '3453721178769211',
-          StoreID: '',
-          CustomField1: '',
-          CustomField2: '',
-          CustomField3: '',
-          CustomField4: '',
-        });
-
-        request(testPayment._server)
-          .post('/payments/ecpay/callback')
-          .send(new URLSearchParams(successfulResponse).toString())
-          .expect('Content-Type', 'text/plain')
-          .expect(200)
-          .then((res) => {
-            expect(res.text).toEqual('1|OK');
-            expect(order.state).toBe(OrderState.COMMITTED);
-            expect(order.additionalInfo?.bankCode).toBe('806');
-            expect(order.additionalInfo?.account).toBe('3453721178769211');
-            expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_PANHSIN);
-
-            done();
-          });
-      });
-
-      afterAll(() => new Promise((resolve) => {
-        testPayment._server?.close(resolve);
-      }));
-    });
+    afterAll(() => new Promise((resolve) => {
+      testPayment._server?.close(resolve);
+    }));
   });
 });

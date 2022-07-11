@@ -1,6 +1,7 @@
 export {
   ECPayCallbackPaymentType,
   ECPayQueryResultStatus,
+  ECPayATMBank,
 } from './typings';
 
 export type {
