@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.2](https://github.com/Rytass/Utils/compare/@rytass/secret-adapter-vault@0.1.1...@rytass/secret-adapter-vault@0.1.2) (2022-07-11)
+
+
+### Bug Fixes
+
+* **secret-adapter-vault:** offline mode cache getter ([8043f98](https://github.com/Rytass/Utils/commit/8043f988ed928c1e0098b5bffaa1d05b9467ff83))
+
+
+
+
+
 ## [0.1.1](https://github.com/Rytass/Utils/compare/@rytass/secret-adapter-vault@0.1.0...@rytass/secret-adapter-vault@0.1.1) (2022-07-04)
 
 **Note:** Version bump only for package @rytass/secret-adapter-vault
