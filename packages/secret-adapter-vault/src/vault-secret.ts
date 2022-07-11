@@ -254,8 +254,12 @@ export class VaultSecret<Options extends VaultSecretOptions> extends SecretManag
   }
 
   get<T>(key: string): VaultGetType<Options, T> {
-    if (!this._online && this._state === VaultSecretState.INIT) {
-      throw new Error('Cache data not ready');
+    if (!this._online) {
+      if (this._state === VaultSecretState.INIT) {
+        throw new Error('Cache data not ready');
+      }
+
+      return this.getSecretValue<T>(key) as VaultGetType<Options, T>;
     }
 
     if (this._token && this._tokenExpiredOn && this._tokenExpiredOn >= Date.now()) {
