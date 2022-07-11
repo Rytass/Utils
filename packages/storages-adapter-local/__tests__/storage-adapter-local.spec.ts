@@ -28,7 +28,7 @@ describe('StorageLocalService', () => {
   });
 
   it('should read image file', async () => {
-    const fileName = 'test.png';
+    const fileName = 'test-image.png';
     const file = await storage.read(fileName, {
       directory: resolve(__dirname, 'statics'),
     });

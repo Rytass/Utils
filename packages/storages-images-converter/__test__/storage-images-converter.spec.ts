@@ -7,7 +7,7 @@ describe('StorageImagesConverter', () => {
   const workingDirectory = resolve(__dirname, 'statics');
 
   it('should convert png to jpeg and save', async () => {
-    const file = await storage.read('test.png', {
+    const file = await storage.read('test-image.png', {
       directory: workingDirectory,
     });
 
@@ -30,18 +30,18 @@ describe('StorageImagesConverter', () => {
       const files = await storage.search(workingDirectory);
 
       expect(files.includes(resolve(workingDirectory, 'test.jpeg'))).toBeTruthy;
-      storage.remove(resolve(workingDirectory, 'test.jpeg'))
+      storage.remove(resolve(workingDirectory, 'test.jpeg'));
     }
   });
 
-  it('should convert png to jpeg with resizement and save', async() => {
-    const file = await storage.read('test.png', {
-        directory: workingDirectory,
-      });
+  it('should convert png to jpeg with resizement and save', async () => {
+    const file = await storage.read('test-image.png', {
+      directory: workingDirectory,
+    });
 
-    const buf = await file.to('jpeg', {resize: {width: 50}})
+    const buf = await file.to('jpeg', { resize: { width: 50 } });
 
     expect(buf).toBeTruthy();
-    expect(buf?.length).toBeLessThan(file.buffer.length)
-  })
+    expect(buf?.length).toBeLessThan(file.buffer.length);
+  });
 });
