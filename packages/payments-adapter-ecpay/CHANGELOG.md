@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.15](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.0.14...@rytass/payments-adapter-ecpay@0.0.15) (2022-08-01)
+
+
+### Bug Fixes
+
+* **storages:** sync deps version and add missing [@types](https://github.com/types), correct import source ([649db9c](https://github.com/Rytass/Utils/commit/649db9cf04975689b00492afbe676edb0d495c0b))
+
+
+
+
+
 ## [0.0.14](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.0.13...@rytass/payments-adapter-ecpay@0.0.14) (2022-07-04)
 
 **Note:** Version bump only for package @rytass/payments-adapter-ecpay
