@@ -1,6 +1,6 @@
 {
   "name": "@rytass/logistics-adapter-tcat",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Rytass Utils Logistics tcat adapter",
   "keywords": [
     "rytass",
@@ -24,7 +24,7 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/logistics": "^0.0.8",
+    "@rytass/logistics": "^0.0.9",
     "axios": "^0.27.2",
     "cheerio": "^1.0.0-rc.11"
   },

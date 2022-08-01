@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.11](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ecpay@0.1.10...@rytass/invoice-adapter-ecpay@0.1.11) (2022-08-01)
+
+
+### Bug Fixes
+
+* **packages:** prevent circular dependencies ([8a231bb](https://github.com/Rytass/Utils/commit/8a231bbca6460f6a39b2d02dac043448db4fbde4))
+
+
+
+
+
 ## [0.1.10](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ecpay@0.1.9...@rytass/invoice-adapter-ecpay@0.1.10) (2022-07-04)
 
 

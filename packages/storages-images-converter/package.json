@@ -1,6 +1,6 @@
 {
   "name": "@rytass/storages-images-converter",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Rytass Utils Storages Images Converter",
   "keywords": [
     "rytass",
@@ -25,7 +25,7 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/storages": "^0.0.9",
+    "@rytass/storages": "^0.0.10",
     "sharp": "^0.30.6"
   },
   "devDependencies": {
