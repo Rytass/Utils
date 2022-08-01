@@ -1,11 +1,13 @@
+import { FileStats } from '../typings';
 import {
   Convertable,
   Converter,
   ConverterManagerInterface,
+} from './typings';
+import {
   ErrorCode,
-  FileStats,
   StorageError,
-} from '..';
+} from '../errors/errors';
 
 export class ConverterManager<T extends Converter[]>
   implements ConverterManagerInterface<T>

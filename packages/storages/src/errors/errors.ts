@@ -2,7 +2,9 @@ import { StorageErrorInterface } from '..';
 
 export class StorageError implements StorageErrorInterface {
   readonly code: ErrorCode;
+
   readonly message?: string;
+
   constructor(code: ErrorCode, message?: string) {
     this.code = code;
     this.message = message;

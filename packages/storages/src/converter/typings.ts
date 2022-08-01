@@ -1,4 +1,4 @@
-import { ErrorCallback, FileStats, StorageOptions } from '..';
+import { FileStats, StorageOptions } from '../typings';
 
 export interface Converter<
   T extends string = any,

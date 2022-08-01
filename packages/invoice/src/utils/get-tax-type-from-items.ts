@@ -1,4 +1,5 @@
-import { TaxType, InvoicePaymentItem } from '..';
+import { InvoicePaymentItem } from '../invoice-gateway';
+import { TaxType } from '../typings';
 
 export function getTaxTypeFromItems(items: InvoicePaymentItem[]): TaxType {
   const {
