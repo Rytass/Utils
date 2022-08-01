@@ -27,5 +27,8 @@
     "@rytass/logistics": "^0.0.8",
     "axios": "^0.27.2",
     "cheerio": "^1.0.0-rc.11"
+  },
+  "devDependencies": {
+    "@types/parse5": "^7.0.0"
   }
 }

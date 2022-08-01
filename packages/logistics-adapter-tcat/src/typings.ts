@@ -3,7 +3,7 @@ import cheerio from 'cheerio'
 import {
   LogisticsInterface,
   LogisticsStatusHistory,
-} from 'logistics/src/typings';
+} from '@rytass/logistics';
 
 export type TCatLogisticsStatus =
   | 'DELIVERED'
