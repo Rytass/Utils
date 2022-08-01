@@ -1,10 +1,10 @@
-import { Convertable } from 'storages/src/converter';
 import {
+  Convertable,
   ErrorCallback,
   FileType,
   StorageAsyncCallback,
   StorageWriteOptions,
-} from 'storages/src/typings';
+} from '@rytass/storages';
 import { StorageLocalFileOptions, StorageLocalOptions } from '.';
 
 export class StorageLocalFile<T extends StorageLocalOptions>

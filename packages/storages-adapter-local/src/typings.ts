@@ -1,10 +1,10 @@
-import { Convertable } from 'storages/src/converter';
 import {
+  Convertable,
   ErrorCallback,
   StorageAsyncCallback,
   StorageOptions,
   StorageWriteOptions,
-} from 'storages/src/typings';
+} from '@rytass/storages';
 
 export interface StorageLocalCacheOptions {
   maxSize: number;
