@@ -30,16 +30,8 @@ export class ImageTranscoder implements FileConverter<ImageTranscoderOptions> {
 
     converter.toFormat(this.options.targetFormat, this.options);
 
+    // Stream cannot throw when format not supported
     if (file instanceof Readable) {
-      const extensionStream = new PassThrough();
-
-      fromStream(extensionStream).then((extension: FileTypeResult | undefined) => {
-        if (!extension || !~SupportSources.indexOf(extension.ext)) {
-          throw new UnsupportSource();
-        }
-      });
-
-      file.pipe(extensionStream);
       file.pipe(converter);
     }
 

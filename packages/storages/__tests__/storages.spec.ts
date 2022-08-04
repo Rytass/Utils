@@ -4,6 +4,7 @@
 
 import { resolve } from 'path';
 import { createHash } from 'crypto';
+import { Readable } from 'stream';
 import { readFileSync, createReadStream } from 'fs';
 import { Storage } from '../src';
 
@@ -23,6 +24,18 @@ describe('Storage', () => {
       expect(await storage.getStreamFilename(
         createReadStream(sampleFilePath)
       )).toBe(filename);
+    });
+
+    it('should no extensions when file type detection failed (Stream)', async () => {
+      const filename = await storage.getStreamFilename(Readable.from(Buffer.from([0xb5, 0xa1])));
+
+      expect(filename).toBe(createHash('sha256').update(Buffer.from([0xb5, 0xa1])).digest('hex'));
+    });
+
+    it('should no extensions when file type detection failed (Buffer)', async () => {
+      const filename = await storage.getBufferFilename(Buffer.from([0xb5, 0xa1]));
+
+      expect(filename).toBe(createHash('sha256').update(Buffer.from([0xb5, 0xa1])).digest('hex'));
     });
   });
 
