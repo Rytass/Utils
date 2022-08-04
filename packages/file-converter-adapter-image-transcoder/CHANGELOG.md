@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.0.11 (2022-08-04)
+
+**Note:** Version bump only for package @rytass/file-converter-adapter-image-transcoder
+
+
+
+
+
 ## [0.0.10](https://github.com/Rytass/Utils/compare/@rytass/storages-images-converter@0.0.9...@rytass/storages-images-converter@0.0.10) (2022-08-01)
 
 **Note:** Version bump only for package @rytass/storages-images-converter

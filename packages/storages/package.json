@@ -1,6 +1,6 @@
 {
   "name": "@rytass/storages",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Rytass Utils Storages",
   "keywords": [
     "rytass",
@@ -22,8 +22,7 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/file-converter": "0.1.0",
+    "@rytass/file-converter": "^0.1.1",
     "file-type": "^16"
-  },
-  "devDependencies": {}
+  }
 }
