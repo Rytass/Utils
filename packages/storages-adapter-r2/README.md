@@ -2,4 +2,4 @@
 
 ## Features
 
-- [ ] File I/O
+- [x] Cloudflare R2 bucket

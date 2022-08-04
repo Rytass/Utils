@@ -1,11 +1,5 @@
-# `storage-images-converter`
+# Rytass Utils - File Converter Image Transcoder Adapter
 
-> TODO: description
+## Features
 
-## Usage
-
-```
-const storageImagesConverter = require('storage-images-converter');
-
-// TODO: DEMONSTRATE API
-```
+- [x] transcoder image format (via sharp)

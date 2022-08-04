@@ -1,11 +1,5 @@
-# `@rytass/file-converter`
+# Rytass Utils - File Converters
 
-> TODO: description
+## Adapters
 
-## Usage
-
-```
-const fileConverter = require('@rytass/file-converter');
-
-// TODO: DEMONSTRATE API
-```
+- [x] ImageTranscoder [npm](https://www.npmjs.com/package/@rytass/file-converter-adapter-image-transcoder)
