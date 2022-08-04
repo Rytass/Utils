@@ -1,2 +1,2 @@
 export * from './typings';
-export * from './storages-adapter-local'
+export * from './storages-adapter-local';

@@ -17,22 +17,16 @@
   "scripts": {
     "clean": "npm run build:clean",
     "build:clean": "node ../../scripts/cleanBuild.js",
-    "build": "npm run build:clean && node ../../scripts/build.js",
-    "release": "lerna version patch && npm run build && lerna publish from-package"
+    "build": "npm run build:clean && node ../../scripts/build.js"
   },
   "bugs": {
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
     "@rytass/storages": "^0.0.10",
-    "@rytass/storages-images-converter": "^0.0.10",
-    "lru-cache": "^7.12.0",
-    "mime-types": "^2.1.35",
-    "mmmagic": "^0.5.3"
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
-    "@types/lru-cache": "^7.10.10",
-    "@types/mime-types": "^2.1.1",
-    "@types/mmmagic": "^0.4.30"
+    "@types/uuid": "^8.3.4"
   }
 }

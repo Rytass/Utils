@@ -1,12 +1,14 @@
 {
-  "name": "@rytass/storages",
-  "version": "0.0.10",
-  "description": "Rytass Utils Storages",
+  "name": "@rytass/storages-adapter-r2",
+  "version": "0.1.0",
+  "description": "Cloudflare R2 storage adapter",
   "keywords": [
     "rytass",
-    "storages"
+    "r2",
+    "cloudflare",
+    "storage"
   ],
-  "author": "MarshallChiang <ambrosia8286@gmail.com>",
+  "author": "Chia Yu Pai <fantasyatelier@gmail.com>",
   "homepage": "https://github.com/Rytass/Utils#readme",
   "license": "MIT",
   "repository": {
@@ -22,8 +24,14 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/file-converter": "0.1.0",
-    "file-type": "^16"
+    "@rytass/storages": "^0.0.10",
+    "aws-sdk": "^2.1185.0",
+    "axios": "^0.27.2",
+    "luxon": "^3.0.1",
+    "uuid": "^8.3.2"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@types/luxon": "^3.0.0",
+    "@types/uuid": "^8.3.4"
+  }
 }

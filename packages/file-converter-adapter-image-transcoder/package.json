@@ -1,5 +1,5 @@
 {
-  "name": "@rytass/storages-images-converter",
+  "name": "@rytass/file-converter-adapter-image-transcoder",
   "version": "0.0.10",
   "description": "Rytass Utils Storages Images Converter",
   "keywords": [
@@ -18,14 +18,14 @@
   "scripts": {
     "clean": "npm run build:clean",
     "build:clean": "node ../../scripts/cleanBuild.js",
-    "build": "npm run build:clean && node ../../scripts/build.js",
-    "release": "lerna version patch && npm run build && lerna publish from-package"
+    "build": "npm run build:clean && node ../../scripts/build.js"
   },
   "bugs": {
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/storages": "^0.0.10",
+    "@rytass/file-converter": "0.1.0",
+    "file-type": "^16",
     "sharp": "^0.30.6"
   },
   "devDependencies": {

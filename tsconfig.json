@@ -3,6 +3,12 @@
   "compilerOptions": {
     "baseUrl": "./packages",
     "paths": {
+      "@rytass/file-converter": [
+        "file-converter/src"
+      ],
+      "@rytass/file-converter-adapter-image-transcoder": [
+        "file-converter-adapter-image-transcoder/src"
+      ],
       "@rytass/payments": [
         "payments/src"
       ],
@@ -36,8 +42,8 @@
       "@rytass/storages-adapter-local": [
         "storages-adapter-local/src"
       ],
-      "@rytass/storages-images-converter": [
-        "storages-images-converter/src"
+      "@rytass/storages-adapter-r2": [
+        "storages-adapter-r2/src"
       ],
       "@rytass/logistics": [
         "logistics/src"
