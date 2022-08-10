@@ -1,6 +1,6 @@
 {
   "name": "@rytass/storages-adapter-local",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "Rytass Utils Storages local adapter",
   "keywords": [
     "rytass",
