@@ -56,7 +56,17 @@ export class StorageR2Service extends Storage<StorageR2Options> {
     }
   }
 
-  private async writeStreamFile(stream: Readable): Promise<StorageFile> {
+  private async writeStreamFile(stream: Readable, givenFilename?: string): Promise<StorageFile> {
+    if (givenFilename) {
+      const uploadPromise = await this.s3.upload({
+        Bucket: this.bucket,
+        Key: givenFilename,
+        Body: stream,
+      }).promise();
+
+      return { key: givenFilename };
+    }
+
     const tempFilename = uuid();
     const uploadStream = new PassThrough();
 
@@ -89,8 +99,8 @@ export class StorageR2Service extends Storage<StorageR2Options> {
     return { key: filename };
   }
 
-  async writeBufferFile(buffer: Buffer): Promise<StorageFile> {
-    const filename = await this.getBufferFilename(buffer);
+  async writeBufferFile(buffer: Buffer, givenFilename?: string): Promise<StorageFile> {
+    const filename = givenFilename || await this.getBufferFilename(buffer);
 
     await this.s3.upload({
       Key: filename,
@@ -101,12 +111,12 @@ export class StorageR2Service extends Storage<StorageR2Options> {
     return { key: filename };
   }
 
-  write(file: InputFile): Promise<StorageFile> {
+  write(file: InputFile, filename?: string): Promise<StorageFile> {
     if (file instanceof Buffer) {
-      return this.writeBufferFile(file);
+      return this.writeBufferFile(file, filename);
     }
 
-    return this.writeStreamFile(file);
+    return this.writeStreamFile(file, filename);
   }
 
   batchWrite(files: InputFile[]): Promise<StorageFile[]> {

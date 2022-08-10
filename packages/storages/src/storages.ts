@@ -1,7 +1,7 @@
 import { Readable, PassThrough } from 'stream';
 import { createHash } from 'crypto';
-import { fromBuffer, fromStream } from 'file-type';
-import { ConverterManager } from './converter-manager';
+import { FileTypeResult, fromBuffer, fromStream } from 'file-type';
+import { ConverterManager } from '@rytass/file-converter';
 import { FilenameHashAlgorithm, InputFile, ReadBufferFileOptions, ReadStreamFileOptions, StorageFile, StorageOptions } from './typings';
 
 export interface StorageInterface {
@@ -23,6 +23,18 @@ export class Storage<O extends Record<string, any> = Record<string, any>> implem
   constructor(options?: StorageOptions<O>) {
     this.converterManager = new ConverterManager(options?.converters ?? []);
     this.hashAlgorithm = options?.hashAlgorithm || 'sha256';
+  }
+
+  public getExtension(file: InputFile): Promise<FileTypeResult | undefined> {
+    if (file instanceof Buffer) {
+      return fromBuffer(file);
+    }
+
+    const extensionStream = new PassThrough();
+
+    file.pipe(extensionStream);
+
+    return fromStream(extensionStream);
   }
 
   async getBufferFilename(buffer: Buffer): Promise<string> {
@@ -59,11 +71,11 @@ export class Storage<O extends Record<string, any> = Record<string, any>> implem
     });
   }
 
-  write(file: InputFile): Promise<StorageFile> {
+  write(file: InputFile, filename?: string): Promise<StorageFile> {
     throw new Error('Method not implemented.');
   }
 
-  batchWrite(files: InputFile[]): Promise<StorageFile[]> {
+  batchWrite(files: InputFile[], filenames?: string[]): Promise<StorageFile[]> {
     throw new Error('Method not implemented.');
   }
 

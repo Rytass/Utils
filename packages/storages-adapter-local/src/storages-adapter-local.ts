@@ -45,19 +45,29 @@ export class LocalStorage extends Storage {
     }
   }
 
-  private async writeBuffer(buffer: Buffer): Promise<StorageFile> {
+  private async writeBuffer(buffer: Buffer, givenFilename?: string): Promise<StorageFile> {
     const convertedBuffer = await this.converterManager.convert<Buffer>(buffer);
 
-    const filename = await this.getBufferFilename(convertedBuffer);
+    const filename = givenFilename || await this.getBufferFilename(convertedBuffer);
 
     await writeFile(this.getFileFullPath(filename), convertedBuffer);
 
     return { key: filename };
   }
 
-  private async writeStream(stream: Readable): Promise<StorageFile> {
+  private async writeStream(stream: Readable, givenFilename?: string): Promise<StorageFile> {
     return new Promise<StorageFile>(async (promiseResolve) => {
       const convertedStream = await this.converterManager.convert<Readable>(stream);
+
+      if (givenFilename) {
+        const writeStream = createWriteStream(this.getFileFullPath(givenFilename));
+
+        convertedStream.pipe(writeStream);
+
+        promiseResolve({ key: givenFilename });
+
+        return;
+      }
 
       const tempFilename = uuid();
       const writeStream = createWriteStream(this.getFileFullPath(tempFilename));
@@ -99,18 +109,18 @@ export class LocalStorage extends Storage {
     return Promise.resolve(this.readFileStream(key));
   }
 
-  async write(file: InputFile): Promise<StorageFile> {
+  async write(file: InputFile, filename?: string): Promise<StorageFile> {
     const convertedFile = await this.converterManager.convert(file);
 
     if (convertedFile instanceof Buffer) {
-      return this.writeBuffer(convertedFile);
+      return this.writeBuffer(convertedFile, filename);
     }
 
-    return this.writeStream(convertedFile);
+    return this.writeStream(convertedFile, filename);
   }
 
-  batchWrite(files: InputFile[]): Promise<StorageFile[]> {
-    return Promise.all(files.map(file => this.write(file)));
+  batchWrite(files: InputFile[], filenames?: string[]): Promise<StorageFile[]> {
+    return Promise.all(files.map((file, index) => this.write(file, filenames?.[index])));
   }
 
   remove(key: string): Promise<void> {

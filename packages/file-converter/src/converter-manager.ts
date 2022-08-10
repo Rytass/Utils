@@ -1,4 +1,4 @@
-import type { ConvertableFile, FileConverter } from '@rytass/file-converter';
+import type { ConvertableFile, FileConverter } from './file-converter';
 
 export class ConverterManager {
   private readonly converters: FileConverter[];
