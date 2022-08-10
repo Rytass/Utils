@@ -9,6 +9,9 @@
       "@rytass/file-converter-adapter-image-transcoder": [
         "file-converter-adapter-image-transcoder/src"
       ],
+      "@rytass/file-converter-adapter-image-resizer": [
+        "file-converter-adapter-image-resizer/src"
+      ],
       "@rytass/payments": [
         "payments/src"
       ],

@@ -1,4 +1,4 @@
-import { ConvertableFile, FileConverter } from '@rytass/file-converter';
+import { ConvertableFile, FileConverter } from '../src';
 import { ConverterManager } from '../src/converter-manager';
 
 describe('ConverterManager', () => {
