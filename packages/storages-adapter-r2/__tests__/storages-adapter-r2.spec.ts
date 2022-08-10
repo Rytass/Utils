@@ -120,6 +120,67 @@ describe('Cloudflare R2 storage adapter', () => {
     urlMocked.mockClear();
   });
 
+  it('should use custom filename when write buffer file', async () => {
+    const customFilename = 'aaa.png';
+    const { StorageR2Service } = await import('../src');
+
+    const service = new StorageR2Service({
+      accessKey: ACCESS_KEY,
+      secretKey: SECRET_KEY,
+      account: ACCOUNT,
+      bucket: BUCKET,
+    });
+
+    const { key } = await service.write(sampleFileBuffer, customFilename);
+
+    expect(key).toBe(customFilename);
+
+    const uploadedFile = await service.read(customFilename, { format: 'buffer' });
+
+    expect(Buffer.compare(uploadedFile, sampleFileBuffer)).toBe(0);
+    expect(uploadMocked).toBeCalledTimes(1);
+    expect(getMocked).toBeCalledTimes(1);
+
+    await service.remove(customFilename);
+  });
+
+  it('should use custom filename when write stream file', async () => {
+    const customFilename = 'aaa.png';
+    const { StorageR2Service } = await import('../src');
+
+    const service = new StorageR2Service({
+      accessKey: ACCESS_KEY,
+      secretKey: SECRET_KEY,
+      account: ACCOUNT,
+      bucket: BUCKET,
+    });
+
+    const stream = createReadStream(sampleFile);
+
+    const { key } = await service.write(stream, customFilename);
+
+    expect(key).toBe(customFilename);
+
+    const readStream = await service.read(customFilename);
+
+    return new Promise<void>((done) => {
+      let buffer = Buffer.from([]);
+
+      readStream.on('data', (chunk) => {
+        buffer = Buffer.concat([buffer, chunk]);
+      });
+
+      readStream.on('end', async () => {
+        expect(Buffer.compare(buffer, sampleFileBuffer)).toBe(0);
+        expect(getMocked).toBeCalledTimes(1);
+
+        await service.remove(customFilename);
+
+        done();
+      });
+    });
+  });
+
   it('should catch r2 error no specfic', async () => {
     const { StorageR2Service } = await import('../src');
 

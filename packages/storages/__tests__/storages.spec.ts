@@ -37,6 +37,20 @@ describe('Storage', () => {
 
       expect(filename).toBe(createHash('sha256').update(Buffer.from([0xb5, 0xa1])).digest('hex'));
     });
+
+    it('should get extension from buffer', async () => {
+      const extension = await storage.getExtension(sampleFileBuffer);
+
+      expect(extension?.ext).toBe('png');
+      expect(extension?.mime).toBe('image/png');
+    });
+
+    it('should get extension from stream', async () => {
+      const extension = await storage.getExtension(createReadStream(sampleFilePath));
+
+      expect(extension?.ext).toBe('png');
+      expect(extension?.mime).toBe('image/png');
+    });
   });
 
   describe('Not implement methods', () => {

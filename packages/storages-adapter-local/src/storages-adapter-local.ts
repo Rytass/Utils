@@ -64,6 +64,10 @@ export class LocalStorage extends Storage {
 
         convertedStream.pipe(writeStream);
 
+        await new Promise<void>((pResolve) => {
+          stream.on('end', pResolve);
+        });
+
         promiseResolve({ key: givenFilename });
 
         return;

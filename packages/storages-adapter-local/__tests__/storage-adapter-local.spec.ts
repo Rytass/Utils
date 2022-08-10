@@ -69,6 +69,28 @@ describe('StorageLocalService', () => {
       });
     });
 
+    describe('Write File w/ Custom Filename', () => {
+      const customFilename = 'aaa.png';
+
+      it('should use custom filename when write buffer file', async () => {
+        const { key } = await localStorage.write(sampleFileBuffer, customFilename);
+
+        expect(key).toBe(customFilename);
+      });
+
+      it('should use custom filename when write stream file', async () => {
+        const stream = createReadStream(sampleFilePath);
+
+        const { key } = await localStorage.write(stream, customFilename);
+
+        expect(key).toBe(customFilename);
+      });
+
+      afterEach(() => {
+        rmSync(resolve(workingDirectory, customFilename));
+      });
+    });
+
     describe('Read File', () => {
       it('should read file buffer', (done) => {
         localStorage.write(sampleFileBuffer).then(async () => {
