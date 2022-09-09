@@ -5,7 +5,7 @@ import { round } from '../../../utils/decimal';
  * FinalPriceOnlyRoundStrategy.
  */
 export class FinalPriceOnlyRoundStrategy implements RoundStrategy {
-  readonly type: RoundStrategyType = 'FINAL_PRICE_ONLY';
+  readonly type: RoundStrategyType = 'final-price-only';
   readonly precision: RoundPrecision;
 
   constructor(precision: RoundPrecision) {

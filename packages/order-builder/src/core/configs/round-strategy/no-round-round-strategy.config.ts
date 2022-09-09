@@ -4,7 +4,7 @@ import { RoundPrecision, RoundStrategy, RoundStrategyType } from '../typings';
  * NoRoundRoundStrategy.
  */
 export class NoRoundRoundStrategy implements RoundStrategy {
-  readonly type: RoundStrategyType = 'NO_ROUND';
+  readonly type: RoundStrategyType = 'no-round';
   readonly precision: RoundPrecision;
 
   constructor(precision: RoundPrecision) {

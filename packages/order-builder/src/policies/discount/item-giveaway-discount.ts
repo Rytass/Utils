@@ -5,8 +5,17 @@ import { plus, times } from '../../utils/decimal';
 import { PolicyPrefix } from '../typings';
 import { generateNewPolicyId } from '../utils';
 import { BaseDiscount } from './base-discount';
-import { Discount, DiscountOptions, PolicyDiscountDescription } from './typings';
-import { getConditionsByDiscountConstructor, getOnlyMatchedItems, getOptionsByDiscountConstructor, getOrderItems } from './utils';
+import {
+  Discount,
+  DiscountOptions,
+  PolicyDiscountDescription,
+} from './typings';
+import {
+  getConditionsByDiscountConstructor,
+  getOnlyMatchedItems,
+  getOptionsByDiscountConstructor,
+  getOrderItems,
+} from './utils';
 
 type ItemGiveawayStrategy = 'LOW_PRICE_FIRST' | 'HIGH_PRICE_FIRST';
 
@@ -18,7 +27,7 @@ interface ItemGiveawayDiscountOptions extends DiscountOptions {
  * A policy on `giveaway items` based on item-give-away-strategy.
  * @param {Number} value `Number` Quantity of giveaway items.
  * @returns {Policy} Policy
-*/
+ */
 export class ItemGiveawayDiscount implements BaseDiscount {
   readonly prefix = PolicyPrefix.DISCOUNT;
   readonly type = Discount.ITEM_GIVEAWAY;
@@ -45,7 +54,7 @@ export class ItemGiveawayDiscount implements BaseDiscount {
    * @param {ItemGiveawayDiscountOptions} options ItemGiveawayDiscountOptions
    * @returns {Policy} Policy
    */
-   constructor(
+  constructor(
     value: number,
     condition: Condition,
     options?: ItemGiveawayDiscountOptions
@@ -55,10 +64,7 @@ export class ItemGiveawayDiscount implements BaseDiscount {
    * @param {ItemGiveawayDiscountOptions} options ItemGiveawayDiscountOptions
    * @returns {Policy} Policy
    */
-  constructor(
-    value: number,
-    options: ItemGiveawayDiscountOptions,
-  );
+  constructor(value: number, options: ItemGiveawayDiscountOptions);
   /**
    * @param {Number} value `Number` Quantity of giveaway items.
    * @returns {Policy} Policy
@@ -77,9 +83,11 @@ export class ItemGiveawayDiscount implements BaseDiscount {
   }
 
   matchedItems(order: Order): FlattenOrderItem[] {
-    return (this.options?.onlyMatched
-      ? getOnlyMatchedItems(order, this.conditions)
-      : getOrderItems(order)).filter(item => times(item.unitPrice, item.quantity));
+    return (
+      this.options?.onlyMatched
+        ? getOnlyMatchedItems(order, this.conditions)
+        : getOrderItems(order)
+    ).filter(item => times(item.unitPrice, item.quantity));
   }
 
   valid(order: Order): boolean {
@@ -94,7 +102,7 @@ export class ItemGiveawayDiscount implements BaseDiscount {
 
   description(
     giveawayItemValue: number,
-    appliedItems: FlattenOrderItem[],
+    appliedItems: FlattenOrderItem[]
   ): PolicyDiscountDescription {
     return {
       id: this.id,
@@ -129,20 +137,16 @@ export class ItemGiveawayDiscount implements BaseDiscount {
 
       const giveawayItemValue = order.config.roundStrategy.round(
         // original giveawayItem
-        giveawayItems.reduce((total, item) => plus(
-          total,
-          item.unitPrice,
-        ), 0),
-        'FINAL_PRICE_ONLY',
+        giveawayItems.reduce((total, item) => plus(total, item.unitPrice), 0),
+        'final-price-only'
       );
 
-      return [
-        ...policies,
+      policies.push(
         this.description(
           giveawayItemValue,
-          giveawayItems,
-        ),
-      ] as PolicyDiscountDescription[];
+          giveawayItems
+        ) as PolicyDiscountDescription
+      );
     }
 
     return policies;

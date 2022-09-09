@@ -105,7 +105,7 @@ export class Order<
     this.parent = parent || null;
     this.builder = builder;
     this._policyManager = policyManager;
-    this._itemManager = new OrderItemManager<Item>(this, items);
+    this._itemManager = new OrderItemManager<Item>(items);
     this._coupons = new Set(coupons);
   }
 

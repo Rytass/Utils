@@ -5,17 +5,25 @@ import { divided, plus, times } from '../../utils/decimal';
 import { PolicyPrefix } from '../typings';
 import { generateNewPolicyId } from '../utils';
 import { BaseDiscount } from './base-discount';
-import { Discount, PolicyDiscountDescription, StepDiscountOptions } from './typings';
-import { getConditionsByDiscountConstructor, getOnlyMatchedItems, getOptionsByDiscountConstructor, getOrderItems } from './utils';
+import {
+  Discount,
+  PolicyDiscountDescription,
+  StepDiscountOptions,
+} from './typings';
+import {
+  getConditionsByDiscountConstructor,
+  getOnlyMatchedItems,
+  getOptionsByDiscountConstructor,
+  getOrderItems,
+} from './utils';
 
 /**
  * A policy on `discounting value based on stepped price` on itemValue
  * @param {Number} step step to accumulate discount-value
  * @param {Number} value `Fixed` number
  * @returns {Policy} Policy
-*/
-export class StepValueDiscount
-  implements BaseDiscount {
+ */
+export class StepValueDiscount implements BaseDiscount {
   readonly prefix = PolicyPrefix.DISCOUNT;
   readonly type = Discount.STEP_VALUE;
   readonly id: string;
@@ -44,7 +52,7 @@ export class StepValueDiscount
    * @param {StepDiscountOptions} options StepDiscountOptions
    * @returns {Policy} Policy
    */
-   constructor(
+  constructor(
     step: number,
     value: number,
     condition: Condition,
@@ -56,11 +64,7 @@ export class StepValueDiscount
    * @param {StepDiscountOptions} options StepDiscountOptions
    * @returns {Policy} Policy
    */
-  constructor(
-    step: number,
-    value: number,
-    options: StepDiscountOptions,
-  );
+  constructor(step: number, value: number, options: StepDiscountOptions);
   /**
    * @param {Number} step `Step` to accumulate discount-value
    * @param {Number} value fixed-value number
@@ -99,30 +103,24 @@ export class StepValueDiscount
   discount(itemValue: number): number {
     return times(
       this.value,
-      Math.min(
-        this.stepLimit,
-        Math.floor(divided(
-          itemValue,
-          this.step,
-        )),
-      ),
+      Math.min(this.stepLimit, Math.floor(divided(itemValue, this.step)))
     );
   }
 
   description(
     order: Order,
     itemValue: number,
-    appliedItems: FlattenOrderItem[],
+    appliedItems: FlattenOrderItem[]
   ): PolicyDiscountDescription {
     return {
       id: this.id,
       step: this.step,
       value: this.value,
       type: this.type,
-      discount: order.config.roundStrategy.round(
-        this.discount(itemValue),
-        ['FINAL_PRICE_ONLY', 'EVERY_CALCULATION'],
-      ),
+      discount: order.config.roundStrategy.round(this.discount(itemValue), [
+        'final-price-only',
+        'every-calculation',
+      ]),
       conditions: this.conditions,
       appliedItems,
     };
@@ -135,28 +133,30 @@ export class StepValueDiscount
     if (this.valid(order)) {
       const matchedItems: FlattenOrderItem[] = this.matchedItems(order);
 
-      if (this.options?.stepUnit === 'quantity' && matchedItems.length < this.step) return policies;
+      if (
+        this.options?.stepUnit === 'quantity' &&
+        matchedItems.length < this.step
+      )
+        return policies;
 
-      const itemValue = this.options?.stepUnit === 'quantity'
-        ? matchedItems.reduce((total, item) => (
-            plus(total, item.quantity)
-          ), 0)
-        : order.config.roundStrategy.round(
-          matchedItems.reduce((total, item) => plus(
-            total,
-            item.unitPrice,
-          ), 0),
-          'EVERY_CALCULATION',
-        );
+      const itemValue =
+        this.options?.stepUnit === 'quantity'
+          ? matchedItems.reduce((total, item) => plus(total, item.quantity), 0)
+          : order.config.roundStrategy.round(
+              matchedItems.reduce(
+                (total, item) => plus(total, item.unitPrice),
+                0
+              ),
+              'every-calculation'
+            );
 
-      return [
-        ...policies,
+      policies.push(
         this.description(
           order,
           itemValue,
-          matchedItems,
-        ),
-      ] as PolicyDiscountDescription[];
+          matchedItems
+        ) as PolicyDiscountDescription
+      );
     }
 
     return policies;

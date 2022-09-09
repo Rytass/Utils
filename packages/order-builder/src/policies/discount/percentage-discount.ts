@@ -5,8 +5,17 @@ import { minus, plus, times } from '../../utils/decimal';
 import { PolicyPrefix } from '../typings';
 import { generateNewPolicyId } from '../utils';
 import { BaseDiscount } from './base-discount';
-import { Discount, DiscountOptions, PolicyDiscountDescription } from './typings';
-import { getConditionsByDiscountConstructor, getOnlyMatchedItems, getOptionsByDiscountConstructor, getOrderItems } from './utils';
+import {
+  Discount,
+  DiscountOptions,
+  PolicyDiscountDescription,
+} from './typings';
+import {
+  getConditionsByDiscountConstructor,
+  getOnlyMatchedItems,
+  getOptionsByDiscountConstructor,
+  getOrderItems,
+} from './utils';
 
 /**
  * A policy on `discounting a percentage value` on itemValue.
@@ -39,11 +48,7 @@ export class PercentageDiscount implements BaseDiscount {
    * @param {DiscountOptions} options DiscountOptions
    * @returns {Policy} Policy
    */
-   constructor(
-    value: number,
-    condition: Condition,
-    options?: DiscountOptions
-  );
+  constructor(value: number, condition: Condition, options?: DiscountOptions);
   /**
    * @param {Number} value discount-policy value
    * @param {DiscountOptions} options DiscountOptions
@@ -62,7 +67,7 @@ export class PercentageDiscount implements BaseDiscount {
   ) {
     // To check value boundary. 0 ≤ value ≤ 1
     if (value < 0 || value > 1) {
-      throw new Error('Invalid percentage value.')
+      throw new Error('Invalid percentage value.');
     }
 
     this.options = getOptionsByDiscountConstructor(arg1, arg2);
@@ -92,23 +97,23 @@ export class PercentageDiscount implements BaseDiscount {
    * ```
    * @returns {Number} number
    */
-   discount(price: number): number {
+  discount(price: number): number {
     return times(price, minus(1, this.value));
   }
 
   description(
     order: Order,
     itemValue: number,
-    appliedItems: FlattenOrderItem[],
+    appliedItems: FlattenOrderItem[]
   ): PolicyDiscountDescription {
     return {
       id: this.id,
       value: this.value,
       type: this.type,
-      discount: order.config.roundStrategy.round(
-        this.discount(itemValue),
-        ['FINAL_PRICE_ONLY', 'EVERY_CALCULATION'],
-      ),
+      discount: order.config.roundStrategy.round(this.discount(itemValue), [
+        'final-price-only',
+        'every-calculation',
+      ]),
       conditions: this.conditions,
       appliedItems,
     };
@@ -122,21 +127,17 @@ export class PercentageDiscount implements BaseDiscount {
       const matchedItems: FlattenOrderItem[] = this.matchedItems(order);
 
       const itemValue = order.config.roundStrategy.round(
-        matchedItems.reduce((total, item) => plus(
-          total,
-          item.unitPrice,
-        ), 0),
-        'EVERY_CALCULATION',
+        matchedItems.reduce((total, item) => plus(total, item.unitPrice), 0),
+        'every-calculation'
       );
 
-      return [
-        ...policies,
+      policies.push(
         this.description(
           order,
           itemValue,
-          matchedItems,
-        ),
-      ] as PolicyDiscountDescription[];
+          matchedItems
+        ) as PolicyDiscountDescription
+      );
     }
 
     return policies;

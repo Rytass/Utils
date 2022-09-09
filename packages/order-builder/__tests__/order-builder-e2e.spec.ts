@@ -104,7 +104,7 @@ describe('OrderBuilderE2E', () => {
   /**
    * 情境編號：甲 - 1
    *
-   * 決策法：擇優取一 (ORDER_BASED)
+   * 決策法：擇優取一 (order-based)
    *
    * 情境敘述：
    * 1. 指定商品（Ａ～Ｆ）滿3件 打9折
@@ -130,7 +130,7 @@ describe('OrderBuilderE2E', () => {
     );
 
     let builder = new OrderBuilder<TestOrderItem>({
-      policyPickStrategy: 'ORDER_BASED',
+      policyPickStrategy: 'order-based',
       policies: [policy1],
     });
 
@@ -150,7 +150,7 @@ describe('OrderBuilderE2E', () => {
     );
 
     builder = new OrderBuilder<TestOrderItem>({
-      policyPickStrategy: 'ORDER_BASED',
+      policyPickStrategy: 'order-based',
       policies: [policy2],
     });
 
@@ -171,7 +171,7 @@ describe('OrderBuilderE2E', () => {
     );
 
     builder = new OrderBuilder<TestOrderItem>({
-      policyPickStrategy: 'ORDER_BASED',
+      policyPickStrategy: 'order-based',
       policies: [policy3],
     });
 
@@ -194,7 +194,7 @@ describe('OrderBuilderE2E', () => {
     );
 
     builder = new OrderBuilder<TestOrderItem>({
-      policyPickStrategy: 'ORDER_BASED',
+      policyPickStrategy: 'order-based',
       policies: [policy4],
     });
 
@@ -206,7 +206,7 @@ describe('OrderBuilderE2E', () => {
 
     // 擇優 (1|2)&(3|4)
     builder = new OrderBuilder({
-      policyPickStrategy: 'ORDER_BASED',
+      policyPickStrategy: 'order-based',
       policies: [
         [policy1, policy2],
         [policy3, policy4],
@@ -221,7 +221,7 @@ describe('OrderBuilderE2E', () => {
   /**
    * 情境編號：乙
    *
-   * 決策法：擇優取一 (ORDER_BASED)
+   * 決策法：擇優取一 (order-based)
    *
    * 情境敘述：
    * 1. 指定商品（Ｂ～Ｅ）無條件 送最低價商品
@@ -294,7 +294,7 @@ describe('OrderBuilderE2E', () => {
 
     // 擇優 (1|2) & (3|4|5) & 6
     const builder = new OrderBuilder({
-      policyPickStrategy: 'ORDER_BASED',
+      policyPickStrategy: 'order-based',
       policies: [[policy1, policy2], [policy3, policy4, policy5], policy6],
     });
 
@@ -306,7 +306,7 @@ describe('OrderBuilderE2E', () => {
   /**
    * 情境編號：丙 - 1
    *
-   * 決策法：擇優取一 (ORDER_BASED)
+   * 決策法：擇優取一 (order-based)
    *
    * 情境敘述：
    * 1. 全館 滿6件 送最低價商品
@@ -362,7 +362,7 @@ describe('OrderBuilderE2E', () => {
     );
 
     const builder = new OrderBuilder({
-      policyPickStrategy: 'ORDER_BASED',
+      policyPickStrategy: 'order-based',
       policies: [policy1, policy2, policy3, policy4, policy5],
     });
 
@@ -374,7 +374,7 @@ describe('OrderBuilderE2E', () => {
   /**
    * 情境編號：丙 - 2
    *
-   * 決策法：擇優取一 (ORDER_BASED)
+   * 決策法：擇優取一 (order-based)
    *
    * 情境敘述：
    * 1. 全館 滿14000元 贈最低價品
@@ -436,8 +436,8 @@ describe('OrderBuilderE2E', () => {
     );
 
     const builder = new OrderBuilder({
-      policyPickStrategy: 'ORDER_BASED',
-      discountMethod: 'PRICE_WEIGHTED_AVERAGE',
+      policyPickStrategy: 'order-based',
+      discountMethod: 'price-weighted-average',
       policies: [policy1, policy2, policy3, policy4, policy5, policy6],
     });
 
@@ -451,7 +451,7 @@ describe('OrderBuilderE2E', () => {
   /**
    * 情境編號：丁
    *
-   * 決策法：擇優取一 (ORDER_BASED)
+   * 決策法：擇優取一 (order-based)
    *
    * 情境敘述：
    * 1. 指定分類（飾品）無條件 折1,000 元
@@ -509,12 +509,12 @@ describe('OrderBuilderE2E', () => {
     );
 
     const builder1 = new OrderBuilder({
-      policyPickStrategy: 'ORDER_BASED',
+      policyPickStrategy: 'order-based',
       policies: [policy1, policy2, policy3],
     });
 
     const builder2 = new OrderBuilder({
-      policyPickStrategy: 'ORDER_BASED',
+      policyPickStrategy: 'order-based',
       policies: [policy4, policy5],
     });
 
@@ -530,7 +530,7 @@ describe('OrderBuilderE2E', () => {
   /**
    * 情境編號：戊
    *
-   * 決策法：擇優取一 (ORDER_BASED)
+   * 決策法：擇優取一 (order-based)
    *
    * 情境敘述：
    * 1. 指定商品（Ｂ～Ｅ）無條件 送最低價商品
@@ -611,7 +611,7 @@ describe('OrderBuilderE2E', () => {
   /**
    * 情境編號：甲 - 2
    *
-   * 決策法：最適組合 (ITEM_BASED)
+   * 決策法：最適組合 (item-based)
    *
    * 情境敘述：
    * 1. 指定商品（Ａ～Ｆ）滿3件 打9折
@@ -674,7 +674,7 @@ describe('OrderBuilderE2E', () => {
 
     // (1|2)&(3|4)
     const builder1 = new OrderBuilder<TestOrderItem>({
-      policyPickStrategy: 'ITEM_BASED',
+      policyPickStrategy: 'item-based',
       policies: [
         [policy1, policy2],
         [policy3, policy4],
@@ -684,7 +684,7 @@ describe('OrderBuilderE2E', () => {
     const order1 = builder1.build({ items });
 
     const builder2 = new OrderBuilder<TestOrderItem>({
-      policyPickStrategy: 'ITEM_BASED',
+      policyPickStrategy: 'item-based',
       policies: [
         [policy1, policy2],
         policy3,
@@ -884,12 +884,12 @@ describe('TAST v0.0.2', () => {
      * @todo
      * improve algorithm.
      */
-    // const order3 = new OrderBuilder(order2.builder)
-    //   .addPolicy([
-    //     [policy6, policy7],
-    //   ])
-    //   .build({ id: 'TDD3', items });
+    const order3 = new OrderBuilder(order2.builder)
+      .addPolicy([
+        [policy6, policy7],
+      ])
+      .build({ id: 'TDD3', items });
 
-    // expect(order3.price).toEqual(34261);
+    expect(order3.price).toEqual(34261);
   })
 })

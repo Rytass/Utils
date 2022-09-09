@@ -5,7 +5,7 @@ import { round } from '../../../utils/decimal';
  * EveryCalculationRoundStrategy.
  */
 export class EveryCalculationRoundStrategy implements RoundStrategy {
-  readonly type: RoundStrategyType = 'EVERY_CALCULATION';
+  readonly type: RoundStrategyType = 'every-calculation';
   readonly precision: RoundPrecision;
 
   constructor(precision: RoundPrecision) {
