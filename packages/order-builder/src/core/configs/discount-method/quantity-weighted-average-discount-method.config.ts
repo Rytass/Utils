@@ -76,7 +76,9 @@ export class QuantityWeightedAverageDiscountMethod implements DiscountMethod {
         this.handleOneDescription(order, description)
       );
 
-      return [...descriptions, ...appendDescriptions];
+      descriptions.push(...appendDescriptions);
+
+      return descriptions;
     }, [] as PolicyDiscountDescription[]);
   }
 }
