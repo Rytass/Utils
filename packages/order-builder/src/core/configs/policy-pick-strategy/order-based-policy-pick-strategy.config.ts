@@ -10,7 +10,7 @@ import {
  * OrderBasedPolicyPickStrategy
  */
 export class OrderBasedPolicyPickStrategy implements PolicyPickStrategy {
-  type: PolicyPickStrategyType = 'ORDER_BASED';
+  type: PolicyPickStrategyType = 'order-based';
 
   pick(order: Order, policies: Policies): PolicyDiscountDescription[] {
     return Array.isArray(policies)

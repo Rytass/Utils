@@ -9,23 +9,23 @@ export interface OrderConfigOption {
   /**
    * Strategy to determinate how to pick the `best-solution` in each `policies` iteration.
    * @description
-   * `ORDER_BASED` Choose the **lowest-discount policy** and applied it on matched-items from a `policies` iteration.
+   * `order-based` Choose the **lowest-discount policy** and applied it on matched-items from a `policies` iteration.
    * @description
-   * `ITEM_BASED` Choose the **lowest-discount-combination** decided by different items respectively from all the permutations of a `policies` iteration. (Discount Optimal Solution)
-   * @default "ITEM_BASED"
+   * `item-based` Choose the **lowest-discount-combination** decided by different items respectively from all the permutations of a `policies` iteration. (Discount Optimal Solution)
+   * @default "item-based"
    */
   policyPickStrategy: PolicyPickStrategyType;
   /**
    * Strategy to determinate how `policy-discount` will be splitted into matched-items.
    * @param discountMethod DiscountMethodType
-   * @default "PRICE_WEIGHTED_AVERAGE"
+   * @default "price-weighted-average"
    */
   discountMethod: DiscountMethodType;
   /**
    * Strategy to determinate whether and how to rounding the calculated number on order-builder.
    * @param roundStrategy RoundStrategyType | [RoundStrategyType, RoundPrecision]
    * @description `strategy` | `[strategy, precision]`
-   * @default strategy "EVERY_CALCULATION"
+   * @default strategy "every-calculation"
    * @default precision 0
    */
   roundStrategy: RoundStrategyType | [RoundStrategyType, RoundPrecision];
@@ -45,9 +45,9 @@ export class OrderConfig {
       ? config.discountMethod
       : (() => {
       switch (config?.discountMethod) {
-        case 'QUANTITY_WEIGHTED_AVERAGE':
+        case 'quantity-weighted-average':
           return new QuantityWeightedAverageDiscountMethod();
-        case 'PRICE_WEIGHTED_AVERAGE':
+        case 'price-weighted-average':
         default:
           return new PriceWeightedAverageDiscountMethod();
       }
@@ -58,9 +58,9 @@ export class OrderConfig {
       ? config.policyPickStrategy
       : (() => {
         switch (config?.policyPickStrategy) {
-          case 'ORDER_BASED':
+          case 'order-based':
             return new OrderBasedPolicyPickStrategy();
-          case 'ITEM_BASED':
+          case 'item-based':
           default:
             return new ItemBasedPolicyPickStrategy();
           }
@@ -75,14 +75,14 @@ export class OrderConfig {
           precision,
         ] = config?.roundStrategy && Array.isArray(config.roundStrategy)
           ? config.roundStrategy as [RoundStrategyType, RoundPrecision]
-          : [config?.roundStrategy || 'EVERY_CALCULATION', 0] as [RoundStrategyType, RoundPrecision];
+          : [config?.roundStrategy || 'every-calculation', 0] as [RoundStrategyType, RoundPrecision];
 
         switch (roundStrategy) {
-          case 'NO_ROUND':
+          case 'no-round':
             return new NoRoundRoundStrategy(precision);
-          case 'FINAL_PRICE_ONLY':
+          case 'final-price-only':
             return new FinalPriceOnlyRoundStrategy(precision);
-          case 'EVERY_CALCULATION':
+          case 'every-calculation':
           default:
             return new EveryCalculationRoundStrategy(precision);
         }

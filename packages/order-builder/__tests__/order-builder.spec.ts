@@ -571,8 +571,8 @@ describe('Order', () => {
   it('should allow to give config property', () => {
     const builder9 = new OrderBuilder({
       policies: [],
-      discountMethod: 'QUANTITY_WEIGHTED_AVERAGE',
-      roundStrategy: ['EVERY_CALCULATION', 2],
+      discountMethod: 'quantity-weighted-average',
+      roundStrategy: ['every-calculation', 2],
     });
 
     expect(builder9.config).toBeDefined();
@@ -590,8 +590,8 @@ describe('Order', () => {
   const valueDiscountPolicy = new ValueDiscount(20, { id: 'VALUE_DISCOUNT' });
   const builder11 = new OrderBuilder({
     policies: [valueDiscountPolicy],
-    discountMethod: 'PRICE_WEIGHTED_AVERAGE',
-    roundStrategy: 'FINAL_PRICE_ONLY',
+    discountMethod: 'price-weighted-average',
+    roundStrategy: 'final-price-only',
   });
 
   expect(builder11.getPolicy('VALUE_DISCOUNT')).toEqual(valueDiscountPolicy);
@@ -616,8 +616,8 @@ describe('Order', () => {
   it('should create a no-round quantity-weighted-discountMethod order-builder', () => {
     const builder = new OrderBuilder({
       policies: [new PercentageDiscount(0.87)],
-      discountMethod: 'QUANTITY_WEIGHTED_AVERAGE',
-      roundStrategy: 'NO_ROUND',
+      discountMethod: 'quantity-weighted-average',
+      roundStrategy: 'no-round',
     });
 
     const order = builder.build({
@@ -658,8 +658,8 @@ describe('Order', () => {
       policies: [
         [new PercentageDiscount(0.85), new ValueDiscount(50)],
       ],
-      discountMethod: 'QUANTITY_WEIGHTED_AVERAGE',
-      roundStrategy: 'NO_ROUND',
+      discountMethod: 'quantity-weighted-average',
+      roundStrategy: 'no-round',
     });
 
     const order2 = builder2.build({
@@ -687,8 +687,8 @@ describe('Order', () => {
       policies: [
         [],
       ],
-      discountMethod: 'QUANTITY_WEIGHTED_AVERAGE',
-      roundStrategy: 'NO_ROUND',
+      discountMethod: 'quantity-weighted-average',
+      roundStrategy: 'no-round',
     });
 
     const order3 = builder3.build({
@@ -718,9 +718,9 @@ describe('Order', () => {
 
     // Initialize a order-builder.
     const builder = new OrderBuilder({
-      policyPickStrategy: 'ITEM_BASED',
-      discountMethod: 'PRICE_WEIGHTED_AVERAGE',
-      roundStrategy: 'EVERY_CALCULATION',
+      policyPickStrategy: 'item-based',
+      discountMethod: 'price-weighted-average',
+      roundStrategy: 'every-calculation',
       policies: [policy1],
     });
 

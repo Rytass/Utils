@@ -284,37 +284,37 @@ describe('OrderBuilderConfig', () => {
     it('FinalPriceOnly', () => {
       const finalPriceOnly = new FinalPriceOnlyRoundStrategy(1);
 
-      expect(finalPriceOnly.round(1.34, 'FINAL_PRICE_ONLY')).toEqual(1.3);
-      expect(finalPriceOnly.round(1.34, 'EVERY_CALCULATION')).toEqual(1.34);
-      expect(finalPriceOnly.round(1.34, 'NO_ROUND')).toEqual(1.34);
+      expect(finalPriceOnly.round(1.34, 'final-price-only')).toEqual(1.3);
+      expect(finalPriceOnly.round(1.34, 'every-calculation')).toEqual(1.34);
+      expect(finalPriceOnly.round(1.34, 'no-round')).toEqual(1.34);
       expect(
-        finalPriceOnly.round(1.34, ['FINAL_PRICE_ONLY', 'EVERY_CALCULATION'])
+        finalPriceOnly.round(1.34, ['final-price-only', 'every-calculation'])
       ).toEqual(1.3);
     });
 
     it('EveryCalculation', () => {
       const everyCalculation = new EveryCalculationRoundStrategy(1);
 
-      expect(everyCalculation.round(1.34, 'FINAL_PRICE_ONLY')).toEqual(1.34);
-      expect(everyCalculation.round(1.34, 'EVERY_CALCULATION')).toEqual(1.3);
-      expect(everyCalculation.round(1.34, 'NO_ROUND')).toEqual(1.34);
+      expect(everyCalculation.round(1.34, 'final-price-only')).toEqual(1.34);
+      expect(everyCalculation.round(1.34, 'every-calculation')).toEqual(1.3);
+      expect(everyCalculation.round(1.34, 'no-round')).toEqual(1.34);
       expect(
-        everyCalculation.round(1.34, ['FINAL_PRICE_ONLY', 'EVERY_CALCULATION'])
+        everyCalculation.round(1.34, ['final-price-only', 'every-calculation'])
       ).toEqual(1.3);
     });
 
     it('NoRound', () => {
       const everyCalculation = new NoRoundRoundStrategy(1);
 
-      expect(everyCalculation.round(1.34, 'NO_ROUND')).toEqual(1.34);
-      expect(everyCalculation.round(1.34, 'FINAL_PRICE_ONLY')).toEqual(1.34);
-      expect(everyCalculation.round(1.34, 'EVERY_CALCULATION')).toEqual(1.34);
-      expect(everyCalculation.round(1.34, 'NO_ROUND')).toEqual(1.34);
+      expect(everyCalculation.round(1.34, 'no-round')).toEqual(1.34);
+      expect(everyCalculation.round(1.34, 'final-price-only')).toEqual(1.34);
+      expect(everyCalculation.round(1.34, 'every-calculation')).toEqual(1.34);
+      expect(everyCalculation.round(1.34, 'no-round')).toEqual(1.34);
       expect(
-        everyCalculation.round(1.34, ['FINAL_PRICE_ONLY', 'EVERY_CALCULATION'])
+        everyCalculation.round(1.34, ['final-price-only', 'every-calculation'])
       ).toEqual(1.34);
 
-      expect(everyCalculation.round(1.34, ['NO_ROUND'])).toEqual(1.34);
+      expect(everyCalculation.round(1.34, ['no-round'])).toEqual(1.34);
     });
   });
 

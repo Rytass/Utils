@@ -87,7 +87,7 @@ export class ValueDiscount implements BaseDiscount {
       type: this.type,
       discount: order.config.roundStrategy.round(
         this.discount(),
-        ['EVERY_CALCULATION', 'FINAL_PRICE_ONLY'],
+        ['every-calculation', 'final-price-only'],
       ),
       conditions: this.conditions,
       appliedItems,
@@ -101,10 +101,7 @@ export class ValueDiscount implements BaseDiscount {
     if (this.valid(order)) {
       const matchedItems: FlattenOrderItem[] = this.matchedItems(order);
 
-      return [
-        ...policies,
-        this.description(order, matchedItems),
-      ] as PolicyDiscountDescription[];
+      policies.push(this.description(order, matchedItems) as PolicyDiscountDescription);
     }
 
     return policies;

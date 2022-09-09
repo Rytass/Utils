@@ -7,7 +7,7 @@ import { DiscountMethod, DiscountMethodType } from '../typings';
  * PriceWeightedAverageDiscountMethod.
  */
 export class PriceWeightedAverageDiscountMethod implements DiscountMethod {
-  readonly type: DiscountMethodType = 'PRICE_WEIGHTED_AVERAGE';
+  readonly type: DiscountMethodType = 'price-weighted-average';
 
   handleOneDescription(order: Order, description: PolicyDiscountDescription) {
     const itemValue = description.appliedItems.reduce(
@@ -27,7 +27,7 @@ export class PriceWeightedAverageDiscountMethod implements DiscountMethod {
 
         const itemDiscountValue = order.config.roundStrategy.round(
           times(description.discount, discountSplitRate),
-          'EVERY_CALCULATION'
+          'every-calculation'
         );
 
         storedRecord.addDiscountRecord({
@@ -59,7 +59,9 @@ export class PriceWeightedAverageDiscountMethod implements DiscountMethod {
         this.handleOneDescription(order, description)
       );
 
-      return [...descriptions, ...appendDescriptions];
+      descriptions.push(...appendDescriptions);
+
+      return descriptions;
     }, [] as PolicyDiscountDescription[]);
   }
 }

@@ -24,13 +24,6 @@ export class CartesianProduct<T> {
    */
   readonly length: number;
 
-  /**
-   * returns `[...this]`.
-   */
-  toArray(): NonNullable<T>[][] {
-    return [...this] as NonNullable<T>[][];
-  }
-
   constructor(...args: Iterable<T>[]) {
     this.seed = args.map(v => [...v]);
     this.size = this.seed.length;
@@ -57,5 +50,24 @@ export class CartesianProduct<T> {
     }
 
     return result;
+  }
+
+  /**
+   * returns `[...this]`.
+   */
+   toArray(): NonNullable<T>[][] {
+    return [...this] as NonNullable<T>[][];
+  }
+
+  forEach(cb: (iter: NonNullable<T>[]) => void): void {
+    let pointer;
+
+    for (let i = 0; i < this.length; i++) {
+      pointer = this.nth(i);
+
+      if (pointer.length > 0) {
+        cb(pointer)
+      }
+    }
   }
 }

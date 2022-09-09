@@ -16,7 +16,7 @@ export type PolicyPickMemoRecord = {
  * ItemBasedPolicyPickStrategy
  */
 export class ItemBasedPolicyPickStrategy implements PolicyPickStrategy {
-  type: PolicyPickStrategyType = 'ITEM_BASED';
+  type: PolicyPickStrategyType = 'item-based';
 
   pick(order: Order, policies: Policies): PolicyDiscountDescription[] {
     return Array.isArray(policies)
@@ -61,47 +61,44 @@ export class ItemBasedPolicyPickStrategy implements PolicyPickStrategy {
       ...itemPolicyCombinationMap.values()
     );
 
-    const [_, descriptions] = itemsCartesianProduct.toArray().reduce(
-      ([currentBestDiscountValue, descriptions], itemCombination) => {
-        const policyItemsMap = groupBy(
-          itemCombination,
-          combination => combination.policy.id
-        );
+    let bestTotalDiscountValue = Number.NEGATIVE_INFINITY;
+    let bestSubOrders: Order[] = [];
 
-        const subOrders = Object.values(policyItemsMap).map(
-          policyItemRecord =>
-            order.subOrder({
-              itemScope: 'uuid',
-              subItems: policyItemRecord.map(record => record.item),
-              subPolicies: policyItemRecord?.[0]?.policy,
-            })
-        );
+    itemsCartesianProduct.forEach((itemCombination) => {
+      const policyItemsMap = groupBy(
+        itemCombination,
+        combination => combination.policy.id
+      );
 
-        const combinationTotalDiscountValue = subOrders.reduce(
-          (totalDiscount, subOrder) =>
-            plus(totalDiscount, subOrder.discountValue),
-          0
-        );
+      const subOrders = Object.values(policyItemsMap).map(
+        policyItemRecord =>
+          order.subOrder({
+            itemScope: 'uuid',
+            subItems: policyItemRecord.map(record => record.item),
+            subPolicies: policyItemRecord?.[0]?.policy,
+          })
+      );
 
-        // Choose the higher discountValue sub-set as the best solution so far.
-        if (combinationTotalDiscountValue > currentBestDiscountValue) {
-          return [
-            combinationTotalDiscountValue,
-            subOrders.reduce(
-              (total, subOrder) => [...total, ...subOrder.discounts],
-              [] as PolicyDiscountDescription[]
-            ),
-          ] as [number, PolicyDiscountDescription[]];
-        }
+      const combinationTotalDiscountValue = subOrders.reduce(
+        (totalDiscount, subOrder) =>
+          plus(totalDiscount, subOrder.discountValue),
+        0
+      );
 
-        return [currentBestDiscountValue, descriptions] as [
-          number,
-          PolicyDiscountDescription[]
-        ];
+      // Choose the higher discountValue sub-set as the best solution so far.
+      if (combinationTotalDiscountValue > bestTotalDiscountValue) {
+        bestTotalDiscountValue = combinationTotalDiscountValue;
+        bestSubOrders = subOrders;
+      }
+    });
+
+    return bestSubOrders.reduce(
+      (total, subOrder) => {
+        total.push(...subOrder.discounts);
+
+        return total;
       },
-      [Number.NEGATIVE_INFINITY, []] as [number, PolicyDiscountDescription[]]
+      [] as PolicyDiscountDescription[]
     );
-
-    return descriptions;
   }
 }

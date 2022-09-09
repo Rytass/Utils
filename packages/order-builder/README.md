@@ -2,6 +2,8 @@
 
 ## An `Order` builder API makes business-logic development more easier.
 
+---
+
 ## Features
 
   - Arbitrary-precision order-calculating based on [decimal.js](https://github.com/MikeMcl/decimal.js/).
@@ -41,9 +43,9 @@ Core API
     - validator
       - `CouponValidator`
 
-## Documents
-
 ---
+
+## Documents
 
 ### OrderBuilder
 
@@ -59,8 +61,8 @@ Core API
 | **Properties**       | Type                     | Required |
 | -------------------- | ------------------------ | -------- |
 | `policies`           | Policy[]                 | `true`   |
-| `discountMethod`     | "PRICE_WEIGHTED_AVERAGE" \| "QUANTITY_WEIGHTED_AVERAGE" | `false` |
-| `roundStrategy`      | "EVERY_CALCULATION" \| "FINAL_PRICE_ONLY" \| "NO_ROUND" | `false` |
+| `discountMethod`     | "price-weighted-average" \| "quantity-weighted-average" | `false` |
+| `roundStrategy`      | "every-calculation" \| "final-price-only" \| "no-round" | `false` |
 
 
 <!-- Disable table formatting because Prettier messing it up. -->
@@ -149,6 +151,7 @@ Core API
 | `Policies`     | `Policy` \| `Policy[]` |
 | `RemovePolicy` | `Policy` \| `string`   |
 
+---
 
 ## Basic Usage
 
@@ -160,9 +163,9 @@ const policy2 = new PercentageDiscount(0.8, { id: 'DISCOUNT_2' });
 
 // Initialize an order-builder.
 const builder = new OrderBuilder({
-  policyPickStrategy: 'ITEM_BASED',
-  discountMethod: 'PRICE_WEIGHTED_AVERAGE',
-  roundStrategy: 'EVERY_CALCULATION',
+  policyPickStrategy: 'item-based',
+  discountMethod: 'price-weighted-average',
+  roundStrategy: 'every-calculation',
   policies: [policy1],
 });
 
@@ -332,7 +335,7 @@ const items: TestOrderItem[] = [
 /**
  * 情境編號：甲
  * 
- * 決策法：擇優取一 (ORDER_BASED)
+ * 決策法：擇優取一 (order-based)
  *
  * 情境敘述：
  * 1. 指定商品（Ａ～Ｆ）滿3件 打9折
@@ -392,7 +395,7 @@ const policy4 = new StepPercentageDiscount(
 
 // 擇優 (1|2) & (3|4)
 const builder = new OrderBuilder({
-  policyPickStrategy: 'ORDER_BASED',
+  policyPickStrategy: 'order-based',
   policies: [
     [policy1, policy2],
     [policy3, policy4],
@@ -410,7 +413,7 @@ order.price // 24856
 /**
  * 情境編號：乙
  * 
- * 決策法：擇優取一 (ORDER_BASED)
+ * 決策法：擇優取一 (order-based)
  *
  * 情境敘述：
  * 1. 指定商品（Ｂ～Ｅ）無條件 送最低價商品
@@ -483,7 +486,7 @@ const policy6 = new ItemGiveawayDiscount(1, new QuantityThreshold(6));
 
 // 擇優 (1|2) & (3|4|5) & 6
 const builder = new OrderBuilder({
-  policyPickStrategy: 'ORDER_BASED',
+  policyPickStrategy: 'order-based',
   policies: [
     [policy1, policy2],
     [policy3, policy4, policy5],
@@ -502,7 +505,7 @@ order.price // 24868
 /**
  * 情境編號：丙 - 1
  * 
- * 決策法：擇優取一 (ORDER_BASED)
+ * 決策法：擇優取一 (order-based)
  *
  * 情境敘述：
  * 1. 全館 滿6件 送最低價商品
@@ -564,7 +567,7 @@ const policy5 = new ItemGiveawayDiscount(
 );
 
 const builder = new OrderBuilder({
-  policyPickStrategy: 'ORDER_BASED',
+  policyPickStrategy: 'order-based',
   policies: [
     policy1,
     policy2,
@@ -585,7 +588,7 @@ order.price // 24677
 /**
  * 情境編號：丙 - 2
  * 
- * 決策法：擇優取一 (ORDER_BASED)
+ * 決策法：擇優取一 (order-based)
  *
  * 情境敘述：
  * 1. 全館 滿14000元 贈最低價品
@@ -654,8 +657,8 @@ const policy6 = new StepValueDiscount(
 );
 
 const builder = new OrderBuilder({
-  policyPickStrategy: 'ORDER_BASED',
-  discountMethod: 'PRICE_WEIGHTED_AVERAGE',
+  policyPickStrategy: 'order-based',
+  discountMethod: 'price-weighted-average',
   policies: [
     policy1,
     policy2,
@@ -677,7 +680,7 @@ order.price // 26250
 /**
   * 情境編號：丁
   * 
-  * 決策法：擇優取一 (ORDER_BASED)
+  * 決策法：擇優取一 (order-based)
   *
   * 情境敘述：
   * 1. 指定分類（飾品）無條件 折1,000 元
@@ -738,7 +741,7 @@ const policy5 = new PercentageDiscount(
 );
 
 const builder1 = new OrderBuilder({
-  policyPickStrategy: 'ORDER_BASED',
+  policyPickStrategy: 'order-based',
   policies: [
     policy1,
     policy2,
@@ -747,7 +750,7 @@ const builder1 = new OrderBuilder({
 });
 
 const builder2 = new OrderBuilder({
-  policyPickStrategy: 'ORDER_BASED',
+  policyPickStrategy: 'order-based',
   policies: [
     policy4,
     policy5,
@@ -767,7 +770,7 @@ order2.price // 28765
 /**
  * 情境編號：戊
  *
- * 決策法：擇優取一 (ORDER_BASED)
+ * 決策法：擇優取一 (order-based)
  *
  * 情境敘述：
  * 1. 指定商品（Ｂ～Ｅ）無條件 送最低價商品
@@ -836,7 +839,7 @@ const policy6 = new ItemGiveawayDiscount(
 );
 
 const builder1 = new OrderBuilder({
-  policyPickStrategy: 'ORDER_BASED',
+  policyPickStrategy: 'order-based',
   policies: [
     policy1,
     policy2,
@@ -845,7 +848,7 @@ const builder1 = new OrderBuilder({
 });
 
 const builder2 = new OrderBuilder({
-  policyPickStrategy: 'ORDER_BASED',
+  policyPickStrategy: 'order-based',
   policies: [
     policy4,
     policy5,
@@ -866,7 +869,7 @@ order2.price // 27850
 /**
  * 情境編號：甲 - 2
  *
- * 決策法：最適組合 (ITEM_BASED)
+ * 決策法：最適組合 (item-based)
  *
  * 情境敘述：
  * 1. 指定商品（Ａ～Ｆ）滿3件 打9折
@@ -929,7 +932,7 @@ const policy4 = new StepPercentageDiscount(
 
 // (1|2)&(3|4)
 const builder1 = new OrderBuilder<TestOrderItem>({
-  policyPickStrategy: 'ITEM_BASED',
+  policyPickStrategy: 'item-based',
   policies: [
     [policy1, policy2],
     [policy3, policy4],
@@ -939,7 +942,7 @@ const builder1 = new OrderBuilder<TestOrderItem>({
 const order1 = builder1.build({ items });
 
 const builder2 = new OrderBuilder<TestOrderItem>({
-  policyPickStrategy: 'ITEM_BASED',
+  policyPickStrategy: 'item-based',
   policies: [
     [policy1, policy2],
     policy3,

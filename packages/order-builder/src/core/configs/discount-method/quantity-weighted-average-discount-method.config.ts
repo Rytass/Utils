@@ -7,7 +7,7 @@ import { DiscountMethod, DiscountMethodType } from '../typings';
  * QuantityWeightedAverageDiscountMethod
  */
 export class QuantityWeightedAverageDiscountMethod implements DiscountMethod {
-  readonly type: DiscountMethodType = 'QUANTITY_WEIGHTED_AVERAGE';
+  readonly type: DiscountMethodType = 'quantity-weighted-average';
 
   handleOneDescription(order: Order, description: PolicyDiscountDescription) {
     // In quantity-weighted-average method item-price must be sort first to ensure
@@ -37,7 +37,7 @@ export class QuantityWeightedAverageDiscountMethod implements DiscountMethod {
         // In weighted-average method, maximum discount shared value of item is the value of item.
         const itemDiscountValue = order.config.roundStrategy.round(
           Math.min(storedRecord.currentValue, predictItemDiscountValue),
-          'EVERY_CALCULATION'
+          'every-calculation'
         );
 
         // It means others items have to enhance their shared-discount to balance the total-discount.
