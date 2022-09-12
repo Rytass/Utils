@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.13](https://github.com/Rytass/Utils/compare/@rytass/order-builder@0.0.12...@rytass/order-builder@0.0.13) (2022-09-12)
+
+
+### Bug Fixes
+
+* **packages/order-builder:** append omitted modification ([70375f2](https://github.com/Rytass/Utils/commit/70375f24ce4676aa165407a96a79e759970afaed))
+
+
+### Features
+
+* **packages/order-builder:** fixed `stack-overflow` problem on using spread syntax ([9016f88](https://github.com/Rytass/Utils/commit/9016f885847456358aacaf5f14379cebd9b2f438))
+
+
+
+
+
 ## [0.0.12](https://github.com/Rytass/Utils/compare/@rytass/order-builder@0.0.11...@rytass/order-builder@0.0.12) (2022-07-04)
 
 **Note:** Version bump only for package @rytass/order-builder
