@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.12](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ecpay@0.1.11...@rytass/invoice-adapter-ecpay@0.1.12) (2022-09-15)
+
+
+### Features
+
+* **invoice:** export mobile barcode and love code validator method from private ([ea6d6a7](https://github.com/Rytass/Utils/commit/ea6d6a761d30305efb3390099df78f5870988aa2))
+
+
+
+
+
 ## [0.1.11](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ecpay@0.1.10...@rytass/invoice-adapter-ecpay@0.1.11) (2022-08-01)
 
 
