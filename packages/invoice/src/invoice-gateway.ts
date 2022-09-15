@@ -14,4 +14,8 @@ export interface InvoiceIssueOptions<I extends Invoice<PaymentItem>> {
 
 export interface InvoiceGateway<I extends Invoice<PaymentItem>> {
   issue(options: InvoiceIssueOptions<I>): Promise<I>;
+
+  // Utils
+  isMobileBarcodeValid(code: string): Promise<boolean>;
+  isLoveCodeValid(code: string): Promise<boolean>;
 }

@@ -57,7 +57,7 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayInvoice> {
     );
   }
 
-  private async isLoveCodeValidator(loveCode: string): Promise<boolean> {
+  async isLoveCodeValid(loveCode: string): Promise<boolean> {
     const { data } = await axios.post<ECPayInvoiceResponse>(`${this.baseUrl}/B2CInvoice/CheckLoveCode`, JSON.stringify({
       MerchantID: this.merchantId,
       RqHeader: {
@@ -83,7 +83,7 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayInvoice> {
     return payload.IsExist === 'Y';
   }
 
-  private async isMobileBarcodeValidator(barcode: string): Promise<boolean> {
+  async isMobileBarcodeValid(barcode: string): Promise<boolean> {
     const { data } = await axios.post<ECPayInvoiceResponse>(`${this.baseUrl}/B2CInvoice/CheckBarcode`, JSON.stringify({
       MerchantID: this.merchantId,
       RqHeader: {
@@ -159,14 +159,14 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayInvoice> {
 
     if (options.carrier?.type === InvoiceCarrierType.LOVE_CODE) {
       // validate love code
-      if (!(await this.isLoveCodeValidator(options.carrier.code))) {
+      if (!(await this.isLoveCodeValid(options.carrier.code))) {
         throw new Error('Love code is invalid');
       }
     }
 
     if (options.carrier?.type === InvoiceCarrierType.MOBILE) {
       // validate mobile
-      if (!(await this.isMobileBarcodeValidator(options.carrier.code))) {
+      if (!(await this.isMobileBarcodeValid(options.carrier.code))) {
         throw new Error('Mobile barcode is invalid');
       }
     }
