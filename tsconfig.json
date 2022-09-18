@@ -33,6 +33,9 @@
       "@rytass/secret-adapter-vault": [
         "secret-adapter-vault/src"
       ],
+      "@rytass/secret-adapter-vault-nestjs": [
+        "secret-adapter-vault-nestjs/src"
+      ],
       "@rytass/order-builder": [
         "order-builder/src"
       ],

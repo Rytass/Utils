@@ -1,0 +1,40 @@
+{
+  "name": "@rytass/secret-adapter-vault-nestjs",
+  "version": "0.1.2",
+  "description": "Rytass Sceret Vault nestjs adapter",
+  "keywords": [
+    "rytass",
+    "secret",
+    "vault",
+    "nestjs"
+  ],
+  "author": "Chia Yu Pai <fantasyatelier@gmail.com>",
+  "homepage": "https://github.com/Rytass/Utils#readme",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rytass/Utils.git"
+  },
+  "scripts": {
+    "clean": "npm run build:clean",
+    "build:clean": "node ../../scripts/cleanBuild.js",
+    "build": "npm run build:clean && node ../../scripts/build.js"
+  },
+  "bugs": {
+    "url": "https://github.com/Rytass/Utils/issues"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^9.0.11",
+    "@nestjs/config": "^2.2.0",
+    "reflect-metadata": "^0.1.13"
+  },
+  "dependencies": {
+    "@rytass/secret-adapter-vault": "^0.1.2"
+  },
+  "devDependencies": {
+    "@nestjs/common": "^9.0.11",
+    "@nestjs/config": "^2.2.0",
+    "axios": "^0.27.2",
+    "reflect-metadata": "^0.1.13"
+  }
+}
