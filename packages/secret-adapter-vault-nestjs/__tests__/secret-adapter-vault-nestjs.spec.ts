@@ -103,8 +103,6 @@ describe('VaultSecretNestjsModule', () => {
 
     const project = RegExp.$1;
 
-    console.log({ project, VAULT_PROJECT, VAULT_EMPTY_PROJECT });
-
     if (!~[VAULT_PROJECT, VAULT_EMPTY_PROJECT].indexOf(project)) {
       throw new AxiosError(403);
     }
