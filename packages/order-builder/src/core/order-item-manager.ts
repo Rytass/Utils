@@ -6,8 +6,7 @@ import {
 } from './typings';
 import { OrderItemRecordCollection } from './order-item-record-collection';
 import { Policy } from '../policies';
-import { minus, plus, times } from '../utils/decimal';
-import { Order } from './order';
+import { minus } from '../utils/decimal';
 
 /**
  * OrderItemManager

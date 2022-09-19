@@ -1,6 +1,7 @@
 import { Policy } from '../policies';
 import { ObjRecord } from '../typings';
 import { ItemDiscountRecord } from './order-item-record-collection';
+import { Condition } from '../conditions';
 
 type OrderItemConditionCb = ((..._:any[]) => boolean);
 
@@ -49,4 +50,14 @@ export interface OrderItemRecord<Item extends OrderItem> {
   discountValue: number;
   finalPrice: number;
   discountRecords: ItemDiscountRecord[];
+}
+
+/**
+ * Logistics of the order.
+ */
+export interface OrderLogistics {
+  price: number;
+  name?: string;
+  threshold?: number;
+  freeConditions?: Condition | Condition[];
 }

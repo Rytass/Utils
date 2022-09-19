@@ -3,6 +3,7 @@ import {
   OrderItem,
   OrderItemRecord,
   FlattenOrderItem,
+  OrderLogistics,
 } from './typings';
 import { OrderConfig } from './configs/order-config';
 import { OrderItemManager } from './order-item-manager';
@@ -10,6 +11,7 @@ import { OrderPolicyManager } from './order-policy-manager';
 import { Policies, PolicyDiscountDescription } from '../policies';
 import { minus, plus, times } from '../utils/decimal';
 import { OrderBuilder } from './order-builder';
+import { ORDER_LOGISTICS_ID } from './utils';
 
 /**
  * OrderConstructor
@@ -59,6 +61,7 @@ export class Order<
 
   /**
    * OrderBuilder configuration.
+   * @returns {OrderConfig} OrderConfig
    */
   get config(): OrderConfig {
     return this.builder.config;
@@ -66,8 +69,9 @@ export class Order<
 
   /**
    * Item Manager
+   * @returns {OrderItemManager} OrderItemManager
    */
-  get itemManager() {
+  get itemManager(): OrderItemManager<Item> {
     return this._itemManager;
   }
 
@@ -83,7 +87,7 @@ export class Order<
    * All coupons in order.
    * @returns {Array} String[]
    */
-  get coupons() {
+  get coupons(): Coupon[] {
     return Array.from(this._coupons.values());
   }
 
@@ -91,8 +95,16 @@ export class Order<
    * All policies config based on its builder.
    * @returns {Array} Policy[]
    */
-  get policies() {
+  get policies(): Policies[] {
     return this._policyManager.policies;
+  }
+
+  /**
+   * Get logistics config.
+   * @returns {OrderLogistics} OrderLogistics
+   */
+  get logistics(): OrderLogistics | undefined {
+    return this.builder.config.logistics;
   }
 
   constructor(
@@ -170,6 +182,14 @@ export class Order<
    */
   get price(): number {
     return minus(this.itemValue, this.discountValue);
+  }
+
+  /**
+   * Get logistics record.
+   * @returns {OrderItemRecord} OrderItemRecord
+   */
+   get logisticsRecord(): OrderItemRecord<Item> | null {
+    return this.itemRecords.find(record => record.originItem.id === ORDER_LOGISTICS_ID) || null;
   }
 
   /**

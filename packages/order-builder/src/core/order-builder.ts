@@ -1,9 +1,10 @@
 import { OptionalKeys } from '../typings';
 import { Order } from './order';
 import { OrderConfig, OrderConfigOption } from './configs/order-config';
-import { OrderItem } from './typings';
+import { OrderItem, OrderLogistics } from './typings';
 import { OrderPolicyManager, RemovePolicy } from './order-policy-manager';
 import { Policies, Policy } from '../policies';
+import { applyOrderLogisticAndReturnLogisticsItem, ORDER_LOGISTICS_ID } from './utils';
 
 /**
  * OrderConstructor
@@ -11,12 +12,13 @@ import { Policies, Policy } from '../policies';
  * @param {Array} coupons string[]
  */
 interface OrderBuilderBuildInputs<
-Item extends OrderItem = OrderItem,
-Coupon extends string = string,
+  Item extends OrderItem = OrderItem,
+  Coupon extends string = string
 > {
   id?: string;
   items: Item[];
   coupons?: Coupon[];
+  logistics?: OrderLogistics;
 }
 
 /**
@@ -25,15 +27,15 @@ Coupon extends string = string,
  * @param {OrderConfigOption} config OrderConfigOption
  */
 interface OrderBuilderConstructor extends OptionalKeys<OrderConfigOption> {
-  policies: Policies[];
+  policies?: Policies[];
 }
 
 /**
  * OrderBuilder
  */
 export class OrderBuilder<
-Item extends OrderItem = OrderItem,
-Coupon extends string = string,
+  Item extends OrderItem = OrderItem,
+  Coupon extends string = string
 > {
   private _hasBuiltOrders: boolean = false;
   private readonly _policyManager: OrderPolicyManager;
@@ -72,7 +74,7 @@ Coupon extends string = string,
     this.config = new OrderConfig(
       arg0 instanceof OrderBuilder
         ? arg0.config
-        : config as OrderConfigOption | undefined
+        : (config as OrderConfigOption | undefined)
     );
   }
 
@@ -82,11 +84,22 @@ Coupon extends string = string,
    * @description `builder`.`policies` will be immutable after this method be called.
    * @returns {Order} Order
    */
-  build<I extends Item, C extends Coupon>({
-    id,
-    items,
+  public build<I extends Item, C extends Coupon>({
+    id = `ORDER_${Date.now()}`,
+    items: itemsProp,
     coupons = [],
+    logistics: logisticsProp,
   }: OrderBuilderBuildInputs<I, C>): Order<I, C> {
+    // Items logic
+    const items = itemsProp.filter(item => item.id !== ORDER_LOGISTICS_ID);
+
+    // Logistic logic
+    const logistics = logisticsProp || this.config.logistics;
+
+    if (typeof logistics !== 'undefined') {
+      items.push(applyOrderLogisticAndReturnLogisticsItem(this, logistics));
+    }
+
     this._hasBuiltOrders = true;
 
     return new Order<I, C>(this, this._policyManager, {
@@ -100,17 +113,17 @@ Coupon extends string = string,
    * Add Policy.
    * @description will be forbidden once `builder`.`order` instance be built.
    * @param policy Policy
-   * @returns {Order} Order
+   * @returns {OrderBuilder} OrderBuilder
    */
-  addPolicy(policy: Policies): OrderBuilder<Item, Coupon>;
+  public addPolicy(policy: Policies): OrderBuilder<Item, Coupon>;
   /**
    * Add Policy.
    * @description will be forbidden once `builder`.`order` instance be built.
    * @param policies Policy[]
-   * @returns {Order} Order
+   * @returns {OrderBuilder} OrderBuilder
    */
-  addPolicy(policies: Policies[]): OrderBuilder<Item, Coupon>;
-  addPolicy(arg0: Policies | Policies[]): OrderBuilder<Item, Coupon> {
+  public addPolicy(policies: Policies[]): OrderBuilder<Item, Coupon>;
+  public addPolicy(arg0: Policies | Policies[]): OrderBuilder<Item, Coupon> {
     if (this.hasBuiltOrders) {
       throw new Error('Policy is immutable if builder.build was called.');
     }
@@ -124,17 +137,21 @@ Coupon extends string = string,
    * Remove Policy.
    * @description will be forbidden once `builder`.`order` instance be built.
    * @param {Policy} policy RemovePolicy
-   * @returns {Order} Order
+   * @returns {OrderBuilder} OrderBuilder
    */
-  removePolicy<PT extends RemovePolicy>(policy: PT): OrderBuilder<Item, Coupon>;
+  public removePolicy<PT extends RemovePolicy>(policy: PT): OrderBuilder<Item, Coupon>;
   /**
    * Remove Policies.
    * @description will be forbidden once `builder`.`order` instance be built.
    * @param {Array<Policy>} policies Policy[]
-   * @returns {Order} Order
+   * @returns {OrderBuilder} OrderBuilder
    */
-  removePolicy<PT extends RemovePolicy>(policies: PT[]): OrderBuilder<Item, Coupon>;
-  removePolicy<PT extends RemovePolicy>(arg0: PT | PT[]): OrderBuilder<Item, Coupon> {
+  public removePolicy<PT extends RemovePolicy>(
+    policies: PT[]
+  ): OrderBuilder<Item, Coupon>;
+  public removePolicy<PT extends RemovePolicy>(
+    arg0: PT | PT[]
+  ): OrderBuilder<Item, Coupon> {
     if (this.hasBuiltOrders) {
       throw new Error('Policy is immutable if builder.build was called.');
     }
@@ -149,7 +166,18 @@ Coupon extends string = string,
    * @param policyId String
    * @returns Policy | undefined
    */
-  getPolicy(policyId: string): Policy | undefined {
+  public getPolicy(policyId: string): Policy | undefined {
     return this._policyManager.policyMap.get(policyId);
+  }
+
+  /**
+   * Set logistics.
+   * @param logistics OrderLogistic
+   * @return {OrderBuilder} OrderBuilder
+   */
+  public setLogistics(logistics: OrderLogistics): OrderBuilder {
+    this.config.updateLogistics(logistics);
+
+    return this;
   }
 }
