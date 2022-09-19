@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.14](https://github.com/Rytass/Utils/compare/@rytass/order-builder@0.0.13...@rytass/order-builder@0.0.14) (2022-09-19)
+
+
+### Features
+
+* **order-builder:** add `ItemExcluded` Condition and `Logistics` logic ([6570dab](https://github.com/Rytass/Utils/commit/6570dab15c29ae3d7195ba7b204d41d59d8abc29))
+
+
+
+
+
 ## [0.0.13](https://github.com/Rytass/Utils/compare/@rytass/order-builder@0.0.12...@rytass/order-builder@0.0.13) (2022-09-12)
 
 
