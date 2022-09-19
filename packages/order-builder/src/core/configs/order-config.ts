@@ -2,6 +2,7 @@ import { FinalPriceOnlyRoundStrategy, EveryCalculationRoundStrategy, NoRoundRoun
 import { QuantityWeightedAverageDiscountMethod, PriceWeightedAverageDiscountMethod } from './discount-method';
 import { ItemBasedPolicyPickStrategy, OrderBasedPolicyPickStrategy } from './policy-pick-strategy';
 import { DiscountMethod, DiscountMethodType, PolicyPickStrategy, PolicyPickStrategyType, RoundPrecision, RoundStrategy, RoundStrategyType } from './typings';
+import { OrderLogistics } from './../typings';
 
 export type OrderConfigConstructor = OrderConfigOption | OrderConfig;
 
@@ -29,6 +30,10 @@ export interface OrderConfigOption {
    * @default precision 0
    */
   roundStrategy: RoundStrategyType | [RoundStrategyType, RoundPrecision];
+  /**
+   * Logistic
+   */
+  logistics: OrderLogistics;
 }
 
 /**
@@ -38,6 +43,11 @@ export class OrderConfig {
   readonly discountMethod: DiscountMethod;
   readonly policyPickStrategy: PolicyPickStrategy;
   readonly roundStrategy: RoundStrategy;
+  private _logistics: OrderLogistics | undefined;
+
+  get logistics(): OrderLogistics | undefined {
+    return this._logistics;
+  }
 
   constructor(config?: OrderConfigConstructor) {
     // Discount method.
@@ -87,5 +97,12 @@ export class OrderConfig {
             return new EveryCalculationRoundStrategy(precision);
         }
       })();
+
+    // Logistics
+    this._logistics = config?.logistics;
+  }
+
+  public updateLogistics(logistics: OrderLogistics) {
+    this._logistics = logistics;
   }
 }

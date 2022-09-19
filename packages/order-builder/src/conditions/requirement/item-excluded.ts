@@ -4,11 +4,11 @@ import { plus } from '../../utils/decimal';
 import { Condition } from '../typings';
 import { ItemSpecifiedInput, Requirement, RequirementDescription } from './typings';
 
-export class ItemIncluded
+export class ItemExcluded
   <Item extends OrderItem = OrderItem>
   implements Condition<RequirementDescription>
 {
-  readonly type = Requirement.INCLUDED;
+  readonly type = Requirement.EXCLUDED;
   readonly items: string[];
   readonly threshold: number;
   readonly conditions: Condition[];
@@ -16,19 +16,19 @@ export class ItemIncluded
   private readonly itemSet: Set<string>;
 
   /**
-   * Item included condition.
+   * Item excluded condition.
    * @description Filter the items scope, and activate policy in the filtered scope.
-   * @param {Object} itemIncludedInput Object
+   * @param {Object} itemExcludedInput Object
    */
-  constructor(itemIncludedInput: ItemSpecifiedInput<Item>) {
-    this.items = Array.isArray(itemIncludedInput.items)
-      ? itemIncludedInput.items
-      : [itemIncludedInput.items];
+  constructor(itemExcludedInput: ItemSpecifiedInput<Item>) {
+    this.items = Array.isArray(itemExcludedInput.items)
+      ? itemExcludedInput.items
+      : [itemExcludedInput.items];
 
     this.itemSet = new Set(this.items);
-    this.threshold = itemIncludedInput.threshold || 1;
-    this.scope = itemIncludedInput.scope || 'id' as keyof Item;
-    this.conditions = itemIncludedInput.conditions || [];
+    this.threshold = itemExcludedInput.threshold || 1;
+    this.scope = itemExcludedInput.scope || 'id' as keyof Item;
+    this.conditions = itemExcludedInput.conditions || [];
   }
 
   matchedItems<I extends OrderItem = Item>(order: Order<I>): FlattenOrderItem<I>[] {
@@ -38,7 +38,7 @@ export class ItemIncluded
 
     return order.itemManager.flattenItems.filter(item => (
       item?.[scope]
-      && this.itemSet.has(item[scope])
+      && !this.itemSet.has(item[scope])
       && item.unitPrice > 0 // is not out of stock.
     ));
   }

@@ -1,5 +1,4 @@
 import {
-  CouponValidator,
   ItemGiveawayDiscount,
   ItemIncluded,
   OrderBuilder,
@@ -895,15 +894,6 @@ describe('TAST v0.0.2', () => {
   })
 
   it('Logistics Fee', () => {
-    const logisticsFee: TestOrderItem = {
-      id: 'logistics-fee',
-      name: '運費',
-      unitPrice: 200, // (假設運費固定為 200)
-      quantity: 1,
-      category: '',
-      brand: '',
-    };
-
     const originItems: TestOrderItem[] = [
       {
         id: 'A',
@@ -929,10 +919,10 @@ describe('TAST v0.0.2', () => {
         category: 'shoes',
         brand: 'N21',
       },
-      logisticsFee, // add to order-items
     ];
 
     let order = new OrderBuilder()
+      .setLogistics({ price: 200 })
       // 指定商品 B, C, D, E 滿兩件
       .addPolicy(
         new ItemGiveawayDiscount(
@@ -944,32 +934,26 @@ describe('TAST v0.0.2', () => {
           { onlyMatched: true }
         )
       )
-      .build({ items: originItems });
+      .build({
+        items: originItems,
+      });
 
     // 4500 + 200 - 1500 = 3200
     expect(order.price).toEqual(3200);
 
     order = new OrderBuilder(order.builder)
-      // 滿 2000 免運政策
-      .addPolicy(
-        new ItemGiveawayDiscount(
-          1,
-          [
-            new PriceThreshold(2000),
-            new ItemIncluded<TestOrderItem>({
-              items: [logisticsFee.id],
-              scope: 'id',
-            }),
-          ],
-          { onlyMatched: true }
-        )
-      )
-      .build({ items: originItems });
+    .setLogistics({
+      price: 200,
+      threshold: 2000,
+    })
+    .build({ items: originItems });
 
     // 4500 + 200 - 1500 - 200 = 3000
     expect(order.price).toEqual(3000);
 
-    const order2 = new OrderBuilder()
+    const order2 = new OrderBuilder({
+      logistics: { price: 5000 }, // will be overwrite at build time.
+    })
       // 指定商品 B, C, D, E 滿兩件送最低價品
       .addPolicy(
         new ItemGiveawayDiscount(
@@ -981,22 +965,85 @@ describe('TAST v0.0.2', () => {
           { onlyMatched: true }
         )
       )
-      // 滿 2000 免運政策
+      .build({
+        items: originItems,
+        logistics: {
+          price: 200,
+          threshold: 2000,
+        },
+      });
+
+    expect(order2.price).toEqual(3000);
+
+    // The condition of free-logistics is not satisfied.
+    expect(
+      new OrderBuilder({
+        logistics: {
+          price: 200,
+          threshold: 2000,
+        },
+      }).build({
+        items: [
+          {
+            id: 'A',
+            name: '外套A',
+            unitPrice: 1000,
+            quantity: 1,
+            category: 'jacket',
+            brand: 'AJE',
+          },
+        ],
+      }).price
+    ).toEqual(1000 + 200);
+
+    const originItems3: TestOrderItem[] = [
+      {
+        id: 'A',
+        name: '外套A',
+        unitPrice: 1000,
+        quantity: 1,
+        category: 'jacket',
+        brand: 'AJE',
+      },
+      {
+        id: 'B',
+        name: '外套B',
+        unitPrice: 1500,
+        quantity: 1,
+        category: 'jacket',
+        brand: 'N21',
+      },
+      {
+        id: 'C',
+        name: '鞋子C',
+        unitPrice: 2000,
+        quantity: 1,
+        category: 'shoes',
+        brand: 'N21',
+      },
+    ];
+
+    const order3 = new OrderBuilder()
+      // 滿 2000 免運
+      .setLogistics({
+        price: 200,
+        threshold: 2000,
+        name: '運費',
+      })
+      // 指定商品 B, C, D, E 滿兩件送最低價品
       .addPolicy(
         new ItemGiveawayDiscount(
           1,
-          [
-            new PriceThreshold(2000),
-            new ItemIncluded<TestOrderItem>({
-              items: [logisticsFee.id],
-              scope: 'id',
-            }),
-          ],
+          new ItemIncluded<TestOrderItem>({
+            items: ['B', 'C', 'D', 'E'],
+            threshold: 2,
+          }),
           { onlyMatched: true }
         )
       )
-      .build({ items: originItems });
+      .build({ items: originItems3 });
 
-    expect(order2.price).toEqual(3000);
+    // 4500 + 200 - 1500 - 200 = 3000
+    expect(order3.price).toEqual(3000);
   });
 })

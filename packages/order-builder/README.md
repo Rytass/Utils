@@ -40,6 +40,7 @@ Core API
       - `ItemIncluded`
       - `ItemRequired`
       - `QuantityRequired`
+      - `ItemExcluded`
     - validator
       - `CouponValidator`
 
@@ -63,6 +64,7 @@ Core API
 | `policies`           | Policy[]                 | `true`   |
 | `discountMethod`     | "price-weighted-average" \| "quantity-weighted-average" | `false` |
 | `roundStrategy`      | "every-calculation" \| "final-price-only" \| "no-round" | `false` |
+| `logistics`          | OrderLogistics           | `false` |
 
 
 <!-- Disable table formatting because Prettier messing it up. -->
@@ -82,6 +84,7 @@ Core API
 | `removePolicy(policies: Policy[])`       | | |
 | `removePolicy(policies: string[])`       | | |
 | `getPolicy(policyId: string)`            | Policy \| undefined | Get the specified policy instance by **policy.id** |
+| `setLogistics(logistics: OrderLogistics)`| this              | Set the logistics of the order. |
 
 ---
 
@@ -111,8 +114,10 @@ Core API
 | `itemValue`                              | number            | Get total value of items in this order. |
 | `itemQuantity`                           | number            | Get total quantity of items in this order. |
 | `price`                                  | number            | Get final price of order. |
+| `logistics`                              | OrderLogistics    | Get logistics config of current order. |
+| `logisticsRecord`                        | OrderItemRecord   | Get logistics in the type of order-item-record. |
 | **Methods**                              |                   | |
-| `subOrder(subCondition: SubOrderCondition)`                             | Order             | Create a new instance of **Order** based on the sub-condition on `items` and `coupons`. |
+| `subOrder(subCondition: SubOrderCondition)`| Order             | Create a new instance of **Order** based on the sub-condition on `items` and `coupons`. |
 | `addCoupon(coupon: string)`              | this              | Push coupon(s) into `order.coupons`.  |
 | `addCoupon(coupons: string[])`           |                   | |
 | `removeCoupon(coupon: string)`           | this              | Remove coupons(s) from `order.coupons` |
@@ -1014,16 +1019,6 @@ order1.itemRecords
  * 預期結果： 4500 + 200 - 1500 - 200 = 3000
  * 購物車顯示金額 3000
  */
-
-const logisticsFee: TestOrderItem = {
-  id: 'logistics-fee',
-  name: '運費',
-  unitPrice: 200, // (假設運費固定為 200)
-  quantity: 1,
-  category: '',
-  brand: '',
-};
-
 const originItems: TestOrderItem[] = [
   {
     id: 'A',
@@ -1049,10 +1044,15 @@ const originItems: TestOrderItem[] = [
     category: 'shoes',
     brand: 'N21',
   },
-  logisticsFee, // add to order-items
 ];
 
 const order = new OrderBuilder()
+  // 滿 2000 免運
+  .setLogistics({
+    price: 200,
+    threshold: 2000,
+    name: '運費',
+  })
   // 指定商品 B, C, D, E 滿兩件送最低價品
   .addPolicy(
     new ItemGiveawayDiscount(
@@ -1061,20 +1061,6 @@ const order = new OrderBuilder()
         items: ['B', 'C', 'D', 'E'],
         threshold: 2,
       }),
-      { onlyMatched: true }
-    )
-  )
-  // 滿 2000 免運政策
-  .addPolicy(
-    new ItemGiveawayDiscount(
-      1,
-      [
-        new PriceThreshold(2000),
-        new ItemIncluded<TestOrderItem>({
-          items: [logisticsFee.id],
-          scope: 'id',
-        }),
-      ],
       { onlyMatched: true }
     )
   )

@@ -11,6 +11,8 @@ import {
   StepValueDiscount,
   ItemIncluded,
   QuantityThreshold,
+  ORDER_LOGISTICS_ID,
+  ItemExcluded,
 } from '../src';
 import { Order } from '../src/core/order';
 import { OrderConfig } from '../src/core/configs/order-config';
@@ -977,4 +979,136 @@ describe('Condition', () => {
     .build({ items });
 
   expect(order5.price).toEqual(31500);
+
+  const builder6 = new OrderBuilder({
+    policies: [
+      new ValueDiscount(100, new ItemExcluded({
+        items: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'],
+      })),
+    ],
+  });
+
+  const order6 = builder6.build({ items });
+
+  expect(order6.price).toEqual(31500);
+
+  const builder7 = new OrderBuilder({
+    policies: [
+      new ValueDiscount(100, new ItemExcluded({
+        items: 'A',
+      })),
+    ],
+  });
+
+  const order7 = builder7.build({ items: [] });
+
+  expect(order7.price).toEqual(0);
+
+  const builder8 = new OrderBuilder({
+    policies: [
+      new ValueDiscount(100, new ItemExcluded({
+        items: 'A',
+      })),
+      new ValueDiscount(100, new ItemExcluded({
+        items: [],
+      })),
+      new ValueDiscount(100, new ItemExcluded({
+        items: 'A',
+        conditions: [new PriceThreshold(100000)],
+      })),
+    ],
+  });
+
+  const order8 = builder8.build({ items });
+
+  expect(order8.price).toEqual(31400);
 })
+
+describe('Logistics', () => {
+  it('logistics', () => {
+    const items = [
+      {
+        id: 'A',
+        name: '外套A',
+        unitPrice: 1000,
+        quantity: 1,
+        category: 'jacket',
+        brand: 'AJE',
+      },
+    ];
+
+    const order = new OrderBuilder({
+      logistics: {
+        price: 200,
+        threshold: 2000,
+        name: 'custom logistics name',
+      },
+    }).build({
+      items,
+    });
+
+    // The condition of free-logistics is not satisfied.
+    expect(order.price).toEqual(1000 + 200);
+    expect(JSON.stringify(order.logisticsRecord)).toEqual(
+      JSON.stringify({
+        itemId: '__LOGISTICS__-1',
+        originItem: {
+          id: '__LOGISTICS__',
+          name: 'custom logistics name',
+          unitPrice: 200,
+        },
+        initialValue: 200,
+        discountValue: 0,
+        finalPrice: 200,
+        discountRecords: [],
+        appliedPolicies: [],
+      })
+    );
+
+    const order2 = new OrderBuilder()
+      .setLogistics({
+        price: 200,
+        name: 'ECat',
+        freeConditions: new ItemIncluded({
+          items: 'A',
+        }),
+      })
+      .build({ items: [] });
+
+    expect(order2.price).toEqual(200);
+
+    const order3 = new OrderBuilder()
+      .setLogistics({
+        price: 300,
+        name: 'ECat',
+        freeConditions: [
+          new PriceThreshold(2000),
+          new ItemIncluded({ items: 'A' }),
+        ],
+      }).build({
+        items: [
+          {
+            id: 'A',
+            name: 'a',
+            quantity: 1,
+            unitPrice: 2001,
+          },
+        ],
+      });
+
+    expect(order3.price).toEqual(2001);
+  });
+
+  it('should return null', () => {
+    expect(new OrderBuilder().build({
+      items: [
+        {
+          id: '1',
+          name: '1',
+          quantity: 1,
+          unitPrice: 200,
+        },
+      ],
+    }).logisticsRecord).toEqual(null);
+  });
+});

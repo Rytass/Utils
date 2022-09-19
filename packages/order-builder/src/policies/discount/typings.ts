@@ -1,5 +1,5 @@
 import { ObjRecord } from '../../typings';
-import { Condition } from '../../conditions';
+import { Condition, ItemSpecifiedInput } from '../../conditions';
 import { PolicyResult } from '../typings';
 import { FlattenOrderItem, OrderItem } from '../../core';
 
@@ -23,6 +23,7 @@ T extends ObjRecord = ObjRecord> = PolicyResult<{
 export type DiscountOptions<T extends ObjRecord = ObjRecord> = {
   id?: string;
   onlyMatched?: boolean;
+  excluded?: ItemSpecifiedInput<OrderItem>;
 } & T;
 
 /**
