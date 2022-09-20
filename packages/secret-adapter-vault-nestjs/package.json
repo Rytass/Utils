@@ -29,7 +29,8 @@
     "reflect-metadata": "^0.1.13"
   },
   "dependencies": {
-    "@rytass/secret-adapter-vault": "^0.1.2"
+    "@rytass/secret-adapter-vault": "^0.1.2",
+    "regenerator-runtime": "^0.13.9"
   },
   "devDependencies": {
     "@nestjs/common": "^9.0.11",
