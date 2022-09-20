@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.5](https://github.com/Rytass/Utils/compare/@rytass/secret-adapter-vault-nestjs@0.1.4...@rytass/secret-adapter-vault-nestjs@0.1.5) (2022-09-20)
+
+
+### Features
+
+* **secret-adapter-vault-nestjs:** add forRoot to provide path from config ([15a7d42](https://github.com/Rytass/Utils/commit/15a7d4208e7d807015a7380a90749c21cf88bf49))
+
+
+
+
+
 ## [0.1.4](https://github.com/Rytass/Utils/compare/@rytass/secret-adapter-vault-nestjs@0.1.3...@rytass/secret-adapter-vault-nestjs@0.1.4) (2022-09-20)
 
 
