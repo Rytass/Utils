@@ -6,12 +6,13 @@ import {
   OrderLogistics,
 } from './typings';
 import { OrderConfig } from './configs/order-config';
-import { OrderItemManager } from './order-item-manager';
+import { OrderItemManager, OrderItemManagerImpl } from './order-item-manager';
 import { OrderPolicyManager } from './order-policy-manager';
 import { Policies, PolicyDiscountDescription } from '../policies';
 import { minus, plus, times } from '../utils/decimal';
 import { OrderBuilder } from './order-builder';
-import { ORDER_LOGISTICS_ID } from './utils';
+import { generateNewOrderId, ORDER_LOGISTICS_ID } from './utils';
+import { OrderCalculateSubject } from './order-calculate-subject';
 
 /**
  * OrderConstructor
@@ -56,7 +57,7 @@ export class Order<
   readonly parent: Order | null;
   readonly builder: OrderBuilder;
   private readonly _policyManager: OrderPolicyManager;
-  private readonly _itemManager: OrderItemManager<Item>;
+  private readonly _itemManager: OrderItemManagerImpl<Item>;
   private readonly _coupons: Set<Coupon>;
 
   /**
@@ -113,66 +114,77 @@ export class Order<
     { id, items, coupons }: OrderConstructor<Item, Coupon>,
     parent?: Order
   ) {
-    this.id = id || `ORDER_${Date.now()}`;
+    this.id = id || generateNewOrderId();
     this.parent = parent || null;
     this.builder = builder;
     this._policyManager = policyManager;
-    this._itemManager = new OrderItemManager<Item>(items);
+    this._itemManager = new OrderItemManagerImpl<Item>(items);
     this._coupons = new Set(coupons);
   }
 
+  private readonly _itemRecordSubject = new OrderCalculateSubject<OrderItemRecord<Item>[]>();
   /**
    * Get the after-balanced item detail records.
    * @returns {Array<OrderItemRecord>} OrderItemRecord[]
    */
   get itemRecords(): OrderItemRecord<Item>[] {
-    this.config.discountMethod.calculateDiscounts(this); // calculate discounts first.
+    return this._itemRecordSubject.subscribe(() => {
+      this.config.discountMethod.calculateDiscounts(this); // calculate discounts first.
 
-    return this.itemManager.getCurrentItemRecords(
-      this._policyManager.policyMap
-    );
+      return this.itemManager.getCurrentItemRecords(
+        this._policyManager.policyMap
+      );
+    });
   }
 
+  private readonly _discountsSubject = new OrderCalculateSubject<PolicyDiscountDescription[]>();
   /**
    * Activated discount-policies in this order.
    * @returns {Array} PolicyDiscountDescription[]
    */
   get discounts(): PolicyDiscountDescription[] {
-    return this.config.discountMethod.calculateDiscounts(this);
+    return this._discountsSubject.subscribe(
+      () => this.config.discountMethod.calculateDiscounts(this),
+    );
   }
 
+  private readonly _discountValueSubject = new OrderCalculateSubject<number>();
   /**
    * Total value of `activated` discount-policies.
    * @description Policies `will not be included` if own conditions were not satisfied.
    * @returns {Number} Number
    */
   get discountValue(): number {
-    return this.discounts.reduce(
-      (totalDiscountValue, discountDescription) =>
+    return this._discountValueSubject.subscribe(() => this.discounts.reduce(
+      (totalDiscountValue: number, discountDescription) =>
         plus(totalDiscountValue, discountDescription.discount),
       0
-    );
+    ));
   }
 
+  private readonly _itemValueSubject = new OrderCalculateSubject<number>();
   /**
    * Total value of items in order.
    * @description sum of all `quantity` * `unitPrice`.
    * @returns {Number} Number
    */
   get itemValue(): number {
-    return this.items.reduce(
-      (total, item) => plus(total, times(item.quantity, item.unitPrice)),
+    return this._itemValueSubject.subscribe(() => this.items.reduce(
+      (total: number, item) => plus(total, times(item.quantity, item.unitPrice)),
       0
-    );
+    ));
   }
 
+  private readonly _itemQuantitySubject = new OrderCalculateSubject<number>();
   /**
    * Total quantity of all items in order.
    * @description sum of all `quantity`.
    * @returns {Number} Number
    */
   get itemQuantity(): number {
-    return this.items.reduce((total, item) => plus(total, item.quantity), 0);
+    return this._itemQuantitySubject.subscribe(() =>  this.items.reduce(
+      (total: number, item) => plus(total, item.quantity), 0
+    ));
   }
 
   /**
@@ -193,12 +205,26 @@ export class Order<
   }
 
   /**
+   * Mutate hook.
+   */
+  private useEffect(next: Function) {
+    this._discountsSubject.next();
+    this._itemRecordSubject.next();
+    this._discountValueSubject.next();
+    this._itemValueSubject.next();
+    this._itemQuantitySubject.next();
+    next();
+
+    return this;
+  }
+
+  /**
    * To get a sub-order instance.
    * @param {Array} subItems (String | FlattenOrderItem)[]
    * @param {Array} subCoupons String[]
    * @returns {Order} Order
    */
-  subOrder({
+  public subOrder({
     subItems = [],
     subCoupons = [],
     subPolicies,
@@ -253,19 +279,19 @@ export class Order<
    * @param {String} coupon String
    * @returns {Order} Order
    */
-  addCoupon(coupon: Coupon): Order<Item, Coupon>;
+  public addCoupon(coupon: Coupon): Order<Item, Coupon>;
   /**
    * Push couponId into `order`.`coupons`
    * @param {Array} coupons String[]
    * @returns {Order} Order
    */
-  addCoupon(coupons: Coupon[]): Order<Item, Coupon>;
-  addCoupon(arg0: Coupon | Coupon[]): Order<Item, Coupon> {
-    const coupons = Array.isArray(arg0) ? arg0 : [arg0];
+  public addCoupon(coupons: Coupon[]): Order<Item, Coupon>;
+  public addCoupon(arg0: Coupon | Coupon[]): Order<Item, Coupon> {
+    return this.useEffect(() => {
+      const coupons = Array.isArray(arg0) ? arg0 : [arg0];
 
-    coupons.forEach(coupon => this._coupons.add(coupon));
-
-    return this;
+      coupons.forEach(coupon => this._coupons.add(coupon));
+    });
   }
 
   /**
@@ -273,19 +299,19 @@ export class Order<
    * @param {String} coupon String
    * @returns {Order} Order
    */
-  removeCoupon(coupon: Coupon): Order<Item, Coupon>;
+  public removeCoupon(coupon: Coupon): Order<Item, Coupon>;
   /**
    * Remove couponId from `order`.`coupons` if exists.
    * @param {Array} coupons String[]
    * @returns {Order} Order
    */
-  removeCoupon(coupons: Coupon[]): Order<Item, Coupon>;
-  removeCoupon(arg0: Coupon | Coupon[]): Order<Item, Coupon> {
-    const coupons = Array.isArray(arg0) ? arg0 : [arg0];
+  public removeCoupon(coupons: Coupon[]): Order<Item, Coupon>;
+  public removeCoupon(arg0: Coupon | Coupon[]): Order<Item, Coupon> {
+    return this.useEffect(() => {
+      const coupons = Array.isArray(arg0) ? arg0 : [arg0];
 
-    coupons.forEach(coupon => this._coupons.delete(coupon));
-
-    return this;
+      coupons.forEach(coupon => this._coupons.delete(coupon));
+    });
   }
 
   /**
@@ -293,17 +319,17 @@ export class Order<
    * @param {OrderItem} item OrderItem
    * @returns {Order} Order
    */
-  addItem(item: Item): Order<Item, Coupon>;
+  public addItem(item: Item): Order<Item, Coupon>;
   /**
    * Add item from `order`.`items`.
    * @param {Array} items OrderItem[]
    * @returns {Order} Order
    */
-  addItem(items: Item[]): Order<Item, Coupon>;
-  addItem(arg0: Item | Item[]): Order<Item, Coupon> {
-    this._itemManager.addItem(arg0);
-
-    return this;
+  public addItem(items: Item[]): Order<Item, Coupon>;
+  public addItem(arg0: Item | Item[]): Order<Item, Coupon> {
+    return this.useEffect(() => {
+      this._itemManager.addItem(arg0);
+    });
   }
 
   /**
@@ -312,13 +338,13 @@ export class Order<
    * @param {Number} quantity quantity of item to remove
    * @returns {Order} Order
    */
-  removeItem(id: string, quantity: number): Order<Item, Coupon>;
+   public removeItem(id: string, quantity: number): Order<Item, Coupon>;
   /**
    * Remove item from `order`.`items`.
    * @param {OrderItem} item OrderItem
    * @returns {Order} Order
    */
-  removeItem<RemoveItem extends BaseOrderItem>(
+   public removeItem<RemoveItem extends BaseOrderItem>(
     item: RemoveItem
   ): Order<Item, Coupon>;
   /**
@@ -326,15 +352,15 @@ export class Order<
    * @param {Array} items OrderItem[]
    * @returns {Order} Order
    */
-  removeItem<RemoveItem extends BaseOrderItem>(
+  public removeItem<RemoveItem extends BaseOrderItem>(
     items: RemoveItem[]
   ): Order<Item, Coupon>;
-  removeItem<RemoveItem extends BaseOrderItem>(
+  public removeItem<RemoveItem extends BaseOrderItem>(
     arg0: string | RemoveItem | RemoveItem[],
     arg1?: number
   ): Order<Item, Coupon> {
-    this._itemManager.removeItem(arg0, arg1);
-
-    return this;
+    return this.useEffect(() => {
+      this._itemManager.removeItem(arg0, arg1);
+    });
   }
 }
