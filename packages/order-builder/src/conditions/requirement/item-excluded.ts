@@ -32,7 +32,7 @@ export class ItemExcluded
   }
 
   matchedItems<I extends OrderItem = Item>(order: Order<I>): FlattenOrderItem<I>[] {
-    if (this.items.length  < 1) return [];
+    if (this.items.length < 1) return [];
 
     const scope = this.scope as string;
 
