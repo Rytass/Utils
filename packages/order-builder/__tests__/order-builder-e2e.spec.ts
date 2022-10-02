@@ -1046,4 +1046,322 @@ describe('TAST v0.0.2', () => {
     // 4500 + 200 - 1500 - 200 = 3000
     expect(order3.price).toEqual(3000);
   });
+
+  /**
+   * 需要能單純判斷是否滿足特定條件、滿足幾次，不影響訂單計算的類似 policy 功能
+   * 使用情境：滿足條件贈送紅利點數、滿足條件可加購商品
+   *
+   * 目前 TAST 這邊只需要判斷到有沒有符合就好，不需要知道滿足幾次
+   *
+   * 情境敘述：
+   * 新增一個只判斷是否符合條件的 policy
+   * 透過 order.onlyMatchedPolicies 回傳 policy 是否符合條件
+   *
+   * ```typescript
+   * const policy = new OnlyMatchedDiscount(conditions);
+   *
+   * const order = new OrderBuilder().addPolicy(policy).build({ items });
+   *
+   * order.onlyMatchedPolicies // [{ id: 'only-matched-policy', matchedTimes: 1 }]
+   * ```
+   */
+  it('Only Matched Policy', () => {
+    const items: TestOrderItem[] = [
+      {
+        id: 'A',
+        name: '外套A',
+        unitPrice: 1000,
+        quantity: 1,
+        category: 'jacket',
+        brand: 'AJE',
+      },
+      {
+        id: 'B',
+        name: '外套B',
+        unitPrice: 1500,
+        quantity: 1,
+        category: 'jacket',
+        brand: 'N21',
+      },
+      {
+        id: 'C',
+        name: '鞋子C',
+        unitPrice: 2000,
+        quantity: 1,
+        category: 'shoes',
+        brand: 'N21',
+      },
+    ];
+
+    // 每 2000 元折 200 元 -> 滿足 2 次
+
+    const policy1 = new StepValueDiscount(
+      2000,
+      200,
+      { id: 'only-matched-policy', stepUnit: 'price' },
+    );
+
+    const builder = new OrderBuilder();
+
+    const policy1MatchedTimes = builder
+      .addPolicy(policy1)
+      .build({ items })
+      .discounts
+      .find(discount => discount.id === policy1.id)
+      ?.matchedTimes || 0;
+
+    expect(policy1MatchedTimes).toBe(2); // step(4500, 2000) = 2
+
+    expect(
+      builder
+        .build({ items })
+        .discountValue
+    ).toBe(policy1.value * policy1MatchedTimes);
+
+    expect(
+      new OrderBuilder()
+        .addPolicy(
+          new StepPercentageDiscount(1499, 0.8, { id: 'p2', stepUnit: 'price' })
+        )
+        .build({ items })
+        .discounts.find(discount => discount.id === 'p2')?.matchedTimes
+    ).toBe(3);
+
+    let ob = new OrderBuilder()
+      .addPolicy(
+        new StepPercentageDiscount(1499, 0.8, {
+          id: 'p3',
+          stepUnit: 'price',
+          excludedInCalculation: true,
+        })
+      )
+      .build({ items });
+
+    expect(ob.price).toBe(4500);
+    expect(JSON.stringify(ob.discounts)).toBe(  JSON.stringify([
+      {
+        id: 'p3',
+        step: 1499,
+        value: 0.8,
+        type: 'STEP_PERCENTAGE',
+        discount: 0,
+        conditions: [],
+        appliedItems: [
+          {
+            id: 'A',
+            name: '外套A',
+            unitPrice: 1000,
+            quantity: 1,
+            category: 'jacket',
+            brand: 'AJE',
+            uuid: 'A-1',
+          },
+          {
+            id: 'B',
+            name: '外套B',
+            unitPrice: 1500,
+            quantity: 1,
+            category: 'jacket',
+            brand: 'N21',
+            uuid: 'B-1',
+          },
+          {
+            id: 'C',
+            name: '鞋子C',
+            unitPrice: 2000,
+            quantity: 1,
+            category: 'shoes',
+            brand: 'N21',
+            uuid: 'C-1',
+          },
+        ],
+        matchedTimes: 3,
+      },
+    ]));
+
+    ob = new OrderBuilder()
+      .addPolicy(
+        new StepValueDiscount(1499, 200, {
+          id: 'p4',
+          stepUnit: 'price',
+          excludedInCalculation: true,
+        })
+      )
+      .build({ items });
+
+    expect(ob.price).toBe(4500);
+    expect(JSON.stringify(ob.discounts)).toBe(  JSON.stringify([
+      {
+        id: 'p4',
+        step: 1499,
+        value: 200,
+        type: 'STEP_VALUE',
+        discount: 0,
+        conditions: [],
+        appliedItems: [
+          {
+            id: 'A',
+            name: '外套A',
+            unitPrice: 1000,
+            quantity: 1,
+            category: 'jacket',
+            brand: 'AJE',
+            uuid: 'A-1',
+          },
+          {
+            id: 'B',
+            name: '外套B',
+            unitPrice: 1500,
+            quantity: 1,
+            category: 'jacket',
+            brand: 'N21',
+            uuid: 'B-1',
+          },
+          {
+            id: 'C',
+            name: '鞋子C',
+            unitPrice: 2000,
+            quantity: 1,
+            category: 'shoes',
+            brand: 'N21',
+            uuid: 'C-1',
+          },
+        ],
+        matchedTimes: 3,
+      },
+    ]));
+
+    ob = new OrderBuilder()
+      .addPolicy(
+        new ValueDiscount(1499, {
+          id: 'p5',
+          excludedInCalculation: true,
+        })
+      )
+      .build({ items });
+
+    expect(ob.price).toBe(4500);
+    expect(JSON.stringify(ob.discounts)).toBe(JSON.stringify([
+      {
+        id: 'p5',
+        value: 1499,
+        type: 'VALUE',
+        discount: 0,
+        conditions: [],
+        appliedItems: [
+          {
+            id: 'A',
+            name: '外套A',
+            unitPrice: 1000,
+            quantity: 1,
+            category: 'jacket',
+            brand: 'AJE',
+            uuid: 'A-1',
+          },
+          {
+            id: 'B',
+            name: '外套B',
+            unitPrice: 1500,
+            quantity: 1,
+            category: 'jacket',
+            brand: 'N21',
+            uuid: 'B-1',
+          },
+          {
+            id: 'C',
+            name: '鞋子C',
+            unitPrice: 2000,
+            quantity: 1,
+            category: 'shoes',
+            brand: 'N21',
+            uuid: 'C-1',
+          },
+        ],
+        matchedTimes: 1,
+      },
+    ]));
+
+    ob = new OrderBuilder()
+      .addPolicy(
+        new ItemGiveawayDiscount(1, {
+          id: 'p6',
+          excludedInCalculation: true,
+        })
+      )
+      .build({ items });
+
+    expect(ob.price).toBe(4500);
+    expect(JSON.stringify(ob.discounts)).toBe(JSON.stringify([
+      {
+        id: 'p6',
+        value: 1,
+        strategy: 'LOW_PRICE_FIRST',
+        type: 'ITEM_GIVEAWAY',
+        discount: 0,
+        conditions: [],
+        appliedItems: [
+          {
+            id: 'A',
+            name: '外套A',
+            unitPrice: 1000,
+            quantity: 1,
+            category: 'jacket',
+            brand: 'AJE',
+            uuid: 'A-1',
+          },
+        ],
+        matchedTimes: 1,
+      },
+    ]));
+
+    ob = new OrderBuilder()
+      .addPolicy(
+        new PercentageDiscount(0.8, {
+          id: 'p7',
+          excludedInCalculation: true,
+        })
+      )
+      .build({ items });
+
+    expect(ob.price).toBe(4500);
+    expect(JSON.stringify(ob.discounts)).toBe(JSON.stringify([
+      {
+        id: 'p7',
+        value: 0.8,
+        type: 'PERCENTAGE',
+        discount: 0,
+        conditions: [],
+        appliedItems: [
+          {
+            id: 'A',
+            name: '外套A',
+            unitPrice: 1000,
+            quantity: 1,
+            category: 'jacket',
+            brand: 'AJE',
+            uuid: 'A-1',
+          },
+          {
+            id: 'B',
+            name: '外套B',
+            unitPrice: 1500,
+            quantity: 1,
+            category: 'jacket',
+            brand: 'N21',
+            uuid: 'B-1',
+          },
+          {
+            id: 'C',
+            name: '鞋子C',
+            unitPrice: 2000,
+            quantity: 1,
+            category: 'shoes',
+            brand: 'N21',
+            uuid: 'C-1',
+          },
+        ],
+        matchedTimes: 1,
+      },
+    ]));
+  })
 })

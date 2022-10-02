@@ -77,6 +77,7 @@ Core API
 | `hasBuiltOrders`                         | boolean           | Checks whether this builder has already built any instance of order. |
 | **Methods**                              |                   |             |
 | `build`                                  | Order             | Create an order instance, and lock the access of mutations on policy. |
+| `clone`                                  | OrderBuilder      | Create a new OrderBuilder instance based on current instance. |
 | `addPolicy(policy: Policies)`            | this              | Push policy instance(s) into **builder.policies** (can active as `builder.hasBuiltOrders` is `false`). |
 | `addPolicy(policies: Policies[])`        |                   | |
 | `removePolicy(policy: Policy)`           | this              | Remove policy instance(s) from **builder.policies** based on instance reference or **policy.id** (can active as `builder.hasBuiltOrders` is `false`) |
@@ -1067,4 +1068,75 @@ const order = new OrderBuilder()
   .build({ items: originItems });
 
 order.price // 4500 + 200 - 1500 - 200 = 3000
+```
+
+### Matched Times & Excluded Calculating Policy
+
+```typescript
+/**
+ * 情境敘述：
+ * 滿足條件贈送紅利點數、滿足條件可加購商品
+ * 需要能單純判斷是否滿足特定條件、滿足幾次，不影響訂單計算的 policy 功能
+ */
+const items: TestOrderItem[] = [
+  {
+    id: 'A',
+    name: '外套A',
+    unitPrice: 1000,
+    quantity: 1,
+    category: 'jacket',
+    brand: 'AJE',
+  },
+  {
+    id: 'B',
+    name: '外套B',
+    unitPrice: 1500,
+    quantity: 1,
+    category: 'jacket',
+    brand: 'N21',
+  },
+  {
+    id: 'C',
+    name: '鞋子C',
+    unitPrice: 2000,
+    quantity: 1,
+    category: 'shoes',
+    brand: 'N21',
+  },
+];
+
+// Policy1: 每 2000 元折 200 元
+const policy1 = new StepValueDiscount(
+  2000,
+  200,
+  { stepUnit: 'price' },
+);
+
+// Policy1 滿足次數
+new OrderBuilder()
+  .addPolicy(policy1)
+  .build({ items })
+  .discounts
+  .find(discount => discount.id === policy1.id)
+  ?.matchedTimes; // step(4500, 2000) = 2
+
+// Policy2: 每 1499 元打 8折 (Matched only Policy, will not participant in discounting)
+const policy2 = new StepPercentageDiscount(
+  1499,
+  0.8,
+  { stepUnit: 'price', excludedInCalculation: true }
+);
+
+const order = new OrderBuilder()
+  .addPolicy(policy2)
+  .build({ items });
+
+// Policy2: 滿足次數
+order
+.discounts
+.find(discount => discount.id === policy2id)
+?.matchedTimes; // step(4500, 1499) = 3
+
+// Policy2: Excluded in calculation.
+order.discountValue // 0
 ```

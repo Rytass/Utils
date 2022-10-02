@@ -98,7 +98,9 @@ export class PercentageDiscount implements BaseDiscount {
    * @returns {Number} number
    */
   discount(price: number): number {
-    return times(price, minus(1, this.value));
+    return this.options?.excludedInCalculation
+    ? 0
+    : times(price, minus(1, this.value));
   }
 
   description(
@@ -116,6 +118,7 @@ export class PercentageDiscount implements BaseDiscount {
       ]),
       conditions: this.conditions,
       appliedItems,
+      matchedTimes: 1,
     };
   }
 
