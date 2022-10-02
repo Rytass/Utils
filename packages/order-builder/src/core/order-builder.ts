@@ -4,7 +4,7 @@ import { OrderConfig, OrderConfigOption } from './configs/order-config';
 import { OrderItem, OrderLogistics } from './typings';
 import { OrderPolicyManager, RemovePolicy } from './order-policy-manager';
 import { Policies, Policy } from '../policies';
-import { applyOrderLogisticAndReturnLogisticsItem, ORDER_LOGISTICS_ID } from './utils';
+import { applyOrderLogisticAndReturnLogisticsItem, generateNewOrderId, ORDER_LOGISTICS_ID } from './utils';
 
 /**
  * OrderConstructor
@@ -85,11 +85,13 @@ export class OrderBuilder<
    * @returns {Order} Order
    */
   public build<I extends Item, C extends Coupon>({
-    id = `ORDER_${Date.now()}`,
+    id: orderId,
     items: itemsProp,
     coupons = [],
     logistics: logisticsProp,
   }: OrderBuilderBuildInputs<I, C>): Order<I, C> {
+    const id = orderId || generateNewOrderId();
+
     // Items logic
     const items = itemsProp.filter(item => item.id !== ORDER_LOGISTICS_ID);
 
@@ -110,6 +112,13 @@ export class OrderBuilder<
   }
 
   /**
+   * Clone current policy instance. (Will get different instance.)
+   */
+  public clone(): OrderBuilder<Item, Coupon> {
+    return new OrderBuilder<Item, Coupon>(this);
+  }
+
+  /**
    * Add Policy.
    * @description will be forbidden once `builder`.`order` instance be built.
    * @param policy Policy
@@ -125,7 +134,7 @@ export class OrderBuilder<
   public addPolicy(policies: Policies[]): OrderBuilder<Item, Coupon>;
   public addPolicy(arg0: Policies | Policies[]): OrderBuilder<Item, Coupon> {
     if (this.hasBuiltOrders) {
-      throw new Error('Policy is immutable if builder.build was called.');
+      throw new Error('Policy is immutable if builder.build was called. You should call builder.clone first.');
     }
 
     this._policyManager.addPolicy(arg0);
@@ -153,7 +162,7 @@ export class OrderBuilder<
     arg0: PT | PT[]
   ): OrderBuilder<Item, Coupon> {
     if (this.hasBuiltOrders) {
-      throw new Error('Policy is immutable if builder.build was called.');
+      throw new Error('Policy is immutable if builder.build was called. You should call builder.clone first.');
     }
 
     this._policyManager.removePolicy(arg0);
