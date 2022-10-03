@@ -8,6 +8,13 @@ import { ItemGiveawayDiscount, Policies } from '../policies';
 import { OrderBuilder } from './order-builder';
 import { OrderItem, OrderLogistics } from './typings';
 
+/** ------------------- Order ------------------- */
+export function generateNewOrderId() {
+  return `ORDER_${Date.now()}`;
+}
+
+/** ------------------- Logistics ------------------- */
+
 export const ORDER_LOGISTICS_ID = '__LOGISTICS__';
 export const ORDER_LOGISTICS_NAME = 'logistics';
 

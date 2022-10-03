@@ -97,7 +97,9 @@ export class ItemGiveawayDiscount implements BaseDiscount {
   }
 
   discount(giveawayItemValue: number): number {
-    return giveawayItemValue;
+    return this.options?.excludedInCalculation
+      ? 0
+      : giveawayItemValue;
   }
 
   description(
@@ -112,6 +114,7 @@ export class ItemGiveawayDiscount implements BaseDiscount {
       discount: this.discount(giveawayItemValue),
       conditions: this.conditions,
       appliedItems,
+      matchedTimes: appliedItems.length,
     };
   }
 

@@ -18,11 +18,13 @@ T extends ObjRecord = ObjRecord> = PolicyResult<{
   discount: number;
   conditions: Condition[];
   appliedItems: FlattenOrderItem<OrderItem>[];
+  matchedTimes: number;
 }> & T;
 
 export type DiscountOptions<T extends ObjRecord = ObjRecord> = {
   id?: string;
   onlyMatched?: boolean;
+  excludedInCalculation?: boolean;
 } & T;
 
 /**

@@ -90,7 +90,7 @@ describe('OrderBuilder', () => {
     } catch (ex: any) {
       expect(ex).toBeInstanceOf(Error);
       expect(ex?.message).toEqual(
-        'Policy is immutable if builder.build was called.'
+        'Policy is immutable if builder.build was called. You should call builder.clone first.'
       );
     }
 
@@ -99,7 +99,7 @@ describe('OrderBuilder', () => {
     } catch (ex: any) {
       expect(ex).toBeInstanceOf(Error);
       expect(ex?.message).toEqual(
-        'Policy is immutable if builder.build was called.'
+        'Policy is immutable if builder.build was called. You should call builder.clone first.'
       );
     }
 
@@ -223,7 +223,7 @@ describe('OrderBuilder', () => {
     } catch (ex: any) {
       expect(ex).toBeInstanceOf(Error);
       expect(ex?.message).toEqual(
-        'Policy is immutable if builder.build was called.'
+        'Policy is immutable if builder.build was called. You should call builder.clone first.'
       );
     }
 
@@ -1112,3 +1112,51 @@ describe('Logistics', () => {
     }).logisticsRecord).toEqual(null);
   });
 });
+
+describe('Clone OrderBuilder', () => {
+  it('should create a new instance of OrderBuilder', () => {
+    const items = [
+      {
+        id: 'A',
+        name: '外套A',
+        unitPrice: 1000,
+        quantity: 1,
+        category: 'jacket',
+        brand: 'AJE',
+      },
+    ];
+
+    const order = new OrderBuilder({
+      logistics: {
+        price: 200,
+        threshold: 2000,
+        name: 'custom logistics name',
+      },
+    }).build({ items });
+
+    const builder2 = order.builder.clone();
+
+    expect(builder2 === order.builder).toBeFalsy();
+
+    try {
+      new OrderBuilder()
+      .addPolicy(new ValueDiscount(200))
+      .build({ items })
+      .builder
+      .addPolicy(new ValueDiscount(50))
+    } catch (ex: any) {
+      expect(ex.message).toBe('Policy is immutable if builder.build was called. You should call builder.clone first.');
+    }
+
+    expect(
+      new OrderBuilder()
+      .addPolicy(new ValueDiscount(200))
+      .build({ items })
+      .builder
+      .clone() // !! difference
+      .addPolicy(new ValueDiscount(50))
+      .build({ items })
+      .price
+    ).toBe(1000 - 200 - 50);
+  });
+})

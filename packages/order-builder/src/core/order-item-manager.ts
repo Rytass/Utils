@@ -11,7 +11,23 @@ import { minus } from '../utils/decimal';
 /**
  * OrderItemManager
  */
-export class OrderItemManager<Item extends OrderItem = OrderItem> {
+export interface OrderItemManager<Item extends OrderItem = OrderItem>
+  extends Pick<
+    OrderItemManagerImpl<Item>,
+    | 'items'
+    | 'collectionMap'
+    | 'flattenItems'
+    | 'initCollectionMap'
+    | 'getCurrentItemRecords'
+    | 'updateCollection'
+  > {}
+
+/**
+ * OrderItemManagerImpl (Can only accessed by its owner `Order`.)
+ */
+export class OrderItemManagerImpl<Item extends OrderItem = OrderItem>
+  implements OrderItemManager<Item>
+{
   private _collectionMap: Map<string, OrderItemRecordCollection> = new Map();
   private _items: Item[];
 
@@ -60,11 +76,11 @@ export class OrderItemManager<Item extends OrderItem = OrderItem> {
     this._items = items;
   }
 
-  initCollectionMap(): void {
+  public initCollectionMap(): void {
     this._collectionMap.clear();
   }
 
-  getCurrentItemRecords(
+  public getCurrentItemRecords(
     policyMap: Map<string, Policy>
   ): OrderItemRecord<Item>[] {
     return this.flattenItems
@@ -90,7 +106,7 @@ export class OrderItemManager<Item extends OrderItem = OrderItem> {
       }));
   }
 
-  updateCollection<T extends FlattenOrderItem<OrderItem>>(
+  public updateCollection<T extends FlattenOrderItem<OrderItem>>(
     item: T,
     resolve: (record: OrderItemRecordCollection) => OrderItemRecordCollection
   ): void {
@@ -100,13 +116,13 @@ export class OrderItemManager<Item extends OrderItem = OrderItem> {
     this._collectionMap.set(item.uuid, resolve(storedRecord));
   }
 
-  addItem<I extends Item>(arg0: I | I[]): void {
+  public addItem<I extends Item>(arg0: I | I[]): void {
     const items = Array.isArray(arg0) ? arg0 : [arg0];
 
     this._items = [...this._items, ...items];
   }
 
-  removeItem<RemoveItem extends BaseOrderItem = BaseOrderItem>(
+  public removeItem<RemoveItem extends BaseOrderItem = BaseOrderItem>(
     arg0: string | RemoveItem | RemoveItem[],
     arg1?: number
   ): void {

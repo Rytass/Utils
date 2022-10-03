@@ -21,19 +21,19 @@ export class OrderPolicyManager {
     this._policies = policies;
   }
 
-  addPolicy(policy: Policies): void;
-  addPolicy(policies: Policies[]): void;
-  addPolicy(arg0: Policies | Policies[]): void;
-  addPolicy(arg0: Policies | Policies[]): any {
+  public addPolicy(policy: Policies): void;
+  public addPolicy(policies: Policies[]): void;
+  public addPolicy(arg0: Policies | Policies[]): void;
+  public addPolicy(arg0: Policies | Policies[]): any {
     const policies = Array.isArray(arg0) ? arg0 : [arg0];
 
     this._policies = [...this._policies, ...policies];
   }
 
-  removePolicy<PT extends RemovePolicy>(policy: PT): void;
-  removePolicy<PT extends RemovePolicy>(policies: PT[]): void;
-  removePolicy<PT extends RemovePolicy>(arg0: PT | PT[]): void;
-  removePolicy<PT extends RemovePolicy>(arg0: PT | PT[]): void {
+  public removePolicy<PT extends RemovePolicy>(policy: PT): void;
+  public removePolicy<PT extends RemovePolicy>(policies: PT[]): void;
+  public removePolicy<PT extends RemovePolicy>(arg0: PT | PT[]): void;
+  public removePolicy<PT extends RemovePolicy>(arg0: PT | PT[]): void {
     const policies = Array.isArray(arg0) ? arg0 : [arg0];
 
     const toRemovePolicyIdSet = new Set(

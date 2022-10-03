@@ -101,10 +101,12 @@ export class StepValueDiscount implements BaseDiscount {
   }
 
   discount(itemValue: number): number {
-    return times(
-      this.value,
-      Math.min(this.stepLimit, Math.floor(divided(itemValue, this.step)))
-    );
+    return this.options?.excludedInCalculation
+      ? 0
+      : times(
+        this.value,
+        Math.min(this.stepLimit, Math.floor(divided(itemValue, this.step))),
+      );
   }
 
   description(
@@ -112,6 +114,11 @@ export class StepValueDiscount implements BaseDiscount {
     itemValue: number,
     appliedItems: FlattenOrderItem[]
   ): PolicyDiscountDescription {
+    const matchedTimes = Math.min(
+      this.stepLimit,
+      Math.floor(divided(itemValue, this.step)),
+    );
+
     return {
       id: this.id,
       step: this.step,
@@ -123,6 +130,7 @@ export class StepValueDiscount implements BaseDiscount {
       ]),
       conditions: this.conditions,
       appliedItems,
+      matchedTimes,
     };
   }
 

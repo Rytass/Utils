@@ -21,4 +21,4 @@ export interface Policy<T extends ObjRecord = ObjRecord> {
   description(..._: any[]): PolicyResult<T>;
 }
 
-export type Policies<P extends Policy = Policy> = P | P[]
+export type Policies<P extends Policy = Policy> = P | P[];

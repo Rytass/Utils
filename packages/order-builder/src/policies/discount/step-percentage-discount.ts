@@ -106,6 +106,8 @@ export class StepPercentageDiscount implements BaseDiscount {
   }
 
   discount(itemValue: number, multiplier: number): number {
+    if (this.options?.excludedInCalculation) return 0;
+
     const discountRate = pow(
       this.value,
       Math.min(this.stepLimit, Math.floor(divided(multiplier, this.step)))
@@ -120,6 +122,11 @@ export class StepPercentageDiscount implements BaseDiscount {
     multiplier: number,
     appliedItems: FlattenOrderItem[]
   ): PolicyDiscountDescription {
+    const matchedTimes = Math.min(
+      this.stepLimit,
+      Math.floor(divided(multiplier, this.step))
+    );
+
     return {
       id: this.id,
       step: this.step,
@@ -131,6 +138,7 @@ export class StepPercentageDiscount implements BaseDiscount {
       ),
       conditions: this.conditions,
       appliedItems,
+      matchedTimes,
     };
   }
 

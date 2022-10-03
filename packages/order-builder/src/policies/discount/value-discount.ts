@@ -77,7 +77,9 @@ export class ValueDiscount implements BaseDiscount {
   }
 
   discount(): number {
-    return this.value;
+    return this.options?.excludedInCalculation
+      ? 0
+      : this.value;
   }
 
   description(order: Order, appliedItems: FlattenOrderItem[]): PolicyDiscountDescription {
@@ -91,6 +93,7 @@ export class ValueDiscount implements BaseDiscount {
       ),
       conditions: this.conditions,
       appliedItems,
+      matchedTimes: 1,
     };
   }
 
