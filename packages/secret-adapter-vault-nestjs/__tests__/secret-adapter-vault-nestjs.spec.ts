@@ -186,7 +186,7 @@ describe('VaultSecretNestjsModule', () => {
   mockConfig.set('VAULT_PATH', VAULT_PROJECT);
 
   it('shoult test', async () => {
-    const service = new VaultService(mockConfig as unknown as ConfigService);
+    const service = new VaultService(mockConfig as unknown as ConfigService, VAULT_PROJECT);
 
     const testValue = await service.get('test'); // Before ready
     const test2Value = await service.get('test2'); // After ready
