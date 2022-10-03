@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.15](https://github.com/Rytass/Utils/compare/@rytass/order-builder@0.0.14...@rytass/order-builder@0.0.15) (2022-10-03)
+
+
+### Features
+
+* **order-builder:** add `clone` method to `OrderBuilder` ([0e23741](https://github.com/Rytass/Utils/commit/0e23741a23bbbefe22384582ed72ced961ddebf6))
+* **order-builder:** add `OrderCalculateSubject` in `Order` ([4b9ae6b](https://github.com/Rytass/Utils/commit/4b9ae6be26e293668b8004235801f3399fdd5271))
+* **order-builder:** make `OrderItemManager` being interface ([164ff1f](https://github.com/Rytass/Utils/commit/164ff1f2c36beae253caf0ef3bbad3412a8984c6))
+* **order-builder:** resolved [#20](https://github.com/Rytass/Utils/issues/20) ([a72250b](https://github.com/Rytass/Utils/commit/a72250b79d8cd434e74f34f83976aafbdd5081a5))
+
+
+
+
+
 ## [0.0.14](https://github.com/Rytass/Utils/compare/@rytass/order-builder@0.0.13...@rytass/order-builder@0.0.14) (2022-09-19)
 
 
