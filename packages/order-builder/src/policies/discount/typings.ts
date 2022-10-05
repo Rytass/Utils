@@ -30,7 +30,7 @@ export type DiscountOptions<T extends ObjRecord = ObjRecord> = {
 /**
  * @param {"quantity"|"price"} unit "quantity"|"price"
  */
-export type StepDiscountOptions = DiscountOptions<{
+export type StepDiscountOptions<T extends ObjRecord = ObjRecord> = DiscountOptions<{
   stepUnit: 'quantity' | 'price';
   stepLimit?: number;
-}>
+} & T>
