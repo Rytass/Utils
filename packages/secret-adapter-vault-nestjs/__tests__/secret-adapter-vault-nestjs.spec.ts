@@ -1,6 +1,6 @@
 import type { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import { VaultService } from '../src';
+import { VaultModule, VaultService } from '../src';
 
 const VAULT_HOST = 'https://vault.yourserver.com';
 const VAULT_ACCOUNT = 'utils';
@@ -193,5 +193,25 @@ describe('VaultSecretNestjsModule', () => {
 
     expect(testValue).toBe('abc');
     expect(test2Value).toBe('123');
-  })
+  });
+
+  it('should vault forRoot use default value', () => {
+    const module = VaultModule.forRoot() as {
+      providers: {
+        useValue: string;
+      }[];
+    };
+
+    expect(module.providers[0].useValue).toBe('/');
+  });
+
+  it('should get path on vault forRoot method', () => {
+    const module = VaultModule.forRoot({ path: '/aaa' }) as {
+      providers: {
+        useValue: string;
+      }[];
+    };
+
+    expect(module.providers[0].useValue).toBe('/aaa');
+  });
 });
