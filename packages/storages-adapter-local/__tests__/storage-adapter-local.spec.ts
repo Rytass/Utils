@@ -73,7 +73,7 @@ describe('StorageLocalService', () => {
       const customFilename = 'aaa.png';
 
       it('should use custom filename when write buffer file', async () => {
-        const { key } = await localStorage.write(sampleFileBuffer, customFilename);
+        const { key } = await localStorage.write(sampleFileBuffer, { filename: customFilename });
 
         expect(key).toBe(customFilename);
       });
@@ -81,7 +81,7 @@ describe('StorageLocalService', () => {
       it('should use custom filename when write stream file', async () => {
         const stream = createReadStream(sampleFilePath);
 
-        const { key } = await localStorage.write(stream, customFilename);
+        const { key } = await localStorage.write(stream, { filename: customFilename });
 
         expect(key).toBe(customFilename);
       });

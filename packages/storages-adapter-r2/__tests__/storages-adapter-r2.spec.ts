@@ -13,23 +13,23 @@ const SECRET_KEY = 'bbbb';
 const ACCOUNT = 'cccc';
 const BUCKET = 'utils';
 
+const sampleFile = resolve(__dirname, '../__fixtures__/test-image.png');
+const sampleFileBuffer = readFileSync(sampleFile);
+const sampleFileSha256 = `${createHash('sha256').update(sampleFileBuffer).digest('hex')}.png`;
+const FAKE_URL = 'https://fake.rytass.com';
+const NOT_FOUND_FILE = 'NOT_EXIST';
+const GENERAL_ERROR_FILE = 'GENERAL_ERROR_FILE';
+
+const fakeStorage = new Map<string, Buffer>();
+
+fakeStorage.set('saved-file', sampleFileBuffer);
+
 describe('Cloudflare R2 storage adapter', () => {
-  const sampleFile = resolve(__dirname, '../__fixtures__/test-image.png');
-  const sampleFileBuffer = readFileSync(sampleFile);
-  const sampleFileSha256 = `${createHash('sha256').update(sampleFileBuffer).digest('hex')}.png`;
-  const FAKE_URL = 'https://fake.rytass.com';
-  const NOT_FOUND_FILE = 'NOT_EXIST';
-  const GENERAL_ERROR_FILE = 'GENERAL_ERROR_FILE';
-
-  const fakeStorage = new Map<string, Buffer>();
-
-  fakeStorage.set('saved-file', sampleFileBuffer);
-
   const uploadPromiseMocked = jest.fn(() => new Promise((pResolve) => {
     pResolve({ key: sampleFileSha256 });
   }));
 
-  const uploadMocked = jest.fn((params: S3.Types.PutObjectRequest, options?: S3.ManagedUpload.ManagedUploadOptions) => {
+  const defaultUploadMocked = jest.fn((params: S3.Types.PutObjectRequest, options?: S3.ManagedUpload.ManagedUploadOptions) => {
     if (params.Body instanceof Buffer) {
       fakeStorage.set(params.Key, params.Body);
 
@@ -54,6 +54,8 @@ describe('Cloudflare R2 storage adapter', () => {
       }),
     };
   });
+
+  let uploadMocked = defaultUploadMocked;
 
   const deleteMocked = jest.fn((params: S3.Types.DeleteObjectRequest) => {
     fakeStorage.delete(params.Key);
@@ -99,18 +101,18 @@ describe('Cloudflare R2 storage adapter', () => {
     return FAKE_URL;
   });
 
-  const mockedS3 = {
-    upload: uploadMocked,
-    getObject: getMocked,
-    copyObject: copyMocked,
-    deleteObject: deleteMocked,
-    getSignedUrlPromise: urlMocked,
-  };
-
-  jest.mock('aws-sdk', () => ({
-    S3: jest.fn(() => mockedS3),
-    Credentials,
-  }));
+  beforeAll(() => {
+    jest.mock('aws-sdk', () => ({
+      S3: jest.fn(() => ({
+        upload: (params: S3.Types.PutObjectRequest, options?: S3.ManagedUpload.ManagedUploadOptions) => uploadMocked(params, options),
+        getObject: getMocked,
+        copyObject: copyMocked,
+        deleteObject: deleteMocked,
+        getSignedUrlPromise: urlMocked,
+      })),
+      Credentials,
+    }));
+  });
 
   beforeEach(() => {
     uploadMocked.mockClear();
@@ -131,7 +133,7 @@ describe('Cloudflare R2 storage adapter', () => {
       bucket: BUCKET,
     });
 
-    const { key } = await service.write(sampleFileBuffer, customFilename);
+    const { key } = await service.write(sampleFileBuffer, { filename: customFilename });
 
     expect(key).toBe(customFilename);
 
@@ -157,7 +159,7 @@ describe('Cloudflare R2 storage adapter', () => {
 
     const stream = createReadStream(sampleFile);
 
-    const { key } = await service.write(stream, customFilename);
+    const { key } = await service.write(stream, { filename: customFilename });
 
     expect(key).toBe(customFilename);
 
@@ -353,5 +355,75 @@ describe('Cloudflare R2 storage adapter', () => {
     expect(key1).toBe(buffer1Hash);
     expect(key2).toBe(buffer2Hash);
     expect(uploadMocked).toBeCalledTimes(2);
+  });
+
+  it('should write buffer file with content type', async () => {
+    uploadMocked = jest.fn((params: S3.Types.PutObjectRequest, options?: S3.ManagedUpload.ManagedUploadOptions) => {
+      expect(params.ContentType).toBe('image/png');
+
+      fakeStorage.set(params.Key, params.Body as Buffer);
+
+      return {
+        promise: () => uploadPromiseMocked,
+      };
+    });
+
+    const { StorageR2Service } = await import('../src');
+
+    const service = new StorageR2Service({
+      accessKey: ACCESS_KEY,
+      secretKey: SECRET_KEY,
+      account: ACCOUNT,
+      bucket: BUCKET,
+    });
+
+    await service.write(sampleFileBuffer, { contentType: 'image/png' });
+
+    expect(uploadMocked).toBeCalledTimes(1);
+  });
+
+  it('should write stream file with content type', async () => {
+    uploadMocked = jest.fn((params: S3.Types.PutObjectRequest, options?: S3.ManagedUpload.ManagedUploadOptions) => {
+      expect(params.ContentType).toBe('image/png');
+
+      return {
+        promise: () => new Promise((pResolve) => {
+          let buffer = Buffer.from([]);
+
+          (params.Body as PassThrough).on('data', (chunk) => {
+            buffer = Buffer.concat([buffer, chunk]);
+          });
+
+          (params.Body as PassThrough).on('end', () => {
+            fakeStorage.set(params.Key, buffer);
+
+            pResolve(uploadPromiseMocked);
+          });
+        }),
+      };
+    });
+
+    const { StorageR2Service } = await import('../src');
+
+    const service = new StorageR2Service({
+      accessKey: ACCESS_KEY,
+      secretKey: SECRET_KEY,
+      account: ACCOUNT,
+      bucket: BUCKET,
+    });
+
+    const stream = createReadStream(sampleFile);
+
+    await service.write(stream, { contentType: 'image/png' });
+
+    const stream2 = createReadStream(sampleFile);
+
+    await service.write(stream2, { filename: 'target.png', contentType: 'image/png' });
+
+    expect(uploadMocked).toBeCalledTimes(2);
+  });
+
+  afterEach(() => {
+    uploadMocked = defaultUploadMocked;
   });
 });

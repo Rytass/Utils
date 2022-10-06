@@ -1,4 +1,4 @@
-import { StorageError, ErrorCode, Storage, ReadBufferFileOptions, ReadStreamFileOptions, InputFile, StorageFile } from '@rytass/storages';
+import { StorageError, ErrorCode, Storage, ReadBufferFileOptions, ReadStreamFileOptions, InputFile, StorageFile, WriteFileOptions } from '@rytass/storages';
 import { Credentials, S3 } from 'aws-sdk';
 import { Readable, PassThrough } from 'stream';
 import { v4 as uuid } from 'uuid';
@@ -56,12 +56,15 @@ export class StorageR2Service extends Storage<StorageR2Options> {
     }
   }
 
-  private async writeStreamFile(stream: Readable, givenFilename?: string): Promise<StorageFile> {
+  private async writeStreamFile(stream: Readable, options?: WriteFileOptions): Promise<StorageFile> {
+    const givenFilename = options?.filename;
+
     if (givenFilename) {
       const uploadPromise = await this.s3.upload({
         Bucket: this.bucket,
         Key: givenFilename,
         Body: stream,
+        ...(options?.contentType ? { ContentType: options?.contentType } : {}),
       }).promise();
 
       return { key: givenFilename };
@@ -76,6 +79,7 @@ export class StorageR2Service extends Storage<StorageR2Options> {
       Bucket: this.bucket,
       Key: tempFilename,
       Body: uploadStream,
+      ...(options?.contentType ? { ContentType: options?.contentType } : {}),
     }).promise();
 
     stream.pipe(uploadStream);
@@ -89,6 +93,7 @@ export class StorageR2Service extends Storage<StorageR2Options> {
       Bucket: this.bucket,
       CopySource: `/${this.bucket}/${tempFilename}`,
       Key: filename,
+      ...(options?.contentType ? { ContentType: options?.contentType } : {}),
     }).promise();
 
     await this.s3.deleteObject({
@@ -99,24 +104,25 @@ export class StorageR2Service extends Storage<StorageR2Options> {
     return { key: filename };
   }
 
-  async writeBufferFile(buffer: Buffer, givenFilename?: string): Promise<StorageFile> {
-    const filename = givenFilename || await this.getBufferFilename(buffer);
+  async writeBufferFile(buffer: Buffer, options?: WriteFileOptions): Promise<StorageFile> {
+    const filename = options?.filename || await this.getBufferFilename(buffer);
 
     await this.s3.upload({
       Key: filename,
       Bucket: this.bucket,
       Body: buffer,
+      ...(options?.contentType ? { ContentType: options?.contentType } : {}),
     }).promise();
 
     return { key: filename };
   }
 
-  write(file: InputFile, filename?: string): Promise<StorageFile> {
+  write(file: InputFile, options?: WriteFileOptions): Promise<StorageFile> {
     if (file instanceof Buffer) {
-      return this.writeBufferFile(file, filename);
+      return this.writeBufferFile(file, options);
     }
 
-    return this.writeStreamFile(file, filename);
+    return this.writeStreamFile(file, options);
   }
 
   batchWrite(files: InputFile[]): Promise<StorageFile[]> {

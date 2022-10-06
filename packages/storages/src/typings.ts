@@ -22,3 +22,8 @@ export type FileKey = string;
 export interface StorageFile {
   readonly key: FileKey;
 }
+
+export interface WriteFileOptions {
+  filename?: string;
+  contentType?: string;
+}

@@ -2,7 +2,7 @@ import { Readable, PassThrough } from 'stream';
 import { createHash } from 'crypto';
 import { FileTypeResult, fromBuffer, fromStream } from 'file-type';
 import { ConverterManager } from '@rytass/file-converter';
-import { FilenameHashAlgorithm, InputFile, ReadBufferFileOptions, ReadStreamFileOptions, StorageFile, StorageOptions } from './typings';
+import { FilenameHashAlgorithm, InputFile, ReadBufferFileOptions, ReadStreamFileOptions, StorageFile, StorageOptions, WriteFileOptions } from './typings';
 
 export interface StorageInterface {
   write(file: InputFile): Promise<StorageFile>;
@@ -71,11 +71,11 @@ export class Storage<O extends Record<string, any> = Record<string, any>> implem
     });
   }
 
-  write(file: InputFile, filename?: string): Promise<StorageFile> {
+  write(file: InputFile, options?: WriteFileOptions): Promise<StorageFile> {
     throw new Error('Method not implemented.');
   }
 
-  batchWrite(files: InputFile[], filenames?: string[]): Promise<StorageFile[]> {
+  batchWrite(files: InputFile[], options?: WriteFileOptions[]): Promise<StorageFile[]> {
     throw new Error('Method not implemented.');
   }
 

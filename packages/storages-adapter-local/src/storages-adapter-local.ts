@@ -6,6 +6,7 @@ import {
   StorageFile,
   ReadBufferFileOptions,
   ReadStreamFileOptions,
+  WriteFileOptions,
 } from '@rytass/storages';
 import { v4 as uuid } from 'uuid';
 import { StorageLocalOptions } from './typings';
@@ -45,22 +46,22 @@ export class LocalStorage extends Storage {
     }
   }
 
-  private async writeBuffer(buffer: Buffer, givenFilename?: string): Promise<StorageFile> {
+  private async writeBuffer(buffer: Buffer, options?: WriteFileOptions): Promise<StorageFile> {
     const convertedBuffer = await this.converterManager.convert<Buffer>(buffer);
 
-    const filename = givenFilename || await this.getBufferFilename(convertedBuffer);
+    const filename = options?.filename || await this.getBufferFilename(convertedBuffer);
 
     await writeFile(this.getFileFullPath(filename), convertedBuffer);
 
     return { key: filename };
   }
 
-  private async writeStream(stream: Readable, givenFilename?: string): Promise<StorageFile> {
+  private async writeStream(stream: Readable, options?: WriteFileOptions): Promise<StorageFile> {
     return new Promise<StorageFile>(async (promiseResolve) => {
       const convertedStream = await this.converterManager.convert<Readable>(stream);
 
-      if (givenFilename) {
-        const writeStream = createWriteStream(this.getFileFullPath(givenFilename));
+      if (options?.filename) {
+        const writeStream = createWriteStream(this.getFileFullPath(options.filename));
 
         convertedStream.pipe(writeStream);
 
@@ -68,7 +69,7 @@ export class LocalStorage extends Storage {
           stream.on('end', pResolve);
         });
 
-        promiseResolve({ key: givenFilename });
+        promiseResolve({ key: options.filename });
 
         return;
       }
@@ -113,18 +114,18 @@ export class LocalStorage extends Storage {
     return Promise.resolve(this.readFileStream(key));
   }
 
-  async write(file: InputFile, filename?: string): Promise<StorageFile> {
+  async write(file: InputFile, options?: WriteFileOptions): Promise<StorageFile> {
     const convertedFile = await this.converterManager.convert(file);
 
     if (convertedFile instanceof Buffer) {
-      return this.writeBuffer(convertedFile, filename);
+      return this.writeBuffer(convertedFile, options);
     }
 
-    return this.writeStream(convertedFile, filename);
+    return this.writeStream(convertedFile, options);
   }
 
-  batchWrite(files: InputFile[], filenames?: string[]): Promise<StorageFile[]> {
-    return Promise.all(files.map((file, index) => this.write(file, filenames?.[index])));
+  batchWrite(files: InputFile[], options?: WriteFileOptions[]): Promise<StorageFile[]> {
+    return Promise.all(files.map((file, index) => this.write(file, options?.[index])));
   }
 
   remove(key: string): Promise<void> {
