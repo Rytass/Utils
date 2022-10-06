@@ -1,4 +1,4 @@
-import { OrderItem } from '../../core';
+import { FlattenOrderItem, OrderItem } from '../../core';
 import { ObjRecord } from '../../typings';
 import { Condition } from '../typings';
 
@@ -23,9 +23,24 @@ export type OmitItemSpecifiedScope<O extends OrderItem> = Omit<
   'conditionRef' | 'unitPrice' | 'quantity'
 >;
 
-export type ItemSpecifiedInput<Item extends OrderItem> = {
-  items: string | string[];
+type ItemSpecifiedBaseInput = {
   threshold?: number;
-  scope?: ItemSpecifiedScope<OmitItemSpecifiedScope<Item>>;
   conditions?: Condition[];
 };
+
+export type ItemSpecifiedScopeInput<Item extends OrderItem> =
+  ItemSpecifiedBaseInput & {
+    items: string | string[];
+    scope?:
+      | ItemSpecifiedScope<OmitItemSpecifiedScope<Item>>
+      | ItemSpecifiedScope<OmitItemSpecifiedScope<Item>>[];
+  };
+
+export type ItemSpecifiedResolvedFnInput<Item extends OrderItem> =
+  ItemSpecifiedBaseInput & {
+    isMatchedItem: <II extends FlattenOrderItem<Item>>(item: II) => boolean;
+  };
+
+export type ItemSpecifiedInput<Item extends OrderItem> =
+  | ItemSpecifiedScopeInput<Item>
+  | ItemSpecifiedResolvedFnInput<Item>;
