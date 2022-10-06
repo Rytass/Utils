@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.17](https://github.com/Rytass/Utils/compare/@rytass/order-builder@0.0.16...@rytass/order-builder@0.0.17) (2022-10-06)
+
+
+### Features
+
+* **order-builder:** add `isMatchedItem` resolver in `ItemIncluded`, `ItemExcluded` overload ([7dcdf05](https://github.com/Rytass/Utils/commit/7dcdf05cfbf482682551ac183b16a4c5c3292f4e))
+* **order-builder:** export interface of `Order` ([f6235d8](https://github.com/Rytass/Utils/commit/f6235d823236edb2fcfbbdc0b5d3dc3ec9a2e26d))
+
+
+
+
+
 ## [0.0.16](https://github.com/Rytass/Utils/compare/@rytass/order-builder@0.0.15...@rytass/order-builder@0.0.16) (2022-10-05)
 
 **Note:** Version bump only for package @rytass/order-builder
