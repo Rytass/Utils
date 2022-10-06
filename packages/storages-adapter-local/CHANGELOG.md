@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.1.0](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-local@0.0.13...@rytass/storages-adapter-local@0.1.0) (2022-10-06)
+
+
+### Features
+
+* **storages:** add content type setter on storage api ([2561ffc](https://github.com/Rytass/Utils/commit/2561ffc5a4b66f208190ef2230c46276f9945df8))
+
+
+
+
+
 ## [0.0.13](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-local@0.0.12...@rytass/storages-adapter-local@0.0.13) (2022-08-10)
 
 **Note:** Version bump only for package @rytass/storages-adapter-local
