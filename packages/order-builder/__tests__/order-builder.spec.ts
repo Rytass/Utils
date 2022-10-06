@@ -27,8 +27,8 @@ describe('OrderBuilder', () => {
 
     expect(builder).toBeDefined();
     expect(builder).toBeInstanceOf(OrderBuilder);
-  })
-})
+  });
+});
 
 describe('OrderBuilder', () => {
   it('should create an OrderBuilder instance', () => {
@@ -83,7 +83,9 @@ describe('OrderBuilder', () => {
     expect(order1).toBeDefined();
     expect(order1).toBeInstanceOf(Order);
 
-    const discountPolicy = new ValueDiscount(10, [new PriceThreshold(500)], { id: 'TESTING' });
+    const discountPolicy = new ValueDiscount(10, [new PriceThreshold(500)], {
+      id: 'TESTING',
+    });
 
     try {
       builder.addPolicy(discountPolicy);
@@ -103,8 +105,13 @@ describe('OrderBuilder', () => {
       );
     }
 
-    const memberDiscount = new PercentageDiscount(0.8, { id: 'MEMBER_DISCOUNT' });
-    const testDiscount = new ValueDiscount(10, [new PriceThreshold(500)], { id: 'TESTING' });
+    const memberDiscount = new PercentageDiscount(0.8, {
+      id: 'MEMBER_DISCOUNT',
+    });
+
+    const testDiscount = new ValueDiscount(10, [new PriceThreshold(500)], {
+      id: 'TESTING',
+    });
 
     const builder3 = new OrderBuilder({
       policies: [
@@ -118,17 +125,20 @@ describe('OrderBuilder', () => {
     });
 
     const order3 = builder3.build({
-      items: [{
-        id: 'ItemA',
-        name: 'Hello',
-        unitPrice: 100,
-        quantity: 10,
-      }, {
-        id: 'ItemB',
-        name: 'Foo',
-        unitPrice: 70,
-        quantity: 2,
-      }],
+      items: [
+        {
+          id: 'ItemA',
+          name: 'Hello',
+          unitPrice: 100,
+          quantity: 10,
+        },
+        {
+          id: 'ItemB',
+          name: 'Foo',
+          unitPrice: 70,
+          quantity: 2,
+        },
+      ],
     });
 
     expect(order3.price).toEqual(722); // 1140 * 0.8 - 100 - 80 - 10 = 722
@@ -139,24 +149,29 @@ describe('OrderBuilder', () => {
       .removePolicy([testDiscount, memberDiscount])
       .build({ items: order3.items });
 
-    expect(JSON.stringify(order3.items)).toEqual(JSON.stringify([{
-      id: 'ItemA',
-      name: 'Hello',
-      unitPrice: 100,
-      quantity: 10,
-    }, {
-      id: 'ItemB',
-      name: 'Foo',
-      unitPrice: 70,
-      quantity: 2,
-    }]));
+    expect(JSON.stringify(order3.items)).toEqual(
+      JSON.stringify([
+        {
+          id: 'ItemA',
+          name: 'Hello',
+          unitPrice: 100,
+          quantity: 10,
+        },
+        {
+          id: 'ItemB',
+          name: 'Foo',
+          unitPrice: 70,
+          quantity: 2,
+        },
+      ])
+    );
 
     expect(JSON.stringify(order4.items)).toEqual(JSON.stringify(order4.items));
     expect(order4.price).toEqual(960); // 1140 - 100 - 80 = 960
 
     order4.removeItem('ItemB', 1);
 
-    expect(order4.price).toEqual(890) // 1070 - 100 - 80 = 890
+    expect(order4.price).toEqual(890); // 1070 - 100 - 80 = 890
 
     const builder5 = new OrderBuilder(builder4);
 
@@ -172,134 +187,162 @@ describe('OrderBuilder', () => {
           new PriceThreshold(2000),
           new ItemRequired({ id: 'ItemC', quantity: 1 }),
         ])
-      )
+      );
 
     const order5 = builder5.build({
-      items: [{
-        id: 'ItemB',
-        name: 'Foo',
-        unitPrice: 100,
-        quantity: 15,
-      }],
+      items: [
+        {
+          id: 'ItemB',
+          name: 'Foo',
+          unitPrice: 100,
+          quantity: 15,
+        },
+      ],
     });
 
     // expect(order5.price).toEqual(570); // 1500 * 0.5 - 100 - 80 = 570
   });
 
-  describe([
-    '1. [會員優惠:MEMBER_DISCOUNT]: 八折',
-    '2. [季度優惠:SEASONAL_DISCOUNT]: 滿500元折抵100元',
-    '3. (滿額 300元) 及 (購買 ItemA(*2) 和 ItemB(*1)) 可以折抵500元',
-    '4. [折價卷]: 該會員使用折價卷 50 元',
-  ].join('\n'), () => {
-    const builder = new OrderBuilder({
-      policies: [
-        new PercentageDiscount(0.8, { id: 'MEMBER_DISCOUNT' }),
-        new ValueDiscount(100, [new PriceThreshold(500)], { id: 'SEASONAL_DISCOUNT' }),
-        new ValueDiscount(500, [
-          new PriceThreshold(300),
-          new ItemRequired([{
-            id: 'ItemA',
-            quantity: 2,
-          }, 'ItemB']),
-        ]),
-      ],
-    });
+  describe(
+    [
+      '1. [會員優惠:MEMBER_DISCOUNT]: 八折',
+      '2. [季度優惠:SEASONAL_DISCOUNT]: 滿500元折抵100元',
+      '3. (滿額 300元) 及 (購買 ItemA(*2) 和 ItemB(*1)) 可以折抵500元',
+      '4. [折價卷]: 該會員使用折價卷 50 元',
+    ].join('\n'),
+    () => {
+      const builder = new OrderBuilder({
+        policies: [
+          new PercentageDiscount(0.8, { id: 'MEMBER_DISCOUNT' }),
+          new ValueDiscount(100, [new PriceThreshold(500)], {
+            id: 'SEASONAL_DISCOUNT',
+          }),
+          new ValueDiscount(500, [
+            new PriceThreshold(300),
+            new ItemRequired([
+              {
+                id: 'ItemA',
+                quantity: 2,
+              },
+              'ItemB',
+            ]),
+          ]),
+        ],
+      });
 
-    builder.addPolicy(new ValueDiscount(50, [new CouponValidator('DISCOUNT_50')]));
-
-    const order1 = builder.build({
-      items: [{
-        id: 'ItemB',
-        name: 'Hello',
-        unitPrice: 100,
-        quantity: 10,
-      }],
-    });
-
-    // throw error "Policy is immutable if builder.build was called."
-    try {
-      builder.addPolicy(new ValueDiscount(10, [new CouponValidator('DISCOUNT_10')]));
-    } catch (ex: any) {
-      expect(ex).toBeInstanceOf(Error);
-      expect(ex?.message).toEqual(
-        'Policy is immutable if builder.build was called. You should call builder.clone first.'
+      builder.addPolicy(
+        new ValueDiscount(50, [new CouponValidator('DISCOUNT_50')])
       );
+
+      const order1 = builder.build({
+        items: [
+          {
+            id: 'ItemB',
+            name: 'Hello',
+            unitPrice: 100,
+            quantity: 10,
+          },
+        ],
+      });
+
+      // throw error "Policy is immutable if builder.build was called."
+      try {
+        builder.addPolicy(
+          new ValueDiscount(10, [new CouponValidator('DISCOUNT_10')])
+        );
+      } catch (ex: any) {
+        expect(ex).toBeInstanceOf(Error);
+        expect(ex?.message).toEqual(
+          'Policy is immutable if builder.build was called. You should call builder.clone first.'
+        );
+      }
+
+      expect(order1.price).toEqual(700); // 1000 * 0.8 - 100 = 700
+
+      order1.addCoupon('DISCOUNT_50');
+
+      expect(order1.price).toEqual(650); // 1000 * 0.8 - 100 - 50 = 650
+
+      const order2 = builder.build({
+        items: [
+          {
+            id: 'ItemA',
+            name: 'Hello',
+            unitPrice: 100,
+            quantity: 10,
+          },
+          {
+            id: 'ItemB',
+            name: 'Foo',
+            unitPrice: 70,
+            quantity: 1,
+          },
+        ],
+      });
+
+      expect(order1 === order2).toEqual(false);
+      expect(order2.price).toEqual(256); // 1070 * 0.8 - 100 - 500 = 256
+      expect(order2.discountValue).toEqual(814); // 1070 * 0.2 + 100 + 500 = 814
+
+      // On Refund
+      order2.removeItem('ItemB', 1);
+      order2.removeItem('ItemB', '' as unknown as number); // test if developer given wrong input in a forced way.
+
+      expect(order2.price).toEqual(700); // 1000 * 0.8 - 100 = 700
+
+      const builder2 = new OrderBuilder(builder);
+
+      expect(builder2).toBeDefined();
+      expect(builder2).toBeInstanceOf(OrderBuilder);
+      expect(builder2 === builder).toEqual(false);
+
+      builder2.addPolicy(
+        new ValueDiscount(10, [new CouponValidator('DISCOUNT_10')])
+      );
+
+      builder2.removePolicy('MEMBER_DISCOUNT');
+
+      const order3 = builder2.build({
+        items: [
+          {
+            id: 'ItemB',
+            name: 'Hello',
+            unitPrice: 100,
+            quantity: 10,
+          },
+        ],
+        coupons: ['DISCOUNT_10'],
+      });
+
+      expect(order3.price).toEqual(890); // 1000 - 100 - 10 = 890
     }
-
-    expect(order1.price).toEqual(700); // 1000 * 0.8 - 100 = 700
-
-    order1.addCoupon('DISCOUNT_50');
-
-    expect(order1.price).toEqual(650); // 1000 * 0.8 - 100 - 50 = 650
-
-    const order2 = builder.build({
-      items: [{
-        id: 'ItemA',
-        name: 'Hello',
-        unitPrice: 100,
-        quantity: 10,
-      }, {
-        id: 'ItemB',
-        name: 'Foo',
-        unitPrice: 70,
-        quantity: 1,
-      }],
-    });
-
-    expect(order1 === order2).toEqual(false);
-    expect(order2.price).toEqual(256); // 1070 * 0.8 - 100 - 500 = 256
-    expect(order2.discountValue).toEqual(814) // 1070 * 0.2 + 100 + 500 = 814
-
-    // On Refund
-    order2.removeItem('ItemB', 1);
-    order2.removeItem('ItemB', '' as unknown as number); // test if developer given wrong input in a forced way.
-
-    expect(order2.price).toEqual(700); // 1000 * 0.8 - 100 = 700
-
-    const builder2 = new OrderBuilder(builder);
-
-    expect(builder2).toBeDefined();
-    expect(builder2).toBeInstanceOf(OrderBuilder);
-    expect(builder2 === builder).toEqual(false);
-
-    builder2.addPolicy(new ValueDiscount(10, [new CouponValidator('DISCOUNT_10')]));
-    builder2.removePolicy('MEMBER_DISCOUNT');
-
-    const order3 = builder2.build({
-      items: [{
-        id: 'ItemB',
-        name: 'Hello',
-        unitPrice: 100,
-        quantity: 10,
-      }],
-      coupons: ['DISCOUNT_10'],
-    });
-
-    expect(order3.price).toEqual(890); // 1000 - 100 - 10 = 890
-  })
+  );
 });
 
 describe('Order', () => {
   const builder = new OrderBuilder();
 
   // itemValue = 100 * 10 + 70 + 70 * 2 = 1210
-  const items = [{
-    id: 'ItemA',
-    name: 'Hello',
-    unitPrice: 100,
-    quantity: 10,
-  }, {
-    id: 'ItemB',
-    name: 'Foo',
-    unitPrice: 70,
-    quantity: 1,
-  }, {
-    id: 'ItemC',
-    name: 'Foo',
-    unitPrice: 70,
-    quantity: 2,
-  }];
+  const items = [
+    {
+      id: 'ItemA',
+      name: 'Hello',
+      unitPrice: 100,
+      quantity: 10,
+    },
+    {
+      id: 'ItemB',
+      name: 'Foo',
+      unitPrice: 70,
+      quantity: 1,
+    },
+    {
+      id: 'ItemC',
+      name: 'Foo',
+      unitPrice: 70,
+      quantity: 2,
+    },
+  ];
 
   builder
     .addPolicy(new ValueDiscount(100))
@@ -341,15 +384,17 @@ describe('Order', () => {
     unitPrice: 100,
   });
 
-  expect(JSON.stringify(order.items)).toEqual(JSON.stringify([
-    ...items,
-    {
-      id: 'ItemD',
-      name: '213',
-      quantity: 20,
-      unitPrice: 100,
-    },
-  ]));
+  expect(JSON.stringify(order.items)).toEqual(
+    JSON.stringify([
+      ...items,
+      {
+        id: 'ItemD',
+        name: '213',
+        quantity: 20,
+        unitPrice: 100,
+      },
+    ])
+  );
 
   order.addItem([
     {
@@ -366,27 +411,29 @@ describe('Order', () => {
     },
   ]);
 
-  expect(JSON.stringify(order.items)).toEqual(JSON.stringify([
-    ...items,
-    {
-      id: 'ItemD',
-      name: '213',
-      quantity: 20,
-      unitPrice: 100,
-    },
-    {
-      id: 'ItemE',
-      name: 'E',
-      quantity: 20,
-      unitPrice: 2.99,
-    },
-    {
-      id: 'ItemF',
-      name: 'F',
-      quantity: 1,
-      unitPrice: 100,
-    },
-  ]));
+  expect(JSON.stringify(order.items)).toEqual(
+    JSON.stringify([
+      ...items,
+      {
+        id: 'ItemD',
+        name: '213',
+        quantity: 20,
+        unitPrice: 100,
+      },
+      {
+        id: 'ItemE',
+        name: 'E',
+        quantity: 20,
+        unitPrice: 2.99,
+      },
+      {
+        id: 'ItemF',
+        name: 'F',
+        quantity: 1,
+        unitPrice: 100,
+      },
+    ])
+  );
 
   order
     .removeItem('ItemD', 1)
@@ -396,42 +443,49 @@ describe('Order', () => {
       { id: 'ItemF', quantity: 2 },
     ]);
 
-  expect(JSON.stringify(order.items)).toEqual(JSON.stringify([
-    {
-      id: 'ItemA',
-      name: 'Hello',
-      unitPrice: 100,
-      quantity: 5,
-    }, {
-      id: 'ItemB',
-      name: 'Foo',
-      unitPrice: 70,
-      quantity: 1,
-    }, {
-      id: 'ItemC',
-      name: 'Foo',
-      unitPrice: 70,
-      quantity: 2,
-    }, {
-      id: 'ItemD',
-      name: '213',
-      quantity: 19,
-      unitPrice: 100,
-    }, {
-      id: 'ItemE',
-      name: 'E',
-      quantity: 10,
-      unitPrice: 2.99,
-    },
-  ]));
+  expect(JSON.stringify(order.items)).toEqual(
+    JSON.stringify([
+      {
+        id: 'ItemA',
+        name: 'Hello',
+        unitPrice: 100,
+        quantity: 5,
+      },
+      {
+        id: 'ItemB',
+        name: 'Foo',
+        unitPrice: 70,
+        quantity: 1,
+      },
+      {
+        id: 'ItemC',
+        name: 'Foo',
+        unitPrice: 70,
+        quantity: 2,
+      },
+      {
+        id: 'ItemD',
+        name: '213',
+        quantity: 19,
+        unitPrice: 100,
+      },
+      {
+        id: 'ItemE',
+        name: 'E',
+        quantity: 10,
+        unitPrice: 2.99,
+      },
+    ])
+  );
 
-  const subOrder = order
-    .addCoupon(['COUPON1', 'COUPON2', 'COUPON3']).subOrder({
-      subCoupons: ['COUPON2', 'COUPON1'],
-      subItems: [],
-    });
+  const subOrder = order.addCoupon(['COUPON1', 'COUPON2', 'COUPON3']).subOrder({
+    subCoupons: ['COUPON2', 'COUPON1'],
+    subItems: [],
+  });
 
-  expect(JSON.stringify(subOrder.coupons)).toEqual(JSON.stringify(['COUPON2', 'COUPON1']))
+  expect(JSON.stringify(subOrder.coupons)).toEqual(
+    JSON.stringify(['COUPON2', 'COUPON1'])
+  );
 
   const subOrder2 = order.subOrder({});
 
@@ -439,19 +493,22 @@ describe('Order', () => {
 
   const subOrder3 = order.subOrder({ subItems: ['ItemB', 'ItemA'] });
 
-  expect(JSON.stringify(subOrder3.items)).toEqual(JSON.stringify([
-    {
-      id: 'ItemA',
-      name: 'Hello',
-      unitPrice: 100,
-      quantity: 5,
-    }, {
-      id: 'ItemB',
-      name: 'Foo',
-      unitPrice: 70,
-      quantity: 1,
-    },
-  ]))
+  expect(JSON.stringify(subOrder3.items)).toEqual(
+    JSON.stringify([
+      {
+        id: 'ItemA',
+        name: 'Hello',
+        unitPrice: 100,
+        quantity: 5,
+      },
+      {
+        id: 'ItemB',
+        name: 'Foo',
+        unitPrice: 70,
+        quantity: 1,
+      },
+    ])
+  );
 
   const matchedItems = getOnlyMatchedItems(subOrder, [new PriceThreshold(10)]);
 
@@ -459,10 +516,14 @@ describe('Order', () => {
 
   const builder2 = new OrderBuilder({
     policies: [
-      new ItemGiveawayDiscount(1, new ItemIncluded({
-        items: [],
-        conditions: [],
-      }), { onlyMatched: true }),
+      new ItemGiveawayDiscount(
+        1,
+        new ItemIncluded({
+          items: [],
+          conditions: [],
+        }),
+        { onlyMatched: true }
+      ),
     ],
   });
 
@@ -483,27 +544,32 @@ describe('Order', () => {
     ],
   });
 
-  const items2 = [{
-    id: 'ItemA',
-    name: 'Hello',
-    unitPrice: 100,
-    quantity: 10,
-  }, {
-    id: 'ItemB',
-    name: 'Foo',
-    unitPrice: 70,
-    quantity: 1,
-  }, {
-    id: 'ItemC',
-    name: 'Foo',
-    unitPrice: 70,
-    quantity: 2,
-  }, {
-    id: 'ItemD',
-    name: 'Foo',
-    unitPrice: 50,
-    quantity: 2,
-  }];
+  const items2 = [
+    {
+      id: 'ItemA',
+      name: 'Hello',
+      unitPrice: 100,
+      quantity: 10,
+    },
+    {
+      id: 'ItemB',
+      name: 'Foo',
+      unitPrice: 70,
+      quantity: 1,
+    },
+    {
+      id: 'ItemC',
+      name: 'Foo',
+      unitPrice: 70,
+      quantity: 2,
+    },
+    {
+      id: 'ItemD',
+      name: 'Foo',
+      unitPrice: 50,
+      quantity: 2,
+    },
+  ];
 
   const order3 = builder3.build({ items: items2 });
 
@@ -557,12 +623,11 @@ describe('Order', () => {
   expect(order7.price).toEqual(1170);
 
   const builder8 = new OrderBuilder({
-    policies: [new StepValueDiscount(
-      2,
-      20,
-      new QuantityThreshold(16),
-      { stepUnit: 'quantity' },
-    )],
+    policies: [
+      new StepValueDiscount(2, 20, new QuantityThreshold(16), {
+        stepUnit: 'quantity',
+      }),
+    ],
   });
 
   const order8 = builder8.build({ items: items2 });
@@ -604,10 +669,7 @@ describe('Order', () => {
     const policy3 = new ValueDiscount(20);
 
     const builder = new OrderBuilder({
-      policies: [
-        policy1,
-        [policy2, policy3],
-      ],
+      policies: [policy1, [policy2, policy3]],
     });
 
     const order = builder.build({ items: [] });
@@ -629,12 +691,14 @@ describe('Order', () => {
           name: 'Hello',
           unitPrice: 100,
           quantity: 5,
-        }, {
+        },
+        {
           id: 'ItemB',
           name: 'Foo',
           unitPrice: 70,
           quantity: 1,
-        }, {
+        },
+        {
           id: 'ItemC',
           name: 'Foo2',
           unitPrice: 10,
@@ -650,16 +714,16 @@ describe('Order', () => {
     // but 'ItemC' has only $10 to split out
     // so other items have to digest more shared-discount.
     // (75.4 - 10) / (7 - 1) === 10.9 (Items except for 'ItemC')
-    expect(order.itemRecords.every(record => (
-      record.originItem.id === 'ItemC'
-        ? record.discountValue === 10
-        : record.discountValue === 10.9
-    ))).toEqual(true);
+    expect(
+      order.itemRecords.every(record =>
+        record.originItem.id === 'ItemC'
+          ? record.discountValue === 10
+          : record.discountValue === 10.9
+      )
+    ).toEqual(true);
 
     const builder2 = new OrderBuilder({
-      policies: [
-        [new PercentageDiscount(0.85), new ValueDiscount(50)],
-      ],
+      policies: [[new PercentageDiscount(0.85), new ValueDiscount(50)]],
       discountMethod: 'quantity-weighted-average',
       roundStrategy: 'no-round',
     });
@@ -671,7 +735,8 @@ describe('Order', () => {
           name: 'Hello',
           unitPrice: 100,
           quantity: 5,
-        }, {
+        },
+        {
           id: 'ItemB',
           name: 'Foo',
           unitPrice: 70,
@@ -683,12 +748,12 @@ describe('Order', () => {
     // 570 * 0.85 = 484.5
     expect(order2.price).toEqual(484.5);
     // 85.5 / 6 = 14.25
-    expect(order2.itemRecords.every(record => record.discountValue === 14.25)).toEqual(true);
+    expect(
+      order2.itemRecords.every(record => record.discountValue === 14.25)
+    ).toEqual(true);
 
     const builder3 = new OrderBuilder({
-      policies: [
-        [],
-      ],
+      policies: [[]],
       discountMethod: 'quantity-weighted-average',
       roundStrategy: 'no-round',
     });
@@ -700,7 +765,8 @@ describe('Order', () => {
           name: 'Hello',
           unitPrice: 100,
           quantity: 5,
-        }, {
+        },
+        {
           id: 'ItemB',
           name: 'Foo',
           unitPrice: 70,
@@ -710,9 +776,12 @@ describe('Order', () => {
     });
 
     expect(order3.price).toEqual(570);
-    expect(order3.itemRecords.every(record => record.discountValue === 0)).toEqual(true);
+    expect(
+      order3.itemRecords.every(record => record.discountValue === 0)
+    ).toEqual(true);
+
     expect(order3.discounts.length).toEqual(0);
-  })
+  });
 
   it('README USAGE', () => {
     const policy1 = new ValueDiscount(100, { id: 'DISCOUNT_1' });
@@ -750,36 +819,44 @@ describe('Order', () => {
     expect(builder.getPolicy('DISCOUNT_1')).toEqual(undefined);
     expect(builder.getPolicy('DISCOUNT_2')).toEqual(policy2);
     expect(order.price).toEqual(200);
-    expect(JSON.stringify(order.itemRecords)).toEqual(JSON.stringify([
-      {
-        itemId: 'ItemA-1',
-        originItem: { id: 'ItemA', name: 'Foo', unitPrice: 100 },
-        initialValue: 100,
-        discountValue: 20,
-        finalPrice: 80,
-        discountRecords: [{ policyId: 'DISCOUNT_2', itemId: 'ItemA-1', discountValue: 20 }],
-        appliedPolicies: [policy2],
-      },
-      {
-        itemId: 'ItemA-2',
-        originItem: { id: 'ItemA', name: 'Foo', unitPrice: 100 },
-        initialValue: 100,
-        discountValue: 20,
-        finalPrice: 80,
-        discountRecords: [{ policyId: 'DISCOUNT_2', itemId: 'ItemA-2', discountValue: 20 }],
-        appliedPolicies: [policy2],
-      },
-      {
-        itemId: 'ItemB-1',
-        originItem: { id: 'ItemB', name: 'Bar', unitPrice: 50 },
-        initialValue: 50,
-        discountValue: 10,
-        finalPrice: 40,
-        discountRecords: [{ policyId: 'DISCOUNT_2', itemId: 'ItemB-1', discountValue: 10 }],
-        appliedPolicies: [policy2],
-      },
-    ]));
-  })
+    expect(JSON.stringify(order.itemRecords)).toEqual(
+      JSON.stringify([
+        {
+          itemId: 'ItemA-1',
+          originItem: { id: 'ItemA', name: 'Foo', unitPrice: 100 },
+          initialValue: 100,
+          discountValue: 20,
+          finalPrice: 80,
+          discountRecords: [
+            { policyId: 'DISCOUNT_2', itemId: 'ItemA-1', discountValue: 20 },
+          ],
+          appliedPolicies: [policy2],
+        },
+        {
+          itemId: 'ItemA-2',
+          originItem: { id: 'ItemA', name: 'Foo', unitPrice: 100 },
+          initialValue: 100,
+          discountValue: 20,
+          finalPrice: 80,
+          discountRecords: [
+            { policyId: 'DISCOUNT_2', itemId: 'ItemA-2', discountValue: 20 },
+          ],
+          appliedPolicies: [policy2],
+        },
+        {
+          itemId: 'ItemB-1',
+          originItem: { id: 'ItemB', name: 'Bar', unitPrice: 50 },
+          initialValue: 50,
+          discountValue: 10,
+          finalPrice: 40,
+          discountRecords: [
+            { policyId: 'DISCOUNT_2', itemId: 'ItemB-1', discountValue: 10 },
+          ],
+          appliedPolicies: [policy2],
+        },
+      ])
+    );
+  });
 });
 
 /** Discount */
@@ -802,7 +879,7 @@ describe('Discount', () => {
     expect(valueDiscount2).toBeDefined();
     expect(valueDiscount2).toBeInstanceOf(ValueDiscount);
     expect(valueDiscount2.discount()).toEqual(20);
-  })
+  });
 
   it('PercentageDiscount', () => {
     try {
@@ -812,7 +889,10 @@ describe('Discount', () => {
       expect(ex.message).toEqual('Invalid percentage value.');
     }
 
-    const percentageDiscount = new PercentageDiscount(0.1, { id: 'PERCENTAGE_DISCOUNT' });
+    const percentageDiscount = new PercentageDiscount(0.1, {
+      id: 'PERCENTAGE_DISCOUNT',
+    });
+
     const itemValue = 100;
 
     expect(percentageDiscount).toBeDefined();
@@ -824,7 +904,7 @@ describe('Discount', () => {
     expect(percentageDiscount2).toBeDefined();
     expect(percentageDiscount2).toBeInstanceOf(PercentageDiscount);
     expect(percentageDiscount2.discount(itemValue)).toEqual(20); // 100 * (1 - 0.8) = 20
-  })
+  });
 
   it('StepDiscount', () => {
     const discount = new StepValueDiscount(500, 50);
@@ -835,8 +915,8 @@ describe('Discount', () => {
     expect(discount.discount(1000)).toEqual(100);
     expect(discount.discount(1001)).toEqual(100);
     expect(discount.discount(999)).toEqual(50);
-  })
-})
+  });
+});
 
 describe('Condition', () => {
   const items = [
@@ -897,12 +977,7 @@ describe('Condition', () => {
   ];
 
   const builder = new OrderBuilder({
-    policies: [
-      new PercentageDiscount(
-        0.9,
-        new QuantityRequired(5),
-      ),
-    ],
+    policies: [new PercentageDiscount(0.9, new QuantityRequired(5))],
   });
 
   const order = builder.build({ items });
@@ -913,14 +988,7 @@ describe('Condition', () => {
     policies: [
       new PercentageDiscount(0.9, [
         new ItemRequired({ id: 'A', quantity: 2 }),
-        new QuantityRequired(3, [
-          'A',
-          'B',
-          'C',
-          'D',
-          'E',
-          'F',
-        ]),
+        new QuantityRequired(3, ['A', 'B', 'C', 'D', 'E', 'F']),
       ]),
     ],
   });
@@ -947,11 +1015,7 @@ describe('Condition', () => {
   expect(order3.price).toEqual(31500);
 
   const builder4 = new OrderBuilder({
-    policies: [
-      new PercentageDiscount(0.9, [
-        new QuantityRequired(11),
-      ]),
-    ],
+    policies: [new PercentageDiscount(0.9, [new QuantityRequired(11)])],
   });
 
   const order4 = builder4.build({ items });
@@ -963,13 +1027,16 @@ describe('Condition', () => {
       new ValueDiscount(100, { id: '1' }),
       new ValueDiscount(100, { id: '2' }),
       new ValueDiscount(100, { id: '3' }),
-      [new ValueDiscount(100, { id: '4' }), new ValueDiscount(100, { id: '5' })],
+      [
+        new ValueDiscount(100, { id: '4' }),
+        new ValueDiscount(100, { id: '5' }),
+      ],
       new ValueDiscount(
         10,
         new ItemIncluded({
           items: [],
           conditions: [new PriceThreshold(1000000)],
-        }),
+        })
       ),
     ],
   });
@@ -982,9 +1049,12 @@ describe('Condition', () => {
 
   const builder6 = new OrderBuilder({
     policies: [
-      new ValueDiscount(100, new ItemExcluded({
-        items: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'],
-      })),
+      new ValueDiscount(
+        100,
+        new ItemExcluded({
+          items: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'],
+        })
+      ),
     ],
   });
 
@@ -994,9 +1064,12 @@ describe('Condition', () => {
 
   const builder7 = new OrderBuilder({
     policies: [
-      new ValueDiscount(100, new ItemExcluded({
-        items: 'A',
-      })),
+      new ValueDiscount(
+        100,
+        new ItemExcluded({
+          items: 'A',
+        })
+      ),
     ],
   });
 
@@ -1006,23 +1079,32 @@ describe('Condition', () => {
 
   const builder8 = new OrderBuilder({
     policies: [
-      new ValueDiscount(100, new ItemExcluded({
-        items: 'A',
-      })),
-      new ValueDiscount(100, new ItemExcluded({
-        items: [],
-      })),
-      new ValueDiscount(100, new ItemExcluded({
-        items: 'A',
-        conditions: [new PriceThreshold(100000)],
-      })),
+      new ValueDiscount(
+        100,
+        new ItemExcluded({
+          items: 'A',
+        })
+      ),
+      new ValueDiscount(
+        100,
+        new ItemExcluded({
+          items: [],
+        })
+      ),
+      new ValueDiscount(
+        100,
+        new ItemExcluded({
+          items: 'A',
+          conditions: [new PriceThreshold(100000)],
+        })
+      ),
     ],
   });
 
   const order8 = builder8.build({ items });
 
   expect(order8.price).toEqual(31400);
-})
+});
 
 describe('Logistics', () => {
   it('logistics', () => {
@@ -1085,7 +1167,8 @@ describe('Logistics', () => {
           new PriceThreshold(2000),
           new ItemIncluded({ items: 'A' }),
         ],
-      }).build({
+      })
+      .build({
         items: [
           {
             id: 'A',
@@ -1100,16 +1183,18 @@ describe('Logistics', () => {
   });
 
   it('should return null', () => {
-    expect(new OrderBuilder().build({
-      items: [
-        {
-          id: '1',
-          name: '1',
-          quantity: 1,
-          unitPrice: 200,
-        },
-      ],
-    }).logisticsRecord).toEqual(null);
+    expect(
+      new OrderBuilder().build({
+        items: [
+          {
+            id: '1',
+            name: '1',
+            quantity: 1,
+            unitPrice: 200,
+          },
+        ],
+      }).logisticsRecord
+    ).toEqual(null);
   });
 });
 
@@ -1140,23 +1225,223 @@ describe('Clone OrderBuilder', () => {
 
     try {
       new OrderBuilder()
-      .addPolicy(new ValueDiscount(200))
-      .build({ items })
-      .builder
-      .addPolicy(new ValueDiscount(50))
+        .addPolicy(new ValueDiscount(200))
+        .build({ items })
+        .builder.addPolicy(new ValueDiscount(50));
     } catch (ex: any) {
-      expect(ex.message).toBe('Policy is immutable if builder.build was called. You should call builder.clone first.');
+      expect(ex.message).toBe(
+        'Policy is immutable if builder.build was called. You should call builder.clone first.'
+      );
     }
 
     expect(
       new OrderBuilder()
-      .addPolicy(new ValueDiscount(200))
-      .build({ items })
-      .builder
-      .clone() // !! difference
-      .addPolicy(new ValueDiscount(50))
-      .build({ items })
-      .price
+        .addPolicy(new ValueDiscount(200))
+        .build({ items })
+        .builder.clone() // !! difference
+        .addPolicy(new ValueDiscount(50))
+        .build({ items }).price
     ).toBe(1000 - 200 - 50);
   });
-})
+
+  it('ItemSpecifiedPolicy', () => {
+    const items = [
+      {
+        id: 'A',
+        name: '外套A',
+        unitPrice: 1000,
+        quantity: 1,
+        category: 'jacket',
+        brand: 'AJE',
+      },
+      {
+        id: 'B',
+        name: '外套B',
+        unitPrice: 1500,
+        quantity: 1,
+        category: 'jacket',
+        brand: 'N21',
+      },
+      {
+        id: 'C',
+        name: '鞋子C',
+        unitPrice: 2000,
+        quantity: 1,
+        category: 'shoes',
+        brand: 'N21',
+      },
+      {
+        id: 'D',
+        name: '鞋子D',
+        unitPrice: 2500,
+        quantity: 2,
+        category: 'shoes',
+        brand: 'Preen',
+      },
+      {
+        id: 'E',
+        name: '鞋子E',
+        unitPrice: 3000,
+        quantity: 1,
+        category: 'shoes',
+        brand: 'Preen',
+      },
+      {
+        id: 'F',
+        name: '飾品F',
+        unitPrice: 4000,
+        quantity: 3,
+        category: 'accessory',
+        brand: 'Swell',
+      },
+      {
+        id: 'G',
+        name: '飾品G',
+        unitPrice: 5000,
+        quantity: 1,
+        category: 'accessory',
+        brand: 'Swell',
+      },
+      {
+        id: 'H',
+        name: '飾品H',
+        unitPrice: 6000,
+        quantity: 1,
+        category: 'accessory',
+        brand: 'Swell',
+      },
+      {
+        id: 'I',
+        name: '飾品I',
+        unitPrice: 6500,
+        quantity: 2,
+        category: 'accessory',
+        brand: 'Boyy',
+      },
+    ];
+
+    const p1IdSet = new Set(['B', 'C', 'D', 'E']);
+
+    const policy1 = new ItemGiveawayDiscount(
+      1,
+      new ItemIncluded({
+        isMatchedItem: item => p1IdSet.has(item.id),
+        threshold: 2,
+      }),
+      { id: 'POLICY_1', onlyMatched: true }
+    );
+
+    const policy2 = new StepValueDiscount(
+      4000,
+      200,
+      new ItemIncluded({
+        items: ['C', 'D', 'E', 'F', 'G', 'H', 'I'],
+      }),
+      { id: 'POLICY_2', stepUnit: 'price', onlyMatched: true }
+    );
+
+    const builder = new OrderBuilder({
+      policies: [[policy1, policy2]],
+    });
+
+    let order = builder.build({ items });
+
+    expect(order.price).toEqual(44000);
+
+    const policy3 = new ValueDiscount(
+      300,
+      new ItemIncluded({
+        items: ['Boyy', '飾品H'],
+        scope: ['brand', 'name'],
+        threshold: 12501,
+      })
+    );
+
+    order = new OrderBuilder().addPolicy(policy3).build({ items });
+
+    expect(order.price).toEqual(48500);
+
+    const policy4 = new ValueDiscount(
+      300,
+      new ItemIncluded({
+        items: ['Boyy', '飾品H'],
+        scope: ['brand', 'name'],
+        conditions: [new PriceThreshold(12500)],
+      })
+    );
+
+    order = new OrderBuilder().addPolicy(policy4).build({ items });
+
+    expect(order.price).toEqual(48200);
+
+    const policy5 = new ValueDiscount(
+      500,
+      new ItemExcluded({
+        // 除了 item.name = '飾品H' 以外的項目才能生效
+        isMatchedItem: item => item.name !== '飾品H',
+        conditions: [new PriceThreshold(12500)],
+      }),
+      { onlyMatched: true }
+    );
+
+    order = new OrderBuilder().addPolicy(policy5).build({ items });
+
+    expect(order.price).toEqual(48500);
+
+    const policy6 = new ValueDiscount(
+      500,
+      new ItemExcluded({
+        // 除了 item.name = '飾品H' 以外的項目才能生效
+        items: '飾品H',
+        scope: 'category',
+        conditions: [new PriceThreshold(12500)],
+      }),
+      { onlyMatched: true }
+    );
+
+    order = new OrderBuilder().addPolicy(policy6).build({ items });
+
+    expect(order.price).toEqual(48000);
+
+    const policy7 = new ValueDiscount(
+      500,
+      new ItemIncluded({
+        items: ['Boyy', '飾品H'],
+        scope: ['name', 'category'],
+        conditions: [new PriceThreshold(12500)],
+      }),
+      { onlyMatched: true }
+    );
+
+    order = new OrderBuilder().addPolicy(policy7).build({ items });
+
+    expect(order.price).toEqual(48500);
+
+    const policy8 = new ValueDiscount(
+      500,
+      new ItemIncluded({
+        items: ['Boyy', '飾品H'],
+        scope: ['not-valid-scope'],
+        conditions: [new PriceThreshold(12500)],
+      }),
+      { onlyMatched: true }
+    );
+
+    order = new OrderBuilder().addPolicy(policy8).build({ items });
+
+    expect(order.price).toEqual(48500);
+
+    const policy9 = new ValueDiscount(
+      500,
+      new ItemExcluded({
+        items: ['Boyy', '飾品H'],
+        scope: ['not-valid-scope'],
+      }),
+      { onlyMatched: true }
+    );
+
+    order = new OrderBuilder().addPolicy(policy9).build({ items });
+
+    expect(order.price).toEqual(48500);
+  });
+});
