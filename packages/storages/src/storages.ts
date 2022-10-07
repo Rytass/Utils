@@ -67,7 +67,7 @@ export class Storage<O extends Record<string, any> = Record<string, any>> implem
         resolve(`${filename}${extension?.ext ? `.${extension.ext}` : ''}`);
       });
 
-      stream.pipe(hashStream).pipe(extensionStream);
+      stream.pipe(extensionStream).pipe(hashStream);
     });
   }
 
