@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.1](https://github.com/Rytass/Utils/compare/@rytass/storages@0.1.0...@rytass/storages@0.1.1) (2022-10-07)
+
+
+### Bug Fixes
+
+* **storages:** stream filename getter issue ([51e6e8e](https://github.com/Rytass/Utils/commit/51e6e8e006c5e81dace796f1c8cd7598a0dfc567))
+
+
+
+
+
 # [0.1.0](https://github.com/Rytass/Utils/compare/@rytass/storages@0.0.12...@rytass/storages@0.1.0) (2022-10-06)
 
 
