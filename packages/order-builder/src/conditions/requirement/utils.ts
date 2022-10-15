@@ -1,5 +1,9 @@
 import { OrderItem } from '../../core/typings';
-import { ItemSpecifiedInput, ItemSpecifiedResolvedFnInput } from './typings';
+import {
+  ItemSpecifiedInput,
+  ItemSpecifiedResolvedFnInput,
+  QuantityRequiredInput,
+} from './typings';
 
 export function isItemSpecifiedResolvedFnInput<Item extends OrderItem>(
   options: ItemSpecifiedInput<Item>
@@ -29,4 +33,13 @@ export function itemIsMatchedItemFn<Item extends OrderItem>(
   options: ItemSpecifiedInput<Item>
 ): ItemSpecifiedResolvedFnInput<Item>['isMatchedItem'] | null {
   return isItemSpecifiedResolvedFnInput(options) ? options.isMatchedItem : null;
+}
+
+export function quantityRequiredOptions<Options>(
+  arg1: (QuantityRequiredInput | string)[] | Options | undefined,
+  arg2: Options | undefined
+): Options | undefined {
+  if (Array.isArray(arg1)) return arg2;
+
+  return arg1 || arg2;
 }

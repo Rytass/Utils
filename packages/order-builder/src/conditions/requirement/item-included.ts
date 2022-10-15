@@ -14,14 +14,18 @@ import {
   itemSpecifiedItems,
   itemSpecifiedScope,
 } from './utils';
+import { ObjRecord } from '../../typings';
 
-export class ItemIncluded<Item extends OrderItem = OrderItem>
-  implements Condition<RequirementDescription>
+export class ItemIncluded<
+  Item extends OrderItem = OrderItem,
+  Options extends ObjRecord = ObjRecord>
+  implements Condition<RequirementDescription, Options>
 {
   readonly type = Requirement.INCLUDED;
   readonly items: string[];
   readonly threshold: number;
   readonly conditions: Condition[];
+  readonly options?: Options;
   private readonly scope: (keyof Item)[] | null;
   private readonly itemSet: Set<string> | null;
   private readonly isMatchedItem:
@@ -33,10 +37,11 @@ export class ItemIncluded<Item extends OrderItem = OrderItem>
    * @description Filter the items scope, and activate policy in the filtered scope.
    * @param {Object} itemIncludedInput Object
    */
-  constructor(itemIncludedInput: ItemSpecifiedInput<Item>);
-  constructor(itemIncludedInput: ItemSpecifiedResolvedFnInput<Item>);
-  constructor(itemIncludedInput: ItemSpecifiedScopeInput<Item>);
-  constructor(itemIncludedInput: ItemSpecifiedInput<Item>) {
+  constructor(itemIncludedInput: ItemSpecifiedInput<Item>, options?: Options);
+  constructor(itemIncludedInput: ItemSpecifiedResolvedFnInput<Item>, options?: Options);
+  constructor(itemIncludedInput: ItemSpecifiedScopeInput<Item>, options?: Options);
+  constructor(itemIncludedInput: ItemSpecifiedInput<Item>, options?: Options) {
+    this.options = options;
     this.threshold = itemIncludedInput.threshold || 1;
     this.conditions = itemIncludedInput.conditions || [];
     this.isMatchedItem = itemIsMatchedItemFn(itemIncludedInput);
