@@ -723,6 +723,7 @@ describe('Order', () => {
     ).toEqual(true);
 
     const builder2 = new OrderBuilder({
+      policyPickStrategy: 'order-based',
       policies: [[new PercentageDiscount(0.85), new ValueDiscount(50)]],
       discountMethod: 'quantity-weighted-average',
       roundStrategy: 'no-round',
@@ -863,7 +864,6 @@ describe('Order', () => {
 describe('Discount', () => {
   const tz = Date.now();
   const now = jest.spyOn(Date, 'now');
-  const hijackedPolicyId = `POLICY_${tz}`;
 
   now.mockImplementation(() => tz);
 

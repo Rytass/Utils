@@ -5,12 +5,13 @@ import {
   PriceThreshold,
 } from '../conditions';
 import { ItemGiveawayDiscount, Policies } from '../policies';
+import { uuid } from '../utils/uuid';
 import { OrderBuilder } from './order-builder';
 import { OrderItem, OrderLogistics } from './typings';
 
 /** ------------------- Order ------------------- */
 export function generateNewOrderId() {
-  return `ORDER_${Date.now()}`;
+  return `ORDER:${uuid()}`;
 }
 
 /** ------------------- Logistics ------------------- */
