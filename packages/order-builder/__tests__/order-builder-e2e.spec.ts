@@ -4,6 +4,7 @@ import {
   OrderBuilder,
   OrderItem,
   PercentageDiscount,
+  Policy,
   PriceThreshold,
   QuantityThreshold,
   StepPercentageDiscount,
@@ -1127,18 +1128,18 @@ describe('TAST v0.0.2', () => {
         .discounts.find(discount => discount.id === 'p2')?.matchedTimes
     ).toBe(3);
 
+    let p: Policy = new StepPercentageDiscount(1499, 0.8, {
+      id: 'p3',
+      stepUnit: 'price',
+      excludedInCalculation: true,
+    });
+
     let ob = new OrderBuilder()
-      .addPolicy(
-        new StepPercentageDiscount(1499, 0.8, {
-          id: 'p3',
-          stepUnit: 'price',
-          excludedInCalculation: true,
-        })
-      )
+      .addPolicy(p)
       .build({ items });
 
     expect(ob.price).toBe(4500);
-    expect(JSON.stringify(ob.discounts)).toBe(  JSON.stringify([
+    expect(JSON.stringify(ob.discounts)).toBe(JSON.stringify([
       {
         id: 'p3',
         step: 1499,
@@ -1176,21 +1177,22 @@ describe('TAST v0.0.2', () => {
           },
         ],
         matchedTimes: 3,
+        policy: p,
       },
     ]));
 
+    p = new StepValueDiscount(1499, 200, {
+      id: 'p4',
+      stepUnit: 'price',
+      excludedInCalculation: true,
+    });
+
     ob = new OrderBuilder()
-      .addPolicy(
-        new StepValueDiscount(1499, 200, {
-          id: 'p4',
-          stepUnit: 'price',
-          excludedInCalculation: true,
-        })
-      )
+      .addPolicy(p)
       .build({ items });
 
     expect(ob.price).toBe(4500);
-    expect(JSON.stringify(ob.discounts)).toBe(  JSON.stringify([
+    expect(JSON.stringify(ob.discounts)).toBe(JSON.stringify([
       {
         id: 'p4',
         step: 1499,
@@ -1228,16 +1230,17 @@ describe('TAST v0.0.2', () => {
           },
         ],
         matchedTimes: 3,
+        policy: p,
       },
     ]));
 
+    p = new ValueDiscount(1499, {
+      id: 'p5',
+      excludedInCalculation: true,
+    });
+
     ob = new OrderBuilder()
-      .addPolicy(
-        new ValueDiscount(1499, {
-          id: 'p5',
-          excludedInCalculation: true,
-        })
-      )
+      .addPolicy(p)
       .build({ items });
 
     expect(ob.price).toBe(4500);
@@ -1278,16 +1281,17 @@ describe('TAST v0.0.2', () => {
           },
         ],
         matchedTimes: 1,
+        policy: p,
       },
     ]));
 
+    p = new ItemGiveawayDiscount(1, {
+      id: 'p6',
+      excludedInCalculation: true,
+    });
+
     ob = new OrderBuilder()
-      .addPolicy(
-        new ItemGiveawayDiscount(1, {
-          id: 'p6',
-          excludedInCalculation: true,
-        })
-      )
+      .addPolicy(p)
       .build({ items });
 
     expect(ob.price).toBe(4500);
@@ -1311,16 +1315,17 @@ describe('TAST v0.0.2', () => {
           },
         ],
         matchedTimes: 1,
+        policy: p,
       },
     ]));
 
+    p = new PercentageDiscount(0.8, {
+      id: 'p7',
+      excludedInCalculation: true,
+    });
+
     ob = new OrderBuilder()
-      .addPolicy(
-        new PercentageDiscount(0.8, {
-          id: 'p7',
-          excludedInCalculation: true,
-        })
-      )
+      .addPolicy(p)
       .build({ items });
 
     expect(ob.price).toBe(4500);
@@ -1361,6 +1366,7 @@ describe('TAST v0.0.2', () => {
           },
         ],
         matchedTimes: 1,
+        policy: p,
       },
     ]));
   })

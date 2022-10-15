@@ -115,6 +115,7 @@ export class ItemGiveawayDiscount implements BaseDiscount {
       conditions: this.conditions,
       appliedItems,
       matchedTimes: appliedItems.length,
+      policy: this,
     };
   }
 
