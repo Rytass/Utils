@@ -14,7 +14,7 @@ export type PolicyResult<T extends ObjRecord> = {
 export interface Policy<T extends ObjRecord = ObjRecord> {
   id: string;
   prefix: PolicyPrefix;
-  condition?: Condition[];
+  conditions?: Condition[];
   matchedItems(order: Order): FlattenOrderItem[];
   valid(order: Order): boolean;
   resolve<TT extends T>(order: Order, ..._: any[]): TT[];

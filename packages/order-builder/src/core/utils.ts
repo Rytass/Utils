@@ -19,19 +19,6 @@ export function generateNewOrderId() {
 export const ORDER_LOGISTICS_ID = '__LOGISTICS__';
 export const ORDER_LOGISTICS_NAME = 'logistics';
 
-function excludeGlobalEffectOnLogistics(policy: Policies | Policies[]): void {
-  if (Array.isArray(policy)) {
-    policy.forEach(p => excludeGlobalEffectOnLogistics(p));
-  } else {
-    policy.condition?.push(
-      new ItemExcluded({
-        items: ORDER_LOGISTICS_ID,
-        scope: 'id',
-      })
-    );
-  }
-}
-
 function getConditions(
   target: Condition | Condition[] | undefined
 ): Condition[] {
@@ -73,8 +60,6 @@ export function applyOrderLogisticAndReturnLogisticsItem<
       )
     );
   }
-
-  excludeGlobalEffectOnLogistics(orderBuilder.policies);
 
   return logisticsItem;
 }

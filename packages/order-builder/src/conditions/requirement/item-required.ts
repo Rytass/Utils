@@ -1,29 +1,37 @@
 import { Order } from '../../core/order';
 import { Condition } from '../typings';
 import { Requirement, RequirementDescription } from './typings';
+import { ObjRecord } from '../../typings';
 
 type ItemRequiredInput = {
   id: string;
   quantity: number;
 };
 
-export class ItemRequired implements Condition<RequirementDescription<ItemRequiredInput>> {
+export class ItemRequired<Options extends ObjRecord = ObjRecord>
+  implements Condition<RequirementDescription<ItemRequiredInput>, Options>
+{
   readonly type = Requirement.ITEM;
   readonly items: ItemRequiredInput[];
+  readonly options?: Options;
 
   /**
    * Item requirement condition
    * @description To check whether an order has all given items.
    * @param {ItemRequiredInput|String} item ItemRequiredInput | String
    */
-  constructor(item: ItemRequiredInput | string);
+  constructor(item: ItemRequiredInput | string, options?: Options);
   /**
    * Item requirement condition
    * @description To check whether an order has all given items.
    * @param {Array} items (ItemRequiredInput | String)[]
    */
-  constructor(items: (ItemRequiredInput | string)[]);
-  constructor(arg0: (ItemRequiredInput | string) | (ItemRequiredInput | string)[]) {
+  constructor(items: (ItemRequiredInput | string)[], options?: Options);
+  constructor(
+    arg0: (ItemRequiredInput | string) | (ItemRequiredInput | string)[],
+    options?: Options
+  ) {
+    this.options = options;
     const items = Array.isArray(arg0) ? arg0 : [arg0];
 
     this.items = items.map(item =>
