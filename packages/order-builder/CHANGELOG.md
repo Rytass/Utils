@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.18](https://github.com/Rytass/Utils/compare/@rytass/order-builder@0.0.17...@rytass/order-builder@0.0.18) (2022-10-17)
+
+
+### Bug Fixes
+
+* **order-builder:** resolved [#25](https://github.com/Rytass/Utils/issues/25) ([69ea30c](https://github.com/Rytass/Utils/commit/69ea30c50d55b556d74372f27915aaf9c2764b97))
+* **order-builder:** resolved [#26](https://github.com/Rytass/Utils/issues/26) ([c859731](https://github.com/Rytass/Utils/commit/c859731b171f89b4d90d1fd88ef31e3befb7675a))
+
+
+### Features
+
+* **order-builder:** resolved [#27](https://github.com/Rytass/Utils/issues/27) ([dae89bb](https://github.com/Rytass/Utils/commit/dae89bbaf9f1adfffce445c4e19f23b0ef975538))
+
+
+
+
+
 ## [0.0.17](https://github.com/Rytass/Utils/compare/@rytass/order-builder@0.0.16...@rytass/order-builder@0.0.17) (2022-10-06)
 
 

@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.2](https://github.com/Rytass/Utils/compare/@rytass/storages@0.1.1...@rytass/storages@0.1.2) (2022-10-17)
+
+
+### Bug Fixes
+
+* **storages:** add promise reject tracing code ([0b81415](https://github.com/Rytass/Utils/commit/0b81415a4828819e66877f6e7a36c327aabb45d4))
+
+
+
+
+
 ## [0.1.1](https://github.com/Rytass/Utils/compare/@rytass/storages@0.1.0...@rytass/storages@0.1.1) (2022-10-07)
 
 

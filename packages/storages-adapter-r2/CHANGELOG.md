@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.2](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-r2@0.2.1...@rytass/storages-adapter-r2@0.2.2) (2022-10-17)
+
+**Note:** Version bump only for package @rytass/storages-adapter-r2
+
+
+
+
+
 ## [0.2.1](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-r2@0.2.0...@rytass/storages-adapter-r2@0.2.1) (2022-10-07)
 
 **Note:** Version bump only for package @rytass/storages-adapter-r2
