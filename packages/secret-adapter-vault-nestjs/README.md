@@ -23,7 +23,7 @@ class TestService {
 }
 
 @Module({
-  imports: [VaultModule],
+  imports: [VaultModule.forRoot({ path: '/', isGlobal: true })],
   providers: [TestService],
 })
 class TestModule {};
