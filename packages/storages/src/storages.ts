@@ -44,7 +44,7 @@ export class Storage<O extends Record<string, any> = Record<string, any>> implem
   }
 
   getStreamFilename(stream: Readable): Promise<string> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const hashStream = new PassThrough();
       const extensionStream = new PassThrough();
 
@@ -65,9 +65,9 @@ export class Storage<O extends Record<string, any> = Record<string, any>> implem
         fromStream(extensionStream),
       ]).then(([filename, extension]) => {
         resolve(`${filename}${extension?.ext ? `.${extension.ext}` : ''}`);
-      });
+      }).catch(reject);
 
-      stream.pipe(extensionStream).pipe(hashStream);
+      stream.pipe(hashStream).pipe(extensionStream);
     });
   }
 
