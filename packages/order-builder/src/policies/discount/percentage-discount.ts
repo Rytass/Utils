@@ -119,6 +119,7 @@ export class PercentageDiscount implements BaseDiscount {
       conditions: this.conditions,
       appliedItems,
       matchedTimes: 1,
+      policy: this,
     };
   }
 

@@ -2,6 +2,7 @@ import { ObjRecord } from '../../typings';
 import { Condition } from '../../conditions';
 import { PolicyResult } from '../typings';
 import { FlattenOrderItem, OrderItem } from '../../core';
+import { BaseDiscount } from './base-discount';
 
 export enum Discount {
   PERCENTAGE = 'PERCENTAGE',
@@ -19,6 +20,7 @@ T extends ObjRecord = ObjRecord> = PolicyResult<{
   conditions: Condition[];
   appliedItems: FlattenOrderItem<OrderItem>[];
   matchedTimes: number;
+  policy: BaseDiscount,
 }> & T;
 
 export type DiscountOptions<T extends ObjRecord = ObjRecord> = {

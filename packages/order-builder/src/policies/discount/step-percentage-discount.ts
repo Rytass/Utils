@@ -139,6 +139,7 @@ export class StepPercentageDiscount implements BaseDiscount {
       conditions: this.conditions,
       appliedItems,
       matchedTimes,
+      policy: this,
     };
   }
 

@@ -5,31 +5,19 @@ import {
   PriceThreshold,
 } from '../conditions';
 import { ItemGiveawayDiscount, Policies } from '../policies';
+import { uuid } from '../utils/uuid';
 import { OrderBuilder } from './order-builder';
 import { OrderItem, OrderLogistics } from './typings';
 
 /** ------------------- Order ------------------- */
 export function generateNewOrderId() {
-  return `ORDER_${Date.now()}`;
+  return `ORDER:${uuid()}`;
 }
 
 /** ------------------- Logistics ------------------- */
 
 export const ORDER_LOGISTICS_ID = '__LOGISTICS__';
 export const ORDER_LOGISTICS_NAME = 'logistics';
-
-function excludeGlobalEffectOnLogistics(policy: Policies | Policies[]): void {
-  if (Array.isArray(policy)) {
-    policy.forEach(p => excludeGlobalEffectOnLogistics(p));
-  } else {
-    policy.condition?.push(
-      new ItemExcluded({
-        items: ORDER_LOGISTICS_ID,
-        scope: 'id',
-      })
-    );
-  }
-}
 
 function getConditions(
   target: Condition | Condition[] | undefined
@@ -72,8 +60,6 @@ export function applyOrderLogisticAndReturnLogisticsItem<
       )
     );
   }
-
-  excludeGlobalEffectOnLogistics(orderBuilder.policies);
 
   return logisticsItem;
 }

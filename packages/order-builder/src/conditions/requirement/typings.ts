@@ -44,3 +44,8 @@ export type ItemSpecifiedResolvedFnInput<Item extends OrderItem> =
 export type ItemSpecifiedInput<Item extends OrderItem> =
   | ItemSpecifiedScopeInput<Item>
   | ItemSpecifiedResolvedFnInput<Item>;
+
+export type QuantityRequiredInput = {
+  id: string;
+  leastQuantity?: number; // if quantity not given, default will fallback to 0;
+};

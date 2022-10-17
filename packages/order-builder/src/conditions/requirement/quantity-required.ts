@@ -1,18 +1,16 @@
 import { Order } from '../../core/order';
 import { Condition } from '../typings';
-import { Requirement, RequirementDescription } from './typings';
+import { QuantityRequiredInput, Requirement, RequirementDescription } from './typings';
+import { ObjRecord } from '../../typings';
+import { quantityRequiredOptions } from './utils';
 
-type QuantityRequiredInput = {
-  id: string;
-  leastQuantity?: number; // if quantity not given, default will fallback to 0;
-};
-
-export class QuantityRequired
-  implements Condition<RequirementDescription<QuantityRequiredInput>>
+export class QuantityRequired<Options extends ObjRecord = ObjRecord>
+  implements Condition<RequirementDescription<QuantityRequiredInput>, Options>
 {
   readonly type = Requirement.QUANTITY;
   readonly items: QuantityRequiredInput[];
   readonly leastQuantity: number;
+  readonly options?: Options;
 
   /**
    * Quantity requirement condition
@@ -23,19 +21,22 @@ export class QuantityRequired
   constructor(
     leastQuantity: number,
     specifiedItems: (QuantityRequiredInput | string)[],
+    options?: Options
   );
   /**
    * Quantity requirement condition
    * @description To check whether an order has reached given quantity items.
    * @param {Number} leastQuantity Number - A least quantity of items to satisfy condition.
    */
-  constructor(leastQuantity: number);
+  constructor(leastQuantity: number, options?: Options);
   constructor(
     leastQuantity: number,
-    specifiedItems?: (QuantityRequiredInput | string)[],
+    arg1?: (QuantityRequiredInput | string)[] | Options,
+    arg2?: Options,
   ) {
+    this.options = quantityRequiredOptions<Options>(arg1, arg2);
     this.leastQuantity = leastQuantity;
-    const items = Array.isArray(specifiedItems) ? specifiedItems : [];
+    const items = Array.isArray(arg1) ? arg1 : [];
 
     this.items = items.map(item => ({
       id: typeof item === 'string' ? item : item.id,
