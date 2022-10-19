@@ -59,6 +59,7 @@ describe('Storage', () => {
     it('should subclass method not be implemented', () => {
       expect(() => storage.read('file')).toThrow();
       expect(() => storage.remove('file')).toThrow();
+      expect(() => storage.isExists('file')).toThrow();
       expect(() => storage.write(Buffer.from([]))).toThrow();
       expect(() => storage.batchWrite([Buffer.from([])])).toThrow();
     });

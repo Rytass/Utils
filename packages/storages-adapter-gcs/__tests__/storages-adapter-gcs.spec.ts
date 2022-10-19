@@ -75,6 +75,10 @@ const deleteMock = jest.fn((filename: string) => () => {
   fakeStorage.delete(filename);
 });
 
+const existsMock = jest.fn((filename: string) => () => {
+  return [fakeStorage.has(filename)];
+});
+
 const moveMock = jest.fn((filename: string) => (newFilename: string) => {
   const buffer = fakeStorage.get(filename);
 
@@ -93,6 +97,7 @@ const fileMock = jest.fn(filename => ({
   createReadStream: () => readStreamMock(filename)(),
   createWriteStream: (options: Record<string, string>) => writeStreamMock(filename)(options),
   getSignedUrl: (options: Record<string, string>) => getSignedUrlMock(filename)(options),
+  exists: () => existsMock(filename)(),
 }));
 
 describe('GCS adapter', () => {
@@ -455,5 +460,24 @@ describe('GCS adapter', () => {
     expect(writeStreamMock).toBeCalledTimes(2);
 
     writeStreamMock = originWriteStreamMock;
+  });
+
+  it('should check file exists', async () => {
+    const { StorageGCSService } = await import('../src');
+
+    const storage = new StorageGCSService({
+      projectId: PROJECT_ID,
+      credentials: {
+        client_email: CLIENT_EMAIL,
+        private_key: CLIENT_SECRET,
+      },
+      bucket: BUCKET,
+    });
+
+    const notFound = await storage.isExists(NOT_FOUND_FILE);
+    const exists = await storage.isExists('saved-file');
+
+    expect(notFound).toBeFalsy();
+    expect(exists).toBeTruthy();
   });
 });

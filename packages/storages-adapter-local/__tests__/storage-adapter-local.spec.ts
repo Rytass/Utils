@@ -139,6 +139,23 @@ describe('StorageLocalService', () => {
       });
     });
 
+    describe('File exists', () => {
+      it('should check file exists', async () => {
+        const localStorage = new LocalStorage({
+          directory: workingDirectory,
+          autoMkdir: true,
+        });
+
+        await localStorage.write(sampleFileBuffer);
+
+        const notFound = await localStorage.isExists('not-found');
+        const exists = await localStorage.isExists(filename);
+
+        expect(notFound).toBeFalsy();
+        expect(exists).toBeTruthy();
+      });
+    });
+
     afterAll(() => {
       rmSync(workingDirectory, { recursive: true, force: true });
     });

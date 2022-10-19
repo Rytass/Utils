@@ -135,4 +135,16 @@ export class LocalStorage extends Storage {
 
     return unlink(path);
   }
+
+  async isExists(key: string): Promise<boolean> {
+    const path = this.getFileFullPath(key);
+
+    try {
+      await this.checkFileExists(path);
+
+      return true;
+    } catch (ex: any) {
+      return false;
+    }
+  }
 }

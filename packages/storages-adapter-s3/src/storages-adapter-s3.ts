@@ -133,4 +133,19 @@ export class StorageS3Service extends Storage<StorageS3Options> {
       Key: key,
     }).promise();
   }
+
+  async isExists(key: string): Promise<boolean> {
+    try {
+      await this.s3.headObject({
+        Bucket: this.bucket,
+        Key: key,
+      }).promise();
+
+      return true;
+    } catch (ex: any) {
+      if (ex.name === 'NotFound') return false;
+
+      throw ex;
+    }
+  }
 }

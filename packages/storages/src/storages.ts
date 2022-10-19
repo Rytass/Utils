@@ -89,4 +89,8 @@ export class Storage<O extends Record<string, any> = Record<string, any>> implem
   remove(key: string): Promise<void> {
     throw new Error('Method not implemented.');
   }
+
+  isExists(key: string): Promise<boolean> {
+    throw new Error('Method not implemented.');
+  }
 }

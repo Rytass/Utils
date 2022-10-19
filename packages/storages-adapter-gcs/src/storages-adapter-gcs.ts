@@ -127,4 +127,12 @@ export class StorageGCSService extends Storage<GCSOptions> {
   async remove(key: string): Promise<void> {
     await this.bucket.file(key).delete();
   }
+
+  async isExists(filename: string): Promise<boolean> {
+    const file = this.bucket.file(filename);
+
+    const [exists] = await file.exists();
+
+    return exists;
+  }
 }

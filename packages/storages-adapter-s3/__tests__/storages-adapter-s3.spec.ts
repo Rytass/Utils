@@ -65,6 +65,28 @@ describe('AWS S3 storage adapter', () => {
     };
   });
 
+  const headMocked = jest.fn((params: S3.Types.HeadObjectRequest) => {
+    if (!fakeStorage.has(params.Key)) {
+      if (params.Key === GENERAL_ERROR_FILE) {
+        return {
+          promise: () => Promise.reject(new Error('Unknown Error')),
+        };
+      }
+
+      const notExistsError = new Error();
+
+      notExistsError.name = 'NotFound';
+
+      return {
+        promise: () => Promise.reject(notExistsError),
+      };
+    }
+
+    return {
+      promise: () => Promise.resolve(),
+    };
+  });
+
   const getMocked = jest.fn((params: S3.Types.GetObjectRequest) => {
     if (params.Key === GENERAL_ERROR_FILE) {
       throw new Error('Unknown Error');
@@ -106,6 +128,7 @@ describe('AWS S3 storage adapter', () => {
       S3: jest.fn(() => ({
         upload: (params: S3.Types.PutObjectRequest, options?: S3.ManagedUpload.ManagedUploadOptions) => uploadMocked(params, options),
         getObject: getMocked,
+        headObject: headMocked,
         copyObject: copyMocked,
         deleteObject: deleteMocked,
         getSignedUrlPromise: urlMocked,
@@ -421,6 +444,27 @@ describe('AWS S3 storage adapter', () => {
     await service.write(stream2, { filename: 'target.png', contentType: 'image/png' });
 
     expect(uploadMocked).toBeCalledTimes(2);
+  });
+
+  it('should check file exists', async () => {
+    const { StorageS3Service } = await import('../src');
+
+    const service = new StorageS3Service({
+      accessKey: ACCESS_KEY,
+      secretKey: SECRET_KEY,
+      region: REGION,
+      bucket: BUCKET,
+    });
+
+    const notFound = await service.isExists(NOT_FOUND_FILE);
+    const exists = await service.isExists('saved-file');
+
+    expect(notFound).toBeFalsy();
+    expect(exists).toBeTruthy();
+
+    expect(headMocked).toBeCalledTimes(2);
+
+    expect(() => service.isExists(GENERAL_ERROR_FILE)).rejects.toThrow();
   });
 
   afterEach(() => {
