@@ -1,14 +1,12 @@
 {
-  "name": "@rytass/storages-adapter-gcs",
+  "name": "@rytass/storages-adapter-s3",
   "version": "0.1.0",
-  "description": "Google Cloud Storage Adapter for @rytass/storages",
+  "description": "AWS S3 storage adapter",
   "keywords": [
-    "gcp",
-    "cloud",
-    "storage",
     "rytass",
-    "storage",
-    "gcs"
+    "s3",
+    "aws",
+    "storage"
   ],
   "author": "Chia Yu Pai <fantasyatelier@gmail.com>",
   "homepage": "https://github.com/Rytass/Utils#readme",
@@ -26,11 +24,14 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@google-cloud/storage": "^6.5.3",
     "@rytass/storages": "^0.1.2",
+    "aws-sdk": "^2.1185.0",
+    "axios": "^0.27.2",
+    "luxon": "^3.0.1",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
+    "@types/luxon": "^3.0.0",
     "@types/uuid": "^8.3.4"
   }
 }
