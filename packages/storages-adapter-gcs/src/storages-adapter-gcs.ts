@@ -20,7 +20,7 @@ export class StorageGCSService extends Storage<GCSOptions> {
     this.bucket = this.storage.bucket(options.bucket);
   }
 
-  async url(key: string, expires = 1000 * 60 * 60 * 24): Promise<string> {
+  async url(key: string, expires = Date.now() + 1000 * 60 * 60 * 24): Promise<string> {
     const file = this.bucket.file(key);
     const [url] = await file.getSignedUrl({
       action: 'read',
