@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.3](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-gcs@0.1.2...@rytass/storages-adapter-gcs@0.1.3) (2022-11-15)
+
+
+### Bug Fixes
+
+* **storages-adapter-gcs:** default signed url expires ([9e97296](https://github.com/Rytass/Utils/commit/9e97296397d0fb1ccbdfd78740364c4dc78a06b9))
+
+
+
+
+
 ## [0.1.2](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-gcs@0.1.1...@rytass/storages-adapter-gcs@0.1.2) (2022-10-19)
 
 
