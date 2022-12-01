@@ -1,9 +1,6 @@
-import cheerio from 'cheerio'
+import cheerio from 'cheerio';
 
-import {
-  LogisticsInterface,
-  LogisticsStatusHistory,
-} from '@rytass/logistics';
+import { LogisticsInterface, LogisticsStatusHistory } from '@rytass/logistics';
 
 export type TCatLogisticsStatus =
   | 'DELIVERED'
@@ -18,30 +15,30 @@ export type TCatLogisticsStatus =
   | 'FAIL_PICKUP'
   | 'AWAY_HOME';
 
-  /**
-   * Create customized logistics interface for TCAT
-   *
-   * The type parameter need to satisfy at least `DELIVEERED` | `DELIVERING` | `SHELVED`,
-   * and provide a statusMap function to generate array of *LogisticsStatusHistory* with corresponding status.
-   *
-   * ```
-   * import { TCatLogisticsService, TCatLogisticsInterface } from '@rytass/logistics-adapter-tcat'
-   *
-   * type customStatus = 'DELIVERED' | 'DELIVERING' | 'SHELVED' | 'TEST'
-   *
-   * const customLogistics: TCatLogisticsInterface<customStatus> = {
-   *     ignoreNotFound: false,
-   *     url: 'https://www.t-cat.com.tw/Inquire/TraceDetail.aspx',
-   *     statusMap(reference: string, id: string) => {
-   *     ...
-   *   }
-   * }
-   *
-   * const logistics = new TCatLogisticsService(customLogistics)
-   * ```
-   */
+/**
+ * Create customized logistics interface for TCAT
+ *
+ * The type parameter need to satisfy at least `DELIVEERED` | `DELIVERING` | `SHELVED`,
+ * and provide a statusMap function to generate array of *LogisticsStatusHistory* with corresponding status.
+ *
+ * ```
+ * import { TCatLogisticsService, TCatLogisticsInterface } from '@rytass/logistics-adapter-tcat'
+ *
+ * type customStatus = 'DELIVERED' | 'DELIVERING' | 'SHELVED' | 'TEST'
+ *
+ * const customLogistics: TCatLogisticsInterface<customStatus> = {
+ *     ignoreNotFound: false,
+ *     url: 'https://www.t-cat.com.tw/Inquire/TraceDetail.aspx',
+ *     statusMap(reference: string, id: string) => {
+ *     ...
+ *   }
+ * }
+ *
+ * const logistics = new TCatLogisticsService(customLogistics)
+ * ```
+ */
 export interface TCatLogisticsInterface<T> extends LogisticsInterface<T> {
-  ignoreNotFound: boolean
+  ignoreNotFound: boolean;
   /**
    * A logistic result html and its id will be passed into statusMap
    */
@@ -71,14 +68,13 @@ export const TCatLogistics: TCatLogisticsInterface<TCatLogisticsStatus> = {
   ): LogisticsStatusHistory<TCatLogisticsStatus>[] => {
     const statusHistory: LogisticsStatusHistory<TCatLogisticsStatus>[] = [];
     const $ = cheerio.load(reference);
-    const traceDOM = $(
-      '#main > div.contentsArea > div > div > div > div > table > tbody > tr'
-    );
+    const traceDOM = $('#resultTable tr');
 
     let isMatch: boolean = false;
 
     traceDOM.map((_index, dom) => {
       const innerText: string = $(dom).text();
+
       const statusArray: string[] = innerText.split(' ').filter(e => e != '');
 
       const status: TCatLogisticsStatus =
