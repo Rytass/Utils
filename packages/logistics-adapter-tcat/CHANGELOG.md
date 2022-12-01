@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.10](https://github.com/Rytass/Utils/compare/@rytass/logistics-adapter-tcat@0.0.9...@rytass/logistics-adapter-tcat@0.0.10) (2022-12-01)
+
+
+### Features
+
+* **logistics:** update unit test config ([f3e2317](https://github.com/Rytass/Utils/commit/f3e23175c95a45ace1315e9918170c5674d12417))
+
+
+
+
+
 ## 0.0.9 (2022-08-01)
 
 
