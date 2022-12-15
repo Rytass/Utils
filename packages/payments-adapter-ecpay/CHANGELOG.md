@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.16](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.0.15...@rytass/payments-adapter-ecpay@0.0.16) (2022-12-15)
+
+
+### Features
+
+* **payments-adapter-ecpay:** public default server handler ([5eb9faf](https://github.com/Rytass/Utils/commit/5eb9faf8e240b873add052ae9c9197e06f9312fa))
+
+
+
+
+
 ## [0.0.15](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.0.14...@rytass/payments-adapter-ecpay@0.0.15) (2022-08-01)
 
 
