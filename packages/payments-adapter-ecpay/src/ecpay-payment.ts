@@ -127,7 +127,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
     });
   }
 
-  private defaultServerListener(req: IncomingMessage, res: ServerResponse) {
+  public defaultServerListener(req: IncomingMessage, res: ServerResponse) {
     const checkoutRe = new RegExp(`^${this.checkoutPath}/([^/]+)$`);
 
     if (req.method === 'GET' && req.url && checkoutRe.test(req.url)) {
