@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.3](https://github.com/Rytass/Utils/compare/@rytass/file-converter-adapter-image-transcoder@0.1.1...@rytass/file-converter-adapter-image-transcoder@0.1.3) (2022-12-21)
+
+
+### Features
+
+* **deps:** upgrade sharp version ([98f7028](https://github.com/Rytass/Utils/commit/98f7028cc8783683a435118e1e7312b407cdc191))
+
+
+
+
+
 ## [0.1.2](https://github.com/Rytass/Utils/compare/@rytass/file-converter-adapter-image-transcoder@0.1.1...@rytass/file-converter-adapter-image-transcoder@0.1.2) (2022-12-21)
 
 
