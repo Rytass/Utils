@@ -225,7 +225,7 @@ export class EZPayInvoiceGateway implements InvoiceGateway<EZPayInvoice> {
 
         const itemTaxRate = this.getItemTaxRate(item, taxType, options.specialTaxPercentage);
 
-        return (item.quantity * item.unitPrice) / itemTaxRate;
+        return Math.round((item.quantity * item.unitPrice) / itemTaxRate);
       }).join('|'),
       ItemTaxType: taxType === TaxType.MIXED ? options.items.map((item) => {
         switch (item.taxType) {
