@@ -17,7 +17,7 @@
         "*.spec.*",
         "**/*.md"
       ],
-      "message": "chore(release): %s",
+      "message": "chore: %s",
       "conventionalCommits": true,
       "yes": true
     },
