@@ -1,4 +1,4 @@
-import { CustomsMark, getTaxTypeFromItems, InvoiceCarrierType, InvoiceGateway, InvoiceMobileCarrier, InvoiceMoicaCarrier, InvoiceVoidOptions, TaxType } from '@rytass/invoice';
+import { CustomsMark, getTaxTypeFromItems, Invoice, InvoiceAllowance, InvoiceAllowanceOptions, InvoiceCarrierType, InvoiceGateway, InvoiceMobileCarrier, InvoiceMoicaCarrier, InvoicePaymentItem, InvoiceVoidOptions, PaymentItem, TaxType } from '@rytass/invoice';
 import axios from 'axios';
 import isEmail from 'validator/lib/isEmail';
 import { DateTime } from 'luxon';
@@ -27,6 +27,7 @@ import {
 import {
   ECPayInvoice,
 } from './ecpay-invoice';
+import { ECPayInvoiceAllowance } from './ecpay-allowance';
 
 export class ECPayInvoiceGateway implements InvoiceGateway<ECPayInvoice> {
   private readonly revision = '3.0.0';
@@ -286,5 +287,13 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayInvoice> {
     }
 
     throw new Error('ECPay gateway error');
+  }
+
+  async allowance(invoice: ECPayInvoice, allowanceItems: InvoicePaymentItem[], options?: InvoiceAllowanceOptions | undefined): Promise<ECPayInvoice> {
+    return invoice;
+  }
+
+  async invalidAllowance(allowance: ECPayInvoiceAllowance): Promise<ECPayInvoice> {
+    return allowance.parentInvoice;
   }
 }

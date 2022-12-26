@@ -1,12 +1,13 @@
 /* eslint-disable no-control-regex */
-import { CustomsMark, getTaxTypeFromItems, InvoiceCarrierType, InvoiceGateway, InvoiceVoidOptions, TaxType } from '@rytass/invoice';
+import { CustomsMark, getTaxTypeFromItems, Invoice, InvoiceAllowance, InvoiceAllowanceState, InvoiceCarrierType, InvoiceGateway, InvoiceVoidOptions, PaymentItem, TaxType } from '@rytass/invoice';
 import { createCipheriv, createHash, createDecipheriv } from 'crypto';
 import axios from 'axios';
 import isEmail from 'validator/lib/isEmail';
 import { DateTime } from 'luxon';
 import FormData from 'form-data';
 import { EZPayInvoice } from './ezpay-invoice';
-import { EZPayAvailableCarrier, EZPayBaseUrls, EZPayInvoiceB2BIssueOptions, EZPayInvoiceB2CIssueOptions, EZPayInvoiceGatewayOptions, EZPayInvoiceIssueOptions, EZPayInvoiceIssuePayload, EZPayInvoiceIssueStatus, EZPayInvoiceLoveCodeValidationPayload, EZPayInvoiceLoveCodeValidationSuccessResponse, EZPayInvoiceMobileValidationPayload, EZPayInvoiceMobileValidationSuccessResponse, EZPayInvoiceResponse, EZPayInvoiceSuccessResponse, EZPayInvoiceVoidOptions, EZPayInvoiceVoidPayload, EZPayInvoiceVoidSuccessResponse, EZPayPaymentItem, EZPayTaxTypeCode } from './typings';
+import { EZPayAvailableCarrier, EZPayBaseUrls, EZPayInvoiceAllowanceOptions, EZPayInvoiceAllowancePayload, EZPayInvoiceAllowanceSuccessResponse, EZPayInvoiceB2BIssueOptions, EZPayInvoiceB2CIssueOptions, EZPayInvoiceGatewayOptions, EZPayInvoiceInvalidAllowancePayload, EZPayInvoiceInvalidAllowanceSuccessResponse, EZPayInvoiceIssueOptions, EZPayInvoiceIssuePayload, EZPayInvoiceIssueStatus, EZPayInvoiceLoveCodeValidationPayload, EZPayInvoiceLoveCodeValidationSuccessResponse, EZPayInvoiceMobileValidationPayload, EZPayInvoiceMobileValidationSuccessResponse, EZPayInvoiceResponse, EZPayInvoiceSuccessResponse, EZPayInvoiceVoidOptions, EZPayInvoiceVoidPayload, EZPayInvoiceVoidSuccessResponse, EZPayPaymentItem, EZPayTaxTypeCode } from './typings';
+import { EZPayInvoiceAllowance } from './ezpay-allowance';
 
 export class EZPayInvoiceGateway implements InvoiceGateway<EZPayInvoice> {
   private readonly hashKey: string = 'yoRs5AfTfAWe9HI4DlEYKRorr9YvV3Kr';
@@ -277,6 +278,7 @@ export class EZPayInvoiceGateway implements InvoiceGateway<EZPayInvoice> {
       randomCode: payload.RandomNum,
       platformId: payload.InvoiceTransNo,
       orderId: payload.MerchantOrderNo,
+      taxType,
     });
   }
 
@@ -397,6 +399,141 @@ export class EZPayInvoiceGateway implements InvoiceGateway<EZPayInvoice> {
     invoice.setVoid(DateTime.fromFormat(responsePayload.CreateTime, 'yyyy-MM-dd HH:mm:ss').toJSDate());
 
     return invoice;
+  }
+
+  public async allowance(invoice: EZPayInvoice, allowanceItems: EZPayPaymentItem[], options?: EZPayInvoiceAllowanceOptions): Promise<EZPayInvoice> {
+    const totalAllowanceAmount = allowanceItems.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+
+    if (totalAllowanceAmount > invoice.nowAmount) {
+      throw new Error('No enough amount for allowance');
+    }
+
+    if (invoice.taxType === TaxType.MIXED && !options?.taxType) {
+      throw new Error('Mixed invoice allowance must specify a tax type');
+    }
+
+    const postData = this.encrypt<EZPayInvoiceAllowancePayload>({
+      RespondType: 'JSON',
+      Version: '1.3',
+      TimeStamp: Math.floor(Date.now() / 1000).toString(),
+      InvoiceNo: invoice.invoiceNumber,
+      MerchantOrderNo: invoice.orderId,
+      ItemName: allowanceItems.map(item => item.name).join('|'),
+      ItemCount: allowanceItems.map(item => item.quantity).join('|'),
+      ItemUnit: allowanceItems.map(item => item.unit || '式').join('|'),
+      ItemPrice: allowanceItems.map(item => item.unitPrice).join('|'),
+      ItemAmt: allowanceItems.map(item => item.unitPrice * item.quantity).join('|'),
+      ...(invoice.taxType === TaxType.MIXED && options?.taxType ? ({
+        TaxTypeForMixed: (() => {
+          switch (options.taxType) {
+            case TaxType.TAXED:
+              return '1';
+
+            case TaxType.ZERO_TAX:
+              return '2';
+
+            case TaxType.TAX_FREE:
+              return '3';
+          }
+        })(),
+      }) : ({})),
+      ItemTaxAmt: '0',
+      TotalAmt: totalAllowanceAmount,
+      ...(options?.buyerEmail ? ({
+        BuyerEmail: options.buyerEmail,
+      }) : ({})),
+      Status: '1',
+    });
+
+    const formData = new FormData();
+
+    formData.append('MerchantID_', this.merchantId);
+    formData.append('PostData_', postData);
+
+    const { data } = await axios.post<EZPayInvoiceResponse>(`${this.baseUrl}/Api/allowance_issue`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    if (data.Status !== 'SUCCESS') {
+      throw new Error(data.Message);
+    }
+
+    const responsePayload = JSON.parse(data.Result) as (EZPayInvoiceAllowanceSuccessResponse & {
+      CheckCode: string;
+    });
+
+    if (invoice.platformId && this.getResponseCheckCode({
+      InvoiceTransNo: invoice.platformId,
+      MerchantID: this.merchantId,
+      MerchantOrderNo: invoice.orderId,
+      RandomNum: invoice.randomCode,
+      TotalAmt: invoice.issuedAmount,
+    }) !== responsePayload.CheckCode) {
+      throw new Error('Invalid CheckCode');
+    }
+
+    const allowance = new EZPayInvoiceAllowance({
+      allowanceNumber: responsePayload.AllowanceNo,
+      allowancePrice: Number(responsePayload.AllowanceAmt),
+      allowancedOn: new Date(),
+      remainingAmount: Number(responsePayload.RemainAmt),
+      items: allowanceItems,
+      parentInvoice: invoice,
+      status: InvoiceAllowanceState.ISSUED,
+    });
+
+    invoice.addAllowance(allowance);
+
+    return invoice;
+  }
+
+  async invalidAllowance(allowance: EZPayInvoiceAllowance, reason?: string): Promise<EZPayInvoice> {
+    if (allowance.status !== InvoiceAllowanceState.ISSUED) {
+      throw new Error('Invalid allowance status');
+    }
+
+    const postData = this.encrypt<EZPayInvoiceInvalidAllowancePayload>({
+      RespondType: 'JSON',
+      Version: '1.0',
+      TimeStamp: Math.floor(Date.now() / 1000).toString(),
+      AllowanceNo: allowance.allowanceNumber,
+      InvalidReason: reason ?? '折讓作廢',
+    });
+
+    const formData = new FormData();
+
+    formData.append('MerchantID_', this.merchantId);
+    formData.append('PostData_', postData);
+
+    const { data } = await axios.post<EZPayInvoiceResponse>(`${this.baseUrl}/Api/allowanceInvalid`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    if (data.Status !== 'SUCCESS') {
+      throw new Error(data.Message);
+    }
+
+    const responsePayload = JSON.parse(data.Result) as (EZPayInvoiceInvalidAllowanceSuccessResponse & {
+      CheckCode: string;
+    });
+
+    if (allowance.parentInvoice.platformId && this.getResponseCheckCode({
+      InvoiceTransNo: allowance.parentInvoice.platformId,
+      MerchantID: this.merchantId,
+      MerchantOrderNo: allowance.parentInvoice.orderId,
+      RandomNum: allowance.parentInvoice.randomCode,
+      TotalAmt: allowance.parentInvoice.issuedAmount,
+    }) !== responsePayload.CheckCode) {
+      throw new Error('Invalid CheckCode');
+    }
+
+    allowance.invalid(DateTime.fromFormat(responsePayload.CreateTime, 'yyyy-MM-dd HH:mm:ss').toJSDate());
+
+    return allowance.parentInvoice;
   }
 }
 

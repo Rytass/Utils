@@ -17,6 +17,7 @@ describe('ECPayInvoiceGateway Void', () => {
   const FAKE_INVOICE_NUMBER = 'JJ00050096';
   const FAKE_RANDOM_CODE = '9527';
   const FAKE_ORDER_ID = '202212260100401';
+  const SHOULD_THROW_ERROR_REASON = 'THROWOOOWOWOW';
 
   beforeAll(() => {
     post.mockImplementation(async (url: string, data: unknown) => {
@@ -41,6 +42,7 @@ describe('ECPayInvoiceGateway Void', () => {
       ) as {
         InvoiceNo: string;
         InvoiceDate: string;
+        Reason: string;
       };
 
       const cipher = createCipheriv('aes-128-cbc', DEFAULT_AES_KEY, DEFAULT_AES_IV);
@@ -76,7 +78,7 @@ describe('ECPayInvoiceGateway Void', () => {
             Timestamp: Math.round(Date.now() / 1000),
             Revision: '3.0.0',
           },
-          TransCode: 1,
+          TransCode: SHOULD_THROW_ERROR_REASON === plainPayload.Reason ? 999 : 1,
           TransMsg: 'Success',
           Data: [
             cipher.update(encodeURIComponent(JSON.stringify({
@@ -127,5 +129,25 @@ describe('ECPayInvoiceGateway Void', () => {
     expect(() => invoiceGateway.void(mockInvoice, {
       reason: '測試作廢',
     })).rejects.toThrow();
+  });
+
+  describe('Misc', () => {
+    it('should throw error when ecpay reject request', () => {
+      const mockInvoice = new ECPayInvoice({
+        items: [{
+          name: '橡皮擦',
+          unitPrice: 10,
+          quantity: 2,
+        }],
+        issuedOn: new Date(),
+        invoiceNumber: FAKE_INVOICE_NUMBER,
+        randomCode: FAKE_RANDOM_CODE,
+        orderId: FAKE_ORDER_ID,
+      });
+
+      expect(() => invoiceGateway.void(mockInvoice, {
+        reason: SHOULD_THROW_ERROR_REASON,
+      })).rejects.toThrow();
+    });
   });
 });

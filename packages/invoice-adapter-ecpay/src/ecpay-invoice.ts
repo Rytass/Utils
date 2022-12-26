@@ -1,9 +1,8 @@
-import { Invoice, InvoiceAllowance, InvoiceState } from '@rytass/invoice';
+import { Invoice, InvoiceState } from '@rytass/invoice';
+import { ECPayInvoiceAllowance } from './ecpay-allowance';
 import { ECPayInvoiceOptions, ECPayPaymentItem } from './typings';
 
 export class ECPayInvoice implements Invoice<ECPayPaymentItem> {
-  state = InvoiceState.ISSUED;
-
   readonly invoiceNumber;
 
   readonly randomCode;
@@ -14,13 +13,15 @@ export class ECPayInvoice implements Invoice<ECPayPaymentItem> {
 
   readonly orderId: string;
 
+  readonly items: ECPayPaymentItem[];
+
+  readonly allowances: ECPayInvoiceAllowance[] = [];
+
+  state = InvoiceState.ISSUED;
+
   voidOn: Date | null = null;
 
-  allowances: InvoiceAllowance[] = [];
-
   nowAmount: number;
-
-  items: ECPayPaymentItem[];
 
   constructor(options: ECPayInvoiceOptions) {
     this.issuedOn = options.issuedOn;

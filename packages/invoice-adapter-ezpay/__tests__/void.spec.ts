@@ -6,8 +6,8 @@ import axios from 'axios';
 import FormData from 'form-data';
 import { createDecipheriv, createHash } from 'crypto';
 import { parse } from 'parse-multipart-data';
-import { EZPayBaseUrls, EZPayInvoice, EZPayInvoiceGateway, EZPayInvoiceVoidPayload, InvoiceState } from '../src';
 import { DateTime } from 'luxon';
+import { EZPayBaseUrls, EZPayInvoice, EZPayInvoiceGateway, EZPayInvoiceVoidPayload, InvoiceState, TaxType } from '../src';
 
 const AES_IV = 'gmY2MPN8PHFvA7KR';
 const AES_KEY = 'cNg3wIe8PkCVcqb37RY0LFbf00FgrNXg';
@@ -36,6 +36,7 @@ describe('EZPayInvoiceGateway Void', () => {
   const FAKE_RANDOM_CODE = '9527';
   const FAKE_PLATFORM_ID = '22122618222889038';
   const FAKE_ORDER_ID = '202212260100401';
+  const SHOULD_THROW_REASON = 'THROWWWWW';
 
   beforeAll(() => {
     post.mockImplementation(async (url: string, data: any) => {
@@ -85,7 +86,7 @@ describe('EZPayInvoiceGateway Void', () => {
           Result: JSON.stringify({
             CheckCode: getResponseCheckCode({
               InvoiceTransNo: FAKE_PLATFORM_ID,
-              MerchantID: MERCHANT_ID,
+              MerchantID: SHOULD_THROW_REASON === params.InvalidReason ? 'INVALID_MERCHANT' : MERCHANT_ID,
               MerchantOrderNo: FAKE_ORDER_ID,
               RandomNum: FAKE_RANDOM_CODE,
               TotalAmt: 20,
@@ -111,6 +112,7 @@ describe('EZPayInvoiceGateway Void', () => {
       randomCode: FAKE_RANDOM_CODE,
       platformId: FAKE_PLATFORM_ID,
       orderId: FAKE_ORDER_ID,
+      taxType: TaxType.TAXED,
     });
 
     const voidedInvoice = await invoiceGateway.void(mockInvoice, {
@@ -132,11 +134,53 @@ describe('EZPayInvoiceGateway Void', () => {
       randomCode: FAKE_RANDOM_CODE,
       platformId: FAKE_PLATFORM_ID,
       orderId: FAKE_ORDER_ID,
+      taxType: TaxType.TAXED,
     });
 
     expect(() => invoiceGateway.void(mockInvoice, {
       reason: '測試作廢',
     })).rejects.toThrow();
+  });
+
+  describe('Misc', () => {
+    it('should throw error when check code invalid', async () => {
+      const mockInvoice = new EZPayInvoice({
+        items: [{
+          name: '橡皮擦',
+          unitPrice: 10,
+          quantity: 2,
+        }],
+        issuedOn: new Date(),
+        invoiceNumber: FAKE_INVOICE_NUMBER,
+        randomCode: FAKE_RANDOM_CODE,
+        platformId: FAKE_PLATFORM_ID,
+        orderId: FAKE_ORDER_ID,
+        taxType: TaxType.TAXED,
+      });
+
+      expect(() => invoiceGateway.void(mockInvoice, { reason: SHOULD_THROW_REASON })).rejects.toThrow();
+    });
+
+    it('should invoice setVoid method can use new Date() for void time in default', async () => {
+      const mockInvoice = new EZPayInvoice({
+        items: [{
+          name: '橡皮擦',
+          unitPrice: 10,
+          quantity: 2,
+        }],
+        issuedOn: new Date(),
+        invoiceNumber: FAKE_INVOICE_NUMBER,
+        randomCode: FAKE_RANDOM_CODE,
+        platformId: FAKE_PLATFORM_ID,
+        orderId: FAKE_ORDER_ID,
+        taxType: TaxType.TAXED,
+      });
+
+      mockInvoice.setVoid();
+
+      expect(mockInvoice.voidOn).toBeInstanceOf(Date);
+      expect(mockInvoice.state).toBe(InvoiceState.VOID);
+    });
   });
 });
 

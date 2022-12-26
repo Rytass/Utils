@@ -1,10 +1,14 @@
 import { CustomsMark, InvoiceIssueOptions, InvoiceLoveCodeCarrier, InvoiceMobileCarrier, InvoiceMoicaCarrier, InvoicePaymentItem, InvoicePrintCarrier, InvoiceVoidOptions, InvoicPlatformCarrier, TaxType } from '@rytass/invoice';
 import { EZPayInvoice } from './ezpay-invoice';
-import { EZPayInvoiceGateway } from './ezpay-invoice-gateway';
 
 export enum EZPayBaseUrls {
   DEVELOPMENT = 'https://cinv.ezpay.com.tw',
   PRODUCTION = 'https://inv.ezpay.com.tw',
+}
+
+export interface EZPayInvoiceAllowanceOptions {
+  taxType?: Omit<TaxType, TaxType.MIXED | TaxType.SPECIAL>;
+  buyerEmail?: string;
 }
 
 export interface EZPayPaymentItem extends InvoicePaymentItem {
@@ -22,6 +26,7 @@ export interface EZPayInvoiceOptions {
   randomCode: string;
   orderId: string;
   platformId?: string;
+  taxType: TaxType;
 }
 
 interface EZPayInvoiceIssueBaseOptions extends InvoiceIssueOptions<EZPayInvoice> {
@@ -85,6 +90,32 @@ export interface EZPayInvoiceVoidPayload {
   TimeStamp: string;
   InvoiceNumber: string;
   InvalidReason: string;
+}
+
+export interface EZPayInvoiceInvalidAllowancePayload {
+  RespondType: 'JSON';
+  Version: '1.0';
+  TimeStamp: string;
+  AllowanceNo: string;
+  InvalidReason: string;
+}
+
+export interface EZPayInvoiceAllowancePayload {
+  RespondType: 'JSON';
+  Version: '1.3';
+  TimeStamp: string;
+  InvoiceNo: string;
+  MerchantOrderNo: string;
+  ItemName: string;
+  ItemCount: string;
+  ItemUnit: string;
+  ItemPrice: string;
+  ItemAmt: string;
+  TaxTypeForMixed?: '1' | '2' | '3';
+  ItemTaxAmt: string;
+  TotalAmt: number;
+  BuyerEmail?: string;
+  Status: '0' | '1';
 }
 
 export interface EZPayInvoiceIssuePayload {
@@ -219,5 +250,20 @@ export interface EZPayInvoiceLoveCodeValidationSuccessResponse {
 export interface EZPayInvoiceVoidSuccessResponse {
   MerchantID: string;
   InvoiceNumber: string;
+  CreateTime: string;
+}
+
+export interface EZPayInvoiceAllowanceSuccessResponse {
+  AllowanceNo: string;
+  InvoiceNumber: string;
+  MerchantID: string;
+  MerchantOrderNo: string;
+  AllowanceAmt: number;
+  RemainAmt: number;
+}
+
+export interface EZPayInvoiceInvalidAllowanceSuccessResponse {
+  AllowanceNo: string;
+  MerchantID: string;
   CreateTime: string;
 }

@@ -1,10 +1,8 @@
-import { Invoice, InvoiceAllowance, InvoiceState } from '@rytass/invoice';
-import { EZPayInvoiceGateway } from './ezpay-invoice-gateway';
+import { Invoice, InvoiceState, TaxType } from '@rytass/invoice';
+import { EZPayInvoiceAllowance } from './ezpay-allowance';
 import { EZPayInvoiceOptions, EZPayPaymentItem } from './typings';
 
 export class EZPayInvoice implements Invoice<EZPayPaymentItem> {
-  state = InvoiceState.ISSUED;
-
   readonly invoiceNumber;
 
   readonly randomCode;
@@ -15,15 +13,19 @@ export class EZPayInvoice implements Invoice<EZPayPaymentItem> {
 
   readonly orderId: string;
 
+  readonly taxType: TaxType;
+
   readonly platformId?: string;
+
+  readonly allowances: EZPayInvoiceAllowance[] = [];
+
+  readonly items: EZPayPaymentItem[];
+
+  state = InvoiceState.ISSUED;
 
   voidOn: Date | null = null;
 
-  allowances: InvoiceAllowance[] = [];
-
   nowAmount: number;
-
-  items: EZPayPaymentItem[];
 
   constructor(options: EZPayInvoiceOptions) {
     this.issuedOn = options.issuedOn;
@@ -33,6 +35,7 @@ export class EZPayInvoice implements Invoice<EZPayPaymentItem> {
     this.randomCode = options.randomCode;
     this.invoiceNumber = options.invoiceNumber;
     this.orderId = options.orderId;
+    this.taxType = options.taxType;
 
     // Optional
     this.platformId = options.platformId;
@@ -41,6 +44,12 @@ export class EZPayInvoice implements Invoice<EZPayPaymentItem> {
   public async setVoid(voidOn = new Date()): Promise<void> {
     this.state = InvoiceState.VOID;
     this.voidOn = voidOn;
+  }
+
+  public async addAllowance(allowance: EZPayInvoiceAllowance): Promise<void> {
+    this.allowances.push(allowance);
+
+    this.nowAmount = allowance.remainingAmount;
   }
 }
 

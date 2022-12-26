@@ -1,14 +1,6 @@
 import { PaymentItem } from '@rytass/payments';
-import { InvoiceCarrier, CustomsMark, TaxType } from '.';
+import { InvoiceCarrier, CustomsMark, InvoicePaymentItem, InvoiceVoidOptions, InvoiceAllowanceOptions, InvoiceAllowance } from '.';
 import { Invoice } from './invoice';
-
-export type InvoicePaymentItem = PaymentItem & {
-  taxType?: TaxType.TAXED | TaxType.TAX_FREE | TaxType.ZERO_TAX | TaxType.SPECIAL;
-}
-
-export interface InvoiceVoidOptions {
-  reason: string;
-}
 
 export interface InvoiceIssueOptions<I extends Invoice<PaymentItem>> {
   items: InvoicePaymentItem[];
@@ -20,6 +12,8 @@ export interface InvoiceIssueOptions<I extends Invoice<PaymentItem>> {
 export interface InvoiceGateway<I extends Invoice<PaymentItem>> {
   issue(options: InvoiceIssueOptions<I>): Promise<I>;
   void(invoice: Invoice<PaymentItem>, options: InvoiceVoidOptions): Promise<Invoice<PaymentItem>>;
+  allowance(invoice: Invoice<PaymentItem>, allowanceItems: InvoicePaymentItem[], options?: InvoiceAllowanceOptions): Promise<Invoice<PaymentItem>>;
+  invalidAllowance(allowance: InvoiceAllowance<PaymentItem>): Promise<Invoice<PaymentItem>>;
 
   // Utils
   isMobileBarcodeValid(code: string): Promise<boolean>;

@@ -1,21 +1,23 @@
-import { InvoiceState, InvoiceAllowance, PaymentItem } from '.';
+import { PaymentItem } from '@rytass/payments';
+import { InvoiceState } from './typings';
+import { InvoiceAllowance } from './invoice-allowance';
 
 export interface Invoice<Item extends PaymentItem> {
+  readonly invoiceNumber: string;
+
+  readonly issuedOn: Date;
+
+  readonly allowances: InvoiceAllowance<Item>[];
+
+  readonly issuedAmount: number;
+
+  readonly randomCode: string;
+
+  readonly items: Item[];
+
   state: InvoiceState;
-
-  invoiceNumber: string;
-
-  issuedOn: Date;
-
-  voidOn: Date | null;
-
-  allowances: InvoiceAllowance[];
-
-  issuedAmount: number;
 
   nowAmount: number;
 
-  randomCode: string;
-
-  items: Item[];
+  voidOn: Date | null;
 }

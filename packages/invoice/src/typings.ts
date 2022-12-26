@@ -1,3 +1,4 @@
+import { PaymentItem } from '@rytass/payments';
 
 export enum InvoiceCarrierType {
   PRINT = 'PRINT',
@@ -10,6 +11,18 @@ export enum InvoiceCarrierType {
 
 interface InvoiceCarrierBase {
   type: InvoiceCarrierType;
+}
+
+export interface InvoiceAllowanceOptions {
+  taxType?: Omit<TaxType, TaxType.MIXED | TaxType.SPECIAL>;
+}
+
+export type InvoicePaymentItem = PaymentItem & {
+  taxType?: Omit<TaxType, TaxType.MIXED>;
+}
+
+export interface InvoiceVoidOptions {
+  reason: string;
 }
 
 export interface InvoicePrintCarrier extends InvoiceCarrierBase {
@@ -107,14 +120,10 @@ export enum InvoiceState {
   ALLOWANCED = 'ALLOWANCED',
 }
 
-export interface InvoiceAllowance {
-  allowanceNumber: string;
-
-  allowancePrice: number;
-
-  allowancedOn: Date;
-
-  remainingAmount: number;
+export enum InvoiceAllowanceState {
+  INITED = 'INITED',
+  ISSUED = 'ISSUED',
+  INVALID = 'INVALID',
 }
 
 export enum CustomsMark {
