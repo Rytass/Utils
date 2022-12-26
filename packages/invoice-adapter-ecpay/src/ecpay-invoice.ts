@@ -4,17 +4,19 @@ import { ECPayInvoiceOptions, ECPayPaymentItem } from './typings';
 export class ECPayInvoice implements Invoice<ECPayPaymentItem> {
   state = InvoiceState.ISSUED;
 
-  invoiceNumber = '';
+  readonly invoiceNumber;
 
-  randomCode = '';
+  readonly randomCode;
 
-  issuedOn: Date;
+  readonly issuedOn: Date;
+
+  readonly issuedAmount: number;
+
+  readonly orderId: string;
 
   voidOn: Date | null = null;
 
   allowances: InvoiceAllowance[] = [];
-
-  issuedAmount: number;
 
   nowAmount: number;
 
@@ -27,5 +29,11 @@ export class ECPayInvoice implements Invoice<ECPayPaymentItem> {
     this.issuedAmount = this.nowAmount;
     this.randomCode = options.randomCode;
     this.invoiceNumber = options.invoiceNumber;
+    this.orderId = options.orderId;
+  }
+
+  setVoid() {
+    this.state = InvoiceState.VOID;
+    this.voidOn = new Date();
   }
 }

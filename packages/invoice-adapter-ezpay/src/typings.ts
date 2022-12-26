@@ -1,5 +1,6 @@
-import { CustomsMark, InvoiceIssueOptions, InvoiceLoveCodeCarrier, InvoiceMobileCarrier, InvoiceMoicaCarrier, InvoicePaymentItem, InvoicePrintCarrier, InvoicPlatformCarrier, TaxType } from '@rytass/invoice';
+import { CustomsMark, InvoiceIssueOptions, InvoiceLoveCodeCarrier, InvoiceMobileCarrier, InvoiceMoicaCarrier, InvoicePaymentItem, InvoicePrintCarrier, InvoiceVoidOptions, InvoicPlatformCarrier, TaxType } from '@rytass/invoice';
 import { EZPayInvoice } from './ezpay-invoice';
+import { EZPayInvoiceGateway } from './ezpay-invoice-gateway';
 
 export enum EZPayBaseUrls {
   DEVELOPMENT = 'https://cinv.ezpay.com.tw',
@@ -19,6 +20,8 @@ export interface EZPayInvoiceOptions {
   issuedOn: Date;
   invoiceNumber: string;
   randomCode: string;
+  orderId: string;
+  platformId?: string;
 }
 
 interface EZPayInvoiceIssueBaseOptions extends InvoiceIssueOptions<EZPayInvoice> {
@@ -74,6 +77,14 @@ export interface EZPayInvoiceMobileValidationPayload {
 export interface EZPayInvoiceLoveCodeValidationPayload {
   TimeStamp: string;
   LoveCode: string;
+}
+
+export interface EZPayInvoiceVoidPayload {
+  RespondType: 'JSON';
+  Version: '1.0';
+  TimeStamp: string;
+  InvoiceNumber: string;
+  InvalidReason: string;
 }
 
 export interface EZPayInvoiceIssuePayload {
@@ -161,6 +172,10 @@ export enum ErrorCode {
   CBC10004 = '財政部大平台網路連線異常',
 }
 
+export interface EZPayInvoiceVoidOptions extends InvoiceVoidOptions {
+  reason: string;
+}
+
 export interface EZPayInvoiceResponse {
   Status: 'SUCCESS' | ErrorCode;
   Message: string;
@@ -199,4 +214,10 @@ export interface EZPayInvoiceMobileValidationSuccessResponse {
 export interface EZPayInvoiceLoveCodeValidationSuccessResponse {
   LoveCode: string;
   IsExist: 'Y' | 'N';
+}
+
+export interface EZPayInvoiceVoidSuccessResponse {
+  MerchantID: string;
+  InvoiceNumber: string;
+  CreateTime: string;
 }

@@ -1,4 +1,4 @@
-import { CustomsMark, getTaxTypeFromItems, InvoiceCarrierType, InvoiceGateway, InvoiceMobileCarrier, InvoiceMoicaCarrier, TaxType } from '@rytass/invoice';
+import { CustomsMark, getTaxTypeFromItems, InvoiceCarrierType, InvoiceGateway, InvoiceMobileCarrier, InvoiceMoicaCarrier, InvoiceVoidOptions, TaxType } from '@rytass/invoice';
 import axios from 'axios';
 import isEmail from 'validator/lib/isEmail';
 import { DateTime } from 'luxon';
@@ -18,7 +18,11 @@ import {
   ECPayInvoiceMobileBarcodeValidateResponse,
   ECPayInvoiceRequestBody,
   ECPayInvoiceResponse,
+  ECPayInvoiceVoidOptions,
+  ECPayInvoiceVoidRequestBody,
+  ECPayInvoiceVoidResponse,
   ECPayIssuedInvoiceResponse,
+  ECPayVoidInvoiceResponseDecrypted,
 } from './typings';
 import {
   ECPayInvoice,
@@ -243,7 +247,42 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayInvoice> {
         issuedOn: DateTime.fromFormat(payload.InvoiceDate, 'yyyy-MM-dd+HH:mm:ss').toJSDate(),
         invoiceNumber: payload.InvoiceNo,
         randomCode: payload.RandomNumber,
+        orderId: options.orderId,
       });
+    }
+
+    throw new Error('ECPay gateway error');
+  }
+
+  async void(invoice: ECPayInvoice, options: ECPayInvoiceVoidOptions): Promise<ECPayInvoice> {
+    const now = Math.round(Date.now() / 1000);
+
+    const { data } = await axios.post<ECPayInvoiceVoidResponse>(`${this.baseUrl}/B2CInvoice/Invalid`, JSON.stringify({
+      MerchantID: this.merchantId,
+      RqHeader: {
+        Timestamp: now,
+        Revision: this.revision,
+      },
+      Data: this.encrypt<ECPayInvoiceVoidRequestBody>({
+        MerchantID: this.merchantId,
+        InvoiceNo: invoice.invoiceNumber,
+        InvoiceDate: DateTime.fromJSDate(invoice.issuedOn).toFormat('yyyy-MM-dd'),
+        Reason: options.reason,
+      }),
+    }));
+
+    if (data.TransCode === ECPAY_INVOICE_SUCCESS_CODE) {
+      const payload = this.decrypt<ECPayVoidInvoiceResponseDecrypted>(data.Data);
+
+      if (payload.RtnCode !== ECPAY_INVOICE_SUCCESS_CODE) {
+        throw new Error('ECPay issue failed');
+      }
+
+      if (payload.InvoiceNo) {
+        invoice.setVoid();
+      }
+
+      return invoice;
     }
 
     throw new Error('ECPay gateway error');

@@ -1,11 +1,40 @@
-import { CustomsMark, InvoiceCarrier, InvoiceIssueOptions, InvoicePaymentItem, SpecialTaxCode, TaxType } from '@rytass/invoice';
+import { CustomsMark, InvoiceCarrier, InvoiceIssueOptions, InvoicePaymentItem, InvoiceVoidOptions, SpecialTaxCode, TaxType } from '@rytass/invoice';
 import { ECPayInvoice } from '.';
+
+export interface ECPayInvoiceVoidOptions extends InvoiceVoidOptions {
+  reason: string;
+}
+
+export interface ECPayInvoiceVoidRequestBody {
+  MerchantID: string;
+  InvoiceNo: string;
+  InvoiceDate: string;
+  Reason: string;
+}
+
+export interface ECPayInvoiceVoidResponse {
+  PlatformID?: string;
+  MerchantID: string;
+  RpHeader: {
+    Timestamp: number;
+  };
+  TransCode: number;
+  TransMsg: string;
+  Data: string;
+}
+
+export interface ECPayVoidInvoiceResponseDecrypted {
+  RtnCode: number;
+  RtnMsg: string;
+  InvoiceNo: string;
+}
 
 export interface ECPayInvoiceOptions {
   items: ECPayPaymentItem[];
   issuedOn: Date;
   invoiceNumber: string;
   randomCode: string;
+  orderId: string;
 }
 
 export interface ECPayInvoiceGatewayOptions {

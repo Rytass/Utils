@@ -23,3 +23,4 @@ export const ECPayTaxTypeCode = {
 }
 
 export const ECPAY_INVOICE_SUCCESS_CODE = 1;
+export const ECPAY_INVOICE_NOT_FOUND = 1600003;

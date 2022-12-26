@@ -1,12 +1,12 @@
 /* eslint-disable no-control-regex */
-import { CustomsMark, getTaxTypeFromItems, InvoiceCarrierType, InvoiceGateway, TaxType } from '@rytass/invoice';
+import { CustomsMark, getTaxTypeFromItems, InvoiceCarrierType, InvoiceGateway, InvoiceVoidOptions, TaxType } from '@rytass/invoice';
 import { createCipheriv, createHash, createDecipheriv } from 'crypto';
 import axios from 'axios';
 import isEmail from 'validator/lib/isEmail';
 import { DateTime } from 'luxon';
 import FormData from 'form-data';
 import { EZPayInvoice } from './ezpay-invoice';
-import { EZPayAvailableCarrier, EZPayBaseUrls, EZPayInvoiceB2BIssueOptions, EZPayInvoiceB2CIssueOptions, EZPayInvoiceGatewayOptions, EZPayInvoiceIssueOptions, EZPayInvoiceIssuePayload, EZPayInvoiceIssueStatus, EZPayInvoiceLoveCodeValidationPayload, EZPayInvoiceLoveCodeValidationSuccessResponse, EZPayInvoiceMobileValidationPayload, EZPayInvoiceMobileValidationSuccessResponse, EZPayInvoiceResponse, EZPayInvoiceSuccessResponse, EZPayPaymentItem, EZPayTaxTypeCode } from './typings';
+import { EZPayAvailableCarrier, EZPayBaseUrls, EZPayInvoiceB2BIssueOptions, EZPayInvoiceB2CIssueOptions, EZPayInvoiceGatewayOptions, EZPayInvoiceIssueOptions, EZPayInvoiceIssuePayload, EZPayInvoiceIssueStatus, EZPayInvoiceLoveCodeValidationPayload, EZPayInvoiceLoveCodeValidationSuccessResponse, EZPayInvoiceMobileValidationPayload, EZPayInvoiceMobileValidationSuccessResponse, EZPayInvoiceResponse, EZPayInvoiceSuccessResponse, EZPayInvoiceVoidOptions, EZPayInvoiceVoidPayload, EZPayInvoiceVoidSuccessResponse, EZPayPaymentItem, EZPayTaxTypeCode } from './typings';
 
 export class EZPayInvoiceGateway implements InvoiceGateway<EZPayInvoice> {
   private readonly hashKey: string = 'yoRs5AfTfAWe9HI4DlEYKRorr9YvV3Kr';
@@ -36,6 +36,15 @@ export class EZPayInvoiceGateway implements InvoiceGateway<EZPayInvoice> {
       decipher.update(secret, 'hex', 'utf8'),
       decipher.final('utf8'),
     ].join('').replace(/\x1b/g, '') as T;
+  }
+
+  private getResponseCheckCode<T extends Record<string, any>>(response: T): string {
+    const encodedData = Object.entries(response)
+      .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+      .map(([key, value]) => `${key}=${value}`)
+      .join('&');
+
+    return createHash('sha256').update(`HashIV=${this.hashIv}&${encodedData}&HashKey=${this.hashKey}`).digest('hex').toUpperCase();
   }
 
   private getChecksum(postData: string): string {
@@ -266,6 +275,8 @@ export class EZPayInvoiceGateway implements InvoiceGateway<EZPayInvoice> {
       issuedOn: DateTime.fromFormat(payload.CreateTime, 'yyyy-MM-dd HH:mm:ss').toJSDate(),
       invoiceNumber: payload.InvoiceNumber,
       randomCode: payload.RandomNum,
+      platformId: payload.InvoiceTransNo,
+      orderId: payload.MerchantOrderNo,
     });
   }
 
@@ -343,6 +354,49 @@ export class EZPayInvoiceGateway implements InvoiceGateway<EZPayInvoice> {
       }, {}) as EZPayInvoiceLoveCodeValidationSuccessResponse;
 
     return payload.IsExist === 'Y';
+  }
+
+  public async void(invoice: EZPayInvoice, options: EZPayInvoiceVoidOptions): Promise<EZPayInvoice> {
+    const postData = this.encrypt<EZPayInvoiceVoidPayload>({
+      RespondType: 'JSON',
+      Version: '1.0',
+      TimeStamp: Math.floor(Date.now() / 1000).toString(),
+      InvoiceNumber: invoice.invoiceNumber,
+      InvalidReason: options.reason,
+    });
+
+    const formData = new FormData();
+
+    formData.append('MerchantID_', this.merchantId);
+    formData.append('PostData_', postData);
+
+    const { data } = await axios.post<EZPayInvoiceResponse>(`${this.baseUrl}/Api/invoice_invalid`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    if (data.Status !== 'SUCCESS') {
+      throw new Error(data.Message);
+    }
+
+    const responsePayload = JSON.parse(data.Result) as (EZPayInvoiceVoidSuccessResponse & {
+      CheckCode: string;
+    });
+
+    if (invoice.platformId && this.getResponseCheckCode({
+      InvoiceTransNo: invoice.platformId,
+      MerchantID: this.merchantId,
+      MerchantOrderNo: invoice.orderId,
+      RandomNum: invoice.randomCode,
+      TotalAmt: invoice.issuedAmount,
+    }) !== responsePayload.CheckCode) {
+      throw new Error('Invalid CheckCode');
+    }
+
+    invoice.setVoid(DateTime.fromFormat(responsePayload.CreateTime, 'yyyy-MM-dd HH:mm:ss').toJSDate());
+
+    return invoice;
   }
 }
 

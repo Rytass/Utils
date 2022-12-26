@@ -1,20 +1,25 @@
 import { Invoice, InvoiceAllowance, InvoiceState } from '@rytass/invoice';
+import { EZPayInvoiceGateway } from './ezpay-invoice-gateway';
 import { EZPayInvoiceOptions, EZPayPaymentItem } from './typings';
 
 export class EZPayInvoice implements Invoice<EZPayPaymentItem> {
   state = InvoiceState.ISSUED;
 
-  invoiceNumber = '';
+  readonly invoiceNumber;
 
-  randomCode = '';
+  readonly randomCode;
 
-  issuedOn: Date;
+  readonly issuedOn: Date;
+
+  readonly issuedAmount: number;
+
+  readonly orderId: string;
+
+  readonly platformId?: string;
 
   voidOn: Date | null = null;
 
   allowances: InvoiceAllowance[] = [];
-
-  issuedAmount: number;
 
   nowAmount: number;
 
@@ -27,5 +32,15 @@ export class EZPayInvoice implements Invoice<EZPayPaymentItem> {
     this.issuedAmount = this.nowAmount;
     this.randomCode = options.randomCode;
     this.invoiceNumber = options.invoiceNumber;
+    this.orderId = options.orderId;
+
+    // Optional
+    this.platformId = options.platformId;
+  }
+
+  public async setVoid(voidOn = new Date()): Promise<void> {
+    this.state = InvoiceState.VOID;
+    this.voidOn = voidOn;
   }
 }
+
