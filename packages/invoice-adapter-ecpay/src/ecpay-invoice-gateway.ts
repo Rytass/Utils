@@ -1,4 +1,4 @@
-import { CustomsMark, getTaxTypeFromItems, Invoice, InvoiceAllowance, InvoiceAllowanceOptions, InvoiceCarrierType, InvoiceGateway, InvoiceMobileCarrier, InvoiceMoicaCarrier, InvoicePaymentItem, InvoiceVoidOptions, PaymentItem, TaxType } from '@rytass/invoice';
+import { CustomsMark, getTaxTypeFromItems, InvoiceAllowanceState, InvoiceCarrierType, InvoiceGateway, InvoiceMobileCarrier, InvoiceMoicaCarrier, TaxType } from '@rytass/invoice';
 import axios from 'axios';
 import isEmail from 'validator/lib/isEmail';
 import { DateTime } from 'luxon';
@@ -10,7 +10,13 @@ import {
   ECPAY_INVOICE_SUCCESS_CODE,
 } from './constants';
 import {
+  ECPayAllowanceInvoiceResponseDecrypted,
+  ECPayInvalidAllowanceInvoiceResponseDecrypted,
+  ECPayInvoiceAllowanceNotificationTarget,
+  ECPayInvoiceAllowanceOptions,
+  ECPayInvoiceAllowanceRequestBody,
   ECPayInvoiceGatewayOptions,
+  ECPayInvoiceInvalidAllowanceRequestBody,
   ECPayInvoiceIssueOptions,
   ECPayInvoiceLoveCodeValidateRequestBody,
   ECPayInvoiceLoveCodeValidateResponse,
@@ -22,6 +28,7 @@ import {
   ECPayInvoiceVoidRequestBody,
   ECPayInvoiceVoidResponse,
   ECPayIssuedInvoiceResponse,
+  ECPayPaymentItem,
   ECPayVoidInvoiceResponseDecrypted,
 } from './typings';
 import {
@@ -249,6 +256,7 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayInvoice> {
         invoiceNumber: payload.InvoiceNo,
         randomCode: payload.RandomNumber,
         orderId: options.orderId,
+        taxType,
       });
     }
 
@@ -289,11 +297,126 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayInvoice> {
     throw new Error('ECPay gateway error');
   }
 
-  async allowance(invoice: ECPayInvoice, allowanceItems: InvoicePaymentItem[], options?: InvoiceAllowanceOptions | undefined): Promise<ECPayInvoice> {
-    return invoice;
+  async allowance(invoice: ECPayInvoice, allowanceItems: ECPayPaymentItem[], options?: ECPayInvoiceAllowanceOptions): Promise<ECPayInvoice> {
+    if (invoice.taxType === TaxType.MIXED && !options?.taxType) {
+      throw new Error('Mixed invoice allowance must specify a tax type');
+    }
+
+    const now = Math.round(Date.now() / 1000);
+
+    const totalAmount = allowanceItems.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
+
+    const { data } = await axios.post<ECPayInvoiceVoidResponse>(`${this.baseUrl}/B2CInvoice/Allowance`, JSON.stringify({
+      MerchantID: this.merchantId,
+      RqHeader: {
+        Timestamp: now,
+        Revision: this.revision,
+      },
+      Data: this.encrypt<ECPayInvoiceAllowanceRequestBody>({
+        MerchantID: this.merchantId,
+        InvoiceNo: invoice.invoiceNumber,
+        InvoiceDate: DateTime.fromJSDate(invoice.issuedOn).toFormat('yyyy-MM-dd'),
+        AllowanceNotify: (() => {
+          if (!options?.notificationTargets) return 'N';
+
+          if (~options.notificationTargets.indexOf(ECPayInvoiceAllowanceNotificationTarget.EMAIL)
+            && options.notifyEmail) {
+            if (~options.notificationTargets.indexOf(ECPayInvoiceAllowanceNotificationTarget.SMS)
+            && options.notifyPhone) {
+              return 'A';
+            }
+
+            return 'E';
+          }
+
+          if (~options.notificationTargets.indexOf(ECPayInvoiceAllowanceNotificationTarget.SMS)
+            && options.notifyPhone) {
+            return 'A';
+          }
+
+          return 'N';
+        })(),
+        CustomerName: options?.buyerName ?? '',
+        NotifyMail: ~(options?.notificationTargets ?? []).indexOf(ECPayInvoiceAllowanceNotificationTarget.EMAIL) && options?.notifyEmail ? options?.notifyEmail : '',
+        NotifyPhone: ~(options?.notificationTargets ?? []).indexOf(ECPayInvoiceAllowanceNotificationTarget.SMS) && options?.notifyPhone ? options?.notifyPhone : '',
+        AllowanceAmount: totalAmount,
+        Items: allowanceItems.map((item, index) => ({
+          ItemSeq: index + 1,
+          ItemName: item.name,
+          ItemCount: item.quantity,
+          ItemWord: item.unit ?? '式',
+          ItemPrice: item.unitPrice,
+          ...(invoice.taxType === TaxType.MIXED ? ({
+            ItemTaxType: (() => {
+              switch (options?.taxType) {
+                case TaxType.TAXED:
+                  return '1';
+
+                case TaxType.ZERO_TAX:
+                  return '2';
+
+                case TaxType.TAX_FREE:
+                  return '3';
+              }
+            })(),
+          }) : ({})),
+          ItemAmount: item.quantity * item.unitPrice,
+        })),
+      }),
+    }));
+
+    if (data.TransCode === ECPAY_INVOICE_SUCCESS_CODE) {
+      const payload = this.decrypt<ECPayAllowanceInvoiceResponseDecrypted>(data.Data);
+
+      if (payload.RtnCode !== ECPAY_INVOICE_SUCCESS_CODE) {
+        throw new Error('ECPay allowance failed');
+      }
+
+      const allowance = new ECPayInvoiceAllowance({
+        allowanceNumber: payload.IA_Allow_No,
+        allowancePrice: totalAmount,
+        allowancedOn: DateTime.fromFormat(payload.IA_Date, 'yyyy-MM-dd HH:mm:ss').toJSDate(),
+        remainingAmount: payload.IA_Remain_Allowance_Amt,
+        items: allowanceItems,
+        parentInvoice: invoice,
+        status: InvoiceAllowanceState.ISSUED,
+      });
+
+      return invoice;
+    }
+
+    throw new Error('ECPay gateway error');
   }
 
-  async invalidAllowance(allowance: ECPayInvoiceAllowance): Promise<ECPayInvoice> {
-    return allowance.parentInvoice;
+  async invalidAllowance(allowance: ECPayInvoiceAllowance, reason?: string): Promise<ECPayInvoice> {
+    const now = Math.round(Date.now() / 1000);
+
+    const { data } = await axios.post<ECPayInvoiceVoidResponse>(`${this.baseUrl}/B2CInvoice/Allowance`, JSON.stringify({
+      MerchantID: this.merchantId,
+      RqHeader: {
+        Timestamp: now,
+        Revision: this.revision,
+      },
+      Data: this.encrypt<ECPayInvoiceInvalidAllowanceRequestBody>({
+        MerchantID: this.merchantId,
+        InvoiceNo: allowance.parentInvoice.invoiceNumber,
+        AllowanceNo: allowance.allowanceNumber,
+        Reason: reason ?? '作廢折讓',
+      }),
+    }));
+
+    if (data.TransCode === ECPAY_INVOICE_SUCCESS_CODE) {
+      const payload = this.decrypt<ECPayInvalidAllowanceInvoiceResponseDecrypted>(data.Data);
+
+      if (payload.RtnCode !== ECPAY_INVOICE_SUCCESS_CODE) {
+        throw new Error('ECPay allowance failed');
+      }
+
+      allowance.invalid();
+
+      return allowance.parentInvoice;
+    }
+
+    throw new Error('ECPay gateway error');
   }
 }

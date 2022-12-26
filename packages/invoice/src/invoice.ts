@@ -7,7 +7,7 @@ export interface Invoice<Item extends PaymentItem> {
 
   readonly issuedOn: Date;
 
-  readonly allowances: InvoiceAllowance<Item>[];
+  readonly allowances: InvoiceAllowance<PaymentItem>[];
 
   readonly issuedAmount: number;
 
@@ -20,4 +20,6 @@ export interface Invoice<Item extends PaymentItem> {
   nowAmount: number;
 
   voidOn: Date | null;
+
+  setVoid: () => void;
 }

@@ -19,7 +19,7 @@ export class EZPayInvoiceAllowance implements InvoiceAllowance<EZPayPaymentItem>
 
   invalidOn: Date | null = null;
 
-  constructor(options: Omit<InvoiceAllowance<EZPayPaymentItem>, 'invalidOn'> & { parentInvoice: EZPayInvoice }) {
+  constructor(options: Omit<InvoiceAllowance<EZPayPaymentItem>, 'invalidOn' | 'invalid'> & { parentInvoice: EZPayInvoice }) {
     this.allowanceNumber = options.allowanceNumber;
     this.allowancePrice = options.allowancePrice;
     this.allowancedOn = options.allowancedOn;

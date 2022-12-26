@@ -41,12 +41,12 @@ export class EZPayInvoice implements Invoice<EZPayPaymentItem> {
     this.platformId = options.platformId;
   }
 
-  public async setVoid(voidOn = new Date()): Promise<void> {
+  public setVoid(voidOn = new Date()): void {
     this.state = InvoiceState.VOID;
     this.voidOn = voidOn;
   }
 
-  public async addAllowance(allowance: EZPayInvoiceAllowance): Promise<void> {
+  public addAllowance(allowance: EZPayInvoiceAllowance): void {
     this.allowances.push(allowance);
 
     this.nowAmount = allowance.remainingAmount;

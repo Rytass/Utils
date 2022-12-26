@@ -1,8 +1,21 @@
-import { CustomsMark, InvoiceCarrier, InvoiceIssueOptions, InvoicePaymentItem, InvoiceVoidOptions, SpecialTaxCode, TaxType } from '@rytass/invoice';
+import { CustomsMark, InvoiceAllowanceOptions, InvoiceCarrier, InvoiceIssueOptions, InvoicePaymentItem, InvoiceVoidOptions, SpecialTaxCode, TaxType } from '@rytass/invoice';
 import { ECPayInvoice } from '.';
+
+export enum ECPayInvoiceAllowanceNotificationTarget {
+  SMS = 'SMS',
+  EMAIL = 'EMAIL',
+}
 
 export interface ECPayInvoiceVoidOptions extends InvoiceVoidOptions {
   reason: string;
+}
+
+export interface ECPayInvoiceAllowanceOptions extends InvoiceAllowanceOptions {
+  taxType?: Omit<TaxType, TaxType.MIXED | TaxType.SPECIAL>;
+  notificationTargets?: ECPayInvoiceAllowanceNotificationTarget[];
+  buyerName?: string;
+  notifyEmail?: string;
+  notifyPhone?: string;
 }
 
 export interface ECPayInvoiceVoidRequestBody {
@@ -10,6 +23,33 @@ export interface ECPayInvoiceVoidRequestBody {
   InvoiceNo: string;
   InvoiceDate: string;
   Reason: string;
+}
+
+export interface ECPayInvoiceInvalidAllowanceRequestBody {
+  MerchantID: string;
+  InvoiceNo: string;
+  AllowanceNo: string;
+  Reason: string;
+}
+
+export interface ECPayInvoiceAllowanceRequestBody {
+  MerchantID: string;
+  InvoiceNo: string;
+  InvoiceDate: string;
+  AllowanceNotify: 'S' | 'E' | 'A' | 'N';
+  CustomerName?: string;
+  NotifyMail?: string;
+  NotifyPhone?: string;
+  AllowanceAmount: number;
+  Items: {
+    ItemSeq: number;
+    ItemName: string;
+    ItemCount: number;
+    ItemWord: string;
+    ItemPrice: number;
+    ItemTaxType?: '1' | '2' | '3' | '';
+    ItemAmount: number;
+  }[];
 }
 
 export interface ECPayInvoiceVoidResponse {
@@ -29,12 +69,28 @@ export interface ECPayVoidInvoiceResponseDecrypted {
   InvoiceNo: string;
 }
 
+export interface ECPayAllowanceInvoiceResponseDecrypted {
+  RtnCode: number;
+  RtnMsg: string;
+  IA_Allow_No: string;
+  IA_Invoice_No: string;
+  IA_Date: string;
+  IA_Remain_Allowance_Amt: number;
+}
+
+export interface ECPayInvalidAllowanceInvoiceResponseDecrypted {
+  RtnCode: number;
+  RtnMsg: string;
+  IA_Invoice_No: string;
+}
+
 export interface ECPayInvoiceOptions {
   items: ECPayPaymentItem[];
   issuedOn: Date;
   invoiceNumber: string;
   randomCode: string;
   orderId: string;
+  taxType: TaxType;
 }
 
 export interface ECPayInvoiceGatewayOptions {

@@ -1,4 +1,4 @@
-import { Invoice, InvoiceState } from '@rytass/invoice';
+import { Invoice, InvoiceState, TaxType } from '@rytass/invoice';
 import { ECPayInvoiceAllowance } from './ecpay-allowance';
 import { ECPayInvoiceOptions, ECPayPaymentItem } from './typings';
 
@@ -12,6 +12,8 @@ export class ECPayInvoice implements Invoice<ECPayPaymentItem> {
   readonly issuedAmount: number;
 
   readonly orderId: string;
+
+  readonly taxType: TaxType;
 
   readonly items: ECPayPaymentItem[];
 
@@ -31,10 +33,17 @@ export class ECPayInvoice implements Invoice<ECPayPaymentItem> {
     this.randomCode = options.randomCode;
     this.invoiceNumber = options.invoiceNumber;
     this.orderId = options.orderId;
+    this.taxType = options.taxType;
   }
 
   setVoid() {
     this.state = InvoiceState.VOID;
     this.voidOn = new Date();
+  }
+
+  public async addAllowance(allowance: ECPayInvoiceAllowance): Promise<void> {
+    this.allowances.push(allowance);
+
+    this.nowAmount = allowance.remainingAmount;
   }
 }

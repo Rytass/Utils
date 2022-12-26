@@ -16,4 +16,6 @@ export interface InvoiceAllowance<Item extends PaymentItem> {
   status: InvoiceAllowanceState;
 
   invalidOn: Date | null;
+
+  invalid: () => void;
 }
