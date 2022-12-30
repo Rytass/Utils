@@ -1,3 +1,4 @@
+import { plus, times } from '../../utils/decimal';
 import { Condition } from '../../conditions';
 import { FlattenOrderItem } from '../../core';
 import { Order } from '../../core/order';
@@ -83,13 +84,21 @@ export class ValueDiscount implements BaseDiscount {
   }
 
   description(order: Order, appliedItems: FlattenOrderItem[]): PolicyDiscountDescription {
+    const maximumDiscountValue = appliedItems.reduce(
+      (total, item) => plus(total, times(item.quantity, item.unitPrice)),
+      0
+    );
+
     return {
       id: this.id,
       value: this.value,
       type: this.type,
-      discount: order.config.roundStrategy.round(
-        this.discount(),
-        ['every-calculation', 'final-price-only'],
+      discount: Math.min(
+        maximumDiscountValue,
+        order.config.roundStrategy.round(
+          this.discount(),
+          ['every-calculation', 'final-price-only'],
+        ),
       ),
       conditions: this.conditions,
       appliedItems,

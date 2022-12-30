@@ -1370,4 +1370,43 @@ describe('TAST v0.0.2', () => {
       },
     ]));
   })
+
+  it('Test discountValue > itemValue Scenario', () => {
+    const items: TestOrderItem[] = [
+      {
+        id: 'A',
+        name: '外套A',
+        unitPrice: 1000,
+        quantity: 1,
+        category: 'jacket',
+        brand: 'AJE',
+      },
+      {
+        id: 'B',
+        name: '外套B',
+        unitPrice: 1500,
+        quantity: 1,
+        category: 'jacket',
+        brand: 'N21',
+      },
+      {
+        id: 'C',
+        name: '鞋子C',
+        unitPrice: 2000,
+        quantity: 1,
+        category: 'shoes',
+        brand: 'N21',
+      },
+    ];
+
+    const order = new OrderBuilder({
+      policyPickStrategy: 'order-based',
+      policies: [
+        new ValueDiscount(200),
+        [new ValueDiscount(2000), new ValueDiscount(100000000)],
+      ],
+    }).build({ items });
+
+    expect(order.price).toEqual(0);
+  });
 })
