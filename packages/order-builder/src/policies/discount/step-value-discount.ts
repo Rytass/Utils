@@ -119,15 +119,23 @@ export class StepValueDiscount implements BaseDiscount {
       Math.floor(divided(itemValue, this.step)),
     );
 
+    const maximumDiscountValue = appliedItems.reduce(
+      (total, item) => plus(total, times(item.quantity, item.unitPrice)),
+      0
+    );
+
     return {
       id: this.id,
       step: this.step,
       value: this.value,
       type: this.type,
-      discount: order.config.roundStrategy.round(this.discount(itemValue), [
+      discount: Math.min(
+        maximumDiscountValue,
+        order.config.roundStrategy.round(this.discount(itemValue), [
         'final-price-only',
         'every-calculation',
       ]),
+      ),
       conditions: this.conditions,
       appliedItems,
       matchedTimes,

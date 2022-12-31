@@ -1408,5 +1408,15 @@ describe('TAST v0.0.2', () => {
     }).build({ items });
 
     expect(order.price).toEqual(0);
+
+    const order2 = new OrderBuilder({
+      policyPickStrategy: 'order-based',
+      policies: [
+        new ValueDiscount(200),
+        new StepValueDiscount(2, 100000000, { stepUnit: 'quantity' }),
+      ],
+    }).build({ items });
+
+    expect(order2.price).toEqual(0);
   });
 })
