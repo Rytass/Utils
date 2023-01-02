@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.5](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ezpay@0.1.4...@rytass/invoice-adapter-ezpay@0.1.5) (2023-01-02)
+
+
+### Features
+
+* **invoice-adapter-ecpay:** add allowance and invalidAllowance methods ([148b362](https://github.com/Rytass/Utils/commit/148b36207d068544cfc0a81b73cd9287b032b09b))
+* **invoice-adapter-ezpay:** add allowance and invalidAllowance methods ([7a3a21d](https://github.com/Rytass/Utils/commit/7a3a21d66423a26fa5a2940cc7228c33010a4de0))
+* **invoice:** add void method ([33aed19](https://github.com/Rytass/Utils/commit/33aed195eedb5bb96f60b1da197abe43991e0e97))
+
+
+
+
+
 ## [0.1.4](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ezpay@0.1.2...@rytass/invoice-adapter-ezpay@0.1.4) (2022-12-21)
 
 

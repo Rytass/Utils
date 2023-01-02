@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.19](https://github.com/Rytass/Utils/compare/@rytass/order-builder@0.0.18...@rytass/order-builder@0.0.19) (2023-01-02)
+
+
+### Bug Fixes
+
+* **order-builder:** fixed `StepValueDiscount` valid maximum value ([1f5ca37](https://github.com/Rytass/Utils/commit/1f5ca3721eb3aae7ca9974562e0e0ed246232288))
+* **order-builder:** fixed `ValueDiscount` valid maximum value ([25774a6](https://github.com/Rytass/Utils/commit/25774a6f7889c5c7c4019f13122ef57a41ea06b5))
+
+
+
+
+
 ## [0.0.18](https://github.com/Rytass/Utils/compare/@rytass/order-builder@0.0.17...@rytass/order-builder@0.0.18) (2022-10-17)
 
 

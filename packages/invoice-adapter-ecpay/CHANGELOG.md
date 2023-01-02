@@ -3,6 +3,24 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.13](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ecpay@0.1.12...@rytass/invoice-adapter-ecpay@0.1.13) (2023-01-02)
+
+
+### Bug Fixes
+
+* **invoice-adapter-ecpay:** add missing taxType for new interface of invoice ([98fb11b](https://github.com/Rytass/Utils/commit/98fb11b2be1a835e5536b86e659b7f480c59d6b4))
+
+
+### Features
+
+* **invoice-adapter-ecpay:** add allowance and invalidAllowance methods ([148b362](https://github.com/Rytass/Utils/commit/148b36207d068544cfc0a81b73cd9287b032b09b))
+* **invoice-adapter-ezpay:** add allowance and invalidAllowance methods ([7a3a21d](https://github.com/Rytass/Utils/commit/7a3a21d66423a26fa5a2940cc7228c33010a4de0))
+* **invoice:** add void method ([33aed19](https://github.com/Rytass/Utils/commit/33aed195eedb5bb96f60b1da197abe43991e0e97))
+
+
+
+
+
 ## [0.1.12](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ecpay@0.1.11...@rytass/invoice-adapter-ecpay@0.1.12) (2022-09-15)
 
 
