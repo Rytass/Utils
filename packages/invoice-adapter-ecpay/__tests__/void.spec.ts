@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 
-import { ECPayInvoice, ECPayInvoiceGateway, InvoiceState } from '../src';
+import { ECPayInvoice, ECPayInvoiceGateway, InvoiceState, TaxType } from '../src';
 import axios from 'axios';
 import { createDecipheriv, createCipheriv } from 'crypto';
 
@@ -104,6 +104,7 @@ describe('ECPayInvoiceGateway Void', () => {
       invoiceNumber: FAKE_INVOICE_NUMBER,
       randomCode: FAKE_RANDOM_CODE,
       orderId: FAKE_ORDER_ID,
+      taxType: TaxType.TAXED,
     });
 
     const voidedInvoice = await invoiceGateway.void(mockInvoice, {
@@ -124,6 +125,7 @@ describe('ECPayInvoiceGateway Void', () => {
       invoiceNumber: 'GG00148493',
       randomCode: FAKE_RANDOM_CODE,
       orderId: FAKE_ORDER_ID,
+      taxType: TaxType.TAXED,
     });
 
     expect(() => invoiceGateway.void(mockInvoice, {
@@ -143,6 +145,7 @@ describe('ECPayInvoiceGateway Void', () => {
         invoiceNumber: FAKE_INVOICE_NUMBER,
         randomCode: FAKE_RANDOM_CODE,
         orderId: FAKE_ORDER_ID,
+        taxType: TaxType.TAXED,
       });
 
       expect(() => invoiceGateway.void(mockInvoice, {
