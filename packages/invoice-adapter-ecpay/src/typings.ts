@@ -1,18 +1,12 @@
 import { CustomsMark, InvoiceAllowanceOptions, InvoiceCarrier, InvoiceIssueOptions, InvoicePaymentItem, InvoiceVoidOptions, SpecialTaxCode, TaxType } from '@rytass/invoice';
 import { ECPayInvoice } from '.';
 
-export enum ECPayInvoiceAllowanceNotificationTarget {
-  SMS = 'SMS',
-  EMAIL = 'EMAIL',
-}
-
 export interface ECPayInvoiceVoidOptions extends InvoiceVoidOptions {
   reason: string;
 }
 
 export interface ECPayInvoiceAllowanceOptions extends InvoiceAllowanceOptions {
   taxType?: Omit<TaxType, TaxType.MIXED | TaxType.SPECIAL>;
-  notificationTargets?: ECPayInvoiceAllowanceNotificationTarget[];
   buyerName?: string;
   notifyEmail?: string;
   notifyPhone?: string;

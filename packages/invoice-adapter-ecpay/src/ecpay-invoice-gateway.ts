@@ -12,7 +12,6 @@ import {
 import {
   ECPayAllowanceInvoiceResponseDecrypted,
   ECPayInvalidAllowanceInvoiceResponseDecrypted,
-  ECPayInvoiceAllowanceNotificationTarget,
   ECPayInvoiceAllowanceOptions,
   ECPayInvoiceAllowanceRequestBody,
   ECPayInvoiceGatewayOptions,
@@ -317,28 +316,23 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayInvoice> {
         InvoiceNo: invoice.invoiceNumber,
         InvoiceDate: DateTime.fromJSDate(invoice.issuedOn).toFormat('yyyy-MM-dd'),
         AllowanceNotify: (() => {
-          if (!options?.notificationTargets) return 'N';
-
-          if (~options.notificationTargets.indexOf(ECPayInvoiceAllowanceNotificationTarget.EMAIL)
-            && options.notifyEmail) {
-            if (~options.notificationTargets.indexOf(ECPayInvoiceAllowanceNotificationTarget.SMS)
-            && options.notifyPhone) {
+          if (options?.notifyEmail) {
+            if (options?.notifyPhone) {
               return 'A';
             }
 
             return 'E';
           }
 
-          if (~options.notificationTargets.indexOf(ECPayInvoiceAllowanceNotificationTarget.SMS)
-            && options.notifyPhone) {
-            return 'A';
+          if (options?.notifyPhone) {
+            return 'S';
           }
 
           return 'N';
         })(),
         CustomerName: options?.buyerName ?? '',
-        NotifyMail: ~(options?.notificationTargets ?? []).indexOf(ECPayInvoiceAllowanceNotificationTarget.EMAIL) && options?.notifyEmail ? options?.notifyEmail : '',
-        NotifyPhone: ~(options?.notificationTargets ?? []).indexOf(ECPayInvoiceAllowanceNotificationTarget.SMS) && options?.notifyPhone ? options?.notifyPhone : '',
+        NotifyMail: options?.notifyEmail,
+        NotifyPhone: options?.notifyPhone,
         AllowanceAmount: totalAmount,
         Items: allowanceItems.map((item, index) => ({
           ItemSeq: index + 1,
@@ -369,7 +363,7 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayInvoice> {
       const payload = this.decrypt<ECPayAllowanceInvoiceResponseDecrypted>(data.Data);
 
       if (payload.RtnCode !== ECPAY_INVOICE_SUCCESS_CODE) {
-        throw new Error('ECPay allowance failed');
+        throw new Error(`ECPay allowance failed: (${payload.RtnMsg})`);
       }
 
       const allowance = new ECPayInvoiceAllowance({
@@ -382,6 +376,8 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayInvoice> {
         status: InvoiceAllowanceState.ISSUED,
       });
 
+      invoice.addAllowance(allowance);
+
       return invoice;
     }
 
@@ -391,7 +387,7 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayInvoice> {
   async invalidAllowance(allowance: ECPayInvoiceAllowance, reason?: string): Promise<ECPayInvoice> {
     const now = Math.round(Date.now() / 1000);
 
-    const { data } = await axios.post<ECPayInvoiceVoidResponse>(`${this.baseUrl}/B2CInvoice/Allowance`, JSON.stringify({
+    const { data } = await axios.post<ECPayInvoiceVoidResponse>(`${this.baseUrl}/B2CInvoice/AllowanceInvalid`, JSON.stringify({
       MerchantID: this.merchantId,
       RqHeader: {
         Timestamp: now,
@@ -409,7 +405,7 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayInvoice> {
       const payload = this.decrypt<ECPayInvalidAllowanceInvoiceResponseDecrypted>(data.Data);
 
       if (payload.RtnCode !== ECPAY_INVOICE_SUCCESS_CODE) {
-        throw new Error('ECPay allowance failed');
+        throw new Error(`ECPay allowance failed: (${payload.RtnMsg})`);
       }
 
       allowance.invalid();
