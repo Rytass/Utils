@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.14](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ecpay@0.1.13...@rytass/invoice-adapter-ecpay@0.1.14) (2023-01-03)
+
+**Note:** Version bump only for package @rytass/invoice-adapter-ecpay
+
+
+
+
+
 ## [0.1.13](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ecpay@0.1.12...@rytass/invoice-adapter-ecpay@0.1.13) (2023-01-02)
 
 
