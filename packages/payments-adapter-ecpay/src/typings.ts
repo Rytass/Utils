@@ -126,6 +126,10 @@ enum ECPayOrderFormKey {
   CheckMacValue = 'CheckMacValue',
   ChooseSubPayment = 'ChooseSubPayment',
   StoreExpireDate = 'StoreExpireDate',
+  CustomField1 = 'CustomField1',
+  CustomField2 = 'CustomField2',
+  CustomField3 = 'CustomField3',
+  CustomField4 = 'CustomField4',
 }
 
 export type ECPayOrderForm = Record<ECPayOrderFormKey, string>;
@@ -481,11 +485,11 @@ export interface ECPayQueryResultPayload {
   MerchantTradeNo: string;
   StoreID: string;
   TradeNo: string;
-  TradeAmt: number;
+  TradeAmt: string;
   PaymentDate: string;
   PaymentType: ECPayCallbackPaymentType;
-  HandlingCharge: number;
-  PaymentTypeChargeFee: number;
+  HandlingCharge: string;
+  PaymentTypeChargeFee: string;
   TradeDate: string;
   TradeStatus: ECPayQueryResultStatus;
   ItemName: string;

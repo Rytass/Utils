@@ -456,13 +456,17 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
       PaymentType: 'aio',
       TotalAmount: totalAmount.toString(),
       TradeDesc: orderInput.description || '-',
-      ItemName: orderInput.items.map(item => `${item.name} x${item.quantity}`).join('#'),
+      ItemName: orderInput.items.map(item => `${item.name.replace(/#/g, '%23')} x${item.quantity}`).join('#'),
       ReturnURL: `${this.serverHost}${this.callbackPath}`,
       ChoosePayment: orderInput.channel ? ECPayChannel[orderInput.channel] : 'ALL',
       NeedExtraPaidInfo: 'Y',
       EncryptType: '1',
       OrderResultURL: orderInput.clientBackUrl || '',
       Language: this.language,
+      CustomField1: '',
+      CustomField2: '',
+      CustomField3: '',
+      CustomField4: orderInput.items.map(item => item.unitPrice).join('#'),
     } as Omit<ECPayOrderForm, 'CheckMacValue'>;
 
     if ((!orderInput.channel || orderInput.channel === Channel.CREDIT_CARD)) {
@@ -672,13 +676,20 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
       throw new Error('Invalid CheckSum');
     }
 
+    const unitPrices = (response.CustomField4 || '').split(/#/).filter(unitPrice => unitPrice !== '');
+    const items = response.ItemName.split(/#/).map((itemStr, index) => {
+      const [name, quantity] = itemStr.split(/\sx(\d+)$/);
+
+      return {
+        name: name.replace(/%23/g, '#'),
+        quantity: Number(quantity),
+        unitPrice: unitPrices[index] !== undefined ? Number(unitPrices[index]) : (index === 0 ? Number(response.TradeAmt) : 0),
+      };
+    });
+
     return new ECPayOrder({
       id: response.MerchantTradeNo,
-      items: [{
-        name: ECPayOrder.FAKE_ITEM,
-        unitPrice: response.TradeAmt,
-        quantity: 1,
-      }],
+      items,
       gateway: this,
       createdAt: DateTime.fromFormat(response.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
       committedAt: response.PaymentDate ? DateTime.fromFormat(response.PaymentDate, 'yyyy/MM/dd HH:mm:ss').toJSDate() : null,

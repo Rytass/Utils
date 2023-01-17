@@ -100,6 +100,8 @@ export interface Order<OCM extends OrderCommitMessage> extends PrepareOrderInput
   infoRetrieved<T extends OCM>(asyncInformation: AsyncOrderInformation<T>): void;
   fail(code: number, message: string): void;
   commit<T extends OCM>(message: T, additionalInfo?: AdditionalInfo<T>): void;
+
+  refund(amount?: number): Promise<void>;
 }
 
 type InputFromOrderCommitMessage<OCM extends OrderCommitMessage> = PrepareOrderInput;
@@ -186,6 +188,7 @@ export enum OrderState {
   ASYNC_INFO_RETRIEVED = 'ASYNC_INFO_RETRIEVED', // Async Payment Infomation Retrived (ATM/CVS/Barcode...)
   COMMITTED = 'COMMITTED', // Fulfilled
   FAILED = 'FAILED',
+  REFUNDED = 'REFUNDED',
 }
 
 export interface OrderFailMessage {

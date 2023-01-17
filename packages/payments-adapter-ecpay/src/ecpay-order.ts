@@ -3,8 +3,6 @@ import { ECPayPayment, ECPayOrderItem, ECPayCallbackPaymentType, ECPayCommitMess
 import { ECPayChannel } from './constants';
 
 export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
-  static FAKE_ITEM = 'RP_FAKE_ITEM';
-
   private readonly _id: string;
 
   private readonly _items: ECPayOrderItem[];
@@ -215,6 +213,10 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
     this._state = OrderState.COMMITTED;
 
     this.gateway.emitter.emit(PaymentEvents.ORDER_COMMITTED, this);
+  }
+
+  async refund(amount?: number): Promise<void> {
+
   }
 }
 
