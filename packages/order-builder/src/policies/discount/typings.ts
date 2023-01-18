@@ -10,6 +10,7 @@ export enum Discount {
   STEP_VALUE = 'STEP_VALUE',
   STEP_PERCENTAGE = 'STEP_PERCENTAGE',
   ITEM_GIVEAWAY = 'ITEM_GIVEAWAY',
+  STEP_ITEM_GIVEAWAY = 'STEP_ITEM_GIVEAWAY',
 }
 
 export type PolicyDiscountDescription<
@@ -36,3 +37,5 @@ export type StepDiscountOptions<T extends ObjRecord = ObjRecord> = DiscountOptio
   stepUnit: 'quantity' | 'price';
   stepLimit?: number;
 } & T>
+
+export type ItemGiveawayStrategy = 'LOW_PRICE_FIRST' | 'HIGH_PRICE_FIRST';

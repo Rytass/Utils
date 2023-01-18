@@ -1,15 +1,16 @@
 import { Condition } from '../../conditions';
 import { FlattenOrderItem } from '../../core';
 import { Order } from '../../core/order';
-import { plus, times } from '../../utils/decimal';
+import { ObjRecord } from '../../typings';
+import { divided, minus, plus, times } from '../../utils/decimal';
 import { PolicyPrefix } from '../typings';
 import { generateNewPolicyId } from '../utils';
 import { BaseDiscount } from './base-discount';
 import {
   Discount,
-  DiscountOptions,
   ItemGiveawayStrategy,
   PolicyDiscountDescription,
+  DiscountOptions,
 } from './typings';
 import {
   getConditionsByDiscountConstructor,
@@ -18,66 +19,82 @@ import {
   getOrderItems,
 } from './utils';
 
-interface ItemGiveawayDiscountOptions extends DiscountOptions {
-  strategy?: ItemGiveawayStrategy;
-}
+type StepItemGiveawayDiscountOptions<T extends ObjRecord = ObjRecord> =
+  DiscountOptions<
+    {
+      stepLimit?: number;
+      strategy?: ItemGiveawayStrategy;
+    } & T
+  >;
 
 /**
  * A policy on `giveaway items` based on item-give-away-strategy.
  * @param {Number} value `Number` Quantity of giveaway items.
  * @returns {Policy} Policy
  */
-export class ItemGiveawayDiscount implements BaseDiscount {
+export class StepItemGiveawayDiscount implements BaseDiscount {
   readonly prefix = PolicyPrefix.DISCOUNT;
-  readonly type = Discount.ITEM_GIVEAWAY;
+  readonly type = Discount.STEP_ITEM_GIVEAWAY;
   readonly id: string;
+  readonly step: number;
   readonly value: number;
   readonly strategy: ItemGiveawayStrategy;
   readonly conditions: Condition[];
-  readonly options?: ItemGiveawayDiscountOptions;
+  readonly options?: StepItemGiveawayDiscountOptions;
 
+  /**
+   * @param {Number} step step to accumulate discount-value
+   * @param {Number} value `Number` Quantity of giveaway items.
+   * @param {StepItemGiveawayDiscountOptions} options StepItemGiveawayDiscountOptions
+   * @returns {Policy} Policy
+   */
+  constructor(
+    step: number,
+    value: number,
+    options: StepItemGiveawayDiscountOptions
+  );
   /**
    * @param {Number} value `Number` Quantity of giveaway items.
    * @param {Array} conditions Condition[]
-   * @param {ItemGiveawayDiscountOptions} options ItemGiveawayDiscountOptions
+   * @param {StepItemGiveawayDiscountOptions} options StepItemGiveawayDiscountOptions
    * @returns {Policy} Policy
    */
   constructor(
+    step: number,
     value: number,
     conditions: Condition[],
-    options?: ItemGiveawayDiscountOptions
+    options?: StepItemGiveawayDiscountOptions
   );
   /**
+   * @param {Number} step step to accumulate discount-value
    * @param {Number} value `Number` Quantity of giveaway items.
    * @param {Condition} condition Condition
-   * @param {ItemGiveawayDiscountOptions} options ItemGiveawayDiscountOptions
+   * @param {StepItemGiveawayDiscountOptions} options StepItemGiveawayDiscountOptions
    * @returns {Policy} Policy
    */
   constructor(
+    step: number,
     value: number,
     condition: Condition,
-    options?: ItemGiveawayDiscountOptions
+    options?: StepItemGiveawayDiscountOptions
   );
   /**
-   * @param {Number} value `Number` Quantity of giveaway items.
-   * @param {ItemGiveawayDiscountOptions} options ItemGiveawayDiscountOptions
-   * @returns {Policy} Policy
-   */
-  constructor(value: number, options: ItemGiveawayDiscountOptions);
-  /**
+   * @param {Number} step step to accumulate discount-value
    * @param {Number} value `Number` Quantity of giveaway items.
    * @returns {Policy} Policy
    */
-  constructor(value: number);
+  constructor(step: number, value: number);
   constructor(
+    step: number,
     value: number,
-    arg1?: Condition | Condition[] | ItemGiveawayDiscountOptions,
-    arg2?: ItemGiveawayDiscountOptions
+    arg1?: StepItemGiveawayDiscountOptions | Condition | Condition[],
+    arg2?: StepItemGiveawayDiscountOptions
   ) {
     this.options = getOptionsByDiscountConstructor(arg1, arg2);
     this.strategy = this.options?.strategy ?? 'LOW_PRICE_FIRST';
     this.id = this.options?.id || generateNewPolicyId();
-    this.value = value;
+    this.value = Math.floor(value);
+    this.step = Math.floor(step);
     this.conditions = getConditionsByDiscountConstructor(arg1);
   }
 
@@ -96,9 +113,7 @@ export class ItemGiveawayDiscount implements BaseDiscount {
   }
 
   discount(giveawayItemValue: number): number {
-    return this.options?.excludedInCalculation
-      ? 0
-      : giveawayItemValue;
+    return this.options?.excludedInCalculation ? 0 : giveawayItemValue;
   }
 
   description(
@@ -124,6 +139,14 @@ export class ItemGiveawayDiscount implements BaseDiscount {
   ): PolicyDiscountDescription[] {
     if (this.valid(order)) {
       const matchedItems: FlattenOrderItem[] = this.matchedItems(order);
+
+      const stepLimit = Math.min(
+        this.options?.stepLimit || Number.MAX_SAFE_INTEGER,
+        Math.floor(divided(matchedItems.length, this.step + this.value))
+      );
+
+      const effectTimes = times(this.value, stepLimit);
+
       const giveawayItems = matchedItems
         // sort by giveaway strategy
         .sort((a, b) => {
@@ -136,7 +159,7 @@ export class ItemGiveawayDiscount implements BaseDiscount {
           }
         })
         // pick matched-giveaway-items quantity by given quantity (this.value)
-        .slice(0, this.value);
+        .slice(0, effectTimes);
 
       const giveawayItemValue = order.config.roundStrategy.round(
         // original giveawayItem
