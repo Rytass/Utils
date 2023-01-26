@@ -18,6 +18,7 @@
     "build:clean": "node ../../scripts/cleanBuild.js",
     "build": "npm run build:clean && node ../../scripts/build.js"
   },
+  "main": "./lib/index.cjs.js",
   "bugs": {
     "url": "https://github.com/Rytass/Utils/issues"
   },
@@ -31,6 +32,7 @@
   "devDependencies": {
     "@types/debug": "^4.1.7",
     "@types/lru-cache": "^7.10.10",
-    "@types/luxon": "^2.3.2"
+    "@types/luxon": "^2.3.2",
+    "ngrok": "^4.3.3"
   }
 }

@@ -10,6 +10,7 @@ module.exports = {
   },
   moduleFileExtensions: ['js', 'json', 'ts', 'tsx', 'node'],
   moduleNameMapper: {
+    '^uuid$': 'uuid',
     '@rytass/([a-zA-Z-_/]*)$': '<rootDir>/packages/$1/src',
   },
   modulePathIgnorePatterns: ['/lib/'],

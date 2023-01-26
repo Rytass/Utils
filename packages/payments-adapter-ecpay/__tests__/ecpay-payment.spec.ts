@@ -34,6 +34,30 @@ describe('ECPayPayment', () => {
     return mockServer;
   });
 
+  describe('Waiting withServer mode server listen', () => {
+    it('should reject prepare on server not ready', (done) => {
+      const payment = new ECPayPayment({
+        withServer: true,
+        onServerListen: () => {
+          payment._server?.close(done);
+        },
+      });
+
+      expect(() => payment.prepare<ECPayChannelCreditCard>({
+        channel: Channel.CREDIT_CARD,
+        items: [{
+          name: 'Test',
+          unitPrice: 10,
+          quantity: 1,
+        }, {
+          name: '中文',
+          unitPrice: 15,
+          quantity: 4,
+        }],
+      })).toThrow();
+    });
+  });
+
   // Form Page HTML
   describe('Generate Form Page HTML', () => {
     const payment = new ECPayPayment();

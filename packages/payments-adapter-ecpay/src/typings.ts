@@ -14,12 +14,14 @@ export interface ECPayInitOptions<O extends ECPayOrder<ECPayCommitMessage>> {
   callbackPath?: string;
   asyncInfoPath?: string;
   checkoutPath?: string;
-  withServer?: boolean;
+  withServer?: boolean | 'ngrok';
   serverListener?: (req: IncomingMessage, res: ServerResponse) => void;
   ttl?: number; // Order Expire Time is ms
   onCommit?: (order: O) => void;
   onInfoRetrieved?: (order: O) => void;
   onServerListen?: () => void;
+  creditCheckCode?: number; // For credit card refund
+  emulateRefund?: boolean,
 }
 
 export interface ECPayCreditCardOrderInput extends PrepareOrderInput {
@@ -218,7 +220,7 @@ export interface ECPayCallbackCreditPayload extends ECPayCallbackPayload {
   CustomField3: string;
   CustomField4: string;
   CheckMacValue: string;
-  gwsr: number; // Authentication Code
+  gwsr: string; // Authentication Code
   process_date: string;
   auth_code: string; // Credit Card Auth Code (6 digits)
   amount: number;
@@ -498,6 +500,19 @@ export interface ECPayQueryResultPayload {
   CustomField3: string;
   CustomField4: string;
   CheckMacValue: string;
+  amount: string;
+  auth_code: string;
+  card4no: string;
+  card6no: string;
+  ATMAccBank: string;
+  ATMAccNo: string;
+  eci: string;
+  ExecTimes: string;
+  Frequency: string;
+  gwsr: string;
+  HandlingChange: string;
+  process_date: string;
+  PayFrom: string;
 }
 
 export enum Language {
@@ -506,6 +521,63 @@ export enum Language {
   JAPANESE = 'JPN',
   SIMPLIFIED_CHINESE = 'CHI',
   TRADITIONAL_CHINESE = '',
+}
+
+export enum ECPayCreditCardOrderStatus {
+  CLOSED = '已關帳',
+  CANCELLED = '已取消',
+  MANUALLY_CANCELLED = '操作取消',
+  UNAUTHORIZED = '未授權',
+  AUTHORIZED = '已授權',
+}
+
+export enum ECPayCredirCardOrderCloseStatus {
+  PREPARE = '要關帳',
+  COMMITTED = '已關帳',
+  CANCELLED = '已取消',
+  MANUALLY_CANCELLED = '操作取消',
+}
+
+export interface ECPayOrderDoActionResponse {
+  MerchantID: string;
+  MerchantTradeNo: string;
+  TradeNo: string;
+  RtnCode: number;
+  RtnMsg: string;
+}
+
+export interface ECPayCreditCardDetailQueryResponse {
+  RtnMsg: string;
+  RtnValue: {
+    TradeID: string;
+    amount: string;
+    clsamt: string;
+    authtime: string;
+    status: ECPayCreditCardOrderStatus;
+    close_data: {
+      status: ECPayCredirCardOrderCloseStatus;
+      sno: string;
+      amount: string;
+      datetime: string;
+    }[];
+  };
+}
+
+export interface ECPayOrderActionPayload extends Record<string, string> {
+  MerchantID: string;
+  MerchantTradeNo: string;
+  TradeNo: string;
+  Action: 'R' | 'N';
+  TotalAmount: string;
+  CheckMacValue: string;
+}
+
+export interface ECPayCreditCardDetailQueryPayload extends Record<string, string> {
+  MerchantID: string;
+  CreditRefundedId: string;
+  CreditAmount: string;
+  CreditCheckCode: string;
+  CheckMacValue: string;
 }
 
 export interface ECPayQueryOrderPayload extends Record<string, string> {

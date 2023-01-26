@@ -1,12 +1,13 @@
 import { createHash, randomBytes } from 'crypto';
-import { PaymentGateway, PaymentEvents, Channel, PaymentPeriodType, CVSInfo, VirtualAccountInfo, CreditCardAuthInfo, BarcodeInfo, VistualAccountPaymentInfo, OrderState, CVSPaymentInfo } from '@rytass/payments';
+import { PaymentGateway, PaymentEvents, Channel, PaymentPeriodType, CVSInfo, VirtualAccountInfo, CreditCardAuthInfo, BarcodeInfo, VistualAccountPaymentInfo, OrderState, CVSPaymentInfo, AdditionalInfo } from '@rytass/payments';
 import { DateTime } from 'luxon';
 import LRUCache from 'lru-cache';
 import axios from 'axios';
 import { createServer, IncomingMessage, ServerResponse, Server } from 'http';
 import debug from 'debug';
+import ngrok from 'ngrok';
 import { EventEmitter } from 'events';
-import { ECPayCallbackCreditPayload, ECPayCallbackPayload, ECPayCallbackPaymentType, ECPayCommitMessage, ECPayOrderCreditCardCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayQueryResultPayload, ECPayOrderVirtualAccountCommitMessage, Language, GetOrderInput, ECPayCreditCardOrderInput, ECPayQueryOrderPayload, ECPayOrderCVSCommitMessage, ECPayOrderBarcodeCommitMessage, ECPayAsyncInformationBarcodePayload, ECPayAsyncInformationCVSPayload, ECPayAsyncInformationVirtualAccountPayload, ECPayAsyncInformationPayload, ECPayCallbackVirtualAccountPayload, ECPayCallbackCVSPayload, ECPayCallbackBarcodePayload } from './typings';
+import { ECPayCallbackCreditPayload, ECPayCallbackPayload, ECPayCallbackPaymentType, ECPayCommitMessage, ECPayOrderCreditCardCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayQueryResultPayload, ECPayOrderVirtualAccountCommitMessage, Language, GetOrderInput, ECPayCreditCardOrderInput, ECPayQueryOrderPayload, ECPayOrderCVSCommitMessage, ECPayOrderBarcodeCommitMessage, ECPayAsyncInformationBarcodePayload, ECPayAsyncInformationCVSPayload, ECPayAsyncInformationVirtualAccountPayload, ECPayAsyncInformationPayload, ECPayCallbackVirtualAccountPayload, ECPayCallbackCVSPayload, ECPayCallbackBarcodePayload, ECPayCreditCardDetailQueryPayload, ECPayCreditCardDetailQueryResponse, ECPayCreditCardOrderStatus, ECPayCredirCardOrderCloseStatus, ECPayOrderActionPayload, ECPayOrderDoActionResponse } from './typings';
 import { ECPayChannel, ECPayCVS, ECPayPaymentPeriodType, NUMERIC_CALLBACK_KEYS } from './constants';
 import { ECPayOrder } from './ecpay-order';
 
@@ -25,11 +26,17 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
   private asyncInfoPath = '/payments/ecpay/async-informations';
   private checkoutPath = '/payments/ecpay/checkout';
 
+  private isGatewayReady = false;
+  private creditCheckCode: number | null = null;
+  private emulateRefund = false;
+
   readonly emitter = new EventEmitter();
 
   private serverListener: (req: IncomingMessage, res: ServerResponse) => void = (req, res) => this.defaultServerListener(req, res);
 
   private pendingOrdersCache: LRUCache<string, ECPayOrder<CM>>;
+
+  private emaluateRefundedOrder = new Set<string>();
 
   _server?: Server;
 
@@ -44,11 +51,15 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
     this.callbackPath = options?.callbackPath || this.callbackPath;
     this.asyncInfoPath = options?.asyncInfoPath || this.asyncInfoPath;
     this.checkoutPath = options?.checkoutPath || this.checkoutPath;
+    this.creditCheckCode = options?.creditCheckCode ?? null;
+    this.emulateRefund = !!options?.emulateRefund;
 
     if (options?.withServer) {
       this.serverListener = options?.serverListener || this.serverListener;
 
-      this.createServer();
+      this.createServer(options.withServer === 'ngrok');
+    } else {
+      this.isGatewayReady = true;
     }
 
     if (typeof options?.onCommit === 'function') {
@@ -60,6 +71,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
     }
 
     if (typeof options?.onServerListen === 'function') {
+      this.emitter.on(PaymentEvents.SERVER_LISTENED, () => { this.isGatewayReady = true; });
       this.emitter.on(PaymentEvents.SERVER_LISTENED, options.onServerListen);
     }
 
@@ -115,15 +127,25 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
     return true;
   }
 
-  private createServer() {
+  private createServer(useNgrok: boolean) {
     const url = new URL(this.serverHost);
 
     this._server = createServer((req, res) => this.serverListener(req, res));
 
-    this._server.listen(Number(url.port || 3000), '0.0.0.0', () => {
-      this.emitter.emit(PaymentEvents.SERVER_LISTENED);
+    const port = Number(url.port || 3000);
 
-      debugPayment(`ECPayment Callback Server Listen on port ${url.port || 3000}`);
+    this._server.listen(port, '0.0.0.0', async () => {
+      if (useNgrok) {
+        const ngrokUrl = await ngrok.connect(port);
+
+        this.serverHost = ngrokUrl;
+
+        debugPayment(`ECPayment Callback Server Listen on port ${port} with ngrok url: ${ngrokUrl}`);
+      } else {
+        debugPayment(`ECPayment Callback Server Listen on port ${port}`);
+      }
+
+      this.emitter.emit(PaymentEvents.SERVER_LISTENED);
     });
   }
 
@@ -137,6 +159,8 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
         const order = this.pendingOrdersCache.get(orderId);
 
         if (order) {
+          debugPayment(`ECPayment serve checkout page for order ${orderId}`);
+
           res.writeHead(200, {
             'Content-Type': 'text/html',
           });
@@ -198,10 +222,14 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
       try {
         switch (req.url) {
           case this.asyncInfoPath:
+            debugPayment(`ECPayment handled async information for order ${payload.MerchantTradeNo}`);
+
             this.handleAsyncInformation(order, payload);
             break;
 
           case this.callbackPath:
+            debugPayment(`ECPayment handled payment result for order ${payload.MerchantTradeNo}`)
+
             this.handlePaymentResult(order, payload);
             break;
         }
@@ -316,6 +344,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
           eci: creditCardInfo.eci,
           card4Number: creditCardInfo.card4no,
           card6Number: creditCardInfo.card6no,
+          gwsr: creditCardInfo.gwsr,
         } as CreditCardAuthInfo);
 
         break;
@@ -408,6 +437,10 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
   }
 
   prepare<P extends CM>(orderInput: GetOrderInput<P>): ECPayOrder<P> {
+    if (!this.isGatewayReady) {
+      throw new Error('Please waiting gateway ready');
+    }
+
     if (orderInput.channel && orderInput.channel !== Channel.CREDIT_CARD && (orderInput as ECPayCreditCardOrderInput).memory) {
       throw new Error('`memory` only use on credit card channel');
     }
@@ -655,6 +688,10 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
   }
 
   async query<T extends ECPayOrder<ECPayCommitMessage>>(id: string): Promise<T> {
+    if (!this.isGatewayReady) {
+      throw new Error('Please waiting gateway ready');
+    }
+
     const date = new Date();
 
     const payload = this.addMac<ECPayQueryOrderPayload>({
@@ -687,19 +724,182 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
       };
     });
 
-    return new ECPayOrder({
-      id: response.MerchantTradeNo,
-      items,
-      gateway: this,
-      createdAt: DateTime.fromFormat(response.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
-      committedAt: response.PaymentDate ? DateTime.fromFormat(response.PaymentDate, 'yyyy/MM/dd HH:mm:ss').toJSDate() : null,
-      platformTradeNumber: response.MerchantTradeNo,
-      paymentType: response.PaymentType,
-      status: response.TradeStatus,
-    }) as T;
+    switch (response.PaymentType) {
+      case ECPayCallbackPaymentType.CREDIT_CARD:
+        return new ECPayOrder<ECPayOrderCreditCardCommitMessage>({
+          id: response.MerchantTradeNo,
+          items,
+          gateway: this as ECPayPayment<ECPayCommitMessage>,
+          createdAt: DateTime.fromFormat(response.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+          committedAt: response.PaymentDate ? DateTime.fromFormat(response.PaymentDate, 'yyyy/MM/dd HH:mm:ss').toJSDate() : null,
+          platformTradeNumber: response.MerchantTradeNo,
+          paymentType: response.PaymentType,
+          status: response.TradeStatus,
+        }, {
+          channel: Channel.CREDIT_CARD,
+          processDate: DateTime.fromFormat(response.process_date, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+          authCode: response.auth_code,
+          amount: Number(response.amount),
+          eci: response.eci,
+          card4Number: response.card4no,
+          card6Number: response.card6no,
+          gwsr: response.gwsr,
+        } as CreditCardAuthInfo) as T;
+
+      case ECPayCallbackPaymentType.ATM_BOT:
+      case ECPayCallbackPaymentType.ATM_CHINATRUST:
+      case ECPayCallbackPaymentType.ATM_FIRST:
+      case ECPayCallbackPaymentType.ATM_LAND:
+      case ECPayCallbackPaymentType.ATM_TACHONG:
+      case ECPayCallbackPaymentType.ATM_PANHSIN:
+        return new ECPayOrder<ECPayOrderVirtualAccountCommitMessage>({
+          id: response.MerchantTradeNo,
+          items,
+          gateway: this as ECPayPayment<ECPayCommitMessage>,
+          createdAt: DateTime.fromFormat(response.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+          committedAt: response.PaymentDate ? DateTime.fromFormat(response.PaymentDate, 'yyyy/MM/dd HH:mm:ss').toJSDate() : null,
+          platformTradeNumber: response.MerchantTradeNo,
+          paymentType: response.PaymentType,
+          status: response.TradeStatus,
+        }, {
+          channel: Channel.VIRTUAL_ACCOUNT,
+          buyerAccountNumber: response.ATMAccNo,
+          buyerBankCode: response.ATMAccBank,
+        } as VistualAccountPaymentInfo) as T;
+
+      case ECPayCallbackPaymentType.CVS:
+      case ECPayCallbackPaymentType.CVS_FAMILY:
+      case ECPayCallbackPaymentType.CVS_HILIFE:
+      case ECPayCallbackPaymentType.CVS_IBON:
+      case ECPayCallbackPaymentType.CVS_OK:
+        return new ECPayOrder<ECPayOrderCVSCommitMessage>({
+          id: response.MerchantTradeNo,
+          items,
+          gateway: this as ECPayPayment<ECPayCommitMessage>,
+          createdAt: DateTime.fromFormat(response.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+          committedAt: response.PaymentDate ? DateTime.fromFormat(response.PaymentDate, 'yyyy/MM/dd HH:mm:ss').toJSDate() : null,
+          platformTradeNumber: response.MerchantTradeNo,
+          paymentType: response.PaymentType,
+          status: response.TradeStatus,
+        }, {
+          channel: Channel.CVS_KIOSK,
+          cvsPayFrom: ECPayCVS[response.PayFrom],
+        }) as T;
+
+      default:
+        return new ECPayOrder({
+          id: response.MerchantTradeNo,
+          items,
+          gateway: this,
+          createdAt: DateTime.fromFormat(response.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+          committedAt: response.PaymentDate ? DateTime.fromFormat(response.PaymentDate, 'yyyy/MM/dd HH:mm:ss').toJSDate() : null,
+          platformTradeNumber: response.MerchantTradeNo,
+          paymentType: response.PaymentType,
+          status: response.TradeStatus,
+        }) as T
+    }
   }
 
   getCheckoutUrl(order: ECPayOrder<ECPayCommitMessage>) {
     return `${this.serverHost}${this.checkoutPath}/${order.id}`;
+  }
+
+  private getEmulatedCreditCardTradeStatusResponse(gwsr: string, amount: number): ECPayCreditCardDetailQueryResponse {
+    if (this.emaluateRefundedOrder.has(gwsr)) {
+      return {
+        RtnMsg: '',
+        RtnValue: {
+          TradeID: Date.now().toString(),
+          amount: amount.toString(),
+          clsamt: amount.toString(),
+          authtime: DateTime.local().toFormat('yyyy/M/dd tt'),
+          status: ECPayCreditCardOrderStatus.CLOSED,
+          close_data: [
+            {
+              status: ECPayCredirCardOrderCloseStatus.COMMITTED,
+              sno: Date.now().toString(),
+              amount: amount.toString(),
+              datetime: DateTime.local().toFormat('yyyy/M/dd tt'),
+            },
+          ],
+        },
+      };
+    }
+
+    this.emaluateRefundedOrder.add(gwsr);
+
+    return {
+      RtnMsg: '',
+      RtnValue: {
+        TradeID: Date.now().toString(),
+        amount: amount.toString(),
+        clsamt: amount.toString(),
+        authtime: DateTime.local().toFormat('yyyy/M/dd tt'),
+        status: ECPayCreditCardOrderStatus.CLOSED,
+        close_data: [
+          {
+            status: ECPayCredirCardOrderCloseStatus.COMMITTED,
+            sno: Date.now().toString(),
+            amount: amount.toString(),
+            datetime: DateTime.local().toFormat('yyyy/M/dd tt'),
+          },
+        ],
+      },
+    };
+  }
+
+  async getCreditCardTradeStatus(gwsr: string, amount: number): Promise<ECPayCreditCardOrderStatus> {
+    if (!this.isGatewayReady) {
+      throw new Error('Please waiting gateway ready');
+    }
+
+    if (!this.creditCheckCode) {
+      throw new Error('Please provide creditCheckCode retrived from ECPay admin');
+    }
+
+    const payload = this.addMac<ECPayCreditCardDetailQueryPayload>({
+      MerchantID: this.merchantId,
+      CreditRefundId: gwsr,
+      CreditAmount: amount.toString(),
+      CreditCheckCode: this.creditCheckCode.toString(),
+    });
+
+    const result = this.emulateRefund ? this.getEmulatedCreditCardTradeStatusResponse(gwsr, amount) : await axios.post<ECPayCreditCardDetailQueryResponse>(`${this.baseUrl}/CreditDetail/QueryTrade/V2`, new URLSearchParams(payload).toString());
+
+    return (result as ECPayCreditCardDetailQueryResponse).RtnValue?.status;
+  }
+
+  private getEmulatedOrderActionResponse(merchantId: string, merchantTradeNo: string, tradeNo: string): ECPayOrderDoActionResponse {
+    return {
+      MerchantID: merchantId,
+      MerchantTradeNo: merchantTradeNo,
+      TradeNo: tradeNo,
+      RtnCode: 1,
+      RtnMsg: '',
+    };
+  }
+
+  async doOrderAction(order: ECPayOrder<ECPayCommitMessage>, action: 'R' | 'N', amount: number): Promise<void> {
+    if (!this.isGatewayReady) {
+      throw new Error('Please waiting gateway ready');
+    }
+
+    const payload = this.addMac<ECPayOrderActionPayload>({
+      MerchantID: this.merchantId,
+      MerchantTradeNo: order.id,
+      TradeNo: order.platformTradeNumber as string,
+      Action: action,
+      TotalAmount: amount.toString(),
+    });
+
+    const result = this.emulateRefund ? this.getEmulatedOrderActionResponse(
+      this.merchantId,
+      order.id,
+      order.platformTradeNumber as string,
+    ) : await axios.post<ECPayOrderDoActionResponse>(`${this.baseUrl}/CreditDetail/DoAction`, new URLSearchParams(payload).toString());
+
+    if ((result as ECPayOrderDoActionResponse).RtnCode !== 1) {
+      throw new Error((result as ECPayOrderDoActionResponse).RtnMsg || 'Unknown error');
+    }
   }
 }

@@ -11,6 +11,11 @@ export type {
   ECPayCommitMessage,
   ECPayChannelCreditCard,
   ECPayChannelVirtualAccount,
+  ECPayOrderCreditCardCommitMessage,
+  ECPayOrderVirtualAccountCommitMessage,
+  ECPayOrderCVSCommitMessage,
+  ECPayOrderBarcodeCommitMessage,
+  ECPayOrderApplePayCommitMessage,
 } from './typings';
 
 export { ECPayPayment } from './ecpay-payment';

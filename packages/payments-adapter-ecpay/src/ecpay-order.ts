@@ -1,6 +1,7 @@
-import { AdditionalInfo, AsyncOrderInformation, Channel, Order, OrderFailMessage, OrderState, PaymentEvents } from '@rytass/payments';
+import { AdditionalInfo, AsyncOrderInformation, Channel, CreditCardAuthInfo, Order, OrderFailMessage, OrderState, PaymentEvents } from '@rytass/payments';
 import { ECPayPayment, ECPayOrderItem, ECPayCallbackPaymentType, ECPayCommitMessage, ECPayOrderForm, ECPayQueryResultStatus, OrderCreateInit, OrderFromServerInit } from '.';
 import { ECPayChannel } from './constants';
+import { ECPayCreditCardOrderStatus } from './typings';
 
 export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
   private readonly _id: string;
@@ -29,7 +30,7 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
 
   private _failedMessage: string | undefined;
 
-  constructor(options: OrderCreateInit<OCM> | OrderFromServerInit<OCM>) {
+  constructor(options: OrderCreateInit<OCM> | OrderFromServerInit<OCM>, additionalInfo?: AdditionalInfo<OCM>) {
     this._id = options.id;
     this._items = options.items.map(item => new ECPayOrderItem(item));
     this.gateway = options.gateway;
@@ -70,6 +71,8 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
         }
       })();
     }
+
+    this._additionalInfo = additionalInfo;
   }
 
   get id() {
@@ -216,7 +219,39 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
   }
 
   async refund(amount?: number): Promise<void> {
+    if (this._paymentType !== ECPayCallbackPaymentType.CREDIT_CARD) {
+      throw new Error('Only credit card payment can be refunded');
+    }
 
+    if (!(this._additionalInfo as CreditCardAuthInfo)?.gwsr) {
+      throw new Error('Cannot fetch gwsr from ECPay');
+    }
+
+    const creditCardStatus = await this.gateway.getCreditCardTradeStatus((this._additionalInfo as CreditCardAuthInfo).gwsr, amount || this.totalPrice);
+
+    const refundAction = (() => {
+      switch (creditCardStatus) {
+        case ECPayCreditCardOrderStatus.CLOSED:
+          return 'R';
+
+        case ECPayCreditCardOrderStatus.AUTHORIZED:
+          return 'N';
+
+        case ECPayCreditCardOrderStatus.UNAUTHORIZED:
+          throw new Error('Unauthorized order cannot be refunded');
+
+        case ECPayCreditCardOrderStatus.CANCELLED:
+        case ECPayCreditCardOrderStatus.MANUALLY_CANCELLED:
+          throw new Error('Order already cancelled');
+
+        default:
+          throw new Error('Invalid Status');
+      }
+    })();
+
+    await this.gateway.doOrderAction(this, refundAction, amount || this.totalPrice);
+
+    this._state = OrderState.REFUNDED;
   }
 }
 

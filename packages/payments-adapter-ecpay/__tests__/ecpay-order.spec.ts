@@ -43,46 +43,32 @@ describe('ECPayOrder', () => {
   });
 
   it('should get valid checkout url', (done) => {
-    let finishable = false;
-
     const paymentWithServer = new ECPayPayment({
       withServer: true,
       serverHost: 'http://localhost:3001',
       onServerListen: () => {
-        if (finishable) {
-          paymentWithServer._server?.close(() => {
-            done();
-          });
-        } else {
-          finishable = true;
-        }
+        const withServerOrder = paymentWithServer.prepare<ECPayChannelCreditCard>({
+          channel: Channel.CREDIT_CARD,
+          items: [{
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          }, {
+            name: '中文',
+            unitPrice: 15,
+            quantity: 4,
+          }],
+        });
+
+        const re = new RegExp(`${withServerOrder.id}$`);
+
+        expect(withServerOrder.checkoutURL).toMatch(re);
+
+        paymentWithServer._server?.close(() => {
+          done();
+        });
       },
     });
-
-    const withServerOrder = paymentWithServer.prepare<ECPayChannelCreditCard>({
-      channel: Channel.CREDIT_CARD,
-      items: [{
-        name: 'Test',
-        unitPrice: 10,
-        quantity: 1,
-      }, {
-        name: '中文',
-        unitPrice: 15,
-        quantity: 4,
-      }],
-    });
-
-    const re = new RegExp(`${withServerOrder.id}$`);
-
-    expect(withServerOrder.checkoutURL).toMatch(re);
-
-    if (finishable) {
-      paymentWithServer._server?.close(() => {
-        done();
-      });
-    }
-
-    finishable = true;
   });
 
   describe('Order Commit', () => {

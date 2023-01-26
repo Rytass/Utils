@@ -150,6 +150,7 @@ export interface CreditCardAuthInfo {
   eci: CreditCardECI;
   card4Number: string;
   card6Number: string;
+  gwsr: string;
 }
 
 export interface VistualAccountPaymentInfo {

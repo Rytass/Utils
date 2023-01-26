@@ -20,5 +20,6 @@
   },
   "bugs": {
     "url": "https://github.com/Rytass/Utils/issues"
-  }
+  },
+  "main": "lib/index.cjs.js"
 }
