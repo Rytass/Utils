@@ -2,11 +2,11 @@
  * @jest-environment node
  */
 
-import { Channel, CreditCardAuthInfo, OrderState } from '@rytass/payments';
+import { Channel, CVS, OrderState } from '@rytass/payments';
 import axios from 'axios';
 import { createHash } from 'crypto';
 import { DateTime } from 'luxon';
-import { ECPayCommitMessage, ECPayPayment, ECPayOrder, ECPayCallbackPaymentType, ECPayOrderCreditCardCommitMessage, ECPayOrderVirtualAccountCommitMessage } from '../src';
+import { ECPayCommitMessage, ECPayPayment, ECPayOrder, ECPayCallbackPaymentType, ECPayOrderCreditCardCommitMessage, ECPayOrderVirtualAccountCommitMessage, ECPayOrderCVSCommitMessage } from '../src';
 
 function addMac(payload: Record<string, string>) {
   const mac = createHash('sha256')
@@ -99,7 +99,7 @@ describe('ECPayPayment', () => {
           CustomField1: '',
           CustomField2: '',
           CustomField3: '',
-          CustomField4: '',
+          CustomField4: '30#10',
           eci: '0',
           ExecTimes: '',
           Frequency: '',
@@ -227,12 +227,169 @@ describe('ECPayPayment', () => {
 
       payment.query('6df4782d4514241fcb6f')
         .then((order: ECPayOrder<ECPayOrderVirtualAccountCommitMessage>) => {
-          console.log(order);
-
           expect(order.id).toBe('6df4782d4514241fcb6f');
           expect(order.additionalInfo?.channel).toBe(Channel.VIRTUAL_ACCOUNT);
           expect(order.additionalInfo?.buyerBankCode).toBe('412');
           expect(order.additionalInfo?.buyerAccountNumber).toBe('49318901423');
+
+          done();
+        });
+    });
+
+    it('should order query response data in cvs mode', (done) => {
+      post.mockImplementation(async (url: string, data: unknown) => {
+        expect(url).toEqual('https://payment-stage.ecpay.com.tw/Cashier/QueryTradeInfo/V5');
+
+        const params = Array.from(new URLSearchParams(data as string).entries())
+          .reduce((vars, [key, value]) => ({
+            ...vars,
+            [key]: value,
+          }), {}) as {
+            MerchantID: string;
+            MerchantTradeNo: string;
+            PlatformID: string;
+            TimeStamp: string;
+            CheckMacValue: string;
+          };
+
+        expect(checkMac(params)).toBeTruthy();
+
+        const payload = addMac({
+          AlipayID: '',
+          AlipayTradeNo: '',
+          amount: '70',
+          ATMAccBank: '412',
+          ATMAccNo: '49318901423',
+          auth_code: '777777',
+          card4no: '2222',
+          card6no: '431195',
+          CustomField1: '',
+          CustomField2: '',
+          CustomField3: '',
+          CustomField4: '',
+          eci: '0',
+          ExecTimes: '',
+          Frequency: '',
+          gwsr: '11944770',
+          HandlingCharge: '5',
+          ItemName: 'Test x1#中文 x4',
+          MerchantID: params.MerchantID,
+          MerchantTradeNo: params.MerchantTradeNo,
+          PayFrom: 'family',
+          PaymentDate: '2022/04/19 17:21:21',
+          PaymentNo: '',
+          PaymentType: ECPayCallbackPaymentType.CVS,
+          PaymentTypeChargeFee: '5',
+          PeriodAmount: '',
+          PeriodType: '',
+          process_date: '2022/04/19 17:21:21',
+          red_dan: '0',
+          red_de_amt: '0',
+          red_ok_amt: '0',
+          red_yet: '0',
+          staed: '0',
+          stage: '0',
+          stast: '0',
+          StoreID: '',
+          TenpayTradeNo: '',
+          TotalSuccessAmount: '',
+          TotalSuccessTimes: '',
+          TradeAmt: '70',
+          TradeDate: '2022/04/19 17:20:47',
+          TradeNo: '2204191720475767',
+          TradeStatus: '1',
+          WebATMAccBank: '',
+          WebATMAccNo: '',
+          WebATMBankName: '',
+        });
+
+        return { data: payload };
+      });
+
+      payment.query('6df4782d4514241fcb6f')
+        .then((order: ECPayOrder<ECPayOrderCVSCommitMessage>) => {
+          expect(order.id).toBe('6df4782d4514241fcb6f');
+          expect(order.additionalInfo?.channel).toBe(Channel.CVS_KIOSK);
+          expect(order.additionalInfo?.cvsPayFrom).toBe(CVS.FAMILY_MART);
+
+          done();
+        });
+    });
+
+    it('should order query response data in barcode mode', (done) => {
+      post.mockImplementation(async (url: string, data: unknown) => {
+        expect(url).toEqual('https://payment-stage.ecpay.com.tw/Cashier/QueryTradeInfo/V5');
+
+        const params = Array.from(new URLSearchParams(data as string).entries())
+          .reduce((vars, [key, value]) => ({
+            ...vars,
+            [key]: value,
+          }), {}) as {
+            MerchantID: string;
+            MerchantTradeNo: string;
+            PlatformID: string;
+            TimeStamp: string;
+            CheckMacValue: string;
+          };
+
+        expect(checkMac(params)).toBeTruthy();
+
+        const payload = addMac({
+          AlipayID: '',
+          AlipayTradeNo: '',
+          amount: '70',
+          ATMAccBank: '412',
+          ATMAccNo: '49318901423',
+          auth_code: '777777',
+          card4no: '2222',
+          card6no: '431195',
+          CustomField1: '',
+          CustomField2: '',
+          CustomField3: '',
+          CustomField4: '',
+          eci: '0',
+          ExecTimes: '',
+          Frequency: '',
+          gwsr: '11944770',
+          HandlingCharge: '5',
+          ItemName: 'Test x1#中文 x4',
+          MerchantID: params.MerchantID,
+          MerchantTradeNo: params.MerchantTradeNo,
+          PayFrom: 'family',
+          PaymentDate: '2022/04/19 17:21:21',
+          PaymentNo: '',
+          PaymentType: ECPayCallbackPaymentType.BARCODE,
+          PaymentTypeChargeFee: '5',
+          PeriodAmount: '',
+          PeriodType: '',
+          process_date: '2022/04/19 17:21:21',
+          red_dan: '0',
+          red_de_amt: '0',
+          red_ok_amt: '0',
+          red_yet: '0',
+          staed: '0',
+          stage: '0',
+          stast: '0',
+          StoreID: '',
+          TenpayTradeNo: '',
+          TotalSuccessAmount: '',
+          TotalSuccessTimes: '',
+          TradeAmt: '70',
+          TradeDate: '2022/04/19 17:20:47',
+          TradeNo: '2204191720475767',
+          TradeStatus: '1',
+          WebATMAccBank: '',
+          WebATMAccNo: '',
+          WebATMBankName: '',
+        });
+
+        return { data: payload };
+      });
+
+      payment.query('6df4782d4514241fcb6f')
+        .then((order: ECPayOrder<ECPayOrderCVSCommitMessage>) => {
+          expect(order.id).toBe('6df4782d4514241fcb6f');
+          expect(order.additionalInfo).toBeUndefined();
 
           done();
         });

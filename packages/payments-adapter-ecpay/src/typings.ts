@@ -20,7 +20,6 @@ export interface ECPayInitOptions<O extends ECPayOrder<ECPayCommitMessage>> {
   onCommit?: (order: O) => void;
   onInfoRetrieved?: (order: O) => void;
   onServerListen?: () => void;
-  creditCheckCode?: number; // For credit card refund
   emulateRefund?: boolean,
 }
 
@@ -98,7 +97,7 @@ export interface OrderFromServerInit<OCM extends ECPayCommitMessage> extends Ord
   status: ECPayQueryResultStatus;
 }
 
-enum ECPayOrderFormKey {
+export enum ECPayOrderFormKey {
   MerchantID = 'MerchantID',
   MerchantTradeNo = 'MerchantTradeNo',
   MerchantTradeDate = 'MerchantTradeDate',

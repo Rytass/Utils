@@ -1,6 +1,8 @@
 export {
   ECPayCallbackPaymentType,
   ECPayQueryResultStatus,
+  ECPayCreditCardOrderStatus,
+  ECPayCredirCardOrderCloseStatus,
   ECPayATMBank,
 } from './typings';
 
@@ -16,6 +18,9 @@ export type {
   ECPayOrderCVSCommitMessage,
   ECPayOrderBarcodeCommitMessage,
   ECPayOrderApplePayCommitMessage,
+  ECPayQueryOrderPayload,
+  ECPayCreditCardDetailQueryPayload,
+  ECPayOrderActionPayload,
 } from './typings';
 
 export { ECPayPayment } from './ecpay-payment';
