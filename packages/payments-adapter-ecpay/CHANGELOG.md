@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.17](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.0.16...@rytass/payments-adapter-ecpay@0.0.17) (2023-01-27)
+
+
+### Features
+
+* **payments-adapter-ecpay:** refund with emulator ([e40449e](https://github.com/Rytass/Utils/commit/e40449e82b1acb8178f2cf2478d14ccc9a2598db))
+* **payments-adapter-ecpay:** resolve queried order item and use custom fields to store unit price ([e37055b](https://github.com/Rytass/Utils/commit/e37055b00ae0ab7aff747e070382fab8188dc463))
+
+
+
+
+
 ## [0.0.16](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.0.15...@rytass/payments-adapter-ecpay@0.0.16) (2022-12-15)
 
 

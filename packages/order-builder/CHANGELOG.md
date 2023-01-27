@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.20](https://github.com/Rytass/Utils/compare/@rytass/order-builder@0.0.19...@rytass/order-builder@0.0.20) (2023-01-27)
+
+
+### Features
+
+* **order-builder:** add `StepItemGiveawayDiscount` Policy ([0116e94](https://github.com/Rytass/Utils/commit/0116e94a9652f479e6998b41927e4313b0de843a))
+
+
+
+
+
 ## [0.0.19](https://github.com/Rytass/Utils/compare/@rytass/order-builder@0.0.18...@rytass/order-builder@0.0.19) (2023-01-02)
 
 
