@@ -218,7 +218,9 @@ describe('ECPayPayment Refund', () => {
 
     // Second refund but no effect on emulated refund
 
-    await order.refund();
+    const order2 = await payment.query(VALID_ORDER_ID);
+
+    await order2.refund();
   });
 
   it('should refund on live mode', async () => {

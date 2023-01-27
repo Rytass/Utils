@@ -219,6 +219,10 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
   }
 
   async refund(amount?: number): Promise<void> {
+    if (this._state !== OrderState.COMMITTED) {
+      throw new Error('Only committed order can be refunded');
+    }
+
     if (this._paymentType !== ECPayCallbackPaymentType.CREDIT_CARD) {
       throw new Error('Only credit card payment can be refunded');
     }
@@ -243,9 +247,6 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
         case ECPayCreditCardOrderStatus.CANCELLED:
         case ECPayCreditCardOrderStatus.MANUALLY_CANCELLED:
           throw new Error('Order already cancelled');
-
-        default:
-          throw new Error('Invalid Status');
       }
     })();
 
