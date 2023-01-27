@@ -143,7 +143,7 @@ export class StepPercentageDiscount implements BaseDiscount {
     };
   }
 
-  getMultiplier(itemValue: number, items: FlattenOrderItem[]) {
+  private getMultiplier(itemValue: number, items: FlattenOrderItem[]) {
     return this.options?.stepUnit === 'quantity'
       ? items.reduce((total, item) => plus(total, item.quantity), 0)
       : itemValue;

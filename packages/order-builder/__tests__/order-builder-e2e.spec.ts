@@ -1,3 +1,4 @@
+import { StepItemGiveawayDiscount } from './../src/policies/discount/step-item-giveaway-discount';
 import {
   ItemGiveawayDiscount,
   ItemIncluded,
@@ -1419,4 +1420,114 @@ describe('TAST v0.0.2', () => {
 
     expect(order2.price).toEqual(0);
   });
+
+  it('StepItemGiveawayDiscount', () => {
+    const items: TestOrderItem[] = [
+      {
+        id: 'A',
+        name: '外套A',
+        unitPrice: 1000,
+        quantity: 2,
+        category: 'jacket',
+        brand: 'AJE',
+      },
+      {
+        id: 'B',
+        name: '外套B',
+        unitPrice: 1500,
+        quantity: 2,
+        category: 'jacket',
+        brand: 'N21',
+      },
+      {
+        id: 'C',
+        name: '鞋子C',
+        unitPrice: 2000,
+        quantity: 4,
+        category: 'shoes',
+        brand: 'N21',
+      },
+      {
+        id: 'D',
+        name: '鞋子D',
+        unitPrice: 2500,
+        quantity: 2,
+        category: 'shoes',
+        brand: 'Preen',
+      },
+      {
+        id: 'E',
+        name: '鞋子E',
+        unitPrice: 3000,
+        quantity: 1,
+        category: 'shoes',
+        brand: 'Preen',
+      },
+    ];
+
+    const order = new OrderBuilder({
+      policyPickStrategy: 'order-based',
+      policies: [
+        [
+          // 指定商品Ａ滿 2 件 折 200 元
+          new ValueDiscount(200, [
+            new ItemIncluded(
+              {
+                isMatchedItem: item => item.id === 'A',
+                threshold: 2,
+              },
+              { onlyMatched: true }
+            ),
+          ]),
+          // 指定商品Ｂ每 1000元 折 200 元，最多重複 2 次（至多折 400）
+          new StepValueDiscount(
+            1000,
+            200,
+            new ItemIncluded({
+              isMatchedItem: item => item.id === 'B',
+            }),
+            {
+              stepUnit: 'price',
+              stepLimit: 2,
+              onlyMatched: true,
+            }
+          ),
+        ],
+        [
+          // 指定分類（N21）每 2 件 送價低品 1 件，最多重複 2 次（至多買 4 送 2 ）
+          new StepItemGiveawayDiscount(
+            2,
+            1,
+            new ItemIncluded<TestOrderItem>({
+              isMatchedItem: item => item.brand === 'N21',
+            }),
+            { onlyMatched: true }
+          ),
+          // 指定分類（鞋子）滿 3 件 打 8 折
+          new PercentageDiscount(
+            0.8,
+            new ItemIncluded<TestOrderItem>({
+              isMatchedItem: item => item.category === 'shoes',
+              threshold: 3,
+            }),
+            { onlyMatched: true }
+          ),
+        ],
+        // 全館 滿5件 打9折
+        new PercentageDiscount(0.9, new QuantityThreshold(5)),
+      ],
+    }).build({ items });
+
+    expect(order.itemValue).toEqual(21000);
+    expect(order.price).toEqual(15660);
+
+    const policy1 = new StepItemGiveawayDiscount(
+      2,
+      1,
+      { strategy: 'HIGH_PRICE_FIRST', excludedInCalculation: true }
+    );
+
+    expect(policy1).toBeInstanceOf(StepItemGiveawayDiscount);
+    expect(policy1.resolve(order, []).length).toEqual(1);
+  })
 })
