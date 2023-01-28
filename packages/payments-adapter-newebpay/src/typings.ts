@@ -57,10 +57,15 @@ export interface NewebPayOrderInit<OCM extends NewebPayCommitMessage> {
 }
 
 export interface NewebPayPrepareOrderInit<OCM extends NewebPayCommitMessage> extends NewebPayOrderInit<OCM> {
-  id: string;
-  items: PaymentItem[];
   makePayload: NewebPayMPGMakeOrderPayload;
-  gateway: NewebPayPayment<OCM>;
+}
+
+export interface NewebPayOrderFromServerInit<OCM extends NewebPayCommitMessage> extends NewebPayOrderInit<OCM> {
+  createdAt: Date;
+  committedAt: Date | null;
+  platformTradeNumber: string;
+  channel: NewebPaymentChannel;
+  status: NewebPayOrderStatusFromAPI;
 }
 
 export type NewebPayOrderInput<CM extends NewebPayCommitMessage> = CM extends NewebPayCreditCardCommitMessage
@@ -88,6 +93,12 @@ export interface NewebPayPaymentInitOptions<O extends NewebPayOrder<NewebPayComm
   serverListener?: (req: IncomingMessage, res: ServerResponse) => void;
   onCommit?: (order: O) => void;
   onServerListen?: () => void;
+}
+
+export interface NewebPayAPIResponseWrapper<T> {
+  Status: 'SUCCESS' | string;
+  Message: string;
+  Result: T;
 }
 
 export interface NewebPayMPGMakeOrderPayload {
@@ -132,7 +143,9 @@ export interface NewebPayInfoRetriveEncryptedPayload {
 }
 
 export type NewebPayAuthBank = 'Esun' | 'Taishin' | 'CTBC' | 'NCCC' | 'CathayBk' | 'Citibank' | 'UBOT' | 'SFBank' | 'Fubon' | 'FirstBank' | 'KGI';
+export type NewebPayThirdPartyAuthBank = 'Esun' | 'Linepay';
 export type NewebPayCreditCardSubChannel = 'CREDIT' | 'FOREIGN' | 'UNIONPAY' | 'GOOGLEPAY' | 'SAMSUNGPAY' | 'DCC';
+export type NewebPayThirdPartySubChannel = 'LINEPAY' | 'ESUNWALLET' | 'TAIWANPAY';
 
 export enum NewebPayCreditCardSpeedCheckoutMode {
   NONE = 0,
@@ -156,14 +169,14 @@ export interface NewebPayNotifyEncryptedPayload {
   Card6No?: string;
   Card4No?: string;
   Exp?: string; // Unknown Field
-  AuthBank?: NewebPayAuthBank;
+  AuthBank?: NewebPayAuthBank | NewebPayThirdPartyAuthBank;
   TokenUseStatus?: NewebPayCreditCardSpeedCheckoutMode;
   InstFirst?: number;
   InstEach?: number;
   Inst?: number;
   ECI?: CreditCardECI;
   RedAmt?: number;
-  PaymentMethod?: NewebPayCreditCardSubChannel;
+  PaymentMethod?: NewebPayCreditCardSubChannel | NewebPayThirdPartySubChannel;
   DCC_Amt?: number;
   DCC_Rate?: number;
   DCC_Markup?: number;
@@ -233,3 +246,97 @@ export interface NewebPayMPGMakeOrderEncryptedPayload extends Record<string, str
   EZPALIPAY?: 1 | 0;
   LgsType?: undefined; // Disable CVS Logistic
 }
+
+export interface NewebPayQueryRequestPayload extends Record<string, string> {
+  MerchantID: string;
+  Version: '1.3';
+  RespondType: 'JSON';
+  CheckValue: string;
+  TimeStamp: string;
+  MerchantOrderNo: string;
+  Amt: string;
+  Gateway: 'Composite' | '';
+}
+
+export enum NewebPayOrderStatusFromAPI {
+  INITED = '0',
+  COMMITTED = '1',
+  FAILED = '2',
+  CANCELLED = '3',
+  REFUNDED = '6',
+  WAITING_BANK = '9',
+}
+
+export interface NewebPayQueryResponseBasePayload {
+  MerchantID: string;
+  Amt: number;
+  TradeNo: string;
+  MerchantOrderNo: string;
+  TradeStatus: NewebPayOrderStatusFromAPI;
+  PaymentType: NewebPayPaymentType;
+  CreateTime: string; // YYYY-MM-DD HH:mm:ss
+  PayTime?: string; // YYYY-MM-DD HH:mm:ss
+  CheckCode: string;
+  FundTime: string; // YYYY-MM-DD
+  ShopMerchantID?: string;
+}
+
+export enum NewebPayCreditCardBalanceStatus {
+  UNSETTLED = 0,
+  WAITING = 1,
+  WORKING = 2,
+  SETTLED = 3,
+}
+
+export interface NewebPayQueryCreditCardResponsePayload extends NewebPayQueryResponseBasePayload {
+  RespondCode: string;
+  Auth: string;
+  ECI: CreditCardECI;
+  CloseAmt: string;
+  CloseStatus: NewebPayCreditCardBalanceStatus;
+  BackBalance: string;
+  BackStatus: NewebPayCreditCardBalanceStatus;
+  RespondMsg: string;
+  Inst: string;
+  InstFirst: string;
+  InstEach: string;
+  PaymentMethod: NewebPayCreditCardSubChannel;
+  Card6No: string;
+  Card4No: string;
+  AuthBank: NewebPayAuthBank;
+}
+
+export interface NewebPayQueryATMResponsePayload extends NewebPayQueryResponseBasePayload {
+  PayInfo: string;
+  ExpireDate: string; // YYYY-MM-DD HH:mm:ss
+  OrderStatus: NewebPayOrderStatusFromAPI;
+}
+
+export type NewebPayQueryBarcodeResponsePayload = NewebPayQueryATMResponsePayload;
+export type NewebPayQueryCVSResponsePayload = NewebPayQueryATMResponsePayload;
+export type NewebPayQueryVistualAccountResponsePayload = NewebPayQueryATMResponsePayload;
+
+export interface NewebPayQueryLogisticResponsePayload extends NewebPayQueryResponseBasePayload {
+  StoreType: '全家' | '7-ELEVEN' | '萊爾富' | 'OK mart';
+  StoreCode: string;
+  StoreName: string;
+  LgsNo: string;
+  LgsType: 'B2C' | 'C2C';
+}
+
+export interface NewebPayQueryThirdPartyResponsePayload extends NewebPayQueryResponseBasePayload {
+  RespondCode: string;
+  CloseAmt: number;
+  CloseStatus: NewebPayCreditCardBalanceStatus;
+  BackBalance: string;
+  BackStatus: NewebPayCreditCardBalanceStatus;
+  RespondMsg: string;
+  PaymentMethod: NewebPayThirdPartySubChannel;
+  AuthBank: NewebPayThirdPartyAuthBank;
+}
+
+export type NewebPayQueryLinePayResponsePayload = NewebPayQueryThirdPartyResponsePayload;
+export type NewebPayQueryEsunWalletResponsePayload = NewebPayQueryThirdPartyResponsePayload;
+export type NewebPayQueryTaiwanPayResponsePayload = NewebPayQueryThirdPartyResponsePayload;
+
+export type NewebPayQueryResponsePayload = NewebPayQueryCreditCardResponsePayload | NewebPayQueryATMResponsePayload | NewebPayQueryLogisticResponsePayload | NewebPayQueryThirdPartyResponsePayload;

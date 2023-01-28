@@ -1,5 +1,5 @@
 /* eslint-disable no-control-regex */
-import { Channel, OrderCommitMessage, OrderState, PaymentEvents, PaymentGateway } from '@rytass/payments';
+import { AdditionalInfo, Channel, CreditCardAuthInfo, OrderCommitMessage, OrderState, PaymentEvents, PaymentGateway } from '@rytass/payments';
 import { EventEmitter } from 'events';
 import { randomBytes, createCipheriv, createDecipheriv, createHash } from 'crypto';
 import { DateTime } from 'luxon';
@@ -8,11 +8,12 @@ import ngrok from 'ngrok';
 import LRUCache from 'lru-cache';
 import { Server, IncomingMessage, ServerResponse, createServer } from 'http';
 import { NewebPayOrder } from './newebpay-order';
-import { AllowUILanguage, NewebPaymentChannel, NewebPayCommitMessage, NewebPayMPGMakeOrderEncryptedPayload, NewebPayMPGMakeOrderPayload, NewebPayOrderInput, NewebPayPaymentInitOptions, NewebPayNotifyPayload, NewebPayNotifyEncryptedPayload, NewebPayInfoRetriveEncryptedPayload } from './typings';
+import { AllowUILanguage, NewebPaymentChannel, NewebPayCommitMessage, NewebPayMPGMakeOrderEncryptedPayload, NewebPayMPGMakeOrderPayload, NewebPayOrderInput, NewebPayPaymentInitOptions, NewebPayNotifyPayload, NewebPayNotifyEncryptedPayload, NewebPayInfoRetriveEncryptedPayload, NewebPayQueryRequestPayload, NewebPayAPIResponseWrapper, NewebPayQueryResponsePayload, NewebPayCreditCardBalanceStatus, NewebPayCreditCardSpeedCheckoutMode, NewebPayOrderFromServerInit } from './typings';
 import { NewebPayLinePayOrderInput } from './typings/line-pay.typing';
 import { NewebPayAdditionInfoCreditCard, NewebPayCreditCardCommitMessage, NewebPayCreditCardOrderInput } from './typings/credit-card.typing';
 import { NewebPayWebATMCommitMessage, NewebPayWebATMOrderInput } from './typings/webatm.typing';
 import { NewebPayVirtualAccountCommitMessage } from './typings/virtual-account.typing';
+import axios from 'axios';
 
 const debugPayment = debug('Rytass:Payment:NewebPay');
 
@@ -254,6 +255,10 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
             currencyCode: payload.DCC_Currency_Code,
           }: undefined,
           bonusAmount: payload.RedAmt,
+          closeBalance: payload.Amt,
+          closeStatus: NewebPayCreditCardBalanceStatus.UNSETTLED,
+          remainingBalance: payload.Amt,
+          refundStatus: NewebPayCreditCardBalanceStatus.UNSETTLED,
         } as NewebPayAdditionInfoCreditCard);
 
         break;
@@ -282,7 +287,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
     };
   }
 
-  private resolveEncryptedPayload<T>(encrypted: string, hash: string): T {
+  private resolveEncryptedPayload<T extends { MerchantOrderNo: string }>(encrypted: string, hash: string): T {
     if (hash !== createHash('sha256').update(`HashKey=${this.hashKey}&${encrypted}&HashIV=${this.hashIv}`).digest('hex').toUpperCase()) {
       throw new Error('Invalid hash');
     }
@@ -294,15 +299,11 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
     const plainInfo = `${decipher.update(encrypted, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(/\x1E/g, '').replace(/\x14/g, '');
 
     try {
-      const payload = (JSON.parse(plainInfo) as {
-        Status: 'SUCCESS' | string;
-        Message: string;
-        Result: T;
-      });
+      const payload = JSON.parse(plainInfo) as NewebPayAPIResponseWrapper<T>;
 
       if (payload.Status === 'SUCCESS') return payload.Result;
 
-      const order = this.pendingOrdersCache.get<NewebPayOrder<NewebPayCommitMessage>>((payload.Result as { MerchantOrderNo: string }).MerchantOrderNo);
+      const order = this.pendingOrdersCache.get<NewebPayOrder<NewebPayCommitMessage>>((payload.Result).MerchantOrderNo);
 
       if (order) {
         order.fail(payload.Status, payload.Message);
@@ -391,16 +392,87 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
     return order;
   }
 
-  async query<T extends NewebPayOrder<CM>>(id: string): Promise<T> {
+  async query<T extends NewebPayOrder<CM>>(id: string, amount: number): Promise<T> {
     if (!this.isGatewayReady) {
       throw new Error('Please waiting gateway ready');
     }
 
-    return new NewebPayOrder({
-      id: '',
-      items: [],
-      makePayload: {} as NewebPayMPGMakeOrderPayload,
+    const now = Math.round(Date.now() / 1000);
+
+    const payload = {
+      MerchantID: this.merchantId,
+      Version: '1.3',
+      RespondType: 'JSON',
+      TimeStamp: now.toString(),
+      MerchantOrderNo: id,
+      Amt: amount.toString(),
+      Gateway: /^MS5/.test(this.merchantId) ? 'Composite' : '',
+      CheckValue: createHash('sha256').update(`IV=${this.hashIv}&Amt=${amount}&MerchantID=${this.merchantId}&MerchantOrderNo=${id}&Key=${this.hashKey}`).digest('hex').toUpperCase(),
+    } as NewebPayQueryRequestPayload;
+
+    const { data } = await axios.post<NewebPayAPIResponseWrapper<NewebPayQueryResponsePayload>>(`${this.baseUrl}/API/QueryTradeInfo`, new URLSearchParams(payload).toString());
+
+    const savedOrder = this.pendingOrdersCache.get(data.Result.MerchantOrderNo);
+
+    const basicInfo = {
+      id: data.Result.MerchantOrderNo,
+      items: savedOrder?.items ?? [{
+        name: '商品一批',
+        unitPrice: data.Result.Amt,
+        quantity: 1,
+      }],
       gateway: this,
-    }) as T;
+      createdAt: DateTime.fromFormat(data.Result.CreateTime, 'yyyy-MM-dd HH:mm:ss').toJSDate(),
+      committedAt: data.Result.PayTime ? DateTime.fromFormat(data.Result.PayTime, 'yyyy-MM-dd HH:mm:ss').toJSDate() : null,
+      platformTradeNumber: data.Result.TradeNo,
+      channel: ((paymentType) => {
+        switch (paymentType) {
+          case 'ANDROIDPAY':
+            return NewebPaymentChannel.ANDROID_PAY;
+
+          case 'SAMSUNGPAY':
+            return NewebPaymentChannel.SAMSUNGPAY;
+
+          case 'UNIONPAY':
+            return NewebPaymentChannel.UNIONPAY;
+
+          case 'WEBATM':
+            return NewebPaymentChannel.WEBATM;
+
+          case 'VACC':
+            return NewebPaymentChannel.VACC;
+
+          case 'CREDIT':
+          default:
+            return NewebPaymentChannel.CREDIT;
+        }
+      })(data.Result.PaymentType),
+      status: data.Result.TradeStatus,
+    };
+
+    if ('ECI' in data.Result) {
+      return new NewebPayOrder<NewebPayCreditCardCommitMessage>(basicInfo as NewebPayOrderFromServerInit<NewebPayCreditCardCommitMessage>, {
+        channel: Channel.CREDIT_CARD,
+        processDate: DateTime.fromFormat(data.Result.PayTime || data.Result.CreateTime, 'yyyy-MM-dd HH:mm:ss').toJSDate(),
+        authCode: data.Result.Auth,
+        amount: data.Result.Amt,
+        eci: data.Result.ECI,
+        card4Number: data.Result.Card4No,
+        card6Number: data.Result.Card6No,
+        authBank: data.Result.AuthBank,
+        subChannel: data.Result.PaymentMethod,
+        installments: data.Result.Inst ? {
+          count: data.Result.Inst,
+          firstAmount: data.Result.InstFirst,
+          eachAmount: data.Result.InstEach,
+        } : undefined,
+        closeStatus: data.Result.CloseStatus,
+        closeBalance: Number(data.Result.CloseAmt),
+        refundStatus: data.Result.BackStatus,
+        remainingBalance: Number(data.Result.BackBalance),
+      } as CreditCardAuthInfo) as T;
+    }
+
+    return new NewebPayOrder(basicInfo) as T;
   }
 }

@@ -1,7 +1,7 @@
 import { AdditionalInfo, AsyncOrderInformation, Order, OrderState, PaymentEvents } from '@rytass/payments';
 import { NewebPayOrderItem } from './newebpay-order-item';
 import { NewebPayPayment } from './newebpay-payment';
-import { NewebPayCommitMessage, NewebPaymentChannel, NewebPayMPGMakeOrderPayload, NewebPayPrepareOrderInit } from './typings';
+import { NewebPayCommitMessage, NewebPaymentChannel, NewebPayMPGMakeOrderPayload, NewebPayOrderFromServerInit, NewebPayOrderStatusFromAPI, NewebPayPrepareOrderInit } from './typings';
 
 export class NewebPayOrder<OCM extends NewebPayCommitMessage> implements Order<OCM> {
   private readonly _id: string;
@@ -10,7 +10,7 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage> implements Order<O
 
   private readonly _gateway: NewebPayPayment<OCM>;
 
-  private readonly _makePayload: NewebPayMPGMakeOrderPayload | null;
+  private readonly _makePayload: NewebPayMPGMakeOrderPayload | undefined;
 
   private _state = OrderState.INITED;
 
@@ -30,11 +30,39 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage> implements Order<O
 
   private _additionalInfo?: AdditionalInfo<OCM>;
 
-  constructor(options: NewebPayPrepareOrderInit<OCM>) {
+  constructor(options: NewebPayPrepareOrderInit<OCM> | NewebPayOrderFromServerInit<OCM>, additionalInfo?: AdditionalInfo<OCM>) {
     this._id = options.id;
     this._items = options.items;
     this._gateway = options.gateway;
-    this._makePayload = options.makePayload ?? null;
+
+    if ('makePayload' in options) {
+      this._makePayload = options.makePayload ?? null;
+    } else if ('platformTradeNumber' in options) {
+      this._platformTradeNumber = options.platformTradeNumber;
+      this._createdAt = options.createdAt;
+      this._committedAt = options.committedAt;
+      this._channel = options.channel;
+
+      this._state = ((status) => {
+        switch (status) {
+          case NewebPayOrderStatusFromAPI.INITED:
+          case NewebPayOrderStatusFromAPI.WAITING_BANK:
+            return OrderState.INITED;
+
+          case NewebPayOrderStatusFromAPI.COMMITTED:
+            return OrderState.COMMITTED;
+
+          case NewebPayOrderStatusFromAPI.FAILED:
+          case NewebPayOrderStatusFromAPI.CANCELLED:
+            return OrderState.FAILED;
+
+          case NewebPayOrderStatusFromAPI.REFUNDED:
+            return OrderState.REFUNDED;
+        }
+      })(options.status);
+    }
+
+    this._additionalInfo = additionalInfo;
   }
 
   get id() {

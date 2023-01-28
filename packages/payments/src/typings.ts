@@ -126,7 +126,7 @@ export interface PaymentGateway<
 
   prepare<N extends OCM>(input: InputFromOrderCommitMessage<N>): Order<N>;
 
-  query<OO extends O>(id: string): Promise<OO>;
+  query<OO extends O>(id: string, options?: any): Promise<OO>;
 }
 
 export enum Channel {
