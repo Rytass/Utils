@@ -4,6 +4,7 @@
 
 import request from 'supertest';
 import { OrderState } from '@rytass/payments';
+import { DateTime } from 'luxon';
 import { addMac } from '../__utils__/add-mac';
 import { Channel, ECPayCallbackPaymentType, ECPayPayment } from '@rytass/payments-adapter-ecpay';
 import http, { createServer } from 'http';
@@ -203,7 +204,7 @@ describe('ECPayPayment (Barcode)', () => {
           expect(order.asyncInfo?.barcodes[0]).toBe('1106176EA');
           expect(order.asyncInfo?.barcodes[1]).toBe('3453010377039404');
           expect(order.asyncInfo?.barcodes[2]).toBe('061616000001000');
-          expect(order.asyncInfo?.expiredAt).toBe('2022/06/30 20:26:59');
+          expect(DateTime.fromJSDate(order.asyncInfo?.expiredAt!).toFormat('yyyy/MM/dd HH:mm:ss')).toBe('2022/06/30 20:26:59');
 
           done();
         });
@@ -257,7 +258,7 @@ describe('ECPayPayment (Barcode)', () => {
         .then((res) => {
           expect(res.text).toEqual('1|OK');
           expect(order.state).toBe(OrderState.FAILED);
-          expect(order.failedMessage?.code).toBe(1010007322)
+          expect(order.failedMessage?.code).toBe('1010007322')
           expect(order.failedMessage?.message).toBe('Get Barcode Code Failed.');
           expect(order.asyncInfo).toBeUndefined();
 

@@ -1156,7 +1156,7 @@ describe('ECPayPayment', () => {
         .then((res) => {
           expect(res.text).toEqual('1|OK');
           expect(order.state).toBe(OrderState.FAILED);
-          expect(order.failedMessage?.code).toBe(2);
+          expect(order.failedMessage?.code).toBe('2');
           expect(order.failedMessage?.message).toBe('交易失敗');
 
           done();

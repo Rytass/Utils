@@ -7,6 +7,7 @@ import { CVS, OrderState } from '@rytass/payments';
 import { addMac } from '../__utils__/add-mac';
 import { Channel, ECPayCallbackPaymentType, ECPayPayment } from '@rytass/payments-adapter-ecpay';
 import http, { createServer } from 'http';
+import { DateTime } from 'luxon';
 import { ECPayChannelCVS } from 'payments-adapter-ecpay/src/typings';
 
 describe('ECPayPayment (CVS)', () => {
@@ -199,7 +200,7 @@ describe('ECPayPayment (CVS)', () => {
           expect(res.text).toEqual('1|OK');
           expect(order.state).toBe(OrderState.ASYNC_INFO_RETRIEVED);
           expect(order.asyncInfo?.paymentCode).toBe('LLL22167774958');
-          expect(order.asyncInfo?.expiredAt).toBe('2022/06/30 20:26:59');
+          expect(DateTime.fromJSDate(order.asyncInfo?.expiredAt!).toFormat('yyyy/MM/dd HH:mm:ss')).toBe('2022/06/30 20:26:59');
 
           done();
         });
@@ -252,7 +253,7 @@ describe('ECPayPayment (CVS)', () => {
         .then((res) => {
           expect(res.text).toEqual('1|OK');
           expect(order.state).toBe(OrderState.FAILED);
-          expect(order.failedMessage?.code).toBe(0)
+          expect(order.failedMessage?.code).toBe('0')
           expect(order.failedMessage?.message).toBe('Get CVS Code Failed.');
           expect(order.asyncInfo).toBeUndefined();
 

@@ -7,6 +7,7 @@ import { OrderState } from '@rytass/payments';
 import { addMac } from '../__utils__/add-mac';
 import { Channel, ECPayCallbackPaymentType, ECPayChannelCreditCard, ECPayChannelVirtualAccount, ECPayCommitMessage, ECPayOrder, ECPayPayment } from '@rytass/payments-adapter-ecpay';
 import http, { createServer } from 'http';
+import { DateTime } from 'luxon';
 
 describe('ECPayPayment (Virtual Account)', () => {
   const originCreateServer = createServer;
@@ -644,7 +645,7 @@ describe('ECPayPayment (Virtual Account)', () => {
             expect(order.state).toBe(OrderState.ASYNC_INFO_RETRIEVED);
             expect(order.asyncInfo?.bankCode).toBe('806');
             expect(order.asyncInfo?.account).toBe('3453721178769211');
-            expect(order.asyncInfo?.expiredAt).toBe('2022/04/27');
+            expect(DateTime.fromJSDate(order.asyncInfo?.expiredAt!).toFormat('yyyy/MM/dd')).toBe('2022/04/27');
 
             done();
           });
@@ -714,7 +715,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           channel: Channel.VIRTUAL_ACCOUNT,
           bankCode: '806',
           account: '3453721178769211',
-          expiredAt: '2022/04/27',
+          expiredAt: DateTime.fromFormat('2022/04/27', 'yyyy/MM/dd').toJSDate(),
         }, ECPayCallbackPaymentType.ATM_PANHSIN)).toThrowError();
       });
 
@@ -760,7 +761,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           .then((res) => {
             expect(res.text).toEqual('1|OK');
             expect(order.state).toBe(OrderState.FAILED);
-            expect(order.failedMessage?.code).toBe(44444)
+            expect(order.failedMessage?.code).toBe('44444')
             expect(order.failedMessage?.message).toBe('Get VirtualAccount Failed');
             expect(order.asyncInfo).toBeUndefined();
 

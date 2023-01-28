@@ -6,7 +6,7 @@ export const ECPayPaymentPeriodType: Record<PaymentPeriodType, string> = {
   [PaymentPeriodType.YEAR]: 'Y',
 };
 
-export const ECPayChannel: Record<Channel, string> = {
+export const ECPayChannel: Record<Extract<Channel, Channel.CREDIT_CARD | Channel.WEB_ATM | Channel.VIRTUAL_ACCOUNT | Channel.CVS_KIOSK | Channel.CVS_BARCODE | Channel.APPLE_PAY>, string> = {
   [Channel.CREDIT_CARD]: 'Credit',
   [Channel.WEB_ATM]: 'WebATM',
   [Channel.VIRTUAL_ACCOUNT]: 'ATM',

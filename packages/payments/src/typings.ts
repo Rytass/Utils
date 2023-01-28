@@ -45,35 +45,47 @@ export interface OrderApplePayCommitMessage extends OrderCommitMessage {
   committedAt: Date | null;
 }
 
+export interface OrderLinePayCommitMessage extends OrderCommitMessage {
+  type?: Channel.LINE_PAY;
+  id: string;
+  totalPrice: number;
+  committedAt: Date | null;
+}
+
+export interface OrderWebATMCommitMessage extends OrderCommitMessage {
+  type?: Channel.WEB_ATM;
+  id: string;
+  totalPrice: number;
+  committedAt: Date | null;
+}
+
 export interface OrderCommitMessage {
   id: string;
   totalPrice: number;
   committedAt: Date | null;
 }
 
-type IsExtends<OCM, CheckTarget, Result> = OCM extends CheckTarget ? Result : never;
-
 export type AsyncOrderInformation<OCM extends OrderCommitMessage> =
-  IsExtends<OCM, OrderVirtualAccountCommitMessage, VirtualAccountInfo> extends never
-  ? IsExtends<OCM, OrderCVSCommitMessage, CVSInfo> extends never
-  ? IsExtends<OCM, OrderBarcodeCommitMessage, BarcodeInfo> extends never
-  ? never
-  : BarcodeInfo
-  : CVSInfo
-  : VirtualAccountInfo;
+  OCM extends OrderVirtualAccountCommitMessage
+  ? VirtualAccountInfo
+  : OCM extends OrderCVSCommitMessage
+  ? CVSInfo
+  : OCM extends OrderBarcodeCommitMessage
+  ? BarcodeInfo
+  : never;
 
 export type AdditionalInfo<OCM extends OrderCommitMessage> =
-  IsExtends<OCM, OrderCreditCardCommitMessage, CreditCardAuthInfo> extends never
-  ? IsExtends<OCM, OrderVirtualAccountCommitMessage, VistualAccountPaymentInfo> extends never
-  ? IsExtends<OCM, OrderCVSCommitMessage, CVSPaymentInfo> extends never
-  ? IsExtends<OCM, OrderBarcodeCommitMessage, BarcodeInfo> extends never
-  ? IsExtends<OCM, OrderApplePayCommitMessage, undefined> extends never
-  ? never
-  : undefined
-  : undefined
-  : CVSPaymentInfo
-  : VistualAccountPaymentInfo
-  : CreditCardAuthInfo;
+  OCM extends OrderCreditCardCommitMessage
+  ? CreditCardAuthInfo
+  : OCM extends OrderVirtualAccountCommitMessage
+  ? VistualAccountPaymentInfo
+  : OCM extends OrderCVSCommitMessage
+  ? CVSPaymentInfo
+  : OCM extends OrderBarcodeCommitMessage
+  ? BarcodeInfo
+  : OCM extends OrderApplePayCommitMessage
+  ? undefined
+  : never;
 
 export interface Order<OCM extends OrderCommitMessage> extends PrepareOrderInput {
   // Order State
@@ -98,7 +110,7 @@ export interface Order<OCM extends OrderCommitMessage> extends PrepareOrderInput
   commitable: boolean;
 
   infoRetrieved<T extends OCM>(asyncInformation: AsyncOrderInformation<T>): void;
-  fail(code: number, message: string): void;
+  fail(code: string, message: string): void;
   commit<T extends OCM>(message: T, additionalInfo?: AdditionalInfo<T>): void;
 
   refund(amount?: number): Promise<void>;
@@ -124,6 +136,7 @@ export enum Channel {
   CVS_KIOSK = 'CVS_KIOSK',
   CVS_BARCODE = 'CVS_BARCODE',
   APPLE_PAY = 'APPLE_PAY',
+  LINE_PAY = 'LINE_PAY',
 }
 
 export enum CreditCardECI {
@@ -150,7 +163,7 @@ export interface CreditCardAuthInfo {
   eci: CreditCardECI;
   card4Number: string;
   card6Number: string;
-  gwsr: string;
+  gwsr?: string;
 }
 
 export interface VistualAccountPaymentInfo {
@@ -163,7 +176,7 @@ export interface VirtualAccountInfo {
   channel: Channel.VIRTUAL_ACCOUNT;
   bankCode: string;
   account: string;
-  expiredAt: string;
+  expiredAt: Date;
 }
 
 export interface CVSPaymentInfo {
@@ -174,13 +187,13 @@ export interface CVSPaymentInfo {
 export interface CVSInfo {
   channel: Channel.CVS_KIOSK;
   paymentCode: string;
-  expiredAt: string;
+  expiredAt: Date;
 }
 
 export interface BarcodeInfo {
   channel: Channel.CVS_BARCODE;
   barcodes: [string, string, string];
-  expiredAt: string;
+  expiredAt: Date;
 }
 
 export enum OrderState {
@@ -193,7 +206,7 @@ export enum OrderState {
 }
 
 export interface OrderFailMessage {
-  code: number;
+  code: string;
   message: string;
 }
 
@@ -202,6 +215,7 @@ export enum PaymentEvents {
   ORDER_INFO_RETRIEVED = 'INFO_RETRIEVED',
   ORDER_PRE_COMMIT = 'PRE_COMMIT',
   ORDER_COMMITTED = 'COMMITTED',
+  ORDER_FAILED = 'FAILED',
 }
 
 export enum PaymentPeriodType {

@@ -1,6 +1,6 @@
 import { PaymentItem, PrepareOrderInput, Channel, CreditCardECI, OrderCommitMessage, PaymentPeriod, OrderCreditCardCommitMessage, OrderVirtualAccountCommitMessage, OrderCVSCommitMessage, OrderBarcodeCommitMessage, OrderApplePayCommitMessage } from '@rytass/payments';
 import { IncomingMessage, ServerResponse } from 'http';
-import { ECPayPayment } from '.';
+import { ECPayPayment } from './ecpay-payment';
 import { ECPayOrder } from './ecpay-order';
 
 export interface ECPayInitOptions<O extends ECPayOrder<ECPayCommitMessage>> {

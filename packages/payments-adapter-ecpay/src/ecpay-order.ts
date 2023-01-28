@@ -10,7 +10,7 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
 
   private readonly _form: ECPayOrderForm | undefined;
 
-  private readonly gateway: ECPayPayment<OCM>;
+  private readonly _gateway: ECPayPayment<OCM>;
 
   private _asyncInfo?: AsyncOrderInformation<OCM>;
 
@@ -26,14 +26,14 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
 
   private _paymentType: ECPayCallbackPaymentType | undefined;
 
-  private _failedCode: number | undefined;
+  private _failedCode: string | undefined;
 
   private _failedMessage: string | undefined;
 
   constructor(options: OrderCreateInit<OCM> | OrderFromServerInit<OCM>, additionalInfo?: AdditionalInfo<OCM>) {
     this._id = options.id;
     this._items = options.items.map(item => new ECPayOrderItem(item));
-    this.gateway = options.gateway;
+    this._gateway = options.gateway;
     this._state = OrderState.INITED;
 
     if ((options as OrderCreateInit<OCM>).form) {
@@ -112,7 +112,7 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
     <title>Payment Submit Form</title>
   </head>
   <body>
-    <form action="${this.gateway.baseUrl}/Cashier/AioCheckOut/V5" method="POST">
+    <form action="${this._gateway.baseUrl}/Cashier/AioCheckOut/V5" method="POST">
       ${Object.entries(this.form).map(([key, value]) => `<input name="${key}" value="${value}" type="hidden" />`).join('\n')}
     </form>
     <script>
@@ -125,11 +125,11 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
   get checkoutURL(): string {
     this._state = OrderState.PRE_COMMIT;
 
-    if (!this.gateway._server) {
+    if (!this._gateway._server) {
       throw new Error('To use automatic checkout server, please initial payment with `withServer` options.');
     }
 
-    return this.gateway.getCheckoutUrl(this);
+    return this._gateway.getCheckoutUrl(this);
   }
 
   get commitable(): boolean {
@@ -170,7 +170,7 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
     if (this._state !== OrderState.FAILED) return null;
 
     return {
-      code: this._failedCode as number,
+      code: this._failedCode as string,
       message: this._failedMessage as string,
     };
   }
@@ -183,14 +183,16 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
 
     this._state = OrderState.ASYNC_INFO_RETRIEVED;
 
-    this.gateway.emitter.emit(PaymentEvents.ORDER_INFO_RETRIEVED, this);
+    this._gateway.emitter.emit(PaymentEvents.ORDER_INFO_RETRIEVED, this);
   }
 
-  fail(returnCode: number, message: string) {
+  fail(returnCode: string, message: string) {
     this._failedCode = returnCode;
     this._failedMessage = message;
 
     this._state = OrderState.FAILED;
+
+    this._gateway.emitter.emit(PaymentEvents.ORDER_FAILED, this);
   }
 
   commit<T extends OCM>(message: T, additionalInfo?: AdditionalInfo<T>) {
@@ -215,7 +217,7 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
     this._paymentType = message.paymentType;
     this._state = OrderState.COMMITTED;
 
-    this.gateway.emitter.emit(PaymentEvents.ORDER_COMMITTED, this);
+    this._gateway.emitter.emit(PaymentEvents.ORDER_COMMITTED, this);
   }
 
   async refund(amount?: number): Promise<void> {
@@ -231,7 +233,7 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
       throw new Error('Cannot fetch gwsr from ECPay');
     }
 
-    const creditCardStatus = await this.gateway.getCreditCardTradeStatus((this._additionalInfo as CreditCardAuthInfo).gwsr, amount || this.totalPrice);
+    const creditCardStatus = await this._gateway.getCreditCardTradeStatus((this._additionalInfo as CreditCardAuthInfo).gwsr!, amount || this.totalPrice);
 
     const refundAction = (() => {
       switch (creditCardStatus) {
@@ -250,7 +252,7 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
       }
     })();
 
-    await this.gateway.doOrderAction(this, refundAction, amount || this.totalPrice);
+    await this._gateway.doOrderAction(this, refundAction, amount || this.totalPrice);
 
     this._state = OrderState.REFUNDED;
   }

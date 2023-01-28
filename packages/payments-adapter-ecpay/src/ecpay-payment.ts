@@ -249,7 +249,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
 
   private handlePaymentResult(order: ECPayOrder<ECPayCommitMessage>, payload: ECPayCallbackPayload) {
     if (payload.RtnCode !== 1) {
-      order.fail(payload.RtnCode, payload.RtnMsg);
+      order.fail(payload.RtnCode.toString(), payload.RtnMsg);
 
       return;
     }
@@ -370,10 +370,10 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
               asyncInfo.Barcode2,
               asyncInfo.Barcode3,
             ],
-            expiredAt: asyncInfo.ExpireDate,
+            expiredAt: DateTime.fromFormat(asyncInfo.ExpireDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
           } as BarcodeInfo);
         } else {
-          order.fail(payload.RtnCode, payload.RtnMsg);
+          order.fail(payload.RtnCode.toString(), payload.RtnMsg);
 
           debugPayment(`Get barcode number failed: ${order.id}`);
         }
@@ -392,10 +392,10 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
             channel: Channel.CVS_KIOSK,
             paymentType: payload.PaymentType,
             paymentCode: asyncInfo.PaymentNo,
-            expiredAt: asyncInfo.ExpireDate,
+            expiredAt: DateTime.fromFormat(asyncInfo.ExpireDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
           } as CVSInfo);
         } else {
-          order.fail(payload.RtnCode, payload.RtnMsg);
+          order.fail(payload.RtnCode.toString(), payload.RtnMsg);
 
           debugPayment(`Get cvs kiosk number failed: ${order.id}`);
         }
@@ -419,10 +419,10 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
             channel: Channel.VIRTUAL_ACCOUNT,
             bankCode: asyncInfo.BankCode,
             account: asyncInfo.vAccount,
-            expiredAt: asyncInfo.ExpireDate,
+            expiredAt: DateTime.fromFormat(asyncInfo.ExpireDate, 'yyyy/MM/dd').toJSDate(),
           } as VirtualAccountInfo, payload.PaymentType);
         } else {
-          order.fail(payload.RtnCode, payload.RtnMsg);
+          order.fail(payload.RtnCode.toString(), payload.RtnMsg);
 
           debugPayment(`Get virutal account failed: ${order.id}`);
         }
