@@ -1,5 +1,5 @@
 /* eslint-disable no-control-regex */
-import { AdditionalInfo, Channel, CreditCardAuthInfo, OrderCommitMessage, OrderState, PaymentEvents, PaymentGateway } from '@rytass/payments';
+import { AdditionalInfo, Channel, CreditCardAuthInfo, OrderCommitMessage, OrderState, PaymentEvents, PaymentGateway, VistualAccountPaymentInfo } from '@rytass/payments';
 import { EventEmitter } from 'events';
 import { randomBytes, createCipheriv, createDecipheriv, createHash } from 'crypto';
 import { DateTime } from 'luxon';
@@ -8,8 +8,7 @@ import ngrok from 'ngrok';
 import LRUCache from 'lru-cache';
 import { Server, IncomingMessage, ServerResponse, createServer } from 'http';
 import { NewebPayOrder } from './newebpay-order';
-import { AllowUILanguage, NewebPaymentChannel, NewebPayCommitMessage, NewebPayMPGMakeOrderEncryptedPayload, NewebPayMPGMakeOrderPayload, NewebPayOrderInput, NewebPayPaymentInitOptions, NewebPayNotifyPayload, NewebPayNotifyEncryptedPayload, NewebPayInfoRetriveEncryptedPayload, NewebPayQueryRequestPayload, NewebPayAPIResponseWrapper, NewebPayQueryResponsePayload, NewebPayCreditCardBalanceStatus, NewebPayCreditCardSpeedCheckoutMode, NewebPayOrderFromServerInit } from './typings';
-import { NewebPayLinePayOrderInput } from './typings/line-pay.typing';
+import { AllowUILanguage, NewebPaymentChannel, NewebPayCommitMessage, NewebPayMPGMakeOrderEncryptedPayload, NewebPayMPGMakeOrderPayload, NewebPayOrderInput, NewebPayPaymentInitOptions, NewebPayNotifyPayload, NewebPayNotifyEncryptedPayload, NewebPayInfoRetriveEncryptedPayload, NewebPayQueryRequestPayload, NewebPayAPIResponseWrapper, NewebPayQueryResponsePayload, NewebPayCreditCardBalanceStatus, NewebPayCreditCardSpeedCheckoutMode, NewebPayOrderFromServerInit, NewebPayCreditCardCancelRequestPayload, NewebPayCreditCardCancelEncryptedRequestPayload, NewebPayCreditCardCancelResponse, NewebPayCreditCardCloseEncryptedRequestPayload, NewebPayCreditCardCloseRequestPayload, NewebPayCreditCardCloseResponse } from './typings';
 import { NewebPayAdditionInfoCreditCard, NewebPayCreditCardCommitMessage, NewebPayCreditCardOrderInput } from './typings/credit-card.typing';
 import { NewebPayWebATMCommitMessage, NewebPayWebATMOrderInput } from './typings/webatm.typing';
 import { NewebPayVirtualAccountCommitMessage } from './typings/virtual-account.typing';
@@ -473,6 +472,218 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
       } as CreditCardAuthInfo) as T;
     }
 
+    if ('PayInfo' in data.Result) {
+      switch (data.Result.PaymentType) {
+        case 'VACC':
+        case 'WEBATM': {
+          const [, buyerBankCode, buyerAccountNumber] = data.Result.PayInfo.match(/^\((\d+)\)(\d+)$/) as [string, string, string];
+
+          return new NewebPayOrder<NewebPayVirtualAccountCommitMessage>({
+            ...basicInfo,
+            status: data.Result.OrderStatus,
+          } as NewebPayOrderFromServerInit<NewebPayVirtualAccountCommitMessage>, {
+            buyerBankCode,
+            buyerAccountNumber,
+          } as VistualAccountPaymentInfo) as T;
+        }
+
+        // case 'BARCODE': {
+        //   const barcodes = data.Result.PayInfo.split(/,/) as [string, string, string];
+        // }
+
+        // case 'CVS': {
+        //
+        // }
+      }
+    }
+
     return new NewebPayOrder(basicInfo) as T;
+  }
+
+  async cancel(order: NewebPayOrder<NewebPayCreditCardCommitMessage>): Promise<void> {
+    if ((order.additionalInfo as NewebPayAdditionInfoCreditCard).closeStatus !== NewebPayCreditCardBalanceStatus.UNSETTLED) {
+      throw new Error('Only unsettled order can be canceled');
+    }
+
+    const cipher = createCipheriv('aes-256-cbc', this.hashKey, this.hashIv);
+
+    const encrypted = `${cipher.update(Object.entries({
+      RespondType: 'JSON',
+      Version: '1.0',
+      Amt: order.totalPrice,
+      MerchantOrderNo: order.id,
+      IndexType: 1,
+      TimeStamp: Math.round(Date.now() / 1000).toString(),
+    } as NewebPayCreditCardCancelEncryptedRequestPayload)
+      .filter(([, value]) => value !== undefined)
+      .map(([key, value]) => `${key}=${encodeURIComponent(value as string | number)}`)
+      .join('&'), 'utf8', 'hex')}${cipher.final('hex')}`;
+
+    const payload = {
+      MerchantID_: this.merchantId,
+      PostData_: encrypted,
+    } as NewebPayCreditCardCancelRequestPayload;
+
+    const { data } = await axios.post<NewebPayAPIResponseWrapper<NewebPayCreditCardCancelResponse>>(`${this.baseUrl}/API/CreditCard/Cancel`, new URLSearchParams(payload).toString());
+
+    if (data.Status !== 'SUCCESS') {
+      debugPayment(data.Message);
+
+      throw new Error('Cancel order failed');
+    }
+
+    const validCode = createHash('sha256').update(`HashKey=${this.hashKey}&${encrypted}&HashIV=${this.hashIv}`).digest('hex').toUpperCase();
+
+    if (validCode !== data.Result.CheckCode) throw new Error('Invalid check code');
+  }
+
+  async settle(order: NewebPayOrder<NewebPayCreditCardCommitMessage>): Promise<void> {
+    if ((order.additionalInfo as NewebPayAdditionInfoCreditCard).closeStatus !== NewebPayCreditCardBalanceStatus.UNSETTLED) {
+      throw new Error('Only unsettled order can be canceled');
+    }
+
+    const cipher = createCipheriv('aes-256-cbc', this.hashKey, this.hashIv);
+
+    const encrypted = `${cipher.update(Object.entries({
+      RespondType: 'JSON',
+      Version: '1.0',
+      Amt: order.totalPrice,
+      MerchantOrderNo: order.id,
+      IndexType: 1,
+      TimeStamp: Math.round(Date.now() / 1000).toString(),
+      CloseType: 1,
+    } as NewebPayCreditCardCloseEncryptedRequestPayload)
+      .filter(([, value]) => value !== undefined)
+      .map(([key, value]) => `${key}=${encodeURIComponent(value as string | number)}`)
+      .join('&'), 'utf8', 'hex')}${cipher.final('hex')}`;
+
+    const payload = {
+      MerchantID_: this.merchantId,
+      PostData_: encrypted,
+    } as NewebPayCreditCardCloseRequestPayload;
+
+    const { data } = await axios.post<NewebPayAPIResponseWrapper<NewebPayCreditCardCloseResponse>>(`${this.baseUrl}/API/CreditCard/Close`, new URLSearchParams(payload).toString());
+
+    if (data.Status !== 'SUCCESS') {
+      debugPayment(data.Message);
+
+      throw new Error('Settle order failed');
+    }
+  }
+
+  async unsettle(order: NewebPayOrder<NewebPayCreditCardCommitMessage>): Promise<void> {
+    if ((order.additionalInfo as NewebPayAdditionInfoCreditCard).closeStatus !== NewebPayCreditCardBalanceStatus.SETTLED) {
+      throw new Error('Only unsettled order can be canceled');
+    }
+
+    const cipher = createCipheriv('aes-256-cbc', this.hashKey, this.hashIv);
+
+    const encrypted = `${cipher.update(Object.entries({
+      RespondType: 'JSON',
+      Version: '1.0',
+      Amt: order.totalPrice,
+      MerchantOrderNo: order.id,
+      IndexType: 1,
+      TimeStamp: Math.round(Date.now() / 1000).toString(),
+      CloseType: 1,
+      Cancel: 1,
+    } as NewebPayCreditCardCloseEncryptedRequestPayload)
+      .filter(([, value]) => value !== undefined)
+      .map(([key, value]) => `${key}=${encodeURIComponent(value as string | number)}`)
+      .join('&'), 'utf8', 'hex')}${cipher.final('hex')}`;
+
+    const payload = {
+      MerchantID_: this.merchantId,
+      PostData_: encrypted,
+    } as NewebPayCreditCardCloseRequestPayload;
+
+    const { data } = await axios.post<NewebPayAPIResponseWrapper<NewebPayCreditCardCloseResponse>>(`${this.baseUrl}/API/CreditCard/Close`, new URLSearchParams(payload).toString());
+
+    if (data.Status !== 'SUCCESS') {
+      debugPayment(data.Message);
+
+      throw new Error('Unsettle order failed');
+    }
+  }
+
+  async refund(order: NewebPayOrder<NewebPayCreditCardCommitMessage>): Promise<void> {
+    if (!~[NewebPayCreditCardBalanceStatus.WORKING, NewebPayCreditCardBalanceStatus.SETTLED].indexOf((order.additionalInfo as NewebPayAdditionInfoCreditCard).closeStatus)) {
+      throw new Error('Only working/settled order can be refunded');
+    }
+
+    if ((order.additionalInfo as NewebPayAdditionInfoCreditCard).refundStatus !== NewebPayCreditCardBalanceStatus.UNSETTLED) {
+      throw new Error('Order refunding.');
+    }
+
+    const cipher = createCipheriv('aes-256-cbc', this.hashKey, this.hashIv);
+
+    const encrypted = `${cipher.update(Object.entries({
+      RespondType: 'JSON',
+      Version: '1.0',
+      Amt: order.totalPrice,
+      MerchantOrderNo: order.id,
+      IndexType: 1,
+      TimeStamp: Math.round(Date.now() / 1000).toString(),
+      CloseType: 2,
+    } as NewebPayCreditCardCloseEncryptedRequestPayload)
+      .filter(([, value]) => value !== undefined)
+      .map(([key, value]) => `${key}=${encodeURIComponent(value as string | number)}`)
+      .join('&'), 'utf8', 'hex')}${cipher.final('hex')}`;
+
+    const payload = {
+      MerchantID_: this.merchantId,
+      PostData_: encrypted,
+    } as NewebPayCreditCardCloseRequestPayload;
+
+    const { data } = await axios.post<NewebPayAPIResponseWrapper<NewebPayCreditCardCloseResponse>>(`${this.baseUrl}/API/CreditCard/Close`, new URLSearchParams(payload).toString());
+
+    if (data.Status !== 'SUCCESS') {
+      debugPayment(data.Message);
+
+      throw new Error('Refund order failed');
+    }
+  }
+
+  async cancelRefund(order: NewebPayOrder<NewebPayCreditCardCommitMessage>): Promise<void> {
+    if ((order.additionalInfo as NewebPayAdditionInfoCreditCard).closeStatus !== NewebPayCreditCardBalanceStatus.SETTLED) {
+      throw new Error('Only settled order can be cancel refund');
+    }
+
+    if ((order.additionalInfo as NewebPayAdditionInfoCreditCard).refundStatus !== NewebPayCreditCardBalanceStatus.WAITING) {
+      throw new Error('Order not refunding.');
+    }
+
+    if (order.state !== OrderState.REFUNDED) {
+      throw new Error('Only refunded order can be cancel refund');
+    }
+
+    const cipher = createCipheriv('aes-256-cbc', this.hashKey, this.hashIv);
+
+    const encrypted = `${cipher.update(Object.entries({
+      RespondType: 'JSON',
+      Version: '1.0',
+      Amt: order.totalPrice,
+      MerchantOrderNo: order.id,
+      IndexType: 1,
+      TimeStamp: Math.round(Date.now() / 1000).toString(),
+      CloseType: 2,
+      Cancel: 1,
+    } as NewebPayCreditCardCloseEncryptedRequestPayload)
+      .filter(([, value]) => value !== undefined)
+      .map(([key, value]) => `${key}=${encodeURIComponent(value as string | number)}`)
+      .join('&'), 'utf8', 'hex')}${cipher.final('hex')}`;
+
+    const payload = {
+      MerchantID_: this.merchantId,
+      PostData_: encrypted,
+    } as NewebPayCreditCardCloseRequestPayload;
+
+    const { data } = await axios.post<NewebPayAPIResponseWrapper<NewebPayCreditCardCloseResponse>>(`${this.baseUrl}/API/CreditCard/Close`, new URLSearchParams(payload).toString());
+
+    if (data.Status !== 'SUCCESS') {
+      debugPayment(data.Message);
+
+      throw new Error('Refund order failed');
+    }
   }
 }

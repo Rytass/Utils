@@ -36,10 +36,10 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
     this._gateway = options.gateway;
     this._state = OrderState.INITED;
 
-    if ((options as OrderCreateInit<OCM>).form) {
-      this._form = (options as OrderCreateInit<OCM>).form;
+    if ('form' in options) {
+      this._form = options.form;
       this._paymentType = (() => {
-        switch ((options as OrderCreateInit<OCM>).form.ChoosePayment) {
+        switch (options.form.ChoosePayment) {
           case ECPayChannel[Channel.CREDIT_CARD]:
             return ECPayCallbackPaymentType.CREDIT_CARD;
 
@@ -50,13 +50,13 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
             return undefined;
         }
       })();
-    } else if ((options as OrderFromServerInit<OCM>).platformTradeNumber) {
-      this._createdAt = (options as OrderFromServerInit<OCM>).createdAt;
-      this._committedAt = (options as OrderFromServerInit<OCM>).committedAt;
-      this._platformTradeNumber = (options as OrderFromServerInit<OCM>).platformTradeNumber;
-      this._paymentType = (options as OrderFromServerInit<OCM>).paymentType;
+    } else if ('platformTradeNumber' in options) {
+      this._createdAt = options.createdAt;
+      this._committedAt = options.committedAt;
+      this._platformTradeNumber = options.platformTradeNumber;
+      this._paymentType = options.paymentType;
       this._state = (() => {
-        switch ((options as OrderFromServerInit<OCM>).status) {
+        switch (options.status) {
           case ECPayQueryResultStatus.COMMITTED:
             return OrderState.COMMITTED;
 

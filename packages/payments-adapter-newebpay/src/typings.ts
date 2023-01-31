@@ -282,10 +282,10 @@ export interface NewebPayQueryResponseBasePayload {
 }
 
 export enum NewebPayCreditCardBalanceStatus {
-  UNSETTLED = 0,
-  WAITING = 1,
-  WORKING = 2,
-  SETTLED = 3,
+  UNSETTLED = '0',
+  WAITING = '1',
+  WORKING = '2',
+  SETTLED = '3',
 }
 
 export interface NewebPayQueryCreditCardResponsePayload extends NewebPayQueryResponseBasePayload {
@@ -340,3 +340,48 @@ export type NewebPayQueryEsunWalletResponsePayload = NewebPayQueryThirdPartyResp
 export type NewebPayQueryTaiwanPayResponsePayload = NewebPayQueryThirdPartyResponsePayload;
 
 export type NewebPayQueryResponsePayload = NewebPayQueryCreditCardResponsePayload | NewebPayQueryATMResponsePayload | NewebPayQueryLogisticResponsePayload | NewebPayQueryThirdPartyResponsePayload;
+
+export interface NewebPayCreditCardCancelRequestPayload extends Record<string, string> {
+  MerchantID_: string;
+  PostData_: string;
+}
+
+export interface NewebPayCreditCardCancelEncryptedRequestPayload {
+  RespondType: 'JSON';
+  Version: '1.0';
+  Amt: number;
+  MerchantOrderNo: string;
+  IndexType: 1;
+  TimeStamp: string;
+}
+
+export interface NewebPayCreditCardCancelResponse {
+  MerchantID: string;
+  TradeNo: string;
+  Amt: number;
+  MerchantOrderNo: string;
+  CheckCode: string;
+}
+
+export interface NewebPayCreditCardCloseRequestPayload extends Record<string, string> {
+  MerchantID_: string;
+  PostData_: string;
+}
+
+export interface NewebPayCreditCardCloseEncryptedRequestPayload {
+  RespondType: 'JSON';
+  Version: '1.0';
+  Amt: number;
+  MerchantOrderNo: string;
+  TimeStamp: string;
+  IndexType: 1;
+  CloseType: 1 | 2;
+  Cancel?: 1;
+}
+
+export interface NewebPayCreditCardCloseResponse {
+  MerchantID: string;
+  TradeNo: string;
+  Amt: number;
+  MerchantOrderNo: string;
+}

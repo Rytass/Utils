@@ -1,7 +1,8 @@
 import { AdditionalInfo, AsyncOrderInformation, Order, OrderState, PaymentEvents } from '@rytass/payments';
 import { NewebPayOrderItem } from './newebpay-order-item';
 import { NewebPayPayment } from './newebpay-payment';
-import { NewebPayCommitMessage, NewebPaymentChannel, NewebPayMPGMakeOrderPayload, NewebPayOrderFromServerInit, NewebPayOrderStatusFromAPI, NewebPayPrepareOrderInit } from './typings';
+import { NewebPayCommitMessage, NewebPayCreditCardBalanceStatus, NewebPaymentChannel, NewebPayMPGMakeOrderPayload, NewebPayOrderFromServerInit, NewebPayOrderStatusFromAPI, NewebPayPrepareOrderInit } from './typings';
+import { NewebPayAdditionInfoCreditCard, NewebPayCreditCardCommitMessage } from './typings/credit-card.typing';
 
 export class NewebPayOrder<OCM extends NewebPayCommitMessage> implements Order<OCM> {
   private readonly _id: string;
@@ -200,7 +201,65 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage> implements Order<O
     this._gateway.emitter.emit(PaymentEvents.ORDER_COMMITTED, this);
   }
 
-  async refund() {
+  async creditCardSettle() {
+    if (this._state !== OrderState.COMMITTED) {
+      throw new Error('Only committed order can be settled');
+    }
 
+    if (this._channel !== NewebPaymentChannel.CREDIT) {
+      throw new Error('Only credit card order can be refunded');
+    }
+
+    await this._gateway.settle(this as NewebPayOrder<NewebPayCreditCardCommitMessage>);
+
+    ((this.additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage>) as NewebPayAdditionInfoCreditCard).closeStatus = NewebPayCreditCardBalanceStatus.SETTLED;
+  }
+
+  async cancelRefund() {
+    await this._gateway.cancelRefund(this as NewebPayOrder<NewebPayCreditCardCommitMessage>);
+
+    ((this.additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage>) as NewebPayAdditionInfoCreditCard).refundStatus = NewebPayCreditCardBalanceStatus.UNSETTLED;
+
+    this._state = OrderState.COMMITTED;
+  }
+
+  async refund() {
+    if (this._state !== OrderState.COMMITTED) {
+      throw new Error('Only committed order can be refunded');
+    }
+
+    if (this._channel !== NewebPaymentChannel.CREDIT) {
+      throw new Error('Only credit card order can be refunded');
+    }
+
+    const closeStatus = ((this.additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage>) as NewebPayAdditionInfoCreditCard).closeStatus;
+
+    switch (closeStatus) {
+      case NewebPayCreditCardBalanceStatus.UNSETTLED:
+        await this._gateway.cancel(this as NewebPayOrder<NewebPayCreditCardCommitMessage>);
+
+        ((this.additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage>) as NewebPayAdditionInfoCreditCard).closeStatus = NewebPayCreditCardBalanceStatus.SETTLED;
+
+        this._state = OrderState.REFUNDED;
+        break;
+
+      case NewebPayCreditCardBalanceStatus.WAITING:
+        await this._gateway.unsettle(this as NewebPayOrder<NewebPayCreditCardCommitMessage>);
+
+        ((this.additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage>) as NewebPayAdditionInfoCreditCard).closeStatus = NewebPayCreditCardBalanceStatus.UNSETTLED;
+
+        this._state = OrderState.REFUNDED;
+        break;
+
+      case NewebPayCreditCardBalanceStatus.WORKING:
+      case NewebPayCreditCardBalanceStatus.SETTLED:
+        await this._gateway.refund(this as NewebPayOrder<NewebPayCreditCardCommitMessage>);
+
+        ((this.additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage>) as NewebPayAdditionInfoCreditCard).closeStatus = NewebPayCreditCardBalanceStatus.SETTLED;
+        ((this.additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage>) as NewebPayAdditionInfoCreditCard).refundStatus = NewebPayCreditCardBalanceStatus.WAITING;
+
+        this._state = OrderState.REFUNDED;
+        break;
+    }
   }
 }
