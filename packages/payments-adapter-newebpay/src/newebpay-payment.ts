@@ -8,7 +8,7 @@ import ngrok from 'ngrok';
 import LRUCache from 'lru-cache';
 import { Server, IncomingMessage, ServerResponse, createServer } from 'http';
 import { NewebPayOrder } from './newebpay-order';
-import { AllowUILanguage, NewebPaymentChannel, NewebPayCommitMessage, NewebPayMPGMakeOrderEncryptedPayload, NewebPayMPGMakeOrderPayload, NewebPayOrderInput, NewebPayPaymentInitOptions, NewebPayNotifyPayload, NewebPayNotifyEncryptedPayload, NewebPayInfoRetriveEncryptedPayload, NewebPayQueryRequestPayload, NewebPayAPIResponseWrapper, NewebPayQueryResponsePayload, NewebPayCreditCardBalanceStatus, NewebPayCreditCardSpeedCheckoutMode, NewebPayOrderFromServerInit, NewebPayCreditCardCancelRequestPayload, NewebPayCreditCardCancelEncryptedRequestPayload, NewebPayCreditCardCancelResponse, NewebPayCreditCardCloseEncryptedRequestPayload, NewebPayCreditCardCloseRequestPayload, NewebPayCreditCardCloseResponse } from './typings';
+import { AllowUILanguage, NewebPaymentChannel, NewebPayCommitMessage, NewebPayMPGMakeOrderEncryptedPayload, NewebPayMPGMakeOrderPayload, NewebPayOrderInput, NewebPayPaymentInitOptions, NewebPayNotifyPayload, NewebPayNotifyEncryptedPayload, NewebPayInfoRetriveEncryptedPayload, NewebPayQueryRequestPayload, NewebPayAPIResponseWrapper, NewebPayQueryResponsePayload, NewebPayCreditCardBalanceStatus, NewebPayCreditCardSpeedCheckoutMode, NewebPayOrderFromServerInit, NewebPayCreditCardCancelRequestPayload, NewebPayCreditCardCancelEncryptedRequestPayload, NewebPayCreditCardCancelResponse, NewebPayCreditCardCloseEncryptedRequestPayload, NewebPayCreditCardCloseRequestPayload, NewebPayCreditCardCloseResponse, NewebPayOrderStatusFromAPI } from './typings';
 import { NewebPayAdditionInfoCreditCard, NewebPayCreditCardCommitMessage, NewebPayCreditCardOrderInput } from './typings/credit-card.typing';
 import { NewebPayWebATMCommitMessage, NewebPayWebATMOrderInput } from './typings/webatm.typing';
 import { NewebPayVirtualAccountCommitMessage } from './typings/virtual-account.typing';
@@ -450,7 +450,10 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
     };
 
     if ('ECI' in data.Result) {
-      return new NewebPayOrder<NewebPayCreditCardCommitMessage>(basicInfo as NewebPayOrderFromServerInit<NewebPayCreditCardCommitMessage>, {
+      return new NewebPayOrder<NewebPayCreditCardCommitMessage>({
+        ...(basicInfo as NewebPayOrderFromServerInit<NewebPayCreditCardCommitMessage>),
+        status: data.Result.BackStatus === NewebPayCreditCardBalanceStatus.UNSETTLED ? data.Result.TradeStatus : NewebPayOrderStatusFromAPI.REFUNDED,
+      }, {
         channel: Channel.CREDIT_CARD,
         processDate: DateTime.fromFormat(data.Result.PayTime || data.Result.CreateTime, 'yyyy-MM-dd HH:mm:ss').toJSDate(),
         authCode: data.Result.Auth,
@@ -476,7 +479,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
       switch (data.Result.PaymentType) {
         case 'VACC':
         case 'WEBATM': {
-          const [, buyerBankCode, buyerAccountNumber] = data.Result.PayInfo.match(/^\((\d+)\)(\d+)$/) as [string, string, string];
+          const [, buyerBankCode, buyerAccountNumber] = data.Result.PayInfo.match(/^\((\d+)\)(.+)$/) as [string, string, string];
 
           return new NewebPayOrder<NewebPayVirtualAccountCommitMessage>({
             ...basicInfo,

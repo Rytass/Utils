@@ -25,9 +25,13 @@ describe('NewebPay Payments', () => {
 
       // console.log(order.formHTML);
 
-      const order = await payment.query('7bd2170f7d46712bb246', 10);
+      const order = await payment.query('ee08876536b8f919047e', 10);
 
       console.log(order);
+
+      // await order.refund();
+
+      // console.log(order);
     });
   });
 });

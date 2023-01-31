@@ -212,7 +212,7 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage> implements Order<O
 
     await this._gateway.settle(this as NewebPayOrder<NewebPayCreditCardCommitMessage>);
 
-    ((this.additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage>) as NewebPayAdditionInfoCreditCard).closeStatus = NewebPayCreditCardBalanceStatus.SETTLED;
+    ((this.additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage>) as NewebPayAdditionInfoCreditCard).closeStatus = NewebPayCreditCardBalanceStatus.WAITING;
   }
 
   async cancelRefund() {
