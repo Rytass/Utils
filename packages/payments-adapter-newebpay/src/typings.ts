@@ -10,18 +10,18 @@ import { NewebPayOrder } from './newebpay-order';
 export enum NewebPaymentChannel {
   CREDIT = 1,
   ANDROID_PAY = 2,
-  SAMSUNGPAY = 4,
-  UNIONPAY = 8,
+  SAMSUNG_PAY = 4,
+  UNION_PAY = 8,
   WEBATM = 16,
   VACC = 32,
   // CVS = 64,
   // BARCODE = 128,
-  // ESUNWALLET = 256,
-  // TAIWANPAY = 512,
-  // LINEPAY = 1024,
+  // ESUN_WALLET = 256,
+  // TAIWAN_PAY = 512,
+  // LINE_PAY = 1024,
   // EZPAY = 2048,
-  // EZPWECHAT = 4096,
-  // EZPALIPAY = 8192,
+  // EZP_WECHAT = 4096,
+  // EZP_ALIPAY = 8192,
 }
 
 export enum AllowUILanguage {
@@ -80,9 +80,9 @@ export type NewebPayOrderInput<CM extends NewebPayCommitMessage> = CM extends Ne
 
 export interface NewebPayPaymentInitOptions<O extends NewebPayOrder<NewebPayCommitMessage>> {
   baseUrl?: string;
-  merchantId?: string;
-  hashKey?: string;
-  hashIv?: string;
+  merchantId: string;
+  aesKey: string;
+  aesIv: string;
   language?: AllowUILanguage;
   serverHost?: string;
   callbackPath?: string;

@@ -1,4 +1,4 @@
-import { OrderVirtualAccountCommitMessage, PaymentItem, PrepareOrderInput, VirtualAccountInfo } from '@rytass/payments';
+import { OrderVirtualAccountCommitMessage, PaymentItem, PrepareOrderInput } from '@rytass/payments';
 import { AllowUILanguage, NewebPayCommitMessage, NewebPaymentChannel } from '../typings';
 
 export enum NewebPayVirtualAccountBank {
@@ -14,9 +14,9 @@ export interface NewebPayVirtualAccountCommitMessage extends OrderVirtualAccount
 }
 
 export interface NewebPayVirtualAccountOrderInput extends PrepareOrderInput {
+  channel: NewebPaymentChannel.VACC;
   id?: string;
   items: PaymentItem[];
   bankTypes: NewebPayVirtualAccountBank[];
   language?: AllowUILanguage;
 }
-

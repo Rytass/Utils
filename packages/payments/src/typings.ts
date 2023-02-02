@@ -79,6 +79,8 @@ export type AdditionalInfo<OCM extends OrderCommitMessage> =
   ? CreditCardAuthInfo
   : OCM extends OrderVirtualAccountCommitMessage
   ? VistualAccountPaymentInfo
+  : OCM extends OrderWebATMCommitMessage
+  ? WebATMPaymentInfo
   : OCM extends OrderCVSCommitMessage
   ? CVSPaymentInfo
   : OCM extends OrderBarcodeCommitMessage
@@ -164,6 +166,12 @@ export interface CreditCardAuthInfo {
   card4Number: string;
   card6Number: string;
   gwsr?: string;
+}
+
+export interface WebATMPaymentInfo {
+  channel: Channel.WEB_ATM;
+  buyerAccountNumber: string;
+  buyerBankCode: string;
 }
 
 export interface VistualAccountPaymentInfo {

@@ -160,7 +160,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
           debugPayment(`ECPayment serve checkout page for order ${orderId}`);
 
           res.writeHead(200, {
-            'Content-Type': 'text/html',
+            'Content-Type': 'text/html; charset=utf-8',
           });
 
           res.end(order.formHTML);

@@ -31,6 +31,7 @@
     "ngrok": "^4.3.3"
   },
   "devDependencies": {
-    "debug": "^4.3.4"
+    "debug": "^4.3.4",
+    "supertest": "^6.3.3"
   }
 }

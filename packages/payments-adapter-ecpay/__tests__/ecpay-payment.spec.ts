@@ -169,7 +169,7 @@ describe('ECPayPayment', () => {
 
       request(payment._server)
         .get(`/payments/ecpay/checkout/${order.id}`)
-        .expect('Content-Type', 'text/html')
+        .expect('Content-Type', 'text/html; charset=utf-8')
         .expect(200)
         .then((res) => {
           expect(res.text).toEqual(order.formHTML);

@@ -1,5 +1,5 @@
 import { AdditionalInfo, Channel, CreditCardAuthInfo, CreditCardECI, OrderCreditCardCommitMessage, PaymentItem, PrepareOrderInput } from '@rytass/payments';
-import { AllowUILanguage, NewebPayAuthBank, NewebPayCommitMessage, NewebPayCreditCardBalanceStatus, NewebPayCreditCardSpeedCheckoutMode, NewebPayCreditCardSubChannel } from '../typings';
+import { AllowUILanguage, NewebPayAuthBank, NewebPayCommitMessage, NewebPayCreditCardBalanceStatus, NewebPayCreditCardSpeedCheckoutMode, NewebPayCreditCardSubChannel, NewebPaymentChannel } from '../typings';
 
 export enum NewebPayCreditCardInstallmentOptions {
   THREE = 3,
@@ -41,6 +41,7 @@ export interface NewebPayCreditCardCommitMessage extends OrderCreditCardCommitMe
 }
 
 export interface NewebPayCreditCardOrderInput extends PrepareOrderInput {
+  channel: NewebPaymentChannel.CREDIT;
   id?: string;
   items: PaymentItem[];
   installments?: NewebPayCreditCardInstallmentOptions[];

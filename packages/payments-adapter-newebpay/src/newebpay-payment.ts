@@ -1,5 +1,5 @@
 /* eslint-disable no-control-regex */
-import { AdditionalInfo, Channel, CreditCardAuthInfo, OrderCommitMessage, OrderState, PaymentEvents, PaymentGateway, VistualAccountPaymentInfo } from '@rytass/payments';
+import { Channel, CreditCardAuthInfo, OrderState, PaymentEvents, PaymentGateway, VistualAccountPaymentInfo, WebATMPaymentInfo } from '@rytass/payments';
 import { EventEmitter } from 'events';
 import { randomBytes, createCipheriv, createDecipheriv, createHash } from 'crypto';
 import { DateTime } from 'luxon';
@@ -8,7 +8,7 @@ import ngrok from 'ngrok';
 import LRUCache from 'lru-cache';
 import { Server, IncomingMessage, ServerResponse, createServer } from 'http';
 import { NewebPayOrder } from './newebpay-order';
-import { AllowUILanguage, NewebPaymentChannel, NewebPayCommitMessage, NewebPayMPGMakeOrderEncryptedPayload, NewebPayMPGMakeOrderPayload, NewebPayOrderInput, NewebPayPaymentInitOptions, NewebPayNotifyPayload, NewebPayNotifyEncryptedPayload, NewebPayInfoRetriveEncryptedPayload, NewebPayQueryRequestPayload, NewebPayAPIResponseWrapper, NewebPayQueryResponsePayload, NewebPayCreditCardBalanceStatus, NewebPayCreditCardSpeedCheckoutMode, NewebPayOrderFromServerInit, NewebPayCreditCardCancelRequestPayload, NewebPayCreditCardCancelEncryptedRequestPayload, NewebPayCreditCardCancelResponse, NewebPayCreditCardCloseEncryptedRequestPayload, NewebPayCreditCardCloseRequestPayload, NewebPayCreditCardCloseResponse, NewebPayOrderStatusFromAPI } from './typings';
+import { AllowUILanguage, NewebPaymentChannel, NewebPayCommitMessage, NewebPayMPGMakeOrderEncryptedPayload, NewebPayMPGMakeOrderPayload, NewebPayOrderInput, NewebPayPaymentInitOptions, NewebPayNotifyPayload, NewebPayNotifyEncryptedPayload, NewebPayInfoRetriveEncryptedPayload, NewebPayQueryRequestPayload, NewebPayAPIResponseWrapper, NewebPayQueryResponsePayload, NewebPayCreditCardBalanceStatus, NewebPayOrderFromServerInit, NewebPayCreditCardCancelRequestPayload, NewebPayCreditCardCancelEncryptedRequestPayload, NewebPayCreditCardCancelResponse, NewebPayCreditCardCloseEncryptedRequestPayload, NewebPayCreditCardCloseRequestPayload, NewebPayCreditCardCloseResponse, NewebPayOrderStatusFromAPI } from './typings';
 import { NewebPayAdditionInfoCreditCard, NewebPayCreditCardCommitMessage, NewebPayCreditCardOrderInput } from './typings/credit-card.typing';
 import { NewebPayWebATMCommitMessage, NewebPayWebATMOrderInput } from './typings/webatm.typing';
 import { NewebPayVirtualAccountCommitMessage } from './typings/virtual-account.typing';
@@ -18,8 +18,8 @@ const debugPayment = debug('Rytass:Payment:NewebPay');
 
 export class NewebPayPayment<CM extends NewebPayCommitMessage> implements PaymentGateway<CM, NewebPayOrder<CM>> {
   private readonly baseUrl: string;
-  private readonly hashKey: string;
-  private readonly hashIv: string;
+  private readonly aesKey: string;
+  private readonly aesIv: string;
   private readonly merchantId: string;
   private readonly language: AllowUILanguage;
   private serverHost: string;
@@ -32,11 +32,11 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
 
   readonly _server?: Server;
 
-  constructor(options?: NewebPayPaymentInitOptions<NewebPayOrder<CM>>) {
+  constructor(options: NewebPayPaymentInitOptions<NewebPayOrder<CM>>) {
     this.baseUrl = options?.baseUrl ?? 'https://ccore.newebpay.com';
-    this.hashKey = options?.hashKey ?? 'csZM5zSocJo7IZqaAlIpiu0pxZ8U7R9P';
-    this.hashIv = options?.hashIv ?? 'yKeWqlY8mXvhoG71';
-    this.merchantId = options?.merchantId ?? 'MS34356577';
+    this.aesKey = options.aesKey;
+    this.aesIv = options.aesIv;
+    this.merchantId = options.merchantId;
     this.language = options?.language ?? AllowUILanguage.ZH_TW;
     this.serverHost = options?.serverHost ?? 'http://localhost:3000';
     this.callbackPath = options?.callbackPath ?? '/payments/newebpay/callback';
@@ -110,7 +110,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
           debugPayment(`ECPayment serve checkout page for order ${orderId}`);
 
           res.writeHead(200, {
-            'Content-Type': 'text/html',
+            'Content-Type': 'text/html; charset=utf-8',
           });
 
           res.end(order.formHTML);
@@ -144,40 +144,47 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
           {},
         ) as NewebPayNotifyPayload;
 
-      switch (req.url) {
-        case this.callbackPath: {
-          const resolvedData = this.resolveEncryptedPayload<NewebPayNotifyEncryptedPayload>(payload.TradeInfo, payload.TradeSha);
-          const order = this.pendingOrdersCache.get<NewebPayOrder<NewebPayCommitMessage>>(resolvedData.MerchantOrderNo);
+      try {
+        switch (req.url) {
+          case this.callbackPath: {
+            const resolvedData = this.resolveEncryptedPayload<NewebPayNotifyEncryptedPayload>(payload.TradeInfo, payload.TradeSha);
+            const order = this.pendingOrdersCache.get<NewebPayOrder<NewebPayCommitMessage>>(resolvedData.MerchantOrderNo);
 
-          if (!order) {
-            res.writeHead(404);
-            res.end();
+            if (!order) {
+              res.writeHead(404);
+              res.end();
 
-            return;
+              return;
+            }
+
+            this.handlePaymentResult(order, resolvedData);
+            break;
           }
 
-          this.handlePaymentResult(order, resolvedData);
-          break;
-        }
+          case this.asyncInfoPath: {
+            const resolvedData = this.resolveEncryptedPayload<NewebPayInfoRetriveEncryptedPayload>(payload.TradeInfo, payload.TradeSha);
+            const order = this.pendingOrdersCache.get<NewebPayOrder<NewebPayCommitMessage>>(resolvedData.MerchantOrderNo);
 
-        case this.asyncInfoPath: {
-          const resolvedData = this.resolveEncryptedPayload<NewebPayInfoRetriveEncryptedPayload>(payload.TradeInfo, payload.TradeSha);
-          const order = this.pendingOrdersCache.get<NewebPayOrder<NewebPayCommitMessage>>(resolvedData.MerchantOrderNo);
+            if (!order) {
+              res.writeHead(404);
+              res.end();
 
-          if (!order) {
-            res.writeHead(404);
-            res.end();
+              return;
+            }
 
-            return;
+            this.handleAsyncInformation(order, resolvedData);
+            break;
           }
-
-          this.handleAsyncInformation(order, resolvedData);
-          break;
         }
+
+        res.writeHead(200);
+        res.end();
+      } catch (ex) {
+        debugPayment(ex);
+
+        res.writeHead(400);
+        res.end('Checksum Invalid');
       }
-
-      res.writeHead(200);
-      res.end();
     });
   }
 
@@ -208,7 +215,11 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
           committedAt: DateTime.fromFormat(payload.PayTime, 'yyyy-MM-dd HH:mm:ss').toJSDate(),
           platformTradeNumber: payload.TradeNo,
           channel: NewebPaymentChannel.WEBATM,
-        });
+        }, {
+          channel: Channel.WEB_ATM,
+          buyerBankCode: payload.PayBankCode,
+          buyerAccountNumber: payload.PayerAccount5Code,
+        } as WebATMPaymentInfo);
 
         break;
 
@@ -219,7 +230,11 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
           committedAt: DateTime.fromFormat(payload.PayTime, 'yyyy-MM-dd HH:mm:ss').toJSDate(),
           platformTradeNumber: payload.TradeNo,
           channel: NewebPaymentChannel.VACC,
-        });
+        }, {
+          channel: Channel.VIRTUAL_ACCOUNT,
+          buyerBankCode: payload.PayBankCode,
+          buyerAccountNumber: payload.PayerAccount5Code,
+        } as VistualAccountPaymentInfo);
 
         break;
 
@@ -274,28 +289,28 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
       .map(([key, value]) => `${key}=${encodeURIComponent(value as string | number)}`)
       .join('&');
 
-    const cipher = createCipheriv('aes-256-cbc', this.hashKey, this.hashIv);
+    const cipher = createCipheriv('aes-256-cbc', this.aesKey, this.aesIv);
     const encrypted = `${cipher.update(params, 'utf8', 'hex')}${cipher.final('hex') }`;
 
     return {
       MerchantID: this.merchantId,
       TradeInfo: encrypted,
-      TradeSha: createHash('sha256').update(`HashKey=${this.hashKey}&${encrypted}&HashIV=${this.hashIv}`).digest('hex').toUpperCase(),
+      TradeSha: createHash('sha256').update(`HashKey=${this.aesKey}&${encrypted}&HashIV=${this.aesIv}`).digest('hex').toUpperCase(),
       Version: '2.0',
       EncryptType: 0,
     };
   }
 
   private resolveEncryptedPayload<T extends { MerchantOrderNo: string }>(encrypted: string, hash: string): T {
-    if (hash !== createHash('sha256').update(`HashKey=${this.hashKey}&${encrypted}&HashIV=${this.hashIv}`).digest('hex').toUpperCase()) {
+    if (hash !== createHash('sha256').update(`HashKey=${this.aesKey}&${encrypted}&HashIV=${this.aesIv}`).digest('hex').toUpperCase()) {
       throw new Error('Invalid hash');
     }
 
-    const decipher = createDecipheriv('aes-256-cbc', this.hashKey, this.hashIv);
+    const decipher = createDecipheriv('aes-256-cbc', this.aesKey, this.aesIv);
 
     decipher.setAutoPadding(false);
 
-    const plainInfo = `${decipher.update(encrypted, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(/\x1E/g, '').replace(/\x14/g, '');
+    const plainInfo = `${decipher.update(encrypted, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
 
     try {
       const payload = JSON.parse(plainInfo) as NewebPayAPIResponseWrapper<T>;
@@ -360,23 +375,23 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
       OrderComment: input.remark ?? '',
       CREDIT: input.channel & NewebPaymentChannel.CREDIT ? 1 : 0,
       ANDROIDPAY: input.channel & NewebPaymentChannel.ANDROID_PAY ? 1 : 0,
-      SAMSUNGPAY: input.channel & NewebPaymentChannel.SAMSUNGPAY ? 1 : 0,
-      // LINEPAY: input.channel & NewebPaymentChannel.LINEPAY ? 1 : 0,
+      SAMSUNGPAY: input.channel & NewebPaymentChannel.SAMSUNG_PAY ? 1 : 0,
+      // LINEPAY: input.channel & NewebPaymentChannel.LINE_PAY ? 1 : 0,
       // ImageUrl: (input as NewebPayLinePayOrderInput).imageUrl ?? undefined,
       InstFlag: ((input as NewebPayCreditCardOrderInput).installments ?? []).join(',') || '',
       // CreditRed: (input as NewebPayCreditCardOrderInput).canUseBonus ? 1 : 0,
-      UNIONPAY: input.channel & NewebPaymentChannel.UNIONPAY ? 1 : 0,
+      UNIONPAY: input.channel & NewebPaymentChannel.UNION_PAY ? 1 : 0,
       WEBATM: input.channel & NewebPaymentChannel.WEBATM ? 1 : 0,
       VACC: input.channel & NewebPaymentChannel.VACC ? 1 : 0,
       BankType: ((input as NewebPayWebATMOrderInput).bankTypes ?? []).join(',') || '',
       // CVS: input.channel & NewebPaymentChannel.CVS ? 1 : 0,
       // BARCODE: input.channel & NewebPaymentChannel.BARCODE ? 1 : 0,
-      // ESUNWALLET: input.channel & NewebPaymentChannel.ESUNWALLET ? 1 : 0,
-      // TAIWANPAY: input.channel & NewebPaymentChannel.TAIWANPAY ? 1 : 0,
+      // ESUNWALLET: input.channel & NewebPaymentChannel.ESUN_WALLET ? 1 : 0,
+      // TAIWANPAY: input.channel & NewebPaymentChannel.TAIWAN_PAY ? 1 : 0,
       // CVSCOM: 0,
       // EZPAY: input.channel & NewebPaymentChannel.EZPAY ? 1 : 0,
-      // EZPWECHAT: input.channel & NewebPaymentChannel.EZPWECHAT ? 1 : 0,
-      // EZPALIPAY: input.channel & NewebPaymentChannel.EZPALIPAY ? 1 : 0,
+      // EZPWECHAT: input.channel & NewebPaymentChannel.EZP_WECHAT ? 1 : 0,
+      // EZPALIPAY: input.channel & NewebPaymentChannel.EZP_ALIPAY ? 1 : 0,
     } as NewebPayMPGMakeOrderEncryptedPayload;
 
     const order = new NewebPayOrder({
@@ -392,10 +407,6 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
   }
 
   async query<T extends NewebPayOrder<CM>>(id: string, amount: number): Promise<T> {
-    if (!this.isGatewayReady) {
-      throw new Error('Please waiting gateway ready');
-    }
-
     const now = Math.round(Date.now() / 1000);
 
     const payload = {
@@ -406,10 +417,16 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
       MerchantOrderNo: id,
       Amt: amount.toString(),
       Gateway: /^MS5/.test(this.merchantId) ? 'Composite' : '',
-      CheckValue: createHash('sha256').update(`IV=${this.hashIv}&Amt=${amount}&MerchantID=${this.merchantId}&MerchantOrderNo=${id}&Key=${this.hashKey}`).digest('hex').toUpperCase(),
+      CheckValue: createHash('sha256').update(`IV=${this.aesIv}&Amt=${amount}&MerchantID=${this.merchantId}&MerchantOrderNo=${id}&Key=${this.aesKey}`).digest('hex').toUpperCase(),
     } as NewebPayQueryRequestPayload;
 
     const { data } = await axios.post<NewebPayAPIResponseWrapper<NewebPayQueryResponsePayload>>(`${this.baseUrl}/API/QueryTradeInfo`, new URLSearchParams(payload).toString());
+
+    const checkCode = createHash('sha256').update(`HashIV=${this.aesIv}&Amt=${data.Result.Amt}&MerchantID=${data.Result.MerchantID}&MerchantOrderNo=${data.Result.MerchantOrderNo}&TradeNo=${data.Result.TradeNo}&HashKey=${this.aesKey}`).digest('hex').toUpperCase();
+
+    if (checkCode !== data.Result.CheckCode) {
+      throw new Error('CheckCode is not valid');
+    }
 
     const savedOrder = this.pendingOrdersCache.get(data.Result.MerchantOrderNo);
 
@@ -430,10 +447,10 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
             return NewebPaymentChannel.ANDROID_PAY;
 
           case 'SAMSUNGPAY':
-            return NewebPaymentChannel.SAMSUNGPAY;
+            return NewebPaymentChannel.SAMSUNG_PAY;
 
           case 'UNIONPAY':
-            return NewebPaymentChannel.UNIONPAY;
+            return NewebPaymentChannel.UNION_PAY;
 
           case 'WEBATM':
             return NewebPaymentChannel.WEBATM;
@@ -508,7 +525,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
       throw new Error('Only unsettled order can be canceled');
     }
 
-    const cipher = createCipheriv('aes-256-cbc', this.hashKey, this.hashIv);
+    const cipher = createCipheriv('aes-256-cbc', this.aesKey, this.aesIv);
 
     const encrypted = `${cipher.update(Object.entries({
       RespondType: 'JSON',
@@ -535,7 +552,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
       throw new Error('Cancel order failed');
     }
 
-    const validCode = createHash('sha256').update(`HashKey=${this.hashKey}&${encrypted}&HashIV=${this.hashIv}`).digest('hex').toUpperCase();
+    const validCode = createHash('sha256').update(`HashKey=${this.aesKey}&${encrypted}&HashIV=${this.aesIv}`).digest('hex').toUpperCase();
 
     if (validCode !== data.Result.CheckCode) throw new Error('Invalid check code');
   }
@@ -545,7 +562,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
       throw new Error('Only unsettled order can be canceled');
     }
 
-    const cipher = createCipheriv('aes-256-cbc', this.hashKey, this.hashIv);
+    const cipher = createCipheriv('aes-256-cbc', this.aesKey, this.aesIv);
 
     const encrypted = `${cipher.update(Object.entries({
       RespondType: 'JSON',
@@ -579,7 +596,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
       throw new Error('Only unsettled order can be canceled');
     }
 
-    const cipher = createCipheriv('aes-256-cbc', this.hashKey, this.hashIv);
+    const cipher = createCipheriv('aes-256-cbc', this.aesKey, this.aesIv);
 
     const encrypted = `${cipher.update(Object.entries({
       RespondType: 'JSON',
@@ -618,7 +635,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
       throw new Error('Order refunding.');
     }
 
-    const cipher = createCipheriv('aes-256-cbc', this.hashKey, this.hashIv);
+    const cipher = createCipheriv('aes-256-cbc', this.aesKey, this.aesIv);
 
     const encrypted = `${cipher.update(Object.entries({
       RespondType: 'JSON',
@@ -660,7 +677,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
       throw new Error('Only refunded order can be cancel refund');
     }
 
-    const cipher = createCipheriv('aes-256-cbc', this.hashKey, this.hashIv);
+    const cipher = createCipheriv('aes-256-cbc', this.aesKey, this.aesIv);
 
     const encrypted = `${cipher.update(Object.entries({
       RespondType: 'JSON',
