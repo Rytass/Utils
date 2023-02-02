@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.18](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.0.17...@rytass/payments-adapter-ecpay@0.0.18) (2023-02-02)
+
+
+### Bug Fixes
+
+* **payments-adapter-ecpay:** move ngrok to dependencies ([99ade80](https://github.com/Rytass/Utils/commit/99ade80448b99535df1699fd9502fd49972da9cd))
+
+
+### Features
+
+* **payments-adapter-newebpay:** add newebpay adapter for CREDIT/VACC/WEBATM ([b6cf908](https://github.com/Rytass/Utils/commit/b6cf9086990b662253907fcb93601c3c7116a077))
+* **payments-adapter-newebpay:** refund api ([e002212](https://github.com/Rytass/Utils/commit/e00221268a36a0de1eb33386397fcb6239638c7e))
+
+
+
+
+
 ## [0.0.17](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.0.16...@rytass/payments-adapter-ecpay@0.0.17) (2023-01-27)
 
 
