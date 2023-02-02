@@ -75,6 +75,7 @@ describe('NewebPay Payment Server', () => {
             .expect(200);
 
           expect(order.state).toBe(OrderState.COMMITTED);
+          expect(order.committedAt?.getTime()).toBe(DateTime.fromFormat('2023-02-02 14:38:50', 'yyyy-MM-dd HH:mm:ss').toMillis());
 
           payment._server?.close();
 

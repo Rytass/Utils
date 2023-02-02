@@ -1,4 +1,4 @@
-import { AdditionalInfo, Channel, CreditCardAuthInfo, CreditCardECI, OrderCreditCardCommitMessage, PaymentItem, PrepareOrderInput } from '@rytass/payments';
+import { AdditionalInfo, Channel, CreditCardAuthInfo, OrderCreditCardCommitMessage, PaymentItem, PrepareOrderInput } from '@rytass/payments';
 import { AllowUILanguage, NewebPayAuthBank, NewebPayCommitMessage, NewebPayCreditCardBalanceStatus, NewebPayCreditCardSpeedCheckoutMode, NewebPayCreditCardSubChannel, NewebPaymentChannel } from '../typings';
 
 export enum NewebPayCreditCardInstallmentOptions {

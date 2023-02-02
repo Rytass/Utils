@@ -592,8 +592,8 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
   }
 
   async unsettle(order: NewebPayOrder<NewebPayCreditCardCommitMessage>): Promise<void> {
-    if ((order.additionalInfo as NewebPayAdditionInfoCreditCard).closeStatus !== NewebPayCreditCardBalanceStatus.SETTLED) {
-      throw new Error('Only unsettled order can be canceled');
+    if ((order.additionalInfo as NewebPayAdditionInfoCreditCard).closeStatus !== NewebPayCreditCardBalanceStatus.WAITING) {
+      throw new Error('Only waiting order can be unsettle');
     }
 
     const cipher = createCipheriv('aes-256-cbc', this.aesKey, this.aesIv);

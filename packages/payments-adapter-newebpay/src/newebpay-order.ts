@@ -33,11 +33,11 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage> implements Order<O
 
   constructor(options: NewebPayPrepareOrderInit<OCM> | NewebPayOrderFromServerInit<OCM>, additionalInfo?: AdditionalInfo<OCM>) {
     this._id = options.id;
-    this._items = options.items;
+    this._items = options.items.map(item => new NewebPayOrderItem(item));
     this._gateway = options.gateway;
 
     if ('makePayload' in options) {
-      this._makePayload = options.makePayload ?? null;
+      this._makePayload = options.makePayload;
     } else if ('platformTradeNumber' in options) {
       this._platformTradeNumber = options.platformTradeNumber;
       this._createdAt = options.createdAt;
@@ -207,7 +207,7 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage> implements Order<O
     }
 
     if (this._channel !== NewebPaymentChannel.CREDIT) {
-      throw new Error('Only credit card order can be refunded');
+      throw new Error('Only credit card order can be settled');
     }
 
     await this._gateway.settle(this as NewebPayOrder<NewebPayCreditCardCommitMessage>);
