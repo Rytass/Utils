@@ -267,3 +267,67 @@ export interface EZPayInvoiceInvalidAllowanceSuccessResponse {
   MerchantID: string;
   CreateTime: string;
 }
+
+export type EZPayInvoiceQueryOptions = EZPayInvoiceQueryWithInvoiceNumber | EZPayInvoiceQueryWithOrderId;
+
+interface EZPayInvoiceQueryWithInvoiceNumber {
+  invoiceNumber: string;
+  randomCode: string;
+}
+
+interface EZPayInvoiceQueryWithOrderId {
+  orderId: string;
+  amount: number;
+}
+
+export interface EZPayInvoiceQueryPayload {
+  RespondType: 'JSON';
+  Version: '1.3';
+  TimeStamp: string;
+  SearchType: '0' | '1';
+  MerchantOrderNo: string;
+  TotalAmount: string;
+  InvoiceNumber: string;
+  RandomNum: string;
+}
+
+export interface EZPayInvoiceQueryResponse {
+  Status: 'SUCCESS' | ErrorCode;
+  Message: string;
+  Result: string;
+}
+
+export interface EZPayInvoiceQueryResponsePayload {
+  MerchantID: string;
+  InvoiceTransNo: string;
+  MerchantOrderNo: string;
+  InvoiceNumber: string;
+  RandomNum: string;
+  BuyerName: string;
+  BuyerUBN: string;
+  BuyerAddress: string;
+  BuyerPhone: string;
+  BuyerEmail: string;
+  InvoiceType: '07' | '08';
+  Category: 'B2B' | 'B2C';
+  TaxType: '1' | '2' | '3' | '9';
+  TaxRate: number;
+  Amt: number;
+  AmtSales: number;
+  AmtZero: number;
+  AmtFree: number;
+  TaxAmt: number;
+  TotalAmt: number;
+  CarrierType: '0' | '1' | '2' | '';
+  CarrierNum: string;
+  LoveCode: string;
+  PrintFlag: 'Y' | 'N';
+  KioskPrintFlag: '1';
+  CreateTime: string; // YYYY-MM-DD HH:mm:ss
+  ItemDetail: string;
+  InvoiceStatus: '1' | '2';
+  UploadStatus: '0' | '1' | '2' | '3' | '4';
+  BarCode: string;
+  QRCodeL: string;
+  QRCodeR: string;
+}

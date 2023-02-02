@@ -6,10 +6,10 @@ import isEmail from 'validator/lib/isEmail';
 import { DateTime } from 'luxon';
 import FormData from 'form-data';
 import { EZPayInvoice } from './ezpay-invoice';
-import { EZPayAvailableCarrier, EZPayBaseUrls, EZPayInvoiceAllowanceOptions, EZPayInvoiceAllowancePayload, EZPayInvoiceAllowanceSuccessResponse, EZPayInvoiceB2BIssueOptions, EZPayInvoiceB2CIssueOptions, EZPayInvoiceGatewayOptions, EZPayInvoiceInvalidAllowancePayload, EZPayInvoiceInvalidAllowanceSuccessResponse, EZPayInvoiceIssueOptions, EZPayInvoiceIssuePayload, EZPayInvoiceIssueStatus, EZPayInvoiceLoveCodeValidationPayload, EZPayInvoiceLoveCodeValidationSuccessResponse, EZPayInvoiceMobileValidationPayload, EZPayInvoiceMobileValidationSuccessResponse, EZPayInvoiceResponse, EZPayInvoiceSuccessResponse, EZPayInvoiceVoidOptions, EZPayInvoiceVoidPayload, EZPayInvoiceVoidSuccessResponse, EZPayPaymentItem, EZPayTaxTypeCode } from './typings';
+import { EZPayAvailableCarrier, EZPayBaseUrls, EZPayInvoiceAllowanceOptions, EZPayInvoiceAllowancePayload, EZPayInvoiceAllowanceSuccessResponse, EZPayInvoiceB2BIssueOptions, EZPayInvoiceB2CIssueOptions, EZPayInvoiceGatewayOptions, EZPayInvoiceInvalidAllowancePayload, EZPayInvoiceInvalidAllowanceSuccessResponse, EZPayInvoiceIssueOptions, EZPayInvoiceIssuePayload, EZPayInvoiceIssueStatus, EZPayInvoiceLoveCodeValidationPayload, EZPayInvoiceLoveCodeValidationSuccessResponse, EZPayInvoiceMobileValidationPayload, EZPayInvoiceMobileValidationSuccessResponse, EZPayInvoiceQueryOptions, EZPayInvoiceQueryPayload, EZPayInvoiceQueryResponse, EZPayInvoiceQueryResponsePayload, EZPayInvoiceResponse, EZPayInvoiceSuccessResponse, EZPayInvoiceVoidOptions, EZPayInvoiceVoidPayload, EZPayInvoiceVoidSuccessResponse, EZPayPaymentItem, EZPayTaxTypeCode } from './typings';
 import { EZPayInvoiceAllowance } from './ezpay-allowance';
 
-export class EZPayInvoiceGateway implements InvoiceGateway<EZPayInvoice> {
+export class EZPayInvoiceGateway implements InvoiceGateway<EZPayInvoice, EZPayInvoiceQueryOptions> {
   private readonly hashKey: string = 'yoRs5AfTfAWe9HI4DlEYKRorr9YvV3Kr';
   private readonly hashIv: string = 'CrJMQLwDF6zKOeaP';
   private readonly merchantId: string = '34818970';
@@ -534,6 +534,106 @@ export class EZPayInvoiceGateway implements InvoiceGateway<EZPayInvoice> {
     allowance.invalid(DateTime.fromFormat(responsePayload.CreateTime, 'yyyy-MM-dd HH:mm:ss').toJSDate());
 
     return allowance.parentInvoice;
+  }
+
+  async query(options: EZPayInvoiceQueryOptions): Promise<EZPayInvoice> {
+    const postData = this.encrypt<EZPayInvoiceQueryPayload>({
+      RespondType: 'JSON',
+      Version: '1.3',
+      TimeStamp: Math.floor(Date.now() / 1000).toString(),
+      SearchType: ('invoiceNumber' in options) ? '0' : '1',
+      MerchantOrderNo: ('invoiceNumber' in options) ? '' : options.orderId,
+      TotalAmount: ('invoiceNumber' in options) ? '' : options.amount.toString(),
+      InvoiceNumber: ('invoiceNumber' in options) ? options.invoiceNumber : '',
+      RandomNum: ('invoiceNumber' in options) ? options.randomCode : '',
+    });
+
+    const formData = new FormData();
+
+    formData.append('MerchantID_', this.merchantId);
+    formData.append('PostData_', postData);
+
+    const { data } = await axios.post<EZPayInvoiceQueryResponse>(`${this.baseUrl}/Api/invoice_search`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    if (data.Status !== 'SUCCESS') {
+      throw new Error(data.Message);
+    }
+
+    const responsePayload = JSON.parse(data.Result) as (EZPayInvoiceQueryResponsePayload & {
+      CheckCode: string;
+    });
+
+    if (this.getResponseCheckCode({
+      InvoiceTransNo: responsePayload.InvoiceTransNo,
+      MerchantID: this.merchantId,
+      MerchantOrderNo: responsePayload.MerchantOrderNo,
+      RandomNum: responsePayload.RandomNum,
+      TotalAmt: responsePayload.TotalAmt,
+    }) !== responsePayload.CheckCode) {
+      throw new Error('Invalid CheckCode');
+    }
+
+    try {
+      const items = JSON.parse(responsePayload.ItemDetail) as {
+        ItemNum: string;
+        ItemName: string;
+        ItemCount: number;
+        ItemWord: string;
+        ItemPrice: number;
+        ItemAmount: number;
+        ItemTaxType: string;
+      }[];
+
+      return new EZPayInvoice({
+        items: items.map(item => ({
+          name: item.ItemName,
+          unitPrice: item.ItemPrice,
+          quantity: item.ItemAmount,
+          unit: item.ItemWord,
+          taxType: ((taxType) => {
+            switch (taxType) {
+              case '1':
+                return TaxType.TAXED;
+
+              case '2':
+                return TaxType.ZERO_TAX;
+
+              case '3':
+                return TaxType.TAX_FREE;
+
+              default:
+                return undefined;
+            }
+          })(item.ItemTaxType),
+        })),
+        issuedOn: DateTime.fromFormat(responsePayload.CreateTime, 'yyyy-MM-dd HH:mm:ss').toJSDate(),
+        invoiceNumber: responsePayload.InvoiceNumber,
+        randomCode: responsePayload.RandomNum,
+        platformId: responsePayload.InvoiceTransNo,
+        orderId: responsePayload.MerchantOrderNo,
+        taxType: ((taxType) => {
+          switch (taxType) {
+            case '1':
+              return TaxType.TAXED;
+
+            case '2':
+              return TaxType.ZERO_TAX;
+
+            case '3':
+              return TaxType.TAX_FREE;
+
+            case '9':
+              return TaxType.MIXED;
+          }
+        })(responsePayload.TaxType),
+      });
+    } catch (ex) {
+      throw new Error('Item Parse Failed');
+    }
   }
 }
 
