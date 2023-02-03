@@ -65,3 +65,19 @@ invoiceGateway.issue({
   }],
 });
 ```
+
+### Query Invoice
+
+```typescript
+// Query with invoice number and random code
+invoiceGateway.query({
+  invoiceNumber: 'ZZ12345678',
+  randomCode: '1234',
+});
+
+// Query with order id and amount
+invoiceGateway.query({
+  orderId: '48f0d90c9039e8',
+  amount: 500,
+});
+```

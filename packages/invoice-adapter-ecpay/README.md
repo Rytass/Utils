@@ -71,3 +71,18 @@ invoiceGateway.issue({
   }],
 });
 ```
+
+### Query Invoice
+
+```typescript
+// Query with invoice number and issue date (date only, no time)
+invoiceGateway.query({
+  invoiceNumber: 'ZZ12345678',
+  issuedOn: new Date(),
+});
+
+// Query with order id
+invoiceGateway.query({
+  orderId: '48f0d90c9039e8',
+});
+```
