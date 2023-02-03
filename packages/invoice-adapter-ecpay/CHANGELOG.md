@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.17](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ecpay@0.1.16...@rytass/invoice-adapter-ecpay@0.1.17) (2023-02-03)
+
+
+### Features
+
+* **invoice:** add query invoice method ([9934006](https://github.com/Rytass/Utils/commit/9934006c0e8b5c35b216f652e990e3a79b1ef118))
+
+
+
+
+
 ## [0.1.16](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ecpay@0.1.15...@rytass/invoice-adapter-ecpay@0.1.16) (2023-02-02)
 
 **Note:** Version bump only for package @rytass/invoice-adapter-ecpay
