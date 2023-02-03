@@ -286,7 +286,7 @@ export interface EZPayInvoiceQueryPayload {
   TimeStamp: string;
   SearchType: '0' | '1';
   MerchantOrderNo: string;
-  TotalAmount: string;
+  TotalAmt: string;
   InvoiceNumber: string;
   RandomNum: string;
 }

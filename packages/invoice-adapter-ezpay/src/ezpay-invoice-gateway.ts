@@ -543,7 +543,7 @@ export class EZPayInvoiceGateway implements InvoiceGateway<EZPayInvoice, EZPayIn
       TimeStamp: Math.floor(Date.now() / 1000).toString(),
       SearchType: ('invoiceNumber' in options) ? '0' : '1',
       MerchantOrderNo: ('invoiceNumber' in options) ? '' : options.orderId,
-      TotalAmount: ('invoiceNumber' in options) ? '' : options.amount.toString(),
+      TotalAmt: ('invoiceNumber' in options) ? '' : options.amount.toString(),
       InvoiceNumber: ('invoiceNumber' in options) ? options.invoiceNumber : '',
       RandomNum: ('invoiceNumber' in options) ? options.randomCode : '',
     });
