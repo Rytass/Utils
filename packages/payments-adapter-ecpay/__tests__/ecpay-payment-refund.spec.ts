@@ -58,8 +58,8 @@ describe('ECPayPayment Refund', () => {
     it('should reject credit card trade status getter on server not ready', (done) => {
       const payment = new ECPayPayment({
         withServer: true,
-        onServerListen: () => {
-          payment._server?.close();
+        onServerListen: async () => {
+          await payment._server?.close();
 
           done();
         },

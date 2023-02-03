@@ -41,10 +41,10 @@ describe('NewebPay Payments', () => {
         aesIv: AES_IV,
         withServer: 'ngrok',
         serverHost: 'http://0.0.0.0',
-        onServerListen: () => {
+        onServerListen: async () => {
           expect(mockConnect).toBeCalledWith(3000);
 
-          payment._server?.close();
+          await payment._server?.close();
 
           done();
         },
@@ -62,10 +62,10 @@ describe('NewebPay Payments', () => {
         aesIv: AES_IV,
         withServer: 'ngrok',
         serverHost: 'http://0.0.0.0:888',
-        onServerListen: () => {
+        onServerListen: async () => {
           expect(mockConnect).toBeCalledWith(888);
 
-          payment._server?.close();
+          await payment._server?.close();
 
           done();
         },
@@ -83,10 +83,10 @@ describe('NewebPay Payments', () => {
         aesIv: AES_IV,
         withServer: 'ngrok',
         serverHost: 'http://0.0.0.0:888',
-        onServerListen: () => {
+        onServerListen: async () => {
           expect(mockConnect).toBeCalled();
 
-          payment._server?.close();
+          await payment._server?.close();
 
           done();
         },
@@ -221,8 +221,8 @@ describe('NewebPay Payments', () => {
         aesKey: AES_KEY,
         aesIv: AES_IV,
         withServer: true,
-        onServerListen: () => {
-          paymentServer._server!.close();
+        onServerListen: async () => {
+          await paymentServer._server!.close();
 
           done();
         },

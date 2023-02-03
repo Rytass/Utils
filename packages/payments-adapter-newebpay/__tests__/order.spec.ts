@@ -97,7 +97,7 @@ describe('NewebPay Order', () => {
       withServer: true,
       serverHost: 'https://rytass.com',
       checkoutPath: '/newebpay/checkout',
-      onServerListen: () => {
+      onServerListen: async () => {
         const order = payment2.prepare({
           id: '123142',
           items: [{
@@ -110,7 +110,7 @@ describe('NewebPay Order', () => {
 
         expect(order.checkoutURL).toBe('https://rytass.com/newebpay/checkout/123142');
 
-        payment2._server?.close();
+        await payment2._server?.close();
 
         done();
       },

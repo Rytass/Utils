@@ -1,13 +1,11 @@
 module.exports = {
   transform: {
     '\\.ts$': 'ts-jest',
+    '^.+\\.tsx?$': [
+      'ts-jest', { tsconfig: '<rootDir>/tsconfig.spec.json' },
+    ],
   },
   testMatch: ['**/+(*.)+(spec|test).+(ts|js)?(x)'],
-  globals: {
-    'ts-jest': {
-      tsconfig: '<rootDir>/tsconfig.spec.json',
-    },
-  },
   moduleFileExtensions: ['js', 'json', 'ts', 'tsx', 'node'],
   moduleNameMapper: {
     '^uuid$': 'uuid',
