@@ -5,7 +5,7 @@
 import { ECPayInvoice, ECPayInvoiceAllowance, ECPayInvoiceAllowanceRequestBody, ECPayInvoiceGateway, ECPayInvoiceInvalidAllowanceRequestBody, InvoiceAllowanceState, InvoiceState, TaxType } from '../src';
 import axios from 'axios';
 import { DateTime } from 'luxon';
-import { randomBytes, createDecipheriv, createCipheriv } from 'crypto';
+import { createDecipheriv, createCipheriv } from 'crypto';
 
 const DEFAULT_AES_IV = 'q9jcZX8Ib9LM8wYk';
 const DEFAULT_AES_KEY = 'ejCk326UnaZWKisg';
