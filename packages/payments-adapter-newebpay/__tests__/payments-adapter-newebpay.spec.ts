@@ -61,9 +61,9 @@ describe('NewebPay Payments', () => {
         aesKey: AES_KEY,
         aesIv: AES_IV,
         withServer: 'ngrok',
-        serverHost: 'http://0.0.0.0:888',
+        serverHost: 'http://0.0.0.0:3005',
         onServerListen: async () => {
-          expect(mockConnect).toBeCalledWith(888);
+          expect(mockConnect).toBeCalledWith(3005);
 
           await payment._server?.close();
 
@@ -82,7 +82,7 @@ describe('NewebPay Payments', () => {
         aesKey: AES_KEY,
         aesIv: AES_IV,
         withServer: 'ngrok',
-        serverHost: 'http://0.0.0.0:888',
+        serverHost: 'http://0.0.0.0:3005',
         onServerListen: async () => {
           expect(mockConnect).toBeCalled();
 
