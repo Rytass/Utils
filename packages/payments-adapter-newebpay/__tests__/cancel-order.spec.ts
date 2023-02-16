@@ -51,7 +51,8 @@ describe('NewebPay Cancel Order', () => {
           Status: 'SUCCESS',
           Message: '',
           Result: {
-            CheckCode: createHash('sha256').update(`HashKey=${AES_KEY}&${postData}&HashIV=${AES_IV}`).digest('hex').toUpperCase(),
+            TradeNo: '1234567890',
+            CheckCode: createHash('sha256').update(`HashIV=${AES_IV}&Amt=${order.totalPrice}&MerchantID=${MERCHANT_ID}&MerchantOrderNo=${order.id}&TradeNo=1234567890&HashKey=${AES_KEY}`).digest('hex').toUpperCase(),
           },
         },
       };

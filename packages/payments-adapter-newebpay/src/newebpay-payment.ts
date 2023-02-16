@@ -552,7 +552,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
       throw new Error('Cancel order failed');
     }
 
-    const validCode = createHash('sha256').update(`HashKey=${this.aesKey}&${encrypted}&HashIV=${this.aesIv}`).digest('hex').toUpperCase();
+    const validCode = createHash('sha256').update(`HashIV=${this.aesIv}&Amt=${order.totalPrice}&MerchantID=${this.merchantId}&MerchantOrderNo=${order.id}&TradeNo=${data.Result.TradeNo}&HashKey=${this.aesKey}`).digest('hex').toUpperCase();
 
     if (validCode !== data.Result.CheckCode) throw new Error('Invalid check code');
   }
