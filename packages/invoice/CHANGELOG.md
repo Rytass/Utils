@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.14](https://github.com/Rytass/Utils/compare/@rytass/invoice@0.1.12...@rytass/invoice@0.1.14) (2023-02-16)
+
+
+### Features
+
+* **invoice:** add query invoice method ([9934006](https://github.com/Rytass/Utils/commit/9934006c0e8b5c35b216f652e990e3a79b1ef118))
+
+
+
+
+
 ## [0.1.13](https://github.com/Rytass/Utils/compare/@rytass/invoice@0.1.12...@rytass/invoice@0.1.13) (2023-02-03)
 
 
