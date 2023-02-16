@@ -141,44 +141,35 @@ describe('ECPayPayment', () => {
   });
 
   describe('Serve checkout server', () => {
-    let payment: ECPayPayment<ECPayChannelCreditCard>;
-
-    beforeAll(() => {
-      return new Promise<void>((resolve) => {
-        payment = new ECPayPayment({
-          withServer: true,
-          serverHost: 'http://localhost',
-          onServerListen: resolve,
-        });
-      });
-    });
-
     it('should serve checkout url', (done) => {
-      const order = payment.prepare({
-        channel: Channel.CREDIT_CARD,
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }, {
-          name: '中文',
-          unitPrice: 15,
-          quantity: 4,
-        }],
-      });
+      const payment = new ECPayPayment<ECPayChannelCreditCard>({
+        withServer: true,
+        serverHost: 'http://localhost',
+        onServerListen: async () => {
+          const order = payment.prepare({
+            channel: Channel.CREDIT_CARD,
+            items: [{
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            }, {
+              name: '中文',
+              unitPrice: 15,
+              quantity: 4,
+            }],
+          });
 
-      request(payment._server)
-        .get(`/payments/ecpay/checkout/${order.id}`)
-        .expect('Content-Type', 'text/html; charset=utf-8')
-        .expect(200)
-        .then((res) => {
+          const res = await request(payment._server)
+            .get(`/payments/ecpay/checkout/${order.id}`)
+            .expect('Content-Type', 'text/html; charset=utf-8')
+            .expect(200);
+
           expect(res.text).toEqual(order.formHTML);
 
-          done();
-        });
+          payment._server?.close(done);
+        },
+      });
     });
-
-    afterAll(() => new Promise(resolve => payment._server?.close(resolve)));
   });
 
   describe('Serve callback handler server', () => {
@@ -261,7 +252,7 @@ describe('ECPayPayment', () => {
       const payment = new ECPayPayment<ECPayChannelCreditCard>({
         withServer: true,
         serverHost: 'http://localhost:3005',
-        onServerListen: () => {
+        onServerListen: async () => {
           const order = payment.prepare({
             channel: Channel.CREDIT_CARD,
             items: [{
@@ -303,24 +294,23 @@ describe('ECPayPayment', () => {
             TradeNo: '2204181914513433',
           });
 
+          const res = await request(payment._server)
+            .post('/payments/ecpay/callback')
+            .send(new URLSearchParams(successfulResponse).toString())
+            .expect('Content-Type', 'text/plain')
+            .expect(200);
+
+          expect(res.text).toEqual('1|OK');
+
           request(payment._server)
             .post('/payments/ecpay/callback')
             .send(new URLSearchParams(successfulResponse).toString())
             .expect('Content-Type', 'text/plain')
-            .expect(200)
-            .then((res) => {
-              expect(res.text).toEqual('1|OK');
+            .expect(400)
+            .then((failedResponse) => {
+              expect(failedResponse.text).toEqual('0|OrderNotFound');
 
-              request(payment._server)
-                .post('/payments/ecpay/callback')
-                .send(new URLSearchParams(successfulResponse).toString())
-                .expect('Content-Type', 'text/plain')
-                .expect(400)
-                .then((failedResponse) => {
-                  expect(failedResponse.text).toEqual('0|OrderNotFound');
-
-                  payment._server?.close(done);
-                });
+              payment._server?.close(done);
             });
         },
       });
@@ -494,8 +484,6 @@ describe('ECPayPayment', () => {
   });
 
   describe('Custom server listener', () => {
-    let payment: ECPayPayment<ECPayChannelCreditCard>;
-
     const serverListenerMock = jest.fn<void, [IncomingMessage, ServerResponse]>((req, res) => {
       res.writeHead(200, {
         'Content-Type': 'text/plain',
@@ -504,73 +492,67 @@ describe('ECPayPayment', () => {
       res.end('1|OK');
     });
 
-    beforeAll(() => {
-      return new Promise<void>((resolve) => {
-        payment = new ECPayPayment({
-          withServer: true,
-          serverHost: 'http://localhost:3007',
-          onServerListen: resolve,
-          serverListener: serverListenerMock,
-        });
-      });
-    });
-
     it('should provide custom server listener', (done) => {
-      const order = payment.prepare({
-        channel: Channel.CREDIT_CARD,
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }, {
-          name: '中文',
-          unitPrice: 15,
-          quantity: 4,
-        }],
-      });
+      const payment = new ECPayPayment<ECPayChannelCreditCard>({
+        withServer: true,
+        serverHost: 'http://localhost:3007',
+        onServerListen: async () => {
+          const order = payment.prepare({
+            channel: Channel.CREDIT_CARD,
+            items: [{
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            }, {
+              name: '中文',
+              unitPrice: 15,
+              quantity: 4,
+            }],
+          });
 
-      const successfulResponse = addMac({
-        amount: '70',
-        auth_code: '777777',
-        card4no: '2222',
-        card6no: '431195',
-        CustomField1: '',
-        CustomField2: '',
-        CustomField3: '',
-        CustomField4: '',
-        eci: '0',
-        gwsr: '11943076',
-        MerchantID: '2000132',
-        MerchantTradeNo: order.id,
-        PaymentDate: '2022/04/18 19:15:33',
-        PaymentType: 'Credit_CreditCard',
-        process_date: '2022/04/18 19:15:33',
-        RtnCode: '1',
-        RtnMsg: '交易成功',
-        SimulatePaid: '0',
-        TradeAmt: '70',
-        TradeDate: '2022/04/18 19:14:51',
-        TradeNo: '2204181914513433',
-      });
-
-      request(payment._server)
-        .get(`/payments/ecpay/callback/${order.id}`)
-        .expect(200)
-        .then(() => {
-          expect(serverListenerMock.mock.calls.length).toBe(1);
+          const successfulResponse = addMac({
+            amount: '70',
+            auth_code: '777777',
+            card4no: '2222',
+            card6no: '431195',
+            CustomField1: '',
+            CustomField2: '',
+            CustomField3: '',
+            CustomField4: '',
+            eci: '0',
+            gwsr: '11943076',
+            MerchantID: '2000132',
+            MerchantTradeNo: order.id,
+            PaymentDate: '2022/04/18 19:15:33',
+            PaymentType: 'Credit_CreditCard',
+            process_date: '2022/04/18 19:15:33',
+            RtnCode: '1',
+            RtnMsg: '交易成功',
+            SimulatePaid: '0',
+            TradeAmt: '70',
+            TradeDate: '2022/04/18 19:14:51',
+            TradeNo: '2204181914513433',
+          });
 
           request(payment._server)
-            .post('/payments/ecpay/callback')
-            .send(new URLSearchParams(successfulResponse).toString())
-            .then(async () => {
-              expect(serverListenerMock.mock.calls.length).toBe(2);
+            .get(`/payments/ecpay/callback/${order.id}`)
+            .expect(200)
+            .then(() => {
+              expect(serverListenerMock.mock.calls.length).toBe(1);
 
-              done();
+              request(payment._server)
+                .post('/payments/ecpay/callback')
+                .send(new URLSearchParams(successfulResponse).toString())
+                .then(async () => {
+                  expect(serverListenerMock.mock.calls.length).toBe(2);
+
+                  payment._server?.close(done);
+                });
             });
-        });
+        },
+        serverListener: serverListenerMock,
+      });
     });
-
-    afterAll(() => new Promise(resolve => payment._server?.close(resolve)));
   });
 
   describe('Memory cards', () => {
@@ -1041,181 +1023,170 @@ describe('ECPayPayment', () => {
   });
 
   describe('Invalid Payment Type', () => {
-    let testPayment: ECPayPayment<ECPayChannelCreditCard>;
-
-    beforeAll(() => new Promise<void>((resolve) => {
-      testPayment = new ECPayPayment({
-        withServer: true,
-        onServerListen: resolve,
-      });
-    }));
-
     it('should reject invalid channel on callback', (done) => {
-      const order = testPayment.prepare({
-        channel: Channel.CREDIT_CARD,
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
+      const testPayment = new ECPayPayment<ECPayChannelCreditCard>({
+        withServer: true,
+        onServerListen: () => {
+          const order = testPayment.prepare({
+            channel: Channel.CREDIT_CARD,
+            items: [{
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            }],
+          });
+
+          // Get HTML to trigger pre commit
+          // eslint-disable-next-line no-unused-vars
+          const html = order.formHTML;
+
+          const successfulResponse = addMac({
+            BankCode: '806',
+            ExpireDate: '2022/04/27',
+            MerchantID: '2000132',
+            MerchantTradeNo: order.id,
+            PaymentType: 'INVALID_PAYMENT_TYPE',
+            RtnCode: '1',
+            RtnMsg: 'Get VirtualAccount Succeeded',
+            TradeAmt: order.totalPrice.toString(),
+            TradeDate: '2022/04/20 17:30:52',
+            TradeNo: '2204201729498436',
+            vAccount: '3453721178769211',
+            StoreID: '',
+            CustomField1: '',
+            CustomField2: '',
+            CustomField3: '',
+            CustomField4: '',
+          });
+
+          request(testPayment._server)
+            .post('/payments/ecpay/callback')
+            .send(new URLSearchParams(successfulResponse).toString())
+            .expect('Content-Type', 'text/plain')
+            .expect(400)
+            .then((res) => {
+              expect(res.text).toEqual('0|OrderNotFound');
+
+              testPayment._server?.close(done);
+            });
+        },
       });
-
-      // Get HTML to trigger pre commit
-      // eslint-disable-next-line no-unused-vars
-      const html = order.formHTML;
-
-      const successfulResponse = addMac({
-        BankCode: '806',
-        ExpireDate: '2022/04/27',
-        MerchantID: '2000132',
-        MerchantTradeNo: order.id,
-        PaymentType: 'INVALID_PAYMENT_TYPE',
-        RtnCode: '1',
-        RtnMsg: 'Get VirtualAccount Succeeded',
-        TradeAmt: order.totalPrice.toString(),
-        TradeDate: '2022/04/20 17:30:52',
-        TradeNo: '2204201729498436',
-        vAccount: '3453721178769211',
-        StoreID: '',
-        CustomField1: '',
-        CustomField2: '',
-        CustomField3: '',
-        CustomField4: '',
-      });
-
-      request(testPayment._server)
-        .post('/payments/ecpay/callback')
-        .send(new URLSearchParams(successfulResponse).toString())
-        .expect('Content-Type', 'text/plain')
-        .expect(400)
-        .then((res) => {
-          expect(res.text).toEqual('0|OrderNotFound');
-
-          done();
-        });
     });
-
-    afterAll(() => new Promise((resolve) => {
-      testPayment._server?.close(resolve);
-    }));
   });
 
   describe('Payment Result Default Handler', () => {
-    let testPayment: ECPayPayment<ECPayChannelCreditCard>;
-
-    beforeAll(() => new Promise<void>((resolve) => {
-      testPayment = new ECPayPayment({
-        withServer: true,
-        onServerListen: resolve,
-      });
-    }));
-
     it('should no effect if duplicate result callback', (done) => {
-      const order = testPayment.prepare({
-        channel: Channel.CREDIT_CARD,
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
+      const testPayment = new ECPayPayment<ECPayChannelCreditCard>({
+        withServer: true,
+        onServerListen: () => {
+          const order = testPayment.prepare({
+            channel: Channel.CREDIT_CARD,
+            items: [{
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            }],
+          });
+
+          // Get HTML to trigger pre commit
+          // eslint-disable-next-line no-unused-vars
+          const html = order.formHTML;
+
+          const successfulResponse = addMac({
+            amount: '70',
+            auth_code: '777777',
+            card4no: '2222',
+            card6no: '431195',
+            CustomField1: '',
+            CustomField2: '',
+            CustomField3: '',
+            CustomField4: '',
+            eci: '0',
+            gwsr: '11943076',
+            MerchantID: '2000132',
+            MerchantTradeNo: order.id,
+            PaymentDate: '2022/04/18 19:15:33',
+            PaymentType: ECPayCallbackPaymentType.CREDIT_CARD,
+            process_date: '2022/04/18 19:15:33',
+            RtnCode: '2',
+            RtnMsg: '交易失敗',
+            SimulatePaid: '0',
+            TradeAmt: order.totalPrice.toString(),
+            TradeDate: '2022/04/18 19:14:51',
+            TradeNo: '2204181914513433',
+          });
+
+          request(testPayment._server)
+            .post('/payments/ecpay/callback')
+            .send(new URLSearchParams(successfulResponse).toString())
+            .expect('Content-Type', 'text/plain')
+            .expect(200)
+            .then((res) => {
+              expect(res.text).toEqual('1|OK');
+              expect(order.state).toBe(OrderState.FAILED);
+              expect(order.failedMessage?.code).toBe('2');
+              expect(order.failedMessage?.message).toBe('交易失敗');
+
+              testPayment._server?.close(done);
+            });
+        },
       });
-
-      // Get HTML to trigger pre commit
-      // eslint-disable-next-line no-unused-vars
-      const html = order.formHTML;
-
-      const successfulResponse = addMac({
-        amount: '70',
-        auth_code: '777777',
-        card4no: '2222',
-        card6no: '431195',
-        CustomField1: '',
-        CustomField2: '',
-        CustomField3: '',
-        CustomField4: '',
-        eci: '0',
-        gwsr: '11943076',
-        MerchantID: '2000132',
-        MerchantTradeNo: order.id,
-        PaymentDate: '2022/04/18 19:15:33',
-        PaymentType: ECPayCallbackPaymentType.CREDIT_CARD,
-        process_date: '2022/04/18 19:15:33',
-        RtnCode: '2',
-        RtnMsg: '交易失敗',
-        SimulatePaid: '0',
-        TradeAmt: order.totalPrice.toString(),
-        TradeDate: '2022/04/18 19:14:51',
-        TradeNo: '2204181914513433',
-      });
-
-      request(testPayment._server)
-        .post('/payments/ecpay/callback')
-        .send(new URLSearchParams(successfulResponse).toString())
-        .expect('Content-Type', 'text/plain')
-        .expect(200)
-        .then((res) => {
-          expect(res.text).toEqual('1|OK');
-          expect(order.state).toBe(OrderState.FAILED);
-          expect(order.failedMessage?.code).toBe('2');
-          expect(order.failedMessage?.message).toBe('交易失敗');
-
-          done();
-        });
     });
 
     it('should reject if invalid payment type call async info', (done) => {
-      const order = testPayment.prepare({
-        channel: Channel.CREDIT_CARD,
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
+      const testPayment = new ECPayPayment<ECPayChannelCreditCard>({
+        withServer: true,
+        onServerListen: () => {
+          const order = testPayment.prepare({
+            channel: Channel.CREDIT_CARD,
+            items: [{
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            }],
+          });
+
+          // Get HTML to trigger pre commit
+          // eslint-disable-next-line no-unused-vars
+          const html = order.formHTML;
+
+          const successfulResponse = addMac({
+            amount: '70',
+            auth_code: '777777',
+            card4no: '2222',
+            card6no: '431195',
+            CustomField1: '',
+            CustomField2: '',
+            CustomField3: '',
+            CustomField4: '',
+            eci: '0',
+            gwsr: '11943076',
+            MerchantID: '2000132',
+            MerchantTradeNo: order.id,
+            PaymentDate: '2022/04/18 19:15:33',
+            PaymentType: ECPayCallbackPaymentType.CREDIT_CARD,
+            process_date: '2022/04/18 19:15:33',
+            RtnCode: '2',
+            RtnMsg: '交易失敗',
+            SimulatePaid: '0',
+            TradeAmt: order.totalPrice.toString(),
+            TradeDate: '2022/04/18 19:14:51',
+            TradeNo: '2204181914513433',
+          });
+
+          request(testPayment._server)
+            .post('/payments/ecpay/async-informations')
+            .send(new URLSearchParams(successfulResponse).toString())
+            .expect('Content-Type', 'text/plain')
+            .expect(400)
+            .then((res) => {
+              expect(res.text).toEqual('0|OrderNotFound');
+              expect(order.state).toBe(OrderState.PRE_COMMIT);
+
+              testPayment._server?.close(done);
+            });
+        },
       });
-
-      // Get HTML to trigger pre commit
-      // eslint-disable-next-line no-unused-vars
-      const html = order.formHTML;
-
-      const successfulResponse = addMac({
-        amount: '70',
-        auth_code: '777777',
-        card4no: '2222',
-        card6no: '431195',
-        CustomField1: '',
-        CustomField2: '',
-        CustomField3: '',
-        CustomField4: '',
-        eci: '0',
-        gwsr: '11943076',
-        MerchantID: '2000132',
-        MerchantTradeNo: order.id,
-        PaymentDate: '2022/04/18 19:15:33',
-        PaymentType: ECPayCallbackPaymentType.CREDIT_CARD,
-        process_date: '2022/04/18 19:15:33',
-        RtnCode: '2',
-        RtnMsg: '交易失敗',
-        SimulatePaid: '0',
-        TradeAmt: order.totalPrice.toString(),
-        TradeDate: '2022/04/18 19:14:51',
-        TradeNo: '2204181914513433',
-      });
-
-      request(testPayment._server)
-        .post('/payments/ecpay/async-informations')
-        .send(new URLSearchParams(successfulResponse).toString())
-        .expect('Content-Type', 'text/plain')
-        .expect(400)
-        .then((res) => {
-          expect(res.text).toEqual('0|OrderNotFound');
-          expect(order.state).toBe(OrderState.PRE_COMMIT);
-
-          done();
-        });
     });
-
-    afterAll(() => new Promise((resolve) => {
-      testPayment._server?.close(resolve);
-    }));
   });
 });

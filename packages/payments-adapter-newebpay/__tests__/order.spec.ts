@@ -110,9 +110,7 @@ describe('NewebPay Order', () => {
 
         expect(order.checkoutURL).toBe('https://rytass.com/newebpay/checkout/123142');
 
-        await payment2._server?.close();
-
-        done();
+        payment2._server?.close(done);
       },
     });
   });

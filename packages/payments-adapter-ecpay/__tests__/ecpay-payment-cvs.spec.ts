@@ -37,271 +37,308 @@ describe('ECPayPayment (CVS)', () => {
   });
 
   describe('CVS', () => {
-    let payment: ECPayPayment<ECPayChannelCVS>;
-
-    beforeAll(() => new Promise<void>((resolve) => {
-      payment = new ECPayPayment<ECPayChannelCVS>({
+    it('should throw on not cvs channel set cvsExpireMinutes', (done) => {
+      const payment = new ECPayPayment<ECPayChannelCVS>({
         withServer: true,
-        onServerListen: resolve,
-      });
-    }));
+        onServerListen: () => {
+          expect(() => {
+            payment.prepare({
+              // @ts-ignore: Unreachable code error
+              channel: Channel.VIRTUAL_ACCOUNT,
+              cvsExpireMinutes: 1100,
+              items: [{
+                name: 'Test',
+                unitPrice: 100,
+                quantity: 1,
+              }],
+            });
+          }).toThrowError();
 
-    it('should throw on not cvs channel set cvsExpireMinutes', () => {
-      expect(() => {
-        payment.prepare({
-          // @ts-ignore: Unreachable code error
-          channel: Channel.VIRTUAL_ACCOUNT,
-          cvsExpireMinutes: 1100,
-          items: [{
-            name: 'Test',
-            unitPrice: 100,
-            quantity: 1,
-          }],
-        });
-      }).toThrowError();
+          payment._server?.close(done);
+        },
+      });
     });
 
-    it('should `cvsExpireMinutes` between 1 and 43200', () => {
-      expect(() => {
-        payment.prepare({
-          channel: Channel.CVS_KIOSK,
-          cvsExpireMinutes: 0,
-          items: [{
-            name: 'Test',
-            unitPrice: 100,
-            quantity: 1,
-          }],
-        });
-      }).toThrowError();
+    it('should `cvsExpireMinutes` between 1 and 43200', (done) => {
+      const payment = new ECPayPayment<ECPayChannelCVS>({
+        withServer: true,
+        onServerListen: () => {
+          expect(() => {
+            payment.prepare({
+              channel: Channel.CVS_KIOSK,
+              cvsExpireMinutes: 0,
+              items: [{
+                name: 'Test',
+                unitPrice: 100,
+                quantity: 1,
+              }],
+            });
+          }).toThrowError();
 
-      expect(() => {
-        payment.prepare({
-          channel: Channel.CVS_KIOSK,
-          cvsExpireMinutes: 99999,
-          items: [{
-            name: 'Test',
-            unitPrice: 100,
-            quantity: 1,
-          }],
-        });
-      }).toThrowError();
+          expect(() => {
+            payment.prepare({
+              channel: Channel.CVS_KIOSK,
+              cvsExpireMinutes: 99999,
+              items: [{
+                name: 'Test',
+                unitPrice: 100,
+                quantity: 1,
+              }],
+            });
+          }).toThrowError();
+
+          payment._server?.close(done);
+        },
+      });
     });
 
-    it('should default virtual expire minutes is 10080', () => {
-      const order = payment.prepare({
-        channel: Channel.CVS_KIOSK,
-        items: [{
-          name: 'Test',
-          unitPrice: 100,
-          quantity: 1,
-        }],
-      });
+    it('should default virtual expire minutes is 10080', (done) => {
+      const payment = new ECPayPayment<ECPayChannelCVS>({
+        withServer: true,
+        onServerListen: () => {
+          const order = payment.prepare({
+            channel: Channel.CVS_KIOSK,
+            items: [{
+              name: 'Test',
+              unitPrice: 100,
+              quantity: 1,
+            }],
+          });
 
-      expect(order.form.StoreExpireDate).toBe('10080');
+          expect(order.form.StoreExpireDate).toBe('10080');
+
+          payment._server?.close(done);
+        },
+      });
     });
 
-    it('should throw if total aomunt between 33 and 6000', () => {
-      expect(() => {
-        payment.prepare({
-          channel: Channel.CVS_KIOSK,
-          items: [{
-            name: 'Test',
-            unitPrice: 10,
-            quantity: 1,
-          }],
-        });
-      }).toThrowError();
+    it('should throw if total aomunt between 33 and 6000', (done) => {
+      const payment = new ECPayPayment<ECPayChannelCVS>({
+        withServer: true,
+        onServerListen: () => {
+          expect(() => {
+            payment.prepare({
+              channel: Channel.CVS_KIOSK,
+              items: [{
+                name: 'Test',
+                unitPrice: 10,
+                quantity: 1,
+              }],
+            });
+          }).toThrowError();
 
-      expect(() => {
-        payment.prepare({
-          channel: Channel.CVS_KIOSK,
-          items: [{
-            name: 'Test',
-            unitPrice: 9990,
-            quantity: 1,
-          }],
-        });
-      }).toThrowError();
+          expect(() => {
+            payment.prepare({
+              channel: Channel.CVS_KIOSK,
+              items: [{
+                name: 'Test',
+                unitPrice: 9990,
+                quantity: 1,
+              }],
+            });
+          }).toThrowError();
+
+          payment._server?.close(done);
+        },
+      });
     });
 
-    it('should represent cvs config on form data', () => {
-      const order = payment.prepare({
-        channel: Channel.CVS_KIOSK,
-        cvsExpireMinutes: 19999,
-        items: [{
-          name: 'Test',
-          unitPrice: 1000,
-          quantity: 1,
-        }],
+    it('should represent cvs config on form data', (done) => {
+      const payment = new ECPayPayment<ECPayChannelCVS>({
+        withServer: true,
+        onServerListen: () => {
+          const order = payment.prepare({
+            channel: Channel.CVS_KIOSK,
+            cvsExpireMinutes: 19999,
+            items: [{
+              name: 'Test',
+              unitPrice: 1000,
+              quantity: 1,
+            }],
+          });
+
+          expect(order.form.StoreExpireDate).toBe('19999');
+          expect(order.form.PaymentInfoURL).toBe('http://localhost:3000/payments/ecpay/async-informations');
+          expect(order.form.ClientRedirectURL).toBe('');
+
+          const clientOrder = payment.prepare({
+            channel: Channel.CVS_KIOSK,
+            items: [{
+              name: 'Test',
+              unitPrice: 1000,
+              quantity: 1,
+            }],
+            clientBackUrl: 'https://rytass.com',
+          });
+
+          expect(clientOrder.form.ClientRedirectURL).toBe('https://rytass.com');
+
+          payment._server?.close(done);
+        },
       });
-
-      expect(order.form.StoreExpireDate).toBe('19999');
-      expect(order.form.PaymentInfoURL).toBe('http://localhost:3000/payments/ecpay/async-informations');
-      expect(order.form.ClientRedirectURL).toBe('');
-
-      const clientOrder = payment.prepare({
-        channel: Channel.CVS_KIOSK,
-        items: [{
-          name: 'Test',
-          unitPrice: 1000,
-          quantity: 1,
-        }],
-        clientBackUrl: 'https://rytass.com',
-      });
-
-      expect(clientOrder.form.ClientRedirectURL).toBe('https://rytass.com');
     });
 
     it('should default callback handler commit order', (done) => {
-      const order = payment.prepare({
-        channel: Channel.CVS_KIOSK,
-        items: [{
-          name: 'Test',
-          unitPrice: 1000,
-          quantity: 1,
-        }],
-      });
+      const payment = new ECPayPayment<ECPayChannelCVS>({
+        withServer: true,
+        onServerListen: async () => {
+          const order = payment.prepare({
+            channel: Channel.CVS_KIOSK,
+            items: [{
+              name: 'Test',
+              unitPrice: 1000,
+              quantity: 1,
+            }],
+          });
 
-      expect(order.state).toBe(OrderState.INITED);
+          expect(order.state).toBe(OrderState.INITED);
 
-      // Get HTML to trigger pre commit
-      // eslint-disable-next-line no-unused-vars
-      const html = order.formHTML;
+          // Get HTML to trigger pre commit
+          // eslint-disable-next-line no-unused-vars
+          const html = order.formHTML;
 
-      const successfulResponse = addMac({
-        Barcode1: '',
-        Barcode2: '',
-        Barcode3: '',
-        ExpireDate: '2022/06/30 20:26:59',
-        MerchantID: '2000132',
-        MerchantTradeNo: order.id,
-        PaymentNo: 'LLL22167774958',
-        PaymentType: ECPayCallbackPaymentType.CVS,
-        RtnCode: '10100073',
-        RtnMsg: 'Get CVS Code Succeeded.',
-        TradeAmt: order.totalPrice.toString(),
-        TradeDate: '2022/06/16 23:07:58',
-        TradeNo: '2204201729498436',
-        StoreID: '',
-        CustomField1: '',
-        CustomField2: '',
-        CustomField3: '',
-        CustomField4: '',
-      });
+          const successfulResponse = addMac({
+            Barcode1: '',
+            Barcode2: '',
+            Barcode3: '',
+            ExpireDate: '2022/06/30 20:26:59',
+            MerchantID: '2000132',
+            MerchantTradeNo: order.id,
+            PaymentNo: 'LLL22167774958',
+            PaymentType: ECPayCallbackPaymentType.CVS,
+            RtnCode: '10100073',
+            RtnMsg: 'Get CVS Code Succeeded.',
+            TradeAmt: order.totalPrice.toString(),
+            TradeDate: '2022/06/16 23:07:58',
+            TradeNo: '2204201729498436',
+            StoreID: '',
+            CustomField1: '',
+            CustomField2: '',
+            CustomField3: '',
+            CustomField4: '',
+          });
 
-      expect(order.state).toBe(OrderState.PRE_COMMIT);
+          expect(order.state).toBe(OrderState.PRE_COMMIT);
 
-      request(payment._server)
-        .post('/payments/ecpay/async-informations')
-        .send(new URLSearchParams(successfulResponse).toString())
-        .expect('Content-Type', 'text/plain')
-        .expect(200)
-        .then((res) => {
+          const res = await request(payment._server)
+            .post('/payments/ecpay/async-informations')
+            .send(new URLSearchParams(successfulResponse).toString())
+            .expect('Content-Type', 'text/plain')
+            .expect(200);
+
           expect(res.text).toEqual('1|OK');
           expect(order.state).toBe(OrderState.ASYNC_INFO_RETRIEVED);
           expect(order.asyncInfo?.paymentCode).toBe('LLL22167774958');
           expect(DateTime.fromJSDate(order.asyncInfo?.expiredAt!).toFormat('yyyy/MM/dd HH:mm:ss')).toBe('2022/06/30 20:26:59');
 
-          done();
-        });
+          payment._server?.close(done);
+        },
+      })
     });
 
     it('should default callback handler keep status if get code failed', (done) => {
-      const order = payment.prepare({
-        channel: Channel.CVS_KIOSK,
-        items: [{
-          name: 'Test',
-          unitPrice: 1000,
-          quantity: 1,
-        }],
-      });
+      const payment = new ECPayPayment<ECPayChannelCVS>({
+        withServer: true,
+        onServerListen: async () => {
+          const order = payment.prepare({
+            channel: Channel.CVS_KIOSK,
+            items: [{
+              name: 'Test',
+              unitPrice: 1000,
+              quantity: 1,
+            }],
+          });
 
-      expect(order.state).toBe(OrderState.INITED);
+          expect(order.state).toBe(OrderState.INITED);
 
-      // Get HTML to trigger pre commit
-      // eslint-disable-next-line no-unused-vars
-      const html = order.formHTML;
+          // Get HTML to trigger pre commit
+          // eslint-disable-next-line no-unused-vars
+          const html = order.formHTML;
 
-      const successfulResponse = addMac({
-        Barcode1: '',
-        Barcode2: '',
-        Barcode3: '',
-        ExpireDate: '2022/06/30 20:26:59',
-        MerchantID: '1',
-        MerchantTradeNo: order.id,
-        PaymentNo: 'LLL22167774958',
-        PaymentType: ECPayCallbackPaymentType.CVS,
-        RtnCode: '0',
-        RtnMsg: 'Get CVS Code Failed.',
-        TradeAmt: order.totalPrice.toString(),
-        TradeDate: '2022/06/16 23:07:58',
-        TradeNo: '2204201729498436',
-        StoreID: '',
-        CustomField1: '',
-        CustomField2: '',
-        CustomField3: '',
-        CustomField4: '',
-      });
+          const successfulResponse = addMac({
+            Barcode1: '',
+            Barcode2: '',
+            Barcode3: '',
+            ExpireDate: '2022/06/30 20:26:59',
+            MerchantID: '1',
+            MerchantTradeNo: order.id,
+            PaymentNo: 'LLL22167774958',
+            PaymentType: ECPayCallbackPaymentType.CVS,
+            RtnCode: '0',
+            RtnMsg: 'Get CVS Code Failed.',
+            TradeAmt: order.totalPrice.toString(),
+            TradeDate: '2022/06/16 23:07:58',
+            TradeNo: '2204201729498436',
+            StoreID: '',
+            CustomField1: '',
+            CustomField2: '',
+            CustomField3: '',
+            CustomField4: '',
+          });
 
-      expect(order.state).toBe(OrderState.PRE_COMMIT);
+          expect(order.state).toBe(OrderState.PRE_COMMIT);
 
-      request(payment._server)
-        .post('/payments/ecpay/async-informations')
-        .send(new URLSearchParams(successfulResponse).toString())
-        .expect('Content-Type', 'text/plain')
-        .expect(200)
-        .then((res) => {
+          const res = await request(payment._server)
+            .post('/payments/ecpay/async-informations')
+            .send(new URLSearchParams(successfulResponse).toString())
+            .expect('Content-Type', 'text/plain')
+            .expect(200);
+
           expect(res.text).toEqual('1|OK');
           expect(order.state).toBe(OrderState.FAILED);
           expect(order.failedMessage?.code).toBe('0')
           expect(order.failedMessage?.message).toBe('Get CVS Code Failed.');
           expect(order.asyncInfo).toBeUndefined();
 
-          done();
-        });
+          payment._server?.close(done);
+        },
+      })
     });
 
     it('should received callback of cvs payments', (done) => {
-      const order = payment.prepare<ECPayChannelCVS>({
-        channel: Channel.CVS_KIOSK,
-        items: [{
-          name: 'Test',
-          unitPrice: 99,
-          quantity: 1,
-        }],
-      });
+      const payment = new ECPayPayment<ECPayChannelCVS>({
+        withServer: true,
+        onServerListen: async () => {
+          const order = payment.prepare<ECPayChannelCVS>({
+            channel: Channel.CVS_KIOSK,
+            items: [{
+              name: 'Test',
+              unitPrice: 99,
+              quantity: 1,
+            }],
+          });
 
-      // Get HTML to trigger pre commit
-      // eslint-disable-next-line no-unused-vars
-      const html = order.formHTML;
+          // Get HTML to trigger pre commit
+          // eslint-disable-next-line no-unused-vars
+          const html = order.formHTML;
 
-      const successfulResponse = addMac({
-        Barcode1: '',
-        Barcode2: '',
-        Barcode3: '',
-        ExpireDate: '2022/06/30 20:26:59',
-        MerchantID: '2000132',
-        MerchantTradeNo: order.id,
-        PaymentNo: 'LLL22167774958',
-        PaymentType: ECPayCallbackPaymentType.CVS,
-        RtnCode: '10100073',
-        RtnMsg: 'Get CVS Code Succeeded.',
-        TradeAmt: order.totalPrice.toString(),
-        TradeDate: '2022/06/16 23:07:58',
-        TradeNo: '2204201729498436',
-        StoreID: '',
-        CustomField1: '',
-        CustomField2: '',
-        CustomField3: '',
-        CustomField4: '',
-      });
+          const successfulResponse = addMac({
+            Barcode1: '',
+            Barcode2: '',
+            Barcode3: '',
+            ExpireDate: '2022/06/30 20:26:59',
+            MerchantID: '2000132',
+            MerchantTradeNo: order.id,
+            PaymentNo: 'LLL22167774958',
+            PaymentType: ECPayCallbackPaymentType.CVS,
+            RtnCode: '10100073',
+            RtnMsg: 'Get CVS Code Succeeded.',
+            TradeAmt: order.totalPrice.toString(),
+            TradeDate: '2022/06/16 23:07:58',
+            TradeNo: '2204201729498436',
+            StoreID: '',
+            CustomField1: '',
+            CustomField2: '',
+            CustomField3: '',
+            CustomField4: '',
+          });
 
-      request(payment._server)
-        .post('/payments/ecpay/async-informations')
-        .send(new URLSearchParams(successfulResponse).toString())
-        .expect('Content-Type', 'text/plain')
-        .expect(200)
-        .then((res) => {
+          const res = await request(payment._server)
+            .post('/payments/ecpay/async-informations')
+            .send(new URLSearchParams(successfulResponse).toString())
+            .expect('Content-Type', 'text/plain')
+            .expect(200);
+
           expect(res.text).toEqual('1|OK');
           expect(order.state).toBe(OrderState.ASYNC_INFO_RETRIEVED);
 
@@ -354,23 +391,19 @@ describe('ECPayPayment (CVS)', () => {
             AlipayID: '',
           });
 
-          request(payment._server)
+          const resCallback = await request(payment._server)
             .post('/payments/ecpay/callback')
             .send(new URLSearchParams(callbackResponse).toString())
             .expect('Content-Type', 'text/plain')
-            .expect(200)
-            .then((res) => {
-              expect(res.text).toEqual('1|OK');
-              expect(order.state).toBe(OrderState.COMMITTED);
-              expect(order.additionalInfo?.cvsPayFrom).toBe(CVS.FAMILY_MART);
+            .expect(200);
 
-              done();
-            });
-        });
+          expect(resCallback.text).toEqual('1|OK');
+          expect(order.state).toBe(OrderState.COMMITTED);
+          expect(order.additionalInfo?.cvsPayFrom).toBe(CVS.FAMILY_MART);
+
+          payment._server?.close(done);
+        },
+      })
     });
-
-    afterAll(() => new Promise((resolve) => {
-      payment._server?.close(resolve);
-    }));
   });
 });

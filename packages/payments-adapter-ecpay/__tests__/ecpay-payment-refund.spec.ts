@@ -59,9 +59,7 @@ describe('ECPayPayment Refund', () => {
       const payment = new ECPayPayment({
         withServer: true,
         onServerListen: async () => {
-          await payment._server?.close();
-
-          done();
+          payment._server?.close(done);
         },
       });
 

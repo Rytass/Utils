@@ -77,9 +77,7 @@ describe('NewebPay Payment Server', () => {
           expect(order.state).toBe(OrderState.COMMITTED);
           expect(order.committedAt?.getTime()).toBe(DateTime.fromFormat('2023-02-02 14:38:50', 'yyyy-MM-dd HH:mm:ss').toMillis());
 
-          await payment._server?.close();
-
-          done();
+          payment._server?.close(done);
         },
       });
     });
@@ -94,9 +92,7 @@ describe('NewebPay Payment Server', () => {
         onCommit: async (order) => {
           expect(order.id).toBe('123456789')
 
-          await payment._server?.close();
-
-          done();
+          payment._server?.close(done);
         },
         onServerListen: async () => {
           const order = payment.prepare({
@@ -223,9 +219,7 @@ describe('NewebPay Payment Server', () => {
           expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).installments?.firstAmount).toBe(34);
           expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).installments?.eachAmount).toBe(33);
 
-          await payment._server?.close();
-
-          done();
+          payment._server?.close(done);
         },
       });
     });
@@ -301,9 +295,7 @@ describe('NewebPay Payment Server', () => {
           expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).dcc?.currency).toBe('TWD');
           expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).dcc?.currencyCode).toBe(12);
 
-          await payment._server?.close();
-
-          done();
+          payment._server?.close(done);
         },
       });
     });
@@ -366,9 +358,7 @@ describe('NewebPay Payment Server', () => {
           expect(order.additionalInfo?.buyerBankCode).toBe('012');
           expect(order.additionalInfo?.buyerAccountNumber).toBe('51938');
 
-          await payment._server?.close();
-
-          done();
+          payment._server?.close(done);
         },
       });
     });
@@ -431,9 +421,7 @@ describe('NewebPay Payment Server', () => {
           expect(order.additionalInfo?.buyerBankCode).toBe('012');
           expect(order.additionalInfo?.buyerAccountNumber).toBe('51938');
 
-          await payment._server?.close();
-
-          done();
+          payment._server?.close(done);
         },
       });
     });
@@ -495,9 +483,7 @@ describe('NewebPay Payment Server', () => {
 
           expect(order.state).toBe(OrderState.INITED);
 
-          await payment._server?.close();
-
-          done();
+          payment._server?.close(done);
         },
       });
     });
@@ -548,9 +534,7 @@ describe('NewebPay Payment Server', () => {
             }).toString())
             .expect(404);
 
-          await payment._server?.close();
-
-          done();
+          payment._server?.close(done);
         },
       });
     });
@@ -610,9 +594,7 @@ describe('NewebPay Payment Server', () => {
           expect(order.asyncInfo?.account).toBe('686168251938');
           expect(order.asyncInfo?.expiredAt.getTime()).toBe(DateTime.fromFormat('2023-02-05 15:23:43', 'yyyy-MM-dd HH:mm:ss').toJSDate().getTime());
 
-          await payment._server?.close();
-
-          done();
+          payment._server?.close(done);
         },
       });
     });
@@ -665,9 +647,7 @@ describe('NewebPay Payment Server', () => {
 
           expect(order.state).toBe(OrderState.INITED);
 
-          await payment._server?.close();
-
-          done();
+          payment._server?.close(done);
         },
       });
     });
@@ -709,9 +689,7 @@ describe('NewebPay Payment Server', () => {
             }).toString())
             .expect(404);
 
-          await payment._server?.close();
-
-          done();
+          payment._server?.close(done);
         },
       });
     });
@@ -740,9 +718,7 @@ describe('NewebPay Payment Server', () => {
 
           expect(response.text).toBe(order.formHTML);
 
-          await payment._server?.close();
-
-          done();
+          payment._server?.close(done);
         },
       });
     });
@@ -765,9 +741,7 @@ describe('NewebPay Payment Server', () => {
             .get('/newebpay/checkout/1')
             .expect(404);
 
-          await payment._server?.close();
-
-          done();
+          payment._server?.close(done);
         },
       });
     });
@@ -833,9 +807,7 @@ describe('NewebPay Payment Server', () => {
 
           expect(response.text).toBe('Checksum Invalid');
 
-          await payment._server?.close();
-
-          done();
+          payment._server?.close(done);
         },
       });
     });
@@ -892,9 +864,7 @@ describe('NewebPay Payment Server', () => {
 
           expect(response.text).toBe('Checksum Invalid');
 
-          await payment._server?.close();
-
-          done();
+          payment._server?.close(done);
         },
       });
     });
@@ -962,9 +932,7 @@ describe('NewebPay Payment Server', () => {
           expect(order.failedMessage?.code).toBe('FAIL');
           expect(order.failedMessage?.message).toBe('失敗');
 
-          await payment._server?.close();
-
-          done();
+          payment._server?.close(done);
         },
       });
     });
@@ -1023,9 +991,7 @@ describe('NewebPay Payment Server', () => {
           expect(order.failedMessage?.code).toBe('FAIL');
           expect(order.failedMessage?.message).toBe('失敗');
 
-          await payment._server?.close();
-
-          done();
+          payment._server?.close(done);
         },
       });
     });
@@ -1076,9 +1042,7 @@ describe('NewebPay Payment Server', () => {
             }).toString())
             .expect(400);
 
-          await payment._server?.close();
-
-          done();
+          payment._server?.close(done);
         },
       });
     });
@@ -1120,9 +1084,7 @@ describe('NewebPay Payment Server', () => {
             }).toString())
             .expect(400);
 
-          await payment._server?.close();
-
-          done();
+          payment._server?.close(done);
         },
       });
     });

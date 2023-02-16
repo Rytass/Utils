@@ -44,9 +44,7 @@ describe('NewebPay Payments', () => {
         onServerListen: async () => {
           expect(mockConnect).toBeCalledWith(3000);
 
-          await payment._server?.close();
-
-          done();
+          payment._server?.close(done);
         },
       });
     });
@@ -65,9 +63,7 @@ describe('NewebPay Payments', () => {
         onServerListen: async () => {
           expect(mockConnect).toBeCalledWith(3005);
 
-          await payment._server?.close();
-
-          done();
+          payment._server?.close(done);
         },
       });
     });
@@ -86,9 +82,7 @@ describe('NewebPay Payments', () => {
         onServerListen: async () => {
           expect(mockConnect).toBeCalled();
 
-          await payment._server?.close();
-
-          done();
+          payment._server?.close(done);
         },
       });
     });
@@ -222,9 +216,7 @@ describe('NewebPay Payments', () => {
         aesIv: AES_IV,
         withServer: true,
         onServerListen: async () => {
-          await paymentServer._server!.close();
-
-          done();
+          paymentServer._server!.close(done);
         },
       });
 

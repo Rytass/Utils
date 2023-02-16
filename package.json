@@ -14,8 +14,8 @@
     "lint:ts": "eslint . --ext .ts",
     "lint": "npm run lint:ts",
     "test:clean": "rm -rf ./coverage",
-    "test:coverage": "jest --coverage",
-    "test": "jest",
+    "test:coverage": "jest --coverage --maxWorkers=1",
+    "test": "jest --maxWorkers=1",
     "prepare": "husky install",
     "release": "lerna version patch && npm run build && lerna publish from-package --contents lib"
   },

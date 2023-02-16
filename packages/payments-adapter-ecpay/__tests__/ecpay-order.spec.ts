@@ -65,9 +65,7 @@ describe('ECPayOrder', () => {
 
         expect(withServerOrder.checkoutURL).toMatch(re);
 
-        paymentWithServer._server?.close(() => {
-          done();
-        });
+        paymentWithServer._server?.close(done);
       },
     });
   });
