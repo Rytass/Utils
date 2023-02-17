@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.10](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ezpay@0.1.9...@rytass/invoice-adapter-ezpay@0.1.10) (2023-02-17)
+
+
+### Bug Fixes
+
+* **invoice-adapter-ezpay:** invoice query number field ([23585d3](https://github.com/Rytass/Utils/commit/23585d369e634cf5c04b95d80ac086fae1311d14))
+
+
+
+
+
 ## [0.1.9](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ezpay@0.1.7...@rytass/invoice-adapter-ezpay@0.1.9) (2023-02-16)
 
 
