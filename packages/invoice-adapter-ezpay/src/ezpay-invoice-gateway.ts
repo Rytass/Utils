@@ -592,7 +592,7 @@ export class EZPayInvoiceGateway implements InvoiceGateway<EZPayInvoice, EZPayIn
         items: items.map(item => ({
           name: item.ItemName,
           unitPrice: item.ItemPrice,
-          quantity: item.ItemAmount,
+          quantity: item.ItemCount,
           unit: item.ItemWord,
           taxType: ((taxType) => {
             switch (taxType) {

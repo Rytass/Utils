@@ -110,7 +110,7 @@ describe('EZPay Invoice Query', () => {
     expect(invoice.invoiceNumber).toBe('FF00000001');
     expect(invoice.randomCode).toBe('1440');
     expect(invoice.orderId).toBe('90h31g023476g234g');
-    expect(invoice.issuedAmount).toBe(200);
+    expect(invoice.issuedAmount).toBe(20);
     expect(invoice.state).toBe(InvoiceState.ISSUED);
     expect(DateTime.fromJSDate(invoice.issuedOn).toFormat('yyyyMMdd')).toBe('20230203');
   });
@@ -143,7 +143,7 @@ describe('EZPay Invoice Query', () => {
       expect(params.get('RespondType')).toBe('JSON');
       expect(params.get('Version')).toBe('1.3');
       expect(params.get('MerchantOrderNo')).toBe('90h31g023476g234g');
-      expect(params.get('TotalAmt')).toBe('200');
+      expect(params.get('TotalAmt')).toBe('20');
 
       return {
         data: {
@@ -198,13 +198,13 @@ describe('EZPay Invoice Query', () => {
 
     const invoice = await gateway.query({
       orderId: '90h31g023476g234g',
-      amount: 200,
+      amount: 20,
     });
 
     expect(invoice.invoiceNumber).toBe('FF00000001');
     expect(invoice.randomCode).toBe('1440');
     expect(invoice.orderId).toBe('90h31g023476g234g');
-    expect(invoice.issuedAmount).toBe(200);
+    expect(invoice.issuedAmount).toBe(20);
   });
 
   it('should query zero tax invoice with orderId', async () => {
@@ -235,7 +235,7 @@ describe('EZPay Invoice Query', () => {
       expect(params.get('RespondType')).toBe('JSON');
       expect(params.get('Version')).toBe('1.3');
       expect(params.get('MerchantOrderNo')).toBe('90h31g023476g234g');
-      expect(params.get('TotalAmt')).toBe('200');
+      expect(params.get('TotalAmt')).toBe('20');
 
       return {
         data: {
@@ -290,7 +290,7 @@ describe('EZPay Invoice Query', () => {
 
     const invoice = await gateway.query({
       orderId: '90h31g023476g234g',
-      amount: 200,
+      amount: 20,
     });
 
     expect(invoice.taxType).toBe(TaxType.ZERO_TAX);
@@ -324,7 +324,7 @@ describe('EZPay Invoice Query', () => {
       expect(params.get('RespondType')).toBe('JSON');
       expect(params.get('Version')).toBe('1.3');
       expect(params.get('MerchantOrderNo')).toBe('90h31g023476g234g');
-      expect(params.get('TotalAmt')).toBe('200');
+      expect(params.get('TotalAmt')).toBe('20');
 
       return {
         data: {
@@ -379,7 +379,7 @@ describe('EZPay Invoice Query', () => {
 
     const invoice = await gateway.query({
       orderId: '90h31g023476g234g',
-      amount: 200,
+      amount: 20,
     });
 
     expect(invoice.taxType).toBe(TaxType.TAX_FREE);
@@ -413,7 +413,7 @@ describe('EZPay Invoice Query', () => {
       expect(params.get('RespondType')).toBe('JSON');
       expect(params.get('Version')).toBe('1.3');
       expect(params.get('MerchantOrderNo')).toBe('90h31g023476g234g');
-      expect(params.get('TotalAmt')).toBe('200');
+      expect(params.get('TotalAmt')).toBe('20');
 
       return {
         data: {
@@ -488,7 +488,7 @@ describe('EZPay Invoice Query', () => {
 
     const invoice = await gateway.query({
       orderId: '90h31g023476g234g',
-      amount: 200,
+      amount: 20,
     });
 
     expect(invoice.taxType).toBe(TaxType.MIXED);
@@ -554,7 +554,7 @@ describe('EZPay Invoice Query', () => {
 
     expect(() => gateway.query({
       orderId: '90h31g023476g234g',
-      amount: 200,
+      amount: 20,
     })).rejects.toThrowError('Invalid CheckCode');
   });
 
@@ -615,7 +615,7 @@ describe('EZPay Invoice Query', () => {
 
     expect(() => gateway.query({
       orderId: '90h31g023476g234g',
-      amount: 200,
+      amount: 20,
     })).rejects.toThrowError('Item Parse Failed');
   });
 
@@ -634,7 +634,7 @@ describe('EZPay Invoice Query', () => {
 
     expect(() => gateway.query({
       orderId: '90h31g023476g234g',
-      amount: 200,
+      amount: 20,
     })).rejects.toThrow();
   });
 });
