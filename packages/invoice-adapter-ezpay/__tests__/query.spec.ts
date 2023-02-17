@@ -7,7 +7,8 @@ import { parse } from 'parse-multipart-data';
 import FormData from 'form-data';
 import { createDecipheriv, createHash } from 'crypto';
 import { DateTime } from 'luxon';
-import { EZPayInvoiceGateway, EZPayBaseUrls, InvoiceState, TaxType } from '../src';
+import { randomBytes } from 'crypto';
+import { EZPayInvoiceGateway, EZPayBaseUrls, InvoiceState, TaxType, InvoiceCarrierType } from '../src';
 
 const AES_IV = 'gmY2MPN8PHFvA7KR';
 const AES_KEY = 'cNg3wIe8PkCVcqb37RY0LFbf00FgrNXg';
@@ -113,6 +114,99 @@ describe('EZPay Invoice Query', () => {
     expect(invoice.issuedAmount).toBe(20);
     expect(invoice.state).toBe(InvoiceState.ISSUED);
     expect(DateTime.fromJSDate(invoice.issuedOn).toFormat('yyyyMMdd')).toBe('20230203');
+  });
+
+  it('should query void invoice with invoice number', async () => {
+    const mockPost = jest.spyOn(axios, 'post');
+
+    mockPost.mockImplementation(async (url: string, data: any) => {
+      expect(url).toMatch(/\/Api\/invoice_search$/);
+
+      const formData = data as FormData;
+
+      const payloadArray = parse(formData.getBuffer(), formData.getBoundary());
+
+      const payload = payloadArray.reduce((vars, field) => ({
+        ...vars,
+        [field.name as string]: field.data.toString('utf8'),
+      }), {}) as {
+        MerchantID_: string;
+        PostData_: string;
+      };
+
+      const decipher = createDecipheriv('aes-256-cbc', AES_KEY, AES_IV);
+
+      const params = new URLSearchParams([
+        decipher.update(payload.PostData_, 'hex', 'utf8'),
+        decipher.final('utf8'),
+      ].join(''));
+
+      expect(params.get('RespondType')).toBe('JSON');
+      expect(params.get('Version')).toBe('1.3');
+      expect(params.get('InvoiceNumber')).toBe('FF00000001');
+      expect(params.get('RandomNum')).toBe('1440');
+
+      return {
+        data: {
+          MerchantID: MERCHANT_ID,
+          Status: 'SUCCESS',
+          Result: JSON.stringify({
+            Amt: '19',
+            BarCode: '11202FF000000011440',
+            BuyerAddress: '',
+            BuyerEmail: 'user@rytass.com',
+            BuyerName: 'Tester',
+            BuyerPhone: '',
+            BuyerUBN: '',
+            CarrierNum: '',
+            CarrierType: '',
+            Category: 'B2C',
+            CheckCode: createHash('sha256').update(`HashIV=${AES_IV}&InvoiceTransNo=23020318530290616&MerchantID=${MERCHANT_ID}&MerchantOrderNo=90h31g023476g234g&RandomNum=1440&TotalAmt=20&HashKey=${AES_KEY}`).digest('hex').toUpperCase(),
+            CreateStatusTime: '',
+            CreateTime: '2023-02-03 18:53:02',
+            InvoiceNumber: 'FF00000001',
+            InvoiceStatus: '2',
+            InvoiceTransNo: '23020318530290616',
+            InvoiceType: '07',
+            ItemDetail: JSON.stringify([{
+              ItemAmount: '20',
+              ItemCount: '2',
+              ItemName: '橡皮擦',
+              ItemNum: '1',
+              ItemPrice: '10',
+              ItemRemark: '',
+              ItemTaxType: '',
+              ItemWord: '式',
+              RelateNumber: '',
+            }]),
+            KioskPrintFlag: '',
+            LoveCode: '',
+            MerchantID: '31090553',
+            MerchantOrderNo: '90h31g023476g234g',
+            PrintFlag: 'Y',
+            QRcodeL: 'FF000000011120203144000000013000000140000000001012145GQVWH99zBlXEGWDbB0LloA==:**********:1:1:1:橡皮擦:2:10',
+            QRcodeR: '**',
+            RandomNum: '1440',
+            TaxAmt: '1',
+            TaxRate: '0.05000',
+            TaxType: '1',
+            TotalAmt: '20',
+            UploadStatus: '1',
+          }),
+        },
+      };
+    });
+
+    const invoice = await gateway.query({
+      invoiceNumber: 'FF00000001',
+      randomCode: '1440',
+    });
+
+    expect(invoice.invoiceNumber).toBe('FF00000001');
+    expect(invoice.randomCode).toBe('1440');
+    expect(invoice.orderId).toBe('90h31g023476g234g');
+    expect(invoice.voidOn).not.toBeNull();
+    expect(invoice.state).toBe(InvoiceState.VOID);
   });
 
   it('should query invoice with orderId', async () => {

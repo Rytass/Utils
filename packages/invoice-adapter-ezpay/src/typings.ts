@@ -1,4 +1,4 @@
-import { CustomsMark, InvoiceIssueOptions, InvoiceLoveCodeCarrier, InvoiceMobileCarrier, InvoiceMoicaCarrier, InvoicePaymentItem, InvoicePrintCarrier, InvoiceVoidOptions, InvoicPlatformCarrier, TaxType } from '@rytass/invoice';
+import { CustomsMark, InvoiceIssueOptions, InvoiceLoveCodeCarrier, InvoiceMobileCarrier, InvoiceMoicaCarrier, InvoicePaymentItem, InvoicePrintCarrier, InvoiceState, InvoiceVoidOptions, InvoicPlatformCarrier, TaxType } from '@rytass/invoice';
 import { EZPayInvoice } from './ezpay-invoice';
 
 export enum EZPayBaseUrls {
@@ -27,6 +27,8 @@ export interface EZPayInvoiceOptions {
   orderId: string;
   platformId?: string;
   taxType: TaxType;
+  voidOn?: Date;
+  state?: InvoiceState;
 }
 
 interface EZPayInvoiceIssueBaseOptions extends InvoiceIssueOptions<EZPayInvoice> {

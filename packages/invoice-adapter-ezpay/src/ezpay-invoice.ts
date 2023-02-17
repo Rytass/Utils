@@ -36,6 +36,8 @@ export class EZPayInvoice implements Invoice<EZPayPaymentItem> {
     this.invoiceNumber = options.invoiceNumber;
     this.orderId = options.orderId;
     this.taxType = options.taxType;
+    this.voidOn = options.voidOn ?? null;
+    this.state = options.state ?? this.state;
 
     // Optional
     this.platformId = options.platformId;

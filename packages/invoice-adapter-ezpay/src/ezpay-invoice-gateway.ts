@@ -1,5 +1,5 @@
 /* eslint-disable no-control-regex */
-import { CustomsMark, getTaxTypeFromItems, Invoice, InvoiceAllowance, InvoiceAllowanceState, InvoiceCarrierType, InvoiceGateway, InvoiceVoidOptions, PaymentItem, TaxType } from '@rytass/invoice';
+import { CustomsMark, getTaxTypeFromItems, Invoice, InvoiceAllowance, InvoiceAllowanceState, InvoiceCarrierType, InvoiceGateway, InvoiceState, InvoiceVoidOptions, PaymentItem, TaxType } from '@rytass/invoice';
 import { createCipheriv, createHash, createDecipheriv } from 'crypto';
 import axios from 'axios';
 import isEmail from 'validator/lib/isEmail';
@@ -589,6 +589,8 @@ export class EZPayInvoiceGateway implements InvoiceGateway<EZPayInvoice, EZPayIn
       }[];
 
       return new EZPayInvoice({
+        state: responsePayload.InvoiceStatus === '1' ? InvoiceState.ISSUED : InvoiceState.VOID,
+        voidOn: responsePayload.InvoiceStatus === '2' ? new Date() : undefined,
         items: items.map(item => ({
           name: item.ItemName,
           unitPrice: item.ItemPrice,
