@@ -51,6 +51,83 @@ describe('Storage', () => {
       expect(extension?.ext).toBe('png');
       expect(extension?.mime).toBe('image/png');
     });
+
+    it('should get filename stream can handle multiple chunk stream, unknown file type', (done) => {
+      const stream = new Readable({
+        read() {},
+      });
+
+      storage.getStreamFilename(stream).then((resolvedFilename) => {
+        expect(resolvedFilename).toMatch(/^[0-f]+$/);
+
+        done();
+      });
+
+      stream.push(Buffer.from([0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]));
+
+      setImmediate(() => {
+        stream.push(Buffer.from([0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]));
+        stream.push(null);
+      });
+    });
+
+    it('should get filename stream can handle multiple chunk stream', (done) => {
+      const stream = new Readable({
+        read() {},
+      });
+
+      storage.getStreamFilename(stream).then((resolvedFilename) => {
+        expect(resolvedFilename).toBe(filename);
+
+        done();
+      });
+
+      stream.push(sampleFileBuffer.subarray(0, 4));
+
+      setImmediate(() => {
+        stream.push(sampleFileBuffer.subarray(4, 8));
+        stream.push(sampleFileBuffer.subarray(8));
+        stream.push(null);
+      });
+    });
+
+    it('should get filename stream can handle multiple chunk stream, first chunk result', (done) => {
+      const stream = new Readable({
+        read() {},
+      });
+
+      storage.getStreamFilename(stream).then((resolvedFilename) => {
+        expect(resolvedFilename).toBe(filename);
+
+        done();
+      });
+
+      stream.push(sampleFileBuffer.subarray(0, 32));
+
+      setImmediate(() => {
+        stream.push(sampleFileBuffer.subarray(32));
+        stream.push(null);
+      });
+    });
+
+    it('should get filename stream can handle multiple chunk stream, first chunk result with delay', (done) => {
+      const stream = new Readable({
+        read() {},
+      });
+
+      storage.getStreamFilename(stream).then((resolvedFilename) => {
+        expect(resolvedFilename).toBe(filename);
+
+        done();
+      });
+
+      stream.push(sampleFileBuffer.subarray(0, 32));
+
+      setImmediate(() => {
+        stream.push(sampleFileBuffer.subarray(32));
+        stream.push(null);
+      });
+    });
   });
 
   describe('Not implement methods', () => {

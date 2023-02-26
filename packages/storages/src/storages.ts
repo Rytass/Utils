@@ -1,5 +1,5 @@
 import { Readable, PassThrough } from 'stream';
-import { createHash } from 'crypto';
+import { createHash, randomBytes } from 'crypto';
 import { FileTypeResult, fromBuffer, fromStream } from 'file-type';
 import { ConverterManager } from '@rytass/file-converter';
 import { FilenameHashAlgorithm, InputFile, ReadBufferFileOptions, ReadStreamFileOptions, StorageFile, StorageOptions, WriteFileOptions } from './typings';
@@ -14,6 +14,8 @@ export interface StorageInterface {
 
   remove(key: string): Promise<void>;
 }
+
+const MIN_BUFFER_LENGTH = 16;
 
 export class Storage<O extends Record<string, any> = Record<string, any>> implements StorageInterface {
   readonly converterManager: ConverterManager;
@@ -60,9 +62,53 @@ export class Storage<O extends Record<string, any> = Record<string, any>> implem
         });
       });
 
+      const getStreamFileType = new Promise<FileTypeResult | undefined>((subResolve) => {
+        let resolved = false;
+        let isEnd = false;
+
+        const bufferStorage: Buffer[] = [];
+        const waitingTasks: boolean[] = [];
+
+        extensionStream.on('data', (buffer: Buffer) => {
+          if (resolved) return;
+
+          bufferStorage.push(buffer);
+
+          const targetBuffer = Buffer.concat(bufferStorage);
+
+          if (targetBuffer.length >= MIN_BUFFER_LENGTH) {
+            const taskIndex = waitingTasks.length;
+
+            waitingTasks.push(true);
+
+            fromBuffer(targetBuffer).then((result) => {
+              waitingTasks[taskIndex] = false;
+
+              if (!result && !isEnd) return;
+
+              resolved = true;
+
+              subResolve(result);
+            });
+          } else {
+            waitingTasks.push(false);
+          }
+        });
+
+        extensionStream.on('end', () => {
+          isEnd = true;
+
+          if (waitingTasks.every(task => !task) && !resolved) {
+            resolved = true;
+
+            subResolve(undefined);
+          }
+        });
+      });
+
       Promise.all([
         getStreamHash,
-        fromStream(extensionStream),
+        getStreamFileType,
       ]).then(([filename, extension]) => {
         resolve(`${filename}${extension?.ext ? `.${extension.ext}` : ''}`);
       }).catch(reject);
