@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.3.0](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-r2@0.2.4...@rytass/storages-adapter-r2@0.3.0) (2023-02-27)
+
+
+### Features
+
+* **storages:** auto detect mime for content type ([4c8a951](https://github.com/Rytass/Utils/commit/4c8a9515a1852d8431a6e9e1345d79b3e652de0c))
+
+
+
+
+
 ## [0.2.4](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-r2@0.2.3...@rytass/storages-adapter-r2@0.2.4) (2023-02-26)
 
 **Note:** Version bump only for package @rytass/storages-adapter-r2
