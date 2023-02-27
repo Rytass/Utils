@@ -6,6 +6,7 @@ import { resolve } from 'path';
 import { Readable, Writable } from 'stream';
 import { readFileSync, createReadStream, createWriteStream } from 'fs';
 import { createHash } from 'crypto';
+import { Metadata } from '@google-cloud/storage/build/src/nodejs-common';
 
 const sampleFile = resolve(__dirname, '../__fixtures__/test-image.png');
 const sampleFileBuffer = readFileSync(sampleFile);
@@ -89,6 +90,10 @@ const moveMock = jest.fn((filename: string) => (newFilename: string) => {
   fakeStorage.delete(filename);
 });
 
+const setMetadataMock = jest.fn((filename: string) => (metadata: Metadata) => {
+
+});
+
 const fileMock = jest.fn(filename => ({
   save: (buffer: Buffer, options: Record<string, string>) => saveMock(filename)(buffer, options),
   download: () => downloadMock(filename)(),
@@ -98,6 +103,7 @@ const fileMock = jest.fn(filename => ({
   createWriteStream: (options: Record<string, string>) => writeStreamMock(filename)(options),
   getSignedUrl: (options: Record<string, string>) => getSignedUrlMock(filename)(options),
   exists: () => existsMock(filename)(),
+  setMetadata: (metadata: Metadata) => setMetadataMock(filename)(metadata),
 }));
 
 describe('GCS adapter', () => {
@@ -378,8 +384,8 @@ describe('GCS adapter', () => {
     const buffer1 = Buffer.from([0x01]);
     const buffer2 = Buffer.from([0x02]);
 
-    const buffer1Hash = await storage.getBufferFilename(buffer1);
-    const buffer2Hash = await storage.getBufferFilename(buffer2);
+    const [buffer1Hash] = await storage.getBufferFilename(buffer1);
+    const [buffer2Hash] = await storage.getBufferFilename(buffer2);
 
     const [{ key: key1 }, { key: key2 }] = await storage.batchWrite([buffer1, buffer2]);
 

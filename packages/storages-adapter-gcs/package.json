@@ -26,11 +26,11 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@google-cloud/storage": "^6.5.3",
+    "@google-cloud/storage": "^6.9.3",
     "@rytass/storages": "^0.1.4",
-    "uuid": "^8.3.2"
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "@types/uuid": "^8.3.4"
+    "@types/uuid": "^9.0.1"
   }
 }

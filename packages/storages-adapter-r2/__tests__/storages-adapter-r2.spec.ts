@@ -5,7 +5,7 @@
 import { resolve } from 'path';
 import { Credentials, S3 } from 'aws-sdk';
 import { createHash } from 'crypto';
-import { PassThrough } from 'stream';
+import { Readable, PassThrough } from 'stream';
 import { createReadStream, readFileSync } from 'fs';
 
 const ACCESS_KEY = 'aaaa';
@@ -371,8 +371,8 @@ describe('Cloudflare R2 storage adapter', () => {
     const buffer1 = Buffer.from([0x01]);
     const buffer2 = Buffer.from([0x02]);
 
-    const buffer1Hash = await service.getBufferFilename(buffer1);
-    const buffer2Hash = await service.getBufferFilename(buffer2);
+    const [buffer1Hash] = await service.getBufferFilename(buffer1);
+    const [buffer2Hash] = await service.getBufferFilename(buffer2);
 
     const [{ key: key1 }, { key: key2 }] = await service.batchWrite([buffer1, buffer2]);
 
@@ -402,6 +402,40 @@ describe('Cloudflare R2 storage adapter', () => {
     });
 
     await service.write(sampleFileBuffer, { contentType: 'image/png' });
+
+    expect(uploadMocked).toBeCalledTimes(1);
+  });
+
+  it('should write unknown stream with content type', async () => {
+    uploadMocked = jest.fn((params: S3.Types.PutObjectRequest, options?: S3.ManagedUpload.ManagedUploadOptions) => {
+      expect(params.ContentType).toBe('image/png');
+
+      fakeStorage.set(params.Key, params.Body as Buffer);
+
+      return {
+        promise: () => uploadPromiseMocked,
+      };
+    });
+
+    const { StorageR2Service } = await import('../src');
+
+    const service = new StorageR2Service({
+      accessKey: ACCESS_KEY,
+      secretKey: SECRET_KEY,
+      account: ACCOUNT,
+      bucket: BUCKET,
+    });
+
+    const stream = new Readable({
+      read() { },
+    });
+
+    setImmediate(() => {
+      stream.push(Buffer.from([0x00, 0x01, 0x04, 0x00, 0x00, 0x01, 0x04, 0x00, 0x00, 0x01, 0x04, 0x00, 0x00, 0x01, 0x04, 0x00]));
+      stream.push(null);
+    });
+
+    await service.write(stream, { contentType: 'image/png' });
 
     expect(uploadMocked).toBeCalledTimes(1);
   });

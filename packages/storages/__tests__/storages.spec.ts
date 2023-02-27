@@ -17,23 +17,27 @@ describe('Storage', () => {
     const storage = new Storage();
 
     it('should get buffer filename', async () => {
-      expect(await storage.getBufferFilename(sampleFileBuffer)).toBe(filename);
+      const [resolvedFilename] = await storage.getBufferFilename(sampleFileBuffer);
+
+      expect(resolvedFilename).toBe(filename);
     });
 
     it('should get stream filename', async () => {
-      expect(await storage.getStreamFilename(
+      const [resolvedFilename] = await storage.getStreamFilename(
         createReadStream(sampleFilePath)
-      )).toBe(filename);
+      );
+
+      expect(resolvedFilename).toBe(filename);
     });
 
     it('should no extensions when file type detection failed (Stream)', async () => {
-      const filename = await storage.getStreamFilename(Readable.from(Buffer.from([0xb5, 0xa1])));
+      const [filename] = await storage.getStreamFilename(Readable.from(Buffer.from([0xb5, 0xa1])));
 
       expect(filename).toBe(createHash('sha256').update(Buffer.from([0xb5, 0xa1])).digest('hex'));
     });
 
     it('should no extensions when file type detection failed (Buffer)', async () => {
-      const filename = await storage.getBufferFilename(Buffer.from([0xb5, 0xa1]));
+      const [filename] = await storage.getBufferFilename(Buffer.from([0xb5, 0xa1]));
 
       expect(filename).toBe(createHash('sha256').update(Buffer.from([0xb5, 0xa1])).digest('hex'));
     });
@@ -57,7 +61,7 @@ describe('Storage', () => {
         read() {},
       });
 
-      storage.getStreamFilename(stream).then((resolvedFilename) => {
+      storage.getStreamFilename(stream).then(([resolvedFilename]) => {
         expect(resolvedFilename).toMatch(/^[0-f]+$/);
 
         done();
@@ -76,7 +80,7 @@ describe('Storage', () => {
         read() {},
       });
 
-      storage.getStreamFilename(stream).then((resolvedFilename) => {
+      storage.getStreamFilename(stream).then(([resolvedFilename]) => {
         expect(resolvedFilename).toBe(filename);
 
         done();
@@ -96,7 +100,7 @@ describe('Storage', () => {
         read() {},
       });
 
-      storage.getStreamFilename(stream).then((resolvedFilename) => {
+      storage.getStreamFilename(stream).then(([resolvedFilename]) => {
         expect(resolvedFilename).toBe(filename);
 
         done();
@@ -115,7 +119,7 @@ describe('Storage', () => {
         read() {},
       });
 
-      storage.getStreamFilename(stream).then((resolvedFilename) => {
+      storage.getStreamFilename(stream).then(([resolvedFilename]) => {
         expect(resolvedFilename).toBe(filename);
 
         done();

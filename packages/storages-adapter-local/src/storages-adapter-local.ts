@@ -49,7 +49,9 @@ export class LocalStorage extends Storage {
   private async writeBuffer(buffer: Buffer, options?: WriteFileOptions): Promise<StorageFile> {
     const convertedBuffer = await this.converterManager.convert<Buffer>(buffer);
 
-    const filename = options?.filename || await this.getBufferFilename(convertedBuffer);
+    const fileInfo = options?.filename || await this.getBufferFilename(buffer);
+
+    const filename = Array.isArray(fileInfo) ? fileInfo[0] : fileInfo;
 
     await writeFile(this.getFileFullPath(filename), convertedBuffer);
 
@@ -77,7 +79,7 @@ export class LocalStorage extends Storage {
       const tempFilename = uuid();
       const writeStream = createWriteStream(this.getFileFullPath(tempFilename));
 
-      this.getStreamFilename(convertedStream).then(async (filename) => {
+      this.getStreamFilename(convertedStream).then(async ([filename]) => {
         await rename(this.getFileFullPath(tempFilename), this.getFileFullPath(filename));
 
         promiseResolve({ key: filename });

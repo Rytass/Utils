@@ -84,7 +84,7 @@ export class StorageR2Service extends Storage<StorageR2Options> {
 
     stream.pipe(uploadStream);
 
-    const [filename] = await Promise.all([
+    const [[filename, mime]] = await Promise.all([
       getFilenamePromise,
       uploadPromise,
     ]);
@@ -93,6 +93,7 @@ export class StorageR2Service extends Storage<StorageR2Options> {
       Bucket: this.bucket,
       CopySource: `/${this.bucket}/${tempFilename}`,
       Key: filename,
+      ...(mime ? { ContentType: mime } : {}),
       ...(options?.contentType ? { ContentType: options?.contentType } : {}),
     }).promise();
 
@@ -105,12 +106,15 @@ export class StorageR2Service extends Storage<StorageR2Options> {
   }
 
   async writeBufferFile(buffer: Buffer, options?: WriteFileOptions): Promise<StorageFile> {
-    const filename = options?.filename || await this.getBufferFilename(buffer);
+    const fileInfo = options?.filename || await this.getBufferFilename(buffer);
+
+    const filename = Array.isArray(fileInfo) ? fileInfo[0] : fileInfo;
 
     await this.s3.upload({
       Key: filename,
       Bucket: this.bucket,
       Body: buffer,
+      ...(Array.isArray(fileInfo) && fileInfo[1] ? { ContentType: fileInfo[1] } : {}),
       ...(options?.contentType ? { ContentType: options?.contentType } : {}),
     }).promise();
 

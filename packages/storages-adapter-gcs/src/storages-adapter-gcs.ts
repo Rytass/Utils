@@ -87,12 +87,16 @@ export class StorageGCSService extends Storage<GCSOptions> {
 
     stream.pipe(uploadStream).pipe(writeStream);
 
-    const [filename] = await Promise.all([
+    const [[filename, mime]] = await Promise.all([
       getFilenamePromise,
       new Promise((resolve) => {
         writeStream.on('finish', resolve);
       }),
     ]);
+
+    if (!options?.contentType && mime) {
+      await tempFile.setMetadata({ contentType: mime });
+    }
 
     await tempFile.move(filename);
 
@@ -100,12 +104,15 @@ export class StorageGCSService extends Storage<GCSOptions> {
   }
 
   private async writeBufferFile(buffer: Buffer, options?: WriteFileOptions): Promise<StorageFile> {
-    const filename = options?.filename || await this.getBufferFilename(buffer);
+    const fileInfo = options?.filename || await this.getBufferFilename(buffer);
+
+    const filename = Array.isArray(fileInfo) ? fileInfo[0] : fileInfo;
 
     const file = this.bucket.file(filename);
 
     await file.save(buffer, {
       gzip: 'auto',
+      ...(Array.isArray(fileInfo) && fileInfo[1] ? { ContentType: fileInfo[1] } : {}),
       ...(options?.contentType ? { contentType: options?.contentType } : {}),
     });
 

@@ -39,13 +39,16 @@ export class Storage<O extends Record<string, any> = Record<string, any>> implem
     return fromStream(extensionStream);
   }
 
-  async getBufferFilename(buffer: Buffer): Promise<string> {
+  async getBufferFilename(buffer: Buffer): Promise<[string, string | undefined]> {
     const extension = await fromBuffer(buffer);
 
-    return `${createHash(this.hashAlgorithm).update(buffer).digest('hex')}${extension?.ext ? `.${extension.ext}` : ''}`;
+    return [
+      `${createHash(this.hashAlgorithm).update(buffer).digest('hex')}${extension?.ext ? `.${extension.ext}` : ''}`,
+      extension?.mime ?? undefined,
+    ];
   }
 
-  getStreamFilename(stream: Readable): Promise<string> {
+  getStreamFilename(stream: Readable): Promise<[string, string | undefined]> {
     return new Promise((resolve, reject) => {
       const hashStream = new PassThrough();
       const extensionStream = new PassThrough();
@@ -110,7 +113,10 @@ export class Storage<O extends Record<string, any> = Record<string, any>> implem
         getStreamHash,
         getStreamFileType,
       ]).then(([filename, extension]) => {
-        resolve(`${filename}${extension?.ext ? `.${extension.ext}` : ''}`);
+        resolve([
+          `${filename}${extension?.ext ? `.${extension.ext}` : ''}`,
+          extension?.mime ?? undefined,
+        ]);
       }).catch(reject);
 
       stream.pipe(hashStream).pipe(extensionStream);
