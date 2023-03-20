@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from 'crypto';
-import { PaymentGateway, PaymentEvents, Channel, PaymentPeriodType, CVSInfo, VirtualAccountInfo, CreditCardAuthInfo, BarcodeInfo, VistualAccountPaymentInfo, OrderState, CVSPaymentInfo, AdditionalInfo } from '@rytass/payments';
+import { PaymentGateway, PaymentEvents, Channel, PaymentPeriodType, CVSInfo, VirtualAccountInfo, CreditCardAuthInfo, BarcodeInfo, VirtualAccountPaymentInfo, OrderState, CVSPaymentInfo, AdditionalInfo } from '@rytass/payments';
 import { DateTime } from 'luxon';
 import LRUCache from 'lru-cache';
 import axios from 'axios';
@@ -207,7 +207,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
 
       const order = this.pendingOrdersCache.get<ECPayOrder<ECPayCommitMessage>>(payload.MerchantTradeNo);
 
-      if (!order || !order.commitable) {
+      if (!order || !order.committable) {
         res.writeHead(400, {
           'Content-Type': 'text/plain',
         });
@@ -318,7 +318,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
           channel: Channel.VIRTUAL_ACCOUNT,
           buyerAccountNumber: virtualAccountInfo.ATMAccNo,
           buyerBankCode: virtualAccountInfo.ATMAccBank,
-        } as VistualAccountPaymentInfo);
+        } as VirtualAccountPaymentInfo);
 
         break;
       }
@@ -756,7 +756,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
           channel: Channel.VIRTUAL_ACCOUNT,
           buyerAccountNumber: response.ATMAccNo,
           buyerBankCode: response.ATMAccBank,
-        } as VistualAccountPaymentInfo) as T;
+        } as VirtualAccountPaymentInfo) as T;
 
       case ECPayCallbackPaymentType.CVS:
       case ECPayCallbackPaymentType.CVS_FAMILY:

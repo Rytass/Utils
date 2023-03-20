@@ -314,7 +314,7 @@ export interface NewebPayQueryATMResponsePayload extends NewebPayQueryResponseBa
 
 export type NewebPayQueryBarcodeResponsePayload = NewebPayQueryATMResponsePayload;
 export type NewebPayQueryCVSResponsePayload = NewebPayQueryATMResponsePayload;
-export type NewebPayQueryVistualAccountResponsePayload = NewebPayQueryATMResponsePayload;
+export type NewebPayQueryVirtualAccountResponsePayload = NewebPayQueryATMResponsePayload;
 
 export interface NewebPayQueryLogisticResponsePayload extends NewebPayQueryResponseBasePayload {
   StoreType: '全家' | '7-ELEVEN' | '萊爾富' | 'OK mart';

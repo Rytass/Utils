@@ -134,7 +134,7 @@ describe('NewebPay Order', () => {
     } as VirtualAccountInfo)).toThrow();
   });
 
-  it('should throw error when commit a not commitable order', () => {
+  it('should throw error when commit a not committable order', () => {
     const order = payment.prepare({
       id: '123142',
       items: [{

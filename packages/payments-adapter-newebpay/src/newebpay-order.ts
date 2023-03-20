@@ -127,7 +127,7 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage> implements Order<O
     return this._state;
   }
 
-  get commitable(): boolean {
+  get committable(): boolean {
     return !!~[OrderState.PRE_COMMIT, OrderState.ASYNC_INFO_RETRIEVED].indexOf(this._state);
   }
 
@@ -186,7 +186,7 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage> implements Order<O
   }
 
   commit<T extends OCM>(message: T, additionalInfo?: AdditionalInfo<T>) {
-    if (!this.commitable) throw new Error(`Only pre-commit, info-retrieved order can commit, now: ${this._state}`);
+    if (!this.committable) throw new Error(`Only pre-commit, info-retrieved order can commit, now: ${this._state}`);
 
     if (this._id !== message.id) {
       throw new Error(`Order ID not matched, given: ${message.id} actual: ${this._id}`);

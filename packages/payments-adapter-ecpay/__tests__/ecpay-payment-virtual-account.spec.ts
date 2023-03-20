@@ -148,7 +148,7 @@ describe('ECPayPayment (Virtual Account)', () => {
       expect(clientOrder.form.ClientRedirectURL).toBe('https://rytass.com');
     });
 
-    describe('Vistual Account Banks', () => {
+    describe('Virtual Account Banks', () => {
       const mockedOnInfoRetrieved = jest.fn<void, [ECPayOrder<ECPayCommitMessage>]>(() => { });
 
       it('should reject invalid channel type', (done) => {

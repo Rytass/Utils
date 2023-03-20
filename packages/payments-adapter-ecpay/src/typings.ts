@@ -148,7 +148,7 @@ export enum ECPayCallbackPaymentType {
   CREDIT_CARD = 'Credit_CreditCard',
   VIRTUAL_ACCOUNT_WAITING = 'VIRTAL_ACCOUNT_WAITING',
 
-  // ATM (Vistual Account)
+  // ATM (Virtual Account)
   ATM_BOT = 'ATM_BOT',
   ATM_CHINATRUST = 'ATM_CHINATRUST',
   ATM_FIRST = 'ATM_FIRST',

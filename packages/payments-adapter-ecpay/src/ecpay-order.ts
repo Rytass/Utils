@@ -132,7 +132,7 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
     return this._gateway.getCheckoutUrl(this);
   }
 
-  get commitable(): boolean {
+  get committable(): boolean {
     return !!~[OrderState.PRE_COMMIT, OrderState.ASYNC_INFO_RETRIEVED].indexOf(this._state);
   }
 
@@ -196,7 +196,7 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
   }
 
   commit<T extends OCM>(message: T, additionalInfo?: AdditionalInfo<T>) {
-    if (!this.commitable) throw new Error(`Only pre-commit, info-retrieved order can commit, now: ${this._state}`);
+    if (!this.committable) throw new Error(`Only pre-commit, info-retrieved order can commit, now: ${this._state}`);
 
     if (this._id !== message.id) {
       throw new Error(`Order ID not matched, given: ${message.id} actual: ${this._id}`);

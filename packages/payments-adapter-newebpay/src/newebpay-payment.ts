@@ -1,5 +1,5 @@
 /* eslint-disable no-control-regex */
-import { Channel, CreditCardAuthInfo, OrderState, PaymentEvents, PaymentGateway, VistualAccountPaymentInfo, WebATMPaymentInfo } from '@rytass/payments';
+import { Channel, CreditCardAuthInfo, OrderState, PaymentEvents, PaymentGateway, VirtualAccountPaymentInfo, WebATMPaymentInfo } from '@rytass/payments';
 import { EventEmitter } from 'events';
 import { randomBytes, createCipheriv, createDecipheriv, createHash } from 'crypto';
 import { DateTime } from 'luxon';
@@ -234,7 +234,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
           channel: Channel.VIRTUAL_ACCOUNT,
           buyerBankCode: payload.PayBankCode,
           buyerAccountNumber: payload.PayerAccount5Code,
-        } as VistualAccountPaymentInfo);
+        } as VirtualAccountPaymentInfo);
 
         break;
 
@@ -504,7 +504,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
           } as NewebPayOrderFromServerInit<NewebPayVirtualAccountCommitMessage>, {
             buyerBankCode,
             buyerAccountNumber,
-          } as VistualAccountPaymentInfo) as T;
+          } as VirtualAccountPaymentInfo) as T;
         }
 
         // case 'BARCODE': {

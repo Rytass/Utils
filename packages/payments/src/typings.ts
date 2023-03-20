@@ -78,7 +78,7 @@ export type AdditionalInfo<OCM extends OrderCommitMessage> =
   OCM extends OrderCreditCardCommitMessage
   ? CreditCardAuthInfo
   : OCM extends OrderVirtualAccountCommitMessage
-  ? VistualAccountPaymentInfo
+  ? VirtualAccountPaymentInfo
   : OCM extends OrderWebATMCommitMessage
   ? WebATMPaymentInfo
   : OCM extends OrderCVSCommitMessage
@@ -109,7 +109,7 @@ export interface Order<OCM extends OrderCommitMessage> extends PrepareOrderInput
 
   id: string;
   items: PaymentItem[];
-  commitable: boolean;
+  committable: boolean;
 
   infoRetrieved<T extends OCM>(asyncInformation: AsyncOrderInformation<T>): void;
   fail(code: string, message: string): void;
@@ -174,7 +174,7 @@ export interface WebATMPaymentInfo {
   buyerBankCode: string;
 }
 
-export interface VistualAccountPaymentInfo {
+export interface VirtualAccountPaymentInfo {
   channel: Channel.VIRTUAL_ACCOUNT;
   buyerAccountNumber: string;
   buyerBankCode: string;
