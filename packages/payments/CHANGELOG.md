@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.16](https://github.com/Rytass/Utils/compare/@rytass/payments@0.0.15...@rytass/payments@0.0.16) (2023-03-21)
+
+
+### Features
+
+* **payments-adapter-hwanan:** add basic payment gateway without implements ([439a77a](https://github.com/Rytass/Utils/commit/439a77a2c639ff31f71918b59c3a1f05c8f4e058))
+
+
+
+
+
 ## [0.0.15](https://github.com/Rytass/Utils/compare/@rytass/payments@0.0.14...@rytass/payments@0.0.15) (2023-02-02)
 
 

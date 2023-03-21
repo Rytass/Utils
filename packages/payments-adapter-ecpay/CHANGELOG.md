@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.19](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.0.18...@rytass/payments-adapter-ecpay@0.0.19) (2023-03-21)
+
+
+### Bug Fixes
+
+* **payments:** test cases on server listen close issue ([4454f88](https://github.com/Rytass/Utils/commit/4454f882244d078b91d207b0a2aa73bd5d61730b))
+
+
+### Features
+
+* **payments-adapter-hwanan:** add basic payment gateway without implements ([439a77a](https://github.com/Rytass/Utils/commit/439a77a2c639ff31f71918b59c3a1f05c8f4e058))
+* **payments-adapter-hwanan:** add Hwa Nan Bank payment adapter ([c3736b1](https://github.com/Rytass/Utils/commit/c3736b12655854f3313833f0b6e7a66c6f588ab2))
+
+
+
+
+
 ## [0.0.18](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.0.17...@rytass/payments-adapter-ecpay@0.0.18) (2023-02-02)
 
 
