@@ -38,6 +38,7 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage> implements Order<O
 
     if ('makePayload' in options) {
       this._makePayload = options.makePayload;
+      this._createdAt = new Date();
     } else if ('platformTradeNumber' in options) {
       this._platformTradeNumber = options.platformTradeNumber;
       this._createdAt = options.createdAt;
@@ -148,12 +149,12 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage> implements Order<O
     };
   }
 
-  // Async order infomation
+  // Async order information
   get asyncInfo() {
     return this._asyncInfo;
   }
 
-  // Additional infomation
+  // Additional information
   get additionalInfo() {
     return this._additionalInfo;
   }

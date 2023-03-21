@@ -22,18 +22,23 @@ export class HwaNanOrder<OCM extends HwaNanCommitMessage = HwaNanCreditCardCommi
 
   private _createdAt: Date | null = null;
 
+  private _platformTradeNumber: string | null = null;
+
   private _channel: HwaNanPaymentChannel | undefined;
 
-  private _asyncInfo?: AsyncOrderInformation<OCM>;
+  private _additionalInfo?: AdditionalInfo<OCM>;
 
   constructor(options: HwaNanPrepareOrderInit<OCM>, additionalInfo?: AdditionalInfo<OCM>) {
     this._id = options.id;
     this._items = options.items.map(item => new HwaNanOrderItem(item));
     this._gateway = options.gateway;
+    this._createdAt = new Date();
 
     if ('makePayload' in options) {
       this._makePayload = options.makePayload;
     }
+
+    this._additionalInfo = additionalInfo;
   }
 
   get id() {
@@ -69,6 +74,54 @@ export class HwaNanOrder<OCM extends HwaNanCommitMessage = HwaNanCreditCardCommi
     };
   }
 
+  get totalPrice() {
+    return this.items.reduce((sum, item) => (
+      sum + (item.unitPrice * item.quantity)
+    ), 0);
+  }
+
+  // Additional information
+  get additionalInfo() {
+    return this._additionalInfo;
+  }
+
+  get platformTradeNumber(): string | null {
+    return this._platformTradeNumber;
+  }
+
+  get form(): HwaNanMakeOrderPayload {
+    if (~[OrderState.COMMITTED, OrderState.FAILED].indexOf(this._state)) {
+      throw new Error('Finished order cannot get submit form data');
+    }
+
+    this._state = OrderState.PRE_COMMIT;
+
+    return this._makePayload!;
+  }
+
+  get formHTML(): string {
+    if (~[OrderState.COMMITTED, OrderState.FAILED].indexOf(this._state)) {
+      throw new Error('Finished order cannot get submit form url');
+    }
+
+    this._state = OrderState.PRE_COMMIT;
+
+    return `<!DOCTYPE html>
+<html>
+  <head>
+    <title>Payment Submit Form</title>
+  </head>
+  <body>
+    <form action="${this._gateway.checkoutActionUrl}" method="POST">
+      ${Object.entries(this.form).map(([key, value]) => `<input name="${key}" value="${value}" type="hidden" />`).join('\n')}
+    </form>
+    <script>
+      document.forms[0].submit();
+    </script>
+  </body>
+</html>`;
+  }
+
   fail(returnCode: string, message: string) {
     this._failedCode = returnCode;
     this._failedMessage = message;
@@ -79,13 +132,7 @@ export class HwaNanOrder<OCM extends HwaNanCommitMessage = HwaNanCreditCardCommi
   }
 
   infoRetrieved<T extends OCM>(asyncInformation: AsyncOrderInformation<T>) {
-    if (this._state !== OrderState.PRE_COMMIT) throw new Error(`Only pre-commit order can commit, now: ${this._state}`);
-
-    this._asyncInfo = asyncInformation;
-
-    this._state = OrderState.ASYNC_INFO_RETRIEVED;
-
-    this._gateway.emitter.emit(PaymentEvents.ORDER_INFO_RETRIEVED, this);
+    throw new Error('Hwa Nan Bank not support async info retrieve');
   }
 
   commit<T extends OCM>(message: T, additionalInfo?: AdditionalInfo<T>) {
@@ -94,15 +141,17 @@ export class HwaNanOrder<OCM extends HwaNanCommitMessage = HwaNanCreditCardCommi
     if (this._id !== message.id) {
       throw new Error(`Order ID not matched, given: ${message.id} actual: ${this._id}`);
     }
+
+    this._additionalInfo = additionalInfo;
+    this._committedAt = message.committedAt;
+    this._platformTradeNumber = message.platformTradeNumber;
+    this._channel = message.channel;
+    this._state = OrderState.COMMITTED;
+
+    this._gateway.emitter.emit(PaymentEvents.ORDER_COMMITTED, this);
   }
 
   async refund() {
-    if (this._state !== OrderState.COMMITTED) {
-      throw new Error('Only committed order can be refunded');
-    }
-
-    if (this._channel !== HwaNanPaymentChannel.CREDIT) {
-      throw new Error('Only credit card order can be refunded');
-    }
+    throw new Error('Hwa Nan Bank not support refund');
   }
 }

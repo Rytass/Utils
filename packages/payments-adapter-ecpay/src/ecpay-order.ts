@@ -156,12 +156,12 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
     return this._paymentType;
   }
 
-  // Async order infomation
+  // Async order information
   get asyncInfo() {
     return this._asyncInfo;
   }
 
-  // Additional infomation
+  // Additional information
   get additionalInfo() {
     return this._additionalInfo;
   }

@@ -76,8 +76,9 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
       this.emitter.on(PaymentEvents.ORDER_COMMITTED, options.onCommit);
     }
 
+    this.emitter.on(PaymentEvents.SERVER_LISTENED, () => { this.isGatewayReady = true; });
+
     if (typeof options?.onServerListen === 'function') {
-      this.emitter.on(PaymentEvents.SERVER_LISTENED, () => { this.isGatewayReady = true; });
       this.emitter.on(PaymentEvents.SERVER_LISTENED, options.onServerListen);
     }
 
