@@ -1,4 +1,4 @@
-import { AdditionalInfo, Channel, CreditCardAuthInfo, PaymentEvents, PaymentGateway } from '@rytass/payments';
+import { AdditionalInfo, Channel, CreditCardAuthInfo, CreditCardECI, PaymentEvents, PaymentGateway } from '@rytass/payments';
 import { EventEmitter } from 'events';
 import debug from 'debug';
 import LRUCache from 'lru-cache';
@@ -99,6 +99,42 @@ export class HwaNanPayment<CM extends HwaNanCommitMessage = HwaNanCreditCardComm
     return `${this.baseUrl}/transaction/api-auth/`;
   }
 
+  public parseCallbackMessage(payload: HwaNanNotifyPayload): void {
+    const order = this.pendingOrdersCache.get(payload.lidm);
+
+    if (!order) throw new Error('Order not found');
+
+    switch (payload.status) {
+      case '0':
+        order.commit<CM>({
+          id: payload.lidm,
+          totalPrice: Number(payload.authAmt),
+          committedAt: new Date(),
+          channel: HwaNanPaymentChannel.CREDIT,
+          platformTradeNumber: payload.xid,
+        } as CM, {
+          channel: Channel.CREDIT_CARD,
+          processDate: new Date(),
+          authCode: payload.authCode,
+          amount: Number(payload.authAmt),
+          eci: CreditCardECI.VISA_AE_JCB_3D,
+          card6Number: 'xxxxxx',
+          card4Number: payload.Last4digitPAN,
+        } as AdditionalInfo<CM>);
+
+        break;
+
+      default:
+        order.fail(payload.errcode, payload.errDesc);
+        break;
+    }
+  }
+
+  public isCheckValueValid(payload: HwaNanNotifyPayload): boolean {
+    return payload.checkValue === createHash('md5').update(`${createHash('md5').update(`${this.identifier}|${payload.lidm}`).digest('hex')
+      }|${payload.status}|${payload.errcode}|${payload.authCode}|${payload.authAmt}|${payload.xid}`).digest('hex').substring(16);
+  }
+
   public defaultServerListener(req: IncomingMessage, res: ServerResponse) {
     const checkoutRe = new RegExp(`^${this.checkoutPath}/([^/]+)$`);
 
@@ -146,53 +182,24 @@ export class HwaNanPayment<CM extends HwaNanCommitMessage = HwaNanCreditCardComm
           {},
         ) as HwaNanNotifyPayload;
 
-      const correctCheckValue = createHash('md5').update(`${
-        createHash('md5').update(`${this.identifier}|${payload.lidm}`).digest('hex')
-      }|${payload.status}|${payload.errcode}|${payload.authCode}|${payload.authAmt}|${payload.xid}`).digest('hex').substring(16);
-
-      if (payload.checkValue !== correctCheckValue) {
+      if (!this.isCheckValueValid(payload)) {
         res.writeHead(400);
         res.end('Checksum Invalid')
 
         return;
       }
 
-      const order = this.pendingOrdersCache.get(payload.lidm);
+      try {
+        this.parseCallbackMessage(payload);
 
-      if (!order) {
+        res.writeHead(200);
+        res.end();
+      } catch (ex) {
+        debugPayment(ex);
+
         res.writeHead(400);
         res.end('Order Not Found');
-
-        return;
       }
-
-      switch (payload.status) {
-        case '0':
-          order.commit<CM>({
-            id: payload.lidm,
-            totalPrice: Number(payload.authAmt),
-            committedAt: new Date(),
-            channel: HwaNanPaymentChannel.CREDIT,
-            platformTradeNumber: payload.xid,
-          } as CM, {
-            channel: Channel.CREDIT_CARD,
-            processDate: new Date(),
-            authCode: payload.authCode,
-            amount: Number(payload.authAmt),
-            eci: '',
-            card6Number: 'xxxxxx',
-            card4Number: payload.Last4digitPAN,
-          } as AdditionalInfo<CM>);
-
-          break;
-
-        default:
-          order.fail(payload.errcode, payload.errDesc);
-          break;
-      }
-
-      res.writeHead(200);
-      res.end();
     });
   }
 

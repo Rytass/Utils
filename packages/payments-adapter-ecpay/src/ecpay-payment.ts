@@ -248,7 +248,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
     });
   }
 
-  private handlePaymentResult(order: ECPayOrder<ECPayCommitMessage>, payload: ECPayCallbackPayload) {
+  public handlePaymentResult(order: ECPayOrder<ECPayCommitMessage>, payload: ECPayCallbackPayload) {
     if (payload.RtnCode !== 1) {
       order.fail(payload.RtnCode.toString(), payload.RtnMsg);
 
@@ -354,7 +354,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
     }
   }
 
-  private handleAsyncInformation(order: ECPayOrder<ECPayCommitMessage>, payload: ECPayAsyncInformationPayload) {
+  public handleAsyncInformation(order: ECPayOrder<ECPayCommitMessage>, payload: ECPayAsyncInformationPayload) {
     if (order.state !== OrderState.PRE_COMMIT) {
       return;
     }
