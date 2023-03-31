@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.3](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-hwanan@0.0.2...@rytass/payments-adapter-hwanan@0.0.3) (2023-03-31)
+
+
+### Features
+
+* **payments-adapter-hwanan:** expose parseCallbackMessage method ([e1cb310](https://github.com/Rytass/Utils/commit/e1cb31052f9977ec27a036903e0100abae721a91))
+
+
+
+
+
 ## 0.0.2 (2023-03-21)
 
 
