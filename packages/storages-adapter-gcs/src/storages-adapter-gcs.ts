@@ -112,7 +112,7 @@ export class StorageGCSService extends Storage<GCSOptions> {
 
     await file.save(buffer, {
       gzip: 'auto',
-      ...(Array.isArray(fileInfo) && fileInfo[1] ? { ContentType: fileInfo[1] } : {}),
+      ...(Array.isArray(fileInfo) && fileInfo[1] ? { contentType: fileInfo[1] } : {}),
       ...(options?.contentType ? { contentType: options?.contentType } : {}),
     });
 

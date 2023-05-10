@@ -1,0 +1,31 @@
+{
+  "name": "@rytass/storages-adapter-azure-blob",
+  "version": "0.1.0",
+  "description": "Rytass Utils Storages Azure Blob adapter",
+  "keywords": [
+    "rytass",
+    "storages",
+    "azure",
+    "blob"
+  ],
+  "author": "Chia Yu Pai <fantasyatelier@gmail.com>",
+  "homepage": "https://github.com/Rytass/Utils#readme",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rytass/Utils.git"
+  },
+  "scripts": {
+    "clean": "npm run build:clean",
+    "build:clean": "node ../../scripts/cleanBuild.js",
+    "build": "npm run build:clean && node ../../scripts/build.js"
+  },
+  "bugs": {
+    "url": "https://github.com/Rytass/Utils/issues"
+  },
+  "dependencies": {
+    "@azure/storage-blob": "^12.14.0",
+    "@rytass/storages": "^0.2.0",
+    "uuid": "^9.0.0"
+  }
+}

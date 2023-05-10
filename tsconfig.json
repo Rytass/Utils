@@ -60,6 +60,9 @@
       "@rytass/storages-adapter-s3": [
         "storages-adapter-s3/src"
       ],
+      "@rytass/storages-adapter-azure-blob": [
+        "storages-adapter-azure-blob/src"
+      ],
       "@rytass/logistics": [
         "logistics/src"
       ],
