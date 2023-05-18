@@ -1,5 +1,64 @@
-import { CustomsMark, InvoiceAllowanceOptions, InvoiceCarrier, InvoiceIssueOptions, InvoicePaymentItem, InvoiceVoidOptions, SpecialTaxCode, TaxType } from '@rytass/invoice';
+import { CustomsMark, InvoiceAllowanceOptions, InvoiceAwardType, InvoiceCarrier, InvoiceIssueOptions, InvoicePaymentItem, InvoiceVoidOptions, SpecialTaxCode, TaxType } from '@rytass/invoice';
 import { ECPayInvoice } from '.';
+
+export interface ECPayInvoiceListQueryOptions {
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
+  onlyAward?: boolean;
+  onlyInvalid?: boolean;
+}
+
+export interface ECPayInvoiceListQueryRequestBody {
+  MerchantID: string;
+  BeginDate: string;
+  EndDate: string;
+  NumPerPage: number;
+  ShowingPage: number;
+  DataType: 1 | 2;
+  Query_Award: 0 | 1 | 2;
+  Query_Invalid: 0 | 1 | 2;
+}
+
+export interface ECPayQueryListInvoiceResponse {
+  MerchantID: string;
+  RpHeader: {
+    Timestamp: number;
+  };
+  TransCode: number;
+  TransMsg: string;
+  Data: ECPayQueryListInvoiceResponseDecrypted;
+}
+
+export interface ECPayQueryListInvoiceResponseDecrypted {
+  RtnCode: number;
+  RtnMsg: string;
+  TotalCount: number;
+  ShowingPage: number;
+  InvoiceData: {
+    IIS_Number: string;
+    IIS_Relate_Number: string;
+    IIS_Identifier: string;
+    IIS_Clearance_Mark: string;
+    IIS_Category: string;
+    IIS_Tax_Type: string;
+    IIS_Tax_Rate: number;
+    IIS_Tax_Amount: number;
+    IIS_Sales_Amount: number;
+    IIS_Create_Date: string; // YYYY-MM-DD HH:mm:ss
+    IIS_Issue_Status: '0' | '1';
+    IIS_Invalid_Status: '0' | '1';
+    IIS_Upload_Status: '0' | '1';
+    IIS_Upload_Date: string; // YYYY-MM-DD HH:mm:ss
+    IIS_Turnkey_Status: 'C' | 'E' | 'G' | 'P';
+    IIS_Remain_Allowance_Amt: number;
+    IIS_Print_Flag: '0' | '1';
+    IIS_Award_Flag: '0' | '1' | 'X';
+    IIS_Award_Type: '0' | '6' | '5' | '4' | '3' | '2' | '1' | '12' | '11' | '10' | '9' | '8' | '7';
+    IIS_Carrier_Type: '' | '1' | '2' | '3';
+    IIS_Carrier_Num: string;
+    IIS_Love_Code: string;
+  }[];
+}
 
 export type ECPayInvoiceQueryOptions = ECPayInvoiceQueryWithOrderIdOptions | ECPayInvoiceQueryWithInvouceNumberAndDateOptions;
 
@@ -172,6 +231,8 @@ export interface ECPayInvoiceOptions {
   randomCode: string;
   orderId: string;
   taxType: TaxType;
+  awardType?: InvoiceAwardType;
+  isVoid?: boolean;
 }
 
 export interface ECPayInvoiceGatewayOptions {

@@ -1,5 +1,5 @@
 import { PaymentItem } from '@rytass/payments';
-import { InvoiceState } from './typings';
+import { InvoiceAwardType, InvoiceState } from './typings';
 import { InvoiceAllowance } from './invoice-allowance';
 
 export interface Invoice<Item extends PaymentItem> {
@@ -22,4 +22,6 @@ export interface Invoice<Item extends PaymentItem> {
   voidOn: Date | null;
 
   setVoid: () => void;
+
+  awardType?: InvoiceAwardType;
 }

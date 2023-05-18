@@ -1,5 +1,20 @@
 import { PaymentItem } from '@rytass/payments';
 
+export enum InvoiceAwardType {
+  TWO_HUNDRED = 6,
+  ONE_THOUSAND = 5,
+  FOUR_THOUSAND = 4,
+  TEN_THOUSAND = 3,
+  FORTY_THOUSAND = 2,
+  TWO_HUNDRED_THOUSAND = 1,
+  TWO_MILLION = 7,
+  TEN_MILLION = 8,
+  CLOUD_TWO_THOUSAND = 9,
+  ONE_MILLION = 10,
+  FIVE_HUNDRED = 11,
+  EIGHT_HUNDRED = 12,
+}
+
 export enum InvoiceCarrierType {
   PRINT = 'PRINT',
   MOBILE = 'MOBILE',

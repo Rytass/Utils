@@ -8,6 +8,8 @@ import {
   ECPayCustomsMark,
   ECPayTaxTypeCode,
   ECPAY_INVOICE_SUCCESS_CODE,
+  ECPAY_COMPRESSED_ITEM_NAME,
+  ECPAY_RANDOM_CODE,
 } from './constants';
 import {
   ECPayAllowanceInvoiceResponseDecrypted,
@@ -17,13 +19,14 @@ import {
   ECPayInvoiceGatewayOptions,
   ECPayInvoiceInvalidAllowanceRequestBody,
   ECPayInvoiceIssueOptions,
+  ECPayInvoiceListQueryOptions,
+  ECPayInvoiceListQueryRequestBody,
   ECPayInvoiceLoveCodeValidateRequestBody,
   ECPayInvoiceLoveCodeValidateResponse,
   ECPayInvoiceMobileBarcodeValidateRequestBody,
   ECPayInvoiceMobileBarcodeValidateResponse,
   ECPayInvoiceQueryOptions,
   ECPayInvoiceQueryRequestBody,
-  ECPayInvoiceQueryWithOrderIdOptions,
   ECPayInvoiceRequestBody,
   ECPayInvoiceResponse,
   ECPayInvoiceVoidOptions,
@@ -33,6 +36,7 @@ import {
   ECPayPaymentItem,
   ECPayQueryInvoiceResponse,
   ECPayQueryInvoiceResponseDecrypted,
+  ECPayQueryListInvoiceResponse,
   ECPayVoidInvoiceResponseDecrypted,
 } from './typings';
 import {
@@ -471,9 +475,11 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayInvoice, ECPayIn
           remark: item.ItemRemark,
         })),
         issuedOn: DateTime.fromFormat(payload.IIS_Create_Date, 'yyyy-MM-dd+HH:mm:ss').toJSDate(),
+        isVoid: payload.IIS_Invalid_Status === '1',
         invoiceNumber: payload.IIS_Number,
         randomCode: payload.IIS_Random_Number,
         orderId: payload.IIS_Relate_Number,
+        awardType: Number(payload.IIS_Award_Type),
         taxType: ((taxType) => {
           switch (taxType) {
             case '1':
@@ -496,5 +502,100 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayInvoice, ECPayIn
     }
 
     throw new Error('ECPay gateway error');
+  }
+
+  private async getInvoiceListInPage(options: ECPayInvoiceListQueryOptions, page: number): Promise<ECPayInvoice[]> {
+    const now = Math.round(Date.now() / 1000);
+
+    const { data } = await axios.post<ECPayQueryListInvoiceResponse>(`${this.baseUrl}/B2CInvoice/GetIssueList`, JSON.stringify({
+      MerchantID: this.merchantId,
+      RqHeader: {
+        Timestamp: now,
+      },
+      Data: this.encrypt<ECPayInvoiceListQueryRequestBody>({
+        MerchantID: this.merchantId,
+        BeginDate: options.startDate,
+        EndDate: options.endDate,
+        NumPerPage: 200,
+        ShowingPage: page,
+        DataType: 1,
+        Query_Award: options.onlyAward ? 1 : 0,
+        Query_Invalid: options.onlyInvalid ? 1 : 0,
+      }),
+    }));
+
+    if (data.TransCode === ECPAY_INVOICE_SUCCESS_CODE) {
+      return data.Data.InvoiceData.map(invoice => new ECPayInvoice({
+        items: [{
+          name: ECPAY_COMPRESSED_ITEM_NAME,
+          unitPrice: invoice.IIS_Sales_Amount,
+          quantity: 1,
+          unit: '式',
+          taxType: ((taxType) => {
+            switch (taxType) {
+              case '2':
+                return TaxType.ZERO_TAX;
+
+              case '3':
+                return TaxType.TAX_FREE;
+
+              case '4':
+                return TaxType.SPECIAL;
+
+              case '1':
+              default:
+                return TaxType.TAXED;
+            }
+          })(invoice.IIS_Tax_Type),
+          remark: '',
+        }],
+        issuedOn: DateTime.fromFormat(invoice.IIS_Create_Date, 'yyyy-MM-dd HH:mm:ss').toJSDate(),
+        isVoid: invoice.IIS_Invalid_Status === '1',
+        invoiceNumber: invoice.IIS_Number,
+        randomCode: ECPAY_RANDOM_CODE,
+        orderId: invoice.IIS_Relate_Number,
+        awardType: Number(invoice.IIS_Award_Type),
+        taxType: ((taxType) => {
+          switch (taxType) {
+            case '2':
+              return TaxType.ZERO_TAX;
+
+            case '3':
+              return TaxType.TAX_FREE;
+
+            case '4':
+              return TaxType.SPECIAL;
+
+            case '9':
+              return TaxType.MIXED;
+
+            case '1':
+            default:
+              return TaxType.TAXED;
+          }
+        })(invoice.IIS_Tax_Type),
+      }));
+    }
+
+    throw new Error('ECPay gateway error');
+  }
+
+  async list(options: ECPayInvoiceListQueryOptions): Promise<ECPayInvoice[]> {
+    const getData = async (allInvoices: ECPayInvoice[] = [], page = 1): Promise<ECPayInvoice[]> => {
+      const invoices = await this.getInvoiceListInPage(options, page);
+
+      if (invoices.length === 0) return allInvoices;
+
+      if (invoices.length < 200) {
+        return [
+          ...allInvoices,
+          ...invoices,
+        ];
+      }
+
+      return getData([ ...allInvoices, ...invoices ], page + 1);
+    };
+
+    return getData();
   }
 }
