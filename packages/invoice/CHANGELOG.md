@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.16](https://github.com/Rytass/Utils/compare/@rytass/invoice@0.1.15...@rytass/invoice@0.1.16) (2023-05-18)
+
+
+### Features
+
+* **invoice-adapter-ecpay:** add list method ([a252fbd](https://github.com/Rytass/Utils/commit/a252fbdc120443cee730c06e22c29023bb1d3a0e))
+
+
+
+
+
 ## [0.1.15](https://github.com/Rytass/Utils/compare/@rytass/invoice@0.1.14...@rytass/invoice@0.1.15) (2023-03-21)
 
 **Note:** Version bump only for package @rytass/invoice
