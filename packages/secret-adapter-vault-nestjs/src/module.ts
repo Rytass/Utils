@@ -11,7 +11,7 @@ export class VaultModule {
 		return {
 			imports: [
 				ConfigModule.forRoot({
-					envFilePath: options.cacheFile,
+					envFilePath: options.fallbackFile,
 				}),
 			],
 			module: VaultModule,

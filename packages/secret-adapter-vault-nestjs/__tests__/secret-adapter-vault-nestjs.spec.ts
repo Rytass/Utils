@@ -229,7 +229,7 @@ describe('VaultSecretNestjsModule', () => {
       return ConfigModule.forRoot(options);
     });
 
-    VaultModule.forRoot({ path: '/', cacheFile: 'cache.env' });
+    VaultModule.forRoot({ path: '/', fallbackFile: 'cache.env' });
   });
 
   it('should fallback when network failure', async () => {
