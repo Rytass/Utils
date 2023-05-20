@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.1](https://github.com/Rytass/Utils/compare/@rytass/secret-adapter-vault-nestjs@0.2.0...@rytass/secret-adapter-vault-nestjs@0.2.1) (2023-05-20)
+
+
+### Bug Fixes
+
+* **secret-adapter-vault-nestjs:** use friendly name for network failure fallback name ([2530d36](https://github.com/Rytass/Utils/commit/2530d360516b8ecb2a233c4f62e50e977802469b))
+
+
+
+
+
 # [0.2.0](https://github.com/Rytass/Utils/compare/@rytass/secret-adapter-vault-nestjs@0.1.5...@rytass/secret-adapter-vault-nestjs@0.2.0) (2023-05-20)
 
 
