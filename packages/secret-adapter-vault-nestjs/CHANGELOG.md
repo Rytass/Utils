@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.2.0](https://github.com/Rytass/Utils/compare/@rytass/secret-adapter-vault-nestjs@0.1.5...@rytass/secret-adapter-vault-nestjs@0.2.0) (2023-05-20)
+
+
+### Bug Fixes
+
+* **secret-adapter-vault-nestjs:** test condition path ([1f8b981](https://github.com/Rytass/Utils/commit/1f8b981ad321a60052b12fdc6fd27ca629c5bc30))
+
+
+### Features
+
+* **secret-adapter-vault-nestjs:** add env fallback feature, upgrade axios ([2b75b59](https://github.com/Rytass/Utils/commit/2b75b59926ad024a8c549bfdecaf49835df5a6f5))
+
+
+
+
+
 ## [0.1.5](https://github.com/Rytass/Utils/compare/@rytass/secret-adapter-vault-nestjs@0.1.4...@rytass/secret-adapter-vault-nestjs@0.1.5) (2022-09-20)
 
 

@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.1.0](https://github.com/Rytass/Utils/compare/@rytass/logistics-adapter-tcat@0.0.10...@rytass/logistics-adapter-tcat@0.1.0) (2023-05-20)
+
+
+### Features
+
+* **secret-adapter-vault-nestjs:** add env fallback feature, upgrade axios ([2b75b59](https://github.com/Rytass/Utils/commit/2b75b59926ad024a8c549bfdecaf49835df5a6f5))
+
+
+
+
+
 ## [0.0.10](https://github.com/Rytass/Utils/compare/@rytass/logistics-adapter-tcat@0.0.9...@rytass/logistics-adapter-tcat@0.0.10) (2022-12-01)
 
 

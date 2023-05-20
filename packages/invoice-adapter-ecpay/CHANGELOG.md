@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.2.0](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ecpay@0.1.20...@rytass/invoice-adapter-ecpay@0.2.0) (2023-05-20)
+
+
+### Features
+
+* **secret-adapter-vault-nestjs:** add env fallback feature, upgrade axios ([2b75b59](https://github.com/Rytass/Utils/commit/2b75b59926ad024a8c549bfdecaf49835df5a6f5))
+
+
+
+
+
 ## [0.1.20](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ecpay@0.1.19...@rytass/invoice-adapter-ecpay@0.1.20) (2023-05-18)
 
 
