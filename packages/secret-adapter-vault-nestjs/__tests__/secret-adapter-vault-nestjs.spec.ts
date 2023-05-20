@@ -1,6 +1,7 @@
-import type { ConfigService } from '@nestjs/config';
+import { ConfigModule, ConfigModuleOptions, ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import { VaultModule, VaultService } from '../src';
+import { VaultModule } from '../src/module';
+import { VaultService } from '../src/service';
 
 const VAULT_HOST = 'https://vault.yourserver.com';
 const VAULT_ACCOUNT = 'utils';
@@ -133,6 +134,10 @@ describe('VaultSecretNestjsModule', () => {
   });
 
   post.mockImplementation(async (url: string, data: unknown, config) => {
+    console.log({ url, data });
+
+    if (!url.match(new RegExp(`^${VAULT_HOST}`))) throw new AxiosError(404);
+
     if (url === `${VAULT_HOST}/v1/auth/userpass/login/${VAULT_ACCOUNT}`) {
       const payload = JSON.parse(data as string) as {
         password: string;
@@ -195,14 +200,14 @@ describe('VaultSecretNestjsModule', () => {
     expect(test2Value).toBe('123');
   });
 
-  it('should vault forRoot use default value', () => {
+  it('should vault forRoot use default value', async () => {
     const module = VaultModule.forRoot() as {
       providers: {
         useValue: string;
       }[];
     };
 
-    expect(module.providers[0].useValue).toBe('/');
+    expect(module.providers[1].useValue).toBe('/');
   });
 
   it('should get path on vault forRoot method', () => {
@@ -212,6 +217,35 @@ describe('VaultSecretNestjsModule', () => {
       }[];
     };
 
-    expect(module.providers[0].useValue).toBe('/aaa');
+    expect(module.providers[1].useValue).toBe('/aaa');
+  });
+
+  it('should use fallback env file', (done) => {
+    jest.spyOn(ConfigModule, 'forRoot').mockImplementationOnce((options?: ConfigModuleOptions) => {
+      expect(options?.envFilePath).toBe('cache.env');
+
+      done();
+
+      return ConfigModule.forRoot(options);
+    });
+
+    VaultModule.forRoot({ path: '/', cacheFile: 'cache.env' });
+  });
+
+  it('should fallback when network failure', async () => {
+    const configMap = new Map<string, string>(mockConfig);
+
+    configMap.set('VAULT_HOST', 'http://localhost:1234');
+    configMap.set('AAA', '123');
+    configMap.set('BBB', '456');
+
+    const service = new VaultService(configMap as unknown as ConfigService, '/');
+
+    // waiting for ready
+    expect(await service.get('AAA')).toBe('123');
+
+    // realtime
+    expect(await service.get('BBB')).toBe('456');
+    expect(await service.get('CCC')).toBe('');
   });
 });

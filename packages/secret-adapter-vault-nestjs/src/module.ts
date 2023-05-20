@@ -1,19 +1,22 @@
-import { DynamicModule, Module } from '@nestjs/common';
+import { DynamicModule, Global, Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { VAULT_PATH_TOKEN } from './constants';
-import { VaultHostModule } from './host.module';
 import { VaultModuleOptions } from './interfaces';
 import { VaultService } from './service';
 
-@Module({
-	imports: [VaultHostModule],
-	exports: [VaultHostModule],
-})
+@Global()
+@Module({})
 export class VaultModule {
 	static forRoot(options: VaultModuleOptions = { path: '/' }): DynamicModule {
 		return {
+			imports: [
+				ConfigModule.forRoot({
+					envFilePath: options.cacheFile,
+				}),
+			],
 			module: VaultModule,
-			global: options.isGlobal,
 			providers: [
+				ConfigService,
 				{
 					provide: VAULT_PATH_TOKEN,
 					useValue: options.path,

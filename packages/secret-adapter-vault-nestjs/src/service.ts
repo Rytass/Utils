@@ -7,10 +7,12 @@ import { VAULT_PATH_TOKEN } from './constants';
 export class VaultService {
   private readonly manager: VaultSecret<VaultSecretOptions>;
 
-  private readonly onReadyCallbacks: (() => void)[] = [];
+  private readonly onReadyCallbacks: ((dataSource?: { get: (key: string) => Promise<any> }) => void)[] = [];
+
+  private fallbackToEnvFile = false;
 
   constructor(
-    config: ConfigService,
+    private readonly config: ConfigService,
     @Inject(VAULT_PATH_TOKEN) path: string,
   ) {
     const host = config.get<string>('VAULT_HOST') as string;
@@ -23,6 +25,11 @@ export class VaultService {
         account: user,
         password: pass,
       },
+      onError: (err) => {
+        this.fallbackToEnvFile = true;
+
+        this.onReadyCallbacks.forEach(done => done(config));
+      },
       onReady: () => {
         this.onReadyCallbacks.forEach(done => done());
       },
@@ -30,13 +37,17 @@ export class VaultService {
   }
 
   public async get<T = string>(key: string): Promise<T> {
+    if (this.fallbackToEnvFile) {
+      return Promise.resolve((this.config.get<T>(key) || '') as T);
+    }
+
     if (this.manager.state === VaultSecretState.READY) {
       return this.manager.get(key);
     }
 
     return new Promise((resolve) => {
-      this.onReadyCallbacks.push(() => {
-        resolve(this.manager.get(key));
+      this.onReadyCallbacks.push((dataSource: { get: (key: string) => Promise<any> } = this.manager) => {
+        resolve(dataSource.get(key));
       });
     });
   }

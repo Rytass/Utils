@@ -149,6 +149,8 @@ describe('VaultSecret', () => {
   });
 
   post.mockImplementation(async (url: string, data: unknown, config) => {
+    if (!url.match(new RegExp(`^${VAULT_HOST}`))) throw new AxiosError(404);
+
     if (url === `${VAULT_HOST}/v1/auth/userpass/login/${VAULT_ACCOUNT}`) {
       const payload = JSON.parse(data as string) as {
         password: string;
@@ -770,6 +772,24 @@ describe('VaultSecret', () => {
 
         done();
       }, 500);
+    });
+  });
+
+  describe('Vault network invalid', () => {
+    it('should emit error message on network failed', (done) => {
+
+      const manager = new VaultSecret(VAULT_PROJECT, {
+        host: 'https://not-valid.rytass.com',
+        auth: {
+          account: VAULT_ACCOUNT,
+          password: VAULT_PASSWORD,
+        },
+        onError: () => {
+          expect(true).toBeTruthy();
+
+          done();
+        },
+      });
     });
   });
 });

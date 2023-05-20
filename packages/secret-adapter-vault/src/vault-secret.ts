@@ -37,6 +37,8 @@ export class VaultSecret<Options extends VaultSecretOptions> extends SecretManag
       this._state = VaultSecretState.READY;
 
       this.emitter.emit(VaultEvents.READY);
+    }).catch((ex) => {
+      this.emitter.emit(VaultEvents.ERROR, ex);
     });
 
     if (typeof options.onError === 'function') {

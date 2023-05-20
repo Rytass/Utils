@@ -1,1 +1,1 @@
-export const VAULT_PATH_TOKEN = Symbol('VAULT_PATH_TOKEN');
+export const VAULT_PATH_TOKEN: symbol = Symbol('VAULT_PATH_TOKEN');
