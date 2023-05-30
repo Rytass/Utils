@@ -11,7 +11,7 @@ export enum StorageLocalHelperCommands {
   FREE = 'df -m __DIR__ | awk \'$3 ~ /[0-9]+/ { print $4 }\'',
 }
 
-// @dev: in megabytes
+// @dev: in 1M blocks
 export interface StorageLocalUsageInfo {
   used: number,
   free: number,

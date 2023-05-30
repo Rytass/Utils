@@ -37,7 +37,7 @@ export class LocalStorage extends Storage {
     }
   }
 
-  // @dev: returns file system usage in megabytes
+  // @dev: returns file system usage in 1M-blocks
   private async getFsUsage(): Promise<StorageLocalUsageInfo> {
     const used = Number(
       (await spawn(
