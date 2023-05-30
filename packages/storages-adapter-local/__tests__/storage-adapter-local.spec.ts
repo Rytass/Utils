@@ -58,6 +58,10 @@ describe('StorageLocalService', () => {
 
           expect(savedFakeBuffer.compare(fakeFileBuffer)).toBe(0);
 
+          const usage = await localStorage.getUsageInfo();
+
+          expect(usage.used).toBeGreaterThan(0);
+
           rmSync(resolve(workingDirectory, fakeFilename));
 
           done();

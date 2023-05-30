@@ -9,11 +9,20 @@ import {
   WriteFileOptions,
 } from '@rytass/storages';
 import { v4 as uuid } from 'uuid';
-import { StorageLocalOptions } from './typings';
+import { promisify } from 'util';
+import {
+  StorageLocalOptions,
+  StorageLocalUsageInfo,
+  StorageLocalHelperCommands,
+} from './typings';
 import { resolve } from 'path';
 import { Readable } from 'stream';
 import { lstatSync, mkdirSync, createReadStream, createWriteStream } from 'fs';
 import { readFile, unlink, writeFile, rename } from 'fs/promises';
+import { exec as execInCb } from 'child_process';
+
+// @dev: using the
+const exec = promisify(execInCb);
 
 export class LocalStorage extends Storage {
   private readonly directory: string;
@@ -30,6 +39,25 @@ export class LocalStorage extends Storage {
     if (!lstatSync(this.directory).isDirectory()) {
       throw new StorageError(ErrorCode.DIRECTORY_NOT_FOUND);
     }
+  }
+
+  public async getUsageInfo(): Promise<StorageLocalUsageInfo> {
+    const _usage: StorageLocalUsageInfo = await this.getFsUsage();
+
+    return _usage;
+  }
+
+  // @dev: returns file system usage in 1M-blocks
+  private async getFsUsage(): Promise<StorageLocalUsageInfo> {
+    const used = Number((await exec(StorageLocalHelperCommands.USED.replace('__DIR__', this.directory))).stdout);
+    const free = Number((await exec(StorageLocalHelperCommands.FREE.replace('__DIR__', this.directory))).stdout);
+    const total = Number((await exec(StorageLocalHelperCommands.TOTAL.replace('__DIR__', this.directory))).stdout);
+
+    return {
+      used,
+      free,
+      total,
+    };
   }
 
   private getFileFullPath(key: string) {
