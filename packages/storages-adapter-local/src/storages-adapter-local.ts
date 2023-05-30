@@ -32,6 +32,24 @@ export class LocalStorage extends Storage {
     }
   }
 
+  // @dev: returns file system usage in megabytes
+  private async getFsUsage(): Promise<StorageLocalUsageInfo> {
+    const used = Number(
+      (await spawn(
+        StorageLocalHelperCommands.USED.replace('__DIR__', this.directory)
+      )).stdout
+    );
+    const free = Number(
+      (await spawn(
+        StorageLocalHelperCommands.FREE.replace('__DIR__', this.directory)
+      )).stdout
+    );
+    return {
+      used,
+      free,
+    }
+  }
+
   private getFileFullPath(key: string) {
     return resolve(this.directory, key);
   }
