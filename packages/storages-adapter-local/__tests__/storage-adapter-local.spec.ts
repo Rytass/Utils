@@ -58,15 +58,11 @@ describe('StorageLocalService', () => {
 
           expect(savedFakeBuffer.compare(fakeFileBuffer)).toBe(0);
 
-          rmSync(resolve(workingDirectory, fakeFilename));
+          const usage = await localStorage.getUsageInfo();
 
-          done();
-        });
-      });
-
-      it('should use some disk space', (done) => {
-        localStorage.getUsageInfo().then((usage) => {
           expect(usage.used).toBeGreaterThan(0);
+
+          rmSync(resolve(workingDirectory, fakeFilename));
 
           done();
         });
