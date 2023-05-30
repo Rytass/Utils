@@ -51,33 +51,15 @@ export class LocalStorage extends Storage {
 
   // @dev: returns file system usage in 1M-blocks
   private async getFsUsage(): Promise<StorageLocalUsageInfo> {
-    const used$ = from(exec(
-      StorageLocalHelperCommands.USED.replace('__DIR__', this.directory)
-    )).pipe(catchError((err) => { throw err }));
+    const used = Number((await exec(StorageLocalHelperCommands.USED.replace('__DIR__', this.directory))).stdout);
+    const free = Number((await exec(StorageLocalHelperCommands.FREE.replace('__DIR__', this.directory))).stdout);
+    const total = Number((await exec(StorageLocalHelperCommands.TOTAL.replace('__DIR__', this.directory))).stdout);
 
-    const free$ = from(exec(
-      StorageLocalHelperCommands.FREE.replace('__DIR__', this.directory)
-    )).pipe(catchError((err) => { throw err }));
-
-    const total$ = from(exec(
-      StorageLocalHelperCommands.TOTAL.replace('__DIR__', this.directory)
-    )).pipe(catchError((err) => { throw err }));
-
-    return new Promise((resolve, reject) => {
-      zip(used$, free$, total$).subscribe({
-        next: ([used, free, total]) => {
-          resolve({
-            used: Number(used.stdout),
-            free: Number(free.stdout),
-            total: Number(total.stdout),
-          });
-        },
-        error: (err) => {
-          console.error(`Command execution error: ${err}`);
-          reject(err);
-        },
-      });
-    });
+    return {
+      used,
+      free,
+      total,
+    };
   }
 
   private getFileFullPath(key: string) {
