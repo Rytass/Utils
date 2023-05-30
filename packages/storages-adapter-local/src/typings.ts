@@ -10,3 +10,9 @@ export enum StorageLocalHelperCommands {
   USED = 'du -sm . | awk \'{ print $1 }\'',
   FREE = 'df -m . | awk \'$3 ~ /[0-9]+/ { print $4 }\'',
 }
+
+// @dev: in megabytes
+export interface StorageLocalUsageInfo {
+  used: number,
+  free: number,
+}
