@@ -18,7 +18,7 @@ import { resolve } from 'path';
 import { Readable } from 'stream';
 import { lstatSync, mkdirSync, createReadStream, createWriteStream } from 'fs';
 import { readFile, unlink, writeFile, rename } from 'fs/promises';
-import { spawn } from 'child_process';
+import { exec } from 'child_process';
 
 export class LocalStorage extends Storage {
   private readonly directory: string;
@@ -46,19 +46,19 @@ export class LocalStorage extends Storage {
   // @dev: returns file system usage in 1M-blocks
   private async getFsUsage(): Promise<StorageLocalUsageInfo> {
     const used = Number(
-      (await spawn(
+      (await exec(
         StorageLocalHelperCommands.USED.replace('__DIR__', this.directory)
       )).stdout
     );
 
     const free = Number(
-      (await spawn(
+      (await exec(
         StorageLocalHelperCommands.FREE.replace('__DIR__', this.directory)
       )).stdout
     );
 
     const total = Number(
-      (await spawn(
+      (await exec(
         StorageLocalHelperCommands.TOTAL.replace('__DIR__', this.directory)
       )).stdout
     );
