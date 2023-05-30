@@ -3,6 +3,38 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.1](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-local@0.2.0...@rytass/storages-adapter-local@0.2.1) (2023-05-30)
+
+
+### Bug Fixes
+
+* correct unit to 1M blocks ([ff81490](https://github.com/Rytass/Utils/commit/ff81490f52be89dc5061ee7deeb495b2940565d1))
+* eslint ([54cb6e3](https://github.com/Rytass/Utils/commit/54cb6e30a4c07a8e7038154ca3c2310620bce3a4))
+* eslint ([1076222](https://github.com/Rytass/Utils/commit/10762222cc673a22e852d01332c29acb85c1ee82))
+* removing extra imports ([f68d49f](https://github.com/Rytass/Utils/commit/f68d49fa3e6aa0d03763481cd033c36c6a3f5287))
+* updating storage-local tests to chain getUsageInfo ([02c8f2d](https://github.com/Rytass/Utils/commit/02c8f2d4f6bcb45b7959c4c358bb6fbdbc5b40da))
+* using exec instead of spawn for child_process ([59edc98](https://github.com/Rytass/Utils/commit/59edc980e84899baedf5c62094aa51d668b73ba5))
+
+
+### Features
+
+* adding dependencies and chain operation with RX ([a8b86c8](https://github.com/Rytass/Utils/commit/a8b86c84ecc390ceeab1093c3c04ec057e207b91))
+* getFsUsage dependencies ([b48fa24](https://github.com/Rytass/Utils/commit/b48fa2417a8d9b9f87807188876e577120eeef8b))
+* getFsUsage private function added to storage local ([0a0436a](https://github.com/Rytass/Utils/commit/0a0436acb2a84091ecf779b15d15aed871a14545))
+* public getUsageInfo for storage-local ([467e093](https://github.com/Rytass/Utils/commit/467e0930798e9efbb388da22795db0a701ba6ebe))
+* storage helper commands for *nix systems ([ca46aa5](https://github.com/Rytass/Utils/commit/ca46aa50a4bd2b2cc0911419ce5839a0f23eb380))
+* storage helper commands into a template ([e6b18a2](https://github.com/Rytass/Utils/commit/e6b18a21f6a2dd8d91523a3dd3ccccffa54d5e1e))
+* storage helper commands: total ([400573d](https://github.com/Rytass/Utils/commit/400573d26ef2f10f16d012591276755af89f35f0))
+* struct StorageLocalUsageInfo in MB ([d36472a](https://github.com/Rytass/Utils/commit/d36472aa202de86ce4651e265d124fac0fb5b268))
+* switched back to Promise based logic ([add3b0c](https://github.com/Rytass/Utils/commit/add3b0cf4a6c3bb987e1fe9e7ce76f96a78bb4f9))
+* total added to helper function ([7f50ba7](https://github.com/Rytass/Utils/commit/7f50ba7ab8d92ebf6eed86eb629adf0870bbd691))
+* unit test on getUsageInfo ([f0674e8](https://github.com/Rytass/Utils/commit/f0674e8a83ec32067a2d2c5bdf521ba9d0f2ab2c))
+* wrapping the exec child_process import ([c69b07e](https://github.com/Rytass/Utils/commit/c69b07e55df292a12b64d8f9d83a88f9072b963a))
+
+
+
+
+
 # [0.2.0](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-local@0.1.4...@rytass/storages-adapter-local@0.2.0) (2023-02-27)
 
 
