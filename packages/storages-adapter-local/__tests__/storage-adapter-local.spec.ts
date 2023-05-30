@@ -64,6 +64,14 @@ describe('StorageLocalService', () => {
         });
       });
 
+      it('should use some disk space', (done) => {
+        localStorage.getUsageInfo().then((usage) => {
+          expect(usage.used).toBeGreaterThan(0);
+
+          done();
+        });
+      });
+
       afterEach(() => {
         rmSync(resolve(workingDirectory, filename));
       });
