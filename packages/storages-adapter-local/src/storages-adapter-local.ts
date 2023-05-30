@@ -10,8 +10,6 @@ import {
 } from '@rytass/storages';
 import { v4 as uuid } from 'uuid';
 import { promisify } from 'util';
-import { zip, from } from 'rxjs';
-import { catchError } from 'rxjs/operators';
 import {
   StorageLocalOptions,
   StorageLocalUsageInfo,
