@@ -9,11 +9,16 @@ import {
   WriteFileOptions,
 } from '@rytass/storages';
 import { v4 as uuid } from 'uuid';
-import { StorageLocalOptions } from './typings';
+import {
+  StorageLocalOptions,
+  StorageLocalUsageInfo,
+  StorageLocalHelperCommands,
+} from './typings';
 import { resolve } from 'path';
 import { Readable } from 'stream';
 import { lstatSync, mkdirSync, createReadStream, createWriteStream } from 'fs';
 import { readFile, unlink, writeFile, rename } from 'fs/promises';
+import { spawn } from 'child_process';
 
 export class LocalStorage extends Storage {
   private readonly directory: string;
