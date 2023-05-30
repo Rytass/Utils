@@ -49,9 +49,15 @@ export class LocalStorage extends Storage {
         StorageLocalHelperCommands.FREE.replace('__DIR__', this.directory)
       )).stdout
     );
+    const total = Number(
+      (await spawn(
+        StorageLocalHelperCommands.TOTAL.replace('__DIR__', this.directory)
+      )).stdout
+    );
     return {
       used,
       free,
+      total,
     }
   }
 

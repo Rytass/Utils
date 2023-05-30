@@ -16,4 +16,5 @@ export enum StorageLocalHelperCommands {
 export interface StorageLocalUsageInfo {
   used: number,
   free: number,
+  total: number,
 }
