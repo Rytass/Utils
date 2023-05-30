@@ -70,7 +70,7 @@ export class LocalStorage extends Storage {
             used: Number(used.stdout),
             free: Number(free.stdout),
             total: Number(total.stdout),
-          })
+          });
         },
         error: (err) => {
           console.error(`Command execution error: ${err}`);
