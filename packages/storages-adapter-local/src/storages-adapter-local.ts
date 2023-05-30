@@ -18,7 +18,10 @@ import { resolve } from 'path';
 import { Readable } from 'stream';
 import { lstatSync, mkdirSync, createReadStream, createWriteStream } from 'fs';
 import { readFile, unlink, writeFile, rename } from 'fs/promises';
-import { exec } from 'child_process';
+import { exec as execInCb } from 'child_process';
+
+// @dev: using the
+const exec = promisify(execInCb);
 
 export class LocalStorage extends Storage {
   private readonly directory: string;
