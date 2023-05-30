@@ -9,6 +9,9 @@ import {
   WriteFileOptions,
 } from '@rytass/storages';
 import { v4 as uuid } from 'uuid';
+import { promisify } from 'util';
+import { zip, from } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import {
   StorageLocalOptions,
   StorageLocalUsageInfo,
@@ -48,29 +51,33 @@ export class LocalStorage extends Storage {
 
   // @dev: returns file system usage in 1M-blocks
   private async getFsUsage(): Promise<StorageLocalUsageInfo> {
-    const used = Number(
-      (await exec(
-        StorageLocalHelperCommands.USED.replace('__DIR__', this.directory)
-      )).stdout
-    );
+    const used$ = from(exec(
+      StorageLocalHelperCommands.USED.replace('__DIR__', this.directory)
+    )).pipe(catchError((err) => { throw err }));
 
-    const free = Number(
-      (await exec(
-        StorageLocalHelperCommands.FREE.replace('__DIR__', this.directory)
-      )).stdout
-    );
+    const free$ = from(exec(
+      StorageLocalHelperCommands.FREE.replace('__DIR__', this.directory)
+    )).pipe(catchError((err) => { throw err }));
 
-    const total = Number(
-      (await exec(
-        StorageLocalHelperCommands.TOTAL.replace('__DIR__', this.directory)
-      )).stdout
-    );
+    const total$ = from(exec(
+      StorageLocalHelperCommands.TOTAL.replace('__DIR__', this.directory)
+    )).pipe(catchError((err) => { throw err }));
 
-    return {
-      used,
-      free,
-      total,
-    }
+    return new Promise((resolve, reject) => {
+      zip(used$, free$, total$).subscribe({
+        next: ([used, free, total]) => {
+          resolve({
+            used: Number(used.stdout),
+            free: Number(free.stdout),
+            total: Number(total.stdout),
+          })
+        },
+        error: (err) => {
+          console.error(`Command execution error: ${err}`);
+          reject(err);
+        },
+      });
+    });
   }
 
   private getFileFullPath(key: string) {
