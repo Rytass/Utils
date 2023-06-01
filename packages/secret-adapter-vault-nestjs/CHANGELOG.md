@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.2](https://github.com/Rytass/Utils/compare/@rytass/secret-adapter-vault-nestjs@0.2.1...@rytass/secret-adapter-vault-nestjs@0.2.2) (2023-06-01)
+
+
+### Features
+
+* **secret-adapter-vault-nestjs:** if vault host not set, auto fallback to env file ([e77fd28](https://github.com/Rytass/Utils/commit/e77fd28177adc3b7bdec830b1c9db827b9a44e35))
+
+
+
+
+
 ## [0.2.1](https://github.com/Rytass/Utils/compare/@rytass/secret-adapter-vault-nestjs@0.2.0...@rytass/secret-adapter-vault-nestjs@0.2.1) (2023-05-20)
 
 
