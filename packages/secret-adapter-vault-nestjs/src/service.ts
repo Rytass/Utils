@@ -5,7 +5,7 @@ import { VAULT_PATH_TOKEN } from './constants';
 
 @Injectable()
 export class VaultService {
-  private readonly manager: VaultSecret<VaultSecretOptions>;
+  private readonly manager?: VaultSecret<VaultSecretOptions>;
 
   private readonly onReadyCallbacks: ((dataSource?: { get: (key: string) => Promise<any> }) => void)[] = [];
 
@@ -18,6 +18,12 @@ export class VaultService {
     const host = config.get<string>('VAULT_HOST') as string;
     const user = config.get<string>('VAULT_ACCOUNT') as string;
     const pass = config.get<string>('VAULT_PASSWORD') as string;
+
+    if (!host) {
+      this.fallbackToEnvFile = true;
+
+      return;
+    }
 
     this.manager = new VaultSecret(path, {
       host,
@@ -41,12 +47,12 @@ export class VaultService {
       return Promise.resolve((this.config.get<T>(key) || '') as T);
     }
 
-    if (this.manager.state === VaultSecretState.READY) {
-      return this.manager.get(key);
+    if (this.manager!.state === VaultSecretState.READY) {
+      return this.manager!.get(key);
     }
 
     return new Promise((resolve) => {
-      this.onReadyCallbacks.push((dataSource: { get: (key: string) => Promise<any> } = this.manager) => {
+      this.onReadyCallbacks.push((dataSource: { get: (key: string) => Promise<any> } = this.manager!) => {
         resolve(dataSource.get(key));
       });
     });

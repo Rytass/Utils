@@ -134,8 +134,6 @@ describe('VaultSecretNestjsModule', () => {
   });
 
   post.mockImplementation(async (url: string, data: unknown, config) => {
-    console.log({ url, data });
-
     if (!url.match(new RegExp(`^${VAULT_HOST}`))) throw new AxiosError(404);
 
     if (url === `${VAULT_HOST}/v1/auth/userpass/login/${VAULT_ACCOUNT}`) {
@@ -236,6 +234,22 @@ describe('VaultSecretNestjsModule', () => {
     const configMap = new Map<string, string>(mockConfig);
 
     configMap.set('VAULT_HOST', 'http://localhost:1234');
+    configMap.set('AAA', '123');
+    configMap.set('BBB', '456');
+
+    const service = new VaultService(configMap as unknown as ConfigService, '/');
+
+    // waiting for ready
+    expect(await service.get('AAA')).toBe('123');
+
+    // realtime
+    expect(await service.get('BBB')).toBe('456');
+    expect(await service.get('CCC')).toBe('');
+  });
+
+  it('should fallback when host is not set', async () => {
+    const configMap = new Map<string, string>();
+
     configMap.set('AAA', '123');
     configMap.set('BBB', '456');
 
