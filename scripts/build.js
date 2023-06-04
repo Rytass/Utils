@@ -1,7 +1,7 @@
 const path = require('path');
 const fse = require('fs-extra');
 const { execSync } = require('child_process');
-const glob = require('glob');
+const { glob } = require('glob');
 const { rollup } = require('rollup');
 const { swc } = require('rollup-plugin-swc3');
 
@@ -32,41 +32,37 @@ const ROOT_SYMBOL = '__ROOT__';
 const DEPS_SET_RECORD = {};
 const TRIGGERS_SET_RECORD = {};
 
-function getPackagesInfos() {
-  return new Promise((resolve, reject) => {
-    glob('**/package.json', (_, files) => {
-      resolve(
-        files.reduce((acc, file) => {
-          const packageJsonPath = path.resolve(rootPackagePath, file);
-          const packageJson = require(packageJsonPath);
-          const dirs = file
-            .replace(/package\.json|\/package\.json/, '')
-            .split('/')
-            .filter(Boolean);
+async function getPackagesInfos() {
+  const files = await glob('**/package.json');
 
-          const name = [rootPackageName, ...dirs].join('/');
+  return files.reduce((acc, file) => {
+    const packageJsonPath = path.resolve(rootPackagePath, file);
+    const packageJson = require(packageJsonPath);
+    const dirs = file
+      .replace(/package\.json|\/package\.json/, '')
+      .split('/')
+      .filter(Boolean);
 
-          if (packageJson.name !== name) {
-            // Resolve version conflict
-            if (~dirs.indexOf('node_modules')) {
-              return acc;
-            }
+    const name = [rootPackageName, ...dirs].join('/');
 
-            reject(`Package name '${name}' should equal '${packageJson.name}'`);
-          }
+    if (packageJson.name !== name) {
+      // Resolve version conflict
+      if (~dirs.indexOf('node_modules')) {
+        return acc;
+      }
 
-          const packageSymbol = dirs.join('/') || ROOT_SYMBOL;
+      throw new Error(`Package name '${name}' should equal '${packageJson.name}'`);
+    }
 
-          acc[packageSymbol] = {
-            packageJson,
-            dirs,
-          };
+    const packageSymbol = dirs.join('/') || ROOT_SYMBOL;
 
-          return acc;
-        }, {})
-      );
-    });
-  });
+    acc[packageSymbol] = {
+      packageJson,
+      dirs,
+    };
+
+    return acc;
+  }, {});
 }
 
 function isExternal(id) {

@@ -26,7 +26,7 @@
   "dependencies": {
     "@rytass/file-converter": "^0.1.2",
     "file-type": "^16",
-    "sharp": "^0.31.2"
+    "sharp": "^0.32.1"
   },
   "devDependencies": {
     "@types/sharp": "^0.31.0"

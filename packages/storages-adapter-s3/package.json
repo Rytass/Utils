@@ -25,13 +25,13 @@
   },
   "dependencies": {
     "@rytass/storages": "^0.2.0",
-    "aws-sdk": "^2.1185.0",
+    "aws-sdk": "^2.1390.0",
     "axios": "^1.4.0",
-    "luxon": "^3.0.1",
-    "uuid": "^8.3.2"
+    "luxon": "^3.3.0",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "@types/luxon": "^3.0.0",
-    "@types/uuid": "^8.3.4"
+    "@types/luxon": "^3.3.0",
+    "@types/uuid": "^9.0.1"
   }
 }

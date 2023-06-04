@@ -1,7 +1,7 @@
 import { AdditionalInfo, Channel, CreditCardAuthInfo, CreditCardECI, PaymentEvents, PaymentGateway } from '@rytass/payments';
 import { EventEmitter } from 'events';
 import debug from 'debug';
-import LRUCache from 'lru-cache';
+import { LRUCache } from 'lru-cache';
 import ngrok from 'ngrok';
 import { IncomingMessage, ServerResponse, Server, createServer } from 'http';
 import { createHash, randomBytes } from 'crypto';

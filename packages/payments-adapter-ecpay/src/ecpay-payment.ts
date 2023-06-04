@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'crypto';
 import { PaymentGateway, PaymentEvents, Channel, PaymentPeriodType, CVSInfo, VirtualAccountInfo, CreditCardAuthInfo, BarcodeInfo, VirtualAccountPaymentInfo, OrderState, CVSPaymentInfo, AdditionalInfo } from '@rytass/payments';
 import { DateTime } from 'luxon';
-import LRUCache from 'lru-cache';
+import { LRUCache } from 'lru-cache';
 import axios from 'axios';
 import { createServer, IncomingMessage, ServerResponse, Server } from 'http';
 import debug from 'debug';
@@ -206,7 +206,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
         return;
       }
 
-      const order = this.pendingOrdersCache.get<ECPayOrder<ECPayCommitMessage>>(payload.MerchantTradeNo);
+      const order = this.pendingOrdersCache.get(payload.MerchantTradeNo);
 
       if (!order || !order.committable) {
         res.writeHead(400, {

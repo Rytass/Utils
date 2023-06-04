@@ -5,7 +5,7 @@ import { randomBytes, createCipheriv, createDecipheriv, createHash } from 'crypt
 import { DateTime } from 'luxon';
 import debug from 'debug';
 import ngrok from 'ngrok';
-import LRUCache from 'lru-cache';
+import { LRUCache } from 'lru-cache';
 import { Server, IncomingMessage, ServerResponse, createServer } from 'http';
 import { NewebPayOrder } from './newebpay-order';
 import { AllowUILanguage, NewebPaymentChannel, NewebPayCommitMessage, NewebPayMPGMakeOrderEncryptedPayload, NewebPayMPGMakeOrderPayload, NewebPayOrderInput, NewebPayPaymentInitOptions, NewebPayNotifyPayload, NewebPayNotifyEncryptedPayload, NewebPayInfoRetriveEncryptedPayload, NewebPayQueryRequestPayload, NewebPayAPIResponseWrapper, NewebPayQueryResponsePayload, NewebPayCreditCardBalanceStatus, NewebPayOrderFromServerInit, NewebPayCreditCardCancelRequestPayload, NewebPayCreditCardCancelEncryptedRequestPayload, NewebPayCreditCardCancelResponse, NewebPayCreditCardCloseEncryptedRequestPayload, NewebPayCreditCardCloseRequestPayload, NewebPayCreditCardCloseResponse, NewebPayOrderStatusFromAPI } from './typings';
@@ -149,7 +149,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
         switch (req.url) {
           case this.callbackPath: {
             const resolvedData = this.resolveEncryptedPayload<NewebPayNotifyEncryptedPayload>(payload.TradeInfo, payload.TradeSha);
-            const order = this.pendingOrdersCache.get<NewebPayOrder<NewebPayCommitMessage>>(resolvedData.MerchantOrderNo);
+            const order = this.pendingOrdersCache.get(resolvedData.MerchantOrderNo);
 
             if (!order) {
               res.writeHead(404);
@@ -164,7 +164,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
 
           case this.asyncInfoPath: {
             const resolvedData = this.resolveEncryptedPayload<NewebPayInfoRetriveEncryptedPayload>(payload.TradeInfo, payload.TradeSha);
-            const order = this.pendingOrdersCache.get<NewebPayOrder<NewebPayCommitMessage>>(resolvedData.MerchantOrderNo);
+            const order = this.pendingOrdersCache.get(resolvedData.MerchantOrderNo);
 
             if (!order) {
               res.writeHead(404);
@@ -318,7 +318,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
 
       if (payload.Status === 'SUCCESS') return payload.Result;
 
-      const order = this.pendingOrdersCache.get<NewebPayOrder<NewebPayCommitMessage>>((payload.Result).MerchantOrderNo);
+      const order = this.pendingOrdersCache.get((payload.Result).MerchantOrderNo);
 
       if (order) {
         order.fail(payload.Status, payload.Message);
