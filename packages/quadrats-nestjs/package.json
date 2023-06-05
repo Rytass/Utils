@@ -1,5 +1,5 @@
 {
-  "name": "quadrats-nestjs",
+  "name": "@rytass/quadrats-nestjs",
   "version": "0.1.1",
   "description": "Quadrats CMS Nestjs Module",
   "keywords": [
