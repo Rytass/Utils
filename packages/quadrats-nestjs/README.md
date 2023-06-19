@@ -62,3 +62,38 @@ export class ArticleController {
   }
 }
 ```
+
+### Multi-language Support
+
+```typescript
+// article.service.ts
+import { Injectable } from 'nestjs/common';
+
+@Injectable()
+class ArticleService {
+  constructor(
+    private readonly quadratsArticleService: QuadratsArticleService,
+  ) {}
+
+  async addMultiLanguageArticle() {
+    const article = await articleService.create({
+      title: 'Multiple Language',
+      categoryIds: [],
+      tags: ['Chinese', 'English'],
+      languageContents: [{
+        elements: [{
+          type: 'p',
+          children: [{ text: '中文內容' }],
+        }],
+        language: 'zh-Hant',
+      }, {
+        elements: [{
+          type: 'p',
+          children: [{ text: 'English Content' }],
+        }],
+        language: 'en',
+      }],
+    });
+  }
+}
+```
