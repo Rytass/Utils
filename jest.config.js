@@ -11,6 +11,7 @@ module.exports = {
     '^uuid$': 'uuid',
     '@rytass/([a-zA-Z-_/]*)$': '<rootDir>/packages/$1/src',
   },
+  transformIgnorePatterns: ['/node_modules/(?!bcp-47)/'],
   modulePathIgnorePatterns: ['/lib/'],
   testPathIgnorePatterns: ['/node_modules/'],
   collectCoverageFrom: ['packages/*/src/**/*', '!**/index.ts'],

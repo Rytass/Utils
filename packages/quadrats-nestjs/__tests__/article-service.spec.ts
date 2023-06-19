@@ -358,4 +358,296 @@ describe('Quadrats Nestjs Module - Article Service', () => {
     expect(newVersionArticle?.tags.length).toBe(1);
     expect(originArticle?.versionId).not.toBe(newVersionArticle?.versionId);
   });
+
+  it('should language for contents can set', async () => {
+    const articleService = await moduleRef.resolve(QuadratsArticleService);
+
+    const request = jest.spyOn(axios, 'request');
+
+    request.mockImplementationOnce(async (config) => {
+      expect(config.url).toBe(`${HOST}/graphql`);
+
+      const data = JSON.parse(config.data as string) as {
+        query: string;
+        variables: {
+          title: string;
+          contents: {
+            language: 'DEFAULT';
+            elements: QuadratsElement[];
+          }[];
+          categoryIds: string[];
+          tags: string[];
+          releasedAt: string | null;
+          auth: {
+            accessKey: string;
+            secret: string;
+          }
+        }
+      };
+
+      expect(data.variables.auth.accessKey).toBe(ACCESS_KEY);
+      expect(data.variables.auth.secret).toBe(SECRET);
+
+      expect(data.variables.title).toBe('Test Article Rytass');
+      expect(data.variables.releasedAt).toBeNull();
+
+      return {
+        data: {
+          data: {
+            createArticle: {
+              id: '02500000031430000000',
+              versionId: '02500000031430000001',
+              title: 'Test Article Rytass',
+              categories: [],
+              contents: data.variables.contents,
+              tags: [],
+            },
+          },
+        },
+      };
+    });
+
+    const article = await articleService.create({
+      title: 'Test Article Rytass',
+      categoryIds: [],
+      tags: [],
+      contents: [{
+        type: 'p',
+        children: [{ text: '中文內容' }],
+      }],
+      language: 'zh-Hant',
+    });
+
+    expect(article.id).toBeDefined();
+    expect(article.title).toBe('Test Article Rytass');
+    expect(article.contents[0].language).toBe('zh-Hant');
+    expect((article.contents[0].elements[0].children[0] as QuadratsText).text).toBe('中文內容');
+  });
+
+  it('should add article version can support custom language', async () => {
+    const articleService = await moduleRef.resolve(QuadratsArticleService);
+
+    const request = jest.spyOn(axios, 'request');
+
+    request.mockImplementationOnce(async (config) => {
+      expect(config.url).toBe(`${HOST}/graphql`);
+
+      const data = JSON.parse(config.data as string) as {
+        query: string;
+        variables: {
+          title: string;
+          contents: {
+            language: 'DEFAULT';
+            elements: QuadratsElement[];
+          }[];
+          categoryIds: string[];
+          tags: string[];
+          releasedAt: string | null;
+          auth: {
+            accessKey: string;
+            secret: string;
+          }
+        }
+      };
+
+      expect(data.variables.auth.accessKey).toBe(ACCESS_KEY);
+      expect(data.variables.auth.secret).toBe(SECRET);
+
+      expect(data.variables.title).toBe('Test Article Rytass');
+      expect(data.variables.releasedAt).toBeNull();
+
+      return {
+        data: {
+          data: {
+            addArticleVersion: {
+              id: '02500000031430000000',
+              versionId: '02500000031430000001',
+              title: 'Test Article Rytass',
+              categories: [],
+              contents: data.variables.contents,
+              tags: [],
+            },
+          },
+        },
+      };
+    });
+
+    const article = await articleService.addVersion({
+      id: '02500000031430000000',
+      title: 'Test Article Rytass',
+      categoryIds: [],
+      tags: [],
+      contents: [{
+        type: 'p',
+        children: [{ text: '中文內容' }],
+      }],
+      language: 'zh-Hant',
+    });
+
+    expect(article.id).toBeDefined();
+    expect(article.title).toBe('Test Article Rytass');
+    expect(article.contents[0].language).toBe('zh-Hant');
+    expect((article.contents[0].elements[0].children[0] as QuadratsText).text).toBe('中文內容');
+  });
+
+  it('should multi-language contents can set', async () => {
+    const articleService = await moduleRef.resolve(QuadratsArticleService);
+
+    const request = jest.spyOn(axios, 'request');
+
+    request.mockImplementationOnce(async (config) => {
+      expect(config.url).toBe(`${HOST}/graphql`);
+
+      const data = JSON.parse(config.data as string) as {
+        query: string;
+        variables: {
+          title: string;
+          contents: {
+            language: 'DEFAULT';
+            elements: QuadratsElement[];
+          }[];
+          categoryIds: string[];
+          tags: string[];
+          releasedAt: string | null;
+          auth: {
+            accessKey: string;
+            secret: string;
+          }
+        }
+      };
+
+      expect(data.variables.auth.accessKey).toBe(ACCESS_KEY);
+      expect(data.variables.auth.secret).toBe(SECRET);
+
+      expect(data.variables.title).toBe('Test Article Rytass');
+      expect(data.variables.releasedAt).toBeNull();
+
+      return {
+        data: {
+          data: {
+            createArticle: {
+              id: '02500000031430000000',
+              versionId: '02500000031430000001',
+              title: 'Test Article Rytass',
+              categories: [],
+              contents: data.variables.contents,
+              tags: [],
+            },
+          },
+        },
+      };
+    });
+
+    const article = await articleService.create({
+      title: 'Test Article Rytass',
+      categoryIds: [],
+      tags: [],
+      languageContents: [{
+        elements: [{
+          type: 'p',
+          children: [{ text: '中文內容' }],
+        }],
+        language: 'zh-Hant',
+      }, {
+        elements: [{
+          type: 'p',
+          children: [{ text: 'English Content' }],
+        }],
+        language: 'en',
+      }],
+    });
+
+    expect(article.id).toBeDefined();
+    expect(article.title).toBe('Test Article Rytass');
+
+    const chineseContent = article.contents.find(content => content.language === 'zh-Hant');
+    const englishContent = article.contents.find(content => content.language === 'en');
+
+    expect(chineseContent!.language).toBe('zh-Hant');
+    expect((chineseContent!.elements[0].children[0] as QuadratsText).text).toBe('中文內容');
+
+    expect(englishContent!.language).toBe('en');
+    expect((englishContent!.elements[0].children[0] as QuadratsText).text).toBe('English Content');
+  });
+
+  it('should article can add version with multi-language contents', async () => {
+    const articleService = await moduleRef.resolve(QuadratsArticleService);
+
+    const request = jest.spyOn(axios, 'request');
+
+    request.mockImplementationOnce(async (config) => {
+      expect(config.url).toBe(`${HOST}/graphql`);
+
+      const data = JSON.parse(config.data as string) as {
+        query: string;
+        variables: {
+          title: string;
+          contents: {
+            language: 'DEFAULT';
+            elements: QuadratsElement[];
+          }[];
+          categoryIds: string[];
+          tags: string[];
+          releasedAt: string | null;
+          auth: {
+            accessKey: string;
+            secret: string;
+          }
+        }
+      };
+
+      expect(data.variables.auth.accessKey).toBe(ACCESS_KEY);
+      expect(data.variables.auth.secret).toBe(SECRET);
+
+      expect(data.variables.title).toBe('Test Article Rytass');
+      expect(data.variables.releasedAt).toBeNull();
+
+      return {
+        data: {
+          data: {
+            addArticleVersion: {
+              id: '02500000031430000000',
+              versionId: '02500000031430000001',
+              title: 'Test Article Rytass',
+              categories: [],
+              contents: data.variables.contents,
+              tags: [],
+            },
+          },
+        },
+      };
+    });
+
+    const article = await articleService.addVersion({
+      id: '02500000031430000000',
+      title: 'Test Article Rytass',
+      categoryIds: [],
+      tags: [],
+      languageContents: [{
+        elements: [{
+          type: 'p',
+          children: [{ text: '中文內容' }],
+        }],
+        language: 'zh-Hant',
+      }, {
+        elements: [{
+          type: 'p',
+          children: [{ text: 'English Content' }],
+        }],
+        language: 'en',
+      }],
+    });
+
+    expect(article.id).toBeDefined();
+    expect(article.title).toBe('Test Article Rytass');
+
+    const chineseContent = article.contents.find(content => content.language === 'zh-Hant');
+    const englishContent = article.contents.find(content => content.language === 'en');
+
+    expect(chineseContent!.language).toBe('zh-Hant');
+    expect((chineseContent!.elements[0].children[0] as QuadratsText).text).toBe('中文內容');
+
+    expect(englishContent!.language).toBe('en');
+    expect((englishContent!.elements[0].children[0] as QuadratsText).text).toBe('English Content');
+  });
 });

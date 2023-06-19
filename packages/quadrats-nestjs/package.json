@@ -26,9 +26,13 @@
   "dependencies": {
     "@quadrats/core": "^0.7.0",
     "axios": "^1.4.0",
-    "form-data": "^4.0.0"
+    "form-data": "^4.0.0",
+    "language-tags": "^1.0.8"
   },
   "peerDependencies": {
     "@nestjs/common": "^9.4.2"
+  },
+  "devDependencies": {
+    "@types/language-tags": "^1.0.1"
   }
 }
