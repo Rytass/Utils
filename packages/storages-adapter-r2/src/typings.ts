@@ -5,4 +5,5 @@ export interface StorageR2Options extends StorageOptions {
   secretKey: string;
   bucket: string;
   account: string;
+  customDomain?: string;
 }

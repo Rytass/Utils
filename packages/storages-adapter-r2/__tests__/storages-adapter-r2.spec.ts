@@ -119,19 +119,23 @@ describe('Cloudflare R2 storage adapter', () => {
     };
   });
 
-  const urlMocked = jest.fn((operation: string, params: { Bucket: string; Key: string; }) => {
+  const urlMocked = jest.fn(options => (operation: string, params: { Bucket: string; Key: string; }) => {
+    if (options.s3BucketEndpoint) {
+      return options.endpoint;
+    }
+
     return FAKE_URL;
   });
 
   beforeAll(() => {
     jest.mock('aws-sdk', () => ({
-      S3: jest.fn(() => ({
+      S3: jest.fn(s3Options => ({
         upload: (params: S3.Types.PutObjectRequest, options?: S3.ManagedUpload.ManagedUploadOptions) => uploadMocked(params, options),
         getObject: getMocked,
         headObject: headMocked,
         copyObject: copyMocked,
         deleteObject: deleteMocked,
-        getSignedUrlPromise: urlMocked,
+        getSignedUrlPromise: urlMocked(s3Options),
       })),
       Credentials,
     }));
@@ -500,6 +504,23 @@ describe('Cloudflare R2 storage adapter', () => {
     expect(headMocked).toBeCalledTimes(2);
 
     expect(() => service.isExists(GENERAL_ERROR_FILE)).rejects.toThrow();
+  });
+
+  it('should custom domain represents on presigned url', async () => {
+    const { StorageR2Service } = await import('../src');
+
+    const service = new StorageR2Service({
+      accessKey: ACCESS_KEY,
+      secretKey: SECRET_KEY,
+      account: ACCOUNT,
+      bucket: BUCKET,
+      customDomain: 'https://custom.domain.com',
+    });
+
+    const url = await service.url('saved-file');
+
+    expect(url).toBe('https://custom.domain.com');
+    expect(urlMocked).toBeCalledTimes(1);
   });
 
   afterEach(() => {

@@ -15,13 +15,14 @@ export class StorageR2Service extends Storage<StorageR2Options> {
     this.bucket = options.bucket;
 
     this.s3 = new S3({
-      endpoint: `https://${options.account}.r2.cloudflarestorage.com`,
+      endpoint: options.customDomain || `https://${options.account}.r2.cloudflarestorage.com`,
       credentials: new Credentials({
         accessKeyId: options.accessKey,
         secretAccessKey: options.secretKey,
       }),
       region: 'auto',
       signatureVersion: 'v4',
+      s3BucketEndpoint: !!options.customDomain,
     });
   }
 
