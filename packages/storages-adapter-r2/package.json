@@ -1,6 +1,6 @@
 {
   "name": "@rytass/storages-adapter-r2",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Cloudflare R2 storage adapter",
   "keywords": [
     "rytass",

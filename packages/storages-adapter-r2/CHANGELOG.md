@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.4.2](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-r2@0.4.1...@rytass/storages-adapter-r2@0.4.2) (2023-06-26)
+
+
+### Features
+
+* **storages-adapter-r2:** add custom domain support ([e7fc1ff](https://github.com/Rytass/Utils/commit/e7fc1ff91ee3c7d3cda8e404f8d7a3f40bcde5d1))
+
+
+
+
+
 ## [0.4.1](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-r2@0.4.0...@rytass/storages-adapter-r2@0.4.1) (2023-06-05)
 
 **Note:** Version bump only for package @rytass/storages-adapter-r2
