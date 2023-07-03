@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.4.3](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-r2@0.4.2...@rytass/storages-adapter-r2@0.4.3) (2023-07-03)
+
+
+### Bug Fixes
+
+* **storages-adapter-r2:** r2 write issue if custom domain set ([e765c20](https://github.com/Rytass/Utils/commit/e765c2008186042f7f639610aa5a244113fd9803))
+
+
+
+
+
 ## [0.4.2](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-r2@0.4.1...@rytass/storages-adapter-r2@0.4.2) (2023-06-26)
 
 
