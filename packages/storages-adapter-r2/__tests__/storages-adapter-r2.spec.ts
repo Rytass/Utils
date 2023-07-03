@@ -16,7 +16,7 @@ const BUCKET = 'utils';
 const sampleFile = resolve(__dirname, '../__fixtures__/test-image.png');
 const sampleFileBuffer = readFileSync(sampleFile);
 const sampleFileSha256 = `${createHash('sha256').update(sampleFileBuffer).digest('hex')}.png`;
-const FAKE_URL = 'https://fake.rytass.com';
+const FAKE_URL = `https://utils.cccc.r2.cloudflarestorage.com/${sampleFileSha256}.png`;
 const NOT_FOUND_FILE = 'NOT_EXIST';
 const GENERAL_ERROR_FILE = 'GENERAL_ERROR_FILE';
 
@@ -120,10 +120,6 @@ describe('Cloudflare R2 storage adapter', () => {
   });
 
   const urlMocked = jest.fn(options => (operation: string, params: { Bucket: string; Key: string; }) => {
-    if (options.s3BucketEndpoint) {
-      return options.endpoint;
-    }
-
     return FAKE_URL;
   });
 
@@ -519,7 +515,7 @@ describe('Cloudflare R2 storage adapter', () => {
 
     const url = await service.url('saved-file');
 
-    expect(url).toBe('https://custom.domain.com');
+    expect(url).toMatch(new RegExp('^https://custom.domain.com'));
     expect(urlMocked).toBeCalledTimes(1);
   });
 

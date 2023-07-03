@@ -9,28 +9,43 @@ export class StorageR2Service extends Storage<StorageR2Options> {
 
   private readonly s3: S3;
 
+  private readonly parseSignedURL: ((url: string) => string) | undefined;
+
   constructor(options: StorageR2Options) {
     super(options);
 
     this.bucket = options.bucket;
 
+    if (options.customDomain) {
+      const re = new RegExp(`^https://${options.bucket}.${options.account}.r2.cloudflarestorage.com`);
+
+      this.parseSignedURL = (url: string) => {
+        return url.replace(re, options.customDomain as string);
+      };
+    }
+
     this.s3 = new S3({
-      endpoint: options.customDomain || `https://${options.account}.r2.cloudflarestorage.com`,
+      endpoint: `https://${options.account}.r2.cloudflarestorage.com`,
       credentials: new Credentials({
         accessKeyId: options.accessKey,
         secretAccessKey: options.secretKey,
       }),
       region: 'auto',
       signatureVersion: 'v4',
-      s3BucketEndpoint: !!options.customDomain,
     });
   }
 
   async url(key: string): Promise<string> {
-    return this.s3.getSignedUrlPromise('getObject', {
+    const signedURL = await this.s3.getSignedUrlPromise('getObject', {
       Bucket: this.bucket,
       Key: key,
     });
+
+    if (this.parseSignedURL) {
+      return this.parseSignedURL(signedURL);
+    }
+
+    return signedURL;
   }
 
   read(key: string): Promise<Readable>;
