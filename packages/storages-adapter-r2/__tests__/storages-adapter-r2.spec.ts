@@ -16,7 +16,8 @@ const BUCKET = 'utils';
 const sampleFile = resolve(__dirname, '../__fixtures__/test-image.png');
 const sampleFileBuffer = readFileSync(sampleFile);
 const sampleFileSha256 = `${createHash('sha256').update(sampleFileBuffer).digest('hex')}.png`;
-const FAKE_URL = `https://utils.cccc.r2.cloudflarestorage.com/${sampleFileSha256}.png`;
+const FAKE_URL = `https://utils.${ACCOUNT}.r2.cloudflarestorage.com/${sampleFileSha256}.png`;
+const FAKE_URL_WITH_EXPIRES = (expires: number) => `https://utils.${ACCOUNT}.r2.cloudflarestorage.com/${sampleFileSha256}.png?expires=${expires}`;
 const NOT_FOUND_FILE = 'NOT_EXIST';
 const GENERAL_ERROR_FILE = 'GENERAL_ERROR_FILE';
 
@@ -119,7 +120,9 @@ describe('Cloudflare R2 storage adapter', () => {
     };
   });
 
-  const urlMocked = jest.fn(options => (operation: string, params: { Bucket: string; Key: string; }) => {
+  const urlMocked = jest.fn(options => (operation: string, params: { Bucket: string; Key: string; Expires?: number; }) => {
+    if (params.Expires) return FAKE_URL_WITH_EXPIRES(params.Expires);
+
     return FAKE_URL;
   });
 
@@ -516,6 +519,22 @@ describe('Cloudflare R2 storage adapter', () => {
     const url = await service.url('saved-file');
 
     expect(url).toMatch(new RegExp('^https://custom.domain.com'));
+    expect(urlMocked).toBeCalledTimes(1);
+  });
+
+  it('should set expires on url getter', async () => {
+    const { StorageR2Service } = await import('../src');
+
+    const service = new StorageR2Service({
+      accessKey: ACCESS_KEY,
+      secretKey: SECRET_KEY,
+      account: ACCOUNT,
+      bucket: BUCKET,
+    });
+
+    const url = await service.url('saved-file', { expires: 3600 });
+
+    expect(url).toMatch(FAKE_URL_WITH_EXPIRES(3600));
     expect(urlMocked).toBeCalledTimes(1);
   });
 

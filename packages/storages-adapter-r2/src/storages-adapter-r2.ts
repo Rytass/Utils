@@ -2,7 +2,7 @@ import { StorageError, ErrorCode, Storage, ReadBufferFileOptions, ReadStreamFile
 import { Credentials, S3 } from 'aws-sdk';
 import { Readable, PassThrough } from 'stream';
 import { v4 as uuid } from 'uuid';
-import { StorageR2Options } from './typings';
+import { PresignedURLOptions, StorageR2Options } from './typings';
 
 export class StorageR2Service extends Storage<StorageR2Options> {
   private readonly bucket: string;
@@ -35,10 +35,11 @@ export class StorageR2Service extends Storage<StorageR2Options> {
     });
   }
 
-  async url(key: string): Promise<string> {
+  async url(key: string, options?: PresignedURLOptions): Promise<string> {
     const signedURL = await this.s3.getSignedUrlPromise('getObject', {
       Bucket: this.bucket,
       Key: key,
+      ...(options?.expires ? { Expires: options?.expires } : {}),
     });
 
     if (this.parseSignedURL) {

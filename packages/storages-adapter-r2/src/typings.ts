@@ -7,3 +7,7 @@ export interface StorageR2Options extends StorageOptions {
   account: string;
   customDomain?: string;
 }
+
+export interface PresignedURLOptions {
+  expires?: number;
+}
