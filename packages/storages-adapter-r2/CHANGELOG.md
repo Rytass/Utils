@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.4.4](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-r2@0.4.3...@rytass/storages-adapter-r2@0.4.4) (2023-08-06)
+
+
+### Features
+
+* **storages-adapter-r2:** add expires config on presigned url generator ([0b3d898](https://github.com/Rytass/Utils/commit/0b3d898807d5884a6bd4b65e7f8bb5750284ebaf))
+
+
+
+
+
 ## [0.4.3](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-r2@0.4.2...@rytass/storages-adapter-r2@0.4.3) (2023-07-03)
 
 
