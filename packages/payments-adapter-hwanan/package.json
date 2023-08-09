@@ -1,6 +1,6 @@
 {
   "name": "@rytass/payments-adapter-hwanan",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Hwa Nan Bank Payment Adapter",
   "keywords": [
     "rytass",
