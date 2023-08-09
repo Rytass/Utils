@@ -3,6 +3,11 @@ import { IncomingMessage, ServerResponse } from 'http';
 import { HwaNanOrder } from './hwanan-order';
 import { HwaNanPayment } from './hwanan-payment';
 
+export interface OrdersCache<CM extends HwaNanCommitMessage, Key extends string, Value extends HwaNanOrder<CM>> {
+  get: (key: Key) => Value | undefined;
+  set: (key: Key, value: Value) => void;
+}
+
 export enum HwaNanPaymentChannel {
   CREDIT = 1,
 }
@@ -96,6 +101,7 @@ export interface HwaNanPaymentInitOptions<O extends HwaNanOrder<HwaNanCommitMess
   serverListener?: (req: IncomingMessage, res: ServerResponse) => void;
   onCommit?: (order: O) => void;
   onServerListen?: () => void;
+  ordersCache?: OrdersCache<HwaNanCommitMessage, string, O>;
 }
 
 export interface HwaNanNotifyPayload {

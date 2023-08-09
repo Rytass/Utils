@@ -7,7 +7,7 @@ import { createServer, IncomingMessage, ServerResponse, Server } from 'http';
 import debug from 'debug';
 import ngrok from 'ngrok';
 import { EventEmitter } from 'events';
-import { ECPayCallbackCreditPayload, ECPayCallbackPayload, ECPayCallbackPaymentType, ECPayCommitMessage, ECPayOrderCreditCardCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayQueryResultPayload, ECPayOrderVirtualAccountCommitMessage, Language, GetOrderInput, ECPayCreditCardOrderInput, ECPayQueryOrderPayload, ECPayOrderCVSCommitMessage, ECPayOrderBarcodeCommitMessage, ECPayAsyncInformationBarcodePayload, ECPayAsyncInformationCVSPayload, ECPayAsyncInformationVirtualAccountPayload, ECPayAsyncInformationPayload, ECPayCallbackVirtualAccountPayload, ECPayCallbackCVSPayload, ECPayCallbackBarcodePayload, ECPayCreditCardDetailQueryPayload, ECPayCreditCardDetailQueryResponse, ECPayCreditCardOrderStatus, ECPayCredirCardOrderCloseStatus, ECPayOrderActionPayload, ECPayOrderDoActionResponse } from './typings';
+import { ECPayCallbackCreditPayload, ECPayCallbackPayload, ECPayCallbackPaymentType, ECPayCommitMessage, ECPayOrderCreditCardCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayQueryResultPayload, ECPayOrderVirtualAccountCommitMessage, Language, GetOrderInput, ECPayCreditCardOrderInput, ECPayQueryOrderPayload, ECPayOrderCVSCommitMessage, ECPayOrderBarcodeCommitMessage, ECPayAsyncInformationBarcodePayload, ECPayAsyncInformationCVSPayload, ECPayAsyncInformationVirtualAccountPayload, ECPayAsyncInformationPayload, ECPayCallbackVirtualAccountPayload, ECPayCallbackCVSPayload, ECPayCallbackBarcodePayload, ECPayCreditCardDetailQueryPayload, ECPayCreditCardDetailQueryResponse, ECPayCreditCardOrderStatus, ECPayCredirCardOrderCloseStatus, ECPayOrderActionPayload, ECPayOrderDoActionResponse, OrdersCache } from './typings';
 import { ECPayChannel, ECPayCVS, ECPayPaymentPeriodType, NUMERIC_CALLBACK_KEYS } from './constants';
 import { ECPayOrder } from './ecpay-order';
 
@@ -33,7 +33,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
 
   private serverListener: (req: IncomingMessage, res: ServerResponse) => void = (req, res) => this.defaultServerListener(req, res);
 
-  private pendingOrdersCache: LRUCache<string, ECPayOrder<CM>>;
+  private readonly pendingOrdersCache: OrdersCache<CM, string, ECPayOrder<CM>>;
 
   private emaluateRefundedOrder = new Set<string>();
 
@@ -74,7 +74,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
       this.emitter.on(PaymentEvents.SERVER_LISTENED, options.onServerListen);
     }
 
-    this.pendingOrdersCache = new LRUCache({
+    this.pendingOrdersCache = options?.ordersCache ?? new LRUCache({
       ttlAutopurge: true,
       ttl: options?.ttl ?? 10 * 60 * 1000, // default: 10 mins
     });

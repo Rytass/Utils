@@ -7,6 +7,11 @@ import { NewebPayVirtualAccountCommitMessage, NewebPayVirtualAccountOrderInput }
 import { NewebPayWebATMCommitMessage, NewebPayWebATMOrderInput } from './typings/webatm.typing';
 import { NewebPayOrder } from './newebpay-order';
 
+export interface OrdersCache<CM extends NewebPayCommitMessage, Key extends string, Value extends NewebPayOrder<CM>> {
+  get: (key: Key) => Value | undefined;
+  set: (key: Key, value: Value) => void;
+}
+
 export enum NewebPaymentChannel {
   CREDIT = 1,
   ANDROID_PAY = 2,
@@ -93,6 +98,7 @@ export interface NewebPayPaymentInitOptions<O extends NewebPayOrder<NewebPayComm
   serverListener?: (req: IncomingMessage, res: ServerResponse) => void;
   onCommit?: (order: O) => void;
   onServerListen?: () => void;
+  ordersCache?: OrdersCache<NewebPayCommitMessage, string, O>;
 }
 
 export interface NewebPayAPIResponseWrapper<T> {

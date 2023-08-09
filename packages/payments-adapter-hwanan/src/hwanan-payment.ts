@@ -6,7 +6,7 @@ import ngrok from 'ngrok';
 import { IncomingMessage, ServerResponse, Server, createServer } from 'http';
 import { createHash, randomBytes } from 'crypto';
 import { HwaNanOrder } from './hwanan-order';
-import { GetCheckCodeArgs, HwaNanAutoCapMode, HwaNanCommitMessage, HwaNanCreditCardCommitMessage, HwaNanCustomizePageType, HwaNanNotifyPayload, HwaNanOrderInput, HwaNanPaymentChannel, HwaNanPaymentInitOptions, HwaNanTransactionType } from './typings';
+import { GetCheckCodeArgs, HwaNanAutoCapMode, HwaNanCommitMessage, HwaNanCreditCardCommitMessage, HwaNanCustomizePageType, HwaNanNotifyPayload, HwaNanOrderInput, HwaNanPaymentChannel, HwaNanPaymentInitOptions, HwaNanTransactionType, OrdersCache } from './typings';
 
 const debugPayment = debug('Rytass:Payment:HwaNan');
 
@@ -21,7 +21,7 @@ export class HwaNanPayment<CM extends HwaNanCommitMessage = HwaNanCreditCardComm
   private readonly identifier: string;
   private readonly customizePageType: HwaNanCustomizePageType = HwaNanCustomizePageType.ZH_TW;
   private readonly customizePageVersion: string | undefined;
-  private readonly pendingOrdersCache: LRUCache<string, HwaNanOrder<CM>>;
+  private readonly pendingOrdersCache: OrdersCache<CM, string, HwaNanOrder<CM>>;
   private readonly serverListener: ((req: IncomingMessage, res: ServerResponse) => void) | undefined;
   private serverHost: string = 'http://localhost:3000';
   private isGatewayReady = false;
@@ -42,7 +42,7 @@ export class HwaNanPayment<CM extends HwaNanCommitMessage = HwaNanCreditCardComm
     this.customizePageType = options.customizePageType || this.customizePageType;
     this.customizePageVersion = this.customizePageType === HwaNanCustomizePageType.OTHER ? options.customizePageVersion : undefined;
 
-    this.pendingOrdersCache = new LRUCache({
+    this.pendingOrdersCache = options.ordersCache ?? new LRUCache({
       ttlAutopurge: true,
       ttl: options?.ttl ?? 10 * 60 * 1000, // default: 10 mins
     });

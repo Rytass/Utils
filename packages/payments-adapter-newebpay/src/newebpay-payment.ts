@@ -8,7 +8,7 @@ import ngrok from 'ngrok';
 import { LRUCache } from 'lru-cache';
 import { Server, IncomingMessage, ServerResponse, createServer } from 'http';
 import { NewebPayOrder } from './newebpay-order';
-import { AllowUILanguage, NewebPaymentChannel, NewebPayCommitMessage, NewebPayMPGMakeOrderEncryptedPayload, NewebPayMPGMakeOrderPayload, NewebPayOrderInput, NewebPayPaymentInitOptions, NewebPayNotifyPayload, NewebPayNotifyEncryptedPayload, NewebPayInfoRetriveEncryptedPayload, NewebPayQueryRequestPayload, NewebPayAPIResponseWrapper, NewebPayQueryResponsePayload, NewebPayCreditCardBalanceStatus, NewebPayOrderFromServerInit, NewebPayCreditCardCancelRequestPayload, NewebPayCreditCardCancelEncryptedRequestPayload, NewebPayCreditCardCancelResponse, NewebPayCreditCardCloseEncryptedRequestPayload, NewebPayCreditCardCloseRequestPayload, NewebPayCreditCardCloseResponse, NewebPayOrderStatusFromAPI } from './typings';
+import { AllowUILanguage, NewebPaymentChannel, NewebPayCommitMessage, NewebPayMPGMakeOrderEncryptedPayload, NewebPayMPGMakeOrderPayload, NewebPayOrderInput, NewebPayPaymentInitOptions, NewebPayNotifyPayload, NewebPayNotifyEncryptedPayload, NewebPayInfoRetriveEncryptedPayload, NewebPayQueryRequestPayload, NewebPayAPIResponseWrapper, NewebPayQueryResponsePayload, NewebPayCreditCardBalanceStatus, NewebPayOrderFromServerInit, NewebPayCreditCardCancelRequestPayload, NewebPayCreditCardCancelEncryptedRequestPayload, NewebPayCreditCardCancelResponse, NewebPayCreditCardCloseEncryptedRequestPayload, NewebPayCreditCardCloseRequestPayload, NewebPayCreditCardCloseResponse, NewebPayOrderStatusFromAPI, OrdersCache } from './typings';
 import { NewebPayAdditionInfoCreditCard, NewebPayCreditCardCommitMessage, NewebPayCreditCardOrderInput } from './typings/credit-card.typing';
 import { NewebPayWebATMCommitMessage, NewebPayWebATMOrderInput } from './typings/webatm.typing';
 import { NewebPayVirtualAccountCommitMessage } from './typings/virtual-account.typing';
@@ -27,7 +27,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
   private readonly asyncInfoPath: string;
   private readonly checkoutPath: string;
   private readonly serverListener: ((req: IncomingMessage, res: ServerResponse) => void) | undefined;
-  private readonly pendingOrdersCache: LRUCache<string, NewebPayOrder<CM>>;
+  private readonly pendingOrdersCache: OrdersCache<CM, string, NewebPayOrder<CM>>;
   private isGatewayReady = false;
 
   readonly _server?: Server;
@@ -82,7 +82,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
       this.emitter.on(PaymentEvents.SERVER_LISTENED, options.onServerListen);
     }
 
-    this.pendingOrdersCache = new LRUCache({
+    this.pendingOrdersCache = options.ordersCache ?? new LRUCache<string, NewebPayOrder<CM>>({
       ttlAutopurge: true,
       ttl: options?.ttl ?? 10 * 60 * 1000, // default: 10 mins
     });

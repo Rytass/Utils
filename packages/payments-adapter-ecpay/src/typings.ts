@@ -3,6 +3,11 @@ import { IncomingMessage, ServerResponse } from 'http';
 import { ECPayPayment } from './ecpay-payment';
 import { ECPayOrder } from './ecpay-order';
 
+export interface OrdersCache<CM extends ECPayCommitMessage, Key extends string, Value extends ECPayOrder<CM>> {
+  get: (key: Key) => Value | undefined;
+  set: (key: Key, value: Value) => void;
+}
+
 export interface ECPayInitOptions<O extends ECPayOrder<ECPayCommitMessage>> {
   language?: Language;
   baseUrl?: string;
@@ -21,6 +26,7 @@ export interface ECPayInitOptions<O extends ECPayOrder<ECPayCommitMessage>> {
   onInfoRetrieved?: (order: O) => void;
   onServerListen?: () => void;
   emulateRefund?: boolean,
+  ordersCache?: OrdersCache<ECPayCommitMessage, string, O>;
 }
 
 export interface ECPayCreditCardOrderInput extends PrepareOrderInput {
