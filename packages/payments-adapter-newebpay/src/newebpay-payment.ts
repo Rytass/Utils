@@ -98,14 +98,14 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
     return `${this.serverHost}${this.checkoutPath}/${order.id}`;
   }
 
-  public defaultServerListener(req: IncomingMessage, res: ServerResponse) {
+  public async defaultServerListener(req: IncomingMessage, res: ServerResponse) {
     const checkoutRe = new RegExp(`^${this.checkoutPath}/([^/]+)$`);
 
     if (req.method === 'GET' && req.url && checkoutRe.test(req.url)) {
       const orderId = RegExp.$1;
 
       if (orderId) {
-        const order = this.pendingOrdersCache.get(orderId);
+        const order = await this.pendingOrdersCache.get(orderId);
 
         if (order) {
           debugPayment(`ECPayment serve checkout page for order ${orderId}`);
@@ -134,7 +134,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
       bufferArray.push(chunk);
     });
 
-    req.on('end', () => {
+    req.on('end', async () => {
       const payloadString = Buffer.from(Buffer.concat(bufferArray)).toString('utf8');
       const payload = Array.from(new URLSearchParams(payloadString).entries())
         .reduce(
@@ -148,8 +148,8 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
       try {
         switch (req.url) {
           case this.callbackPath: {
-            const resolvedData = this.resolveEncryptedPayload<NewebPayNotifyEncryptedPayload>(payload.TradeInfo, payload.TradeSha);
-            const order = this.pendingOrdersCache.get(resolvedData.MerchantOrderNo);
+            const resolvedData = await this.resolveEncryptedPayload<NewebPayNotifyEncryptedPayload>(payload.TradeInfo, payload.TradeSha);
+            const order = await this.pendingOrdersCache.get(resolvedData.MerchantOrderNo);
 
             if (!order) {
               res.writeHead(404);
@@ -163,8 +163,8 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
           }
 
           case this.asyncInfoPath: {
-            const resolvedData = this.resolveEncryptedPayload<NewebPayInfoRetriveEncryptedPayload>(payload.TradeInfo, payload.TradeSha);
-            const order = this.pendingOrdersCache.get(resolvedData.MerchantOrderNo);
+            const resolvedData = await this.resolveEncryptedPayload<NewebPayInfoRetriveEncryptedPayload>(payload.TradeInfo, payload.TradeSha);
+            const order = await this.pendingOrdersCache.get(resolvedData.MerchantOrderNo);
 
             if (!order) {
               res.writeHead(404);
@@ -302,7 +302,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
     };
   }
 
-  private resolveEncryptedPayload<T extends { MerchantOrderNo: string }>(encrypted: string, hash: string): T {
+  private async resolveEncryptedPayload<T extends { MerchantOrderNo: string }>(encrypted: string, hash: string): Promise<T> {
     if (hash !== createHash('sha256').update(`HashKey=${this.aesKey}&${encrypted}&HashIV=${this.aesIv}`).digest('hex').toUpperCase()) {
       throw new Error('Invalid hash');
     }
@@ -318,7 +318,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
 
       if (payload.Status === 'SUCCESS') return payload.Result;
 
-      const order = this.pendingOrdersCache.get((payload.Result).MerchantOrderNo);
+      const order = await this.pendingOrdersCache.get((payload.Result).MerchantOrderNo);
 
       if (order) {
         order.fail(payload.Status, payload.Message);
@@ -429,7 +429,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
       throw new Error('CheckCode is not valid');
     }
 
-    const savedOrder = this.pendingOrdersCache.get(data.Result.MerchantOrderNo);
+    const savedOrder = await this.pendingOrdersCache.get(data.Result.MerchantOrderNo);
 
     const basicInfo = {
       id: data.Result.MerchantOrderNo,
