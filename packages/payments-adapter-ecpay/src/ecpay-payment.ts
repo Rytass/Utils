@@ -35,7 +35,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
 
   private readonly pendingOrdersCache: OrdersCache<CM, string, ECPayOrder<CM>>;
 
-  private emaluateRefundedOrder = new Set<string>();
+  private emulateRefundedOrder = new Set<string>();
 
   _server?: Server;
 
@@ -779,7 +779,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
   }
 
   private getEmulatedCreditCardTradeStatusResponse(gwsr: string, amount: number): { data: ECPayCreditCardDetailQueryResponse } {
-    if (this.emaluateRefundedOrder.has(gwsr)) {
+    if (this.emulateRefundedOrder.has(gwsr)) {
       return {
         data: {
           RtnMsg: '',
@@ -802,7 +802,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
       };
     }
 
-    this.emaluateRefundedOrder.add(gwsr);
+    this.emulateRefundedOrder.add(gwsr);
 
     return {
       data: {
