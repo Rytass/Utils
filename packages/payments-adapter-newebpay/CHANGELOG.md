@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.1.0](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-newebpay@0.0.6...@rytass/payments-adapter-newebpay@0.1.0) (2023-08-12)
+
+
+### Features
+
+* **payments:** add Promise<Value> support in OrdersCache ([2bb44a3](https://github.com/Rytass/Utils/commit/2bb44a383bbada1c7cb4b2bb9441f1a16035110f))
+* **payments:** change order cache mode to async, thus prepare method be Promise ([da86d7c](https://github.com/Rytass/Utils/commit/da86d7cf414e11945144c9f104ad59660840c3f5))
+
+
+
+
+
 ## [0.0.6](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-newebpay@0.0.5...@rytass/payments-adapter-newebpay@0.0.6) (2023-08-09)
 
 

@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.2.0](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.1.2...@rytass/payments-adapter-ecpay@0.2.0) (2023-08-12)
+
+
+### Bug Fixes
+
+* **payments-adapter-ecpay:** typo ([36f8819](https://github.com/Rytass/Utils/commit/36f8819c1c3c267ba5b49879ec376b00a59b00d9))
+
+
+### Features
+
+* **payments:** change order cache mode to async, thus prepare method be Promise ([da86d7c](https://github.com/Rytass/Utils/commit/da86d7cf414e11945144c9f104ad59660840c3f5))
+
+
+
+
+
 ## [0.1.2](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.1.1...@rytass/payments-adapter-ecpay@0.1.2) (2023-08-09)
 
 
