@@ -23,7 +23,7 @@ describe('NewebPay Payment Server', () => {
         withServer: true,
         callbackPath: '/newebpay/callback',
         onServerListen: async () => {
-          const order = payment.prepare({
+          const order = await payment.prepare({
             channel: NewebPaymentChannel.CREDIT,
             items: [{
               name: '湯麵',
@@ -95,7 +95,7 @@ describe('NewebPay Payment Server', () => {
           payment._server?.close(done);
         },
         onServerListen: async () => {
-          const order = payment.prepare({
+          const order = await payment.prepare({
             id: '123456789',
             channel: NewebPaymentChannel.CREDIT,
             items: [{
@@ -160,7 +160,7 @@ describe('NewebPay Payment Server', () => {
         withServer: true,
         callbackPath: '/newebpay/callback',
         onServerListen: async () => {
-          const order = payment.prepare<NewebPayCreditCardCommitMessage>({
+          const order = await payment.prepare<NewebPayCreditCardCommitMessage>({
             channel: NewebPaymentChannel.CREDIT,
             items: [{
               name: '湯麵',
@@ -232,7 +232,7 @@ describe('NewebPay Payment Server', () => {
         withServer: true,
         callbackPath: '/newebpay/callback',
         onServerListen: async () => {
-          const order = payment.prepare<NewebPayCreditCardCommitMessage>({
+          const order = await payment.prepare<NewebPayCreditCardCommitMessage>({
             channel: NewebPaymentChannel.CREDIT,
             items: [{
               name: '湯麵',
@@ -308,7 +308,7 @@ describe('NewebPay Payment Server', () => {
         withServer: true,
         callbackPath: '/newebpay/callback',
         onServerListen: async () => {
-          const order = payment.prepare<NewebPayWebATMCommitMessage>({
+          const order = await payment.prepare<NewebPayWebATMCommitMessage>({
             channel: NewebPaymentChannel.WEBATM,
             items: [{
               name: '湯麵',
@@ -371,7 +371,7 @@ describe('NewebPay Payment Server', () => {
         withServer: true,
         callbackPath: '/newebpay/callback',
         onServerListen: async () => {
-          const order = payment.prepare<NewebPayVirtualAccountCommitMessage>({
+          const order = await payment.prepare<NewebPayVirtualAccountCommitMessage>({
             channel: NewebPaymentChannel.VACC,
             items: [{
               name: '湯麵',
@@ -434,7 +434,7 @@ describe('NewebPay Payment Server', () => {
         withServer: true,
         callbackPath: '/newebpay/callback',
         onServerListen: async () => {
-          const order = payment.prepare({
+          const order = await payment.prepare({
             channel: NewebPaymentChannel.CREDIT,
             items: [{
               name: '湯麵',
@@ -547,7 +547,7 @@ describe('NewebPay Payment Server', () => {
         withServer: true,
         asyncInfoPath: '/newebpay/async-informations',
         onServerListen: async () => {
-          const order = payment.prepare({
+          const order = await payment.prepare({
             channel: NewebPaymentChannel.VACC,
             items: [{
               name: '湯麵',
@@ -607,7 +607,7 @@ describe('NewebPay Payment Server', () => {
         withServer: true,
         asyncInfoPath: '/newebpay/async-informations',
         onServerListen: async () => {
-          const order = payment.prepare({
+          const order = await payment.prepare({
             channel: NewebPaymentChannel.VACC,
             items: [{
               name: '湯麵',
@@ -702,7 +702,7 @@ describe('NewebPay Payment Server', () => {
         withServer: true,
         checkoutPath: '/newebpay/checkout',
         onServerListen: async () => {
-          const order = payment.prepare({
+          const order = await payment.prepare({
             channel: NewebPaymentChannel.CREDIT,
             items: [{
               name: 'Test Item',
@@ -754,7 +754,7 @@ describe('NewebPay Payment Server', () => {
         withServer: true,
         callbackPath: '/newebpay/callback',
         onServerListen: async () => {
-          const order = payment.prepare({
+          const order = await payment.prepare({
             channel: NewebPaymentChannel.CREDIT,
             items: [{
               name: '湯麵',
@@ -820,7 +820,7 @@ describe('NewebPay Payment Server', () => {
         withServer: true,
         asyncInfoPath: '/newebpay/async-informations',
         onServerListen: async () => {
-          const order = payment.prepare({
+          const order = await payment.prepare({
             channel: NewebPaymentChannel.VACC,
             items: [{
               name: '湯麵',
@@ -877,7 +877,7 @@ describe('NewebPay Payment Server', () => {
         withServer: true,
         callbackPath: '/newebpay/callback',
         onServerListen: async () => {
-          const order = payment.prepare({
+          const order = await payment.prepare({
             channel: NewebPaymentChannel.CREDIT,
             items: [{
               name: '湯麵',
@@ -945,7 +945,7 @@ describe('NewebPay Payment Server', () => {
         withServer: true,
         asyncInfoPath: '/newebpay/async-informations',
         onServerListen: async () => {
-          const order = payment.prepare({
+          const order = await payment.prepare({
             channel: NewebPaymentChannel.VACC,
             items: [{
               name: '湯麵',

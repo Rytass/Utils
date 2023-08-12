@@ -8,8 +8,8 @@ import { NewebPayWebATMCommitMessage, NewebPayWebATMOrderInput } from './typings
 import { NewebPayOrder } from './newebpay-order';
 
 export interface OrdersCache<CM extends NewebPayCommitMessage, Key extends string, Value extends NewebPayOrder<CM>> {
-  get: (key: Key) => Promise<Value>| Value | undefined;
-  set: (key: Key, value: Value) => void;
+  get: (key: Key) => Promise<Value | undefined>;
+  set: (key: Key, value: Value) => Promise<void>;
 }
 
 export enum NewebPaymentChannel {

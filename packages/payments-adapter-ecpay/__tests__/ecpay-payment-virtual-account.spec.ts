@@ -42,72 +42,62 @@ describe('ECPayPayment (Virtual Account)', () => {
     });
 
     it('should throw error on invalid channel', () => {
-      expect(() => {
-        payment.prepare({
-          channel: Channel.CREDIT_CARD,
-          // @ts-ignore: Unreachable code error
-          virtualAccountExpireDays: 9,
-          items: [{
-            name: 'Test',
-            unitPrice: 15,
-            quantity: 1,
-          }],
-        });
-      }).toThrowError();
+      expect(() => payment.prepare({
+        channel: Channel.CREDIT_CARD,
+        // @ts-ignore: Unreachable code error
+        virtualAccountExpireDays: 9,
+        items: [{
+          name: 'Test',
+          unitPrice: 15,
+          quantity: 1,
+        }],
+      })).rejects.toThrowError();
     });
 
     it('should `virtualAccountExpireDays` between 1 and 60', () => {
-      expect(() => {
-        payment.prepare({
-          channel: Channel.VIRTUAL_ACCOUNT,
-          virtualAccountExpireDays: 0,
-          items: [{
-            name: 'Test',
-            unitPrice: 15,
-            quantity: 1,
-          }],
-        });
-      }).toThrowError();
+      expect(() => payment.prepare({
+        channel: Channel.VIRTUAL_ACCOUNT,
+        virtualAccountExpireDays: 0,
+        items: [{
+          name: 'Test',
+          unitPrice: 15,
+          quantity: 1,
+        }],
+      })).rejects.toThrowError();
 
-      expect(() => {
-        payment.prepare({
-          channel: Channel.VIRTUAL_ACCOUNT,
-          virtualAccountExpireDays: 99,
-          items: [{
-            name: 'Test',
-            unitPrice: 15,
-            quantity: 1,
-          }],
-        });
-      }).toThrowError();
+      expect(() => payment.prepare({
+        channel: Channel.VIRTUAL_ACCOUNT,
+        virtualAccountExpireDays: 99,
+        items: [{
+          name: 'Test',
+          unitPrice: 15,
+          quantity: 1,
+        }],
+      })).rejects.toThrowError();
     });
 
     it('should throw if total aomunt between 11 and 49999', () => {
-      expect(() => {
-        payment.prepare({
-          channel: Channel.VIRTUAL_ACCOUNT,
-          items: [{
-            name: 'Test',
-            unitPrice: 10,
-            quantity: 1,
-          }],
-        });
-      }).toThrowError();
+      expect(() => payment.prepare({
+        channel: Channel.VIRTUAL_ACCOUNT,
+        items: [{
+          name: 'Test',
+          unitPrice: 10,
+          quantity: 1,
+        }],
+      })).rejects.toThrowError();
 
-      expect(() => {
-        payment.prepare({
-          channel: Channel.VIRTUAL_ACCOUNT,
-          items: [{
-            name: 'Test',
-            unitPrice: 99990,
-            quantity: 1,
-          }],
-        });
-      }).toThrowError();
+      expect(() => payment.prepare({
+        channel: Channel.VIRTUAL_ACCOUNT,
+        items: [{
+          name: 'Test',
+          unitPrice: 99990,
+          quantity: 1,
+        }],
+      })).rejects.toThrowError();
     });
 
-    it('should default virtual expire day is 3', () => {
-      const order = payment.prepare({
+    it('should default virtual expire day is 3', async () => {
+      const order = await payment.prepare({
         channel: Channel.VIRTUAL_ACCOUNT,
         items: [{
           name: 'Test',
@@ -119,8 +109,8 @@ describe('ECPayPayment (Virtual Account)', () => {
       expect(order.form.ExpireDate).toBe('3');
     });
 
-    it('should represent virtual account config on form data', () => {
-      const order = payment.prepare({
+    it('should represent virtual account config on form data', async () => {
+      const order = await payment.prepare({
         channel: Channel.VIRTUAL_ACCOUNT,
         virtualAccountExpireDays: 7,
         items: [{
@@ -134,7 +124,7 @@ describe('ECPayPayment (Virtual Account)', () => {
       expect(order.form.PaymentInfoURL).toBe('http://localhost:9999/callback');
       expect(order.form.ClientRedirectURL).toBe('');
 
-      const clientOrder = payment.prepare({
+      const clientOrder = await payment.prepare({
         channel: Channel.VIRTUAL_ACCOUNT,
         virtualAccountExpireDays: 7,
         items: [{
@@ -156,7 +146,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = testPayment.prepare({
+            const order = await testPayment.prepare({
               channel: Channel.CREDIT_CARD,
               items: [{
                 name: 'Test',
@@ -206,7 +196,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = testPayment.prepare<ECPayChannelVirtualAccount>({
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
               items: [{
@@ -263,7 +253,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = testPayment.prepare<ECPayChannelVirtualAccount>({
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
               items: [{
@@ -317,7 +307,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = testPayment.prepare<ECPayChannelVirtualAccount>({
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
               items: [{
@@ -371,7 +361,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = testPayment.prepare<ECPayChannelVirtualAccount>({
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
               items: [{
@@ -425,7 +415,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = testPayment.prepare<ECPayChannelVirtualAccount>({
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
               items: [{
@@ -479,7 +469,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = testPayment.prepare<ECPayChannelVirtualAccount>({
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
               items: [{
@@ -533,7 +523,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = testPayment.prepare<ECPayChannelVirtualAccount>({
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
               items: [{
@@ -587,7 +577,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = testPayment.prepare<ECPayChannelVirtualAccount>({
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
               items: [{
@@ -641,7 +631,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = testPayment.prepare<ECPayChannelVirtualAccount>({
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
               items: [{
@@ -696,7 +686,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = testPayment.prepare<ECPayChannelVirtualAccount>({
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
               items: [{
@@ -750,7 +740,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = testPayment.prepare<ECPayChannelVirtualAccount>({
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
               items: [{
@@ -777,7 +767,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = testPayment.prepare<ECPayChannelVirtualAccount>({
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
               items: [{
@@ -832,7 +822,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = testPayment.prepare<ECPayChannelVirtualAccount>({
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
               items: [{
@@ -946,7 +936,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = testPayment.prepare<ECPayChannelVirtualAccount>({
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
               items: [{
@@ -1027,7 +1017,7 @@ describe('ECPayPayment (Virtual Account)', () => {
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = testPayment.prepare<ECPayChannelVirtualAccount>({
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
               items: [{

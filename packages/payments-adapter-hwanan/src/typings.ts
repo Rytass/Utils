@@ -4,8 +4,8 @@ import { HwaNanOrder } from './hwanan-order';
 import { HwaNanPayment } from './hwanan-payment';
 
 export interface OrdersCache<CM extends HwaNanCommitMessage, Key extends string, Value extends HwaNanOrder<CM>> {
-  get: (key: Key) => Value | undefined;
-  set: (key: Key, value: Value) => void;
+  get: (key: Key) => Promise<Value | undefined>;
+  set: (key: Key, value: Value) => Promise<void>;
 }
 
 export enum HwaNanPaymentChannel {

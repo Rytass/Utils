@@ -42,10 +42,17 @@ export class HwaNanPayment<CM extends HwaNanCommitMessage = HwaNanCreditCardComm
     this.customizePageType = options.customizePageType || this.customizePageType;
     this.customizePageVersion = this.customizePageType === HwaNanCustomizePageType.OTHER ? options.customizePageVersion : undefined;
 
-    this.pendingOrdersCache = options.ordersCache ?? new LRUCache({
+    const lruCache = options?.ordersCache ? undefined : new LRUCache<string, HwaNanOrder<CM>>({
       ttlAutopurge: true,
       ttl: options?.ttl ?? 10 * 60 * 1000, // default: 10 mins
     });
+
+    this.pendingOrdersCache = options?.ordersCache ?? {
+      get: async (key: string) => lruCache!.get(key),
+      set: async (key: string, value: HwaNanOrder<CM>) => {
+        lruCache!.set(key, value);
+      },
+    };
 
     if (typeof options?.onCommit === 'function') {
       this.emitter.on(PaymentEvents.ORDER_COMMITTED, options.onCommit);
@@ -99,8 +106,8 @@ export class HwaNanPayment<CM extends HwaNanCommitMessage = HwaNanCreditCardComm
     return `${this.baseUrl}/transaction/api-auth/`;
   }
 
-  public parseCallbackMessage(payload: HwaNanNotifyPayload): void {
-    const order = this.pendingOrdersCache.get(payload.lidm);
+  public async parseCallbackMessage(payload: HwaNanNotifyPayload): Promise<void> {
+    const order = await this.pendingOrdersCache.get(payload.lidm);
 
     if (!order) throw new Error('Order not found');
 
@@ -135,14 +142,14 @@ export class HwaNanPayment<CM extends HwaNanCommitMessage = HwaNanCreditCardComm
       }|${payload.status}|${payload.errcode}|${payload.authCode}|${payload.authAmt}|${payload.xid}`).digest('hex').substring(16);
   }
 
-  public defaultServerListener(req: IncomingMessage, res: ServerResponse) {
+  public async defaultServerListener(req: IncomingMessage, res: ServerResponse) {
     const checkoutRe = new RegExp(`^${this.checkoutPath}/([^/]+)$`);
 
     if (req.method === 'GET' && req.url && checkoutRe.test(req.url)) {
       const orderId = RegExp.$1;
 
       if (orderId) {
-        const order = this.pendingOrdersCache.get(orderId);
+        const order = await this.pendingOrdersCache.get(orderId);
 
         if (order) {
           debugPayment(`ECPayment serve checkout page for order ${orderId}`);
@@ -171,7 +178,7 @@ export class HwaNanPayment<CM extends HwaNanCommitMessage = HwaNanCreditCardComm
       bufferArray.push(chunk);
     });
 
-    req.on('end', () => {
+    req.on('end', async () => {
       const payloadString = Buffer.from(Buffer.concat(bufferArray)).toString('utf8');
       const payload = Array.from(new URLSearchParams(payloadString).entries())
         .reduce(
@@ -190,7 +197,7 @@ export class HwaNanPayment<CM extends HwaNanCommitMessage = HwaNanCreditCardComm
       }
 
       try {
-        this.parseCallbackMessage(payload);
+        await this.parseCallbackMessage(payload);
 
         res.writeHead(200);
         res.end();
@@ -203,7 +210,7 @@ export class HwaNanPayment<CM extends HwaNanCommitMessage = HwaNanCreditCardComm
     });
   }
 
-  prepare<NCM extends CM>(input: HwaNanOrderInput<NCM>): HwaNanOrder<NCM> {
+  async prepare<NCM extends CM>(input: HwaNanOrderInput<NCM>): Promise<HwaNanOrder<NCM>> {
     if (!this.isGatewayReady) {
       throw new Error('Please waiting gateway ready');
     }
@@ -238,7 +245,7 @@ export class HwaNanPayment<CM extends HwaNanCommitMessage = HwaNanCreditCardComm
       },
     }) as HwaNanOrder<NCM>;
 
-    this.pendingOrdersCache.set(order.id, order);
+    await this.pendingOrdersCache.set(order.id, order);
 
     return order;
   }

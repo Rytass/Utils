@@ -35,8 +35,8 @@ describe('ECPayPayment (Apple Pay)', () => {
   describe('Apple Pay', () => {
     const payment = new ECPayPayment<ECPayChannelApplePay>();
 
-    it('should represent apple pay config on form data', () => {
-      const order = payment.prepare({
+    it('should represent apple pay config on form data', async () => {
+      const order = await payment.prepare({
         channel: Channel.APPLE_PAY,
         items: [{
           name: 'Test',

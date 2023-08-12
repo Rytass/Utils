@@ -121,7 +121,7 @@ describe('NewebPay Payments', () => {
     });
 
     it('should prepare order get encrypted payload', async () => {
-      const order = payment.prepare({
+      const order = await payment.prepare({
         channel: NewebPaymentChannel.CREDIT,
         items: [{
           name: '鉛筆',
@@ -152,8 +152,8 @@ describe('NewebPay Payments', () => {
       expect(order.form.TradeSha).toBe(createHash('sha256').update(`HashKey=${AES_KEY}&${order.form.TradeInfo}&HashIV=${AES_IV}`).digest('hex').toUpperCase());
     });
 
-    it('should prepare order represent other pay channels', () => {
-      const order = payment.prepare({
+    it('should prepare order represent other pay channels', async () => {
+      const order = await payment.prepare({
         channel: NewebPaymentChannel.ANDROID_PAY | NewebPaymentChannel.SAMSUNG_PAY | NewebPaymentChannel.UNION_PAY | NewebPaymentChannel.WEBATM | NewebPaymentChannel.VACC,
         items: [{
           name: '鉛筆',
@@ -184,7 +184,7 @@ describe('NewebPay Payments', () => {
           quantity: 1,
         }],
         tradeLimit: 20,
-      })).toThrowError('`tradeLimit` should between 60 and 900 (seconds)');
+      })).rejects.toThrowError('`tradeLimit` should between 60 and 900 (seconds)');
 
       expect(() => payment.prepare({
         channel: NewebPaymentChannel.CREDIT,
@@ -194,7 +194,7 @@ describe('NewebPay Payments', () => {
           quantity: 1,
         }],
         tradeLimit: 2000,
-      })).toThrowError('`tradeLimit` should between 60 and 900 (seconds)');
+      })).rejects.toThrowError('`tradeLimit` should between 60 and 900 (seconds)');
     });
 
     it('should throw error on invalid expire date', () => {
@@ -206,7 +206,7 @@ describe('NewebPay Payments', () => {
           quantity: 1,
         }],
         expireDate: '2023-01-31',
-      })).toThrowError('`expireDate` should be in format of `YYYYMMDD`');
+      })).rejects.toThrowError('`expireDate` should be in format of `YYYYMMDD`');
     });
 
     it('should throw error before server ready prepare', (done) => {
@@ -227,7 +227,7 @@ describe('NewebPay Payments', () => {
           unitPrice: 10,
           quantity: 1,
         }],
-      })).toThrowError('Please waiting gateway ready');
+      })).rejects.toThrowError('Please waiting gateway ready');
     });
   });
 

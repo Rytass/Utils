@@ -4,8 +4,8 @@ import { ECPayPayment } from './ecpay-payment';
 import { ECPayOrder } from './ecpay-order';
 
 export interface OrdersCache<CM extends ECPayCommitMessage, Key extends string, Value extends ECPayOrder<CM>> {
-  get: (key: Key) => Value | undefined;
-  set: (key: Key, value: Value) => void;
+  get: (key: Key) => Promise<Value | undefined>;
+  set: (key: Key, value: Value) => Promise<void>;
 }
 
 export interface ECPayInitOptions<O extends ECPayOrder<ECPayCommitMessage>> {

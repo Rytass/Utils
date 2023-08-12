@@ -75,8 +75,8 @@ describe('NewebPay Order', () => {
     expect(() => order.formHTML).toThrowError('Finished order cannot get submit form url');
   });
 
-  it('should throw error when get checkout url with no server', () => {
-    const order = payment.prepare({
+  it('should throw error when get checkout url with no server', async () => {
+    const order = await payment.prepare({
       id: '123142',
       items: [{
         name: 'test',
@@ -98,7 +98,7 @@ describe('NewebPay Order', () => {
       serverHost: 'https://rytass.com',
       checkoutPath: '/newebpay/checkout',
       onServerListen: async () => {
-        const order = payment2.prepare({
+        const order = await payment2.prepare({
           id: '123142',
           items: [{
             name: 'test',
@@ -110,13 +110,15 @@ describe('NewebPay Order', () => {
 
         expect(order.checkoutURL).toBe('https://rytass.com/newebpay/checkout/123142');
 
-        payment2._server?.close(done);
+        await payment2._server?.close();
+
+        done();
       },
     });
   });
 
-  it('should throw error when info retrived method call on a not committable order', () => {
-    const order = payment.prepare({
+  it('should throw error when info retrived method call on a not committable order', async () => {
+    const order = await payment.prepare({
       id: '123142',
       items: [{
         name: 'test',
@@ -134,8 +136,8 @@ describe('NewebPay Order', () => {
     } as VirtualAccountInfo)).toThrow();
   });
 
-  it('should throw error when commit a not committable order', () => {
-    const order = payment.prepare({
+  it('should throw error when commit a not committable order', async () => {
+    const order = await payment.prepare({
       id: '123142',
       items: [{
         name: 'test',
@@ -158,8 +160,8 @@ describe('NewebPay Order', () => {
     } as WebATMPaymentInfo)).toThrow();
   });
 
-  it('should throw error when commit id not matched', () => {
-    const order = payment.prepare({
+  it('should throw error when commit id not matched', async () => {
+    const order = await payment.prepare({
       id: '123142',
       items: [{
         name: 'test',

@@ -50,7 +50,7 @@ describe('ECPayPayment (Barcode)', () => {
               unitPrice: 100,
               quantity: 1,
             }],
-          })).toThrowError();
+          })).rejects.toThrowError();
 
           payment._server?.close(done);
         },
@@ -69,19 +69,17 @@ describe('ECPayPayment (Barcode)', () => {
               unitPrice: 100,
               quantity: 1,
             }],
-          })).toThrowError();
+          })).rejects.toThrowError();
 
-          expect(() => {
-            payment.prepare({
-              channel: Channel.CVS_BARCODE,
-              cvsBarcodeExpireDays: 99999,
-              items: [{
-                name: 'Test',
-                unitPrice: 100,
-                quantity: 1,
-              }],
-            });
-          }).toThrowError();
+          expect(() => payment.prepare({
+            channel: Channel.CVS_BARCODE,
+            cvsBarcodeExpireDays: 99999,
+            items: [{
+              name: 'Test',
+              unitPrice: 100,
+              quantity: 1,
+            }],
+          })).rejects.toThrowError();
 
           payment._server?.close(done);
         },
@@ -91,8 +89,8 @@ describe('ECPayPayment (Barcode)', () => {
     it('should default virtual expire days is 7', (done) => {
       const payment = new ECPayPayment<ECPayChannelBarcode>({
         withServer: true,
-        onServerListen: () => {
-          const order = payment.prepare({
+        onServerListen: async () => {
+          const order = await payment.prepare({
             channel: Channel.CVS_BARCODE,
             items: [{
               name: 'Test',
@@ -112,27 +110,23 @@ describe('ECPayPayment (Barcode)', () => {
       const payment = new ECPayPayment<ECPayChannelBarcode>({
         withServer: true,
         onServerListen: () => {
-          expect(() => {
-            payment.prepare({
-              channel: Channel.CVS_BARCODE,
-              items: [{
-                name: 'Test',
-                unitPrice: 10,
-                quantity: 1,
-              }],
-            });
-          }).toThrowError();
+          expect(() => payment.prepare({
+            channel: Channel.CVS_BARCODE,
+            items: [{
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            }],
+          })).rejects.toThrowError();
 
-          expect(() => {
-            payment.prepare({
-              channel: Channel.CVS_BARCODE,
-              items: [{
-                name: 'Test',
-                unitPrice: 99900,
-                quantity: 1,
-              }],
-            });
-          }).toThrowError();
+          expect(() => payment.prepare({
+            channel: Channel.CVS_BARCODE,
+            items: [{
+              name: 'Test',
+              unitPrice: 99900,
+              quantity: 1,
+            }],
+          })).rejects.toThrowError();
 
           payment._server?.close(done);
         },
@@ -142,8 +136,8 @@ describe('ECPayPayment (Barcode)', () => {
     it('should represent barcode config on form data', (done) => {
       const payment = new ECPayPayment<ECPayChannelBarcode>({
         withServer: true,
-        onServerListen: () => {
-          const order = payment.prepare({
+        onServerListen: async () => {
+          const order = await payment.prepare({
             channel: Channel.CVS_BARCODE,
             cvsBarcodeExpireDays: 3,
             items: [{
@@ -157,7 +151,7 @@ describe('ECPayPayment (Barcode)', () => {
           expect(order.form.PaymentInfoURL).toBe('http://localhost:3000/payments/ecpay/async-informations');
           expect(order.form.ClientRedirectURL).toBe('');
 
-          const clientOrder = payment.prepare({
+          const clientOrder = await payment.prepare({
             channel: Channel.CVS_BARCODE,
             items: [{
               name: 'Test',
@@ -178,7 +172,7 @@ describe('ECPayPayment (Barcode)', () => {
       const payment = new ECPayPayment<ECPayChannelBarcode>({
         withServer: true,
         onServerListen: async () => {
-          const order = payment.prepare({
+          const order = await payment.prepare({
             channel: Channel.CVS_BARCODE,
             cvsBarcodeExpireDays: 1,
             items: [{
@@ -240,7 +234,7 @@ describe('ECPayPayment (Barcode)', () => {
       const payment = new ECPayPayment<ECPayChannelBarcode>({
         withServer: true,
         onServerListen: async () => {
-          const order = payment.prepare({
+          const order = await payment.prepare({
             channel: Channel.CVS_BARCODE,
             cvsBarcodeExpireDays: 1,
             items: [{
@@ -300,7 +294,7 @@ describe('ECPayPayment (Barcode)', () => {
       const payment = new ECPayPayment<ECPayChannelBarcode>({
         withServer: true,
         onServerListen: async () => {
-          const order = payment.prepare<ECPayChannelBarcode>({
+          const order = await payment.prepare<ECPayChannelBarcode>({
             channel: Channel.CVS_BARCODE,
             items: [{
               name: 'Test',

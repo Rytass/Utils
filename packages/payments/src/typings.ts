@@ -126,7 +126,7 @@ export interface PaymentGateway<
 > {
   emitter: EventEmitter;
 
-  prepare<N extends OCM>(input: InputFromOrderCommitMessage<N>): Order<N>;
+  prepare<N extends OCM>(input: InputFromOrderCommitMessage<N>): Promise<Order<N>>;
 
   query<OO extends O>(id: string, options?: any): Promise<OO>;
 }

@@ -74,10 +74,17 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
       this.emitter.on(PaymentEvents.SERVER_LISTENED, options.onServerListen);
     }
 
-    this.pendingOrdersCache = options?.ordersCache ?? new LRUCache({
+    const lruCache = options?.ordersCache ? undefined : new LRUCache<string, ECPayOrder<CM>>({
       ttlAutopurge: true,
       ttl: options?.ttl ?? 10 * 60 * 1000, // default: 10 mins
     });
+
+    this.pendingOrdersCache = options?.ordersCache ?? {
+      get: async (key: string) => lruCache!.get(key),
+      set: async (key: string, value: ECPayOrder<CM>) => {
+        lruCache!.set(key, value);
+      },
+    };
   }
 
   private getOrderId() {
@@ -148,14 +155,14 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
     });
   }
 
-  public defaultServerListener(req: IncomingMessage, res: ServerResponse) {
+  public async defaultServerListener(req: IncomingMessage, res: ServerResponse) {
     const checkoutRe = new RegExp(`^${this.checkoutPath}/([^/]+)$`);
 
     if (req.method === 'GET' && req.url && checkoutRe.test(req.url)) {
       const orderId = RegExp.$1;
 
       if (orderId) {
-        const order = this.pendingOrdersCache.get(orderId);
+        const order = await this.pendingOrdersCache.get(orderId);
 
         if (order) {
           debugPayment(`ECPayment serve checkout page for order ${orderId}`);
@@ -184,7 +191,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
       bufferArray.push(chunk);
     });
 
-    req.on('end', () => {
+    req.on('end', async () => {
       const payloadString = Buffer.from(Buffer.concat(bufferArray)).toString('utf8');
 
       const payload = Array.from(new URLSearchParams(payloadString).entries())
@@ -206,7 +213,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
         return;
       }
 
-      const order = this.pendingOrdersCache.get(payload.MerchantTradeNo);
+      const order = await this.pendingOrdersCache.get(payload.MerchantTradeNo);
 
       if (!order || !order.committable) {
         res.writeHead(400, {
@@ -435,7 +442,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
     }
   }
 
-  prepare<P extends CM>(orderInput: GetOrderInput<P>): ECPayOrder<P> {
+  async prepare<P extends CM>(orderInput: GetOrderInput<P>): Promise<ECPayOrder<P>> {
     if (!this.isGatewayReady) {
       throw new Error('Please waiting gateway ready');
     }
@@ -681,7 +688,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
       gateway: this,
     }) as ECPayOrder<P>;
 
-    this.pendingOrdersCache.set(order.id, order);
+    await this.pendingOrdersCache.set(order.id, order);
 
     return order;
   }

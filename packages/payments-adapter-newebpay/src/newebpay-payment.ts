@@ -82,10 +82,18 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
       this.emitter.on(PaymentEvents.SERVER_LISTENED, options.onServerListen);
     }
 
-    this.pendingOrdersCache = options.ordersCache ?? new LRUCache<string, NewebPayOrder<CM>>({
+    const lruCache = options?.ordersCache ? undefined : new LRUCache<string, NewebPayOrder<CM>>({
       ttlAutopurge: true,
       ttl: options?.ttl ?? 10 * 60 * 1000, // default: 10 mins
     });
+
+    this.pendingOrdersCache = options?.ordersCache ?? {
+      get: async (key: string) => lruCache!.get(key),
+      set: async (key: string, value: NewebPayOrder<CM>) => {
+        lruCache!.set(key, value);
+      },
+    };
+
   }
 
   readonly emitter = new EventEmitter();
@@ -334,7 +342,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
     }
   }
 
-  prepare<NCM extends CM>(input: NewebPayOrderInput<NCM>): NewebPayOrder<NCM> {
+  async prepare<NCM extends CM>(input: NewebPayOrderInput<NCM>): Promise<NewebPayOrder<NCM>> {
     if (!this.isGatewayReady) {
       throw new Error('Please waiting gateway ready');
     }
@@ -402,7 +410,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
       gateway: this,
     });
 
-    this.pendingOrdersCache.set(order.id, order);
+    await this.pendingOrdersCache.set(order.id, order);
 
     return order;
   }

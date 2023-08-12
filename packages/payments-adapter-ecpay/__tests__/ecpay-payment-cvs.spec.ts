@@ -41,18 +41,16 @@ describe('ECPayPayment (CVS)', () => {
       const payment = new ECPayPayment<ECPayChannelCVS>({
         withServer: true,
         onServerListen: () => {
-          expect(() => {
-            payment.prepare({
-              // @ts-ignore: Unreachable code error
-              channel: Channel.VIRTUAL_ACCOUNT,
-              cvsExpireMinutes: 1100,
-              items: [{
-                name: 'Test',
-                unitPrice: 100,
-                quantity: 1,
-              }],
-            });
-          }).toThrowError();
+          expect(() => payment.prepare({
+            // @ts-ignore: Unreachable code error
+            channel: Channel.VIRTUAL_ACCOUNT,
+            cvsExpireMinutes: 1100,
+            items: [{
+              name: 'Test',
+              unitPrice: 100,
+              quantity: 1,
+            }],
+          })).rejects.toThrowError();
 
           payment._server?.close(done);
         },
@@ -63,29 +61,25 @@ describe('ECPayPayment (CVS)', () => {
       const payment = new ECPayPayment<ECPayChannelCVS>({
         withServer: true,
         onServerListen: () => {
-          expect(() => {
-            payment.prepare({
-              channel: Channel.CVS_KIOSK,
-              cvsExpireMinutes: 0,
-              items: [{
-                name: 'Test',
-                unitPrice: 100,
-                quantity: 1,
-              }],
-            });
-          }).toThrowError();
+          expect(() => payment.prepare({
+            channel: Channel.CVS_KIOSK,
+            cvsExpireMinutes: 0,
+            items: [{
+              name: 'Test',
+              unitPrice: 100,
+              quantity: 1,
+            }],
+          })).rejects.toThrowError();
 
-          expect(() => {
-            payment.prepare({
-              channel: Channel.CVS_KIOSK,
-              cvsExpireMinutes: 99999,
-              items: [{
-                name: 'Test',
-                unitPrice: 100,
-                quantity: 1,
-              }],
-            });
-          }).toThrowError();
+          expect(() => payment.prepare({
+            channel: Channel.CVS_KIOSK,
+            cvsExpireMinutes: 99999,
+            items: [{
+              name: 'Test',
+              unitPrice: 100,
+              quantity: 1,
+            }],
+          })).rejects.toThrowError();
 
           payment._server?.close(done);
         },
@@ -95,8 +89,8 @@ describe('ECPayPayment (CVS)', () => {
     it('should default virtual expire minutes is 10080', (done) => {
       const payment = new ECPayPayment<ECPayChannelCVS>({
         withServer: true,
-        onServerListen: () => {
-          const order = payment.prepare({
+        onServerListen: async () => {
+          const order = await payment.prepare({
             channel: Channel.CVS_KIOSK,
             items: [{
               name: 'Test',
@@ -116,27 +110,23 @@ describe('ECPayPayment (CVS)', () => {
       const payment = new ECPayPayment<ECPayChannelCVS>({
         withServer: true,
         onServerListen: () => {
-          expect(() => {
-            payment.prepare({
-              channel: Channel.CVS_KIOSK,
-              items: [{
-                name: 'Test',
-                unitPrice: 10,
-                quantity: 1,
-              }],
-            });
-          }).toThrowError();
+          expect(() => payment.prepare({
+            channel: Channel.CVS_KIOSK,
+            items: [{
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            }],
+          })).rejects.toThrowError();
 
-          expect(() => {
-            payment.prepare({
-              channel: Channel.CVS_KIOSK,
-              items: [{
-                name: 'Test',
-                unitPrice: 9990,
-                quantity: 1,
-              }],
-            });
-          }).toThrowError();
+          expect(() => payment.prepare({
+            channel: Channel.CVS_KIOSK,
+            items: [{
+              name: 'Test',
+              unitPrice: 9990,
+              quantity: 1,
+            }],
+          })).rejects.toThrowError();
 
           payment._server?.close(done);
         },
@@ -146,8 +136,8 @@ describe('ECPayPayment (CVS)', () => {
     it('should represent cvs config on form data', (done) => {
       const payment = new ECPayPayment<ECPayChannelCVS>({
         withServer: true,
-        onServerListen: () => {
-          const order = payment.prepare({
+        onServerListen: async () => {
+          const order = await payment.prepare({
             channel: Channel.CVS_KIOSK,
             cvsExpireMinutes: 19999,
             items: [{
@@ -161,7 +151,7 @@ describe('ECPayPayment (CVS)', () => {
           expect(order.form.PaymentInfoURL).toBe('http://localhost:3000/payments/ecpay/async-informations');
           expect(order.form.ClientRedirectURL).toBe('');
 
-          const clientOrder = payment.prepare({
+          const clientOrder = await payment.prepare({
             channel: Channel.CVS_KIOSK,
             items: [{
               name: 'Test',
@@ -182,7 +172,7 @@ describe('ECPayPayment (CVS)', () => {
       const payment = new ECPayPayment<ECPayChannelCVS>({
         withServer: true,
         onServerListen: async () => {
-          const order = payment.prepare({
+          const order = await payment.prepare({
             channel: Channel.CVS_KIOSK,
             items: [{
               name: 'Test',
@@ -240,7 +230,7 @@ describe('ECPayPayment (CVS)', () => {
       const payment = new ECPayPayment<ECPayChannelCVS>({
         withServer: true,
         onServerListen: async () => {
-          const order = payment.prepare({
+          const order = await payment.prepare({
             channel: Channel.CVS_KIOSK,
             items: [{
               name: 'Test',
@@ -299,7 +289,7 @@ describe('ECPayPayment (CVS)', () => {
       const payment = new ECPayPayment<ECPayChannelCVS>({
         withServer: true,
         onServerListen: async () => {
-          const order = payment.prepare<ECPayChannelCVS>({
+          const order = await payment.prepare<ECPayChannelCVS>({
             channel: Channel.CVS_KIOSK,
             items: [{
               name: 'Test',

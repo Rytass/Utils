@@ -5,29 +5,42 @@ import { ECPayPayment, ECPayOrderItem, ECPayCallbackPaymentType, ECPayChannelCre
 describe('ECPayOrder', () => {
   const payment = new ECPayPayment();
 
-  const order = payment.prepare<ECPayChannelCreditCard>({
-    channel: Channel.CREDIT_CARD,
-    items: [new ECPayOrderItem({
-      name: 'Test',
-      unitPrice: 10,
-      quantity: 1,
-    }), new ECPayOrderItem({
-      name: '中文',
-      unitPrice: 15,
-      quantity: 4,
-    })],
-  });
+  it('should calculate total price', async () => {
+    const order = await payment.prepare<ECPayChannelCreditCard>({
+      channel: Channel.CREDIT_CARD,
+      items: [new ECPayOrderItem({
+        name: 'Test',
+        unitPrice: 10,
+        quantity: 1,
+      }), new ECPayOrderItem({
+        name: '中文',
+        unitPrice: 15,
+        quantity: 4,
+      })],
+    });
 
-  it('should calculate total price', () => {
     expect(order.totalPrice).toBe(70);
   });
 
-  it('should get checkout url throw error when no server', () => {
+  it('should get checkout url throw error when no server', async () => {
+    const order = await payment.prepare<ECPayChannelCreditCard>({
+      channel: Channel.CREDIT_CARD,
+      items: [new ECPayOrderItem({
+        name: 'Test',
+        unitPrice: 10,
+        quantity: 1,
+      }), new ECPayOrderItem({
+        name: '中文',
+        unitPrice: 15,
+        quantity: 4,
+      })],
+    });
+
     expect(() => order.checkoutURL).toThrowError();
   });
 
-  it('should fallback channel to all', () => {
-    const allOrder = payment.prepare<ECPayChannelCreditCard>({
+  it('should fallback channel to all', async () => {
+    const allOrder = await payment.prepare<ECPayChannelCreditCard>({
       items: [{
         name: 'Test',
         unitPrice: 10,
@@ -47,8 +60,8 @@ describe('ECPayOrder', () => {
     const paymentWithServer = new ECPayPayment({
       withServer: true,
       serverHost: 'http://localhost:3001',
-      onServerListen: () => {
-        const withServerOrder = paymentWithServer.prepare<ECPayChannelCreditCard>({
+      onServerListen: async () => {
+        const withServerOrder = await paymentWithServer.prepare<ECPayChannelCreditCard>({
           channel: Channel.CREDIT_CARD,
           items: [{
             name: 'Test',
@@ -71,12 +84,12 @@ describe('ECPayOrder', () => {
   });
 
   describe('Order Commit', () => {
-    it('should represent pre commit state', () => {
+    it('should represent pre commit state', async () => {
       const payment = new ECPayPayment({
         merchantId: 'mid',
       });
 
-      const order = payment.prepare<ECPayChannelCreditCard>({
+      const order = await payment.prepare<ECPayChannelCreditCard>({
         items: [{
           name: 'Test',
           unitPrice: 10,
@@ -108,12 +121,12 @@ describe('ECPayOrder', () => {
       expect(order.state).toBe(OrderState.COMMITTED);
     });
 
-    it('should block form getter after committed', () => {
+    it('should block form getter after committed', async () => {
       const payment = new ECPayPayment({
         merchantId: 'mid',
       });
 
-      const order = payment.prepare<ECPayChannelCreditCard>({
+      const order = await payment.prepare<ECPayChannelCreditCard>({
         channel: Channel.CREDIT_CARD,
         items: [{
           name: 'Test',
@@ -143,12 +156,12 @@ describe('ECPayOrder', () => {
       expect(() => order.formHTML).toThrowError();
     });
 
-    it('should get commit message after committed', () => {
+    it('should get commit message after committed', async () => {
       const payment = new ECPayPayment({
         merchantId: 'mid',
       });
 
-      const order = payment.prepare<ECPayChannelCreditCard>({
+      const order = await payment.prepare<ECPayChannelCreditCard>({
         channel: Channel.CREDIT_CARD,
         items: [{
           name: 'Test',
@@ -196,12 +209,12 @@ describe('ECPayOrder', () => {
       expect(order.paymentType).toBe(ECPayCallbackPaymentType.CREDIT_CARD);
     });
 
-    it('should reject commit if message data not match', () => {
+    it('should reject commit if message data not match', async () => {
       const payment = new ECPayPayment<ECPayChannelCreditCard>({
         merchantId: 'mid',
       });
 
-      const order = payment.prepare({
+      const order = await payment.prepare({
         channel: Channel.CREDIT_CARD,
         items: [{
           name: 'Test',
@@ -254,12 +267,12 @@ describe('ECPayOrder', () => {
       }).toThrowError();
     });
 
-    it('should reject invalid state order', () => {
+    it('should reject invalid state order', async () => {
       const payment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
         merchantId: 'mid',
       });
 
-      const order = payment.prepare({
+      const order = await payment.prepare({
         channel: Channel.CREDIT_CARD,
         items: [{
           name: 'Test',
@@ -287,10 +300,10 @@ describe('ECPayOrder', () => {
   });
 
   describe('Refund', () => {
-    it('should reject if order not committed', () => {
+    it('should reject if order not committed', async () => {
       const payment = new ECPayPayment<ECPayChannelCreditCard>();
 
-      const order = payment.prepare({
+      const order = await payment.prepare({
         channel: Channel.CREDIT_CARD,
         items: [{
           name: 'Test',
@@ -331,10 +344,10 @@ describe('ECPayOrder', () => {
       expect(() => order.refund()).rejects.toThrow();
     });
 
-    it('should reject no gwsr credit card order', () => {
+    it('should reject no gwsr credit card order', async () => {
       const payment = new ECPayPayment<ECPayChannelCreditCard>();
 
-      const order = payment.prepare({
+      const order = await payment.prepare({
         channel: Channel.CREDIT_CARD,
         items: [{
           name: 'Test',
@@ -372,10 +385,10 @@ describe('ECPayOrder', () => {
     });
 
     describe('Refund Action Cases', () => {
-      it('should represent R on credit card order CLOSED', (done) => {
+      it('should represent R on credit card order CLOSED', async () => {
         const payment = new ECPayPayment<ECPayChannelCreditCard>();
 
-        const order = payment.prepare({
+        const order = await payment.prepare({
           channel: Channel.CREDIT_CARD,
           items: [{
             name: 'Test',
@@ -413,19 +426,22 @@ describe('ECPayOrder', () => {
         const mockDoAction = jest.spyOn(payment, 'doOrderAction');
 
         mockGetCreditCardTradeStatus.mockImplementationOnce(() => Promise.resolve(ECPayCreditCardOrderStatus.CLOSED));
-        mockDoAction.mockImplementationOnce(async (order, action) => {
-          expect(action).toBe('R');
 
-          done();
+        await new Promise<void>((pResolve) => {
+          mockDoAction.mockImplementationOnce(async (order, action) => {
+            expect(action).toBe('R');
+
+            pResolve();
+          });
+
+          order.refund();
         });
-
-        order.refund();
       });
 
-      it('should represent N on credit card order AUTHORIZED', (done) => {
+      it('should represent N on credit card order AUTHORIZED', async () => {
         const payment = new ECPayPayment<ECPayChannelCreditCard>();
 
-        const order = payment.prepare({
+        const order = await payment.prepare({
           channel: Channel.CREDIT_CARD,
           items: [{
             name: 'Test',
@@ -463,19 +479,22 @@ describe('ECPayOrder', () => {
         const mockDoAction = jest.spyOn(payment, 'doOrderAction');
 
         mockGetCreditCardTradeStatus.mockImplementationOnce(() => Promise.resolve(ECPayCreditCardOrderStatus.AUTHORIZED));
-        mockDoAction.mockImplementationOnce(async (order, action) => {
-          expect(action).toBe('N');
 
-          done();
+        await new Promise<void>((pResolve) => {
+          mockDoAction.mockImplementationOnce(async (order, action) => {
+            expect(action).toBe('N');
+
+            pResolve();
+          });
+
+          order.refund();
         });
-
-        order.refund();
       });
 
-      it('should throw error on credit card order UNAUTHORIZED', () => {
+      it('should throw error on credit card order UNAUTHORIZED', async () => {
         const payment = new ECPayPayment<ECPayChannelCreditCard>();
 
-        const order = payment.prepare({
+        const order = await payment.prepare({
           channel: Channel.CREDIT_CARD,
           items: [{
             name: 'Test',
@@ -516,10 +535,10 @@ describe('ECPayOrder', () => {
         expect(() => order.refund()).rejects.toThrow();
       });
 
-      it('should throw error on credit card order CANCELLED/MANUALLY_CANCELLED', () => {
+      it('should throw error on credit card order CANCELLED/MANUALLY_CANCELLED', async () => {
         const payment = new ECPayPayment<ECPayChannelCreditCard>();
 
-        const order = payment.prepare({
+        const order = await payment.prepare({
           channel: Channel.CREDIT_CARD,
           items: [{
             name: 'Test',

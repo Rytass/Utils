@@ -16,7 +16,7 @@ const IDENTIFIER = '8949bf87c8d710a0';
 
 describe('HwaNan Payment', () => {
   describe('Initialize', () => {
-    it('should represent MerchantID, TerminalID, merID, MerchantName', () => {
+    it('should represent MerchantID, TerminalID, merID, MerchantName', async () => {
       const payment = new HwaNanPayment({
         merchantId: MERCHANT_ID,
         terminalId: TERMINAL_ID,
@@ -25,7 +25,7 @@ describe('HwaNan Payment', () => {
         identifier: IDENTIFIER,
       });
 
-      const order = payment.prepare({
+      const order = await payment.prepare({
         items: [{
           name: 'Pencil',
           unitPrice: 10,
@@ -39,7 +39,7 @@ describe('HwaNan Payment', () => {
       expect(order.form.MerchantName).toBe('Rytass Shop');
     });
 
-    it('should represent customize template', () => {
+    it('should represent customize template', async () => {
       const payment = new HwaNanPayment({
         merchantId: MERCHANT_ID,
         terminalId: TERMINAL_ID,
@@ -50,7 +50,7 @@ describe('HwaNan Payment', () => {
         customizePageVersion: 'TestTemplate',
       });
 
-      const order = payment.prepare({
+      const order = await payment.prepare({
         items: [{
           name: 'Pencil',
           unitPrice: 10,
@@ -85,8 +85,8 @@ describe('HwaNan Payment', () => {
       identifier: IDENTIFIER,
     });
 
-    it('should prepare order form payload', () => {
-      const order = payment.prepare({
+    it('should prepare order form payload', async () => {
+      const order = await payment.prepare({
         id: '202303210001',
         items: [{
           name: 'Pencil',
@@ -101,8 +101,8 @@ describe('HwaNan Payment', () => {
       expect(order.form.purchAmt).toBe(20);
     });
 
-    it('should prepare order form html', () => {
-      const order = payment.prepare({
+    it('should prepare order form html', async () => {
+      const order = await payment.prepare({
         id: '202303210001',
         items: [{
           name: 'Pencil',
@@ -116,8 +116,8 @@ describe('HwaNan Payment', () => {
       expect(formHTML).toMatch(/^<!DOCTYPE html>/);
     });
 
-    it('should auto generate order id', () => {
-      const order = payment.prepare({
+    it('should auto generate order id', async () => {
+      const order = await payment.prepare({
         items: [{
           name: 'Pencil',
           unitPrice: 10,
@@ -131,7 +131,7 @@ describe('HwaNan Payment', () => {
     it('should throw error when prepare order with no items', () => {
       expect(() => payment.prepare({
         items: [],
-      })).toThrow();
+      })).rejects.toThrow();
     });
   });
 
@@ -160,7 +160,7 @@ describe('HwaNan Payment', () => {
         withServer: true,
         checkoutPath: '/checkout',
         onServerListen: async () => {
-          const order = payment.prepare({
+          const order = await payment.prepare({
             items: [{
               name: 'Pencil',
               unitPrice: 10,
@@ -203,7 +203,7 @@ describe('HwaNan Payment', () => {
           unitPrice: 10,
           quantity: 2,
         }],
-      })).toThrow();
+      })).rejects.toThrow();
     });
 
     it('should set port for build-in server', (done) => {
@@ -267,7 +267,7 @@ describe('HwaNan Payment', () => {
           expect(order.id).toBe('123456789');
         },
         onServerListen: async () => {
-          const order = payment.prepare({
+          const order = await payment.prepare({
             id: '123456789',
             items: [{
               name: 'Pencil',
@@ -331,7 +331,7 @@ describe('HwaNan Payment', () => {
           expect(order.id).toBe('123456789');
         },
         onServerListen: async () => {
-          const order = payment.prepare({
+          const order = await payment.prepare({
             id: '123456789',
             items: [{
               name: 'Pencil',
