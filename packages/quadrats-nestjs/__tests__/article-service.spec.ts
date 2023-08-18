@@ -3,6 +3,7 @@ import axios from 'axios';
 import { QuadratsModule } from '../src/module';
 import { QuadratsArticleService } from '../src/services/article.service';
 import type { QuadratsElement, QuadratsText } from '@quadrats/core';
+import { Language } from '../src/language';
 
 const HOST = 'https://custom-url.com';
 const ACCESS_KEY = '1111111111111';
@@ -415,12 +416,12 @@ describe('Quadrats Nestjs Module - Article Service', () => {
         type: 'p',
         children: [{ text: '中文內容' }],
       }],
-      language: 'zh-Hant',
+      language: Language.ZH_TW,
     });
 
     expect(article.id).toBeDefined();
     expect(article.title).toBe('Test Article Rytass');
-    expect(article.contents[0].language).toBe('zh-Hant');
+    expect(article.contents[0].language).toBe(Language.ZH_TW);
     expect((article.contents[0].elements[0].children[0] as QuadratsText).text).toBe('中文內容');
   });
 
@@ -481,12 +482,12 @@ describe('Quadrats Nestjs Module - Article Service', () => {
         type: 'p',
         children: [{ text: '中文內容' }],
       }],
-      language: 'zh-Hant',
+      language: Language.ZH_TW,
     });
 
     expect(article.id).toBeDefined();
     expect(article.title).toBe('Test Article Rytass');
-    expect(article.contents[0].language).toBe('zh-Hant');
+    expect(article.contents[0].language).toBe(Language.ZH_TW);
     expect((article.contents[0].elements[0].children[0] as QuadratsText).text).toBe('中文內容');
   });
 
@@ -547,26 +548,26 @@ describe('Quadrats Nestjs Module - Article Service', () => {
           type: 'p',
           children: [{ text: '中文內容' }],
         }],
-        language: 'zh-Hant',
+        language: Language.ZH_TW,
       }, {
         elements: [{
           type: 'p',
           children: [{ text: 'English Content' }],
         }],
-        language: 'en',
+        language: Language.EN_US,
       }],
     });
 
     expect(article.id).toBeDefined();
     expect(article.title).toBe('Test Article Rytass');
 
-    const chineseContent = article.contents.find(content => content.language === 'zh-Hant');
-    const englishContent = article.contents.find(content => content.language === 'en');
+    const chineseContent = article.contents.find(content => content.language === Language.ZH_TW);
+    const englishContent = article.contents.find(content => content.language === Language.EN_US);
 
-    expect(chineseContent!.language).toBe('zh-Hant');
+    expect(chineseContent!.language).toBe(Language.ZH_TW);
     expect((chineseContent!.elements[0].children[0] as QuadratsText).text).toBe('中文內容');
 
-    expect(englishContent!.language).toBe('en');
+    expect(englishContent!.language).toBe(Language.EN_US);
     expect((englishContent!.elements[0].children[0] as QuadratsText).text).toBe('English Content');
   });
 
@@ -628,26 +629,26 @@ describe('Quadrats Nestjs Module - Article Service', () => {
           type: 'p',
           children: [{ text: '中文內容' }],
         }],
-        language: 'zh-Hant',
+        language: Language.ZH_TW,
       }, {
         elements: [{
           type: 'p',
           children: [{ text: 'English Content' }],
         }],
-        language: 'en',
+        language: Language.EN_US,
       }],
     });
 
     expect(article.id).toBeDefined();
     expect(article.title).toBe('Test Article Rytass');
 
-    const chineseContent = article.contents.find(content => content.language === 'zh-Hant');
-    const englishContent = article.contents.find(content => content.language === 'en');
+    const chineseContent = article.contents.find(content => content.language === Language.ZH_TW);
+    const englishContent = article.contents.find(content => content.language === Language.EN_US);
 
-    expect(chineseContent!.language).toBe('zh-Hant');
+    expect(chineseContent!.language).toBe(Language.ZH_TW);
     expect((chineseContent!.elements[0].children[0] as QuadratsText).text).toBe('中文內容');
 
-    expect(englishContent!.language).toBe('en');
+    expect(englishContent!.language).toBe(Language.EN_US);
     expect((englishContent!.elements[0].children[0] as QuadratsText).text).toBe('English Content');
   });
 });

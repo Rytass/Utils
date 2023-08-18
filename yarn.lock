@@ -1831,11 +1831,6 @@
   dependencies:
     "@types/node" "*"
 
-"@types/language-tags@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@types/language-tags/-/language-tags-1.0.1.tgz#58e04ca5a27031b8cb7c0c91eec653f245b6bde9"
-  integrity sha512-rTtRNIewaBrkMUfsCe7ES3xsTRQcEVgic2yoDY9hM3D/nwmABcG2du4l4+dTbWvfO8pUYwL4/2TbWFJa/AGc2g==
-
 "@types/lru-cache@^7.10.10":
   version "7.10.10"
   resolved "https://registry.yarnpkg.com/@types/lru-cache/-/lru-cache-7.10.10.tgz#3fa937c35ff4b3f6753d5737915c9bf8e693a713"
@@ -6012,18 +6007,6 @@ kleur@^3.0.3:
   version "3.0.3"
   resolved "https://registry.yarnpkg.com/kleur/-/kleur-3.0.3.tgz#a79c9ecc86ee1ce3fa6206d1216c501f147fc07e"
   integrity sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w==
-
-language-subtag-registry@^0.3.20:
-  version "0.3.22"
-  resolved "https://registry.yarnpkg.com/language-subtag-registry/-/language-subtag-registry-0.3.22.tgz#2e1500861b2e457eba7e7ae86877cbd08fa1fd1d"
-  integrity sha512-tN0MCzyWnoz/4nHS6uxdlFWoUZT7ABptwKPQ52Ea7URk6vll88bWBVhodtnlfEuCcKWNGoc+uGbw1cwa9IKh/w==
-
-language-tags@^1.0.8:
-  version "1.0.8"
-  resolved "https://registry.yarnpkg.com/language-tags/-/language-tags-1.0.8.tgz#042b4bdb0d4e771a9f8cc2fdc9bb26a52a367312"
-  integrity sha512-aWAZwgPLS8hJ20lNPm9HNVs4inexz6S2sQa3wx/+ycuutMNE5/IfYxiWYBbi+9UWCQVaXYCOPUl6gFrPR7+jGg==
-  dependencies:
-    language-subtag-registry "^0.3.20"
 
 lerna@^6.6.2:
   version "6.6.2"

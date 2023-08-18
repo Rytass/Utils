@@ -1,5 +1,6 @@
 import { QuadratsElement } from '@quadrats/core';
 import { LanguageContents } from './language-contents';
+import { Language } from '../language';
 
 export interface CreateArticleOptions {
   title: string;
@@ -7,7 +8,7 @@ export interface CreateArticleOptions {
   tags: string[];
   releasedAt?: Date | null;
   contents?: QuadratsElement[];
-  language?: string;
+  language?: Language;
 
   // Multi-language article
   languageContents?: LanguageContents[];

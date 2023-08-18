@@ -1,5 +1,6 @@
 export * from './module';
 export * from './typings';
+export * from './language';
 
 // Services
 export * from './services/article.service';
