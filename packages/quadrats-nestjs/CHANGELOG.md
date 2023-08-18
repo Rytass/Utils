@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.4](https://github.com/Rytass/Utils/compare/@rytass/quadrats-nestjs@0.1.3...@rytass/quadrats-nestjs@0.1.4) (2023-08-18)
+
+
+### Bug Fixes
+
+* **quadrats-nestjs:** language mapping issue, export valid languages type ([5aaafea](https://github.com/Rytass/Utils/commit/5aaafea010d3b63935a2d14319cb4bd7328f4b58))
+
+
+
+
+
 ## [0.1.3](https://github.com/Rytass/Utils/compare/@rytass/quadrats-nestjs@0.1.2...@rytass/quadrats-nestjs@0.1.3) (2023-06-19)
 
 
