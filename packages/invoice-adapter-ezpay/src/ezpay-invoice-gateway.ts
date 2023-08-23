@@ -351,7 +351,7 @@ export class EZPayInvoiceGateway implements InvoiceGateway<EZPayInvoice, EZPayIn
 
         return {
           ...vars,
-          [key]: decodeURIComponent(value.trim()).replaceAll('\x1B/', ''),
+          [key]: decodeURIComponent(value.trim()).replaceAll('\x1B/', '').replaceAll('\b', ''),
         };
       }, {}) as EZPayInvoiceLoveCodeValidationSuccessResponse;
 
