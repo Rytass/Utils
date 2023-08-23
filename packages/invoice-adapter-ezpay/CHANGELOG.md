@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.1](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ezpay@0.2.0...@rytass/invoice-adapter-ezpay@0.2.1) (2023-08-23)
+
+
+### Bug Fixes
+
+* **invoice-adapter-ezpay:** fixing meaningless \b in IsExist value by substituting with empty string ([2eccc83](https://github.com/Rytass/Utils/commit/2eccc83c828691795325837986e84904e4c756f9))
+
+
+
+
+
 # [0.2.0](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ezpay@0.1.14...@rytass/invoice-adapter-ezpay@0.2.0) (2023-08-12)
 
 **Note:** Version bump only for package @rytass/invoice-adapter-ezpay
