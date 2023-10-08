@@ -4,7 +4,7 @@ import { Readable } from 'stream';
 import { fromBuffer } from 'file-type';
 import { ImageTranscoderOptions } from './typings';
 import { SupportSources } from './constants';
-import { UnsupportSource } from './errors';
+import { UnsupportedSource } from './errors';
 
 export class ImageTranscoder implements FileConverter<ImageTranscoderOptions> {
   private readonly options: ImageTranscoderOptions;
@@ -20,7 +20,7 @@ export class ImageTranscoder implements FileConverter<ImageTranscoderOptions> {
       const extension = await fromBuffer(file);
 
       if (!extension || !~SupportSources.indexOf(extension.ext)) {
-        throw new UnsupportSource();
+        throw new UnsupportedSource();
       }
 
       converter = sharp(file);

@@ -207,7 +207,7 @@ export interface BarcodeInfo {
 export enum OrderState {
   INITED = 'INITED',
   PRE_COMMIT = 'PRE_COMMIT', // Created
-  ASYNC_INFO_RETRIEVED = 'ASYNC_INFO_RETRIEVED', // Async Payment Infomation Retrived (ATM/CVS/Barcode...)
+  ASYNC_INFO_RETRIEVED = 'ASYNC_INFO_RETRIEVED', // Async Payment Information Retrieved (ATM/CVS/Barcode...)
   COMMITTED = 'COMMITTED', // Fulfilled
   FAILED = 'FAILED',
   REFUNDED = 'REFUNDED',

@@ -1,4 +1,4 @@
-import { CustomsMark, InvoiceIssueOptions, InvoiceLoveCodeCarrier, InvoiceMobileCarrier, InvoiceMoicaCarrier, InvoicePaymentItem, InvoicePrintCarrier, InvoiceState, InvoiceVoidOptions, InvoicPlatformCarrier, TaxType } from '@rytass/invoice';
+import { CustomsMark, InvoiceIssueOptions, InvoiceLoveCodeCarrier, InvoiceMobileCarrier, InvoiceMoicaCarrier, InvoicePaymentItem, InvoicePrintCarrier, InvoiceState, InvoiceVoidOptions, InvoicePlatformCarrier, TaxType } from '@rytass/invoice';
 import { EZPayInvoice } from './ezpay-invoice';
 
 export enum EZPayBaseUrls {
@@ -74,7 +74,7 @@ export const EZPayTaxTypeCode = {
   [TaxType.MIXED]: '9',
 }
 
-export type EZPayAvailableCarrier = InvoicePrintCarrier | InvoiceLoveCodeCarrier | InvoiceMobileCarrier | InvoiceMoicaCarrier | InvoicPlatformCarrier;
+export type EZPayAvailableCarrier = InvoicePrintCarrier | InvoiceLoveCodeCarrier | InvoiceMobileCarrier | InvoiceMoicaCarrier | InvoicePlatformCarrier;
 
 export interface EZPayInvoiceMobileValidationPayload {
   TimeStamp: string;

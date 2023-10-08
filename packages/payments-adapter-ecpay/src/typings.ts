@@ -536,7 +536,7 @@ export enum ECPayCreditCardOrderStatus {
   AUTHORIZED = '已授權',
 }
 
-export enum ECPayCredirCardOrderCloseStatus {
+export enum ECPayCreditCardOrderCloseStatus {
   PREPARE = '要關帳',
   COMMITTED = '已關帳',
   CANCELLED = '已取消',
@@ -560,7 +560,7 @@ export interface ECPayCreditCardDetailQueryResponse {
     authtime: string;
     status: ECPayCreditCardOrderStatus;
     close_data: {
-      status: ECPayCredirCardOrderCloseStatus;
+      status: ECPayCreditCardOrderCloseStatus;
       sno: string;
       amount: string;
       datetime: string;

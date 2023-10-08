@@ -8,9 +8,9 @@ import { QuadratsArticleImageService } from '../src/services/image.service';
 import axios from 'axios';
 import { Readable } from 'node:stream';
 
-const HOST = 'https://api.quadrats.io';
-const ACCESS_KEY = '02500000031350000000';
-const SECRET = 'KaoCULLK36DxoBMXA9x6SEXSZHAGyq4a';
+const HOST = 'https://custom-url.com';
+const ACCESS_KEY = '1111111111111';
+const SECRET = '398h50w49g8042380f3e4irj4if3';
 
 describe('Quadrats Nestjs Module - Image Service', () => {
   let moduleRef: TestingModule;

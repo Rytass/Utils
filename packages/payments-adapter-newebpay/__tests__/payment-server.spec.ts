@@ -4,7 +4,7 @@
 
 import { CreditCardECI, OrderState } from '@rytass/payments';
 import { NewebPaymentChannel, NewebPayVirtualAccountBank, NewebPayPayment, NewebPayWebATMBank, NewebPayWebATMCommitMessage, NewebPayAdditionInfoCreditCard, NewebPayCreditCardCommitMessage, NewebPayVirtualAccountCommitMessage } from '../src';
-import { NewebPayAPIResponseWrapper, NewebPayCreditCardSpeedCheckoutMode, NewebPayInfoRetriveEncryptedPayload, NewebPayNotifyEncryptedPayload } from '../src/typings';
+import { NewebPayAPIResponseWrapper, NewebPayCreditCardSpeedCheckoutMode, NewebPayInfoRetrieveEncryptedPayload, NewebPayNotifyEncryptedPayload } from '../src/typings';
 import request from 'supertest';
 import { DateTime } from 'luxon';
 import { createCipheriv, createHash } from 'crypto';
@@ -576,7 +576,7 @@ describe('NewebPay Payment Server', () => {
               BankCode: '012',
               CodeNo: '686168251938',
             },
-          } as NewebPayAPIResponseWrapper<NewebPayInfoRetriveEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
+          } as NewebPayAPIResponseWrapper<NewebPayInfoRetrieveEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
 
           await request(payment._server)
             .post('/newebpay/async-informations')
@@ -632,7 +632,7 @@ describe('NewebPay Payment Server', () => {
               BankCode: '012',
               CodeNo: '686168251938',
             },
-          } as NewebPayAPIResponseWrapper<NewebPayInfoRetriveEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
+          } as NewebPayAPIResponseWrapper<NewebPayInfoRetrieveEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
 
           await request(payment._server)
             .post('/newebpay/async-informations')
@@ -676,7 +676,7 @@ describe('NewebPay Payment Server', () => {
               BankCode: '012',
               CodeNo: '686168251938',
             },
-          } as NewebPayAPIResponseWrapper<NewebPayInfoRetriveEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
+          } as NewebPayAPIResponseWrapper<NewebPayInfoRetrieveEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
 
           await request(payment._server)
             .post('/newebpay/async-informations')
@@ -849,7 +849,7 @@ describe('NewebPay Payment Server', () => {
               BankCode: '012',
               CodeNo: '686168251938',
             },
-          } as NewebPayAPIResponseWrapper<NewebPayInfoRetriveEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
+          } as NewebPayAPIResponseWrapper<NewebPayInfoRetrieveEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
 
           const response = await request(payment._server)
             .post('/newebpay/async-informations')
@@ -974,7 +974,7 @@ describe('NewebPay Payment Server', () => {
               BankCode: '012',
               CodeNo: '686168251938',
             },
-          } as NewebPayAPIResponseWrapper<NewebPayInfoRetriveEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
+          } as NewebPayAPIResponseWrapper<NewebPayInfoRetrieveEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
 
           await request(payment._server)
             .post('/newebpay/async-informations')
@@ -1071,7 +1071,7 @@ describe('NewebPay Payment Server', () => {
               BankCode: '012',
               CodeNo: '686168251938',
             },
-          } as NewebPayAPIResponseWrapper<NewebPayInfoRetriveEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
+          } as NewebPayAPIResponseWrapper<NewebPayInfoRetrieveEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
 
           await request(payment._server)
             .post('/newebpay/async-informations')

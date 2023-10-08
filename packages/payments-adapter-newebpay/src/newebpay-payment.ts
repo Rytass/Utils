@@ -8,7 +8,7 @@ import ngrok from 'ngrok';
 import { LRUCache } from 'lru-cache';
 import { Server, IncomingMessage, ServerResponse, createServer } from 'http';
 import { NewebPayOrder } from './newebpay-order';
-import { AllowUILanguage, NewebPaymentChannel, NewebPayCommitMessage, NewebPayMPGMakeOrderEncryptedPayload, NewebPayMPGMakeOrderPayload, NewebPayOrderInput, NewebPayPaymentInitOptions, NewebPayNotifyPayload, NewebPayNotifyEncryptedPayload, NewebPayInfoRetriveEncryptedPayload, NewebPayQueryRequestPayload, NewebPayAPIResponseWrapper, NewebPayQueryResponsePayload, NewebPayCreditCardBalanceStatus, NewebPayOrderFromServerInit, NewebPayCreditCardCancelRequestPayload, NewebPayCreditCardCancelEncryptedRequestPayload, NewebPayCreditCardCancelResponse, NewebPayCreditCardCloseEncryptedRequestPayload, NewebPayCreditCardCloseRequestPayload, NewebPayCreditCardCloseResponse, NewebPayOrderStatusFromAPI, OrdersCache } from './typings';
+import { AllowUILanguage, NewebPaymentChannel, NewebPayCommitMessage, NewebPayMPGMakeOrderEncryptedPayload, NewebPayMPGMakeOrderPayload, NewebPayOrderInput, NewebPayPaymentInitOptions, NewebPayNotifyPayload, NewebPayNotifyEncryptedPayload, NewebPayInfoRetrieveEncryptedPayload, NewebPayQueryRequestPayload, NewebPayAPIResponseWrapper, NewebPayQueryResponsePayload, NewebPayCreditCardBalanceStatus, NewebPayOrderFromServerInit, NewebPayCreditCardCancelRequestPayload, NewebPayCreditCardCancelEncryptedRequestPayload, NewebPayCreditCardCancelResponse, NewebPayCreditCardCloseEncryptedRequestPayload, NewebPayCreditCardCloseRequestPayload, NewebPayCreditCardCloseResponse, NewebPayOrderStatusFromAPI, OrdersCache } from './typings';
 import { NewebPayAdditionInfoCreditCard, NewebPayCreditCardCommitMessage, NewebPayCreditCardOrderInput } from './typings/credit-card.typing';
 import { NewebPayWebATMCommitMessage, NewebPayWebATMOrderInput } from './typings/webatm.typing';
 import { NewebPayVirtualAccountCommitMessage } from './typings/virtual-account.typing';
@@ -40,7 +40,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
     this.language = options?.language ?? AllowUILanguage.ZH_TW;
     this.serverHost = options?.serverHost ?? 'http://localhost:3000';
     this.callbackPath = options?.callbackPath ?? '/payments/newebpay/callback';
-    this.asyncInfoPath = options?.asyncInfoPath ?? '/payments/newebpay/async-informations';
+    this.asyncInfoPath = options?.asyncInfoPath ?? '/payments/newebpay/async-information';
     this.checkoutPath = options?.checkoutPath ?? '/payments/newebpay/checkout';
 
     if (options?.withServer) {
@@ -171,7 +171,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
           }
 
           case this.asyncInfoPath: {
-            const resolvedData = await this.resolveEncryptedPayload<NewebPayInfoRetriveEncryptedPayload>(payload.TradeInfo, payload.TradeSha);
+            const resolvedData = await this.resolveEncryptedPayload<NewebPayInfoRetrieveEncryptedPayload>(payload.TradeInfo, payload.TradeSha);
             const order = await this.pendingOrdersCache.get(resolvedData.MerchantOrderNo);
 
             if (!order) {
@@ -197,7 +197,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
     });
   }
 
-  private handleAsyncInformation(order: NewebPayOrder<NewebPayCommitMessage>, payload: NewebPayInfoRetriveEncryptedPayload) {
+  private handleAsyncInformation(order: NewebPayOrder<NewebPayCommitMessage>, payload: NewebPayInfoRetrieveEncryptedPayload) {
     if (order.state !== OrderState.PRE_COMMIT) return;
 
     switch (payload.PaymentType) {

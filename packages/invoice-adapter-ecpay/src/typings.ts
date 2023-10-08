@@ -60,13 +60,13 @@ export interface ECPayQueryListInvoiceResponseDecrypted {
   }[];
 }
 
-export type ECPayInvoiceQueryOptions = ECPayInvoiceQueryWithOrderIdOptions | ECPayInvoiceQueryWithInvouceNumberAndDateOptions;
+export type ECPayInvoiceQueryOptions = ECPayInvoiceQueryWithOrderIdOptions | ECPayInvoiceQueryWithInvoiceNumberAndDateOptions;
 
 export interface ECPayInvoiceQueryWithOrderIdOptions {
   orderId: string;
 }
 
-export interface ECPayInvoiceQueryWithInvouceNumberAndDateOptions {
+export interface ECPayInvoiceQueryWithInvoiceNumberAndDateOptions {
   invoiceNumber: string;
   issuedOn: Date;
 }
@@ -74,13 +74,13 @@ interface ECPayInvoiceQueryBasePayload {
   MerchantID: string;
 }
 
-export type ECPayInvoiceQueryRequestBody = ECPayInvoiceQueryWithOrderIdRequestBody | ECPayInvoiceQueryWithInvoiceNumbreAndDateRequestBody
+export type ECPayInvoiceQueryRequestBody = ECPayInvoiceQueryWithOrderIdRequestBody | ECPayInvoiceQueryWithInvoiceNumberAndDateRequestBody
 
 interface ECPayInvoiceQueryWithOrderIdRequestBody extends ECPayInvoiceQueryBasePayload {
   RelateNumber: string;
 }
 
-interface ECPayInvoiceQueryWithInvoiceNumbreAndDateRequestBody extends ECPayInvoiceQueryBasePayload {
+interface ECPayInvoiceQueryWithInvoiceNumberAndDateRequestBody extends ECPayInvoiceQueryBasePayload {
   InvoiceNo: string;
   InvoiceDate: string;
 }

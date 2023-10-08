@@ -18,7 +18,7 @@ export type TCatLogisticsStatus =
 /**
  * Create customized logistics interface for TCAT
  *
- * The type parameter need to satisfy at least `DELIVEERED` | `DELIVERING` | `SHELVED`,
+ * The type parameter need to satisfy at least `DELIVERED` | `DELIVERING` | `SHELVED`,
  * and provide a statusMap function to generate array of *LogisticsStatusHistory* with corresponding status.
  *
  * ```

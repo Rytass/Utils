@@ -125,7 +125,7 @@ export interface NewebPayNotifyPayload {
 
 type NewebPayPaymentType = 'CREDIT' | 'ANDROIDPAY' | 'SAMSUNGPAY' | 'LINEPAY' | 'UNIONPAY' | 'WEBATM' | 'VACC' | 'CVS' | 'BARCODE' | 'ESUNWALLET' | 'TAIWANPAY' | 'EZPAY' | 'EZPWECHAT' | 'EZPALIPAY';
 
-export interface NewebPayInfoRetriveEncryptedPayload {
+export interface NewebPayInfoRetrieveEncryptedPayload {
   MerchantID: string;
   Amt: number;
   TradeNo: string;

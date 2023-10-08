@@ -5,7 +5,7 @@ import { QuadratsArticleTagService } from '../src/services/tag.service';
 
 const HOST = 'https://custom-url.com';
 const ACCESS_KEY = '1111111111111';
-const SECRET = '398h50w49g8042380feirjif3';
+const SECRET = '398h50w49g8042380f3e4irj4if3';
 
 describe('Quadrats Nestjs Module - Tag Service', () => {
   let moduleRef: TestingModule;

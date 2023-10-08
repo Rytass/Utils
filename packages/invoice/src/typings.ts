@@ -59,12 +59,12 @@ export interface InvoiceLoveCodeCarrier extends InvoiceCarrierBase {
   code: string;
 }
 
-export interface InvoicMemberCarrier extends InvoiceCarrierBase {
+export interface InvoiceMemberCarrier extends InvoiceCarrierBase {
   type: InvoiceCarrierType.MEMBER;
   code: string;
 }
 
-export interface InvoicPlatformCarrier extends InvoiceCarrierBase {
+export interface InvoicePlatformCarrier extends InvoiceCarrierBase {
   type: InvoiceCarrierType.PLATFORM;
   code: string;
 }
@@ -73,13 +73,13 @@ export type InvoiceCarrier = InvoicePrintCarrier
   | InvoiceMobileCarrier
   | InvoiceMoicaCarrier
   | InvoiceLoveCodeCarrier
-  | InvoicMemberCarrier
-  | InvoicPlatformCarrier;
+  | InvoiceMemberCarrier
+  | InvoicePlatformCarrier;
 
 export const InvoiceCarriers = {
   PRINT: { type: InvoiceCarrierType.PRINT } as InvoicePrintCarrier,
-  MEMBER: { type: InvoiceCarrierType.MEMBER } as InvoicMemberCarrier,
-  PLATFORM: { type: InvoiceCarrierType.PLATFORM } as InvoicPlatformCarrier,
+  MEMBER: { type: InvoiceCarrierType.MEMBER } as InvoiceMemberCarrier,
+  PLATFORM: { type: InvoiceCarrierType.PLATFORM } as InvoicePlatformCarrier,
   LOVE_CODE: (loveCode: string) => ({
     type: InvoiceCarrierType.LOVE_CODE,
     code: loveCode,

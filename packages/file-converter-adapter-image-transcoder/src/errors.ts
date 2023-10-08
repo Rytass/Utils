@@ -1,3 +1,3 @@
-export class UnsupportSource extends Error {
-  message = 'UnsupportSource'
+export class UnsupportedSource extends Error {
+  message = 'UnsupportedSource'
 }

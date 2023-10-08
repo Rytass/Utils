@@ -2,7 +2,7 @@ import { SecretManager } from '@rytass/secret';
 import axios, { AxiosError } from 'axios';
 import { EventEmitter } from 'events';
 import { VaultSecretOptions } from '.';
-import { VaultAuthMethods, VaultEvents, VaultGetSecretResponse, VaultAPIFailedResponse, VaultTokenRetriveResponse, VaultTokenRetriveSuccessResponse, VaultGetSecretSuccessResponse, VaultSecretState, VaultSecretOnlineOptions, VaultGetType, VaultSetType, VaultDeleteType } from './typings';
+import { VaultAuthMethods, VaultEvents, VaultGetSecretResponse, VaultAPIFailedResponse, VaultTokenRetrieveResponse, VaultTokenRetrieveSuccessResponse, VaultGetSecretSuccessResponse, VaultSecretState, VaultSecretOnlineOptions, VaultGetType, VaultSetType, VaultDeleteType } from './typings';
 
 export class VaultSecret<Options extends VaultSecretOptions> extends SecretManager {
   private readonly _host: string;
@@ -29,7 +29,7 @@ export class VaultSecret<Options extends VaultSecretOptions> extends SecretManag
     this._tokenTTL = options.tokenTTL || this._tokenTTL;
     this._online = options.online || this._online;
 
-    this.retriveToken()?.then(async () => {
+    this.retrieveToken()?.then(async () => {
       if (!this._online) {
         [this._cacheData, this._cacheVersion] = await this.getSecretVersionOnline();
       }
@@ -58,14 +58,14 @@ export class VaultSecret<Options extends VaultSecretOptions> extends SecretManag
     if (this._token) this.renewToken();
   }
 
-  private retriveToken() {
+  private retrieveToken() {
     if (this._auth.account) {
-      return this.retriveTokenByUesrPass(this._auth.account, this._auth.password);
+      return this.retrieveTokenByUserPass(this._auth.account, this._auth.password);
     }
   }
 
-  private async retriveTokenByUesrPass(account: string, password: string) {
-    const { data } = await axios.post<VaultTokenRetriveResponse>(`${this._host}/v1/auth/userpass/login/${account}`, JSON.stringify({
+  private async retrieveTokenByUserPass(account: string, password: string) {
+    const { data } = await axios.post<VaultTokenRetrieveResponse>(`${this._host}/v1/auth/userpass/login/${account}`, JSON.stringify({
       password,
     }), {
       headers: {
@@ -78,21 +78,21 @@ export class VaultSecret<Options extends VaultSecretOptions> extends SecretManag
         this.emitter.emit(VaultEvents.ERROR, error);
       });
 
-      this.ternimate();
+      this.terminate();
 
       return;
     }
 
-    this._token = (data as VaultTokenRetriveSuccessResponse).auth.client_token;
-    this._tokenExpiredOn = Date.now() + Math.max((data as VaultTokenRetriveSuccessResponse).auth.lease_duration - 300, 0); // Calculate safety expires time
+    this._token = (data as VaultTokenRetrieveSuccessResponse).auth.client_token;
+    this._tokenExpiredOn = Date.now() + Math.max((data as VaultTokenRetrieveSuccessResponse).auth.lease_duration - 300, 0); // Calculate safety expires time
   }
 
   private async renewToken() {
     if (this._tokenExpiredOn! < Date.now()) {
-      return this.retriveToken();
+      return this.retrieveToken();
     }
 
-    const { data } = await axios.post<VaultTokenRetriveResponse>(`${this._host}/v1/auth/token/renew-self`, null, {
+    const { data } = await axios.post<VaultTokenRetrieveResponse>(`${this._host}/v1/auth/token/renew-self`, null, {
       headers: {
         'X-Vault-Token': this._token!,
       },
@@ -103,13 +103,13 @@ export class VaultSecret<Options extends VaultSecretOptions> extends SecretManag
         this.emitter.emit(VaultEvents.ERROR, error);
       });
 
-      this.ternimate();
+      this.terminate();
 
       return;
     }
 
-    this._token = (data as VaultTokenRetriveSuccessResponse).auth.client_token;
-    this._tokenExpiredOn = Date.now() + (data as VaultTokenRetriveSuccessResponse).auth.lease_duration - 300; // Calculate safety expires time
+    this._token = (data as VaultTokenRetrieveSuccessResponse).auth.client_token;
+    this._tokenExpiredOn = Date.now() + (data as VaultTokenRetrieveSuccessResponse).auth.lease_duration - 300; // Calculate safety expires time
 
     this.emitter.emit(VaultEvents.TOKEN_RENEWED);
   }
@@ -240,7 +240,7 @@ export class VaultSecret<Options extends VaultSecretOptions> extends SecretManag
     }
   }
 
-  public ternimate() {
+  public terminate() {
     this._state = VaultSecretState.TERMINATED;
     this._tokenExpiredOn = Date.now();
 
@@ -269,15 +269,15 @@ export class VaultSecret<Options extends VaultSecretOptions> extends SecretManag
     }
 
     return new Promise<T>((resolve) => {
-      const onTokenRetrived = () => {
-        this.emitter.removeListener(VaultEvents.READY, onTokenRetrived);
-        this.emitter.removeListener(VaultEvents.TOKEN_RENEWED, onTokenRetrived);
+      const onTokenRetrieved = () => {
+        this.emitter.removeListener(VaultEvents.READY, onTokenRetrieved);
+        this.emitter.removeListener(VaultEvents.TOKEN_RENEWED, onTokenRetrieved);
 
         resolve(this.getSecretValue<T>(key));
       }
 
-      this.emitter.on(VaultEvents.READY, onTokenRetrived);
-      this.emitter.on(VaultEvents.TOKEN_RENEWED, onTokenRetrived);
+      this.emitter.on(VaultEvents.READY, onTokenRetrieved);
+      this.emitter.on(VaultEvents.TOKEN_RENEWED, onTokenRetrieved);
     }) as VaultGetType<Options, T>;
   }
 
@@ -297,15 +297,15 @@ export class VaultSecret<Options extends VaultSecretOptions> extends SecretManag
     }
 
     return new Promise<void>((resolve) => {
-      const onTokenRetrived = async () => {
-        this.emitter.removeListener(VaultEvents.READY, onTokenRetrived);
-        this.emitter.removeListener(VaultEvents.TOKEN_RENEWED, onTokenRetrived);
+      const onTokenRetrieved = async () => {
+        this.emitter.removeListener(VaultEvents.READY, onTokenRetrieved);
+        this.emitter.removeListener(VaultEvents.TOKEN_RENEWED, onTokenRetrieved);
 
         resolve(this.setSecretValueOnline<T>(key, value));
       }
 
-      this.emitter.on(VaultEvents.READY, onTokenRetrived);
-      this.emitter.on(VaultEvents.TOKEN_RENEWED, onTokenRetrived);
+      this.emitter.on(VaultEvents.READY, onTokenRetrieved);
+      this.emitter.on(VaultEvents.TOKEN_RENEWED, onTokenRetrieved);
     }) as VaultSetType<Options> ;
   }
 
@@ -325,15 +325,15 @@ export class VaultSecret<Options extends VaultSecretOptions> extends SecretManag
     }
 
     return new Promise<void>((resolve) => {
-      const onTokenRetrived = async () => {
-        this.emitter.removeListener(VaultEvents.READY, onTokenRetrived);
-        this.emitter.removeListener(VaultEvents.TOKEN_RENEWED, onTokenRetrived);
+      const onTokenRetrieved = async () => {
+        this.emitter.removeListener(VaultEvents.READY, onTokenRetrieved);
+        this.emitter.removeListener(VaultEvents.TOKEN_RENEWED, onTokenRetrieved);
 
         resolve(this.removeSecretKeyOnline(key));
       }
 
-      this.emitter.on(VaultEvents.READY, onTokenRetrived);
-      this.emitter.on(VaultEvents.TOKEN_RENEWED, onTokenRetrived);
+      this.emitter.on(VaultEvents.READY, onTokenRetrieved);
+      this.emitter.on(VaultEvents.TOKEN_RENEWED, onTokenRetrieved);
     }) as VaultDeleteType<Options>;
   }
 
