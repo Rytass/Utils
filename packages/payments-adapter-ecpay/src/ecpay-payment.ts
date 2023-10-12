@@ -7,7 +7,7 @@ import { createServer, IncomingMessage, ServerResponse, Server } from 'http';
 import debug from 'debug';
 import ngrok from 'ngrok';
 import { EventEmitter } from 'events';
-import { ECPayCallbackCreditPayload, ECPayCallbackPayload, ECPayCallbackPaymentType, ECPayCommitMessage, ECPayOrderCreditCardCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayQueryResultPayload, ECPayOrderVirtualAccountCommitMessage, Language, GetOrderInput, ECPayCreditCardOrderInput, ECPayQueryOrderPayload, ECPayOrderCVSCommitMessage, ECPayOrderBarcodeCommitMessage, ECPayAsyncInformationBarcodePayload, ECPayAsyncInformationCVSPayload, ECPayAsyncInformationVirtualAccountPayload, ECPayAsyncInformationPayload, ECPayCallbackVirtualAccountPayload, ECPayCallbackCVSPayload, ECPayCallbackBarcodePayload, ECPayCreditCardDetailQueryPayload, ECPayCreditCardDetailQueryResponse, ECPayCreditCardOrderStatus, ECPayCredirCardOrderCloseStatus, ECPayOrderActionPayload, ECPayOrderDoActionResponse, OrdersCache } from './typings';
+import { ECPayCallbackCreditPayload, ECPayCallbackPayload, ECPayCallbackPaymentType, ECPayCommitMessage, ECPayOrderCreditCardCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayQueryResultPayload, ECPayOrderVirtualAccountCommitMessage, Language, GetOrderInput, ECPayCreditCardOrderInput, ECPayQueryOrderPayload, ECPayOrderCVSCommitMessage, ECPayOrderBarcodeCommitMessage, ECPayAsyncInformationBarcodePayload, ECPayAsyncInformationCVSPayload, ECPayAsyncInformationVirtualAccountPayload, ECPayAsyncInformationPayload, ECPayCallbackVirtualAccountPayload, ECPayCallbackCVSPayload, ECPayCallbackBarcodePayload, ECPayCreditCardDetailQueryPayload, ECPayCreditCardDetailQueryResponse, ECPayCreditCardOrderStatus, ECPayCreditCardOrderCloseStatus, ECPayOrderActionPayload, ECPayOrderDoActionResponse, OrdersCache } from './typings';
 import { ECPayChannel, ECPayCVS, ECPayPaymentPeriodType, NUMERIC_CALLBACK_KEYS } from './constants';
 import { ECPayOrder } from './ecpay-order';
 
@@ -798,7 +798,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
             status: ECPayCreditCardOrderStatus.CLOSED,
             close_data: [
               {
-                status: ECPayCredirCardOrderCloseStatus.COMMITTED,
+                status: ECPayCreditCardOrderCloseStatus.COMMITTED,
                 sno: Date.now().toString(),
                 amount: amount.toString(),
                 datetime: DateTime.local().toFormat('yyyy/M/dd tt'),
@@ -822,7 +822,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
           status: ECPayCreditCardOrderStatus.CLOSED,
           close_data: [
             {
-              status: ECPayCredirCardOrderCloseStatus.COMMITTED,
+              status: ECPayCreditCardOrderCloseStatus.COMMITTED,
               sno: Date.now().toString(),
               amount: amount.toString(),
               datetime: DateTime.local().toFormat('yyyy/M/dd tt'),

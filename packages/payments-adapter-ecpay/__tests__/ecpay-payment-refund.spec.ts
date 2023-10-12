@@ -5,7 +5,7 @@
 import axios from 'axios';
 import { createHash } from 'crypto';
 import { DateTime } from 'luxon';
-import { ECPayPayment, OrderState, ECPayQueryOrderPayload, ECPayCredirCardOrderCloseStatus, ECPayCreditCardDetailQueryPayload, ECPayCreditCardOrderStatus, ECPayOrderActionPayload, ECPayOrder, ECPayOrderForm } from '../src';
+import { ECPayPayment, OrderState, ECPayQueryOrderPayload, ECPayCreditCardOrderCloseStatus, ECPayCreditCardDetailQueryPayload, ECPayCreditCardOrderStatus, ECPayOrderActionPayload, ECPayOrder, ECPayOrderForm } from '../src';
 
 function addMac(payload: Record<string, string>) {
   const mac = createHash('sha256')
@@ -169,7 +169,7 @@ describe('ECPayPayment Refund', () => {
               status: ECPayCreditCardOrderStatus.CLOSED,
               close_data: [
                 {
-                  status: ECPayCredirCardOrderCloseStatus.COMMITTED,
+                  status: ECPayCreditCardOrderCloseStatus.COMMITTED,
                   sno: Date.now().toString(),
                   amount: params.CreditAmount,
                   datetime: DateTime.local().toFormat('yyyy/M/dd tt'),

@@ -2,7 +2,7 @@ export {
   ECPayCallbackPaymentType,
   ECPayQueryResultStatus,
   ECPayCreditCardOrderStatus,
-  ECPayCredirCardOrderCloseStatus,
+  ECPayCreditCardOrderCloseStatus,
   ECPayATMBank,
 } from './typings';
 
