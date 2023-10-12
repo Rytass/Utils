@@ -1,5 +1,5 @@
-import { DynamicModule, Global, Module } from '@nestjs/common';
-import { QuadratsModuleOptions } from './typings';
+import { DynamicModule, Global, Module, Provider, Type } from '@nestjs/common';
+import { QuadratsModuleAsyncOptions, QuadratsModuleOptions } from './typings';
 import { API_HOST, QUADRATS_AUTH_CLIENT } from './constants';
 import { QuadratsArticleService } from './services/article.service';
 import { QuadratsArticleCategoryService } from './services/category.service';
@@ -39,5 +39,73 @@ export class QuadratsModule {
         QuadratsArticleImageService,
       ],
     } as DynamicModule;
+  }
+
+  static forRootAsync(options: QuadratsModuleAsyncOptions): DynamicModule {
+    const provider: Provider = {
+      provide: API_HOST,
+      // useValue: QuadratsModule.DEFAULT_HOST,
+      inject: options.inject || [],
+      useFactory: async() => {
+        const { host } = await options.useFactory()
+
+        return host || QuadratsModule.DEFAULT_HOST
+      },
+    }
+
+    return {
+      module: QuadratsModule,
+      global: true,
+      providers: [
+        ...this.createAsyncProviders(options),
+        provider,
+        QuadratsArticleService,
+        QuadratsArticleCategoryService,
+        QuadratsArticleTagService,
+        QuadratsArticleImageService,
+      ],
+      exports: [
+        QuadratsArticleService,
+        QuadratsArticleCategoryService,
+        QuadratsArticleTagService,
+        QuadratsArticleImageService,
+      ],
+    } as DynamicModule
+  }
+
+  private static createAsyncProviders(options: QuadratsModuleAsyncOptions): Provider[] {
+    // if (options.useExisting || options.useFactory) {
+      return [this.createAsyncOptionsProvider(options)]
+    // }
+
+    // const useClass = options.useClass as Type<QuadratsModuleOptions>
+
+    // return [
+    //   this.createAsyncOptionsProvider(options),
+    //   {
+    //     provide: useClass,
+    //     useClass,
+    //   },
+    // ]
+  }
+
+  private static createAsyncOptionsProvider(options: QuadratsModuleAsyncOptions): Provider {
+    // if (options.useFactory) {
+      return {
+        inject: options.inject || [],
+        provide: QUADRATS_AUTH_CLIENT,
+        useFactory: options.useFactory,
+      }
+    // }
+
+    // const inject = [
+    //   (options.useClass || options.useExisting) as Type<QuadratsModuleOptions>,
+    // ]
+
+    // return {
+    //   provide: QUADRATS_AUTH_CLIENT,
+    //   useFactory: async (optionsFactory: QuadratsModuleOptions) => optionsFactory,
+    //   inject,
+    // }
   }
 }
