@@ -101,18 +101,18 @@ describe('Quadrats Nestjs Module', () => {
     const request = jest.spyOn(axios, 'request');
 
     request.mockImplementationOnce(async (config) => {
-      expect(config.url).toBe(`${HOST}/graphql`);
-
       const data = JSON.parse(config.data as string) as {
         query: string;
         variables: {
           auth: {
+            host: string,
             accessKey: string;
             secret: string;
           }
         }
       };
 
+      expect(data.variables.auth.host).toBe(HOST);
       expect(data.variables.auth.accessKey).toBe(ACCESS_KEY);
       expect(data.variables.auth.secret).toBe(SECRET);
 
@@ -146,6 +146,7 @@ describe('Quadrats Nestjs Module', () => {
         query: string;
         variables: {
           auth: {
+            host: string,
             accessKey: string;
             secret: string;
           }
