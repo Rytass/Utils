@@ -1,6 +1,6 @@
 {
   "name": "@rytass/payments-adapter-hwanan",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Hwa Nan Bank Payment Adapter",
   "keywords": [
     "rytass",
@@ -24,7 +24,7 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/payments": "^0.1.0",
+    "@rytass/payments": "^0.1.1",
     "axios": "^1.4.0",
     "lru-cache": "^9.1.2",
     "ngrok": "^4.3.3"

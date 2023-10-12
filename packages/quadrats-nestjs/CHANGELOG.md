@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.5](https://github.com/Rytass/Utils/compare/@rytass/quadrats-nestjs@0.1.4...@rytass/quadrats-nestjs@0.1.5) (2023-10-12)
+
+
+### Features
+
+* 🎸 add quadrats module forRootAsync ([652dec3](https://github.com/Rytass/Utils/commit/652dec398fdf8acd6e0ee9426dd16bc2249c3c88))
+
+
+
+
+
 ## [0.1.4](https://github.com/Rytass/Utils/compare/@rytass/quadrats-nestjs@0.1.3...@rytass/quadrats-nestjs@0.1.4) (2023-08-18)
 
 

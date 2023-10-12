@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.1](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.2.0...@rytass/payments-adapter-ecpay@0.2.1) (2023-10-12)
+
+
+### Bug Fixes
+
+* **payments-adapter-ecpay:** typo ([84015e6](https://github.com/Rytass/Utils/commit/84015e6f41d7ba8ea9e212346ed581559ab426fe))
+
+
+
+
+
 # [0.2.0](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.1.2...@rytass/payments-adapter-ecpay@0.2.0) (2023-08-12)
 
 

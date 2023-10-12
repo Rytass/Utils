@@ -1,6 +1,6 @@
 {
   "name": "@rytass/secret-adapter-vault-nestjs",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Rytass Sceret Vault nestjs adapter",
   "keywords": [
     "rytass",
@@ -29,7 +29,7 @@
     "reflect-metadata": "^0.1.13"
   },
   "dependencies": {
-    "@rytass/secret-adapter-vault": "^0.2.0",
+    "@rytass/secret-adapter-vault": "^0.2.1",
     "regenerator-runtime": "^0.13.11"
   },
   "devDependencies": {
