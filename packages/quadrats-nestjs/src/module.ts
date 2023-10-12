@@ -44,7 +44,6 @@ export class QuadratsModule {
   static forRootAsync(options: QuadratsModuleAsyncOptions): DynamicModule {
     const provider: Provider = {
       provide: API_HOST,
-      // useValue: QuadratsModule.DEFAULT_HOST,
       inject: options.inject || [],
       useFactory: async() => {
         const { host } = await options.useFactory()
@@ -74,38 +73,14 @@ export class QuadratsModule {
   }
 
   private static createAsyncProviders(options: QuadratsModuleAsyncOptions): Provider[] {
-    // if (options.useExisting || options.useFactory) {
-      return [this.createAsyncOptionsProvider(options)]
-    // }
-
-    // const useClass = options.useClass as Type<QuadratsModuleOptions>
-
-    // return [
-    //   this.createAsyncOptionsProvider(options),
-    //   {
-    //     provide: useClass,
-    //     useClass,
-    //   },
-    // ]
+    return [this.createAsyncOptionsProvider(options)]
   }
 
   private static createAsyncOptionsProvider(options: QuadratsModuleAsyncOptions): Provider {
-    // if (options.useFactory) {
-      return {
-        inject: options.inject || [],
-        provide: QUADRATS_AUTH_CLIENT,
-        useFactory: options.useFactory,
-      }
-    // }
-
-    // const inject = [
-    //   (options.useClass || options.useExisting) as Type<QuadratsModuleOptions>,
-    // ]
-
-    // return {
-    //   provide: QUADRATS_AUTH_CLIENT,
-    //   useFactory: async (optionsFactory: QuadratsModuleOptions) => optionsFactory,
-    //   inject,
-    // }
+    return {
+      inject: options.inject || [],
+      provide: QUADRATS_AUTH_CLIENT,
+      useFactory: options.useFactory,
+    }
   }
 }
