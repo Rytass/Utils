@@ -6,19 +6,15 @@ import { FIND_CATEGORY_QUERY } from '../graphql/find-category.query';
 import { CREATE_CATEGORY_MUTATION } from '../graphql/create-category.mutation';
 import { RENAME_CATEGORY_MUTATION } from '../graphql/rename-category.mutation';
 import axios from 'axios';
-import {QuadratsModule} from '../module';
 
 @Injectable()
 export class QuadratsArticleCategoryService {
-  private readonly apiHost: string;
   constructor(
     @Inject(API_HOST)
-    private readonly hostConfig: { host: string },
+    private readonly apiHost: string,
     @Inject(QUADRATS_AUTH_CLIENT)
     private readonly auth: { accessKey: string, secret: string },
-  ) {
-    this.apiHost = this.hostConfig.host ?? QuadratsModule.DEFAULT_HOST
-  }
+  ) {}
 
   public async getAll(): Promise<QuadratsArticleCategory[]> {
     const { data } = await axios.request<{ data: { findCategories: QuadratsArticleCategory[] } }>({

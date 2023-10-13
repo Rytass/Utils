@@ -11,19 +11,15 @@ import { AddArticleVersionOptions } from '../dtos/add-article-version-options';
 import { ADD_ARTICLE_VERSION_MUTATION } from '../graphql/add-article-version.mutation';
 import axios from 'axios';
 import { Language } from '../language';
-import {QuadratsModule} from '../module';
 
 @Injectable()
 export class QuadratsArticleService {
-  private readonly apiHost: string;
   constructor(
     @Inject(API_HOST)
-    private readonly hostConfig: { host: string },
+    private readonly apiHost: string,
     @Inject(QUADRATS_AUTH_CLIENT)
     private readonly auth: { accessKey: string, secret: string },
-  ) {
-    this.apiHost = this.hostConfig.host ?? QuadratsModule.DEFAULT_HOST
-  }
+  ) {}
 
   public async addVersion(options: AddArticleVersionOptions): Promise<QuadratsArticle> {
     if (!Array.isArray(options.contents) && !Array.isArray(options.languageContents)) {
