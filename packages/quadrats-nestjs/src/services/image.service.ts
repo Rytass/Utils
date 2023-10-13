@@ -4,7 +4,6 @@ import FormData from 'form-data';
 import axios from 'axios';
 import { API_HOST, QUADRATS_AUTH_CLIENT } from '../constants';
 import { ImageDetailURL } from '../dtos/image-detail-url';
-import {QuadratsModule} from '../module';
 
 @Injectable()
 export class QuadratsArticleImageService {

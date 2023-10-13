@@ -6,7 +6,6 @@ import { FIND_CATEGORY_QUERY } from '../graphql/find-category.query';
 import { CREATE_CATEGORY_MUTATION } from '../graphql/create-category.mutation';
 import { RENAME_CATEGORY_MUTATION } from '../graphql/rename-category.mutation';
 import axios from 'axios';
-import {QuadratsModule} from '../module';
 
 @Injectable()
 export class QuadratsArticleCategoryService {

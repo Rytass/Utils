@@ -3,7 +3,6 @@ import axios from 'axios';
 import { API_HOST, QUADRATS_AUTH_CLIENT } from '../constants';
 import { FindTagsOptions } from '../dtos/find-tags-options';
 import { TAGS_QUERY } from '../graphql/tags.query';
-import {QuadratsModule} from '../module';
 
 @Injectable()
 export class QuadratsArticleTagService {
