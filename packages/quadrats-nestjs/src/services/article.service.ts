@@ -61,7 +61,6 @@ export class QuadratsArticleService {
       throw new Error('`contents` or `languageContents` should be set');
     }
 
-    console.log(this.apiHost)
     const { data } = await axios.request<{ data: { createArticle: QuadratsArticle } }>({
       url: `${this.apiHost}/graphql`,
       method: 'post',

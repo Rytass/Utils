@@ -45,10 +45,10 @@ export class QuadratsModule {
     const provider: Provider = {
       provide: API_HOST,
       inject: options.inject || [],
-      useFactory: async() => {
-        const { host } = await options.useFactory()
+      useFactory: async (...args) => {
+        const { host } = await options.useFactory(...args);
 
-        return host || QuadratsModule.DEFAULT_HOST
+        return host || QuadratsModule.DEFAULT_HOST;
       },
     }
 
