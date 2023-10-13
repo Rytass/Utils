@@ -8,15 +8,12 @@ import {QuadratsModule} from '../module';
 
 @Injectable()
 export class QuadratsArticleImageService {
-  private readonly apiHost: string;
   constructor(
     @Inject(API_HOST)
-    private readonly hostConfig: { host: string },
+    private readonly apiHost: string,
     @Inject(QUADRATS_AUTH_CLIENT)
     private readonly auth: { accessKey: string, secret: string },
-  ) {
-    this.apiHost = this.hostConfig.host ?? QuadratsModule.DEFAULT_HOST
-  }
+  ) {}
 
   async uploadImage(image: Buffer | Readable, urlMode?: false): Promise<string>;
   async uploadImage(image: Buffer | Readable, urlMode?: true): Promise<ImageDetailURL>;

@@ -18,9 +18,7 @@ export class QuadratsModule {
       providers: [
         {
           provide: API_HOST,
-          useValue: {
-            host: options.host || QuadratsModule.DEFAULT_HOST,
-          },
+          useValue: options.host || QuadratsModule.DEFAULT_HOST,
         },
         {
           provide: QUADRATS_AUTH_CLIENT,
@@ -47,7 +45,11 @@ export class QuadratsModule {
     const provider: Provider = {
       provide: API_HOST,
       inject: options.inject || [],
-      useFactory: options.useFactory,
+      useFactory: async (...args) => {
+        const { host } = await options.useFactory(...args);
+
+        return host || QuadratsModule.DEFAULT_HOST;
+      },
     }
 
     return {
