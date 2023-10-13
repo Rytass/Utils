@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.6](https://github.com/Rytass/Utils/compare/@rytass/quadrats-nestjs@0.1.5...@rytass/quadrats-nestjs@0.1.6) (2023-10-13)
+
+
+### Features
+
+* 🎸 add forRootAsync ([c533087](https://github.com/Rytass/Utils/commit/c533087aac1674e7fe72d3dbd86cda14cc5648e3))
+* 🎸 add forRootAsync for module ([9c19f23](https://github.com/Rytass/Utils/commit/9c19f23582afe3f8f31648cd0390e27c3d7f308a))
+* 🎸 modified API_HOST provider format ([e1509a4](https://github.com/Rytass/Utils/commit/e1509a4019f10a6665072bacd94cc8ac30d809ef))
+
+
+
+
+
 ## [0.1.5](https://github.com/Rytass/Utils/compare/@rytass/quadrats-nestjs@0.1.4...@rytass/quadrats-nestjs@0.1.5) (2023-10-12)
 
 
