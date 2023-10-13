@@ -44,11 +44,8 @@ export class QuadratsModule {
   static forRootAsync(options: QuadratsModuleAsyncOptions): DynamicModule {
     const provider: Provider = {
       provide: API_HOST,
-      // useValue: QuadratsModule.DEFAULT_HOST,
       inject: options.inject || [],
-      useFactory: async () => {
-        return QuadratsModule.DEFAULT_HOST
-      },
+      useFactory: options.useFactory,
     }
 
     return {
