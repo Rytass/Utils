@@ -299,7 +299,7 @@ describe('VaultSecret', () => {
         onReady: () => {
           expect(manager.sync()).rejects.toThrow();
 
-          manager.ternimate();
+          manager.terminate();
 
           done();
         },
@@ -400,7 +400,7 @@ describe('VaultSecret', () => {
       manager.get('KEY').then((value) => {
         expect(value).toBe(undefined);
 
-        manager.ternimate();
+        manager.terminate();
 
         done();
       });
@@ -421,7 +421,7 @@ describe('VaultSecret', () => {
 
         expect(value).toBe('value');
 
-        manager.ternimate();
+        manager.terminate();
 
         done();
       });
@@ -444,7 +444,7 @@ describe('VaultSecret', () => {
         .then(() => {
           expect(onError).toBeCalled();
 
-          manager.ternimate();
+          manager.terminate();
 
           done();
         });
@@ -485,7 +485,7 @@ describe('VaultSecret', () => {
       });
 
       afterAll(() => {
-        manager.ternimate();
+        manager.terminate();
       });
     });
 
@@ -519,7 +519,7 @@ describe('VaultSecret', () => {
         expect(errorManager.get('what_a_secret')).rejects.toThrow().then(() => {
           expect(onError).toBeCalled();
 
-          errorManager.ternimate();
+          errorManager.terminate();
 
           done();
         });
@@ -536,7 +536,7 @@ describe('VaultSecret', () => {
         });
 
         expect(errorManager.delete('Not_Set_Key')).rejects.toThrow().then(() => {
-          errorManager.ternimate();
+          errorManager.terminate();
 
           done();
         });
@@ -558,7 +558,7 @@ describe('VaultSecret', () => {
         expect(errorManager.delete('COULD_NOT_BE_REMOVED')).rejects.toThrow().then(() => {
           expect(onError).toBeCalled();
 
-          errorManager.ternimate();
+          errorManager.terminate();
 
           done();
         });
@@ -580,7 +580,7 @@ describe('VaultSecret', () => {
         expect(errorManager.set('WILL_FAILED_UPDATE_KEY', 'aaaa')).rejects.toThrow().then(() => {
           expect(onError).toBeCalled();
 
-          errorManager.ternimate();
+          errorManager.terminate();
 
           done();
         });
@@ -695,7 +695,7 @@ describe('VaultSecret', () => {
       setTimeout(() => {
         expect(post.mock.calls.length).toBeGreaterThanOrEqual(2);
 
-        manager.ternimate();
+        manager.terminate();
 
         post.mockClear();
 
@@ -725,7 +725,7 @@ describe('VaultSecret', () => {
       setTimeout(() => {
         expect(post.mock.calls.length).toBe(2);
 
-        manager.ternimate();
+        manager.terminate();
 
         post.mockClear();
 
@@ -768,7 +768,7 @@ describe('VaultSecret', () => {
       setTimeout(() => {
         expect(manager.state).toBe(VaultSecretState.READY);
 
-        manager.ternimate();
+        manager.terminate();
 
         done();
       }, 500);
