@@ -970,8 +970,6 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage> im
 
     const { data } = await axios.post<string>(`${this.baseUrl}/MerchantMember/AuthCardID/V2`, new URLSearchParams(payload).toString())
 
-    console.log(data);
-
     const responsePayload = Array.from(new URLSearchParams(data).entries())
       .reduce(
         (vars, [key, value]) => ({
