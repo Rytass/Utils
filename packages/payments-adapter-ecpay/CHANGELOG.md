@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.2](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.2.1...@rytass/payments-adapter-ecpay@0.2.2) (2023-11-25)
+
+
+### Features
+
+* **payments-adapter-ecpay:** add bind card api ([1d94305](https://github.com/Rytass/Utils/commit/1d943059ea5a92167b0c46a91a871506749d5404))
+* **payments-adapter-ecpay:** checkout with bound card ([a57e6b3](https://github.com/Rytass/Utils/commit/a57e6b3f13cec4f6dfdfff45b572cdb60e8c76f2))
+
+
+
+
+
 ## [0.2.1](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.2.0...@rytass/payments-adapter-ecpay@0.2.1) (2023-10-12)
 
 
