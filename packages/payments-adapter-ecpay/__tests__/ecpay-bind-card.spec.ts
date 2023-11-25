@@ -5,9 +5,10 @@
 import request from 'supertest';
 import http, { createServer } from 'http';
 import { LRUCache } from 'lru-cache';
+import axios from 'axios';
 import { ECPayPayment } from '../src/ecpay-payment';
 import { ECPayBindCardRequest } from '../src/ecpay-bind-card-request';
-import { ECPayBindCardRequestState } from '../src/typings';
+import { ECPayBindCardRequestState, ECPayCheckoutWithBoundCardRequestPayload } from '../src/typings';
 
 const BASE_URL = 'https://payment-stage.ecpay.com.tw';
 const MERCHANT_ID = '2000214';
@@ -49,8 +50,8 @@ describe('ECPayPayment Card Binding', () => {
       hashKey: HASH_KEY,
       hashIv: HASH_IV,
       baseUrl: BASE_URL,
-      onServerListen: () => {
-        const bindCardRequest = payment.prepareBindCard('rytass');
+      onServerListen: async () => {
+        const bindCardRequest = await payment.prepareBindCard('rytass');
 
         bindCardRequest.formHTML;
 
@@ -92,8 +93,8 @@ describe('ECPayPayment Card Binding', () => {
       hashIv: HASH_IV,
       baseUrl: BASE_URL,
       boundCardFinishPath: '/payments/ecpay/bound-card-finished',
-      onServerListen: () => {
-        const bindCardRequest = payment.prepareBindCard('rytass');
+      onServerListen: async () => {
+        const bindCardRequest = await payment.prepareBindCard('rytass');
 
         bindCardRequest.formHTML;
 
@@ -142,8 +143,8 @@ describe('ECPayPayment Card Binding', () => {
       hashIv: HASH_IV,
       baseUrl: BASE_URL,
       boundCardPath: '/payments/ecpay/bound-card',
-      onServerListen: () => {
-        const bindCardRequest = payment.prepareBindCard('rytass');
+      onServerListen: async () => {
+        const bindCardRequest = await payment.prepareBindCard('rytass');
 
         bindCardRequest.formHTML;
 
@@ -214,7 +215,7 @@ describe('ECPayPayment Card Binding', () => {
     });
   });
 
-  it('should pass custom cache store', () => {
+  it('should pass custom cache store', async () => {
     const cache = new LRUCache<string, ECPayBindCardRequest>({
       ttlAutopurge: true,
       max: 100,
@@ -233,10 +234,129 @@ describe('ECPayPayment Card Binding', () => {
       },
     });
 
-    const bindCardRequest = payment.prepareBindCard('rytass');
+    const bindCardRequest = await payment.prepareBindCard('rytass');
 
     bindCardRequest.formHTML;
 
     expect(bindCardRequest).toEqual(cache.get(MEMBER_ID));
+  });
+
+  it('should checkout with bound card', async () => {
+    const payment = new ECPayPayment({
+      merchantId: MERCHANT_ID,
+      hashKey: HASH_KEY,
+      hashIv: HASH_IV,
+      baseUrl: BASE_URL,
+    });
+
+    const mockPost = jest.spyOn(axios, 'post');
+
+    mockPost.mockImplementationOnce(async (url: string, data: any) => {
+      expect(url).toBe(`${BASE_URL}/MerchantMember/AuthCardID/V2`);
+
+      const payload = Array.from(new URLSearchParams(data).entries())
+        .reduce(
+          (vars, [key, value]) => ({
+            ...vars,
+            [key]: value,
+          }),
+          {},
+      ) as ECPayCheckoutWithBoundCardRequestPayload;
+
+      expect(payload.MerchantID).toBe(MERCHANT_ID);
+      expect(payload.MerchantMemberID).toBe(`${MERCHANT_ID}${MEMBER_ID}`);
+      expect(payload.TotalAmount).toBe('15');
+
+      return {
+        data: 'RtnCode=1&RtnMsg=Succeeded&MerchantID=2000214&MerchantTradeNo=77b408aa812d0df16b66&AllpayTradeNo=2311252334204234&gwsr=12970067&process_date=2023/11/25 23:34:22&auth_code=777777&amount=15&card6no=431195&card4no=2222&stage=0&stast=0&staed=0&eci=0&CheckMacValue=575DC850D9AB96134F7EB44FC355704D71EAEF50094B5D3EA6592B0163FC266C',
+      };
+    });
+
+    const response = await payment.checkoutWithBoundCard({
+      memberId: MEMBER_ID,
+      cardId: '187794',
+      description: 'Test',
+      amount: 15,
+    });
+
+    expect(response.amount).toBe(15);
+  });
+
+  it('should throw when checkout with bound card received invalid checksum', async () => {
+    const payment = new ECPayPayment({
+      merchantId: MERCHANT_ID,
+      hashKey: HASH_KEY,
+      hashIv: HASH_IV,
+      baseUrl: BASE_URL,
+    });
+
+    const mockPost = jest.spyOn(axios, 'post');
+
+    mockPost.mockImplementationOnce(async (url: string, data: any) => {
+      expect(url).toBe(`${BASE_URL}/MerchantMember/AuthCardID/V2`);
+
+      const payload = Array.from(new URLSearchParams(data).entries())
+        .reduce(
+          (vars, [key, value]) => ({
+            ...vars,
+            [key]: value,
+          }),
+          {},
+      ) as ECPayCheckoutWithBoundCardRequestPayload;
+
+      expect(payload.MerchantID).toBe(MERCHANT_ID);
+      expect(payload.MerchantMemberID).toBe(`${MERCHANT_ID}${MEMBER_ID}`);
+      expect(payload.TotalAmount).toBe('15');
+
+      return {
+        data: 'RtnCode=1&RtnMsg=Succeeded&MerchantID=2000214&MerchantTradeNo=77b408aa812d0df16b66&AllpayTradeNo=2311252334204234&gwsr=12970067&process_date=2023/11/25 23:34:22&auth_code=777777&amount=15&card6no=431195&card4no=2222&stage=0&stast=0&staed=0&eci=0&CheckMacValue=575DC850D9AB96134F7EB44FC355704D71EAEF50094B5D3EA6592B0163FC266A',
+      };
+    });
+
+    expect(() => payment.checkoutWithBoundCard({
+      memberId: MEMBER_ID,
+      cardId: '187794',
+      description: 'Test',
+      amount: 15,
+    })).rejects.toThrow();
+  });
+
+  it('should throw when checkout with bound card received error', async () => {
+    const payment = new ECPayPayment({
+      merchantId: MERCHANT_ID,
+      hashKey: HASH_KEY,
+      hashIv: HASH_IV,
+      baseUrl: BASE_URL,
+    });
+
+    const mockPost = jest.spyOn(axios, 'post');
+
+    mockPost.mockImplementationOnce(async (url: string, data: any) => {
+      expect(url).toBe(`${BASE_URL}/MerchantMember/AuthCardID/V2`);
+
+      const payload = Array.from(new URLSearchParams(data).entries())
+        .reduce(
+          (vars, [key, value]) => ({
+            ...vars,
+            [key]: value,
+          }),
+          {},
+      ) as ECPayCheckoutWithBoundCardRequestPayload;
+
+      expect(payload.MerchantID).toBe(MERCHANT_ID);
+      expect(payload.MerchantMemberID).toBe(`${MERCHANT_ID}${MEMBER_ID}`);
+      expect(payload.TotalAmount).toBe('15');
+
+      return {
+        data: 'RtnCode=99999&RtnMsg=Failed&MerchantID=2000214&MerchantTradeNo=77b408aa812d0df16b66&AllpayTradeNo=2311252334204234&gwsr=12970067&process_date=2023/11/25 23:34:22&auth_code=777777&amount=15&card6no=431195&card4no=2222&stage=0&stast=0&staed=0&eci=0&CheckMacValue=37F112488F86A58705566967A9B8EAD0951B40D0C6D91F6B096E4FAB579D52BC',
+      };
+    });
+
+    expect(() => payment.checkoutWithBoundCard({
+      memberId: MEMBER_ID,
+      cardId: '187794',
+      description: 'Test',
+      amount: 15,
+    })).rejects.toThrow();
   });
 });

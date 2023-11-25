@@ -612,3 +612,59 @@ export enum ECPayBindCardRequestState {
   BOUND = 'BOUND',
   FAILED = 'FAILED',
 }
+
+export interface ECPayCheckoutWithBoundCardPayload {
+  installments?: 0 | 3 | 6 | 12 | 18 | 24;
+  memberId: string;
+  cardId: string;
+  description: string;
+  amount: number;
+  tradeTime?: Date;
+  orderId?: string; // Order Unique ID
+}
+
+export interface ECPayCheckoutWithBoundCardRequestPayload extends Record<string, string> {
+  MerchantID: string;
+  MerchantMemberID: string;
+  MerchantTradeNo: string;
+  MerchantTradeDate: string; // YYYY/MM/DD HH:mm:ss
+  TotalAmount: string;
+  TradeDesc: string;
+  CardID: string;
+  stage: string;
+  CheckMacValue: string;
+}
+
+export interface ECPayCheckoutWithBoundCardResult {
+  id: string; // Order ID
+  platformTradeNumber: string;
+  amount: number;
+  installments: number;
+  firstInstallmentAmount: number;
+  eachInstallmentAmount: number;
+  gwsr: string; // Authentication Code
+  process_date: Date;
+  auth_code: string; // Credit Card Auth Code (6 digits)
+  eci: CreditCardECI;
+  firstSixDigits: string;
+  lastFourDigits: string;
+}
+
+export interface ECPayCheckoutWithBoundCardResponsePayload {
+  RtnCode: number | 1;
+  RtnMsg: string;
+  MerchantID: string;
+  MerchantTradeNo: string;
+  AllpayTradeNo: string;
+  gwsr: number;
+  process_date: string; // YYYY/MM/DD HH:mm:ss
+  auth_code: string;
+  amount: number;
+  card6no: string;
+  card4no: string;
+  stage: string; // Installments
+  stast: string; // First installment amount
+  staed: string; // Each installment amount
+  eci: CreditCardECI;
+  CheckMacValue: '5C97A411CD923906C2D9783DE51B6B8987AEE430BA08C9B7136DAE98AFE7D384'
+}

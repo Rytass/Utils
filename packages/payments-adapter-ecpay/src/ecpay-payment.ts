@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from 'crypto';
-import { PaymentGateway, PaymentEvents, Channel, PaymentPeriodType, CVSInfo, VirtualAccountInfo, CreditCardAuthInfo, BarcodeInfo, VirtualAccountPaymentInfo, OrderState, CVSPaymentInfo, AdditionalInfo } from '@rytass/payments';
+import { PaymentGateway, PaymentEvents, Channel, PaymentPeriodType, CVSInfo, VirtualAccountInfo, CreditCardAuthInfo, BarcodeInfo, VirtualAccountPaymentInfo, OrderState } from '@rytass/payments';
 import { DateTime } from 'luxon';
 import { LRUCache } from 'lru-cache';
 import axios from 'axios';
@@ -7,7 +7,7 @@ import { createServer, IncomingMessage, ServerResponse, Server } from 'http';
 import debug from 'debug';
 import ngrok from 'ngrok';
 import { EventEmitter } from 'events';
-import { ECPayCallbackCreditPayload, ECPayCallbackPayload, ECPayCallbackPaymentType, ECPayCommitMessage, ECPayOrderCreditCardCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayQueryResultPayload, ECPayOrderVirtualAccountCommitMessage, Language, GetOrderInput, ECPayCreditCardOrderInput, ECPayQueryOrderPayload, ECPayOrderCVSCommitMessage, ECPayOrderBarcodeCommitMessage, ECPayAsyncInformationBarcodePayload, ECPayAsyncInformationCVSPayload, ECPayAsyncInformationVirtualAccountPayload, ECPayAsyncInformationPayload, ECPayCallbackVirtualAccountPayload, ECPayCallbackCVSPayload, ECPayCallbackBarcodePayload, ECPayCreditCardDetailQueryPayload, ECPayCreditCardDetailQueryResponse, ECPayCreditCardOrderStatus, ECPayCreditCardOrderCloseStatus, ECPayOrderActionPayload, ECPayOrderDoActionResponse, OrdersCache, ECPayBoundCardResponse, ECPayBindCardRequestPayload, ECPayPaymentCallbackPayload, ECPayBindCardCallbackPayload, BindCardRequestCache, ECPayBindCardRequestState } from './typings';
+import { ECPayCallbackCreditPayload, ECPayCallbackPayload, ECPayCallbackPaymentType, ECPayCommitMessage, ECPayOrderCreditCardCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayQueryResultPayload, ECPayOrderVirtualAccountCommitMessage, Language, GetOrderInput, ECPayCreditCardOrderInput, ECPayQueryOrderPayload, ECPayOrderCVSCommitMessage, ECPayOrderBarcodeCommitMessage, ECPayAsyncInformationBarcodePayload, ECPayAsyncInformationCVSPayload, ECPayAsyncInformationVirtualAccountPayload, ECPayAsyncInformationPayload, ECPayCallbackVirtualAccountPayload, ECPayCallbackCVSPayload, ECPayCallbackBarcodePayload, ECPayCreditCardDetailQueryPayload, ECPayCreditCardDetailQueryResponse, ECPayCreditCardOrderStatus, ECPayCreditCardOrderCloseStatus, ECPayOrderActionPayload, ECPayOrderDoActionResponse, OrdersCache, ECPayBindCardRequestPayload, ECPayPaymentCallbackPayload, ECPayBindCardCallbackPayload, BindCardRequestCache, ECPayBindCardRequestState, ECPayCheckoutWithBoundCardPayload, ECPayCheckoutWithBoundCardRequestPayload, ECPayCheckoutWithBoundCardResponsePayload, ECPayCheckoutWithBoundCardResult } from './typings';
 import { ECPayChannel, ECPayCVS, ECPayPaymentPeriodType, NUMERIC_CALLBACK_KEYS } from './constants';
 import { ECPayOrder } from './ecpay-order';
 import { ECPayBindCardRequest } from './ecpay-bind-card-request';
@@ -145,6 +145,8 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage> im
         }),
           {}),
     );
+
+    console.log({ computedMac });
 
     if (computedMac !== mac) return false;
 
@@ -939,7 +941,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage> im
     }
   }
 
-  prepareBindCard(memberId: string, finishRedirectURL?: string): ECPayBindCardRequest {
+  async prepareBindCard(memberId: string, finishRedirectURL?: string): Promise<ECPayBindCardRequest> {
     const payload = this.addMac<ECPayBindCardRequestPayload>({
       MerchantID: this.merchantId,
       MerchantMemberID: `${this.merchantId}${memberId}`,
@@ -949,8 +951,57 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage> im
 
     const request = new ECPayBindCardRequest(payload, this);
 
-    this.bindCardRequestsCache.set(memberId, request);
+    await this.bindCardRequestsCache.set(memberId, request);
 
     return request;
+  }
+
+  async checkoutWithBoundCard(options: ECPayCheckoutWithBoundCardPayload): Promise<ECPayCheckoutWithBoundCardResult> {
+    const payload = this.addMac<ECPayCheckoutWithBoundCardRequestPayload>({
+      MerchantID: this.merchantId,
+      MerchantMemberID: `${this.merchantId}${options.memberId}`,
+      MerchantTradeNo: options.orderId || this.getOrderId(),
+      MerchantTradeDate: DateTime.fromJSDate(options.tradeTime || new Date()).toFormat('yyyy/MM/dd HH:mm:ss'),
+      TotalAmount: options.amount.toString(),
+      TradeDesc: encodeURIComponent(options.description),
+      CardID: options.cardId,
+      stage: (options.installments ?? 0).toString(),
+    });
+
+    const { data } = await axios.post<string>(`${this.baseUrl}/MerchantMember/AuthCardID/V2`, new URLSearchParams(payload).toString())
+
+    console.log(data);
+
+    const responsePayload = Array.from(new URLSearchParams(data).entries())
+      .reduce(
+        (vars, [key, value]) => ({
+          ...vars,
+          [key]: (value !== '' && ~NUMERIC_CALLBACK_KEYS.indexOf(key)) ? Number(value) : value,
+        }),
+        {},
+    ) as ECPayCheckoutWithBoundCardResponsePayload;
+
+    if (!this.checkMac<ECPayCheckoutWithBoundCardResponsePayload>(responsePayload)) {
+      throw new Error('Invalid CheckSum');
+    }
+
+    if (responsePayload.RtnCode !== 1) {
+      throw new Error(responsePayload.RtnMsg);
+    }
+
+    return {
+      id: responsePayload.MerchantTradeNo,
+      platformTradeNumber: responsePayload.AllpayTradeNo,
+      amount: responsePayload.amount,
+      installments: Number(responsePayload.stage),
+      firstInstallmentAmount: Number(responsePayload.stast),
+      eachInstallmentAmount: Number(responsePayload.staed),
+      gwsr: responsePayload.gwsr.toString(),
+      process_date: DateTime.fromFormat(responsePayload.process_date, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+      auth_code: responsePayload.auth_code,
+      eci: responsePayload.eci,
+      lastFourDigits: responsePayload.card4no,
+      firstSixDigits: responsePayload.card6no,
+    };
   }
 }
