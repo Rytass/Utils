@@ -2,10 +2,16 @@ import { PaymentItem, PrepareOrderInput, Channel, CreditCardECI, OrderCommitMess
 import { IncomingMessage, ServerResponse } from 'http';
 import { ECPayPayment } from './ecpay-payment';
 import { ECPayOrder } from './ecpay-order';
+import { ECPayBindCardRequest } from './ecpay-bind-card-request';
 
 export interface OrdersCache<CM extends ECPayCommitMessage, Key extends string, Value extends ECPayOrder<CM>> {
   get: (key: Key) => Promise<Value | undefined>;
   set: (key: Key, value: Value) => Promise<void>;
+}
+
+export interface BindCardRequestCache {
+  get: (key: string) => Promise<ECPayBindCardRequest | undefined>;
+  set: (key: string, value: ECPayBindCardRequest) => Promise<void>;
 }
 
 export interface ECPayInitOptions<O extends ECPayOrder<ECPayCommitMessage>> {
@@ -19,6 +25,8 @@ export interface ECPayInitOptions<O extends ECPayOrder<ECPayCommitMessage>> {
   callbackPath?: string;
   asyncInfoPath?: string;
   checkoutPath?: string;
+  boundCardPath?: string;
+  boundCardFinishPath?: string;
   withServer?: boolean | 'ngrok';
   serverListener?: (req: IncomingMessage, res: ServerResponse) => void;
   ttl?: number; // Order Expire Time is ms
@@ -27,6 +35,7 @@ export interface ECPayInitOptions<O extends ECPayOrder<ECPayCommitMessage>> {
   onServerListen?: () => void;
   emulateRefund?: boolean,
   ordersCache?: OrdersCache<ECPayCommitMessage, string, O>;
+  bindCardRequestsCache?: BindCardRequestCache;
 }
 
 export interface ECPayCreditCardOrderInput extends PrepareOrderInput {
@@ -193,10 +202,22 @@ export enum ECPayCallbackReturnCode {
 
 export interface ECPayCallbackPayload {
   MerchantID: string;
-  MerchantTradeNo: string;
-  StoreID: string;
   RtnCode: ECPayCallbackReturnCode | number;
   RtnMsg: ECPayCallbackReturnMessage;
+  CheckMacValue: string;
+}
+
+export interface ECPayBindCardCallbackPayload extends ECPayCallbackPayload {
+  MerchantMemberID: string;
+  CardID: string;
+  Card6No: string;
+  Card4No: string;
+  BindingDate: string; // YYYY/MM/DD HH:mm:ss
+}
+
+export interface ECPayPaymentCallbackPayload extends ECPayCallbackPayload {
+  MerchantTradeNo: string;
+  StoreID: string;
   TradeNo: string;
   TradeAmt: number;
   PaymentType: ECPayCallbackPaymentType;
@@ -205,26 +226,12 @@ export interface ECPayCallbackPayload {
   CustomField2: string;
   CustomField3: string;
   CustomField4: string;
-  CheckMacValue: string;
 }
 
-export interface ECPayCallbackCreditPayload extends ECPayCallbackPayload {
-  MerchantID: string;
-  MerchantTradeNo: string;
-  StoreID: string;
-  RtnCode: ECPayCallbackReturnCode | number;
-  RtnMsg: ECPayCallbackReturnMessage;
-  TradeNo: string;
-  TradeAmt: number;
+export interface ECPayCallbackCreditPayload extends ECPayPaymentCallbackPayload {
   PaymentDate: string;
   PaymentType: ECPayCallbackPaymentType.CREDIT_CARD;
-  TradeDate: string;
   SimulatePaid: ECPayCallbackSimulatePaidState;
-  CustomField1: string;
-  CustomField2: string;
-  CustomField3: string;
-  CustomField4: string;
-  CheckMacValue: string;
   gwsr: string; // Authentication Code
   process_date: string;
   auth_code: string; // Credit Card Auth Code (6 digits)
@@ -234,14 +241,7 @@ export interface ECPayCallbackCreditPayload extends ECPayCallbackPayload {
   card6no: string;
 }
 
-export interface ECPayCallbackVirtualAccountPayload extends ECPayCallbackPayload {
-  MerchantID: string;
-  MerchantTradeNo: string;
-  StoreID: string;
-  RtnCode: ECPayCallbackReturnCode | number;
-  RtnMsg: ECPayCallbackReturnMessage;
-  TradeNo: string;
-  TradeAmt: number;
+export interface ECPayCallbackVirtualAccountPayload extends ECPayPaymentCallbackPayload {
   PaymentDate: string;
   PaymentType: Extract<
     ECPayCallbackPaymentType,
@@ -252,25 +252,12 @@ export interface ECPayCallbackVirtualAccountPayload extends ECPayCallbackPayload
     ECPayCallbackPaymentType.ATM_PANHSIN |
     ECPayCallbackPaymentType.ATM_TACHONG
   >;
-  TradeDate: string;
   SimulatePaid: ECPayCallbackSimulatePaidState;
-  CustomField1: string;
-  CustomField2: string;
-  CustomField3: string;
-  CustomField4: string;
-  CheckMacValue: string;
   ATMAccBank: string;
   ATMAccNo: string;
 }
 
-export interface ECPayCallbackCVSPayload extends ECPayCallbackPayload {
-  MerchantID: string;
-  MerchantTradeNo: string;
-  StoreID: string;
-  RtnCode: ECPayCallbackReturnCode | number;
-  RtnMsg: ECPayCallbackReturnMessage;
-  TradeNo: string;
-  TradeAmt: number;
+export interface ECPayCallbackCVSPayload extends ECPayPaymentCallbackPayload {
   PaymentDate: string;
   PaymentType: Extract<
     ECPayCallbackPaymentType,
@@ -280,34 +267,14 @@ export interface ECPayCallbackCVSPayload extends ECPayCallbackPayload {
     ECPayCallbackPaymentType.CVS_IBON |
     ECPayCallbackPaymentType.CVS_OK
   >;
-  TradeDate: string;
-  SimulatePaid: ECPayCallbackSimulatePaidState;
-  CustomField1: string;
-  CustomField2: string;
-  CustomField3: string;
-  CustomField4: string;
-  CheckMacValue: string;
   PaymentNo: string;
   PayFrom: string;
 }
 
-export interface ECPayCallbackBarcodePayload extends ECPayCallbackPayload {
-  MerchantID: string;
-  MerchantTradeNo: string;
-  StoreID: string;
-  RtnCode: ECPayCallbackReturnCode | number;
-  RtnMsg: ECPayCallbackReturnMessage;
-  TradeNo: string;
-  TradeAmt: number;
+export interface ECPayCallbackBarcodePayload extends ECPayPaymentCallbackPayload {
   PaymentDate: string;
   PaymentType: ECPayCallbackPaymentType.BARCODE;
-  TradeDate: string;
   SimulatePaid: ECPayCallbackSimulatePaidState;
-  CustomField1: string;
-  CustomField2: string;
-  CustomField3: string;
-  CustomField4: string;
-  CheckMacValue: string;
 }
 
 export interface ECPayAsyncInformationPayload {
@@ -610,3 +577,38 @@ export type ECPayChannelVirtualAccount = ECPayOrderVirtualAccountCommitMessage;
 export type ECPayChannelCVS = ECPayOrderCVSCommitMessage;
 export type ECPayChannelBarcode = ECPayOrderBarcodeCommitMessage;
 export type ECPayChannelApplePay = ECPayOrderApplePayCommitMessage;
+
+export interface ECPayBindCardRequestPayload extends Record<string, string> {
+  MerchantID: string;
+  MerchantMemberID: string;
+  ServerReplyURL: string;
+  ClientRedirectURL: string;
+  CheckMacValue: string;
+}
+
+export interface ECPayBoundCardResponse {
+  RtnCode: number;
+  RtnMsg: string;
+  MerchantID: string;
+  PlatformID: string;
+  MerchantMemberID: string;
+  CardID: string;
+  Card6No: string;
+  Card4No: string;
+  BindingDate: string;
+  CheckMacValue: string;
+}
+
+export interface ECPayBoundCardResult {
+  id: string;
+  firstSixDigits: string;
+  lastFourDigits: string;
+  boundOn: string; // ISO8601
+}
+
+export enum ECPayBindCardRequestState {
+  INITED = 'INITED',
+  FORM_GENERATED = 'FORM_GENERATED',
+  BOUND = 'BOUND',
+  FAILED = 'FAILED',
+}

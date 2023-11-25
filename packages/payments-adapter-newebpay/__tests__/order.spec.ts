@@ -3,6 +3,7 @@
  * @jest-environment node
  */
 
+import http, { createServer } from 'http';
 import { Channel, VirtualAccountInfo, WebATMPaymentInfo } from '@rytass/payments';
 import { NewebPaymentChannel, NewebPayOrder, NewebPayOrderStatusFromAPI, NewebPayPayment, NewebPayVirtualAccountCommitMessage, NewebPayWebATMCommitMessage } from '../src';
 
@@ -11,6 +12,31 @@ const AES_KEY = 'X4vM1RymaxkyzZ9mZHNE67Kba2gpv40c';
 const AES_IV = '6ma4zu0UFWk54oyX';
 
 describe('NewebPay Order', () => {
+  const originCreateServer = createServer;
+  const mockedCreateServer = jest.spyOn(http, 'createServer');
+
+  mockedCreateServer.mockImplementation((requestHandler) => {
+    const mockServer = originCreateServer(requestHandler);
+
+    const mockedListen = jest.spyOn(mockServer, 'listen');
+
+    mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
+      mockServer.listen(0, listeningListener);
+
+      return mockServer;
+    });
+
+    const mockedClose = jest.spyOn(mockServer, 'close');
+
+    mockedClose.mockImplementationOnce((onClosed) => {
+      mockServer.close(onClosed);
+
+      return mockServer;
+    });
+
+    return mockServer;
+  });
+
   const payment = new NewebPayPayment({
     merchantId: MERCHANT_ID,
     aesKey: AES_KEY,

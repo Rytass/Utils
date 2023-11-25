@@ -7,13 +7,14 @@ import { createServer, IncomingMessage, ServerResponse, Server } from 'http';
 import debug from 'debug';
 import ngrok from 'ngrok';
 import { EventEmitter } from 'events';
-import { ECPayCallbackCreditPayload, ECPayCallbackPayload, ECPayCallbackPaymentType, ECPayCommitMessage, ECPayOrderCreditCardCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayQueryResultPayload, ECPayOrderVirtualAccountCommitMessage, Language, GetOrderInput, ECPayCreditCardOrderInput, ECPayQueryOrderPayload, ECPayOrderCVSCommitMessage, ECPayOrderBarcodeCommitMessage, ECPayAsyncInformationBarcodePayload, ECPayAsyncInformationCVSPayload, ECPayAsyncInformationVirtualAccountPayload, ECPayAsyncInformationPayload, ECPayCallbackVirtualAccountPayload, ECPayCallbackCVSPayload, ECPayCallbackBarcodePayload, ECPayCreditCardDetailQueryPayload, ECPayCreditCardDetailQueryResponse, ECPayCreditCardOrderStatus, ECPayCreditCardOrderCloseStatus, ECPayOrderActionPayload, ECPayOrderDoActionResponse, OrdersCache } from './typings';
+import { ECPayCallbackCreditPayload, ECPayCallbackPayload, ECPayCallbackPaymentType, ECPayCommitMessage, ECPayOrderCreditCardCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayQueryResultPayload, ECPayOrderVirtualAccountCommitMessage, Language, GetOrderInput, ECPayCreditCardOrderInput, ECPayQueryOrderPayload, ECPayOrderCVSCommitMessage, ECPayOrderBarcodeCommitMessage, ECPayAsyncInformationBarcodePayload, ECPayAsyncInformationCVSPayload, ECPayAsyncInformationVirtualAccountPayload, ECPayAsyncInformationPayload, ECPayCallbackVirtualAccountPayload, ECPayCallbackCVSPayload, ECPayCallbackBarcodePayload, ECPayCreditCardDetailQueryPayload, ECPayCreditCardDetailQueryResponse, ECPayCreditCardOrderStatus, ECPayCreditCardOrderCloseStatus, ECPayOrderActionPayload, ECPayOrderDoActionResponse, OrdersCache, ECPayBoundCardResponse, ECPayBindCardRequestPayload, ECPayPaymentCallbackPayload, ECPayBindCardCallbackPayload, BindCardRequestCache, ECPayBindCardRequestState } from './typings';
 import { ECPayChannel, ECPayCVS, ECPayPaymentPeriodType, NUMERIC_CALLBACK_KEYS } from './constants';
 import { ECPayOrder } from './ecpay-order';
+import { ECPayBindCardRequest } from './ecpay-bind-card-request';
 
 const debugPayment = debug('Rytass:Payment:ECPay');
 
-export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGateway<CM, ECPayOrder<CM>> {
+export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage> implements PaymentGateway<CM, ECPayOrder<CM>> {
   readonly baseUrl: string = 'https://payment-stage.ecpay.com.tw';
 
   private language = Language.TRADITIONAL_CHINESE;
@@ -25,6 +26,8 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
   private callbackPath = '/payments/ecpay/callback';
   private asyncInfoPath = '/payments/ecpay/async-informations';
   private checkoutPath = '/payments/ecpay/checkout';
+  private boundCardPath = '/payments/ecpay/bound-card';
+  private boundCardFinishPath = '/payments/ecpay/bound-card-finished';
 
   private isGatewayReady = false;
   private emulateRefund = false;
@@ -34,6 +37,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
   private serverListener: (req: IncomingMessage, res: ServerResponse) => void = (req, res) => this.defaultServerListener(req, res);
 
   private readonly pendingOrdersCache: OrdersCache<CM, string, ECPayOrder<CM>>;
+  private readonly bindCardRequestsCache: BindCardRequestCache;
 
   private emulateRefundedOrder = new Set<string>();
 
@@ -50,6 +54,8 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
     this.callbackPath = options?.callbackPath || this.callbackPath;
     this.asyncInfoPath = options?.asyncInfoPath || this.asyncInfoPath;
     this.checkoutPath = options?.checkoutPath || this.checkoutPath;
+    this.boundCardPath = options?.boundCardPath || this.boundCardPath;
+    this.boundCardFinishPath = options?.boundCardFinishPath || this.boundCardFinishPath;
     this.emulateRefund = !!options?.emulateRefund;
 
     if (options?.withServer) {
@@ -83,6 +89,18 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
       get: async (key: string) => lruCache!.get(key),
       set: async (key: string, value: ECPayOrder<CM>) => {
         lruCache!.set(key, value);
+      },
+    };
+
+    const requestLruCache = options?.bindCardRequestsCache ? undefined : new LRUCache<string, ECPayBindCardRequest>({
+      ttlAutopurge: true,
+      ttl: options?.ttl ?? 10 * 60 * 1000, // default: 10 mins
+    });
+
+    this.bindCardRequestsCache = options?.bindCardRequestsCache ?? {
+      get: async (key: string) => requestLruCache!.get(key),
+      set: async (key: string, value: ECPayBindCardRequest) => {
+        requestLruCache!.set(key, value);
       },
     };
   }
@@ -178,7 +196,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
       }
     }
 
-    if (!req.url || req.method !== 'POST' || !~[this.asyncInfoPath, this.callbackPath].indexOf(req.url)) {
+    if (!req.url || req.method !== 'POST' || !~[this.asyncInfoPath, this.callbackPath, this.boundCardPath, this.boundCardFinishPath].indexOf(req.url)) {
       res.writeHead(404);
       res.end();
 
@@ -213,31 +231,56 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
         return;
       }
 
-      const order = await this.pendingOrdersCache.get(payload.MerchantTradeNo);
-
-      if (!order || !order.committable) {
-        res.writeHead(400, {
-          'Content-Type': 'text/plain',
-        });
-
-        res.end('0|OrderNotFound');
-
-        return;
-      }
-
       try {
         switch (req.url) {
           case this.asyncInfoPath:
-            debugPayment(`ECPayment handled async information for order ${payload.MerchantTradeNo}`);
+          case this.callbackPath: {
+            const paymentPayload = payload as ECPayPaymentCallbackPayload;
+            const order = await this.pendingOrdersCache.get(paymentPayload.MerchantTradeNo);
 
-            this.handleAsyncInformation(order, payload);
+            if (!order || !order.committable) {
+              res.writeHead(400, {
+                'Content-Type': 'text/plain',
+              });
+
+              res.end('0|OrderNotFound');
+
+              return;
+            }
+
+            if (req.url === this.asyncInfoPath) {
+              debugPayment(`ECPayment handled async information for order ${paymentPayload.MerchantTradeNo}`);
+
+              this.handleAsyncInformation(order, paymentPayload);
+            } else {
+              debugPayment(`ECPayment handled payment result for order ${paymentPayload.MerchantTradeNo}`)
+
+              this.handlePaymentResult(order, paymentPayload);
+            }
+
             break;
+          }
 
-          case this.callbackPath:
-            debugPayment(`ECPayment handled payment result for order ${payload.MerchantTradeNo}`)
+          case this.boundCardPath:
+          case this.boundCardFinishPath: {
+            const bindCardPayload = payload as ECPayBindCardCallbackPayload;
+            const request = await this.bindCardRequestsCache.get(bindCardPayload.MerchantMemberID.replace(new RegExp(`^${bindCardPayload.MerchantID}`), ''));
 
-            this.handlePaymentResult(order, payload);
+            if (!request || request.state !== ECPayBindCardRequestState.FORM_GENERATED) {
+              res.writeHead(400, {
+                'Content-Type': 'text/plain',
+              });
+
+              res.end('0|RequestNotFound');
+
+              return;
+            }
+
+            debugPayment('ECPayment handled bind card result')
+
+            this.handleBindCardResult(request, bindCardPayload);
             break;
+          }
         }
 
         res.writeHead(200, {
@@ -255,7 +298,17 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
     });
   }
 
-  public handlePaymentResult(order: ECPayOrder<ECPayCommitMessage>, payload: ECPayCallbackPayload) {
+  public handleBindCardResult(request: ECPayBindCardRequest, payload: ECPayBindCardCallbackPayload) {
+    if (payload.RtnCode !== 1) {
+      request.fail(payload.RtnCode.toString(), payload.RtnMsg);
+
+      return;
+    }
+
+    request.bound(payload);
+  }
+
+  public handlePaymentResult(order: ECPayOrder<ECPayCommitMessage>, payload: ECPayPaymentCallbackPayload) {
     if (payload.RtnCode !== 1) {
       order.fail(payload.RtnCode.toString(), payload.RtnMsg);
 
@@ -884,5 +937,20 @@ export class ECPayPayment<CM extends ECPayCommitMessage> implements PaymentGatew
     if (result.data.RtnCode !== 1) {
       throw new Error(result.data.RtnMsg || 'Unknown error');
     }
+  }
+
+  prepareBindCard(memberId: string, finishRedirectURL?: string): ECPayBindCardRequest {
+    const payload = this.addMac<ECPayBindCardRequestPayload>({
+      MerchantID: this.merchantId,
+      MerchantMemberID: `${this.merchantId}${memberId}`,
+      ServerReplyURL: `${this.serverHost}${this.boundCardPath}`,
+      ClientRedirectURL: finishRedirectURL ?? `${this.serverHost}${this.boundCardFinishPath}`,
+    });
+
+    const request = new ECPayBindCardRequest(payload, this);
+
+    this.bindCardRequestsCache.set(memberId, request);
+
+    return request;
   }
 }

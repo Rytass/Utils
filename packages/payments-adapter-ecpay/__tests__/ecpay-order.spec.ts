@@ -1,8 +1,34 @@
 import { Channel, CreditCardAuthInfo, CreditCardECI, OrderState } from '@rytass/payments';
 import { DateTime } from 'luxon';
+import http, { createServer } from 'http';
 import { ECPayPayment, ECPayOrderItem, ECPayCallbackPaymentType, ECPayChannelCreditCard, ECPayChannelVirtualAccount, ECPayOrder, ECPayQueryResultStatus, ECPayCreditCardOrderStatus } from '../src';
 
 describe('ECPayOrder', () => {
+  const originCreateServer = createServer;
+  const mockedCreateServer = jest.spyOn(http, 'createServer');
+
+  mockedCreateServer.mockImplementation((requestHandler) => {
+    const mockServer = originCreateServer(requestHandler);
+
+    const mockedListen = jest.spyOn(mockServer, 'listen');
+
+    mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
+      mockServer.listen(0, listeningListener);
+
+      return mockServer;
+    });
+
+    const mockedClose = jest.spyOn(mockServer, 'close');
+
+    mockedClose.mockImplementationOnce((onClosed) => {
+      mockServer.close(onClosed);
+
+      return mockServer;
+    });
+
+    return mockServer;
+  });
+
   const payment = new ECPayPayment();
 
   it('should calculate total price', async () => {

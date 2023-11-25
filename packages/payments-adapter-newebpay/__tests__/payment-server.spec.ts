@@ -7,6 +7,7 @@ import { NewebPaymentChannel, NewebPayVirtualAccountBank, NewebPayPayment, Neweb
 import { NewebPayAPIResponseWrapper, NewebPayCreditCardSpeedCheckoutMode, NewebPayInfoRetrieveEncryptedPayload, NewebPayNotifyEncryptedPayload } from '../src/typings';
 import request from 'supertest';
 import { DateTime } from 'luxon';
+import http, { createServer } from 'http';
 import { createCipheriv, createHash } from 'crypto';
 
 const MERCHANT_ID = 'MS154366906';
@@ -14,6 +15,31 @@ const AES_KEY = 'X4vM1RymaxkyzZ9mZHNE67Kba2gpv40c';
 const AES_IV = '6ma4zu0UFWk54oyX';
 
 describe('NewebPay Payment Server', () => {
+  const originCreateServer = createServer;
+  const mockedCreateServer = jest.spyOn(http, 'createServer');
+
+  mockedCreateServer.mockImplementation((requestHandler) => {
+    const mockServer = originCreateServer(requestHandler);
+
+    const mockedListen = jest.spyOn(mockServer, 'listen');
+
+    mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
+      mockServer.listen(0, listeningListener);
+
+      return mockServer;
+    });
+
+    const mockedClose = jest.spyOn(mockServer, 'close');
+
+    mockedClose.mockImplementationOnce((onClosed) => {
+      mockServer.close(onClosed);
+
+      return mockServer;
+    });
+
+    return mockServer;
+  });
+
   describe('Default server listener', () => {
     it('should server received committed credit card callback', (done) => {
       const payment = new NewebPayPayment({

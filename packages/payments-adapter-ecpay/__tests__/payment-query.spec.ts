@@ -5,6 +5,7 @@
 import { Channel, CVS, OrderState } from '@rytass/payments';
 import axios from 'axios';
 import { createHash } from 'crypto';
+import http, { createServer } from 'http';
 import { DateTime } from 'luxon';
 import { ECPayCommitMessage, ECPayPayment, ECPayOrder, ECPayCallbackPaymentType, ECPayOrderCreditCardCommitMessage, ECPayOrderVirtualAccountCommitMessage, ECPayOrderCVSCommitMessage } from '../src';
 
@@ -50,6 +51,31 @@ function checkMac(payload: Record<string, string>): boolean {
 }
 
 describe('ECPayPayment', () => {
+  const originCreateServer = createServer;
+  const mockedCreateServer = jest.spyOn(http, 'createServer');
+
+  mockedCreateServer.mockImplementation((requestHandler) => {
+    const mockServer = originCreateServer(requestHandler);
+
+    const mockedListen = jest.spyOn(mockServer, 'listen');
+
+    mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
+      mockServer.listen(0, listeningListener);
+
+      return mockServer;
+    });
+
+    const mockedClose = jest.spyOn(mockServer, 'close');
+
+    mockedClose.mockImplementationOnce((onClosed) => {
+      mockServer.close(onClosed);
+
+      return mockServer;
+    });
+
+    return mockServer;
+  });
+
   describe('Waiting withServer mode server listen', () => {
     it('should reject query on server not ready', (done) => {
       const payment = new ECPayPayment({

@@ -330,6 +330,7 @@ describe('ECPayPayment (CVS)', () => {
             .expect(200);
 
           expect(res.text).toEqual('1|OK');
+
           expect(order.state).toBe(OrderState.ASYNC_INFO_RETRIEVED);
 
           const callbackResponse = addMac({

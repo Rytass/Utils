@@ -5,6 +5,7 @@
 import axios from 'axios';
 import { createHash } from 'crypto';
 import { DateTime } from 'luxon';
+import http, { createServer } from 'http';
 import { ECPayPayment, OrderState, ECPayQueryOrderPayload, ECPayCreditCardOrderCloseStatus, ECPayCreditCardDetailQueryPayload, ECPayCreditCardOrderStatus, ECPayOrderActionPayload, ECPayOrder, ECPayOrderForm } from '../src';
 
 function addMac(payload: Record<string, string>) {
@@ -54,6 +55,31 @@ const WILL_REJECT_REFUND_ORDER_ID = '1209819069024802';
 const WILL_THROW_UNKNOWN_ERROR_REFUND_ORDER_ID = '1209819069024809';
 
 describe('ECPayPayment Refund', () => {
+  const originCreateServer = createServer;
+  const mockedCreateServer = jest.spyOn(http, 'createServer');
+
+  mockedCreateServer.mockImplementation((requestHandler) => {
+    const mockServer = originCreateServer(requestHandler);
+
+    const mockedListen = jest.spyOn(mockServer, 'listen');
+
+    mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
+      mockServer.listen(0, listeningListener);
+
+      return mockServer;
+    });
+
+    const mockedClose = jest.spyOn(mockServer, 'close');
+
+    mockedClose.mockImplementationOnce((onClosed) => {
+      mockServer.close(onClosed);
+
+      return mockServer;
+    });
+
+    return mockServer;
+  });
+
   describe('Waiting withServer mode server listen', () => {
     it('should reject credit card trade status getter on server not ready', (done) => {
       const payment = new ECPayPayment({

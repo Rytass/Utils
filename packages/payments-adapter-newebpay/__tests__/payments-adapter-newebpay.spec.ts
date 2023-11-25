@@ -5,6 +5,7 @@
 
 import ngrok from 'ngrok';
 import axios from 'axios';
+import http, { createServer } from 'http';
 import { OrderState } from '@rytass/payments';
 import { createHash, createDecipheriv, randomBytes } from 'crypto';
 import { NewebPayCreditCardBalanceStatus, NewebPayMPGMakeOrderPayload, NewebPaymentChannel, NewebPayOrder, NewebPayPayment, NewebPayOrderStatusFromAPI, NewebPayWebATMCommitMessage, NewebPayAdditionInfoCreditCard, NewebPayCreditCardCommitMessage } from '../src';
@@ -14,6 +15,31 @@ const AES_KEY = 'X4vM1RymaxkyzZ9mZHNE67Kba2gpv40c';
 const AES_IV = '6ma4zu0UFWk54oyX';
 
 describe('NewebPay Payments', () => {
+  const originCreateServer = createServer;
+  const mockedCreateServer = jest.spyOn(http, 'createServer');
+
+  mockedCreateServer.mockImplementation((requestHandler) => {
+    const mockServer = originCreateServer(requestHandler);
+
+    const mockedListen = jest.spyOn(mockServer, 'listen');
+
+    mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
+      mockServer.listen(0, listeningListener);
+
+      return mockServer;
+    });
+
+    const mockedClose = jest.spyOn(mockServer, 'close');
+
+    mockedClose.mockImplementationOnce((onClosed) => {
+      mockServer.close(onClosed);
+
+      return mockServer;
+    });
+
+    return mockServer;
+  });
+
   describe('Property', () => {
     it('should checkActionUrl property return gateway url', () => {
       const payment = new NewebPayPayment({

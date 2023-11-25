@@ -14,6 +14,7 @@
 - [x] Query
 - [ ] Refund
 - [ ] Refund (Installments)
+- [x] Card Binding
 
 ## Getting Started
 

@@ -224,6 +224,8 @@ export enum PaymentEvents {
   ORDER_PRE_COMMIT = 'PRE_COMMIT',
   ORDER_COMMITTED = 'COMMITTED',
   ORDER_FAILED = 'FAILED',
+  CARD_BOUND = 'CARD_BOUND',
+  CARD_BINDING_FAILED = 'CARD_BINDING_FAILED',
 }
 
 export enum PaymentPeriodType {
