@@ -359,4 +359,50 @@ describe('ECPayPayment Card Binding', () => {
       amount: 15,
     })).rejects.toThrow();
   });
+
+  it('should get binding url', (done) => {
+    const payment = new ECPayPayment({
+      withServer: true,
+      serverHost: 'http://localhost:3333',
+      merchantId: MERCHANT_ID,
+      hashKey: HASH_KEY,
+      hashIv: HASH_IV,
+      baseUrl: BASE_URL,
+      bindCardPath: '/payments/ecpay/bind-card',
+      boundCardPath: '/payments/ecpay/bound-card',
+      onServerListen: async () => {
+        const bindRequest = await payment.prepareBindCard('rytass');
+
+        const url = bindRequest.bindingURL;
+
+        expect(url).toEqual('http://localhost:3333/payments/ecpay/bind-card/rytass');
+
+        request(payment._server)
+          .get('/payments/ecpay/bind-card/rytass')
+          .expect('Content-Type', 'text/html; charset=utf-8')
+          .expect(200)
+          .then((res) => {
+            expect(res.text).toMatch(/BindingCardID/);
+
+            payment._server?.close(done);
+          });
+      },
+    });
+  });
+
+  it('should throw when get binding url without server mode', async () => {
+    const payment = new ECPayPayment({
+      serverHost: 'http://localhost:3333',
+      merchantId: MERCHANT_ID,
+      hashKey: HASH_KEY,
+      hashIv: HASH_IV,
+      baseUrl: BASE_URL,
+      bindCardPath: '/payments/ecpay/bind-card',
+      boundCardPath: '/payments/ecpay/bound-card',
+    });
+
+    const bindRequest = await payment.prepareBindCard('rytass');
+
+    expect(() => bindRequest.bindingURL).toThrow();
+  });
 });

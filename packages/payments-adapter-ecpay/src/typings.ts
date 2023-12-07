@@ -25,6 +25,7 @@ export interface ECPayInitOptions<O extends ECPayOrder<ECPayCommitMessage>> {
   callbackPath?: string;
   asyncInfoPath?: string;
   checkoutPath?: string;
+  bindCardPath?: string;
   boundCardPath?: string;
   boundCardFinishPath?: string;
   withServer?: boolean | 'ngrok';

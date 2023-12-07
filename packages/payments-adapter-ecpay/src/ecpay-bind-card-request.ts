@@ -51,6 +51,14 @@ export class ECPayBindCardRequest {
 </html>`;
   }
 
+  get bindingURL(): string {
+    if (!this._gateway._server) {
+      throw new Error('To use automatic checkout server, please initial payment with `withServer` options.');
+    }
+
+    return this._gateway.getBindingURL(this);
+  }
+
   get cardId(): string | undefined {
     return this._cardId;
   }

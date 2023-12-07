@@ -26,6 +26,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage> im
   private callbackPath = '/payments/ecpay/callback';
   private asyncInfoPath = '/payments/ecpay/async-informations';
   private checkoutPath = '/payments/ecpay/checkout';
+  private bindCardPath = '/payments/ecpay/bind-card';
   private boundCardPath = '/payments/ecpay/bound-card';
   private boundCardFinishPath = '/payments/ecpay/bound-card-finished';
 
@@ -54,6 +55,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage> im
     this.callbackPath = options?.callbackPath || this.callbackPath;
     this.asyncInfoPath = options?.asyncInfoPath || this.asyncInfoPath;
     this.checkoutPath = options?.checkoutPath || this.checkoutPath;
+    this.bindCardPath = options?.bindCardPath || this.bindCardPath;
     this.boundCardPath = options?.boundCardPath || this.boundCardPath;
     this.boundCardFinishPath = options?.boundCardFinishPath || this.boundCardFinishPath;
     this.emulateRefund = !!options?.emulateRefund;
@@ -146,8 +148,6 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage> im
           {}),
     );
 
-    console.log({ computedMac });
-
     if (computedMac !== mac) return false;
 
     return true;
@@ -177,23 +177,46 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage> im
 
   public async defaultServerListener(req: IncomingMessage, res: ServerResponse) {
     const checkoutRe = new RegExp(`^${this.checkoutPath}/([^/]+)$`);
+    const bindCardRe = new RegExp(`^${this.bindCardPath}/([^/]+)$`);
 
-    if (req.method === 'GET' && req.url && checkoutRe.test(req.url)) {
-      const orderId = RegExp.$1;
+    if (req.method === 'GET' && req.url) {
+      if (checkoutRe.test(req.url)) {
+        const orderId = RegExp.$1;
 
-      if (orderId) {
-        const order = await this.pendingOrdersCache.get(orderId);
+        if (orderId) {
+          const order = await this.pendingOrdersCache.get(orderId);
 
-        if (order) {
-          debugPayment(`ECPayment serve checkout page for order ${orderId}`);
+          if (order) {
+            debugPayment(`ECPayment serve checkout page for order ${orderId}`);
 
-          res.writeHead(200, {
-            'Content-Type': 'text/html; charset=utf-8',
-          });
+            res.writeHead(200, {
+              'Content-Type': 'text/html; charset=utf-8',
+            });
 
-          res.end(order.formHTML);
+            res.end(order.formHTML);
 
-          return;
+            return;
+          }
+        }
+      }
+
+      if (bindCardRe.test(req.url)) {
+        const memberId = RegExp.$1;
+
+        if (memberId) {
+          const request = await this.bindCardRequestsCache.get(memberId);
+
+          if (request) {
+            debugPayment(`ECPayment serve bind card page for member ${memberId}`);
+
+            res.writeHead(200, {
+              'Content-Type': 'text/html; charset=utf-8',
+            });
+
+            res.end(request.formHTML);
+
+            return;
+          }
         }
       }
     }
@@ -838,6 +861,10 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage> im
 
   getCheckoutUrl(order: ECPayOrder<ECPayCommitMessage>) {
     return `${this.serverHost}${this.checkoutPath}/${order.id}`;
+  }
+
+  getBindingURL(bindCardRequest: ECPayBindCardRequest) {
+    return `${this.serverHost}${this.bindCardPath}/${bindCardRequest.memberId}`;
   }
 
   private getEmulatedCreditCardTradeStatusResponse(gwsr: string, amount: number): { data: ECPayCreditCardDetailQueryResponse } {
