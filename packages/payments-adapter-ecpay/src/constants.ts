@@ -16,6 +16,7 @@ export const ECPayChannel: Record<Extract<Channel, Channel.CREDIT_CARD | Channel
 };
 
 export const NUMERIC_CALLBACK_KEYS = [
+  'Count',
   'RtnCode',
   'TradeAmt',
   'SimulatePaid',

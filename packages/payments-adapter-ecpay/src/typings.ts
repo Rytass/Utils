@@ -667,5 +667,27 @@ export interface ECPayCheckoutWithBoundCardResponsePayload {
   stast: string; // First installment amount
   staed: string; // Each installment amount
   eci: CreditCardECI;
-  CheckMacValue: '5C97A411CD923906C2D9783DE51B6B8987AEE430BA08C9B7136DAE98AFE7D384'
+  CheckMacValue: string;
+}
+
+export interface ECPayBoundCardQueryRequestPayload extends Record<string, string> {
+  MerchantID: string;
+  MerchantMemberID: string;
+  CheckMacValue: string;
+}
+
+export interface ECPayBoundCardQueryResponsePayload {
+  MerchantID: string;
+  MerchantMemberID: string;
+  Count: string;
+  JSonData: string;
+  CheckMacValue: string;
+}
+
+export interface ECPayBoundCardInfo {
+  cardId: string;
+  cardNumberPrefix: string;
+  cardNumberSuffix: string;
+  bindingDate: Date;
+  expireDate: Date;
 }

@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon';
 import { ECPayPayment } from './ecpay-payment';
-import { ECPayBindCardCallbackPayload, ECPayBindCardRequestPayload, ECPayBindCardRequestState, ECPayCommitMessage } from './typings';
+import { ECPayBindCardCallbackPayload, ECPayBindCardRequestPayload, ECPayBindCardRequestState, ECPayBoundCardInfo, ECPayCommitMessage } from './typings';
 import { PaymentEvents } from '@rytass/payments';
 
 export class ECPayBindCardRequest {
@@ -13,6 +13,7 @@ export class ECPayBindCardRequest {
   private _cardNumberPrefix: string | undefined;
   private _cardNumberSuffix: string | undefined;
   private _bindingDate: Date | undefined;
+  private _expireDate: Date | undefined;
 
   private _failedCode: string | undefined;
   private _failedMessage: string | undefined;
@@ -92,6 +93,22 @@ export class ECPayBindCardRequest {
       code: this._failedCode as string,
       message: this._failedMessage as string,
     };
+  }
+
+  get expireDate(): Promise<Date> {
+    if (this._expireDate) return Promise.resolve(this._expireDate);
+
+    return new Promise<Date>(async (resolve, reject) => {
+      try {
+        const boundCardInfo = await this._gateway.queryBoundCard(this.memberId);
+
+        this._expireDate = boundCardInfo.expireDate as Date;
+
+        resolve(boundCardInfo.expireDate as Date);
+      } catch (ex) {
+        reject(ex);
+      }
+    });
   }
 
   bound(payload: ECPayBindCardCallbackPayload) {

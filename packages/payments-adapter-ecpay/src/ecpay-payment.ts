@@ -7,7 +7,7 @@ import { createServer, IncomingMessage, ServerResponse, Server } from 'http';
 import debug from 'debug';
 import ngrok from 'ngrok';
 import { EventEmitter } from 'events';
-import { ECPayCallbackCreditPayload, ECPayCallbackPayload, ECPayCallbackPaymentType, ECPayCommitMessage, ECPayOrderCreditCardCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayQueryResultPayload, ECPayOrderVirtualAccountCommitMessage, Language, GetOrderInput, ECPayCreditCardOrderInput, ECPayQueryOrderPayload, ECPayOrderCVSCommitMessage, ECPayOrderBarcodeCommitMessage, ECPayAsyncInformationBarcodePayload, ECPayAsyncInformationCVSPayload, ECPayAsyncInformationVirtualAccountPayload, ECPayAsyncInformationPayload, ECPayCallbackVirtualAccountPayload, ECPayCallbackCVSPayload, ECPayCallbackBarcodePayload, ECPayCreditCardDetailQueryPayload, ECPayCreditCardDetailQueryResponse, ECPayCreditCardOrderStatus, ECPayCreditCardOrderCloseStatus, ECPayOrderActionPayload, ECPayOrderDoActionResponse, OrdersCache, ECPayBindCardRequestPayload, ECPayPaymentCallbackPayload, ECPayBindCardCallbackPayload, BindCardRequestCache, ECPayBindCardRequestState, ECPayCheckoutWithBoundCardPayload, ECPayCheckoutWithBoundCardRequestPayload, ECPayCheckoutWithBoundCardResponsePayload, ECPayCheckoutWithBoundCardResult } from './typings';
+import { ECPayCallbackCreditPayload, ECPayCallbackPayload, ECPayCallbackPaymentType, ECPayCommitMessage, ECPayOrderCreditCardCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayQueryResultPayload, ECPayOrderVirtualAccountCommitMessage, Language, GetOrderInput, ECPayCreditCardOrderInput, ECPayQueryOrderPayload, ECPayOrderCVSCommitMessage, ECPayOrderBarcodeCommitMessage, ECPayAsyncInformationBarcodePayload, ECPayAsyncInformationCVSPayload, ECPayAsyncInformationVirtualAccountPayload, ECPayAsyncInformationPayload, ECPayCallbackVirtualAccountPayload, ECPayCallbackCVSPayload, ECPayCallbackBarcodePayload, ECPayCreditCardDetailQueryPayload, ECPayCreditCardDetailQueryResponse, ECPayCreditCardOrderStatus, ECPayCreditCardOrderCloseStatus, ECPayOrderActionPayload, ECPayOrderDoActionResponse, OrdersCache, ECPayBindCardRequestPayload, ECPayPaymentCallbackPayload, ECPayBindCardCallbackPayload, BindCardRequestCache, ECPayBindCardRequestState, ECPayCheckoutWithBoundCardPayload, ECPayCheckoutWithBoundCardRequestPayload, ECPayCheckoutWithBoundCardResponsePayload, ECPayCheckoutWithBoundCardResult, ECPayBoundCardInfo, ECPayBoundCardQueryResponsePayload } from './typings';
 import { ECPayChannel, ECPayCVS, ECPayPaymentPeriodType, NUMERIC_CALLBACK_KEYS } from './constants';
 import { ECPayOrder } from './ecpay-order';
 import { ECPayBindCardRequest } from './ecpay-bind-card-request';
@@ -1027,6 +1027,48 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage> im
       eci: responsePayload.eci,
       lastFourDigits: responsePayload.card4no,
       firstSixDigits: responsePayload.card6no,
+    };
+  }
+
+  async queryBoundCard(memberId: string): Promise<ECPayBoundCardInfo> {
+    const payload = this.addMac<ECPayCheckoutWithBoundCardRequestPayload>({
+      MerchantID: this.merchantId,
+      MerchantMemberID: `${this.merchantId}${memberId}`,
+    });
+
+    const { data } = await axios.post<string>(`${this.baseUrl}/MerchantMember/QueryMemberBinding`, new URLSearchParams(payload).toString())
+
+    const responsePayload = Array.from(new URLSearchParams(data).entries())
+      .reduce(
+        (vars, [key, value]) => ({
+          ...vars,
+          [key]: (value !== '' && ~NUMERIC_CALLBACK_KEYS.indexOf(key)) ? Number(value) : value,
+        }),
+        {},
+      ) as ECPayBoundCardQueryResponsePayload;
+
+    if (!this.checkMac<ECPayBoundCardQueryResponsePayload>(responsePayload)) {
+      throw new Error('Invalid CheckSum');
+    }
+
+    if (!responsePayload.Count) {
+      throw new Error('No card found');
+    }
+
+    const jsonPayload = JSON.parse(responsePayload.JSonData) as {
+      CardID: string;
+      Card6No: string;
+      Card4No: string;
+      CardExpireDate: string;
+      BindingDate: string;
+    };
+
+    return {
+      cardId: jsonPayload.CardID,
+      cardNumberPrefix: jsonPayload.Card6No,
+      cardNumberSuffix: jsonPayload.Card4No,
+      bindingDate: DateTime.fromFormat(jsonPayload.BindingDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+      expireDate: DateTime.fromFormat(jsonPayload.CardExpireDate, 'yyMM').startOf('month').toJSDate(),
     };
   }
 }
