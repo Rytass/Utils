@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.4](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.2.3...@rytass/payments-adapter-ecpay@0.2.4) (2024-03-25)
+
+
+### Features
+
+* **payments-adapter-ecpay:** add queryBoundCard method ([f22e253](https://github.com/Rytass/Utils/commit/f22e2538bec20729b8dcf385c80ba82c0ad7a5ea))
+
+
+
+
+
 ## [0.2.3](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.2.2...@rytass/payments-adapter-ecpay@0.2.3) (2023-12-07)
 
 
