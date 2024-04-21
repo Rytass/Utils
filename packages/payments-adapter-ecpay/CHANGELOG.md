@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.5](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.2.4...@rytass/payments-adapter-ecpay@0.2.5) (2024-04-21)
+
+
+### Bug Fixes
+
+* **payments-adapter-ecpay:** correct member id on binding card mode ([ac8718e](https://github.com/Rytass/Utils/commit/ac8718e1b1a684df7c95e371e90c7db4b6204e14))
+
+
+
+
+
 ## [0.2.4](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.2.3...@rytass/payments-adapter-ecpay@0.2.4) (2024-03-25)
 
 
