@@ -8,6 +8,10 @@ import http, { createServer, IncomingMessage, ServerResponse } from 'http';
 import { ECPayOrder, ECPayPayment, ECPayChannelCreditCard, ECPayCommitMessage, ECPayCallbackPaymentType } from '@rytass/payments-adapter-ecpay';
 import { Channel, OrderState, PaymentPeriodType } from '@rytass/payments';
 
+const DEFAULT_MERCHANT_ID = '2000132';
+const DEFAULT_HASH_KEY = '5294y06JbISpM5x9';
+const DEFAULT_HASH_IV = 'v77hoKGq4kWxNNIS';
+
 describe('ECPayPayment', () => {
   const originCreateServer = createServer;
   const mockedCreateServer = jest.spyOn(http, 'createServer');
@@ -582,7 +586,11 @@ describe('ECPayPayment', () => {
   });
 
   describe('Memory cards', () => {
-    const payment = new ECPayPayment<ECPayChannelCreditCard>();
+    const payment = new ECPayPayment<ECPayChannelCreditCard>({
+      merchantId: DEFAULT_MERCHANT_ID,
+      hashKey: DEFAULT_HASH_KEY,
+      hashIv: DEFAULT_HASH_IV,
+    });
 
     it('should memory card only works on credit channel', () => {
       expect(() => payment.prepare({
@@ -622,7 +630,7 @@ describe('ECPayPayment', () => {
       });
 
       expect(order.form.BindingCard).toBe('1');
-      expect(order.form.MerchantMemberID).toBe('M_ID');
+      expect(order.form.MerchantMemberID).toBe(`${DEFAULT_MERCHANT_ID}M_ID`);
     });
   });
 
