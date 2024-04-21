@@ -661,7 +661,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage> im
 
       if (orderInput.memory) {
         payload.BindingCard = '1';
-        payload.MerchantMemberID = orderInput.memberId as string;
+        payload.MerchantMemberID = `${this.merchantId}${orderInput.memberId}`;
       }
 
       if (orderInput.allowCreditCardRedeem) {
