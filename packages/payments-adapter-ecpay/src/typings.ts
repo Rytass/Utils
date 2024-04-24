@@ -587,6 +587,22 @@ export interface ECPayBindCardRequestPayload extends Record<string, string> {
   CheckMacValue: string;
 }
 
+export interface ECPayBindCardWithTransactionRequestPayload extends Record<string, string> {
+  MerchantID: string;
+  MerchantTradeNo: string;
+  AllpayTradeNo: string;
+  MerchantMemberID: string;
+  CheckMacValue: string;
+}
+
+export interface ECPayBindCardWithTransactionRequestOptions {
+  memberId: string;
+  cardId: string;
+  cardNumberPrefix: string;
+  cardNumberSuffix: string;
+  bindingDate: Date;
+}
+
 export interface ECPayBoundCardResponse {
   RtnCode: number;
   RtnMsg: string;
@@ -649,6 +665,20 @@ export interface ECPayCheckoutWithBoundCardResult {
   eci: CreditCardECI;
   firstSixDigits: string;
   lastFourDigits: string;
+}
+
+export interface ECPayBoundCardWithTransactionResponsePayload {
+  RtnCode: number | 1;
+  RtnMsg: string;
+  MerchantID: string;
+  MerchantTradeNo: string;
+  AllpayTradeNo: string;
+  MerchantMemberID: string;
+  CardID: string;
+  Card6No: string;
+  Card4No: string;
+  BindingDate: string; // YYYY/MM/DD HH:mm:ss
+  CheckMacValue: string;
 }
 
 export interface ECPayCheckoutWithBoundCardResponsePayload {

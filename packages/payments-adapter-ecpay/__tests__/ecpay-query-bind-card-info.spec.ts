@@ -5,41 +5,17 @@
 import http, { createServer } from 'http';
 import { ECPayPayment } from '../src/ecpay-payment';
 import axios from 'axios';
-import { createHash } from 'crypto';
 import { DateTime } from 'luxon';
 import { ECPayBindCardRequest } from '../src';
 import { ECPayBindCardCallbackPayload, ECPayBindCardRequestPayload } from '../src/typings';
+import { getAddMac } from '../__utils__/add-mac';
 
 const BASE_URL = 'https://payment-stage.ecpay.com.tw';
 const MERCHANT_ID = '2000214';
 const HASH_KEY = '5294y06JbISpM5x9';
 const HASH_IV = 'v77hoKGq4kWxNNIS';
 
-function addMac(payload: Record<string, string>) {
-  const mac = createHash('sha256')
-    .update(
-      encodeURIComponent(
-        [
-          ['HashKey', '5294y06JbISpM5x9'],
-          ...Object.entries(payload).sort(([aKey], [bKey]) => (aKey.toLowerCase() < bKey.toLowerCase() ? -1 : 1)),
-          ['HashIV', 'v77hoKGq4kWxNNIS'],
-        ]
-          .map(([key, value]) => `${key}=${value}`)
-          .join('&'),
-      )
-        .toLowerCase()
-        .replace(/'/g, '%27')
-        .replace(/~/g, '%7e')
-        .replace(/%20/g, '+'),
-    )
-    .digest('hex')
-    .toUpperCase();
-
-  return {
-    ...payload,
-    CheckMacValue: mac,
-  } as Record<string, string>;
-}
+const addMac = getAddMac(HASH_KEY, HASH_IV);
 
 function checkMac(payload: Record<string, string>): boolean {
   const { CheckMacValue: mac, ...res } = payload;

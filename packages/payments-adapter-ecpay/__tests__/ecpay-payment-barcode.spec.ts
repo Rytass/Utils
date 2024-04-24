@@ -5,10 +5,12 @@
 import request from 'supertest';
 import { OrderState } from '@rytass/payments';
 import { DateTime } from 'luxon';
-import { addMac } from '../__utils__/add-mac';
+import { getAddMac } from '../__utils__/add-mac';
 import { Channel, ECPayCallbackPaymentType, ECPayPayment } from '@rytass/payments-adapter-ecpay';
 import http, { createServer } from 'http';
 import { ECPayChannelBarcode } from 'payments-adapter-ecpay/src/typings';
+
+const addMac = getAddMac();
 
 describe('ECPayPayment (Barcode)', () => {
   const originCreateServer = createServer;

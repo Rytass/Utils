@@ -7,7 +7,7 @@ import { createServer, IncomingMessage, ServerResponse, Server } from 'http';
 import debug from 'debug';
 import ngrok from 'ngrok';
 import { EventEmitter } from 'events';
-import { ECPayCallbackCreditPayload, ECPayCallbackPayload, ECPayCallbackPaymentType, ECPayCommitMessage, ECPayOrderCreditCardCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayQueryResultPayload, ECPayOrderVirtualAccountCommitMessage, Language, GetOrderInput, ECPayCreditCardOrderInput, ECPayQueryOrderPayload, ECPayOrderCVSCommitMessage, ECPayOrderBarcodeCommitMessage, ECPayAsyncInformationBarcodePayload, ECPayAsyncInformationCVSPayload, ECPayAsyncInformationVirtualAccountPayload, ECPayAsyncInformationPayload, ECPayCallbackVirtualAccountPayload, ECPayCallbackCVSPayload, ECPayCallbackBarcodePayload, ECPayCreditCardDetailQueryPayload, ECPayCreditCardDetailQueryResponse, ECPayCreditCardOrderStatus, ECPayCreditCardOrderCloseStatus, ECPayOrderActionPayload, ECPayOrderDoActionResponse, OrdersCache, ECPayBindCardRequestPayload, ECPayPaymentCallbackPayload, ECPayBindCardCallbackPayload, BindCardRequestCache, ECPayBindCardRequestState, ECPayCheckoutWithBoundCardPayload, ECPayCheckoutWithBoundCardRequestPayload, ECPayCheckoutWithBoundCardResponsePayload, ECPayCheckoutWithBoundCardResult, ECPayBoundCardInfo, ECPayBoundCardQueryResponsePayload } from './typings';
+import { ECPayCallbackCreditPayload, ECPayCallbackPayload, ECPayCallbackPaymentType, ECPayCommitMessage, ECPayOrderCreditCardCommitMessage, ECPayInitOptions, ECPayOrderForm, ECPayQueryResultPayload, ECPayOrderVirtualAccountCommitMessage, Language, GetOrderInput, ECPayCreditCardOrderInput, ECPayQueryOrderPayload, ECPayOrderCVSCommitMessage, ECPayOrderBarcodeCommitMessage, ECPayAsyncInformationBarcodePayload, ECPayAsyncInformationCVSPayload, ECPayAsyncInformationVirtualAccountPayload, ECPayAsyncInformationPayload, ECPayCallbackVirtualAccountPayload, ECPayCallbackCVSPayload, ECPayCallbackBarcodePayload, ECPayCreditCardDetailQueryPayload, ECPayCreditCardDetailQueryResponse, ECPayCreditCardOrderStatus, ECPayCreditCardOrderCloseStatus, ECPayOrderActionPayload, ECPayOrderDoActionResponse, OrdersCache, ECPayBindCardRequestPayload, ECPayPaymentCallbackPayload, ECPayBindCardCallbackPayload, BindCardRequestCache, ECPayBindCardRequestState, ECPayCheckoutWithBoundCardPayload, ECPayCheckoutWithBoundCardRequestPayload, ECPayCheckoutWithBoundCardResponsePayload, ECPayCheckoutWithBoundCardResult, ECPayBoundCardInfo, ECPayBoundCardQueryResponsePayload, ECPayBindCardWithTransactionRequestPayload, ECPayBoundCardWithTransactionResponsePayload } from './typings';
 import { ECPayChannel, ECPayCVS, ECPayPaymentPeriodType, NUMERIC_CALLBACK_KEYS } from './constants';
 import { ECPayOrder } from './ecpay-order';
 import { ECPayBindCardRequest } from './ecpay-bind-card-request';
@@ -966,6 +966,46 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage> im
     if (result.data.RtnCode !== 1) {
       throw new Error(result.data.RtnMsg || 'Unknown error');
     }
+  }
+
+  async bindCardWithTransaction(
+    memberId: string,
+    orderIdFromECPay: string,
+    bindingOrderId?: string,
+  ): Promise<ECPayBindCardRequest> {
+    const payload = this.addMac<ECPayBindCardWithTransactionRequestPayload>({
+      MerchantID: this.merchantId,
+      MerchantMemberID: `${this.merchantId}${memberId}`,
+      MerchantTradeNo: bindingOrderId ?? randomBytes(10).toString('hex'),
+      AllpayTradeNo: orderIdFromECPay,
+    });
+
+    const { data } = await axios.post<string>(`${this.baseUrl}/MerchantMember/BindingTrade`, new URLSearchParams(payload).toString())
+
+    const responsePayload = Array.from(new URLSearchParams(data).entries())
+      .reduce(
+        (vars, [key, value]) => ({
+          ...vars,
+          [key]: (value !== '' && ~NUMERIC_CALLBACK_KEYS.indexOf(key)) ? Number(value) : value,
+        }),
+        {},
+      ) as ECPayBoundCardWithTransactionResponsePayload;
+
+    if (!this.checkMac<ECPayBoundCardWithTransactionResponsePayload>(responsePayload)) {
+      throw new Error('Invalid CheckSum');
+    }
+
+    if (responsePayload.RtnCode !== 1) {
+      throw new Error(responsePayload.RtnMsg);
+    }
+
+    return new ECPayBindCardRequest({
+      memberId,
+      cardId: responsePayload.CardID,
+      cardNumberPrefix: responsePayload.Card6No,
+      cardNumberSuffix: responsePayload.Card4No,
+      bindingDate: DateTime.fromFormat(responsePayload.BindingDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+    }, this);
   }
 
   async prepareBindCard(memberId: string, finishRedirectURL?: string): Promise<ECPayBindCardRequest> {

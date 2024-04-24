@@ -1,10 +1,10 @@
 import { DateTime } from 'luxon';
 import { ECPayPayment } from './ecpay-payment';
-import { ECPayBindCardCallbackPayload, ECPayBindCardRequestPayload, ECPayBindCardRequestState, ECPayBoundCardInfo, ECPayCommitMessage } from './typings';
+import { ECPayBindCardCallbackPayload, ECPayBindCardRequestPayload, ECPayBindCardRequestState, ECPayBindCardWithTransactionRequestOptions, ECPayBoundCardInfo, ECPayCommitMessage } from './typings';
 import { PaymentEvents } from '@rytass/payments';
 
 export class ECPayBindCardRequest {
-  private readonly _form: ECPayBindCardRequestPayload;
+  private readonly _form: ECPayBindCardRequestPayload | undefined;
   private readonly _gateway: ECPayPayment;
 
   private _resolved = false;
@@ -18,13 +18,26 @@ export class ECPayBindCardRequest {
   private _failedCode: string | undefined;
   private _failedMessage: string | undefined;
 
-  constructor(options: ECPayBindCardRequestPayload, gateway: ECPayPayment) {
-    this._form = options;
+  private _memberId: string;
+
+  constructor(options: ECPayBindCardRequestPayload | ECPayBindCardWithTransactionRequestOptions, gateway: ECPayPayment) {
+    if ('ServerReplyURL' in options) {
+      this._form = options as ECPayBindCardRequestPayload;
+      this._memberId = options.MerchantMemberID.replace(new RegExp(`^${options.MerchantID}`), '');
+    } else {
+      this._resolved = true;
+      this._memberId = options.memberId;
+      this._cardId = options.cardId;
+      this._cardNumberPrefix = options.cardNumberPrefix;
+      this._cardNumberSuffix = options.cardNumberSuffix;
+      this._bindingDate = options.bindingDate;
+    }
+
     this._gateway = gateway;
   }
 
   get memberId(): string {
-    return this._form.MerchantMemberID.replace(new RegExp(`^${this._form.MerchantID}`), '');
+    return this._memberId;
   }
 
   get form(): ECPayBindCardRequestPayload {
@@ -32,7 +45,7 @@ export class ECPayBindCardRequest {
 
     this._resolved = true;
 
-    return this._form;
+    return this._form as ECPayBindCardRequestPayload;
   }
 
   get formHTML(): string {

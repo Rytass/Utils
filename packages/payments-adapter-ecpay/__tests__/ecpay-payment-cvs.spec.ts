@@ -4,11 +4,13 @@
 
 import request from 'supertest';
 import { CVS, OrderState } from '@rytass/payments';
-import { addMac } from '../__utils__/add-mac';
+import { getAddMac } from '../__utils__/add-mac';
 import { Channel, ECPayCallbackPaymentType, ECPayPayment } from '@rytass/payments-adapter-ecpay';
 import http, { createServer } from 'http';
 import { DateTime } from 'luxon';
 import { ECPayChannelCVS } from 'payments-adapter-ecpay/src/typings';
+
+const addMac = getAddMac();
 
 describe('ECPayPayment (CVS)', () => {
   const originCreateServer = createServer;

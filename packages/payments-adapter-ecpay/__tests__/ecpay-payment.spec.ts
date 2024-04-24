@@ -3,7 +3,7 @@
  */
 
 import request from 'supertest';
-import { addMac } from '../__utils__/add-mac';
+import { getAddMac } from '../__utils__/add-mac';
 import http, { createServer, IncomingMessage, ServerResponse } from 'http';
 import { ECPayOrder, ECPayPayment, ECPayChannelCreditCard, ECPayCommitMessage, ECPayCallbackPaymentType } from '@rytass/payments-adapter-ecpay';
 import { Channel, OrderState, PaymentPeriodType } from '@rytass/payments';
@@ -11,6 +11,8 @@ import { Channel, OrderState, PaymentPeriodType } from '@rytass/payments';
 const DEFAULT_MERCHANT_ID = '2000132';
 const DEFAULT_HASH_KEY = '5294y06JbISpM5x9';
 const DEFAULT_HASH_IV = 'v77hoKGq4kWxNNIS';
+
+const addMac = getAddMac(DEFAULT_HASH_KEY, DEFAULT_HASH_IV);
 
 describe('ECPayPayment', () => {
   const originCreateServer = createServer;

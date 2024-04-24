@@ -4,10 +4,12 @@
 
 import request from 'supertest';
 import { OrderState } from '@rytass/payments';
-import { addMac } from '../__utils__/add-mac';
+import { getAddMac } from '../__utils__/add-mac';
 import { Channel, ECPayCallbackPaymentType, ECPayChannelCreditCard, ECPayChannelVirtualAccount, ECPayCommitMessage, ECPayOrder, ECPayPayment } from '@rytass/payments-adapter-ecpay';
 import http, { createServer } from 'http';
 import { DateTime } from 'luxon';
+
+const addMac = getAddMac();
 
 describe('ECPayPayment (Virtual Account)', () => {
   const originCreateServer = createServer;
