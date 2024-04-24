@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.6](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.2.5...@rytass/payments-adapter-ecpay@0.2.6) (2024-04-24)
+
+
+### Features
+
+* **payments-adapter-ecpay:** add bind card with transaction method ([2708896](https://github.com/Rytass/Utils/commit/2708896d70095e7aac8bc0b796471e3cf9787ea7))
+
+
+
+
+
 ## [0.2.5](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.2.4...@rytass/payments-adapter-ecpay@0.2.5) (2024-04-21)
 
 
