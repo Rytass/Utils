@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.7](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.2.6...@rytass/payments-adapter-ecpay@0.2.7) (2024-06-28)
+
+
+### Bug Fixes
+
+* **payments-adapter-ecpay:** correct card number existed ([8f285e4](https://github.com/Rytass/Utils/commit/8f285e4ac3c624effc47d755db0399f3a930fe5d))
+
+
+### Features
+
+* **payments-adapter-ecpay:** bound status detection ([203aa7d](https://github.com/Rytass/Utils/commit/203aa7dbefe6c4dd3e5777d570badd5be178dead))
+
+
+
+
+
 ## [0.2.6](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.2.5...@rytass/payments-adapter-ecpay@0.2.6) (2024-04-24)
 
 
