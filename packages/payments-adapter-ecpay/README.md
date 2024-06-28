@@ -68,3 +68,43 @@ const html = order.formHTML;
 // 3. Get built-in server URL to auto submit (only works if `withServer` is set)
 const url = order.checkoutURL;
 ```
+
+
+### Bind Card With Transaction
+
+```typescript
+const payment = new ECPayPayment<ECPayChannelCreditCard>({
+  merchantId: MERCHANT_ID,
+  hashKey: HASH_KEY,
+  hashIv: HASH_IV,
+  serverHost: 'http://localhost:3000', // Built in server listen on localhost:3000 or ngrok url
+  onCommit: onOrderCommit,
+  withServer: false,
+  // when memory is true, you cannot use this transaction to bind card
+  memory: false,
+});
+
+
+// get the platform
+function onOrderCommit(order: ECPayOrder<ECPayChannelCreditCard>) {
+  // When order committed, you can bind card with transaction
+  if (ecpayOrder.state !== OrderState.COMMITTED) {
+    const { id, platformTradeNumber } = order;
+    const memberId = 'MEMBER_ID';
+    const request = await ecPayPayment.bindCardWithTransaction(memberId, platformTradeNumber, id);
+
+    // You can save cardId to database
+    const cardId = request.cardId;
+
+    // You can use cardId to checkout with bound card
+    const result = await this.ecPayPayment.checkoutWithBoundCard({
+      memberId,
+      cardId,
+      description: 'test',
+      amount: 100,
+    });
+  }
+
+
+}
+```
