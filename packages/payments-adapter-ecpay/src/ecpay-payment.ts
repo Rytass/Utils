@@ -995,18 +995,8 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage> im
       throw new Error('Invalid CheckSum');
     }
 
-    // CardNo is existed.
-    if (responsePayload.RtnCode === 10100112) {
-      return new ECPayBindCardRequest({
-        memberId,
-        cardId: responsePayload.CardID,
-        cardNumberPrefix: responsePayload.Card6No,
-        cardNumberSuffix: responsePayload.Card4No,
-        bindingDate: DateTime.fromFormat(responsePayload.BindingDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
-      }, this);
-    }
-
-    if (responsePayload.RtnCode !== 1) {
+    // 1: Success, 10100112: Already bound
+    if (!~[1, 10100112].indexOf(responsePayload.RtnCode)) {
       throw new Error(responsePayload.RtnMsg);
     }
 
