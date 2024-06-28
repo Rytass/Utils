@@ -103,6 +103,60 @@ describe('ECPayPayment Card Binding With Transaction', () => {
     expect(DateTime.fromJSDate(request.bindingDate!).toFormat('yyyy/MM/dd HH:mm:ss')).toEqual(bindingDate);
   });
 
+  it('should card binding with transaction', async () => {
+    const memberId = 'rytass';
+    const orderIdFromECPay = '1303151740582564';
+    const cardId = '41234';
+    const cardNumberPrefix = '431131';
+    const cardNumberSuffix = '1233';
+    const bindingDate = DateTime.now().toFormat('yyyy/MM/dd HH:mm:ss');
+
+    post.mockImplementation((async (url: string, data: unknown) => {
+      expect(url).toEqual(`${BASE_URL}/MerchantMember/BindingTrade`);
+
+      const params = Array.from(new URLSearchParams(data as string).entries())
+        .reduce((vars, [key, value]) => ({
+          ...vars,
+          [key]: value,
+        }), {}) as {
+          MerchantID: string;
+          MerchantMemberID: string;
+          MerchantTradeNo: string;
+          AllpayTradeNo: string;
+          CheckMacValue: string;
+        };
+
+      expect(checkMac(params)).toBeTruthy();
+
+      expect(params.MerchantID).toEqual(MERCHANT_ID);
+      expect(params.MerchantMemberID).toEqual(`${MERCHANT_ID}${memberId}`);
+      expect(params.AllpayTradeNo).toEqual(orderIdFromECPay);
+      expect(params.MerchantTradeNo.length).toBeLessThanOrEqual(20);
+
+      return {
+        data: addMac({
+          RtnCode: '10100112',
+          RtnMsg: 'CardNo is existed.',
+          MerchantID: MERCHANT_ID,
+          MerchantTradeNo: params.MerchantTradeNo,
+          AllpayTradeNo: orderIdFromECPay,
+          MerchantMemberID: `${MERCHANT_ID}${memberId}`,
+          CardID: cardId,
+          Card6No: cardNumberPrefix,
+          Card4No: cardNumberSuffix,
+          BindingDate: bindingDate,
+        }),
+      };
+    }));
+
+    const request = await payment.bindCardWithTransaction(memberId, orderIdFromECPay);
+
+    expect(request.cardId).toEqual(cardId);
+    expect(request.cardNumberPrefix).toEqual(cardNumberPrefix);
+    expect(request.cardNumberSuffix).toEqual(cardNumberSuffix);
+    expect(DateTime.fromJSDate(request.bindingDate!).toFormat('yyyy/MM/dd HH:mm:ss')).toEqual(bindingDate);
+  });
+
   it('should send custom merchant trade number', async () => {
     const memberId = 'rytass';
     const orderIdFromECPay = '1303151740582564';
