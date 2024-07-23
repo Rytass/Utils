@@ -1,23 +1,17 @@
-## 0.1.2 (2024-07-23)
-
-
-### 🚀 Features
-
-- **member-base-nestjs-module:** error of member account duplicate
-
-
-### ❤️  Thank You
-
-- Chia Yu Pai
-
 # Change Log
 
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-## 0.1.1 (2024-07-23)
-
+## [0.1.3](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.2...@rytass/member-base-nestjs-module@0.1.3) (2024-07-23)
 
 ### Features
 
-* **member-base-nestjs-module:** base service implemented ([f4cc532](https://github.com/Rytass/Utils/commit/f4cc532606134ea43fbd09a520fab87766b7c1c6))
+- **member-base-nestjs-module:** add forget password flow, admin service ([bafde90](https://github.com/Rytass/Utils/commit/bafde909646da8e3c69cba052b25ecd8d51c82fe))
+- **member-base-nestjs-module:** add member logs ([628a687](https://github.com/Rytass/Utils/commit/628a687c6fbd06ba09f0a575171211864ced9034))
+
+## 0.1.1 (2024-07-23)
+
+### Features
+
+- **member-base-nestjs-module:** base service implemented ([f4cc532](https://github.com/Rytass/Utils/commit/f4cc532606134ea43fbd09a520fab87766b7c1c6))
