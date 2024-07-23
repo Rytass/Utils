@@ -3,6 +3,7 @@ import {
   Inject,
   Injectable,
   InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import { QueryFailedError, Repository } from 'typeorm';
 import { hash, verify } from 'argon2';
@@ -13,12 +14,18 @@ import {
   RESET_PASSWORD_TOKEN_SECRET,
 } from '../typings/member-base-providers';
 import { sign, verify as verifyJWT } from 'jsonwebtoken';
+import {
+  MemberLoginLogEntity,
+  MemberLoginLogRepo,
+} from '../models/member-login-log.entity';
 
 @Injectable()
 export class MemberBaseService {
   constructor(
     @Inject(MemberRepo)
     private readonly memberRepo: Repository<MemberEntity>,
+    @Inject(MemberLoginLogRepo)
+    private readonly memberLoginLogRepo: Repository<MemberLoginLogEntity>,
     @Inject(LOGIN_FAILED_BAN_THRESHOLD)
     private readonly loginFailedBanThreshold: number,
     @Inject(RESET_PASSWORD_TOKEN_EXPIRATION)
@@ -26,6 +33,8 @@ export class MemberBaseService {
     @Inject(RESET_PASSWORD_TOKEN_SECRET)
     private readonly resetPasswordTokenSecret: string,
   ) {}
+
+  private readonly logger = new Logger(MemberBaseService.name);
 
   async getResetPasswordToken(id: string): Promise<string> {
     const member = await this.memberRepo.findOne({
@@ -103,7 +112,11 @@ export class MemberBaseService {
     return member;
   }
 
-  async login(account: string, password: string): Promise<MemberEntity | null> {
+  async login(
+    account: string,
+    password: string,
+    ip?: string,
+  ): Promise<MemberEntity | null> {
     const member = await this.memberRepo.findOne({
       where: { account },
     });
@@ -122,11 +135,25 @@ export class MemberBaseService {
 
         await this.memberRepo.save(member);
 
+        // async log
+        this.memberLoginLogRepo.save({
+          memberId: member.id,
+          success: true,
+          ip: ip ? `${ip}/32` : null,
+        });
+
         return member;
       } else {
         member.loginFailedCounter += 1;
 
         await this.memberRepo.save(member);
+
+        // async log
+        this.memberLoginLogRepo.save({
+          memberId: member.id,
+          success: false,
+          ip: ip ? `${ip}/32` : null,
+        });
 
         throw new BadRequestException('Invalid password');
       }

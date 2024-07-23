@@ -4,9 +4,12 @@ import {
   DeleteDateColumn,
   Entity,
   Index,
+  OneToMany,
   PrimaryGeneratedColumn,
+  Relation,
   UpdateDateColumn,
 } from 'typeorm';
+import { MemberLoginLogEntity } from './member-login-log.entity';
 
 export const MemberRepo = Symbol('MemberRepo');
 
@@ -36,4 +39,7 @@ export class MemberEntity {
 
   @DeleteDateColumn()
   deletedAt: Date | null;
+
+  @OneToMany(() => MemberLoginLogEntity, (log) => log.member)
+  loginLogs: Relation<MemberLoginLogEntity[]>;
 }
