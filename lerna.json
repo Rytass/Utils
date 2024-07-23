@@ -3,9 +3,6 @@
     "packages/*"
   ],
   "npmClient": "yarn",
-  "npmClientArgs": [
-    "--no-lockfile"
-  ],
   "version": "independent",
   "command": {
     "version": {
