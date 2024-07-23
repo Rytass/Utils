@@ -36,9 +36,9 @@ export class MemberBaseService {
 
   private readonly logger = new Logger(MemberBaseService.name);
 
-  async getResetPasswordToken(id: string): Promise<string> {
+  async getResetPasswordToken(account: string): Promise<string> {
     const member = await this.memberRepo.findOne({
-      where: { id },
+      where: { account },
     });
 
     if (!member) {
@@ -53,7 +53,7 @@ export class MemberBaseService {
 
     const token = sign(
       {
-        id,
+        id: member.id,
         requestedOn: requestedOn.getTime(),
       },
       this.resetPasswordTokenSecret,

@@ -19,13 +19,6 @@ module.exports = {
     indent: 0,
     'no-dupe-class-members': 0,
     'no-unused-vars': 0,
-    'arrow-parens': [
-      2,
-      'as-needed',
-      {
-        requireForBlockBody: true,
-      },
-    ],
     'comma-dangle': [
       2,
       {
