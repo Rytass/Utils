@@ -7,17 +7,16 @@
     "packages/*"
   ],
   "scripts": {
-    "bootstrap": "lerna bootstrap",
-    "clean": "lerna run clean && lerna clean",
-    "build:clean": "lerna run build:clean --stream --parallel",
-    "build": "lerna run build --stream --sort",
+    "clean": "nx run-many -t clean",
+    "build:clean": "nx run-many -t build:clean",
+    "build": "nx run-many -t build",
     "lint:ts": "eslint . --ext .ts",
     "lint": "npm run lint:ts",
     "test:clean": "rm -rf ./coverage",
     "test:coverage": "jest --coverage -w 1",
     "test": "jest -w 1",
     "prepare": "husky install",
-    "release": "lerna version patch && npm run build && lerna publish from-package --contents lib"
+    "release": "lerna version patch && nx run-many -t build && lerna publish from-package --contents lib"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.3.0",
@@ -28,6 +27,7 @@
     "@nestjs/testing": "^10.3.10",
     "@nestjs/typeorm": "^10.0.2",
     "@nrwl/nx-cloud": "^19.0.0",
+    "@nx/js": "^19.5.2",
     "@swc/core": "^1.7.0",
     "@types/jest": "^29.5.12",
     "@types/supertest": "^6.0.2",
@@ -46,6 +46,7 @@
     "jest-environment-jsdom": "^29.7.0",
     "lerna": "^8.1.7",
     "lint-staged": "^15.2.7",
+    "nx": "^19.5.2",
     "reflect-metadata": "^0.2.2",
     "rollup": "^4.19.0",
     "rollup-plugin-swc3": "^0.11.2",
