@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.6](https://github.com/Rytass/Utils/compare/@rytass/secret-adapter-vault-nestjs@0.2.5...@rytass/secret-adapter-vault-nestjs@0.2.6) (2024-07-23)
+
+
+### Features
+
+* **member-base-nestjs-module:** base service implemented ([f4cc532](https://github.com/Rytass/Utils/commit/f4cc532606134ea43fbd09a520fab87766b7c1c6))
+
+
+
+
+
 ## [0.2.5](https://github.com/Rytass/Utils/compare/@rytass/secret-adapter-vault-nestjs@0.2.4...@rytass/secret-adapter-vault-nestjs@0.2.5) (2024-07-23)
 
 **Note:** Version bump only for package @rytass/secret-adapter-vault-nestjs
