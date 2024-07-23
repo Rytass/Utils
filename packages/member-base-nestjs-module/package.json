@@ -27,6 +27,7 @@
     "@nestjs/common": "*",
     "@nestjs/typeorm": "*",
     "argon2": "*",
+    "jsonwebtoken": "*",
     "typeorm": "*"
   }
 }

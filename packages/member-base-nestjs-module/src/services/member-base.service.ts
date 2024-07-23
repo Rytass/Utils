@@ -1,8 +1,18 @@
-import { BadRequestException, Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { QueryFailedError, Repository } from 'typeorm';
 import { hash, verify } from 'argon2';
 import { MemberEntity, MemberRepo } from '../models';
-import { LOGIN_FAILED_BAN_THRESHOLD } from '../typings/member-base-providers';
+import {
+  LOGIN_FAILED_BAN_THRESHOLD,
+  RESET_PASSWORD_TOKEN_EXPIRATION,
+  RESET_PASSWORD_TOKEN_SECRET,
+} from '../typings/member-base-providers';
+import { sign, verify as verifyJWT } from 'jsonwebtoken';
 
 @Injectable()
 export class MemberBaseService {
@@ -11,7 +21,71 @@ export class MemberBaseService {
     private readonly memberRepo: Repository<MemberEntity>,
     @Inject(LOGIN_FAILED_BAN_THRESHOLD)
     private readonly loginFailedBanThreshold: number,
+    @Inject(RESET_PASSWORD_TOKEN_EXPIRATION)
+    private readonly resetPasswordTokenExpiration: number,
+    @Inject(RESET_PASSWORD_TOKEN_SECRET)
+    private readonly resetPasswordTokenSecret: string,
   ) {}
+
+  async getResetPasswordToken(id: string): Promise<string> {
+    const member = await this.memberRepo.findOne({
+      where: { id },
+    });
+
+    if (!member) {
+      throw new BadRequestException('Member not found');
+    }
+
+    const requestedOn = new Date();
+
+    member.resetPasswordRequestedAt = requestedOn;
+
+    await this.memberRepo.save(member);
+
+    const token = sign(
+      {
+        id,
+        requestedOn: requestedOn.getTime(),
+      },
+      this.resetPasswordTokenSecret,
+      {
+        expiresIn: this.resetPasswordTokenExpiration,
+      },
+    );
+
+    return token;
+  }
+
+  async changePasswordWithToken(
+    token: string,
+    newPassword: string,
+  ): Promise<MemberEntity> {
+    try {
+      const { id, requestedOn } = verifyJWT(
+        token,
+        this.resetPasswordTokenSecret,
+      ) as { id: string; requestedOn: number };
+
+      const member = await this.memberRepo.findOne({
+        where: {
+          id,
+          resetPasswordRequestedAt: new Date(requestedOn),
+        },
+      });
+
+      if (!member) {
+        throw new BadRequestException('Invalid token');
+      }
+
+      member.password = await hash(newPassword);
+
+      await this.memberRepo.save(member);
+
+      return member;
+    } catch (ex) {
+      throw new BadRequestException('Invalid token');
+    }
+  }
 
   async register(account: string, password: string): Promise<MemberEntity> {
     const member = this.memberRepo.create({ account });

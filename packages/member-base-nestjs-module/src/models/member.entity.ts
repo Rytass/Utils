@@ -1,13 +1,22 @@
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  Index,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 export const MemberRepo = Symbol('MemberRepo');
 
 @Entity('members')
+@Index(['account'], { unique: true, where: 'deletedAt IS NULL' })
 export class MemberEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('varchar', { unique: true })
+  @Column('varchar')
   account: string;
 
   @Column('varchar')
