@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.4](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.3...@rytass/member-base-nestjs-module@0.1.4) (2024-07-23)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** correct condition sql ([0e84b84](https://github.com/Rytass/Utils/commit/0e84b84b31d8329a35d75f053dad6ba316dcc54f))
+
 ## [0.1.3](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.2...@rytass/member-base-nestjs-module@0.1.3) (2024-07-23)
 
 ### Features
