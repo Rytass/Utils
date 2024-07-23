@@ -7,11 +7,10 @@
     "strict": true,
     "declaration": true,
     "esModuleInterop": true,
+    "strictPropertyInitialization": false,
     "experimentalDecorators": true,
     "moduleResolution": "node",
-    "lib": [
-      "esnext"
-    ]
+    "lib": ["esnext"]
   },
   "exclude": ["node_modules", "**/node_modules"]
 }
