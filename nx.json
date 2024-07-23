@@ -4,5 +4,11 @@
     "build": {
       "dependsOn": ["^build"]
     }
+  },
+  "release": {
+    "changelog": {
+      "projectChangelogs": true
+    },
+    "projectsRelationship": "independent"
   }
 }
