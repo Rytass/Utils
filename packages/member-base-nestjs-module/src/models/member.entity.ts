@@ -14,7 +14,7 @@ import { MemberLoginLogEntity } from './member-login-log.entity';
 export const MemberRepo = Symbol('MemberRepo');
 
 @Entity('members')
-@Index(['account'], { unique: true, where: 'deletedAt IS NULL' })
+@Index(['account'], { unique: true, where: '"deletedAt" IS NULL' })
 export class MemberEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
