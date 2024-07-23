@@ -9,6 +9,7 @@ import { getAddMac } from '../__utils__/add-mac';
 import { Channel, ECPayCallbackPaymentType, ECPayPayment } from '@rytass/payments-adapter-ecpay';
 import http, { createServer } from 'http';
 import { ECPayChannelBarcode } from 'payments-adapter-ecpay/src/typings';
+import { App } from 'supertest/types';
 
 const addMac = getAddMac();
 
@@ -213,7 +214,7 @@ describe('ECPayPayment (Barcode)', () => {
 
           expect(order.state).toBe(OrderState.PRE_COMMIT);
 
-          const res = await request(payment._server)
+          const res = await request(payment._server as App)
             .post('/payments/ecpay/async-informations')
             .send(new URLSearchParams(successfulResponse).toString())
             .expect('Content-Type', 'text/plain')
@@ -275,7 +276,7 @@ describe('ECPayPayment (Barcode)', () => {
 
           expect(order.state).toBe(OrderState.PRE_COMMIT);
 
-          const res = await request(payment._server)
+          const res = await request(payment._server as App)
             .post('/payments/ecpay/async-informations')
             .send(new URLSearchParams(successfulResponse).toString())
             .expect('Content-Type', 'text/plain')
@@ -330,7 +331,7 @@ describe('ECPayPayment (Barcode)', () => {
             CustomField4: '',
           });
 
-          const res = await request(payment._server)
+          const res = await request(payment._server as App)
             .post('/payments/ecpay/async-informations')
             .send(new URLSearchParams(successfulResponse).toString())
             .expect('Content-Type', 'text/plain')
@@ -388,7 +389,7 @@ describe('ECPayPayment (Barcode)', () => {
             AlipayID: '',
           });
 
-          const resCallback = await request(payment._server)
+          const resCallback = await request(payment._server as App)
             .post('/payments/ecpay/callback')
             .send(new URLSearchParams(callbackResponse).toString())
             .expect('Content-Type', 'text/plain')

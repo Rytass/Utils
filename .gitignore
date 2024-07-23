@@ -53,3 +53,6 @@ Thumbs.db
 
 # typescript types
 *.d.ts
+
+# Yarn
+.yarn/install-state.gz

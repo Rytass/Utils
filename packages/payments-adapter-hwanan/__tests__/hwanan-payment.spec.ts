@@ -8,6 +8,7 @@ import http, { createServer } from 'http';
 import { createHash, randomBytes } from 'crypto';
 import { HwaNanCustomizePageType, HwaNanPayment } from '../src';
 import { OrderState } from '@rytass/payments';
+import { App } from 'supertest/types';
 
 const MERCHANT_ID = '326650918560582';
 const TERMINAL_ID = '87345985';
@@ -168,7 +169,7 @@ describe('HwaNan Payment', () => {
             }],
           });
 
-          const data = await request(payment._server)
+          const data = await request(payment._server as App)
             .get(`/checkout/${order.id}`)
             .expect(200);
 
@@ -278,7 +279,7 @@ describe('HwaNan Payment', () => {
 
           expect(order.state).toBe(OrderState.INITED);
 
-          await request(payment._server)
+          await request(payment._server as App)
             .get(`/checkout/${order.id}`)
             .expect(200);
 
@@ -286,7 +287,7 @@ describe('HwaNan Payment', () => {
 
           const xid = randomBytes(10).toString('hex');
 
-          await request(payment._server)
+          await request(payment._server as App)
             .post('/callback')
             .send(new URLSearchParams({
               status: '0',
@@ -342,7 +343,7 @@ describe('HwaNan Payment', () => {
 
           expect(order.state).toBe(OrderState.INITED);
 
-          await request(payment._server)
+          await request(payment._server as App)
             .get(`/checkout/${order.id}`)
             .expect(200);
 
@@ -350,7 +351,7 @@ describe('HwaNan Payment', () => {
 
           const xid = randomBytes(10).toString('hex');
 
-          await request(payment._server)
+          await request(payment._server as App)
             .post('/callback')
             .send(new URLSearchParams({
               status: '-1',
@@ -391,11 +392,11 @@ describe('HwaNan Payment', () => {
         checkoutPath: '/checkout',
         callbackPath: '/callback',
         onServerListen: async () => {
-          await request(payment._server)
+          await request(payment._server as App)
             .post('/not_found')
             .expect(404);
 
-          await request(payment._server)
+          await request(payment._server as App)
             .post('/callback')
             .send(new URLSearchParams({
               status: '0',
@@ -414,7 +415,7 @@ describe('HwaNan Payment', () => {
             }).toString())
             .expect(400, 'Checksum Invalid');
 
-          await request(payment._server)
+          await request(payment._server as App)
             .post('/callback')
             .send(new URLSearchParams({
               status: '0',

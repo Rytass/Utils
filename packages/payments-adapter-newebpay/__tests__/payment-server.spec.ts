@@ -9,6 +9,7 @@ import request from 'supertest';
 import { DateTime } from 'luxon';
 import http, { createServer } from 'http';
 import { createCipheriv, createHash } from 'crypto';
+import { App } from 'supertest/types';
 
 const MERCHANT_ID = 'MS154366906';
 const AES_KEY = 'X4vM1RymaxkyzZ9mZHNE67Kba2gpv40c';
@@ -89,7 +90,7 @@ describe('NewebPay Payment Server', () => {
             },
           } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
 
-          await request(payment._server)
+          await request(payment._server as App)
             .post('/newebpay/callback')
             .send(new URLSearchParams({
               Status: 'SUCCESS',
@@ -162,7 +163,7 @@ describe('NewebPay Payment Server', () => {
             },
           } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
 
-          await request(payment._server)
+          await request(payment._server as App)
             .post('/newebpay/callback')
             .send(new URLSearchParams({
               Status: 'SUCCESS',
@@ -229,7 +230,7 @@ describe('NewebPay Payment Server', () => {
             },
           } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
 
-          await request(payment._server)
+          await request(payment._server as App)
             .post('/newebpay/callback')
             .send(new URLSearchParams({
               Status: 'SUCCESS',
@@ -303,7 +304,7 @@ describe('NewebPay Payment Server', () => {
             },
           } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
 
-          await request(payment._server)
+          await request(payment._server as App)
             .post('/newebpay/callback')
             .send(new URLSearchParams({
               Status: 'SUCCESS',
@@ -368,7 +369,7 @@ describe('NewebPay Payment Server', () => {
             },
           } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
 
-          await request(payment._server)
+          await request(payment._server as App)
             .post('/newebpay/callback')
             .send(new URLSearchParams({
               Status: 'SUCCESS',
@@ -431,7 +432,7 @@ describe('NewebPay Payment Server', () => {
             },
           } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
 
-          await request(payment._server)
+          await request(payment._server as App)
             .post('/newebpay/callback')
             .send(new URLSearchParams({
               Status: 'SUCCESS',
@@ -496,7 +497,7 @@ describe('NewebPay Payment Server', () => {
             },
           } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
 
-          await request(payment._server)
+          await request(payment._server as App)
             .post('/newebpay/callback')
             .send(new URLSearchParams({
               Status: 'SUCCESS',
@@ -549,7 +550,7 @@ describe('NewebPay Payment Server', () => {
             },
           } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
 
-          await request(payment._server)
+          await request(payment._server as App)
             .post('/newebpay/callback')
             .send(new URLSearchParams({
               Status: 'SUCCESS',
@@ -604,7 +605,7 @@ describe('NewebPay Payment Server', () => {
             },
           } as NewebPayAPIResponseWrapper<NewebPayInfoRetrieveEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
 
-          await request(payment._server)
+          await request(payment._server as App)
             .post('/newebpay/async-informations')
             .send(new URLSearchParams({
               Status: 'SUCCESS',
@@ -660,7 +661,7 @@ describe('NewebPay Payment Server', () => {
             },
           } as NewebPayAPIResponseWrapper<NewebPayInfoRetrieveEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
 
-          await request(payment._server)
+          await request(payment._server as App)
             .post('/newebpay/async-informations')
             .send(new URLSearchParams({
               Status: 'SUCCESS',
@@ -704,7 +705,7 @@ describe('NewebPay Payment Server', () => {
             },
           } as NewebPayAPIResponseWrapper<NewebPayInfoRetrieveEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
 
-          await request(payment._server)
+          await request(payment._server as App)
             .post('/newebpay/async-informations')
             .send(new URLSearchParams({
               Status: 'SUCCESS',
@@ -737,7 +738,7 @@ describe('NewebPay Payment Server', () => {
             }],
           });
 
-          const response = await request(payment._server)
+          const response = await request(payment._server as App)
             .get(`/newebpay/checkout/${order.id}`)
             .expect('Content-Type', 'text/html; charset=utf-8')
             .expect(200);
@@ -759,11 +760,11 @@ describe('NewebPay Payment Server', () => {
         callbackPath: '/newebpay/callback',
         asyncInfoPath: '/newebpay/async-informations',
         onServerListen: async () => {
-          await request(payment._server)
+          await request(payment._server as App)
             .post('/notexist')
             .expect(404);
 
-          await request(payment._server)
+          await request(payment._server as App)
             .get('/newebpay/checkout/1')
             .expect(404);
 
@@ -820,7 +821,7 @@ describe('NewebPay Payment Server', () => {
             },
           } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
 
-          const response = await request(payment._server)
+          const response = await request(payment._server as App)
             .post('/newebpay/callback')
             .send(new URLSearchParams({
               Status: 'SUCCESS',
@@ -877,7 +878,7 @@ describe('NewebPay Payment Server', () => {
             },
           } as NewebPayAPIResponseWrapper<NewebPayInfoRetrieveEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
 
-          const response = await request(payment._server)
+          const response = await request(payment._server as App)
             .post('/newebpay/async-informations')
             .send(new URLSearchParams({
               Status: 'SUCCESS',
@@ -943,7 +944,7 @@ describe('NewebPay Payment Server', () => {
             },
           } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
 
-          await request(payment._server)
+          await request(payment._server as App)
             .post('/newebpay/callback')
             .send(new URLSearchParams({
               Status: 'FAIL',
@@ -1002,7 +1003,7 @@ describe('NewebPay Payment Server', () => {
             },
           } as NewebPayAPIResponseWrapper<NewebPayInfoRetrieveEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
 
-          await request(payment._server)
+          await request(payment._server as App)
             .post('/newebpay/async-informations')
             .send(new URLSearchParams({
               Status: 'FAIL',
@@ -1057,7 +1058,7 @@ describe('NewebPay Payment Server', () => {
             },
           } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
 
-          await request(payment._server)
+          await request(payment._server as App)
             .post('/newebpay/callback')
             .send(new URLSearchParams({
               Status: 'FAIL',
@@ -1099,7 +1100,7 @@ describe('NewebPay Payment Server', () => {
             },
           } as NewebPayAPIResponseWrapper<NewebPayInfoRetrieveEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
 
-          await request(payment._server)
+          await request(payment._server as App)
             .post('/newebpay/async-informations')
             .send(new URLSearchParams({
               Status: 'FAIL',

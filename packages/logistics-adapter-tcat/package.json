@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@rytass/logistics": "^0.0.9",
-    "axios": "^1.4.0",
+    "axios": "^1.7.2",
     "cheerio": "^1.0.0-rc.12"
   },
   "devDependencies": {

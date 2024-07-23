@@ -24,8 +24,8 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@azure/storage-blob": "^12.14.0",
+    "@azure/storage-blob": "^12.23.0",
     "@rytass/storages": "^0.2.0",
-    "uuid": "^9.0.0"
+    "uuid": "^10.0.0"
   }
 }

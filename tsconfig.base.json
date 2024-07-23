@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
-    "target": "es2022",
-    "module": "es2022",
+    "target": "esnext",
+    "module": "esnext",
     "isolatedModules": true,
     "strict": true,
     "declaration": true,
@@ -10,7 +10,7 @@
     "experimentalDecorators": true,
     "moduleResolution": "node",
     "lib": [
-      "es2022"
+      "esnext"
     ]
   },
   "exclude": ["node_modules", "**/node_modules"]

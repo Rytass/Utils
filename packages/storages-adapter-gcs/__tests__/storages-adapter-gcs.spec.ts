@@ -6,7 +6,7 @@ import { resolve } from 'path';
 import { Readable, Writable } from 'stream';
 import { readFileSync, createReadStream, createWriteStream } from 'fs';
 import { createHash } from 'crypto';
-import { Metadata } from '@google-cloud/storage/build/src/nodejs-common';
+import { FileMetadata } from '@google-cloud/storage';
 
 const sampleFile = resolve(__dirname, '../__fixtures__/test-image.png');
 const sampleFileBuffer = readFileSync(sampleFile);
@@ -90,7 +90,7 @@ const moveMock = jest.fn((filename: string) => (newFilename: string) => {
   fakeStorage.delete(filename);
 });
 
-const setMetadataMock = jest.fn((filename: string) => (metadata: Metadata) => {
+const setMetadataMock = jest.fn((filename: string) => (metadata: FileMetadata) => {
 
 });
 
@@ -103,7 +103,7 @@ const fileMock = jest.fn(filename => ({
   createWriteStream: (options: Record<string, string>) => writeStreamMock(filename)(options),
   getSignedUrl: (options: Record<string, string>) => getSignedUrlMock(filename)(options),
   exists: () => existsMock(filename)(),
-  setMetadata: (metadata: Metadata) => setMetadataMock(filename)(metadata),
+  setMetadata: (metadata: FileMetadata) => setMetadataMock(filename)(metadata),
 }));
 
 describe('GCS adapter', () => {

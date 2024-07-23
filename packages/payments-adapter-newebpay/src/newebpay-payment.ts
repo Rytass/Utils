@@ -347,15 +347,15 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
       throw new Error('Please waiting gateway ready');
     }
 
-    if (input.tradeLimit && input.tradeLimit < 60) {
+    if ('tradeLimit' in input && input.tradeLimit && input.tradeLimit < 60) {
       throw new Error('`tradeLimit` should between 60 and 900 (seconds)');
     }
 
-    if (input.tradeLimit && input.tradeLimit > 900) {
+    if ('tradeLimit' in input && input.tradeLimit && input.tradeLimit > 900) {
       throw new Error('`tradeLimit` should between 60 and 900 (seconds)');
     }
 
-    if (input.expireDate && !DateTime.fromFormat(input.expireDate, 'yyyyMMdd').isValid) {
+    if ('expireDate' in input && input.expireDate && !DateTime.fromFormat(input.expireDate, 'yyyyMMdd').isValid) {
       throw new Error('`expireDate` should be in format of `YYYYMMDD`');
     }
 
@@ -372,35 +372,24 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage> implements Paymen
       MerchantOrderNo: input.id ?? id,
       Amt: input.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0),
       ItemDesc: input.items.map(item => item.name).join(',').substring(0, 50),
-      TradeLimit: input.tradeLimit ?? 0,
-      ExpireDate: input.expireDate,
-      ReturnURL: input.clientBackUrl ?? '',
+      TradeLimit: 'tradeLimit' in input ? input.tradeLimit ?? 0 : 0,
+      ExpireDate: 'expireDate' in input ? input.expireDate ?? '' : '',
+      ReturnURL: 'clientBackUrl' in input ? input.clientBackUrl ?? '' : '',
       NotifyURL: `${this.serverHost}${this.callbackPath}`,
       CustomerURL: `${this.serverHost}${this.asyncInfoPath}`,
-      ClientBackURL: input.clientBackUrl ?? '',
-      Email: input.email ?? '',
+      ClientBackURL: 'clientBackUrl' in input ? input.clientBackUrl ?? '' : '',
+      Email: 'email' in input ? input.email ?? '' : '',
       EmailModify: 0,
       LoginType: 0,
-      OrderComment: input.remark ?? '',
-      CREDIT: input.channel & NewebPaymentChannel.CREDIT ? 1 : 0,
-      ANDROIDPAY: input.channel & NewebPaymentChannel.ANDROID_PAY ? 1 : 0,
-      SAMSUNGPAY: input.channel & NewebPaymentChannel.SAMSUNG_PAY ? 1 : 0,
-      // LINEPAY: input.channel & NewebPaymentChannel.LINE_PAY ? 1 : 0,
-      // ImageUrl: (input as NewebPayLinePayOrderInput).imageUrl ?? undefined,
+      OrderComment: 'remark' in input ? input.remark ?? '' : '',
+      CREDIT: 'channel' in input ? (input.channel & NewebPaymentChannel.CREDIT ? 1 : 0) : 0,
+      ANDROIDPAY: 'channel' in input ? (input.channel & NewebPaymentChannel.ANDROID_PAY ? 1 : 0) : 0,
+      SAMSUNGPAY: 'channel' in input ? (input.channel & NewebPaymentChannel.SAMSUNG_PAY ? 1 : 0) : 0,
       InstFlag: ((input as NewebPayCreditCardOrderInput).installments ?? []).join(',') || '',
-      // CreditRed: (input as NewebPayCreditCardOrderInput).canUseBonus ? 1 : 0,
-      UNIONPAY: input.channel & NewebPaymentChannel.UNION_PAY ? 1 : 0,
-      WEBATM: input.channel & NewebPaymentChannel.WEBATM ? 1 : 0,
-      VACC: input.channel & NewebPaymentChannel.VACC ? 1 : 0,
+      UNIONPAY: 'channel' in input ? (input.channel & NewebPaymentChannel.UNION_PAY ? 1 : 0) : 0,
+      WEBATM: 'channel' in input ? (input.channel & NewebPaymentChannel.WEBATM ? 1 : 0) : 0,
+      VACC: 'channel' in input ? (input.channel & NewebPaymentChannel.VACC ? 1 : 0) : 0,
       BankType: ((input as NewebPayWebATMOrderInput).bankTypes ?? []).join(',') || '',
-      // CVS: input.channel & NewebPaymentChannel.CVS ? 1 : 0,
-      // BARCODE: input.channel & NewebPaymentChannel.BARCODE ? 1 : 0,
-      // ESUNWALLET: input.channel & NewebPaymentChannel.ESUN_WALLET ? 1 : 0,
-      // TAIWANPAY: input.channel & NewebPaymentChannel.TAIWAN_PAY ? 1 : 0,
-      // CVSCOM: 0,
-      // EZPAY: input.channel & NewebPaymentChannel.EZPAY ? 1 : 0,
-      // EZPWECHAT: input.channel & NewebPaymentChannel.EZP_WECHAT ? 1 : 0,
-      // EZPALIPAY: input.channel & NewebPaymentChannel.EZP_ALIPAY ? 1 : 0,
     } as NewebPayMPGMakeOrderEncryptedPayload;
 
     const order = new NewebPayOrder({

@@ -9,6 +9,7 @@ import axios from 'axios';
 import { ECPayPayment } from '../src/ecpay-payment';
 import { ECPayBindCardRequest } from '../src/ecpay-bind-card-request';
 import { ECPayBindCardRequestState, ECPayCheckoutWithBoundCardRequestPayload } from '../src/typings';
+import { App } from 'supertest/types';
 
 const BASE_URL = 'https://payment-stage.ecpay.com.tw';
 const MERCHANT_ID = '2000214';
@@ -67,7 +68,7 @@ describe('ECPayPayment Card Binding', () => {
           CheckMacValue: 'A44745C8EF1FCE3741F17CEA9FE6C7D33F502FFF633291DFC6F3B885D0309796',
         };
 
-        request(payment._server)
+        request(payment._server as App)
           .post('/payments/ecpay/bound-card-finished')
           .send(new URLSearchParams(successfulResponse).toString())
           .expect('Content-Type', 'text/plain')
@@ -112,7 +113,7 @@ describe('ECPayPayment Card Binding', () => {
           CheckMacValue: '2C35D59EB0BF5EBA4A5FCA37D6AA697D66B708C98244A061AD4EA9896E30B8C2',
         };
 
-        request(payment._server)
+        request(payment._server as App)
           .post('/payments/ecpay/bound-card-finished')
           .send(new URLSearchParams(successfulResponse).toString())
           .expect('Content-Type', 'text/plain')
@@ -160,7 +161,7 @@ describe('ECPayPayment Card Binding', () => {
           CheckMacValue: '2C35D59EB0BF5EBA4A5FCA37D6AA697D66B708C98244A061AD4EA9896E30B8C2',
         };
 
-        request(payment._server)
+        request(payment._server as App)
           .post('/payments/ecpay/bound-card')
           .send(new URLSearchParams(successfulResponse).toString())
           .expect('Content-Type', 'text/plain')
@@ -201,7 +202,7 @@ describe('ECPayPayment Card Binding', () => {
           CheckMacValue: '2C35D59EB0BF5EBA4A5FCA37D6AA697D66B708C98244A061AD4EA9896E30B8C2',
         };
 
-        request(payment._server)
+        request(payment._server as App)
           .post('/payments/ecpay/bound-card')
           .send(new URLSearchParams(successfulResponse).toString())
           .expect('Content-Type', 'text/plain')
@@ -377,7 +378,7 @@ describe('ECPayPayment Card Binding', () => {
 
         expect(url).toEqual('http://localhost:3333/payments/ecpay/bind-card/rytass');
 
-        request(payment._server)
+        request(payment._server as App)
           .get('/payments/ecpay/bind-card/rytass')
           .expect('Content-Type', 'text/html; charset=utf-8')
           .expect(200)

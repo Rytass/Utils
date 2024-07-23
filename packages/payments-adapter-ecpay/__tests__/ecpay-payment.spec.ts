@@ -7,6 +7,7 @@ import { getAddMac } from '../__utils__/add-mac';
 import http, { createServer, IncomingMessage, ServerResponse } from 'http';
 import { ECPayOrder, ECPayPayment, ECPayChannelCreditCard, ECPayCommitMessage, ECPayCallbackPaymentType } from '@rytass/payments-adapter-ecpay';
 import { Channel, OrderState, PaymentPeriodType } from '@rytass/payments';
+import { App } from 'supertest/types';
 
 const DEFAULT_MERCHANT_ID = '2000132';
 const DEFAULT_HASH_KEY = '5294y06JbISpM5x9';
@@ -191,7 +192,7 @@ describe('ECPayPayment', () => {
             }],
           });
 
-          const res = await request(payment._server)
+          const res = await request(payment._server as App)
             .get(`/payments/ecpay/checkout/${order.id}`)
             .expect('Content-Type', 'text/html; charset=utf-8')
             .expect(200);
@@ -210,7 +211,7 @@ describe('ECPayPayment', () => {
         withServer: true,
         serverHost: 'http://localhost:3005',
         onServerListen: () => {
-          request(payment._server)
+          request(payment._server as App)
             .get('/payments/ecpay/notAPath')
             .expect(404)
             .then(() => {
@@ -266,7 +267,7 @@ describe('ECPayPayment', () => {
             TradeNo: '2204181914513433',
           });
 
-          request(payment._server)
+          request(payment._server as App)
             .post('/payments/ecpay/callback')
             .send(new URLSearchParams(successfulResponse).toString())
             .expect('Content-Type', 'text/plain')
@@ -326,7 +327,7 @@ describe('ECPayPayment', () => {
             TradeNo: '2204181914513433',
           });
 
-          const res = await request(payment._server)
+          const res = await request(payment._server as App)
             .post('/payments/ecpay/callback')
             .send(new URLSearchParams(successfulResponse).toString())
             .expect('Content-Type', 'text/plain')
@@ -334,7 +335,7 @@ describe('ECPayPayment', () => {
 
           expect(res.text).toEqual('1|OK');
 
-          request(payment._server)
+          request(payment._server as App)
             .post('/payments/ecpay/callback')
             .send(new URLSearchParams(successfulResponse).toString())
             .expect('Content-Type', 'text/plain')
@@ -394,7 +395,7 @@ describe('ECPayPayment', () => {
             TradeNo: '2204181914513433',
           });
 
-          request(payment._server)
+          request(payment._server as App)
             .post('/payments/ecpay/callback')
             .send(new URLSearchParams(successfulResponse).toString())
             .expect('Content-Type', 'text/plain')
@@ -438,7 +439,7 @@ describe('ECPayPayment', () => {
             CheckMacValue: '3CD5424E742BF5AB43D52A9E43F30F176A655F271730E1F5DBC13A03B346CBDCCCC', // Wrong
           };
 
-          request(payment._server)
+          request(payment._server as App)
             .post('/payments/ecpay/callback')
             .send(new URLSearchParams(successfulResponse).toString())
             .expect('Content-Type', 'text/plain')
@@ -501,7 +502,7 @@ describe('ECPayPayment', () => {
             TradeNo: '2204181914513433',
           });
 
-          request(payment._server)
+          request(payment._server as App)
             .post('/payments/ecpay/callback')
             .send(new URLSearchParams(successfulResponse).toString())
             .then(() => {
@@ -566,13 +567,13 @@ describe('ECPayPayment', () => {
             TradeNo: '2204181914513433',
           });
 
-          request(payment._server)
+          request(payment._server as App)
             .get(`/payments/ecpay/callback/${order.id}`)
             .expect(200)
             .then(() => {
               expect(serverListenerMock.mock.calls.length).toBe(1);
 
-              request(payment._server)
+              request(payment._server as App)
                 .post('/payments/ecpay/callback')
                 .send(new URLSearchParams(successfulResponse).toString())
                 .then(async () => {
@@ -1055,7 +1056,7 @@ describe('ECPayPayment', () => {
             CustomField4: '',
           });
 
-          request(testPayment._server)
+          request(testPayment._server as App)
             .post('/payments/ecpay/callback')
             .send(new URLSearchParams(successfulResponse).toString())
             .expect('Content-Type', 'text/plain')
@@ -1112,7 +1113,7 @@ describe('ECPayPayment', () => {
             TradeNo: '2204181914513433',
           });
 
-          request(testPayment._server)
+          request(testPayment._server as App)
             .post('/payments/ecpay/callback')
             .send(new URLSearchParams(successfulResponse).toString())
             .expect('Content-Type', 'text/plain')
@@ -1170,7 +1171,7 @@ describe('ECPayPayment', () => {
             TradeNo: '2204181914513433',
           });
 
-          request(testPayment._server)
+          request(testPayment._server as App)
             .post('/payments/ecpay/async-informations')
             .send(new URLSearchParams(successfulResponse).toString())
             .expect('Content-Type', 'text/plain')

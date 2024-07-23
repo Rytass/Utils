@@ -1,7 +1,7 @@
 import { ImageWatermark } from '../src/image-watermark';
 import sharp from 'sharp';
 import { createHash } from 'crypto';
-import { createReadStream, writeFileSync, readFileSync } from 'fs';
+import { createReadStream, writeFileSync, createWriteStream, readFileSync } from 'fs';
 import { resolve } from 'path';
 import { Readable } from 'stream';
 
@@ -34,15 +34,15 @@ describe('Image Transcoder Watermark', () => {
 
     const stream = await transcoder.convert<Readable>(readStream);
 
-    const hasher = createHash('sha256');
+    const hash = createHash('sha256');
 
     return new Promise<void>((pResolve) => {
       stream.on('data', (chunk) => {
-        hasher.update(chunk);
+        hash.update(chunk);
       })
 
       stream.on('end', () => {
-        expect(hasher.digest('hex')).toBe(resultHash);
+        expect(hash.digest('hex')).toBe(resultHash);
 
         pResolve();
       });

@@ -30,13 +30,13 @@
   },
   "dependencies": {
     "@rytass/secret-adapter-vault": "^0.2.1",
-    "regenerator-runtime": "^0.13.11"
+    "regenerator-runtime": "^0.14.1"
   },
   "devDependencies": {
-    "@nestjs/common": "^9.4.2",
-    "@nestjs/config": "^2.3.2",
-    "@nestjs/core": "^9.4.2",
-    "axios": "^1.4.0",
-    "reflect-metadata": "^0.1.13"
+    "@nestjs/common": "^10.3.10",
+    "@nestjs/config": "^3.2.3",
+    "@nestjs/core": "^10.3.10",
+    "axios": "^1.7.2",
+    "reflect-metadata": "^0.2.2"
   }
 }

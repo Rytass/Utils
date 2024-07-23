@@ -24,6 +24,6 @@
   },
   "dependencies": {
     "@rytass/secret": "^0.1.0",
-    "axios": "^1.4.0"
+    "axios": "^1.7.2"
   }
 }

@@ -8,6 +8,7 @@ import { getAddMac } from '../__utils__/add-mac';
 import { Channel, ECPayCallbackPaymentType, ECPayChannelCreditCard, ECPayChannelVirtualAccount, ECPayCommitMessage, ECPayOrder, ECPayPayment } from '@rytass/payments-adapter-ecpay';
 import http, { createServer } from 'http';
 import { DateTime } from 'luxon';
+import { App } from 'supertest/types';
 
 const addMac = getAddMac();
 
@@ -180,7 +181,7 @@ describe('ECPayPayment (Virtual Account)', () => {
               CustomField4: '',
             });
 
-            const res = await request(testPayment._server)
+            const res = await request(testPayment._server as App)
               .post('/payments/ecpay/async-informations')
               .send(new URLSearchParams(successfulResponse).toString())
               .expect('Content-Type', 'text/plain')
@@ -231,7 +232,7 @@ describe('ECPayPayment (Virtual Account)', () => {
               CustomField4: '',
             });
 
-            const res = await request(testPayment._server)
+            const res = await request(testPayment._server as App)
               .post('/payments/ecpay/async-informations')
               .send(new URLSearchParams(successfulResponse).toString())
               .expect('Content-Type', 'text/plain')
@@ -288,7 +289,7 @@ describe('ECPayPayment (Virtual Account)', () => {
               CustomField4: '',
             });
 
-            const res = await request(testPayment._server)
+            const res = await request(testPayment._server as App)
               .post('/payments/ecpay/async-informations')
               .send(new URLSearchParams(successfulResponse).toString())
               .expect('Content-Type', 'text/plain')
@@ -342,7 +343,7 @@ describe('ECPayPayment (Virtual Account)', () => {
               CustomField4: '',
             });
 
-            const res = await request(testPayment._server)
+            const res = await request(testPayment._server as App)
               .post('/payments/ecpay/async-informations')
               .send(new URLSearchParams(successfulResponse).toString())
               .expect('Content-Type', 'text/plain')
@@ -396,7 +397,7 @@ describe('ECPayPayment (Virtual Account)', () => {
               CustomField4: '',
             });
 
-            const res = await request(testPayment._server)
+            const res = await request(testPayment._server as App)
               .post('/payments/ecpay/async-informations')
               .send(new URLSearchParams(successfulResponse).toString())
               .expect('Content-Type', 'text/plain')
@@ -450,7 +451,7 @@ describe('ECPayPayment (Virtual Account)', () => {
               CustomField4: '',
             });
 
-            const res = await request(testPayment._server)
+            const res = await request(testPayment._server as App)
               .post('/payments/ecpay/async-informations')
               .send(new URLSearchParams(successfulResponse).toString())
               .expect('Content-Type', 'text/plain')
@@ -504,7 +505,7 @@ describe('ECPayPayment (Virtual Account)', () => {
               CustomField4: '',
             });
 
-            const res = await request(testPayment._server)
+            const res = await request(testPayment._server as App)
               .post('/payments/ecpay/async-informations')
               .send(new URLSearchParams(successfulResponse).toString())
               .expect('Content-Type', 'text/plain')
@@ -558,7 +559,7 @@ describe('ECPayPayment (Virtual Account)', () => {
               CustomField4: '',
             });
 
-            const res = await request(testPayment._server)
+            const res = await request(testPayment._server as App)
               .post('/payments/ecpay/async-informations')
               .send(new URLSearchParams(successfulResponse).toString())
               .expect('Content-Type', 'text/plain')
@@ -612,7 +613,7 @@ describe('ECPayPayment (Virtual Account)', () => {
               CustomField4: '',
             });
 
-            const res = await request(testPayment._server)
+            const res = await request(testPayment._server as App)
               .post('/payments/ecpay/async-informations')
               .send(new URLSearchParams(successfulResponse).toString())
               .expect('Content-Type', 'text/plain')
@@ -666,7 +667,7 @@ describe('ECPayPayment (Virtual Account)', () => {
               CustomField4: '',
             });
 
-            const res = await request(testPayment._server)
+            const res = await request(testPayment._server as App)
               .post('/payments/ecpay/async-informations')
               .send(new URLSearchParams(successfulResponse).toString())
               .expect('Content-Type', 'text/plain')
@@ -721,7 +722,7 @@ describe('ECPayPayment (Virtual Account)', () => {
               CustomField4: '',
             });
 
-            const res = await request(testPayment._server)
+            const res = await request(testPayment._server as App)
               .post('/payments/ecpay/async-informations')
               .send(new URLSearchParams(successfulResponse).toString())
               .expect('Content-Type', 'text/plain')
@@ -802,7 +803,7 @@ describe('ECPayPayment (Virtual Account)', () => {
               CustomField4: '',
             });
 
-            const res = await request(testPayment._server)
+            const res = await request(testPayment._server as App)
               .post('/payments/ecpay/async-informations')
               .send(new URLSearchParams(successfulResponse).toString())
               .expect('Content-Type', 'text/plain')
@@ -857,7 +858,7 @@ describe('ECPayPayment (Virtual Account)', () => {
               CustomField4: '',
             });
 
-            const res = await request(testPayment._server)
+            const res = await request(testPayment._server as App)
               .post('/payments/ecpay/async-informations')
               .send(new URLSearchParams(successfulResponse).toString())
               .expect('Content-Type', 'text/plain')
@@ -917,7 +918,7 @@ describe('ECPayPayment (Virtual Account)', () => {
               AlipayID: '',
             });
 
-            const resCallback = await request(testPayment._server)
+            const resCallback = await request(testPayment._server as App)
               .post('/payments/ecpay/callback')
               .send(new URLSearchParams(callbackResponse).toString())
               .expect('Content-Type', 'text/plain')
@@ -971,7 +972,7 @@ describe('ECPayPayment (Virtual Account)', () => {
               CustomField4: '',
             });
 
-            const res = await request(testPayment._server)
+            const res = await request(testPayment._server as App)
               .post('/payments/ecpay/async-informations')
               .send(new URLSearchParams(successfulResponse).toString())
               .expect('Content-Type', 'text/plain')
@@ -999,7 +1000,7 @@ describe('ECPayPayment (Virtual Account)', () => {
               CustomField4: '',
             });
 
-            const resAsync = await request(testPayment._server)
+            const resAsync = await request(testPayment._server as App)
               .post('/payments/ecpay/async-informations')
               .send(new URLSearchParams(successfulResponse2).toString())
               .expect('Content-Type', 'text/plain')
@@ -1052,7 +1053,7 @@ describe('ECPayPayment (Virtual Account)', () => {
               CustomField4: '',
             });
 
-            const res = await request(testPayment._server)
+            const res = await request(testPayment._server as App)
               .post('/payments/ecpay/async-informations')
               .send(new URLSearchParams(successfulResponse).toString())
               .expect('Content-Type', 'text/plain')
@@ -1110,7 +1111,7 @@ describe('ECPayPayment (Virtual Account)', () => {
               AlipayID: '',
             });
 
-            const resCallback = await request(testPayment._server)
+            const resCallback = await request(testPayment._server as App)
               .post('/payments/ecpay/callback')
               .send(new URLSearchParams(callbackResponse).toString())
               .expect('Content-Type', 'text/plain')
