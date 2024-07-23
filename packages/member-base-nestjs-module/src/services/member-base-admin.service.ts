@@ -39,6 +39,7 @@ export class MemberBaseAdminService {
     }
 
     member.password = await hash(newPassword);
+    member.passwordChangedAt = new Date();
 
     await this.memberRepo.save(member);
 

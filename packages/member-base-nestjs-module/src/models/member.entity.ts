@@ -25,6 +25,9 @@ export class MemberEntity {
   @Column('varchar')
   password: string;
 
+  @Column('timestamptz', { default: 'now()' })
+  passwordChangedAt: Date;
+
   @Column('timestamptz', { nullable: true })
   resetPasswordRequestedAt: Date | null;
 

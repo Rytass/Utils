@@ -3,7 +3,6 @@ import {
   Inject,
   Injectable,
   InternalServerErrorException,
-  Logger,
 } from '@nestjs/common';
 import { QueryFailedError, Repository } from 'typeorm';
 import { hash, verify } from 'argon2';
@@ -33,8 +32,6 @@ export class MemberBaseService {
     @Inject(RESET_PASSWORD_TOKEN_SECRET)
     private readonly resetPasswordTokenSecret: string,
   ) {}
-
-  private readonly logger = new Logger(MemberBaseService.name);
 
   async getResetPasswordToken(account: string): Promise<string> {
     const member = await this.memberRepo.findOne({
@@ -87,6 +84,7 @@ export class MemberBaseService {
       }
 
       member.password = await hash(newPassword);
+      member.passwordChangedAt = new Date();
 
       await this.memberRepo.save(member);
 
