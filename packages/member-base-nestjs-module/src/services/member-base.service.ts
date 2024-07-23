@@ -1,5 +1,5 @@
 import { BadRequestException, Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { QueryFailedError, Repository } from 'typeorm';
 import { hash, verify } from 'argon2';
 import { MemberEntity, MemberRepo } from '../models';
 import { LOGIN_FAILED_BAN_THRESHOLD } from '../typings/member-base-providers';
@@ -18,7 +18,13 @@ export class MemberBaseService {
 
     member.password = await hash(password);
 
-    await this.memberRepo.save(member);
+    try {
+      await this.memberRepo.save(member);
+    } catch (ex) {
+      if (/unique/.test((ex as QueryFailedError).message)) {
+        throw new BadRequestException('Member already exists');
+      }
+    }
 
     return member;
   }
