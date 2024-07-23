@@ -1,3 +1,15 @@
+## 0.1.2 (2024-07-23)
+
+
+### 🚀 Features
+
+- **member-base-nestjs-module:** error of member account duplicate
+
+
+### ❤️  Thank You
+
+- Chia Yu Pai
+
 # Change Log
 
 All notable changes to this project will be documented in this file.
