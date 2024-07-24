@@ -7,7 +7,7 @@ import {
   PrimaryGeneratedColumn,
   Relation,
 } from 'typeorm';
-import { MemberEntity } from './member.entity';
+import { BaseMemberEntity } from './base-member.entity';
 
 export const MemberLoginLogRepo = Symbol('MemberLoginLogRepo');
 
@@ -28,7 +28,7 @@ export class MemberLoginLogEntity {
   @CreateDateColumn()
   createdAt: Date;
 
-  @ManyToOne(() => MemberEntity, (member) => member.loginLogs)
+  @ManyToOne(() => BaseMemberEntity, (member) => member.loginLogs)
   @JoinColumn({ name: 'memberId', referencedColumnName: 'id' })
-  member: Relation<MemberEntity>;
+  member: Relation<BaseMemberEntity>;
 }

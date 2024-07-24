@@ -7,15 +7,17 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   Relation,
+  TableInheritance,
   UpdateDateColumn,
 } from 'typeorm';
 import { MemberLoginLogEntity } from './member-login-log.entity';
 
-export const MemberRepo = Symbol('MemberRepo');
+export const BaseMemberRepo = Symbol('BaseMemberRepo');
 
 @Entity('members')
+@TableInheritance({ column: { type: 'varchar', name: 'entityName' } })
 @Index(['account'], { unique: true, where: '"deletedAt" IS NULL' })
-export class MemberEntity {
+export class BaseMemberEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 

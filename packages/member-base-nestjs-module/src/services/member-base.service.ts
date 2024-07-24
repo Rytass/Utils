@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { QueryFailedError, Repository } from 'typeorm';
 import { hash, verify } from 'argon2';
-import { MemberEntity, MemberRepo } from '../models';
+import { BaseMemberEntity } from '../models';
 import {
   LOGIN_FAILED_BAN_THRESHOLD,
   RESET_PASSWORD_TOKEN_EXPIRATION,
@@ -17,12 +17,13 @@ import {
   MemberLoginLogEntity,
   MemberLoginLogRepo,
 } from '../models/member-login-log.entity';
+import { BaseMemberRepo } from '../models/base-member.entity';
 
 @Injectable()
 export class MemberBaseService {
   constructor(
-    @Inject(MemberRepo)
-    private readonly memberRepo: Repository<MemberEntity>,
+    @Inject(BaseMemberRepo)
+    private readonly baseMemberRepo: Repository<BaseMemberEntity>,
     @Inject(MemberLoginLogRepo)
     private readonly memberLoginLogRepo: Repository<MemberLoginLogEntity>,
     @Inject(LOGIN_FAILED_BAN_THRESHOLD)
@@ -34,7 +35,7 @@ export class MemberBaseService {
   ) {}
 
   async getResetPasswordToken(account: string): Promise<string> {
-    const member = await this.memberRepo.findOne({
+    const member = await this.baseMemberRepo.findOne({
       where: { account },
     });
 
@@ -46,7 +47,7 @@ export class MemberBaseService {
 
     member.resetPasswordRequestedAt = requestedOn;
 
-    await this.memberRepo.save(member);
+    await this.baseMemberRepo.save(member);
 
     const token = sign(
       {
@@ -65,14 +66,14 @@ export class MemberBaseService {
   async changePasswordWithToken(
     token: string,
     newPassword: string,
-  ): Promise<MemberEntity> {
+  ): Promise<BaseMemberEntity> {
     try {
       const { id, requestedOn } = verifyJWT(
         token,
         this.resetPasswordTokenSecret,
       ) as { id: string; requestedOn: number };
 
-      const member = await this.memberRepo.findOne({
+      const member = await this.baseMemberRepo.findOne({
         where: {
           id,
           resetPasswordRequestedAt: new Date(requestedOn),
@@ -86,7 +87,7 @@ export class MemberBaseService {
       member.password = await hash(newPassword);
       member.passwordChangedAt = new Date();
 
-      await this.memberRepo.save(member);
+      await this.baseMemberRepo.save(member);
 
       return member;
     } catch (ex) {
@@ -94,13 +95,13 @@ export class MemberBaseService {
     }
   }
 
-  async register(account: string, password: string): Promise<MemberEntity> {
-    const member = this.memberRepo.create({ account });
+  async register(account: string, password: string): Promise<BaseMemberEntity> {
+    const member = this.baseMemberRepo.create({ account });
 
     member.password = await hash(password);
 
     try {
-      await this.memberRepo.save(member);
+      await this.baseMemberRepo.save(member);
     } catch (ex) {
       if (/unique/.test((ex as QueryFailedError).message)) {
         throw new BadRequestException('Member already exists');
@@ -114,8 +115,8 @@ export class MemberBaseService {
     account: string,
     password: string,
     ip?: string,
-  ): Promise<MemberEntity | null> {
-    const member = await this.memberRepo.findOne({
+  ): Promise<BaseMemberEntity | null> {
+    const member = await this.baseMemberRepo.findOne({
       where: { account },
     });
 
@@ -131,7 +132,7 @@ export class MemberBaseService {
       if (await verify(member.password, password)) {
         member.loginFailedCounter = 0;
 
-        await this.memberRepo.save(member);
+        await this.baseMemberRepo.save(member);
 
         // async log
         this.memberLoginLogRepo.save({
@@ -144,7 +145,7 @@ export class MemberBaseService {
       } else {
         member.loginFailedCounter += 1;
 
-        await this.memberRepo.save(member);
+        await this.baseMemberRepo.save(member);
 
         // async log
         this.memberLoginLogRepo.save({
@@ -160,8 +161,8 @@ export class MemberBaseService {
     }
   }
 
-  async resetLoginFailedCounter(id: string): Promise<MemberEntity> {
-    const member = await this.memberRepo.findOne({ where: { id } });
+  async resetLoginFailedCounter(id: string): Promise<BaseMemberEntity> {
+    const member = await this.baseMemberRepo.findOne({ where: { id } });
 
     if (!member) {
       throw new BadRequestException('Member not found');
@@ -169,7 +170,7 @@ export class MemberBaseService {
 
     member.loginFailedCounter = 0;
 
-    await this.memberRepo.save(member);
+    await this.baseMemberRepo.save(member);
 
     return member;
   }

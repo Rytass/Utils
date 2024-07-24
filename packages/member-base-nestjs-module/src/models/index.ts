@@ -1,1 +1,2 @@
-export * from './member.entity';
+export { BaseMemberEntity } from './base-member.entity';
+export * from './member-login-log.entity';

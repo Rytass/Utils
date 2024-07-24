@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { MemberEntity, MemberRepo } from './member.entity';
+import { BaseMemberEntity, BaseMemberRepo } from './base-member.entity';
 import { DataSource } from 'typeorm';
 import {
   MemberLoginLogEntity,
@@ -8,9 +8,9 @@ import {
 } from './member-login-log.entity';
 
 const models = [
-  [MemberRepo, MemberEntity],
+  [BaseMemberRepo, BaseMemberEntity],
   [MemberLoginLogRepo, MemberLoginLogEntity],
-] as [symbol, typeof MemberEntity][];
+] as [symbol, typeof BaseMemberEntity][];
 
 @Module({
   imports: [TypeOrmModule.forFeature(models.map((model) => model[1]))],

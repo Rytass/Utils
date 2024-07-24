@@ -1,17 +1,18 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { MemberEntity, MemberRepo } from '../models';
+import { BaseMemberEntity } from '../models';
 import { Repository } from 'typeorm';
 import { hash } from 'argon2';
+import { BaseMemberRepo } from '../models/base-member.entity';
 
 @Injectable()
 export class MemberBaseAdminService {
   constructor(
-    @Inject(MemberRepo)
-    private readonly memberRepo: Repository<MemberEntity>,
+    @Inject(BaseMemberRepo)
+    private readonly baseMemberRepo: Repository<BaseMemberEntity>,
   ) {}
 
   async archiveMember(id: string): Promise<void> {
-    const member = await this.memberRepo.findOne({
+    const member = await this.baseMemberRepo.findOne({
       where: {
         id,
       },
@@ -21,14 +22,14 @@ export class MemberBaseAdminService {
       throw new BadRequestException('Member not found');
     }
 
-    await this.memberRepo.softRemove(member);
+    await this.baseMemberRepo.softRemove(member);
   }
 
   async resetMemberPassword(
     id: string,
     newPassword: string,
-  ): Promise<MemberEntity> {
-    const member = await this.memberRepo.findOne({
+  ): Promise<BaseMemberEntity> {
+    const member = await this.baseMemberRepo.findOne({
       where: {
         id,
       },
@@ -41,7 +42,7 @@ export class MemberBaseAdminService {
     member.password = await hash(newPassword);
     member.passwordChangedAt = new Date();
 
-    await this.memberRepo.save(member);
+    await this.baseMemberRepo.save(member);
 
     return member;
   }
