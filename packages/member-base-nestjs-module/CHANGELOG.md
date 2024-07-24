@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.6](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.5...@rytass/member-base-nestjs-module@0.1.6) (2024-07-24)
+
+### Features
+
+- **member-base-nestjs-module:** add passwordChangedAt column to record the password age ([178fe83](https://github.com/Rytass/Utils/commit/178fe838385fdca6e0340632c884f3a36903644c))
+- **member-base-nestjs-module:** change member to base member entity and it can be inherited by user, updated README ([e50c871](https://github.com/Rytass/Utils/commit/e50c871b4bb562a45f360b02996e23cd894a2a05))
+
 ## [0.1.5](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.4...@rytass/member-base-nestjs-module@0.1.5) (2024-07-23)
 
 ### Features
