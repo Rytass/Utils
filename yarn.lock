@@ -3553,7 +3553,6 @@ __metadata:
     axios: "npm:^1.7.2"
     form-data: "npm:^4.0.0"
     luxon: "npm:^3.4.4"
-    parse-multipart-data: "npm:^1.5.0"
     validator: "npm:^13.12.0"
   languageName: unknown
   linkType: soft
@@ -3571,7 +3570,6 @@ __metadata:
   resolution: "@rytass/logistics-adapter-tcat@workspace:packages/logistics-adapter-tcat"
   dependencies:
     "@rytass/logistics": "npm:^0.0.9"
-    "@types/parse5": "npm:^7.0.0"
     axios: "npm:^1.7.2"
     cheerio: "npm:^1.0.0-rc.12"
   languageName: unknown
@@ -3637,11 +3635,9 @@ __metadata:
     "@rytass/payments": "npm:^0.1.2"
     "@types/lru-cache": "npm:^7.10.10"
     axios: "npm:^1.7.2"
-    debug: "npm:^4.3.5"
     lru-cache: "npm:^11.0.0"
     luxon: "npm:^3.4.4"
     ngrok: "npm:^4.3.3"
-    supertest: "npm:^7.0.0"
   languageName: unknown
   linkType: soft
 
@@ -3667,18 +3663,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/secret-adapter-vault-nestjs@workspace:packages/secret-adapter-vault-nestjs"
   dependencies:
-    "@nestjs/common": "npm:^10.3.10"
-    "@nestjs/config": "npm:^3.2.3"
-    "@nestjs/core": "npm:^10.3.10"
     "@rytass/secret-adapter-vault": "npm:^0.2.2"
-    axios: "npm:^1.7.2"
-    reflect-metadata: "npm:^0.2.2"
     regenerator-runtime: "npm:^0.14.1"
-    rxjs: "npm:^7.8.1"
   peerDependencies:
-    "@nestjs/common": ^9.0.11
-    "@nestjs/config": ^2.2.0
-    reflect-metadata: ^0.1.13
+    "@nestjs/common": "*"
+    "@nestjs/config": "*"
+    reflect-metadata: "*"
   languageName: unknown
   linkType: soft
 
@@ -4335,15 +4325,6 @@ __metadata:
   version: 4.0.2
   resolution: "@types/parse-json@npm:4.0.2"
   checksum: 10c0/b1b863ac34a2c2172fbe0807a1ec4d5cb684e48d422d15ec95980b81475fac4fdb3768a8b13eef39130203a7c04340fc167bae057c7ebcafd7dec9fe6c36aeb1
-  languageName: node
-  linkType: hard
-
-"@types/parse5@npm:^7.0.0":
-  version: 7.0.0
-  resolution: "@types/parse5@npm:7.0.0"
-  dependencies:
-    parse5: "npm:*"
-  checksum: 10c0/67a4db2e3c68adb3f71085cb7781889001c654dbf4900d35a99faa8d527f9b31e50766211f0236a5e3f160282fcfc7a5b41670b2577172f1eb7dd410a9d2084d
   languageName: node
   linkType: hard
 
@@ -11882,15 +11863,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"parse5@npm:*, parse5@npm:^7.0.0, parse5@npm:^7.1.1":
-  version: 7.1.2
-  resolution: "parse5@npm:7.1.2"
-  dependencies:
-    entities: "npm:^4.4.0"
-  checksum: 10c0/297d7af8224f4b5cb7f6617ecdae98eeaed7f8cbd78956c42785e230505d5a4f07cef352af10d3006fa5c1544b76b57784d3a22d861ae071bbc460c649482bf4
-  languageName: node
-  linkType: hard
-
 "parse5@npm:^5.1.1":
   version: 5.1.1
   resolution: "parse5@npm:5.1.1"
@@ -11902,6 +11874,15 @@ __metadata:
   version: 6.0.1
   resolution: "parse5@npm:6.0.1"
   checksum: 10c0/595821edc094ecbcfb9ddcb46a3e1fe3a718540f8320eff08b8cf6742a5114cce2d46d45f95c26191c11b184dcaf4e2960abcd9c5ed9eb9393ac9a37efcfdecb
+  languageName: node
+  linkType: hard
+
+"parse5@npm:^7.0.0, parse5@npm:^7.1.1":
+  version: 7.1.2
+  resolution: "parse5@npm:7.1.2"
+  dependencies:
+    entities: "npm:^4.4.0"
+  checksum: 10c0/297d7af8224f4b5cb7f6617ecdae98eeaed7f8cbd78956c42785e230505d5a4f07cef352af10d3006fa5c1544b76b57784d3a22d861ae071bbc460c649482bf4
   languageName: node
   linkType: hard
 
@@ -12809,6 +12790,7 @@ __metadata:
     "@commitlint/config-conventional": "npm:^18"
     "@commitlint/config-lerna-scopes": "npm:^18"
     "@nestjs/common": "npm:^10.3.10"
+    "@nestjs/config": "npm:^3.2.3"
     "@nestjs/core": "npm:^10.3.10"
     "@nestjs/testing": "npm:^10.3.10"
     "@nestjs/typeorm": "npm:^10.0.2"
@@ -12821,7 +12803,9 @@ __metadata:
     "@typescript-eslint/eslint-plugin": "npm:^7.17.0"
     "@typescript-eslint/parser": "npm:^7.17.0"
     argon2: "npm:^0.40.3"
+    axios: "npm:^1.7.2"
     cz-conventional-changelog: "npm:^3.3.0"
+    debug: "npm:^4.3.5"
     eslint: "npm:^8"
     eslint-config-airbnb-base: "npm:^15.0.0"
     eslint-config-airbnb-typescript: "npm:^18.0.0"
@@ -12835,6 +12819,7 @@ __metadata:
     lerna: "npm:^8.1.7"
     lint-staged: "npm:^15.2.7"
     nx: "npm:^19.5.2"
+    parse-multipart-data: "npm:^1.5.0"
     prettier: "npm:^3.3.3"
     reflect-metadata: "npm:^0.2.2"
     rollup: "npm:^4.19.0"

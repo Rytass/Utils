@@ -31,8 +31,6 @@
     "ngrok": "^4.3.3"
   },
   "devDependencies": {
-    "@types/lru-cache": "^7.10.10",
-    "debug": "^4.3.5",
-    "supertest": "^7.0.0"
+    "@types/lru-cache": "^7.10.10"
   }
 }
