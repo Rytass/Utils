@@ -1,0 +1,32 @@
+{
+  "name": "@rytass/cms-base-nestjs-module",
+  "version": "0.1.0",
+  "description": "Rytass Content Management System NestJS Base Module",
+  "keywords": [
+    "rytass",
+    "cms",
+    "nestjs"
+  ],
+  "author": "Chia Yu Pai <fantasyatelier@gmail.com>",
+  "homepage": "https://github.com/Rytass/Utils#readme",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rytass/Utils.git"
+  },
+  "scripts": {
+    "clean": "npm run build:clean",
+    "build:clean": "node ../../scripts/cleanBuild.js",
+    "build": "npm run build:clean && node ../../scripts/build.js",
+    "release": "lerna version patch && npm run build && lerna publish from-package"
+  },
+  "bugs": {
+    "url": "https://github.com/Rytass/Utils/issues"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "*",
+    "@nestjs/typeorm": "*",
+    "@quadrats/core": "*",
+    "typeorm": "*"
+  }
+}

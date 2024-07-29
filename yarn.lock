@@ -3495,6 +3495,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rytass/cms-base-nestjs-module@workspace:packages/cms-base-nestjs-module":
+  version: 0.0.0-use.local
+  resolution: "@rytass/cms-base-nestjs-module@workspace:packages/cms-base-nestjs-module"
+  peerDependencies:
+    "@nestjs/common": "*"
+    "@nestjs/typeorm": "*"
+    "@quadrats/core": "*"
+    typeorm: "*"
+  languageName: unknown
+  linkType: soft
+
 "@rytass/file-converter-adapter-image-resizer@workspace:packages/file-converter-adapter-image-resizer":
   version: 0.0.0-use.local
   resolution: "@rytass/file-converter-adapter-image-resizer@workspace:packages/file-converter-adapter-image-resizer"

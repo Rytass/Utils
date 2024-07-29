@@ -5,10 +5,11 @@ import {
   RESET_PASSWORD_TOKEN_SECRET,
 } from '../typings/member-base-providers';
 import { MemberBaseRootModuleOptionsDto } from '../typings/member-base-root-module-options.dto';
+import { Provider } from '@nestjs/common';
 
 export const getProvidersFromOptions = (
   options?: MemberBaseRootModuleOptionsDto,
-) => [
+): Provider[] => [
   {
     provide: LOGIN_FAILED_BAN_THRESHOLD,
     useValue: options?.loginFailedBanThreshold ?? 5,
