@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.11](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.10...@rytass/member-base-nestjs-module@0.1.11) (2024-07-30)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** async for root should provide options from useFactory/useClass/useExisting ([18e68ef](https://github.com/Rytass/Utils/commit/18e68ef6da76b39d06c3dd110e933c24e54ac2d7))
+
+### Features
+
+- **cms-base-nestjs-module:** add custom child entity providers ([d8b93d0](https://github.com/Rytass/Utils/commit/d8b93d0fb34372bd1d03715c1cc1c7b4f3701381))
+
 ## [0.1.10](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.9...@rytass/member-base-nestjs-module@0.1.10) (2024-07-30)
 
 ### Bug Fixes

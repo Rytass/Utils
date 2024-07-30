@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.13](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.12...@rytass/cms-base-nestjs-module@0.1.13) (2024-07-30)
+
+### Features
+
+- **cms-base-nestjs-module:** add custom child entity providers ([d8b93d0](https://github.com/Rytass/Utils/commit/d8b93d0fb34372bd1d03715c1cc1c7b4f3701381))
+
 ## [0.1.12](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.11...@rytass/cms-base-nestjs-module@0.1.12) (2024-07-30)
 
 ### Features
