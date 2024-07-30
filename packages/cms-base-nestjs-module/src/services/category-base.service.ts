@@ -70,10 +70,15 @@ export class CategoryBaseService {
     };
   }
 
-  async findAll(
+  public async findAll(
     options?: CategoryFindAllDto & { language: Language },
   ): Promise<SingleCategoryBaseDto[]>;
-  async findAll(options?: CategoryFindAllDto): Promise<CategoryBaseDto[]> {
+  public async findAll(
+    options?: CategoryFindAllDto,
+  ): Promise<CategoryBaseDto[]>;
+  public async findAll(
+    options?: CategoryFindAllDto,
+  ): Promise<CategoryBaseDto[]> {
     const qb = this.getDefaultQueryBuilder('categories');
 
     if (options?.ids) {
@@ -95,6 +100,7 @@ export class CategoryBaseService {
     id: string,
     language: Language,
   ): Promise<SingleCategoryBaseDto>;
+  async findById(id: string): Promise<CategoryBaseDto>;
   async findById(id: string, language?: Language): Promise<CategoryBaseDto> {
     const qb = this.getDefaultQueryBuilder('categories');
 

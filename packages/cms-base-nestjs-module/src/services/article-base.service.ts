@@ -83,6 +83,7 @@ export class ArticleBaseService {
     return qb;
   }
 
+  async findById(id: string): Promise<ArticleBaseDto>;
   async findById(id: string, language: Language): Promise<SingleArticleBaseDto>;
   async findById(id: string, language?: Language): Promise<ArticleBaseDto> {
     if (language && !this.multipleLanguageMode) {
@@ -129,6 +130,7 @@ export class ArticleBaseService {
   async findAll(
     options?: ArticleFindAllDto & { language: Language },
   ): Promise<SingleArticleBaseDto[]>;
+  async findAll(options?: ArticleFindAllDto): Promise<ArticleBaseDto[]>;
   async findAll(options?: ArticleFindAllDto): Promise<ArticleBaseDto[]> {
     if (options?.language && !this.multipleLanguageMode) {
       throw new BadRequestException('Multiple language mode is disabled');
