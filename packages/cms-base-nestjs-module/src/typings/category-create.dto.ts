@@ -1,8 +1,8 @@
 import { Language } from './language';
 
 interface BaseCategoryCreateDto {
-  bindable: boolean;
-  parentIds: string[];
+  bindable?: boolean; // default: true
+  parentIds?: string[];
 }
 
 export interface SingleLanguageCategoryCreateDto extends BaseCategoryCreateDto {
