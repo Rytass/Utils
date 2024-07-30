@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.25](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.24...@rytass/cms-base-nestjs-module@0.1.25) (2024-07-30)
+
+### Features
+
+- **cms-base-nestjs-module:** add sorter and pagination on category find all ([39e342c](https://github.com/Rytass/Utils/commit/39e342c6ccd6f31baf769e024a52114fe757c892))
+
 ## [0.1.24](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.23...@rytass/cms-base-nestjs-module@0.1.24) (2024-07-30)
 
 ### Features
