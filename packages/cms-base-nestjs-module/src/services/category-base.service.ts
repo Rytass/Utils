@@ -185,6 +185,12 @@ export class CategoryBaseService {
     id: string,
     options: CategoryCreateDto,
   ): Promise<BaseCategoryEntity> {
+    if (!this.allowMultipleParentCategories && options.parentIds?.length) {
+      throw new BadRequestException(
+        'Multiple parent categories not allowed, please enable on module forRoot options',
+      );
+    }
+
     const qb = this.getDefaultQueryBuilder('categories');
 
     qb.leftJoinAndSelect('categories.parents', 'parents');
@@ -199,15 +205,20 @@ export class CategoryBaseService {
 
     let parentCategories: BaseCategoryEntity[] = [];
 
-    if (options.parentIds?.length && this.allowMultipleParentCategories) {
+    if (
+      (options.parentIds?.length || options.parentId) &&
+      this.allowMultipleParentCategories
+    ) {
       parentCategories = await this.baseCategoryRepo.find({
         where: {
-          id: In(options.parentIds),
+          id: In(
+            options.parentIds?.length ? options.parentIds : [options.parentId],
+          ),
         },
         relations: ['parents'],
       });
 
-      if (parentCategories.length !== options.parentIds.length) {
+      if (parentCategories.length !== (options.parentIds?.length ?? 1)) {
         throw new BadRequestException('Parent category not found');
       }
     }
@@ -320,14 +331,25 @@ export class CategoryBaseService {
   async create(options: CategoryCreateDto): Promise<BaseCategoryEntity> {
     let parentCategories: BaseCategoryEntity[] = [];
 
-    if (options.parentIds?.length && this.allowMultipleParentCategories) {
+    if (!this.allowMultipleParentCategories && options.parentIds?.length) {
+      throw new BadRequestException(
+        'Multiple parent categories not allowed, please enable on module forRoot options',
+      );
+    }
+
+    if (
+      (options.parentIds?.length || options.parentId) &&
+      this.allowMultipleParentCategories
+    ) {
       parentCategories = await this.baseCategoryRepo.find({
         where: {
-          id: In(options.parentIds),
+          id: In(
+            options.parentIds?.length ? options.parentIds : [options.parentId],
+          ),
         },
       });
 
-      if (parentCategories.length !== options.parentIds.length) {
+      if (parentCategories.length !== (options.parentIds?.length ?? 1)) {
         throw new BadRequestException('Parent category not found');
       }
     }
