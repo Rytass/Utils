@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.15](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.14...@rytass/cms-base-nestjs-module@0.1.15) (2024-07-30)
+
+### Features
+
+- **cms-base-nestjs-module:** support parentId option on multiple mode, throw error when user provide parentIds in single mode ([8c78315](https://github.com/Rytass/Utils/commit/8c78315b2968a142c8b7c2bd6011201a712a2614))
+
 ## [0.1.14](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.13...@rytass/cms-base-nestjs-module@0.1.14) (2024-07-30)
 
 ### Features
