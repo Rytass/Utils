@@ -1,7 +1,7 @@
 import { CMSBaseRootModuleOptionsDto } from './typings/cms-base-root-module-options.dto';
 import { CMSBaseModule } from './cms-base.module';
 import { CMSBaseRootModuleAsyncOptionsDto } from './typings/cms-base-root-module-async-options';
-import { getProvidersFromOptions } from './helper/get-providers-from-options';
+import { OptionProviders } from './constant/option-providers';
 import { DynamicModule, Provider, Type } from '@nestjs/common';
 import { CMS_BASE_MODULE_OPTIONS } from './typings/cms-base-providers';
 import { CMSBaseRootModuleOptionFactory } from './typings/cms-base-root-module-option-factory';
@@ -13,10 +13,7 @@ export class CMSBaseRootModule {
     return {
       module: CMSBaseModule,
       imports: options?.imports ?? [],
-      providers: [
-        ...this.createAsyncProvider(options),
-        ...getProvidersFromOptions(),
-      ],
+      providers: [...this.createAsyncProvider(options), ...OptionProviders],
     };
   }
 
@@ -28,7 +25,7 @@ export class CMSBaseRootModule {
           provide: CMS_BASE_MODULE_OPTIONS,
           useValue: options,
         },
-        ...getProvidersFromOptions(),
+        ...OptionProviders,
       ],
     };
   }

@@ -5,11 +5,11 @@ import {
 } from '../typings/cms-base-providers';
 import { CMSBaseRootModuleOptionsDto } from '../typings/cms-base-root-module-options.dto';
 
-export const getProvidersFromOptions = (): Provider[] => [
+export const OptionProviders = [
   {
     provide: MULTIPLE_LANGUAGE_MODE,
     inject: [CMS_BASE_MODULE_OPTIONS],
     useFactory: (options?: CMSBaseRootModuleOptionsDto) =>
       options?.multipleLanguageMode ?? false,
   },
-];
+] as Provider[];

@@ -1,24 +1,74 @@
 import { MemberBaseRootModuleOptionsDto } from './typings/member-base-root-module-options.dto';
 import { MemberBaseModule } from './member-base.module';
 import { MemberBaseRootModuleAsyncOptionsDto } from './typings/member-base-root-module-async-options';
-import { getProvidersFromOptions } from './helper/get-providers-from-options';
-import { DynamicModule } from '@nestjs/common';
+import { OptionProviders } from './constants/option-providers';
+import { DynamicModule, Provider, Type } from '@nestjs/common';
+import { MEMBER_BASE_MODULE_OPTIONS } from './typings/member-base-providers';
+import { MemberBaseRootModuleOptionFactory } from './typings/member-base-root-module-option-factory';
 
 export class MemberBaseRootModule {
   static forRootAsync(
-    options?: MemberBaseRootModuleAsyncOptionsDto,
+    options: MemberBaseRootModuleAsyncOptionsDto,
   ): DynamicModule {
     return {
       module: MemberBaseModule,
       imports: options?.imports ?? [],
-      providers: getProvidersFromOptions(options),
+      providers: [...this.createAsyncProvider(options), ...OptionProviders],
     };
   }
 
   static forRoot(options?: MemberBaseRootModuleOptionsDto): DynamicModule {
     return {
       module: MemberBaseModule,
-      providers: getProvidersFromOptions(options),
+      providers: [
+        {
+          provide: MEMBER_BASE_MODULE_OPTIONS,
+          useValue: options,
+        },
+        ...OptionProviders,
+      ],
+    };
+  }
+
+  private static createAsyncProvider(
+    options: MemberBaseRootModuleAsyncOptionsDto,
+  ): Provider[] {
+    if (options.useExisting || options.useFactory) {
+      return [this.createAsyncOptionsProvider(options)];
+    }
+
+    return [
+      this.createAsyncOptionsProvider(options),
+      ...(options.useClass
+        ? [
+            {
+              provide: options.useClass,
+              useClass: options.useClass,
+            },
+          ]
+        : []),
+    ];
+  }
+
+  private static createAsyncOptionsProvider(
+    options: MemberBaseRootModuleAsyncOptionsDto,
+  ): Provider {
+    if (options.useFactory) {
+      return {
+        provide: MEMBER_BASE_MODULE_OPTIONS,
+        useFactory: options.useFactory,
+        inject: options.inject || [],
+      };
+    }
+
+    return {
+      provide: MEMBER_BASE_MODULE_OPTIONS,
+      useFactory: async (optionsFactory: MemberBaseRootModuleOptionFactory) =>
+        await optionsFactory.createMemberOptions(),
+      inject: [
+        (options.useExisting ||
+          options.useClass) as Type<MemberBaseRootModuleOptionFactory>,
+      ],
     };
   }
 }
