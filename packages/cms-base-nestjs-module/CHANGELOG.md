@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.22](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.21...@rytass/cms-base-nestjs-module@0.1.22) (2024-07-30)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** join table alias duplicate issue ([99903dc](https://github.com/Rytass/Utils/commit/99903dce5d28fd83404a21378d352aa325503667))
+
 ## [0.1.21](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.20...@rytass/cms-base-nestjs-module@0.1.21) (2024-07-30)
 
 ### Bug Fixes
