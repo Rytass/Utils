@@ -91,13 +91,14 @@ export class CategoryBaseService {
       id,
     )) as BaseCategoryEntity;
 
+    givenSet.add(id);
+
     if (foundCategory.parents.length) {
       return foundCategory.parents
-        .map((parent) => async (set: Set<string>) => {
-          const parentIdSet = await this.getParentCategoryIdSet(parent.id);
-
-          return new Set<string>([...set, ...parentIdSet]);
-        })
+        .map(
+          (parent) => (set: Set<string>) =>
+            this.getParentCategoryIdSet(parent.id, set),
+        )
         .reduce((prev, next) => prev.then(next), Promise.resolve(givenSet));
     }
 
@@ -106,14 +107,13 @@ export class CategoryBaseService {
 
   private async checkCircularCategories(
     category: BaseCategoryEntity,
-    parents: BaseCategoryEntity[],
+    targetParents: BaseCategoryEntity[],
   ): Promise<void> {
-    const allParentIdSet = await parents
-      .map((parent) => async (set: Set<string>) => {
-        const foundSet = await this.getParentCategoryIdSet(parent.id);
-
-        return new Set<string>([...set, ...foundSet]);
-      })
+    const allParentIdSet = await targetParents
+      .map(
+        (parent) => (set: Set<string>) =>
+          this.getParentCategoryIdSet(parent.id, set),
+      )
       .reduce(
         (prev, next) => prev.then(next),
         Promise.resolve(new Set<string>()),
