@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.9](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.8...@rytass/member-base-nestjs-module@0.1.9) (2024-07-30)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** define options entity ([542d487](https://github.com/Rytass/Utils/commit/542d48744d698c9491d5b541fb66acf6a1f8df97))
+
 ## [0.1.8](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.7...@rytass/member-base-nestjs-module@0.1.8) (2024-07-30)
 
 ### Features
