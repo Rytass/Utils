@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.21](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.20...@rytass/cms-base-nestjs-module@0.1.21) (2024-07-30)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** injectable not working issue ([5c43e2f](https://github.com/Rytass/Utils/commit/5c43e2fae7982f779807fb9e831ff12d9a21d6d8))
+
 ## [0.1.20](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.19...@rytass/cms-base-nestjs-module@0.1.20) (2024-07-30)
 
 **Note:** Version bump only for package @rytass/cms-base-nestjs-module
