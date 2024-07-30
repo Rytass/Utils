@@ -1,5 +1,10 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { DataSource, Repository, SelectQueryBuilder } from 'typeorm';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
+import { DataSource, In, Repository, SelectQueryBuilder } from 'typeorm';
 import {
   BaseArticleRepo,
   BaseArticleEntity,
@@ -19,9 +24,11 @@ import { ArticleFindAllDto } from '../typings/article-find-all.dto';
 import { Language } from '../typings/language';
 import {
   ArticleBaseDto,
-  MultiLanguageArticleBaseDto,
   SingleArticleBaseDto,
 } from '../typings/article-base.dto';
+import { BaseCategoryRepo } from '../models/base-category.entity';
+import { BaseCategoryEntity } from '../models/base-category.entity';
+import { ArticleSorter } from '../typings/article-sorter.enum';
 
 @Injectable()
 export class ArticleBaseService {
@@ -32,10 +39,14 @@ export class ArticleBaseService {
     private readonly baseArticleVersionRepo: Repository<BaseArticleVersionEntity>,
     @Inject(BaseArticleVersionContentRepo)
     private readonly baseArticleVersionContentRepo: Repository<BaseArticleVersionContentEntity>,
+    @Inject(BaseCategoryRepo)
+    private readonly baseCategoryRepo: Repository<BaseCategoryEntity>,
     @Inject(MULTIPLE_LANGUAGE_MODE)
     private readonly multipleLanguageMode: boolean,
     private readonly dataSource: DataSource,
   ) {}
+
+  private readonly logger = new Logger(ArticleBaseService.name);
 
   private getDefaultQueryBuilder(
     alias = 'articles',
@@ -43,6 +54,7 @@ export class ArticleBaseService {
   ): SelectQueryBuilder<BaseArticleEntity> {
     const qb = this.baseArticleRepo.createQueryBuilder(alias);
 
+    qb.leftJoinAndSelect(`${alias}.categories`, 'categories');
     qb.innerJoinAndSelect(`${alias}.versions`, 'versions');
     qb.innerJoinAndSelect(
       'versions.multiLanguageContents',
@@ -122,7 +134,7 @@ export class ArticleBaseService {
 
     const qb = this.getDefaultQueryBuilder('articles');
 
-    if (options.ids) {
+    if (options.ids?.length) {
       qb.andWhere('articles.id IN (:...ids)', { ids: options.ids });
     }
 
@@ -131,6 +143,26 @@ export class ArticleBaseService {
         language: options.language,
       });
     }
+
+    if (options.categoryIds?.length) {
+      qb.andWhere('categories.id IN (:...categoryIds)', {
+        categoryIds: options.categoryIds,
+      });
+    }
+
+    switch (options.sorter) {
+      case ArticleSorter.CREATED_AT_ASC:
+        qb.addOrderBy('articles.createdAt', 'ASC');
+        break;
+
+      case ArticleSorter.CREATED_AT_DESC:
+      default:
+        qb.addOrderBy('articles.createdAt', 'DESC');
+        break;
+    }
+
+    qb.skip(options.offset ?? 0);
+    qb.take(Math.min(options.limit ?? 20, 100));
 
     const articles = await qb.getMany();
 
@@ -174,10 +206,36 @@ export class ArticleBaseService {
     id: string,
     options: ArticleCreateDto,
   ): Promise<BaseArticleEntity> {
-    const article = await this.baseArticleRepo.findOne({ where: { id } });
+    const targetCategories = options?.categoryIds?.length
+      ? await this.baseCategoryRepo.find({
+          where: {
+            id: In(options.categoryIds),
+            bindable: true,
+          },
+        })
+      : [];
+
+    if (targetCategories.length !== (options?.categoryIds?.length ?? 0)) {
+      throw new BadRequestException('Category not found');
+    }
+
+    const article = await this.baseArticleRepo.findOne({
+      where: { id },
+      relations: ['categories'],
+    });
 
     if (!article) {
       throw new BadRequestException('Article not found');
+    }
+
+    if (article.categories.length && !options.categoryIds) {
+      this.logger.warn(
+        `Article ${id} has categories, but no categoryIds provided when add version. The article categories will no change after version added.`,
+      );
+    }
+
+    if (options.categoryIds) {
+      article.categories = targetCategories;
     }
 
     const latestQb =
@@ -198,6 +256,8 @@ export class ArticleBaseService {
     await runner.startTransaction();
 
     try {
+      await runner.manager.save(article);
+
       const version = this.baseArticleVersionRepo.create({
         articleId: article.id,
         version: latestVersion.version + 1,
@@ -249,7 +309,22 @@ export class ArticleBaseService {
   }
 
   async create(options: ArticleCreateDto): Promise<BaseArticleEntity> {
-    const article = this.baseArticleRepo.create({});
+    const targetCategories = options?.categoryIds?.length
+      ? await this.baseCategoryRepo.find({
+          where: {
+            id: In(options.categoryIds),
+            bindable: true,
+          },
+        })
+      : [];
+
+    if (targetCategories.length !== (options?.categoryIds?.length ?? 0)) {
+      throw new BadRequestException('Category not found');
+    }
+
+    const article = this.baseArticleRepo.create({
+      categories: targetCategories,
+    });
 
     const runner = this.dataSource.createQueryRunner();
 

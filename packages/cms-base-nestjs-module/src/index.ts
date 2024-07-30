@@ -10,6 +10,7 @@ export * from './models/index';
 
 // Typings
 export * from './typings/language';
+export * from './typings/article-sorter.enum';
 
 // Constants
 export * from './constant/default-language';

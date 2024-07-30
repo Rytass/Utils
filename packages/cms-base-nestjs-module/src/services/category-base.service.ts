@@ -121,6 +121,7 @@ export class CategoryBaseService {
           multiLanguageName,
         ]),
       );
+
       const nextLanguageSet = new Set(
         Object.keys(options.multiLanguageNames ?? {}),
       );

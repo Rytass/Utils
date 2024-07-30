@@ -15,6 +15,14 @@ import {
   BaseArticleVersionContentEntity,
   BaseArticleVersionContentRepo,
 } from './base-article-version-content.entity';
+import {
+  CategoryRelationEntity,
+  CategoryRelationRepo,
+} from './category-relation.entity';
+import {
+  ArticleCategoryEntity,
+  ArticleCategoryRepo,
+} from './article-category.entity';
 
 const models = [
   [BaseArticleRepo, BaseArticleEntity],
@@ -22,6 +30,8 @@ const models = [
   [BaseArticleVersionContentRepo, BaseArticleVersionContentEntity],
   [BaseCategoryRepo, BaseCategoryEntity],
   [BaseCategoryMultiLanguageNameRepo, BaseCategoryMultiLanguageNameEntity],
+  [CategoryRelationRepo, CategoryRelationEntity],
+  [ArticleCategoryRepo, ArticleCategoryEntity],
 ] as [symbol, typeof BaseArticleEntity][];
 
 @Module({

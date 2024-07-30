@@ -12,6 +12,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { BaseCategoryMultiLanguageNameEntity } from './base-category-multi-language-name.entity';
+import { BaseArticleEntity } from './base-article.entity';
 
 export const BaseCategoryRepo = Symbol('BaseCategoryRepo');
 
@@ -49,4 +50,7 @@ export class BaseCategoryEntity {
     (multiLanguageName) => multiLanguageName.category,
   )
   multiLanguageNames: Relation<BaseCategoryMultiLanguageNameEntity[]>;
+
+  @ManyToMany(() => BaseArticleEntity, (article) => article.categories)
+  articles: Relation<BaseArticleEntity[]>;
 }

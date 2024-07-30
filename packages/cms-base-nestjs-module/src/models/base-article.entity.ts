@@ -2,13 +2,15 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  JoinTable,
+  ManyToMany,
   OneToMany,
   PrimaryGeneratedColumn,
   Relation,
   TableInheritance,
-  UpdateDateColumn,
 } from 'typeorm';
 import { BaseArticleVersionEntity } from './base-article-version.entity';
+import { BaseCategoryEntity } from './base-category.entity';
 
 export const BaseArticleRepo = Symbol('BaseArticleRepo');
 
@@ -29,4 +31,12 @@ export class BaseArticleEntity {
     (articleVersion) => articleVersion.article,
   )
   versions: Relation<BaseArticleVersionEntity[]>;
+
+  @ManyToMany(() => BaseCategoryEntity, (category) => category.articles)
+  @JoinTable({
+    name: 'articles_categories',
+    joinColumn: { name: 'articleId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'categoryId', referencedColumnName: 'id' },
+  })
+  categories: Relation<BaseCategoryEntity[]>;
 }

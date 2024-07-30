@@ -3,6 +3,7 @@ import { Language } from './language';
 
 interface BaseArticleCreateDto {
   tags?: string[];
+  categoryIds?: string[];
 }
 
 interface SingleArticleCreateDto extends BaseArticleCreateDto {
