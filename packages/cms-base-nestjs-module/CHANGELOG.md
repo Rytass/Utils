@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.23](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.22...@rytass/cms-base-nestjs-module@0.1.23) (2024-07-30)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** circular check logic ([8f1a8d1](https://github.com/Rytass/Utils/commit/8f1a8d1efe542e78d1e6c31820d4aac7c15f94ec))
+
 ## [0.1.22](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.21...@rytass/cms-base-nestjs-module@0.1.22) (2024-07-30)
 
 ### Bug Fixes
