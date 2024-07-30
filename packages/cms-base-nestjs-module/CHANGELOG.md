@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.3](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.2...@rytass/cms-base-nestjs-module@0.1.3) (2024-07-30)
+
+### Features
+
+- **cms-base-nestjs-module:** export category service ([7076b52](https://github.com/Rytass/Utils/commit/7076b528ac9eaea097e22f25c214c3da6acb20b2))
+
 ## [0.1.2](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.1...@rytass/cms-base-nestjs-module@0.1.2) (2024-07-30)
 
 ### Features
