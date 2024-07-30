@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.10](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.9...@rytass/cms-base-nestjs-module@0.1.10) (2024-07-30)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** child category names join ([6a392bb](https://github.com/Rytass/Utils/commit/6a392bb45351dcd6612a55a545ba4f244a0f4111))
+
 ## [0.1.9](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.8...@rytass/cms-base-nestjs-module@0.1.9) (2024-07-30)
 
 ### Bug Fixes
