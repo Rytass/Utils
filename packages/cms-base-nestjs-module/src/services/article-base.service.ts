@@ -5,20 +5,17 @@ import {
   Logger,
 } from '@nestjs/common';
 import { DataSource, In, Repository, SelectQueryBuilder } from 'typeorm';
-import {
-  BaseArticleRepo,
-  BaseArticleEntity,
-} from '../models/base-article.entity';
+import { BaseArticleEntity } from '../models/base-article.entity';
 import { ArticleCreateDto } from '../typings/article-create.dto';
+import { BaseArticleVersionEntity } from '../models/base-article-version.entity';
+import { BaseArticleVersionContentEntity } from '../models/base-article-version-content.entity';
 import {
-  BaseArticleVersionEntity,
-  BaseArticleVersionRepo,
-} from '../models/base-article-version.entity';
-import {
-  BaseArticleVersionContentEntity,
-  BaseArticleVersionContentRepo,
-} from '../models/base-article-version-content.entity';
-import { MULTIPLE_LANGUAGE_MODE } from '../typings/cms-base-providers';
+  MULTIPLE_LANGUAGE_MODE,
+  RESOLVED_ARTICLE_REPO,
+  RESOLVED_ARTICLE_VERSION_CONTENT_REPO,
+  RESOLVED_ARTICLE_VERSION_REPO,
+  RESOLVED_CATEGORY_REPO,
+} from '../typings/cms-base-providers';
 import { DEFAULT_LANGUAGE } from '../constant/default-language';
 import { ArticleFindAllDto } from '../typings/article-find-all.dto';
 import { Language } from '../typings/language';
@@ -26,7 +23,6 @@ import {
   ArticleBaseDto,
   SingleArticleBaseDto,
 } from '../typings/article-base.dto';
-import { BaseCategoryRepo } from '../models/base-category.entity';
 import { BaseCategoryEntity } from '../models/base-category.entity';
 import { ArticleSorter } from '../typings/article-sorter.enum';
 import { InjectDataSource } from '@nestjs/typeorm';
@@ -34,13 +30,13 @@ import { InjectDataSource } from '@nestjs/typeorm';
 @Injectable()
 export class ArticleBaseService {
   constructor(
-    @Inject(BaseArticleRepo)
+    @Inject(RESOLVED_ARTICLE_REPO)
     private readonly baseArticleRepo: Repository<BaseArticleEntity>,
-    @Inject(BaseArticleVersionRepo)
+    @Inject(RESOLVED_ARTICLE_VERSION_REPO)
     private readonly baseArticleVersionRepo: Repository<BaseArticleVersionEntity>,
-    @Inject(BaseArticleVersionContentRepo)
+    @Inject(RESOLVED_ARTICLE_VERSION_CONTENT_REPO)
     private readonly baseArticleVersionContentRepo: Repository<BaseArticleVersionContentEntity>,
-    @Inject(BaseCategoryRepo)
+    @Inject(RESOLVED_CATEGORY_REPO)
     private readonly baseCategoryRepo: Repository<BaseCategoryEntity>,
     @Inject(MULTIPLE_LANGUAGE_MODE)
     private readonly multipleLanguageMode: boolean,

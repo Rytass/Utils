@@ -2,12 +2,12 @@ import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { BaseMemberEntity } from '../models';
 import { Repository } from 'typeorm';
 import { hash } from 'argon2';
-import { BaseMemberRepo } from '../models/base-member.entity';
+import { RESOLVED_MEMBER_REPO } from 'member-base-nestjs-module/lib/typings/member-base-providers';
 
 @Injectable()
 export class MemberBaseAdminService {
   constructor(
-    @Inject(BaseMemberRepo)
+    @Inject(RESOLVED_MEMBER_REPO)
     private readonly baseMemberRepo: Repository<BaseMemberEntity>,
   ) {}
 

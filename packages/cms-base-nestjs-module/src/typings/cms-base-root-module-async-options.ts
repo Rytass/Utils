@@ -3,8 +3,7 @@ import { CMSBaseRootModuleOptionsDto } from './cms-base-root-module-options.dto'
 import { CMSBaseRootModuleOptionFactory } from './cms-base-root-module-option-factory';
 
 export interface CMSBaseRootModuleAsyncOptionsDto
-  extends Pick<ModuleMetadata, 'imports'>,
-    CMSBaseRootModuleOptionsDto {
+  extends Pick<ModuleMetadata, 'imports'> {
   useFactory?: (
     ...args: any[]
   ) => Promise<CMSBaseRootModuleOptionsDto> | CMSBaseRootModuleOptionsDto;

@@ -4,17 +4,15 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import {
-  BaseCategoryEntity,
-  BaseCategoryRepo,
-} from '../models/base-category.entity';
+import { BaseCategoryEntity } from '../models/base-category.entity';
 import { DataSource, In, Repository, SelectQueryBuilder } from 'typeorm';
-import { MULTIPLE_LANGUAGE_MODE } from '../typings/cms-base-providers';
-import { CategoryCreateDto } from '../typings/category-create.dto';
 import {
-  BaseCategoryMultiLanguageNameEntity,
-  BaseCategoryMultiLanguageNameRepo,
-} from '../models/base-category-multi-language-name.entity';
+  MULTIPLE_LANGUAGE_MODE,
+  RESOLVED_CATEGORY_MULTI_LANGUAGE_NAME_REPO,
+  RESOLVED_CATEGORY_REPO,
+} from '../typings/cms-base-providers';
+import { CategoryCreateDto } from '../typings/category-create.dto';
+import { BaseCategoryMultiLanguageNameEntity } from '../models/base-category-multi-language-name.entity';
 import { CategoryFindAllDto } from '../typings/category-find-all.dto';
 import { DEFAULT_LANGUAGE } from '../constant/default-language';
 import { InjectDataSource } from '@nestjs/typeorm';
@@ -27,9 +25,9 @@ import { Language } from '../typings/language';
 @Injectable()
 export class CategoryBaseService {
   constructor(
-    @Inject(BaseCategoryMultiLanguageNameRepo)
+    @Inject(RESOLVED_CATEGORY_MULTI_LANGUAGE_NAME_REPO)
     private readonly baseCategoryMultiLanguageNameRepo: Repository<BaseCategoryMultiLanguageNameEntity>,
-    @Inject(BaseCategoryRepo)
+    @Inject(RESOLVED_CATEGORY_REPO)
     private readonly baseCategoryRepo: Repository<BaseCategoryEntity>,
     @Inject(MULTIPLE_LANGUAGE_MODE)
     private readonly multipleLanguageMode: boolean,

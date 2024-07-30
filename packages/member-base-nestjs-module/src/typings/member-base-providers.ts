@@ -7,6 +7,8 @@ export const RESET_PASSWORD_TOKEN_SECRET = Symbol(
   'RESET_PASSWORD_TOKEN_SECRET',
 );
 
+// Options Entity Providers
 export const PROVIDE_MEMBER_ENTITY = Symbol('PROVIDE_MEMBER_ENTITY');
 
+// Resolved Entity Repository Providers
 export const RESOLVED_MEMBER_REPO = Symbol('RESOLVED_MEMBER_REPO');
