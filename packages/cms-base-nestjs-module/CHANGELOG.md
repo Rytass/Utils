@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.5](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.4...@rytass/cms-base-nestjs-module@0.1.5) (2024-07-30)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** category bindable default is true ([e50d2cf](https://github.com/Rytass/Utils/commit/e50d2cff06a39c2b41699bc022854d4fc61d21d7))
+- **cms-base-nestjs-module:** create category params optional ([14b3030](https://github.com/Rytass/Utils/commit/14b3030eb3ba80f945b4dc8c21894c161c679531))
+
 ## [0.1.4](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.3...@rytass/cms-base-nestjs-module@0.1.4) (2024-07-30)
 
 ### Bug Fixes
