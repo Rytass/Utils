@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.8](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.7...@rytass/cms-base-nestjs-module@0.1.8) (2024-07-30)
+
+### Features
+
+- **cms-base-nestjs-module:** category language based dto ([d4cc509](https://github.com/Rytass/Utils/commit/d4cc509b51190adfbd8d75053623388079b71a54))
+
 ## [0.1.7](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.6...@rytass/cms-base-nestjs-module@0.1.7) (2024-07-30)
 
 ### Features
