@@ -11,18 +11,18 @@ import {
   LOGIN_FAILED_BAN_THRESHOLD,
   RESET_PASSWORD_TOKEN_EXPIRATION,
   RESET_PASSWORD_TOKEN_SECRET,
+  RESOLVED_MEMBER_REPO,
 } from '../typings/member-base-providers';
 import { sign, verify as verifyJWT } from 'jsonwebtoken';
 import {
   MemberLoginLogEntity,
   MemberLoginLogRepo,
 } from '../models/member-login-log.entity';
-import { BaseMemberRepo } from '../models/base-member.entity';
 
 @Injectable()
 export class MemberBaseService {
   constructor(
-    @Inject(BaseMemberRepo)
+    @Inject(RESOLVED_MEMBER_REPO)
     private readonly baseMemberRepo: Repository<BaseMemberEntity>,
     @Inject(MemberLoginLogRepo)
     private readonly memberLoginLogRepo: Repository<MemberLoginLogEntity>,

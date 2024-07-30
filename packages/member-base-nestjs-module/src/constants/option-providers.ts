@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import {
   LOGIN_FAILED_BAN_THRESHOLD,
   MEMBER_BASE_MODULE_OPTIONS,
+  PROVIDE_MEMBER_ENTITY,
   RESET_PASSWORD_TOKEN_EXPIRATION,
   RESET_PASSWORD_TOKEN_SECRET,
 } from '../typings/member-base-providers';
@@ -25,6 +26,12 @@ export const OptionProviders = [
     provide: RESET_PASSWORD_TOKEN_SECRET,
     useFactory: (options?: MemberBaseRootModuleOptionsDto) =>
       options?.resetPasswordTokenSecret ?? randomBytes(16).toString('hex'),
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: PROVIDE_MEMBER_ENTITY,
+    useFactory: (options?: MemberBaseRootModuleOptionsDto) =>
+      options?.memberEntity ?? null,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
 ] as Provider[];
