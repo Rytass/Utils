@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.19](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.18...@rytass/cms-base-nestjs-module@0.1.19) (2024-07-30)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** update cascade policy ([2d9a587](https://github.com/Rytass/Utils/commit/2d9a5875fab67e003f88b7ac345e6f669d95e2b9))
+
 ## [0.1.18](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.17...@rytass/cms-base-nestjs-module@0.1.18) (2024-07-30)
 
 ### Bug Fixes
