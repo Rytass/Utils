@@ -39,6 +39,11 @@ export class BaseArticleVersionContentEntity {
   @ManyToOne(
     () => BaseArticleVersionEntity,
     (articleVersion) => articleVersion.multiLanguageContents,
+    {
+      onUpdate: 'CASCADE',
+      onDelete: 'CASCADE',
+      orphanedRowAction: 'delete',
+    },
   )
   @JoinColumn([
     { name: 'articleId', referencedColumnName: 'articleId' },

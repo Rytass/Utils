@@ -33,14 +33,17 @@ export class BaseArticleVersionEntity {
   @DeleteDateColumn()
   deletedAt: Date | null;
 
-  @ManyToOne(() => BaseArticleEntity, (article) => article.versions)
+  @ManyToOne(() => BaseArticleEntity, (article) => article.versions, {
+    onUpdate: 'CASCADE',
+    onDelete: 'CASCADE',
+    orphanedRowAction: 'delete',
+  })
   @JoinColumn({ name: 'articleId', referencedColumnName: 'id' })
   article: Relation<BaseArticleEntity>;
 
   @OneToMany(
     () => BaseArticleVersionContentEntity,
     (content) => content.articleVersion,
-    { cascade: true },
   )
   multiLanguageContents: Relation<BaseArticleVersionContentEntity[]>;
 }

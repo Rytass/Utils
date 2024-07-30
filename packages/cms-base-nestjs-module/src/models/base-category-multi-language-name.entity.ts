@@ -39,6 +39,11 @@ export class BaseCategoryMultiLanguageNameEntity {
   @ManyToOne(
     () => BaseCategoryEntity,
     (category) => category.multiLanguageNames,
+    {
+      onUpdate: 'CASCADE',
+      onDelete: 'CASCADE',
+      orphanedRowAction: 'delete',
+    },
   )
   @JoinColumn({ name: 'categoryId', referencedColumnName: 'id' })
   category: Relation<BaseCategoryEntity>;

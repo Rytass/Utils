@@ -29,12 +29,13 @@ export class BaseArticleEntity {
   @OneToMany(
     () => BaseArticleVersionEntity,
     (articleVersion) => articleVersion.article,
-    { cascade: true },
   )
   versions: Relation<BaseArticleVersionEntity[]>;
 
   @ManyToMany(() => BaseCategoryEntity, (category) => category.articles, {
-    cascade: true,
+    onUpdate: 'CASCADE',
+    onDelete: 'CASCADE',
+    orphanedRowAction: 'delete',
   })
   @JoinTable({
     name: 'article_categories',
