@@ -25,7 +25,10 @@ export class CategoryDataLoader {
       );
 
       qb.leftJoinAndSelect('categories.parents', 'parents');
-      qb.leftJoinAndSelect('parents.multiLanguageNames', 'multiLanguageNames');
+      qb.leftJoinAndSelect(
+        'parents.multiLanguageNames',
+        'childMultiLanguageNames',
+      );
 
       qb.andWhere('categories.id IN (:...ids)', { ids });
 
