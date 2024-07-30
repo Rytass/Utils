@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.16](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.15...@rytass/cms-base-nestjs-module@0.1.16) (2024-07-30)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** correct many to many directions ([05136d2](https://github.com/Rytass/Utils/commit/05136d23e5d7e3685c44997160a18f59ab01c773))
+
 ## [0.1.15](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.14...@rytass/cms-base-nestjs-module@0.1.15) (2024-07-30)
 
 ### Features
