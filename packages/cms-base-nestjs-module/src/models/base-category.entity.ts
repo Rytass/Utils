@@ -39,8 +39,8 @@ export class BaseCategoryEntity {
   })
   @JoinTable({
     name: 'category_relations',
-    joinColumn: { name: 'parentId', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'childId', referencedColumnName: 'id' },
+    joinColumn: { name: 'childId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'parentId', referencedColumnName: 'id' },
   })
   parents: Relation<BaseCategoryEntity[]>;
 
