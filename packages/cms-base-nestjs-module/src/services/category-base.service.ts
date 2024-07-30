@@ -8,7 +8,7 @@ import {
   BaseCategoryEntity,
   BaseCategoryRepo,
 } from '../models/base-category.entity';
-import { DataSource, Repository, SelectQueryBuilder } from 'typeorm';
+import { DataSource, In, Repository, SelectQueryBuilder } from 'typeorm';
 import { MULTIPLE_LANGUAGE_MODE } from '../typings/cms-base-providers';
 import { CategoryCreateDto } from '../typings/category-create.dto';
 import {
@@ -18,6 +18,11 @@ import {
 import { CategoryFindAllDto } from '../typings/category-find-all.dto';
 import { DEFAULT_LANGUAGE } from '../constant/default-language';
 import { InjectDataSource } from '@nestjs/typeorm';
+import {
+  CategoryBaseDto,
+  SingleCategoryBaseDto,
+} from '../typings/category-base.dto';
+import { Language } from '../typings/language';
 
 @Injectable()
 export class CategoryBaseService {
@@ -43,19 +48,54 @@ export class CategoryBaseService {
     return qb;
   }
 
-  async findAll(options: CategoryFindAllDto): Promise<BaseCategoryEntity[]> {
+  private parseSingleLanguageCategory(
+    category: BaseCategoryEntity,
+    language: Language = DEFAULT_LANGUAGE,
+  ): SingleCategoryBaseDto {
+    const multiLanguageName = category.multiLanguageNames.find(
+      (multiLanguageName) => multiLanguageName.language === language,
+    ) as BaseCategoryMultiLanguageNameEntity;
+
+    return {
+      id: category.id,
+      bindable: category.bindable,
+      createdAt: category.createdAt,
+      updatedAt: category.updatedAt,
+      deletedAt: category.deletedAt,
+      language: multiLanguageName.language,
+      name: multiLanguageName.name,
+      children: category.children.map((childCategory) =>
+        this.parseSingleLanguageCategory(childCategory),
+      ),
+    };
+  }
+
+  async findAll(
+    options?: CategoryFindAllDto & { language: Language },
+  ): Promise<SingleCategoryBaseDto[]>;
+  async findAll(options?: CategoryFindAllDto): Promise<CategoryBaseDto[]> {
     const qb = this.getDefaultQueryBuilder('categories');
 
-    if (options.ids) {
+    if (options?.ids) {
       qb.andWhere('categories.id IN (:...ids)', { ids: options.ids });
     }
 
     const categories = await qb.getMany();
 
+    if (options?.language || !this.multipleLanguageMode) {
+      return categories.map((category) =>
+        this.parseSingleLanguageCategory(category, options?.language),
+      );
+    }
+
     return categories;
   }
 
-  async findById(id: string): Promise<BaseCategoryEntity> {
+  async findById(
+    id: string,
+    language: Language,
+  ): Promise<SingleCategoryBaseDto>;
+  async findById(id: string, language?: Language): Promise<CategoryBaseDto> {
     const qb = this.getDefaultQueryBuilder('categories');
 
     qb.andWhere('categories.id = :id', { id });
@@ -64,6 +104,10 @@ export class CategoryBaseService {
 
     if (!category) {
       throw new BadRequestException('Category not found');
+    }
+
+    if (language || !this.multipleLanguageMode) {
+      return this.parseSingleLanguageCategory(category, language);
     }
 
     return category;
@@ -98,7 +142,11 @@ export class CategoryBaseService {
     let parentCategories: BaseCategoryEntity[] = [];
 
     if (options.parentIds?.length) {
-      parentCategories = await this.findAll({ ids: options.parentIds });
+      parentCategories = await this.baseCategoryRepo.find({
+        where: {
+          id: In(options.parentIds),
+        },
+      });
 
       if (parentCategories.length !== options.parentIds.length) {
         throw new BadRequestException('Parent category not found');
@@ -195,7 +243,11 @@ export class CategoryBaseService {
     let parentCategories: BaseCategoryEntity[] = [];
 
     if (options.parentIds?.length) {
-      parentCategories = await this.findAll({ ids: options.parentIds });
+      parentCategories = await this.baseCategoryRepo.find({
+        where: {
+          id: In(options.parentIds),
+        },
+      });
 
       if (parentCategories.length !== options.parentIds.length) {
         throw new BadRequestException('Parent category not found');

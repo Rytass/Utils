@@ -127,32 +127,32 @@ export class ArticleBaseService {
   }
 
   async findAll(
-    options: ArticleFindAllDto & { language: Language },
+    options?: ArticleFindAllDto & { language: Language },
   ): Promise<SingleArticleBaseDto[]>;
-  async findAll(options: ArticleFindAllDto): Promise<ArticleBaseDto[]> {
-    if (options.language && !this.multipleLanguageMode) {
+  async findAll(options?: ArticleFindAllDto): Promise<ArticleBaseDto[]> {
+    if (options?.language && !this.multipleLanguageMode) {
       throw new BadRequestException('Multiple language mode is disabled');
     }
 
     const qb = this.getDefaultQueryBuilder('articles');
 
-    if (options.ids?.length) {
+    if (options?.ids?.length) {
       qb.andWhere('articles.id IN (:...ids)', { ids: options.ids });
     }
 
-    if (options.language) {
+    if (options?.language) {
       qb.andWhere('multiLanguageContents.language = :language', {
         language: options.language,
       });
     }
 
-    if (options.categoryIds?.length) {
+    if (options?.categoryIds?.length) {
       qb.andWhere('categories.id IN (:...categoryIds)', {
         categoryIds: options.categoryIds,
       });
     }
 
-    switch (options.sorter) {
+    switch (options?.sorter) {
       case ArticleSorter.CREATED_AT_ASC:
         qb.addOrderBy('articles.createdAt', 'ASC');
         break;
@@ -163,16 +163,16 @@ export class ArticleBaseService {
         break;
     }
 
-    qb.skip(options.offset ?? 0);
-    qb.take(Math.min(options.limit ?? 20, 100));
+    qb.skip(options?.offset ?? 0);
+    qb.take(Math.min(options?.limit ?? 20, 100));
 
     const articles = await qb.getMany();
 
-    if (options.language || !this.multipleLanguageMode) {
+    if (options?.language || !this.multipleLanguageMode) {
       return articles.map((article) => {
         const defaultContent = article.versions[0].multiLanguageContents.find(
           (content) =>
-            content.language === (options.language || DEFAULT_LANGUAGE),
+            content.language === (options?.language || DEFAULT_LANGUAGE),
         ) as BaseArticleVersionContentEntity;
 
         return {
