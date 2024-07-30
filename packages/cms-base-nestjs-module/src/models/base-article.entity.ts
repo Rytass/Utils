@@ -34,7 +34,7 @@ export class BaseArticleEntity {
 
   @ManyToMany(() => BaseCategoryEntity, (category) => category.articles)
   @JoinTable({
-    name: 'articles_categories',
+    name: 'article_categories',
     joinColumn: { name: 'articleId', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'categoryId', referencedColumnName: 'id' },
   })
