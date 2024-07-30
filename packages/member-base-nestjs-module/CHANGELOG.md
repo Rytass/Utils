@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.12](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.11...@rytass/member-base-nestjs-module@0.1.12) (2024-07-30)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** import path ([7dd221f](https://github.com/Rytass/Utils/commit/7dd221f3e1f3f4f8a114d9c71b557f70cf7af063))
+
 ## [0.1.11](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.10...@rytass/member-base-nestjs-module@0.1.11) (2024-07-30)
 
 ### Bug Fixes
