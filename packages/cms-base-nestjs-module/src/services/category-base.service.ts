@@ -25,6 +25,7 @@ import {
 } from '../typings/category-base.dto';
 import { Language } from '../typings/language';
 import { CategoryDataLoader } from '../data-loaders/category.dataloader';
+import { CategorySorter } from '../typings/category-sorter.enum';
 
 @Injectable()
 export class CategoryBaseService {
@@ -152,6 +153,20 @@ export class CategoryBaseService {
         this.parseSingleLanguageCategory(category, options?.language),
       );
     }
+
+    switch (options?.sorter) {
+      case CategorySorter.CREATED_AT_ASC:
+        qb.addOrderBy('articles.createdAt', 'ASC');
+        break;
+
+      case CategorySorter.CREATED_AT_DESC:
+      default:
+        qb.addOrderBy('articles.createdAt', 'DESC');
+        break;
+    }
+
+    qb.skip(options?.offset ?? 0);
+    qb.take(Math.min(options?.limit ?? 20, 100));
 
     return categories;
   }
