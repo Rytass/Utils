@@ -2,7 +2,7 @@ import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { BaseMemberEntity } from '../models';
 import { Repository } from 'typeorm';
 import { hash } from 'argon2';
-import { RESOLVED_MEMBER_REPO } from 'member-base-nestjs-module/lib/typings/member-base-providers';
+import { RESOLVED_MEMBER_REPO } from '../typings/member-base-providers';
 
 @Injectable()
 export class MemberBaseAdminService {
