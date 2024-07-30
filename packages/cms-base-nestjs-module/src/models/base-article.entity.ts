@@ -32,11 +32,7 @@ export class BaseArticleEntity {
   )
   versions: Relation<BaseArticleVersionEntity[]>;
 
-  @ManyToMany(() => BaseCategoryEntity, (category) => category.articles, {
-    onUpdate: 'CASCADE',
-    onDelete: 'CASCADE',
-    orphanedRowAction: 'delete',
-  })
+  @ManyToMany(() => BaseCategoryEntity, (category) => category.articles)
   @JoinTable({
     name: 'article_categories',
     joinColumn: { name: 'articleId', referencedColumnName: 'id' },

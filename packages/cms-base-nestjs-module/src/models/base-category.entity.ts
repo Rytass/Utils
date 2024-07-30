@@ -55,6 +55,10 @@ export class BaseCategoryEntity {
   )
   multiLanguageNames: Relation<BaseCategoryMultiLanguageNameEntity[]>;
 
-  @ManyToMany(() => BaseArticleEntity, (article) => article.categories)
+  @ManyToMany(() => BaseArticleEntity, (article) => article.categories, {
+    onUpdate: 'CASCADE',
+    onDelete: 'CASCADE',
+    orphanedRowAction: 'delete',
+  })
   articles: Relation<BaseArticleEntity[]>;
 }
