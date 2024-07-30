@@ -44,9 +44,7 @@ export class BaseCategoryEntity {
   })
   parents: Relation<BaseCategoryEntity[]>;
 
-  @ManyToMany(() => BaseCategoryEntity, (category) => category.parents, {
-    cascade: true,
-  })
+  @ManyToMany(() => BaseCategoryEntity, (category) => category.parents)
   children: Relation<BaseCategoryEntity[]>;
 
   @OneToMany(
