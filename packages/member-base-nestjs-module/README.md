@@ -3,6 +3,22 @@
 ## Inheritance
 
 ```
+// app.module.ts
+import { Module } from '@nestjs/common';
+import { MemberEntity } from './models/member.entity.ts';
+
+@Module({
+  imports: [
+    TypeOrmModule.forRoot({
+      // ... typeorm configuration
+    }),
+    MemberBaseRootModule.forRoot({
+      memberEntity: MemberEntity, // register custom child entity
+    }),
+  ],
+})
+export class AppModule {}
+
 // models/member.entity.ts
 import { BaseMemberEntity } from '@rytass/member-base-nestjs-module';
 import { ChildEntity, Column, OneToMany, Relation } from 'typeorm';
