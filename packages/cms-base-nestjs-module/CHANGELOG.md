@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.24](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.23...@rytass/cms-base-nestjs-module@0.1.24) (2024-07-30)
+
+### Features
+
+- **cms-base-nestjs-module:** add fromTop filter on category find all ([29d2f18](https://github.com/Rytass/Utils/commit/29d2f187d10bf0ee7ffcd3d1b0addf83bf456f9b))
+
 ## [0.1.23](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.22...@rytass/cms-base-nestjs-module@0.1.23) (2024-07-30)
 
 ### Bug Fixes
