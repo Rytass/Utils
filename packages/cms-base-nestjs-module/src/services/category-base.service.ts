@@ -139,6 +139,12 @@ export class CategoryBaseService {
       qb.andWhere('categories.id IN (:...ids)', { ids: options.ids });
     }
 
+    if (options?.fromTop) {
+      qb.leftJoin('categories.parents', 'fromTopParents');
+
+      qb.andWhere('fromTopParents.id IS NULL');
+    }
+
     const categories = await qb.getMany();
 
     if (options?.language || !this.multipleLanguageMode) {
