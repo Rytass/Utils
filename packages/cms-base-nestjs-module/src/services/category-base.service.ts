@@ -68,9 +68,10 @@ export class CategoryBaseService {
       deletedAt: category.deletedAt,
       language: multiLanguageName.language,
       name: multiLanguageName.name,
-      children: category.children.map((childCategory) =>
-        this.parseSingleLanguageCategory(childCategory),
-      ),
+      children:
+        category.children?.map((childCategory) =>
+          this.parseSingleLanguageCategory(childCategory),
+        ) ?? [],
     };
   }
 
