@@ -7,6 +7,7 @@ import {
 import { BaseCategoryEntity } from '../models/base-category.entity';
 import { DataSource, In, Repository, SelectQueryBuilder } from 'typeorm';
 import {
+  CATEGORY_DATA_LOADER,
   CIRCULAR_CATEGORY_MODE,
   MULTIPLE_CATEGORY_PARENT_MODE,
   MULTIPLE_LANGUAGE_MODE,
@@ -40,6 +41,7 @@ export class CategoryBaseService {
     private readonly allowCircularCategories: boolean,
     @InjectDataSource()
     private readonly dataSource: DataSource,
+    @Inject(CATEGORY_DATA_LOADER)
     private readonly categoryDataLoader: CategoryDataLoader,
   ) {}
 
