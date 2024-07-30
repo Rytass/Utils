@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.11](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.10...@rytass/cms-base-nestjs-module@0.1.11) (2024-07-30)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** circular children issue ([498c088](https://github.com/Rytass/Utils/commit/498c08853152bdabbfd37492faf143b7757e0531))
+
+### Features
+
+- **cms-base-nestjs-module:** add async factory ([7d1f8eb](https://github.com/Rytass/Utils/commit/7d1f8eb5ab520e8b9ad232e0f5c3f1f18400a0fb))
+
 ## [0.1.10](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.9...@rytass/cms-base-nestjs-module@0.1.10) (2024-07-30)
 
 ### Bug Fixes
