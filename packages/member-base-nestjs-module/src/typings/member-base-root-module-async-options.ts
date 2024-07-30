@@ -3,8 +3,7 @@ import { MemberBaseRootModuleOptionsDto } from './member-base-root-module-option
 import { MemberBaseRootModuleOptionFactory } from './member-base-root-module-option-factory';
 
 export interface MemberBaseRootModuleAsyncOptionsDto
-  extends Pick<ModuleMetadata, 'imports'>,
-    MemberBaseRootModuleOptionsDto {
+  extends Pick<ModuleMetadata, 'imports'> {
   useFactory?: (
     ...args: any[]
   ) => Promise<MemberBaseRootModuleOptionsDto> | MemberBaseRootModuleOptionsDto;
