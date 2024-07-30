@@ -28,5 +28,9 @@
     "@nestjs/typeorm": "*",
     "@quadrats/core": "*",
     "typeorm": "*"
+  },
+  "dependencies": {
+    "dataloader": "^2.2.2",
+    "lru-cache": "^11.0.0"
   }
 }

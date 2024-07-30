@@ -7,6 +7,8 @@ import {
 import { BaseCategoryEntity } from '../models/base-category.entity';
 import { DataSource, In, Repository, SelectQueryBuilder } from 'typeorm';
 import {
+  CIRCULAR_CATEGORY_MODE,
+  MULTIPLE_CATEGORY_PARENT_MODE,
   MULTIPLE_LANGUAGE_MODE,
   RESOLVED_CATEGORY_MULTI_LANGUAGE_NAME_REPO,
   RESOLVED_CATEGORY_REPO,
@@ -21,6 +23,7 @@ import {
   SingleCategoryBaseDto,
 } from '../typings/category-base.dto';
 import { Language } from '../typings/language';
+import { CategoryDataLoader } from '../data-loaders/category.dataloader';
 
 @Injectable()
 export class CategoryBaseService {
@@ -31,8 +34,13 @@ export class CategoryBaseService {
     private readonly baseCategoryRepo: Repository<BaseCategoryEntity>,
     @Inject(MULTIPLE_LANGUAGE_MODE)
     private readonly multipleLanguageMode: boolean,
+    @Inject(MULTIPLE_CATEGORY_PARENT_MODE)
+    private readonly allowMultipleParentCategories: boolean,
+    @Inject(CIRCULAR_CATEGORY_MODE)
+    private readonly allowCircularCategories: boolean,
     @InjectDataSource()
     private readonly dataSource: DataSource,
+    private readonly categoryDataLoader: CategoryDataLoader,
   ) {}
 
   private getDefaultQueryBuilder(
@@ -71,6 +79,47 @@ export class CategoryBaseService {
           this.parseSingleLanguageCategory(childCategory),
         ) ?? [],
     };
+  }
+
+  private async getParentCategoryIdSet(
+    id: string,
+    givenSet = new Set<string>(),
+  ): Promise<Set<string>> {
+    const foundCategory = (await this.categoryDataLoader.withParentsLoader.load(
+      id,
+    )) as BaseCategoryEntity;
+
+    if (foundCategory.parents.length) {
+      return foundCategory.parents
+        .map((parent) => async (set: Set<string>) => {
+          const parentIdSet = await this.getParentCategoryIdSet(parent.id);
+
+          return new Set<string>([...set, ...parentIdSet]);
+        })
+        .reduce((prev, next) => prev.then(next), Promise.resolve(givenSet));
+    }
+
+    return givenSet;
+  }
+
+  private async checkCircularCategories(
+    category: BaseCategoryEntity,
+    parents: BaseCategoryEntity[],
+  ): Promise<void> {
+    const allParentIdSet = await parents
+      .map((parent) => async (set: Set<string>) => {
+        const foundSet = await this.getParentCategoryIdSet(parent.id);
+
+        return new Set<string>([...set, ...foundSet]);
+      })
+      .reduce(
+        (prev, next) => prev.then(next),
+        Promise.resolve(new Set<string>()),
+      );
+
+    if (allParentIdSet.has(category.id)) {
+      throw new BadRequestException('Circular category is not allowed');
+    }
   }
 
   public async findAll(
@@ -150,16 +199,36 @@ export class CategoryBaseService {
 
     let parentCategories: BaseCategoryEntity[] = [];
 
-    if (options.parentIds?.length) {
+    if (options.parentIds?.length && this.allowMultipleParentCategories) {
       parentCategories = await this.baseCategoryRepo.find({
         where: {
           id: In(options.parentIds),
         },
+        relations: ['parents'],
       });
 
       if (parentCategories.length !== options.parentIds.length) {
         throw new BadRequestException('Parent category not found');
       }
+    }
+
+    if (options.parentId && !this.allowMultipleParentCategories) {
+      const parentCategory = await this.baseCategoryRepo.findOne({
+        where: {
+          id: options.parentId,
+        },
+        relations: ['parents'],
+      });
+
+      if (!parentCategory) {
+        throw new BadRequestException('Parent category not found');
+      }
+
+      parentCategories = [parentCategory];
+    }
+
+    if (!this.allowCircularCategories) {
+      await this.checkCircularCategories(category, parentCategories);
     }
 
     category.bindable = options.bindable ?? true;
@@ -251,7 +320,7 @@ export class CategoryBaseService {
   async create(options: CategoryCreateDto): Promise<BaseCategoryEntity> {
     let parentCategories: BaseCategoryEntity[] = [];
 
-    if (options.parentIds?.length) {
+    if (options.parentIds?.length && this.allowMultipleParentCategories) {
       parentCategories = await this.baseCategoryRepo.find({
         where: {
           id: In(options.parentIds),
@@ -261,6 +330,20 @@ export class CategoryBaseService {
       if (parentCategories.length !== options.parentIds.length) {
         throw new BadRequestException('Parent category not found');
       }
+    }
+
+    if (options.parentId && !this.allowMultipleParentCategories) {
+      const parentCategory = await this.baseCategoryRepo.findOne({
+        where: {
+          id: options.parentId,
+        },
+      });
+
+      if (!parentCategory) {
+        throw new BadRequestException('Parent category not found');
+      }
+
+      parentCategories = [parentCategory];
     }
 
     const category = this.baseCategoryRepo.create({

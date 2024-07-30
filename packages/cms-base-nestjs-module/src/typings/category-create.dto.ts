@@ -3,6 +3,7 @@ import { Language } from './language';
 interface BaseCategoryCreateDto {
   bindable?: boolean; // default: true
   parentIds?: string[];
+  parentId?: string;
 }
 
 export interface SingleLanguageCategoryCreateDto extends BaseCategoryCreateDto {
