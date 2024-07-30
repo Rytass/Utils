@@ -103,7 +103,7 @@ export class CategoryBaseService {
       }
     }
 
-    category.bindable = options.bindable ?? false;
+    category.bindable = options.bindable ?? true;
     category.parents = parentCategories;
 
     let willRemoveLanguages: BaseCategoryMultiLanguageNameEntity[] = [];
@@ -201,7 +201,7 @@ export class CategoryBaseService {
     }
 
     const category = this.baseCategoryRepo.create({
-      bindable: options.bindable ?? false,
+      bindable: options.bindable ?? true,
       parents: parentCategories,
     });
 
