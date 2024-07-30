@@ -8,7 +8,7 @@ import {
   BaseCategoryEntity,
   BaseCategoryRepo,
 } from '../models/base-category.entity';
-import { DataSource, In, Repository, SelectQueryBuilder } from 'typeorm';
+import { DataSource, Repository, SelectQueryBuilder } from 'typeorm';
 import { MULTIPLE_LANGUAGE_MODE } from '../typings/cms-base-providers';
 import { CategoryCreateDto } from '../typings/category-create.dto';
 import {
@@ -17,6 +17,7 @@ import {
 } from '../models/base-category-multi-language-name.entity';
 import { CategoryFindAllDto } from '../typings/category-find-all.dto';
 import { DEFAULT_LANGUAGE } from '../constant/default-language';
+import { InjectDataSource } from '@nestjs/typeorm';
 
 @Injectable()
 export class CategoryBaseService {
@@ -27,6 +28,7 @@ export class CategoryBaseService {
     private readonly baseCategoryRepo: Repository<BaseCategoryEntity>,
     @Inject(MULTIPLE_LANGUAGE_MODE)
     private readonly multipleLanguageMode: boolean,
+    @InjectDataSource()
     private readonly dataSource: DataSource,
   ) {}
 

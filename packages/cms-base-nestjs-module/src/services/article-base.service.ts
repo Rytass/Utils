@@ -29,6 +29,7 @@ import {
 import { BaseCategoryRepo } from '../models/base-category.entity';
 import { BaseCategoryEntity } from '../models/base-category.entity';
 import { ArticleSorter } from '../typings/article-sorter.enum';
+import { InjectDataSource } from '@nestjs/typeorm';
 
 @Injectable()
 export class ArticleBaseService {
@@ -43,6 +44,7 @@ export class ArticleBaseService {
     private readonly baseCategoryRepo: Repository<BaseCategoryEntity>,
     @Inject(MULTIPLE_LANGUAGE_MODE)
     private readonly multipleLanguageMode: boolean,
+    @InjectDataSource()
     private readonly dataSource: DataSource,
   ) {}
 
