@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.8](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.7...@rytass/member-base-nestjs-module@0.1.8) (2024-07-30)
+
+### Features
+
+- **member-base-nestjs-module:** add async providers ([2f11bd0](https://github.com/Rytass/Utils/commit/2f11bd021a31cd3457389d78dbf56f93961c8765))
+- **member-base-nestjs-module:** allow custom base member entity ([c38ad1d](https://github.com/Rytass/Utils/commit/c38ad1d55663907c9e4256bf4713b0783c9e1aa5))
+
 ## [0.1.7](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.6...@rytass/member-base-nestjs-module@0.1.7) (2024-07-29)
 
 ### Features

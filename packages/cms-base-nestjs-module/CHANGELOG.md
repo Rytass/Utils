@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.12](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.11...@rytass/cms-base-nestjs-module@0.1.12) (2024-07-30)
+
+### Features
+
+- **member-base-nestjs-module:** add async providers ([2f11bd0](https://github.com/Rytass/Utils/commit/2f11bd021a31cd3457389d78dbf56f93961c8765))
+
 ## [0.1.11](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.10...@rytass/cms-base-nestjs-module@0.1.11) (2024-07-30)
 
 ### Bug Fixes
