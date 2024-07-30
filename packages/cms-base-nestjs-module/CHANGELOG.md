@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.14](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.13...@rytass/cms-base-nestjs-module@0.1.14) (2024-07-30)
+
+### Features
+
+- **cms-base-nestjs-module:** add multiple parent config and disable circular option ([36ab79b](https://github.com/Rytass/Utils/commit/36ab79b36b1e3587a7eb4c81b8e866ebfab3b915))
+
 ## [0.1.13](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.12...@rytass/cms-base-nestjs-module@0.1.13) (2024-07-30)
 
 ### Features
