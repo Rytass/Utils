@@ -44,12 +44,15 @@ export class BaseCategoryEntity {
   })
   parents: Relation<BaseCategoryEntity[]>;
 
-  @ManyToMany(() => BaseCategoryEntity, (category) => category.parents)
+  @ManyToMany(() => BaseCategoryEntity, (category) => category.parents, {
+    cascade: true,
+  })
   children: Relation<BaseCategoryEntity[]>;
 
   @OneToMany(
     () => BaseCategoryMultiLanguageNameEntity,
     (multiLanguageName) => multiLanguageName.category,
+    { cascade: true },
   )
   multiLanguageNames: Relation<BaseCategoryMultiLanguageNameEntity[]>;
 

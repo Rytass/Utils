@@ -29,6 +29,7 @@ export class BaseArticleEntity {
   @OneToMany(
     () => BaseArticleVersionEntity,
     (articleVersion) => articleVersion.article,
+    { cascade: true },
   )
   versions: Relation<BaseArticleVersionEntity[]>;
 

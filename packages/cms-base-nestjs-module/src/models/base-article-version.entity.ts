@@ -42,6 +42,7 @@ export class BaseArticleVersionEntity {
   @OneToMany(
     () => BaseArticleVersionContentEntity,
     (content) => content.articleVersion,
+    { cascade: true },
   )
   multiLanguageContents: Relation<BaseArticleVersionContentEntity[]>;
 }
