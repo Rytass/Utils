@@ -44,6 +44,10 @@ export class CategoryBaseService {
 
     qb.innerJoinAndSelect(`${alias}.multiLanguageNames`, 'multiLanguageNames');
     qb.leftJoinAndSelect(`${alias}.children`, 'children');
+    qb.leftJoinAndSelect(
+      'children.multiLanguageNames',
+      'childrenMultiLanguageNames',
+    );
 
     return qb;
   }
