@@ -39,6 +39,7 @@ export class BaseArticleVersionContentEntity {
   @ManyToOne(
     () => BaseArticleVersionEntity,
     (articleVersion) => articleVersion.multiLanguageContents,
+    { cascade: true },
   )
   @JoinColumn([
     { name: 'articleId', referencedColumnName: 'articleId' },

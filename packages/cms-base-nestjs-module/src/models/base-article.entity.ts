@@ -32,7 +32,9 @@ export class BaseArticleEntity {
   )
   versions: Relation<BaseArticleVersionEntity[]>;
 
-  @ManyToMany(() => BaseCategoryEntity, (category) => category.articles)
+  @ManyToMany(() => BaseCategoryEntity, (category) => category.articles, {
+    cascade: true,
+  })
   @JoinTable({
     name: 'article_categories',
     joinColumn: { name: 'articleId', referencedColumnName: 'id' },

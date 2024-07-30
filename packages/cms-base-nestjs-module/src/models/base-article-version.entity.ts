@@ -33,7 +33,9 @@ export class BaseArticleVersionEntity {
   @DeleteDateColumn()
   deletedAt: Date | null;
 
-  @ManyToOne(() => BaseArticleEntity, (article) => article.versions)
+  @ManyToOne(() => BaseArticleEntity, (article) => article.versions, {
+    cascade: true,
+  })
   @JoinColumn({ name: 'articleId', referencedColumnName: 'id' })
   article: Relation<BaseArticleEntity>;
 

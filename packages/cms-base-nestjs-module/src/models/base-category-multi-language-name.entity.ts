@@ -39,6 +39,7 @@ export class BaseCategoryMultiLanguageNameEntity {
   @ManyToOne(
     () => BaseCategoryEntity,
     (category) => category.multiLanguageNames,
+    { cascade: true },
   )
   @JoinColumn({ name: 'categoryId', referencedColumnName: 'id' })
   category: Relation<BaseCategoryEntity>;

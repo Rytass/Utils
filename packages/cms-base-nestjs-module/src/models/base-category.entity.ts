@@ -34,7 +34,9 @@ export class BaseCategoryEntity {
   @DeleteDateColumn()
   deletedAt: Date | null;
 
-  @ManyToMany(() => BaseCategoryEntity, (category) => category.children)
+  @ManyToMany(() => BaseCategoryEntity, (category) => category.children, {
+    cascade: true,
+  })
   @JoinTable({
     name: 'category_relations',
     joinColumn: { name: 'parentId', referencedColumnName: 'id' },
