@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.21](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.20...@rytass/member-base-nestjs-module@0.1.21) (2024-07-31)
+
+### Features
+
+- **member-base-nestjs-module:** enableGlobalGuard option ([f88a9f5](https://github.com/Rytass/Utils/commit/f88a9f528c6850983b7f085f748ea8b0155f1fb2))
+
 ## [0.1.20](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.19...@rytass/member-base-nestjs-module@0.1.20) (2024-07-31)
 
 ### Features
