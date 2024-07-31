@@ -15,5 +15,6 @@ export {
 } from './typings/member-base-providers';
 
 // Casbin
+export * from './guards/casbin.guard';
 export * from './decorators/action.decorator';
 export * from './decorators/is-public.decorator';
