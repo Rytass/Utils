@@ -1,13 +1,17 @@
 import { randomBytes } from 'node:crypto';
 import {
+  CASBIN_ENFORCER,
   LOGIN_FAILED_BAN_THRESHOLD,
   MEMBER_BASE_MODULE_OPTIONS,
   PROVIDE_MEMBER_ENTITY,
   RESET_PASSWORD_TOKEN_EXPIRATION,
   RESET_PASSWORD_TOKEN_SECRET,
 } from '../typings/member-base-providers';
+import { newEnforcer, newModelFromString } from 'casbin';
 import { MemberBaseRootModuleOptionsDto } from '../typings/member-base-root-module-options.dto';
 import { Provider } from '@nestjs/common';
+import TypeORMAdapter from 'typeorm-adapter';
+import { CASBIN_MODEL } from './casbin-models/rbac-with-domains';
 
 export const OptionProviders = [
   {
@@ -32,6 +36,28 @@ export const OptionProviders = [
     provide: PROVIDE_MEMBER_ENTITY,
     useFactory: (options?: MemberBaseRootModuleOptionsDto) =>
       options?.memberEntity ?? null,
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: CASBIN_ENFORCER,
+    useFactory: async (options?: MemberBaseRootModuleOptionsDto) => {
+      if (!options?.casbinAdapterOptions) return null;
+
+      const adapter = await TypeORMAdapter.newAdapter(
+        options.casbinAdapterOptions,
+      );
+
+      const enforcer = await newEnforcer();
+
+      const model = newModelFromString(
+        options.casbinModelString || CASBIN_MODEL,
+      );
+
+      await enforcer.initWithModelAndAdapter(model, adapter);
+      await enforcer.loadPolicy();
+
+      return enforcer;
+    },
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
 ] as Provider[];

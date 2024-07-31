@@ -7,6 +7,8 @@ export const RESET_PASSWORD_TOKEN_SECRET = Symbol(
   'RESET_PASSWORD_TOKEN_SECRET',
 );
 
+export const CASBIN_ENFORCER = Symbol('CASBIN_ENFORCER');
+
 // Options Entity Providers
 export const PROVIDE_MEMBER_ENTITY = Symbol('PROVIDE_MEMBER_ENTITY');
 
