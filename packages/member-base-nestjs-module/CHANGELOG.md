@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.17](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.16...@rytass/member-base-nestjs-module@0.1.17) (2024-07-31)
+
+### Features
+
+- **member-base-nestjs-module:** export decorator and set APP_GUARD ([aa049dc](https://github.com/Rytass/Utils/commit/aa049dc6f00bbe10aa246421b7f38c9dc2089e63))
+
 ## [0.1.16](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.15...@rytass/member-base-nestjs-module@0.1.16) (2024-07-31)
 
 ### Bug Fixes
