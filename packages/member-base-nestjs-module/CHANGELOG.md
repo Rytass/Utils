@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.22](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.21...@rytass/member-base-nestjs-module@0.1.22) (2024-07-31)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** add missing export symbols ([8b79c59](https://github.com/Rytass/Utils/commit/8b79c596417bc1585fae5bf6136eb3b0e2811db1))
+
 ## [0.1.21](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.20...@rytass/member-base-nestjs-module@0.1.21) (2024-07-31)
 
 ### Features
