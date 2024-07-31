@@ -13,20 +13,21 @@ import { CASBIN_ENFORCER } from '../typings/member-base-providers';
 @Injectable()
 export class CasbinGuard implements CanActivate {
   constructor(
-    private readonly reflector: Reflector,
     @Inject(CASBIN_ENFORCER)
     private readonly enforcer: Enforcer,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const isPublic = this.reflector.get<boolean>(
+    const reflector = new Reflector();
+
+    const isPublic = reflector.get<boolean>(
       IS_ROUTE_PUBLIC,
       context.getHandler(),
     );
 
     if (isPublic) return true;
 
-    const allowActions = this.reflector.get(AllowActions, context.getHandler());
+    const allowActions = reflector.get(AllowActions, context.getHandler());
 
     if (!allowActions?.length) return false;
 
