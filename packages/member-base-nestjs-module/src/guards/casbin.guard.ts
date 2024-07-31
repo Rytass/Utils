@@ -6,15 +6,22 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Enforcer } from 'casbin';
+import { verify } from 'jsonwebtoken';
 import { AllowActions } from '../decorators/action.decorator';
 import { IS_ROUTE_PUBLIC } from '../decorators/is-public.decorator';
-import { CASBIN_ENFORCER } from '../typings/member-base-providers';
+import {
+  ACCESS_TOKEN_SECRET,
+  CASBIN_ENFORCER,
+} from '../typings/member-base-providers';
+import { BaseMemberEntity } from '../models/base-member.entity';
 
 @Injectable()
 export class CasbinGuard implements CanActivate {
   constructor(
     @Inject(CASBIN_ENFORCER)
     private readonly enforcer: Enforcer,
+    @Inject(ACCESS_TOKEN_SECRET)
+    private readonly accessTokenSecret: string,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -31,10 +38,27 @@ export class CasbinGuard implements CanActivate {
 
     if (!allowActions?.length) return false;
 
-    const request = context.switchToHttp().getRequest() as Request;
+    const request = context.switchToHttp().getRequest();
 
-    console.log(request, this.enforcer);
+    try {
+      const token = (request.headers.authorization ?? '')
+        .replace(/^Bearer\s/, '')
+        .trim();
 
-    return true;
+      if (!token) return false;
+
+      const payload = verify(token, this.accessTokenSecret) as Pick<
+        BaseMemberEntity,
+        'id' | 'account'
+      >;
+
+      return Promise.all(
+        allowActions.map(([domain, subject, action]) =>
+          this.enforcer.enforce(payload.id, domain, subject, action),
+        ),
+      ).then((results) => results.some((result) => result));
+    } catch (ex) {
+      return false;
+    }
   }
 }

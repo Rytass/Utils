@@ -8,7 +8,11 @@ import { QueryFailedError, Repository } from 'typeorm';
 import { hash, verify } from 'argon2';
 import { BaseMemberEntity } from '../models';
 import {
+  ACCESS_TOKEN_EXPIRATION,
+  ACCESS_TOKEN_SECRET,
   LOGIN_FAILED_BAN_THRESHOLD,
+  REFRESH_TOKEN_EXPIRATION,
+  REFRESH_TOKEN_SECRET,
   RESET_PASSWORD_TOKEN_EXPIRATION,
   RESET_PASSWORD_TOKEN_SECRET,
   RESOLVED_MEMBER_REPO,
@@ -32,6 +36,14 @@ export class MemberBaseService {
     private readonly resetPasswordTokenExpiration: number,
     @Inject(RESET_PASSWORD_TOKEN_SECRET)
     private readonly resetPasswordTokenSecret: string,
+    @Inject(ACCESS_TOKEN_SECRET)
+    private readonly accessTokenSecret: string,
+    @Inject(ACCESS_TOKEN_EXPIRATION)
+    private readonly accessTokenExpiration: number,
+    @Inject(REFRESH_TOKEN_SECRET)
+    private readonly refreshTokenSecret: string,
+    @Inject(REFRESH_TOKEN_EXPIRATION)
+    private readonly refreshTokenExpiration: number,
   ) {}
 
   async getResetPasswordToken(account: string): Promise<string> {
@@ -111,11 +123,62 @@ export class MemberBaseService {
     return member;
   }
 
+  async refreshToken(refreshToken: string): Promise<{
+    accessToken: string;
+    refreshToken: string;
+  }> {
+    try {
+      const { id, account, passwordChangedAt } = verifyJWT(
+        refreshToken,
+        this.refreshTokenSecret,
+      ) as { id: string; account: string; passwordChangedAt: number | null };
+
+      const member = await this.baseMemberRepo.findOne({
+        where: { id, account },
+      });
+
+      if (!member) {
+        throw new BadRequestException('Member not found');
+      }
+
+      if (member.passwordChangedAt?.getTime() !== passwordChangedAt) {
+        throw new BadRequestException('Password changed, please sign in again');
+      }
+
+      return {
+        accessToken: sign(
+          {
+            id: member.id,
+            account: member.account,
+          },
+          this.accessTokenSecret,
+          { expiresIn: this.accessTokenExpiration },
+        ),
+        refreshToken: sign(
+          {
+            id: member.id,
+            account: member.account,
+            passwordChangedAt: member.passwordChangedAt?.getTime() ?? null,
+          },
+          this.refreshTokenSecret,
+          { expiresIn: this.refreshTokenExpiration },
+        ),
+      };
+    } catch (ex) {
+      if (ex instanceof BadRequestException) throw ex;
+
+      throw new BadRequestException('Invalid token');
+    }
+  }
+
   async login(
     account: string,
     password: string,
     ip?: string,
-  ): Promise<BaseMemberEntity | null> {
+  ): Promise<{
+    accessToken: string;
+    refreshToken: string;
+  }> {
     const member = await this.baseMemberRepo.findOne({
       where: { account },
     });
@@ -141,7 +204,29 @@ export class MemberBaseService {
           ip: ip ? `${ip}/32` : null,
         });
 
-        return member;
+        return {
+          accessToken: sign(
+            {
+              id: member.id,
+              account: member.account,
+            },
+            this.accessTokenSecret,
+            {
+              expiresIn: this.accessTokenExpiration,
+            },
+          ),
+          refreshToken: sign(
+            {
+              id: member.id,
+              account: member.account,
+              passwordChangedAt: member.passwordChangedAt?.getTime() ?? null,
+            },
+            this.refreshTokenSecret,
+            {
+              expiresIn: this.refreshTokenExpiration,
+            },
+          ),
+        };
       } else {
         member.loginFailedCounter += 1;
 
