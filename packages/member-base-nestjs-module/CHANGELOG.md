@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.26](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.25...@rytass/member-base-nestjs-module@0.1.26) (2024-07-31)
+
+### Features
+
+- **member-base-nestjs-module:** remove enableGraphQL option, module will detect request automatically ([73c1e65](https://github.com/Rytass/Utils/commit/73c1e6566bba71e0679f626696e16cc84901f8a6))
+
 ## [0.1.25](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.24...@rytass/member-base-nestjs-module@0.1.25) (2024-07-31)
 
 ### Features
