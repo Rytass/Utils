@@ -2,7 +2,7 @@
 
 ## Inheritance
 
-```
+```typescript
 // app.module.ts
 import { Module } from '@nestjs/common';
 import { MemberEntity } from './models/member.entity.ts';
@@ -93,11 +93,34 @@ export class MemberService {
 
 ## RBAC with Domains Configuration
 
+```typescript
+// app.module.ts
+import { Module } from '@nestjs/common';
+import { MemberEntity } from './models/member.entity.ts';
+
+@Module({
+  imports: [
+    TypeOrmModule.forRoot({
+      // ... typeorm configuration
+    }),
+    MemberBaseRootModule.forRoot({
+      casbinAdapterOptions: {
+        type: 'postgres',
+        host: 'localhost',
+        username: 'rytass',
+        password: 'rytass',
+        database: 'rytass',
+        schema: 'members',
+      },
+    }),
+  ],
+})
+export class AppModule {}
+
 // controllers/article.controller.ts
 import { Controller, Get, Post } from '@nestjs/common';
 import { IsPublic, AllowedActions } from '@rytass/member-base-nestjs-module';
 
-```
 @Controller('/articles')
 export class ArticleController {
   @Get('/')
