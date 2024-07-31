@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.23](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.22...@rytass/member-base-nestjs-module@0.1.23) (2024-07-31)
+
+### Features
+
+- **member-base-nestjs-module:** add graphql casbin guard support ([3163697](https://github.com/Rytass/Utils/commit/31636976428e404a6e77b096cebc05c30db0e8a9))
+
 ## [0.1.22](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.21...@rytass/member-base-nestjs-module@0.1.22) (2024-07-31)
 
 ### Bug Fixes
