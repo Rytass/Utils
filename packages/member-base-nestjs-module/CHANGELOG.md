@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.24](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.23...@rytass/member-base-nestjs-module@0.1.24) (2024-07-31)
+
+### Features
+
+- **member-base-nestjs-module:** simple resolver for graphql context ([3655a05](https://github.com/Rytass/Utils/commit/3655a05b7703f68aca7ea9c7bfac7a224df1c78e))
+
 ## [0.1.23](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.22...@rytass/member-base-nestjs-module@0.1.23) (2024-07-31)
 
 ### Features
