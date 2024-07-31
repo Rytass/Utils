@@ -30,9 +30,7 @@
     "typeorm": "*"
   },
   "dependencies": {
-    "casbin": "^5.30.0",
     "dataloader": "^2.2.2",
-    "lru-cache": "^11.0.0",
-    "typeorm-adapter": "^1.7.0"
+    "lru-cache": "^11.0.0"
   }
 }

@@ -3499,10 +3499,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/cms-base-nestjs-module@workspace:packages/cms-base-nestjs-module"
   dependencies:
-    casbin: "npm:^5.30.0"
     dataloader: "npm:^2.2.2"
     lru-cache: "npm:^11.0.0"
-    typeorm-adapter: "npm:^1.7.0"
   peerDependencies:
     "@nestjs/common": "*"
     "@nestjs/typeorm": "*"
@@ -3600,6 +3598,9 @@ __metadata:
 "@rytass/member-base-nestjs-module@workspace:packages/member-base-nestjs-module":
   version: 0.0.0-use.local
   resolution: "@rytass/member-base-nestjs-module@workspace:packages/member-base-nestjs-module"
+  dependencies:
+    casbin: "npm:^5.30.0"
+    typeorm-adapter: "npm:^1.7.0"
   peerDependencies:
     "@nestjs/common": "*"
     "@nestjs/typeorm": "*"
