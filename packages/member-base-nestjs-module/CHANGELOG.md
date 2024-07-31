@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.20](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.19...@rytass/member-base-nestjs-module@0.1.20) (2024-07-31)
+
+### Features
+
+- **member-base-nestjs-module:** finish casbin header token check and sign jwt tokens ([30bb111](https://github.com/Rytass/Utils/commit/30bb111a5fb33f6a8803349d369251ad58b3798f))
+
 ## [0.1.19](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.18...@rytass/member-base-nestjs-module@0.1.19) (2024-07-31)
 
 ### Features
