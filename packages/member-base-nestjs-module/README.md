@@ -90,3 +90,57 @@ export class MemberService {
   }
 }
 ```
+
+## RBAC with Domains Configuration
+
+// controllers/article.controller.ts
+import { Controller, Get, Post } from '@nestjs/common';
+import { IsPublic, AllowedActions } from '@rytass/member-base-nestjs-module';
+
+```
+@Controller('/articles')
+export class ArticleController {
+  @Get('/')
+  @IsPublic()
+  list() {
+    // allow everyone
+  }
+
+  @Post('/')
+  @AllowedActions([
+    ['articles', 'article', 'create'], // Domain, Subject, Action
+  ])
+  create() {
+    // Only allowed members
+  }
+}
+
+// services/member.service.ts
+import { Injectable } from '@nestjs/common';
+import { MemberBaseService, CASBIN_ENFORCER } from '@rytass/member-base-nestjs-module';
+import type { Enforcer } from 'casbin';
+
+@Injectable()
+export class MemberService {
+  constructor(
+    private readonly memberBaseService: MemberBaseService,
+    @Inject(CASBIN_ENFORCER)
+    private readonly enforcer: Enforcer,
+  ) {}
+
+  // Create member and assign permissions
+  async onApplicationBootstrap() {
+    // Set role domain actions
+    await this.enforcer.addPolicy('article-admin', 'articles', 'article', 'create');
+    await this.enforcer.addPolicy('article-admin', 'articles', 'article', 'update');
+    await this.enforcer.addPolicy('article-admin', 'articles', 'article', 'list');
+    await this.enforcer.addPolicy('article-admin', 'articles', 'article', 'delete');
+
+    const member = await this.memberBaseService.register('creator', 'complex-password');
+
+    await this.enforcer.addGroupingPolicy(member.id, 'article-admin', 'articles');
+  }
+}
+```
+
+You can use MemberBaseService.login to get accessToken and put it in header (Authorization) with Bearer prefix to authorize the request.
