@@ -43,23 +43,48 @@ export class GraphQLCasbinGuard implements CanActivate {
 
     if (!allowActions?.length) return false;
 
-    const { GqlExecutionContext } = await import('@nestjs/graphql');
+    const contextType = context.getType<'http' | 'graphql'>();
 
-    const ctx = GqlExecutionContext.create(context).getContext<{
-      token: string | null;
-    }>();
+    let token: string | null;
 
-    if (!ctx?.token) return false;
+    switch (contextType) {
+      case 'graphql': {
+        const { GqlExecutionContext } = await import('@nestjs/graphql');
 
-    const payload = verify(ctx.token, this.accessTokenSecret) as Pick<
-      BaseMemberEntity,
-      'id' | 'account'
-    >;
+        const ctx = GqlExecutionContext.create(context).getContext<{
+          token: string | null;
+        }>();
 
-    return Promise.all(
-      allowActions.map(([domain, subject, action]) =>
-        this.enforcer.enforce(payload.id, domain, subject, action),
-      ),
-    ).then((results) => results.some((result) => result));
+        token = ctx?.token ?? null;
+        break;
+      }
+
+      case 'http':
+      default:
+        token = (
+          context.switchToHttp().getRequest().headers.authorization ?? ''
+        )
+          .replace(/^Bearer\s/, '')
+          .trim();
+
+        break;
+    }
+
+    if (!token) return false;
+
+    try {
+      const payload = verify(token, this.accessTokenSecret) as Pick<
+        BaseMemberEntity,
+        'id' | 'account'
+      >;
+
+      return Promise.all(
+        allowActions.map(([domain, subject, action]) =>
+          this.enforcer.enforce(payload.id, domain, subject, action),
+        ),
+      ).then((results) => results.some((result) => result));
+    } catch (ex) {
+      return false;
+    }
   }
 }
