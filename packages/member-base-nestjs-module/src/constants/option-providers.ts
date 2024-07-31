@@ -3,6 +3,7 @@ import {
   ACCESS_TOKEN_EXPIRATION,
   ACCESS_TOKEN_SECRET,
   CASBIN_ENFORCER,
+  ENABLE_GLOBAL_GUARD,
   LOGIN_FAILED_BAN_THRESHOLD,
   MEMBER_BASE_MODULE_OPTIONS,
   PROVIDE_MEMBER_ENTITY,
@@ -67,6 +68,12 @@ export const OptionProviders = [
     provide: REFRESH_TOKEN_EXPIRATION,
     useFactory: (options?: MemberBaseRootModuleOptionsDto) =>
       options?.refreshTokenExpiration ?? 60 * 60 * 24 * 90,
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: ENABLE_GLOBAL_GUARD,
+    useFactory: (options?: MemberBaseRootModuleOptionsDto) =>
+      options?.enableGlobalGuard ?? true,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {

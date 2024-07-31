@@ -13,6 +13,7 @@ export interface MemberBaseRootModuleOptionsDto {
   refreshTokenExpiration?: number; // default: 60 * 60 * 24 * 90, 90 days
 
   // Casbin
+  enableGlobalGuard?: boolean; // default: true
   casbinAdapterOptions?: TypeORMAdapterOptions;
   casbinModelString?: string; // default: RBAC with domains
 

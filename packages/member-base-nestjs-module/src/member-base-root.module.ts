@@ -5,6 +5,8 @@ import { OptionProviders } from './constants/option-providers';
 import { DynamicModule, Provider, Type } from '@nestjs/common';
 import { MEMBER_BASE_MODULE_OPTIONS } from './typings/member-base-providers';
 import { MemberBaseRootModuleOptionFactory } from './typings/member-base-root-module-option-factory';
+import { APP_GUARD } from '@nestjs/core';
+import { CasbinGuard } from './guards/casbin.guard';
 
 export class MemberBaseRootModule {
   static forRootAsync(
@@ -13,7 +15,14 @@ export class MemberBaseRootModule {
     return {
       module: MemberBaseModule,
       imports: options?.imports ?? [],
-      providers: [...this.createAsyncProvider(options), ...OptionProviders],
+      providers: [
+        ...this.createAsyncProvider(options),
+        ...OptionProviders,
+        {
+          provide: APP_GUARD,
+          useClass: CasbinGuard,
+        },
+      ],
     };
   }
 
@@ -26,6 +35,10 @@ export class MemberBaseRootModule {
           useValue: options,
         },
         ...OptionProviders,
+        {
+          provide: APP_GUARD,
+          useClass: CasbinGuard,
+        },
       ],
     };
   }

@@ -12,6 +12,7 @@ import { IS_ROUTE_PUBLIC } from '../decorators/is-public.decorator';
 import {
   ACCESS_TOKEN_SECRET,
   CASBIN_ENFORCER,
+  ENABLE_GLOBAL_GUARD,
 } from '../typings/member-base-providers';
 import { BaseMemberEntity } from '../models/base-member.entity';
 
@@ -22,9 +23,13 @@ export class CasbinGuard implements CanActivate {
     private readonly enforcer: Enforcer,
     @Inject(ACCESS_TOKEN_SECRET)
     private readonly accessTokenSecret: string,
+    @Inject(ENABLE_GLOBAL_GUARD)
+    private readonly enableGlobalGuard: boolean,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    if (!this.enableGlobalGuard) return true;
+
     const reflector = new Reflector();
 
     const isPublic = reflector.get<boolean>(
