@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.19](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.18...@rytass/member-base-nestjs-module@0.1.19) (2024-07-31)
+
+### Features
+
+- **member-base-nestjs-module:** new reflector ([da916e7](https://github.com/Rytass/Utils/commit/da916e76eff7b51526e0c2bf36f65ee4cf0dd486))
+
 ## [0.1.18](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.17...@rytass/member-base-nestjs-module@0.1.18) (2024-07-31)
 
 **Note:** Version bump only for package @rytass/member-base-nestjs-module
