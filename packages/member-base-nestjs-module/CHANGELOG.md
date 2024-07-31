@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.13](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.12...@rytass/member-base-nestjs-module@0.1.13) (2024-07-31)
+
+### Features
+
+- **member-base-nestjs-module:** add casbin ([dfc58de](https://github.com/Rytass/Utils/commit/dfc58de22b26930271e5af0692ffaf7b0eb1af22))
+
 ## [0.1.12](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.11...@rytass/member-base-nestjs-module@0.1.12) (2024-07-30)
 
 ### Bug Fixes
