@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.16](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.15...@rytass/member-base-nestjs-module@0.1.16) (2024-07-31)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** re-define type ([27340ca](https://github.com/Rytass/Utils/commit/27340ca5bdea5d2eae35e01f3f36c07465ed4801))
+
 ## [0.1.15](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.14...@rytass/member-base-nestjs-module@0.1.15) (2024-07-31)
 
 ### Bug Fixes
