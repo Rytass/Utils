@@ -167,3 +167,29 @@ export class MemberService {
 ```
 
 You can use MemberBaseService.login to get accessToken and put it in header (Authorization) with Bearer prefix to authorize the request.
+
+### GraphQL Support
+
+You should resolve token into graphql context named **token** by yourself or use module provided helper.
+
+```typescript
+// app.module.ts
+import { Module } from '@nestjs/common';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { GraphQLModule } from '@nestjs/graphql';
+import { GraphQLContextTokenResolver } from '@rytass/member-base-nestjs-module';
+
+@Module({
+  imports: [
+    GraphQLModule.forRoot<ApolloDriverConfig>({
+      driver: ApolloDriver,
+      fieldResolverEnhancers: ['guards'], // Important!!
+      debug: true,
+      playground: true,
+      autoTransformHttpErrors: true,
+      context: GraphQLContextTokenResolver, // ({ req }: { req: Request }) => { token: string | null }
+    }),
+  ],
+})
+export class AppModule {}
+```

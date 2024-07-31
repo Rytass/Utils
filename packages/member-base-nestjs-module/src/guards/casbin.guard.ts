@@ -4,17 +4,17 @@ import {
   Inject,
   Injectable,
 } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
 import { Enforcer } from 'casbin';
-import { verify } from 'jsonwebtoken';
-import { AllowActions } from '../decorators/action.decorator';
-import { IS_ROUTE_PUBLIC } from '../decorators/is-public.decorator';
 import {
   ACCESS_TOKEN_SECRET,
   CASBIN_ENFORCER,
   ENABLE_GLOBAL_GUARD,
 } from '../typings/member-base-providers';
 import { BaseMemberEntity } from '../models/base-member.entity';
+import { Reflector } from '@nestjs/core';
+import { IS_ROUTE_PUBLIC } from '../decorators/is-public.decorator';
+import { AllowActions } from '../decorators/action.decorator';
+import { verify } from 'jsonwebtoken';
 
 @Injectable()
 export class CasbinGuard implements CanActivate {
@@ -43,15 +43,36 @@ export class CasbinGuard implements CanActivate {
 
     if (!allowActions?.length) return false;
 
-    const request = context.switchToHttp().getRequest();
+    const contextType = context.getType<'http' | 'graphql'>();
+
+    let token: string | null;
+
+    switch (contextType) {
+      case 'graphql': {
+        const { GqlExecutionContext } = await import('@nestjs/graphql');
+
+        const ctx = GqlExecutionContext.create(context).getContext<{
+          token: string | null;
+        }>();
+
+        token = ctx?.token ?? null;
+        break;
+      }
+
+      case 'http':
+      default:
+        token = (
+          context.switchToHttp().getRequest().headers.authorization ?? ''
+        )
+          .replace(/^Bearer\s/, '')
+          .trim();
+
+        break;
+    }
+
+    if (!token) return false;
 
     try {
-      const token = (request.headers.authorization ?? '')
-        .replace(/^Bearer\s/, '')
-        .trim();
-
-      if (!token) return false;
-
       const payload = verify(token, this.accessTokenSecret) as Pick<
         BaseMemberEntity,
         'id' | 'account'
