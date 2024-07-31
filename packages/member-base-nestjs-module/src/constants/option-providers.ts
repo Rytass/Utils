@@ -11,6 +11,10 @@ import { newEnforcer, newModelFromString } from 'casbin';
 import { MemberBaseRootModuleOptionsDto } from '../typings/member-base-root-module-options.dto';
 import { Provider } from '@nestjs/common';
 import { CASBIN_MODEL } from './casbin-models/rbac-with-domains';
+import type TypeORMAdapterType from 'typeorm-adapter';
+
+const TypeORMAdapter: typeof TypeORMAdapterType =
+  require('typeorm-adapter').default;
 
 export const OptionProviders = [
   {
@@ -41,8 +45,6 @@ export const OptionProviders = [
     provide: CASBIN_ENFORCER,
     useFactory: async (options?: MemberBaseRootModuleOptionsDto) => {
       if (!options?.casbinAdapterOptions) return null;
-
-      const TypeORMAdapter = (await import('typeorm-adapter')).default;
 
       const adapter = await TypeORMAdapter.newAdapter(
         options.casbinAdapterOptions,
