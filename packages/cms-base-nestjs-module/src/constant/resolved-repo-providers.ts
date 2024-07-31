@@ -21,7 +21,7 @@ import { BaseArticleVersionContentRepo } from '../models/base-article-version-co
 import { BaseCategoryRepo } from '../models/base-category.entity';
 import { BaseCategoryMultiLanguageNameRepo } from '../models';
 
-const TARGETS = [
+export const TARGETS = [
   [BaseArticleRepo, PROVIDE_ARTICLE_ENTITY, RESOLVED_ARTICLE_REPO],
   [
     BaseArticleVersionRepo,
