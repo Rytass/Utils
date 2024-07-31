@@ -23,6 +23,12 @@
   "bugs": {
     "url": "https://github.com/Rytass/Utils/issues"
   },
+  "optionalDependencies": {
+    "@nestjs/graphql": "*",
+    "graphql": "*",
+    "ts-morph": "^23.0.0",
+    "ws": "^8.18.0"
+  },
   "peerDependencies": {
     "@nestjs/common": "*",
     "@nestjs/typeorm": "*",
@@ -33,5 +39,8 @@
   "dependencies": {
     "casbin": "^5.30.0",
     "typeorm-adapter": "^1.7.0"
+  },
+  "devDependencies": {
+    "@types/ws": "^8"
   }
 }

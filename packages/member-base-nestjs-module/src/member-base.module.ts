@@ -7,7 +7,9 @@ import {
   ACCESS_TOKEN_SECRET,
   CASBIN_ENFORCER,
   ENABLE_GLOBAL_GUARD,
+  GRAPHQL_CONTEXT_TOKEN_PARSER,
 } from './typings/member-base-providers';
+import { GraphQLContextTokenParserProvider } from './providers/graphql-context-token-parser.provider';
 
 @Module({
   imports: [MemberBaseModelsModule],
@@ -15,6 +17,7 @@ import {
     ...ResolvedRepoProviders,
     MemberBaseService,
     MemberBaseAdminService,
+    GraphQLContextTokenParserProvider,
   ],
   exports: [
     MemberBaseModelsModule,
@@ -23,6 +26,7 @@ import {
     CASBIN_ENFORCER,
     ACCESS_TOKEN_SECRET,
     ENABLE_GLOBAL_GUARD,
+    GRAPHQL_CONTEXT_TOKEN_PARSER,
   ],
 })
 export class MemberBaseModule {}

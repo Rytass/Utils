@@ -19,4 +19,7 @@ export interface MemberBaseRootModuleOptionsDto {
 
   // Entities
   memberEntity?: new () => BaseMemberEntity; // default: MemberEntity
+
+  // GraphQL
+  enableGraphQL: boolean; // default: true
 }

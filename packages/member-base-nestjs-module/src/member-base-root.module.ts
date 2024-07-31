@@ -7,6 +7,7 @@ import { MEMBER_BASE_MODULE_OPTIONS } from './typings/member-base-providers';
 import { MemberBaseRootModuleOptionFactory } from './typings/member-base-root-module-option-factory';
 import { APP_GUARD } from '@nestjs/core';
 import { CasbinGuard } from './guards/casbin.guard';
+import { GraphQLCasbinGuard } from './guards/graphql-casbin.guard';
 
 export class MemberBaseRootModule {
   static forRootAsync(
@@ -20,7 +21,8 @@ export class MemberBaseRootModule {
         ...OptionProviders,
         {
           provide: APP_GUARD,
-          useClass: CasbinGuard,
+          useClass:
+            options?.enableGraphQL === false ? CasbinGuard : GraphQLCasbinGuard,
         },
       ],
     };
@@ -37,7 +39,8 @@ export class MemberBaseRootModule {
         ...OptionProviders,
         {
           provide: APP_GUARD,
-          useClass: CasbinGuard,
+          useClass:
+            options?.enableGraphQL === false ? CasbinGuard : GraphQLCasbinGuard,
         },
       ],
     };
