@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.35](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.34...@rytass/member-base-nestjs-module@0.1.35) (2024-08-01)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** conditional store payload ([e330954](https://github.com/Rytass/Utils/commit/e3309548780ce8e3eeeea2443ad1ac7ae0c56f8b))
+
 ## [0.1.34](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.33...@rytass/member-base-nestjs-module@0.1.34) (2024-08-01)
 
 ### Bug Fixes
