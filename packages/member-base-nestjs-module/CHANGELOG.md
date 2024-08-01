@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.32](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.31...@rytass/member-base-nestjs-module@0.1.32) (2024-08-01)
+
+### Features
+
+- **member-base-nestjs-module:** add param decorator ([28a8a9d](https://github.com/Rytass/Utils/commit/28a8a9de1c00921f2e57529449b7eb51d46a9229))
+
 ## [0.1.31](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.30...@rytass/member-base-nestjs-module@0.1.31) (2024-08-01)
 
 ### Features
