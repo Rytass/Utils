@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.33](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.32...@rytass/member-base-nestjs-module@0.1.33) (2024-08-01)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** add missing export ([c9ac6e4](https://github.com/Rytass/Utils/commit/c9ac6e41b533292a81beaed3cc0607b7e2c1e1eb))
+
+### Features
+
+- **member-base-nestjs-module:** add authenticated decorator ([bada0b8](https://github.com/Rytass/Utils/commit/bada0b809bd2d05b59338eb0a4adf7ee91ac65ff))
+
 ## [0.1.32](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.31...@rytass/member-base-nestjs-module@0.1.32) (2024-08-01)
 
 ### Features
