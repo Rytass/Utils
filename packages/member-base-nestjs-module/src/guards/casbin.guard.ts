@@ -47,7 +47,7 @@ export class CasbinGuard implements CanActivate {
 
     const allowActions = reflector.get(AllowActions, context.getHandler());
 
-    if (!allowActions?.length) return false;
+    if (!allowActions?.length && !onlyAuthenticated) return false;
 
     const contextType = context.getType<'http' | 'graphql'>();
 
