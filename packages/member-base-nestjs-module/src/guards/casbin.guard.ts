@@ -78,6 +78,8 @@ export class CasbinGuard implements CanActivate {
         'id' | 'account'
       >;
 
+      context.switchToHttp().getRequest().payload = payload;
+
       return Promise.all(
         allowActions.map(([domain, subject, action]) =>
           this.enforcer.enforce(payload.id, domain, subject, action),

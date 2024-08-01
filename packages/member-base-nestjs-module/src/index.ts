@@ -18,6 +18,8 @@ export {
 export * from './guards/casbin.guard';
 export * from './decorators/action.decorator';
 export * from './decorators/is-public.decorator';
+export * from './decorators/member-id.decorator';
+export * from './decorators/account.decorator';
 
 // Helpers
 export * from './helpers/graphql-context-token-resolver';
