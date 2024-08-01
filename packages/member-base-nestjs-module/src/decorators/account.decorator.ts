@@ -1,11 +1,9 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { BaseMemberEntity } from '../models/base-member.entity';
+import { getPayloadFromContext } from '../utils/get-payload-from-context';
 
 export const Account = createParamDecorator(
   (data, context: ExecutionContext): string | null => {
-    const payload = context.switchToHttp().getRequest().payload as
-      | Pick<BaseMemberEntity, 'id' | 'account'>
-      | undefined;
+    const payload = getPayloadFromContext(context);
 
     return payload?.account ?? null;
   },

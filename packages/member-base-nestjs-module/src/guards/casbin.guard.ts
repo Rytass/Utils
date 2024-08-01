@@ -84,7 +84,24 @@ export class CasbinGuard implements CanActivate {
         'id' | 'account'
       >;
 
-      context.switchToHttp().getRequest().payload = payload;
+      switch (contextType) {
+        case 'graphql': {
+          const { GqlExecutionContext } = await import('@nestjs/graphql');
+
+          const ctx = GqlExecutionContext.create(context).getContext<{
+            token: string | null;
+            payload?: Pick<BaseMemberEntity, 'id' | 'account'>;
+          }>();
+
+          ctx.payload = payload;
+          break;
+        }
+
+        case 'http':
+        default:
+          context.switchToHttp().getRequest().payload = payload;
+          break;
+      }
 
       if (onlyAuthenticated) return true;
 
