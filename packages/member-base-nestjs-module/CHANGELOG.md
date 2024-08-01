@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.31](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.30...@rytass/member-base-nestjs-module@0.1.31) (2024-08-01)
+
+### Features
+
+- **member-base-nestjs-module:** export graphql dto ([5981597](https://github.com/Rytass/Utils/commit/5981597f6d0b8a47e05ce6ca7328d9ff19d4097c))
+
 ## [0.1.30](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.29...@rytass/member-base-nestjs-module@0.1.30) (2024-08-01)
 
 ### Bug Fixes
