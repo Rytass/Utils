@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { MemberBaseModelsModule } from './models/models.module';
 import { MemberBaseService } from './services/member-base.service';
 import { MemberBaseAdminService } from './services/member-base-admin.service';
@@ -9,6 +9,7 @@ import {
   ENABLE_GLOBAL_GUARD,
 } from './typings/member-base-providers';
 
+@Global()
 @Module({
   imports: [MemberBaseModelsModule],
   providers: [
