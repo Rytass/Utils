@@ -22,6 +22,7 @@ import {
   MemberLoginLogEntity,
   MemberLoginLogRepo,
 } from '../models/member-login-log.entity';
+import { TokenPairDto } from '../dto/token-pair.dto';
 
 @Injectable()
 export class MemberBaseService {
@@ -123,10 +124,7 @@ export class MemberBaseService {
     return member;
   }
 
-  async refreshToken(refreshToken: string): Promise<{
-    accessToken: string;
-    refreshToken: string;
-  }> {
+  async refreshToken(refreshToken: string): Promise<TokenPairDto> {
     try {
       const { id, account, passwordChangedAt } = verifyJWT(
         refreshToken,
@@ -175,10 +173,7 @@ export class MemberBaseService {
     account: string,
     password: string,
     ip?: string,
-  ): Promise<{
-    accessToken: string;
-    refreshToken: string;
-  }> {
+  ): Promise<TokenPairDto> {
     const member = await this.baseMemberRepo.findOne({
       where: { account },
     });
