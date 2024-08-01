@@ -1,5 +1,4 @@
 // Modules
-export * from './member-base-root.module';
 export * from './member-base.module';
 
 // Services

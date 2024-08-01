@@ -13,7 +13,7 @@ import {
   RESET_PASSWORD_TOKEN_SECRET,
 } from '../typings/member-base-providers';
 import { newEnforcer, newModelFromString } from 'casbin';
-import { MemberBaseRootModuleOptionsDto } from '../typings/member-base-root-module-options.dto';
+import { MemberBaseModuleOptionsDto } from '../typings/member-base-module-options.dto';
 import { Provider } from '@nestjs/common';
 import { CASBIN_MODEL } from './casbin-models/rbac-with-domains';
 import type TypeORMAdapterType from 'typeorm-adapter';
@@ -24,61 +24,61 @@ const TypeORMAdapter: typeof TypeORMAdapterType =
 export const OptionProviders = [
   {
     provide: LOGIN_FAILED_BAN_THRESHOLD,
-    useFactory: (options?: MemberBaseRootModuleOptionsDto) =>
+    useFactory: (options?: MemberBaseModuleOptionsDto) =>
       options?.loginFailedBanThreshold ?? 5,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: RESET_PASSWORD_TOKEN_EXPIRATION,
-    useFactory: (options?: MemberBaseRootModuleOptionsDto) =>
+    useFactory: (options?: MemberBaseModuleOptionsDto) =>
       options?.resetPasswordTokenExpiration ?? 60 * 60 * 1,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: RESET_PASSWORD_TOKEN_SECRET,
-    useFactory: (options?: MemberBaseRootModuleOptionsDto) =>
+    useFactory: (options?: MemberBaseModuleOptionsDto) =>
       options?.resetPasswordTokenSecret ?? randomBytes(16).toString('hex'),
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_MEMBER_ENTITY,
-    useFactory: (options?: MemberBaseRootModuleOptionsDto) =>
+    useFactory: (options?: MemberBaseModuleOptionsDto) =>
       options?.memberEntity ?? null,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: ACCESS_TOKEN_SECRET,
-    useFactory: (options?: MemberBaseRootModuleOptionsDto) =>
+    useFactory: (options?: MemberBaseModuleOptionsDto) =>
       options?.accessTokenSecret ?? randomBytes(16).toString('hex'),
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: ACCESS_TOKEN_EXPIRATION,
-    useFactory: (options?: MemberBaseRootModuleOptionsDto) =>
+    useFactory: (options?: MemberBaseModuleOptionsDto) =>
       options?.accessTokenExpiration ?? 60 * 15,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: REFRESH_TOKEN_SECRET,
-    useFactory: (options?: MemberBaseRootModuleOptionsDto) =>
+    useFactory: (options?: MemberBaseModuleOptionsDto) =>
       options?.refreshTokenSecret ?? randomBytes(16).toString('hex'),
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: REFRESH_TOKEN_EXPIRATION,
-    useFactory: (options?: MemberBaseRootModuleOptionsDto) =>
+    useFactory: (options?: MemberBaseModuleOptionsDto) =>
       options?.refreshTokenExpiration ?? 60 * 60 * 24 * 90,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: ENABLE_GLOBAL_GUARD,
-    useFactory: (options?: MemberBaseRootModuleOptionsDto) =>
+    useFactory: (options?: MemberBaseModuleOptionsDto) =>
       options?.enableGlobalGuard ?? true,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: CASBIN_ENFORCER,
-    useFactory: async (options?: MemberBaseRootModuleOptionsDto) => {
+    useFactory: async (options?: MemberBaseModuleOptionsDto) => {
       if (!options?.casbinAdapterOptions) return null;
 
       const adapter = await TypeORMAdapter.newAdapter(
