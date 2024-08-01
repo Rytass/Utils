@@ -16,6 +16,7 @@ import { CasbinGuard } from './guards/casbin.guard';
 import { MemberBaseModuleOptionsDto } from './typings/member-base-module-options.dto';
 import { MemberBaseModuleOptionFactory } from './typings/member-base-module-option-factory';
 
+@Global()
 @Module({})
 export class MemberBaseModule {
   static forRootAsync(options: MemberBaseModuleAsyncOptionsDto): DynamicModule {
