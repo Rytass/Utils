@@ -9,10 +9,7 @@ export * from './services/member-base-admin.service';
 export * from './models/index';
 
 // Resolved Repositories
-export {
-  RESOLVED_MEMBER_REPO,
-  CASBIN_ENFORCER,
-} from './typings/member-base-providers';
+export { CASBIN_ENFORCER } from './typings/member-base-providers';
 
 // Casbin
 export * from './guards/casbin.guard';
