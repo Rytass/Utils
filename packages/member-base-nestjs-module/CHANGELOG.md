@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.30](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.29...@rytass/member-base-nestjs-module@0.1.30) (2024-08-01)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** add Global decorator ([acde8b6](https://github.com/Rytass/Utils/commit/acde8b644d84c85d1ef599415e06c5a433e737e6))
+
 ## [0.1.29](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.28...@rytass/member-base-nestjs-module@0.1.29) (2024-08-01)
 
 **Note:** Version bump only for package @rytass/member-base-nestjs-module
