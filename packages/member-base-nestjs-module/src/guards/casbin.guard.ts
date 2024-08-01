@@ -15,6 +15,7 @@ import { Reflector } from '@nestjs/core';
 import { IS_ROUTE_PUBLIC } from '../decorators/is-public.decorator';
 import { AllowActions } from '../decorators/action.decorator';
 import { verify } from 'jsonwebtoken';
+import { IS_ROUTE_ONLY_AUTHENTICATED } from '../decorators/authenticated.decorator';
 
 @Injectable()
 export class CasbinGuard implements CanActivate {
@@ -34,6 +35,11 @@ export class CasbinGuard implements CanActivate {
 
     const isPublic = reflector.get<boolean>(
       IS_ROUTE_PUBLIC,
+      context.getHandler(),
+    );
+
+    const onlyAuthenticated = reflector.get<boolean>(
+      IS_ROUTE_ONLY_AUTHENTICATED,
       context.getHandler(),
     );
 
@@ -79,6 +85,8 @@ export class CasbinGuard implements CanActivate {
       >;
 
       context.switchToHttp().getRequest().payload = payload;
+
+      if (onlyAuthenticated) return true;
 
       return Promise.all(
         allowActions.map(([domain, subject, action]) =>
