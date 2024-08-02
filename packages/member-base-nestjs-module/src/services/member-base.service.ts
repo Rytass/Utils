@@ -76,6 +76,33 @@ export class MemberBaseService {
     return token;
   }
 
+  async changePassword(
+    id: string,
+    originPassword: string,
+    newPassword: string,
+  ): Promise<BaseMemberEntity> {
+    const member = await this.baseMemberRepo.findOne({ where: { id } });
+
+    if (!member) {
+      throw new BadRequestException('Member not found');
+    }
+
+    try {
+      if (await verify(member.password, originPassword)) {
+        member.password = await hash(newPassword);
+        member.passwordChangedAt = new Date();
+
+        await this.baseMemberRepo.save(member);
+
+        return member;
+      } else {
+        throw new BadRequestException('Invalid password');
+      }
+    } catch (err) {
+      throw new InternalServerErrorException('Password validation error');
+    }
+  }
+
   async changePasswordWithToken(
     token: string,
     newPassword: string,
