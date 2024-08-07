@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.37](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.36...@rytass/member-base-nestjs-module@0.1.37) (2024-08-07)
+
+### Features
+
+- **member-base-nestjs-module:** add change password ([283a0a4](https://github.com/Rytass/Utils/commit/283a0a41543bdc6289616a845d352f4f8b99f2c4))
+
 ## [0.1.36](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.35...@rytass/member-base-nestjs-module@0.1.36) (2024-08-01)
 
 **Note:** Version bump only for package @rytass/member-base-nestjs-module
