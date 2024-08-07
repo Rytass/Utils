@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.30](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.29...@rytass/cms-base-nestjs-module@0.1.30) (2024-08-07)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** correct forRoot method providers ([fb66e22](https://github.com/Rytass/Utils/commit/fb66e22b6f72cfbd8ff3660169edb6bff3bca629))
+
 ## [0.1.29](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.28...@rytass/cms-base-nestjs-module@0.1.29) (2024-08-07)
 
 **Note:** Version bump only for package @rytass/cms-base-nestjs-module
