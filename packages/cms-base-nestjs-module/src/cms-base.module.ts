@@ -54,6 +54,14 @@ export class CMSBaseModule {
           useValue: options,
         },
         ...OptionProviders,
+        ...ResolvedRepoProviders,
+        CategoryDataLoader,
+        {
+          provide: CATEGORY_DATA_LOADER,
+          useExisting: CategoryDataLoader,
+        },
+        ArticleBaseService,
+        CategoryBaseService,
       ],
       exports: [
         ...TARGETS.map(([, , resolved]) => resolved),
