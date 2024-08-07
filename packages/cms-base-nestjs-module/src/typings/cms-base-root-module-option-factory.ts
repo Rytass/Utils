@@ -1,7 +1,7 @@
-import { CMSBaseRootModuleOptionsDto } from './cms-base-root-module-options.dto';
+import { CMSBaseModuleOptionsDto } from './cms-base-root-module-options.dto';
 
-export interface CMSBaseRootModuleOptionFactory {
+export interface CMSBaseModuleOptionFactory {
   createCMSOptions():
-    | Promise<CMSBaseRootModuleOptionsDto>
-    | CMSBaseRootModuleOptionsDto;
+    | Promise<CMSBaseModuleOptionsDto>
+    | CMSBaseModuleOptionsDto;
 }

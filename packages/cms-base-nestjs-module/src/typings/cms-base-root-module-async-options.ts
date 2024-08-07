@@ -1,13 +1,13 @@
 import { ModuleMetadata, Type } from '@nestjs/common';
-import { CMSBaseRootModuleOptionsDto } from './cms-base-root-module-options.dto';
-import { CMSBaseRootModuleOptionFactory } from './cms-base-root-module-option-factory';
+import { CMSBaseModuleOptionsDto } from './cms-base-root-module-options.dto';
+import { CMSBaseModuleOptionFactory } from './cms-base-root-module-option-factory';
 
-export interface CMSBaseRootModuleAsyncOptionsDto
+export interface CMSBaseModuleAsyncOptionsDto
   extends Pick<ModuleMetadata, 'imports'> {
   useFactory?: (
     ...args: any[]
-  ) => Promise<CMSBaseRootModuleOptionsDto> | CMSBaseRootModuleOptionsDto;
+  ) => Promise<CMSBaseModuleOptionsDto> | CMSBaseModuleOptionsDto;
   inject?: any[];
-  useClass?: Type<CMSBaseRootModuleOptionFactory>;
-  useExisting?: Type<CMSBaseRootModuleOptionFactory>;
+  useClass?: Type<CMSBaseModuleOptionFactory>;
+  useExisting?: Type<CMSBaseModuleOptionFactory>;
 }

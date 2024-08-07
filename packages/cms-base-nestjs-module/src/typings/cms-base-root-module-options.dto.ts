@@ -6,7 +6,7 @@ import {
   BaseCategoryMultiLanguageNameEntity,
 } from '../models';
 
-export interface CMSBaseRootModuleOptionsDto {
+export interface CMSBaseModuleOptionsDto {
   multipleLanguageMode?: boolean; // default: false
   allowMultipleParentCategories?: boolean; // default: false
   allowCircularCategories?: boolean; // default: false

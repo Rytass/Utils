@@ -10,54 +10,54 @@ import {
   PROVIDE_CATEGORY_ENTITY,
   PROVIDE_CATEGORY_MULTI_LANGUAGE_NAME_ENTITY,
 } from '../typings/cms-base-providers';
-import { CMSBaseRootModuleOptionsDto } from '../typings/cms-base-root-module-options.dto';
+import { CMSBaseModuleOptionsDto } from '../typings/cms-base-root-module-options.dto';
 
 export const OptionProviders = [
   {
     provide: MULTIPLE_LANGUAGE_MODE,
-    useFactory: (options?: CMSBaseRootModuleOptionsDto) =>
+    useFactory: (options?: CMSBaseModuleOptionsDto) =>
       options?.multipleLanguageMode ?? false,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: MULTIPLE_CATEGORY_PARENT_MODE,
-    useFactory: (options?: CMSBaseRootModuleOptionsDto) =>
+    useFactory: (options?: CMSBaseModuleOptionsDto) =>
       options?.allowMultipleParentCategories ?? false,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: CIRCULAR_CATEGORY_MODE,
-    useFactory: (options?: CMSBaseRootModuleOptionsDto) =>
+    useFactory: (options?: CMSBaseModuleOptionsDto) =>
       options?.allowCircularCategories ?? false,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_ARTICLE_ENTITY,
-    useFactory: (options?: CMSBaseRootModuleOptionsDto) =>
+    useFactory: (options?: CMSBaseModuleOptionsDto) =>
       options?.articleEntity ?? null,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_ARTICLE_VERSION_ENTITY,
-    useFactory: (options?: CMSBaseRootModuleOptionsDto) =>
+    useFactory: (options?: CMSBaseModuleOptionsDto) =>
       options?.articleVersionEntity ?? null,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_ARTICLE_VERSION_CONTENT_ENTITY,
-    useFactory: (options?: CMSBaseRootModuleOptionsDto) =>
+    useFactory: (options?: CMSBaseModuleOptionsDto) =>
       options?.articleVersionContentEntity ?? null,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_CATEGORY_ENTITY,
-    useFactory: (options?: CMSBaseRootModuleOptionsDto) =>
+    useFactory: (options?: CMSBaseModuleOptionsDto) =>
       options?.categoryEntity ?? null,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_CATEGORY_MULTI_LANGUAGE_NAME_ENTITY,
-    useFactory: (options?: CMSBaseRootModuleOptionsDto) =>
+    useFactory: (options?: CMSBaseModuleOptionsDto) =>
       options?.categoryMultiLanguageNameEntity ?? null,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },

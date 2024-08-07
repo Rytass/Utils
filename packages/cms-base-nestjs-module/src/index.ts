@@ -1,5 +1,5 @@
 // Modules
-export * from './cms-base-root.module';
+export * from './cms-base.module';
 
 // Services
 export * from './services/article-base.service';
