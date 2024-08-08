@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.38](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.37...@rytass/member-base-nestjs-module@0.1.38) (2024-08-08)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** type definition ([10b30f8](https://github.com/Rytass/Utils/commit/10b30f88732f0651010dc2a210529ca6b1d5160a))
+
+### Features
+
+- **member-base-nestjs-module:** add password history, age, reset policies ([08928b1](https://github.com/Rytass/Utils/commit/08928b14b6edab4e562daccca2bb2db755f96b04))
+- **member-base-nestjs-module:** add password policy options ([9e1a008](https://github.com/Rytass/Utils/commit/9e1a008b8b44548b56ad20133c82221ade73066a))
+- **member-base-nestjs-module:** warning on accessTokenSecret or refreshTokenSecret not set (using random string) ([14e2a4d](https://github.com/Rytass/Utils/commit/14e2a4d2585575326b2c771dd80b8b02dc6d413d))
+
 ## [0.1.37](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.36...@rytass/member-base-nestjs-module@0.1.37) (2024-08-07)
 
 ### Features
