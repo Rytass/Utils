@@ -3,7 +3,8 @@ import { BaseMemberEntity } from '../../models/base-member.entity';
 
 @ObjectType('Member')
 export class BaseMemberGraphQLDto
-  implements Omit<BaseMemberEntity, 'password' | 'loginLogs'>
+  implements
+    Omit<BaseMemberEntity, 'password' | 'loginLogs' | 'passwordHistories'>
 {
   @Field(() => ID)
   id: string;
@@ -19,6 +20,9 @@ export class BaseMemberGraphQLDto
 
   @Field(() => Int)
   loginFailedCounter: number;
+
+  @Field(() => Boolean)
+  shouldUpdatePassword: boolean;
 
   @Field(() => Date)
   createdAt: Date;
