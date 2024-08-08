@@ -19,4 +19,12 @@ export interface MemberBaseModuleOptionsDto {
 
   // Entities
   memberEntity?: new () => BaseMemberEntity; // default: MemberEntity
+
+  // Password Policy
+  passwordShouldIncludeUppercase?: boolean; // default: true
+  passwordShouldIncludeLowercase?: boolean; // default: true
+  passwordShouldIncludeDigit?: boolean; // default: true
+  passwordShouldIncludeSpecialCharacters?: boolean; // default: false
+  passwordMinLength?: number; // default: 8
+  passwordPolicyRegExp?: RegExp; // default: undefined, if set, will override the above options
 }

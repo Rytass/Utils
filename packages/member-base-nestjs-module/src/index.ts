@@ -4,6 +4,7 @@ export * from './member-base.module';
 // Services
 export * from './services/member-base.service';
 export * from './services/member-base-admin.service';
+export * from './services/password-validator.service';
 
 // Models
 export * from './models/index';

@@ -15,6 +15,29 @@ import { OptionProviders } from './constants/option-providers';
 import { CasbinGuard } from './guards/casbin.guard';
 import { MemberBaseModuleOptionsDto } from './typings/member-base-module-options.dto';
 import { MemberBaseModuleOptionFactory } from './typings/member-base-module-option-factory';
+import { PasswordValidatorService } from './services/password-validator.service';
+
+const providers = [
+  ...OptionProviders,
+  ...ResolvedRepoProviders,
+  MemberBaseService,
+  MemberBaseAdminService,
+  PasswordValidatorService,
+  {
+    provide: APP_GUARD,
+    useClass: CasbinGuard,
+  },
+];
+
+const exports = [
+  MemberBaseModelsModule,
+  MemberBaseService,
+  MemberBaseAdminService,
+  PasswordValidatorService,
+  CASBIN_ENFORCER,
+  ACCESS_TOKEN_SECRET,
+  ENABLE_GLOBAL_GUARD,
+];
 
 @Global()
 @Module({})
@@ -23,25 +46,8 @@ export class MemberBaseModule {
     return {
       module: MemberBaseModule,
       imports: [...(options?.imports ?? []), MemberBaseModelsModule],
-      providers: [
-        ...this.createAsyncProvider(options),
-        ...OptionProviders,
-        ...ResolvedRepoProviders,
-        MemberBaseService,
-        MemberBaseAdminService,
-        {
-          provide: APP_GUARD,
-          useClass: CasbinGuard,
-        },
-      ],
-      exports: [
-        MemberBaseModelsModule,
-        MemberBaseService,
-        MemberBaseAdminService,
-        CASBIN_ENFORCER,
-        ACCESS_TOKEN_SECRET,
-        ENABLE_GLOBAL_GUARD,
-      ],
+      providers: [...this.createAsyncProvider(options), ...providers],
+      exports,
     };
   }
 
@@ -54,23 +60,9 @@ export class MemberBaseModule {
           provide: MEMBER_BASE_MODULE_OPTIONS,
           useValue: options,
         },
-        ...OptionProviders,
-        ...ResolvedRepoProviders,
-        MemberBaseService,
-        MemberBaseAdminService,
-        {
-          provide: APP_GUARD,
-          useClass: CasbinGuard,
-        },
+        ...providers,
       ],
-      exports: [
-        MemberBaseModelsModule,
-        MemberBaseService,
-        MemberBaseAdminService,
-        CASBIN_ENFORCER,
-        ACCESS_TOKEN_SECRET,
-        ENABLE_GLOBAL_GUARD,
-      ],
+      exports,
     };
   }
 

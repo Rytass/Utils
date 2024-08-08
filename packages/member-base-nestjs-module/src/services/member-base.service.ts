@@ -27,6 +27,7 @@ import {
 } from '../models/member-login-log.entity';
 import { TokenPairDto } from '../dto/token-pair.dto';
 import { MemberBaseModuleOptionsDto } from '../typings/member-base-module-options.dto';
+import { PasswordValidatorService } from './password-validator.service';
 
 @Injectable()
 export class MemberBaseService implements OnApplicationBootstrap {
@@ -53,6 +54,7 @@ export class MemberBaseService implements OnApplicationBootstrap {
     private readonly refreshTokenSecret: string,
     @Inject(REFRESH_TOKEN_EXPIRATION)
     private readonly refreshTokenExpiration: number,
+    private readonly passwordValidatorService: PasswordValidatorService,
   ) {}
 
   private readonly logger = new Logger(MemberBaseService.name);
@@ -102,6 +104,10 @@ export class MemberBaseService implements OnApplicationBootstrap {
     originPassword: string,
     newPassword: string,
   ): Promise<BaseMemberEntity> {
+    if (!this.passwordValidatorService.validatePassword(newPassword)) {
+      throw new BadRequestException('Password does not meet the policy');
+    }
+
     const member = await this.baseMemberRepo.findOne({ where: { id } });
 
     if (!member) {
@@ -128,6 +134,10 @@ export class MemberBaseService implements OnApplicationBootstrap {
     token: string,
     newPassword: string,
   ): Promise<BaseMemberEntity> {
+    if (!this.passwordValidatorService.validatePassword(newPassword)) {
+      throw new BadRequestException('Password does not meet the policy');
+    }
+
     try {
       const { id, requestedOn } = verifyJWT(
         token,
@@ -157,6 +167,10 @@ export class MemberBaseService implements OnApplicationBootstrap {
   }
 
   async register(account: string, password: string): Promise<BaseMemberEntity> {
+    if (!this.passwordValidatorService.validatePassword(password)) {
+      throw new BadRequestException('Password does not meet the policy');
+    }
+
     const member = this.baseMemberRepo.create({ account });
 
     member.password = await hash(password);

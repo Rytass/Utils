@@ -3,12 +3,14 @@ import { BaseMemberEntity } from '../models';
 import { Repository } from 'typeorm';
 import { hash } from 'argon2';
 import { RESOLVED_MEMBER_REPO } from '../typings/member-base-providers';
+import { PasswordValidatorService } from './password-validator.service';
 
 @Injectable()
 export class MemberBaseAdminService {
   constructor(
     @Inject(RESOLVED_MEMBER_REPO)
     private readonly baseMemberRepo: Repository<BaseMemberEntity>,
+    private readonly passwordValidatorService: PasswordValidatorService,
   ) {}
 
   async archiveMember(id: string): Promise<void> {
@@ -28,7 +30,15 @@ export class MemberBaseAdminService {
   async resetMemberPassword(
     id: string,
     newPassword: string,
+    ignorePasswordPolicy = false,
   ): Promise<BaseMemberEntity> {
+    if (
+      !ignorePasswordPolicy &&
+      !this.passwordValidatorService.validatePassword(newPassword)
+    ) {
+      throw new BadRequestException('Password does not meet the policy');
+    }
+
     const member = await this.baseMemberRepo.findOne({
       where: {
         id,

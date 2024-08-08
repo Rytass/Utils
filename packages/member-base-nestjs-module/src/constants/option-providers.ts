@@ -6,6 +6,12 @@ import {
   ENABLE_GLOBAL_GUARD,
   LOGIN_FAILED_BAN_THRESHOLD,
   MEMBER_BASE_MODULE_OPTIONS,
+  PASSWORD_POLICY_REGEXP,
+  PASSWORD_SHOULD_INCLUDE_DIGIT,
+  PASSWORD_SHOULD_INCLUDE_LOWERCASE,
+  PASSWORD_SHOULD_INCLUDE_SPECIAL_CHARACTER,
+  PASSWORD_SHOULD_INCLUDE_UPPERCASE,
+  PASSWORD_MIN_LENGTH,
   PROVIDE_MEMBER_ENTITY,
   REFRESH_TOKEN_EXPIRATION,
   REFRESH_TOKEN_SECRET,
@@ -96,6 +102,42 @@ export const OptionProviders = [
 
       return enforcer;
     },
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: PASSWORD_SHOULD_INCLUDE_UPPERCASE,
+    useFactory: (options?: MemberBaseModuleOptionsDto) =>
+      options?.passwordShouldIncludeUppercase ?? true,
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: PASSWORD_SHOULD_INCLUDE_LOWERCASE,
+    useFactory: (options?: MemberBaseModuleOptionsDto) =>
+      options?.passwordShouldIncludeLowercase ?? true,
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: PASSWORD_SHOULD_INCLUDE_DIGIT,
+    useFactory: (options?: MemberBaseModuleOptionsDto) =>
+      options?.passwordShouldIncludeDigit ?? true,
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: PASSWORD_SHOULD_INCLUDE_SPECIAL_CHARACTER,
+    useFactory: (options?: MemberBaseModuleOptionsDto) =>
+      options?.passwordShouldIncludeSpecialCharacters ?? false,
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: PASSWORD_MIN_LENGTH,
+    useFactory: (options?: MemberBaseModuleOptionsDto) =>
+      options?.passwordMinLength ?? 8,
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: PASSWORD_POLICY_REGEXP,
+    useFactory: (options?: MemberBaseModuleOptionsDto) =>
+      options?.passwordPolicyRegExp ?? undefined,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
 ] as Provider[];
