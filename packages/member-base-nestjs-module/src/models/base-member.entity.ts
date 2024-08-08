@@ -11,6 +11,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { MemberLoginLogEntity } from './member-login-log.entity';
+import { MemberPasswordHistoryEntity } from './member-password-history.entity';
 
 export const BaseMemberRepo = Symbol('BaseMemberRepo');
 
@@ -36,6 +37,12 @@ export class BaseMemberEntity {
   @Column('int2', { default: 0 })
   loginFailedCounter: number;
 
+  @Column('boolean', {
+    default: false,
+    comment: 'Member should update password before login',
+  })
+  shouldUpdatePassword: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 
@@ -47,4 +54,7 @@ export class BaseMemberEntity {
 
   @OneToMany(() => MemberLoginLogEntity, (log) => log.member)
   loginLogs: Relation<MemberLoginLogEntity[]>;
+
+  @OneToMany(() => MemberLoginLogEntity, (log) => log.member)
+  passwordHistories: Relation<MemberPasswordHistoryEntity[]>;
 }

@@ -3720,12 +3720,15 @@ __metadata:
   resolution: "@rytass/member-base-nestjs-module@workspace:packages/member-base-nestjs-module"
   dependencies:
     "@nestjs/graphql": "npm:*"
+    "@types/luxon": "npm:^3"
     "@types/ws": "npm:^8"
-    casbin: "npm:^5.30.0"
+    casbin: "npm:^5"
+    generate-password: "npm:^1.7.1"
     graphql: "npm:*"
-    ts-morph: "npm:^23.0.0"
-    typeorm-adapter: "npm:^1.7.0"
-    ws: "npm:^8.18.0"
+    luxon: "npm:^3"
+    ts-morph: "npm:*"
+    typeorm-adapter: "npm:^1"
+    ws: "npm:^8"
   peerDependencies:
     "@nestjs/common": "*"
     "@nestjs/typeorm": "*"
@@ -4426,7 +4429,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/luxon@npm:^3.4.2":
+"@types/luxon@npm:^3, @types/luxon@npm:^3.4.2":
   version: 3.4.2
   resolution: "@types/luxon@npm:3.4.2"
   checksum: 10c0/d835467de3daf7e17ba78b50bb5a14efd94272439ca067990d71332a54b311544459c69623eddd243b511b28d70194c9591a9ee8cf9c038962c965f991affd7e
@@ -5679,7 +5682,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"casbin@npm:^5.27.0, casbin@npm:^5.30.0":
+"casbin@npm:^5, casbin@npm:^5.27.0":
   version: 5.30.0
   resolution: "casbin@npm:5.30.0"
   dependencies:
@@ -8043,6 +8046,13 @@ __metadata:
     gaxios: "npm:^6.0.0"
     json-bigint: "npm:^1.0.0"
   checksum: 10c0/0f84f8c0b974e79d0da0f3063023486e53d7982ce86c4b5871e4ee3b1fc4e7f76fcc05f6342aa0ded5023f1a499c21ab97743a498b31f3aa299905226d1f66ab
+  languageName: node
+  linkType: hard
+
+"generate-password@npm:^1.7.1":
+  version: 1.7.1
+  resolution: "generate-password@npm:1.7.1"
+  checksum: 10c0/76f5c1f478d0151630910d81e5e1ca6c2762053f03b15f629546c60c7692b93a6743fbf43a2e2825c4fb833e8f20fa2290ade55cfd9296e1f16d0cc0266216d9
   languageName: node
   linkType: hard
 
@@ -10818,6 +10828,13 @@ __metadata:
   dependencies:
     yallist: "npm:^4.0.0"
   checksum: 10c0/cb53e582785c48187d7a188d3379c181b5ca2a9c78d2bce3e7dee36f32761d1c42983da3fe12b55cb74e1779fa94cdc2e5367c028a9b35317184ede0c07a30a9
+  languageName: node
+  linkType: hard
+
+"luxon@npm:^3":
+  version: 3.5.0
+  resolution: "luxon@npm:3.5.0"
+  checksum: 10c0/335789bba95077db831ef99894edadeb23023b3eb2137a1b56acd0d290082b691cf793143d69e30bc069ec95f0b49f36419f48e951c68014f19ffe12045e3494
   languageName: node
   linkType: hard
 
@@ -14290,7 +14307,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-morph@npm:^23.0.0":
+"ts-morph@npm:*":
   version: 23.0.0
   resolution: "ts-morph@npm:23.0.0"
   dependencies:
@@ -14505,7 +14522,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typeorm-adapter@npm:^1.7.0":
+"typeorm-adapter@npm:^1":
   version: 1.7.0
   resolution: "typeorm-adapter@npm:1.7.0"
   dependencies:
@@ -15216,7 +15233,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ws@npm:^8.11.0, ws@npm:^8.18.0":
+"ws@npm:^8, ws@npm:^8.11.0":
   version: 8.18.0
   resolution: "ws@npm:8.18.0"
   peerDependencies:

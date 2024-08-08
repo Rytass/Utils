@@ -17,6 +17,10 @@ import {
   REFRESH_TOKEN_SECRET,
   RESET_PASSWORD_TOKEN_EXPIRATION,
   RESET_PASSWORD_TOKEN_SECRET,
+  PASSWORD_HISTORY_LIMIT,
+  PASSWORD_AGE_LIMIT_IN_DAYS,
+  ONLY_RESET_REFRESH_TOKEN_EXPIRATION_BY_PASSWORD,
+  FORCE_REJECT_LOGIN_ON_PASSWORD_EXPIRED,
 } from '../typings/member-base-providers';
 import { newEnforcer, newModelFromString } from 'casbin';
 import { MemberBaseModuleOptionsDto } from '../typings/member-base-module-options.dto';
@@ -138,6 +142,30 @@ export const OptionProviders = [
     provide: PASSWORD_POLICY_REGEXP,
     useFactory: (options?: MemberBaseModuleOptionsDto) =>
       options?.passwordPolicyRegExp ?? undefined,
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: PASSWORD_HISTORY_LIMIT,
+    useFactory: (options?: MemberBaseModuleOptionsDto) =>
+      options?.passwordHistoryLimit ?? undefined,
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: PASSWORD_AGE_LIMIT_IN_DAYS,
+    useFactory: (options?: MemberBaseModuleOptionsDto) =>
+      options?.passwordAgeLimitInDays ?? undefined,
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: ONLY_RESET_REFRESH_TOKEN_EXPIRATION_BY_PASSWORD,
+    useFactory: (options?: MemberBaseModuleOptionsDto) =>
+      options?.onlyResetRefreshTokenExpirationByPassword ?? false,
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: FORCE_REJECT_LOGIN_ON_PASSWORD_EXPIRED,
+    useFactory: (options?: MemberBaseModuleOptionsDto) =>
+      options?.forceRejectLoginOnPasswordExpired ?? false,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
 ] as Provider[];

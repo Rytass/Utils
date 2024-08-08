@@ -4,6 +4,10 @@ import { Repository } from 'typeorm';
 import { hash } from 'argon2';
 import { RESOLVED_MEMBER_REPO } from '../typings/member-base-providers';
 import { PasswordValidatorService } from './password-validator.service';
+import {
+  MemberPasswordHistoryEntity,
+  MemberPasswordHistoryRepo,
+} from '../models/member-password-history.entity';
 
 @Injectable()
 export class MemberBaseAdminService {
@@ -11,6 +15,8 @@ export class MemberBaseAdminService {
     @Inject(RESOLVED_MEMBER_REPO)
     private readonly baseMemberRepo: Repository<BaseMemberEntity>,
     private readonly passwordValidatorService: PasswordValidatorService,
+    @Inject(MemberPasswordHistoryRepo)
+    private readonly memberPasswordHistoryRepo: Repository<MemberPasswordHistoryEntity>,
   ) {}
 
   async archiveMember(id: string): Promise<void> {
@@ -34,7 +40,7 @@ export class MemberBaseAdminService {
   ): Promise<BaseMemberEntity> {
     if (
       !ignorePasswordPolicy &&
-      !this.passwordValidatorService.validatePassword(newPassword)
+      !(await this.passwordValidatorService.validatePassword(newPassword))
     ) {
       throw new BadRequestException('Password does not meet the policy');
     }
@@ -53,6 +59,13 @@ export class MemberBaseAdminService {
     member.passwordChangedAt = new Date();
 
     await this.baseMemberRepo.save(member);
+
+    await this.memberPasswordHistoryRepo.save(
+      this.memberPasswordHistoryRepo.create({
+        memberId: member.id,
+        password: member.password,
+      }),
+    );
 
     return member;
   }

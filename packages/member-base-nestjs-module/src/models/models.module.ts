@@ -6,10 +6,15 @@ import {
   MemberLoginLogEntity,
   MemberLoginLogRepo,
 } from './member-login-log.entity';
+import {
+  MemberPasswordHistoryEntity,
+  MemberPasswordHistoryRepo,
+} from './member-password-history.entity';
 
 const models = [
   [BaseMemberRepo, BaseMemberEntity],
   [MemberLoginLogRepo, MemberLoginLogEntity],
+  [MemberPasswordHistoryRepo, MemberPasswordHistoryEntity],
 ] as [symbol, typeof BaseMemberEntity][];
 
 @Module({

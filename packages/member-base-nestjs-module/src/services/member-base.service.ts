@@ -8,12 +8,15 @@ import {
 } from '@nestjs/common';
 import { QueryFailedError, Repository } from 'typeorm';
 import { hash, verify } from 'argon2';
-import { BaseMemberEntity } from '../models';
+import { BaseMemberEntity } from '../models/base-member.entity';
 import {
   ACCESS_TOKEN_EXPIRATION,
   ACCESS_TOKEN_SECRET,
+  FORCE_REJECT_LOGIN_ON_PASSWORD_EXPIRED,
   LOGIN_FAILED_BAN_THRESHOLD,
   MEMBER_BASE_MODULE_OPTIONS,
+  ONLY_RESET_REFRESH_TOKEN_EXPIRATION_BY_PASSWORD,
+  PASSWORD_AGE_LIMIT_IN_DAYS,
   REFRESH_TOKEN_EXPIRATION,
   REFRESH_TOKEN_SECRET,
   RESET_PASSWORD_TOKEN_EXPIRATION,
@@ -28,6 +31,10 @@ import {
 import { TokenPairDto } from '../dto/token-pair.dto';
 import { MemberBaseModuleOptionsDto } from '../typings/member-base-module-options.dto';
 import { PasswordValidatorService } from './password-validator.service';
+import {
+  MemberPasswordHistoryEntity,
+  MemberPasswordHistoryRepo,
+} from '../models/member-password-history.entity';
 
 @Injectable()
 export class MemberBaseService implements OnApplicationBootstrap {
@@ -54,7 +61,15 @@ export class MemberBaseService implements OnApplicationBootstrap {
     private readonly refreshTokenSecret: string,
     @Inject(REFRESH_TOKEN_EXPIRATION)
     private readonly refreshTokenExpiration: number,
+    @Inject(ONLY_RESET_REFRESH_TOKEN_EXPIRATION_BY_PASSWORD)
+    private readonly onlyResetRefreshTokenExpirationByPassword: boolean,
     private readonly passwordValidatorService: PasswordValidatorService,
+    @Inject(MemberPasswordHistoryRepo)
+    private readonly memberPasswordHistoryRepo: Repository<MemberPasswordHistoryEntity>,
+    @Inject(PASSWORD_AGE_LIMIT_IN_DAYS)
+    private readonly passwordAgeLimitInDays: number | undefined,
+    @Inject(FORCE_REJECT_LOGIN_ON_PASSWORD_EXPIRED)
+    private readonly forceRejectLoginOnPasswordExpired: boolean,
   ) {}
 
   private readonly logger = new Logger(MemberBaseService.name);
@@ -104,7 +119,7 @@ export class MemberBaseService implements OnApplicationBootstrap {
     originPassword: string,
     newPassword: string,
   ): Promise<BaseMemberEntity> {
-    if (!this.passwordValidatorService.validatePassword(newPassword)) {
+    if (!(await this.passwordValidatorService.validatePassword(newPassword))) {
       throw new BadRequestException('Password does not meet the policy');
     }
 
@@ -118,8 +133,16 @@ export class MemberBaseService implements OnApplicationBootstrap {
       if (await verify(member.password, originPassword)) {
         member.password = await hash(newPassword);
         member.passwordChangedAt = new Date();
+        member.shouldUpdatePassword = false;
 
         await this.baseMemberRepo.save(member);
+
+        await this.memberPasswordHistoryRepo.save(
+          this.memberPasswordHistoryRepo.create({
+            memberId: member.id,
+            password: member.password,
+          }),
+        );
 
         return member;
       } else {
@@ -134,7 +157,7 @@ export class MemberBaseService implements OnApplicationBootstrap {
     token: string,
     newPassword: string,
   ): Promise<BaseMemberEntity> {
-    if (!this.passwordValidatorService.validatePassword(newPassword)) {
+    if (!(await this.passwordValidatorService.validatePassword(newPassword))) {
       throw new BadRequestException('Password does not meet the policy');
     }
 
@@ -157,8 +180,16 @@ export class MemberBaseService implements OnApplicationBootstrap {
 
       member.password = await hash(newPassword);
       member.passwordChangedAt = new Date();
+      member.shouldUpdatePassword = false;
 
       await this.baseMemberRepo.save(member);
+
+      await this.memberPasswordHistoryRepo.save(
+        this.memberPasswordHistoryRepo.create({
+          memberId: member.id,
+          password: member.password,
+        }),
+      );
 
       return member;
     } catch (ex) {
@@ -167,7 +198,7 @@ export class MemberBaseService implements OnApplicationBootstrap {
   }
 
   async register(account: string, password: string): Promise<BaseMemberEntity> {
-    if (!this.passwordValidatorService.validatePassword(password)) {
+    if (!(await this.passwordValidatorService.validatePassword(password))) {
       throw new BadRequestException('Password does not meet the policy');
     }
 
@@ -177,6 +208,13 @@ export class MemberBaseService implements OnApplicationBootstrap {
 
     try {
       await this.baseMemberRepo.save(member);
+
+      await this.memberPasswordHistoryRepo.save(
+        this.memberPasswordHistoryRepo.create({
+          memberId: member.id,
+          password: member.password,
+        }),
+      );
     } catch (ex) {
       if (/unique/.test((ex as QueryFailedError).message)) {
         throw new BadRequestException('Member already exists');
@@ -186,12 +224,45 @@ export class MemberBaseService implements OnApplicationBootstrap {
     return member;
   }
 
+  async registerWithoutPassword(
+    account: string,
+  ): Promise<[BaseMemberEntity, string]> {
+    const password = this.passwordValidatorService.generateValidPassword();
+
+    const member = this.baseMemberRepo.create({ account });
+
+    member.password = await hash(password);
+    member.shouldUpdatePassword = true;
+
+    try {
+      await this.baseMemberRepo.save(member);
+
+      await this.memberPasswordHistoryRepo.save(
+        this.memberPasswordHistoryRepo.create({
+          memberId: member.id,
+          password: member.password,
+        }),
+      );
+    } catch (ex) {
+      if (/unique/.test((ex as QueryFailedError).message)) {
+        throw new BadRequestException('Member already exists');
+      }
+    }
+
+    return [member, password];
+  }
+
   async refreshToken(refreshToken: string): Promise<TokenPairDto> {
     try {
-      const { id, account, passwordChangedAt } = verifyJWT(
+      const { id, account, passwordChangedAt, exp } = verifyJWT(
         refreshToken,
         this.refreshTokenSecret,
-      ) as { id: string; account: string; passwordChangedAt: number | null };
+      ) as {
+        id: string;
+        account: string;
+        passwordChangedAt: number | null;
+        exp: number;
+      };
 
       const member = await this.baseMemberRepo.findOne({
         where: { id, account },
@@ -221,7 +292,11 @@ export class MemberBaseService implements OnApplicationBootstrap {
             passwordChangedAt: member.passwordChangedAt?.getTime() ?? null,
           },
           this.refreshTokenSecret,
-          { expiresIn: this.refreshTokenExpiration },
+          {
+            expiresIn: this.onlyResetRefreshTokenExpirationByPassword
+              ? Math.round((exp * 1000 - Date.now()) / 1000)
+              : this.refreshTokenExpiration,
+          },
         ),
       };
     } catch (ex) {
@@ -248,8 +323,22 @@ export class MemberBaseService implements OnApplicationBootstrap {
       throw new BadRequestException('Member is banned');
     }
 
+    const isPasswordExpired = this.passwordAgeLimitInDays
+      ? this.passwordValidatorService.shouldUpdatePassword(member)
+      : false;
+
+    if (isPasswordExpired && this.forceRejectLoginOnPasswordExpired) {
+      throw new BadRequestException('Password expired, please update password');
+    }
+
     try {
       if (await verify(member.password, password)) {
+        if (member.shouldUpdatePassword) {
+          throw new BadRequestException(
+            'Member should update password before login',
+          );
+        }
+
         member.loginFailedCounter = 0;
 
         await this.baseMemberRepo.save(member);
@@ -283,22 +372,30 @@ export class MemberBaseService implements OnApplicationBootstrap {
               expiresIn: this.refreshTokenExpiration,
             },
           ),
+          ...(this.passwordAgeLimitInDays
+            ? {
+                shouldUpdatePassword: isPasswordExpired,
+                passwordChangedAt: member.passwordChangedAt?.toISOString(),
+              }
+            : {}),
         };
-      } else {
-        member.loginFailedCounter += 1;
-
-        await this.baseMemberRepo.save(member);
-
-        // async log
-        this.memberLoginLogRepo.save({
-          memberId: member.id,
-          success: false,
-          ip: ip ? `${ip}/32` : null,
-        });
-
-        throw new BadRequestException('Invalid password');
       }
+
+      member.loginFailedCounter += 1;
+
+      await this.baseMemberRepo.save(member);
+
+      // async log
+      this.memberLoginLogRepo.save({
+        memberId: member.id,
+        success: false,
+        ip: ip ? `${ip}/32` : null,
+      });
+
+      throw new BadRequestException('Invalid password');
     } catch (err) {
+      if (err instanceof BadRequestException) throw err;
+
       throw new InternalServerErrorException('Password validation error');
     }
   }

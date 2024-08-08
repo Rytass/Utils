@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { verify } from 'argon2';
 import {
   PASSWORD_SHOULD_INCLUDE_UPPERCASE,
   PASSWORD_SHOULD_INCLUDE_LOWERCASE,
@@ -6,7 +7,17 @@ import {
   PASSWORD_SHOULD_INCLUDE_SPECIAL_CHARACTER,
   PASSWORD_MIN_LENGTH,
   PASSWORD_POLICY_REGEXP,
+  PASSWORD_HISTORY_LIMIT,
+  PASSWORD_AGE_LIMIT_IN_DAYS,
 } from '../typings/member-base-providers';
+import { BaseMemberEntity } from '../models/base-member.entity';
+import {
+  MemberPasswordHistoryEntity,
+  MemberPasswordHistoryRepo,
+} from '../models/member-password-history.entity';
+import { Repository } from 'typeorm';
+import { DateTime } from 'luxon';
+import { generate } from 'generate-password';
 
 @Injectable()
 export class PasswordValidatorService {
@@ -23,9 +34,39 @@ export class PasswordValidatorService {
     private readonly passwordMinLength: number,
     @Inject(PASSWORD_POLICY_REGEXP)
     private readonly passwordPolicyRegExp: RegExp | undefined,
+    @Inject(PASSWORD_HISTORY_LIMIT)
+    private readonly passwordHistoryLimit: number | undefined,
+    @Inject(MemberPasswordHistoryRepo)
+    private readonly memberPasswordHistoryRepo: Repository<MemberPasswordHistoryEntity>,
+    @Inject(PASSWORD_AGE_LIMIT_IN_DAYS)
+    private readonly passwordAgeLimitInDays: number | undefined,
   ) {}
 
-  validatePassword(password: string): boolean {
+  generateValidPassword(): string {
+    return generate({
+      length: this.passwordMinLength,
+      numbers: this.passwordShouldIncludeDigit,
+      uppercase: this.passwordShouldIncludeUppercase,
+      lowercase: this.passwordShouldIncludeLowercase,
+      symbols: this.passwordShouldIncludeSpecialCharacter,
+    });
+  }
+
+  shouldUpdatePassword(member: BaseMemberEntity): boolean {
+    if (!this.passwordAgeLimitInDays) return false;
+
+    const validBefore = DateTime.fromJSDate(member.passwordChangedAt)
+      .plus({ days: this.passwordAgeLimitInDays })
+      .endOf('day')
+      .toMillis();
+
+    return validBefore < DateTime.now().toMillis();
+  }
+
+  async validatePassword(
+    password: string,
+    memberId?: string,
+  ): Promise<boolean> {
     const trimmed = password.trim();
 
     if (this.passwordPolicyRegExp) {
@@ -53,6 +94,31 @@ export class PasswordValidatorService {
       !/[!><.,?@#$%^&*;:'"|\\/~`()-_+={}[\]]/.test(trimmed)
     ) {
       return false;
+    }
+
+    if (this.passwordHistoryLimit) {
+      const qb = this.memberPasswordHistoryRepo.createQueryBuilder('histories');
+
+      qb.andWhere('histories.memberId = :memberId', { memberId });
+      qb.addOrderBy('histories.createdAt', 'DESC');
+
+      qb.take(this.passwordHistoryLimit);
+
+      const histories = await qb.getMany();
+
+      try {
+        await histories
+          .map((history) => async () => {
+            const isVerify = await verify(history.password, password);
+
+            if (isVerify) {
+              throw new Error('Password is in history');
+            }
+          })
+          .reduce((prev, next) => prev.then(next), Promise.resolve());
+      } catch (ex) {
+        return false;
+      }
     }
 
     return true;
