@@ -3,6 +3,8 @@ import {
   Inject,
   Injectable,
   InternalServerErrorException,
+  Logger,
+  OnApplicationBootstrap,
 } from '@nestjs/common';
 import { QueryFailedError, Repository } from 'typeorm';
 import { hash, verify } from 'argon2';
@@ -11,6 +13,7 @@ import {
   ACCESS_TOKEN_EXPIRATION,
   ACCESS_TOKEN_SECRET,
   LOGIN_FAILED_BAN_THRESHOLD,
+  MEMBER_BASE_MODULE_OPTIONS,
   REFRESH_TOKEN_EXPIRATION,
   REFRESH_TOKEN_SECRET,
   RESET_PASSWORD_TOKEN_EXPIRATION,
@@ -23,10 +26,15 @@ import {
   MemberLoginLogRepo,
 } from '../models/member-login-log.entity';
 import { TokenPairDto } from '../dto/token-pair.dto';
+import { MemberBaseModuleOptionsDto } from '../typings/member-base-module-options.dto';
 
 @Injectable()
-export class MemberBaseService {
+export class MemberBaseService implements OnApplicationBootstrap {
   constructor(
+    @Inject(MEMBER_BASE_MODULE_OPTIONS)
+    private readonly originalProvidedOptions:
+      | MemberBaseModuleOptionsDto
+      | undefined,
     @Inject(RESOLVED_MEMBER_REPO)
     private readonly baseMemberRepo: Repository<BaseMemberEntity>,
     @Inject(MemberLoginLogRepo)
@@ -46,6 +54,19 @@ export class MemberBaseService {
     @Inject(REFRESH_TOKEN_EXPIRATION)
     private readonly refreshTokenExpiration: number,
   ) {}
+
+  private readonly logger = new Logger(MemberBaseService.name);
+
+  onApplicationBootstrap(): void {
+    if (
+      !this.originalProvidedOptions?.accessTokenSecret ||
+      !this.originalProvidedOptions?.refreshTokenSecret
+    ) {
+      this.logger.warn(
+        'No access token secret or refresh token secret provided, using random secret',
+      );
+    }
+  }
 
   async getResetPasswordToken(account: string): Promise<string> {
     const member = await this.baseMemberRepo.findOne({
