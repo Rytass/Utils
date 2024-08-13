@@ -63,13 +63,14 @@ export class MemberBaseService implements OnApplicationBootstrap {
     private readonly refreshTokenExpiration: number,
     @Inject(ONLY_RESET_REFRESH_TOKEN_EXPIRATION_BY_PASSWORD)
     private readonly onlyResetRefreshTokenExpirationByPassword: boolean,
-    private readonly passwordValidatorService: PasswordValidatorService,
     @Inject(MemberPasswordHistoryRepo)
     private readonly memberPasswordHistoryRepo: Repository<MemberPasswordHistoryEntity>,
     @Inject(PASSWORD_AGE_LIMIT_IN_DAYS)
     private readonly passwordAgeLimitInDays: number | undefined,
     @Inject(FORCE_REJECT_LOGIN_ON_PASSWORD_EXPIRED)
     private readonly forceRejectLoginOnPasswordExpired: boolean,
+    @Inject(PasswordValidatorService)
+    private readonly passwordValidatorService: PasswordValidatorService,
   ) {}
 
   private readonly logger = new Logger(MemberBaseService.name);

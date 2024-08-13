@@ -14,6 +14,7 @@ export class MemberBaseAdminService {
   constructor(
     @Inject(RESOLVED_MEMBER_REPO)
     private readonly baseMemberRepo: Repository<BaseMemberEntity>,
+    @Inject(PasswordValidatorService)
     private readonly passwordValidatorService: PasswordValidatorService,
     @Inject(MemberPasswordHistoryRepo)
     private readonly memberPasswordHistoryRepo: Repository<MemberPasswordHistoryEntity>,
