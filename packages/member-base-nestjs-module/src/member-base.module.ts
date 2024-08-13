@@ -20,9 +20,9 @@ import { PasswordValidatorService } from './services/password-validator.service'
 const providers = [
   ...OptionProviders,
   ...ResolvedRepoProviders,
+  PasswordValidatorService,
   MemberBaseService,
   MemberBaseAdminService,
-  PasswordValidatorService,
   {
     provide: APP_GUARD,
     useClass: CasbinGuard,
@@ -30,10 +30,10 @@ const providers = [
 ];
 
 const exports = [
+  PasswordValidatorService,
   MemberBaseModelsModule,
   MemberBaseService,
   MemberBaseAdminService,
-  PasswordValidatorService,
   CASBIN_ENFORCER,
   ACCESS_TOKEN_SECRET,
   ENABLE_GLOBAL_GUARD,
