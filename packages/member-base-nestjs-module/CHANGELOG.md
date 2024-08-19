@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.43](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.42...@rytass/member-base-nestjs-module@0.1.43) (2024-08-19)
+
+### Features
+
+- **member-base-nestjs-module:** typing infer ([2ecb3ff](https://github.com/Rytass/Utils/commit/2ecb3ffc2dc9b573c25cfab843983c68d7eb16b6))
+
 ## [0.1.42](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.41...@rytass/member-base-nestjs-module@0.1.42) (2024-08-19)
 
 ### Features

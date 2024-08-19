@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.33](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.32...@rytass/cms-base-nestjs-module@0.1.33) (2024-08-19)
+
+### Features
+
+- **cms-base-nestjs-module:** typing infer ([13832df](https://github.com/Rytass/Utils/commit/13832dfc1e49ba584ffc74c2c4133bd056f8bfbe))
+
 ## [0.1.32](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.31...@rytass/cms-base-nestjs-module@0.1.32) (2024-08-19)
 
 ### Features
