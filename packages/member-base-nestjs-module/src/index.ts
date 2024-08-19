@@ -10,7 +10,10 @@ export * from './services/password-validator.service';
 export * from './models/index';
 
 // Resolved Repositories
-export { CASBIN_ENFORCER } from './typings/member-base-providers';
+export {
+  CASBIN_ENFORCER,
+  RESOLVED_MEMBER_REPO,
+} from './typings/member-base-providers';
 
 // Casbin
 export * from './guards/casbin.guard';
