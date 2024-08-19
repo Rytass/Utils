@@ -16,7 +16,7 @@ import {
   RESOLVED_ARTICLE_VERSION_REPO,
   RESOLVED_CATEGORY_REPO,
 } from '../typings/cms-base-providers';
-import { DEFAULT_LANGUAGE } from '../constant/default-language';
+import { DEFAULT_LANGUAGE } from '../constants/default-language';
 import { ArticleFindAllDto } from '../typings/article-find-all.dto';
 import { Language } from '../typings/language';
 import {
@@ -26,6 +26,12 @@ import {
 import { BaseCategoryEntity } from '../models/base-category.entity';
 import { ArticleSorter } from '../typings/article-sorter.enum';
 import { InjectDataSource } from '@nestjs/typeorm';
+import { MultipleLanguageModeIsDisabledError } from '../constants/errors/base.errors';
+import {
+  ArticleNotFoundError,
+  ArticleVersionNotFoundError,
+} from '../constants/errors/article.errors';
+import { CategoryNotFoundError } from '../constants/errors/category.errors';
 
 @Injectable()
 export class ArticleBaseService {
@@ -83,7 +89,7 @@ export class ArticleBaseService {
   async findById(id: string, language: Language): Promise<SingleArticleBaseDto>;
   async findById(id: string, language?: Language): Promise<ArticleBaseDto> {
     if (language && !this.multipleLanguageMode) {
-      throw new BadRequestException('Multiple language mode is disabled');
+      throw new MultipleLanguageModeIsDisabledError();
     }
 
     const qb = this.getDefaultQueryBuilder('articles');
@@ -97,7 +103,7 @@ export class ArticleBaseService {
     const article = await qb.getOne();
 
     if (!article) {
-      throw new BadRequestException('Article not found');
+      throw new ArticleNotFoundError();
     }
 
     if (language || !this.multipleLanguageMode) {
@@ -129,7 +135,7 @@ export class ArticleBaseService {
   async findAll(options?: ArticleFindAllDto): Promise<ArticleBaseDto[]>;
   async findAll(options?: ArticleFindAllDto): Promise<ArticleBaseDto[]> {
     if (options?.language && !this.multipleLanguageMode) {
-      throw new BadRequestException('Multiple language mode is disabled');
+      throw new MultipleLanguageModeIsDisabledError();
     }
 
     const qb = this.getDefaultQueryBuilder('articles');
@@ -196,7 +202,7 @@ export class ArticleBaseService {
     const article = await this.baseArticleRepo.findOne({ where: { id } });
 
     if (!article) {
-      throw new BadRequestException('Article not found');
+      throw new ArticleNotFoundError();
     }
 
     await this.baseArticleRepo.softDelete(id);
@@ -216,7 +222,7 @@ export class ArticleBaseService {
       : [];
 
     if (targetCategories.length !== (options?.categoryIds?.length ?? 0)) {
-      throw new BadRequestException('Category not found');
+      throw new CategoryNotFoundError();
     }
 
     const article = await this.baseArticleRepo.findOne({
@@ -225,7 +231,7 @@ export class ArticleBaseService {
     });
 
     if (!article) {
-      throw new BadRequestException('Article not found');
+      throw new ArticleNotFoundError();
     }
 
     if (article.categories.length && !options.categoryIds) {
@@ -247,7 +253,7 @@ export class ArticleBaseService {
     const latestVersion = await latestQb.getOne();
 
     if (!latestVersion) {
-      throw new BadRequestException('Article version not found');
+      throw new ArticleVersionNotFoundError();
     }
 
     const runner = this.dataSource.createQueryRunner();
@@ -268,7 +274,7 @@ export class ArticleBaseService {
 
       if ('multiLanguageContents' in options) {
         if (!this.multipleLanguageMode)
-          throw new BadRequestException('Multiple language mode is disabled');
+          throw new MultipleLanguageModeIsDisabledError();
 
         await runner.manager.save(
           Object.entries(options.multiLanguageContents).map(
@@ -319,7 +325,7 @@ export class ArticleBaseService {
       : [];
 
     if (targetCategories.length !== (options?.categoryIds?.length ?? 0)) {
-      throw new BadRequestException('Category not found');
+      throw new CategoryNotFoundError();
     }
 
     const article = this.baseArticleRepo.create({
@@ -344,7 +350,7 @@ export class ArticleBaseService {
 
       if ('multiLanguageContents' in options) {
         if (!this.multipleLanguageMode)
-          throw new BadRequestException('Multiple language mode is disabled');
+          throw new MultipleLanguageModeIsDisabledError();
 
         await runner.manager.save(
           Object.entries(options.multiLanguageContents).map(

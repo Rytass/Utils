@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Inject,
   Injectable,
-  InternalServerErrorException,
   Logger,
   OnApplicationBootstrap,
 } from '@nestjs/common';
@@ -35,6 +34,18 @@ import {
   MemberPasswordHistoryEntity,
   MemberPasswordHistoryRepo,
 } from '../models/member-password-history.entity';
+import {
+  InvalidPasswordError,
+  InvalidToken,
+  MemberAlreadyExistedError,
+  MemberBannedError,
+  MemberNotFoundError,
+  PasswordChangedError,
+  PasswordDoesNotMeetPolicyError,
+  PasswordExpiredError,
+  PasswordShouldUpdatePasswordError,
+  PasswordValidationError,
+} from '../constants/errors/base.error';
 
 @Injectable()
 export class MemberBaseService implements OnApplicationBootstrap {
@@ -92,7 +103,7 @@ export class MemberBaseService implements OnApplicationBootstrap {
     });
 
     if (!member) {
-      throw new BadRequestException('Member not found');
+      throw new MemberNotFoundError();
     }
 
     const requestedOn = new Date();
@@ -121,13 +132,13 @@ export class MemberBaseService implements OnApplicationBootstrap {
     newPassword: string,
   ): Promise<BaseMemberEntity> {
     if (!(await this.passwordValidatorService.validatePassword(newPassword))) {
-      throw new BadRequestException('Password does not meet the policy');
+      throw new PasswordDoesNotMeetPolicyError();
     }
 
     const member = await this.baseMemberRepo.findOne({ where: { id } });
 
     if (!member) {
-      throw new BadRequestException('Member not found');
+      throw new MemberNotFoundError();
     }
 
     try {
@@ -147,10 +158,10 @@ export class MemberBaseService implements OnApplicationBootstrap {
 
         return member;
       } else {
-        throw new BadRequestException('Invalid password');
+        throw new InvalidPasswordError();
       }
     } catch (err) {
-      throw new InternalServerErrorException('Password validation error');
+      throw new PasswordValidationError();
     }
   }
 
@@ -159,7 +170,7 @@ export class MemberBaseService implements OnApplicationBootstrap {
     newPassword: string,
   ): Promise<BaseMemberEntity> {
     if (!(await this.passwordValidatorService.validatePassword(newPassword))) {
-      throw new BadRequestException('Password does not meet the policy');
+      throw new PasswordDoesNotMeetPolicyError();
     }
 
     try {
@@ -176,7 +187,7 @@ export class MemberBaseService implements OnApplicationBootstrap {
       });
 
       if (!member) {
-        throw new BadRequestException('Invalid token');
+        throw new InvalidToken();
       }
 
       member.password = await hash(newPassword);
@@ -194,13 +205,13 @@ export class MemberBaseService implements OnApplicationBootstrap {
 
       return member;
     } catch (ex) {
-      throw new BadRequestException('Invalid token');
+      throw new InvalidToken();
     }
   }
 
   async register(account: string, password: string): Promise<BaseMemberEntity> {
     if (!(await this.passwordValidatorService.validatePassword(password))) {
-      throw new BadRequestException('Password does not meet the policy');
+      throw new PasswordDoesNotMeetPolicyError();
     }
 
     const member = this.baseMemberRepo.create({ account });
@@ -218,7 +229,7 @@ export class MemberBaseService implements OnApplicationBootstrap {
       );
     } catch (ex) {
       if (/unique/.test((ex as QueryFailedError).message)) {
-        throw new BadRequestException('Member already exists');
+        throw new MemberAlreadyExistedError();
       }
     }
 
@@ -246,7 +257,7 @@ export class MemberBaseService implements OnApplicationBootstrap {
       );
     } catch (ex) {
       if (/unique/.test((ex as QueryFailedError).message)) {
-        throw new BadRequestException('Member already exists');
+        throw new MemberAlreadyExistedError();
       }
     }
 
@@ -270,11 +281,11 @@ export class MemberBaseService implements OnApplicationBootstrap {
       });
 
       if (!member) {
-        throw new BadRequestException('Member not found');
+        throw new MemberNotFoundError();
       }
 
       if (member.passwordChangedAt?.getTime() !== passwordChangedAt) {
-        throw new BadRequestException('Password changed, please sign in again');
+        throw new PasswordChangedError();
       }
 
       return {
@@ -303,7 +314,7 @@ export class MemberBaseService implements OnApplicationBootstrap {
     } catch (ex) {
       if (ex instanceof BadRequestException) throw ex;
 
-      throw new BadRequestException('Invalid token');
+      throw new InvalidToken();
     }
   }
 
@@ -317,11 +328,11 @@ export class MemberBaseService implements OnApplicationBootstrap {
     });
 
     if (!member) {
-      throw new BadRequestException('Member not found');
+      throw new MemberNotFoundError();
     }
 
     if (member.loginFailedCounter >= this.loginFailedBanThreshold) {
-      throw new BadRequestException('Member is banned');
+      throw new MemberBannedError();
     }
 
     const isPasswordExpired = this.passwordAgeLimitInDays
@@ -329,15 +340,13 @@ export class MemberBaseService implements OnApplicationBootstrap {
       : false;
 
     if (isPasswordExpired && this.forceRejectLoginOnPasswordExpired) {
-      throw new BadRequestException('Password expired, please update password');
+      throw new PasswordExpiredError();
     }
 
     try {
       if (await verify(member.password, password)) {
         if (member.shouldUpdatePassword) {
-          throw new BadRequestException(
-            'Member should update password before login',
-          );
+          throw new PasswordShouldUpdatePasswordError();
         }
 
         member.loginFailedCounter = 0;
@@ -393,11 +402,11 @@ export class MemberBaseService implements OnApplicationBootstrap {
         ip: ip ? `${ip}/32` : null,
       });
 
-      throw new BadRequestException('Invalid password');
+      throw new InvalidPasswordError();
     } catch (err) {
       if (err instanceof BadRequestException) throw err;
 
-      throw new InternalServerErrorException('Password validation error');
+      throw new PasswordValidationError();
     }
   }
 
@@ -405,7 +414,7 @@ export class MemberBaseService implements OnApplicationBootstrap {
     const member = await this.baseMemberRepo.findOne({ where: { id } });
 
     if (!member) {
-      throw new BadRequestException('Member not found');
+      throw new MemberNotFoundError();
     }
 
     member.loginFailedCounter = 0;

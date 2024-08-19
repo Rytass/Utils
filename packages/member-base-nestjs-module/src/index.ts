@@ -27,3 +27,6 @@ export * from './helpers/graphql-context-token-resolver';
 export * from './dto/graphql/token-pair.dto';
 export * from './dto/graphql/base-member.dto';
 export * from './dto/graphql/member-login-log.dto';
+
+// Errors
+export * from './constants/errors/index';

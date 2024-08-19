@@ -15,4 +15,7 @@ export * from './typings/article-sorter.enum';
 export * from './typings/category-sorter.enum';
 
 // Constants
-export * from './constant/default-language';
+export * from './constants/default-language';
+
+// Errors
+export * from './constants/errors/index';

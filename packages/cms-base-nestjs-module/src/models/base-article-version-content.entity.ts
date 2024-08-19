@@ -7,7 +7,7 @@ import {
   Relation,
   TableInheritance,
 } from 'typeorm';
-import { DEFAULT_LANGUAGE } from '../constant/default-language';
+import { DEFAULT_LANGUAGE } from '../constants/default-language';
 import { QuadratsElement } from '@quadrats/core';
 import { BaseArticleVersionEntity } from './base-article-version.entity';
 

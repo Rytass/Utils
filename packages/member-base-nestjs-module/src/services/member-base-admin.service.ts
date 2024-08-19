@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { BaseMemberEntity } from '../models';
 import { Repository } from 'typeorm';
 import { hash } from 'argon2';
@@ -8,6 +8,10 @@ import {
   MemberPasswordHistoryEntity,
   MemberPasswordHistoryRepo,
 } from '../models/member-password-history.entity';
+import {
+  MemberNotFoundError,
+  PasswordDoesNotMeetPolicyError,
+} from '../constants/errors/base.error';
 
 @Injectable()
 export class MemberBaseAdminService {
@@ -28,7 +32,7 @@ export class MemberBaseAdminService {
     });
 
     if (!member) {
-      throw new BadRequestException('Member not found');
+      throw new MemberNotFoundError();
     }
 
     await this.baseMemberRepo.softRemove(member);
@@ -43,7 +47,7 @@ export class MemberBaseAdminService {
       !ignorePasswordPolicy &&
       !(await this.passwordValidatorService.validatePassword(newPassword))
     ) {
-      throw new BadRequestException('Password does not meet the policy');
+      throw new PasswordDoesNotMeetPolicyError();
     }
 
     const member = await this.baseMemberRepo.findOne({
@@ -53,7 +57,7 @@ export class MemberBaseAdminService {
     });
 
     if (!member) {
-      throw new BadRequestException('Member not found');
+      throw new MemberNotFoundError();
     }
 
     member.password = await hash(newPassword);

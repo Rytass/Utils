@@ -12,7 +12,7 @@ import {
 } from 'typeorm';
 import { BaseCategoryEntity } from './base-category.entity';
 import { Language } from '../typings/language';
-import { DEFAULT_LANGUAGE } from '../constant/default-language';
+import { DEFAULT_LANGUAGE } from '../constants/default-language';
 
 export const BaseCategoryMultiLanguageNameRepo = Symbol(
   'BaseCategoryMultiLanguageNameRepo',

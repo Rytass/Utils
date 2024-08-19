@@ -17,7 +17,7 @@ import {
 import { CategoryCreateDto } from '../typings/category-create.dto';
 import { BaseCategoryMultiLanguageNameEntity } from '../models/base-category-multi-language-name.entity';
 import { CategoryFindAllDto } from '../typings/category-find-all.dto';
-import { DEFAULT_LANGUAGE } from '../constant/default-language';
+import { DEFAULT_LANGUAGE } from '../constants/default-language';
 import { InjectDataSource } from '@nestjs/typeorm';
 import {
   CategoryBaseDto,
@@ -26,6 +26,12 @@ import {
 import { Language } from '../typings/language';
 import { CategoryDataLoader } from '../data-loaders/category.dataloader';
 import { CategorySorter } from '../typings/category-sorter.enum';
+import {
+  CategoryNotFoundError,
+  CircularCategoryNotAllowedError,
+  MultipleParentCategoryNotAllowedError,
+  ParentCategoryNotFoundError,
+} from '../constants/errors/category.errors';
 
 @Injectable()
 export class CategoryBaseService {
@@ -121,7 +127,7 @@ export class CategoryBaseService {
       );
 
     if (allParentIdSet.has(category.id)) {
-      throw new BadRequestException('Circular category is not allowed');
+      throw new CircularCategoryNotAllowedError();
     }
   }
 
@@ -184,7 +190,7 @@ export class CategoryBaseService {
     const category = await qb.getOne();
 
     if (!category) {
-      throw new BadRequestException('Category not found');
+      throw new CategoryNotFoundError();
     }
 
     if (language || !this.multipleLanguageMode) {
@@ -198,7 +204,7 @@ export class CategoryBaseService {
     const category = await this.baseCategoryRepo.findOne({ where: { id } });
 
     if (!category) {
-      throw new BadRequestException('Category not found');
+      throw new CategoryNotFoundError();
     }
 
     await this.baseCategoryRepo.softDelete(id);
@@ -209,9 +215,7 @@ export class CategoryBaseService {
     options: CategoryCreateDto,
   ): Promise<BaseCategoryEntity> {
     if (!this.allowMultipleParentCategories && options.parentIds?.length) {
-      throw new BadRequestException(
-        'Multiple parent categories not allowed, please enable on module forRoot options',
-      );
+      throw new MultipleParentCategoryNotAllowedError();
     }
 
     const qb = this.getDefaultQueryBuilder('categories');
@@ -223,7 +227,7 @@ export class CategoryBaseService {
     const category = await qb.getOne();
 
     if (!category) {
-      throw new BadRequestException('Category not found');
+      throw new CategoryNotFoundError();
     }
 
     let parentCategories: BaseCategoryEntity[] = [];
@@ -242,7 +246,7 @@ export class CategoryBaseService {
       });
 
       if (parentCategories.length !== (options.parentIds?.length ?? 1)) {
-        throw new BadRequestException('Parent category not found');
+        throw new ParentCategoryNotFoundError();
       }
     }
 
@@ -255,7 +259,7 @@ export class CategoryBaseService {
       });
 
       if (!parentCategory) {
-        throw new BadRequestException('Parent category not found');
+        throw new ParentCategoryNotFoundError();
       }
 
       parentCategories = [parentCategory];
@@ -355,9 +359,7 @@ export class CategoryBaseService {
     let parentCategories: BaseCategoryEntity[] = [];
 
     if (!this.allowMultipleParentCategories && options.parentIds?.length) {
-      throw new BadRequestException(
-        'Multiple parent categories not allowed, please enable on module forRoot options',
-      );
+      throw new MultipleParentCategoryNotAllowedError();
     }
 
     if (
@@ -373,7 +375,7 @@ export class CategoryBaseService {
       });
 
       if (parentCategories.length !== (options.parentIds?.length ?? 1)) {
-        throw new BadRequestException('Parent category not found');
+        throw new ParentCategoryNotFoundError();
       }
     }
 
@@ -385,7 +387,7 @@ export class CategoryBaseService {
       });
 
       if (!parentCategory) {
-        throw new BadRequestException('Parent category not found');
+        throw new ParentCategoryNotFoundError();
       }
 
       parentCategories = [parentCategory];

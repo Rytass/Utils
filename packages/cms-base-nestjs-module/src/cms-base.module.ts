@@ -5,14 +5,14 @@ import { CategoryBaseService } from './services/category-base.service';
 import {
   ResolvedRepoProviders,
   TARGETS,
-} from './constant/resolved-repo-providers';
+} from './constants/resolved-repo-providers';
 import { CategoryDataLoader } from './data-loaders/category.dataloader';
 import {
   CATEGORY_DATA_LOADER,
   CMS_BASE_MODULE_OPTIONS,
 } from './typings/cms-base-providers';
 import { CMSBaseModuleAsyncOptionsDto } from './typings/cms-base-root-module-async-options';
-import { OptionProviders } from './constant/option-providers';
+import { OptionProviders } from './constants/option-providers';
 import { CMSBaseModuleOptionsDto } from './typings/cms-base-root-module-options.dto';
 import { CMSBaseModuleOptionFactory } from './typings/cms-base-root-module-option-factory';
 
