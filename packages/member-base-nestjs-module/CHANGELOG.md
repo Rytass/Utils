@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.42](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.41...@rytass/member-base-nestjs-module@0.1.42) (2024-08-19)
+
+### Features
+
+- **member-base-nestjs-module:** export RESOLVED_MEMBER_REPO symbol ([4fe07b7](https://github.com/Rytass/Utils/commit/4fe07b7ecae1796a73aea740ee69f9c736032e34))
+
 ## [0.1.41](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.40...@rytass/member-base-nestjs-module@0.1.41) (2024-08-19)
 
 ### Features

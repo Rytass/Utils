@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.32](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.31...@rytass/cms-base-nestjs-module@0.1.32) (2024-08-19)
+
+### Features
+
+- **cms-base-nestjs-module:** export RESOLVED\_\* repositories symbol ([4c7662a](https://github.com/Rytass/Utils/commit/4c7662a6c8e9a9a848af4fc921e4f45caaa67c9e))
+
 ## [0.1.31](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.30...@rytass/cms-base-nestjs-module@0.1.31) (2024-08-19)
 
 ### Features
