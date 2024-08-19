@@ -20,7 +20,9 @@ import { DateTime } from 'luxon';
 import { generate } from 'generate-password';
 
 @Injectable()
-export class PasswordValidatorService {
+export class PasswordValidatorService<
+  MemberEntity extends BaseMemberEntity = BaseMemberEntity,
+> {
   constructor(
     @Inject(PASSWORD_SHOULD_INCLUDE_UPPERCASE)
     private readonly passwordShouldIncludeUppercase: boolean,
@@ -52,7 +54,9 @@ export class PasswordValidatorService {
     });
   }
 
-  shouldUpdatePassword(member: BaseMemberEntity): boolean {
+  shouldUpdatePassword<T extends MemberEntity = MemberEntity>(
+    member: T,
+  ): boolean {
     if (!this.passwordAgeLimitInDays) return false;
 
     const validBefore = DateTime.fromJSDate(member.passwordChangedAt)

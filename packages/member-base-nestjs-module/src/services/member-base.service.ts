@@ -48,7 +48,10 @@ import {
 } from '../constants/errors/base.error';
 
 @Injectable()
-export class MemberBaseService implements OnApplicationBootstrap {
+export class MemberBaseService<
+  MemberEntity extends BaseMemberEntity = BaseMemberEntity,
+> implements OnApplicationBootstrap
+{
   constructor(
     @Inject(MEMBER_BASE_MODULE_OPTIONS)
     private readonly originalProvidedOptions:
@@ -126,11 +129,11 @@ export class MemberBaseService implements OnApplicationBootstrap {
     return token;
   }
 
-  async changePassword(
+  async changePassword<T extends MemberEntity = MemberEntity>(
     id: string,
     originPassword: string,
     newPassword: string,
-  ): Promise<BaseMemberEntity> {
+  ): Promise<T> {
     if (!(await this.passwordValidatorService.validatePassword(newPassword))) {
       throw new PasswordDoesNotMeetPolicyError();
     }
@@ -156,7 +159,7 @@ export class MemberBaseService implements OnApplicationBootstrap {
           }),
         );
 
-        return member;
+        return member as T;
       } else {
         throw new InvalidPasswordError();
       }
@@ -165,10 +168,10 @@ export class MemberBaseService implements OnApplicationBootstrap {
     }
   }
 
-  async changePasswordWithToken(
+  async changePasswordWithToken<T extends MemberEntity = MemberEntity>(
     token: string,
     newPassword: string,
-  ): Promise<BaseMemberEntity> {
+  ): Promise<T> {
     if (!(await this.passwordValidatorService.validatePassword(newPassword))) {
       throw new PasswordDoesNotMeetPolicyError();
     }
@@ -203,13 +206,16 @@ export class MemberBaseService implements OnApplicationBootstrap {
         }),
       );
 
-      return member;
+      return member as T;
     } catch (ex) {
       throw new InvalidToken();
     }
   }
 
-  async register(account: string, password: string): Promise<BaseMemberEntity> {
+  async register<T extends MemberEntity = MemberEntity>(
+    account: string,
+    password: string,
+  ): Promise<T> {
     if (!(await this.passwordValidatorService.validatePassword(password))) {
       throw new PasswordDoesNotMeetPolicyError();
     }
@@ -233,12 +239,12 @@ export class MemberBaseService implements OnApplicationBootstrap {
       }
     }
 
-    return member;
+    return member as T;
   }
 
-  async registerWithoutPassword(
+  async registerWithoutPassword<T extends MemberEntity = MemberEntity>(
     account: string,
-  ): Promise<[BaseMemberEntity, string]> {
+  ): Promise<[T, string]> {
     const password = this.passwordValidatorService.generateValidPassword();
 
     const member = this.baseMemberRepo.create({ account });
@@ -261,7 +267,7 @@ export class MemberBaseService implements OnApplicationBootstrap {
       }
     }
 
-    return [member, password];
+    return [member as T, password];
   }
 
   async refreshToken(refreshToken: string): Promise<TokenPairDto> {
@@ -410,7 +416,9 @@ export class MemberBaseService implements OnApplicationBootstrap {
     }
   }
 
-  async resetLoginFailedCounter(id: string): Promise<BaseMemberEntity> {
+  async resetLoginFailedCounter<T extends MemberEntity = MemberEntity>(
+    id: string,
+  ): Promise<T> {
     const member = await this.baseMemberRepo.findOne({ where: { id } });
 
     if (!member) {
@@ -421,6 +429,6 @@ export class MemberBaseService implements OnApplicationBootstrap {
 
     await this.baseMemberRepo.save(member);
 
-    return member;
+    return member as T;
   }
 }

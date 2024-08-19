@@ -14,7 +14,9 @@ import {
 } from '../constants/errors/base.error';
 
 @Injectable()
-export class MemberBaseAdminService {
+export class MemberBaseAdminService<
+  MemberEntity extends BaseMemberEntity = BaseMemberEntity,
+> {
   constructor(
     @Inject(RESOLVED_MEMBER_REPO)
     private readonly baseMemberRepo: Repository<BaseMemberEntity>,
@@ -38,11 +40,11 @@ export class MemberBaseAdminService {
     await this.baseMemberRepo.softRemove(member);
   }
 
-  async resetMemberPassword(
+  async resetMemberPassword<T extends MemberEntity = MemberEntity>(
     id: string,
     newPassword: string,
     ignorePasswordPolicy = false,
-  ): Promise<BaseMemberEntity> {
+  ): Promise<T> {
     if (
       !ignorePasswordPolicy &&
       !(await this.passwordValidatorService.validatePassword(newPassword))
@@ -72,6 +74,6 @@ export class MemberBaseAdminService {
       }),
     );
 
-    return member;
+    return member as T;
   }
 }
