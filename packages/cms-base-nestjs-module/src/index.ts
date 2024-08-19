@@ -19,3 +19,12 @@ export * from './constants/default-language';
 
 // Errors
 export * from './constants/errors/index';
+
+// Resolved Repositories
+export {
+  RESOLVED_ARTICLE_REPO,
+  RESOLVED_ARTICLE_VERSION_CONTENT_REPO,
+  RESOLVED_ARTICLE_VERSION_REPO,
+  RESOLVED_CATEGORY_MULTI_LANGUAGE_NAME_REPO,
+  RESOLVED_CATEGORY_REPO,
+} from './typings/cms-base-providers';
