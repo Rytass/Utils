@@ -19,10 +19,7 @@ import { BaseCategoryMultiLanguageNameEntity } from '../models/base-category-mul
 import { CategoryFindAllDto } from '../typings/category-find-all.dto';
 import { DEFAULT_LANGUAGE } from '../constants/default-language';
 import { InjectDataSource } from '@nestjs/typeorm';
-import {
-  CategoryBaseDto,
-  SingleCategoryBaseDto,
-} from '../typings/category-base.dto';
+import { CategoryBaseDto } from '../typings/category-base.dto';
 import { Language } from '../typings/language';
 import { CategoryDataLoader } from '../data-loaders/category.dataloader';
 import { CategorySorter } from '../typings/category-sorter.enum';
@@ -32,9 +29,14 @@ import {
   MultipleParentCategoryNotAllowedError,
   ParentCategoryNotFoundError,
 } from '../constants/errors/category.errors';
+import { SingleCategoryBaseDto } from '../typings/category-base.dto';
 
 @Injectable()
-export class CategoryBaseService {
+export class CategoryBaseService<
+  CategoryEntity extends BaseCategoryEntity = BaseCategoryEntity,
+  CategoryMultiLanguageNameEntity extends
+    BaseCategoryMultiLanguageNameEntity = BaseCategoryMultiLanguageNameEntity,
+> {
   constructor(
     @Inject(RESOLVED_CATEGORY_MULTI_LANGUAGE_NAME_REPO)
     private readonly baseCategoryMultiLanguageNameRepo: Repository<BaseCategoryMultiLanguageNameEntity>,
@@ -52,9 +54,9 @@ export class CategoryBaseService {
     private readonly categoryDataLoader: CategoryDataLoader,
   ) {}
 
-  private getDefaultQueryBuilder(
+  private getDefaultQueryBuilder<C extends CategoryEntity = CategoryEntity>(
     alias = 'categories',
-  ): SelectQueryBuilder<BaseCategoryEntity> {
+  ): SelectQueryBuilder<C> {
     const qb = this.baseCategoryRepo.createQueryBuilder(alias);
 
     qb.innerJoinAndSelect(`${alias}.multiLanguageNames`, 'multiLanguageNames');
@@ -64,16 +66,17 @@ export class CategoryBaseService {
       'childrenMultiLanguageNames',
     );
 
-    return qb;
+    return qb as SelectQueryBuilder<C>;
   }
 
-  private parseSingleLanguageCategory(
-    category: BaseCategoryEntity,
-    language: Language = DEFAULT_LANGUAGE,
-  ): SingleCategoryBaseDto {
+  private parseSingleLanguageCategory<
+    C extends CategoryEntity = CategoryEntity,
+    CM extends
+      CategoryMultiLanguageNameEntity = CategoryMultiLanguageNameEntity,
+  >(category: C, language: Language = DEFAULT_LANGUAGE): SingleCategoryBaseDto {
     const multiLanguageName = category.multiLanguageNames.find(
       (multiLanguageName) => multiLanguageName.language === language,
-    ) as BaseCategoryMultiLanguageNameEntity;
+    ) as CM;
 
     return {
       id: category.id,
@@ -85,7 +88,7 @@ export class CategoryBaseService {
       name: multiLanguageName.name,
       children:
         category.children?.map((childCategory) =>
-          this.parseSingleLanguageCategory(childCategory),
+          this.parseSingleLanguageCategory(childCategory as C),
         ) ?? [],
     };
   }
@@ -96,7 +99,7 @@ export class CategoryBaseService {
   ): Promise<Set<string>> {
     const foundCategory = (await this.categoryDataLoader.withParentsLoader.load(
       id,
-    )) as BaseCategoryEntity;
+    )) as CategoryEntity;
 
     givenSet.add(id);
 
@@ -112,10 +115,9 @@ export class CategoryBaseService {
     return givenSet;
   }
 
-  private async checkCircularCategories(
-    category: BaseCategoryEntity,
-    targetParents: BaseCategoryEntity[],
-  ): Promise<void> {
+  private async checkCircularCategories<
+    C extends CategoryEntity = CategoryEntity,
+  >(category: C, targetParents: C[]): Promise<void> {
     const allParentIdSet = await targetParents
       .map(
         (parent) => (set: Set<string>) =>
@@ -131,15 +133,23 @@ export class CategoryBaseService {
     }
   }
 
-  public async findAll(
+  public async findAll<
+    C extends CategoryEntity = CategoryEntity,
+    CM extends
+      CategoryMultiLanguageNameEntity = CategoryMultiLanguageNameEntity,
+  >(
     options?: CategoryFindAllDto & { language: Language },
-  ): Promise<SingleCategoryBaseDto[]>;
-  public async findAll(
-    options?: CategoryFindAllDto,
-  ): Promise<CategoryBaseDto[]>;
-  public async findAll(
-    options?: CategoryFindAllDto,
-  ): Promise<CategoryBaseDto[]> {
+  ): Promise<SingleCategoryBaseDto<C, CM>[]>;
+  public async findAll<
+    C extends CategoryEntity = CategoryEntity,
+    CM extends
+      CategoryMultiLanguageNameEntity = CategoryMultiLanguageNameEntity,
+  >(options?: CategoryFindAllDto): Promise<CategoryBaseDto<C, CM>[]>;
+  public async findAll<
+    C extends CategoryEntity = CategoryEntity,
+    CM extends
+      CategoryMultiLanguageNameEntity = CategoryMultiLanguageNameEntity,
+  >(options?: CategoryFindAllDto): Promise<CategoryBaseDto<C, CM>[]> {
     const qb = this.getDefaultQueryBuilder('categories');
 
     if (options?.ids) {
@@ -174,15 +184,24 @@ export class CategoryBaseService {
     qb.skip(options?.offset ?? 0);
     qb.take(Math.min(options?.limit ?? 20, 100));
 
-    return categories;
+    return categories as CategoryBaseDto<C, CM>[];
   }
 
-  async findById(
-    id: string,
-    language: Language,
-  ): Promise<SingleCategoryBaseDto>;
-  async findById(id: string): Promise<CategoryBaseDto>;
-  async findById(id: string, language?: Language): Promise<CategoryBaseDto> {
+  async findById<
+    C extends CategoryEntity = CategoryEntity,
+    CM extends
+      CategoryMultiLanguageNameEntity = CategoryMultiLanguageNameEntity,
+  >(id: string, language: Language): Promise<SingleCategoryBaseDto<C, CM>>;
+  async findById<
+    C extends CategoryEntity = CategoryEntity,
+    CM extends
+      CategoryMultiLanguageNameEntity = CategoryMultiLanguageNameEntity,
+  >(id: string): Promise<CategoryBaseDto>;
+  async findById<
+    C extends CategoryEntity = CategoryEntity,
+    CM extends
+      CategoryMultiLanguageNameEntity = CategoryMultiLanguageNameEntity,
+  >(id: string, language?: Language): Promise<CategoryBaseDto> {
     const qb = this.getDefaultQueryBuilder('categories');
 
     qb.andWhere('categories.id = :id', { id });
@@ -210,10 +229,11 @@ export class CategoryBaseService {
     await this.baseCategoryRepo.softDelete(id);
   }
 
-  async update(
-    id: string,
-    options: CategoryCreateDto,
-  ): Promise<BaseCategoryEntity> {
+  async update<
+    C extends CategoryEntity = CategoryEntity,
+    CM extends
+      CategoryMultiLanguageNameEntity = CategoryMultiLanguageNameEntity,
+  >(id: string, options: CategoryCreateDto): Promise<C> {
     if (!this.allowMultipleParentCategories && options.parentIds?.length) {
       throw new MultipleParentCategoryNotAllowedError();
     }
@@ -230,20 +250,20 @@ export class CategoryBaseService {
       throw new CategoryNotFoundError();
     }
 
-    let parentCategories: BaseCategoryEntity[] = [];
+    let parentCategories: C[] = [];
 
     if (
       (options.parentIds?.length || options.parentId) &&
       this.allowMultipleParentCategories
     ) {
-      parentCategories = await this.baseCategoryRepo.find({
+      parentCategories = (await this.baseCategoryRepo.find({
         where: {
           id: In(
             options.parentIds?.length ? options.parentIds : [options.parentId],
           ),
         },
         relations: ['parents'],
-      });
+      })) as C[];
 
       if (parentCategories.length !== (options.parentIds?.length ?? 1)) {
         throw new ParentCategoryNotFoundError();
@@ -251,12 +271,12 @@ export class CategoryBaseService {
     }
 
     if (options.parentId && !this.allowMultipleParentCategories) {
-      const parentCategory = await this.baseCategoryRepo.findOne({
+      const parentCategory = (await this.baseCategoryRepo.findOne({
         where: {
           id: options.parentId,
         },
         relations: ['parents'],
-      });
+      })) as C;
 
       if (!parentCategory) {
         throw new ParentCategoryNotFoundError();
@@ -272,8 +292,8 @@ export class CategoryBaseService {
     category.bindable = options.bindable ?? true;
     category.parents = parentCategories;
 
-    let willRemoveLanguages: BaseCategoryMultiLanguageNameEntity[] = [];
-    let willCreateOrUpdateLanguages: BaseCategoryMultiLanguageNameEntity[] = [];
+    let willRemoveLanguages: CM[] = [];
+    let willCreateOrUpdateLanguages: CM[] = [];
 
     if ('multiLanguageNames' in options) {
       if (!this.multipleLanguageMode)
@@ -294,7 +314,7 @@ export class CategoryBaseService {
 
       willRemoveLanguages = category.multiLanguageNames.filter(
         (multiLanguageName) => !nextLanguageSet.has(multiLanguageName.language),
-      );
+      ) as CM[];
 
       willCreateOrUpdateLanguages = Object.entries(
         options.multiLanguageNames ?? {},
@@ -312,7 +332,7 @@ export class CategoryBaseService {
           language,
           name,
         });
-      });
+      }) as CM[];
     } else {
       const defaultLanguage = category.multiLanguageNames.find(
         (multiLanguageName) => multiLanguageName.language === DEFAULT_LANGUAGE,
@@ -321,7 +341,7 @@ export class CategoryBaseService {
       if (defaultLanguage) {
         defaultLanguage.name = options.name;
 
-        willCreateOrUpdateLanguages = [defaultLanguage];
+        willCreateOrUpdateLanguages = [defaultLanguage] as CM[];
       } else {
         willCreateOrUpdateLanguages = [
           this.baseCategoryMultiLanguageNameRepo.create({
@@ -329,7 +349,7 @@ export class CategoryBaseService {
             language: DEFAULT_LANGUAGE,
             name: options.name,
           }),
-        ];
+        ] as CM[];
       }
     }
 
@@ -345,7 +365,7 @@ export class CategoryBaseService {
 
       await runner.commitTransaction();
 
-      return category;
+      return category as C;
     } catch (ex) {
       await runner.rollbackTransaction();
 
@@ -355,8 +375,12 @@ export class CategoryBaseService {
     }
   }
 
-  async create(options: CategoryCreateDto): Promise<BaseCategoryEntity> {
-    let parentCategories: BaseCategoryEntity[] = [];
+  async create<
+    C extends CategoryEntity = CategoryEntity,
+    CM extends
+      CategoryMultiLanguageNameEntity = CategoryMultiLanguageNameEntity,
+  >(options: CategoryCreateDto): Promise<C> {
+    let parentCategories: C[] = [];
 
     if (!this.allowMultipleParentCategories && options.parentIds?.length) {
       throw new MultipleParentCategoryNotAllowedError();
@@ -366,13 +390,13 @@ export class CategoryBaseService {
       (options.parentIds?.length || options.parentId) &&
       this.allowMultipleParentCategories
     ) {
-      parentCategories = await this.baseCategoryRepo.find({
+      parentCategories = (await this.baseCategoryRepo.find({
         where: {
           id: In(
             options.parentIds?.length ? options.parentIds : [options.parentId],
           ),
         },
-      });
+      })) as C[];
 
       if (parentCategories.length !== (options.parentIds?.length ?? 1)) {
         throw new ParentCategoryNotFoundError();
@@ -390,7 +414,7 @@ export class CategoryBaseService {
         throw new ParentCategoryNotFoundError();
       }
 
-      parentCategories = [parentCategory];
+      parentCategories = [parentCategory] as C[];
     }
 
     const category = this.baseCategoryRepo.create({
@@ -434,7 +458,7 @@ export class CategoryBaseService {
 
       await runner.commitTransaction();
 
-      return category;
+      return category as C;
     } catch (ex) {
       await runner.rollbackTransaction();
 

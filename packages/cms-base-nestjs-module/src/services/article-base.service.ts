@@ -34,7 +34,13 @@ import {
 import { CategoryNotFoundError } from '../constants/errors/category.errors';
 
 @Injectable()
-export class ArticleBaseService {
+export class ArticleBaseService<
+  ArticleEntity extends BaseArticleEntity = BaseArticleEntity,
+  ArticleVersionEntity extends
+    BaseArticleVersionEntity = BaseArticleVersionEntity,
+  ArticleVersionContentEntity extends
+    BaseArticleVersionContentEntity = BaseArticleVersionContentEntity,
+> {
   constructor(
     @Inject(RESOLVED_ARTICLE_REPO)
     private readonly baseArticleRepo: Repository<BaseArticleEntity>,
@@ -52,10 +58,10 @@ export class ArticleBaseService {
 
   private readonly logger = new Logger(ArticleBaseService.name);
 
-  private getDefaultQueryBuilder(
+  private getDefaultQueryBuilder<A extends ArticleEntity = ArticleEntity>(
     alias = 'articles',
     onlyLatest = false,
-  ): SelectQueryBuilder<BaseArticleEntity> {
+  ): SelectQueryBuilder<A> {
     const qb = this.baseArticleRepo.createQueryBuilder(alias);
 
     qb.leftJoinAndSelect(`${alias}.categories`, 'categories');
@@ -82,17 +88,29 @@ export class ArticleBaseService {
       );
     }
 
-    return qb;
+    return qb as SelectQueryBuilder<A>;
   }
 
-  async findById(id: string): Promise<ArticleBaseDto>;
-  async findById(id: string, language: Language): Promise<SingleArticleBaseDto>;
-  async findById(id: string, language?: Language): Promise<ArticleBaseDto> {
+  async findById<
+    A extends ArticleEntity = ArticleEntity,
+    AV extends ArticleVersionEntity = ArticleVersionEntity,
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(id: string): Promise<ArticleBaseDto<A, AV, AVC>>;
+  async findById<
+    A extends ArticleEntity = ArticleEntity,
+    AV extends ArticleVersionEntity = ArticleVersionEntity,
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(id: string, language: Language): Promise<SingleArticleBaseDto<A, AV, AVC>>;
+  async findById<
+    A extends ArticleEntity = ArticleEntity,
+    AV extends ArticleVersionEntity = ArticleVersionEntity,
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(id: string, language?: Language): Promise<ArticleBaseDto<A, AV, AVC>> {
     if (language && !this.multipleLanguageMode) {
       throw new MultipleLanguageModeIsDisabledError();
     }
 
-    const qb = this.getDefaultQueryBuilder('articles');
+    const qb = this.getDefaultQueryBuilder<A>('articles');
 
     qb.andWhere('articles.id = :id', { id });
 
@@ -109,7 +127,7 @@ export class ArticleBaseService {
     if (language || !this.multipleLanguageMode) {
       const defaultContent = article.versions[0].multiLanguageContents.find(
         (content) => content.language === (language || DEFAULT_LANGUAGE),
-      ) as BaseArticleVersionContentEntity;
+      ) as AVC;
 
       return {
         id: article.id,
@@ -125,20 +143,32 @@ export class ArticleBaseService {
     return {
       id: article.id,
       tags: article.versions[0].tags,
-      multiLanguageContents: article.versions[0].multiLanguageContents,
+      multiLanguageContents: article.versions[0].multiLanguageContents as AVC[],
     };
   }
 
-  async findAll(
+  async findAll<
+    A extends ArticleEntity = ArticleEntity,
+    AV extends ArticleVersionEntity = ArticleVersionEntity,
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(
     options?: ArticleFindAllDto & { language: Language },
-  ): Promise<SingleArticleBaseDto[]>;
-  async findAll(options?: ArticleFindAllDto): Promise<ArticleBaseDto[]>;
-  async findAll(options?: ArticleFindAllDto): Promise<ArticleBaseDto[]> {
+  ): Promise<SingleArticleBaseDto<A, AV, AVC>[]>;
+  async findAll<
+    A extends ArticleEntity = ArticleEntity,
+    AV extends ArticleVersionEntity = ArticleVersionEntity,
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(options?: ArticleFindAllDto): Promise<ArticleBaseDto<A, AV, AVC>[]>;
+  async findAll<
+    A extends ArticleEntity = ArticleEntity,
+    AV extends ArticleVersionEntity = ArticleVersionEntity,
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(options?: ArticleFindAllDto): Promise<ArticleBaseDto<A, AV, AVC>[]> {
     if (options?.language && !this.multipleLanguageMode) {
       throw new MultipleLanguageModeIsDisabledError();
     }
 
-    const qb = this.getDefaultQueryBuilder('articles');
+    const qb = this.getDefaultQueryBuilder<A>('articles');
 
     if (options?.ids?.length) {
       qb.andWhere('articles.id IN (:...ids)', { ids: options.ids });
@@ -177,7 +207,7 @@ export class ArticleBaseService {
         const defaultContent = article.versions[0].multiLanguageContents.find(
           (content) =>
             content.language === (options?.language || DEFAULT_LANGUAGE),
-        ) as BaseArticleVersionContentEntity;
+        ) as AVC;
 
         return {
           id: article.id,
@@ -194,7 +224,7 @@ export class ArticleBaseService {
     return articles.map((article) => ({
       id: article.id,
       tags: article.versions[0].tags,
-      multiLanguageContents: article.versions[0].multiLanguageContents,
+      multiLanguageContents: article.versions[0].multiLanguageContents as AVC[],
     }));
   }
 
@@ -208,10 +238,10 @@ export class ArticleBaseService {
     await this.baseArticleRepo.softDelete(id);
   }
 
-  async addVersion(
+  async addVersion<A extends ArticleEntity = ArticleEntity>(
     id: string,
     options: ArticleCreateDto,
-  ): Promise<BaseArticleEntity> {
+  ): Promise<A> {
     const targetCategories = options?.categoryIds?.length
       ? await this.baseCategoryRepo.find({
           where: {
@@ -304,7 +334,7 @@ export class ArticleBaseService {
 
       await runner.commitTransaction();
 
-      return article;
+      return article as A;
     } catch (ex) {
       await runner.rollbackTransaction();
 
@@ -314,7 +344,9 @@ export class ArticleBaseService {
     }
   }
 
-  async create(options: ArticleCreateDto): Promise<BaseArticleEntity> {
+  async create<A extends ArticleEntity = ArticleEntity>(
+    options: ArticleCreateDto,
+  ): Promise<A> {
     const targetCategories = options?.categoryIds?.length
       ? await this.baseCategoryRepo.find({
           where: {
@@ -380,7 +412,7 @@ export class ArticleBaseService {
 
       await runner.commitTransaction();
 
-      return article;
+      return article as A;
     } catch (ex) {
       await runner.rollbackTransaction();
 

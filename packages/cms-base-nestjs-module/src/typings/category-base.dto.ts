@@ -3,22 +3,37 @@ import {
   BaseCategoryMultiLanguageNameEntity,
 } from '../models';
 
-export type SingleCategoryBaseDto = Pick<
-  BaseCategoryEntity,
+export type SingleCategoryBaseDto<
+  CategoryEntity extends BaseCategoryEntity = BaseCategoryEntity,
+  CategoryMultiLanguageNameEntity extends
+    BaseCategoryMultiLanguageNameEntity = BaseCategoryMultiLanguageNameEntity,
+> = Pick<
+  CategoryEntity,
   'id' | 'bindable' | 'createdAt' | 'updatedAt' | 'deletedAt'
 > &
-  Pick<BaseCategoryMultiLanguageNameEntity, 'language' | 'name'> & {
+  Pick<CategoryMultiLanguageNameEntity, 'language' | 'name'> & {
     children: SingleCategoryBaseDto[];
   };
 
-export type MultiLanguageCategoryBaseDto = Pick<
-  BaseCategoryEntity,
+export type MultiLanguageCategoryBaseDto<
+  CategoryEntity extends BaseCategoryEntity = BaseCategoryEntity,
+  CategoryMultiLanguageNameEntity extends
+    BaseCategoryMultiLanguageNameEntity = BaseCategoryMultiLanguageNameEntity,
+> = Pick<
+  CategoryEntity,
   'id' | 'bindable' | 'createdAt' | 'updatedAt' | 'deletedAt'
 > & {
-  multiLanguageNames: BaseCategoryMultiLanguageNameEntity[];
+  multiLanguageNames: CategoryMultiLanguageNameEntity[];
   children: MultiLanguageCategoryBaseDto[];
 };
 
-export type CategoryBaseDto =
-  | SingleCategoryBaseDto
-  | MultiLanguageCategoryBaseDto;
+export type CategoryBaseDto<
+  CategoryEntity extends BaseCategoryEntity = BaseCategoryEntity,
+  CategoryMultiLanguageNameEntity extends
+    BaseCategoryMultiLanguageNameEntity = BaseCategoryMultiLanguageNameEntity,
+> =
+  | SingleCategoryBaseDto<CategoryEntity, CategoryMultiLanguageNameEntity>
+  | MultiLanguageCategoryBaseDto<
+      CategoryEntity,
+      CategoryMultiLanguageNameEntity
+    >;
