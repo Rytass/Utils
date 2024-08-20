@@ -1,21 +1,27 @@
 import { QuadratsElement } from '@quadrats/core';
 import { Language } from './language';
+import { BaseArticleEntity } from '../models';
+import { DeepPartial } from 'typeorm';
 
-interface BaseArticleCreateDto {
-  tags?: string[];
-  categoryIds?: string[];
-}
+type BaseArticleCreateDto<A extends BaseArticleEntity = BaseArticleEntity> =
+  DeepPartial<A> & {
+    tags?: string[];
+    categoryIds?: string[];
+  };
 
-interface SingleArticleCreateDto extends BaseArticleCreateDto {
-  title: string;
-  description?: string;
-  content: QuadratsElement;
-}
+type SingleArticleCreateDto<A extends BaseArticleEntity = BaseArticleEntity> =
+  BaseArticleCreateDto<A> & {
+    title: string;
+    description?: string;
+    content: QuadratsElement;
+  };
 
-interface MultiLanguageArticleCreateDto extends BaseArticleCreateDto {
+type MultiLanguageArticleCreateDto<
+  A extends BaseArticleEntity = BaseArticleEntity,
+> = BaseArticleCreateDto<A> & {
   multiLanguageContents: Record<Language, SingleArticleCreateDto>;
-}
+};
 
-export type ArticleCreateDto =
-  | SingleArticleCreateDto
-  | MultiLanguageArticleCreateDto;
+export type ArticleCreateDto<A extends BaseArticleEntity = BaseArticleEntity> =
+  | SingleArticleCreateDto<A>
+  | MultiLanguageArticleCreateDto<A>;

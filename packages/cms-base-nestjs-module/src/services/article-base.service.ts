@@ -4,7 +4,13 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
-import { DataSource, In, Repository, SelectQueryBuilder } from 'typeorm';
+import {
+  DataSource,
+  DeepPartial,
+  In,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
 import { BaseArticleEntity } from '../models/base-article.entity';
 import { ArticleCreateDto } from '../typings/article-create.dto';
 import { BaseArticleVersionEntity } from '../models/base-article-version.entity';
@@ -130,17 +136,15 @@ export class ArticleBaseService<
       ) as AVC;
 
       return {
+        ...article,
+        ...defaultContent,
         id: article.id,
         tags: article.versions[0].tags,
-        language: defaultContent.language,
-        version: defaultContent.version,
-        title: defaultContent.title,
-        description: defaultContent.description,
-        content: defaultContent.content,
       };
     }
 
     return {
+      ...article,
       id: article.id,
       tags: article.versions[0].tags,
       multiLanguageContents: article.versions[0].multiLanguageContents as AVC[],
@@ -210,18 +214,16 @@ export class ArticleBaseService<
         ) as AVC;
 
         return {
+          ...article,
+          ...defaultContent,
           id: article.id,
           tags: article.versions[0].tags,
-          language: defaultContent.language,
-          version: defaultContent.version,
-          title: defaultContent.title,
-          description: defaultContent.description,
-          content: defaultContent.content,
         };
       });
     }
 
     return articles.map((article) => ({
+      ...article,
       id: article.id,
       tags: article.versions[0].tags,
       multiLanguageContents: article.versions[0].multiLanguageContents as AVC[],
@@ -238,9 +240,15 @@ export class ArticleBaseService<
     await this.baseArticleRepo.softDelete(id);
   }
 
-  async addVersion<A extends ArticleEntity = ArticleEntity>(
+  async addVersion<
+    A extends ArticleEntity = ArticleEntity,
+    AV extends ArticleVersionEntity = ArticleVersionEntity,
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(
     id: string,
-    options: ArticleCreateDto,
+    options: ArticleCreateDto<A>,
+    articleVersionOptions?: DeepPartial<AV>,
+    articleVersionContentOptions?: DeepPartial<AVC>,
   ): Promise<A> {
     const targetCategories = options?.categoryIds?.length
       ? await this.baseCategoryRepo.find({
@@ -270,10 +278,6 @@ export class ArticleBaseService<
       );
     }
 
-    if (options.categoryIds) {
-      article.categories = targetCategories;
-    }
-
     const latestQb =
       this.baseArticleVersionRepo.createQueryBuilder('articleVersions');
 
@@ -292,9 +296,14 @@ export class ArticleBaseService<
     await runner.startTransaction();
 
     try {
-      await runner.manager.save(article);
+      await runner.manager.save({
+        ...article,
+        ...options,
+        ...(options.categoryIds ? { categories: targetCategories } : {}),
+      });
 
       const version = this.baseArticleVersionRepo.create({
+        ...(articleVersionOptions ?? {}),
         articleId: article.id,
         version: latestVersion.version + 1,
         tags: options.tags,
@@ -310,6 +319,7 @@ export class ArticleBaseService<
           Object.entries(options.multiLanguageContents).map(
             ([language, content]) =>
               this.baseArticleVersionContentRepo.create({
+                ...(articleVersionContentOptions ?? {}),
                 articleId: article.id,
                 version: latestVersion.version + 1,
                 language,
@@ -322,6 +332,7 @@ export class ArticleBaseService<
       } else {
         await runner.manager.save(
           this.baseArticleVersionContentRepo.create({
+            ...(articleVersionContentOptions ?? {}),
             articleId: article.id,
             version: latestVersion.version + 1,
             language: DEFAULT_LANGUAGE,
@@ -344,8 +355,14 @@ export class ArticleBaseService<
     }
   }
 
-  async create<A extends ArticleEntity = ArticleEntity>(
-    options: ArticleCreateDto,
+  async create<
+    A extends ArticleEntity = ArticleEntity,
+    AV extends ArticleVersionEntity = ArticleVersionEntity,
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(
+    options: ArticleCreateDto<A>,
+    articleVersionOptions?: DeepPartial<AV>,
+    articleVersionContentOptions?: DeepPartial<AVC>,
   ): Promise<A> {
     const targetCategories = options?.categoryIds?.length
       ? await this.baseCategoryRepo.find({
@@ -361,6 +378,7 @@ export class ArticleBaseService<
     }
 
     const article = this.baseArticleRepo.create({
+      ...options,
       categories: targetCategories,
     });
 
@@ -373,6 +391,7 @@ export class ArticleBaseService<
       await runner.manager.save(article);
 
       const version = this.baseArticleVersionRepo.create({
+        ...(articleVersionOptions ?? {}),
         articleId: article.id,
         version: 0,
         tags: options.tags,
@@ -388,6 +407,7 @@ export class ArticleBaseService<
           Object.entries(options.multiLanguageContents).map(
             ([language, content]) =>
               this.baseArticleVersionContentRepo.create({
+                ...(articleVersionContentOptions ?? {}),
                 articleId: article.id,
                 version: 0,
                 language,
@@ -400,6 +420,7 @@ export class ArticleBaseService<
       } else {
         await runner.manager.save(
           this.baseArticleVersionContentRepo.create({
+            ...(articleVersionContentOptions ?? {}),
             articleId: article.id,
             version: 0,
             language: DEFAULT_LANGUAGE,

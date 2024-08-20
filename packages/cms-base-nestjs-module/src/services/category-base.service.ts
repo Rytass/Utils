@@ -5,7 +5,14 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { BaseCategoryEntity } from '../models/base-category.entity';
-import { DataSource, In, Repository, SelectQueryBuilder } from 'typeorm';
+import {
+  DataSource,
+  DeepPartial,
+  In,
+  ObjectLiteral,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
 import {
   CATEGORY_DATA_LOADER,
   CIRCULAR_CATEGORY_MODE,
@@ -14,7 +21,12 @@ import {
   RESOLVED_CATEGORY_MULTI_LANGUAGE_NAME_REPO,
   RESOLVED_CATEGORY_REPO,
 } from '../typings/cms-base-providers';
-import { CategoryCreateDto } from '../typings/category-create.dto';
+import {
+  BaseCategoryCreateDto,
+  CategoryCreateDto,
+  MultiLanguageCategoryCreateDto,
+  SingleLanguageCategoryCreateDto,
+} from '../typings/category-create.dto';
 import { BaseCategoryMultiLanguageNameEntity } from '../models/base-category-multi-language-name.entity';
 import { CategoryFindAllDto } from '../typings/category-find-all.dto';
 import { DEFAULT_LANGUAGE } from '../constants/default-language';
@@ -233,7 +245,11 @@ export class CategoryBaseService<
     C extends CategoryEntity = CategoryEntity,
     CM extends
       CategoryMultiLanguageNameEntity = CategoryMultiLanguageNameEntity,
-  >(id: string, options: CategoryCreateDto): Promise<C> {
+  >(
+    id: string,
+    options: CategoryCreateDto<C>,
+    multiLanguageOptions?: DeepPartial<CM>,
+  ): Promise<C> {
     if (!this.allowMultipleParentCategories && options.parentIds?.length) {
       throw new MultipleParentCategoryNotAllowedError();
     }
@@ -289,9 +305,6 @@ export class CategoryBaseService<
       await this.checkCircularCategories(category, parentCategories);
     }
 
-    category.bindable = options.bindable ?? true;
-    category.parents = parentCategories;
-
     let willRemoveLanguages: CM[] = [];
     let willCreateOrUpdateLanguages: CM[] = [];
 
@@ -328,6 +341,7 @@ export class CategoryBaseService<
         }
 
         return this.baseCategoryMultiLanguageNameRepo.create({
+          ...(multiLanguageOptions ?? {}),
           categoryId: category.id,
           language,
           name,
@@ -339,12 +353,17 @@ export class CategoryBaseService<
       );
 
       if (defaultLanguage) {
-        defaultLanguage.name = options.name;
-
-        willCreateOrUpdateLanguages = [defaultLanguage] as CM[];
+        willCreateOrUpdateLanguages = [
+          {
+            ...(multiLanguageOptions ?? {}),
+            ...defaultLanguage,
+            name: options.name,
+          },
+        ] as CM[];
       } else {
         willCreateOrUpdateLanguages = [
           this.baseCategoryMultiLanguageNameRepo.create({
+            ...(multiLanguageOptions ?? {}),
             categoryId: category.id,
             language: DEFAULT_LANGUAGE,
             name: options.name,
@@ -359,7 +378,13 @@ export class CategoryBaseService<
     await runner.startTransaction();
 
     try {
-      await runner.manager.save(category);
+      await runner.manager.save({
+        ...category,
+        ...options,
+        bindable: options.bindable ?? true,
+        parents: parentCategories,
+      });
+
       await runner.manager.remove(willRemoveLanguages);
       await runner.manager.save(willCreateOrUpdateLanguages);
 
@@ -379,7 +404,10 @@ export class CategoryBaseService<
     C extends CategoryEntity = CategoryEntity,
     CM extends
       CategoryMultiLanguageNameEntity = CategoryMultiLanguageNameEntity,
-  >(options: CategoryCreateDto): Promise<C> {
+  >(
+    options: CategoryCreateDto<C>,
+    multiLanguageOptions?: DeepPartial<CM>,
+  ): Promise<C> {
     let parentCategories: C[] = [];
 
     if (!this.allowMultipleParentCategories && options.parentIds?.length) {
@@ -418,6 +446,7 @@ export class CategoryBaseService<
     }
 
     const category = this.baseCategoryRepo.create({
+      ...(options as DeepPartial<C>),
       bindable: options.bindable ?? true,
       parents: parentCategories,
     });
@@ -440,6 +469,7 @@ export class CategoryBaseService<
           Object.entries(options.multiLanguageNames ?? {}).map(
             ([language, name]) =>
               this.baseCategoryMultiLanguageNameRepo.create({
+                ...((multiLanguageOptions ?? {}) as CM),
                 categoryId: category.id,
                 language,
                 name,
@@ -449,6 +479,7 @@ export class CategoryBaseService<
       } else {
         await runner.manager.save(
           this.baseCategoryMultiLanguageNameRepo.create({
+            ...(multiLanguageOptions ?? {}),
             categoryId: category.id,
             language: DEFAULT_LANGUAGE,
             name: options.name,

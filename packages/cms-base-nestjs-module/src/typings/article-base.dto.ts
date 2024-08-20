@@ -10,12 +10,9 @@ export type SingleArticleBaseDto<
     BaseArticleVersionEntity = BaseArticleVersionEntity,
   ArticleVersionContentEntity extends
     BaseArticleVersionContentEntity = BaseArticleVersionContentEntity,
-> = Pick<
-  ArticleVersionContentEntity,
-  'version' | 'language' | 'title' | 'description' | 'content'
-> &
+> = Omit<ArticleVersionContentEntity, 'id' | 'tags'> &
   Pick<ArticleVersionEntity, 'tags'> &
-  Pick<ArticleEntity, 'id'>;
+  ArticleEntity;
 
 export type MultiLanguageArticleBaseDto<
   ArticleEntity extends BaseArticleEntity = BaseArticleEntity,
@@ -24,7 +21,7 @@ export type MultiLanguageArticleBaseDto<
   ArticleVersionContentEntity extends
     BaseArticleVersionContentEntity = BaseArticleVersionContentEntity,
 > = Pick<ArticleVersionEntity, 'tags'> &
-  Pick<ArticleEntity, 'id'> & {
+  ArticleEntity & {
     multiLanguageContents: ArticleVersionContentEntity[];
   };
 
