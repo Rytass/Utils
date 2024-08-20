@@ -221,12 +221,12 @@ export class MemberBaseService<
       throw new PasswordDoesNotMeetPolicyError();
     }
 
-    const member = this.baseMemberRepo.create({ account });
+    let member = this.baseMemberRepo.create({ account });
 
     member.password = await hash(password);
 
     try {
-      await this.baseMemberRepo.save({
+      member = await this.baseMemberRepo.save({
         ...memberOptions,
         account: member.account,
         password: member.password,
@@ -253,12 +253,12 @@ export class MemberBaseService<
   ): Promise<[T, string]> {
     const password = this.passwordValidatorService.generateValidPassword();
 
-    const member = this.baseMemberRepo.create({ account });
+    let member = this.baseMemberRepo.create({ account });
 
     member.password = await hash(password);
 
     try {
-      await this.baseMemberRepo.save({
+      member = await this.baseMemberRepo.save({
         shouldUpdatePassword: true,
         ...memberOptions,
         account: member.account,
