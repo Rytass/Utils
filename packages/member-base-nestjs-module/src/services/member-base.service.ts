@@ -5,7 +5,7 @@ import {
   Logger,
   OnApplicationBootstrap,
 } from '@nestjs/common';
-import { QueryFailedError, Repository } from 'typeorm';
+import { DeepPartial, QueryFailedError, Repository } from 'typeorm';
 import { hash, verify } from 'argon2';
 import { BaseMemberEntity } from '../models/base-member.entity';
 import {
@@ -215,6 +215,7 @@ export class MemberBaseService<
   async register<T extends MemberEntity = MemberEntity>(
     account: string,
     password: string,
+    memberOptions?: DeepPartial<Omit<T, 'account' | 'password'>>,
   ): Promise<T> {
     if (!(await this.passwordValidatorService.validatePassword(password))) {
       throw new PasswordDoesNotMeetPolicyError();
@@ -225,7 +226,11 @@ export class MemberBaseService<
     member.password = await hash(password);
 
     try {
-      await this.baseMemberRepo.save(member);
+      await this.baseMemberRepo.save({
+        ...memberOptions,
+        account: member.account,
+        password: member.password,
+      });
 
       await this.memberPasswordHistoryRepo.save(
         this.memberPasswordHistoryRepo.create({
@@ -244,16 +249,21 @@ export class MemberBaseService<
 
   async registerWithoutPassword<T extends MemberEntity = MemberEntity>(
     account: string,
+    memberOptions?: DeepPartial<Omit<T, 'account' | 'password'>>,
   ): Promise<[T, string]> {
     const password = this.passwordValidatorService.generateValidPassword();
 
     const member = this.baseMemberRepo.create({ account });
 
     member.password = await hash(password);
-    member.shouldUpdatePassword = true;
 
     try {
-      await this.baseMemberRepo.save(member);
+      await this.baseMemberRepo.save({
+        shouldUpdatePassword: true,
+        ...memberOptions,
+        account: member.account,
+        password: member.password,
+      });
 
       await this.memberPasswordHistoryRepo.save(
         this.memberPasswordHistoryRepo.create({
