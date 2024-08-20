@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.44](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.43...@rytass/member-base-nestjs-module@0.1.44) (2024-08-20)
+
+### Features
+
+- **member-base-nestjs-module:** add member options to provide other column payload ([a9f5ae8](https://github.com/Rytass/Utils/commit/a9f5ae862f24351325ff048811ddaa7ba85b12f5))
+
 ## [0.1.43](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.42...@rytass/member-base-nestjs-module@0.1.43) (2024-08-19)
 
 ### Features
