@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.34](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.33...@rytass/cms-base-nestjs-module@0.1.34) (2024-08-20)
+
+### Features
+
+- **cms-base-nestjs-module:** allow deep partial in article, category create and update ([f982aa7](https://github.com/Rytass/Utils/commit/f982aa76c9aa3483c68aba3dacb5d3c8fde21a70))
+
 ## [0.1.33](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.32...@rytass/cms-base-nestjs-module@0.1.33) (2024-08-19)
 
 ### Features
