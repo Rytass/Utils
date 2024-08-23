@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.35](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.34...@rytass/cms-base-nestjs-module@0.1.35) (2024-08-23)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** update save entity type ([8fc5ee3](https://github.com/Rytass/Utils/commit/8fc5ee352b5207bdcf510c11a6063eea15df3fe9))
+
+### Features
+
+- **cms-base-nestjs-module:** add full text search ([99e7649](https://github.com/Rytass/Utils/commit/99e764979224bf1767f409b752da3286581c5073))
+
 ## [0.1.34](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.33...@rytass/cms-base-nestjs-module@0.1.34) (2024-08-20)
 
 ### Features
