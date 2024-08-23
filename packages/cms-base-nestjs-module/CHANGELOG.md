@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.36](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.35...@rytass/cms-base-nestjs-module@0.1.36) (2024-08-23)
+
+**Note:** Version bump only for package @rytass/cms-base-nestjs-module
+
 ## [0.1.35](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.34...@rytass/cms-base-nestjs-module@0.1.35) (2024-08-23)
 
 ### Bug Fixes
