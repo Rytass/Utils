@@ -31,6 +31,7 @@ import { ArticleFindAllDto } from '../typings/article-find-all.dto';
 import { Language } from '../typings/language';
 import {
   ArticleBaseDto,
+  MultiLanguageArticleBaseDto,
   SingleArticleBaseDto,
 } from '../typings/article-base.dto';
 import { BaseCategoryEntity } from '../models/base-category.entity';
@@ -219,6 +220,7 @@ export class ArticleBaseService<
 
       return {
         ...article,
+        versions: undefined,
         ...defaultContent,
         id: article.id,
         tags: article.versions[0].tags,
@@ -227,6 +229,7 @@ export class ArticleBaseService<
 
     return {
       ...article,
+      versions: undefined,
       id: article.id,
       tags: article.versions[0].tags,
       multiLanguageContents: article.versions[0].multiLanguageContents as AVC[],
@@ -340,6 +343,7 @@ export class ArticleBaseService<
 
         return {
           ...article,
+          versions: undefined,
           ...defaultContent,
           id: article.id,
           tags: article.versions[0].tags,
@@ -347,12 +351,17 @@ export class ArticleBaseService<
       });
     }
 
-    return articles.map((article) => ({
-      ...article,
-      id: article.id,
-      tags: article.versions[0].tags,
-      multiLanguageContents: article.versions[0].multiLanguageContents as AVC[],
-    }));
+    return articles.map(
+      (article) =>
+        ({
+          ...article,
+          versions: undefined,
+          version: article.versions[0].version,
+          tags: article.versions[0].tags,
+          multiLanguageContents: article.versions[0]
+            .multiLanguageContents as AVC[],
+        }) as MultiLanguageArticleBaseDto<A, AV, AVC>,
+    );
   }
 
   async archive(id: string): Promise<void> {

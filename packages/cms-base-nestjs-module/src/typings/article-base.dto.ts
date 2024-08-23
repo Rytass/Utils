@@ -10,9 +10,24 @@ export type SingleArticleBaseDto<
     BaseArticleVersionEntity = BaseArticleVersionEntity,
   ArticleVersionContentEntity extends
     BaseArticleVersionContentEntity = BaseArticleVersionContentEntity,
-> = Omit<ArticleVersionContentEntity, 'id' | 'tags'> &
-  Pick<ArticleVersionEntity, 'tags'> &
-  ArticleEntity;
+> = Omit<
+  ArticleVersionContentEntity,
+  | 'id'
+  | 'articleId'
+  | 'version'
+  | 'searchTokens'
+  | 'searchTokenVersion'
+  | 'articleVersion'
+> &
+  Omit<
+    ArticleVersionEntity,
+    | 'articleId'
+    | 'article'
+    | 'multiLanguageContents'
+    | 'createdAt'
+    | 'deletedAt'
+  > &
+  Omit<ArticleEntity, 'versions'>;
 
 export type MultiLanguageArticleBaseDto<
   ArticleEntity extends BaseArticleEntity = BaseArticleEntity,
@@ -20,8 +35,11 @@ export type MultiLanguageArticleBaseDto<
     BaseArticleVersionEntity = BaseArticleVersionEntity,
   ArticleVersionContentEntity extends
     BaseArticleVersionContentEntity = BaseArticleVersionContentEntity,
-> = Pick<ArticleVersionEntity, 'tags'> &
-  ArticleEntity & {
+> = Omit<
+  ArticleVersionEntity,
+  'articleId' | 'article' | 'multiLanguageContents' | 'createdAt' | 'deletedAt'
+> &
+  Omit<ArticleEntity, 'versions'> & {
     multiLanguageContents: ArticleVersionContentEntity[];
   };
 

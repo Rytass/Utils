@@ -60,3 +60,7 @@ Thumbs.db
 # Nx
 .nx/cache
 .nx/workspace-data
+
+# Docusaurus
+docs/.docusaurus
+docs/build
