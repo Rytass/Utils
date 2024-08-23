@@ -372,12 +372,14 @@ export class CategoryBaseService<
     await runner.startTransaction();
 
     try {
-      await runner.manager.save({
-        ...category,
-        ...options,
-        bindable: options.bindable ?? true,
-        parents: parentCategories,
-      });
+      await runner.manager.save(
+        this.baseCategoryRepo.create({
+          ...category,
+          ...options,
+          bindable: options.bindable ?? true,
+          parents: parentCategories,
+        }),
+      );
 
       await runner.manager.remove(willRemoveLanguages);
       await runner.manager.save(willCreateOrUpdateLanguages);

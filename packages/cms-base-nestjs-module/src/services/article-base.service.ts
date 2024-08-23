@@ -421,11 +421,13 @@ export class ArticleBaseService<
     await runner.startTransaction();
 
     try {
-      await runner.manager.save({
-        ...article,
-        ...options,
-        ...(options.categoryIds ? { categories: targetCategories } : {}),
-      });
+      await runner.manager.save(
+        this.baseArticleRepo.create({
+          ...article,
+          ...options,
+          ...(options.categoryIds ? { categories: targetCategories } : {}),
+        }),
+      );
 
       const version = this.baseArticleVersionRepo.create({
         ...(articleVersionOptions ?? {}),
