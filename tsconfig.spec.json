@@ -1,9 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "composite": true,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false
-  },
-  "include": ["**/*.spec.*", "**/__utils__/*.ts", "./packages"]
-}

@@ -1,2 +1,0 @@
-
-yarn lint-staged --relative --concurrent false -v
