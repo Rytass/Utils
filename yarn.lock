@@ -2722,7 +2722,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@napi-rs/wasm-runtime@npm:0.2.4":
+"@napi-rs/wasm-runtime@npm:0.2.4, @napi-rs/wasm-runtime@npm:^0.2.3":
   version: 0.2.4
   resolution: "@napi-rs/wasm-runtime@npm:0.2.4"
   dependencies:
@@ -2884,6 +2884,157 @@ __metadata:
     rxjs: ^7.2.0
     typeorm: ^0.3.0
   checksum: 10c0/0c5a59273cab43c5b7e4da189e6b9792b64309b32a09c7dbd4bcd6bf2e6ac58faeb3ae40067d3fe987ca857841031bf91c90416ae6824e3525e3e990eb5cf852
+  languageName: node
+  linkType: hard
+
+"@node-rs/jieba-android-arm-eabi@npm:1.10.3":
+  version: 1.10.3
+  resolution: "@node-rs/jieba-android-arm-eabi@npm:1.10.3"
+  conditions: os=android & cpu=arm
+  languageName: node
+  linkType: hard
+
+"@node-rs/jieba-android-arm64@npm:1.10.3":
+  version: 1.10.3
+  resolution: "@node-rs/jieba-android-arm64@npm:1.10.3"
+  conditions: os=android & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@node-rs/jieba-darwin-arm64@npm:1.10.3":
+  version: 1.10.3
+  resolution: "@node-rs/jieba-darwin-arm64@npm:1.10.3"
+  conditions: os=darwin & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@node-rs/jieba-darwin-x64@npm:1.10.3":
+  version: 1.10.3
+  resolution: "@node-rs/jieba-darwin-x64@npm:1.10.3"
+  conditions: os=darwin & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@node-rs/jieba-freebsd-x64@npm:1.10.3":
+  version: 1.10.3
+  resolution: "@node-rs/jieba-freebsd-x64@npm:1.10.3"
+  conditions: os=freebsd & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@node-rs/jieba-linux-arm-gnueabihf@npm:1.10.3":
+  version: 1.10.3
+  resolution: "@node-rs/jieba-linux-arm-gnueabihf@npm:1.10.3"
+  conditions: os=linux & cpu=arm
+  languageName: node
+  linkType: hard
+
+"@node-rs/jieba-linux-arm64-gnu@npm:1.10.3":
+  version: 1.10.3
+  resolution: "@node-rs/jieba-linux-arm64-gnu@npm:1.10.3"
+  conditions: os=linux & cpu=arm64 & libc=glibc
+  languageName: node
+  linkType: hard
+
+"@node-rs/jieba-linux-arm64-musl@npm:1.10.3":
+  version: 1.10.3
+  resolution: "@node-rs/jieba-linux-arm64-musl@npm:1.10.3"
+  conditions: os=linux & cpu=arm64 & libc=musl
+  languageName: node
+  linkType: hard
+
+"@node-rs/jieba-linux-x64-gnu@npm:1.10.3":
+  version: 1.10.3
+  resolution: "@node-rs/jieba-linux-x64-gnu@npm:1.10.3"
+  conditions: os=linux & cpu=x64 & libc=glibc
+  languageName: node
+  linkType: hard
+
+"@node-rs/jieba-linux-x64-musl@npm:1.10.3":
+  version: 1.10.3
+  resolution: "@node-rs/jieba-linux-x64-musl@npm:1.10.3"
+  conditions: os=linux & cpu=x64 & libc=musl
+  languageName: node
+  linkType: hard
+
+"@node-rs/jieba-wasm32-wasi@npm:1.10.3":
+  version: 1.10.3
+  resolution: "@node-rs/jieba-wasm32-wasi@npm:1.10.3"
+  dependencies:
+    "@napi-rs/wasm-runtime": "npm:^0.2.3"
+  conditions: cpu=wasm32
+  languageName: node
+  linkType: hard
+
+"@node-rs/jieba-win32-arm64-msvc@npm:1.10.3":
+  version: 1.10.3
+  resolution: "@node-rs/jieba-win32-arm64-msvc@npm:1.10.3"
+  conditions: os=win32 & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@node-rs/jieba-win32-ia32-msvc@npm:1.10.3":
+  version: 1.10.3
+  resolution: "@node-rs/jieba-win32-ia32-msvc@npm:1.10.3"
+  conditions: os=win32 & cpu=ia32
+  languageName: node
+  linkType: hard
+
+"@node-rs/jieba-win32-x64-msvc@npm:1.10.3":
+  version: 1.10.3
+  resolution: "@node-rs/jieba-win32-x64-msvc@npm:1.10.3"
+  conditions: os=win32 & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@node-rs/jieba@npm:^1.10.3":
+  version: 1.10.3
+  resolution: "@node-rs/jieba@npm:1.10.3"
+  dependencies:
+    "@node-rs/jieba-android-arm-eabi": "npm:1.10.3"
+    "@node-rs/jieba-android-arm64": "npm:1.10.3"
+    "@node-rs/jieba-darwin-arm64": "npm:1.10.3"
+    "@node-rs/jieba-darwin-x64": "npm:1.10.3"
+    "@node-rs/jieba-freebsd-x64": "npm:1.10.3"
+    "@node-rs/jieba-linux-arm-gnueabihf": "npm:1.10.3"
+    "@node-rs/jieba-linux-arm64-gnu": "npm:1.10.3"
+    "@node-rs/jieba-linux-arm64-musl": "npm:1.10.3"
+    "@node-rs/jieba-linux-x64-gnu": "npm:1.10.3"
+    "@node-rs/jieba-linux-x64-musl": "npm:1.10.3"
+    "@node-rs/jieba-wasm32-wasi": "npm:1.10.3"
+    "@node-rs/jieba-win32-arm64-msvc": "npm:1.10.3"
+    "@node-rs/jieba-win32-ia32-msvc": "npm:1.10.3"
+    "@node-rs/jieba-win32-x64-msvc": "npm:1.10.3"
+  dependenciesMeta:
+    "@node-rs/jieba-android-arm-eabi":
+      optional: true
+    "@node-rs/jieba-android-arm64":
+      optional: true
+    "@node-rs/jieba-darwin-arm64":
+      optional: true
+    "@node-rs/jieba-darwin-x64":
+      optional: true
+    "@node-rs/jieba-freebsd-x64":
+      optional: true
+    "@node-rs/jieba-linux-arm-gnueabihf":
+      optional: true
+    "@node-rs/jieba-linux-arm64-gnu":
+      optional: true
+    "@node-rs/jieba-linux-arm64-musl":
+      optional: true
+    "@node-rs/jieba-linux-x64-gnu":
+      optional: true
+    "@node-rs/jieba-linux-x64-musl":
+      optional: true
+    "@node-rs/jieba-wasm32-wasi":
+      optional: true
+    "@node-rs/jieba-win32-arm64-msvc":
+      optional: true
+    "@node-rs/jieba-win32-ia32-msvc":
+      optional: true
+    "@node-rs/jieba-win32-x64-msvc":
+      optional: true
+  checksum: 10c0/7376aa829d45726f7272938e5630c907a0a410a5c476a5f44a6277cb90cb4f69cceead47244ed74c37dceccb895d497b385bb32e043a737b7afbe2dc8a33dec2
   languageName: node
   linkType: hard
 
@@ -3624,6 +3775,7 @@ __metadata:
   peerDependencies:
     "@nestjs/common": "*"
     "@nestjs/typeorm": "*"
+    "@node-rs/jieba": "*"
     "@quadrats/core": "*"
     typeorm: "*"
   languageName: unknown
@@ -13181,6 +13333,7 @@ __metadata:
     "@nestjs/graphql": "npm:^12.2.0"
     "@nestjs/testing": "npm:^10.3.10"
     "@nestjs/typeorm": "npm:^10.0.2"
+    "@node-rs/jieba": "npm:^1.10.3"
     "@nrwl/nx-cloud": "npm:^19.0.0"
     "@nx/js": "npm:^19.5.2"
     "@swc/core": "npm:^1.7.0"

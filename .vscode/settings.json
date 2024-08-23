@@ -1,5 +1,6 @@
 {
   "cSpell.words": [
+    "Allpay",
     "authtime",
     "barcodes",
     "CHINATRUST",
@@ -16,6 +17,7 @@
     "gwsr",
     "HILIFE",
     "IBON",
+    "jieba",
     "lidm",
     "LINEPAY",
     "PANHSIN",
@@ -25,7 +27,9 @@
     "TAIWANPAY",
     "UNIONPAY",
     "VIRTAL",
-    "WECHAT",
-    "Allpay"
+    "WECHAT"
+  ],
+  "cSpell.ignoreWords": [
+    "fulltext"
   ]
 }

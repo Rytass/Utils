@@ -3,11 +3,14 @@ import {
   Inject,
   Injectable,
   Logger,
+  OnApplicationBootstrap,
 } from '@nestjs/common';
 import {
+  Brackets,
   DataSource,
   DeepPartial,
   In,
+  QueryRunner,
   Repository,
   SelectQueryBuilder,
 } from 'typeorm';
@@ -16,6 +19,7 @@ import { ArticleCreateDto } from '../typings/article-create.dto';
 import { BaseArticleVersionEntity } from '../models/base-article-version.entity';
 import { BaseArticleVersionContentEntity } from '../models/base-article-version-content.entity';
 import {
+  FULL_TEXT_SEARCH_MODE,
   MULTIPLE_LANGUAGE_MODE,
   RESOLVED_ARTICLE_REPO,
   RESOLVED_ARTICLE_VERSION_CONTENT_REPO,
@@ -38,6 +42,9 @@ import {
   ArticleVersionNotFoundError,
 } from '../constants/errors/article.errors';
 import { CategoryNotFoundError } from '../constants/errors/category.errors';
+import { ArticleSearchMode } from '../typings/article-search-mode.enum';
+import { QuadratsElement, QuadratsText } from '@quadrats/core';
+import { FULL_TEXT_SEARCH_TOKEN_VERSION } from '../constants/full-text-search-token-version';
 
 @Injectable()
 export class ArticleBaseService<
@@ -46,7 +53,8 @@ export class ArticleBaseService<
     BaseArticleVersionEntity = BaseArticleVersionEntity,
   ArticleVersionContentEntity extends
     BaseArticleVersionContentEntity = BaseArticleVersionContentEntity,
-> {
+> implements OnApplicationBootstrap
+{
   constructor(
     @Inject(RESOLVED_ARTICLE_REPO)
     private readonly baseArticleRepo: Repository<BaseArticleEntity>,
@@ -58,6 +66,8 @@ export class ArticleBaseService<
     private readonly baseCategoryRepo: Repository<BaseCategoryEntity>,
     @Inject(MULTIPLE_LANGUAGE_MODE)
     private readonly multipleLanguageMode: boolean,
+    @Inject(FULL_TEXT_SEARCH_MODE)
+    private readonly fullTextSearchMode: boolean,
     @InjectDataSource()
     private readonly dataSource: DataSource,
   ) {}
@@ -95,6 +105,78 @@ export class ArticleBaseService<
     }
 
     return qb as SelectQueryBuilder<A>;
+  }
+
+  private async bindSearchTokens<
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(articleContent: AVC, tags?: string[], runner?: QueryRunner): Promise<void> {
+    const { cut } = await import('@node-rs/jieba');
+
+    const tokens = cut(
+      articleContent.content
+        .filter((content) => content.type === 'p')
+        .map((content) =>
+          content.children
+            .filter((child) => (child as QuadratsText).text)
+            .map((child) => (child as QuadratsText).text)
+            .join('\n'),
+        )
+        .join('\n'),
+    );
+
+    await (runner ?? this.dataSource).query(
+      `UPDATE "${this.baseArticleVersionContentRepo.metadata.tableName}" SET
+      "searchTokenVersion" = '${FULL_TEXT_SEARCH_TOKEN_VERSION}',
+      "searchTokens" = setweight(to_tsvector('simple', $1), 'A') || setweight(to_tsvector('simple', $2), 'B') || setweight(to_tsvector('simple', $3), 'C') || setweight(to_tsvector('simple', $4), 'D')
+      WHERE "articleId" = $5 AND "version" = $6 AND "language" = $7`,
+      [
+        articleContent.title,
+        tags?.join(' ') ?? '',
+        articleContent.description ?? '',
+        tokens.join(' ') ?? '',
+        articleContent.articleId,
+        articleContent.version,
+        articleContent.language,
+      ],
+    );
+  }
+
+  async onApplicationBootstrap(): Promise<void> {
+    // Auto indexing if full text search mode enabled
+    if (this.fullTextSearchMode) {
+      const qb = this.getDefaultQueryBuilder('articles');
+
+      qb.orWhere('multiLanguageContents.searchTokens IS NULL');
+      qb.orWhere(
+        'multiLanguageContents.searchTokenVersion != :searchTokenVersion',
+        {
+          searchTokenVersion: FULL_TEXT_SEARCH_TOKEN_VERSION,
+        },
+      );
+
+      const articles = await qb.getMany();
+
+      if (articles.length) {
+        this.logger.log('Start indexing articles...');
+
+        await articles
+          .map(
+            (article) => () =>
+              this.bindSearchTokens<ArticleVersionContentEntity>(
+                article.versions[0]
+                  .multiLanguageContents[0] as ArticleVersionContentEntity,
+                article.versions[0].tags,
+              ),
+          )
+          .reduce((prev, next) => prev.then(next), Promise.resolve());
+
+        this.logger.log('Indexing articles done.');
+      }
+
+      await this.dataSource.query(
+        `CREATE INDEX IF NOT EXISTS "article_version_contents_search_tokens_idx" ON "${this.baseArticleVersionContentRepo.metadata.tableName}" USING GIN ("searchTokens")`,
+      );
+    }
   }
 
   async findById<
@@ -188,6 +270,49 @@ export class ArticleBaseService<
       qb.andWhere('categories.id IN (:...categoryIds)', {
         categoryIds: options.categoryIds,
       });
+    }
+
+    if (options?.searchTerm) {
+      switch (options?.searchMode) {
+        case ArticleSearchMode.FULL_TEXT: {
+          if (!this.fullTextSearchMode)
+            throw new Error('Full text search is disabled.');
+
+          const { cut } = await import('@node-rs/jieba');
+
+          const tokens = cut(options.searchTerm.trim());
+
+          qb.andWhere(
+            "multiLanguageContents.searchTokens @@ to_tsquery('simple', :searchTerm)",
+            {
+              searchTerm: tokens.join('|'),
+            },
+          );
+
+          break;
+        }
+
+        case ArticleSearchMode.TITLE:
+        default:
+          qb.andWhere(
+            new Brackets((subQb) => {
+              subQb.orWhere('multiLanguageContents.title ILIKE :searchTerm', {
+                searchTerm: `%${options.searchTerm}%`,
+              });
+
+              subQb.orWhere(
+                'multiLanguageContents.description ILIKE :searchTerm',
+                {
+                  searchTerm: `%${options.searchTerm}%`,
+                },
+              );
+
+              return subQb;
+            }),
+          );
+
+          break;
+      }
     }
 
     switch (options?.sorter) {
@@ -403,7 +528,7 @@ export class ArticleBaseService<
         if (!this.multipleLanguageMode)
           throw new MultipleLanguageModeIsDisabledError();
 
-        await runner.manager.save(
+        const savedContents = await runner.manager.save(
           Object.entries(options.multiLanguageContents).map(
             ([language, content]) =>
               this.baseArticleVersionContentRepo.create({
@@ -414,11 +539,24 @@ export class ArticleBaseService<
                 title: content.title,
                 description: content.description,
                 content: content.content,
-              }),
+              }) as AVC,
           ),
         );
+
+        if (this.fullTextSearchMode) {
+          await savedContents
+            .map(
+              (articleContent) => () =>
+                this.bindSearchTokens<AVC>(
+                  articleContent,
+                  options.tags,
+                  runner,
+                ),
+            )
+            .reduce((prev, next) => prev.then(next), Promise.resolve());
+        }
       } else {
-        await runner.manager.save(
+        const savedContent = await runner.manager.save(
           this.baseArticleVersionContentRepo.create({
             ...(articleVersionContentOptions ?? {}),
             articleId: article.id,
@@ -427,8 +565,12 @@ export class ArticleBaseService<
             title: options.title,
             description: options.description,
             content: options.content,
-          }),
+          }) as AVC,
         );
+
+        if (this.fullTextSearchMode) {
+          await this.bindSearchTokens<AVC>(savedContent, options.tags, runner);
+        }
       }
 
       await runner.commitTransaction();

@@ -26,6 +26,7 @@
   "peerDependencies": {
     "@nestjs/common": "*",
     "@nestjs/typeorm": "*",
+    "@node-rs/jieba": "*",
     "@quadrats/core": "*",
     "typeorm": "*"
   },

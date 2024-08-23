@@ -1,6 +1,7 @@
 import {
   Column,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryColumn,
@@ -10,6 +11,7 @@ import {
 import { DEFAULT_LANGUAGE } from '../constants/default-language';
 import { QuadratsElement } from '@quadrats/core';
 import { BaseArticleVersionEntity } from './base-article-version.entity';
+import { FULL_TEXT_SEARCH_TOKEN_VERSION } from '../constants/full-text-search-token-version';
 
 export const BaseArticleVersionContentRepo = Symbol(
   'BaseArticleVersionContentRepo',
@@ -28,13 +30,21 @@ export class BaseArticleVersionContentEntity {
   language: string;
 
   @Column('varchar')
+  @Index()
   title: string;
 
   @Column('varchar', { nullable: true, comment: 'Use for SEO' })
+  @Index()
   description: string | null;
 
   @Column('json')
-  content: QuadratsElement;
+  content: QuadratsElement[];
+
+  @Column('tsvector', { nullable: true, select: false })
+  searchTokens: string | null;
+
+  @Column('varchar', { default: FULL_TEXT_SEARCH_TOKEN_VERSION, select: false })
+  searchTokenVersion: string;
 
   @ManyToOne(
     () => BaseArticleVersionEntity,

@@ -13,6 +13,7 @@ export * from './models/index';
 export * from './typings/language';
 export * from './typings/article-sorter.enum';
 export * from './typings/category-sorter.enum';
+export * from './typings/article-search-mode.enum';
 
 // Constants
 export * from './constants/default-language';

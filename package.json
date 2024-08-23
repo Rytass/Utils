@@ -28,6 +28,7 @@
     "@nestjs/graphql": "^12.2.0",
     "@nestjs/testing": "^10.3.10",
     "@nestjs/typeorm": "^10.0.2",
+    "@node-rs/jieba": "^1.10.3",
     "@nrwl/nx-cloud": "^19.0.0",
     "@nx/js": "^19.5.2",
     "@swc/core": "^1.7.0",

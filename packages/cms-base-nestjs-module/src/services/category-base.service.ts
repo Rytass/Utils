@@ -9,7 +9,6 @@ import {
   DataSource,
   DeepPartial,
   In,
-  ObjectLiteral,
   Repository,
   SelectQueryBuilder,
 } from 'typeorm';
@@ -21,12 +20,7 @@ import {
   RESOLVED_CATEGORY_MULTI_LANGUAGE_NAME_REPO,
   RESOLVED_CATEGORY_REPO,
 } from '../typings/cms-base-providers';
-import {
-  BaseCategoryCreateDto,
-  CategoryCreateDto,
-  MultiLanguageCategoryCreateDto,
-  SingleLanguageCategoryCreateDto,
-} from '../typings/category-create.dto';
+import { CategoryCreateDto } from '../typings/category-create.dto';
 import { BaseCategoryMultiLanguageNameEntity } from '../models/base-category-multi-language-name.entity';
 import { CategoryFindAllDto } from '../typings/category-find-all.dto';
 import { DEFAULT_LANGUAGE } from '../constants/default-language';

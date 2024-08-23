@@ -13,7 +13,7 @@ type SingleArticleCreateDto<A extends BaseArticleEntity = BaseArticleEntity> =
   BaseArticleCreateDto<A> & {
     title: string;
     description?: string;
-    content: QuadratsElement;
+    content: QuadratsElement[];
   };
 
 type MultiLanguageArticleCreateDto<

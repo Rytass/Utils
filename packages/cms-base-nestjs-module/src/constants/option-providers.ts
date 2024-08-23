@@ -2,6 +2,7 @@ import { Options, Provider } from '@nestjs/common';
 import {
   CIRCULAR_CATEGORY_MODE,
   CMS_BASE_MODULE_OPTIONS,
+  FULL_TEXT_SEARCH_MODE,
   MULTIPLE_CATEGORY_PARENT_MODE,
   MULTIPLE_LANGUAGE_MODE,
   PROVIDE_ARTICLE_ENTITY,
@@ -59,6 +60,23 @@ export const OptionProviders = [
     provide: PROVIDE_CATEGORY_MULTI_LANGUAGE_NAME_ENTITY,
     useFactory: (options?: CMSBaseModuleOptionsDto) =>
       options?.categoryMultiLanguageNameEntity ?? null,
+    inject: [CMS_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: FULL_TEXT_SEARCH_MODE,
+    useFactory: async (options?: CMSBaseModuleOptionsDto) => {
+      if (!options?.fullTextSearchMode) return false;
+
+      try {
+        await import('@node-rs/jieba');
+
+        return true;
+      } catch (ex) {
+        throw new Error(
+          'Full Text Search Mode requires @node-rs/jieba module, please install it first.',
+        );
+      }
+    },
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
 ] as Provider[];
