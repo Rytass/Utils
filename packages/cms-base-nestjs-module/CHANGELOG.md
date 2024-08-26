@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.43](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.42...@rytass/cms-base-nestjs-module@0.1.43) (2024-08-26)
+
+### Features
+
+- **cms-base-nestjs-module:** signature approve basement ([f0d853f](https://github.com/Rytass/Utils/commit/f0d853f2ad2b4a1e4a0c0d78fc38435e4ed2b6c9))
+
 ## [0.1.42](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.41...@rytass/cms-base-nestjs-module@0.1.42) (2024-08-26)
 
 ### Features
