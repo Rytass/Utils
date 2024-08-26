@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.54](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.53...@rytass/cms-base-nestjs-module@0.1.54) (2024-08-26)
+
+### Features
+
+- **cms-base-nestjs-module:** export ArticleSignatureDataLoader ([ab9bc8e](https://github.com/Rytass/Utils/commit/ab9bc8ecf3b359d271164f8cd4a9fbd83ff602db))
+
 ## [0.1.53](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.52...@rytass/cms-base-nestjs-module@0.1.53) (2024-08-26)
 
 ### Bug Fixes
