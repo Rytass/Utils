@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.37](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.36...@rytass/cms-base-nestjs-module@0.1.37) (2024-08-26)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** typing definition in create dto ([d55ae44](https://github.com/Rytass/Utils/commit/d55ae4447cfcdd5efe6b973da66caf641c8b8aec))
+
 ## [0.1.36](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.35...@rytass/cms-base-nestjs-module@0.1.36) (2024-08-23)
 
 **Note:** Version bump only for package @rytass/cms-base-nestjs-module
