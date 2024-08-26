@@ -208,7 +208,7 @@ export class ArticleBaseService<
       throw new MultipleLanguageModeIsDisabledError();
     }
 
-    const qb = this.getDefaultQueryBuilder<A>('articles');
+    const qb = this.getDefaultQueryBuilder<A>('articles', true);
 
     qb.andWhere('articles.id = :id', { id });
 
@@ -266,7 +266,7 @@ export class ArticleBaseService<
       throw new MultipleLanguageModeIsDisabledError();
     }
 
-    const qb = this.getDefaultQueryBuilder<A>('articles');
+    const qb = this.getDefaultQueryBuilder<A>('articles', true);
 
     if (options?.ids?.length) {
       qb.andWhere('articles.id IN (:...ids)', { ids: options.ids });
