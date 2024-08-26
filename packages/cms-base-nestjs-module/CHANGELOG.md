@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.39](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.38...@rytass/cms-base-nestjs-module@0.1.39) (2024-08-26)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** use overload method on create and addVersion method ([395aa4d](https://github.com/Rytass/Utils/commit/395aa4d6283412a740c7cb1290352e38e139f655))
+
 ## [0.1.38](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.37...@rytass/cms-base-nestjs-module@0.1.38) (2024-08-26)
 
 ### Bug Fixes
