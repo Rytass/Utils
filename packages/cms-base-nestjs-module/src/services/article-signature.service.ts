@@ -153,7 +153,9 @@ export class ArticleSignatureService<
 
         if (targetSignature) {
           if (targetSignature.result === ArticleSignatureResult.REJECTED) {
-            await this.articleSignatureRepo.softDelete(targetSignature.id);
+            await runner.manager.softDelete(ArticleSignatureEntity, {
+              id: targetSignature.id,
+            });
           } else {
             throw new BadRequestException('Already signed');
           }
