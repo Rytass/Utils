@@ -110,7 +110,7 @@ export class ArticleBaseService<
           return subQb;
         },
         'latest',
-        'latest.version = versions.version && latest."articleId" = versions."articleId"',
+        'latest.version = versions.version AND latest."articleId" = versions."articleId"',
       );
     }
 
