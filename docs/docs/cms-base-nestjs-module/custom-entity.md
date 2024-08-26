@@ -24,11 +24,13 @@ Next, you need to register this **entity** in the **forRoot** method.
 ```typescript title="src/app.module.ts"
 import { Module } from '@nestjs/common';
 import { CMSBaseModule } from '@rytass/cms-base-nestjs-module';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { ArticleEntity } from './article.entity';
 
 @Module({
   imports: [
     // ... (typeorm register)
+    TypeOrmModule.forFeature([ArticleEntity]), // Remember, forFeature register is required
     CMSBaseModule.forRoot({
       articleEntity: ArticleEntity,
     }),
@@ -59,6 +61,7 @@ export class AppService {
 ```
 
 In addition to defining the **generic** when the **Service** is referenced, you can also override the definition when using a **method**. In this case, the definition provided in the method will take precedence.
+Also, when you create an article and a new version using a custom Entity, the Library will automatically include your custom fields.
 
 
 ```typescript title="src/app.service.ts"
@@ -74,6 +77,14 @@ export class AppService {
 
   findById(id: string): Promise<ArticleBaseDto<ArticleEntity>> {
     return this.articleService.findById<ArticleEntity>(id);
+  }
+
+  createEmptyArticle(title: string): Promise<ArticleEntity> {
+    return this.articleService.create({
+      onShelf: false,
+      title,
+      content: EMPTY_QUADRATS_ELEMENTS,
+    });
   }
 }
 

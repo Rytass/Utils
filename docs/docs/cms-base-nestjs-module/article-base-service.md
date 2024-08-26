@@ -14,14 +14,19 @@ sidebar_position: 2
 #### `findById()`
 
 ```tsx
-findById(id: string, language?: Language): Promise<ArticleBaseDto>
+findById(id: string, options?: ArticleFindByIdBaseDto): Promise<ArticleBaseDto>
 ```
 
 **Parameters:**
 | Name      | Type     | Default   | Description                                                                          |
 | --------- | -------- | --------- | ------------------------------------------------------------------------------------ |
 | id        | uuid     |           | Article ID                                                                           |
-| language  | string   |           | If provided, multiple language mode article will return article like single language |
+
+**ArticleFindByIdBaseDto:**
+| Name          | Type     | Default   | Description                                                                          |
+| ------------- | -------- | --------- | ------------------------------------------------------------------------------------ |
+| language      | string   |           | If provided, multiple language mode article will return article like single language |
+| onlyApproved  | boolean  | false     | When signature mode enabled, pass this args to filter approved version               |
 
 #### `findAll()`
 
@@ -31,16 +36,17 @@ findAll(options?: ArticleFindAllDto): Promise<ArticleBaseDto[]>
 
 **Parameters:**
 
-| Name        | Type     | Default         | Description                                                                          |
-| ----------- | -------- | --------------- | ------------------------------------------------------------------------------------ |
-| ids         | uuid[]   |                 | Find articles in id list                                                             |
-| categoryIds | uuid[]   |                 | Category filter                                                                      |
-| language    | string   |                 | If provided, multiple language mode article will return article like single language |
-| sorted      | enum     | CREATED_AT_DESC | CREATED_AT_DESC | CREATED_AT_ASC                                                     |
-| searchTerm  | string   |                 | Search term in title, description, if use full_text_mode will find in contents       |
-| searchMode  | enum     | TITLE           | TITLE | FULL_TEXT                                                                    |
-| offset      | number   | 0               | Result list pagination offset                                                        |
-| limit       | number   | 20              | Result list pagination limit, max 100                                                |
+| Name         | Type     | Default         | Description                                                                          |
+| ------------ | -------- | --------------- | ------------------------------------------------------------------------------------ |
+| ids          | uuid[]   |                 | Find articles in id list                                                             |
+| categoryIds  | uuid[]   |                 | Category filter                                                                      |
+| language     | string   |                 | If provided, multiple language mode article will return article like single language |
+| sorted       | enum     | CREATED_AT_DESC | CREATED_AT_DESC | CREATED_AT_ASC                                                     |
+| searchTerm   | string   |                 | Search term in title, description, if use full_text_mode will find in contents       |
+| searchMode   | enum     | TITLE           | TITLE | TITLE_AND_TAG | FULL_TEXT                                                    |
+| onlyApproved | boolean  | false           | When signature mode enabled, pass this args to filter approved version               |
+| offset       | number   | 0               | Result list pagination offset                                                        |
+| limit        | number   | 20              | Result list pagination limit, max 100                                                |
 
 ### Interfaces
 

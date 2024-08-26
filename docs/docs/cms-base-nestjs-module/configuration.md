@@ -44,17 +44,20 @@ static forRoot(options?: CMSBaseModuleOptionsDto);
 
 **Parameters:**
 
-| Name                            | Type           | Default   | Description                                           |
-| ------------------------------- | -------------- | --------- | ----------------------------------------------------- |
-| multipleLanguageMode            | boolean        | false     | Enable multiple language support                      |
-| allowMultipleParentCategories   | boolean        | false     | Allow category has multiple parent categories         |
-| allowCircularCategories         | boolean        | false     | Allow category parent loop hierarchy                  |
-| fullTextSearchMode              | boolean        | false     | Search term in article content with node-rs/jieba     |
-| articleEntity                   | TypeORM Entity | undefined | Custom ArticleEntity                                  |
-| articleVersionEntity            | TypeORM Entity | undefined | Custom ArticleVersionEntity                           |
-| articleVersionContentEntity     | TypeORM Entity | undefined | Custom ArticleVersionContentEntity                    |
-| categoryEntity                  | TypeORM Entity | undefined | Custom CategoryEntity                                 |
-| categoryMultiLanguageNameEntity | TypeORM Entity | undefined | Custom BaseCategoryMultiLanguageNameEntity            |
+| Name                            | Type                 | Default   | Description                                                   |
+| ------------------------------- | -------------------- | --------- | ------------------------------------------------------------- |
+| multipleLanguageMode            | boolean              | false     | Enable multiple language support                              |
+| allowMultipleParentCategories   | boolean              | false     | Allow category has multiple parent categories                 |
+| allowCircularCategories         | boolean              | false     | Allow category parent loop hierarchy                          |
+| fullTextSearchMode              | boolean              | false     | Search term in article content with node-rs/jieba             |
+| signatureMode                   | boolean              | false     | Enable signature mode                                         |
+| signatureLevels                 | string[] \| Entity[] | []        | When signature mode enabled, multiple signature configuration |
+| articleEntity                   | TypeORM Entity       | undefined | Custom ArticleEntity                                          |
+| articleVersionEntity            | TypeORM Entity       | undefined | Custom ArticleVersionEntity                                   |
+| articleVersionContentEntity     | TypeORM Entity       | undefined | Custom ArticleVersionContentEntity                            |
+| categoryEntity                  | TypeORM Entity       | undefined | Custom CategoryEntity                                         |
+| categoryMultiLanguageNameEntity | TypeORM Entity       | undefined | Custom BaseCategoryMultiLanguageNameEntity                    |
+| signatureLevelEntity            | TypeORM Entity       | undefined | Custom BaseSignatureLevelEntity                               |
 
 
 #### `forRootAsync()`
