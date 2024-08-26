@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.45](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.44...@rytass/cms-base-nestjs-module@0.1.45) (2024-08-26)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** validate signature level on levels provided ([3354f4b](https://github.com/Rytass/Utils/commit/3354f4bc36e5a34e1fd4865aaa61d4b5e2eac339))
+
 ## [0.1.44](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.43...@rytass/cms-base-nestjs-module@0.1.44) (2024-08-26)
 
 ### Features
