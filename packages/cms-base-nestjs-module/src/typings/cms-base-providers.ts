@@ -42,3 +42,4 @@ export const RESOLVED_SIGNATURE_LEVEL_REPO = Symbol(
 
 // Internal Use Injection Token
 export const CATEGORY_DATA_LOADER = Symbol('CATEGORY_DATA_LOADER');
+export const ARTICLE_SIGNATURE_SERVICE = Symbol('ARTICLE_SIGNATURE_SERVICE');
