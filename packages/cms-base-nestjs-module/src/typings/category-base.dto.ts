@@ -1,7 +1,5 @@
-import {
-  BaseCategoryEntity,
-  BaseCategoryMultiLanguageNameEntity,
-} from '../models';
+import { BaseCategoryMultiLanguageNameEntity } from '../models/base-category-multi-language-name.entity';
+import { BaseCategoryEntity } from '../models/base-category.entity';
 
 export type SingleCategoryBaseDto<
   CategoryEntity extends BaseCategoryEntity = BaseCategoryEntity,

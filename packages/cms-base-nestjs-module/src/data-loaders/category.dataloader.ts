@@ -1,9 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import DataLoader from 'dataloader';
-import { BaseCategoryEntity } from '../models';
 import { RESOLVED_CATEGORY_REPO } from '../typings/cms-base-providers';
 import { Repository } from 'typeorm';
 import { LRUCache } from 'lru-cache';
+import { BaseCategoryEntity } from '../models/base-category.entity';
 
 @Injectable()
 export class CategoryDataLoader {

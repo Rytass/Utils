@@ -15,6 +15,7 @@ import { CMSBaseModuleAsyncOptionsDto } from './typings/cms-base-root-module-asy
 import { OptionProviders } from './constants/option-providers';
 import { CMSBaseModuleOptionsDto } from './typings/cms-base-root-module-options.dto';
 import { CMSBaseModuleOptionFactory } from './typings/cms-base-root-module-option-factory';
+import { ArticleSignatureService } from './services/article-signature.service';
 
 @Global()
 @Module({})
@@ -34,11 +35,13 @@ export class CMSBaseModule {
         },
         ArticleBaseService,
         CategoryBaseService,
+        ArticleSignatureService,
       ],
       exports: [
         ...TARGETS.map(([, , resolved]) => resolved),
         ArticleBaseService,
         CategoryBaseService,
+        ArticleSignatureService,
         CategoryDataLoader,
       ],
     };
@@ -62,11 +65,13 @@ export class CMSBaseModule {
         },
         ArticleBaseService,
         CategoryBaseService,
+        ArticleSignatureService,
       ],
       exports: [
         ...TARGETS.map(([, , resolved]) => resolved),
         ArticleBaseService,
         CategoryBaseService,
+        ArticleSignatureService,
         CategoryDataLoader,
       ],
     };

@@ -2,6 +2,7 @@ import { Options, Provider } from '@nestjs/common';
 import {
   CIRCULAR_CATEGORY_MODE,
   CMS_BASE_MODULE_OPTIONS,
+  ENABLE_SIGNATURE_MODE,
   FULL_TEXT_SEARCH_MODE,
   MULTIPLE_CATEGORY_PARENT_MODE,
   MULTIPLE_LANGUAGE_MODE,
@@ -10,6 +11,8 @@ import {
   PROVIDE_ARTICLE_VERSION_ENTITY,
   PROVIDE_CATEGORY_ENTITY,
   PROVIDE_CATEGORY_MULTI_LANGUAGE_NAME_ENTITY,
+  PROVIDE_SIGNATURE_LEVEL_ENTITY,
+  SIGNATURE_LEVELS,
 } from '../typings/cms-base-providers';
 import { CMSBaseModuleOptionsDto } from '../typings/cms-base-root-module-options.dto';
 
@@ -30,6 +33,18 @@ export const OptionProviders = [
     provide: CIRCULAR_CATEGORY_MODE,
     useFactory: (options?: CMSBaseModuleOptionsDto) =>
       options?.allowCircularCategories ?? false,
+    inject: [CMS_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: ENABLE_SIGNATURE_MODE,
+    useFactory: (options?: CMSBaseModuleOptionsDto) =>
+      options?.signatureMode ?? null,
+    inject: [CMS_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: SIGNATURE_LEVELS,
+    useFactory: (options?: CMSBaseModuleOptionsDto) =>
+      options?.signatureLevels ?? [],
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
@@ -60,6 +75,12 @@ export const OptionProviders = [
     provide: PROVIDE_CATEGORY_MULTI_LANGUAGE_NAME_ENTITY,
     useFactory: (options?: CMSBaseModuleOptionsDto) =>
       options?.categoryMultiLanguageNameEntity ?? null,
+    inject: [CMS_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: PROVIDE_SIGNATURE_LEVEL_ENTITY,
+    useFactory: (options?: CMSBaseModuleOptionsDto) =>
+      options?.signatureLevelEntity ?? null,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {

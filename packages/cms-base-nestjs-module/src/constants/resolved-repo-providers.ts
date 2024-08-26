@@ -6,11 +6,13 @@ import {
   PROVIDE_ARTICLE_VERSION_ENTITY,
   PROVIDE_CATEGORY_ENTITY,
   PROVIDE_CATEGORY_MULTI_LANGUAGE_NAME_ENTITY,
+  PROVIDE_SIGNATURE_LEVEL_ENTITY,
   RESOLVED_ARTICLE_REPO,
   RESOLVED_ARTICLE_VERSION_CONTENT_REPO,
   RESOLVED_ARTICLE_VERSION_REPO,
   RESOLVED_CATEGORY_MULTI_LANGUAGE_NAME_REPO,
   RESOLVED_CATEGORY_REPO,
+  RESOLVED_SIGNATURE_LEVEL_REPO,
 } from '../typings/cms-base-providers';
 import {
   BaseArticleEntity,
@@ -19,7 +21,8 @@ import {
 import { BaseArticleVersionRepo } from '../models/base-article-version.entity';
 import { BaseArticleVersionContentRepo } from '../models/base-article-version-content.entity';
 import { BaseCategoryRepo } from '../models/base-category.entity';
-import { BaseCategoryMultiLanguageNameRepo } from '../models';
+import { BaseSignatureLevelRepo } from '../models/base-signature-level.entity';
+import { BaseCategoryMultiLanguageNameRepo } from '../models/base-category-multi-language-name.entity';
 
 export const TARGETS = [
   [BaseArticleRepo, PROVIDE_ARTICLE_ENTITY, RESOLVED_ARTICLE_REPO],
@@ -38,6 +41,11 @@ export const TARGETS = [
     BaseCategoryMultiLanguageNameRepo,
     PROVIDE_CATEGORY_MULTI_LANGUAGE_NAME_ENTITY,
     RESOLVED_CATEGORY_MULTI_LANGUAGE_NAME_REPO,
+  ],
+  [
+    BaseSignatureLevelRepo,
+    PROVIDE_SIGNATURE_LEVEL_ENTITY,
+    RESOLVED_SIGNATURE_LEVEL_REPO,
   ],
 ];
 

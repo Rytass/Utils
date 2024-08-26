@@ -12,6 +12,7 @@ import {
 } from 'typeorm';
 import { BaseArticleVersionContentEntity } from './base-article-version-content.entity';
 import { BaseArticleEntity } from './base-article.entity';
+import { ArticleSignatureEntity } from './base-article-signature.entity';
 
 export const BaseArticleVersionRepo = Symbol('BaseArticleVersionRepo');
 
@@ -46,4 +47,10 @@ export class BaseArticleVersionEntity {
     (content) => content.articleVersion,
   )
   multiLanguageContents: Relation<BaseArticleVersionContentEntity[]>;
+
+  @OneToMany(
+    () => ArticleSignatureEntity,
+    (signature) => signature.articleVersion,
+  )
+  signatures: Relation<ArticleSignatureEntity[]>;
 }

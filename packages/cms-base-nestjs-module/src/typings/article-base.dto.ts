@@ -1,8 +1,6 @@
-import {
-  BaseArticleEntity,
-  BaseArticleVersionContentEntity,
-  BaseArticleVersionEntity,
-} from '../models';
+import { BaseArticleVersionContentEntity } from '../models/base-article-version-content.entity';
+import { BaseArticleVersionEntity } from '../models/base-article-version.entity';
+import { BaseArticleEntity } from '../models/base-article.entity';
 
 export type SingleArticleBaseDto<
   ArticleEntity extends BaseArticleEntity = BaseArticleEntity,
@@ -24,6 +22,7 @@ export type SingleArticleBaseDto<
     | 'articleId'
     | 'article'
     | 'multiLanguageContents'
+    | 'signatures'
     | 'createdAt'
     | 'deletedAt'
   > &

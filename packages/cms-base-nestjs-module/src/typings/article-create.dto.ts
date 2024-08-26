@@ -1,9 +1,7 @@
+import { BaseArticleVersionContentEntity } from '../models/base-article-version-content.entity';
+import { BaseArticleVersionEntity } from '../models/base-article-version.entity';
+import { BaseArticleEntity } from '../models/base-article.entity';
 import { Language } from './language';
-import {
-  BaseArticleEntity,
-  BaseArticleVersionContentEntity,
-  BaseArticleVersionEntity,
-} from '../models';
 
 type BaseArticleCreateDto<
   A extends BaseArticleEntity = BaseArticleEntity,

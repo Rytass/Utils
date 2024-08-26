@@ -7,13 +7,23 @@ export * from './services/category-base.service';
 export * from './data-loaders/category.dataloader';
 
 // Models
-export * from './models/index';
+export { BaseArticleEntity } from './models/base-article.entity';
+export { BaseArticleVersionEntity } from './models/base-article-version.entity';
+export { BaseArticleVersionContentEntity } from './models/base-article-version-content.entity';
+export { BaseCategoryEntity } from './models/base-category.entity';
+export { BaseCategoryMultiLanguageNameEntity } from './models/base-category-multi-language-name.entity';
+export { BaseSignatureLevelEntity } from './models/base-signature-level.entity';
+
+export * from './models/category-relation.entity';
+export * from './models/article-category.entity';
+export * from './models/article-category.entity';
 
 // Typings
 export * from './typings/language';
 export * from './typings/article-sorter.enum';
 export * from './typings/category-sorter.enum';
 export * from './typings/article-search-mode.enum';
+export * from './typings/article-signature-result.enum';
 
 // Constants
 export * from './constants/default-language';
@@ -29,4 +39,5 @@ export {
   RESOLVED_ARTICLE_VERSION_REPO,
   RESOLVED_CATEGORY_MULTI_LANGUAGE_NAME_REPO,
   RESOLVED_CATEGORY_REPO,
+  RESOLVED_SIGNATURE_LEVEL_REPO,
 } from './typings/cms-base-providers';

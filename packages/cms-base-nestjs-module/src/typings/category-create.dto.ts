@@ -1,6 +1,6 @@
 import { DeepPartial } from 'typeorm';
-import { BaseCategoryEntity } from '../models';
 import { Language } from './language';
+import { BaseCategoryEntity } from '../models/base-category.entity';
 
 export type BaseCategoryCreateDto<
   C extends BaseCategoryEntity = BaseCategoryEntity,

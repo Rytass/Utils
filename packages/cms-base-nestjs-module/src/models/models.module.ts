@@ -23,6 +23,14 @@ import {
   ArticleCategoryEntity,
   ArticleCategoryRepo,
 } from './article-category.entity';
+import {
+  BaseSignatureLevelEntity,
+  BaseSignatureLevelRepo,
+} from './base-signature-level.entity';
+import {
+  ArticleSignatureEntity,
+  ArticleSignatureRepo,
+} from './base-article-signature.entity';
 
 const models = [
   [BaseArticleRepo, BaseArticleEntity],
@@ -30,8 +38,10 @@ const models = [
   [BaseArticleVersionContentRepo, BaseArticleVersionContentEntity],
   [BaseCategoryRepo, BaseCategoryEntity],
   [BaseCategoryMultiLanguageNameRepo, BaseCategoryMultiLanguageNameEntity],
+  [BaseSignatureLevelRepo, BaseSignatureLevelEntity],
   [CategoryRelationRepo, CategoryRelationEntity],
   [ArticleCategoryRepo, ArticleCategoryEntity],
+  [ArticleSignatureRepo, ArticleSignatureEntity],
 ] as [symbol, typeof BaseArticleEntity][];
 
 @Module({
