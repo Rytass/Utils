@@ -37,12 +37,15 @@ export class ArticleSignatureDataLoader {
       qb.leftJoinAndSelect('articleVersions.signatures', 'signatures');
       qb.leftJoinAndSelect('signatures.signatureLevel', 'signatureLevel');
 
-      pairs.forEach((pair) => {
+      pairs.forEach((pair, index) => {
         qb.orWhere(
           new Brackets((subQb) => {
-            subQb.andWhere('articleVersions.id = :id', { id: pair.id });
-            subQb.andWhere('articleVersions.version = :version', {
-              version: pair.version,
+            subQb.andWhere(`articleVersions.articleId = :id_${index}`, {
+              [`id_${index}`]: pair.id,
+            });
+
+            subQb.andWhere(`articleVersions.version = :version_${index}`, {
+              [`version_${index}`]: pair.version,
             });
 
             return subQb;
