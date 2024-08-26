@@ -95,6 +95,10 @@ export class ArticleSignatureService<
       throw new BadRequestException('Invalid article version');
     }
 
+    if (this.signatureLevelsCache.length && !signatureInfo?.signatureLevel) {
+      throw new BadRequestException('Signature level is required');
+    }
+
     const targetLevelIndex = signatureInfo?.signatureLevel
       ? this.signatureLevelsCache.findIndex((level) =>
           signatureInfo.signatureLevel instanceof BaseSignatureLevelEntity
