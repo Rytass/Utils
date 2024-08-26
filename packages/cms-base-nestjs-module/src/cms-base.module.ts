@@ -17,6 +17,7 @@ import { OptionProviders } from './constants/option-providers';
 import { CMSBaseModuleOptionsDto } from './typings/cms-base-root-module-options.dto';
 import { CMSBaseModuleOptionFactory } from './typings/cms-base-root-module-option-factory';
 import { ArticleSignatureService } from './services/article-signature.service';
+import { ArticleSignatureDataLoader } from './data-loaders/article-signature.dataloader';
 
 @Global()
 @Module({})
@@ -41,6 +42,7 @@ export class CMSBaseModule {
         },
         ArticleBaseService,
         CategoryBaseService,
+        ArticleSignatureDataLoader,
       ],
       exports: [
         ...TARGETS.map(([, , resolved]) => resolved),
@@ -48,6 +50,7 @@ export class CMSBaseModule {
         CategoryBaseService,
         ArticleSignatureService,
         CategoryDataLoader,
+        ArticleSignatureDataLoader,
       ],
     };
   }
@@ -75,6 +78,7 @@ export class CMSBaseModule {
         },
         ArticleBaseService,
         CategoryBaseService,
+        ArticleSignatureDataLoader,
       ],
       exports: [
         ...TARGETS.map(([, , resolved]) => resolved),
@@ -82,6 +86,7 @@ export class CMSBaseModule {
         CategoryBaseService,
         ArticleSignatureService,
         CategoryDataLoader,
+        ArticleSignatureDataLoader,
       ],
     };
   }
