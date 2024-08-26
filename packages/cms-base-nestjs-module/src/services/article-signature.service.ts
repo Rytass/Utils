@@ -263,10 +263,12 @@ export class ArticleSignatureService<
           .filter((level) => !targetLevelNames.has(level.name))
           .map((level) => async () => {
             await runner.manager.delete(ArticleSignatureEntity, {
-              signatureLevel: level,
+              signatureLevelId: level.id,
             });
 
-            await runner.manager.softDelete(BaseSignatureLevelEntity, level);
+            await runner.manager.softDelete(BaseSignatureLevelEntity, {
+              id: level.id,
+            });
           })
           .reduce((prev, next) => prev.then(next), Promise.resolve());
 
