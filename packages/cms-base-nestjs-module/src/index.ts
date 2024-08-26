@@ -4,6 +4,7 @@ export * from './cms-base.module';
 // Services
 export * from './services/article-base.service';
 export * from './services/category-base.service';
+export * from './services/article-signature.service';
 export * from './data-loaders/category.dataloader';
 
 // Models

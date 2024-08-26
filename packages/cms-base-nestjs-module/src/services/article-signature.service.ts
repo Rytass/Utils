@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import {
   ENABLE_SIGNATURE_MODE,
+  RESOLVED_ARTICLE_VERSION_REPO,
   RESOLVED_SIGNATURE_LEVEL_REPO,
   SIGNATURE_LEVELS,
 } from '../typings/cms-base-providers';
@@ -24,29 +25,76 @@ import { ArticleSignatureResult } from '../typings/article-signature-result.enum
 export class ArticleSignatureService<
   SignatureLevelEntity extends
     BaseSignatureLevelEntity = BaseSignatureLevelEntity,
-  ArticleVersionEntity extends
-    BaseArticleVersionEntity = BaseArticleVersionEntity,
 > implements OnApplicationBootstrap
 {
   constructor(
+    @Inject(RESOLVED_ARTICLE_VERSION_REPO)
+    private readonly articleVersionRepo: Repository<BaseArticleVersionEntity>,
     @Inject(ENABLE_SIGNATURE_MODE)
     private readonly signatureMode: boolean,
     @Inject(SIGNATURE_LEVELS)
     private readonly signatureLevels: string[] | SignatureLevelEntity[],
     @Inject(RESOLVED_SIGNATURE_LEVEL_REPO)
-    private readonly signatureLevelRepo: Repository<SignatureLevelEntity>,
+    private readonly signatureLevelRepo: Repository<BaseSignatureLevelEntity>,
     @Inject(ArticleSignatureRepo)
     private readonly articleSignatureRepo: Repository<ArticleSignatureEntity>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
   ) {}
 
-  private signatureLevelsCache: SignatureLevelEntity[] = [];
+  private signatureLevelsCache: BaseSignatureLevelEntity[] = [];
 
-  async approveVersion(
-    articleVersion: ArticleVersionEntity,
+  rejectVersion(
+    articleVersion: {
+      id: string;
+      version: number;
+    },
+    signatureInfo?: SignatureInfoDto<SignatureLevelEntity> & {
+      reason?: string | null;
+    },
+  ): Promise<ArticleSignatureEntity> {
+    return this.signature(
+      ArticleSignatureResult.REJECTED,
+      articleVersion,
+      signatureInfo,
+    );
+  }
+
+  approveVersion(
+    articleVersion: {
+      id: string;
+      version: number;
+    },
     signatureInfo?: SignatureInfoDto<SignatureLevelEntity>,
   ): Promise<ArticleSignatureEntity> {
+    return this.signature(
+      ArticleSignatureResult.APPROVED,
+      articleVersion,
+      signatureInfo,
+    );
+  }
+
+  private async signature(
+    result: ArticleSignatureResult,
+    articleVersion: {
+      id: string;
+      version: number;
+    },
+    signatureInfo?: SignatureInfoDto<SignatureLevelEntity> & {
+      reason?: string | null;
+    },
+  ): Promise<ArticleSignatureEntity> {
+    if (
+      !(await this.articleVersionRepo.exists({
+        where: {
+          articleId: articleVersion.id,
+          version: articleVersion.version,
+        },
+      }))
+    ) {
+      throw new BadRequestException('Invalid article version');
+    }
+
     const targetLevelIndex = signatureInfo?.signatureLevel
       ? this.signatureLevelsCache.findIndex((level) =>
           signatureInfo.signatureLevel instanceof BaseSignatureLevelEntity
@@ -74,11 +122,13 @@ export class ArticleSignatureService<
       );
 
       qb.andWhere('signatures.articleId = :articleId', {
-        articleId: articleVersion.articleId,
+        articleId: articleVersion.id,
       });
+
       qb.andWhere('signatures.version = :version', {
         version: articleVersion.version,
       });
+
       qb.setLock('pessimistic_write');
 
       const signatures = await qb.getMany();
@@ -90,6 +140,7 @@ export class ArticleSignatureService<
             signature,
           ]),
         );
+
         const needSignTargets = this.signatureLevelsCache
           .slice(0, targetLevelIndex + 1)
           .map((level) => signatureMap.get(level.id) ?? null);
@@ -132,11 +183,15 @@ export class ArticleSignatureService<
         }
 
         const signature = this.articleSignatureRepo.create({
-          articleId: articleVersion.articleId,
+          articleId: articleVersion.id,
           version: articleVersion.version,
           signatureLevelId: this.signatureLevelsCache[targetLevelIndex].id,
-          result: ArticleSignatureResult.APPROVED,
+          result,
           signerId: signatureInfo?.signerId ?? null,
+          rejectReason:
+            result === ArticleSignatureResult.REJECTED
+              ? (signatureInfo?.reason ?? null)
+              : null,
         });
 
         await runner.manager.save(signature);
@@ -147,13 +202,19 @@ export class ArticleSignatureService<
       }
 
       const signature = this.articleSignatureRepo.create({
-        articleId: articleVersion.articleId,
+        articleId: articleVersion.id,
         version: articleVersion.version,
-        result: ArticleSignatureResult.APPROVED,
+        result,
         signerId: signatureInfo?.signerId ?? null,
+        rejectReason:
+          result === ArticleSignatureResult.REJECTED
+            ? (signatureInfo?.reason ?? null)
+            : null,
       });
 
       await runner.manager.save(signature);
+
+      await runner.commitTransaction();
 
       return signature;
     } catch (ex) {
@@ -180,7 +241,8 @@ export class ArticleSignatureService<
       const existedMap = new Map(
         signatureLevels.map((level) => [level.name, level]),
       );
-      const usedSet = new Set<SignatureLevelEntity>();
+
+      const usedSet = new Set<BaseSignatureLevelEntity>();
 
       const runner = this.dataSource.createQueryRunner();
 
@@ -189,7 +251,7 @@ export class ArticleSignatureService<
 
       try {
         this.signatureLevelsCache = await this.signatureLevels
-          .map((level, index) => async (levels: SignatureLevelEntity[]) => {
+          .map((level, index) => async (levels: BaseSignatureLevelEntity[]) => {
             if (level instanceof BaseSignatureLevelEntity) {
               level.sequence = index;
               level.required = true;
@@ -204,7 +266,7 @@ export class ArticleSignatureService<
             if (existedMap.has(level)) {
               const existedLevel = existedMap.get(
                 level,
-              ) as SignatureLevelEntity;
+              ) as BaseSignatureLevelEntity;
 
               existedLevel.sequence = index;
               existedLevel.required = true;
@@ -213,15 +275,10 @@ export class ArticleSignatureService<
 
               usedSet.add(existedLevel);
 
-              return [
-                ...levels,
-                existedMap.get(level),
-              ] as SignatureLevelEntity[];
+              return [...levels, existedLevel];
             }
 
-            const newLevel = (
-              this.signatureLevelRepo as Repository<BaseSignatureLevelEntity>
-            ).create({
+            const newLevel = this.signatureLevelRepo.create({
               name: level,
               required: true,
               sequence: index,
@@ -229,13 +286,13 @@ export class ArticleSignatureService<
 
             await runner.manager.save(newLevel);
 
-            usedSet.add(newLevel as SignatureLevelEntity);
+            usedSet.add(newLevel);
 
             return levels;
           })
           .reduce(
             (prev, next) => prev.then(next),
-            Promise.resolve([] as SignatureLevelEntity[]),
+            Promise.resolve([] as BaseSignatureLevelEntity[]),
           );
 
         await signatureLevels
