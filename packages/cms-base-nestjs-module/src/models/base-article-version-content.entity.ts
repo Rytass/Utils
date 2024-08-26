@@ -12,6 +12,7 @@ import { DEFAULT_LANGUAGE } from '../constants/default-language';
 import { QuadratsElement } from '@quadrats/core';
 import { BaseArticleVersionEntity } from './base-article-version.entity';
 import { FULL_TEXT_SEARCH_TOKEN_VERSION } from '../constants/full-text-search-token-version';
+import { EMPTY_QUADRATS_ELEMENTS } from '../constants/empty-quadrats-elements';
 
 export const BaseArticleVersionContentRepo = Symbol(
   'BaseArticleVersionContentRepo',
@@ -37,7 +38,7 @@ export class BaseArticleVersionContentEntity {
   @Index()
   description: string | null;
 
-  @Column('json')
+  @Column('json', { default: EMPTY_QUADRATS_ELEMENTS })
   content: QuadratsElement[];
 
   @Column('tsvector', { nullable: true, select: false })

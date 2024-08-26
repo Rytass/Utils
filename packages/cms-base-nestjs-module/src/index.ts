@@ -17,6 +17,7 @@ export * from './typings/article-search-mode.enum';
 
 // Constants
 export * from './constants/default-language';
+export * from './constants/empty-quadrats-elements';
 
 // Errors
 export * from './constants/errors/index';
