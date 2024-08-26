@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.47](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.46...@rytass/cms-base-nestjs-module@0.1.47) (2024-08-26)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** soft delete criteria ([42dbd92](https://github.com/Rytass/Utils/commit/42dbd92d7fc0cb1c10ff59992ebfbcb4fd58ad00))
+
 ## [0.1.46](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.45...@rytass/cms-base-nestjs-module@0.1.46) (2024-08-26)
 
 ### Bug Fixes
