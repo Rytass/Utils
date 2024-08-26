@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.41](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.40...@rytass/cms-base-nestjs-module@0.1.41) (2024-08-26)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** SQL typo ([f39b432](https://github.com/Rytass/Utils/commit/f39b4324e01296848a00b7fd9957642b4f5949c3))
+
+### Features
+
+- **cms-base-nestjs-module:** change tags column type to jsonb ([7ed92aa](https://github.com/Rytass/Utils/commit/7ed92aae69b0e3e8b03d22e7751403c1811637e5))
+
 ## [0.1.40](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.39...@rytass/cms-base-nestjs-module@0.1.40) (2024-08-26)
 
 ### Bug Fixes
