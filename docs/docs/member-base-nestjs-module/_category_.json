@@ -1,0 +1,8 @@
+{
+  "label": "Member Base (NestJS)",
+  "position": 1,
+  "link": {
+    "type": "generated-index",
+    "description": "Member management system base module for NestJS."
+  }
+}
