@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.49](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.48...@rytass/cms-base-nestjs-module@0.1.49) (2024-08-26)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** remove rejected record when approve overwrite request ([be6bae8](https://github.com/Rytass/Utils/commit/be6bae8f3433259094466a3a9f4b84b02fc8103a))
+
+### Features
+
+- **cms-base-nestjs-module:** article signature dataloader ([17f73c0](https://github.com/Rytass/Utils/commit/17f73c0c388d8aea8963cbca77802a3eacd53cc9))
+
 ## [0.1.48](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.47...@rytass/cms-base-nestjs-module@0.1.48) (2024-08-26)
 
 ### Bug Fixes
