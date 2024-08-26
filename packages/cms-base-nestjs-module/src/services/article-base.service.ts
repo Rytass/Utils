@@ -368,10 +368,20 @@ export class ArticleBaseService<
           break;
         }
 
+        case ArticleSearchMode.TITLE_AND_TAG:
         case ArticleSearchMode.TITLE:
         default:
           qb.andWhere(
             new Brackets((subQb) => {
+              if (options?.searchMode === ArticleSearchMode.TITLE_AND_TAG) {
+                subQb.orWhere(
+                  ':searchTerm = ANY (SELECT LOWER(value) FROM jsonb_array_elements_text(versions.tags))',
+                  {
+                    searchTerm: `${options.searchTerm?.toLocaleLowerCase()}`,
+                  },
+                );
+              }
+
               subQb.orWhere('multiLanguageContents.title ILIKE :searchTerm', {
                 searchTerm: `%${options.searchTerm}%`,
               });
