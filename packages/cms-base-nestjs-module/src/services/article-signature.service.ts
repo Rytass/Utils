@@ -248,7 +248,7 @@ export class ArticleSignatureService<
   }
 
   async onApplicationBootstrap(): Promise<void> {
-    if (this.signatureMode && this.signatureLevels.length) {
+    if (this.signatureMode) {
       const signatureLevels = await this.signatureLevelRepo.find();
 
       const existedMap = new Map(
