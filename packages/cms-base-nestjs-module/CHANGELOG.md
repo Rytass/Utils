@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.38](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.37...@rytass/cms-base-nestjs-module@0.1.38) (2024-08-26)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** typing DeepPartial -> Partial ([448550f](https://github.com/Rytass/Utils/commit/448550f7fffba0b9c1666fa767e9f598c8d6efcc))
+
 ## [0.1.37](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.36...@rytass/cms-base-nestjs-module@0.1.37) (2024-08-26)
 
 ### Bug Fixes
