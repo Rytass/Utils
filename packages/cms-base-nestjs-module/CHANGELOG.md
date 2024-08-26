@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.50](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.49...@rytass/cms-base-nestjs-module@0.1.50) (2024-08-26)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** missing symbol export ([3698a18](https://github.com/Rytass/Utils/commit/3698a18fd5f01090571113ce0146ac81d27ed31f))
+
 ## [0.1.49](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.48...@rytass/cms-base-nestjs-module@0.1.49) (2024-08-26)
 
 ### Bug Fixes
