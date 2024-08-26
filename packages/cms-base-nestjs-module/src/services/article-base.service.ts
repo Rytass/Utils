@@ -15,7 +15,11 @@ import {
   SelectQueryBuilder,
 } from 'typeorm';
 import { BaseArticleEntity } from '../models/base-article.entity';
-import { ArticleCreateDto } from '../typings/article-create.dto';
+import {
+  ArticleCreateDto,
+  SingleArticleCreateDto,
+  SingleVersionContentCreateDto,
+} from '../typings/article-create.dto';
 import { BaseArticleVersionEntity } from '../models/base-article-version.entity';
 import { BaseArticleVersionContentEntity } from '../models/base-article-version-content.entity';
 import {
@@ -46,6 +50,11 @@ import { CategoryNotFoundError } from '../constants/errors/category.errors';
 import { ArticleSearchMode } from '../typings/article-search-mode.enum';
 import { QuadratsElement, QuadratsText } from '@quadrats/core';
 import { FULL_TEXT_SEARCH_TOKEN_VERSION } from '../constants/full-text-search-token-version';
+import {
+  ArticleNotIncludeFields,
+  ArticleVersionContentNotIncludeFields,
+  ArticleVersionNotIncludeFields,
+} from '../constants/not-include-entity-fields';
 
 @Injectable()
 export class ArticleBaseService<
@@ -380,9 +389,7 @@ export class ArticleBaseService<
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
   >(
     id: string,
-    options: ArticleCreateDto<A>,
-    articleVersionOptions?: DeepPartial<AV>,
-    articleVersionContentOptions?: DeepPartial<AVC>,
+    options: Omit<ArticleCreateDto<A, AV, AVC>, 'version'>,
   ): Promise<A> {
     const targetCategories = options?.categoryIds?.length
       ? await this.baseCategoryRepo.find({
@@ -433,13 +440,29 @@ export class ArticleBaseService<
       await runner.manager.save(
         this.baseArticleRepo.create({
           ...article,
-          ...options,
+          ...Object.entries(options)
+            .filter(([key]) => !~ArticleNotIncludeFields.indexOf(key))
+            .reduce(
+              (vars, [key, value]) => ({
+                ...vars,
+                [key]: value,
+              }),
+              {},
+            ),
           ...(options.categoryIds ? { categories: targetCategories } : {}),
         }),
       );
 
       const version = this.baseArticleVersionRepo.create({
-        ...(articleVersionOptions ?? {}),
+        ...Object.entries(options)
+          .filter(([key]) => !~ArticleVersionNotIncludeFields.indexOf(key))
+          .reduce(
+            (vars, [key, value]) => ({
+              ...vars,
+              [key]: value,
+            }),
+            {},
+          ),
         articleId: article.id,
         version: latestVersion.version + 1,
         tags: options.tags,
@@ -452,29 +475,37 @@ export class ArticleBaseService<
           throw new MultipleLanguageModeIsDisabledError();
 
         await runner.manager.save(
-          Object.entries(options.multiLanguageContents).map(
-            ([language, content]) =>
-              this.baseArticleVersionContentRepo.create({
-                ...(articleVersionContentOptions ?? {}),
-                articleId: article.id,
-                version: latestVersion.version + 1,
-                language,
-                title: content.title,
-                description: content.description,
-                content: content.content,
-              }),
+          Object.entries(
+            options.multiLanguageContents as Record<
+              Language,
+              SingleVersionContentCreateDto<AVC>
+            >,
+          ).map(([language, content]) =>
+            this.baseArticleVersionContentRepo.create({
+              ...content,
+              articleId: article.id,
+              version: latestVersion.version + 1,
+              language,
+            }),
           ),
         );
       } else {
         await runner.manager.save(
           this.baseArticleVersionContentRepo.create({
-            ...(articleVersionContentOptions ?? {}),
+            ...Object.entries(options)
+              .filter(
+                ([key]) => !~ArticleVersionContentNotIncludeFields.indexOf(key),
+              )
+              .reduce(
+                (vars, [key, value]) => ({
+                  ...vars,
+                  [key]: value,
+                }),
+                {},
+              ),
             articleId: article.id,
             version: latestVersion.version + 1,
             language: DEFAULT_LANGUAGE,
-            title: options.title,
-            description: options.description,
-            content: options.content,
           }),
         );
       }
@@ -495,11 +526,7 @@ export class ArticleBaseService<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
-  >(
-    options: ArticleCreateDto<A>,
-    articleVersionOptions?: DeepPartial<AV>,
-    articleVersionContentOptions?: DeepPartial<AVC>,
-  ): Promise<A> {
+  >(options: ArticleCreateDto<A, AV, AVC>): Promise<A> {
     const targetCategories = options?.categoryIds?.length
       ? await this.baseCategoryRepo.find({
           where: {
@@ -514,7 +541,15 @@ export class ArticleBaseService<
     }
 
     const article = this.baseArticleRepo.create({
-      ...options,
+      ...Object.entries(options)
+        .filter(([key]) => !~ArticleNotIncludeFields.indexOf(key))
+        .reduce(
+          (vars, [key, value]) => ({
+            ...vars,
+            [key]: value,
+          }),
+          {},
+        ),
       categories: targetCategories,
     });
 
@@ -527,9 +562,16 @@ export class ArticleBaseService<
       await runner.manager.save(article);
 
       const version = this.baseArticleVersionRepo.create({
-        ...(articleVersionOptions ?? {}),
+        ...Object.entries(options)
+          .filter(([key]) => !~ArticleVersionNotIncludeFields.indexOf(key))
+          .reduce(
+            (vars, [key, value]) => ({
+              ...vars,
+              [key]: value,
+            }),
+            {},
+          ),
         articleId: article.id,
-        version: 0,
         tags: options.tags,
       });
 
@@ -543,13 +585,10 @@ export class ArticleBaseService<
           Object.entries(options.multiLanguageContents).map(
             ([language, content]) =>
               this.baseArticleVersionContentRepo.create({
-                ...(articleVersionContentOptions ?? {}),
+                ...content,
                 articleId: article.id,
-                version: 0,
+                version: version.version,
                 language,
-                title: content.title,
-                description: content.description,
-                content: content.content,
               }) as AVC,
           ),
         );
@@ -569,13 +608,20 @@ export class ArticleBaseService<
       } else {
         const savedContent = await runner.manager.save(
           this.baseArticleVersionContentRepo.create({
-            ...(articleVersionContentOptions ?? {}),
+            ...Object.entries(options)
+              .filter(
+                ([key]) => !~ArticleVersionContentNotIncludeFields.indexOf(key),
+              )
+              .reduce(
+                (vars, [key, value]) => ({
+                  ...vars,
+                  [key]: value,
+                }),
+                {},
+              ),
             articleId: article.id,
-            version: 0,
+            version: version.version,
             language: DEFAULT_LANGUAGE,
-            title: options.title,
-            description: options.description,
-            content: options.content,
           }) as AVC,
         );
 
