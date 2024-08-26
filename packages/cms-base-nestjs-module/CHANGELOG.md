@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.52](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.51...@rytass/cms-base-nestjs-module@0.1.52) (2024-08-26)
+
+### Features
+
+- **cms-base-nestjs-module:** support TITLE_AND_TAG in searchMode ([24a11f9](https://github.com/Rytass/Utils/commit/24a11f942e332f0c17ec458e7a6f9021e6f58d8f))
+
 ## [0.1.51](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.50...@rytass/cms-base-nestjs-module@0.1.51) (2024-08-26)
 
 ### Features
