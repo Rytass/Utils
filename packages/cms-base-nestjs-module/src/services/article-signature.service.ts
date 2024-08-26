@@ -200,6 +200,8 @@ export class ArticleSignatureService<
 
         await runner.manager.save(signature);
 
+        await runner.commitTransaction();
+
         return signature;
       } else if (signatures.length) {
         throw new BadRequestException('Already signed');
