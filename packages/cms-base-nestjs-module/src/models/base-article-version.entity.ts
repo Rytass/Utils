@@ -24,7 +24,7 @@ export class BaseArticleVersionEntity {
   @PrimaryColumn('int', { default: 0 })
   version: number;
 
-  @Column('simple-array')
+  @Column('jsonb')
   tags: string[];
 
   @CreateDateColumn()
