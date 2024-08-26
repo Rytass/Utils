@@ -39,11 +39,3 @@ export type MultiLanguageArticleCreateDto<
 > = BaseArticleCreateDto<A, AV> & {
   multiLanguageContents: Record<Language, SingleVersionContentCreateDto<AVC>>;
 };
-
-export type ArticleCreateDto<
-  A extends BaseArticleEntity = BaseArticleEntity,
-  AV extends BaseArticleVersionEntity = BaseArticleVersionEntity,
-  AVC extends BaseArticleVersionContentEntity = BaseArticleVersionContentEntity,
-> =
-  | SingleArticleCreateDto<A, AV, AVC>
-  | MultiLanguageArticleCreateDto<A, AV, AVC>;

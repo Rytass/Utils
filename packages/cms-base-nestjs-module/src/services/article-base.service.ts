@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 import {
   BadRequestException,
   Inject,
@@ -8,7 +9,6 @@ import {
 import {
   Brackets,
   DataSource,
-  DeepPartial,
   In,
   QueryRunner,
   Repository,
@@ -16,7 +16,7 @@ import {
 } from 'typeorm';
 import { BaseArticleEntity } from '../models/base-article.entity';
 import {
-  ArticleCreateDto,
+  MultiLanguageArticleCreateDto,
   SingleArticleCreateDto,
   SingleVersionContentCreateDto,
 } from '../typings/article-create.dto';
@@ -48,7 +48,7 @@ import {
 } from '../constants/errors/article.errors';
 import { CategoryNotFoundError } from '../constants/errors/category.errors';
 import { ArticleSearchMode } from '../typings/article-search-mode.enum';
-import { QuadratsElement, QuadratsText } from '@quadrats/core';
+import { QuadratsText } from '@quadrats/core';
 import { FULL_TEXT_SEARCH_TOKEN_VERSION } from '../constants/full-text-search-token-version';
 import {
   ArticleNotIncludeFields,
@@ -389,7 +389,27 @@ export class ArticleBaseService<
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
   >(
     id: string,
-    options: Omit<ArticleCreateDto<A, AV, AVC>, 'version'>,
+    options: Omit<SingleArticleCreateDto<A, AV, AVC>, 'version'>,
+  ): Promise<A>;
+  async addVersion<
+    A extends ArticleEntity = ArticleEntity,
+    AV extends ArticleVersionEntity = ArticleVersionEntity,
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(
+    id: string,
+    options: Omit<MultiLanguageArticleCreateDto<A, AV, AVC>, 'version'>,
+  ): Promise<A>;
+  async addVersion<
+    A extends ArticleEntity = ArticleEntity,
+    AV extends ArticleVersionEntity = ArticleVersionEntity,
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(
+    id: string,
+    options: Omit<
+      | SingleArticleCreateDto<A, AV, AVC>
+      | MultiLanguageArticleCreateDto<A, AV, AVC>,
+      'version'
+    >,
   ): Promise<A> {
     const targetCategories = options?.categoryIds?.length
       ? await this.baseCategoryRepo.find({
@@ -474,23 +494,37 @@ export class ArticleBaseService<
         if (!this.multipleLanguageMode)
           throw new MultipleLanguageModeIsDisabledError();
 
-        await runner.manager.save(
+        const savedContents = await runner.manager.save<AVC>(
           Object.entries(
             options.multiLanguageContents as Record<
               Language,
               SingleVersionContentCreateDto<AVC>
             >,
-          ).map(([language, content]) =>
-            this.baseArticleVersionContentRepo.create({
-              ...content,
-              articleId: article.id,
-              version: latestVersion.version + 1,
-              language,
-            }),
+          ).map(
+            ([language, content]) =>
+              this.baseArticleVersionContentRepo.create({
+                ...content,
+                articleId: article.id,
+                version: latestVersion.version + 1,
+                language,
+              }) as AVC,
           ),
         );
+
+        if (this.fullTextSearchMode) {
+          await savedContents
+            .map(
+              (articleContent) => () =>
+                this.bindSearchTokens<AVC>(
+                  articleContent as AVC,
+                  options.tags,
+                  runner,
+                ),
+            )
+            .reduce((prev, next) => prev.then(next), Promise.resolve());
+        }
       } else {
-        await runner.manager.save(
+        const savedContent = await runner.manager.save<AVC>(
           this.baseArticleVersionContentRepo.create({
             ...Object.entries(options)
               .filter(
@@ -506,8 +540,12 @@ export class ArticleBaseService<
             articleId: article.id,
             version: latestVersion.version + 1,
             language: DEFAULT_LANGUAGE,
-          }),
+          }) as AVC,
         );
+
+        if (this.fullTextSearchMode) {
+          await this.bindSearchTokens<AVC>(savedContent, options.tags, runner);
+        }
       }
 
       await runner.commitTransaction();
@@ -526,7 +564,22 @@ export class ArticleBaseService<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
-  >(options: ArticleCreateDto<A, AV, AVC>): Promise<A> {
+  >(options: SingleArticleCreateDto<A, AV, AVC>): Promise<A>;
+
+  async create<
+    A extends ArticleEntity = ArticleEntity,
+    AV extends ArticleVersionEntity = ArticleVersionEntity,
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(options: MultiLanguageArticleCreateDto<A, AV, AVC>): Promise<A>;
+  async create<
+    A extends ArticleEntity = ArticleEntity,
+    AV extends ArticleVersionEntity = ArticleVersionEntity,
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(
+    options:
+      | SingleArticleCreateDto<A, AV, AVC>
+      | MultiLanguageArticleCreateDto<A, AV, AVC>,
+  ): Promise<A> {
     const targetCategories = options?.categoryIds?.length
       ? await this.baseCategoryRepo.find({
           where: {
