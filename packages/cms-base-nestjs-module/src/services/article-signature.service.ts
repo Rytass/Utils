@@ -247,6 +247,11 @@ export class ArticleSignatureService<
       );
 
       const usedSet = new Set<BaseSignatureLevelEntity>();
+      const targetLevelNames = new Set(
+        this.signatureLevels.map((level) =>
+          level instanceof BaseSignatureLevelEntity ? level.name : level,
+        ),
+      );
 
       const runner = this.dataSource.createQueryRunner();
 
@@ -254,6 +259,17 @@ export class ArticleSignatureService<
       await runner.startTransaction();
 
       try {
+        await signatureLevels
+          .filter((level) => !targetLevelNames.has(level.name))
+          .map((level) => async () => {
+            await runner.manager.delete(ArticleSignatureEntity, {
+              signatureLevel: level,
+            });
+
+            await runner.manager.softDelete(BaseSignatureLevelEntity, level);
+          })
+          .reduce((prev, next) => prev.then(next), Promise.resolve());
+
         this.signatureLevelsCache = await this.signatureLevels
           .map((level, index) => async (levels: BaseSignatureLevelEntity[]) => {
             if (level instanceof BaseSignatureLevelEntity) {
@@ -298,15 +314,6 @@ export class ArticleSignatureService<
             (prev, next) => prev.then(next),
             Promise.resolve([] as BaseSignatureLevelEntity[]),
           );
-
-        await signatureLevels
-          .filter((level) => !usedSet.has(level))
-          .map((level) => async () => {
-            await runner.manager.delete(ArticleSignatureEntity, {
-              signatureLevel: level,
-            });
-          })
-          .reduce((prev, next) => prev.then(next), Promise.resolve());
 
         await runner.commitTransaction();
       } catch (ex) {
