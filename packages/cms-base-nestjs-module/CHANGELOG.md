@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.42](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.41...@rytass/cms-base-nestjs-module@0.1.42) (2024-08-26)
+
+### Features
+
+- **cms-base-nestjs-module:** export quadrats empty element item ([55a5f14](https://github.com/Rytass/Utils/commit/55a5f14539294e54becf61d040c6baa44d1ca6df))
+
 ## [0.1.41](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.40...@rytass/cms-base-nestjs-module@0.1.41) (2024-08-26)
 
 ### Bug Fixes
