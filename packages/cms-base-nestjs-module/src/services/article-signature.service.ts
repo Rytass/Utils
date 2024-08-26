@@ -44,6 +44,11 @@ export class ArticleSignatureService<
 
   private signatureLevelsCache: BaseSignatureLevelEntity[] = [];
 
+  get finalSignatureLevel(): SignatureLevelEntity | null {
+    return (this.signatureLevelsCache[this.signatureLevelsCache.length - 1] ??
+      null) as SignatureLevelEntity | null;
+  }
+
   rejectVersion(
     articleVersion: {
       id: string;

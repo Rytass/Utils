@@ -11,4 +11,5 @@ export interface ArticleFindAllDto {
   limit?: number; // default: 20, max: 100
   searchTerm?: string;
   searchMode?: ArticleSearchMode; // default ArticleSearchMode.TITLE
+  onlyApproved?: boolean; // default: false
 }

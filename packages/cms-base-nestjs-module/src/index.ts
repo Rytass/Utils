@@ -5,7 +5,10 @@ export * from './cms-base.module';
 export * from './services/article-base.service';
 export * from './services/category-base.service';
 export * from './services/article-signature.service';
+
+// DataLoaders
 export * from './data-loaders/category.dataloader';
+export * from './data-loaders/article-signature.dataloader';
 
 // Models
 export { BaseArticleEntity } from './models/base-article.entity';

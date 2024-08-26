@@ -23,6 +23,8 @@ import {
 import { BaseArticleVersionEntity } from '../models/base-article-version.entity';
 import { BaseArticleVersionContentEntity } from '../models/base-article-version-content.entity';
 import {
+  ARTICLE_SIGNATURE_SERVICE,
+  ENABLE_SIGNATURE_MODE,
   FULL_TEXT_SEARCH_MODE,
   MULTIPLE_LANGUAGE_MODE,
   RESOLVED_ARTICLE_REPO,
@@ -55,6 +57,10 @@ import {
   ArticleVersionContentNotIncludeFields,
   ArticleVersionNotIncludeFields,
 } from '../constants/not-include-entity-fields';
+import { ArticleSignatureService } from './article-signature.service';
+import { ArticleFindByIdBaseDto } from '../typings/article-find-by-id.dto';
+import { ArticleDefaultQueryBuilderDto } from '../typings/article-default-query-builder.dto';
+import { ArticleSignatureResult } from '../typings/article-signature-result.enum';
 
 @Injectable()
 export class ArticleBaseService<
@@ -78,6 +84,10 @@ export class ArticleBaseService<
     private readonly multipleLanguageMode: boolean,
     @Inject(FULL_TEXT_SEARCH_MODE)
     private readonly fullTextSearchMode: boolean,
+    @Inject(ENABLE_SIGNATURE_MODE)
+    private readonly signatureMode: boolean,
+    @Inject(ARTICLE_SIGNATURE_SERVICE)
+    private readonly articleSignatureService: ArticleSignatureService,
     @InjectDataSource()
     private readonly dataSource: DataSource,
   ) {}
@@ -86,7 +96,7 @@ export class ArticleBaseService<
 
   private getDefaultQueryBuilder<A extends ArticleEntity = ArticleEntity>(
     alias = 'articles',
-    onlyLatest = false,
+    options?: ArticleDefaultQueryBuilderDto,
   ): SelectQueryBuilder<A> {
     const qb = this.baseArticleRepo.createQueryBuilder(alias);
 
@@ -97,7 +107,7 @@ export class ArticleBaseService<
       'multiLanguageContents',
     );
 
-    if (onlyLatest) {
+    if (options?.onlyLatest) {
       // Latest version
       qb.innerJoin(
         (subQb) => {
@@ -107,11 +117,47 @@ export class ArticleBaseService<
           subQb.addSelect('MAX(versions.version)', 'version');
           subQb.groupBy('versions.articleId');
 
+          if (options?.onlyApproved && this.signatureMode) {
+            subQb.innerJoin('versions.signatures', 'signatures');
+            subQb.andWhere('signatures.result = :result', {
+              result: ArticleSignatureResult.APPROVED,
+            });
+
+            const latestId =
+              this.articleSignatureService.finalSignatureLevel?.id;
+
+            if (latestId) {
+              subQb.andWhere(
+                'signatures.signatureLevelId = :signatureLevelId',
+                {
+                  signatureLevelId: latestId,
+                },
+              );
+            } else {
+              subQb.andWhere('signatures.signatureLevelId IS NULL');
+            }
+          }
+
           return subQb;
         },
         'latest',
         'latest.version = versions.version AND latest."articleId" = versions."articleId"',
       );
+    } else if (options?.onlyApproved && this.signatureMode) {
+      qb.innerJoin('versions.signatures', 'signatures');
+      qb.andWhere('signatures.result = :result', {
+        result: ArticleSignatureResult.APPROVED,
+      });
+
+      const latestId = this.articleSignatureService.finalSignatureLevel?.id;
+
+      if (latestId) {
+        qb.andWhere('signatures.signatureLevelId = :signatureLevelId', {
+          signatureLevelId: latestId,
+        });
+      } else {
+        qb.andWhere('signatures.signatureLevelId IS NULL');
+      }
     }
 
     return qb as SelectQueryBuilder<A>;
@@ -193,27 +239,41 @@ export class ArticleBaseService<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
-  >(id: string): Promise<ArticleBaseDto<A, AV, AVC>>;
+  >(
+    id: string,
+    options?: ArticleFindByIdBaseDto,
+  ): Promise<ArticleBaseDto<A, AV, AVC>>;
   async findById<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
-  >(id: string, language: Language): Promise<SingleArticleBaseDto<A, AV, AVC>>;
+  >(
+    id: string,
+    options?: ArticleFindByIdBaseDto & { language: Language },
+  ): Promise<SingleArticleBaseDto<A, AV, AVC>>;
   async findById<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
-  >(id: string, language?: Language): Promise<ArticleBaseDto<A, AV, AVC>> {
-    if (language && !this.multipleLanguageMode) {
+  >(
+    id: string,
+    options?: ArticleFindByIdBaseDto,
+  ): Promise<ArticleBaseDto<A, AV, AVC>> {
+    if (options?.language && !this.multipleLanguageMode) {
       throw new MultipleLanguageModeIsDisabledError();
     }
 
-    const qb = this.getDefaultQueryBuilder<A>('articles', true);
+    const qb = this.getDefaultQueryBuilder<A>('articles', {
+      onlyLatest: true,
+      onlyApproved: options?.onlyApproved,
+    });
 
     qb.andWhere('articles.id = :id', { id });
 
-    if (language) {
-      qb.andWhere('multiLanguageContents.language = :language', { language });
+    if (options?.language) {
+      qb.andWhere('multiLanguageContents.language = :language', {
+        language: options.language,
+      });
     }
 
     const article = await qb.getOne();
@@ -222,9 +282,10 @@ export class ArticleBaseService<
       throw new ArticleNotFoundError();
     }
 
-    if (language || !this.multipleLanguageMode) {
+    if (options?.language || !this.multipleLanguageMode) {
       const defaultContent = article.versions[0].multiLanguageContents.find(
-        (content) => content.language === (language || DEFAULT_LANGUAGE),
+        (content) =>
+          content.language === (options?.language || DEFAULT_LANGUAGE),
       ) as AVC;
 
       return {
@@ -266,7 +327,10 @@ export class ArticleBaseService<
       throw new MultipleLanguageModeIsDisabledError();
     }
 
-    const qb = this.getDefaultQueryBuilder<A>('articles', true);
+    const qb = this.getDefaultQueryBuilder<A>('articles', {
+      onlyLatest: true,
+      onlyApproved: options?.onlyApproved,
+    });
 
     if (options?.ids?.length) {
       qb.andWhere('articles.id IN (:...ids)', { ids: options.ids });
