@@ -28,5 +28,16 @@ export class AppService {
     @Inject(RESOLVED_CATEGORY_REPO)
     private readonly categoryRepo: Repository<CustomCategoryEntity>,
   ) {}
+
+  async findCategories() {
+    const qb = this.categoryRepo.createQueryBuilder('categories');
+
+    qb.leftJoinAndSelect('categories.multiLanguageNames', 'multiLanguageNames');
+    qb.leftJoinAndSelect('categories.articles', 'articles');
+
+    const categories = await qb.getMany();
+
+    return categories;
+  }
 }
 ```
