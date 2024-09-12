@@ -82,3 +82,11 @@ export class PasswordShouldUpdatePasswordError extends BadRequestException {
 
   code = 109;
 }
+
+export class PasswordInHistoryError extends BadRequestException {
+  constructor() {
+    super('Password is in history');
+  }
+
+  code = 110;
+}

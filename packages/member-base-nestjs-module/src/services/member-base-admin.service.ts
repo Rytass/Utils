@@ -47,7 +47,7 @@ export class MemberBaseAdminService<
   ): Promise<T> {
     if (
       !ignorePasswordPolicy &&
-      !(await this.passwordValidatorService.validatePassword(newPassword))
+      !(await this.passwordValidatorService.validatePassword(newPassword, id))
     ) {
       throw new PasswordDoesNotMeetPolicyError();
     }

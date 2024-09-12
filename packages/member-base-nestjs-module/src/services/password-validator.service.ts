@@ -18,6 +18,7 @@ import {
 import { Repository } from 'typeorm';
 import { DateTime } from 'luxon';
 import { generate } from 'generate-password';
+import { PasswordInHistoryError } from '../constants/errors/base.error';
 
 @Injectable()
 export class PasswordValidatorService<
@@ -116,7 +117,7 @@ export class PasswordValidatorService<
             const isVerify = await verify(history.password, password);
 
             if (isVerify) {
-              throw new Error('Password is in history');
+              throw new PasswordInHistoryError();
             }
           })
           .reduce((prev, next) => prev.then(next), Promise.resolve());

@@ -134,7 +134,9 @@ export class MemberBaseService<
     originPassword: string,
     newPassword: string,
   ): Promise<T> {
-    if (!(await this.passwordValidatorService.validatePassword(newPassword))) {
+    if (
+      !(await this.passwordValidatorService.validatePassword(newPassword, id))
+    ) {
       throw new PasswordDoesNotMeetPolicyError();
     }
 
@@ -172,15 +174,17 @@ export class MemberBaseService<
     token: string,
     newPassword: string,
   ): Promise<T> {
-    if (!(await this.passwordValidatorService.validatePassword(newPassword))) {
-      throw new PasswordDoesNotMeetPolicyError();
-    }
-
     try {
       const { id, requestedOn } = verifyJWT(
         token,
         this.resetPasswordTokenSecret,
       ) as { id: string; requestedOn: number };
+
+      if (
+        !(await this.passwordValidatorService.validatePassword(newPassword, id))
+      ) {
+        throw new PasswordDoesNotMeetPolicyError();
+      }
 
       const member = await this.baseMemberRepo.findOne({
         where: {
