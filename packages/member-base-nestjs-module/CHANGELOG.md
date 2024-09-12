@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.46](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.45...@rytass/member-base-nestjs-module@0.1.46) (2024-09-12)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** password history check failure ([60a787d](https://github.com/Rytass/Utils/commit/60a787d784121e28f083f12ad424602bdc094e46))
+
 ## [0.1.45](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.44...@rytass/member-base-nestjs-module@0.1.45) (2024-08-20)
 
 ### Bug Fixes
