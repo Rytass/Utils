@@ -324,6 +324,13 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage> im
   }
 
   public handleBindCardResult(request: ECPayBindCardRequest, payload: ECPayBindCardCallbackPayload) {
+    // CardNo is existed.
+    if (payload.RtnCode === 10100112) {
+      request.fail(payload.RtnCode.toString(), payload.RtnMsg, payload);
+
+      return;
+    }
+
     if (payload.RtnCode !== 1) {
       request.fail(payload.RtnCode.toString(), payload.RtnMsg);
 

@@ -133,9 +133,16 @@ export class ECPayBindCardRequest {
     this._gateway.emitter.emit(PaymentEvents.CARD_BOUND, this);
   }
 
-  fail(returnCode: string, message: string) {
+  fail(returnCode: string, message: string, additionalPayload?: ECPayBindCardCallbackPayload) {
     this._failedCode = returnCode;
     this._failedMessage = message;
+
+    if (additionalPayload) {
+      this._cardId = additionalPayload.CardID;
+      this._cardNumberPrefix = additionalPayload.Card6No;
+      this._cardNumberSuffix = additionalPayload.Card4No;
+      this._bindingDate = DateTime.fromFormat(additionalPayload.BindingDate, 'yyyy/MM/dd HH:mm:ss').toJSDate();
+    }
 
     this._gateway.emitter.emit(PaymentEvents.CARD_BINDING_FAILED, this);
   }
