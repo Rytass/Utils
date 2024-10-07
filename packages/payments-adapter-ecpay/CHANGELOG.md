@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.3.1](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.3.0...@rytass/payments-adapter-ecpay@0.3.1) (2024-10-07)
+
+### Features
+
+- **payments-adapter-happy-card:** new payment adapter happy card ([db76873](https://github.com/Rytass/Utils/commit/db76873e47a9ad44dbea02d19a0d1126fb2570c5))
+
 # [0.3.0](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.2.9...@rytass/payments-adapter-ecpay@0.3.0) (2024-10-07)
 
 ### Features
