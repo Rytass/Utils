@@ -6,10 +6,10 @@ import {
   ErrorCode,
 } from '@rytass/logistics';
 import axios from 'axios';
-import { TCatLogisticsInterface } from '.';
+import { TCatLogisticsInterface } from './typings';
 
 export class TCatLogisticsService<
-  T extends TCatLogisticsInterface<LogisticsStatus<T>>
+  T extends TCatLogisticsInterface<LogisticsStatus<T>>,
 > implements LogisticsService<T>
 {
   private readonly configuration: T;
@@ -17,7 +17,7 @@ export class TCatLogisticsService<
   constructor(
     configuration: T extends TCatLogisticsInterface<LogisticsStatus<T>>
       ? T
-      : never
+      : never,
   ) {
     this.configuration = configuration;
   }
@@ -29,7 +29,7 @@ export class TCatLogisticsService<
 
   private getLogisticsStatuses(
     id: string,
-    html: string
+    html: string,
   ): LogisticsTraceResponse<T> {
     const statusHistory = this.configuration.statusMap(html, id) as ReturnType<
       T['statusMap']
@@ -38,7 +38,7 @@ export class TCatLogisticsService<
     if (!statusHistory.length && !this.configuration.ignoreNotFound)
       throw new LogisticsError(
         ErrorCode.NOT_FOUND_ERROR,
-        `ID:${id} is not found.`
+        `ID:${id} is not found.`,
       );
 
     return {
@@ -52,7 +52,7 @@ export class TCatLogisticsService<
   async trace(logisticsId: string): Promise<LogisticsTraceResponse<T>[]>;
   async trace(logisticsId: string[]): Promise<LogisticsTraceResponse<T>[]>;
   async trace(
-    logisticsIds: string | string[]
+    logisticsIds: string | string[],
   ): Promise<LogisticsTraceResponse<T>[]> {
     const logistics: LogisticsTraceResponse<T>[] = [];
     const ids: string[] =
@@ -63,12 +63,12 @@ export class TCatLogisticsService<
         await axios
           .get(this.getTraceUrl(id))
           .then(({ data }) =>
-            logistics.push(this.getLogisticsStatuses(id, data))
+            logistics.push(this.getLogisticsStatuses(id, data)),
           )
           .catch((error) => {
             throw error;
           });
-      })
+      }),
     );
 
     return logistics;

@@ -1,4 +1,16 @@
-import { CustomsMark, InvoiceIssueOptions, InvoiceLoveCodeCarrier, InvoiceMobileCarrier, InvoiceMoicaCarrier, InvoicePaymentItem, InvoicePrintCarrier, InvoiceState, InvoiceVoidOptions, InvoicePlatformCarrier, TaxType } from '@rytass/invoice';
+import {
+  CustomsMark,
+  InvoiceIssueOptions,
+  InvoiceLoveCodeCarrier,
+  InvoiceMobileCarrier,
+  InvoiceMoicaCarrier,
+  InvoicePaymentItem,
+  InvoicePrintCarrier,
+  InvoiceState,
+  InvoiceVoidOptions,
+  InvoicePlatformCarrier,
+  TaxType,
+} from '@rytass/invoice';
 import { EZPayInvoice } from './ezpay-invoice';
 
 export enum EZPayBaseUrls {
@@ -16,7 +28,11 @@ export interface EZPayPaymentItem extends InvoicePaymentItem {
   unitPrice: number;
   quantity: number;
   unit?: string;
-  taxType?: TaxType.TAXED | TaxType.TAX_FREE | TaxType.ZERO_TAX | TaxType.SPECIAL;
+  taxType?:
+    | TaxType.TAXED
+    | TaxType.TAX_FREE
+    | TaxType.ZERO_TAX
+    | TaxType.SPECIAL;
 }
 
 export interface EZPayInvoiceOptions {
@@ -31,28 +47,31 @@ export interface EZPayInvoiceOptions {
   state?: InvoiceState;
 }
 
-interface EZPayInvoiceIssueBaseOptions extends InvoiceIssueOptions<EZPayInvoice> {
-  items: EZPayPaymentItem[];
+interface EZPayInvoiceIssueBaseOptions
+  extends InvoiceIssueOptions<EZPayPaymentItem> {
   buyerName: string;
   orderId: string;
   buyerEmail?: string;
   ezPayTransNumber?: string;
   specialTaxPercentage?: number; // 18% = 18
-  customsMark?: CustomsMark;
   remark?: string;
 }
 
-export interface EZPayInvoiceB2CIssueOptions extends EZPayInvoiceIssueBaseOptions {
+export interface EZPayInvoiceB2CIssueOptions
+  extends EZPayInvoiceIssueBaseOptions {
   carrier: EZPayAvailableCarrier;
 }
 
-export interface EZPayInvoiceB2BIssueOptions extends EZPayInvoiceIssueBaseOptions {
+export interface EZPayInvoiceB2BIssueOptions
+  extends EZPayInvoiceIssueBaseOptions {
   vatNumber: string;
   buyerAddress?: string;
   carrier: InvoicePrintCarrier;
 }
 
-export type EZPayInvoiceIssueOptions = EZPayInvoiceB2CIssueOptions | EZPayInvoiceB2BIssueOptions;
+export type EZPayInvoiceIssueOptions =
+  | EZPayInvoiceB2CIssueOptions
+  | EZPayInvoiceB2BIssueOptions;
 
 export interface EZPayInvoiceGatewayOptions {
   hashKey?: string;
@@ -72,9 +91,14 @@ export const EZPayTaxTypeCode = {
   [TaxType.ZERO_TAX]: '2',
   [TaxType.TAX_FREE]: '3',
   [TaxType.MIXED]: '9',
-}
+};
 
-export type EZPayAvailableCarrier = InvoicePrintCarrier | InvoiceLoveCodeCarrier | InvoiceMobileCarrier | InvoiceMoicaCarrier | InvoicePlatformCarrier;
+export type EZPayAvailableCarrier =
+  | InvoicePrintCarrier
+  | InvoiceLoveCodeCarrier
+  | InvoiceMobileCarrier
+  | InvoiceMoicaCarrier
+  | InvoicePlatformCarrier;
 
 export interface EZPayInvoiceMobileValidationPayload {
   TimeStamp: string;
@@ -270,7 +294,9 @@ export interface EZPayInvoiceInvalidAllowanceSuccessResponse {
   CreateTime: string;
 }
 
-export type EZPayInvoiceQueryOptions = EZPayInvoiceQueryWithInvoiceNumber | EZPayInvoiceQueryWithOrderId;
+export type EZPayInvoiceQueryOptions =
+  | EZPayInvoiceQueryWithInvoiceNumber
+  | EZPayInvoiceQueryWithOrderId;
 
 interface EZPayInvoiceQueryWithInvoiceNumber {
   invoiceNumber: string;

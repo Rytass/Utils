@@ -25,6 +25,7 @@
       "@rytass/order-builder": ["order-builder/src"],
       "@rytass/invoice": ["invoice/src"],
       "@rytass/invoice-adapter-ecpay": ["invoice-adapter-ecpay/src"],
+      "@rytass/invoice-adapter-bank-pro": ["invoice-adapter-bank-pro/src"],
       "@rytass/storages": ["storages/src"],
       "@rytass/storages-adapter-gcs": ["storages-adapter-gcs/src"],
       "@rytass/storages-adapter-local": ["storages-adapter-local/src"],

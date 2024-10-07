@@ -4785,6 +4785,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@rytass/invoice-adapter-bank-pro@workspace:packages/invoice-adapter-bank-pro":
+  version: 0.0.0-use.local
+  resolution: "@rytass/invoice-adapter-bank-pro@workspace:packages/invoice-adapter-bank-pro"
+  dependencies:
+    "@rytass/invoice": "npm:^0.2.2"
+    "@types/luxon": "npm:^3.4.2"
+    axios: "npm:^1.7.2"
+    luxon: "npm:^3.4.4"
+    validator: "npm:^13.12.0"
+  languageName: unknown
+  linkType: soft
+
 "@rytass/invoice-adapter-ecpay@workspace:packages/invoice-adapter-ecpay":
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-adapter-ecpay@workspace:packages/invoice-adapter-ecpay"

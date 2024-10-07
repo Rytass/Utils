@@ -1,8 +1,14 @@
-import { Invoice, InvoiceAllowance, InvoiceAllowanceState } from '@rytass/invoice';
+import {
+  Invoice,
+  InvoiceAllowance,
+  InvoiceAllowanceState,
+} from '@rytass/invoice';
 import { ECPayInvoice } from './ecpay-invoice';
 import { ECPayPaymentItem } from './typings';
 
-export class ECPayInvoiceAllowance implements InvoiceAllowance<ECPayPaymentItem> {
+export class ECPayInvoiceAllowance
+  implements InvoiceAllowance<ECPayPaymentItem>
+{
   readonly allowanceNumber: string;
 
   readonly allowancePrice: number;
@@ -19,7 +25,12 @@ export class ECPayInvoiceAllowance implements InvoiceAllowance<ECPayPaymentItem>
 
   invalidOn: Date | null = null;
 
-  constructor(options: Omit<InvoiceAllowance<ECPayPaymentItem>, 'invalidOn' | 'invalid'> & { parentInvoice: ECPayInvoice }) {
+  constructor(
+    options: Omit<
+      InvoiceAllowance<ECPayPaymentItem>,
+      'invalidOn' | 'invalid'
+    > & { parentInvoice: ECPayInvoice },
+  ) {
     this.allowanceNumber = options.allowanceNumber;
     this.allowancePrice = options.allowancePrice;
     this.allowancedOn = options.allowancedOn;
@@ -29,7 +40,7 @@ export class ECPayInvoiceAllowance implements InvoiceAllowance<ECPayPaymentItem>
     this.status = options.status;
   }
 
-  invalid(invalidOn = new Date()) {
+  invalid(invalidOn = new Date()): void {
     this.invalidOn = invalidOn;
     this.status = InvoiceAllowanceState.INVALID;
 

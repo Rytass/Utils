@@ -1,4 +1,9 @@
-import { Invoice, InvoiceAwardType, InvoiceState, TaxType } from '@rytass/invoice';
+import {
+  Invoice,
+  InvoiceAwardType,
+  InvoiceState,
+  TaxType,
+} from '@rytass/invoice';
 import { ECPayInvoiceAllowance } from './ecpay-allowance';
 import { ECPayInvoiceOptions, ECPayPaymentItem } from './typings';
 
@@ -30,7 +35,10 @@ export class ECPayInvoice implements Invoice<ECPayPaymentItem> {
   constructor(options: ECPayInvoiceOptions) {
     this.issuedOn = options.issuedOn;
     this.items = options.items;
-    this.nowAmount = options.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+    this.nowAmount = options.items.reduce(
+      (sum, item) => sum + item.quantity * item.unitPrice,
+      0,
+    );
     this.issuedAmount = this.nowAmount;
     this.randomCode = options.randomCode;
     this.invoiceNumber = options.invoiceNumber;
@@ -43,7 +51,7 @@ export class ECPayInvoice implements Invoice<ECPayPaymentItem> {
     }
   }
 
-  setVoid() {
+  setVoid(): void {
     this.state = InvoiceState.VOID;
     this.voidOn = new Date();
   }

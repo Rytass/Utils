@@ -1,4 +1,6 @@
-import { PaymentItem, Invoice, InvoiceAllowanceState } from '.';
+import { Invoice } from './invoice';
+import { InvoiceAllowanceState } from './typings';
+import { PaymentItem } from '@rytass/payments';
 
 export interface InvoiceAllowance<Item extends PaymentItem> {
   readonly allowanceNumber: string;

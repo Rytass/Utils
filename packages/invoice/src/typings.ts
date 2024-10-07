@@ -32,9 +32,10 @@ export interface InvoiceAllowanceOptions {
   taxType?: Omit<TaxType, TaxType.MIXED | TaxType.SPECIAL>;
 }
 
-export type InvoicePaymentItem = PaymentItem & {
-  taxType?: Omit<TaxType, TaxType.MIXED>;
-}
+export type InvoicePaymentItem<Item extends PaymentItem = PaymentItem> =
+  Item & {
+    taxType?: Omit<TaxType, TaxType.MIXED>;
+  };
 
 export interface InvoiceVoidOptions {
   reason: string;
@@ -69,7 +70,8 @@ export interface InvoicePlatformCarrier extends InvoiceCarrierBase {
   code: string;
 }
 
-export type InvoiceCarrier = InvoicePrintCarrier
+export type InvoiceCarrier =
+  | InvoicePrintCarrier
   | InvoiceMobileCarrier
   | InvoiceMoicaCarrier
   | InvoiceLoveCodeCarrier
@@ -80,18 +82,18 @@ export const InvoiceCarriers = {
   PRINT: { type: InvoiceCarrierType.PRINT } as InvoicePrintCarrier,
   MEMBER: { type: InvoiceCarrierType.MEMBER } as InvoiceMemberCarrier,
   PLATFORM: { type: InvoiceCarrierType.PLATFORM } as InvoicePlatformCarrier,
-  LOVE_CODE: (loveCode: string) => ({
+  LOVE_CODE: (loveCode: string): InvoiceLoveCodeCarrier => ({
     type: InvoiceCarrierType.LOVE_CODE,
     code: loveCode,
-  } as InvoiceLoveCodeCarrier),
-  MOBILE: (barcode: string) => ({
+  }),
+  MOBILE: (barcode: string): InvoiceMobileCarrier => ({
     type: InvoiceCarrierType.MOBILE,
     code: barcode,
-  } as InvoiceMobileCarrier),
-  MOICA: (barcode: string) => ({
+  }),
+  MOICA: (barcode: string): InvoiceMoicaCarrier => ({
     type: InvoiceCarrierType.MOICA,
     code: barcode,
-  } as InvoiceMoicaCarrier),
+  }),
 };
 
 export enum TaxType {

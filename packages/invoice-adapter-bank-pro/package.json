@@ -1,0 +1,34 @@
+{
+  "name": "@rytass/invoice-adapter-bank-pro",
+  "version": "0.0.1",
+  "description": "Rytass Invoice Gateway - BankPro",
+  "keywords": [
+    "rytass",
+    "invoice",
+    "bank-pro"
+  ],
+  "author": "Chia Yu Pai <fantasyatelier@gmail.com>",
+  "homepage": "https://github.com/Rytass/Utils#readme",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rytass/Utils.git"
+  },
+  "scripts": {
+    "clean": "npm run build:clean",
+    "build:clean": "node ../../scripts/cleanBuild.js",
+    "build": "npm run build:clean && node ../../scripts/build.js"
+  },
+  "bugs": {
+    "url": "https://github.com/Rytass/Utils/issues"
+  },
+  "dependencies": {
+    "@rytass/invoice": "^0.2.2",
+    "axios": "^1.7.2",
+    "luxon": "^3.4.4",
+    "validator": "^13.12.0"
+  },
+  "devDependencies": {
+    "@types/luxon": "^3.4.2"
+  }
+}
