@@ -4902,6 +4902,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@rytass/payments-adapter-happy-card@workspace:packages/payments-adapter-happy-card":
+  version: 0.0.0-use.local
+  resolution: "@rytass/payments-adapter-happy-card@workspace:packages/payments-adapter-happy-card"
+  dependencies:
+    "@rytass/payments": "npm:^0.1.2"
+    "@types/lodash": "npm:^4"
+    "@types/luxon": "npm:^3.4.2"
+    axios: "npm:^1.7.2"
+    lodash: "npm:^4.17.21"
+    luxon: "npm:^3.4.4"
+  languageName: unknown
+  linkType: soft
+
 "@rytass/payments-adapter-hwanan@workspace:packages/payments-adapter-hwanan":
   version: 0.0.0-use.local
   resolution: "@rytass/payments-adapter-hwanan@workspace:packages/payments-adapter-hwanan"
@@ -5878,6 +5891,13 @@ __metadata:
   dependencies:
     "@types/node": "npm:*"
   checksum: 10c0/ff8f54fc49621210291f815fe5b15d809fd7d032941b3180743440bd507ecdf08b9e844625fa346af568c84bf34114eb378dcdc3e921a08ba1e2a08d7e3c809c
+  languageName: node
+  linkType: hard
+
+"@types/lodash@npm:^4":
+  version: 4.17.10
+  resolution: "@types/lodash@npm:4.17.10"
+  checksum: 10c0/149b2b9fcc277204393423ed14df28894980c2322ec522fc23f2c6f7edef6ee8d876ee09ed4520f45d128adc0a7a6e618bb0017668349716cd99c6ef54a21621
   languageName: node
   linkType: hard
 

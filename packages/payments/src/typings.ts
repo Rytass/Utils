@@ -6,8 +6,8 @@ export interface PaymentItem {
   quantity: number;
 }
 
-export interface PrepareOrderInput {
-  items: PaymentItem[];
+export interface PrepareOrderInput<I extends PaymentItem = PaymentItem> {
+  items: I[];
 }
 
 export interface OrderCreditCardCommitMessage extends OrderCommitMessage {
@@ -67,29 +67,30 @@ export interface OrderCommitMessage {
 
 export type AsyncOrderInformation<OCM extends OrderCommitMessage> =
   OCM extends OrderVirtualAccountCommitMessage
-  ? VirtualAccountInfo
-  : OCM extends OrderCVSCommitMessage
-  ? CVSInfo
-  : OCM extends OrderBarcodeCommitMessage
-  ? BarcodeInfo
-  : never;
+    ? VirtualAccountInfo
+    : OCM extends OrderCVSCommitMessage
+      ? CVSInfo
+      : OCM extends OrderBarcodeCommitMessage
+        ? BarcodeInfo
+        : never;
 
 export type AdditionalInfo<OCM extends OrderCommitMessage> =
   OCM extends OrderCreditCardCommitMessage
-  ? CreditCardAuthInfo
-  : OCM extends OrderVirtualAccountCommitMessage
-  ? VirtualAccountPaymentInfo
-  : OCM extends OrderWebATMCommitMessage
-  ? WebATMPaymentInfo
-  : OCM extends OrderCVSCommitMessage
-  ? CVSPaymentInfo
-  : OCM extends OrderBarcodeCommitMessage
-  ? BarcodeInfo
-  : OCM extends OrderApplePayCommitMessage
-  ? undefined
-  : never;
+    ? CreditCardAuthInfo
+    : OCM extends OrderVirtualAccountCommitMessage
+      ? VirtualAccountPaymentInfo
+      : OCM extends OrderWebATMCommitMessage
+        ? WebATMPaymentInfo
+        : OCM extends OrderCVSCommitMessage
+          ? CVSPaymentInfo
+          : OCM extends OrderBarcodeCommitMessage
+            ? BarcodeInfo
+            : OCM extends OrderApplePayCommitMessage
+              ? undefined
+              : never;
 
-export interface Order<OCM extends OrderCommitMessage> extends PrepareOrderInput {
+export interface Order<OCM extends OrderCommitMessage>
+  extends PrepareOrderInput {
   // Order State
   state: OrderState;
 
@@ -111,14 +112,17 @@ export interface Order<OCM extends OrderCommitMessage> extends PrepareOrderInput
   items: PaymentItem[];
   committable: boolean;
 
-  infoRetrieved<T extends OCM>(asyncInformation: AsyncOrderInformation<T>): void;
+  infoRetrieved<T extends OCM>(
+    asyncInformation: AsyncOrderInformation<T>,
+  ): void;
   fail(code: string, message: string): void;
   commit<T extends OCM>(message: T, additionalInfo?: AdditionalInfo<T>): void;
 
   refund(amount?: number): Promise<void>;
 }
 
-type InputFromOrderCommitMessage<OCM extends OrderCommitMessage> = PrepareOrderInput;
+type InputFromOrderCommitMessage<OCM extends OrderCommitMessage> =
+  PrepareOrderInput;
 
 export interface PaymentGateway<
   OCM extends OrderCommitMessage,
@@ -126,7 +130,9 @@ export interface PaymentGateway<
 > {
   emitter: EventEmitter;
 
-  prepare<N extends OCM>(input: InputFromOrderCommitMessage<N>): Promise<Order<N>>;
+  prepare<N extends OCM>(
+    input: InputFromOrderCommitMessage<N>,
+  ): Promise<Order<N>>;
 
   query<OO extends O>(id: string, options?: any): Promise<OO>;
 }

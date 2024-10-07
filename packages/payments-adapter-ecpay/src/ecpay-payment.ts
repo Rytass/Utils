@@ -1070,6 +1070,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
     const unitPrices = (response.CustomField4 || '')
       .split(/#/)
       .filter((unitPrice) => unitPrice !== '');
+
     const items = response.ItemName.split(/#/).map((itemStr, index) => {
       const [name, quantity] = itemStr.split(/\sx(\d+)$/);
 
