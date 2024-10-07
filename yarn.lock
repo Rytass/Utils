@@ -4789,7 +4789,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-adapter-bank-pro@workspace:packages/invoice-adapter-bank-pro"
   dependencies:
-    "@rytass/invoice": "npm:^0.2.2"
+    "@rytass/invoice": "npm:^0.3.0"
     "@types/luxon": "npm:^3.4.2"
     axios: "npm:^1.7.2"
     luxon: "npm:^3.4.4"
@@ -4801,7 +4801,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-adapter-ecpay@workspace:packages/invoice-adapter-ecpay"
   dependencies:
-    "@rytass/invoice": "npm:^0.2.2"
+    "@rytass/invoice": "npm:^0.3.0"
     "@types/validator": "npm:^13.12.0"
     axios: "npm:^1.7.2"
     luxon: "npm:^3.4.4"
@@ -4813,7 +4813,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-adapter-ezpay@workspace:packages/invoice-adapter-ezpay"
   dependencies:
-    "@rytass/invoice": "npm:^0.2.2"
+    "@rytass/invoice": "npm:^0.3.0"
     "@types/luxon": "npm:^3.4.2"
     axios: "npm:^1.7.2"
     form-data: "npm:^4.0.0"
@@ -4822,7 +4822,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rytass/invoice@npm:^0.2.2, @rytass/invoice@workspace:packages/invoice":
+"@rytass/invoice@npm:^0.3.0, @rytass/invoice@workspace:packages/invoice":
   version: 0.0.0-use.local
   resolution: "@rytass/invoice@workspace:packages/invoice"
   dependencies:
@@ -4948,7 +4948,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/secret-adapter-vault-nestjs@workspace:packages/secret-adapter-vault-nestjs"
   dependencies:
-    "@rytass/secret-adapter-vault": "npm:^0.2.2"
+    "@rytass/secret-adapter-vault": "npm:^0.3.0"
     regenerator-runtime: "npm:^0.14.1"
   peerDependencies:
     "@nestjs/common": "*"
@@ -4957,7 +4957,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rytass/secret-adapter-vault@npm:^0.2.2, @rytass/secret-adapter-vault@workspace:packages/secret-adapter-vault":
+"@rytass/secret-adapter-vault@npm:^0.3.0, @rytass/secret-adapter-vault@workspace:packages/secret-adapter-vault":
   version: 0.0.0-use.local
   resolution: "@rytass/secret-adapter-vault@workspace:packages/secret-adapter-vault"
   dependencies:

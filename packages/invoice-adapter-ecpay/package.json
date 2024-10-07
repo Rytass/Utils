@@ -1,6 +1,6 @@
 {
   "name": "@rytass/invoice-adapter-ecpay",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "description": "Rytass Invoice Gateway - ECPay",
   "keywords": [
     "rytass",
@@ -23,7 +23,7 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/invoice": "^0.2.2",
+    "@rytass/invoice": "^0.3.0",
     "axios": "^1.7.2",
     "luxon": "^3.4.4",
     "validator": "^13.12.0"

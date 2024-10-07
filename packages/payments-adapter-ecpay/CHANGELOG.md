@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.3.0](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.2.9...@rytass/payments-adapter-ecpay@0.3.0) (2024-10-07)
+
+### Features
+
+- **invoice-adapter-bank-pro:** new adapter: bank pro ([def2815](https://github.com/Rytass/Utils/commit/def281507eaa30fef550467b3fad6632e152ce17))
+
 ## [0.2.9](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.2.8...@rytass/payments-adapter-ecpay@0.2.9) (2024-10-03)
 
 ### Bug Fixes
