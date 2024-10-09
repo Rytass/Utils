@@ -134,7 +134,7 @@ export class BankProInvoiceGateway
           return options.carrier.code;
 
         default:
-          return undefined;
+          return '';
       }
     })();
 
@@ -154,16 +154,16 @@ export class BankProInvoiceGateway
           TaxAmount: 0,
           TotalAmount: amount,
           SellerBAN: this.sellerBAN,
-          SellerCode: options.sellerCode ?? undefined,
-          BuyerBAN: options.vatNumber ?? undefined,
-          BuyerCompanyName: options.companyName ?? undefined,
+          SellerCode: options.sellerCode ?? '',
+          BuyerBAN: options.vatNumber ?? '',
+          BuyerCompanyName: options.companyName ?? '',
           PaperInvoiceMark: 'N',
           DonateMark:
             options.carrier?.type === InvoiceCarrierType.LOVE_CODE
               ? options.carrier.code
-              : undefined,
-          MainRemark: options.remark ?? undefined,
-          CarrierType: ((): '3J0002' | 'CQ0001' | undefined => {
+              : '',
+          MainRemark: options.remark ?? '',
+          CarrierType: ((): '3J0002' | 'CQ0001' | '' => {
             switch (options.carrier?.type) {
               case InvoiceCarrierType.MOBILE:
                 return '3J0002';
@@ -172,11 +172,11 @@ export class BankProInvoiceGateway
                 return 'CQ0001';
 
               default:
-                return undefined;
+                return '';
             }
           })(),
-          CarrierId1: carrierId,
-          CarrierId2: carrierId,
+          CarrierId1: carrierId ?? '',
+          CarrierId2: carrierId ?? '',
           Members: [
             {
               ID: [InvoiceCarrierType.MEMBER, undefined].indexOf(
@@ -184,26 +184,31 @@ export class BankProInvoiceGateway
               )
                 ? options.buyerEmail
                 : options.orderId,
-              Name: options.buyerName ?? undefined,
-              ZipCode: options.buyerZipCode ?? undefined,
-              Address: options.buyerAddress ?? undefined,
-              Mobilephone: options.buyerMobile ?? undefined,
+              Name: options.buyerName ?? '',
+              ZipCode: options.buyerZipCode ?? '',
+              Address: options.buyerAddress ?? '',
+              Tel: '',
+              Mobilephone: options.buyerMobile ?? '',
               Email: options.buyerEmail,
             },
           ],
           OrderDetails: options.items.map((item, index) => ({
             SeqNo: (index + 1).toString(),
-            ItemID: item.id ?? undefined,
-            Barcode: item.barcode ?? undefined,
+            ItemID: item.id ?? '',
+            Barcode: item.barcode ?? '',
             ItemName: item.name,
-            ItemSpec: item.spec ?? undefined,
-            Unit: item.unit ?? undefined,
-            UnitPrice: item.unitPrice,
+            ItemSpec: item.spec ?? '',
+            Unit: item.unit ?? '',
+            UnitPrice: 0,
             Qty: item.quantity,
+            Amount: 0,
+            TaxAmount: 0,
             TotalAmount: (item.unitPrice * item.quantity).toString(),
+            HealthAmount: 0,
             RateType:
               BankProRateType[(item.taxType as TaxType) ?? TaxType.TAXED],
-            DetailRemark: item.remark ?? undefined,
+            DiscountAmount: 0,
+            DetailRemark: item.remark ?? '',
           })),
         },
       ],
