@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.3](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-bank-pro@0.1.2...@rytass/invoice-adapter-bank-pro@0.1.3) (2024-11-05)
+
+### Bug Fixes
+
+- **invoice-adapter-bank-pro:** improve validation and date formatting in invoice processing ([8b6d18e](https://github.com/Rytass/Utils/commit/8b6d18e878d08c5b12e4f1194231344bebe09a9e))
+
 ## [0.1.2](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-bank-pro@0.1.1...@rytass/invoice-adapter-bank-pro@0.1.2) (2024-10-09)
 
 ### Bug Fixes
