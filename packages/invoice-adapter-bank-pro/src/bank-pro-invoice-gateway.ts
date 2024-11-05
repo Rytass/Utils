@@ -1,4 +1,3 @@
-import { BadRequestException } from '@nestjs/common';
 import {
   getTaxTypeFromItems,
   InvoiceCarrierType,
@@ -41,65 +40,65 @@ export class BankProInvoiceGateway
     this.baseUrl = options?.baseUrl || this.baseUrl;
 
     if (!/^\d{8}$/.test(options.sellerBAN)) {
-      throw new BadRequestException('Seller BAN should be 8 digits');
+      throw new Error('Seller BAN should be 8 digits');
     }
   }
 
   async issue(options: BankProInvoiceIssueOptions): Promise<BankProInvoice> {
     if (options.orderId.length > 40) {
-      throw new BadRequestException('Order ID is too long, max: 40');
+      throw new Error('Order ID is too long, max: 40');
     }
 
     if (options.vatNumber && !/^\d{8}$/.test(options.vatNumber)) {
-      throw new BadRequestException('VAT number should be 8 digits');
+      throw new Error('VAT number should be 8 digits');
     }
 
     if (options.remark && options.remark.length > 100) {
-      throw new BadRequestException('Remark is too long, max: 100');
+      throw new Error('Remark is too long, max: 100');
     }
 
     if (options.buyerName && options.buyerName.length > 80) {
-      throw new BadRequestException('Buyer name is too long, max: 80');
+      throw new Error('Buyer name is too long, max: 80');
     }
 
     if (options.buyerZipCode && !/\d{1,5}/.test(options.buyerZipCode)) {
-      throw new BadRequestException('Buyer zip code should be 1-5 digits');
+      throw new Error('Buyer zip code should be 1-5 digits');
     }
 
     if (options.buyerAddress && options.buyerAddress.length > 240) {
-      throw new BadRequestException('Buyer address is too long, max: 240');
+      throw new Error('Buyer address is too long, max: 240');
     }
 
     if (options.buyerMobile && options.buyerMobile.length > 20) {
-      throw new BadRequestException('Buyer mobile is too long, max: 20');
+      throw new Error('Buyer mobile is too long, max: 20');
     }
 
     if (options.items.some((item) => item.name.length > 200)) {
-      throw new BadRequestException('Item name is too long, max: 200');
+      throw new Error('Item name is too long, max: 200');
     }
 
     if (options.items.some((item) => item.unit && item.unit?.length > 6)) {
-      throw new BadRequestException('Item unit is too long, max: 6');
+      throw new Error('Item unit is too long, max: 6');
     }
 
     if (options.items.some((item) => item.quantity <= 0)) {
-      throw new BadRequestException('Item quantity should more than zero');
+      throw new Error('Item quantity should more than zero');
     }
 
     if (options.items.some((item) => item.remark && item.remark.length > 100)) {
-      throw new BadRequestException('Item remark is too long, max: 100');
+      throw new Error('Item remark is too long, max: 100');
     }
 
     if (options.items.some((item) => item.id && item.id.length > 40)) {
-      throw new BadRequestException('Item ID is too long, max: 40');
+      throw new Error('Item ID is too long, max: 40');
     }
 
     if (options.items.some((item) => item.spec && item.spec.length > 100)) {
-      throw new BadRequestException('Item spec is too long, max: 100');
+      throw new Error('Item spec is too long, max: 100');
     }
 
     if (!isEmail(options.buyerEmail)) {
-      throw new BadRequestException('Buyer email is invalid');
+      throw new Error('Buyer email is invalid');
     }
 
     const taxType = getTaxTypeFromItems(options.items);
@@ -107,7 +106,7 @@ export class BankProInvoiceGateway
     const rateType = BankProRateType[taxType];
 
     if (!rateType) {
-      throw new BadRequestException(
+      throw new Error(
         'Tax type not supported, you should split tax type in each invoice',
       );
     }
@@ -221,13 +220,11 @@ export class BankProInvoiceGateway
     );
 
     if (data.length === 0) {
-      throw new BadRequestException('Failed to issue invoice');
+      throw new Error('Failed to issue invoice');
     }
 
     if (data.some((response) => response.ErrorMessage)) {
-      throw new BadRequestException(
-        data.map((response) => response.ErrorMessage).join(', '),
-      );
+      throw new Error(data.map((response) => response.ErrorMessage).join(', '));
     }
 
     return new BankProInvoice({
@@ -243,31 +240,23 @@ export class BankProInvoiceGateway
   }
 
   async isMobileBarcodeValid(code: string): Promise<boolean> {
-    throw new BadRequestException(
-      'Bank Pro does not support mobile barcode validation',
-    );
+    throw new Error('Bank Pro does not support mobile barcode validation');
   }
 
   async isLoveCodeValid(code: string): Promise<boolean> {
-    throw new BadRequestException(
-      'Bank Pro does not support love code validation',
-    );
+    throw new Error('Bank Pro does not support love code validation');
   }
 
   public async void(invoice: BankProInvoice): Promise<BankProInvoice> {
-    throw new BadRequestException('Bank Pro does not support voiding invoice');
+    throw new Error('Bank Pro does not support voiding invoice');
   }
 
   public async allowance(invoice: BankProInvoice): Promise<BankProInvoice> {
-    throw new BadRequestException(
-      'Bank Pro does not support allowance invoice',
-    );
+    throw new Error('Bank Pro does not support allowance invoice');
   }
 
   async invalidAllowance(): Promise<BankProInvoice> {
-    throw new BadRequestException(
-      'Bank Pro does not support invalid allowance',
-    );
+    throw new Error('Bank Pro does not support invalid allowance');
   }
 
   async query(
@@ -277,6 +266,6 @@ export class BankProInvoiceGateway
     options: BankProInvoiceQueryFromInvoiceNumberArgs,
   ): Promise<BankProInvoice>;
   async query(options: BankProInvoiceQueryArgs): Promise<BankProInvoice> {
-    throw new BadRequestException('Bank Pro does not support query invoice');
+    throw new Error('Bank Pro does not support query invoice');
   }
 }

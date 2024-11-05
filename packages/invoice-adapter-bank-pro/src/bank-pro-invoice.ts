@@ -33,6 +33,7 @@ export class BankProInvoice implements Invoice<BankProPaymentItem> {
       (sum, item) => sum + item.quantity * item.unitPrice,
       0,
     );
+
     this.issuedAmount = this.nowAmount;
     this.randomCode = options.randomCode;
     this.invoiceNumber = options.invoiceNumber;
