@@ -1,9 +1,11 @@
+import { BadRequestException } from '@nestjs/common';
 import {
   getTaxTypeFromItems,
   InvoiceCarrierType,
   InvoiceGateway,
   TaxType,
 } from '@rytass/invoice';
+import axios from 'axios';
 import { DateTime } from 'luxon';
 import isEmail from 'validator/lib/isEmail';
 import { BankProInvoice } from './bank-pro-invoice';
@@ -20,8 +22,6 @@ import {
   BankProPaymentItem,
   BankProRateType,
 } from './typings';
-import { BadRequestException } from '@nestjs/common';
-import axios from 'axios';
 
 export class BankProInvoiceGateway
   implements
@@ -84,10 +84,6 @@ export class BankProInvoiceGateway
 
     if (options.items.some((item) => item.quantity <= 0)) {
       throw new BadRequestException('Item quantity should more than zero');
-    }
-
-    if (options.items.some((item) => item.unitPrice <= 0)) {
-      throw new BadRequestException('Item unit price should more than zero');
     }
 
     if (options.items.some((item) => item.remark && item.remark.length > 100)) {
@@ -235,7 +231,7 @@ export class BankProInvoiceGateway
     }
 
     return new BankProInvoice({
-      issuedOn: DateTime.fromFormat(data[0].InvoiceDate, 'yyyy/MM/dd')
+      issuedOn: DateTime.fromFormat(data[0].InvoiceDate, 'yyyy/MM/dd HH:mm:ss')
         .startOf('day')
         .toJSDate(),
       items: options.items,
