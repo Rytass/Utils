@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.5](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-happy-card@0.0.4...@rytass/payments-adapter-happy-card@0.0.5) (2024-11-09)
+
+### Bug Fixes
+
+- **payments-adapter-happy-card:** area type ([6d252f9](https://github.com/Rytass/Utils/commit/6d252f94d400189bc9946518d3c86aef187bee55))
+
 ## [0.0.4](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-happy-card@0.0.3...@rytass/payments-adapter-happy-card@0.0.4) (2024-11-09)
 
 ### Features
