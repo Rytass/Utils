@@ -4926,6 +4926,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@rytass/payments-adapter-icash-pay@workspace:packages/payments-adapter-icash-pay":
+  version: 0.0.0-use.local
+  resolution: "@rytass/payments-adapter-icash-pay@workspace:packages/payments-adapter-icash-pay"
+  dependencies:
+    "@rytass/payments": "npm:^0.1.3"
+    "@types/luxon": "npm:^3.4.2"
+    axios: "npm:^1.7.2"
+    luxon: "npm:^3.4.4"
+  languageName: unknown
+  linkType: soft
+
 "@rytass/payments-adapter-newebpay@workspace:packages/payments-adapter-newebpay":
   version: 0.0.0-use.local
   resolution: "@rytass/payments-adapter-newebpay@workspace:packages/payments-adapter-newebpay"
