@@ -10,7 +10,9 @@ import {
   ICashPayCommitMessage,
   ICashPayPaymentType,
   ICashPayOrderInitOptions,
+  ICashPayRefundOptions,
 } from './typing';
+import { DateTime } from 'luxon';
 
 export class ICashPayOrder<
   OCM extends ICashPayCommitMessage = ICashPayCommitMessage,
@@ -20,21 +22,26 @@ export class ICashPayOrder<
   private readonly _items: ICashPayOrderItem[];
   private readonly _gateway: ICashPayPayment<OCM>;
   private readonly _createdAt: Date;
-  private readonly _state: OrderState;
-  private readonly _committedAt: Date | null;
-  private readonly _failedCode: string | undefined;
-  private readonly _failedMessage: string | undefined;
+  private readonly _deductEncData?: string;
 
-  readonly transactionId?: string;
-  readonly icpAccount?: string;
-  readonly paymentType?: ICashPayPaymentType;
-  readonly boundMemberId?: string;
-  readonly invoiceMobileCarrier?: string;
-  readonly creditCardFirstSix?: string;
-  readonly creditCardLastFour?: string;
-  readonly isTWQRCode: boolean;
-  readonly twqrIssueCode?: string;
-  readonly uniGID?: string;
+  private _failedCode: string | undefined;
+  private _failedMessage: string | undefined;
+  private _state: OrderState;
+  private _committedAt: Date | null;
+
+  private _storeId: string | null;
+  private _storeName: string;
+
+  transactionId?: string;
+  icpAccount?: string;
+  paymentType?: ICashPayPaymentType;
+  boundMemberId?: string;
+  invoiceMobileCarrier?: string;
+  creditCardFirstSix?: string;
+  creditCardLastFour?: string;
+  isTWQRCode: boolean;
+  twqrIssueCode?: string;
+  uniGID?: string;
 
   constructor(options: ICashPayOrderInitOptions) {
     this._id = options.id;
@@ -44,11 +51,7 @@ export class ICashPayOrder<
     this._committedAt = options.committedAt ?? null;
     this._failedCode = options.failedCode;
     this._failedMessage = options.failedMessage;
-    this._state = options.isRefunded
-      ? OrderState.REFUNDED
-      : options.committedAt
-        ? OrderState.COMMITTED
-        : OrderState.FAILED;
+    this._deductEncData = options.deductEncData;
 
     this.transactionId = options.transactionId;
     this.icpAccount = options.icpAccount;
@@ -60,6 +63,16 @@ export class ICashPayOrder<
     this.isTWQRCode = options.isTWQRCode;
     this.twqrIssueCode = options.twqrIssueCode;
     this.uniGID = options.uniGID;
+
+    if (this._deductEncData) {
+      this._state = OrderState.PRE_COMMIT;
+    } else if (options.isRefunded) {
+      this._state = OrderState.REFUNDED;
+    } else if (options.failedCode) {
+      this.fail(options.failedCode, options.failedMessage as string);
+    } else {
+      this._state = OrderState.INITED;
+    }
   }
 
   get id(): string {
@@ -85,6 +98,7 @@ export class ICashPayOrder<
   get gateway(): ICashPayPayment<OCM> {
     return this._gateway;
   }
+
   get failedMessage(): OrderFailMessage | null {
     if (this._state !== OrderState.FAILED) return null;
 
@@ -95,7 +109,7 @@ export class ICashPayOrder<
   }
 
   get committable(): boolean {
-    return OrderState.PRE_COMMIT === this._state;
+    return OrderState.PRE_COMMIT === this._state && !!this._deductEncData;
   }
 
   infoRetrieved(): void {
@@ -103,14 +117,73 @@ export class ICashPayOrder<
   }
 
   fail(returnCode: string, message: string): void {
-    throw new Error('Method not implemented.');
+    this._failedCode = returnCode;
+    this._failedMessage = message;
+
+    this._state = OrderState.FAILED;
+
+    this._gateway.emitter.emit(PaymentEvents.ORDER_FAILED, this);
   }
 
   async commit(): Promise<void> {
-    throw new Error('Method not implemented.');
+    if (!this.committable) throw new Error('Order is not committable');
+
+    try {
+      const response = await this._gateway.commit(
+        this._deductEncData as string,
+      );
+
+      this._committedAt = DateTime.fromFormat(
+        response.PaymentDate,
+        'yyyy/MM/dd HH:mm:ss',
+      ).toJSDate();
+
+      this.transactionId = response.TransactionID;
+      this.icpAccount = response.ICPAccount;
+      this.paymentType = response.PaymentType;
+      this.boundMemberId = response.MMemberID || undefined;
+      this.invoiceMobileCarrier = response.MobileInvoiceCarry || undefined;
+
+      this.creditCardFirstSix = response.MaskedPan
+        ? response.MaskedPan.slice(0, 6)
+        : undefined;
+
+      this.creditCardLastFour = response.MaskedPan
+        ? response.MaskedPan.slice(-4)
+        : undefined;
+
+      this.isTWQRCode = response.IsFiscTWQC === 1;
+      this.twqrIssueCode = response.FiscTWQRIssCode || undefined;
+      this.uniGID = response.GID || undefined;
+      this._state = OrderState.COMMITTED;
+
+      this._gateway.emitter.emit(PaymentEvents.ORDER_COMMITTED, this);
+    } catch (ex) {
+      /^\[(.+)\]\s(.*)$/.test((ex as Error).message);
+
+      await this.fail(RegExp.$1, RegExp.$2);
+    }
   }
 
-  async refund(): Promise<void> {
-    throw new Error('Method not implemented.');
+  async refund(
+    requestRefundAmount: number,
+    options?: Pick<
+      ICashPayRefundOptions,
+      | 'requestRefundCollectedAmount'
+      | 'requestRefundConsignmentAmount'
+      | 'refundOrderId'
+    >,
+  ): Promise<void> {
+    await this.gateway.refund({
+      id: this._id,
+      storeId: this._storeId ?? undefined,
+      storeName: this._storeName,
+      transactionId: this.transactionId as string,
+      requestRefundAmount,
+      requestRefundCollectedAmount: options?.requestRefundCollectedAmount ?? 0,
+      requestRefundConsignmentAmount:
+        options?.requestRefundConsignmentAmount ?? 0,
+      refundOrderId: options?.refundOrderId ?? undefined,
+    });
   }
 }

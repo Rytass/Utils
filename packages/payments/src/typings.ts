@@ -118,7 +118,7 @@ export interface Order<OCM extends OrderCommitMessage>
   fail(code: string, message: string): void;
   commit<T extends OCM>(message: T, additionalInfo?: AdditionalInfo<T>): void;
 
-  refund(amount?: number): Promise<void>;
+  refund(amount?: number, options?: any): Promise<void>;
 }
 
 type InputFromOrderCommitMessage<OCM extends OrderCommitMessage> =

@@ -207,6 +207,7 @@ export interface ICashPayOrderInitOptions {
   twqrIssueCode?: string;
   uniGID?: string;
   isRefunded: boolean;
+  deductEncData?: string;
 }
 
 export const I_CASH_PAY_SUCCESS_CODE = 1;

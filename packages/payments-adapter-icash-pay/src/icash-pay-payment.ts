@@ -101,6 +101,7 @@ export class ICashPayPayment<
       (sum, item) => sum + item.unitPrice * item.quantity,
       0,
     );
+
     const totalAmount =
       options.amount +
       (options.collectedAmount ?? 0) +
@@ -139,6 +140,18 @@ export class ICashPayPayment<
 
     const encData = this.encrypt(JSON.stringify(payload));
 
+    return new ICashPayOrder({
+      id,
+      items: options.items,
+      gateway: this,
+      createdAt: now.toJSDate(),
+      deductEncData: encData,
+      isTWQRCode: false,
+      isRefunded: false,
+    });
+  }
+
+  async commit(encData: string): Promise<ICashPayDeductResponsePayloadBody> {
     const formData = new FormData();
 
     formData.append('EncData', encData);
@@ -156,17 +169,7 @@ export class ICashPayPayment<
     );
 
     if (data.RtnCode !== I_CASH_PAY_SUCCESS_CODE) {
-      return new ICashPayOrder<OCM>({
-        id,
-        items: options.items,
-        gateway: this,
-        createdAt: now.toJSDate(),
-        committedAt: null,
-        failedCode: data.RtnCode.toString(),
-        failedMessage: data.RtnMsg,
-        isTWQRCode: false,
-        isRefunded: false,
-      });
+      throw new Error(`[${data.RtnCode}] ${data.RtnMsg}`);
     }
 
     const signature = headers['x-icp-signature'] ?? '';
@@ -174,48 +177,14 @@ export class ICashPayPayment<
     const verified = this.verify(JSON.stringify(data), signature);
 
     if (!verified) {
-      return new ICashPayOrder<OCM>({
-        id,
-        items: options.items,
-        gateway: this,
-        createdAt: now.toJSDate(),
-        committedAt: null,
-        failedCode: '-999',
-        failedMessage: 'Signature verification failed',
-        isTWQRCode: false,
-        isRefunded: false,
-      });
+      throw new Error('[-999] Signature verification failed');
     }
 
     const responsePayload = this.decrypt<ICashPayDeductResponsePayloadBody>(
       data.EncData,
     );
 
-    return new ICashPayOrder({
-      id,
-      items: options.items,
-      gateway: this,
-      createdAt: now.toJSDate(),
-      committedAt: DateTime.fromFormat(
-        responsePayload.PaymentDate,
-        'yyyy/MM/dd HH:mm:ss',
-      ).toJSDate(),
-      transactionId: responsePayload.TransactionID,
-      icpAccount: responsePayload.ICPAccount,
-      paymentType: responsePayload.PaymentType,
-      boundMemberId: responsePayload.MMemberID || undefined,
-      invoiceMobileCarrier: responsePayload.MobileInvoiceCarry || undefined,
-      creditCardFirstSix: responsePayload.MaskedPan
-        ? responsePayload.MaskedPan.slice(0, 6)
-        : undefined,
-      creditCardLastFour: responsePayload.MaskedPan
-        ? responsePayload.MaskedPan.slice(-4)
-        : undefined,
-      isTWQRCode: responsePayload.IsFiscTWQC === 1,
-      twqrIssueCode: responsePayload.FiscTWQRIssCode || undefined,
-      uniGID: responsePayload.GID || undefined,
-      isRefunded: false,
-    });
+    return responsePayload;
   }
 
   async query<O extends ICashPayOrder<CM> = ICashPayOrder<CM>>(
