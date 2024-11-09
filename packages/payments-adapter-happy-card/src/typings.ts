@@ -183,3 +183,15 @@ export enum HappyCardResultCode {
   FAILED = '0',
   SUCCESS = '1',
 }
+
+export interface HappyCardRefundOptions {
+  id: string;
+  posTradeNo: string;
+  cardSerial: string;
+  isIsland: boolean;
+}
+
+export interface HappyCardCommitOptions {
+  payload: Omit<HappyCardPayRequest, 'basedata'>;
+  isIsland: boolean;
+}

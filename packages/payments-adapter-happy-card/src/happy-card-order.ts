@@ -4,20 +4,10 @@ import {
   OrderState,
   PaymentEvents,
 } from '@rytass/payments';
-import axios from 'axios';
-import {
-  HappyCardCommitMessage,
-  HappyCardOrderInitOptions,
-  HappyCardRefundRequest,
-  HappyCardRefundResponse,
-} from './typings';
+import { HappyCardCommitMessage, HappyCardOrderInitOptions } from './typings';
 import { HappyCardOrderItem } from './happy-card-order-item';
 import { HappyCardPayment } from './happy-card-payment';
-import {
-  HappyCardPayRequest,
-  HappyCardPayResponse,
-  HappyCardResultCode,
-} from './typings';
+import { HappyCardPayRequest } from './typings';
 
 export class HappyCardOrder<OCM extends HappyCardCommitMessage>
   implements Order<OCM>
@@ -103,31 +93,21 @@ export class HappyCardOrder<OCM extends HappyCardCommitMessage>
   async commit(): Promise<void> {
     if (!this.committable) throw new Error('Order is not committable');
 
-    const payload: HappyCardPayRequest = {
-      basedata: this._gateway.getBaseData(this._isIsland),
-      ...this._payload,
-    };
+    try {
+      await this._gateway.commit({
+        payload: this._payload,
+        isIsland: this._isIsland,
+      });
 
-    const { data } = await axios.post<HappyCardPayResponse>(
-      `${this.gateway.baseUrl}/Pay`,
-      JSON.stringify(payload),
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      },
-    );
+      this._committedAt = new Date();
+      this._state = OrderState.COMMITTED;
 
-    if (data.resultCode !== HappyCardResultCode.SUCCESS) {
-      await this.fail(data.resultCode, data.resultMsg);
+      this._gateway.emitter.emit(PaymentEvents.ORDER_COMMITTED, this);
+    } catch (ex) {
+      /^\[(.+)\]\s(.*)$/.test((ex as Error).message);
 
-      return;
+      await this.fail(RegExp.$1, RegExp.$2);
     }
-
-    this._committedAt = new Date();
-    this._state = OrderState.COMMITTED;
-
-    this._gateway.emitter.emit(PaymentEvents.ORDER_COMMITTED, this);
   }
 
   async refund(): Promise<void> {
@@ -135,32 +115,19 @@ export class HappyCardOrder<OCM extends HappyCardCommitMessage>
       throw new Error('Order is not committed');
     }
 
-    const { data } = await axios.post<HappyCardRefundResponse>(
-      `${this.gateway.baseUrl}/CancelPay`,
-      JSON.stringify({
-        basedata: this._gateway.getBaseData(this._isIsland),
-        type: 2,
-        card_list: [
-          {
-            request_no: this.id,
-            pos_trade_no: this.posTradeNo,
-            card_sn: this._payload.card_list[0].card_sn,
-          },
-        ],
-      } as HappyCardRefundRequest),
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      },
-    );
+    try {
+      await this._gateway.refund({
+        id: this.id,
+        posTradeNo: this.posTradeNo,
+        cardSerial: this._payload.card_list[0].card_sn,
+        isIsland: this._isIsland,
+      });
 
-    if (data.resultCode !== HappyCardResultCode.SUCCESS) {
-      await this.fail(data.resultCode, data.resultMsg);
+      this._state = OrderState.REFUNDED;
+    } catch (ex) {
+      /^\[(.+)\]\s(.*)$/.test((ex as Error).message);
 
-      return;
+      await this.fail(RegExp.$1, RegExp.$2);
     }
-
-    this._state = OrderState.REFUNDED;
   }
 }

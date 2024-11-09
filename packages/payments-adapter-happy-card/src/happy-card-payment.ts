@@ -6,10 +6,16 @@ import {
   HappyCardAPIBaseData,
   HappyCardBaseUrls,
   HappyCardCommitMessage,
+  HappyCardCommitOptions,
   HappyCardPaymentInitOptions,
   HappyCardPayOptions,
+  HappyCardPayRequest,
+  HappyCardPayResponse,
   HappyCardRecord,
   HappyCardRecordType,
+  HappyCardRefundOptions,
+  HappyCardRefundRequest,
+  HappyCardRefundResponse,
   HappyCardResultCode,
   HappyCardSearchCardRequest,
   HappyCardSearchCardResponse,
@@ -137,6 +143,53 @@ export class HappyCardPayment<
 
   query<O extends HappyCardOrder<CM>>(id: string): Promise<O> {
     throw new Error('Method not implemented.');
+  }
+
+  async commit(options: HappyCardCommitOptions): Promise<void> {
+    const payload: HappyCardPayRequest = {
+      basedata: this.getBaseData(options.isIsland),
+      ...options.payload,
+    };
+
+    const { data } = await axios.post<HappyCardPayResponse>(
+      `${this.baseUrl}/Pay`,
+      JSON.stringify(payload),
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    if (data.resultCode !== HappyCardResultCode.SUCCESS) {
+      throw new Error(`[${data.resultCode}] ${data.resultMsg}`);
+    }
+  }
+
+  async refund(options: HappyCardRefundOptions): Promise<void> {
+    const { data } = await axios.post<HappyCardRefundResponse>(
+      `${this.baseUrl}/CancelPay`,
+      JSON.stringify({
+        basedata: this.getBaseData(options.isIsland),
+        type: 2,
+        card_list: [
+          {
+            request_no: options.id,
+            pos_trade_no: options.posTradeNo,
+            card_sn: options.cardSerial,
+          },
+        ],
+      } as HappyCardRefundRequest),
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    if (data.resultCode !== HappyCardResultCode.SUCCESS) {
+      throw new Error(`[${data.resultCode}] ${data.resultMsg}`);
+    }
   }
 
   async getCardBalance(
