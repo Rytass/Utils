@@ -46,7 +46,7 @@ export class HappyCardPayment<
       store_id: this.STORE_ID,
       pos_id: this.POS_ID,
       createdate: now.toISO(),
-      area: isIsland ? '2' : '1',
+      area: isIsland ? 2 : 1,
     };
   }
 

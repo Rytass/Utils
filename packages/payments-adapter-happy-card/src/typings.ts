@@ -30,7 +30,7 @@ export interface HappyCardAPIBaseData {
   store_id: string;
   pos_id: string;
   createdate: string;
-  area: string;
+  area: number;
 }
 
 export enum HappyCardRecordType {
