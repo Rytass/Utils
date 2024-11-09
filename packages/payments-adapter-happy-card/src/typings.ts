@@ -6,6 +6,7 @@ export interface HappyCardPaymentInitOptions {
   baseUrl?: HappyCardBaseUrls;
   cSource: string;
   key: string;
+  posId?: string;
 }
 
 export interface HappyCardCommitMessage extends OrderCommitMessage {}
@@ -17,9 +18,9 @@ export interface HappyCardOrderInitOptions<
   items: HappyCardOrderItem[];
   gateway: HappyCardPayment<OCM>;
   createdAt: Date;
-  committedAt: Date | null;
-  failedCode?: string;
-  failedMessage?: string;
+  posTradeNo?: string;
+  isIsland?: boolean;
+  payload: Omit<HappyCardPayRequest, 'basedata'>;
 }
 
 export interface HappyCardAPIBaseData {
@@ -41,15 +42,16 @@ export interface HappyCardUseRecord {
   id: number;
   type?: HappyCardRecordType; // default to 1 (AMOUNT)
   amount: number;
-  cardSerial: string;
 }
 
 export interface HappyCardPayOptions
   extends PrepareOrderInput<HappyCardOrderItem> {
   id?: string;
+  posTradeNo?: string;
   uniMemberGID?: string;
   isIsland?: boolean;
-  type: HappyCardRecordType;
+  type?: HappyCardRecordType;
+  cardSerial: string;
   useRecords: HappyCardUseRecord[];
 }
 
@@ -134,6 +136,42 @@ export interface HappyCardSearchCardResponse {
   };
   resultCode: string;
   resultMsg: string;
+}
+
+export interface HappyCardRefundRequest {
+  basedata: HappyCardAPIBaseData;
+  type: 1 | 2;
+  card_list: {
+    request_no: string;
+    pos_trade_no: string;
+    card_sn: string;
+  }[];
+}
+
+export interface HappyCardRefundResponse {
+  data: {
+    card_list: {
+      card_sn: string;
+      paymentNo: string;
+      record_list: {
+        record_id: number;
+        type: HappyCardRecordType;
+        action_no: string | null;
+        original_amt: number;
+        get_date: string;
+        use_limit_date: string;
+        amt: number;
+      }[];
+    }[];
+  };
+  resultCode: string;
+  resultMsg: string;
+}
+
+export interface HappyCardRecord {
+  id: number;
+  type: HappyCardRecordType;
+  amount: number;
 }
 
 export enum HappyCardBaseUrls {

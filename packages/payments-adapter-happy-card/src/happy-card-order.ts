@@ -1,14 +1,23 @@
 import {
-  AdditionalInfo,
   Order,
   OrderFailMessage,
   OrderState,
   PaymentEvents,
 } from '@rytass/payments';
-import { HappyCardCommitMessage, HappyCardOrderInitOptions } from './typings';
+import axios from 'axios';
+import {
+  HappyCardCommitMessage,
+  HappyCardOrderInitOptions,
+  HappyCardRefundRequest,
+  HappyCardRefundResponse,
+} from './typings';
 import { HappyCardOrderItem } from './happy-card-order-item';
-import { BadRequestException } from '@nestjs/common';
 import { HappyCardPayment } from './happy-card-payment';
+import {
+  HappyCardPayRequest,
+  HappyCardPayResponse,
+  HappyCardResultCode,
+} from 'payments-adapter-happy-card/lib';
 
 export class HappyCardOrder<OCM extends HappyCardCommitMessage>
   implements Order<OCM>
@@ -16,27 +25,33 @@ export class HappyCardOrder<OCM extends HappyCardCommitMessage>
   private readonly _id: string;
   private readonly _items: HappyCardOrderItem[];
   private readonly _gateway: HappyCardPayment<OCM>;
-  private readonly _state: OrderState;
   private readonly _createdAt: Date;
-  private readonly _committedAt: Date | null;
-  private readonly _failedCode: string | undefined;
-  private readonly _failedMessage: string | undefined;
+  private readonly _posTradeNo: string;
+  private readonly _isIsland: boolean;
+  private readonly _payload: Omit<HappyCardPayRequest, 'basedata'>;
+
+  private _state: OrderState;
+  private _committedAt: Date | null;
+  private _failedCode: string | undefined;
+  private _failedMessage: string | undefined;
 
   constructor(options: HappyCardOrderInitOptions) {
     this._id = options.id;
     this._items = options.items;
     this._gateway = options.gateway;
     this._createdAt = options.createdAt;
-    this._state = options.committedAt
-      ? OrderState.COMMITTED
-      : OrderState.FAILED;
-    this._committedAt = options.committedAt;
-    this._failedCode = options.failedCode;
-    this._failedMessage = options.failedMessage;
+    this._isIsland = options.isIsland ?? false;
+    this._state = OrderState.PRE_COMMIT;
+    this._posTradeNo = options.posTradeNo ?? '';
+    this._payload = options.payload;
   }
 
   get id(): string {
     return this._id;
+  }
+
+  get posTradeNo(): string {
+    return this._posTradeNo;
   }
 
   get items(): HappyCardOrderItem[] {
@@ -55,6 +70,10 @@ export class HappyCardOrder<OCM extends HappyCardCommitMessage>
     return this._committedAt;
   }
 
+  get gateway(): HappyCardPayment<OCM> {
+    return this._gateway;
+  }
+
   get failedMessage(): OrderFailMessage | null {
     if (this._state !== OrderState.FAILED) return null;
 
@@ -65,28 +84,83 @@ export class HappyCardOrder<OCM extends HappyCardCommitMessage>
   }
 
   get committable(): boolean {
-    return false; // Always committed after created
+    return OrderState.PRE_COMMIT === this._state;
   }
 
   infoRetrieved(): void {
-    throw new BadRequestException(
-      'Happy card order does not support async info',
-    );
+    throw new Error('Happy card order does not support async info');
   }
 
-  fail(): void {
-    throw new BadRequestException(
-      'Happy card order does not support fail after created',
-    );
+  fail(returnCode: string, message: string): void {
+    this._failedCode = returnCode;
+    this._failedMessage = message;
+
+    this._state = OrderState.FAILED;
+
+    this._gateway.emitter.emit(PaymentEvents.ORDER_FAILED, this);
   }
 
-  commit(): void {
-    throw new BadRequestException(
-      'Happy card order does not support commit after created',
+  async commit(): Promise<void> {
+    if (!this.committable) throw new Error('Order is not committable');
+
+    const payload: HappyCardPayRequest = {
+      basedata: this._gateway.getBaseData(this._isIsland),
+      ...this._payload,
+    };
+
+    const { data } = await axios.post<HappyCardPayResponse>(
+      `${this.gateway.baseUrl}/Pay`,
+      JSON.stringify(payload),
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
     );
+
+    if (data.resultCode !== HappyCardResultCode.SUCCESS) {
+      await this.fail(data.resultCode, data.resultMsg);
+
+      return;
+    }
+
+    this._committedAt = new Date();
+    this._state = OrderState.COMMITTED;
+
+    this._gateway.emitter.emit(PaymentEvents.ORDER_COMMITTED, this);
   }
 
-  refund(): Promise<void> {
-    throw new BadRequestException('Happy card order does not support refund');
+  async refund(): Promise<void> {
+    if (this._state !== OrderState.COMMITTED) {
+      throw new Error('Order is not committed');
+    }
+
+    const { data } = await axios.post<HappyCardRefundResponse>(
+      `${this.gateway.baseUrl}/CancelPay`,
+      JSON.stringify({
+        basedata: this._gateway.getBaseData(this._isIsland),
+        type: 2,
+        card_list: [
+          {
+            request_no: this.id,
+            pos_trade_no: this.posTradeNo,
+            card_sn: this._payload.card_list[0].card_sn,
+          },
+        ],
+      } as HappyCardRefundRequest),
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    if (data.resultCode !== HappyCardResultCode.SUCCESS) {
+      await this.fail(data.resultCode, data.resultMsg);
+
+      return;
+    }
+
+    this._state = OrderState.REFUNDED;
   }
 }

@@ -8,8 +8,7 @@ import {
   HappyCardCommitMessage,
   HappyCardPaymentInitOptions,
   HappyCardPayOptions,
-  HappyCardPayRequest,
-  HappyCardPayResponse,
+  HappyCardRecord,
   HappyCardRecordType,
   HappyCardResultCode,
   HappyCardSearchCardRequest,
@@ -17,8 +16,6 @@ import {
 } from './typings';
 import { DateTime } from 'luxon';
 import axios from 'axios';
-import { BadRequestException } from '@nestjs/common';
-import { groupBy } from 'lodash';
 
 export class HappyCardPayment<
   CM extends HappyCardCommitMessage = HappyCardCommitMessage,
@@ -28,14 +25,13 @@ export class HappyCardPayment<
   private readonly VERSION = '001';
   private readonly POS_ID = '01';
   private readonly VALID_PRODUCT_TYPE_SET = new Set(['1', '3']);
+  private readonly cSource: string;
+  private readonly key: string;
 
-  private baseUrl = HappyCardBaseUrls.DEVELOPMENT;
-  private cSource: string;
-  private key: string;
-
+  readonly baseUrl: HappyCardBaseUrls;
   readonly emitter = new EventEmitter();
 
-  private getBaseData(isIsland = false): HappyCardAPIBaseData {
+  getBaseData(isIsland = false): HappyCardAPIBaseData {
     const now = DateTime.now();
 
     return {
@@ -59,7 +55,7 @@ export class HappyCardPayment<
   }
 
   constructor(options: HappyCardPaymentInitOptions) {
-    this.baseUrl = options.baseUrl ?? this.baseUrl;
+    this.baseUrl = options.baseUrl ?? HappyCardBaseUrls.DEVELOPMENT;
     this.cSource = options.cSource;
     this.key = options.key;
   }
@@ -73,68 +69,69 @@ export class HappyCardPayment<
       (sum, item) => sum + item.quantity * item.unitPrice,
       0,
     );
+
     const totalUseAmount = options.useRecords.reduce(
       (sum, record) => sum + record.amount,
       0,
     );
 
     if (totalItemPrice !== totalUseAmount) {
-      throw new BadRequestException(
-        'Total item price does not match with total use amount',
-      );
+      throw new Error('Total item price does not match with total use amount');
     }
 
     const orderId = options.id || this.getOrderId();
 
-    const payload: HappyCardPayRequest = {
-      basedata: this.getBaseData(options.isIsland),
-      request_no: orderId,
-      trade_date: now.toISO(),
-      is_own_cup: 0,
-      cup_count: 0,
-      MemberGid: options.uniMemberGID ?? undefined,
-      card_list: Object.values(
-        groupBy(options.useRecords, (record) => record.cardSerial),
-      ).map((records) => ({
-        card_sn: records[0].cardSerial,
-        record_list: [],
-        use_list: records.map((record) => ({
-          record_id: record.id,
-          type: record.type ?? HappyCardRecordType.AMOUNT,
-          amt: record.amount,
-          tax_type: options.isIsland ? '116' : '117',
-        })),
-      })),
-    };
+    const records = await this.getCardBalance(options.cardSerial, true);
 
-    const { data } = await axios.post<HappyCardPayResponse>(
-      `${this.baseUrl}/Pay`,
-      JSON.stringify(payload),
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      },
+    const recordBalanceMap = new Map(
+      records.map((record) => [`${record.id}:${record.type}`, record.amount]),
     );
 
-    if (data.resultCode !== HappyCardResultCode.SUCCESS) {
-      return new HappyCardOrder({
-        id: orderId,
-        items: options.items,
-        gateway: this,
-        createdAt: now.toJSDate(),
-        committedAt: null,
-        failedCode: data.resultCode,
-        failedMessage: data.resultMsg,
-      });
+    if (
+      options.useRecords.some((record) => {
+        const balanceRecord = recordBalanceMap.get(
+          `${record.id}:${record.type ?? HappyCardRecordType.AMOUNT}`,
+        );
+
+        if (!balanceRecord) return true;
+
+        return balanceRecord < record.amount;
+      })
+    ) {
+      throw new Error('Balance is not enough');
+    }
+
+    if (options.posTradeNo && options.posTradeNo.length > 6) {
+      throw new Error('POS Trade No length should be less than 6');
     }
 
     return new HappyCardOrder({
       id: orderId,
+      posTradeNo: options.posTradeNo,
       items: options.items,
       gateway: this,
       createdAt: now.toJSDate(),
-      committedAt: now.toJSDate(),
+      isIsland: options.isIsland,
+      payload: {
+        request_no: orderId,
+        trade_date: now.toISO(),
+        is_own_cup: 0,
+        cup_count: 0,
+        pos_trade_no: options.posTradeNo ?? '',
+        MemberGid: options.uniMemberGID ?? '',
+        card_list: [
+          {
+            card_sn: options.cardSerial,
+            record_list: [],
+            use_list: records.map((record) => ({
+              record_id: record.id,
+              type: record.type ?? HappyCardRecordType.AMOUNT,
+              amt: record.amount,
+              tax_type: options.isIsland ? '116' : '117',
+            })),
+          },
+        ],
+      },
     });
   }
 
@@ -142,7 +139,18 @@ export class HappyCardPayment<
     throw new Error('Method not implemented.');
   }
 
-  async getCardBalance(cardSerial: string): Promise<number> {
+  async getCardBalance(
+    cardSerial: string,
+    returnRecords: false,
+  ): Promise<number>;
+  async getCardBalance(
+    cardSerial: string,
+    returnRecords: true,
+  ): Promise<HappyCardRecord[]>;
+  async getCardBalance(
+    cardSerial: string,
+    returnRecords = false,
+  ): Promise<number | HappyCardRecord[]> {
     const { data } = await axios.post<HappyCardSearchCardResponse>(
       `${this.baseUrl}/SearchCard`,
       JSON.stringify({
@@ -157,9 +165,24 @@ export class HappyCardPayment<
     );
 
     if (data.resultCode !== HappyCardResultCode.SUCCESS) {
-      throw new BadRequestException(data.resultMsg);
+      throw new Error(data.resultMsg);
     }
 
-    return data.data.card_list.reduce((sum, card) => sum + card.amt, 0);
+    if (returnRecords) {
+      return data.data.card_list
+        .filter((card) => this.VALID_PRODUCT_TYPE_SET.has(card.productType))
+        .map((card) =>
+          card.record_list.map((record) => ({
+            id: record.record_id,
+            type: record.type,
+            amount: record.amt,
+          })),
+        )
+        .flat();
+    }
+
+    return data.data.card_list
+      .filter((card) => this.VALID_PRODUCT_TYPE_SET.has(card.productType))
+      .reduce((sum, card) => sum + card.amt, 0);
   }
 }
