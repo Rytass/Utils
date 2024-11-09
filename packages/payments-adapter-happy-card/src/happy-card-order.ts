@@ -17,7 +17,7 @@ import {
   HappyCardPayRequest,
   HappyCardPayResponse,
   HappyCardResultCode,
-} from 'payments-adapter-happy-card/lib';
+} from './typings';
 
 export class HappyCardOrder<OCM extends HappyCardCommitMessage>
   implements Order<OCM>
