@@ -278,40 +278,12 @@ export class ICashPayPayment<
         ...(responsePayload.TotalAmount || responsePayload.OTotalAmount
           ? [
               {
-                name: 'Total Amount',
+                name: '服務費',
                 quantity: 1,
                 unitPrice:
                   Number(
                     responsePayload.TotalAmount ??
                       responsePayload.OTotalAmount ??
-                      '0',
-                  ) / 100,
-              },
-            ]
-          : []),
-        ...(responsePayload.ICPAmount || responsePayload.OICPAmount
-          ? [
-              {
-                name: 'ICP Amount',
-                quantity: 1,
-                unitPrice:
-                  Number(
-                    responsePayload.ICPAmount ??
-                      responsePayload.OICPAmount ??
-                      '0',
-                  ) / 100,
-              },
-            ]
-          : []),
-        ...(responsePayload.BonusAmt || responsePayload.OBonusAmt
-          ? [
-              {
-                name: 'Bonus Amount',
-                quantity: 1,
-                unitPrice:
-                  Number(
-                    responsePayload.BonusAmt ??
-                      responsePayload.OBonusAmt ??
                       '0',
                   ) / 100,
               },

@@ -29,9 +29,6 @@ export class ICashPayOrder<
   private _state: OrderState;
   private _committedAt: Date | null;
 
-  private _storeId: string | null;
-  private _storeName: string;
-
   transactionId?: string;
   icpAccount?: string;
   paymentType?: ICashPayPaymentType;
@@ -70,6 +67,8 @@ export class ICashPayOrder<
       this._state = OrderState.REFUNDED;
     } else if (options.failedCode) {
       this.fail(options.failedCode, options.failedMessage as string);
+    } else if (options.committedAt) {
+      this._state = OrderState.COMMITTED;
     } else {
       this._state = OrderState.INITED;
     }
@@ -172,13 +171,15 @@ export class ICashPayOrder<
       | 'requestRefundCollectedAmount'
       | 'requestRefundConsignmentAmount'
       | 'refundOrderId'
+      | 'storeId'
+      | 'storeName'
     >,
   ): Promise<void> {
     await this.gateway.refund({
       id: this._id,
-      storeId: this._storeId ?? undefined,
-      storeName: this._storeName,
       transactionId: this.transactionId as string,
+      storeId: options?.storeId ?? undefined,
+      storeName: options?.storeName ?? '',
       requestRefundAmount,
       requestRefundCollectedAmount: options?.requestRefundCollectedAmount ?? 0,
       requestRefundConsignmentAmount:
