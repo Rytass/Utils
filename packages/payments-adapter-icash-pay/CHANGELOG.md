@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.4](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-icash-pay@0.0.3...@rytass/payments-adapter-icash-pay@0.0.4) (2024-11-10)
+
+### Bug Fixes
+
+- **payments-adapter-icash-pay:** add PlatformID as MerchantID always on refund transaction ([015eadc](https://github.com/Rytass/Utils/commit/015eadcae124b932a9af049b6b4674f0175f7fe2))
+- **payments-adapter-icash-pay:** committed state on query order ([baf8445](https://github.com/Rytass/Utils/commit/baf8445629cff1427d23dc0796d6d898048a3fae))
+
 ## [0.0.3](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-icash-pay@0.0.2...@rytass/payments-adapter-icash-pay@0.0.3) (2024-11-09)
 
 ### Features
