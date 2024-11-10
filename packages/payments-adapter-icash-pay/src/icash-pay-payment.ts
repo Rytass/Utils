@@ -333,6 +333,7 @@ export class ICashPayPayment<
     const orderId = options.refundOrderId ?? this.getOrderId();
 
     const payload: ICashPayRefundRequestPayloadBody = {
+      PlatformID: this.merchantId,
       MerchantID: this.merchantId,
       OMerchantTradeNo: options.id,
       TransactionID: options.transactionId,
