@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.7](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-icash-pay@0.0.6...@rytass/payments-adapter-icash-pay@0.0.7) (2024-11-12)
+
+### Features
+
+- **payments-adapter-icash-pay:** add logLevel support ([0ea8439](https://github.com/Rytass/Utils/commit/0ea84399d891dc69b90e46eeacc1c51349f69f5d))
+
 ## [0.0.6](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-icash-pay@0.0.5...@rytass/payments-adapter-icash-pay@0.0.6) (2024-11-12)
 
 ### Bug Fixes
