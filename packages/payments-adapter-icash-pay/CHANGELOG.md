@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.5](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-icash-pay@0.0.4...@rytass/payments-adapter-icash-pay@0.0.5) (2024-11-12)
+
+### Bug Fixes
+
+- **payments-adapter-icash-pay:** always provide PlatformID for hidden rules from document ([41c3d51](https://github.com/Rytass/Utils/commit/41c3d515ec07fe378c5bd3e4a0860c14f1e1ce74))
+
 ## [0.0.4](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-icash-pay@0.0.3...@rytass/payments-adapter-icash-pay@0.0.4) (2024-11-10)
 
 ### Bug Fixes
