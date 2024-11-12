@@ -15,12 +15,19 @@ export interface ICashPayAESKey {
   iv: string;
 }
 
+export enum LogLevel {
+  ERROR = 1,
+  INFO = 2,
+  DEBUG = 4,
+}
+
 export interface ICashPayPaymentInitOptions {
   baseUrl: ICashPayBaseUrls;
   merchantId: string;
   clientPrivateKey: string;
   serverPublicKey: string;
   aesKey: ICashPayAESKey;
+  logLevel?: LogLevel;
 }
 
 export interface ICashPayPrepareOptions {

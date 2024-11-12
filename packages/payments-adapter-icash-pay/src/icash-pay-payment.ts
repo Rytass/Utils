@@ -22,10 +22,13 @@ import {
   ICashPayRefundRequestPayloadBody,
   ICashPayResponse,
   ICashPayTradeStatus,
+  LogLevel,
 } from './typing';
 import { ICashPayOrder } from './icash-pay-order';
 import { DateTime } from 'luxon';
 import axios from 'axios';
+import debug from 'debug';
+import { iCashPayDebug, iCashPayDebugInfo, iCashPayDebugError } from './debug';
 
 export class ICashPayPayment<
   CM extends ICashPayCommitMessage = ICashPayCommitMessage,
@@ -45,6 +48,23 @@ export class ICashPayPayment<
     this.clientPrivateKey = options.clientPrivateKey;
     this.serverPublicKey = options.serverPublicKey;
     this.aesKey = options.aesKey;
+
+    if (options.logLevel === LogLevel.DEBUG) {
+      debug.enable('Payment:iCashPay:Debug');
+    }
+
+    if (options.logLevel === LogLevel.INFO) {
+      debug.enable('Payment:iCashPay:Info');
+    }
+
+    if (!options.logLevel || options.logLevel === LogLevel.ERROR) {
+      debug.enable('Payment:iCashPay:Error');
+    }
+
+    iCashPayDebug(
+      'Warning! Debug mode is enabled, sensitive data may be logged, please use this mode only for debugging purposes',
+    );
+    iCashPayDebugInfo('Initialized iCashPay Payment Gateway');
   }
 
   private getOrderId() {
@@ -97,6 +117,9 @@ export class ICashPayPayment<
     options: ICashPayPrepareOptions,
   ): Promise<ICashPayOrder<OCM>> {
     const id = options.id ?? this.getOrderId();
+
+    iCashPayDebugInfo(`Preparing order [${id}]`);
+
     const totalPrice = options.items.reduce(
       (sum, item) => sum + item.unitPrice * item.quantity,
       0,
@@ -108,10 +131,14 @@ export class ICashPayPayment<
       (options.consignmentAmount ?? 0);
 
     if (totalPrice !== totalAmount) {
+      iCashPayDebugError('Total amount does not match the sum of item prices');
+
       throw new Error('Total amount does not match the sum of item prices');
     }
 
     if (totalAmount <= 0) {
+      iCashPayDebugError('Total amount must be greater than 0');
+
       throw new Error('Total amount must be greater than 0');
     }
 
@@ -139,7 +166,11 @@ export class ICashPayPayment<
       Barcode: options.barcode,
     };
 
+    iCashPayDebug(`Deduct Payload: ${JSON.stringify(payload)}`);
+
     const encData = this.encrypt(JSON.stringify(payload));
+
+    iCashPayDebug(`Encrypted Data: ${encData}`);
 
     return new ICashPayOrder({
       id,
@@ -169,7 +200,12 @@ export class ICashPayPayment<
       },
     );
 
+    iCashPayDebug(`Deduct Response: ${JSON.stringify(data)}`);
+    iCashPayDebug(`Deduct Response Headers: ${JSON.stringify(headers)}`);
+
     if (data.RtnCode !== I_CASH_PAY_SUCCESS_CODE) {
+      iCashPayDebugError(`[${data.RtnCode}] ${data.RtnMsg}`);
+
       throw new Error(`[${data.RtnCode}] ${data.RtnMsg}`);
     }
 
@@ -177,7 +213,11 @@ export class ICashPayPayment<
 
     const verified = this.verify(JSON.stringify(data), signature);
 
+    iCashPayDebug(`Signature Verification: ${verified}`);
+
     if (!verified) {
+      iCashPayDebugError('[-999] Signature verification failed');
+
       throw new Error('[-999] Signature verification failed');
     }
 
@@ -185,19 +225,27 @@ export class ICashPayPayment<
       data.EncData,
     );
 
+    iCashPayDebug(`Decrypted Data: ${JSON.stringify(responsePayload)}`);
+
     return responsePayload;
   }
 
   async query<O extends ICashPayOrder<CM> = ICashPayOrder<CM>>(
     id: string,
   ): Promise<O> {
+    iCashPayDebugInfo(`Querying order [${id}]`);
+
     const payload: ICashPayQueryRequestPayloadBody = {
       PlatformID: this.merchantId,
       MerchantID: this.merchantId,
       MerchantTradeNo: id,
     };
 
+    iCashPayDebug(`Query Payload: ${JSON.stringify(payload)}`);
+
     const encData = this.encrypt(JSON.stringify(payload));
+
+    iCashPayDebug(`Encrypted Data: ${encData}`);
 
     const formData = new FormData();
 
@@ -214,6 +262,9 @@ export class ICashPayPayment<
         },
       },
     );
+
+    iCashPayDebug(`Query Response: ${JSON.stringify(data)}`);
+    iCashPayDebug(`Query Response Headers: ${JSON.stringify(headers)}`);
 
     const now = DateTime.now();
 
@@ -235,6 +286,8 @@ export class ICashPayPayment<
 
     const verified = this.verify(JSON.stringify(data), signature);
 
+    iCashPayDebug(`Signature Verification: ${verified}`);
+
     if (!verified) {
       return new ICashPayOrder<CM>({
         id,
@@ -252,6 +305,8 @@ export class ICashPayPayment<
     const responsePayload = this.decrypt<ICashPayQueryResponsePayloadBody>(
       data.EncData,
     );
+
+    iCashPayDebug(`Decrypted Data: ${JSON.stringify(responsePayload)}`);
 
     if (
       ~[
@@ -323,16 +378,22 @@ export class ICashPayPayment<
   }
 
   async refund(options: ICashPayRefundOptions): Promise<ICashPayOrder<CM>> {
+    iCashPayDebugInfo(`Refunding order [${options.id}]`);
+
     const totalRefundAmount =
       options.requestRefundAmount +
       (options.requestRefundCollectedAmount ?? 0) +
       (options.requestRefundConsignmentAmount ?? 0);
 
     if (totalRefundAmount <= 0) {
+      iCashPayDebugError('Total refund amount must be greater than 0');
+
       throw new Error('Total refund amount must be greater than 0');
     }
 
     const orderId = options.refundOrderId ?? this.getOrderId();
+
+    iCashPayDebugInfo(`Refund Order ID: ${orderId}`);
 
     const payload: ICashPayRefundRequestPayloadBody = {
       PlatformID: this.merchantId,
@@ -353,7 +414,11 @@ export class ICashPayPayment<
       MerchantTradeDate: DateTime.now().toFormat('yyyy/MM/dd HH:mm:ss'),
     };
 
+    iCashPayDebug(`Refund Payload: ${JSON.stringify(payload)}`);
+
     const encData = this.encrypt(JSON.stringify(payload));
+
+    iCashPayDebug(`Encrypted Data: ${encData}`);
 
     const formData = new FormData();
 
@@ -370,6 +435,9 @@ export class ICashPayPayment<
         },
       },
     );
+
+    iCashPayDebug(`Refund Response: ${JSON.stringify(data)}`);
+    iCashPayDebug(`Refund Response Headers: ${JSON.stringify(headers)}`);
 
     const now = DateTime.now();
 
@@ -390,6 +458,8 @@ export class ICashPayPayment<
     const signature = headers['x-icp-signature'] ?? '';
 
     const verified = this.verify(JSON.stringify(data), signature);
+
+    iCashPayDebug(`Signature Verification: ${verified}`);
 
     if (!verified) {
       return new ICashPayOrder<CM>({
