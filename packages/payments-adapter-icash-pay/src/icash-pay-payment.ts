@@ -192,6 +192,7 @@ export class ICashPayPayment<
     id: string,
   ): Promise<O> {
     const payload: ICashPayQueryRequestPayloadBody = {
+      PlatformID: this.merchantId,
       MerchantID: this.merchantId,
       MerchantTradeNo: id,
     };
