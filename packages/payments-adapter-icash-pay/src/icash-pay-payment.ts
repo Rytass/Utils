@@ -118,6 +118,7 @@ export class ICashPayPayment<
     const now = DateTime.now();
 
     const payload: ICashPayDeductRequestPayloadBody = {
+      PlatformID: this.merchantId,
       MerchantID: this.merchantId,
       MerchantTradeNo: id,
       StoreName: options.storeName,
