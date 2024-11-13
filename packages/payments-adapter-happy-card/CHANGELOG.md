@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.7](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-happy-card@0.0.6...@rytass/payments-adapter-happy-card@0.0.7) (2024-11-13)
+
+### Features
+
+- **payments-adapter-happy-card:** optimize arguments ([6891abe](https://github.com/Rytass/Utils/commit/6891abe1e974a7c8d0c0cd120ad20b1f832e4572))
+
 ## [0.0.6](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-happy-card@0.0.5...@rytass/payments-adapter-happy-card@0.0.6) (2024-11-09)
 
 ### Features
