@@ -175,7 +175,7 @@ export class HappyCardPayment<
         card_list: [
           {
             request_no: options.id,
-            pos_trade_no: options.posTradeNo,
+            pos_trade_no: options.posTradeNo ?? '',
             card_sn: options.cardSerial,
           },
         ],
@@ -195,19 +195,22 @@ export class HappyCardPayment<
   async getCardBalance(
     cardSerial: string,
     returnRecords: false,
+    isIsland?: boolean,
   ): Promise<number>;
   async getCardBalance(
     cardSerial: string,
     returnRecords: true,
+    isIsland?: boolean,
   ): Promise<HappyCardRecord[]>;
   async getCardBalance(
     cardSerial: string,
     returnRecords = false,
+    isIsland: boolean = false,
   ): Promise<number | HappyCardRecord[]> {
     const { data } = await axios.post<HappyCardSearchCardResponse>(
       `${this.baseUrl}/SearchCard`,
       JSON.stringify({
-        basedata: this.getBaseData(),
+        basedata: this.getBaseData(isIsland),
         card_sn: cardSerial,
       } as HappyCardSearchCardRequest),
       {
