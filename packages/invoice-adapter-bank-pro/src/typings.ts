@@ -80,6 +80,20 @@ export const BankProRateType = {
   [TaxType.TAX_FREE]: '3',
 } as Record<TaxType, '1' | '2' | '3'>;
 
+export interface BankProQueryInvoiceByInvoiceNumberPayload {
+  UserID: string;
+  Pwd: string;
+  SystemOID: number;
+  InvoiceNo: string;
+}
+
+export interface BankProQueryInvoiceByOrderNumberPayload {
+  UserID: string;
+  Pwd: string;
+  SystemOID: number;
+  OrderNo: string;
+}
+
 export interface BankProIssueInvoicePayload {
   UserID: string;
   Pwd: string;
@@ -143,3 +157,27 @@ export interface BankProIssueInvoiceResponse {
   AllowanceNo?: string;
   AllowanceDate?: string; // yyyy/MM/dd
 }
+
+export type BankProInvoiceQueryResponse = {
+  InvoiceNo: string;
+  InvoiceDate: string; // yyyy/MM/dd
+  CheckNo: '1';
+  OrderNo: string;
+  BuyerBAN: string;
+  BuyerName: string;
+  BuyerAddress: string;
+  SellerBAN: string;
+  SellerName: string;
+  InvoiceAmount: string; // NumberString in Float
+  RateType: '應稅' | '零稅' | '免稅';
+  TaxAmount: string; // NumberString in Float
+  Remark: string;
+  IsNillify: 'Y' | 'N'; // Y is voided
+  RandomNumber: string;
+  InvoiceDetails: {
+    ProductName: string;
+    Qty: string; // NumberString in Float
+    UnitPrice: string; // NumberString in Float
+    Amount: string; // NumberString in Float
+  }[];
+};

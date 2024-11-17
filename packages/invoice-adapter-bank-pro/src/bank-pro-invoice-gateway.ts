@@ -15,10 +15,13 @@ import {
   BankProInvoiceQueryArgs,
   BankProInvoiceQueryFromInvoiceNumberArgs,
   BankProInvoiceQueryFromOrderIdArgs,
+  BankProInvoiceQueryResponse,
   BankProInvoiceStatus,
   BankProIssueInvoicePayload,
   BankProIssueInvoiceResponse,
   BankProPaymentItem,
+  BankProQueryInvoiceByInvoiceNumberPayload,
+  BankProQueryInvoiceByOrderNumberPayload,
   BankProRateType,
 } from './typings';
 
@@ -266,6 +269,59 @@ export class BankProInvoiceGateway
     options: BankProInvoiceQueryFromInvoiceNumberArgs,
   ): Promise<BankProInvoice>;
   async query(options: BankProInvoiceQueryArgs): Promise<BankProInvoice> {
-    throw new Error('Bank Pro does not support query invoice');
+    const payload =
+      'invoiceNumber' in options
+        ? ({
+            UserID: this.user,
+            Pwd: this.password,
+            SystemOID: this.systemOID,
+            InvoiceNo:
+              'invoiceNumber' in options ? options.invoiceNumber : undefined,
+          } as BankProQueryInvoiceByInvoiceNumberPayload)
+        : ({
+            UserID: this.user,
+            Pwd: this.password,
+            SystemOID: this.systemOID,
+            OrderNo: 'orderId' in options ? options.orderId : undefined,
+          } as BankProQueryInvoiceByOrderNumberPayload);
+
+    const { data } = await axios.post<BankProInvoiceQueryResponse[]>(
+      `${this.baseUrl}/${'invoiceNumber' in options ? 'B2B2CInvoice_GetByInvoiceNo' : 'B2B2CInvoice_GetByOrderNo'}`,
+      JSON.stringify(payload),
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    if (data.length !== 1) throw new Error('Invoice not found');
+
+    return new BankProInvoice({
+      issuedOn: DateTime.fromFormat(data[0].InvoiceDate, 'yyyy/MM/dd')
+        .startOf('day')
+        .toJSDate(),
+      items: data[0].InvoiceDetails.map((item) => ({
+        name: item.ProductName,
+        unitPrice: Number(item.UnitPrice),
+        quantity: Number(item.Qty),
+      })),
+      randomCode: data[0].RandomNumber,
+      invoiceNumber: data[0].InvoiceNo,
+      orderId: data[0].OrderNo,
+      taxType: (() => {
+        switch (data[0].RateType) {
+          case '零稅':
+            return TaxType.ZERO_TAX;
+
+          case '免稅':
+            return TaxType.TAX_FREE;
+
+          case '應稅':
+          default:
+            return TaxType.TAXED;
+        }
+      })(),
+    });
   }
 }
