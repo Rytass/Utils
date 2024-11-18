@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.8](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-happy-card@0.0.7...@rytass/payments-adapter-happy-card@0.0.8) (2024-11-18)
+
+### Features
+
+- **payments-adapter-happy-card:** allow partial deduct ([b684da6](https://github.com/Rytass/Utils/commit/b684da62dcffb607147ad9ad392d9f76142441fd))
+
 ## [0.0.7](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-happy-card@0.0.6...@rytass/payments-adapter-happy-card@0.0.7) (2024-11-13)
 
 ### Features

@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.47](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.46...@rytass/member-base-nestjs-module@0.1.47) (2024-11-18)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** reset password requestd at after token used ([837c73b](https://github.com/Rytass/Utils/commit/837c73b4499b7397bd35ace72e3a3c4e43643689))
+
 ## [0.1.46](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.45...@rytass/member-base-nestjs-module@0.1.46) (2024-09-12)
 
 ### Bug Fixes

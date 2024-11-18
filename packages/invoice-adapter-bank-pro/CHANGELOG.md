@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.5](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-bank-pro@0.1.4...@rytass/invoice-adapter-bank-pro@0.1.5) (2024-11-18)
+
+### Features
+
+- **invoice-adapter-bank-pro:** add invoice qurey ([79e3da3](https://github.com/Rytass/Utils/commit/79e3da3577adf2c30782096126d60788b27558af))
+- **invoice-adapter-bank-pro:** allowance and invalid allowance ([da1b215](https://github.com/Rytass/Utils/commit/da1b215a1e15053bdabe8ac026ea8d20cb9012c9))
+
 ## [0.1.4](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-bank-pro@0.1.3...@rytass/invoice-adapter-bank-pro@0.1.4) (2024-11-09)
 
 **Note:** Version bump only for package @rytass/invoice-adapter-bank-pro
