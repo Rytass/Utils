@@ -129,7 +129,7 @@ export class HappyCardPayment<
           {
             card_sn: options.cardSerial,
             record_list: [],
-            use_list: records.map((record) => ({
+            use_list: options.useRecords.map((record) => ({
               record_id: record.id,
               type: record.type ?? HappyCardRecordType.AMOUNT,
               amt: record.amount,
