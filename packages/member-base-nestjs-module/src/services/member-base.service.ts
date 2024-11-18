@@ -200,6 +200,7 @@ export class MemberBaseService<
       member.password = await hash(newPassword);
       member.passwordChangedAt = new Date();
       member.shouldUpdatePassword = false;
+      member.resetPasswordRequestedAt = null;
 
       await this.baseMemberRepo.save(member);
 
