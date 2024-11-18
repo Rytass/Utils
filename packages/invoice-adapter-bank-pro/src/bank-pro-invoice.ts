@@ -1,5 +1,6 @@
 import { Invoice, InvoiceState, TaxType } from '@rytass/invoice';
 import { BankProInvoiceOptions, BankProPaymentItem } from './typings';
+import { BankProAllowance } from './bank-pro-allowance';
 
 export class BankProInvoice implements Invoice<BankProPaymentItem> {
   readonly invoiceNumber;
@@ -16,7 +17,7 @@ export class BankProInvoice implements Invoice<BankProPaymentItem> {
 
   readonly platformId?: string;
 
-  readonly allowances: any[] = [];
+  readonly allowances: BankProAllowance[] = [];
 
   readonly items: BankProPaymentItem[];
 
@@ -43,5 +44,8 @@ export class BankProInvoice implements Invoice<BankProPaymentItem> {
     this.state = options.state ?? this.state;
   }
 
-  public setVoid(voidOn = new Date()): void {}
+  public setVoid(voidOn = new Date()): void {
+    this.voidOn = voidOn;
+    this.state = InvoiceState.VOID;
+  }
 }

@@ -1,7 +1,9 @@
 import {
   getTaxTypeFromItems,
+  InvoiceAllowanceState,
   InvoiceCarrierType,
   InvoiceGateway,
+  InvoiceState,
   TaxType,
 } from '@rytass/invoice';
 import axios from 'axios';
@@ -23,7 +25,10 @@ import {
   BankProQueryInvoiceByInvoiceNumberPayload,
   BankProQueryInvoiceByOrderNumberPayload,
   BankProRateType,
+  BankProVoidAllowanceResponse,
+  BankProVoidInvoiceResponse,
 } from './typings';
+import { BankProAllowance } from './bank-pro-allowance';
 
 export class BankProInvoiceGateway
   implements
@@ -104,6 +109,10 @@ export class BankProInvoiceGateway
       throw new Error('Buyer email is invalid');
     }
 
+    if (options.vatNumber && !options.buyerAddress) {
+      throw new Error('Company invoice buyerAddress is required');
+    }
+
     const taxType = getTaxTypeFromItems(options.items);
 
     const rateType = BankProRateType[taxType];
@@ -175,6 +184,9 @@ export class BankProInvoiceGateway
           })(),
           CarrierId1: carrierId ?? '',
           CarrierId2: carrierId ?? '',
+          RelateNumber1: '',
+          RelateNumber2: '',
+          RelateNumber3: '',
           Members: [
             {
               ID: [InvoiceCarrierType.MEMBER, undefined].indexOf(
@@ -251,15 +263,305 @@ export class BankProInvoiceGateway
   }
 
   public async void(invoice: BankProInvoice): Promise<BankProInvoice> {
-    throw new Error('Bank Pro does not support voiding invoice');
+    if (invoice.state !== InvoiceState.ISSUED) {
+      throw new Error('Invoice is not issued');
+    }
+
+    const payload: BankProIssueInvoicePayload = {
+      UserID: this.user,
+      Pwd: this.password,
+      SystemOID: this.systemOID,
+      Orders: [
+        {
+          No: invoice.orderId,
+          OrderStatus: BankProInvoiceStatus.DELETE,
+          OrderDate: DateTime.fromJSDate(invoice.issuedOn).toFormat(
+            'yyyy/MM/dd',
+          ),
+          ExpectedShipDate: DateTime.now().toFormat('yyyy/MM/dd'),
+          UpdateOrderDate: DateTime.now().toFormat('yyyy/MM/dd'),
+          RateType: BankProRateType[invoice.taxType],
+          Amount: 0,
+          TaxAmount: 0,
+          TotalAmount: invoice.items.reduce(
+            (sum, item) => sum + item.quantity * item.unitPrice,
+            0,
+          ),
+          SellerBAN: this.sellerBAN,
+          SellerCode: '',
+          BuyerBAN: '',
+          BuyerCompanyName: '',
+          PaperInvoiceMark: 'N',
+          DonateMark: '',
+          MainRemark: '',
+          CarrierType: '',
+          CarrierId1: '',
+          CarrierId2: '',
+          RelateNumber1: '',
+          RelateNumber2: '',
+          RelateNumber3: '',
+          Members: [
+            {
+              ID: '',
+              Name: '',
+              ZipCode: '',
+              Address: '',
+              Tel: '',
+              Mobilephone: '',
+              Email: '',
+            },
+          ],
+          OrderDetails: invoice.items.map((item, index) => ({
+            SeqNo: (index + 1).toString(),
+            ItemID: item.id ?? '',
+            Barcode: item.barcode ?? '',
+            ItemName: item.name,
+            ItemSpec: item.spec ?? '',
+            Unit: item.unit ?? '',
+            UnitPrice: 0,
+            Qty: item.quantity,
+            Amount: 0,
+            TaxAmount: 0,
+            TotalAmount: (item.unitPrice * item.quantity).toString(),
+            HealthAmount: 0,
+            RateType:
+              BankProRateType[(item.taxType as TaxType) ?? TaxType.TAXED],
+            DiscountAmount: 0,
+            DetailRemark: item.remark ?? '',
+          })),
+        },
+      ],
+    };
+
+    const { data } = await axios.post<BankProVoidInvoiceResponse[]>(
+      `${this.baseUrl}/B2B2CInvoice_AddOrders`,
+      JSON.stringify(payload),
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    if (data.length === 0) {
+      throw new Error('Failed to void invoice');
+    }
+
+    if (data.some((response) => response.ErrorMessage)) {
+      throw new Error(data.map((response) => response.ErrorMessage).join(', '));
+    }
+
+    invoice.setVoid();
+
+    return invoice;
   }
 
-  public async allowance(invoice: BankProInvoice): Promise<BankProInvoice> {
-    throw new Error('Bank Pro does not support allowance invoice');
+  public async allowance(
+    invoice: BankProInvoice,
+    allowanceItems: BankProPaymentItem[],
+  ): Promise<BankProInvoice> {
+    if (invoice.state !== InvoiceState.ISSUED) {
+      throw new Error('Invoice is not issued');
+    }
+
+    const allowanceAmount = allowanceItems.reduce(
+      (sum, item) => sum + item.quantity * item.unitPrice,
+      0,
+    );
+
+    if (allowanceAmount <= 0) {
+      throw new Error('Allowance amount should more than zero');
+    }
+
+    const payload: BankProIssueInvoicePayload = {
+      UserID: this.user,
+      Pwd: this.password,
+      SystemOID: this.systemOID,
+      Orders: [
+        {
+          No: invoice.orderId,
+          OrderStatus: BankProInvoiceStatus.ALLOWANCE,
+          OrderDate: DateTime.fromJSDate(invoice.issuedOn).toFormat(
+            'yyyy/MM/dd',
+          ),
+          ExpectedShipDate: DateTime.now().toFormat('yyyy/MM/dd'),
+          UpdateOrderDate: DateTime.now().toFormat('yyyy/MM/dd'),
+          RateType: BankProRateType[invoice.taxType],
+          Amount: 0,
+          TaxAmount: 0,
+          TotalAmount: allowanceAmount,
+          SellerBAN: this.sellerBAN,
+          SellerCode: '',
+          BuyerBAN: '',
+          BuyerCompanyName: '',
+          PaperInvoiceMark: 'N',
+          DonateMark: '',
+          MainRemark: '',
+          CarrierType: '',
+          CarrierId1: '',
+          CarrierId2: '',
+          RelateNumber1: '',
+          RelateNumber2: '',
+          RelateNumber3: '',
+          Members: [
+            {
+              ID: '',
+              Name: '',
+              ZipCode: '',
+              Address: '',
+              Tel: '',
+              Mobilephone: '',
+              Email: '',
+            },
+          ],
+          OrderDetails: invoice.items.map((item, index) => ({
+            SeqNo: (index + 1).toString(),
+            ItemID: item.id ?? '',
+            Barcode: item.barcode ?? '',
+            ItemName: item.name,
+            ItemSpec: item.spec ?? '',
+            Unit: item.unit ?? '',
+            UnitPrice: 0,
+            Qty: item.quantity,
+            Amount: 0,
+            TaxAmount: 0,
+            TotalAmount: (item.unitPrice * item.quantity).toString(),
+            HealthAmount: 0,
+            RateType:
+              BankProRateType[(item.taxType as TaxType) ?? TaxType.TAXED],
+            DiscountAmount: 0,
+            DetailRemark: item.remark ?? '',
+          })),
+        },
+      ],
+    };
+
+    const { data } = await axios.post<BankProVoidAllowanceResponse[]>(
+      `${this.baseUrl}/B2B2CInvoice_AddOrders`,
+      JSON.stringify(payload),
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    if (data.length === 0) {
+      throw new Error('Failed to allowance invoice');
+    }
+
+    if (data.some((response) => response.ErrorMessage)) {
+      throw new Error(data.map((response) => response.ErrorMessage).join(', '));
+    }
+
+    invoice.allowances.push(
+      new BankProAllowance({
+        allowanceNumber: data[0].AllowanceNo.trim(),
+        allowancedOn: DateTime.fromFormat(
+          data[0].AllowanceDate,
+          'yyyy/MM/dd HH:mm:ss',
+        ).toJSDate(),
+        allowancePrice: allowanceAmount,
+        items: allowanceItems,
+        status: InvoiceAllowanceState.ISSUED,
+        invalidOn: null,
+        parentInvoice: invoice,
+      }),
+    );
+
+    return invoice;
   }
 
-  async invalidAllowance(): Promise<BankProInvoice> {
-    throw new Error('Bank Pro does not support invalid allowance');
+  async invalidAllowance(allowance: BankProAllowance): Promise<BankProInvoice> {
+    if (allowance.status !== InvoiceAllowanceState.ISSUED) {
+      throw new Error('Allowance is not issued');
+    }
+
+    const payload: BankProIssueInvoicePayload = {
+      UserID: this.user,
+      Pwd: this.password,
+      SystemOID: this.systemOID,
+      Orders: [
+        {
+          No: allowance.parentInvoice.orderId,
+          OrderStatus: BankProInvoiceStatus.INVALID_ALLOWANCE,
+          OrderDate: DateTime.fromJSDate(
+            allowance.parentInvoice.issuedOn,
+          ).toFormat('yyyy/MM/dd'),
+          ExpectedShipDate: DateTime.now().toFormat('yyyy/MM/dd'),
+          UpdateOrderDate: DateTime.now().toFormat('yyyy/MM/dd'),
+          RateType: BankProRateType[allowance.parentInvoice.taxType],
+          Amount: 0,
+          TaxAmount: 0,
+          TotalAmount: allowance.allowancePrice,
+          SellerBAN: this.sellerBAN,
+          SellerCode: '',
+          BuyerBAN: '',
+          BuyerCompanyName: '',
+          PaperInvoiceMark: 'N',
+          DonateMark: '',
+          MainRemark: '',
+          CarrierType: '',
+          CarrierId1: '',
+          CarrierId2: '',
+          RelateNumber1: '',
+          RelateNumber2: allowance.allowanceNumber,
+          RelateNumber3: '',
+          Members: [
+            {
+              ID: '',
+              Name: '',
+              ZipCode: '',
+              Address: '',
+              Tel: '',
+              Mobilephone: '',
+              Email: '',
+            },
+          ],
+          OrderDetails: allowance.items.map((item, index) => ({
+            SeqNo: (index + 1).toString(),
+            ItemID: item.id ?? '',
+            Barcode: item.barcode ?? '',
+            ItemName: item.name,
+            ItemSpec: item.spec ?? '',
+            Unit: item.unit ?? '',
+            UnitPrice: 0,
+            Qty: item.quantity,
+            Amount: 0,
+            TaxAmount: 0,
+            TotalAmount: (item.unitPrice * item.quantity).toString(),
+            HealthAmount: 0,
+            RateType:
+              BankProRateType[(item.taxType as TaxType) ?? TaxType.TAXED],
+            DiscountAmount: 0,
+            DetailRemark: item.remark ?? '',
+          })),
+        },
+      ],
+    };
+
+    const { data } = await axios.post<BankProVoidAllowanceResponse[]>(
+      `${this.baseUrl}/B2B2CInvoice_AddOrders`,
+      JSON.stringify(payload),
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    if (data.length === 0) {
+      throw new Error('Failed to allowance invoice');
+    }
+
+    if (data.some((response) => response.ErrorMessage)) {
+      throw new Error(data.map((response) => response.ErrorMessage).join(', '));
+    }
+
+    allowance.invalidOn = DateTime.now().toJSDate();
+    allowance.status = InvoiceAllowanceState.INVALID;
+
+    return allowance.parentInvoice;
   }
 
   async query(

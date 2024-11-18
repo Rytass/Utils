@@ -1,9 +1,11 @@
 import {
+  InvoiceAllowanceState,
   InvoiceIssueOptions,
   InvoicePaymentItem,
   InvoiceState,
   TaxType,
 } from '@rytass/invoice';
+import { BankProInvoice } from './bank-pro-invoice';
 
 export enum BankProBaseUrls {
   DEVELOPMENT = 'http://webtest.bpscm.com.tw/webapi/api/B2B2CWebApi',
@@ -118,6 +120,9 @@ export interface BankProIssueInvoicePayload {
     CarrierType: '3J0002' | 'CQ0001' | '';
     CarrierId1: string;
     CarrierId2: string;
+    RelateNumber1: string;
+    RelateNumber2: string;
+    RelateNumber3: string;
     Members: {
       ID: string; // User Email
       Name: string;
@@ -181,3 +186,37 @@ export type BankProInvoiceQueryResponse = {
     Amount: string; // NumberString in Float
   }[];
 };
+
+export interface BankProVoidInvoiceResponse {
+  OrderNo: string;
+  OrderStatus: BankProInvoiceStatus.DELETE;
+  InvoiceNo: '';
+  ErrorMessage: '';
+  RandomNumber: '';
+  InvoiceDate: '';
+  AllowanceNo: '';
+  AllowanceDate: '';
+  AllowanceInvoiceNo: '';
+}
+
+export interface BankProVoidAllowanceResponse {
+  OrderNo: string;
+  OrderStatus: BankProInvoiceStatus.ALLOWANCE;
+  InvoiceNo: '';
+  ErrorMessage: '';
+  RandomNumber: '';
+  InvoiceDate: '';
+  AllowanceNo: string;
+  AllowanceDate: string; // yyyy/MM/dd HH:mm:ss
+  AllowanceInvoiceNo: string;
+}
+
+export interface BankProAllowanceOptions {
+  allowanceNumber: string;
+  allowancePrice: number;
+  allowancedOn: Date;
+  items: BankProPaymentItem[];
+  parentInvoice: BankProInvoice;
+  status: InvoiceAllowanceState;
+  invalidOn: Date | null;
+}
