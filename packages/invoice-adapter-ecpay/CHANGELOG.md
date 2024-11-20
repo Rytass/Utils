@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.4.3](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ecpay@0.4.2...@rytass/invoice-adapter-ecpay@0.4.3) (2024-11-20)
+
+### Features
+
+- **invoice-adapter-ecpay:** add gui validator ([77ac9f7](https://github.com/Rytass/Utils/commit/77ac9f7a0fcde5af3dc45f4d5b64cb71a1c46642))
+
 ## [0.4.2](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ecpay@0.4.1...@rytass/invoice-adapter-ecpay@0.4.2) (2024-11-09)
 
 **Note:** Version bump only for package @rytass/invoice-adapter-ecpay
