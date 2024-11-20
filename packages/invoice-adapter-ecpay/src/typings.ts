@@ -381,6 +381,12 @@ export interface ECPayInvoiceLoveCodeValidateResponse {
   IsExist: 'Y' | 'N';
 }
 
+export interface ECPayInvoiceGUIValidateResponse {
+  RtnCode: number;
+  RtnMsg: string;
+  CompanyName: string;
+}
+
 export interface ECPayInvoiceMobileBarcodeValidateRequestBody {
   MerchantID: string;
   BarCode: string;
@@ -389,4 +395,9 @@ export interface ECPayInvoiceMobileBarcodeValidateRequestBody {
 export interface ECPayInvoiceLoveCodeValidateRequestBody {
   MerchantID: string;
   LoveCode: string;
+}
+
+export interface ECPayInvoiceGUIValidateRequestBody {
+  MerchantID: string;
+  UnifiedBusinessNo: string;
 }

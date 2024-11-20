@@ -27,6 +27,8 @@ import {
   ECPayInvoiceAllowanceOptions,
   ECPayInvoiceAllowanceRequestBody,
   ECPayInvoiceGatewayOptions,
+  ECPayInvoiceGUIValidateRequestBody,
+  ECPayInvoiceGUIValidateResponse,
   ECPayInvoiceInvalidAllowanceRequestBody,
   ECPayInvoiceIssueOptions,
   ECPayInvoiceListQueryOptions,
@@ -86,6 +88,42 @@ export class ECPayInvoiceGateway
         ].join(''),
       ),
     );
+  }
+
+  async isValidGUI(gui: string): Promise<[false] | [true, string]> {
+    if (!/^\d{8}$/.test(gui)) {
+      return [false];
+    }
+
+    console.warn(
+      'GUI validation is not fully covered all companies or organization, this is a supporting feature to help you validate GUI format.',
+    );
+
+    const { data } = await axios.post<ECPayInvoiceResponse>(
+      `${this.baseUrl}/B2CInvoice/GetCompanyNameByTaxID`,
+      JSON.stringify({
+        MerchantID: this.merchantId,
+        RqHeader: {
+          Timestamp: Math.round(Date.now() / 1000),
+        },
+        Data: this.encrypt<ECPayInvoiceGUIValidateRequestBody>({
+          MerchantID: this.merchantId,
+          UnifiedBusinessNo: gui,
+        }),
+      }),
+    );
+
+    if (data.TransCode !== ECPAY_INVOICE_SUCCESS_CODE) {
+      throw new Error('Invalid Response on GUI Validator');
+    }
+
+    const payload = this.decrypt(data.Data) as ECPayInvoiceGUIValidateResponse;
+
+    if (payload.RtnCode !== ECPAY_INVOICE_SUCCESS_CODE) {
+      throw new Error('Invalid Response on GUI Validator');
+    }
+
+    return [true, payload.CompanyName];
   }
 
   async isLoveCodeValid(loveCode: string): Promise<boolean> {
