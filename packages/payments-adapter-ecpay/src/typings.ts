@@ -453,6 +453,11 @@ export enum ECPayQueryResultStatus {
   PRE_COMMIT = '0',
   COMMITTED = '1',
   FAILED = '10200095',
+  // See also: p.ecpay.com.tw/5DD6AAF
+  PAY_FAILED = '10100058',
+  TRADE_DATA_NOT_FOUND = '10200047',
+  // See also: https://www.ecpay.com.tw/CascadeFAQ/CascadeFAQ_Qa?nID=4105
+  TRANSACTION_REJECTED = '10100248',
 }
 
 export interface ECPayQueryResultPayload {
