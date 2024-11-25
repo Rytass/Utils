@@ -84,8 +84,14 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
           case ECPayQueryResultStatus.FAILED:
             return OrderState.FAILED;
 
+          case ECPayQueryResultStatus.PAY_FAILED:
+            return OrderState.FAILED;
+
           case ECPayQueryResultStatus.PRE_COMMIT:
             return OrderState.PRE_COMMIT;
+
+          case ECPayQueryResultStatus.TRADE_DATA_NOT_FOUND:
+            return OrderState.INITED;
 
           default:
             return OrderState.INITED;
