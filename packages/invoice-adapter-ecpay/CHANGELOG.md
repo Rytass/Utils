@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.4.4](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ecpay@0.4.3...@rytass/invoice-adapter-ecpay@0.4.4) (2024-11-28)
+
+### Bug Fixes
+
+- **invoice-adapter-ecpay:** add mobile barcode format check ([14faedc](https://github.com/Rytass/Utils/commit/14faedc1ea0cdad630e19073a913917adf2638aa))
+- **invoice-adapter-ecpay:** correct gui validator ([ae2fdb0](https://github.com/Rytass/Utils/commit/ae2fdb08264ab2904f24fee65f6073468f771b95))
+
 ## [0.4.3](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ecpay@0.4.2...@rytass/invoice-adapter-ecpay@0.4.3) (2024-11-20)
 
 ### Features
