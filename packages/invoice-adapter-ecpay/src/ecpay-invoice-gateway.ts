@@ -120,7 +120,7 @@ export class ECPayInvoiceGateway
     const payload = this.decrypt(data.Data) as ECPayInvoiceGUIValidateResponse;
 
     if (payload.RtnCode !== ECPAY_INVOICE_SUCCESS_CODE) {
-      throw new Error('Invalid Response on GUI Validator');
+      return [false];
     }
 
     return [true, payload.CompanyName];
