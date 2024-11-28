@@ -158,6 +158,10 @@ export class ECPayInvoiceGateway
   }
 
   async isMobileBarcodeValid(barcode: string): Promise<boolean> {
+    if (!/^\/[0-9A-Z+\-.]{7}$/.test(barcode)) {
+      return false;
+    }
+
     const { data } = await axios.post<ECPayInvoiceResponse>(
       `${this.baseUrl}/B2CInvoice/CheckBarcode`,
       JSON.stringify({
