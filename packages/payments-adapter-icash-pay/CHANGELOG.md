@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.8](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-icash-pay@0.0.7...@rytass/payments-adapter-icash-pay@0.0.8) (2024-11-29)
+
+### Features
+
+- **payments-adapter-icash-pay:** add paidAmount and bounsAmount field on icp order ([22d9497](https://github.com/Rytass/Utils/commit/22d9497dbb01d61dc4bf51f1cfe2bfa640dd43f9))
+
 ## [0.0.7](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-icash-pay@0.0.6...@rytass/payments-adapter-icash-pay@0.0.7) (2024-11-12)
 
 ### Features

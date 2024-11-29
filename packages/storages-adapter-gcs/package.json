@@ -1,6 +1,6 @@
 {
   "name": "@rytass/storages-adapter-gcs",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Google Cloud Storage Adapter for @rytass/storages",
   "keywords": [
     "gcp",
@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@google-cloud/storage": "^7.14.0",
-    "@rytass/storages": "^0.2.0",
+    "@rytass/storages": "^0.2.1",
     "uuid": "^11.0.3"
   },
   "devDependencies": {

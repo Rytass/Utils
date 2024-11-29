@@ -1,6 +1,6 @@
 {
   "name": "@rytass/storages-adapter-s3",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "AWS S3 storage adapter",
   "keywords": [
     "rytass",
@@ -24,7 +24,7 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/storages": "^0.2.0",
+    "@rytass/storages": "^0.2.1",
     "aws-sdk": "^2.1692.0",
     "axios": "^1.7.8",
     "luxon": "^3.5.0",
