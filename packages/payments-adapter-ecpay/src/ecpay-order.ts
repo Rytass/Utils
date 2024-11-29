@@ -93,6 +93,9 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
           case ECPayQueryResultStatus.TRANSACTION_REJECTED:
             return OrderState.FAILED;
 
+          case ECPayQueryResultStatus.INCORRECT_CARD_NUMBER:
+              return OrderState.FAILED;
+
           case ECPayQueryResultStatus.TRADE_DATA_NOT_FOUND:
             return OrderState.INITED;
 
