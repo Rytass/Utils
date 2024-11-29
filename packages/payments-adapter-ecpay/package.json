@@ -24,10 +24,10 @@
   },
   "dependencies": {
     "@rytass/payments": "^0.1.4",
-    "axios": "^1.7.2",
-    "debug": "^4.3.5",
-    "lru-cache": "^11.0.0",
-    "luxon": "^3.4.4",
+    "axios": "^1.7.8",
+    "debug": "^4.3.7",
+    "lru-cache": "^11.0.2",
+    "luxon": "^3.5.0",
     "ngrok": "^4.3.3"
   },
   "devDependencies": {

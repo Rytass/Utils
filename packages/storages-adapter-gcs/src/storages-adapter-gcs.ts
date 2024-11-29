@@ -1,4 +1,13 @@
-import { StorageError, ErrorCode, Storage, ReadBufferFileOptions, ReadStreamFileOptions, InputFile, StorageFile, WriteFileOptions } from '@rytass/storages';
+import {
+  StorageError,
+  ErrorCode,
+  Storage,
+  ReadBufferFileOptions,
+  ReadStreamFileOptions,
+  InputFile,
+  StorageFile,
+  WriteFileOptions,
+} from '@rytass/storages';
 import { Readable, PassThrough } from 'stream';
 import { v4 as uuid } from 'uuid';
 import { Bucket, Storage as GCSStorage } from '@google-cloud/storage';
@@ -20,7 +29,10 @@ export class StorageGCSService extends Storage<GCSOptions> {
     this.bucket = this.storage.bucket(options.bucket);
   }
 
-  async url(key: string, expires = Date.now() + 1000 * 60 * 60 * 24): Promise<string> {
+  async url(
+    key: string,
+    expires = Date.now() + 1000 * 60 * 60 * 24,
+  ): Promise<string> {
     const file = this.bucket.file(key);
     const [url] = await file.getSignedUrl({
       action: 'read',
@@ -33,7 +45,10 @@ export class StorageGCSService extends Storage<GCSOptions> {
   read(key: string): Promise<Readable>;
   read(key: string, options: ReadBufferFileOptions): Promise<Buffer>;
   read(key: string, options: ReadStreamFileOptions): Promise<Readable>;
-  async read(key: string, options?: ReadBufferFileOptions | ReadStreamFileOptions): Promise<Buffer | Readable> {
+  async read(
+    key: string,
+    options?: ReadBufferFileOptions | ReadStreamFileOptions,
+  ): Promise<Buffer | Readable> {
     const file = this.bucket.file(key);
 
     try {
@@ -53,7 +68,10 @@ export class StorageGCSService extends Storage<GCSOptions> {
     }
   }
 
-  private async writeStreamFile(stream: Readable, options?: WriteFileOptions): Promise<StorageFile> {
+  private async writeStreamFile(
+    stream: Readable,
+    options?: WriteFileOptions,
+  ): Promise<StorageFile> {
     const givenFilename = options?.filename;
 
     if (givenFilename) {
@@ -103,8 +121,12 @@ export class StorageGCSService extends Storage<GCSOptions> {
     return { key: filename };
   }
 
-  private async writeBufferFile(buffer: Buffer, options?: WriteFileOptions): Promise<StorageFile> {
-    const fileInfo = options?.filename || await this.getBufferFilename(buffer);
+  private async writeBufferFile(
+    buffer: Buffer,
+    options?: WriteFileOptions,
+  ): Promise<StorageFile> {
+    const fileInfo =
+      options?.filename || (await this.getBufferFilename(buffer));
 
     const filename = Array.isArray(fileInfo) ? fileInfo[0] : fileInfo;
 
@@ -112,7 +134,9 @@ export class StorageGCSService extends Storage<GCSOptions> {
 
     await file.save(buffer, {
       gzip: 'auto',
-      ...(Array.isArray(fileInfo) && fileInfo[1] ? { contentType: fileInfo[1] } : {}),
+      ...(Array.isArray(fileInfo) && fileInfo[1]
+        ? { contentType: fileInfo[1] }
+        : {}),
       ...(options?.contentType ? { contentType: options?.contentType } : {}),
     });
 
@@ -124,11 +148,11 @@ export class StorageGCSService extends Storage<GCSOptions> {
       return this.writeBufferFile(file, options);
     }
 
-    return this.writeStreamFile(file, options);
+    return this.writeStreamFile(file as Readable, options);
   }
 
   batchWrite(files: InputFile[]): Promise<StorageFile[]> {
-    return Promise.all(files.map(file => this.write(file)));
+    return Promise.all(files.map((file) => this.write(file)));
   }
 
   async remove(key: string): Promise<void> {

@@ -32,6 +32,6 @@
   },
   "dependencies": {
     "dataloader": "^2.2.2",
-    "lru-cache": "^11.0.0"
+    "lru-cache": "^11.0.2"
   }
 }

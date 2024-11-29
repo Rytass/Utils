@@ -1,4 +1,4 @@
-import cheerio from 'cheerio';
+import { load } from 'cheerio';
 
 import { LogisticsInterface, LogisticsStatusHistory } from '@rytass/logistics';
 
@@ -64,10 +64,10 @@ export const TCatLogistics: TCatLogisticsInterface<TCatLogisticsStatus> = {
   url: 'https://www.t-cat.com.tw/Inquire/TraceDetail.aspx',
   statusMap: (
     reference: string,
-    logisticId: string
+    logisticId: string,
   ): LogisticsStatusHistory<TCatLogisticsStatus>[] => {
     const statusHistory: LogisticsStatusHistory<TCatLogisticsStatus>[] = [];
-    const $ = cheerio.load(reference);
+    const $ = load(reference);
     const traceDOM = $('#resultTable tr');
 
     let isMatch: boolean = false;
@@ -75,7 +75,7 @@ export const TCatLogistics: TCatLogisticsInterface<TCatLogisticsStatus> = {
     traceDOM.map((_index, dom) => {
       const innerText: string = $(dom).text();
 
-      const statusArray: string[] = innerText.split(' ').filter(e => e != '');
+      const statusArray: string[] = innerText.split(' ').filter((e) => e != '');
 
       const status: TCatLogisticsStatus =
         TCatLogisticsStatusMap[statusArray[statusArray.length - 4]];

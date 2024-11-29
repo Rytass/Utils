@@ -1,8 +1,16 @@
 import { Readable, PassThrough } from 'stream';
-import { createHash, randomBytes } from 'crypto';
+import { createHash } from 'crypto';
 import { FileTypeResult, fromBuffer, fromStream } from 'file-type';
 import { ConverterManager } from '@rytass/file-converter';
-import { FilenameHashAlgorithm, InputFile, ReadBufferFileOptions, ReadStreamFileOptions, StorageFile, StorageOptions, WriteFileOptions } from './typings';
+import {
+  FilenameHashAlgorithm,
+  InputFile,
+  ReadBufferFileOptions,
+  ReadStreamFileOptions,
+  StorageFile,
+  StorageOptions,
+  WriteFileOptions,
+} from './typings';
 
 export interface StorageInterface {
   write(file: InputFile): Promise<StorageFile>;
@@ -17,7 +25,9 @@ export interface StorageInterface {
 
 const MIN_BUFFER_LENGTH = 16;
 
-export class Storage<O extends Record<string, any> = Record<string, any>> implements StorageInterface {
+export class Storage<O extends Record<string, any> = Record<string, any>>
+  implements StorageInterface
+{
   readonly converterManager: ConverterManager;
 
   readonly hashAlgorithm: FilenameHashAlgorithm;
@@ -34,12 +44,14 @@ export class Storage<O extends Record<string, any> = Record<string, any>> implem
 
     const extensionStream = new PassThrough();
 
-    file.pipe(extensionStream);
+    (file as Readable).pipe(extensionStream);
 
     return fromStream(extensionStream);
   }
 
-  async getBufferFilename(buffer: Buffer): Promise<[string, string | undefined]> {
+  async getBufferFilename(
+    buffer: Buffer,
+  ): Promise<[string, string | undefined]> {
     const extension = await fromBuffer(buffer);
 
     return [
@@ -65,59 +77,60 @@ export class Storage<O extends Record<string, any> = Record<string, any>> implem
         });
       });
 
-      const getStreamFileType = new Promise<FileTypeResult | undefined>((subResolve) => {
-        let resolved = false;
-        let isEnd = false;
+      const getStreamFileType = new Promise<FileTypeResult | undefined>(
+        (subResolve) => {
+          let resolved = false;
+          let isEnd = false;
 
-        const bufferStorage: Buffer[] = [];
-        const waitingTasks: boolean[] = [];
+          const bufferStorage: Buffer[] = [];
+          const waitingTasks: boolean[] = [];
 
-        extensionStream.on('data', (buffer: Buffer) => {
-          if (resolved) return;
+          extensionStream.on('data', (buffer: Buffer) => {
+            if (resolved) return;
 
-          bufferStorage.push(buffer);
+            bufferStorage.push(buffer);
 
-          const targetBuffer = Buffer.concat(bufferStorage);
+            const targetBuffer = Buffer.concat(bufferStorage);
 
-          if (targetBuffer.length >= MIN_BUFFER_LENGTH) {
-            const taskIndex = waitingTasks.length;
+            if (targetBuffer.length >= MIN_BUFFER_LENGTH) {
+              const taskIndex = waitingTasks.length;
 
-            waitingTasks.push(true);
+              waitingTasks.push(true);
 
-            fromBuffer(targetBuffer).then((result) => {
-              waitingTasks[taskIndex] = false;
+              fromBuffer(targetBuffer).then((result) => {
+                waitingTasks[taskIndex] = false;
 
-              if (!result && !isEnd) return;
+                if (!result && !isEnd) return;
 
+                resolved = true;
+
+                subResolve(result);
+              });
+            } else {
+              waitingTasks.push(false);
+            }
+          });
+
+          extensionStream.on('end', () => {
+            isEnd = true;
+
+            if (waitingTasks.every((task) => !task) && !resolved) {
               resolved = true;
 
-              subResolve(result);
-            });
-          } else {
-            waitingTasks.push(false);
-          }
-        });
+              subResolve(undefined);
+            }
+          });
+        },
+      );
 
-        extensionStream.on('end', () => {
-          isEnd = true;
-
-          if (waitingTasks.every(task => !task) && !resolved) {
-            resolved = true;
-
-            subResolve(undefined);
-          }
-        });
-      });
-
-      Promise.all([
-        getStreamHash,
-        getStreamFileType,
-      ]).then(([filename, extension]) => {
-        resolve([
-          `${filename}${extension?.ext ? `.${extension.ext}` : ''}`,
-          extension?.mime ?? undefined,
-        ]);
-      }).catch(reject);
+      Promise.all([getStreamHash, getStreamFileType])
+        .then(([filename, extension]) => {
+          resolve([
+            `${filename}${extension?.ext ? `.${extension.ext}` : ''}`,
+            extension?.mime ?? undefined,
+          ]);
+        })
+        .catch(reject);
 
       stream.pipe(hashStream).pipe(extensionStream);
     });
@@ -127,14 +140,20 @@ export class Storage<O extends Record<string, any> = Record<string, any>> implem
     throw new Error('Method not implemented.');
   }
 
-  batchWrite(files: InputFile[], options?: WriteFileOptions[]): Promise<StorageFile[]> {
+  batchWrite(
+    files: InputFile[],
+    options?: WriteFileOptions[],
+  ): Promise<StorageFile[]> {
     throw new Error('Method not implemented.');
   }
 
   read(key: string): Promise<Readable>;
   read(key: string, options: ReadBufferFileOptions): Promise<Buffer>;
   read(key: string, options: ReadStreamFileOptions): Promise<Readable>;
-  read(key: string, options?: ReadBufferFileOptions | ReadStreamFileOptions): Promise<Readable> | Promise<Buffer> {
+  read(
+    key: string,
+    options?: ReadBufferFileOptions | ReadStreamFileOptions,
+  ): Promise<Readable> | Promise<Buffer> {
     throw new Error('Method not implemented.');
   }
 
