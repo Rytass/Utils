@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.3.5](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.3.4...@rytass/payments-adapter-ecpay@0.3.5) (2024-11-29)
+
+### Bug Fixes
+
+- **payments-adapter-ecpay:** add query result status code ([e47419d](https://github.com/Rytass/Utils/commit/e47419d3ec3a6b417ca4f10e7e7fc48f7f0a7af5))
+
 ## [0.3.4](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.3.3...@rytass/payments-adapter-ecpay@0.3.4) (2024-11-29)
 
 **Note:** Version bump only for package @rytass/payments-adapter-ecpay
