@@ -458,6 +458,7 @@ export enum ECPayQueryResultStatus {
   TRADE_DATA_NOT_FOUND = '10200047',
   // See also: https://www.ecpay.com.tw/CascadeFAQ/CascadeFAQ_Qa?nID=4105
   TRANSACTION_REJECTED = '10100248',
+  INCORRECT_CARD_NUMBER = '10100249',
 }
 
 export interface ECPayQueryResultPayload {
