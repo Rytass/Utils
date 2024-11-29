@@ -215,6 +215,8 @@ export interface ICashPayOrderInitOptions {
   uniGID?: string;
   isRefunded: boolean;
   deductEncData?: string;
+  paidAmount: number;
+  bonusAmount: number;
 }
 
 export const I_CASH_PAY_SUCCESS_CODE = 1;

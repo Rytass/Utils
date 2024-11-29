@@ -29,6 +29,9 @@ export class ICashPayOrder<
   private _state: OrderState;
   private _committedAt: Date | null;
 
+  private _paidAmount: number;
+  private _bonusAmount: number;
+
   transactionId?: string;
   icpAccount?: string;
   paymentType?: ICashPayPaymentType;
@@ -49,6 +52,8 @@ export class ICashPayOrder<
     this._failedCode = options.failedCode;
     this._failedMessage = options.failedMessage;
     this._deductEncData = options.deductEncData;
+    this._paidAmount = options.paidAmount;
+    this._bonusAmount = options.bonusAmount;
 
     this.transactionId = options.transactionId;
     this.icpAccount = options.icpAccount;
@@ -111,6 +116,22 @@ export class ICashPayOrder<
     return OrderState.PRE_COMMIT === this._state && !!this._deductEncData;
   }
 
+  get totalAmount(): number {
+    return this._paidAmount + this._bonusAmount;
+  }
+
+  get paidAmount(): number {
+    return this._paidAmount;
+  }
+
+  get bonusAmount(): number {
+    if (this._state === OrderState.PRE_COMMIT) {
+      console.warn('bonusAmount is not accurate before commit');
+    }
+
+    return this._bonusAmount;
+  }
+
   infoRetrieved(): void {
     throw new Error('iCash Pay order does not support async info');
   }
@@ -155,6 +176,9 @@ export class ICashPayOrder<
       this.twqrIssueCode = response.FiscTWQRIssCode || undefined;
       this.uniGID = response.GID || undefined;
       this._state = OrderState.COMMITTED;
+
+      this._paidAmount = Number(response.ICPAmount ?? 0) / 100;
+      this._bonusAmount = Number(response.BonusAmt ?? 0) / 100;
 
       this._gateway.emitter.emit(PaymentEvents.ORDER_COMMITTED, this);
     } catch (ex) {

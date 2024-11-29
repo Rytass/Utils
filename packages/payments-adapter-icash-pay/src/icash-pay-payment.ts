@@ -64,6 +64,7 @@ export class ICashPayPayment<
     iCashPayDebug(
       'Warning! Debug mode is enabled, sensitive data may be logged, please use this mode only for debugging purposes',
     );
+
     iCashPayDebugInfo('Initialized iCashPay Payment Gateway');
   }
 
@@ -180,6 +181,8 @@ export class ICashPayPayment<
       deductEncData: encData,
       isTWQRCode: false,
       isRefunded: false,
+      paidAmount: totalAmount,
+      bonusAmount: 0,
     });
   }
 
@@ -279,6 +282,8 @@ export class ICashPayPayment<
         failedMessage: data.RtnMsg,
         isTWQRCode: false,
         isRefunded: false,
+        paidAmount: 0,
+        bonusAmount: 0,
       }) as O;
     }
 
@@ -299,6 +304,8 @@ export class ICashPayPayment<
         failedMessage: 'Signature verification failed',
         isTWQRCode: false,
         isRefunded: false,
+        paidAmount: 0,
+        bonusAmount: 0,
       }) as O;
     }
 
@@ -326,6 +333,8 @@ export class ICashPayPayment<
         failedMessage: data.RtnMsg,
         isTWQRCode: responsePayload.IsFiscTWQC === 1,
         isRefunded: false,
+        paidAmount: 0,
+        bonusAmount: 0,
       }) as O;
     }
 
@@ -347,6 +356,12 @@ export class ICashPayPayment<
             ]
           : []),
       ],
+      paidAmount:
+        Number(responsePayload.ICPAmount ?? responsePayload.OICPAmount ?? '0') /
+        100,
+      bonusAmount:
+        Number(responsePayload.BonusAmt ?? responsePayload.OBonusAmt ?? '0') /
+        100,
       gateway: this,
       createdAt: DateTime.fromFormat(
         responsePayload.PaymentDate,
@@ -452,6 +467,8 @@ export class ICashPayPayment<
         failedMessage: data.RtnMsg,
         isTWQRCode: false,
         isRefunded: false,
+        paidAmount: 0,
+        bonusAmount: 0,
       });
     }
 
@@ -472,6 +489,8 @@ export class ICashPayPayment<
         failedMessage: 'Signature verification failed',
         isTWQRCode: false,
         isRefunded: false,
+        paidAmount: 0,
+        bonusAmount: 0,
       });
     }
 
