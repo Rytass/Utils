@@ -21,9 +21,9 @@
     "docs:build": "docusaurus build docs"
   },
   "devDependencies": {
-    "@commitlint/cli": "^19",
-    "@commitlint/config-conventional": "^19",
-    "@commitlint/config-lerna-scopes": "^19",
+    "@commitlint/cli": "^19.6.0",
+    "@commitlint/config-conventional": "^19.6.0",
+    "@commitlint/config-lerna-scopes": "^19.5.0",
     "@docusaurus/core": "^3.6.3",
     "@docusaurus/module-type-aliases": "^3.6.3",
     "@docusaurus/preset-classic": "^3.6.3",
@@ -83,9 +83,6 @@
   },
   "resolutions": {
     "got": "^11",
-    "@commitlint/cli": "^18",
-    "@commitlint/config-conventional": "^18",
-    "@commitlint/config-lerna-scopes": "^18",
     "eslint": "^8",
     "@nx/js": "^19",
     "nx": "^19"
