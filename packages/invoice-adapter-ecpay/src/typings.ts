@@ -286,6 +286,8 @@ export interface ECPayInvoiceGatewayOptions {
   aesIv?: string;
   merchantId?: string;
   baseUrl?: ECPayBaseUrls;
+  skipMobileBarcodeValidation?: boolean;
+  skipLoveCodeValidation?: boolean;
 }
 
 interface ECPayCustomerInfo {

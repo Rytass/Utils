@@ -63,6 +63,8 @@ export class ECPayInvoiceGateway
   private readonly aesKey: string = 'ejCk326UnaZWKisg';
   private readonly merchantId: string = '2000132';
   private readonly baseUrl: string = ECPayBaseUrls.DEVELOPMENT;
+  private readonly skipMobileBarcodeValidation: boolean = false;
+  private readonly skipLoveCodeValidation: boolean = false;
 
   private encrypt<T>(data: T): string {
     const encodedData = encodeURIComponent(JSON.stringify(data));
@@ -197,6 +199,9 @@ export class ECPayInvoiceGateway
     this.aesKey = options?.aesKey || this.aesKey;
     this.merchantId = options?.merchantId || this.merchantId;
     this.baseUrl = options?.baseUrl || this.baseUrl;
+    this.skipMobileBarcodeValidation =
+      options?.skipMobileBarcodeValidation ?? false;
+    this.skipLoveCodeValidation = options?.skipLoveCodeValidation ?? false;
   }
 
   async issue(options: ECPayInvoiceIssueOptions): Promise<ECPayInvoice> {
@@ -256,14 +261,20 @@ export class ECPayInvoiceGateway
 
     if (options.carrier?.type === InvoiceCarrierType.LOVE_CODE) {
       // validate love code
-      if (!(await this.isLoveCodeValid(options.carrier.code))) {
+      if (
+        !this.skipLoveCodeValidation &&
+        !(await this.isLoveCodeValid(options.carrier.code))
+      ) {
         throw new Error('Love code is invalid');
       }
     }
 
     if (options.carrier?.type === InvoiceCarrierType.MOBILE) {
       // validate mobile
-      if (!(await this.isMobileBarcodeValid(options.carrier.code))) {
+      if (
+        !this.skipMobileBarcodeValidation &&
+        !(await this.isMobileBarcodeValid(options.carrier.code))
+      ) {
         throw new Error('Mobile barcode is invalid');
       }
     }
