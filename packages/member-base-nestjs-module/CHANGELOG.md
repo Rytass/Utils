@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.48](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.47...@rytass/member-base-nestjs-module@0.1.48) (2025-01-16)
+
+### Features
+
+- **member-base-nestjs-module:** allow customize casbin permissino decorator and checker ([1a2daee](https://github.com/Rytass/Utils/commit/1a2daeea0e5a427fcf598f67fc40a7aabf90be7f))
+
 ## [0.1.47](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.46...@rytass/member-base-nestjs-module@0.1.47) (2024-11-18)
 
 ### Bug Fixes
