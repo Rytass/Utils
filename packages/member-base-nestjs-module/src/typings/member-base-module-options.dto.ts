@@ -1,5 +1,7 @@
 import { TypeORMAdapterOptions } from 'typeorm-adapter';
 import { BaseMemberEntity } from '../models';
+import { ReflectableDecorator } from '@nestjs/core';
+import { Enforcer } from 'casbin';
 
 export interface MemberBaseModuleOptionsDto {
   loginFailedBanThreshold?: number; // default: 5
@@ -17,6 +19,16 @@ export interface MemberBaseModuleOptionsDto {
   enableGlobalGuard?: boolean; // default: true
   casbinAdapterOptions?: TypeORMAdapterOptions;
   casbinModelString?: string; // default: RBAC with domains
+  casbinPermissionDecorator?: ReflectableDecorator<any[]>;
+  casbinPermissionChecker?: ({
+    enforcer,
+    payload,
+    actions,
+  }: {
+    enforcer: Enforcer;
+    payload: Pick<BaseMemberEntity, 'id' | 'account'>;
+    actions: any[];
+  }) => Promise<boolean>;
 
   // Entities
   memberEntity?: new () => BaseMemberEntity; // default: MemberEntity

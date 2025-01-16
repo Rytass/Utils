@@ -8,10 +8,12 @@ import { Enforcer } from 'casbin';
 import {
   ACCESS_TOKEN_SECRET,
   CASBIN_ENFORCER,
+  CASBIN_PERMISSION_CHECKER,
+  CASBIN_PERMISSION_DECORATOR,
   ENABLE_GLOBAL_GUARD,
 } from '../typings/member-base-providers';
 import { BaseMemberEntity } from '../models/base-member.entity';
-import { Reflector } from '@nestjs/core';
+import { ReflectableDecorator, Reflector } from '@nestjs/core';
 import { IS_ROUTE_PUBLIC } from '../decorators/is-public.decorator';
 import { AllowActions } from '../decorators/action.decorator';
 import { verify } from 'jsonwebtoken';
@@ -26,6 +28,18 @@ export class CasbinGuard implements CanActivate {
     private readonly accessTokenSecret: string,
     @Inject(ENABLE_GLOBAL_GUARD)
     private readonly enableGlobalGuard: boolean,
+    @Inject(CASBIN_PERMISSION_DECORATOR)
+    private readonly permissionDecorator: ReflectableDecorator<any>,
+    @Inject(CASBIN_PERMISSION_CHECKER)
+    private readonly permissionChecker: ({
+      enforcer,
+      payload,
+      actions,
+    }: {
+      enforcer: Enforcer;
+      payload: Pick<BaseMemberEntity, 'id' | 'account'>;
+      actions: any;
+    }) => Promise<boolean>,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -45,7 +59,10 @@ export class CasbinGuard implements CanActivate {
 
     if (isPublic) return true;
 
-    const allowActions = reflector.get(AllowActions, context.getHandler());
+    const allowActions = reflector.get(
+      this.permissionDecorator ?? AllowActions,
+      context.getHandler(),
+    );
 
     if (!allowActions?.length && !onlyAuthenticated) return false;
 
@@ -105,11 +122,11 @@ export class CasbinGuard implements CanActivate {
 
       if (onlyAuthenticated) return true;
 
-      return Promise.all(
-        allowActions.map(([domain, subject, action]) =>
-          this.enforcer.enforce(payload.id, domain, subject, action),
-        ),
-      ).then((results) => results.some((result) => result));
+      return this.permissionChecker({
+        enforcer: this.enforcer,
+        payload,
+        actions: allowActions,
+      });
     } catch (ex) {
       return false;
     }

@@ -21,12 +21,17 @@ import {
   PASSWORD_AGE_LIMIT_IN_DAYS,
   ONLY_RESET_REFRESH_TOKEN_EXPIRATION_BY_PASSWORD,
   FORCE_REJECT_LOGIN_ON_PASSWORD_EXPIRED,
+  CASBIN_PERMISSION_DECORATOR,
+  CASBIN_PERMISSION_CHECKER,
 } from '../typings/member-base-providers';
-import { newEnforcer, newModelFromString } from 'casbin';
+import { Enforcer, newEnforcer, newModelFromString } from 'casbin';
 import { MemberBaseModuleOptionsDto } from '../typings/member-base-module-options.dto';
 import { Provider } from '@nestjs/common';
+import { Domain, Subject, Action } from '../decorators/action.decorator';
 import { CASBIN_MODEL } from './casbin-models/rbac-with-domains';
 import type TypeORMAdapterType from 'typeorm-adapter';
+import { AllowActions } from '../decorators/action.decorator';
+import { BaseMemberEntity } from '../models';
 
 const TypeORMAdapter: typeof TypeORMAdapterType =
   require('typeorm-adapter').default;
@@ -106,6 +111,33 @@ export const OptionProviders = [
 
       return enforcer;
     },
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: CASBIN_PERMISSION_DECORATOR,
+    useFactory: async (options?: MemberBaseModuleOptionsDto) =>
+      options?.casbinPermissionDecorator ?? AllowActions,
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: CASBIN_PERMISSION_CHECKER,
+    useFactory: async (options?: MemberBaseModuleOptionsDto) =>
+      options?.casbinPermissionChecker
+        ? options.casbinPermissionChecker
+        : ({
+            enforcer,
+            payload,
+            actions,
+          }: {
+            enforcer: Enforcer;
+            payload: Pick<BaseMemberEntity, 'id' | 'account'>;
+            actions: [Domain, Subject, Action][];
+          }) =>
+            Promise.all(
+              actions.map(([domain, subject, action]) =>
+                enforcer.enforce(payload.id, domain, subject, action),
+              ),
+            ).then((results) => results.some((result) => result)),
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
