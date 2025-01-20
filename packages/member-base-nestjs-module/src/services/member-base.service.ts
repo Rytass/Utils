@@ -11,6 +11,7 @@ import { BaseMemberEntity } from '../models/base-member.entity';
 import {
   ACCESS_TOKEN_EXPIRATION,
   ACCESS_TOKEN_SECRET,
+  CUSTOMIZED_JWT_PAYLOAD,
   FORCE_REJECT_LOGIN_ON_PASSWORD_EXPIRED,
   LOGIN_FAILED_BAN_THRESHOLD,
   MEMBER_BASE_MODULE_OPTIONS,
@@ -85,6 +86,10 @@ export class MemberBaseService<
     private readonly forceRejectLoginOnPasswordExpired: boolean,
     @Inject(PasswordValidatorService)
     private readonly passwordValidatorService: PasswordValidatorService,
+    @Inject(CUSTOMIZED_JWT_PAYLOAD)
+    private readonly customizedJwtPayload: (
+      member: BaseMemberEntity,
+    ) => Pick<BaseMemberEntity, 'id' | 'account'>,
   ) {}
 
   private readonly logger = new Logger(MemberBaseService.name);
@@ -312,16 +317,14 @@ export class MemberBaseService<
       return {
         accessToken: sign(
           {
-            id: member.id,
-            account: member.account,
+            ...this.customizedJwtPayload(member),
           },
           this.accessTokenSecret,
           { expiresIn: this.accessTokenExpiration },
         ),
         refreshToken: sign(
           {
-            id: member.id,
-            account: member.account,
+            ...this.customizedJwtPayload(member),
             passwordChangedAt: member.passwordChangedAt?.getTime() ?? null,
           },
           this.refreshTokenSecret,
@@ -384,8 +387,7 @@ export class MemberBaseService<
         return {
           accessToken: sign(
             {
-              id: member.id,
-              account: member.account,
+              ...this.customizedJwtPayload(member),
             },
             this.accessTokenSecret,
             {
@@ -394,8 +396,7 @@ export class MemberBaseService<
           ),
           refreshToken: sign(
             {
-              id: member.id,
-              account: member.account,
+              ...this.customizedJwtPayload(member),
               passwordChangedAt: member.passwordChangedAt?.getTime() ?? null,
             },
             this.refreshTokenSecret,
