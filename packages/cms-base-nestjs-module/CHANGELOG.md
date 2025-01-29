@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.58](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.57...@rytass/cms-base-nestjs-module@0.1.58) (2025-01-29)
+
+### Features
+
+- **cms-base-nestjs-module:** add categories parent id filter support ([5336c43](https://github.com/Rytass/Utils/commit/5336c43f91da2fc1f42e453d725941a629812fd4))
+
 ## [0.1.57](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.56...@rytass/cms-base-nestjs-module@0.1.57) (2025-01-29)
 
 ### Features
