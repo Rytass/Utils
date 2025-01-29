@@ -61,6 +61,11 @@ import { ArticleSignatureService } from './article-signature.service';
 import { ArticleFindByIdBaseDto } from '../typings/article-find-by-id.dto';
 import { ArticleDefaultQueryBuilderDto } from '../typings/article-default-query-builder.dto';
 import { ArticleSignatureResult } from '../typings/article-signature-result.enum';
+import {
+  ArticleCollectionDto,
+  MultiLanguageArticleCollectionDto,
+  SingleArticleCollectionDto,
+} from '../typings/article-collection.dto';
 
 @Injectable()
 export class ArticleBaseService<
@@ -306,27 +311,15 @@ export class ArticleBaseService<
     };
   }
 
-  async findAll<
-    A extends ArticleEntity = ArticleEntity,
-    AV extends ArticleVersionEntity = ArticleVersionEntity,
-    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
-  >(
+  private async getFindAllQueryBuilder<A extends ArticleEntity = ArticleEntity>(
     options?: ArticleFindAllDto & { language: Language },
-  ): Promise<SingleArticleBaseDto<A, AV, AVC>[]>;
-  async findAll<
-    A extends ArticleEntity = ArticleEntity,
-    AV extends ArticleVersionEntity = ArticleVersionEntity,
-    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
-  >(options?: ArticleFindAllDto): Promise<ArticleBaseDto<A, AV, AVC>[]>;
-  async findAll<
-    A extends ArticleEntity = ArticleEntity,
-    AV extends ArticleVersionEntity = ArticleVersionEntity,
-    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
-  >(options?: ArticleFindAllDto): Promise<ArticleBaseDto<A, AV, AVC>[]> {
-    if (options?.language && !this.multipleLanguageMode) {
-      throw new MultipleLanguageModeIsDisabledError();
-    }
-
+  ): Promise<SelectQueryBuilder<A>>;
+  private async getFindAllQueryBuilder<A extends ArticleEntity = ArticleEntity>(
+    options?: ArticleFindAllDto,
+  ): Promise<SelectQueryBuilder<A>>;
+  private async getFindAllQueryBuilder<A extends ArticleEntity = ArticleEntity>(
+    options?: ArticleFindAllDto,
+  ): Promise<SelectQueryBuilder<A>> {
     const qb = this.getDefaultQueryBuilder<A>('articles', {
       onlyLatest: true,
       onlyApproved: options?.onlyApproved,
@@ -411,6 +404,102 @@ export class ArticleBaseService<
         qb.addOrderBy('articles.createdAt', 'DESC');
         break;
     }
+
+    return qb;
+  }
+
+  async findCollection<
+    A extends ArticleEntity = ArticleEntity,
+    AV extends ArticleVersionEntity = ArticleVersionEntity,
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(
+    options?: ArticleFindAllDto & { language: Language },
+  ): Promise<SingleArticleCollectionDto<A, AV, AVC>>;
+  async findCollection<
+    A extends ArticleEntity = ArticleEntity,
+    AV extends ArticleVersionEntity = ArticleVersionEntity,
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(
+    options?: ArticleFindAllDto,
+  ): Promise<MultiLanguageArticleCollectionDto<A, AV, AVC>>;
+  async findCollection<
+    A extends ArticleEntity = ArticleEntity,
+    AV extends ArticleVersionEntity = ArticleVersionEntity,
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(options?: ArticleFindAllDto): Promise<ArticleCollectionDto<A, AV, AVC>> {
+    if (options?.language && !this.multipleLanguageMode) {
+      throw new MultipleLanguageModeIsDisabledError();
+    }
+
+    const qb = await this.getFindAllQueryBuilder<A>(options);
+
+    qb.skip(options?.offset ?? 0);
+    qb.take(Math.min(options?.limit ?? 20, 100));
+
+    const [articles, total] = await qb.getManyAndCount();
+
+    if (options?.language || !this.multipleLanguageMode) {
+      return {
+        articles: articles.map((article) => {
+          const defaultContent = article.versions[0].multiLanguageContents.find(
+            (content) =>
+              content.language === (options?.language || DEFAULT_LANGUAGE),
+          ) as AVC;
+
+          return {
+            ...article,
+            versions: undefined,
+            ...defaultContent,
+            id: article.id,
+            tags: article.versions[0].tags,
+          };
+        }),
+        total,
+        offset: options?.offset ?? 0,
+        limit: Math.min(options?.limit ?? 20, 100),
+      };
+    }
+
+    return {
+      articles: articles.map(
+        (article) =>
+          ({
+            ...article,
+            versions: undefined,
+            version: article.versions[0].version,
+            tags: article.versions[0].tags,
+            multiLanguageContents: article.versions[0]
+              .multiLanguageContents as AVC[],
+          }) as MultiLanguageArticleBaseDto<A, AV, AVC>,
+      ),
+      total,
+      offset: options?.offset ?? 0,
+      limit: Math.min(options?.limit ?? 20, 100),
+    };
+  }
+
+  async findAll<
+    A extends ArticleEntity = ArticleEntity,
+    AV extends ArticleVersionEntity = ArticleVersionEntity,
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(
+    options?: ArticleFindAllDto & { language: Language },
+  ): Promise<SingleArticleBaseDto<A, AV, AVC>[]>;
+  async findAll<
+    A extends ArticleEntity = ArticleEntity,
+    AV extends ArticleVersionEntity = ArticleVersionEntity,
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(options?: ArticleFindAllDto): Promise<ArticleBaseDto<A, AV, AVC>[]>;
+  async findAll<
+    A extends ArticleEntity = ArticleEntity,
+    AV extends ArticleVersionEntity = ArticleVersionEntity,
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(options?: ArticleFindAllDto): Promise<ArticleBaseDto<A, AV, AVC>[]> {
+    if (options?.language && !this.multipleLanguageMode) {
+      throw new MultipleLanguageModeIsDisabledError();
+    }
+
+    const qb = await this.getFindAllQueryBuilder<A>(options);
 
     qb.skip(options?.offset ?? 0);
     qb.take(Math.min(options?.limit ?? 20, 100));
