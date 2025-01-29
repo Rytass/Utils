@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.57](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.56...@rytass/cms-base-nestjs-module@0.1.57) (2025-01-29)
+
+### Features
+
+- **cms-base-nestjs-module:** add find collection support pagination request on article service ([44da9ae](https://github.com/Rytass/Utils/commit/44da9ae3877944aafe2ebad8ae1dfed7efbae76f))
+
 ## [0.1.56](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.55...@rytass/cms-base-nestjs-module@0.1.56) (2024-11-29)
 
 **Note:** Version bump only for package @rytass/cms-base-nestjs-module
