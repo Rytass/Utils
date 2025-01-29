@@ -168,6 +168,14 @@ export class CategoryBaseService<
       qb.andWhere('fromTopParents.id IS NULL');
     }
 
+    if (options?.parentIds?.length) {
+      qb.innerJoin('categories.parents', 'parentForFilters');
+
+      qb.andWhere('parentForFilters.id IN (:...parentIds)', {
+        parentIds: options.parentIds,
+      });
+    }
+
     const categories = await qb.getMany();
 
     if (options?.language || !this.multipleLanguageMode) {

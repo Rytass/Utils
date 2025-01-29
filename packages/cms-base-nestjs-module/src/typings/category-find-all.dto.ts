@@ -8,4 +8,5 @@ export interface CategoryFindAllDto {
   sorter?: CategorySorter;
   offset?: number; // default: 0
   limit?: number; // default: 20, max: 100
+  parentIds?: string[];
 }
