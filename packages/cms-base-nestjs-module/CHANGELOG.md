@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.59](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.58...@rytass/cms-base-nestjs-module@0.1.59) (2025-01-29)
+
+### Features
+
+- **cms-base-nestjs-module:** update search term sql statement ([37160f0](https://github.com/Rytass/Utils/commit/37160f08901a6fa5558c15e630796b3ed29a5320))
+
 ## [0.1.58](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.57...@rytass/cms-base-nestjs-module@0.1.58) (2025-01-29)
 
 ### Features
