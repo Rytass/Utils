@@ -351,8 +351,12 @@ export class ArticleBaseService<
 
           const tokens = cut(options.searchTerm.trim());
 
-          const searchQb =
-            this.baseArticleVersionContentRepo.createQueryBuilder('contents');
+          const searchQb = this.dataSource.createQueryBuilder();
+
+          searchQb.from(
+            `${this.baseArticleVersionContentRepo.metadata.schema}.${this.baseArticleVersionContentRepo.metadata.tableName}`,
+            'contents',
+          );
 
           searchQb.andWhere(
             "contents.searchTokens @@ to_tsquery('simple', :searchTerm)",
@@ -360,6 +364,10 @@ export class ArticleBaseService<
               searchTerm: tokens.join('|'),
             },
           );
+
+          searchQb.andWhere('contents."entityName" = :entityName', {
+            entityName: this.baseArticleVersionContentRepo.metadata.targetName,
+          });
 
           searchQb.andWhere('contents."articleId" = "versions"."articleId"');
           searchQb.andWhere('contents."version" = "versions"."version"');
@@ -372,8 +380,12 @@ export class ArticleBaseService<
         case ArticleSearchMode.TITLE_AND_TAG:
         case ArticleSearchMode.TITLE:
         default: {
-          const searchQb =
-            this.baseArticleVersionContentRepo.createQueryBuilder('contents');
+          const searchQb = this.dataSource.createQueryBuilder();
+
+          searchQb.from(
+            `${this.baseArticleVersionContentRepo.metadata.schema}.${this.baseArticleVersionContentRepo.metadata.tableName}`,
+            'contents',
+          );
 
           if (options?.searchMode === ArticleSearchMode.TITLE_AND_TAG) {
             searchQb.orWhere(
@@ -390,6 +402,10 @@ export class ArticleBaseService<
 
           searchQb.orWhere('contents.description ILIKE :searchTerm', {
             searchTerm: `%${options.searchTerm}%`,
+          });
+
+          searchQb.andWhere('contents."entityName" = :entityName', {
+            entityName: this.baseArticleVersionContentRepo.metadata.targetName,
           });
 
           searchQb.andWhere('contents."articleId" = "versions"."articleId"');
