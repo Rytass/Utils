@@ -351,46 +351,54 @@ export class ArticleBaseService<
 
           const tokens = cut(options.searchTerm.trim());
 
-          qb.andWhere(
-            "multiLanguageContents.searchTokens @@ to_tsquery('simple', :searchTerm)",
+          const searchQb =
+            this.baseArticleVersionContentRepo.createQueryBuilder('contents');
+
+          searchQb.andWhere(
+            "contents.searchTokens @@ to_tsquery('simple', :searchTerm)",
             {
               searchTerm: tokens.join('|'),
             },
           );
+
+          searchQb.andWhere('contents."articleId" = "versions"."articleId"');
+          searchQb.andWhere('contents."version" = "versions"."version"');
+
+          qb.andWhereExists(searchQb);
 
           break;
         }
 
         case ArticleSearchMode.TITLE_AND_TAG:
         case ArticleSearchMode.TITLE:
-        default:
-          qb.andWhere(
-            new Brackets((subQb) => {
-              if (options?.searchMode === ArticleSearchMode.TITLE_AND_TAG) {
-                subQb.orWhere(
-                  ':tagSearchTerm = ANY (SELECT LOWER(value) FROM jsonb_array_elements_text(versions.tags))',
-                  {
-                    tagSearchTerm: `${options.searchTerm?.toLocaleLowerCase()}`,
-                  },
-                );
-              }
+        default: {
+          const searchQb =
+            this.baseArticleVersionContentRepo.createQueryBuilder('contents');
 
-              subQb.orWhere('multiLanguageContents.title ILIKE :searchTerm', {
-                searchTerm: `%${options.searchTerm}%`,
-              });
+          if (options?.searchMode === ArticleSearchMode.TITLE_AND_TAG) {
+            searchQb.orWhere(
+              ':tagSearchTerm = ANY (SELECT LOWER(value) FROM jsonb_array_elements_text(versions.tags))',
+              {
+                tagSearchTerm: `${options.searchTerm?.toLocaleLowerCase()}`,
+              },
+            );
+          }
 
-              subQb.orWhere(
-                'multiLanguageContents.description ILIKE :searchTerm',
-                {
-                  searchTerm: `%${options.searchTerm}%`,
-                },
-              );
+          searchQb.orWhere('contents.title ILIKE :searchTerm', {
+            searchTerm: `%${options.searchTerm}%`,
+          });
 
-              return subQb;
-            }),
-          );
+          searchQb.orWhere('contents.description ILIKE :searchTerm', {
+            searchTerm: `%${options.searchTerm}%`,
+          });
+
+          searchQb.andWhere('contents."articleId" = "versions"."articleId"');
+          searchQb.andWhere('contents."version" = "versions"."version"');
+
+          qb.andWhereExists(searchQb);
 
           break;
+        }
       }
     }
 
