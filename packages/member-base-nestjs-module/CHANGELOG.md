@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.49](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.48...@rytass/member-base-nestjs-module@0.1.49) (2025-02-02)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** bypass graphql context properties in default ([a74b9c2](https://github.com/Rytass/Utils/commit/a74b9c26a527a8465519e4f0061a22a5d3e96c51))
+
 ## [0.1.48](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.47...@rytass/member-base-nestjs-module@0.1.48) (2025-01-16)
 
 ### Features
