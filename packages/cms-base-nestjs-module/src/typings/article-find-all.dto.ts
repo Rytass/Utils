@@ -4,7 +4,7 @@ import { Language } from './language';
 
 export interface ArticleFindAllDto {
   ids?: string[];
-  categoryIds?: string[];
+  categoryIds?: string[]; // Article must have at least one of these categories
   language?: Language;
   sorter?: ArticleSorter;
   offset?: number; // default: 0
@@ -12,4 +12,5 @@ export interface ArticleFindAllDto {
   searchTerm?: string;
   searchMode?: ArticleSearchMode; // default ArticleSearchMode.TITLE
   onlyApproved?: boolean; // default: false
+  requiredCategoryIds?: string[]; // Article must have all of these categories
 }

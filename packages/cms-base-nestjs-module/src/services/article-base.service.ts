@@ -335,10 +335,62 @@ export class ArticleBaseService<
       });
     }
 
-    if (options?.categoryIds?.length) {
-      qb.andWhere('categories.id IN (:...categoryIds)', {
-        categoryIds: options.categoryIds,
+    if (options?.requiredCategoryIds?.length) {
+      const relationMetadata =
+        this.baseArticleRepo.metadata.manyToManyRelations.find(
+          (relation) =>
+            `${this.baseArticleRepo.metadata.schema}.${relation.propertyPath}` ===
+            this.baseCategoryRepo.metadata.tablePath,
+        )?.junctionEntityMetadata;
+
+      options?.requiredCategoryIds?.forEach((categoryId, index) => {
+        const relationQb = this.dataSource.createQueryBuilder();
+
+        relationQb.from(
+          `${this.baseArticleRepo.metadata.schema}.${relationMetadata?.tableName}`,
+          `requiredCategoryRelations${index}`,
+        );
+
+        relationQb.andWhere(
+          `"requiredCategoryRelations${index}"."categoryId" = :requiredCategoryId${index}`,
+          {
+            [`requiredCategoryId${index}`]: categoryId,
+          },
+        );
+
+        relationQb.andWhere(
+          `"requiredCategoryRelations${index}"."articleId" = articles.id`,
+        );
+
+        qb.andWhereExists(relationQb);
       });
+    }
+
+    if (options?.categoryIds?.length) {
+      const relationMetadata =
+        this.baseArticleRepo.metadata.manyToManyRelations.find(
+          (relation) =>
+            `${this.baseArticleRepo.metadata.schema}.${relation.propertyPath}` ===
+            this.baseCategoryRepo.metadata.tablePath,
+        )?.junctionEntityMetadata;
+
+      const relationQb = this.dataSource.createQueryBuilder();
+
+      relationQb.from(
+        `${this.baseArticleRepo.metadata.schema}.${relationMetadata?.tableName}`,
+        `categoryRelations`,
+      );
+
+      relationQb.andWhere(
+        '"categoryRelations"."categoryId" IN (:...categoryIds)',
+        {
+          categoryIds: options.categoryIds,
+        },
+      );
+
+      relationQb.andWhere(`"categoryRelations"."articleId" = articles.id`);
+
+      qb.andWhereExists(relationQb);
     }
 
     if (options?.searchTerm) {
