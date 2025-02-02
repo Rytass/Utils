@@ -1,18 +1,18 @@
-export const GraphQLContextTokenResolver = async ({
-  req,
-}: {
+export const GraphQLContextTokenResolver = async (context: {
   req: { headers: Record<string, string> };
 }): Promise<{ token: string | null }> => {
   try {
-    const token = (req.headers.authorization || '')
+    const token = (context.req.headers.authorization || '')
       .replace(/^Bearer\s/, '')
       .trim();
 
     return {
+      ...context,
       token,
     };
   } catch (ex) {
     return {
+      ...context,
       token: null,
     };
   }
