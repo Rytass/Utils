@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.61](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.60...@rytass/cms-base-nestjs-module@0.1.61) (2025-02-02)
+
+### Features
+
+- **cms-base-nestjs-module:** seperate categoryIds and requiredCategoryIds on find all articles filter ([c331f86](https://github.com/Rytass/Utils/commit/c331f86d728c3113e84f024a3524adcfc09a9486))
+
 ## [0.1.60](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.59...@rytass/cms-base-nestjs-module@0.1.60) (2025-01-29)
 
 ### Bug Fixes
