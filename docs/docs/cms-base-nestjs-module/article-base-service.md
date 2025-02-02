@@ -34,19 +34,33 @@ findById(id: string, options?: ArticleFindByIdBaseDto): Promise<ArticleBaseDto>
 findAll(options?: ArticleFindAllDto): Promise<ArticleBaseDto[]>
 ```
 
+Also support **findCollection** with same arguments to support pagination.
+
+```ts
+interface ArticleCollectionDto {
+  articles: ArticleBaseDto[];
+  total: number;
+  offset: number;
+  limit: number;
+}
+
+findCollection(options?: ArticleFindAllDto): Promise<ArticleCollectionDto>
+```
+
 **Parameters:**
 
-| Name         | Type     | Default         | Description                                                                          |
-| ------------ | -------- | --------------- | ------------------------------------------------------------------------------------ |
-| ids          | uuid[]   |                 | Find articles in id list                                                             |
-| categoryIds  | uuid[]   |                 | Category filter                                                                      |
-| language     | string   |                 | If provided, multiple language mode article will return article like single language |
-| sorted       | enum     | CREATED_AT_DESC | CREATED_AT_DESC | CREATED_AT_ASC                                                     |
-| searchTerm   | string   |                 | Search term in title, description, if use full_text_mode will find in contents       |
-| searchMode   | enum     | TITLE           | TITLE | TITLE_AND_TAG | FULL_TEXT                                                    |
-| onlyApproved | boolean  | false           | When signature mode enabled, pass this args to filter approved version               |
-| offset       | number   | 0               | Result list pagination offset                                                        |
-| limit        | number   | 20              | Result list pagination limit, max 100                                                |
+| Name                 | Type     | Default         | Description                                                                          |
+| -------------------- | -------- | --------------- | ------------------------------------------------------------------------------------ |
+| ids                  | uuid[]   |                 | Find articles in id list                                                             |
+| categoryIds          | uuid[]   |                 | Category filter (At least one)                                                       |
+| requiredCategoryIds  | uuid[]   |                 | Category filter (Required)                                                           |
+| language             | string   |                 | If provided, multiple language mode article will return article like single language |
+| sorted               | enum     | CREATED_AT_DESC | CREATED_AT_DESC | CREATED_AT_ASC                                                     |
+| searchTerm           | string   |                 | Search term in title, description, if use full_text_mode will find in contents       |
+| searchMode           | enum     | TITLE           | TITLE | TITLE_AND_TAG | FULL_TEXT                                                    |
+| onlyApproved         | boolean  | false           | When signature mode enabled, pass this args to filter approved version               |
+| offset               | number   | 0               | Result list pagination offset                                                        |
+| limit                | number   | 20              | Result list pagination limit, max 100                                                |
 
 ### Interfaces
 
