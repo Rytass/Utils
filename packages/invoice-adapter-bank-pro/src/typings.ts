@@ -68,6 +68,18 @@ export interface BankProInvoiceIssueOptions
   buyerMobile?: string;
 }
 
+export interface BankProInvoicePosIssueOptions
+  extends InvoiceIssueOptions<BankProPaymentItem> {
+  orderId: string;
+  issueAt: Date;
+  registerCode: string;
+  storeName: string;
+  storeCode: string;
+  sellerCode?: string; // 賣方廠編
+  companyName?: string; // 買方公司名稱
+  remark?: string;
+}
+
 export enum BankProInvoiceStatus {
   CREATE = '0',
   UPDATE = '1',
@@ -219,4 +231,82 @@ export interface BankProAllowanceOptions {
   parentInvoice: BankProInvoice;
   status: InvoiceAllowanceState;
   invalidOn: Date | null;
+}
+
+export interface BankProPosMainPayload {
+  /**
+   * 檔案代號 - 固定值填 M.
+   */
+  FileType: 'M';
+
+  /**
+   * 發票狀態
+   * 1: 發票開立
+   * 4: 折讓開立
+   * 6: 發票補印
+   * 7: 折讓補印
+   */
+  State: '1' | '4' | '6' | '7';
+
+  /**
+   * 賣方統編
+   */
+  SellerBAN: string;
+
+  /**
+   * 店別代碼
+   */
+  StoreCode: string;
+
+  /**
+   * 相關號碼（店別名稱）
+   */
+  StoreName: string;
+  /**
+   * 機號
+   */
+  RegisterCode: string;
+  /**
+   * 發票: 交易序號(20 碼)
+   * 折讓: 折讓單號(16 碼)
+   */
+  OrderNo: string;
+  InvoiceNo: string;
+  InvoiceDate: string; // 系統自動讀取時間 (格式: yyyy/MM/dd 或 yyyy/MM/dd HH:mm:ss，作廢時為作廢日期)
+  AllowanceDate?: string;
+  BuyerBAN: string;
+  PrintMark: string;
+  MemberId: string;
+  GroupMark: string;
+  SalesAmt: string;
+  FreeTaxSalesAmt: string;
+  ZeroTaxSalesAmt: string;
+  TaxAmt: string;
+  TotalAmt: number;
+  TaxType: '1' | '2' | '3' | '4' | '9';
+  TaxRate: string;
+  CarrierType: string;
+  CarrierId1: string;
+  CarrierId2: string;
+  NpoBan: string;
+  RandomNumber: string;
+  MainRemark: string;
+  Buyer: '';
+  CancelReason: string;
+  ReturnTaxDocumentNo: string;
+  Remark: string;
+}
+
+export interface BankProPosDetailPayload {
+  FileType: 'D';
+  SequenceNo: string;
+  ItemName: string;
+  Qty: number;
+  Unit: string;
+  UnitPrice: number;
+  SalesAmt: '';
+  TaxAmt: '';
+  TotalAmt: string;
+  RelatedNumber: '';
+  Remark: string;
 }
