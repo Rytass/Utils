@@ -1,8 +1,10 @@
 import { DateTime } from 'luxon';
 import {
+  BankProInvoice,
   BankProInvoiceGateway,
   BankProInvoiceGatewayOptions,
   BankProInvoicePosIssueOptions,
+  BankProInvoicePosVoidOptions,
   InvoiceCarrierType,
   TaxType,
 } from '../src';
@@ -157,5 +159,68 @@ describe('BankProInvoiceGateway posIssue', () => {
       expect(detailFields[9]).toBe(''); // RelateNumber
       expect(detailFields[10]).toBe(''); // Remark
     });
+  });
+});
+
+describe('BankProInvoiceGateway posVoid', () => {
+  const now = new Date();
+
+  const gatewayOptions: BankProInvoiceGatewayOptions = {
+    user: 'testUser',
+    password: 'testPassword',
+    systemOID: 123,
+    sellerBAN: '12345678',
+  };
+
+  const voidOptions: BankProInvoicePosVoidOptions = {
+    registerCode: 'REG01',
+    storeCode: 'STORE',
+    storeName: 'Test Store',
+    cancelledAt: now,
+  };
+
+  const invoice = new BankProInvoice({
+    invoiceNumber: 'AB12345678',
+    vatNumber: '12345678',
+    issuedOn: now,
+    randomCode: '1234',
+    orderId: 'order123',
+    taxType: TaxType.TAXED,
+    items: [],
+  });
+
+  let gateway: BankProInvoiceGateway;
+
+  beforeEach(() => {
+    gateway = new BankProInvoiceGateway(gatewayOptions);
+  });
+
+  it('should generate correct POS void txt format', () => {
+    const result = gateway.posVoid(invoice, voidOptions);
+
+    const fields = result.split('|');
+
+    expect(fields[0]).toBe('M'); // FileType
+    expect(fields[1]).toBe('2'); // State
+    expect(fields[2]).toBe('12345678'); // SellerBAN
+    expect(fields[3]).toBe('STORE'); // StoreCode
+    expect(fields[4]).toBe('Test Store'); // StoreName
+    expect(fields[5]).toBe('REG01'); // RegisterCode
+    expect(fields[6]).toBe('order123'); // OrderNo
+    expect(fields[7]).toBe('AB12345678'); // InvoiceNo
+    expect(fields[8]).toBe(
+      `${DateTime.fromJSDate(invoice.issuedOn).toFormat('yyyy/MM/dd')}`,
+    ); // InvoiceDate
+
+    expect(fields[9]).toBe(
+      `${DateTime.fromJSDate(now).toFormat('yyyy/MM/dd HH:mm:ss')}`,
+    ); // CancelDate
+
+    expect(fields[10]).toBe(`${invoice.vatNumber ?? ''}`); // BuyerBAN
+    expect(fields[11]).toBe(''); // CancelReason
+    expect(fields[12]).toBe(''); // ReturnTaxDocumentNo
+    expect(fields[13]).toBe(''); // Remark
+
+    console.log(result);
   });
 });

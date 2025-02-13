@@ -16,6 +16,7 @@ import {
   BankProInvoiceGatewayOptions,
   BankProInvoiceIssueOptions,
   BankProInvoicePosIssueOptions,
+  BankProInvoicePosVoidOptions,
   BankProInvoiceQueryArgs,
   BankProInvoiceQueryFromInvoiceNumberArgs,
   BankProInvoiceQueryFromOrderIdArgs,
@@ -143,40 +144,6 @@ export class BankProInvoiceGateway
       Remark: '',
     };
 
-    const mainSequence: { [key: number]: keyof BankProPosMainPayload } = {
-      1: 'FileType',
-      2: 'State',
-      3: 'SellerBAN',
-      4: 'StoreCode',
-      5: 'StoreName',
-      6: 'RegisterCode',
-      7: 'OrderNo',
-      8: 'InvoiceNo',
-      9: 'InvoiceDate',
-      10: 'AllowanceDate',
-      11: 'BuyerBAN',
-      12: 'PrintMark',
-      13: 'MemberId',
-      14: 'GroupMark',
-      15: 'SalesAmt',
-      16: 'FreeTaxSalesAmt',
-      17: 'ZeroTaxSalesAmt',
-      18: 'TaxAmt',
-      19: 'TotalAmt',
-      20: 'TaxType',
-      21: 'TaxRate',
-      22: 'CarrierType',
-      23: 'CarrierId1',
-      24: 'CarrierId2',
-      25: 'NpoBan',
-      26: 'RandomNumber',
-      27: 'MainRemark',
-      28: 'Buyer',
-      29: 'CancelReason',
-      30: 'ReturnTaxDocumentNo',
-      31: 'Remark',
-    };
-
     const detailPayloads =
       payload.Orders[0].OrderDetails.map<BankProPosDetailPayload>((item) => ({
         FileType: 'D',
@@ -192,40 +159,38 @@ export class BankProInvoiceGateway
         Remark: item.DetailRemark,
       }));
 
-    const detailSequence: { [key: number]: keyof BankProPosDetailPayload } = {
-      1: 'FileType',
-      2: 'SequenceNo',
-      3: 'ItemName',
-      4: 'Qty',
-      5: 'Unit',
-      6: 'UnitPrice',
-      7: 'SalesAmt',
-      8: 'TaxAmt',
-      9: 'TotalAmt',
-      10: 'RelatedNumber',
-      11: 'Remark',
-    };
-
-    const sortedDetailSequence = Object.keys(detailSequence).sort(
-      (a, b) => Number(a) - Number(b),
-    );
-
-    const main = Object.keys(mainSequence)
-      .sort((a, b) => Number(a) - Number(b))
-      .map((key) => mainPayload[mainSequence[Number(key)]])
-      .join('|');
-
+    const main = Object.values(mainPayload).join('|');
     const details = detailPayloads.map((detail) =>
-      sortedDetailSequence
-        .map((key) => detail[detailSequence[Number(key)]])
-        .join('|'),
+      Object.values(detail).join('|'),
     );
 
     return [main, ...details].join('\n');
   }
 
-  posVoid(): string {
-    throw new Error('Bank Pro does not support POS void');
+  posVoid(
+    invoice: BankProInvoice,
+    options: BankProInvoicePosVoidOptions,
+  ): string {
+    const payload = {
+      FileType: 'M',
+      State: '2',
+      SellerBAN: this.sellerBAN,
+      StoreCode: options.storeCode,
+      StoreName: options.storeName,
+      RegisterCode: options.registerCode,
+      OrderNo: invoice.orderId,
+      InvoiceNo: invoice.invoiceNumber,
+      InvoiceDate: DateTime.fromJSDate(invoice.issuedOn).toFormat('yyyy/MM/dd'),
+      CancelDate: DateTime.fromJSDate(options.cancelledAt).toFormat(
+        'yyyy/MM/dd HH:mm:ss',
+      ),
+      BuyerBAN: invoice.vatNumber,
+      CancelReason: '',
+      ReturnTaxDocumentNo: '',
+      Remark: '',
+    };
+
+    return Object.values(payload).join('|');
   }
 
   async isMobileBarcodeValid(code: string): Promise<boolean> {
@@ -598,6 +563,7 @@ export class BankProInvoiceGateway
             return TaxType.TAXED;
         }
       })(),
+      vatNumber: data[0].BuyerBAN,
     });
   }
 

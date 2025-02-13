@@ -1,6 +1,6 @@
 import { Invoice, InvoiceState, TaxType } from '@rytass/invoice';
-import { BankProInvoiceOptions, BankProPaymentItem } from './typings';
 import { BankProAllowance } from './bank-pro-allowance';
+import { BankProInvoiceOptions, BankProPaymentItem } from './typings';
 
 export class BankProInvoice implements Invoice<BankProPaymentItem> {
   readonly invoiceNumber;
@@ -27,6 +27,8 @@ export class BankProInvoice implements Invoice<BankProPaymentItem> {
 
   nowAmount: number;
 
+  vatNumber?: string;
+
   constructor(options: BankProInvoiceOptions) {
     this.issuedOn = options.issuedOn;
     this.items = options.items;
@@ -40,6 +42,7 @@ export class BankProInvoice implements Invoice<BankProPaymentItem> {
     this.invoiceNumber = options.invoiceNumber;
     this.orderId = options.orderId;
     this.taxType = options.taxType;
+    this.vatNumber = options.vatNumber;
     this.voidOn = options.voidOn ?? null;
     this.state = options.state ?? this.state;
   }

@@ -33,6 +33,7 @@ export interface BankProInvoiceOptions {
   taxType: TaxType;
   voidOn?: Date;
   state?: InvoiceState;
+  vatNumber?: string;
 }
 
 export interface BankProInvoiceGatewayOptions {
@@ -72,12 +73,19 @@ export interface BankProInvoicePosIssueOptions
   extends InvoiceIssueOptions<BankProPaymentItem> {
   orderId: string;
   issueAt: Date;
-  registerCode: string;
+  registerCode: string; // 機號
   storeName: string;
   storeCode: string;
   sellerCode?: string; // 賣方廠編
   companyName?: string; // 買方公司名稱
   remark?: string;
+}
+
+export interface BankProInvoicePosVoidOptions {
+  registerCode: string;
+  storeName: string;
+  storeCode: string;
+  cancelledAt: Date;
 }
 
 export enum BankProInvoiceStatus {
