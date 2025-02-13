@@ -9,6 +9,7 @@ import {
 import axios from 'axios';
 import { DateTime } from 'luxon';
 import isEmail from 'validator/lib/isEmail';
+import { BankProAllowance } from './bank-pro-allowance';
 import { BankProInvoice } from './bank-pro-invoice';
 import {
   BankProBaseUrls,
@@ -28,7 +29,6 @@ import {
   BankProVoidAllowanceResponse,
   BankProVoidInvoiceResponse,
 } from './typings';
-import { BankProAllowance } from './bank-pro-allowance';
 
 export class BankProInvoiceGateway
   implements
@@ -107,10 +107,6 @@ export class BankProInvoiceGateway
 
     if (!isEmail(options.buyerEmail)) {
       throw new Error('Buyer email is invalid');
-    }
-
-    if (options.vatNumber && !options.buyerAddress) {
-      throw new Error('Company invoice buyerAddress is required');
     }
 
     const taxType = getTaxTypeFromItems(options.items);
