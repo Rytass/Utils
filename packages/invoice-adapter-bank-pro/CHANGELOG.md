@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.7](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-bank-pro@0.1.6...@rytass/invoice-adapter-bank-pro@0.1.7) (2025-02-13)
+
+### Bug Fixes
+
+- **bank-pro-invoice-gateway:** remove redundant buyerAddress validation ([6000b6e](https://github.com/Rytass/Utils/commit/6000b6eceb91eca23a5de0b4f6165a1bf8b82404))
+
 ## [0.1.6](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-bank-pro@0.1.5...@rytass/invoice-adapter-bank-pro@0.1.6) (2024-11-29)
 
 **Note:** Version bump only for package @rytass/invoice-adapter-bank-pro
