@@ -2,6 +2,7 @@ import { TypeORMAdapterOptions } from 'typeorm-adapter';
 import { BaseMemberEntity } from '../models';
 import { ReflectableDecorator } from '@nestjs/core';
 import { Enforcer } from 'casbin';
+import { OAuth2Provider } from './oauth2-provider.interface';
 
 export interface MemberBaseModuleOptionsDto {
   loginFailedBanThreshold?: number; // default: 5
@@ -46,4 +47,8 @@ export interface MemberBaseModuleOptionsDto {
   customizedJwtPayload?: (
     member: BaseMemberEntity,
   ) => Pick<BaseMemberEntity, 'id' | 'account'>; // default: undefined
+
+  // OAuth2
+  oauth2Providers?: OAuth2Provider[];
+  oauth2ClientDestUrl?: string; // default: '/login'
 }

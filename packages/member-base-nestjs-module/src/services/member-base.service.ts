@@ -105,6 +105,29 @@ export class MemberBaseService<
     }
   }
 
+  signRefreshToken(member: BaseMemberEntity): string {
+    return sign(
+      {
+        ...this.customizedJwtPayload(member),
+        passwordChangedAt: member.passwordChangedAt?.getTime() ?? null,
+      },
+      this.refreshTokenSecret,
+      {
+        expiresIn: this.refreshTokenExpiration,
+      },
+    );
+  }
+
+  signAccessToken(member: BaseMemberEntity): string {
+    return sign(
+      {
+        ...this.customizedJwtPayload(member),
+      },
+      this.accessTokenSecret,
+      { expiresIn: this.accessTokenExpiration },
+    );
+  }
+
   async getResetPasswordToken(account: string): Promise<string> {
     const member = await this.baseMemberRepo.findOne({
       where: { account },
@@ -315,25 +338,8 @@ export class MemberBaseService<
       }
 
       return {
-        accessToken: sign(
-          {
-            ...this.customizedJwtPayload(member),
-          },
-          this.accessTokenSecret,
-          { expiresIn: this.accessTokenExpiration },
-        ),
-        refreshToken: sign(
-          {
-            ...this.customizedJwtPayload(member),
-            passwordChangedAt: member.passwordChangedAt?.getTime() ?? null,
-          },
-          this.refreshTokenSecret,
-          {
-            expiresIn: this.onlyResetRefreshTokenExpirationByPassword
-              ? Math.round((exp * 1000 - Date.now()) / 1000)
-              : this.refreshTokenExpiration,
-          },
-        ),
+        accessToken: this.signAccessToken(member),
+        refreshToken: this.signRefreshToken(member),
       };
     } catch (ex) {
       if (ex instanceof BadRequestException) throw ex;
@@ -385,25 +391,8 @@ export class MemberBaseService<
         });
 
         return {
-          accessToken: sign(
-            {
-              ...this.customizedJwtPayload(member),
-            },
-            this.accessTokenSecret,
-            {
-              expiresIn: this.accessTokenExpiration,
-            },
-          ),
-          refreshToken: sign(
-            {
-              ...this.customizedJwtPayload(member),
-              passwordChangedAt: member.passwordChangedAt?.getTime() ?? null,
-            },
-            this.refreshTokenSecret,
-            {
-              expiresIn: this.refreshTokenExpiration,
-            },
-          ),
+          accessToken: this.signAccessToken(member),
+          refreshToken: this.signRefreshToken(member),
           ...(this.passwordAgeLimitInDays
             ? {
                 shouldUpdatePassword: isPasswordExpired,

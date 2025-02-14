@@ -16,6 +16,8 @@ import { CasbinGuard } from './guards/casbin.guard';
 import { MemberBaseModuleOptionsDto } from './typings/member-base-module-options.dto';
 import { MemberBaseModuleOptionFactory } from './typings/member-base-module-option-factory';
 import { PasswordValidatorService } from './services/password-validator.service';
+import { OAuthService } from './services/oauth.service';
+import { OAuthCallbacksController } from './controllers/oauth-callbacks.controller';
 
 const providers = [
   ...OptionProviders,
@@ -23,6 +25,7 @@ const providers = [
   PasswordValidatorService,
   MemberBaseService,
   MemberBaseAdminService,
+  OAuthService,
   {
     provide: APP_GUARD,
     useClass: CasbinGuard,
@@ -34,10 +37,13 @@ const exports = [
   MemberBaseModelsModule,
   MemberBaseService,
   MemberBaseAdminService,
+  OAuthService,
   CASBIN_ENFORCER,
   ACCESS_TOKEN_SECRET,
   ENABLE_GLOBAL_GUARD,
 ];
+
+const controllers = [OAuthCallbacksController];
 
 @Global()
 @Module({})
@@ -47,6 +53,7 @@ export class MemberBaseModule {
       module: MemberBaseModule,
       imports: [...(options?.imports ?? []), MemberBaseModelsModule],
       providers: [...this.createAsyncProvider(options), ...providers],
+      controllers,
       exports,
     };
   }
@@ -62,6 +69,7 @@ export class MemberBaseModule {
         },
         ...providers,
       ],
+      controllers,
       exports,
     };
   }

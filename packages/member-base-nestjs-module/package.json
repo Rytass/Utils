@@ -37,6 +37,7 @@
     "typeorm": "*"
   },
   "dependencies": {
+    "axios": "*",
     "casbin": "^5",
     "generate-password": "^1.7.1",
     "luxon": "^3",

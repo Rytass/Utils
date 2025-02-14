@@ -24,6 +24,8 @@ import {
   CASBIN_PERMISSION_DECORATOR,
   CASBIN_PERMISSION_CHECKER,
   CUSTOMIZED_JWT_PAYLOAD,
+  OAUTH2_PROVIDERS,
+  OAUTH2_CLIENT_DEST_URL,
 } from '../typings/member-base-providers';
 import { Enforcer, newEnforcer, newModelFromString } from 'casbin';
 import { MemberBaseModuleOptionsDto } from '../typings/member-base-module-options.dto';
@@ -33,6 +35,7 @@ import { CASBIN_MODEL } from './casbin-models/rbac-with-domains';
 import type TypeORMAdapterType from 'typeorm-adapter';
 import { AllowActions } from '../decorators/action.decorator';
 import { BaseMemberEntity } from '../models';
+import { OAuth2Provider } from '../typings/oauth2-provider.interface';
 
 const TypeORMAdapter: typeof TypeORMAdapterType =
   require('typeorm-adapter').default;
@@ -209,6 +212,17 @@ export const OptionProviders = [
         id: member.id,
         account: member.account,
       })),
+  },
+  {
+    provide: OAUTH2_PROVIDERS,
+    useFactory: (options?: MemberBaseModuleOptionsDto) =>
+      options?.oauth2Providers ?? [],
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: OAUTH2_CLIENT_DEST_URL,
+    useFactory: (options?: MemberBaseModuleOptionsDto) =>
+      options?.oauth2ClientDestUrl ?? '/login',
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
 ] as Provider[];

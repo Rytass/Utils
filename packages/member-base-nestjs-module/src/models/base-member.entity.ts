@@ -12,6 +12,7 @@ import {
 } from 'typeorm';
 import { MemberLoginLogEntity } from './member-login-log.entity';
 import { MemberPasswordHistoryEntity } from './member-password-history.entity';
+import { MemberOAuthRecordEntity } from './member-oauth-record.entity';
 
 export const BaseMemberRepo = Symbol('BaseMemberRepo');
 
@@ -57,4 +58,7 @@ export class BaseMemberEntity {
 
   @OneToMany(() => MemberLoginLogEntity, (log) => log.member)
   passwordHistories: Relation<MemberPasswordHistoryEntity[]>;
+
+  @OneToMany(() => MemberOAuthRecordEntity, (record) => record.member)
+  oauthRecords: Relation<MemberOAuthRecordEntity[]>;
 }
