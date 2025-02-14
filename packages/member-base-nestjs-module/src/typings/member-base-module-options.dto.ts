@@ -47,5 +47,3 @@ export interface MemberBaseModuleOptionsDto {
     member: BaseMemberEntity,
   ) => Pick<BaseMemberEntity, 'id' | 'account'>; // default: undefined
 }
-
-type a = (member: BaseMemberEntity) => Pick<BaseMemberEntity, 'id' | 'account'>;
