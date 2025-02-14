@@ -1,8 +1,12 @@
 export const GraphQLContextTokenResolver = async (context: {
-  req: { headers: Record<string, string> };
+  req: { headers: Record<string, string>; cookies: Record<string, string> };
 }): Promise<{ token: string | null }> => {
   try {
-    const token = (context.req.headers.authorization || '')
+    const token = (
+      context.req.headers.authorization ||
+      context.req.cookies?.token ||
+      ''
+    )
       .replace(/^Bearer\s/, '')
       .trim();
 

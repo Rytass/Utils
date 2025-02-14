@@ -26,6 +26,7 @@ import {
   CUSTOMIZED_JWT_PAYLOAD,
   OAUTH2_PROVIDERS,
   OAUTH2_CLIENT_DEST_URL,
+  COOKIE_MODE,
 } from '../typings/member-base-providers';
 import { Enforcer, newEnforcer, newModelFromString } from 'casbin';
 import { MemberBaseModuleOptionsDto } from '../typings/member-base-module-options.dto';
@@ -223,6 +224,12 @@ export const OptionProviders = [
     provide: OAUTH2_CLIENT_DEST_URL,
     useFactory: (options?: MemberBaseModuleOptionsDto) =>
       options?.oauth2ClientDestUrl ?? '/login',
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: COOKIE_MODE,
+    useFactory: (options?: MemberBaseModuleOptionsDto) =>
+      options?.cookieMode ?? false,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
 ] as Provider[];

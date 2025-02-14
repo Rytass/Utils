@@ -4,7 +4,10 @@ import { BaseMemberEntity } from '../../models/base-member.entity';
 @ObjectType('Member')
 export class BaseMemberGraphQLDto
   implements
-    Omit<BaseMemberEntity, 'password' | 'loginLogs' | 'passwordHistories'>
+    Omit<
+      BaseMemberEntity,
+      'password' | 'loginLogs' | 'passwordHistories' | 'oauthRecords'
+    >
 {
   @Field(() => ID)
   id: string;

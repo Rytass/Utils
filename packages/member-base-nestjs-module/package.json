@@ -25,6 +25,7 @@
   },
   "optionalDependencies": {
     "@nestjs/graphql": "*",
+    "cookie-parser": "*",
     "graphql": "*",
     "ts-morph": "*",
     "ws": "^8"

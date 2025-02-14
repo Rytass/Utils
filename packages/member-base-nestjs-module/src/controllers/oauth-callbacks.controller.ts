@@ -10,6 +10,7 @@ import {
 import { IsPublic } from '../decorators/is-public.decorator';
 import { OAuth2Provider } from '../typings/oauth2-provider.interface';
 import {
+  COOKIE_MODE,
   OAUTH2_CLIENT_DEST_URL,
   OAUTH2_PROVIDERS,
 } from '../typings/member-base-providers';
@@ -23,6 +24,8 @@ export class OAuthCallbacksController {
     private readonly providers: OAuth2Provider[],
     @Inject(OAUTH2_CLIENT_DEST_URL)
     private readonly clientDestUrl: string,
+    @Inject(COOKIE_MODE)
+    private readonly cookieMode: boolean,
     private readonly oauthService: OAuthService,
   ) {}
 
@@ -86,9 +89,18 @@ export class OAuthCallbacksController {
           state,
         );
 
-        res.redirect(
-          `${this.clientDestUrl}?accessToken=${tokenPair.accessToken}&refreshToken=${tokenPair.refreshToken}${tokenPair.state ? `&state=${tokenPair.state}` : ''}`,
-        );
+        if (this.cookieMode) {
+          res.cookie('token', tokenPair.refreshToken, {
+            httpOnly: true,
+            secure: true,
+          });
+
+          res.redirect(this.clientDestUrl);
+        } else {
+          res.redirect(
+            `${this.clientDestUrl}?accessToken=${tokenPair.accessToken}&refreshToken=${tokenPair.refreshToken}${tokenPair.state ? `&state=${tokenPair.state}` : ''}`,
+          );
+        }
 
         break;
       }
@@ -99,9 +111,18 @@ export class OAuthCallbacksController {
           state,
         );
 
-        res.redirect(
-          `${this.clientDestUrl}?accessToken=${tokenPair.accessToken}&refreshToken=${tokenPair.refreshToken}${tokenPair.state ? `&state=${tokenPair.state}` : ''}`,
-        );
+        if (this.cookieMode) {
+          res.cookie('token', tokenPair.refreshToken, {
+            httpOnly: true,
+            secure: true,
+          });
+
+          res.redirect(this.clientDestUrl);
+        } else {
+          res.redirect(
+            `${this.clientDestUrl}?accessToken=${tokenPair.accessToken}&refreshToken=${tokenPair.refreshToken}${tokenPair.state ? `&state=${tokenPair.state}` : ''}`,
+          );
+        }
 
         break;
       }
@@ -113,9 +134,18 @@ export class OAuthCallbacksController {
           state,
         );
 
-        res.redirect(
-          `${this.clientDestUrl}?accessToken=${tokenPair.accessToken}&refreshToken=${tokenPair.refreshToken}${tokenPair.state ? `&state=${tokenPair.state}` : ''}`,
-        );
+        if (this.cookieMode) {
+          res.cookie('token', tokenPair.refreshToken, {
+            httpOnly: true,
+            secure: true,
+          });
+
+          res.redirect(this.clientDestUrl);
+        } else {
+          res.redirect(
+            `${this.clientDestUrl}?accessToken=${tokenPair.accessToken}&refreshToken=${tokenPair.refreshToken}${tokenPair.state ? `&state=${tokenPair.state}` : ''}`,
+          );
+        }
 
         break;
       }
