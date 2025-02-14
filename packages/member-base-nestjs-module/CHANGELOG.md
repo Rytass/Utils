@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.50](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.49...@rytass/member-base-nestjs-module@0.1.50) (2025-02-14)
+
+### Features
+
+- **api:** customized jwt payload ([e284472](https://github.com/Rytass/Utils/commit/e2844724ce84b07b4c79a864f5b512b79d7a3c1c))
+- **member-base-nestjs-module:** add oauth2 supports ([7d717ec](https://github.com/Rytass/Utils/commit/7d717ecde3a12f0a8c648758fa41a0190d5f4911))
+- **member-base-nestjs-module:** cookie mode support ([b5bb307](https://github.com/Rytass/Utils/commit/b5bb30700add7a58ec6ee09141717034c33d3558))
+
 ## [0.1.49](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.48...@rytass/member-base-nestjs-module@0.1.49) (2025-02-02)
 
 ### Bug Fixes
