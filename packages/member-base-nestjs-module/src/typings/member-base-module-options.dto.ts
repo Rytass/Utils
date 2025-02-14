@@ -43,4 +43,7 @@ export interface MemberBaseModuleOptionsDto {
   passwordHistoryLimit?: number; // default undefined, if set, will enable password history check
   passwordAgeLimitInDays?: number; // default undefined, if set, will enable password age check
   forceRejectLoginOnPasswordExpired?: boolean; // default: false, if true, will reject login when password is expired
+  customizedJwtPayload?: (
+    member: BaseMemberEntity,
+  ) => Pick<BaseMemberEntity, 'id' | 'account'>; // default: undefined
 }

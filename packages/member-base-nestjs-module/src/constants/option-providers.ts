@@ -23,6 +23,7 @@ import {
   FORCE_REJECT_LOGIN_ON_PASSWORD_EXPIRED,
   CASBIN_PERMISSION_DECORATOR,
   CASBIN_PERMISSION_CHECKER,
+  CUSTOMIZED_JWT_PAYLOAD,
 } from '../typings/member-base-providers';
 import { Enforcer, newEnforcer, newModelFromString } from 'casbin';
 import { MemberBaseModuleOptionsDto } from '../typings/member-base-module-options.dto';
@@ -198,6 +199,16 @@ export const OptionProviders = [
     provide: FORCE_REJECT_LOGIN_ON_PASSWORD_EXPIRED,
     useFactory: (options?: MemberBaseModuleOptionsDto) =>
       options?.forceRejectLoginOnPasswordExpired ?? false,
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: CUSTOMIZED_JWT_PAYLOAD,
+    useFactory: (options?: MemberBaseModuleOptionsDto) =>
+      options?.customizedJwtPayload ??
+      ((member: BaseMemberEntity) => ({
+        id: member.id,
+        account: member.account,
+      })),
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
 ] as Provider[];
