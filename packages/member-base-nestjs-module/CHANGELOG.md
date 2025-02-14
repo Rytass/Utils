@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.51](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.50...@rytass/member-base-nestjs-module@0.1.51) (2025-02-14)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** missing class inject decorator ([89c4bf7](https://github.com/Rytass/Utils/commit/89c4bf7b89ed800a12333cabe01385617ead278f))
+
 ## [0.1.50](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.49...@rytass/member-base-nestjs-module@0.1.50) (2025-02-14)
 
 ### Features
