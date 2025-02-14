@@ -51,6 +51,7 @@ static forRoot(options?: CMSBaseModuleOptionsDto);
 | loginFailedBanThreshold                   | number                | 5              | Number of allowed password attempts                           |
 | resetPasswordTokenExpiration              | number                | 3600           | Seconds of reset password token expiration                    |
 | resetPasswordTokenSecret                  | string                |                | Reset password token secret, will generate automatically      |
+| cookieMode                                | boolean               |                | Use cookie [token] to replace header authorization token      |
 | accessTokenSecret                         | string                |                | Access token secret, will generate automatically              |
 | accessTokenExpiration                     | number                | 900            | Seconds of access token expiration                            |
 | refreshTokenSecret                        | string                |                | Refresh token secret, will generate automatically             |
@@ -69,7 +70,9 @@ static forRoot(options?: CMSBaseModuleOptionsDto);
 | passwordHistoryLimit                      | number                |                | Password Policy: Password History Check (Not duplicate)       |
 | passwordAgeLimitInDays                    | number                |                | Password Policy: Change reminder (When expired)               |
 | forceRejectLoginOnPasswordExpired         | boolean               | false          | If true, reject login when password is expired                |
-
+| customizedJwtPayload                      | (member) => Payload   |                | Customize jwt access token payload                            |
+| oauth2Providers                           | OAuth2Provider[]      |                | Configure OAuth2 login channel                                |
+| oauth2ClientDestUrl                       | string                | /login         | After oauth2 logged in, url redirect target in client         |
 
 #### `forRootAsync()`
 
