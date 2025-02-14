@@ -28,6 +28,7 @@ export class OAuthService {
     private readonly baseMemberRepo: Repository<BaseMemberEntity>,
     @Inject(MemberOAuthRecordRepo)
     private readonly memberOAuthRecordRepo: Repository<MemberOAuthRecordEntity>,
+    @Inject(MemberBaseService)
     private readonly memberBaseService: MemberBaseService,
   ) {}
 

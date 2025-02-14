@@ -26,6 +26,7 @@ export class OAuthCallbacksController {
     private readonly clientDestUrl: string,
     @Inject(COOKIE_MODE)
     private readonly cookieMode: boolean,
+    @Inject(OAuthService)
     private readonly oauthService: OAuthService,
   ) {}
 
