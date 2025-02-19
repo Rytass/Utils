@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.52](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.51...@rytass/member-base-nestjs-module@0.1.52) (2025-02-19)
+
+### Features
+
+- **member-base-nestjs-module:** export MemberOAuthRecordEntity ([cefa781](https://github.com/Rytass/Utils/commit/cefa781ff3d00401618e13aca9de34e0d19d257a))
+
 ## [0.1.51](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.50...@rytass/member-base-nestjs-module@0.1.51) (2025-02-14)
 
 ### Bug Fixes
