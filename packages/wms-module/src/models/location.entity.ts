@@ -13,15 +13,15 @@ export const LocationRepo = Symbol('LocationRepo');
 
 @Entity('locations')
 @Tree('materialized-path')
-export class Location {
+export class LocationEntity {
   @PrimaryGeneratedColumn('increment')
   id: string;
 
   @TreeChildren()
-  children: Location[];
+  children: LocationEntity[];
 
   @TreeParent()
-  parent: Location;
+  parent: LocationEntity;
 
   @CreateDateColumn()
   createdAt: Date;
