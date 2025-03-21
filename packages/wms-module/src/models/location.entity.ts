@@ -1,4 +1,5 @@
 import {
+  AfterLoad,
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
@@ -13,7 +14,7 @@ export const LocationRepo = Symbol('LocationRepo');
 
 @Entity('locations')
 @Tree('materialized-path')
-export class LocationEntity {
+export abstract class LocationEntity {
   @PrimaryGeneratedColumn('increment')
   id: string;
 
@@ -31,4 +32,9 @@ export class LocationEntity {
 
   @DeleteDateColumn()
   deletedAt: Date | null;
+
+  @AfterLoad()
+  stringify(): void {
+    this.id = this.id.toString();
+  }
 }
