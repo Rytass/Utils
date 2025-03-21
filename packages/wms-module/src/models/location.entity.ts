@@ -2,19 +2,21 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
+  TableInheritance,
   Tree,
   TreeChildren,
   TreeParent,
-  UpdateDateColumn,
+  UpdateDateColumn
 } from 'typeorm';
 
 export const LocationRepo = Symbol('LocationRepo');
 
 @Entity('locations')
+@TableInheritance({ column: { type: 'varchar', name: 'entityName' } })
 @Tree('materialized-path')
-export class LocationEntity {
-  @PrimaryGeneratedColumn('increment')
+export abstract class LocationEntity {
+  @PrimaryColumn({ type: 'varchar' })
   id: string;
 
   @TreeChildren()
