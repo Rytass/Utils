@@ -1,5 +1,6 @@
 import {
   Column,
+  CreateDateColumn,
   Entity,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -31,4 +32,7 @@ export class StockEntity {
 
   @ManyToOne(() => BatchEntity, (batch) => batch.stocks)
   batch: Relation<BatchEntity>;
+
+  @CreateDateColumn()
+  createdAt: Date;
 }

@@ -1,7 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { LocationRepo } from '../src/models/location.entity';
+import { ChildEntity, Column, TreeRepository } from 'typeorm';
+import { LocationEntity, LocationRepo } from '../src/models/location.entity';
+import { LocationService } from '../src/services/location.service';
 import { WMSModule } from '../src/wms.module';
+
+@ChildEntity()
+class MyLocationEntity extends LocationEntity {
+  @Column('varchar')
+  customField: string;
+}
 
 describe('WMSModule', () => {
   it(
@@ -11,36 +19,96 @@ describe('WMSModule', () => {
         imports: [
           TypeOrmModule.forRoot({
             type: 'sqlite',
-            database: ':memory:',
-            // database: 'database.sqlite',
+            // database: ':memory:',
+            database: 'wms_test_db.sqlite',
             autoLoadEntities: true,
             synchronize: true,
             logging: true,
           }),
-          WMSModule.forRoot({}),
+          WMSModule.forRootAsync({
+            imports: [
+              TypeOrmModule.forFeature([LocationEntity, MyLocationEntity]),
+            ],
+            useFactory: () => ({
+              locationEntity: MyLocationEntity,
+            }),
+            inject: [],
+          }),
         ],
       }).compile();
 
-      const locationRepo = module.get(LocationRepo);
+      const locationRepo =
+        module.get<TreeRepository<MyLocationEntity>>(LocationRepo);
 
-      await locationRepo.save([
-        {
-          id: '1',
-          name: 'Location 1',
-        },
+      const locationService =
+        module.get<LocationService<MyLocationEntity>>(LocationService);
+
+      await locationService.createLocation({
+        id: 'chihuahua',
+        customField: 'customField',
+      });
+
+      await locationService.createLocation(
         {
           id: '2',
-          name: 'Location 2',
+          customField: 'anotherCustomField',
         },
+        'chihuahua',
+      );
+
+      await locationService.createLocation(
+        {
+          id: '3',
+          customField: 'anotherCustomField',
+        },
+        '2',
+      );
+
+      const locations = await locationRepo.find({
+        relations: {
+          parent: true,
+          children: true,
+        },
+      });
+
+      expect(locations).toEqual([
+        expect.objectContaining({
+          id: 'chihuahua',
+          children: [
+            expect.objectContaining({
+              id: '2',
+            }),
+          ],
+          parent: null,
+          createdAt: expect.any(Date),
+          updatedAt: expect.any(Date),
+          deletedAt: null,
+        }),
+        expect.objectContaining({
+          id: '2',
+          children: [
+            expect.objectContaining({
+              id: '3',
+            }),
+          ],
+          parent: expect.objectContaining({
+            id: 'chihuahua',
+          }),
+          createdAt: expect.any(Date),
+          updatedAt: expect.any(Date),
+          deletedAt: null,
+        }),
+        expect.objectContaining({
+          id: '3',
+          children: [],
+          parent: expect.objectContaining({
+            id: '2',
+          }),
+          createdAt: expect.any(Date),
+          updatedAt: expect.any(Date),
+          deletedAt: null,
+        }),
       ]);
-
-      console.log('Locations created');
-
-      const locations = await locationRepo.find();
-
-      console.log(locations);
-
-      expect(locations).toBeDefined();
     },
     50 * 1000,
   );
