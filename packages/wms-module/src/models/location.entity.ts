@@ -2,7 +2,8 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
+  TableInheritance,
   Tree,
   TreeChildren,
   TreeParent,
@@ -12,9 +13,10 @@ import {
 export const LocationRepo = Symbol('LocationRepo');
 
 @Entity('locations')
+@TableInheritance({ column: { type: 'varchar', name: 'entityName' } })
 @Tree('materialized-path')
 export class LocationEntity {
-  @PrimaryGeneratedColumn('increment')
+  @PrimaryColumn({ type: 'varchar' })
   id: string;
 
   @TreeChildren()
