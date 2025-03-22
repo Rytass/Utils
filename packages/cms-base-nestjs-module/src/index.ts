@@ -45,3 +45,7 @@ export {
   RESOLVED_CATEGORY_REPO,
   RESOLVED_SIGNATURE_LEVEL_REPO,
 } from './typings/cms-base-providers';
+
+// DTOs
+export type * from './typings/article-base.dto';
+export type * from './typings/category-base.dto';
