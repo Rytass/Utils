@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.62](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.61...@rytass/cms-base-nestjs-module@0.1.62) (2025-03-22)
+
+### Features
+
+- **cms-base-nestjs-module:** export dto types ([a21a7cf](https://github.com/Rytass/Utils/commit/a21a7cfbdd5f3be6a2a67ac952886d8e84f8c009))
+
 ## [0.1.61](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.60...@rytass/cms-base-nestjs-module@0.1.61) (2025-02-02)
 
 ### Features
