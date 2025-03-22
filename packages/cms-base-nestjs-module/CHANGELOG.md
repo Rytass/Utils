@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.63](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.62...@rytass/cms-base-nestjs-module@0.1.63) (2025-03-22)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** correct getCollection response type ([e76ecec](https://github.com/Rytass/Utils/commit/e76ecec4093af123a4b3c478ba3f24af7814ec4a))
+- **cms-base-nestjs-module:** default tags value if not provided by user ([bf990d4](https://github.com/Rytass/Utils/commit/bf990d49f9c4efe97c3d65d1cc1eccb17228e3ea))
+
 ## [0.1.62](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.61...@rytass/cms-base-nestjs-module@0.1.62) (2025-03-22)
 
 ### Features
