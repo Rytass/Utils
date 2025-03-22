@@ -7,7 +7,6 @@ import {
   OnApplicationBootstrap,
 } from '@nestjs/common';
 import {
-  Brackets,
   DataSource,
   In,
   QueryRunner,
@@ -63,7 +62,6 @@ import { ArticleDefaultQueryBuilderDto } from '../typings/article-default-query-
 import { ArticleSignatureResult } from '../typings/article-signature-result.enum';
 import {
   ArticleCollectionDto,
-  MultiLanguageArticleCollectionDto,
   SingleArticleCollectionDto,
 } from '../typings/article-collection.dto';
 
@@ -495,9 +493,7 @@ export class ArticleBaseService<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
-  >(
-    options?: ArticleFindAllDto,
-  ): Promise<MultiLanguageArticleCollectionDto<A, AV, AVC>>;
+  >(options?: ArticleFindAllDto): Promise<ArticleCollectionDto<A, AV, AVC>>;
   async findCollection<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,

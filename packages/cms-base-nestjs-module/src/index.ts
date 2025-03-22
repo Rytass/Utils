@@ -49,3 +49,4 @@ export {
 // DTOs
 export type * from './typings/article-base.dto';
 export type * from './typings/category-base.dto';
+export type * from './typings/article-collection.dto';
