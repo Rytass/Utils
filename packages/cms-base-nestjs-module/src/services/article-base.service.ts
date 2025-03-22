@@ -724,7 +724,7 @@ export class ArticleBaseService<
           ),
         articleId: article.id,
         version: latestVersion.version + 1,
-        tags: options.tags,
+        tags: options.tags ?? [],
       });
 
       await runner.manager.save(version);
@@ -756,7 +756,7 @@ export class ArticleBaseService<
               (articleContent) => () =>
                 this.bindSearchTokens<AVC>(
                   articleContent as AVC,
-                  options.tags,
+                  options.tags ?? [],
                   runner,
                 ),
             )
@@ -783,7 +783,11 @@ export class ArticleBaseService<
         );
 
         if (this.fullTextSearchMode) {
-          await this.bindSearchTokens<AVC>(savedContent, options.tags, runner);
+          await this.bindSearchTokens<AVC>(
+            savedContent,
+            options.tags ?? [],
+            runner,
+          );
         }
       }
 
@@ -864,7 +868,7 @@ export class ArticleBaseService<
             {},
           ),
         articleId: article.id,
-        tags: options.tags,
+        tags: options.tags ?? [],
       });
 
       await runner.manager.save(version);
@@ -891,7 +895,7 @@ export class ArticleBaseService<
               (articleContent) => () =>
                 this.bindSearchTokens<AVC>(
                   articleContent,
-                  options.tags,
+                  options.tags ?? [],
                   runner,
                 ),
             )
@@ -918,7 +922,11 @@ export class ArticleBaseService<
         );
 
         if (this.fullTextSearchMode) {
-          await this.bindSearchTokens<AVC>(savedContent, options.tags, runner);
+          await this.bindSearchTokens<AVC>(
+            savedContent,
+            options.tags ?? [],
+            runner,
+          );
         }
       }
 
