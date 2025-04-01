@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.64](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.63...@rytass/cms-base-nestjs-module@0.1.64) (2025-04-01)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** add missing version column in findById response ([0eabe52](https://github.com/Rytass/Utils/commit/0eabe520787e44fd35e1461d8b7ce146eb5f6443))
+- **cms-base-nestjs-module:** category update on non-multi-language mode ([954bbe6](https://github.com/Rytass/Utils/commit/954bbe65224d0457930e389ff5cb027fa9728a0b))
+
 ## [0.1.63](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.62...@rytass/cms-base-nestjs-module@0.1.63) (2025-03-22)
 
 ### Bug Fixes
