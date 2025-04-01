@@ -356,11 +356,11 @@ export class CategoryBaseService<
 
       if (defaultLanguage) {
         willCreateOrUpdateLanguages = [
-          {
+          this.baseCategoryMultiLanguageNameRepo.create({
             ...(multiLanguageOptions ?? {}),
             ...defaultLanguage,
             name: options.name,
-          },
+          }),
         ] as CM[];
       } else {
         willCreateOrUpdateLanguages = [
