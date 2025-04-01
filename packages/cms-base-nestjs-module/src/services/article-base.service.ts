@@ -296,6 +296,7 @@ export class ArticleBaseService<
         versions: undefined,
         ...defaultContent,
         id: article.id,
+        version: article.versions[0].version,
         tags: article.versions[0].tags,
       };
     }
@@ -305,6 +306,7 @@ export class ArticleBaseService<
       versions: undefined,
       id: article.id,
       tags: article.versions[0].tags,
+      version: article.versions[0].version,
       multiLanguageContents: article.versions[0].multiLanguageContents as AVC[],
     };
   }
