@@ -1,14 +1,12 @@
 import {
-  Column,
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
-  Index,
   OneToMany,
   PrimaryColumn,
   Relation,
   TableInheritance,
-  UpdateDateColumn,
+  UpdateDateColumn
 } from 'typeorm';
 import { BatchEntity } from './batch.entity';
 import { StockEntity } from './stock.entity';
@@ -16,17 +14,10 @@ import { StockEntity } from './stock.entity';
 export const MaterialRepo = Symbol('MaterialRepo');
 
 @Entity('materials')
-@Index(['sku'], { unique: true, where: '"deletedAt" IS NULL' })
-@TableInheritance({ column: { type: 'varchar', name: 'type' } })
+@TableInheritance({ column: { type: 'varchar', name: 'entityName' } })
 export class MaterialEntity {
   @PrimaryColumn({ type: 'varchar' })
   id: string;
-
-  @Column({ type: 'varchar' })
-  sku: string;
-
-  @Column({ type: 'varchar' })
-  unit: string;
 
   @CreateDateColumn()
   createdAt: Date;

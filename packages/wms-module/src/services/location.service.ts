@@ -1,15 +1,15 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DeepPartial, TreeRepository } from 'typeorm';
 import { LocationEntity } from '../models/location.entity';
-import { RESOLVED_LOCATION_REPO } from '../typings/wms-module-providers';
+import { RESOLVED_TREE_LOCATION_REPO } from '../typings/wms-module-providers';
 
 @Injectable()
 export class LocationService<Entity extends LocationEntity = LocationEntity> {
   private readonly logger = new Logger(LocationService.name);
 
   constructor(
-    @Inject(RESOLVED_LOCATION_REPO)
-    private readonly locationRepo: TreeRepository<LocationEntity>,
+    @Inject(RESOLVED_TREE_LOCATION_REPO)
+    private readonly locationTreeRepo: TreeRepository<LocationEntity>,
   ) {}
 
   async createLocation(
@@ -17,12 +17,12 @@ export class LocationService<Entity extends LocationEntity = LocationEntity> {
     parentId?: string,
   ): Promise<DeepPartial<Entity>> {
     const parent = parentId
-      ? await this.locationRepo.findOne({
+      ? await this.locationTreeRepo.findOne({
           where: { id: parentId },
         })
       : undefined;
 
-    const location = await this.locationRepo.save({
+    const location = await this.locationTreeRepo.save({
       ...options,
       parent,
     });
