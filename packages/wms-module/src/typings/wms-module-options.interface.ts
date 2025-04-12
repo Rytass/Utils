@@ -1,11 +1,15 @@
 import { ModuleMetadata, Type } from '@nestjs/common';
+import { BatchEntity } from '../models/batch.entity';
 import { LocationEntity } from '../models/location.entity';
+import { MaterialEntity } from '../models/material.entity';
 import { StockEntity } from '../models/stock.entity';
 
 export interface WmsModuleOptions {
   // Entities
   stockEntity?: new () => StockEntity; // default: StockEntity
   locationEntity?: new () => LocationEntity; // default: LocationEntity
+  materialEntity?: new () => MaterialEntity; // default: MaterialEntity
+  batchEntity?: new () => BatchEntity; // default: MaterialEntity
 }
 
 export interface WmsModuleOptionsFactory {
