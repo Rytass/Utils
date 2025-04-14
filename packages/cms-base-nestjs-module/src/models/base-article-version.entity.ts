@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
@@ -20,6 +21,7 @@ export const BaseArticleVersionRepo = Symbol('BaseArticleVersionRepo');
 @TableInheritance({ column: { type: 'varchar', name: 'entityName' } })
 export class BaseArticleVersionEntity {
   @PrimaryColumn('uuid')
+  @Index()
   articleId: string;
 
   @PrimaryColumn('int', { default: 0 })

@@ -21,6 +21,7 @@ export const ArticleSignatureRepo = Symbol('ArticleSignatureRepo');
   ['articleId', 'version', 'signatureLevelId'],
   { unique: true, where: '"deletedAt" IS NULL' },
 )
+@Index(['articleId', 'version'])
 export class ArticleSignatureEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -32,6 +33,7 @@ export class ArticleSignatureEntity {
   version: number;
 
   @Column('uuid', { nullable: true })
+  @Index()
   signatureLevelId: string | null;
 
   @Column('enum', {

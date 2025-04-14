@@ -19,6 +19,7 @@ export const BaseArticleVersionContentRepo = Symbol(
 );
 
 @Entity('article_version_contents')
+@Index(['articleId', 'version'])
 @TableInheritance({ column: { type: 'varchar', name: 'entityName' } })
 export class BaseArticleVersionContentEntity {
   @PrimaryColumn('uuid')

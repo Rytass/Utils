@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryColumn,
@@ -22,6 +23,7 @@ export const BaseCategoryMultiLanguageNameRepo = Symbol(
 @TableInheritance({ column: { type: 'varchar', name: 'entityName' } })
 export class BaseCategoryMultiLanguageNameEntity {
   @PrimaryColumn('uuid')
+  @Index()
   categoryId: string;
 
   @PrimaryColumn('varchar', { default: DEFAULT_LANGUAGE })
