@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -17,6 +18,7 @@ export class MemberLoginLogEntity {
   id: string;
 
   @Column('uuid')
+  @Index()
   memberId: string;
 
   @Column('boolean', { default: true })

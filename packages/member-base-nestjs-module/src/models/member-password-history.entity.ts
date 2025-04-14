@@ -3,6 +3,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -17,6 +18,7 @@ export class MemberPasswordHistoryEntity {
   id: string;
 
   @Column('uuid')
+  @Index()
   memberId: string;
 
   @Column('varchar')

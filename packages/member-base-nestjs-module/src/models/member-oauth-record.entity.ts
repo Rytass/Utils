@@ -1,6 +1,7 @@
 import {
   Column,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryColumn,
@@ -13,6 +14,7 @@ export const MemberOAuthRecordRepo = Symbol('MemberOAuthRecordRepo');
 @Entity('member_oauth_records')
 export class MemberOAuthRecordEntity {
   @PrimaryColumn('uuid')
+  @Index()
   memberId: string;
 
   @PrimaryColumn('varchar')
