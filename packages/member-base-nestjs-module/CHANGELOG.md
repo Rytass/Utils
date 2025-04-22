@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.53](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.52...@rytass/member-base-nestjs-module@0.1.53) (2025-04-22)
+
+### Features
+
+- **member-base-nestjs-module:** add index on foreign keys ([8d96b0b](https://github.com/Rytass/Utils/commit/8d96b0b93c1848a81fc2f90432906b94a508430d))
+- **member-base-nestjs-module:** use timestamptz on every timestamp column ([f0fd8b4](https://github.com/Rytass/Utils/commit/f0fd8b4ca38455da50fd5cf0620947686a3eca74))
+
 ## [0.1.52](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.51...@rytass/member-base-nestjs-module@0.1.52) (2025-02-19)
 
 ### Features

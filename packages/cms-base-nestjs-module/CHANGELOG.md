@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.65](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.64...@rytass/cms-base-nestjs-module@0.1.65) (2025-04-22)
+
+### Features
+
+- **cms-base-nestjs-module:** add draft mode ([e9b61ce](https://github.com/Rytass/Utils/commit/e9b61ce01f90d2940144e82b7c1c5f4f2bb64462))
+- **cms-base-nestjs-module:** add index on foreign keys ([04eaaeb](https://github.com/Rytass/Utils/commit/04eaaeb6c6c11ff93519d577ba6d7b8d91a69a94))
+- **cms-base-nestjs-module:** add signaureLevel filter on findAll ([67ae81f](https://github.com/Rytass/Utils/commit/67ae81f1fa21ba5616b55ae46456a55df61c9de4))
+- **cms-base-nestjs-module:** change all timestamp column to timestamptz in default ([0f1affb](https://github.com/Rytass/Utils/commit/0f1affb572710c47c8606757231387bc805cb1c3))
+
 ## [0.1.64](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.63...@rytass/cms-base-nestjs-module@0.1.64) (2025-04-01)
 
 ### Bug Fixes
