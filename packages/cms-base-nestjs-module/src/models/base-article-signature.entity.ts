@@ -48,10 +48,10 @@ export class ArticleSignatureEntity {
   @Column('uuid', { nullable: true })
   signerId: string | null;
 
-  @CreateDateColumn()
+  @CreateDateColumn('timestamptz')
   signedAt: Date;
 
-  @DeleteDateColumn()
+  @DeleteDateColumn('timestamptz')
   deletedAt: Date | null;
 
   @ManyToOne(() => BaseArticleVersionEntity, (version) => version.signatures)

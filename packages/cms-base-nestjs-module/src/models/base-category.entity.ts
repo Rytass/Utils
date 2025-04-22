@@ -25,13 +25,13 @@ export class BaseCategoryEntity {
   @Column('boolean', { default: false, comment: 'is article bindable' })
   bindable: boolean;
 
-  @CreateDateColumn()
+  @CreateDateColumn('timestamptz')
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn('timestamptz')
   updatedAt: Date;
 
-  @DeleteDateColumn()
+  @DeleteDateColumn('timestamptz')
   deletedAt: Date | null;
 
   @ManyToMany(() => BaseCategoryEntity, (category) => category.children)

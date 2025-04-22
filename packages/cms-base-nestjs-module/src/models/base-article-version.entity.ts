@@ -30,10 +30,10 @@ export class BaseArticleVersionEntity {
   @Column('jsonb')
   tags: string[];
 
-  @CreateDateColumn()
+  @CreateDateColumn('timestamptz')
   createdAt: Date;
 
-  @DeleteDateColumn()
+  @DeleteDateColumn('timestamptz')
   deletedAt: Date | null;
 
   @ManyToOne(() => BaseArticleEntity, (article) => article.versions, {

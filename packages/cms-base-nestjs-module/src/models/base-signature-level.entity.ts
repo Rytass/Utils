@@ -29,10 +29,10 @@ export class BaseSignatureLevelEntity {
   @Column('boolean', { default: true })
   required: boolean;
 
-  @CreateDateColumn()
+  @CreateDateColumn('timestamptz')
   createdAt: Date;
 
-  @DeleteDateColumn()
+  @DeleteDateColumn('timestamptz')
   deletedAt: Date | null;
 
   @OneToMany(
