@@ -27,7 +27,7 @@ export class MemberLoginLogEntity {
   @Column('cidr', { nullable: true })
   ip: string | null;
 
-  @CreateDateColumn()
+  @CreateDateColumn('timestamptz')
   createdAt: Date;
 
   @ManyToOne(() => BaseMemberEntity, (member) => member.loginLogs)

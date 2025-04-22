@@ -24,7 +24,7 @@ export class MemberPasswordHistoryEntity {
   @Column('varchar')
   password: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn('timestamptz')
   createdAt: Date;
 
   @ManyToOne(() => BaseMemberEntity, (member) => member.passwordHistories)

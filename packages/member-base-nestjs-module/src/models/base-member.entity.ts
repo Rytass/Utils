@@ -44,13 +44,13 @@ export class BaseMemberEntity {
   })
   shouldUpdatePassword: boolean;
 
-  @CreateDateColumn()
+  @CreateDateColumn('timestamptz')
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn('timestamptz')
   updatedAt: Date;
 
-  @DeleteDateColumn()
+  @DeleteDateColumn('timestamptz')
   deletedAt: Date | null;
 
   @OneToMany(() => MemberLoginLogEntity, (log) => log.member)
