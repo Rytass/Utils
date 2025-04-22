@@ -1,5 +1,6 @@
 import { Options, Provider } from '@nestjs/common';
 import {
+  AUTO_RELEASE_AFTER_APPROVED,
   CIRCULAR_CATEGORY_MODE,
   CMS_BASE_MODULE_OPTIONS,
   DRAFT_MODE,
@@ -105,6 +106,12 @@ export const OptionProviders = [
     provide: DRAFT_MODE,
     useFactory: (options?: CMSBaseModuleOptionsDto) =>
       options?.enableDraftMode ?? false,
+    inject: [CMS_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: AUTO_RELEASE_AFTER_APPROVED,
+    useFactory: (options?: CMSBaseModuleOptionsDto) =>
+      options?.autoReleaseWhenLatestSignatureApproved ?? false,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
 ] as Provider[];

@@ -5,13 +5,15 @@ import {
   OnApplicationBootstrap,
 } from '@nestjs/common';
 import {
+  AUTO_RELEASE_AFTER_APPROVED,
+  DRAFT_MODE,
   ENABLE_SIGNATURE_MODE,
   RESOLVED_ARTICLE_VERSION_REPO,
   RESOLVED_SIGNATURE_LEVEL_REPO,
   SIGNATURE_LEVELS,
 } from '../typings/cms-base-providers';
 import { BaseSignatureLevelEntity } from '../models/base-signature-level.entity';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, IsNull, Repository } from 'typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 import {
   ArticleSignatureEntity,
@@ -38,6 +40,10 @@ export class ArticleSignatureService<
     private readonly signatureLevelRepo: Repository<BaseSignatureLevelEntity>,
     @Inject(ArticleSignatureRepo)
     private readonly articleSignatureRepo: Repository<ArticleSignatureEntity>,
+    @Inject(DRAFT_MODE)
+    private readonly draftMode: boolean,
+    @Inject(AUTO_RELEASE_AFTER_APPROVED)
+    private readonly autoReleaseAfterApproved: boolean,
     @InjectDataSource()
     private readonly dataSource: DataSource,
   ) {}
@@ -205,6 +211,25 @@ export class ArticleSignatureService<
               : null,
         });
 
+        if (
+          this.draftMode &&
+          this.autoReleaseAfterApproved &&
+          this.signatureLevelsCache[targetLevelIndex].id ===
+            this.finalSignatureLevel?.id
+        ) {
+          await runner.manager.update(
+            this.articleVersionRepo.target,
+            {
+              id: articleVersion.id,
+              version: articleVersion.version,
+              releasedAt: IsNull(),
+            },
+            {
+              releasedAt: new Date(),
+            },
+          );
+        }
+
         await runner.manager.save(signature);
 
         await runner.commitTransaction();
@@ -224,6 +249,20 @@ export class ArticleSignatureService<
             ? (signatureInfo?.reason ?? null)
             : null,
       });
+
+      if (this.draftMode && this.autoReleaseAfterApproved) {
+        await runner.manager.update(
+          this.articleVersionRepo.target,
+          {
+            id: articleVersion.id,
+            version: articleVersion.version,
+            releasedAt: IsNull(),
+          },
+          {
+            releasedAt: new Date(),
+          },
+        );
+      }
 
       await runner.manager.save(signature);
 

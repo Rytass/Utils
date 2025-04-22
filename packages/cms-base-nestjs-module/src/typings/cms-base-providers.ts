@@ -8,6 +8,9 @@ export const FULL_TEXT_SEARCH_MODE = Symbol('FULL_TEXT_SEARCH_MODE');
 export const ENABLE_SIGNATURE_MODE = Symbol('ENABLE_SIGNATURE_MODE');
 export const SIGNATURE_LEVELS = Symbol('SIGNATURE_LEVELS');
 export const DRAFT_MODE = Symbol('DRAFT_MODE');
+export const AUTO_RELEASE_AFTER_APPROVED = Symbol(
+  'AUTO_RELEASE_AFTER_APPROVED',
+);
 
 // Options Entity Providers
 export const PROVIDE_ARTICLE_ENTITY = Symbol('PROVIDE_ARTICLE_ENTITY');

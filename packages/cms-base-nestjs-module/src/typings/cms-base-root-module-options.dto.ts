@@ -13,6 +13,7 @@ export interface CMSBaseModuleOptionsDto {
   signatureMode?: boolean; // default: false
   signatureLevels?: string[] | BaseSignatureLevelEntity[];
   enableDraftMode?: boolean; // default: false
+  autoReleaseWhenLatestSignatureApproved?: boolean; // default: false
   articleEntity?: new () => BaseArticleEntity;
   articleVersionEntity?: new () => BaseArticleVersionEntity;
   articleVersionContentEntity?: new () => BaseArticleVersionContentEntity;
