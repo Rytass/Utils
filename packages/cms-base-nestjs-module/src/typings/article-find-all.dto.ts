@@ -13,6 +13,7 @@ export interface ArticleFindAllDto {
   searchTerm?: string;
   searchMode?: ArticleSearchMode; // default ArticleSearchMode.TITLE
   onlyApproved?: boolean; // default: false
+  signatureLevel?: string; // return only articles with this signature level
   requiredCategoryIds?: string[]; // Article must have all of these categories
   versionType?: ArticleFindVersionType; // default: ArticleFindVersionType.RELEASED
 }

@@ -129,7 +129,26 @@ export class ArticleBaseService<
           subQb.andWhere('versions.releasedAt IS NOT NULL');
         }
 
-        if (this.signatureMode && options?.onlyApproved) {
+        if (
+          this.signatureMode &&
+          options?.onlyApproved &&
+          options?.signatureLevel
+        ) {
+          this.logger.debug(
+            `When signature level provided with onlyApproved, only signature level will be used.`,
+          );
+        }
+
+        if (this.signatureMode && options?.signatureLevel) {
+          subQb.innerJoin('versions.signatures', 'signatures');
+          subQb.andWhere('signatures.result = :result', {
+            result: ArticleSignatureResult.APPROVED,
+          });
+
+          subQb.andWhere('signatures.signatureLevelId = :signatureLevelId', {
+            signatureLevelId: options.signatureLevel,
+          });
+        } else if (this.signatureMode && options?.onlyApproved) {
           subQb.innerJoin('versions.signatures', 'signatures');
           subQb.andWhere('signatures.result = :result', {
             result: ArticleSignatureResult.APPROVED,
@@ -318,6 +337,7 @@ export class ArticleBaseService<
           ? options?.versionType
           : ArticleFindVersionType.RELEASED) ?? ArticleFindVersionType.RELEASED,
       onlyApproved: options?.onlyApproved,
+      signatureLevel: options?.signatureLevel,
     });
 
     if (options?.ids?.length) {

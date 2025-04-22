@@ -187,6 +187,11 @@ export class AppService {
     const signed = await this.articleService.findById('some-fresh-article-id', {
       onlyApproved: true,
     });
+
+    // list only manager approved
+    const articles = await this.articleService.findAll({
+      signatureLevel: 'manager',
+    });
   }
 }
 ```
