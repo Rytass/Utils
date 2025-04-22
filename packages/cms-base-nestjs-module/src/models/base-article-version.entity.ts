@@ -30,6 +30,10 @@ export class BaseArticleVersionEntity {
   @Column('jsonb')
   tags: string[];
 
+  @Column('timestamptz', { nullable: true })
+  @Index()
+  releasedAt: Date | null;
+
   @CreateDateColumn('timestamptz')
   createdAt: Date;
 

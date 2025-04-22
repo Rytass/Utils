@@ -23,6 +23,7 @@ import { BaseArticleVersionEntity } from '../models/base-article-version.entity'
 import { BaseArticleVersionContentEntity } from '../models/base-article-version-content.entity';
 import {
   ARTICLE_SIGNATURE_SERVICE,
+  DRAFT_MODE,
   ENABLE_SIGNATURE_MODE,
   FULL_TEXT_SEARCH_MODE,
   MULTIPLE_LANGUAGE_MODE,
@@ -64,6 +65,7 @@ import {
   ArticleCollectionDto,
   SingleArticleCollectionDto,
 } from '../typings/article-collection.dto';
+import { ArticleFindVersionType } from '../typings/article-find-version-type.enum';
 
 @Injectable()
 export class ArticleBaseService<
@@ -91,6 +93,8 @@ export class ArticleBaseService<
     private readonly signatureMode: boolean,
     @Inject(ARTICLE_SIGNATURE_SERVICE)
     private readonly articleSignatureService: ArticleSignatureService,
+    @Inject(DRAFT_MODE)
+    private readonly draftMode: boolean,
     @InjectDataSource()
     private readonly dataSource: DataSource,
   ) {}
@@ -110,58 +114,43 @@ export class ArticleBaseService<
       'multiLanguageContents',
     );
 
-    if (options?.onlyLatest) {
-      // Latest version
-      qb.innerJoin(
-        (subQb) => {
-          subQb.from(BaseArticleVersionEntity, 'versions');
+    qb.innerJoin(
+      (subQb) => {
+        subQb.from(BaseArticleVersionEntity, 'versions');
 
-          subQb.select('versions.articleId', 'articleId');
-          subQb.addSelect('MAX(versions.version)', 'version');
-          subQb.groupBy('versions.articleId');
+        subQb.select('versions.articleId', 'articleId');
+        subQb.addSelect('MAX(versions.version)', 'version');
+        subQb.groupBy('versions.articleId');
 
-          if (options?.onlyApproved && this.signatureMode) {
-            subQb.innerJoin('versions.signatures', 'signatures');
-            subQb.andWhere('signatures.result = :result', {
-              result: ArticleSignatureResult.APPROVED,
+        if (
+          this.draftMode &&
+          options?.versionType === ArticleFindVersionType.RELEASED
+        ) {
+          subQb.andWhere('versions.releasedAt IS NOT NULL');
+        }
+
+        if (this.signatureMode && options?.onlyApproved) {
+          subQb.innerJoin('versions.signatures', 'signatures');
+          subQb.andWhere('signatures.result = :result', {
+            result: ArticleSignatureResult.APPROVED,
+          });
+
+          const latestId = this.articleSignatureService.finalSignatureLevel?.id;
+
+          if (latestId) {
+            subQb.andWhere('signatures.signatureLevelId = :signatureLevelId', {
+              signatureLevelId: latestId,
             });
-
-            const latestId =
-              this.articleSignatureService.finalSignatureLevel?.id;
-
-            if (latestId) {
-              subQb.andWhere(
-                'signatures.signatureLevelId = :signatureLevelId',
-                {
-                  signatureLevelId: latestId,
-                },
-              );
-            } else {
-              subQb.andWhere('signatures.signatureLevelId IS NULL');
-            }
+          } else {
+            subQb.andWhere('signatures.signatureLevelId IS NULL');
           }
+        }
 
-          return subQb;
-        },
-        'latest',
-        'latest.version = versions.version AND latest."articleId" = versions."articleId"',
-      );
-    } else if (options?.onlyApproved && this.signatureMode) {
-      qb.innerJoin('versions.signatures', 'signatures');
-      qb.andWhere('signatures.result = :result', {
-        result: ArticleSignatureResult.APPROVED,
-      });
-
-      const latestId = this.articleSignatureService.finalSignatureLevel?.id;
-
-      if (latestId) {
-        qb.andWhere('signatures.signatureLevelId = :signatureLevelId', {
-          signatureLevelId: latestId,
-        });
-      } else {
-        qb.andWhere('signatures.signatureLevelId IS NULL');
-      }
-    }
+        return subQb;
+      },
+      'target',
+      'target.version = versions.version AND target."articleId" = versions."articleId"',
+    );
 
     return qb as SelectQueryBuilder<A>;
   }
@@ -267,7 +256,10 @@ export class ArticleBaseService<
     }
 
     const qb = this.getDefaultQueryBuilder<A>('articles', {
-      onlyLatest: true,
+      versionType:
+        (this.draftMode
+          ? options?.versionType
+          : ArticleFindVersionType.RELEASED) ?? ArticleFindVersionType.RELEASED,
       onlyApproved: options?.onlyApproved,
     });
 
@@ -321,7 +313,10 @@ export class ArticleBaseService<
     options?: ArticleFindAllDto,
   ): Promise<SelectQueryBuilder<A>> {
     const qb = this.getDefaultQueryBuilder<A>('articles', {
-      onlyLatest: true,
+      versionType:
+        (this.draftMode
+          ? options?.versionType
+          : ArticleFindVersionType.RELEASED) ?? ArticleFindVersionType.RELEASED,
       onlyApproved: options?.onlyApproved,
     });
 
@@ -620,6 +615,46 @@ export class ArticleBaseService<
     await this.baseArticleRepo.softDelete(id);
   }
 
+  async release<
+    A extends ArticleEntity = ArticleEntity,
+    AV extends ArticleVersionEntity = ArticleVersionEntity,
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(id: string, releasedAt?: Date): Promise<ArticleBaseDto<A, AV, AVC>> {
+    if (!this.draftMode) {
+      throw new Error('Draft mode is disabled.');
+    }
+
+    const article = await this.findById<A, AV, AVC>(id, {
+      versionType: ArticleFindVersionType.LATEST,
+    });
+
+    if (article.releasedAt) {
+      this.logger.debug(
+        `Article ${id} is already released [${article.version}] at ${article.releasedAt}.`,
+      );
+
+      return article;
+    }
+
+    this.logger.debug(`Release article ${id} [${article.version}]`);
+
+    const willReleasedAt = releasedAt ?? new Date();
+
+    await this.baseArticleVersionRepo.update(
+      {
+        articleId: id,
+        version: article.version,
+      },
+      {
+        releasedAt: willReleasedAt,
+      },
+    );
+
+    article.releasedAt = willReleasedAt;
+
+    return article;
+  }
+
   async addVersion<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
@@ -723,6 +758,7 @@ export class ArticleBaseService<
         articleId: article.id,
         version: latestVersion.version + 1,
         tags: options.tags ?? [],
+        releasedAt: this.draftMode ? options.releasedAt : new Date(),
       });
 
       await runner.manager.save(version);
@@ -867,6 +903,7 @@ export class ArticleBaseService<
           ),
         articleId: article.id,
         tags: options.tags ?? [],
+        releasedAt: this.draftMode ? options.releasedAt : new Date(),
       });
 
       await runner.manager.save(version);

@@ -28,6 +28,7 @@ export * from './typings/article-sorter.enum';
 export * from './typings/category-sorter.enum';
 export * from './typings/article-search-mode.enum';
 export * from './typings/article-signature-result.enum';
+export * from './typings/article-find-version-type.enum';
 
 // Constants
 export * from './constants/default-language';

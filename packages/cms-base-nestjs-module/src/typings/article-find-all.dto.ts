@@ -1,3 +1,4 @@
+import { ArticleFindVersionType } from './article-find-version-type.enum';
 import { ArticleSearchMode } from './article-search-mode.enum';
 import { ArticleSorter } from './article-sorter.enum';
 import { Language } from './language';
@@ -13,4 +14,5 @@ export interface ArticleFindAllDto {
   searchMode?: ArticleSearchMode; // default ArticleSearchMode.TITLE
   onlyApproved?: boolean; // default: false
   requiredCategoryIds?: string[]; // Article must have all of these categories
+  versionType?: ArticleFindVersionType; // default: ArticleFindVersionType.RELEASED
 }

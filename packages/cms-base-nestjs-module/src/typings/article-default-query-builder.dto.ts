@@ -1,4 +1,6 @@
+import { ArticleFindVersionType } from './article-find-version-type.enum';
+
 export type ArticleDefaultQueryBuilderDto = {
-  onlyLatest?: boolean;
+  versionType?: ArticleFindVersionType;
   onlyApproved?: boolean;
 };

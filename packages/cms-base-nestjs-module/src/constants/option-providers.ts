@@ -2,6 +2,7 @@ import { Options, Provider } from '@nestjs/common';
 import {
   CIRCULAR_CATEGORY_MODE,
   CMS_BASE_MODULE_OPTIONS,
+  DRAFT_MODE,
   ENABLE_SIGNATURE_MODE,
   FULL_TEXT_SEARCH_MODE,
   MULTIPLE_CATEGORY_PARENT_MODE,
@@ -98,6 +99,12 @@ export const OptionProviders = [
         );
       }
     },
+    inject: [CMS_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: DRAFT_MODE,
+    useFactory: (options?: CMSBaseModuleOptionsDto) =>
+      options?.enableDraftMode ?? false,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
 ] as Provider[];
