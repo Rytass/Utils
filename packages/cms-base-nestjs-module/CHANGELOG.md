@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.66](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.65...@rytass/cms-base-nestjs-module@0.1.66) (2025-04-22)
+
+### Features
+
+- **cms-base-nestjs-module:** add autoReleaseWhenLatestSignatureApproved to support auto release on signature mode ([77c4fb2](https://github.com/Rytass/Utils/commit/77c4fb25e8cebe61e60cfeda1e95e28aa601b075))
+
 ## [0.1.65](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.64...@rytass/cms-base-nestjs-module@0.1.65) (2025-04-22)
 
 ### Features
