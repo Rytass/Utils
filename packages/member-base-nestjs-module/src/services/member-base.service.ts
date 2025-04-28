@@ -13,6 +13,7 @@ import {
   ACCESS_TOKEN_SECRET,
   CUSTOMIZED_JWT_PAYLOAD,
   FORCE_REJECT_LOGIN_ON_PASSWORD_EXPIRED,
+  LOGIN_FAILED_AUTO_UNLOCK_SECONDS,
   LOGIN_FAILED_BAN_THRESHOLD,
   MEMBER_BASE_MODULE_OPTIONS,
   ONLY_RESET_REFRESH_TOKEN_EXPIRATION_BY_PASSWORD,
@@ -90,6 +91,8 @@ export class MemberBaseService<
     private readonly customizedJwtPayload: (
       member: BaseMemberEntity,
     ) => Pick<BaseMemberEntity, 'id' | 'account'>,
+    @Inject(LOGIN_FAILED_AUTO_UNLOCK_SECONDS)
+    private readonly loginFailedAutoUnlockSeconds: number | null,
   ) {}
 
   private readonly logger = new Logger(MemberBaseService.name);
@@ -362,7 +365,28 @@ export class MemberBaseService<
     }
 
     if (member.loginFailedCounter >= this.loginFailedBanThreshold) {
-      throw new MemberBannedError();
+      if (this.loginFailedAutoUnlockSeconds) {
+        const latestFailedRecord = await this.memberLoginLogRepo.findOne({
+          order: {
+            createdAt: 'DESC',
+          },
+          where: {
+            memberId: member.id,
+            success: false,
+          },
+        });
+
+        if (
+          !latestFailedRecord ||
+          latestFailedRecord.createdAt.getTime() +
+            this.loginFailedAutoUnlockSeconds * 1000 >
+            Date.now()
+        ) {
+          throw new MemberBannedError();
+        }
+      } else {
+        throw new MemberBannedError();
+      }
     }
 
     const isPasswordExpired = this.passwordAgeLimitInDays

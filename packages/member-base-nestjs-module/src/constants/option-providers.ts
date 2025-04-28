@@ -27,6 +27,7 @@ import {
   OAUTH2_PROVIDERS,
   OAUTH2_CLIENT_DEST_URL,
   COOKIE_MODE,
+  LOGIN_FAILED_AUTO_UNLOCK_SECONDS,
 } from '../typings/member-base-providers';
 import { Enforcer, newEnforcer, newModelFromString } from 'casbin';
 import { MemberBaseModuleOptionsDto } from '../typings/member-base-module-options.dto';
@@ -230,6 +231,12 @@ export const OptionProviders = [
     provide: COOKIE_MODE,
     useFactory: (options?: MemberBaseModuleOptionsDto) =>
       options?.cookieMode ?? false,
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: LOGIN_FAILED_AUTO_UNLOCK_SECONDS,
+    useFactory: (options?: MemberBaseModuleOptionsDto) =>
+      options?.loginFailedAutoUnlockSeconds ?? null,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
 ] as Provider[];
