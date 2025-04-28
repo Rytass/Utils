@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.54](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.53...@rytass/member-base-nestjs-module@0.1.54) (2025-04-28)
+
+### Features
+
+- **member-base-nestjs-module:** support loginFailedAutoUnlockSeconds to auto unlock banned members ([32d6841](https://github.com/Rytass/Utils/commit/32d68414e3d567330336c79f10f5032a85133d47))
+
 ## [0.1.53](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.52...@rytass/member-base-nestjs-module@0.1.53) (2025-04-22)
 
 ### Features
