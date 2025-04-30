@@ -34,10 +34,10 @@ export class BaseArticleVersionEntity {
   @Index()
   releasedAt: Date | null;
 
-  @CreateDateColumn('timestamp with time zone')
+  @CreateDateColumn()
   createdAt: Date;
 
-  @DeleteDateColumn('timestamptz')
+  @DeleteDateColumn()
   deletedAt: Date | null;
 
   @ManyToOne(() => BaseArticleEntity, (article) => article.versions, {

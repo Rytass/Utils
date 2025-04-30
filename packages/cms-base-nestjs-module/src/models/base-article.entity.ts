@@ -20,10 +20,10 @@ export class BaseArticleEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @CreateDateColumn('timestamp with time zone')
+  @CreateDateColumn()
   createdAt: Date;
 
-  @DeleteDateColumn('timestamptz')
+  @DeleteDateColumn()
   deletedAt: Date | null;
 
   @OneToMany(
