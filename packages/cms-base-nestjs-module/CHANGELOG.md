@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.68](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.67...@rytass/cms-base-nestjs-module@0.1.68) (2025-04-30)
+
+### Bug Fixes
+
+- remove typeorm default date column type for sync issue ([babba5f](https://github.com/Rytass/Utils/commit/babba5fb36d53bf102b1b249923f3c3ffa03efd8))
+
 ## [0.1.67](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.66...@rytass/cms-base-nestjs-module@0.1.67) (2025-04-30)
 
 ### Features
