@@ -29,7 +29,7 @@ export class BaseSignatureLevelEntity {
   @Column('boolean', { default: true })
   required: boolean;
 
-  @CreateDateColumn('timestamptz')
+  @CreateDateColumn('timestamp with time zone')
   createdAt: Date;
 
   @DeleteDateColumn('timestamptz')

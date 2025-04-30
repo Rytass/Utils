@@ -34,7 +34,7 @@ export class BaseArticleVersionEntity {
   @Index()
   releasedAt: Date | null;
 
-  @CreateDateColumn('timestamptz')
+  @CreateDateColumn('timestamp with time zone')
   createdAt: Date;
 
   @DeleteDateColumn('timestamptz')

@@ -20,7 +20,7 @@ export class BaseArticleEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @CreateDateColumn('timestamptz')
+  @CreateDateColumn('timestamp with time zone')
   createdAt: Date;
 
   @DeleteDateColumn('timestamptz')

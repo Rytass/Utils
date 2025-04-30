@@ -48,7 +48,7 @@ export class ArticleSignatureEntity {
   @Column('uuid', { nullable: true })
   signerId: string | null;
 
-  @CreateDateColumn('timestamptz')
+  @CreateDateColumn('timestamp with time zone')
   signedAt: Date;
 
   @DeleteDateColumn('timestamptz')

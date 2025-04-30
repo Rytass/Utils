@@ -32,7 +32,7 @@ export class BaseCategoryMultiLanguageNameEntity {
   @Column('varchar')
   name: string;
 
-  @CreateDateColumn('timestamptz')
+  @CreateDateColumn('timestamp with time zone')
   createdAt: Date;
 
   @UpdateDateColumn('timestamptz')

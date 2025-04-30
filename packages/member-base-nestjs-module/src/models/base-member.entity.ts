@@ -44,7 +44,7 @@ export class BaseMemberEntity {
   })
   shouldUpdatePassword: boolean;
 
-  @CreateDateColumn('timestamptz')
+  @CreateDateColumn('timestamp with time zone')
   createdAt: Date;
 
   @UpdateDateColumn('timestamptz')
