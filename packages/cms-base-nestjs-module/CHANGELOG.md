@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.67](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.66...@rytass/cms-base-nestjs-module@0.1.67) (2025-04-30)
+
+### Features
+
+- correct DateColumn type ([f8ddb57](https://github.com/Rytass/Utils/commit/f8ddb572c51664b1c33e84fe2d0c89325a3f8841))
+
 ## [0.1.66](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.65...@rytass/cms-base-nestjs-module@0.1.66) (2025-04-22)
 
 ### Features

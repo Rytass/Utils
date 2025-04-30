@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.55](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.54...@rytass/member-base-nestjs-module@0.1.55) (2025-04-30)
+
+### Features
+
+- correct DateColumn type ([f8ddb57](https://github.com/Rytass/Utils/commit/f8ddb572c51664b1c33e84fe2d0c89325a3f8841))
+
 ## [0.1.54](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.53...@rytass/member-base-nestjs-module@0.1.54) (2025-04-28)
 
 ### Features
