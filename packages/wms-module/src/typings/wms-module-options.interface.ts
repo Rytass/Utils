@@ -2,6 +2,7 @@ import { ModuleMetadata, Type } from '@nestjs/common';
 import { BatchEntity } from '../models/batch.entity';
 import { LocationEntity } from '../models/location.entity';
 import { MaterialEntity } from '../models/material.entity';
+import { OrderEntity } from '../models/order.entity';
 import { StockEntity } from '../models/stock.entity';
 
 export interface WmsModuleOptions {
@@ -9,7 +10,8 @@ export interface WmsModuleOptions {
   stockEntity?: new () => StockEntity; // default: StockEntity
   locationEntity?: new () => LocationEntity; // default: LocationEntity
   materialEntity?: new () => MaterialEntity; // default: MaterialEntity
-  batchEntity?: new () => BatchEntity; // default: MaterialEntity
+  batchEntity?: new () => BatchEntity; // default: BatchEntity
+  orderEntity?: new () => OrderEntity; // default: OrderEntity
 }
 
 export interface WmsModuleOptionsFactory {

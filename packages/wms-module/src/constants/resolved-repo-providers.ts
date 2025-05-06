@@ -3,12 +3,17 @@ import { DataSource, Repository } from 'typeorm';
 import { BatchRepo } from '../models/batch.entity';
 import { LocationEntity, LocationRepo } from '../models/location.entity';
 import { MaterialRepo } from '../models/material.entity';
+import { OrderRepo } from '../models/order.entity';
+import { StockRepo } from '../models/stock.entity';
 import {
   PROVIDE_BATCH_ENTITY,
   PROVIDE_LOCATION_ENTITY,
   PROVIDE_MATERIAL_ENTITY,
+  PROVIDE_ORDER_ENTITY,
+  PROVIDE_STOCK_ENTITY,
   RESOLVED_BATCH_REPO,
   RESOLVED_MATERIAL_REPO,
+  RESOLVED_STOCK_REPO,
   RESOLVED_TREE_LOCATION_REPO,
 } from '../typings/wms-module-providers';
 
@@ -16,6 +21,8 @@ const TARGETS = [
   [LocationRepo, PROVIDE_LOCATION_ENTITY, RESOLVED_TREE_LOCATION_REPO, true],
   [BatchRepo, PROVIDE_BATCH_ENTITY, RESOLVED_BATCH_REPO, false],
   [MaterialRepo, PROVIDE_MATERIAL_ENTITY, RESOLVED_MATERIAL_REPO, false],
+  [OrderRepo, PROVIDE_ORDER_ENTITY, RESOLVED_BATCH_REPO, false],
+  [StockRepo, PROVIDE_STOCK_ENTITY, RESOLVED_STOCK_REPO, false],
 ] as const;
 
 export const ResolvedRepoProviders = TARGETS.map<Provider>(

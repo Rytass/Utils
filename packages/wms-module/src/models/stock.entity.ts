@@ -2,15 +2,18 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
   Relation,
+  TableInheritance,
 } from 'typeorm';
 import { BatchEntity } from './batch.entity';
 import { MaterialEntity } from './material.entity';
 
 export const StockRepo = Symbol('StockRepo');
 @Entity('stocks')
+@TableInheritance({ column: { type: 'varchar', name: 'entityName' } })
 export class StockEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -28,9 +31,11 @@ export class StockEntity {
   quantity: number;
 
   @ManyToOne(() => MaterialEntity, (material) => material.stocks)
+  @JoinColumn({ name: 'materialId', referencedColumnName: 'id' })
   material: Relation<MaterialEntity>;
 
   @ManyToOne(() => BatchEntity, (batch) => batch.stocks)
+  @JoinColumn({ name: 'batchId', referencedColumnName: 'id' })
   batch: Relation<BatchEntity>;
 
   @CreateDateColumn()
