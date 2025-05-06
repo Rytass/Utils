@@ -4,6 +4,7 @@ import { ResolvedRepoProviders } from './constants/resolved-repo-providers';
 import { WMSModelsModule } from './models/wms-models.module';
 import { LocationService } from './services/location.service';
 import { MaterialService } from './services/material.service';
+import { StockService } from './services/stock.service';
 import {
   WmsModuleAsyncOptions,
   WmsModuleOptions,
@@ -15,8 +16,8 @@ const providers = [...OptionProviders, ...ResolvedRepoProviders];
 
 @Module({
   imports: [WMSModelsModule],
-  exports: [LocationService, MaterialService],
-  providers: [LocationService, MaterialService, ...providers],
+  exports: [LocationService, MaterialService, StockService],
+  providers: [LocationService, MaterialService, StockService, ...providers],
 })
 export class WMSModule {
   static forRoot(options: WmsModuleOptions): DynamicModule {
