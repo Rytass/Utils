@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { BatchEntity } from './batch.entity';
 import { MaterialEntity } from './material.entity';
+import { OrderEntity } from './order.entity';
 
 export const StockRepo = Symbol('StockRepo');
 @Entity('stocks')
@@ -27,6 +28,9 @@ export class StockEntity {
   @Column({ type: 'varchar' })
   locationId: string;
 
+  @Column({ type: 'varchar' })
+  orderId: string;
+
   @Column({ type: 'numeric' })
   quantity: number;
 
@@ -35,8 +39,21 @@ export class StockEntity {
   material: Relation<MaterialEntity>;
 
   @ManyToOne(() => BatchEntity, (batch) => batch.stocks)
-  @JoinColumn({ name: 'batchId', referencedColumnName: 'id' })
+  @JoinColumn([
+    {
+      name: 'materialId',
+      referencedColumnName: 'materialId',
+    },
+    { name: 'batchId', referencedColumnName: 'id' },
+  ])
   batch: Relation<BatchEntity>;
+
+  @ManyToOne(() => OrderEntity, (order) => order.stocks)
+  @JoinColumn({
+    name: 'orderId',
+    referencedColumnName: 'id',
+  })
+  order: Relation<OrderEntity>;
 
   @CreateDateColumn()
   createdAt: Date;
