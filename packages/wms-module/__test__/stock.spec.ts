@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { WMSModule } from '../src';
 import { StockEntity } from '../src/models/stock.entity';
 import { StockService } from '../src/services/stock.service';
+import { StockSorter } from '../src/typings/stock-sorter.enum';
 
 describe('StockService', () => {
   let module: TestingModule;
@@ -34,12 +35,18 @@ describe('StockService', () => {
   it('should be defined', async () => {
     expect(stockService).toBeDefined();
 
-    const stocks = await stockService.find({
+    const options = {
       materialIds: [],
       batchIds: [],
-      locationIds: ['2'],
-    });
+      locationIds: ['chihuahua'],
+      sorter: StockSorter.CREATED_AT_ASC,
+    };
 
+    const sum = await stockService.find(options);
+
+    const stocks = await stockService.findTransactions(options);
+
+    console.log('sum', sum);
     console.log('stocks', stocks);
   });
 });

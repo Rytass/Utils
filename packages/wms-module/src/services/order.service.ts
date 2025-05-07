@@ -5,18 +5,13 @@ import { BatchEntity } from '../models/batch.entity';
 import { OrderEntity } from '../models/order.entity';
 import { StockEntity } from '../models/stock.entity';
 import { OrderCreateDto } from '../typings/order-create.dto';
-import {
-  RESOLVED_BATCH_REPO,
-  RESOLVED_ORDER_REPO,
-} from '../typings/wms-module-providers';
+import { RESOLVED_ORDER_REPO } from '../typings/wms-module-providers';
 
 @Injectable()
 export class OrderService {
   constructor(
     @Inject(RESOLVED_ORDER_REPO)
     private readonly orderRepo: Repository<OrderEntity>,
-    @Inject(RESOLVED_BATCH_REPO)
-    private readonly batchRepo: Repository<BatchEntity>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
   ) {}

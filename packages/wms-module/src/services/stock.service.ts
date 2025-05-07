@@ -1,17 +1,17 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { EntityManager, Repository } from 'typeorm';
+import { Inject, Injectable } from '@nestjs/common';
+import { EntityManager, Repository, SelectQueryBuilder } from 'typeorm';
 import { LocationEntity } from '../models/location.entity';
 import { StockEntity } from '../models/stock.entity';
-import { StockFindDto } from '../typings/stock-find.dto';
+import { StockCollectionDto } from '../typings/stock-collection.dto';
+import { StockFindAllDto, StockFindDto } from '../typings/stock-find.dto';
+import { StockSorter } from '../typings/stock-sorter.enum';
 import {
   RESOLVED_STOCK_REPO,
   RESOLVED_TREE_LOCATION_REPO,
 } from '../typings/wms-module-providers';
 
 @Injectable()
-export class StockService<Entity extends StockEntity = StockEntity> {
-  private readonly logger = new Logger(StockService.name);
-
+export class StockService {
   constructor(
     @Inject(RESOLVED_STOCK_REPO)
     private readonly stockRepo: Repository<StockEntity>,
@@ -19,18 +19,13 @@ export class StockService<Entity extends StockEntity = StockEntity> {
     private readonly locationRepo: Repository<LocationEntity>,
   ) {}
 
-  async find(options: StockFindDto, manager?: EntityManager): Promise<number> {
+  private getQueryBuilder(
+    options: StockFindDto,
+    manager?: EntityManager,
+  ): SelectQueryBuilder<StockEntity> {
     const repo = manager?.getRepository(StockEntity) ?? this.stockRepo;
 
-    const queryBuilder = repo
-      .createQueryBuilder('stock')
-      .select('SUM(stock.quantity)', 'quantity')
-      .addSelect('stock.materialId', 'materialId')
-      .addSelect('stock.locationId', 'locationId')
-      .addSelect('stock.batchId', 'batchId');
-    // .groupBy('stock.materialId')
-    // .addGroupBy('stock.locationId')
-    // .addGroupBy('stock.batchId');
+    const queryBuilder = repo.createQueryBuilder('stock');
 
     if (options.locationIds?.length) {
       const locationIds = this.locationRepo
@@ -66,10 +61,58 @@ export class StockService<Entity extends StockEntity = StockEntity> {
       });
     }
 
+    return queryBuilder;
+  }
+
+  async find(options: StockFindDto, manager?: EntityManager): Promise<number> {
+    const queryBuilder = this.getQueryBuilder(options, manager).select(
+      'SUM(stock.quantity)',
+      'quantity',
+    );
+
     const quantity = await queryBuilder
       .getRawOne<{ quantity: number }>()
       .then((result) => result?.quantity ?? 0);
 
     return quantity;
+  }
+
+  async findTransactions(
+    options: StockFindAllDto,
+  ): Promise<StockCollectionDto> {
+    const qb = this.getQueryBuilder(options);
+
+    const offset = options?.offset ?? 0;
+    const limit = Math.min(options?.limit ?? 20, 100);
+
+    qb.skip(offset);
+    qb.take(limit);
+
+    switch (options?.sorter) {
+      case StockSorter.CREATED_AT_ASC:
+        qb.addOrderBy('stock.createdAt', 'ASC');
+        break;
+
+      case StockSorter.CREATED_AT_DESC:
+      default:
+        qb.addOrderBy('stock.createdAt', 'DESC');
+    }
+
+    const [stocks, total] = await qb.getManyAndCount();
+
+    return {
+      transactionLogs: stocks.map((stock) => ({
+        id: stock.id,
+        materialId: stock.materialId,
+        batchId: stock.batchId,
+        locationId: stock.locationId,
+        orderId: stock.orderId,
+        quantity: stock.quantity,
+        createdAt: stock.createdAt,
+      })),
+      total,
+      offset,
+      limit,
+    };
   }
 }
