@@ -1,9 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { LocationEntity } from '../models/location.entity';
 import { StockEntity } from '../models/stock.entity';
 import { StockFindDto } from '../typings/stock-find.dto';
-import { StockQuantityDto } from '../typings/stock-quantity.dto';
 import {
   RESOLVED_STOCK_REPO,
   RESOLVED_TREE_LOCATION_REPO,
@@ -20,23 +19,23 @@ export class StockService<Entity extends StockEntity = StockEntity> {
     private readonly locationRepo: Repository<LocationEntity>,
   ) {}
 
-  async find(options: StockFindDto): Promise<StockQuantityDto[]> {
-    const queryBuilder = this.stockRepo
-      .createQueryBuilder('stock')
+  async find(options: StockFindDto, manager?: EntityManager): Promise<number> {
+    const repo = manager?.getRepository(StockEntity) ?? this.stockRepo;
 
+    const queryBuilder = repo
+      .createQueryBuilder('stock')
       .select('SUM(stock.quantity)', 'quantity')
       .addSelect('stock.materialId', 'materialId')
       .addSelect('stock.locationId', 'locationId')
-      .addSelect('stock.batchId', 'batchId')
-      .groupBy('stock.materialId')
-      .addGroupBy('stock.locationId')
-      .addGroupBy('stock.batchId');
+      .addSelect('stock.batchId', 'batchId');
+    // .groupBy('stock.materialId')
+    // .addGroupBy('stock.locationId')
+    // .addGroupBy('stock.batchId');
 
     if (options.locationIds?.length) {
       const locationIds = this.locationRepo
         .createQueryBuilder('loc')
         .select('loc.id', 'id')
-
         .where((qb) => {
           const subQuery = qb
             .subQuery()
@@ -67,6 +66,10 @@ export class StockService<Entity extends StockEntity = StockEntity> {
       });
     }
 
-    return queryBuilder.getRawMany<StockQuantityDto>();
+    const quantity = await queryBuilder
+      .getRawOne<{ quantity: number }>()
+      .then((result) => result?.quantity ?? 0);
+
+    return quantity;
   }
 }

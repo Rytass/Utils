@@ -4,3 +4,8 @@ export interface StockQuantityDto {
   locationId: string;
   materialId: string;
 }
+
+export interface StockCollectionDto {
+  quantity: number;
+  transactionLogs: StockQuantityDto[];
+}

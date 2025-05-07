@@ -43,12 +43,12 @@ describe('WMSModule', () => {
       const locationService =
         module.get<LocationService<MyLocationEntity>>(LocationService);
 
-      await locationService.createLocation({
+      await locationService.create({
         id: 'chihuahua',
         customField: 'customField',
       });
 
-      await locationService.createLocation(
+      await locationService.create(
         {
           id: '2',
           customField: 'anotherCustomField',
@@ -56,7 +56,7 @@ describe('WMSModule', () => {
         'chihuahua',
       );
 
-      await locationService.createLocation(
+      await locationService.create(
         {
           id: '3',
           customField: 'anotherCustomField',
