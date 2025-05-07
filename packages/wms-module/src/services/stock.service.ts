@@ -28,36 +28,42 @@ export class StockService {
     const queryBuilder = repo.createQueryBuilder('stock');
 
     if (options.locationIds?.length) {
-      const locationIds = this.locationRepo
-        .createQueryBuilder('loc')
-        .select('loc.id', 'id')
-        .where((qb) => {
-          const subQuery = qb
-            .subQuery()
-            .select('1')
-            .from('locations', 'l2')
-            .where('l2.id IN (:...ids)', { ids: options.locationIds })
-            // eslint-disable-next-line quotes
-            .andWhere("loc.mpath LIKE l2.mpath || '%'")
-            .getQuery();
-
-          return `EXISTS ${subQuery}`;
+      if (options.exactLocationMatch) {
+        queryBuilder.andWhere('stock.locationId IN (:...locationIds)', {
+          locationIds: options.locationIds,
         });
+      } else {
+        const locationIds = this.locationRepo
+          .createQueryBuilder('loc')
+          .select('loc.id', 'id')
+          .where((qb) => {
+            const subQuery = qb
+              .subQuery()
+              .select('1')
+              .from('locations', 'l2')
+              .where('l2.id IN (:...l2Ids)', { l2Ids: options.locationIds })
+              // eslint-disable-next-line quotes
+              .andWhere("loc.mpath LIKE l2.mpath || '%'")
+              .getQuery();
 
-      queryBuilder
-        .addCommonTableExpression(locationIds, 'locationIds')
-        .where('stock.locationId IN locationIds');
+            return `EXISTS ${subQuery}`;
+          });
+
+        queryBuilder
+          .addCommonTableExpression(locationIds, 'locationIds')
+          .andWhere('stock.locationId IN locationIds');
+      }
     }
 
     if (options.materialIds?.length) {
-      queryBuilder.andWhere('stock.materialId IN (:...ids)', {
-        ids: options.materialIds,
+      queryBuilder.andWhere('stock.materialId IN (:...materialIds)', {
+        materialIds: options.materialIds,
       });
     }
 
     if (options.batchIds?.length) {
-      queryBuilder.andWhere('stock.batchId IN (:...ids)', {
-        ids: options.batchIds,
+      queryBuilder.andWhere('stock.batchId IN (:...batchIds)', {
+        batchIds: options.batchIds,
       });
     }
 

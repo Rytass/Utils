@@ -1,6 +1,7 @@
 import { Provider } from '@nestjs/common';
 import { WmsModuleOptions } from '../typings/wms-module-options.interface';
 import {
+  ALLOW_NEGATIVE_STOCK,
   PROVIDE_BATCH_ENTITY,
   PROVIDE_LOCATION_ENTITY,
   PROVIDE_MATERIAL_ENTITY,
@@ -33,6 +34,12 @@ export const OptionProviders: Provider[] = [
   {
     provide: PROVIDE_STOCK_ENTITY,
     useFactory: (options?: WmsModuleOptions) => options?.stockEntity ?? null,
+    inject: [WMS_MODULE_OPTIONS],
+  },
+  {
+    provide: ALLOW_NEGATIVE_STOCK,
+    useFactory: (options?: WmsModuleOptions) =>
+      options?.allowNegativeStock ?? false,
     inject: [WMS_MODULE_OPTIONS],
   },
 ];

@@ -22,7 +22,7 @@ describe('OrderService', () => {
         WMSModule.forRootAsync({
           imports: [TypeOrmModule.forFeature([OrderEntity])],
           useFactory: () => ({
-            // stockEntity: StockEntity,
+            allowNegativeStock: true,
           }),
         }),
       ],
@@ -37,13 +37,13 @@ describe('OrderService', () => {
     const stocks = await orderService.createOrder({
       batches: [
         {
-          id: '111',
+          id: '5',
           locationId: '2',
           materialId: 'A',
-          quantity: 4,
+          quantity: -1,
         },
         {
-          id: '555',
+          id: '5',
           locationId: 'chihuahua',
           materialId: 'A',
           quantity: 8,

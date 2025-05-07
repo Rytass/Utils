@@ -25,3 +25,11 @@ export class LocationAlreadyExistedError extends BadRequestException {
 
   code = 102;
 }
+
+export class StockQuantityNotEnoughError extends BadRequestException {
+  constructor() {
+    super('Stock quantity not enough');
+  }
+
+  code = 200;
+}
