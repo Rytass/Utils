@@ -4,6 +4,7 @@ export interface StockFindDto {
   locationIds?: string[]; // Location must have at least one of these locations
   materialIds?: string[]; // Material must have at least one of these materials
   batchIds?: string[]; // Batch must have at least one of these batches
+  exactLocationMatch?: boolean; // If true, only search for the exact locationIds without including their descendants
 }
 
 export interface StockFindAllDto extends StockFindDto {

@@ -12,6 +12,8 @@ export interface WmsModuleOptions {
   materialEntity?: new () => MaterialEntity; // default: MaterialEntity
   batchEntity?: new () => BatchEntity; // default: BatchEntity
   orderEntity?: new () => OrderEntity; // default: OrderEntity
+  // Options
+  allowNegativeStock?: boolean; // default: false
 }
 
 export interface WmsModuleOptionsFactory {
