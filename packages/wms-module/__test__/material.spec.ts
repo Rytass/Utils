@@ -1,29 +1,23 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ChildEntity, Column, DataSource } from 'typeorm';
+import { CustomMaterialEntity } from '../__mocks__/material.mock';
 import { WMSModule } from '../src';
 import { MaterialEntity } from '../src/models/material.entity';
 import { MaterialService } from '../src/services/material.service';
 
-@ChildEntity()
-export class CustomMaterialEntity extends MaterialEntity {
-  @Column('varchar')
-  customField: string;
-}
-
-describe('TypeORM Custom Entity', () => {
+describe('material', () => {
   let module: TestingModule;
+  let service: MaterialService<CustomMaterialEntity>;
 
   beforeAll(async () => {
     module = await Test.createTestingModule({
       imports: [
         TypeOrmModule.forRoot({
           type: 'sqlite',
-          // database: ':memory:',
-          database: 'wms_test_db.sqlite',
+          database: ':memory:',
           autoLoadEntities: true,
           synchronize: true,
-          logging: true,
+          logging: false,
         }),
         WMSModule.forRootAsync({
           imports: [
@@ -32,32 +26,27 @@ describe('TypeORM Custom Entity', () => {
           useFactory: () => ({
             materialEntity: CustomMaterialEntity,
           }),
-          inject: [],
         }),
       ],
     }).compile();
+
+    service =
+      module.get<MaterialService<CustomMaterialEntity>>(MaterialService);
   });
 
-  it('should create a custom entity', async () => {
-    const location = new CustomMaterialEntity();
+  afterAll(async () => {
+    await module.close();
+  });
 
-    location.customField = 'Custom Value';
-    location.id = 'SOME_WHERE';
-
-    const materialService = module.get<MaterialService>(MaterialService);
-
-    await materialService.create(location);
-
-    const materialRepo = module
-      .get<DataSource>(DataSource)
-      .getRepository(CustomMaterialEntity);
-
-    const savedLocation = await materialRepo.findOneOrFail({
-      where: { id: location.id },
+  it('should create a custom material entity', async () => {
+    const material = await service.create({
+      id: 'SOME_MATERIAL_ID',
+      name: 'Test Material',
+      customField: 'custom value',
     });
 
-    expect(savedLocation).toBeDefined();
-
-    expect(savedLocation.customField).toEqual('Custom Value');
+    expect(material).toHaveProperty('id', 'SOME_MATERIAL_ID');
+    expect(material).toHaveProperty('name', 'Test Material');
+    expect(material).toHaveProperty('customField', 'custom value');
   });
 });
