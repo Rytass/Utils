@@ -1,15 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { DataSource, DeepPartial, EntityManager } from 'typeorm';
 import { StockQuantityNotEnoughError } from '../constants/errors/base.error';
 import { BatchEntity } from '../models/batch.entity';
 import { OrderEntity } from '../models/order.entity';
 import { StockEntity } from '../models/stock.entity';
 import { BatchCreateDto, OrderCreateDto } from '../typings/order-create.dto';
-import {
-  ALLOW_NEGATIVE_STOCK,
-  RESOLVED_ORDER_REPO,
-} from '../typings/wms-module-providers';
+import { ALLOW_NEGATIVE_STOCK } from '../typings/wms-module-providers';
 import { StockService } from './stock.service';
 
 @Injectable()
@@ -17,15 +14,16 @@ export class OrderService {
   constructor(
     @Inject(ALLOW_NEGATIVE_STOCK)
     private readonly allowNegativeStock: boolean,
-    @Inject(RESOLVED_ORDER_REPO)
-    private readonly orderRepo: Repository<OrderEntity>,
     @Inject(StockService)
     private readonly stockService: StockService,
     @InjectDataSource()
     private readonly dataSource: DataSource,
   ) {}
 
-  async createOrder(args: OrderCreateDto): Promise<OrderEntity> {
+  async createOrder<T extends OrderEntity>(
+    customOrder: new () => T,
+    args: OrderCreateDto<T>,
+  ): Promise<T> {
     const order = await this.dataSource.transaction(async (manager) => {
       const uniqueBatches = new Map<string, BatchCreateDto>();
       // key: id:materialId
@@ -42,9 +40,9 @@ export class OrderService {
         .getRepository(BatchEntity)
         .insert([...uniqueBatches.values()]);
 
-      const order = await manager.getRepository(OrderEntity).save(
-        this.orderRepo.create({
-          ...args,
+      const order = await manager.getRepository(customOrder).save(
+        manager.getRepository(customOrder).create({
+          ...(args.order as DeepPartial<T>),
         }),
       );
 
@@ -79,8 +77,6 @@ export class OrderService {
     if (this.allowNegativeStock) {
       return true;
     }
-
-    console.log('batch', batch);
 
     const stock = await this.stockService.find(
       {

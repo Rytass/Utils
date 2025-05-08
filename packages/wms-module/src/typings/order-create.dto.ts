@@ -8,8 +8,11 @@ export interface BatchCreateDto {
   quantity: number;
 }
 
-export type OrderCreateDto<O extends OrderEntity = OrderEntity> = DeepPartial<
-  Omit<O, 'batches'>
-> & {
+export type OrderDto<O extends OrderEntity = OrderEntity> = DeepPartial<
+  Omit<O, 'stocks'>
+>;
+
+export type OrderCreateDto<O extends OrderEntity = OrderEntity> = {
+  order: OrderDto<O>;
   batches: BatchCreateDto[];
 };
