@@ -29,13 +29,12 @@ export class LocationService<Entity extends LocationEntity = LocationEntity> {
   ) {}
 
   async create(
-    options: DeepPartial<Entity>,
-    parentId?: string,
+    options: DeepPartial<Entity> & { parentId?: string },
   ): Promise<DeepPartial<Entity>> {
-    const parent = parentId
+    const parent = options.parentId
       ? await this.locationTreeRepo
           .findOneOrFail({
-            where: { id: parentId },
+            where: { id: options.parentId },
           })
           .catch(() => {
             throw new LocationNotFoundError();

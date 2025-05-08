@@ -54,7 +54,7 @@ export class OrderService {
         throw new StockQuantityNotEnoughError();
       }
 
-      await manager.getRepository(StockEntity).save(
+      const stocks = await manager.getRepository(StockEntity).save(
         args.batches.map((batch) => ({
           orderId: order.id,
           batchId: batch.id,
@@ -63,6 +63,8 @@ export class OrderService {
           quantity: batch.quantity,
         })),
       );
+
+      order.stocks = stocks;
 
       return order;
     });
