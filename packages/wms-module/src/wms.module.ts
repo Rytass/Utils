@@ -40,10 +40,16 @@ export class WMSModule {
   }
 
   static forRootAsync(options: WmsModuleAsyncOptions): DynamicModule {
+    const flatRepoProviders: any[] = [];
+
     return {
       module: WMSModule,
       imports: [...(options?.imports ?? []), WMSModelsModule],
-      providers: [...this.createAsyncProvider(options), ...providers],
+      providers: [
+        ...this.createAsyncProvider(options),
+        ...flatRepoProviders,
+        ...providers,
+      ],
     };
   }
 
