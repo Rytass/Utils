@@ -1,10 +1,30 @@
-import { AdditionalInfo, AsyncOrderInformation, Order, OrderState, PaymentEvents } from '@rytass/payments';
+import {
+  AdditionalInfo,
+  AsyncOrderInformation,
+  Order,
+  OrderState,
+  PaymentEvents,
+} from '@rytass/payments';
 import { NewebPayOrderItem } from './newebpay-order-item';
 import { NewebPayPayment } from './newebpay-payment';
-import { NewebPayCommitMessage, NewebPayCreditCardBalanceStatus, NewebPaymentChannel, NewebPayMPGMakeOrderPayload, NewebPayOrderFromServerInit, NewebPayOrderStatusFromAPI, NewebPayPrepareOrderInit } from './typings';
-import { NewebPayAdditionInfoCreditCard, NewebPayCreditCardCommitMessage } from './typings/credit-card.typing';
+import {
+  NewebPayCommitMessage,
+  NewebPayCreditCardBalanceStatus,
+  NewebPaymentChannel,
+  NewebPayMPGMakeOrderPayload,
+  NewebPayOrderFromServerInit,
+  NewebPayOrderStatusFromAPI,
+  NewebPayPrepareOrderInit,
+} from './typings';
+import {
+  NewebPayAdditionInfoCreditCard,
+  NewebPayCreditCardCommitMessage,
+} from './typings/credit-card.typing';
 
-export class NewebPayOrder<OCM extends NewebPayCommitMessage> implements Order<OCM> {
+export class NewebPayOrder<
+  OCM extends NewebPayCommitMessage = NewebPayCommitMessage,
+> implements Order<OCM>
+{
   private readonly _id: string;
 
   private readonly _items: NewebPayOrderItem[];
@@ -31,9 +51,12 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage> implements Order<O
 
   private _additionalInfo?: AdditionalInfo<OCM>;
 
-  constructor(options: NewebPayPrepareOrderInit<OCM> | NewebPayOrderFromServerInit<OCM>, additionalInfo?: AdditionalInfo<OCM>) {
+  constructor(
+    options: NewebPayPrepareOrderInit<OCM> | NewebPayOrderFromServerInit<OCM>,
+    additionalInfo?: AdditionalInfo<OCM>,
+  ) {
     this._id = options.id;
-    this._items = options.items.map(item => new NewebPayOrderItem(item));
+    this._items = options.items.map((item) => new NewebPayOrderItem(item));
     this._gateway = options.gateway;
 
     if ('makePayload' in options) {
@@ -67,18 +90,19 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage> implements Order<O
     this._additionalInfo = additionalInfo;
   }
 
-  get id() {
+  get id(): string {
     return this._id;
   }
 
-  get items() {
+  get items(): NewebPayOrderItem[] {
     return this._items;
   }
 
-  get totalPrice() {
-    return this.items.reduce((sum, item) => (
-      sum + (item.unitPrice * item.quantity)
-    ), 0);
+  get totalPrice(): number {
+    return this.items.reduce(
+      (sum, item) => sum + item.unitPrice * item.quantity,
+      0,
+    );
   }
 
   get form(): NewebPayMPGMakeOrderPayload {
@@ -105,7 +129,12 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage> implements Order<O
   </head>
   <body>
     <form action="${this._gateway.checkoutActionUrl}" method="POST">
-      ${Object.entries(this.form).map(([key, value]) => `<input name="${key}" value="${value}" type="hidden" />`).join('\n')}
+      ${Object.entries(this.form)
+        .map(
+          ([key, value]) =>
+            `<input name="${key}" value="${value}" type="hidden" />`,
+        )
+        .join('\n')}
     </form>
     <script>
       document.forms[0].submit();
@@ -118,18 +147,22 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage> implements Order<O
     this._state = OrderState.PRE_COMMIT;
 
     if (!this._gateway._server) {
-      throw new Error('To use automatic checkout server, please initial payment with `withServer` options.');
+      throw new Error(
+        'To use automatic checkout server, please initial payment with `withServer` options.',
+      );
     }
 
     return this._gateway.getCheckoutUrl(this);
   }
 
-  get state() {
+  get state(): OrderState {
     return this._state;
   }
 
   get committable(): boolean {
-    return !!~[OrderState.PRE_COMMIT, OrderState.ASYNC_INFO_RETRIEVED].indexOf(this._state);
+    return !!~[OrderState.PRE_COMMIT, OrderState.ASYNC_INFO_RETRIEVED].indexOf(
+      this._state,
+    );
   }
 
   get createdAt(): Date | null {
@@ -140,7 +173,10 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage> implements Order<O
     return this._committedAt;
   }
 
-  get failedMessage() {
+  get failedMessage(): {
+    code: string;
+    message: string;
+  } | null {
     if (this._state !== OrderState.FAILED) return null;
 
     return {
@@ -150,12 +186,12 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage> implements Order<O
   }
 
   // Async order information
-  get asyncInfo() {
+  get asyncInfo(): AsyncOrderInformation<OCM> | undefined {
     return this._asyncInfo;
   }
 
   // Additional information
-  get additionalInfo() {
+  get additionalInfo(): AdditionalInfo<OCM> | undefined {
     return this._additionalInfo;
   }
 
@@ -167,7 +203,7 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage> implements Order<O
     return this._channel;
   }
 
-  fail(returnCode: string, message: string) {
+  fail(returnCode: string, message: string): void {
     this._failedCode = returnCode;
     this._failedMessage = message;
 
@@ -176,8 +212,11 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage> implements Order<O
     this._gateway.emitter.emit(PaymentEvents.ORDER_FAILED, this);
   }
 
-  infoRetrieved<T extends OCM>(asyncInformation: AsyncOrderInformation<T>) {
-    if (this._state !== OrderState.PRE_COMMIT) throw new Error(`Only pre-commit order can commit, now: ${this._state}`);
+  infoRetrieved<T extends OCM = OCM>(
+    asyncInformation: AsyncOrderInformation<T>,
+  ): void {
+    if (this._state !== OrderState.PRE_COMMIT)
+      throw new Error(`Only pre-commit order can commit, now: ${this._state}`);
 
     this._asyncInfo = asyncInformation;
 
@@ -186,11 +225,19 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage> implements Order<O
     this._gateway.emitter.emit(PaymentEvents.ORDER_INFO_RETRIEVED, this);
   }
 
-  commit<T extends OCM>(message: T, additionalInfo?: AdditionalInfo<T>) {
-    if (!this.committable) throw new Error(`Only pre-commit, info-retrieved order can commit, now: ${this._state}`);
+  commit<T extends OCM = OCM>(
+    message: T,
+    additionalInfo?: AdditionalInfo<T>,
+  ): void {
+    if (!this.committable)
+      throw new Error(
+        `Only pre-commit, info-retrieved order can commit, now: ${this._state}`,
+      );
 
     if (this._id !== message.id) {
-      throw new Error(`Order ID not matched, given: ${message.id} actual: ${this._id}`);
+      throw new Error(
+        `Order ID not matched, given: ${message.id} actual: ${this._id}`,
+      );
     }
 
     this._additionalInfo = additionalInfo;
@@ -202,7 +249,7 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage> implements Order<O
     this._gateway.emitter.emit(PaymentEvents.ORDER_COMMITTED, this);
   }
 
-  async creditCardSettle() {
+  async creditCardSettle(): Promise<void> {
     if (this._state !== OrderState.COMMITTED) {
       throw new Error('Only committed order can be settled');
     }
@@ -211,20 +258,30 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage> implements Order<O
       throw new Error('Only credit card order can be settled');
     }
 
-    await this._gateway.settle(this as NewebPayOrder<NewebPayCreditCardCommitMessage>);
+    await this._gateway.settle(
+      this as NewebPayOrder<NewebPayCreditCardCommitMessage>,
+    );
 
-    ((this.additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage>) as NewebPayAdditionInfoCreditCard).closeStatus = NewebPayCreditCardBalanceStatus.WAITING;
+    (
+      this
+        .additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage> as NewebPayAdditionInfoCreditCard
+    ).closeStatus = NewebPayCreditCardBalanceStatus.WAITING;
   }
 
-  async cancelRefund() {
-    await this._gateway.cancelRefund(this as NewebPayOrder<NewebPayCreditCardCommitMessage>);
+  async cancelRefund(): Promise<void> {
+    await this._gateway.cancelRefund(
+      this as NewebPayOrder<NewebPayCreditCardCommitMessage>,
+    );
 
-    ((this.additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage>) as NewebPayAdditionInfoCreditCard).refundStatus = NewebPayCreditCardBalanceStatus.UNSETTLED;
+    (
+      this
+        .additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage> as NewebPayAdditionInfoCreditCard
+    ).refundStatus = NewebPayCreditCardBalanceStatus.UNSETTLED;
 
     this._state = OrderState.COMMITTED;
   }
 
-  async refund() {
+  async refund(): Promise<void> {
     if (this._state !== OrderState.COMMITTED) {
       throw new Error('Only committed order can be refunded');
     }
@@ -233,31 +290,52 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage> implements Order<O
       throw new Error('Only credit card order can be refunded');
     }
 
-    const closeStatus = ((this.additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage>) as NewebPayAdditionInfoCreditCard).closeStatus;
+    const closeStatus = (
+      this
+        .additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage> as NewebPayAdditionInfoCreditCard
+    ).closeStatus;
 
     switch (closeStatus) {
       case NewebPayCreditCardBalanceStatus.UNSETTLED:
-        await this._gateway.cancel(this as NewebPayOrder<NewebPayCreditCardCommitMessage>);
+        await this._gateway.cancel(
+          this as NewebPayOrder<NewebPayCreditCardCommitMessage>,
+        );
 
-        ((this.additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage>) as NewebPayAdditionInfoCreditCard).closeStatus = NewebPayCreditCardBalanceStatus.SETTLED;
+        (
+          this
+            .additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage> as NewebPayAdditionInfoCreditCard
+        ).closeStatus = NewebPayCreditCardBalanceStatus.SETTLED;
 
         this._state = OrderState.REFUNDED;
         break;
 
       case NewebPayCreditCardBalanceStatus.WAITING:
-        await this._gateway.unsettle(this as NewebPayOrder<NewebPayCreditCardCommitMessage>);
+        await this._gateway.unsettle(
+          this as NewebPayOrder<NewebPayCreditCardCommitMessage>,
+        );
 
-        ((this.additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage>) as NewebPayAdditionInfoCreditCard).closeStatus = NewebPayCreditCardBalanceStatus.UNSETTLED;
+        (
+          this
+            .additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage> as NewebPayAdditionInfoCreditCard
+        ).closeStatus = NewebPayCreditCardBalanceStatus.UNSETTLED;
 
         this._state = OrderState.REFUNDED;
         break;
 
       case NewebPayCreditCardBalanceStatus.WORKING:
       case NewebPayCreditCardBalanceStatus.SETTLED:
-        await this._gateway.refund(this as NewebPayOrder<NewebPayCreditCardCommitMessage>);
+        await this._gateway.refund(
+          this as NewebPayOrder<NewebPayCreditCardCommitMessage>,
+        );
 
-        ((this.additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage>) as NewebPayAdditionInfoCreditCard).closeStatus = NewebPayCreditCardBalanceStatus.SETTLED;
-        ((this.additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage>) as NewebPayAdditionInfoCreditCard).refundStatus = NewebPayCreditCardBalanceStatus.WAITING;
+        (
+          this
+            .additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage> as NewebPayAdditionInfoCreditCard
+        ).closeStatus = NewebPayCreditCardBalanceStatus.SETTLED;
+        (
+          this
+            .additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage> as NewebPayAdditionInfoCreditCard
+        ).refundStatus = NewebPayCreditCardBalanceStatus.WAITING;
 
         this._state = OrderState.REFUNDED;
         break;
