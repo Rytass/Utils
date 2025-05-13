@@ -53,7 +53,7 @@ static forRoot(options?: CMSBaseModuleOptionsDto);
 | resetPasswordTokenSecret                  | string                |                | Reset password token secret, will generate automatically      |
 | cookieMode                                | boolean               |                | Use cookie [token] to replace header authorization token      |
 | accessTokenSecret                         | string                |                | Access token secret, will generate automatically              |
-| accessTokenExpiration                     | number                | 900            | Seconds of access token expiration                            |
+| accessTokenExpiration                     | string \| number      | 900            | Expiration in seconds or time string like `'1d'`, `'2h'`.     |
 | refreshTokenSecret                        | string                |                | Refresh token secret, will generate automatically             |
 | refreshTokenExpiration                    | number                | 900            | Seconds of refresh token expiration                           |
 | onlyResetRefreshTokenExpirationByPassword | boolean               | false          | Refresh token expiration only reassign by password request    |

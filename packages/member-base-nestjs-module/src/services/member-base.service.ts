@@ -72,7 +72,7 @@ export class MemberBaseService<
     @Inject(ACCESS_TOKEN_SECRET)
     private readonly accessTokenSecret: string,
     @Inject(ACCESS_TOKEN_EXPIRATION)
-    private readonly accessTokenExpiration: number,
+    private readonly accessTokenExpiration: string | number,
     @Inject(REFRESH_TOKEN_SECRET)
     private readonly refreshTokenSecret: string,
     @Inject(REFRESH_TOKEN_EXPIRATION)
