@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.57](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.56...@rytass/member-base-nestjs-module@0.1.57) (2025-05-14)
+
+### Features
+
+- **member-base-nestjs-module:** enforce numeric expiresIn for all JWT sign calls ([0a97409](https://github.com/Rytass/Utils/commit/0a974096c9ccaa23d68a4b57122c4e7690da57a0))
+
 ## [0.1.56](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.55...@rytass/member-base-nestjs-module@0.1.56) (2025-04-30)
 
 ### Bug Fixes
