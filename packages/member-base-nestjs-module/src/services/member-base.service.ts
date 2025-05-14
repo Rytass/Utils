@@ -116,7 +116,10 @@ export class MemberBaseService<
       },
       this.refreshTokenSecret,
       {
-        expiresIn: this.refreshTokenExpiration,
+        expiresIn: this.validateExpiration(
+          this.refreshTokenExpiration,
+          'REFRESH_TOKEN_EXPIRATION',
+        ),
       },
     );
   }
@@ -127,7 +130,12 @@ export class MemberBaseService<
         ...this.customizedJwtPayload(member),
       },
       this.accessTokenSecret,
-      { expiresIn: this.accessTokenExpiration },
+      {
+        expiresIn: this.validateExpiration(
+          this.accessTokenExpiration,
+          'ACCESS_TOKEN_EXPIRATION',
+        ),
+      },
     );
   }
 
@@ -153,7 +161,10 @@ export class MemberBaseService<
       },
       this.resetPasswordTokenSecret,
       {
-        expiresIn: this.resetPasswordTokenExpiration,
+        expiresIn: this.validateExpiration(
+          this.resetPasswordTokenExpiration,
+          'RESET_PASSWORD_TOKEN_EXPIRATION',
+        ),
       },
     );
 
@@ -459,5 +470,15 @@ export class MemberBaseService<
     await this.baseMemberRepo.save(member);
 
     return member as T;
+  }
+
+  private validateExpiration(source: unknown, tokenName: string): number {
+    if (typeof source !== 'number' || Number.isNaN(source)) {
+      throw new BadRequestException(
+        `[${tokenName}] must be a number (in seconds), but got: ${source}`,
+      );
+    }
+
+    return source;
   }
 }
