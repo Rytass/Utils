@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.4.7](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ecpay@0.4.6...@rytass/invoice-adapter-ecpay@0.4.7) (2025-05-16)
+
+### Bug Fixes
+
+- **invoice-adapter-ecpay:** query quantity api key ([ec44ede](https://github.com/Rytass/Utils/commit/ec44edea0b895a30fef61bb6ff26bd24ea502b83))
+
 ## [0.4.6](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ecpay@0.4.5...@rytass/invoice-adapter-ecpay@0.4.6) (2024-12-20)
 
 ### Features
