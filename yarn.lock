@@ -5683,6 +5683,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@rytass/invoice-adapter-amego@workspace:packages/invoice-adapter-amego":
+  version: 0.0.0-use.local
+  resolution: "@rytass/invoice-adapter-amego@workspace:packages/invoice-adapter-amego"
+  dependencies:
+    "@rytass/invoice": "npm:^0.3.2"
+    "@types/luxon": "npm:^3.4.2"
+    axios: "npm:^1.7.8"
+    luxon: "npm:^3.5.0"
+    validator: "npm:^13.12.0"
+  languageName: unknown
+  linkType: soft
+
 "@rytass/invoice-adapter-bank-pro@workspace:packages/invoice-adapter-bank-pro":
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-adapter-bank-pro@workspace:packages/invoice-adapter-bank-pro"
