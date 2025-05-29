@@ -1,0 +1,114 @@
+import {
+  InvoiceAllowanceState,
+  InvoiceIssueOptions,
+  InvoicePaymentItem,
+  InvoiceState,
+  InvoiceVoidOptions,
+  TaxType,
+} from '@rytass/invoice';
+import { AmegoInvoice } from './amego-invoice';
+
+export enum AmegoBaseUrls {
+  DEVELOPMENT = 'https://invoice-api.amego.tw',
+  PRODUCTION = 'https://invoice-api.amego.tw',
+}
+
+export interface AmegoInvoiceGatewayOptions {
+  appKey: string;
+  vatNumber: string;
+  baseUrl?: AmegoBaseUrls;
+}
+
+export interface AmegoPaymentItem extends InvoicePaymentItem {
+  name: string; // 品名
+  quantity: number; // 數量
+  unit?: string; // 單位
+  unitPrice: number; // 單價, 預設含稅0
+  amount: number; // 金額, 預設含稅0
+  remark?: string;
+  taxType: TaxType.TAXED | TaxType.TAX_FREE | TaxType.ZERO_TAX;
+}
+
+export interface AmegoInvoiceVoidOptions extends InvoiceVoidOptions {
+  reason: string;
+}
+
+export interface AmegoInvoiceOptions {
+  orderId: string; // 訂單編號
+  buyerId?: string; // 買方統一編號
+  buyerName?: string; // 買方名稱
+
+  items: AmegoPaymentItem[];
+  issuedOn?: Date | null;
+  invoiceNumber: string;
+  randomCode: string;
+
+  taxType: TaxType;
+  voidOn: Date | null;
+  state?: InvoiceState;
+  allowances?: AmegoInvoice[];
+}
+
+export interface AmegoInvoiceIssueOptions
+  extends InvoiceIssueOptions<AmegoPaymentItem> {
+  orderId: string;
+  buyerIdentifier: string; // 買方統編
+
+  items: AmegoPaymentItem[];
+
+  salesAmount?: number; // 銷售金額, 預設含稅0
+  freeTaxSalesAmount?: number; // 免稅銷售金額, 預設含稅0
+  zeroTaxSalesAmount?: number; // 零稅率銷售金額, 預設含稅0
+  taxType: TaxType; // 課稅別
+  taxRate?: number; // 稅率, 預設含稅 0.05 (5%)
+  taxAmount?: number; // 稅額, 預設含稅 0
+  totalAmount?: number; // 總金額, 預設含稅 0
+  remark?: string; // 備註
+  detailVat: boolean; // 明細是否含稅, 預設為true (含稅) , 亦可為false (未稅)
+}
+
+export const AmegoTaxType = {
+  [TaxType.TAXED]: '1',
+  [TaxType.ZERO_TAX]: '2',
+  [TaxType.TAX_FREE]: '3',
+  [TaxType.SPECIAL]: '4',
+  [TaxType.MIXED]: '9',
+} as Record<TaxType, '1' | '2' | '3' | '4' | '9'>;
+
+export interface AmegoIssueInvoicePayload { }
+
+export interface AmegoIssueInvoiceResponse {
+  code: number;
+  msg: string;
+  invoice_number: string;
+  invoice_time: number;
+  random_number: string;
+  barcode: string;
+  qrcode_left: string;
+  qrcode_right: string;
+  base64_data: string;
+}
+
+export interface AmegoVoidAllowanceResponse { }
+
+export interface AmegoAllowanceOptions {
+  allowanceNumber: string;
+  allowancePrice: number;
+  allowancedOn: Date;
+  items: AmegoPaymentItem[];
+  parentInvoice: AmegoInvoice;
+  status: InvoiceAllowanceState;
+  invalidOn: Date | null;
+}
+
+export interface AmegoInvoiceQueryFromOrderIdArgs {
+  orderId: string;
+}
+
+export interface AmegoInvoiceQueryFromInvoiceNumberArgs {
+  invoiceNumber: string;
+}
+
+export type AmegoInvoiceQueryArgs =
+  | AmegoInvoiceQueryFromOrderIdArgs
+  | AmegoInvoiceQueryFromInvoiceNumberArgs;

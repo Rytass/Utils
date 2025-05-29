@@ -1,27 +1,69 @@
 /**
  * @jest-environment node
  */
-
-import { AmegoBaseUrls, AmegoInvoiceGateway, } from '../src';
+import { AmegoBaseUrls, AmegoInvoiceGateway } from '../src';
 
 const DEFAULT_VAT_NUMBER = '12345678';
 const DEFAULT_APP_KEY = 'sHeq7t8G1wiQvhAuIM27';
 
-describe('Amego Invoice Barcode validation', () => {
-  const gateway = new AmegoInvoiceGateway({
-    vatNumber: DEFAULT_VAT_NUMBER,
-    appKey: DEFAULT_APP_KEY,
-    baseUrl: AmegoBaseUrls.DEVELOPMENT,
+describe('Amego Invoice Query', () => {
+
+  describe('check mobile barcode with default gateway options', () => {
+    const invoiceGateway = new AmegoInvoiceGateway();
+
+    it('should query invoice valid barcode ', async () => {
+      const validBarcode = await invoiceGateway.isMobileBarcodeValid('/DDPD7U2');
+
+      expect(validBarcode).toBe(true);
+    });
+
+    it('should query invoice invalid barcode ', async () => {
+      const invalidBarcode = await invoiceGateway.isMobileBarcodeValid('/DDPD7U3');
+
+      expect(invalidBarcode).toBe(false);
+    });
   });
 
-  it('should query invoice valid barcode ', async () => {
-    const validBarcode = await gateway.isMobileBarcodeValid('/4ALH+JQ');
-    expect(validBarcode).toBe(true);
+  describe('check mobile barcode with specific gateway options', () => {
+    const invoiceGateway = new AmegoInvoiceGateway({
+      appKey: DEFAULT_APP_KEY,
+      vatNumber: DEFAULT_VAT_NUMBER,
+      baseUrl: AmegoBaseUrls.DEVELOPMENT,
+    });
+
+    it('should query invoice valid barcode ', async () => {
+      const validBarcode = await invoiceGateway.isMobileBarcodeValid('/DDPD7U2');
+
+      expect(validBarcode).toBe(true);
+    });
+
+    it('should query invoice invalid barcode ', async () => {
+      const invalidBarcode = await invoiceGateway.isMobileBarcodeValid('/DDPD7U3');
+
+      expect(invalidBarcode).toBe(false);
+    });
   });
 
-  it('should query invoice invalid barcode ', async () => {
-    const validBarcode = await gateway.isMobileBarcodeValid('/4ALH+JA');
-    expect(validBarcode).toBe(false);
+  describe('query invoice with default gateway options', () => {
+    const invoiceGateway = new AmegoInvoiceGateway({
+      appKey: DEFAULT_APP_KEY,
+      vatNumber: DEFAULT_VAT_NUMBER,
+      baseUrl: AmegoBaseUrls.DEVELOPMENT,
+    });
+
+    it('should query invoice by orderId ', async () => {
+      const data = await invoiceGateway.query({ orderId: '3g49n0' });
+
+      expect(data.orderId).toBe('3g49n0');
+      expect(data.invoiceNumber).toBe('AC12346555');
+    });
+
+    it('should query invoice by invoiceNumber ', async () => {
+      const data = await invoiceGateway.query({ invoiceNumber: 'AC12346555' });
+
+      expect(data.orderId).toBe('3g49n0');
+      expect(data.invoiceNumber).toBe('AC12346555');
+    });
   });
 
 });
