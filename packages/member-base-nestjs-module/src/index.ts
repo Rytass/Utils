@@ -36,3 +36,6 @@ export * from './dto/graphql/member-login-log.dto';
 
 // Errors
 export * from './constants/errors/index';
+
+// Constants
+export * from './constants/default-casbin-domain';

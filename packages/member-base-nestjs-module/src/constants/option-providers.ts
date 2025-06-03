@@ -37,6 +37,7 @@ import { CASBIN_MODEL } from './casbin-models/rbac-with-domains';
 import type TypeORMAdapterType from 'typeorm-adapter';
 import { AllowActions } from '../decorators/action.decorator';
 import { BaseMemberEntity } from '../models/base-member.entity';
+import { DEFAULT_CASBIN_DOMAIN } from './default-casbin-domain';
 
 const TypeORMAdapter: typeof TypeORMAdapterType =
   require('typeorm-adapter').default;
@@ -135,12 +136,17 @@ export const OptionProviders = [
             actions,
           }: {
             enforcer: Enforcer;
-            payload: { id: string; domain: string };
+            payload: { id: string; domain?: string };
             actions: [Subject, Action][];
           }) =>
             Promise.all(
               actions.map(([subject, action]) =>
-                enforcer.enforce(payload.id, payload.domain, subject, action),
+                enforcer.enforce(
+                  payload.id,
+                  payload.domain ?? DEFAULT_CASBIN_DOMAIN,
+                  subject,
+                  action,
+                ),
               ),
             ).then((results) => results.some((result) => result)),
     inject: [MEMBER_BASE_MODULE_OPTIONS],
