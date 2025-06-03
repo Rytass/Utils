@@ -4,12 +4,18 @@ import type { MemberBaseModuleOptionFactory } from './member-base-module-option-
 import type { BaseMemberEntity } from '../models/base-member.entity';
 
 export interface MemberBaseModuleAsyncOptionsDto<
-  T extends BaseMemberEntity = BaseMemberEntity,
+  MemberEntity extends BaseMemberEntity = BaseMemberEntity,
+  TokenPayload extends Record<string, any> = Pick<
+    MemberEntity,
+    'id' | 'account'
+  >,
 > extends Pick<ModuleMetadata, 'imports'> {
   useFactory?: (
     ...args: any[]
-  ) => Promise<MemberBaseModuleOptionsDto<T>> | MemberBaseModuleOptionsDto<T>;
+  ) =>
+    | Promise<MemberBaseModuleOptionsDto<MemberEntity, TokenPayload>>
+    | MemberBaseModuleOptionsDto<MemberEntity, TokenPayload>;
   inject?: any[];
-  useClass?: Type<MemberBaseModuleOptionFactory<T>>;
-  useExisting?: Type<MemberBaseModuleOptionFactory<T>>;
+  useClass?: Type<MemberBaseModuleOptionFactory<MemberEntity, TokenPayload>>;
+  useExisting?: Type<MemberBaseModuleOptionFactory<MemberEntity, TokenPayload>>;
 }

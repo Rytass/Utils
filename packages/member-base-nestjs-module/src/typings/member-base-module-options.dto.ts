@@ -5,7 +5,11 @@ import type { Enforcer } from 'casbin';
 import type { OAuth2Provider } from './oauth2-provider.interface';
 
 export interface MemberBaseModuleOptionsDto<
-  T extends BaseMemberEntity = BaseMemberEntity,
+  MemberEntity extends BaseMemberEntity = BaseMemberEntity,
+  TokenPayload extends Record<string, any> = Pick<
+    MemberEntity,
+    'id' | 'account'
+  >,
 > {
   loginFailedBanThreshold?: number; // default: 5
   resetPasswordTokenExpiration?: number; // default: 60 * 60 * 1 = 1 hour
@@ -31,12 +35,12 @@ export interface MemberBaseModuleOptionsDto<
     actions,
   }: {
     enforcer: Enforcer;
-    payload: { id: string; account: string };
+    payload: TokenPayload;
     actions: any[];
   }) => Promise<boolean>;
 
   // Entities
-  memberEntity?: new () => T; // default: MemberEntity
+  memberEntity?: new () => MemberEntity; // default: MemberEntity
 
   // Password Policy
   passwordShouldIncludeUppercase?: boolean; // default: true
@@ -48,7 +52,7 @@ export interface MemberBaseModuleOptionsDto<
   passwordHistoryLimit?: number; // default undefined, if set, will enable password history check
   passwordAgeLimitInDays?: number; // default undefined, if set, will enable password age check
   forceRejectLoginOnPasswordExpired?: boolean; // default: false, if true, will reject login when password is expired
-  customizedJwtPayload?: (member: T) => Pick<T, 'id' | 'account'>; // default: undefined
+  customizedJwtPayload?: (member: MemberEntity) => TokenPayload; // default: undefined
 
   // OAuth2
   oauth2Providers?: OAuth2Provider[];

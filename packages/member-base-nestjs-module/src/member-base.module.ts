@@ -49,8 +49,14 @@ const controllers = [OAuthCallbacksController];
 @Global()
 @Module({})
 export class MemberBaseModule {
-  static forRootAsync<T extends BaseMemberEntity = BaseMemberEntity>(
-    options: MemberBaseModuleAsyncOptionsDto<T>,
+  static forRootAsync<
+    MemberEntity extends BaseMemberEntity = BaseMemberEntity,
+    TokenPayload extends Record<string, any> = Pick<
+      MemberEntity,
+      'id' | 'account'
+    >,
+  >(
+    options: MemberBaseModuleAsyncOptionsDto<MemberEntity, TokenPayload>,
   ): DynamicModule {
     return {
       module: MemberBaseModule,
@@ -61,8 +67,14 @@ export class MemberBaseModule {
     };
   }
 
-  static forRoot<T extends BaseMemberEntity = BaseMemberEntity>(
-    options?: MemberBaseModuleOptionsDto<T>,
+  static forRoot<
+    MemberEntity extends BaseMemberEntity = BaseMemberEntity,
+    TokenPayload extends Record<string, any> = Pick<
+      MemberEntity,
+      'id' | 'account'
+    >,
+  >(
+    options?: MemberBaseModuleOptionsDto<MemberEntity, TokenPayload>,
   ): DynamicModule {
     return {
       module: MemberBaseModule,
@@ -80,14 +92,22 @@ export class MemberBaseModule {
   }
 
   private static createAsyncProvider<
-    T extends BaseMemberEntity = BaseMemberEntity,
-  >(options: MemberBaseModuleAsyncOptionsDto<T>): Provider[] {
+    MemberEntity extends BaseMemberEntity = BaseMemberEntity,
+    TokenPayload extends Record<string, any> = Pick<
+      MemberEntity,
+      'id' | 'account'
+    >,
+  >(
+    options: MemberBaseModuleAsyncOptionsDto<MemberEntity, TokenPayload>,
+  ): Provider[] {
     if (options.useExisting || options.useFactory) {
-      return [this.createAsyncOptionsProvider<T>(options)];
+      return [
+        this.createAsyncOptionsProvider<MemberEntity, TokenPayload>(options),
+      ];
     }
 
     return [
-      this.createAsyncOptionsProvider<T>(options),
+      this.createAsyncOptionsProvider<MemberEntity, TokenPayload>(options),
       ...(options.useClass
         ? [
             {
@@ -100,8 +120,14 @@ export class MemberBaseModule {
   }
 
   private static createAsyncOptionsProvider<
-    T extends BaseMemberEntity = BaseMemberEntity,
-  >(options: MemberBaseModuleAsyncOptionsDto<T>): Provider {
+    MemberEntity extends BaseMemberEntity = BaseMemberEntity,
+    TokenPayload extends Record<string, any> = Pick<
+      MemberEntity,
+      'id' | 'account'
+    >,
+  >(
+    options: MemberBaseModuleAsyncOptionsDto<MemberEntity, TokenPayload>,
+  ): Provider {
     if (options.useFactory) {
       return {
         provide: MEMBER_BASE_MODULE_OPTIONS,
@@ -112,11 +138,15 @@ export class MemberBaseModule {
 
     return {
       provide: MEMBER_BASE_MODULE_OPTIONS,
-      useFactory: async (optionsFactory: MemberBaseModuleOptionFactory<T>) =>
-        await optionsFactory.createMemberOptions(),
+      useFactory: async (
+        optionsFactory: MemberBaseModuleOptionFactory<
+          MemberEntity,
+          TokenPayload
+        >,
+      ) => await optionsFactory.createMemberOptions(),
       inject: [
         (options.useExisting || options.useClass) as Type<
-          MemberBaseModuleOptionFactory<T>
+          MemberBaseModuleOptionFactory<MemberEntity, TokenPayload>
         >,
       ],
     };
