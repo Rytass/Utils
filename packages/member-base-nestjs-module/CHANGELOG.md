@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.60](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.59...@rytass/member-base-nestjs-module@0.1.60) (2025-06-03)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** use overload to support legacy code ([9de8597](https://github.com/Rytass/Utils/commit/9de85973bb15cb75bc5ae972f59f37e0d9bd9198))
+
 ## [0.1.59](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.58...@rytass/member-base-nestjs-module@0.1.59) (2025-06-03)
 
 ### Bug Fixes
