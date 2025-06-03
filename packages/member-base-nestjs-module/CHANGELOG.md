@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.62](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.61...@rytass/member-base-nestjs-module@0.1.62) (2025-06-03)
+
+### Features
+
+- **member-base-nestjs-module:** add default casbin domain ([c562df0](https://github.com/Rytass/Utils/commit/c562df0375c54461e53832cafe67ab5a0cdf5a0d))
+
 ## [0.1.61](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.60...@rytass/member-base-nestjs-module@0.1.61) (2025-06-03)
 
 ### Bug Fixes
