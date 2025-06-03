@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.59](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.58...@rytass/member-base-nestjs-module@0.1.59) (2025-06-03)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** domain options in login and refresh method ([289bfa2](https://github.com/Rytass/Utils/commit/289bfa2f72b24db72e181907abd6338ee8e2c71e))
+
 ## [0.1.58](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.57...@rytass/member-base-nestjs-module@0.1.58) (2025-06-03)
 
 ### Bug Fixes
