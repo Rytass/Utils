@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.61](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.60...@rytass/member-base-nestjs-module@0.1.61) (2025-06-03)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** add token payload generic ([8ec1316](https://github.com/Rytass/Utils/commit/8ec1316e57da2df44647589c1f8ec218d81d82a8))
+
 ## [0.1.60](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.59...@rytass/member-base-nestjs-module@0.1.60) (2025-06-03)
 
 ### Bug Fixes
