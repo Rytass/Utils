@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.58](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.57...@rytass/member-base-nestjs-module@0.1.58) (2025-06-03)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** RBAC w/ domain decorator fix, options member entity generics ([fd4f82d](https://github.com/Rytass/Utils/commit/fd4f82d23309ff6af5273d187d426096d615666f))
+
 ## [0.1.57](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.56...@rytass/member-base-nestjs-module@0.1.57) (2025-05-14)
 
 ### Features
