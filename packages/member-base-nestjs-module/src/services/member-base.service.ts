@@ -374,10 +374,25 @@ export class MemberBaseService<
   async login(
     account: string,
     password: string,
-    ip?: string,
+    ip?: string, // IP address as string
+  ): Promise<TokenPairDto>;
+  async login(
+    account: string,
+    password: string,
     options?: {
       domain?: string;
+      ip?: string;
     },
+  ): Promise<TokenPairDto>;
+  async login(
+    account: string,
+    password: string,
+    options?:
+      | {
+          domain?: string;
+          ip?: string;
+        }
+      | string,
   ): Promise<TokenPairDto> {
     const member = await this.baseMemberRepo.findOne({
       where: { account },
@@ -420,6 +435,9 @@ export class MemberBaseService<
       throw new PasswordExpiredError();
     }
 
+    const ip =
+      typeof options === 'string' ? options : (options?.ip ?? undefined);
+
     try {
       if (await verify(member.password, password)) {
         if (member.shouldUpdatePassword) {
@@ -437,15 +455,14 @@ export class MemberBaseService<
           ip: ip ? `${ip}/32` : null,
         });
 
+        const domain =
+          typeof options === 'string'
+            ? undefined
+            : (options?.domain ?? undefined);
+
         return {
-          accessToken: this.signAccessToken(
-            member as MemberEntity,
-            options?.domain ?? undefined,
-          ),
-          refreshToken: this.signRefreshToken(
-            member as MemberEntity,
-            options?.domain ?? undefined,
-          ),
+          accessToken: this.signAccessToken(member as MemberEntity, domain),
+          refreshToken: this.signRefreshToken(member as MemberEntity, domain),
           ...(this.passwordAgeLimitInDays
             ? {
                 shouldUpdatePassword: isPasswordExpired,
