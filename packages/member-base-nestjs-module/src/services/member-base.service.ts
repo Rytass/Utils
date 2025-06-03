@@ -88,9 +88,7 @@ export class MemberBaseService<
     @Inject(PasswordValidatorService)
     private readonly passwordValidatorService: PasswordValidatorService,
     @Inject(CUSTOMIZED_JWT_PAYLOAD)
-    private readonly customizedJwtPayload: (
-      member: BaseMemberEntity,
-    ) => Pick<BaseMemberEntity, 'id' | 'account'>,
+    private readonly customizedJwtPayload: (member: MemberEntity) => object,
     @Inject(LOGIN_FAILED_AUTO_UNLOCK_SECONDS)
     private readonly loginFailedAutoUnlockSeconds: number | null,
   ) {}
@@ -108,7 +106,7 @@ export class MemberBaseService<
     }
   }
 
-  signRefreshToken(member: BaseMemberEntity, domain?: string): string {
+  signRefreshToken(member: MemberEntity, domain?: string): string {
     return sign(
       {
         ...this.customizedJwtPayload(member),
@@ -125,7 +123,7 @@ export class MemberBaseService<
     );
   }
 
-  signAccessToken(member: BaseMemberEntity, domain?: string): string {
+  signAccessToken(member: MemberEntity, domain?: string): string {
     return sign(
       {
         ...this.customizedJwtPayload(member),
@@ -329,7 +327,10 @@ export class MemberBaseService<
     return [member as T, password];
   }
 
-  async refreshToken(refreshToken: string): Promise<TokenPairDto> {
+  async refreshToken(
+    refreshToken: string,
+    options?: { domain?: string },
+  ): Promise<TokenPairDto> {
     try {
       const { id, account, passwordChangedAt, exp } = verifyJWT(
         refreshToken,
@@ -354,8 +355,14 @@ export class MemberBaseService<
       }
 
       return {
-        accessToken: this.signAccessToken(member),
-        refreshToken: this.signRefreshToken(member),
+        accessToken: this.signAccessToken(
+          member as MemberEntity,
+          options?.domain ?? undefined,
+        ),
+        refreshToken: this.signRefreshToken(
+          member as MemberEntity,
+          options?.domain ?? undefined,
+        ),
       };
     } catch (ex) {
       if (ex instanceof BadRequestException) throw ex;
@@ -368,6 +375,9 @@ export class MemberBaseService<
     account: string,
     password: string,
     ip?: string,
+    options?: {
+      domain?: string;
+    },
   ): Promise<TokenPairDto> {
     const member = await this.baseMemberRepo.findOne({
       where: { account },
@@ -428,8 +438,14 @@ export class MemberBaseService<
         });
 
         return {
-          accessToken: this.signAccessToken(member),
-          refreshToken: this.signRefreshToken(member),
+          accessToken: this.signAccessToken(
+            member as MemberEntity,
+            options?.domain ?? undefined,
+          ),
+          refreshToken: this.signRefreshToken(
+            member as MemberEntity,
+            options?.domain ?? undefined,
+          ),
           ...(this.passwordAgeLimitInDays
             ? {
                 shouldUpdatePassword: isPasswordExpired,
