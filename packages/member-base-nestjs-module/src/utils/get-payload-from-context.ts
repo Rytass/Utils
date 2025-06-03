@@ -1,6 +1,6 @@
-import { ExecutionContext } from '@nestjs/common';
+import type { ExecutionContext } from '@nestjs/common';
 import type { GqlExecutionContext } from '@nestjs/graphql';
-import { BaseMemberEntity } from '../models/base-member.entity';
+import type { BaseMemberEntity } from '../models/base-member.entity';
 
 export const getPayloadFromContext = (
   context: ExecutionContext,

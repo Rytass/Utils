@@ -91,6 +91,7 @@ export class CasbinGuard implements CanActivate {
             : (ctx.req.headers.authorization ?? '')
                 .replace(/^Bearer\s/, '')
                 .trim()) ?? null;
+
         break;
       }
 

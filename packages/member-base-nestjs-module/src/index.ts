@@ -7,7 +7,10 @@ export * from './services/member-base-admin.service';
 export * from './services/password-validator.service';
 
 // Models
-export * from './models/index';
+export { BaseMemberEntity } from './models/base-member.entity';
+export * from './models/member-login-log.entity';
+export * from './models/member-password-history.entity';
+export * from './models/member-oauth-record.entity';
 
 // Resolved Repositories
 export {

@@ -18,6 +18,7 @@ import { MemberBaseModuleOptionFactory } from './typings/member-base-module-opti
 import { PasswordValidatorService } from './services/password-validator.service';
 import { OAuthService } from './services/oauth.service';
 import { OAuthCallbacksController } from './controllers/oauth-callbacks.controller';
+import { BaseMemberEntity } from './models/base-member.entity';
 
 const providers = [
   ...OptionProviders,
@@ -48,7 +49,9 @@ const controllers = [OAuthCallbacksController];
 @Global()
 @Module({})
 export class MemberBaseModule {
-  static forRootAsync(options: MemberBaseModuleAsyncOptionsDto): DynamicModule {
+  static forRootAsync<T extends BaseMemberEntity = BaseMemberEntity>(
+    options: MemberBaseModuleAsyncOptionsDto<T>,
+  ): DynamicModule {
     return {
       module: MemberBaseModule,
       imports: [...(options?.imports ?? []), MemberBaseModelsModule],
@@ -58,7 +61,9 @@ export class MemberBaseModule {
     };
   }
 
-  static forRoot(options?: MemberBaseModuleOptionsDto): DynamicModule {
+  static forRoot<T extends BaseMemberEntity = BaseMemberEntity>(
+    options?: MemberBaseModuleOptionsDto<T>,
+  ): DynamicModule {
     return {
       module: MemberBaseModule,
       imports: [MemberBaseModelsModule],
@@ -74,15 +79,15 @@ export class MemberBaseModule {
     };
   }
 
-  private static createAsyncProvider(
-    options: MemberBaseModuleAsyncOptionsDto,
-  ): Provider[] {
+  private static createAsyncProvider<
+    T extends BaseMemberEntity = BaseMemberEntity,
+  >(options: MemberBaseModuleAsyncOptionsDto<T>): Provider[] {
     if (options.useExisting || options.useFactory) {
-      return [this.createAsyncOptionsProvider(options)];
+      return [this.createAsyncOptionsProvider<T>(options)];
     }
 
     return [
-      this.createAsyncOptionsProvider(options),
+      this.createAsyncOptionsProvider<T>(options),
       ...(options.useClass
         ? [
             {
@@ -94,9 +99,9 @@ export class MemberBaseModule {
     ];
   }
 
-  private static createAsyncOptionsProvider(
-    options: MemberBaseModuleAsyncOptionsDto,
-  ): Provider {
+  private static createAsyncOptionsProvider<
+    T extends BaseMemberEntity = BaseMemberEntity,
+  >(options: MemberBaseModuleAsyncOptionsDto<T>): Provider {
     if (options.useFactory) {
       return {
         provide: MEMBER_BASE_MODULE_OPTIONS,
@@ -107,11 +112,12 @@ export class MemberBaseModule {
 
     return {
       provide: MEMBER_BASE_MODULE_OPTIONS,
-      useFactory: async (optionsFactory: MemberBaseModuleOptionFactory) =>
+      useFactory: async (optionsFactory: MemberBaseModuleOptionFactory<T>) =>
         await optionsFactory.createMemberOptions(),
       inject: [
-        (options.useExisting ||
-          options.useClass) as Type<MemberBaseModuleOptionFactory>,
+        (options.useExisting || options.useClass) as Type<
+          MemberBaseModuleOptionFactory<T>
+        >,
       ],
     };
   }

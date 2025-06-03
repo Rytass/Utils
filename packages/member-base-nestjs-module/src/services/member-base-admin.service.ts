@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { BaseMemberEntity } from '../models';
+import { BaseMemberEntity } from '../models/base-member.entity';
 import { Repository } from 'typeorm';
 import { hash } from 'argon2';
 import { RESOLVED_MEMBER_REPO } from '../typings/member-base-providers';

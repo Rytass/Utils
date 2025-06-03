@@ -108,11 +108,12 @@ export class MemberBaseService<
     }
   }
 
-  signRefreshToken(member: BaseMemberEntity): string {
+  signRefreshToken(member: BaseMemberEntity, domain?: string): string {
     return sign(
       {
         ...this.customizedJwtPayload(member),
         passwordChangedAt: member.passwordChangedAt?.getTime() ?? null,
+        ...(domain ? { domain } : {}),
       },
       this.refreshTokenSecret,
       {
@@ -124,10 +125,11 @@ export class MemberBaseService<
     );
   }
 
-  signAccessToken(member: BaseMemberEntity): string {
+  signAccessToken(member: BaseMemberEntity, domain?: string): string {
     return sign(
       {
         ...this.customizedJwtPayload(member),
+        ...(domain ? { domain } : {}),
       },
       this.accessTokenSecret,
       {

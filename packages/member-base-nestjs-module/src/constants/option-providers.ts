@@ -32,12 +32,11 @@ import {
 import { Enforcer, newEnforcer, newModelFromString } from 'casbin';
 import { MemberBaseModuleOptionsDto } from '../typings/member-base-module-options.dto';
 import { Provider } from '@nestjs/common';
-import { Domain, Subject, Action } from '../decorators/action.decorator';
+import { Subject, Action } from '../decorators/action.decorator';
 import { CASBIN_MODEL } from './casbin-models/rbac-with-domains';
 import type TypeORMAdapterType from 'typeorm-adapter';
 import { AllowActions } from '../decorators/action.decorator';
-import { BaseMemberEntity } from '../models';
-import { OAuth2Provider } from '../typings/oauth2-provider.interface';
+import { BaseMemberEntity } from '../models/base-member.entity';
 
 const TypeORMAdapter: typeof TypeORMAdapterType =
   require('typeorm-adapter').default;
@@ -136,12 +135,12 @@ export const OptionProviders = [
             actions,
           }: {
             enforcer: Enforcer;
-            payload: Pick<BaseMemberEntity, 'id' | 'account'>;
-            actions: [Domain, Subject, Action][];
+            payload: { id: string; domain: string };
+            actions: [Subject, Action][];
           }) =>
             Promise.all(
-              actions.map(([domain, subject, action]) =>
-                enforcer.enforce(payload.id, domain, subject, action),
+              actions.map(([subject, action]) =>
+                enforcer.enforce(payload.id, payload.domain, subject, action),
               ),
             ).then((results) => results.some((result) => result)),
     inject: [MEMBER_BASE_MODULE_OPTIONS],

@@ -17,7 +17,7 @@ import {
 } from '../models/member-oauth-record.entity';
 import { Repository } from 'typeorm';
 import { MemberBaseService } from './member-base.service';
-import { BaseMemberEntity } from '../models';
+import { BaseMemberEntity } from '../models/base-member.entity';
 
 @Injectable()
 export class OAuthService {
