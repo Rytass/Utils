@@ -3,18 +3,28 @@ import sharp from 'sharp';
 import { Readable } from 'stream';
 import { ImageResizerOptions } from './typings';
 
+sharp.cache(false);
+
 export class ImageResizer implements FileConverter<ImageResizerOptions> {
   private readonly options: ImageResizerOptions;
 
-  constructor(options: ImageResizerOptions = {
-    keepAspectRatio: true,
-  }) {
-    if (!options.maxHeight && !options.maxWidth) throw new Error('Please provide at least one `maxWidth` or `maxHeight`');
+  constructor(
+    options: ImageResizerOptions = {
+      keepAspectRatio: true,
+      concurrency: 1,
+    },
+  ) {
+    if (!options.maxHeight && !options.maxWidth)
+      throw new Error('Please provide at least one `maxWidth` or `maxHeight`');
 
     this.options = options;
+
+    sharp.concurrency(this.options.concurrency ?? 1);
   }
 
-  async convert<Output extends ConvertableFile>(file: ConvertableFile): Promise<Output> {
+  async convert<Output extends ConvertableFile>(
+    file: ConvertableFile,
+  ): Promise<Output> {
     let converter;
 
     if (file instanceof Buffer) {
