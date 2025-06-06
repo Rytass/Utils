@@ -87,5 +87,5 @@
     "@nx/js": "^19",
     "nx": "^19"
   },
-  "packageManager": "yarn@4.3.1"
+  "packageManager": "yarn@4.9.1"
 }
