@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.8](https://github.com/Rytass/Utils/compare/@rytass/file-converter-adapter-image-watermark@0.1.7...@rytass/file-converter-adapter-image-watermark@0.1.8) (2025-06-06)
+
+### Features
+
+- **file-converter-adapter-image-watermark:** add sharp concurrency config ([1827db5](https://github.com/Rytass/Utils/commit/1827db5fe858126138ad2c62ad009cfd56cdaf4e))
+
 ## [0.1.7](https://github.com/Rytass/Utils/compare/@rytass/file-converter-adapter-image-watermark@0.1.6...@rytass/file-converter-adapter-image-watermark@0.1.7) (2024-11-29)
 
 **Note:** Version bump only for package @rytass/file-converter-adapter-image-watermark

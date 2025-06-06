@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.7](https://github.com/Rytass/Utils/compare/@rytass/file-converter-adapter-image-resizer@0.1.6...@rytass/file-converter-adapter-image-resizer@0.1.7) (2025-06-06)
+
+### Features
+
+- **file-converter-adapter-image-resizer:** add option for sharp concurrency ([bb37b96](https://github.com/Rytass/Utils/commit/bb37b960be5c0496acaed3d83f73b140c6b70d74))
+
 ## [0.1.6](https://github.com/Rytass/Utils/compare/@rytass/file-converter-adapter-image-resizer@0.1.5...@rytass/file-converter-adapter-image-resizer@0.1.6) (2024-11-29)
 
 **Note:** Version bump only for package @rytass/file-converter-adapter-image-resizer

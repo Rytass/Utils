@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.8](https://github.com/Rytass/Utils/compare/@rytass/file-converter-adapter-image-transcoder@0.1.7...@rytass/file-converter-adapter-image-transcoder@0.1.8) (2025-06-06)
+
+### Features
+
+- **file-converter-adapter-image-transcoder:** add sharp concurrenct config ([75cc22f](https://github.com/Rytass/Utils/commit/75cc22f690dca25f6139cf626109f230f3eef559))
+
 ## [0.1.7](https://github.com/Rytass/Utils/compare/@rytass/file-converter-adapter-image-transcoder@0.1.6...@rytass/file-converter-adapter-image-transcoder@0.1.7) (2024-11-29)
 
 **Note:** Version bump only for package @rytass/file-converter-adapter-image-transcoder
