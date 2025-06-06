@@ -6,14 +6,20 @@ import { ImageTranscoderOptions } from './typings';
 import { SupportSources } from './constants';
 import { UnsupportedSource } from './errors';
 
+sharp.cache(false);
+
 export class ImageTranscoder implements FileConverter<ImageTranscoderOptions> {
   private readonly options: ImageTranscoderOptions;
 
-  constructor(options: ImageTranscoderOptions) {
+  constructor(options: ImageTranscoderOptions & { concurrency?: number }) {
     this.options = options;
+
+    sharp.concurrency(options.concurrency ?? 1);
   }
 
-  async convert<Output extends ConvertableFile>(file: ConvertableFile): Promise<Output> {
+  async convert<Output extends ConvertableFile>(
+    file: ConvertableFile,
+  ): Promise<Output> {
     let converter;
 
     if (file instanceof Buffer) {
