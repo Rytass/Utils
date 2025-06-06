@@ -52,17 +52,20 @@ describe('Amego Invoice Query', () => {
     });
 
     it('should query invoice by orderId ', async () => {
-      const data = await invoiceGateway.query({ orderId: '3g49n0' });
+      const data = await invoiceGateway.query({ orderId: '3g49n3' });
 
-      expect(data.orderId).toBe('3g49n0');
-      expect(data.invoiceNumber).toBe('AC12346555');
+      console.log(`Query Result by orderId: ${JSON.stringify(data)}`);
+
+      expect(data.orderId).toBe('3g49n3');
+      expect(data.invoiceNumber).toBe('AC12364096');
     });
 
     it('should query invoice by invoiceNumber ', async () => {
-      const data = await invoiceGateway.query({ invoiceNumber: 'AC12346555' });
+      const data = await invoiceGateway.query({ invoiceNumber: 'AC12364090' });
 
-      expect(data.orderId).toBe('3g49n0');
-      expect(data.invoiceNumber).toBe('AC12346555');
+      console.log(`Query Result by invoiceNumber: ${JSON.stringify(data)}`);
+      expect(data.orderId).toBe('202506061426231983');
+      expect(data.invoiceNumber).toBe('AC12364090');
     });
   });
 
