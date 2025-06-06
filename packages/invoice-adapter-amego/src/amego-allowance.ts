@@ -9,23 +9,17 @@ export class AmegoAllowance implements InvoiceAllowance<AmegoPaymentItem> {
 
   readonly allowancedOn: Date;
 
+  readonly invoiceType: string;
+
   readonly _remainingAmount: number;
 
   get remainingAmount(): number {
-    console.warn(
-      'Amego not support remainingAmount query, this value is cached when allowance is created.',
-    );
-
     return this._remainingAmount;
   }
 
   readonly _items: AmegoPaymentItem[];
 
   get items(): AmegoPaymentItem[] {
-    console.warn(
-      'Amego not support items query, this value is cached when allowance is created.',
-    );
-
     return this._items;
   }
 
@@ -36,14 +30,19 @@ export class AmegoAllowance implements InvoiceAllowance<AmegoPaymentItem> {
   invalidOn: Date | null;
 
   constructor(options: AmegoAllowanceOptions) {
+    this.invoiceType = options.invoiceType ?? 'G0401'; // Default to C0401 if not provided
     this.allowanceNumber = options.allowanceNumber;
     this.allowancePrice = options.allowancePrice;
     this.allowancedOn = options.allowancedOn;
     this._items = options.items;
-    this._remainingAmount =
-      options.parentInvoice.issuedAmount - this.allowancePrice;
-
     this.parentInvoice = options.parentInvoice;
+
+    this._remainingAmount =
+      options.parentInvoice.issuedAmount - options.parentInvoice.accumulatedAllowances.reduce(
+        (sum, allowance) => sum + allowance.allowancePrice,
+        0,
+      );
+
     this.status = options.status;
     this.invalidOn = options.invalidOn ?? null;
   }

@@ -1,4 +1,5 @@
 import {
+  InvoiceAllowanceOptions,
   InvoiceAllowanceState,
   InvoiceIssueOptions,
   InvoicePaymentItem,
@@ -7,6 +8,7 @@ import {
   TaxType,
 } from '@rytass/invoice';
 import { AmegoInvoice } from './amego-invoice';
+import { AmegoAllowance } from './amego-allowance';
 
 export enum AmegoBaseUrls {
   DEVELOPMENT = 'https://invoice-api.amego.tw',
@@ -24,7 +26,7 @@ export interface AmegoPaymentItem extends InvoicePaymentItem {
   quantity: number; // 數量
   unit?: string; // 單位
   unitPrice: number; // 單價, 預設含稅0
-  amount: number; // 金額, 預設含稅0
+  // amount: number; // 金額, 預設含稅0
   remark?: string;
   taxType: TaxType.TAXED | TaxType.TAX_FREE | TaxType.ZERO_TAX;
 }
@@ -35,8 +37,8 @@ export interface AmegoInvoiceVoidOptions extends InvoiceVoidOptions {
 
 export interface AmegoInvoiceOptions {
   orderId: string; // 訂單編號
-  buyerId?: string; // 買方統一編號
-  buyerName?: string; // 買方名稱
+  vatNumber?: string; // 買方統一編號
+  buyerEmail?: string; // 買方電子信箱
 
   items: AmegoPaymentItem[];
   issuedOn?: Date | null;
@@ -46,16 +48,18 @@ export interface AmegoInvoiceOptions {
   taxType: TaxType;
   voidOn: Date | null;
   state?: InvoiceState;
-  allowances?: AmegoInvoice[];
+  allowances?: AmegoAllowance[];
+  taxRate?: number; // 稅率, 預設含稅 0.05 (5%)
+  carrier?: {
+    type: string;
+    code: string
+  }
 }
 
 export interface AmegoInvoiceIssueOptions
   extends InvoiceIssueOptions<AmegoPaymentItem> {
   orderId: string;
-  buyerIdentifier: string; // 買方統編
-
   items: AmegoPaymentItem[];
-
   salesAmount?: number; // 銷售金額, 預設含稅0
   freeTaxSalesAmount?: number; // 免稅銷售金額, 預設含稅0
   zeroTaxSalesAmount?: number; // 零稅率銷售金額, 預設含稅0
@@ -65,6 +69,7 @@ export interface AmegoInvoiceIssueOptions
   totalAmount?: number; // 總金額, 預設含稅 0
   remark?: string; // 備註
   detailVat: boolean; // 明細是否含稅, 預設為true (含稅) , 亦可為false (未稅)
+  buyerEmail?: string; // 買方電子信箱
 }
 
 export const AmegoTaxType = {
@@ -74,6 +79,12 @@ export const AmegoTaxType = {
   [TaxType.SPECIAL]: '4',
   [TaxType.MIXED]: '9',
 } as Record<TaxType, '1' | '2' | '3' | '4' | '9'>;
+
+export const ReverseAmegoTaxType = {
+  1: TaxType.TAXED,
+  2: TaxType.ZERO_TAX,
+  3: TaxType.TAX_FREE,
+} as Record<number, TaxType>;
 
 export interface AmegoIssueInvoicePayload { }
 
@@ -91,7 +102,7 @@ export interface AmegoIssueInvoiceResponse {
 
 export interface AmegoVoidAllowanceResponse { }
 
-export interface AmegoAllowanceOptions {
+export interface AmegoAllowanceOptions extends InvoiceAllowanceOptions {
   allowanceNumber: string;
   allowancePrice: number;
   allowancedOn: Date;
@@ -99,6 +110,14 @@ export interface AmegoAllowanceOptions {
   parentInvoice: AmegoInvoice;
   status: InvoiceAllowanceState;
   invalidOn: Date | null;
+  invoiceType?: string;
+  allowanceType?: AmegoAllowanceType;
+  issuedAmount?: number; // 發票金額
+}
+
+export enum AmegoAllowanceType {
+  BUYER_ISSUED = 1,
+  SELLER_ISSUED = 2,
 }
 
 export interface AmegoInvoiceQueryFromOrderIdArgs {
