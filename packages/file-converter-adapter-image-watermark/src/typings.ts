@@ -9,4 +9,5 @@ interface Watermark {
 
 export interface ImageWatermarkOptions {
   watermarks: Watermark[];
+  concurrency?: number;
 }
