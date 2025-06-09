@@ -53,6 +53,7 @@ describe('CategoryBaseService.archive', () => {
 
   it('should soft delete the category if it exists', async () => {
     const mockId = '123';
+
     findOneMock.mockResolvedValue({ id: mockId });
 
     await service.archive(mockId);
@@ -138,6 +139,7 @@ describe('CategoryBaseService.update', () => {
       multiLanguageNames: [{ language: 'en', name: 'Old' }],
       parents: [],
     };
+
     const updateDto = {
       multiLanguageNames: { en: 'Updated EN', zh: '更新的名稱' },
     };
@@ -194,6 +196,7 @@ describe('CategoryBaseService.update', () => {
         multiLanguageNames: { en: 'Test' },
       }),
     ).rejects.toThrow(BadRequestException);
+
     expect(mockRunner.rollbackTransaction).toHaveBeenCalled();
   });
 
@@ -344,6 +347,7 @@ describe('CategoryBaseService.update', () => {
     expect(mockRunner.manager.save).toHaveBeenCalledWith(
       expect.objectContaining(expectedCreated),
     );
+
     expect(result).toEqual(mockCategory);
   });
 
@@ -537,6 +541,7 @@ describe('CategoryBaseService.create', () => {
     (service as any).allowMultipleParentCategories = true;
 
     const mockParentCategory = { id: 'p1' };
+
     mockRepo.find.mockResolvedValue([mockParentCategory]);
     mockRepo.create.mockImplementation((val: any) => val);
 

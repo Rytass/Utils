@@ -31,12 +31,14 @@ describe('OptionProviders', () => {
         ...OptionProviders,
       ],
     }).compile();
+
     jest.resetModules();
     jest.clearAllMocks();
   });
 
   it('should resolve MULTIPLE_LANGUAGE_MODE correctly', () => {
     const value = module.get(MULTIPLE_LANGUAGE_MODE);
+
     expect(value).toBe(true);
   });
 
@@ -52,26 +54,31 @@ describe('OptionProviders', () => {
     }).compile();
 
     const result = testModule.get(MULTIPLE_LANGUAGE_MODE);
+
     expect(result).toBe(false);
   });
 
   it('should resolve ENABLE_SIGNATURE_MODE correctly', () => {
     const value = module.get(ENABLE_SIGNATURE_MODE);
+
     expect(value).toBe('manual');
   });
 
   it('should resolve SIGNATURE_LEVELS correctly', () => {
     const value = module.get(SIGNATURE_LEVELS);
+
     expect(value).toEqual(['L1', 'L2']);
   });
 
   it('should resolve DRAFT_MODE correctly', () => {
     const value = module.get(DRAFT_MODE);
+
     expect(value).toBe(true);
   });
 
   it('should fallback false when fullTextSearchMode is not enabled', async () => {
     const fts = await module.get(FULL_TEXT_SEARCH_MODE);
+
     expect(fts).toBe(false);
   });
 
@@ -93,6 +100,7 @@ describe('OptionProviders', () => {
 
     // Override the factory temporarily
     const originalFactory = provider.useFactory;
+
     provider.useFactory = failingFactory;
 
     await expect(
@@ -119,6 +127,7 @@ describe('OptionProviders', () => {
     }).compile();
 
     const result = await moduleWithFTS.get(FULL_TEXT_SEARCH_MODE);
+
     expect(result).toBe(true);
   });
 
@@ -145,6 +154,7 @@ describe('OptionProviders', () => {
 
       // Force all providers to instantiate
       const app = moduleWithFTS.createNestApplication();
+
       await app.init();
 
       return moduleWithFTS.get(FULL_TEXT_SEARCH_MODE);

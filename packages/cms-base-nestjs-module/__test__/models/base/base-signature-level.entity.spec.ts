@@ -8,9 +8,11 @@ function resolveType(type: any): any {
 
 function resolveInverseSide(value: any): string | undefined {
   if (typeof value === 'function') {
-    const dummy = new Proxy({}, { get: (_, prop) => prop });
+    const dummy = { signatureLevel: 'signatureLevel' };
+
     return value(dummy);
   }
+
   return undefined;
 }
 
@@ -27,6 +29,7 @@ describe('BaseSignatureLevelEntity relations', () => {
     expect(resolveInverseSide(relation?.inverseSideProperty)).toBe(
       'signatureLevel',
     );
+
     expect(relation?.relationType).toBe('one-to-many');
   });
 });

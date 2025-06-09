@@ -154,6 +154,7 @@ describe('ArticleBaseService (create)', () => {
   const createMock = jest
     .fn()
     .mockImplementation((data) => ({ ...data, id: 'a1' }));
+
   const saveMock = jest.fn().mockResolvedValue({ id: 'a1' });
 
   const createQueryRunnerMock = {

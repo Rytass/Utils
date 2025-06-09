@@ -56,6 +56,7 @@ describe('CategoryBaseService.findAll', () => {
         children: [],
       },
     ];
+
     mockQueryBuilder.getMany.mockResolvedValue(mockCategories);
 
     const result = await service.findAll({ language: 'en' });
@@ -82,6 +83,7 @@ describe('CategoryBaseService.findAll', () => {
       'categories.parents',
       'fromTopParents',
     );
+
     expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
       'fromTopParents.id IS NULL',
     );
@@ -94,6 +96,7 @@ describe('CategoryBaseService.findAll', () => {
       'categories.parents',
       'parentForFilters',
     );
+
     expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
       'parentForFilters.id IN (:...parentIds)',
       { parentIds: ['p1'] },
@@ -107,10 +110,12 @@ describe('CategoryBaseService.findAll', () => {
       offset: 10,
       limit: 5,
     });
+
     expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith(
       'articles.createdAt',
       'ASC',
     );
+
     expect(mockQueryBuilder.skip).toHaveBeenCalledWith(10);
     expect(mockQueryBuilder.take).toHaveBeenCalledWith(5);
   });
@@ -200,9 +205,11 @@ describe('CategoryBaseService.findById', () => {
       multiLanguageNames: [{ language: DEFAULT_LANGUAGE, name: 'Test' }],
       children: [],
     };
+
     mockQueryBuilder.getOne.mockResolvedValue(mockCategory);
 
     const result = await service.findById('1', DEFAULT_LANGUAGE);
+
     expect(result).toEqual(
       expect.objectContaining({
         id: '1',
@@ -225,9 +232,11 @@ describe('CategoryBaseService.findById', () => {
       multiLanguageNames: [{ language: DEFAULT_LANGUAGE, name: 'Test' }],
       children: [],
     };
+
     mockQueryBuilder.getOne.mockResolvedValue(mockCategory);
 
     const result = await service.findById('1');
+
     expect(result).toEqual(
       expect.objectContaining({
         id: '1',
@@ -248,9 +257,11 @@ describe('CategoryBaseService.findById', () => {
       multiLanguageNames: [{ language: DEFAULT_LANGUAGE, name: 'Test' }],
       children: [],
     };
+
     mockQueryBuilder.getOne.mockResolvedValue(mockCategory);
 
     const result = await service.findById('1');
+
     expect(result).toEqual(mockCategory);
   });
 

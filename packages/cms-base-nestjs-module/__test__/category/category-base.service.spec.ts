@@ -71,18 +71,22 @@ describe('CategoryBaseService.getDefaultQueryBuilder', () => {
     expect(mockCategoryRepo.createQueryBuilder).toHaveBeenCalledWith(
       'categories',
     );
+
     expect(innerJoinAndSelectMock).toHaveBeenCalledWith(
       'categories.multiLanguageNames',
       'multiLanguageNames',
     );
+
     expect(leftJoinAndSelectMock).toHaveBeenCalledWith(
       'categories.children',
       'children',
     );
+
     expect(leftJoinAndSelectMock).toHaveBeenCalledWith(
       'children.multiLanguageNames',
       'childrenMultiLanguageNames',
     );
+
     expect(result).toBeDefined();
   });
 });
@@ -214,6 +218,7 @@ describe('CategoryBaseService.getParentCategoryIdSet', () => {
       id,
       parents: [{ id: 'p1', parents: [] }],
     }));
+
     loadMock.mockImplementationOnce(async (id: string) => ({
       id,
       parents: [],
@@ -282,6 +287,7 @@ describe('CategoryBaseService.checkCircularCategories', () => {
                   p2: { id: 'p2', parents: [] },
                   c1: { id: 'c1', parents: [] },
                 };
+
                 return Promise.resolve(mockData[id]);
               }),
             },
@@ -318,6 +324,7 @@ describe('CategoryBaseService.checkCircularCategories', () => {
                   p1: { id: 'p1', parents: [] },
                   p2: { id: 'p2', parents: [] },
                 };
+
                 return Promise.resolve(mockData[id]);
               }),
             },

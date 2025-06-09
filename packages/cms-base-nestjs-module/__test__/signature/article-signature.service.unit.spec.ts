@@ -78,6 +78,7 @@ describe('ArticleSignatureService.finalSignatureLevel', () => {
 
   it('should return the last item from signatureLevelsCache as finalSignatureLevel', () => {
     const finalLevel = service.finalSignatureLevel;
+
     expect(finalLevel).toEqual({
       id: '2',
       name: 'LV2',
@@ -89,6 +90,7 @@ describe('ArticleSignatureService.finalSignatureLevel', () => {
     (service as any).signatureLevelsCache = [];
 
     const finalLevel = service.finalSignatureLevel;
+
     expect(finalLevel).toBeNull();
   });
 });
@@ -175,6 +177,7 @@ describe('ArticleSignatureService.rejectVersion', () => {
       version,
       info,
     );
+
     expect(result).toBe('mocked-signature');
   });
 });
@@ -260,6 +263,7 @@ describe('ArticleSignatureService.approveVersion', () => {
       version,
       info,
     );
+
     expect(result).toBe('mocked-signature');
   });
 });
@@ -342,6 +346,7 @@ describe('ArticleSignatureService.signature', () => {
     existsMock.mockResolvedValue(true);
 
     const levelInstance = new BaseSignatureLevelEntity();
+
     levelInstance.id = '2';
     levelInstance.name = 'LV2';
     levelInstance.required = true;
@@ -442,6 +447,7 @@ describe('ArticleSignatureService.signature', () => {
     existsMock.mockResolvedValue(true);
 
     const levelInstance = new BaseSignatureLevelEntity();
+
     levelInstance.id = '2';
     levelInstance.name = 'LV2';
     levelInstance.required = true;
@@ -532,6 +538,7 @@ describe('ArticleSignatureService.signature', () => {
     expect(softDeleteMock).toHaveBeenCalledWith(expect.anything(), {
       id: 'sig2',
     });
+
     expect(result.result).toBe(ArticleSignatureResult.APPROVED);
   });
 
@@ -563,6 +570,7 @@ describe('ArticleSignatureService.signature', () => {
     ]);
 
     const now = new Date();
+
     jest.useFakeTimers().setSystemTime(now);
 
     const result = await service['signature'](
@@ -775,6 +783,7 @@ describe('ArticleSignatureService.refreshSignatureLevelsCache', () => {
   it('should map signatureLevels correctly when containing entity instances and strings', async () => {
     // Arrange
     const levelInstance = new BaseSignatureLevelEntity();
+
     levelInstance.id = '1';
     levelInstance.name = 'EntityLevel';
 
@@ -786,6 +795,7 @@ describe('ArticleSignatureService.refreshSignatureLevelsCache', () => {
       { id: '1', name: 'EntityLevel', required: true, sequence: 0 },
       { id: '2', name: 'OLD_LEVEL', required: true, sequence: 1 },
     ]);
+
     (service as any).signatureLevelRepo = {
       find: findMock,
       create: jest.fn((data) => data),
@@ -807,6 +817,7 @@ describe('ArticleSignatureService.refreshSignatureLevelsCache', () => {
         softDelete: softDeleteMock,
       },
     };
+
     (service as any).dataSource = {
       createQueryRunner: () => runnerMock,
     };
@@ -826,6 +837,7 @@ describe('ArticleSignatureService.onApplicationBootstrap', () => {
     { id: '1', name: 'LV1', required: true, sequence: 0 },
     { id: '2', name: 'LV2', required: true, sequence: 1 },
   ];
+
   let service: ArticleSignatureService<any>;
   const findMock = jest.fn();
   const saveMock = jest.fn();
@@ -887,8 +899,10 @@ describe('ArticleSignatureService.onApplicationBootstrap', () => {
     ]);
 
     const createdLevels: BaseSignatureLevelEntity[] = [];
+
     saveMock.mockImplementation(async (level: BaseSignatureLevelEntity) => {
       createdLevels.push(level);
+
       return level;
     });
 
@@ -900,9 +914,11 @@ describe('ArticleSignatureService.onApplicationBootstrap', () => {
     expect(deleteMock).toHaveBeenCalledWith(expect.anything(), {
       signatureLevelId: '3',
     });
+
     expect(softDeleteMock).toHaveBeenCalledWith(BaseSignatureLevelEntity, {
       id: '3',
     });
+
     expect(service.finalSignatureLevel?.name).toBe('LV2');
   });
 

@@ -96,6 +96,7 @@ describe('ArticleBaseService (bindSearchTokens)', () => {
     ]);
 
     const { cut } = await import('@node-rs/jieba');
+
     expect(cut).toHaveBeenCalledWith(expectedText);
   });
 
@@ -134,6 +135,7 @@ describe('ArticleBaseService (bindSearchTokens)', () => {
     ]);
 
     const { cut } = await import('@node-rs/jieba');
+
     expect(cut).toHaveBeenCalledWith(expectedText);
   });
 
@@ -174,6 +176,7 @@ describe('ArticleBaseService (bindSearchTokens)', () => {
     ]);
 
     const { cut } = await import('@node-rs/jieba');
+
     expect(cut).toHaveBeenCalledWith(expectedText);
   });
 
@@ -219,11 +222,13 @@ describe('ArticleBaseService (bindSearchTokens)', () => {
     ]);
 
     const { cut } = await import('@node-rs/jieba');
+
     expect(cut).toHaveBeenCalledWith(expectedText);
   });
 
   it('should handle children without text field gracefully', async () => {
     const { cut } = await import('@node-rs/jieba');
+
     (cut as jest.Mock).mockReturnValue([]);
     const articleContent = {
       title: 'No Text Children',
@@ -238,11 +243,13 @@ describe('ArticleBaseService (bindSearchTokens)', () => {
         },
       ],
     };
+
     (service as any).dataSource = { query: queryMock };
 
     await (service as any).bindSearchTokens(articleContent);
 
     const params = queryMock.mock.calls[0][1];
+
     expect(params[3]).toBe('');
   });
 });

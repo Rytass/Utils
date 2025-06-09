@@ -135,6 +135,7 @@ describe('ArticleBaseService (findById)', () => {
       'articles.id = :id',
       { id: 'article-id' },
     );
+
     expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
       'multiLanguageContents.language = :language',
       { language: 'zh' },
@@ -324,10 +325,12 @@ describe('ArticleBaseService (getFindAllQueryBuilder)', () => {
       'articles.id IN (:...ids)',
       { ids: ['id1'] },
     );
+
     expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
       'multiLanguageContents.language = :language',
       { language: 'en' },
     );
+
     expect(mockQueryBuilder.andWhereExists).toHaveBeenCalled();
     expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith(
       'articles.createdAt',
@@ -362,6 +365,7 @@ describe('ArticleBaseService (getFindAllQueryBuilder)', () => {
         tags: ['t1'],
       },
     ]);
+
     expect(getManyMock).toHaveBeenCalled();
   });
 
@@ -384,6 +388,7 @@ describe('ArticleBaseService (getFindAllQueryBuilder)', () => {
     }));
 
     const { cut } = await import('@node-rs/jieba');
+
     (cut as jest.Mock).mockReturnValue(['climate', 'change']);
 
     await service['getFindAllQueryBuilder']({
@@ -416,10 +421,12 @@ describe('ArticleBaseService (getFindAllQueryBuilder)', () => {
       ':tagSearchTerm = ANY (SELECT LOWER(value) FROM jsonb_array_elements_text(versions.tags))',
       { tagSearchTerm: 'climate' },
     );
+
     expect(mockQueryBuilder.orWhere).toHaveBeenCalledWith(
       'contents.title ILIKE :searchTerm',
       { searchTerm: '%climate%' },
     );
+
     expect(mockQueryBuilder.orWhere).toHaveBeenCalledWith(
       'contents.description ILIKE :searchTerm',
       { searchTerm: '%climate%' },

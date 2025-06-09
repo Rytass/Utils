@@ -101,6 +101,7 @@ describe('ArticleSignatureDataLoader', () => {
 
     const mockOrWhere = jest.fn((brackets) => {
       bracketFns.push(brackets); // Store Brackets object
+
       return mockQb;
     });
 
@@ -131,6 +132,7 @@ describe('ArticleSignatureDataLoader', () => {
           `articleVersions.articleId = :id_${index}`,
           { [`id_${index}`]: `a${index + 1}` },
         );
+
         expect(subQbMock.andWhere).toHaveBeenCalledWith(
           `articleVersions.version = :version_${index}`,
           { [`version_${index}`]: index + 1 },

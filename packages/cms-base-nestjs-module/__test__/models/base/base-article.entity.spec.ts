@@ -5,8 +5,10 @@ function resolveTypeName(type: any): string {
   try {
     if (typeof type === 'function') {
       const resolved = type();
+
       return resolved?.name || type.name || '';
     }
+
     return type?.name || '';
   } catch {
     return type?.name || '';
@@ -70,6 +72,7 @@ describe('BaseArticleEntity relations', () => {
     const fn = typeof inverse === 'function' ? inverse : undefined;
 
     const result = fn?.({ articles: 'mock' });
+
     expect(result).toBe('mock');
   });
 });

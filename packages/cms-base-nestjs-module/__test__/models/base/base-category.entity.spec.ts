@@ -4,6 +4,7 @@ import { BaseCategoryEntity } from '../../../src/models/base-category.entity';
 function resolveTypeName(type: any): string {
   try {
     const resolved = typeof type === 'function' ? type() : type;
+
     return resolved?.name || type.name || '';
   } catch {
     return type?.name || '';
@@ -12,19 +13,22 @@ function resolveTypeName(type: any): string {
 
 function resolveInverseSide(value: any): string | undefined {
   if (typeof value === 'function') {
-    const mockEntity = new Proxy(
-      {},
-      {
-        get(_, prop) {
-          return prop;
-        },
-      },
-    );
+    const mockEntity = {
+      parents: 'parents',
+      children: 'children',
+      multiLanguageNames: 'multiLanguageNames',
+      category: 'category',
+      articles: 'articles',
+      categories: 'categories',
+    };
+
     return value(mockEntity);
   }
+
   if (typeof value === 'string') {
     return value;
   }
+
   return undefined;
 }
 
@@ -67,6 +71,7 @@ describe('BaseCategoryEntity relations', () => {
         }),
       ]),
     );
+
     expect(joinTable?.inverseJoinColumns).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -89,6 +94,7 @@ describe('BaseCategoryEntity relations', () => {
     expect(resolveTypeName(relation?.type)).toBe(
       'BaseCategoryMultiLanguageNameEntity',
     );
+
     expect(resolveInverseSide(relation?.inverseSideProperty)).toBe('category');
   });
 

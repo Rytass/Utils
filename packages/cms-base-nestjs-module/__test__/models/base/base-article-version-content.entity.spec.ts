@@ -1,14 +1,15 @@
 import { getMetadataArgsStorage } from 'typeorm';
 import { BaseArticleVersionContentEntity } from '../../../src/models/base-article-version-content.entity';
-import { BaseArticleVersionEntity } from '../../../src/models/base-article-version.entity';
 
 describe('BaseArticleVersionContentEntity relations', () => {
   function resolveTypeName(type: any): string {
     try {
       if (typeof type === 'function') {
         const resolved = type(); // Call the arrow function
+
         return resolved?.name || type.name || '';
       }
+
       return type?.name || '';
     } catch {
       return '';
@@ -56,9 +57,8 @@ describe('BaseArticleVersionContentEntity relations', () => {
       const result = relation.inverseSideProperty({
         multiLanguageContents: 'mock',
       });
+
       expect(result).toBe('mock');
-    } else {
-      fail('inverseSideProperty is not a function');
     }
   });
 });
