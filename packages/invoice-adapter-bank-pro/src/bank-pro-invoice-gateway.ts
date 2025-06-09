@@ -5,6 +5,7 @@ import {
   InvoiceGateway,
   InvoiceState,
   TaxType,
+  verifyVatNumber,
 } from '@rytass/invoice';
 import axios from 'axios';
 import { DateTime } from 'luxon';
@@ -47,8 +48,8 @@ export class BankProInvoiceGateway
     this.sellerBAN = options.sellerBAN;
     this.baseUrl = options?.baseUrl || this.baseUrl;
 
-    if (!/^\d{8}$/.test(options.sellerBAN)) {
-      throw new Error('Seller BAN should be 8 digits');
+    if (!verifyVatNumber(options.sellerBAN)) {
+      throw new Error('Seller BAN should not be a valid VAT number');
     }
   }
 
@@ -57,8 +58,8 @@ export class BankProInvoiceGateway
       throw new Error('Order ID is too long, max: 40');
     }
 
-    if (options.vatNumber && !/^\d{8}$/.test(options.vatNumber)) {
-      throw new Error('VAT number should be 8 digits');
+    if (options.vatNumber && !verifyVatNumber(options.vatNumber)) {
+      throw new Error('VAT number is invalid');
     }
 
     if (options.remark && options.remark.length > 100) {
