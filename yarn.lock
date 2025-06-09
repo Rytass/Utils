@@ -5732,7 +5732,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rytass/invoice@npm:^0.3.3, @rytass/invoice@workspace:packages/invoice":
+"@rytass/invoice@npm:^0.3.2, @rytass/invoice@npm:^0.3.3, @rytass/invoice@workspace:packages/invoice":
   version: 0.0.0-use.local
   resolution: "@rytass/invoice@workspace:packages/invoice"
   dependencies:
