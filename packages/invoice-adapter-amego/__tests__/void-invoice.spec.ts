@@ -16,7 +16,6 @@ describe('AmegoInvoiceGateway Void Invoice', () => {
         items: [{
           quantity: 1,
           unitPrice: 10,
-          amount: 10,
           taxType: TaxType.TAXED,
           name: '橡皮擦',
         }],

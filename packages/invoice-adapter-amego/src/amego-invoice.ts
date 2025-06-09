@@ -39,10 +39,6 @@ export class AmegoInvoice implements Invoice<AmegoPaymentItem> {
     code: string;
   };
 
-  set addAllowances(allowances: AmegoAllowance[]) {
-    this.accumulatedAllowances.push(...allowances);
-  }
-
   constructor(options: AmegoInvoiceOptions) {
     this.issuedOn = options.issuedOn ?? new Date();
     this.items = options.items ?? [];
