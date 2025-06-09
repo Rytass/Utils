@@ -111,8 +111,6 @@ export class AmegoInvoiceGateway
 
     const encodedPayload = this.generateEncodedPayload(JSON.stringify(payload));
 
-    // throw new Error('Amego invoice allowance is not implemented yet');
-
     const { data } = await axios.post<{ code: number, msg: string }>(
       `${this.baseUrl}/json/g0401`,
       encodedPayload,
@@ -140,12 +138,6 @@ export class AmegoInvoiceGateway
     );
 
     return invoice;
-  }
-
-  async invalidAllowance(
-    allowance: InvoiceAllowance<PaymentItem>,
-  ): Promise<Invoice<PaymentItem>> {
-    throw new Error('Method not implemented.');
   }
 
   async query(options: AmegoInvoiceQueryFromOrderIdArgs): Promise<AmegoInvoice>;
@@ -315,8 +307,32 @@ export class AmegoInvoiceGateway
     });
   }
 
-  async isLoveCodeValid(code: string): Promise<boolean> {
-    throw new Error('Method not implemented.');
+  async invalidAllowance(
+    allowance: AmegoAllowance,
+  ): Promise<AmegoInvoice> {
+    if (allowance.parentInvoice.state !== InvoiceState.VOID) {
+      throw new Error('Invoice is not voided');
+    }
+
+    const encodedData = this.generateEncodedPayload(JSON.stringify([{ CancelAllowanceNumber: allowance.allowanceNumber }]));
+
+    const { data } = await axios.post<{ code: number; msg: string }>(
+      `${this.baseUrl}/json/g0501`,
+      encodedData,
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      },
+    );
+
+    if (data.code !== 0) {
+      throw new Error(`Amego invoice cancel void failed: ${data.msg}`);
+    }
+
+    allowance.invalid();
+
+    return allowance.parentInvoice;
   }
 
   async issue(options: AmegoInvoiceIssueOptions): Promise<AmegoInvoice> {
@@ -472,23 +488,6 @@ export class AmegoInvoiceGateway
     });
   }
 
-  async isMobileBarcodeValid(code: string): Promise<boolean> {
-
-    const encodedPayload = this.generateEncodedPayload(JSON.stringify({ barCode: code }));
-
-    const { data } = await axios.post<{ code: number; msg: string }>(
-      `${this.baseUrl}/json/barcode`,
-      encodedPayload,
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      },
-    );
-
-    return data.code === 0;
-  }
-
   async void(invoice: AmegoInvoice): Promise<AmegoInvoice> {
 
     const encodedData = this.generateEncodedPayload(JSON.stringify([{ CancelInvoiceNumber: invoice.invoiceNumber }]));
@@ -510,6 +509,27 @@ export class AmegoInvoiceGateway
     invoice.setVoid();
 
     return invoice;
+  }
+
+  async isMobileBarcodeValid(code: string): Promise<boolean> {
+
+    const encodedPayload = this.generateEncodedPayload(JSON.stringify({ barCode: code }));
+
+    const { data } = await axios.post<{ code: number; msg: string }>(
+      `${this.baseUrl}/json/barcode`,
+      encodedPayload,
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      },
+    );
+
+    return data.code === 0;
+  }
+
+  async isLoveCodeValid(code: string): Promise<boolean> {
+    throw new Error('Method not supported in Amego API.');
   }
 
   private generateEncodedPayload(apiData: string): string {

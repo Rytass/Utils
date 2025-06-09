@@ -9,7 +9,7 @@ import { AmegoAllowance } from '../src/amego-allowance';
 
 describe('AmegoInvoiceGateway:Allowance', () => {
 
-  describe('should allow an invoice', () => {
+  describe('should invoice allowance', () => {
     const invoiceGateway = new AmegoInvoiceGateway();
 
     it('should allowance an invoice', async () => {
@@ -41,6 +41,20 @@ describe('AmegoInvoiceGateway:Allowance', () => {
       expect(data.items.length).toBe(2);
       expect(data.items[0].name).toBe('巧克力');
 
+    });
+
+  });
+
+  describe('should invalid invoice allowance', () => {
+    const invoiceGateway = new AmegoInvoiceGateway();
+
+    it('should allowance an invoice', async () => {
+
+      const invoice = await invoiceGateway.query({ orderId: '202506061426231983' });
+
+      const data = await invoiceGateway.invalidAllowance(invoice.allowances[0]);
+
+      expect(data.allowances[0].status).toBe(InvoiceAllowanceState.INVALID);
     });
 
   });
