@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.10](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-happy-card@0.0.9...@rytass/payments-adapter-happy-card@0.0.10) (2025-06-09)
+
+### Bug Fixes
+
+- **payments-adapter-happy-card:** undocumented time offset in check method ([ffb2a52](https://github.com/Rytass/Utils/commit/ffb2a52cdc1e6940fad520a6280637dfd67c1d01))
+
 ## [0.0.9](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-happy-card@0.0.8...@rytass/payments-adapter-happy-card@0.0.9) (2024-11-29)
 
 **Note:** Version bump only for package @rytass/payments-adapter-happy-card
