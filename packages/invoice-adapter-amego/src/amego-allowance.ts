@@ -50,5 +50,6 @@ export class AmegoAllowance implements InvoiceAllowance<AmegoPaymentItem> {
   invalid: () => void = () => {
     this.status = InvoiceAllowanceState.INVALID;
     this.invalidOn = new Date();
-  };
+    this.parentInvoice.nowAmount += this.allowancePrice;
+  }
 }

@@ -151,7 +151,7 @@ export class AmegoInvoiceGateway
 
     const encodedPayload = this.generateEncodedPayload(JSON.stringify(apiData));
 
-    const { data: resp } = await axios.post<{
+    const { data } = await axios.post<{
       code: number;
       msg: string;
       data: {
@@ -192,11 +192,11 @@ export class AmegoInvoiceGateway
       },
     });
 
-    if (resp.code !== 0) {
-      throw new Error(`Amego invoice query failed: ${resp.msg}`);
+    if (data.code !== 0) {
+      throw new Error(`Amego invoice query failed: ${data.msg}`);
     }
 
-    const thisInvoiceItems = resp.data.product_item.map((item) => {
+    const thisInvoiceItems = data.data.product_item.map((item) => {
       return {
         taxType: ReverseAmegoTaxType[item.tax_type] as TaxType.TAXED | TaxType.ZERO_TAX | TaxType.TAX_FREE,
         name: item.description,
@@ -209,28 +209,28 @@ export class AmegoInvoiceGateway
     });
 
     const thisInvoice = new AmegoInvoice({
-      orderId: resp.data.order_id,
-      vatNumber: resp.data.buyer_identifier,
+      orderId: data.data.order_id,
+      vatNumber: data.data.buyer_identifier,
       issuedOn: DateTime.fromFormat(
-        `${resp.data.invoice_date}${resp.data.invoice_time}`,
+        `${data.data.invoice_date}${data.data.invoice_time}`,
         'yyyyMMddHH:mm:ss',
       ).toJSDate(),
       items: thisInvoiceItems,
-      invoiceNumber: resp.data.invoice_number || '',
-      randomCode: resp.data.random_number || '',
-      carrier: resp.data.carrier_type !== '' ? {
-        type: resp.data.carrier_type === '3J0002' ? InvoiceCarrierType.MOBILE : InvoiceCarrierType.MOICA,
-        code: resp.data.carrier_id1 || resp.data.carrier_id2 || '',
+      invoiceNumber: data.data.invoice_number || '',
+      randomCode: data.data.random_number || '',
+      carrier: data.data.carrier_type ? {
+        type: data.data.carrier_type === '3J0002' ? InvoiceCarrierType.MOBILE : InvoiceCarrierType.MOICA,
+        code: data.data.carrier_id1 || data.data.carrier_id2 || '',
       } : undefined,
-      taxType: ReverseAmegoTaxType[resp.data.tax_type],
-      taxRate: parseFloat(resp.data.tax_rate),
+      taxType: ReverseAmegoTaxType[data.data.tax_type],
+      taxRate: parseFloat(data.data.tax_rate),
       voidOn: null,
       state: InvoiceState.ISSUED,
     });
 
-    const thisInvoiceAllowances = resp.data.allowance.map((allowance, index) => {
+    const thisInvoiceAllowances = data.data.allowance.map((allowance, index) => {
       const copyInvoice = new AmegoInvoice({ ...thisInvoice });
-      const allowances = resp.data.allowance.reduce((acc, allowance, currentIndex) => {
+      const allowances = data.data.allowance.reduce((acc, allowance, currentIndex) => {
 
         // copy thisInvoice to avoid mutation
         const copyInvoice = new AmegoInvoice({ ...thisInvoice });
@@ -251,6 +251,10 @@ export class AmegoInvoiceGateway
             invalidOn: null,
             parentInvoice: copyInvoice,
           })
+
+          if (allowance.invoice_type === 'G0501' || allowance.invoice_type === 'D0501') {
+            thisAllowance.invalid()
+          }
 
           acc.push(thisAllowance);
 
@@ -280,20 +284,20 @@ export class AmegoInvoiceGateway
     });
 
     return new AmegoInvoice({
-      orderId: resp.data.order_id,
-      vatNumber: resp.data.buyer_identifier,
+      orderId: data.data.order_id,
+      vatNumber: data.data.buyer_identifier,
       issuedOn: DateTime.fromFormat(
-        `${resp.data.invoice_date}${resp.data.invoice_time}`,
+        `${data.data.invoice_date}${data.data.invoice_time}`,
         'yyyyMMddHH:mm:ss',
       ).toJSDate(),
-      invoiceNumber: resp.data.invoice_number || '',
-      randomCode: resp.data.random_number || '',
-      carrier: resp.data.carrier_type !== '' ? {
-        type: resp.data.carrier_type === '3J0002' ? InvoiceCarrierType.MOBILE : InvoiceCarrierType.MOICA,
-        code: resp.data.carrier_id1 || resp.data.carrier_id2 || '',
+      invoiceNumber: data.data.invoice_number || '',
+      randomCode: data.data.random_number || '',
+      carrier: data.data.carrier_type !== '' ? {
+        type: data.data.carrier_type === '3J0002' ? InvoiceCarrierType.MOBILE : InvoiceCarrierType.MOICA,
+        code: data.data.carrier_id1 || data.data.carrier_id2 || '',
       } : undefined,
-      taxType: ReverseAmegoTaxType[resp.data.tax_type],
-      taxRate: parseFloat(resp.data.tax_rate),
+      taxType: ReverseAmegoTaxType[data.data.tax_type],
+      taxRate: parseFloat(data.data.tax_rate),
       voidOn: null,
       state: InvoiceState.ISSUED,
       allowances: thisInvoiceAllowances,
@@ -304,9 +308,6 @@ export class AmegoInvoiceGateway
   async invalidAllowance(
     allowance: AmegoAllowance,
   ): Promise<AmegoInvoice> {
-    if (allowance.parentInvoice.state !== InvoiceState.VOID) {
-      throw new Error('Invoice is not voided');
-    }
 
     const encodedData = this.generateEncodedPayload(JSON.stringify([{ CancelAllowanceNumber: allowance.allowanceNumber }]));
 
@@ -326,7 +327,9 @@ export class AmegoInvoiceGateway
 
     allowance.invalid();
 
-    return allowance.parentInvoice;
+    return this.query({
+      invoiceNumber: allowance.parentInvoice.invoiceNumber,
+    });
   }
 
   async issue(options: AmegoInvoiceIssueOptions): Promise<AmegoInvoice> {
@@ -471,7 +474,7 @@ export class AmegoInvoiceGateway
       orderId: options.orderId,
       vatNumber: options.vatNumber,
       items: options.items,
-      issuedOn: data.invoice_time ? new Date(data.invoice_time) : null,
+      issuedOn: data.invoice_time ? new Date(data.invoice_time * 1000) : null,
       invoiceNumber: data.invoice_number,
       randomCode: data.random_number,
       taxType: options.taxType,
