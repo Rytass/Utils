@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.1.0](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-happy-card@0.0.10...@rytass/payments-adapter-happy-card@0.1.0) (2025-06-09)
+
+### Features
+
+- support productType in getCardBalance ([d6191cf](https://github.com/Rytass/Utils/commit/d6191cf127075874eb94e5d0bec38f84fcd2a523))
+
 ## [0.0.10](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-happy-card@0.0.9...@rytass/payments-adapter-happy-card@0.0.10) (2025-06-09)
 
 ### Bug Fixes

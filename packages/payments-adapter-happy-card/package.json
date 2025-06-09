@@ -1,6 +1,6 @@
 {
   "name": "@rytass/payments-adapter-happy-card",
-  "version": "0.0.10",
+  "version": "0.1.0",
   "description": "Rytass Payment Gateway",
   "keywords": [
     "rytass",
