@@ -11,6 +11,7 @@ import {
   InvoiceVoidOptions,
   PaymentItem,
   TaxType,
+  verifyVatNumber,
 } from '@rytass/invoice';
 import { createCipheriv, createHash, createDecipheriv } from 'crypto';
 import axios from 'axios';
@@ -165,7 +166,7 @@ export class EZPayInvoiceGateway
       throw new Error('`orderId` is required and length less than 20');
     }
 
-    if (options.vatNumber && !/^\d{8}$/.test(options.vatNumber)) {
+    if (options.vatNumber && !verifyVatNumber(options.vatNumber)) {
       throw new Error('Invalid VAT number format');
     }
 
