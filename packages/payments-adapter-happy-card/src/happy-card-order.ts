@@ -4,7 +4,11 @@ import {
   OrderState,
   PaymentEvents,
 } from '@rytass/payments';
-import { HappyCardCommitMessage, HappyCardOrderInitOptions } from './typings';
+import {
+  HappyCardCommitMessage,
+  HappyCardOrderInitOptions,
+  HappyCardProductType,
+} from './typings';
 import { HappyCardOrderItem } from './happy-card-order-item';
 import { HappyCardPayment } from './happy-card-payment';
 import { HappyCardPayRequest } from './typings';
@@ -13,6 +17,7 @@ export class HappyCardOrder<OCM extends HappyCardCommitMessage>
   implements Order<OCM>
 {
   private readonly _id: string;
+  private readonly _productType: HappyCardProductType;
   private readonly _items: HappyCardOrderItem[];
   private readonly _gateway: HappyCardPayment<OCM>;
   private readonly _createdAt: Date;
@@ -27,6 +32,7 @@ export class HappyCardOrder<OCM extends HappyCardCommitMessage>
 
   constructor(options: HappyCardOrderInitOptions) {
     this._id = options.id;
+    this._productType = options.productType;
     this._items = options.items;
     this._gateway = options.gateway;
     this._createdAt = options.createdAt;
@@ -38,6 +44,10 @@ export class HappyCardOrder<OCM extends HappyCardCommitMessage>
 
   get id(): string {
     return this._id;
+  }
+
+  get productType(): string {
+    return this._productType;
   }
 
   get posTradeNo(): string {

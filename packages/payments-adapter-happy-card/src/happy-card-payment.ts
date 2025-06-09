@@ -11,6 +11,7 @@ import {
   HappyCardPayOptions,
   HappyCardPayRequest,
   HappyCardPayResponse,
+  HappyCardProductType,
   HappyCardRecord,
   HappyCardRecordType,
   HappyCardRefundOptions,
@@ -87,7 +88,10 @@ export class HappyCardPayment<
 
     const orderId = options.id || this.getOrderId();
 
-    const records = await this.getCardBalance(options.cardSerial, true);
+    const [records, productType] = await this.getCardBalance(
+      options.cardSerial,
+      true,
+    );
 
     const recordBalanceMap = new Map(
       records.map((record) => [`${record.id}:${record.type}`, record.amount]),
@@ -113,6 +117,7 @@ export class HappyCardPayment<
 
     return new HappyCardOrder({
       id: orderId,
+      productType,
       posTradeNo: options.posTradeNo,
       items: options.items,
       gateway: this,
@@ -196,17 +201,19 @@ export class HappyCardPayment<
     cardSerial: string,
     returnRecords: false,
     isIsland?: boolean,
-  ): Promise<number>;
+  ): Promise<[number, HappyCardProductType]>;
   async getCardBalance(
     cardSerial: string,
     returnRecords: true,
     isIsland?: boolean,
-  ): Promise<HappyCardRecord[]>;
+  ): Promise<[HappyCardRecord[], HappyCardProductType]>;
   async getCardBalance(
     cardSerial: string,
     returnRecords = false,
     isIsland: boolean = false,
-  ): Promise<number | HappyCardRecord[]> {
+  ): Promise<
+    [number, HappyCardProductType] | [HappyCardRecord[], HappyCardProductType]
+  > {
     const { data } = await axios.post<HappyCardSearchCardResponse>(
       `${this.baseUrl}/SearchCard`,
       JSON.stringify({
@@ -225,20 +232,26 @@ export class HappyCardPayment<
     }
 
     if (returnRecords) {
-      return data.data.card_list
-        .filter((card) => this.VALID_PRODUCT_TYPE_SET.has(card.productType))
-        .map((card) =>
-          card.record_list.map((record) => ({
-            id: record.record_id,
-            type: record.type,
-            amount: record.amt,
-          })),
-        )
-        .flat();
+      return [
+        data.data.card_list
+          .filter((card) => this.VALID_PRODUCT_TYPE_SET.has(card.productType))
+          .map((card) =>
+            card.record_list.map((record) => ({
+              id: record.record_id,
+              type: record.type,
+              amount: record.amt,
+            })),
+          )
+          .flat(),
+        data.data.card_list[0].productType,
+      ];
     }
 
-    return data.data.card_list
-      .filter((card) => this.VALID_PRODUCT_TYPE_SET.has(card.productType))
-      .reduce((sum, card) => sum + card.amt, 0);
+    return [
+      data.data.card_list
+        .filter((card) => this.VALID_PRODUCT_TYPE_SET.has(card.productType))
+        .reduce((sum, card) => sum + card.amt, 0),
+      data.data.card_list[0].productType,
+    ];
   }
 }
