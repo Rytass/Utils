@@ -1,20 +1,16 @@
 import {
-  Invoice,
-  InvoiceAllowance,
-  InvoiceAllowanceOptions,
   InvoiceAllowanceState,
   InvoiceCarrierType,
   InvoiceGateway,
-  InvoicePaymentItem,
   InvoiceState,
-  InvoiceVoidOptions,
-  PaymentItem,
   TaxType,
+  verifyVatNumber
 } from '@rytass/invoice';
 import axios from 'axios';
-import { DateTime } from 'luxon';
 import { createHash } from 'crypto';
+import { DateTime } from 'luxon';
 
+import { AmegoAllowance } from './amego-allowance';
 import { AmegoInvoice } from './amego-invoice';
 import {
   AmegoAllowanceOptions,
@@ -24,13 +20,11 @@ import {
   AmegoInvoiceQueryArgs,
   AmegoInvoiceQueryFromInvoiceNumberArgs,
   AmegoInvoiceQueryFromOrderIdArgs,
-  AmegoInvoiceVoidOptions,
   AmegoIssueInvoiceResponse,
   AmegoPaymentItem,
   AmegoTaxType,
-  ReverseAmegoTaxType,
+  ReverseAmegoTaxType
 } from './typings';
-import { AmegoAllowance } from './amego-allowance';
 
 export class AmegoInvoiceGateway
   implements InvoiceGateway<AmegoPaymentItem, AmegoInvoice> {
@@ -340,7 +334,7 @@ export class AmegoInvoiceGateway
       throw new Error('Order ID is required');
     }
 
-    if (options.vatNumber && !/^\d{8}$/.test(options.vatNumber)) {
+    if (options.vatNumber && !verifyVatNumber(options.vatNumber)) {
       throw new Error('Invalid VAT number format');
     }
 
