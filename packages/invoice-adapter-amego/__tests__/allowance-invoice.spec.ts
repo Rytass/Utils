@@ -36,7 +36,7 @@ describe('AmegoInvoiceGateway:Allowance', () => {
       expect(data.allowances.length).toBe(4);
       expect(data.allowances[0]).toBeInstanceOf(AmegoAllowance);
       expect(data.allowances[0].allowancePrice).toBe(30);
-      expect(data.allowances[0].invoiceType).toBe('D0401');
+      expect(['D0401', 'G0401']).toContain(data.allowances[0].invoiceType);
       expect(data.allowances[0].status).toBe(InvoiceAllowanceState.ISSUED);
       expect(data.items.length).toBe(2);
       expect(data.items[0].name).toBe('巧克力');

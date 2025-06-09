@@ -30,7 +30,7 @@ export class AmegoAllowance implements InvoiceAllowance<AmegoPaymentItem> {
   invalidOn: Date | null;
 
   constructor(options: AmegoAllowanceOptions) {
-    this.invoiceType = options.invoiceType ?? 'G0401'; // Default to C0401 if not provided
+    this.invoiceType = options.invoiceType ?? 'G0401'; // Default to G0401 if not provided
     this.allowanceNumber = options.allowanceNumber;
     this.allowancePrice = options.allowancePrice;
     this.allowancedOn = options.allowancedOn;
@@ -47,5 +47,8 @@ export class AmegoAllowance implements InvoiceAllowance<AmegoPaymentItem> {
     this.invalidOn = options.invalidOn ?? null;
   }
 
-  invalid: () => void;
+  invalid: () => void = () => {
+    this.status = InvoiceAllowanceState.INVALID;
+    this.invalidOn = new Date();
+  };
 }
