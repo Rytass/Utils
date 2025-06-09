@@ -15,6 +15,7 @@ export interface HappyCardOrderInitOptions<
   OCM extends HappyCardCommitMessage = HappyCardCommitMessage,
 > {
   id: string;
+  productType: HappyCardProductType;
   items: HappyCardOrderItem[];
   gateway: HappyCardPayment<OCM>;
   createdAt: Date;
@@ -106,7 +107,7 @@ export interface HappyCardSearchCardResponse {
       orderSn: string;
       card_sn: string;
       memberGid: string;
-      productType: '1' | '2' | '3' | '4' | '5' | '6';
+      productType: HappyCardProductType;
       productTypeName: string;
       original_amt: number;
       original_bonus: number;
@@ -194,4 +195,13 @@ export interface HappyCardRefundOptions {
 export interface HappyCardCommitOptions {
   payload: Omit<HappyCardPayRequest, 'basedata'>;
   isIsland?: boolean;
+}
+
+export enum HappyCardProductType {
+  INVOICE_FIRST_HAPPY_CARD_GF = '1',
+  INVOICE_LATER_HAPPY_CARD_GS = '2',
+  INVOICE_FIRST_DIGITAL_GIFT_GF = '3',
+  INVOICE_LATER_DIGITAL_GIFT_GS = '4',
+  INVOICE_FIRST_PHYSICAL_GIFT_GF = '5',
+  INVOICE_LATER_PHYSICAL_GIFT_GS = '6',
 }
