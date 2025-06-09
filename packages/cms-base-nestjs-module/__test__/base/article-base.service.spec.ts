@@ -90,14 +90,17 @@ describe('ArticleBaseService (getDefaultQueryBuilder)', () => {
       'articles.categories',
       'categories',
     );
+
     expect(qb.innerJoinAndSelect).toHaveBeenCalledWith(
       'articles.versions',
       'versions',
     );
+
     expect(qb.innerJoinAndSelect).toHaveBeenCalledWith(
       'versions.multiLanguageContents',
       'multiLanguageContents',
     );
+
     expect(qb.innerJoin).toHaveBeenCalledWith(
       expect.any(Function),
       'target',
@@ -148,14 +151,17 @@ describe('ArticleBaseService (getDefaultQueryBuilder)', () => {
       expect.any(Function),
       'versions',
     );
+
     expect(mockSubQb.select).toHaveBeenCalledWith(
       'versions.articleId',
       'articleId',
     );
+
     expect(mockSubQb.addSelect).toHaveBeenCalledWith(
       'MAX(versions.version)',
       'version',
     );
+
     expect(mockSubQb.groupBy).toHaveBeenCalledWith('versions.articleId');
 
     expect(mockSubQb.andWhere).not.toHaveBeenCalled();
@@ -257,16 +263,19 @@ describe('ArticleBaseService (getDefaultQueryBuilder)', () => {
     expect(loggerMock.debug).toHaveBeenCalledWith(
       'When signature level provided with onlyApproved, only signature level will be used.',
     );
+
     expect(mockSubQb.innerJoin).toHaveBeenCalledWith(
       'versions.signatures',
       'signatures',
     );
+
     expect(mockSubQb.andWhere).toHaveBeenCalledWith(
       'signatures.result = :result',
       {
         result: ArticleSignatureResult.APPROVED,
       },
     );
+
     expect(mockSubQb.andWhere).toHaveBeenCalledWith(
       'signatures.signatureLevelId = :signatureLevelId',
       {
@@ -319,12 +328,14 @@ describe('ArticleBaseService (getDefaultQueryBuilder)', () => {
       'versions.signatures',
       'signatures',
     );
+
     expect(mockSubQb.andWhere).toHaveBeenCalledWith(
       'signatures.result = :result',
       {
         result: ArticleSignatureResult.APPROVED,
       },
     );
+
     expect(mockSubQb.andWhere).toHaveBeenCalledWith(
       'signatures.signatureLevelId = :signatureLevelId',
       {
@@ -388,6 +399,7 @@ describe('ArticleBaseService (getDefaultQueryBuilder)', () => {
       'versions.signatures',
       'signatures',
     );
+
     expect(mockSubQb.andWhere).toHaveBeenCalledWith(
       'signatures.result = :result',
       {
@@ -458,12 +470,14 @@ describe('ArticleBaseService (getDefaultQueryBuilder)', () => {
       'versions.signatures',
       'signatures',
     );
+
     expect(mockSubQb.andWhere).toHaveBeenCalledWith(
       'signatures.result = :result',
       {
         result: ArticleSignatureResult.APPROVED,
       },
     );
+
     expect(mockSubQb.andWhere).toHaveBeenCalledWith(
       'signatures.signatureLevelId = :signatureLevelId',
       {

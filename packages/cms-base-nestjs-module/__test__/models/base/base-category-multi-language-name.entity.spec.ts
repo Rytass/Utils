@@ -6,8 +6,10 @@ function resolveTypeName(type: any): string {
   try {
     if (typeof type === 'function') {
       const resolved = type();
+
       return resolved?.name || type.name || '';
     }
+
     return type?.name || '';
   } catch {
     return type?.name || '';
@@ -38,6 +40,7 @@ describe('BaseCategoryMultiLanguageNameEntity relation: category', () => {
     const fn = typeof inverse === 'function' ? inverse : undefined;
 
     const result = fn?.({ multiLanguageNames: ['中文', 'English'] });
+
     expect(result).toEqual(['中文', 'English']);
   });
 

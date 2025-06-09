@@ -54,6 +54,7 @@ describe('CategoryDataLoader', () => {
     expect(mockQb.andWhere).toHaveBeenCalledWith('categories.id IN (:...ids)', {
       ids: ['c1', 'c2'],
     });
+
     expect(repo.createQueryBuilder).toHaveBeenCalledWith('categories');
   });
 

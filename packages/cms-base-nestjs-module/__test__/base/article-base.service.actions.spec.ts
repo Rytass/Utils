@@ -169,6 +169,7 @@ describe('ArticleBaseService (release)', () => {
     expect(result.releasedAt.getTime()).toBeGreaterThanOrEqual(
       before.getTime(),
     );
+
     expect(result.releasedAt.getTime()).toBeLessThanOrEqual(after.getTime());
 
     expect(updateMock).toHaveBeenCalledWith(
@@ -259,6 +260,7 @@ describe('ArticleBaseService (addVersion)', () => {
     await expect(service.addVersion('a1', options)).rejects.toThrow(
       CategoryNotFoundError,
     );
+
     expect(findMock).toHaveBeenCalledWith({
       where: { id: expect.any(Object), bindable: true },
     });
@@ -298,6 +300,7 @@ describe('ArticleBaseService (addVersion)', () => {
       id: 'a1',
       categories: [],
     });
+
     // No previous version found
     createQueryBuilderMock.getOne.mockResolvedValue(undefined);
 
@@ -315,11 +318,13 @@ describe('ArticleBaseService (addVersion)', () => {
 
   it('should include categories when categoryIds are provided and save is successful', async () => {
     const targetCategories = [{ id: 'cat1', bindable: true }];
+
     findMock.mockResolvedValue(targetCategories);
     findOneMock.mockResolvedValue({
       id: 'a1',
       categories: [],
     });
+
     createQueryBuilderMock.getOne.mockResolvedValue({ version: 3 });
 
     // Setup mock .create and .save
@@ -330,11 +335,13 @@ describe('ArticleBaseService (addVersion)', () => {
       create: createSpy,
       findOne: findOneMock,
     };
+
     (service as any).baseArticleVersionRepo = {
       create: createSpy,
       findOne: findOneMock,
       createQueryBuilder: () => createQueryBuilderMock,
     };
+
     (service as any).baseArticleVersionContentRepo = {
       create: createSpy,
       findOne: findOneMock,
@@ -351,6 +358,7 @@ describe('ArticleBaseService (addVersion)', () => {
     await service.addVersion('a1', options);
 
     const savedArticle = saveSpy.mock.calls[0][0] as any;
+
     expect(savedArticle.categories).toEqual(targetCategories);
   });
 
@@ -370,16 +378,19 @@ describe('ArticleBaseService (addVersion)', () => {
     createQueryBuilderMock.getOne.mockResolvedValue({ version: 1 });
 
     const warnSpy = jest.fn();
+
     (service as any).logger = { warn: warnSpy };
 
     (service as any).baseArticleRepo = {
       create: jest.fn((x) => x),
       findOne: findOneMock,
     };
+
     (service as any).baseArticleVersionRepo = {
       create: jest.fn((x) => x),
       createQueryBuilder: () => createQueryBuilderMock,
     };
+
     (service as any).baseArticleVersionContentRepo = {
       create: jest.fn((x) => x),
     };
@@ -397,6 +408,7 @@ describe('ArticleBaseService (addVersion)', () => {
 
   it('should call bindSearchTokens when fullTextSearchMode is enabled', async () => {
     const bindSearchTokensSpy = jest.fn();
+
     (service as any).bindSearchTokens = bindSearchTokensSpy;
     (service as any).multipleLanguageMode = true;
     (service as any).fullTextSearchMode = true;
@@ -406,15 +418,18 @@ describe('ArticleBaseService (addVersion)', () => {
     createQueryBuilderMock.getOne.mockResolvedValue({ version: 1 });
 
     const createSpy = jest.fn((x) => x);
+
     (service as any).baseArticleRepo = {
       create: createSpy,
       findOne: findOneMock,
     };
+
     (service as any).baseArticleVersionRepo = {
       create: createSpy,
       findOne: findOneMock,
       createQueryBuilder: () => createQueryBuilderMock,
     };
+
     (service as any).baseArticleVersionContentRepo = {
       create: createSpy,
       findOne: findOneMock,
@@ -463,6 +478,7 @@ describe('ArticleBaseService (addVersion)', () => {
         if ((input as any).version === 2) {
           versionEntityHolder.push(input); // Capture the saved version entity
         }
+
         return input;
       });
 
@@ -470,11 +486,13 @@ describe('ArticleBaseService (addVersion)', () => {
       create: createSpy,
       findOne: findOneMock,
     };
+
     (service as any).baseArticleVersionRepo = {
       create: createSpy,
       findOne: findOneMock,
       createQueryBuilder: () => createQueryBuilderMock,
     };
+
     (service as any).baseArticleVersionContentRepo = {
       create: createSpy,
       findOne: findOneMock,
@@ -490,6 +508,7 @@ describe('ArticleBaseService (addVersion)', () => {
     };
 
     const before = Date.now();
+
     await service.addVersion('a1', options);
     const after = Date.now();
 
@@ -498,6 +517,7 @@ describe('ArticleBaseService (addVersion)', () => {
     expect(
       new Date(versionEntityHolder[0].releasedAt).getTime(),
     ).toBeGreaterThanOrEqual(before);
+
     expect(
       new Date(versionEntityHolder[0].releasedAt).getTime(),
     ).toBeLessThanOrEqual(after);
@@ -514,20 +534,24 @@ describe('ArticleBaseService (addVersion)', () => {
     createQueryBuilderMock.getOne.mockResolvedValue({ version: 1 });
 
     const createSpy = jest.fn((x) => x);
+
     (service as any).baseArticleRepo = {
       create: createSpy,
       findOne: findOneMock,
     };
+
     (service as any).baseArticleVersionRepo = {
       create: createSpy,
       createQueryBuilder: () => createQueryBuilderMock,
     };
+
     (service as any).baseArticleVersionContentRepo = {
       create: createSpy,
     };
 
     // Spy on bindSearchTokens
     const bindSearchTokensSpy = jest.fn();
+
     (service as any).bindSearchTokens = bindSearchTokensSpy;
 
     // Stub save() to simulate saving multiLanguageContents
@@ -571,20 +595,24 @@ describe('ArticleBaseService (addVersion)', () => {
 
     // Prepare spy and .create overrides
     const createSpy = jest.fn((x) => x);
+
     (service as any).baseArticleRepo = {
       create: createSpy,
       findOne: findOneMock,
     };
+
     (service as any).baseArticleVersionRepo = {
       create: createSpy,
       createQueryBuilder: () => createQueryBuilderMock,
     };
+
     (service as any).baseArticleVersionContentRepo = {
       create: createSpy,
     };
 
     // Spy on bindSearchTokens
     const bindSearchTokensSpy = jest.fn();
+
     (service as any).bindSearchTokens = bindSearchTokensSpy;
 
     // Stub runner.manager.save to simulate single-language content save
@@ -659,6 +687,7 @@ describe('ArticleBaseService (addVersion)', () => {
     const createSpy = jest.fn((x) => x);
 
     const error = new Error('Mock save failure');
+
     jest
       .spyOn(runnerMock.manager!, 'save')
       .mockImplementationOnce(async () => {})
@@ -672,10 +701,12 @@ describe('ArticleBaseService (addVersion)', () => {
       create: createSpy,
       findOne: findOneMock,
     };
+
     (service as any).baseArticleVersionRepo = {
       create: createSpy,
       createQueryBuilder: () => createQueryBuilderMock,
     };
+
     (service as any).baseArticleVersionContentRepo = {
       create: createSpy,
     };
@@ -709,10 +740,12 @@ describe('ArticleBaseService (addVersion)', () => {
       create: jest.fn((x) => x),
       findOne: findOneMock,
     };
+
     (service as any).baseArticleVersionRepo = {
       create: jest.fn((x) => x),
       createQueryBuilder: () => createQueryBuilderMock,
     };
+
     (service as any).baseArticleVersionContentRepo = {
       create: jest.fn((x) => x),
     };
@@ -800,6 +833,7 @@ describe('ArticleBaseService (create)', () => {
       .spyOn(runnerMock.manager!, 'save')
       .mockImplementation(async (entity) => {
         savedEntities.push(entity);
+
         return entity;
       });
 
@@ -816,6 +850,7 @@ describe('ArticleBaseService (create)', () => {
     };
 
     const before = Date.now();
+
     await service.create(options);
     const after = Date.now();
 
@@ -828,6 +863,7 @@ describe('ArticleBaseService (create)', () => {
     expect(new Date(savedVersion.releasedAt).getTime()).toBeGreaterThanOrEqual(
       before,
     );
+
     expect(new Date(savedVersion.releasedAt).getTime()).toBeLessThanOrEqual(
       after,
     );
@@ -885,6 +921,7 @@ describe('ArticleBaseService (create)', () => {
       ['search'],
       runnerMock,
     );
+
     expect(bindSearchTokensSpy).toHaveBeenCalledWith(
       expect.objectContaining({ language: 'zh' }),
       ['search'],
@@ -942,12 +979,13 @@ describe('ArticleBaseService (create)', () => {
     expect(bindSearchTokensSpy).toHaveBeenCalledTimes(2);
     expect(bindSearchTokensSpy).toHaveBeenCalledWith(
       expect.objectContaining({ language: 'en' }),
-      [], // ✅ fallback
+      [],
       runnerMock,
     );
+
     expect(bindSearchTokensSpy).toHaveBeenCalledWith(
       expect.objectContaining({ language: 'zh' }),
-      [], // ✅ fallback
+      [],
       runnerMock,
     );
   });
@@ -994,6 +1032,7 @@ describe('ArticleBaseService (create)', () => {
     findMock.mockResolvedValue([]);
 
     const createSpy = jest.fn((x) => x);
+
     (service as any).baseArticleRepo = { create: createSpy };
     (service as any).baseArticleVersionRepo = { create: createSpy };
     (service as any).baseArticleVersionContentRepo = { create: createSpy };
@@ -1002,6 +1041,7 @@ describe('ArticleBaseService (create)', () => {
     const releaseSpy = jest.spyOn(runnerMock, 'release');
 
     const saveMock = jest.spyOn(runnerMock.manager!, 'save');
+
     saveMock
       .mockImplementationOnce(async () => ({ id: 'a1' })) // First save: article
       .mockImplementationOnce(() => {

@@ -97,6 +97,7 @@ describe('ArticleBaseService (onApplicationBootstrap)', () => {
     expect(mockQueryBuilder.orWhere).toHaveBeenCalledWith(
       'multiLanguageContents.searchTokens IS NULL',
     );
+
     expect(mockQueryBuilder.orWhere).toHaveBeenCalledWith(
       'multiLanguageContents.searchTokenVersion != :searchTokenVersion',
       { searchTokenVersion: '0.0.1' },
@@ -105,6 +106,7 @@ describe('ArticleBaseService (onApplicationBootstrap)', () => {
     expect(queryMock).toHaveBeenCalledWith(
       expect.stringContaining('CREATE INDEX'),
     );
+
     expect(loggerMock.log).toHaveBeenCalledWith('Start indexing articles...');
     expect(loggerMock.log).toHaveBeenCalledWith('Indexing articles done.');
   });
@@ -122,6 +124,7 @@ describe('ArticleBaseService (onApplicationBootstrap)', () => {
     expect(queryMock).toHaveBeenCalledWith(
       expect.stringContaining('CREATE INDEX'),
     );
+
     expect(loggerMock.log).not.toHaveBeenCalledWith(
       'Start indexing articles...',
     );
@@ -129,6 +132,7 @@ describe('ArticleBaseService (onApplicationBootstrap)', () => {
 
   it('should fallback to empty string when description is undefined', async () => {
     const { cut } = await import('@node-rs/jieba');
+
     (cut as jest.Mock).mockReturnValue([]);
 
     const articleContent = {
@@ -151,11 +155,13 @@ describe('ArticleBaseService (onApplicationBootstrap)', () => {
 
     expect(queryMock).toHaveBeenCalled();
     const params = queryMock.mock.calls[0][1];
+
     expect(params[2]).toBe('');
   });
 
   it('should fallback to empty string for tokens when content has no <p>', async () => {
     const { cut } = await import('@node-rs/jieba');
+
     (cut as jest.Mock).mockReturnValue([]);
 
     const articleContent = {
@@ -178,6 +184,7 @@ describe('ArticleBaseService (onApplicationBootstrap)', () => {
 
     expect(queryMock).toHaveBeenCalled();
     const params = queryMock.mock.calls[0][1];
+
     expect(params[3]).toBe('');
   });
 });

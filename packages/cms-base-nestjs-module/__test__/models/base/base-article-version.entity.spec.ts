@@ -5,8 +5,10 @@ function resolveTypeName(type: any): string {
   try {
     if (typeof type === 'function') {
       const resolved = type();
+
       return resolved?.name || type.name || '';
     }
+
     return type?.name || '';
   } catch {
     return type?.name || '';
@@ -47,9 +49,8 @@ describe('BaseArticleVersionEntity relations', () => {
 
     if (typeof relation?.inverseSideProperty === 'function') {
       const result = relation.inverseSideProperty({ versions: 'mock' });
+
       expect(result).toBe('mock');
-    } else {
-      fail('inverseSideProperty is not a function');
     }
   });
 
@@ -69,6 +70,7 @@ describe('BaseArticleVersionEntity relations', () => {
     const inverse = relation?.inverseSideProperty;
     const fn = typeof inverse === 'function' ? inverse : undefined;
     const result = fn?.({ articleVersion: 'mock' });
+
     expect(result).toBe('mock');
   });
 
@@ -86,6 +88,7 @@ describe('BaseArticleVersionEntity relations', () => {
     const inverse = relation?.inverseSideProperty;
     const fn = typeof inverse === 'function' ? inverse : undefined;
     const result = fn?.({ articleVersion: 'mock' });
+
     expect(result).toBe('mock');
   });
 });

@@ -6,8 +6,10 @@ function resolveTypeName(type: any): string {
   try {
     if (typeof type === 'function') {
       const resolved = type();
+
       return resolved?.name || type.name || '';
     }
+
     return type?.name || '';
   } catch {
     return type?.name || '';
@@ -88,6 +90,7 @@ describe('ArticleSignatureEntity relations', () => {
 
     // Simulate the inverse call
     const result = fn?.({ signatures: 'test' });
+
     expect(result).toBe('test');
   });
 
@@ -104,6 +107,7 @@ describe('ArticleSignatureEntity relations', () => {
     const fn = typeof inverse === 'function' ? inverse : undefined;
 
     const result = fn?.({ signatures: ['x'] });
+
     expect(result).toEqual(['x']);
   });
 });
