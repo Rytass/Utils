@@ -201,6 +201,7 @@ export class ECPayInvoiceGateway
     this.baseUrl = options?.baseUrl || this.baseUrl;
     this.skipMobileBarcodeValidation =
       options?.skipMobileBarcodeValidation ?? false;
+
     this.skipLoveCodeValidation = options?.skipLoveCodeValidation ?? false;
   }
 
