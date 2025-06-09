@@ -51,7 +51,7 @@ export class HappyCardPayment<
       version: this.VERSION,
       store_id: this.STORE_ID,
       pos_id: this.POS_ID,
-      createdate: now.toISO(),
+      createdate: now.toISO({ includeOffset: false }),
       area: isIsland ? 2 : 1,
     };
   }
