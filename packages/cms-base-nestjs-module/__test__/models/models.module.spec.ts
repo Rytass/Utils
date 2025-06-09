@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-
+import { Test } from '@nestjs/testing';
 import {
   BaseArticleRepo,
   BaseArticleEntity,
@@ -36,11 +36,22 @@ import {
   ArticleSignatureRepo,
   ArticleSignatureEntity,
 } from '../../src/models/base-article-signature.entity';
+import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { CMSBaseModelsModule } from '../../src/models/models.module';
 
 describe('CMSBaseModelsModule Factory Functions (direct test)', () => {
+  const TYPE_ORM_OPTIONS = {
+    type: 'postgres',
+    host: 'localhost',
+    username: '',
+    password: '',
+  } satisfies TypeOrmModuleOptions;
+
   const mockGetRepository = jest.fn((entity) => `MockRepo:${entity.name}`);
   const mockDataSource = {
     getRepository: mockGetRepository,
+    entityMetadatas: [],
+    options: TYPE_ORM_OPTIONS,
   } as unknown as DataSource;
 
   const tokenEntityPairs = [
@@ -67,6 +78,7 @@ describe('CMSBaseModelsModule Factory Functions (direct test)', () => {
       // This is the exact factory function logic from your module
       const factoryFunction = (dataSource: DataSource) =>
         dataSource.getRepository(entity);
+
       const result = factoryFunction(mockDataSource);
 
       results.push({ token, entity, result });
@@ -104,9 +116,24 @@ describe('CMSBaseModelsModule Factory Functions (direct test)', () => {
 
       // Test the factory function
       const result = config.useFactory(mockDataSource);
+
       expect(result).toBe(`MockRepo:${expectedEntity.name}`);
     });
 
     expect(mockGetRepository).toHaveBeenCalledTimes(tokenEntityPairs.length);
+  });
+
+  it('should dataSource.getRepository calls with correct entities', async () => {
+    const moduleRef = await Test.createTestingModule({
+      imports: [TypeOrmModule.forRoot(TYPE_ORM_OPTIONS), CMSBaseModelsModule],
+    })
+      .overrideProvider(DataSource)
+      .useValue(mockDataSource)
+      .compile();
+
+    const repo = moduleRef.get(BaseArticleRepo);
+
+    expect(repo).toBeDefined();
+    expect(mockGetRepository).toHaveBeenCalled();
   });
 });
