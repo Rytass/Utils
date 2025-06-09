@@ -1,12 +1,30 @@
 /**
  * @jest-environment node
  */
-import { AmegoInvoice, AmegoInvoiceGateway, InvoiceCarriers, InvoiceCarrierType, InvoiceState, SpecialTaxCode, TaxType } from '../src';
+import axios from 'axios';
+import { DateTime } from 'luxon';
+import { AmegoBaseUrls, AmegoInvoice, AmegoInvoiceGateway, InvoiceCarriers, InvoiceCarrierType, InvoiceState, SpecialTaxCode, TaxType } from '../src';
+
+const baseUrl = AmegoBaseUrls.DEVELOPMENT
 
 describe('AmegoInvoiceGateway Void Invoice', () => {
   describe('void invoice with default options', () => {
-
+    const post = jest.spyOn(axios, 'post');
     const invoiceGateway = new AmegoInvoiceGateway();
+
+    beforeAll(() => {
+      post.mockImplementation(async (url: string, data: any) => {
+
+        expect(url).toEqual(`${baseUrl}/json/f0501`);
+
+        return {
+          data: {
+            code: 0,
+            msg: '',
+          },
+        };
+      });
+    });
 
     it('should void with default options success', (done) => {
 
