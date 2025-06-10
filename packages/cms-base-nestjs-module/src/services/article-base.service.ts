@@ -212,7 +212,7 @@ export class ArticleBaseService<
       'multiLanguageContents',
     );
 
-    if (options?.version) {
+    if (options?.version !== undefined) {
       qb.andWhere('versions.version = :version', {
         version: options.version,
       });
