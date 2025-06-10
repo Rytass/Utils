@@ -723,15 +723,11 @@ export class ArticleBaseService<
       stage: ArticleStage.RELEASED,
     });
 
-    if (!article) {
-      throw new BadRequestException(`Article ${id} not found or not released.`);
-    }
-
     const targetPlaceArticle = await this.findById<A, AV, AVC>(id, {
       stage: this.articleSignatureService.enabled
         ? ArticleStage.VERIFIED
         : ArticleStage.DRAFT,
-    });
+    }).catch((ex) => null);
 
     this.logger.debug(`Withdraw article ${id} [${article.version}]`);
 
@@ -797,7 +793,7 @@ export class ArticleBaseService<
           (options?.releasedAt?.getTime() ?? Date.now()) <= Date.now()
             ? ArticleStage.RELEASED
             : ArticleStage.SCHEDULED,
-      });
+      }).catch((ex) => null);
     }
 
     if (article.releasedAt) {
@@ -870,10 +866,6 @@ export class ArticleBaseService<
       version: options?.version ?? undefined,
     });
 
-    if (!article) {
-      throw new ArticleNotFoundError();
-    }
-
     if (article.submittedAt) {
       throw new BadRequestException(
         `Article ${id} is already submitted [${article.version}] at ${article.submittedAt}.`,
@@ -882,7 +874,7 @@ export class ArticleBaseService<
 
     const pendingReviewArticle = await this.findById<A, AV, AVC>(id, {
       stage: ArticleStage.REVIEWING,
-    });
+    }).catch((ex) => null);
 
     const runner = this.dataSource.createQueryRunner();
 
