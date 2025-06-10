@@ -5,7 +5,6 @@ export const MULTIPLE_CATEGORY_PARENT_MODE = Symbol(
 );
 export const CIRCULAR_CATEGORY_MODE = Symbol('CIRCULAR_CATEGORY_MODE');
 export const FULL_TEXT_SEARCH_MODE = Symbol('FULL_TEXT_SEARCH_MODE');
-export const ENABLE_SIGNATURE_MODE = Symbol('ENABLE_SIGNATURE_MODE');
 export const SIGNATURE_LEVELS = Symbol('SIGNATURE_LEVELS');
 export const DRAFT_MODE = Symbol('DRAFT_MODE');
 export const AUTO_RELEASE_AFTER_APPROVED = Symbol(

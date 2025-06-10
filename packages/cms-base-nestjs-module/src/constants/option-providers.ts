@@ -4,7 +4,6 @@ import {
   CIRCULAR_CATEGORY_MODE,
   CMS_BASE_MODULE_OPTIONS,
   DRAFT_MODE,
-  ENABLE_SIGNATURE_MODE,
   FULL_TEXT_SEARCH_MODE,
   MULTIPLE_CATEGORY_PARENT_MODE,
   MULTIPLE_LANGUAGE_MODE,
@@ -38,15 +37,9 @@ export const OptionProviders = [
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
-    provide: ENABLE_SIGNATURE_MODE,
-    useFactory: (options?: CMSBaseModuleOptionsDto) =>
-      options?.signatureMode ?? null,
-    inject: [CMS_BASE_MODULE_OPTIONS],
-  },
-  {
     provide: SIGNATURE_LEVELS,
     useFactory: (options?: CMSBaseModuleOptionsDto) =>
-      options?.signatureLevels ?? [],
+      options?.signatureLevels ?? ['ADMIN'],
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
@@ -105,7 +98,7 @@ export const OptionProviders = [
   {
     provide: DRAFT_MODE,
     useFactory: (options?: CMSBaseModuleOptionsDto) =>
-      options?.enableDraftMode ?? false,
+      options?.enableDraftMode ?? true,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {

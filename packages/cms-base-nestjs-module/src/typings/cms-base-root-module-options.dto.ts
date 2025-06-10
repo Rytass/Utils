@@ -10,7 +10,6 @@ export interface CMSBaseModuleOptionsDto {
   allowMultipleParentCategories?: boolean; // default: false
   allowCircularCategories?: boolean; // default: false
   fullTextSearchMode?: boolean; // default: false
-  signatureMode?: boolean; // default: false
   signatureLevels?: string[] | BaseSignatureLevelEntity[];
   enableDraftMode?: boolean; // default: false
   autoReleaseWhenLatestSignatureApproved?: boolean; // default: false

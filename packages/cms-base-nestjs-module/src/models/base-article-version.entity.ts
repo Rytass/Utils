@@ -32,7 +32,17 @@ export class BaseArticleVersionEntity {
 
   @Column('timestamptz', { nullable: true })
   @Index()
+  submittedAt: Date | null;
+
+  @Column('uuid', { nullable: true })
+  submittedBy: string | null;
+
+  @Column('timestamptz', { nullable: true })
+  @Index()
   releasedAt: Date | null;
+
+  @Column('uuid', { nullable: true })
+  releasedBy: string | null;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -17,6 +17,7 @@ type BaseArticleCreateDto<
       | 'multiLanguageContents'
     > & {
       categoryIds?: string[];
+      submitted?: boolean;
     }
 >;
 

@@ -1,7 +1,7 @@
-import { ArticleFindVersionType } from './article-find-version-type.enum';
+import { ArticleStage } from './article-stage.enum';
 
 export type ArticleDefaultQueryBuilderDto = {
-  versionType?: ArticleFindVersionType;
-  onlyApproved?: boolean;
   signatureLevel?: string;
+  stage?: ArticleStage; // Defaults: ArticleStage.RELEASED
+  version?: number;
 };

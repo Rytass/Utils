@@ -24,7 +24,6 @@ import { BaseArticleVersionContentEntity } from '../models/base-article-version-
 import {
   ARTICLE_SIGNATURE_SERVICE,
   DRAFT_MODE,
-  ENABLE_SIGNATURE_MODE,
   FULL_TEXT_SEARCH_MODE,
   MULTIPLE_LANGUAGE_MODE,
   RESOLVED_ARTICLE_REPO,
@@ -66,6 +65,8 @@ import {
   SingleArticleCollectionDto,
 } from '../typings/article-collection.dto';
 import { ArticleFindVersionType } from '../typings/article-find-version-type.enum';
+import { ArticleStage } from '../typings/article-stage.enum';
+import { ArticleSignatureDataLoader } from '../data-loaders/article-signature.dataloader';
 
 @Injectable()
 export class ArticleBaseService<
@@ -89,22 +90,113 @@ export class ArticleBaseService<
     private readonly multipleLanguageMode: boolean,
     @Inject(FULL_TEXT_SEARCH_MODE)
     private readonly fullTextSearchMode: boolean,
-    @Inject(ENABLE_SIGNATURE_MODE)
-    private readonly signatureMode: boolean,
     @Inject(ARTICLE_SIGNATURE_SERVICE)
     private readonly articleSignatureService: ArticleSignatureService,
     @Inject(DRAFT_MODE)
     private readonly draftMode: boolean,
+    @Inject(ArticleSignatureDataLoader)
+    private readonly articleSignatureDataLoader: ArticleSignatureDataLoader,
     @InjectDataSource()
     private readonly dataSource: DataSource,
   ) {}
 
   private readonly logger = new Logger(ArticleBaseService.name);
 
+  private queryStagesFeaturesCheck = (stage: ArticleStage) => {
+    switch (stage) {
+      case ArticleStage.DRAFT:
+        if (!this.draftMode) {
+          throw new Error('Draft mode is disabled.');
+        }
+
+        break;
+      case ArticleStage.VERIFIED:
+      case ArticleStage.REVIEWING:
+        if (!this.articleSignatureService.enabled) {
+          throw new Error('Signature mode is disabled.');
+        }
+
+        break;
+
+      default:
+        break;
+    }
+  };
+
+  private limitStageWithQueryBuilder(
+    qb: SelectQueryBuilder<BaseArticleEntity>,
+    stage: ArticleStage,
+    signatureLevelId?: string,
+  ): SelectQueryBuilder<BaseArticleEntity> {
+    switch (stage) {
+      case ArticleStage.DRAFT:
+        qb.andWhere(`versions.releasedAt IS NULL`);
+        qb.andWhere(`versions.submittedAt IS NULL`);
+        break;
+
+      case ArticleStage.REVIEWING:
+        qb.andWhere(`versions.releasedAt IS NULL`);
+        qb.andWhere(`versions.submittedAt IS NOT NULL`);
+        qb.leftJoin(
+          'versions.signatures',
+          'signatures',
+          `signatures.result = :result AND signatures."signatureLevelId" = :signatureLevelId`,
+          {
+            result: ArticleSignatureResult.APPROVED,
+            signatureLevelId:
+              signatureLevelId ??
+              this.articleSignatureService.finalSignatureLevel?.id,
+          },
+        );
+
+        qb.andWhere('signatures.id IS NULL');
+
+        break;
+
+      case ArticleStage.VERIFIED:
+        qb.andWhere(`versions.releasedAt IS NULL`);
+        qb.innerJoin(
+          'versions.signatures',
+          'signatures',
+          `signatures.result = :result AND signatures."signatureLevelId" = :signatureLevelId`,
+          {
+            result: ArticleSignatureResult.APPROVED,
+            signatureLevelId:
+              this.articleSignatureService.finalSignatureLevel?.id,
+          },
+        );
+
+        break;
+
+      case ArticleStage.SCHEDULED:
+        qb.andWhere(`versions.releasedAt IS NOT NULL`);
+        qb.andWhere(`versions.releasedAt > CURRENT_TIMESTAMP`);
+        break;
+
+      case ArticleStage.RELEASED:
+      default:
+        qb.andWhere(`versions.releasedAt IS NOT NULL`);
+        qb.andWhere(`versions.releasedAt <= CURRENT_TIMESTAMP`);
+        break;
+    }
+
+    return qb;
+  }
+
   private getDefaultQueryBuilder<A extends ArticleEntity = ArticleEntity>(
     alias = 'articles',
     options?: ArticleDefaultQueryBuilderDto,
   ): SelectQueryBuilder<A> {
+    if (options?.version && options?.stage) {
+      this.logger.warn(
+        `Combining version and stage filters, only version filter will be applied.`,
+      );
+    }
+
+    if (options?.stage) {
+      this.queryStagesFeaturesCheck(options.stage);
+    }
+
     const qb = this.baseArticleRepo.createQueryBuilder(alias);
 
     qb.leftJoinAndSelect(`${alias}.categories`, 'categories');
@@ -114,62 +206,33 @@ export class ArticleBaseService<
       'multiLanguageContents',
     );
 
-    qb.innerJoin(
-      (subQb) => {
-        subQb.from(BaseArticleVersionEntity, 'versions');
+    if (options?.version) {
+      qb.andWhere('versions.version = :version', {
+        version: options.version,
+      });
+    } else if (options?.stage) {
+      this.limitStageWithQueryBuilder(
+        qb,
+        options.stage,
+        options.stage === ArticleStage.REVIEWING
+          ? options?.signatureLevel
+          : undefined,
+      );
+    } else {
+      qb.innerJoin(
+        (subQb) => {
+          subQb.from(BaseArticleVersionEntity, 'versions');
 
-        subQb.select('versions.articleId', 'articleId');
-        subQb.addSelect('MAX(versions.version)', 'version');
-        subQb.groupBy('versions.articleId');
+          subQb.select('versions.articleId', 'articleId');
+          subQb.addSelect('MAX(versions.version)', 'version');
+          subQb.groupBy('versions.articleId');
 
-        if (
-          this.draftMode &&
-          options?.versionType === ArticleFindVersionType.RELEASED
-        ) {
-          subQb.andWhere('versions.releasedAt IS NOT NULL');
-        }
-
-        if (
-          this.signatureMode &&
-          options?.onlyApproved &&
-          options?.signatureLevel
-        ) {
-          this.logger.debug(
-            `When signature level provided with onlyApproved, only signature level will be used.`,
-          );
-        }
-
-        if (this.signatureMode && options?.signatureLevel) {
-          subQb.innerJoin('versions.signatures', 'signatures');
-          subQb.andWhere('signatures.result = :result', {
-            result: ArticleSignatureResult.APPROVED,
-          });
-
-          subQb.andWhere('signatures.signatureLevelId = :signatureLevelId', {
-            signatureLevelId: options.signatureLevel,
-          });
-        } else if (this.signatureMode && options?.onlyApproved) {
-          subQb.innerJoin('versions.signatures', 'signatures');
-          subQb.andWhere('signatures.result = :result', {
-            result: ArticleSignatureResult.APPROVED,
-          });
-
-          const latestId = this.articleSignatureService.finalSignatureLevel?.id;
-
-          if (latestId) {
-            subQb.andWhere('signatures.signatureLevelId = :signatureLevelId', {
-              signatureLevelId: latestId,
-            });
-          } else {
-            subQb.andWhere('signatures.signatureLevelId IS NULL');
-          }
-        }
-
-        return subQb;
-      },
-      'target',
-      'target.version = versions.version AND target."articleId" = versions."articleId"',
-    );
+          return subQb;
+        },
+        'target',
+        'target.version = versions.version AND target."articleId" = versions."articleId"',
+      );
+    }
 
     return qb as SelectQueryBuilder<A>;
   }
@@ -275,11 +338,8 @@ export class ArticleBaseService<
     }
 
     const qb = this.getDefaultQueryBuilder<A>('articles', {
-      versionType:
-        (this.draftMode
-          ? options?.versionType
-          : ArticleFindVersionType.RELEASED) ?? ArticleFindVersionType.RELEASED,
-      onlyApproved: options?.onlyApproved,
+      stage: options?.stage ?? undefined,
+      version: options?.version ?? undefined,
     });
 
     qb.andWhere('articles.id = :id', { id });
@@ -309,6 +369,8 @@ export class ArticleBaseService<
         id: article.id,
         version: article.versions[0].version,
         tags: article.versions[0].tags,
+        releasedAt: article.versions[0].releasedAt,
+        releasedBy: article.versions[0].releasedBy,
       };
     }
 
@@ -319,6 +381,8 @@ export class ArticleBaseService<
       tags: article.versions[0].tags,
       version: article.versions[0].version,
       multiLanguageContents: article.versions[0].multiLanguageContents as AVC[],
+      releasedAt: article.versions[0].releasedAt,
+      releasedBy: article.versions[0].releasedBy,
     };
   }
 
@@ -332,11 +396,7 @@ export class ArticleBaseService<
     options?: ArticleFindAllDto,
   ): Promise<SelectQueryBuilder<A>> {
     const qb = this.getDefaultQueryBuilder<A>('articles', {
-      versionType:
-        (this.draftMode
-          ? options?.versionType
-          : ArticleFindVersionType.RELEASED) ?? ArticleFindVersionType.RELEASED,
-      onlyApproved: options?.onlyApproved,
+      stage: options?.stage ?? undefined,
       signatureLevel: options?.signatureLevel,
     });
 
@@ -625,6 +685,21 @@ export class ArticleBaseService<
     );
   }
 
+  async deleteVersion(id: string, version: number): Promise<void> {
+    const qb = this.baseArticleVersionRepo.createQueryBuilder('versions');
+
+    qb.andWhere('versions.articleId = :id', { id });
+    qb.andWhere('versions.version = :version', { version });
+
+    const targetVersion = await qb.getOne();
+
+    if (!targetVersion) {
+      throw new ArticleVersionNotFoundError();
+    }
+
+    await this.baseArticleVersionRepo.softRemove(targetVersion);
+  }
+
   async archive(id: string): Promise<void> {
     const article = await this.baseArticleRepo.findOne({ where: { id } });
 
@@ -635,18 +710,95 @@ export class ArticleBaseService<
     await this.baseArticleRepo.softDelete(id);
   }
 
-  async release<
+  async withdraw<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
-  >(id: string, releasedAt?: Date): Promise<ArticleBaseDto<A, AV, AVC>> {
+  >(id: string): Promise<ArticleBaseDto<A, AV, AVC>> {
     if (!this.draftMode) {
       throw new Error('Draft mode is disabled.');
     }
 
     const article = await this.findById<A, AV, AVC>(id, {
-      versionType: ArticleFindVersionType.LATEST,
+      stage: ArticleStage.RELEASED,
     });
+
+    if (!article) {
+      throw new BadRequestException(`Article ${id} not found or not released.`);
+    }
+
+    const targetPlaceArticle = await this.findById<A, AV, AVC>(id, {
+      stage: this.articleSignatureService.enabled
+        ? ArticleStage.VERIFIED
+        : ArticleStage.DRAFT,
+    });
+
+    this.logger.debug(`Withdraw article ${id} [${article.version}]`);
+
+    const runner = this.dataSource.createQueryRunner();
+
+    await runner.connect();
+    await runner.startTransaction();
+
+    try {
+      if (targetPlaceArticle) {
+        this.logger.debug(
+          `Article ${id} is already in draft or verified [${targetPlaceArticle.version}]. Removing previous version.`,
+        );
+
+        await runner.manager.softDelete(BaseArticleVersionEntity, {
+          articleId: id,
+          version: targetPlaceArticle.version,
+        });
+      }
+
+      await runner.manager.update(
+        BaseArticleVersionEntity,
+        {
+          articleId: id,
+          version: article.version,
+        },
+        {
+          releasedAt: null,
+        },
+      );
+
+      await runner.commitTransaction();
+    } catch (ex) {
+      await runner.rollbackTransaction();
+
+      throw ex;
+    } finally {
+      await runner.release();
+    }
+
+    article.releasedAt = null;
+
+    return article;
+  }
+
+  async release<
+    A extends ArticleEntity = ArticleEntity,
+    AV extends ArticleVersionEntity = ArticleVersionEntity,
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(
+    id: string,
+    options?: { releasedAt?: Date; version?: number },
+  ): Promise<ArticleBaseDto<A, AV, AVC>> {
+    const article = await this.findById<A, AV, AVC>(id, {
+      version: options?.version ?? undefined,
+    });
+
+    let shouldDeleteVersion = null;
+
+    if (options?.version) {
+      shouldDeleteVersion = await this.findById(id, {
+        stage:
+          (options?.releasedAt?.getTime() ?? Date.now()) <= Date.now()
+            ? ArticleStage.RELEASED
+            : ArticleStage.SCHEDULED,
+      });
+    }
 
     if (article.releasedAt) {
       this.logger.debug(
@@ -658,19 +810,119 @@ export class ArticleBaseService<
 
     this.logger.debug(`Release article ${id} [${article.version}]`);
 
-    const willReleasedAt = releasedAt ?? new Date();
+    const willReleasedAt = options?.releasedAt ?? new Date();
 
-    await this.baseArticleVersionRepo.update(
-      {
-        articleId: id,
-        version: article.version,
-      },
-      {
-        releasedAt: willReleasedAt,
-      },
-    );
+    const runner = this.dataSource.createQueryRunner();
+
+    await runner.connect();
+    await runner.startTransaction();
+
+    try {
+      if (shouldDeleteVersion) {
+        this.logger.debug(
+          `Article ${id} is already scheduled or released [${shouldDeleteVersion.version}]. Removing previous version.`,
+        );
+
+        await runner.manager.softRemove(BaseArticleVersionEntity, {
+          articleId: shouldDeleteVersion.id,
+          version: shouldDeleteVersion.version,
+        });
+      }
+
+      await runner.manager.update(
+        BaseArticleVersionEntity,
+        {
+          articleId: id,
+          version: article.version,
+        },
+        {
+          releasedAt: willReleasedAt,
+        },
+      );
+
+      await runner.commitTransaction();
+    } catch (ex) {
+      await runner.rollbackTransaction();
+
+      throw ex;
+    } finally {
+      await runner.release();
+    }
 
     article.releasedAt = willReleasedAt;
+
+    return article;
+  }
+
+  async submit<
+    A extends ArticleEntity = ArticleEntity,
+    AV extends ArticleVersionEntity = ArticleVersionEntity,
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(
+    id: string,
+    options?: { version?: number; userId?: string },
+  ): Promise<ArticleBaseDto<A, AV, AVC>> {
+    if (!this.articleSignatureService.enabled) {
+      throw new Error('Signature mode is disabled.');
+    }
+
+    const article = await this.findById<A, AV, AVC>(id, {
+      version: options?.version ?? undefined,
+    });
+
+    if (!article) {
+      throw new ArticleNotFoundError();
+    }
+
+    if (article.submittedAt) {
+      throw new BadRequestException(
+        `Article ${id} is already submitted [${article.version}] at ${article.submittedAt}.`,
+      );
+    }
+
+    const pendingReviewArticle = await this.findById<A, AV, AVC>(id, {
+      stage: ArticleStage.REVIEWING,
+    });
+
+    const runner = this.dataSource.createQueryRunner();
+
+    await runner.connect();
+    await runner.startTransaction();
+
+    try {
+      if (pendingReviewArticle) {
+        this.logger.debug(
+          `Article ${id} is already pending review [${pendingReviewArticle.version}]. Removing previous version.`,
+        );
+
+        await runner.manager.softRemove(BaseArticleVersionEntity, {
+          articleId: id,
+          version: pendingReviewArticle.version,
+        });
+      }
+
+      await runner.manager.update(
+        BaseArticleVersionEntity,
+        {
+          articleId: id,
+          version: article.version,
+        },
+        {
+          submittedAt: new Date(),
+          submittedBy: options?.userId ?? undefined,
+        },
+      );
+
+      await runner.commitTransaction();
+    } catch (ex) {
+      await runner.rollbackTransaction();
+
+      throw ex;
+    } finally {
+      await runner.release();
+    }
+
+    article.submittedAt = new Date();
 
     return article;
   }
@@ -862,7 +1114,6 @@ export class ArticleBaseService<
     AV extends ArticleVersionEntity = ArticleVersionEntity,
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
   >(options: SingleArticleCreateDto<A, AV, AVC>): Promise<A>;
-
   async create<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
@@ -877,6 +1128,14 @@ export class ArticleBaseService<
       | SingleArticleCreateDto<A, AV, AVC>
       | MultiLanguageArticleCreateDto<A, AV, AVC>,
   ): Promise<A> {
+    if (options?.submitted && !this.articleSignatureService.enabled) {
+      throw new Error('Signature mode is disabled.');
+    }
+
+    if (options?.releasedAt && !this.draftMode) {
+      throw new Error('Draft mode is disabled.');
+    }
+
     const targetCategories = options?.categoryIds?.length
       ? await this.baseCategoryRepo.find({
           where: {

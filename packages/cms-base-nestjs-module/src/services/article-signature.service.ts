@@ -7,7 +7,6 @@ import {
 import {
   AUTO_RELEASE_AFTER_APPROVED,
   DRAFT_MODE,
-  ENABLE_SIGNATURE_MODE,
   RESOLVED_ARTICLE_VERSION_REPO,
   RESOLVED_SIGNATURE_LEVEL_REPO,
   SIGNATURE_LEVELS,
@@ -32,8 +31,6 @@ export class ArticleSignatureService<
   constructor(
     @Inject(RESOLVED_ARTICLE_VERSION_REPO)
     private readonly articleVersionRepo: Repository<BaseArticleVersionEntity>,
-    @Inject(ENABLE_SIGNATURE_MODE)
-    private readonly signatureMode: boolean,
     @Inject(SIGNATURE_LEVELS)
     private readonly signatureLevels: string[] | SignatureLevelEntity[],
     @Inject(RESOLVED_SIGNATURE_LEVEL_REPO)
@@ -47,6 +44,10 @@ export class ArticleSignatureService<
     @InjectDataSource()
     private readonly dataSource: DataSource,
   ) {}
+
+  get enabled(): boolean {
+    return this.signatureLevels.length > 0;
+  }
 
   private signatureLevelsCache: BaseSignatureLevelEntity[] = [];
 
@@ -95,6 +96,10 @@ export class ArticleSignatureService<
       reason?: string | null;
     },
   ): Promise<ArticleSignatureEntity> {
+    if (!this.enabled) {
+      throw new BadRequestException('Signature is not enabled');
+    }
+
     if (
       !(await this.articleVersionRepo.exists({
         where: {
@@ -106,7 +111,10 @@ export class ArticleSignatureService<
       throw new BadRequestException('Invalid article version');
     }
 
-    if (this.signatureLevelsCache.length && !signatureInfo?.signatureLevel) {
+    if (
+      this.signatureLevelsCache.length > 1 &&
+      !signatureInfo?.signatureLevel
+    ) {
       throw new BadRequestException('Signature level is required');
     }
 
@@ -116,13 +124,10 @@ export class ArticleSignatureService<
             ? level.id === signatureInfo.signatureLevel.id
             : level.name === signatureInfo.signatureLevel,
         )
-      : Number.NaN;
+      : 0;
 
-    if (
-      signatureInfo?.signatureLevel &&
-      (targetLevelIndex === -1 || Number.isNaN(targetLevelIndex))
-    ) {
-      throw new Error('Invalid signature level');
+    if (signatureInfo?.signatureLevel && !~targetLevelIndex) {
+      throw new BadRequestException('Invalid signature level');
     }
 
     const runner = this.dataSource.createQueryRunner();
@@ -287,7 +292,7 @@ export class ArticleSignatureService<
   }
 
   async onApplicationBootstrap(): Promise<void> {
-    if (this.signatureMode) {
+    if (this.enabled) {
       const signatureLevels = await this.signatureLevelRepo.find();
 
       const existedMap = new Map(
