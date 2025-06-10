@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.70](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.69...@rytass/cms-base-nestjs-module@0.1.70) (2025-06-10)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** prevent findById error crash action method ([ece5d10](https://github.com/Rytass/Utils/commit/ece5d1022f4276cd39d06dc7a380dbca84bdc84f))
+
 ## [0.1.69](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.68...@rytass/cms-base-nestjs-module@0.1.69) (2025-06-10)
 
 ### Bug Fixes
