@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.72](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.71...@rytass/cms-base-nestjs-module@0.1.72) (2025-06-10)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** version is zero ([325d74a](https://github.com/Rytass/Utils/commit/325d74ab38211f2848bee8be02c6cf95d474cb68))
+
+### Features
+
+- **cms-base-nestjs-module:** update article stage auto replace flow ([1ac32e0](https://github.com/Rytass/Utils/commit/1ac32e030506021f1eb114f6adbf2460deb13a1f))
+
 ## [0.1.71](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.70...@rytass/cms-base-nestjs-module@0.1.71) (2025-06-10)
 
 ### Bug Fixes
