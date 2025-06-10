@@ -17,40 +17,6 @@ describe('AmegoInvoiceGateway Issue Invoice', () => {
     beforeAll(() => {
       post.mockImplementation(async (url: string, data: any) => {
 
-        //   Amego invoice issue response: {
-        //   code: 0,
-        //   msg: '',
-        //   invoice_number: 'AC12367705',
-        //   invoice_time: 1749478829,
-        //   random_number: '6121',
-        //   barcode: '11406AC123677056121',
-        //   qrcode_left: 'AC1236770511406096121000000ee000000fa5588071012345678Kl5uSAlhCfQMd3WjsCxKiQ==:**********:1:2:0:',
-        //   qrcode_right: '**口香糖:10:10'
-        // }
-
-        //   test response AmegoInvoice {
-        //   invoiceNumber: 'AC12367705',
-        //   issuedOn: 2025-06-09T14:20:29.000Z,
-        //   allowances: [],
-        //   accumulatedAllowances: [],
-        //   issuedAmount: 250,
-        //   randomCode: '6121',
-        //   items: [
-        //     { name: '口香糖', quantity: 10, unitPrice: 10, taxType: 'TAXED' },
-        //     { name: '巧克力', quantity: 10, unitPrice: 15, taxType: 'TAXED' }
-        //   ],
-        //   state: 'ISSUED',
-        //   nowAmount: 250,
-        //   voidOn: null,
-        //   orderId: '202506091426231986',
-        //   taxType: 'TAXED',
-        //   vatNumber: '55880710',
-        //   taxRate: 0.05,
-        //   taxAmount: 12,
-        //   carrier: undefined,
-        //   awardType: undefined
-        // }
-
         expect(url).toEqual(`${baseUrl}/json/f0401`);
 
         return {
