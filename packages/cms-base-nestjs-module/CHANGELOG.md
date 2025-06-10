@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.71](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.70...@rytass/cms-base-nestjs-module@0.1.71) (2025-06-10)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** change article dto will be spread of article and article version entity ([dbab297](https://github.com/Rytass/Utils/commit/dbab29762b947393a868abd67bc92e53eef4bf8d))
+
+### Features
+
+- **cms-base-nestjs-module:** utils for article entity column normailize ([3ec70c9](https://github.com/Rytass/Utils/commit/3ec70c90cf8b2f77a4153e073f779f409785d93e))
+
 ## [0.1.70](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.69...@rytass/cms-base-nestjs-module@0.1.70) (2025-06-10)
 
 ### Bug Fixes
