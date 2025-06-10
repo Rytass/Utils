@@ -10,7 +10,6 @@ import { CategoryDataLoader } from './data-loaders/category.dataloader';
 import {
   ARTICLE_BASE_SERVICE,
   ARTICLE_SIGNATURE_DATALOADER,
-  ARTICLE_SIGNATURE_SERVICE,
   CATEGORY_DATA_LOADER,
   CMS_BASE_MODULE_OPTIONS,
 } from './typings/cms-base-providers';
@@ -18,7 +17,6 @@ import { CMSBaseModuleAsyncOptionsDto } from './typings/cms-base-root-module-asy
 import { OptionProviders } from './constants/option-providers';
 import { CMSBaseModuleOptionsDto } from './typings/cms-base-root-module-options.dto';
 import { CMSBaseModuleOptionFactory } from './typings/cms-base-root-module-option-factory';
-import { ArticleSignatureService } from './services/article-signature.service';
 import { ArticleSignatureDataLoader } from './data-loaders/article-signature.dataloader';
 
 @Global()
@@ -37,11 +35,6 @@ export class CMSBaseModule {
           provide: CATEGORY_DATA_LOADER,
           useExisting: CategoryDataLoader,
         },
-        ArticleSignatureService,
-        {
-          provide: ARTICLE_SIGNATURE_SERVICE,
-          useExisting: ArticleSignatureService,
-        },
         ArticleBaseService,
         {
           provide: ARTICLE_BASE_SERVICE,
@@ -58,7 +51,6 @@ export class CMSBaseModule {
         ...TARGETS.map(([, , resolved]) => resolved),
         ArticleBaseService,
         CategoryBaseService,
-        ArticleSignatureService,
         CategoryDataLoader,
         ArticleSignatureDataLoader,
       ],
@@ -81,11 +73,6 @@ export class CMSBaseModule {
           provide: CATEGORY_DATA_LOADER,
           useExisting: CategoryDataLoader,
         },
-        ArticleSignatureService,
-        {
-          provide: ARTICLE_SIGNATURE_SERVICE,
-          useExisting: ArticleSignatureService,
-        },
         ArticleBaseService,
         {
           provide: ARTICLE_BASE_SERVICE,
@@ -102,7 +89,6 @@ export class CMSBaseModule {
         ...TARGETS.map(([, , resolved]) => resolved),
         ArticleBaseService,
         CategoryBaseService,
-        ArticleSignatureService,
         CategoryDataLoader,
         ArticleSignatureDataLoader,
       ],

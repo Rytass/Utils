@@ -9,6 +9,7 @@ import {
 import {
   DataSource,
   In,
+  IsNull,
   QueryRunner,
   Repository,
   SelectQueryBuilder,
@@ -22,8 +23,7 @@ import {
 import { BaseArticleVersionEntity } from '../models/base-article-version.entity';
 import { BaseArticleVersionContentEntity } from '../models/base-article-version-content.entity';
 import {
-  ARTICLE_SIGNATURE_DATALOADER,
-  ARTICLE_SIGNATURE_SERVICE,
+  AUTO_RELEASE_AFTER_APPROVED,
   DRAFT_MODE,
   FULL_TEXT_SEARCH_MODE,
   MULTIPLE_LANGUAGE_MODE,
@@ -31,6 +31,8 @@ import {
   RESOLVED_ARTICLE_VERSION_CONTENT_REPO,
   RESOLVED_ARTICLE_VERSION_REPO,
   RESOLVED_CATEGORY_REPO,
+  RESOLVED_SIGNATURE_LEVEL_REPO,
+  SIGNATURE_LEVELS,
 } from '../typings/cms-base-providers';
 import { DEFAULT_LANGUAGE } from '../constants/default-language';
 import { ArticleFindAllDto } from '../typings/article-find-all.dto';
@@ -52,12 +54,6 @@ import { CategoryNotFoundError } from '../constants/errors/category.errors';
 import { ArticleSearchMode } from '../typings/article-search-mode.enum';
 import { QuadratsText } from '@quadrats/core';
 import { FULL_TEXT_SEARCH_TOKEN_VERSION } from '../constants/full-text-search-token-version';
-import {
-  ArticleNotIncludeFields,
-  ArticleVersionContentNotIncludeFields,
-  ArticleVersionNotIncludeFields,
-} from '../constants/not-include-entity-fields';
-import { ArticleSignatureService } from './article-signature.service';
 import { ArticleFindByIdBaseDto } from '../typings/article-find-by-id.dto';
 import { ArticleDefaultQueryBuilderDto } from '../typings/article-default-query-builder.dto';
 import { ArticleSignatureResult } from '../typings/article-signature-result.enum';
@@ -65,16 +61,19 @@ import {
   ArticleCollectionDto,
   SingleArticleCollectionDto,
 } from '../typings/article-collection.dto';
-import { ArticleFindVersionType } from '../typings/article-find-version-type.enum';
 import { ArticleStage } from '../typings/article-stage.enum';
-import { ArticleSignatureDataLoader } from '../data-loaders/article-signature.dataloader';
 import {
   removeArticleInvalidFields,
   removeArticleVersionContentInvalidFields,
   removeArticleVersionInvalidFields,
   removeMultipleLanguageArticleVersionInvalidFields,
 } from '../utils/remove-invalid-fields';
-import { ArticleSignatureEntity } from '../models/base-article-signature.entity';
+import {
+  ArticleSignatureEntity,
+  ArticleSignatureRepo,
+} from '../models/base-article-signature.entity';
+import { BaseSignatureLevelEntity } from '../models/base-signature-level.entity';
+import { SignatureInfoDto } from '../typings/signature-info.dto';
 
 @Injectable()
 export class ArticleBaseService<
@@ -83,6 +82,8 @@ export class ArticleBaseService<
     BaseArticleVersionEntity = BaseArticleVersionEntity,
   ArticleVersionContentEntity extends
     BaseArticleVersionContentEntity = BaseArticleVersionContentEntity,
+  SignatureLevelEntity extends
+    BaseSignatureLevelEntity = BaseSignatureLevelEntity,
 > implements OnApplicationBootstrap
 {
   constructor(
@@ -98,17 +99,32 @@ export class ArticleBaseService<
     private readonly multipleLanguageMode: boolean,
     @Inject(FULL_TEXT_SEARCH_MODE)
     private readonly fullTextSearchMode: boolean,
-    @Inject(ARTICLE_SIGNATURE_SERVICE)
-    private readonly articleSignatureService: ArticleSignatureService,
     @Inject(DRAFT_MODE)
     private readonly draftMode: boolean,
-    @Inject(ARTICLE_SIGNATURE_DATALOADER)
-    private readonly articleSignatureDataLoader: ArticleSignatureDataLoader,
+    @Inject(SIGNATURE_LEVELS)
+    private readonly signatureLevels: string[] | SignatureLevelEntity[],
+    @Inject(RESOLVED_SIGNATURE_LEVEL_REPO)
+    private readonly signatureLevelRepo: Repository<BaseSignatureLevelEntity>,
+    @Inject(ArticleSignatureRepo)
+    private readonly articleSignatureRepo: Repository<ArticleSignatureEntity>,
+    @Inject(AUTO_RELEASE_AFTER_APPROVED)
+    private readonly autoReleaseAfterApproved: boolean,
     @InjectDataSource()
     private readonly dataSource: DataSource,
   ) {}
 
   private readonly logger = new Logger(ArticleBaseService.name);
+
+  private get signatureEnabled(): boolean {
+    return this.signatureLevels.length > 0;
+  }
+
+  private signatureLevelsCache: BaseSignatureLevelEntity[] = [];
+
+  get finalSignatureLevel(): SignatureLevelEntity | null {
+    return (this.signatureLevelsCache[this.signatureLevelsCache.length - 1] ??
+      null) as SignatureLevelEntity | null;
+  }
 
   private queryStagesFeaturesCheck = (stage: ArticleStage) => {
     switch (stage) {
@@ -120,7 +136,7 @@ export class ArticleBaseService<
         break;
       case ArticleStage.VERIFIED:
       case ArticleStage.REVIEWING:
-        if (!this.articleSignatureService.enabled) {
+        if (!this.signatureEnabled) {
           throw new Error('Signature mode is disabled.');
         }
 
@@ -178,9 +194,7 @@ export class ArticleBaseService<
           'signatureLevel',
           'signatureLevel.name = :signatureLevel',
           {
-            signatureLevel:
-              signatureLevel ??
-              this.articleSignatureService.finalSignatureLevel?.name,
+            signatureLevel: signatureLevel ?? this.finalSignatureLevel?.name,
           },
         );
 
@@ -205,8 +219,7 @@ export class ArticleBaseService<
               `signatures.result = :result AND signatures."signatureLevelId" = :signatureLevelId`,
               {
                 result: ArticleSignatureResult.APPROVED,
-                signatureLevelId:
-                  this.articleSignatureService.finalSignatureLevel?.id,
+                signatureLevelId: this.finalSignatureLevel?.id,
               },
             );
 
@@ -249,7 +262,7 @@ export class ArticleBaseService<
     }
 
     const qb = runner
-      ? runner.manager.createQueryBuilder(BaseArticleEntity, alias)
+      ? runner.manager.createQueryBuilder(this.baseArticleRepo.target, alias)
       : this.baseArticleRepo.createQueryBuilder(alias);
 
     qb.leftJoinAndSelect(`${alias}.categories`, 'categories');
@@ -359,6 +372,94 @@ export class ArticleBaseService<
       await this.dataSource.query(
         `CREATE INDEX IF NOT EXISTS "article_version_contents_search_tokens_idx" ON "${this.baseArticleVersionContentRepo.metadata.tableName}" USING GIN ("searchTokens")`,
       );
+    }
+
+    if (this.signatureEnabled) {
+      const signatureLevels = await this.signatureLevelRepo.find();
+
+      const existedMap = new Map(
+        signatureLevels.map((level) => [level.name, level]),
+      );
+
+      const usedSet = new Set<BaseSignatureLevelEntity>();
+      const targetLevelNames = new Set(
+        this.signatureLevels.map((level) =>
+          level instanceof BaseSignatureLevelEntity ? level.name : level,
+        ),
+      );
+
+      const runner = this.dataSource.createQueryRunner();
+
+      await runner.connect();
+      await runner.startTransaction();
+
+      try {
+        await signatureLevels
+          .filter((level) => !targetLevelNames.has(level.name))
+          .map((level) => async () => {
+            await runner.manager.delete(this.articleSignatureRepo.target, {
+              signatureLevelId: level.id,
+            });
+
+            await runner.manager.softDelete(this.signatureLevelRepo.target, {
+              id: level.id,
+            });
+          })
+          .reduce((prev, next) => prev.then(next), Promise.resolve());
+
+        this.signatureLevelsCache = await this.signatureLevels
+          .map((level, index) => async (levels: BaseSignatureLevelEntity[]) => {
+            if (level instanceof BaseSignatureLevelEntity) {
+              level.sequence = index;
+              level.required = true;
+
+              await runner.manager.save(level);
+
+              usedSet.add(level);
+
+              return [...levels, level];
+            }
+
+            if (existedMap.has(level)) {
+              const existedLevel = existedMap.get(
+                level,
+              ) as BaseSignatureLevelEntity;
+
+              existedLevel.sequence = index;
+              existedLevel.required = true;
+
+              await runner.manager.save(existedLevel);
+
+              usedSet.add(existedLevel);
+
+              return [...levels, existedLevel];
+            }
+
+            const newLevel = this.signatureLevelRepo.create({
+              name: level,
+              required: true,
+              sequence: index,
+            });
+
+            await runner.manager.save(newLevel);
+
+            usedSet.add(newLevel);
+
+            return levels;
+          })
+          .reduce(
+            (prev, next) => prev.then(next),
+            Promise.resolve([] as BaseSignatureLevelEntity[]),
+          );
+
+        await runner.commitTransaction();
+      } catch (ex) {
+        await runner.rollbackTransaction();
+
+        throw ex;
+      } finally {
+        await runner.release();
+      }
     }
   }
 
@@ -768,9 +869,7 @@ export class ArticleBaseService<
     });
 
     const targetPlaceArticle = await this.findById<A, AV, AVC>(id, {
-      stage: this.articleSignatureService.enabled
-        ? ArticleStage.VERIFIED
-        : ArticleStage.DRAFT,
+      stage: this.signatureEnabled ? ArticleStage.VERIFIED : ArticleStage.DRAFT,
     }).catch((ex) => null);
 
     this.logger.debug(`Withdraw article ${id} [${article.version}]`);
@@ -786,14 +885,14 @@ export class ArticleBaseService<
           `Article ${id} is already in draft or verified [${targetPlaceArticle.version}]. Removing previous version.`,
         );
 
-        await runner.manager.softDelete(BaseArticleVersionEntity, {
+        await runner.manager.softDelete(this.baseArticleVersionRepo.target, {
           articleId: id,
           version: targetPlaceArticle.version,
         });
       }
 
       await runner.manager.update(
-        BaseArticleVersionEntity,
+        this.baseArticleVersionRepo.target,
         {
           articleId: id,
           version: article.version,
@@ -863,14 +962,14 @@ export class ArticleBaseService<
           `Article ${id} is already scheduled or released [${shouldDeleteVersion.version}]. Removing previous version.`,
         );
 
-        await runner.manager.softRemove(BaseArticleVersionEntity, {
+        await runner.manager.softRemove(this.baseArticleVersionRepo.target, {
           articleId: shouldDeleteVersion.id,
           version: shouldDeleteVersion.version,
         });
       }
 
       await runner.manager.update(
-        BaseArticleVersionEntity,
+        this.baseArticleVersionRepo.target,
         {
           articleId: id,
           version: article.version,
@@ -902,7 +1001,7 @@ export class ArticleBaseService<
     id: string,
     options?: { version?: number; userId?: string },
   ): Promise<ArticleBaseDto<A, AV, AVC>> {
-    if (!this.articleSignatureService.enabled) {
+    if (!this.signatureEnabled) {
       throw new Error('Signature mode is disabled.');
     }
 
@@ -931,14 +1030,14 @@ export class ArticleBaseService<
           `Article ${id} is already pending review [${pendingReviewArticle.version}]. Removing previous version.`,
         );
 
-        await runner.manager.softRemove(BaseArticleVersionEntity, {
+        await runner.manager.softRemove(this.baseArticleVersionRepo.target, {
           articleId: id,
           version: pendingReviewArticle.version,
         });
       }
 
       await runner.manager.update(
-        BaseArticleVersionEntity,
+        this.baseArticleVersionRepo.target,
         {
           articleId: id,
           version: article.version,
@@ -977,10 +1076,7 @@ export class ArticleBaseService<
     }
 
     if (signatureLevel) {
-      if (
-        signatureLevel ===
-        this.articleSignatureService.finalSignatureLevel?.name
-      ) {
+      if (signatureLevel === this.finalSignatureLevel?.name) {
         return ArticleStage.VERIFIED;
       }
 
@@ -1028,15 +1124,14 @@ export class ArticleBaseService<
     if (
       options.releasedAt &&
       options.signatureLevel &&
-      this.articleSignatureService.finalSignatureLevel?.name !==
-        options.signatureLevel
+      this.finalSignatureLevel?.name !== options.signatureLevel
     ) {
       throw new Error(
         'Only final signature level is allowed when releasing an article version.',
       );
     }
 
-    if (options.submitted && !this.articleSignatureService.enabled) {
+    if (options.submitted && !this.signatureEnabled) {
       throw new Error('Signature mode is disabled.');
     }
 
@@ -1132,7 +1227,7 @@ export class ArticleBaseService<
 
     try {
       if (placedArticle) {
-        await runner.manager.softRemove(BaseArticleVersionEntity, {
+        await runner.manager.softRemove(this.baseArticleVersionRepo.target, {
           articleId: id,
           version: placedArticle.version,
         });
@@ -1219,15 +1314,14 @@ export class ArticleBaseService<
       }
 
       if (options.signatureLevel || options.releasedAt) {
-        await this.articleSignatureService.approveVersion(
+        await this.approveVersion(
           {
             id: article.id,
             version: version.version,
           },
           {
             signatureLevel:
-              options.signatureLevel ??
-              this.articleSignatureService.finalSignatureLevel?.name,
+              options.signatureLevel ?? this.finalSignatureLevel?.name,
             signerId: options.userId,
             runner,
           },
@@ -1358,15 +1452,14 @@ export class ArticleBaseService<
       }
 
       if (options.signatureLevel || options.releasedAt) {
-        await this.articleSignatureService.approveVersion(
+        await this.approveVersion(
           {
             id: article.id,
             version: version.version,
           },
           {
             signatureLevel:
-              options.signatureLevel ??
-              this.articleSignatureService.finalSignatureLevel?.name,
+              options.signatureLevel ?? this.finalSignatureLevel?.name,
             signerId: options.userId,
             runner,
           },
@@ -1385,5 +1478,284 @@ export class ArticleBaseService<
     } finally {
       await runner.release();
     }
+  }
+  rejectVersion(
+    articleVersion: {
+      id: string;
+      version: number;
+    },
+    signatureInfo?: SignatureInfoDto<SignatureLevelEntity> & {
+      reason?: string | null;
+      runner?: QueryRunner;
+    },
+  ): Promise<ArticleSignatureEntity> {
+    return this.signature(
+      ArticleSignatureResult.REJECTED,
+      articleVersion,
+      signatureInfo,
+    );
+  }
+
+  approveVersion(
+    articleVersion: {
+      id: string;
+      version: number;
+    },
+    signatureInfo?: SignatureInfoDto<SignatureLevelEntity> & {
+      runner?: QueryRunner;
+    },
+  ): Promise<ArticleSignatureEntity> {
+    return this.signature(
+      ArticleSignatureResult.APPROVED,
+      articleVersion,
+      signatureInfo,
+    );
+  }
+
+  private async signature(
+    result: ArticleSignatureResult,
+    articleVersion: {
+      id: string;
+      version: number;
+    },
+    signatureInfo?: SignatureInfoDto<SignatureLevelEntity> & {
+      reason?: string | null;
+      runner?: QueryRunner;
+    },
+  ): Promise<ArticleSignatureEntity> {
+    if (!this.signatureEnabled) {
+      throw new BadRequestException('Signature is not enabled');
+    }
+
+    const placedArticle = await this.findById(
+      articleVersion.id,
+      {
+        stage:
+          result === ArticleSignatureResult.APPROVED
+            ? signatureInfo?.signatureLevel === this.finalSignatureLevel?.name
+              ? ArticleStage.VERIFIED
+              : ArticleStage.REVIEWING
+            : ArticleStage.DRAFT,
+      },
+      signatureInfo?.runner,
+    ).catch((ex) => null);
+
+    if (signatureInfo?.runner) {
+      if (
+        !(await signatureInfo.runner.manager.exists(
+          this.baseArticleVersionRepo.target,
+          {
+            where: {
+              articleId: articleVersion.id,
+              version: articleVersion.version,
+            },
+          },
+        ))
+      ) {
+        throw new BadRequestException('Invalid article version');
+      }
+    } else if (
+      !(await this.baseArticleVersionRepo.exists({
+        where: {
+          articleId: articleVersion.id,
+          version: articleVersion.version,
+        },
+      }))
+    ) {
+      throw new BadRequestException('Invalid article version');
+    }
+
+    if (
+      this.signatureLevelsCache.length > 1 &&
+      !signatureInfo?.signatureLevel
+    ) {
+      throw new BadRequestException('Signature level is required');
+    }
+
+    const targetLevelIndex = signatureInfo?.signatureLevel
+      ? this.signatureLevelsCache.findIndex((level) =>
+          signatureInfo.signatureLevel instanceof BaseSignatureLevelEntity
+            ? level.id === signatureInfo.signatureLevel.id
+            : level.name === signatureInfo.signatureLevel,
+        )
+      : 0;
+
+    if (signatureInfo?.signatureLevel && !~targetLevelIndex) {
+      throw new BadRequestException('Invalid signature level');
+    }
+
+    const runner = signatureInfo?.runner ?? this.dataSource.createQueryRunner();
+
+    if (!signatureInfo?.runner) {
+      await runner.connect();
+      await runner.startTransaction();
+    }
+
+    try {
+      const qb = runner.manager.createQueryBuilder(
+        this.articleSignatureRepo.target,
+        'signatures',
+      );
+
+      qb.andWhere('signatures.articleId = :articleId', {
+        articleId: articleVersion.id,
+      });
+
+      qb.andWhere('signatures.version = :version', {
+        version: articleVersion.version,
+      });
+
+      qb.setLock('pessimistic_write');
+
+      const signatures = await qb.getMany();
+
+      if (!Number.isNaN(targetLevelIndex)) {
+        const signatureMap = new Map(
+          signatures.map((signature) => [
+            signature.signatureLevelId,
+            signature,
+          ]),
+        );
+
+        const needSignTargets = this.signatureLevelsCache
+          .slice(0, targetLevelIndex + 1)
+          .map((level) => signatureMap.get(level.id) ?? null);
+
+        const targetSignature = needSignTargets[targetLevelIndex];
+
+        if (targetSignature) {
+          if (targetSignature.result === ArticleSignatureResult.REJECTED) {
+            await runner.manager.softDelete(this.articleSignatureRepo.target, {
+              id: targetSignature.id,
+            });
+          } else {
+            throw new BadRequestException('Already signed');
+          }
+        }
+
+        if (targetLevelIndex > 0) {
+          const previousSignature = needSignTargets[targetLevelIndex - 1];
+          const previousRequiredSignatureLevels = this.signatureLevelsCache
+            .slice(0, targetLevelIndex)
+            .filter((level) => level.required);
+
+          const latestRequireSignatureLevel =
+            previousRequiredSignatureLevels[
+              previousRequiredSignatureLevels.length - 1
+            ];
+
+          if (
+            previousSignature &&
+            previousSignature.result !== ArticleSignatureResult.APPROVED
+          ) {
+            throw new BadRequestException('Previous valid signature not found');
+          }
+
+          const latestRequireSignature = signatureMap.get(
+            latestRequireSignatureLevel.id,
+          );
+
+          if (!latestRequireSignature) {
+            throw new BadRequestException('Previous valid signature not found');
+          }
+        }
+
+        const signature = this.articleSignatureRepo.create({
+          articleId: articleVersion.id,
+          version: articleVersion.version,
+          signatureLevelId: this.signatureLevelsCache[targetLevelIndex].id,
+          result,
+          signerId: signatureInfo?.signerId ?? null,
+          rejectReason:
+            result === ArticleSignatureResult.REJECTED
+              ? (signatureInfo?.reason ?? null)
+              : null,
+        });
+
+        if (
+          this.draftMode &&
+          this.autoReleaseAfterApproved &&
+          this.signatureLevelsCache[targetLevelIndex].id ===
+            this.finalSignatureLevel?.id
+        ) {
+          await runner.manager.update(
+            this.baseArticleVersionRepo.target,
+            {
+              id: articleVersion.id,
+              version: articleVersion.version,
+              releasedAt: IsNull(),
+            },
+            {
+              releasedAt: new Date(),
+            },
+          );
+        }
+
+        await runner.manager.save(signature);
+
+        if (placedArticle) {
+          await runner.manager.softRemove(placedArticle);
+        }
+
+        if (!signatureInfo?.runner) {
+          await runner.commitTransaction();
+        }
+
+        return signature;
+      } else if (signatures.length) {
+        throw new BadRequestException('Already signed');
+      }
+
+      const signature = this.articleSignatureRepo.create({
+        articleId: articleVersion.id,
+        version: articleVersion.version,
+        result,
+        signerId: signatureInfo?.signerId ?? null,
+        rejectReason:
+          result === ArticleSignatureResult.REJECTED
+            ? (signatureInfo?.reason ?? null)
+            : null,
+      });
+
+      if (this.draftMode && this.autoReleaseAfterApproved) {
+        await runner.manager.update(
+          this.baseArticleVersionRepo.target,
+          {
+            id: articleVersion.id,
+            version: articleVersion.version,
+            releasedAt: IsNull(),
+          },
+          {
+            releasedAt: new Date(),
+          },
+        );
+      }
+
+      await runner.manager.save(signature);
+
+      if (!signatureInfo?.runner) {
+        await runner.commitTransaction();
+      }
+
+      return signature;
+    } catch (ex) {
+      if (!signatureInfo?.runner) {
+        await runner.rollbackTransaction();
+      }
+
+      throw ex;
+    } finally {
+      if (!signatureInfo?.runner) {
+        await runner.release();
+      }
+    }
+  }
+
+  async refreshSignatureLevelsCache(): Promise<void> {
+    this.signatureLevelsCache = (await (
+      this.signatureLevelRepo as Repository<BaseSignatureLevelEntity>
+    ).find({
+      order: { sequence: 'ASC' },
+    })) as SignatureLevelEntity[];
   }
 }
