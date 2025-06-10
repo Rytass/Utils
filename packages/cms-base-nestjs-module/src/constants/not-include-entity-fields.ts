@@ -3,10 +3,9 @@ export const ArticleNotIncludeFields = ['versions', 'categories'];
 export const ArticleVersionNotIncludeFields = [
   ...ArticleNotIncludeFields,
   'articleId',
-  'createdAt',
-  'deletedAt',
   'article',
   'multiLanguageContents',
+  'signatures',
 ];
 
 export const ArticleVersionContentNotIncludeFields = [

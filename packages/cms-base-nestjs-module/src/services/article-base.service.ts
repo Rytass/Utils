@@ -67,6 +67,12 @@ import {
 import { ArticleFindVersionType } from '../typings/article-find-version-type.enum';
 import { ArticleStage } from '../typings/article-stage.enum';
 import { ArticleSignatureDataLoader } from '../data-loaders/article-signature.dataloader';
+import {
+  removeArticleInvalidFields,
+  removeArticleVersionContentInvalidFields,
+  removeArticleVersionInvalidFields,
+  removeMultipleLanguageArticleVersionInvalidFields,
+} from '../utils/remove-invalid-fields';
 
 @Injectable()
 export class ArticleBaseService<
@@ -363,26 +369,18 @@ export class ArticleBaseService<
       ) as AVC;
 
       return {
-        ...article,
-        ...article.versions[0],
-        ...languageContent,
-        articleId: undefined,
-        article: undefined,
-        signatures: undefined,
-        versions: undefined,
-        id: article.id,
-      };
+        ...removeArticleVersionContentInvalidFields<AVC>(languageContent),
+        ...removeArticleVersionInvalidFields<AV>(article.versions[0]),
+        ...removeArticleInvalidFields<A>(article),
+      } as SingleArticleBaseDto<A, AV, AVC>;
     }
 
     return {
-      ...article,
-      ...article.versions[0],
-      article: undefined,
-      articleId: undefined,
-      signatures: undefined,
-      versions: undefined,
-      id: article.id,
-    };
+      ...removeMultipleLanguageArticleVersionInvalidFields<AV>(
+        article.versions[0],
+      ),
+      ...removeArticleInvalidFields<A>(article),
+    } as MultiLanguageArticleBaseDto<A, AV, AVC>;
   }
 
   private async getFindAllQueryBuilder<A extends ArticleEntity = ArticleEntity>(
@@ -596,33 +594,25 @@ export class ArticleBaseService<
             ) as AVC;
 
           return {
-            ...article,
-            ...article.versions[0],
-            ...languageContent,
-            articleId: undefined,
-            article: undefined,
-            signatures: undefined,
-            versions: undefined,
-            id: article.id,
+            ...removeArticleVersionContentInvalidFields<AVC>(languageContent),
+            ...removeArticleVersionInvalidFields<AV>(article.versions[0]),
+            ...removeArticleInvalidFields<A>(article),
           };
         }),
         total,
         offset: options?.offset ?? 0,
         limit: Math.min(options?.limit ?? 20, 100),
-      };
+      } as SingleArticleCollectionDto<A, AV, AVC>;
     }
 
     return {
       articles: articles.map(
         (article) =>
           ({
-            ...article,
-            ...article.versions[0],
-            articleId: undefined,
-            article: undefined,
-            signatures: undefined,
-            versions: undefined,
-            id: article.id,
+            ...removeMultipleLanguageArticleVersionInvalidFields(
+              article.versions[0],
+            ),
+            ...removeArticleInvalidFields(article),
           }) as MultiLanguageArticleBaseDto<A, AV, AVC>,
       ),
       total,
@@ -667,28 +657,20 @@ export class ArticleBaseService<
         ) as AVC;
 
         return {
-          ...article,
-          ...article.versions[0],
-          ...languageContent,
-          articleId: undefined,
-          article: undefined,
-          signatures: undefined,
-          versions: undefined,
-          id: article.id,
-        };
+          ...removeArticleVersionContentInvalidFields<AVC>(languageContent),
+          ...removeArticleVersionInvalidFields<AV>(article.versions[0]),
+          ...removeArticleInvalidFields<A>(article),
+        } as SingleArticleBaseDto<A, AV, AVC>;
       });
     }
 
     return articles.map(
       (article) =>
         ({
-          ...article,
-          ...article.versions[0],
-          articleId: undefined,
-          article: undefined,
-          signatures: undefined,
-          versions: undefined,
-          id: article.id,
+          ...removeMultipleLanguageArticleVersionInvalidFields<AV>(
+            article.versions[0],
+          ),
+          ...removeArticleInvalidFields<A>(article),
         }) as MultiLanguageArticleBaseDto<A, AV, AVC>,
     );
   }
@@ -1004,32 +986,15 @@ export class ArticleBaseService<
       await runner.manager.save(
         this.baseArticleRepo.create({
           ...article,
-          ...Object.entries(options)
-            .filter(([key]) => !~ArticleNotIncludeFields.indexOf(key))
-            .reduce(
-              (vars, [key, value]) => ({
-                ...vars,
-                [key]: value,
-              }),
-              {},
-            ),
+          ...removeArticleInvalidFields(options),
           ...(options.categoryIds ? { categories: targetCategories } : {}),
         }),
       );
 
       const version = this.baseArticleVersionRepo.create({
-        ...Object.entries(options)
-          .filter(([key]) => !~ArticleVersionNotIncludeFields.indexOf(key))
-          .reduce(
-            (vars, [key, value]) => ({
-              ...vars,
-              [key]: value,
-            }),
-            {},
-          ),
+        ...removeArticleVersionInvalidFields<AV>(options),
         articleId: article.id,
         version: latestVersion.version + 1,
-        tags: options.tags ?? [],
         releasedAt: this.draftMode ? options.releasedAt : new Date(),
       });
 
@@ -1048,7 +1013,7 @@ export class ArticleBaseService<
           ).map(
             ([language, content]) =>
               this.baseArticleVersionContentRepo.create({
-                ...content,
+                ...removeArticleVersionContentInvalidFields<AVC>(content),
                 articleId: article.id,
                 version: latestVersion.version + 1,
                 language,
@@ -1071,17 +1036,9 @@ export class ArticleBaseService<
       } else {
         const savedContent = await runner.manager.save<AVC>(
           this.baseArticleVersionContentRepo.create({
-            ...Object.entries(options)
-              .filter(
-                ([key]) => !~ArticleVersionContentNotIncludeFields.indexOf(key),
-              )
-              .reduce(
-                (vars, [key, value]) => ({
-                  ...vars,
-                  [key]: value,
-                }),
-                {},
-              ),
+            ...removeArticleVersionContentInvalidFields<AVC>(
+              options as SingleArticleCreateDto<A, AV, AVC>,
+            ),
             articleId: article.id,
             version: latestVersion.version + 1,
             language: DEFAULT_LANGUAGE,
@@ -1127,7 +1084,7 @@ export class ArticleBaseService<
     options:
       | SingleArticleCreateDto<A, AV, AVC>
       | MultiLanguageArticleCreateDto<A, AV, AVC>,
-  ): Promise<A> {
+  ): Promise<ArticleBaseDto<A, AV, AVC>> {
     if (options?.submitted && !this.articleSignatureService.enabled) {
       throw new Error('Signature mode is disabled.');
     }
@@ -1150,15 +1107,7 @@ export class ArticleBaseService<
     }
 
     const article = this.baseArticleRepo.create({
-      ...Object.entries(options)
-        .filter(([key]) => !~ArticleNotIncludeFields.indexOf(key))
-        .reduce(
-          (vars, [key, value]) => ({
-            ...vars,
-            [key]: value,
-          }),
-          {},
-        ),
+      ...removeArticleInvalidFields(options),
       categories: targetCategories,
     });
 
@@ -1171,17 +1120,8 @@ export class ArticleBaseService<
       await runner.manager.save(article);
 
       const version = this.baseArticleVersionRepo.create({
-        ...Object.entries(options)
-          .filter(([key]) => !~ArticleVersionNotIncludeFields.indexOf(key))
-          .reduce(
-            (vars, [key, value]) => ({
-              ...vars,
-              [key]: value,
-            }),
-            {},
-          ),
+        ...removeArticleVersionInvalidFields<AV>(options),
         articleId: article.id,
-        tags: options.tags ?? [],
         releasedAt: this.draftMode ? options.releasedAt : new Date(),
       });
 
@@ -1195,7 +1135,7 @@ export class ArticleBaseService<
           Object.entries(options.multiLanguageContents).map(
             ([language, content]) =>
               this.baseArticleVersionContentRepo.create({
-                ...content,
+                ...removeArticleVersionContentInvalidFields<AVC>(content),
                 articleId: article.id,
                 version: version.version,
                 language,
@@ -1218,17 +1158,7 @@ export class ArticleBaseService<
       } else {
         const savedContent = await runner.manager.save(
           this.baseArticleVersionContentRepo.create({
-            ...Object.entries(options)
-              .filter(
-                ([key]) => !~ArticleVersionContentNotIncludeFields.indexOf(key),
-              )
-              .reduce(
-                (vars, [key, value]) => ({
-                  ...vars,
-                  [key]: value,
-                }),
-                {},
-              ),
+            ...removeArticleVersionContentInvalidFields<AVC>(options),
             articleId: article.id,
             version: version.version,
             language: DEFAULT_LANGUAGE,
@@ -1246,7 +1176,9 @@ export class ArticleBaseService<
 
       await runner.commitTransaction();
 
-      return article as A;
+      return this.findById<A, AV, AVC>(article.id, {
+        version: version.version,
+      });
     } catch (ex) {
       await runner.rollbackTransaction();
 
