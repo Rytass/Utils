@@ -122,48 +122,6 @@ describe('Amego Invoice Query', () => {
       post.mockImplementation(async (url: string, data: any) => {
         expect(url).toEqual(`${baseUrl}/json/invoice_query`);
 
-        //     {
-        //   code: 0,
-        //   msg: '',
-        //   data: {
-        //     invoice_number: 'AC12364096',
-        //     invoice_type: 'C0401',
-        //     invoice_status: 99,
-        //     invoice_date: 20250606,
-        //     invoice_time: '14:30:54',
-        //     buyer_identifier: '55880710',
-        //     buyer_name: '55880710',
-        //     buyer_zip: 0,
-        //     buyer_address: '',
-        //     buyer_telephone_number: '',
-        //     buyer_email_address: '',
-        //     sales_amount: 238,
-        //     free_tax_sales_amount: 0,
-        //     zero_tax_sales_amount: 0,
-        //     tax_type: 1,
-        //     tax_rate: '0.05',
-        //     tax_amount: 12,
-        //     total_amount: 250,
-        //     print_mark: 'Y',
-        //     random_number: '6476',
-        //     main_remark: '',
-        //     customs_clearance_mark: 0,
-        //     carrier_type: '',
-        //     carrier_id1: '',
-        //     carrier_id2: '',
-        //     npoban: '',
-        //     cancel_date: 0,
-        //     invoice_lottery: 0,
-        //     order_id: '3g49n3',
-        //     detail_vat: 1,
-        //     detail_amount_round: 1,
-        //     create_date: 1749191454,
-        //     product_item: [ [Object], [Object] ],
-        //     wait: [],
-        //     allowance: [ [Object], [Object] ]
-        //   }
-        // }
-
         return {
           data: {
             code: 0,
