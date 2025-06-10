@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.4.9](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ecpay@0.4.8...@rytass/invoice-adapter-ecpay@0.4.9) (2025-06-10)
+
+### Features
+
+- **invoice-adapter-ecpay:** validate VAT numbers using verifyVatNumber utility ([3fef35c](https://github.com/Rytass/Utils/commit/3fef35cb9fc98429633d1a0eab362f7f8f46e67f))
+
 ## [0.4.8](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ecpay@0.4.7...@rytass/invoice-adapter-ecpay@0.4.8) (2025-06-09)
 
 **Note:** Version bump only for package @rytass/invoice-adapter-ecpay

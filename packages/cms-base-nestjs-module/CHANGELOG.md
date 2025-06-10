@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.69](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.68...@rytass/cms-base-nestjs-module@0.1.69) (2025-06-10)
+
+### Bug Fixes
+
+- fix linting problems ([09de780](https://github.com/Rytass/Utils/commit/09de780af16cb3b99aa75e9bf7432c4f628be904))
+
 ## [0.1.68](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.67...@rytass/cms-base-nestjs-module@0.1.68) (2025-04-30)
 
 ### Bug Fixes
