@@ -10,6 +10,8 @@ import {
   DataSource,
   In,
   IsNull,
+  LessThanOrEqual,
+  Not,
   QueryRunner,
   Repository,
   SelectQueryBuilder,
@@ -156,7 +158,7 @@ export class ArticleBaseService<
       case ArticleStage.DRAFT:
         qb.innerJoin(
           (subQb) => {
-            subQb.from(BaseArticleVersionEntity, 'versions');
+            subQb.from(this.baseArticleVersionRepo.target, 'versions');
 
             subQb.select('versions.articleId', 'articleId');
             subQb.addSelect('versions.version', 'version');
@@ -206,7 +208,8 @@ export class ArticleBaseService<
         qb.andWhere(`versions.releasedAt IS NULL`);
         qb.innerJoin(
           (subQb) => {
-            subQb.from(ArticleSignatureEntity, 'signatures');
+            subQb.from(this.articleSignatureRepo.target, 'signatures');
+            subQb.innerJoin('signatures.articleVersion', 'articleVersion');
 
             subQb.select('signatures.articleId', 'articleId');
             subQb.addSelect('signatures.version', 'version');
@@ -232,14 +235,50 @@ export class ArticleBaseService<
         break;
 
       case ArticleStage.SCHEDULED:
-        qb.andWhere(`versions.releasedAt IS NOT NULL`);
-        qb.andWhere(`versions.releasedAt > CURRENT_TIMESTAMP`);
+        qb.innerJoin(
+          (subQb) => {
+            subQb.from(this.baseArticleVersionRepo.target, 'versions');
+
+            subQb.select('versions.articleId', 'articleId');
+            subQb.addSelect('versions.version', 'version');
+            subQb.addSelect(
+              'ROW_NUMBER() OVER (PARTITION BY versions."articleId" ORDER BY versions."releasedAt" ASC)',
+              'rowIndex',
+            );
+
+            subQb.andWhere(`versions.releasedAt IS NOT NULL`);
+            subQb.andWhere(`versions.releasedAt > CURRENT_TIMESTAMP`);
+
+            return subQb;
+          },
+          'stage_ranked',
+          'stage_ranked."articleId" = versions."articleId" AND stage_ranked."version" = versions."version" AND stage_ranked."rowIndex" = 1',
+        );
+
         break;
 
       case ArticleStage.RELEASED:
       default:
-        qb.andWhere(`versions.releasedAt IS NOT NULL`);
-        qb.andWhere(`versions.releasedAt <= CURRENT_TIMESTAMP`);
+        qb.innerJoin(
+          (subQb) => {
+            subQb.from(this.baseArticleVersionRepo.target, 'versions');
+
+            subQb.select('versions.articleId', 'articleId');
+            subQb.addSelect('versions.version', 'version');
+            subQb.addSelect(
+              'ROW_NUMBER() OVER (PARTITION BY versions."articleId" ORDER BY versions."releasedAt" DESC)',
+              'rowIndex',
+            );
+
+            subQb.andWhere(`versions.releasedAt IS NOT NULL`);
+            subQb.andWhere(`versions.releasedAt <= CURRENT_TIMESTAMP`);
+
+            return subQb;
+          },
+          'stage_ranked',
+          'stage_ranked."articleId" = versions."articleId" AND stage_ranked."version" = versions."version" AND stage_ranked."rowIndex" = 1',
+        );
+
         break;
     }
 
@@ -287,7 +326,7 @@ export class ArticleBaseService<
     } else {
       qb.innerJoin(
         (subQb) => {
-          subQb.from(BaseArticleVersionEntity, 'versions');
+          subQb.from(this.baseArticleVersionRepo.target, 'versions');
 
           subQb.select('versions.articleId', 'articleId');
           subQb.addSelect('MAX(versions.version)', 'version');
@@ -891,6 +930,12 @@ export class ArticleBaseService<
         });
       }
 
+      await runner.manager.softDelete(this.baseArticleVersionRepo.target, {
+        articleId: id,
+        releasedAt: LessThanOrEqual(new Date()),
+        version: Not(article.version),
+      });
+
       await runner.manager.update(
         this.baseArticleVersionRepo.target,
         {
@@ -928,16 +973,12 @@ export class ArticleBaseService<
       version: options?.version ?? undefined,
     });
 
-    let shouldDeleteVersion = null;
-
-    if (options?.version) {
-      shouldDeleteVersion = await this.findById(id, {
-        stage:
-          (options?.releasedAt?.getTime() ?? Date.now()) <= Date.now()
-            ? ArticleStage.RELEASED
-            : ArticleStage.SCHEDULED,
-      }).catch((ex) => null);
-    }
+    const shouldDeleteVersion = await this.findById(id, {
+      stage:
+        (options?.releasedAt?.getTime() ?? Date.now()) <= Date.now()
+          ? ArticleStage.RELEASED
+          : ArticleStage.SCHEDULED,
+    }).catch((ex) => null);
 
     if (article.releasedAt) {
       this.logger.debug(
@@ -1211,6 +1252,7 @@ export class ArticleBaseService<
     const latestQb =
       this.baseArticleVersionRepo.createQueryBuilder('articleVersions');
 
+    latestQb.withDeleted();
     latestQb.andWhere('articleVersions.articleId = :id', { id });
     latestQb.addOrderBy('articleVersions.version', 'DESC');
 
@@ -1532,7 +1574,8 @@ export class ArticleBaseService<
       {
         stage:
           result === ArticleSignatureResult.APPROVED
-            ? signatureInfo?.signatureLevel === this.finalSignatureLevel?.name
+            ? (signatureInfo?.signatureLevel ?? this.signatureLevels[0]) ===
+              this.finalSignatureLevel?.name
               ? ArticleStage.VERIFIED
               : ArticleStage.REVIEWING
             : ArticleStage.DRAFT,
@@ -1694,7 +1737,10 @@ export class ArticleBaseService<
         await runner.manager.save(signature);
 
         if (placedArticle) {
-          await runner.manager.softRemove(placedArticle);
+          await runner.manager.softDelete(this.baseArticleVersionRepo.target, {
+            articleId: placedArticle.id,
+            version: placedArticle.version,
+          });
         }
 
         if (!signatureInfo?.runner) {
@@ -1732,6 +1778,13 @@ export class ArticleBaseService<
       }
 
       await runner.manager.save(signature);
+
+      if (placedArticle) {
+        await runner.manager.softDelete(this.baseArticleVersionRepo.target, {
+          articleId: placedArticle.id,
+          version: placedArticle.version,
+        });
+      }
 
       if (!signatureInfo?.runner) {
         await runner.commitTransaction();

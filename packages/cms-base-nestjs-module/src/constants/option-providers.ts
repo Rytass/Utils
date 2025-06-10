@@ -16,6 +16,7 @@ import {
   SIGNATURE_LEVELS,
 } from '../typings/cms-base-providers';
 import { CMSBaseModuleOptionsDto } from '../typings/cms-base-root-module-options.dto';
+import { DEFAULT_SIGNATURE_LEVEL } from './default-signature-level';
 
 export const OptionProviders = [
   {
@@ -39,7 +40,7 @@ export const OptionProviders = [
   {
     provide: SIGNATURE_LEVELS,
     useFactory: (options?: CMSBaseModuleOptionsDto) =>
-      options?.signatureLevels ?? ['ADMIN'],
+      options?.signatureLevels ?? [DEFAULT_SIGNATURE_LEVEL],
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {

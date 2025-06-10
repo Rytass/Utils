@@ -33,6 +33,7 @@ export * from './typings/article-stage.enum';
 // Constants
 export * from './constants/default-language';
 export * from './constants/empty-quadrats-elements';
+export * from './constants/default-signature-level';
 
 // Errors
 export * from './constants/errors/index';
