@@ -357,32 +357,31 @@ export class ArticleBaseService<
     }
 
     if (options?.language || !this.multipleLanguageMode) {
-      const defaultContent = article.versions[0].multiLanguageContents.find(
+      const languageContent = article.versions[0].multiLanguageContents.find(
         (content) =>
           content.language === (options?.language || DEFAULT_LANGUAGE),
       ) as AVC;
 
       return {
         ...article,
+        ...article.versions[0],
+        ...languageContent,
+        articleId: undefined,
+        article: undefined,
+        signatures: undefined,
         versions: undefined,
-        ...defaultContent,
         id: article.id,
-        version: article.versions[0].version,
-        tags: article.versions[0].tags,
-        releasedAt: article.versions[0].releasedAt,
-        releasedBy: article.versions[0].releasedBy,
       };
     }
 
     return {
       ...article,
+      ...article.versions[0],
+      article: undefined,
+      articleId: undefined,
+      signatures: undefined,
       versions: undefined,
       id: article.id,
-      tags: article.versions[0].tags,
-      version: article.versions[0].version,
-      multiLanguageContents: article.versions[0].multiLanguageContents as AVC[],
-      releasedAt: article.versions[0].releasedAt,
-      releasedBy: article.versions[0].releasedBy,
     };
   }
 
@@ -590,17 +589,21 @@ export class ArticleBaseService<
     if (options?.language || !this.multipleLanguageMode) {
       return {
         articles: articles.map((article) => {
-          const defaultContent = article.versions[0].multiLanguageContents.find(
-            (content) =>
-              content.language === (options?.language || DEFAULT_LANGUAGE),
-          ) as AVC;
+          const languageContent =
+            article.versions[0].multiLanguageContents.find(
+              (content) =>
+                content.language === (options?.language || DEFAULT_LANGUAGE),
+            ) as AVC;
 
           return {
             ...article,
+            ...article.versions[0],
+            ...languageContent,
+            articleId: undefined,
+            article: undefined,
+            signatures: undefined,
             versions: undefined,
-            ...defaultContent,
             id: article.id,
-            tags: article.versions[0].tags,
           };
         }),
         total,
@@ -614,11 +617,12 @@ export class ArticleBaseService<
         (article) =>
           ({
             ...article,
+            ...article.versions[0],
+            articleId: undefined,
+            article: undefined,
+            signatures: undefined,
             versions: undefined,
-            version: article.versions[0].version,
-            tags: article.versions[0].tags,
-            multiLanguageContents: article.versions[0]
-              .multiLanguageContents as AVC[],
+            id: article.id,
           }) as MultiLanguageArticleBaseDto<A, AV, AVC>,
       ),
       total,
@@ -657,17 +661,20 @@ export class ArticleBaseService<
 
     if (options?.language || !this.multipleLanguageMode) {
       return articles.map((article) => {
-        const defaultContent = article.versions[0].multiLanguageContents.find(
+        const languageContent = article.versions[0].multiLanguageContents.find(
           (content) =>
             content.language === (options?.language || DEFAULT_LANGUAGE),
         ) as AVC;
 
         return {
           ...article,
+          ...article.versions[0],
+          ...languageContent,
+          articleId: undefined,
+          article: undefined,
+          signatures: undefined,
           versions: undefined,
-          ...defaultContent,
           id: article.id,
-          tags: article.versions[0].tags,
         };
       });
     }
@@ -676,11 +683,12 @@ export class ArticleBaseService<
       (article) =>
         ({
           ...article,
+          ...article.versions[0],
+          articleId: undefined,
+          article: undefined,
+          signatures: undefined,
           versions: undefined,
-          version: article.versions[0].version,
-          tags: article.versions[0].tags,
-          multiLanguageContents: article.versions[0]
-            .multiLanguageContents as AVC[],
+          id: article.id,
         }) as MultiLanguageArticleBaseDto<A, AV, AVC>,
     );
   }
