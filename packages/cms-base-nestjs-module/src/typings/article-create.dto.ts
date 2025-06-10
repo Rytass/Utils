@@ -18,6 +18,8 @@ type BaseArticleCreateDto<
     > & {
       categoryIds?: string[];
       submitted?: boolean;
+      signatureLevel?: string | null;
+      userId?: string | null;
     }
 >;
 

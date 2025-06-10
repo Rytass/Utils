@@ -5,6 +5,7 @@ import {
   OnApplicationBootstrap,
 } from '@nestjs/common';
 import {
+  ARTICLE_BASE_SERVICE,
   AUTO_RELEASE_AFTER_APPROVED,
   DRAFT_MODE,
   RESOLVED_ARTICLE_VERSION_REPO,
@@ -12,7 +13,7 @@ import {
   SIGNATURE_LEVELS,
 } from '../typings/cms-base-providers';
 import { BaseSignatureLevelEntity } from '../models/base-signature-level.entity';
-import { DataSource, IsNull, Repository } from 'typeorm';
+import { DataSource, IsNull, QueryRunner, Repository } from 'typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 import {
   ArticleSignatureEntity,
@@ -21,6 +22,8 @@ import {
 import { BaseArticleVersionEntity } from '../models/base-article-version.entity';
 import { SignatureInfoDto } from '../typings/signature-info.dto';
 import { ArticleSignatureResult } from '../typings/article-signature-result.enum';
+import { ArticleBaseService } from './article-base.service';
+import { ArticleStage } from '../typings/article-stage.enum';
 
 @Injectable()
 export class ArticleSignatureService<
@@ -43,6 +46,8 @@ export class ArticleSignatureService<
     private readonly autoReleaseAfterApproved: boolean,
     @InjectDataSource()
     private readonly dataSource: DataSource,
+    @Inject(ARTICLE_BASE_SERVICE)
+    private readonly articleBaseService: ArticleBaseService,
   ) {}
 
   get enabled(): boolean {
@@ -63,6 +68,7 @@ export class ArticleSignatureService<
     },
     signatureInfo?: SignatureInfoDto<SignatureLevelEntity> & {
       reason?: string | null;
+      runner?: QueryRunner;
     },
   ): Promise<ArticleSignatureEntity> {
     return this.signature(
@@ -77,7 +83,9 @@ export class ArticleSignatureService<
       id: string;
       version: number;
     },
-    signatureInfo?: SignatureInfoDto<SignatureLevelEntity>,
+    signatureInfo?: SignatureInfoDto<SignatureLevelEntity> & {
+      runner?: QueryRunner;
+    },
   ): Promise<ArticleSignatureEntity> {
     return this.signature(
       ArticleSignatureResult.APPROVED,
@@ -94,13 +102,40 @@ export class ArticleSignatureService<
     },
     signatureInfo?: SignatureInfoDto<SignatureLevelEntity> & {
       reason?: string | null;
+      runner?: QueryRunner;
     },
   ): Promise<ArticleSignatureEntity> {
     if (!this.enabled) {
       throw new BadRequestException('Signature is not enabled');
     }
 
-    if (
+    const placedArticle = await this.articleBaseService
+      .findById(
+        articleVersion.id,
+        {
+          stage:
+            result === ArticleSignatureResult.APPROVED
+              ? signatureInfo?.signatureLevel === this.finalSignatureLevel?.name
+                ? ArticleStage.VERIFIED
+                : ArticleStage.REVIEWING
+              : ArticleStage.DRAFT,
+        },
+        signatureInfo?.runner,
+      )
+      .catch((ex) => null);
+
+    if (signatureInfo?.runner) {
+      if (
+        !(await signatureInfo.runner.manager.exists(BaseArticleVersionEntity, {
+          where: {
+            articleId: articleVersion.id,
+            version: articleVersion.version,
+          },
+        }))
+      ) {
+        throw new BadRequestException('Invalid article version');
+      }
+    } else if (
       !(await this.articleVersionRepo.exists({
         where: {
           articleId: articleVersion.id,
@@ -130,10 +165,12 @@ export class ArticleSignatureService<
       throw new BadRequestException('Invalid signature level');
     }
 
-    const runner = this.dataSource.createQueryRunner();
+    const runner = signatureInfo?.runner ?? this.dataSource.createQueryRunner();
 
-    await runner.connect();
-    await runner.startTransaction();
+    if (!signatureInfo?.runner) {
+      await runner.connect();
+      await runner.startTransaction();
+    }
 
     try {
       const qb = runner.manager.createQueryBuilder(
@@ -237,7 +274,13 @@ export class ArticleSignatureService<
 
         await runner.manager.save(signature);
 
-        await runner.commitTransaction();
+        if (placedArticle) {
+          await runner.manager.softRemove(placedArticle);
+        }
+
+        if (!signatureInfo?.runner) {
+          await runner.commitTransaction();
+        }
 
         return signature;
       } else if (signatures.length) {
@@ -271,15 +314,21 @@ export class ArticleSignatureService<
 
       await runner.manager.save(signature);
 
-      await runner.commitTransaction();
+      if (!signatureInfo?.runner) {
+        await runner.commitTransaction();
+      }
 
       return signature;
     } catch (ex) {
-      await runner.rollbackTransaction();
+      if (!signatureInfo?.runner) {
+        await runner.rollbackTransaction();
+      }
 
       throw ex;
     } finally {
-      await runner.release();
+      if (!signatureInfo?.runner) {
+        await runner.release();
+      }
     }
   }
 

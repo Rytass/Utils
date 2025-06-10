@@ -8,6 +8,8 @@ import {
 } from './constants/resolved-repo-providers';
 import { CategoryDataLoader } from './data-loaders/category.dataloader';
 import {
+  ARTICLE_BASE_SERVICE,
+  ARTICLE_SIGNATURE_DATALOADER,
   ARTICLE_SIGNATURE_SERVICE,
   CATEGORY_DATA_LOADER,
   CMS_BASE_MODULE_OPTIONS,
@@ -41,8 +43,16 @@ export class CMSBaseModule {
           useExisting: ArticleSignatureService,
         },
         ArticleBaseService,
+        {
+          provide: ARTICLE_BASE_SERVICE,
+          useExisting: ArticleBaseService,
+        },
         CategoryBaseService,
         ArticleSignatureDataLoader,
+        {
+          provide: ARTICLE_SIGNATURE_DATALOADER,
+          useExisting: ArticleSignatureDataLoader,
+        },
       ],
       exports: [
         ...TARGETS.map(([, , resolved]) => resolved),
@@ -77,8 +87,16 @@ export class CMSBaseModule {
           useExisting: ArticleSignatureService,
         },
         ArticleBaseService,
+        {
+          provide: ARTICLE_BASE_SERVICE,
+          useExisting: ArticleBaseService,
+        },
         CategoryBaseService,
         ArticleSignatureDataLoader,
+        {
+          provide: ARTICLE_SIGNATURE_DATALOADER,
+          useExisting: ArticleSignatureDataLoader,
+        },
       ],
       exports: [
         ...TARGETS.map(([, , resolved]) => resolved),
