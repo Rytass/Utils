@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.75](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.74...@rytass/cms-base-nestjs-module@0.1.75) (2025-06-11)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** remove unused options from create article and add version ([265639d](https://github.com/Rytass/Utils/commit/265639d51aff396dd9e65e73c64fa8a9d4ae2a1a))
+
 ## [0.1.74](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.73...@rytass/cms-base-nestjs-module@0.1.74) (2025-06-10)
 
 ### Bug Fixes
