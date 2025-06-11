@@ -1,4 +1,10 @@
-export const ArticleNotIncludeFields = ['versions', 'categories'];
+export const ArticleNotIncludeFields = [
+  'id',
+  'createdAt',
+  'deletedAt',
+  'versions',
+  'categories',
+];
 
 export const ArticleVersionNotIncludeFields = [
   ...ArticleNotIncludeFields,

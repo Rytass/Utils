@@ -7,7 +7,7 @@ type BaseArticleCreateDto<
   A extends BaseArticleEntity = BaseArticleEntity,
   AV extends BaseArticleVersionEntity = BaseArticleVersionEntity,
 > = Partial<
-  Omit<A, 'versions' | 'categories'> &
+  Omit<A, 'versions' | 'categories' | 'createdAt' | 'deletedAt' | 'id'> &
     Omit<
       AV,
       | 'articleId'
@@ -15,6 +15,11 @@ type BaseArticleCreateDto<
       | 'deletedAt'
       | 'article'
       | 'multiLanguageContents'
+      | 'submittedAt'
+      | 'submittedBy'
+      | 'releasedBy'
+      | 'signatures'
+      | 'version'
     > & {
       categoryIds?: string[];
       submitted?: boolean;

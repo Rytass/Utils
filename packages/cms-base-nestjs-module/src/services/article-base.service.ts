@@ -1187,7 +1187,7 @@ export class ArticleBaseService<
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
   >(
     id: string,
-    options: Omit<SingleArticleCreateDto<A, AV, AVC>, 'version'>,
+    options: SingleArticleCreateDto<A, AV, AVC> & { id: A['id'] },
   ): Promise<A>;
   async addVersion<
     A extends ArticleEntity = ArticleEntity,
@@ -1195,7 +1195,7 @@ export class ArticleBaseService<
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
   >(
     id: string,
-    options: Omit<MultiLanguageArticleCreateDto<A, AV, AVC>, 'version'>,
+    options: MultiLanguageArticleCreateDto<A, AV, AVC> & { id: A['id'] },
   ): Promise<A>;
   async addVersion<
     A extends ArticleEntity = ArticleEntity,
@@ -1203,11 +1203,9 @@ export class ArticleBaseService<
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
   >(
     id: string,
-    options: Omit<
-      | SingleArticleCreateDto<A, AV, AVC>
-      | MultiLanguageArticleCreateDto<A, AV, AVC>,
-      'version'
-    >,
+    options:
+      | (SingleArticleCreateDto<A, AV, AVC> & { id: A['id'] })
+      | (MultiLanguageArticleCreateDto<A, AV, AVC> & { id: A['id'] }),
   ): Promise<A> {
     this.optionsCheck<A, AV, AVC>(options);
 
@@ -1417,7 +1415,7 @@ export class ArticleBaseService<
     }
 
     const article = this.baseArticleRepo.create({
-      ...removeArticleInvalidFields(options),
+      ...removeArticleInvalidFields<A>(options as Partial<A>),
       categories: targetCategories,
     });
 

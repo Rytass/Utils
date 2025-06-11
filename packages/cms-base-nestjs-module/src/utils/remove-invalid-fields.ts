@@ -27,9 +27,7 @@ type RemovedArticleVersionContentFields =
 
 export function removeArticleInvalidFields<
   A extends BaseArticleEntity = BaseArticleEntity,
->(
-  article: Partial<Pick<A, 'createdAt' | 'deletedAt'>>,
-): Omit<A, RemovedArticleFields> {
+>(article: Partial<A>): Omit<A, RemovedArticleFields> {
   return Object.entries(article)
     .filter(([key]) => !~ArticleNotIncludeFields.indexOf(key))
     .reduce<Omit<A, RemovedArticleFields>>(
