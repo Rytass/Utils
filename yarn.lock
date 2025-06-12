@@ -5376,6 +5376,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@rytass/cms-frontend@workspace:packages/cms-frontend":
+  version: 0.0.0-use.local
+  resolution: "@rytass/cms-frontend@workspace:packages/cms-frontend"
+  peerDependencies:
+    react: "*"
+    react-dom: "*"
+  languageName: unknown
+  linkType: soft
+
 "@rytass/file-converter-adapter-image-resizer@workspace:packages/file-converter-adapter-image-resizer":
   version: 0.0.0-use.local
   resolution: "@rytass/file-converter-adapter-image-resizer@workspace:packages/file-converter-adapter-image-resizer"
