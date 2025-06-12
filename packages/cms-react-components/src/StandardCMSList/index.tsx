@@ -1,9 +1,11 @@
 import React from 'react';
 import { Button, Typography } from '@mezzanine-ui/react';
+import classes from './index.module.scss';
 
-const Demo = () => {
+const StandardCMSList = () => {
   return (
-    <div>
+    <div className={classes.root}>
+      StandardCMSList
       <Button type="button" variant="contained">
         button
       </Button>
@@ -13,4 +15,4 @@ const Demo = () => {
   );
 };
 
-export { Demo };
+export { StandardCMSList };
