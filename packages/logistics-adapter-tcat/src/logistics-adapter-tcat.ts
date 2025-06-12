@@ -6,12 +6,11 @@ import {
   ErrorCode,
 } from '@rytass/logistics';
 import axios from 'axios';
-import { TCatLogisticsInterface } from './typings';
+import { TCatLogisticsInterface, TCatLogisticsStatusHistory, TCatLogisticsTraceResponse } from './typings';
 
 export class TCatLogisticsService<
   T extends TCatLogisticsInterface<LogisticsStatus<T>>,
-> implements LogisticsService<T>
-{
+> implements LogisticsService<T> {
   private readonly configuration: T;
 
   constructor(
@@ -30,7 +29,7 @@ export class TCatLogisticsService<
   private getLogisticsStatuses(
     id: string,
     html: string,
-  ): LogisticsTraceResponse<T> {
+  ): TCatLogisticsTraceResponse<T> {
     const statusHistory = this.configuration.statusMap(html, id) as ReturnType<
       T['statusMap']
     >;
@@ -43,9 +42,7 @@ export class TCatLogisticsService<
 
     return {
       logisticsId: id,
-      statusHistory: this.configuration.statusMap(html, id) as ReturnType<
-        T['statusMap']
-      >,
+      statusHistory: this.configuration.statusMap(html, id) as TCatLogisticsStatusHistory<T['reference']>[],
     };
   }
 
@@ -54,7 +51,7 @@ export class TCatLogisticsService<
   async trace(
     logisticsIds: string | string[],
   ): Promise<LogisticsTraceResponse<T>[]> {
-    const logistics: LogisticsTraceResponse<T>[] = [];
+    const logistics: TCatLogisticsTraceResponse<T>[] = [];
     const ids: string[] =
       typeof logisticsIds === 'string' ? [logisticsIds] : logisticsIds;
 

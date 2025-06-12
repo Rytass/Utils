@@ -1,8 +1,8 @@
 import { load } from 'cheerio';
 
-import { LogisticsInterface, LogisticsStatusHistory } from '@rytass/logistics';
+import { LogisticsInterface, LogisticsStatus, LogisticsStatusHistory } from '@rytass/logistics';
 
-export type TCatLogisticsStatus =
+export type TCatLogisticsStatus<T extends LogisticsInterface<unknown> = any> =
   | 'DELIVERED'
   | 'TRANSPORTING'
   | 'DELIVERING'
@@ -13,7 +13,12 @@ export type TCatLogisticsStatus =
   | 'INVESTIGATING'
   | 'DELIVERING_TODAY'
   | 'FAIL_PICKUP'
-  | 'AWAY_HOME';
+  | 'AWAY_HOME'
+  | LogisticsStatus<T>;
+
+export interface TCatLogisticsStatusHistory<T> extends LogisticsStatusHistory<T> {
+  businessPremise: string;
+}
 
 /**
  * Create customized logistics interface for TCAT
@@ -45,6 +50,11 @@ export interface TCatLogisticsInterface<T> extends LogisticsInterface<T> {
   statusMap: (html: string, id: string) => LogisticsStatusHistory<T>[];
 }
 
+export interface TCatLogisticsTraceResponse<K extends LogisticsInterface<TCatLogisticsStatus>> {
+  logisticsId: string;
+  statusHistory: TCatLogisticsStatusHistory<K['reference']>[];
+}
+
 const TCatLogisticsStatusMap: { [key: string]: TCatLogisticsStatus } = {
   順利送達: 'DELIVERED',
   轉運中: 'TRANSPORTING',
@@ -66,7 +76,7 @@ export const TCatLogistics: TCatLogisticsInterface<TCatLogisticsStatus> = {
     reference: string,
     logisticId: string,
   ): LogisticsStatusHistory<TCatLogisticsStatus>[] => {
-    const statusHistory: LogisticsStatusHistory<TCatLogisticsStatus>[] = [];
+    const statusHistory: TCatLogisticsStatusHistory<TCatLogisticsStatus>[] = [];
     const $ = load(reference);
     const traceDOM = $('#resultTable tr');
 
@@ -75,7 +85,7 @@ export const TCatLogistics: TCatLogisticsInterface<TCatLogisticsStatus> = {
     traceDOM.map((_index, dom) => {
       const innerText: string = $(dom).text();
 
-      const statusArray: string[] = innerText.split(' ').filter((e) => e != '');
+      const statusArray: string[] = innerText.split(' ').filter(e => e != '');
 
       const status: TCatLogisticsStatus =
         TCatLogisticsStatusMap[statusArray[statusArray.length - 4]];

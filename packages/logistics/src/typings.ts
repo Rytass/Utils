@@ -8,7 +8,6 @@ export interface LogisticsInterface<T = LogisticsBaseStatus> {
 }
 
 export interface LogisticsStatusHistory<T> {
-  businessPremise: string;
   date: string;
   status: T;
 }
