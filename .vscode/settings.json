@@ -31,7 +31,5 @@
     "VIRTAL",
     "WECHAT"
   ],
-  "cSpell.ignoreWords": [
-    "fulltext"
-  ]
+  "cSpell.ignoreWords": ["fulltext"]
 }
