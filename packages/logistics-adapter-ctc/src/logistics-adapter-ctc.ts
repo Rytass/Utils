@@ -6,7 +6,7 @@ import {
   LogisticsTraceResponse
 } from '@rytass/logistics';
 import axios from 'axios';
-import { CtcLogisticsInterface, CtcLogisticsStatusEnum, CtcLogisticsStatusHistory, CtcLogisticsStatusMap } from './typings';
+import { CreateOrUpdateCtcLogisticsOptions, CreateOrUpdateCtcLogisticsRequest, CreateOrUpdateCtcLogisticsResponse, CtcLogisticsDto, CtcLogisticsInterface, CtcLogisticsStatusEnum, CtcLogisticsStatusHistory, CtcLogisticsStatusMap } from './typings';
 
 export class CtcLogisticsService<
   T extends CtcLogisticsInterface<LogisticsStatus<T>>,
@@ -21,13 +21,12 @@ export class CtcLogisticsService<
     this.configuration = configuration;
   }
 
-  async getLogisticsStatuses(
-    id: string,
+  private async getLogisticsStatuses(
+    trackingNumber: string,
   ): Promise<LogisticsTraceResponse<T>> {
 
     try {
       const result = await axios.get<{
-        error: string | null;
         success: boolean;
         shipment_history: {
           status: string;
@@ -35,7 +34,7 @@ export class CtcLogisticsService<
           created_at: string;
         }[];
         images: string[];
-      }>(`${this.configuration.url}/${id}`, {
+      }>(`${this.configuration.url}/${trackingNumber}`, {
         headers: {
           'Content-Type': 'application/json',
           'api-token': this.configuration.apiToken,
@@ -46,23 +45,21 @@ export class CtcLogisticsService<
 
       if (status !== 200) {
         if (!this.configuration.ignoreNotFound) {
-          throw new LogisticsError(ErrorCode.INVALID_PARAMETER, `Failed to fetch logistics status for ID: ${id}`);
+          throw new LogisticsError(ErrorCode.INVALID_PARAMETER, `Failed to fetch logistics status for ID: ${trackingNumber}`);
         } else {
-          console.warn(`Ignoring not found for ID: ${id}`);
 
           return {
-            logisticsId: id,
+            logisticsId: trackingNumber,
             statusHistory: [],
           }
         }
       } else {
         if (!data.success && !this.configuration.ignoreNotFound) {
-          throw new LogisticsError(ErrorCode.INVALID_PARAMETER, `ID:${id} is not found.`);
+          throw new LogisticsError(ErrorCode.INVALID_PARAMETER, `ID:${trackingNumber} is not found.`);
         } else if (!data.success) {
-          console.warn(`Ignoring not found for ID: ${id}`);
 
           return {
-            logisticsId: id,
+            logisticsId: trackingNumber,
             statusHistory: [],
           }
         }
@@ -77,7 +74,7 @@ export class CtcLogisticsService<
       });
 
       return {
-        logisticsId: id,
+        logisticsId: trackingNumber,
         statusHistory: statusHistory as CtcLogisticsStatusHistory<T['reference']>[],
       }
 
@@ -91,19 +88,19 @@ export class CtcLogisticsService<
           if (err.response?.status === 403) {
             throw new LogisticsError(
               ErrorCode.PERMISSION_DENIED,
-              `No Permission to view ID:${id}`,
+              `No Permission to view ID:${trackingNumber}`,
             );
           }
 
           throw new LogisticsError(
             ErrorCode.INVALID_PARAMETER,
-            `Failed to fetch logistics status for ID: ${id}, ${JSON.stringify(err.response?.data)}`,
+            `Failed to fetch logistics status for ID: ${trackingNumber}, ${JSON.stringify(err.response?.data)}`,
           );
 
         } else {
 
           return {
-            logisticsId: id,
+            logisticsId: trackingNumber,
             statusHistory: [],
           }
         }
@@ -121,5 +118,128 @@ export class CtcLogisticsService<
     const ids = Array.isArray(logisticsIds) ? logisticsIds : [logisticsIds];
 
     return Promise.all(ids.map(id => this.getLogisticsStatuses(id)))
+  }
+
+  async create(options: CreateOrUpdateCtcLogisticsOptions): Promise<CtcLogisticsDto> {
+
+    const { senderTel, senderMobile, receiverMobile, receiverTel } = options;
+
+    if (!senderTel && !senderMobile) {
+      throw new LogisticsError(
+        ErrorCode.INVALID_PARAMETER,
+        'Either senderTel or senderMobile must be provided.',
+      );
+    }
+
+    if (!receiverTel && !receiverMobile) {
+      throw new LogisticsError(
+        ErrorCode.INVALID_PARAMETER,
+        'Either receiverTel or receiverMobile must be provided.',
+      );
+    }
+
+    const requestBody: CreateOrUpdateCtcLogisticsRequest = {
+      order: {
+        tracking_number: options.trackingNumber,
+        customer_department_id: options.customerDepartmentId,
+
+        sender_company: options.senderCompany,
+        sender_contact_name: options.senderContactName ?? options.senderCompany,
+        sender_tel: senderTel ?? '',
+        sender_mobile: senderMobile ?? '',
+        sender_address: options.senderAddress,
+        sender_remark: options.senderRemark ?? '',
+
+        receiver_company: options.receiverCompany,
+        receiver_contact_name: options.receiverContactName,
+        receiver_tel: receiverTel ?? '',
+        receiver_mobile: receiverMobile ?? '',
+        receiver_address: options.receiverAddress,
+        receiver_remark: options.receiverRemark ?? '',
+
+        shipment_content: options.shipmentContent ?? '貨件', // 固定為 '貨件'
+        transportation: options.transportation ?? 'truck', // 固定為 'truck'
+        shipping_method: options.shippingMethod ?? 'land', // 固定為 'land'
+        payer: options.payer ?? 'sender', // 固定為 'sender'
+        shipping_time: options.shippingTime ?? 'regular', // 固定為 'regular'
+        payment_method: options.paymentMethod ?? 'monthly', // 固定為 'monthly'
+        quantity: options.quantity ?? 1, // 固定為 1
+        weight: options.weight ?? 1, // 固定為 1
+        volume: options.volume ?? 1, // 固定為 1
+      },
+    }
+
+    try {
+
+      const { data } = await axios.post<CreateOrUpdateCtcLogisticsResponse>(`${this.configuration.url}`, requestBody, {
+        headers: {
+          'Content-Type': 'application/json',
+          'api-token': this.configuration.apiToken,
+        },
+      })
+
+      if (!data.success) {
+        throw new LogisticsError(
+          ErrorCode.INVALID_PARAMETER,
+          `Failed to create logistics with tracking number: ${options.trackingNumber}, ${JSON.stringify(data)}`,
+        );
+      }
+
+      return {
+        trackingNumber: data.tracking_number ?? options.trackingNumber,
+        shippingNumber: data.shipping_number,
+      }
+    } catch (err) {
+      if (err instanceof LogisticsError) {
+        throw err;
+      }
+
+      if (axios.isAxiosError(err)) {
+        throw new LogisticsError(
+          ErrorCode.INVALID_PARAMETER,
+          `Failed to create logistics with tracking number: ${options.trackingNumber}, ${err}`,
+        );
+      }
+
+      throw err;
+    }
+  }
+
+  async update(options: CreateOrUpdateCtcLogisticsOptions): Promise<CtcLogisticsDto> {
+    const { trackingNumber } = options;
+
+    if (!trackingNumber) {
+      throw new LogisticsError(
+        ErrorCode.INVALID_PARAMETER,
+        'trackingNumber is required for update.',
+      );
+    }
+
+    try {
+      const data: LogisticsTraceResponse<T> = await this.getLogisticsStatuses(trackingNumber);
+
+      if (data.statusHistory.length === 0) {
+        throw new LogisticsError(
+          ErrorCode.NOT_FOUND_ERROR,
+          `Logistics with tracking number: ${trackingNumber} not found.`,
+        );
+      }
+
+      return this.create(options);
+    } catch (err) {
+
+      if (err instanceof LogisticsError) {
+        throw err;
+      }
+
+      if (axios.isAxiosError(err)) {
+        throw new LogisticsError(
+          ErrorCode.INVALID_PARAMETER,
+          `Failed to update logistics with tracking number: ${trackingNumber}, ${JSON.stringify(err.response?.data)}`,
+        );
+      }
+
+      throw err;
+    }
   }
 }

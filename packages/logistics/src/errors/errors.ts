@@ -10,6 +10,7 @@ export class LogisticsError implements LogisticsErrorInterface {
 }
 
 export enum ErrorCode {
+  NOT_IMPLEMENTED = '999',
   NOT_FOUND_ERROR = '101',
   PERMISSION_DENIED = '102',
   INVALID_PARAMETER = '103',
