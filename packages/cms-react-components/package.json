@@ -1,10 +1,11 @@
 {
-  "name": "@rytass/cms-frontend",
+  "name": "@rytass/cms-react-components",
   "version": "0.1.1",
-  "description": "Rytass Content Management System Frontend Base Module",
+  "description": "Rytass Content Management System React Components",
   "keywords": [
     "rytass",
-    "cms"
+    "cms",
+    "react"
   ],
   "author": "Cheng Min Ting <ting@rytass.com>",
   "homepage": "https://github.com/Rytass/Utils#readme",

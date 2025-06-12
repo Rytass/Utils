@@ -5469,9 +5469,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rytass/cms-frontend@workspace:packages/cms-frontend":
+"@rytass/cms-react-components@workspace:packages/cms-react-components":
   version: 0.0.0-use.local
-  resolution: "@rytass/cms-frontend@workspace:packages/cms-frontend"
+  resolution: "@rytass/cms-react-components@workspace:packages/cms-react-components"
   peerDependencies:
     "@mezzanine-ui/core": "*"
     "@mezzanine-ui/icons": "*"
