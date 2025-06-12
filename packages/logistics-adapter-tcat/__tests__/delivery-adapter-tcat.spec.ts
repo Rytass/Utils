@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { ErrorCode, LogisticsError } from '@rytass/logistics';
-import { TCatLogisticsService, TCatLogistics } from '../src';
+import { TCatLogisticsService, TCatLogistics, TCatLogisticsStatusHistory, TCatLogisticsStatus } from '../src';
 import { TraceCases } from './delivery-adapter-tcat-config.config';
 
 describe('delivery-adapter-tcat', () => {
@@ -22,7 +22,7 @@ describe('delivery-adapter-tcat', () => {
     logistics.trace(logisticId).then((responses) => {
       responses.map((response) => {
         expect(response.logisticsId).toEqual(logisticId);
-        response.statusHistory.map((history, index) => {
+        (response.statusHistory as TCatLogisticsStatusHistory<TCatLogisticsStatus>[]).map((history, index) => {
           switch (index) {
             case 0:
               expect(history.businessPremise).toEqual('伊通營業所');
@@ -70,7 +70,7 @@ describe('delivery-adapter-tcat', () => {
       responses.map((response) => {
         switch (response.logisticsId) {
           case '800978442950':
-            response.statusHistory.map((history, index) => {
+            (response.statusHistory as TCatLogisticsStatusHistory<TCatLogisticsStatus>[]).map((history, index) => {
               switch (index) {
                 case 0:
                   expect(history.businessPremise).toEqual('伊通營業所');
@@ -98,7 +98,7 @@ describe('delivery-adapter-tcat', () => {
             break;
 
           case '903404283301':
-            response.statusHistory.map((history, index) => {
+            (response.statusHistory as TCatLogisticsStatusHistory<TCatLogisticsStatus>[]).map((history, index) => {
               switch (index) {
                 case 0:
                   expect(history.businessPremise).toEqual('竹圍營業所');
