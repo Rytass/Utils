@@ -5473,6 +5473,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/cms-frontend@workspace:packages/cms-frontend"
   peerDependencies:
+    "@mezzanine-ui/core": "*"
+    "@mezzanine-ui/icons": "*"
+    "@mezzanine-ui/react": "*"
+    "@mezzanine-ui/system": "*"
     react: "*"
     react-dom: "*"
   languageName: unknown
