@@ -1,0 +1,34 @@
+{
+  "name": "@rytass/cms-base-nestjs-graphql-module",
+  "version": "0.0.1",
+  "description": "Rytass Content Management System NestJS Base GraphQL Module",
+  "keywords": [
+    "rytass",
+    "cms",
+    "nestjs",
+    "graphql"
+  ],
+  "author": "Chia Yu Pai <fantasyatelier@gmail.com>",
+  "homepage": "https://github.com/Rytass/Utils#readme",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rytass/Utils.git"
+  },
+  "scripts": {
+    "clean": "npm run build:clean",
+    "build:clean": "node ../../scripts/cleanBuild.js",
+    "build": "npm run build:clean && node ../../scripts/build.js",
+    "release": "lerna version patch && npm run build && lerna publish from-package"
+  },
+  "bugs": {
+    "url": "https://github.com/Rytass/Utils/issues"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "*",
+    "@nestjs/typeorm": "*",
+    "@node-rs/jieba": "*",
+    "@quadrats/core": "*",
+    "typeorm": "*"
+  }
+}

@@ -5361,6 +5361,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rytass/cms-base-nestjs-graphql-module@workspace:packages/cms-base-nestjs-graphql-module":
+  version: 0.0.0-use.local
+  resolution: "@rytass/cms-base-nestjs-graphql-module@workspace:packages/cms-base-nestjs-graphql-module"
+  peerDependencies:
+    "@nestjs/common": "*"
+    "@nestjs/typeorm": "*"
+    "@node-rs/jieba": "*"
+    "@quadrats/core": "*"
+    typeorm: "*"
+  languageName: unknown
+  linkType: soft
+
 "@rytass/cms-base-nestjs-module@workspace:packages/cms-base-nestjs-module":
   version: 0.0.0-use.local
   resolution: "@rytass/cms-base-nestjs-module@workspace:packages/cms-base-nestjs-module"
