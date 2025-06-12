@@ -4,6 +4,7 @@ const { execSync } = require('child_process');
 const { glob } = require('glob');
 const { rollup } = require('rollup');
 const { swc } = require('rollup-plugin-swc3');
+const postcss = require('rollup-plugin-postcss');
 
 const { PWD } = process.env;
 const rootPackagePath = PWD;
@@ -113,6 +114,10 @@ async function build(packageSymbol, packageInfos) {
       plugins: [
         swc({
           tsconfig,
+        }),
+        postcss({
+          modules: true,
+          use: ['sass'],
         }),
       ],
     });
