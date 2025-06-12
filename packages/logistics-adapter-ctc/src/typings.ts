@@ -64,3 +64,74 @@ export const CtcLogistics: CtcLogisticsInterface<CtcLogisticsStatus> = {
   apiToken: 'c5a41fd4ab87598f47eda26c7c54f512',
   ignoreNotFound: true,
 }
+
+export interface CreateOrUpdateCtcLogisticsOptions {
+  trackingNumber: string; // 查件單號, primary key
+  customerDepartmentId: number; // 客戶部門ID, optional
+
+  senderCompany: string; // 寄件人公司名稱
+  senderContactName?: string; // 寄件人聯絡人
+  senderAddress: string; // 寄件人地址
+  senderTel?: string; // 寄件人市話
+  senderMobile?: string; // 寄件人手機
+  senderRemark?: string; // 寄件人備註
+
+  receiverCompany: string; // 收件人公司名稱
+  receiverContactName: string; // 收件人聯絡人
+  receiverAddress: string; // 收件人地址
+  receiverTel?: string; // 收件人市話
+  receiverMobile?: string; // 收件人手機
+  receiverRemark?: string; // 收件人備註
+
+  shipmentContent?: string; // 貨物內容, 固定為 '貨件'
+  transportation?: string; // 運輸工具, 固定為 'truck'
+  shippingMethod?: string; // 運送方式, 固定為 'land'
+  payer?: string; // 費用支付方, 固定為 'sender'
+  shippingTime?: string; // 送件時效, 固定為 'regular'
+  paymentMethod?: string; // 結算方式, 固定為 'monthly'
+  quantity?: number; // 件數, 固定為 1
+  weight?: number; // 重量, 固定為 1
+  volume?: number; // 材積, 固定為 1
+}
+
+export interface CtcLogisticsDto {
+  trackingNumber: string; // 查件單號
+  shippingNumber: string; // 托運單號
+}
+
+export interface CreateOrUpdateCtcLogisticsRequest {
+  order: {
+    tracking_number: string; // 查件單號
+    customer_department_id: number; // 客戶部門ID
+
+    sender_company: string; // 寄件人公司名稱
+    sender_contact_name: string; // 寄件人聯絡人
+    sender_tel?: string; // 寄件人市話
+    sender_mobile?: string; // 寄件人手機
+    sender_address: string; // 寄件人地址
+    sender_remark?: string; // 寄件人備註
+
+    receiver_company: string; // 收件人公司名稱
+    receiver_contact_name: string; // 收件人聯絡人
+    receiver_tel?: string; // 收件人市話
+    receiver_mobile?: string; // 收件人手機
+    receiver_address: string; // 收件人地址
+    receiver_remark?: string; // 收件人備註
+
+    shipment_content: string; // 貨物內容 * 固定為 '貨件'
+    transportation: string; // 運輸工具 * 固定為 'truck'
+    shipping_method: string; // 運送方式 * 固定為 'land'
+    payer: string; // 費用支付方 * 固定為 'sender'
+    shipping_time: string; // 送件時效 * 固定為 'regular'
+    payment_method: string; // 結算方式 * 固定為 'monthly'
+    quantity: number; // 件數 * 固定為 1
+    weight: number; // 重量 * 固定為 1
+    volume: number; // 材積 * 固定為 1
+  }
+}
+
+export interface CreateOrUpdateCtcLogisticsResponse {
+  success: boolean; // 是否成功
+  shipping_number: string; // 托運單號
+  tracking_number?: string; // 查件單號
+}

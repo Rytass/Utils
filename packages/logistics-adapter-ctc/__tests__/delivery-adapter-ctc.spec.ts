@@ -1,26 +1,171 @@
-import axios from 'axios';
-import { ErrorCode, LogisticsError } from '@rytass/logistics';
+
+import { LogisticsError } from '@rytass/logistics';
 import { CtcLogisticsService, CtcLogistics } from '../src';
+import axios from 'axios';
 
 describe('delivery-adapter-ctc', () => {
-  // const get = jest.spyOn(axios, 'get');
+  const get = jest.spyOn(axios, 'get');
 
-  it('should trace single logistic', async () => {
+  describe('get logistics tracing', () => {
+    it('should trace single logistic with default configuration', async () => {
+      const logisticsService = new CtcLogisticsService(CtcLogistics);
+
+      const logisticId = ['R25061100009'];
+
+      get.mockImplementationOnce(async (url: string, data: any) => {
+        expect(url).toBe('https://tms2.ctc-express.cloud/api/v1/customer/orders/R25061100009');
+
+        return {
+          status: 200,
+          data: {
+            success: true,
+            shipment_history: [
+              {
+                status: '新單測試',
+                code: 10,
+                created_at: '2025-06-11 17:26:10',
+              },
+            ],
+            images: [],
+          },
+        };
+      });
+
+      try {
+        const result = await logisticsService.trace(logisticId);
+
+        console.log(`result: ${JSON.stringify(result)}`);
+
+      } catch (error) {
+        console.error(`Error occurred: ${error instanceof LogisticsError ? error.message : error}`);
+      }
+
+    });
+
+    it('should trace single logistic with specific configuration', async () => {
+      const logisticsService = new CtcLogisticsService({
+        url: 'https://tms2.ctc-express.cloud/api/v1/customer/orders',
+        apiToken: 'c5a41fd4ab87598f47eda26c7c54f512',
+        ignoreNotFound: true,
+      });
+
+      const logisticId = ['R25061100009'];
+
+      get.mockImplementationOnce(async (url: string, data: any) => {
+        expect(url).toBe('https://tms2.ctc-express.cloud/api/v1/customer/orders/R25061100009');
+
+        return {
+          status: 200,
+          data: {
+            success: true,
+            shipment_history: [
+              {
+                status: '新單測試',
+                code: 10,
+                created_at: '2025-06-11 17:26:10',
+              },
+            ],
+            images: [],
+          },
+        };
+      });
+
+      try {
+        const result = await logisticsService.trace(logisticId);
+
+        console.log(`result: ${JSON.stringify(result)}`);
+
+      } catch (error) {
+        console.error(`Error occurred: ${error instanceof LogisticsError ? error.message : error}`);
+      }
+
+    });
+  })
+
+  describe('create or update logistics with default configuration', () => {
     const logisticsService = new CtcLogisticsService(CtcLogistics);
-    const logisticId = ['R25061100008'];
+    const post = jest.spyOn(axios, 'post');
+    const get = jest.spyOn(axios, 'get');
 
-    // get.mockImplementationOnce(async (url: string) => {
-    //   expect(url).toEqual(traceUrl(logisticId));
+    const createOrUpdateCtcLogisticsOptions = {
+      trackingNumber: 'R25061100009', // 查件單號
+      senderCompany: 'Sender Name',
+      senderMobile: '1234567890',
+      senderAddress: 'Sender Address',
+      receiverCompany: 'Receiver Name',
+      receiverContactName: 'Receiver Contact',
+      receiverMobile: '0987654321',
+      receiverAddress: 'Receiver Address',
 
-    // });
-    try {
-      const result = await logisticsService.trace(logisticId);
+      customerDepartmentId: 1572, // 客戶部門ID, optional
+      senderContactName: 'Sender Contact', // 寄件人聯絡人, optional
+      senderTel: '12345678', // 寄件人市話, optional
+      senderRemark: 'Sender Remark', // 寄件人備註, optional
+      receiverTel: '87654321', // 收件人市話, optional
+      receiverRemark: 'Receiver Remark', // 收件人備註, optional
+      shipmentContent: '貨件', // 貨物內容, 固定為 '貨件'
+      transportation: 'truck', // 運輸工具, 固定為 'truck'
+      shippingMethod: 'land', // 運送方式, 固定為 'land'
+      payer: 'sender', // 費用支付方, 固定為 'sender'
+      shippingTime: 'regular', // 送件時效, 固定為 'regular'
+      paymentMethod: 'monthly', // 結算方式, 固定為 'monthly'
+      quantity: 1, // 件數, 固定為 1
+      weight: 1, // 重量, 固定為 1
+      volume: 1, // 材積, 固定為 1
+    };
 
-      console.log(`result: ${JSON.stringify(result)}`);
+    post.mockImplementation(async (url: string, data: any) => {
+      expect(url).toBe('https://tms2.ctc-express.cloud/api/v1/customer/orders');
 
-    } catch (error) {
-      console.error(`Error occurred: ${error instanceof LogisticsError ? error.message : error}`);
-    }
+      return {
+        data: {
+          success: true,
+          shipping_number: 'R25061100009測試',
+          tracking_number: 'R25061100009',
+        },
+      };
+    });
 
-  });
+    get.mockImplementationOnce(async (url: string, data: any) => {
+      console.log(`get url: ${url}`);
+      expect(url).toBe('https://tms2.ctc-express.cloud/api/v1/customer/orders/R25061100009');
+
+      return {
+        status: 200,
+        data: {
+          success: true,
+          shipment_history: [
+            {
+              status: '新單測試',
+              code: 10,
+              created_at: '2025-06-11 17:26:10',
+            },
+          ],
+          images: [],
+        },
+      };
+    });
+
+    it('should create a new logistics with default configuration', async () => {
+      const result = await logisticsService.create(createOrUpdateCtcLogisticsOptions);
+
+      // {
+      //     "success": true,
+      //     "shipping_number": "R25061100009",
+      //     "tracking_number": "R25061100009"
+      // }
+
+      console.log(`Created logistics: ${JSON.stringify(result)}`);
+
+    });
+
+    it('should update a logistics with default configuration', async () => {
+
+      createOrUpdateCtcLogisticsOptions.receiverCompany = 'Updated Receiver Name';
+
+      const result = await logisticsService.update(createOrUpdateCtcLogisticsOptions);
+
+      console.log(`Updated logistics: ${JSON.stringify(result)}`);
+    });
+  })
 });
