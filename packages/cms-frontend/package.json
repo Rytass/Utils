@@ -24,6 +24,10 @@
   },
   "peerDependencies": {
     "react": "*",
-    "react-dom": "*"
+    "react-dom": "*",
+    "@mezzanine-ui/core": "*",
+    "@mezzanine-ui/icons": "*",
+    "@mezzanine-ui/react": "*",
+    "@mezzanine-ui/system": "*"
   }
 }
