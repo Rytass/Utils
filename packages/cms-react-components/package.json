@@ -28,8 +28,6 @@
     "@mezzanine-ui/icons": "*",
     "@mezzanine-ui/react": "*",
     "@mezzanine-ui/system": "*",
-    "@types/react": "*",
-    "@types/react-dom": "*",
     "react": "*",
     "react-dom": "*"
   }
