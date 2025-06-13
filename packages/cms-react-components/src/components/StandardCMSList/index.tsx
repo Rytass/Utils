@@ -1,8 +1,9 @@
-import React from 'react';
-import { Button, Typography } from '@mezzanine-ui/react';
+import React, { ReactElement } from 'react';
+import { Button, Typography, Icon } from '@mezzanine-ui/react';
+import { History } from '../../icons/history';
 import classes from './index.module.scss';
 
-const StandardCMSList = () => {
+const StandardCMSList = (): ReactElement => {
   return (
     <div className={classes.root}>
       StandardCMSList
@@ -11,6 +12,7 @@ const StandardCMSList = () => {
       </Button>
       <Typography variant="h1">h1</Typography>
       <Typography variant="h2">h2</Typography>
+      <Icon icon={History} size={16} />
     </div>
   );
 };
