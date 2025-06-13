@@ -30,7 +30,8 @@
     "TAIWANPAY",
     "UNIONPAY",
     "VIRTAL",
-    "WECHAT"
+    "WECHAT",
+    "UNRELEASE"
   ],
   "cSpell.ignoreWords": ["fulltext"]
 }

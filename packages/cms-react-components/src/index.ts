@@ -6,3 +6,6 @@ export * from './components/StandardCMSTabs';
 
 // icons
 export { History } from './icons/history';
+
+// typings
+export * from './typings';
