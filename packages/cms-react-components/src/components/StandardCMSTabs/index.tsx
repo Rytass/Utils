@@ -1,29 +1,21 @@
-import React, {
-  ReactElement,
-  Key,
-  useState,
-  useCallback,
-  useMemo,
-} from 'react';
+import React, { ReactElement, Key, useCallback, useMemo } from 'react';
 import { Tabs, TabPane, Tab } from '@mezzanine-ui/react';
 import { ArticleStage } from '../../typings';
 import classes from './index.module.scss';
 
 export interface StandardCMSTabsProps {
-  defaultStage?: ArticleStage;
-  onChange?: (stage: ArticleStage) => void;
+  activeStage: ArticleStage;
+  onChange: (stage: ArticleStage) => void;
   tabsNaming?: {
     [key in ArticleStage]: string;
   };
 }
 
 const StandardCMSTabs = ({
-  defaultStage = ArticleStage.DRAFT,
+  activeStage,
   onChange,
   tabsNaming,
 }: StandardCMSTabsProps): ReactElement => {
-  const [activeTabId, setActiveTabId] = useState<ArticleStage>(defaultStage);
-
   const tabs = useMemo(
     () => [
       {
@@ -54,15 +46,14 @@ const StandardCMSTabs = ({
     (activeKey: Key) => {
       const nextStage = activeKey as ArticleStage;
 
-      setActiveTabId(nextStage);
-      onChange?.(nextStage);
+      onChange(nextStage);
     },
     [onChange],
   );
 
   return (
     <Tabs
-      activeKey={activeTabId}
+      activeKey={activeStage}
       tabBarClassName={classes.tabBar}
       onChange={onTabChange}
     >
