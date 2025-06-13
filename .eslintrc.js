@@ -5,7 +5,7 @@ module.exports = {
     jest: true,
   },
   extends: ['eslint:recommended'],
-  plugins: ['import'],
+  plugins: ['import', 'react', 'react-hooks'],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 2020,
@@ -13,6 +13,8 @@ module.exports = {
   },
   rules: {
     '@typescript-eslint/explicit-module-boundary-types': 'error',
+    'react-hooks/rules-of-hooks': 'error',
+    'react-hooks/exhaustive-deps': 'warn',
     indent: 0,
     'no-dupe-class-members': 0,
     'no-unused-vars': 0,
