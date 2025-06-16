@@ -5638,6 +5638,7 @@ __metadata:
     "@mezzanine-ui/icons": "*"
     "@mezzanine-ui/react": "*"
     "@mezzanine-ui/system": "*"
+    lodash: "*"
     react: "*"
     react-dom: "*"
   languageName: unknown
@@ -6853,6 +6854,13 @@ __metadata:
   version: 4.17.13
   resolution: "@types/lodash@npm:4.17.13"
   checksum: 10c0/c3d0b7efe7933ac0369b99f2f7bff9240d960680fdb74b41ed4bd1b3ca60cca1e31fe4046d9abbde778f941a41bc2a75eb629abf8659fa6c27b66efbbb0802a9
+  languageName: node
+  linkType: hard
+
+"@types/lodash@npm:^4.17.17":
+  version: 4.17.17
+  resolution: "@types/lodash@npm:4.17.17"
+  checksum: 10c0/8e75df02a15f04d4322c5a503e4efd0e7a92470570ce80f17e9f11ce2b1f1a7c994009c9bcff39f07e0f9ffd8ccaff09b3598997c404b801abd5a7eee5a639dc
   languageName: node
   linkType: hard
 
@@ -22320,6 +22328,7 @@ __metadata:
     "@swc/core": "npm:^1.9.3"
     "@types/jest": "npm:^29.5.14"
     "@types/jsonwebtoken": "npm:^9"
+    "@types/lodash": "npm:^4.17.17"
     "@types/react": "npm:^19.1.8"
     "@types/react-dom": "npm:^19.1.6"
     "@types/supertest": "npm:^6.0.2"
@@ -22345,6 +22354,7 @@ __metadata:
     jsonwebtoken: "npm:^9.0.2"
     lerna: "npm:^8.1.9"
     lint-staged: "npm:^15.2.10"
+    lodash: "npm:^4.17.21"
     node-gyp: "npm:^10.2.0"
     nx: "npm:^20.1.4"
     parse-multipart-data: "npm:^1.5.0"
