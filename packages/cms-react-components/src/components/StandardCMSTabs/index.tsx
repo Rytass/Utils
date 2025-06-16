@@ -7,7 +7,7 @@ export interface StandardCMSTabsProps {
   activeStage: ArticleStage;
   onChange: (stage: ArticleStage) => void;
   tabsNaming?: {
-    [key in ArticleStage]: string;
+    [key in ArticleStage]?: string;
   };
 }
 
