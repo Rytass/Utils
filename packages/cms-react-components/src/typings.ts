@@ -14,7 +14,7 @@ export enum ArticleTableActions {
   PutBack = 'PutBack',
   Review = 'Review',
   Release = 'Release',
-  Unrelease = 'Unrelease',
+  Withdraw = 'Withdraw',
 }
 
 export interface ArticleTableActionsType {
@@ -39,7 +39,7 @@ export interface ArticleTableActionsType {
   [ArticleStage.SCHEDULED]?: (
     | ArticleTableActions.View
     | ArticleTableActions.Update
-    | ArticleTableActions.Unrelease
+    | ArticleTableActions.Withdraw
   )[];
   [ArticleStage.RELEASED]?: (
     | ArticleTableActions.Update
@@ -68,7 +68,7 @@ export enum ArticlesPermissions {
   // Scheduled
   UpdateArticleInScheduled = 'UpdateArticleInScheduled',
   ReleaseArticleInScheduled = 'ReleaseArticleInScheduled',
-  UnreleaseArticleInScheduled = 'UnreleaseArticleInScheduled',
+  WithdrawArticleInScheduled = 'WithdrawArticleInScheduled',
 
   // Released
   UpdateArticleInReleased = 'UpdateArticleInReleased',
