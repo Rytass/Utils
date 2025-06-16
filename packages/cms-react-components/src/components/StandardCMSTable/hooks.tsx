@@ -113,6 +113,94 @@ export function useMappingTableActions<T extends TableDataSourceWithID>({
         ];
       }
 
+      case ArticleStage.REVIEWING: {
+        const actionsFilterByPermissions = currentTableActions?.filter(
+          (action) => {
+            switch (action) {
+              case ArticleTableActions.Update:
+                return havePermission({
+                  userPermissions,
+                  targetPermission:
+                    ArticlesPermissions.UpdateArticleInReviewing,
+                });
+
+              case ArticleTableActions.Review:
+                return havePermission({
+                  userPermissions,
+                  targetPermission: ArticlesPermissions.ApproveRejectArticle,
+                });
+
+              case ArticleTableActions.Delete:
+                return havePermission({
+                  userPermissions,
+                  targetPermission:
+                    ArticlesPermissions.DeleteArticleInReviewing,
+                });
+
+              case ArticleTableActions.PutBack:
+                return havePermission({
+                  userPermissions,
+                  targetPermission: ArticlesPermissions.SubmitPutBackArticle,
+                });
+
+              default:
+                return false;
+            }
+          },
+        );
+
+        if (actionsFilterByPermissions?.length === 0) return [];
+
+        return [
+          {
+            title: '',
+            align: 'end',
+            render: (source) => (
+              <div className={classes.tableActions}>
+                {actionsFilterByPermissions?.map((action) => {
+                  switch (action) {
+                    case ArticleTableActions.Update: {
+                      return (
+                        <Button type="button" variant="text">
+                          編輯
+                        </Button>
+                      );
+                    }
+
+                    case ArticleTableActions.Review: {
+                      return (
+                        <Button type="button" variant="text">
+                          審核
+                        </Button>
+                      );
+                    }
+
+                    case ArticleTableActions.Delete: {
+                      return (
+                        <Button type="button" variant="text" danger>
+                          刪除
+                        </Button>
+                      );
+                    }
+
+                    case ArticleTableActions.PutBack: {
+                      return (
+                        <Button type="button" variant="text" danger>
+                          撤回審核
+                        </Button>
+                      );
+                    }
+
+                    default:
+                      return null;
+                  }
+                })}
+              </div>
+            ),
+          },
+        ];
+      }
+
       default:
         return [];
     }
