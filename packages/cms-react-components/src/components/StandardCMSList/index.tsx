@@ -8,7 +8,7 @@ export interface StandardCMSListProps {
   defaultStage?: ArticleStage;
   onTabChange?: (stage: ArticleStage) => void;
   tabsNaming?: {
-    [key in ArticleStage]: string;
+    [key in ArticleStage]?: string;
   };
 }
 
