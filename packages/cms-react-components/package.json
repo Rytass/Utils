@@ -28,6 +28,7 @@
     "@mezzanine-ui/icons": "*",
     "@mezzanine-ui/react": "*",
     "@mezzanine-ui/system": "*",
+    "lodash": "*",
     "react": "*",
     "react-dom": "*"
   }
