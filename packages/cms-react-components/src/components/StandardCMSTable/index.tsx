@@ -13,7 +13,12 @@ import {
   TableScrolling,
 } from '@mezzanine-ui/core/table';
 import { VersionLog } from '../../icons/version-log';
-import { ArticleStage, ArticlesPermissions } from '../../typings';
+import {
+  ArticleStage,
+  ArticlesPermissions,
+  ArticleTableActionsType,
+} from '../../typings';
+import { useMappingTableActions } from './hooks';
 import classes from './index.module.scss';
 
 export interface StandardCMSTableProps<T extends TableDataSourceWithID> {
@@ -95,9 +100,19 @@ export interface StandardCMSTableProps<T extends TableDataSourceWithID> {
    * 是否顯示版本紀錄按鈕
    */
   withVersionLogs?: boolean;
+  /**
+   * 定義 Table row 操作列
+   */
+  actions?: ArticleTableActionsType;
+  /**
+   * 自定義額外 Table row 操作列
+   */
+  customizedActions?: TableColumn<T>[];
 }
 
 const StandardCMSTable = <T extends TableDataSourceWithID>({
+  currentStage,
+  userPermissions,
   dataSource,
   columns: columnsProps,
   scroll,
@@ -115,7 +130,15 @@ const StandardCMSTable = <T extends TableDataSourceWithID>({
   emptyProps,
   loadingTip,
   withVersionLogs = true,
+  actions,
+  customizedActions = [],
 }: StandardCMSTableProps<T>): ReactElement => {
+  const tableActions = useMappingTableActions<T>({
+    currentStage,
+    userPermissions,
+    actions,
+  });
+
   const columns = useMemo(
     (): TableColumn<T>[] =>
       compact<TableColumn<T>>([
@@ -129,8 +152,10 @@ const StandardCMSTable = <T extends TableDataSourceWithID>({
           ),
         },
         ...columnsProps,
+        ...tableActions,
+        ...customizedActions,
       ]),
-    [columnsProps, withVersionLogs],
+    [withVersionLogs, columnsProps, tableActions, customizedActions],
   );
 
   const baseTableProps = useMemo(

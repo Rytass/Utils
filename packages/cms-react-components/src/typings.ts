@@ -18,30 +18,30 @@ export enum ArticleTableActions {
 }
 
 export interface ArticleTableActionsType {
-  [ArticleStage.DRAFT]: (
+  [ArticleStage.DRAFT]?: (
     | ArticleTableActions.Update
     | ArticleTableActions.Submit
     | ArticleTableActions.Release
     | ArticleTableActions.Delete
   )[];
-  [ArticleStage.REVIEWING]: (
+  [ArticleStage.REVIEWING]?: (
     | ArticleTableActions.Update
     | ArticleTableActions.Review
     | ArticleTableActions.Delete
     | ArticleTableActions.PutBack
   )[];
-  [ArticleStage.VERIFIED]: (
+  [ArticleStage.VERIFIED]?: (
     | ArticleTableActions.View
     | ArticleTableActions.Update
     | ArticleTableActions.Release
     | ArticleTableActions.Delete
   )[];
-  [ArticleStage.SCHEDULED]: (
+  [ArticleStage.SCHEDULED]?: (
     | ArticleTableActions.View
     | ArticleTableActions.Update
     | ArticleTableActions.Unrelease
   )[];
-  [ArticleStage.RELEASED]: (
+  [ArticleStage.RELEASED]?: (
     | ArticleTableActions.Update
     | ArticleTableActions.Delete
   )[];
