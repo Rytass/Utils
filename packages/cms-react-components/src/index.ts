@@ -1,6 +1,9 @@
 // typings
 export * from './typings';
 
+// utils
+export * from './utils/havePermission';
+
 // constants
 export * from './constants';
 
