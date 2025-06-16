@@ -11,9 +11,12 @@ import {
   TableRowSelection,
   TableScrolling,
 } from '@mezzanine-ui/core/table';
+import { ArticleStage, ArticlesPermissions } from '../../typings';
 import classes from './index.module.scss';
 
 export interface StandardCMSTableProps<T extends TableDataSourceWithID> {
+  currentStage: ArticleStage;
+  userPermissions: ArticlesPermissions[];
   /**
    * 資料陣列
    */

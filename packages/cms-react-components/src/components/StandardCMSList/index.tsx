@@ -6,7 +6,7 @@ import classes from './index.module.scss';
 import { TableDataSourceWithID } from '@mezzanine-ui/core/table';
 
 export interface StandardCMSListProps<T extends TableDataSourceWithID>
-  extends StandardCMSTableProps<T> {
+  extends Omit<StandardCMSTableProps<T>, 'currentStage'> {
   defaultStage?: ArticleStage;
   onTabChange?: (stage: ArticleStage) => void;
   tabsNaming?: {
@@ -37,7 +37,7 @@ const StandardCMSList = <T extends TableDataSourceWithID>({
         onChange={onChange}
         tabsNaming={tabsNaming}
       />
-      <StandardCMSTable {...tableProps} />
+      <StandardCMSTable {...tableProps} currentStage={activeTabId} />
     </div>
   );
 };
