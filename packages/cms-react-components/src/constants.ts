@@ -22,7 +22,7 @@ export const defaultAdminRolePermissions = [
   // Scheduled
   ArticlesPermissions.UpdateArticleInScheduled,
   ArticlesPermissions.ReleaseArticleInScheduled,
-  ArticlesPermissions.UnreleaseArticleInScheduled,
+  ArticlesPermissions.WithdrawArticleInScheduled,
   // Released
   ArticlesPermissions.UpdateArticleInReleased,
   ArticlesPermissions.ReleaseArticleInReleased,
@@ -41,7 +41,7 @@ export const defaultGeneralRolePermissions = [
   ArticlesPermissions.ReleaseArticleInVerified,
   // Scheduled
   ArticlesPermissions.ReleaseArticleInScheduled,
-  ArticlesPermissions.UnreleaseArticleInScheduled,
+  ArticlesPermissions.WithdrawArticleInScheduled,
   // Released
   ArticlesPermissions.UpdateArticleInReleased,
 ];
@@ -68,7 +68,7 @@ export const defaultTableActions: ArticleTableActionsType = {
   [ArticleStage.SCHEDULED]: [
     ArticleTableActions.View,
     ArticleTableActions.Update,
-    ArticleTableActions.Unrelease,
+    ArticleTableActions.Withdraw,
   ],
   [ArticleStage.RELEASED]: [
     ArticleTableActions.Update,

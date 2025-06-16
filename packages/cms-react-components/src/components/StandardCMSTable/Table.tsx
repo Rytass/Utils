@@ -9,6 +9,7 @@ import { StandardCMSTableProps } from './typings';
 const Table = <T extends TableDataSourceWithID>({
   currentStage,
   userPermissions,
+  actionsEvents,
   dataSource,
   columns: columnsProps,
   scroll,
@@ -32,6 +33,7 @@ const Table = <T extends TableDataSourceWithID>({
   const tableActions = useMappingTableActions<T>({
     currentStage,
     userPermissions,
+    actionsEvents,
     actions,
   });
 

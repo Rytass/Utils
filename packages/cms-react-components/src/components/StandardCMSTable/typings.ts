@@ -17,6 +17,11 @@ import {
   ArticleTableActionsType,
 } from '../../typings';
 
+export interface StandardCMSTableEventsProps<T extends TableDataSourceWithID> {
+  onUpdate?: (source: T) => Promise<void>;
+  onDelete?: (source: T) => Promise<void>;
+}
+
 export interface StandardCMSTableProps<T extends TableDataSourceWithID> {
   /**
    * 當下文章狀態
@@ -26,6 +31,10 @@ export interface StandardCMSTableProps<T extends TableDataSourceWithID> {
    * 當下使用者權限
    */
   userPermissions: ArticlesPermissions[];
+  /**
+   * 按鈕事件
+   */
+  actionsEvents: StandardCMSTableEventsProps<T>;
   /**
    * 資料陣列
    */

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Button } from '@mezzanine-ui/react';
 import { TableColumn, TableDataSourceWithID } from '@mezzanine-ui/core/table';
 import {
@@ -11,19 +11,50 @@ import { defaultTableActions } from '../../constants';
 import { havePermission } from '../../utils/havePermission';
 import { useDialog } from '../dialog/useDialog';
 import { useModal } from '../modal/useModal';
+import { StandardCMSTableEventsProps } from './typings';
 import classes from './index.module.scss';
 
 export function useMappingTableActions<T extends TableDataSourceWithID>({
   currentStage,
   userPermissions,
+  actionsEvents,
   actions,
 }: {
   currentStage: ArticleStage;
   userPermissions: ArticlesPermissions[];
+  actionsEvents: StandardCMSTableEventsProps<T>;
   actions?: ArticleTableActionsType;
 }): TableColumn<T>[] {
   const { openDialog } = useDialog();
   const { openModal } = useModal();
+
+  const onUpdate = useCallback(
+    (source: T) => async () => {
+      await actionsEvents.onUpdate?.(source);
+    },
+    [actionsEvents],
+  );
+
+  const onDelete = useCallback(
+    (source: T) => async () => {
+      const isConfirm = await openDialog({
+        severity: 'error',
+        style: { width: 384 },
+        title: '確認刪除文章？',
+        children: '此動作無法復原。',
+        cancelText: '取消',
+        cancelButtonProps: {
+          danger: false,
+        },
+        confirmText: '刪除文章',
+      });
+
+      if (isConfirm) {
+        await actionsEvents.onDelete?.(source);
+      }
+    },
+    [actionsEvents, openDialog],
+  );
 
   const tableActions = useMemo((): TableColumn<T>[] => {
     const currentTableActions =
@@ -78,7 +109,11 @@ export function useMappingTableActions<T extends TableDataSourceWithID>({
                   switch (action) {
                     case ArticleTableActions.Update: {
                       return (
-                        <Button type="button" variant="text">
+                        <Button
+                          type="button"
+                          variant="text"
+                          onClick={onUpdate(source)}
+                        >
                           編輯
                         </Button>
                       );
@@ -106,22 +141,7 @@ export function useMappingTableActions<T extends TableDataSourceWithID>({
                           type="button"
                           variant="text"
                           danger
-                          onClick={async () => {
-                            const isConfirm = await openDialog({
-                              severity: 'error',
-                              title: '確認刪除文章？',
-                              children: '此動作無法復原。',
-                              cancelText: '取消',
-                              cancelButtonProps: {
-                                danger: false,
-                              },
-                              confirmText: '刪除文章',
-                            });
-
-                            if (isConfirm) {
-                              console.log('source', source);
-                            }
-                          }}
+                          onClick={onDelete(source)}
                         >
                           刪除此版本
                         </Button>
@@ -331,11 +351,11 @@ export function useMappingTableActions<T extends TableDataSourceWithID>({
                     ArticlesPermissions.UpdateArticleInScheduled,
                 });
 
-              case ArticleTableActions.Unrelease:
+              case ArticleTableActions.Withdraw:
                 return havePermission({
                   userPermissions,
                   targetPermission:
-                    ArticlesPermissions.UnreleaseArticleInScheduled,
+                    ArticlesPermissions.WithdrawArticleInScheduled,
                 });
 
               default:
@@ -370,7 +390,7 @@ export function useMappingTableActions<T extends TableDataSourceWithID>({
                       );
                     }
 
-                    case ArticleTableActions.Unrelease: {
+                    case ArticleTableActions.Withdraw: {
                       return (
                         <Button type="button" variant="text" danger>
                           取消發佈
@@ -449,7 +469,7 @@ export function useMappingTableActions<T extends TableDataSourceWithID>({
       default:
         return [];
     }
-  }, [actions, currentStage, openDialog, userPermissions]);
+  }, [actions, currentStage, onUpdate, onDelete, userPermissions]);
 
   return tableActions;
 }
