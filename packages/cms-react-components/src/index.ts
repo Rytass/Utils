@@ -5,7 +5,7 @@ export * from './typings';
 export * from './constants';
 
 // icons
-export { History } from './icons/history';
+export { VersionLog } from './icons/version-log';
 
 // components
 export * from './components/StandardCMSActions';

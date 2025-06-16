@@ -1,7 +1,7 @@
 import { IconDefinition } from '@mezzanine-ui/icons';
 
-export const History: IconDefinition = {
-  name: 'history',
+export const VersionLog: IconDefinition = {
+  name: 'version-log',
   definition: {
     svg: {
       viewBox: '0 0 16 16',
