@@ -1,10 +1,12 @@
 import React, { ReactElement, useState, useCallback } from 'react';
 import { StandardCMSTabs } from '../StandardCMSTabs';
-import { StandardCMSTable } from '../StandardCMSTable';
+import { StandardCMSTable, StandardCMSTableProps } from '../StandardCMSTable';
 import { ArticleStage } from '../../typings';
 import classes from './index.module.scss';
+import { TableDataSourceWithID } from '@mezzanine-ui/core/table';
 
-export interface StandardCMSListProps {
+export interface StandardCMSListProps<T extends TableDataSourceWithID>
+  extends StandardCMSTableProps<T> {
   defaultStage?: ArticleStage;
   onTabChange?: (stage: ArticleStage) => void;
   tabsNaming?: {
@@ -12,11 +14,12 @@ export interface StandardCMSListProps {
   };
 }
 
-const StandardCMSList = ({
+const StandardCMSList = <T extends TableDataSourceWithID>({
   defaultStage = ArticleStage.DRAFT,
   onTabChange,
   tabsNaming,
-}: StandardCMSListProps): ReactElement => {
+  ...tableProps
+}: StandardCMSListProps<T>): ReactElement => {
   const [activeTabId, setActiveTabId] = useState<ArticleStage>(defaultStage);
 
   const onChange = useCallback(
@@ -34,7 +37,7 @@ const StandardCMSList = ({
         onChange={onChange}
         tabsNaming={tabsNaming}
       />
-      <StandardCMSTable />
+      <StandardCMSTable {...tableProps} />
     </div>
   );
 };
