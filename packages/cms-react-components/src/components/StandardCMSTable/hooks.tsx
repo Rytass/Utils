@@ -288,6 +288,85 @@ export function useMappingTableActions<T extends TableDataSourceWithID>({
         ];
       }
 
+      case ArticleStage.SCHEDULED: {
+        const actionsFilterByPermissions = currentTableActions?.filter(
+          (action) => {
+            switch (action) {
+              case ArticleTableActions.View:
+                return !havePermission({
+                  userPermissions,
+                  targetPermission:
+                    ArticlesPermissions.UpdateArticleInScheduled,
+                });
+
+              case ArticleTableActions.Update:
+                return havePermission({
+                  userPermissions,
+                  targetPermission:
+                    ArticlesPermissions.UpdateArticleInScheduled,
+                });
+
+              case ArticleTableActions.Unrelease:
+                return havePermission({
+                  userPermissions,
+                  targetPermission:
+                    ArticlesPermissions.UnreleaseArticleInScheduled,
+                });
+
+              default:
+                return false;
+            }
+          },
+        );
+
+        if (actionsFilterByPermissions?.length === 0) return [];
+
+        return [
+          {
+            title: '',
+            align: 'end',
+            render: (source) => (
+              <div className={classes.tableActions}>
+                {actionsFilterByPermissions?.map((action) => {
+                  switch (action) {
+                    case ArticleTableActions.View: {
+                      return (
+                        <Button type="button" variant="text">
+                          檢視
+                        </Button>
+                      );
+                    }
+
+                    case ArticleTableActions.Update: {
+                      return (
+                        <Button type="button" variant="text">
+                          編輯
+                        </Button>
+                      );
+                    }
+
+                    case ArticleTableActions.Unrelease: {
+                      return (
+                        <Button type="button" variant="text" danger>
+                          取消發佈
+                        </Button>
+                      );
+                    }
+
+                    default:
+                      return null;
+                  }
+                })}
+              </div>
+            ),
+          },
+        ];
+      }
+
+      case ArticleStage.RELEASED: {
+        return [];
+      }
+
       default:
         return [];
     }
