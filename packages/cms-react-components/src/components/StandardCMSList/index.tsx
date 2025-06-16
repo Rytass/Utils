@@ -1,6 +1,7 @@
 import React, { ReactElement, useState, useCallback } from 'react';
 import { StandardCMSTabs } from '../StandardCMSTabs';
-import { StandardCMSTable, StandardCMSTableProps } from '../StandardCMSTable';
+import { StandardCMSTable } from '../StandardCMSTable';
+import { StandardCMSTableProps } from '../StandardCMSTable/typings';
 import { ArticleStage } from '../../typings';
 import classes from './index.module.scss';
 import { TableDataSourceWithID } from '@mezzanine-ui/core/table';

@@ -9,6 +9,8 @@ import {
 } from '../../typings';
 import { defaultTableActions } from '../../constants';
 import { havePermission } from '../../utils/havePermission';
+import { useDialog } from '../dialog/useDialog';
+import { useModal } from '../modal/useModal';
 import classes from './index.module.scss';
 
 export function useMappingTableActions<T extends TableDataSourceWithID>({
@@ -20,6 +22,9 @@ export function useMappingTableActions<T extends TableDataSourceWithID>({
   userPermissions: ArticlesPermissions[];
   actions?: ArticleTableActionsType;
 }): TableColumn<T>[] {
+  const { openDialog } = useDialog();
+  const { openModal } = useModal();
+
   const tableActions = useMemo((): TableColumn<T>[] => {
     const currentTableActions =
       actions?.[currentStage] ?? defaultTableActions[currentStage];
@@ -97,7 +102,27 @@ export function useMappingTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Delete: {
                       return (
-                        <Button type="button" variant="text" danger>
+                        <Button
+                          type="button"
+                          variant="text"
+                          danger
+                          onClick={async () => {
+                            const isConfirm = await openDialog({
+                              severity: 'error',
+                              title: '確認刪除文章？',
+                              children: '此動作無法復原。',
+                              cancelText: '取消',
+                              cancelButtonProps: {
+                                danger: false,
+                              },
+                              confirmText: '刪除文章',
+                            });
+
+                            if (isConfirm) {
+                              console.log('source', source);
+                            }
+                          }}
+                        >
                           刪除此版本
                         </Button>
                       );
@@ -424,7 +449,7 @@ export function useMappingTableActions<T extends TableDataSourceWithID>({
       default:
         return [];
     }
-  }, [actions, currentStage, userPermissions]);
+  }, [actions, currentStage, openDialog, userPermissions]);
 
   return tableActions;
 }
