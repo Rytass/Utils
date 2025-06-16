@@ -364,7 +364,61 @@ export function useMappingTableActions<T extends TableDataSourceWithID>({
       }
 
       case ArticleStage.RELEASED: {
-        return [];
+        const actionsFilterByPermissions = currentTableActions?.filter(
+          (action) => {
+            switch (action) {
+              case ArticleTableActions.Update:
+                return havePermission({
+                  userPermissions,
+                  targetPermission: ArticlesPermissions.UpdateArticleInReleased,
+                });
+
+              case ArticleTableActions.Delete:
+                return havePermission({
+                  userPermissions,
+                  targetPermission: ArticlesPermissions.DeleteArticleInReleased,
+                });
+
+              default:
+                return false;
+            }
+          },
+        );
+
+        if (actionsFilterByPermissions?.length === 0) return [];
+
+        return [
+          {
+            title: '',
+            align: 'end',
+            render: (source) => (
+              <div className={classes.tableActions}>
+                {actionsFilterByPermissions?.map((action) => {
+                  switch (action) {
+                    case ArticleTableActions.Update: {
+                      return (
+                        <Button type="button" variant="text">
+                          編輯
+                        </Button>
+                      );
+                    }
+
+                    case ArticleTableActions.Delete: {
+                      return (
+                        <Button type="button" variant="text" danger>
+                          移除
+                        </Button>
+                      );
+                    }
+
+                    default:
+                      return null;
+                  }
+                })}
+              </div>
+            ),
+          },
+        ];
       }
 
       default:
