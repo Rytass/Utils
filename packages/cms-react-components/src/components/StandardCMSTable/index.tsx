@@ -1,5 +1,6 @@
 import React, { ReactElement, ReactNode, useMemo } from 'react';
-import { EmptyProps, Table } from '@mezzanine-ui/react';
+import { compact } from 'lodash';
+import { EmptyProps, Table, IconButton, Icon } from '@mezzanine-ui/react';
 import {
   ExpandRowBySources,
   TableColumn,
@@ -11,11 +12,18 @@ import {
   TableRowSelection,
   TableScrolling,
 } from '@mezzanine-ui/core/table';
+import { VersionLog } from '../../icons/version-log';
 import { ArticleStage, ArticlesPermissions } from '../../typings';
 import classes from './index.module.scss';
 
 export interface StandardCMSTableProps<T extends TableDataSourceWithID> {
+  /**
+   * 當下文章狀態
+   */
   currentStage: ArticleStage;
+  /**
+   * 當下使用者權限
+   */
   userPermissions: ArticlesPermissions[];
   /**
    * 資料陣列
@@ -83,6 +91,10 @@ export interface StandardCMSTableProps<T extends TableDataSourceWithID> {
    * 自定義 loading 提示文字
    */
   loadingTip?: string;
+  /**
+   * 是否顯示版本紀錄按鈕
+   */
+  withVersionLogs?: boolean;
 }
 
 const StandardCMSTable = <T extends TableDataSourceWithID>({
@@ -102,10 +114,23 @@ const StandardCMSTable = <T extends TableDataSourceWithID>({
   bodyRowClassName,
   emptyProps,
   loadingTip,
+  withVersionLogs = true,
 }: StandardCMSTableProps<T>): ReactElement => {
   const columns = useMemo(
-    (): TableColumn<T>[] => [...columnsProps],
-    [columnsProps],
+    (): TableColumn<T>[] =>
+      compact<TableColumn<T>>([
+        withVersionLogs && {
+          title: '',
+          width: 60,
+          render: (source) => (
+            <IconButton type="button" size="small">
+              <Icon icon={VersionLog} size={16} />
+            </IconButton>
+          ),
+        },
+        ...columnsProps,
+      ]),
+    [columnsProps, withVersionLogs],
   );
 
   const baseTableProps = useMemo(
