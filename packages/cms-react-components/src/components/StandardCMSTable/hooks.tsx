@@ -9,6 +9,7 @@ import {
 } from '../../typings';
 import { defaultTableActions } from '../../constants';
 import { havePermission } from '../../utils/havePermission';
+import classes from './index.module.scss';
 
 export function useMappingTableActions<T extends TableDataSourceWithID>({
   currentStage,
@@ -27,83 +28,79 @@ export function useMappingTableActions<T extends TableDataSourceWithID>({
 
     switch (currentStage) {
       case ArticleStage.DRAFT: {
+        const actionsFilterByPermissions = currentTableActions?.filter(
+          (action) => {
+            switch (action) {
+              case ArticleTableActions.Update:
+                return havePermission({
+                  userPermissions,
+                  targetPermission: ArticlesPermissions.UpdateArticleInDraft,
+                });
+
+              case ArticleTableActions.Submit:
+                return havePermission({
+                  userPermissions,
+                  targetPermission: ArticlesPermissions.SubmitPutBackArticle,
+                });
+
+              case ArticleTableActions.Release:
+                return havePermission({
+                  userPermissions,
+                  targetPermission: ArticlesPermissions.ReleaseArticleInDraft,
+                });
+
+              case ArticleTableActions.Delete:
+                return havePermission({
+                  userPermissions,
+                  targetPermission: ArticlesPermissions.DeleteArticleInDraft,
+                });
+
+              default:
+                return false;
+            }
+          },
+        );
+
+        if (actionsFilterByPermissions?.length === 0) return [];
+
         return [
           {
             title: '',
+            align: 'end',
             render: (source) => (
-              <div>
-                {currentTableActions?.map((action) => {
+              <div className={classes.tableActions}>
+                {actionsFilterByPermissions?.map((action) => {
                   switch (action) {
                     case ArticleTableActions.Update: {
-                      if (
-                        havePermission({
-                          userPermissions,
-                          targetPermission:
-                            ArticlesPermissions.UpdateArticleInDraft,
-                        })
-                      ) {
-                        return (
-                          <Button type="button" variant="text">
-                            編輯
-                          </Button>
-                        );
-                      }
-
-                      return null;
+                      return (
+                        <Button type="button" variant="text">
+                          編輯
+                        </Button>
+                      );
                     }
 
                     case ArticleTableActions.Submit: {
-                      if (
-                        havePermission({
-                          userPermissions,
-                          targetPermission:
-                            ArticlesPermissions.SubmitPutBackArticle,
-                        })
-                      ) {
-                        return (
-                          <Button type="button" variant="text">
-                            送審
-                          </Button>
-                        );
-                      }
-
-                      return null;
+                      return (
+                        <Button type="button" variant="text">
+                          送審
+                        </Button>
+                      );
                     }
 
                     case ArticleTableActions.Release: {
-                      if (
-                        havePermission({
-                          userPermissions,
-                          targetPermission:
-                            ArticlesPermissions.ReleaseArticleInDraft,
-                        })
-                      ) {
-                        return (
-                          <Button type="button" variant="text">
-                            發佈
-                          </Button>
-                        );
-                      }
-
-                      return null;
+                      return (
+                        <Button type="button" variant="text">
+                          發佈
+                        </Button>
+                      );
                     }
 
                     case ArticleTableActions.Delete: {
-                      if (
-                        havePermission({
-                          userPermissions,
-                          targetPermission:
-                            ArticlesPermissions.DeleteArticleInDraft,
-                        })
-                      ) {
-                        return (
-                          <Button type="button" variant="text" danger>
-                            刪除此版本
-                          </Button>
-                        );
-                      }
-
-                      return null;
+                      return (
+                        <Button type="button" variant="text" danger>
+                          刪除此版本
+                        </Button>
+                      );
                     }
 
                     default:
