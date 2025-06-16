@@ -201,6 +201,93 @@ export function useMappingTableActions<T extends TableDataSourceWithID>({
         ];
       }
 
+      case ArticleStage.VERIFIED: {
+        const actionsFilterByPermissions = currentTableActions?.filter(
+          (action) => {
+            switch (action) {
+              case ArticleTableActions.View:
+                return !havePermission({
+                  userPermissions,
+                  targetPermission: ArticlesPermissions.UpdateArticleInVerified,
+                });
+
+              case ArticleTableActions.Update:
+                return havePermission({
+                  userPermissions,
+                  targetPermission: ArticlesPermissions.UpdateArticleInVerified,
+                });
+
+              case ArticleTableActions.Release:
+                return havePermission({
+                  userPermissions,
+                  targetPermission:
+                    ArticlesPermissions.ReleaseArticleInVerified,
+                });
+
+              case ArticleTableActions.Delete:
+                return havePermission({
+                  userPermissions,
+                  targetPermission: ArticlesPermissions.DeleteArticleInVerified,
+                });
+
+              default:
+                return false;
+            }
+          },
+        );
+
+        if (actionsFilterByPermissions?.length === 0) return [];
+
+        return [
+          {
+            title: '',
+            align: 'end',
+            render: (source) => (
+              <div className={classes.tableActions}>
+                {actionsFilterByPermissions?.map((action) => {
+                  switch (action) {
+                    case ArticleTableActions.View: {
+                      return (
+                        <Button type="button" variant="text">
+                          檢視
+                        </Button>
+                      );
+                    }
+
+                    case ArticleTableActions.Update: {
+                      return (
+                        <Button type="button" variant="text">
+                          編輯
+                        </Button>
+                      );
+                    }
+
+                    case ArticleTableActions.Release: {
+                      return (
+                        <Button type="button" variant="text">
+                          發佈
+                        </Button>
+                      );
+                    }
+
+                    case ArticleTableActions.Delete: {
+                      return (
+                        <Button type="button" variant="text" danger>
+                          刪除
+                        </Button>
+                      );
+                    }
+
+                    default:
+                      return null;
+                  }
+                })}
+              </div>
+            ),
+          },
+        ];
+      }
+
       default:
         return [];
     }
