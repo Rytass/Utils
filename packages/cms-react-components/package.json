@@ -24,12 +24,17 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "peerDependencies": {
+    "@hookform/error-message": "*",
+    "@hookform/resolvers": "*",
     "@mezzanine-ui/core": "*",
     "@mezzanine-ui/icons": "*",
     "@mezzanine-ui/react": "*",
+    "@mezzanine-ui/react-hook-form-v2": "*",
     "@mezzanine-ui/system": "*",
+    "dayjs": "*",
     "lodash": "*",
     "react": "*",
-    "react-dom": "*"
+    "react-dom": "*",
+    "react-hook-form": "*"
   }
 }
