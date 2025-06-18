@@ -72,5 +72,6 @@ export enum ArticlesPermissions {
   // Released
   UpdateArticleInReleased = 'UpdateArticleInReleased',
   ReleaseArticleInReleased = 'ReleaseArticleInReleased',
+  WithdrawArticleInReleased = 'WithdrawArticleInReleased',
   DeleteArticleInReleased = 'DeleteArticleInReleased',
 }

@@ -4,11 +4,13 @@ import { useDialog } from '../../dialog/useDialog';
 import { useModal } from '../../modal/useModal';
 import { VerifyReleaseModal } from '../../cms-modals/VerifyReleaseModal';
 import { StandardCMSTableEventsProps } from '../typings';
-import { ArticleStage } from '../../../typings';
+import { ArticleStage, ArticlesPermissions } from '../../../typings';
 
 export function useTableEvents<T extends TableDataSourceWithID>({
+  userPermissions,
   actionsEvents,
 }: {
+  userPermissions: ArticlesPermissions[];
   actionsEvents: StandardCMSTableEventsProps<T>;
 }): {
   onView: (source: T) => () => Promise<void>;

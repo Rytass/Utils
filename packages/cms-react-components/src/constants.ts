@@ -25,6 +25,7 @@ export const defaultAdminRolePermissions = [
   // Released
   ArticlesPermissions.UpdateArticleInReleased,
   ArticlesPermissions.ReleaseArticleInReleased,
+  ArticlesPermissions.WithdrawArticleInReleased,
   ArticlesPermissions.DeleteArticleInReleased,
 ];
 
