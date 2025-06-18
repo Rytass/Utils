@@ -18,7 +18,7 @@ import {
 } from '../../typings';
 
 export interface StandardCMSTableEventsProps<T extends TableDataSourceWithID> {
-  onUpdate?: (source: T) => Promise<void>;
+  onView?: (source: T) => Promise<void>;
   onSubmit?: (source: T) => Promise<void>;
   onRelease?: (source: T, releasedAt: string) => Promise<void>;
   onApprove?: (source: T) => Promise<void>;
