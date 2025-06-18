@@ -81,7 +81,7 @@
     "prism-react-renderer": "^2.4.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-hook-form": "^7.58.0",
+    "react-hook-form": "^7.58.1",
     "reflect-metadata": "^0.2.2",
     "rollup": "^4.27.4",
     "rollup-plugin-postcss": "^4.0.2",
