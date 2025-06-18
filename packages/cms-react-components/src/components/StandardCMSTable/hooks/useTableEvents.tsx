@@ -55,6 +55,9 @@ export function useTableEvents<T extends TableDataSourceWithID>({
             onApprove={async () => {
               await actionsEvents.onApprove?.(source);
             }}
+            onReject={async (reason) => {
+              await actionsEvents.onReject?.(source, reason);
+            }}
           />
         ),
       });
