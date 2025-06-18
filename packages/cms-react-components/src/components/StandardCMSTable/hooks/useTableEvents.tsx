@@ -7,6 +7,7 @@ import {
   DeleteWithdrawModal,
   DeleteWithdrawModalRadio,
 } from '../../cms-modals/DeleteWithdrawModal';
+import { havePermission } from '../../../utils/havePermission';
 import { StandardCMSTableEventsProps } from '../typings';
 import { ArticleStage, ArticlesPermissions } from '../../../typings';
 
@@ -23,6 +24,7 @@ export function useTableEvents<T extends TableDataSourceWithID>({
   onSubmit: (source: T) => () => Promise<void>;
   onPutBack: (source: T) => () => Promise<void>;
   onDelete: (source: T) => () => Promise<void>;
+  onDeleteWithdraw: (source: T) => () => Promise<void>;
 } {
   const { openDialog } = useDialog();
   const { openModal } = useModal();
@@ -160,6 +162,41 @@ export function useTableEvents<T extends TableDataSourceWithID>({
     [actionsEvents, openDialog],
   );
 
+  const onDeleteWithdraw = useCallback(
+    (source: T) => async () => {
+      openModal({
+        size: 'small',
+        children: (
+          <DeleteWithdrawModal
+            defaultRadioValue={
+              havePermission({
+                userPermissions,
+                targetPermission: ArticlesPermissions.WithdrawArticleInReleased,
+              })
+                ? DeleteWithdrawModalRadio.Withdraw
+                : DeleteWithdrawModalRadio.Delete
+            }
+            withDelete={havePermission({
+              userPermissions,
+              targetPermission: ArticlesPermissions.DeleteArticleInReleased,
+            })}
+            withWithdraw={havePermission({
+              userPermissions,
+              targetPermission: ArticlesPermissions.WithdrawArticleInReleased,
+            })}
+            onDelete={async () => {
+              await actionsEvents.onDelete?.(source);
+            }}
+            onWithdraw={async () => {
+              await actionsEvents.onWithdraw?.(source);
+            }}
+          />
+        ),
+      });
+    },
+    [actionsEvents, openModal, userPermissions],
+  );
+
   return {
     onView,
     onVerifyRelease,
@@ -167,5 +204,6 @@ export function useTableEvents<T extends TableDataSourceWithID>({
     onSubmit,
     onPutBack,
     onDelete,
+    onDeleteWithdraw,
   };
 }

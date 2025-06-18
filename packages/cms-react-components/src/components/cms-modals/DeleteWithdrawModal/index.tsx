@@ -3,6 +3,7 @@ import {
   ModalHeader,
   ModalBody as MznModalBody,
   ModalActions,
+  Typography,
   RadioGroup,
   Radio,
 } from '@mezzanine-ui/react';
@@ -10,26 +11,26 @@ import { useModal } from '../../modal/useModal';
 import classes from './index.module.scss';
 
 export enum DeleteWithdrawModalRadio {
-  Withdraw = 'Withdraw',
   Delete = 'Delete',
+  Withdraw = 'Withdraw',
 }
 
 export interface DeleteWithdrawModalProps {
   showSeverityIcon?: boolean;
   defaultRadioValue: DeleteWithdrawModalRadio;
-  withWithdraw?: boolean;
   withDelete?: boolean;
-  onWithdraw: () => Promise<void>;
+  withWithdraw?: boolean;
   onDelete: () => Promise<void>;
+  onWithdraw: () => Promise<void>;
 }
 
 const DeleteWithdrawModal = ({
   showSeverityIcon = false,
   defaultRadioValue,
-  withWithdraw,
   withDelete,
-  onWithdraw,
+  withWithdraw,
   onDelete,
+  onWithdraw,
 }: DeleteWithdrawModalProps): ReactNode => {
   const [currentRadioValue, setCurrentRadioValue] =
     useState<DeleteWithdrawModalRadio>(defaultRadioValue);
@@ -38,15 +39,15 @@ const DeleteWithdrawModal = ({
 
   const onConfirm = useMemo(() => {
     switch (currentRadioValue) {
-      case DeleteWithdrawModalRadio.Withdraw:
-        return async () => {
-          await onWithdraw();
-          closeModal();
-        };
-
       case DeleteWithdrawModalRadio.Delete:
         return async () => {
           await onDelete();
+          closeModal();
+        };
+
+      case DeleteWithdrawModalRadio.Withdraw:
+        return async () => {
+          await onWithdraw();
           closeModal();
         };
 
@@ -61,6 +62,9 @@ const DeleteWithdrawModal = ({
     <>
       <ModalHeader showSeverityIcon={showSeverityIcon}>移除文章</ModalHeader>
       <MznModalBody className={classes.modalBody}>
+        <Typography variant="body1" color="text-primary">
+          將已發佈文章從前台移除，請確認是否執行此操作。
+        </Typography>
         <RadioGroup
           size="large"
           value={currentRadioValue}
