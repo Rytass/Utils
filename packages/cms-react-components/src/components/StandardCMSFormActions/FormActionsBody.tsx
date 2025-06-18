@@ -6,11 +6,18 @@ import { StandardCMSFormActionsProps } from './typings';
 const FormActionsBody = <T extends FieldValues>(
   props: StandardCMSFormActionsProps<T>,
 ): ReactNode => {
-  const { className, methods, children } = props;
+  const { className, methods, children, onSubmit: onSubmitProps } = props;
 
-  const onSubmit = useCallback(async (value: T) => {
-    console.log('value', value);
-  }, []);
+  const onSubmit = useCallback(
+    async (value: T) => {
+      if (onSubmitProps) {
+        await onSubmitProps(value);
+      } else {
+        console.log('value', value);
+      }
+    },
+    [onSubmitProps],
+  );
 
   return (
     <FormProvider {...methods}>

@@ -1,4 +1,4 @@
-import React, { ReactNode, useMemo, useState } from 'react';
+import React, { ReactNode, useMemo, useState, useCallback } from 'react';
 import { Button, cx } from '@mezzanine-ui/react';
 import { FieldValues, useWatch } from 'react-hook-form';
 import { StandardCMSFormActionsProps } from './typings';
@@ -10,6 +10,8 @@ const FormActionsFooter = <T extends FieldValues>({
   disableLeaveButton,
   disableActionButton,
   disableSubmitButton,
+  onLeave: onLeaveProps,
+  onAction: onActionProps,
   currentStage,
   userPermissions,
   actionsEvents,
@@ -45,6 +47,26 @@ const FormActionsFooter = <T extends FieldValues>({
     return baseCondition || disableSubmitButton?.(values);
   }, [disableSubmitButton, loading, values]);
 
+  const onLeave = useCallback(async () => {
+    if (onLeaveProps) {
+      await onLeaveProps(values);
+    } else {
+      console.log('onLeave', values);
+    }
+  }, [onLeaveProps, values]);
+
+  const onAction = useCallback(async () => {
+    setActing(true);
+
+    if (onActionProps) {
+      await onActionProps(values);
+    } else {
+      console.log('onAction', values);
+    }
+
+    setActing(false);
+  }, [onActionProps, values]);
+
   return (
     <div className={cx(classes.formActionsFooter, actionsClassName)}>
       <Button
@@ -52,6 +74,8 @@ const FormActionsFooter = <T extends FieldValues>({
         size="large"
         variant="text"
         danger
+        onClick={onLeave}
+        loading={loading}
         disabled={leaveDisabled}
       >
         離開
@@ -61,6 +85,8 @@ const FormActionsFooter = <T extends FieldValues>({
           type="button"
           size="large"
           variant="outlined"
+          onClick={onAction}
+          loading={loading}
           disabled={actionDisabled}
         >
           儲存草稿
@@ -69,7 +95,7 @@ const FormActionsFooter = <T extends FieldValues>({
           type="submit"
           size="large"
           variant="contained"
-          loading={isSubmitting}
+          loading={loading}
           disabled={submitDisabled}
         >
           送審
