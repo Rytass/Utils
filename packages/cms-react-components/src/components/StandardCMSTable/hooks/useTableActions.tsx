@@ -24,7 +24,9 @@ export function useTableActions<T extends TableDataSourceWithID>({
   actionsEvents: StandardCMSTableEventsProps<T>;
   actions?: ArticleTableActionsType;
 }): TableColumn<T>[] {
-  const { onUpdate, onSubmit, onDelete } = useTableEvents({ actionsEvents });
+  const { onUpdate, onVerify, onSubmit, onDelete } = useTableEvents({
+    actionsEvents,
+  });
 
   const tableActions = useMemo((): TableColumn<T>[] => {
     const currentTableActions =
@@ -103,7 +105,11 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Release: {
                       return (
-                        <Button type="button" variant="text">
+                        <Button
+                          type="button"
+                          variant="text"
+                          onClick={onVerify(source, currentStage)}
+                        >
                           發佈
                         </Button>
                       );
@@ -443,7 +449,15 @@ export function useTableActions<T extends TableDataSourceWithID>({
       default:
         return [];
     }
-  }, [actions, currentStage, userPermissions, onUpdate, onSubmit, onDelete]);
+  }, [
+    actions,
+    currentStage,
+    userPermissions,
+    onUpdate,
+    onSubmit,
+    onVerify,
+    onDelete,
+  ]);
 
   return tableActions;
 }
