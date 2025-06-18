@@ -19,14 +19,16 @@ export enum VerifyReleaseModalRadio {
 }
 
 export interface VerifyReleaseModalProps {
-  title?: string;
+  title: string;
+  showSeverityIcon?: boolean;
   defaultRadioValue?: VerifyReleaseModalRadio;
   onRelease: (releasedAt: string) => Promise<void>;
   onApprove: () => Promise<void>;
 }
 
 const VerifyReleaseModal = ({
-  title = '審核通過',
+  title,
+  showSeverityIcon = false,
   defaultRadioValue = VerifyReleaseModalRadio.Now,
   onRelease,
   onApprove,
@@ -93,7 +95,7 @@ const VerifyReleaseModal = ({
 
   return (
     <>
-      <ModalHeader>{title}</ModalHeader>
+      <ModalHeader showSeverityIcon={showSeverityIcon}>{title}</ModalHeader>
       <MznModalBody className={classes.modalBody}>
         <RadioGroup
           size="large"
