@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import { TableDataSourceWithID } from '@mezzanine-ui/core/table';
 import { useDialog } from '../../dialog/useDialog';
 import { useModal } from '../../modal/useModal';
-import { VerifyModal } from '../../cms-modals/VerifyModal';
+import { VerifyReleaseModal } from '../../cms-modals/VerifyReleaseModal';
 import { StandardCMSTableEventsProps } from '../typings';
 import { ArticleStage } from '../../../typings';
 
@@ -29,7 +29,7 @@ export function useTableEvents<T extends TableDataSourceWithID>({
   const onVerify = useCallback(
     (source: T, stage: ArticleStage) => async () => {
       openModal({
-        children: <VerifyModal />,
+        children: <VerifyReleaseModal />,
       });
     },
     [openModal],
