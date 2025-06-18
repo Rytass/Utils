@@ -14,7 +14,7 @@ const StandardCMSFormActions = <T extends FieldValues>(
     <CalendarConfigProvider methods={calendarMethodsDayjs}>
       <DialogProvider>
         <ModalProvider>
-          <FormActions {...props} />;
+          <FormActions {...props} />
         </ModalProvider>
       </DialogProvider>
     </CalendarConfigProvider>
