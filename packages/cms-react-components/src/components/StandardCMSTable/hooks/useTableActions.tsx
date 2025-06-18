@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Button } from '@mezzanine-ui/react';
 import { TableColumn, TableDataSourceWithID } from '@mezzanine-ui/core/table';
 import {
@@ -9,10 +9,9 @@ import {
 } from '../../../typings';
 import { defaultTableActions } from '../../../constants';
 import { havePermission } from '../../../utils/havePermission';
-import { useDialog } from '../../dialog/useDialog';
-import { useModal } from '../../modal/useModal';
 import { StandardCMSTableEventsProps } from '../typings';
-import classes from './index.module.scss';
+import { useTableEvents } from './useTableEvents';
+import classes from '../index.module.scss';
 
 export function useTableActions<T extends TableDataSourceWithID>({
   currentStage,
@@ -25,59 +24,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
   actionsEvents: StandardCMSTableEventsProps<T>;
   actions?: ArticleTableActionsType;
 }): TableColumn<T>[] {
-  const { openDialog } = useDialog();
-  const { openModal } = useModal();
-
-  const onUpdate = useCallback(
-    (source: T) => async () => {
-      await actionsEvents.onUpdate?.(source);
-    },
-    [actionsEvents],
-  );
-
-  const onSubmit = useCallback(
-    (source: T) => async () => {
-      const isConfirm = await openDialog({
-        style: { width: 384 },
-        title: '提交審核此文章',
-        children: '文章將移至「待審核」。請確認是否提交審核此文章。',
-        cancelText: '取消',
-        cancelButtonProps: {
-          danger: false,
-        },
-        confirmText: '提交審核',
-        confirmButtonProps: {
-          danger: false,
-        },
-      });
-
-      if (isConfirm) {
-        await actionsEvents.onSubmit?.(source);
-      }
-    },
-    [actionsEvents, openDialog],
-  );
-
-  const onDelete = useCallback(
-    (source: T) => async () => {
-      const isConfirm = await openDialog({
-        severity: 'error',
-        style: { width: 384 },
-        title: '確認刪除文章？',
-        children: '此動作無法復原。',
-        cancelText: '取消',
-        cancelButtonProps: {
-          danger: false,
-        },
-        confirmText: '刪除文章',
-      });
-
-      if (isConfirm) {
-        await actionsEvents.onDelete?.(source);
-      }
-    },
-    [actionsEvents, openDialog],
-  );
+  const { onUpdate, onSubmit, onDelete } = useTableEvents({ actionsEvents });
 
   const tableActions = useMemo((): TableColumn<T>[] => {
     const currentTableActions =
