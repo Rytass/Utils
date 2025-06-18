@@ -35,6 +35,29 @@ export function useMappingTableActions<T extends TableDataSourceWithID>({
     [actionsEvents],
   );
 
+  const onSubmit = useCallback(
+    (source: T) => async () => {
+      const isConfirm = await openDialog({
+        style: { width: 384 },
+        title: '提交審核此文章',
+        children: '文章將移至「待審核」。請確認是否提交審核此文章。',
+        cancelText: '取消',
+        cancelButtonProps: {
+          danger: false,
+        },
+        confirmText: '提交審核',
+        confirmButtonProps: {
+          danger: false,
+        },
+      });
+
+      if (isConfirm) {
+        await actionsEvents.onSubmit?.(source);
+      }
+    },
+    [actionsEvents, openDialog],
+  );
+
   const onDelete = useCallback(
     (source: T) => async () => {
       const isConfirm = await openDialog({
@@ -121,7 +144,11 @@ export function useMappingTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Submit: {
                       return (
-                        <Button type="button" variant="text">
+                        <Button
+                          type="button"
+                          variant="text"
+                          onClick={onSubmit(source)}
+                        >
                           送審
                         </Button>
                       );
@@ -469,7 +496,7 @@ export function useMappingTableActions<T extends TableDataSourceWithID>({
       default:
         return [];
     }
-  }, [actions, currentStage, onUpdate, onDelete, userPermissions]);
+  }, [actions, currentStage, userPermissions, onUpdate, onSubmit, onDelete]);
 
   return tableActions;
 }

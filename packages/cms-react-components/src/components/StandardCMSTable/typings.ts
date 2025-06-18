@@ -19,6 +19,7 @@ import {
 
 export interface StandardCMSTableEventsProps<T extends TableDataSourceWithID> {
   onUpdate?: (source: T) => Promise<void>;
+  onSubmit?: (source: T) => Promise<void>;
   onDelete?: (source: T) => Promise<void>;
 }
 

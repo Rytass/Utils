@@ -1,5 +1,7 @@
 import React, { ReactElement } from 'react';
 import { TableDataSourceWithID } from '@mezzanine-ui/core/table';
+import { CalendarConfigProvider } from '@mezzanine-ui/react';
+import calendarMethodsDayjs from '@mezzanine-ui/core/calendarMethodsDayjs';
 import DialogProvider from '../dialog/DialogProvider';
 import ModalProvider from '../modal/ModalProvider';
 import Table from './Table';
@@ -9,11 +11,13 @@ const StandardCMSTable = <T extends TableDataSourceWithID>(
   props: StandardCMSTableProps<T>,
 ): ReactElement => {
   return (
-    <DialogProvider>
-      <ModalProvider>
-        <Table {...props} />
-      </ModalProvider>
-    </DialogProvider>
+    <CalendarConfigProvider methods={calendarMethodsDayjs}>
+      <DialogProvider>
+        <ModalProvider>
+          <Table {...props} />
+        </ModalProvider>
+      </DialogProvider>
+    </CalendarConfigProvider>
   );
 };
 
