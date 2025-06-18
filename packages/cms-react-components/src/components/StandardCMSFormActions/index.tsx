@@ -5,7 +5,7 @@ import calendarMethodsDayjs from '@mezzanine-ui/core/calendarMethodsDayjs';
 import DialogProvider from '../dialog/DialogProvider';
 import ModalProvider from '../modal/ModalProvider';
 import { StandardCMSFormActionsProps } from './typings';
-import FormActions from './FormActions';
+import FormActionsBody from './FormActionsBody';
 
 const StandardCMSFormActions = <T extends FieldValues>(
   props: StandardCMSFormActionsProps<T>,
@@ -14,7 +14,7 @@ const StandardCMSFormActions = <T extends FieldValues>(
     <CalendarConfigProvider methods={calendarMethodsDayjs}>
       <DialogProvider>
         <ModalProvider>
-          <FormActions {...props} />
+          <FormActionsBody {...props} />
         </ModalProvider>
       </DialogProvider>
     </CalendarConfigProvider>
