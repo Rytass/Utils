@@ -3,7 +3,7 @@ import { compact } from 'lodash';
 import { Table as MznTable, IconButton, Icon } from '@mezzanine-ui/react';
 import { TableColumn, TableDataSourceWithID } from '@mezzanine-ui/core/table';
 import { VersionLog } from '../../icons/version-log';
-import { useMappingTableActions } from './hooks';
+import { useTableActions } from './hooks/useTableActions';
 import { StandardCMSTableProps } from './typings';
 
 const Table = <T extends TableDataSourceWithID>({
@@ -30,7 +30,7 @@ const Table = <T extends TableDataSourceWithID>({
   actions,
   customizedActions = [],
 }: StandardCMSTableProps<T>): ReactElement => {
-  const tableActions = useMappingTableActions<T>({
+  const tableActions = useTableActions<T>({
     currentStage,
     userPermissions,
     actionsEvents,
