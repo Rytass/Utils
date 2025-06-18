@@ -29,6 +29,8 @@ const DialogProvider: FC<{ children?: ReactNode }> = ({ children }) => {
     confirmButtonProps,
     confirmText = '確認',
     size = 'small',
+    showSeverityIcon = false,
+    hideCloseIcon = true,
     ...rest
   } = dialogConfig;
 
@@ -67,6 +69,7 @@ const DialogProvider: FC<{ children?: ReactNode }> = ({ children }) => {
           {...rest}
           severity={severity}
           disableCloseOnBackdropClick
+          hideCloseIcon={hideCloseIcon}
           onClose={() => {
             handleResolveActions(false);
           }}
@@ -74,7 +77,10 @@ const DialogProvider: FC<{ children?: ReactNode }> = ({ children }) => {
           size={size}
           className={cx(classes.host, className)}
         >
-          <ModalHeader showSeverityIcon titleLarge={titleLarge}>
+          <ModalHeader
+            showSeverityIcon={showSeverityIcon}
+            titleLarge={titleLarge}
+          >
             {title}
           </ModalHeader>
           <ModalBody className={classes.modalBody}>{dialogChildren}</ModalBody>
