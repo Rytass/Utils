@@ -53,7 +53,6 @@ export enum ArticlesPermissions {
   ApproveRejectArticle = 'ApproveRejectArticle',
   // Draft
   UpdateArticleInDraft = 'UpdateArticleInDraft',
-  ReleaseArticleInDraft = 'ReleaseArticleInDraft',
   DeleteArticleInDraft = 'DeleteArticleInDraft',
 
   // Reviewing

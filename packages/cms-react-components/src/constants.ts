@@ -10,7 +10,6 @@ export const defaultAdminRolePermissions = [
   ArticlesPermissions.ApproveRejectArticle,
   // Draft
   ArticlesPermissions.UpdateArticleInDraft,
-  ArticlesPermissions.ReleaseArticleInDraft,
   ArticlesPermissions.DeleteArticleInDraft,
   // Reviewing
   ArticlesPermissions.UpdateArticleInReviewing,
