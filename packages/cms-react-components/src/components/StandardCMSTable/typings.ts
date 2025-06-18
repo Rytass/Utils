@@ -22,6 +22,7 @@ export interface StandardCMSTableEventsProps<T extends TableDataSourceWithID> {
   onSubmit?: (source: T) => Promise<void>;
   onPutBack?: (source: T) => Promise<void>;
   onRelease?: (source: T, releasedAt: string) => Promise<void>;
+  onWithdraw?: (source: T) => Promise<void>;
   onApprove?: (source: T) => Promise<void>;
   onReject?: (source: T, reason: string) => Promise<void>;
   onDelete?: (source: T) => Promise<void>;
