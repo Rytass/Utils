@@ -1,6 +1,8 @@
 import React, { ReactNode, useMemo, useState, useCallback } from 'react';
 import { Button, cx } from '@mezzanine-ui/react';
 import { FieldValues, useWatch } from 'react-hook-form';
+import { useActionButton } from './hooks/useActionButton';
+import { useSubmitButton } from './hooks/useSubmitButton';
 import { StandardCMSFormActionsProps } from './typings';
 import classes from './index.module.scss';
 
@@ -15,11 +17,14 @@ const FormActionsFooter = <T extends FieldValues>({
   disableSubmitButton,
   onLeave: onLeaveProps,
   onAction: onActionProps,
+  onSubmit: onSubmitProps,
   currentStage,
   userPermissions,
   actionsEvents,
 }: StandardCMSFormActionsProps<T>): ReactNode => {
   const [acting, setActing] = useState<boolean>(false);
+  const actionButton = useActionButton();
+  const submitButton = useSubmitButton();
 
   const watchValues = useWatch<T>();
 
@@ -38,13 +43,13 @@ const FormActionsFooter = <T extends FieldValues>({
   );
 
   const actionButtonText = useMemo(
-    () => actionButtonTextProps || '儲存草稿',
-    [actionButtonTextProps],
+    () => actionButtonTextProps || actionButton.text,
+    [actionButton.text, actionButtonTextProps],
   );
 
   const submitButtonText = useMemo(
-    () => submitButtonTextProps || '送審',
-    [submitButtonTextProps],
+    () => submitButtonTextProps || submitButton.text,
+    [submitButton.text, submitButtonTextProps],
   );
 
   const leaveDisabled = useMemo(() => {
@@ -79,11 +84,11 @@ const FormActionsFooter = <T extends FieldValues>({
     if (onActionProps) {
       await onActionProps(values);
     } else {
-      console.log('onAction', values);
+      await actionButton.onAction?.();
     }
 
     setActing(false);
-  }, [onActionProps, values]);
+  }, [actionButton, onActionProps, values]);
 
   return (
     <div className={cx(classes.formActionsFooter, actionsClassName)}>
@@ -99,25 +104,29 @@ const FormActionsFooter = <T extends FieldValues>({
         {leaveButtonText}
       </Button>
       <div className={classes.actionsSet}>
-        <Button
-          type="button"
-          size="large"
-          variant="outlined"
-          onClick={onAction}
-          loading={loading}
-          disabled={actionDisabled}
-        >
-          {actionButtonText}
-        </Button>
-        <Button
-          type="submit"
-          size="large"
-          variant="contained"
-          loading={loading}
-          disabled={submitDisabled}
-        >
-          {submitButtonText}
-        </Button>
+        {actionButtonText && (onActionProps || actionButton.onAction) && (
+          <Button
+            type="button"
+            size="large"
+            variant="outlined"
+            onClick={onAction}
+            loading={loading}
+            disabled={actionDisabled}
+          >
+            {actionButtonText}
+          </Button>
+        )}
+        {submitButtonText && (onSubmitProps || submitButton.onSubmit) && (
+          <Button
+            type="submit"
+            size="large"
+            variant="contained"
+            loading={loading}
+            disabled={submitDisabled}
+          >
+            {submitButtonText}
+          </Button>
+        )}
       </div>
     </div>
   );
