@@ -69,16 +69,19 @@ const VerifyReleaseModal = ({
       case VerifyReleaseModalRadio.Now:
         return async () => {
           await onRelease(dayjs(Date.now()).toISOString());
+          closeModal();
         };
 
       case VerifyReleaseModalRadio.Schedule:
         return async () => {
           await onRelease(dayjs(releasedAt).toISOString());
+          closeModal();
         };
 
       case VerifyReleaseModalRadio.Approve:
         return async () => {
           await onApprove();
+          closeModal();
         };
 
       default:

@@ -24,7 +24,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
   actionsEvents: StandardCMSTableEventsProps<T>;
   actions?: ArticleTableActionsType;
 }): TableColumn<T>[] {
-  const { onUpdate, onVerify, onSubmit, onDelete } = useTableEvents({
+  const { onView, onVerify, onSubmit, onDelete } = useTableEvents({
     actionsEvents,
   });
 
@@ -84,7 +84,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
                         <Button
                           type="button"
                           variant="text"
-                          onClick={onUpdate(source)}
+                          onClick={onView(source)}
                         >
                           編輯
                         </Button>
@@ -453,7 +453,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
     actions,
     currentStage,
     userPermissions,
-    onUpdate,
+    onView,
     onSubmit,
     onVerify,
     onDelete,

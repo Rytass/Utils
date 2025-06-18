@@ -11,7 +11,7 @@ export function useTableEvents<T extends TableDataSourceWithID>({
 }: {
   actionsEvents: StandardCMSTableEventsProps<T>;
 }): {
-  onUpdate: (source: T) => () => Promise<void>;
+  onView: (source: T) => () => Promise<void>;
   onVerify: (source: T, stage: ArticleStage) => () => Promise<void>;
   onSubmit: (source: T) => () => Promise<void>;
   onDelete: (source: T) => () => Promise<void>;
@@ -19,9 +19,9 @@ export function useTableEvents<T extends TableDataSourceWithID>({
   const { openDialog } = useDialog();
   const { openModal } = useModal();
 
-  const onUpdate = useCallback(
+  const onView = useCallback(
     (source: T) => async () => {
-      await actionsEvents.onUpdate?.(source);
+      await actionsEvents.onView?.(source);
     },
     [actionsEvents],
   );
@@ -87,7 +87,7 @@ export function useTableEvents<T extends TableDataSourceWithID>({
   );
 
   return {
-    onUpdate,
+    onView,
     onVerify,
     onSubmit,
     onDelete,
