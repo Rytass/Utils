@@ -18,6 +18,7 @@ export { useModal } from './components/modal/useModal';
 export * from './components/cms-modals/DeleteWithdrawModal';
 export * from './components/cms-modals/VerifyReleaseModal';
 export * from './components/StandardCMSFormActions';
+export * from './components/StandardCMSFormActions/typings';
 export * from './components/StandardCMSList';
 export * from './components/StandardCMSTable';
 export * from './components/StandardCMSTable/typings';
