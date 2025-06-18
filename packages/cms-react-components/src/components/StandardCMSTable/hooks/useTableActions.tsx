@@ -26,6 +26,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
 }): TableColumn<T>[] {
   const { onView, onVerifyRelease, onWithdraw, onSubmit, onPutBack, onDelete } =
     useTableEvents({
+      userPermissions,
       actionsEvents,
     });
 
@@ -448,10 +449,18 @@ export function useTableActions<T extends TableDataSourceWithID>({
                 });
 
               case ArticleTableActions.Delete:
-                return havePermission({
-                  userPermissions,
-                  targetPermission: ArticlesPermissions.DeleteArticleInReleased,
-                });
+                return (
+                  havePermission({
+                    userPermissions,
+                    targetPermission:
+                      ArticlesPermissions.WithdrawArticleInReleased,
+                  }) ||
+                  havePermission({
+                    userPermissions,
+                    targetPermission:
+                      ArticlesPermissions.DeleteArticleInReleased,
+                  })
+                );
 
               default:
                 return false;
@@ -471,7 +480,11 @@ export function useTableActions<T extends TableDataSourceWithID>({
                   switch (action) {
                     case ArticleTableActions.Update: {
                       return (
-                        <Button type="button" variant="text">
+                        <Button
+                          type="button"
+                          variant="text"
+                          onClick={onView(source)}
+                        >
                           編輯
                         </Button>
                       );
