@@ -1,0 +1,18 @@
+@use '~@mezzanine-ui/system/palette';
+
+.modalBody {
+  .radioGroup {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 0;
+
+    .divider {
+      width: 100%;
+      height: 1px;
+      background-color: palette.color(border);
+      margin: 28px 0;
+    }
+  }
+}

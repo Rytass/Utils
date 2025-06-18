@@ -2,7 +2,9 @@ import React, { useCallback } from 'react';
 import { TableDataSourceWithID } from '@mezzanine-ui/core/table';
 import { useDialog } from '../../dialog/useDialog';
 import { useModal } from '../../modal/useModal';
+import { VerifyModal } from '../../cms-modals/VerifyModal';
 import { StandardCMSTableEventsProps } from '../typings';
+import { ArticleStage } from '../../../typings';
 
 export function useTableEvents<T extends TableDataSourceWithID>({
   actionsEvents,
@@ -10,6 +12,7 @@ export function useTableEvents<T extends TableDataSourceWithID>({
   actionsEvents: StandardCMSTableEventsProps<T>;
 }): {
   onUpdate: (source: T) => () => Promise<void>;
+  onVerify: (source: T, stage: ArticleStage) => () => Promise<void>;
   onSubmit: (source: T) => () => Promise<void>;
   onDelete: (source: T) => () => Promise<void>;
 } {
@@ -23,10 +26,18 @@ export function useTableEvents<T extends TableDataSourceWithID>({
     [actionsEvents],
   );
 
+  const onVerify = useCallback(
+    (source: T, stage: ArticleStage) => async () => {
+      openModal({
+        children: <VerifyModal />,
+      });
+    },
+    [openModal],
+  );
+
   const onSubmit = useCallback(
     (source: T) => async () => {
       const isConfirm = await openDialog({
-        style: { width: 384 },
         title: '提交審核此文章',
         children: '文章將移至「待審核」。請確認是否提交審核此文章。',
         cancelText: '取消',
@@ -50,7 +61,6 @@ export function useTableEvents<T extends TableDataSourceWithID>({
     (source: T) => async () => {
       const isConfirm = await openDialog({
         severity: 'error',
-        style: { width: 384 },
         title: '確認刪除文章？',
         children: '此動作無法復原。',
         cancelText: '取消',
@@ -69,6 +79,7 @@ export function useTableEvents<T extends TableDataSourceWithID>({
 
   return {
     onUpdate,
+    onVerify,
     onSubmit,
     onDelete,
   };
