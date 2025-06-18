@@ -7,8 +7,24 @@ import { StandardCMSFormActionsProps } from './typings';
 const FormActionsBody = <T extends FieldValues>(
   props: StandardCMSFormActionsProps<T>,
 ): ReactNode => {
-  const { className, methods, children, onSubmit: onSubmitProps } = props;
-  const submitButton = useSubmitButton();
+  const {
+    className,
+    methods,
+    children,
+    onSubmit: onSubmitProps,
+    currentStage,
+    userPermissions,
+    actionsEvents,
+  } = props;
+
+  const values = methods.watch();
+
+  const submitButton = useSubmitButton<T>({
+    values,
+    currentStage,
+    userPermissions,
+    actionsEvents,
+  });
 
   const onSubmit = useCallback(
     async (value: T) => {
