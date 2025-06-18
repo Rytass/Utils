@@ -82,7 +82,7 @@ export function useMappingTableActions<T extends TableDataSourceWithID>({
               case ArticleTableActions.Release:
                 return havePermission({
                   userPermissions,
-                  targetPermission: ArticlesPermissions.ReleaseArticleInDraft,
+                  targetPermission: ArticlesPermissions.ApproveRejectArticle,
                 });
 
               case ArticleTableActions.Delete:
