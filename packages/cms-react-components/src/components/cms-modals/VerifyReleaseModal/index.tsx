@@ -27,6 +27,7 @@ export interface VerifyReleaseModalProps {
   withReject?: boolean;
   onRelease: (releasedAt: string) => Promise<void>;
   onApprove: () => Promise<void>;
+  onReject?: (reason: string) => Promise<void>;
 }
 
 const VerifyReleaseModal = ({
@@ -36,6 +37,7 @@ const VerifyReleaseModal = ({
   withReject = false,
   onRelease,
   onApprove,
+  onReject,
 }: VerifyReleaseModalProps): ReactNode => {
   const [currentRadioValue, setCurrentRadioValue] =
     useState<VerifyReleaseModalRadio>(defaultRadioValue);
@@ -97,12 +99,26 @@ const VerifyReleaseModal = ({
           closeModal();
         };
 
+      case VerifyReleaseModalRadio.Reject:
+        return async () => {
+          await onReject?.(rejectReason);
+          closeModal();
+        };
+
       default:
         return () => {
           closeModal();
         };
     }
-  }, [currentRadioValue, onRelease, releasedAt, onApprove, closeModal]);
+  }, [
+    currentRadioValue,
+    onRelease,
+    closeModal,
+    releasedAt,
+    onApprove,
+    onReject,
+    rejectReason,
+  ]);
 
   return (
     <>
