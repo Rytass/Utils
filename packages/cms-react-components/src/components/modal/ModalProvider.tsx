@@ -11,7 +11,8 @@ const ModalProvider: FC<{ children?: ReactNode }> = ({ children }) => {
 
   const {
     disableCloseOnBackdropClick = false,
-    hideCloseIcon = false,
+    hideCloseIcon = true,
+    severity,
     size = 'large',
     children: modalChildren,
     width,
@@ -39,6 +40,7 @@ const ModalProvider: FC<{ children?: ReactNode }> = ({ children }) => {
         <Modal
           disableCloseOnBackdropClick={disableCloseOnBackdropClick}
           hideCloseIcon={hideCloseIcon}
+          severity={severity}
           size={size}
           onClose={() => {
             setOpen(false);

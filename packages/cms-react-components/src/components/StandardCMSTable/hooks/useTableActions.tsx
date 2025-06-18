@@ -6,15 +6,15 @@ import {
   ArticleTableActions,
   ArticlesPermissions,
   ArticleTableActionsType,
-} from '../../typings';
-import { defaultTableActions } from '../../constants';
-import { havePermission } from '../../utils/havePermission';
-import { useDialog } from '../dialog/useDialog';
-import { useModal } from '../modal/useModal';
-import { StandardCMSTableEventsProps } from './typings';
+} from '../../../typings';
+import { defaultTableActions } from '../../../constants';
+import { havePermission } from '../../../utils/havePermission';
+import { useDialog } from '../../dialog/useDialog';
+import { useModal } from '../../modal/useModal';
+import { StandardCMSTableEventsProps } from '../typings';
 import classes from './index.module.scss';
 
-export function useMappingTableActions<T extends TableDataSourceWithID>({
+export function useTableActions<T extends TableDataSourceWithID>({
   currentStage,
   userPermissions,
   actionsEvents,
