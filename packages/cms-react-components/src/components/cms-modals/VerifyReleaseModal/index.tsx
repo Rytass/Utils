@@ -21,16 +21,20 @@ export enum VerifyReleaseModalRadio {
 export interface VerifyReleaseModalProps {
   title?: string;
   defaultRadioValue?: VerifyReleaseModalRadio;
+  onRelease: (releasedAt: string) => Promise<void>;
+  onApprove: () => Promise<void>;
 }
 
 const VerifyReleaseModal = ({
   title = '審核通過',
   defaultRadioValue = VerifyReleaseModalRadio.Now,
+  onRelease,
+  onApprove,
 }: VerifyReleaseModalProps): ReactNode => {
   const [currentRadioValue, setCurrentRadioValue] =
     useState<VerifyReleaseModalRadio>(defaultRadioValue);
 
-  const [releaseAt, setReleaseAt] = useState<string>('');
+  const [releasedAt, setReleasedAt] = useState<string>('');
 
   const { closeModal } = useModal();
 
@@ -49,6 +53,40 @@ const VerifyReleaseModal = ({
         return '確認';
     }
   }, [currentRadioValue]);
+
+  const disabled = useMemo(() => {
+    switch (currentRadioValue) {
+      case VerifyReleaseModalRadio.Schedule:
+        return !releasedAt;
+
+      default:
+        return false;
+    }
+  }, [currentRadioValue, releasedAt]);
+
+  const onConfirm = useMemo(() => {
+    switch (currentRadioValue) {
+      case VerifyReleaseModalRadio.Now:
+        return async () => {
+          await onRelease(dayjs(Date.now()).toISOString());
+        };
+
+      case VerifyReleaseModalRadio.Schedule:
+        return async () => {
+          await onRelease(dayjs(releasedAt).toISOString());
+        };
+
+      case VerifyReleaseModalRadio.Approve:
+        return async () => {
+          await onApprove();
+        };
+
+      default:
+        return () => {
+          closeModal();
+        };
+    }
+  }, [currentRadioValue, onRelease, releasedAt, onApprove, closeModal]);
 
   return (
     <>
@@ -72,9 +110,9 @@ const VerifyReleaseModal = ({
             <DateTimePicker
               placeholder="yyyy-mm-dd hh:mm:ss"
               size="large"
-              value={releaseAt}
+              value={releasedAt}
               onChange={(date) => {
-                setReleaseAt(date ?? '');
+                setReleasedAt(date ?? '');
               }}
               isDateDisabled={(date) => dayjs(date).isBefore(dayjs(), 'day')}
               disabled={currentRadioValue !== VerifyReleaseModalRadio.Schedule}
@@ -101,12 +139,13 @@ const VerifyReleaseModal = ({
           type: 'button',
           size: 'large',
           variant: 'contained',
+          disabled,
           style: {
             minWidth: 'unset',
           },
         }}
         onCancel={closeModal}
-        // onConfirm={onConfirm}
+        onConfirm={onConfirm}
       />
     </>
   );

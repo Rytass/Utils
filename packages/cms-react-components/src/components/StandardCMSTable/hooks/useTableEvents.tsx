@@ -29,10 +29,19 @@ export function useTableEvents<T extends TableDataSourceWithID>({
   const onVerify = useCallback(
     (source: T, stage: ArticleStage) => async () => {
       openModal({
-        children: <VerifyReleaseModal />,
+        children: (
+          <VerifyReleaseModal
+            onRelease={async (releasedAt) => {
+              await actionsEvents.onRelease?.(source, releasedAt);
+            }}
+            onApprove={async () => {
+              await actionsEvents.onApprove?.(source);
+            }}
+          />
+        ),
       });
     },
-    [openModal],
+    [actionsEvents, openModal],
   );
 
   const onSubmit = useCallback(
