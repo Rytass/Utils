@@ -15,6 +15,7 @@ export { default as DialogProvider } from './components/dialog/DialogProvider';
 export { useDialog } from './components/dialog/useDialog';
 export { default as ModalProvider } from './components/modal/ModalProvider';
 export { useModal } from './components/modal/useModal';
+export * from './components/cms-modals/DeleteWithdrawModal';
 export * from './components/cms-modals/VerifyReleaseModal';
 export * from './components/StandardCMSFormActions';
 export * from './components/StandardCMSList';
