@@ -37,6 +37,9 @@ export function useTableEvents<T extends TableDataSourceWithID>({
           case ArticleStage.REVIEWING:
             return '審核文章';
 
+          case ArticleStage.VERIFIED:
+            return '發佈設定';
+
           default:
             return '';
         }
@@ -47,6 +50,9 @@ export function useTableEvents<T extends TableDataSourceWithID>({
         children: (
           <VerifyReleaseModal
             title={title}
+            withApprove={[ArticleStage.DRAFT, ArticleStage.REVIEWING].includes(
+              stage,
+            )}
             withReject={stage === ArticleStage.REVIEWING}
             showSeverityIcon={stage === ArticleStage.DRAFT}
             onRelease={async (releasedAt) => {

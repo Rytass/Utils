@@ -24,6 +24,7 @@ export interface VerifyReleaseModalProps {
   title: string;
   showSeverityIcon?: boolean;
   defaultRadioValue?: VerifyReleaseModalRadio;
+  withApprove?: boolean;
   withReject?: boolean;
   onRelease: (releasedAt: string) => Promise<void>;
   onApprove: () => Promise<void>;
@@ -34,6 +35,7 @@ const VerifyReleaseModal = ({
   title,
   showSeverityIcon = false,
   defaultRadioValue = VerifyReleaseModalRadio.Now,
+  withApprove = false,
   withReject = false,
   onRelease,
   onApprove,
@@ -150,10 +152,12 @@ const VerifyReleaseModal = ({
               disabled={currentRadioValue !== VerifyReleaseModalRadio.Schedule}
             />
           </div>
-          <div className={classes.divider} />
-          <Radio value={VerifyReleaseModalRadio.Approve}>
-            即刻通過審查 （文章會將移至可發佈）
-          </Radio>
+          {(withApprove || withReject) && <div className={classes.divider} />}
+          {withApprove && (
+            <Radio value={VerifyReleaseModalRadio.Approve}>
+              即刻通過審查 （文章會將移至可發佈）
+            </Radio>
+          )}
           {withReject && (
             <div className={classes.rejectWrapper}>
               <Radio value={VerifyReleaseModalRadio.Reject}>
@@ -170,6 +174,7 @@ const VerifyReleaseModal = ({
                     onChange={(value) => {
                       setRejectReason(value);
                     }}
+                    autoFocus
                     disabled={
                       currentRadioValue !== VerifyReleaseModalRadio.Reject
                     }
