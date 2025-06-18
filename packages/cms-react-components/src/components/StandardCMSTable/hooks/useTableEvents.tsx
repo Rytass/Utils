@@ -12,8 +12,9 @@ export function useTableEvents<T extends TableDataSourceWithID>({
   actionsEvents: StandardCMSTableEventsProps<T>;
 }): {
   onView: (source: T) => () => Promise<void>;
-  onVerify: (source: T, stage: ArticleStage) => () => Promise<void>;
+  onVerifyRelease: (source: T, stage: ArticleStage) => () => Promise<void>;
   onSubmit: (source: T) => () => Promise<void>;
+  onPutBack: (source: T) => () => Promise<void>;
   onDelete: (source: T) => () => Promise<void>;
 } {
   const { openDialog } = useDialog();
@@ -26,11 +27,27 @@ export function useTableEvents<T extends TableDataSourceWithID>({
     [actionsEvents],
   );
 
-  const onVerify = useCallback(
+  const onVerifyRelease = useCallback(
     (source: T, stage: ArticleStage) => async () => {
+      const title = (() => {
+        switch (stage) {
+          case ArticleStage.DRAFT:
+            return '審核通過';
+
+          case ArticleStage.REVIEWING:
+            return '審核文章';
+
+          default:
+            return '';
+        }
+      })();
+
       openModal({
+        severity: 'success',
         children: (
           <VerifyReleaseModal
+            title={title}
+            showSeverityIcon={stage === ArticleStage.DRAFT}
             onRelease={async (releasedAt) => {
               await actionsEvents.onRelease?.(source, releasedAt);
             }}
@@ -66,6 +83,26 @@ export function useTableEvents<T extends TableDataSourceWithID>({
     [actionsEvents, openDialog],
   );
 
+  const onPutBack = useCallback(
+    (source: T) => async () => {
+      const isConfirm = await openDialog({
+        severity: 'error',
+        title: '確認撤銷審核此文章？',
+        children: '內容將被移至草稿區。',
+        cancelText: '取消',
+        cancelButtonProps: {
+          danger: false,
+        },
+        confirmText: '撤銷審核',
+      });
+
+      if (isConfirm) {
+        await actionsEvents.onPutBack?.(source);
+      }
+    },
+    [actionsEvents, openDialog],
+  );
+
   const onDelete = useCallback(
     (source: T) => async () => {
       const isConfirm = await openDialog({
@@ -88,8 +125,9 @@ export function useTableEvents<T extends TableDataSourceWithID>({
 
   return {
     onView,
-    onVerify,
+    onVerifyRelease,
     onSubmit,
+    onPutBack,
     onDelete,
   };
 }

@@ -24,9 +24,10 @@ export function useTableActions<T extends TableDataSourceWithID>({
   actionsEvents: StandardCMSTableEventsProps<T>;
   actions?: ArticleTableActionsType;
 }): TableColumn<T>[] {
-  const { onView, onVerify, onSubmit, onDelete } = useTableEvents({
-    actionsEvents,
-  });
+  const { onView, onVerifyRelease, onSubmit, onPutBack, onDelete } =
+    useTableEvents({
+      actionsEvents,
+    });
 
   const tableActions = useMemo((): TableColumn<T>[] => {
     const currentTableActions =
@@ -108,7 +109,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
                         <Button
                           type="button"
                           variant="text"
-                          onClick={onVerify(source, currentStage)}
+                          onClick={onVerifyRelease(source, currentStage)}
                         >
                           發佈
                         </Button>
@@ -186,7 +187,11 @@ export function useTableActions<T extends TableDataSourceWithID>({
                   switch (action) {
                     case ArticleTableActions.Update: {
                       return (
-                        <Button type="button" variant="text">
+                        <Button
+                          type="button"
+                          variant="text"
+                          onClick={onView(source)}
+                        >
                           編輯
                         </Button>
                       );
@@ -194,7 +199,11 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Review: {
                       return (
-                        <Button type="button" variant="text">
+                        <Button
+                          type="button"
+                          variant="text"
+                          onClick={onVerifyRelease(source, currentStage)}
+                        >
                           審核
                         </Button>
                       );
@@ -202,7 +211,12 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Delete: {
                       return (
-                        <Button type="button" variant="text" danger>
+                        <Button
+                          type="button"
+                          variant="text"
+                          danger
+                          onClick={onDelete(source)}
+                        >
                           刪除
                         </Button>
                       );
@@ -210,7 +224,12 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.PutBack: {
                       return (
-                        <Button type="button" variant="text" danger>
+                        <Button
+                          type="button"
+                          variant="text"
+                          danger
+                          onClick={onPutBack(source)}
+                        >
                           撤回審核
                         </Button>
                       );
@@ -455,7 +474,8 @@ export function useTableActions<T extends TableDataSourceWithID>({
     userPermissions,
     onView,
     onSubmit,
-    onVerify,
+    onPutBack,
+    onVerifyRelease,
     onDelete,
   ]);
 
