@@ -13,6 +13,7 @@ export function useTableEvents<T extends TableDataSourceWithID>({
 }): {
   onView: (source: T) => () => Promise<void>;
   onVerifyRelease: (source: T, stage: ArticleStage) => () => Promise<void>;
+  onWithdraw: (source: T) => () => Promise<void>;
   onSubmit: (source: T) => () => Promise<void>;
   onPutBack: (source: T) => () => Promise<void>;
   onDelete: (source: T) => () => Promise<void>;
@@ -69,6 +70,26 @@ export function useTableEvents<T extends TableDataSourceWithID>({
       });
     },
     [actionsEvents, openModal],
+  );
+
+  const onWithdraw = useCallback(
+    (source: T) => async () => {
+      const isConfirm = await openDialog({
+        severity: 'error',
+        title: '確認取消發佈此文章？',
+        children: '內容將被移至可發佈區。',
+        cancelText: '取消',
+        cancelButtonProps: {
+          danger: false,
+        },
+        confirmText: '取消發佈',
+      });
+
+      if (isConfirm) {
+        await actionsEvents.onWithdraw?.(source);
+      }
+    },
+    [actionsEvents, openDialog],
   );
 
   const onSubmit = useCallback(
@@ -136,6 +157,7 @@ export function useTableEvents<T extends TableDataSourceWithID>({
   return {
     onView,
     onVerifyRelease,
+    onWithdraw,
     onSubmit,
     onPutBack,
     onDelete,
