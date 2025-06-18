@@ -23,12 +23,22 @@ const FormActionsFooter = <T extends FieldValues>({
   actionsEvents,
 }: StandardCMSFormActionsProps<T>): ReactNode => {
   const [acting, setActing] = useState<boolean>(false);
-  const actionButton = useActionButton();
-  const submitButton = useSubmitButton();
 
-  const watchValues = useWatch<T>();
+  const values = methods.watch();
 
-  const values = useMemo(() => watchValues as T, [watchValues]);
+  const actionButton = useActionButton<T>({
+    values,
+    currentStage,
+    userPermissions,
+    actionsEvents,
+  });
+
+  const submitButton = useSubmitButton<T>({
+    values,
+    currentStage,
+    userPermissions,
+    actionsEvents,
+  });
 
   const isSubmitting = useMemo(
     () => methods.formState.isSubmitting,
