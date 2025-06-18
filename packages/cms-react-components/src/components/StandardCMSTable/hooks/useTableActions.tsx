@@ -24,11 +24,18 @@ export function useTableActions<T extends TableDataSourceWithID>({
   actionsEvents: StandardCMSTableEventsProps<T>;
   actions?: ArticleTableActionsType;
 }): TableColumn<T>[] {
-  const { onView, onVerifyRelease, onWithdraw, onSubmit, onPutBack, onDelete } =
-    useTableEvents({
-      userPermissions,
-      actionsEvents,
-    });
+  const {
+    onView,
+    onVerifyRelease,
+    onWithdraw,
+    onSubmit,
+    onPutBack,
+    onDelete,
+    onDeleteWithdraw,
+  } = useTableEvents({
+    userPermissions,
+    actionsEvents,
+  });
 
   const tableActions = useMemo((): TableColumn<T>[] => {
     const currentTableActions =
@@ -492,7 +499,12 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Delete: {
                       return (
-                        <Button type="button" variant="text" danger>
+                        <Button
+                          type="button"
+                          variant="text"
+                          danger
+                          onClick={onDeleteWithdraw(source)}
+                        >
                           移除
                         </Button>
                       );
@@ -521,6 +533,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
     onDelete,
     onPutBack,
     onWithdraw,
+    onDeleteWithdraw,
   ]);
 
   return tableActions;
