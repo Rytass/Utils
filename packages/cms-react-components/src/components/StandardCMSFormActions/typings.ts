@@ -11,6 +11,9 @@ export interface StandardCMSFormActionsProps<T extends FieldValues> {
   className?: string;
   actionsClassName?: string;
   methods: UseFormReturn<T>;
+  leaveButtonText?: string;
+  actionButtonText?: string;
+  submitButtonText?: string;
   disableLeaveButton?: (values: T) => boolean;
   disableActionButton?: (values: T) => boolean;
   disableSubmitButton?: (values: T) => boolean;

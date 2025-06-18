@@ -7,6 +7,9 @@ import classes from './index.module.scss';
 const FormActionsFooter = <T extends FieldValues>({
   actionsClassName,
   methods,
+  leaveButtonText: leaveButtonTextProps,
+  actionButtonText: actionButtonTextProps,
+  submitButtonText: submitButtonTextProps,
   disableLeaveButton,
   disableActionButton,
   disableSubmitButton,
@@ -28,6 +31,21 @@ const FormActionsFooter = <T extends FieldValues>({
   );
 
   const loading = useMemo(() => isSubmitting || acting, [isSubmitting, acting]);
+
+  const leaveButtonText = useMemo(
+    () => leaveButtonTextProps || '離開',
+    [leaveButtonTextProps],
+  );
+
+  const actionButtonText = useMemo(
+    () => actionButtonTextProps || '儲存草稿',
+    [actionButtonTextProps],
+  );
+
+  const submitButtonText = useMemo(
+    () => submitButtonTextProps || '送審',
+    [submitButtonTextProps],
+  );
 
   const leaveDisabled = useMemo(() => {
     const baseCondition = loading;
@@ -78,7 +96,7 @@ const FormActionsFooter = <T extends FieldValues>({
         loading={loading}
         disabled={leaveDisabled}
       >
-        離開
+        {leaveButtonText}
       </Button>
       <div className={classes.actionsSet}>
         <Button
@@ -89,7 +107,7 @@ const FormActionsFooter = <T extends FieldValues>({
           loading={loading}
           disabled={actionDisabled}
         >
-          儲存草稿
+          {actionButtonText}
         </Button>
         <Button
           type="submit"
@@ -98,7 +116,7 @@ const FormActionsFooter = <T extends FieldValues>({
           loading={loading}
           disabled={submitDisabled}
         >
-          送審
+          {submitButtonText}
         </Button>
       </div>
     </div>
