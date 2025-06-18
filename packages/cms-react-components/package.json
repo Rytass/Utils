@@ -29,7 +29,6 @@
     "@mezzanine-ui/core": "*",
     "@mezzanine-ui/icons": "*",
     "@mezzanine-ui/react": "*",
-    "@mezzanine-ui/react-hook-form-v2": "*",
     "@mezzanine-ui/system": "*",
     "dayjs": "*",
     "lodash": "*",
