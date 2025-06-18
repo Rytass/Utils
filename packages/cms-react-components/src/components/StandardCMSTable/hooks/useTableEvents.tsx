@@ -47,6 +47,7 @@ export function useTableEvents<T extends TableDataSourceWithID>({
         children: (
           <VerifyReleaseModal
             title={title}
+            withReject={stage === ArticleStage.REVIEWING}
             showSeverityIcon={stage === ArticleStage.DRAFT}
             onRelease={async (releasedAt) => {
               await actionsEvents.onRelease?.(source, releasedAt);

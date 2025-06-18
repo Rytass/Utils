@@ -1,0 +1,14 @@
+.root {
+  width: 100%;
+
+  .requiredMark {
+    vertical-align: top;
+    display: inline-block;
+    margin-left: 4px;
+    font-weight: 500;
+  }
+
+  .textarea {
+    width: 100%;
+  }
+}

@@ -21,5 +21,19 @@
       background-color: palette.color(border);
       margin: 28px 0;
     }
+
+    .rejectWrapper {
+      align-self: stretch;
+
+      .rejectField {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-start;
+        gap: 24px;
+        padding-left: 32px;
+        margin-top: 8px;
+      }
+    }
   }
 }
