@@ -4,11 +4,13 @@ import {
   ModalHeader,
   ModalBody as MznModalBody,
   ModalActions,
+  Typography,
   RadioGroup,
   Radio,
   DateTimePicker,
 } from '@mezzanine-ui/react';
 import { useModal } from '../../modal/useModal';
+import { Textarea } from '../../cms-fields/Textarea';
 import classes from './index.module.scss';
 
 export enum VerifyReleaseModalRadio {
@@ -22,6 +24,7 @@ export interface VerifyReleaseModalProps {
   title: string;
   showSeverityIcon?: boolean;
   defaultRadioValue?: VerifyReleaseModalRadio;
+  withReject?: boolean;
   onRelease: (releasedAt: string) => Promise<void>;
   onApprove: () => Promise<void>;
 }
@@ -30,6 +33,7 @@ const VerifyReleaseModal = ({
   title,
   showSeverityIcon = false,
   defaultRadioValue = VerifyReleaseModalRadio.Now,
+  withReject = false,
   onRelease,
   onApprove,
 }: VerifyReleaseModalProps): ReactNode => {
@@ -37,6 +41,7 @@ const VerifyReleaseModal = ({
     useState<VerifyReleaseModalRadio>(defaultRadioValue);
 
   const [releasedAt, setReleasedAt] = useState<string>('');
+  const [rejectReason, setRejectReason] = useState<string>('');
 
   const { closeModal } = useModal();
 
@@ -51,6 +56,9 @@ const VerifyReleaseModal = ({
       case VerifyReleaseModalRadio.Approve:
         return '即刻通過';
 
+      case VerifyReleaseModalRadio.Reject:
+        return '不通過';
+
       default:
         return '確認';
     }
@@ -61,10 +69,13 @@ const VerifyReleaseModal = ({
       case VerifyReleaseModalRadio.Schedule:
         return !releasedAt;
 
+      case VerifyReleaseModalRadio.Reject:
+        return !rejectReason;
+
       default:
         return false;
     }
-  }, [currentRadioValue, releasedAt]);
+  }, [currentRadioValue, rejectReason, releasedAt]);
 
   const onConfirm = useMemo(() => {
     switch (currentRadioValue) {
@@ -127,6 +138,30 @@ const VerifyReleaseModal = ({
           <Radio value={VerifyReleaseModalRadio.Approve}>
             即刻通過審查 （文章會將移至可發佈）
           </Radio>
+          {withReject && (
+            <div className={classes.rejectWrapper}>
+              <Radio value={VerifyReleaseModalRadio.Reject}>
+                不通過 （文章會將移至草稿區）
+              </Radio>
+              {currentRadioValue === VerifyReleaseModalRadio.Reject && (
+                <div className={classes.rejectField}>
+                  <Typography variant="body1" color="text-primary">
+                    當審核未通過時，內容將自動移至草稿區，需修改後重新送審。
+                  </Typography>
+                  <Textarea
+                    label="不通過原因"
+                    value={rejectReason}
+                    onChange={(value) => {
+                      setRejectReason(value);
+                    }}
+                    disabled={
+                      currentRadioValue !== VerifyReleaseModalRadio.Reject
+                    }
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </RadioGroup>
       </MznModalBody>
       <ModalActions
@@ -145,6 +180,7 @@ const VerifyReleaseModal = ({
           size: 'large',
           variant: 'contained',
           disabled,
+          danger: currentRadioValue === VerifyReleaseModalRadio.Reject,
           style: {
             minWidth: 'unset',
           },
