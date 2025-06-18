@@ -24,8 +24,6 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "peerDependencies": {
-    "@hookform/error-message": "*",
-    "@hookform/resolvers": "*",
     "@mezzanine-ui/core": "*",
     "@mezzanine-ui/icons": "*",
     "@mezzanine-ui/react": "*",
