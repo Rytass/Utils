@@ -27,7 +27,7 @@ export interface VerifyReleaseModalProps {
   withApprove?: boolean;
   withReject?: boolean;
   onRelease: (releasedAt: string) => Promise<void>;
-  onApprove: () => Promise<void>;
+  onApprove?: () => Promise<void>;
   onReject?: (reason: string) => Promise<void>;
 }
 
@@ -97,7 +97,7 @@ const VerifyReleaseModal = ({
 
       case VerifyReleaseModalRadio.Approve:
         return async () => {
-          await onApprove();
+          await onApprove?.();
           closeModal();
         };
 
