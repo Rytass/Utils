@@ -275,6 +275,37 @@ export function useActionButton<T extends FieldValues>({
     }
 
     case ArticleStage.RELEASED: {
+      if (
+        havePermission({
+          userPermissions,
+          targetPermission: ArticlesPermissions.UpdateArticleInReleased,
+        })
+      ) {
+        return {
+          text: '新增草稿版本',
+          onAction: async () => {
+            const isConfirm = await openDialog({
+              severity: 'info',
+              size: 'small',
+              title: '確認新增草稿版本？',
+              children: '內容將被移至所屬的草稿列表頁。',
+              cancelText: '取消',
+              cancelButtonProps: {
+                danger: false,
+              },
+              confirmText: '新增草稿',
+              confirmButtonProps: {
+                danger: false,
+              },
+            });
+
+            if (isConfirm) {
+              await actionsEvents.onUpdateToDraft?.(values);
+            }
+          },
+        };
+      }
+
       return {
         text: '',
         onAction: undefined,
