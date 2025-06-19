@@ -46,6 +46,7 @@ export interface ArticleTableActionsType {
     | ArticleTableActions.Update
     | ArticleTableActions.Delete
   )[];
+  [ArticleStage.UNKNOWN]?: [];
 }
 
 export enum ArticlesPermissions {
