@@ -12,6 +12,7 @@ const FormActionsBody = <T extends FieldValues>(
     methods,
     children,
     onSubmit: onSubmitProps,
+    createMode,
     currentStage,
     userPermissions,
     actionsEvents,
@@ -21,6 +22,7 @@ const FormActionsBody = <T extends FieldValues>(
 
   const submitButton = useSubmitButton<T>({
     values,
+    createMode,
     currentStage,
     userPermissions,
     actionsEvents,

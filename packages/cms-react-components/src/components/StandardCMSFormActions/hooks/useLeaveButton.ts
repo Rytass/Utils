@@ -2,7 +2,7 @@ import { FieldValues } from 'react-hook-form';
 import { StandardCMSFormActionsEventsProps } from '../typings';
 import { ArticleStage, ArticlesPermissions } from '../../../typings';
 
-export function useSubmitButton<T extends FieldValues>({
+export function useLeaveButton<T extends FieldValues>({
   values,
   createMode,
   currentStage,
@@ -16,10 +16,10 @@ export function useSubmitButton<T extends FieldValues>({
   actionsEvents: StandardCMSFormActionsEventsProps<T>;
 }): {
   text: string;
-  onSubmit?: () => Promise<void>;
+  onLeave?: () => Promise<void>;
 } {
   return {
-    text: '送審',
-    onSubmit: async () => {},
+    text: '離開',
+    onLeave: async () => {},
   };
 }

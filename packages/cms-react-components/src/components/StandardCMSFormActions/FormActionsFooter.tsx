@@ -1,6 +1,7 @@
 import React, { ReactNode, useMemo, useState, useCallback } from 'react';
 import { Button, cx } from '@mezzanine-ui/react';
-import { FieldValues, useWatch } from 'react-hook-form';
+import { FieldValues } from 'react-hook-form';
+import { useLeaveButton } from './hooks/useLeaveButton';
 import { useActionButton } from './hooks/useActionButton';
 import { useSubmitButton } from './hooks/useSubmitButton';
 import { StandardCMSFormActionsProps } from './typings';
@@ -18,6 +19,7 @@ const FormActionsFooter = <T extends FieldValues>({
   onLeave: onLeaveProps,
   onAction: onActionProps,
   onSubmit: onSubmitProps,
+  createMode,
   currentStage,
   userPermissions,
   actionsEvents,
@@ -26,8 +28,17 @@ const FormActionsFooter = <T extends FieldValues>({
 
   const values = methods.watch();
 
+  const leaveButton = useLeaveButton<T>({
+    values,
+    createMode,
+    currentStage,
+    userPermissions,
+    actionsEvents,
+  });
+
   const actionButton = useActionButton<T>({
     values,
+    createMode,
     currentStage,
     userPermissions,
     actionsEvents,
@@ -35,6 +46,7 @@ const FormActionsFooter = <T extends FieldValues>({
 
   const submitButton = useSubmitButton<T>({
     values,
+    createMode,
     currentStage,
     userPermissions,
     actionsEvents,
@@ -48,8 +60,8 @@ const FormActionsFooter = <T extends FieldValues>({
   const loading = useMemo(() => isSubmitting || acting, [isSubmitting, acting]);
 
   const leaveButtonText = useMemo(
-    () => leaveButtonTextProps || '離開',
-    [leaveButtonTextProps],
+    () => leaveButtonTextProps || leaveButton.text,
+    [leaveButton.text, leaveButtonTextProps],
   );
 
   const actionButtonText = useMemo(
@@ -84,9 +96,9 @@ const FormActionsFooter = <T extends FieldValues>({
     if (onLeaveProps) {
       await onLeaveProps(values);
     } else {
-      console.log('onLeave', values);
+      await leaveButton.onLeave?.();
     }
-  }, [onLeaveProps, values]);
+  }, [leaveButton, onLeaveProps, values]);
 
   const onAction = useCallback(async () => {
     setActing(true);
