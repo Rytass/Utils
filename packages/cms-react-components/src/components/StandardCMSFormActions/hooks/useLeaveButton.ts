@@ -143,6 +143,29 @@ export function useLeaveButton<T extends FieldValues>({
       };
     }
 
+    case ArticleStage.RELEASED: {
+      if (
+        havePermission({
+          userPermissions,
+          targetPermission: ArticlesPermissions.UpdateArticleInReleased,
+        })
+      ) {
+        return {
+          text,
+          onLeave: onLeave(
+            '編輯將不被保存，如果需要保存目前文章編輯進度，請選擇「新增草稿版本」。',
+          ),
+        };
+      }
+
+      return {
+        text,
+        onLeave: async () => {
+          await actionsEvents.onLeave?.(values);
+        },
+      };
+    }
+
     default:
       return {
         text,
