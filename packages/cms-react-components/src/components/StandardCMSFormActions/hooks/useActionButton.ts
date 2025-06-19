@@ -22,23 +22,38 @@ export function useActionButton<T extends FieldValues>({
   danger?: boolean;
   onAction?: () => Promise<void>;
 } {
-  if (
-    createMode &&
-    havePermission({
-      userPermissions,
-      targetPermission: ArticlesPermissions.CreateArticle,
-    })
-  ) {
+  if (createMode) {
+    if (
+      havePermission({
+        userPermissions,
+        targetPermission: ArticlesPermissions.CreateArticle,
+      })
+    ) {
+      return {
+        text: '儲存草稿',
+        onAction: async () => {
+          await actionsEvents.onCreateDraft?.(values);
+        },
+      };
+    }
+
     return {
-      text: '儲存草稿',
-      onAction: async () => {
-        await actionsEvents.onCreateDraft?.(values);
-      },
+      text: '',
+      onAction: undefined,
     };
   }
 
-  return {
-    text: '',
-    onAction: undefined,
-  };
+  switch (currentStage) {
+    case ArticleStage.DRAFT:
+      return {
+        text: '',
+        onAction: undefined,
+      };
+
+    default:
+      return {
+        text: '',
+        onAction: undefined,
+      };
+  }
 }

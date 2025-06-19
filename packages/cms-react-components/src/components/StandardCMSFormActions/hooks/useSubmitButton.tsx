@@ -28,70 +28,79 @@ export function useSubmitButton<T extends FieldValues>({
   const { openDialog } = useDialog();
   const { openModal } = useModal();
 
-  if (
-    createMode &&
-    havePermission({
-      userPermissions,
-      targetPermission: ArticlesPermissions.CreateArticle,
-    })
-  ) {
+  if (createMode) {
     if (
       havePermission({
         userPermissions,
-        targetPermission: ArticlesPermissions.ApproveRejectArticle,
+        targetPermission: ArticlesPermissions.CreateArticle,
       })
     ) {
-      return {
-        text: '發佈',
-        onSubmit: async () => {
-          openModal({
-            severity: 'success',
-            children: (
-              <VerifyReleaseModal
-                title="審核通過"
-                withApprove
-                showSeverityIcon
-                onRelease={async (releasedAt) => {
-                  await actionsEvents.onCreateAndRelease?.(values, releasedAt);
-                }}
-                onApprove={async () => {
-                  await actionsEvents.onCreateAndApprove?.(values);
-                }}
-              />
-            ),
-          });
-        },
-      };
-    }
+      if (
+        havePermission({
+          userPermissions,
+          targetPermission: ArticlesPermissions.ApproveRejectArticle,
+        })
+      ) {
+        return {
+          text: '發佈',
+          onSubmit: async () => {
+            openModal({
+              severity: 'success',
+              children: (
+                <VerifyReleaseModal
+                  title="審核通過"
+                  withApprove
+                  showSeverityIcon
+                  onRelease={async (releasedAt) => {
+                    await actionsEvents.onCreateAndRelease?.(
+                      values,
+                      releasedAt,
+                    );
+                  }}
+                  onApprove={async () => {
+                    await actionsEvents.onCreateAndApprove?.(values);
+                  }}
+                />
+              ),
+            });
+          },
+        };
+      }
 
-    if (
-      havePermission({
-        userPermissions,
-        targetPermission: ArticlesPermissions.SubmitPutBackArticle,
-      })
-    ) {
-      return {
-        text: '送審',
-        onSubmit: async () => {
-          const isConfirm = await openDialog({
-            severity: 'info',
-            size: 'small',
-            title: '提交審核此文章',
-            children: '請確認是否提交審核此文章。',
-            cancelText: '取消',
-            cancelButtonProps: {
-              danger: false,
-            },
-            confirmText: '提交審核',
-            confirmButtonProps: {
-              danger: false,
-            },
-          });
+      if (
+        havePermission({
+          userPermissions,
+          targetPermission: ArticlesPermissions.SubmitPutBackArticle,
+        })
+      ) {
+        return {
+          text: '送審',
+          onSubmit: async () => {
+            const isConfirm = await openDialog({
+              severity: 'info',
+              size: 'small',
+              title: '提交審核此文章',
+              children: '請確認是否提交審核此文章。',
+              cancelText: '取消',
+              cancelButtonProps: {
+                danger: false,
+              },
+              confirmText: '提交審核',
+              confirmButtonProps: {
+                danger: false,
+              },
+            });
 
-          if (isConfirm) {
-            await actionsEvents.onCreateAndSubmit?.(values);
-          }
-        },
+            if (isConfirm) {
+              await actionsEvents.onCreateAndSubmit?.(values);
+            }
+          },
+        };
+      }
+
+      return {
+        text: '',
+        onSubmit: undefined,
       };
     }
 
@@ -101,8 +110,17 @@ export function useSubmitButton<T extends FieldValues>({
     };
   }
 
-  return {
-    text: '',
-    onSubmit: undefined,
-  };
+  switch (currentStage) {
+    case ArticleStage.DRAFT:
+      return {
+        text: '',
+        onSubmit: undefined,
+      };
+
+    default:
+      return {
+        text: '',
+        onSubmit: undefined,
+      };
+  }
 }
