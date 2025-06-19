@@ -4,12 +4,14 @@ import { ArticleStage, ArticlesPermissions } from '../../../typings';
 
 export function useActionButton<T extends FieldValues>({
   values,
+  isDirty,
   createMode,
   currentStage,
   userPermissions,
   actionsEvents,
 }: {
   values: T;
+  isDirty: boolean;
   createMode?: boolean;
   currentStage: ArticleStage;
   userPermissions: ArticlesPermissions[];

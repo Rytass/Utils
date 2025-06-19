@@ -1,4 +1,4 @@
-import React, { ReactNode, useCallback } from 'react';
+import React, { ReactNode, useMemo, useCallback } from 'react';
 import { FieldValues, FormProvider } from 'react-hook-form';
 import FormActionsFooter from './FormActionsFooter';
 import { useSubmitButton } from './hooks/useSubmitButton';
@@ -20,8 +20,14 @@ const FormActionsBody = <T extends FieldValues>(
 
   const values = methods.watch();
 
+  const isDirty = useMemo(
+    () => methods.formState.isDirty,
+    [methods.formState.isDirty],
+  );
+
   const submitButton = useSubmitButton<T>({
     values,
+    isDirty,
     createMode,
     currentStage,
     userPermissions,
