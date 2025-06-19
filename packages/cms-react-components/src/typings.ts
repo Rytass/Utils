@@ -4,6 +4,7 @@ export enum ArticleStage {
   VERIFIED = 'VERIFIED',
   SCHEDULED = 'SCHEDULED',
   RELEASED = 'RELEASED',
+  UNKNOWN = 'UNKNOWN',
 }
 
 export enum ArticleTableActions {
