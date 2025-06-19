@@ -32,7 +32,7 @@ export function useActionButton<T extends FieldValues>({
       return {
         text: '儲存草稿',
         onAction: async () => {
-          await actionsEvents.onCreateDraft?.(values);
+          await actionsEvents.onCreateToDraft?.(values);
         },
       };
     }
@@ -54,7 +54,7 @@ export function useActionButton<T extends FieldValues>({
         return {
           text: '儲存草稿',
           onAction: async () => {
-            await actionsEvents.onUpdateDraft?.(values);
+            await actionsEvents.onUpdateToDraft?.(values);
           },
         };
       }

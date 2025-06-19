@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { FieldValues } from 'react-hook-form';
+import { havePermission } from '../../../utils/havePermission';
 import { StandardCMSFormActionsEventsProps } from '../typings';
 import { ArticleStage, ArticlesPermissions } from '../../../typings';
 import { useDialog } from '../../dialog/useDialog';
@@ -62,6 +63,39 @@ export function useLeaveButton<T extends FieldValues>({
           '編輯將不被保存，如果需要保存目前文章編輯進度，請選擇「儲存草稿」。',
         ),
       };
+
+    case ArticleStage.REVIEWING: {
+      if (
+        havePermission({
+          userPermissions,
+          targetPermission: ArticlesPermissions.ApproveRejectArticle,
+        })
+      ) {
+        return {
+          text,
+          onLeave: onLeave('編輯將不被保存，此動作無法復原。'),
+        };
+      }
+
+      if (
+        havePermission({
+          userPermissions,
+          targetPermission: ArticlesPermissions.UpdateArticleInReviewing,
+        })
+      ) {
+        return {
+          text,
+          onLeave: onLeave(
+            '編輯將不被保存，如果需要保存目前文章編輯進度，請選擇「新增草稿版本」。',
+          ),
+        };
+      }
+
+      return {
+        text,
+        onLeave: onLeave('編輯將不被保存，此動作無法復原。'),
+      };
+    }
 
     default:
       return {
