@@ -56,13 +56,28 @@ export function useLeaveButton<T extends FieldValues>({
   }
 
   switch (currentStage) {
-    case ArticleStage.DRAFT:
+    case ArticleStage.DRAFT: {
+      if (
+        havePermission({
+          userPermissions,
+          targetPermission: ArticlesPermissions.UpdateArticleInDraft,
+        })
+      ) {
+        return {
+          text,
+          onLeave: onLeave(
+            '編輯將不被保存，如果需要保存目前文章編輯進度，請選擇「儲存草稿」。',
+          ),
+        };
+      }
+
       return {
         text,
-        onLeave: onLeave(
-          '編輯將不被保存，如果需要保存目前文章編輯進度，請選擇「儲存草稿」。',
-        ),
+        onLeave: async () => {
+          await actionsEvents.onLeave?.(values);
+        },
       };
+    }
 
     case ArticleStage.REVIEWING: {
       if (
