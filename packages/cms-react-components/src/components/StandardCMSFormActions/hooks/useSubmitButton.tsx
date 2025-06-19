@@ -23,6 +23,7 @@ export function useSubmitButton<T extends FieldValues>({
   actionsEvents: StandardCMSFormActionsEventsProps<T>;
 }): {
   text: string;
+  disabled?: boolean;
   onSubmit?: () => Promise<void>;
 } {
   const { openDialog } = useDialog();
@@ -245,6 +246,131 @@ export function useSubmitButton<T extends FieldValues>({
               await actionsEvents.onSubmit?.(values);
             }
           },
+        };
+      }
+
+      return {
+        text: '',
+        onSubmit: undefined,
+      };
+    }
+
+    case ArticleStage.REVIEWING: {
+      if (
+        isDirty &&
+        havePermission({
+          userPermissions,
+          targetPermission: ArticlesPermissions.UpdateArticleInReviewing,
+        })
+      ) {
+        if (
+          havePermission({
+            userPermissions,
+            targetPermission: ArticlesPermissions.ApproveRejectArticle,
+          })
+        ) {
+          return {
+            text: '審核通過',
+            onSubmit: async () => {
+              openModal({
+                severity: 'success',
+                children: (
+                  <VerifyReleaseModal
+                    title="審核通過"
+                    withApprove
+                    showSeverityIcon
+                    onRelease={async (releasedAt) => {
+                      await actionsEvents.onUpdateAndRelease?.(
+                        values,
+                        releasedAt,
+                      );
+                    }}
+                    onApprove={async () => {
+                      await actionsEvents.onUpdateAndApprove?.(values);
+                    }}
+                  />
+                ),
+              });
+            },
+          };
+        }
+
+        if (
+          havePermission({
+            userPermissions,
+            targetPermission: ArticlesPermissions.SubmitPutBackArticle,
+          })
+        ) {
+          return {
+            text: '送審',
+            onSubmit: async () => {
+              const isConfirm = await openDialog({
+                severity: 'info',
+                size: 'small',
+                title: '提交審核此文章',
+                children: '請確認是否提交審核此文章。',
+                cancelText: '取消',
+                cancelButtonProps: {
+                  danger: false,
+                },
+                confirmText: '提交審核',
+                confirmButtonProps: {
+                  danger: false,
+                },
+              });
+
+              if (isConfirm) {
+                await actionsEvents.onUpdateAndSubmit?.(values);
+              }
+            },
+          };
+        }
+
+        return {
+          text: '',
+          onSubmit: undefined,
+        };
+      }
+
+      if (
+        havePermission({
+          userPermissions,
+          targetPermission: ArticlesPermissions.ApproveRejectArticle,
+        })
+      ) {
+        return {
+          text: '審核通過',
+          onSubmit: async () => {
+            openModal({
+              severity: 'success',
+              children: (
+                <VerifyReleaseModal
+                  title="審核通過"
+                  withApprove
+                  showSeverityIcon
+                  onRelease={async (releasedAt) => {
+                    await actionsEvents.onRelease?.(values, releasedAt);
+                  }}
+                  onApprove={async () => {
+                    await actionsEvents.onApprove?.(values);
+                  }}
+                />
+              ),
+            });
+          },
+        };
+      }
+
+      if (
+        havePermission({
+          userPermissions,
+          targetPermission: ArticlesPermissions.SubmitPutBackArticle,
+        })
+      ) {
+        return {
+          text: '送審',
+          disabled: true,
+          onSubmit: async () => {},
         };
       }
 

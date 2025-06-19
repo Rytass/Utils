@@ -96,8 +96,10 @@ const FormActionsFooter = <T extends FieldValues>({
   const submitDisabled = useMemo(() => {
     const baseCondition = loading;
 
-    return baseCondition || disableSubmitButton?.(values);
-  }, [disableSubmitButton, loading, values]);
+    return (
+      baseCondition || submitButton.disabled || disableSubmitButton?.(values)
+    );
+  }, [disableSubmitButton, loading, submitButton.disabled, values]);
 
   const onLeave = useCallback(async () => {
     if (onLeaveProps) {
