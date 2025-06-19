@@ -28,6 +28,16 @@ const FormActionsFooter = <T extends FieldValues>({
 
   const values = methods.watch();
 
+  const isSubmitting = useMemo(
+    () => methods.formState.isSubmitting,
+    [methods.formState.isSubmitting],
+  );
+
+  const isDirty = useMemo(
+    () => methods.formState.isDirty,
+    [methods.formState.isDirty],
+  );
+
   const leaveButton = useLeaveButton<T>({
     values,
     createMode,
@@ -38,6 +48,7 @@ const FormActionsFooter = <T extends FieldValues>({
 
   const actionButton = useActionButton<T>({
     values,
+    isDirty,
     createMode,
     currentStage,
     userPermissions,
@@ -46,16 +57,12 @@ const FormActionsFooter = <T extends FieldValues>({
 
   const submitButton = useSubmitButton<T>({
     values,
+    isDirty,
     createMode,
     currentStage,
     userPermissions,
     actionsEvents,
   });
-
-  const isSubmitting = useMemo(
-    () => methods.formState.isSubmitting,
-    [methods.formState.isSubmitting],
-  );
 
   const loading = useMemo(() => isSubmitting || acting, [isSubmitting, acting]);
 
