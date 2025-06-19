@@ -5,6 +5,9 @@ import { ArticleStage, ArticlesPermissions } from '../../typings';
 export interface StandardCMSFormActionsEventsProps<T extends FieldValues> {
   onLeave?: (source: T) => Promise<void>;
   onCreateDraft?: (source: T) => Promise<void>;
+  onCreateAndRelease?: (source: T, releasedAt: string) => Promise<void>;
+  onCreateAndApprove?: (source: T) => Promise<void>;
+  onCreateAndSubmit?: (source: T) => Promise<void>;
 }
 
 export interface StandardCMSFormActionsProps<T extends FieldValues> {
