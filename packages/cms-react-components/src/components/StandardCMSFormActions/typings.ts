@@ -8,6 +8,13 @@ export interface StandardCMSFormActionsEventsProps<T extends FieldValues> {
   onCreateAndRelease?: (source: T, releasedAt: string) => Promise<void>;
   onCreateAndApprove?: (source: T) => Promise<void>;
   onCreateAndSubmit?: (source: T) => Promise<void>;
+  onUpdateDraft?: (source: T) => Promise<void>;
+  onUpdateAndRelease?: (source: T, releasedAt: string) => Promise<void>;
+  onUpdateAndApprove?: (source: T) => Promise<void>;
+  onUpdateAndSubmit?: (source: T) => Promise<void>;
+  onRelease?: (source: T, releasedAt: string) => Promise<void>;
+  onApprove?: (source: T) => Promise<void>;
+  onSubmit?: (source: T) => Promise<void>;
 }
 
 export interface StandardCMSFormActionsProps<T extends FieldValues> {
