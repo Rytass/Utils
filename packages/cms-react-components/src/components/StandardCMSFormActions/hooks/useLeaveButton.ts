@@ -97,6 +97,15 @@ export function useLeaveButton<T extends FieldValues>({
       };
     }
 
+    case ArticleStage.VERIFIED: {
+      return {
+        text,
+        onLeave: async () => {
+          await actionsEvents.onLeave?.(values);
+        },
+      };
+    }
+
     default:
       return {
         text,
