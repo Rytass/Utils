@@ -455,6 +455,20 @@ export function useSubmitButton<T extends FieldValues>({
       };
     }
 
+    case ArticleStage.SCHEDULED: {
+      return {
+        text: '',
+        onSubmit: undefined,
+      };
+    }
+
+    case ArticleStage.RELEASED: {
+      return {
+        text: '',
+        onSubmit: undefined,
+      };
+    }
+
     default:
       return {
         text: '',

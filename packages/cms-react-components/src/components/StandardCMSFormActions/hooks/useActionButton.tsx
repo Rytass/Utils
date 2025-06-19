@@ -204,6 +204,83 @@ export function useActionButton<T extends FieldValues>({
       };
     }
 
+    case ArticleStage.SCHEDULED: {
+      if (
+        havePermission({
+          userPermissions,
+          targetPermission: ArticlesPermissions.UpdateArticleInScheduled,
+        })
+      ) {
+        return {
+          text: '新增草稿版本',
+          onAction: async () => {
+            const isConfirm = await openDialog({
+              severity: 'info',
+              size: 'small',
+              title: '確認新增草稿版本？',
+              children: '內容將被移至所屬的草稿列表頁。',
+              cancelText: '取消',
+              cancelButtonProps: {
+                danger: false,
+              },
+              confirmText: '新增草稿',
+              confirmButtonProps: {
+                danger: false,
+              },
+            });
+
+            if (isConfirm) {
+              await actionsEvents.onUpdateToDraft?.(values);
+            }
+          },
+        };
+      }
+
+      if (
+        havePermission({
+          userPermissions,
+          targetPermission: ArticlesPermissions.UpdateArticleInDraft, // 因為將被導入至類似草稿區的編輯狀態
+        })
+      ) {
+        return {
+          text: '修改內容',
+          onAction: async () => {
+            const isConfirm = await openDialog({
+              severity: 'info',
+              size: 'small',
+              title: '確定要修改內容？',
+              children:
+                '內容將被移至所屬的草稿列表頁，修改後需重新審核。此操作無法還原。',
+              cancelText: '取消',
+              cancelButtonProps: {
+                danger: false,
+              },
+              confirmText: '修改內容',
+              confirmButtonProps: {
+                danger: false,
+              },
+            });
+
+            if (isConfirm) {
+              await actionsEvents.onGoToEdit?.(values);
+            }
+          },
+        };
+      }
+
+      return {
+        text: '',
+        onAction: undefined,
+      };
+    }
+
+    case ArticleStage.RELEASED: {
+      return {
+        text: '',
+        onAction: undefined,
+      };
+    }
+
     default:
       return {
         text: '',
