@@ -21,7 +21,7 @@ export function useSubmitButton<T extends FieldValues>({
   onSubmit?: () => Promise<void>;
 } {
   return {
-    text: '送審',
-    onSubmit: async () => {},
+    text: '',
+    onSubmit: undefined,
   };
 }

@@ -139,6 +139,7 @@ const FormActionsFooter = <T extends FieldValues>({
             size="large"
             variant="outlined"
             onClick={onAction}
+            danger={actionButton.danger}
             loading={loading}
             disabled={actionDisabled}
           >

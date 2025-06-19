@@ -1,4 +1,5 @@
 import { FieldValues } from 'react-hook-form';
+import { havePermission } from '../../../utils/havePermission';
 import { StandardCMSFormActionsEventsProps } from '../typings';
 import { ArticleStage, ArticlesPermissions } from '../../../typings';
 
@@ -18,10 +19,32 @@ export function useActionButton<T extends FieldValues>({
   actionsEvents: StandardCMSFormActionsEventsProps<T>;
 }): {
   text: string;
+  danger?: boolean;
   onAction?: () => Promise<void>;
 } {
+  if (createMode) {
+    if (
+      havePermission({
+        userPermissions,
+        targetPermission: ArticlesPermissions.CreateArticle,
+      })
+    ) {
+      return {
+        text: '儲存草稿',
+        onAction: async () => {
+          await actionsEvents.onCreateDraft?.(values);
+        },
+      };
+    }
+
+    return {
+      text: '',
+      onAction: undefined,
+    };
+  }
+
   return {
-    text: '儲存草稿',
-    onAction: async () => {},
+    text: '',
+    onAction: undefined,
   };
 }
