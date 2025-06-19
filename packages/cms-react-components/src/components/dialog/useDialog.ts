@@ -21,13 +21,15 @@ export const useDialog = (): DialogHookValue => {
     const isConfirm = await openDialog({
       severity: config?.severity ?? 'warning',
       size: config?.size ?? 'small',
-      title: config?.title ?? '確認取消',
-      children: config?.children ?? '取消不會儲存內容，確定取消？',
+      title: config?.title ?? '確認離開編輯？',
+      children:
+        config?.children ??
+        '編輯將不被保存，如果需要保存目前文章編輯進度，請選擇「新增草稿版本」。',
       cancelText: config?.cancelText ?? '取消',
       cancelButtonProps: {
         danger: false,
       },
-      confirmText: config?.confirmText ?? '確認取消',
+      confirmText: config?.confirmText ?? '離開編輯',
       confirmButtonProps: {
         danger: config?.isConfirmDanger ?? false,
       },

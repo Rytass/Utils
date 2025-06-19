@@ -4,11 +4,13 @@ import { ArticleStage, ArticlesPermissions } from '../../../typings';
 
 export function useActionButton<T extends FieldValues>({
   values,
+  createMode,
   currentStage,
   userPermissions,
   actionsEvents,
 }: {
   values: T;
+  createMode?: boolean;
   currentStage: ArticleStage;
   userPermissions: ArticlesPermissions[];
   actionsEvents: StandardCMSFormActionsEventsProps<T>;

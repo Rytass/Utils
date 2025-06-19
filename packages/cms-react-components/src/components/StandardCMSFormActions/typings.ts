@@ -21,6 +21,7 @@ export interface StandardCMSFormActionsProps<T extends FieldValues> {
   onAction?: (values: T) => Promise<void>;
   onSubmit?: (values: T) => Promise<void>;
   children: ReactNode;
+  createMode?: boolean;
   currentStage: ArticleStage;
   userPermissions: ArticlesPermissions[];
   actionsEvents: StandardCMSFormActionsEventsProps<T>;
