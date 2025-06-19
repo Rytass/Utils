@@ -44,11 +44,26 @@ export function useActionButton<T extends FieldValues>({
   }
 
   switch (currentStage) {
-    case ArticleStage.DRAFT:
+    case ArticleStage.DRAFT: {
+      if (
+        havePermission({
+          userPermissions,
+          targetPermission: ArticlesPermissions.UpdateArticleInDraft,
+        })
+      ) {
+        return {
+          text: '儲存草稿',
+          onAction: async () => {
+            await actionsEvents.onUpdateDraft?.(values);
+          },
+        };
+      }
+
       return {
         text: '',
         onAction: undefined,
       };
+    }
 
     default:
       return {
