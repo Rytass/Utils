@@ -56,8 +56,8 @@ export function useLeaveButton<T extends FieldValues>({
   }
 
   switch (currentStage) {
+    // 中間態
     case ArticleStage.UNKNOWN: {
-      // 中間態
       if (
         havePermission({
           userPermissions,
