@@ -531,6 +531,118 @@ export function useSubmitButton<T extends FieldValues>({
     }
 
     case ArticleStage.RELEASED: {
+      if (
+        isDirty &&
+        havePermission({
+          userPermissions,
+          targetPermission: ArticlesPermissions.UpdateArticleInReleased,
+        })
+      ) {
+        if (
+          havePermission({
+            userPermissions,
+            targetPermission: ArticlesPermissions.ReleaseArticleInReleased,
+          })
+        ) {
+          return {
+            text: '發佈',
+            onSubmit: async () => {
+              openModal({
+                severity: 'success',
+                children: (
+                  <VerifyReleaseModal
+                    title="發佈設定"
+                    withApprove={false}
+                    showSeverityIcon={false}
+                    onRelease={async (releasedAt) => {
+                      await actionsEvents.onUpdateAndRelease?.(
+                        values,
+                        releasedAt,
+                      );
+                    }}
+                  />
+                ),
+              });
+            },
+          };
+        }
+
+        if (
+          havePermission({
+            userPermissions,
+            targetPermission: ArticlesPermissions.SubmitPutBackArticle,
+          })
+        ) {
+          return {
+            text: '送審',
+            onSubmit: async () => {
+              const isConfirm = await openDialog({
+                severity: 'info',
+                size: 'small',
+                title: '提交審核此文章',
+                children: '請確認是否提交審核此文章。',
+                cancelText: '取消',
+                cancelButtonProps: {
+                  danger: false,
+                },
+                confirmText: '提交審核',
+                confirmButtonProps: {
+                  danger: false,
+                },
+              });
+
+              if (isConfirm) {
+                await actionsEvents.onUpdateAndSubmit?.(values);
+              }
+            },
+          };
+        }
+
+        return {
+          text: '',
+          onSubmit: undefined,
+        };
+      }
+
+      if (
+        havePermission({
+          userPermissions,
+          targetPermission: ArticlesPermissions.ReleaseArticleInReleased,
+        })
+      ) {
+        return {
+          text: '發佈設定',
+          onSubmit: async () => {
+            openModal({
+              severity: 'success',
+              children: (
+                <VerifyReleaseModal
+                  title="發佈設定"
+                  withApprove={false}
+                  showSeverityIcon={false}
+                  onRelease={async (releasedAt) => {
+                    await actionsEvents.onRelease?.(values, releasedAt);
+                  }}
+                />
+              ),
+            });
+          },
+        };
+      }
+
+      if (
+        havePermission({
+          userPermissions,
+          targetPermission: ArticlesPermissions.SubmitPutBackArticle,
+        })
+      ) {
+        return {
+          text: '送審',
+          disabled: true,
+          onSubmit: async () => {},
+        };
+      }
+
       return {
         text: '',
         onSubmit: undefined,
