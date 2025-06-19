@@ -192,9 +192,7 @@ const VerifyReleaseModal = ({
           type: 'button',
           size: 'large',
           variant: 'outlined',
-          style: {
-            minWidth: 'unset',
-          },
+          danger: false,
         }}
         confirmButtonProps={{
           type: 'button',
@@ -202,9 +200,6 @@ const VerifyReleaseModal = ({
           variant: 'contained',
           disabled,
           danger: currentRadioValue === VerifyReleaseModalRadio.Reject,
-          style: {
-            minWidth: 'unset',
-          },
         }}
         onCancel={closeModal}
         onConfirm={onConfirm}

@@ -14,6 +14,7 @@ export interface StandardCMSFormActionsEventsProps<T extends FieldValues> {
   onUpdateAndSubmit?: (source: T) => Promise<void>;
   onRelease?: (source: T, releasedAt: string) => Promise<void>;
   onApprove?: (source: T) => Promise<void>;
+  onReject?: (source: T, reason: string) => Promise<void>;
   onSubmit?: (source: T) => Promise<void>;
 }
 
