@@ -4,6 +4,7 @@ import { havePermission } from '../../../utils/havePermission';
 import { RejectModal } from '../../cms-modals/RejectModal';
 import { StandardCMSFormActionsEventsProps } from '../typings';
 import { ArticleStage, ArticlesPermissions } from '../../../typings';
+import { useDialog } from '../../dialog/useDialog';
 import { useModal } from '../../modal/useModal';
 
 export function useActionButton<T extends FieldValues>({
@@ -25,6 +26,7 @@ export function useActionButton<T extends FieldValues>({
   danger?: boolean;
   onAction?: () => Promise<void>;
 } {
+  const { openDialog } = useDialog();
   const { openModal } = useModal();
 
   if (createMode) {
@@ -91,6 +93,37 @@ export function useActionButton<T extends FieldValues>({
                 />
               ),
             });
+          },
+        };
+      }
+
+      if (
+        havePermission({
+          userPermissions,
+          targetPermission: ArticlesPermissions.UpdateArticleInReviewing,
+        })
+      ) {
+        return {
+          text: '新增草稿版本',
+          onAction: async () => {
+            const isConfirm = await openDialog({
+              severity: 'info',
+              size: 'small',
+              title: '確認新增草稿版本？',
+              children: '內容將被移至所屬的草稿列表頁。',
+              cancelText: '取消',
+              cancelButtonProps: {
+                danger: false,
+              },
+              confirmText: '新增草稿',
+              confirmButtonProps: {
+                danger: false,
+              },
+            });
+
+            if (isConfirm) {
+              await actionsEvents.onUpdateToDraft?.(values);
+            }
           },
         };
       }
