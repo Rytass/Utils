@@ -92,18 +92,13 @@ const DeleteWithdrawModal = ({
           type: 'button',
           size: 'large',
           variant: 'outlined',
-          style: {
-            minWidth: 'unset',
-          },
+          danger: false,
         }}
         confirmButtonProps={{
           type: 'button',
           size: 'large',
           variant: 'contained',
           danger: true,
-          style: {
-            minWidth: 'unset',
-          },
         }}
         onCancel={closeModal}
         onConfirm={onConfirm}

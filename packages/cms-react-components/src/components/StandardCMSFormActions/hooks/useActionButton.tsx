@@ -1,7 +1,10 @@
+import React from 'react';
 import { FieldValues } from 'react-hook-form';
 import { havePermission } from '../../../utils/havePermission';
+import { RejectModal } from '../../cms-modals/RejectModal';
 import { StandardCMSFormActionsEventsProps } from '../typings';
 import { ArticleStage, ArticlesPermissions } from '../../../typings';
+import { useModal } from '../../modal/useModal';
 
 export function useActionButton<T extends FieldValues>({
   values,
@@ -22,6 +25,8 @@ export function useActionButton<T extends FieldValues>({
   danger?: boolean;
   onAction?: () => Promise<void>;
 } {
+  const { openModal } = useModal();
+
   if (createMode) {
     if (
       havePermission({
@@ -55,6 +60,37 @@ export function useActionButton<T extends FieldValues>({
           text: '儲存草稿',
           onAction: async () => {
             await actionsEvents.onUpdateToDraft?.(values);
+          },
+        };
+      }
+
+      return {
+        text: '',
+        onAction: undefined,
+      };
+    }
+
+    case ArticleStage.REVIEWING: {
+      if (
+        havePermission({
+          userPermissions,
+          targetPermission: ArticlesPermissions.ApproveRejectArticle,
+        })
+      ) {
+        return {
+          text: '不通過',
+          danger: true,
+          onAction: async () => {
+            openModal({
+              severity: 'error',
+              children: (
+                <RejectModal
+                  onReject={async (reason) => {
+                    await actionsEvents.onReject?.(values, reason);
+                  }}
+                />
+              ),
+            });
           },
         };
       }
