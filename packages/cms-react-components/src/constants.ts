@@ -74,4 +74,5 @@ export const defaultTableActions: ArticleTableActionsType = {
     ArticleTableActions.Update,
     ArticleTableActions.Delete,
   ],
+  [ArticleStage.UNKNOWN]: [],
 };
