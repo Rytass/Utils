@@ -380,6 +380,81 @@ export function useSubmitButton<T extends FieldValues>({
       };
     }
 
+    case ArticleStage.VERIFIED: {
+      if (
+        isDirty &&
+        havePermission({
+          userPermissions,
+          targetPermission: ArticlesPermissions.UpdateArticleInVerified,
+        })
+      ) {
+        if (
+          havePermission({
+            userPermissions,
+            targetPermission: ArticlesPermissions.ReleaseArticleInVerified,
+          })
+        ) {
+          return {
+            text: '發佈',
+            onSubmit: async () => {
+              openModal({
+                severity: 'success',
+                children: (
+                  <VerifyReleaseModal
+                    title="發佈設定"
+                    withApprove={false}
+                    showSeverityIcon={false}
+                    onRelease={async (releasedAt) => {
+                      await actionsEvents.onUpdateAndRelease?.(
+                        values,
+                        releasedAt,
+                      );
+                    }}
+                  />
+                ),
+              });
+            },
+          };
+        }
+
+        return {
+          text: '',
+          onSubmit: undefined,
+        };
+      }
+
+      if (
+        havePermission({
+          userPermissions,
+          targetPermission: ArticlesPermissions.ReleaseArticleInVerified,
+        })
+      ) {
+        return {
+          text: '發佈設定',
+          onSubmit: async () => {
+            openModal({
+              severity: 'success',
+              children: (
+                <VerifyReleaseModal
+                  title="發佈設定"
+                  withApprove={false}
+                  showSeverityIcon={false}
+                  onRelease={async (releasedAt) => {
+                    await actionsEvents.onRelease?.(values, releasedAt);
+                  }}
+                />
+              ),
+            });
+          },
+        };
+      }
+
+      return {
+        text: '',
+        onSubmit: undefined,
+      };
+    }
+
     default:
       return {
         text: '',
