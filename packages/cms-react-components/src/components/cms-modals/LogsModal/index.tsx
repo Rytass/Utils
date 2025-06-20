@@ -5,8 +5,10 @@ import {
   ModalActions,
   Typography,
   Button,
+  Icon,
   cx,
 } from '@mezzanine-ui/react';
+import { ExclamationCircleFilledIcon } from '@mezzanine-ui/icons';
 import { useModal } from '../../modal/useModal';
 import { ArticleStage } from '../../../typings';
 import classes from './index.module.scss';
@@ -16,17 +18,19 @@ const data: {
     time: string;
     member: string;
     version: number;
+    reason?: string;
   };
 } = {
   [ArticleStage.DRAFT]: {
     time: '2025-06-01．13:30',
     member: 'staff@email.com',
-    version: 1,
+    version: 5,
+    reason: '內文有錯字，請修正後再次送審。',
   },
   [ArticleStage.REVIEWING]: {
     time: '2025-06-02．13:30',
     member: 'manager@email.com',
-    version: 2,
+    version: 4,
   },
   [ArticleStage.VERIFIED]: {
     time: '2025-06-03．13:30',
@@ -41,7 +45,7 @@ const data: {
   [ArticleStage.RELEASED]: {
     time: '2025-06-05．13:30',
     member: 'staff@email.com',
-    version: 5,
+    version: 1,
   },
 };
 
@@ -171,6 +175,18 @@ const LogsModal = (): ReactNode => {
                       </Typography>
                     </div>
                   </div>
+                  {!!data[targetStage]?.reason && (
+                    <div className={classes.reasonWrapper}>
+                      <Icon
+                        icon={ExclamationCircleFilledIcon}
+                        size={24}
+                        color="warning"
+                      />
+                      <Typography variant="input1" color="text-primary">
+                        {data[targetStage].reason}
+                      </Typography>
+                    </div>
+                  )}
                 </div>
               </div>
             );
