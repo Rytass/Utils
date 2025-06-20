@@ -958,7 +958,9 @@ export class ArticleBaseService<
 
     article.releasedAt = null;
 
-    return article;
+    return this.findById<A, AV, AVC>(article.id, {
+      version: article.version,
+    });
   }
 
   async release<
@@ -1031,7 +1033,9 @@ export class ArticleBaseService<
 
     article.releasedAt = willReleasedAt;
 
-    return article;
+    return this.findById<A, AV, AVC>(article.id, {
+      version: article.version,
+    });
   }
 
   async submit<
@@ -1100,7 +1104,9 @@ export class ArticleBaseService<
 
     article.submittedAt = new Date();
 
-    return article;
+    return this.findById<A, AV, AVC>(article.id, {
+      version: article.version,
+    });
   }
 
   private getPlacedArticleStage({
@@ -1206,7 +1212,7 @@ export class ArticleBaseService<
     options:
       | (SingleArticleCreateDto<A, AV, AVC> & { id: A['id'] })
       | (MultiLanguageArticleCreateDto<A, AV, AVC> & { id: A['id'] }),
-  ): Promise<A> {
+  ): Promise<ArticleBaseDto<A, AV, AVC>> {
     this.optionsCheck<A, AV, AVC>(options);
 
     const placedArticleStage = this.getPlacedArticleStage({
@@ -1370,7 +1376,9 @@ export class ArticleBaseService<
 
       await runner.commitTransaction();
 
-      return article as A;
+      return this.findById<A, AV, AVC>(article.id, {
+        version: version.version,
+      });
     } catch (ex) {
       await runner.rollbackTransaction();
 
@@ -1519,7 +1527,11 @@ export class ArticleBaseService<
       await runner.release();
     }
   }
-  rejectVersion(
+  rejectVersion<
+    A extends ArticleEntity = ArticleEntity,
+    AV extends ArticleVersionEntity = ArticleVersionEntity,
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(
     articleVersion: {
       id: string;
       version: number;
@@ -1528,15 +1540,19 @@ export class ArticleBaseService<
       reason?: string | null;
       runner?: QueryRunner;
     },
-  ): Promise<ArticleSignatureEntity> {
-    return this.signature(
+  ): Promise<ArticleBaseDto<A, AV, AVC>> {
+    return this.signature<A, AV, AVC>(
       ArticleSignatureResult.REJECTED,
       articleVersion,
       signatureInfo,
     );
   }
 
-  approveVersion(
+  approveVersion<
+    A extends ArticleEntity = ArticleEntity,
+    AV extends ArticleVersionEntity = ArticleVersionEntity,
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(
     articleVersion: {
       id: string;
       version: number;
@@ -1544,15 +1560,19 @@ export class ArticleBaseService<
     signatureInfo?: SignatureInfoDto<SignatureLevelEntity> & {
       runner?: QueryRunner;
     },
-  ): Promise<ArticleSignatureEntity> {
-    return this.signature(
+  ): Promise<ArticleBaseDto<A, AV, AVC>> {
+    return this.signature<A, AV, AVC>(
       ArticleSignatureResult.APPROVED,
       articleVersion,
       signatureInfo,
     );
   }
 
-  private async signature(
+  private async signature<
+    A extends ArticleEntity = ArticleEntity,
+    AV extends ArticleVersionEntity = ArticleVersionEntity,
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(
     result: ArticleSignatureResult,
     articleVersion: {
       id: string;
@@ -1562,7 +1582,7 @@ export class ArticleBaseService<
       reason?: string | null;
       runner?: QueryRunner;
     },
-  ): Promise<ArticleSignatureEntity> {
+  ): Promise<ArticleBaseDto<A, AV, AVC>> {
     if (!this.signatureEnabled) {
       throw new BadRequestException('Signature is not enabled');
     }
@@ -1745,7 +1765,9 @@ export class ArticleBaseService<
           await runner.commitTransaction();
         }
 
-        return signature;
+        return this.findById<A, AV, AVC>(articleVersion.id, {
+          version: articleVersion.version,
+        });
       } else if (signatures.length) {
         throw new BadRequestException('Already signed');
       }
@@ -1788,7 +1810,9 @@ export class ArticleBaseService<
         await runner.commitTransaction();
       }
 
-      return signature;
+      return this.findById<A, AV, AVC>(articleVersion.id, {
+        version: articleVersion.version,
+      });
     } catch (ex) {
       if (!signatureInfo?.runner) {
         await runner.rollbackTransaction();

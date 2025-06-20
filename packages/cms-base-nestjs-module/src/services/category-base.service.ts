@@ -210,12 +210,12 @@ export class CategoryBaseService<
     C extends CategoryEntity = CategoryEntity,
     CM extends
       CategoryMultiLanguageNameEntity = CategoryMultiLanguageNameEntity,
-  >(id: string): Promise<CategoryBaseDto>;
+  >(id: string): Promise<CategoryBaseDto<C, CM>>;
   async findById<
     C extends CategoryEntity = CategoryEntity,
     CM extends
       CategoryMultiLanguageNameEntity = CategoryMultiLanguageNameEntity,
-  >(id: string, language?: Language): Promise<CategoryBaseDto> {
+  >(id: string, language?: Language): Promise<CategoryBaseDto<C, CM>> {
     const qb = this.getDefaultQueryBuilder('categories');
 
     qb.andWhere('categories.id = :id', { id });
@@ -230,7 +230,7 @@ export class CategoryBaseService<
       return this.parseSingleLanguageCategory(category, language);
     }
 
-    return category;
+    return category as CategoryBaseDto<C, CM>;
   }
 
   async archive(id: string): Promise<void> {
@@ -251,7 +251,7 @@ export class CategoryBaseService<
     id: string,
     options: CategoryCreateDto<C>,
     multiLanguageOptions?: DeepPartial<CM>,
-  ): Promise<C> {
+  ): Promise<CategoryBaseDto<C, CM>> {
     if (!this.allowMultipleParentCategories && options.parentIds?.length) {
       throw new MultipleParentCategoryNotAllowedError();
     }
@@ -394,7 +394,7 @@ export class CategoryBaseService<
 
       await runner.commitTransaction();
 
-      return category as C;
+      return this.findById<C, CM>(category.id);
     } catch (ex) {
       await runner.rollbackTransaction();
 
@@ -411,7 +411,7 @@ export class CategoryBaseService<
   >(
     options: CategoryCreateDto<C>,
     multiLanguageOptions?: DeepPartial<CM>,
-  ): Promise<C> {
+  ): Promise<CategoryBaseDto<C, CM>> {
     let parentCategories: C[] = [];
 
     if (!this.allowMultipleParentCategories && options.parentIds?.length) {
@@ -493,7 +493,7 @@ export class CategoryBaseService<
 
       await runner.commitTransaction();
 
-      return category as C;
+      return this.findById<C, CM>(category.id);
     } catch (ex) {
       await runner.rollbackTransaction();
 
