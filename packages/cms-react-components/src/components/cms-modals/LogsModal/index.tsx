@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useState } from 'react';
 import {
   ModalHeader,
   ModalBody as MznModalBody,
@@ -98,71 +98,87 @@ export function getStageNaming(stage: ArticleStage): {
 export interface LogsModalProps {}
 
 const LogsModal = (): ReactNode => {
+  const [versionMode, setVersionMode] = useState<boolean>(false);
   const { closeModal } = useModal();
 
   return (
     <>
       <ModalHeader showSeverityIcon={false}>版本資訊</ModalHeader>
       <MznModalBody className={classes.modalBody}>
-        {Object.keys(data).map((stage) => {
-          const targetStage = stage as ArticleStage;
+        {versionMode && (
+          <Typography variant="h6" color="text-primary">
+            Ver. 1
+          </Typography>
+        )}
+        <div className={classes.wrapper}>
+          {Object.keys(data).map((stage) => {
+            const targetStage = stage as ArticleStage;
 
-          return (
-            <div key={stage} className={classes.block}>
-              <div className={classes.timeLineWrapper}>
-                <div
-                  className={cx(classes.topLine, {
-                    [classes.isHidden]: targetStage === ArticleStage.DRAFT,
-                  })}
-                />
-                <div className={classes.dot} />
-                <div
-                  className={cx(classes.bottomLine, {
-                    [classes.isHidden]: targetStage === ArticleStage.RELEASED,
-                  })}
-                />
-              </div>
-              <div className={classes.contentWrapper}>
-                <div className={classes.stageWrapper}>
-                  <Typography variant="h5" color="text-primary">
-                    {getStageNaming(targetStage).stageName}
-                  </Typography>
-                  {data[targetStage]?.version && (
-                    <Button
-                      type="button"
-                      variant="text"
-                      color="secondary"
-                      size="small"
-                    >
-                      {`Ver. ${data[targetStage].version}`}
-                    </Button>
-                  )}
+            return (
+              <div key={stage} className={classes.block}>
+                <div className={classes.timeLineWrapper}>
+                  <div
+                    className={cx(classes.topLine, {
+                      [classes.isHidden]: targetStage === ArticleStage.DRAFT,
+                    })}
+                  />
+                  <div
+                    className={cx(classes.dot, {
+                      [classes.notActive]:
+                        !data[targetStage]?.time && !data[targetStage]?.member,
+                    })}
+                  />
+                  <div
+                    className={cx(classes.bottomLine, {
+                      [classes.isHidden]: targetStage === ArticleStage.RELEASED,
+                    })}
+                  />
                 </div>
-                <div className={classes.list}>
-                  <div className={classes.option}>
-                    <Typography variant="h6" color="text-secondary">
-                      {getStageNaming(targetStage).timeTitle}
+                <div className={classes.contentWrapper}>
+                  <div className={classes.stageWrapper}>
+                    <Typography variant="h5" color="text-primary">
+                      {getStageNaming(targetStage).stageName}
                     </Typography>
-                    <Typography variant="body2" color="text-primary">
-                      {data[targetStage]?.time || '-'}
-                    </Typography>
+                    {!versionMode && data[targetStage]?.version && (
+                      <Button
+                        type="button"
+                        variant="text"
+                        color="secondary"
+                        size="small"
+                        onClick={() => {
+                          setVersionMode(true);
+                        }}
+                      >
+                        {`Ver. ${data[targetStage].version}`}
+                      </Button>
+                    )}
                   </div>
-                  <div className={classes.option}>
-                    <Typography variant="h6" color="text-secondary">
-                      {getStageNaming(targetStage).memberTitle}
-                    </Typography>
-                    <Typography variant="body2" color="text-primary">
-                      {data[targetStage]?.member || '-'}
-                    </Typography>
+                  <div className={classes.list}>
+                    <div className={classes.option}>
+                      <Typography variant="h6" color="text-secondary">
+                        {getStageNaming(targetStage).timeTitle}
+                      </Typography>
+                      <Typography variant="body2" color="text-primary">
+                        {data[targetStage]?.time || '-'}
+                      </Typography>
+                    </div>
+                    <div className={classes.option}>
+                      <Typography variant="h6" color="text-secondary">
+                        {getStageNaming(targetStage).memberTitle}
+                      </Typography>
+                      <Typography variant="body2" color="text-primary">
+                        {data[targetStage]?.member || '-'}
+                      </Typography>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </MznModalBody>
       <ModalActions
-        cancelText="取消"
+        cancelText="返回"
         confirmText="關閉"
         cancelButtonProps={{
           type: 'button',
@@ -170,7 +186,7 @@ const LogsModal = (): ReactNode => {
           variant: 'outlined',
           danger: false,
           style: {
-            display: 'none',
+            display: versionMode ? 'flex' : 'none',
           },
         }}
         confirmButtonProps={{
@@ -179,7 +195,9 @@ const LogsModal = (): ReactNode => {
           variant: 'contained',
           danger: false,
         }}
-        onCancel={closeModal}
+        onCancel={() => {
+          setVersionMode(false);
+        }}
         onConfirm={closeModal}
       />
     </>
