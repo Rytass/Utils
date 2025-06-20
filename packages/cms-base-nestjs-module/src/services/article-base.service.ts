@@ -969,7 +969,7 @@ export class ArticleBaseService<
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
   >(
     id: string,
-    options?: { releasedAt?: Date; version?: number },
+    options?: { releasedAt?: Date; version?: number; userId?: string },
   ): Promise<ArticleBaseDto<A, AV, AVC>> {
     const article = await this.findById<A, AV, AVC>(id, {
       version: options?.version ?? undefined,
@@ -1019,6 +1019,7 @@ export class ArticleBaseService<
         },
         {
           releasedAt: willReleasedAt,
+          releasedBy: options?.userId ?? undefined,
         },
       );
 
