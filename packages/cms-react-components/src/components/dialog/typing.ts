@@ -31,9 +31,5 @@ export interface DialogConfigType
 
 export interface DialogHookValue {
   openDialog: (config: DialogConfigType) => void | Promise<boolean>;
-  openCancelConfirmDialog: (
-    onCancel: () => void,
-    config?: CancelConfirmDialogConfig,
-  ) => Promise<void>;
   closeDialog: () => void;
 }
