@@ -16,8 +16,12 @@
 
       .topLine {
         width: 1px;
-        height: 6px;
+        height: 5px;
         background-color: var(--mzn-color-border);
+
+        &.isHidden {
+          background-color: transparent;
+        }
       }
 
       .dot {
@@ -31,6 +35,10 @@
         width: 1px;
         flex: 1;
         background-color: var(--mzn-color-border);
+
+        &.isHidden {
+          background-color: transparent;
+        }
       }
     }
 
