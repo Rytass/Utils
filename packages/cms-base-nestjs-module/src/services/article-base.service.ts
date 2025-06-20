@@ -1301,6 +1301,7 @@ export class ArticleBaseService<
             : undefined,
         releasedAt: this.draftMode ? options.releasedAt : new Date(),
         releasedBy: options.releasedAt ? options.userId : undefined,
+        createdBy: options.userId,
       });
 
       await runner.manager.save(version);
@@ -1448,6 +1449,7 @@ export class ArticleBaseService<
             : undefined,
         releasedAt: this.draftMode ? options.releasedAt : new Date(),
         releasedBy: options.releasedAt ? options.userId : undefined,
+        createdBy: options.userId,
       });
 
       await runner.manager.save(version);

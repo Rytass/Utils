@@ -47,6 +47,9 @@ export class BaseArticleVersionEntity {
   @CreateDateColumn()
   createdAt: Date;
 
+  @Column('uuid', { nullable: true })
+  createdBy: string | null;
+
   @DeleteDateColumn()
   deletedAt: Date | null;
 
