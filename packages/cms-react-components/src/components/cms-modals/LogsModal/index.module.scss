@@ -86,6 +86,17 @@
             gap: 12px;
           }
         }
+
+        .reasonWrapper {
+          align-self: stretch;
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          padding: 0 12px;
+          gap: 12px;
+          margin-top: 8px;
+          border: 1px solid var(--mzn-color-warning);
+        }
       }
     }
   }
