@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.77](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.76...@rytass/cms-base-nestjs-module@0.1.77) (2025-06-20)
+
+### Features
+
+- **cms-base-nestjs-module:** add createdBy field to BaseArticleVersionEntity and update service to set it ([91c3ded](https://github.com/Rytass/Utils/commit/91c3ded593531f979153df58de9a72c4c3738b33))
+
 ## [0.1.76](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.75...@rytass/cms-base-nestjs-module@0.1.76) (2025-06-20)
 
 ### Features
