@@ -34,9 +34,9 @@ const data: {
     version: 3,
   },
   [ArticleStage.SCHEDULED]: {
-    time: '2025-06-04．13:30',
-    member: 'manager@email.com',
-    version: 4,
+    time: '',
+    member: '',
+    version: 0,
   },
   [ArticleStage.RELEASED]: {
     time: '2025-06-05．13:30',
@@ -139,7 +139,7 @@ const LogsModal = (): ReactNode => {
                     <Typography variant="h5" color="text-primary">
                       {getStageNaming(targetStage).stageName}
                     </Typography>
-                    {!versionMode && data[targetStage]?.version && (
+                    {!versionMode && !!data[targetStage]?.version && (
                       <Button
                         type="button"
                         variant="text"
