@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.76](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.75...@rytass/cms-base-nestjs-module@0.1.76) (2025-06-20)
+
+### Features
+
+- **cms-base-nestjs-module:** normalize response type dto ([249571d](https://github.com/Rytass/Utils/commit/249571d08ecbd9fa93d5fbbe1331594675e9cac0))
+
 ## [0.1.75](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.74...@rytass/cms-base-nestjs-module@0.1.75) (2025-06-11)
 
 ### Bug Fixes
