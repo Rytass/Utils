@@ -32,5 +32,11 @@
     "@node-rs/jieba": "*",
     "@quadrats/core": "*",
     "typeorm": "*"
+  },
+  "dependencies": {
+    "@rytass/cms-base-nestjs-module": "^0.1.77",
+    "@rytass/member-base-nestjs-module": "^0.1.62",
+    "dataloader": "^2.2.2",
+    "lru-cache": "^11.0.2"
   }
 }
