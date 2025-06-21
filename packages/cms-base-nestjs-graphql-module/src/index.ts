@@ -1,2 +1,1 @@
-export * from './cms-base.module';
-export * from './cms.service';
+export * from './cms-base-graphql.module';
