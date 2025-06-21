@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.78](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.77...@rytass/cms-base-nestjs-module@0.1.78) (2025-06-21)
+
+### Features
+
+- **cms-base-nestjs-module:** add userId option to release method and update releasedBy field ([36d5e83](https://github.com/Rytass/Utils/commit/36d5e83ea8be761630ef9d1c4f3c91df0d80ea37))
+
 ## [0.1.77](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.76...@rytass/cms-base-nestjs-module@0.1.77) (2025-06-20)
 
 ### Features
