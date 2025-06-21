@@ -1,0 +1,34 @@
+{
+  "name": "@rytass/cms-react-components",
+  "version": "0.1.1",
+  "description": "Rytass Content Management System React Components",
+  "keywords": [
+    "rytass",
+    "cms",
+    "react"
+  ],
+  "author": "Cheng Min Ting <ting@rytass.com>",
+  "homepage": "https://github.com/Rytass/Utils#readme",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rytass/Utils.git"
+  },
+  "scripts": {
+    "clean": "npm run build:clean",
+    "build:clean": "node ../../scripts/cleanBuild.js",
+    "build": "npm run build:clean && node ../../scripts/build.js",
+    "release": "lerna version patch && npm run build && lerna publish from-package"
+  },
+  "bugs": {
+    "url": "https://github.com/Rytass/Utils/issues"
+  },
+  "peerDependencies": {
+    "@mezzanine-ui/core": "*",
+    "@mezzanine-ui/icons": "*",
+    "@mezzanine-ui/react": "*",
+    "@mezzanine-ui/system": "*",
+    "react": "*",
+    "react-dom": "*"
+  }
+}

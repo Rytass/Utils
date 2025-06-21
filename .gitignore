@@ -57,6 +57,9 @@ Thumbs.db
 # Yarn
 .yarn/install-state.gz
 
+# frontend
+frontend
+
 # Nx
 .nx/cache
 .nx/workspace-data
