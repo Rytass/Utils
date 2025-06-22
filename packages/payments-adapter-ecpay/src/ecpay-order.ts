@@ -140,6 +140,10 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
 
     this._state = OrderState.PRE_COMMIT;
 
+    if (typeof this.form !== 'object') {
+      return '';
+    }
+
     return `<!DOCTYPE html>
 <html>
   <head>
