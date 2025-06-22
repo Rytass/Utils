@@ -332,7 +332,7 @@ export class MemberBaseService<
     options?: { domain?: string },
   ): Promise<TokenPairDto> {
     try {
-      const { id, account, passwordChangedAt, exp } = verifyJWT(
+      const { id, account, passwordChangedAt, exp, domain } = verifyJWT(
         refreshToken,
         this.refreshTokenSecret,
       ) as {
@@ -340,6 +340,7 @@ export class MemberBaseService<
         account: string;
         passwordChangedAt: number | null;
         exp: number;
+        domain?: string;
       };
 
       const member = await this.baseMemberRepo.findOne({
@@ -357,11 +358,11 @@ export class MemberBaseService<
       return {
         accessToken: this.signAccessToken(
           member as MemberEntity,
-          options?.domain ?? undefined,
+          options?.domain ?? domain ?? undefined,
         ),
         refreshToken: this.signRefreshToken(
           member as MemberEntity,
-          options?.domain ?? undefined,
+          options?.domain ?? domain ?? undefined,
         ),
       };
     } catch (ex) {
