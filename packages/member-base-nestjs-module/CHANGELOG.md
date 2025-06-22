@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.63](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.62...@rytass/member-base-nestjs-module@0.1.63) (2025-06-22)
+
+### Features
+
+- **member-base-nestjs-module:** add refreshToken function with domain ([a967ab9](https://github.com/Rytass/Utils/commit/a967ab94e75f47b34a3e3183a48eb410128bfccb))
+
 ## [0.1.62](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.61...@rytass/member-base-nestjs-module@0.1.62) (2025-06-03)
 
 ### Features
