@@ -1,5 +1,5 @@
 import { ResolveField, Resolver, Root } from '@nestjs/graphql';
-import { MemberDataLoader } from '../dataloaders/members.dataloader';
+import { MemberDataLoader } from '../data-loaders/members.dataloader';
 import { UserDto } from '../dto/user.dto';
 import { IsPublic } from '@rytass/member-base-nestjs-module';
 import {
@@ -8,10 +8,13 @@ import {
   type ArticleBaseDto,
 } from '@rytass/cms-base-nestjs-module';
 import { CategoryDto } from '../dto/category.dto';
-import { ArticleDataLoader } from '../dataloaders/article.dataloader';
+import { ArticleDataLoader } from '../data-loaders/article.dataloader';
 import { Language } from '../decorators/language.decorator';
-import { Inject } from '@nestjs/common';
+import { BadRequestException, Inject } from '@nestjs/common';
 import { BackstageArticleDto } from '../dto/backstage-article.dto';
+import { ArticleMultiLanguageContentDto } from '../dto/article-multi-language-content.dto';
+import { QuadratsContentScalar } from '../scalars/quadrats-element.scalar';
+import { QuadratsElement } from '@quadrats/core';
 
 @Resolver(() => BackstageArticleDto)
 export class BackstageArticleResolver {
@@ -56,5 +59,60 @@ export class BackstageArticleResolver {
       articleId: article.id,
       language: this.multiLanguage ? language : DEFAULT_LANGUAGE,
     });
+  }
+
+  @ResolveField(() => String)
+  @IsPublic()
+  title(@Root() article: ArticleBaseDto): string {
+    if ('title' in article && !this.multiLanguage) {
+      return article.title;
+    }
+
+    throw new BadRequestException(
+      'Title field is not available in multi-language mode.',
+    );
+  }
+
+  @ResolveField(() => String, { nullable: true })
+  @IsPublic()
+  description(@Root() article: ArticleBaseDto): string | null {
+    if ('description' in article && !this.multiLanguage) {
+      return article.description ?? null;
+    }
+
+    throw new BadRequestException(
+      'Description field is not available in multi-language mode.',
+    );
+  }
+
+  @ResolveField(() => QuadratsContentScalar)
+  @IsPublic()
+  content(@Root() article: ArticleBaseDto): QuadratsElement[] {
+    if ('content' in article && !this.multiLanguage) {
+      return article.content;
+    }
+
+    throw new BadRequestException(
+      'Content field is not available in multi-language mode.',
+    );
+  }
+
+  @ResolveField(() => [ArticleMultiLanguageContentDto])
+  @IsPublic()
+  multiLanguageContents(
+    @Root() article: ArticleBaseDto,
+  ): ArticleMultiLanguageContentDto[] {
+    if ('multiLanguageContents' in article) {
+      return article.multiLanguageContents;
+    }
+
+    return [
+      {
+        language: DEFAULT_LANGUAGE,
+        title: article.title,
+        description: article.description,
+        content: article.content,
+      },
+    ];
   }
 }

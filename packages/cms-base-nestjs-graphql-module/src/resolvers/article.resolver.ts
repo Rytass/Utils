@@ -1,6 +1,6 @@
 import { ResolveField, Resolver, Root } from '@nestjs/graphql';
 import { ArticleDto } from '../dto/article.dto';
-import { MemberDataLoader } from '../dataloaders/members.dataloader';
+import { MemberDataLoader } from '../data-loaders/members.dataloader';
 import { UserDto } from '../dto/user.dto';
 import { IsPublic } from '@rytass/member-base-nestjs-module';
 import {
@@ -9,7 +9,7 @@ import {
   type ArticleBaseDto,
 } from '@rytass/cms-base-nestjs-module';
 import { CategoryDto } from '../dto/category.dto';
-import { ArticleDataLoader } from '../dataloaders/article.dataloader';
+import { ArticleDataLoader } from '../data-loaders/article.dataloader';
 import { Language } from '../decorators/language.decorator';
 import { Inject } from '@nestjs/common';
 

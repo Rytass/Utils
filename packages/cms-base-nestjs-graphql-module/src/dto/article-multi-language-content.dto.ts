@@ -1,10 +1,12 @@
 import { Field, ObjectType } from '@nestjs/graphql';
-import { BaseArticleDto } from './base-article.dto';
 import { QuadratsContentScalar } from '../scalars/quadrats-element.scalar';
 import type { QuadratsElement } from '@quadrats/core';
 
-@ObjectType('Article')
-export class ArticleDto extends BaseArticleDto {
+@ObjectType('ArticleMultiLanguageContent')
+export class ArticleMultiLanguageContentDto {
+  @Field(() => String)
+  language: string;
+
   @Field(() => String)
   title: string;
 

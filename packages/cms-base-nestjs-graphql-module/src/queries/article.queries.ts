@@ -51,7 +51,7 @@ export class ArticleQueries {
 
   @Query(() => BackstageArticleDto)
   @IsPublic()
-  backstageArticle(
+  async backstageArticle(
     @Args('id', { type: () => ID }) id: string,
     @Args('version', { type: () => Int, nullable: true })
     version?: number | null,

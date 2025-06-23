@@ -8,8 +8,8 @@ import { ArticleMutations } from './mutations/article.mutations';
 import { CategoryMutations } from './mutations/category.mutations';
 import { ArticleQueries } from './queries/article.queries';
 import { CategoryQueries } from './queries/category.queries';
-import { MemberDataLoader } from './dataloaders/members.dataloader';
-import { ArticleDataLoader } from './dataloaders/article.dataloader';
+import { MemberDataLoader } from './data-loaders/members.dataloader';
+import { ArticleDataLoader } from './data-loaders/article.dataloader';
 import { ArticleResolver } from './resolvers/article.resolver';
 import { BackstageArticleResolver } from './resolvers/backstage-article.resolver';
 
