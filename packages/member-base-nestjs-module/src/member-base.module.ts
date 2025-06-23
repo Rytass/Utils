@@ -8,6 +8,7 @@ import {
   CASBIN_ENFORCER,
   ENABLE_GLOBAL_GUARD,
   MEMBER_BASE_MODULE_OPTIONS,
+  RESOLVED_MEMBER_REPO,
 } from './typings/member-base-providers';
 import { APP_GUARD } from '@nestjs/core';
 import { MemberBaseModuleAsyncOptionsDto } from './typings/member-base-module-async-options';
@@ -42,6 +43,7 @@ const exports = [
   CASBIN_ENFORCER,
   ACCESS_TOKEN_SECRET,
   ENABLE_GLOBAL_GUARD,
+  RESOLVED_MEMBER_REPO,
 ];
 
 const controllers = [OAuthCallbacksController];
