@@ -1,163 +1,148 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 import {
-  MULTIPLE_LANGUAGE_MODE,
+  AUTO_RELEASE_AFTER_APPROVED,
+  CIRCULAR_CATEGORY_MODE,
   CMS_BASE_MODULE_OPTIONS,
-  ENABLE_SIGNATURE_MODE,
-  SIGNATURE_LEVELS,
   DRAFT_MODE,
   FULL_TEXT_SEARCH_MODE,
+  MULTIPLE_CATEGORY_PARENT_MODE,
+  MULTIPLE_LANGUAGE_MODE,
+  PROVIDE_ARTICLE_ENTITY,
+  PROVIDE_ARTICLE_VERSION_CONTENT_ENTITY,
+  PROVIDE_ARTICLE_VERSION_ENTITY,
+  PROVIDE_CATEGORY_ENTITY,
+  PROVIDE_CATEGORY_MULTI_LANGUAGE_NAME_ENTITY,
+  PROVIDE_SIGNATURE_LEVEL_ENTITY,
+  SIGNATURE_LEVELS,
 } from '../src/typings/cms-base-providers';
 import { OptionProviders } from '../src/constants/option-providers';
-import { FactoryProvider } from '@nestjs/common';
+import { DEFAULT_SIGNATURE_LEVEL } from '../src/constants/default-signature-level';
 
 describe('OptionProviders', () => {
-  const baseOptions = {
+  const mockOptions = {
     multipleLanguageMode: true,
-    signatureMode: 'manual',
+    allowMultipleParentCategories: true,
+    allowCircularCategories: true,
     signatureLevels: ['L1', 'L2'],
-    enableDraftMode: true,
-    fullTextSearchMode: false,
+    articleEntity: 'ArticleEntity',
+    articleVersionEntity: 'ArticleVersionEntity',
+    articleVersionContentEntity: 'ArticleVersionContentEntity',
+    categoryEntity: 'CategoryEntity',
+    categoryMultiLanguageNameEntity: 'CategoryNameEntity',
+    signatureLevelEntity: 'SignatureLevelEntity',
+    fullTextSearchMode: true,
+    enableDraftMode: false,
+    autoReleaseWhenLatestSignatureApproved: true,
   };
 
-  let module: TestingModule;
+  let moduleRef: any;
 
   beforeEach(async () => {
-    module = await Test.createTestingModule({
+    const testingModule = await Test.createTestingModule({
       providers: [
-        {
-          provide: CMS_BASE_MODULE_OPTIONS,
-          useValue: baseOptions,
-        },
+        { provide: CMS_BASE_MODULE_OPTIONS, useValue: mockOptions },
         ...OptionProviders,
       ],
     }).compile();
 
-    jest.resetModules();
-    jest.clearAllMocks();
+    moduleRef = testingModule;
   });
 
-  it('should resolve MULTIPLE_LANGUAGE_MODE correctly', () => {
-    const value = module.get(MULTIPLE_LANGUAGE_MODE);
-
-    expect(value).toBe(true);
+  it('should provide MULTIPLE_LANGUAGE_MODE as true', () => {
+    expect(moduleRef.get(MULTIPLE_LANGUAGE_MODE)).toBe(true);
   });
 
-  it('should fallback to false when multipleLanguageMode is undefined', async () => {
-    const testModule = await Test.createTestingModule({
+  it('should provide MULTIPLE_CATEGORY_PARENT_MODE as true', () => {
+    expect(moduleRef.get(MULTIPLE_CATEGORY_PARENT_MODE)).toBe(true);
+  });
+
+  it('should provide CIRCULAR_CATEGORY_MODE as true', () => {
+    expect(moduleRef.get(CIRCULAR_CATEGORY_MODE)).toBe(true);
+  });
+
+  it('should provide SIGNATURE_LEVELS from options', () => {
+    expect(moduleRef.get(SIGNATURE_LEVELS)).toEqual(['L1', 'L2']);
+  });
+
+  it('should fallback SIGNATURE_LEVELS to DEFAULT_SIGNATURE_LEVEL if not provided', async () => {
+    const testingModule = await Test.createTestingModule({
       providers: [
-        {
-          provide: CMS_BASE_MODULE_OPTIONS,
-          useValue: {},
-        },
+        { provide: CMS_BASE_MODULE_OPTIONS, useValue: {} },
         ...OptionProviders,
       ],
     }).compile();
 
-    const result = testModule.get(MULTIPLE_LANGUAGE_MODE);
-
-    expect(result).toBe(false);
+    expect(testingModule.get(SIGNATURE_LEVELS)).toEqual([
+      DEFAULT_SIGNATURE_LEVEL,
+    ]);
   });
 
-  it('should resolve ENABLE_SIGNATURE_MODE correctly', () => {
-    const value = module.get(ENABLE_SIGNATURE_MODE);
-
-    expect(value).toBe('manual');
-  });
-
-  it('should resolve SIGNATURE_LEVELS correctly', () => {
-    const value = module.get(SIGNATURE_LEVELS);
-
-    expect(value).toEqual(['L1', 'L2']);
-  });
-
-  it('should resolve DRAFT_MODE correctly', () => {
-    const value = module.get(DRAFT_MODE);
-
-    expect(value).toBe(true);
-  });
-
-  it('should fallback false when fullTextSearchMode is not enabled', async () => {
-    const fts = await module.get(FULL_TEXT_SEARCH_MODE);
-
-    expect(fts).toBe(false);
-  });
-
-  it('should throw error if fullTextSearchMode enabled but jieba not installed', async () => {
-    const provider = OptionProviders.find(
-      (p): p is FactoryProvider =>
-        'provide' in p && p.provide === FULL_TEXT_SEARCH_MODE,
+  it('should provide all entity injection tokens from options', () => {
+    expect(moduleRef.get(PROVIDE_ARTICLE_ENTITY)).toBe('ArticleEntity');
+    expect(moduleRef.get(PROVIDE_ARTICLE_VERSION_ENTITY)).toBe(
+      'ArticleVersionEntity',
     );
 
-    if (!provider) {
-      throw new Error('FULL_TEXT_SEARCH_MODE provider not found');
-    }
+    expect(moduleRef.get(PROVIDE_ARTICLE_VERSION_CONTENT_ENTITY)).toBe(
+      'ArticleVersionContentEntity',
+    );
 
-    const failingFactory = jest.fn(async () => {
-      throw new Error(
-        'Full Text Search Mode requires @node-rs/jieba module, please install it first.',
-      );
-    });
+    expect(moduleRef.get(PROVIDE_CATEGORY_ENTITY)).toBe('CategoryEntity');
+    expect(moduleRef.get(PROVIDE_CATEGORY_MULTI_LANGUAGE_NAME_ENTITY)).toBe(
+      'CategoryNameEntity',
+    );
 
-    // Override the factory temporarily
-    const originalFactory = provider.useFactory;
-
-    provider.useFactory = failingFactory;
-
-    await expect(
-      provider.useFactory({ fullTextSearchMode: true }),
-    ).rejects.toThrow(/jieba/);
-
-    // Restore original after test
-    provider.useFactory = originalFactory;
+    expect(moduleRef.get(PROVIDE_SIGNATURE_LEVEL_ENTITY)).toBe(
+      'SignatureLevelEntity',
+    );
   });
 
-  it('should resolve FULL_TEXT_SEARCH_MODE as true when jieba is installed', async () => {
-    jest.mock('@node-rs/jieba', () => ({}));
+  it('should provide DRAFT_MODE as false', () => {
+    expect(moduleRef.get(DRAFT_MODE)).toBe(false);
+  });
 
-    const moduleWithFTS = await Test.createTestingModule({
-      providers: [
-        {
-          provide: CMS_BASE_MODULE_OPTIONS,
-          useValue: {
-            fullTextSearchMode: true,
-          },
-        },
-        ...OptionProviders,
-      ],
-    }).compile();
+  it('should provide AUTO_RELEASE_AFTER_APPROVED as true', () => {
+    expect(moduleRef.get(AUTO_RELEASE_AFTER_APPROVED)).toBe(true);
+  });
 
-    const result = await moduleWithFTS.get(FULL_TEXT_SEARCH_MODE);
+  it('should provide FULL_TEXT_SEARCH_MODE as true if @node-rs/jieba is available', async () => {
+    const result = await moduleRef.get(FULL_TEXT_SEARCH_MODE);
 
     expect(result).toBe(true);
   });
 
-  it('should test async provider factory', async () => {
+  it('should throw error if FULL_TEXT_SEARCH_MODE enabled but jieba is missing', async () => {
+    jest.resetModules();
+
+    // simulate @node-rs/jieba not being installed
     jest.doMock('@node-rs/jieba', () => {
-      throw new Error('Module not found');
+      throw new Error('jieba not found');
     });
 
-    // If the provider factory is async and throws
     await expect(async () => {
-      const moduleWithFTS = await Test.createTestingModule({
-        providers: [
-          {
-            provide: CMS_BASE_MODULE_OPTIONS,
-            useValue: {
-              fullTextSearchMode: true,
+      await jest.isolateModulesAsync(async () => {
+        const { CMS_BASE_MODULE_OPTIONS, FULL_TEXT_SEARCH_MODE } = await import(
+          '../src/typings/cms-base-providers'
+        );
+
+        const { OptionProviders } = await import(
+          '../src/constants/option-providers'
+        );
+
+        const testingModule = await Test.createTestingModule({
+          providers: [
+            {
+              provide: CMS_BASE_MODULE_OPTIONS,
+              useValue: { fullTextSearchMode: true },
             },
-          },
-          ...OptionProviders,
-        ],
-      }).compile();
+            ...OptionProviders,
+          ],
+        }).compile();
 
-      await moduleWithFTS.init();
-
-      // Force all providers to instantiate
-      const app = moduleWithFTS.createNestApplication();
-
-      await app.init();
-
-      return moduleWithFTS.get(FULL_TEXT_SEARCH_MODE);
-    }).rejects.toThrow('Full Text Search Mode requires @node-rs/jieba module');
+        await testingModule.get(FULL_TEXT_SEARCH_MODE);
+      });
+    }).rejects.toThrow(
+      'Full Text Search Mode requires @node-rs/jieba module, please install it first.',
+    );
   });
 });
