@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.18](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.17...@rytass/cms-base-nestjs-graphql-module@0.0.18) (2025-06-23)
+
+### Features
+
+- **cms-base-nestjs-graphql-module:** add stage version type support ([6bbe49e](https://github.com/Rytass/Utils/commit/6bbe49ee31c26398e4ae1b955d9c26bfb6d6a353))
+
 ## [0.0.17](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.16...@rytass/cms-base-nestjs-graphql-module@0.0.17) (2025-06-23)
 
 ### Features
