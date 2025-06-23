@@ -1790,9 +1790,13 @@ export class ArticleBaseService<
           await runner.commitTransaction();
         }
 
-        return this.findById<A, AV, AVC>(articleVersion.id, {
-          version: articleVersion.version,
-        });
+        return this.findById<A, AV, AVC>(
+          articleVersion.id,
+          {
+            version: articleVersion.version,
+          },
+          signatureInfo?.runner,
+        );
       } else if (signatures.length) {
         throw new BadRequestException('Already signed');
       }
@@ -1835,9 +1839,13 @@ export class ArticleBaseService<
         await runner.commitTransaction();
       }
 
-      return this.findById<A, AV, AVC>(articleVersion.id, {
-        version: articleVersion.version,
-      });
+      return this.findById<A, AV, AVC>(
+        articleVersion.id,
+        {
+          version: articleVersion.version,
+        },
+        signatureInfo?.runner,
+      );
     } catch (ex) {
       if (!signatureInfo?.runner) {
         await runner.rollbackTransaction();
