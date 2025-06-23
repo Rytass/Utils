@@ -11,10 +11,10 @@ import { IsPublic } from '@rytass/member-base-nestjs-module';
 import { Language } from '../decorators/language.decorator';
 import { ArticleCollectionDto } from '../dto/article-collection.dto';
 import { ArticleDto } from '../dto/article.dto';
-import { ArticleBackstageDto } from '../dto/article-backstage.dto';
-import { ArticleBackstageCollectionDto } from '../dto/article-backstage-collection.dto';
+import { BackstageArticleDto } from '../dto/backstage-article.dto';
+import { BackstageArticleCollectionDto } from '../dto/backstage-article-collection.dto';
 import { Inject } from '@nestjs/common';
-import { ArticleBackstageArgs } from '../dto/article-backstage.args';
+import { BackstageArticleArgs } from '../dto/backstage-article.args';
 
 @Resolver()
 export class ArticleQueries {
@@ -49,21 +49,21 @@ export class ArticleQueries {
     }) as Promise<ArticleCollectionDto>;
   }
 
-  @Query(() => ArticleBackstageDto)
+  @Query(() => BackstageArticleDto)
   @IsPublic()
   backstageArticle(
     @Args('id', { type: () => ID }) id: string,
     @Args('version', { type: () => Int, nullable: true })
     version?: number | null,
-  ): Promise<ArticleBackstageDto> {
+  ): Promise<BackstageArticleDto> {
     return this.articleService.findById(id, { version });
   }
 
-  @Query(() => ArticleBackstageCollectionDto)
+  @Query(() => BackstageArticleCollectionDto)
   @IsPublic()
   backstageArticles(
-    @Args() args: ArticleBackstageArgs,
-  ): Promise<ArticleBackstageCollectionDto> {
+    @Args() args: BackstageArticleArgs,
+  ): Promise<BackstageArticleCollectionDto> {
     return this.articleService.findCollection(args);
   }
 }

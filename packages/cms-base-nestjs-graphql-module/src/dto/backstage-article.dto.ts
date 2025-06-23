@@ -1,8 +1,8 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
 import { BaseArticleDto } from './base-article.dto';
 
-@ObjectType('ArticleBackstage')
-export class ArticleBackstageDto extends BaseArticleDto {
+@ObjectType('BackstageArticle')
+export class BackstageArticleDto extends BaseArticleDto {
   @Field(() => Int)
   version: number;
 

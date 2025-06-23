@@ -2,18 +2,18 @@ import { Args, ID, Mutation, Resolver } from '@nestjs/graphql';
 import { CategoryBaseService } from '@rytass/cms-base-nestjs-module';
 import { CreateCategoryArgs } from '../dto/create-category.args';
 import { IsPublic } from '@rytass/member-base-nestjs-module';
-import { CategoryBackstageDto } from '../dto/category-backstage.dto';
+import { BackstageCategoryDto } from '../dto/backstage-category.dto';
 import { UpdateCategoryArgs } from '../dto/update-category.args';
 
 @Resolver()
 export class CategoryMutations {
   constructor(private readonly categoryService: CategoryBaseService) {}
 
-  @Mutation(() => CategoryBackstageDto)
+  @Mutation(() => BackstageCategoryDto)
   @IsPublic()
   createCategory(
     @Args() args: CreateCategoryArgs,
-  ): Promise<CategoryBackstageDto> {
+  ): Promise<BackstageCategoryDto> {
     return this.categoryService.create({
       ...args,
       multiLanguageNames: Object.fromEntries(
@@ -22,11 +22,11 @@ export class CategoryMutations {
     });
   }
 
-  @Mutation(() => CategoryBackstageDto)
+  @Mutation(() => BackstageCategoryDto)
   @IsPublic()
   updateCategory(
     @Args() args: UpdateCategoryArgs,
-  ): Promise<CategoryBackstageDto> {
+  ): Promise<BackstageCategoryDto> {
     return this.categoryService.update(args.id, {
       ...args,
       multiLanguageNames: Object.fromEntries(

@@ -11,10 +11,10 @@ import { CategoryDto } from '../dto/category.dto';
 import { ArticleDataLoader } from '../dataloaders/article.dataloader';
 import { Language } from '../decorators/language.decorator';
 import { Inject } from '@nestjs/common';
-import { ArticleBackstageDto } from '../dto/article-backstage.dto';
+import { BackstageArticleDto } from '../dto/backstage-article.dto';
 
-@Resolver(() => ArticleBackstageDto)
-export class ArticleBackstageResolver {
+@Resolver(() => BackstageArticleDto)
+export class BackstageArticleResolver {
   constructor(
     private readonly memberDataloader: MemberDataLoader,
     private readonly articleDataloader: ArticleDataLoader,

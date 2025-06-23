@@ -3,7 +3,7 @@ import {
   DEFAULT_LANGUAGE,
 } from '@rytass/cms-base-nestjs-module';
 import { Args, ID, Int, Mutation, Resolver } from '@nestjs/graphql';
-import { ArticleBackstageDto } from '../dto/article-backstage.dto';
+import { BackstageArticleDto } from '../dto/backstage-article.dto';
 import { CreateArticleArgs } from '../dto/create-article.args';
 import { IsPublic, MemberId } from '@rytass/member-base-nestjs-module';
 import { UpdateArticleArgs } from '../dto/update-article.args';
@@ -12,12 +12,12 @@ import { UpdateArticleArgs } from '../dto/update-article.args';
 export class ArticleMutations {
   constructor(private readonly articleService: ArticleBaseService) {}
 
-  @Mutation(() => ArticleBackstageDto)
+  @Mutation(() => BackstageArticleDto)
   @IsPublic()
   async createArticle(
     @MemberId() memberId: string,
     @Args() args: CreateArticleArgs,
-  ): Promise<ArticleBackstageDto> {
+  ): Promise<BackstageArticleDto> {
     return this.articleService.create({
       categoryIds: args.categoryIds,
       tags: args.tags,
@@ -39,12 +39,12 @@ export class ArticleMutations {
     });
   }
 
-  @Mutation(() => ArticleBackstageDto)
+  @Mutation(() => BackstageArticleDto)
   @IsPublic()
   async updateArticle(
     @MemberId() memberId: string,
     @Args() args: UpdateArticleArgs,
-  ): Promise<ArticleBackstageDto> {
+  ): Promise<BackstageArticleDto> {
     return this.articleService.addVersion(args.id, {
       categoryIds: args.categoryIds,
       tags: args.tags,
@@ -76,33 +76,33 @@ export class ArticleMutations {
     return true;
   }
 
-  @Mutation(() => ArticleBackstageDto)
+  @Mutation(() => BackstageArticleDto)
   @IsPublic()
   async submitArticle(
     @MemberId() memberId: string,
     @Args('id', { type: () => ID }) id: string,
     @Args('version', { type: () => Int }) version: number,
-  ): Promise<ArticleBackstageDto> {
+  ): Promise<BackstageArticleDto> {
     return this.articleService.submit(id, { version, userId: memberId });
   }
 
-  @Mutation(() => ArticleBackstageDto)
+  @Mutation(() => BackstageArticleDto)
   @IsPublic()
   async approveArticle(
     @Args('id', { type: () => ID }) id: string,
-  ): Promise<ArticleBackstageDto> {
+  ): Promise<BackstageArticleDto> {
     const article = await this.articleService.findById(id);
 
     return this.articleService.approveVersion(article);
   }
 
-  @Mutation(() => ArticleBackstageDto)
+  @Mutation(() => BackstageArticleDto)
   @IsPublic()
   async rejectArticle(
     @Args('id', { type: () => ID }) id: string,
     @Args('reason', { type: () => String, nullable: true })
     reason?: string | null,
-  ): Promise<ArticleBackstageDto> {
+  ): Promise<BackstageArticleDto> {
     const article = await this.articleService.findById(id);
 
     return this.articleService.rejectVersion(article, {
@@ -110,24 +110,24 @@ export class ArticleMutations {
     });
   }
 
-  @Mutation(() => ArticleBackstageDto)
+  @Mutation(() => BackstageArticleDto)
   @IsPublic()
   releaseArticle(
     @MemberId() userId: string,
     @Args('id', { type: () => ID }) id: string,
     @Args('releasedAt', { type: () => Date }) releasedAt: Date,
-  ): Promise<ArticleBackstageDto> {
+  ): Promise<BackstageArticleDto> {
     return this.articleService.release(id, {
       releasedAt,
       userId,
     });
   }
 
-  @Mutation(() => ArticleBackstageDto)
+  @Mutation(() => BackstageArticleDto)
   @IsPublic()
   withdrawArticle(
     @Args('id', { type: () => ID }) id: string,
-  ): Promise<ArticleBackstageDto> {
+  ): Promise<BackstageArticleDto> {
     return this.articleService.withdraw(id);
   }
 }

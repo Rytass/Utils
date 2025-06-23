@@ -7,7 +7,7 @@ import { CategoriesArgs } from '../dto/categories.args';
 import { IsPublic } from '@rytass/member-base-nestjs-module';
 import { CategoryDto } from '../dto/category.dto';
 import { Language } from '../decorators/language.decorator';
-import { CategoryBackstageDto } from '../dto/category-backstage.dto';
+import { BackstageCategoryDto } from '../dto/backstage-category.dto';
 
 @Resolver()
 export class CategoryQueries {
@@ -34,19 +34,19 @@ export class CategoryQueries {
     });
   }
 
-  @Query(() => CategoryBackstageDto)
+  @Query(() => BackstageCategoryDto)
   @IsPublic()
   backstageCategory(
     @Args('id', { type: () => ID }) id: string,
-  ): Promise<CategoryBackstageDto> {
+  ): Promise<BackstageCategoryDto> {
     return this.categoryService.findById(id);
   }
 
-  @Query(() => [CategoryBackstageDto])
+  @Query(() => [BackstageCategoryDto])
   @IsPublic()
   backstageCategories(
     @Args() args: CategoriesArgs,
-  ): Promise<CategoryBackstageDto[]> {
+  ): Promise<BackstageCategoryDto[]> {
     return this.categoryService.findAll(args);
   }
 }

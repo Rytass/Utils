@@ -3,7 +3,7 @@ import { ArticleStage } from '@rytass/cms-base-nestjs-module';
 import { ArticlesArgs } from './articles.args';
 
 @ArgsType()
-export class ArticleBackstageArgs extends ArticlesArgs {
+export class BackstageArticleArgs extends ArticlesArgs {
   @Field(() => ArticleStage)
   stage: ArticleStage;
 }
