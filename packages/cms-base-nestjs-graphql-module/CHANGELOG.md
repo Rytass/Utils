@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.19](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.18...@rytass/cms-base-nestjs-graphql-module@0.0.19) (2025-06-23)
+
+### Features
+
+- **cms-base-nestjs-graphql-module:** add signatures resolver ([0f437c9](https://github.com/Rytass/Utils/commit/0f437c94bd478f44dcd39a00cda38c12c233e90c))
+
 ## [0.0.18](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.17...@rytass/cms-base-nestjs-graphql-module@0.0.18) (2025-06-23)
 
 ### Features
