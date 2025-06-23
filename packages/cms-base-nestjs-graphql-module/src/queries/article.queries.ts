@@ -1,6 +1,7 @@
 import { Args, ID, Query, Resolver } from '@nestjs/graphql';
 import {
   ArticleBaseService,
+  ArticleStage,
   DEFAULT_LANGUAGE,
   MULTIPLE_LANGUAGE_MODE,
   SingleArticleBaseDto,
@@ -29,6 +30,7 @@ export class ArticleQueries {
     @Language() language: string = DEFAULT_LANGUAGE,
   ): Promise<ArticleDto> {
     return this.articleService.findById(id, {
+      stage: ArticleStage.RELEASED,
       language: this.multiLanguage ? (language ?? DEFAULT_LANGUAGE) : undefined,
     }) as Promise<SingleArticleBaseDto>;
   }
@@ -41,6 +43,7 @@ export class ArticleQueries {
   ): Promise<ArticleCollectionDto> {
     return this.articleService.findCollection({
       ...args,
+      stage: ArticleStage.RELEASED,
       language: this.multiLanguage ? (language ?? DEFAULT_LANGUAGE) : undefined,
     }) as Promise<ArticleCollectionDto>;
   }
