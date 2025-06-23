@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.7](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.6...@rytass/cms-base-nestjs-graphql-module@0.0.7) (2025-06-23)
+
+### Bug Fixes
+
+- **cms-base-nestjs-graphql-module:** support multi language mode detection ([24f599b](https://github.com/Rytass/Utils/commit/24f599ba607ddf37d3dc5f45d542a88214007624))
+
 ## [0.0.6](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.5...@rytass/cms-base-nestjs-graphql-module@0.0.6) (2025-06-23)
 
 **Note:** Version bump only for package @rytass/cms-base-nestjs-graphql-module
