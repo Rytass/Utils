@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.64](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.63...@rytass/member-base-nestjs-module@0.1.64) (2025-06-23)
+
+**Note:** Version bump only for package @rytass/member-base-nestjs-module
+
 ## [0.1.63](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.62...@rytass/member-base-nestjs-module@0.1.63) (2025-06-22)
 
 ### Features
