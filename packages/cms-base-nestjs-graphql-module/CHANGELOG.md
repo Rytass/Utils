@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.4](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.3...@rytass/cms-base-nestjs-graphql-module@0.0.4) (2025-06-23)
+
+### Features
+
+- **cms-base-nestjs-graphql-module:** remove interface type ([0807267](https://github.com/Rytass/Utils/commit/080726720133ef45c50b2661cafbff634d2ba98a))
+
 ## [0.0.3](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.2...@rytass/cms-base-nestjs-graphql-module@0.0.3) (2025-06-23)
 
 **Note:** Version bump only for package @rytass/cms-base-nestjs-graphql-module
