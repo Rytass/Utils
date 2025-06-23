@@ -1194,7 +1194,7 @@ export class ArticleBaseService<
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
   >(
     id: string,
-    options: SingleArticleCreateDto<A, AV, AVC> & { id: A['id'] },
+    options: SingleArticleCreateDto<A, AV, AVC>,
   ): Promise<ArticleBaseDto<A, AV, AVC>>;
   async addVersion<
     A extends ArticleEntity = ArticleEntity,
@@ -1202,7 +1202,7 @@ export class ArticleBaseService<
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
   >(
     id: string,
-    options: MultiLanguageArticleCreateDto<A, AV, AVC> & { id: A['id'] },
+    options: MultiLanguageArticleCreateDto<A, AV, AVC>,
   ): Promise<ArticleBaseDto<A, AV, AVC>>;
   async addVersion<
     A extends ArticleEntity = ArticleEntity,
@@ -1211,8 +1211,8 @@ export class ArticleBaseService<
   >(
     id: string,
     options:
-      | (SingleArticleCreateDto<A, AV, AVC> & { id: A['id'] })
-      | (MultiLanguageArticleCreateDto<A, AV, AVC> & { id: A['id'] }),
+      | SingleArticleCreateDto<A, AV, AVC>
+      | MultiLanguageArticleCreateDto<A, AV, AVC>,
   ): Promise<ArticleBaseDto<A, AV, AVC>> {
     this.optionsCheck<A, AV, AVC>(options);
 
@@ -1283,7 +1283,7 @@ export class ArticleBaseService<
       await runner.manager.save(
         this.baseArticleRepo.create({
           ...article,
-          ...removeArticleInvalidFields(options),
+          ...removeArticleInvalidFields(options as Partial<A>),
           ...(options.categoryIds ? { categories: targetCategories } : {}),
         }),
       );
