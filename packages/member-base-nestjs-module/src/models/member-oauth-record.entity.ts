@@ -5,7 +5,7 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryColumn,
-  Relation,
+  type Relation,
 } from 'typeorm';
 import { BaseMemberEntity } from './base-member.entity';
 

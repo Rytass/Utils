@@ -6,7 +6,7 @@ import {
   ManyToMany,
   OneToMany,
   PrimaryGeneratedColumn,
-  Relation,
+  type Relation,
   TableInheritance,
 } from 'typeorm';
 import { BaseArticleVersionEntity } from './base-article-version.entity';

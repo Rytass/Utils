@@ -1,18 +1,17 @@
 import {
   Column,
   CreateDateColumn,
-  DeleteDateColumn,
   Entity,
   Index,
   JoinColumn,
   ManyToOne,
   PrimaryColumn,
-  Relation,
+  type Relation,
   TableInheritance,
   UpdateDateColumn,
 } from 'typeorm';
 import { BaseCategoryEntity } from './base-category.entity';
-import { Language } from '../typings/language';
+import type { Language } from '../typings/language';
 import { DEFAULT_LANGUAGE } from '../constants/default-language';
 
 export const BaseCategoryMultiLanguageNameRepo = Symbol(

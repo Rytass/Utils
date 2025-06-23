@@ -5,7 +5,7 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryColumn,
-  Relation,
+  type Relation,
   TableInheritance,
 } from 'typeorm';
 import { DEFAULT_LANGUAGE } from '../constants/default-language';

@@ -6,7 +6,7 @@ import {
   Index,
   OneToMany,
   PrimaryGeneratedColumn,
-  Relation,
+  type Relation,
   TableInheritance,
   UpdateDateColumn,
 } from 'typeorm';

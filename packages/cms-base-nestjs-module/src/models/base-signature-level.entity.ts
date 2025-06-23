@@ -6,7 +6,7 @@ import {
   Index,
   OneToMany,
   PrimaryGeneratedColumn,
-  Relation,
+  type Relation,
   TableInheritance,
 } from 'typeorm';
 import { ArticleSignatureEntity } from './article-signature.entity';

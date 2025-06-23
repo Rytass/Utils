@@ -7,7 +7,7 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
-  Relation,
+  type Relation,
 } from 'typeorm';
 import { BaseArticleVersionEntity } from './base-article-version.entity';
 import { ArticleSignatureResult } from '../typings/article-signature-result.enum';

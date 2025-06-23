@@ -7,7 +7,7 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
-  Relation,
+  type Relation,
 } from 'typeorm';
 
 export const MemberPasswordHistoryRepo = Symbol('MemberPasswordHistoryRepo');

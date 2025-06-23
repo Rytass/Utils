@@ -15,7 +15,7 @@ import {
   REFRESH_TOKEN_SECRET,
 } from '../typings/member-base-providers';
 import { BaseMemberEntity } from '../models/base-member.entity';
-import { ReflectableDecorator, Reflector } from '@nestjs/core';
+import { type ReflectableDecorator, Reflector } from '@nestjs/core';
 import { IS_ROUTE_PUBLIC } from '../decorators/is-public.decorator';
 import { AllowActions } from '../decorators/action.decorator';
 import { verify } from 'jsonwebtoken';

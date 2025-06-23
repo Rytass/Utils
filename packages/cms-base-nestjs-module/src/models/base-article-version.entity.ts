@@ -8,7 +8,7 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryColumn,
-  Relation,
+  type Relation,
   TableInheritance,
 } from 'typeorm';
 import { BaseArticleVersionContentEntity } from './base-article-version-content.entity';

@@ -15,7 +15,7 @@ import {
   OAUTH2_PROVIDERS,
 } from '../typings/member-base-providers';
 import { OAuthService } from '../services/oauth.service';
-import { Response } from 'express';
+import type { Response } from 'express';
 
 @Controller('/auth')
 export class OAuthCallbacksController {
