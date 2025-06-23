@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.90](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.89...@rytass/cms-base-nestjs-module@0.1.90) (2025-06-23)
+
+### Features
+
+- **cms-base-nestjs-module:** add article stage loader ([8c6df78](https://github.com/Rytass/Utils/commit/8c6df78462cb069ac09b0253ea93d74598d6a074))
+
 ## [0.1.89](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.88...@rytass/cms-base-nestjs-module@0.1.89) (2025-06-23)
 
 ### Features

@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.17](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.16...@rytass/cms-base-nestjs-graphql-module@0.0.17) (2025-06-23)
+
+### Features
+
+- **cms-base-nestjs-graphql-module:** add stage loader ([695760d](https://github.com/Rytass/Utils/commit/695760de302a08f9a1e40ad175a027f42112bbb5))
+
 ## [0.0.16](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.15...@rytass/cms-base-nestjs-graphql-module@0.0.16) (2025-06-23)
 
 ### Features
