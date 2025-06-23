@@ -3,6 +3,7 @@ import { MemberDataLoader } from '../data-loaders/members.dataloader';
 import { UserDto } from '../dto/user.dto';
 import { IsPublic } from '@rytass/member-base-nestjs-module';
 import {
+  ArticleVersionDataLoader,
   DEFAULT_LANGUAGE,
   MULTIPLE_LANGUAGE_MODE,
   type ArticleBaseDto,
@@ -23,6 +24,7 @@ export class BackstageArticleResolver {
     private readonly articleDataloader: ArticleDataLoader,
     @Inject(MULTIPLE_LANGUAGE_MODE)
     private readonly multiLanguage: boolean,
+    private readonly articleVersionDataLoader: ArticleVersionDataLoader,
   ) {}
 
   @ResolveField(() => UserDto, { nullable: true })
@@ -114,5 +116,11 @@ export class BackstageArticleResolver {
         content: article.content,
       },
     ];
+  }
+
+  @ResolveField(() => [BackstageArticleDto])
+  @IsPublic()
+  versions(@Root() article: ArticleBaseDto): Promise<BackstageArticleDto[]> {
+    return this.articleVersionDataLoader.versionsLoader.load(article.id);
   }
 }
