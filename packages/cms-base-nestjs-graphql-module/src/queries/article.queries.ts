@@ -2,6 +2,7 @@ import { Args, ID, Query, Resolver } from '@nestjs/graphql';
 import {
   ArticleBaseService,
   DEFAULT_LANGUAGE,
+  MULTIPLE_LANGUAGE_MODE,
   SingleArticleBaseDto,
 } from '@rytass/cms-base-nestjs-module';
 import { ArticlesArgs } from '../dto/articles.args';
@@ -11,10 +12,15 @@ import { ArticleCollectionDto } from '../dto/article-collection.dto';
 import { ArticleDto } from '../dto/article.dto';
 import { ArticleBackstageDto } from '../dto/article-backstage.dto';
 import { ArticleBackstageCollectionDto } from '../dto/article-backstage-collection.dto';
+import { Inject } from '@nestjs/common';
 
 @Resolver()
 export class ArticleQueries {
-  constructor(private readonly articleService: ArticleBaseService) {}
+  constructor(
+    private readonly articleService: ArticleBaseService,
+    @Inject(MULTIPLE_LANGUAGE_MODE)
+    private readonly multiLanguage: boolean,
+  ) {}
 
   @Query(() => ArticleDto)
   @IsPublic()
@@ -23,7 +29,7 @@ export class ArticleQueries {
     @Language() language: string = DEFAULT_LANGUAGE,
   ): Promise<ArticleDto> {
     return this.articleService.findById(id, {
-      language: language ?? DEFAULT_LANGUAGE,
+      language: this.multiLanguage ? (language ?? DEFAULT_LANGUAGE) : undefined,
     }) as Promise<SingleArticleBaseDto>;
   }
 
@@ -35,8 +41,8 @@ export class ArticleQueries {
   ): Promise<ArticleCollectionDto> {
     return this.articleService.findCollection({
       ...args,
-      language,
-    });
+      language: this.multiLanguage ? (language ?? DEFAULT_LANGUAGE) : undefined,
+    }) as Promise<ArticleCollectionDto>;
   }
 
   @Query(() => ArticleBackstageDto)
