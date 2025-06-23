@@ -35,7 +35,7 @@ import {
 import {
   ArticleSignatureRepo,
   ArticleSignatureEntity,
-} from '../../src/models/base-article-signature.entity';
+} from '../../src/models/article-signature.entity';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { CMSBaseModelsModule } from '../../src/models/models.module';
 

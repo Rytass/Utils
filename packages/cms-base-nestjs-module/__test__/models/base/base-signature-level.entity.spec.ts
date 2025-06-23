@@ -1,6 +1,6 @@
 import { getMetadataArgsStorage } from 'typeorm';
 import { BaseSignatureLevelEntity } from '../../../src/models/base-signature-level.entity';
-import { ArticleSignatureEntity } from '../../../src/models/base-article-signature.entity';
+import { ArticleSignatureEntity } from '../../../src/models/article-signature.entity';
 
 function resolveType(type: any): any {
   return typeof type === 'function' ? type() || type : type;

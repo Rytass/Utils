@@ -3,7 +3,7 @@ import { ArticleSignatureDataLoader } from '../../src/data-loaders/article-signa
 import { Repository } from 'typeorm';
 import { BaseArticleVersionEntity } from '../../src/models/base-article-version.entity';
 import { RESOLVED_ARTICLE_VERSION_REPO } from '../../src/typings/cms-base-providers';
-import { ArticleSignatureEntity } from '../../src/models/base-article-signature.entity';
+import { ArticleSignatureEntity } from '../../src/models/article-signature.entity';
 
 describe('ArticleSignatureDataLoader', () => {
   let dataLoader: ArticleSignatureDataLoader;

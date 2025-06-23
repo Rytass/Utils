@@ -1,5 +1,5 @@
 import { getMetadataArgsStorage } from 'typeorm';
-import { ArticleSignatureEntity } from '../../../src/models/base-article-signature.entity';
+import { ArticleSignatureEntity } from '../../../src/models/article-signature.entity';
 
 // Type resolver helper
 function resolveTypeName(type: any): string {

@@ -73,7 +73,7 @@ import {
 import {
   ArticleSignatureEntity,
   ArticleSignatureRepo,
-} from '../models/base-article-signature.entity';
+} from '../models/article-signature.entity';
 import { BaseSignatureLevelEntity } from '../models/base-signature-level.entity';
 import { SignatureInfoDto } from '../typings/signature-info.dto';
 

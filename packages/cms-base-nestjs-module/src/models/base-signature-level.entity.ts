@@ -9,7 +9,7 @@ import {
   Relation,
   TableInheritance,
 } from 'typeorm';
-import { ArticleSignatureEntity } from './base-article-signature.entity';
+import { ArticleSignatureEntity } from './article-signature.entity';
 
 export const BaseSignatureLevelRepo = Symbol('BaseSignatureLevelRepo');
 

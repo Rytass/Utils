@@ -16,6 +16,7 @@ export { BaseArticleVersionContentEntity } from './models/base-article-version-c
 export { BaseCategoryEntity } from './models/base-category.entity';
 export { BaseCategoryMultiLanguageNameEntity } from './models/base-category-multi-language-name.entity';
 export { BaseSignatureLevelEntity } from './models/base-signature-level.entity';
+export { ArticleSignatureEntity } from './models/article-signature.entity';
 
 export * from './models/category-relation.entity';
 export * from './models/article-category.entity';
@@ -53,3 +54,5 @@ export {
 export type * from './typings/article-base.dto';
 export type * from './typings/category-base.dto';
 export type * from './typings/article-collection.dto';
+export type * from './typings/cms-base-root-module-options.dto';
+export type * from './typings/cms-base-root-module-async-options.dto';

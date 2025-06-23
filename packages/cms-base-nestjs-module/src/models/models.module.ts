@@ -30,7 +30,7 @@ import {
 import {
   ArticleSignatureEntity,
   ArticleSignatureRepo,
-} from './base-article-signature.entity';
+} from './article-signature.entity';
 
 const models = [
   [BaseArticleRepo, BaseArticleEntity],

@@ -8,7 +8,7 @@ import {
   RESOLVED_SIGNATURE_LEVEL_REPO,
   SIGNATURE_LEVELS,
 } from '../../src/typings/cms-base-providers';
-import { ArticleSignatureRepo } from '../../src/models/base-article-signature.entity';
+import { ArticleSignatureRepo } from '../../src/models/article-signature.entity';
 import { DataSource } from 'typeorm';
 import { ArticleSignatureResult } from '../../src/typings/article-signature-result.enum';
 import { BaseSignatureLevelEntity } from '../../src/models/base-signature-level.entity';

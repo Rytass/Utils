@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import DataLoader from 'dataloader';
-import { ArticleSignatureEntity } from '../models/base-article-signature.entity';
+import { ArticleSignatureEntity } from '../models/article-signature.entity';
 import { LRUCache } from 'lru-cache';
 import { Brackets, Repository } from 'typeorm';
 import { BaseArticleVersionEntity } from '../models/base-article-version.entity';

@@ -13,7 +13,7 @@ import {
   CATEGORY_DATA_LOADER,
   CMS_BASE_MODULE_OPTIONS,
 } from './typings/cms-base-providers';
-import { CMSBaseModuleAsyncOptionsDto } from './typings/cms-base-root-module-async-options';
+import { CMSBaseModuleAsyncOptionsDto } from './typings/cms-base-root-module-async-options.dto';
 import { OptionProviders } from './constants/option-providers';
 import { CMSBaseModuleOptionsDto } from './typings/cms-base-root-module-options.dto';
 import { CMSBaseModuleOptionFactory } from './typings/cms-base-root-module-option-factory';

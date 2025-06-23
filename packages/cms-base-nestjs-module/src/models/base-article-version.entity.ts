@@ -13,7 +13,7 @@ import {
 } from 'typeorm';
 import { BaseArticleVersionContentEntity } from './base-article-version-content.entity';
 import { BaseArticleEntity } from './base-article.entity';
-import { ArticleSignatureEntity } from './base-article-signature.entity';
+import { ArticleSignatureEntity } from './article-signature.entity';
 
 export const BaseArticleVersionRepo = Symbol('BaseArticleVersionRepo');
 
