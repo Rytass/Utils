@@ -8,6 +8,8 @@ export * from './services/category-base.service';
 // DataLoaders
 export * from './data-loaders/category.dataloader';
 export * from './data-loaders/article-signature.dataloader';
+export * from './data-loaders/article-version.dataloader';
+export * from './data-loaders/article.dataloader';
 
 // Models
 export { BaseArticleEntity } from './models/base-article.entity';

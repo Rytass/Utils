@@ -25,6 +25,8 @@ import { OptionProviders } from './constants/option-providers';
 import { CMSBaseModuleOptionsDto } from './typings/cms-base-root-module-options.dto';
 import { CMSBaseModuleOptionFactory } from './typings/cms-base-root-module-option-factory';
 import { ArticleSignatureDataLoader } from './data-loaders/article-signature.dataloader';
+import { ArticleVersionDataLoader } from './data-loaders/article-version.dataloader';
+import { ArticleDataLoader } from './data-loaders/article.dataloader';
 
 @Global()
 @Module({})
@@ -49,6 +51,8 @@ export class CMSBaseModule {
         },
         CategoryBaseService,
         ArticleSignatureDataLoader,
+        ArticleVersionDataLoader,
+        ArticleDataLoader,
         {
           provide: ARTICLE_SIGNATURE_DATALOADER,
           useExisting: ArticleSignatureDataLoader,
@@ -60,6 +64,8 @@ export class CMSBaseModule {
         CategoryBaseService,
         CategoryDataLoader,
         ArticleSignatureDataLoader,
+        ArticleVersionDataLoader,
+        ArticleDataLoader,
         MULTIPLE_LANGUAGE_MODE,
         DRAFT_MODE,
         MULTIPLE_CATEGORY_PARENT_MODE,
@@ -94,6 +100,8 @@ export class CMSBaseModule {
         },
         CategoryBaseService,
         ArticleSignatureDataLoader,
+        ArticleVersionDataLoader,
+        ArticleDataLoader,
         {
           provide: ARTICLE_SIGNATURE_DATALOADER,
           useExisting: ArticleSignatureDataLoader,
@@ -105,6 +113,8 @@ export class CMSBaseModule {
         CategoryBaseService,
         CategoryDataLoader,
         ArticleSignatureDataLoader,
+        ArticleVersionDataLoader,
+        ArticleDataLoader,
         MULTIPLE_LANGUAGE_MODE,
         DRAFT_MODE,
         MULTIPLE_CATEGORY_PARENT_MODE,
