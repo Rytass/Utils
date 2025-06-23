@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.9](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.8...@rytass/cms-base-nestjs-graphql-module@0.0.9) (2025-06-23)
+
+### Features
+
+- **cms-base-nestjs-graphql-module:** add article resolver fields on categories and releaesdBy ([121ebd6](https://github.com/Rytass/Utils/commit/121ebd614ae7d84b495bc7f6a2ec8f7955ae3cec))
+
 ## [0.0.8](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.7...@rytass/cms-base-nestjs-graphql-module@0.0.8) (2025-06-23)
 
 ### Features

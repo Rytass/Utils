@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.86](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.85...@rytass/cms-base-nestjs-module@0.1.86) (2025-06-23)
+
+### Features
+
+- **cms-base-nestjs-module:** add updatedAt on find response ([0575df7](https://github.com/Rytass/Utils/commit/0575df7d02b77bfed27d336a1c7c47f82d980d6d))
+
 ## [0.1.85](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.84...@rytass/cms-base-nestjs-module@0.1.85) (2025-06-23)
 
 ### Bug Fixes
