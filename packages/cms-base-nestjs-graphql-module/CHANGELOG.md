@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.5](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.4...@rytass/cms-base-nestjs-graphql-module@0.0.5) (2025-06-23)
+
+### Bug Fixes
+
+- **cms-base-nestjs-graphql-module:** missing object type decorator ([a633952](https://github.com/Rytass/Utils/commit/a633952c70c5972f13441efeb22393233fd09902))
+
 ## [0.0.4](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.3...@rytass/cms-base-nestjs-graphql-module@0.0.4) (2025-06-23)
 
 ### Features
