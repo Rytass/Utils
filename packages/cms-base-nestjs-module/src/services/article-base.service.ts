@@ -568,6 +568,7 @@ export class ArticleBaseService<
         ...removeArticleInvalidFields<A>(article),
         id: article.id,
         createdAt: article.createdAt,
+        updatedAt: article.versions[0].createdAt,
       } as SingleArticleBaseDto<A, AV, AVC>;
     }
 
@@ -578,6 +579,7 @@ export class ArticleBaseService<
       ...removeArticleInvalidFields<A>(article),
       id: article.id,
       createdAt: article.createdAt,
+      updatedAt: article.versions[0].createdAt,
     } as MultiLanguageArticleBaseDto<A, AV, AVC>;
   }
 
@@ -797,6 +799,7 @@ export class ArticleBaseService<
             ...removeArticleInvalidFields<A>(article),
             id: article.id,
             createdAt: article.createdAt,
+            updatedAt: article.versions[0].createdAt,
           };
         }),
         total,
@@ -815,6 +818,7 @@ export class ArticleBaseService<
             ...removeArticleInvalidFields(article),
             id: article.id,
             createdAt: article.createdAt,
+            updatedAt: article.versions[0].createdAt,
           }) as MultiLanguageArticleBaseDto<A, AV, AVC>,
       ),
       total,
@@ -864,6 +868,7 @@ export class ArticleBaseService<
           ...removeArticleInvalidFields<A>(article),
           id: article.id,
           createdAt: article.createdAt,
+          updatedAt: article.versions[0].createdAt,
         } as SingleArticleBaseDto<A, AV, AVC>;
       });
     }
@@ -877,6 +882,7 @@ export class ArticleBaseService<
           ...removeArticleInvalidFields<A>(article),
           id: article.id,
           createdAt: article.createdAt,
+          updatedAt: article.versions[0].createdAt,
         }) as MultiLanguageArticleBaseDto<A, AV, AVC>,
     );
   }

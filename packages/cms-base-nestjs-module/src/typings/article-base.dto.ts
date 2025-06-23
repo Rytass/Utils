@@ -26,7 +26,9 @@ export type SingleArticleBaseDto<
     | 'createdAt'
     | 'deletedAt'
   > &
-  Omit<ArticleEntity, 'versions'>;
+  Omit<ArticleEntity, 'versions'> & {
+    updatedAt: Date;
+  };
 
 export type MultiLanguageArticleBaseDto<
   ArticleEntity extends BaseArticleEntity = BaseArticleEntity,
@@ -39,6 +41,7 @@ export type MultiLanguageArticleBaseDto<
   'articleId' | 'article' | 'multiLanguageContents' | 'createdAt' | 'deletedAt'
 > &
   Omit<ArticleEntity, 'versions'> & {
+    updatedAt: Date;
     multiLanguageContents: ArticleVersionContentEntity[];
   };
 
