@@ -8,7 +8,6 @@ import { ArticlesArgs } from '../dto/articles.args';
 import { IsPublic } from '@rytass/member-base-nestjs-module';
 import { Language } from '../decorators/language.decorator';
 import { ArticleCollectionDto } from '../dto/article-collection.dto';
-import { BaseArticleDto } from '../dto/base-article.dto';
 import { ArticleDto } from '../dto/article.dto';
 import { ArticleBackstageDto } from '../dto/article-backstage.dto';
 import { ArticleBackstageCollectionDto } from '../dto/article-backstage-collection.dto';

@@ -1,4 +1,5 @@
-import { ArgsType, Field, ID, InputType } from '@nestjs/graphql';
+import { ArgsType, Field, ID } from '@nestjs/graphql';
+import { CategoryMultiLanguageNameInput } from './category-multi-language-name.input';
 
 @ArgsType()
 export class CreateCategoryArgs {
@@ -7,19 +8,4 @@ export class CreateCategoryArgs {
 
   @Field(() => [CategoryMultiLanguageNameInput])
   multiLanguageNames: CategoryMultiLanguageNameInput[];
-}
-
-@InputType()
-export class CategoryMultiLanguageNameInput {
-  @Field(() => String, { nullable: true })
-  language?: string | null;
-
-  @Field(() => String)
-  name: string;
-}
-
-@ArgsType()
-export class UpdateCategoryArgs extends CreateCategoryArgs {
-  @Field(() => ID)
-  id: string;
 }

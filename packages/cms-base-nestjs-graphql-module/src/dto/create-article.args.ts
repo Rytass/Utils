@@ -1,4 +1,5 @@
-import { ArgsType, Field, ID, InputType } from '@nestjs/graphql';
+import { ArgsType, Field, ID } from '@nestjs/graphql';
+import { ArticleVersionContentInput } from './article-version-content.input';
 
 @ArgsType()
 export class CreateArticleArgs {
@@ -19,19 +20,4 @@ export class CreateArticleArgs {
 
   @Field(() => String, { nullable: true })
   signatureLevel?: string | null;
-}
-
-@InputType()
-export class ArticleVersionContentInput {
-  @Field(() => String, { nullable: true })
-  language?: string | null;
-
-  @Field(() => String)
-  title: string;
-
-  @Field(() => String, { nullable: true })
-  description?: string | null;
-
-  @Field(() => String)
-  content: string;
 }

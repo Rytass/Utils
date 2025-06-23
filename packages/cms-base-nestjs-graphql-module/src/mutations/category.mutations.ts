@@ -1,11 +1,9 @@
 import { Args, ID, Mutation, Resolver } from '@nestjs/graphql';
 import { CategoryBaseService } from '@rytass/cms-base-nestjs-module';
-import {
-  CreateCategoryArgs,
-  UpdateCategoryArgs,
-} from '../dto/create-category.args';
+import { CreateCategoryArgs } from '../dto/create-category.args';
 import { IsPublic } from '@rytass/member-base-nestjs-module';
 import { CategoryBackstageDto } from '../dto/category-backstage.dto';
+import { UpdateCategoryArgs } from '../dto/update-category.args';
 
 @Resolver()
 export class CategoryMutations {
