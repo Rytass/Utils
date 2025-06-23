@@ -11,6 +11,7 @@ import { CategoryQueries } from './queries/category.queries';
 import { MemberDataLoader } from './dataloaders/members.dataloader';
 import { ArticleDataLoader } from './dataloaders/article.dataloader';
 import { ArticleResolver } from './resolvers/article.resolver';
+import { ArticleBackstageResolver } from './resolvers/article-backstage.resolver';
 
 @Module({})
 export class CMSBaseGraphQLModule {
@@ -26,6 +27,7 @@ export class CMSBaseGraphQLModule {
         MemberDataLoader,
         ArticleDataLoader,
         ArticleResolver,
+        ArticleBackstageResolver,
         ArticleQueries,
         ArticleMutations,
         CategoryQueries,
@@ -43,6 +45,7 @@ export class CMSBaseGraphQLModule {
         MemberDataLoader,
         ArticleDataLoader,
         ArticleResolver,
+        ArticleBackstageResolver,
         ArticleQueries,
         ArticleMutations,
         CategoryQueries,

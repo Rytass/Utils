@@ -8,4 +8,7 @@ export class ArticleBackstageDto extends BaseArticleDto {
 
   @Field(() => Date, { nullable: true })
   deletedAt?: Date | null;
+
+  @Field(() => Date, { nullable: true })
+  submittedAt?: Date | null;
 }

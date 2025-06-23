@@ -1,4 +1,4 @@
-import { Args, ID, Query, Resolver } from '@nestjs/graphql';
+import { Args, ID, Int, Query, Resolver } from '@nestjs/graphql';
 import {
   ArticleBaseService,
   ArticleStage,
@@ -14,6 +14,7 @@ import { ArticleDto } from '../dto/article.dto';
 import { ArticleBackstageDto } from '../dto/article-backstage.dto';
 import { ArticleBackstageCollectionDto } from '../dto/article-backstage-collection.dto';
 import { Inject } from '@nestjs/common';
+import { ArticleBackstageArgs } from '../dto/article-backstage.args';
 
 @Resolver()
 export class ArticleQueries {
@@ -52,14 +53,16 @@ export class ArticleQueries {
   @IsPublic()
   backstageArticle(
     @Args('id', { type: () => ID }) id: string,
+    @Args('version', { type: () => Int, nullable: true })
+    version?: number | null,
   ): Promise<ArticleBackstageDto> {
-    return this.articleService.findById(id);
+    return this.articleService.findById(id, { version });
   }
 
   @Query(() => ArticleBackstageCollectionDto)
   @IsPublic()
   backstageArticles(
-    @Args() args: ArticlesArgs,
+    @Args() args: ArticleBackstageArgs,
   ): Promise<ArticleBackstageCollectionDto> {
     return this.articleService.findCollection(args);
   }

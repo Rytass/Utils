@@ -1,11 +1,7 @@
-import { ArgsType, Field, Int, registerEnumType } from '@nestjs/graphql';
-import { ArticleStage } from '@rytass/cms-base-nestjs-module';
+import { ArgsType, Field, Int } from '@nestjs/graphql';
 
 @ArgsType()
 export class ArticlesArgs {
-  @Field(() => ArticleStage, { nullable: true })
-  stage?: ArticleStage | null;
-
   @Field(() => [String], { nullable: true })
   categoryIds?: string[] | null;
 
@@ -18,7 +14,3 @@ export class ArticlesArgs {
   @Field(() => String, { nullable: true })
   searchTerm?: string | null;
 }
-
-registerEnumType(ArticleStage, {
-  name: 'ArticleStage',
-});
