@@ -12,6 +12,7 @@ import { MemberDataLoader } from './data-loaders/members.dataloader';
 import { ArticleDataLoader } from './data-loaders/article.dataloader';
 import { ArticleResolver } from './resolvers/article.resolver';
 import { BackstageArticleResolver } from './resolvers/backstage-article.resolver';
+import { ArticleSignatureResolver } from './resolvers/article-signature.resolver';
 
 @Module({})
 export class CMSBaseGraphQLModule {
@@ -28,6 +29,7 @@ export class CMSBaseGraphQLModule {
         ArticleDataLoader,
         ArticleResolver,
         BackstageArticleResolver,
+        ArticleSignatureResolver,
         ArticleQueries,
         ArticleMutations,
         CategoryQueries,
@@ -46,6 +48,7 @@ export class CMSBaseGraphQLModule {
         ArticleDataLoader,
         ArticleResolver,
         BackstageArticleResolver,
+        ArticleSignatureResolver,
         ArticleQueries,
         ArticleMutations,
         CategoryQueries,

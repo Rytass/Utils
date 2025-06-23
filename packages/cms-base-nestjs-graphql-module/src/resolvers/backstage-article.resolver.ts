@@ -18,6 +18,7 @@ import { BackstageArticleDto } from '../dto/backstage-article.dto';
 import { ArticleMultiLanguageContentDto } from '../dto/article-multi-language-content.dto';
 import { QuadratsContentScalar } from '../scalars/quadrats-element.scalar';
 import { QuadratsElement } from '@quadrats/core';
+import { ArticleStageVersionDto } from '../dto/article-stage-version.dto';
 
 @Resolver(() => BackstageArticleDto)
 export class BackstageArticleResolver {
@@ -134,5 +135,23 @@ export class BackstageArticleResolver {
       id: article.id,
       version: article.version,
     });
+  }
+
+  @ResolveField(() => ArticleStageVersionDto)
+  @IsPublic()
+  async stageVersion(
+    @Root() article: ArticleBaseDto,
+  ): Promise<ArticleStageVersionDto> {
+    const versions =
+      await this.articleVersionDataLoader.stageVersionsLoader.load(article.id);
+
+    return {
+      id: article.id,
+      draft: versions[ArticleStage.DRAFT] ?? null,
+      reviewing: versions[ArticleStage.REVIEWING] ?? null,
+      verified: versions[ArticleStage.VERIFIED] ?? null,
+      scheduled: versions[ArticleStage.SCHEDULED] ?? null,
+      released: versions[ArticleStage.RELEASED] ?? null,
+    };
   }
 }
