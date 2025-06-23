@@ -180,7 +180,10 @@ export class CategoryBaseService<
 
     if (options?.language || !this.multipleLanguageMode) {
       return categories.map((category) =>
-        this.parseSingleLanguageCategory(category, options?.language),
+        this.parseSingleLanguageCategory(
+          category,
+          options?.language ?? undefined,
+        ),
       );
     }
 

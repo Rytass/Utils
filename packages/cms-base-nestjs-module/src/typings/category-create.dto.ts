@@ -5,9 +5,9 @@ import { BaseCategoryEntity } from '../models/base-category.entity';
 export type BaseCategoryCreateDto<
   C extends BaseCategoryEntity = BaseCategoryEntity,
 > = DeepPartial<Omit<C, 'multiLanguageNames'>> & {
-  bindable?: boolean; // default: true
-  parentIds?: string[];
-  parentId?: string;
+  bindable?: boolean | null; // default: true
+  parentIds?: string[] | null;
+  parentId?: string | null;
 };
 
 export type SingleLanguageCategoryCreateDto<

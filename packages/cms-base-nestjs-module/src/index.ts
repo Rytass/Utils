@@ -29,6 +29,7 @@ export * from './typings/article-search-mode.enum';
 export * from './typings/article-signature-result.enum';
 export * from './typings/article-find-version-type.enum';
 export * from './typings/article-stage.enum';
+export * from './typings/article-signature-result.enum';
 
 // Constants
 export * from './constants/default-language';

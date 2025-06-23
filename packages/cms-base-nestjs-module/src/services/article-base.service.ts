@@ -319,9 +319,9 @@ export class ArticleBaseService<
       this.limitStageWithQueryBuilder(
         qb,
         options.stage,
-        options.stage === ArticleStage.REVIEWING
+        (options.stage === ArticleStage.REVIEWING
           ? options?.signatureLevel
-          : undefined,
+          : undefined) ?? undefined,
       );
     } else {
       qb.innerJoin(
