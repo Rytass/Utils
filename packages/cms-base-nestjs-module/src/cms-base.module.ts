@@ -10,8 +10,15 @@ import { CategoryDataLoader } from './data-loaders/category.dataloader';
 import {
   ARTICLE_BASE_SERVICE,
   ARTICLE_SIGNATURE_DATALOADER,
+  AUTO_RELEASE_AFTER_APPROVED,
   CATEGORY_DATA_LOADER,
+  CIRCULAR_CATEGORY_MODE,
   CMS_BASE_MODULE_OPTIONS,
+  DRAFT_MODE,
+  FULL_TEXT_SEARCH_MODE,
+  MULTIPLE_CATEGORY_PARENT_MODE,
+  MULTIPLE_LANGUAGE_MODE,
+  SIGNATURE_LEVELS,
 } from './typings/cms-base-providers';
 import { CMSBaseModuleAsyncOptionsDto } from './typings/cms-base-root-module-async-options.dto';
 import { OptionProviders } from './constants/option-providers';
@@ -53,6 +60,13 @@ export class CMSBaseModule {
         CategoryBaseService,
         CategoryDataLoader,
         ArticleSignatureDataLoader,
+        MULTIPLE_LANGUAGE_MODE,
+        DRAFT_MODE,
+        MULTIPLE_CATEGORY_PARENT_MODE,
+        CIRCULAR_CATEGORY_MODE,
+        FULL_TEXT_SEARCH_MODE,
+        SIGNATURE_LEVELS,
+        AUTO_RELEASE_AFTER_APPROVED,
       ],
     };
   }
@@ -91,6 +105,13 @@ export class CMSBaseModule {
         CategoryBaseService,
         CategoryDataLoader,
         ArticleSignatureDataLoader,
+        MULTIPLE_LANGUAGE_MODE,
+        DRAFT_MODE,
+        MULTIPLE_CATEGORY_PARENT_MODE,
+        CIRCULAR_CATEGORY_MODE,
+        FULL_TEXT_SEARCH_MODE,
+        SIGNATURE_LEVELS,
+        AUTO_RELEASE_AFTER_APPROVED,
       ],
     };
   }
