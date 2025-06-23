@@ -3,9 +3,11 @@ import { MemberDataLoader } from '../data-loaders/members.dataloader';
 import { UserDto } from '../dto/user.dto';
 import { IsPublic } from '@rytass/member-base-nestjs-module';
 import {
+  ArticleStage,
   ArticleVersionDataLoader,
   DEFAULT_LANGUAGE,
   MULTIPLE_LANGUAGE_MODE,
+  ArticleDataLoader as ModuleArticleDataLoader,
   type ArticleBaseDto,
 } from '@rytass/cms-base-nestjs-module';
 import { CategoryDto } from '../dto/category.dto';
@@ -25,6 +27,7 @@ export class BackstageArticleResolver {
     @Inject(MULTIPLE_LANGUAGE_MODE)
     private readonly multiLanguage: boolean,
     private readonly articleVersionDataLoader: ArticleVersionDataLoader,
+    private readonly moduleArticleDataLoader: ModuleArticleDataLoader,
   ) {}
 
   @ResolveField(() => UserDto, { nullable: true })
@@ -122,5 +125,14 @@ export class BackstageArticleResolver {
   @IsPublic()
   versions(@Root() article: ArticleBaseDto): Promise<BackstageArticleDto[]> {
     return this.articleVersionDataLoader.versionsLoader.load(article.id);
+  }
+
+  @ResolveField(() => ArticleStage)
+  @IsPublic()
+  stage(@Root() article: ArticleBaseDto): Promise<ArticleStage> {
+    return this.moduleArticleDataLoader.stageLoader.load({
+      id: article.id,
+      version: article.version,
+    });
   }
 }
