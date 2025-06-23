@@ -3,6 +3,7 @@ import { MemberDataLoader } from '../data-loaders/members.dataloader';
 import { UserDto } from '../dto/user.dto';
 import { IsPublic } from '@rytass/member-base-nestjs-module';
 import {
+  ArticleSignatureDataLoader,
   ArticleStage,
   ArticleVersionDataLoader,
   DEFAULT_LANGUAGE,
@@ -19,6 +20,7 @@ import { ArticleMultiLanguageContentDto } from '../dto/article-multi-language-co
 import { QuadratsContentScalar } from '../scalars/quadrats-element.scalar';
 import { QuadratsElement } from '@quadrats/core';
 import { ArticleStageVersionDto } from '../dto/article-stage-version.dto';
+import { ArticleSignatureDto } from '../dto/article-signature.dto';
 
 @Resolver(() => BackstageArticleDto)
 export class BackstageArticleResolver {
@@ -29,6 +31,7 @@ export class BackstageArticleResolver {
     private readonly multiLanguage: boolean,
     private readonly articleVersionDataLoader: ArticleVersionDataLoader,
     private readonly moduleArticleDataLoader: ModuleArticleDataLoader,
+    private readonly versionSignaturesLoader: ArticleSignatureDataLoader,
   ) {}
 
   @ResolveField(() => UserDto, { nullable: true })
@@ -132,6 +135,15 @@ export class BackstageArticleResolver {
   @IsPublic()
   stage(@Root() article: ArticleBaseDto): Promise<ArticleStage> {
     return this.moduleArticleDataLoader.stageLoader.load({
+      id: article.id,
+      version: article.version,
+    });
+  }
+
+  @ResolveField(() => [ArticleSignatureDto])
+  @IsPublic()
+  signatures(@Root() article: ArticleBaseDto): Promise<ArticleSignatureDto[]> {
+    return this.versionSignaturesLoader.versionSignaturesLoader.load({
       id: article.id,
       version: article.version,
     });
