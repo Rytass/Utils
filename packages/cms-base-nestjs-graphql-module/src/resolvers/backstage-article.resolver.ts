@@ -1,4 +1,4 @@
-import { ResolveField, Resolver, Root } from '@nestjs/graphql';
+import { ID, ResolveField, Resolver, Root } from '@nestjs/graphql';
 import { MemberDataLoader } from '../data-loaders/members.dataloader';
 import { UserDto } from '../dto/user.dto';
 import { IsPublic } from '@rytass/member-base-nestjs-module';
@@ -33,6 +33,12 @@ export class BackstageArticleResolver {
     private readonly moduleArticleDataLoader: ModuleArticleDataLoader,
     private readonly versionSignaturesLoader: ArticleSignatureDataLoader,
   ) {}
+
+  @ResolveField(() => ID)
+  @IsPublic()
+  id(@Root() article: ArticleBaseDto): string {
+    return `${article.id}:${article.version}`;
+  }
 
   @ResolveField(() => UserDto, { nullable: true })
   @IsPublic()
@@ -151,7 +157,7 @@ export class BackstageArticleResolver {
 
   @ResolveField(() => ArticleStageVersionDto)
   @IsPublic()
-  async stageVersion(
+  async stageVersions(
     @Root() article: ArticleBaseDto,
   ): Promise<ArticleStageVersionDto> {
     const versions =
