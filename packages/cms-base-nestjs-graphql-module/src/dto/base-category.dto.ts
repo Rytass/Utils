@@ -1,7 +1,12 @@
-import { Field, ID, InterfaceType } from '@nestjs/graphql';
+import { Field, ID } from '@nestjs/graphql';
 
-@InterfaceType('BaseCategory')
 export class BaseCategoryDto {
   @Field(() => ID)
   id: string;
+
+  @Field(() => Date)
+  createdAt: Date;
+
+  @Field(() => Date)
+  updatedAt: Date;
 }

@@ -1,6 +1,5 @@
-import { Field, ID, InterfaceType } from '@nestjs/graphql';
+import { Field, ID } from '@nestjs/graphql';
 
-@InterfaceType('BaseArticle')
 export class BaseArticleDto {
   @Field(() => ID)
   id: string;

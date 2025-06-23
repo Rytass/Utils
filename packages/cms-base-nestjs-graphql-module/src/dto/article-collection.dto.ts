@@ -1,9 +1,9 @@
 import { Field, ObjectType } from '@nestjs/graphql';
-import { BaseArticleDto } from './base-article.dto';
 import { Collection } from './collection.dto';
+import { ArticleDto } from './article.dto';
 
 @ObjectType('ArticleCollection')
 export class ArticleCollectionDto extends Collection {
-  @Field(() => [BaseArticleDto])
-  articles: BaseArticleDto[];
+  @Field(() => [ArticleDto])
+  articles: ArticleDto[];
 }

@@ -8,8 +8,6 @@ import { ArticleMutations } from './mutations/article.mutations';
 import { CategoryMutations } from './mutations/category.mutations';
 import { ArticleQueries } from './queries/article.queries';
 import { CategoryQueries } from './queries/category.queries';
-import { ArticleResolver } from './resolvers/article.resolver';
-import { ArticleBackstageResolver } from './resolvers/article-backstage.resolver';
 
 @Module({})
 export class CMSBaseGraphQLModule {
@@ -24,8 +22,6 @@ export class CMSBaseGraphQLModule {
       providers: [
         ArticleQueries,
         ArticleMutations,
-        ArticleResolver,
-        ArticleBackstageResolver,
         CategoryQueries,
         CategoryMutations,
       ],
@@ -40,8 +36,6 @@ export class CMSBaseGraphQLModule {
       providers: [
         ArticleQueries,
         ArticleMutations,
-        ArticleResolver,
-        ArticleBackstageResolver,
         CategoryQueries,
         CategoryMutations,
       ],

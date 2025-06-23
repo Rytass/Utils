@@ -9,17 +9,20 @@ import { IsPublic } from '@rytass/member-base-nestjs-module';
 import { Language } from '../decorators/language.decorator';
 import { ArticleCollectionDto } from '../dto/article-collection.dto';
 import { BaseArticleDto } from '../dto/base-article.dto';
+import { ArticleDto } from '../dto/article.dto';
+import { ArticleBackstageDto } from '../dto/article-backstage.dto';
+import { ArticleBackstageCollectionDto } from '../dto/article-backstage-collection.dto';
 
 @Resolver()
 export class ArticleQueries {
   constructor(private readonly articleService: ArticleBaseService) {}
 
-  @Query(() => BaseArticleDto)
+  @Query(() => ArticleDto)
   @IsPublic()
   article(
     @Args('id', { type: () => ID }) id: string,
     @Language() language: string = DEFAULT_LANGUAGE,
-  ): Promise<BaseArticleDto> {
+  ): Promise<ArticleDto> {
     return this.articleService.findById(id, {
       language: language ?? DEFAULT_LANGUAGE,
     }) as Promise<SingleArticleBaseDto>;
@@ -27,7 +30,29 @@ export class ArticleQueries {
 
   @Query(() => ArticleCollectionDto)
   @IsPublic()
-  async articles(@Args() args: ArticlesArgs): Promise<ArticleCollectionDto> {
+  async articles(
+    @Args() args: ArticlesArgs,
+    @Language() language: string = DEFAULT_LANGUAGE,
+  ): Promise<ArticleCollectionDto> {
+    return this.articleService.findCollection({
+      ...args,
+      language,
+    });
+  }
+
+  @Query(() => ArticleBackstageDto)
+  @IsPublic()
+  backstageArticle(
+    @Args('id', { type: () => ID }) id: string,
+  ): Promise<ArticleBackstageDto> {
+    return this.articleService.findById(id);
+  }
+
+  @Query(() => ArticleBackstageCollectionDto)
+  @IsPublic()
+  backstageArticles(
+    @Args() args: ArticlesArgs,
+  ): Promise<ArticleBackstageCollectionDto> {
     return this.articleService.findCollection(args);
   }
 }
