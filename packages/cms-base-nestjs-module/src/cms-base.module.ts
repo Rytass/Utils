@@ -27,6 +27,7 @@ import { CMSBaseModuleOptionFactory } from './typings/cms-base-root-module-optio
 import { ArticleSignatureDataLoader } from './data-loaders/article-signature.dataloader';
 import { ArticleVersionDataLoader } from './data-loaders/article-version.dataloader';
 import { ArticleDataLoader } from './data-loaders/article.dataloader';
+import { SignatureService } from './services/signature.service';
 
 @Global()
 @Module({})
@@ -39,6 +40,7 @@ export class CMSBaseModule {
         ...this.createAsyncProvider(options),
         ...OptionProviders,
         ...ResolvedRepoProviders,
+        SignatureService,
         CategoryDataLoader,
         {
           provide: CATEGORY_DATA_LOADER,
@@ -88,6 +90,7 @@ export class CMSBaseModule {
         },
         ...OptionProviders,
         ...ResolvedRepoProviders,
+        SignatureService,
         CategoryDataLoader,
         {
           provide: CATEGORY_DATA_LOADER,

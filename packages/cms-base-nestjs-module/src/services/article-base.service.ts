@@ -76,6 +76,8 @@ import {
 } from '../models/article-signature.entity';
 import { BaseSignatureLevelEntity } from '../models/base-signature-level.entity';
 import { SignatureInfoDto } from '../typings/signature-info.dto';
+import { ArticleDataLoader } from '../data-loaders/article.dataloader';
+import { SignatureService } from './signature.service';
 
 @Injectable()
 export class ArticleBaseService<
@@ -113,20 +115,11 @@ export class ArticleBaseService<
     private readonly autoReleaseAfterApproved: boolean,
     @InjectDataSource()
     private readonly dataSource: DataSource,
+    private readonly articleDataLoader: ArticleDataLoader,
+    private readonly signatureService: SignatureService<SignatureLevelEntity>,
   ) {}
 
   private readonly logger = new Logger(ArticleBaseService.name);
-
-  private get signatureEnabled(): boolean {
-    return this.signatureLevels.length > 0;
-  }
-
-  private signatureLevelsCache: BaseSignatureLevelEntity[] = [];
-
-  get finalSignatureLevel(): SignatureLevelEntity | null {
-    return (this.signatureLevelsCache[this.signatureLevelsCache.length - 1] ??
-      null) as SignatureLevelEntity | null;
-  }
 
   private queryStagesFeaturesCheck = (stage: ArticleStage) => {
     switch (stage) {
@@ -138,7 +131,7 @@ export class ArticleBaseService<
         break;
       case ArticleStage.VERIFIED:
       case ArticleStage.REVIEWING:
-        if (!this.signatureEnabled) {
+        if (!this.signatureService.signatureEnabled) {
           throw new Error('Signature mode is disabled.');
         }
 
@@ -196,7 +189,8 @@ export class ArticleBaseService<
           'signatureLevel',
           'signatureLevel.name = :signatureLevel',
           {
-            signatureLevel: signatureLevel ?? this.finalSignatureLevel?.name,
+            signatureLevel:
+              signatureLevel ?? this.signatureService.finalSignatureLevel?.name,
           },
         );
 
@@ -222,7 +216,7 @@ export class ArticleBaseService<
               `signatures.result = :result AND signatures."signatureLevelId" = :signatureLevelId`,
               {
                 result: ArticleSignatureResult.APPROVED,
-                signatureLevelId: this.finalSignatureLevel?.id,
+                signatureLevelId: this.signatureService.finalSignatureLevel?.id,
               },
             );
 
@@ -412,94 +406,6 @@ export class ArticleBaseService<
         `CREATE INDEX IF NOT EXISTS "article_version_contents_search_tokens_idx" ON "${this.baseArticleVersionContentRepo.metadata.tableName}" USING GIN ("searchTokens")`,
       );
     }
-
-    if (this.signatureEnabled) {
-      const signatureLevels = await this.signatureLevelRepo.find();
-
-      const existedMap = new Map(
-        signatureLevels.map((level) => [level.name, level]),
-      );
-
-      const usedSet = new Set<BaseSignatureLevelEntity>();
-      const targetLevelNames = new Set(
-        this.signatureLevels.map((level) =>
-          level instanceof BaseSignatureLevelEntity ? level.name : level,
-        ),
-      );
-
-      const runner = this.dataSource.createQueryRunner();
-
-      await runner.connect();
-      await runner.startTransaction();
-
-      try {
-        await signatureLevels
-          .filter((level) => !targetLevelNames.has(level.name))
-          .map((level) => async () => {
-            await runner.manager.delete(this.articleSignatureRepo.target, {
-              signatureLevelId: level.id,
-            });
-
-            await runner.manager.softDelete(this.signatureLevelRepo.target, {
-              id: level.id,
-            });
-          })
-          .reduce((prev, next) => prev.then(next), Promise.resolve());
-
-        this.signatureLevelsCache = await this.signatureLevels
-          .map((level, index) => async (levels: BaseSignatureLevelEntity[]) => {
-            if (level instanceof BaseSignatureLevelEntity) {
-              level.sequence = index;
-              level.required = true;
-
-              await runner.manager.save(level);
-
-              usedSet.add(level);
-
-              return [...levels, level];
-            }
-
-            if (existedMap.has(level)) {
-              const existedLevel = existedMap.get(
-                level,
-              ) as BaseSignatureLevelEntity;
-
-              existedLevel.sequence = index;
-              existedLevel.required = true;
-
-              await runner.manager.save(existedLevel);
-
-              usedSet.add(existedLevel);
-
-              return [...levels, existedLevel];
-            }
-
-            const newLevel = this.signatureLevelRepo.create({
-              name: level,
-              required: true,
-              sequence: index,
-            });
-
-            await runner.manager.save(newLevel);
-
-            usedSet.add(newLevel);
-
-            return levels;
-          })
-          .reduce(
-            (prev, next) => prev.then(next),
-            Promise.resolve([] as BaseSignatureLevelEntity[]),
-          );
-
-        await runner.commitTransaction();
-      } catch (ex) {
-        await runner.rollbackTransaction();
-
-        throw ex;
-      } finally {
-        await runner.release();
-      }
-    }
   }
 
   async findById<
@@ -554,6 +460,13 @@ export class ArticleBaseService<
 
     if (!article) {
       throw new ArticleNotFoundError();
+    }
+
+    if (options?.stage) {
+      this.articleDataLoader.stageCache.set(
+        `${article.id}:${article.versions[0].version}`,
+        Promise.resolve(options.stage as ArticleStage),
+      );
     }
 
     if (options?.language || !this.multipleLanguageMode) {
@@ -788,6 +701,15 @@ export class ArticleBaseService<
 
     const [articles, total] = await qb.getManyAndCount();
 
+    if (options?.stage) {
+      articles.forEach((article) => {
+        this.articleDataLoader.stageCache.set(
+          `${article.id}:${article.versions[0].version}`,
+          Promise.resolve(options.stage as ArticleStage),
+        );
+      });
+    }
+
     if (options?.language || !this.multipleLanguageMode) {
       return {
         articles: articles.map((article) => {
@@ -862,6 +784,15 @@ export class ArticleBaseService<
     qb.take(Math.min(options?.limit ?? 20, 100));
 
     const articles = await qb.getMany();
+
+    if (options?.stage) {
+      articles.forEach((article) => {
+        this.articleDataLoader.stageCache.set(
+          `${article.id}:${article.versions[0].version}`,
+          Promise.resolve(options.stage as ArticleStage),
+        );
+      });
+    }
 
     if (options?.language || !this.multipleLanguageMode) {
       return articles.map((article) => {
@@ -938,7 +869,9 @@ export class ArticleBaseService<
     });
 
     const targetPlaceArticle = await this.findById<A, AV, AVC>(id, {
-      stage: this.signatureEnabled ? ArticleStage.VERIFIED : ArticleStage.DRAFT,
+      stage: this.signatureService.signatureEnabled
+        ? ArticleStage.VERIFIED
+        : ArticleStage.DRAFT,
     }).catch((ex) => null);
 
     this.logger.debug(`Withdraw article ${id} [${article.version}]`);
@@ -987,6 +920,15 @@ export class ArticleBaseService<
     }
 
     article.releasedAt = null;
+
+    this.articleDataLoader.stageCache.set(
+      `${article.id}:${article.version}`,
+      Promise.resolve(
+        this.signatureService.signatureEnabled
+          ? ArticleStage.VERIFIED
+          : ArticleStage.DRAFT,
+      ),
+    );
 
     return this.findById<A, AV, AVC>(article.id, {
       version: article.version,
@@ -1064,6 +1006,15 @@ export class ArticleBaseService<
 
     article.releasedAt = willReleasedAt;
 
+    this.articleDataLoader.stageCache.set(
+      `${article.id}:${article.version}`,
+      Promise.resolve(
+        willReleasedAt.getTime() > Date.now()
+          ? ArticleStage.SCHEDULED
+          : ArticleStage.RELEASED,
+      ),
+    );
+
     return this.findById<A, AV, AVC>(article.id, {
       version: article.version,
     });
@@ -1077,7 +1028,7 @@ export class ArticleBaseService<
     id: string,
     options?: { version?: number; userId?: string },
   ): Promise<ArticleBaseDto<A, AV, AVC>> {
-    if (!this.signatureEnabled) {
+    if (!this.signatureService.signatureEnabled) {
       throw new Error('Signature mode is disabled.');
     }
 
@@ -1135,6 +1086,11 @@ export class ArticleBaseService<
 
     article.submittedAt = new Date();
 
+    this.articleDataLoader.stageCache.set(
+      `${article.id}:${article.version}`,
+      Promise.resolve(ArticleStage.REVIEWING),
+    );
+
     return this.findById<A, AV, AVC>(article.id, {
       version: article.version,
     });
@@ -1154,7 +1110,7 @@ export class ArticleBaseService<
     }
 
     if (signatureLevel) {
-      if (signatureLevel === this.finalSignatureLevel?.name) {
+      if (signatureLevel === this.signatureService.finalSignatureLevel?.name) {
         return ArticleStage.VERIFIED;
       }
 
@@ -1202,14 +1158,14 @@ export class ArticleBaseService<
     if (
       options.releasedAt &&
       options.signatureLevel &&
-      this.finalSignatureLevel?.name !== options.signatureLevel
+      this.signatureService.finalSignatureLevel?.name !== options.signatureLevel
     ) {
       throw new Error(
         'Only final signature level is allowed when releasing an article version.',
       );
     }
 
-    if (options.submitted && !this.signatureEnabled) {
+    if (options.submitted && !this.signatureService.signatureEnabled) {
       throw new Error('Signature mode is disabled.');
     }
 
@@ -1399,7 +1355,8 @@ export class ArticleBaseService<
           },
           {
             signatureLevel:
-              options.signatureLevel ?? this.finalSignatureLevel?.name,
+              options.signatureLevel ??
+              this.signatureService.finalSignatureLevel?.name,
             signerId: options.userId,
             runner,
           },
@@ -1407,6 +1364,32 @@ export class ArticleBaseService<
       }
 
       await runner.commitTransaction();
+
+      this.articleDataLoader.stageCache.set(
+        `${article.id}:${version.version}`,
+        Promise.resolve(
+          ((): ArticleStage => {
+            if (options.releasedAt) {
+              return options.releasedAt.getTime() > Date.now()
+                ? ArticleStage.SCHEDULED
+                : ArticleStage.RELEASED;
+            }
+
+            if (options.signatureLevel) {
+              return options.signatureLevel ===
+                this.signatureService.finalSignatureLevel?.name
+                ? ArticleStage.VERIFIED
+                : ArticleStage.REVIEWING;
+            }
+
+            if (options.submitted) {
+              return ArticleStage.REVIEWING;
+            }
+
+            return ArticleStage.DRAFT;
+          })(),
+        ),
+      );
 
       return this.findById<A, AV, AVC>(article.id, {
         version: version.version,
@@ -1544,7 +1527,8 @@ export class ArticleBaseService<
           },
           {
             signatureLevel:
-              options.signatureLevel ?? this.finalSignatureLevel?.name,
+              options.signatureLevel ??
+              this.signatureService.finalSignatureLevel?.name,
             signerId: options.userId,
             runner,
           },
@@ -1552,6 +1536,32 @@ export class ArticleBaseService<
       }
 
       await runner.commitTransaction();
+
+      this.articleDataLoader.stageCache.set(
+        `${article.id}:${version.version}`,
+        Promise.resolve(
+          ((): ArticleStage => {
+            if (options.releasedAt) {
+              return options.releasedAt.getTime() > Date.now()
+                ? ArticleStage.SCHEDULED
+                : ArticleStage.RELEASED;
+            }
+
+            if (options.signatureLevel) {
+              return options.signatureLevel ===
+                this.signatureService.finalSignatureLevel?.name
+                ? ArticleStage.VERIFIED
+                : ArticleStage.REVIEWING;
+            }
+
+            if (options.submitted) {
+              return ArticleStage.REVIEWING;
+            }
+
+            return ArticleStage.DRAFT;
+          })(),
+        ),
+      );
 
       return this.findById<A, AV, AVC>(article.id, {
         version: version.version,
@@ -1620,7 +1630,7 @@ export class ArticleBaseService<
       runner?: QueryRunner;
     },
   ): Promise<ArticleBaseDto<A, AV, AVC>> {
-    if (!this.signatureEnabled) {
+    if (!this.signatureService.signatureEnabled) {
       throw new BadRequestException('Signature is not enabled');
     }
 
@@ -1630,7 +1640,7 @@ export class ArticleBaseService<
         stage:
           result === ArticleSignatureResult.APPROVED
             ? (signatureInfo?.signatureLevel ?? this.signatureLevels[0]) ===
-              this.finalSignatureLevel?.name
+              this.signatureService.finalSignatureLevel?.name
               ? ArticleStage.VERIFIED
               : ArticleStage.REVIEWING
             : ArticleStage.DRAFT,
@@ -1664,14 +1674,14 @@ export class ArticleBaseService<
     }
 
     if (
-      this.signatureLevelsCache.length > 1 &&
+      this.signatureService.signatureLevelsCache.length > 1 &&
       !signatureInfo?.signatureLevel
     ) {
       throw new BadRequestException('Signature level is required');
     }
 
     const targetLevelIndex = signatureInfo?.signatureLevel
-      ? this.signatureLevelsCache.findIndex((level) =>
+      ? this.signatureService.signatureLevelsCache.findIndex((level) =>
           signatureInfo.signatureLevel instanceof BaseSignatureLevelEntity
             ? level.id === signatureInfo.signatureLevel.id
             : level.name === signatureInfo.signatureLevel,
@@ -1715,7 +1725,7 @@ export class ArticleBaseService<
           ]),
         );
 
-        const needSignTargets = this.signatureLevelsCache
+        const needSignTargets = this.signatureService.signatureLevelsCache
           .slice(0, targetLevelIndex + 1)
           .map((level) => signatureMap.get(level.id) ?? null);
 
@@ -1733,9 +1743,10 @@ export class ArticleBaseService<
 
         if (targetLevelIndex > 0) {
           const previousSignature = needSignTargets[targetLevelIndex - 1];
-          const previousRequiredSignatureLevels = this.signatureLevelsCache
-            .slice(0, targetLevelIndex)
-            .filter((level) => level.required);
+          const previousRequiredSignatureLevels =
+            this.signatureService.signatureLevelsCache
+              .slice(0, targetLevelIndex)
+              .filter((level) => level.required);
 
           const latestRequireSignatureLevel =
             previousRequiredSignatureLevels[
@@ -1761,7 +1772,8 @@ export class ArticleBaseService<
         const signature = this.articleSignatureRepo.create({
           articleId: articleVersion.id,
           version: articleVersion.version,
-          signatureLevelId: this.signatureLevelsCache[targetLevelIndex].id,
+          signatureLevelId:
+            this.signatureService.signatureLevelsCache[targetLevelIndex].id,
           result,
           signerId: signatureInfo?.signerId ?? null,
           rejectReason:
@@ -1773,8 +1785,8 @@ export class ArticleBaseService<
         if (
           this.draftMode &&
           this.autoReleaseAfterApproved &&
-          this.signatureLevelsCache[targetLevelIndex].id ===
-            this.finalSignatureLevel?.id
+          this.signatureService.signatureLevelsCache[targetLevelIndex].id ===
+            this.signatureService.finalSignatureLevel?.id
         ) {
           await runner.manager.update(
             this.baseArticleVersionRepo.target,
@@ -1851,6 +1863,26 @@ export class ArticleBaseService<
         await runner.commitTransaction();
       }
 
+      if (result === ArticleSignatureResult.REJECTED) {
+        this.articleDataLoader.stageCache.set(
+          `${articleVersion.id}:${articleVersion.version}`,
+          Promise.resolve(ArticleStage.DRAFT),
+        );
+      } else if (
+        signature.signatureLevelId ===
+        this.signatureService.finalSignatureLevel?.id
+      ) {
+        this.articleDataLoader.stageCache.set(
+          `${articleVersion.id}:${articleVersion.version}`,
+          Promise.resolve(ArticleStage.VERIFIED),
+        );
+      } else {
+        this.articleDataLoader.stageCache.set(
+          `${articleVersion.id}:${articleVersion.version}`,
+          Promise.resolve(ArticleStage.REVIEWING),
+        );
+      }
+
       return this.findById<A, AV, AVC>(
         articleVersion.id,
         {
@@ -1872,7 +1904,7 @@ export class ArticleBaseService<
   }
 
   async refreshSignatureLevelsCache(): Promise<void> {
-    this.signatureLevelsCache = (await (
+    this.signatureService.signatureLevelsCache = (await (
       this.signatureLevelRepo as Repository<BaseSignatureLevelEntity>
     ).find({
       order: { sequence: 'ASC' },
