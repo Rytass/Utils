@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.13](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.12...@rytass/cms-base-nestjs-graphql-module@0.0.13) (2025-06-23)
+
+### Features
+
+- **cms-base-nestjs-graphql-module:** add more resolver ([a706558](https://github.com/Rytass/Utils/commit/a7065582f0dd950d898ec061dcbe5a054c115d7c))
+
 ## [0.0.12](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.11...@rytass/cms-base-nestjs-graphql-module@0.0.12) (2025-06-23)
 
 ### Bug Fixes

@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.88](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.87...@rytass/cms-base-nestjs-module@0.1.88) (2025-06-23)
+
+### Features
+
+- **cms-base-nestjs-module:** add deletedAt, updatedBy column on response type ([2417f06](https://github.com/Rytass/Utils/commit/2417f063d809edb8679a9b181622712403b6ecad))
+
 ## [0.1.87](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.86...@rytass/cms-base-nestjs-module@0.1.87) (2025-06-23)
 
 ### Bug Fixes
