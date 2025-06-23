@@ -569,6 +569,8 @@ export class ArticleBaseService<
         id: article.id,
         createdAt: article.createdAt,
         updatedAt: article.versions[0].createdAt,
+        deletedAt: article.deletedAt,
+        updatedBy: article.versions[0].createdBy,
       } as SingleArticleBaseDto<A, AV, AVC>;
     }
 
@@ -580,6 +582,8 @@ export class ArticleBaseService<
       id: article.id,
       createdAt: article.createdAt,
       updatedAt: article.versions[0].createdAt,
+      deletedAt: article.deletedAt,
+      updatedBy: article.versions[0].createdBy,
     } as MultiLanguageArticleBaseDto<A, AV, AVC>;
   }
 
@@ -800,6 +804,8 @@ export class ArticleBaseService<
             id: article.id,
             createdAt: article.createdAt,
             updatedAt: article.versions[0].createdAt,
+            deletedAt: article.deletedAt,
+            updatedBy: article.versions[0].createdBy,
           };
         }),
         total,
@@ -819,6 +825,8 @@ export class ArticleBaseService<
             id: article.id,
             createdAt: article.createdAt,
             updatedAt: article.versions[0].createdAt,
+            deletedAt: article.deletedAt,
+            updatedBy: article.versions[0].createdBy,
           }) as MultiLanguageArticleBaseDto<A, AV, AVC>,
       ),
       total,
@@ -869,6 +877,8 @@ export class ArticleBaseService<
           id: article.id,
           createdAt: article.createdAt,
           updatedAt: article.versions[0].createdAt,
+          deletedAt: article.deletedAt,
+          updatedBy: article.versions[0].createdBy,
         } as SingleArticleBaseDto<A, AV, AVC>;
       });
     }
@@ -883,6 +893,8 @@ export class ArticleBaseService<
           id: article.id,
           createdAt: article.createdAt,
           updatedAt: article.versions[0].createdAt,
+          deletedAt: article.deletedAt,
+          updatedBy: article.versions[0].createdBy,
         }) as MultiLanguageArticleBaseDto<A, AV, AVC>,
     );
   }

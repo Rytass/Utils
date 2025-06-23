@@ -28,6 +28,7 @@ export type SingleArticleBaseDto<
   > &
   Omit<ArticleEntity, 'versions'> & {
     updatedAt: Date;
+    updatedBy?: string | null;
   };
 
 export type MultiLanguageArticleBaseDto<
@@ -42,6 +43,7 @@ export type MultiLanguageArticleBaseDto<
 > &
   Omit<ArticleEntity, 'versions'> & {
     updatedAt: Date;
+    updatedBy?: string | null;
     multiLanguageContents: ArticleVersionContentEntity[];
   };
 
