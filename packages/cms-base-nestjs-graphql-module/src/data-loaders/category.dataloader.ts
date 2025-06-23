@@ -21,9 +21,9 @@ export class CategoryDataLoader {
 
   readonly multiLanguageNameLoader = new DataLoader<
     string,
-    BaseCategoryMultiLanguageNameEntity[] | null
+    BaseCategoryMultiLanguageNameEntity[]
   >(
-    async (ids): Promise<(BaseCategoryMultiLanguageNameEntity[] | null)[]> => {
+    async (ids): Promise<BaseCategoryMultiLanguageNameEntity[][]> => {
       const qb = this.categoryRepo.createQueryBuilder('categories');
 
       qb.innerJoinAndSelect(
@@ -42,12 +42,12 @@ export class CategoryDataLoader {
         ]),
       );
 
-      return ids.map((id) => categoryMap.get(id) ?? null);
+      return ids.map((id) => categoryMap.get(id) ?? []);
     },
     {
       cacheMap: new LRUCache<
         string,
-        Promise<BaseCategoryMultiLanguageNameEntity[] | null>
+        Promise<BaseCategoryMultiLanguageNameEntity[]>
       >({
         max: 100,
         ttl: 1000 * 15, // 15 seconds
@@ -69,8 +69,6 @@ export class CategoryDataLoader {
       const articleMap = new Map(
         articles.map((article) => [article.id, article.categories]),
       );
-
-      console.log('articleMap', articleMap);
 
       return ids.map((id) => articleMap.get(id) ?? []);
     },

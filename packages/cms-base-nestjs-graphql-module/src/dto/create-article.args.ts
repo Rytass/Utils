@@ -3,10 +3,10 @@ import { ArgsType, Field, ID, InputType } from '@nestjs/graphql';
 @ArgsType()
 export class CreateArticleArgs {
   @Field(() => [ID])
-  categoryIds!: string[];
+  categoryIds: string[];
 
   @Field(() => [String])
-  tags!: string[];
+  tags: string[];
 
   @Field(() => [ArticleVersionContentInput])
   multiLanguageContents: ArticleVersionContentInput[];
@@ -15,10 +15,10 @@ export class CreateArticleArgs {
   releasedAt?: Date | null;
 
   @Field(() => Boolean, { nullable: true })
-  submitted: boolean | null;
+  submitted?: boolean | null;
 
   @Field(() => String, { nullable: true })
-  signatureLevel: string | null;
+  signatureLevel?: string | null;
 }
 
 @InputType()
@@ -27,32 +27,11 @@ export class ArticleVersionContentInput {
   language?: string | null;
 
   @Field(() => String)
-  title!: string;
+  title: string;
 
   @Field(() => String, { nullable: true })
   description?: string | null;
 
   @Field(() => String)
-  content!: string;
-}
-
-@ArgsType()
-export class UpdateArticleArgs {
-  @Field(() => ID)
-  id!: string;
-
-  @Field(() => [ID])
-  categoryIds!: string[];
-
-  @Field(() => [String])
-  tags!: string[];
-
-  @Field(() => [ArticleVersionContentInput])
-  multiLanguageContents: ArticleVersionContentInput[];
-
-  @Field(() => Date, { nullable: true })
-  releasedAt?: Date | null;
-
-  @Field(() => String, { nullable: true })
-  signatureLevel: string | null;
+  content: string;
 }

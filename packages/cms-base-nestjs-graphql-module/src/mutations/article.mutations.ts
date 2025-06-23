@@ -1,34 +1,68 @@
-import { Args, ID, Int, Mutation, Resolver } from '@nestjs/graphql';
-import { ArticleBaseService } from '@rytass/cms-base-nestjs-module';
-import { BackstageArticle } from '../dto/article.dto';
 import {
-  CreateArticleArgs,
-  UpdateArticleArgs,
-} from '../dto/create-article.args';
+  ArticleBaseService,
+  DEFAULT_LANGUAGE,
+} from '@rytass/cms-base-nestjs-module';
+import { Args, ID, Int, Mutation, Resolver } from '@nestjs/graphql';
+import { ArticleBackstageDto } from '../dto/article-backstage.dto';
+import { CreateArticleArgs } from '../dto/create-article.args';
 import { IsPublic, MemberId } from '@rytass/member-base-nestjs-module';
+import { UpdateArticleArgs } from '../dto/update-article.args';
 
 @Resolver()
 export class ArticleMutations {
   constructor(private readonly articleService: ArticleBaseService) {}
 
-  @Mutation(() => BackstageArticle)
+  @Mutation(() => ArticleBackstageDto)
   @IsPublic()
   async createArticle(
     @MemberId() memberId: string,
     @Args() args: CreateArticleArgs,
-  ): Promise<BackstageArticle> {
-    return this.articleService.create({ ...args, userId: memberId });
+  ): Promise<ArticleBackstageDto> {
+    return this.articleService.create({
+      categoryIds: args.categoryIds,
+      tags: args.tags,
+      multiLanguageContents: args.multiLanguageContents.reduce(
+        (vars, content) => ({
+          ...vars,
+          [content.language ?? DEFAULT_LANGUAGE]: {
+            title: content.title,
+            description: content.description,
+            content: content.content,
+          },
+        }),
+        {},
+      ),
+      userId: memberId,
+      submitted: args.submitted ?? undefined,
+      signatureLevel: args.signatureLevel ?? null,
+      releasedAt: args.releasedAt ?? null,
+    });
   }
 
-  @Mutation(() => BackstageArticle)
+  @Mutation(() => ArticleBackstageDto)
   @IsPublic()
   async updateArticle(
     @MemberId() memberId: string,
     @Args() args: UpdateArticleArgs,
-  ): Promise<BackstageArticle> {
+  ): Promise<ArticleBackstageDto> {
     return this.articleService.addVersion(args.id, {
-      ...args,
+      categoryIds: args.categoryIds,
+      tags: args.tags,
+      multiLanguageContents: args.multiLanguageContents.reduce(
+        (vars, content) => ({
+          ...vars,
+          [content.language ?? DEFAULT_LANGUAGE]: {
+            title: content.title,
+            description: content.description,
+            content: content.content,
+          },
+        }),
+        {},
+      ),
       userId: memberId,
+      submitted: args.submitted ?? undefined,
+      signatureLevel: args.signatureLevel ?? null,
+      releasedAt: args.releasedAt ?? null,
     });
   }
 
@@ -42,66 +76,58 @@ export class ArticleMutations {
     return true;
   }
 
-  @Mutation(() => BackstageArticle)
+  @Mutation(() => ArticleBackstageDto)
   @IsPublic()
   async submitArticle(
     @MemberId() memberId: string,
     @Args('id', { type: () => ID }) id: string,
     @Args('version', { type: () => Int }) version: number,
-  ): Promise<BackstageArticle> {
+  ): Promise<ArticleBackstageDto> {
     return this.articleService.submit(id, { version, userId: memberId });
   }
 
-  @Mutation(() => BackstageArticle)
+  @Mutation(() => ArticleBackstageDto)
   @IsPublic()
   async approveArticle(
-    @MemberId() memberId: string,
     @Args('id', { type: () => ID }) id: string,
-    @Args('version', { type: () => Int }) version: number,
-    @Args('signatureLevel', { type: () => String }) signatureLevel: string,
-  ): Promise<BackstageArticle> {
-    return this.articleService.approveVersion(
-      { id, version },
-      { signatureLevel, signerId: memberId },
-    );
+  ): Promise<ArticleBackstageDto> {
+    const article = await this.articleService.findById(id);
+
+    return this.articleService.approveVersion(article);
   }
 
-  @Mutation(() => BackstageArticle)
+  @Mutation(() => ArticleBackstageDto)
   @IsPublic()
   async rejectArticle(
-    @MemberId() memberId: string,
     @Args('id', { type: () => ID }) id: string,
-    @Args('version', { type: () => Int }) version: number,
-    @Args('signatureLevel', { type: () => String }) signatureLevel: string,
     @Args('reason', { type: () => String, nullable: true })
     reason?: string | null,
-  ): Promise<BackstageArticle> {
-    return this.articleService.rejectVersion(
-      { id, version },
-      { signatureLevel, signerId: memberId, reason },
-    );
-  }
+  ): Promise<ArticleBackstageDto> {
+    const article = await this.articleService.findById(id);
 
-  @Mutation(() => BackstageArticle)
-  @IsPublic()
-  releaseArticle(
-    @MemberId() memberId: string,
-    @Args('id', { type: () => ID }) id: string,
-    @Args('version', { type: () => Int }) version: number,
-    @Args('releasedAt', { type: () => Date }) releasedAt: Date,
-  ): Promise<BackstageArticle> {
-    return this.articleService.release(id, {
-      releasedAt,
-      version,
-      // userId: memberId,
+    return this.articleService.rejectVersion(article, {
+      reason,
     });
   }
 
-  @Mutation(() => BackstageArticle)
+  @Mutation(() => ArticleBackstageDto)
+  @IsPublic()
+  releaseArticle(
+    @MemberId() userId: string,
+    @Args('id', { type: () => ID }) id: string,
+    @Args('releasedAt', { type: () => Date }) releasedAt: Date,
+  ): Promise<ArticleBackstageDto> {
+    return this.articleService.release(id, {
+      releasedAt,
+      userId,
+    });
+  }
+
+  @Mutation(() => ArticleBackstageDto)
   @IsPublic()
   withdrawArticle(
     @Args('id', { type: () => ID }) id: string,
-  ): Promise<BackstageArticle> {
+  ): Promise<ArticleBackstageDto> {
     return this.articleService.withdraw(id);
   }
 }

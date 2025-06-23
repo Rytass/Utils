@@ -2,11 +2,10 @@ import { Injectable } from '@nestjs/common';
 import DataLoader from 'dataloader';
 import { Brackets, DataSource } from 'typeorm';
 import { LRUCache } from 'lru-cache';
-
-import { ArticleSignatureEntity } from '@rytass/cms-base-nestjs-module/models/base-article-signature.entity';
 import {
   BaseArticleEntity,
   BaseArticleVersionEntity,
+  ArticleSignatureEntity,
 } from '@rytass/cms-base-nestjs-module';
 
 @Injectable()
@@ -56,6 +55,7 @@ export class ArticleDataLoader {
             subQb.andWhere(`versions.articleId = :id_${index}`, {
               [`id_${index}`]: id,
             });
+
             subQb.andWhere(`versions.version = :version_${index}`, {
               [`version_${index}`]: version,
             });
@@ -94,6 +94,7 @@ export class ArticleDataLoader {
         'ArticleSignatureEntity',
         'signatures',
       );
+
       qb.leftJoinAndSelect('signatures.signatureLevel', 'signatureLevel');
 
       qb.where('signatures.articleId IN (:...ids)', { ids });

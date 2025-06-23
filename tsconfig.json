@@ -36,7 +36,9 @@
       ],
       "@rytass/logistics": ["logistics/src"],
       "@rytass/logistics-adapter-tcat": ["logistics-adapter-tcat/src"],
-      "@rytass/member-base-nestjs-module": ["member-base-nestjs-module/src"]
+      "@rytass/member-base-nestjs-module": ["member-base-nestjs-module/src"],
+      "@rytass/cms-base-nestjs-module": ["cms-base-nestjs-module/src"],
+      "@rytass/cms-base-nestjs-graphql-module": ["cms-base-nestjs-graphql-module/src"]
     }
   },
   "references": [

@@ -1,49 +1,33 @@
-import { Args, ID, Int, Query, Resolver } from '@nestjs/graphql';
-import { ArticleBaseService } from '@rytass/cms-base-nestjs-module';
+import { Args, ID, Query, Resolver } from '@nestjs/graphql';
 import {
-  Article,
-  ArticleCollection,
-  BackstageArticle,
-  BackstageArticleCollection,
-} from '../dto/article.dto';
+  ArticleBaseService,
+  DEFAULT_LANGUAGE,
+  SingleArticleBaseDto,
+} from '@rytass/cms-base-nestjs-module';
 import { ArticlesArgs } from '../dto/articles.args';
 import { IsPublic } from '@rytass/member-base-nestjs-module';
+import { Language } from '../decorators/language.decorator';
+import { ArticleCollectionDto } from '../dto/article-collection.dto';
+import { BaseArticleDto } from '../dto/base-article.dto';
 
 @Resolver()
 export class ArticleQueries {
   constructor(private readonly articleService: ArticleBaseService) {}
 
-  @Query(() => Article)
+  @Query(() => BaseArticleDto)
   @IsPublic()
-  async article(
+  article(
     @Args('id', { type: () => ID }) id: string,
-    @Args('version', { type: () => Int, nullable: true })
-    version?: number | null,
-  ): Promise<Article> {
-    return this.articleService.findById(id, { version });
+    @Language() language: string = DEFAULT_LANGUAGE,
+  ): Promise<BaseArticleDto> {
+    return this.articleService.findById(id, {
+      language: language ?? DEFAULT_LANGUAGE,
+    }) as Promise<SingleArticleBaseDto>;
   }
 
-  @Query(() => ArticleCollection)
+  @Query(() => ArticleCollectionDto)
   @IsPublic()
-  async articles(@Args() args: ArticlesArgs): Promise<ArticleCollection> {
-    return this.articleService.findCollection(args);
-  }
-
-  @Query(() => BackstageArticle)
-  @IsPublic()
-  async backstageArticle(
-    @Args('id', { type: () => ID }) id: string,
-    @Args('version', { type: () => Int, nullable: true })
-    version?: number | null,
-  ): Promise<BackstageArticle> {
-    return this.articleService.findById(id, { version });
-  }
-
-  @Query(() => BackstageArticleCollection)
-  @IsPublic()
-  async backstageArticles(
-    @Args() args: ArticlesArgs,
-  ): Promise<BackstageArticleCollection> {
+  async articles(@Args() args: ArticlesArgs): Promise<ArticleCollectionDto> {
     return this.articleService.findCollection(args);
   }
 }

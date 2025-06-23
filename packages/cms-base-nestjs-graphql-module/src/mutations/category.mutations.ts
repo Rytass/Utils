@@ -4,16 +4,18 @@ import {
   CreateCategoryArgs,
   UpdateCategoryArgs,
 } from '../dto/create-category.args';
-import { BackstageCategory } from '../dto/category.dto';
 import { IsPublic } from '@rytass/member-base-nestjs-module';
+import { CategoryBackstageDto } from '../dto/category-backstage.dto';
 
 @Resolver()
 export class CategoryMutations {
   constructor(private readonly categoryService: CategoryBaseService) {}
 
-  @Mutation(() => BackstageCategory)
+  @Mutation(() => CategoryBackstageDto)
   @IsPublic()
-  async createCategory(@Args() args: CreateCategoryArgs) {
+  createCategory(
+    @Args() args: CreateCategoryArgs,
+  ): Promise<CategoryBackstageDto> {
     return this.categoryService.create({
       ...args,
       multiLanguageNames: Object.fromEntries(
@@ -22,9 +24,11 @@ export class CategoryMutations {
     });
   }
 
-  @Mutation(() => BackstageCategory)
+  @Mutation(() => CategoryBackstageDto)
   @IsPublic()
-  updateCategory(@Args() args: UpdateCategoryArgs) {
+  updateCategory(
+    @Args() args: UpdateCategoryArgs,
+  ): Promise<CategoryBackstageDto> {
     return this.categoryService.update(args.id, {
       ...args,
       multiLanguageNames: Object.fromEntries(
@@ -35,7 +39,9 @@ export class CategoryMutations {
 
   @Mutation(() => Boolean)
   @IsPublic()
-  async deleteCategory(@Args('id', { type: () => ID }) id: string) {
+  async deleteCategory(
+    @Args('id', { type: () => ID }) id: string,
+  ): Promise<boolean> {
     await this.categoryService.archive(id);
 
     return true;

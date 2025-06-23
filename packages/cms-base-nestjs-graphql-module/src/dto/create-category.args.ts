@@ -15,11 +15,11 @@ export class CategoryMultiLanguageNameInput {
   language?: string | null;
 
   @Field(() => String)
-  name!: string;
+  name: string;
 }
 
 @ArgsType()
 export class UpdateCategoryArgs extends CreateCategoryArgs {
   @Field(() => ID)
-  id!: string;
+  id: string;
 }

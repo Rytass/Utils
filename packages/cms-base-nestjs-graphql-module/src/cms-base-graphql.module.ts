@@ -1,77 +1,49 @@
 import { Module, DynamicModule } from '@nestjs/common';
-import { CategoryDataLoader, CMSBaseModule } from 'cms-base-nestjs-module/lib';
-import { CMSBaseModuleOptionsDto } from 'cms-base-nestjs-module/lib/typings/cms-base-root-module-options.dto';
-import { CMSBaseModuleAsyncOptionsDto } from 'cms-base-nestjs-module/src/typings/cms-base-root-module-async-options';
-import { ArticleStageDataLoader } from './data-loaders/article-stage.dataloader';
-import { ArticleDataLoader } from './data-loaders/article.dataloader';
-import { MemberDataLoader } from './data-loaders/members.dataloader';
+import {
+  CMSBaseModule,
+  CMSBaseModuleOptionsDto,
+  CMSBaseModuleAsyncOptionsDto,
+} from '@rytass/cms-base-nestjs-module';
 import { ArticleMutations } from './mutations/article.mutations';
-import { AuthMutations } from './mutations/auth.mutations';
 import { CategoryMutations } from './mutations/category.mutations';
 import { ArticleQueries } from './queries/article.queries';
 import { CategoryQueries } from './queries/category.queries';
-import { ArticleSignatureResolvers } from './resolvers/article-signature.resolvers';
-import { ArticleVersionContentResolvers } from './resolvers/article-version-content.resolvers';
-import {
-  ArticleResolvers,
-  BackstageArticleResolvers,
-} from './resolvers/article.resolvers';
-import {
-  CategoryResolvers,
-  BackstageCategoryResolvers,
-} from './resolvers/category.resolvers';
+import { ArticleResolver } from './resolvers/article.resolver';
+import { ArticleBackstageResolver } from './resolvers/article-backstage.resolver';
 
 @Module({})
-export class CmsBaseGraphQLModule {
+export class CMSBaseGraphQLModule {
   static forRootAsync(options: CMSBaseModuleAsyncOptionsDto): DynamicModule {
     return {
-      module: CmsBaseGraphQLModule,
+      module: CMSBaseGraphQLModule,
       imports: [
         ...(options.imports || []),
         CMSBaseModule.forRootAsync(options),
       ],
       exports: [CMSBaseModule],
       providers: [
-        CategoryQueries,
-        CategoryMutations,
-        CategoryResolvers,
-        BackstageCategoryResolvers,
-        CategoryDataLoader,
         ArticleQueries,
         ArticleMutations,
-        ArticleResolvers,
-        BackstageArticleResolvers,
-        ArticleSignatureResolvers,
-        ArticleVersionContentResolvers,
-        ArticleDataLoader,
-        ArticleStageDataLoader,
-        MemberDataLoader,
-        AuthMutations,
+        ArticleResolver,
+        ArticleBackstageResolver,
+        CategoryQueries,
+        CategoryMutations,
       ],
     };
   }
 
   static forRoot(options?: CMSBaseModuleOptionsDto): DynamicModule {
     return {
-      module: CmsBaseGraphQLModule,
+      module: CMSBaseGraphQLModule,
       imports: [CMSBaseModule.forRoot(options)],
       exports: [CMSBaseModule],
       providers: [
-        CategoryQueries,
-        CategoryMutations,
-        CategoryResolvers,
-        BackstageCategoryResolvers,
-        CategoryDataLoader,
         ArticleQueries,
         ArticleMutations,
-        ArticleResolvers,
-        BackstageArticleResolvers,
-        ArticleSignatureResolvers,
-        ArticleVersionContentResolvers,
-        ArticleDataLoader,
-        ArticleStageDataLoader,
-        MemberDataLoader,
-        AuthMutations,
+        ArticleResolver,
+        ArticleBackstageResolver,
+        CategoryQueries,
+        CategoryMutations,
       ],
     };
   }

@@ -3,11 +3,11 @@ import { Field, Int, ObjectType } from '@nestjs/graphql';
 @ObjectType('Collection')
 export class Collection {
   @Field(() => Int)
-  total!: number;
+  total: number;
 
   @Field(() => Int)
-  offset!: number;
+  offset: number;
 
   @Field(() => Int)
-  limit!: number;
+  limit: number;
 }

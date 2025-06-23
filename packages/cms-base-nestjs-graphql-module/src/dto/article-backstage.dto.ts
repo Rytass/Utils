@@ -1,7 +1,7 @@
 import { ObjectType } from '@nestjs/graphql';
 import { BaseArticleDto } from './base-article.dto';
 
-@ObjectType('Article', {
+@ObjectType('ArticleBackstage', {
   implements: [BaseArticleDto],
 })
-export class ArticleDto extends BaseArticleDto {}
+export class ArticleBackstageDto extends BaseArticleDto {}
