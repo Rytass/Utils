@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.85](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.84...@rytass/cms-base-nestjs-module@0.1.85) (2025-06-23)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** add missing article field: id and createdAt ([11f3448](https://github.com/Rytass/Utils/commit/11f344844f1968fe90fd1f24b85415b8f57ba0dc))
+
 ## [0.1.84](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.83...@rytass/cms-base-nestjs-module@0.1.84) (2025-06-23)
 
 ### Features
