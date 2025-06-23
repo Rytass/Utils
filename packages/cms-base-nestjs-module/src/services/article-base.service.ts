@@ -566,6 +566,8 @@ export class ArticleBaseService<
         ...removeArticleVersionContentInvalidFields<AVC>(languageContent),
         ...removeArticleVersionInvalidFields<AV>(article.versions[0]),
         ...removeArticleInvalidFields<A>(article),
+        id: article.id,
+        createdAt: article.createdAt,
       } as SingleArticleBaseDto<A, AV, AVC>;
     }
 
@@ -574,6 +576,8 @@ export class ArticleBaseService<
         article.versions[0],
       ),
       ...removeArticleInvalidFields<A>(article),
+      id: article.id,
+      createdAt: article.createdAt,
     } as MultiLanguageArticleBaseDto<A, AV, AVC>;
   }
 
@@ -791,6 +795,8 @@ export class ArticleBaseService<
             ...removeArticleVersionContentInvalidFields<AVC>(languageContent),
             ...removeArticleVersionInvalidFields<AV>(article.versions[0]),
             ...removeArticleInvalidFields<A>(article),
+            id: article.id,
+            createdAt: article.createdAt,
           };
         }),
         total,
@@ -807,6 +813,8 @@ export class ArticleBaseService<
               article.versions[0],
             ),
             ...removeArticleInvalidFields(article),
+            id: article.id,
+            createdAt: article.createdAt,
           }) as MultiLanguageArticleBaseDto<A, AV, AVC>,
       ),
       total,
@@ -854,6 +862,8 @@ export class ArticleBaseService<
           ...removeArticleVersionContentInvalidFields<AVC>(languageContent),
           ...removeArticleVersionInvalidFields<AV>(article.versions[0]),
           ...removeArticleInvalidFields<A>(article),
+          id: article.id,
+          createdAt: article.createdAt,
         } as SingleArticleBaseDto<A, AV, AVC>;
       });
     }
@@ -865,6 +875,8 @@ export class ArticleBaseService<
             article.versions[0],
           ),
           ...removeArticleInvalidFields<A>(article),
+          id: article.id,
+          createdAt: article.createdAt,
         }) as MultiLanguageArticleBaseDto<A, AV, AVC>,
     );
   }
