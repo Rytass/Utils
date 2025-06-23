@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.87](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.86...@rytass/cms-base-nestjs-module@0.1.87) (2025-06-23)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** add runner on signature respnose findById ([52e892b](https://github.com/Rytass/Utils/commit/52e892b91f2a81c5bd2b9762bee23b0a212faff6))
+
 ## [0.1.86](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.85...@rytass/cms-base-nestjs-module@0.1.86) (2025-06-23)
 
 ### Features
