@@ -1,124 +1,87 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import DataLoader from 'dataloader';
-import { Brackets, DataSource } from 'typeorm';
+import { Repository } from 'typeorm';
 import { LRUCache } from 'lru-cache';
 import {
   BaseArticleEntity,
-  BaseArticleVersionEntity,
-  ArticleSignatureEntity,
+  DEFAULT_LANGUAGE,
+  RESOLVED_ARTICLE_REPO,
 } from '@rytass/cms-base-nestjs-module';
+import { CategoryDto } from '../dto/category.dto';
 
 @Injectable()
 export class ArticleDataLoader {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    @Inject(RESOLVED_ARTICLE_REPO)
+    private readonly articleRepo: Repository<BaseArticleEntity>,
+  ) {}
 
-  readonly articleLoader = new DataLoader<string, BaseArticleEntity | null>(
-    async (ids): Promise<(BaseArticleEntity | null)[]> => {
-      const qb = this.dataSource.createQueryBuilder(
-        BaseArticleEntity,
-        'articles',
+  readonly categoriesLoader = new DataLoader<
+    {
+      articleId: string;
+      language?: string;
+    },
+    CategoryDto[],
+    string
+  >(
+    async (
+      queryArgs: readonly {
+        articleId: string;
+        language?: string;
+      }[],
+    ): Promise<CategoryDto[][]> => {
+      const qb = this.articleRepo.createQueryBuilder('articles');
+
+      qb.leftJoinAndSelect('articles.categories', 'categories');
+      qb.leftJoinAndSelect(
+        'categories.multiLanguageNames',
+        'multiLanguageNames',
       );
 
-      qb.where('articles.id IN (:...ids)', { ids });
+      qb.andWhere('articles.id IN (:...ids)', {
+        ids: queryArgs.map((arg) => arg.articleId),
+      });
 
       const articles = await qb.getMany();
 
-      const articleMap = new Map(
-        articles.map((article) => [article.id, article]),
+      const categoryMap = articles.reduce<Record<string, CategoryDto[]>>(
+        (vars, article) =>
+          article.categories.reduce(
+            (cVars, category) =>
+              category.multiLanguageNames.reduce(
+                (mVars, multiLanguageName) => ({
+                  ...mVars,
+                  [`${article.id}:${multiLanguageName.language}`]: [
+                    ...(mVars[`${article.id}:${multiLanguageName.language}`] ||
+                      []),
+                    {
+                      ...category,
+                      ...multiLanguageName,
+                    },
+                  ],
+                }),
+                cVars,
+              ),
+            vars,
+          ),
+        {},
       );
 
-      return ids.map((id) => articleMap.get(id) ?? null);
-    },
-    {
-      cacheMap: new LRUCache<string, Promise<BaseArticleEntity | null>>({
-        max: 100,
-        ttl: 1000 * 15, // 15 seconds
-        ttlAutopurge: true,
-      }),
-    },
-  );
-
-  readonly versionLoader = new DataLoader<
-    { id: string; version: number },
-    BaseArticleVersionEntity | null,
-    string
-  >(
-    async (args: readonly { id: string; version: number }[]) => {
-      const qb = this.dataSource.createQueryBuilder(
-        BaseArticleVersionEntity,
-        'versions',
-      );
-
-      args.forEach(({ id, version }, index) => {
-        qb.orWhere(
-          new Brackets((subQb) => {
-            subQb.andWhere(`versions.articleId = :id_${index}`, {
-              [`id_${index}`]: id,
-            });
-
-            subQb.andWhere(`versions.version = :version_${index}`, {
-              [`version_${index}`]: version,
-            });
-          }),
-        );
-      });
-
-      const versions = await qb.getMany();
-
-      const versionMap = new Map(
-        versions.map((version) => [
-          `${version.articleId}|${version.version}`,
-          version,
-        ]),
-      );
-
-      return args.map(
-        ({ id, version }) => versionMap.get(`${id}|${version}`) ?? null,
+      return queryArgs.map(
+        (arg) =>
+          categoryMap[`${arg.articleId}:${arg.language ?? DEFAULT_LANGUAGE}`] ??
+          [],
       );
     },
     {
       cache: true,
-      cacheMap: new LRUCache<string, Promise<BaseArticleVersionEntity | null>>({
-        max: 100,
-        ttl: 1000 * 15, // 15 seconds
+      cacheMap: new LRUCache<string, Promise<CategoryDto[]>>({
+        ttl: 1000 * 60, // 1 minute
         ttlAutopurge: true,
+        max: 1000,
       }),
-      cacheKeyFn: (args: { id: string; version: number }) =>
-        `${args.id}|${args.version}`,
-    },
-  );
-
-  readonly signatureLoader = new DataLoader<string, ArticleSignatureEntity[]>(
-    async (ids): Promise<ArticleSignatureEntity[][]> => {
-      const qb = this.dataSource.createQueryBuilder(
-        'ArticleSignatureEntity',
-        'signatures',
-      );
-
-      qb.leftJoinAndSelect('signatures.signatureLevel', 'signatureLevel');
-
-      qb.where('signatures.articleId IN (:...ids)', { ids });
-
-      const signatures = await qb.getMany();
-
-      const signatureMap = signatures.reduce<
-        Record<string, ArticleSignatureEntity[]>
-      >(
-        (vars, item) => ({
-          ...vars,
-          [item.articleId]: [...(vars[item.articleId] ?? []), item],
-        }),
-        {},
-      );
-
-      return ids.map((id) => signatureMap[id] ?? []);
-    },
-    {
-      cacheMap: new LRUCache<string, Promise<ArticleSignatureEntity[]>>({
-        max: 100,
-        ttl: 1000 * 15, // 15 seconds
-        ttlAutopurge: true,
-      }),
+      cacheKeyFn: (queryArgs) =>
+        `${queryArgs.articleId}:${queryArgs.language ?? DEFAULT_LANGUAGE}`,
     },
   );
 }

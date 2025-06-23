@@ -1,32 +1,38 @@
-import { Injectable } from '@nestjs/common';
-import { BaseMemberEntity } from '@rytass/member-base-nestjs-module';
+import { Inject, Injectable } from '@nestjs/common';
+import {
+  BaseMemberEntity,
+  RESOLVED_MEMBER_REPO,
+} from '@rytass/member-base-nestjs-module';
 import DataLoader from 'dataloader';
 import { LRUCache } from 'lru-cache';
-import { DataSource } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 @Injectable()
 export class MemberDataLoader {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    @Inject(RESOLVED_MEMBER_REPO)
+    private readonly memberRepo: Repository<BaseMemberEntity>,
+  ) {}
 
   readonly loader = new DataLoader<string, BaseMemberEntity | null>(
     async (ids): Promise<(BaseMemberEntity | null)[]> => {
-      const members = await this.dataSource
-        .getRepository(BaseMemberEntity)
-        .createQueryBuilder('members')
-        .where('members.id IN (:...ids)', { ids })
-        .getMany();
+      const qb = this.memberRepo.createQueryBuilder('members');
 
-      const memberMap = new Map(members.map((member) => [member.id, member]));
+      qb.withDeleted();
+      qb.andWhere('members.id IN (:...ids)', { ids });
 
-      return ids.map((id) => memberMap.get(id) ?? null);
+      const users = await qb.getMany();
+
+      const userMap = new Map(users.map((user) => [user.id, user]));
+
+      return ids.map((id) => userMap.get(id) ?? null);
     },
     {
-      maxBatchSize: 20,
       cache: true,
       cacheMap: new LRUCache<string, Promise<BaseMemberEntity | null>>({
-        ttl: 1000 * 60, // 1 minute
+        ttl: 1000 * 60 * 10, // 10 minutes
         ttlAutopurge: true,
-        max: 100,
+        max: 1000,
       }),
     },
   );

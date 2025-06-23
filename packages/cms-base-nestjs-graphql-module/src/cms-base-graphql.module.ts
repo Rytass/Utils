@@ -8,6 +8,9 @@ import { ArticleMutations } from './mutations/article.mutations';
 import { CategoryMutations } from './mutations/category.mutations';
 import { ArticleQueries } from './queries/article.queries';
 import { CategoryQueries } from './queries/category.queries';
+import { MemberDataLoader } from './dataloaders/members.dataloader';
+import { ArticleDataLoader } from './dataloaders/article.dataloader';
+import { ArticleResolver } from './resolvers/article.resolver';
 
 @Module({})
 export class CMSBaseGraphQLModule {
@@ -20,6 +23,9 @@ export class CMSBaseGraphQLModule {
       ],
       exports: [CMSBaseModule],
       providers: [
+        MemberDataLoader,
+        ArticleDataLoader,
+        ArticleResolver,
         ArticleQueries,
         ArticleMutations,
         CategoryQueries,
@@ -34,6 +40,9 @@ export class CMSBaseGraphQLModule {
       imports: [CMSBaseModule.forRoot(options)],
       exports: [CMSBaseModule],
       providers: [
+        MemberDataLoader,
+        ArticleDataLoader,
+        ArticleResolver,
         ArticleQueries,
         ArticleMutations,
         CategoryQueries,

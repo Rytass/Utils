@@ -10,4 +10,10 @@ export class BaseArticleDto {
 
   @Field(() => Date)
   createdAt: Date;
+
+  @Field(() => Date)
+  updatedAt: Date;
+
+  @Field(() => Date, { nullable: true })
+  releasedAt: Date | null;
 }

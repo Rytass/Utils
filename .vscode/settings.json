@@ -6,6 +6,7 @@
     "CHINATRUST",
     "clsamt",
     "CVSCOM",
+    "dataloaders",
     "datetime",
     "Einvoice",
     "errcode",

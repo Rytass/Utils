@@ -6,5 +6,5 @@ export class UserDto {
   id: string;
 
   @Field(() => String)
-  name: string;
+  account: string;
 }
