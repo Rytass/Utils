@@ -1195,7 +1195,7 @@ export class ArticleBaseService<
   >(
     id: string,
     options: SingleArticleCreateDto<A, AV, AVC> & { id: A['id'] },
-  ): Promise<A>;
+  ): Promise<ArticleBaseDto<A, AV, AVC>>;
   async addVersion<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
@@ -1203,7 +1203,7 @@ export class ArticleBaseService<
   >(
     id: string,
     options: MultiLanguageArticleCreateDto<A, AV, AVC> & { id: A['id'] },
-  ): Promise<A>;
+  ): Promise<ArticleBaseDto<A, AV, AVC>>;
   async addVersion<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
@@ -1394,12 +1394,16 @@ export class ArticleBaseService<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
-  >(options: SingleArticleCreateDto<A, AV, AVC>): Promise<A>;
+  >(
+    options: SingleArticleCreateDto<A, AV, AVC>,
+  ): Promise<ArticleBaseDto<A, AV, AVC>>;
   async create<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
-  >(options: MultiLanguageArticleCreateDto<A, AV, AVC>): Promise<A>;
+  >(
+    options: MultiLanguageArticleCreateDto<A, AV, AVC>,
+  ): Promise<ArticleBaseDto<A, AV, AVC>>;
   async create<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
