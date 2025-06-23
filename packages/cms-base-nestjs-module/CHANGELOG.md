@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.89](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.88...@rytass/cms-base-nestjs-module@0.1.89) (2025-06-23)
+
+### Features
+
+- **cms-base-nestjs-module:** add versions, categories data loader ([4b66d54](https://github.com/Rytass/Utils/commit/4b66d547f1ba8feae7fe36edce79278ac6a770d6))
+
 ## [0.1.88](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.87...@rytass/cms-base-nestjs-module@0.1.88) (2025-06-23)
 
 ### Features

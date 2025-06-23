@@ -1,6 +1,6 @@
 {
   "name": "@rytass/cms-base-nestjs-graphql-module",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "Rytass Content Management System NestJS Base GraphQL Module",
   "keywords": [
     "rytass",
@@ -31,7 +31,7 @@
     "typeorm": "*"
   },
   "dependencies": {
-    "@rytass/cms-base-nestjs-module": "^0.1.88",
+    "@rytass/cms-base-nestjs-module": "^0.1.89",
     "@rytass/member-base-nestjs-module": "^0.1.65",
     "dataloader": "^2.2.2",
     "lru-cache": "^11.0.2"
