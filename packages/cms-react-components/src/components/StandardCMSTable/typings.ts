@@ -11,6 +11,7 @@ import {
   TableRowSelection,
   TableScrolling,
 } from '@mezzanine-ui/core/table';
+import { LogsModalProps } from '../cms-modals/LogsModal';
 import {
   ArticleStage,
   ArticlesPermissions,
@@ -111,6 +112,10 @@ export interface StandardCMSTableProps<T extends TableDataSourceWithID> {
    * 是否顯示版本紀錄按鈕
    */
   withVersionLogs?: boolean;
+  /**
+   * 版本紀錄資料
+   */
+  versionLogsData?: (source: T) => LogsModalProps;
   /**
    * 定義 Table row 操作列
    */

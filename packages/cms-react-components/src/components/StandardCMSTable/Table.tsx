@@ -1,4 +1,4 @@
-import React, { ReactElement, useMemo, useCallback } from 'react';
+import React, { ReactElement, useMemo } from 'react';
 import { compact } from 'lodash';
 import { Table as MznTable, IconButton, Icon } from '@mezzanine-ui/react';
 import { TableColumn, TableDataSourceWithID } from '@mezzanine-ui/core/table';
@@ -29,6 +29,7 @@ const Table = <T extends TableDataSourceWithID>({
   emptyProps,
   loadingTip,
   withVersionLogs = true,
+  versionLogsData,
   actions,
   customizedActions = [],
 }: StandardCMSTableProps<T>): ReactElement => {
@@ -40,42 +41,39 @@ const Table = <T extends TableDataSourceWithID>({
     actions,
   });
 
-  const onClickVersionIcon = useCallback(
-    (source: T) => () => {
-      openModal({
-        severity: 'info',
-        children: <LogsModal />,
-      });
-    },
-    [openModal],
-  );
-
   const columns = useMemo(
     (): TableColumn<T>[] =>
       compact<TableColumn<T>>([
-        withVersionLogs && {
-          title: '',
-          width: 60,
-          render: (source) => (
-            <IconButton
-              type="button"
-              size="small"
-              onClick={onClickVersionIcon(source)}
-            >
-              <Icon icon={VersionLog} size={16} />
-            </IconButton>
-          ),
-        },
+        withVersionLogs &&
+          versionLogsData && {
+            title: '',
+            width: 60,
+            render: (source) => (
+              <IconButton
+                type="button"
+                size="small"
+                onClick={() => {
+                  openModal({
+                    severity: 'info',
+                    children: <LogsModal {...versionLogsData(source)} />,
+                  });
+                }}
+              >
+                <Icon icon={VersionLog} size={16} />
+              </IconButton>
+            ),
+          },
         ...columnsProps,
         ...tableActions,
         ...customizedActions,
       ]),
     [
       withVersionLogs,
+      versionLogsData,
       columnsProps,
       tableActions,
       customizedActions,
-      onClickVersionIcon,
+      openModal,
     ],
   );
 

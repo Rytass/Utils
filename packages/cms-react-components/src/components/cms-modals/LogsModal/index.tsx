@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useState, useMemo } from 'react';
 import {
   ModalHeader,
   ModalBody as MznModalBody,
@@ -11,43 +11,8 @@ import {
 import { ExclamationCircleFilledIcon } from '@mezzanine-ui/icons';
 import { useModal } from '../../modal/useModal';
 import { ArticleStage } from '../../../typings';
+import { LogsData } from './typings';
 import classes from './index.module.scss';
-
-const data: {
-  [keys in ArticleStage]?: {
-    time: string;
-    member: string;
-    version: number;
-    reason?: string;
-  };
-} = {
-  [ArticleStage.DRAFT]: {
-    time: '2025-06-01．13:30',
-    member: 'staff@email.com',
-    version: 5,
-    reason: '內文有錯字，請修正後再次送審。',
-  },
-  [ArticleStage.REVIEWING]: {
-    time: '2025-06-02．13:30',
-    member: 'manager@email.com',
-    version: 4,
-  },
-  [ArticleStage.VERIFIED]: {
-    time: '2025-06-03．13:30',
-    member: 'staff@email.com',
-    version: 3,
-  },
-  [ArticleStage.SCHEDULED]: {
-    time: '',
-    member: '',
-    version: 0,
-  },
-  [ArticleStage.RELEASED]: {
-    time: '2025-06-05．13:30',
-    member: 'staff@email.com',
-    version: 1,
-  },
-};
 
 export function getStageNaming(stage: ArticleStage): {
   stageName: string;
@@ -99,99 +64,164 @@ export function getStageNaming(stage: ArticleStage): {
   }
 }
 
-export interface LogsModalProps {}
+export interface LogsModalProps {
+  data: LogsData;
+  versionsData?: {
+    [keys in number]?: LogsData;
+  };
+}
 
-const LogsModal = (): ReactNode => {
-  const [versionMode, setVersionMode] = useState<boolean>(false);
+function normalizeData(currentData: LogsData): {
+  [key in ArticleStage]?: {
+    time: string;
+    member: string;
+    version?: number;
+    reason?: string;
+  };
+} {
+  return {
+    [ArticleStage.DRAFT]: {
+      ...currentData[ArticleStage.DRAFT],
+      time: currentData[ArticleStage.DRAFT].updatedAt,
+      member: currentData[ArticleStage.DRAFT].updatedBy,
+    },
+    [ArticleStage.REVIEWING]: {
+      ...currentData[ArticleStage.REVIEWING],
+      time: currentData[ArticleStage.REVIEWING].submittedAt,
+      member: currentData[ArticleStage.REVIEWING].submittedBy,
+    },
+    [ArticleStage.VERIFIED]: {
+      ...currentData[ArticleStage.VERIFIED],
+      time: currentData[ArticleStage.VERIFIED].verifiedAt,
+      member: currentData[ArticleStage.VERIFIED].verifiedBy,
+    },
+    [ArticleStage.SCHEDULED]: {
+      ...currentData[ArticleStage.SCHEDULED],
+      time: currentData[ArticleStage.SCHEDULED].scheduledAt,
+      member: currentData[ArticleStage.SCHEDULED].scheduledBy,
+    },
+    [ArticleStage.RELEASED]: {
+      ...currentData[ArticleStage.RELEASED],
+      time: currentData[ArticleStage.RELEASED].releasedAt,
+      member: currentData[ArticleStage.RELEASED].releasedBy,
+    },
+  };
+}
+
+const LogsModal = ({ data, versionsData }: LogsModalProps): ReactNode => {
+  const [versionMode, setVersionMode] = useState<number | null>(null);
   const { closeModal } = useModal();
+
+  const targetData = useMemo(
+    () => (versionMode ? versionsData?.[versionMode] : data),
+    [data, versionMode, versionsData],
+  );
+
+  const targetDataNormalized = useMemo(
+    () => (targetData ? normalizeData(targetData) : null),
+    [targetData],
+  );
 
   return (
     <>
       <ModalHeader showSeverityIcon={false}>版本資訊</ModalHeader>
+
       <MznModalBody className={classes.modalBody}>
         {versionMode && (
           <Typography variant="h6" color="text-primary">
-            Ver. 1
+            {`Ver. ${versionMode}`}
           </Typography>
         )}
-        <div className={classes.wrapper}>
-          {Object.keys(data).map((stage) => {
-            const targetStage = stage as ArticleStage;
-
-            return (
-              <div key={stage} className={classes.block}>
-                <div className={classes.timeLineWrapper}>
-                  <div
-                    className={cx(classes.topLine, {
-                      [classes.isHidden]: targetStage === ArticleStage.DRAFT,
-                    })}
-                  />
-                  <div
-                    className={cx(classes.dot, {
-                      [classes.notActive]:
-                        !data[targetStage]?.time && !data[targetStage]?.member,
-                    })}
-                  />
-                  <div
-                    className={cx(classes.bottomLine, {
-                      [classes.isHidden]: targetStage === ArticleStage.RELEASED,
-                    })}
-                  />
-                </div>
-                <div className={classes.contentWrapper}>
-                  <div className={classes.stageWrapper}>
-                    <Typography variant="h5" color="text-primary">
-                      {getStageNaming(targetStage).stageName}
-                    </Typography>
-                    {!versionMode && !!data[targetStage]?.version && (
-                      <Button
-                        type="button"
-                        variant="text"
-                        color="secondary"
-                        size="small"
-                        onClick={() => {
-                          setVersionMode(true);
-                        }}
-                      >
-                        {`Ver. ${data[targetStage].version}`}
-                      </Button>
+        {targetDataNormalized && (
+          <div className={classes.wrapper}>
+            {[
+              ArticleStage.DRAFT,
+              ArticleStage.REVIEWING,
+              ArticleStage.VERIFIED,
+              ArticleStage.SCHEDULED,
+              ArticleStage.RELEASED,
+            ].map((targetStage) => {
+              return (
+                <div key={targetStage} className={classes.block}>
+                  <div className={classes.timeLineWrapper}>
+                    <div
+                      className={cx(classes.topLine, {
+                        [classes.isHidden]: targetStage === ArticleStage.DRAFT,
+                      })}
+                    />
+                    <div
+                      className={cx(classes.dot, {
+                        [classes.notActive]:
+                          !targetDataNormalized[targetStage]?.time &&
+                          !targetDataNormalized[targetStage]?.member,
+                      })}
+                    />
+                    <div
+                      className={cx(classes.bottomLine, {
+                        [classes.isHidden]:
+                          targetStage === ArticleStage.RELEASED,
+                      })}
+                    />
+                  </div>
+                  <div className={classes.contentWrapper}>
+                    <div className={classes.stageWrapper}>
+                      <Typography variant="h5" color="text-primary">
+                        {getStageNaming(targetStage).stageName}
+                      </Typography>
+                      {!versionMode &&
+                        !!targetDataNormalized[targetStage]?.version && (
+                          <Button
+                            type="button"
+                            variant="text"
+                            color="secondary"
+                            size="small"
+                            onClick={() => {
+                              setVersionMode(
+                                targetDataNormalized[targetStage]?.version ||
+                                  null,
+                              );
+                            }}
+                          >
+                            {`Ver. ${targetDataNormalized[targetStage].version}`}
+                          </Button>
+                        )}
+                    </div>
+                    <div className={classes.list}>
+                      <div className={classes.option}>
+                        <Typography variant="h6" color="text-secondary">
+                          {getStageNaming(targetStage).timeTitle}
+                        </Typography>
+                        <Typography variant="body2" color="text-primary">
+                          {targetDataNormalized[targetStage]?.time || '-'}
+                        </Typography>
+                      </div>
+                      <div className={classes.option}>
+                        <Typography variant="h6" color="text-secondary">
+                          {getStageNaming(targetStage).memberTitle}
+                        </Typography>
+                        <Typography variant="body2" color="text-primary">
+                          {targetDataNormalized[targetStage]?.member || '-'}
+                        </Typography>
+                      </div>
+                    </div>
+                    {!!targetDataNormalized[targetStage]?.reason && (
+                      <div className={classes.reasonWrapper}>
+                        <Icon
+                          icon={ExclamationCircleFilledIcon}
+                          size={24}
+                          color="warning"
+                        />
+                        <Typography variant="input1" color="text-primary">
+                          {targetDataNormalized[targetStage].reason}
+                        </Typography>
+                      </div>
                     )}
                   </div>
-                  <div className={classes.list}>
-                    <div className={classes.option}>
-                      <Typography variant="h6" color="text-secondary">
-                        {getStageNaming(targetStage).timeTitle}
-                      </Typography>
-                      <Typography variant="body2" color="text-primary">
-                        {data[targetStage]?.time || '-'}
-                      </Typography>
-                    </div>
-                    <div className={classes.option}>
-                      <Typography variant="h6" color="text-secondary">
-                        {getStageNaming(targetStage).memberTitle}
-                      </Typography>
-                      <Typography variant="body2" color="text-primary">
-                        {data[targetStage]?.member || '-'}
-                      </Typography>
-                    </div>
-                  </div>
-                  {!!data[targetStage]?.reason && (
-                    <div className={classes.reasonWrapper}>
-                      <Icon
-                        icon={ExclamationCircleFilledIcon}
-                        size={24}
-                        color="warning"
-                      />
-                      <Typography variant="input1" color="text-primary">
-                        {data[targetStage].reason}
-                      </Typography>
-                    </div>
-                  )}
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </MznModalBody>
       <ModalActions
         cancelText="返回"
@@ -212,7 +242,7 @@ const LogsModal = (): ReactNode => {
           danger: false,
         }}
         onCancel={() => {
-          setVersionMode(false);
+          setVersionMode(null);
         }}
         onConfirm={closeModal}
       />

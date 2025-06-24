@@ -17,6 +17,7 @@ export { default as ModalProvider } from './components/modal/ModalProvider';
 export { useModal } from './components/modal/useModal';
 export * from './components/cms-modals/DeleteWithdrawModal';
 export * from './components/cms-modals/LogsModal';
+export * from './components/cms-modals/LogsModal/typings';
 export * from './components/cms-modals/RejectModal';
 export * from './components/cms-modals/VerifyReleaseModal';
 export * from './components/StandardCMSFormActions';
