@@ -1,4 +1,4 @@
-import React, { ReactNode, useState, useMemo } from 'react';
+import React, { ReactNode, useState, useMemo, useCallback } from 'react';
 import {
   ModalHeader,
   ModalBody as MznModalBody,
@@ -14,60 +14,17 @@ import { ArticleStage } from '../../../typings';
 import { LogsData } from './typings';
 import classes from './index.module.scss';
 
-export function getStageNaming(stage: ArticleStage): {
-  stageName: string;
-  timeTitle: string;
-  memberTitle: string;
-} {
-  switch (stage) {
-    case ArticleStage.DRAFT:
-      return {
-        stageName: '草稿',
-        timeTitle: '最後編輯時間',
-        memberTitle: '編輯人員',
-      };
-
-    case ArticleStage.REVIEWING:
-      return {
-        stageName: '待審核',
-        timeTitle: '送審時間',
-        memberTitle: '送審人員',
-      };
-
-    case ArticleStage.VERIFIED:
-      return {
-        stageName: '可發佈',
-        timeTitle: '過審時間',
-        memberTitle: '審核人員',
-      };
-
-    case ArticleStage.SCHEDULED:
-      return {
-        stageName: '已預約',
-        timeTitle: '預約發佈時間',
-        memberTitle: '預約發佈人員',
-      };
-
-    case ArticleStage.RELEASED:
-      return {
-        stageName: '已發佈',
-        timeTitle: '發佈時間',
-        memberTitle: '發佈人員',
-      };
-
-    default:
-      return {
-        stageName: '',
-        timeTitle: '',
-        memberTitle: '',
-      };
-  }
-}
-
 export interface LogsModalProps {
   data: LogsData;
   versionsData?: {
     [keys in number]?: LogsData;
+  };
+  stageWording?: {
+    [keys in ArticleStage]?: {
+      stageName?: string;
+      timeTitle?: string;
+      memberTitle?: string;
+    };
   };
 }
 
@@ -108,9 +65,68 @@ function normalizeData(currentData: LogsData): {
   };
 }
 
-const LogsModal = ({ data, versionsData }: LogsModalProps): ReactNode => {
+const LogsModal = ({
+  data,
+  versionsData,
+  stageWording,
+}: LogsModalProps): ReactNode => {
   const [versionMode, setVersionMode] = useState<number | null>(null);
   const { closeModal } = useModal();
+
+  const getStageWording = useCallback(
+    (
+      stage: ArticleStage,
+    ): {
+      stageName: string;
+      timeTitle: string;
+      memberTitle: string;
+    } => {
+      switch (stage) {
+        case ArticleStage.DRAFT:
+          return {
+            stageName: stageWording?.[stage]?.stageName || '草稿',
+            timeTitle: stageWording?.[stage]?.timeTitle || '最後編輯時間',
+            memberTitle: stageWording?.[stage]?.memberTitle || '編輯人員',
+          };
+
+        case ArticleStage.REVIEWING:
+          return {
+            stageName: stageWording?.[stage]?.stageName || '待審核',
+            timeTitle: stageWording?.[stage]?.timeTitle || '送審時間',
+            memberTitle: stageWording?.[stage]?.memberTitle || '送審人員',
+          };
+
+        case ArticleStage.VERIFIED:
+          return {
+            stageName: stageWording?.[stage]?.stageName || '可發佈',
+            timeTitle: stageWording?.[stage]?.timeTitle || '過審時間',
+            memberTitle: stageWording?.[stage]?.memberTitle || '審核人員',
+          };
+
+        case ArticleStage.SCHEDULED:
+          return {
+            stageName: stageWording?.[stage]?.stageName || '已預約',
+            timeTitle: stageWording?.[stage]?.timeTitle || '預約發佈時間',
+            memberTitle: stageWording?.[stage]?.memberTitle || '預約發佈人員',
+          };
+
+        case ArticleStage.RELEASED:
+          return {
+            stageName: stageWording?.[stage]?.stageName || '已發佈',
+            timeTitle: stageWording?.[stage]?.timeTitle || '發佈時間',
+            memberTitle: stageWording?.[stage]?.memberTitle || '發佈人員',
+          };
+
+        default:
+          return {
+            stageName: stageWording?.[stage]?.stageName || '',
+            timeTitle: stageWording?.[stage]?.timeTitle || '',
+            memberTitle: stageWording?.[stage]?.memberTitle || '',
+          };
+      }
+    },
+    [stageWording],
+  );
 
   const targetData = useMemo(
     () => (versionMode ? versionsData?.[versionMode] : data),
@@ -166,7 +182,7 @@ const LogsModal = ({ data, versionsData }: LogsModalProps): ReactNode => {
                   <div className={classes.contentWrapper}>
                     <div className={classes.stageWrapper}>
                       <Typography variant="h5" color="text-primary">
-                        {getStageNaming(targetStage).stageName}
+                        {getStageWording(targetStage).stageName}
                       </Typography>
                       {!versionMode &&
                         !!targetDataNormalized[targetStage]?.version && (
@@ -189,7 +205,7 @@ const LogsModal = ({ data, versionsData }: LogsModalProps): ReactNode => {
                     <div className={classes.list}>
                       <div className={classes.option}>
                         <Typography variant="h6" color="text-secondary">
-                          {getStageNaming(targetStage).timeTitle}
+                          {getStageWording(targetStage).timeTitle}
                         </Typography>
                         <Typography variant="body2" color="text-primary">
                           {targetDataNormalized[targetStage]?.time || '-'}
@@ -197,7 +213,7 @@ const LogsModal = ({ data, versionsData }: LogsModalProps): ReactNode => {
                       </div>
                       <div className={classes.option}>
                         <Typography variant="h6" color="text-secondary">
-                          {getStageNaming(targetStage).memberTitle}
+                          {getStageWording(targetStage).memberTitle}
                         </Typography>
                         <Typography variant="body2" color="text-primary">
                           {targetDataNormalized[targetStage]?.member || '-'}
