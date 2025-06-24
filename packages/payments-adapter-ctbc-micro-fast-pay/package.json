@@ -1,0 +1,38 @@
+{
+  "name": "@rytass/payments-adapter-ctbc-micro-fast-pay",
+  "version": "0.0.1",
+  "description": "Rytass Payment Gateway",
+  "keywords": [
+    "rytass",
+    "payment"
+  ],
+  "author": "Chia Yu Pai <fantasyatelier@gmail.com>",
+  "homepage": "https://github.com/Rytass/Utils#readme",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/Rytass/Utils.git"
+  },
+  "scripts": {
+    "clean": "npm run build:clean",
+    "build:clean": "node ../../scripts/cleanBuild.js",
+    "build": "npm run build:clean && node ../../scripts/build.js"
+  },
+  "main": "./lib/index.cjs.js",
+  "bugs": {
+    "url": "https://github.com/Rytass/Utils/issues"
+  },
+  "dependencies": {
+    "@rytass/payments": "^0.1.4",
+    "axios": "^1.7.8",
+    "debug": "^4.3.7",
+    "lru-cache": "^11.0.2",
+    "luxon": "^3.5.0",
+    "ngrok": "^4.3.3"
+  },
+  "devDependencies": {
+    "@types/debug": "^4.1.12",
+    "@types/lru-cache": "^7.10.10",
+    "@types/luxon": "^3.4.2"
+  }
+}
