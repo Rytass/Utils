@@ -1,6 +1,6 @@
 {
   "name": "@rytass/payments-adapter-newebpay",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Rytass Payment Gateway Adapter NewebPay",
   "keywords": [
     "rytass",
@@ -24,7 +24,7 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/payments": "^0.1.4",
+    "@rytass/payments": "^0.1.5",
     "axios": "^1.7.8",
     "lru-cache": "^11.0.2",
     "luxon": "^3.5.0",

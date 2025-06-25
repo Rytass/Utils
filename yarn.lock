@@ -5687,7 +5687,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-adapter-amego@workspace:packages/invoice-adapter-amego"
   dependencies:
-    "@rytass/invoice": "npm:^0.3.3"
+    "@rytass/invoice": "npm:^0.3.4"
     "@types/luxon": "npm:^3.4.2"
     axios: "npm:^1.7.8"
     luxon: "npm:^3.5.0"
@@ -5699,7 +5699,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-adapter-bank-pro@workspace:packages/invoice-adapter-bank-pro"
   dependencies:
-    "@rytass/invoice": "npm:^0.3.3"
+    "@rytass/invoice": "npm:^0.3.4"
     "@types/luxon": "npm:^3.4.2"
     axios: "npm:^1.7.8"
     luxon: "npm:^3.5.0"
@@ -5711,7 +5711,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-adapter-ecpay@workspace:packages/invoice-adapter-ecpay"
   dependencies:
-    "@rytass/invoice": "npm:^0.3.3"
+    "@rytass/invoice": "npm:^0.3.4"
     "@types/validator": "npm:^13.12.2"
     axios: "npm:^1.7.8"
     luxon: "npm:^3.5.0"
@@ -5723,7 +5723,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-adapter-ezpay@workspace:packages/invoice-adapter-ezpay"
   dependencies:
-    "@rytass/invoice": "npm:^0.3.3"
+    "@rytass/invoice": "npm:^0.3.4"
     "@types/luxon": "npm:^3.4.2"
     axios: "npm:^1.7.8"
     form-data: "npm:^4.0.1"
@@ -5732,11 +5732,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rytass/invoice@npm:^0.3.3, @rytass/invoice@workspace:packages/invoice":
+"@rytass/invoice@npm:^0.3.4, @rytass/invoice@workspace:packages/invoice":
   version: 0.0.0-use.local
   resolution: "@rytass/invoice@workspace:packages/invoice"
   dependencies:
-    "@rytass/payments": "npm:^0.1.4"
+    "@rytass/payments": "npm:^0.1.5"
   languageName: unknown
   linkType: soft
 
@@ -5814,7 +5814,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/payments-adapter-ecpay@workspace:packages/payments-adapter-ecpay"
   dependencies:
-    "@rytass/payments": "npm:^0.1.4"
+    "@rytass/payments": "npm:^0.1.5"
     "@types/debug": "npm:^4.1.12"
     "@types/lru-cache": "npm:^7.10.10"
     "@types/luxon": "npm:^3.4.2"
@@ -5830,7 +5830,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/payments-adapter-happy-card@workspace:packages/payments-adapter-happy-card"
   dependencies:
-    "@rytass/payments": "npm:^0.1.4"
+    "@rytass/payments": "npm:^0.1.5"
     "@types/lodash": "npm:^4"
     "@types/luxon": "npm:^3.4.2"
     axios: "npm:^1.7.8"
@@ -5843,7 +5843,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/payments-adapter-hwanan@workspace:packages/payments-adapter-hwanan"
   dependencies:
-    "@rytass/payments": "npm:^0.1.4"
+    "@rytass/payments": "npm:^0.1.5"
     axios: "npm:^1.7.8"
     lru-cache: "npm:^11.0.2"
     ngrok: "npm:^4.3.3"
@@ -5854,7 +5854,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/payments-adapter-icash-pay@workspace:packages/payments-adapter-icash-pay"
   dependencies:
-    "@rytass/payments": "npm:^0.1.4"
+    "@rytass/payments": "npm:^0.1.5"
     "@types/debug": "npm:^4"
     "@types/luxon": "npm:^3.4.2"
     axios: "npm:^1.7.8"
@@ -5867,7 +5867,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/payments-adapter-newebpay@workspace:packages/payments-adapter-newebpay"
   dependencies:
-    "@rytass/payments": "npm:^0.1.4"
+    "@rytass/payments": "npm:^0.1.5"
     "@types/lru-cache": "npm:^7.10.10"
     axios: "npm:^1.7.8"
     lru-cache: "npm:^11.0.2"
@@ -5881,13 +5881,13 @@ __metadata:
   resolution: "@rytass/payments-nestjs-module@workspace:packages/payments-nestjs-module"
   dependencies:
     "@rytass/member-base-nestjs-module": "npm:^0.1.65"
-    "@rytass/payments": "npm:^0.1.4"
+    "@rytass/payments": "npm:^0.1.5"
   peerDependencies:
     "@nestjs/common": "*"
   languageName: unknown
   linkType: soft
 
-"@rytass/payments@npm:^0.1.4, @rytass/payments@workspace:packages/payments":
+"@rytass/payments@npm:^0.1.5, @rytass/payments@workspace:packages/payments":
   version: 0.0.0-use.local
   resolution: "@rytass/payments@workspace:packages/payments"
   languageName: unknown

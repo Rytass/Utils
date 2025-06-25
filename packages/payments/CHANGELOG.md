@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.5](https://github.com/Rytass/Utils/compare/@rytass/payments@0.1.4...@rytass/payments@0.1.5) (2025-06-25)
+
+### Features
+
+- **payments-nestjs-module:** initial package ([44fa096](https://github.com/Rytass/Utils/commit/44fa09616c6336d521f3752d27e47cff70b0fc89))
+
 ## [0.1.4](https://github.com/Rytass/Utils/compare/@rytass/payments@0.1.3...@rytass/payments@0.1.4) (2024-11-09)
 
 ### Features
