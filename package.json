@@ -9,14 +9,14 @@
   "scripts": {
     "clean": "nx run-many -t clean",
     "build:clean": "nx run-many -t build:clean",
-    "build": "nx run-many -t build",
+    "build": "nx run-many -t build --parallel=4",
     "lint:ts": "eslint . --ext .ts",
     "lint": "npm run lint:ts",
     "test:clean": "rm -rf ./coverage",
     "test:coverage": "jest --coverage -w 1",
     "test": "jest -w 1",
     "prepare": "husky install",
-    "release": "lerna version patch && nx run-many -t build && lerna publish from-package --contents lib",
+    "release": "lerna version patch && nx run-many -t build --parallel=8 && lerna publish from-package --contents lib",
     "docs": "docusaurus start docs",
     "docs:build": "docusaurus build docs"
   },
