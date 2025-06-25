@@ -1,0 +1,17 @@
+# Change Log
+
+All notable changes to this project will be documented in this file.
+See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
+
+## 0.1.8 (2025-06-25)
+
+### Features
+
+- **invoice-adapter-amego:** finish implementations ([8396770](https://github.com/Rytass/Utils/commit/83967709a30f6bcfaad5a03247549862c0d82f1f))
+- **invoice-adapter-amego:** fix pr review by codepilot ([c3233c1](https://github.com/Rytass/Utils/commit/c3233c138ab8f7be697f269fd5b183ad8f812f25))
+- **invoice-adapter-amego:** implementation of invalidAllowance ([8f34e00](https://github.com/Rytass/Utils/commit/8f34e004ef657a35f0e0702315c77a3d62fc3a95))
+- **invoice-adapter-amego:** refactor testing code to using mock data ([b6febfa](https://github.com/Rytass/Utils/commit/b6febfa60e0aa17cf008a5de2b55706d66bf63d2))
+- **invoice-adapter-amego:** update invoice package version ([4f86340](https://github.com/Rytass/Utils/commit/4f86340f19cb13b76a65353ecb63fb70958eaaab))
+- **invoice-adapter-amego:** use verifyVatNumber function to check vatNumber ([074fa47](https://github.com/Rytass/Utils/commit/074fa47af73a16cde6f205b23a3898e5acb16539))
+- **invoice:** implementation of invoice provider amego, isMobileBarcodeValid ([5509876](https://github.com/Rytass/Utils/commit/550987604eb3e477eba3ac74cb95b0b534b6321b))
+- **invoice:** implementation of invoice provider amego, issue, void ([3601090](https://github.com/Rytass/Utils/commit/3601090b1ed0fae170f3e8598e972619577c7819))
