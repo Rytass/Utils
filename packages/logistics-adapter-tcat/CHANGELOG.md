@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.2](https://github.com/Rytass/Utils/compare/@rytass/logistics-adapter-tcat@0.2.1...@rytass/logistics-adapter-tcat@0.2.2) (2025-06-25)
+
+### Features
+
+- **logistics-adapter-ctc:** finish trace logistics function ([2ea49bd](https://github.com/Rytass/Utils/commit/2ea49bd8fc3084d0520a6f68d92a400bef084723))
+
 ## [0.2.1](https://github.com/Rytass/Utils/compare/@rytass/logistics-adapter-tcat@0.2.0...@rytass/logistics-adapter-tcat@0.2.1) (2024-11-29)
 
 **Note:** Version bump only for package @rytass/logistics-adapter-tcat

@@ -5744,7 +5744,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/logistics-adapter-ctc@workspace:packages/logistics-adapter-ctc"
   dependencies:
-    "@rytass/logistics": "npm:^0.0.9"
+    "@rytass/logistics": "npm:^0.0.10"
     axios: "npm:^1.7.8"
     cheerio: "npm:^1.0.0"
   languageName: unknown
@@ -5754,13 +5754,13 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/logistics-adapter-tcat@workspace:packages/logistics-adapter-tcat"
   dependencies:
-    "@rytass/logistics": "npm:^0.0.9"
+    "@rytass/logistics": "npm:^0.0.10"
     axios: "npm:^1.7.8"
     cheerio: "npm:^1.0.0"
   languageName: unknown
   linkType: soft
 
-"@rytass/logistics@npm:^0.0.9, @rytass/logistics@workspace:packages/logistics":
+"@rytass/logistics@npm:^0.0.10, @rytass/logistics@workspace:packages/logistics":
   version: 0.0.0-use.local
   resolution: "@rytass/logistics@workspace:packages/logistics"
   languageName: unknown
