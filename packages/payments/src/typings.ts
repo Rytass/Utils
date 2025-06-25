@@ -125,8 +125,8 @@ type InputFromOrderCommitMessage<OCM extends OrderCommitMessage> =
   PrepareOrderInput;
 
 export interface PaymentGateway<
-  OCM extends OrderCommitMessage,
-  O extends Order<OCM>,
+  OCM extends OrderCommitMessage = OrderCommitMessage,
+  O extends Order<OCM> = Order<OCM>,
 > {
   emitter: EventEmitter;
 

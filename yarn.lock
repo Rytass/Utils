@@ -5876,6 +5876,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@rytass/payments-nestjs-module@workspace:packages/payments-nestjs-module":
+  version: 0.0.0-use.local
+  resolution: "@rytass/payments-nestjs-module@workspace:packages/payments-nestjs-module"
+  dependencies:
+    "@rytass/member-base-nestjs-module": "npm:^0.1.65"
+    "@rytass/payments": "npm:^0.1.4"
+  peerDependencies:
+    "@nestjs/common": "*"
+  languageName: unknown
+  linkType: soft
+
 "@rytass/payments@npm:^0.1.4, @rytass/payments@workspace:packages/payments":
   version: 0.0.0-use.local
   resolution: "@rytass/payments@workspace:packages/payments"

@@ -1,0 +1,33 @@
+{
+  "name": "@rytass/payments-nestjs-module",
+  "version": "0.0.1",
+  "description": "Rytass Payment Gateway NestJS Module Wrapper",
+  "keywords": [
+    "rytass",
+    "payment",
+    "nestjs"
+  ],
+  "author": "Chia Yu Pai <fantasyatelier@gmail.com>",
+  "homepage": "https://github.com/Rytass/Utils#readme",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/Rytass/Utils.git"
+  },
+  "scripts": {
+    "clean": "npm run build:clean",
+    "build:clean": "node ../../scripts/cleanBuild.js",
+    "build": "npm run build:clean && node ../../scripts/build.js"
+  },
+  "bugs": {
+    "url": "https://github.com/Rytass/Utils/issues"
+  },
+  "dependencies": {
+    "@rytass/member-base-nestjs-module": "^0.1.65",
+    "@rytass/payments": "^0.1.4"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "*"
+  },
+  "main": "lib/index.cjs.js"
+}

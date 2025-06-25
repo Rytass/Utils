@@ -15,6 +15,13 @@
       ],
       "@rytass/payments": ["payments/src"],
       "@rytass/payments-adapter-ecpay": ["payments-adapter-ecpay/src"],
+      "@rytass/payments-adapter-happy-card": [
+        "payments-adapter-happy-card/src"
+      ],
+      "@rytass/payments-adapter-hwanan": ["payments-adapter-hwanan/src"],
+      "@rytass/payments-adapter-icash-pay": ["payments-adapter-icash-pay/src"],
+      "@rytass/payments-adapter-newebpay": ["payments-adapter-newebpay/src"],
+      "@rytass/payments-nestjs-module": ["payments-nestjs-module/src"],
       "@rytass/sms": ["sms/src"],
       "@rytass/sms-adapter-every8d": ["sms-adapter-every8d/src"],
       "@rytass/secret": ["secret/src"],
@@ -38,7 +45,9 @@
       "@rytass/logistics-adapter-tcat": ["logistics-adapter-tcat/src"],
       "@rytass/member-base-nestjs-module": ["member-base-nestjs-module/src"],
       "@rytass/cms-base-nestjs-module": ["cms-base-nestjs-module/src"],
-      "@rytass/cms-base-nestjs-graphql-module": ["cms-base-nestjs-graphql-module/src"]
+      "@rytass/cms-base-nestjs-graphql-module": [
+        "cms-base-nestjs-graphql-module/src"
+      ]
     }
   },
   "references": [
