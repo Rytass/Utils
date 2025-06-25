@@ -5740,6 +5740,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@rytass/logistics-adapter-ctc@workspace:packages/logistics-adapter-ctc":
+  version: 0.0.0-use.local
+  resolution: "@rytass/logistics-adapter-ctc@workspace:packages/logistics-adapter-ctc"
+  dependencies:
+    "@rytass/logistics": "npm:^0.0.9"
+    axios: "npm:^1.7.8"
+    cheerio: "npm:^1.0.0"
+  languageName: unknown
+  linkType: soft
+
 "@rytass/logistics-adapter-tcat@workspace:packages/logistics-adapter-tcat":
   version: 0.0.0-use.local
   resolution: "@rytass/logistics-adapter-tcat@workspace:packages/logistics-adapter-tcat"
