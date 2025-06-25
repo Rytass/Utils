@@ -13,7 +13,6 @@ const {
   name: rootPackageName,
   dependencies,
   peerDependencies,
-  buildConfig = {},
 } = rootPackageJson;
 
 const externals = [
@@ -22,7 +21,7 @@ const externals = [
     ...peerDependencies,
   }),
   rootPackageName,
-]
+];
 
 const rootPackageDistPath = path.resolve(rootPackagePath, 'lib');
 const rootPath = path.resolve(rootPackagePath, '..', '..');
@@ -52,7 +51,9 @@ async function getPackagesInfos() {
         return acc;
       }
 
-      throw new Error(`Package name '${name}' should equal '${packageJson.name}'`);
+      throw new Error(
+        `Package name '${name}' should equal '${packageJson.name}'`,
+      );
     }
 
     const packageSymbol = dirs.join('/') || ROOT_SYMBOL;
@@ -67,14 +68,14 @@ async function getPackagesInfos() {
 }
 
 function isExternal(id) {
-  return externals.some(ext => id.startsWith(ext));
+  return externals.some((ext) => id.startsWith(ext));
 }
 
 async function rollupBuild({ output, ...options }) {
   const bundle = await rollup(options);
 
   if (Array.isArray(output)) {
-    await Promise.all(output.map(o => bundle.write(o)));
+    await Promise.all(output.map((o) => bundle.write(o)));
   } else {
     await bundle.write(output);
   }
@@ -92,7 +93,9 @@ async function build(packageSymbol, packageInfos) {
   if (!(isRoot && !fse.existsSync(indexPath))) {
     const tsconfig = path.resolve(packagePath, 'tsconfig.build.json');
 
-    execSync(`npx tsc --project ${tsconfig} --outDir ${packageDistPath} --emitDeclarationOnly`);
+    execSync(
+      `npx tsc --project ${tsconfig} --outDir ${packageDistPath} --emitDeclarationOnly`,
+    );
 
     await rollupBuild({
       input: indexPath,
@@ -118,6 +121,8 @@ async function build(packageSymbol, packageInfos) {
         postcss({
           modules: true,
           use: ['sass'],
+          extract: true,
+          minimize: true,
         }),
       ],
     });
@@ -127,25 +132,16 @@ async function build(packageSymbol, packageInfos) {
     packageJson.typings = './index.d.ts';
   }
 
-  if (packageJson?.buildConfig?.styles) {
-    Object
-      .entries(packageJson.buildConfig.styles)
-      .forEach(([from, to]) => {
-        const file = path.resolve(packageSrcPath, `${from}.scss`);
-
-        fse.copyFileSync(file, path.resolve(packageDistPath, `${to}.scss`));
-        execSync(`npx sass ${file} ${path.resolve(packageDistPath, `${to}.css --no-source-map --style=compressed`)}`);
-      });
-  }
-
   delete packageJson.scripts;
-  delete packageJson.buildConfig;
 
-  fse.writeFileSync(packageJsonDistPath, `${JSON.stringify(packageJson, undefined, 2)}\n`);
+  fse.writeFileSync(
+    packageJsonDistPath,
+    `${JSON.stringify(packageJson, undefined, 2)}\n`,
+  );
 
   fse.copySync(
     packageDistPath,
-    path.resolve(nodeModulesPath, ...packageJson.name.split('/'))
+    path.resolve(nodeModulesPath, ...packageJson.name.split('/')),
   );
 }
 
@@ -163,7 +159,9 @@ async function tryBuild(packagesInfos, packageSymbol, triggerSymbol) {
 
   await build(packageSymbol, packagesInfos[packageSymbol]);
 
-  triggers?.forEach(trigger => tryBuild(packagesInfos, trigger, packageSymbol));
+  triggers?.forEach((trigger) =>
+    tryBuild(packagesInfos, trigger, packageSymbol),
+  );
 }
 
 (async () => {
@@ -179,7 +177,7 @@ async function tryBuild(packagesInfos, packageSymbol, triggerSymbol) {
    */
   fse.copyFileSync(
     path.resolve(rootPath, 'LICENSE'),
-    path.resolve(rootPackageDistPath, 'LICENSE')
+    path.resolve(rootPackageDistPath, 'LICENSE'),
   );
 
   /**
@@ -187,33 +185,8 @@ async function tryBuild(packagesInfos, packageSymbol, triggerSymbol) {
    */
   fse.copyFileSync(
     path.resolve(rootPackagePath, 'README.md'),
-    path.resolve(rootPackageDistPath, 'README.md')
+    path.resolve(rootPackageDistPath, 'README.md'),
   );
-
-  /**
-   * copy files or directories by config
-   */
-  buildConfig.copy?.forEach((dir) => {
-    fse.copySync(
-      path.resolve(rootPackagePath, dir),
-      path.resolve(rootPackageDistPath, dir)
-    );
-  });
-
-  /**
-   * resolve dependencies inside root package
-   */
-  Object.entries(packagesInfos).forEach(([packageSymbol, { packageJson }]) => {
-    packageJson.buildConfig?.dependencies?.forEach((dep) => {
-      const depsSet = DEPS_SET_RECORD[packageSymbol] || new Set();
-      const triggersSet = TRIGGERS_SET_RECORD[dep] || new Set();
-
-      depsSet.add(dep);
-      DEPS_SET_RECORD[packageSymbol] = depsSet;
-      triggersSet.add(packageSymbol);
-      TRIGGERS_SET_RECORD[dep] = triggersSet;
-    });
-  });
 
   for (const packageSymbol in packagesInfos) {
     tryBuild(packagesInfos, packageSymbol);
