@@ -22,6 +22,12 @@ export class ArticleResolver {
     private readonly multiLanguage: boolean,
   ) {}
 
+  @ResolveField(() => String)
+  @IsPublic()
+  articleId(@Root() article: ArticleBaseDto): string {
+    return article.id.split(':')[0];
+  }
+
   @ResolveField(() => UserDto, { nullable: true })
   @IsPublic()
   releasedBy(@Root() article: ArticleBaseDto): Promise<UserDto | null> | null {

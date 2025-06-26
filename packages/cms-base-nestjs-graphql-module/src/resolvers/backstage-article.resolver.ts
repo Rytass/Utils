@@ -40,6 +40,12 @@ export class BackstageArticleResolver {
     return `${article.id}:${article.version}`;
   }
 
+  @ResolveField(() => String)
+  @IsPublic()
+  articleId(@Root() article: ArticleBaseDto): string {
+    return article.id;
+  }
+
   @ResolveField(() => UserDto, { nullable: true })
   @IsPublic()
   submittedBy(@Root() article: ArticleBaseDto): Promise<UserDto | null> | null {
