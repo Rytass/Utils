@@ -1,4 +1,5 @@
 import React, { ReactNode, useState, useMemo, useCallback } from 'react';
+import { isNumber } from 'lodash';
 import {
   ModalHeader,
   ModalBody as MznModalBody,
@@ -129,7 +130,7 @@ const LogsModal = ({
   );
 
   const targetData = useMemo(
-    () => (versionMode ? versionsData?.[versionMode] : data),
+    () => (isNumber(versionMode) ? versionsData?.[versionMode] : data),
     [data, versionMode, versionsData],
   );
 
@@ -141,9 +142,8 @@ const LogsModal = ({
   return (
     <>
       <ModalHeader showSeverityIcon={false}>版本資訊</ModalHeader>
-
       <MznModalBody className={classes.modalBody}>
-        {versionMode && (
+        {isNumber(versionMode) && (
           <Typography variant="h6" color="text-primary">
             {`Ver. ${versionMode}`}
           </Typography>
@@ -184,8 +184,10 @@ const LogsModal = ({
                       <Typography variant="h5" color="text-primary">
                         {getStageWording(targetStage).stageName}
                       </Typography>
-                      {!versionMode &&
-                        !!targetDataNormalized[targetStage]?.version && (
+                      {!isNumber(versionMode) &&
+                        isNumber(
+                          targetDataNormalized[targetStage]?.version,
+                        ) && (
                           <Button
                             type="button"
                             variant="text"
@@ -193,8 +195,7 @@ const LogsModal = ({
                             size="small"
                             onClick={() => {
                               setVersionMode(
-                                targetDataNormalized[targetStage]?.version ||
-                                  null,
+                                targetDataNormalized[targetStage]?.version!,
                               );
                             }}
                           >
@@ -248,7 +249,7 @@ const LogsModal = ({
           variant: 'outlined',
           danger: false,
           style: {
-            display: versionMode ? 'flex' : 'none',
+            display: isNumber(versionMode) ? 'flex' : 'none',
           },
         }}
         confirmButtonProps={{
