@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.92](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.91...@rytass/cms-base-nestjs-module@0.1.92) (2025-06-26)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** update rejectVersion method to check article stage before rejection ([516f4a2](https://github.com/Rytass/Utils/commit/516f4a27cd9c7e73f28eaeab66d9f4468f40a903))
+
+### Features
+
+- **cms-base-nestjs-graphql-module:** add putBack method to revert article submission to draft state ([7eb5b2d](https://github.com/Rytass/Utils/commit/7eb5b2daefd2868ed541920f88a244f87ecb5d65))
+
 ## [0.1.91](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.90...@rytass/cms-base-nestjs-module@0.1.91) (2025-06-23)
 
 ### Features

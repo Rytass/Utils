@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.21](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.20...@rytass/cms-base-nestjs-graphql-module@0.0.21) (2025-06-26)
+
+### Bug Fixes
+
+- **cms-base-nestjs-graphql-module:** improve serialize method in QuadratsContentScalar to handle string values correctly ([d6f2e30](https://github.com/Rytass/Utils/commit/d6f2e30c52d052e1d4b944d67902f63d4e1bf2d4))
+- **cms-base-nestjs-graphql-module:** remove unnecessary console log in createArticle method ([53a04c2](https://github.com/Rytass/Utils/commit/53a04c26468b593ea706b6e35320da02a6c0aed5))
+- **cms-base-nestjs-graphql-module:** simplify rejectArticle method by removing version parameter ([9702179](https://github.com/Rytass/Utils/commit/9702179565f45d13b600aca81c19478275c46d36))
+
+### Features
+
+- **cms-base-nestjs-graphql-module:** add articleId field to ArticleResolver and BackstageArticleResolver ([a320973](https://github.com/Rytass/Utils/commit/a3209734592952472fa2b05ed0f98cbf5836c8e9))
+- **cms-base-nestjs-graphql-module:** add deleteArticleVersion mutation and update version handling in approve, reject, and release mutations ([7aa031a](https://github.com/Rytass/Utils/commit/7aa031a88fe71417afbcf828b5cb13e34c0c5861))
+- **cms-base-nestjs-graphql-module:** refactor article creation and update logic to use resolveCreateArticleArgs method for better multi-language support ([6db339d](https://github.com/Rytass/Utils/commit/6db339d68104be04e5d4c4280204329166f1dc19))
+- **cms-base-nestjs-graphql-module:** update submitArticle and add putBackArticle methods for improved article management ([b68418e](https://github.com/Rytass/Utils/commit/b68418ec689593268c4076d4bd42a6b3ab0227e4))
+
 ## [0.0.20](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.19...@rytass/cms-base-nestjs-graphql-module@0.0.20) (2025-06-23)
 
 ### Features
