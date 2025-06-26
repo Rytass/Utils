@@ -112,9 +112,9 @@ const payment = new CTBCPayment({
 
 ### 注意事項
 
-- `txnKey` 必須妥善保管，建議使用 dotenv 或 secrets manager 儲存。
+- `txnKey` 必須妥善保管，建議使用 secrets manager 儲存。
 
-- 綁卡請求送出後，會暫存在記憶體，可依需求改為外部儲存。
+- 綁卡請求送出後，會暫存在記憶體。
 
 ---
 
@@ -125,10 +125,9 @@ const payment = new CTBCPayment({
   1. 十六進位解碼 → base64 解碼 → JSON.parse
   2. 解開 `TXN` 並驗證 MAC → 拿到原始欄位物件
 - ⚠️ **錯誤排查方式**：
-  - `StatusCode !== '00'` 表示失敗，常見如：
-    - `E9998`: 資料格式錯誤
-    - `MAC_FAIL`: 回傳資料遭竄改
-  - 詳細代碼請參見《CTBC-MicroFastPay.pdf》第 8 章錯誤代碼一覽表
+  - `StatusCode !== '00'` 表示請款失敗，常見如：
+    - `E9998`: 未定義錯誤類型（CTBC 回傳 `ERROR_UNDEFINED`）
+  - `MAC_FAIL`： 回傳資料經本地 MAC 驗證不符（非 CTBC StatusCode）
 
 ---
 
@@ -137,6 +136,6 @@ const payment = new CTBCPayment({
 | 錯誤代碼 | 說明               |
 |----------|------------------|
 | I0000    | 交易成功          |
-| E9998    | 格式錯誤          |
+| E0029    | 卡號格式錯誤      |
+| E9998    | 未定義錯誤類型     |
 | MAC_FAIL | 回傳驗證失敗      |
-| 10100112 | 卡片已綁定        |
