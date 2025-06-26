@@ -144,20 +144,8 @@ export class ArticleMutations {
     @Args('id', { type: () => ID }) id: string,
     @Args('reason', { type: () => String, nullable: true })
     reason?: string | null,
-    @Args('version', { type: () => Int, nullable: true })
-    version?: number | null,
   ): Promise<BackstageArticleDto> {
-    const article = await this.articleService.findById(id);
-
-    return this.articleService.rejectVersion(
-      {
-        id,
-        version: version ?? article.version,
-      },
-      {
-        reason,
-      },
-    );
+    return this.articleService.rejectVersion({ id }, { reason });
   }
 
   @Mutation(() => BackstageArticleDto)
