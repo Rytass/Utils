@@ -92,7 +92,12 @@ export class ArticleDataLoader {
               return ArticleStage.VERIFIED;
             }
 
-            if (version.submittedAt) {
+            if (
+              version.submittedAt &&
+              !version.signatures.some(
+                (sig) => sig.result === ArticleSignatureResult.REJECTED,
+              )
+            ) {
               return ArticleStage.REVIEWING;
             }
 
