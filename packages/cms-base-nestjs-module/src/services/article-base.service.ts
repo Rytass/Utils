@@ -1096,6 +1096,78 @@ export class ArticleBaseService<
     });
   }
 
+  async putBack<
+    A extends ArticleEntity = ArticleEntity,
+    AV extends ArticleVersionEntity = ArticleVersionEntity,
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(
+    id: string,
+    options?: { version?: number; userId?: string },
+  ): Promise<ArticleBaseDto<A, AV, AVC>> {
+    if (!this.signatureService.signatureEnabled) {
+      throw new Error('Signature mode is disabled.');
+    }
+
+    const article = await this.findById<A, AV, AVC>(id, {
+      version: options?.version ?? undefined,
+    });
+
+    if (!article.submittedAt) {
+      throw new BadRequestException(
+        `Article ${id} is not submitted yet [${article.version}].`,
+      );
+    }
+
+    const draftArticle = await this.findById<A, AV, AVC>(id, {
+      stage: ArticleStage.DRAFT,
+    }).catch((ex) => null);
+
+    if (draftArticle) {
+      const errorMessage = `Article ${id} is already in draft [${draftArticle.version}].`;
+
+      this.logger.debug(errorMessage);
+      throw new BadRequestException(errorMessage);
+    }
+
+    const runner = this.dataSource.createQueryRunner();
+
+    await runner.connect();
+    await runner.startTransaction();
+
+    try {
+      await runner.manager.update(
+        this.baseArticleVersionRepo.target,
+        {
+          articleId: id,
+          version: article.version,
+        },
+        {
+          submittedAt: null,
+          submittedBy: null,
+        },
+      );
+
+      await runner.commitTransaction();
+    } catch (ex) {
+      await runner.rollbackTransaction();
+
+      throw ex;
+    } finally {
+      await runner.release();
+    }
+
+    article.submittedAt = null;
+
+    this.articleDataLoader.stageCache.set(
+      `${article.id}:${article.version}`,
+      Promise.resolve(ArticleStage.DRAFT),
+    );
+
+    return this.findById<A, AV, AVC>(article.id, {
+      version: article.version,
+    });
+  }
+
   private getPlacedArticleStage({
     submitted,
     releasedAt,
