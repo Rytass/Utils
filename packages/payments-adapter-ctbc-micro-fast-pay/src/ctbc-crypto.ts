@@ -15,18 +15,21 @@ export function buildReqjsonpwd(
   gateway: { merchantId: string; txnKey: string }
 ): string;
 
+// eslint-disable-next-line no-redeclare
 export function buildReqjsonpwd(
   serviceName: string,
   payload: CTBCOrderCommitPayload & CTBCTxnPayload,
   gateway: { merchantId: string; txnKey: string }
 ): string;
 
+// eslint-disable-next-line no-redeclare
 export function buildReqjsonpwd(
   serviceName: string,
   payload: CTBCTxnPayload,
   gateway: { merchantId: string; txnKey: string }
 ): string;
 
+// eslint-disable-next-line no-redeclare
 export function buildReqjsonpwd(
   serviceName: string,
   payload: CTBCTxnPayload,
