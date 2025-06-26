@@ -19,6 +19,7 @@ export function parseRspjsonpwd<T = Record<string, string>>(hex: string, txnKey:
   const obj = Object.fromEntries(
     decrypted.split('&').map(kv => {
       const [k, v] = kv.split('=');
+
       return [k, v];
     })
   );

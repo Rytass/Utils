@@ -111,6 +111,7 @@ export class CTBCOrder {
 
     if (!response.ok) {
       const message = `HTTP Error ${response.status}`;
+
       this.markFailed(`${response.status}`, message);
       this._gateway.emitter.emit(PaymentEvents.ORDER_FAILED, this);
 
