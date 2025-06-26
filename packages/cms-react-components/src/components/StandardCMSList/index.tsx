@@ -1,4 +1,5 @@
 import React, { ReactElement, useState, useCallback } from 'react';
+import { cx } from '@mezzanine-ui/react';
 import { StandardCMSTabs } from '../StandardCMSTabs';
 import { StandardCMSTable } from '../StandardCMSTable';
 import { StandardCMSTableProps } from '../StandardCMSTable/typings';
@@ -13,12 +14,15 @@ export interface StandardCMSListProps<T extends TableDataSourceWithID>
   tabsNaming?: {
     [key in ArticleStage]?: string;
   };
+  tableClassName?: string;
 }
 
 const StandardCMSList = <T extends TableDataSourceWithID>({
   defaultStage = ArticleStage.DRAFT,
   onTabChange,
   tabsNaming,
+  className,
+  tableClassName,
   ...tableProps
 }: StandardCMSListProps<T>): ReactElement => {
   const [activeTabId, setActiveTabId] = useState<ArticleStage>(defaultStage);
@@ -32,13 +36,17 @@ const StandardCMSList = <T extends TableDataSourceWithID>({
   );
 
   return (
-    <div className={classes.root}>
+    <div className={cx(classes.root, className)}>
       <StandardCMSTabs
         activeStage={activeTabId}
         onChange={onChange}
         tabsNaming={tabsNaming}
       />
-      <StandardCMSTable {...tableProps} currentStage={activeTabId} />
+      <StandardCMSTable
+        {...tableProps}
+        className={tableClassName}
+        currentStage={activeTabId}
+      />
     </div>
   );
 };

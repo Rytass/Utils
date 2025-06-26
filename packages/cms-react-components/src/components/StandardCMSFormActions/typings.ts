@@ -3,20 +3,20 @@ import { FieldValues, UseFormReturn } from 'react-hook-form';
 import { ArticleStage, ArticlesPermissions } from '../../typings';
 
 export interface StandardCMSFormActionsEventsProps<T extends FieldValues> {
-  onLeave?: (source: T) => Promise<void>;
-  onGoToEdit?: (source: T) => Promise<void>;
-  onCreateToDraft?: (source: T) => Promise<void>;
-  onCreateAndRelease?: (source: T, releasedAt: string) => Promise<void>;
-  onCreateAndApprove?: (source: T) => Promise<void>;
-  onCreateAndSubmit?: (source: T) => Promise<void>;
-  onUpdateToDraft?: (source: T) => Promise<void>;
-  onUpdateAndRelease?: (source: T, releasedAt: string) => Promise<void>;
-  onUpdateAndApprove?: (source: T) => Promise<void>;
-  onUpdateAndSubmit?: (source: T) => Promise<void>;
-  onRelease?: (source: T, releasedAt: string) => Promise<void>;
-  onApprove?: (source: T) => Promise<void>;
-  onReject?: (source: T, reason: string) => Promise<void>;
-  onSubmit?: (source: T) => Promise<void>;
+  onLeave?: (values: T) => Promise<void>;
+  onGoToEdit?: (values: T) => Promise<void>;
+  onCreateToDraft?: (values: T) => Promise<void>;
+  onCreateAndRelease?: (values: T, releasedAt: string) => Promise<void>;
+  onCreateAndApprove?: (values: T) => Promise<void>;
+  onCreateAndSubmit?: (values: T) => Promise<void>;
+  onUpdateToDraft?: (values: T) => Promise<void>;
+  onUpdateAndRelease?: (values: T, releasedAt: string) => Promise<void>;
+  onUpdateAndApprove?: (values: T) => Promise<void>;
+  onUpdateAndSubmit?: (values: T) => Promise<void>;
+  onRelease?: (values: T, releasedAt: string) => Promise<void>;
+  onApprove?: (values: T) => Promise<void>;
+  onReject?: (values: T, reason: string) => Promise<void>;
+  onSubmit?: (values: T) => Promise<void>;
 }
 
 export interface StandardCMSFormActionsProps<T extends FieldValues> {
