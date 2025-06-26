@@ -1026,15 +1026,13 @@ export class ArticleBaseService<
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
   >(
     id: string,
-    options?: { version?: number; userId?: string },
+    options?: { userId?: string },
   ): Promise<ArticleBaseDto<A, AV, AVC>> {
     if (!this.signatureService.signatureEnabled) {
       throw new Error('Signature mode is disabled.');
     }
 
-    const article = await this.findById<A, AV, AVC>(id, {
-      version: options?.version ?? undefined,
-    });
+    const article = await this.findById<A, AV, AVC>(id);
 
     if (article.submittedAt) {
       throw new BadRequestException(
@@ -1100,22 +1098,9 @@ export class ArticleBaseService<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
-  >(
-    id: string,
-    options?: { version?: number; userId?: string },
-  ): Promise<ArticleBaseDto<A, AV, AVC>> {
+  >(id: string): Promise<ArticleBaseDto<A, AV, AVC>> {
     if (!this.signatureService.signatureEnabled) {
       throw new Error('Signature mode is disabled.');
-    }
-
-    const article = await this.findById<A, AV, AVC>(id, {
-      version: options?.version ?? undefined,
-    });
-
-    if (!article.submittedAt) {
-      throw new BadRequestException(
-        `Article ${id} is not submitted yet [${article.version}].`,
-      );
     }
 
     const draftArticle = await this.findById<A, AV, AVC>(id, {
@@ -1127,6 +1112,14 @@ export class ArticleBaseService<
 
       this.logger.debug(errorMessage);
       throw new BadRequestException(errorMessage);
+    }
+
+    const article = await this.findById<A, AV, AVC>(id);
+
+    if (!article.submittedAt) {
+      throw new BadRequestException(
+        `Article ${id} is not submitted yet [${article.version}].`,
+      );
     }
 
     const runner = this.dataSource.createQueryRunner();

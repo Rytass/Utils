@@ -108,11 +108,8 @@ export class ArticleMutations {
   async submitArticle(
     @MemberId() memberId: string,
     @Args('id', { type: () => ID }) id: string,
-    @Args('version', { type: () => Int, nullable: true })
-    version?: number | null,
   ): Promise<BackstageArticleDto> {
     return this.articleService.submit(id, {
-      version: version ?? undefined,
       userId: memberId,
     });
   }
@@ -122,13 +119,8 @@ export class ArticleMutations {
   async putBackArticle(
     @MemberId() memberId: string,
     @Args('id', { type: () => ID }) id: string,
-    @Args('version', { type: () => Int, nullable: true })
-    version?: number | null,
   ): Promise<BackstageArticleDto> {
-    return this.articleService.putBack(id, {
-      version: version ?? undefined,
-      userId: memberId,
-    });
+    return this.articleService.putBack(id);
   }
 
   @Mutation(() => BackstageArticleDto)
