@@ -62,8 +62,6 @@ export class ArticleMutations {
     @MemberId() memberId: string,
     @Args() args: CreateArticleArgs,
   ): Promise<BackstageArticleDto> {
-    console.log(this.resolveCreateArticleArgs(args));
-
     return this.articleService.create({
       ...this.resolveCreateArticleArgs(args),
       userId: memberId,
