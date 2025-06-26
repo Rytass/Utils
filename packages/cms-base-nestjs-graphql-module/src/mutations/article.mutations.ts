@@ -108,9 +108,27 @@ export class ArticleMutations {
   async submitArticle(
     @MemberId() memberId: string,
     @Args('id', { type: () => ID }) id: string,
-    @Args('version', { type: () => Int }) version: number,
+    @Args('version', { type: () => Int, nullable: true })
+    version?: number | null,
   ): Promise<BackstageArticleDto> {
-    return this.articleService.submit(id, { version, userId: memberId });
+    return this.articleService.submit(id, {
+      version: version ?? undefined,
+      userId: memberId,
+    });
+  }
+
+  @Mutation(() => BackstageArticleDto)
+  @IsPublic()
+  async putBackArticle(
+    @MemberId() memberId: string,
+    @Args('id', { type: () => ID }) id: string,
+    @Args('version', { type: () => Int, nullable: true })
+    version?: number | null,
+  ): Promise<BackstageArticleDto> {
+    return this.articleService.putBack(id, {
+      version: version ?? undefined,
+      userId: memberId,
+    });
   }
 
   @Mutation(() => BackstageArticleDto)
