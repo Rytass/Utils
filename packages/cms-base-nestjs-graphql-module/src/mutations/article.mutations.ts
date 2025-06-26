@@ -1,16 +1,61 @@
 import {
   ArticleBaseService,
   DEFAULT_LANGUAGE,
+  MULTIPLE_LANGUAGE_MODE,
 } from '@rytass/cms-base-nestjs-module';
 import { Args, ID, Int, Mutation, Resolver } from '@nestjs/graphql';
 import { BackstageArticleDto } from '../dto/backstage-article.dto';
 import { CreateArticleArgs } from '../dto/create-article.args';
 import { IsPublic, MemberId } from '@rytass/member-base-nestjs-module';
 import { UpdateArticleArgs } from '../dto/update-article.args';
+import { Inject } from '@nestjs/common';
+import { QuadratsElement } from '@quadrats/core';
 
 @Resolver()
 export class ArticleMutations {
-  constructor(private readonly articleService: ArticleBaseService) {}
+  constructor(
+    @Inject(MULTIPLE_LANGUAGE_MODE)
+    private readonly multiLanguage: boolean,
+    private readonly articleService: ArticleBaseService,
+  ) {}
+
+  private resolveCreateArticleArgs(args: CreateArticleArgs) {
+    const basePayload = {
+      categoryIds: args.categoryIds,
+      tags: args.tags,
+      submitted: args.submitted ?? undefined,
+      signatureLevel: args.signatureLevel ?? null,
+      releasedAt: args.releasedAt ?? null,
+    };
+
+    if (!this.multiLanguage) {
+      const [content] = args.multiLanguageContents;
+
+      return {
+        ...basePayload,
+        title: content.title,
+        content: content.content as unknown as QuadratsElement[],
+        description: content.description ?? undefined,
+      };
+    }
+
+    const multiLanguageContents = args.multiLanguageContents.reduce(
+      (vars, content) => ({
+        ...vars,
+        [content.language ?? DEFAULT_LANGUAGE]: {
+          title: content.title,
+          description: content.description,
+          content: content.content,
+        },
+      }),
+      {},
+    );
+
+    return {
+      ...basePayload,
+      multiLanguageContents,
+    };
+  }
 
   @Mutation(() => BackstageArticleDto)
   @IsPublic()
@@ -18,24 +63,11 @@ export class ArticleMutations {
     @MemberId() memberId: string,
     @Args() args: CreateArticleArgs,
   ): Promise<BackstageArticleDto> {
+    console.log(this.resolveCreateArticleArgs(args));
+
     return this.articleService.create({
-      categoryIds: args.categoryIds,
-      tags: args.tags,
-      multiLanguageContents: args.multiLanguageContents.reduce(
-        (vars, content) => ({
-          ...vars,
-          [content.language ?? DEFAULT_LANGUAGE]: {
-            title: content.title,
-            description: content.description,
-            content: content.content,
-          },
-        }),
-        {},
-      ),
+      ...this.resolveCreateArticleArgs(args),
       userId: memberId,
-      submitted: args.submitted ?? undefined,
-      signatureLevel: args.signatureLevel ?? null,
-      releasedAt: args.releasedAt ?? null,
     });
   }
 
@@ -46,23 +78,8 @@ export class ArticleMutations {
     @Args() args: UpdateArticleArgs,
   ): Promise<BackstageArticleDto> {
     return this.articleService.addVersion(args.id, {
-      categoryIds: args.categoryIds,
-      tags: args.tags,
-      multiLanguageContents: args.multiLanguageContents.reduce(
-        (vars, content) => ({
-          ...vars,
-          [content.language ?? DEFAULT_LANGUAGE]: {
-            title: content.title,
-            description: content.description,
-            content: content.content,
-          },
-        }),
-        {},
-      ),
+      ...this.resolveCreateArticleArgs(args),
       userId: memberId,
-      submitted: args.submitted ?? undefined,
-      signatureLevel: args.signatureLevel ?? null,
-      releasedAt: args.releasedAt ?? null,
     });
   }
 
