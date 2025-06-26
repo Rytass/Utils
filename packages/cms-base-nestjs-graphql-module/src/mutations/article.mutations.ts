@@ -9,7 +9,6 @@ import { CreateArticleArgs } from '../dto/create-article.args';
 import { IsPublic, MemberId } from '@rytass/member-base-nestjs-module';
 import { UpdateArticleArgs } from '../dto/update-article.args';
 import { Inject } from '@nestjs/common';
-import { QuadratsElement } from '@quadrats/core';
 
 @Resolver()
 export class ArticleMutations {
@@ -34,7 +33,7 @@ export class ArticleMutations {
       return {
         ...basePayload,
         title: content.title,
-        content: content.content as unknown as QuadratsElement[],
+        content: content.content,
         description: content.description ?? undefined,
       };
     }
