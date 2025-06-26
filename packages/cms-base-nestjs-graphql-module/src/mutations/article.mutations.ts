@@ -76,6 +76,17 @@ export class ArticleMutations {
     return true;
   }
 
+  @Mutation(() => Boolean)
+  @IsPublic()
+  async deleteArticleVersion(
+    @Args('id', { type: () => ID }) id: string,
+    @Args('version', { type: () => Int }) version: number,
+  ): Promise<boolean> {
+    await this.articleService.deleteVersion(id, version);
+
+    return true;
+  }
+
   @Mutation(() => BackstageArticleDto)
   @IsPublic()
   async submitArticle(
@@ -90,10 +101,15 @@ export class ArticleMutations {
   @IsPublic()
   async approveArticle(
     @Args('id', { type: () => ID }) id: string,
+    @Args('version', { type: () => Int, nullable: true })
+    version?: number | null,
   ): Promise<BackstageArticleDto> {
     const article = await this.articleService.findById(id);
 
-    return this.articleService.approveVersion(article);
+    return this.articleService.approveVersion({
+      id,
+      version: version ?? article.version,
+    });
   }
 
   @Mutation(() => BackstageArticleDto)
@@ -102,12 +118,20 @@ export class ArticleMutations {
     @Args('id', { type: () => ID }) id: string,
     @Args('reason', { type: () => String, nullable: true })
     reason?: string | null,
+    @Args('version', { type: () => Int, nullable: true })
+    version?: number | null,
   ): Promise<BackstageArticleDto> {
     const article = await this.articleService.findById(id);
 
-    return this.articleService.rejectVersion(article, {
-      reason,
-    });
+    return this.articleService.rejectVersion(
+      {
+        id,
+        version: version ?? article.version,
+      },
+      {
+        reason,
+      },
+    );
   }
 
   @Mutation(() => BackstageArticleDto)
@@ -116,10 +140,13 @@ export class ArticleMutations {
     @MemberId() userId: string,
     @Args('id', { type: () => ID }) id: string,
     @Args('releasedAt', { type: () => Date }) releasedAt: Date,
+    @Args('version', { type: () => Int, nullable: true })
+    version?: number | null,
   ): Promise<BackstageArticleDto> {
     return this.articleService.release(id, {
       releasedAt,
       userId,
+      version: version ?? undefined,
     });
   }
 
