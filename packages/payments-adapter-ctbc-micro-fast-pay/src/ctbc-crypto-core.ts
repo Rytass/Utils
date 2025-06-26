@@ -1,6 +1,17 @@
 import crypto from 'node:crypto';
 
-const IV = Buffer.alloc(8, 0); // 8 bytes for DES
+// Default IV fixed for CTBC compatibility (not secret)
+let IV: Buffer = Buffer.alloc(8, 0);
+
+/**
+ * Override default IV used for 3DES encryption.
+ * Default IV is 8 zero-bytes as required by CTBC API.
+ * Useful for testing or other bank integrations.
+ */
+export function setIV(iv: Buffer): void {
+  if (iv.length !== 8) throw new Error('IV must be 8 bytes');
+  IV = iv;
+}
 
 const xorBuffers = (buf1: Buffer, buf2: Buffer): Buffer => {
   const len = Math.min(buf1.length, buf2.length);
