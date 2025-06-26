@@ -1639,23 +1639,35 @@ export class ArticleBaseService<
       await runner.release();
     }
   }
-  rejectVersion<
+  async rejectVersion<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
   >(
     articleVersion: {
       id: string;
-      version: number;
     },
     signatureInfo?: SignatureInfoDto<SignatureLevelEntity> & {
       reason?: string | null;
       runner?: QueryRunner;
     },
   ): Promise<ArticleBaseDto<A, AV, AVC>> {
+    const reviewingArticle = await this.findById<A, AV, AVC>(
+      articleVersion.id,
+      {
+        stage: ArticleStage.REVIEWING,
+      },
+    );
+
+    if (!reviewingArticle) {
+      throw new BadRequestException(
+        `Article ${articleVersion.id} is not in reviewing stage.`,
+      );
+    }
+
     return this.signature<A, AV, AVC>(
       ArticleSignatureResult.REJECTED,
-      articleVersion,
+      reviewingArticle,
       signatureInfo,
     );
   }
