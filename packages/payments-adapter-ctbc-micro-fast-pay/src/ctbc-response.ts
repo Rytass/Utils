@@ -2,62 +2,42 @@ import { decrypt3DES, getDivKey, getMAC } from './ctbc-crypto-core';
 import { Buffer } from 'node:buffer';
 import { CTBCRawResponse } from './typings';
 
-export function parseRspjsonpwd(
-  hex: string,
-  txnKey: string
-): Record<string, string> {
+export function toStringRecord<T>(input: T): Record<string, string> {
+  return input as unknown as Record<string, string>;
+}
+
+export function parseRspjsonpwd<T = Record<string, string>>(hex: string, txnKey: string): T {
   const base64 = Buffer.from(hex, 'hex').toString('utf8');
   const json = Buffer.from(base64, 'base64').toString('utf8');
 
-  let parsed: CTBCRawResponse;
-
-  try {
-    parsed = JSON.parse(json);
-  } catch (err) {
-    throw new Error('Invalid rspjsonpwd: JSON parse failed');
-  }
-
-  const encTxn = parsed.Response?.Data?.TXN;
-
-  if (!encTxn) {
-    throw new Error('Missing TXN in rspjsonpwd');
-  }
+  const response: CTBCRawResponse = JSON.parse(json);
+  const { MAC, TXN } = response.Response.Data;
 
   const divKey = getDivKey(txnKey);
-  const decrypted = decrypt3DES(Buffer.from(encTxn, 'hex'), divKey);
+  const decrypted = decrypt3DES(Buffer.from(TXN, 'hex'), divKey);
 
-  const kv = decrypted.split('&').filter(Boolean);
-  const result: Record<string, string> = {};
+  const obj = Object.fromEntries(
+    decrypted.split('&').map(kv => {
+      const [k, v] = kv.split('=');
+      return [k, v];
+    })
+  );
 
-  for (const pair of kv) {
-    const [k, v] = pair.split('=');
-
-    if (k) result[k] = v ?? '';
-  }
-
-  return result;
+  return obj as T;
 }
 
-export function validateRspjsonpwdMAC(
-  rspjsonpwd: string,
+export function validateRspjsonpwdMAC<T extends Record<string, string>>(
+  payload: T,
   txnKey: string
 ): boolean {
-  try {
-    const base64 = Buffer.from(rspjsonpwd, 'hex').toString('utf8');
-    const json = Buffer.from(base64, 'base64').toString('utf8');
-    const parsed: CTBCRawResponse = JSON.parse(json);
+  const sorted = Object.entries(payload)
+    .filter(([_, v]) => v !== undefined)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${k}=${v}`)
+    .join('&');
 
-    const mac = parsed.Response?.Data?.MAC;
-    const encTxn = parsed.Response?.Data?.TXN;
+  const expected = getMAC(sorted, txnKey);
 
-    if (!mac || !encTxn) return false;
-
-    const divKey = getDivKey(txnKey);
-    const decrypted = decrypt3DES(Buffer.from(encTxn, 'hex'), divKey);
-    const recomputed = getMAC(decrypted, txnKey);
-
-    return mac.toUpperCase() === recomputed;
-  } catch {
-    return false;
-  }
+  return expected === payload.MAC;
 }
+

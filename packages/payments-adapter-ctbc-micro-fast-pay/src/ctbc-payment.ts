@@ -1,24 +1,14 @@
-import { EventEmitter } from 'node:events';
 import { CTBCBindCardRequest } from './ctbc-bind-card-request';
 import {
+  BindCardGatewayLike,
   CTBCBindCardCallbackPayload,
   CTBCBindCardRequestPayload,
+  CTBCMicroFastPayOptions,
 } from './typings';
-import { parseRspjsonpwd, validateRspjsonpwdMAC } from './ctbc-response';
-
-export interface BindCardGatewayLike {
-  baseUrl: string;
-  emitter: EventEmitter;
-  getBindingURL(request: any): string;
-  queryBoundCard(memberId: string): Promise<{ expireDate: Date }>;
-}
-
-export interface CTBCMicroFastPayOptions {
-  merchantId: string;
-  txnKey: string;
-  baseUrl?: string;
-  withServer?: boolean;
-}
+import { parseRspjsonpwd, toStringRecord, validateRspjsonpwdMAC } from './ctbc-response';
+import { CTBCOrder } from './ctbc-order';
+import { PaymentEvents } from '@rytass/payments';
+import EventEmitter from 'node:events';
 
 export class CTBCPayment implements BindCardGatewayLike {
   readonly merchantId: string;
@@ -54,18 +44,20 @@ export class CTBCPayment implements BindCardGatewayLike {
   }
 
   handleBindCardCallback(rspjsonpwd: string): void {
-    if (!validateRspjsonpwdMAC(rspjsonpwd, this.txnKey)) {
+    const payload = parseRspjsonpwd<CTBCBindCardCallbackPayload>(
+      rspjsonpwd,
+      this.txnKey,
+    );
+
+    if (
+      !validateRspjsonpwdMAC(toStringRecord(payload), this.txnKey)
+    ) {
       throw new Error('MAC validation failed');
     }
 
-    const payload = parseRspjsonpwd(
-      rspjsonpwd,
-      this.txnKey,
-    ) as unknown as CTBCBindCardCallbackPayload;
-
     const requestNo = payload.RequestNo;
 
-    if (!requestNo || !this.bindCardRequestsCache.has(requestNo)) {
+    if (!this.bindCardRequestsCache.has(requestNo)) {
       throw new Error(`Unknown bind card request: ${requestNo}`);
     }
 
@@ -77,7 +69,17 @@ export class CTBCPayment implements BindCardGatewayLike {
       request.fail(payload.StatusCode, payload.StatusDesc, payload);
     }
 
-    // Optionally: clear cache
     this.bindCardRequestsCache.delete(requestNo);
+
+    this.emitter.emit(PaymentEvents.CARD_BOUND, request);
+  }
+
+  createOrder(
+    id: string,
+    amount: number,
+    memberId: string,
+    cardToken: string,
+  ): CTBCOrder {
+    return new CTBCOrder(id, amount, memberId, cardToken, this);
   }
 }
