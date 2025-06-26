@@ -2,8 +2,6 @@
 
 本模組提供與中國信託 MicroFastPay 平台整合之完整流程，對齊 ECPay Adapter 設計，支援「信用卡綁定」與「PayJSON 請款」兩大功能，並內建事件監聽、MAC 驗證、TXN 加解密邏輯。
 
----
-
 ## 📌 目錄
 
 - [模組總覽](#模組總覽)
@@ -17,7 +15,7 @@
 
 ## 模組總覽
 
-```txt
+```ts
 CTBCPayment               // 主 Gateway，統一提供綁卡與請款服務
 ├─ createBindCardRequest  // 建立綁卡 Request，產生 form/formHTML
 ├─ handleBindCardCallback // 處理 CTBC 綁卡 callback
@@ -33,24 +31,24 @@ CTBCPayment               // 主 Gateway，統一提供綁卡與請款服務
 
 ```ts
 const bindCardRequest = payment.createBindCardRequest({
-  MerID: 'MER00001',
-  MemberID: 'U0000001',
-  RequestNo: 'ORD20240624001',
-  TokenURL: 'https://your.site/callback',
+  MerID: 'MER00001',                       // 銀行提供之網站代號，與 MerchantID 不同
+  MemberID: 'U0000001',                    // 自定義會員代號（不得為電話/E-mail 等敏感資訊）
+  RequestNo: 'ORD20240624001',             // 請求編號（需唯一）
+  TokenURL: 'https://your.site/callback',  // 綁卡完成後的 callback URL
 });
 ```
 
-2. 將 `bindCardRequest.formHTML` 回傳給使用者（或導向 `bindingURL`）
+2. 將 `bindCardRequest.formHTML` 回傳前端（或導向 `bindingURL`）
 
-3. 使用者完成綁卡後，CTBC 會將加密結果 POST 回 `TokenURL`
+3. CTBC 完成綁卡後，會以 POST 將電文回傳至 `TokenURL`
 
-4. 在 callback handler 中解密並驗證：
+4. 後端解密並處理：
 
 ```ts
 payment.handleBindCardCallback(req.body.reqjsonpwd);
 ```
 
-若綁卡成功，系統將觸發：
+5. 成功後觸發事件：
 
 ```ts
 payment.emitter.on(PaymentEvents.CARD_BOUND, (request) => {
@@ -62,14 +60,14 @@ payment.emitter.on(PaymentEvents.CARD_BOUND, (request) => {
 
 ## 請款流程
 
-1. 建立訂單（可綁背景訂閱、定期扣款）：
+1. 建立訂單（背景定期扣款亦可）：
 
 ```ts
 const order = payment.createOrder(
-  'ORD20240624001', // RequestNo
-  500, // PurchAmt
-  'U0000001', // MemberID
-  'CARDTOKEN123456', // 綁定卡片 token
+  'ORD20240624001',        // RequestNo
+  500,                     // PurchAmt
+  'U0000001',              // MemberID
+  'CARDTOKEN123456',       // 綁定卡片的 CardToken
 );
 ```
 
@@ -105,22 +103,40 @@ payment.emitter.on(PaymentEvents.ORDER_FAILED, (order) => { ... });
 
 ```ts
 const payment = new CTBCPayment({
-  merchantId: 'MER00001',
-  txnKey: 'your-secret-key',
-  baseUrl: 'https://ccapi.ctbcbank.com', // 預設為此，可略
-  withServer: true, // 若需自動產生 bindingURL
+  merchantId: 'MER00001',                 // 與 CTBC 申請的特店代碼
+  txnKey: process.env.CTBC_KEY,           // 壓碼設定時輸入的明碼（MchKey，24 碼）
+  baseUrl: 'https://ccapi.ctbcbank.com',  // 可省略
+  withServer: true,                       // 若需自動產生 bindingURL，可設 true
 });
 ```
 
-### 快取使用說明
+### 注意事項
 
-模組內部會自動將 `bindCardRequest` 暫存於記憶體中，待 callback 成功後刪除。你可依需求改為外部儲存。
+- `txnKey` 必須妥善保管，建議使用 dotenv 或 secrets manager 儲存。
+
+- 綁卡請求送出後，會暫存在記憶體，可依需求改為外部儲存。
 
 ---
 
 ## 補充說明
 
-- 綁卡流程需使用者主動操作（網頁跳轉）
-- 請款流程完全後台執行（背景定期請款可）
-- 所有 TXN/MAC 已符合 CTBC 文件加解密邏輯
-- 若需擴充查詢授權狀態、取消訂單，可依現有架構加掛 Command 類別
+- 🔐 **txnKey（MchKey）來源**：來自 CTBC EzPos 後台壓碼設定，24 碼明碼字串。
+- 🔎 **rspjsonpwd 解碼流程**：
+  1. 十六進位解碼 → base64 解碼 → JSON.parse
+  2. 解開 `TXN` 並驗證 MAC → 拿到原始欄位物件
+- ⚠️ **錯誤排查方式**：
+  - `StatusCode !== '00'` 表示失敗，常見如：
+    - `E9998`: 資料格式錯誤
+    - `MAC_FAIL`: 回傳資料遭竄改
+  - 詳細代碼請參見《CTBC-MicroFastPay.pdf》第 8 章錯誤代碼一覽表
+
+---
+
+## 📎 常見錯誤對照表（部分）
+
+| 錯誤代碼 | 說明               |
+|----------|------------------|
+| I0000    | 交易成功          |
+| E9998    | 格式錯誤          |
+| MAC_FAIL | 回傳驗證失敗      |
+| 10100112 | 卡片已綁定        |
