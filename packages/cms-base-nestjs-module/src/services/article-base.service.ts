@@ -1865,6 +1865,19 @@ export class ArticleBaseService<
               : null,
         });
 
+        if (this.draftMode && result === ArticleSignatureResult.REJECTED) {
+          await runner.manager.update(
+            this.baseArticleVersionRepo.target,
+            {
+              articleId: articleVersion.id,
+              version: articleVersion.version,
+            },
+            {
+              submittedAt: null,
+            },
+          );
+        }
+
         if (
           this.draftMode &&
           this.autoReleaseAfterApproved &&
@@ -1874,7 +1887,7 @@ export class ArticleBaseService<
           await runner.manager.update(
             this.baseArticleVersionRepo.target,
             {
-              id: articleVersion.id,
+              articleId: articleVersion.id,
               version: articleVersion.version,
               releasedAt: IsNull(),
             },
@@ -1919,11 +1932,24 @@ export class ArticleBaseService<
             : null,
       });
 
+      if (this.draftMode && result === ArticleSignatureResult.REJECTED) {
+        await runner.manager.update(
+          this.baseArticleVersionRepo.target,
+          {
+            articleId: articleVersion.id,
+            version: articleVersion.version,
+          },
+          {
+            submittedAt: null,
+          },
+        );
+      }
+
       if (this.draftMode && this.autoReleaseAfterApproved) {
         await runner.manager.update(
           this.baseArticleVersionRepo.target,
           {
-            id: articleVersion.id,
+            articleId: articleVersion.id,
             version: articleVersion.version,
             releasedAt: IsNull(),
           },
