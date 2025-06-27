@@ -121,7 +121,7 @@ export interface Order<OCM extends OrderCommitMessage>
   refund(amount?: number, options?: any): Promise<void>;
 }
 
-type InputFromOrderCommitMessage<OCM extends OrderCommitMessage> =
+export type InputFromOrderCommitMessage<OCM extends OrderCommitMessage> =
   PrepareOrderInput;
 
 export interface PaymentGateway<
