@@ -859,14 +859,25 @@ export class ArticleBaseService<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
-  >(id: string): Promise<ArticleBaseDto<A, AV, AVC>> {
+  >(id: string, version: number): Promise<ArticleBaseDto<A, AV, AVC>> {
     if (!this.draftMode) {
       throw new Error('Draft mode is disabled.');
     }
 
     const article = await this.findById<A, AV, AVC>(id, {
-      stage: ArticleStage.RELEASED,
+      version,
     });
+
+    const stage = await this.articleDataLoader.stageLoader.load({
+      id: article.id,
+      version: article.version,
+    });
+
+    if (![ArticleStage.RELEASED, ArticleStage.SCHEDULED].includes(stage)) {
+      throw new BadRequestException(
+        `Article ${id} is not in released or scheduled stage [${stage}].`,
+      );
+    }
 
     const targetPlaceArticle = await this.findById<A, AV, AVC>(id, {
       stage: this.signatureService.signatureEnabled
