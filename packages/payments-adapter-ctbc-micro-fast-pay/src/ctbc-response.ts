@@ -9,6 +9,7 @@ export function toStringRecord<T>(input: T): Record<string, string> {
 export function decodeResponsePayload<T = Record<string, string>>(
   hex: string,
   txnKey: string,
+  options?: { validateMAC?: boolean }
 ): T {
   const base64 = Buffer.from(hex, 'hex').toString('utf8');
   const json = Buffer.from(base64, 'base64').toString('utf8');
@@ -25,7 +26,21 @@ export function decodeResponsePayload<T = Record<string, string>>(
 
       return [k, v];
     }),
-  );
+  ) as Record<string, string>;
+
+  if (options?.validateMAC ?? true) {
+    const sorted = Object.entries(obj)
+      .filter(([_, v]) => v !== undefined)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, v]) => `${k}=${v}`)
+      .join('&');
+
+    const expected = getMAC(sorted, txnKey);
+
+    if (expected !== MAC) {
+      throw new Error('MAC validation failed');
+    }
+  }
 
   return obj as T;
 }
