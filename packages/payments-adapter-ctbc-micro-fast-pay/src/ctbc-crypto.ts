@@ -9,31 +9,31 @@ import {
 export const toTxnPayload = <T extends object>(value: T): CTBCTxnPayload =>
   value as unknown as CTBCTxnPayload;
 
-export function buildReqjsonpwd(
+export function encodeRequestPayload(
   serviceName: string,
   payload: CTBCBindCardRequestPayload & CTBCTxnPayload,
-  gateway: { merchantId: string; txnKey: string }
+  gateway: { merchantId: string; txnKey: string },
 ): string;
 
 // eslint-disable-next-line no-redeclare
-export function buildReqjsonpwd(
+export function encodeRequestPayload(
   serviceName: string,
   payload: CTBCOrderCommitPayload & CTBCTxnPayload,
-  gateway: { merchantId: string; txnKey: string }
+  gateway: { merchantId: string; txnKey: string },
 ): string;
 
 // eslint-disable-next-line no-redeclare
-export function buildReqjsonpwd(
+export function encodeRequestPayload(
   serviceName: string,
   payload: CTBCTxnPayload,
-  gateway: { merchantId: string; txnKey: string }
+  gateway: { merchantId: string; txnKey: string },
 ): string;
 
 // eslint-disable-next-line no-redeclare
-export function buildReqjsonpwd(
+export function encodeRequestPayload(
   serviceName: string,
   payload: CTBCTxnPayload,
-  gateway: { merchantId: string; txnKey: string }
+  gateway: { merchantId: string; txnKey: string },
 ): string {
   const urlString = Object.entries(payload)
     .filter(([_, value]) => value !== undefined)
@@ -51,7 +51,11 @@ export function buildReqjsonpwd(
         ServiceName: serviceName,
         Version: '1.0',
         MerchantID: gateway.merchantId,
-        RequestTime: new Date().toISOString().slice(0, 19).replace(/-/g, '/').replace('T', ' '),
+        RequestTime: new Date()
+          .toISOString()
+          .slice(0, 19)
+          .replace(/-/g, '/')
+          .replace('T', ' '),
       },
       Data: {
         MAC: mac,

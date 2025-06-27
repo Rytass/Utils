@@ -1,12 +1,15 @@
-import { decrypt3DES, getDivKey, getMAC } from './ctbc-crypto-core';
 import { Buffer } from 'node:buffer';
+import { decrypt3DES, getDivKey, getMAC } from './ctbc-crypto-core';
 import { CTBCRawResponse } from './typings';
 
 export function toStringRecord<T>(input: T): Record<string, string> {
   return input as unknown as Record<string, string>;
 }
 
-export function parseRspjsonpwd<T = Record<string, string>>(hex: string, txnKey: string): T {
+export function decodeResponsePayload<T = Record<string, string>>(
+  hex: string,
+  txnKey: string,
+): T {
   const base64 = Buffer.from(hex, 'hex').toString('utf8');
   const json = Buffer.from(base64, 'base64').toString('utf8');
 
@@ -17,19 +20,19 @@ export function parseRspjsonpwd<T = Record<string, string>>(hex: string, txnKey:
   const decrypted = decrypt3DES(Buffer.from(TXN, 'hex'), divKey);
 
   const obj = Object.fromEntries(
-    decrypted.split('&').map(kv => {
+    decrypted.split('&').map((kv) => {
       const [k, v] = kv.split('=');
 
       return [k, v];
-    })
+    }),
   );
 
   return obj as T;
 }
 
-export function validateRspjsonpwdMAC<T extends Record<string, string>>(
+export function validateResponseMAC<T extends Record<string, string>>(
   payload: T,
-  txnKey: string
+  txnKey: string,
 ): boolean {
   const sorted = Object.entries(payload)
     .filter(([_, v]) => v !== undefined)
@@ -41,4 +44,3 @@ export function validateRspjsonpwdMAC<T extends Record<string, string>>(
 
   return expected === payload.MAC;
 }
-

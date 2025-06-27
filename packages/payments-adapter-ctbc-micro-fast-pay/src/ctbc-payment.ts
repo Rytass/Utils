@@ -1,14 +1,18 @@
+import { PaymentEvents } from '@rytass/payments';
+import EventEmitter from 'node:events';
 import { CTBCBindCardRequest } from './ctbc-bind-card-request';
+import { CTBCOrder } from './ctbc-order';
+import {
+  decodeResponsePayload,
+  toStringRecord,
+  validateResponseMAC,
+} from './ctbc-response';
 import {
   BindCardGatewayLike,
   CTBCBindCardCallbackPayload,
   CTBCBindCardRequestPayload,
   CTBCMicroFastPayOptions,
 } from './typings';
-import { parseRspjsonpwd, toStringRecord, validateRspjsonpwdMAC } from './ctbc-response';
-import { CTBCOrder } from './ctbc-order';
-import { PaymentEvents } from '@rytass/payments';
-import EventEmitter from 'node:events';
 
 export class CTBCPayment implements BindCardGatewayLike {
   readonly merchantId: string;
@@ -44,14 +48,12 @@ export class CTBCPayment implements BindCardGatewayLike {
   }
 
   handleBindCardCallback(rspjsonpwd: string): void {
-    const payload = parseRspjsonpwd<CTBCBindCardCallbackPayload>(
+    const payload = decodeResponsePayload<CTBCBindCardCallbackPayload>(
       rspjsonpwd,
       this.txnKey,
     );
 
-    if (
-      !validateRspjsonpwdMAC(toStringRecord(payload), this.txnKey)
-    ) {
+    if (!validateResponseMAC(toStringRecord(payload), this.txnKey)) {
       throw new Error('MAC validation failed');
     }
 

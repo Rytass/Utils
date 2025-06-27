@@ -1,13 +1,13 @@
 import { PaymentEvents } from '@rytass/payments';
-import { buildReqjsonpwd, toTxnPayload } from './ctbc-crypto';
-import { parseRspjsonpwd, validateRspjsonpwdMAC } from './ctbc-response';
+import { encodeRequestPayload, toTxnPayload } from './ctbc-crypto';
+import { CTBCPayment } from './ctbc-payment';
+import { decodeResponsePayload, validateResponseMAC } from './ctbc-response';
 import {
   CTBCOrderCommitPayload,
   CTBCOrderCommitResult,
   CTBCOrderCommitResultPayload,
   CTBCOrderState,
 } from './typings';
-import { CTBCPayment } from './ctbc-payment';
 
 export class CTBCOrder {
   private readonly _gateway: CTBCPayment;
@@ -97,7 +97,7 @@ export class CTBCOrder {
       PurchAmt: this._amount,
     };
 
-    const reqjsonpwd = buildReqjsonpwd(
+    const reqjsonpwd = encodeRequestPayload(
       'PayJSON',
       toTxnPayload(payload),
       this._gateway,
@@ -126,10 +126,10 @@ export class CTBCOrder {
 
     const rspText = await response.text();
 
-    const parsed = parseRspjsonpwd(rspText, this._gateway.txnKey);
+    const parsed = decodeResponsePayload(rspText, this._gateway.txnKey);
 
     if (
-      !validateRspjsonpwdMAC(
+      !validateResponseMAC(
         parsed as unknown as Record<string, string>,
         this._gateway.txnKey,
       )

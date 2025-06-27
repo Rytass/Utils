@@ -1,12 +1,11 @@
 import { PaymentEvents } from '@rytass/payments';
 import { DateTime } from 'luxon';
-import { buildReqjsonpwd, toTxnPayload } from './ctbc-crypto';
+import { encodeRequestPayload, toTxnPayload } from './ctbc-crypto';
 import { CTBCPayment } from './ctbc-payment';
 import {
   CTBCBindCardCallbackPayload,
   CTBCBindCardRequestPayload,
   CTBCBindCardRequestState,
-  CTBCTxnPayload,
 } from './typings';
 
 export class CTBCBindCardRequest {
@@ -38,7 +37,7 @@ export class CTBCBindCardRequest {
     this._resolved = true;
 
     return {
-      reqjsonpwd: buildReqjsonpwd(
+      reqjsonpwd: encodeRequestPayload(
         'TokenAdd',
         toTxnPayload(this._payload),
         this._gateway,
