@@ -88,8 +88,8 @@ if (result.success) {
 ## 事件監聽
 
 ```ts
-payment.emitter.on(PaymentEvents.CARD_BOUND, (req) => { ... });
-payment.emitter.on(PaymentEvents.CARD_BINDING_FAILED, (req) => { ... });
+payment.emitter.on(PaymentEvents.CARD_BOUND, (request) => { ... });
+payment.emitter.on(PaymentEvents.CARD_BINDING_FAILED, (request) => { ... });
 
 payment.emitter.on(PaymentEvents.ORDER_COMMITTED, (order) => { ... });
 payment.emitter.on(PaymentEvents.ORDER_FAILED, (order) => { ... });

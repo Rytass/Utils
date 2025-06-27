@@ -9,7 +9,7 @@ export function toStringRecord<T>(input: T): Record<string, string> {
 export function decodeResponsePayload<T = Record<string, string>>(
   hex: string,
   txnKey: string,
-  options?: { validateMAC?: boolean }
+  options?: { validateMAC?: boolean },
 ): T {
   const base64 = Buffer.from(hex, 'hex').toString('utf8');
   const json = Buffer.from(base64, 'base64').toString('utf8');

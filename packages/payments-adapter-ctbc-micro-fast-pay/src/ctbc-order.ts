@@ -1,47 +1,46 @@
-import { PaymentEvents } from '@rytass/payments';
+import {
+  PaymentEvents,
+  Order,
+  OrderState,
+  OrderFailMessage,
+  PaymentItem,
+  AdditionalInfo,
+  AsyncOrderInformation,
+} from '@rytass/payments';
 import { encodeRequestPayload, toTxnPayload } from './ctbc-crypto';
 import { CTBCPayment } from './ctbc-payment';
 import { decodeResponsePayload, validateResponseMAC } from './ctbc-response';
 import {
+  CTBCOrderCommitMessage,
   CTBCOrderCommitPayload,
   CTBCOrderCommitResult,
   CTBCOrderCommitResultPayload,
-  CTBCOrderState,
+  CTBCOrderInput,
 } from './typings';
 
-export class CTBCOrder {
+export class CTBCOrder implements Order<CTBCOrderCommitMessage> {
   private readonly _gateway: CTBCPayment;
 
-  private _id: string;
+  id: string;
+  items: PaymentItem[] = [];
+  state: OrderState = OrderState.INITED;
+  createdAt: Date = new Date();
+  committedAt: Date | null = null;
+  additionalInfo?: AdditionalInfo<CTBCOrderCommitMessage>;
+  asyncInfo?: AsyncOrderInformation<CTBCOrderCommitMessage>;
+  failedMessage: OrderFailMessage | null = null;
+
   private _amount: number;
   private _memberId: string;
   private _cardToken: string;
-
-  private _createdAt: Date;
-  private _committedAt?: Date;
   private _platformTradeNumber?: string;
 
-  private _failedCode?: string;
-  private _failedMessage?: string;
-
-  constructor(
-    id: string,
-    amount: number,
-    memberId: string,
-    cardToken: string,
-    gateway: CTBCPayment,
-  ) {
-    this._id = id;
-    this._amount = amount;
-    this._memberId = memberId;
-    this._cardToken = cardToken;
+  constructor(input: CTBCOrderInput, gateway: CTBCPayment) {
+    this.id = input.id;
+    this._amount = input.totalPrice;
+    this._memberId = input.memberId;
+    this._cardToken = input.cardToken;
     this._gateway = gateway;
-
-    this._createdAt = new Date();
-  }
-
-  get id(): string {
-    return this._id;
   }
 
   get amount(): number {
@@ -56,48 +55,46 @@ export class CTBCOrder {
     return this._cardToken;
   }
 
-  get createdAt(): Date {
-    return this._createdAt;
-  }
-
-  get committedAt(): Date | undefined {
-    return this._committedAt;
-  }
-
   get platformTradeNumber(): string | undefined {
     return this._platformTradeNumber;
   }
 
-  get failedMessage(): { code: string; message: string } | null {
-    if (!this._failedCode) return null;
-
-    return {
-      code: this._failedCode,
-      message: this._failedMessage!,
-    };
-  }
-
   get committable(): boolean {
-    return !this._committedAt && !this._failedCode;
+    return this.state === OrderState.INITED && !this.failedMessage;
   }
 
-  get state(): CTBCOrderState {
-    if (this._failedCode) return CTBCOrderState.FAILED;
-    if (this._committedAt) return CTBCOrderState.COMMITTED;
-
-    return CTBCOrderState.INITED;
+  infoRetrieved(info: AsyncOrderInformation<CTBCOrderCommitMessage>): void {
+    this.asyncInfo = info;
   }
 
-  async commit(): Promise<CTBCOrderCommitResult> {
+  fail(code: string, message: string): void {
+    this.failedMessage = { code, message };
+    this.state = OrderState.FAILED;
+  }
+
+  commit(
+    message: CTBCOrderCommitMessage,
+    info?: AdditionalInfo<CTBCOrderCommitMessage>,
+  ): void {
+    this.committedAt = message.committedAt;
+    this.state = OrderState.COMMITTED;
+    this.additionalInfo = info;
+  }
+
+  async refund(): Promise<void> {
+    throw new Error('CTBCOrder.refund not implemented');
+  }
+
+  async executeCommit(): Promise<CTBCOrderCommitResult> {
     const payload: CTBCOrderCommitPayload = {
       MerID: this._gateway.merchantId,
       MemberID: this._memberId,
-      RequestNo: this._id,
+      RequestNo: this.id,
       Token: this._cardToken,
       PurchAmt: this._amount,
     };
 
-    const reqjsonpwd = encodeRequestPayload(
+    const encodedRequestPayload = encodeRequestPayload(
       'PayJSON',
       toTxnPayload(payload),
       this._gateway,
@@ -106,13 +103,15 @@ export class CTBCOrder {
     const response = await fetch(this._gateway.endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ reqjsonpwd }).toString(),
+      body: new URLSearchParams({
+        reqjsonpwd: encodedRequestPayload,
+      }).toString(),
     });
 
     if (!response.ok) {
       const message = `HTTP Error ${response.status}`;
 
-      this.markFailed(`${response.status}`, message);
+      this.fail(`${response.status}`, message);
       this._gateway.emitter.emit(PaymentEvents.ORDER_FAILED, this);
 
       return {
@@ -124,9 +123,9 @@ export class CTBCOrder {
       };
     }
 
-    const rspText = await response.text();
+    const responseText = await response.text();
 
-    const parsed = decodeResponsePayload(rspText, this._gateway.txnKey);
+    const parsed = decodeResponsePayload(responseText, this._gateway.txnKey);
 
     if (
       !validateResponseMAC(
@@ -134,7 +133,7 @@ export class CTBCOrder {
         this._gateway.txnKey,
       )
     ) {
-      this.markFailed('MAC_FAIL', 'Invalid MAC in response');
+      this.fail('MAC_FAIL', 'Invalid MAC in response');
       this._gateway.emitter.emit(PaymentEvents.ORDER_FAILED, this);
 
       return {
@@ -149,7 +148,15 @@ export class CTBCOrder {
     const result = parsed as unknown as CTBCOrderCommitResultPayload;
 
     if (result.StatusCode === '00') {
-      this.markCommitted(result.OrderNo);
+      this._platformTradeNumber = result.OrderNo;
+      this.commit({
+        id: this.id,
+        totalPrice: this._amount,
+        memberId: this._memberId,
+        cardToken: this._cardToken,
+        committedAt: new Date(),
+      });
+
       this._gateway.emitter.emit(PaymentEvents.ORDER_COMMITTED, this);
 
       return {
@@ -157,7 +164,7 @@ export class CTBCOrder {
         orderNo: result.OrderNo,
       };
     } else {
-      this.markFailed(result.StatusCode, result.StatusDesc);
+      this.fail(result.StatusCode, result.StatusDesc);
       this._gateway.emitter.emit(PaymentEvents.ORDER_FAILED, this);
 
       return {
@@ -168,15 +175,5 @@ export class CTBCOrder {
         },
       };
     }
-  }
-
-  private markCommitted(orderNo?: string) {
-    this._committedAt = new Date();
-    this._platformTradeNumber = orderNo;
-  }
-
-  private markFailed(code: string, message: string) {
-    this._failedCode = code;
-    this._failedMessage = message;
   }
 }

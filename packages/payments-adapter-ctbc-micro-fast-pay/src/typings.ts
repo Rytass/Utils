@@ -11,12 +11,13 @@
  * - MAC/TXN 處理通用格式
  */
 
+import { OrderCommitMessage } from '@rytass/payments';
 import { EventEmitter } from 'node:events';
 
-export interface BindCardGatewayLike {
+export interface BindCardGatewayLike<T = any> {
   baseUrl: string; // 綁卡跳轉與 API endpoint 所屬網域
   emitter: EventEmitter; // 綁卡結果事件派發器
-  getBindingURL(request: any): string; // 取得綁卡跳轉用 URL
+  getBindingURL(request: T): string; // 取得綁卡跳轉用 URL
   queryBoundCard(memberId: string): Promise<{ expireDate: Date }>; // 查詢綁定卡片資訊（尚未實作）
 }
 
@@ -138,7 +139,8 @@ export enum CTBCOrderState {
   FAILED = 'FAILED',
 }
 
-export type CTBCTxnPayload = Record<string, string | number | undefined>; // 內部用於組合加密字串的 payload 統一格式
+// 內部用於組合加密字串的 payload 統一格式
+export type CTBCTxnPayload = Record<string, string | number | undefined>;
 
 export interface CTBCOrderCommitResult {
   success: boolean; // 是否請款成功
@@ -147,4 +149,18 @@ export interface CTBCOrderCommitResult {
     code: string; // 錯誤代碼（MAC_FAIL、CTBC status code、HTTP code 等）
     message: string; // 錯誤說明
   };
+}
+
+// 為符合 PaymentGateway 的 commit() 型別要求，擴充必要欄位
+export interface CTBCOrderCommitMessage extends OrderCommitMessage {
+  memberId: string;
+  cardToken: string;
+}
+
+// 提供 prepare() 時所需的訂單建立資料，實際執行時會從 input cast 而來
+export interface CTBCOrderInput {
+  id: string;
+  memberId: string;
+  cardToken: string;
+  totalPrice: number;
 }

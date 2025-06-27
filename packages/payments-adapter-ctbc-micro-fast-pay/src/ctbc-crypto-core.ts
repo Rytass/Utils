@@ -55,10 +55,7 @@ export function encrypt3DES(
   return Buffer.concat([cipher.update(input), cipher.final()]);
 }
 
-export function decrypt3DES(
-  encrypted: Buffer,
-  key: Buffer,
-): string {
+export function decrypt3DES(encrypted: Buffer, key: Buffer): string {
   const decipher = crypto.createDecipheriv('des-ede3-cbc', key, IV);
 
   decipher.setAutoPadding(false);
