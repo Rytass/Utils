@@ -864,13 +864,9 @@ export class ArticleBaseService<
       throw new Error('Draft mode is disabled.');
     }
 
-    const article =
-      (await this.findById<A, AV, AVC>(id, {
-        stage: ArticleStage.RELEASED,
-      }).catch((ex) => null)) ??
-      (await this.findById<A, AV, AVC>(id, {
-        stage: ArticleStage.SCHEDULED,
-      }));
+    const article = await this.findById<A, AV, AVC>(id, {
+      stage: ArticleStage.RELEASED,
+    });
 
     const targetPlaceArticle = await this.findById<A, AV, AVC>(id, {
       stage: this.signatureService.signatureEnabled
