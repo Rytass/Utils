@@ -972,7 +972,10 @@ export class ArticleBaseService<
     await runner.startTransaction();
 
     try {
-      if (shouldDeleteVersion) {
+      if (
+        shouldDeleteVersion &&
+        shouldDeleteVersion.version !== article.version
+      ) {
         this.logger.debug(
           `Article ${id} is already scheduled or released [${shouldDeleteVersion.version}]. Removing previous version.`,
         );
