@@ -958,14 +958,6 @@ export class ArticleBaseService<
           : ArticleStage.SCHEDULED,
     }).catch((ex) => null);
 
-    if (article.releasedAt) {
-      this.logger.debug(
-        `Article ${id} is already released [${article.version}] at ${article.releasedAt}.`,
-      );
-
-      return article;
-    }
-
     this.logger.debug(`Release article ${id} [${article.version}]`);
 
     const willReleasedAt = options?.releasedAt ?? new Date();
