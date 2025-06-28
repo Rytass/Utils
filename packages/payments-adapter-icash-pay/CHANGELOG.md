@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.10](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-icash-pay@0.0.9...@rytass/payments-adapter-icash-pay@0.0.10) (2025-06-28)
+
+**Note:** Version bump only for package @rytass/payments-adapter-icash-pay
+
 ## [0.0.9](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-icash-pay@0.0.8...@rytass/payments-adapter-icash-pay@0.0.9) (2025-06-25)
 
 **Note:** Version bump only for package @rytass/payments-adapter-icash-pay

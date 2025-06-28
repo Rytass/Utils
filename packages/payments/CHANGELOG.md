@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.6](https://github.com/Rytass/Utils/compare/@rytass/payments@0.1.5...@rytass/payments@0.1.6) (2025-06-28)
+
+**Note:** Version bump only for package @rytass/payments
+
 ## [0.1.5](https://github.com/Rytass/Utils/compare/@rytass/payments@0.1.4...@rytass/payments@0.1.5) (2025-06-25)
 
 ### Features
