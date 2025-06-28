@@ -73,9 +73,9 @@ export class CTBCPayment
     throw new Error('CTBCPayment.queryBoundCard not implemented');
   }
 
-  handleBindCardCallback(rspjsonpwd: string): void {
+  handleBindCardCallback(rawPayload: string): void {
     const payload = decodeResponsePayload<CTBCBindCardCallbackPayload>(
-      rspjsonpwd,
+      rawPayload,
       this.txnKey,
     );
 
