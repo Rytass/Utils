@@ -166,7 +166,8 @@ export class ArticleMutations {
   @IsPublic()
   withdrawArticle(
     @Args('id', { type: () => ID }) id: string,
+    @Args('version', { type: () => Int }) version: number,
   ): Promise<BackstageArticleDto> {
-    return this.articleService.withdraw(id);
+    return this.articleService.withdraw(id, version);
   }
 }

@@ -859,14 +859,25 @@ export class ArticleBaseService<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
-  >(id: string): Promise<ArticleBaseDto<A, AV, AVC>> {
+  >(id: string, version: number): Promise<ArticleBaseDto<A, AV, AVC>> {
     if (!this.draftMode) {
       throw new Error('Draft mode is disabled.');
     }
 
     const article = await this.findById<A, AV, AVC>(id, {
-      stage: ArticleStage.RELEASED,
+      version,
     });
+
+    const stage = await this.articleDataLoader.stageLoader.load({
+      id: article.id,
+      version: article.version,
+    });
+
+    if (![ArticleStage.RELEASED, ArticleStage.SCHEDULED].includes(stage)) {
+      throw new BadRequestException(
+        `Article ${id} is not in released or scheduled stage [${stage}].`,
+      );
+    }
 
     const targetPlaceArticle = await this.findById<A, AV, AVC>(id, {
       stage: this.signatureService.signatureEnabled
@@ -954,14 +965,6 @@ export class ArticleBaseService<
           : ArticleStage.SCHEDULED,
     }).catch((ex) => null);
 
-    if (article.releasedAt) {
-      this.logger.debug(
-        `Article ${id} is already released [${article.version}] at ${article.releasedAt}.`,
-      );
-
-      return article;
-    }
-
     this.logger.debug(`Release article ${id} [${article.version}]`);
 
     const willReleasedAt = options?.releasedAt ?? new Date();
@@ -972,7 +975,10 @@ export class ArticleBaseService<
     await runner.startTransaction();
 
     try {
-      if (shouldDeleteVersion) {
+      if (
+        shouldDeleteVersion &&
+        shouldDeleteVersion.version !== article.version
+      ) {
         this.logger.debug(
           `Article ${id} is already scheduled or released [${shouldDeleteVersion.version}]. Removing previous version.`,
         );
@@ -1859,6 +1865,19 @@ export class ArticleBaseService<
               : null,
         });
 
+        if (this.draftMode && result === ArticleSignatureResult.REJECTED) {
+          await runner.manager.update(
+            this.baseArticleVersionRepo.target,
+            {
+              articleId: articleVersion.id,
+              version: articleVersion.version,
+            },
+            {
+              submittedAt: null,
+            },
+          );
+        }
+
         if (
           this.draftMode &&
           this.autoReleaseAfterApproved &&
@@ -1868,7 +1887,7 @@ export class ArticleBaseService<
           await runner.manager.update(
             this.baseArticleVersionRepo.target,
             {
-              id: articleVersion.id,
+              articleId: articleVersion.id,
               version: articleVersion.version,
               releasedAt: IsNull(),
             },
@@ -1890,6 +1909,12 @@ export class ArticleBaseService<
         if (!signatureInfo?.runner) {
           await runner.commitTransaction();
         }
+
+        this.updateSignaturedArticleStageCache(
+          `${articleVersion.id}:${articleVersion.version}`,
+          signature.signatureLevelId,
+          result,
+        );
 
         return this.findById<A, AV, AVC>(
           articleVersion.id,
@@ -1913,11 +1938,24 @@ export class ArticleBaseService<
             : null,
       });
 
+      if (this.draftMode && result === ArticleSignatureResult.REJECTED) {
+        await runner.manager.update(
+          this.baseArticleVersionRepo.target,
+          {
+            articleId: articleVersion.id,
+            version: articleVersion.version,
+          },
+          {
+            submittedAt: null,
+          },
+        );
+      }
+
       if (this.draftMode && this.autoReleaseAfterApproved) {
         await runner.manager.update(
           this.baseArticleVersionRepo.target,
           {
-            id: articleVersion.id,
+            articleId: articleVersion.id,
             version: articleVersion.version,
             releasedAt: IsNull(),
           },
@@ -1940,25 +1978,11 @@ export class ArticleBaseService<
         await runner.commitTransaction();
       }
 
-      if (result === ArticleSignatureResult.REJECTED) {
-        this.articleDataLoader.stageCache.set(
-          `${articleVersion.id}:${articleVersion.version}`,
-          Promise.resolve(ArticleStage.DRAFT),
-        );
-      } else if (
-        signature.signatureLevelId ===
-        this.signatureService.finalSignatureLevel?.id
-      ) {
-        this.articleDataLoader.stageCache.set(
-          `${articleVersion.id}:${articleVersion.version}`,
-          Promise.resolve(ArticleStage.VERIFIED),
-        );
-      } else {
-        this.articleDataLoader.stageCache.set(
-          `${articleVersion.id}:${articleVersion.version}`,
-          Promise.resolve(ArticleStage.REVIEWING),
-        );
-      }
+      this.updateSignaturedArticleStageCache(
+        `${articleVersion.id}:${articleVersion.version}`,
+        signature.signatureLevelId,
+        result,
+      );
 
       return this.findById<A, AV, AVC>(
         articleVersion.id,
@@ -1977,6 +2001,31 @@ export class ArticleBaseService<
       if (!signatureInfo?.runner) {
         await runner.release();
       }
+    }
+  }
+
+  private updateSignaturedArticleStageCache(
+    cacheKey: string,
+    signatureLevelId: string | null,
+    result: ArticleSignatureResult,
+  ): void {
+    if (result === ArticleSignatureResult.REJECTED) {
+      this.articleDataLoader.stageCache.set(
+        cacheKey,
+        Promise.resolve(ArticleStage.DRAFT),
+      );
+    } else if (
+      signatureLevelId === this.signatureService.finalSignatureLevel?.id
+    ) {
+      this.articleDataLoader.stageCache.set(
+        cacheKey,
+        Promise.resolve(ArticleStage.VERIFIED),
+      );
+    } else {
+      this.articleDataLoader.stageCache.set(
+        cacheKey,
+        Promise.resolve(ArticleStage.REVIEWING),
+      );
     }
   }
 
