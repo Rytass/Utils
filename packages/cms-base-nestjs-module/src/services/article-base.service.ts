@@ -1910,6 +1910,12 @@ export class ArticleBaseService<
           await runner.commitTransaction();
         }
 
+        this.updateSignaturedArticleStageCache(
+          `${articleVersion.id}:${articleVersion.version}`,
+          signature.signatureLevelId,
+          result,
+        );
+
         return this.findById<A, AV, AVC>(
           articleVersion.id,
           {
@@ -1972,25 +1978,11 @@ export class ArticleBaseService<
         await runner.commitTransaction();
       }
 
-      if (result === ArticleSignatureResult.REJECTED) {
-        this.articleDataLoader.stageCache.set(
-          `${articleVersion.id}:${articleVersion.version}`,
-          Promise.resolve(ArticleStage.DRAFT),
-        );
-      } else if (
-        signature.signatureLevelId ===
-        this.signatureService.finalSignatureLevel?.id
-      ) {
-        this.articleDataLoader.stageCache.set(
-          `${articleVersion.id}:${articleVersion.version}`,
-          Promise.resolve(ArticleStage.VERIFIED),
-        );
-      } else {
-        this.articleDataLoader.stageCache.set(
-          `${articleVersion.id}:${articleVersion.version}`,
-          Promise.resolve(ArticleStage.REVIEWING),
-        );
-      }
+      this.updateSignaturedArticleStageCache(
+        `${articleVersion.id}:${articleVersion.version}`,
+        signature.signatureLevelId,
+        result,
+      );
 
       return this.findById<A, AV, AVC>(
         articleVersion.id,
@@ -2009,6 +2001,31 @@ export class ArticleBaseService<
       if (!signatureInfo?.runner) {
         await runner.release();
       }
+    }
+  }
+
+  private updateSignaturedArticleStageCache(
+    cacheKey: string,
+    signatureLevelId: string | null,
+    result: ArticleSignatureResult,
+  ): void {
+    if (result === ArticleSignatureResult.REJECTED) {
+      this.articleDataLoader.stageCache.set(
+        cacheKey,
+        Promise.resolve(ArticleStage.DRAFT),
+      );
+    } else if (
+      signatureLevelId === this.signatureService.finalSignatureLevel?.id
+    ) {
+      this.articleDataLoader.stageCache.set(
+        cacheKey,
+        Promise.resolve(ArticleStage.VERIFIED),
+      );
+    } else {
+      this.articleDataLoader.stageCache.set(
+        cacheKey,
+        Promise.resolve(ArticleStage.REVIEWING),
+      );
     }
   }
 
