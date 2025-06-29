@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.93](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.92...@rytass/cms-base-nestjs-module@0.1.93) (2025-06-29)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** handle rejected article versions in draft mode set submittedAt null ([55ecbfb](https://github.com/Rytass/Utils/commit/55ecbfb43049f8d254e60ef166a75325d30911be))
+- **cms-base-nestjs-module:** enhance version check before deleting article version ([80f1093](https://github.com/Rytass/Utils/commit/80f10933204a0f0c67ab2662a8492055d739075e))
+- **cms-base-nestjs-module:** missing stage cache update on signature article ([8ccb7d7](https://github.com/Rytass/Utils/commit/8ccb7d7fc72859ec5fa259eb58c0eb420f67344a))
+- **cms-base-nestjs-module:** remove redundant debug logging for released articles ([e3611d9](https://github.com/Rytass/Utils/commit/e3611d95222091102f6a038f2471ebd0e2562179))
+- **cms-base-nestjs-module:** update findById method to include version and validate article stage in withdraw method ([6410d73](https://github.com/Rytass/Utils/commit/6410d73e0b656ee6acaa003704732cb2c7ee2ca4))
+
 ## [0.1.92](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.91...@rytass/cms-base-nestjs-module@0.1.92) (2025-06-26)
 
 ### Bug Fixes
