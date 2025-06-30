@@ -5,7 +5,7 @@ import { MaterialEntity } from '../models/material.entity';
 import { OrderEntity } from '../models/order.entity';
 import { StockEntity } from '../models/stock.entity';
 
-export interface WmsModuleOptions {
+export interface WMSBaseModuleOptions {
   // Entities
   stockEntity?: new () => StockEntity; // default: StockEntity
   locationEntity?: new () => LocationEntity; // default: LocationEntity
@@ -16,13 +16,18 @@ export interface WmsModuleOptions {
   allowNegativeStock?: boolean; // default: false
 }
 
-export interface WmsModuleOptionsFactory {
-  createWmsModuleOptions(): Promise<WmsModuleOptions> | WmsModuleOptions;
+export interface WMSBaseModuleOptionsFactory {
+  createWMSBaseModuleOptions():
+    | Promise<WMSBaseModuleOptions>
+    | WMSBaseModuleOptions;
 }
 
-export interface WmsModuleAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
-  useFactory?: (...args: any[]) => Promise<WmsModuleOptions> | WmsModuleOptions;
+export interface WMSBaseModuleAsyncOptions
+  extends Pick<ModuleMetadata, 'imports'> {
+  useFactory?: (
+    ...args: any[]
+  ) => Promise<WMSBaseModuleOptions> | WMSBaseModuleOptions;
   inject?: any[];
-  useClass?: Type<WmsModuleOptionsFactory>;
-  useExisting?: Type<WmsModuleOptionsFactory>;
+  useClass?: Type<WMSBaseModuleOptionsFactory>;
+  useExisting?: Type<WMSBaseModuleOptionsFactory>;
 }

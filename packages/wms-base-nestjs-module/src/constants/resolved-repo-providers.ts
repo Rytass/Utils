@@ -16,7 +16,7 @@ import {
   RESOLVED_ORDER_REPO,
   RESOLVED_STOCK_REPO,
   RESOLVED_TREE_LOCATION_REPO,
-} from '../typings/wms-module-providers';
+} from '../typings/wms-base-module-providers';
 
 const TARGETS = [
   [LocationRepo, PROVIDE_LOCATION_ENTITY, RESOLVED_TREE_LOCATION_REPO, true],

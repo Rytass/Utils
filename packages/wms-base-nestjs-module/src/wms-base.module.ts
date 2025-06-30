@@ -7,11 +7,11 @@ import { MaterialService } from './services/material.service';
 import { OrderService } from './services/order.service';
 import { StockService } from './services/stock.service';
 import {
-  WmsModuleAsyncOptions,
-  WmsModuleOptions,
-  WmsModuleOptionsFactory,
-} from './typings/wms-module-options.interface';
-import { WMS_MODULE_OPTIONS } from './typings/wms-module-providers';
+  WMSBaseModuleAsyncOptions,
+  WMSBaseModuleOptions,
+  WMSBaseModuleOptionsFactory,
+} from './typings/wms-base-module-options.interface';
+import { WMS_MODULE_OPTIONS } from './typings/wms-base-module-providers';
 
 const providers = [...OptionProviders, ...ResolvedRepoProviders];
 
@@ -26,10 +26,10 @@ const providers = [...OptionProviders, ...ResolvedRepoProviders];
     ...providers,
   ],
 })
-export class WMSModule {
-  static forRoot(options: WmsModuleOptions): DynamicModule {
+export class WMSBaseModule {
+  static forRoot(options: WMSBaseModuleOptions): DynamicModule {
     return {
-      module: WMSModule,
+      module: WMSBaseModule,
       providers: [
         {
           provide: WMS_MODULE_OPTIONS,
@@ -39,16 +39,16 @@ export class WMSModule {
     };
   }
 
-  static forRootAsync(options: WmsModuleAsyncOptions): DynamicModule {
+  static forRootAsync(options: WMSBaseModuleAsyncOptions): DynamicModule {
     return {
-      module: WMSModule,
+      module: WMSBaseModule,
       imports: [...(options?.imports ?? []), WMSModelsModule],
       providers: [...this.createAsyncProvider(options), ...providers],
     };
   }
 
   private static createAsyncProvider(
-    options: WmsModuleAsyncOptions,
+    options: WMSBaseModuleAsyncOptions,
   ): Provider[] {
     if (options.useExisting || options.useFactory) {
       return [this.createAsyncOptionsProvider(options)];
@@ -67,7 +67,7 @@ export class WMSModule {
     ];
   }
   private static createAsyncOptionsProvider(
-    options: WmsModuleAsyncOptions,
+    options: WMSBaseModuleAsyncOptions,
   ): Provider {
     if (options.useFactory) {
       return {
@@ -80,10 +80,10 @@ export class WMSModule {
     return {
       provide: WMS_MODULE_OPTIONS,
       useFactory: async (optionsFactory: any) =>
-        await optionsFactory.createWmsModuleOptions(),
+        await optionsFactory.createWMSBaseModuleOptions(),
       inject: [
         (options.useExisting ||
-          options.useClass) as Type<WmsModuleOptionsFactory>,
+          options.useClass) as Type<WMSBaseModuleOptionsFactory>,
       ],
     };
   }

@@ -5,7 +5,7 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
-  Relation,
+  type Relation,
   TableInheritance,
 } from 'typeorm';
 import { BatchEntity } from './batch.entity';

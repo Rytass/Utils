@@ -4,9 +4,9 @@ import {
   Entity,
   OneToMany,
   PrimaryColumn,
-  Relation,
+  type Relation,
   TableInheritance,
-  UpdateDateColumn
+  UpdateDateColumn,
 } from 'typeorm';
 import { BatchEntity } from './batch.entity';
 import { StockEntity } from './stock.entity';

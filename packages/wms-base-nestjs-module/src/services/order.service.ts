@@ -6,7 +6,7 @@ import { BatchEntity } from '../models/batch.entity';
 import { OrderEntity } from '../models/order.entity';
 import { StockEntity } from '../models/stock.entity';
 import { BatchCreateDto, OrderCreateDto } from '../typings/order-create.dto';
-import { ALLOW_NEGATIVE_STOCK } from '../typings/wms-module-providers';
+import { ALLOW_NEGATIVE_STOCK } from '../typings/wms-base-module-providers';
 import { StockService } from './stock.service';
 
 @Injectable()

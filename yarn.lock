@@ -6031,9 +6031,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rytass/wms-module@workspace:packages/wms-module":
+"@rytass/wms-base-nestjs-module@workspace:packages/wms-base-nestjs-module":
   version: 0.0.0-use.local
-  resolution: "@rytass/wms-module@workspace:packages/wms-module"
+  resolution: "@rytass/wms-base-nestjs-module@workspace:packages/wms-base-nestjs-module"
   languageName: unknown
   linkType: soft
 

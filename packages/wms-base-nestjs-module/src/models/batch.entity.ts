@@ -4,7 +4,7 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryColumn,
-  Relation,
+  type Relation,
 } from 'typeorm';
 import { MaterialEntity } from './material.entity';
 import { StockEntity } from './stock.entity';

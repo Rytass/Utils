@@ -8,7 +8,7 @@ import { StockSorter } from '../typings/stock-sorter.enum';
 import {
   RESOLVED_STOCK_REPO,
   RESOLVED_TREE_LOCATION_REPO,
-} from '../typings/wms-module-providers';
+} from '../typings/wms-base-module-providers';
 
 @Injectable()
 export class StockService {

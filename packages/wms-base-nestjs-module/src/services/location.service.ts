@@ -12,7 +12,7 @@ import {
   LocationNotFoundError,
 } from '../constants/errors/base.error';
 import { LocationEntity } from '../models/location.entity';
-import { RESOLVED_TREE_LOCATION_REPO } from '../typings/wms-module-providers';
+import { RESOLVED_TREE_LOCATION_REPO } from '../typings/wms-base-module-providers';
 import { StockService } from './stock.service';
 
 @Injectable()

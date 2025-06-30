@@ -2,7 +2,7 @@ import {
   Entity,
   OneToMany,
   PrimaryGeneratedColumn,
-  Relation,
+  type Relation,
   TableInheritance,
 } from 'typeorm';
 import { StockEntity } from './stock.entity';

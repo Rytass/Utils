@@ -1,5 +1,5 @@
 import { Provider } from '@nestjs/common';
-import { WmsModuleOptions } from '../typings/wms-module-options.interface';
+import { WMSBaseModuleOptions } from '../typings/wms-base-module-options.interface';
 import {
   ALLOW_NEGATIVE_STOCK,
   PROVIDE_BATCH_ENTITY,
@@ -8,37 +8,42 @@ import {
   PROVIDE_ORDER_ENTITY,
   PROVIDE_STOCK_ENTITY,
   WMS_MODULE_OPTIONS,
-} from '../typings/wms-module-providers';
+} from '../typings/wms-base-module-providers';
 
 export const OptionProviders: Provider[] = [
   {
     provide: PROVIDE_LOCATION_ENTITY,
-    useFactory: (options?: WmsModuleOptions) => options?.locationEntity ?? null,
+    useFactory: (options?: WMSBaseModuleOptions) =>
+      options?.locationEntity ?? null,
     inject: [WMS_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_MATERIAL_ENTITY,
-    useFactory: (options?: WmsModuleOptions) => options?.materialEntity ?? null,
+    useFactory: (options?: WMSBaseModuleOptions) =>
+      options?.materialEntity ?? null,
     inject: [WMS_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_BATCH_ENTITY,
-    useFactory: (options?: WmsModuleOptions) => options?.batchEntity ?? null,
+    useFactory: (options?: WMSBaseModuleOptions) =>
+      options?.batchEntity ?? null,
     inject: [WMS_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_ORDER_ENTITY,
-    useFactory: (options?: WmsModuleOptions) => options?.orderEntity ?? null,
+    useFactory: (options?: WMSBaseModuleOptions) =>
+      options?.orderEntity ?? null,
     inject: [WMS_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_STOCK_ENTITY,
-    useFactory: (options?: WmsModuleOptions) => options?.stockEntity ?? null,
+    useFactory: (options?: WMSBaseModuleOptions) =>
+      options?.stockEntity ?? null,
     inject: [WMS_MODULE_OPTIONS],
   },
   {
     provide: ALLOW_NEGATIVE_STOCK,
-    useFactory: (options?: WmsModuleOptions) =>
+    useFactory: (options?: WMSBaseModuleOptions) =>
       options?.allowNegativeStock ?? false,
     inject: [WMS_MODULE_OPTIONS],
   },
