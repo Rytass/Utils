@@ -151,7 +151,10 @@ export class ArticleBaseService<
       case ArticleStage.DRAFT:
         qb.innerJoin(
           (subQb) => {
-            subQb.from(this.baseArticleVersionRepo.target, 'versions');
+            subQb.from(
+              this.baseArticleVersionRepo.metadata.tableName,
+              'versions',
+            );
 
             subQb.select('versions.articleId', 'articleId');
             subQb.addSelect('versions.version', 'version');
@@ -202,7 +205,10 @@ export class ArticleBaseService<
         qb.andWhere(`versions.releasedAt IS NULL`);
         qb.innerJoin(
           (subQb) => {
-            subQb.from(this.articleSignatureRepo.target, 'signatures');
+            subQb.from(
+              this.articleSignatureRepo.metadata.tableName,
+              'signatures',
+            );
             subQb.innerJoin('signatures.articleVersion', 'articleVersion');
 
             subQb.select('signatures.articleId', 'articleId');
@@ -231,7 +237,10 @@ export class ArticleBaseService<
       case ArticleStage.SCHEDULED:
         qb.innerJoin(
           (subQb) => {
-            subQb.from(this.baseArticleVersionRepo.target, 'versions');
+            subQb.from(
+              this.baseArticleVersionRepo.metadata.tableName,
+              'versions',
+            );
 
             subQb.select('versions.articleId', 'articleId');
             subQb.addSelect('versions.version', 'version');
@@ -255,7 +264,10 @@ export class ArticleBaseService<
       default:
         qb.innerJoin(
           (subQb) => {
-            subQb.from(this.baseArticleVersionRepo.target, 'versions');
+            subQb.from(
+              this.baseArticleVersionRepo.metadata.tableName,
+              'versions',
+            );
 
             subQb.select('versions.articleId', 'articleId');
             subQb.addSelect('versions.version', 'version');
@@ -295,7 +307,10 @@ export class ArticleBaseService<
     }
 
     const qb = runner
-      ? runner.manager.createQueryBuilder(this.baseArticleRepo.target, alias)
+      ? (runner.manager.createQueryBuilder(
+          this.baseArticleRepo.metadata.tableName,
+          alias,
+        ) as SelectQueryBuilder<BaseArticleEntity>)
       : this.baseArticleRepo.createQueryBuilder(alias);
 
     qb.leftJoinAndSelect(`${alias}.categories`, 'categories');
@@ -320,7 +335,10 @@ export class ArticleBaseService<
     } else {
       qb.innerJoin(
         (subQb) => {
-          subQb.from(this.baseArticleVersionRepo.target, 'versions');
+          subQb.from(
+            this.baseArticleVersionRepo.metadata.tableName,
+            'versions',
+          );
 
           subQb.select('versions.articleId', 'articleId');
           subQb.addSelect('MAX(versions.version)', 'version');
@@ -898,20 +916,26 @@ export class ArticleBaseService<
           `Article ${id} is already in draft or verified [${targetPlaceArticle.version}]. Removing previous version.`,
         );
 
-        await runner.manager.softDelete(this.baseArticleVersionRepo.target, {
-          articleId: id,
-          version: targetPlaceArticle.version,
-        });
+        await runner.manager.softDelete(
+          this.baseArticleVersionRepo.metadata.tableName,
+          {
+            articleId: id,
+            version: targetPlaceArticle.version,
+          },
+        );
       }
 
-      await runner.manager.softDelete(this.baseArticleVersionRepo.target, {
-        articleId: id,
-        releasedAt: LessThanOrEqual(new Date()),
-        version: Not(article.version),
-      });
+      await runner.manager.softDelete(
+        this.baseArticleVersionRepo.metadata.tableName,
+        {
+          articleId: id,
+          releasedAt: LessThanOrEqual(new Date()),
+          version: Not(article.version),
+        },
+      );
 
       await runner.manager.update(
-        this.baseArticleVersionRepo.target,
+        this.baseArticleVersionRepo.metadata.tableName,
         {
           articleId: id,
           version: article.version,
@@ -983,14 +1007,17 @@ export class ArticleBaseService<
           `Article ${id} is already scheduled or released [${shouldDeleteVersion.version}]. Removing previous version.`,
         );
 
-        await runner.manager.softRemove(this.baseArticleVersionRepo.target, {
-          articleId: shouldDeleteVersion.id,
-          version: shouldDeleteVersion.version,
-        });
+        await runner.manager.softRemove(
+          this.baseArticleVersionRepo.metadata.tableName,
+          {
+            articleId: shouldDeleteVersion.id,
+            version: shouldDeleteVersion.version,
+          },
+        );
       }
 
       await runner.manager.update(
-        this.baseArticleVersionRepo.target,
+        this.baseArticleVersionRepo.metadata.tableName,
         {
           articleId: id,
           version: article.version,
@@ -1061,14 +1088,17 @@ export class ArticleBaseService<
           `Article ${id} is already pending review [${pendingReviewArticle.version}]. Removing previous version.`,
         );
 
-        await runner.manager.softRemove(this.baseArticleVersionRepo.target, {
-          articleId: id,
-          version: pendingReviewArticle.version,
-        });
+        await runner.manager.softRemove(
+          this.baseArticleVersionRepo.metadata.tableName,
+          {
+            articleId: id,
+            version: pendingReviewArticle.version,
+          },
+        );
       }
 
       await runner.manager.update(
-        this.baseArticleVersionRepo.target,
+        this.baseArticleVersionRepo.metadata.tableName,
         {
           articleId: id,
           version: article.version,
@@ -1135,7 +1165,7 @@ export class ArticleBaseService<
 
     try {
       await runner.manager.update(
-        this.baseArticleVersionRepo.target,
+        this.baseArticleVersionRepo.metadata.tableName,
         {
           articleId: id,
           version: article.version,
@@ -1331,10 +1361,13 @@ export class ArticleBaseService<
 
     try {
       if (placedArticle) {
-        await runner.manager.softRemove(this.baseArticleVersionRepo.target, {
-          articleId: id,
-          version: placedArticle.version,
-        });
+        await runner.manager.softRemove(
+          this.baseArticleVersionRepo.metadata.tableName,
+          {
+            articleId: id,
+            version: placedArticle.version,
+          },
+        );
       }
 
       await runner.manager.save(
@@ -1734,7 +1767,7 @@ export class ArticleBaseService<
     if (signatureInfo?.runner) {
       if (
         !(await signatureInfo.runner.manager.exists(
-          this.baseArticleVersionRepo.target,
+          this.baseArticleVersionRepo.metadata.tableName,
           {
             where: {
               articleId: articleVersion.id,
@@ -1784,7 +1817,7 @@ export class ArticleBaseService<
 
     try {
       const qb = runner.manager.createQueryBuilder(
-        this.articleSignatureRepo.target,
+        this.articleSignatureRepo.metadata.tableName,
         'signatures',
       );
 
@@ -1816,9 +1849,12 @@ export class ArticleBaseService<
 
         if (targetSignature) {
           if (targetSignature.result === ArticleSignatureResult.REJECTED) {
-            await runner.manager.softDelete(this.articleSignatureRepo.target, {
-              id: targetSignature.id,
-            });
+            await runner.manager.softDelete(
+              this.articleSignatureRepo.metadata.tableName,
+              {
+                id: targetSignature.id,
+              },
+            );
           } else {
             throw new BadRequestException('Already signed');
           }
@@ -1867,7 +1903,7 @@ export class ArticleBaseService<
 
         if (this.draftMode && result === ArticleSignatureResult.REJECTED) {
           await runner.manager.update(
-            this.baseArticleVersionRepo.target,
+            this.baseArticleVersionRepo.metadata.tableName,
             {
               articleId: articleVersion.id,
               version: articleVersion.version,
@@ -1885,7 +1921,7 @@ export class ArticleBaseService<
             this.signatureService.finalSignatureLevel?.id
         ) {
           await runner.manager.update(
-            this.baseArticleVersionRepo.target,
+            this.baseArticleVersionRepo.metadata.tableName,
             {
               articleId: articleVersion.id,
               version: articleVersion.version,
@@ -1900,10 +1936,13 @@ export class ArticleBaseService<
         await runner.manager.save(signature);
 
         if (placedArticle) {
-          await runner.manager.softDelete(this.baseArticleVersionRepo.target, {
-            articleId: placedArticle.id,
-            version: placedArticle.version,
-          });
+          await runner.manager.softDelete(
+            this.baseArticleVersionRepo.metadata.tableName,
+            {
+              articleId: placedArticle.id,
+              version: placedArticle.version,
+            },
+          );
         }
 
         if (!signatureInfo?.runner) {
@@ -1940,7 +1979,7 @@ export class ArticleBaseService<
 
       if (this.draftMode && result === ArticleSignatureResult.REJECTED) {
         await runner.manager.update(
-          this.baseArticleVersionRepo.target,
+          this.baseArticleVersionRepo.metadata.tableName,
           {
             articleId: articleVersion.id,
             version: articleVersion.version,
@@ -1953,7 +1992,7 @@ export class ArticleBaseService<
 
       if (this.draftMode && this.autoReleaseAfterApproved) {
         await runner.manager.update(
-          this.baseArticleVersionRepo.target,
+          this.baseArticleVersionRepo.metadata.tableName,
           {
             articleId: articleVersion.id,
             version: articleVersion.version,
@@ -1968,10 +2007,13 @@ export class ArticleBaseService<
       await runner.manager.save(signature);
 
       if (placedArticle) {
-        await runner.manager.softDelete(this.baseArticleVersionRepo.target, {
-          articleId: placedArticle.id,
-          version: placedArticle.version,
-        });
+        await runner.manager.softDelete(
+          this.baseArticleVersionRepo.metadata.tableName,
+          {
+            articleId: placedArticle.id,
+            version: placedArticle.version,
+          },
+        );
       }
 
       if (!signatureInfo?.runner) {

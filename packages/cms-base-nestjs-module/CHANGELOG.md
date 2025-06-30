@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.94](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.93...@rytass/cms-base-nestjs-module@0.1.94) (2025-06-30)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** use tableName replace with entity target to supporting resolved child entity ([6075d42](https://github.com/Rytass/Utils/commit/6075d42f20e28fa09e26e6cc236a97ab86b7c84b))
+
 ## [0.1.93](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.92...@rytass/cms-base-nestjs-module@0.1.93) (2025-06-29)
 
 ### Bug Fixes

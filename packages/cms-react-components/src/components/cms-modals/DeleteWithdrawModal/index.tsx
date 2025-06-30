@@ -32,6 +32,8 @@ const DeleteWithdrawModal = ({
   onDelete,
   onWithdraw,
 }: DeleteWithdrawModalProps): ReactNode => {
+  const [acting, setActing] = useState<boolean>(false);
+
   const [currentRadioValue, setCurrentRadioValue] =
     useState<DeleteWithdrawModalRadio>(defaultRadioValue);
 
@@ -41,13 +43,17 @@ const DeleteWithdrawModal = ({
     switch (currentRadioValue) {
       case DeleteWithdrawModalRadio.Delete:
         return async () => {
+          setActing(true);
           await onDelete();
+          setActing(false);
           closeModal();
         };
 
       case DeleteWithdrawModalRadio.Withdraw:
         return async () => {
+          setActing(true);
           await onWithdraw();
+          setActing(false);
           closeModal();
         };
 
@@ -99,6 +105,8 @@ const DeleteWithdrawModal = ({
           size: 'large',
           variant: 'contained',
           danger: true,
+          disabled: acting,
+          loading: acting,
         }}
         onCancel={closeModal}
         onConfirm={onConfirm}

@@ -1,13 +1,12 @@
 {
-  "name": "@rytass/cms-base-nestjs-module",
-  "version": "0.1.94",
-  "description": "Rytass Content Management System NestJS Base Module",
+  "name": "@rytass/wms-base-nestjs-module",
+  "version": "0.0.2",
+  "description": "Rytass Warehouse Management System Module",
   "keywords": [
     "rytass",
-    "cms",
+    "wms",
     "nestjs"
   ],
-  "author": "Chia Yu Pai <fantasyatelier@gmail.com>",
   "homepage": "https://github.com/Rytass/Utils#readme",
   "license": "MIT",
   "repository": {
@@ -22,16 +21,5 @@
   },
   "bugs": {
     "url": "https://github.com/Rytass/Utils/issues"
-  },
-  "peerDependencies": {
-    "@nestjs/common": "*",
-    "@nestjs/typeorm": "*",
-    "@node-rs/jieba": "*",
-    "@quadrats/core": "*",
-    "typeorm": "*"
-  },
-  "dependencies": {
-    "dataloader": "^2.2.2",
-    "lru-cache": "^11.0.2"
   }
 }

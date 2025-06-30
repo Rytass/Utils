@@ -14,12 +14,16 @@ export interface RejectModalProps {
 }
 
 const RejectModal = ({ onReject }: RejectModalProps): ReactNode => {
+  const [acting, setActing] = useState<boolean>(false);
+
   const [rejectReason, setRejectReason] = useState<string>('');
 
   const { closeModal } = useModal();
 
   const onConfirm = useCallback(async () => {
+    setActing(true);
     await onReject(rejectReason);
+    setActing(false);
     closeModal();
   }, [closeModal, onReject, rejectReason]);
 
@@ -53,7 +57,8 @@ const RejectModal = ({ onReject }: RejectModalProps): ReactNode => {
           size: 'large',
           variant: 'contained',
           danger: true,
-          disabled: !rejectReason,
+          disabled: !rejectReason || acting,
+          loading: acting,
         }}
         onCancel={closeModal}
         onConfirm={onConfirm}
