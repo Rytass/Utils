@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.4](https://github.com/Rytass/Utils/compare/@rytass/cms-react-components@0.1.3...@rytass/cms-react-components@0.1.4) (2025-06-30)
+
+### Features
+
+- **packages/cms-react-componenst:** set loading status on modals ([808781a](https://github.com/Rytass/Utils/commit/808781a3df5d23472c3ef9cde04dda01ba043d2d))
+
 ## [0.1.3](https://github.com/Rytass/Utils/compare/@rytass/cms-react-components@0.1.2...@rytass/cms-react-components@0.1.3) (2025-06-26)
 
 **Note:** Version bump only for package @rytass/cms-react-components
