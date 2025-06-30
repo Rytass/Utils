@@ -187,6 +187,34 @@ const LogsModal = ({ data, stageWording }: LogsModalProps): ReactNode => {
     [data, stageMode],
   );
 
+  const stages = useMemo(() => {
+    if (stageMode === ArticleStage.SCHEDULED) {
+      return [
+        ArticleStage.DRAFT,
+        ArticleStage.REVIEWING,
+        ArticleStage.VERIFIED,
+        ArticleStage.SCHEDULED,
+      ];
+    }
+
+    if (stageMode === ArticleStage.RELEASED) {
+      return [
+        ArticleStage.DRAFT,
+        ArticleStage.REVIEWING,
+        ArticleStage.VERIFIED,
+        ArticleStage.RELEASED,
+      ];
+    }
+
+    return [
+      ArticleStage.DRAFT,
+      ArticleStage.REVIEWING,
+      ArticleStage.VERIFIED,
+      ArticleStage.SCHEDULED,
+      ArticleStage.RELEASED,
+    ];
+  }, [stageMode]);
+
   return (
     <>
       <ModalHeader showSeverityIcon={false}>版本資訊</ModalHeader>
@@ -197,19 +225,13 @@ const LogsModal = ({ data, stageWording }: LogsModalProps): ReactNode => {
           </Typography>
         )}
         <div className={classes.wrapper}>
-          {[
-            ArticleStage.DRAFT,
-            ArticleStage.REVIEWING,
-            ArticleStage.VERIFIED,
-            ArticleStage.SCHEDULED,
-            ArticleStage.RELEASED,
-          ].map((targetStage) => {
+          {stages.map((targetStage, index) => {
             return (
               <div key={targetStage} className={classes.block}>
                 <div className={classes.timeLineWrapper}>
                   <div
                     className={cx(classes.topLine, {
-                      [classes.isHidden]: targetStage === ArticleStage.DRAFT,
+                      [classes.isHidden]: index === 0,
                     })}
                   />
                   <div
@@ -220,7 +242,7 @@ const LogsModal = ({ data, stageWording }: LogsModalProps): ReactNode => {
                   />
                   <div
                     className={cx(classes.bottomLine, {
-                      [classes.isHidden]: targetStage === ArticleStage.RELEASED,
+                      [classes.isHidden]: index === stages.length - 1,
                     })}
                   />
                 </div>
