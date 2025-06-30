@@ -65,7 +65,7 @@ export function encodeRequestPayload(
   };
 
   const json = JSON.stringify(request);
-  const base64 = Buffer.from(json).toString('base64');
+  const encoded = encodeURIComponent(json);
 
-  return Buffer.from(base64).toString('hex').toUpperCase();
+  return encoded;
 }

@@ -46,7 +46,7 @@ export class CTBCPayment
     this.merId = options.merId;
     this.txnKey = options.txnKey;
     this.baseUrl = options.baseUrl ?? 'https://ccapi.ctbcbank.com';
-    this.endpoint = `${this.baseUrl}/MicroPayExt/PayJSON`;
+    this.endpoint = `${this.baseUrl}/mFastPay/TxnServlet`;
     this._server = options.withServer ?? false;
   }
 
@@ -82,8 +82,8 @@ export class CTBCPayment
     throw new Error('Not implemented');
   }
 
-  getBindingURL(_: CTBCBindCardRequest): string {
-    return `${this.baseUrl}/MicroPayExt/TokenAdd`;
+  getBindingURL(): string {
+    return `${this.baseUrl}/mFastPay/TxnServlet`;
   }
 
   async queryBoundCard(memberId: string): Promise<{ expireDate: Date }> {

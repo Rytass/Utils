@@ -48,33 +48,25 @@ export class CTBCBindCardRequest {
   get formHTML(): string {
     const form = this.form;
 
+    const inputs = Object.entries(form)
+      .map(
+        ([key, value]) =>
+            `<input type="hidden" name="${key}" value="${value}" />`,
+      )
+      .join('\n');
+
     return `<!DOCTYPE html>
 <html>
-  <head>
-    <title>Bind Card Form</title>
-  </head>
-  <body>
-    <form action="${this._gateway.endpoint}" method="POST">
-      ${Object.entries(form)
-        .map(
-          ([key, value]) =>
-            `<input name="${key}" value="${value}" type="hidden" />`,
-        )
-        .join('\n')}
+  <body onload="document.forms['fm'].submit();">
+    <form name="fm" action="${this.bindingURL}" method="post">
+      ${inputs}
     </form>
-    <script>document.forms[0].submit();</script>
   </body>
 </html>`;
   }
 
   get bindingURL(): string {
-    if (!this._gateway._server) {
-      throw new Error(
-        'To use automatic checkout server, please initial payment with `withServer` option.',
-      );
-    }
-
-    return this._gateway.getBindingURL(this);
+    return this._gateway.getBindingURL();
   }
 
   get cardId(): string | undefined {
