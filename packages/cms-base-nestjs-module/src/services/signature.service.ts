@@ -62,13 +62,19 @@ export class SignatureService<
         await signatureLevels
           .filter((level) => !targetLevelNames.has(level.name))
           .map((level) => async () => {
-            await runner.manager.delete(this.articleSignatureRepo.target, {
-              signatureLevelId: level.id,
-            });
+            await runner.manager.delete(
+              this.articleSignatureRepo.metadata.tableName,
+              {
+                signatureLevelId: level.id,
+              },
+            );
 
-            await runner.manager.softDelete(this.signatureLevelRepo.target, {
-              id: level.id,
-            });
+            await runner.manager.softDelete(
+              this.signatureLevelRepo.metadata.tableName,
+              {
+                id: level.id,
+              },
+            );
           })
           .reduce((prev, next) => prev.then(next), Promise.resolve());
 
