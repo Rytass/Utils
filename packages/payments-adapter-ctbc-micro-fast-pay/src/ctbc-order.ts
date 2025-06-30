@@ -127,6 +127,19 @@ export class CTBCOrder implements Order<CTBCOrderCommitMessage> {
 
     const parsed = decodeResponsePayload(responseText, this._gateway.txnKey);
 
+    const result: CTBCOrderCommitResultPayload = {
+      MerchantID: parsed.MerchantID,
+      MerID: parsed.MerID,
+      MemberID: parsed.MemberID,
+      RequestNo: parsed.RequestNo,
+      StatusCode: parsed.StatusCode,
+      StatusDesc: parsed.StatusDesc,
+      ResponseTime: parsed.ResponseTime,
+      AuthCode: parsed.AuthCode ?? undefined,
+      ECI: parsed.ECI ?? undefined,
+      OrderNo: parsed.OrderNo ?? undefined,
+    };
+
     if (
       !validateResponseMAC(
         parsed as Record<string, string>,
@@ -144,8 +157,6 @@ export class CTBCOrder implements Order<CTBCOrderCommitMessage> {
         },
       };
     }
-
-    const result = parsed as unknown as CTBCOrderCommitResultPayload;
 
     if (result.StatusCode === '00') {
       this._platformTradeNumber = result.OrderNo;

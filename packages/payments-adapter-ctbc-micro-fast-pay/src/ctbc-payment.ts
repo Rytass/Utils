@@ -56,7 +56,21 @@ export class CTBCPayment
   async prepare<N extends CTBCOrderCommitMessage>(
     input: InputFromOrderCommitMessage<N>,
   ): Promise<Order<N>> {
-    const orderInput = input as unknown as CTBCOrderInput;
+    const isCTBCOrderInput =
+      typeof input === 'object' &&
+      input !== null &&
+      'id' in input &&
+      'memberId' in input &&
+      'cardToken' in input &&
+      'totalPrice' in input &&
+      typeof input.id === 'string' &&
+      typeof input.memberId === 'string' &&
+      typeof input.cardToken === 'string' &&
+      typeof input.totalPrice === 'number';
+
+    if (!isCTBCOrderInput) throw new Error('Invalid CTBCOrderInput');
+
+    const orderInput = input as CTBCOrderInput;
 
     return new CTBCOrder(orderInput, this) as Order<N>;
   }
