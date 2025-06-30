@@ -26,6 +26,7 @@ export class CTBCPayment
     BindCardGatewayLike
 {
   readonly merchantId: string;
+  readonly merId: string;
   readonly txnKey: string;
   readonly baseUrl: string;
   readonly endpoint: string;
@@ -36,11 +37,13 @@ export class CTBCPayment
 
   constructor(options: {
     merchantId: string;
+    merId: string;
     txnKey: string;
     baseUrl?: string;
     withServer?: boolean;
   }) {
     this.merchantId = options.merchantId;
+    this.merId = options.merId;
     this.txnKey = options.txnKey;
     this.baseUrl = options.baseUrl ?? 'https://ccapi.ctbcbank.com';
     this.endpoint = `${this.baseUrl}/MicroPayExt/PayJSON`;

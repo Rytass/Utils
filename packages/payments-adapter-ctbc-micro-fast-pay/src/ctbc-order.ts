@@ -87,7 +87,7 @@ export class CTBCOrder implements Order<CTBCOrderCommitMessage> {
 
   async executeCommit(): Promise<CTBCOrderCommitResult> {
     const payload: CTBCOrderCommitPayload = {
-      MerID: this._gateway.merchantId,
+      MerID: this._gateway.merId,
       MemberID: this._memberId,
       RequestNo: this.id,
       Token: this._cardToken,
