@@ -19,13 +19,11 @@ import {
 import { ExclamationCircleFilledIcon } from '@mezzanine-ui/icons';
 import { useModal } from '../../modal/useModal';
 import { ArticleStage } from '../../../typings';
-import { LogsData } from './typings';
+import { LogsStageData } from './typings';
 import classes from './index.module.scss';
 
 export interface LogsModalProps {
-  onGetData: () => Promise<{
-    [keys in ArticleStage]?: LogsData | null;
-  }>;
+  onGetData: () => Promise<LogsStageData>;
   stageWording?: {
     [keys in ArticleStage]?: {
       stageName?: string;
@@ -36,12 +34,7 @@ export interface LogsModalProps {
 }
 
 const LogsModal = ({ onGetData, stageWording }: LogsModalProps): ReactNode => {
-  const [data, setData] = useState<
-    | {
-        [keys in ArticleStage]?: LogsData | null;
-      }
-    | null
-  >(null);
+  const [data, setData] = useState<LogsStageData | null>(null);
 
   const [loading, setLoading] = useState<boolean>(false);
   const [stageMode, setStageMode] = useState<ArticleStage | null>(null);

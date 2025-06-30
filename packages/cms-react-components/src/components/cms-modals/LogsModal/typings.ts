@@ -1,3 +1,5 @@
+import { ArticleStage } from '../../../typings';
+
 export interface LogsData {
   createdAt: string;
   createdBy: string;
@@ -12,3 +14,7 @@ export interface LogsData {
   version?: number;
   reason?: string;
 }
+
+export type LogsStageData = {
+  [keys in ArticleStage]?: LogsData | null;
+};
