@@ -1,4 +1,10 @@
-import React, { ReactNode, useState, useMemo, useCallback } from 'react';
+import React, {
+  ReactNode,
+  useState,
+  useMemo,
+  useEffect,
+  useCallback,
+} from 'react';
 import { isNumber } from 'lodash';
 import {
   ModalHeader,
@@ -7,6 +13,7 @@ import {
   Typography,
   Button,
   Icon,
+  Loading,
   cx,
 } from '@mezzanine-ui/react';
 import { ExclamationCircleFilledIcon } from '@mezzanine-ui/icons';
@@ -16,9 +23,9 @@ import { LogsData } from './typings';
 import classes from './index.module.scss';
 
 export interface LogsModalProps {
-  data: {
+  onGetData: () => Promise<{
     [keys in ArticleStage]?: LogsData | null;
-  };
+  }>;
   stageWording?: {
     [keys in ArticleStage]?: {
       stageName?: string;
@@ -28,9 +35,31 @@ export interface LogsModalProps {
   };
 }
 
-const LogsModal = ({ data, stageWording }: LogsModalProps): ReactNode => {
+const LogsModal = ({ onGetData, stageWording }: LogsModalProps): ReactNode => {
+  const [data, setData] = useState<
+    | {
+        [keys in ArticleStage]?: LogsData | null;
+      }
+    | null
+  >(null);
+
+  const [loading, setLoading] = useState<boolean>(false);
   const [stageMode, setStageMode] = useState<ArticleStage | null>(null);
+
   const { closeModal } = useModal();
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+
+      const data = await onGetData();
+
+      setLoading(false);
+
+      setData(data);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const getStageWording = useCallback(
     (
@@ -100,79 +129,79 @@ const LogsModal = ({ data, stageWording }: LogsModalProps): ReactNode => {
         case ArticleStage.DRAFT: {
           if (stageMode) {
             return {
-              time: data[stageMode]?.createdAt || '',
-              member: data[stageMode]?.createdBy || '',
-              reason: data[stageMode]?.reason || '',
+              time: data?.[stageMode]?.createdAt || '',
+              member: data?.[stageMode]?.createdBy || '',
+              reason: data?.[stageMode]?.reason || '',
             };
           }
 
           return {
-            time: data[currentStage]?.updatedAt || '',
-            member: data[currentStage]?.updatedBy || '',
-            reason: data[currentStage]?.reason || '',
+            time: data?.[currentStage]?.updatedAt || '',
+            member: data?.[currentStage]?.updatedBy || '',
+            reason: data?.[currentStage]?.reason || '',
           };
         }
 
         case ArticleStage.REVIEWING: {
           if (stageMode) {
             return {
-              time: data[stageMode]?.submittedAt || '',
-              member: data[stageMode]?.submittedBy || '',
-              reason: data[stageMode]?.reason || '',
+              time: data?.[stageMode]?.submittedAt || '',
+              member: data?.[stageMode]?.submittedBy || '',
+              reason: data?.[stageMode]?.reason || '',
             };
           }
 
           return {
-            time: data[currentStage]?.submittedAt || '',
-            member: data[currentStage]?.submittedBy || '',
-            reason: data[currentStage]?.reason || '',
+            time: data?.[currentStage]?.submittedAt || '',
+            member: data?.[currentStage]?.submittedBy || '',
+            reason: data?.[currentStage]?.reason || '',
           };
         }
 
         case ArticleStage.VERIFIED: {
           if (stageMode) {
             return {
-              time: data[stageMode]?.verifiedAt || '',
-              member: data[stageMode]?.verifiedBy || '',
-              reason: data[stageMode]?.reason || '',
+              time: data?.[stageMode]?.verifiedAt || '',
+              member: data?.[stageMode]?.verifiedBy || '',
+              reason: data?.[stageMode]?.reason || '',
             };
           }
 
           return {
-            time: data[currentStage]?.verifiedAt || '',
-            member: data[currentStage]?.verifiedBy || '',
-            reason: data[currentStage]?.reason || '',
+            time: data?.[currentStage]?.verifiedAt || '',
+            member: data?.[currentStage]?.verifiedBy || '',
+            reason: data?.[currentStage]?.reason || '',
           };
         }
 
         case ArticleStage.SCHEDULED: {
           if (stageMode) {
             return {
-              time: data[stageMode]?.releasedAt || '',
-              member: data[stageMode]?.releasedBy || '',
-              reason: data[stageMode]?.reason || '',
+              time: data?.[stageMode]?.releasedAt || '',
+              member: data?.[stageMode]?.releasedBy || '',
+              reason: data?.[stageMode]?.reason || '',
             };
           }
 
           return {
-            time: data[currentStage]?.releasedAt || '',
-            member: data[currentStage]?.releasedBy || '',
-            reason: data[currentStage]?.reason || '',
+            time: data?.[currentStage]?.releasedAt || '',
+            member: data?.[currentStage]?.releasedBy || '',
+            reason: data?.[currentStage]?.reason || '',
           };
         }
         case ArticleStage.RELEASED: {
           if (stageMode) {
             return {
-              time: data[stageMode]?.releasedAt || '',
-              member: data[stageMode]?.releasedBy || '',
-              reason: data[stageMode]?.reason || '',
+              time: data?.[stageMode]?.releasedAt || '',
+              member: data?.[stageMode]?.releasedBy || '',
+              reason: data?.[stageMode]?.reason || '',
             };
           }
 
           return {
-            time: data[currentStage]?.releasedAt || '',
-            member: data[currentStage]?.releasedBy || '',
-            reason: data[currentStage]?.reason || '',
+            time: data?.[currentStage]?.releasedAt || '',
+            member: data?.[currentStage]?.releasedBy || '',
+            reason: data?.[currentStage]?.reason || '',
           };
         }
 
@@ -218,91 +247,95 @@ const LogsModal = ({ data, stageWording }: LogsModalProps): ReactNode => {
   return (
     <>
       <ModalHeader showSeverityIcon={false}>版本資訊</ModalHeader>
-      <MznModalBody className={classes.modalBody}>
-        {stageMode && (
-          <Typography variant="h6" color="text-primary">
-            {`Ver. ${data[stageMode]?.version}`}
-          </Typography>
-        )}
-        <div className={classes.wrapper}>
-          {stages.map((targetStage, index) => {
-            return (
-              <div key={targetStage} className={classes.block}>
-                <div className={classes.timeLineWrapper}>
-                  <div
-                    className={cx(classes.topLine, {
-                      [classes.isHidden]: index === 0,
-                    })}
-                  />
-                  <div
-                    className={cx(classes.dot, {
-                      [classes.notActive]:
-                        !getStageData(targetStage).time &&
-                        !getStageData(targetStage).member,
-                    })}
-                  />
-                  <div
-                    className={cx(classes.bottomLine, {
-                      [classes.isHidden]: index === stages.length - 1,
-                    })}
-                  />
-                </div>
-                <div className={classes.contentWrapper}>
-                  <div className={classes.stageWrapper}>
-                    <Typography variant="h5" color="text-primary">
-                      {getStageWording(targetStage).stageName}
-                    </Typography>
-                    {!stageMode && isNumber(data[targetStage]?.version) && (
-                      <Button
-                        type="button"
-                        variant="text"
-                        color="secondary"
-                        size="small"
-                        onClick={() => {
-                          setStageMode(targetStage);
-                        }}
-                      >
-                        {`Ver. ${data[targetStage].version}`}
-                      </Button>
-                    )}
+      {loading ? (
+        <Loading loading />
+      ) : (
+        <MznModalBody className={classes.modalBody}>
+          {stageMode && (
+            <Typography variant="h6" color="text-primary">
+              {`Ver. ${data?.[stageMode]?.version}`}
+            </Typography>
+          )}
+          <div className={classes.wrapper}>
+            {stages.map((targetStage, index) => {
+              return (
+                <div key={targetStage} className={classes.block}>
+                  <div className={classes.timeLineWrapper}>
+                    <div
+                      className={cx(classes.topLine, {
+                        [classes.isHidden]: index === 0,
+                      })}
+                    />
+                    <div
+                      className={cx(classes.dot, {
+                        [classes.notActive]:
+                          !getStageData(targetStage).time &&
+                          !getStageData(targetStage).member,
+                      })}
+                    />
+                    <div
+                      className={cx(classes.bottomLine, {
+                        [classes.isHidden]: index === stages.length - 1,
+                      })}
+                    />
                   </div>
-                  <div className={classes.list}>
-                    <div className={classes.option}>
-                      <Typography variant="h6" color="text-secondary">
-                        {getStageWording(targetStage).timeTitle}
+                  <div className={classes.contentWrapper}>
+                    <div className={classes.stageWrapper}>
+                      <Typography variant="h5" color="text-primary">
+                        {getStageWording(targetStage).stageName}
                       </Typography>
-                      <Typography variant="body2" color="text-primary">
-                        {getStageData(targetStage).time || '-'}
-                      </Typography>
+                      {!stageMode && isNumber(data?.[targetStage]?.version) && (
+                        <Button
+                          type="button"
+                          variant="text"
+                          color="secondary"
+                          size="small"
+                          onClick={() => {
+                            setStageMode(targetStage);
+                          }}
+                        >
+                          {`Ver. ${data?.[targetStage].version}`}
+                        </Button>
+                      )}
                     </div>
-                    <div className={classes.option}>
-                      <Typography variant="h6" color="text-secondary">
-                        {getStageWording(targetStage).memberTitle}
-                      </Typography>
-                      <Typography variant="body2" color="text-primary">
-                        {getStageData(targetStage).member || '-'}
-                      </Typography>
-                    </div>
-                  </div>
-                  {!!getStageData(targetStage).reason &&
-                    targetStage === ArticleStage.DRAFT && (
-                      <div className={classes.reasonWrapper}>
-                        <Icon
-                          icon={ExclamationCircleFilledIcon}
-                          size={24}
-                          color="warning"
-                        />
-                        <Typography variant="input1" color="text-primary">
-                          {getStageData(targetStage).reason}
+                    <div className={classes.list}>
+                      <div className={classes.option}>
+                        <Typography variant="h6" color="text-secondary">
+                          {getStageWording(targetStage).timeTitle}
+                        </Typography>
+                        <Typography variant="body2" color="text-primary">
+                          {getStageData(targetStage).time || '-'}
                         </Typography>
                       </div>
-                    )}
+                      <div className={classes.option}>
+                        <Typography variant="h6" color="text-secondary">
+                          {getStageWording(targetStage).memberTitle}
+                        </Typography>
+                        <Typography variant="body2" color="text-primary">
+                          {getStageData(targetStage).member || '-'}
+                        </Typography>
+                      </div>
+                    </div>
+                    {!!getStageData(targetStage).reason &&
+                      targetStage === ArticleStage.DRAFT && (
+                        <div className={classes.reasonWrapper}>
+                          <Icon
+                            icon={ExclamationCircleFilledIcon}
+                            size={24}
+                            color="warning"
+                          />
+                          <Typography variant="input1" color="text-primary">
+                            {getStageData(targetStage).reason}
+                          </Typography>
+                        </div>
+                      )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      </MznModalBody>
+              );
+            })}
+          </div>
+        </MznModalBody>
+      )}
       <ModalActions
         cancelText="返回"
         confirmText="關閉"
