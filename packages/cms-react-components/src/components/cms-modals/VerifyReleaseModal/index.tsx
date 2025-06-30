@@ -41,6 +41,8 @@ const VerifyReleaseModal = ({
   onApprove,
   onReject,
 }: VerifyReleaseModalProps): ReactNode => {
+  const [acting, setActing] = useState<boolean>(false);
+
   const [currentRadioValue, setCurrentRadioValue] =
     useState<VerifyReleaseModalRadio>(defaultRadioValue);
 
@@ -71,39 +73,47 @@ const VerifyReleaseModal = ({
   const disabled = useMemo(() => {
     switch (currentRadioValue) {
       case VerifyReleaseModalRadio.Schedule:
-        return !releasedAt;
+        return !releasedAt || acting;
 
       case VerifyReleaseModalRadio.Reject:
-        return !rejectReason;
+        return !rejectReason || acting;
 
       default:
-        return false;
+        return acting;
     }
-  }, [currentRadioValue, rejectReason, releasedAt]);
+  }, [currentRadioValue, rejectReason, releasedAt, acting]);
 
   const onConfirm = useMemo(() => {
     switch (currentRadioValue) {
       case VerifyReleaseModalRadio.Now:
         return async () => {
+          setActing(true);
           await onRelease(dayjs(Date.now()).toISOString());
+          setActing(false);
           closeModal();
         };
 
       case VerifyReleaseModalRadio.Schedule:
         return async () => {
+          setActing(true);
           await onRelease(dayjs(releasedAt).toISOString());
+          setActing(false);
           closeModal();
         };
 
       case VerifyReleaseModalRadio.Approve:
         return async () => {
+          setActing(true);
           await onApprove?.();
+          setActing(false);
           closeModal();
         };
 
       case VerifyReleaseModalRadio.Reject:
         return async () => {
+          setActing(true);
           await onReject?.(rejectReason);
+          setActing(false);
           closeModal();
         };
 
@@ -199,6 +209,7 @@ const VerifyReleaseModal = ({
           size: 'large',
           variant: 'contained',
           disabled,
+          loading: acting,
           danger: currentRadioValue === VerifyReleaseModalRadio.Reject,
         }}
         onCancel={closeModal}
