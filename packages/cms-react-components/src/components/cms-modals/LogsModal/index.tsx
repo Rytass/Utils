@@ -34,154 +34,154 @@ const LogsModal = ({ data, stageWording }: LogsModalProps): ReactNode => {
 
   const getStageWording = useCallback(
     (
-      stage: ArticleStage,
+      currentStage: ArticleStage,
     ): {
       stageName: string;
       timeTitle: string;
       memberTitle: string;
     } => {
-      switch (stage) {
+      switch (currentStage) {
         case ArticleStage.DRAFT:
           return {
-            stageName: stageWording?.[stage]?.stageName || '草稿',
-            timeTitle: stageWording?.[stage]?.timeTitle || '最後編輯時間',
-            memberTitle: stageWording?.[stage]?.memberTitle || '編輯人員',
+            stageName: stageWording?.[currentStage]?.stageName || '草稿',
+            timeTitle:
+              stageWording?.[currentStage]?.timeTitle || '最後編輯時間',
+            memberTitle:
+              stageWording?.[currentStage]?.memberTitle || '編輯人員',
           };
 
         case ArticleStage.REVIEWING:
           return {
-            stageName: stageWording?.[stage]?.stageName || '待審核',
-            timeTitle: stageWording?.[stage]?.timeTitle || '送審時間',
-            memberTitle: stageWording?.[stage]?.memberTitle || '送審人員',
+            stageName: stageWording?.[currentStage]?.stageName || '待審核',
+            timeTitle: stageWording?.[currentStage]?.timeTitle || '送審時間',
+            memberTitle:
+              stageWording?.[currentStage]?.memberTitle || '送審人員',
           };
 
         case ArticleStage.VERIFIED:
           return {
-            stageName: stageWording?.[stage]?.stageName || '可發佈',
-            timeTitle: stageWording?.[stage]?.timeTitle || '過審時間',
-            memberTitle: stageWording?.[stage]?.memberTitle || '審核人員',
+            stageName: stageWording?.[currentStage]?.stageName || '可發佈',
+            timeTitle: stageWording?.[currentStage]?.timeTitle || '過審時間',
+            memberTitle:
+              stageWording?.[currentStage]?.memberTitle || '審核人員',
           };
 
         case ArticleStage.SCHEDULED:
           return {
-            stageName: stageWording?.[stage]?.stageName || '已預約',
-            timeTitle: stageWording?.[stage]?.timeTitle || '預約發佈時間',
-            memberTitle: stageWording?.[stage]?.memberTitle || '預約發佈人員',
+            stageName: stageWording?.[currentStage]?.stageName || '已預約',
+            timeTitle:
+              stageWording?.[currentStage]?.timeTitle || '預約發佈時間',
+            memberTitle:
+              stageWording?.[currentStage]?.memberTitle || '預約發佈人員',
           };
 
         case ArticleStage.RELEASED:
           return {
-            stageName: stageWording?.[stage]?.stageName || '已發佈',
-            timeTitle: stageWording?.[stage]?.timeTitle || '發佈時間',
-            memberTitle: stageWording?.[stage]?.memberTitle || '發佈人員',
+            stageName: stageWording?.[currentStage]?.stageName || '已發佈',
+            timeTitle: stageWording?.[currentStage]?.timeTitle || '發佈時間',
+            memberTitle:
+              stageWording?.[currentStage]?.memberTitle || '發佈人員',
           };
 
         default:
           return {
-            stageName: stageWording?.[stage]?.stageName || '',
-            timeTitle: stageWording?.[stage]?.timeTitle || '',
-            memberTitle: stageWording?.[stage]?.memberTitle || '',
+            stageName: stageWording?.[currentStage]?.stageName || '',
+            timeTitle: stageWording?.[currentStage]?.timeTitle || '',
+            memberTitle: stageWording?.[currentStage]?.memberTitle || '',
           };
       }
     },
     [stageWording],
   );
 
-  const time = useCallback(
-    (currentStage: ArticleStage): string => {
+  const getStageData = useCallback(
+    (currentStage: ArticleStage) => {
       switch (currentStage) {
         case ArticleStage.DRAFT: {
           if (stageMode) {
-            return data[stageMode]?.createdAt || '';
+            return {
+              time: data[stageMode]?.createdAt || '',
+              member: data[stageMode]?.createdBy || '',
+              reason: data[stageMode]?.reason || '',
+            };
           }
 
-          return data[currentStage]?.updatedAt || '';
+          return {
+            time: data[currentStage]?.updatedAt || '',
+            member: data[currentStage]?.updatedBy || '',
+            reason: data[currentStage]?.reason || '',
+          };
         }
 
         case ArticleStage.REVIEWING: {
           if (stageMode) {
-            return data[stageMode]?.submittedAt || '';
+            return {
+              time: data[stageMode]?.submittedAt || '',
+              member: data[stageMode]?.submittedBy || '',
+              reason: data[stageMode]?.reason || '',
+            };
           }
 
-          return data[currentStage]?.submittedAt || '';
+          return {
+            time: data[currentStage]?.submittedAt || '',
+            member: data[currentStage]?.submittedBy || '',
+            reason: data[currentStage]?.reason || '',
+          };
         }
 
         case ArticleStage.VERIFIED: {
           if (stageMode) {
-            return data[stageMode]?.verifiedAt || '';
+            return {
+              time: data[stageMode]?.verifiedAt || '',
+              member: data[stageMode]?.verifiedBy || '',
+              reason: data[stageMode]?.reason || '',
+            };
           }
 
-          return data[currentStage]?.verifiedAt || '';
+          return {
+            time: data[currentStage]?.verifiedAt || '',
+            member: data[currentStage]?.verifiedBy || '',
+            reason: data[currentStage]?.reason || '',
+          };
         }
 
         case ArticleStage.SCHEDULED: {
           if (stageMode) {
-            return data[stageMode]?.releasedAt || '';
+            return {
+              time: data[stageMode]?.releasedAt || '',
+              member: data[stageMode]?.releasedBy || '',
+              reason: data[stageMode]?.reason || '',
+            };
           }
 
-          return data[currentStage]?.releasedAt || '';
+          return {
+            time: data[currentStage]?.releasedAt || '',
+            member: data[currentStage]?.releasedBy || '',
+            reason: data[currentStage]?.reason || '',
+          };
         }
-
         case ArticleStage.RELEASED: {
           if (stageMode) {
-            return data[stageMode]?.releasedAt || '';
+            return {
+              time: data[stageMode]?.releasedAt || '',
+              member: data[stageMode]?.releasedBy || '',
+              reason: data[stageMode]?.reason || '',
+            };
           }
 
-          return data[currentStage]?.releasedAt || '';
+          return {
+            time: data[currentStage]?.releasedAt || '',
+            member: data[currentStage]?.releasedBy || '',
+            reason: data[currentStage]?.reason || '',
+          };
         }
 
         default:
-          return '';
-      }
-    },
-    [data, stageMode],
-  );
-
-  const member = useCallback(
-    (currentStage: ArticleStage): string => {
-      switch (currentStage) {
-        case ArticleStage.DRAFT: {
-          if (stageMode) {
-            return data[stageMode]?.createdBy || '';
-          }
-
-          return data[currentStage]?.updatedBy || '';
-        }
-
-        case ArticleStage.REVIEWING: {
-          if (stageMode) {
-            return data[stageMode]?.submittedBy || '';
-          }
-
-          return data[currentStage]?.submittedBy || '';
-        }
-
-        case ArticleStage.VERIFIED: {
-          if (stageMode) {
-            return data[stageMode]?.verifiedBy || '';
-          }
-
-          return data[currentStage]?.verifiedBy || '';
-        }
-
-        case ArticleStage.SCHEDULED: {
-          if (stageMode) {
-            return data[stageMode]?.releasedBy || '';
-          }
-
-          return data[currentStage]?.releasedBy || '';
-        }
-
-        case ArticleStage.RELEASED: {
-          if (stageMode) {
-            return data[stageMode]?.releasedBy || '';
-          }
-
-          return data[currentStage]?.releasedBy || '';
-        }
-
-        default:
-          return '';
+          return {
+            time: '',
+            member: '',
+            reason: '',
+          };
       }
     },
     [data, stageMode],
@@ -237,7 +237,8 @@ const LogsModal = ({ data, stageWording }: LogsModalProps): ReactNode => {
                   <div
                     className={cx(classes.dot, {
                       [classes.notActive]:
-                        !time(targetStage) && !member(targetStage),
+                        !getStageData(targetStage).time &&
+                        !getStageData(targetStage).member,
                     })}
                   />
                   <div
@@ -271,7 +272,7 @@ const LogsModal = ({ data, stageWording }: LogsModalProps): ReactNode => {
                         {getStageWording(targetStage).timeTitle}
                       </Typography>
                       <Typography variant="body2" color="text-primary">
-                        {time(targetStage) || '-'}
+                        {getStageData(targetStage).time || '-'}
                       </Typography>
                     </div>
                     <div className={classes.option}>
@@ -279,11 +280,11 @@ const LogsModal = ({ data, stageWording }: LogsModalProps): ReactNode => {
                         {getStageWording(targetStage).memberTitle}
                       </Typography>
                       <Typography variant="body2" color="text-primary">
-                        {member(targetStage) || '-'}
+                        {getStageData(targetStage).member || '-'}
                       </Typography>
                     </div>
                   </div>
-                  {!!data[targetStage]?.reason &&
+                  {!!getStageData(targetStage).reason &&
                     targetStage === ArticleStage.DRAFT && (
                       <div className={classes.reasonWrapper}>
                         <Icon
@@ -292,7 +293,7 @@ const LogsModal = ({ data, stageWording }: LogsModalProps): ReactNode => {
                           color="warning"
                         />
                         <Typography variant="input1" color="text-primary">
-                          {data[targetStage].reason}
+                          {getStageData(targetStage).reason}
                         </Typography>
                       </div>
                     )}
