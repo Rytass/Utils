@@ -137,6 +137,14 @@ const LogsModal = ({ onGetData, stageWording }: LogsModalProps): ReactNode => {
 
         case ArticleStage.REVIEWING: {
           if (stageMode) {
+            if ([ArticleStage.DRAFT].includes(stageMode)) {
+              return {
+                time: '',
+                member: '',
+                reason: '',
+              };
+            }
+
             return {
               time: data?.[stageMode]?.submittedAt || '',
               member: data?.[stageMode]?.submittedBy || '',
@@ -153,6 +161,16 @@ const LogsModal = ({ onGetData, stageWording }: LogsModalProps): ReactNode => {
 
         case ArticleStage.VERIFIED: {
           if (stageMode) {
+            if (
+              [ArticleStage.DRAFT, ArticleStage.REVIEWING].includes(stageMode)
+            ) {
+              return {
+                time: '',
+                member: '',
+                reason: '',
+              };
+            }
+
             return {
               time: data?.[stageMode]?.verifiedAt || '',
               member: data?.[stageMode]?.verifiedBy || '',
@@ -169,6 +187,21 @@ const LogsModal = ({ onGetData, stageWording }: LogsModalProps): ReactNode => {
 
         case ArticleStage.SCHEDULED: {
           if (stageMode) {
+            if (
+              [
+                ArticleStage.DRAFT,
+                ArticleStage.REVIEWING,
+                ArticleStage.VERIFIED,
+                ArticleStage.RELEASED,
+              ].includes(stageMode)
+            ) {
+              return {
+                time: '',
+                member: '',
+                reason: '',
+              };
+            }
+
             return {
               time: data?.[stageMode]?.releasedAt || '',
               member: data?.[stageMode]?.releasedBy || '',
@@ -184,6 +217,21 @@ const LogsModal = ({ onGetData, stageWording }: LogsModalProps): ReactNode => {
         }
         case ArticleStage.RELEASED: {
           if (stageMode) {
+            if (
+              [
+                ArticleStage.DRAFT,
+                ArticleStage.REVIEWING,
+                ArticleStage.VERIFIED,
+                ArticleStage.SCHEDULED,
+              ].includes(stageMode)
+            ) {
+              return {
+                time: '',
+                member: '',
+                reason: '',
+              };
+            }
+
             return {
               time: data?.[stageMode]?.releasedAt || '',
               member: data?.[stageMode]?.releasedBy || '',
