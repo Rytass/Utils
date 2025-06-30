@@ -7,7 +7,7 @@ import {
 } from './typings';
 
 export const toTxnPayload = <T extends object>(value: T): CTBCTxnPayload =>
-  value as unknown as CTBCTxnPayload;
+  value as CTBCTxnPayload;
 
 export function encodeRequestPayload(
   serviceName: string,

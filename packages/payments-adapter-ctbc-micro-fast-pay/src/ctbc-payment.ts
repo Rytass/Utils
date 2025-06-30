@@ -58,7 +58,7 @@ export class CTBCPayment
   ): Promise<Order<N>> {
     const orderInput = input as unknown as CTBCOrderInput;
 
-    return new CTBCOrder(orderInput, this) as unknown as Order<N>;
+    return new CTBCOrder(orderInput, this) as Order<N>;
   }
 
   async query<OO extends CTBCOrder>(id: string): Promise<OO> {

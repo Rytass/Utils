@@ -129,7 +129,7 @@ export class CTBCOrder implements Order<CTBCOrderCommitMessage> {
 
     if (
       !validateResponseMAC(
-        parsed as unknown as Record<string, string>,
+        parsed as Record<string, string>,
         this._gateway.txnKey,
       )
     ) {
