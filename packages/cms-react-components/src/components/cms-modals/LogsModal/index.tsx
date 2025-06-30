@@ -16,9 +16,8 @@ import { LogsData } from './typings';
 import classes from './index.module.scss';
 
 export interface LogsModalProps {
-  data: LogsData;
-  versionsData?: {
-    [keys in number]?: LogsData;
+  data: {
+    [keys in ArticleStage]?: LogsData | null;
   };
   stageWording?: {
     [keys in ArticleStage]?: {
@@ -29,49 +28,8 @@ export interface LogsModalProps {
   };
 }
 
-function normalizeData(currentData: LogsData): {
-  [key in ArticleStage]?: {
-    time: string;
-    member: string;
-    version?: number;
-    reason?: string;
-  };
-} {
-  return {
-    [ArticleStage.DRAFT]: {
-      ...currentData[ArticleStage.DRAFT],
-      time: currentData[ArticleStage.DRAFT].updatedAt,
-      member: currentData[ArticleStage.DRAFT].updatedBy,
-    },
-    [ArticleStage.REVIEWING]: {
-      ...currentData[ArticleStage.REVIEWING],
-      time: currentData[ArticleStage.REVIEWING].submittedAt,
-      member: currentData[ArticleStage.REVIEWING].submittedBy,
-    },
-    [ArticleStage.VERIFIED]: {
-      ...currentData[ArticleStage.VERIFIED],
-      time: currentData[ArticleStage.VERIFIED].verifiedAt,
-      member: currentData[ArticleStage.VERIFIED].verifiedBy,
-    },
-    [ArticleStage.SCHEDULED]: {
-      ...currentData[ArticleStage.SCHEDULED],
-      time: currentData[ArticleStage.SCHEDULED].scheduledAt,
-      member: currentData[ArticleStage.SCHEDULED].scheduledBy,
-    },
-    [ArticleStage.RELEASED]: {
-      ...currentData[ArticleStage.RELEASED],
-      time: currentData[ArticleStage.RELEASED].releasedAt,
-      member: currentData[ArticleStage.RELEASED].releasedBy,
-    },
-  };
-}
-
-const LogsModal = ({
-  data,
-  versionsData,
-  stageWording,
-}: LogsModalProps): ReactNode => {
-  const [versionMode, setVersionMode] = useState<number | null>(null);
+const LogsModal = ({ data, stageWording }: LogsModalProps): ReactNode => {
+  const [stageMode, setStageMode] = useState<ArticleStage | null>(null);
   const { closeModal } = useModal();
 
   const getStageWording = useCallback(
@@ -129,99 +87,182 @@ const LogsModal = ({
     [stageWording],
   );
 
-  const targetData = useMemo(
-    () => (isNumber(versionMode) ? versionsData?.[versionMode] : data),
-    [data, versionMode, versionsData],
+  const time = useCallback(
+    (currentStage: ArticleStage): string => {
+      switch (currentStage) {
+        case ArticleStage.DRAFT: {
+          if (stageMode) {
+            return data[stageMode]?.createdAt || '';
+          }
+
+          return data[currentStage]?.updatedAt || '';
+        }
+
+        case ArticleStage.REVIEWING: {
+          if (stageMode) {
+            return data[stageMode]?.submittedAt || '';
+          }
+
+          return data[currentStage]?.submittedAt || '';
+        }
+
+        case ArticleStage.VERIFIED: {
+          if (stageMode) {
+            return data[stageMode]?.verifiedAt || '';
+          }
+
+          return data[currentStage]?.verifiedAt || '';
+        }
+
+        case ArticleStage.SCHEDULED: {
+          if (stageMode) {
+            return data[stageMode]?.releasedAt || '';
+          }
+
+          return data[currentStage]?.releasedAt || '';
+        }
+
+        case ArticleStage.RELEASED: {
+          if (stageMode) {
+            return data[stageMode]?.releasedAt || '';
+          }
+
+          return data[currentStage]?.releasedAt || '';
+        }
+
+        default:
+          return '';
+      }
+    },
+    [data, stageMode],
   );
 
-  const targetDataNormalized = useMemo(
-    () => (targetData ? normalizeData(targetData) : null),
-    [targetData],
+  const member = useCallback(
+    (currentStage: ArticleStage): string => {
+      switch (currentStage) {
+        case ArticleStage.DRAFT: {
+          if (stageMode) {
+            return data[stageMode]?.createdBy || '';
+          }
+
+          return data[currentStage]?.updatedBy || '';
+        }
+
+        case ArticleStage.REVIEWING: {
+          if (stageMode) {
+            return data[stageMode]?.submittedBy || '';
+          }
+
+          return data[currentStage]?.submittedBy || '';
+        }
+
+        case ArticleStage.VERIFIED: {
+          if (stageMode) {
+            return data[stageMode]?.verifiedBy || '';
+          }
+
+          return data[currentStage]?.verifiedBy || '';
+        }
+
+        case ArticleStage.SCHEDULED: {
+          if (stageMode) {
+            return data[stageMode]?.releasedBy || '';
+          }
+
+          return data[currentStage]?.releasedBy || '';
+        }
+
+        case ArticleStage.RELEASED: {
+          if (stageMode) {
+            return data[stageMode]?.releasedBy || '';
+          }
+
+          return data[currentStage]?.releasedBy || '';
+        }
+
+        default:
+          return '';
+      }
+    },
+    [data, stageMode],
   );
 
   return (
     <>
       <ModalHeader showSeverityIcon={false}>版本資訊</ModalHeader>
       <MznModalBody className={classes.modalBody}>
-        {isNumber(versionMode) && (
+        {stageMode && (
           <Typography variant="h6" color="text-primary">
-            {`Ver. ${versionMode}`}
+            {`Ver. ${data[stageMode]?.version}`}
           </Typography>
         )}
-        {targetDataNormalized && (
-          <div className={classes.wrapper}>
-            {[
-              ArticleStage.DRAFT,
-              ArticleStage.REVIEWING,
-              ArticleStage.VERIFIED,
-              ArticleStage.SCHEDULED,
-              ArticleStage.RELEASED,
-            ].map((targetStage) => {
-              return (
-                <div key={targetStage} className={classes.block}>
-                  <div className={classes.timeLineWrapper}>
-                    <div
-                      className={cx(classes.topLine, {
-                        [classes.isHidden]: targetStage === ArticleStage.DRAFT,
-                      })}
-                    />
-                    <div
-                      className={cx(classes.dot, {
-                        [classes.notActive]:
-                          !targetDataNormalized[targetStage]?.time &&
-                          !targetDataNormalized[targetStage]?.member,
-                      })}
-                    />
-                    <div
-                      className={cx(classes.bottomLine, {
-                        [classes.isHidden]:
-                          targetStage === ArticleStage.RELEASED,
-                      })}
-                    />
+        <div className={classes.wrapper}>
+          {[
+            ArticleStage.DRAFT,
+            ArticleStage.REVIEWING,
+            ArticleStage.VERIFIED,
+            ArticleStage.SCHEDULED,
+            ArticleStage.RELEASED,
+          ].map((targetStage) => {
+            return (
+              <div key={targetStage} className={classes.block}>
+                <div className={classes.timeLineWrapper}>
+                  <div
+                    className={cx(classes.topLine, {
+                      [classes.isHidden]: targetStage === ArticleStage.DRAFT,
+                    })}
+                  />
+                  <div
+                    className={cx(classes.dot, {
+                      [classes.notActive]:
+                        !time(targetStage) && !member(targetStage),
+                    })}
+                  />
+                  <div
+                    className={cx(classes.bottomLine, {
+                      [classes.isHidden]: targetStage === ArticleStage.RELEASED,
+                    })}
+                  />
+                </div>
+                <div className={classes.contentWrapper}>
+                  <div className={classes.stageWrapper}>
+                    <Typography variant="h5" color="text-primary">
+                      {getStageWording(targetStage).stageName}
+                    </Typography>
+                    {!stageMode && isNumber(data[targetStage]?.version) && (
+                      <Button
+                        type="button"
+                        variant="text"
+                        color="secondary"
+                        size="small"
+                        onClick={() => {
+                          setStageMode(targetStage);
+                        }}
+                      >
+                        {`Ver. ${data[targetStage].version}`}
+                      </Button>
+                    )}
                   </div>
-                  <div className={classes.contentWrapper}>
-                    <div className={classes.stageWrapper}>
-                      <Typography variant="h5" color="text-primary">
-                        {getStageWording(targetStage).stageName}
+                  <div className={classes.list}>
+                    <div className={classes.option}>
+                      <Typography variant="h6" color="text-secondary">
+                        {getStageWording(targetStage).timeTitle}
                       </Typography>
-                      {!isNumber(versionMode) &&
-                        isNumber(
-                          targetDataNormalized[targetStage]?.version,
-                        ) && (
-                          <Button
-                            type="button"
-                            variant="text"
-                            color="secondary"
-                            size="small"
-                            onClick={() => {
-                              setVersionMode(
-                                targetDataNormalized[targetStage]?.version!,
-                              );
-                            }}
-                          >
-                            {`Ver. ${targetDataNormalized[targetStage].version}`}
-                          </Button>
-                        )}
+                      <Typography variant="body2" color="text-primary">
+                        {time(targetStage) || '-'}
+                      </Typography>
                     </div>
-                    <div className={classes.list}>
-                      <div className={classes.option}>
-                        <Typography variant="h6" color="text-secondary">
-                          {getStageWording(targetStage).timeTitle}
-                        </Typography>
-                        <Typography variant="body2" color="text-primary">
-                          {targetDataNormalized[targetStage]?.time || '-'}
-                        </Typography>
-                      </div>
-                      <div className={classes.option}>
-                        <Typography variant="h6" color="text-secondary">
-                          {getStageWording(targetStage).memberTitle}
-                        </Typography>
-                        <Typography variant="body2" color="text-primary">
-                          {targetDataNormalized[targetStage]?.member || '-'}
-                        </Typography>
-                      </div>
+                    <div className={classes.option}>
+                      <Typography variant="h6" color="text-secondary">
+                        {getStageWording(targetStage).memberTitle}
+                      </Typography>
+                      <Typography variant="body2" color="text-primary">
+                        {member(targetStage) || '-'}
+                      </Typography>
                     </div>
-                    {!!targetDataNormalized[targetStage]?.reason && (
+                  </div>
+                  {!!data[targetStage]?.reason &&
+                    targetStage === ArticleStage.DRAFT && (
                       <div className={classes.reasonWrapper}>
                         <Icon
                           icon={ExclamationCircleFilledIcon}
@@ -229,16 +270,15 @@ const LogsModal = ({
                           color="warning"
                         />
                         <Typography variant="input1" color="text-primary">
-                          {targetDataNormalized[targetStage].reason}
+                          {data[targetStage].reason}
                         </Typography>
                       </div>
                     )}
-                  </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
+              </div>
+            );
+          })}
+        </div>
       </MznModalBody>
       <ModalActions
         cancelText="返回"
@@ -249,7 +289,7 @@ const LogsModal = ({
           variant: 'outlined',
           danger: false,
           style: {
-            display: isNumber(versionMode) ? 'flex' : 'none',
+            display: stageMode ? 'flex' : 'none',
           },
         }}
         confirmButtonProps={{
@@ -259,7 +299,7 @@ const LogsModal = ({
           danger: false,
         }}
         onCancel={() => {
-          setVersionMode(null);
+          setStageMode(null);
         }}
         onConfirm={closeModal}
       />
