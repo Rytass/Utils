@@ -160,6 +160,50 @@ describe('CategoryBaseService.findAll', () => {
       'DESC',
     );
   });
+
+  it('should return parsed categories with undefined language when language is not provided and multipleLanguageMode is false', async () => {
+    const mockCategories = [
+      {
+        id: '1',
+        multiLanguageNames: [],
+        children: [],
+      },
+      {
+        id: '2',
+        multiLanguageNames: [],
+        children: [],
+      },
+    ];
+
+    mockQueryBuilder.getMany.mockResolvedValue(mockCategories);
+
+    (service as any).multipleLanguageMode = false;
+
+    const mockParsed = mockCategories.map((c) => ({
+      ...c,
+      name: undefined,
+      language: undefined,
+    }));
+
+    const parseSpy = jest
+      .spyOn(service as any, 'parseSingleLanguageCategory')
+      .mockImplementation((...args: unknown[]) => {
+        const [cat, lang] = args as [Record<string, any>, any];
+
+        return {
+          ...cat,
+          name: undefined,
+          language: lang,
+        };
+      });
+
+    const result = await service.findAll({});
+
+    expect(parseSpy).toHaveBeenCalledTimes(2);
+    expect(parseSpy).toHaveBeenNthCalledWith(1, mockCategories[0], undefined);
+    expect(parseSpy).toHaveBeenNthCalledWith(2, mockCategories[1], undefined);
+    expect(result).toEqual(mockParsed);
+  });
 });
 
 describe('CategoryBaseService.findById', () => {
