@@ -1,20 +1,25 @@
 import { Buffer } from 'node:buffer';
 import { decrypt3DES, getDivKey, getMAC } from './ctbc-crypto-core';
-import { CTBCRawResponse } from './typings';
 
 export function toStringRecord<T>(input: T): Record<string, string> {
   return input as Record<string, string>;
 }
 
 export function decodeResponsePayload<T = Record<string, string>>(
-  hex: string,
+  encoded: string,
   txnKey: string,
   options?: { validateMAC?: boolean },
 ): T {
-  const base64 = Buffer.from(hex, 'hex').toString('utf8');
-  const json = Buffer.from(base64, 'base64').toString('utf8');
+  const params = new URLSearchParams(encoded);
+  const rawResponseKey = Array.from(params.keys())[0];
 
-  const response: CTBCRawResponse = JSON.parse(json);
+  if (!rawResponseKey) {
+    throw new Error('Missing encoded response payload');
+  }
+
+  const json = decodeURIComponent(decodeURIComponent(rawResponseKey));
+  const response = JSON.parse(json);
+
   const { MAC, TXN } = response.Response.Data;
 
   const divKey = getDivKey(txnKey);
@@ -24,20 +29,12 @@ export function decodeResponsePayload<T = Record<string, string>>(
     decrypted.split('&').map((kv) => {
       const [k, v] = kv.split('=');
 
-      return [k, v];
+      return [k, v ?? ''];
     }),
   ) as Record<string, string>;
 
   if (options?.validateMAC ?? true) {
-    const sorted = Object.entries(obj)
-      .filter(([_, v]) => v !== undefined)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([k, v]) => `${k}=${v}`)
-      .join('&');
-
-    const expected = getMAC(sorted, txnKey);
-
-    if (expected !== MAC) {
+    if (!validateResponseMAC(decrypted, MAC, txnKey)) {
       throw new Error('MAC validation failed');
     }
   }
@@ -45,17 +42,12 @@ export function decodeResponsePayload<T = Record<string, string>>(
   return obj as T;
 }
 
-export function validateResponseMAC<T extends Record<string, string>>(
-  payload: T,
+export function validateResponseMAC(
+  txnPlaintext: string,
+  mac: string,
   txnKey: string,
 ): boolean {
-  const sorted = Object.entries(payload)
-    .filter(([_, v]) => v !== undefined)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([k, v]) => `${k}=${v}`)
-    .join('&');
+  const expected = getMAC(txnPlaintext, txnKey);
 
-  const expected = getMAC(sorted, txnKey);
-
-  return expected === payload.MAC;
+  return expected === mac;
 }
