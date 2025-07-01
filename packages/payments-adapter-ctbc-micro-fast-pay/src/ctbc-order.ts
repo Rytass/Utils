@@ -9,7 +9,7 @@ import {
 } from '@rytass/payments';
 import { encodeRequestPayload, toTxnPayload } from './ctbc-crypto';
 import { CTBCPayment } from './ctbc-payment';
-import { decodeResponsePayload, validateResponseMAC } from './ctbc-response';
+import { decodeResponsePayload } from './ctbc-response';
 import {
   CTBCOrderCommitMessage,
   CTBCOrderCommitPayload,
@@ -125,46 +125,62 @@ export class CTBCOrder implements Order<CTBCOrderCommitMessage> {
 
     const responseText = await response.text();
 
-    const parsed = decodeResponsePayload(responseText, this._gateway.txnKey);
+    try {
+      const parsed = decodeResponsePayload<CTBCOrderCommitResultPayload>(
+        responseText,
+        this._gateway.txnKey,
+      );
 
-    const result: CTBCOrderCommitResultPayload = {
-      MerchantID: parsed.MerchantID,
-      MerID: parsed.MerID,
-      MemberID: parsed.MemberID,
-      RequestNo: parsed.RequestNo,
-      StatusCode: parsed.StatusCode,
-      StatusDesc: parsed.StatusDesc,
-      ResponseTime: parsed.ResponseTime,
-      AuthCode: parsed.AuthCode ?? undefined,
-      ECI: parsed.ECI ?? undefined,
-      OrderNo: parsed.OrderNo ?? undefined,
-    };
-
-    if (result.StatusCode === '00') {
-      this._platformTradeNumber = result.OrderNo;
-      this.commit({
-        id: this.id,
-        totalPrice: this._amount,
-        memberId: this._memberId,
-        cardToken: this._cardToken,
-        committedAt: new Date(),
-      });
-
-      this._gateway.emitter.emit(PaymentEvents.ORDER_COMMITTED, this);
-
-      return {
-        success: true,
-        orderNo: result.OrderNo,
+      const result: CTBCOrderCommitResultPayload = {
+        MerchantID: parsed.MerchantID,
+        MerID: parsed.MerID,
+        MemberID: parsed.MemberID,
+        RequestNo: parsed.RequestNo,
+        StatusCode: parsed.StatusCode,
+        StatusDesc: parsed.StatusDesc,
+        ResponseTime: parsed.ResponseTime,
+        AuthCode: parsed.AuthCode ?? undefined,
+        ECI: parsed.ECI ?? undefined,
+        OrderNo: parsed.OrderNo ?? undefined,
       };
-    } else {
-      this.fail(result.StatusCode, result.StatusDesc);
+
+      if (result.StatusCode === '00') {
+        this._platformTradeNumber = result.OrderNo;
+        this.commit({
+          id: this.id,
+          totalPrice: this._amount,
+          memberId: this._memberId,
+          cardToken: this._cardToken,
+          committedAt: new Date(),
+        });
+
+        this._gateway.emitter.emit(PaymentEvents.ORDER_COMMITTED, this);
+
+        return {
+          success: true,
+          orderNo: result.OrderNo,
+        };
+      } else {
+        this.fail(result.StatusCode, result.StatusDesc);
+        this._gateway.emitter.emit(PaymentEvents.ORDER_FAILED, this);
+
+        return {
+          success: false,
+          error: {
+            code: result.StatusCode,
+            message: result.StatusDesc,
+          },
+        };
+      }
+    } catch (error) {
+      this.fail('MAC_FAIL', 'Invalid MAC in response');
       this._gateway.emitter.emit(PaymentEvents.ORDER_FAILED, this);
 
       return {
         success: false,
         error: {
-          code: result.StatusCode,
-          message: result.StatusDesc,
+          code: 'MAC_FAIL',
+          message: 'Invalid MAC in response',
         },
       };
     }
