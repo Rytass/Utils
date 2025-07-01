@@ -7,12 +7,20 @@ export function toStringRecord<T>(input: T): Record<string, string> {
 }
 
 export function decodeResponsePayload<T = Record<string, string>>(
-  hex: string,
+  encoded: string,
   txnKey: string,
   options?: { validateMAC?: boolean },
 ): T {
-  const base64 = Buffer.from(hex, 'hex').toString('utf8');
-  const json = Buffer.from(base64, 'base64').toString('utf8');
+  const params = new URLSearchParams(encoded);
+
+  const requestJsonPwd = params.get('reqjsonpwd') ?? encoded;
+
+  if (!requestJsonPwd) {
+    throw new Error('Missing reqjsonpwd');
+  }
+
+  const hexEncoded = decodeURIComponent(requestJsonPwd);
+  const json = Buffer.from(hexEncoded, 'hex').toString('utf8');
 
   const response: CTBCRawResponse = JSON.parse(json);
   const { MAC, TXN } = response.Response.Data;
@@ -24,7 +32,7 @@ export function decodeResponsePayload<T = Record<string, string>>(
     decrypted.split('&').map((kv) => {
       const [k, v] = kv.split('=');
 
-      return [k, v];
+      return [k, v ?? ''];
     }),
   ) as Record<string, string>;
 
