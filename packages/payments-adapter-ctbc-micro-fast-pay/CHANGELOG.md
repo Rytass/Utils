@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.3](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.0.2...@rytass/payments-adapter-ctbc-micro-fast-pay@0.0.3) (2025-07-01)
+
+### Bug Fixes
+
+- **payments-adapter-ctbc-micro-fast-pay:** align formHTML with CTBC bind card auto-submit format ([40a6a38](https://github.com/Rytass/Utils/commit/40a6a38d0927a128b92d660535c7e66511aec53b))
+
+### Features
+
+- **payments-adapter-ctbc-micro-fast-pay:** distinguish between MerchantID and MerID in constructor ([7a54638](https://github.com/Rytass/Utils/commit/7a54638762c38abfb9f72b59502bcce47f0b1011))
+
 ## 0.0.2 (2025-06-28)
 
 ### Features
