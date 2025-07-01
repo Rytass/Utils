@@ -3,7 +3,7 @@ import { decrypt3DES, getDivKey, getMAC } from './ctbc-crypto-core';
 import { CTBCRawResponse } from './typings';
 
 export function toStringRecord<T>(input: T): Record<string, string> {
-  return input as unknown as Record<string, string>;
+  return input as Record<string, string>;
 }
 
 export function decodeResponsePayload<T = Record<string, string>>(

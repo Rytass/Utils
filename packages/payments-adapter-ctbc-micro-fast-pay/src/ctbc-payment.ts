@@ -26,6 +26,7 @@ export class CTBCPayment
     BindCardGatewayLike
 {
   readonly merchantId: string;
+  readonly merId: string;
   readonly txnKey: string;
   readonly baseUrl: string;
   readonly endpoint: string;
@@ -36,14 +37,16 @@ export class CTBCPayment
 
   constructor(options: {
     merchantId: string;
+    merId: string;
     txnKey: string;
     baseUrl?: string;
     withServer?: boolean;
   }) {
     this.merchantId = options.merchantId;
+    this.merId = options.merId;
     this.txnKey = options.txnKey;
     this.baseUrl = options.baseUrl ?? 'https://ccapi.ctbcbank.com';
-    this.endpoint = `${this.baseUrl}/MicroPayExt/PayJSON`;
+    this.endpoint = `${this.baseUrl}/mFastPay/TxnServlet`;
     this._server = options.withServer ?? false;
   }
 
@@ -56,17 +59,31 @@ export class CTBCPayment
   async prepare<N extends CTBCOrderCommitMessage>(
     input: InputFromOrderCommitMessage<N>,
   ): Promise<Order<N>> {
-    const orderInput = input as unknown as CTBCOrderInput;
+    const isCTBCOrderInput =
+      typeof input === 'object' &&
+      input !== null &&
+      'id' in input &&
+      'memberId' in input &&
+      'cardToken' in input &&
+      'totalPrice' in input &&
+      typeof input.id === 'string' &&
+      typeof input.memberId === 'string' &&
+      typeof input.cardToken === 'string' &&
+      typeof input.totalPrice === 'number';
 
-    return new CTBCOrder(orderInput, this) as unknown as Order<N>;
+    if (!isCTBCOrderInput) throw new Error('Invalid CTBCOrderInput');
+
+    const orderInput = input as CTBCOrderInput;
+
+    return new CTBCOrder(orderInput, this) as Order<N>;
   }
 
   async query<OO extends CTBCOrder>(id: string): Promise<OO> {
     throw new Error('Not implemented');
   }
 
-  getBindingURL(_: CTBCBindCardRequest): string {
-    return `${this.baseUrl}/MicroPayExt/TokenAdd`;
+  getBindingURL(): string {
+    return `${this.baseUrl}/mFastPay/TxnServlet`;
   }
 
   async queryBoundCard(memberId: string): Promise<{ expireDate: Date }> {

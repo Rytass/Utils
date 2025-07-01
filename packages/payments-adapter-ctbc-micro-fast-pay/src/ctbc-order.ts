@@ -87,7 +87,7 @@ export class CTBCOrder implements Order<CTBCOrderCommitMessage> {
 
   async executeCommit(): Promise<CTBCOrderCommitResult> {
     const payload: CTBCOrderCommitPayload = {
-      MerID: this._gateway.merchantId,
+      MerID: this._gateway.merId,
       MemberID: this._memberId,
       RequestNo: this.id,
       Token: this._cardToken,
@@ -127,9 +127,22 @@ export class CTBCOrder implements Order<CTBCOrderCommitMessage> {
 
     const parsed = decodeResponsePayload(responseText, this._gateway.txnKey);
 
+    const result: CTBCOrderCommitResultPayload = {
+      MerchantID: parsed.MerchantID,
+      MerID: parsed.MerID,
+      MemberID: parsed.MemberID,
+      RequestNo: parsed.RequestNo,
+      StatusCode: parsed.StatusCode,
+      StatusDesc: parsed.StatusDesc,
+      ResponseTime: parsed.ResponseTime,
+      AuthCode: parsed.AuthCode ?? undefined,
+      ECI: parsed.ECI ?? undefined,
+      OrderNo: parsed.OrderNo ?? undefined,
+    };
+
     if (
       !validateResponseMAC(
-        parsed as unknown as Record<string, string>,
+        parsed as Record<string, string>,
         this._gateway.txnKey,
       )
     ) {
@@ -144,8 +157,6 @@ export class CTBCOrder implements Order<CTBCOrderCommitMessage> {
         },
       };
     }
-
-    const result = parsed as unknown as CTBCOrderCommitResultPayload;
 
     if (result.StatusCode === '00') {
       this._platformTradeNumber = result.OrderNo;
