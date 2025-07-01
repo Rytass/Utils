@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.4](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.0.3...@rytass/payments-adapter-ctbc-micro-fast-pay@0.0.4) (2025-07-01)
+
+### Bug Fixes
+
+- **payments-adapter-ctbc-micro-fast-pay:** correct double-encoded payload decoding in decodeResponsePayload ([841a1d1](https://github.com/Rytass/Utils/commit/841a1d1f8c9ad603799791f7918ae2421181bb15))
+
 ## [0.0.3](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.0.2...@rytass/payments-adapter-ctbc-micro-fast-pay@0.0.3) (2025-07-01)
 
 ### Bug Fixes
