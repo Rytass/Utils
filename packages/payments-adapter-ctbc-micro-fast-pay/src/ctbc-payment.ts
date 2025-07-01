@@ -96,10 +96,6 @@ export class CTBCPayment
       this.txnKey,
     );
 
-    if (!validateResponseMAC(toStringRecord(payload), this.txnKey)) {
-      throw new Error('MAC validation failed');
-    }
-
     const requestNo = payload.RequestNo;
 
     if (!this.bindCardRequestsCache.has(requestNo)) {

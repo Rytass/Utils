@@ -140,24 +140,6 @@ export class CTBCOrder implements Order<CTBCOrderCommitMessage> {
       OrderNo: parsed.OrderNo ?? undefined,
     };
 
-    if (
-      !validateResponseMAC(
-        parsed as Record<string, string>,
-        this._gateway.txnKey,
-      )
-    ) {
-      this.fail('MAC_FAIL', 'Invalid MAC in response');
-      this._gateway.emitter.emit(PaymentEvents.ORDER_FAILED, this);
-
-      return {
-        success: false,
-        error: {
-          code: 'MAC_FAIL',
-          message: 'Invalid MAC in response',
-        },
-      };
-    }
-
     if (result.StatusCode === '00') {
       this._platformTradeNumber = result.OrderNo;
       this.commit({
