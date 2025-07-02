@@ -16,8 +16,6 @@ import {
 import { CTBCBindCardRequest } from './ctbc-bind-card-request';
 import {
   decodeResponsePayload,
-  toStringRecord,
-  validateResponseMAC,
 } from './ctbc-response';
 
 export class CTBCPayment
