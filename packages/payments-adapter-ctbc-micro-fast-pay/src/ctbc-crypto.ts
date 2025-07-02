@@ -36,8 +36,8 @@ export function encodeRequestPayload(
   gateway: { merchantId: string; txnKey: string },
 ): string {
   const urlString = Object.entries(payload)
-    .filter(([_, value]) => value !== undefined)
-    .sort(([a], [b]) => a.localeCompare(b))
+    .filter(([_, v]) => v !== undefined)
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
     .map(([k, v]) => `${k}=${v}`)
     .join('&');
 
