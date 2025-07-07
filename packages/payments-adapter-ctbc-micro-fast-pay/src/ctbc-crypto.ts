@@ -7,7 +7,7 @@ import {
 } from './typings';
 
 export const toTxnPayload = <T extends object>(value: T): CTBCTxnPayload =>
-  value as unknown as CTBCTxnPayload;
+  value as CTBCTxnPayload;
 
 export function encodeRequestPayload(
   serviceName: string,
@@ -65,7 +65,7 @@ export function encodeRequestPayload(
   };
 
   const json = JSON.stringify(request);
-  const base64 = Buffer.from(json).toString('base64');
+  const encoded = encodeURIComponent(json);
 
-  return Buffer.from(base64).toString('hex').toUpperCase();
+  return encoded;
 }
