@@ -4,10 +4,12 @@ import {
   MULTIPLE_LANGUAGE_MODE,
 } from '@rytass/cms-base-nestjs-module';
 import { CreateCategoryArgs } from '../dto/create-category.args';
-import { IsPublic } from '@rytass/member-base-nestjs-module';
+import { AllowActions } from '@rytass/member-base-nestjs-module';
 import { BackstageCategoryDto } from '../dto/backstage-category.dto';
 import { UpdateCategoryArgs } from '../dto/update-category.args';
 import { Inject } from '@nestjs/common';
+import { BaseAction } from '../constants/enum/base-action.enum';
+import { BaseResource } from '../constants/enum/base-resource.enum';
 
 @Resolver()
 export class CategoryMutations {
@@ -42,7 +44,7 @@ export class CategoryMutations {
   }
 
   @Mutation(() => BackstageCategoryDto)
-  @IsPublic()
+  @AllowActions([[BaseResource.CATEGORY, BaseAction.CREATE]])
   createCategory(
     @Args() args: CreateCategoryArgs,
   ): Promise<BackstageCategoryDto> {
@@ -52,7 +54,7 @@ export class CategoryMutations {
   }
 
   @Mutation(() => BackstageCategoryDto)
-  @IsPublic()
+  @AllowActions([[BaseResource.CATEGORY, BaseAction.UPDATE]])
   updateCategory(
     @Args() args: UpdateCategoryArgs,
   ): Promise<BackstageCategoryDto> {
@@ -62,7 +64,7 @@ export class CategoryMutations {
   }
 
   @Mutation(() => Boolean)
-  @IsPublic()
+  @AllowActions([[BaseResource.CATEGORY, BaseAction.DELETE]])
   async deleteCategory(
     @Args('id', { type: () => ID }) id: string,
   ): Promise<boolean> {

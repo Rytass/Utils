@@ -5,11 +5,13 @@ import {
   MULTIPLE_LANGUAGE_MODE,
 } from '@rytass/cms-base-nestjs-module';
 import { CategoriesArgs } from '../dto/categories.args';
-import { IsPublic } from '@rytass/member-base-nestjs-module';
+import { AllowActions, IsPublic } from '@rytass/member-base-nestjs-module';
 import { CategoryDto } from '../dto/category.dto';
 import { Language } from '../decorators/language.decorator';
 import { BackstageCategoryDto } from '../dto/backstage-category.dto';
 import { Inject } from '@nestjs/common';
+import { BaseAction } from '../constants/enum/base-action.enum';
+import { BaseResource } from '../constants/enum/base-resource.enum';
 
 @Resolver()
 export class CategoryQueries {
@@ -45,7 +47,7 @@ export class CategoryQueries {
   }
 
   @Query(() => BackstageCategoryDto)
-  @IsPublic()
+  @AllowActions([[BaseResource.CATEGORY, BaseAction.READ]])
   backstageCategory(
     @Args('id', { type: () => ID }) id: string,
   ): Promise<BackstageCategoryDto> {
@@ -53,7 +55,7 @@ export class CategoryQueries {
   }
 
   @Query(() => [BackstageCategoryDto])
-  @IsPublic()
+  @AllowActions([[BaseResource.CATEGORY, BaseAction.LIST]])
   backstageCategories(
     @Args() args: CategoriesArgs,
   ): Promise<BackstageCategoryDto[]> {

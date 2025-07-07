@@ -6,9 +6,11 @@ import {
 import { Args, ID, Int, Mutation, Resolver } from '@nestjs/graphql';
 import { BackstageArticleDto } from '../dto/backstage-article.dto';
 import { CreateArticleArgs } from '../dto/create-article.args';
-import { IsPublic, MemberId } from '@rytass/member-base-nestjs-module';
+import { AllowActions, MemberId } from '@rytass/member-base-nestjs-module';
 import { UpdateArticleArgs } from '../dto/update-article.args';
 import { Inject } from '@nestjs/common';
+import { BaseAction } from '../constants/enum/base-action.enum';
+import { BaseResource } from '../constants/enum/base-resource.enum';
 
 @Resolver()
 export class ArticleMutations {
@@ -57,7 +59,7 @@ export class ArticleMutations {
   }
 
   @Mutation(() => BackstageArticleDto)
-  @IsPublic()
+  @AllowActions([[BaseResource.ARTICLE, BaseAction.CREATE]])
   async createArticle(
     @MemberId() memberId: string,
     @Args() args: CreateArticleArgs,
@@ -69,7 +71,7 @@ export class ArticleMutations {
   }
 
   @Mutation(() => BackstageArticleDto)
-  @IsPublic()
+  @AllowActions([[BaseResource.ARTICLE, BaseAction.UPDATE]])
   async updateArticle(
     @MemberId() memberId: string,
     @Args() args: UpdateArticleArgs,
@@ -81,7 +83,7 @@ export class ArticleMutations {
   }
 
   @Mutation(() => Boolean)
-  @IsPublic()
+  @AllowActions([[BaseResource.ARTICLE, BaseAction.DELETE]])
   async deleteArticle(
     @Args('id', { type: () => ID }) id: string,
   ): Promise<boolean> {
@@ -91,7 +93,7 @@ export class ArticleMutations {
   }
 
   @Mutation(() => Boolean)
-  @IsPublic()
+  @AllowActions([[BaseResource.ARTICLE, BaseAction.DELETE_VERSION]])
   async deleteArticleVersion(
     @Args('id', { type: () => ID }) id: string,
     @Args('version', { type: () => Int }) version: number,
@@ -102,7 +104,7 @@ export class ArticleMutations {
   }
 
   @Mutation(() => BackstageArticleDto)
-  @IsPublic()
+  @AllowActions([[BaseResource.ARTICLE, BaseAction.SUBMIT]])
   async submitArticle(
     @MemberId() memberId: string,
     @Args('id', { type: () => ID }) id: string,
@@ -113,7 +115,7 @@ export class ArticleMutations {
   }
 
   @Mutation(() => BackstageArticleDto)
-  @IsPublic()
+  @AllowActions([[BaseResource.ARTICLE, BaseAction.PUT_BACK]])
   async putBackArticle(
     @MemberId() memberId: string,
     @Args('id', { type: () => ID }) id: string,
@@ -122,7 +124,7 @@ export class ArticleMutations {
   }
 
   @Mutation(() => BackstageArticleDto)
-  @IsPublic()
+  @AllowActions([[BaseResource.ARTICLE, BaseAction.APPROVE]])
   async approveArticle(
     @Args('id', { type: () => ID }) id: string,
     @Args('version', { type: () => Int, nullable: true })
@@ -137,7 +139,7 @@ export class ArticleMutations {
   }
 
   @Mutation(() => BackstageArticleDto)
-  @IsPublic()
+  @AllowActions([[BaseResource.ARTICLE, BaseAction.REJECT]])
   async rejectArticle(
     @Args('id', { type: () => ID }) id: string,
     @Args('reason', { type: () => String, nullable: true })
@@ -147,7 +149,7 @@ export class ArticleMutations {
   }
 
   @Mutation(() => BackstageArticleDto)
-  @IsPublic()
+  @AllowActions([[BaseResource.ARTICLE, BaseAction.RELEASE]])
   releaseArticle(
     @MemberId() userId: string,
     @Args('id', { type: () => ID }) id: string,
@@ -163,7 +165,7 @@ export class ArticleMutations {
   }
 
   @Mutation(() => BackstageArticleDto)
-  @IsPublic()
+  @AllowActions([[BaseResource.ARTICLE, BaseAction.WITHDRAW]])
   withdrawArticle(
     @Args('id', { type: () => ID }) id: string,
     @Args('version', { type: () => Int }) version: number,
