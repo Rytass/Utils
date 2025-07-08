@@ -53,7 +53,11 @@ export class CTBCPayment
   createBindCardRequest(
     payload: CTBCBindCardRequestPayload,
   ): CTBCBindCardRequest {
-    return new CTBCBindCardRequest(payload, this);
+    const request = new CTBCBindCardRequest(payload, this);
+
+    this.bindCardRequestsCache.set(payload.RequestNo, request);
+
+    return request;
   }
 
   async prepare<N extends CTBCOrderCommitMessage>(
