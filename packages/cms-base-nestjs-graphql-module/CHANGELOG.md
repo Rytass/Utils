@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.24](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.23...@rytass/cms-base-nestjs-graphql-module@0.0.24) (2025-07-08)
+
+### Bug Fixes
+
+- **cms-base-nestjs-graphql-module:** fix multiple language mode is not enabled ([74ee78f](https://github.com/Rytass/Utils/commit/74ee78fd36194e03d0bffced87675428bc07d92c))
+
+### Features
+
+- **cms-base-nestjs-graphql-module:** replace IsPublic with AllowActions for article and category mutations and queries; add BaseAction and BaseResource enums ([31f85f4](https://github.com/Rytass/Utils/commit/31f85f441f8d7919abd43f19d1f7da865a72b575))
+
 ## [0.0.23](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.22...@rytass/cms-base-nestjs-graphql-module@0.0.23) (2025-06-30)
 
 **Note:** Version bump only for package @rytass/cms-base-nestjs-graphql-module
