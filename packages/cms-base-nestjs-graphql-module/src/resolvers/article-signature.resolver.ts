@@ -1,7 +1,7 @@
 import { ResolveField, Resolver, Root } from '@nestjs/graphql';
 import { ArticleSignatureDto } from '../dto/article-signature.dto';
 import { UserDto } from '../dto/user.dto';
-import { IsPublic } from '@rytass/member-base-nestjs-module';
+import { Authenticated } from '@rytass/member-base-nestjs-module';
 import { MemberDataLoader } from '../data-loaders/members.dataloader';
 import {
   ArticleSignatureEntity,
@@ -14,7 +14,7 @@ export class ArticleSignatureResolver {
   constructor(private readonly memberDataloader: MemberDataLoader) {}
 
   @ResolveField(() => UserDto, { nullable: true })
-  @IsPublic()
+  @Authenticated()
   signer(
     @Root() signature: ArticleSignatureEntity,
   ): Promise<UserDto | null> | null {
@@ -24,7 +24,7 @@ export class ArticleSignatureResolver {
   }
 
   @ResolveField(() => ArticleSignatureStepDto)
-  @IsPublic()
+  @Authenticated()
   step(@Root() signature: ArticleSignatureEntity): ArticleSignatureStepDto {
     return (
       signature.signatureLevel ?? {
