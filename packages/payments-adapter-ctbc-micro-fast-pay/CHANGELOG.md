@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.5](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.0.4...@rytass/payments-adapter-ctbc-micro-fast-pay@0.0.5) (2025-07-08)
+
+### Bug Fixes
+
+- **payments-adapter-ctbc-micro-fast-pay:** ensure TXN_DATA sorting uses strict ASCII order ([02d2699](https://github.com/Rytass/Utils/commit/02d2699c6bf58d616d85b11f5e7bd24778b9002c))
+- **payments-adapter-ctbc-micro-fast-pay:** remove redundant double decodeURIComponent for response payload ([00fe516](https://github.com/Rytass/Utils/commit/00fe5166f1f199547da9fbb06541270268e0a262))
+
+### Features
+
+- **payments-adapter-ctbc-micro-fast-pay:** cache bind card request instances by RequestNo ([a7bf7f9](https://github.com/Rytass/Utils/commit/a7bf7f9845db1a9584ae92ac4693817e51cc7445))
+
 ## [0.0.4](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.0.3...@rytass/payments-adapter-ctbc-micro-fast-pay@0.0.4) (2025-07-01)
 
 ### Bug Fixes
