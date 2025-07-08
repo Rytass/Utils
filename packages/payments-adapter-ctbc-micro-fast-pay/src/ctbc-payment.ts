@@ -16,6 +16,8 @@ import {
 import { CTBCBindCardRequest } from './ctbc-bind-card-request';
 import {
   decodeResponsePayload,
+  toStringRecord,
+  validateResponseMAC,
 } from './ctbc-response';
 
 export class CTBCPayment
@@ -51,7 +53,11 @@ export class CTBCPayment
   createBindCardRequest(
     payload: CTBCBindCardRequestPayload,
   ): CTBCBindCardRequest {
-    return new CTBCBindCardRequest(payload, this);
+    const request = new CTBCBindCardRequest(payload, this);
+
+    this.bindCardRequestsCache.set(payload.RequestNo, request);
+
+    return request;
   }
 
   async prepare<N extends CTBCOrderCommitMessage>(
