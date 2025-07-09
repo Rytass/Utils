@@ -44,8 +44,15 @@ const bindCardRequest = payment.createBindCardRequest({
 
 4. 後端解密並處理：
 
+使用 strictCache 控制快取依賴
+
+handleBindCardCallback 的第二個參數 strictCache 預設為 true，表示此 callback
+必須對應到先前建立的快取綁卡請求，否則會拋出錯誤。
+
+若你希望在找不到快取時，依照回傳電文自動建立新的綁卡請求，可設為 false：
+
 ```ts
-payment.handleBindCardCallback(req.body.reqjsonpwd);
+payment.handleBindCardCallback(req.body.reqjsonpwd, false);
 ```
 
 5. 成功後觸發事件：

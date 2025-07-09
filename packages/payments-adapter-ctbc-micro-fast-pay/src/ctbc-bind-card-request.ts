@@ -28,6 +28,10 @@ export class CTBCBindCardRequest {
     this._memberId = payload.MemberID;
   }
 
+  get payload(): CTBCBindCardRequestPayload {
+    return this._payload;
+  }
+
   get memberId(): string {
     return this._memberId;
   }
@@ -136,7 +140,6 @@ export class CTBCBindCardRequest {
         this._cardNumberPrefix = payload.CardNoMask.slice(0, 6);
         this._cardNumberSuffix = payload.CardNoMask.slice(-4);
       }
-
     }
 
     this._gateway.emitter.emit(PaymentEvents.CARD_BINDING_FAILED, this);
