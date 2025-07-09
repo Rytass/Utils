@@ -74,7 +74,7 @@ const order = payment.createOrder(
 2. 執行請款：
 
 ```ts
-const result = await order.commit();
+const result = await order.executeCommit();
 
 if (result.success) {
   console.log('請款成功，平台交易號：', result.orderNo);
