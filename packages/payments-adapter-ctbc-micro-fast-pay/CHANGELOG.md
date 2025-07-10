@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.6](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.0.5...@rytass/payments-adapter-ctbc-micro-fast-pay@0.0.6) (2025-07-10)
+
+### Bug Fixes
+
+- **payments-adapter-ctbc-micro-fast-pay:** guard against missing CardNoMask in payloads ([a48d212](https://github.com/Rytass/Utils/commit/a48d21228271b7c16ccf336dc9d5acfc5ede50c2))
+
+### Features
+
+- **payments-adapter-ctbc-micro-fast-pay:** support non-strict bind card callback with mismatch warning ([5d3f54e](https://github.com/Rytass/Utils/commit/5d3f54ec9bb7e2c1eac47ae3028eb7cad2d3d3d9))
+
 ## [0.0.5](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.0.4...@rytass/payments-adapter-ctbc-micro-fast-pay@0.0.5) (2025-07-08)
 
 ### Bug Fixes
