@@ -17,8 +17,17 @@ import { EventEmitter } from 'node:events';
 export interface BindCardGatewayLike<T = any> {
   baseUrl: string; // 綁卡跳轉與 API endpoint 所屬網域
   emitter: EventEmitter; // 綁卡結果事件派發器
-  getBindingURL(request: T): string; // 取得綁卡跳轉用 URL
+  getBindingURL(): string;
   queryBoundCard(memberId: string): Promise<{ expireDate: Date }>; // 查詢綁定卡片資訊（尚未實作）
+}
+
+export interface CTBCPaymentOptions {
+  merchantId: string; // CTBC 配發之商店代碼
+  merId: string; // 商店代碼（CTBC 配發之商店代號）
+  txnKey: string; // MAC/TXN 使用的金鑰（商店自管）
+  baseUrl?: string; // API base URL，預設為 https://ccapi.ctbcbank.com
+  requireCacheHit?: boolean; // 是否強制要求 callback 必須命中快取（預設 true）
+  withServer?: boolean; // 是否使用後端伺服器生成 bindingURL
 }
 
 export interface CTBCMicroFastPayOptions {

@@ -14,6 +14,7 @@ import {
   CTBCBindCardRequestPayload,
   CTBCOrderCommitMessage,
   CTBCOrderInput,
+  CTBCPaymentOptions,
 } from './typings';
 
 export class CTBCPayment
@@ -26,23 +27,20 @@ export class CTBCPayment
   readonly txnKey: string;
   readonly baseUrl: string;
   readonly endpoint: string;
+  readonly requireCacheHit: boolean;
+
   readonly emitter = new EventEmitter();
   readonly _server: boolean;
 
   readonly bindCardRequestsCache = new Map<string, CTBCBindCardRequest>();
 
-  constructor(options: {
-    merchantId: string;
-    merId: string;
-    txnKey: string;
-    baseUrl?: string;
-    withServer?: boolean;
-  }) {
+  constructor(options: CTBCPaymentOptions) {
     this.merchantId = options.merchantId;
     this.merId = options.merId;
     this.txnKey = options.txnKey;
     this.baseUrl = options.baseUrl ?? 'https://ccapi.ctbcbank.com';
     this.endpoint = `${this.baseUrl}/mFastPay/TxnServlet`;
+    this.requireCacheHit = options.requireCacheHit ?? true;
     this._server = options.withServer ?? false;
   }
 
@@ -90,10 +88,7 @@ export class CTBCPayment
     throw new Error('CTBCPayment.queryBoundCard not implemented');
   }
 
-  handleBindCardCallback(
-    rawPayload: string,
-    strictCache: boolean = true,
-  ): void {
+  handleBindCardCallback(rawPayload: string): void {
     const payload = decodeResponsePayload<CTBCBindCardCallbackPayload>(
       rawPayload,
       this.txnKey,
@@ -101,7 +96,7 @@ export class CTBCPayment
 
     const requestNo = payload.RequestNo;
 
-    if (strictCache && !this.bindCardRequestsCache.has(requestNo)) {
+    if (this.requireCacheHit && !this.bindCardRequestsCache.has(requestNo)) {
       throw new Error(`Unknown bind card request: ${requestNo}`);
     }
 
@@ -134,7 +129,7 @@ export class CTBCPayment
       this.emitter.emit(PaymentEvents.CARD_BINDING_FAILED, request);
     }
 
-    if (strictCache) {
+    if (this.requireCacheHit) {
       this.bindCardRequestsCache.delete(requestNo);
     }
   }
