@@ -1,6 +1,6 @@
 {
   "name": "@rytass/cms-base-nestjs-graphql-module",
-  "version": "0.0.23",
+  "version": "0.0.24",
   "description": "Rytass Content Management System NestJS Base GraphQL Module",
   "keywords": [
     "rytass",

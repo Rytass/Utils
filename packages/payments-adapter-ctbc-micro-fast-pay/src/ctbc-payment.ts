@@ -1,24 +1,20 @@
 import {
+  InputFromOrderCommitMessage,
+  Order,
+  PaymentEvents,
+  PaymentGateway,
+} from '@rytass/payments';
+import EventEmitter from 'node:events';
+import { CTBCBindCardRequest } from './ctbc-bind-card-request';
+import { CTBCOrder } from './ctbc-order';
+import { decodeResponsePayload } from './ctbc-response';
+import {
   BindCardGatewayLike,
   CTBCBindCardCallbackPayload,
   CTBCBindCardRequestPayload,
   CTBCOrderCommitMessage,
   CTBCOrderInput,
 } from './typings';
-import EventEmitter from 'node:events';
-import { CTBCOrder } from './ctbc-order';
-import {
-  InputFromOrderCommitMessage,
-  Order,
-  PaymentEvents,
-  PaymentGateway,
-} from '@rytass/payments';
-import { CTBCBindCardRequest } from './ctbc-bind-card-request';
-import {
-  decodeResponsePayload,
-  toStringRecord,
-  validateResponseMAC,
-} from './ctbc-response';
 
 export class CTBCPayment
   implements
@@ -53,7 +49,11 @@ export class CTBCPayment
   createBindCardRequest(
     payload: CTBCBindCardRequestPayload,
   ): CTBCBindCardRequest {
-    return new CTBCBindCardRequest(payload, this);
+    const request = new CTBCBindCardRequest(payload, this);
+
+    this.bindCardRequestsCache.set(payload.RequestNo, request);
+
+    return request;
   }
 
   async prepare<N extends CTBCOrderCommitMessage>(
@@ -90,7 +90,10 @@ export class CTBCPayment
     throw new Error('CTBCPayment.queryBoundCard not implemented');
   }
 
-  handleBindCardCallback(rawPayload: string): void {
+  handleBindCardCallback(
+    rawPayload: string,
+    strictCache: boolean = true,
+  ): void {
     const payload = decodeResponsePayload<CTBCBindCardCallbackPayload>(
       rawPayload,
       this.txnKey,
@@ -98,20 +101,42 @@ export class CTBCPayment
 
     const requestNo = payload.RequestNo;
 
-    if (!this.bindCardRequestsCache.has(requestNo)) {
+    if (strictCache && !this.bindCardRequestsCache.has(requestNo)) {
       throw new Error(`Unknown bind card request: ${requestNo}`);
     }
 
-    const request = this.bindCardRequestsCache.get(requestNo)!;
+    const cachedRequest = this.bindCardRequestsCache.get(requestNo);
+
+    if (cachedRequest) {
+      const original = cachedRequest.payload;
+      const mismatches = ['MerID', 'MemberID', 'RequestNo'].filter(
+        (field) =>
+          original[field as keyof typeof original] !==
+          payload[field as keyof typeof payload],
+      );
+
+      if (mismatches.length > 0) {
+        console.warn(
+          `[CTBC] Warning: Mismatched callback fields: ${mismatches.join(', ')}`,
+        );
+      }
+    }
+
+    const request =
+      cachedRequest ??
+      new CTBCBindCardRequest({ ...payload, TokenURL: '' }, this);
 
     if (payload.StatusCode === '00') {
       request.bound(payload);
+      this.emitter.emit(PaymentEvents.CARD_BOUND, request);
     } else {
       request.fail(payload.StatusCode, payload.StatusDesc, payload);
+      this.emitter.emit(PaymentEvents.CARD_BINDING_FAILED, request);
     }
 
-    this.bindCardRequestsCache.delete(requestNo);
-    this.emitter.emit(PaymentEvents.CARD_BOUND, request);
+    if (strictCache) {
+      this.bindCardRequestsCache.delete(requestNo);
+    }
   }
 
   createOrder(

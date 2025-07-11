@@ -28,6 +28,10 @@ export class CTBCBindCardRequest {
     this._memberId = payload.MemberID;
   }
 
+  get payload(): CTBCBindCardRequestPayload {
+    return this._payload;
+  }
+
   get memberId(): string {
     return this._memberId;
   }
@@ -51,7 +55,7 @@ export class CTBCBindCardRequest {
     const inputs = Object.entries(form)
       .map(
         ([key, value]) =>
-            `<input type="hidden" name="${key}" value="${value}" />`,
+          `<input type="hidden" name="${key}" value="${value}" />`,
       )
       .join('\n');
 
@@ -107,8 +111,12 @@ export class CTBCBindCardRequest {
 
   bound(payload: CTBCBindCardCallbackPayload): void {
     this._cardId = payload.CardToken;
-    this._cardNumberPrefix = payload.CardNoMask.slice(0, 6);
-    this._cardNumberSuffix = payload.CardNoMask.slice(-4);
+
+    if (payload.CardNoMask && payload.CardNoMask.length >= 16) {
+      this._cardNumberPrefix = payload.CardNoMask.slice(0, 6);
+      this._cardNumberSuffix = payload.CardNoMask.slice(-4);
+    }
+
     this._bindingDate = DateTime.fromFormat(
       payload.ResponseTime,
       'yyyy/MM/dd HH:mm:ss',
@@ -127,8 +135,11 @@ export class CTBCBindCardRequest {
 
     if (payload) {
       this._cardId = payload.CardToken;
-      this._cardNumberPrefix = payload.CardNoMask.slice(0, 6);
-      this._cardNumberSuffix = payload.CardNoMask.slice(-4);
+
+      if (payload.CardNoMask && payload.CardNoMask.length >= 16) {
+        this._cardNumberPrefix = payload.CardNoMask.slice(0, 6);
+        this._cardNumberSuffix = payload.CardNoMask.slice(-4);
+      }
     }
 
     this._gateway.emitter.emit(PaymentEvents.CARD_BINDING_FAILED, this);

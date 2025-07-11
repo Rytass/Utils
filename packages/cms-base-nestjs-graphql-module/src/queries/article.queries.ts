@@ -7,7 +7,7 @@ import {
   SingleArticleBaseDto,
 } from '@rytass/cms-base-nestjs-module';
 import { ArticlesArgs } from '../dto/articles.args';
-import { IsPublic } from '@rytass/member-base-nestjs-module';
+import { AllowActions, IsPublic } from '@rytass/member-base-nestjs-module';
 import { Language } from '../decorators/language.decorator';
 import { ArticleCollectionDto } from '../dto/article-collection.dto';
 import { ArticleDto } from '../dto/article.dto';
@@ -15,6 +15,8 @@ import { BackstageArticleDto } from '../dto/backstage-article.dto';
 import { BackstageArticleCollectionDto } from '../dto/backstage-article-collection.dto';
 import { Inject } from '@nestjs/common';
 import { BackstageArticleArgs } from '../dto/backstage-article.args';
+import { BaseAction } from '../constants/enum/base-action.enum';
+import { BaseResource } from '../constants/enum/base-resource.enum';
 
 @Resolver()
 export class ArticleQueries {
@@ -50,7 +52,7 @@ export class ArticleQueries {
   }
 
   @Query(() => BackstageArticleDto)
-  @IsPublic()
+  @AllowActions([[BaseResource.ARTICLE, BaseAction.READ]])
   async backstageArticle(
     @Args('id', { type: () => ID }) id: string,
     @Args('version', { type: () => Int, nullable: true })
@@ -60,7 +62,7 @@ export class ArticleQueries {
   }
 
   @Query(() => BackstageArticleCollectionDto)
-  @IsPublic()
+  @AllowActions([[BaseResource.ARTICLE, BaseAction.LIST]])
   backstageArticles(
     @Args() args: BackstageArticleArgs,
   ): Promise<BackstageArticleCollectionDto> {

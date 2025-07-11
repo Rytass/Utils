@@ -17,7 +17,7 @@ export function decodeResponsePayload<T = Record<string, string>>(
     throw new Error('Missing encoded response payload');
   }
 
-  const json = decodeURIComponent(decodeURIComponent(rawResponseKey));
+  const json = decodeURIComponent(rawResponseKey);
   const response = JSON.parse(json);
 
   const { MAC, TXN } = response.Response.Data;

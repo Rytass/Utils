@@ -1,7 +1,7 @@
 import { ID, ResolveField, Resolver, Root } from '@nestjs/graphql';
 import { MemberDataLoader } from '../data-loaders/members.dataloader';
 import { UserDto } from '../dto/user.dto';
-import { IsPublic } from '@rytass/member-base-nestjs-module';
+import { Authenticated } from '@rytass/member-base-nestjs-module';
 import {
   ArticleSignatureDataLoader,
   ArticleStage,
@@ -35,19 +35,19 @@ export class BackstageArticleResolver {
   ) {}
 
   @ResolveField(() => ID)
-  @IsPublic()
+  @Authenticated()
   id(@Root() article: ArticleBaseDto): string {
     return `${article.id}:${article.version}`;
   }
 
   @ResolveField(() => String)
-  @IsPublic()
+  @Authenticated()
   articleId(@Root() article: ArticleBaseDto): string {
     return article.id;
   }
 
   @ResolveField(() => UserDto, { nullable: true })
-  @IsPublic()
+  @Authenticated()
   submittedBy(@Root() article: ArticleBaseDto): Promise<UserDto | null> | null {
     return article.submittedBy
       ? this.memberDataloader.loader.load(article.submittedBy)
@@ -55,7 +55,7 @@ export class BackstageArticleResolver {
   }
 
   @ResolveField(() => UserDto, { nullable: true })
-  @IsPublic()
+  @Authenticated()
   lastEditor(@Root() article: ArticleBaseDto): Promise<UserDto | null> | null {
     return article.updatedBy
       ? this.memberDataloader.loader.load(article.updatedBy)
@@ -63,7 +63,7 @@ export class BackstageArticleResolver {
   }
 
   @ResolveField(() => UserDto, { nullable: true })
-  @IsPublic()
+  @Authenticated()
   releasedBy(@Root() article: ArticleBaseDto): Promise<UserDto | null> | null {
     return article.releasedBy
       ? this.memberDataloader.loader.load(article.releasedBy)
@@ -71,7 +71,7 @@ export class BackstageArticleResolver {
   }
 
   @ResolveField(() => [CategoryDto])
-  @IsPublic()
+  @Authenticated()
   categories(
     @Root() article: ArticleBaseDto,
     @Language() language: string = DEFAULT_LANGUAGE,
@@ -83,7 +83,7 @@ export class BackstageArticleResolver {
   }
 
   @ResolveField(() => String)
-  @IsPublic()
+  @Authenticated()
   title(@Root() article: ArticleBaseDto): string {
     if ('title' in article && !this.multiLanguage) {
       return article.title;
@@ -95,7 +95,7 @@ export class BackstageArticleResolver {
   }
 
   @ResolveField(() => String, { nullable: true })
-  @IsPublic()
+  @Authenticated()
   description(@Root() article: ArticleBaseDto): string | null {
     if ('description' in article && !this.multiLanguage) {
       return article.description ?? null;
@@ -107,7 +107,7 @@ export class BackstageArticleResolver {
   }
 
   @ResolveField(() => QuadratsContentScalar)
-  @IsPublic()
+  @Authenticated()
   content(@Root() article: ArticleBaseDto): QuadratsElement[] {
     if ('content' in article && !this.multiLanguage) {
       return article.content;
@@ -119,7 +119,7 @@ export class BackstageArticleResolver {
   }
 
   @ResolveField(() => [ArticleMultiLanguageContentDto])
-  @IsPublic()
+  @Authenticated()
   multiLanguageContents(
     @Root() article: ArticleBaseDto,
   ): ArticleMultiLanguageContentDto[] {
@@ -138,13 +138,13 @@ export class BackstageArticleResolver {
   }
 
   @ResolveField(() => [BackstageArticleDto])
-  @IsPublic()
+  @Authenticated()
   versions(@Root() article: ArticleBaseDto): Promise<BackstageArticleDto[]> {
     return this.articleVersionDataLoader.versionsLoader.load(article.id);
   }
 
   @ResolveField(() => ArticleStage)
-  @IsPublic()
+  @Authenticated()
   stage(@Root() article: ArticleBaseDto): Promise<ArticleStage> {
     return this.moduleArticleDataLoader.stageLoader.load({
       id: article.id,
@@ -153,7 +153,7 @@ export class BackstageArticleResolver {
   }
 
   @ResolveField(() => [ArticleSignatureDto])
-  @IsPublic()
+  @Authenticated()
   signatures(@Root() article: ArticleBaseDto): Promise<ArticleSignatureDto[]> {
     return this.versionSignaturesLoader.versionSignaturesLoader.load({
       id: article.id,
@@ -162,7 +162,7 @@ export class BackstageArticleResolver {
   }
 
   @ResolveField(() => ArticleStageVersionDto)
-  @IsPublic()
+  @Authenticated()
   async stageVersions(
     @Root() article: ArticleBaseDto,
   ): Promise<ArticleStageVersionDto> {

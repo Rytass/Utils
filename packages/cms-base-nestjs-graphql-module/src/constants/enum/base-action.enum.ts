@@ -1,0 +1,17 @@
+export enum BaseAction {
+  LIST = 'LIST',
+  READ = 'READ',
+  CREATE = 'CREATE',
+  UPDATE = 'UPDATE',
+  DELETE = 'DELETE',
+  DELETE_VERSION = 'DELETE_VERSION',
+
+  SUBMIT = 'SUBMIT',
+  PUT_BACK = 'PUT_BACK',
+
+  APPROVE = 'APPROVE',
+  REJECT = 'REJECT',
+
+  RELEASE = 'RELEASE',
+  WITHDRAW = 'WITHDRAW',
+}
