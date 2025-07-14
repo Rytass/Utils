@@ -40,6 +40,8 @@ export class ArticleSignatureDataLoader {
         );
       });
 
+      qb.addOrderBy('signatures.signedAt', 'DESC');
+
       const versions = await qb.getMany();
 
       const versionMap = new Map(
