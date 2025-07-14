@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.95](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.94...@rytass/cms-base-nestjs-module@0.1.95) (2025-07-14)
+
+### Features
+
+- **cms-base-nestjs-module:** add default sorting by article ID in query builder ([99800d6](https://github.com/Rytass/Utils/commit/99800d63fe3da67e53857a93639c22633474fa76))
+- **cms-base-nestjs-module:** add new sorting options for articles by release and submission dates ([bff22ce](https://github.com/Rytass/Utils/commit/bff22ce99eae186629fffad10e6a814230c7a445))
+- **cms-base-nestjs-module:** add ordering by signature date in ArticleSignatureDataLoader ([6548634](https://github.com/Rytass/Utils/commit/65486349d661c1cfc23081f9923c0acb81c9d539))
+
 ## [0.1.94](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.93...@rytass/cms-base-nestjs-module@0.1.94) (2025-06-30)
 
 ### Bug Fixes
