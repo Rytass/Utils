@@ -1,6 +1,6 @@
 # CTBC Micro Fast Pay Module 使用說明
 
-本模組提供與中國信託 MicroFastPay 平台整合之完整流程，對齊 ECPay Adapter 設計，支援「信用卡綁定」與「PayJSON 請款」兩大功能，並內建事件監聽、MAC 驗證、TXN 加解密邏輯。
+本模組提供與 CTBC MicroFastPay 平台整合之完整流程，對齊 ECPay Adapter 設計，支援「信用卡綁定」與「PayJSON 請款」兩大功能，並內建事件監聽、MAC 驗證、TXN 加解密邏輯。
 
 ## 📌 目錄
 
@@ -44,16 +44,13 @@ const bindCardRequest = payment.createBindCardRequest({
 
 4. 後端解密並處理：
 
-使用 strictCache 控制快取依賴
-
-handleBindCardCallback 的第二個參數 strictCache 預設為 true，表示此 callback
-必須對應到先前建立的快取綁卡請求，否則會拋出錯誤。
-
-若你希望在找不到快取時，依照回傳電文自動建立新的綁卡請求，可設為 false：
+handleBindCardCallback 行為由初始化 gateway 時的 `requireCacheHit` 參數控制，預設為 `true`，表示此 callback 必須對應到先前建立的綁卡請求，否則會拋出錯誤。
 
 ```ts
-payment.handleBindCardCallback(req.body.reqjsonpwd, false);
+payment.handleBindCardCallback(req.body.reqjsonpwd);
 ```
+
+> 若你希望允許 fallback 行為（例如 callback 無對應快取但仍需處理），可在 `CTBCPayment` 初始化時將 `requireCacheHit` 設為 `false`。
 
 5. 成功後觸發事件：
 
@@ -67,7 +64,7 @@ payment.emitter.on(PaymentEvents.CARD_BOUND, (request) => {
 
 ## 請款流程
 
-1. 建立訂單（背景定期扣款亦可）：
+1. 建立訂單（亦可用於排程背景扣款）：
 
 ```ts
 const order = payment.createOrder(
@@ -110,7 +107,7 @@ payment.emitter.on(PaymentEvents.ORDER_FAILED, (order) => { ... });
 
 ```ts
 const payment = new CTBCPayment({
-  merchantId: 'MER00001',                 // 與 CTBC 申請的特店代碼
+  merchantId: 'MER00001',                 // 與 CTBC 申請的特店代碼（非 TXN 中的 MerID）
   txnKey: process.env.CTBC_KEY,           // 壓碼設定時輸入的明碼（MchKey，24 碼）
   baseUrl: 'https://ccapi.ctbcbank.com',  // 可省略
   withServer: true,                       // 若需自動產生 bindingURL，可設 true
@@ -121,7 +118,8 @@ const payment = new CTBCPayment({
 
 - `txnKey` 必須妥善保管，建議使用 secrets manager 儲存。
 
-- 綁卡請求送出後，會暫存在記憶體。
+- 綁卡請求送出後，會暫存在記憶體（僅限應用程式執行期間），用於 callback 對應與驗證。
+- 若使用分散式部署，請確保 callback 導向原節點，或改用共享快取。
 
 ---
 
