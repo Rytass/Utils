@@ -1,98 +1,192 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { DataSource, QueryRunner } from 'typeorm';
 import { ArticleBaseService } from '../../src/services/article-base.service';
-import {
-  ARTICLE_SIGNATURE_SERVICE,
-  DRAFT_MODE,
-  ENABLE_SIGNATURE_MODE,
-  FULL_TEXT_SEARCH_MODE,
-  MULTIPLE_LANGUAGE_MODE,
-  RESOLVED_ARTICLE_REPO,
-  RESOLVED_ARTICLE_VERSION_CONTENT_REPO,
-  RESOLVED_ARTICLE_VERSION_REPO,
-  RESOLVED_CATEGORY_REPO,
-} from '../../src/typings/cms-base-providers';
-import { DataSource } from 'typeorm';
+import { BaseArticleVersionContentEntity } from '../../src/models/base-article-version-content.entity';
+import { FULL_TEXT_SEARCH_TOKEN_VERSION } from '../../src/constants/full-text-search-token-version';
 
 jest.mock('@node-rs/jieba', () => ({
-  cut: jest.fn(() => ['mocked', 'tokens']),
+  cut: jest.fn().mockReturnValue(['token1', 'token2']),
 }));
 
-describe('ArticleBaseService (onApplicationBootstrap)', () => {
-  let service: ArticleBaseService<any, any, any>;
-  const queryMock = jest.fn();
-  const getManyMock = jest.fn();
+describe('ArticleBaseService - bindSearchTokens', () => {
+  let service: ArticleBaseService;
+  let mockQuery: jest.Mock;
+  const mockTableName = 'article_version_contents';
 
-  const mockQueryBuilder = {
-    leftJoinAndSelect: jest.fn().mockReturnThis(),
-    innerJoinAndSelect: jest.fn().mockReturnThis(),
-    innerJoin: jest.fn().mockReturnThis(),
-    select: jest.fn().mockReturnThis(),
-    addSelect: jest.fn().mockReturnThis(),
-    groupBy: jest.fn().mockReturnThis(),
-    andWhere: jest.fn().mockReturnThis(),
-    orWhere: jest.fn().mockReturnThis(),
-    getMany: getManyMock,
-  };
+  beforeEach(() => {
+    mockQuery = jest.fn();
 
-  beforeEach(async () => {
-    mockQueryBuilder.orWhere.mockClear();
+    const mockDataSource = {
+      query: mockQuery,
+    } as unknown as DataSource;
 
-    const mockRepo = {
-      createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder),
+    const mockBaseArticleVersionContentRepo = {
+      metadata: {
+        tableName: mockTableName,
+      },
     };
 
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ArticleBaseService,
-        { provide: RESOLVED_ARTICLE_REPO, useValue: mockRepo },
-        { provide: RESOLVED_ARTICLE_VERSION_REPO, useValue: {} },
-        { provide: RESOLVED_ARTICLE_VERSION_CONTENT_REPO, useValue: {} },
-        { provide: RESOLVED_CATEGORY_REPO, useValue: {} },
-        { provide: MULTIPLE_LANGUAGE_MODE, useValue: false },
-        { provide: FULL_TEXT_SEARCH_MODE, useValue: true },
-        { provide: ENABLE_SIGNATURE_MODE, useValue: false },
-        { provide: ARTICLE_SIGNATURE_SERVICE, useValue: {} },
-        { provide: DRAFT_MODE, useValue: false },
-        { provide: DataSource, useValue: { query: queryMock } },
-      ],
-    }).compile();
+    service = new ArticleBaseService(
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      true,
+      true,
+      true,
+      [],
+      {} as any,
+      {} as any,
+      true,
+      mockDataSource,
+      mockBaseArticleVersionContentRepo as any,
+      {} as any,
+    );
 
-    service = module.get<ArticleBaseService<any, any, any>>(ArticleBaseService);
-
-    (service as any).baseArticleVersionContentRepo = {
-      metadata: { tableName: 'article_version_contents' },
-    };
-
-    getManyMock.mockReset();
-    queryMock.mockReset();
+    Object.defineProperty(service, 'baseArticleVersionContentRepo', {
+      value: mockBaseArticleVersionContentRepo,
+      writable: false,
+    });
   });
 
-  it('should index articles and create GIN index when fullTextSearchMode is enabled', async () => {
-    const loggerMock = { log: jest.fn() };
+  it('should generate search tokens and execute update query using dataSource by default', async () => {
+    const articleContent = {
+      articleId: 'article-1',
+      version: 2,
+      language: 'en',
+      title: 'Test Title',
+      description: 'Test Desc',
+      content: [
+        {
+          type: 'p',
+          children: [{ text: 'Hello' }, { text: 'World' }],
+        },
+        {
+          type: 'div',
+          children: [{ text: 'Ignore this' }],
+        },
+      ],
+    } as unknown as BaseArticleVersionContentEntity;
 
-    getManyMock.mockResolvedValue([
-      {
-        versions: [
-          {
-            tags: ['tag1'],
-            multiLanguageContents: [
-              {
-                title: 'Index Me',
-                description: 'Desc',
-                language: 'en',
-                articleId: 'a1',
-                version: 1,
-                content: [{ type: 'p', children: [{ text: 'Token test' }] }],
-              },
-            ],
-          },
-        ],
+    await service['bindSearchTokens'](articleContent, ['tag1', 'tag2']);
+
+    expect(mockQuery).toHaveBeenCalledWith(
+      expect.stringContaining(`UPDATE "${mockTableName}" SET`),
+      [
+        'Test Title',
+        'tag1 tag2',
+        'Test Desc',
+        'token1 token2',
+        'article-1',
+        2,
+        'en',
+      ],
+    );
+  });
+
+  it('should use provided QueryRunner if passed', async () => {
+    const mockRunner: Partial<QueryRunner> = {
+      query: jest.fn(),
+    };
+
+    const articleContent = {
+      articleId: 'a2',
+      version: 5,
+      language: 'zh',
+      title: '標題',
+      description: '描述',
+      content: [
+        {
+          type: 'p',
+          children: [{ text: '這是內容' }],
+        },
+      ],
+    } as unknown as BaseArticleVersionContentEntity;
+
+    await service['bindSearchTokens'](
+      articleContent,
+      undefined,
+      mockRunner as QueryRunner,
+    );
+
+    expect(mockRunner.query).toHaveBeenCalledWith(
+      expect.stringContaining(`UPDATE "${mockTableName}" SET`),
+      ['標題', '', '描述', 'token1 token2', 'a2', 5, 'zh'],
+    );
+  });
+});
+
+describe('ArticleBaseService - onApplicationBootstrap', () => {
+  let service: ArticleBaseService;
+  let mockQueryBuilder: any;
+  let mockDataSource: any;
+  let mockLogger: any;
+  let mockBindSearchTokens: jest.SpyInstance;
+
+  beforeEach(() => {
+    mockQueryBuilder = {
+      orWhere: jest.fn().mockReturnThis(),
+      getMany: jest.fn(),
+    };
+
+    mockDataSource = {
+      query: jest.fn(),
+    };
+
+    mockLogger = {
+      log: jest.fn(),
+    };
+
+    service = new ArticleBaseService(
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      true, // multipleLanguageMode
+      true, // allowMultipleParentCategories
+      true, // allowCircularCategories
+      [], // articleStageQueryFeatures
+      {} as any,
+      {} as any,
+      true, // fullTextSearchMode
+      mockDataSource,
+      { metadata: { tableName: 'article_version_contents' } } as any,
+      {} as any,
+    );
+
+    Object.defineProperty(service, 'logger', {
+      value: mockLogger,
+    });
+
+    Object.defineProperty(service, 'baseArticleVersionContentRepo', {
+      value: {
+        metadata: {
+          tableName: 'article_version_contents',
+        },
       },
-    ]);
+    });
 
-    (service as any).logger = loggerMock;
+    jest
+      .spyOn(service as any, 'getDefaultQueryBuilder')
+      .mockReturnValue(mockQueryBuilder);
 
-    await (service as any).onApplicationBootstrap();
+    mockBindSearchTokens = jest
+      .spyOn(service as any, 'bindSearchTokens')
+      .mockResolvedValue(undefined);
+  });
+
+  it('should index articles with missing or outdated search tokens', async () => {
+    const mockArticle = {
+      versions: [
+        {
+          multiLanguageContents: [{}],
+          tags: ['tag'],
+        },
+      ],
+    };
+
+    mockQueryBuilder.getMany.mockResolvedValue([mockArticle]);
+
+    await service.onApplicationBootstrap();
 
     expect(mockQueryBuilder.orWhere).toHaveBeenCalledWith(
       'multiLanguageContents.searchTokens IS NULL',
@@ -100,91 +194,33 @@ describe('ArticleBaseService (onApplicationBootstrap)', () => {
 
     expect(mockQueryBuilder.orWhere).toHaveBeenCalledWith(
       'multiLanguageContents.searchTokenVersion != :searchTokenVersion',
-      { searchTokenVersion: '0.0.1' },
+      { searchTokenVersion: FULL_TEXT_SEARCH_TOKEN_VERSION },
     );
 
-    expect(queryMock).toHaveBeenCalledWith(
-      expect.stringContaining('CREATE INDEX'),
+    expect(mockBindSearchTokens).toHaveBeenCalledWith(
+      mockArticle.versions[0].multiLanguageContents[0],
+      ['tag'],
     );
 
-    expect(loggerMock.log).toHaveBeenCalledWith('Start indexing articles...');
-    expect(loggerMock.log).toHaveBeenCalledWith('Indexing articles done.');
+    expect(mockDataSource.query).toHaveBeenCalledWith(
+      expect.stringContaining('CREATE INDEX IF NOT EXISTS'),
+    );
+
+    expect(mockLogger.log).toHaveBeenCalledWith('Start indexing articles...');
+    expect(mockLogger.log).toHaveBeenCalledWith('Indexing articles done.');
   });
 
-  it('should not index or create tokens if no articles are returned', async () => {
-    const loggerMock = { log: jest.fn() };
-
-    getManyMock.mockResolvedValue([]);
-
-    (service as any).logger = loggerMock;
+  it('should not index anything if no outdated articles found', async () => {
+    mockQueryBuilder.getMany.mockResolvedValue([]);
 
     await service.onApplicationBootstrap();
 
-    expect(getManyMock).toHaveBeenCalled();
-    expect(queryMock).toHaveBeenCalledWith(
-      expect.stringContaining('CREATE INDEX'),
-    );
-
-    expect(loggerMock.log).not.toHaveBeenCalledWith(
+    expect(mockBindSearchTokens).not.toHaveBeenCalled();
+    expect(mockLogger.log).not.toHaveBeenCalledWith(
       'Start indexing articles...',
     );
-  });
 
-  it('should fallback to empty string when description is undefined', async () => {
-    const { cut } = await import('@node-rs/jieba');
-
-    (cut as jest.Mock).mockReturnValue([]);
-
-    const articleContent = {
-      title: 'No Description',
-      description: undefined,
-      articleId: 'x1',
-      version: 5,
-      language: 'en',
-      content: [
-        {
-          type: 'p',
-          children: [{ text: 'Paragraph text' }],
-        },
-      ],
-    };
-
-    (service as any).dataSource = { query: queryMock };
-
-    await (service as any).bindSearchTokens(articleContent);
-
-    expect(queryMock).toHaveBeenCalled();
-    const params = queryMock.mock.calls[0][1];
-
-    expect(params[2]).toBe('');
-  });
-
-  it('should fallback to empty string for tokens when content has no <p>', async () => {
-    const { cut } = await import('@node-rs/jieba');
-
-    (cut as jest.Mock).mockReturnValue([]);
-
-    const articleContent = {
-      title: 'No Paragraphs',
-      description: 'Some description',
-      articleId: 'x2',
-      version: 6,
-      language: 'en',
-      content: [
-        {
-          type: 'h1',
-          children: [{ text: 'Heading text' }],
-        },
-      ],
-    };
-
-    (service as any).dataSource = { query: queryMock };
-
-    await (service as any).bindSearchTokens(articleContent);
-
-    expect(queryMock).toHaveBeenCalled();
-    const params = queryMock.mock.calls[0][1];
-
-    expect(params[3]).toBe('');
+    expect(mockLogger.log).not.toHaveBeenCalledWith('Indexing articles done.');
+    expect(mockDataSource.query).toHaveBeenCalled();
   });
 });

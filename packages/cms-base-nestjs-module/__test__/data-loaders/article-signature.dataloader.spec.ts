@@ -1,147 +1,164 @@
-import { Test } from '@nestjs/testing';
 import { ArticleSignatureDataLoader } from '../../src/data-loaders/article-signature.dataloader';
+import { RESOLVED_ARTICLE_VERSION_REPO } from '../../src/typings/cms-base-providers';
 import { Repository } from 'typeorm';
 import { BaseArticleVersionEntity } from '../../src/models/base-article-version.entity';
-import { RESOLVED_ARTICLE_VERSION_REPO } from '../../src/typings/cms-base-providers';
+import { Test } from '@nestjs/testing';
 import { ArticleSignatureEntity } from '../../src/models/article-signature.entity';
 
 describe('ArticleSignatureDataLoader', () => {
-  let dataLoader: ArticleSignatureDataLoader;
-  let repo: jest.Mocked<Repository<BaseArticleVersionEntity>>;
+  let loader: ArticleSignatureDataLoader;
+  let articleVersionRepo: jest.Mocked<Repository<BaseArticleVersionEntity>>;
 
   beforeEach(async () => {
-    const moduleRef = await Test.createTestingModule({
+    articleVersionRepo = {
+      createQueryBuilder: jest.fn(),
+    } as any;
+
+    const module = await Test.createTestingModule({
       providers: [
         ArticleSignatureDataLoader,
         {
           provide: RESOLVED_ARTICLE_VERSION_REPO,
-          useValue: {
-            createQueryBuilder: jest.fn(),
-          },
+          useValue: articleVersionRepo,
         },
       ],
     }).compile();
 
-    dataLoader = moduleRef.get(ArticleSignatureDataLoader);
-    repo = moduleRef.get(RESOLVED_ARTICLE_VERSION_REPO);
+    loader = module.get(ArticleSignatureDataLoader);
   });
 
-  it('should return signatures for valid id|version pairs', async () => {
-    const mockQb: any = {
+  it('should return signatures grouped by articleId and version', async () => {
+    const mockSignatures = [
+      { id: 's1' } as ArticleSignatureEntity,
+      { id: 's2' } as ArticleSignatureEntity,
+    ];
+
+    const mockVersion = {
+      articleId: 'a1',
+      version: 1,
+      signatures: mockSignatures,
+    } as BaseArticleVersionEntity;
+
+    const getMany = jest.fn().mockResolvedValue([mockVersion]);
+    const orWhere = jest.fn().mockImplementation(() => qb);
+    const andWhere = jest.fn().mockImplementation(() => subQb);
+    const subQb = { andWhere };
+    const qb = {
       leftJoinAndSelect: jest.fn().mockReturnThis(),
-      orWhere: jest.fn().mockReturnThis(),
-      getMany: jest.fn().mockResolvedValue([
-        {
-          articleId: 'a1',
-          version: 1,
-          signatures: [{ id: 's1' }] as ArticleSignatureEntity[],
-        },
-        {
-          articleId: 'a2',
-          version: 2,
-          signatures: [{ id: 's2' }] as ArticleSignatureEntity[],
-        },
-      ]),
+      orWhere,
+      getMany,
     };
 
-    repo.createQueryBuilder.mockReturnValue(mockQb);
+    articleVersionRepo.createQueryBuilder.mockReturnValue(qb as any);
 
-    const result = await dataLoader.versionSignaturesLoader.loadMany([
-      'a1|1',
-      'a2|2',
-    ]);
+    const result = await loader.versionSignaturesLoader.load({
+      id: 'a1',
+      version: 1,
+    });
 
-    expect(result).toEqual([[{ id: 's1' }], [{ id: 's2' }]]);
-
-    expect(repo.createQueryBuilder).toHaveBeenCalled();
-  });
-
-  it('should return empty array for missing versions', async () => {
-    const mockQb: any = {
-      leftJoinAndSelect: jest.fn().mockReturnThis(),
-      orWhere: jest.fn().mockReturnThis(),
-      getMany: jest.fn().mockResolvedValue([]),
-    };
-
-    repo.createQueryBuilder.mockReturnValue(mockQb);
-
-    const result = await dataLoader.versionSignaturesLoader.loadMany([
-      'notfound|999',
-    ]);
-
-    expect(result).toEqual([[]]);
-  });
-
-  it('should throw error on invalid format', async () => {
-    await expect(
-      dataLoader.versionSignaturesLoader.load('invalid-format'),
-    ).rejects.toThrow(
-      'Invalid id: invalid-format, please use format: id|version',
+    expect(result).toEqual(mockSignatures);
+    expect(articleVersionRepo.createQueryBuilder).toHaveBeenCalledWith(
+      'articleVersions',
     );
+
+    expect(qb.leftJoinAndSelect).toHaveBeenCalledWith(
+      'articleVersions.signatures',
+      'signatures',
+    );
+
+    expect(qb.leftJoinAndSelect).toHaveBeenCalledWith(
+      'signatures.signatureLevel',
+      'signatureLevel',
+    );
+
+    expect(getMany).toHaveBeenCalled();
   });
 
-  it('should throw error on NaN version', async () => {
-    await expect(
-      dataLoader.versionSignaturesLoader.load('a1|NaN'),
-    ).rejects.toThrow('Invalid id: a1|NaN, please use format: id|version');
-  });
-
-  it('should throw error on negative version', async () => {
-    await expect(
-      dataLoader.versionSignaturesLoader.load('a1|-1'),
-    ).rejects.toThrow('Invalid id: a1|-1, please use format: id|version');
-  });
-
-  it('should call orWhere with correct Brackets for multiple id|version pairs', async () => {
-    const subQbMock = {
-      andWhere: jest.fn().mockReturnThis(),
-    };
-
-    const bracketFns: any[] = [];
-
-    const mockOrWhere = jest.fn((brackets) => {
-      bracketFns.push(brackets); // Store Brackets object
-
-      return mockQb;
-    });
-
-    const mockQb: any = {
+  it('should return empty array if no version matches', async () => {
+    const getMany = jest.fn().mockResolvedValue([]);
+    const orWhere = jest.fn().mockImplementation(() => qb);
+    const andWhere = jest.fn().mockImplementation(() => subQb);
+    const subQb = { andWhere };
+    const qb = {
       leftJoinAndSelect: jest.fn().mockReturnThis(),
-      orWhere: mockOrWhere,
-      getMany: jest.fn().mockResolvedValue([
-        { articleId: 'a1', version: 1, signatures: [] },
-        { articleId: 'a2', version: 2, signatures: [] },
-      ]),
+      orWhere,
+      getMany,
     };
 
-    repo.createQueryBuilder.mockReturnValue(mockQb);
+    articleVersionRepo.createQueryBuilder.mockReturnValue(qb as any);
 
-    await dataLoader.versionSignaturesLoader.loadMany(['a1|1', 'a2|2']);
-
-    expect(mockOrWhere).toHaveBeenCalledTimes(2);
-
-    bracketFns.forEach((bracketsObj, index) => {
-      if (
-        typeof bracketsObj === 'object' &&
-        typeof bracketsObj.whereFactory === 'function'
-      ) {
-        // Simulate what TypeORM does internally
-        bracketsObj.whereFactory(subQbMock);
-
-        expect(subQbMock.andWhere).toHaveBeenCalledWith(
-          `articleVersions.articleId = :id_${index}`,
-          { [`id_${index}`]: `a${index + 1}` },
-        );
-
-        expect(subQbMock.andWhere).toHaveBeenCalledWith(
-          `articleVersions.version = :version_${index}`,
-          { [`version_${index}`]: index + 1 },
-        );
-      } else {
-        throw new Error(
-          `Expected Brackets object with .whereFactory in bracketFns[${index}], but got: ${typeof bracketsObj}`,
-        );
-      }
+    const result = await loader.versionSignaturesLoader.load({
+      id: 'not-found',
+      version: 99,
     });
+
+    expect(result).toEqual([]);
+  });
+
+  it('should cache results using the LRU cache', async () => {
+    const mockSignatures = [{ id: 'sig' }] as ArticleSignatureEntity[];
+
+    const mockVersion = {
+      articleId: 'a1',
+      version: 1,
+      signatures: mockSignatures,
+    } as BaseArticleVersionEntity;
+
+    const getMany = jest.fn().mockResolvedValue([mockVersion]);
+    const orWhere = jest.fn().mockImplementation(() => qb);
+    const andWhere = jest.fn().mockImplementation(() => subQb);
+    const subQb = { andWhere };
+    const qb = {
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      orWhere,
+      getMany,
+    };
+
+    articleVersionRepo.createQueryBuilder.mockReturnValue(qb as any);
+
+    const result1 = await loader.versionSignaturesLoader.load({
+      id: 'a1',
+      version: 1,
+    });
+
+    const result2 = await loader.versionSignaturesLoader.load({
+      id: 'a1',
+      version: 1,
+    });
+
+    expect(result1).toBe(result2);
+    expect(getMany).toHaveBeenCalledTimes(1);
+  });
+
+  it('should call subQb.andWhere with articleId and version inside Brackets (index 0)', async () => {
+    const mockAndWhere = jest.fn().mockReturnThis();
+    const mockSubQb = { andWhere: mockAndWhere };
+    const mockGetMany = jest.fn().mockResolvedValue([]);
+
+    const mockQueryBuilder = {
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      orWhere: jest.fn().mockImplementation((brackets: any) => {
+        brackets.whereFactory(mockSubQb as any);
+
+        return mockQueryBuilder;
+      }),
+      getMany: mockGetMany,
+    };
+
+    articleVersionRepo.createQueryBuilder.mockReturnValue(
+      mockQueryBuilder as any,
+    );
+
+    await loader.versionSignaturesLoader.load({ id: 'a1', version: 1 });
+
+    expect(mockAndWhere).toHaveBeenCalledWith(
+      'articleVersions.articleId = :id_0',
+      { id_0: 'a1' },
+    );
+
+    expect(mockAndWhere).toHaveBeenCalledWith(
+      'articleVersions.version = :version_0',
+      { version_0: 1 },
+    );
   });
 });
