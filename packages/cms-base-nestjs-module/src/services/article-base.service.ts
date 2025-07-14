@@ -712,6 +712,8 @@ export class ArticleBaseService<
         break;
     }
 
+    qb.addOrderBy('articles.id', 'ASC');
+
     return qb;
   }
 
