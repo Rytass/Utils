@@ -678,6 +678,30 @@ export class ArticleBaseService<
     }
 
     switch (options?.sorter) {
+      case ArticleSorter.RELEASED_AT_ASC:
+        qb.addOrderBy('versions.releasedAt', 'ASC');
+        break;
+
+      case ArticleSorter.RELEASED_AT_DESC:
+        qb.addOrderBy('versions.releasedAt', 'DESC');
+        break;
+
+      case ArticleSorter.SUBMITTED_AT_ASC:
+        qb.addOrderBy('versions.submittedAt', 'ASC');
+        break;
+
+      case ArticleSorter.SUBMITTED_AT_DESC:
+        qb.addOrderBy('versions.submittedAt', 'DESC');
+        break;
+
+      case ArticleSorter.UPDATED_AT_ASC:
+        qb.addOrderBy('versions.createdAt', 'ASC');
+        break;
+
+      case ArticleSorter.UPDATED_AT_DESC:
+        qb.addOrderBy('versions.createdAt', 'DESC');
+        break;
+
       case ArticleSorter.CREATED_AT_ASC:
         qb.addOrderBy('articles.createdAt', 'ASC');
         break;
