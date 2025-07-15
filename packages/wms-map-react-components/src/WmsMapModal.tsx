@@ -42,12 +42,52 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
     const input = document.createElement('input');
 
     input.type = 'file';
-    input.accept = 'image/*';
+    input.accept = 'image/png,image/jpeg,image/jpg';
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
 
       if (file) {
-        console.log('Uploading file:', file.name);
+        // Check file type
+        if (!file.type.match(/^image\/(png|jpeg|jpg)$/)) {
+          alert('請選擇 PNG 或 JPG 格式的圖片');
+          return;
+        }
+
+        // Create file URL
+        const imageUrl = URL.createObjectURL(file);
+        
+        // Create image element to get dimensions
+        const img = new Image();
+        img.onload = () => {
+          // Calculate appropriate size (max 400px width/height)
+          const maxSize = 400;
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > maxSize || height > maxSize) {
+            const ratio = Math.min(maxSize / width, maxSize / height);
+            width = width * ratio;
+            height = height * ratio;
+          }
+
+          // Create new image node
+          const newNode = {
+            id: `image-${Date.now()}`,
+            type: 'imageNode',
+            position: { x: 100, y: 100 },
+            data: {
+              imageUrl,
+              width: Math.round(width),
+              height: Math.round(height),
+              fileName: file.name,
+            },
+          };
+
+          // Add node to the canvas
+          setNodes((nds) => [...nds, newNode]);
+        };
+        
+        img.src = imageUrl;
       }
     };
 
