@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.26](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.25...@rytass/cms-base-nestjs-graphql-module@0.0.26) (2025-07-15)
+
+### Features
+
+- **cms-base-nestjs-graphql-module:** add support for custom article fields and async options ([7d719fe](https://github.com/Rytass/Utils/commit/7d719feb7dad91fd1f046c53514ea6f89dfb0156))
+
 ## [0.0.25](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.24...@rytass/cms-base-nestjs-graphql-module@0.0.25) (2025-07-14)
 
 ### Features
