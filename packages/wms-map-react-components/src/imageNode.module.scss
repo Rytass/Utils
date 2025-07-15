@@ -6,13 +6,16 @@
   border-radius: 8px;
   position: relative;
   transition: border-color 0.2s ease;
+  z-index: 1;
 
   &.selected {
     border-color: #5570d3;
+    z-index: 10;
   }
 
   &:hover {
     border-color: #b0b0b0;
+    z-index: 5;
   }
 }
 
@@ -26,8 +29,9 @@
 .image {
   border-radius: 6px;
   object-fit: contain;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   background: white;
+  border: 1px solid #e0e0e0;
 }
 
 .imageLabel {
