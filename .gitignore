@@ -64,6 +64,7 @@ frontend
 # Claude Code
 .claude
 CLAUDE.md
+__FOR_DESIGN/
 
 # Nx
 .nx/cache
