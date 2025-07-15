@@ -1,13 +1,19 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { VaultSecret, VaultSecretOptions, VaultSecretState } from '@rytass/secret-adapter-vault';
+import {
+  VaultSecret,
+  VaultSecretOptions,
+  VaultSecretState,
+} from '@rytass/secret-adapter-vault';
 import { VAULT_PATH_TOKEN } from './constants';
 
 @Injectable()
 export class VaultService {
   private readonly manager?: VaultSecret<VaultSecretOptions>;
 
-  private readonly onReadyCallbacks: ((dataSource?: { get: (key: string) => Promise<any> }) => void)[] = [];
+  private readonly onReadyCallbacks: ((dataSource?: {
+    get: (key: string) => Promise<any>;
+  }) => void)[] = [];
 
   private fallbackToEnvFile = false;
 
@@ -34,10 +40,10 @@ export class VaultService {
       onError: (err) => {
         this.fallbackToEnvFile = true;
 
-        this.onReadyCallbacks.forEach(done => done(config));
+        this.onReadyCallbacks.forEach((done) => done(config));
       },
       onReady: () => {
-        this.onReadyCallbacks.forEach(done => done());
+        this.onReadyCallbacks.forEach((done) => done());
       },
     });
   }
@@ -52,8 +58,46 @@ export class VaultService {
     }
 
     return new Promise((resolve) => {
-      this.onReadyCallbacks.push((dataSource: { get: (key: string) => Promise<any> } = this.manager!) => {
-        resolve(dataSource.get(key));
+      this.onReadyCallbacks.push(
+        (
+          dataSource: { get: (key: string) => Promise<any> } = this.manager!,
+        ) => {
+          resolve(dataSource.get(key));
+        },
+      );
+    });
+  }
+
+  public async set<T = string>(key: string, value: T): Promise<void> {
+    if (this.fallbackToEnvFile) {
+      throw new Error('Cannot set value when fallback to env file is enabled.');
+    }
+
+    if (this.manager!.state === VaultSecretState.READY) {
+      return this.manager!.set(key, value);
+    }
+
+    return new Promise((resolve) => {
+      this.onReadyCallbacks.push(() => {
+        resolve(this.manager!.set(key, value));
+      });
+    });
+  }
+
+  public async delete(key: string): Promise<void> {
+    if (this.fallbackToEnvFile) {
+      throw new Error(
+        'Cannot delete value when fallback to env file is enabled.',
+      );
+    }
+
+    if (this.manager!.state === VaultSecretState.READY) {
+      return this.manager!.delete(key);
+    }
+
+    return new Promise((resolve) => {
+      this.onReadyCallbacks.push(() => {
+        resolve(this.manager!.delete(key));
       });
     });
   }
