@@ -61,6 +61,10 @@ Thumbs.db
 # frontend
 frontend
 
+# Claude Code
+.claude
+CLAUDE.md
+
 # Nx
 .nx/cache
 .nx/workspace-data
