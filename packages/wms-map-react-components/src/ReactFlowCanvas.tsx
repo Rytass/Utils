@@ -1,4 +1,4 @@
-import React, { FC, useRef, useState } from 'react';
+import React, { FC, useRef, useState, useMemo } from 'react';
 import {
   Background,
   Edge,
@@ -6,6 +6,7 @@ import {
   ReactFlow,
   useReactFlow,
 } from '@xyflow/react';
+import ImageNode from './ImageNode';
 import styles from './reactFlowCanvas.module.scss';
 
 interface ReactFlowCanvasProps {
@@ -73,6 +74,13 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
 }) => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
+  const nodeTypes = useMemo(
+    () => ({
+      imageNode: ImageNode,
+    }),
+    []
+  );
+
   return (
     <div ref={reactFlowWrapper} className={styles.reactFlowWrapper}>
       <ReactFlow
@@ -81,6 +89,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        nodeTypes={nodeTypes}
         fitView
         className={styles.reactFlowCanvas}
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
