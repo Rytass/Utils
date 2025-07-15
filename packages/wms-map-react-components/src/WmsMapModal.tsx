@@ -1,5 +1,5 @@
 import React, { FC, useCallback } from 'react';
-import { Button, Modal, ModalHeader } from '@mezzanine-ui/react';
+import { Modal, ModalHeader } from '@mezzanine-ui/react';
 import {
   addEdge,
   Connection,
@@ -49,26 +49,29 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
 
       if (files.length > 0) {
         // Process each file
-        files.forEach((file, index) => {
+        files.forEach((file: File, index: number) => {
           // Check file type
           if (!file.type.match(/^image\/(png|jpeg|jpg)$/)) {
             alert(`檔案 ${file.name} 不是有效的圖片格式，請選擇 PNG 或 JPG 格式`);
+
             return;
           }
 
           // Create file URL
           const imageUrl = URL.createObjectURL(file);
-          
+
           // Create image element to get dimensions
           const img = new Image();
+
           img.onload = () => {
             // Calculate appropriate size (max 500px width/height for better visibility)
             const maxSize = 500;
             let width = img.width;
             let height = img.height;
-            
+
             if (width > maxSize || height > maxSize) {
               const ratio = Math.min(maxSize / width, maxSize / height);
+
               width = width * ratio;
               height = height * ratio;
             }
@@ -83,14 +86,16 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
             const newNode = {
               id: `image-${Date.now()}-${index}`,
               type: 'imageNode',
-              position: { 
-                x: baseX + offsetX, 
-                y: baseY + offsetY 
+              position: {
+                x: baseX + offsetX,
+                y: baseY + offsetY,
               },
               data: {
                 imageUrl,
                 width: Math.round(width),
                 height: Math.round(height),
+                originalWidth: img.width,
+                originalHeight: img.height,
                 fileName: file.name,
               },
             };
@@ -100,7 +105,7 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
               setNodes((nds) => [...nds, newNode]);
             }, index * 100); // 100ms delay between each image
           };
-          
+
           img.src = imageUrl;
         });
       }

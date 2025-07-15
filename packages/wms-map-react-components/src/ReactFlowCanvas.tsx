@@ -76,7 +76,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
 
   const nodeTypes = useMemo(
     () => ({
-      imageNode: ImageNode,
+      imageNode: ImageNode as any,
     }),
     []
   );
@@ -95,6 +95,9 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
         minZoom={0.1}
         maxZoom={4}
+        nodesConnectable={false}
+        nodesDraggable={true}
+        elementsSelectable={true}
       >
         <CustomControls />
         <Background />
