@@ -43,51 +43,66 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
 
     input.type = 'file';
     input.accept = 'image/png,image/jpeg,image/jpg';
+    input.multiple = true; // Enable multiple file selection
     input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
+      const files = Array.from((e.target as HTMLInputElement).files || []);
 
-      if (file) {
-        // Check file type
-        if (!file.type.match(/^image\/(png|jpeg|jpg)$/)) {
-          alert('請選擇 PNG 或 JPG 格式的圖片');
-          return;
-        }
-
-        // Create file URL
-        const imageUrl = URL.createObjectURL(file);
-        
-        // Create image element to get dimensions
-        const img = new Image();
-        img.onload = () => {
-          // Calculate appropriate size (max 400px width/height)
-          const maxSize = 400;
-          let width = img.width;
-          let height = img.height;
-          
-          if (width > maxSize || height > maxSize) {
-            const ratio = Math.min(maxSize / width, maxSize / height);
-            width = width * ratio;
-            height = height * ratio;
+      if (files.length > 0) {
+        // Process each file
+        files.forEach((file, index) => {
+          // Check file type
+          if (!file.type.match(/^image\/(png|jpeg|jpg)$/)) {
+            alert(`檔案 ${file.name} 不是有效的圖片格式，請選擇 PNG 或 JPG 格式`);
+            return;
           }
 
-          // Create new image node
-          const newNode = {
-            id: `image-${Date.now()}`,
-            type: 'imageNode',
-            position: { x: 100, y: 100 },
-            data: {
-              imageUrl,
-              width: Math.round(width),
-              height: Math.round(height),
-              fileName: file.name,
-            },
-          };
+          // Create file URL
+          const imageUrl = URL.createObjectURL(file);
+          
+          // Create image element to get dimensions
+          const img = new Image();
+          img.onload = () => {
+            // Calculate appropriate size (max 500px width/height for better visibility)
+            const maxSize = 500;
+            let width = img.width;
+            let height = img.height;
+            
+            if (width > maxSize || height > maxSize) {
+              const ratio = Math.min(maxSize / width, maxSize / height);
+              width = width * ratio;
+              height = height * ratio;
+            }
 
-          // Add node to the canvas
-          setNodes((nds) => [...nds, newNode]);
-        };
-        
-        img.src = imageUrl;
+            // Calculate staggered position
+            const baseX = 100;
+            const baseY = 100;
+            const offsetX = index * 30; // 30px horizontal offset
+            const offsetY = index * 20; // 20px vertical offset
+
+            // Create new image node
+            const newNode = {
+              id: `image-${Date.now()}-${index}`,
+              type: 'imageNode',
+              position: { 
+                x: baseX + offsetX, 
+                y: baseY + offsetY 
+              },
+              data: {
+                imageUrl,
+                width: Math.round(width),
+                height: Math.round(height),
+                fileName: file.name,
+              },
+            };
+
+            // Add node to the canvas with a slight delay to ensure proper stacking
+            setTimeout(() => {
+              setNodes((nds) => [...nds, newNode]);
+            }, index * 100); // 100ms delay between each image
+          };
+          
+          img.src = imageUrl;
+        });
       }
     };
 
