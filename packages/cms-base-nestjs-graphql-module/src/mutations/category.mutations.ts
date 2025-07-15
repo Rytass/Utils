@@ -10,18 +10,34 @@ import { UpdateCategoryArgs } from '../dto/update-category.args';
 import { Inject } from '@nestjs/common';
 import { BaseAction } from '../constants/enum/base-action.enum';
 import { BaseResource } from '../constants/enum/base-resource.enum';
+import { MAP_CATEGORY_CUSTOM_FIELDS_TO_ENTITY_COLUMNS } from '../typings/cms-graphql-base-providers';
+import { CustomFieldInput } from '../dto/custom-field.input';
 
 @Resolver()
 export class CategoryMutations {
   constructor(
     @Inject(MULTIPLE_LANGUAGE_MODE)
     private readonly multiLanguage: boolean,
+    @Inject(MAP_CATEGORY_CUSTOM_FIELDS_TO_ENTITY_COLUMNS)
+    private readonly mapCategoryCustomFieldsToEntityColumns: (
+      customFields: CustomFieldInput[],
+    ) => Promise<Record<string, string>>,
     private readonly categoryService: CategoryBaseService,
   ) {}
 
-  private resolveCreateCategoryArgs(args: CreateCategoryArgs) {
+  private async resolveCreateCategoryArgs(args: CreateCategoryArgs) {
+    const extraArgsInput: Record<string, string | object> = {};
+
+    if (args.customFields?.length) {
+      Object.assign(
+        extraArgsInput,
+        await this.mapCategoryCustomFieldsToEntityColumns(args.customFields),
+      );
+    }
+
     const basePayload = {
       parentIds: args.parentIds,
+      ...extraArgsInput,
     };
 
     if (!this.multiLanguage) {
@@ -45,21 +61,21 @@ export class CategoryMutations {
 
   @Mutation(() => BackstageCategoryDto)
   @AllowActions([[BaseResource.CATEGORY, BaseAction.CREATE]])
-  createCategory(
+  async createCategory(
     @Args() args: CreateCategoryArgs,
   ): Promise<BackstageCategoryDto> {
     return this.categoryService.create({
-      ...this.resolveCreateCategoryArgs(args),
+      ...(await this.resolveCreateCategoryArgs(args)),
     });
   }
 
   @Mutation(() => BackstageCategoryDto)
   @AllowActions([[BaseResource.CATEGORY, BaseAction.UPDATE]])
-  updateCategory(
+  async updateCategory(
     @Args() args: UpdateCategoryArgs,
   ): Promise<BackstageCategoryDto> {
     return this.categoryService.update(args.id, {
-      ...this.resolveCreateCategoryArgs(args),
+      ...(await this.resolveCreateCategoryArgs(args)),
     });
   }
 
