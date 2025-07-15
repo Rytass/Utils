@@ -1,0 +1,68 @@
+// Toolbar Styles
+
+.toolbar {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 1000;
+  background-color: white;
+  border-radius: 6px;
+  padding: 0 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
+}
+
+.toolbarLeft {
+  display: flex;
+  gap: 8px;
+}
+
+.toolbarButton {
+  height: 32px !important;
+  padding: 0 16px !important;
+  border: 1px solid #d0d0d0 !important;
+  border-radius: 4px !important;
+  background-color: white !important;
+  color: #666 !important;
+  font-size: 14px !important;
+  min-width: auto !important;
+  
+  &:hover {
+    border-color: #b0b0b0 !important;
+    background-color: #f8f8f8 !important;
+    color: #666 !important;
+  }
+
+  &:focus {
+    border-color: #b0b0b0 !important;
+    background-color: #f8f8f8 !important;
+    color: #666 !important;
+    box-shadow: none !important;
+  }
+}
+
+.saveButton {
+  height: 32px !important;
+  padding: 0 16px !important;
+  border: none !important;
+  border-radius: 4px !important;
+  background-color: #5570d3 !important;
+  color: white !important;
+  font-size: 14px !important;
+  min-width: auto !important;
+  
+  &:hover {
+    background-color: #4461c2 !important;
+    color: white !important;
+  }
+
+  &:focus {
+    background-color: #4461c2 !important;
+    color: white !important;
+    box-shadow: none !important;
+  }
+}
