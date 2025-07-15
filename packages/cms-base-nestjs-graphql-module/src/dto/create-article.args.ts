@@ -1,5 +1,6 @@
 import { ArgsType, Field, ID } from '@nestjs/graphql';
 import { ArticleVersionContentInput } from './article-version-content.input';
+import { CustomFieldInput } from './custom-field.input';
 
 @ArgsType()
 export class CreateArticleArgs {
@@ -20,4 +21,7 @@ export class CreateArticleArgs {
 
   @Field(() => String, { nullable: true })
   signatureLevel?: string | null;
+
+  @Field(() => [CustomFieldInput], { nullable: true })
+  customFields?: CustomFieldInput[];
 }
