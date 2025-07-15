@@ -17,6 +17,14 @@
     border-color: #b0b0b0;
     z-index: 5;
   }
+
+  &.resizing {
+    cursor: nw-resize;
+
+    .image {
+      pointer-events: none;
+    }
+  }
 }
 
 .imageContainer {
@@ -50,14 +58,17 @@
   text-overflow: ellipsis;
 }
 
-.handle {
-  width: 8px;
-  height: 8px;
-  background: #5570d3;
-  border: 2px solid white;
-  border-radius: 50%;
-  
+
+// Custom NodeResizer handle styles
+.imageNode :global(.react-flow__resize-control) {
+  width: 20px !important;
+  height: 20px !important;
+  border: 1px solid #5570d3 !important;
+  border-radius: 2px !important;
+  background: white !important;
+
   &:hover {
-    background: #4461c2;
+    background: #5570d3 !important;
+    transform: scale(1.2);
   }
 }
