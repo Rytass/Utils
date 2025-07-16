@@ -263,6 +263,10 @@ export class VaultSecret<
 
       throw new Error((data as VaultAPIFailedResponse)?.errors.join(', '));
     }
+
+    if (!this._online) {
+      this._cacheData![key] = value;
+    }
   }
 
   private async removeSecretKeyOnline(key: string): Promise<void> {
@@ -303,6 +307,10 @@ export class VaultSecret<
       });
 
       throw new Error((data as VaultAPIFailedResponse)?.errors.join(', '));
+    }
+
+    if (!this._online) {
+      delete this._cacheData![key];
     }
   }
 
@@ -354,8 +362,8 @@ export class VaultSecret<
     }) as VaultGetType<Options, T>;
   }
 
-  set<T>(key: string, value: T): VaultSetType<Options> {
-    if (!this._online) {
+  set<T>(key: string, value: T, syncToOnline = false): VaultSetType<Options> {
+    if (!syncToOnline) {
       if (this._state === VaultSecretState.INIT) {
         throw new Error('Cache data not ready');
       }
@@ -389,8 +397,8 @@ export class VaultSecret<
     }) as VaultSetType<Options>;
   }
 
-  delete(key: string): VaultDeleteType<Options> {
-    if (!this._online) {
+  delete(key: string, syncToOnline = false): VaultDeleteType<Options> {
+    if (!syncToOnline) {
       if (this._state === VaultSecretState.INIT) {
         throw new Error('Cache data not ready');
       }

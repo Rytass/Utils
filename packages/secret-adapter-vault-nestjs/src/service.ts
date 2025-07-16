@@ -68,23 +68,27 @@ export class VaultService {
     });
   }
 
-  public async set<T = string>(key: string, value: T): Promise<void> {
+  public async set<T = string>(
+    key: string,
+    value: T,
+    syncToOnline = false,
+  ): Promise<void> {
     if (this.fallbackToEnvFile) {
       throw new Error('Cannot set value when fallback to env file is enabled.');
     }
 
     if (this.manager!.state === VaultSecretState.READY) {
-      return this.manager!.set(key, value);
+      return this.manager!.set(key, value, syncToOnline);
     }
 
     return new Promise((resolve) => {
       this.onReadyCallbacks.push(() => {
-        resolve(this.manager!.set(key, value));
+        resolve(this.manager!.set(key, value, syncToOnline));
       });
     });
   }
 
-  public async delete(key: string): Promise<void> {
+  public async delete(key: string, syncToOnline = false): Promise<void> {
     if (this.fallbackToEnvFile) {
       throw new Error(
         'Cannot delete value when fallback to env file is enabled.',
@@ -92,12 +96,12 @@ export class VaultService {
     }
 
     if (this.manager!.state === VaultSecretState.READY) {
-      return this.manager!.delete(key);
+      return this.manager!.delete(key, syncToOnline);
     }
 
     return new Promise((resolve) => {
       this.onReadyCallbacks.push(() => {
-        resolve(this.manager!.delete(key));
+        resolve(this.manager!.delete(key, syncToOnline));
       });
     });
   }
