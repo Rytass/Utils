@@ -5925,7 +5925,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/secret-adapter-vault-nestjs@workspace:packages/secret-adapter-vault-nestjs"
   dependencies:
-    "@rytass/secret-adapter-vault": "npm:^0.3.1"
+    "@rytass/secret-adapter-vault": "npm:^0.3.2"
     regenerator-runtime: "npm:^0.14.1"
   peerDependencies:
     "@nestjs/common": "*"
@@ -5934,7 +5934,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rytass/secret-adapter-vault@npm:^0.3.1, @rytass/secret-adapter-vault@workspace:packages/secret-adapter-vault":
+"@rytass/secret-adapter-vault@npm:^0.3.2, @rytass/secret-adapter-vault@workspace:packages/secret-adapter-vault":
   version: 0.0.0-use.local
   resolution: "@rytass/secret-adapter-vault@workspace:packages/secret-adapter-vault"
   dependencies:
