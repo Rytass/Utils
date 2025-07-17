@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.27](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.26...@rytass/cms-base-nestjs-graphql-module@0.0.27) (2025-07-17)
+
+### Bug Fixes
+
+- **cms-base-nestjs-graphql-module:** update categoryIds, parentIds, and ids fields to use ID type ([0ab423c](https://github.com/Rytass/Utils/commit/0ab423cf63cc76437bb1700e82a0197b8fff4367))
+
 ## [0.0.26](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.25...@rytass/cms-base-nestjs-graphql-module@0.0.26) (2025-07-15)
 
 ### Features
