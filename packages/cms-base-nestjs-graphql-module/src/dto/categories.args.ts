@@ -1,12 +1,12 @@
-import { ArgsType, Field, registerEnumType } from '@nestjs/graphql';
+import { ArgsType, Field, ID, registerEnumType } from '@nestjs/graphql';
 import { CategorySorter } from '@rytass/cms-base-nestjs-module';
 
 @ArgsType()
 export class CategoriesArgs {
-  @Field(() => [String], { nullable: true })
+  @Field(() => [ID], { nullable: true })
   parentIds?: string[] | null;
 
-  @Field(() => [String], { nullable: true })
+  @Field(() => [ID], { nullable: true })
   ids?: string[] | null;
 
   @Field(() => String, { nullable: true })
