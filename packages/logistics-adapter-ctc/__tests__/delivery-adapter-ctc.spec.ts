@@ -1,6 +1,6 @@
 
 import { LogisticsError } from '@rytass/logistics';
-import { CtcLogisticsService, CtcLogistics } from '../src';
+import { CtcLogisticsService, CtcLogistics, CreateOrUpdateCtcLogisticsOptions } from '../src';
 import axios from 'axios';
 
 describe('delivery-adapter-ctc', () => {
@@ -88,7 +88,8 @@ describe('delivery-adapter-ctc', () => {
     const get = jest.spyOn(axios, 'get');
 
     const createOrUpdateCtcLogisticsOptions = {
-      trackingNumber: 'R25061100009', // 查件單號
+      shippingNumber: 'R25071700027', // 托運單號
+      trackingNumber: 'ABCD202507170001', // 查件單號
       senderCompany: 'Sender Name',
       senderMobile: '1234567890',
       senderAddress: 'Sender Address',
@@ -112,7 +113,7 @@ describe('delivery-adapter-ctc', () => {
       quantity: 1, // 件數, 固定為 1
       weight: 1, // 重量, 固定為 1
       volume: 1, // 材積, 固定為 1
-    };
+    } as CreateOrUpdateCtcLogisticsOptions;
 
     post.mockImplementation(async (url: string, data: any) => {
       expect(url).toBe('https://tms2.ctc-express.cloud/api/v1/customer/orders');
@@ -120,8 +121,8 @@ describe('delivery-adapter-ctc', () => {
       return {
         data: {
           success: true,
-          shipping_number: 'R25061100009測試',
-          tracking_number: 'R25061100009',
+          shipping_number: 'R25071700027',
+          tracking_number: 'ABCD202507170001',
         },
       };
     });
