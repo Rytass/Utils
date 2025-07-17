@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.3](https://github.com/Rytass/Utils/compare/@rytass/logistics-adapter-ctc@0.2.2...@rytass/logistics-adapter-ctc@0.2.3) (2025-07-17)
+
+### Features
+
+- **logistics-adapter-ctc:** update createOrUpdate input interface ([b7b96cb](https://github.com/Rytass/Utils/commit/b7b96cbca6459772c8a7c31aa2e8671147a4a3a0))
+
 ## 0.2.2 (2025-06-25)
 
 ### Features
