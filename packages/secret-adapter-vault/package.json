@@ -1,6 +1,6 @@
 {
   "name": "@rytass/secret-adapter-vault",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Rytass Secret Vault adapter",
   "keywords": [
     "rytass",

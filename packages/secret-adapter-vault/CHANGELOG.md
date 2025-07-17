@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.3.2](https://github.com/Rytass/Utils/compare/@rytass/secret-adapter-vault@0.3.1...@rytass/secret-adapter-vault@0.3.2) (2025-07-16)
+
+### Features
+
+- **secret-adapter-vault:** add sync to online option on set and delete methods ([1d5abab](https://github.com/Rytass/Utils/commit/1d5abab41f2b9c2226912288081db6a14121bade))
+
 ## [0.3.1](https://github.com/Rytass/Utils/compare/@rytass/secret-adapter-vault@0.3.0...@rytass/secret-adapter-vault@0.3.1) (2024-11-29)
 
 **Note:** Version bump only for package @rytass/secret-adapter-vault

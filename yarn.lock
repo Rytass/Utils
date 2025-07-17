@@ -5602,7 +5602,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/cms-base-nestjs-graphql-module@workspace:packages/cms-base-nestjs-graphql-module"
   dependencies:
-    "@rytass/cms-base-nestjs-module": "npm:^0.1.94"
+    "@rytass/cms-base-nestjs-module": "npm:^0.1.95"
     "@rytass/member-base-nestjs-module": "npm:^0.1.65"
     dataloader: "npm:^2.2.2"
     lru-cache: "npm:^11.0.2"
@@ -5615,7 +5615,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rytass/cms-base-nestjs-module@npm:^0.1.94, @rytass/cms-base-nestjs-module@workspace:packages/cms-base-nestjs-module":
+"@rytass/cms-base-nestjs-module@npm:^0.1.95, @rytass/cms-base-nestjs-module@workspace:packages/cms-base-nestjs-module":
   version: 0.0.0-use.local
   resolution: "@rytass/cms-base-nestjs-module@workspace:packages/cms-base-nestjs-module"
   dependencies:
@@ -5925,7 +5925,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/secret-adapter-vault-nestjs@workspace:packages/secret-adapter-vault-nestjs"
   dependencies:
-    "@rytass/secret-adapter-vault": "npm:^0.3.1"
+    "@rytass/secret-adapter-vault": "npm:^0.3.2"
     regenerator-runtime: "npm:^0.14.1"
   peerDependencies:
     "@nestjs/common": "*"
@@ -5934,7 +5934,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rytass/secret-adapter-vault@npm:^0.3.1, @rytass/secret-adapter-vault@workspace:packages/secret-adapter-vault":
+"@rytass/secret-adapter-vault@npm:^0.3.2, @rytass/secret-adapter-vault@workspace:packages/secret-adapter-vault":
   version: 0.0.0-use.local
   resolution: "@rytass/secret-adapter-vault@workspace:packages/secret-adapter-vault"
   dependencies:

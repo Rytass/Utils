@@ -3,6 +3,26 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.27](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.26...@rytass/cms-base-nestjs-graphql-module@0.0.27) (2025-07-17)
+
+### Bug Fixes
+
+- **cms-base-nestjs-graphql-module:** update categoryIds, parentIds, and ids fields to use ID type ([0ab423c](https://github.com/Rytass/Utils/commit/0ab423cf63cc76437bb1700e82a0197b8fff4367))
+
+## [0.0.26](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.25...@rytass/cms-base-nestjs-graphql-module@0.0.26) (2025-07-15)
+
+### Features
+
+- **cms-base-nestjs-graphql-module:** add support for custom article fields and async options ([7d719fe](https://github.com/Rytass/Utils/commit/7d719feb7dad91fd1f046c53514ea6f89dfb0156))
+
+## [0.0.25](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.24...@rytass/cms-base-nestjs-graphql-module@0.0.25) (2025-07-14)
+
+### Features
+
+- **cms-base-nestjs-graphql-module:** add BackstageCategoryResolver and CategoryMultiLanguageNameDto for multi-language support ([3285ffc](https://github.com/Rytass/Utils/commit/3285ffcb0364271e4b037bf7857b083ed9390334))
+- **cms-base-nestjs-graphql-module:** add sorter field to BackstageArticleArgs for article sorting ([14fa2fd](https://github.com/Rytass/Utils/commit/14fa2fda9cfefbebab9db0b55766f37092402fbb))
+- **cms-base-nestjs-graphql-module:** add sorter field to CategoriesArgs for category sorting ([fa0d57e](https://github.com/Rytass/Utils/commit/fa0d57e83a14d510168ff99a1690d360ec3beb65))
+
 ## [0.0.24](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.0.23...@rytass/cms-base-nestjs-graphql-module@0.0.24) (2025-07-08)
 
 ### Bug Fixes

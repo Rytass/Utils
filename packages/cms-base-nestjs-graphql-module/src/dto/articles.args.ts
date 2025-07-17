@@ -1,8 +1,8 @@
-import { ArgsType, Field, Int } from '@nestjs/graphql';
+import { ArgsType, Field, ID, Int } from '@nestjs/graphql';
 
 @ArgsType()
 export class ArticlesArgs {
-  @Field(() => [String], { nullable: true })
+  @Field(() => [ID], { nullable: true })
   categoryIds?: string[] | null;
 
   @Field(() => Int, { nullable: true })

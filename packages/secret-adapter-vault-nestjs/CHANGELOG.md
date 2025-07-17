@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.3.3](https://github.com/Rytass/Utils/compare/@rytass/secret-adapter-vault-nestjs@0.3.2...@rytass/secret-adapter-vault-nestjs@0.3.3) (2025-07-16)
+
+### Features
+
+- **secret-adapter-vault:** add sync to online option on set and delete methods ([1d5abab](https://github.com/Rytass/Utils/commit/1d5abab41f2b9c2226912288081db6a14121bade))
+
+## [0.3.2](https://github.com/Rytass/Utils/compare/@rytass/secret-adapter-vault-nestjs@0.3.1...@rytass/secret-adapter-vault-nestjs@0.3.2) (2025-07-15)
+
+### Features
+
+- **secret-adapter-vault-nestjs:** expose set and delete method ([20b3322](https://github.com/Rytass/Utils/commit/20b3322323fb0574c19b7cbb8d0b81d2ac6b5f88))
+
 ## [0.3.1](https://github.com/Rytass/Utils/compare/@rytass/secret-adapter-vault-nestjs@0.3.0...@rytass/secret-adapter-vault-nestjs@0.3.1) (2024-11-29)
 
 **Note:** Version bump only for package @rytass/secret-adapter-vault-nestjs

@@ -11,22 +11,38 @@ import { UpdateArticleArgs } from '../dto/update-article.args';
 import { Inject } from '@nestjs/common';
 import { BaseAction } from '../constants/enum/base-action.enum';
 import { BaseResource } from '../constants/enum/base-resource.enum';
+import { MAP_ARTICLE_CUSTOM_FIELDS_TO_ENTITY_COLUMNS } from '../typings/cms-graphql-base-providers';
+import { CustomFieldInput } from '../dto/custom-field.input';
 
 @Resolver()
 export class ArticleMutations {
   constructor(
     @Inject(MULTIPLE_LANGUAGE_MODE)
     private readonly multiLanguage: boolean,
+    @Inject(MAP_ARTICLE_CUSTOM_FIELDS_TO_ENTITY_COLUMNS)
+    private readonly mapArticleCustomFieldsToEntityColumns: (
+      customFields: CustomFieldInput[],
+    ) => Promise<Record<string, string>>,
     private readonly articleService: ArticleBaseService,
   ) {}
 
-  private resolveCreateArticleArgs(args: CreateArticleArgs) {
+  private async resolveCreateArticleArgs(args: CreateArticleArgs) {
+    const extraArgsInput: Record<string, string | object> = {};
+
+    if (args.customFields?.length) {
+      Object.assign(
+        extraArgsInput,
+        await this.mapArticleCustomFieldsToEntityColumns(args.customFields),
+      );
+    }
+
     const basePayload = {
       categoryIds: args.categoryIds,
       tags: args.tags,
       submitted: args.submitted ?? undefined,
       signatureLevel: args.signatureLevel ?? null,
       releasedAt: args.releasedAt ?? null,
+      ...extraArgsInput,
     };
 
     if (!this.multiLanguage) {
@@ -65,7 +81,7 @@ export class ArticleMutations {
     @Args() args: CreateArticleArgs,
   ): Promise<BackstageArticleDto> {
     return this.articleService.create({
-      ...this.resolveCreateArticleArgs(args),
+      ...(await this.resolveCreateArticleArgs(args)),
       userId: memberId,
     });
   }
@@ -77,7 +93,7 @@ export class ArticleMutations {
     @Args() args: UpdateArticleArgs,
   ): Promise<BackstageArticleDto> {
     return this.articleService.addVersion(args.id, {
-      ...this.resolveCreateArticleArgs(args),
+      ...(await this.resolveCreateArticleArgs(args)),
       userId: memberId,
     });
   }

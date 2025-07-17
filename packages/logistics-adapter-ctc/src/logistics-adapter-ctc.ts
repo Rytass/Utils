@@ -140,8 +140,9 @@ export class CtcLogisticsService<
 
     const requestBody: CreateOrUpdateCtcLogisticsRequest = {
       order: {
-        tracking_number: options.trackingNumber,
+        tracking_number: options.trackingNumber, // 建立可指定查件單號, 更新時可帶入托運單號做更新
         customer_department_id: options.customerDepartmentId,
+        customer_department_unit_id: options.customerDepartmentUnitId,
 
         sender_company: options.senderCompany,
         sender_contact_name: options.senderContactName ?? options.senderCompany,
@@ -160,7 +161,7 @@ export class CtcLogisticsService<
         shipment_content: options.shipmentContent ?? '貨件', // 固定為 '貨件'
         transportation: options.transportation ?? 'truck', // 固定為 'truck'
         shipping_method: options.shippingMethod ?? 'land', // 固定為 'land'
-        payer: options.payer ?? 'sender', // 固定為 'sender'
+        payer: options.payer ?? 'receiver', // 固定為 'receiver'
         shipping_time: options.shippingTime ?? 'regular', // 固定為 'regular'
         payment_method: options.paymentMethod ?? 'monthly', // 固定為 'monthly'
         quantity: options.quantity ?? 1, // 固定為 1
@@ -186,7 +187,7 @@ export class CtcLogisticsService<
       }
 
       return {
-        trackingNumber: data.tracking_number ?? options.trackingNumber,
+        trackingNumber: data.tracking_number,
         shippingNumber: data.shipping_number,
       }
     } catch (err) {

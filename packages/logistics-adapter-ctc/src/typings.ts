@@ -66,8 +66,9 @@ export const CtcLogistics: CtcLogisticsInterface<CtcLogisticsStatus> = {
 }
 
 export interface CreateOrUpdateCtcLogisticsOptions {
-  trackingNumber: string; // 查件單號, primary key
-  customerDepartmentId: number; // 客戶部門ID, optional
+  trackingNumber?: string; // 查件單號, primary key
+  customerDepartmentId?: number; // 客戶部門ID, optional
+  customerDepartmentUnitId?: number; // 客戶部門單位ID, optional
 
   senderCompany: string; // 寄件人公司名稱
   senderContactName?: string; // 寄件人聯絡人
@@ -95,14 +96,15 @@ export interface CreateOrUpdateCtcLogisticsOptions {
 }
 
 export interface CtcLogisticsDto {
-  trackingNumber: string; // 查件單號
+  trackingNumber?: string; // 查件單號
   shippingNumber: string; // 托運單號
 }
 
 export interface CreateOrUpdateCtcLogisticsRequest {
   order: {
-    tracking_number: string; // 查件單號
-    customer_department_id: number; // 客戶部門ID
+    tracking_number?: string; // 查件單號
+    customer_department_id?: number; // 客戶部門ID, optional
+    customer_department_unit_id?: number; // 客戶部門單位ID, optional
 
     sender_company: string; // 寄件人公司名稱
     sender_contact_name: string; // 寄件人聯絡人
