@@ -209,6 +209,7 @@ export class ArticleBaseService<
               this.articleSignatureRepo.metadata.tableName,
               'signatures',
             );
+
             subQb.innerJoin('signatures.articleVersion', 'articleVersion');
 
             subQb.select('signatures.articleId', 'articleId');

@@ -1,11 +1,14 @@
-import { CMS_BASE_MODULE_OPTIONS } from '../src/typings/cms-base-providers';
+import { CMSBaseModuleOptionFactory } from 'cms-base-nestjs-module/src/typings/cms-base-root-module-option-factory';
 import { CMSBaseModule } from '../src/cms-base.module';
+import { CMS_BASE_MODULE_OPTIONS } from '../src/typings/cms-base-providers';
+import { CMSBaseModuleOptionsDto } from '../src/typings/cms-base-root-module-options.dto';
 
 describe('CMSBaseModule.forRoot', () => {
   it('should return a valid DynamicModule with config values', () => {
     const module = CMSBaseModule.forRoot({
       multipleLanguageMode: true,
       fullTextSearchMode: true,
+      enableDraftMode: true,
     });
 
     expect(module.module).toBe(CMSBaseModule);
@@ -16,6 +19,7 @@ describe('CMSBaseModule.forRoot', () => {
           useValue: expect.objectContaining({
             multipleLanguageMode: true,
             fullTextSearchMode: true,
+            enableDraftMode: true,
           }),
         }),
       ]),
@@ -53,13 +57,14 @@ describe('CMSBaseModule.forRootAsync (useFactory)', () => {
 });
 
 describe('CMSBaseModule.forRootAsync (useClass)', () => {
-  class MockFactory {
-    createCMSOptions() {
+  class MockFactory implements CMSBaseModuleOptionFactory {
+    createCMSOptions(): CMSBaseModuleOptionsDto {
       return {
         enableDraftMode: true,
       };
     }
   }
+
   it('should return a DynamicModule with useClass provider', () => {
     const module = CMSBaseModule.forRootAsync({
       useClass: MockFactory,
@@ -81,10 +86,10 @@ describe('CMSBaseModule.forRootAsync (useClass)', () => {
   });
 
   it('should execute useFactory from useClass provider', async () => {
-    class DummyFactory {
-      createCMSOptions() {
+    class DummyFactory implements CMSBaseModuleOptionFactory {
+      createCMSOptions(): CMSBaseModuleOptionsDto {
         return {
-          signatureMode: true,
+          allowMultipleParentCategories: true,
         };
       }
     }
@@ -105,7 +110,7 @@ describe('CMSBaseModule.forRootAsync (useClass)', () => {
     const result = await factoryProvider!.useFactory(new DummyFactory());
 
     expect(result).toEqual({
-      signatureMode: true,
+      allowMultipleParentCategories: true,
     });
   });
 });

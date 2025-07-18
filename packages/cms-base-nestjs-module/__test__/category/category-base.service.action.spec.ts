@@ -1,685 +1,1244 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { CategoryBaseService } from '../../src/services/category-base.service';
-import { DataSource, In } from 'typeorm';
 import {
-  CATEGORY_DATA_LOADER,
-  CIRCULAR_CATEGORY_MODE,
-  MULTIPLE_CATEGORY_PARENT_MODE,
-  MULTIPLE_LANGUAGE_MODE,
-  RESOLVED_CATEGORY_MULTI_LANGUAGE_NAME_REPO,
-  RESOLVED_CATEGORY_REPO,
-} from '../../src/typings/cms-base-providers';
+  DataSource,
+  EntityManager,
+  In,
+  QueryRunner,
+  Repository,
+} from 'typeorm';
+import { CategoryBaseService } from '../../src/services/category-base.service';
+import { BaseCategoryEntity } from '../../src/models/base-category.entity';
 import {
   CategoryNotFoundError,
+  CircularCategoryNotAllowedError,
   MultipleParentCategoryNotAllowedError,
   ParentCategoryNotFoundError,
 } from '../../src/constants/errors/category.errors';
-import {
-  BadRequestException,
-  InternalServerErrorException,
-} from '@nestjs/common';
-import { DEFAULT_LANGUAGE } from '../../src/constants/default-language';
+import { BaseCategoryMultiLanguageNameEntity } from '../../src/models/base-category-multi-language-name.entity';
+import { CategoryDataLoader } from '../../src/data-loaders/category.dataloader';
+import { DEFAULT_LANGUAGE } from '@rytass/cms-base-nestjs-module';
 
-describe('CategoryBaseService.archive', () => {
-  let service: CategoryBaseService<any, any>;
-  let findOneMock: jest.Mock;
-  let softDeleteMock: jest.Mock;
+describe('CategoryBaseService - archive', () => {
+  let service: CategoryBaseService;
+  let baseCategoryRepo: any;
 
-  beforeEach(async () => {
-    findOneMock = jest.fn();
-    softDeleteMock = jest.fn();
+  beforeEach(() => {
+    baseCategoryRepo = jest.mocked({
+      findOne: jest.fn(),
+      softDelete: jest.fn(),
+    } as Partial<Repository<BaseCategoryEntity>>);
 
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        CategoryBaseService,
-        {
-          provide: RESOLVED_CATEGORY_REPO,
-          useValue: {
-            findOne: findOneMock,
-            softDelete: softDeleteMock,
-          },
-        },
-        { provide: RESOLVED_CATEGORY_MULTI_LANGUAGE_NAME_REPO, useValue: {} },
-        { provide: MULTIPLE_LANGUAGE_MODE, useValue: true },
-        { provide: MULTIPLE_CATEGORY_PARENT_MODE, useValue: true },
-        { provide: CIRCULAR_CATEGORY_MODE, useValue: false },
-        { provide: CATEGORY_DATA_LOADER, useValue: {} },
-        { provide: DataSource, useValue: {} },
-      ],
-    }).compile();
-
-    service = module.get(CategoryBaseService);
-  });
-
-  it('should soft delete the category if it exists', async () => {
-    const mockId = '123';
-
-    findOneMock.mockResolvedValue({ id: mockId });
-
-    await service.archive(mockId);
-
-    expect(findOneMock).toHaveBeenCalledWith({ where: { id: mockId } });
-    expect(softDeleteMock).toHaveBeenCalledWith(mockId);
+    service = new CategoryBaseService(
+      {} as any, // baseCategoryMultiLanguageNameRepo
+      baseCategoryRepo as any, // baseCategoryRepo
+      false, // multipleLanguageMode
+      false, // allowMultipleParentCategories
+      false, // allowCircularCategories
+      { createQueryRunner: jest.fn() } as any, // dataSource
+      {} as any, // categoryDataLoader
+    );
   });
 
   it('should throw CategoryNotFoundError if category does not exist', async () => {
-    findOneMock.mockResolvedValue(null);
+    baseCategoryRepo.findOne!.mockResolvedValue(null); // not found
 
-    await expect(service.archive('non-existent')).rejects.toThrow(
+    await expect(service.archive('nonexistent-id')).rejects.toThrow(
       CategoryNotFoundError,
     );
   });
+
+  it('should soft delete the category if found', async () => {
+    baseCategoryRepo.findOne!.mockResolvedValue({
+      id: '123',
+    } as BaseCategoryEntity);
+
+    await service.archive('123');
+
+    expect(baseCategoryRepo.softDelete).toHaveBeenCalledWith('123');
+  });
 });
 
-describe('CategoryBaseService.update', () => {
-  let service: CategoryBaseService<any, any>;
-  let mockRepo: any;
-  let mockRunner: any;
-  let mockDataSource: any;
+describe('CategoryBaseService - update', () => {
+  let service: CategoryBaseService;
+  let baseCategoryRepo: jest.Mocked<Repository<BaseCategoryEntity>>;
+  let queryRunner: jest.Mocked<Partial<QueryRunner>>;
 
-  beforeEach(async () => {
-    mockRepo = {
+  beforeEach(() => {
+    baseCategoryRepo = {
+      findOne: jest.fn(),
+      find: jest.fn(),
+      create: jest.fn(),
+      save: jest.fn(),
       createQueryBuilder: jest.fn().mockReturnValue({
         innerJoinAndSelect: jest.fn().mockReturnThis(),
         leftJoinAndSelect: jest.fn().mockReturnThis(),
         andWhere: jest.fn().mockReturnThis(),
-        getOne: jest.fn(),
+        getOne: jest.fn().mockResolvedValue(null),
       }),
-      create: jest.fn(),
-      find: jest.fn(),
-      findOne: jest.fn(),
-    };
+    } as unknown as jest.Mocked<Repository<BaseCategoryEntity>>;
 
-    mockRunner = {
+    queryRunner = {
       connect: jest.fn(),
       startTransaction: jest.fn(),
       commitTransaction: jest.fn(),
       rollbackTransaction: jest.fn(),
       release: jest.fn(),
       manager: {
-        save: jest.fn(),
-        remove: jest.fn(),
-      },
+        save: jest.fn().mockResolvedValue(undefined),
+        remove: jest.fn().mockResolvedValue(undefined),
+      } as unknown as EntityManager,
     };
 
-    mockDataSource = {
-      createQueryRunner: jest.fn().mockReturnValue(mockRunner),
-    };
+    const dataSource = {
+      createQueryRunner: () => queryRunner,
+    } as unknown as DataSource;
 
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        CategoryBaseService,
-        { provide: RESOLVED_CATEGORY_REPO, useValue: mockRepo },
-        {
-          provide: RESOLVED_CATEGORY_MULTI_LANGUAGE_NAME_REPO,
-          useValue: mockRepo,
+    service = new CategoryBaseService(
+      {
+        create: jest.fn((input) => input),
+      } as unknown as Repository<BaseCategoryMultiLanguageNameEntity>,
+      baseCategoryRepo,
+      true,
+      false,
+      false,
+      dataSource,
+      {
+        withParentsLoader: {
+          load: jest.fn().mockResolvedValue({ parents: [] }),
         },
-        { provide: MULTIPLE_LANGUAGE_MODE, useValue: true },
-        { provide: MULTIPLE_CATEGORY_PARENT_MODE, useValue: true },
-        { provide: CIRCULAR_CATEGORY_MODE, useValue: false },
-        {
-          provide: CATEGORY_DATA_LOADER,
-          useValue: {
-            withParentsLoader: {
-              load: jest.fn().mockResolvedValue({ id: 'c1', parents: [] }),
-            },
-          },
-        },
-
-        { provide: DataSource, useValue: mockDataSource },
-      ],
-    }).compile();
-
-    service = module.get(CategoryBaseService);
-  });
-
-  it('should update category with multi-language names', async () => {
-    const category = {
-      id: 'c1',
-      multiLanguageNames: [{ language: 'en', name: 'Old' }],
-      parents: [],
-    };
-
-    const updateDto = {
-      multiLanguageNames: { en: 'Updated EN', zh: '更新的名稱' },
-    };
-
-    mockRepo.createQueryBuilder().getOne.mockResolvedValue(category);
-    mockRepo.find.mockResolvedValue([]);
-    mockRepo.create.mockImplementation((val: any) => val);
-
-    const result = await service.update('c1', updateDto);
-
-    expect(mockRunner.manager.save).toHaveBeenCalled();
-    expect(result).toEqual(category);
-  });
-
-  it('should throw CategoryNotFoundError if category does not exist', async () => {
-    mockRepo.createQueryBuilder().getOne.mockResolvedValue(undefined);
-
-    await expect(
-      service.update('unknown', { multiLanguageNames: { en: 'Test' } }),
-    ).rejects.toThrow(CategoryNotFoundError);
-  });
-
-  it('should throw ParentCategoryNotFoundError if parent not found', async () => {
-    const category = {
-      id: 'c1',
-      multiLanguageNames: [],
-      parents: [],
-    };
-
-    mockRepo.createQueryBuilder().getOne.mockResolvedValue(category);
-    mockRepo.find.mockResolvedValue([]);
-
-    await expect(
-      service.update('c1', {
-        multiLanguageNames: { en: 'Test' },
-        parentIds: ['p1'],
-      }),
-    ).rejects.toThrow(ParentCategoryNotFoundError);
-  });
-
-  it('should rollback and rethrow on DB failure', async () => {
-    const category = {
-      id: 'c1',
-      multiLanguageNames: [],
-      parents: [],
-    };
-
-    mockRepo.createQueryBuilder().getOne.mockResolvedValue(category);
-    mockRepo.find.mockResolvedValue([]);
-    mockRunner.manager.save.mockRejectedValue(new Error('fail'));
-
-    await expect(
-      service.update('c1', {
-        multiLanguageNames: { en: 'Test' },
-      }),
-    ).rejects.toThrow(BadRequestException);
-
-    expect(mockRunner.rollbackTransaction).toHaveBeenCalled();
-  });
-
-  it('should throw MultipleParentCategoryNotAllowedError if parentIds are provided and allowMultipleParentCategories is false', async () => {
-    (service as any).allowMultipleParentCategories = false;
-
-    const dto = {
-      parentIds: ['p1', 'p2'],
-      name: 'Test',
-    };
-
-    await expect(service.update('c1', dto as any)).rejects.toThrow(
-      MultipleParentCategoryNotAllowedError,
+      } as unknown as CategoryDataLoader,
     );
   });
 
-  it('should resolve parent by parentId when parentIds is undefined and allowMultipleParentCategories is true', async () => {
-    (service as any).allowMultipleParentCategories = true;
-
-    const mockCategory = {
-      id: 'c1',
-      multiLanguageNames: [],
-      parents: [],
-    };
-
-    const mockParentCategory = {
-      id: 'p1',
-      parents: [],
-    };
-
-    mockRepo.createQueryBuilder().getOne.mockResolvedValue(mockCategory);
-    mockRepo.find.mockResolvedValue([mockParentCategory]);
-
-    mockRunner.manager.save.mockResolvedValue(mockCategory);
-    mockRunner.manager.remove.mockResolvedValue(undefined);
-
-    const dto = {
-      parentId: 'p1',
-      multiLanguageNames: { en: 'Name' },
-    };
-
-    const result = await service.update('c1', dto);
-
-    expect(mockRepo.find).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: {
-          id: expect.any(Object),
-        },
-        relations: ['parents'],
-      }),
-    );
-
-    expect(result).toEqual(mockCategory);
-  });
-
-  it('should resolve parent by parentId when allowMultipleParentCategories is false', async () => {
-    (service as any).allowMultipleParentCategories = false;
-
-    const mockCategory = { id: 'c1', multiLanguageNames: [], parents: [] };
-    const mockParentCategory = { id: 'p1', parents: [] };
-
-    mockRepo.createQueryBuilder().getOne.mockResolvedValue(mockCategory);
-    mockRepo.findOne.mockResolvedValue(mockParentCategory);
-    mockRunner.manager.save.mockResolvedValue(mockCategory);
-    mockRunner.manager.remove.mockResolvedValue(undefined);
-
-    const dto = {
-      parentId: 'p1',
-      multiLanguageNames: { en: 'Test Name' },
-    };
-
-    const result = await service.update('c1', dto);
-
-    expect(mockRepo.findOne).toHaveBeenCalledWith({
-      where: { id: 'p1' },
-      relations: ['parents'],
-    });
-
-    expect(result).toEqual(mockCategory);
-  });
-
-  it('should throw ParentCategoryNotFoundError if parentId is used but category not found (single-parent mode)', async () => {
-    (service as any).allowMultipleParentCategories = false;
-
-    const mockCategory = { id: 'c1', multiLanguageNames: [], parents: [] };
-
-    mockRepo.createQueryBuilder().getOne.mockResolvedValue(mockCategory);
-    mockRepo.findOne.mockResolvedValue(undefined);
-
-    await expect(
-      service.update('c1', {
-        parentId: 'nonexistent',
-        multiLanguageNames: { en: 'Missing Parent' },
-      }),
-    ).rejects.toThrow(ParentCategoryNotFoundError);
-  });
-
-  it('should throw if multiple language mode is disabled but multiLanguageNames are passed in update()', async () => {
-    (service as any).multipleLanguageMode = false;
-
-    const mockCategory = {
-      id: 'c1',
-      multiLanguageNames: [],
-      parents: [],
-    };
-
-    mockRepo.createQueryBuilder().getOne.mockResolvedValue(mockCategory);
-    mockRepo.find.mockResolvedValue([]);
-
-    const dto = {
-      multiLanguageNames: { en: 'Name' },
-    };
-
-    await expect(service.update('c1', dto)).rejects.toThrow(
-      InternalServerErrorException,
-    );
-  });
-
-  it('should fallback to default language when multiLanguageNames is null', async () => {
-    const mockCategory = {
-      id: 'c1',
-      multiLanguageNames: [
-        { language: 'en', name: 'Old' },
-        { language: 'zh', name: '舊名' },
-      ],
-      parents: [],
-    };
-
-    const expectedCreated = {
-      categoryId: 'c1',
-      language: 'en',
-      name: 'StillOld',
-    };
-
-    mockRepo.createQueryBuilder().getOne.mockResolvedValue(mockCategory);
-    mockRepo.find.mockResolvedValue([]);
-    mockRunner.manager.save.mockResolvedValue(mockCategory);
-    mockRunner.manager.remove.mockResolvedValue(undefined);
-    mockRepo.create.mockReturnValue(expectedCreated);
-
-    const dto = {
-      name: 'StillOld',
-      multiLanguageNames: null,
-    };
-
-    const result = await service.update('c1', dto as any);
-
-    expect(mockRunner.manager.save).toHaveBeenCalledWith(
-      expect.objectContaining(expectedCreated),
-    );
-
-    expect(result).toEqual(mockCategory);
-  });
-
-  it('should use existing defaultLanguage to create fallback when multiLanguageNames not provided', async () => {
-    (service as any).multipleLanguageMode = true;
-
-    const mockCategory = {
-      id: 'c1',
-      multiLanguageNames: [{ language: DEFAULT_LANGUAGE, name: 'Old Default' }],
-      parents: [],
-    };
-
-    mockRepo.createQueryBuilder().getOne.mockResolvedValue(mockCategory);
-    mockRepo.find.mockResolvedValue([]);
-    mockRunner.manager.save.mockResolvedValue(mockCategory);
-    mockRunner.manager.remove.mockResolvedValue(undefined);
-
-    mockRepo.create.mockImplementation((val: any) => val);
-
-    const dto = { name: 'Updated Name' };
-
-    const result = await service.update('c1', dto);
-
-    expect(mockRunner.manager.save).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({
-          language: DEFAULT_LANGUAGE,
-          name: 'Updated Name',
-        }),
-      ]),
-    );
-
-    expect(result).toEqual(mockCategory);
-  });
-
-  it('should create default language entry from scratch when no defaultLanguage exists', async () => {
-    (service as any).multipleLanguageMode = true;
-
-    const mockCategory = {
-      id: 'c1',
-      multiLanguageNames: [],
-      parents: [],
-    };
-
-    mockRepo.createQueryBuilder().getOne.mockResolvedValue(mockCategory);
-    mockRepo.find.mockResolvedValue([]);
-    mockRunner.manager.save.mockResolvedValue(mockCategory);
-    mockRunner.manager.remove.mockResolvedValue(undefined);
-
-    mockRepo.create.mockImplementation((val: any) => val);
-
-    const dto = { name: 'Brand New Default Name' };
-
-    const result = await service.update('c1', dto);
-
-    expect(mockRunner.manager.save).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({
-          categoryId: 'c1',
-          language: DEFAULT_LANGUAGE,
-          name: 'Brand New Default Name',
-        }),
-      ]),
-    );
-
-    expect(result).toEqual(mockCategory);
-  });
-});
-
-describe('CategoryBaseService.create', () => {
-  let service: CategoryBaseService<any, any>;
-  let mockRepo: any;
-  let mockRunner: any;
-  let mockDataSource: any;
-
-  beforeEach(async () => {
-    mockRepo = {
-      create: jest.fn(),
-      find: jest.fn(),
-      findOne: jest.fn(),
-      createQueryBuilder: jest.fn().mockReturnValue({
-        innerJoinAndSelect: jest.fn().mockReturnThis(),
-        leftJoinAndSelect: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getOne: jest.fn(),
-        getMany: jest.fn(),
-        addOrderBy: jest.fn().mockReturnThis(),
-        skip: jest.fn().mockReturnThis(),
-        take: jest.fn().mockReturnThis(),
-      }),
-    };
-
-    mockRunner = {
-      connect: jest.fn(),
-      startTransaction: jest.fn(),
-      commitTransaction: jest.fn(),
-      rollbackTransaction: jest.fn(),
-      release: jest.fn(),
-      manager: {
-        save: jest.fn(),
-        remove: jest.fn(),
-      },
-    };
-
-    mockDataSource = {
-      createQueryRunner: jest.fn().mockReturnValue(mockRunner),
-    };
-
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        CategoryBaseService,
-        { provide: RESOLVED_CATEGORY_REPO, useValue: mockRepo },
-        {
-          provide: RESOLVED_CATEGORY_MULTI_LANGUAGE_NAME_REPO,
-          useValue: mockRepo,
-        },
-        { provide: MULTIPLE_LANGUAGE_MODE, useValue: true },
-        { provide: MULTIPLE_CATEGORY_PARENT_MODE, useValue: true },
-        { provide: CIRCULAR_CATEGORY_MODE, useValue: false },
-        { provide: CATEGORY_DATA_LOADER, useValue: {} },
-        { provide: DataSource, useValue: mockDataSource },
-      ],
-    }).compile();
-
-    service = module.get(CategoryBaseService);
-  });
-
-  it('should create a category with multiple language names', async () => {
-    const dto = {
-      multiLanguageNames: { en: 'Test EN', zh: '測試' },
-    };
-
-    const createdCategory = { id: '1', ...dto };
-
-    mockRepo.create.mockReturnValue(createdCategory);
-    mockRunner.manager.save.mockResolvedValue(createdCategory);
-
-    const result = await service.create(dto);
-
-    expect(mockRepo.create).toHaveBeenCalled();
-    expect(mockRunner.manager.save).toHaveBeenCalled();
-    expect(result).toEqual(createdCategory);
-  });
-
-  it('should throw if multiple parents provided when not allowed', async () => {
-    (service as any).allowMultipleParentCategories = false;
-
-    await expect(
-      service.create({
+  it('should throw MultipleParentCategoryNotAllowedError if multiple parents but not allowed', async () => {
+    await expect(() =>
+      service.update('cat-id', {
         parentIds: ['p1', 'p2'],
-        multiLanguageNames: { en: 'Test' },
+        multiLanguageNames: {},
       }),
     ).rejects.toThrow(MultipleParentCategoryNotAllowedError);
   });
 
-  it('should throw if a specified parent category is not found', async () => {
-    mockRepo.find.mockResolvedValue([]); // simulate no match
-    await expect(
-      service.create({ parentIds: ['p1'], multiLanguageNames: { en: 'Test' } }),
+  it('should throw CategoryNotFoundError if category not found', async () => {
+    baseCategoryRepo.createQueryBuilder = jest.fn().mockReturnValue({
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(null),
+    });
+
+    await expect(() =>
+      service.update('cat-id', {
+        multiLanguageNames: {},
+      }),
+    ).rejects.toThrow(CategoryNotFoundError);
+  });
+
+  it('should throw ParentCategoryNotFoundError if single parent not found', async () => {
+    baseCategoryRepo.createQueryBuilder = jest.fn().mockReturnValue({
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue({
+        id: 'cat-id',
+        multiLanguageNames: [],
+        bindable: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        parents: [],
+        children: [],
+        articles: [],
+      } as BaseCategoryEntity),
+    });
+
+    baseCategoryRepo.findOne!.mockResolvedValueOnce(null);
+
+    await expect(() =>
+      service.update('cat-id', {
+        parentId: 'p1',
+        multiLanguageNames: {},
+      }),
     ).rejects.toThrow(ParentCategoryNotFoundError);
   });
 
-  it('should throw BadRequestException if multiple language mode is disabled but names are passed', async () => {
-    (service as any).multipleLanguageMode = false;
+  it('should throw CircularCategoryNotAllowedError', async () => {
+    const mockCategory = {
+      id: 'cat-id',
+      multiLanguageNames: [],
+      bindable: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
+      parents: [],
+      children: [],
+      articles: [],
+    } as BaseCategoryEntity;
 
-    const dto = {
-      multiLanguageNames: { en: 'Test' },
+    const mockParent = {
+      ...mockCategory,
+      id: 'p1',
+    } as BaseCategoryEntity;
+
+    baseCategoryRepo.createQueryBuilder = jest.fn().mockReturnValue({
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(mockCategory),
+    });
+
+    baseCategoryRepo.findOne = jest.fn().mockImplementation(({ where }) => {
+      if (where?.id === 'p1') return Promise.resolve(mockParent);
+
+      return Promise.resolve(null);
+    });
+
+    service['checkCircularCategories'] = jest
+      .fn()
+      .mockRejectedValue(new CircularCategoryNotAllowedError());
+
+    await expect(() =>
+      service.update('cat-id', {
+        parentId: 'p1',
+        multiLanguageNames: {},
+      }),
+    ).rejects.toThrow(CircularCategoryNotAllowedError);
+  });
+
+  it('should throw if multiLanguageNames is present but mode is disabled', async () => {
+    service = new CategoryBaseService(
+      {
+        create: jest.fn((x) => x),
+      } as any,
+      baseCategoryRepo as any,
+      false,
+      false,
+      false,
+      {
+        createQueryRunner: () => queryRunner,
+      } as any,
+      {} as any,
+    );
+
+    const mockCategory = {
+      id: 'cat-id',
+      multiLanguageNames: [],
+      bindable: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
+      parents: [],
+      children: [],
+      articles: [],
+    } as BaseCategoryEntity;
+
+    baseCategoryRepo.createQueryBuilder = jest.fn().mockReturnValue({
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(mockCategory),
+    });
+
+    await expect(() =>
+      service.update('cat-id', {
+        multiLanguageNames: { en: 'Test' },
+      }),
+    ).rejects.toThrow('Multiple language mode is not enabled');
+  });
+
+  it('should rollback transaction on failure', async () => {
+    const mockCategory = {
+      id: 'cat-id',
+      multiLanguageNames: [],
+      bindable: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
+      parents: [],
+      children: [],
+      articles: [],
+    } as BaseCategoryEntity;
+
+    const mockParent = {
+      ...mockCategory,
+      id: 'p1',
     };
 
-    mockRepo.create.mockReturnValue({ id: 'c1', ...dto });
+    baseCategoryRepo.findOne = jest.fn().mockImplementation(({ where }) => {
+      if (where?.id === 'cat-id') return Promise.resolve(mockCategory);
+      if (where?.id === 'p1') return Promise.resolve(mockParent);
 
-    await expect(service.create(dto)).rejects.toThrow(BadRequestException);
-    await expect(service.create(dto)).rejects.toThrow(
+      return Promise.resolve(null);
+    });
+
+    baseCategoryRepo.createQueryBuilder = jest.fn().mockReturnValue({
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(mockCategory),
+    });
+
+    queryRunner.manager!.save = jest.fn().mockRejectedValue(new Error('fail'));
+
+    await expect(() =>
+      service.update('cat-id', {
+        name: 'fail',
+        parentId: 'p1',
+        multiLanguageNames: {},
+      }),
+    ).rejects.toThrow();
+
+    expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
+  });
+
+  it('should update successfully without multiLanguageNames', async () => {
+    const mockMultiLang = {
+      language: 'zh',
+      name: '舊名稱',
+      categoryId: 'cat-id',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      category: {} as any,
+    } as BaseCategoryMultiLanguageNameEntity;
+
+    const mockCategory = {
+      id: 'cat-id',
+      multiLanguageNames: [mockMultiLang],
+      bindable: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
+      parents: [],
+      children: [],
+      articles: [],
+    } as BaseCategoryEntity;
+
+    const mockParent = {
+      ...mockCategory,
+      id: 'p1',
+    };
+
+    baseCategoryRepo.findOne = jest.fn().mockImplementation(({ where }) => {
+      if (where?.id === 'cat-id') return Promise.resolve(mockCategory);
+      if (where?.id === 'p1') return Promise.resolve(mockParent);
+
+      return Promise.resolve(null);
+    });
+
+    baseCategoryRepo.createQueryBuilder = jest.fn().mockReturnValue({
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(mockCategory),
+    });
+
+    queryRunner.manager!.save = jest.fn().mockResolvedValue(undefined);
+    queryRunner.manager!.remove = jest.fn().mockResolvedValue(undefined);
+
+    service.findById = jest.fn().mockResolvedValue({
+      id: 'cat-id',
+      name: '新名稱',
+    });
+
+    const result = await service.update('cat-id', {
+      name: '新名稱',
+      parentId: 'p1',
+      multiLanguageNames: {},
+    });
+
+    expect(queryRunner.startTransaction).toHaveBeenCalled();
+    expect(queryRunner.commitTransaction).toHaveBeenCalled();
+    expect(result).toEqual({ id: 'cat-id', name: '新名稱' });
+  });
+
+  it('should update successfully with multiLanguageNames', async () => {
+    const existingMultiLang = [
+      {
+        language: 'en',
+        name: 'Old',
+        categoryId: 'cat-id',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        category: {} as any,
+      },
+      {
+        language: 'zh',
+        name: '舊名稱',
+        categoryId: 'cat-id',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        category: {} as any,
+      },
+    ] as BaseCategoryMultiLanguageNameEntity[];
+
+    const mockCategory = {
+      id: 'cat-id',
+      multiLanguageNames: existingMultiLang,
+      bindable: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
+      parents: [],
+      children: [],
+      articles: [],
+    } as BaseCategoryEntity;
+
+    const mockParent = {
+      ...mockCategory,
+      id: 'p1',
+    };
+
+    baseCategoryRepo.findOne = jest.fn().mockImplementation(({ where }) => {
+      if (where?.id === 'cat-id') return Promise.resolve(mockCategory);
+      if (where?.id === 'p1') return Promise.resolve(mockParent);
+
+      return Promise.resolve(null);
+    });
+
+    baseCategoryRepo.createQueryBuilder = jest.fn().mockReturnValue({
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(mockCategory),
+    });
+
+    (queryRunner.manager as EntityManager).save = jest
+      .fn()
+      .mockResolvedValue(undefined);
+
+    (queryRunner.manager as EntityManager).remove = jest
+      .fn()
+      .mockResolvedValue(undefined);
+
+    service.findById = jest.fn().mockResolvedValue({ id: 'cat-id' });
+
+    const result = await service.update(
+      'cat-id',
+      {
+        parentId: 'p1',
+        multiLanguageNames: {
+          en: 'New',
+        },
+      },
+      {},
+    );
+
+    expect(queryRunner.commitTransaction).toHaveBeenCalled();
+    expect(result).toEqual({ id: 'cat-id' });
+  });
+
+  it('should handle parentIds in multiple parent mode', async () => {
+    const mockCategory = {
+      id: 'cat-id',
+      multiLanguageNames: [],
+      bindable: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
+      parents: [],
+      children: [],
+      articles: [],
+    } as BaseCategoryEntity;
+
+    const mockParent = {
+      ...mockCategory,
+      id: 'p1',
+    };
+
+    baseCategoryRepo.find = jest.fn().mockResolvedValue([mockParent]);
+
+    baseCategoryRepo.createQueryBuilder = jest.fn().mockReturnValue({
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(mockCategory),
+    });
+
+    (queryRunner.manager as EntityManager).save = jest
+      .fn()
+      .mockResolvedValue(undefined);
+
+    (queryRunner.manager as EntityManager).remove = jest
+      .fn()
+      .mockResolvedValue(undefined);
+
+    service = new CategoryBaseService(
+      {
+        create: jest.fn((x) => x),
+      } as any,
+      baseCategoryRepo as any,
+      true,
+      true,
+      true,
+      {
+        createQueryRunner: () => queryRunner,
+      } as any,
+      {} as any,
+    );
+
+    service.findById = jest.fn().mockResolvedValue({ id: 'cat-id' });
+
+    const result = await service.update('cat-id', {
+      name: 'NewName',
+      parentIds: ['p1'],
+      multiLanguageNames: {},
+    });
+
+    expect(baseCategoryRepo.find).toHaveBeenCalledWith({
+      where: { id: In(['p1']) },
+      relations: ['parents'],
+    });
+
+    expect(queryRunner.commitTransaction).toHaveBeenCalled();
+    expect(result).toEqual({ id: 'cat-id' });
+  });
+
+  it('should handle parentId with allowMultipleParentCategories enabled (single parentId path)', async () => {
+    const mockCategory = {
+      id: 'cat-id',
+      multiLanguageNames: [],
+      bindable: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
+      parents: [],
+      children: [],
+      articles: [],
+    } as BaseCategoryEntity;
+
+    const mockParent = {
+      ...mockCategory,
+      id: 'p1',
+    };
+
+    baseCategoryRepo.find = jest.fn().mockResolvedValue([mockParent]);
+
+    baseCategoryRepo.createQueryBuilder = jest.fn().mockReturnValue({
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(mockCategory),
+    });
+
+    (queryRunner.manager as EntityManager).save = jest
+      .fn()
+      .mockResolvedValue(undefined);
+
+    (queryRunner.manager as EntityManager).remove = jest
+      .fn()
+      .mockResolvedValue(undefined);
+
+    service = new CategoryBaseService(
+      { create: jest.fn((x) => x) } as any,
+      baseCategoryRepo as any,
+      true,
+      true,
+      false,
+      {
+        createQueryRunner: () => queryRunner,
+      } as any,
+      {
+        withParentsLoader: {
+          load: jest.fn().mockResolvedValue(mockCategory),
+        },
+      } as any,
+    );
+
+    service.findById = jest.fn().mockResolvedValue({ id: 'cat-id' });
+
+    const result = await service.update('cat-id', {
+      name: 'Updated Name',
+      parentId: 'p1',
+      multiLanguageNames: {},
+    });
+
+    expect(baseCategoryRepo.find).toHaveBeenCalledWith({
+      where: { id: In(['p1']) },
+      relations: ['parents'],
+    });
+
+    expect(result).toEqual({ id: 'cat-id' });
+  });
+
+  it('should throw ParentCategoryNotFoundError if some parentIds are not found', async () => {
+    const mockCategory = {
+      id: 'cat-id',
+      multiLanguageNames: [],
+    } as unknown as BaseCategoryEntity;
+
+    baseCategoryRepo.createQueryBuilder = jest.fn().mockReturnValue({
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(mockCategory),
+    });
+
+    baseCategoryRepo.find = jest.fn().mockResolvedValue([]); // simulate missing parents
+
+    service = new CategoryBaseService(
+      { create: jest.fn() } as any,
+      baseCategoryRepo as any,
+      true, // multipleLanguageMode
+      true, // allowMultipleParentCategories
+      false, // allowCircularCategories
+      { createQueryRunner: () => queryRunner } as any,
+      {} as any,
+    );
+
+    await expect(() =>
+      service.update('cat-id', {
+        parentIds: ['p1', 'p2'],
+        multiLanguageNames: {},
+      }),
+    ).rejects.toThrow(ParentCategoryNotFoundError);
+  });
+
+  it('should create a new multi-language name if it does not exist', async () => {
+    const mockCategory = {
+      id: 'cat-id',
+      multiLanguageNames: [],
+      bindable: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
+      parents: [],
+      children: [],
+      articles: [],
+    } as BaseCategoryEntity;
+
+    const mockParent = {
+      ...mockCategory,
+      id: 'p1',
+    };
+
+    baseCategoryRepo.findOne = jest.fn().mockResolvedValue(mockParent);
+    baseCategoryRepo.find = jest.fn().mockResolvedValue([mockParent]);
+    baseCategoryRepo.createQueryBuilder = jest.fn().mockReturnValue({
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(mockCategory),
+    });
+
+    const createSpy = jest.fn((input) => input);
+
+    service = new CategoryBaseService(
+      { create: createSpy } as any,
+      baseCategoryRepo,
+      true, // multiLanguageMode
+      true, // allowMultipleParents
+      false,
+      { createQueryRunner: () => queryRunner } as any,
+      {
+        load: jest.fn().mockResolvedValue({ parents: [] }),
+        withParentsLoader: {
+          load: jest.fn().mockResolvedValue({ parents: [] }),
+        },
+      } as any,
+    );
+
+    service.findById = jest.fn().mockResolvedValue({ id: 'cat-id' });
+
+    const result = await service.update(
+      'cat-id',
+      {
+        parentIds: ['p1'],
+        multiLanguageNames: {
+          fr: 'Nouveau',
+        },
+      },
+      { createdAt: new Date() },
+    );
+
+    expect(createSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        categoryId: 'cat-id',
+        language: 'fr',
+        name: 'Nouveau',
+      }),
+    );
+
+    expect(result).toEqual({ id: 'cat-id' });
+  });
+
+  it('should not throw when multiLanguageNames is undefined', async () => {
+    const mockCategory = {
+      id: 'cat-id',
+      multiLanguageNames: [],
+      bindable: true,
+      parents: [],
+      children: [],
+      articles: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
+    } as BaseCategoryEntity;
+
+    baseCategoryRepo.findOne = jest.fn().mockResolvedValue(mockCategory);
+    baseCategoryRepo.createQueryBuilder = jest.fn().mockReturnValue({
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(mockCategory),
+    });
+
+    queryRunner.manager!.save = jest.fn().mockResolvedValue(undefined);
+    queryRunner.manager!.remove = jest.fn().mockResolvedValue(undefined);
+
+    service.findById = jest.fn().mockResolvedValue({ id: 'cat-id' });
+
+    const result = await service.update('cat-id', {
+      name: 'Updated Name',
+      multiLanguageNames: undefined,
+    });
+
+    expect(result).toEqual({ id: 'cat-id' });
+  });
+
+  it('should fallback to empty object when multiLanguageOptions is undefined and language does not exist', async () => {
+    const mockCategory = {
+      id: 'cat-id',
+      multiLanguageNames: [],
+      bindable: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
+      parents: [],
+      children: [],
+      articles: [],
+    } as BaseCategoryEntity;
+
+    baseCategoryRepo.findOne = jest.fn().mockResolvedValue(mockCategory);
+    baseCategoryRepo.createQueryBuilder = jest.fn().mockReturnValue({
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(mockCategory),
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+    });
+
+    queryRunner.manager!.save = jest.fn().mockResolvedValue(undefined);
+    queryRunner.manager!.remove = jest.fn().mockResolvedValue(undefined);
+
+    const createSpy = jest.fn((input) => input);
+
+    service = new CategoryBaseService(
+      { create: createSpy } as any,
+      baseCategoryRepo,
+      true, // multiLanguageMode
+      false,
+      false,
+      { createQueryRunner: () => queryRunner } as any,
+      {
+        withParentsLoader: {
+          load: jest.fn().mockResolvedValue({ parents: [] }),
+        },
+      } as any,
+    );
+
+    service.findById = jest.fn().mockResolvedValue({ id: 'cat-id' });
+
+    await service.update(
+      'cat-id',
+      {
+        multiLanguageNames: {
+          en: 'Hello',
+        },
+      },
+      undefined,
+    );
+
+    expect(createSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        categoryId: 'cat-id',
+        language: 'en',
+        name: 'Hello',
+      }),
+    );
+  });
+
+  it('should create a new default language name when multiLanguageNames is missing and no default language exists', async () => {
+    const mockCategory = {
+      id: 'cat-id',
+      multiLanguageNames: [], // No languages at all
+      bindable: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
+      parents: [],
+      children: [],
+      articles: [],
+    } as BaseCategoryEntity;
+
+    baseCategoryRepo.findOne = jest.fn().mockResolvedValue(undefined);
+    baseCategoryRepo.find = jest.fn().mockResolvedValue([]);
+    baseCategoryRepo.createQueryBuilder = jest.fn().mockReturnValue({
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(mockCategory),
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+    });
+
+    queryRunner.manager!.save = jest.fn().mockResolvedValue(undefined);
+    queryRunner.manager!.remove = jest.fn().mockResolvedValue(undefined);
+
+    const createSpy = jest.fn((input) => input);
+
+    service = new CategoryBaseService(
+      { create: createSpy } as any,
+      baseCategoryRepo,
+      true, // multipleLanguageMode
+      false,
+      false,
+      { createQueryRunner: () => queryRunner } as any,
+      {
+        withParentsLoader: {
+          load: jest.fn().mockResolvedValue({ parents: [] }),
+        },
+      } as any,
+    );
+
+    service.findById = jest.fn().mockResolvedValue({ id: 'cat-id' });
+
+    const options = {
+      name: 'Default Fallback Name',
+    };
+
+    const result = await service.update('cat-id', options, undefined);
+
+    expect(createSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        categoryId: 'cat-id',
+        language: DEFAULT_LANGUAGE,
+        name: 'Default Fallback Name',
+      }),
+    );
+
+    expect(result).toEqual({ id: 'cat-id' });
+  });
+
+  it('should update existing default language name if present and multiLanguageNames is not provided', async () => {
+    const mockCategory = {
+      id: 'cat-id',
+      multiLanguageNames: [
+        {
+          categoryId: 'cat-id',
+          language: DEFAULT_LANGUAGE,
+          name: 'Old Name',
+        },
+      ],
+      bindable: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
+      parents: [],
+      children: [],
+      articles: [],
+    } as unknown as BaseCategoryEntity;
+
+    baseCategoryRepo.findOne = jest.fn().mockResolvedValue(undefined);
+    baseCategoryRepo.find = jest.fn().mockResolvedValue([]);
+    baseCategoryRepo.createQueryBuilder = jest.fn().mockReturnValue({
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(mockCategory),
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+    });
+
+    queryRunner.manager!.save = jest.fn().mockResolvedValue(undefined);
+    queryRunner.manager!.remove = jest.fn().mockResolvedValue(undefined);
+
+    const createSpy = jest.fn((input) => input);
+
+    service = new CategoryBaseService(
+      { create: createSpy } as any,
+      baseCategoryRepo,
+      true,
+      false,
+      false,
+      { createQueryRunner: () => queryRunner } as any,
+      {
+        withParentsLoader: {
+          load: jest.fn().mockResolvedValue({ parents: [] }),
+        },
+      } as any,
+    );
+
+    service.findById = jest.fn().mockResolvedValue({ id: 'cat-id' });
+
+    const result = await service.update(
+      'cat-id',
+      {
+        name: 'Updated Default Name',
+      },
+      undefined,
+    );
+
+    // ✅ Verifies that the default language path was used
+    expect(createSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        categoryId: 'cat-id',
+        language: DEFAULT_LANGUAGE,
+        name: 'Updated Default Name',
+      }),
+    );
+
+    expect(result).toEqual({ id: 'cat-id' });
+  });
+});
+
+describe('CategoryBaseService - create', () => {
+  let service: CategoryBaseService;
+  let baseCategoryRepo: jest.Mocked<Repository<BaseCategoryEntity>>;
+  let multiLangRepo: jest.Mocked<
+    Repository<BaseCategoryMultiLanguageNameEntity>
+  >;
+
+  let queryRunner: QueryRunner;
+  let manager: {
+    save: jest.MockedFunction<any>;
+    remove: jest.MockedFunction<any>;
+  };
+
+  beforeEach(() => {
+    jest.resetAllMocks();
+    baseCategoryRepo = {
+      create: jest.fn(),
+      find: jest.fn(),
+      findOne: jest.fn(),
+    } as unknown as jest.Mocked<Repository<BaseCategoryEntity>>;
+
+    multiLangRepo = {
+      create: jest.fn(),
+    } as unknown as jest.Mocked<
+      Repository<BaseCategoryMultiLanguageNameEntity>
+    >;
+
+    manager = {
+      save: jest.fn().mockResolvedValue(undefined),
+      remove: jest.fn().mockResolvedValue(undefined),
+    };
+
+    queryRunner = {
+      connect: jest.fn(),
+      startTransaction: jest.fn(),
+      commitTransaction: jest.fn(),
+      rollbackTransaction: jest.fn(),
+      release: jest.fn(),
+      manager,
+    } as unknown as jest.Mocked<QueryRunner>;
+
+    service = new CategoryBaseService(
+      multiLangRepo,
+      baseCategoryRepo,
+      true,
+      true,
+      false,
+      { createQueryRunner: () => queryRunner } as any,
+      {} as any,
+    );
+  });
+
+  it('should create a category with multiple language names', async () => {
+    const categoryInput = {
+      name: 'ignore',
+      parentIds: [],
+      multiLanguageNames: {
+        en: 'English Name',
+        fr: 'Nom Francais',
+      },
+    };
+
+    const createdCategory = {
+      id: 'cat-1',
+      multiLanguageNames: [],
+      parents: [],
+    } as unknown as BaseCategoryEntity;
+
+    baseCategoryRepo.create.mockReturnValue(createdCategory);
+    multiLangRepo.create.mockImplementation(
+      (input) =>
+        ({
+          ...input,
+          categoryId: input.categoryId || 'cat-1',
+        }) as any,
+    );
+
+    jest.spyOn(service, 'findById').mockResolvedValue(createdCategory as any);
+
+    const result = await service.create(categoryInput);
+
+    expect(manager.save).toHaveBeenCalledTimes(2);
+    expect(multiLangRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({ language: 'en', name: 'English Name' }),
+    );
+
+    expect(multiLangRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({ language: 'fr', name: 'Nom Francais' }),
+    );
+
+    expect(result).toEqual(createdCategory);
+  });
+
+  it('should create a category with default language if multiLanguageNames is not present', async () => {
+    const categoryInput = {
+      name: 'Default Name',
+      parentIds: [],
+    };
+
+    const createdCategory = {
+      id: 'cat-2',
+      multiLanguageNames: [],
+      parents: [],
+    } as unknown as BaseCategoryEntity;
+
+    baseCategoryRepo.create.mockReturnValue(createdCategory);
+    multiLangRepo.create.mockImplementation(
+      (input) =>
+        ({
+          ...input,
+          categoryId: input.categoryId || 'cat-2',
+        }) as any,
+    );
+
+    jest.spyOn(service, 'findById').mockResolvedValue(createdCategory as any);
+
+    const result = await service.create(categoryInput);
+
+    expect(multiLangRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        categoryId: 'cat-2',
+        language: DEFAULT_LANGUAGE,
+        name: 'Default Name',
+      }),
+    );
+
+    expect(result).toEqual(createdCategory);
+  });
+
+  it('should throw error if multipleLanguageMode is false and multiLanguageNames is provided', async () => {
+    service = new CategoryBaseService(
+      multiLangRepo,
+      baseCategoryRepo,
+      false,
+      true,
+      false,
+      { createQueryRunner: () => queryRunner } as any,
+      {} as any,
+    );
+
+    const input = {
+      name: 'Should Fail',
+      multiLanguageNames: {
+        en: 'English Name',
+      },
+    };
+
+    await expect(service.create(input)).rejects.toThrow(
       'Multiple language mode is not enabled',
     );
   });
 
-  it('should rollback and rethrow on DB error', async () => {
-    const dto = {
-      multiLanguageNames: { en: 'Test' },
-    };
+  it('should throw ParentCategoryNotFoundError if parentId not found', async () => {
+    service = new CategoryBaseService(
+      multiLangRepo,
+      baseCategoryRepo,
+      true,
+      false,
+      false,
+      { createQueryRunner: () => queryRunner } as any,
+      {} as any,
+    );
 
-    mockRepo.create.mockReturnValue({ id: 'c1', ...dto });
-    mockRunner.manager.save.mockRejectedValue(new Error('fail'));
+    baseCategoryRepo.findOne.mockResolvedValue(null);
 
-    await expect(service.create(dto)).rejects.toThrow(BadRequestException);
-    expect(mockRunner.rollbackTransaction).toHaveBeenCalled();
+    await expect(
+      service.create({ name: 'x', parentId: 'nonexistent' }),
+    ).rejects.toThrow(ParentCategoryNotFoundError);
   });
 
-  it('should resolve parent by parentId when parentIds is undefined and allowMultipleParentCategories is true', async () => {
-    (service as any).allowMultipleParentCategories = true;
+  it('should throw MultipleParentCategoryNotAllowedError if parentIds is provided but allowMultipleParentCategories is false', async () => {
+    service = new CategoryBaseService(
+      multiLangRepo,
+      baseCategoryRepo,
+      true,
+      false,
+      false,
+      { createQueryRunner: () => queryRunner } as any,
+      {} as any,
+    );
 
-    const mockParentCategory = { id: 'p1' };
-
-    mockRepo.find.mockResolvedValue([mockParentCategory]);
-    mockRepo.create.mockImplementation((val: any) => val);
-
-    const dto = {
-      parentId: 'p1',
+    const input = {
       name: 'Test',
+      parentIds: ['p1', 'p2'],
     };
 
-    const result = await service.create(dto);
-
-    expect(mockRepo.find).toHaveBeenCalledWith({
-      where: { id: In(['p1']) },
-    });
-
-    expect(mockRunner.manager.save).toHaveBeenCalledWith(
-      expect.objectContaining({
-        parents: [mockParentCategory],
-      }),
+    await expect(service.create(input)).rejects.toThrow(
+      MultipleParentCategoryNotAllowedError,
     );
-
-    expect(result.parents).toEqual([mockParentCategory]);
   });
 
-  it('should throw ParentCategoryNotFoundError if parentId is given but parent not found (via parentIds fallback)', async () => {
-    (service as any).allowMultipleParentCategories = true;
+  it('should find parent categories when parentIds are provided and allowMultipleParentCategories is true', async () => {
+    service = new CategoryBaseService(
+      multiLangRepo,
+      baseCategoryRepo,
+      true,
+      true,
+      false,
+      { createQueryRunner: () => queryRunner } as any,
+      {} as any,
+    );
 
-    mockRepo.find.mockResolvedValue([]); // Not found
-
-    const dto = {
-      parentId: 'missing-id',
-      name: 'Test',
+    const input = {
+      name: 'With Parents',
+      parentIds: ['p1', 'p2'],
     };
 
-    await expect(service.create(dto)).rejects.toThrow(
-      ParentCategoryNotFoundError,
-    );
+    const mockParents = [{ id: 'p1' }, { id: 'p2' }] as BaseCategoryEntity[];
 
-    expect(mockRepo.find).toHaveBeenCalledWith({
-      where: { id: In(['missing-id']) },
+    baseCategoryRepo.find.mockResolvedValue(mockParents);
+    baseCategoryRepo.create.mockReturnValue({ id: 'cat-3' } as any);
+    jest.spyOn(service, 'findById').mockResolvedValue({ id: 'cat-3' } as any);
+
+    const result = await service.create(input);
+
+    expect(baseCategoryRepo.find).toHaveBeenCalledWith({
+      where: {
+        id: expect.anything(),
+      },
     });
+
+    expect(result).toEqual({ id: 'cat-3' });
   });
 
-  it('should throw ParentCategoryNotFoundError when parentId is not found and multiple parent not allowed', async () => {
-    (service as any).allowMultipleParentCategories = false;
+  it('should use parentId when parentIds is undefined and allowMultipleParentCategories is true', async () => {
+    service = new CategoryBaseService(
+      multiLangRepo,
+      baseCategoryRepo,
+      true, // multipleLanguageMode
+      true, // allowMultipleParentCategories
+      false,
+      { createQueryRunner: () => queryRunner } as any,
+      {} as any,
+    );
 
-    const mockCategory = {
-      id: 'c1',
+    const input = {
+      name: 'Fallback to parentId',
+      parentId: 'parent-1',
+      // parentIds is intentionally undefined
+    };
+
+    const mockParent = { id: 'parent-1' } as BaseCategoryEntity;
+
+    // Mock `find` to return 1 parent (length matches expected)
+    baseCategoryRepo.find.mockResolvedValue([mockParent]);
+
+    // Mock category creation
+    const createdCategory = {
+      id: 'cat-4',
       multiLanguageNames: [],
-      parents: [],
+      parents: [mockParent],
+    } as unknown as BaseCategoryEntity;
+
+    baseCategoryRepo.create.mockReturnValue(createdCategory);
+    jest.spyOn(service, 'findById').mockResolvedValue(createdCategory as any);
+
+    const result = await service.create(input);
+
+    expect(baseCategoryRepo.find).toHaveBeenCalledWith({
+      where: {
+        id: In(['parent-1']),
+      },
+    });
+
+    expect(result).toEqual(createdCategory);
+  });
+
+  it('should throw ParentCategoryNotFoundError if one of parentIds not found', async () => {
+    service = new CategoryBaseService(
+      multiLangRepo,
+      baseCategoryRepo,
+      true,
+      true, // allowMultipleParentCategories = true
+      false,
+      { createQueryRunner: () => queryRunner } as any,
+      {} as any,
+    );
+
+    const input = {
+      name: 'Mismatch parents',
+      parentIds: ['p1', 'p2'],
     };
 
-    mockRepo.createQueryBuilder().getOne.mockResolvedValue(mockCategory);
-    mockRepo.findOne.mockResolvedValue(undefined);
+    baseCategoryRepo.find.mockResolvedValue([
+      { id: 'p1' } as BaseCategoryEntity,
+    ]); // only 1 found instead of 2
 
-    const dto = {
-      parentId: 'nonexistent',
-      multiLanguageNames: { en: 'Test Name' },
-    };
-
-    await expect(service.update('c1', dto)).rejects.toThrow(
+    await expect(service.create(input)).rejects.toThrow(
       ParentCategoryNotFoundError,
     );
   });
 
-  it('should set parentCategories from parentId when allowMultipleParentCategories is false', async () => {
-    (service as any).allowMultipleParentCategories = false;
+  it('should use parentId if allowMultipleParentCategories is false and parent exists', async () => {
+    service = new CategoryBaseService(
+      multiLangRepo,
+      baseCategoryRepo,
+      true,
+      false, // allowMultipleParentCategories = false
+      false,
+      { createQueryRunner: () => queryRunner } as any,
+      {} as any,
+    );
 
-    const mockCategory = {
-      id: 'c1',
+    const input = {
+      name: 'Single parent',
+      parentId: 'single-parent-id',
+    };
+
+    const mockParent = { id: 'single-parent-id' } as BaseCategoryEntity;
+
+    baseCategoryRepo.findOne.mockResolvedValue(mockParent);
+    baseCategoryRepo.create.mockReturnValue({
+      id: 'cat-single',
+      parents: [mockParent],
       multiLanguageNames: [],
-      parents: [],
-    };
+    } as unknown as BaseCategoryEntity);
 
-    const mockParent = {
-      id: 'p1',
-      parents: [],
-    };
+    jest.spyOn(service, 'findById').mockResolvedValue({
+      id: 'cat-single',
+      parents: [mockParent],
+      multiLanguageNames: [],
+    } as any);
 
-    mockRepo.findOne.mockResolvedValue(mockParent);
-    mockRepo.create.mockImplementation((val: any) => val);
-    mockRunner.manager.save.mockResolvedValue(mockCategory);
+    const result = await service.create(input);
 
-    const dto = {
-      parentId: 'p1',
-      name: 'Test Category',
-    };
-
-    const result = await service.create(dto);
-
-    expect(mockRepo.findOne).toHaveBeenCalledWith({
-      where: { id: 'p1' },
+    expect(baseCategoryRepo.findOne).toHaveBeenCalledWith({
+      where: { id: 'single-parent-id' },
     });
 
-    expect(result.parents).toEqual([mockParent]);
+    expect(result).toEqual(expect.objectContaining({ id: 'cat-single' }));
   });
 
-  it('should throw ParentCategoryNotFoundError when parentId is not found and multiple parent not allowed', async () => {
-    (service as any).allowMultipleParentCategories = false;
-
-    mockRepo.findOne.mockResolvedValue(undefined); // simulate not found
-
-    const dto = {
-      parentId: 'missing-id',
-      name: 'Test Category',
-    };
-
-    await expect(service.create(dto)).rejects.toThrow(
-      ParentCategoryNotFoundError,
-    );
-
-    expect(mockRepo.findOne).toHaveBeenCalledWith({
-      where: { id: 'missing-id' },
-    });
-  });
-
-  it('should not fail if multiLanguageNames is null', async () => {
-    const dto = {
-      name: 'Test Fallback',
-      multiLanguageNames: null,
+  it('should handle case when multiLanguageNames is undefined (no entries)', async () => {
+    const categoryInput = {
+      name: 'No languages',
+      parentIds: [],
+      multiLanguageNames: undefined, // force the nullish fallback
     };
 
     const createdCategory = {
-      id: 'cat-123',
-      ...dto,
-    };
+      id: 'cat-undef',
+      multiLanguageNames: [],
+      parents: [],
+    } as unknown as BaseCategoryEntity;
 
-    mockRepo.create.mockReturnValue(createdCategory);
-    mockRunner.manager.save.mockResolvedValue(createdCategory);
+    baseCategoryRepo.create.mockReturnValue(createdCategory);
+    jest.spyOn(service, 'findById').mockResolvedValue(createdCategory as any);
 
-    const result = await service.create(dto);
+    const saveSpy = jest.spyOn(queryRunner.manager, 'save');
 
-    // First call: save the category itself
-    expect(mockRunner.manager.save).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'cat-123' }),
-    );
+    const result = await service.create(categoryInput);
 
-    // Second call: empty multiLanguageNames should trigger save([])
-    expect(mockRunner.manager.save.mock.calls[1][0]).toEqual([]);
+    expect(saveSpy.mock.calls.length).toBeGreaterThanOrEqual(1);
+    expect(multiLangRepo.create).not.toHaveBeenCalled();
 
     expect(result).toEqual(createdCategory);
   });

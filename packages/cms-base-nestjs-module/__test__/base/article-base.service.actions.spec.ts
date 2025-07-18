@@ -1,1088 +1,2392 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { ArticleBaseService } from '../../src/services/article-base.service';
-import {
-  ARTICLE_SIGNATURE_SERVICE,
-  DRAFT_MODE,
-  ENABLE_SIGNATURE_MODE,
-  FULL_TEXT_SEARCH_MODE,
-  MULTIPLE_LANGUAGE_MODE,
-  RESOLVED_ARTICLE_REPO,
-  RESOLVED_ARTICLE_VERSION_CONTENT_REPO,
-  RESOLVED_ARTICLE_VERSION_REPO,
-  RESOLVED_CATEGORY_REPO,
-} from '../../src/typings/cms-base-providers';
-import { DataSource, EntityManager, QueryRunner } from 'typeorm';
+import { ArticleStage } from '../../src/typings/article-stage.enum';
 import {
   ArticleNotFoundError,
   ArticleVersionNotFoundError,
 } from '../../src/constants/errors/article.errors';
-import { CategoryNotFoundError } from '../../src/constants/errors/category.errors';
+import { ArticleBaseService } from '../../src/services/article-base.service';
+import { SignatureService } from '../../src/services/signature.service';
 import { BadRequestException } from '@nestjs/common';
-import { DEFAULT_LANGUAGE } from '../../src/constants/default-language';
+import { DataSource, QueryRunner } from 'typeorm';
+import { CategoryNotFoundError } from '../../src/constants/errors/category.errors';
+import {
+  MultiLanguageArticleCreateDto,
+  SingleArticleCreateDto,
+} from '../../src/typings/article-create.dto';
+import { MultipleLanguageModeIsDisabledError } from '../../src/constants/errors/base.errors';
+import { QuadratsElement } from '@quadrats/core';
 
-describe('ArticleBaseService (archive)', () => {
-  let service: ArticleBaseService<any, any, any>;
-  const findOneMock = jest.fn();
-  const softDeleteMock = jest.fn();
+describe('ArticleBaseService - deleteVersion', () => {
+  let service: ArticleBaseService;
+  let mockArticleVersionRepo: any;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ArticleBaseService,
-        {
-          provide: RESOLVED_ARTICLE_REPO,
-          useValue: {
-            findOne: findOneMock,
-            softDelete: softDeleteMock,
-          },
-        },
-        { provide: RESOLVED_ARTICLE_VERSION_REPO, useValue: {} },
-        { provide: RESOLVED_ARTICLE_VERSION_CONTENT_REPO, useValue: {} },
-        { provide: RESOLVED_CATEGORY_REPO, useValue: {} },
-        { provide: MULTIPLE_LANGUAGE_MODE, useValue: true },
-        { provide: FULL_TEXT_SEARCH_MODE, useValue: false },
-        { provide: ENABLE_SIGNATURE_MODE, useValue: false },
-        { provide: ARTICLE_SIGNATURE_SERVICE, useValue: {} },
-        { provide: DRAFT_MODE, useValue: false },
-        {
-          provide: DataSource,
-          useValue: {},
-        },
-      ],
-    }).compile();
+  beforeEach(() => {
+    mockArticleVersionRepo = {
+      createQueryBuilder: jest.fn(),
+      softRemove: jest.fn(),
+    };
 
-    service = module.get<ArticleBaseService<any, any, any>>(ArticleBaseService);
-  });
-
-  it('should soft delete the article when it exists', async () => {
-    findOneMock.mockResolvedValue({ id: 'a1' });
-
-    await service.archive('a1');
-
-    expect(findOneMock).toHaveBeenCalledWith({ where: { id: 'a1' } });
-    expect(softDeleteMock).toHaveBeenCalledWith('a1');
-  });
-
-  it('should throw ArticleNotFoundError if article does not exist', async () => {
-    findOneMock.mockResolvedValue(undefined);
-
-    await expect(service.archive('missing-id')).rejects.toThrow(
-      ArticleNotFoundError,
+    service = new ArticleBaseService(
+      {} as any,
+      mockArticleVersionRepo,
+      {} as any,
+      {} as any,
+      true,
+      true,
+      true,
+      [],
+      {} as any,
+      {} as any,
+      true,
+      {} as any,
+      {} as any,
+      {} as any,
     );
+  });
+
+  it('should throw ArticleVersionNotFoundError if version not found', async () => {
+    const mockQb = {
+      andWhere: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(undefined),
+    };
+
+    mockArticleVersionRepo.createQueryBuilder.mockReturnValue(mockQb);
+
+    await expect(service.deleteVersion('article-id', 2)).rejects.toThrow(
+      ArticleVersionNotFoundError,
+    );
+
+    expect(mockQb.andWhere).toHaveBeenCalledWith('versions.articleId = :id', {
+      id: 'article-id',
+    });
+
+    expect(mockQb.andWhere).toHaveBeenCalledWith(
+      'versions.version = :version',
+      { version: 2 },
+    );
+  });
+
+  it('should softRemove the found version', async () => {
+    const mockVersion = { id: 'v2' };
+    const mockQb = {
+      andWhere: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(mockVersion),
+    };
+
+    mockArticleVersionRepo.createQueryBuilder.mockReturnValue(mockQb);
+    mockArticleVersionRepo.softRemove.mockResolvedValue(undefined);
+
+    await service.deleteVersion('article-id', 2);
+
+    expect(mockQb.getOne).toHaveBeenCalled();
+    expect(mockArticleVersionRepo.softRemove).toHaveBeenCalledWith(mockVersion);
   });
 });
 
-describe('ArticleBaseService (release)', () => {
-  let service: ArticleBaseService<any, any, any>;
-  const updateMock = jest.fn();
+describe('ArticleBaseService - archive', () => {
+  let service: ArticleBaseService;
+  let mockArticleRepo: any;
 
-  const mockFindById = jest.fn();
-  const now = new Date();
+  beforeEach(() => {
+    mockArticleRepo = {
+      findOne: jest.fn(),
+      softDelete: jest.fn(),
+    };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ArticleBaseService,
-        {
-          provide: RESOLVED_ARTICLE_REPO,
-          useValue: {},
-        },
-        {
-          provide: RESOLVED_ARTICLE_VERSION_REPO,
-          useValue: { update: updateMock },
-        },
-        { provide: RESOLVED_ARTICLE_VERSION_CONTENT_REPO, useValue: {} },
-        { provide: RESOLVED_CATEGORY_REPO, useValue: {} },
-        { provide: MULTIPLE_LANGUAGE_MODE, useValue: true },
-        { provide: FULL_TEXT_SEARCH_MODE, useValue: false },
-        { provide: ENABLE_SIGNATURE_MODE, useValue: false },
-        { provide: ARTICLE_SIGNATURE_SERVICE, useValue: {} },
-        { provide: DRAFT_MODE, useValue: true },
-        {
-          provide: DataSource,
-          useValue: {},
-        },
-      ],
-    }).compile();
-
-    service = module.get<ArticleBaseService<any, any, any>>(ArticleBaseService);
-
-    service.findById = mockFindById;
+    service = new ArticleBaseService(
+      mockArticleRepo,
+      {} as any,
+      {} as any,
+      {} as any,
+      true,
+      true,
+      true,
+      [],
+      {} as any,
+      {} as any,
+      true,
+      {} as any,
+      {} as any,
+      {} as any,
+    );
   });
 
-  it('should throw error if draftMode is disabled', async () => {
-    (service as any).draftMode = false;
+  it('should throw ArticleNotFoundError if article is not found', async () => {
+    mockArticleRepo.findOne.mockResolvedValue(null);
 
-    await expect(service.release('a1')).rejects.toThrow(
+    await expect(service.archive('article-id')).rejects.toThrow(
+      ArticleNotFoundError,
+    );
+
+    expect(mockArticleRepo.findOne).toHaveBeenCalledWith({
+      where: { id: 'article-id' },
+    });
+  });
+
+  it('should call softDelete on the article repo if article is found', async () => {
+    mockArticleRepo.findOne.mockResolvedValue({ id: 'article-id' });
+    mockArticleRepo.softDelete.mockResolvedValue(undefined);
+
+    await service.archive('article-id');
+
+    expect(mockArticleRepo.softDelete).toHaveBeenCalledWith('article-id');
+  });
+});
+
+describe('withdraw', () => {
+  let service: ArticleBaseService;
+  let runner: any;
+  let articleSignatureRepo: any;
+
+  beforeEach(() => {
+    runner = {
+      connect: jest.fn(),
+      startTransaction: jest.fn(),
+      commitTransaction: jest.fn(),
+      rollbackTransaction: jest.fn(),
+      release: jest.fn(),
+      manager: {
+        softDelete: jest.fn(),
+        update: jest.fn(),
+      },
+    };
+
+    articleSignatureRepo = {
+      find: jest.fn(),
+      save: jest.fn(),
+    };
+
+    const mockArticleDataLoader = {
+      articleRepo: {} as any,
+      articleVersionRepo: {} as any,
+      signatureService: {} as any,
+      stageLoader: {
+        load: jest.fn(),
+      },
+      stageCache: new Map<string, Promise<ArticleStage>>(),
+      categoryLoader: {} as any,
+      versionLoader: {} as any,
+    };
+
+    service = new ArticleBaseService(
+      {} as any, // baseArticleRepo
+      { metadata: { tableName: 'versions' } } as any, // baseArticleVersionRepo
+      {} as any, // baseArticleVersionContentRepo
+      {} as any, // baseCategoryRepo
+      true, // multipleLanguageMode
+      true, // fullTextSearchMode
+      true, // draftMode
+      [], // signatureLevels
+      {} as any, // signatureLevelRepo
+      articleSignatureRepo as any, // ArticleSignatureRepo
+      true, // autoReleaseAfterApproved
+      {
+        createQueryRunner: () => runner,
+      } as any, // dataSource
+      mockArticleDataLoader as any, // articleDataLoader
+      {
+        signatureEnabled: false,
+      } as any, // signatureService
+    );
+  });
+
+  it('should throw if draftMode is disabled', async () => {
+    const mockArticleDataLoader = {
+      articleRepo: {} as any,
+      articleVersionRepo: {} as any,
+      signatureService: {} as any,
+      stageLoader: {
+        load: jest.fn(),
+      },
+      stageCache: new Map(),
+      categoryLoader: {} as any,
+      versionLoader: {} as any,
+    };
+
+    const mockSignatureService = {
+      signatureEnabled: false,
+    };
+
+    service = new ArticleBaseService(
+      {} as any, // baseArticleRepo
+      { metadata: { tableName: 'versions' } } as any, // baseArticleVersionRepo
+      {} as any, // baseArticleVersionContentRepo
+      {} as any, // baseCategoryRepo
+      true, // multipleLanguageMode
+      true, // fullTextSearchMode
+      false, // draftMode = false
+      [], // signatureLevels
+      {} as any, // signatureLevelRepo
+      {} as any, // articleSignatureRepo (was wrongly mocked before)
+      true, // autoReleaseAfterApproved
+      {
+        createQueryRunner: () => runner,
+      } as any, // dataSource
+      mockArticleDataLoader as any, // articleDataLoader
+      mockSignatureService as any, // signatureService
+    );
+
+    await expect(service.withdraw('id', 1)).rejects.toThrow(
       'Draft mode is disabled.',
     );
   });
 
-  it('should do nothing if article is already released', async () => {
-    const releasedAt = new Date('2024-01-01');
+  it('should throw if article is not in RELEASED or SCHEDULED stage', async () => {
+    const stageLoader = service['articleDataLoader'].stageLoader
+      .load as jest.Mock;
 
-    mockFindById.mockResolvedValue({
-      id: 'a1',
-      version: 2,
-      releasedAt,
+    jest.spyOn(service, 'findById').mockResolvedValue({ id: 'id', version: 1 });
+
+    stageLoader.mockResolvedValue('DRAFT');
+
+    await expect(service.withdraw('id', 1)).rejects.toThrow(
+      'Article id is not in released or scheduled stage [DRAFT].',
+    );
+  });
+
+  it('should withdraw and soft delete correct versions', async () => {
+    jest.spyOn(service, 'findById').mockImplementation((id, options: any) => {
+      if (options?.version) {
+        return Promise.resolve({
+          id,
+          version: 1,
+          releasedAt: new Date(),
+        }) as any;
+      }
+
+      return Promise.resolve({ id, version: 99 }) as any;
     });
 
-    const result = await service.release('a1');
+    const stageLoader = service['articleDataLoader'].stageLoader
+      .load as jest.Mock;
 
-    expect(result.releasedAt).toEqual(releasedAt);
-    expect(updateMock).not.toHaveBeenCalled();
+    stageLoader.mockResolvedValue('RELEASED');
+
+    const result = await service.withdraw('id', 1);
+
+    expect(runner.connect).toHaveBeenCalled();
+    expect(runner.startTransaction).toHaveBeenCalled();
+
+    expect(runner.manager.softDelete).toHaveBeenCalledWith(
+      'versions',
+      expect.objectContaining({
+        articleId: 'id',
+        releasedAt: expect.any(Object),
+        version: expect.any(Object),
+      }),
+    );
+
+    expect(runner.manager.softDelete).toHaveBeenCalledWith(
+      'versions',
+      expect.objectContaining({
+        articleId: 'id',
+        releasedAt: expect.any(Object),
+        version: expect.any(Object),
+      }),
+    );
+
+    expect(runner.manager.update).toHaveBeenCalledWith(
+      'versions',
+      {
+        articleId: 'id',
+        version: 1,
+      },
+      {
+        releasedAt: null,
+      },
+    );
+
+    expect(runner.commitTransaction).toHaveBeenCalled();
+    expect(runner.release).toHaveBeenCalled();
+    expect(result).toBeDefined();
   });
 
-  it('should update releasedAt and return updated article', async () => {
-    const unreleasedArticle = {
-      id: 'a1',
-      version: 2,
-      releasedAt: undefined,
-    };
+  it('should rollback transaction if error occurs', async () => {
+    jest.spyOn(service, 'findById').mockResolvedValue({ id: 'id', version: 1 });
 
-    mockFindById.mockResolvedValue(unreleasedArticle);
+    const stageLoader = service['articleDataLoader'].stageLoader
+      .load as jest.Mock;
 
-    const result = await service.release('a1', now);
+    stageLoader.mockResolvedValue('RELEASED');
 
-    expect(updateMock).toHaveBeenCalledWith(
-      { articleId: 'a1', version: 2 },
-      { releasedAt: now },
+    runner.manager.softDelete.mockImplementation(() => {
+      throw new Error('Soft delete failed');
+    });
+
+    await expect(service.withdraw('id', 1)).rejects.toThrow(
+      'Soft delete failed',
     );
 
-    expect(result.releasedAt).toEqual(now);
+    expect(runner.rollbackTransaction).toHaveBeenCalled();
+    expect(runner.release).toHaveBeenCalled();
   });
 
-  it('should use current date if releasedAt is not provided', async () => {
-    const unreleasedArticle = {
-      id: 'a1',
-      version: 2,
-      releasedAt: undefined,
+  it('should use VERIFIED stage when signature is enabled', async () => {
+    const mockArticleDataLoader = {
+      articleRepo: {} as any,
+      articleVersionRepo: {} as any,
+      signatureService: {} as any,
+      stageLoader: {
+        load: jest.fn().mockResolvedValue(ArticleStage.RELEASED),
+      },
+      stageCache: new Map<string, Promise<ArticleStage>>(),
+      categoryLoader: {} as any,
+      versionLoader: {} as any,
     };
 
-    mockFindById.mockResolvedValue(unreleasedArticle);
-
-    const before = new Date();
-    const result = await service.release('a1');
-    const after = new Date();
-
-    expect(result.releasedAt).toBeInstanceOf(Date);
-    expect(result.releasedAt.getTime()).toBeGreaterThanOrEqual(
-      before.getTime(),
+    service = new ArticleBaseService(
+      {} as any, // baseArticleRepo
+      { metadata: { tableName: 'versions' } } as any, // baseArticleVersionRepo
+      {} as any, // baseArticleVersionContentRepo
+      {} as any, // baseCategoryRepo
+      true, // multipleLanguageMode
+      true, // fullTextSearchMode
+      true, // draftMode
+      [], // signatureLevels
+      {} as any, // signatureLevelRepo
+      articleSignatureRepo as any, // ArticleSignatureRepo
+      true, // autoReleaseAfterApproved
+      {
+        createQueryRunner: () => runner,
+      } as any, // dataSource
+      mockArticleDataLoader as any, // articleDataLoader
+      {
+        signatureEnabled: true,
+      } as any, // signatureService
     );
 
-    expect(result.releasedAt.getTime()).toBeLessThanOrEqual(after.getTime());
+    const findByIdSpy = jest
+      .spyOn(service, 'findById')
+      .mockImplementation((id, options: any) => {
+        if (options?.stage === ArticleStage.VERIFIED) {
+          return Promise.resolve({ id, version: 2 }) as any;
+        }
 
-    expect(updateMock).toHaveBeenCalledWith(
-      { articleId: 'a1', version: 2 },
-      { releasedAt: expect.any(Date) },
+        if (options?.version === 1) {
+          return Promise.resolve({
+            id,
+            version: 1,
+            releasedAt: new Date(),
+          }) as any;
+        }
+
+        return Promise.resolve({ id, version: 99 }) as any;
+      });
+
+    await service.withdraw('id', 1);
+
+    expect(findByIdSpy).toHaveBeenCalledWith(
+      'id',
+      expect.objectContaining({ stage: ArticleStage.VERIFIED }),
     );
+  });
+
+  it('should continue even if findById for targetPlaceArticle throws', async () => {
+    const stageLoader = service['articleDataLoader'].stageLoader
+      .load as jest.Mock;
+
+    stageLoader.mockResolvedValue(ArticleStage.RELEASED);
+
+    jest.spyOn(service, 'findById').mockImplementation((id, options: any) => {
+      if (options?.version) {
+        return Promise.resolve({
+          id,
+          version: 1,
+          releasedAt: new Date(),
+        }) as any;
+      }
+
+      if (options?.stage) {
+        return Promise.reject(new Error('fetch failed'));
+      }
+
+      return Promise.resolve({ id, version: 99 }) as any;
+    });
+
+    const result = await service.withdraw('id', 1);
+
+    expect(result).toBeDefined();
+    expect(runner.connect).toHaveBeenCalled();
+    expect(runner.commitTransaction).toHaveBeenCalled();
   });
 });
 
-describe('ArticleBaseService (addVersion)', () => {
-  let service: ArticleBaseService<any, any, any>;
-  const findMock = jest.fn();
-  const findOneMock = jest.fn();
-  const createQueryBuilderMock = {
-    andWhere: jest.fn().mockReturnThis(),
-    addOrderBy: jest.fn().mockReturnThis(),
-    getOne: jest.fn(),
-  };
+describe('release', () => {
+  let service: ArticleBaseService;
+  let runner: any;
+  const baseArticleVersionRepo = { metadata: { tableName: 'versions' } };
 
-  const runnerMock: Partial<QueryRunner> = {
-    connect: jest.fn(),
-    startTransaction: jest.fn(),
-    commitTransaction: jest.fn(),
-    rollbackTransaction: jest.fn(),
-    release: jest.fn(),
-    manager: {
-      save: jest.fn(),
-    } as unknown as EntityManager,
-  };
-
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ArticleBaseService,
-        {
-          provide: RESOLVED_ARTICLE_REPO,
-          useValue: {
-            findOne: findOneMock,
-          },
-        },
-        {
-          provide: RESOLVED_ARTICLE_VERSION_REPO,
-          useValue: {
-            createQueryBuilder: () => createQueryBuilderMock,
-          },
-        },
-        {
-          provide: RESOLVED_ARTICLE_VERSION_CONTENT_REPO,
-          useValue: {
-            create: jest.fn((x) => x),
-          },
-        },
-        {
-          provide: RESOLVED_CATEGORY_REPO,
-          useValue: {
-            find: findMock,
-          },
-        },
-        { provide: MULTIPLE_LANGUAGE_MODE, useValue: false },
-        { provide: FULL_TEXT_SEARCH_MODE, useValue: false },
-        { provide: ENABLE_SIGNATURE_MODE, useValue: false },
-        { provide: ARTICLE_SIGNATURE_SERVICE, useValue: {} },
-        { provide: DRAFT_MODE, useValue: true },
-        {
-          provide: DataSource,
-          useValue: {
-            createQueryRunner: () => runnerMock,
-          },
-        },
-      ],
-    }).compile();
-
-    service = module.get<ArticleBaseService<any, any, any>>(ArticleBaseService);
-  });
-
-  it('should throw CategoryNotFoundError when categoryIds are not valid or bindable', async () => {
-    findMock.mockResolvedValue([]); // Simulate no valid categories found
-
-    const options = {
-      categoryIds: ['cat1', 'cat2'],
-      title: 'Test Title',
-      description: 'Test Description',
-      tags: ['news'],
-      content: [{ type: 'p', children: [{ text: 'Hello world' }] }],
+  beforeEach(() => {
+    runner = {
+      connect: jest.fn(),
+      startTransaction: jest.fn(),
+      commitTransaction: jest.fn(),
+      rollbackTransaction: jest.fn(),
+      release: jest.fn(),
+      manager: {
+        softRemove: jest.fn(),
+        update: jest.fn(),
+      },
     };
 
-    await expect(service.addVersion('a1', options)).rejects.toThrow(
-      CategoryNotFoundError,
-    );
-
-    expect(findMock).toHaveBeenCalledWith({
-      where: { id: expect.any(Object), bindable: true },
-    });
-  });
-
-  it('should throw ArticleNotFoundError when article is not found', async () => {
-    // Prepare category lookup to pass validation
-    findMock.mockResolvedValue([{ id: 'cat1', bindable: true }]);
-
-    // Simulate article not found
-    findOneMock.mockResolvedValue(undefined);
-
-    const options = {
-      categoryIds: ['cat1'],
-      title: 'New Title',
-      description: 'New Desc',
-      tags: ['tech'],
-      content: [{ type: 'p', children: [{ text: 'Hello' }] }],
+    const mockArticleDataLoader = {
+      articleRepo: {} as any,
+      articleVersionRepo: {} as any,
+      signatureService: {} as any,
+      stageLoader: {
+        load: jest.fn(),
+      },
+      stageCache: new Map<string, Promise<ArticleStage>>(),
+      categoryLoader: {} as any,
+      versionLoader: {} as any,
     };
 
-    await expect(service.addVersion('nonexistent-id', options)).rejects.toThrow(
-      ArticleNotFoundError,
-    );
+    const mockSignatureService = {
+      signatureEnabled: false,
+    } as any;
 
-    expect(findMock).toHaveBeenCalled();
-    expect(findOneMock).toHaveBeenCalledWith({
-      where: { id: 'nonexistent-id' },
-      relations: ['categories'],
-    });
-  });
-
-  it('should throw ArticleVersionNotFoundError if no previous version found', async () => {
-    // Valid categories
-    findMock.mockResolvedValue([]);
-    // Valid article exists
-    findOneMock.mockResolvedValue({
-      id: 'a1',
-      categories: [],
-    });
-
-    // No previous version found
-    createQueryBuilderMock.getOne.mockResolvedValue(undefined);
-
-    const options = {
-      title: 'New Version',
-      description: 'Desc',
-      tags: ['new'],
-      content: [{ type: 'p', children: [{ text: 'v1' }] }],
-    };
-
-    await expect(service.addVersion('a1', options)).rejects.toThrow(
-      ArticleVersionNotFoundError,
-    );
-  });
-
-  it('should include categories when categoryIds are provided and save is successful', async () => {
-    const targetCategories = [{ id: 'cat1', bindable: true }];
-
-    findMock.mockResolvedValue(targetCategories);
-    findOneMock.mockResolvedValue({
-      id: 'a1',
-      categories: [],
-    });
-
-    createQueryBuilderMock.getOne.mockResolvedValue({ version: 3 });
-
-    // Setup mock .create and .save
-    const createSpy = jest.fn((x) => x);
-    const saveSpy = jest.spyOn(runnerMock.manager!, 'save');
-
-    (service as any).baseArticleRepo = {
-      create: createSpy,
-      findOne: findOneMock,
-    };
-
-    (service as any).baseArticleVersionRepo = {
-      create: createSpy,
-      findOne: findOneMock,
-      createQueryBuilder: () => createQueryBuilderMock,
-    };
-
-    (service as any).baseArticleVersionContentRepo = {
-      create: createSpy,
-      findOne: findOneMock,
-    };
-
-    const options = {
-      categoryIds: ['cat1'],
-      title: 'New Ver',
-      description: 'Desc',
-      tags: ['tag1'],
-      content: [{ type: 'p', children: [{ text: 'Hello' }] }],
-    };
-
-    await service.addVersion('a1', options);
-
-    const savedArticle = saveSpy.mock.calls[0][0] as any;
-
-    expect(savedArticle.categories).toEqual(targetCategories);
-  });
-
-  it('should warn when article has categories but no categoryIds are provided', async () => {
-    findOneMock.mockResolvedValue({
-      id: 'a1',
-      categories: [{ id: 'cat1' }],
-    });
-
-    const options = {
-      title: 'Title',
-      description: 'Desc',
-      tags: ['t'],
-      content: [{ type: 'p', children: [{ text: 'Test' }] }],
-    };
-
-    createQueryBuilderMock.getOne.mockResolvedValue({ version: 1 });
-
-    const warnSpy = jest.fn();
-
-    (service as any).logger = { warn: warnSpy };
-
-    (service as any).baseArticleRepo = {
-      create: jest.fn((x) => x),
-      findOne: findOneMock,
-    };
-
-    (service as any).baseArticleVersionRepo = {
-      create: jest.fn((x) => x),
-      createQueryBuilder: () => createQueryBuilderMock,
-    };
-
-    (service as any).baseArticleVersionContentRepo = {
-      create: jest.fn((x) => x),
-    };
-
-    const saveSpy = jest
-      .spyOn(runnerMock.manager!, 'save')
-      .mockResolvedValue({});
-
-    await service.addVersion('a1', options);
-
-    expect(warnSpy).toHaveBeenCalledWith(
-      'Article a1 has categories, but no categoryIds provided when add version. The article categories will no change after version added.',
-    );
-  });
-
-  it('should call bindSearchTokens when fullTextSearchMode is enabled', async () => {
-    const bindSearchTokensSpy = jest.fn();
-
-    (service as any).bindSearchTokens = bindSearchTokensSpy;
-    (service as any).multipleLanguageMode = true;
-    (service as any).fullTextSearchMode = true;
-
-    findMock.mockResolvedValue([]);
-    findOneMock.mockResolvedValue({ id: 'a1', categories: [] });
-    createQueryBuilderMock.getOne.mockResolvedValue({ version: 1 });
-
-    const createSpy = jest.fn((x) => x);
-
-    (service as any).baseArticleRepo = {
-      create: createSpy,
-      findOne: findOneMock,
-    };
-
-    (service as any).baseArticleVersionRepo = {
-      create: createSpy,
-      findOne: findOneMock,
-      createQueryBuilder: () => createQueryBuilderMock,
-    };
-
-    (service as any).baseArticleVersionContentRepo = {
-      create: createSpy,
-      findOne: findOneMock,
-    };
-
-    jest.spyOn(runnerMock.manager!, 'save').mockResolvedValue([
+    service = new ArticleBaseService(
+      {} as any,
+      baseArticleVersionRepo as any,
+      {} as any,
+      {} as any,
+      true,
+      true,
+      true,
+      [],
+      {} as any,
+      {} as any,
+      true,
       {
-        articleId: 'a1',
-        version: 2,
-        language: 'en',
-        title: 'EN Title',
-        description: 'EN Desc',
-        content: [],
-      },
-    ]);
-
-    const options = {
-      multiLanguageContents: {
-        en: { title: 'EN Title', description: 'EN Desc', content: [] },
-      },
-      tags: ['fulltext'],
-    };
-
-    await service.addVersion('a1', options);
-
-    expect(bindSearchTokensSpy).toHaveBeenCalledTimes(1);
-    expect(bindSearchTokensSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ language: 'en' }),
-      ['fulltext'],
-      runnerMock,
+        createQueryRunner: () => runner,
+      } as any,
+      mockArticleDataLoader as any,
+      mockSignatureService,
     );
   });
 
-  it('should set releasedAt to current date when draftMode is false and no releasedAt is provided', async () => {
-    findMock.mockResolvedValue([]);
-    findOneMock.mockResolvedValue({ id: 'a1', categories: [] });
-    createQueryBuilderMock.getOne.mockResolvedValue({ version: 1 });
-
-    const createSpy = jest.fn((x) => x);
-
-    const versionEntityHolder: any[] = [];
-
-    const saveSpy = jest
-      .spyOn(runnerMock.manager!, 'save')
-      .mockImplementation(async (input) => {
-        if ((input as any).version === 2) {
-          versionEntityHolder.push(input); // Capture the saved version entity
-        }
-
-        return input;
-      });
-
-    (service as any).baseArticleRepo = {
-      create: createSpy,
-      findOne: findOneMock,
-    };
-
-    (service as any).baseArticleVersionRepo = {
-      create: createSpy,
-      findOne: findOneMock,
-      createQueryBuilder: () => createQueryBuilderMock,
-    };
-
-    (service as any).baseArticleVersionContentRepo = {
-      create: createSpy,
-      findOne: findOneMock,
-    };
-
-    (service as any).draftMode = false;
-
-    const options = {
-      title: 'Auto Released',
-      description: 'No release date provided',
-      tags: ['auto'],
-      content: [{ type: 'p', children: [{ text: 'Text' }] }],
-    };
-
-    const before = Date.now();
-
-    await service.addVersion('a1', options);
-    const after = Date.now();
-
-    expect(versionEntityHolder[0]).toBeDefined(); // ⛳️ Ensure it was captured
-    expect(versionEntityHolder[0].releasedAt).toBeDefined();
-    expect(
-      new Date(versionEntityHolder[0].releasedAt).getTime(),
-    ).toBeGreaterThanOrEqual(before);
-
-    expect(
-      new Date(versionEntityHolder[0].releasedAt).getTime(),
-    ).toBeLessThanOrEqual(after);
-  });
-
-  it('should call bindSearchTokens with empty array when tags are not provided and fullTextSearchMode is true', async () => {
-    // Enable modes
-    (service as any).multipleLanguageMode = true;
-    (service as any).fullTextSearchMode = true;
-
-    // Setup mocks
-    findMock.mockResolvedValue([]);
-    findOneMock.mockResolvedValue({ id: 'a1', categories: [] });
-    createQueryBuilderMock.getOne.mockResolvedValue({ version: 1 });
-
-    const createSpy = jest.fn((x) => x);
-
-    (service as any).baseArticleRepo = {
-      create: createSpy,
-      findOne: findOneMock,
-    };
-
-    (service as any).baseArticleVersionRepo = {
-      create: createSpy,
-      createQueryBuilder: () => createQueryBuilderMock,
-    };
-
-    (service as any).baseArticleVersionContentRepo = {
-      create: createSpy,
-    };
-
-    // Spy on bindSearchTokens
-    const bindSearchTokensSpy = jest.fn();
-
-    (service as any).bindSearchTokens = bindSearchTokensSpy;
-
-    // Stub save() to simulate saving multiLanguageContents
-    jest.spyOn(runnerMock.manager!, 'save').mockResolvedValue([
-      {
-        articleId: 'a1',
-        version: 2,
-        language: 'en',
-        title: 'Test',
-        description: 'Test',
-        content: [],
-      },
-    ]);
-
-    const options = {
-      multiLanguageContents: {
-        en: { title: 'EN', description: 'EN Desc', content: [] },
-      },
-      // 👇 omit tags entirely
-    };
-
-    await service.addVersion('a1', options);
-
-    expect(bindSearchTokensSpy).toHaveBeenCalledTimes(1);
-    expect(bindSearchTokensSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ language: 'en' }),
-      [], // ✅ Expect fallback to empty array
-      runnerMock,
-    );
-  });
-
-  it('should call bindSearchTokens with [] in single-language path when tags are missing', async () => {
-    // Enable fullTextSearchMode and disable multi-language mode
-    (service as any).multipleLanguageMode = false;
-    (service as any).fullTextSearchMode = true;
-
-    // Setup mocks for repositories and query builder
-    findMock.mockResolvedValue([]);
-    findOneMock.mockResolvedValue({ id: 'a1', categories: [] });
-    createQueryBuilderMock.getOne.mockResolvedValue({ version: 1 });
-
-    // Prepare spy and .create overrides
-    const createSpy = jest.fn((x) => x);
-
-    (service as any).baseArticleRepo = {
-      create: createSpy,
-      findOne: findOneMock,
-    };
-
-    (service as any).baseArticleVersionRepo = {
-      create: createSpy,
-      createQueryBuilder: () => createQueryBuilderMock,
-    };
-
-    (service as any).baseArticleVersionContentRepo = {
-      create: createSpy,
-    };
-
-    // Spy on bindSearchTokens
-    const bindSearchTokensSpy = jest.fn();
-
-    (service as any).bindSearchTokens = bindSearchTokensSpy;
-
-    // Stub runner.manager.save to simulate single-language content save
-    jest.spyOn(runnerMock.manager!, 'save').mockResolvedValue({
-      articleId: 'a1',
-      version: 2,
-      language: 'en',
-      title: 'Single-Language No Tags',
-      description: 'Desc',
-      content: [],
-    });
-
-    // No tags provided
-    const options = {
-      title: 'No Tags Title',
-      description: 'No tags provided',
-      content: [{ type: 'p', children: [{ text: 'Only Content' }] }],
-      // 👇 tags omitted intentionally
-    };
-
-    // Act
-    await service.addVersion('a1', options);
-
-    // Assert: bindSearchTokens must be called with [] as fallback
-    expect(bindSearchTokensSpy).toHaveBeenCalledTimes(1);
-    expect(bindSearchTokensSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ language: 'en' }),
-      [], // ✅ fallback triggered
-      runnerMock,
-    );
-  });
-  //   findMock.mockResolvedValue([]); // valid categories
-  //   findOneMock.mockResolvedValue({ id: 'a1', categories: [] }); // valid article
-  //   createQueryBuilderMock.getOne.mockResolvedValue({ version: 1 }); // valid latest version
-
-  //   (service as any).baseArticleRepo = {
-  //     create: jest.fn((x) => x),
-  //     findOne: findOneMock,
-  //   };
-  //   (service as any).baseArticleVersionRepo = {
-  //     create: jest.fn((x) => x),
-  //     createQueryBuilder: () => createQueryBuilderMock,
-  //   };
-  //   (service as any).baseArticleVersionContentRepo = {
-  //     create: jest.fn((x) => x),
-  //   };
-
-  //   (service as any).multipleLanguageMode = false; // ✅ force the condition
-
-  //   const options = {
-  //     multiLanguageContents: {
-  //       en: {
-  //         title: 'English Title',
-  //         description: 'English Desc',
-  //         content: [],
-  //       },
-  //     },
-  //     tags: ['test'],
-  //   };
-
-  //   // Act & Assert
-  //   await expect(service.addVersion('a1', options)).rejects.toThrow(
-  //     MultipleLanguageModeIsDisabledError,
-  //   );
-  // });
-
-  it('should rollback transaction and throw BadRequestException if unexpected error occurs during version save', async () => {
-    findMock.mockResolvedValue([]);
-    findOneMock.mockResolvedValue({ id: 'a1', categories: [] });
-    createQueryBuilderMock.getOne.mockResolvedValue({ version: 1 });
-
-    const createSpy = jest.fn((x) => x);
-
-    const error = new Error('Mock save failure');
+  it('should update release time immediately if no scheduled version exists', async () => {
+    const now = new Date();
 
     jest
-      .spyOn(runnerMock.manager!, 'save')
-      .mockImplementationOnce(async () => {})
-      .mockImplementationOnce(async () => {
-        throw error;
-      });
+      .spyOn(service, 'findById')
+      .mockImplementationOnce(
+        () => Promise.resolve({ id: 'id', version: 1 }) as any,
+      )
+      .mockImplementationOnce(() => Promise.reject(new Error('not found')))
+      .mockImplementationOnce(
+        () => Promise.resolve({ id: 'id', version: 1 }) as any,
+      );
 
-    const rollbackSpy = jest.spyOn(runnerMock, 'rollbackTransaction');
+    const result = await service.release('id', { releasedAt: now });
 
-    (service as any).baseArticleRepo = {
-      create: createSpy,
-      findOne: findOneMock,
-    };
-
-    (service as any).baseArticleVersionRepo = {
-      create: createSpy,
-      createQueryBuilder: () => createQueryBuilderMock,
-    };
-
-    (service as any).baseArticleVersionContentRepo = {
-      create: createSpy,
-    };
-
-    const options = {
-      title: 'Should Fail',
-      description: 'Force error during save(version)',
-      tags: ['err'],
-      content: [{ type: 'p', children: [{ text: 'Boom' }] }],
-    };
-
-    // Assert
-    await expect(service.addVersion('a1', options)).rejects.toThrow(
-      BadRequestException,
+    expect(runner.connect).toHaveBeenCalled();
+    expect(runner.startTransaction).toHaveBeenCalled();
+    expect(runner.manager.update).toHaveBeenCalledWith(
+      'versions',
+      { articleId: 'id', version: 1 },
+      { releasedAt: now, releasedBy: undefined },
     );
 
-    // Verify rollback was called
-    expect(rollbackSpy).toHaveBeenCalled();
+    expect(runner.commitTransaction).toHaveBeenCalled();
+    expect(runner.release).toHaveBeenCalled();
+    expect(result).toBeDefined();
   });
 
-  it('should throw MultipleLanguageModeIsDisabledError if multiLanguageContents is used while disabled', async () => {
-    // Arrange
-    (service as any).multipleLanguageMode = false; // force path
-    (service as any).fullTextSearchMode = true; // irrelevant but matches context
+  it('should remove existing released/scheduled version if it differs', async () => {
+    jest
+      .spyOn(service, 'findById')
+      .mockImplementationOnce(
+        () => Promise.resolve({ id: 'id', version: 2 }) as any,
+      )
+      .mockImplementationOnce(
+        () => Promise.resolve({ id: 'id', version: 1 }) as any,
+      )
+      .mockImplementationOnce(
+        () => Promise.resolve({ id: 'id', version: 2 }) as any,
+      );
 
-    findMock.mockResolvedValue([]); // valid categories
-    findOneMock.mockResolvedValue({ id: 'a1', categories: [] }); // valid article
-    createQueryBuilderMock.getOne.mockResolvedValue({ version: 1 }); // valid latest version
+    const result = await service.release('id', { releasedAt: new Date() });
 
-    (service as any).baseArticleRepo = {
-      create: jest.fn((x) => x),
-      findOne: findOneMock,
-    };
+    expect(runner.manager.softRemove).toHaveBeenCalledWith('versions', {
+      articleId: 'id',
+      version: 1,
+    });
 
-    (service as any).baseArticleVersionRepo = {
-      create: jest.fn((x) => x),
-      createQueryBuilder: () => createQueryBuilderMock,
-    };
+    expect(runner.manager.update).toHaveBeenCalledWith(
+      'versions',
+      { articleId: 'id', version: 2 },
+      expect.objectContaining({ releasedAt: expect.any(Date) }),
+    );
 
-    (service as any).baseArticleVersionContentRepo = {
-      create: jest.fn((x) => x),
-    };
+    expect(result).toBeDefined();
+  });
 
-    const options = {
-      multiLanguageContents: {
-        en: {
-          title: 'English Title',
-          description: 'English Desc',
-          content: [],
-        },
-      },
-      tags: ['test'],
-    };
+  it('should rollback transaction if update fails', async () => {
+    jest
+      .spyOn(service, 'findById')
+      .mockImplementation(
+        () => Promise.resolve({ id: 'id', version: 1 }) as any,
+      );
 
-    // Act & Assert
-    await expect(service.addVersion('a1', options)).rejects.toThrowError(
+    runner.manager.update.mockImplementation(() => {
+      throw new Error('update failed');
+    });
+
+    await expect(
+      service.release('id', { releasedAt: new Date() }),
+    ).rejects.toThrow('update failed');
+
+    expect(runner.rollbackTransaction).toHaveBeenCalled();
+    expect(runner.release).toHaveBeenCalled();
+  });
+
+  it('should assign releasedBy if userId is provided', async () => {
+    jest
+      .spyOn(service, 'findById')
+      .mockImplementationOnce(
+        () => Promise.resolve({ id: 'id', version: 1 }) as any,
+      )
+      .mockImplementationOnce(() => Promise.reject(null))
+      .mockImplementationOnce(
+        () => Promise.resolve({ id: 'id', version: 1 }) as any,
+      );
+
+    const now = new Date();
+
+    await service.release('id', { releasedAt: now, userId: 'user123' });
+
+    expect(runner.manager.update).toHaveBeenCalledWith(
+      'versions',
+      { articleId: 'id', version: 1 },
+      { releasedAt: now, releasedBy: 'user123' },
+    );
+  });
+
+  it('should default to RELEASED if releasedAt is not provided', async () => {
+    const findByIdSpy = jest
+      .spyOn(service, 'findById')
+      .mockResolvedValue({ id: 'id', version: 1 } as any);
+
+    await service.release('id', { version: 1 });
+
+    expect(findByIdSpy).toHaveBeenCalledWith(
+      'id',
       expect.objectContaining({
-        message: expect.stringContaining('Multiple language mode is disabled'),
+        stage: ArticleStage.RELEASED,
+      }),
+    );
+  });
+
+  it('should call findById with SCHEDULED stage if releasedAt is in the future', async () => {
+    const findByIdSpy = jest
+      .spyOn(service, 'findById')
+      .mockResolvedValue({ id: 'id', version: 1 } as any);
+
+    await service.release('id', {
+      releasedAt: new Date(Date.now() + 60_000),
+      version: 1,
+    });
+
+    expect(findByIdSpy).toHaveBeenCalledWith(
+      'id',
+      expect.objectContaining({
+        stage: ArticleStage.SCHEDULED,
       }),
     );
   });
 });
 
-describe('ArticleBaseService (create)', () => {
-  let service: ArticleBaseService<any, any, any>;
-  const findMock = jest.fn();
-  const createSpy = jest.fn((x) => x);
-  const runnerMock: Partial<QueryRunner> = {
-    connect: jest.fn(),
-    startTransaction: jest.fn(),
-    commitTransaction: jest.fn(),
-    rollbackTransaction: jest.fn(),
-    release: jest.fn(),
-    manager: {
-      save: jest.fn(),
-    } as unknown as EntityManager,
-  };
+describe('submit', () => {
+  let service: ArticleBaseService;
+  let runner: any;
 
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ArticleBaseService,
-        {
-          provide: RESOLVED_ARTICLE_REPO,
-          useValue: { create: createSpy },
-        },
-        {
-          provide: RESOLVED_ARTICLE_VERSION_REPO,
-          useValue: { create: createSpy },
-        },
-        {
-          provide: RESOLVED_ARTICLE_VERSION_CONTENT_REPO,
-          useValue: { create: createSpy },
-        },
-        {
-          provide: RESOLVED_CATEGORY_REPO,
-          useValue: { find: findMock },
-        },
-        { provide: MULTIPLE_LANGUAGE_MODE, useValue: false },
-        { provide: FULL_TEXT_SEARCH_MODE, useValue: false },
-        { provide: ENABLE_SIGNATURE_MODE, useValue: false },
-        { provide: ARTICLE_SIGNATURE_SERVICE, useValue: {} },
-        { provide: DRAFT_MODE, useValue: true },
-        {
-          provide: DataSource,
-          useValue: {
-            createQueryRunner: () => runnerMock,
-          },
-        },
-      ],
-    }).compile();
+  beforeEach(() => {
+    runner = {
+      connect: jest.fn(),
+      startTransaction: jest.fn(),
+      commitTransaction: jest.fn(),
+      rollbackTransaction: jest.fn(),
+      release: jest.fn(),
+      manager: {
+        update: jest.fn(),
+        softRemove: jest.fn(),
+      },
+    };
 
-    service = module.get<ArticleBaseService<any, any, any>>(ArticleBaseService);
+    const mockArticleDataLoader = {
+      articleRepo: {} as any,
+      articleVersionRepo: {} as any,
+      signatureService: {} as any,
+      stageLoader: { load: jest.fn() },
+      stageCache: new Map(),
+      categoryLoader: {} as any,
+      versionLoader: {} as any,
+    };
+
+    service = new ArticleBaseService(
+      {} as any,
+      { metadata: { tableName: 'versions' } } as any,
+      {} as any,
+      {} as any,
+      true,
+      true,
+      true,
+      [],
+      {} as any,
+      {} as any,
+      true,
+      { createQueryRunner: () => runner } as any,
+      mockArticleDataLoader as any,
+      { signatureEnabled: true } as any,
+    );
   });
 
-  it('should set releasedAt to current date when draftMode is false and no releasedAt is provided', async () => {
-    findMock.mockResolvedValue([]);
+  it('should throw if signature mode is disabled', async () => {
+    service = new ArticleBaseService(
+      {} as any,
+      { metadata: { tableName: 'versions' } } as any,
+      {} as any,
+      {} as any,
+      true,
+      true,
+      true,
+      [],
+      {} as any,
+      {} as any,
+      true,
+      { createQueryRunner: () => runner } as any,
+      {} as any,
+      { signatureEnabled: false } as any,
+    );
 
-    const createSpy = jest.fn((x) => x);
-    const savedEntities: any[] = [];
+    await expect(service.submit('id')).rejects.toThrow(
+      'Signature mode is disabled.',
+    );
+  });
+
+  it('should throw if article is already submitted', async () => {
+    jest.spyOn(service, 'findById').mockResolvedValue({
+      id: 'id',
+      version: 1,
+      submittedAt: new Date(),
+    } as any);
+
+    await expect(service.submit('id')).rejects.toThrow(
+      'Article id is already submitted',
+    );
+  });
+
+  it('should softRemove old REVIEWING version if exists and update current version', async () => {
+    jest.spyOn(service, 'findById').mockImplementation((id, options: any) => {
+      if (options?.stage === ArticleStage.REVIEWING) {
+        return Promise.resolve({ id, version: 9 }) as any;
+      }
+
+      return Promise.resolve({ id, version: 10 }) as any;
+    });
+
+    const result = await service.submit('id', { userId: 'user-1' });
+
+    expect(runner.connect).toHaveBeenCalled();
+    expect(runner.startTransaction).toHaveBeenCalled();
+    expect(runner.manager.softRemove).toHaveBeenCalledWith('versions', {
+      articleId: 'id',
+      version: 9,
+    });
+
+    expect(runner.manager.update).toHaveBeenCalledWith(
+      'versions',
+      { articleId: 'id', version: 10 },
+      expect.objectContaining({ submittedBy: 'user-1' }),
+    );
+
+    expect(runner.commitTransaction).toHaveBeenCalled();
+    expect(runner.release).toHaveBeenCalled();
+    expect(result).toBeDefined();
+  });
+
+  it('should continue if REVIEWING version is not found', async () => {
+    jest.spyOn(service, 'findById').mockImplementation((id, options: any) => {
+      if (options?.stage === ArticleStage.REVIEWING) {
+        return Promise.reject(new Error('not found'));
+      }
+
+      return Promise.resolve({ id, version: 3 }) as any;
+    });
+
+    const result = await service.submit('id');
+
+    expect(runner.manager.update).toHaveBeenCalled();
+    expect(result).toBeDefined();
+  });
+
+  it('should rollback transaction if error occurs', async () => {
+    jest
+      .spyOn(service, 'findById')
+      .mockResolvedValue({ id: 'id', version: 1 } as any);
+
+    runner.manager.update.mockImplementation(() => {
+      throw new Error('Update failed');
+    });
+
+    await expect(service.submit('id')).rejects.toThrow('Update failed');
+    expect(runner.rollbackTransaction).toHaveBeenCalled();
+    expect(runner.release).toHaveBeenCalled();
+  });
+});
+
+describe('putBack', () => {
+  let service: ArticleBaseService;
+  let runner: any;
+
+  beforeEach(() => {
+    jest.resetAllMocks();
+    runner = {
+      connect: jest.fn(),
+      startTransaction: jest.fn(),
+      commitTransaction: jest.fn(),
+      rollbackTransaction: jest.fn(),
+      release: jest.fn(),
+      manager: {
+        update: jest.fn(),
+      },
+    };
+
+    const mockArticleDataLoader = {
+      stageCache: new Map(),
+    };
+
+    service = new ArticleBaseService(
+      {} as any,
+      { metadata: { tableName: 'versions' } } as any,
+      {} as any,
+      {} as any,
+      true,
+      true,
+      true,
+      [],
+      {} as any,
+      {} as any,
+      true,
+      { createQueryRunner: () => runner } as any,
+      mockArticleDataLoader as any,
+      { signatureEnabled: true } as any,
+    );
+  });
+
+  it('should throw if signature mode is disabled', async () => {
+    service = new ArticleBaseService(
+      {} as any,
+      { metadata: { tableName: 'versions' } } as any,
+      {} as any,
+      {} as any,
+      true,
+      true,
+      true,
+      [],
+      {} as any,
+      {} as any,
+      true,
+      { createQueryRunner: () => runner } as any,
+      {} as any,
+      { signatureEnabled: false } as any,
+    );
+
+    await expect(service.putBack('id')).rejects.toThrow(
+      'Signature mode is disabled.',
+    );
+  });
+
+  it('should throw if draft article already exists', async () => {
+    jest.spyOn(service, 'findById').mockImplementation((id, options: any) => {
+      if (options?.stage === 'DRAFT') {
+        return Promise.resolve({ id, version: 2 }) as any;
+      }
+
+      return Promise.resolve({
+        id,
+        version: 3,
+        submittedAt: new Date(),
+      }) as any;
+    });
+
+    await expect(service.putBack('id')).rejects.toThrow(
+      'Article id is already in draft [2].',
+    );
+  });
+
+  it('should throw if article is not submitted yet', async () => {
+    jest.spyOn(service, 'findById').mockImplementation((id, options: any) => {
+      if (options?.stage === 'DRAFT') {
+        return Promise.resolve(null);
+      }
+
+      return Promise.resolve({ id, version: 1, submittedAt: null }) as any;
+    });
+
+    await expect(service.putBack('id')).rejects.toThrow(
+      'Article id is not submitted yet [1].',
+    );
+  });
+
+  it('should update submittedAt and submittedBy to null', async () => {
+    jest.spyOn(service, 'findById').mockImplementation((id, options: any) => {
+      if (options?.stage === 'DRAFT') {
+        return Promise.resolve(null);
+      }
+
+      return Promise.resolve({
+        id,
+        version: 1,
+        submittedAt: new Date(),
+      }) as any;
+    });
+
+    const result = await service.putBack('id');
+
+    expect(runner.connect).toHaveBeenCalled();
+    expect(runner.startTransaction).toHaveBeenCalled();
+    expect(runner.manager.update).toHaveBeenCalledWith(
+      'versions',
+      { articleId: 'id', version: 1 },
+      { submittedAt: null, submittedBy: null },
+    );
+
+    expect(runner.commitTransaction).toHaveBeenCalled();
+    expect(runner.release).toHaveBeenCalled();
+    expect(result).toBeDefined();
+  });
+
+  it('should rollback if an error is thrown', async () => {
+    jest.spyOn(service, 'findById').mockImplementation((id, options: any) => {
+      if (options?.stage === 'DRAFT') {
+        return Promise.resolve(null);
+      }
+
+      return Promise.resolve({
+        id,
+        version: 1,
+        submittedAt: new Date(),
+      }) as any;
+    });
+
+    runner.manager.update.mockImplementation(() => {
+      throw new Error('Update failed');
+    });
+
+    await expect(service.putBack('id')).rejects.toThrow('Update failed');
+    expect(runner.rollbackTransaction).toHaveBeenCalled();
+    expect(runner.release).toHaveBeenCalled();
+  });
+
+  it('should continue when findById for draft article throws error', async () => {
+    const mockArticleDataLoader = {
+      articleRepo: {} as any,
+      articleVersionRepo: {} as any,
+      signatureService: {} as any,
+      stageLoader: {
+        load: jest.fn(),
+      },
+      stageCache: new Map<string, Promise<ArticleStage>>(),
+      categoryLoader: {} as any,
+      versionLoader: {} as any,
+    };
+
+    service = new ArticleBaseService(
+      {} as any,
+      { metadata: { tableName: 'versions' } } as any,
+      {} as any,
+      {} as any,
+      true,
+      true,
+      true,
+      [],
+      {} as any,
+      {} as any,
+      true,
+      { createQueryRunner: () => runner } as any,
+      mockArticleDataLoader as any,
+      { signatureEnabled: true } as any, // correct 14th argument
+    );
+
+    jest.spyOn(service, 'findById').mockImplementation((id, options: any) => {
+      if (options?.stage === ArticleStage.DRAFT) {
+        return Promise.reject(new Error('Failed to fetch draft'));
+      }
+
+      return Promise.resolve({
+        id,
+        version: 1,
+        submittedAt: new Date(),
+      }) as any;
+    });
+
+    await expect(service.putBack('article-id')).resolves.toBeDefined();
+
+    expect(runner.connect).toHaveBeenCalled();
+    expect(runner.commitTransaction).toHaveBeenCalled();
+  });
+});
+
+describe('getPlacedArticleStage', () => {
+  let service: any;
+
+  const mockSignatureService = {
+    finalSignatureLevel: {
+      id: 'any-id',
+      name: 'FINAL',
+      sequence: 1,
+      required: true,
+      createdAt: new Date(),
+      deletedAt: new Date(),
+      signatures: [],
+    },
+    signatureEnabled: true,
+    signatureLevels: [],
+    signatureLevelRepo: {} as any,
+    dataSource: {} as any,
+    articleSignatureRepo: {} as any,
+    getSignatureStage: jest.fn(),
+    isFinalSignatureLevel: jest.fn(),
+  } as unknown as SignatureService<any>;
+
+  beforeEach(() => {
+    service = new ArticleBaseService(
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      true, // multipleLanguageMode
+      true, // fullTextSearchMode
+      true, // draftMode
+      [], // signatureLevels
+      {} as any,
+      {} as any,
+      true, // autoReleaseAfterApproved
+      {} as any, // dataSource
+      {} as any, // articleDataLoader
+      mockSignatureService,
+    );
+  });
+
+  it('should return REVIEWING if submitted is true', () => {
+    const stage = service['getPlacedArticleStage']({
+      submitted: true,
+      releasedAt: null,
+      signatureLevel: null,
+    });
+
+    expect(stage).toBe(ArticleStage.REVIEWING);
+  });
+
+  it('should return VERIFIED if signatureLevel matches final level', () => {
+    const stage = service['getPlacedArticleStage']({
+      submitted: false,
+      releasedAt: null,
+      signatureLevel: 'FINAL',
+    });
+
+    expect(stage).toBe(ArticleStage.VERIFIED);
+  });
+
+  it('should return REVIEWING if signatureLevel exists but is not final', () => {
+    const stage = service['getPlacedArticleStage']({
+      submitted: false,
+      releasedAt: null,
+      signatureLevel: 'MID',
+    });
+
+    expect(stage).toBe(ArticleStage.REVIEWING);
+  });
+
+  it('should return SCHEDULED if releasedAt is in the future', () => {
+    const stage = service['getPlacedArticleStage']({
+      submitted: false,
+      releasedAt: new Date(Date.now() + 100000),
+      signatureLevel: null,
+    });
+
+    expect(stage).toBe(ArticleStage.SCHEDULED);
+  });
+
+  it('should return RELEASED if releasedAt is in the past', () => {
+    const stage = service['getPlacedArticleStage']({
+      submitted: false,
+      releasedAt: new Date(Date.now() - 100000),
+      signatureLevel: null,
+    });
+
+    expect(stage).toBe(ArticleStage.RELEASED);
+  });
+
+  it('should return DRAFT if nothing set and draftMode is enabled', () => {
+    const stage = service['getPlacedArticleStage']({
+      submitted: false,
+      releasedAt: null,
+      signatureLevel: null,
+    });
+
+    expect(stage).toBe(ArticleStage.DRAFT);
+  });
+
+  it('should return RELEASED if nothing set and draftMode is disabled', () => {
+    service.draftMode = false;
+
+    const stage = service['getPlacedArticleStage']({
+      submitted: false,
+      releasedAt: null,
+      signatureLevel: null,
+    });
+
+    expect(stage).toBe(ArticleStage.RELEASED);
+  });
+});
+
+describe('ArticleBaseService.addVersion', () => {
+  let service: ArticleBaseService;
+  let runner: any;
+
+  let mockArticleRepo: any;
+  let mockVersionRepo: any;
+  let mockContentRepo: any;
+  let mockCategoryRepo: any;
+  let mockSignatureLevelRepo: any;
+  let mockSignatureRepo: any;
+  let mockRepo: any;
+  let mockDataSource: any;
+  let mockDataLoader: any;
+  let mockSignatureService: any;
+  let mockQueryBuilder: any;
+
+  const mockArticle = { id: 'article-1', categories: [] };
+  const mockVersion = { version: 2 };
+
+  beforeEach(() => {
+    jest.resetAllMocks();
+    mockRepo = (tableName = 'mock_table') => ({
+      find: jest.fn(),
+      findOne: jest.fn(),
+      save: jest.fn(),
+      softRemove: jest.fn(),
+      softDelete: jest.fn(),
+      update: jest.fn(),
+      create: jest.fn((input) => input),
+      createQueryBuilder: jest.fn(),
+      metadata: {
+        tableName,
+      },
+    });
+
+    mockQueryBuilder = {
+      withDeleted: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      getOne: jest.fn(),
+      setLock: jest.fn().mockReturnThis(),
+      getMany: jest.fn(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+    };
+
+    mockArticleRepo = mockRepo();
+    mockVersionRepo = {
+      ...mockRepo(),
+      createQueryBuilder: jest.fn(() => mockQueryBuilder),
+    };
+
+    mockContentRepo = mockRepo();
+    mockCategoryRepo = mockRepo();
+    mockSignatureLevelRepo = mockRepo();
+    mockSignatureRepo = mockRepo();
+
+    runner = {
+      connect: jest.fn(),
+      startTransaction: jest.fn(),
+      commitTransaction: jest.fn(),
+      rollbackTransaction: jest.fn(),
+      release: jest.fn(),
+      query: jest.fn().mockResolvedValue([]),
+      manager: {
+        save: jest.fn().mockImplementation((data) => Promise.resolve(data)),
+        softRemove: jest.fn().mockResolvedValue(undefined),
+        softDelete: jest.fn().mockResolvedValue(undefined),
+        update: jest.fn().mockResolvedValue(undefined),
+      },
+    };
+
+    mockDataSource = {
+      createQueryRunner: () => runner,
+      query: jest.fn().mockResolvedValue([]),
+    };
+
+    mockDataLoader = {
+      stageCache: {
+        set: jest.fn(),
+      },
+    };
+
+    mockSignatureService = {
+      signatureEnabled: true,
+      finalSignatureLevel: { name: 'LEVEL_3', id: 'sig-level-3' },
+      signatureLevelsCache: [
+        { id: 'sig-level-1', name: 'LEVEL_1', required: false },
+        { id: 'sig-level-3', name: 'LEVEL_3', required: true },
+      ],
+    };
+
+    service = new ArticleBaseService(
+      mockArticleRepo,
+      mockVersionRepo,
+      mockContentRepo,
+      mockCategoryRepo,
+      true, // multipleLanguageMode
+      true, // fullTextSearchMode
+      true, // draftMode
+      ['LEVEL_1', 'LEVEL_2', 'LEVEL_3'], // signatureLevels
+      mockSignatureLevelRepo,
+      mockSignatureRepo,
+      true, // autoReleaseAfterApproved
+      mockDataSource as any,
+      mockDataLoader as any,
+      mockSignatureService as any,
+    );
+  });
+
+  it('should add version with single-language content', async () => {
+    jest
+      .spyOn(service, 'findById')
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(mockVersion);
+
+    mockCategoryRepo.find.mockResolvedValue([{ id: 'cat-1', bindable: true }]);
+    mockArticleRepo.findOne.mockResolvedValue(mockArticle);
+    mockVersionRepo.createQueryBuilder.mockReturnValue({
+      withDeleted: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(mockVersion),
+    });
+
+    const result = await service.addVersion('article-1', {
+      userId: 'user-1',
+      submitted: true,
+      categoryIds: ['cat-1'],
+      title: 'Test',
+      content: [],
+      tags: [],
+    });
+
+    expect(result).toBeDefined();
+    expect(runner.startTransaction).toHaveBeenCalled();
+    expect(runner.commitTransaction).toHaveBeenCalled();
+  });
+
+  it('should add version with multi-language content', async () => {
+    jest
+      .spyOn(service, 'findById')
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(mockVersion);
+
+    mockCategoryRepo.find.mockResolvedValue([{ id: 'cat-1', bindable: true }]);
+    mockArticleRepo.findOne.mockResolvedValue(mockArticle);
+    mockVersionRepo.createQueryBuilder.mockReturnValue({
+      withDeleted: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(mockVersion),
+    });
+
+    const multiLangDto: MultiLanguageArticleCreateDto = {
+      userId: 'user-1',
+      submitted: false,
+      categoryIds: ['cat-1'],
+      multiLanguageContents: {
+        en: { title: 'English', content: [] },
+        zh: { title: '中文', content: [] },
+      },
+      tags: ['tag1'],
+    };
+
+    const result = await service.addVersion('article-1', multiLangDto);
+
+    expect(result).toBeDefined();
+    expect(runner.commitTransaction).toHaveBeenCalled();
+  });
+
+  it('should throw CategoryNotFoundError if categoryId not found', async () => {
+    mockCategoryRepo.find.mockResolvedValue([]);
+    await expect(
+      service.addVersion('article-1', {
+        userId: 'user-1',
+        submitted: true,
+        categoryIds: ['missing-cat'],
+        title: 'Test',
+        content: [],
+        tags: [],
+      }),
+    ).rejects.toThrow(CategoryNotFoundError);
+  });
+
+  it('should throw ArticleNotFoundError if article not found', async () => {
+    jest.spyOn(service, 'findById').mockResolvedValue(null);
+    mockCategoryRepo.find.mockResolvedValue([{ id: 'cat-1', bindable: true }]);
+    mockArticleRepo.findOne.mockResolvedValue(null);
+
+    await expect(
+      service.addVersion('article-1', {
+        userId: 'user-1',
+        submitted: false,
+        categoryIds: ['cat-1'],
+        title: 'Test',
+        content: [],
+        tags: [],
+      }),
+    ).rejects.toThrow(ArticleNotFoundError);
+  });
+
+  it('should throw ArticleVersionNotFoundError if no previous version', async () => {
+    mockCategoryRepo.find.mockResolvedValue([{ id: 'cat-1', bindable: true }]);
+    mockArticleRepo.findOne.mockResolvedValue(mockArticle);
+    mockVersionRepo.createQueryBuilder.mockReturnValue({
+      withDeleted: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(null),
+    });
+
+    await expect(
+      service.addVersion('article-1', {
+        userId: 'user-1',
+        submitted: false,
+        categoryIds: ['cat-1'],
+        title: 'Test',
+        content: [],
+        tags: [],
+      }),
+    ).rejects.toThrow(ArticleVersionNotFoundError);
+  });
+
+  it('should rollback transaction on failure', async () => {
+    jest
+      .spyOn(service, 'findById')
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(mockVersion);
+
+    mockCategoryRepo.find.mockResolvedValue([{ id: 'cat-1', bindable: true }]);
+    mockArticleRepo.findOne.mockResolvedValue(mockArticle);
+    mockVersionRepo.createQueryBuilder.mockReturnValue({
+      withDeleted: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(mockVersion),
+    });
+
+    runner.manager.save.mockRejectedValueOnce(new Error('DB error'));
+
+    await expect(
+      service.addVersion('article-1', {
+        userId: 'user-1',
+        submitted: true,
+        categoryIds: ['cat-1'],
+        title: 'Test',
+        content: [],
+        tags: [],
+      }),
+    ).rejects.toThrow(BadRequestException);
+
+    expect(runner.rollbackTransaction).toHaveBeenCalled();
+  });
+
+  it('should call approveVersion if signatureLevel or releasedAt is provided', async () => {
+    const approveVersionSpy = jest
+      .spyOn(service, 'approveVersion')
+      .mockResolvedValue({} as any);
 
     jest
-      .spyOn(runnerMock.manager!, 'save')
-      .mockImplementation(async (entity) => {
-        savedEntities.push(entity);
+      .spyOn(service, 'findById')
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(mockVersion);
 
-        return entity;
-      });
+    mockCategoryRepo.find.mockResolvedValue([{ id: 'cat-1', bindable: true }]);
+    mockArticleRepo.findOne.mockResolvedValue(mockArticle);
+    mockVersionRepo.createQueryBuilder.mockReturnValue({
+      withDeleted: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(mockVersion),
+    });
 
-    (service as any).baseArticleRepo = { create: createSpy };
-    (service as any).baseArticleVersionRepo = { create: createSpy };
-    (service as any).baseArticleVersionContentRepo = { create: createSpy };
-    (service as any).draftMode = false;
+    await service.addVersion('article-1', {
+      userId: 'user-1',
+      signatureLevel: 'LEVEL_1',
+      categoryIds: ['cat-1'],
+      title: 'Test',
+      content: [],
+      tags: [],
+    });
 
-    const options = {
-      title: 'Draft off',
-      description: 'Testing new Date fallback',
-      tags: ['t'],
-      content: [{ type: 'p', children: [{ text: 'test' }] }],
+    expect(approveVersionSpy).toHaveBeenCalled();
+  });
+
+  it('should add version with empty categories if categoryIds is not provided', async () => {
+    jest
+      .spyOn(service, 'findById')
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(mockVersion);
+
+    mockCategoryRepo.find.mockResolvedValue([]);
+    mockArticleRepo.findOne.mockResolvedValue(mockArticle);
+    mockVersionRepo.createQueryBuilder.mockReturnValue({
+      withDeleted: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(mockVersion),
+    });
+
+    const result = await service.addVersion('article-1', {
+      userId: 'user-1',
+      submitted: false,
+      // categoryIds is undefined
+      title: 'Test without categories',
+      content: [],
+      tags: [],
+    });
+
+    expect(result).toBeDefined();
+    expect(mockCategoryRepo.find).not.toHaveBeenCalled();
+    expect(runner.commitTransaction).toHaveBeenCalled();
+  });
+
+  it('should not throw CategoryNotFoundError when categoryIds is undefined and targetCategories is empty', async () => {
+    jest
+      .spyOn(service, 'findById')
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(mockVersion);
+
+    mockCategoryRepo.find.mockResolvedValue([]);
+    mockArticleRepo.findOne.mockResolvedValue(mockArticle);
+    mockVersionRepo.createQueryBuilder.mockReturnValue({
+      withDeleted: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(mockVersion),
+    });
+
+    const result = await service.addVersion('article-1', {
+      userId: 'user-1',
+      submitted: false,
+      title: 'Untitled',
+      content: [],
+      tags: [],
+    });
+
+    expect(result).toBeDefined();
+    expect(mockCategoryRepo.find).not.toHaveBeenCalled();
+    expect(runner.commitTransaction).toHaveBeenCalled();
+  });
+
+  it('should log warning when article has categories and categoryIds is not provided', async () => {
+    const loggerWarnSpy = jest
+      .spyOn(service['logger'], 'warn')
+      .mockImplementation();
+
+    const articleWithCategories = {
+      id: 'article-1',
+      categories: [{ id: 'cat-a' }, { id: 'cat-b' }],
     };
+
+    jest
+      .spyOn(service, 'findById')
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(mockVersion);
+
+    mockCategoryRepo.find.mockResolvedValue([]); // should not be called, but safe fallback
+    mockArticleRepo.findOne.mockResolvedValue(articleWithCategories);
+    mockVersionRepo.createQueryBuilder.mockReturnValue({
+      withDeleted: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(mockVersion),
+    });
+
+    const result = await service.addVersion('article-1', {
+      userId: 'user-1',
+      submitted: false,
+      // No categoryIds provided
+      title: 'Test',
+      content: [],
+      tags: [],
+    });
+
+    expect(result).toBeDefined();
+    expect(loggerWarnSpy).toHaveBeenCalledWith(
+      'Article article-1 has categories, but no categoryIds provided when add version. The article categories will no change after version added.',
+    );
+  });
+
+  it('should fallback to new Date() for releasedAt when draftMode is false', async () => {
+    service = new ArticleBaseService(
+      mockArticleRepo,
+      mockVersionRepo,
+      mockContentRepo,
+      mockCategoryRepo,
+      true, // multipleLanguageMode
+      true, // fullTextSearchMode
+      false, // draftMode = false
+      ['LEVEL_1', 'LEVEL_2', 'LEVEL_3'],
+      mockSignatureLevelRepo,
+      mockSignatureRepo,
+      true,
+      mockDataSource as any,
+      mockDataLoader as any,
+      mockSignatureService as any,
+    );
+
+    jest
+      .spyOn(service, 'findById')
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(mockVersion);
+
+    mockCategoryRepo.find.mockResolvedValue([]);
+    mockArticleRepo.findOne.mockResolvedValue(mockArticle);
+    mockVersionRepo.createQueryBuilder.mockReturnValue({
+      withDeleted: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(mockVersion),
+    });
 
     const before = Date.now();
 
-    await service.create(options);
+    await service.addVersion('article-1', {
+      userId: 'user-1',
+      submitted: false,
+      categoryIds: [],
+      title: 'Test',
+      content: [],
+      tags: [],
+    });
+
     const after = Date.now();
 
-    // 🔍 Filter for the version entity (has articleId, tags, releasedAt)
-    const savedVersion = savedEntities.find(
-      (e) => 'releasedAt' in e && 'tags' in e && 'articleId' in e,
+    const savedVersion = runner.manager.save.mock.calls.find(
+      ([arg]: [any]) => arg?.version === mockVersion.version + 1,
+    )?.[0];
+
+    expect(savedVersion.releasedAt).toBeDefined();
+    expect(savedVersion.releasedAt.getTime()).toBeGreaterThanOrEqual(before);
+    expect(savedVersion.releasedAt.getTime()).toBeLessThanOrEqual(after);
+  });
+
+  it('should softRemove placedArticle when it exists', async () => {
+    const placedArticle = { id: 'article-1', version: 99 };
+    const latestVersion = { version: 99 };
+
+    service = new ArticleBaseService(
+      mockArticleRepo,
+      mockVersionRepo,
+      mockContentRepo,
+      mockCategoryRepo,
+      true,
+      true,
+      true,
+      ['LEVEL_1', 'LEVEL_2', 'LEVEL_3'],
+      mockSignatureLevelRepo,
+      mockSignatureRepo,
+      true,
+      mockDataSource as any,
+      mockDataLoader as any,
+      mockSignatureService as any,
     );
 
-    expect(savedVersion?.releasedAt).toBeDefined();
-    expect(new Date(savedVersion.releasedAt).getTime()).toBeGreaterThanOrEqual(
+    jest
+      .spyOn(service, 'findById')
+      .mockResolvedValueOnce(placedArticle)
+      .mockResolvedValueOnce(latestVersion);
+
+    mockCategoryRepo.find.mockResolvedValue([]);
+    mockArticleRepo.findOne.mockResolvedValue(mockArticle);
+    mockVersionRepo.createQueryBuilder.mockReturnValue({
+      withDeleted: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue({ version: 98 }),
+    });
+
+    await service.addVersion('article-1', {
+      userId: 'user-1',
+      submitted: false,
+      categoryIds: [],
+      title: 'Test',
+      content: [],
+      tags: [],
+    });
+
+    expect(runner.manager.softRemove).toHaveBeenCalledWith(
+      mockVersionRepo.metadata.tableName,
+      {
+        articleId: 'article-1',
+        version: 99,
+      },
+    );
+  });
+
+  it('should set releasedBy when releasedAt is provided', async () => {
+    runner = {
+      connect: jest.fn(),
+      startTransaction: jest.fn(),
+      commitTransaction: jest.fn(),
+      rollbackTransaction: jest.fn(),
+      release: jest.fn(),
+      query: jest.fn().mockResolvedValue([]),
+      manager: {
+        save: jest.fn().mockImplementation((data) => Promise.resolve(data)),
+        softRemove: jest.fn().mockResolvedValue(undefined),
+        softDelete: jest.fn().mockResolvedValue(undefined),
+        update: jest.fn().mockResolvedValue(undefined),
+        exists: jest.fn().mockResolvedValue(true),
+        createQueryBuilder: jest.fn(() => mockQueryBuilder),
+      },
+    };
+
+    jest
+      .spyOn(service, 'findById')
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(mockVersion);
+
+    mockCategoryRepo.find.mockResolvedValue([]);
+    mockArticleRepo.findOne.mockResolvedValue(mockArticle);
+    mockVersionRepo.createQueryBuilder.mockReturnValue({
+      withDeleted: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(mockVersion),
+    });
+
+    const releasedAt = new Date(Date.now() + 100000); // future date
+
+    jest.spyOn(service as any, 'approveVersion').mockResolvedValue(undefined);
+
+    await service.addVersion('article-1', {
+      userId: 'user-1',
+      releasedAt,
+      submitted: false,
+      categoryIds: [],
+      title: 'Test',
+      content: [],
+      tags: [],
+    });
+
+    const savedVersion = runner.manager.save.mock.calls.find(
+      ([arg]: [any]) => arg?.version === mockVersion.version + 1,
+    )?.[0];
+
+    expect(savedVersion.releasedBy).toBe('user-1');
+  });
+
+  it('should throw MultipleLanguageModeIsDisabledError if multipleLanguageMode is false', async () => {
+    service = new ArticleBaseService(
+      mockArticleRepo,
+      mockVersionRepo,
+      mockContentRepo,
+      mockCategoryRepo,
+      false, // multipleLanguageMode disabled
+      true,
+      true,
+      ['LEVEL_1', 'LEVEL_2', 'LEVEL_3'],
+      mockSignatureLevelRepo,
+      mockSignatureRepo,
+      true,
+      mockDataSource as any,
+      mockDataLoader as any,
+      mockSignatureService as any,
+    );
+
+    const mockContent: QuadratsElement[] = [
+      {
+        type: 'paragraph',
+        children: [{ text: 'Test content' }],
+      },
+    ];
+
+    const dto: MultiLanguageArticleCreateDto = {
+      userId: 'user-1',
+      submitted: false,
+      categoryIds: [],
+      tags: [],
+      signatureLevel: 'LEVEL_1',
+      multiLanguageContents: {
+        en: {
+          title: 'English Title',
+          content: mockContent,
+        },
+        zh: {
+          title: '中文標題',
+          content: mockContent,
+        },
+      },
+    };
+
+    mockArticleRepo.findOne.mockResolvedValue({
+      id: 'article-1',
+      versions: [],
+      categories: [],
+    });
+
+    (
+      mockVersionRepo.createQueryBuilder().getOne as jest.Mock
+    ).mockResolvedValue(mockVersion);
+
+    await expect(service.addVersion('article-1', dto)).rejects.toThrow(
+      new MultipleLanguageModeIsDisabledError(),
+    );
+  });
+
+  it('should fallback to empty array when options.tags is undefined (multi-language)', async () => {
+    runner.manager.exists = jest.fn().mockResolvedValue(true);
+    runner.manager.createQueryBuilder = jest.fn(() => mockQueryBuilder);
+    mockQueryBuilder.getMany = jest.fn().mockResolvedValue([]);
+
+    service = new ArticleBaseService(
+      mockArticleRepo,
+      mockVersionRepo,
+      mockContentRepo,
+      mockCategoryRepo,
+      true,
+      true, // fullTextSearchMode
+      true,
+      ['LEVEL_1', 'LEVEL_2', 'LEVEL_3'],
+      mockSignatureLevelRepo,
+      mockSignatureRepo,
+      true,
+      mockDataSource as any,
+      mockDataLoader as any,
+      mockSignatureService as any,
+    );
+
+    const mockContent: QuadratsElement[] = [
+      {
+        type: 'paragraph',
+        children: [{ text: 'Test content' }],
+      },
+    ];
+
+    const dto: MultiLanguageArticleCreateDto = {
+      userId: 'user-1',
+      submitted: false,
+      categoryIds: [],
+      signatureLevel: 'LEVEL_1',
+      multiLanguageContents: {
+        en: {
+          title: 'English Title',
+          content: mockContent,
+        },
+        zh: {
+          title: '中文標題',
+          content: mockContent,
+        },
+      },
+    };
+
+    const mockVersion = {
+      version: 2,
+      articleId: 'article-1',
+      content: [
+        {
+          title: 'English Title',
+          content: mockContent,
+          language: 'en',
+          tags: [],
+        },
+        {
+          title: '中文標題',
+          content: mockContent,
+          language: 'zh',
+          tags: [],
+        },
+      ],
+      updatedAt: new Date(),
+      updatedBy: null,
+    };
+
+    mockArticleRepo.findOne.mockResolvedValue({
+      id: 'article-1',
+      versions: [],
+      categories: [],
+      createdBy: 'user-1',
+    });
+
+    mockVersionRepo.createQueryBuilder.mockReturnValue({
+      withDeleted: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(mockVersion),
+    });
+
+    const bindSearchTokensMock = jest
+      .spyOn(service as any, 'bindSearchTokens')
+      .mockResolvedValue(undefined);
+
+    runner.manager.save.mockImplementation((input: any) => {
+      if (Array.isArray(input)) {
+        return Promise.resolve(
+          input.map((content: any) => ({
+            ...content,
+            id: 'mock-content-id',
+            createdAt: new Date(),
+          })),
+        );
+      }
+
+      if (input?.version && input?.articleId) {
+        return Promise.resolve(input); // version
+      }
+
+      return Promise.resolve({}); // signature or others
+    });
+
+    jest.spyOn(service, 'findById').mockImplementation(async (id: string) => {
+      if (id === 'article-1') {
+        return {
+          id: 'article-1',
+          versions: [],
+          categories: [],
+          createdBy: 'user-1',
+        };
+      }
+
+      throw new ArticleNotFoundError();
+    });
+
+    await service.addVersion('article-1', dto);
+
+    expect(bindSearchTokensMock).toHaveBeenCalledTimes(2);
+    expect(bindSearchTokensMock.mock.calls[0][1]).toEqual([]);
+    expect(bindSearchTokensMock.mock.calls[1][1]).toEqual([]);
+  });
+
+  it('should fallback to empty array when options.tags is undefined (single-language)', async () => {
+    runner.manager.exists = jest.fn().mockResolvedValue(true);
+    runner.manager.createQueryBuilder = jest.fn(() => mockQueryBuilder);
+    mockQueryBuilder.getMany = jest.fn().mockResolvedValue([]);
+
+    service = new ArticleBaseService(
+      mockArticleRepo,
+      mockVersionRepo,
+      mockContentRepo,
+      mockCategoryRepo,
+      true,
+      true, // fullTextSearchMode
+      true,
+      ['LEVEL_1', 'LEVEL_2', 'LEVEL_3'],
+      mockSignatureLevelRepo,
+      mockSignatureRepo,
+      true,
+      mockDataSource as any,
+      mockDataLoader as any,
+      mockSignatureService as any,
+    );
+
+    const mockContent: QuadratsElement[] = [
+      {
+        type: 'paragraph',
+        children: [{ text: 'Test content' }],
+      },
+    ];
+
+    const dto: SingleArticleCreateDto<any, any, any> = {
+      userId: 'user-1',
+      submitted: false,
+      categoryIds: [],
+      signatureLevel: 'LEVEL_1',
+      title: 'Single Lang Title',
+      content: mockContent,
+    };
+
+    const mockVersion = {
+      version: 1,
+      articleId: 'article-1',
+      content: [],
+      updatedAt: new Date(),
+      updatedBy: null,
+    };
+
+    mockArticleRepo.findOne.mockResolvedValue({
+      id: 'article-1',
+      versions: [],
+      categories: [],
+      createdBy: 'user-1',
+    });
+
+    mockVersionRepo.createQueryBuilder.mockReturnValue({
+      withDeleted: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(mockVersion),
+    });
+
+    const bindSearchTokensMock = jest
+      .spyOn(service as any, 'bindSearchTokens')
+      .mockResolvedValue(undefined);
+
+    runner.manager.save.mockImplementation((input: any) => {
+      if (input?.language) {
+        return Promise.resolve({
+          ...input,
+          id: 'mock-content-id',
+          createdAt: new Date(),
+        });
+      }
+
+      return Promise.resolve(input);
+    });
+
+    jest.spyOn(service, 'findById').mockImplementation(async (id: string) => {
+      if (id === 'article-1') {
+        return {
+          id: 'article-1',
+          versions: [],
+          categories: [],
+          createdBy: 'user-1',
+        };
+      }
+
+      throw new ArticleNotFoundError();
+    });
+
+    await service.addVersion('article-1', dto);
+
+    expect(bindSearchTokensMock).toHaveBeenCalledTimes(1);
+    expect(bindSearchTokensMock.mock.calls[0][1]).toEqual([]); // fallback
+  });
+
+  it('should return RELEASED when releasedAt is in the past (single-language)', async () => {
+    (service as any).multipleLanguageMode = false;
+
+    jest.spyOn(service as any, 'bindSearchTokens').mockResolvedValue(undefined);
+
+    runner.manager.exists = jest.fn().mockResolvedValue(true);
+    runner.manager.createQueryBuilder = jest.fn(() => mockQueryBuilder);
+
+    const mockContent: QuadratsElement[] = [
+      { type: 'paragraph', children: [{ text: 'Past release' }] },
+    ];
+
+    const pastDate = new Date(Date.now() - 10000);
+
+    const dto: SingleArticleCreateDto = {
+      userId: 'user-1',
+      submitted: false,
+      categoryIds: [],
+      signatureLevel: undefined,
+      releasedAt: pastDate,
+      title: 'Released article',
+      content: mockContent,
+    };
+
+    mockArticleRepo.findOne.mockResolvedValue({
+      id: 'article-1',
+      categories: [],
+    });
+
+    mockVersionRepo.createQueryBuilder.mockReturnValue({
+      withDeleted: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue({
+        articleId: 'article-1',
+        version: 1,
+      }),
+    });
+
+    runner.manager.save.mockImplementation((input: any) => {
+      if (input?.version && input?.articleId) {
+        return Promise.resolve(input);
+      }
+
+      return Promise.resolve({
+        ...input,
+        id: 'mock-content-id',
+        createdAt: new Date(),
+      });
+    });
+
+    jest
+      .spyOn(service, 'findById')
+      .mockResolvedValueOnce({
+        id: 'article-1',
+        categories: [],
+      } as any)
+      .mockResolvedValueOnce({
+        id: 'article-1',
+        version: 2,
+        content: [
+          {
+            title: 'Released article',
+            content: mockContent,
+            language: 'en',
+            tags: [],
+          },
+        ],
+        categories: [],
+      } as any);
+
+    jest.spyOn(service as any, 'approveVersion').mockResolvedValue(undefined);
+
+    await service.addVersion('article-1', dto);
+  });
+
+  it('should return VERIFIED when signatureLevel equals finalSignatureLevel.name (single-language)', async () => {
+    (service as any).multipleLanguageMode = false;
+    (service as any).signatureService.finalSignatureLevel = { name: 'LEVEL_3' };
+
+    jest.spyOn(service as any, 'bindSearchTokens').mockResolvedValue(undefined);
+    jest.spyOn(service as any, 'approveVersion').mockResolvedValue(undefined);
+
+    const mockContent: QuadratsElement[] = [
+      { type: 'paragraph', children: [{ text: 'Verified content' }] },
+    ];
+
+    const dto: SingleArticleCreateDto = {
+      userId: 'user-1',
+      submitted: false,
+      categoryIds: [],
+      signatureLevel: 'LEVEL_3', // matches finalSignatureLevel
+      releasedAt: undefined,
+      title: 'Verified article',
+      content: mockContent,
+    };
+
+    mockArticleRepo.findOne.mockResolvedValue({
+      id: 'article-1',
+      categories: [],
+    });
+
+    mockVersionRepo.createQueryBuilder.mockReturnValue({
+      withDeleted: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      getOne: jest
+        .fn()
+        .mockResolvedValue({ articleId: 'article-1', version: 1 }),
+    });
+
+    runner.manager.save.mockImplementation((input: any) => {
+      return Promise.resolve({
+        ...input,
+        id: 'mock-id',
+        createdAt: new Date(),
+      });
+    });
+
+    jest
+      .spyOn(service, 'findById')
+      .mockResolvedValueOnce({ id: 'article-1', categories: [] } as any)
+      .mockResolvedValueOnce({
+        id: 'article-1',
+        version: 2,
+        content: [
+          {
+            title: 'Verified article',
+            content: mockContent,
+            language: 'en',
+            tags: [],
+          },
+        ],
+        categories: [],
+      } as any);
+
+    await service.addVersion('article-1', dto);
+  });
+});
+
+describe('ArticleBaseService.create', () => {
+  let service: any;
+  let runner: any;
+
+  let mockArticleRepo: any;
+  let mockVersionRepo: any;
+  let mockContentRepo: any;
+  let mockCategoryRepo: any;
+  let mockSignatureRepo: any;
+  let mockSignatureLevelRepo: any;
+  let mockDataLoader: any;
+  let mockSignatureService: any;
+
+  beforeEach(() => {
+    const mockRepo = () => ({
+      find: jest.fn(),
+      findOne: jest.fn(),
+      save: jest.fn(),
+      create: jest.fn((input) => input),
+      metadata: { tableName: 'mock_table' },
+    });
+
+    runner = {
+      connect: jest.fn(),
+      startTransaction: jest.fn(),
+      commitTransaction: jest.fn(),
+      rollbackTransaction: jest.fn(),
+      release: jest.fn(),
+      manager: {
+        save: jest.fn().mockImplementation((data) => Promise.resolve(data)),
+      },
+    };
+
+    mockArticleRepo = mockRepo();
+    mockVersionRepo = mockRepo();
+    mockContentRepo = mockRepo();
+    mockCategoryRepo = mockRepo();
+    mockSignatureRepo = mockRepo();
+    mockSignatureLevelRepo = mockRepo();
+
+    mockDataLoader = {
+      stageCache: {
+        set: jest.fn(),
+      },
+    };
+
+    mockSignatureService = {
+      finalSignatureLevel: { name: 'FINAL' },
+    };
+
+    service = new ArticleBaseService(
+      mockArticleRepo,
+      mockVersionRepo,
+      mockContentRepo,
+      mockCategoryRepo,
+      false, // multipleLanguageMode
+      true, // fullTextSearchMode
+      true, // draftMode
+      [], // searchableKeys
+      mockSignatureLevelRepo,
+      mockSignatureRepo,
+      true, // allowSignatureApproval
+      { createQueryRunner: () => runner } as any,
+      mockDataLoader,
+      mockSignatureService,
+    );
+
+    jest.spyOn(service as any, 'bindSearchTokens').mockResolvedValue(undefined);
+    jest.spyOn(service as any, 'approveVersion').mockResolvedValue(undefined);
+    jest.spyOn(service as any, 'findById').mockResolvedValue({ id: 'mock-id' });
+  });
+
+  it('should create an article with single-language content', async () => {
+    mockCategoryRepo.find.mockResolvedValue([{ id: 'cat-1', bindable: true }]);
+
+    const result = await service.create({
+      userId: 'user-1',
+      categoryIds: ['cat-1'],
+      submitted: false,
+      releasedAt: null,
+      signatureLevel: null,
+      tags: [],
+      title: 'Hello',
+      content: [],
+    });
+
+    expect(mockArticleRepo.create).toHaveBeenCalled();
+    expect(mockVersionRepo.create).toHaveBeenCalled();
+    expect(mockContentRepo.create).toHaveBeenCalled();
+    expect(runner.manager.save).toHaveBeenCalled();
+    expect(mockDataLoader.stageCache.set).toHaveBeenCalled();
+    expect(result).toBeDefined();
+  });
+
+  it('should create article with multi-language contents and bind search tokens', async () => {
+    service.multipleLanguageMode = true;
+    mockCategoryRepo.find.mockResolvedValue([{ id: 'cat-1', bindable: true }]);
+
+    const result = await service.create({
+      userId: 'user-1',
+      categoryIds: ['cat-1'],
+      multiLanguageContents: {
+        en: { title: 'English', body: 'Content EN' },
+        zh: { title: '中文', body: 'Content ZH' },
+      },
+      tags: ['tag'],
+    });
+
+    expect(mockContentRepo.create).toHaveBeenCalledTimes(2);
+    expect(service.bindSearchTokens).toHaveBeenCalledTimes(2);
+    expect(result).toBeDefined();
+  });
+
+  it('should throw CategoryNotFoundError if some categories are not bindable', async () => {
+    mockCategoryRepo.find.mockResolvedValue([]);
+
+    await expect(
+      service.create({
+        userId: 'user-1',
+        categoryIds: ['cat-x'],
+        title: 'Failing',
+        content: [],
+      }),
+    ).rejects.toThrowError(CategoryNotFoundError);
+  });
+
+  it('should throw if multiLanguageContents is passed but multipleLanguageMode is false', async () => {
+    mockCategoryRepo.find.mockResolvedValue([{ id: 'cat-1', bindable: true }]);
+
+    await expect(
+      service.create({
+        userId: 'user-1',
+        categoryIds: ['cat-1'],
+        multiLanguageContents: {
+          en: { title: 'test', body: 'test' },
+        },
+      }),
+    ).rejects.toThrowError(new MultipleLanguageModeIsDisabledError());
+  });
+
+  it('should call approveVersion when signatureLevel is provided', async () => {
+    mockCategoryRepo.find.mockResolvedValue([{ id: 'cat-1', bindable: true }]);
+
+    await service.create({
+      userId: 'user-1',
+      categoryIds: ['cat-1'],
+      signatureLevel: 'FINAL',
+      content: [],
+    });
+
+    expect(service.approveVersion).toHaveBeenCalled();
+  });
+
+  it('should rollback transaction and throw on error', async () => {
+    mockCategoryRepo.find.mockResolvedValue([{ id: 'cat-1', bindable: true }]);
+    runner.manager.save = jest.fn().mockRejectedValue(new Error('DB Error'));
+
+    await expect(
+      service.create({
+        userId: 'user-1',
+        categoryIds: ['cat-1'],
+        title: 'fail',
+        content: [],
+      }),
+    ).rejects.toThrow(BadRequestException);
+
+    expect(runner.rollbackTransaction).toHaveBeenCalled();
+    expect(runner.release).toHaveBeenCalled();
+  });
+
+  it('should schedule article when releasedAt is in the future', async () => {
+    mockCategoryRepo.find.mockResolvedValue([{ id: 'cat-1', bindable: true }]);
+    const futureDate = new Date(Date.now() + 100000);
+
+    await service.create({
+      userId: 'user-1',
+      categoryIds: ['cat-1'],
+      releasedAt: futureDate,
+      content: [],
+    });
+
+    const stageCall = mockDataLoader.stageCache.set.mock.calls[0][1];
+    const stage = await stageCall;
+
+    expect(stage).toBe('SCHEDULED');
+  });
+
+  it('should create article when categoryIds is not provided (no category check)', async () => {
+    const result = await service.create({
+      userId: 'user-1',
+      title: 'No Categories',
+      content: [],
+      submitted: false,
+    });
+
+    expect(mockCategoryRepo.find).not.toHaveBeenCalled();
+    expect(mockArticleRepo.create).toHaveBeenCalled();
+    expect(mockVersionRepo.create).toHaveBeenCalled();
+    expect(mockContentRepo.create).toHaveBeenCalled();
+    expect(result).toBeDefined();
+  });
+
+  it('should use current date for releasedAt when draftMode is false', async () => {
+    service.draftMode = false;
+    mockCategoryRepo.find.mockResolvedValue([]);
+
+    const createSpy = jest.spyOn(mockVersionRepo, 'create');
+
+    const before = Date.now();
+
+    await service.create({
+      userId: 'user-1',
+      title: 'No Draft Mode',
+      content: [],
+      submitted: false,
+    });
+
+    const after = Date.now();
+
+    const versionInput = createSpy.mock.calls[0][0];
+
+    expect((versionInput as any).releasedAt).toBeInstanceOf(Date);
+
+    expect((versionInput as any).releasedAt.getTime()).toBeGreaterThanOrEqual(
       before,
     );
 
-    expect(new Date(savedVersion.releasedAt).getTime()).toBeLessThanOrEqual(
+    expect((versionInput as any).releasedAt.getTime()).toBeLessThanOrEqual(
       after,
     );
   });
 
-  it('should bind search tokens for multi-language contents when fullTextSearchMode is true', async () => {
-    // Arrange
-    findMock.mockResolvedValue([]);
+  it('should bind search tokens with empty tags when options.tags is undefined', async () => {
+    service.multipleLanguageMode = true;
+    service.fullTextSearchMode = true;
+    mockCategoryRepo.find.mockResolvedValue([]);
 
-    const createSpy = jest.fn((x) => x);
-    const bindSearchTokensSpy = jest.fn();
+    const bindSpy = jest
+      .spyOn(service as any, 'bindSearchTokens')
+      .mockResolvedValue(undefined);
 
-    (service as any).baseArticleRepo = { create: createSpy };
-    (service as any).baseArticleVersionRepo = { create: createSpy };
-    (service as any).baseArticleVersionContentRepo = { create: createSpy };
-
-    (service as any).multipleLanguageMode = true;
-    (service as any).fullTextSearchMode = true;
-    (service as any).bindSearchTokens = bindSearchTokensSpy;
-
-    jest.spyOn(runnerMock.manager!, 'save').mockResolvedValue([
-      {
-        articleId: 'a1',
-        version: 1,
-        language: 'en',
-        title: 'EN',
-        description: 'Desc',
-        content: [],
-      },
-      {
-        articleId: 'a1',
-        version: 1,
-        language: 'zh',
-        title: 'ZH',
-        description: '說明',
-        content: [],
-      },
-    ]);
-
-    const options = {
+    await service.create({
+      userId: 'user-1',
       multiLanguageContents: {
-        en: { title: 'EN', description: 'Desc', content: [] },
-        zh: { title: 'ZH', description: '說明', content: [] },
+        en: { title: 'EN', body: 'content' },
+        fr: { title: 'FR', body: 'contenu' },
       },
-      tags: ['search'],
-    };
+    });
 
-    // Act
-    await service.create(options);
-
-    // Assert
-    expect(bindSearchTokensSpy).toHaveBeenCalledTimes(2);
-    expect(bindSearchTokensSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ language: 'en' }),
-      ['search'],
-      runnerMock,
-    );
-
-    expect(bindSearchTokensSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ language: 'zh' }),
-      ['search'],
-      runnerMock,
-    );
+    expect(bindSpy).toHaveBeenCalledTimes(2);
+    for (const call of bindSpy.mock.calls) {
+      expect(call[1]).toEqual([]);
+    }
   });
 
-  it('should bind search tokens for each multi-language content with fallback [] when tags are undefined', async () => {
-    // Arrange
-    findMock.mockResolvedValue([]);
+  it('should set stage to RELEASED when releasedAt is now or in the past', async () => {
+    const releasedAt = new Date(Date.now() - 1000);
 
-    const createSpy = jest.fn((x) => x);
-    const bindSearchTokensSpy = jest.fn();
+    mockCategoryRepo.find.mockResolvedValue([]);
 
-    (service as any).baseArticleRepo = { create: createSpy };
-    (service as any).baseArticleVersionRepo = { create: createSpy };
-    (service as any).baseArticleVersionContentRepo = { create: createSpy };
+    await service.create({
+      userId: 'user-1',
+      releasedAt,
+      content: [],
+    });
 
-    (service as any).multipleLanguageMode = true;
-    (service as any).fullTextSearchMode = true;
-    (service as any).bindSearchTokens = bindSearchTokensSpy;
+    const setCall = mockDataLoader.stageCache.set.mock.calls[0][1];
+    const stage = await setCall;
 
-    // ✅ Simulate saving multi-language contents returning an array
-    jest.spyOn(runnerMock.manager!, 'save').mockResolvedValue([
-      {
-        articleId: 'a1',
-        version: 1,
-        language: 'en',
-        title: 'EN',
-        description: 'Desc',
-        content: [],
-      },
-      {
-        articleId: 'a1',
-        version: 1,
-        language: 'zh',
-        title: 'ZH',
-        description: '說明',
-        content: [],
-      },
-    ]);
+    expect(stage).toBe('RELEASED');
+  });
 
-    const options = {
-      multiLanguageContents: {
-        en: { title: 'EN', description: 'Desc', content: [] },
-        zh: { title: 'ZH', description: '說明', content: [] },
-      },
-      // 👇 tags intentionally omitted
-    };
+  it('should set stage to REVIEWING when signatureLevel is not final', async () => {
+    mockCategoryRepo.find.mockResolvedValue([]);
 
-    // Act
-    await service.create(options);
+    await service.create({
+      userId: 'user-1',
+      signatureLevel: 'MID', // != FINAL
+      content: [],
+    });
 
-    // Assert
-    expect(bindSearchTokensSpy).toHaveBeenCalledTimes(2);
-    expect(bindSearchTokensSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ language: 'en' }),
+    const setCall = mockDataLoader.stageCache.set.mock.calls[0][1];
+    const stage = await setCall;
+
+    expect(stage).toBe('REVIEWING');
+  });
+
+  it('should set stage to REVIEWING when submitted is true and no other stage is set', async () => {
+    service.signatureService.signatureEnabled = true;
+    mockCategoryRepo.find.mockResolvedValue([]);
+
+    await service.create({
+      userId: 'user-1',
+      submitted: true,
+      content: [],
+    });
+
+    const setCall = mockDataLoader.stageCache.set.mock.calls[0][1];
+    const stage = await setCall;
+
+    expect(stage).toBe('REVIEWING');
+  });
+
+  it('should set stage to DRAFT when no stage flags are provided', async () => {
+    mockCategoryRepo.find.mockResolvedValue([]);
+
+    await service.create({
+      userId: 'user-1',
+      content: [],
+    });
+
+    const setCall = mockDataLoader.stageCache.set.mock.calls[0][1];
+    const stage = await setCall;
+
+    expect(stage).toBe('DRAFT');
+  });
+});
+
+describe('ArticleBaseService.rejectVersion', () => {
+  let service: any;
+
+  beforeEach(() => {
+    service = new ArticleBaseService(
+      {} as any, // articleRepo
+      {} as any, // versionRepo
+      {} as any, // contentRepo
+      {} as any, // categoryRepo
+      false,
+      false,
+      true,
       [],
-      runnerMock,
+      {} as any, // sigLevelRepo
+      {} as any, // sigRepo
+      true,
+      {} as any, // dataSource
+      {} as any, // loader
+      {} as any, // sigService
     );
 
-    expect(bindSearchTokensSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ language: 'zh' }),
-      [],
-      runnerMock,
-    );
+    jest.spyOn(service, 'findById');
+    jest.spyOn(service, 'signature').mockResolvedValue({ id: 'mock-id' });
   });
 
-  it('should bind search tokens for single-language content when fullTextSearchMode is true', async () => {
-    // Arrange
-    findMock.mockResolvedValue([]); // No category filtering errors
+  it('should throw if article is not in REVIEWING stage', async () => {
+    service.findById.mockResolvedValue(null); // simulate not found
 
-    const createSpy = jest.fn((x) => x);
-    const bindSearchTokensSpy = jest.fn();
-
-    (service as any).baseArticleRepo = { create: createSpy };
-    (service as any).baseArticleVersionRepo = { create: createSpy };
-    (service as any).baseArticleVersionContentRepo = { create: createSpy };
-
-    (service as any).multipleLanguageMode = false;
-    (service as any).fullTextSearchMode = true;
-    (service as any).bindSearchTokens = bindSearchTokensSpy;
-
-    jest
-      .spyOn(runnerMock.manager!, 'save')
-      .mockImplementation(async (entity) => entity);
-
-    const options = {
-      title: 'Single Lang',
-      description: 'Basic',
-      content: [{ type: 'p', children: [{ text: 'Hello' }] }],
-    };
-
-    // Act
-    await service.create(options);
-
-    // Assert
-    expect(bindSearchTokensSpy).toHaveBeenCalledTimes(1);
-    expect(bindSearchTokensSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ language: DEFAULT_LANGUAGE }),
-      [],
-      runnerMock,
-    );
+    await expect(
+      service.rejectVersion({ id: 'article-1' }),
+    ).rejects.toThrowError('Article article-1 is not in reviewing stage.');
   });
 
-  it('should rollback transaction and throw BadRequestException if save fails', async () => {
-    // Arrange
-    findMock.mockResolvedValue([]);
+  it('should call signature with REJECTED result if article is in REVIEWING', async () => {
+    const reviewingArticle = { id: 'article-1', stage: 'REVIEWING' };
 
-    const createSpy = jest.fn((x) => x);
+    service.findById.mockResolvedValue(reviewingArticle);
 
-    (service as any).baseArticleRepo = { create: createSpy };
-    (service as any).baseArticleVersionRepo = { create: createSpy };
-    (service as any).baseArticleVersionContentRepo = { create: createSpy };
+    const result = await service.rejectVersion(
+      { id: 'article-1' },
+      { reason: 'Invalid content', runner: {} as any },
+    );
 
-    const rollbackSpy = jest.spyOn(runnerMock, 'rollbackTransaction');
-    const releaseSpy = jest.spyOn(runnerMock, 'release');
+    expect(service.findById).toHaveBeenCalledWith('article-1', {
+      stage: 'REVIEWING',
+    });
 
-    const saveMock = jest.spyOn(runnerMock.manager!, 'save');
+    expect(service.signature).toHaveBeenCalledWith(
+      'REJECTED',
+      reviewingArticle,
+      { reason: 'Invalid content', runner: {} },
+    );
 
-    saveMock
-      .mockImplementationOnce(async () => ({ id: 'a1' })) // First save: article
-      .mockImplementationOnce(() => {
-        throw new Error('Version save failed'); // Second save: version (simulate failure)
-      });
-
-    const options = {
-      title: 'Trigger Error',
-      description: 'Catch block coverage',
-      content: [{ type: 'p', children: [{ text: 'Oops' }] }],
-    };
-
-    // Act + Assert
-    await expect(service.create(options)).rejects.toThrow(BadRequestException);
-
-    // Assert rollback and release were called
-    expect(rollbackSpy).toHaveBeenCalledTimes(1);
-    expect(releaseSpy).toHaveBeenCalledTimes(1);
-
-    // Ensure commit was not called
-    expect(runnerMock.commitTransaction).not.toHaveBeenCalled();
-
-    // Ensure only two saves were attempted before failure
-    expect(saveMock).toHaveBeenCalledTimes(2);
+    expect(result).toEqual({ id: 'mock-id' });
   });
 
-  it('should wrap MultipleLanguageModeIsDisabledError in BadRequestException', async () => {
-    const options = {
-      multiLanguageContents: {
-        en: {
-          title: 'EN Title',
-          description: 'EN Desc',
-          content: [],
-        },
-      },
-      tags: ['test'],
-    };
+  it('should handle optional signatureInfo argument', async () => {
+    const reviewingArticle = { id: 'article-2' };
 
-    await expect(service.create(options)).rejects.toThrow(BadRequestException);
-    await expect(service.create(options)).rejects.toThrow(
-      'Multiple language mode is disabled',
+    service.findById.mockResolvedValue(reviewingArticle);
+
+    const result = await service.rejectVersion({ id: 'article-2' });
+
+    expect(service.signature).toHaveBeenCalledWith(
+      'REJECTED',
+      reviewingArticle,
+      undefined,
     );
+
+    expect(result).toEqual({ id: 'mock-id' });
   });
 });
