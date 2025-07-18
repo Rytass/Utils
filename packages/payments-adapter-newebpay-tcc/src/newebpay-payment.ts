@@ -1,3 +1,32 @@
+/**
+ * NewebPayPayment (Gateway)
+ * --------------------------------------------------
+ * Entry point for NewebPay Tokenized Credit Card (TCC) integration.
+ *
+ * Provides a unified interface to handle:
+ *   - Initial card binding (P1 / NPA-B101)
+ *   - Subsequent token-based payments (Pn / NPA-B102)
+ *   - Token status query (NPA-B103)
+ *   - Token unbinding (NPA-B104)
+ *
+ * Core features:
+ *   - AES encryption + SHA-256 signature (CBC or GCM)
+ *   - Form generator for P1 HTML submission
+ *   - Callback handling for bind success/failure
+ *   - Event-driven architecture via EventEmitter
+ *
+ * Exposes methods:
+ *   - createBindCardRequest()
+ *   - handleBindCardCallback()
+ *   - createOrder()
+ *   - queryBindCard()
+ *   - unbindCard()
+ *
+ * Emits PaymentEvents such as:
+ *   - CARD_BOUND / CARD_BINDING_FAILED
+ *   - ORDER_COMMITTED / ORDER_FAILED
+ */
+
 import {
   InputFromOrderCommitMessage,
   Order,
@@ -86,8 +115,12 @@ export class NewebPayPayment
     return json;
   }
 
+  /* ------------------------------------------------------------------ */
+  /* P1 Bind Card Flow                                                  */
+  /* ------------------------------------------------------------------ */
+
   /**
-   * 建立 NewebPayBindCardRequest 物件，產生表單提交資料
+   * Create a NewebPayBindCardRequest instance to generate form submission data.
    */
   createBindCardRequest(
     payload: NewebPayBindCardRequestInput,
@@ -132,7 +165,7 @@ export class NewebPayPayment
   }
 
   /**
-   * 接收 NotifyURL 回傳資料（P1 callback），並觸發綁卡成功或失敗事件
+   * Handle data returned from the NotifyURL (P1 callback) and emit success or failure events for card binding.
    */
   handleBindCardCallback(tradeInfo: string, tradeSha: string): void {
     const raw = decodePayload(tradeInfo, tradeSha, this.encodeOpts);

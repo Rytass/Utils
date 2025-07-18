@@ -1,10 +1,10 @@
 /*
  * NewebPay Crypto – Request / Response helpers
  * --------------------------------------------------
- * 將欄位物件 → ASCII 排序 → URL 查詢字串
- *   ↳ AES 加密 (EncryptData / TradeInfo)
- *   ↳ SHA256 雜湊 (HashData / TradeSha)
- * 解析回傳：驗證 Hash → AES 解開 → 轉回物件
+ * Transforms a field object → ASCII-sorted → URL query string
+ *   ↳ AES encryption (EncryptData / TradeInfo)
+ *   ↳ SHA256 hashing (HashData / TradeSha)
+ * Parses response: verify hash → decrypt AES → convert back to object
  */
 
 import { encryptAES, decryptAES, generateHashData, sha256Hex, AesMode } from './newebpay-crypto-core';

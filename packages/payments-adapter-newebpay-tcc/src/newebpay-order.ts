@@ -1,13 +1,13 @@
 /**
  * NewebPayOrder (Pn)
  * --------------------------------------------------
- * 封裝 NPA-B102「後續約定付款」邏輯。
+ * Encapsulates the NPA-B102 "Subsequent Scheduled Payment" flow.
  *
- * 流程：
+ * Flow:
  *   1. Gateway.createOrder(...) → new NewebPayOrder
- *   2. client 呼叫 order.executeCommit()
- *   3. 本檔案組合 PostData_ (AES/CBC+SHA256) 並送往 /API/CreditCard
- *   4. 解析回傳、驗證 Hash，更新 state 與派發事件
+ *   2. Client calls order.executeCommit()
+ *   3. This file constructs PostData_ (AES/CBC + SHA256) and sends it to /API/CreditCard
+ *   4. Parses response, verifies hash, updates state, and emits related events
  */
 
 import { Order, OrderState, PaymentEvents } from '@rytass/payments';

@@ -1,37 +1,36 @@
 /**
- * NewebPay Response helpers
+ * NewebPay Response Helpers
  * --------------------------------------------------
- * 封裝所有 NPA-B101 / B102 / B103 / B104（以及 P1 前台回傳）
- * 的解密與雜湊驗證邏輯，統一暴露兩個函式：
+ * Encapsulates decryption and hash verification logic for responses from
+ * NPA-B101 / B102 / B103 / B104 and the P1 frontend callback.
  *
- * 1. decodeTradeInfo  –  處理 P1 (NPA-F011) 或 B101/B102 直接回傳的
- *    { TradeInfo, TradeSha } 欄位。
+ * Provides two unified utility functions:
  *
- * 2. decodeEncryptData – 處理 B101/B102/B103/B104 HTTP JSON 回傳包裝：
+ * 1. decodeTradeInfo – Handles direct response with fields:
+ *    { TradeInfo, TradeSha }, typically from P1 (NPA-F011) or B101/B102.
+ *
+ * 2. decodeEncryptData – Handles JSON-wrapped response from B101/B102/B103/B104:
  *    {
  *      Status,
  *      Message,
  *      Result: { EncryptData, HashData }
  *    }
  *
- * 兩者皆在通過 SHA-256 驗證後，解開 AES，並回傳物件 (Record<string,string>)。
+ * Both functions verify SHA-256 hash, decrypt the AES payload,
+ * and return a flat object (Record<string, string>).
  */
 
 import { EncodeOptions } from './newebpay-crypto';
 import { decodePayload } from './newebpay-crypto';
 import { HttpResponse } from './typings';
 
-/* ------------------------------------------------------------------ */
-/* Types */
-/* ------------------------------------------------------------------ */
-
-/** 任何帶有 EncryptData / HashData 的結果包裝 */
+//Any response object containing EncryptData and HashData fields
 interface EncryptedResult {
   EncryptData: string;
   HashData: string;
 }
 
-/** 任何帶有 TradeInfo / TradeSha 的結果包裝 */
+// Any response object containing TradeInfo and TradeSha fields
 interface TradeInfoEnvelope {
   TradeInfo: string;
   TradeSha: string;
@@ -42,7 +41,7 @@ interface TradeInfoEnvelope {
 /* ------------------------------------------------------------------ */
 
 /**
- * Decode P1 / B101 / B102 回傳的 TradeInfo & TradeSha
+ * Decode TradeInfo & TradeSha returned from P1 / B101 / B102
  */
 export function decodeTradeInfo(
   env: TradeInfoEnvelope,
@@ -52,9 +51,9 @@ export function decodeTradeInfo(
 }
 
 /**
- * Decode JSON 包裝層的 EncryptData & HashData
+ * Decode JSON-wrapped EncryptData & HashData from B101/B102/B103/B104
  *
- * @throws Error  若 SHA-256 驗證失敗或 HTTP Status != SUCCESS
+ * @throws Error if SHA-256 verification fails or HTTP Status !== 'SUCCESS'
  */
 export function decodeEncryptData<T extends EncryptedResult = EncryptedResult>(
   apiResp: HttpResponse<T>,
