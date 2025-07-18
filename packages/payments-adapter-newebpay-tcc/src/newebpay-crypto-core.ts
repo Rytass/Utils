@@ -11,12 +11,8 @@
 
 import crypto from 'node:crypto';
 
-// #region ─────────────────────────── Types ───────────────────────────
 export type AesMode = 'CBC' | 'GCM';
 
-// #endregion
-
-// #region ───────────────────────── Helpers ───────────────────────────
 function pkcs7Pad(buf: Buffer, blockSize = 16): Buffer {
   const pad = blockSize - (buf.length % blockSize);
 
@@ -38,10 +34,6 @@ export function sha256Hex(data: crypto.BinaryLike): string {
   return crypto.createHash('sha256').update(data).digest('hex').toUpperCase();
 }
 
-// #endregion
-
-// #region ───────────────────── AES Encrypt / Decrypt ──────────────────
-
 export function encryptAES(
   plaintext: string | Buffer,
   key: string | Buffer,
@@ -52,14 +44,22 @@ export function encryptAES(
   const _iv = typeof iv === 'string' ? Buffer.from(iv, 'utf8') : iv;
   const cipherName = mode === 'CBC' ? 'aes-256-cbc' : 'aes-256-gcm';
 
-  const cipher = crypto.createCipheriv(cipherName, _key, _iv) as crypto.CipherGCM;
-  let input = typeof plaintext === 'string' ? Buffer.from(plaintext, 'utf8') : plaintext;
+  const cipher = crypto.createCipheriv(
+    cipherName,
+    _key,
+    _iv,
+  ) as crypto.CipherGCM;
+
+  let input =
+    typeof plaintext === 'string' ? Buffer.from(plaintext, 'utf8') : plaintext;
 
   if (mode === 'CBC') input = pkcs7Pad(input);
 
   const encrypted = Buffer.concat([cipher.update(input), cipher.final()]);
 
-  return mode === 'GCM' ? Buffer.concat([encrypted, cipher.getAuthTag()]) : encrypted;
+  return mode === 'GCM'
+    ? Buffer.concat([encrypted, cipher.getAuthTag()])
+    : encrypted;
 }
 
 export function decryptAES(
@@ -80,7 +80,11 @@ export function decryptAES(
     data = data.subarray(0, data.length - 16);
   }
 
-  const decipher = crypto.createDecipheriv(cipherName, _key, _iv) as crypto.DecipherGCM;
+  const decipher = crypto.createDecipheriv(
+    cipherName,
+    _key,
+    _iv,
+  ) as crypto.DecipherGCM;
 
   if (authTag) {
     (decipher as crypto.DecipherGCM).setAuthTag(authTag);
@@ -91,18 +95,19 @@ export function decryptAES(
   return mode === 'CBC' ? pkcs7Unpad(decrypted) : decrypted;
 }
 
-// #endregion
-
-// #region ───────────────────────── CheckCode ──────────────────────────
 /**
- * 依附錄四演算法產生 CheckCode (HashData / TradeSha)
- * 公式：SHA256(`HashKey=${key}&${hexStr}&HashIV=${iv}`) → hex
+ * Generates CheckCode (HashData / TradeSha) based on Appendix 4 algorithm.
+ * Formula: SHA256(`HashKey=${key}&${hexStr}&HashIV=${iv}`) → hex
  *
- * @param encryptedHex  AES 加密後的 **HEX 字串** (大小寫不限)
+ * @param encryptedHex  AES-encrypted **HEX string** (case-insensitive)
  */
-export function generateHashData(encryptedHex: string, key: string, iv: string): string {
+
+export function generateHashData(
+  encryptedHex: string,
+  key: string,
+  iv: string,
+): string {
   const raw = `HashKey=${key}&${encryptedHex}&HashIV=${iv}`;
 
   return sha256Hex(raw).toUpperCase();
 }
-// #endregion

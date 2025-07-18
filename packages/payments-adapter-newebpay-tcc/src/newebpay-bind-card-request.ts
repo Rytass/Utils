@@ -1,25 +1,31 @@
 /**
  * NewebPayBindCardRequest
  * --------------------------------------------------
- * 封裝「首次約定付款 (P1) 綁卡流程」之 Request 物件。
- * 產生提交表單 (TradeInfo/TradeSha) 與 HTML，並追蹤綁卡狀態。
+ * Encapsulates the request object for the "Initial Tokenized Payment (P1)" bind card flow.
+ * Generates submission form data (TradeInfo/TradeSha) and HTML, and tracks bind status.
  *
- * ⚠️ 僅聚焦流程本身；Gateway (NewebPayPayment) 將負責
- * - 提供 encode Key/IV
- * - 監聽伺服器並回呼 bound() / fail()
+ * Focuses solely on the client-side binding flow. The Gateway (NewebPayPayment) is responsible for:
+ * - Providing encryption Key/IV for encoding
+ * - Listening for server-side callback and invoking bound() / fail()
  */
 
 import { PaymentEvents } from '@rytass/payments';
 import { DateTime } from 'luxon';
-import { buildTradeInfo, EncodeOptions } from './newebpay-crypto';
-import { NewebPayBindCardRequestPayload, NewebPayBindCardRequestState, NewebPayBindCardResult, TradeInfoResult } from './typings';
+import { buildTradeInfo } from './newebpay-crypto';
+import {
+  EncodeOptions,
+  NewebPayBindCardRequestPayload,
+  NewebPayBindCardRequestState,
+  NewebPayBindCardResult,
+  TradeInfoResult,
+} from './typings';
 import { EventEmitter } from 'node:events';
 
 export class NewebPayBindCardRequest {
-  /* raw P1 payload (ASCII→AES 前) */
+  /* Raw P1 payload (before ASCII sort and AES encryption) */
   private readonly _payload: NewebPayBindCardRequestPayload;
 
-  /* gateway 資訊 (僅用於 baseUrl 與 encode key/iv、事件派送) */
+  /* Gateway context (used only for baseUrl, encryption key/iv, and event dispatching) */
   private readonly _encodeOpts: EncodeOptions;
   private readonly _emitter: EventEmitter;
   private readonly _mpgEndpoint: string;
@@ -48,10 +54,6 @@ export class NewebPayBindCardRequest {
     this._mpgEndpoint = mpgEndpoint;
   }
 
-  /* ------------------------------------------------------------------ */
-  /* Basic getters */
-  /* ------------------------------------------------------------------ */
-
   get tokenValue(): string | undefined {
     return this._tokenValue;
   }
@@ -67,19 +69,13 @@ export class NewebPayBindCardRequest {
   get state(): NewebPayBindCardRequestState {
     return this._state;
   }
-  get failedMessage():
-    | { code: string; message: string }
-    | null {
+  get failedMessage(): { code: string; message: string } | null {
     if (!this._failedCode) return null;
 
     return { code: this._failedCode, message: this._failedMsg! };
   }
 
-  /* ------------------------------------------------------------------ */
-  /* Form & HTML */
-  /* ------------------------------------------------------------------ */
-
-  /** 回傳提交綁卡用的表單欄位 (P1 前台) */
+  /** Returns the form fields for submitting a bind card request (P1 frontend) */
   get form(): Record<string, string | number> {
     if (this._state !== NewebPayBindCardRequestState.INITED)
       throw new Error('Form already generated');
@@ -105,14 +101,12 @@ export class NewebPayBindCardRequest {
     };
   }
 
-  /** 產生自動 submit 的 HTML (方便後端返回前端直接跳轉) */
+  /** Generates auto-submitting HTML (useful for backend to redirect to frontend) */
   get formHTML(): string {
     const formFields = this.form;
 
     const inputs = Object.entries(formFields)
-      .map(
-        ([k, v]) => `<input type="hidden" name="${k}" value="${v}" />`,
-      )
+      .map(([k, v]) => `<input type="hidden" name="${k}" value="${v}" />`)
       .join('\n      ');
 
     return `<!DOCTYPE html>
@@ -125,12 +119,8 @@ export class NewebPayBindCardRequest {
 </html>`;
   }
 
-  /* ------------------------------------------------------------------ */
-  /* Callback handlers – called by Gateway */
-  /* ------------------------------------------------------------------ */
-
   /**
-   * 處理綁卡成功
+   * Handles bind card success
    */
   bound(result: NewebPayBindCardResult): void {
     this._tokenValue = result.TokenValue;
@@ -147,9 +137,13 @@ export class NewebPayBindCardRequest {
   }
 
   /**
-   * 處理綁卡失敗
+   * Handles bind card failure
    */
-  fail(code: string, message: string, maybeResult?: Partial<NewebPayBindCardResult>): void {
+  fail(
+    code: string,
+    message: string,
+    maybeResult?: Partial<NewebPayBindCardResult>,
+  ): void {
     this._failedCode = code;
     this._failedMsg = message;
     this._state = NewebPayBindCardRequestState.FAILED;

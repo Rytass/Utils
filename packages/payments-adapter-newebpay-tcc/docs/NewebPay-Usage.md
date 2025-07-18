@@ -152,4 +152,3 @@ payment.emitter.on(PaymentEvents.ORDER_FAILED, (order) => { ... });
 - 綁卡流程屬一次性綁定，需由前端引導跳轉 NewebPay 頁面。
 - 綁卡完成後可使用 `TokenValue` 執行背景請款或排程扣款。
 - 僅支援幕後 API（NPA-B101 / B102 / B103 / B104）與前台 P1（NPA-F011）。
-

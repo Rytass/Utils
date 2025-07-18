@@ -1,6 +1,6 @@
 {
   "name": "@rytass/payments-adapter-newebpay-tcc",
-  "version": "0.0.7",
+  "version": "0.0.1",
   "description": "Rytass Payment Gateway",
   "keywords": [
     "rytass",
