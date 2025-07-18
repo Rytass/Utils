@@ -14,14 +14,15 @@ let secretDataMap = {
     COULD_NOT_BE_REMOVED: 'aaa',
   },
   [VAULT_EMPTY_PROJECT]: undefined,
-} as Record<string, Record<string, any> | undefined> ;
+} as Record<string, Record<string, any> | undefined>;
 
 let secretVersionMap = {
   [VAULT_PROJECT]: 3,
   [VAULT_EMPTY_PROJECT]: 0,
 } as Record<string, number>;
 
-const TOKEN = 'hvs.CAESIHKbC7ihFPU3_rCfEaKXxI0NA_lZqdn4BcMLRh_8Y_aXGhgawheoi_u99_20aJtdkahjrSOGhgbC2xVRlM5Um8';
+const TOKEN =
+  'hvs.CAESIHKbC7ihFPU3_rCfEaKXxI0NA_lZqdn4BcMLRh_8Y_aXGhgawheoi_u99_20aJtdkahjrSOGhgbC2xVRlM5Um8';
 
 const LOGIN_RESPONSE_SAMPLE = {
   request_id: 'fbc5688f-932f-4484-3ab5-9967d10dc3eb',
@@ -34,17 +35,9 @@ const LOGIN_RESPONSE_SAMPLE = {
   auth: {
     client_token: TOKEN,
     accessor: 'C7ShyDLIQ8KBx5fqQGwRAlKrf',
-    policies: [
-      'default',
-      'utils-unit-test',
-    ],
-    token_policies: [
-      'default',
-      'utils-unit-test',
-    ],
-    identity_policies: [
-      'utils-unit-test',
-    ],
+    policies: ['default', 'utils-unit-test'],
+    token_policies: ['default', 'utils-unit-test'],
+    identity_policies: ['utils-unit-test'],
     metadata: {
       username: 'utils',
     },
@@ -99,13 +92,13 @@ class AxiosError extends Error {
     this.response.status = status;
   }
 
-  isAxiosError = true
+  isAxiosError = true;
 
   response: {
     status: number;
   } = {
     status: 200,
-  }
+  };
 }
 
 describe('VaultSecret', () => {
@@ -172,14 +165,14 @@ describe('VaultSecret', () => {
     }
 
     const payload = JSON.parse(data as string) as {
-      data: Record<string, any>,
+      data: Record<string, any>;
       options?: {
         cas: number;
-      },
-    }
+      };
+    };
 
     if (payload.data.WILL_FAILED_UPDATE_KEY) {
-      return { data: { errors: ['FAILED'] }};
+      return { data: { errors: ['FAILED'] } };
     }
 
     if (!payload.data.COULD_NOT_BE_REMOVED) {
@@ -376,11 +369,13 @@ describe('VaultSecret', () => {
         onReady: () => {
           manager.set('WILL_FAILED_UPDATE_KEY', 'FAILED');
 
-          expect(manager.sync()).rejects.toThrow().then(() => {
-            expect(onError).toBeCalled();
+          expect(manager.sync())
+            .rejects.toThrow()
+            .then(() => {
+              expect(onError).toBeCalled();
 
-            done();
-          });
+              done();
+            });
         },
       });
     });
@@ -416,7 +411,7 @@ describe('VaultSecret', () => {
         },
       });
 
-      manager.set('COULD_NOT_BE_REMOVED', 'value').then(async () => {
+      manager.set('COULD_NOT_BE_REMOVED', 'value', true).then(async () => {
         const value = await manager.get('COULD_NOT_BE_REMOVED');
 
         expect(value).toBe('value');
@@ -440,7 +435,8 @@ describe('VaultSecret', () => {
         onError,
       });
 
-      expect(manager.get('KEY_FROM_UNAUTHORIZED')).rejects.toThrow()
+      expect(manager.get('KEY_FROM_UNAUTHORIZED'))
+        .rejects.toThrow()
         .then(() => {
           expect(onError).toBeCalled();
 
@@ -463,7 +459,7 @@ describe('VaultSecret', () => {
       });
 
       it('should set value on test and get correct response', (done) => {
-        manager.set<string>('test', '123').then(async () => {
+        manager.set<string>('test', '123', true).then(async () => {
           const result = await manager.get<string>('test');
 
           expect(result).toBe('123');
@@ -473,8 +469,8 @@ describe('VaultSecret', () => {
       });
 
       it('should return undefined on key not found', (done) => {
-        manager.set<string>('willRemove', '123').then(async () => {
-          await manager.delete('willRemove');
+        manager.set<string>('willRemove', '123', true).then(async () => {
+          await manager.delete('willRemove', true);
 
           const result = await manager.get<undefined>('willRemove');
 
@@ -496,10 +492,7 @@ describe('VaultSecret', () => {
         get.mockImplementationOnce(async (url: string, data: unknown) => {
           return {
             data: {
-              errors: [
-                'TEST1',
-                'test2',
-              ],
+              errors: ['TEST1', 'test2'],
             },
           };
         });
@@ -516,13 +509,15 @@ describe('VaultSecret', () => {
           onError,
         });
 
-        expect(errorManager.get('what_a_secret')).rejects.toThrow().then(() => {
-          expect(onError).toBeCalled();
+        expect(errorManager.get('what_a_secret'))
+          .rejects.toThrow()
+          .then(() => {
+            expect(onError).toBeCalled();
 
-          errorManager.terminate();
+            errorManager.terminate();
 
-          done();
-        });
+            done();
+          });
       });
 
       it('should throw when delete undefined value', (done) => {
@@ -535,11 +530,13 @@ describe('VaultSecret', () => {
           },
         });
 
-        expect(errorManager.delete('Not_Set_Key')).rejects.toThrow().then(() => {
-          errorManager.terminate();
+        expect(errorManager.delete('Not_Set_Key', true))
+          .rejects.toThrow()
+          .then(() => {
+            errorManager.terminate();
 
-          done();
-        });
+            done();
+          });
       });
 
       it('should throw when remove value failed', (done) => {
@@ -555,13 +552,15 @@ describe('VaultSecret', () => {
           onError,
         });
 
-        expect(errorManager.delete('COULD_NOT_BE_REMOVED')).rejects.toThrow().then(() => {
-          expect(onError).toBeCalled();
+        expect(errorManager.delete('COULD_NOT_BE_REMOVED', true))
+          .rejects.toThrow()
+          .then(() => {
+            expect(onError).toBeCalled();
 
-          errorManager.terminate();
+            errorManager.terminate();
 
-          done();
-        });
+            done();
+          });
       });
 
       it('should throw when set value failed', (done) => {
@@ -577,13 +576,15 @@ describe('VaultSecret', () => {
           onError,
         });
 
-        expect(errorManager.set('WILL_FAILED_UPDATE_KEY', 'aaaa')).rejects.toThrow().then(() => {
-          expect(onError).toBeCalled();
+        expect(errorManager.set('WILL_FAILED_UPDATE_KEY', 'aaaa', true))
+          .rejects.toThrow()
+          .then(() => {
+            expect(onError).toBeCalled();
 
-          errorManager.terminate();
+            errorManager.terminate();
 
-          done();
-        });
+            done();
+          });
       });
     });
   });
@@ -596,10 +597,7 @@ describe('VaultSecret', () => {
         if (url.match(/renew-self$/)) {
           return {
             data: {
-              errors: [
-                'TEST1',
-                'test2',
-              ],
+              errors: ['TEST1', 'test2'],
             },
           };
         }
@@ -638,10 +636,7 @@ describe('VaultSecret', () => {
       post.mockImplementationOnce(async (url: string, data: unknown) => {
         return {
           data: {
-            errors: [
-              'TEST1',
-              'test2',
-            ],
+            errors: ['TEST1', 'test2'],
           },
         };
       });
@@ -777,7 +772,6 @@ describe('VaultSecret', () => {
 
   describe('Vault network invalid', () => {
     it('should emit error message on network failed', (done) => {
-
       const manager = new VaultSecret(VAULT_PROJECT, {
         host: 'https://not-valid.rytass.com',
         auth: {

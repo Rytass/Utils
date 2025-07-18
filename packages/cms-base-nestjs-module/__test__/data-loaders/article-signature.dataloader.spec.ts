@@ -4,12 +4,14 @@ import { Repository } from 'typeorm';
 import { BaseArticleVersionEntity } from '../../src/models/base-article-version.entity';
 import { Test } from '@nestjs/testing';
 import { ArticleSignatureEntity } from '../../src/models/article-signature.entity';
+import { add } from 'lodash';
 
 describe('ArticleSignatureDataLoader', () => {
   let loader: ArticleSignatureDataLoader;
   let articleVersionRepo: jest.Mocked<Repository<BaseArticleVersionEntity>>;
 
   beforeEach(async () => {
+    jest.resetAllMocks();
     articleVersionRepo = {
       createQueryBuilder: jest.fn(),
     } as any;
@@ -47,6 +49,7 @@ describe('ArticleSignatureDataLoader', () => {
       leftJoinAndSelect: jest.fn().mockReturnThis(),
       orWhere,
       getMany,
+      addOrderBy: jest.fn().mockReturnThis(),
     };
 
     articleVersionRepo.createQueryBuilder.mockReturnValue(qb as any);
@@ -83,6 +86,7 @@ describe('ArticleSignatureDataLoader', () => {
       leftJoinAndSelect: jest.fn().mockReturnThis(),
       orWhere,
       getMany,
+      addOrderBy: jest.fn().mockReturnThis(),
     };
 
     articleVersionRepo.createQueryBuilder.mockReturnValue(qb as any);
@@ -112,6 +116,7 @@ describe('ArticleSignatureDataLoader', () => {
       leftJoinAndSelect: jest.fn().mockReturnThis(),
       orWhere,
       getMany,
+      addOrderBy: jest.fn().mockReturnThis(),
     };
 
     articleVersionRepo.createQueryBuilder.mockReturnValue(qb as any);
@@ -143,6 +148,7 @@ describe('ArticleSignatureDataLoader', () => {
         return mockQueryBuilder;
       }),
       getMany: mockGetMany,
+      addOrderBy: jest.fn().mockReturnThis(),
     };
 
     articleVersionRepo.createQueryBuilder.mockReturnValue(
@@ -160,5 +166,22 @@ describe('ArticleSignatureDataLoader', () => {
       'articleVersions.version = :version_0',
       { version_0: 1 },
     );
+  });
+
+  it('should return empty array if args is empty', async () => {
+    const getMany = jest.fn().mockResolvedValue([]);
+
+    const qb = {
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      orWhere: jest.fn().mockReturnThis(),
+      getMany,
+      addOrderBy: jest.fn().mockReturnThis(),
+    };
+
+    articleVersionRepo.createQueryBuilder.mockReturnValue(qb as any);
+
+    const result = await loader.versionSignaturesLoader.loadMany([]);
+
+    expect(result).toEqual([]);
   });
 });
