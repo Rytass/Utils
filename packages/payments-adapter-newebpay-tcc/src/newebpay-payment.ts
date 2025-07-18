@@ -1,4 +1,9 @@
-import { PaymentEvents } from '@rytass/payments';
+import {
+  InputFromOrderCommitMessage,
+  Order,
+  PaymentEvents,
+  PaymentGateway,
+} from '@rytass/payments';
 import { EventEmitter } from 'node:events';
 import { NewebPayBindCardRequest } from './newebpay-bind-card-request';
 import { decodePayload, EncodeOptions, encodePayload } from './newebpay-crypto';
@@ -9,22 +14,24 @@ import {
   NewebPayBindCardRequestPayload,
   NewebPayBindCardRequestState,
   NewebPayBindCardResult,
+  NewebPayOrderCommitMessage,
   NewebPayOrderInput,
   NewebPayPaymentOptions,
   QueryBindCardResult,
   UnbindCardResult,
 } from './typings';
 
-export class NewebPayPayment {
-  readonly _emitter = new EventEmitter();
-
+export class NewebPayPayment
+  implements PaymentGateway<NewebPayOrderCommitMessage, NewebPayOrder>
+{
   readonly merchantId: string;
   readonly key: string;
   readonly iv: string;
   readonly encryptType: 0 | 1;
   readonly baseUrl: string;
 
-  readonly _bindCardCache = new Map<string, NewebPayBindCardRequest>();
+  readonly emitter = new EventEmitter();
+  readonly bindCardRequestsCache = new Map<string, NewebPayBindCardRequest>();
 
   constructor(options: NewebPayPaymentOptions) {
     this.merchantId = options.merchantId;
@@ -32,6 +39,16 @@ export class NewebPayPayment {
     this.iv = options.aesIv;
     this.encryptType = options.encryptType ?? 0;
     this.baseUrl = options.baseUrl ?? 'https://ccore.newebpay.com';
+  }
+
+  async prepare<N extends NewebPayOrderCommitMessage>(
+    input: InputFromOrderCommitMessage<N>,
+  ): Promise<Order<N>> {
+    throw new Error('NewebPayPayment.prepare() not implemented');
+  }
+
+  async query<OO extends NewebPayOrder>(id: string): Promise<OO> {
+    throw new Error('NewebPayPayment.query() not implemented');
   }
 
   createOrder(input: NewebPayOrderInput): NewebPayOrder {
@@ -106,10 +123,10 @@ export class NewebPayPayment {
     const request = new NewebPayBindCardRequest(
       normalized,
       this.encodeOpts,
-      this._emitter,
+      this.emitter,
     );
 
-    this._bindCardCache.set(normalized.TokenTerm, request);
+    this.bindCardRequestsCache.set(normalized.TokenTerm, request);
 
     return request;
   }
@@ -133,7 +150,7 @@ export class NewebPayPayment {
       PayTime: raw['PayTime'],
     };
 
-    const request = this._bindCardCache.get(tokenTerm);
+    const request = this.bindCardRequestsCache.get(tokenTerm);
 
     if (
       !request ||
@@ -209,7 +226,7 @@ export class NewebPayPayment {
     });
 
     if (res.Status === 'SUCCESS') {
-      this._emitter.emit(PaymentEvents.CARD_BINDING_FAILED, {
+      this.emitter.emit(PaymentEvents.CARD_BINDING_FAILED, {
         tokenTerm,
         tokenValue,
       });
