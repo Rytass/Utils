@@ -1196,6 +1196,123 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
       { tagSearchTerm: 'environment' },
     );
   });
+
+  it('should sort by RELEASED_AT_ASC', async () => {
+    const qbMock = {
+      addOrderBy: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+    };
+
+    jest
+      .spyOn(service as any, 'getDefaultQueryBuilder')
+      .mockReturnValue(qbMock as any);
+
+    await (service as any).getFindAllQueryBuilder({
+      sorter: ArticleSorter.RELEASED_AT_ASC,
+    });
+
+    expect(qbMock.addOrderBy).toHaveBeenCalledWith(
+      'versions.releasedAt',
+      'ASC',
+    );
+  });
+
+  it('should sort by RELEASED_AT_DESC', async () => {
+    const qbMock = {
+      addOrderBy: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+    };
+
+    jest
+      .spyOn(service as any, 'getDefaultQueryBuilder')
+      .mockReturnValue(qbMock as any);
+
+    await (service as any).getFindAllQueryBuilder({
+      sorter: ArticleSorter.RELEASED_AT_DESC,
+    });
+
+    expect(qbMock.addOrderBy).toHaveBeenCalledWith(
+      'versions.releasedAt',
+      'DESC',
+    );
+  });
+
+  it('should sort by SUBMITTED_AT_ASC', async () => {
+    const qbMock = {
+      addOrderBy: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+    };
+
+    jest
+      .spyOn(service as any, 'getDefaultQueryBuilder')
+      .mockReturnValue(qbMock as any);
+
+    await (service as any).getFindAllQueryBuilder({
+      sorter: ArticleSorter.SUBMITTED_AT_ASC,
+    });
+
+    expect(qbMock.addOrderBy).toHaveBeenCalledWith(
+      'versions.submittedAt',
+      'ASC',
+    );
+  });
+
+  it('should sort by SUBMITTED_AT_DESC', async () => {
+    const qbMock = {
+      addOrderBy: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+    };
+
+    jest
+      .spyOn(service as any, 'getDefaultQueryBuilder')
+      .mockReturnValue(qbMock as any);
+
+    await (service as any).getFindAllQueryBuilder({
+      sorter: ArticleSorter.SUBMITTED_AT_DESC,
+    });
+
+    expect(qbMock.addOrderBy).toHaveBeenCalledWith(
+      'versions.submittedAt',
+      'DESC',
+    );
+  });
+
+  it('should sort by UPDATED_AT_ASC', async () => {
+    const qbMock = {
+      addOrderBy: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+    };
+
+    jest
+      .spyOn(service as any, 'getDefaultQueryBuilder')
+      .mockReturnValue(qbMock as any);
+
+    await (service as any).getFindAllQueryBuilder({
+      sorter: ArticleSorter.UPDATED_AT_ASC,
+    });
+
+    expect(qbMock.addOrderBy).toHaveBeenCalledWith('versions.createdAt', 'ASC');
+  });
+
+  it('should sort by UPDATED_AT_DESC', async () => {
+    const qbMock = {
+      addOrderBy: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+    };
+
+    jest
+      .spyOn(service as any, 'getDefaultQueryBuilder')
+      .mockReturnValue(qbMock as any);
+
+    await (service as any).getFindAllQueryBuilder({
+      sorter: ArticleSorter.UPDATED_AT_DESC,
+    });
+
+    expect(qbMock.addOrderBy).toHaveBeenCalledWith(
+      'versions.createdAt',
+      'DESC',
+    );
+  });
 });
 
 describe('optionsCheck', () => {
