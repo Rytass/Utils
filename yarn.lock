@@ -5879,6 +5879,22 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@rytass/payments-adapter-newebpay-tcc@workspace:packages/payments-adapter-newebpay-tcc":
+  version: 0.0.0-use.local
+  resolution: "@rytass/payments-adapter-newebpay-tcc@workspace:packages/payments-adapter-newebpay-tcc"
+  dependencies:
+    "@rytass/payments": "npm:^0.1.6"
+    "@types/debug": "npm:^4.1.12"
+    "@types/lru-cache": "npm:^7.10.10"
+    "@types/luxon": "npm:^3.4.2"
+    axios: "npm:^1.7.8"
+    debug: "npm:^4.3.7"
+    lru-cache: "npm:^11.0.2"
+    luxon: "npm:^3.5.0"
+    ngrok: "npm:^4.3.3"
+  languageName: unknown
+  linkType: soft
+
 "@rytass/payments-adapter-newebpay@workspace:packages/payments-adapter-newebpay":
   version: 0.0.0-use.local
   resolution: "@rytass/payments-adapter-newebpay@workspace:packages/payments-adapter-newebpay"

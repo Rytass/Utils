@@ -147,3 +147,9 @@ export interface NewebPayOrderCommitMessage extends OrderCommitMessage {
   tokenTerm: string;
   tokenValue: string;
 }
+
+export enum NewebPayOrderState {
+  INITED = 'INITED',
+  COMMITTED = 'COMMITTED',
+  FAILED = 'FAILED',
+}

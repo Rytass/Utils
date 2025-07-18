@@ -64,7 +64,7 @@ export class NewebPayOrder implements Order<NewebPayOrderCommitMessage> {
   infoRetrieved(info: AsyncOrderInformation<NewebPayOrderCommitMessage>): void {
     this.asyncInfo = info;
     this.state = OrderState.ASYNC_INFO_RETRIEVED;
-    this._gateway._emitter.emit(PaymentEvents.ORDER_INFO_RETRIEVED, this);
+    this._gateway.emitter.emit(PaymentEvents.ORDER_INFO_RETRIEVED, this);
   }
 
   fail(code: string, message: string): void {
@@ -136,7 +136,7 @@ export class NewebPayOrder implements Order<NewebPayOrderCommitMessage> {
           payTime: data.PayTime,
         };
 
-        this._gateway._emitter.emit(PaymentEvents.ORDER_COMMITTED, this);
+        this._gateway.emitter.emit(PaymentEvents.ORDER_COMMITTED, this);
       } else {
         this.state = OrderState.FAILED;
         result = {
@@ -144,7 +144,7 @@ export class NewebPayOrder implements Order<NewebPayOrderCommitMessage> {
           error: { code: data.Status, message: data.Message },
         };
 
-        this._gateway._emitter.emit(PaymentEvents.ORDER_FAILED, this);
+        this._gateway.emitter.emit(PaymentEvents.ORDER_FAILED, this);
       }
     } catch (err: any) {
       this.state = OrderState.FAILED;
@@ -153,7 +153,7 @@ export class NewebPayOrder implements Order<NewebPayOrderCommitMessage> {
         error: { code: 'DECODE_FAIL', message: err.message },
       };
 
-      this._gateway._emitter.emit(PaymentEvents.ORDER_FAILED, this);
+      this._gateway.emitter.emit(PaymentEvents.ORDER_FAILED, this);
     }
 
     return result;
