@@ -8,6 +8,7 @@ describe('Image Transcoder Watermark', () => {
   const watermarkBuffer = readFileSync(
     resolve(__dirname, '../__fixtures__/watermark.png'),
   );
+
   const resultHash = createHash('sha256')
     .update(
       readFileSync(resolve(__dirname, '../__fixtures__/result-sample.png')),
