@@ -1,6 +1,9 @@
-
 import { LogisticsError } from '@rytass/logistics';
-import { CtcLogisticsService, CtcLogistics, CreateOrUpdateCtcLogisticsOptions } from '../src';
+import {
+  CtcLogisticsService,
+  CtcLogistics,
+  CreateOrUpdateCtcLogisticsOptions,
+} from '../src';
 import axios from 'axios';
 
 describe('delivery-adapter-ctc', () => {
@@ -13,7 +16,9 @@ describe('delivery-adapter-ctc', () => {
       const logisticId = ['R25061100009'];
 
       get.mockImplementationOnce(async (url: string, data: any) => {
-        expect(url).toBe('https://tms2.ctc-express.cloud/api/v1/customer/orders/R25061100009');
+        expect(url).toBe(
+          'https://tms2.ctc-express.cloud/api/v1/customer/orders/R25061100009',
+        );
 
         return {
           status: 200,
@@ -35,11 +40,11 @@ describe('delivery-adapter-ctc', () => {
         const result = await logisticsService.trace(logisticId);
 
         console.log(`result: ${JSON.stringify(result)}`);
-
       } catch (error) {
-        console.error(`Error occurred: ${error instanceof LogisticsError ? error.message : error}`);
+        console.error(
+          `Error occurred: ${error instanceof LogisticsError ? error.message : error}`,
+        );
       }
-
     });
 
     it('should trace single logistic with specific configuration', async () => {
@@ -52,7 +57,9 @@ describe('delivery-adapter-ctc', () => {
       const logisticId = ['R25061100009'];
 
       get.mockImplementationOnce(async (url: string, data: any) => {
-        expect(url).toBe('https://tms2.ctc-express.cloud/api/v1/customer/orders/R25061100009');
+        expect(url).toBe(
+          'https://tms2.ctc-express.cloud/api/v1/customer/orders/ABCD202507170001',
+        );
 
         return {
           status: 200,
@@ -74,13 +81,13 @@ describe('delivery-adapter-ctc', () => {
         const result = await logisticsService.trace(logisticId);
 
         console.log(`result: ${JSON.stringify(result)}`);
-
       } catch (error) {
-        console.error(`Error occurred: ${error instanceof LogisticsError ? error.message : error}`);
+        console.error(
+          `Error occurred: ${error instanceof LogisticsError ? error.message : error}`,
+        );
       }
-
     });
-  })
+  });
 
   describe('create or update logistics with default configuration', () => {
     const logisticsService = new CtcLogisticsService(CtcLogistics);
@@ -129,7 +136,9 @@ describe('delivery-adapter-ctc', () => {
 
     get.mockImplementationOnce(async (url: string, data: any) => {
       console.log(`get url: ${url}`);
-      expect(url).toBe('https://tms2.ctc-express.cloud/api/v1/customer/orders/R25061100009');
+      expect(url).toBe(
+        'https://tms2.ctc-express.cloud/api/v1/customer/orders/ABCD202507170001',
+      );
 
       return {
         status: 200,
@@ -148,7 +157,9 @@ describe('delivery-adapter-ctc', () => {
     });
 
     it('should create a new logistics with default configuration', async () => {
-      const result = await logisticsService.create(createOrUpdateCtcLogisticsOptions);
+      const result = await logisticsService.create(
+        createOrUpdateCtcLogisticsOptions,
+      );
 
       // {
       //     "success": true,
@@ -157,16 +168,17 @@ describe('delivery-adapter-ctc', () => {
       // }
 
       console.log(`Created logistics: ${JSON.stringify(result)}`);
-
     });
 
     it('should update a logistics with default configuration', async () => {
+      createOrUpdateCtcLogisticsOptions.receiverCompany =
+        'Updated Receiver Name';
 
-      createOrUpdateCtcLogisticsOptions.receiverCompany = 'Updated Receiver Name';
-
-      const result = await logisticsService.update(createOrUpdateCtcLogisticsOptions);
+      const result = await logisticsService.update(
+        createOrUpdateCtcLogisticsOptions,
+      );
 
       console.log(`Updated logistics: ${JSON.stringify(result)}`);
     });
-  })
+  });
 });
