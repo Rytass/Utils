@@ -1,6 +1,4 @@
 import { BaseArticleEntity } from '../../src/models/base-article.entity';
-import { BaseArticleVersionEntity } from '../../src/models/base-article-version.entity';
-import { BaseArticleVersionContentEntity } from '../../src/models/base-article-version-content.entity';
 import {
   RESOLVED_ARTICLE_REPO,
   MULTIPLE_LANGUAGE_MODE,

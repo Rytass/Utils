@@ -4,7 +4,6 @@ import { Repository } from 'typeorm';
 import { BaseArticleVersionEntity } from '../../src/models/base-article-version.entity';
 import { Test } from '@nestjs/testing';
 import { ArticleSignatureEntity } from '../../src/models/article-signature.entity';
-import { add } from 'lodash';
 
 describe('ArticleSignatureDataLoader', () => {
   let loader: ArticleSignatureDataLoader;

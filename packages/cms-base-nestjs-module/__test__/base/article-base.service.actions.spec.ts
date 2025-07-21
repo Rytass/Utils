@@ -6,7 +6,6 @@ import {
 import { ArticleBaseService } from '../../src/services/article-base.service';
 import { SignatureService } from '../../src/services/signature.service';
 import { BadRequestException } from '@nestjs/common';
-import { DataSource, QueryRunner } from 'typeorm';
 import { CategoryNotFoundError } from '../../src/constants/errors/category.errors';
 import {
   MultiLanguageArticleCreateDto,

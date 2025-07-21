@@ -3,7 +3,6 @@ import { DEFAULT_LANGUAGE } from '../../src/constants/default-language';
 import { ArticleNotFoundError } from '../../src/constants/errors/article.errors';
 import { MultipleLanguageModeIsDisabledError } from '../../src/constants/errors/base.errors';
 import { ArticleBaseService } from '../../src/services/article-base.service';
-import { language } from 'googleapis/build/src/apis/language';
 
 describe('ArticleBaseService - findById', () => {
   let service: ArticleBaseService;
