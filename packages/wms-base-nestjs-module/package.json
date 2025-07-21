@@ -21,5 +21,8 @@
   },
   "bugs": {
     "url": "https://github.com/Rytass/Utils/issues"
+  },
+  "devDependencies": {
+    "sqlite3": "^5.1.7"
   }
 }

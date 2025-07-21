@@ -13,7 +13,7 @@ import {
   RESOLVED_STOCK_REPO,
   StockEntity,
   StockService,
-  WMSModule,
+  WMSBaseModule,
 } from '../src';
 import { StockQuantityNotEnoughError } from '../src/constants/errors/base.error';
 import { OrderEntity } from '../src/models/order.entity';
@@ -48,7 +48,7 @@ describe('order', () => {
           autoLoadEntities: true,
           synchronize: true,
         }),
-        WMSModule.forRootAsync({
+        WMSBaseModule.forRootAsync({
           imports: [
             TypeOrmModule.forFeature([
               OrderAEntity,
@@ -230,7 +230,7 @@ describe('order with allowNegativeStock', () => {
           autoLoadEntities: true,
           synchronize: true,
         }),
-        WMSModule.forRootAsync({
+        WMSBaseModule.forRootAsync({
           imports: [
             TypeOrmModule.forFeature([
               OrderAEntity,

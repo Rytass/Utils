@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CustomMaterialEntity } from '../__mocks__/material.mock';
-import { WMSModule } from '../src';
+import { WMSBaseModule } from '../src';
 import { MaterialEntity } from '../src/models/material.entity';
 import { MaterialService } from '../src/services/material.service';
 
@@ -19,7 +19,7 @@ describe('material', () => {
           synchronize: true,
           logging: false,
         }),
-        WMSModule.forRootAsync({
+        WMSBaseModule.forRootAsync({
           imports: [
             TypeOrmModule.forFeature([MaterialEntity, CustomMaterialEntity]),
           ],

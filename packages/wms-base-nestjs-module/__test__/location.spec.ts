@@ -2,7 +2,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CustomLocationEntity, locationMock } from '../__mocks__/location.mock';
 import { materialMock } from '../__mocks__/material.mock';
-import { MaterialService, OrderEntity, OrderService, WMSModule } from '../src';
+import {
+  MaterialService,
+  OrderEntity,
+  OrderService,
+  WMSBaseModule,
+} from '../src';
 import {
   LocationAlreadyExistedError,
   LocationCannotArchiveError,
@@ -23,7 +28,7 @@ describe('location', () => {
           synchronize: true,
           logging: false,
         }),
-        WMSModule.forRootAsync({
+        WMSBaseModule.forRootAsync({
           imports: [
             TypeOrmModule.forFeature([LocationEntity, CustomLocationEntity]),
           ],

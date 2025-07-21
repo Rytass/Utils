@@ -8,7 +8,7 @@ import {
   MaterialService,
   OrderEntity,
   OrderService,
-  WMSModule,
+  WMSBaseModule,
 } from '../src';
 import { StockEntity } from '../src/models/stock.entity';
 import { StockService } from '../src/services/stock.service';
@@ -28,7 +28,7 @@ describe('stock', () => {
           logging: 'all',
           logger: 'advanced-console',
         }),
-        WMSModule.forRootAsync({
+        WMSBaseModule.forRootAsync({
           imports: [TypeOrmModule.forFeature([StockEntity])],
           useFactory: () => ({}),
         }),
