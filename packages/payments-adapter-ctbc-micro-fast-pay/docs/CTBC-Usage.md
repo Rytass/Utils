@@ -130,7 +130,7 @@ const payment = new CTBCPayment({
   1. 十六進位解碼 → base64 解碼 → JSON.parse
   2. 解開 `TXN` 並驗證 MAC → 拿到原始欄位物件
 - ⚠️ **錯誤排查方式**：
-  - `StatusCode !== '00'` 表示請款失敗，常見如：
+  - `StatusCode !== 'I0000'` 表示請款失敗，常見如：
     - `E9998`: 未定義錯誤類型（CTBC 回傳 `ERROR_UNDEFINED`）
   - `MAC_FAIL`： 回傳資料經本地 MAC 驗證不符（非 CTBC StatusCode）
 
