@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.8](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.0.7...@rytass/payments-adapter-ctbc-micro-fast-pay@0.0.8) (2025-07-24)
+
+### Bug Fixes
+
+- **payments-adapter-ctbc-micro-fast-pay:** align success status code and error handling with CTBC spec ([e8c4c7a](https://github.com/Rytass/Utils/commit/e8c4c7adb65471af83250b7e378912d92a535a57))
+- **payments-adapter-ctbc-micro-fast-pay:** update success status code check in bind card callback ([b663c39](https://github.com/Rytass/Utils/commit/b663c39294edd9a5072f0360e5bcaf3c2bec934b))
+
 ## [0.0.7](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.0.6...@rytass/payments-adapter-ctbc-micro-fast-pay@0.0.7) (2025-07-11)
 
 **Note:** Version bump only for package @rytass/payments-adapter-ctbc-micro-fast-pay
