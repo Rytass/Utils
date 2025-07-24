@@ -305,6 +305,54 @@ export class AmegoInvoiceGateway
     });
   }
 
+  getCarrierInfo(options: {
+    carrier?: { type?: InvoiceCarrierType; code?: string };
+    buyerEmail?: string;
+  }): {
+    carrierId: string;
+    carrierType: '3J0002' | 'CQ0001' | 'amego' | '';
+    buyerEmail: string;
+    loveCode: string;
+  } {
+    switch (options.carrier?.type) {
+      case InvoiceCarrierType.PLATFORM:
+        return {
+          carrierId: options.buyerEmail ? `a${options.buyerEmail}` : '',
+          carrierType: 'amego',
+          buyerEmail: options.buyerEmail ?? '',
+          loveCode: '',
+        };
+      case InvoiceCarrierType.MOBILE:
+        return {
+          carrierId: options.carrier?.code ?? '',
+          carrierType: '3J0002',
+          buyerEmail: options.buyerEmail ?? '',
+          loveCode: '',
+        };
+      case InvoiceCarrierType.MOICA:
+        return {
+          carrierId: options.carrier?.code ?? '',
+          carrierType: 'CQ0001',
+          buyerEmail: options.buyerEmail ?? '',
+          loveCode: '',
+        };
+      case InvoiceCarrierType.LOVE_CODE:
+        return {
+          carrierId: '',
+          carrierType: '',
+          buyerEmail: options.buyerEmail ?? '',
+          loveCode: options.carrier?.code ?? '',
+        };
+      default:
+        return {
+          carrierId: '',
+          carrierType: '',
+          buyerEmail: options.buyerEmail ?? '',
+          loveCode: '',
+        };
+    }
+  }
+
   async invalidAllowance(
     allowance: AmegoAllowance,
   ): Promise<AmegoInvoice> {
@@ -375,6 +423,15 @@ export class AmegoInvoiceGateway
       );
     }
 
+    if (
+      options.carrier?.type === InvoiceCarrierType.PLATFORM &&
+      !options.buyerEmail
+    ) {
+      throw new Error(
+        'Platform carrier should provide buyer email to received notification',
+      );
+    }
+
     let salesAmount = options.items
       .filter((item) => item.taxType === TaxType.TAXED)
       .reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
@@ -402,36 +459,22 @@ export class AmegoInvoiceGateway
     const totalAmount =
       salesAmount + salesAmountZeroTax + salesAmountTaxFree + taxAmount;
 
-    const carrierId = ((): string | undefined => {
-      switch (options.carrier?.type) {
-        case InvoiceCarrierType.MOBILE:
-        case InvoiceCarrierType.MOICA:
-          return options.carrier.code;
-
-        default:
-          return '';
-      }
-    })();
+    const { carrierId, carrierType, buyerEmail, loveCode } = this.getCarrierInfo({
+      carrier: options.carrier,
+      buyerEmail: options.buyerEmail,
+    });
 
     const payload = {
       OrderId: options.orderId,
       BuyerIdentifier: options.vatNumber
         ? options.vatNumber
         : '0000000000', // 預設為空統一編號
-      BuyerName: options.vatNumber ? options.vatNumber : '消費者',
-      BuyerEmail: options.buyerEmail || '',
-      CarrierType: ((): '3J0002' | 'CQ0001' | '' => {
-        switch (options.carrier?.type) {
-          case InvoiceCarrierType.MOBILE:
-            return '3J0002';
-          case InvoiceCarrierType.MOICA:
-            return 'CQ0001';
-          default:
-            return '';
-        }
-      })(),
+      BuyerName: options.vatNumber && options.buyerName ? options.buyerName : options.vatNumber ?? '消費者',
+      BuyerEmailAddress: buyerEmail,
+      CarrierType: carrierType,
       CarrierId1: carrierId ?? '',
       CarrierId2: carrierId ?? '',
+      NPOBAN: loveCode,
       ProductItem: options.items.map((item) => {
         return {
           Description: item.name,
