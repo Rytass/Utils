@@ -317,7 +317,7 @@ export class AmegoInvoiceGateway
     switch (options.carrier?.type) {
       case InvoiceCarrierType.PLATFORM:
         return {
-          carrierId: options.buyerEmail ? `a${options.buyerEmail}` : '',
+          carrierId: options.buyerEmail ?? '',
           carrierType: 'amego',
           buyerEmail: options.buyerEmail ?? '',
           loveCode: '',
@@ -432,7 +432,7 @@ export class AmegoInvoiceGateway
       );
     }
 
-    let salesAmount = options.items
+    const salesAmountTaxed = options.items
       .filter((item) => item.taxType === TaxType.TAXED)
       .reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
 
@@ -450,11 +450,11 @@ export class AmegoInvoiceGateway
 
     const taxAmount = options.detailVat
       ? options.vatNumber
-        ? salesAmount - Math.round(salesAmount / (1 + taxRate))
+        ? salesAmountTaxed - Math.round(salesAmountTaxed / (1 + taxRate))
         : 0
-      : Math.round(salesAmount * taxRate);
+      : Math.round(salesAmountTaxed * taxRate);
 
-    salesAmount = salesAmount - taxAmount;
+    const salesAmount = salesAmountTaxed - taxAmount;
 
     const totalAmount =
       salesAmount + salesAmountZeroTax + salesAmountTaxFree + taxAmount;
