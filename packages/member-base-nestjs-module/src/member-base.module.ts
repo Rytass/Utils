@@ -34,7 +34,7 @@ const providers = [
   },
 ];
 
-const exports = [
+const exportInjectable = [
   PasswordValidatorService,
   MemberBaseModelsModule,
   MemberBaseService,
@@ -65,7 +65,7 @@ export class MemberBaseModule {
       imports: [...(options?.imports ?? []), MemberBaseModelsModule],
       providers: [...this.createAsyncProvider(options), ...providers],
       controllers,
-      exports,
+      exports: exportInjectable,
     };
   }
 
@@ -89,7 +89,7 @@ export class MemberBaseModule {
         ...providers,
       ],
       controllers,
-      exports,
+      exports: exportInjectable,
     };
   }
 

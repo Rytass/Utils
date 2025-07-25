@@ -2,10 +2,10 @@ name: Rytass Utils CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
@@ -30,8 +30,3 @@ jobs:
 
       - name: Build
         run: yarn build
-
-      - uses: sonarsource/sonarqube-scan-action@master
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
