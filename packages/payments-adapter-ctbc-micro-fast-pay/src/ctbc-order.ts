@@ -144,7 +144,7 @@ export class CTBCOrder implements Order<CTBCOrderCommitMessage> {
         OrderNo: parsed.OrderNo ?? undefined,
       };
 
-      if (result.StatusCode === '00') {
+      if (result.StatusCode === 'I0000') {
         this._platformTradeNumber = result.OrderNo;
         this.commit({
           id: this.id,
@@ -179,8 +179,8 @@ export class CTBCOrder implements Order<CTBCOrderCommitMessage> {
       return {
         success: false,
         error: {
-          code: 'MAC_FAIL',
-          message: 'Invalid MAC in response',
+          code: 'unknown',
+          message: error as string,
         },
       };
     }

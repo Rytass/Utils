@@ -121,7 +121,7 @@ export class CTBCPayment
       cachedRequest ??
       new CTBCBindCardRequest({ ...payload, TokenURL: '' }, this);
 
-    if (payload.StatusCode === '00') {
+    if (payload.StatusCode === 'I0000') {
       request.bound(payload);
       this.emitter.emit(PaymentEvents.CARD_BOUND, request);
     } else {
