@@ -38,8 +38,6 @@ describe('delivery-adapter-ctc', () => {
 
       try {
         const result = await logisticsService.trace(logisticId);
-
-        console.log(`result: ${JSON.stringify(result)}`);
       } catch (error) {
         console.error(
           `Error occurred: ${error instanceof LogisticsError ? error.message : error}`,
@@ -79,8 +77,6 @@ describe('delivery-adapter-ctc', () => {
 
       try {
         const result = await logisticsService.trace(logisticId);
-
-        console.log(`result: ${JSON.stringify(result)}`);
       } catch (error) {
         console.error(
           `Error occurred: ${error instanceof LogisticsError ? error.message : error}`,
@@ -135,9 +131,8 @@ describe('delivery-adapter-ctc', () => {
     });
 
     get.mockImplementationOnce(async (url: string, data: any) => {
-      console.log(`get url: ${url}`);
       expect(url).toBe(
-        'https://tms2.ctc-express.cloud/api/v1/customer/orders/ABCD202507170001',
+        'https://tms2.ctc-express.cloud/api/v1/customer/orders/R25061100009',
       );
 
       return {
@@ -160,14 +155,6 @@ describe('delivery-adapter-ctc', () => {
       const result = await logisticsService.create(
         createOrUpdateCtcLogisticsOptions,
       );
-
-      // {
-      //     "success": true,
-      //     "shipping_number": "R25061100009",
-      //     "tracking_number": "R25061100009"
-      // }
-
-      console.log(`Created logistics: ${JSON.stringify(result)}`);
     });
 
     it('should update a logistics with default configuration', async () => {
@@ -177,8 +164,6 @@ describe('delivery-adapter-ctc', () => {
       const result = await logisticsService.update(
         createOrUpdateCtcLogisticsOptions,
       );
-
-      console.log(`Updated logistics: ${JSON.stringify(result)}`);
     });
   });
 });

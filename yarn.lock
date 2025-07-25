@@ -22728,6 +22728,7 @@ __metadata:
     rollup-plugin-swc3: "npm:^0.12.1"
     rxjs: "npm:^7.8.1"
     sass: "npm:^1.89.2"
+    sqlite3: "npm:^5.1.7"
     supertest: "npm:^7.0.0"
     ts-jest: "npm:^29.2.5"
     typeorm: "npm:^0.3.20"

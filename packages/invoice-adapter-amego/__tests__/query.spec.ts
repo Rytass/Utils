@@ -6,7 +6,7 @@ import { AmegoBaseUrls, AmegoInvoiceGateway } from '../src';
 
 const DEFAULT_VAT_NUMBER = '12345678';
 const DEFAULT_APP_KEY = 'sHeq7t8G1wiQvhAuIM27';
-const baseUrl = AmegoBaseUrls.DEVELOPMENT
+const baseUrl = AmegoBaseUrls.DEVELOPMENT;
 
 describe('Amego Invoice Query', () => {
   const post = jest.spyOn(axios, 'post');
@@ -28,11 +28,12 @@ describe('Amego Invoice Query', () => {
     });
 
     it('should query invoice valid barcode ', async () => {
-      const validBarcode = await invoiceGateway.isMobileBarcodeValid('/DDPD7U2');
+      const validBarcode =
+        await invoiceGateway.isMobileBarcodeValid('/DDPD7U2');
 
       expect(validBarcode).toBe(true);
     });
-  })
+  });
 
   describe('check mobile barcode with default gateway options fail', () => {
     const invoiceGateway = new AmegoInvoiceGateway();
@@ -51,7 +52,8 @@ describe('Amego Invoice Query', () => {
     });
 
     it('should query invoice invalid barcode ', async () => {
-      const invalidBarcode = await invoiceGateway.isMobileBarcodeValid('/DDPD7U3');
+      const invalidBarcode =
+        await invoiceGateway.isMobileBarcodeValid('/DDPD7U3');
 
       expect(invalidBarcode).toBe(false);
     });
@@ -78,7 +80,8 @@ describe('Amego Invoice Query', () => {
     });
 
     it('should query invoice valid barcode ', async () => {
-      const validBarcode = await invoiceGateway.isMobileBarcodeValid('/DDPD7U2');
+      const validBarcode =
+        await invoiceGateway.isMobileBarcodeValid('/DDPD7U2');
 
       expect(validBarcode).toBe(true);
     });
@@ -105,7 +108,8 @@ describe('Amego Invoice Query', () => {
     });
 
     it('should query invoice invalid barcode ', async () => {
-      const invalidBarcode = await invoiceGateway.isMobileBarcodeValid('/DDPD7U3');
+      const invalidBarcode =
+        await invoiceGateway.isMobileBarcodeValid('/DDPD7U3');
 
       expect(invalidBarcode).toBe(false);
     });
@@ -156,8 +160,6 @@ describe('Amego Invoice Query', () => {
     it('should query invoice by orderId ', async () => {
       const data = await invoiceGateway.query({ orderId: '3g49n3' });
 
-      console.log(`Query Result by orderId: ${JSON.stringify(data)}`);
-
       expect(data.orderId).toBe('3g49n3');
       expect(data.invoiceNumber).toBe('AC12364096');
     });
@@ -165,10 +167,8 @@ describe('Amego Invoice Query', () => {
     it('should query invoice by invoiceNumber ', async () => {
       const data = await invoiceGateway.query({ invoiceNumber: 'AC12364096' });
 
-      console.log(`Query Result by invoiceNumber: ${JSON.stringify(data)}`);
       expect(data.orderId).toBe('3g49n3');
       expect(data.invoiceNumber).toBe('AC12364096');
     });
   });
-
 });
