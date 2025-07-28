@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.4.0](https://github.com/Rytass/Utils/compare/@rytass/invoice@0.3.5...@rytass/invoice@0.4.0) (2025-07-28)
+
+**Note:** Version bump only for package @rytass/invoice
+
 ## [0.3.5](https://github.com/Rytass/Utils/compare/@rytass/invoice@0.3.4...@rytass/invoice@0.3.5) (2025-06-28)
 
 **Note:** Version bump only for package @rytass/invoice

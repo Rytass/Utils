@@ -1,6 +1,6 @@
 {
   "name": "@rytass/payments-nestjs-module",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "description": "Rytass Payment Gateway NestJS Module Wrapper",
   "keywords": [
     "rytass",
@@ -23,8 +23,8 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/member-base-nestjs-module": "^0.1.65",
-    "@rytass/payments": "^0.1.6"
+    "@rytass/member-base-nestjs-module": "^0.2.0",
+    "@rytass/payments": "^0.2.0"
   },
   "peerDependencies": {
     "@nestjs/common": "*"

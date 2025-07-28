@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.4.0](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.3.7...@rytass/payments-adapter-ecpay@0.4.0) (2025-07-28)
+
+### Features
+
+- **payments-adapter-ecpay:** implement bind card interface, replace ngrok version ([10a441f](https://github.com/Rytass/Utils/commit/10a441fd538cdf7decde4cf68f580a17b57d9efb))
+
 ## [0.3.7](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.3.6...@rytass/payments-adapter-ecpay@0.3.7) (2025-06-28)
 
 **Note:** Version bump only for package @rytass/payments-adapter-ecpay

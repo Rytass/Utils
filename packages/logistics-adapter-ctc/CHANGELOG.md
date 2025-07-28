@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.3.0](https://github.com/Rytass/Utils/compare/@rytass/logistics-adapter-ctc@0.2.3...@rytass/logistics-adapter-ctc@0.3.0) (2025-07-28)
+
+### Bug Fixes
+
+- add sqlite3 for unit test, remove console.log ([8e9a857](https://github.com/Rytass/Utils/commit/8e9a8574e8d6ed37b5806ccbf0239488c1875373))
+
 ## [0.2.3](https://github.com/Rytass/Utils/compare/@rytass/logistics-adapter-ctc@0.2.2...@rytass/logistics-adapter-ctc@0.2.3) (2025-07-17)
 
 ### Features

@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.2.0](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-amego@0.1.10...@rytass/invoice-adapter-amego@0.2.0) (2025-07-28)
+
+### Bug Fixes
+
+- add sqlite3 for unit test, remove console.log ([8e9a857](https://github.com/Rytass/Utils/commit/8e9a8574e8d6ed37b5806ccbf0239488c1875373))
+
 ## [0.1.10](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-amego@0.1.9...@rytass/invoice-adapter-amego@0.1.10) (2025-06-28)
 
 **Note:** Version bump only for package @rytass/invoice-adapter-amego

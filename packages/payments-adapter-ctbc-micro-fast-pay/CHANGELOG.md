@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.1.0](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.0.8...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.0) (2025-07-28)
+
+### Bug Fixes
+
+- **payments-adapter-ctbc-micro-fast-pay:** package.json dependencies on ngrok ([4aa3606](https://github.com/Rytass/Utils/commit/4aa3606e63244daadfc9a669afa7d1654c693437))
+
 ## [0.0.8](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.0.7...@rytass/payments-adapter-ctbc-micro-fast-pay@0.0.8) (2025-07-24)
 
 ### Bug Fixes

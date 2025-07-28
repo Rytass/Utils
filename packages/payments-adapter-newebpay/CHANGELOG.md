@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.2.0](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-newebpay@0.1.10...@rytass/payments-adapter-newebpay@0.2.0) (2025-07-28)
+
+### Features
+
+- **payments-adapter-newebpay:** update ngrok version ([9d05168](https://github.com/Rytass/Utils/commit/9d05168f831b7e9d1bc01d35ca1beebd6ff1a99c))
+
 ## [0.1.10](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-newebpay@0.1.9...@rytass/payments-adapter-newebpay@0.1.10) (2025-06-28)
 
 **Note:** Version bump only for package @rytass/payments-adapter-newebpay

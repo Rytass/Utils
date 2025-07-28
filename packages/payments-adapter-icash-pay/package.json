@@ -1,6 +1,6 @@
 {
   "name": "@rytass/payments-adapter-icash-pay",
-  "version": "0.0.10",
+  "version": "0.1.0",
   "description": "Rytass Payment Gateway",
   "keywords": [
     "rytass",
@@ -24,7 +24,7 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/payments": "^0.1.6",
+    "@rytass/payments": "^0.2.0",
     "axios": "^1.7.8",
     "debug": "^4.3.7",
     "luxon": "^3.5.0"

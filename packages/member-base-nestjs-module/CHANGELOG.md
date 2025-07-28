@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.2.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.65...@rytass/member-base-nestjs-module@0.2.0) (2025-07-28)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** rename exports to support test coverage ([e15d344](https://github.com/Rytass/Utils/commit/e15d3443a7dbfd398ba4bdea76ebe386f6d11314))
+
 ## [0.1.65](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.64...@rytass/member-base-nestjs-module@0.1.65) (2025-06-23)
 
 ### Features

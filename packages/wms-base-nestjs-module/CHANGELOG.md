@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.1.0](https://github.com/Rytass/Utils/compare/@rytass/wms-base-nestjs-module@0.0.2...@rytass/wms-base-nestjs-module@0.1.0) (2025-07-28)
+
+**Note:** Version bump only for package @rytass/wms-base-nestjs-module
+
 ## 0.0.2 (2025-06-30)
 
 ### Features

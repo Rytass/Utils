@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.2.0](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-hwanan@0.1.8...@rytass/payments-adapter-hwanan@0.2.0) (2025-07-28)
+
+### Features
+
+- **payments-adapter-hwanan:** udpate ngrok version ([605b215](https://github.com/Rytass/Utils/commit/605b215cd78393925f483492b890075b1aa67be0))
+
 ## [0.1.8](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-hwanan@0.1.7...@rytass/payments-adapter-hwanan@0.1.8) (2025-06-28)
 
 **Note:** Version bump only for package @rytass/payments-adapter-hwanan

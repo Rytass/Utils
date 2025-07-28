@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.4.0](https://github.com/Rytass/Utils/compare/@rytass/secret-adapter-vault-nestjs@0.3.3...@rytass/secret-adapter-vault-nestjs@0.4.0) (2025-07-28)
+
+**Note:** Version bump only for package @rytass/secret-adapter-vault-nestjs
+
 ## [0.3.3](https://github.com/Rytass/Utils/compare/@rytass/secret-adapter-vault-nestjs@0.3.2...@rytass/secret-adapter-vault-nestjs@0.3.3) (2025-07-16)
 
 ### Features
