@@ -5,12 +5,14 @@ import {
   ECPayBindCardRequestPayload,
   ECPayBindCardRequestState,
   ECPayBindCardWithTransactionRequestOptions,
-  ECPayBoundCardInfo,
-  ECPayCommitMessage,
 } from './typings';
-import { OrderFailMessage, PaymentEvents } from '@rytass/payments';
+import {
+  BindCardRequest,
+  OrderFailMessage,
+  PaymentEvents,
+} from '@rytass/payments';
 
-export class ECPayBindCardRequest {
+export class ECPayBindCardRequest implements BindCardRequest {
   private readonly _form: ECPayBindCardRequestPayload | undefined;
   private readonly _gateway: ECPayPayment;
 

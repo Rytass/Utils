@@ -10,13 +10,13 @@ import {
   BarcodeInfo,
   VirtualAccountPaymentInfo,
   OrderState,
+  BindCardPaymentGateway,
 } from '@rytass/payments';
 import { DateTime } from 'luxon';
 import { LRUCache } from 'lru-cache';
 import axios from 'axios';
 import { createServer, IncomingMessage, ServerResponse, Server } from 'http';
 import debug from 'debug';
-import ngrok from 'ngrok';
 import { EventEmitter } from 'events';
 import {
   ECPayCallbackCreditPayload,
@@ -70,11 +70,12 @@ import {
 } from './constants';
 import { ECPayOrder } from './ecpay-order';
 import { ECPayBindCardRequest } from './ecpay-bind-card-request';
+import { orderBy } from 'lodash';
 
 const debugPayment = debug('Rytass:Payment:ECPay');
 
 export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
-  implements PaymentGateway<CM, ECPayOrder<CM>>
+  implements PaymentGateway<CM, ECPayOrder<CM>>, BindCardPaymentGateway<CM>
 {
   readonly baseUrl: string = 'https://payment-stage.ecpay.com.tw';
 
@@ -112,6 +113,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
     this.merchantId = options?.merchantId || this.merchantId;
     this.merchantCheckCode =
       options?.merchantCheckCode || this.merchantCheckCode;
+
     this.hashKey = options?.hashKey || this.hashKey;
     this.hashIv = options?.hashIv || this.hashIv;
     this.serverHost = options?.serverHost || this.serverHost;
@@ -122,6 +124,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
     this.boundCardPath = options?.boundCardPath || this.boundCardPath;
     this.boundCardFinishPath =
       options?.boundCardFinishPath || this.boundCardFinishPath;
+
     this.emulateRefund = !!options?.emulateRefund;
 
     if (options?.withServer) {
@@ -240,12 +243,36 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
 
     this._server.listen(port, '0.0.0.0', async () => {
       if (useNgrok) {
-        const ngrokUrl = await ngrok.connect(port);
+        if (!process.env.NGROK_AUTHTOKEN) {
+          debugPayment(
+            '[ECPayPayment] NGROK_AUTHTOKEN is not set. Please set it in your environment variables.',
+          );
 
-        this.serverHost = ngrokUrl;
+          throw new Error(
+            '[ECPayPayment] NGROK_AUTHTOKEN is not set. Please set it in your environment variables.',
+          );
+        }
+
+        try {
+          await import('@ngrok/ngrok');
+        } catch (ex) {
+          debugPayment(
+            '[ECPayPayment] Failed to import ngrok. Please install it to use ngrok feature.',
+          );
+
+          throw ex;
+        }
+
+        const ngrok = (await import('@ngrok/ngrok')).default;
+
+        await ngrok.authtoken(process.env.NGROK_AUTHTOKEN);
+
+        const forwarder = await ngrok.forward(port);
+
+        this.serverHost = forwarder.url() as string;
 
         debugPayment(
-          `ECPayment Callback Server Listen on port ${port} with ngrok url: ${ngrokUrl}`,
+          `ECPayment Callback Server Listen on port ${port} with ngrok url: ${this.serverHost}`,
         );
       } else {
         debugPayment(`ECPayment Callback Server Listen on port ${port}`);
@@ -1349,6 +1376,10 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
     memberId: string,
     finishRedirectURL?: string,
   ): Promise<ECPayBindCardRequest> {
+    if (!this.isGatewayReady) {
+      throw new Error('Please waiting gateway ready');
+    }
+
     const payload = this.addMac<ECPayBindCardRequestPayload>({
       MerchantID: this.merchantId,
       MerchantMemberID: `${this.merchantId}${memberId}`,
@@ -1366,7 +1397,25 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
 
   async checkoutWithBoundCard(
     options: ECPayCheckoutWithBoundCardPayload,
-  ): Promise<ECPayCheckoutWithBoundCardResult> {
+  ): Promise<ECPayOrder<CM>> {
+    const orderId = options.orderId || this.getOrderId();
+    const order = new ECPayOrder({
+      id: orderId,
+      items: options.items,
+      gateway: this,
+      cardId: options.cardId,
+      memberId: options.memberId,
+    });
+
+    const totalAmount = options.items.reduce(
+      (sum, item) => sum + item.unitPrice * item.quantity,
+      0,
+    );
+
+    if (totalAmount <= 0) {
+      throw new Error('Total amount should be greater than 0');
+    }
+
     const payload = this.addMac<ECPayCheckoutWithBoundCardRequestPayload>({
       MerchantID: this.merchantId,
       MerchantMemberID: `${this.merchantId}${options.memberId}`,
@@ -1374,8 +1423,10 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
       MerchantTradeDate: DateTime.fromJSDate(
         options.tradeTime || new Date(),
       ).toFormat('yyyy/MM/dd HH:mm:ss'),
-      TotalAmount: options.amount.toString(),
-      TradeDesc: encodeURIComponent(options.description),
+      TotalAmount: totalAmount.toString(),
+      TradeDesc: encodeURIComponent(
+        options.items.map((item) => item.name).join(', '),
+      ),
       CardID: options.cardId,
       stage: (options.installments ?? 0).toString(),
     });
@@ -1408,23 +1459,23 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
       throw new Error(responsePayload.RtnMsg);
     }
 
-    return {
-      id: responsePayload.MerchantTradeNo,
-      platformTradeNumber: responsePayload.AllpayTradeNo,
-      amount: responsePayload.amount,
-      installments: Number(responsePayload.stage),
-      firstInstallmentAmount: Number(responsePayload.stast),
-      eachInstallmentAmount: Number(responsePayload.staed),
-      gwsr: responsePayload.gwsr.toString(),
-      process_date: DateTime.fromFormat(
+    order.commit<CM>({
+      id: order.id,
+      totalPrice: totalAmount,
+      committedAt: DateTime.fromFormat(
         responsePayload.process_date,
         'yyyy/MM/dd HH:mm:ss',
       ).toJSDate(),
-      auth_code: responsePayload.auth_code,
-      eci: responsePayload.eci,
-      lastFourDigits: responsePayload.card4no,
-      firstSixDigits: responsePayload.card6no,
-    };
+      merchantId: this.merchantId,
+      tradeNumber: responsePayload.AllpayTradeNo,
+      tradeDate: DateTime.fromFormat(
+        responsePayload.process_date,
+        'yyyy/MM/dd HH:mm:ss',
+      ).toJSDate(),
+      paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
+    } as CM);
+
+    return order;
   }
 
   async queryBoundCard(memberId: string): Promise<ECPayBoundCardInfo> {

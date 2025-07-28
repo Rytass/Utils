@@ -14,6 +14,7 @@ import {
   ECPayOrderForm,
   ECPayQueryResultStatus,
   OrderCreateInit,
+  OrderFromBoundCard,
   OrderFromServerInit,
 } from './typings';
 import { ECPayChannel } from './constants';
@@ -48,8 +49,15 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
 
   private _failedMessage: string | undefined;
 
+  private _checkoutMemberId: string | null = null;
+
+  private _checkoutCardId: string | null = null;
+
   constructor(
-    options: OrderCreateInit<OCM> | OrderFromServerInit<OCM>,
+    options:
+      | OrderCreateInit<OCM>
+      | OrderFromServerInit<OCM>
+      | OrderFromBoundCard<OCM>,
     additionalInfo?: AdditionalInfo<OCM>,
   ) {
     this._id = options.id;
@@ -94,7 +102,7 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
             return OrderState.FAILED;
 
           case ECPayQueryResultStatus.INCORRECT_CARD_NUMBER:
-              return OrderState.FAILED;
+            return OrderState.FAILED;
 
           case ECPayQueryResultStatus.TRADE_DATA_NOT_FOUND:
             return OrderState.INITED;
@@ -103,6 +111,9 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
             return OrderState.INITED;
         }
       })();
+    } else if ('cardId' in options) {
+      this._checkoutMemberId = options.memberId || null;
+      this._checkoutCardId = options.cardId || null;
     }
 
     this._additionalInfo = additionalInfo;
