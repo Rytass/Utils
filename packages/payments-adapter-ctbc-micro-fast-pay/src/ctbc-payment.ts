@@ -201,6 +201,7 @@ export class CTBCPayment<
               Buffer.from(Data.TXN, 'hex'),
               divKey,
             );
+
             const decryptedParams = new URLSearchParams(plainPayload);
 
             const statusCode = decryptedParams.get('StatusCode');
@@ -257,6 +258,7 @@ export class CTBCPayment<
               Buffer.from(Data.TXN, 'hex'),
               divKey,
             );
+
             const decryptedParams = new URLSearchParams(plainPayload);
 
             const statusCode = decryptedParams.get('StatusCode');
