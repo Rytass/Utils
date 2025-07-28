@@ -4486,6 +4486,145 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ngrok/ngrok-android-arm64@npm:1.5.1":
+  version: 1.5.1
+  resolution: "@ngrok/ngrok-android-arm64@npm:1.5.1"
+  conditions: os=android & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@ngrok/ngrok-darwin-arm64@npm:1.5.1":
+  version: 1.5.1
+  resolution: "@ngrok/ngrok-darwin-arm64@npm:1.5.1"
+  conditions: os=darwin & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@ngrok/ngrok-darwin-universal@npm:1.5.1":
+  version: 1.5.1
+  resolution: "@ngrok/ngrok-darwin-universal@npm:1.5.1"
+  conditions: os=darwin
+  languageName: node
+  linkType: hard
+
+"@ngrok/ngrok-darwin-x64@npm:1.5.1":
+  version: 1.5.1
+  resolution: "@ngrok/ngrok-darwin-x64@npm:1.5.1"
+  conditions: os=darwin & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@ngrok/ngrok-freebsd-x64@npm:1.5.1":
+  version: 1.5.1
+  resolution: "@ngrok/ngrok-freebsd-x64@npm:1.5.1"
+  conditions: os=freebsd & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@ngrok/ngrok-linux-arm-gnueabihf@npm:1.5.1":
+  version: 1.5.1
+  resolution: "@ngrok/ngrok-linux-arm-gnueabihf@npm:1.5.1"
+  conditions: os=linux & cpu=arm
+  languageName: node
+  linkType: hard
+
+"@ngrok/ngrok-linux-arm64-gnu@npm:1.5.1":
+  version: 1.5.1
+  resolution: "@ngrok/ngrok-linux-arm64-gnu@npm:1.5.1"
+  conditions: os=linux & cpu=arm64 & libc=glibc
+  languageName: node
+  linkType: hard
+
+"@ngrok/ngrok-linux-arm64-musl@npm:1.5.1":
+  version: 1.5.1
+  resolution: "@ngrok/ngrok-linux-arm64-musl@npm:1.5.1"
+  conditions: os=linux & cpu=arm64 & libc=musl
+  languageName: node
+  linkType: hard
+
+"@ngrok/ngrok-linux-x64-gnu@npm:1.5.1":
+  version: 1.5.1
+  resolution: "@ngrok/ngrok-linux-x64-gnu@npm:1.5.1"
+  conditions: os=linux & cpu=x64 & libc=glibc
+  languageName: node
+  linkType: hard
+
+"@ngrok/ngrok-linux-x64-musl@npm:1.5.1":
+  version: 1.5.1
+  resolution: "@ngrok/ngrok-linux-x64-musl@npm:1.5.1"
+  conditions: os=linux & cpu=x64 & libc=musl
+  languageName: node
+  linkType: hard
+
+"@ngrok/ngrok-win32-arm64-msvc@npm:1.5.1":
+  version: 1.5.1
+  resolution: "@ngrok/ngrok-win32-arm64-msvc@npm:1.5.1"
+  conditions: os=win32 & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@ngrok/ngrok-win32-ia32-msvc@npm:1.5.1":
+  version: 1.5.1
+  resolution: "@ngrok/ngrok-win32-ia32-msvc@npm:1.5.1"
+  conditions: os=win32 & cpu=ia32
+  languageName: node
+  linkType: hard
+
+"@ngrok/ngrok-win32-x64-msvc@npm:1.5.1":
+  version: 1.5.1
+  resolution: "@ngrok/ngrok-win32-x64-msvc@npm:1.5.1"
+  conditions: os=win32 & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@ngrok/ngrok@npm:^1.5.1":
+  version: 1.5.1
+  resolution: "@ngrok/ngrok@npm:1.5.1"
+  dependencies:
+    "@ngrok/ngrok-android-arm64": "npm:1.5.1"
+    "@ngrok/ngrok-darwin-arm64": "npm:1.5.1"
+    "@ngrok/ngrok-darwin-universal": "npm:1.5.1"
+    "@ngrok/ngrok-darwin-x64": "npm:1.5.1"
+    "@ngrok/ngrok-freebsd-x64": "npm:1.5.1"
+    "@ngrok/ngrok-linux-arm-gnueabihf": "npm:1.5.1"
+    "@ngrok/ngrok-linux-arm64-gnu": "npm:1.5.1"
+    "@ngrok/ngrok-linux-arm64-musl": "npm:1.5.1"
+    "@ngrok/ngrok-linux-x64-gnu": "npm:1.5.1"
+    "@ngrok/ngrok-linux-x64-musl": "npm:1.5.1"
+    "@ngrok/ngrok-win32-arm64-msvc": "npm:1.5.1"
+    "@ngrok/ngrok-win32-ia32-msvc": "npm:1.5.1"
+    "@ngrok/ngrok-win32-x64-msvc": "npm:1.5.1"
+  dependenciesMeta:
+    "@ngrok/ngrok-android-arm64":
+      optional: true
+    "@ngrok/ngrok-darwin-arm64":
+      optional: true
+    "@ngrok/ngrok-darwin-universal":
+      optional: true
+    "@ngrok/ngrok-darwin-x64":
+      optional: true
+    "@ngrok/ngrok-freebsd-x64":
+      optional: true
+    "@ngrok/ngrok-linux-arm-gnueabihf":
+      optional: true
+    "@ngrok/ngrok-linux-arm64-gnu":
+      optional: true
+    "@ngrok/ngrok-linux-arm64-musl":
+      optional: true
+    "@ngrok/ngrok-linux-x64-gnu":
+      optional: true
+    "@ngrok/ngrok-linux-x64-musl":
+      optional: true
+    "@ngrok/ngrok-win32-arm64-msvc":
+      optional: true
+    "@ngrok/ngrok-win32-ia32-msvc":
+      optional: true
+    "@ngrok/ngrok-win32-x64-msvc":
+      optional: true
+  checksum: 10c0/c07b0d3c89d9439e4d27387831c643a0dce6b5dc1db30f0ef764bdf02c66781efc3830d8983a6746fe77ea7f124fe994b0ba25c8f65ea827b9cd37da0c8278e8
+  languageName: node
+  linkType: hard
+
 "@node-rs/jieba-android-arm-eabi@npm:1.10.4":
   version: 1.10.4
   resolution: "@node-rs/jieba-android-arm-eabi@npm:1.10.4"
@@ -22680,6 +22819,7 @@ __metadata:
     "@nestjs/graphql": "npm:^12.2.1"
     "@nestjs/testing": "npm:^10.4.12"
     "@nestjs/typeorm": "npm:^10.0.2"
+    "@ngrok/ngrok": "npm:^1.5.1"
     "@node-rs/jieba": "npm:^1.10.4"
     "@nrwl/nx-cloud": "npm:^19.1.0"
     "@nx/js": "npm:^20.1.4"

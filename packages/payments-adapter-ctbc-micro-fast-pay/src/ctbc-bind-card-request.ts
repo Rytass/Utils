@@ -1,5 +1,4 @@
-import { PaymentEvents } from '@rytass/payments';
-import { DateTime } from 'luxon';
+import { BindCardRequest, PaymentEvents } from '@rytass/payments';
 import { encodeRequestPayload, toTxnPayload } from './ctbc-crypto';
 import { CTBCPayment } from './ctbc-payment';
 import {
@@ -8,7 +7,7 @@ import {
   CTBCBindCardRequestState,
 } from './typings';
 
-export class CTBCBindCardRequest {
+export class CTBCBindCardRequest implements BindCardRequest {
   private readonly _gateway: CTBCPayment;
   private readonly _payload: CTBCBindCardRequestPayload;
 
@@ -62,15 +61,11 @@ export class CTBCBindCardRequest {
     return `<!DOCTYPE html>
 <html>
   <body onload="document.forms['fm'].submit();">
-    <form name="fm" action="${this.bindingURL}" method="post">
+    <form name="fm" action="${this._gateway.executeURL}" method="post">
       ${inputs}
     </form>
   </body>
 </html>`;
-  }
-
-  get bindingURL(): string {
-    return this._gateway.getBindingURL();
   }
 
   get cardId(): string | undefined {
@@ -110,37 +105,21 @@ export class CTBCBindCardRequest {
   }
 
   bound(payload: CTBCBindCardCallbackPayload): void {
-    this._cardId = payload.CardToken;
+    this._cardId = payload.cardToken;
 
-    if (payload.CardNoMask && payload.CardNoMask.length >= 16) {
-      this._cardNumberPrefix = payload.CardNoMask.slice(0, 6);
-      this._cardNumberSuffix = payload.CardNoMask.slice(-4);
+    if (payload.cardNoMask && payload.cardNoMask.length >= 16) {
+      this._cardNumberPrefix = payload.cardNoMask.slice(0, 6);
+      this._cardNumberSuffix = payload.cardNoMask.slice(-4);
     }
 
-    this._bindingDate = DateTime.fromFormat(
-      payload.ResponseTime,
-      'yyyy/MM/dd HH:mm:ss',
-    ).toJSDate();
+    this._bindingDate = new Date();
 
     this._gateway.emitter.emit(PaymentEvents.CARD_BOUND, this);
   }
 
-  fail(
-    code: string,
-    message: string,
-    payload?: CTBCBindCardCallbackPayload,
-  ): void {
+  fail(code: string, message: string): void {
     this._failedCode = code;
     this._failedMessage = message;
-
-    if (payload) {
-      this._cardId = payload.CardToken;
-
-      if (payload.CardNoMask && payload.CardNoMask.length >= 16) {
-        this._cardNumberPrefix = payload.CardNoMask.slice(0, 6);
-        this._cardNumberSuffix = payload.CardNoMask.slice(-4);
-      }
-    }
 
     this._gateway.emitter.emit(PaymentEvents.CARD_BINDING_FAILED, this);
   }

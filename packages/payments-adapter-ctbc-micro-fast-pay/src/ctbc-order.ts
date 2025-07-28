@@ -1,188 +1,162 @@
 import {
-  PaymentEvents,
   Order,
   OrderState,
   OrderFailMessage,
   PaymentItem,
-  AdditionalInfo,
   AsyncOrderInformation,
+  PaymentEvents,
 } from '@rytass/payments';
-import { encodeRequestPayload, toTxnPayload } from './ctbc-crypto';
 import { CTBCPayment } from './ctbc-payment';
-import { decodeResponsePayload } from './ctbc-response';
 import {
+  CTBCCheckoutWithBoundCardRequestPayload,
   CTBCOrderCommitMessage,
-  CTBCOrderCommitPayload,
-  CTBCOrderCommitResult,
-  CTBCOrderCommitResultPayload,
-  CTBCOrderInput,
+  CTBCPayOrderForm,
+  OrderCreateInit,
 } from './typings';
 
-export class CTBCOrder implements Order<CTBCOrderCommitMessage> {
-  private readonly _gateway: CTBCPayment;
+export class CTBCOrder<
+  OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessage,
+> implements Order<OCM>
+{
+  private readonly _id: string;
+  private readonly _items: PaymentItem[];
+  private readonly _form: CTBCPayOrderForm | undefined;
+  private readonly _gateway: CTBCPayment<OCM>;
 
-  id: string;
-  items: PaymentItem[] = [];
-  state: OrderState = OrderState.INITED;
-  createdAt: Date = new Date();
-  committedAt: Date | null = null;
-  additionalInfo?: AdditionalInfo<CTBCOrderCommitMessage>;
-  asyncInfo?: AsyncOrderInformation<CTBCOrderCommitMessage>;
-  failedMessage: OrderFailMessage | null = null;
+  private _asyncInfo?: AsyncOrderInformation<OCM>;
+  private _committedAt: Date | null = null;
+  private _createdAt: Date | null = null;
+  private _state: OrderState;
+  private _failedCode: string | undefined;
+  private _failedMessage: string | undefined;
 
-  private _amount: number;
-  private _memberId: string;
-  private _cardToken: string;
-  private _platformTradeNumber?: string;
+  private _checkoutMemberId: string | null = null;
+  private _checkoutCardId: string | null = null;
 
-  constructor(input: CTBCOrderInput, gateway: CTBCPayment) {
-    this.id = input.id;
-    this._amount = input.totalPrice;
-    this._memberId = input.memberId;
-    this._cardToken = input.cardToken;
-    this._gateway = gateway;
+  constructor(options: OrderCreateInit<OCM>) {
+    this._id = options.id;
+    this._items = options.items;
+    this._gateway = options.gateway;
+
+    if ('form' in options) {
+      this._form = options.form;
+      this._state = OrderState.INITED;
+    } else {
+      this._checkoutCardId = options.checkoutCardId ?? null;
+      this._checkoutMemberId = options.checkoutMemberId ?? null;
+      this._state = OrderState.PRE_COMMIT;
+    }
+
+    this._createdAt = options.createdAt ?? new Date();
   }
 
-  get amount(): number {
-    return this._amount;
+  get id(): string {
+    return this._id;
   }
 
-  get memberId(): string {
-    return this._memberId;
+  get items(): PaymentItem[] {
+    return this._items;
   }
 
-  get cardToken(): string {
-    return this._cardToken;
-  }
-
-  get platformTradeNumber(): string | undefined {
-    return this._platformTradeNumber;
+  get totalPrice(): number {
+    return this.items.reduce(
+      (sum, item) => sum + item.unitPrice * item.quantity,
+      0,
+    );
   }
 
   get committable(): boolean {
-    return this.state === OrderState.INITED && !this.failedMessage;
+    return !!~[OrderState.PRE_COMMIT, OrderState.ASYNC_INFO_RETRIEVED].indexOf(
+      this._state,
+    );
+  }
+  get state(): OrderState {
+    return this._state;
   }
 
-  infoRetrieved(info: AsyncOrderInformation<CTBCOrderCommitMessage>): void {
-    this.asyncInfo = info;
+  get createdAt(): Date | null {
+    return this._createdAt;
+  }
+
+  get committedAt(): Date | null {
+    return this._committedAt;
+  }
+
+  get failedMessage(): OrderFailMessage | null {
+    if (this._state !== OrderState.FAILED) return null;
+
+    return {
+      code: this._failedCode as string,
+      message: this._failedMessage as string,
+    };
+  }
+
+  get checkoutMemberId(): string | null {
+    return this._checkoutMemberId;
+  }
+
+  get checkoutCardId(): string | null {
+    return this._checkoutCardId;
+  }
+
+  get asyncInfo(): AsyncOrderInformation<OCM> | undefined {
+    return this._asyncInfo;
+  }
+
+  infoRetrieved(info: AsyncOrderInformation<OCM>): void {
+    this._asyncInfo = info;
+    this._state = OrderState.ASYNC_INFO_RETRIEVED;
+
+    this._gateway.emitter.emit(PaymentEvents.ORDER_INFO_RETRIEVED, this);
   }
 
   fail(code: string, message: string): void {
-    this.failedMessage = { code, message };
-    this.state = OrderState.FAILED;
+    this._failedCode = code;
+    this._failedMessage = message;
+
+    this._state = OrderState.FAILED;
+
+    this._gateway.emitter.emit(PaymentEvents.ORDER_FAILED, this);
   }
 
-  commit(
-    message: CTBCOrderCommitMessage,
-    info?: AdditionalInfo<CTBCOrderCommitMessage>,
-  ): void {
-    this.committedAt = message.committedAt;
-    this.state = OrderState.COMMITTED;
-    this.additionalInfo = info;
+  commit(message: OCM): void {
+    if (!this.committable) {
+      throw new Error(`Only pre-commit order can commit, now: ${this._state}`);
+    }
+
+    this._committedAt = message.committedAt;
+    this._state = OrderState.COMMITTED;
+
+    this._gateway.emitter.emit(PaymentEvents.ORDER_COMMITTED, this);
+  }
+
+  get boundCardCheckoutPayload(): CTBCCheckoutWithBoundCardRequestPayload {
+    if (!this._checkoutCardId || !this._checkoutMemberId) {
+      throw new Error(
+        'Bound card checkout payload requires checkoutCardId and checkoutMemberId',
+      );
+    }
+
+    return {
+      MerID: this._gateway.merId,
+      MemberID: this.checkoutMemberId as string,
+      PurchAmt: this.totalPrice,
+      TxType: 0,
+      AuthResURL: this._gateway.boundCheckoutResultURL,
+      AutoCap: 1,
+      Lidm: this.id,
+      RequestNo: this.id,
+      Token: this.checkoutCardId as string,
+      OrderDesc:
+        this.items
+          .map((item) => item.name)
+          .join(', ')
+          .substr(0, 18) || undefined, // Max 18 characters
+      TerminalID: this._gateway.terminalId,
+    } satisfies CTBCCheckoutWithBoundCardRequestPayload;
   }
 
   async refund(): Promise<void> {
     throw new Error('CTBCOrder.refund not implemented');
-  }
-
-  async executeCommit(): Promise<CTBCOrderCommitResult> {
-    const payload: CTBCOrderCommitPayload = {
-      MerID: this._gateway.merId,
-      MemberID: this._memberId,
-      RequestNo: this.id,
-      Token: this._cardToken,
-      PurchAmt: this._amount,
-    };
-
-    const encodedRequestPayload = encodeRequestPayload(
-      'PayJSON',
-      toTxnPayload(payload),
-      this._gateway,
-    );
-
-    const response = await fetch(this._gateway.endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        reqjsonpwd: encodedRequestPayload,
-      }).toString(),
-    });
-
-    if (!response.ok) {
-      const message = `HTTP Error ${response.status}`;
-
-      this.fail(`${response.status}`, message);
-      this._gateway.emitter.emit(PaymentEvents.ORDER_FAILED, this);
-
-      return {
-        success: false,
-        error: {
-          code: `${response.status}`,
-          message,
-        },
-      };
-    }
-
-    const responseText = await response.text();
-
-    try {
-      const parsed = decodeResponsePayload<CTBCOrderCommitResultPayload>(
-        responseText,
-        this._gateway.txnKey,
-      );
-
-      const result: CTBCOrderCommitResultPayload = {
-        MerchantID: parsed.MerchantID,
-        MerID: parsed.MerID,
-        MemberID: parsed.MemberID,
-        RequestNo: parsed.RequestNo,
-        StatusCode: parsed.StatusCode,
-        StatusDesc: parsed.StatusDesc,
-        ResponseTime: parsed.ResponseTime,
-        AuthCode: parsed.AuthCode ?? undefined,
-        ECI: parsed.ECI ?? undefined,
-        OrderNo: parsed.OrderNo ?? undefined,
-      };
-
-      if (result.StatusCode === 'I0000') {
-        this._platformTradeNumber = result.OrderNo;
-        this.commit({
-          id: this.id,
-          totalPrice: this._amount,
-          memberId: this._memberId,
-          cardToken: this._cardToken,
-          committedAt: new Date(),
-        });
-
-        this._gateway.emitter.emit(PaymentEvents.ORDER_COMMITTED, this);
-
-        return {
-          success: true,
-          orderNo: result.OrderNo,
-        };
-      } else {
-        this.fail(result.StatusCode, result.StatusDesc);
-        this._gateway.emitter.emit(PaymentEvents.ORDER_FAILED, this);
-
-        return {
-          success: false,
-          error: {
-            code: result.StatusCode,
-            message: result.StatusDesc,
-          },
-        };
-      }
-    } catch (error) {
-      this.fail('MAC_FAIL', 'Invalid MAC in response');
-      this._gateway.emitter.emit(PaymentEvents.ORDER_FAILED, this);
-
-      return {
-        success: false,
-        error: {
-          code: 'unknown',
-          message: error as string,
-        },
-      };
-    }
   }
 }

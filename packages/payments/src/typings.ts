@@ -137,6 +137,28 @@ export interface PaymentGateway<
   query<OO extends O>(id: string, options?: any): Promise<OO>;
 }
 
+export interface BindCardRequest {
+  cardId: string | undefined;
+  memberId: string;
+}
+
+export interface CheckoutWithBoundCardOptions {
+  cardId: string; // 綁定的卡片 ID
+  memberId: string; // 綁定會員 ID
+  items: PaymentItem[];
+  orderId?: string; // 可選的訂單 ID，若未提供則自動生成
+}
+
+export interface BindCardPaymentGateway<
+  CM extends OrderCommitMessage = OrderCommitMessage,
+  R extends BindCardRequest = BindCardRequest,
+  O extends Order<CM> = Order<CM>,
+> {
+  prepareBindCard(memberId: string): Promise<R>;
+
+  checkoutWithBoundCard(options: CheckoutWithBoundCardOptions): Promise<O>;
+}
+
 export enum Channel {
   CREDIT_CARD = 'CREDIT_CARD',
   WEB_ATM = 'WEB_ATM',

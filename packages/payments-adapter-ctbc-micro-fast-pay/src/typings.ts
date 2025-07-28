@@ -11,23 +11,72 @@
  * - MAC/TXN 處理通用格式
  */
 
-import { OrderCommitMessage } from '@rytass/payments';
+import {
+  CheckoutWithBoundCardOptions,
+  OrderCommitMessage,
+  PaymentItem,
+} from '@rytass/payments';
 import { EventEmitter } from 'node:events';
+import { IncomingMessage, ServerResponse } from 'node:http';
+import { CTBCBindCardRequest } from './ctbc-bind-card-request';
+import { CTBCPayment } from './ctbc-payment';
+import { CTBCOrder } from './ctbc-order';
 
-export interface BindCardGatewayLike<T = any> {
-  baseUrl: string; // 綁卡跳轉與 API endpoint 所屬網域
-  emitter: EventEmitter; // 綁卡結果事件派發器
-  getBindingURL(): string;
-  queryBoundCard(memberId: string): Promise<{ expireDate: Date }>; // 查詢綁定卡片資訊（尚未實作）
+export interface OrderCache<
+  CM extends CTBCOrderCommitMessage = CTBCOrderCommitMessage,
+  Key extends string = string,
+  Value extends CTBCOrder<CM> = CTBCOrder<CM>,
+> {
+  get: (key: Key) => Promise<Value | undefined>;
+  set: (key: Key, value: Value) => Promise<void>;
 }
 
-export interface CTBCPaymentOptions {
-  merchantId: string; // CTBC 配發之商店代碼
-  merId: string; // 商店代碼（CTBC 配發之商店代號）
-  txnKey: string; // MAC/TXN 使用的金鑰（商店自管）
-  baseUrl?: string; // API base URL，預設為 https://ccapi.ctbcbank.com
-  requireCacheHit?: boolean; // 是否強制要求 callback 必須命中快取（預設 true）
-  withServer?: boolean; // 是否使用後端伺服器生成 bindingURL
+export interface BindCardRequestCache<
+  Key extends string = string,
+  Value extends CTBCBindCardRequest = CTBCBindCardRequest,
+> {
+  get: (key: Key) => Promise<Value | undefined>;
+  set: (key: Key, value: Value) => Promise<void>;
+}
+
+export enum CTBCOrderFormKey {}
+
+export type CTBCPayOrderForm = Record<CTBCOrderFormKey, string>;
+
+export interface OrderCreateInit<
+  OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessage,
+> {
+  id: string;
+  items: PaymentItem[];
+  form?: CTBCPayOrderForm;
+  gateway: CTBCPayment<OCM>;
+  createdAt?: Date; // 訂單建立時間，預設為當前時間
+  checkoutMemberId?: string; // 綁定會員 ID（若有）
+  checkoutCardId?: string; // 綁定卡片 ID（若有）
+}
+
+export interface CTBCPaymentOptions<
+  O extends
+    CTBCOrder<CTBCOrderCommitMessage> = CTBCOrder<CTBCOrderCommitMessage>,
+> {
+  merchantId: string;
+  merId: string;
+  txnKey: string;
+  terminalId: string;
+  baseUrl?: string;
+  requireCacheHit?: boolean;
+  withServer?: boolean | 'ngrok';
+  serverHost?: string; // Default: http://localhost:3000
+  bindCardPath?: string;
+  boundCardPath?: string;
+  boundCardCheckoutResultPath?: string;
+  serverListener?: (req: IncomingMessage, res: ServerResponse) => void;
+  onServerListen?: () => void;
+  onCommit?: (order: O) => void;
+  orderCache?: OrderCache;
+  orderCacheTTL?: number; // Order Expire Time is ms
+  bindCardRequestsCache?: BindCardRequestCache;
+  bindCardRequestsCacheTTL?: number; // Order Expire Time is ms
 }
 
 export interface CTBCMicroFastPayOptions {
@@ -35,6 +84,30 @@ export interface CTBCMicroFastPayOptions {
   txnKey: string; // MAC/TXN 使用的金鑰（商店自管）
   baseUrl?: string; // API base URL，預設為 https://ccapi.ctbcbank.com
   withServer?: boolean; // 是否使用後端伺服器自動產生 bindingURL
+}
+
+export interface CTBCResponsePayload {
+  Header: {
+    ServiceName: 'TokenAdd';
+    Version: '1.0';
+    ResponseTime: string; // yyyy/MM/dd+HH:mm:ss (UTC+8)
+    MerchantID: string;
+    RequestNo: string; // 綁卡交易序號
+  };
+  Data: {
+    MAC: string; // 驗證用雜湊碼（MAC）
+    TXN: string; // 綁卡回傳資料（加密）
+  };
+}
+
+export interface CTBCRequestPrepareBindCardOptions {
+  finishRedirectURL?: string;
+  requestId?: string;
+  promoCode?: string; // 活動代碼（可選）
+  Pid?: string; // 身分證字號（可選）
+  PhoneNum?: string; // 手機號碼（可選）
+  PhoneNumEditable?: '0' | '1'; // 手機號碼是否允許使用者修改（0: 否, 1: 是）
+  Birthday?: Date;
 }
 
 /**
@@ -50,24 +123,16 @@ export interface CTBCBindCardRequestPayload {
   Pid?: string; // 身分證字號（可選）
   PhoneNum?: string; // 手機號碼（可選）
   PhoneNumEditable?: '0' | '1'; // 手機號碼是否允許使用者修改（0: 否, 1: 是）
+  Birthday?: string; // MMDDYYYY 格式的生日（可選）
 }
 
 /**
  * 綁卡完成後，CTBC 回傳的資料結構，對應文件 §4.2.1 新增卡片 Response
  */
 export interface CTBCBindCardCallbackPayload {
-  MerchantID: string; // 商店代碼（應與 MerID 相同）
-  MerID: string; // 商店代碼
-  BindMerID: string; // 綁卡商店代號（通常與 MerID 相同）
-  MemberID: string; // 會員編號（綁定對象）
-  RequestNo: string; // 綁卡交易序號（與送出時一致）
-
-  CardToken: string; // 綁卡後產出的 Token 值（未來支付用）
-  CardNoMask: string; // 遮罩後的卡號（ex: 411111******1111）
-  CardType: string; // 卡別（如：信用卡、VISA、MASTER）
-  StatusCode: string; // 綁卡狀態代碼（'00' 表成功）
-  StatusDesc: string; // 狀態說明（如成功/失敗原因）
-  ResponseTime: string; // 回應時間，格式為 yyyy/MM/dd HH:mm:ss
+  cardToken: string; // 綁卡後產出的 Token 值（未來支付用）
+  cardNoMask: string; // 卡號前六後四 (0000-00**-****-0000)
+  requestNo: string;
 }
 
 /**
@@ -80,13 +145,28 @@ export enum CTBCBindCardRequestState {
   FAILED = 'FAILED', // 綁卡失敗
 }
 
+export interface CTBCRawRequest {
+  Request: {
+    Header: {
+      ServiceName: 'PayJSON'; // 服務名稱（固定）
+      Version: '1.0'; // 版本號（預設為 1.0）
+      MerchantID: string; // 商店代碼（可能為空）
+      RequestTime: string; // 回傳時間，格式 yyyy/MM/dd HH:mm:ss
+    };
+    Data: {
+      MAC: string; // 驗證用雜湊碼（MAC）
+      TXN: string; // 綁卡回傳資料（加密）
+    };
+  };
+}
+
 /**
  * CTBC rspjsonpwd 解出來後的最外層結構（內含 TXN/MAC）
  */
 export interface CTBCRawResponse {
   Response: {
     Header: {
-      ServiceName: string; // 服務名稱（固定）
+      ServiceName: 'TokenAdd'; // 服務名稱（固定）
       Version?: string; // 版本號（預設為 1.0）
       MerchantID?: string; // 商店代碼（可能為空）
       ResponseTime: string; // 回傳時間，格式 yyyy/MM/dd HH:mm:ss
@@ -161,10 +241,7 @@ export interface CTBCOrderCommitResult {
 }
 
 // 為符合 PaymentGateway 的 commit() 型別要求，擴充必要欄位
-export interface CTBCOrderCommitMessage extends OrderCommitMessage {
-  memberId: string;
-  cardToken: string;
-}
+export interface CTBCOrderCommitMessage extends OrderCommitMessage {}
 
 // 提供 prepare() 時所需的訂單建立資料，實際執行時會從 input cast 而來
 export interface CTBCOrderInput {
@@ -172,4 +249,55 @@ export interface CTBCOrderInput {
   memberId: string;
   cardToken: string;
   totalPrice: number;
+}
+
+export interface CTBCCheckoutWithBoundCardOptions
+  extends CheckoutWithBoundCardOptions {
+  cardId: string; // 綁定的卡片 ID
+  memberId: string; // 綁定會員 ID
+  items: PaymentItem[];
+  orderId?: string;
+}
+
+export interface CTBCCheckoutWithBoundCardRequestPayload {
+  MerID: string;
+  MemberID: string;
+  TerminalID: string;
+  Lidm: string; // 訂單追蹤碼
+  PurchAmt: number;
+  TxType: 0 | 1 | 2; // 0: 一般交易, 1: 分期付款, 2: 紅利抵扣
+  NumberOfPay?: number; // 分期付款期數（若 TxType 為 1 時必填）
+  ProdCode?: number; // 產品代碼
+  MerchantName?: string; // 商店名稱
+  Customize?: '1' | '2' | '3' | '4' | '5'; // 自訂化選項（1: 繁體中文, 2: 簡體中文, 3: 英文, 4: 日文, 5: 其他）
+  AuthResURL: string;
+  AutoCap: 0 | 1; // 是否自動請款（0: 否, 1: 是）
+  SubMerchantID?: string; // 子商店代碼（可選）
+  OrderDesc?: string; // 訂單描述（可選）
+  Pid?: string; // 身分證字號（可選）
+  Birthday?: string; // 生日（MMDDYYYY 格式，可選）
+  RequestNo: string;
+  Token: string;
+  PromoCode?: string; // 活動代碼（可選）
+}
+
+export interface CTBCCheckoutWithBoundCardResponsePayload {
+  AuthAmount: number;
+  AuthCode: string; // 授權碼
+  Authrrpid: string; // 授權回覆 ID
+  CapBatchId: string; // 請款批次 ID
+  CardNo: string; // 授權碼
+  CardNumber: string; // 卡號（前六後四）
+  EInvoice: 1 | 0; // 是否開立電子發票（1: 是, 0: 否）
+  Errcode: string; // 錯誤代碼（00: 成功）
+  Last4DigitPAN: string; // 最後四位卡號
+  Lidm: string; // 訂單追蹤碼
+  MemberID: string; // 綁定會員 ID
+  MerID: string; // 商店代號
+  MerchantID: string; // 商店 ID
+  RequestNo: string; // 訂單編號
+  Status: string; // 交易狀態（0: 成功）
+  StatusCode: string; // 交易狀態碼（I0000: 成功）
+  TermSeq: string; // 端末機序號
+  Xid: string; // 交易 ID
 }
