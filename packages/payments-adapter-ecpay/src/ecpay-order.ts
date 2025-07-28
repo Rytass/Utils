@@ -229,6 +229,14 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
     };
   }
 
+  get checkoutMemberId(): string | null {
+    return this._checkoutMemberId;
+  }
+
+  get checkoutCardId(): string | null {
+    return this._checkoutCardId;
+  }
+
   infoRetrieved<T extends OCM>(
     asyncInformation: AsyncOrderInformation<T>,
     paymentType?: ECPayCallbackPaymentType,

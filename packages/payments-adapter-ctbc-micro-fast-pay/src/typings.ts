@@ -39,7 +39,10 @@ export interface BindCardRequestCache<
   set: (key: Key, value: Value) => Promise<void>;
 }
 
-export enum CTBCOrderFormKey {}
+export enum CTBCOrderFormKey {
+  URLEnc = 'URLEnc',
+  merID = 'merID',
+}
 
 export type CTBCPayOrderForm = Record<CTBCOrderFormKey, string>;
 
@@ -50,6 +53,7 @@ export interface OrderCreateInit<
   items: PaymentItem[];
   form?: CTBCPayOrderForm;
   gateway: CTBCPayment<OCM>;
+  clientBackUrl?: string | null;
   createdAt?: Date; // 訂單建立時間，預設為當前時間
   checkoutMemberId?: string; // 綁定會員 ID（若有）
   checkoutCardId?: string; // 綁定卡片 ID（若有）
@@ -67,6 +71,8 @@ export interface CTBCPaymentOptions<
   requireCacheHit?: boolean;
   withServer?: boolean | 'ngrok';
   serverHost?: string; // Default: http://localhost:3000
+  callbackPath?: string;
+  checkoutPath?: string;
   bindCardPath?: string;
   boundCardPath?: string;
   boundCardCheckoutResultPath?: string;
@@ -300,4 +306,14 @@ export interface CTBCCheckoutWithBoundCardResponsePayload {
   StatusCode: string; // 交易狀態碼（I0000: 成功）
   TermSeq: string; // 端末機序號
   Xid: string; // 交易 ID
+}
+
+export interface CTBCInMacRequestPayload {
+  MerchantID: string;
+  TerminalID: string;
+  lidm: string;
+  purchAmt: number;
+  txType: '0' | '1' | '2' | '4' | '6'; // 0: 一般交易, 1: 分期付款, 2: 紅利抵扣, 4: 紅利分期, 6: AE
+  Option: string; // 1 為一般特店，美運時帶空字串
+  Key: string;
 }

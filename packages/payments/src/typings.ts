@@ -121,8 +121,18 @@ export interface Order<OCM extends OrderCommitMessage>
   refund(amount?: number, options?: any): Promise<void>;
 }
 
-export type InputFromOrderCommitMessage<OCM extends OrderCommitMessage> =
-  PrepareOrderInput;
+export enum CardType {
+  VMJ = 'VMJ',
+  AE = 'AE',
+}
+
+export interface InputFromOrderCommitMessage<OCM extends OrderCommitMessage>
+  extends PrepareOrderInput {
+  id?: string;
+  cardType?: CardType; // Default: CardType.VMJ
+  shopName?: string;
+  clientBackUrl?: string;
+}
 
 export interface PaymentGateway<
   OCM extends OrderCommitMessage = OrderCommitMessage,

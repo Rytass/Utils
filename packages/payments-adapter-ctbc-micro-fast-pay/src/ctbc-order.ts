@@ -5,6 +5,7 @@ import {
   PaymentItem,
   AsyncOrderInformation,
   PaymentEvents,
+  AdditionalInfo,
 } from '@rytass/payments';
 import { CTBCPayment } from './ctbc-payment';
 import {
@@ -23,12 +24,14 @@ export class CTBCOrder<
   private readonly _form: CTBCPayOrderForm | undefined;
   private readonly _gateway: CTBCPayment<OCM>;
 
+  private _additionalInfo?: AdditionalInfo<OCM>;
   private _asyncInfo?: AsyncOrderInformation<OCM>;
   private _committedAt: Date | null = null;
   private _createdAt: Date | null = null;
   private _state: OrderState;
   private _failedCode: string | undefined;
   private _failedMessage: string | undefined;
+  private _clientBackUrl: string | undefined;
 
   private _checkoutMemberId: string | null = null;
   private _checkoutCardId: string | null = null;
@@ -40,6 +43,7 @@ export class CTBCOrder<
 
     if ('form' in options) {
       this._form = options.form;
+      this._clientBackUrl = options.clientBackUrl ?? undefined;
       this._state = OrderState.INITED;
     } else {
       this._checkoutCardId = options.checkoutCardId ?? null;
@@ -54,6 +58,10 @@ export class CTBCOrder<
     return this._id;
   }
 
+  get clientBackUrl(): string | undefined {
+    return this._clientBackUrl;
+  }
+
   get items(): PaymentItem[] {
     return this._items;
   }
@@ -63,6 +71,44 @@ export class CTBCOrder<
       (sum, item) => sum + item.unitPrice * item.quantity,
       0,
     );
+  }
+
+  get form(): CTBCPayOrderForm {
+    if (~[OrderState.COMMITTED, OrderState.FAILED].indexOf(this._state)) {
+      throw new Error('Finished order cannot get submit form data');
+    }
+
+    this._state = OrderState.PRE_COMMIT;
+
+    return this._form!;
+  }
+
+  get formHTML(): string {
+    if (~[OrderState.COMMITTED, OrderState.FAILED].indexOf(this._state)) {
+      throw new Error('Finished order cannot get submit form url');
+    }
+
+    this._state = OrderState.PRE_COMMIT;
+
+    return `<!DOCTYPE html>
+<html>
+  <head>
+    <title>Payment Submit Form</title>
+  </head>
+  <body>
+    <form action="${this._gateway.baseUrl}/mauth/SSLAuthUI.jsp" method="POST">
+      ${Object.entries(this.form)
+        .map(
+          ([key, value]) =>
+            `<input name="${key}" value="${value}" type="hidden" />`,
+        )
+        .join('\n')}
+    </form>
+    <script>
+      document.forms[0].submit();
+    </script>
+  </body>
+</html>`;
   }
 
   get committable(): boolean {
@@ -80,6 +126,11 @@ export class CTBCOrder<
 
   get committedAt(): Date | null {
     return this._committedAt;
+  }
+
+  // Additional information
+  get additionalInfo(): AdditionalInfo<OCM> | undefined {
+    return this._additionalInfo;
   }
 
   get failedMessage(): OrderFailMessage | null {
@@ -119,12 +170,13 @@ export class CTBCOrder<
     this._gateway.emitter.emit(PaymentEvents.ORDER_FAILED, this);
   }
 
-  commit(message: OCM): void {
+  commit(message: OCM, additionalInfo?: AdditionalInfo<OCM>): void {
     if (!this.committable) {
       throw new Error(`Only pre-commit order can commit, now: ${this._state}`);
     }
 
     this._committedAt = message.committedAt;
+    this._additionalInfo = additionalInfo;
     this._state = OrderState.COMMITTED;
 
     this._gateway.emitter.emit(PaymentEvents.ORDER_COMMITTED, this);
@@ -151,7 +203,7 @@ export class CTBCOrder<
         this.items
           .map((item) => item.name)
           .join(', ')
-          .substr(0, 18) || undefined, // Max 18 characters
+          .substring(0, 18) || undefined, // Max 18 characters
       TerminalID: this._gateway.terminalId,
     } satisfies CTBCCheckoutWithBoundCardRequestPayload;
   }

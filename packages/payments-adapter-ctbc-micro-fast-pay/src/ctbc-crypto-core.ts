@@ -1,7 +1,10 @@
 import crypto from 'node:crypto';
+import { CTBCInMacRequestPayload } from './typings';
 
 // Default IV fixed for CTBC compatibility (not secret)
 let IV: Buffer = Buffer.alloc(8, 0);
+
+export let SSLAuthIV: Buffer = Buffer.from('hywebpg5', 'utf8'); // Default IV for SSLAuth, can be overridden
 
 /**
  * Override default IV used for 3DES encryption.
@@ -11,6 +14,47 @@ let IV: Buffer = Buffer.alloc(8, 0);
 export function setIV(iv: Buffer): void {
   if (iv.length !== 8) throw new Error('IV must be 8 bytes');
   IV = iv;
+}
+
+export function setSSLAuthIV(iv: Buffer): void {
+  if (iv.length !== 8) throw new Error('SSLAuth IV must be 8 bytes');
+
+  SSLAuthIV = iv;
+}
+
+export function getMacFromParams(params: CTBCInMacRequestPayload): string {
+  const buffer = Buffer.from(
+    `|${[
+      params.MerchantID,
+      params.TerminalID,
+      params.lidm,
+      params.purchAmt,
+      params.txType,
+      params.Option,
+    ].join('|')}|`,
+    'utf8',
+  );
+
+  return desMac(buffer, params.Key);
+}
+
+export function desMac(message: Buffer, key: string): string {
+  const blockSize = 8;
+  const padLength = blockSize - (message.length % blockSize);
+  const padding = Buffer.alloc(padLength, padLength);
+  const paddedMsg = Buffer.concat([message, padding]);
+
+  const cipher = crypto.createCipheriv(
+    'des-ede3-cbc',
+    Buffer.from(key, 'utf8'),
+    SSLAuthIV,
+  );
+
+  cipher.setAutoPadding(false);
+
+  const encrypted = Buffer.concat([cipher.update(paddedMsg), cipher.final()]);
+
+  return encrypted.toString('hex').toUpperCase();
 }
 
 const xorBuffers = (buf1: Buffer, buf2: Buffer): Buffer => {

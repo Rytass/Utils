@@ -1,13 +1,19 @@
 import {
+  AdditionalInfo,
   BindCardPaymentGateway,
+  CardType,
+  Channel,
+  CreditCardECI,
   InputFromOrderCommitMessage,
   Order,
+  OrderCreditCardCommitMessage,
   PaymentEvents,
   PaymentGateway,
 } from '@rytass/payments';
 import EventEmitter from 'node:events';
 import { LRUCache } from 'lru-cache';
 import debug from 'debug';
+import * as iconv from 'iconv-lite';
 import {
   createServer,
   IncomingMessage,
@@ -20,20 +26,26 @@ import {
   BindCardRequestCache,
   CTBCBindCardRequestPayload,
   CTBCCheckoutWithBoundCardOptions,
+  CTBCInMacRequestPayload,
   CTBCOrderCommitMessage,
+  CTBCOrderFormKey,
   CTBCPaymentOptions,
+  CTBCPayOrderForm,
   CTBCRawRequest,
   CTBCRequestPrepareBindCardOptions,
   CTBCResponsePayload,
   OrderCache,
 } from './typings';
-import { randomBytes } from 'node:crypto';
+import { createDecipheriv, randomBytes } from 'node:crypto';
 import { DateTime } from 'luxon';
 import {
   decrypt3DES,
+  desMac,
   encrypt3DES,
   getDivKey,
   getMAC,
+  getMacFromParams,
+  SSLAuthIV,
 } from './ctbc-crypto-core';
 import { URLSearchParams } from 'node:url';
 
@@ -46,6 +58,8 @@ export class CTBCPayment<
   implements PaymentGateway<CM, CTBCOrder<CM>>, BindCardPaymentGateway<CM>
 {
   private serverHost = 'http://localhost:3000';
+  private callbackPath = '/payments/ctbc/callback';
+  private checkoutPath = '/payments/ctbc/checkout';
   private bindCardPath = '/payments/ctbc/bind-card';
   private boundCardPath = '/payments/ctbc/bound-card';
   private boundCardCheckoutResultPath =
@@ -75,8 +89,9 @@ export class CTBCPayment<
     this.txnKey = options.txnKey;
     this.terminalId = options.terminalId;
     this.baseUrl = options.baseUrl ?? 'https://testepos.ctbcbank.com';
-    this.endpoint = `${this.baseUrl}/mFastPay/TxnServlet`;
     this.serverHost = options?.serverHost || this.serverHost;
+    this.callbackPath = options?.callbackPath || this.callbackPath;
+    this.checkoutPath = options?.checkoutPath || this.checkoutPath;
     this.bindCardPath = options?.bindCardPath || this.bindCardPath;
     this.boundCardPath = options?.boundCardPath || this.boundCardPath;
     this.boundCardCheckoutResultPath =
@@ -131,6 +146,7 @@ export class CTBCPayment<
     req: IncomingMessage,
     res: ServerResponse,
   ): Promise<void> {
+    const checkoutRe = new RegExp(`^${this.checkoutPath}/([^/]+)$`);
     const bindCardRe = new RegExp(`^${this.bindCardPath}/([^/]+)$`);
 
     debugPaymentServer(`[${req.method}] ${req.url}`);
@@ -138,6 +154,28 @@ export class CTBCPayment<
     debugPaymentServer(this.bindCardRequestsCache);
 
     if (req.method === 'GET' && req.url) {
+      if (checkoutRe.test(req.url)) {
+        const orderId = RegExp.$1;
+
+        if (orderId) {
+          const order = await this.orderCache.get(orderId);
+
+          if (order) {
+            debugPayment(
+              `CTBCPayment serve checkout page for order ${orderId}`,
+            );
+
+            res.writeHead(200, {
+              'Content-Type': 'text/html; charset=utf-8',
+            });
+
+            res.end(order.formHTML);
+
+            return;
+          }
+        }
+      }
+
       if (bindCardRe.test(req.url)) {
         const memberId = RegExp.$1;
 
@@ -164,7 +202,11 @@ export class CTBCPayment<
     if (
       !req.url ||
       req.method !== 'POST' ||
-      !~[this.boundCardPath, this.boundCardCheckoutResultPath].indexOf(req.url)
+      !~[
+        this.boundCardPath,
+        this.boundCardCheckoutResultPath,
+        this.callbackPath,
+      ].indexOf(req.url)
     ) {
       res.writeHead(404);
       res.end();
@@ -185,6 +227,102 @@ export class CTBCPayment<
 
       try {
         switch (req.url) {
+          case this.callbackPath: {
+            const params = new URLSearchParams(payloadString);
+            const response = params.get('URLResEnc');
+
+            if (!response) {
+              throw new Error('Missing URLResEnc parameter in callback');
+            }
+
+            const decipher = createDecipheriv(
+              'des-ede3-cbc',
+              Buffer.from(this.txnKey, 'utf8'),
+              SSLAuthIV,
+            );
+
+            decipher.setAutoPadding(false);
+
+            const decrypted = Buffer.concat([
+              decipher.update(Buffer.from(response, 'hex')),
+              decipher.final(),
+            ]);
+
+            const plain = iconv.decode(decrypted, 'big5');
+
+            const payload = new URLSearchParams(plain);
+            const requestId = payload.get('lidm');
+
+            if (!requestId) {
+              throw new Error('Missing lidm parameter in callback');
+            }
+
+            const order = (await this.orderCache.get(
+              requestId,
+            )) as CTBCOrder<OrderCreditCardCommitMessage>;
+
+            const errorCode = payload.get('errcode');
+            const errorMessage = payload.get('errDesc');
+
+            if (errorCode !== '00') {
+              if (order) {
+                order.fail(errorCode ?? 'x9999', errorMessage ?? '-');
+              }
+
+              throw new Error(
+                `CTBC Bound Card Checkout Failed: ${errorCode} - ${errorMessage}`,
+              );
+            }
+
+            if (!order) {
+              throw new Error(
+                `Unknown bound card checkout order: ${requestId}`,
+              );
+            }
+
+            order.commit(
+              {
+                id: order.id,
+                totalPrice: Number(payload.get('authAmt')),
+                committedAt: new Date(),
+              } as OrderCreditCardCommitMessage,
+              {
+                channel: Channel.CREDIT_CARD,
+                processDate: new Date(),
+                amount: Number(payload.get('authAmt')),
+                eci: CreditCardECI.VISA_AE_JCB_3D,
+                authCode: payload.get('authCode') as string,
+                card6Number: (payload.get('CardNumber') as string).substring(
+                  0,
+                  6,
+                ),
+                card4Number: payload.get('Last4digitPAN') as string,
+              } as AdditionalInfo<OrderCreditCardCommitMessage>,
+            );
+
+            debugPaymentServer(
+              `CTBCPayment bound card checkout order ${order.id} successful.`,
+            );
+
+            if (order.clientBackUrl) {
+              res.writeHead(302, {
+                Location: order.clientBackUrl,
+              });
+
+              res.end();
+
+              return;
+            }
+
+            res.writeHead(200, {
+              'Content-Type': 'text/plain',
+            });
+
+            res.end('1|OK');
+
+            break;
+          }
+
           case this.boundCardPath: {
             const params = new URLSearchParams(payloadString);
             const payload = JSON.parse(
@@ -292,9 +430,10 @@ export class CTBCPayment<
               `CTBCPayment bound card checkout order ${order.id} successful.`,
             );
 
-            res.writeHead(200, {
-              'Content-Type': 'text/plain',
-            });
+            if (order.clientBackUrl)
+              res.writeHead(200, {
+                'Content-Type': 'text/plain',
+              });
 
             res.end('1|OK');
 
@@ -401,9 +540,95 @@ export class CTBCPayment<
   }
 
   async prepare<N extends CTBCOrderCommitMessage>(
-    input: InputFromOrderCommitMessage<N>,
+    options: InputFromOrderCommitMessage<N>,
   ): Promise<Order<N>> {
-    throw new Error('CTBCPayment.prepare not implemented');
+    if (options.id && options.id.length > 19) {
+      throw new Error('Order ID must be less than 20 characters');
+    }
+
+    if (options.id && /[^0-9a-z_]/i.test(options.id)) {
+      throw new Error(
+        'Order ID can only contain alphanumeric characters and underscores',
+      );
+    }
+
+    const totalPrice = options.items.reduce(
+      (sum, item) => sum + item.unitPrice * item.quantity,
+      0,
+    );
+
+    if (totalPrice <= 0) {
+      throw new Error('Total price must be greater than 0');
+    }
+
+    const orderId = options.id ?? randomBytes(8).toString('hex');
+
+    const orderDesc = options.items.map((item) => item.name).join(', ');
+    const txType = options.cardType === CardType.AE ? '6' : '0';
+    const option = options.cardType === CardType.AE ? '' : '1';
+
+    const mac = getMacFromParams({
+      MerchantID: this.merchantId,
+      TerminalID: this.terminalId,
+      lidm: orderId,
+      purchAmt: totalPrice,
+      txType,
+      Option: option,
+      Key: this.txnKey,
+    }).slice(-48);
+
+    // Keep Order In Params
+    const params: (string | Buffer)[] = [];
+
+    params.push(`MerchantID=${this.merchantId}&`);
+    params.push(`TerminalID=${this.terminalId}&`);
+    params.push(`lidm=${orderId}&`);
+    params.push(`purchAmt=${totalPrice.toString()}&`);
+    params.push(`txType=${txType}&`);
+    params.push('MerchantName=');
+
+    if (options.shopName) {
+      params.push(iconv.encode(options.shopName, 'big5'));
+    }
+
+    params.push(`&AuthResURL=${`${this.serverHost}${this.callbackPath}`}&`);
+    params.push('OrderDesc=');
+
+    if (orderDesc) {
+      params.push(iconv.encode(orderDesc, 'big5'));
+    }
+
+    params.push('&ProdCode=&');
+    params.push('AutoCap=1&');
+    params.push('customize=1&');
+    params.push('NumberOfPay=&');
+    params.push(`InMac=${mac}`);
+
+    const encPayload = Buffer.concat(
+      params.map((param) =>
+        Buffer.isBuffer(param) ? param : Buffer.from(param, 'utf8'),
+      ),
+    );
+    const enc = desMac(encPayload, this.txnKey);
+
+    const order = new CTBCOrder({
+      id: orderId,
+      items: options.items,
+      form: {
+        [CTBCOrderFormKey.URLEnc]: enc,
+        [CTBCOrderFormKey.merID]: this.merId,
+      } satisfies CTBCPayOrderForm,
+      gateway: this,
+      clientBackUrl: options.clientBackUrl,
+    });
+
+    this.orderCache.set(orderId, order);
+
+    debugPayment(
+      `CTBCPayment Checkout URL: ${this.serverHost}${this.checkoutPath}/${orderId}`,
+    );
+
+    return order as Order<N>;
   }
 
   async query<OO extends CTBCOrder>(id: string): Promise<OO> {
