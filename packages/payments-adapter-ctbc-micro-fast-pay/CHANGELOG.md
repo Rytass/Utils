@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.1](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.0...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.1) (2025-07-28)
+
+### Features
+
+- **payments-adapter-ctbc-micro-fast-pay:** support one time checkout ([04088a0](https://github.com/Rytass/Utils/commit/04088a0d119b617ee19918539ad05c31565bd427))
+
 # [0.1.0](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.0.8...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.0) (2025-07-28)
 
 ### Bug Fixes

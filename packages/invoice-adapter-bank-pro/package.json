@@ -1,6 +1,6 @@
 {
   "name": "@rytass/invoice-adapter-bank-pro",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Rytass Invoice Gateway - BankPro",
   "keywords": [
     "rytass",
@@ -23,7 +23,7 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/invoice": "^0.4.0",
+    "@rytass/invoice": "^0.4.1",
     "axios": "^1.7.8",
     "luxon": "^3.5.0",
     "validator": "^13.12.0"
