@@ -17,7 +17,6 @@ import {
 } from 'crypto';
 import { DateTime } from 'luxon';
 import debug from 'debug';
-import ngrok from 'ngrok';
 import { LRUCache } from 'lru-cache';
 import { Server, IncomingMessage, ServerResponse, createServer } from 'http';
 import { NewebPayOrder } from './newebpay-order';
@@ -95,6 +94,7 @@ export class NewebPayPayment<
     this.callbackPath = options?.callbackPath ?? '/payments/newebpay/callback';
     this.asyncInfoPath =
       options?.asyncInfoPath ?? '/payments/newebpay/async-information';
+
     this.checkoutPath = options?.checkoutPath ?? '/payments/newebpay/checkout';
 
     if (options?.withServer) {
@@ -110,19 +110,39 @@ export class NewebPayPayment<
 
       this._server.listen(port, '0.0.0.0', async () => {
         if (options.withServer === 'ngrok') {
-          try {
-            const ngrokUrl = await ngrok.connect(port);
-
-            this.serverHost = ngrokUrl;
-
+          if (!process.env.NGROK_AUTHTOKEN) {
             debugPayment(
-              `ECPayment Callback Server Listen on port ${port} with ngrok url: ${ngrokUrl}`,
+              '[NewebPayment] NGROK_AUTHTOKEN is not set. Please set it in your environment variables.',
             );
-          } catch (ex) {
-            debugPayment(ex);
+
+            throw new Error(
+              '[NewebPayment] NGROK_AUTHTOKEN is not set. Please set it in your environment variables.',
+            );
           }
+
+          try {
+            await import('@ngrok/ngrok');
+          } catch (ex) {
+            debugPayment(
+              '[NewebPayment] Failed to import ngrok. Please install it to use ngrok feature.',
+            );
+
+            throw ex;
+          }
+
+          const ngrok = (await import('@ngrok/ngrok')).default;
+
+          await ngrok.authtoken(process.env.NGROK_AUTHTOKEN);
+
+          const forwarder = await ngrok.forward(port);
+
+          this.serverHost = forwarder.url() as string;
+
+          debugPayment(
+            `NewebPayment Callback Server Listen on port ${port} with ngrok url: ${this.serverHost}`,
+          );
         } else {
-          debugPayment(`ECPayment Callback Server Listen on port ${port}`);
+          debugPayment(`NewebPayment Callback Server Listen on port ${port}`);
         }
 
         this.emitter.emit(PaymentEvents.SERVER_LISTENED);
@@ -215,6 +235,7 @@ export class NewebPayPayment<
       const payloadString = Buffer.from(Buffer.concat(bufferArray)).toString(
         'utf8',
       );
+
       const payload = Array.from(
         new URLSearchParams(payloadString).entries(),
       ).reduce(
@@ -233,6 +254,7 @@ export class NewebPayPayment<
                 payload.TradeInfo,
                 payload.TradeSha,
               );
+
             const order = await this.pendingOrdersCache.get(
               resolvedData.MerchantOrderNo,
             );
@@ -254,6 +276,7 @@ export class NewebPayPayment<
                 payload.TradeInfo,
                 payload.TradeSha,
               );
+
             const order = await this.pendingOrdersCache.get(
               resolvedData.MerchantOrderNo,
             );
