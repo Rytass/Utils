@@ -332,6 +332,7 @@ export class NewebPayOrder<
           this
             .additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage> as NewebPayAdditionInfoCreditCard
         ).closeStatus = NewebPayCreditCardBalanceStatus.SETTLED;
+
         (
           this
             .additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage> as NewebPayAdditionInfoCreditCard

@@ -1,10 +1,14 @@
 /* eslint-disable no-control-regex */
 import {
+  BindCardPaymentGateway,
   Channel,
+  CheckoutWithBoundCardOptions,
   CreditCardAuthInfo,
+  Order,
   OrderState,
   PaymentEvents,
   PaymentGateway,
+  PaymentItem,
   VirtualAccountPaymentInfo,
   WebATMPaymentInfo,
 } from '@rytass/payments';
@@ -44,6 +48,9 @@ import {
   NewebPayCreditCardCloseResponse,
   NewebPayOrderStatusFromAPI,
   OrdersCache,
+  NewebPayBindCardRequestTradeInfoPayload,
+  BindCardRequestCache,
+  NewebPayBindCardResponseTradeInfoPayload,
 } from './typings';
 import {
   NewebPayAdditionInfoCreditCard,
@@ -56,12 +63,14 @@ import {
 } from './typings/webatm.typing';
 import { NewebPayVirtualAccountCommitMessage } from './typings/virtual-account.typing';
 import axios from 'axios';
+import { NewebPayBindCardRequest } from './newebpay-bind-card-request';
 
 const debugPayment = debug('Rytass:Payment:NewebPay');
 
 export class NewebPayPayment<
-  CM extends NewebPayCommitMessage = NewebPayCommitMessage,
-> implements PaymentGateway<CM, NewebPayOrder<CM>>
+    CM extends NewebPayCommitMessage = NewebPayCommitMessage,
+  >
+  implements PaymentGateway<CM, NewebPayOrder<CM>>, BindCardPaymentGateway<CM>
 {
   private readonly baseUrl: string;
   private readonly aesKey: string;
@@ -72,14 +81,13 @@ export class NewebPayPayment<
   private readonly callbackPath: string;
   private readonly asyncInfoPath: string;
   private readonly checkoutPath: string;
+  private readonly bindCardPath: string;
+  private readonly boundCardPath: string;
   private readonly serverListener:
     | ((req: IncomingMessage, res: ServerResponse) => void)
     | undefined;
-  private readonly pendingOrdersCache: OrdersCache<
-    CM,
-    string,
-    NewebPayOrder<CM>
-  >;
+  private readonly pendingOrdersCache: OrdersCache;
+  private readonly bindCardRequestsCache: BindCardRequestCache;
   private isGatewayReady = false;
 
   readonly _server?: Server;
@@ -96,6 +104,9 @@ export class NewebPayPayment<
       options?.asyncInfoPath ?? '/payments/newebpay/async-information';
 
     this.checkoutPath = options?.checkoutPath ?? '/payments/newebpay/checkout';
+    this.bindCardPath = options?.bindCardPath ?? '/payments/newebpay/bind-card';
+    this.boundCardPath =
+      options?.boundCardPath ?? '/payments/newebpay/bound-card';
 
     if (options?.withServer) {
       this.serverListener =
@@ -176,6 +187,20 @@ export class NewebPayPayment<
         lruCache!.set(key, value);
       },
     };
+
+    const requestLruCache = options?.bindCardRequestsCache
+      ? undefined
+      : new LRUCache<string, NewebPayBindCardRequest>({
+          ttlAutopurge: true,
+          ttl: options?.ttl ?? 10 * 60 * 1000, // default: 10 mins
+        });
+
+    this.bindCardRequestsCache = options?.bindCardRequestsCache ?? {
+      get: async (key: string) => requestLruCache!.get(key),
+      set: async (key: string, value: NewebPayBindCardRequest) => {
+        requestLruCache!.set(key, value);
+      },
+    };
   }
 
   readonly emitter = new EventEmitter();
@@ -188,28 +213,59 @@ export class NewebPayPayment<
     return `${this.serverHost}${this.checkoutPath}/${order.id}`;
   }
 
+  getBindCardUrl(request: NewebPayBindCardRequest): string {
+    return `${this.serverHost}${this.bindCardPath}/${request.id}`;
+  }
+
   public async defaultServerListener(
     req: IncomingMessage,
     res: ServerResponse,
   ): Promise<void> {
     const checkoutRe = new RegExp(`^${this.checkoutPath}/([^/]+)$`);
+    const bindCardRe = new RegExp(`^${this.bindCardPath}/([^/]+)$`);
 
-    if (req.method === 'GET' && req.url && checkoutRe.test(req.url)) {
-      const orderId = RegExp.$1;
+    if (req.method === 'GET' && req.url) {
+      if (bindCardRe.test(req.url)) {
+        const orderId = RegExp.$1;
 
-      if (orderId) {
-        const order = await this.pendingOrdersCache.get(orderId);
+        if (orderId) {
+          const request = await this.bindCardRequestsCache.get(orderId);
 
-        if (order) {
-          debugPayment(`ECPayment serve checkout page for order ${orderId}`);
+          if (request) {
+            debugPayment(
+              `NewebPayment serve bind card page for order ${orderId}`,
+            );
 
-          res.writeHead(200, {
-            'Content-Type': 'text/html; charset=utf-8',
-          });
+            res.writeHead(200, {
+              'Content-Type': 'text/html; charset=utf-8',
+            });
 
-          res.end(order.formHTML);
+            res.end(request.formHTML);
 
-          return;
+            return;
+          }
+        }
+      }
+
+      if (checkoutRe.test(req.url)) {
+        const orderId = RegExp.$1;
+
+        if (orderId) {
+          const order = await this.pendingOrdersCache.get(orderId);
+
+          if (order) {
+            debugPayment(
+              `NewebPayment serve checkout page for order ${orderId}`,
+            );
+
+            res.writeHead(200, {
+              'Content-Type': 'text/html; charset=utf-8',
+            });
+
+            res.end(order.formHTML);
+
+            return;
+          }
         }
       }
     }
@@ -217,7 +273,9 @@ export class NewebPayPayment<
     if (
       !req.url ||
       req.method !== 'POST' ||
-      !~[this.callbackPath, this.asyncInfoPath].indexOf(req.url)
+      !~[this.callbackPath, this.asyncInfoPath, this.boundCardPath].indexOf(
+        req.url,
+      )
     ) {
       res.writeHead(404);
       res.end();
@@ -248,6 +306,29 @@ export class NewebPayPayment<
 
       try {
         switch (req.url) {
+          case this.boundCardPath: {
+            const resolvedData =
+              await this.resolveEncryptedPayload<NewebPayBindCardResponseTradeInfoPayload>(
+                payload.TradeInfo,
+                payload.TradeSha,
+              );
+
+            const request = await this.bindCardRequestsCache.get(
+              resolvedData.MerchantOrderNo,
+            );
+
+            if (!request) {
+              res.writeHead(404);
+              res.end();
+
+              return;
+            }
+
+            request.bound(resolvedData);
+
+            break;
+          }
+
           case this.callbackPath: {
             const resolvedData =
               await this.resolveEncryptedPayload<NewebPayNotifyEncryptedPayload>(
@@ -443,7 +524,7 @@ export class NewebPayPayment<
       string,
       string | number | undefined
     >,
-  >(payload: T): NewebPayMPGMakeOrderPayload {
+  >(payload: T, version = '2.0'): NewebPayMPGMakeOrderPayload {
     const params = Object.entries(payload)
       .filter(([, value]) => value !== undefined)
       .map(
@@ -462,7 +543,7 @@ export class NewebPayPayment<
         .update(`HashKey=${this.aesKey}&${encrypted}&HashIV=${this.aesIv}`)
         .digest('hex')
         .toUpperCase(),
-      Version: '2.0',
+      Version: version,
       EncryptType: 0,
     };
   }
@@ -1072,5 +1153,60 @@ export class NewebPayPayment<
 
       throw new Error('Refund order failed');
     }
+  }
+
+  async prepareBindCard(
+    memberId: string,
+    options?: {
+      items?: PaymentItem[];
+      finishRedirectURL?: string;
+      orderId?: string;
+    },
+  ): Promise<NewebPayBindCardRequest> {
+    const totalAmount = (options?.items ?? []).reduce(
+      (sum, item) => sum + item.unitPrice * item.quantity,
+      0,
+    );
+    const description = (options?.items ?? [])
+      .map((item) => item.name)
+      .join(',');
+
+    const id = options?.orderId ?? randomBytes(15).toString('hex');
+
+    const payload = {
+      MerchantID: this.merchantId,
+      RespondType: 'JSON',
+      TimeStamp: Math.round(Date.now() / 1000).toString(),
+      Version: '2.1',
+      MerchantOrderNo: id,
+      Amt: totalAmount || 1,
+      ItemDesc: description.substring(0, 50) || '綁定信用卡',
+      OrderComment: '',
+      CREDITAGREEMENT: 1,
+      CREDITAEAGREEMENT: 0,
+      TokenTerm: memberId,
+      ReturnURL: `${this.serverHost}${this.boundCardPath}`,
+    } satisfies NewebPayBindCardRequestTradeInfoPayload;
+
+    const request = new NewebPayBindCardRequest({
+      form: this.generatePayload<NewebPayBindCardRequestTradeInfoPayload>(
+        payload,
+      ),
+      gateway: this,
+      id,
+      memberId,
+    });
+
+    this.bindCardRequestsCache.set(request.id, request);
+
+    debugPayment(`Bind card url: ${this.getBindCardUrl(request)}`);
+
+    return request;
+  }
+
+  async checkoutWithBoundCard(
+    options: CheckoutWithBoundCardOptions,
+  ): Promise<Order<CM>> {
+    return {} as Order<CM>;
   }
 }
