@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.3](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.2...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.3) (2025-07-29)
+
+### Features
+
+- **payments-adapter-ctbc-micro-fast-pay:** export handleCallbackTextBodyByURLPath ([bb64d00](https://github.com/Rytass/Utils/commit/bb64d00b4290d1f24175fb4a69167c95e52ba0e0))
+
 ## [0.1.2](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.1...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.2) (2025-07-29)
 
 ### Bug Fixes
