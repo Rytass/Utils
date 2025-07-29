@@ -51,6 +51,8 @@ import {
   NewebPayBindCardRequestTradeInfoPayload,
   BindCardRequestCache,
   NewebPayBindCardResponseTradeInfoPayload,
+  NewebPayCheckoutWithTokenPayload,
+  NewebPayCheckoutWithTokenPostData,
 } from './typings';
 import {
   NewebPayAdditionInfoCreditCard,
@@ -64,6 +66,7 @@ import {
 import { NewebPayVirtualAccountCommitMessage } from './typings/virtual-account.typing';
 import axios from 'axios';
 import { NewebPayBindCardRequest } from './newebpay-bind-card-request';
+import { sum } from 'lodash';
 
 const debugPayment = debug('Rytass:Payment:NewebPay');
 
@@ -519,12 +522,12 @@ export class NewebPayPayment<
     return randomBytes(10).toString('hex');
   }
 
-  private generatePayload<
+  private encrypt<
     T extends Record<string, string | number | undefined> = Record<
       string,
       string | number | undefined
     >,
-  >(payload: T, version = '2.0'): NewebPayMPGMakeOrderPayload {
+  >(payload: T): string {
     const params = Object.entries(payload)
       .filter(([, value]) => value !== undefined)
       .map(
@@ -534,7 +537,17 @@ export class NewebPayPayment<
       .join('&');
 
     const cipher = createCipheriv('aes-256-cbc', this.aesKey, this.aesIv);
-    const encrypted = `${cipher.update(params, 'utf8', 'hex')}${cipher.final('hex')}`;
+
+    return `${cipher.update(params, 'utf8', 'hex')}${cipher.final('hex')}`;
+  }
+
+  private generatePayload<
+    T extends Record<string, string | number | undefined> = Record<
+      string,
+      string | number | undefined
+    >,
+  >(payload: T, version = '2.0'): NewebPayMPGMakeOrderPayload {
+    const encrypted = this.encrypt(payload);
 
     return {
       MerchantID: this.merchantId,
@@ -1167,6 +1180,7 @@ export class NewebPayPayment<
       (sum, item) => sum + item.unitPrice * item.quantity,
       0,
     );
+
     const description = (options?.items ?? [])
       .map((item) => item.name)
       .join(',');
@@ -1207,6 +1221,64 @@ export class NewebPayPayment<
   async checkoutWithBoundCard(
     options: CheckoutWithBoundCardOptions,
   ): Promise<Order<CM>> {
-    return {} as Order<CM>;
+    const amount = options.items.reduce(
+      (sum, item) => sum + item.unitPrice * item.quantity,
+      0,
+    );
+    const description = options.items.map((item) => item.name).join(',');
+    const orderId = options.orderId ?? randomBytes(15).toString('hex');
+
+    const params = new URLSearchParams();
+
+    const time = new Date();
+
+    params.append('MerchantID_', this.merchantId);
+    params.append('Pos_', 'JSON');
+    params.append(
+      'PostData_',
+      this.encrypt<NewebPayCheckoutWithTokenPostData>({
+        TimeStamp: Math.round(time.getTime() / 1000).toString(),
+        Version: '2.1',
+        MerchantOrderNo: orderId,
+        Amt: amount,
+        ProdDesc: description.substring(0, 50),
+        TokenValue: options.cardId,
+        TokenTerm: options.memberId,
+        TokenSwitch: 'on',
+      }),
+    );
+
+    const response = (await fetch(`${this.baseUrl}/API/CreditCard`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: params.toString(),
+    }).then((res) =>
+      res.json(),
+    )) as NewebPayAPIResponseWrapper<NewebPayBindCardResponseTradeInfoPayload>;
+
+    const order = new NewebPayOrder({
+      id: orderId,
+      items: options.items,
+      gateway: this,
+      createdAt: time,
+      committedAt: new Date(),
+      platformTradeNumber: response.Result.TradeNo,
+      channel: NewebPaymentChannel.CREDIT,
+      status: NewebPayOrderStatusFromAPI.COMMITTED,
+    });
+
+    if (response.Status !== 'SUCCESS') {
+      debugPayment(response.Message);
+
+      order.fail(response.Status, response.Message);
+
+      return order as Order<CM>;
+    }
+
+    this.emitter.emit(PaymentEvents.ORDER_COMMITTED, order);
+
+    return order as Order<CM>;
   }
 }

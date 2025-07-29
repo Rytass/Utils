@@ -554,3 +554,29 @@ export interface NewebPayBindCardRequestOptions {
   id: string;
   memberId: string;
 }
+
+export interface NewebPayCheckoutWithTokenPayload {
+  MerchantID_: string;
+  PostData_: string;
+  Pos_: 'JSON';
+}
+
+export interface NewebPayCheckoutWithTokenPostData
+  extends Record<string, string | number | undefined> {
+  TimeStamp: string; // Unix timestamp in seconds
+  Version: '2.1';
+  P3D?: '1' | '';
+  UseFor?: 0 | 1 | 2; // 0: WEB, 1: APP, 2: Period
+  MobileVerify?: ''; // Don't Use, only UseFor: 1
+  MobileNumber?: string; // Member's mobile number, 10 characters
+  NotifyURL?: string;
+  ReturnURL?: string;
+  MerchantOrderNo: string; // max: 30 characters
+  Amt: number; // Total amount
+  ProdDesc: string; // Product description, max: 50 characters
+  PayerEmail?: string;
+  Inst?: string; // Installment options, e.g., '3,6,12' for 3, 6, and 12 installments
+  TokenValue: string; // Card ID
+  TokenTerm: string; // Member ID
+  TokenSwitch: 'on';
+}
