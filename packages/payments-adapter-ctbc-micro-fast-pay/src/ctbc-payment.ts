@@ -141,6 +141,233 @@ export class CTBCPayment<
     };
   }
 
+  async handleCallbackTextBodyByURLPath(
+    url: string,
+    body: string,
+  ): Promise<{
+    status?: number;
+    headers?: Record<string, string>;
+    body?: string;
+  }> {
+    switch (url) {
+      case this.callbackPath: {
+        const params = new URLSearchParams(body);
+        const response = params.get('URLResEnc');
+
+        if (!response) {
+          throw new Error('Missing URLResEnc parameter in callback');
+        }
+
+        const decipher = createDecipheriv(
+          'des-ede3-cbc',
+          Buffer.from(this.txnKey, 'utf8'),
+          SSLAuthIV,
+        );
+
+        decipher.setAutoPadding(false);
+
+        const decrypted = Buffer.concat([
+          decipher.update(Buffer.from(response, 'hex')),
+          decipher.final(),
+        ]);
+
+        const plain = iconv.decode(decrypted, 'big5');
+
+        const payload = new URLSearchParams(plain);
+        const requestId = payload.get('lidm');
+
+        if (!requestId) {
+          throw new Error('Missing lidm parameter in callback');
+        }
+
+        const order = (await this.orderCache.get(
+          requestId,
+        )) as CTBCOrder<OrderCreditCardCommitMessage>;
+
+        const errorCode = payload.get('errcode');
+        const errorMessage = payload.get('errDesc');
+
+        if (errorCode !== '00') {
+          if (order) {
+            order.fail(errorCode ?? 'x9999', errorMessage ?? '-');
+          }
+
+          throw new Error(
+            `CTBC Bound Card Checkout Failed: ${errorCode} - ${errorMessage}`,
+          );
+        }
+
+        if (!order) {
+          throw new Error(`Unknown bound card checkout order: ${requestId}`);
+        }
+
+        order.commit(
+          {
+            id: order.id,
+            totalPrice: Number(payload.get('authAmt')),
+            committedAt: new Date(),
+          } as OrderCreditCardCommitMessage,
+          {
+            channel: Channel.CREDIT_CARD,
+            processDate: new Date(),
+            amount: Number(payload.get('authAmt')),
+            eci: CreditCardECI.VISA_AE_JCB_3D,
+            authCode: payload.get('authCode') as string,
+            card6Number: (payload.get('CardNumber') as string).substring(0, 6),
+            card4Number: payload.get('Last4digitPAN') as string,
+          } as AdditionalInfo<OrderCreditCardCommitMessage>,
+        );
+
+        debugPaymentServer(
+          `CTBCPayment bound card checkout order ${order.id} successful.`,
+        );
+
+        if (order.clientBackUrl) {
+          return {
+            status: 302,
+            headers: {
+              Location: order.clientBackUrl,
+            },
+          };
+        }
+
+        return {
+          status: 200,
+          headers: {
+            'Content-Type': 'text/plain',
+          },
+          body: '1|OK',
+        };
+      }
+
+      case this.boundCardPath: {
+        const params = new URLSearchParams(body);
+        const payload = JSON.parse(
+          decodeURIComponent(params.get('rspjsonpwd') as string),
+        ) as {
+          Response: CTBCResponsePayload;
+        };
+
+        const { Data } = payload.Response;
+
+        const divKey = getDivKey(this.txnKey);
+
+        const plainPayload = decrypt3DES(Buffer.from(Data.TXN, 'hex'), divKey);
+
+        const decryptedParams = new URLSearchParams(plainPayload);
+
+        const statusCode = decryptedParams.get('StatusCode');
+        const statusDesc = decryptedParams.get('StatusDesc');
+        const requestId = decryptedParams.get('RequestNo') ?? '';
+        const request = await this.bindCardRequestsCache.get(requestId);
+
+        if (statusCode !== 'I0000') {
+          if (request) {
+            request.fail(statusCode ?? 'x9999', statusDesc ?? '-');
+          }
+
+          throw new Error(
+            `CTBC Bind Card Failed: ${statusCode} - ${statusDesc}`,
+          );
+        }
+
+        if (!request) {
+          throw new Error(`Unknown bind card request: ${requestId}`);
+        }
+
+        request.bound({
+          cardToken: decryptedParams.get('CardToken') as string,
+          cardNoMask: (decryptedParams.get('CardNoMask') as string).replace(
+            /-/g,
+            '',
+          ),
+          requestNo: requestId,
+        });
+
+        debugPaymentServer(
+          `CTBCPayment bound card for request ${requestId} [${request.memberId}]`,
+        );
+
+        return {
+          status: 200,
+          headers: {
+            'Content-Type': 'text/plain',
+          },
+          body: '1|OK',
+        };
+      }
+
+      case this.boundCardCheckoutResultPath: {
+        const payload = JSON.parse(decodeURIComponent(body)) as {
+          Response: CTBCResponsePayload;
+        };
+
+        const { Data } = payload.Response;
+
+        const divKey = getDivKey(this.txnKey);
+
+        const plainPayload = decrypt3DES(Buffer.from(Data.TXN, 'hex'), divKey);
+
+        const decryptedParams = new URLSearchParams(plainPayload);
+
+        const statusCode = decryptedParams.get('StatusCode');
+        const statusDesc = decryptedParams.get('StatusDesc');
+        const requestId = decryptedParams.get('RequestNo') ?? '';
+        const order = await this.orderCache.get(requestId);
+
+        if (statusCode !== 'I0000') {
+          if (order) {
+            order.fail(statusCode ?? 'x9999', statusDesc ?? '-');
+          }
+
+          throw new Error(
+            `CTBC Bound Card Checkout Failed: ${statusCode} - ${statusDesc}`,
+          );
+        }
+
+        if (!order) {
+          throw new Error(`Unknown bound card checkout order: ${requestId}`);
+        }
+
+        order.commit({
+          id: order.id,
+          totalPrice: Number(decryptedParams.get('AuthAmount')),
+          committedAt: new Date(),
+        } as CM);
+
+        debugPaymentServer(
+          `CTBCPayment bound card checkout order ${order.id} successful.`,
+        );
+
+        if (order.clientBackUrl) {
+          return {
+            status: 302,
+            headers: {
+              Location: order.clientBackUrl,
+            },
+          };
+        }
+
+        return {
+          status: 200,
+          headers: {
+            'Content-Type': 'text/plain',
+          },
+          body: '1|OK',
+        };
+      }
+
+      default:
+        return {
+          status: 404,
+          headers: {
+            'Content-Type': 'text/plain',
+          },
+          body: '0|Not Found',
+        };
+    }
+  }
+
   public async defaultServerListener(
     req: IncomingMessage,
     res: ServerResponse,
@@ -225,222 +452,22 @@ export class CTBCPayment<
       );
 
       try {
-        switch (req.url) {
-          case this.callbackPath: {
-            const params = new URLSearchParams(payloadString);
-            const response = params.get('URLResEnc');
+        const response = await this.handleCallbackTextBodyByURLPath(
+          req.url as string,
+          payloadString,
+        );
 
-            if (!response) {
-              throw new Error('Missing URLResEnc parameter in callback');
-            }
+        res.writeHead(
+          response.status || 404,
+          response.headers || {
+            'Content-Type': 'text/plain',
+          },
+        );
 
-            const decipher = createDecipheriv(
-              'des-ede3-cbc',
-              Buffer.from(this.txnKey, 'utf8'),
-              SSLAuthIV,
-            );
-
-            decipher.setAutoPadding(false);
-
-            const decrypted = Buffer.concat([
-              decipher.update(Buffer.from(response, 'hex')),
-              decipher.final(),
-            ]);
-
-            const plain = iconv.decode(decrypted, 'big5');
-
-            const payload = new URLSearchParams(plain);
-            const requestId = payload.get('lidm');
-
-            if (!requestId) {
-              throw new Error('Missing lidm parameter in callback');
-            }
-
-            const order = (await this.orderCache.get(
-              requestId,
-            )) as CTBCOrder<OrderCreditCardCommitMessage>;
-
-            const errorCode = payload.get('errcode');
-            const errorMessage = payload.get('errDesc');
-
-            if (errorCode !== '00') {
-              if (order) {
-                order.fail(errorCode ?? 'x9999', errorMessage ?? '-');
-              }
-
-              throw new Error(
-                `CTBC Bound Card Checkout Failed: ${errorCode} - ${errorMessage}`,
-              );
-            }
-
-            if (!order) {
-              throw new Error(
-                `Unknown bound card checkout order: ${requestId}`,
-              );
-            }
-
-            order.commit(
-              {
-                id: order.id,
-                totalPrice: Number(payload.get('authAmt')),
-                committedAt: new Date(),
-              } as OrderCreditCardCommitMessage,
-              {
-                channel: Channel.CREDIT_CARD,
-                processDate: new Date(),
-                amount: Number(payload.get('authAmt')),
-                eci: CreditCardECI.VISA_AE_JCB_3D,
-                authCode: payload.get('authCode') as string,
-                card6Number: (payload.get('CardNumber') as string).substring(
-                  0,
-                  6,
-                ),
-                card4Number: payload.get('Last4digitPAN') as string,
-              } as AdditionalInfo<OrderCreditCardCommitMessage>,
-            );
-
-            debugPaymentServer(
-              `CTBCPayment bound card checkout order ${order.id} successful.`,
-            );
-
-            if (order.clientBackUrl) {
-              res.writeHead(302, {
-                Location: order.clientBackUrl,
-              });
-
-              res.end();
-
-              return;
-            }
-
-            res.writeHead(200, {
-              'Content-Type': 'text/plain',
-            });
-
-            res.end('1|OK');
-
-            break;
-          }
-
-          case this.boundCardPath: {
-            const params = new URLSearchParams(payloadString);
-            const payload = JSON.parse(
-              decodeURIComponent(params.get('rspjsonpwd') as string),
-            ) as {
-              Response: CTBCResponsePayload;
-            };
-
-            const { Data } = payload.Response;
-
-            const divKey = getDivKey(this.txnKey);
-
-            const plainPayload = decrypt3DES(
-              Buffer.from(Data.TXN, 'hex'),
-              divKey,
-            );
-
-            const decryptedParams = new URLSearchParams(plainPayload);
-
-            const statusCode = decryptedParams.get('StatusCode');
-            const statusDesc = decryptedParams.get('StatusDesc');
-            const requestId = decryptedParams.get('RequestNo') ?? '';
-            const request = await this.bindCardRequestsCache.get(requestId);
-
-            if (statusCode !== 'I0000') {
-              if (request) {
-                request.fail(statusCode ?? 'x9999', statusDesc ?? '-');
-              }
-
-              throw new Error(
-                `CTBC Bind Card Failed: ${statusCode} - ${statusDesc}`,
-              );
-            }
-
-            if (!request) {
-              throw new Error(`Unknown bind card request: ${requestId}`);
-            }
-
-            request.bound({
-              cardToken: decryptedParams.get('CardToken') as string,
-              cardNoMask: (decryptedParams.get('CardNoMask') as string).replace(
-                /-/g,
-                '',
-              ),
-              requestNo: requestId,
-            });
-
-            debugPaymentServer(
-              `CTBCPayment bound card for request ${requestId} [${request.memberId}]`,
-            );
-
-            res.writeHead(200, {
-              'Content-Type': 'text/plain',
-            });
-
-            res.end('1|OK');
-
-            break;
-          }
-
-          case this.boundCardCheckoutResultPath: {
-            const payload = JSON.parse(decodeURIComponent(payloadString)) as {
-              Response: CTBCResponsePayload;
-            };
-
-            const { Data } = payload.Response;
-
-            const divKey = getDivKey(this.txnKey);
-
-            const plainPayload = decrypt3DES(
-              Buffer.from(Data.TXN, 'hex'),
-              divKey,
-            );
-
-            const decryptedParams = new URLSearchParams(plainPayload);
-
-            const statusCode = decryptedParams.get('StatusCode');
-            const statusDesc = decryptedParams.get('StatusDesc');
-            const requestId = decryptedParams.get('RequestNo') ?? '';
-            const order = await this.orderCache.get(requestId);
-
-            if (statusCode !== 'I0000') {
-              if (order) {
-                order.fail(statusCode ?? 'x9999', statusDesc ?? '-');
-              }
-
-              throw new Error(
-                `CTBC Bound Card Checkout Failed: ${statusCode} - ${statusDesc}`,
-              );
-            }
-
-            if (!order) {
-              throw new Error(
-                `Unknown bound card checkout order: ${requestId}`,
-              );
-            }
-
-            order.commit({
-              id: order.id,
-              totalPrice: Number(decryptedParams.get('AuthAmount')),
-              committedAt: new Date(),
-            } as CM);
-
-            debugPaymentServer(
-              `CTBCPayment bound card checkout order ${order.id} successful.`,
-            );
-
-            if (order.clientBackUrl)
-              res.writeHead(200, {
-                'Content-Type': 'text/plain',
-              });
-
-            res.end('1|OK');
-
-            break;
-          }
-
-          default:
-            break;
+        if (response.body) {
+          res.end(response.body);
+        } else {
+          res.end();
         }
       } catch (ex) {
         debugPaymentServer(
