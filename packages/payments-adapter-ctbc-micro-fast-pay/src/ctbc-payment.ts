@@ -26,7 +26,6 @@ import {
   BindCardRequestCache,
   CTBCBindCardRequestPayload,
   CTBCCheckoutWithBoundCardOptions,
-  CTBCInMacRequestPayload,
   CTBCOrderCommitMessage,
   CTBCOrderFormKey,
   CTBCPaymentOptions,
@@ -609,6 +608,7 @@ export class CTBCPayment<
         Buffer.isBuffer(param) ? param : Buffer.from(param, 'utf8'),
       ),
     );
+
     const enc = desMac(encPayload, this.txnKey);
 
     const order = new CTBCOrder({
@@ -637,6 +637,10 @@ export class CTBCPayment<
 
   get executeURL(): string {
     return `${this.baseUrl}/mFastPay/TxnServlet`;
+  }
+
+  getCheckoutUrl(order: CTBCOrder<CM>): string {
+    return `${this.serverHost}${this.checkoutPath}/${order.id}`;
   }
 
   get boundCheckoutResultURL(): string {

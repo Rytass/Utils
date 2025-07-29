@@ -19,17 +19,20 @@ import { ECPayBindCardRequest } from './ecpay-bind-card-request';
 import { ECPayOrderItem } from './ecpay-order-item';
 
 export interface OrdersCache<
-  CM extends ECPayCommitMessage,
-  Key extends string,
-  Value extends ECPayOrder<CM>,
+  CM extends ECPayCommitMessage = ECPayCommitMessage,
+  Key extends string = string,
+  Value extends ECPayOrder<CM> = ECPayOrder<CM>,
 > {
   get: (key: Key) => Promise<Value | undefined>;
   set: (key: Key, value: Value) => Promise<void>;
 }
 
-export interface BindCardRequestCache {
-  get: (key: string) => Promise<ECPayBindCardRequest | undefined>;
-  set: (key: string, value: ECPayBindCardRequest) => Promise<void>;
+export interface BindCardRequestCache<
+  Key extends string = string,
+  Value extends ECPayBindCardRequest = ECPayBindCardRequest,
+> {
+  get: (key: Key) => Promise<Value | undefined>;
+  set: (key: Key, value: Value) => Promise<void>;
 }
 
 export interface ECPayInitOptions<O extends ECPayOrder<ECPayCommitMessage>> {

@@ -100,7 +100,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
   private serverListener: (req: IncomingMessage, res: ServerResponse) => void =
     (req, res) => this.defaultServerListener(req, res);
 
-  private readonly pendingOrdersCache: OrdersCache<CM, string, ECPayOrder<CM>>;
+  private readonly pendingOrdersCache: OrdersCache;
   private readonly bindCardRequestsCache: BindCardRequestCache;
 
   private emulateRefundedOrder = new Set<string>();
