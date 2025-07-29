@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.2](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.1...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.2) (2025-07-29)
+
+### Bug Fixes
+
+- **payments-adapter-ctbc-micro-fast-pay:** Order Desc cannot include space char ([73e6ba6](https://github.com/Rytass/Utils/commit/73e6ba6b953a4cbc2be568e8e0a333df7c7d051e))
+
 ## [0.1.1](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.0...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.1) (2025-07-28)
 
 ### Features

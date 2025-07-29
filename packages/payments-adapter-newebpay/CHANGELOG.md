@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.2](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-newebpay@0.2.1...@rytass/payments-adapter-newebpay@0.2.2) (2025-07-29)
+
+### Features
+
+- **payments-adapter-newebpay:** add bind card request prepare ([330ce8c](https://github.com/Rytass/Utils/commit/330ce8cd270e8c335ec6c721b49929e579f0c04a))
+- **payments-adapter-newebpay:** checkout with token ([c826f64](https://github.com/Rytass/Utils/commit/c826f64b259a193b9468089747db6b4e6742e250))
+
 ## [0.2.1](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-newebpay@0.2.0...@rytass/payments-adapter-newebpay@0.2.1) (2025-07-28)
 
 **Note:** Version bump only for package @rytass/payments-adapter-newebpay
