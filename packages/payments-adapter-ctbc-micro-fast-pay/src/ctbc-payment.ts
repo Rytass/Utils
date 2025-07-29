@@ -594,7 +594,7 @@ export class CTBCPayment<
     params.push('OrderDesc=');
 
     if (orderDesc) {
-      params.push(iconv.encode(orderDesc, 'big5'));
+      params.push(iconv.encode(orderDesc.replace(/\s/g, ''), 'big5'));
     }
 
     params.push('&ProdCode=&');
