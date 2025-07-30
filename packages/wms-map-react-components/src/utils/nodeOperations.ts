@@ -3,7 +3,7 @@ import { Node } from '@xyflow/react';
 export interface CopyNodeOptions {
   currentNode: Node;
   offsetPercentage?: number;
-  nodeType: 'rectangleNode' | 'pathNode';
+  nodeType: 'rectangleNode' | 'pathNode' | 'imageNode';
   data: any;
 }
 
@@ -76,6 +76,31 @@ export const createPathCopy = (options: CopyNodeOptions): Node => {
       color: data.color,
       strokeWidth: data.strokeWidth,
       label: data.label,
+    },
+  };
+};
+
+/**
+ * Create a copy of an image node
+ */
+export const createImageCopy = (options: CopyNodeOptions): Node => {
+  const { currentNode, offsetPercentage = 0.25, data } = options;
+  const { offsetX, offsetY } = calculateCopyOffset(data.width, data.height, offsetPercentage);
+
+  return {
+    id: `image-${Date.now()}`,
+    type: 'imageNode',
+    position: {
+      x: currentNode.position.x + offsetX,
+      y: currentNode.position.y + offsetY,
+    },
+    data: {
+      imageUrl: data.imageUrl,
+      width: data.width,
+      height: data.height,
+      fileName: data.fileName,
+      originalWidth: data.originalWidth,
+      originalHeight: data.originalHeight,
     },
   };
 };

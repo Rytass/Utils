@@ -40,7 +40,7 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode }) => {
     handleArrange,
     getNodes,
     setNodes,
-  } = useContextMenu({ id, editMode, isEditable });
+  } = useContextMenu({ id, editMode, isEditable, nodeType: 'pathNode' });
 
   // Text editing functionality
   const {

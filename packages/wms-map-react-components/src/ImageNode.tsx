@@ -2,6 +2,9 @@ import React, { FC, useState, useCallback, useEffect } from 'react';
 import { NodeProps, NodeResizeControl, useUpdateNodeInternals, useReactFlow } from '@xyflow/react';
 import { EditMode } from '../typings';
 import { DEFAULT_IMAGE_WIDTH, DEFAULT_IMAGE_HEIGHT, ACTIVE_OPACITY, INACTIVE_OPACITY, IMAGE_RESIZE_CONTROL_SIZE } from './constants';
+import { useContextMenu } from './hooks/useContextMenu';
+import { createImageCopy } from './utils/nodeOperations';
+import ContextMenu from './ContextMenu';
 import styles from './imageNode.module.scss';
 
 interface ImageNodeData {
@@ -43,6 +46,17 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
   const isEditable = editMode === EditMode.BACKGROUND;
   const opacity = editMode === EditMode.BACKGROUND ? ACTIVE_OPACITY : INACTIVE_OPACITY;
 
+  // Context menu functionality
+  const {
+    contextMenu,
+    handleContextMenu,
+    handleCloseContextMenu,
+    handleDelete,
+    handleArrange,
+    getNodes,
+    setNodes: setNodesFromHook,
+  } = useContextMenu({ id, editMode, isEditable, nodeType: 'imageNode' });
+
   const updateNodeData = useCallback((updates: Partial<ImageNodeData>) => {
     setNodes((nodes) =>
       nodes.map((node) =>
@@ -62,6 +76,31 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
     setCurrentSize(newSize);
     updateNodeData({ width: newWidth, height: newHeight });
   }, [aspectRatio, updateNodeData]);
+
+  // Handle copy and paste
+  const handleCopyPaste = useCallback(() => {
+    const currentNode = getNodes().find(node => node.id === id);
+    if (!currentNode) {
+      console.error('Current node not found');
+      return;
+    }
+    
+    const copiedNode = createImageCopy({
+      currentNode,
+      nodeType: 'imageNode',
+      data: { 
+        imageUrl, 
+        width: currentSize.width, 
+        height: currentSize.height, 
+        fileName,
+        originalWidth,
+        originalHeight,
+      },
+    });
+    
+    setNodesFromHook((nds) => [...nds, copiedNode]);
+    handleCloseContextMenu();
+  }, [id, imageUrl, currentSize, fileName, originalWidth, originalHeight, getNodes, setNodesFromHook, handleCloseContextMenu]);
 
   return (
     <div className={`${styles.imageNode} ${selected ? styles.selected : ''}`}>
@@ -129,7 +168,10 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
           />
         </>
       )}
-      <div className={styles.imageContainer}>
+      <div 
+        className={styles.imageContainer}
+        onContextMenu={handleContextMenu}
+      >
         <img
           src={imageUrl}
           alt={fileName || 'Uploaded image'}
@@ -145,6 +187,17 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
         />
         {fileName && <div className={styles.imageLabel}>{fileName}</div>}
       </div>
+      
+      {/* Context Menu */}
+      <ContextMenu
+        visible={contextMenu.visible}
+        x={contextMenu.x}
+        y={contextMenu.y}
+        onClose={handleCloseContextMenu}
+        onCopyPaste={handleCopyPaste}
+        onDelete={handleDelete}
+        onArrange={handleArrange}
+      />
     </div>
   );
 };
