@@ -54,3 +54,8 @@ export enum EditMode {
   BACKGROUND = 'BACKGROUND',
   LAYER = 'LAYER',
 }
+
+export enum DrawingMode {
+  NONE = 'NONE',
+  RECTANGLE = 'RECTANGLE',
+}

@@ -10,7 +10,7 @@ import {
   useNodesState,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { EditMode } from '../typings';
+import { EditMode, DrawingMode } from '../typings';
 import Toolbar from './Toolbar';
 import Breadcrumb from './Breadcrumb';
 import ReactFlowCanvas from './ReactFlowCanvas';
@@ -28,19 +28,19 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [editMode, setEditMode] = useState<EditMode>(EditMode.BACKGROUND);
+  const [drawingMode, setDrawingMode] = useState<DrawingMode>(DrawingMode.NONE);
 
   const handleEditModeChange = useCallback((mode: EditMode) => {
     setEditMode(mode);
-    
-    // When switching to LAYER mode, deselect all nodes
-    if (mode === EditMode.LAYER) {
-      setNodes((nds) => 
-        nds.map((node) => ({
-          ...node,
-          selected: false,
-        }))
-      );
-    }
+    setDrawingMode(DrawingMode.NONE); // Reset drawing mode when switching edit modes
+
+    // When switching modes, deselect all nodes
+    setNodes((nds) =>
+      nds.map((node) => ({
+        ...node,
+        selected: false,
+      }))
+    );
   }, [setNodes]);
 
   const onConnect = useCallback(
@@ -135,6 +135,39 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
     setEdges([]);
   };
 
+  const handleToggleRectangleTool = useCallback(() => {
+    if (editMode !== EditMode.LAYER) return;
+    
+    setDrawingMode(prev => 
+      prev === DrawingMode.RECTANGLE ? DrawingMode.NONE : DrawingMode.RECTANGLE
+    );
+  }, [editMode]);
+
+  const handleCreateRectangle = useCallback((startX: number, startY: number, endX: number, endY: number) => {
+    const width = Math.abs(endX - startX);
+    const height = Math.abs(endY - startY);
+    
+    if (width < 10 || height < 10) return; // Minimum size check
+
+    const newRectangle = {
+      id: `rectangle-${Date.now()}`,
+      type: 'rectangleNode',
+      position: {
+        x: Math.min(startX, endX),
+        y: Math.min(startY, endY),
+      },
+      data: {
+        width,
+        height,
+        color: '#3b82f6',
+        label: '矩形區域',
+      },
+    };
+
+    setNodes((nds) => [...nds, newRectangle]);
+    // Keep drawing mode active for continuous drawing
+  }, [setNodes]);
+
   return (
     <Modal
       open={open}
@@ -155,7 +188,9 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
             onDeleteAll={handleDeleteAll}
             onSave={handleSave}
             editMode={editMode}
+            drawingMode={drawingMode}
             onEditModeChange={handleEditModeChange}
+            onToggleRectangleTool={handleToggleRectangleTool}
           />
 
           <ReactFlowCanvas
@@ -165,6 +200,8 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             editMode={editMode}
+            drawingMode={drawingMode}
+            onCreateRectangle={handleCreateRectangle}
           />
         </ReactFlowProvider>
       </div>

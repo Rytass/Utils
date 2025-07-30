@@ -1,5 +1,5 @@
-import React, { FC, useState } from 'react';
-import { NodeProps, NodeResizeControl } from '@xyflow/react';
+import React, { FC, useState, useCallback, useEffect } from 'react';
+import { NodeProps, NodeResizeControl, useReactFlow } from '@xyflow/react';
 import { EditMode } from '../typings';
 import styles from './imageNode.module.scss';
 
@@ -17,6 +17,8 @@ interface ImageNodeProps extends NodeProps {
 }
 
 const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
+  const { setNodes } = useReactFlow();
+  
   const {
     imageUrl,
     width = 300,
@@ -28,18 +30,40 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
 
   const [currentSize, setCurrentSize] = useState({ width, height });
 
+  // Sync currentSize with node data when it changes
+  useEffect(() => {
+    setCurrentSize({ width, height });
+  }, [width, height]);
+
   // Calculate aspect ratio
   const aspectRatio = originalWidth / originalHeight;
   // Check if this node should be editable based on edit mode
   const isEditable = editMode === EditMode.BACKGROUND;
   const opacity = editMode === EditMode.BACKGROUND ? 1 : 0.4;
 
-  const handleResize = (event: any, params: any) => {
+  const handleResize = useCallback((event: any, params: any) => {
     const newWidth = params.width;
     const newHeight = newWidth / aspectRatio;
 
-    setCurrentSize({ width: newWidth, height: newHeight });
-  };
+    const newSize = { width: newWidth, height: newHeight };
+    setCurrentSize(newSize);
+    
+    // Update the node data to persist the changes
+    setNodes((nodes) =>
+      nodes.map((node) =>
+        node.id === id
+          ? {
+              ...node,
+              data: {
+                ...node.data,
+                width: newWidth,
+                height: newHeight,
+              },
+            }
+          : node
+      )
+    );
+  }, [aspectRatio, id, setNodes]);
 
   return (
     <div className={`${styles.imageNode} ${selected ? styles.selected : ''}`}>
