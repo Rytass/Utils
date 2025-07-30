@@ -14,7 +14,37 @@ interface DrawingState {
   screenPoints: { x: number; y: number }[];
   currentMousePos: { x: number; y: number } | null;
   lastClickTime: number;
+  isShiftPressed: boolean;
 }
+
+// Utility function to constrain point to straight lines (horizontal, vertical, 45-degree)
+const constrainToStraightLine = (
+  currentPoint: { x: number; y: number },
+  previousPoint: { x: number; y: number }
+): { x: number; y: number } => {
+  const dx = currentPoint.x - previousPoint.x;
+  const dy = currentPoint.y - previousPoint.y;
+  
+  // Calculate angle in degrees
+  const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+  
+  // Normalize angle to 0-360 range
+  const normalizedAngle = ((angle % 360) + 360) % 360;
+  
+  // Snap to nearest cardinal/diagonal direction (every 45 degrees)
+  const snapAngle = Math.round(normalizedAngle / 45) * 45;
+  
+  // Calculate distance from previous point
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  
+  // Convert back to radians and calculate constrained position
+  const constrainedAngle = (snapAngle * Math.PI) / 180;
+  
+  return {
+    x: previousPoint.x + Math.cos(constrainedAngle) * distance,
+    y: previousPoint.y + Math.sin(constrainedAngle) * distance,
+  };
+};
 
 export const usePenDrawing = ({ 
   editMode, 
@@ -30,6 +60,7 @@ export const usePenDrawing = ({
     screenPoints: [],
     currentMousePos: null,
     lastClickTime: 0,
+    isShiftPressed: false,
   });
 
   const handleClick = useCallback((event: MouseEvent) => {
@@ -47,10 +78,24 @@ export const usePenDrawing = ({
     const screenX = event.clientX - rect.left;
     const screenY = event.clientY - rect.top;
     
-    const position = screenToFlowPosition({ 
+    let position = screenToFlowPosition({ 
       x: event.clientX, 
       y: event.clientY
     });
+    
+    let constrainedScreenPos = { x: screenX, y: screenY };
+    
+    // Apply straight line constraint if Shift is pressed and we have a previous point
+    if (event.shiftKey && drawingState.points.length > 0) {
+      const previousPoint = drawingState.points[drawingState.points.length - 1];
+      position = constrainToStraightLine(position, previousPoint);
+      
+      // Also constrain the screen position for consistent preview
+      if (drawingState.screenPoints.length > 0) {
+        const previousScreenPoint = drawingState.screenPoints[drawingState.screenPoints.length - 1];
+        constrainedScreenPos = constrainToStraightLine({ x: screenX, y: screenY }, previousScreenPoint);
+      }
+    }
     
     // Check for double-click (within 300ms)
     const isDoubleClick = currentTime - drawingState.lastClickTime < 300;
@@ -73,6 +118,7 @@ export const usePenDrawing = ({
         screenPoints: [],
         currentMousePos: null,
         lastClickTime: 0,
+        isShiftPressed: false,
       });
     } else {
       // Regular click - add point
@@ -80,8 +126,9 @@ export const usePenDrawing = ({
         ...prev,
         isDrawing: true,
         points: [...prev.points, position],
-        screenPoints: [...prev.screenPoints, { x: screenX, y: screenY }],
+        screenPoints: [...prev.screenPoints, constrainedScreenPos],
         lastClickTime: currentTime,
+        isShiftPressed: event.shiftKey,
       }));
     }
   }, [drawingMode, editMode, screenToFlowPosition, drawingState.lastClickTime, drawingState.isDrawing, drawingState.points, onCreatePath]);
@@ -93,14 +140,23 @@ export const usePenDrawing = ({
     if (!wrapper) return;
     
     const rect = wrapper.getBoundingClientRect();
-    const screenX = event.clientX - rect.left;
-    const screenY = event.clientY - rect.top;
+    let screenX = event.clientX - rect.left;
+    let screenY = event.clientY - rect.top;
+    
+    // Apply constraint to mouse position if Shift is pressed and we're drawing
+    if (event.shiftKey && drawingState.screenPoints.length > 0) {
+      const previousScreenPoint = drawingState.screenPoints[drawingState.screenPoints.length - 1];
+      const constrainedPos = constrainToStraightLine({ x: screenX, y: screenY }, previousScreenPoint);
+      screenX = constrainedPos.x;
+      screenY = constrainedPos.y;
+    }
     
     setDrawingState(prev => ({
       ...prev,
       currentMousePos: { x: screenX, y: screenY },
+      isShiftPressed: event.shiftKey,
     }));
-  }, [drawingMode, editMode]);
+  }, [drawingMode, editMode, drawingState.screenPoints]);
 
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
@@ -114,6 +170,7 @@ export const usePenDrawing = ({
         screenPoints: [],
         currentMousePos: null,
         lastClickTime: 0,
+        isShiftPressed: false,
       });
     }
     
@@ -133,6 +190,7 @@ export const usePenDrawing = ({
         screenPoints: [],
         currentMousePos: null,
         lastClickTime: 0,
+        isShiftPressed: false,
       });
     }
   }, [drawingMode, editMode, drawingState.isDrawing, drawingState.points, onCreatePath]);
@@ -147,6 +205,7 @@ export const usePenDrawing = ({
         screenPoints: [],
         currentMousePos: null,
         lastClickTime: 0,
+        isShiftPressed: false,
       }));
     }
   }, [drawingMode]);
