@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.5](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.4...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.5) (2025-07-30)
+
+### Features
+
+- **payments-adapter-ctbc-micro-fast-pay:** handld ctbc order.commit CardNumber not exist when amex ([af9e98f](https://github.com/Rytass/Utils/commit/af9e98fcd8eef26928c2063474b45a2ffd7c43d7))
+
 ## [0.1.4](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.3...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.4) (2025-07-30)
 
 ### Bug Fixes
