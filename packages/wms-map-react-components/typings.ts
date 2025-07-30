@@ -49,3 +49,8 @@ export interface MapPolygonRange extends MapRange {
   type: MapRangeType.POLYGON;
   points: MapPolygonRangePoint[];
 }
+
+export enum EditMode {
+  BACKGROUND = 'BACKGROUND',
+  LAYER = 'LAYER',
+}
