@@ -125,9 +125,9 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
       // Delete all image nodes (background images)
       setNodes((nds) => nds.filter((node) => node.type !== 'imageNode'));
     } else if (editMode === EditMode.LAYER) {
-      // Delete all rectangle nodes (layer elements)
-      setNodes((nds) => nds.filter((node) => node.type !== 'rectangleNode'));
-      // Also clear edges if deleting rectangles
+      // Delete all layer nodes (rectangles and paths)
+      setNodes((nds) => nds.filter((node) => node.type !== 'rectangleNode' && node.type !== 'pathNode'));
+      // Also clear edges if deleting layer elements
       setEdges([]);
     }
   }, [editMode, setNodes, setEdges]);
@@ -137,6 +137,14 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
     
     setDrawingMode(prev => 
       prev === DrawingMode.RECTANGLE ? DrawingMode.NONE : DrawingMode.RECTANGLE
+    );
+  }, [editMode]);
+
+  const handleTogglePenTool = useCallback(() => {
+    if (editMode !== EditMode.LAYER) return;
+    
+    setDrawingMode(prev => 
+      prev === DrawingMode.PEN ? DrawingMode.NONE : DrawingMode.PEN
     );
   }, [editMode]);
 
@@ -165,6 +173,27 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
     // Keep drawing mode active for continuous drawing
   }, [setNodes, selectedColor]);
 
+  const handleCreatePath = useCallback((points: { x: number; y: number }[]) => {
+    if (points.length < 2) return; // Need at least 2 points for a path
+
+    const newPath = {
+      id: `path-${Date.now()}`,
+      type: 'pathNode',
+      position: {
+        x: Math.min(...points.map(p => p.x)),
+        y: Math.min(...points.map(p => p.y)),
+      },
+      data: {
+        points,
+        color: selectedColor,
+        strokeWidth: 2,
+      },
+    };
+
+    setNodes((nds) => [...nds, newPath]);
+    // Keep drawing mode active for continuous drawing
+  }, [setNodes, selectedColor]);
+
   // Placeholder undo/redo functions - can be implemented with proper state management later
   const handleUndo = useCallback(() => {
     console.log('Undo action');
@@ -179,12 +208,12 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
   const handleSelectionChange = useCallback((params: OnSelectionChangeParams) => {
     setSelectedNodes(params.nodes);
     
-    // If a single rectangle is selected, update the color picker to show its color
-    if (params.nodes.length === 1 && params.nodes[0].type === 'rectangleNode') {
-      const selectedRectangle = params.nodes[0];
-      const rectangleColor = selectedRectangle.data?.color;
-      if (rectangleColor && typeof rectangleColor === 'string') {
-        setSelectedColor(rectangleColor);
+    // If a single colorable node is selected, update the color picker to show its color
+    if (params.nodes.length === 1 && (params.nodes[0].type === 'rectangleNode' || params.nodes[0].type === 'pathNode')) {
+      const selectedNode = params.nodes[0];
+      const nodeColor = selectedNode.data?.color;
+      if (nodeColor && typeof nodeColor === 'string') {
+        setSelectedColor(nodeColor);
       }
     }
   }, []);
@@ -192,12 +221,14 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
   const handleColorChange = useCallback((color: string) => {
     setSelectedColor(color);
     
-    // Update color of selected rectangle nodes
-    const selectedRectangles = selectedNodes.filter(node => node.type === 'rectangleNode');
-    if (selectedRectangles.length > 0) {
+    // Update color of selected colorable nodes (rectangles and paths)
+    const selectedColorableNodes = selectedNodes.filter(node => 
+      node.type === 'rectangleNode' || node.type === 'pathNode'
+    );
+    if (selectedColorableNodes.length > 0) {
       setNodes((nds) =>
         nds.map((node) => {
-          if (selectedRectangles.some(selected => selected.id === node.id)) {
+          if (selectedColorableNodes.some(selected => selected.id === node.id)) {
             return { ...node, data: { ...node.data, color } };
           }
           return node;
@@ -229,6 +260,7 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
             drawingMode={drawingMode}
             onEditModeChange={handleEditModeChange}
             onToggleRectangleTool={handleToggleRectangleTool}
+            onTogglePenTool={handleTogglePenTool}
             onUndo={handleUndo}
             onRedo={handleRedo}
             canUndo={false}
@@ -246,6 +278,7 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
             editMode={editMode}
             drawingMode={drawingMode}
             onCreateRectangle={handleCreateRectangle}
+            onCreatePath={handleCreatePath}
             onSelectionChange={handleSelectionChange}
           />
         </ReactFlowProvider>

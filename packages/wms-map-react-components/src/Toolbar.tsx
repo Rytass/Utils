@@ -12,6 +12,7 @@ interface ToolbarProps {
   drawingMode: DrawingMode;
   onEditModeChange: (mode: EditMode) => void;
   onToggleRectangleTool: () => void;
+  onTogglePenTool: () => void;
   onUndo?: () => void;
   onRedo?: () => void;
   canUndo?: boolean;
@@ -28,6 +29,7 @@ const Toolbar: FC<ToolbarProps> = ({
   drawingMode, 
   onEditModeChange, 
   onToggleRectangleTool,
+  onTogglePenTool,
   onUndo,
   onRedo,
   canUndo = false,
@@ -42,6 +44,8 @@ const Toolbar: FC<ToolbarProps> = ({
   useEffect(() => {
     if (drawingMode === DrawingMode.RECTANGLE) {
       setLayerTool(LayerDrawingTool.RECTANGLE);
+    } else if (drawingMode === DrawingMode.PEN) {
+      setLayerTool(LayerDrawingTool.PEN);
     } else {
       setLayerTool(LayerDrawingTool.SELECT);
     }
@@ -127,9 +131,11 @@ const Toolbar: FC<ToolbarProps> = ({
             className={styles.toolButton}
             onClick={() => {
               setLayerTool(LayerDrawingTool.SELECT);
-              // Turn off rectangle drawing mode when selecting other tools
+              // Turn off drawing modes when selecting select tool
               if (drawingMode === DrawingMode.RECTANGLE) {
                 onToggleRectangleTool();
+              } else if (drawingMode === DrawingMode.PEN) {
+                onTogglePenTool();
               }
             }}
             title="選取工具"
@@ -149,15 +155,12 @@ const Toolbar: FC<ToolbarProps> = ({
             ⬜
           </Button>
           <Button
-            variant={layerTool === LayerDrawingTool.PEN ? "contained" : "outlined"}
+            variant={drawingMode === DrawingMode.PEN ? "contained" : "outlined"}
             size="small"
             className={styles.toolButton}
             onClick={() => {
               setLayerTool(LayerDrawingTool.PEN);
-              // Turn off rectangle drawing mode when selecting other tools
-              if (drawingMode === DrawingMode.RECTANGLE) {
-                onToggleRectangleTool();
-              }
+              onTogglePenTool();
             }}
             title="鋼筆工具"
           >

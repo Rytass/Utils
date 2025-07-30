@@ -58,6 +58,7 @@ export enum EditMode {
 export enum DrawingMode {
   NONE = 'NONE',
   RECTANGLE = 'RECTANGLE',
+  PEN = 'PEN',
 }
 
 export enum LayerDrawingTool {
