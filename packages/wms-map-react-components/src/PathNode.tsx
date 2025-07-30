@@ -17,7 +17,7 @@ interface PathNodeProps extends NodeProps {
 }
 
 const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode }) => {
-  const { setNodes } = useReactFlow();
+  const { setNodes, getNodes } = useReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
   const inputRef = useRef<HTMLInputElement>(null);
   
@@ -109,22 +109,17 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode }) => {
 
   // Handle right click for context menu
   const handleContextMenu = useCallback((event: React.MouseEvent) => {
-    console.log('Right click detected on path', { isEditable, editMode });
-    if (!isEditable) {
-      console.log('Not editable, ignoring right click');
-      return;
-    }
+    if (!isEditable) return;
     
     event.preventDefault();
     event.stopPropagation();
     
-    console.log('Setting context menu visible at', event.clientX, event.clientY);
     setContextMenu({
       visible: true,
       x: event.clientX,
       y: event.clientY,
     });
-  }, [isEditable, editMode]);
+  }, [isEditable]);
 
   // Handle context menu actions
   const handleCloseContextMenu = useCallback(() => {
@@ -132,10 +127,53 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode }) => {
   }, []);
 
   const handleCopyPaste = useCallback(() => {
-    // TODO: Implement copy and paste functionality
-    console.log('Copy and paste not implemented yet');
+    console.log('Copying and pasting path');
+    
+    // Get current node to access its position
+    const currentNode = getNodes().find(node => node.id === id);
+    if (!currentNode) {
+      console.error('Current node not found');
+      return;
+    }
+    
+    // Calculate path dimensions for offset calculation
+    const xs = points.map(p => p.x);
+    const ys = points.map(p => p.y);
+    const bounds = {
+      minX: Math.min(...xs),
+      minY: Math.min(...ys),
+      maxX: Math.max(...xs),
+      maxY: Math.max(...ys),
+    };
+    const pathWidth = Math.max(bounds.maxX - bounds.minX, 10);
+    const pathHeight = Math.max(bounds.maxY - bounds.minY, 10);
+    
+    // Calculate new position (offset by 25% of path size to bottom-right)
+    const offsetX = pathWidth * 0.25;
+    const offsetY = pathHeight * 0.25;
+    
+    // Create a copy of the current node with new ID and position
+    const copiedNode = {
+      id: `path-${Date.now()}`,
+      type: 'pathNode',
+      position: {
+        x: currentNode.position.x + offsetX,
+        y: currentNode.position.y + offsetY,
+      },
+      data: {
+        points,
+        color,
+        strokeWidth,
+        label,
+      },
+    };
+    
+    console.log('Creating copied path node:', copiedNode);
+    
+    // Add the copied node to the canvas
+    setNodes((nds) => [...nds, copiedNode]);
     handleCloseContextMenu();
-  }, [handleCloseContextMenu]);
+  }, [id, points, color, strokeWidth, label, getNodes, setNodes, handleCloseContextMenu]);
 
   const handleDelete = useCallback(() => {
     setNodes((nodes) => nodes.filter((node) => node.id !== id));

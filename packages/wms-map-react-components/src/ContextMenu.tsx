@@ -28,28 +28,21 @@ const ContextMenu: FC<ContextMenuProps> = ({
     if (!visible) return;
 
     const handleClickOutside = (event: MouseEvent) => {
-      console.log('Click outside detected', event.target);
       const target = event.target as Node;
       const menuElement = menuRef.current;
       
       if (menuElement) {
         const isInsideMenu = menuElement.contains(target);
-        console.log('Is click inside menu?', isInsideMenu);
-        
         if (!isInsideMenu) {
-          console.log('Closing context menu due to outside click');
           onClose();
         }
       } else {
-        console.log('Menu ref not found, closing');
         onClose();
       }
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      console.log('Key pressed:', event.key);
       if (event.key === 'Escape') {
-        console.log('Closing context menu due to Escape key');
         onClose();
       }
     };
@@ -69,12 +62,7 @@ const ContextMenu: FC<ContextMenuProps> = ({
     };
   }, [visible, onClose]);
 
-  if (!visible) {
-    console.log('Context menu not visible');
-    return null;
-  }
-  
-  console.log('Context menu rendering at', x, y);
+  if (!visible) return null;
 
   // Adjust position to ensure menu stays within viewport
   const adjustedX = Math.min(x, window.innerWidth - 150); // 150 is approximate menu width
