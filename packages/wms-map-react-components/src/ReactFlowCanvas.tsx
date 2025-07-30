@@ -107,7 +107,6 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
         onConnect={onConnect}
         onSelectionChange={onSelectionChange}
         nodeTypes={nodeTypes}
-        fitView
         className={styles.reactFlowCanvas}
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
         minZoom={0.1}
