@@ -221,7 +221,7 @@ export class CTBCPayment<
             amount: Number(payload.get('authAmt')),
             eci: CreditCardECI.VISA_AE_JCB_3D,
             authCode: payload.get('authCode') as string,
-            card6Number: (payload.get('CardNumber') as string).substring(0, 6),
+            card6Number: (payload.get('CardNumber') ?? '').substring(0, 6),
             card4Number: payload.get('Last4digitPAN') as string,
           } as AdditionalInfo<OrderCreditCardCommitMessage>,
         );
