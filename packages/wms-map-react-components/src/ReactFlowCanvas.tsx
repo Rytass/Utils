@@ -11,7 +11,9 @@ import {
 import { EditMode, DrawingMode } from '../typings';
 import ImageNode from './ImageNode';
 import RectangleNode from './RectangleNode';
+import PathNode from './PathNode';
 import { useRectangleDrawing } from './hooks/useRectangleDrawing';
+import { usePenDrawing } from './hooks/usePenDrawing';
 import styles from './reactFlowCanvas.module.scss';
 
 interface ReactFlowCanvasProps {
@@ -23,6 +25,7 @@ interface ReactFlowCanvasProps {
   editMode: EditMode;
   drawingMode: DrawingMode;
   onCreateRectangle: (startX: number, startY: number, endX: number, endY: number) => void;
+  onCreatePath: (points: { x: number; y: number }[]) => void;
   onSelectionChange?: (params: OnSelectionChangeParams) => void;
 }
 
@@ -73,29 +76,50 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
   editMode,
   drawingMode,
   onCreateRectangle,
+  onCreatePath,
   onSelectionChange,
 }) => {
-  const { containerRef, isDrawing, previewRect } = useRectangleDrawing({
+  const { containerRef: rectContainerRef, isDrawing: isDrawingRect, previewRect } = useRectangleDrawing({
     editMode,
     drawingMode,
     onCreateRectangle,
+  });
+
+  const { containerRef: penContainerRef, isDrawing: isDrawingPen, previewPath, currentPoints } = usePenDrawing({
+    editMode,
+    drawingMode,
+    onCreatePath,
   });
 
   const nodeTypes = useMemo(
     () => ({
       imageNode: (props: any) => <ImageNode {...props} editMode={editMode} />,
       rectangleNode: (props: any) => <RectangleNode {...props} editMode={editMode} />,
+      pathNode: (props: any) => <PathNode {...props} editMode={editMode} />,
     }),
     [editMode]
   );
 
+
+  // Use a callback ref to assign both drawing hooks to the same container
+  const containerRef = useCallback((node: HTMLDivElement | null) => {
+    rectContainerRef.current = node;
+    penContainerRef.current = node;
+  }, [rectContainerRef, penContainerRef]);
+
+  const getCursor = () => {
+    if (editMode !== EditMode.LAYER) return 'default';
+    if (drawingMode === DrawingMode.RECTANGLE) return 'crosshair';
+    if (drawingMode === DrawingMode.PEN) return 'crosshair';
+    return 'default';
+  };
 
   return (
     <div 
       ref={containerRef} 
       className={styles.reactFlowWrapper}
       style={{ 
-        cursor: drawingMode === DrawingMode.RECTANGLE && editMode === EditMode.LAYER ? 'crosshair' : 'default',
+        cursor: getCursor(),
         position: 'relative'
       }}
     >
@@ -112,10 +136,11 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
         minZoom={0.1}
         maxZoom={4}
         nodesConnectable={false}
-        nodesDraggable={editMode === EditMode.BACKGROUND || (editMode === EditMode.LAYER && drawingMode !== DrawingMode.RECTANGLE)}
-        elementsSelectable={editMode === EditMode.BACKGROUND || (editMode === EditMode.LAYER && drawingMode !== DrawingMode.RECTANGLE)}
+        nodesDraggable={editMode === EditMode.BACKGROUND || (editMode === EditMode.LAYER && drawingMode === DrawingMode.NONE)}
+        elementsSelectable={editMode === EditMode.BACKGROUND || (editMode === EditMode.LAYER && drawingMode === DrawingMode.NONE)}
         selectNodesOnDrag={false}
-        panOnDrag={drawingMode !== DrawingMode.RECTANGLE}
+        panOnDrag={drawingMode === DrawingMode.NONE}
+        zoomOnDoubleClick={drawingMode !== DrawingMode.PEN}
       >
         <CustomControls />
         <Background />
@@ -148,6 +173,61 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
             zIndex: 1000,
           }}
         />
+      )}
+      
+      {/* Drawing preview path and points */}
+      {drawingMode === DrawingMode.PEN && editMode === EditMode.LAYER && (
+        <svg
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            zIndex: 1000,
+          }}
+        >
+          {/* Preview path */}
+          {previewPath && previewPath.length > 1 && (
+            <path
+              d={`M ${previewPath.map(p => `${p.x} ${p.y}`).join(' L ')}`}
+              stroke="#3b82f6"
+              strokeWidth="2"
+              strokeDasharray="5,5"
+              fill="none"
+              fillOpacity={0}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          )}
+          
+          {/* Closing line preview for paths with 3+ points */}
+          {currentPoints && currentPoints.length >= 3 && (
+            <path
+              d={`M ${currentPoints[currentPoints.length - 1].x} ${currentPoints[currentPoints.length - 1].y} L ${currentPoints[0].x} ${currentPoints[0].y}`}
+              stroke="#3b82f6"
+              strokeWidth="1"
+              strokeDasharray="2,2"
+              fill="none"
+              strokeLinecap="round"
+              opacity="0.5"
+            />
+          )}
+          
+          {/* Current points */}
+          {currentPoints && currentPoints.map((point, index) => (
+            <circle
+              key={index}
+              cx={point.x}
+              cy={point.y}
+              r="4"
+              fill="#3b82f6"
+              stroke="white"
+              strokeWidth="2"
+            />
+          ))}
+        </svg>
       )}
     </div>
   );
