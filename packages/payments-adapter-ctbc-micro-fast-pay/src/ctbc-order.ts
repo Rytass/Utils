@@ -6,6 +6,7 @@ import {
   AsyncOrderInformation,
   PaymentEvents,
   AdditionalInfo,
+  CardType,
 } from '@rytass/payments';
 import { CTBCPayment } from './ctbc-payment';
 import {
@@ -35,6 +36,7 @@ export class CTBCOrder<
 
   private _checkoutMemberId: string | null = null;
   private _checkoutCardId: string | null = null;
+  private _cardType: CardType;
 
   constructor(options: OrderCreateInit<OCM>) {
     this._id = options.id;
@@ -52,6 +54,7 @@ export class CTBCOrder<
     }
 
     this._createdAt = options.createdAt ?? new Date();
+    this._cardType = options.cardType ?? CardType.VMJ;
   }
 
   get id(): string {
@@ -152,6 +155,10 @@ export class CTBCOrder<
 
   get asyncInfo(): AsyncOrderInformation<OCM> | undefined {
     return this._asyncInfo;
+  }
+
+  get cardType(): CardType {
+    return this._cardType;
   }
 
   infoRetrieved(info: AsyncOrderInformation<OCM>): void {

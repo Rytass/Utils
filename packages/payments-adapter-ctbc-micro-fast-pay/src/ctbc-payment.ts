@@ -52,10 +52,9 @@ const debugPayment = debug('Rytass:Payment:CTBC');
 const debugPaymentServer = debug('Rytass:Payment:CTBC:Server');
 
 export class CTBCPayment<
-    CM extends CTBCOrderCommitMessage = CTBCOrderCommitMessage,
-  >
-  implements PaymentGateway<CM, CTBCOrder<CM>>, BindCardPaymentGateway<CM>
-{
+  CM extends CTBCOrderCommitMessage = CTBCOrderCommitMessage,
+>
+  implements PaymentGateway<CM, CTBCOrder<CM>>, BindCardPaymentGateway<CM> {
   private serverHost = 'http://localhost:3000';
   private callbackPath = '/payments/ctbc/callback';
   private checkoutPath = '/payments/ctbc/checkout';
@@ -187,13 +186,22 @@ export class CTBCPayment<
         const errorCode = payload.get('errcode');
         const errorMessage = payload.get('errDesc');
 
-        if (errorCode !== '00') {
+        const isSuccess =
+          (order.cardType === CardType.AE && errorCode === 'A000') ||
+          (order.cardType === CardType.VMJ && errorCode === '00');
+
+        if (!isSuccess) {
           if (order) {
             order.fail(errorCode ?? 'x9999', errorMessage ?? '-');
           }
 
+          const typeLabel = {
+            [CardType.AE]: 'Amex',
+            [CardType.VMJ]: 'Card',
+          }[order.cardType] ?? 'Unknown';
+
           throw new Error(
-            `CTBC Bound Card Checkout Failed: ${errorCode} - ${errorMessage}`,
+            `CTBC ${typeLabel} Checkout Failed: ${errorCode} - ${errorMessage}`,
           );
         }
 
@@ -589,6 +597,7 @@ export class CTBCPayment<
 
     const orderId = options.id ?? randomBytes(8).toString('hex');
 
+    const cardType = options.cardType;
     const orderDesc = options.items.map((item) => item.name).join(', ');
     const txType = options.cardType === CardType.AE ? '6' : '0';
     const option = options.cardType === CardType.AE ? '' : '1';
@@ -647,6 +656,7 @@ export class CTBCPayment<
       } satisfies CTBCPayOrderForm,
       gateway: this,
       clientBackUrl: options.clientBackUrl,
+      cardType
     });
 
     this.orderCache.set(orderId, order);
