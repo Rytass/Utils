@@ -1,7 +1,10 @@
-import React, { FC, useState, useCallback, useEffect, useRef } from 'react';
-import { NodeProps, useReactFlow, useUpdateNodeInternals } from '@xyflow/react';
+import React, { FC, useCallback } from 'react';
+import { NodeProps } from '@xyflow/react';
 import { EditMode } from '../typings';
 import { DEFAULT_RECTANGLE_COLOR, DEFAULT_PATH_LABEL, ACTIVE_OPACITY, RECTANGLE_INACTIVE_OPACITY } from './constants';
+import { useContextMenu } from './hooks/useContextMenu';
+import { useTextEditing } from './hooks/useTextEditing';
+import { createPathCopy } from './utils/nodeOperations';
 import ContextMenu from './ContextMenu';
 import styles from './pathNode.module.scss';
 
@@ -17,10 +20,6 @@ interface PathNodeProps extends NodeProps {
 }
 
 const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode }) => {
-  const { setNodes, getNodes } = useReactFlow();
-  const updateNodeInternals = useUpdateNodeInternals();
-  const inputRef = useRef<HTMLInputElement>(null);
-  
   const {
     points = [],
     color = DEFAULT_RECTANGLE_COLOR,
@@ -28,163 +27,30 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode }) => {
     label = DEFAULT_PATH_LABEL,
   } = data as unknown as PathNodeData;
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [editingText, setEditingText] = useState(label);
-  const [contextMenu, setContextMenu] = useState<{ visible: boolean; x: number; y: number }>({
-    visible: false,
-    x: 0,
-    y: 0,
-  });
-
-  // Sync state with node data changes
-  useEffect(() => {
-    if (!isEditing) {
-      setEditingText(label);
-    }
-  }, [label, isEditing]);
-
   // Only editable in LAYER mode
   const isEditable = editMode === EditMode.LAYER;
   const opacity = editMode === EditMode.LAYER ? ACTIVE_OPACITY : RECTANGLE_INACTIVE_OPACITY;
 
-  const updateNodeData = useCallback((updates: Partial<PathNodeData>) => {
-    setNodes((nodes) =>
-      nodes.map((node) =>
-        node.id === id
-          ? { ...node, data: { ...node.data, ...updates } }
-          : node
-      )
-    );
-    updateNodeInternals(id);
-  }, [id, setNodes, updateNodeInternals]);
+  // Context menu functionality
+  const {
+    contextMenu,
+    handleContextMenu,
+    handleCloseContextMenu,
+    handleDelete,
+    handleArrange,
+    getNodes,
+    setNodes,
+  } = useContextMenu({ id, editMode, isEditable });
 
-  // Handle double click to start editing
-  const handleDoubleClick = useCallback((event: React.MouseEvent) => {
-    event.stopPropagation();
-    if (isEditable) {
-      setIsEditing(true);
-      setEditingText(label);
-    }
-  }, [isEditable, label]);
-
-  // Handle saving the edited text
-  const handleSaveText = useCallback(() => {
-    setIsEditing(false);
-    updateNodeData({ label: editingText });
-  }, [editingText, updateNodeData]);
-
-  // Handle input key events
-  const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
-    if (event.key === 'Enter') {
-      handleSaveText();
-    } else if (event.key === 'Escape') {
-      setIsEditing(false);
-      setEditingText(label);
-    }
-  }, [handleSaveText, label]);
-
-  // Auto-focus input when editing starts
-  useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, [isEditing]);
-
-  // Handle clicking outside to save
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (isEditing && inputRef.current && !inputRef.current.contains(event.target as Node)) {
-        handleSaveText();
-      }
-    };
-
-    if (isEditing) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-      };
-    }
-  }, [isEditing, handleSaveText]);
-
-  // Handle right click for context menu
-  const handleContextMenu = useCallback((event: React.MouseEvent) => {
-    if (!isEditable) return;
-    
-    event.preventDefault();
-    event.stopPropagation();
-    
-    setContextMenu({
-      visible: true,
-      x: event.clientX,
-      y: event.clientY,
-    });
-  }, [isEditable]);
-
-  // Handle context menu actions
-  const handleCloseContextMenu = useCallback(() => {
-    setContextMenu({ visible: false, x: 0, y: 0 });
-  }, []);
-
-  const handleCopyPaste = useCallback(() => {
-    console.log('Copying and pasting path');
-    
-    // Get current node to access its position
-    const currentNode = getNodes().find(node => node.id === id);
-    if (!currentNode) {
-      console.error('Current node not found');
-      return;
-    }
-    
-    // Calculate path dimensions for offset calculation
-    const xs = points.map(p => p.x);
-    const ys = points.map(p => p.y);
-    const bounds = {
-      minX: Math.min(...xs),
-      minY: Math.min(...ys),
-      maxX: Math.max(...xs),
-      maxY: Math.max(...ys),
-    };
-    const pathWidth = Math.max(bounds.maxX - bounds.minX, 10);
-    const pathHeight = Math.max(bounds.maxY - bounds.minY, 10);
-    
-    // Calculate new position (offset by 25% of path size to bottom-right)
-    const offsetX = pathWidth * 0.25;
-    const offsetY = pathHeight * 0.25;
-    
-    // Create a copy of the current node with new ID and position
-    const copiedNode = {
-      id: `path-${Date.now()}`,
-      type: 'pathNode',
-      position: {
-        x: currentNode.position.x + offsetX,
-        y: currentNode.position.y + offsetY,
-      },
-      data: {
-        points,
-        color,
-        strokeWidth,
-        label,
-      },
-    };
-    
-    console.log('Creating copied path node:', copiedNode);
-    
-    // Add the copied node to the canvas
-    setNodes((nds) => [...nds, copiedNode]);
-    handleCloseContextMenu();
-  }, [id, points, color, strokeWidth, label, getNodes, setNodes, handleCloseContextMenu]);
-
-  const handleDelete = useCallback(() => {
-    setNodes((nodes) => nodes.filter((node) => node.id !== id));
-    handleCloseContextMenu();
-  }, [id, setNodes, handleCloseContextMenu]);
-
-  const handleArrange = useCallback(() => {
-    // TODO: Implement arrange functionality
-    console.log('Arrange not implemented yet');
-    handleCloseContextMenu();
-  }, [handleCloseContextMenu]);
+  // Text editing functionality
+  const {
+    isEditing,
+    editingText,
+    inputRef,
+    setEditingText,
+    handleDoubleClick,
+    handleKeyDown,
+  } = useTextEditing({ id, label, editMode, isEditable });
 
   // Calculate path dimensions
   const getBounds = useCallback(() => {
@@ -225,9 +91,23 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode }) => {
       })()
     : '';
 
-  // Calculate center position for text
-  const centerX = width / 2;
-  const centerY = height / 2;
+  // Handle copy and paste
+  const handleCopyPaste = useCallback(() => {
+    const currentNode = getNodes().find(node => node.id === id);
+    if (!currentNode) {
+      console.error('Current node not found');
+      return;
+    }
+    
+    const copiedNode = createPathCopy({
+      currentNode,
+      nodeType: 'pathNode',
+      data: { points, color, strokeWidth, label },
+    });
+    
+    setNodes((nds) => [...nds, copiedNode]);
+    handleCloseContextMenu();
+  }, [id, points, color, strokeWidth, label, getNodes, setNodes, handleCloseContextMenu]);
 
   return (
     <div className={`${styles.pathNode} ${selected ? styles.selected : ''}`}>
