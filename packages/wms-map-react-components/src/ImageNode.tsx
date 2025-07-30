@@ -1,5 +1,6 @@
 import React, { FC, useState } from 'react';
 import { NodeProps, NodeResizeControl } from '@xyflow/react';
+import { EditMode } from '../typings';
 import styles from './imageNode.module.scss';
 
 interface ImageNodeData {
@@ -11,7 +12,11 @@ interface ImageNodeData {
   originalHeight?: number;
 }
 
-const ImageNode: FC<NodeProps> = ({ data, selected, id }) => {
+interface ImageNodeProps extends NodeProps {
+  editMode: EditMode;
+}
+
+const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
   const {
     imageUrl,
     width = 300,
@@ -25,6 +30,9 @@ const ImageNode: FC<NodeProps> = ({ data, selected, id }) => {
 
   // Calculate aspect ratio
   const aspectRatio = originalWidth / originalHeight;
+  // Check if this node should be editable based on edit mode
+  const isEditable = editMode === EditMode.BACKGROUND;
+  const opacity = editMode === EditMode.BACKGROUND ? 1 : 0.4;
 
   const handleResize = (event: any, params: any) => {
     const newWidth = params.width;
@@ -35,7 +43,7 @@ const ImageNode: FC<NodeProps> = ({ data, selected, id }) => {
 
   return (
     <div className={`${styles.imageNode} ${selected ? styles.selected : ''}`}>
-      {selected && (
+      {selected && isEditable && (
         <>
           <NodeResizeControl
             style={{
@@ -109,6 +117,7 @@ const ImageNode: FC<NodeProps> = ({ data, selected, id }) => {
             height: `${currentSize.height}px`,
             maxWidth: '100%',
             maxHeight: '100%',
+            opacity: opacity,
           }}
           draggable={false}
         />
