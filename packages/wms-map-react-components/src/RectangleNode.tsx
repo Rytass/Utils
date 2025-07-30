@@ -47,7 +47,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({ data, selected, id, editMode })
     handleArrange,
     getNodes,
     setNodes,
-  } = useContextMenu({ id, editMode, isEditable });
+  } = useContextMenu({ id, editMode, isEditable, nodeType: 'rectangleNode' });
 
   // Text editing functionality
   const {

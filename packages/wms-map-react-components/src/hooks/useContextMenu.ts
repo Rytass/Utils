@@ -6,6 +6,7 @@ interface UseContextMenuProps {
   id: string;
   editMode: EditMode;
   isEditable: boolean;
+  nodeType?: 'rectangleNode' | 'pathNode' | 'imageNode';
 }
 
 interface ContextMenuState {
@@ -14,7 +15,7 @@ interface ContextMenuState {
   y: number;
 }
 
-export const useContextMenu = ({ id, editMode, isEditable }: UseContextMenuProps) => {
+export const useContextMenu = ({ id, editMode, isEditable, nodeType }: UseContextMenuProps) => {
   const { setNodes, getNodes } = useReactFlow();
   
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
@@ -25,7 +26,13 @@ export const useContextMenu = ({ id, editMode, isEditable }: UseContextMenuProps
 
   // Handle right click for context menu
   const handleContextMenu = useCallback((event: React.MouseEvent) => {
-    if (!isEditable) return;
+    // For image nodes, show context menu in BACKGROUND mode
+    // For rectangle/path nodes, show context menu in LAYER mode
+    const shouldShowMenu = 
+      (nodeType === 'imageNode' && editMode === EditMode.BACKGROUND) ||
+      ((nodeType === 'rectangleNode' || nodeType === 'pathNode') && editMode === EditMode.LAYER && isEditable);
+    
+    if (!shouldShowMenu) return;
     
     event.preventDefault();
     event.stopPropagation();
@@ -35,7 +42,7 @@ export const useContextMenu = ({ id, editMode, isEditable }: UseContextMenuProps
       x: event.clientX,
       y: event.clientY,
     });
-  }, [isEditable]);
+  }, [isEditable, editMode, nodeType]);
 
   // Handle context menu actions
   const handleCloseContextMenu = useCallback(() => {
