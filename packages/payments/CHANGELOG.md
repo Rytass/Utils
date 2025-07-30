@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.2](https://github.com/Rytass/Utils/compare/@rytass/payments@0.2.1...@rytass/payments@0.2.2) (2025-07-30)
+
+### Bug Fixes
+
+- **payments-adapter-ctbc-micro-fast-pay:** ctbc order add cardType ([5129658](https://github.com/Rytass/Utils/commit/512965856822c7a9e2d0ee23759d3d535ed65b4e))
+
 ## [0.2.1](https://github.com/Rytass/Utils/compare/@rytass/payments@0.2.0...@rytass/payments@0.2.1) (2025-07-28)
 
 ### Features

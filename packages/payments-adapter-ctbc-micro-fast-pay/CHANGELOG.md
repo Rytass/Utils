@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.4](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.3...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.4) (2025-07-30)
+
+### Bug Fixes
+
+- **payments-adapter-ctbc-micro-fast-pay:** add amex callbackPath check Amex credit card success ([029084b](https://github.com/Rytass/Utils/commit/029084b4ded62e6ee13f76c4229afb598f9af899))
+- **payments-adapter-ctbc-micro-fast-pay:** ctbc order add cardType ([5129658](https://github.com/Rytass/Utils/commit/512965856822c7a9e2d0ee23759d3d535ed65b4e))
+
 ## [0.1.3](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.2...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.3) (2025-07-29)
 
 ### Features
