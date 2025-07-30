@@ -1,13 +1,14 @@
-import React, { FC, useState, useCallback, useEffect } from 'react';
+import React, { FC, useState, useCallback, useEffect, useRef } from 'react';
 import { NodeProps, useReactFlow, useUpdateNodeInternals } from '@xyflow/react';
 import { EditMode } from '../typings';
-import { DEFAULT_RECTANGLE_COLOR, ACTIVE_OPACITY, RECTANGLE_INACTIVE_OPACITY } from './constants';
+import { DEFAULT_RECTANGLE_COLOR, DEFAULT_PATH_LABEL, ACTIVE_OPACITY, RECTANGLE_INACTIVE_OPACITY } from './constants';
 import styles from './pathNode.module.scss';
 
 interface PathNodeData {
   points: { x: number; y: number }[];
   color?: string;
   strokeWidth?: number;
+  label?: string;
 }
 
 interface PathNodeProps extends NodeProps {
@@ -17,12 +18,24 @@ interface PathNodeProps extends NodeProps {
 const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode }) => {
   const { setNodes } = useReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
+  const inputRef = useRef<HTMLInputElement>(null);
   
   const {
     points = [],
     color = DEFAULT_RECTANGLE_COLOR,
     strokeWidth = 2,
+    label = DEFAULT_PATH_LABEL,
   } = data as unknown as PathNodeData;
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingText, setEditingText] = useState(label);
+
+  // Sync state with node data changes
+  useEffect(() => {
+    if (!isEditing) {
+      setEditingText(label);
+    }
+  }, [label, isEditing]);
 
   // Only editable in LAYER mode
   const isEditable = editMode === EditMode.LAYER;
@@ -38,6 +51,55 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode }) => {
     );
     updateNodeInternals(id);
   }, [id, setNodes, updateNodeInternals]);
+
+  // Handle double click to start editing
+  const handleDoubleClick = useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (isEditable) {
+      setIsEditing(true);
+      setEditingText(label);
+    }
+  }, [isEditable, label]);
+
+  // Handle saving the edited text
+  const handleSaveText = useCallback(() => {
+    setIsEditing(false);
+    updateNodeData({ label: editingText });
+  }, [editingText, updateNodeData]);
+
+  // Handle input key events
+  const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
+    if (event.key === 'Enter') {
+      handleSaveText();
+    } else if (event.key === 'Escape') {
+      setIsEditing(false);
+      setEditingText(label);
+    }
+  }, [handleSaveText, label]);
+
+  // Auto-focus input when editing starts
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  // Handle clicking outside to save
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isEditing && inputRef.current && !inputRef.current.contains(event.target as Node)) {
+        handleSaveText();
+      }
+    };
+
+    if (isEditing) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [isEditing, handleSaveText]);
 
   // Calculate path dimensions
   const getBounds = useCallback(() => {
@@ -78,6 +140,10 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode }) => {
       })()
     : '';
 
+  // Calculate center position for text
+  const centerX = width / 2;
+  const centerY = height / 2;
+
   return (
     <div className={`${styles.pathNode} ${selected ? styles.selected : ''}`}>
       <div 
@@ -88,7 +154,9 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode }) => {
           opacity: opacity,
           border: selected && isEditable ? '2px solid #3b82f6' : 'none',
           borderRadius: '4px',
+          position: 'relative',
         }}
+        onDoubleClick={handleDoubleClick}
       >
         <svg
           width={width}
@@ -105,6 +173,62 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode }) => {
             strokeLinejoin="round"
           />
         </svg>
+        
+        {/* Text overlay */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            fontSize: '12px',
+            fontWeight: 'bold',
+            textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+            pointerEvents: isEditing ? 'auto' : 'none',
+            width: '90%',
+            textAlign: 'center',
+          }}
+        >
+          {isEditing ? (
+            <input
+              ref={inputRef}
+              type="text"
+              value={editingText}
+              onChange={(e) => setEditingText(e.target.value)}
+              onKeyDown={handleKeyDown}
+              style={{
+                background: 'rgba(0,0,0,0.5)',
+                border: '1px solid white',
+                borderRadius: '4px',
+                outline: 'none',
+                color: 'white',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                width: '100%',
+                padding: '2px 4px',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
+            <span 
+              style={{ 
+                cursor: isEditable ? 'text' : 'default',
+                background: isClosedPath ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.6)',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                backdropFilter: 'blur(2px)',
+              }}
+            >
+              {label}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

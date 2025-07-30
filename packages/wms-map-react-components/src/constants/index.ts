@@ -16,6 +16,7 @@ export const MIN_RESIZE_HEIGHT = 30;
 
 // Text and labels
 export const DEFAULT_RECTANGLE_LABEL = '矩形區域';
+export const DEFAULT_PATH_LABEL = '路徑區域';
 
 // Opacity values
 export const ACTIVE_OPACITY = 1;

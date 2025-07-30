@@ -12,7 +12,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { EditMode, DrawingMode } from '../typings';
-import { DEFAULT_RECTANGLE_WIDTH, DEFAULT_RECTANGLE_HEIGHT, DEFAULT_RECTANGLE_COLOR, DEFAULT_RECTANGLE_LABEL, MIN_RECTANGLE_SIZE } from './constants';
+import { DEFAULT_RECTANGLE_WIDTH, DEFAULT_RECTANGLE_HEIGHT, DEFAULT_RECTANGLE_COLOR, DEFAULT_RECTANGLE_LABEL, DEFAULT_PATH_LABEL, MIN_RECTANGLE_SIZE } from './constants';
 import { calculateImageSize, calculateStaggeredPosition } from './utils/nodeUtils';
 import Toolbar from './Toolbar';
 import Breadcrumb from './Breadcrumb';
@@ -187,6 +187,7 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
         points,
         color: selectedColor,
         strokeWidth: 2,
+        label: DEFAULT_PATH_LABEL,
       },
     };
 
