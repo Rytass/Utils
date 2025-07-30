@@ -8,6 +8,7 @@ import {
   ReactFlowProvider,
   useEdgesState,
   useNodesState,
+  OnSelectionChangeParams,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { EditMode, DrawingMode } from '../typings';
@@ -31,6 +32,8 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [editMode, setEditMode] = useState<EditMode>(EditMode.BACKGROUND);
   const [drawingMode, setDrawingMode] = useState<DrawingMode>(DrawingMode.NONE);
+  const [selectedColor, setSelectedColor] = useState<string>(DEFAULT_RECTANGLE_COLOR);
+  const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
 
   const handleEditModeChange = useCallback((mode: EditMode) => {
     setEditMode(mode);
@@ -153,14 +156,14 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
       data: {
         width,
         height,
-        color: DEFAULT_RECTANGLE_COLOR,
+        color: selectedColor,
         label: DEFAULT_RECTANGLE_LABEL,
       },
     };
 
     setNodes((nds) => [...nds, newRectangle]);
     // Keep drawing mode active for continuous drawing
-  }, [setNodes]);
+  }, [setNodes, selectedColor]);
 
   // Placeholder undo/redo functions - can be implemented with proper state management later
   const handleUndo = useCallback(() => {
@@ -172,6 +175,36 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
     console.log('Redo action');
     // TODO: Implement redo functionality
   }, []);
+
+  const handleSelectionChange = useCallback((params: OnSelectionChangeParams) => {
+    setSelectedNodes(params.nodes);
+    
+    // If a single rectangle is selected, update the color picker to show its color
+    if (params.nodes.length === 1 && params.nodes[0].type === 'rectangleNode') {
+      const selectedRectangle = params.nodes[0];
+      const rectangleColor = selectedRectangle.data?.color;
+      if (rectangleColor && typeof rectangleColor === 'string') {
+        setSelectedColor(rectangleColor);
+      }
+    }
+  }, []);
+
+  const handleColorChange = useCallback((color: string) => {
+    setSelectedColor(color);
+    
+    // Update color of selected rectangle nodes
+    const selectedRectangles = selectedNodes.filter(node => node.type === 'rectangleNode');
+    if (selectedRectangles.length > 0) {
+      setNodes((nds) =>
+        nds.map((node) => {
+          if (selectedRectangles.some(selected => selected.id === node.id)) {
+            return { ...node, data: { ...node.data, color } };
+          }
+          return node;
+        })
+      );
+    }
+  }, [selectedNodes, setNodes]);
 
   return (
     <Modal
@@ -200,6 +233,8 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
             onRedo={handleRedo}
             canUndo={false}
             canRedo={false}
+            onColorChange={handleColorChange}
+            selectedColor={selectedColor}
           />
 
           <ReactFlowCanvas
@@ -211,6 +246,7 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
             editMode={editMode}
             drawingMode={drawingMode}
             onCreateRectangle={handleCreateRectangle}
+            onSelectionChange={handleSelectionChange}
           />
         </ReactFlowProvider>
       </div>
