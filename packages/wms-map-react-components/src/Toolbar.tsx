@@ -1,21 +1,34 @@
 import React, { FC } from 'react';
 import { Button } from '@mezzanine-ui/react';
+import { EditMode } from '../typings';
 import styles from './toolbar.module.scss';
 
 interface ToolbarProps {
   onUpload: () => void;
   onDeleteAll: () => void;
   onSave: () => void;
+  editMode: EditMode;
+  onEditModeChange: (mode: EditMode) => void;
 }
 
-const Toolbar: FC<ToolbarProps> = ({ onUpload, onDeleteAll, onSave }) => {
+const Toolbar: FC<ToolbarProps> = ({ onUpload, onDeleteAll, onSave, editMode, onEditModeChange }) => {
   return (
     <div className={styles.toolbar}>
       <div className={styles.toolbarLeft}>
-        <Button variant="outlined" size="small" className={styles.toolbarButton}>
+        <Button 
+          variant={editMode === EditMode.LAYER ? "contained" : "outlined"} 
+          size="small" 
+          className={styles.toolbarButton}
+          onClick={() => onEditModeChange(EditMode.LAYER)}
+        >
           圖層
         </Button>
-        <Button variant="outlined" size="small" className={styles.toolbarButton}>
+        <Button 
+          variant={editMode === EditMode.BACKGROUND ? "contained" : "outlined"} 
+          size="small" 
+          className={styles.toolbarButton}
+          onClick={() => onEditModeChange(EditMode.BACKGROUND)}
+        >
           底圖
         </Button>
         <Button variant="outlined" size="small" className={styles.toolbarButton} onClick={onUpload}>

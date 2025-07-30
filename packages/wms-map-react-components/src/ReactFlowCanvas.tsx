@@ -6,6 +6,7 @@ import {
   ReactFlow,
   useReactFlow,
 } from '@xyflow/react';
+import { EditMode } from '../typings';
 import ImageNode from './ImageNode';
 import styles from './reactFlowCanvas.module.scss';
 
@@ -15,6 +16,7 @@ interface ReactFlowCanvasProps {
   onNodesChange: (changes: any) => void;
   onEdgesChange: (changes: any) => void;
   onConnect: (connection: any) => void;
+  editMode: EditMode;
 }
 
 const CustomControls: FC = () => {
@@ -71,14 +73,15 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
   onNodesChange,
   onEdgesChange,
   onConnect,
+  editMode,
 }) => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
   const nodeTypes = useMemo(
     () => ({
-      imageNode: ImageNode as any,
+      imageNode: (props: any) => <ImageNode {...props} editMode={editMode} />,
     }),
-    []
+    [editMode]
   );
 
   return (
@@ -96,8 +99,8 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
         minZoom={0.1}
         maxZoom={4}
         nodesConnectable={false}
-        nodesDraggable={true}
-        elementsSelectable={true}
+        nodesDraggable={editMode === EditMode.BACKGROUND}
+        elementsSelectable={editMode === EditMode.BACKGROUND}
       >
         <CustomControls />
         <Background />

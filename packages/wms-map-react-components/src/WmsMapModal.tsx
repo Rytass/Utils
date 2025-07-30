@@ -1,4 +1,4 @@
-import React, { FC, useCallback } from 'react';
+import React, { FC, useCallback, useState } from 'react';
 import { Modal, ModalHeader } from '@mezzanine-ui/react';
 import {
   addEdge,
@@ -10,6 +10,7 @@ import {
   useNodesState,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { EditMode } from '../typings';
 import Toolbar from './Toolbar';
 import Breadcrumb from './Breadcrumb';
 import ReactFlowCanvas from './ReactFlowCanvas';
@@ -26,6 +27,21 @@ const initialEdges: Edge[] = [];
 const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [editMode, setEditMode] = useState<EditMode>(EditMode.BACKGROUND);
+
+  const handleEditModeChange = useCallback((mode: EditMode) => {
+    setEditMode(mode);
+    
+    // When switching to LAYER mode, deselect all nodes
+    if (mode === EditMode.LAYER) {
+      setNodes((nds) => 
+        nds.map((node) => ({
+          ...node,
+          selected: false,
+        }))
+      );
+    }
+  }, [setNodes]);
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -138,6 +154,8 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
             onUpload={handleUpload}
             onDeleteAll={handleDeleteAll}
             onSave={handleSave}
+            editMode={editMode}
+            onEditModeChange={handleEditModeChange}
           />
 
           <ReactFlowCanvas
@@ -146,6 +164,7 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            editMode={editMode}
           />
         </ReactFlowProvider>
       </div>
