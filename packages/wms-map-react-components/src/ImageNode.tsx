@@ -1,6 +1,7 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
-import { NodeProps, NodeResizeControl, useReactFlow } from '@xyflow/react';
+import { NodeProps, NodeResizeControl, useUpdateNodeInternals, useReactFlow } from '@xyflow/react';
 import { EditMode } from '../typings';
+import { DEFAULT_IMAGE_WIDTH, DEFAULT_IMAGE_HEIGHT, ACTIVE_OPACITY, INACTIVE_OPACITY, IMAGE_RESIZE_CONTROL_SIZE } from './constants';
 import styles from './imageNode.module.scss';
 
 interface ImageNodeData {
@@ -18,11 +19,12 @@ interface ImageNodeProps extends NodeProps {
 
 const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
   const { setNodes } = useReactFlow();
+  const updateNodeInternals = useUpdateNodeInternals();
   
   const {
     imageUrl,
-    width = 300,
-    height = 200,
+    width = DEFAULT_IMAGE_WIDTH,
+    height = DEFAULT_IMAGE_HEIGHT,
     fileName,
     originalWidth = width,
     originalHeight = height,
@@ -39,7 +41,18 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
   const aspectRatio = originalWidth / originalHeight;
   // Check if this node should be editable based on edit mode
   const isEditable = editMode === EditMode.BACKGROUND;
-  const opacity = editMode === EditMode.BACKGROUND ? 1 : 0.4;
+  const opacity = editMode === EditMode.BACKGROUND ? ACTIVE_OPACITY : INACTIVE_OPACITY;
+
+  const updateNodeData = useCallback((updates: Partial<ImageNodeData>) => {
+    setNodes((nodes) =>
+      nodes.map((node) =>
+        node.id === id
+          ? { ...node, data: { ...node.data, ...updates } }
+          : node
+      )
+    );
+    updateNodeInternals(id);
+  }, [id, setNodes, updateNodeInternals]);
 
   const handleResize = useCallback((event: any, params: any) => {
     const newWidth = params.width;
@@ -47,23 +60,8 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
 
     const newSize = { width: newWidth, height: newHeight };
     setCurrentSize(newSize);
-    
-    // Update the node data to persist the changes
-    setNodes((nodes) =>
-      nodes.map((node) =>
-        node.id === id
-          ? {
-              ...node,
-              data: {
-                ...node.data,
-                width: newWidth,
-                height: newHeight,
-              },
-            }
-          : node
-      )
-    );
-  }, [aspectRatio, id, setNodes]);
+    updateNodeData({ width: newWidth, height: newHeight });
+  }, [aspectRatio, updateNodeData]);
 
   return (
     <div className={`${styles.imageNode} ${selected ? styles.selected : ''}`}>
@@ -73,8 +71,8 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
             style={{
               background: 'white',
               border: '1px solid #5570d3',
-              width: 20,
-              height: 20,
+              width: IMAGE_RESIZE_CONTROL_SIZE,
+              height: IMAGE_RESIZE_CONTROL_SIZE,
               borderRadius: 2,
               zIndex: 10,
             }}
@@ -88,8 +86,8 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
             style={{
               background: 'white',
               border: '1px solid #5570d3',
-              width: 20,
-              height: 20,
+              width: IMAGE_RESIZE_CONTROL_SIZE,
+              height: IMAGE_RESIZE_CONTROL_SIZE,
               borderRadius: 2,
               zIndex: 10,
             }}
@@ -103,8 +101,8 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
             style={{
               background: 'white',
               border: '1px solid #5570d3',
-              width: 20,
-              height: 20,
+              width: IMAGE_RESIZE_CONTROL_SIZE,
+              height: IMAGE_RESIZE_CONTROL_SIZE,
               borderRadius: 2,
               zIndex: 10,
             }}
@@ -118,8 +116,8 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
             style={{
               background: 'white',
               border: '1px solid #5570d3',
-              width: 20,
-              height: 20,
+              width: IMAGE_RESIZE_CONTROL_SIZE,
+              height: IMAGE_RESIZE_CONTROL_SIZE,
               borderRadius: 2,
               zIndex: 10,
             }}

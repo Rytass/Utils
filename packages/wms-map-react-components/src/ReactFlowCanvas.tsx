@@ -6,10 +6,12 @@ import {
   ReactFlow,
   useReactFlow,
   SelectionMode,
+  OnSelectionChangeParams,
 } from '@xyflow/react';
 import { EditMode, DrawingMode } from '../typings';
 import ImageNode from './ImageNode';
 import RectangleNode from './RectangleNode';
+import { useRectangleDrawing } from './hooks/useRectangleDrawing';
 import styles from './reactFlowCanvas.module.scss';
 
 interface ReactFlowCanvasProps {
@@ -81,14 +83,11 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
   drawingMode,
   onCreateRectangle,
 }) => {
-  const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const { screenToFlowPosition } = useReactFlow();
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [startPos, setStartPos] = useState({ x: 0, y: 0 });
-  const [currentPos, setCurrentPos] = useState({ x: 0, y: 0 });
-  // Screen coordinates for preview rectangle
-  const [startScreenPos, setStartScreenPos] = useState({ x: 0, y: 0 });
-  const [currentScreenPos, setCurrentScreenPos] = useState({ x: 0, y: 0 });
+  const { containerRef, isDrawing, previewRect } = useRectangleDrawing({
+    editMode,
+    drawingMode,
+    onCreateRectangle,
+  });
 
   const nodeTypes = useMemo(
     () => ({
@@ -98,116 +97,10 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
     [editMode]
   );
 
-  // Handle DOM mouse events for rectangle drawing
-  const handleMouseDown = useCallback((event: MouseEvent) => {
-    if (drawingMode !== DrawingMode.RECTANGLE || editMode !== EditMode.LAYER) return;
-    
-    console.log('Mouse down in drawing mode');
-    
-    const wrapper = reactFlowWrapper.current;
-    if (!wrapper) return;
-    
-    const rect = wrapper.getBoundingClientRect();
-    const screenX = event.clientX - rect.left;
-    const screenY = event.clientY - rect.top;
-    
-    const position = screenToFlowPosition({ 
-      x: event.clientX, 
-      y: event.clientY
-    });
-    
-    console.log('Start screen:', { x: screenX, y: screenY });
-    console.log('Start flow position:', position);
-    
-    setIsDrawing(true);
-    setStartPos(position);
-    setCurrentPos(position);
-    setStartScreenPos({ x: screenX, y: screenY });
-    setCurrentScreenPos({ x: screenX, y: screenY });
-  }, [drawingMode, editMode, screenToFlowPosition]);
-
-  const handleMouseMove = useCallback((event: MouseEvent) => {
-    if (!isDrawing || drawingMode !== DrawingMode.RECTANGLE) return;
-    
-    const wrapper = reactFlowWrapper.current;
-    if (!wrapper) return;
-    
-    const rect = wrapper.getBoundingClientRect();
-    const screenX = event.clientX - rect.left;
-    const screenY = event.clientY - rect.top;
-    
-    const position = screenToFlowPosition({ 
-      x: event.clientX, 
-      y: event.clientY
-    });
-    
-    setCurrentPos(position);
-    setCurrentScreenPos({ x: screenX, y: screenY });
-  }, [isDrawing, drawingMode, screenToFlowPosition]);
-
-  const handleMouseUp = useCallback((event: MouseEvent) => {
-    if (!isDrawing || drawingMode !== DrawingMode.RECTANGLE) return;
-    
-    console.log('Mouse up');
-    
-    const wrapper = reactFlowWrapper.current;
-    if (!wrapper) return;
-    
-    const rect = wrapper.getBoundingClientRect();
-    const endPosition = screenToFlowPosition({ 
-      x: event.clientX, 
-      y: event.clientY
-    });
-    
-    console.log('End flow position:', endPosition);
-    console.log('Final rectangle will be created at:', {
-      x: Math.min(startPos.x, endPosition.x),
-      y: Math.min(startPos.y, endPosition.y),
-      width: Math.abs(endPosition.x - startPos.x),
-      height: Math.abs(endPosition.y - startPos.y)
-    });
-    
-    const width = Math.abs(endPosition.x - startPos.x);
-    const height = Math.abs(endPosition.y - startPos.y);
-    
-    console.log('Rectangle size:', { width, height });
-    
-    if (width > 10 && height > 10) {
-      console.log('Creating rectangle...');
-      onCreateRectangle(startPos.x, startPos.y, endPosition.x, endPosition.y);
-    }
-    
-    setIsDrawing(false);
-  }, [isDrawing, drawingMode, screenToFlowPosition, startPos, onCreateRectangle]);
-
-  // Add and remove event listeners
-  React.useEffect(() => {
-    const wrapper = reactFlowWrapper.current;
-    if (!wrapper) return;
-
-    wrapper.addEventListener('mousedown', handleMouseDown);
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      wrapper.removeEventListener('mousedown', handleMouseDown);
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [handleMouseDown, handleMouseMove, handleMouseUp]);
-
-
-  // Calculate preview rectangle for drawing using screen coordinates
-  const previewRect = isDrawing ? {
-    x: Math.min(startScreenPos.x, currentScreenPos.x),
-    y: Math.min(startScreenPos.y, currentScreenPos.y),
-    width: Math.abs(currentScreenPos.x - startScreenPos.x),
-    height: Math.abs(currentScreenPos.y - startScreenPos.y),
-  } : null;
 
   return (
     <div 
-      ref={reactFlowWrapper} 
+      ref={containerRef} 
       className={styles.reactFlowWrapper}
       style={{ 
         cursor: drawingMode === DrawingMode.RECTANGLE && editMode === EditMode.LAYER ? 'crosshair' : 'default',

@@ -1,6 +1,7 @@
 import React, { FC, useState, useCallback, useRef, useEffect } from 'react';
-import { NodeProps, NodeResizeControl, useReactFlow } from '@xyflow/react';
+import { NodeProps, NodeResizeControl, useReactFlow, useUpdateNodeInternals } from '@xyflow/react';
 import { EditMode } from '../typings';
+import { DEFAULT_RECTANGLE_WIDTH, DEFAULT_RECTANGLE_HEIGHT, DEFAULT_RECTANGLE_COLOR, DEFAULT_RECTANGLE_LABEL, ACTIVE_OPACITY, RECTANGLE_INACTIVE_OPACITY, RESIZE_CONTROL_SIZE, MIN_RESIZE_WIDTH, MIN_RESIZE_HEIGHT } from './constants';
 import styles from './rectangleNode.module.scss';
 
 interface RectangleNodeData {
@@ -16,13 +17,14 @@ interface RectangleNodeProps extends NodeProps {
 
 const RectangleNode: FC<RectangleNodeProps> = ({ data, selected, id, editMode }) => {
   const { setNodes } = useReactFlow();
+  const updateNodeInternals = useUpdateNodeInternals();
   const inputRef = useRef<HTMLInputElement>(null);
   
   const {
-    width = 150,
-    height = 100,
-    color = '#3b82f6',
-    label = '矩形區域',
+    width = DEFAULT_RECTANGLE_WIDTH,
+    height = DEFAULT_RECTANGLE_HEIGHT,
+    color = DEFAULT_RECTANGLE_COLOR,
+    label = DEFAULT_RECTANGLE_LABEL,
   } = data as unknown as RectangleNodeData;
 
   const [currentSize, setCurrentSize] = useState({ width, height });
@@ -39,28 +41,24 @@ const RectangleNode: FC<RectangleNodeProps> = ({ data, selected, id, editMode })
 
   // Only editable in LAYER mode
   const isEditable = editMode === EditMode.LAYER;
-  const opacity = editMode === EditMode.LAYER ? 1 : 0.6;
+  const opacity = editMode === EditMode.LAYER ? ACTIVE_OPACITY : RECTANGLE_INACTIVE_OPACITY;
+
+  const updateNodeData = useCallback((updates: Partial<RectangleNodeData>) => {
+    setNodes((nodes) =>
+      nodes.map((node) =>
+        node.id === id
+          ? { ...node, data: { ...node.data, ...updates } }
+          : node
+      )
+    );
+    updateNodeInternals(id);
+  }, [id, setNodes, updateNodeInternals]);
 
   const handleResize = useCallback((event: any, params: any) => {
     const newSize = { width: params.width, height: params.height };
     setCurrentSize(newSize);
-    
-    // Update the node data to persist the changes
-    setNodes((nodes) =>
-      nodes.map((node) =>
-        node.id === id
-          ? {
-              ...node,
-              data: {
-                ...node.data,
-                width: params.width,
-                height: params.height,
-              },
-            }
-          : node
-      )
-    );
-  }, [id, setNodes]);
+    updateNodeData({ width: params.width, height: params.height });
+  }, [updateNodeData]);
 
   // Handle double click to start editing
   const handleDoubleClick = useCallback((event: React.MouseEvent) => {
@@ -74,22 +72,8 @@ const RectangleNode: FC<RectangleNodeProps> = ({ data, selected, id, editMode })
   // Handle saving the edited text
   const handleSaveText = useCallback(() => {
     setIsEditing(false);
-    
-    // Update the node data with new label
-    setNodes((nodes) =>
-      nodes.map((node) =>
-        node.id === id
-          ? {
-              ...node,
-              data: {
-                ...node.data,
-                label: editingText,
-              },
-            }
-          : node
-      )
-    );
-  }, [id, editingText, setNodes]);
+    updateNodeData({ label: editingText });
+  }, [editingText, updateNodeData]);
 
   // Handle input key events
   const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
@@ -132,52 +116,52 @@ const RectangleNode: FC<RectangleNodeProps> = ({ data, selected, id, editMode })
           <NodeResizeControl
             style={{
               background: 'white',
-              border: '2px solid #3b82f6',
-              width: 16,
-              height: 16,
+              border: `2px solid ${DEFAULT_RECTANGLE_COLOR}`,
+              width: RESIZE_CONTROL_SIZE,
+              height: RESIZE_CONTROL_SIZE,
               borderRadius: 2,
             }}
-            minWidth={50}
-            minHeight={30}
+            minWidth={MIN_RESIZE_WIDTH}
+            minHeight={MIN_RESIZE_HEIGHT}
             onResize={handleResize}
             position="top-left"
           />
           <NodeResizeControl
             style={{
               background: 'white',
-              border: '2px solid #3b82f6',
-              width: 16,
-              height: 16,
+              border: `2px solid ${DEFAULT_RECTANGLE_COLOR}`,
+              width: RESIZE_CONTROL_SIZE,
+              height: RESIZE_CONTROL_SIZE,
               borderRadius: 2,
             }}
-            minWidth={50}
-            minHeight={30}
+            minWidth={MIN_RESIZE_WIDTH}
+            minHeight={MIN_RESIZE_HEIGHT}
             onResize={handleResize}
             position="top-right"
           />
           <NodeResizeControl
             style={{
               background: 'white',
-              border: '2px solid #3b82f6',
-              width: 16,
-              height: 16,
+              border: `2px solid ${DEFAULT_RECTANGLE_COLOR}`,
+              width: RESIZE_CONTROL_SIZE,
+              height: RESIZE_CONTROL_SIZE,
               borderRadius: 2,
             }}
-            minWidth={50}
-            minHeight={30}
+            minWidth={MIN_RESIZE_WIDTH}
+            minHeight={MIN_RESIZE_HEIGHT}
             onResize={handleResize}
             position="bottom-left"
           />
           <NodeResizeControl
             style={{
               background: 'white',
-              border: '2px solid #3b82f6',
-              width: 16,
-              height: 16,
+              border: `2px solid ${DEFAULT_RECTANGLE_COLOR}`,
+              width: RESIZE_CONTROL_SIZE,
+              height: RESIZE_CONTROL_SIZE,
               borderRadius: 2,
             }}
-            minWidth={50}
-            minHeight={30}
+            minWidth={MIN_RESIZE_WIDTH}
+            minHeight={MIN_RESIZE_HEIGHT}
             onResize={handleResize}
             position="bottom-right"
           />
