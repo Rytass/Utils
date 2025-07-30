@@ -59,3 +59,9 @@ export enum DrawingMode {
   NONE = 'NONE',
   RECTANGLE = 'RECTANGLE',
 }
+
+export enum LayerDrawingTool {
+  SELECT = 'SELECT',
+  RECTANGLE = 'RECTANGLE', 
+  PEN = 'PEN',
+}

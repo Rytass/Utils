@@ -46,16 +46,6 @@ const CustomControls: FC = () => {
 
   return (
     <>
-      {/* Undo/Redo Controls - Left */}
-      <div className={styles.undoRedoControls}>
-        <button className={styles.controlButton}>
-          ↶
-        </button>
-        <button className={styles.controlButton}>
-          ↷
-        </button>
-      </div>
-
       {/* Zoom Controls - Right */}
       <div className={styles.zoomControls}>
         <button className={styles.controlButton} onClick={handleZoomOut}>

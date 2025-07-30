@@ -162,6 +162,17 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
     // Keep drawing mode active for continuous drawing
   }, [setNodes]);
 
+  // Placeholder undo/redo functions - can be implemented with proper state management later
+  const handleUndo = useCallback(() => {
+    console.log('Undo action');
+    // TODO: Implement undo functionality
+  }, []);
+
+  const handleRedo = useCallback(() => {
+    console.log('Redo action');
+    // TODO: Implement redo functionality
+  }, []);
+
   return (
     <Modal
       open={open}
@@ -185,6 +196,10 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
             drawingMode={drawingMode}
             onEditModeChange={handleEditModeChange}
             onToggleRectangleTool={handleToggleRectangleTool}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            canUndo={false}
+            canRedo={false}
           />
 
           <ReactFlowCanvas
