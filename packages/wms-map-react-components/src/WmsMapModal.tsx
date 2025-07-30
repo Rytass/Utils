@@ -117,10 +117,17 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
     input.click();
   };
 
-  const handleDeleteAll = () => {
-    setNodes([]);
-    setEdges([]);
-  };
+  const handleDeleteAll = useCallback(() => {
+    if (editMode === EditMode.BACKGROUND) {
+      // Delete all image nodes (background images)
+      setNodes((nds) => nds.filter((node) => node.type !== 'imageNode'));
+    } else if (editMode === EditMode.LAYER) {
+      // Delete all rectangle nodes (layer elements)
+      setNodes((nds) => nds.filter((node) => node.type !== 'rectangleNode'));
+      // Also clear edges if deleting rectangles
+      setEdges([]);
+    }
+  }, [editMode, setNodes, setEdges]);
 
   const handleToggleRectangleTool = useCallback(() => {
     if (editMode !== EditMode.LAYER) return;
