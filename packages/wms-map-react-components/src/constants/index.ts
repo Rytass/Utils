@@ -7,6 +7,7 @@ export const DEFAULT_RECTANGLE_HEIGHT = 100;
 // Colors
 export const DEFAULT_RECTANGLE_COLOR = '#3b82f6';
 export const SELECTION_BORDER_COLOR = '#3b82f6';
+export const DEFAULT_BACKGROUND_TOOL_COLOR = '#3b82f6';
 
 // Minimum sizes
 export const MIN_RECTANGLE_SIZE = 10;
