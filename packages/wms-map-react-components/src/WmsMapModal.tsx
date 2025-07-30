@@ -11,6 +11,8 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { EditMode, DrawingMode } from '../typings';
+import { DEFAULT_RECTANGLE_WIDTH, DEFAULT_RECTANGLE_HEIGHT, DEFAULT_RECTANGLE_COLOR, DEFAULT_RECTANGLE_LABEL, MIN_RECTANGLE_SIZE } from './constants';
+import { calculateImageSize, calculateStaggeredPosition } from './utils/nodeUtils';
 import Toolbar from './Toolbar';
 import Breadcrumb from './Breadcrumb';
 import ReactFlowCanvas from './ReactFlowCanvas';
@@ -80,36 +82,21 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
           const img = new Image();
 
           img.onload = () => {
-            // Calculate appropriate size (max 500px width/height for better visibility)
-            const maxSize = 500;
-            let width = img.width;
-            let height = img.height;
+            // Calculate appropriate size using utility function
+            const { width, height } = calculateImageSize(img.width, img.height);
 
-            if (width > maxSize || height > maxSize) {
-              const ratio = Math.min(maxSize / width, maxSize / height);
-
-              width = width * ratio;
-              height = height * ratio;
-            }
-
-            // Calculate staggered position
-            const baseX = 100;
-            const baseY = 100;
-            const offsetX = index * 30; // 30px horizontal offset
-            const offsetY = index * 20; // 20px vertical offset
+            // Calculate staggered position using utility function
+            const position = calculateStaggeredPosition(index);
 
             // Create new image node
             const newNode = {
               id: `image-${Date.now()}-${index}`,
               type: 'imageNode',
-              position: {
-                x: baseX + offsetX,
-                y: baseY + offsetY,
-              },
+              position,
               data: {
                 imageUrl,
-                width: Math.round(width),
-                height: Math.round(height),
+                width,
+                height,
                 originalWidth: img.width,
                 originalHeight: img.height,
                 fileName: file.name,
@@ -147,7 +134,7 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
     const width = Math.abs(endX - startX);
     const height = Math.abs(endY - startY);
     
-    if (width < 10 || height < 10) return; // Minimum size check
+    if (width < MIN_RECTANGLE_SIZE || height < MIN_RECTANGLE_SIZE) return; // Minimum size check
 
     const newRectangle = {
       id: `rectangle-${Date.now()}`,
@@ -159,8 +146,8 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
       data: {
         width,
         height,
-        color: '#3b82f6',
-        label: '矩形區域',
+        color: DEFAULT_RECTANGLE_COLOR,
+        label: DEFAULT_RECTANGLE_LABEL,
       },
     };
 
