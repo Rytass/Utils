@@ -15,6 +15,7 @@ export interface OrderCreditCardCommitMessage extends OrderCommitMessage {
   id: string;
   totalPrice: number;
   committedAt: Date;
+  cardType?: CardType;
 }
 
 export interface OrderVirtualAccountCommitMessage extends OrderCommitMessage {
@@ -67,27 +68,27 @@ export interface OrderCommitMessage {
 
 export type AsyncOrderInformation<OCM extends OrderCommitMessage> =
   OCM extends OrderVirtualAccountCommitMessage
-    ? VirtualAccountInfo
-    : OCM extends OrderCVSCommitMessage
-      ? CVSInfo
-      : OCM extends OrderBarcodeCommitMessage
-        ? BarcodeInfo
-        : never;
+  ? VirtualAccountInfo
+  : OCM extends OrderCVSCommitMessage
+  ? CVSInfo
+  : OCM extends OrderBarcodeCommitMessage
+  ? BarcodeInfo
+  : never;
 
 export type AdditionalInfo<OCM extends OrderCommitMessage> =
   OCM extends OrderCreditCardCommitMessage
-    ? CreditCardAuthInfo
-    : OCM extends OrderVirtualAccountCommitMessage
-      ? VirtualAccountPaymentInfo
-      : OCM extends OrderWebATMCommitMessage
-        ? WebATMPaymentInfo
-        : OCM extends OrderCVSCommitMessage
-          ? CVSPaymentInfo
-          : OCM extends OrderBarcodeCommitMessage
-            ? BarcodeInfo
-            : OCM extends OrderApplePayCommitMessage
-              ? undefined
-              : never;
+  ? CreditCardAuthInfo
+  : OCM extends OrderVirtualAccountCommitMessage
+  ? VirtualAccountPaymentInfo
+  : OCM extends OrderWebATMCommitMessage
+  ? WebATMPaymentInfo
+  : OCM extends OrderCVSCommitMessage
+  ? CVSPaymentInfo
+  : OCM extends OrderBarcodeCommitMessage
+  ? BarcodeInfo
+  : OCM extends OrderApplePayCommitMessage
+  ? undefined
+  : never;
 
 export interface Order<OCM extends OrderCommitMessage>
   extends PrepareOrderInput {
@@ -129,9 +130,9 @@ export enum CardType {
 export interface InputFromOrderCommitMessage<OCM extends OrderCommitMessage>
   extends PrepareOrderInput {
   id?: string;
-  cardType?: CardType; // Default: CardType.VMJ
   shopName?: string;
   clientBackUrl?: string;
+  cardType?: CardType;
 }
 
 export interface PaymentGateway<

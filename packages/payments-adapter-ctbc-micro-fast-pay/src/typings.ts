@@ -12,6 +12,7 @@
  */
 
 import {
+  CardType,
   CheckoutWithBoundCardOptions,
   OrderCommitMessage,
   PaymentItem,
@@ -57,6 +58,7 @@ export interface OrderCreateInit<
   createdAt?: Date; // 訂單建立時間，預設為當前時間
   checkoutMemberId?: string; // 綁定會員 ID（若有）
   checkoutCardId?: string; // 綁定卡片 ID（若有）
+  cardType?: CardType; // 卡片類型，預設為 'VMJ'
 }
 
 export interface CTBCPaymentOptions<
