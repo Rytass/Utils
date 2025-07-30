@@ -187,7 +187,7 @@ export class CTBCPayment<
         const errorCode = payload.get('errcode');
         const errorMessage = payload.get('errDesc');
 
-        if (errorCode !== '00') {
+        if (errorCode !== '00' && errorCode !== 'A000') {
           if (order) {
             order.fail(errorCode ?? 'x9999', errorMessage ?? '-');
           }
