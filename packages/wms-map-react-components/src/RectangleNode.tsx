@@ -17,7 +17,7 @@ interface RectangleNodeProps extends NodeProps {
 }
 
 const RectangleNode: FC<RectangleNodeProps> = ({ data, selected, id, editMode }) => {
-  const { setNodes } = useReactFlow();
+  const { setNodes, getNodes } = useReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
   const inputRef = useRef<HTMLInputElement>(null);
   
@@ -93,22 +93,17 @@ const RectangleNode: FC<RectangleNodeProps> = ({ data, selected, id, editMode })
 
   // Handle right click for context menu
   const handleContextMenu = useCallback((event: React.MouseEvent) => {
-    console.log('Right click detected on rectangle', { isEditable, editMode });
-    if (!isEditable) {
-      console.log('Not editable, ignoring right click');
-      return;
-    }
+    if (!isEditable) return;
     
     event.preventDefault();
     event.stopPropagation();
     
-    console.log('Setting context menu visible at', event.clientX, event.clientY);
     setContextMenu({
       visible: true,
       x: event.clientX,
       y: event.clientY,
     });
-  }, [isEditable, editMode]);
+  }, [isEditable]);
 
   // Handle context menu actions
   const handleCloseContextMenu = useCallback(() => {
@@ -116,10 +111,41 @@ const RectangleNode: FC<RectangleNodeProps> = ({ data, selected, id, editMode })
   }, []);
 
   const handleCopyPaste = useCallback(() => {
-    // TODO: Implement copy and paste functionality
-    console.log('Copy and paste not implemented yet');
+    console.log('Copying and pasting rectangle');
+    
+    // Get current node to access its position
+    const currentNode = getNodes().find(node => node.id === id);
+    if (!currentNode) {
+      console.error('Current node not found');
+      return;
+    }
+    
+    // Calculate new position (offset by 25% of current size to bottom-right)
+    const offsetX = currentSize.width * 0.25;
+    const offsetY = currentSize.height * 0.25;
+    
+    // Create a copy of the current node with new ID and position
+    const copiedNode = {
+      id: `rectangle-${Date.now()}`,
+      type: 'rectangleNode',
+      position: {
+        x: currentNode.position.x + offsetX,
+        y: currentNode.position.y + offsetY,
+      },
+      data: {
+        width: currentSize.width,
+        height: currentSize.height,
+        color,
+        label,
+      },
+    };
+    
+    console.log('Creating copied node:', copiedNode);
+    
+    // Add the copied node to the canvas
+    setNodes((nds) => [...nds, copiedNode]);
     handleCloseContextMenu();
-  }, [handleCloseContextMenu]);
+  }, [id, currentSize, color, label, getNodes, setNodes, handleCloseContextMenu]);
 
   const handleDelete = useCallback(() => {
     setNodes((nodes) => nodes.filter((node) => node.id !== id));
