@@ -23,6 +23,7 @@ interface ReactFlowCanvasProps {
   editMode: EditMode;
   drawingMode: DrawingMode;
   onCreateRectangle: (startX: number, startY: number, endX: number, endY: number) => void;
+  onSelectionChange?: (params: OnSelectionChangeParams) => void;
 }
 
 const CustomControls: FC = () => {
@@ -72,6 +73,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
   editMode,
   drawingMode,
   onCreateRectangle,
+  onSelectionChange,
 }) => {
   const { containerRef, isDrawing, previewRect } = useRectangleDrawing({
     editMode,
@@ -103,6 +105,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onSelectionChange={onSelectionChange}
         nodeTypes={nodeTypes}
         fitView
         className={styles.reactFlowCanvas}

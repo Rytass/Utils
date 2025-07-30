@@ -16,6 +16,8 @@ interface ToolbarProps {
   onRedo?: () => void;
   canUndo?: boolean;
   canRedo?: boolean;
+  onColorChange?: (color: string) => void;
+  selectedColor?: string;
 }
 
 const Toolbar: FC<ToolbarProps> = ({ 
@@ -29,10 +31,12 @@ const Toolbar: FC<ToolbarProps> = ({
   onUndo,
   onRedo,
   canUndo = false,
-  canRedo = false
+  canRedo = false,
+  onColorChange,
+  selectedColor: parentSelectedColor
 }) => {
   const [layerTool, setLayerTool] = useState<LayerDrawingTool>(LayerDrawingTool.SELECT);
-  const [selectedColor, setSelectedColor] = useState<string>(DEFAULT_BACKGROUND_TOOL_COLOR);
+  const selectedColor = parentSelectedColor || DEFAULT_BACKGROUND_TOOL_COLOR;
 
   // Sync layer tool state with drawing mode
   useEffect(() => {
@@ -42,6 +46,12 @@ const Toolbar: FC<ToolbarProps> = ({
       setLayerTool(LayerDrawingTool.SELECT);
     }
   }, [drawingMode]);
+
+  const handleColorChange = (color: string) => {
+    if (onColorChange) {
+      onColorChange(color);
+    }
+  };
 
   return (
     <>
@@ -163,7 +173,7 @@ const Toolbar: FC<ToolbarProps> = ({
               id="colorInput"
               type="color"
               value={selectedColor}
-              onChange={(e) => setSelectedColor(e.target.value)}
+              onChange={(e) => handleColorChange(e.target.value)}
               className={styles.colorInput}
               title="選擇顏色"
             />
