@@ -2,6 +2,7 @@ import React, { FC, useState, useCallback, useRef, useEffect } from 'react';
 import { NodeProps, NodeResizeControl, useReactFlow, useUpdateNodeInternals } from '@xyflow/react';
 import { EditMode } from '../typings';
 import { DEFAULT_RECTANGLE_WIDTH, DEFAULT_RECTANGLE_HEIGHT, DEFAULT_RECTANGLE_COLOR, DEFAULT_RECTANGLE_LABEL, ACTIVE_OPACITY, RECTANGLE_INACTIVE_OPACITY, RESIZE_CONTROL_SIZE, MIN_RESIZE_WIDTH, MIN_RESIZE_HEIGHT } from './constants';
+import ContextMenu from './ContextMenu';
 import styles from './rectangleNode.module.scss';
 
 interface RectangleNodeData {
@@ -30,6 +31,11 @@ const RectangleNode: FC<RectangleNodeProps> = ({ data, selected, id, editMode })
   const [currentSize, setCurrentSize] = useState({ width, height });
   const [isEditing, setIsEditing] = useState(false);
   const [editingText, setEditingText] = useState(label);
+  const [contextMenu, setContextMenu] = useState<{ visible: boolean; x: number; y: number }>({
+    visible: false,
+    x: 0,
+    y: 0,
+  });
 
   // Sync state with node data changes
   useEffect(() => {
@@ -84,6 +90,47 @@ const RectangleNode: FC<RectangleNodeProps> = ({ data, selected, id, editMode })
       setEditingText(label);
     }
   }, [handleSaveText, label]);
+
+  // Handle right click for context menu
+  const handleContextMenu = useCallback((event: React.MouseEvent) => {
+    console.log('Right click detected on rectangle', { isEditable, editMode });
+    if (!isEditable) {
+      console.log('Not editable, ignoring right click');
+      return;
+    }
+    
+    event.preventDefault();
+    event.stopPropagation();
+    
+    console.log('Setting context menu visible at', event.clientX, event.clientY);
+    setContextMenu({
+      visible: true,
+      x: event.clientX,
+      y: event.clientY,
+    });
+  }, [isEditable, editMode]);
+
+  // Handle context menu actions
+  const handleCloseContextMenu = useCallback(() => {
+    setContextMenu({ visible: false, x: 0, y: 0 });
+  }, []);
+
+  const handleCopyPaste = useCallback(() => {
+    // TODO: Implement copy and paste functionality
+    console.log('Copy and paste not implemented yet');
+    handleCloseContextMenu();
+  }, [handleCloseContextMenu]);
+
+  const handleDelete = useCallback(() => {
+    setNodes((nodes) => nodes.filter((node) => node.id !== id));
+    handleCloseContextMenu();
+  }, [id, setNodes, handleCloseContextMenu]);
+
+  const handleArrange = useCallback(() => {
+    // TODO: Implement arrange functionality
+    console.log('Arrange not implemented yet');
+    handleCloseContextMenu();
+  }, [handleCloseContextMenu]);
 
   // Auto-focus input when editing starts
   useEffect(() => {
@@ -186,6 +233,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({ data, selected, id, editMode })
           position: 'relative',
         }}
         onDoubleClick={handleDoubleClick}
+        onContextMenu={handleContextMenu}
       >
         {isEditing ? (
           <input
@@ -213,6 +261,17 @@ const RectangleNode: FC<RectangleNodeProps> = ({ data, selected, id, editMode })
           </span>
         )}
       </div>
+      
+      {/* Context Menu */}
+      <ContextMenu
+        visible={contextMenu.visible}
+        x={contextMenu.x}
+        y={contextMenu.y}
+        onClose={handleCloseContextMenu}
+        onCopyPaste={handleCopyPaste}
+        onDelete={handleDelete}
+        onArrange={handleArrange}
+      />
     </div>
   );
 };
