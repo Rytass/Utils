@@ -139,16 +139,16 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
 
   const handleToggleRectangleTool = useCallback(() => {
     if (editMode !== EditMode.LAYER) return;
-    
-    setDrawingMode(prev => 
+
+    setDrawingMode(prev =>
       prev === DrawingMode.RECTANGLE ? DrawingMode.NONE : DrawingMode.RECTANGLE
     );
   }, [editMode]);
 
   const handleTogglePenTool = useCallback(() => {
     if (editMode !== EditMode.LAYER) return;
-    
-    setDrawingMode(prev => 
+
+    setDrawingMode(prev =>
       prev === DrawingMode.PEN ? DrawingMode.NONE : DrawingMode.PEN
     );
   }, [editMode]);
@@ -156,13 +156,13 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
   const handleCreateRectangle = useCallback((startX: number, startY: number, endX: number, endY: number) => {
     const width = Math.abs(endX - startX);
     const height = Math.abs(endY - startY);
-    
+
     if (width < MIN_RECTANGLE_SIZE || height < MIN_RECTANGLE_SIZE) return; // Minimum size check
 
     setNodes((nds) => {
       // Calculate next zIndex
       const maxZIndex = Math.max(...nds.map(n => n.zIndex || 0), 0);
-      
+
       const newRectangle = {
         id: `rectangle-${Date.now()}`,
         type: 'rectangleNode',
@@ -190,7 +190,7 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
     setNodes((nds) => {
       // Calculate next zIndex
       const maxZIndex = Math.max(...nds.map(n => n.zIndex || 0), 0);
-      
+
       const newPath = {
         id: `path-${Date.now()}`,
         type: 'pathNode',
@@ -225,7 +225,7 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
 
   const handleSelectionChange = useCallback((params: OnSelectionChangeParams) => {
     setSelectedNodes(params.nodes);
-    
+
     // If a single colorable node is selected, update the color picker to show its color
     if (params.nodes.length === 1 && (params.nodes[0].type === 'rectangleNode' || params.nodes[0].type === 'pathNode')) {
       const selectedNode = params.nodes[0];
@@ -238,9 +238,9 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
 
   const handleColorChange = useCallback((color: string) => {
     setSelectedColor(color);
-    
+
     // Update color of selected colorable nodes (rectangles and paths)
-    const selectedColorableNodes = selectedNodes.filter(node => 
+    const selectedColorableNodes = selectedNodes.filter(node =>
       node.type === 'rectangleNode' || node.type === 'pathNode'
     );
     if (selectedColorableNodes.length > 0) {
@@ -269,7 +269,7 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
 
       <div className={styles.content}>
         <ReactFlowProvider>
-          <Breadcrumb warehouseIds={['10001', '10001A']} />
+          <Breadcrumb warehouseIds={['10001', '10001A', '10002', '100002B', '100003', '100003B']} />
           <Toolbar
             onUpload={handleUpload}
             onDeleteAll={handleDeleteAll}
