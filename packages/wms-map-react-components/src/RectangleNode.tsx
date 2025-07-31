@@ -44,7 +44,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({ data, selected, id, editMode })
     handleContextMenu,
     handleCloseContextMenu,
     handleDelete,
-    handleArrange,
+    arrangeActions,
     getNodes,
     setNodes,
   } = useContextMenu({ id, editMode, isEditable, nodeType: 'rectangleNode' });
@@ -75,13 +75,19 @@ const RectangleNode: FC<RectangleNodeProps> = ({ data, selected, id, editMode })
       return;
     }
     
-    const copiedNode = createRectangleCopy({
-      currentNode,
-      nodeType: 'rectangleNode',
-      data: { width: currentSize.width, height: currentSize.height, color, label },
+    setNodes((nds) => {
+      // Calculate next zIndex
+      const maxZIndex = Math.max(...nds.map(n => n.zIndex || 0), 0);
+      
+      const copiedNode = createRectangleCopy({
+        currentNode,
+        nodeType: 'rectangleNode',
+        data: { width: currentSize.width, height: currentSize.height, color, label },
+      });
+      
+      const nodeWithZIndex = { ...copiedNode, zIndex: maxZIndex + 1 };
+      return [...nds, nodeWithZIndex];
     });
-    
-    setNodes((nds) => [...nds, copiedNode]);
     handleCloseContextMenu();
   }, [id, currentSize, color, label, getNodes, setNodes, handleCloseContextMenu]);
 
@@ -200,7 +206,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({ data, selected, id, editMode })
         onClose={handleCloseContextMenu}
         onCopyPaste={handleCopyPaste}
         onDelete={handleDelete}
-        onArrange={handleArrange}
+        arrangeActions={arrangeActions}
       />
     </div>
   );

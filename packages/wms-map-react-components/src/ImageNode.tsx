@@ -52,7 +52,7 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
     handleContextMenu,
     handleCloseContextMenu,
     handleDelete,
-    handleArrange,
+    arrangeActions,
     getNodes,
     setNodes: setNodesFromHook,
   } = useContextMenu({ id, editMode, isEditable, nodeType: 'imageNode' });
@@ -85,20 +85,26 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
       return;
     }
     
-    const copiedNode = createImageCopy({
-      currentNode,
-      nodeType: 'imageNode',
-      data: { 
-        imageUrl, 
-        width: currentSize.width, 
-        height: currentSize.height, 
-        fileName,
-        originalWidth,
-        originalHeight,
-      },
+    setNodesFromHook((nds) => {
+      // Calculate next zIndex
+      const maxZIndex = Math.max(...nds.map(n => n.zIndex || 0), 0);
+      
+      const copiedNode = createImageCopy({
+        currentNode,
+        nodeType: 'imageNode',
+        data: { 
+          imageUrl, 
+          width: currentSize.width, 
+          height: currentSize.height, 
+          fileName,
+          originalWidth,
+          originalHeight,
+        },
+      });
+      
+      const nodeWithZIndex = { ...copiedNode, zIndex: maxZIndex + 1 };
+      return [...nds, nodeWithZIndex];
     });
-    
-    setNodesFromHook((nds) => [...nds, copiedNode]);
     handleCloseContextMenu();
   }, [id, imageUrl, currentSize, fileName, originalWidth, originalHeight, getNodes, setNodesFromHook, handleCloseContextMenu]);
 
@@ -196,7 +202,7 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
         onClose={handleCloseContextMenu}
         onCopyPaste={handleCopyPaste}
         onDelete={handleDelete}
-        onArrange={handleArrange}
+        arrangeActions={arrangeActions}
       />
     </div>
   );

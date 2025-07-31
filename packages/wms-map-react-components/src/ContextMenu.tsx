@@ -1,6 +1,13 @@
-import React, { FC, useEffect, useRef } from 'react';
+import React, { FC, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styles from './contextMenu.module.scss';
+
+interface ArrangeActions {
+  onBringToFront: () => void;
+  onBringForward: () => void;
+  onSendBackward: () => void;
+  onSendToBack: () => void;
+}
 
 interface ContextMenuProps {
   visible: boolean;
@@ -9,7 +16,7 @@ interface ContextMenuProps {
   onClose: () => void;
   onCopyPaste: () => void;
   onDelete: () => void;
-  onArrange: () => void;
+  arrangeActions: ArrangeActions;
 }
 
 const ContextMenu: FC<ContextMenuProps> = ({
@@ -19,9 +26,10 @@ const ContextMenu: FC<ContextMenuProps> = ({
   onClose,
   onCopyPaste,
   onDelete,
-  onArrange,
+  arrangeActions,
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
+  const [showArrangeSubmenu, setShowArrangeSubmenu] = useState(false);
 
   // Handle clicking outside to close menu
   useEffect(() => {
@@ -85,8 +93,69 @@ const ContextMenu: FC<ContextMenuProps> = ({
       <div className={styles.menuItem} onClick={onDelete}>
         刪除
       </div>
-      <div className={styles.menuItem} onClick={onArrange}>
+      <div 
+        className={`${styles.menuItem} ${styles.hasSubmenu}`}
+        onMouseEnter={() => setShowArrangeSubmenu(true)}
+        onMouseLeave={() => setShowArrangeSubmenu(false)}
+      >
         排列順序
+        <span className={styles.arrow}>▶</span>
+        
+        {/* Submenu */}
+        {showArrangeSubmenu && (
+          <div 
+            className={styles.submenu}
+            style={{
+              position: 'absolute',
+              left: '100%',
+              top: 0,
+              zIndex: 10001,
+            }}
+            onMouseEnter={() => setShowArrangeSubmenu(true)}
+            onMouseLeave={() => setShowArrangeSubmenu(false)}
+          >
+            <div 
+              className={styles.menuItem} 
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                arrangeActions.onBringToFront(); 
+                onClose(); 
+              }}
+            >
+              移至最前
+            </div>
+            <div 
+              className={styles.menuItem} 
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                arrangeActions.onBringForward(); 
+                onClose(); 
+              }}
+            >
+              置前
+            </div>
+            <div 
+              className={styles.menuItem} 
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                arrangeActions.onSendBackward(); 
+                onClose(); 
+              }}
+            >
+              置後
+            </div>
+            <div 
+              className={styles.menuItem} 
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                arrangeActions.onSendToBack(); 
+                onClose(); 
+              }}
+            >
+              移至最後
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
