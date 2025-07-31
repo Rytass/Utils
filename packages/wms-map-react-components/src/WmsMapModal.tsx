@@ -108,7 +108,12 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
 
             // Add node to the canvas with a slight delay to ensure proper stacking
             setTimeout(() => {
-              setNodes((nds) => [...nds, newNode]);
+              setNodes((nds) => {
+                // Calculate next zIndex
+                const maxZIndex = Math.max(...nds.map(n => n.zIndex || 0), 0);
+                const nodeWithZIndex = { ...newNode, zIndex: maxZIndex + 1 };
+                return [...nds, nodeWithZIndex];
+              });
             }, index * 100); // 100ms delay between each image
           };
 
@@ -154,44 +159,56 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
     
     if (width < MIN_RECTANGLE_SIZE || height < MIN_RECTANGLE_SIZE) return; // Minimum size check
 
-    const newRectangle = {
-      id: `rectangle-${Date.now()}`,
-      type: 'rectangleNode',
-      position: {
-        x: Math.min(startX, endX),
-        y: Math.min(startY, endY),
-      },
-      data: {
-        width,
-        height,
-        color: selectedColor,
-        label: DEFAULT_RECTANGLE_LABEL,
-      },
-    };
+    setNodes((nds) => {
+      // Calculate next zIndex
+      const maxZIndex = Math.max(...nds.map(n => n.zIndex || 0), 0);
+      
+      const newRectangle = {
+        id: `rectangle-${Date.now()}`,
+        type: 'rectangleNode',
+        position: {
+          x: Math.min(startX, endX),
+          y: Math.min(startY, endY),
+        },
+        zIndex: maxZIndex + 1,
+        data: {
+          width,
+          height,
+          color: selectedColor,
+          label: DEFAULT_RECTANGLE_LABEL,
+        },
+      };
 
-    setNodes((nds) => [...nds, newRectangle]);
+      return [...nds, newRectangle];
+    });
     // Keep drawing mode active for continuous drawing
   }, [setNodes, selectedColor]);
 
   const handleCreatePath = useCallback((points: { x: number; y: number }[]) => {
     if (points.length < 2) return; // Need at least 2 points for a path
 
-    const newPath = {
-      id: `path-${Date.now()}`,
-      type: 'pathNode',
-      position: {
-        x: Math.min(...points.map(p => p.x)),
-        y: Math.min(...points.map(p => p.y)),
-      },
-      data: {
-        points,
-        color: selectedColor,
-        strokeWidth: 2,
-        label: DEFAULT_PATH_LABEL,
-      },
-    };
+    setNodes((nds) => {
+      // Calculate next zIndex
+      const maxZIndex = Math.max(...nds.map(n => n.zIndex || 0), 0);
+      
+      const newPath = {
+        id: `path-${Date.now()}`,
+        type: 'pathNode',
+        position: {
+          x: Math.min(...points.map(p => p.x)),
+          y: Math.min(...points.map(p => p.y)),
+        },
+        zIndex: maxZIndex + 1,
+        data: {
+          points,
+          color: selectedColor,
+          strokeWidth: 2,
+          label: DEFAULT_PATH_LABEL,
+        },
+      };
 
-    setNodes((nds) => [...nds, newPath]);
+      return [...nds, newPath];
+    });
     // Keep drawing mode active for continuous drawing
   }, [setNodes, selectedColor]);
 

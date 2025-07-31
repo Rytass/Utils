@@ -37,7 +37,7 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode }) => {
     handleContextMenu,
     handleCloseContextMenu,
     handleDelete,
-    handleArrange,
+    arrangeActions,
     getNodes,
     setNodes,
   } = useContextMenu({ id, editMode, isEditable, nodeType: 'pathNode' });
@@ -99,13 +99,19 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode }) => {
       return;
     }
     
-    const copiedNode = createPathCopy({
-      currentNode,
-      nodeType: 'pathNode',
-      data: { points, color, strokeWidth, label },
+    setNodes((nds) => {
+      // Calculate next zIndex
+      const maxZIndex = Math.max(...nds.map(n => n.zIndex || 0), 0);
+      
+      const copiedNode = createPathCopy({
+        currentNode,
+        nodeType: 'pathNode',
+        data: { points, color, strokeWidth, label },
+      });
+      
+      const nodeWithZIndex = { ...copiedNode, zIndex: maxZIndex + 1 };
+      return [...nds, nodeWithZIndex];
     });
-    
-    setNodes((nds) => [...nds, copiedNode]);
     handleCloseContextMenu();
   }, [id, points, color, strokeWidth, label, getNodes, setNodes, handleCloseContextMenu]);
 
@@ -205,7 +211,7 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode }) => {
         onClose={handleCloseContextMenu}
         onCopyPaste={handleCopyPaste}
         onDelete={handleDelete}
-        onArrange={handleArrange}
+        arrangeActions={arrangeActions}
       />
     </div>
   );

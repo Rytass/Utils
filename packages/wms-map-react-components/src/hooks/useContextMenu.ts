@@ -54,18 +54,141 @@ export const useContextMenu = ({ id, editMode, isEditable, nodeType }: UseContex
     handleCloseContextMenu();
   }, [id, setNodes, handleCloseContextMenu]);
 
-  const handleArrange = useCallback(() => {
-    // TODO: Implement arrange functionality
-    console.log('Arrange not implemented yet');
+  // Arrange functionality
+  const handleBringToFront = useCallback(() => {
+    console.log('Bringing to front:', id);
+    setNodes((nodes) => {
+      console.log('Current nodes:', nodes.map(n => n.id));
+      const nodeToMove = nodes.find(node => node.id === id);
+      if (!nodeToMove) {
+        console.log('Node not found');
+        return nodes;
+      }
+      
+      const otherNodes = nodes.filter(node => node.id !== id);
+      // Calculate highest zIndex
+      const maxZIndex = Math.max(...nodes.map(n => n.zIndex || 0), 0);
+      
+      const updatedNode = {
+        ...nodeToMove,
+        zIndex: maxZIndex + 1
+      };
+      
+      const newNodes = [...otherNodes, updatedNode]; // Move to end (front) with higher zIndex
+      console.log('New nodes order:', newNodes.map(n => `${n.id}(z:${n.zIndex || 0})`));
+      return newNodes;
+    });
     handleCloseContextMenu();
-  }, [handleCloseContextMenu]);
+  }, [id, setNodes, handleCloseContextMenu]);
+
+  const handleBringForward = useCallback(() => {
+    console.log('Bringing forward:', id);
+    setNodes((nodes) => {
+      const currentNode = nodes.find(node => node.id === id);
+      if (!currentNode) {
+        console.log('Node not found');
+        return nodes;
+      }
+      
+      // Find the node immediately in front (higher zIndex)
+      const currentZ = currentNode.zIndex || 0;
+      const nodesAbove = nodes.filter(n => (n.zIndex || 0) > currentZ);
+      
+      if (nodesAbove.length === 0) {
+        console.log('Already at front');
+        return nodes;
+      }
+      
+      // Find the node with the lowest zIndex above current node
+      const nextNode = nodesAbove.reduce((min, node) => 
+        (node.zIndex || 0) < (min.zIndex || 0) ? node : min
+      );
+      
+      // Swap zIndex values
+      return nodes.map(node => {
+        if (node.id === id) {
+          return { ...node, zIndex: nextNode.zIndex };
+        } else if (node.id === nextNode.id) {
+          return { ...node, zIndex: currentZ };
+        }
+        return node;
+      });
+    });
+    handleCloseContextMenu();
+  }, [id, setNodes, handleCloseContextMenu]);
+
+  const handleSendBackward = useCallback(() => {
+    console.log('Sending backward:', id);
+    setNodes((nodes) => {
+      const currentNode = nodes.find(node => node.id === id);
+      if (!currentNode) {
+        console.log('Node not found');
+        return nodes;
+      }
+      
+      // Find the node immediately behind (lower zIndex)
+      const currentZ = currentNode.zIndex || 0;
+      const nodesBelow = nodes.filter(n => (n.zIndex || 0) < currentZ);
+      
+      if (nodesBelow.length === 0) {
+        console.log('Already at back');
+        return nodes;
+      }
+      
+      // Find the node with the highest zIndex below current node
+      const prevNode = nodesBelow.reduce((max, node) => 
+        (node.zIndex || 0) > (max.zIndex || 0) ? node : max
+      );
+      
+      // Swap zIndex values
+      return nodes.map(node => {
+        if (node.id === id) {
+          return { ...node, zIndex: prevNode.zIndex };
+        } else if (node.id === prevNode.id) {
+          return { ...node, zIndex: currentZ };
+        }
+        return node;
+      });
+    });
+    handleCloseContextMenu();
+  }, [id, setNodes, handleCloseContextMenu]);
+
+  const handleSendToBack = useCallback(() => {
+    console.log('Sending to back:', id);
+    setNodes((nodes) => {
+      const nodeToMove = nodes.find(node => node.id === id);
+      if (!nodeToMove) {
+        console.log('Node not found');
+        return nodes;
+      }
+      
+      const otherNodes = nodes.filter(node => node.id !== id);
+      // Calculate lowest zIndex
+      const minZIndex = Math.min(...nodes.map(n => n.zIndex || 0), 0);
+      
+      const updatedNode = {
+        ...nodeToMove,
+        zIndex: minZIndex - 1
+      };
+      
+      const newNodes = [updatedNode, ...otherNodes]; // Move to beginning (back) with lower zIndex
+      console.log('New nodes order:', newNodes.map(n => `${n.id}(z:${n.zIndex || 0})`));
+      return newNodes;
+    });
+    handleCloseContextMenu();
+  }, [id, setNodes, handleCloseContextMenu]);
 
   return {
     contextMenu,
     handleContextMenu,
     handleCloseContextMenu,
     handleDelete,
-    handleArrange,
+    arrangeActions: {
+      onBringToFront: handleBringToFront,
+      onBringForward: handleBringForward,
+      onSendBackward: handleSendBackward,
+      onSendToBack: handleSendToBack,
+    },
     getNodes,
     setNodes,
   };
