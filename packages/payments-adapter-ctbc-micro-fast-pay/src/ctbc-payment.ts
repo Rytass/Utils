@@ -52,9 +52,10 @@ const debugPayment = debug('Rytass:Payment:CTBC');
 const debugPaymentServer = debug('Rytass:Payment:CTBC:Server');
 
 export class CTBCPayment<
-  CM extends CTBCOrderCommitMessage = CTBCOrderCommitMessage,
->
-  implements PaymentGateway<CM, CTBCOrder<CM>>, BindCardPaymentGateway<CM> {
+    CM extends CTBCOrderCommitMessage = CTBCOrderCommitMessage,
+  >
+  implements PaymentGateway<CM, CTBCOrder<CM>>, BindCardPaymentGateway<CM>
+{
   private serverHost = 'http://localhost:3000';
   private callbackPath = '/payments/ctbc/callback';
   private checkoutPath = '/payments/ctbc/checkout';
@@ -195,10 +196,11 @@ export class CTBCPayment<
             order.fail(errorCode ?? 'x9999', errorMessage ?? '-');
           }
 
-          const typeLabel = {
-            [CardType.AE]: 'Amex',
-            [CardType.VMJ]: 'Card',
-          }[order.cardType] ?? 'Unknown';
+          const typeLabel =
+            {
+              [CardType.AE]: 'Amex',
+              [CardType.VMJ]: 'Card',
+            }[order.cardType] ?? 'Unknown';
 
           throw new Error(
             `CTBC ${typeLabel} Checkout Failed: ${errorCode} - ${errorMessage}`,
@@ -656,7 +658,7 @@ export class CTBCPayment<
       } satisfies CTBCPayOrderForm,
       gateway: this,
       clientBackUrl: options.clientBackUrl,
-      cardType
+      cardType,
     });
 
     this.orderCache.set(orderId, order);
