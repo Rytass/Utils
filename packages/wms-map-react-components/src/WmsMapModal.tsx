@@ -14,6 +14,7 @@ import '@xyflow/react/dist/style.css';
 import { EditMode, DrawingMode } from '../typings';
 import { DEFAULT_RECTANGLE_COLOR, DEFAULT_RECTANGLE_LABEL, DEFAULT_PATH_LABEL, MIN_RECTANGLE_SIZE } from './constants';
 import { calculateImageSize, calculateStaggeredPosition } from './utils/nodeUtils';
+import { transformNodesToMapData, logMapData } from './utils/mapDataTransform';
 import Toolbar from './Toolbar';
 import Breadcrumb from './components/breadcrumb/Breadcrumb';
 import ReactFlowCanvas from './ReactFlowCanvas';
@@ -56,7 +57,14 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
   );
 
   const handleSave = () => {
-    console.log('Saving warehouse layout...', { nodes, edges });
+    // 轉換 React Flow 節點資料為符合 typings.ts 定義的格式
+    const mapData = transformNodesToMapData(nodes);
+    
+    // 輸出格式化的資料到 console
+    logMapData(mapData);
+    
+    // TODO: 之後這裡會呼叫 API 來儲存資料
+    // await saveMapData(mapData);
   };
 
   const handleUpload = () => {
