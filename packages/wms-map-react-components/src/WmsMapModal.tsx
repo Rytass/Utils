@@ -12,7 +12,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { EditMode, DrawingMode } from '../typings';
-import { DEFAULT_RECTANGLE_WIDTH, DEFAULT_RECTANGLE_HEIGHT, DEFAULT_RECTANGLE_COLOR, DEFAULT_RECTANGLE_LABEL, DEFAULT_PATH_LABEL, MIN_RECTANGLE_SIZE } from './constants';
+import { DEFAULT_RECTANGLE_COLOR, DEFAULT_RECTANGLE_LABEL, DEFAULT_PATH_LABEL, MIN_RECTANGLE_SIZE } from './constants';
 import { calculateImageSize, calculateStaggeredPosition } from './utils/nodeUtils';
 import Toolbar from './Toolbar';
 import Breadcrumb from './Breadcrumb';
@@ -112,6 +112,7 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
                 // Calculate next zIndex
                 const maxZIndex = Math.max(...nds.map(n => n.zIndex || 0), 0);
                 const nodeWithZIndex = { ...newNode, zIndex: maxZIndex + 1 };
+
                 return [...nds, nodeWithZIndex];
               });
             }, index * 100); // 100ms delay between each image
@@ -230,6 +231,7 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
     if (params.nodes.length === 1 && (params.nodes[0].type === 'rectangleNode' || params.nodes[0].type === 'pathNode')) {
       const selectedNode = params.nodes[0];
       const nodeColor = selectedNode.data?.color;
+
       if (nodeColor && typeof nodeColor === 'string') {
         setSelectedColor(nodeColor);
       }
@@ -243,12 +245,14 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
     const selectedColorableNodes = selectedNodes.filter(node =>
       node.type === 'rectangleNode' || node.type === 'pathNode'
     );
+
     if (selectedColorableNodes.length > 0) {
       setNodes((nds) =>
         nds.map((node) => {
           if (selectedColorableNodes.some(selected => selected.id === node.id)) {
             return { ...node, data: { ...node.data, color } };
           }
+
           return node;
         })
       );
