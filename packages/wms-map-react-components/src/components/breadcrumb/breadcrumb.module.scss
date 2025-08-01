@@ -1,11 +1,9 @@
-// Breadcrumb Styles
-
 .breadcrumbSection {
   position: absolute;
   top: 20px;
   left: 24px;
   z-index: 1001;
-  
+
   .warehouseIdSection {
     display: flex;
     align-items: center;
@@ -26,21 +24,21 @@
       color: #333;
       font-size: 14px;
       font-weight: 400;
-      
+
       &.lastItem {
         color: #999;
         font-weight: 300;
       }
-      
+
       &.clickable {
         cursor: pointer;
         user-select: none;
-        
+
         &:hover {
           color: #6c7cd6;
           text-decoration: underline;
         }
-        
+
         &.lastItem:hover {
           color: #6c7cd6;
         }
@@ -50,7 +48,7 @@
     .ellipsisContainer {
       position: relative;
       display: inline-block;
-      
+
       .ellipsis {
         color: #6c7cd6;
         font-size: 14px;
@@ -60,7 +58,7 @@
         border-radius: 3px;
         cursor: pointer;
         user-select: none;
-        
+
         &:hover {
           background-color: #dcdcf4;
         }
@@ -77,22 +75,22 @@
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         min-width: 120px;
         z-index: 1002;
-        
+
         .dropdownItem {
           padding: 8px 12px;
           font-size: 14px;
           color: #333;
           cursor: pointer;
-          
+
           &:hover {
             background-color: #f5f5f5;
           }
-          
+
           &:first-child {
             border-top-left-radius: 3px;
             border-top-right-radius: 3px;
           }
-          
+
           &:last-child {
             border-bottom-left-radius: 3px;
             border-bottom-right-radius: 3px;
@@ -113,12 +111,12 @@
       align-items: center;
       justify-content: center;
       transition: all 0.2s ease;
-      
+
       &:hover {
         background-color: #f5f5f5;
         color: #6c7cd6;
       }
-      
+
       &:active {
         background-color: #e8eaf6;
       }

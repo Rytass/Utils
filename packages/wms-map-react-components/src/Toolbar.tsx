@@ -1,6 +1,6 @@
-import React, { FC, useState, useEffect } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { Button } from '@mezzanine-ui/react';
-import { EditMode, DrawingMode, LayerDrawingTool } from '../typings';
+import { DrawingMode, EditMode, LayerDrawingTool } from '../typings';
 import { DEFAULT_BACKGROUND_TOOL_COLOR } from './constants';
 import styles from './toolbar.module.scss';
 
@@ -21,13 +21,13 @@ interface ToolbarProps {
   selectedColor?: string;
 }
 
-const Toolbar: FC<ToolbarProps> = ({ 
-  onUpload, 
-  onDeleteAll, 
-  onSave, 
-  editMode, 
-  drawingMode, 
-  onEditModeChange, 
+const Toolbar: FC<ToolbarProps> = ({
+  onUpload,
+  onDeleteAll,
+  onSave,
+  editMode,
+  drawingMode,
+  onEditModeChange,
   onToggleRectangleTool,
   onTogglePenTool,
   onUndo,
@@ -35,12 +35,15 @@ const Toolbar: FC<ToolbarProps> = ({
   canUndo = false,
   canRedo = false,
   onColorChange,
-  selectedColor: parentSelectedColor
+  selectedColor: parentSelectedColor,
 }) => {
-  const [layerTool, setLayerTool] = useState<LayerDrawingTool>(LayerDrawingTool.SELECT);
+  const [layerTool, setLayerTool] = useState<LayerDrawingTool>(
+    LayerDrawingTool.SELECT,
+  );
+
   const selectedColor = parentSelectedColor || DEFAULT_BACKGROUND_TOOL_COLOR;
 
-  // Sync layer tool state with drawing mode
+  // 同步圖層工具狀態與繪圖模式
   useEffect(() => {
     if (drawingMode === DrawingMode.RECTANGLE) {
       setLayerTool(LayerDrawingTool.RECTANGLE);
@@ -61,41 +64,53 @@ const Toolbar: FC<ToolbarProps> = ({
     <>
       <div className={styles.toolbar}>
         <div className={styles.toolbarLeft}>
-          <Button 
-            variant={editMode === EditMode.LAYER ? "contained" : "outlined"} 
-            size="small" 
+          <Button
+            variant={editMode === EditMode.LAYER ? 'contained' : 'outlined'}
+            size="small"
             className={styles.toolbarButton}
             onClick={() => onEditModeChange(EditMode.LAYER)}
           >
             圖層
           </Button>
-          <Button 
-            variant={editMode === EditMode.BACKGROUND ? "contained" : "outlined"} 
-            size="small" 
+          <Button
+            variant={
+              editMode === EditMode.BACKGROUND ? 'contained' : 'outlined'
+            }
+            size="small"
             className={styles.toolbarButton}
             onClick={() => onEditModeChange(EditMode.BACKGROUND)}
           >
             底圖
           </Button>
-          <Button 
-            variant="outlined" 
-            size="small" 
-            className={styles.toolbarButton} 
+          <Button
+            variant="outlined"
+            size="small"
+            className={styles.toolbarButton}
             onClick={onUpload}
             disabled={editMode !== EditMode.BACKGROUND}
           >
             上傳
           </Button>
-          
-          <Button variant="outlined" size="small" className={styles.toolbarButton} onClick={onDeleteAll}>
+
+          <Button
+            variant="outlined"
+            size="small"
+            className={styles.toolbarButton}
+            onClick={onDeleteAll}
+          >
             刪除全部
           </Button>
         </div>
-        <Button variant="contained" size="small" className={styles.saveButton} onClick={onSave}>
+        <Button
+          variant="contained"
+          size="small"
+          className={styles.saveButton}
+          onClick={onSave}
+        >
           儲存
         </Button>
       </div>
-      
+
       {/* Layer drawing tools - separate floating toolbar with undo/redo */}
       {editMode === EditMode.LAYER && (
         <div className={styles.layerTools}>
@@ -120,18 +135,20 @@ const Toolbar: FC<ToolbarProps> = ({
           >
             ↷
           </Button>
-          
+
           {/* Separator */}
           <div className={styles.separator} />
-          
+
           {/* Drawing tools */}
           <Button
-            variant={drawingMode === DrawingMode.NONE ? "contained" : "outlined"}
+            variant={
+              drawingMode === DrawingMode.NONE ? 'contained' : 'outlined'
+            }
             size="small"
             className={`${styles.toolButton} ${drawingMode === DrawingMode.NONE ? styles.toolButtonActive : ''}`}
             onClick={() => {
               setLayerTool(LayerDrawingTool.SELECT);
-              // Turn off drawing modes when selecting select tool
+              // 選擇選取工具時關閉繪圖模式
               if (drawingMode === DrawingMode.RECTANGLE) {
                 onToggleRectangleTool();
               } else if (drawingMode === DrawingMode.PEN) {
@@ -143,7 +160,9 @@ const Toolbar: FC<ToolbarProps> = ({
             ↖️
           </Button>
           <Button
-            variant={drawingMode === DrawingMode.RECTANGLE ? "contained" : "outlined"}
+            variant={
+              drawingMode === DrawingMode.RECTANGLE ? 'contained' : 'outlined'
+            }
             size="small"
             className={`${styles.toolButton} ${drawingMode === DrawingMode.RECTANGLE ? styles.toolButtonActive : ''}`}
             onClick={() => {
@@ -155,7 +174,7 @@ const Toolbar: FC<ToolbarProps> = ({
             ⬜
           </Button>
           <Button
-            variant={drawingMode === DrawingMode.PEN ? "contained" : "outlined"}
+            variant={drawingMode === DrawingMode.PEN ? 'contained' : 'outlined'}
             size="small"
             className={`${styles.toolButton} ${drawingMode === DrawingMode.PEN ? styles.toolButtonActive : ''}`}
             onClick={() => {
@@ -167,7 +186,7 @@ const Toolbar: FC<ToolbarProps> = ({
             🖊️
           </Button>
           <div className={styles.colorPicker}>
-            <div 
+            <div
               className={styles.colorDisplay}
               style={{ backgroundColor: selectedColor }}
               onClick={() => document.getElementById('colorInput')?.click()}

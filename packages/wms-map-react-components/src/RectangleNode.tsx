@@ -1,7 +1,17 @@
-import React, { FC, useState, useCallback, useEffect } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 import { NodeProps, NodeResizeControl } from '@xyflow/react';
 import { EditMode } from '../typings';
-import { DEFAULT_RECTANGLE_WIDTH, DEFAULT_RECTANGLE_HEIGHT, DEFAULT_RECTANGLE_COLOR, DEFAULT_RECTANGLE_LABEL, ACTIVE_OPACITY, RECTANGLE_INACTIVE_OPACITY, RESIZE_CONTROL_SIZE, MIN_RESIZE_WIDTH, MIN_RESIZE_HEIGHT } from './constants';
+import {
+  ACTIVE_OPACITY,
+  DEFAULT_RECTANGLE_COLOR,
+  DEFAULT_RECTANGLE_HEIGHT,
+  DEFAULT_RECTANGLE_LABEL,
+  DEFAULT_RECTANGLE_WIDTH,
+  MIN_RESIZE_HEIGHT,
+  MIN_RESIZE_WIDTH,
+  RECTANGLE_INACTIVE_OPACITY,
+  RESIZE_CONTROL_SIZE,
+} from './constants';
 import { useContextMenu } from './hooks/useContextMenu';
 import { useTextEditing } from './hooks/useTextEditing';
 import { createRectangleCopy } from './utils/nodeOperations';
@@ -19,7 +29,12 @@ interface RectangleNodeProps extends NodeProps {
   editMode: EditMode;
 }
 
-const RectangleNode: FC<RectangleNodeProps> = ({ data, selected, id, editMode }) => {
+const RectangleNode: FC<RectangleNodeProps> = ({
+  data,
+  selected,
+  id,
+  editMode,
+}) => {
   const {
     width = DEFAULT_RECTANGLE_WIDTH,
     height = DEFAULT_RECTANGLE_HEIGHT,
@@ -36,7 +51,8 @@ const RectangleNode: FC<RectangleNodeProps> = ({ data, selected, id, editMode })
 
   // Only editable in LAYER mode
   const isEditable = editMode === EditMode.LAYER;
-  const opacity = editMode === EditMode.LAYER ? ACTIVE_OPACITY : RECTANGLE_INACTIVE_OPACITY;
+  const opacity =
+    editMode === EditMode.LAYER ? ACTIVE_OPACITY : RECTANGLE_INACTIVE_OPACITY;
 
   // Context menu functionality
   const {
@@ -61,38 +77,61 @@ const RectangleNode: FC<RectangleNodeProps> = ({ data, selected, id, editMode })
   } = useTextEditing({ id, label, editMode, isEditable });
 
   // Handle resize with size sync
-  const handleResize = useCallback((event: any, params: any) => {
-    const newSize = { width: params.width, height: params.height };
-    setCurrentSize(newSize);
-    updateNodeData({ width: params.width, height: params.height });
-  }, [updateNodeData]);
+  const handleResize = useCallback(
+    (event: any, params: any) => {
+      const newSize = { width: params.width, height: params.height };
+
+      setCurrentSize(newSize);
+      updateNodeData({ width: params.width, height: params.height });
+    },
+    [updateNodeData],
+  );
 
   // Handle copy and paste
   const handleCopyPaste = useCallback(() => {
-    const currentNode = getNodes().find(node => node.id === id);
+    const currentNode = getNodes().find((node) => node.id === id);
+
     if (!currentNode) {
       console.error('Current node not found');
+
       return;
     }
-    
+
     setNodes((nds) => {
       // Calculate next zIndex
-      const maxZIndex = Math.max(...nds.map(n => n.zIndex || 0), 0);
-      
+      const maxZIndex = Math.max(...nds.map((n) => n.zIndex || 0), 0);
+
       const copiedNode = createRectangleCopy({
         currentNode,
         nodeType: 'rectangleNode',
-        data: { width: currentSize.width, height: currentSize.height, color, label },
+        data: {
+          width: currentSize.width,
+          height: currentSize.height,
+          color,
+          label,
+        },
       });
-      
+
       const nodeWithZIndex = { ...copiedNode, zIndex: maxZIndex + 1 };
+
       return [...nds, nodeWithZIndex];
     });
+    
     handleCloseContextMenu();
-  }, [id, currentSize, color, label, getNodes, setNodes, handleCloseContextMenu]);
+  }, [
+    id,
+    currentSize,
+    color,
+    label,
+    getNodes,
+    setNodes,
+    handleCloseContextMenu,
+  ]);
 
   return (
-    <div className={`${styles.rectangleNode} ${selected ? styles.selected : ''}`}>
+    <div
+      className={`${styles.rectangleNode} ${selected ? styles.selected : ''}`}
+    >
       {selected && isEditable && (
         <>
           <NodeResizeControl
@@ -149,15 +188,18 @@ const RectangleNode: FC<RectangleNodeProps> = ({ data, selected, id, editMode })
           />
         </>
       )}
-      
-      <div 
+
+      <div
         className={styles.rectangleContainer}
         style={{
           width: `${currentSize.width}px`,
           height: `${currentSize.height}px`,
           backgroundColor: color,
           opacity: opacity,
-          border: selected && isEditable ? '2px solid #3b82f6' : '1px solid rgba(0,0,0,0.2)',
+          border:
+            selected && isEditable
+              ? '2px solid #3b82f6'
+              : '1px solid rgba(0,0,0,0.2)',
           borderRadius: '4px',
           display: 'flex',
           alignItems: 'center',
@@ -197,7 +239,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({ data, selected, id, editMode })
           </span>
         )}
       </div>
-      
+
       {/* Context Menu */}
       <ContextMenu
         visible={contextMenu.visible}
