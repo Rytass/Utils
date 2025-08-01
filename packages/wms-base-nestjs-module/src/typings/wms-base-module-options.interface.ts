@@ -4,6 +4,7 @@ import { LocationEntity } from '../models/location.entity';
 import { MaterialEntity } from '../models/material.entity';
 import { OrderEntity } from '../models/order.entity';
 import { StockEntity } from '../models/stock.entity';
+import { WarehouseMapEntity } from '../models/warehouse-map.entity';
 
 export interface WMSBaseModuleOptions {
   // Entities
@@ -12,6 +13,7 @@ export interface WMSBaseModuleOptions {
   materialEntity?: new () => MaterialEntity; // default: MaterialEntity
   batchEntity?: new () => BatchEntity; // default: BatchEntity
   orderEntity?: new () => OrderEntity; // default: OrderEntity
+  warehouseMapEntity?: new () => WarehouseMapEntity; // default: WarehouseMapEntity
   // Options
   allowNegativeStock?: boolean; // default: false
 }

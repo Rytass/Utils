@@ -7,6 +7,7 @@ import {
   PROVIDE_MATERIAL_ENTITY,
   PROVIDE_ORDER_ENTITY,
   PROVIDE_STOCK_ENTITY,
+  PROVIDE_WAREHOUSE_MAP_ENTITY,
   WMS_MODULE_OPTIONS,
 } from '../typings/wms-base-module-providers';
 
@@ -45,6 +46,12 @@ export const OptionProviders: Provider[] = [
     provide: ALLOW_NEGATIVE_STOCK,
     useFactory: (options?: WMSBaseModuleOptions) =>
       options?.allowNegativeStock ?? false,
+    inject: [WMS_MODULE_OPTIONS],
+  },
+  {
+    provide: PROVIDE_WAREHOUSE_MAP_ENTITY,
+    useFactory: (options?: WMSBaseModuleOptions) =>
+      options?.warehouseMapEntity ?? null,
     inject: [WMS_MODULE_OPTIONS],
   },
 ];

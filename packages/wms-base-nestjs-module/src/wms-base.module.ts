@@ -12,17 +12,25 @@ import {
   WMSBaseModuleOptionsFactory,
 } from './typings/wms-base-module-options.interface';
 import { WMS_MODULE_OPTIONS } from './typings/wms-base-module-providers';
+import { WarehouseMapService } from './services/warehouse-map.service';
 
 const providers = [...OptionProviders, ...ResolvedRepoProviders];
 
 @Module({
   imports: [WMSModelsModule],
-  exports: [LocationService, MaterialService, StockService, OrderService],
+  exports: [
+    LocationService,
+    MaterialService,
+    StockService,
+    OrderService,
+    WarehouseMapService,
+  ],
   providers: [
     LocationService,
     MaterialService,
     StockService,
     OrderService,
+    WarehouseMapService,
     ...providers,
   ],
 })
