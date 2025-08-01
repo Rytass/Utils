@@ -38,9 +38,10 @@ const ContextMenu: FC<ContextMenuProps> = ({
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
       const menuElement = menuRef.current;
-      
+
       if (menuElement) {
         const isInsideMenu = menuElement.contains(target);
+
         if (!isInsideMenu) {
           onClose();
         }
@@ -94,19 +95,21 @@ const ContextMenu: FC<ContextMenuProps> = ({
         </div>
       </div>
       <div className={styles.menuItem} onClick={onDelete}>
-        刪除
+        <div className={styles.menuItemContent}>
+          <span className={styles.menuItemText}>刪除</span>
+          <span className={styles.menuItemShortcut}>Del</span>
+        </div>
       </div>
-      <div 
+      <div
         className={`${styles.menuItem} ${styles.hasSubmenu}`}
         onMouseEnter={() => setShowArrangeSubmenu(true)}
         onMouseLeave={() => setShowArrangeSubmenu(false)}
       >
         排列順序
         <span className={styles.arrow}>▶</span>
-        
         {/* Submenu */}
         {showArrangeSubmenu && (
-          <div 
+          <div
             className={styles.submenu}
             style={{
               position: 'absolute',
@@ -117,42 +120,42 @@ const ContextMenu: FC<ContextMenuProps> = ({
             onMouseEnter={() => setShowArrangeSubmenu(true)}
             onMouseLeave={() => setShowArrangeSubmenu(false)}
           >
-            <div 
-              className={styles.menuItem} 
-              onClick={(e) => { 
-                e.stopPropagation(); 
-                arrangeActions.onBringToFront(); 
-                onClose(); 
+            <div
+              className={styles.menuItem}
+              onClick={(e) => {
+                e.stopPropagation();
+                arrangeActions.onBringToFront();
+                onClose();
               }}
             >
               移至最前
             </div>
-            <div 
-              className={styles.menuItem} 
-              onClick={(e) => { 
-                e.stopPropagation(); 
-                arrangeActions.onBringForward(); 
-                onClose(); 
+            <div
+              className={styles.menuItem}
+              onClick={(e) => {
+                e.stopPropagation();
+                arrangeActions.onBringForward();
+                onClose();
               }}
             >
               置前
             </div>
-            <div 
-              className={styles.menuItem} 
-              onClick={(e) => { 
-                e.stopPropagation(); 
-                arrangeActions.onSendBackward(); 
-                onClose(); 
+            <div
+              className={styles.menuItem}
+              onClick={(e) => {
+                e.stopPropagation();
+                arrangeActions.onSendBackward();
+                onClose();
               }}
             >
               置後
             </div>
-            <div 
-              className={styles.menuItem} 
-              onClick={(e) => { 
-                e.stopPropagation(); 
-                arrangeActions.onSendToBack(); 
-                onClose(); 
+            <div
+              className={styles.menuItem}
+              onClick={(e) => {
+                e.stopPropagation();
+                arrangeActions.onSendToBack();
+                onClose();
               }}
             >
               移至最後

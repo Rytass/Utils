@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useState, useEffect } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Modal, ModalHeader } from '@mezzanine-ui/react';
 import {
   addEdge,
@@ -316,7 +316,7 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
   const handleCopyPaste = useCallback(() => {
     // 決定要複製的節點：優先使用最後複製的節點，否則使用選中的節點
     let nodeToCopy: Node | null = null;
-    
+
     if (lastCopiedNode) {
       // 如果有最後複製的節點，使用它
       nodeToCopy = lastCopiedNode;
@@ -324,66 +324,94 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
       // 否則使用選中的節點
       nodeToCopy = selectedNodes[0];
     }
-    
+
     if (!nodeToCopy) return;
-    
+
     // 只處理可複製的節點類型
-    if (!['rectangleNode', 'pathNode', 'imageNode'].includes(nodeToCopy.type || '')) {
+    if (
+      !['rectangleNode', 'pathNode', 'imageNode'].includes(
+        nodeToCopy.type || '',
+      )
+    ) {
       return;
     }
 
     // 動態導入 nodeOperations 工具函數
-    import('./utils/nodeOperations').then(({ createRectangleCopy, createPathCopy, createImageCopy }) => {
-      let newNode: Node;
+    import('./utils/nodeOperations').then(
+      ({ createRectangleCopy, createPathCopy, createImageCopy }) => {
+        let newNode: Node;
 
-      switch (nodeToCopy.type) {
-        case 'rectangleNode':
-          newNode = createRectangleCopy({
-            currentNode: nodeToCopy,
-            offsetPercentage: 0.25,
-            nodeType: 'rectangleNode',
-            data: nodeToCopy.data,
-          });
-          break;
-        case 'pathNode':
-          newNode = createPathCopy({
-            currentNode: nodeToCopy,
-            offsetPercentage: 0.25,
-            nodeType: 'pathNode',
-            data: nodeToCopy.data,
-          });
-          break;
-        case 'imageNode':
-          newNode = createImageCopy({
-            currentNode: nodeToCopy,
-            offsetPercentage: 0.25,
-            nodeType: 'imageNode',
-            data: nodeToCopy.data,
-          });
-          break;
-        default:
-          return;
-      }
+        switch (nodeToCopy.type) {
+          case 'rectangleNode':
+            newNode = createRectangleCopy({
+              currentNode: nodeToCopy,
+              offsetPercentage: 0.25,
+              nodeType: 'rectangleNode',
+              data: nodeToCopy.data,
+            });
 
-      setNodes((nds) => {
-        // 計算下一個 zIndex
-        const maxZIndex = Math.max(...nds.map(n => n.zIndex || 0), 0);
-        const nodeWithZIndex = { ...newNode, zIndex: maxZIndex + 1 };
-        return [...nds, nodeWithZIndex];
-      });
-      
-      // 更新最後複製的節點為新創建的節點，放在 setNodes 外面以確保狀態正確更新
-      setLastCopiedNode(newNode);
-    });
+            break;
+          case 'pathNode':
+            newNode = createPathCopy({
+              currentNode: nodeToCopy,
+              offsetPercentage: 0.25,
+              nodeType: 'pathNode',
+              data: nodeToCopy.data,
+            });
+
+            break;
+          case 'imageNode':
+            newNode = createImageCopy({
+              currentNode: nodeToCopy,
+              offsetPercentage: 0.25,
+              nodeType: 'imageNode',
+              data: nodeToCopy.data,
+            });
+
+            break;
+          default:
+            return;
+        }
+
+        setNodes((nds) => {
+          // 計算下一個 zIndex
+          const maxZIndex = Math.max(...nds.map((n) => n.zIndex || 0), 0);
+          const nodeWithZIndex = { ...newNode, zIndex: maxZIndex + 1 };
+
+          return [...nds, nodeWithZIndex];
+        });
+
+        // 更新最後複製的節點為新創建的節點，放在 setNodes 外面以確保狀態正確更新
+        setLastCopiedNode(newNode);
+      },
+    );
   }, [selectedNodes, lastCopiedNode, setNodes]);
+
+  // 處理 Delete 鍵刪除選中節點功能
+  const handleDeleteSelected = useCallback(() => {
+    if (selectedNodes.length === 0) return;
+
+    const selectedNodeIds = selectedNodes.map((node) => node.id);
+
+    setNodes((nds) => nds.filter((node) => !selectedNodeIds.includes(node.id)));
+
+    // 重置相關狀態
+    setLastCopiedNode(null);
+  }, [selectedNodes, setNodes]);
 
   // 鍵盤事件監聽器
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Command+D (Mac) 或 Ctrl+D (Windows/Linux)
+      // Command+D (Mac) 或 Ctrl+D (Windows/Linux) - 複製並貼上
       if ((event.metaKey || event.ctrlKey) && event.key === 'd') {
         event.preventDefault();
         handleCopyPaste();
+      }
+
+      // Delete 鍵 - 刪除選中節點
+      if (event.key === 'Delete' || event.key === 'Backspace') {
+        event.preventDefault();
+        handleDeleteSelected();
       }
     };
 
@@ -395,7 +423,7 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [open, handleCopyPaste]);
+  }, [open, handleCopyPaste, handleDeleteSelected]);
 
   return (
     <Modal open={open} onClose={onClose} className={styles.modal}>
