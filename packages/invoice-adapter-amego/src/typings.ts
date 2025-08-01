@@ -70,6 +70,7 @@ export interface AmegoInvoiceIssueOptions
   remark?: string; // 備註
   detailVat: boolean; // 明細是否含稅, 預設為true (含稅) , 亦可為false (未稅)
   buyerEmail?: string; // 買方電子信箱
+  buyerName?: string; // 買方名稱(抬頭)
 }
 
 export const AmegoTaxType = {
