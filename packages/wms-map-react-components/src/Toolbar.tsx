@@ -126,9 +126,9 @@ const Toolbar: FC<ToolbarProps> = ({
           
           {/* Drawing tools */}
           <Button
-            variant={layerTool === LayerDrawingTool.SELECT ? "contained" : "outlined"}
+            variant={drawingMode === DrawingMode.NONE ? "contained" : "outlined"}
             size="small"
-            className={styles.toolButton}
+            className={`${styles.toolButton} ${drawingMode === DrawingMode.NONE ? styles.toolButtonActive : ''}`}
             onClick={() => {
               setLayerTool(LayerDrawingTool.SELECT);
               // Turn off drawing modes when selecting select tool
@@ -145,7 +145,7 @@ const Toolbar: FC<ToolbarProps> = ({
           <Button
             variant={drawingMode === DrawingMode.RECTANGLE ? "contained" : "outlined"}
             size="small"
-            className={styles.toolButton}
+            className={`${styles.toolButton} ${drawingMode === DrawingMode.RECTANGLE ? styles.toolButtonActive : ''}`}
             onClick={() => {
               setLayerTool(LayerDrawingTool.RECTANGLE);
               onToggleRectangleTool();
@@ -157,7 +157,7 @@ const Toolbar: FC<ToolbarProps> = ({
           <Button
             variant={drawingMode === DrawingMode.PEN ? "contained" : "outlined"}
             size="small"
-            className={styles.toolButton}
+            className={`${styles.toolButton} ${drawingMode === DrawingMode.PEN ? styles.toolButtonActive : ''}`}
             onClick={() => {
               setLayerTool(LayerDrawingTool.PEN);
               onTogglePenTool();
