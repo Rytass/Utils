@@ -33,6 +33,7 @@
     "@mezzanine-ui/core": "^0.16.0",
     "@mezzanine-ui/icons": "^0.16.0",
     "@mezzanine-ui/react": "^0.16.0",
+    "@mezzanine-ui/react-hook-form-v2": "^0.0.87",
     "@mezzanine-ui/system": "^0.16.0",
     "@nestjs/common": "^10.4.12",
     "@nestjs/config": "^3.3.0",

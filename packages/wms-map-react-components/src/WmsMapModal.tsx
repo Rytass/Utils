@@ -15,7 +15,7 @@ import { EditMode, DrawingMode } from '../typings';
 import { DEFAULT_RECTANGLE_COLOR, DEFAULT_RECTANGLE_LABEL, DEFAULT_PATH_LABEL, MIN_RECTANGLE_SIZE } from './constants';
 import { calculateImageSize, calculateStaggeredPosition } from './utils/nodeUtils';
 import Toolbar from './Toolbar';
-import Breadcrumb from './Breadcrumb';
+import Breadcrumb from './components/breadcrumb/Breadcrumb';
 import ReactFlowCanvas from './ReactFlowCanvas';
 import styles from './wmsMapModal.module.scss';
 

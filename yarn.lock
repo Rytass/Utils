@@ -3529,6 +3529,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@hookform/error-message@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "@hookform/error-message@npm:2.0.1"
+  peerDependencies:
+    react: ">=16.8.0"
+    react-dom: ">=16.8.0"
+    react-hook-form: ^7.0.0
+  checksum: 10c0/6b608bcdbd797ddb7c6cfc8c42b6bbac40066181a0c582b1f1a342bfa65fa7e8329cdb8e869a76e33988cd46fe8623d521ea597231b9d33e1f0ba3288e36c58e
+  languageName: node
+  linkType: hard
+
 "@humanwhocodes/config-array@npm:^0.13.0":
   version: 0.13.0
   resolution: "@humanwhocodes/config-array@npm:0.13.0"
@@ -4275,6 +4286,25 @@ __metadata:
   version: 0.16.0
   resolution: "@mezzanine-ui/icons@npm:0.16.0"
   checksum: 10c0/e06466d385f163f2a5bb4df6fdb3557a30488d8de040ab92d1c706a9d8f1ae1f5317aaf470f2d090c139895605f75995db01adad7783b87b2dc9ba882c6e254e
+  languageName: node
+  linkType: hard
+
+"@mezzanine-ui/react-hook-form-v2@npm:^0.0.87":
+  version: 0.0.87
+  resolution: "@mezzanine-ui/react-hook-form-v2@npm:0.0.87"
+  dependencies:
+    "@hookform/error-message": "npm:^2.0.1"
+  peerDependencies:
+    "@mezzanine-ui/core": ^0.15.2
+    "@mezzanine-ui/icons": ^0.15.2
+    "@mezzanine-ui/react": ^0.15.2
+    "@mezzanine-ui/system": ^0.15.2
+    dayjs: ^1.11.13
+    lodash: ^4.17.21
+    react: ^18.3.1
+    react-dom: ^18.3.1
+    react-hook-form: ^7.52.2
+  checksum: 10c0/c69ad7c1e224d72a6cfb9d250dc00252845f776edb800f5b4ddafada298c5684978bb7105a967c0930332fc516c45418e311c5c8980561c0f7e595373302cd07
   languageName: node
   linkType: hard
 
@@ -22898,6 +22928,7 @@ __metadata:
     "@mezzanine-ui/core": "npm:^0.16.0"
     "@mezzanine-ui/icons": "npm:^0.16.0"
     "@mezzanine-ui/react": "npm:^0.16.0"
+    "@mezzanine-ui/react-hook-form-v2": "npm:^0.0.87"
     "@mezzanine-ui/system": "npm:^0.16.0"
     "@nestjs/common": "npm:^10.4.12"
     "@nestjs/config": "npm:^3.3.0"
