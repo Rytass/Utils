@@ -100,7 +100,33 @@ export const usePenDrawing = ({
     // Check for double-click (within 300ms)
     const isDoubleClick = currentTime - drawingState.lastClickTime < 300;
     
-    if (isDoubleClick && drawingState.isDrawing) {
+    // Check if clicking on the first point to close the path (only if we have at least 3 points)
+    let isClickingFirstPoint = false;
+    if (drawingState.isDrawing && drawingState.points.length >= 3) {
+      const firstPoint = drawingState.screenPoints[0];
+      const distance = Math.sqrt(
+        Math.pow(constrainedScreenPos.x - firstPoint.x, 2) + 
+        Math.pow(constrainedScreenPos.y - firstPoint.y, 2)
+      );
+      // Consider it a click on the first point if within 10 pixels
+      isClickingFirstPoint = distance <= 10;
+    }
+    
+    if (isClickingFirstPoint) {
+      // Close the path by adding the first point at the end
+      const closedPath = [...drawingState.points, drawingState.points[0]];
+      onCreatePath(closedPath);
+      
+      // Reset drawing state
+      setDrawingState({
+        isDrawing: false,
+        points: [],
+        screenPoints: [],
+        currentMousePos: null,
+        lastClickTime: 0,
+        isShiftPressed: false,
+      });
+    } else if (isDoubleClick && drawingState.isDrawing) {
       // Complete and close the path if we have at least 3 points
       if (drawingState.points.length >= 3) {
         // Close the path by adding the first point at the end
@@ -238,5 +264,8 @@ export const usePenDrawing = ({
     isDrawing: drawingState.isDrawing,
     previewPath,
     currentPoints: drawingState.screenPoints,
+    // 提供起始點資訊，用於顯示閉合提示
+    firstPoint: drawingState.screenPoints.length > 0 ? drawingState.screenPoints[0] : null,
+    canClose: drawingState.isDrawing && drawingState.screenPoints.length >= 3,
   };
 };
