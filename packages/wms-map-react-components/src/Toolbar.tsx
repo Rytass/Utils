@@ -67,7 +67,7 @@ const Toolbar: FC<ToolbarProps> = ({
           <Button
             variant={editMode === EditMode.LAYER ? 'contained' : 'outlined'}
             size="small"
-            className={styles.toolbarButton}
+            className={`${styles.toolbarButton} ${editMode === EditMode.LAYER ? styles.toolbarButtonActive : ''}`}
             onClick={() => onEditModeChange(EditMode.LAYER)}
           >
             圖層
@@ -77,7 +77,7 @@ const Toolbar: FC<ToolbarProps> = ({
               editMode === EditMode.BACKGROUND ? 'contained' : 'outlined'
             }
             size="small"
-            className={styles.toolbarButton}
+            className={`${styles.toolbarButton} ${editMode === EditMode.BACKGROUND ? styles.toolbarButtonActive : ''}`}
             onClick={() => onEditModeChange(EditMode.BACKGROUND)}
           >
             底圖

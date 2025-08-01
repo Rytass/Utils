@@ -41,6 +41,53 @@
     color: #666 !important;
     box-shadow: none !important;
   }
+
+  // Active state for contained variant buttons in toolbar
+  &[data-variant="contained"],
+  &[class*="contained"] {
+    background-color: #5570d3 !important;
+    color: white !important;
+    border-color: #4461c2 !important;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(85, 112, 211, 0.2) !important;
+    transform: translateY(0.5px) !important;
+    
+    &:hover {
+      background-color: #4461c2 !important;
+      color: white !important;
+      border-color: #3a5bb8 !important;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(68, 97, 194, 0.3) !important;
+    }
+
+    &:focus {
+      background-color: #4461c2 !important;
+      color: white !important;
+      border-color: #3a5bb8 !important;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(68, 97, 194, 0.3) !important;
+    }
+  }
+}
+
+// Custom active class for toolbar buttons
+.toolbarButtonActive {
+  background-color: #5570d3 !important;
+  color: white !important;
+  border-color: #4461c2 !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(85, 112, 211, 0.2) !important;
+  transform: translateY(0.5px) !important;
+  
+  &:hover {
+    background-color: #4461c2 !important;
+    color: white !important;
+    border-color: #3a5bb8 !important;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(68, 97, 194, 0.3) !important;
+  }
+
+  &:focus {
+    background-color: #4461c2 !important;
+    color: white !important;
+    border-color: #3a5bb8 !important;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(68, 97, 194, 0.3) !important;
+  }
 }
 
 .saveButton {
