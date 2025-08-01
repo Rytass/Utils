@@ -16,7 +16,7 @@ export enum MapRangeType {
 interface MapRange {
   id: ID;
   type: MapRangeType;
-  color: MapRangeColor;
+  color: string;
 }
 
 export interface MapBackground {
@@ -63,6 +63,6 @@ export enum DrawingMode {
 
 export enum LayerDrawingTool {
   SELECT = 'SELECT',
-  RECTANGLE = 'RECTANGLE', 
+  RECTANGLE = 'RECTANGLE',
   PEN = 'PEN',
 }
