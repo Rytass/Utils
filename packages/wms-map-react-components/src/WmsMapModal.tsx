@@ -46,6 +46,7 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
   );
 
   const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
+  const [lastCopiedNode, setLastCopiedNode] = useState<Node | null>(null);
 
   const handleEditModeChange = useCallback(
     (mode: EditMode) => {
@@ -263,6 +264,11 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
     (params: OnSelectionChangeParams) => {
       setSelectedNodes(params.nodes);
 
+      // 當用戶選擇不同節點時，重置 lastCopiedNode 以避免連續複製混亂
+      if (params.nodes.length > 0) {
+        setLastCopiedNode(null);
+      }
+
       // 如果選擇了單一可著色節點，更新顏色選擇器以顯示其顏色
       if (
         params.nodes.length === 1 &&
@@ -308,12 +314,21 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
 
   // 處理 Command+D 快捷鍵複製並貼上功能
   const handleCopyPaste = useCallback(() => {
-    if (selectedNodes.length !== 1) return;
-
-    const selectedNode = selectedNodes[0];
+    // 決定要複製的節點：優先使用最後複製的節點，否則使用選中的節點
+    let nodeToCopy: Node | null = null;
+    
+    if (lastCopiedNode) {
+      // 如果有最後複製的節點，使用它
+      nodeToCopy = lastCopiedNode;
+    } else if (selectedNodes.length === 1) {
+      // 否則使用選中的節點
+      nodeToCopy = selectedNodes[0];
+    }
+    
+    if (!nodeToCopy) return;
     
     // 只處理可複製的節點類型
-    if (!['rectangleNode', 'pathNode', 'imageNode'].includes(selectedNode.type || '')) {
+    if (!['rectangleNode', 'pathNode', 'imageNode'].includes(nodeToCopy.type || '')) {
       return;
     }
 
@@ -321,29 +336,29 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
     import('./utils/nodeOperations').then(({ createRectangleCopy, createPathCopy, createImageCopy }) => {
       let newNode: Node;
 
-      switch (selectedNode.type) {
+      switch (nodeToCopy.type) {
         case 'rectangleNode':
           newNode = createRectangleCopy({
-            currentNode: selectedNode,
+            currentNode: nodeToCopy,
             offsetPercentage: 0.25,
             nodeType: 'rectangleNode',
-            data: selectedNode.data,
+            data: nodeToCopy.data,
           });
           break;
         case 'pathNode':
           newNode = createPathCopy({
-            currentNode: selectedNode,
+            currentNode: nodeToCopy,
             offsetPercentage: 0.25,
             nodeType: 'pathNode',
-            data: selectedNode.data,
+            data: nodeToCopy.data,
           });
           break;
         case 'imageNode':
           newNode = createImageCopy({
-            currentNode: selectedNode,
+            currentNode: nodeToCopy,
             offsetPercentage: 0.25,
             nodeType: 'imageNode',
-            data: selectedNode.data,
+            data: nodeToCopy.data,
           });
           break;
         default:
@@ -356,8 +371,11 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
         const nodeWithZIndex = { ...newNode, zIndex: maxZIndex + 1 };
         return [...nds, nodeWithZIndex];
       });
+      
+      // 更新最後複製的節點為新創建的節點，放在 setNodes 外面以確保狀態正確更新
+      setLastCopiedNode(newNode);
     });
-  }, [selectedNodes, setNodes]);
+  }, [selectedNodes, lastCopiedNode, setNodes]);
 
   // 鍵盤事件監聽器
   useEffect(() => {
