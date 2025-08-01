@@ -1,0 +1,99 @@
+// ReactFlow Canvas Styles
+
+.reactFlowWrapper {
+  width: 100%;
+  height: 100%;
+  padding-top: 80px; // Space for breadcrumb and toolbar
+}
+
+.reactFlowCanvas {
+  background-color: white;
+  width: 100%;
+  height: 100%;
+}
+
+.emptyState {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: #999;
+  font-size: 16px;
+  z-index: 10;
+
+  .emptyIcon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    color: #d0d0d0;
+    line-height: 1;
+  }
+
+  .emptyTitle {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 8px;
+  }
+
+  .emptySubText {
+    font-size: 14px;
+    color: #999;
+    margin-top: 8px;
+  }
+}
+
+// Custom Controls Styling
+.undoRedoControls {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  display: flex;
+  gap: 4px;
+  z-index: 1000;
+}
+
+.zoomControls {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 1000;
+}
+
+.controlButton {
+  width: 32px;
+  height: 32px;
+  background-color: white;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  color: #666;
+  
+  &:hover {
+    border-color: #b0b0b0;
+    background-color: #f8f8f8;
+  }
+  
+  &:active {
+    background-color: #e8e8e8;
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.zoomPercentage {
+  padding: 0 8px;
+  font-size: 14px;
+  color: #666;
+  min-width: 45px;
+  text-align: center;
+}

@@ -1,0 +1,31 @@
+// Breadcrumb Styles
+
+.breadcrumbSection {
+  position: absolute;
+  top: 20px;
+  left: 24px;
+  z-index: 1001;
+  
+  .warehouseIdSection {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background-color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e0e0e0;
+
+    .separator {
+      color: #999;
+      font-size: 14px;
+      margin: 0 2px;
+    }
+
+    .warehouseIdText {
+      color: #333;
+      font-size: 14px;
+      font-weight: 400;
+    }
+  }
+}
