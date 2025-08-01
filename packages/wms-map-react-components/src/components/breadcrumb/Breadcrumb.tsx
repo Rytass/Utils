@@ -19,6 +19,7 @@ const Breadcrumb: FC<BreadcrumbProps> = ({ warehouseIds, onWarehouseClick, onWar
   const handleEditClick = () => {
     // 預設編輯最後一個項目
     const lastIndex = warehouseIds.length - 1;
+
     setEditingIndex(lastIndex);
     setShowEditModal(true);
   };
@@ -27,6 +28,7 @@ const Breadcrumb: FC<BreadcrumbProps> = ({ warehouseIds, onWarehouseClick, onWar
     if (editingIndex >= 0 && onWarehouseEdit) {
       onWarehouseEdit(warehouseIds[editingIndex], newName, editingIndex);
     }
+
     setEditingIndex(-1);
   };
 

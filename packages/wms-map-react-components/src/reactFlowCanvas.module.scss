@@ -1,9 +1,7 @@
-// ReactFlow Canvas Styles
-
 .reactFlowWrapper {
   width: 100%;
   height: 100%;
-  padding-top: 80px; // Space for breadcrumb and toolbar
+  padding-top: 80px;
 }
 
 .reactFlowCanvas {
@@ -42,7 +40,7 @@
   }
 }
 
-// Custom Controls Styling
+// 自訂控制項樣式
 .zoomControls {
   position: absolute;
   bottom: 20px;
@@ -65,16 +63,16 @@
   cursor: pointer;
   font-size: 16px;
   color: #666;
-  
+
   &:hover {
     border-color: #b0b0b0;
     background-color: #f8f8f8;
   }
-  
+
   &:active {
     background-color: #e8e8e8;
   }
-  
+
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;

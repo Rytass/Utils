@@ -1,5 +1,3 @@
-// Image Node Styles
-
 .imageNode {
   background: transparent;
   border: 2px solid transparent;
@@ -59,7 +57,7 @@
 }
 
 
-// Custom NodeResizer handle styles
+// 自訂 NodeResizer 樣式
 .imageNode :global(.react-flow__resize-control) {
   width: 20px !important;
   height: 20px !important;

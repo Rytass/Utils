@@ -1,8 +1,6 @@
-// Path Node Styles
-
 .pathNode {
   position: relative;
-  
+
   &.selected {
     z-index: 1000;
   }
@@ -11,7 +9,7 @@
 .pathContainer {
   position: relative;
   cursor: default;
-  
+
   &:hover {
     .pathNode:not(.selected) & {
       outline: 1px solid rgba(59, 130, 246, 0.3);
