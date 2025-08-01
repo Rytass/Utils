@@ -1,0 +1,17 @@
+// Modal 樣式
+.modalContent {
+  padding: 16px 0;
+
+  .fieldLabel {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 8px;
+  }
+}
+
+.modalFooter {
+  gap: 16px;
+  justify-content: end;
+}
