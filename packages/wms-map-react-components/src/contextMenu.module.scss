@@ -18,6 +18,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  min-width: 160px;
 
   &:hover {
     background-color: #f5f5f5;
@@ -26,6 +27,24 @@
   &:active {
     background-color: #e9ecef;
   }
+}
+
+.menuItemContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.menuItemText {
+  flex: 1;
+}
+
+.menuItemShortcut {
+  font-size: 12px;
+  color: #666;
+  margin-left: 16px;
+  font-family: monospace;
 }
 
 .hasSubmenu {
