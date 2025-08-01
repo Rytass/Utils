@@ -88,7 +88,10 @@ const ContextMenu: FC<ContextMenuProps> = ({
       }}
     >
       <div className={styles.menuItem} onClick={onCopyPaste}>
-        複製並貼上
+        <div className={styles.menuItemContent}>
+          <span className={styles.menuItemText}>複製並貼上</span>
+          <span className={styles.menuItemShortcut}>⌘D</span>
+        </div>
       </div>
       <div className={styles.menuItem} onClick={onDelete}>
         刪除

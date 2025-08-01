@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useState } from 'react';
+import React, { FC, useCallback, useState, useEffect } from 'react';
 import { Modal, ModalHeader } from '@mezzanine-ui/react';
 import {
   addEdge,
@@ -305,6 +305,79 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
     },
     [selectedNodes, setNodes],
   );
+
+  // 處理 Command+D 快捷鍵複製並貼上功能
+  const handleCopyPaste = useCallback(() => {
+    if (selectedNodes.length !== 1) return;
+
+    const selectedNode = selectedNodes[0];
+    
+    // 只處理可複製的節點類型
+    if (!['rectangleNode', 'pathNode', 'imageNode'].includes(selectedNode.type || '')) {
+      return;
+    }
+
+    // 動態導入 nodeOperations 工具函數
+    import('./utils/nodeOperations').then(({ createRectangleCopy, createPathCopy, createImageCopy }) => {
+      let newNode: Node;
+
+      switch (selectedNode.type) {
+        case 'rectangleNode':
+          newNode = createRectangleCopy({
+            currentNode: selectedNode,
+            offsetPercentage: 0.25,
+            nodeType: 'rectangleNode',
+            data: selectedNode.data,
+          });
+          break;
+        case 'pathNode':
+          newNode = createPathCopy({
+            currentNode: selectedNode,
+            offsetPercentage: 0.25,
+            nodeType: 'pathNode',
+            data: selectedNode.data,
+          });
+          break;
+        case 'imageNode':
+          newNode = createImageCopy({
+            currentNode: selectedNode,
+            offsetPercentage: 0.25,
+            nodeType: 'imageNode',
+            data: selectedNode.data,
+          });
+          break;
+        default:
+          return;
+      }
+
+      setNodes((nds) => {
+        // 計算下一個 zIndex
+        const maxZIndex = Math.max(...nds.map(n => n.zIndex || 0), 0);
+        const nodeWithZIndex = { ...newNode, zIndex: maxZIndex + 1 };
+        return [...nds, nodeWithZIndex];
+      });
+    });
+  }, [selectedNodes, setNodes]);
+
+  // 鍵盤事件監聽器
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Command+D (Mac) 或 Ctrl+D (Windows/Linux)
+      if ((event.metaKey || event.ctrlKey) && event.key === 'd') {
+        event.preventDefault();
+        handleCopyPaste();
+      }
+    };
+
+    // 只在 modal 開啟時添加事件監聽器
+    if (open) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [open, handleCopyPaste]);
 
   return (
     <Modal open={open} onClose={onClose} className={styles.modal}>
