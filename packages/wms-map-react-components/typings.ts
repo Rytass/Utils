@@ -38,6 +38,7 @@ export interface MapRectangleRange extends MapRange {
   y: number;
   width: number;
   height: number;
+  text?: string;
 }
 
 export interface MapPolygonRangePoint {
@@ -48,6 +49,7 @@ export interface MapPolygonRangePoint {
 export interface MapPolygonRange extends MapRange {
   type: MapRangeType.POLYGON;
   points: MapPolygonRangePoint[];
+  text?: string;
 }
 
 export enum EditMode {

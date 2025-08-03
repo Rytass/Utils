@@ -31,6 +31,7 @@ interface ReactFlowCanvasProps {
   ) => void;
   onCreatePath: (points: { x: number; y: number }[]) => void;
   onSelectionChange?: (params: OnSelectionChangeParams) => void;
+  onTextEditComplete?: (id: string, oldText: string, newText: string) => void;
 }
 
 const CustomControls: FC = () => {
@@ -82,6 +83,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
   onCreateRectangle,
   onCreatePath,
   onSelectionChange,
+  onTextEditComplete,
 }) => {
   const {
     containerRef: rectContainerRef,
@@ -110,11 +112,11 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
     () => ({
       imageNode: (props: any) => <ImageNode {...props} editMode={editMode} />,
       rectangleNode: (props: any) => (
-        <RectangleNode {...props} editMode={editMode} />
+        <RectangleNode {...props} editMode={editMode} onTextEditComplete={onTextEditComplete} />
       ),
-      pathNode: (props: any) => <PathNode {...props} editMode={editMode} />,
+      pathNode: (props: any) => <PathNode {...props} editMode={editMode} onTextEditComplete={onTextEditComplete} />,
     }),
-    [editMode],
+    [editMode, onTextEditComplete],
   );
 
   // Use a callback ref to assign both drawing hooks to the same container

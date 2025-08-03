@@ -7,9 +7,10 @@ interface UseTextEditingProps {
   label: string;
   editMode: EditMode;
   isEditable: boolean;
+  onTextEditComplete?: (id: string, oldText: string, newText: string) => void;
 }
 
-export const useTextEditing = ({ id, label, editMode, isEditable }: UseTextEditingProps) => {
+export const useTextEditing = ({ id, label, editMode, isEditable, onTextEditComplete }: UseTextEditingProps) => {
   const { setNodes } = useReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -25,6 +26,7 @@ export const useTextEditing = ({ id, label, editMode, isEditable }: UseTextEditi
   }, [label, isEditing]);
 
   const updateNodeData = useCallback((updates: any) => {
+    console.log('📝 updateNodeData 調用 (會觸發 React Flow 資料變更):', { id, updates });
     setNodes((nodes) =>
       nodes.map((node) =>
         node.id === id
@@ -46,9 +48,28 @@ export const useTextEditing = ({ id, label, editMode, isEditable }: UseTextEditi
 
   // Handle saving the edited text
   const handleSaveText = useCallback(() => {
+    // 只有在文字真的有變更時才進行更新
+    if (label === editingText) {
+      setIsEditing(false);
+      return;
+    }
+    
+    const oldText = label;
+    const newText = editingText;
+    
+    console.log('💾 保存文字編輯 (手動觸發歷史記錄):', { id, oldText, newText });
+    
     setIsEditing(false);
     updateNodeData({ label: editingText });
-  }, [editingText, updateNodeData]);
+    
+    // 通知父組件文字編輯完成（這會觸發歷史記錄）
+    if (onTextEditComplete) {
+      // 延遲執行以確保 updateNodeData 完成
+      setTimeout(() => {
+        onTextEditComplete(id, oldText, newText);
+      }, 10);
+    }
+  }, [editingText, updateNodeData, id, label, onTextEditComplete]);
 
   // Handle input key events
   const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
@@ -71,18 +92,30 @@ export const useTextEditing = ({ id, label, editMode, isEditable }: UseTextEditi
   // Handle clicking outside to save
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (isEditing && inputRef.current && !inputRef.current.contains(event.target as Node)) {
-        handleSaveText();
+      if (isEditing && inputRef.current) {
+        const target = event.target as HTMLElement;
+        // 檢查點擊是否在 input 元素外部
+        if (!inputRef.current.contains(target)) {
+          console.log('🖱️ 點擊外部區域，保存文字編輯:', { id, editingText });
+          handleSaveText();
+        }
       }
     };
 
     if (isEditing) {
-      document.addEventListener('mousedown', handleClickOutside);
+      // 使用 'click' 事件而不是 'mousedown' 以確保更好的兼容性
+      document.addEventListener('click', handleClickOutside, true);
       return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
+        document.removeEventListener('click', handleClickOutside, true);
       };
     }
-  }, [isEditing, handleSaveText]);
+  }, [isEditing, handleSaveText, id, editingText]);
+
+  // Handle input blur event (when input loses focus)
+  const handleBlur = useCallback(() => {
+    console.log('🔄 Input blur 事件，保存文字編輯:', { id, editingText });
+    handleSaveText();
+  }, [handleSaveText, id, editingText]);
 
   return {
     isEditing,
@@ -91,6 +124,7 @@ export const useTextEditing = ({ id, label, editMode, isEditable }: UseTextEditi
     setEditingText,
     handleDoubleClick,
     handleKeyDown,
+    handleBlur,
     updateNodeData,
   };
 };
