@@ -27,6 +27,7 @@ interface RectangleNodeData {
 
 interface RectangleNodeProps extends NodeProps {
   editMode: EditMode;
+  onTextEditComplete?: (id: string, oldText: string, newText: string) => void;
 }
 
 const RectangleNode: FC<RectangleNodeProps> = ({
@@ -34,6 +35,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({
   selected,
   id,
   editMode,
+  onTextEditComplete,
 }) => {
   const {
     width = DEFAULT_RECTANGLE_WIDTH,
@@ -73,8 +75,9 @@ const RectangleNode: FC<RectangleNodeProps> = ({
     setEditingText,
     handleDoubleClick,
     handleKeyDown,
+    handleBlur,
     updateNodeData,
-  } = useTextEditing({ id, label, editMode, isEditable });
+  } = useTextEditing({ id, label, editMode, isEditable, onTextEditComplete });
 
   // Handle resize with size sync
   const handleResize = useCallback(
@@ -220,6 +223,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({
             value={editingText}
             onChange={(e) => setEditingText(e.target.value)}
             onKeyDown={handleKeyDown}
+            onBlur={handleBlur}
             style={{
               background: 'transparent',
               border: 'none',

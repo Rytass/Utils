@@ -17,9 +17,10 @@ interface PathNodeData {
 
 interface PathNodeProps extends NodeProps {
   editMode: EditMode;
+  onTextEditComplete?: (id: string, oldText: string, newText: string) => void;
 }
 
-const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode }) => {
+const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode, onTextEditComplete }) => {
   const {
     points = [],
     color = DEFAULT_RECTANGLE_COLOR,
@@ -50,7 +51,8 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode }) => {
     setEditingText,
     handleDoubleClick,
     handleKeyDown,
-  } = useTextEditing({ id, label, editMode, isEditable });
+    handleBlur,
+  } = useTextEditing({ id, label, editMode, isEditable, onTextEditComplete });
 
   // Calculate path dimensions
   const getBounds = useCallback(() => {
@@ -172,6 +174,7 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode }) => {
               value={editingText}
               onChange={(e) => setEditingText(e.target.value)}
               onKeyDown={handleKeyDown}
+              onBlur={handleBlur}
               style={{
                 background: 'rgba(0,0,0,0.5)',
                 border: '1px solid white',

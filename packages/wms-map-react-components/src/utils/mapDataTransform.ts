@@ -54,6 +54,7 @@ export const transformNodesToMapData = (nodes: Node[]): Map => {
           y: node.position.y,
           width: rectData.width || 100,
           height: rectData.height || 100,
+          text: rectData.label, // 將 React Flow 節點的 label 映射到 text 欄位
         };
         
         ranges.push(rectangleRange);
@@ -73,6 +74,7 @@ export const transformNodesToMapData = (nodes: Node[]): Map => {
           type: MapRangeType.POLYGON,
           color: pathData.color || '#0000FF', // 預設為藍色
           points: pathData.points || [],
+          text: pathData.label, // 將 React Flow 節點的 label 映射到 text 欄位
         };
         
         ranges.push(polygonRange);
@@ -131,6 +133,7 @@ export const logMapData = (mapData: Map): void => {
           color: rect.color,
           position: { x: rect.x, y: rect.y },
           size: { width: rect.width, height: rect.height },
+          text: rect.text,
         });
       } else if (range.type === MapRangeType.POLYGON) {
         const poly = range as MapPolygonRange;
@@ -140,6 +143,7 @@ export const logMapData = (mapData: Map): void => {
           color: poly.color,
           pointCount: poly.points.length,
           points: poly.points,
+          text: poly.text,
         });
       }
     });
