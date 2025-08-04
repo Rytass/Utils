@@ -1,6 +1,5 @@
 import { ExecutionContext } from '@nestjs/common';
 import type { Request } from 'express';
-import type { GqlExecutionContext as GQLContext } from '@nestjs/graphql';
 import { Enforcer } from 'casbin';
 import { BaseMemberEntity } from '../models/base-member.entity';
 
@@ -10,18 +9,22 @@ type InjectedRequest = Request & {
   _injectedEnforcer: symbol;
 };
 
-export const getRequestFromContext = async (
+export const getRequestFromContext = (
   context: ExecutionContext,
-): Promise<InjectedRequest> => {
+): InjectedRequest => {
   const contextType = context.getType<'http' | 'graphql'>();
 
   switch (contextType) {
     case 'graphql': {
-      const { GqlExecutionContext } = await import('@nestjs/graphql');
+      const { GqlExecutionContext } = require('@nestjs/graphql') as {
+        GqlExecutionContext: {
+          create: (context: ExecutionContext) => {
+            getContext: () => { req: InjectedRequest };
+          };
+        };
+      };
 
-      return GqlExecutionContext.create(context).getContext<{
-        req: InjectedRequest;
-      }>().req;
+      return GqlExecutionContext.create(context).getContext().req;
     }
 
     case 'http':

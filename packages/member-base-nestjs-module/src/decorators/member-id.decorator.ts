@@ -1,5 +1,6 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { BaseMemberEntity } from '../models/base-member.entity';
+import { getRequestFromContext } from '../utils/get-request-from-context';
 
 export const MemberId = createParamDecorator(
   (
@@ -8,6 +9,8 @@ export const MemberId = createParamDecorator(
       payload: Pick<BaseMemberEntity, 'id' | 'account'>;
     },
   ): string | null => {
-    return context.payload?.id ?? null;
+    const request = getRequestFromContext(context);
+
+    return request.payload?.id ?? null;
   },
 );
