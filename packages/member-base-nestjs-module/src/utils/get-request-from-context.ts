@@ -10,21 +10,18 @@ type InjectedRequest = Request & {
   _injectedEnforcer: symbol;
 };
 
-export const getRequestFromContext = (
+export const getRequestFromContext = async (
   context: ExecutionContext,
-): InjectedRequest => {
+): Promise<InjectedRequest> => {
   const contextType = context.getType<'http' | 'graphql'>();
 
   switch (contextType) {
     case 'graphql': {
-      const { GqlExecutionContext } = require('@nestjs/graphql') as {
-        GqlExecutionContext: {
-          create(context: ExecutionContext): GQLContext;
-        };
-      };
+      const { GqlExecutionContext } = await import('@nestjs/graphql');
 
-      return GqlExecutionContext.create(context).getContext()
-        .req as InjectedRequest;
+      return GqlExecutionContext.create(context).getContext<{
+        req: InjectedRequest;
+      }>().req;
     }
 
     case 'http':

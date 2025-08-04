@@ -21,6 +21,7 @@ import { AllowActions } from '../decorators/action.decorator';
 import { verify } from 'jsonwebtoken';
 import { IS_ROUTE_ONLY_AUTHENTICATED } from '../decorators/authenticated.decorator';
 import { getTokenFromContext } from '../utils/get-token-from-context';
+import { getRequestFromContext } from '../utils/get-request-from-context';
 
 export interface ContextPayload {
   token: string | null;
@@ -61,7 +62,9 @@ export class CasbinGuard implements CanActivate {
       payload: Pick<BaseMemberEntity, 'id' | 'account'>;
     },
   ): Promise<boolean> {
-    context.enforcer = this.enforcer;
+    const request = await getRequestFromContext(context);
+
+    request.enforcer = this.enforcer;
 
     if (!this.enableGlobalGuard) return true;
 
@@ -96,7 +99,7 @@ export class CasbinGuard implements CanActivate {
         this.cookieMode ? this.refreshTokenSecret : this.accessTokenSecret,
       ) as Pick<BaseMemberEntity, 'id' | 'account'>;
 
-      context.payload = payload;
+      request.payload = payload;
 
       if (onlyAuthenticated) return true;
 
