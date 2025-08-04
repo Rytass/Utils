@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.3](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-amego@0.2.2...@rytass/invoice-adapter-amego@0.2.3) (2025-08-04)
+
+### Features
+
+- **invoice-adapter-amego:** amego invoice lib support invoice buyerName and invoiceType: LoveCode, PLATFORM ([a4105f2](https://github.com/Rytass/Utils/commit/a4105f2536ae4533b4aa642831768ec87651b4a5))
+- **invoice-adapter-amego:** fix after pr reviewed ([e735d67](https://github.com/Rytass/Utils/commit/e735d67dcd993305cb121d542be752abe7f65af1))
+- **invoice-adapter-amego:** refactor all test cases ([029b3c2](https://github.com/Rytass/Utils/commit/029b3c2a8794069499e93a566af21894232688f0))
+
 ## [0.2.2](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-amego@0.2.1...@rytass/invoice-adapter-amego@0.2.2) (2025-07-30)
 
 **Note:** Version bump only for package @rytass/invoice-adapter-amego
