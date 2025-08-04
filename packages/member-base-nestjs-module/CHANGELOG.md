@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.2](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.1...@rytass/member-base-nestjs-module@0.2.2) (2025-08-04)
+
+### Features
+
+- **member-base-nestjs-module:** add enforcer middleware ([d40c9d8](https://github.com/Rytass/Utils/commit/d40c9d88dc15364c58d9fb68b559f0dbc7e3c58f))
+
 ## [0.2.1](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.0...@rytass/member-base-nestjs-module@0.2.1) (2025-08-04)
 
 ### Features
