@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.1](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.0...@rytass/member-base-nestjs-module@0.2.1) (2025-08-04)
+
+### Features
+
+- **member-base-nestjs-module:** inject enforcer and add @HasPermission param decorator ([d363e52](https://github.com/Rytass/Utils/commit/d363e5214566582822938cc1393d8f17f8cc4c8a))
+- **member-base-nestjs-module:** isolate graphql from package ([cf4b7f9](https://github.com/Rytass/Utils/commit/cf4b7f97ba519043e394f40c25aabc9d79e3dbff))
+
 # [0.2.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.65...@rytass/member-base-nestjs-module@0.2.0) (2025-07-28)
 
 ### Bug Fixes
