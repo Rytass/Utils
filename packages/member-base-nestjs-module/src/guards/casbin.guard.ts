@@ -55,7 +55,14 @@ export class CasbinGuard implements CanActivate {
     }) => Promise<boolean>,
   ) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
+  async canActivate(
+    context: ExecutionContext & {
+      enforcer: Enforcer;
+      payload: Pick<BaseMemberEntity, 'id' | 'account'>;
+    },
+  ): Promise<boolean> {
+    context.enforcer = this.enforcer;
+
     if (!this.enableGlobalGuard) return true;
 
     const reflector = new Reflector();
@@ -79,8 +86,6 @@ export class CasbinGuard implements CanActivate {
 
     if (!allowActions?.length && !onlyAuthenticated) return false;
 
-    const contextType = context.getType<'http' | 'graphql'>();
-
     const token = await getTokenFromContext(context, this.cookieMode);
 
     if (!token) return false;
@@ -91,26 +96,7 @@ export class CasbinGuard implements CanActivate {
         this.cookieMode ? this.refreshTokenSecret : this.accessTokenSecret,
       ) as Pick<BaseMemberEntity, 'id' | 'account'>;
 
-      // switch (contextType) {
-      //   case 'graphql': {
-      //     const { GqlExecutionContext } = await import('@nestjs/graphql');
-
-      //     const ctx =
-      //       GqlExecutionContext.create(context).getContext<ContextPayload>();
-
-      //     ctx.payload = payload;
-      //     ctx.enforcer = this.enforcer;
-      //     break;
-      //   }
-
-      //   case 'http':
-      //   default:
-      //     context.switchToHttp().getRequest<ContextPayload>().payload = payload;
-      //     context.switchToHttp().getRequest<ContextPayload>().enforcer =
-      //       this.enforcer;
-
-      //     break;
-      // }
+      context.payload = payload;
 
       if (onlyAuthenticated) return true;
 

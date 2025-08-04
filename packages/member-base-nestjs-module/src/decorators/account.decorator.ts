@@ -1,17 +1,13 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { getRequestFromContext } from '../utils/get-request-from-context';
-import { CASBIN_ENFORCER } from '../typings/member-base-providers';
+import { BaseMemberEntity } from '../models/base-member.entity';
 
 export const Account = createParamDecorator(
-  (data, context: ExecutionContext): string | null => {
-    const request = getRequestFromContext(context);
-
-    if (request._injectedEnforcer !== CASBIN_ENFORCER) {
-      throw new Error(
-        '@Account decorator should configure with EnforcerMiddleware',
-      );
-    }
-
-    return request.payload?.account ?? null;
+  (
+    data,
+    context: ExecutionContext & {
+      payload: Pick<BaseMemberEntity, 'id' | 'account'>;
+    },
+  ): string | null => {
+    return context.payload?.account ?? null;
   },
 );

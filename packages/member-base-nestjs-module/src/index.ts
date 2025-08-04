@@ -33,8 +33,5 @@ export * from './helpers/graphql-context-token-resolver';
 // Errors
 export * from './constants/errors/index';
 
-// Middlewares
-export * from './middlewares/enforcer.middleware';
-
 // Constants
 export * from './constants/default-casbin-domain';
