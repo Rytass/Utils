@@ -19,8 +19,8 @@ import { type ReflectableDecorator, Reflector } from '@nestjs/core';
 import { IS_ROUTE_PUBLIC } from '../decorators/is-public.decorator';
 import { AllowActions } from '../decorators/action.decorator';
 import { verify } from 'jsonwebtoken';
-import { Request } from 'express';
 import { IS_ROUTE_ONLY_AUTHENTICATED } from '../decorators/authenticated.decorator';
+import { getTokenFromContext } from '../utils/get-token-from-context';
 
 export interface ContextPayload {
   token: string | null;
@@ -81,38 +81,7 @@ export class CasbinGuard implements CanActivate {
 
     const contextType = context.getType<'http' | 'graphql'>();
 
-    let token: string | null;
-
-    switch (contextType) {
-      case 'graphql': {
-        const { GqlExecutionContext } = await import('@nestjs/graphql');
-
-        const ctx = GqlExecutionContext.create(context).getContext<{
-          req: Request;
-        }>();
-
-        token =
-          (this.cookieMode
-            ? ctx.req.cookies.token
-            : (ctx.req.headers.authorization ?? '')
-                .replace(/^Bearer\s/, '')
-                .trim()) ?? null;
-
-        break;
-      }
-
-      case 'http':
-      default:
-        token = (
-          this.cookieMode
-            ? context.switchToHttp().getRequest().cookies.token
-            : (context.switchToHttp().getRequest().headers.authorization ?? '')
-        )
-          .replace(/^Bearer\s/, '')
-          .trim();
-
-        break;
-    }
+    const token = await getTokenFromContext(context, this.cookieMode);
 
     if (!token) return false;
 
@@ -122,26 +91,26 @@ export class CasbinGuard implements CanActivate {
         this.cookieMode ? this.refreshTokenSecret : this.accessTokenSecret,
       ) as Pick<BaseMemberEntity, 'id' | 'account'>;
 
-      switch (contextType) {
-        case 'graphql': {
-          const { GqlExecutionContext } = await import('@nestjs/graphql');
+      // switch (contextType) {
+      //   case 'graphql': {
+      //     const { GqlExecutionContext } = await import('@nestjs/graphql');
 
-          const ctx =
-            GqlExecutionContext.create(context).getContext<ContextPayload>();
+      //     const ctx =
+      //       GqlExecutionContext.create(context).getContext<ContextPayload>();
 
-          ctx.payload = payload;
-          ctx.enforcer = this.enforcer;
-          break;
-        }
+      //     ctx.payload = payload;
+      //     ctx.enforcer = this.enforcer;
+      //     break;
+      //   }
 
-        case 'http':
-        default:
-          context.switchToHttp().getRequest<ContextPayload>().payload = payload;
-          context.switchToHttp().getRequest<ContextPayload>().enforcer =
-            this.enforcer;
+      //   case 'http':
+      //   default:
+      //     context.switchToHttp().getRequest<ContextPayload>().payload = payload;
+      //     context.switchToHttp().getRequest<ContextPayload>().enforcer =
+      //       this.enforcer;
 
-          break;
-      }
+      //     break;
+      // }
 
       if (onlyAuthenticated) return true;
 
