@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.1](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.2.0...@rytass/cms-base-nestjs-module@0.2.1) (2025-08-04)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** category types ([42c3e45](https://github.com/Rytass/Utils/commit/42c3e45ab3aa72ef9ec287d7dfcab690f2952d9d))
+
 # [0.2.0](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.1.95...@rytass/cms-base-nestjs-module@0.2.0) (2025-07-28)
 
 **Note:** Version bump only for package @rytass/cms-base-nestjs-module
