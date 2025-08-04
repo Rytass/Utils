@@ -139,6 +139,7 @@ export class CasbinGuard implements CanActivate {
           context.switchToHttp().getRequest<ContextPayload>().payload = payload;
           context.switchToHttp().getRequest<ContextPayload>().enforcer =
             this.enforcer;
+
           break;
       }
 

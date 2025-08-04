@@ -47,5 +47,8 @@
   "devDependencies": {
     "@types/luxon": "^3",
     "@types/ws": "^8"
-  }
+  },
+  "isolateEntries": [
+    "./graphql.ts"
+  ]
 }
