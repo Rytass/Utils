@@ -1,5 +1,5 @@
 import { Invoice, InvoiceAllowance, InvoiceAwardType, InvoiceState, PaymentItem, TaxType } from '@rytass/invoice';
-import { AmegoInvoiceOptions, AmegoPaymentItem } from './typings';
+import { AmegoInvoiceOptions, AmegoPaymentItem, AMEGO_CONSTANTS } from './typings';
 import { AmegoAllowance } from './amego-allowance';
 
 export class AmegoInvoice implements Invoice<AmegoPaymentItem> {
@@ -63,7 +63,7 @@ export class AmegoInvoice implements Invoice<AmegoPaymentItem> {
     this.voidOn = options.voidOn ?? null;
     this.state = options.state ?? this.state;
     this.vatNumber = options.vatNumber ?? '0000000000';
-    this.taxRate = options.taxRate ?? 0.05; // Default tax rate is 5%
+    this.taxRate = options.taxRate ?? AMEGO_CONSTANTS.DEFAULT_TAX_RATE; // Default tax rate is 5%
     this.taxAmount = options.items.reduce((sum, item) => {
       if (item.taxType === TaxType.TAXED) {
         const thisItemTax = Math.round((item.unitPrice * item.quantity * this.taxRate) / (1 + this.taxRate));

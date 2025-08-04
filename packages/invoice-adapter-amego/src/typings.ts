@@ -70,6 +70,7 @@ export interface AmegoInvoiceIssueOptions
   remark?: string; // 備註
   detailVat: boolean; // 明細是否含稅, 預設為true (含稅) , 亦可為false (未稅)
   buyerEmail?: string; // 買方電子信箱
+  buyerName?: string; // 買方名稱(抬頭)
 }
 
 export const AmegoTaxType = {
@@ -131,3 +132,14 @@ export interface AmegoInvoiceQueryFromInvoiceNumberArgs {
 export type AmegoInvoiceQueryArgs =
   | AmegoInvoiceQueryFromOrderIdArgs
   | AmegoInvoiceQueryFromInvoiceNumberArgs;
+
+// 常數定義
+export const AMEGO_CONSTANTS = {
+  MAX_ORDER_ID_LENGTH: 40,
+  MAX_ITEM_NAME_LENGTH: 256,
+  MAX_ITEM_UNIT_LENGTH: 6,
+  MAX_ITEM_REMARK_LENGTH: 40,
+  DEFAULT_TAX_RATE: 0.05,
+  LOVE_CODE_MIN_LENGTH: 3,
+  LOVE_CODE_MAX_LENGTH: 7,
+} as const;
