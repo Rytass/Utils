@@ -63,6 +63,22 @@ export class CasbinGuard implements CanActivate {
     },
   ): Promise<boolean> {
     const request = await getRequestFromContext(context);
+    const token = await getTokenFromContext(context, this.cookieMode);
+
+    if (token) {
+      try {
+        const payload = verify(
+          token,
+          this.cookieMode ? this.refreshTokenSecret : this.accessTokenSecret,
+        ) as Pick<BaseMemberEntity, 'id' | 'account'>;
+
+        request.payload = payload;
+      } catch (ex) {
+        request.payload = undefined;
+      }
+    } else {
+      request.payload = undefined;
+    }
 
     request.enforcer = this.enforcer;
 
@@ -89,27 +105,15 @@ export class CasbinGuard implements CanActivate {
 
     if (!allowActions?.length && !onlyAuthenticated) return false;
 
-    const token = await getTokenFromContext(context, this.cookieMode);
-
     if (!token) return false;
 
-    try {
-      const payload = verify(
-        token,
-        this.cookieMode ? this.refreshTokenSecret : this.accessTokenSecret,
-      ) as Pick<BaseMemberEntity, 'id' | 'account'>;
+    if (!request.payload) return false;
+    if (onlyAuthenticated) return true;
 
-      request.payload = payload;
-
-      if (onlyAuthenticated) return true;
-
-      return this.permissionChecker({
-        enforcer: this.enforcer,
-        payload,
-        actions: allowActions,
-      });
-    } catch (ex) {
-      return false;
-    }
+    return this.permissionChecker({
+      enforcer: this.enforcer,
+      payload: request.payload,
+      actions: allowActions,
+    });
   }
 }
