@@ -51,7 +51,7 @@ export class CasbinGuard implements CanActivate {
       actions,
     }: {
       enforcer: Enforcer;
-      payload: Pick<BaseMemberEntity, 'id' | 'account'>;
+      payload: { id: string; domain?: string };
       actions: any;
     }) => Promise<boolean>,
   ) {}
@@ -59,7 +59,7 @@ export class CasbinGuard implements CanActivate {
   async canActivate(
     context: ExecutionContext & {
       enforcer: Enforcer;
-      payload: Pick<BaseMemberEntity, 'id' | 'account'>;
+      payload: { id: string; domain?: string };
     },
   ): Promise<boolean> {
     const request = await getRequestFromContext(context);
@@ -81,6 +81,7 @@ export class CasbinGuard implements CanActivate {
     }
 
     request.enforcer = this.enforcer;
+    request.casbinPermissionChecker = this.permissionChecker;
 
     if (!this.enableGlobalGuard) return true;
 

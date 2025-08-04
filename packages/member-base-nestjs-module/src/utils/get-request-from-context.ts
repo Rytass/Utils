@@ -5,7 +5,12 @@ import { BaseMemberEntity } from '../models/base-member.entity';
 
 type InjectedRequest = Request & {
   enforcer?: Enforcer;
-  payload?: Pick<BaseMemberEntity, 'id' | 'account'>;
+  payload?: Pick<BaseMemberEntity, 'id' | 'account'> & { domain?: string };
+  casbinPermissionChecker?: (options: {
+    enforcer: Enforcer;
+    payload: Pick<BaseMemberEntity, 'id' | 'account'>;
+    actions: any;
+  }) => Promise<boolean>;
   _injectedEnforcer: symbol;
 };
 
