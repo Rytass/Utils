@@ -132,3 +132,14 @@ export interface AmegoInvoiceQueryFromInvoiceNumberArgs {
 export type AmegoInvoiceQueryArgs =
   | AmegoInvoiceQueryFromOrderIdArgs
   | AmegoInvoiceQueryFromInvoiceNumberArgs;
+
+// 常數定義
+export const AMEGO_CONSTANTS = {
+  MAX_ORDER_ID_LENGTH: 40,
+  MAX_ITEM_NAME_LENGTH: 256,
+  MAX_ITEM_UNIT_LENGTH: 6,
+  MAX_ITEM_REMARK_LENGTH: 40,
+  DEFAULT_TAX_RATE: 0.05,
+  LOVE_CODE_MIN_LENGTH: 3,
+  LOVE_CODE_MAX_LENGTH: 7,
+} as const;
