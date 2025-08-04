@@ -1,37 +1,32 @@
 import { BaseCategoryMultiLanguageNameEntity } from '../models/base-category-multi-language-name.entity';
 import { BaseCategoryEntity } from '../models/base-category.entity';
 
-export type SingleCategoryBaseDto<
-  CategoryEntity extends BaseCategoryEntity = BaseCategoryEntity,
-  CategoryMultiLanguageNameEntity extends
+type CategoryRootDto<
+  C extends BaseCategoryEntity = BaseCategoryEntity,
+  CM extends
     BaseCategoryMultiLanguageNameEntity = BaseCategoryMultiLanguageNameEntity,
-> = Pick<
-  CategoryEntity,
-  'id' | 'bindable' | 'createdAt' | 'updatedAt' | 'deletedAt'
-> &
-  Pick<CategoryMultiLanguageNameEntity, 'language' | 'name'> & {
-    children: SingleCategoryBaseDto[];
-  };
+> = Omit<C, 'parents' | 'children' | 'articles' | 'multiLanguageNames'> & {
+  children: CategoryRootDto<C, CM>[];
+  parents: CategoryRootDto<C, CM>[];
+};
+
+export type SingleCategoryBaseDto<
+  C extends BaseCategoryEntity = BaseCategoryEntity,
+  CM extends
+    BaseCategoryMultiLanguageNameEntity = BaseCategoryMultiLanguageNameEntity,
+> = CategoryRootDto<C, CM> &
+  Omit<CM, 'category' | 'categoryId' | 'createdAt' | 'updatedAt'>;
 
 export type MultiLanguageCategoryBaseDto<
-  CategoryEntity extends BaseCategoryEntity = BaseCategoryEntity,
-  CategoryMultiLanguageNameEntity extends
+  C extends BaseCategoryEntity = BaseCategoryEntity,
+  CM extends
     BaseCategoryMultiLanguageNameEntity = BaseCategoryMultiLanguageNameEntity,
-> = Pick<
-  CategoryEntity,
-  'id' | 'bindable' | 'createdAt' | 'updatedAt' | 'deletedAt'
-> & {
-  multiLanguageNames: CategoryMultiLanguageNameEntity[];
-  children: MultiLanguageCategoryBaseDto[];
+> = CategoryRootDto<C, CM> & {
+  multiLanguageNames: Omit<CM, 'category'>[];
 };
 
 export type CategoryBaseDto<
-  CategoryEntity extends BaseCategoryEntity = BaseCategoryEntity,
-  CategoryMultiLanguageNameEntity extends
+  C extends BaseCategoryEntity = BaseCategoryEntity,
+  CM extends
     BaseCategoryMultiLanguageNameEntity = BaseCategoryMultiLanguageNameEntity,
-> =
-  | SingleCategoryBaseDto<CategoryEntity, CategoryMultiLanguageNameEntity>
-  | MultiLanguageCategoryBaseDto<
-      CategoryEntity,
-      CategoryMultiLanguageNameEntity
-    >;
+> = SingleCategoryBaseDto<C, CM> | MultiLanguageCategoryBaseDto<C, CM>;
