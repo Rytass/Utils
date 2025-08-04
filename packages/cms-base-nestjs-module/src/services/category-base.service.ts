@@ -94,12 +94,12 @@ export class CategoryBaseService<
     return {
       ...columns,
       ...multiLanguageName,
-      children: children.map((child) =>
+      children: (children ?? []).map((child) =>
         this.parseSingleLanguageCategory<T, U>(
           child as T & { multiLanguageNames: U[] },
         ),
       ),
-      parents: parents.map((parent) =>
+      parents: (parents ?? []).map((parent) =>
         this.parseSingleLanguageCategory<T, U>(
           parent as T & { multiLanguageNames: U[] },
         ),
@@ -115,12 +115,12 @@ export class CategoryBaseService<
 
     return {
       ...columns,
-      children: children.map((child) =>
+      children: (children ?? []).map((child) =>
         this.parseToMultiLanguageCategory<T, U>(
           child as T & { multiLanguageNames: U[] },
         ),
       ),
-      parents: parents.map((child) =>
+      parents: (parents ?? []).map((child) =>
         this.parseToMultiLanguageCategory<T, U>(
           child as T & { multiLanguageNames: U[] },
         ),
