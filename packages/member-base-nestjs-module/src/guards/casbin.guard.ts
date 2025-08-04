@@ -22,6 +22,12 @@ import { verify } from 'jsonwebtoken';
 import { Request } from 'express';
 import { IS_ROUTE_ONLY_AUTHENTICATED } from '../decorators/authenticated.decorator';
 
+export interface ContextPayload {
+  token: string | null;
+  payload?: Pick<BaseMemberEntity, 'id' | 'account'>;
+  enforcer: Enforcer;
+}
+
 @Injectable()
 export class CasbinGuard implements CanActivate {
   constructor(
@@ -120,18 +126,19 @@ export class CasbinGuard implements CanActivate {
         case 'graphql': {
           const { GqlExecutionContext } = await import('@nestjs/graphql');
 
-          const ctx = GqlExecutionContext.create(context).getContext<{
-            token: string | null;
-            payload?: Pick<BaseMemberEntity, 'id' | 'account'>;
-          }>();
+          const ctx =
+            GqlExecutionContext.create(context).getContext<ContextPayload>();
 
           ctx.payload = payload;
+          ctx.enforcer = this.enforcer;
           break;
         }
 
         case 'http':
         default:
-          context.switchToHttp().getRequest().payload = payload;
+          context.switchToHttp().getRequest<ContextPayload>().payload = payload;
+          context.switchToHttp().getRequest<ContextPayload>().enforcer =
+            this.enforcer;
           break;
       }
 

@@ -25,6 +25,7 @@ export * from './decorators/is-public.decorator';
 export * from './decorators/member-id.decorator';
 export * from './decorators/account.decorator';
 export * from './decorators/authenticated.decorator';
+export * from './decorators/has-permission.decorator';
 
 // Helpers
 export * from './helpers/graphql-context-token-resolver';
