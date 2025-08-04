@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.7](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.6...@rytass/member-base-nestjs-module@0.2.7) (2025-08-04)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** use casbinPermissionChecker on @HasPermission decorator ([5cff1c3](https://github.com/Rytass/Utils/commit/5cff1c30eae4b77f44f8b593ae424a9a2041f9ea))
+
 ## [0.2.6](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.5...@rytass/member-base-nestjs-module@0.2.6) (2025-08-04)
 
 **Note:** Version bump only for package @rytass/member-base-nestjs-module
