@@ -30,8 +30,6 @@ import {
 export class AmegoInvoiceGateway
   implements InvoiceGateway<AmegoPaymentItem, AmegoInvoice> {
   private static readonly DEFAULT_ALLOWANCE_TYPE = 2;
-  private static readonly INVOICE_STATUS_ISSUED = 99;
-  private static readonly INVOICE_STATUS_INVALID = 91;
   private static readonly COMMON_HEADERS = {
     'Content-Type': 'application/x-www-form-urlencoded',
   } as const;
@@ -186,6 +184,7 @@ export class AmegoInvoiceGateway
           amount: number;
           remark?: string;
         }[];
+        cancel_date: number;
       };
     }>(`${this.baseUrl}/json/invoice_query`, encodedPayload, {
       headers: {
@@ -209,6 +208,12 @@ export class AmegoInvoiceGateway
       };
     });
 
+
+    const voidOn = data.data.cancel_date
+      ? DateTime.fromSeconds(data.data.cancel_date).toJSDate()
+      : null;
+    const state = this.getInvoiceState(data.data.invoice_type);
+
     const thisInvoice = new AmegoInvoice({
       orderId: data.data.order_id,
       vatNumber: data.data.buyer_identifier,
@@ -222,8 +227,8 @@ export class AmegoInvoiceGateway
       carrier: this.parseCarrierFromResponse(data.data.carrier_type, data.data.carrier_id1, data.data.carrier_id2),
       taxType: ReverseAmegoTaxType[data.data.tax_type],
       taxRate: parseFloat(data.data.tax_rate),
-      voidOn: null,
-      state: InvoiceState.ISSUED,
+      voidOn: voidOn,
+      state: state,
     });
 
     const thisInvoiceAllowances = data.data.allowance.map((allowanceData, index) => {
@@ -235,9 +240,7 @@ export class AmegoInvoiceGateway
         .slice(0, index) // 只取當前 allowance 之前的
         .map((prevAllowanceData) => {
           // 判斷是否為無效狀態
-          const isInvalid = prevAllowanceData.invoice_type === 'G0501' ||
-            prevAllowanceData.invoice_type === 'D0501' ||
-            prevAllowanceData.invoice_status === AmegoInvoiceGateway.INVOICE_STATUS_INVALID;
+          const isInvalid = this.getInvoiceAllowanceState(prevAllowanceData.invoice_type) === InvoiceAllowanceState.INVALID;
 
           const prevAllowance = new AmegoAllowance({
             allowanceNumber: prevAllowanceData.allowance_number,
@@ -248,11 +251,7 @@ export class AmegoInvoiceGateway
             ).toJSDate(),
             allowancePrice: prevAllowanceData.total_amount + prevAllowanceData.tax_amount,
             items: [], // Amego does not provide items in allowance query, so we set it to empty array
-            status: prevAllowanceData.invoice_status === AmegoInvoiceGateway.INVOICE_STATUS_ISSUED
-              ? InvoiceAllowanceState.ISSUED
-              : prevAllowanceData.invoice_status === AmegoInvoiceGateway.INVOICE_STATUS_INVALID
-                ? InvoiceAllowanceState.INVALID
-                : InvoiceAllowanceState.INITED,
+            status: this.getInvoiceAllowanceState(prevAllowanceData.invoice_type),
             invalidOn: isInvalid ? DateTime.fromFormat(
               String(prevAllowanceData.allowance_date),
               'yyyyMMdd',
@@ -261,7 +260,7 @@ export class AmegoInvoiceGateway
           });
 
           // 如果是無效類型但狀態還未更新，手動標記為無效
-          if (isInvalid && prevAllowance.status !== InvoiceAllowanceState.INVALID) {
+          if (isInvalid) {
             prevAllowance.invalid();
           }
 
@@ -272,9 +271,7 @@ export class AmegoInvoiceGateway
       parentInvoice.accumulatedAllowances.push(...previousAllowances);
 
       // 判斷當前 allowance 是否為無效狀態
-      const isCurrentInvalid = allowanceData.invoice_type === 'G0501' ||
-        allowanceData.invoice_type === 'D0501' ||
-        allowanceData.invoice_status === AmegoInvoiceGateway.INVOICE_STATUS_INVALID;
+      const isCurrentInvalid = this.getInvoiceAllowanceState(allowanceData.invoice_type) === InvoiceAllowanceState.INVALID;
 
       // 創建當前的 allowance
       const currentAllowance = new AmegoAllowance({
@@ -286,11 +283,7 @@ export class AmegoInvoiceGateway
         ).toJSDate(),
         allowancePrice: allowanceData.total_amount + allowanceData.tax_amount,
         items: [], // Amego does not provide items in allowance query, so we set it to empty array
-        status: allowanceData.invoice_status === AmegoInvoiceGateway.INVOICE_STATUS_ISSUED
-          ? InvoiceAllowanceState.ISSUED
-          : allowanceData.invoice_status === AmegoInvoiceGateway.INVOICE_STATUS_INVALID
-            ? InvoiceAllowanceState.INVALID
-            : InvoiceAllowanceState.INITED,
+        status: this.getInvoiceAllowanceState(allowanceData.invoice_type),
         invalidOn: isCurrentInvalid ? DateTime.fromFormat(
           String(allowanceData.allowance_date),
           'yyyyMMdd',
@@ -299,7 +292,7 @@ export class AmegoInvoiceGateway
       });
 
       // 如果是無效類型但狀態還未更新，手動標記為無效
-      if (isCurrentInvalid && currentAllowance.status !== InvoiceAllowanceState.INVALID) {
+      if (isCurrentInvalid) {
         currentAllowance.invalid();
       }
 
@@ -318,11 +311,49 @@ export class AmegoInvoiceGateway
       carrier: this.parseCarrierFromResponse(data.data.carrier_type, data.data.carrier_id1, data.data.carrier_id2),
       taxType: ReverseAmegoTaxType[data.data.tax_type],
       taxRate: parseFloat(data.data.tax_rate),
-      voidOn: null,
-      state: InvoiceState.ISSUED,
+      voidOn: voidOn,
+      state: state,
       allowances: thisInvoiceAllowances,
       items: thisInvoiceItems,
     });
+  }
+
+  getInvoiceState(invoiceType: string): InvoiceState {
+    switch (invoiceType) {
+      case 'A0401': // B2B發票開立
+      case 'C0401': // B2C發票開立
+      case 'F0401': // 發票開立
+      // D0501, B0501, G0501 因為折讓作廢之後回到原本開立的狀態
+      case 'B0501': // B2B折讓作廢
+      case 'D0501': // B2C折讓作廢
+      case 'G0501': // 折讓單作廢
+        return InvoiceState.ISSUED;
+      case 'A0501': // B2B發票作廢
+      case 'C0501': // B2C發票作廢
+      case 'F0501': // 發票作廢
+        return InvoiceState.VOID;
+      case 'B0401': // B2B折讓開立
+      case 'D0401': // B2C折讓開立
+      case 'G0401': // 折讓單開立
+        return InvoiceState.ALLOWANCED;
+      default:
+        return InvoiceState.INITED;
+    }
+  }
+
+  getInvoiceAllowanceState(invoiceType: string): InvoiceAllowanceState {
+    switch (invoiceType) {
+      case 'B0501': // B2B折讓作廢
+      case 'D0501': // B2C折讓作廢
+      case 'G0501': // 折讓單作廢
+        return InvoiceAllowanceState.INVALID;
+      case 'B0401': // B2B折讓開立
+      case 'D0401': // B2C折讓開立
+      case 'G0401': // 折讓單開立
+        return InvoiceAllowanceState.ISSUED;
+      default:
+        return InvoiceAllowanceState.INITED;
+    }
   }
 
   getCarrierInfo(options: {
