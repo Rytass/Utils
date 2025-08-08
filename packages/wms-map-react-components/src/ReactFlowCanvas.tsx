@@ -6,6 +6,7 @@ import {
   OnSelectionChangeParams,
   ReactFlow,
   useReactFlow,
+  useOnViewportChange,
 } from '@xyflow/react';
 import { DrawingMode, EditMode } from '../typings';
 import ImageNode from './ImageNode';
@@ -37,21 +38,28 @@ interface ReactFlowCanvasProps {
 
 const CustomControls: FC = () => {
   const { zoomIn, zoomOut, fitView, getZoom } = useReactFlow();
-  const [zoom, setZoom] = useState(100);
+  const [zoom, setZoom] = useState(() => Math.round(getZoom() * 100));
+
+  // Listen for viewport changes (including mouse wheel zoom)
+  useOnViewportChange({
+    onChange: (viewport) => {
+      setZoom(Math.round(viewport.zoom * 100));
+    }
+  });
 
   const handleZoomIn = () => {
     zoomIn();
-    setZoom(Math.round(getZoom() * 100));
+    // No need to manually update zoom state, useOnViewportChange will handle it
   };
 
   const handleZoomOut = () => {
     zoomOut();
-    setZoom(Math.round(getZoom() * 100));
+    // No need to manually update zoom state, useOnViewportChange will handle it
   };
 
   const handleFitView = () => {
     fitView();
-    setZoom(Math.round(getZoom() * 100));
+    // No need to manually update zoom state, useOnViewportChange will handle it
   };
 
   return (
