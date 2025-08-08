@@ -9,6 +9,7 @@ import {
   ReactFlowProvider,
   useEdgesState,
   useNodesState,
+  useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { DrawingMode, EditMode } from '../typings';
@@ -59,6 +60,9 @@ const WmsMapContent: FC<{
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
   const [lastCopiedNode, setLastCopiedNode] = useState<Node | null>(null);
+  
+  // Get React Flow instance for viewport information
+  const { getViewport } = useReactFlow();
   
   // 用於延遲顏色變更歷史記錄的 ref
   const colorChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -209,8 +213,16 @@ const WmsMapContent: FC<{
             // 使用工具函數計算適當尺寸
             const { width, height } = calculateImageSize(img.width, img.height);
 
-            // 使用工具函數計算錯開位置
-            const position = calculateStaggeredPosition(index);
+            // 使用工具函數計算錯開位置，優先使用當前 viewport 位置
+            const viewport = getViewport();
+            const position = calculateStaggeredPosition(
+              index, 
+              100, 
+              100,
+              viewport.x,
+              viewport.y,
+              viewport.zoom
+            );
 
             // 建立新的圖片節點
             const newNode = {
