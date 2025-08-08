@@ -1,5 +1,5 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
-import { NodeProps, NodeResizeControl, useUpdateNodeInternals, useReactFlow } from '@xyflow/react';
+import { NodeProps, NodeResizer, useUpdateNodeInternals, useReactFlow } from '@xyflow/react';
 import { EditMode } from '../typings';
 import { DEFAULT_IMAGE_WIDTH, DEFAULT_IMAGE_HEIGHT, ACTIVE_OPACITY, INACTIVE_OPACITY, IMAGE_RESIZE_CONTROL_SIZE } from './constants';
 import { useContextMenu } from './hooks/useContextMenu';
@@ -23,7 +23,7 @@ interface ImageNodeProps extends NodeProps {
 const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
   const { setNodes } = useReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
-  
+
   const {
     imageUrl,
     width = DEFAULT_IMAGE_WIDTH,
@@ -73,10 +73,37 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
     const newWidth = params.width;
     const newHeight = newWidth / aspectRatio;
 
+    // React Flow NodeResizer 最佳實踐：
+    // 1. NodeResizer 自動處理位置更新，我們只需更新節點資料
+    // 2. 使用 params 中的所有資訊來同步狀態
     const newSize = { width: newWidth, height: newHeight };
     setCurrentSize(newSize);
-    updateNodeData({ width: newWidth, height: newHeight });
-  }, [aspectRatio, updateNodeData]);
+
+    // 同時更新節點資料，NodeResizer 會處理位置變更
+    setNodes((nodes) =>
+      nodes.map((node) =>
+        node.id === id
+          ? {
+              ...node,
+              data: { ...node.data, width: newWidth, height: newHeight },
+              // NodeResizer 提供了正確的位置，我們應該使用它
+              position: { x: params.x, y: params.y },
+            }
+          : node
+      )
+    );
+  }, [aspectRatio, id, setNodes]);
+
+  const handleResizeStart = useCallback((event: any, params: any) => {
+    // 開始調整大小時可以執行額外的邏輯，例如禁用拖拽
+    // 這裡保持空白，但提供了擴展點
+  }, []);
+
+  const handleResizeEnd = useCallback((event: any, params: any) => {
+    // 調整大小結束時確保內部狀態同步
+    updateNodeInternals(id);
+    // 這是確保 React Flow 內部狀態與節點同步的最佳時機
+  }, [id, updateNodeInternals]);
 
   // Handle copy and paste
   const handleCopyPaste = useCallback(() => {
@@ -85,24 +112,24 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
       console.error('Current node not found');
       return;
     }
-    
+
     setNodesFromHook((nds) => {
       // Calculate next zIndex
       const maxZIndex = Math.max(...nds.map(n => n.zIndex || 0), 0);
-      
+
       const copiedNode = createImageCopy({
         currentNode,
         nodeType: 'imageNode',
-        data: { 
-          imageUrl, 
-          width: currentSize.width, 
-          height: currentSize.height, 
+        data: {
+          imageUrl,
+          width: currentSize.width,
+          height: currentSize.height,
           fileName,
           originalWidth,
           originalHeight,
         },
       });
-      
+
       const nodeWithZIndex = { ...copiedNode, zIndex: maxZIndex + 1 };
       return [...nds, nodeWithZIndex];
     });
@@ -112,70 +139,19 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
   return (
     <div className={`${styles.imageNode} ${selected ? styles.selected : ''}`}>
       {selected && isEditable && (
-        <>
-          <NodeResizeControl
-            style={{
-              background: 'white',
-              border: '1px solid #5570d3',
-              width: IMAGE_RESIZE_CONTROL_SIZE,
-              height: IMAGE_RESIZE_CONTROL_SIZE,
-              borderRadius: 2,
-              zIndex: 10,
-            }}
-            minWidth={50}
-            minHeight={50 / aspectRatio}
-            keepAspectRatio={true}
-            onResize={handleResize}
-            position="top-left"
-          />
-          <NodeResizeControl
-            style={{
-              background: 'white',
-              border: '1px solid #5570d3',
-              width: IMAGE_RESIZE_CONTROL_SIZE,
-              height: IMAGE_RESIZE_CONTROL_SIZE,
-              borderRadius: 2,
-              zIndex: 10,
-            }}
-            minWidth={50}
-            minHeight={50 / aspectRatio}
-            keepAspectRatio={true}
-            onResize={handleResize}
-            position="top-right"
-          />
-          <NodeResizeControl
-            style={{
-              background: 'white',
-              border: '1px solid #5570d3',
-              width: IMAGE_RESIZE_CONTROL_SIZE,
-              height: IMAGE_RESIZE_CONTROL_SIZE,
-              borderRadius: 2,
-              zIndex: 10,
-            }}
-            minWidth={50}
-            minHeight={50 / aspectRatio}
-            keepAspectRatio={true}
-            onResize={handleResize}
-            position="bottom-left"
-          />
-          <NodeResizeControl
-            style={{
-              background: 'white',
-              border: '1px solid #5570d3',
-              width: IMAGE_RESIZE_CONTROL_SIZE,
-              height: IMAGE_RESIZE_CONTROL_SIZE,
-              borderRadius: 2,
-              zIndex: 10,
-            }}
-            minWidth={50}
-            minHeight={50 / aspectRatio}
-            keepAspectRatio={true}
-            onResize={handleResize}
-            position="bottom-right"
-          />
-        </>
+        <NodeResizer
+          minWidth={50}
+          minHeight={50 / aspectRatio}
+          keepAspectRatio={true}
+          onResizeStart={handleResizeStart}
+          onResize={handleResize}
+          onResizeEnd={handleResizeEnd}
+          isVisible={selected && isEditable}
+          color="#5570d3"
+          handleClassName={styles.customResizeHandle}
+        />
       )}
-      <div 
+      <div
         className={styles.imageContainer}
         onContextMenu={handleContextMenu}
       >
@@ -194,7 +170,7 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
         />
         {fileName && <div className={styles.imageLabel}>{fileName}</div>}
       </div>
-      
+
       {/* Context Menu */}
       <ContextMenu
         visible={contextMenu.visible}
@@ -210,4 +186,4 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
   );
 };
 
-export default ImageNode;
+export default React.memo(ImageNode);
