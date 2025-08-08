@@ -218,7 +218,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
           {previewPath && previewPath.length > 1 && (
             <path
               d={`M ${previewPath.map((p) => `${p.x} ${p.y}`).join(' L ')}`}
-              stroke="#3b82f6"
+              stroke={selectedColor}
               strokeWidth="2"
               strokeDasharray="5,5"
               fill="none"
@@ -232,7 +232,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
           {currentPoints && currentPoints.length >= 3 && (
             <path
               d={`M ${currentPoints[currentPoints.length - 1].x} ${currentPoints[currentPoints.length - 1].y} L ${currentPoints[0].x} ${currentPoints[0].y}`}
-              stroke="#3b82f6"
+              stroke={selectedColor}
               strokeWidth="1"
               strokeDasharray="2,2"
               fill="none"
@@ -288,7 +288,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
                 cx={point.x}
                 cy={point.y}
                 r={index === 0 && canClose ? '0' : '4'} // Hide first point circle if we're showing the close indicator
-                fill="#3b82f6"
+                fill={selectedColor}
                 stroke="white"
                 strokeWidth="2"
               />
