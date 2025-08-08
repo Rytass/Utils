@@ -46,9 +46,9 @@ export class AmegoAllowance implements InvoiceAllowance<AmegoPaymentItem> {
 
           if (allowance.invoiceType.endsWith('0401')) {
             return sum + allowance.allowancePrice;
-          } else {
-            return sum - allowance.allowancePrice;
           }
+
+          return sum - allowance.allowancePrice;
         },
         0,
       );
