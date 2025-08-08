@@ -198,12 +198,11 @@ const RectangleNode: FC<RectangleNodeProps> = ({
         style={{
           width: `${currentSize.width}px`,
           height: `${currentSize.height}px`,
-          backgroundColor: color,
+          backgroundColor: `${color}33`, // 20% opacity (33 in hex = 20% * 255)
           opacity: opacity,
-          border:
-            selected && isEditable
-              ? '2px solid #3b82f6'
-              : '1px solid rgba(0,0,0,0.2)',
+          border: selected && isEditable
+            ? '2px solid #3b82f6'
+            : `2px solid ${color}`, // 100% opacity border
           borderRadius: '4px',
           display: 'flex',
           alignItems: 'center',

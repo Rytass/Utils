@@ -685,6 +685,7 @@ const WmsMapContent: FC<{
         onConnect={onConnect}
         editMode={editMode}
         drawingMode={drawingMode}
+        selectedColor={selectedColor}
         onCreateRectangle={handleCreateRectangle}
         onCreatePath={handleCreatePath}
         onSelectionChange={handleSelectionChange}

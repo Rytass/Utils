@@ -23,6 +23,7 @@ interface ReactFlowCanvasProps {
   onConnect: (connection: any) => void;
   editMode: EditMode;
   drawingMode: DrawingMode;
+  selectedColor?: string;
   onCreateRectangle: (
     startX: number,
     startY: number,
@@ -80,6 +81,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
   onConnect,
   editMode,
   drawingMode,
+  selectedColor = '#3b82f6',
   onCreateRectangle,
   onCreatePath,
   onSelectionChange,
@@ -191,8 +193,8 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
             top: previewRect.y,
             width: previewRect.width,
             height: previewRect.height,
-            border: '2px dashed #3b82f6',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            border: `2px dashed ${selectedColor}`,
+            backgroundColor: `${selectedColor}33`, // 20% opacity
             pointerEvents: 'none',
             zIndex: 1000,
           }}
