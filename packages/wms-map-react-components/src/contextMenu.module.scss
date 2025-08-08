@@ -27,6 +27,19 @@
   &:active {
     background-color: #e9ecef;
   }
+
+  &.disabled {
+    color: #999;
+    cursor: not-allowed;
+    
+    &:hover {
+      background-color: transparent;
+    }
+    
+    &:active {
+      background-color: transparent;
+    }
+  }
 }
 
 .menuItemContent {

@@ -63,6 +63,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({
     handleCloseContextMenu,
     handleDelete,
     arrangeActions,
+    arrangeStates,
     getNodes,
     setNodes,
   } = useContextMenu({ id, editMode, isEditable, nodeType: 'rectangleNode' });
@@ -253,6 +254,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({
         onCopyPaste={handleCopyPaste}
         onDelete={handleDelete}
         arrangeActions={arrangeActions}
+        arrangeStates={arrangeStates}
       />
     </div>
   );
