@@ -104,6 +104,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
     currentPoints,
     firstPoint,
     canClose,
+    forceComplete,
   } = usePenDrawing({
     editMode,
     drawingMode,
@@ -138,6 +139,14 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
     return 'default';
   };
 
+  // Handle pane click for auto-completing pen drawing
+  const handlePaneClick = useCallback(() => {
+    // Only auto-complete if we're in pen drawing mode and actually drawing
+    if (drawingMode === DrawingMode.PEN && editMode === EditMode.LAYER && isDrawingPen) {
+      forceComplete();
+    }
+  }, [drawingMode, editMode, isDrawingPen, forceComplete]);
+
   return (
     <div
       ref={containerRef}
@@ -154,6 +163,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onSelectionChange={onSelectionChange}
+        onPaneClick={handlePaneClick}
         nodeTypes={nodeTypes}
         className={styles.reactFlowCanvas}
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}

@@ -53,6 +53,8 @@ export const usePenDrawing = ({
 }: UsePenDrawingProps) => {
   const { screenToFlowPosition } = useReactFlow();
   const containerRef = useRef<HTMLDivElement>(null);
+  const previousModeRef = useRef(drawingMode);
+  const previousEditModeRef = useRef(editMode);
   
   const [drawingState, setDrawingState] = useState<DrawingState>({
     isDrawing: false,
@@ -221,20 +223,70 @@ export const usePenDrawing = ({
     }
   }, [drawingMode, editMode, drawingState.isDrawing, drawingState.points, onCreatePath]);
 
-  // Reset drawing state when switching away from pen mode
-  useEffect(() => {
-    if (drawingMode !== DrawingMode.PEN) {
-      setDrawingState(prev => ({
-        ...prev,
-        isDrawing: false,
-        points: [],
-        screenPoints: [],
-        currentMousePos: null,
-        lastClickTime: 0,
-        isShiftPressed: false,
-      }));
+  // Force complete current path (for auto-close on pane click)
+  const forceComplete = useCallback(() => {
+    if (!drawingState.isDrawing || drawingState.points.length < 2) return;
+    
+    // Auto-close the path if we have 3+ points, otherwise create open path
+    if (drawingState.points.length >= 3) {
+      const closedPath = [...drawingState.points, drawingState.points[0]];
+      onCreatePath(closedPath);
+    } else {
+      onCreatePath(drawingState.points);
     }
-  }, [drawingMode]);
+    
+    // Reset drawing state
+    setDrawingState({
+      isDrawing: false,
+      points: [],
+      screenPoints: [],
+      currentMousePos: null,
+      lastClickTime: 0,
+      isShiftPressed: false,
+    });
+  }, [drawingState.isDrawing, drawingState.points, onCreatePath]);
+
+  // Reset drawing state when switching away from pen mode or LAYER mode
+  useEffect(() => {
+    const modeChanged = previousModeRef.current !== drawingMode;
+    const editModeChanged = previousEditModeRef.current !== editMode;
+    
+    if (modeChanged || editModeChanged) {
+      setDrawingState(prev => {
+        // Should we force complete before resetting?
+        const shouldForceComplete = (
+          // Switching away from PEN mode
+          (previousModeRef.current === DrawingMode.PEN && drawingMode !== DrawingMode.PEN) ||
+          // Switching away from LAYER mode
+          (previousEditModeRef.current === EditMode.LAYER && editMode !== EditMode.LAYER)
+        ) && prev.isDrawing && prev.points.length >= 2;
+
+        if (shouldForceComplete) {
+          // Force complete the current path before switching
+          if (prev.points.length >= 3) {
+            const closedPath = [...prev.points, prev.points[0]];
+            onCreatePath(closedPath);
+          } else {
+            onCreatePath(prev.points);
+          }
+        }
+        
+        // Reset drawing state
+        return {
+          isDrawing: false,
+          points: [],
+          screenPoints: [],
+          currentMousePos: null,
+          lastClickTime: 0,
+          isShiftPressed: false,
+        };
+      });
+
+      // Update refs
+      previousModeRef.current = drawingMode;
+      previousEditModeRef.current = editMode;
+    }
+  }, [drawingMode, editMode, onCreatePath]);
 
   // Event listeners setup
   useEffect(() => {
@@ -267,5 +319,6 @@ export const usePenDrawing = ({
     // 提供起始點資訊，用於顯示閉合提示
     firstPoint: drawingState.screenPoints.length > 0 ? drawingState.screenPoints[0] : null,
     canClose: drawingState.isDrawing && drawingState.screenPoints.length >= 3,
+    forceComplete,
   };
 };
