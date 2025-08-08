@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useReactFlow } from '@xyflow/react';
 import { EditMode } from '../../typings';
 
