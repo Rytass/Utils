@@ -143,7 +143,7 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode, onTextEditC
             stroke={color}
             strokeWidth={strokeWidth}
             fill={isClosedPath ? color : "none"}
-            fillOpacity={isClosedPath ? 0.1 : 0}
+            fillOpacity={isClosedPath ? 0.2 : 0}
             strokeLinecap="round"
             strokeLinejoin="round"
           />
