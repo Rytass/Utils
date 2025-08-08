@@ -9,6 +9,13 @@ interface UseContextMenuProps {
   nodeType?: 'rectangleNode' | 'pathNode' | 'imageNode';
 }
 
+interface ArrangeStates {
+  canBringToFront: boolean;
+  canBringForward: boolean;
+  canSendBackward: boolean;
+  canSendToBack: boolean;
+}
+
 interface ContextMenuState {
   visible: boolean;
   x: number;
@@ -17,6 +24,37 @@ interface ContextMenuState {
 
 export const useContextMenu = ({ id, editMode, isEditable, nodeType }: UseContextMenuProps) => {
   const { setNodes, getNodes } = useReactFlow();
+  
+  // Calculate arrange states based on current node position
+  const getArrangeStates = useCallback((): ArrangeStates => {
+    const nodes = getNodes();
+    const currentNode = nodes.find(node => node.id === id);
+    
+    if (!currentNode) {
+      return {
+        canBringToFront: false,
+        canBringForward: false,
+        canSendBackward: false,
+        canSendToBack: false,
+      };
+    }
+    
+    const currentZ = currentNode.zIndex || 0;
+    const allZIndexes = nodes.map(n => n.zIndex || 0).sort((a, b) => a - b);
+    const maxZ = Math.max(...allZIndexes);
+    const minZ = Math.min(...allZIndexes);
+    
+    // Check if there are nodes above (higher zIndex)
+    const nodesAbove = nodes.filter(n => (n.zIndex || 0) > currentZ);
+    const nodesBelow = nodes.filter(n => (n.zIndex || 0) < currentZ);
+    
+    return {
+      canBringToFront: currentZ < maxZ, // Can bring to front if not already at max
+      canBringForward: nodesAbove.length > 0, // Can bring forward if there are nodes above
+      canSendBackward: nodesBelow.length > 0, // Can send backward if there are nodes below
+      canSendToBack: currentZ > minZ, // Can send to back if not already at min
+    };
+  }, [id, getNodes]);
   
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     visible: false,
@@ -189,6 +227,7 @@ export const useContextMenu = ({ id, editMode, isEditable, nodeType }: UseContex
       onSendBackward: handleSendBackward,
       onSendToBack: handleSendToBack,
     },
+    arrangeStates: getArrangeStates(),
     getNodes,
     setNodes,
   };

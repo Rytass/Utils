@@ -35,6 +35,7 @@ const BaseNode: FC<BaseNodeProps> = ({
     handleCloseContextMenu,
     handleDelete,
     arrangeActions,
+    arrangeStates,
   } = useContextMenu({ id, editMode, isEditable, nodeType: 'rectangleNode' });
 
   // Text editing functionality
@@ -87,6 +88,7 @@ const BaseNode: FC<BaseNodeProps> = ({
         onCopyPaste={onCopyPaste}
         onDelete={handleDelete}
         arrangeActions={arrangeActions}
+        arrangeStates={arrangeStates}
       />
     </div>
   );

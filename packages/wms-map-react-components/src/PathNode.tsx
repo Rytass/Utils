@@ -39,6 +39,7 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode, onTextEditC
     handleCloseContextMenu,
     handleDelete,
     arrangeActions,
+    arrangeStates,
     getNodes,
     setNodes,
   } = useContextMenu({ id, editMode, isEditable, nodeType: 'pathNode' });
@@ -215,6 +216,7 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode, onTextEditC
         onCopyPaste={handleCopyPaste}
         onDelete={handleDelete}
         arrangeActions={arrangeActions}
+        arrangeStates={arrangeStates}
       />
     </div>
   );

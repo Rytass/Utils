@@ -9,6 +9,13 @@ interface ArrangeActions {
   onSendToBack: () => void;
 }
 
+interface ArrangeStates {
+  canBringToFront: boolean;
+  canBringForward: boolean;
+  canSendBackward: boolean;
+  canSendToBack: boolean;
+}
+
 interface ContextMenuProps {
   visible: boolean;
   x: number;
@@ -17,6 +24,7 @@ interface ContextMenuProps {
   onCopyPaste: () => void;
   onDelete: () => void;
   arrangeActions: ArrangeActions;
+  arrangeStates: ArrangeStates;
 }
 
 const ContextMenu: FC<ContextMenuProps> = ({
@@ -27,6 +35,7 @@ const ContextMenu: FC<ContextMenuProps> = ({
   onCopyPaste,
   onDelete,
   arrangeActions,
+  arrangeStates,
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
   const [showArrangeSubmenu, setShowArrangeSubmenu] = useState(false);
@@ -121,41 +130,49 @@ const ContextMenu: FC<ContextMenuProps> = ({
             onMouseLeave={() => setShowArrangeSubmenu(false)}
           >
             <div
-              className={styles.menuItem}
+              className={`${styles.menuItem} ${!arrangeStates.canBringToFront ? styles.disabled : ''}`}
               onClick={(e) => {
                 e.stopPropagation();
-                arrangeActions.onBringToFront();
-                onClose();
+                if (arrangeStates.canBringToFront) {
+                  arrangeActions.onBringToFront();
+                  onClose();
+                }
               }}
             >
               移至最前
             </div>
             <div
-              className={styles.menuItem}
+              className={`${styles.menuItem} ${!arrangeStates.canBringForward ? styles.disabled : ''}`}
               onClick={(e) => {
                 e.stopPropagation();
-                arrangeActions.onBringForward();
-                onClose();
+                if (arrangeStates.canBringForward) {
+                  arrangeActions.onBringForward();
+                  onClose();
+                }
               }}
             >
               置前
             </div>
             <div
-              className={styles.menuItem}
+              className={`${styles.menuItem} ${!arrangeStates.canSendBackward ? styles.disabled : ''}`}
               onClick={(e) => {
                 e.stopPropagation();
-                arrangeActions.onSendBackward();
-                onClose();
+                if (arrangeStates.canSendBackward) {
+                  arrangeActions.onSendBackward();
+                  onClose();
+                }
               }}
             >
               置後
             </div>
             <div
-              className={styles.menuItem}
+              className={`${styles.menuItem} ${!arrangeStates.canSendToBack ? styles.disabled : ''}`}
               onClick={(e) => {
                 e.stopPropagation();
-                arrangeActions.onSendToBack();
-                onClose();
+                if (arrangeStates.canSendToBack) {
+                  arrangeActions.onSendToBack();
+                  onClose();
+                }
               }}
             >
               移至最後

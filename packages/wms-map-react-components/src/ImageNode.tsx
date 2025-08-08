@@ -53,6 +53,7 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
     handleCloseContextMenu,
     handleDelete,
     arrangeActions,
+    arrangeStates,
     getNodes,
     setNodes: setNodesFromHook,
   } = useContextMenu({ id, editMode, isEditable, nodeType: 'imageNode' });
@@ -203,6 +204,7 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
         onCopyPaste={handleCopyPaste}
         onDelete={handleDelete}
         arrangeActions={arrangeActions}
+        arrangeStates={arrangeStates}
       />
     </div>
   );
