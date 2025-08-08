@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.4](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-amego@0.2.3...@rytass/invoice-adapter-amego@0.2.4) (2025-08-08)
+
+### Features
+
+- **invoice-adapter-amego:** return invoice type by different code ([4ba2ad2](https://github.com/Rytass/Utils/commit/4ba2ad2e6eb06b5a2c7f35fc2bf615541ea89016))
+
 ## [0.2.3](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-amego@0.2.2...@rytass/invoice-adapter-amego@0.2.3) (2025-08-04)
 
 ### Features

@@ -1,6 +1,6 @@
 {
   "name": "@rytass/invoice-adapter-amego",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Rytass Invoice Gateway - Amego",
   "keywords": [
     "rytass",
