@@ -39,7 +39,17 @@ export class AmegoAllowance implements InvoiceAllowance<AmegoPaymentItem> {
 
     this._remainingAmount =
       options.parentInvoice.issuedAmount - options.parentInvoice.accumulatedAllowances.reduce(
-        (sum, allowance) => sum + allowance.allowancePrice,
+        (sum, allowance) => {
+          if (allowance.status !== InvoiceAllowanceState.ISSUED) {
+            return sum; // 忽略無效的折讓
+          }
+
+          if (allowance.invoiceType.endsWith('0401')) {
+            return sum + allowance.allowancePrice;
+          } else {
+            return sum - allowance.allowancePrice;
+          }
+        },
         0,
       );
 

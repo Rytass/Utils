@@ -1,4 +1,4 @@
-import { Invoice, InvoiceAllowance, InvoiceAwardType, InvoiceState, PaymentItem, TaxType } from '@rytass/invoice';
+import { Invoice, InvoiceAllowance, InvoiceAllowanceState, InvoiceAwardType, InvoiceState, PaymentItem, TaxType } from '@rytass/invoice';
 import { AmegoInvoiceOptions, AmegoPaymentItem, AMEGO_CONSTANTS } from './typings';
 import { AmegoAllowance } from './amego-allowance';
 
@@ -49,7 +49,17 @@ export class AmegoInvoice implements Invoice<AmegoPaymentItem> {
     );
 
     const totalAllowanceAmount = options.allowances?.reduce(
-      (sum, allowance) => { return sum + allowance.allowancePrice; },
+      (sum, allowance) => {
+        if (allowance.status !== InvoiceAllowanceState.ISSUED) {
+          return sum; // 忽略無效的折讓
+        }
+
+        if (allowance.invoiceType.endsWith('0401')) {
+          return sum + allowance.allowancePrice;
+        } else {
+          return sum - allowance.allowancePrice;
+        }
+      },
       0,
     ) ?? 0;
 

@@ -554,5 +554,71 @@ describe('AmegoInvoiceGateway Issue Invoice', () => {
         loveCode: '',
       });
     });
+
+    it('should handle different carrier types in getCarrierInfo', () => {
+      // Test platform carrier
+      const platformResult = invoiceGateway.getCarrierInfo({
+        carrier: {
+          type: InvoiceCarrierType.PLATFORM,
+          code: 'user@example.com',
+        },
+        buyerEmail: 'test@example.com',
+      });
+
+      expect(platformResult).toEqual({
+        carrierId: 'test@example.com',
+        carrierType: 'amego',
+        buyerEmail: 'test@example.com',
+        loveCode: '',
+      });
+
+      // Test mobile carrier
+      const mobileResult = invoiceGateway.getCarrierInfo({
+        carrier: {
+          type: InvoiceCarrierType.MOBILE,
+          code: '/DDPD7U2',
+        },
+        buyerEmail: 'test@example.com',
+      });
+
+      expect(mobileResult).toEqual({
+        carrierId: '/DDPD7U2',
+        carrierType: '3J0002',
+        buyerEmail: 'test@example.com',
+        loveCode: '',
+      });
+
+      // Test MOICA carrier
+      const moicaResult = invoiceGateway.getCarrierInfo({
+        carrier: {
+          type: InvoiceCarrierType.MOICA,
+          code: 'CA123456789',
+        },
+        buyerEmail: 'test@example.com',
+      });
+
+      expect(moicaResult).toEqual({
+        carrierId: 'CA123456789',
+        carrierType: 'CQ0001',
+        buyerEmail: 'test@example.com',
+        loveCode: '',
+      });
+
+      // Test love code carrier
+      const loveCodeResult = invoiceGateway.getCarrierInfo({
+        carrier: {
+          type: InvoiceCarrierType.LOVE_CODE,
+          code: '001',
+        },
+        buyerEmail: 'test@example.com',
+      });
+
+      expect(loveCodeResult).toEqual({
+        carrierId: '',
+        carrierType: '',
+        buyerEmail: 'test@example.com',
+        loveCode: '001',
+      });
+    });
   });
 });
