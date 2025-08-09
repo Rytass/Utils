@@ -181,16 +181,10 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
         maxZoom={4}
         nodesConnectable={false}
         nodesDraggable={
-          viewMode === ViewMode.EDIT && (
-            editMode === EditMode.BACKGROUND ||
-            (editMode === EditMode.LAYER && drawingMode === DrawingMode.NONE)
-          )
+          viewMode === ViewMode.EDIT && drawingMode === DrawingMode.NONE
         }
         elementsSelectable={
-          viewMode === ViewMode.EDIT && (
-            editMode === EditMode.BACKGROUND ||
-            (editMode === EditMode.LAYER && drawingMode === DrawingMode.NONE)
-          )
+          viewMode === ViewMode.EDIT
         }
         selectNodesOnDrag={false}
         panOnDrag={viewMode === ViewMode.EDIT && drawingMode === DrawingMode.NONE}

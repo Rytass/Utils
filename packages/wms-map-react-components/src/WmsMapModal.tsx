@@ -71,6 +71,35 @@ const WmsMapContent: FC<{
   // 用於延遲顏色變更歷史記錄的 ref
   const colorChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
+  // 根據編輯模式和視圖模式動態更新所有節點的可選取性和可拖曳性
+  useEffect(() => {
+    setNodes((nodes) =>
+      nodes.map((node) => {
+        let shouldBeSelectable = false;
+        let shouldBeDraggable = false;
+        
+        // 檢視模式下所有節點都不可選取和拖曳
+        if (viewMode === ViewMode.VIEW) {
+          shouldBeSelectable = false;
+          shouldBeDraggable = false;
+        } else if (node.type === 'imageNode') {
+          // 底圖節點只能在底圖模式下選取和拖曳
+          shouldBeSelectable = editMode === EditMode.BACKGROUND;
+          shouldBeDraggable = editMode === EditMode.BACKGROUND;
+        } else if (node.type === 'rectangleNode' || node.type === 'pathNode') {
+          // 圖層節點只能在圖層模式下選取和拖曳
+          shouldBeSelectable = editMode === EditMode.LAYER;
+          shouldBeDraggable = editMode === EditMode.LAYER;
+        }
+        
+        return {
+          ...node,
+          selectable: shouldBeSelectable,
+          draggable: shouldBeDraggable,
+        };
+      })
+    );
+  }, [editMode, viewMode, setNodes]);
 
   // 使用直接狀態 undo/redo 系統
   const {
@@ -235,6 +264,8 @@ const WmsMapContent: FC<{
               id: `image-${Date.now()}-${index}`,
               type: 'imageNode',
               position,
+              selectable: editMode === EditMode.BACKGROUND, // 根據當前編輯模式設置可選取性
+              draggable: editMode === EditMode.BACKGROUND, // 根據當前編輯模式設置可拖曳性
               data: {
                 imageUrl,
                 width,
@@ -326,6 +357,8 @@ const WmsMapContent: FC<{
             y: Math.min(startY, endY),
           },
           zIndex: maxZIndex + 1,
+          selectable: editMode === EditMode.LAYER, // 根據當前編輯模式設置可選取性
+          draggable: editMode === EditMode.LAYER, // 根據當前編輯模式設置可拖曳性
           data: {
             width,
             height,
@@ -367,6 +400,8 @@ const WmsMapContent: FC<{
             y: Math.min(...points.map((p) => p.y)),
           },
           zIndex: maxZIndex + 1,
+          selectable: editMode === EditMode.LAYER, // 根據當前編輯模式設置可選取性
+          draggable: editMode === EditMode.LAYER, // 根據當前編輯模式設置可拖曳性
           data: {
             points,
             color: selectedColor,
