@@ -1,6 +1,6 @@
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { NodeProps, NodeResizeControl } from '@xyflow/react';
-import { EditMode } from '../typings';
+import { EditMode, ViewMode } from '../typings';
 import {
   ACTIVE_OPACITY,
   DEFAULT_RECTANGLE_COLOR,
@@ -27,6 +27,7 @@ interface RectangleNodeData {
 
 interface RectangleNodeProps extends NodeProps {
   editMode: EditMode;
+  viewMode: ViewMode;
   onTextEditComplete?: (id: string, oldText: string, newText: string) => void;
 }
 
@@ -35,6 +36,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({
   selected,
   id,
   editMode,
+  viewMode,
   onTextEditComplete,
 }) => {
   const {
@@ -52,7 +54,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({
   }, [width, height]);
 
   // Only editable in LAYER mode
-  const isEditable = editMode === EditMode.LAYER;
+  const isEditable = viewMode === ViewMode.EDIT && editMode === EditMode.LAYER;
   const opacity =
     editMode === EditMode.LAYER ? ACTIVE_OPACITY : RECTANGLE_INACTIVE_OPACITY;
 
@@ -213,8 +215,8 @@ const RectangleNode: FC<RectangleNodeProps> = ({
           textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
           position: 'relative',
         }}
-        onDoubleClick={handleDoubleClick}
-        onContextMenu={handleContextMenu}
+        onDoubleClick={viewMode === ViewMode.EDIT ? handleDoubleClick : undefined}
+        onContextMenu={viewMode === ViewMode.EDIT ? handleContextMenu : undefined}
       >
         {isEditing ? (
           <input
@@ -244,17 +246,19 @@ const RectangleNode: FC<RectangleNodeProps> = ({
         )}
       </div>
 
-      {/* Context Menu */}
-      <ContextMenu
-        visible={contextMenu.visible}
-        x={contextMenu.x}
-        y={contextMenu.y}
-        onClose={handleCloseContextMenu}
-        onCopyPaste={handleCopyPaste}
-        onDelete={handleDelete}
-        arrangeActions={arrangeActions}
-        arrangeStates={arrangeStates}
-      />
+      {/* Context Menu - Only show in edit mode */}
+      {viewMode === ViewMode.EDIT && (
+        <ContextMenu
+          visible={contextMenu.visible}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={handleCloseContextMenu}
+          onCopyPaste={handleCopyPaste}
+          onDelete={handleDelete}
+          arrangeActions={arrangeActions}
+          arrangeStates={arrangeStates}
+        />
+      )}
     </div>
   );
 };

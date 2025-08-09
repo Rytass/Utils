@@ -8,7 +8,7 @@ import {
   useReactFlow,
   useOnViewportChange,
 } from '@xyflow/react';
-import { DrawingMode, EditMode } from '../typings';
+import { DrawingMode, EditMode, ViewMode } from '../typings';
 import ImageNode from './ImageNode';
 import RectangleNode from './RectangleNode';
 import PathNode from './PathNode';
@@ -24,6 +24,7 @@ interface ReactFlowCanvasProps {
   onConnect: (connection: any) => void;
   editMode: EditMode;
   drawingMode: DrawingMode;
+  viewMode: ViewMode;
   selectedColor?: string;
   onCreateRectangle: (
     startX: number,
@@ -89,6 +90,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
   onConnect,
   editMode,
   drawingMode,
+  viewMode,
   selectedColor = '#3b82f6',
   onCreateRectangle,
   onCreatePath,
@@ -121,13 +123,13 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
 
   const nodeTypes = useMemo(
     () => ({
-      imageNode: (props: any) => <ImageNode {...props} editMode={editMode} />,
+      imageNode: (props: any) => <ImageNode {...props} editMode={editMode} viewMode={viewMode} />,
       rectangleNode: (props: any) => (
-        <RectangleNode {...props} editMode={editMode} onTextEditComplete={onTextEditComplete} />
+        <RectangleNode {...props} editMode={editMode} viewMode={viewMode} onTextEditComplete={onTextEditComplete} />
       ),
-      pathNode: (props: any) => <PathNode {...props} editMode={editMode} onTextEditComplete={onTextEditComplete} />,
+      pathNode: (props: any) => <PathNode {...props} editMode={editMode} viewMode={viewMode} onTextEditComplete={onTextEditComplete} />,
     }),
-    [editMode, onTextEditComplete],
+    [editMode, viewMode, onTextEditComplete],
   );
 
   // Use a callback ref to assign both drawing hooks to the same container
@@ -179,16 +181,20 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
         maxZoom={4}
         nodesConnectable={false}
         nodesDraggable={
-          editMode === EditMode.BACKGROUND ||
-          (editMode === EditMode.LAYER && drawingMode === DrawingMode.NONE)
+          viewMode === ViewMode.EDIT && (
+            editMode === EditMode.BACKGROUND ||
+            (editMode === EditMode.LAYER && drawingMode === DrawingMode.NONE)
+          )
         }
         elementsSelectable={
-          editMode === EditMode.BACKGROUND ||
-          (editMode === EditMode.LAYER && drawingMode === DrawingMode.NONE)
+          viewMode === ViewMode.EDIT && (
+            editMode === EditMode.BACKGROUND ||
+            (editMode === EditMode.LAYER && drawingMode === DrawingMode.NONE)
+          )
         }
         selectNodesOnDrag={false}
-        panOnDrag={drawingMode === DrawingMode.NONE}
-        zoomOnDoubleClick={drawingMode !== DrawingMode.PEN}
+        panOnDrag={viewMode === ViewMode.EDIT && drawingMode === DrawingMode.NONE}
+        zoomOnDoubleClick={viewMode === ViewMode.EDIT && drawingMode !== DrawingMode.PEN}
       >
         <CustomControls />
         <Background />
