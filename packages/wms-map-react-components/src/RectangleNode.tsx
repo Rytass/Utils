@@ -55,6 +55,8 @@ const RectangleNode: FC<RectangleNodeProps> = ({
 
   // Only editable in LAYER mode
   const isEditable = viewMode === ViewMode.EDIT && editMode === EditMode.LAYER;
+  // Check if this node should be selectable (only in LAYER mode)
+  const isSelectable = editMode === EditMode.LAYER;
   const opacity =
     editMode === EditMode.LAYER ? ACTIVE_OPACITY : RECTANGLE_INACTIVE_OPACITY;
 
@@ -136,7 +138,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({
 
   return (
     <div
-      className={`${styles.rectangleNode} ${selected ? styles.selected : ''}`}
+      className={`${styles.rectangleNode} ${selected ? styles.selected : ''} ${!isSelectable ? styles.nonSelectable : ''}`}
     >
       {selected && isEditable && (
         <>

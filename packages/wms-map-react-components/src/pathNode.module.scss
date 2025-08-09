@@ -4,6 +4,20 @@
   &.selected {
     z-index: 1000;
   }
+
+  &.nonSelectable {
+    cursor: default;
+    
+    .pathContainer {
+      opacity: 0.5;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+      
+      &:hover {
+        outline: none;
+      }
+    }
+  }
 }
 
 .pathContainer {

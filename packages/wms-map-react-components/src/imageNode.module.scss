@@ -23,6 +23,21 @@
       pointer-events: none;
     }
   }
+
+  &.nonSelectable {
+    cursor: default;
+    border-color: transparent !important;
+    
+    &:hover {
+      border-color: transparent !important;
+      z-index: 1;
+    }
+    
+    .image {
+      opacity: 0.7;
+      transition: opacity 0.2s ease;
+    }
+  }
 }
 
 .imageContainer {

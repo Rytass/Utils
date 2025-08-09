@@ -31,6 +31,8 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode, viewMode, o
 
   // Only editable in LAYER mode and EDIT view mode
   const isEditable = viewMode === ViewMode.EDIT && editMode === EditMode.LAYER;
+  // Check if this node should be selectable (only in LAYER mode)
+  const isSelectable = editMode === EditMode.LAYER;
   const opacity = editMode === EditMode.LAYER ? ACTIVE_OPACITY : RECTANGLE_INACTIVE_OPACITY;
 
   // Context menu functionality
@@ -120,7 +122,7 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode, viewMode, o
   }, [id, points, color, strokeWidth, label, getNodes, setNodes, handleCloseContextMenu]);
 
   return (
-    <div className={`${styles.pathNode} ${selected ? styles.selected : ''}`}>
+    <div className={`${styles.pathNode} ${selected ? styles.selected : ''} ${!isSelectable ? styles.nonSelectable : ''}`}>
       <div 
         className={styles.pathContainer}
         style={{

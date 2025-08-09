@@ -57,6 +57,8 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode, viewMode 
   const aspectRatio = originalWidth / originalHeight;
   // Check if this node should be editable based on edit mode and view mode
   const isEditable = viewMode === ViewMode.EDIT && editMode === EditMode.BACKGROUND;
+  // Check if this node should be selectable (only in BACKGROUND mode or VIEW mode)
+  const isSelectable = editMode === EditMode.BACKGROUND || viewMode === ViewMode.VIEW;
   const opacity =
     editMode === EditMode.BACKGROUND ? ACTIVE_OPACITY : INACTIVE_OPACITY;
 
@@ -197,7 +199,9 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode, viewMode 
   ]);
 
   return (
-    <div className={`${styles.imageNode} ${selected ? styles.selected : ''}`}>
+    <div 
+      className={`${styles.imageNode} ${selected ? styles.selected : ''} ${!isSelectable ? styles.nonSelectable : ''}`}
+    >
       {selected && isEditable && (
         <NodeResizer
           minWidth={50}
