@@ -66,7 +66,7 @@ const WmsMapContent: FC<{
   const [lastCopiedNode, setLastCopiedNode] = useState<Node | null>(null);
   
   // Get React Flow instance for viewport information
-  const { getViewport } = useReactFlow();
+  const { getViewport, getNodes, getEdges } = useReactFlow();
   
   // 用於延遲顏色變更歷史記錄的 ref
   const colorChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -523,8 +523,23 @@ const WmsMapContent: FC<{
   const handleTextEditComplete = useCallback((id: string, oldText: string, newText: string) => {
     console.log('📝 文字編輯完成，手動記錄歷史:', { id, oldText, newText });
     flushColorChangeHistory(); // 先清理顏色變更記錄
-    saveState(nodes, edges, `text-edit-${id}`);
-  }, [saveState, flushColorChangeHistory, nodes, edges]);
+    
+    // 使用 setTimeout 確保能獲取到更新後的 nodes 狀態
+    setTimeout(() => {
+      // 通過 React Flow hooks 獲取最新的節點和邊狀態
+      const currentNodes = getNodes();
+      const currentEdges = getEdges();
+      
+      console.log('📸 保存文字編輯後的狀態:', {
+        id,
+        nodesCount: currentNodes.length,
+        edgesCount: currentEdges.length,
+        updatedNode: currentNodes.find((n: any) => n.id === id)?.data?.label
+      });
+      
+      saveState(currentNodes, currentEdges, `text-edit-${id}`);
+    }, 20); // 增加延遲時間確保狀態更新完成
+  }, [saveState, flushColorChangeHistory, getNodes, getEdges]);
 
   // 處理 Command+D 快捷鍵複製並貼上功能
   const handleCopyPaste = useCallback(() => {
