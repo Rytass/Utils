@@ -132,9 +132,11 @@ const WmsMapContent: FC<{
       change.type === 'position' && change.dragging === false
     );
     
-    // 檢查是否有資料變更（包含文字編輯）
+    // 檢查是否有資料變更（包含文字編輯），但忽略調整大小中的變更
     const hasDataChange = changes.some(change => 
-      change.type === 'replace'
+      change.type === 'replace' && 
+      // 忽略正在調整大小的節點的資料變更
+      !(change.item?.data?.isResizing)
     );
     
     if (hasDragEnd) {

@@ -28,6 +28,7 @@ interface ImageNodeData {
 
 interface ImageNodeProps extends NodeProps {
   editMode: EditMode;
+  onResizeComplete?: (id: string, oldSize: { width: number; height: number }, newSize: { width: number; height: number }) => void;
 }
 
 const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
@@ -44,6 +45,7 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
   } = data as unknown as ImageNodeData;
 
   const [currentSize, setCurrentSize] = useState({ width, height });
+  const [isResizing, setIsResizing] = useState(false);
 
   // Sync currentSize with node data when it changes
   useEffect(() => {
@@ -89,28 +91,30 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
       const newWidth = params.width;
       const newHeight = newWidth / aspectRatio;
 
-      // React Flow NodeResizer 最佳實踐：
-      // 1. NodeResizer 自動處理位置更新，我們只需更新節點資料
-      // 2. 使用 params 中的所有資訊來同步狀態
+      // 在 resize 過程中更新本地狀態和節點資料以提供正確的視覺回饋
       const newSize = { width: newWidth, height: newHeight };
 
       setCurrentSize(newSize);
 
-      // 同時更新節點資料，NodeResizer 會處理位置變更
+      // 標記正在調整大小，避免在 WmsMapModal 中記錄歷史
+      if (!isResizing) {
+        setIsResizing(true);
+      }
+
+      // 即時更新節點以提供視覺回饋
       setNodes((nodes) =>
         nodes.map((node) =>
           node.id === id
             ? {
                 ...node,
-                data: { ...node.data, width: newWidth, height: newHeight },
-                // NodeResizer 提供了正確的位置，我們應該使用它
+                data: { ...node.data, width: newWidth, height: newHeight, isResizing: true },
                 position: { x: params.x, y: params.y },
               }
             : node,
         ),
       );
     },
-    [aspectRatio, id, setNodes],
+    [aspectRatio, id, setNodes, isResizing],
   );
 
   const handleResizeStart = useCallback((event: any, params: any) => {
@@ -120,11 +124,30 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
 
   const handleResizeEnd = useCallback(
     (event: any, params: any) => {
-      // 調整大小結束時確保內部狀態同步
+      const newWidth = params.width;
+      const newHeight = newWidth / aspectRatio;
+
+      // 清除調整大小標記
+      setIsResizing(false);
+
+      // 最終更新節點資料，移除 isResizing 標記
+      // 這次更新會觸發歷史記錄（因為沒有 isResizing 標記）
+      setNodes((nodes) =>
+        nodes.map((node) =>
+          node.id === id
+            ? {
+                ...node,
+                data: { ...node.data, width: newWidth, height: newHeight, isResizing: undefined },
+                position: { x: params.x, y: params.y },
+              }
+            : node,
+        ),
+      );
+
+      // 確保內部狀態同步
       updateNodeInternals(id);
-      // 這是確保 React Flow 內部狀態與節點同步的最佳時機
     },
-    [id, updateNodeInternals],
+    [aspectRatio, id, setNodes, updateNodeInternals],
   );
 
   // Handle copy and paste
