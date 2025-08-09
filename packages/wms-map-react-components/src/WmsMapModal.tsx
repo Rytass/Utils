@@ -12,7 +12,7 @@ import {
   useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { DrawingMode, EditMode } from '../typings';
+import { DrawingMode, EditMode, ViewMode } from '../typings';
 import {
   DEFAULT_PATH_LABEL,
   DEFAULT_RECTANGLE_COLOR,
@@ -33,6 +33,7 @@ import styles from './wmsMapModal.module.scss';
 interface WmsMapModalProps {
   onClose: () => void;
   open: boolean;
+  viewMode?: ViewMode;
 }
 
 const initialNodes: Node[] = [];
@@ -43,6 +44,7 @@ const WmsMapContent: FC<{
   editMode: EditMode;
   drawingMode: DrawingMode;
   selectedColor: string;
+  viewMode: ViewMode;
   onEditModeChange: (mode: EditMode) => void;
   onToggleRectangleTool: () => void;
   onTogglePenTool: () => void;
@@ -51,6 +53,7 @@ const WmsMapContent: FC<{
   editMode,
   drawingMode,
   selectedColor,
+  viewMode,
   onEditModeChange,
   onToggleRectangleTool,
   onTogglePenTool,
@@ -674,22 +677,24 @@ const WmsMapContent: FC<{
           '100003B',
         ]}
       />
-      <Toolbar
-        onUpload={handleUpload}
-        onDeleteAll={handleDeleteAll}
-        onSave={handleSave}
-        editMode={editMode}
-        drawingMode={drawingMode}
-        onEditModeChange={onEditModeChange}
-        onToggleRectangleTool={onToggleRectangleTool}
-        onTogglePenTool={onTogglePenTool}
-        onUndo={handleUndo}
-        onRedo={handleRedo}
-        canUndo={canUndo}
-        canRedo={canRedo}
-        onColorChange={handleColorChangeInternal}
-        selectedColor={selectedColor}
-      />
+      {viewMode === ViewMode.EDIT && (
+        <Toolbar
+          onUpload={handleUpload}
+          onDeleteAll={handleDeleteAll}
+          onSave={handleSave}
+          editMode={editMode}
+          drawingMode={drawingMode}
+          onEditModeChange={onEditModeChange}
+          onToggleRectangleTool={onToggleRectangleTool}
+          onTogglePenTool={onTogglePenTool}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          onColorChange={handleColorChangeInternal}
+          selectedColor={selectedColor}
+        />
+      )}
 
       <ReactFlowCanvas
         nodes={nodes}
@@ -699,6 +704,7 @@ const WmsMapContent: FC<{
         onConnect={onConnect}
         editMode={editMode}
         drawingMode={drawingMode}
+        viewMode={viewMode}
         selectedColor={selectedColor}
         onCreateRectangle={handleCreateRectangle}
         onCreatePath={handleCreatePath}
@@ -709,7 +715,7 @@ const WmsMapContent: FC<{
   );
 };
 
-const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
+const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open, viewMode = ViewMode.EDIT }) => {
   const [editMode, setEditMode] = useState<EditMode>(EditMode.BACKGROUND);
   const [drawingMode, setDrawingMode] = useState<DrawingMode>(DrawingMode.NONE);
   const [selectedColor, setSelectedColor] = useState<string>(
@@ -761,6 +767,7 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open }) => {
             editMode={editMode}
             drawingMode={drawingMode}
             selectedColor={selectedColor}
+            viewMode={viewMode}
             onEditModeChange={handleEditModeChange}
             onToggleRectangleTool={handleToggleRectangleTool}
             onTogglePenTool={handleTogglePenTool}

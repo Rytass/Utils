@@ -5,7 +5,7 @@ import {
   useUpdateNodeInternals,
   useReactFlow,
 } from '@xyflow/react';
-import { EditMode } from '../typings';
+import { EditMode, ViewMode } from '../typings';
 import {
   DEFAULT_IMAGE_WIDTH,
   DEFAULT_IMAGE_HEIGHT,
@@ -28,10 +28,11 @@ interface ImageNodeData {
 
 interface ImageNodeProps extends NodeProps {
   editMode: EditMode;
+  viewMode: ViewMode;
   onResizeComplete?: (id: string, oldSize: { width: number; height: number }, newSize: { width: number; height: number }) => void;
 }
 
-const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
+const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode, viewMode }) => {
   const { setNodes } = useReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
 
@@ -54,8 +55,8 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
 
   // Calculate aspect ratio
   const aspectRatio = originalWidth / originalHeight;
-  // Check if this node should be editable based on edit mode
-  const isEditable = editMode === EditMode.BACKGROUND;
+  // Check if this node should be editable based on edit mode and view mode
+  const isEditable = viewMode === ViewMode.EDIT && editMode === EditMode.BACKGROUND;
   const opacity =
     editMode === EditMode.BACKGROUND ? ACTIVE_OPACITY : INACTIVE_OPACITY;
 
@@ -210,7 +211,7 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
           handleClassName={styles.customResizeHandle}
         />
       )}
-      <div className={styles.imageContainer} onContextMenu={handleContextMenu}>
+      <div className={styles.imageContainer} onContextMenu={viewMode === ViewMode.EDIT ? handleContextMenu : undefined}>
         <img
           src={imageUrl}
           alt={fileName || 'Uploaded image'}
@@ -227,17 +228,19 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode }) => {
         {fileName && <div className={styles.imageLabel}>{fileName}</div>}
       </div>
 
-      {/* Context Menu */}
-      <ContextMenu
-        visible={contextMenu.visible}
-        x={contextMenu.x}
-        y={contextMenu.y}
-        onClose={handleCloseContextMenu}
-        onCopyPaste={handleCopyPaste}
-        onDelete={handleDelete}
-        arrangeActions={arrangeActions}
-        arrangeStates={arrangeStates}
-      />
+      {/* Context Menu - Only show in edit mode */}
+      {viewMode === ViewMode.EDIT && (
+        <ContextMenu
+          visible={contextMenu.visible}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={handleCloseContextMenu}
+          onCopyPaste={handleCopyPaste}
+          onDelete={handleDelete}
+          arrangeActions={arrangeActions}
+          arrangeStates={arrangeStates}
+        />
+      )}
     </div>
   );
 };

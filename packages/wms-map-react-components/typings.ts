@@ -68,3 +68,8 @@ export enum LayerDrawingTool {
   RECTANGLE = 'RECTANGLE',
   PEN = 'PEN',
 }
+
+export enum ViewMode {
+  EDIT = 'EDIT',
+  VIEW = 'VIEW',
+}

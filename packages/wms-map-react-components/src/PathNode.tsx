@@ -1,6 +1,6 @@
 import React, { FC, useCallback } from 'react';
 import { NodeProps } from '@xyflow/react';
-import { EditMode } from '../typings';
+import { EditMode, ViewMode } from '../typings';
 import { DEFAULT_RECTANGLE_COLOR, DEFAULT_PATH_LABEL, ACTIVE_OPACITY, RECTANGLE_INACTIVE_OPACITY } from './constants';
 import { useContextMenu } from './hooks/useContextMenu';
 import { useTextEditing } from './hooks/useTextEditing';
@@ -17,10 +17,11 @@ interface PathNodeData {
 
 interface PathNodeProps extends NodeProps {
   editMode: EditMode;
+  viewMode: ViewMode;
   onTextEditComplete?: (id: string, oldText: string, newText: string) => void;
 }
 
-const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode, onTextEditComplete }) => {
+const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode, viewMode, onTextEditComplete }) => {
   const {
     points = [],
     color = DEFAULT_RECTANGLE_COLOR,
@@ -28,8 +29,8 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode, onTextEditC
     label = DEFAULT_PATH_LABEL,
   } = data as unknown as PathNodeData;
 
-  // Only editable in LAYER mode
-  const isEditable = editMode === EditMode.LAYER;
+  // Only editable in LAYER mode and EDIT view mode
+  const isEditable = viewMode === ViewMode.EDIT && editMode === EditMode.LAYER;
   const opacity = editMode === EditMode.LAYER ? ACTIVE_OPACITY : RECTANGLE_INACTIVE_OPACITY;
 
   // Context menu functionality
@@ -130,8 +131,8 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode, onTextEditC
           borderRadius: '4px',
           position: 'relative',
         }}
-        onDoubleClick={handleDoubleClick}
-        onContextMenu={handleContextMenu}
+        onDoubleClick={viewMode === ViewMode.EDIT ? handleDoubleClick : undefined}
+        onContextMenu={viewMode === ViewMode.EDIT ? handleContextMenu : undefined}
       >
         <svg
           width={width}
@@ -207,17 +208,19 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode, onTextEditC
         </div>
       </div>
       
-      {/* Context Menu */}
-      <ContextMenu
-        visible={contextMenu.visible}
-        x={contextMenu.x}
-        y={contextMenu.y}
-        onClose={handleCloseContextMenu}
-        onCopyPaste={handleCopyPaste}
-        onDelete={handleDelete}
-        arrangeActions={arrangeActions}
-        arrangeStates={arrangeStates}
-      />
+      {/* Context Menu - Only show in edit mode */}
+      {viewMode === ViewMode.EDIT && (
+        <ContextMenu
+          visible={contextMenu.visible}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={handleCloseContextMenu}
+          onCopyPaste={handleCopyPaste}
+          onDelete={handleDelete}
+          arrangeActions={arrangeActions}
+          arrangeStates={arrangeStates}
+        />
+      )}
     </div>
   );
 };
