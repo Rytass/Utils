@@ -68,7 +68,7 @@
   // 禁用狀態
   &:disabled {
     opacity: 0.6 !important;
-    cursor: not-allowed !important;
+    cursor: default !important;
     transform: none !important;
     
     &:hover {

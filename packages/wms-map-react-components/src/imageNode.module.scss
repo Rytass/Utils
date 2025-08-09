@@ -17,7 +17,7 @@
   }
 
   &.resizing {
-    cursor: nw-resize;
+    cursor: default;
 
     .image {
       pointer-events: none;
@@ -89,21 +89,21 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
   }
 
-  // 不同位置的控制點可以有不同樣式
+  // 不同位置的控制點使用預設樣式
   &[data-position="top-left"] {
-    cursor: nw-resize !important;
+    cursor: default !important;
   }
 
   &[data-position="top-right"] {
-    cursor: ne-resize !important;
+    cursor: default !important;
   }
 
   &[data-position="bottom-left"] {
-    cursor: sw-resize !important;
+    cursor: default !important;
   }
 
   &[data-position="bottom-right"] {
-    cursor: se-resize !important;
+    cursor: default !important;
   }
 }
 

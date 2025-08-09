@@ -197,7 +197,7 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode, viewMode, o
           ) : (
             <span 
               style={{ 
-                cursor: isEditable ? 'text' : 'default',
+                cursor: 'default',
                 background: isClosedPath ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.6)',
                 padding: '2px 6px',
                 borderRadius: '4px',

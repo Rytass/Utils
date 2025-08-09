@@ -60,7 +60,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  cursor: default;
   font-size: 16px;
   color: #666;
 
@@ -75,7 +75,7 @@
 
   &:disabled {
     opacity: 0.5;
-    cursor: not-allowed;
+    cursor: default;
   }
 }
 

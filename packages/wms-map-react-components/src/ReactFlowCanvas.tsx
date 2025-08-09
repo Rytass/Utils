@@ -142,10 +142,6 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
   );
 
   const getCursor = () => {
-    if (editMode !== EditMode.LAYER) return 'default';
-    if (drawingMode === DrawingMode.RECTANGLE) return 'crosshair';
-    if (drawingMode === DrawingMode.PEN) return 'crosshair';
-
     return 'default';
   };
 
@@ -293,7 +289,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
                 fill="#10b981"
                 stroke="white"
                 strokeWidth="2"
-                style={{ cursor: 'pointer' }}
+                style={{ cursor: 'default' }}
               />
             </>
           )}
