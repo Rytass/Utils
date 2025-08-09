@@ -10,7 +10,7 @@
 
 .menuItem {
   padding: 8px 16px;
-  cursor: pointer;
+  cursor: default;
   font-size: 14px;
   color: #333;
   transition: background-color 0.15s ease;
@@ -30,7 +30,7 @@
 
   &.disabled {
     color: #999;
-    cursor: not-allowed;
+    cursor: default;
     
     &:hover {
       background-color: transparent;

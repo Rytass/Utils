@@ -242,7 +242,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({
             onClick={(e) => e.stopPropagation()}
           />
         ) : (
-          <span style={{ cursor: isEditable ? 'text' : 'default' }}>
+          <span style={{ cursor: 'default' }}>
             {label}
           </span>
         )}
