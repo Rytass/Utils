@@ -1,0 +1,114 @@
+// ViewModeToggle 組件專用樣式
+// 此檔案包含所有與 ViewMode 切換按鈕相關的樣式
+// 便於測試階段使用，後續可整個檔案刪除
+
+.floatingContainer {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 10000; // 確保在 Modal 之上
+  pointer-events: auto; // 確保按鈕可點擊
+}
+
+.toggleButton {
+  height: 36px !important;
+  padding: 0 16px !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  backdrop-filter: blur(8px) !important;
+  
+  // 編輯模式樣式 (contained variant)
+  &[data-variant="contained"] {
+    background-color: #5570d3 !important;
+    color: white !important;
+    border: 2px solid #5570d3 !important;
+    
+    &:hover {
+      background-color: #4461c2 !important;
+      border-color: #4461c2 !important;
+      box-shadow: 0 6px 20px rgba(68, 97, 194, 0.4) !important;
+      transform: translateY(-2px) !important;
+    }
+
+    &:active {
+      background-color: #3a5bb8 !important;
+      border-color: #3a5bb8 !important;
+      transform: translateY(0px) !important;
+      box-shadow: 0 2px 8px rgba(58, 91, 184, 0.3) !important;
+    }
+  }
+  
+  // 檢視模式樣式 (outlined variant)
+  &[data-variant="outlined"] {
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    color: #5570d3 !important;
+    border: 2px solid #5570d3 !important;
+    
+    &:hover {
+      background-color: rgba(248, 249, 255, 0.98) !important;
+      border-color: #4461c2 !important;
+      color: #4461c2 !important;
+      box-shadow: 0 6px 20px rgba(85, 112, 211, 0.25) !important;
+      transform: translateY(-2px) !important;
+    }
+
+    &:active {
+      background-color: rgba(240, 242, 255, 0.98) !important;
+      border-color: #3a5bb8 !important;
+      color: #3a5bb8 !important;
+      transform: translateY(0px) !important;
+      box-shadow: 0 2px 8px rgba(85, 112, 211, 0.2) !important;
+    }
+  }
+
+  // 禁用狀態
+  &:disabled {
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    
+    &:hover {
+      transform: none !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    }
+  }
+
+  // 焦點狀態
+  &:focus {
+    outline: 3px solid rgba(85, 112, 211, 0.3) !important;
+    outline-offset: 2px !important;
+  }
+
+  // 響應式設計
+  @media (max-width: 768px) {
+    height: 32px !important;
+    padding: 0 12px !important;
+    font-size: 13px !important;
+  }
+
+  @media (max-width: 480px) {
+    height: 28px !important;
+    padding: 0 10px !important;
+    font-size: 12px !important;
+    border-radius: 6px !important;
+  }
+}
+
+// 浮動容器的響應式定位
+@media (max-width: 768px) {
+  .floatingContainer {
+    top: 15px;
+    left: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .floatingContainer {
+    top: 10px;
+    left: 10px;
+  }
+}

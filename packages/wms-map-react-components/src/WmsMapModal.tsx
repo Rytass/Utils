@@ -28,6 +28,7 @@ import { useDirectStateHistory } from './hooks/useDirectStateHistory';
 import Toolbar from './Toolbar';
 import Breadcrumb from './components/breadcrumb/Breadcrumb';
 import ReactFlowCanvas from './ReactFlowCanvas';
+import ViewModeToggle from './components/ViewModeToggle';
 import styles from './wmsMapModal.module.scss';
 
 interface WmsMapModalProps {
@@ -715,12 +716,22 @@ const WmsMapContent: FC<{
   );
 };
 
-const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open, viewMode = ViewMode.EDIT }) => {
+const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open, viewMode: initialViewMode = ViewMode.EDIT }) => {
+  const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
   const [editMode, setEditMode] = useState<EditMode>(EditMode.BACKGROUND);
   const [drawingMode, setDrawingMode] = useState<DrawingMode>(DrawingMode.NONE);
   const [selectedColor, setSelectedColor] = useState<string>(
     DEFAULT_RECTANGLE_COLOR,
   );
+
+  // 同步外部 viewMode 變化
+  useEffect(() => {
+    setViewMode(initialViewMode);
+  }, [initialViewMode]);
+
+  const handleViewModeToggle = useCallback(() => {
+    setViewMode(prev => prev === ViewMode.EDIT ? ViewMode.VIEW : ViewMode.EDIT);
+  }, []);
 
   const handleEditModeChange = useCallback(
     (mode: EditMode) => {
@@ -754,28 +765,37 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open, viewMode = ViewMode.
   );
 
   return (
-    <Modal open={open} onClose={onClose} className={styles.modal}>
-      <ModalHeader className={styles.modalHeader}>
-        <div className={styles.headerLeft}>
-          <span className={styles.title}>編輯倉儲空間</span>
-        </div>
-      </ModalHeader>
+    <>
+      {/* 浮動在遮罩層上的測試按鈕 */}
+      <ViewModeToggle 
+        viewMode={viewMode} 
+        onToggle={handleViewModeToggle}
+        isVisible={open} // 只有當 Modal 開啟時才顯示
+      />
+      
+      <Modal open={open} onClose={onClose} className={styles.modal}>
+        <ModalHeader className={styles.modalHeader}>
+          <div className={styles.headerLeft}>
+            <span className={styles.title}>編輯倉儲空間</span>
+          </div>
+        </ModalHeader>
 
-      <div className={styles.content}>
-        <ReactFlowProvider>
-          <WmsMapContent
-            editMode={editMode}
-            drawingMode={drawingMode}
-            selectedColor={selectedColor}
-            viewMode={viewMode}
-            onEditModeChange={handleEditModeChange}
-            onToggleRectangleTool={handleToggleRectangleTool}
-            onTogglePenTool={handleTogglePenTool}
-            onColorChange={handleColorChange}
-          />
-        </ReactFlowProvider>
-      </div>
-    </Modal>
+        <div className={styles.content}>
+          <ReactFlowProvider>
+            <WmsMapContent
+              editMode={editMode}
+              drawingMode={drawingMode}
+              selectedColor={selectedColor}
+              viewMode={viewMode}
+              onEditModeChange={handleEditModeChange}
+              onToggleRectangleTool={handleToggleRectangleTool}
+              onTogglePenTool={handleTogglePenTool}
+              onColorChange={handleColorChange}
+            />
+          </ReactFlowProvider>
+        </div>
+      </Modal>
+    </>
   );
 };
 
