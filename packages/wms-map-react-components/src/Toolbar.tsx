@@ -111,97 +111,100 @@ const Toolbar: FC<ToolbarProps> = ({
         </Button>
       </div>
 
-      {/* Layer drawing tools - separate floating toolbar with undo/redo */}
-      {editMode === EditMode.LAYER && (
-        <div className={styles.layerTools}>
-          {/* Undo/Redo buttons */}
-          <Button
-            variant="outlined"
-            size="small"
-            className={styles.toolButton}
-            onClick={onUndo}
-            disabled={!canUndo}
-            title="上一步"
-          >
-            ↶
-          </Button>
-          <Button
-            variant="outlined"
-            size="small"
-            className={styles.toolButton}
-            onClick={onRedo}
-            disabled={!canRedo}
-            title="下一步"
-          >
-            ↷
-          </Button>
+      {/* Unified toolbar - always visible, content changes based on mode */}
+      <div className={styles.unifiedTools}>
+        {/* Undo/Redo buttons - always visible */}
+        <Button
+          variant="outlined"
+          size="small"
+          className={styles.toolButton}
+          onClick={onUndo}
+          disabled={!canUndo}
+          title="上一步"
+        >
+          ↶
+        </Button>
+        <Button
+          variant="outlined"
+          size="small"
+          className={styles.toolButton}
+          onClick={onRedo}
+          disabled={!canRedo}
+          title="下一步"
+        >
+          ↷
+        </Button>
 
-          {/* Separator */}
-          <div className={styles.separator} />
+        {/* Separator and drawing tools - only in LAYER mode */}
+        {editMode === EditMode.LAYER && (
+          <>
+            {/* Separator */}
+            <div className={styles.separator} />
 
-          {/* Drawing tools */}
-          <Button
-            variant={
-              drawingMode === DrawingMode.NONE ? 'contained' : 'outlined'
-            }
-            size="small"
-            className={`${styles.toolButton} ${drawingMode === DrawingMode.NONE ? styles.toolButtonActive : ''}`}
-            onClick={() => {
-              setLayerTool(LayerDrawingTool.SELECT);
-              // 選擇選取工具時關閉繪圖模式
-              if (drawingMode === DrawingMode.RECTANGLE) {
-                onToggleRectangleTool();
-              } else if (drawingMode === DrawingMode.PEN) {
-                onTogglePenTool();
+            {/* Drawing tools */}
+            <Button
+              variant={
+                drawingMode === DrawingMode.NONE ? 'contained' : 'outlined'
               }
-            }}
-            title="選取工具"
-          >
-            ↖️
-          </Button>
-          <Button
-            variant={
-              drawingMode === DrawingMode.RECTANGLE ? 'contained' : 'outlined'
-            }
-            size="small"
-            className={`${styles.toolButton} ${drawingMode === DrawingMode.RECTANGLE ? styles.toolButtonActive : ''}`}
-            onClick={() => {
-              setLayerTool(LayerDrawingTool.RECTANGLE);
-              onToggleRectangleTool();
-            }}
-            title="矩形工具"
-          >
-            ⬜
-          </Button>
-          <Button
-            variant={drawingMode === DrawingMode.PEN ? 'contained' : 'outlined'}
-            size="small"
-            className={`${styles.toolButton} ${drawingMode === DrawingMode.PEN ? styles.toolButtonActive : ''}`}
-            onClick={() => {
-              setLayerTool(LayerDrawingTool.PEN);
-              onTogglePenTool();
-            }}
-            title="鋼筆工具"
-          >
-            🖊️
-          </Button>
-          <div className={styles.colorPicker}>
-            <div
-              className={styles.colorDisplay}
-              style={{ backgroundColor: selectedColor }}
-              onClick={() => document.getElementById('colorInput')?.click()}
-            />
-            <input
-              id="colorInput"
-              type="color"
-              value={selectedColor}
-              onChange={(e) => handleColorChange(e.target.value)}
-              className={styles.colorInput}
-              title="選擇顏色"
-            />
-          </div>
-        </div>
-      )}
+              size="small"
+              className={`${styles.toolButton} ${drawingMode === DrawingMode.NONE ? styles.toolButtonActive : ''}`}
+              onClick={() => {
+                setLayerTool(LayerDrawingTool.SELECT);
+                // 選擇選取工具時關閉繪圖模式
+                if (drawingMode === DrawingMode.RECTANGLE) {
+                  onToggleRectangleTool();
+                } else if (drawingMode === DrawingMode.PEN) {
+                  onTogglePenTool();
+                }
+              }}
+              title="選取工具"
+            >
+              ↖️
+            </Button>
+            <Button
+              variant={
+                drawingMode === DrawingMode.RECTANGLE ? 'contained' : 'outlined'
+              }
+              size="small"
+              className={`${styles.toolButton} ${drawingMode === DrawingMode.RECTANGLE ? styles.toolButtonActive : ''}`}
+              onClick={() => {
+                setLayerTool(LayerDrawingTool.RECTANGLE);
+                onToggleRectangleTool();
+              }}
+              title="矩形工具"
+            >
+              ⬜
+            </Button>
+            <Button
+              variant={drawingMode === DrawingMode.PEN ? 'contained' : 'outlined'}
+              size="small"
+              className={`${styles.toolButton} ${drawingMode === DrawingMode.PEN ? styles.toolButtonActive : ''}`}
+              onClick={() => {
+                setLayerTool(LayerDrawingTool.PEN);
+                onTogglePenTool();
+              }}
+              title="鋼筆工具"
+            >
+              🖊️
+            </Button>
+            <div className={styles.colorPicker}>
+              <div
+                className={styles.colorDisplay}
+                style={{ backgroundColor: selectedColor }}
+                onClick={() => document.getElementById('colorInput')?.click()}
+              />
+              <input
+                id="colorInput"
+                type="color"
+                value={selectedColor}
+                onChange={(e) => handleColorChange(e.target.value)}
+                className={styles.colorInput}
+                title="選擇顏色"
+              />
+            </div>
+          </>
+        )}
+      </div>
     </>
   );
 };
