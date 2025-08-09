@@ -30,28 +30,37 @@
   }
 }
 
-// 確保調整大小控制項的正確定位
-.rectangleNode .react-flow__resize-control {
-  position: absolute;
-  pointer-events: all;
-  
-  &.top-left {
-    top: -8px;
-    left: -8px;
+// 自訂 NodeResizer 樣式類別
+.customResizeHandle {
+  width: 12px !important;
+  height: 12px !important;
+  border: 2px solid #5570d3 !important;
+  border-radius: 3px !important;
+  background: white !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+  transition: all 0.2s ease !important;
+
+  &:hover {
+    background: #5570d3 !important;
+    border-color: #3d5af1 !important;
+    transform: scale(1.3) !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
   }
-  
-  &.top-right {
-    top: -8px;
-    right: -8px;
+
+  // 不同位置的控制點使用預設樣式
+  &[data-position="top-left"] {
+    cursor: default !important;
   }
-  
-  &.bottom-left {
-    bottom: -8px;
-    left: -8px;
+
+  &[data-position="top-right"] {
+    cursor: default !important;
   }
-  
-  &.bottom-right {
-    bottom: -8px;
-    right: -8px;
+
+  &[data-position="bottom-left"] {
+    cursor: default !important;
+  }
+
+  &[data-position="bottom-right"] {
+    cursor: default !important;
   }
 }

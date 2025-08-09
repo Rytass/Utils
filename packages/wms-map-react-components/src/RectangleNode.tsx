@@ -1,5 +1,5 @@
 import React, { FC, useCallback, useEffect, useState } from 'react';
-import { NodeProps, NodeResizeControl } from '@xyflow/react';
+import { NodeProps, NodeResizer, useReactFlow, useUpdateNodeInternals } from '@xyflow/react';
 import { EditMode, ViewMode } from '../typings';
 import {
   ACTIVE_OPACITY,
@@ -10,7 +10,6 @@ import {
   MIN_RESIZE_HEIGHT,
   MIN_RESIZE_WIDTH,
   RECTANGLE_INACTIVE_OPACITY,
-  RESIZE_CONTROL_SIZE,
 } from './constants';
 import { useContextMenu } from './hooks/useContextMenu';
 import { useTextEditing } from './hooks/useTextEditing';
@@ -39,6 +38,9 @@ const RectangleNode: FC<RectangleNodeProps> = ({
   viewMode,
   onTextEditComplete,
 }) => {
+  const { setNodes } = useReactFlow();
+  const updateNodeInternals = useUpdateNodeInternals();
+
   const {
     width = DEFAULT_RECTANGLE_WIDTH,
     height = DEFAULT_RECTANGLE_HEIGHT,
@@ -47,6 +49,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({
   } = data as unknown as RectangleNodeData;
 
   const [currentSize, setCurrentSize] = useState({ width, height });
+  const [isResizing, setIsResizing] = useState(false);
 
   // Sync state with node data changes
   useEffect(() => {
@@ -60,6 +63,22 @@ const RectangleNode: FC<RectangleNodeProps> = ({
   const opacity =
     editMode === EditMode.LAYER ? ACTIVE_OPACITY : RECTANGLE_INACTIVE_OPACITY;
 
+  // Update node data function (similar to ImageNode implementation)
+  const updateNodeData = useCallback(
+    (updates: Partial<RectangleNodeData>) => {
+      setNodes((nodes) =>
+        nodes.map((node) =>
+          node.id === id
+            ? { ...node, data: { ...node.data, ...updates } }
+            : node,
+        ),
+      );
+
+      updateNodeInternals(id);
+    },
+    [id, setNodes, updateNodeInternals],
+  );
+
   // Context menu functionality
   const {
     contextMenu,
@@ -69,7 +88,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({
     arrangeActions,
     arrangeStates,
     getNodes,
-    setNodes,
+    setNodes: setNodesFromHook,
   } = useContextMenu({ id, editMode, isEditable, nodeType: 'rectangleNode' });
 
   // Text editing functionality
@@ -81,18 +100,70 @@ const RectangleNode: FC<RectangleNodeProps> = ({
     handleDoubleClick,
     handleKeyDown,
     handleBlur,
-    updateNodeData,
   } = useTextEditing({ id, label, editMode, isEditable, onTextEditComplete });
 
-  // Handle resize with size sync
+  // Handle resize start
+  const handleResizeStart = useCallback((event: any, params: any) => {
+    // 開始調整大小時可以執行額外的邏輯，例如禁用拖拽
+    // 這裡保持空白，但提供了擴展點
+  }, []);
+
+  // Handle resize with size sync and position update (diagonal anchor)
   const handleResize = useCallback(
     (event: any, params: any) => {
       const newSize = { width: params.width, height: params.height };
 
       setCurrentSize(newSize);
-      updateNodeData({ width: params.width, height: params.height });
+
+      // 標記正在調整大小，避免在 WmsMapModal 中記錄歷史
+      if (!isResizing) {
+        setIsResizing(true);
+      }
+
+      // 即時更新節點以提供視覺回饋，同時更新位置以保持對角錨點
+      setNodes((nodes) =>
+        nodes.map((node) =>
+          node.id === id
+            ? {
+                ...node,
+                data: { ...node.data, width: params.width, height: params.height, isResizing: true },
+                position: { x: params.x, y: params.y },
+              }
+            : node,
+        ),
+      );
     },
-    [updateNodeData],
+    [id, setNodes, isResizing],
+  );
+
+  // Handle resize end to ensure final state is saved
+  const handleResizeEnd = useCallback(
+    (event: any, params: any) => {
+      const newSize = { width: params.width, height: params.height };
+      
+      setCurrentSize(newSize);
+      
+      // 清除調整大小標記
+      setIsResizing(false);
+
+      // 最終更新節點資料，移除 isResizing 標記，同時更新位置
+      // 這次更新會觸發歷史記錄（因為沒有 isResizing 標記）
+      setNodes((nodes) =>
+        nodes.map((node) =>
+          node.id === id
+            ? {
+                ...node,
+                data: { ...node.data, width: params.width, height: params.height, isResizing: undefined },
+                position: { x: params.x, y: params.y },
+              }
+            : node,
+        ),
+      );
+
+      // 確保內部狀態同步
+      updateNodeInternals(id);
+    },
+    [id, setNodes, updateNodeInternals],
   );
 
   // Handle copy and paste
@@ -105,7 +176,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({
       return;
     }
 
-    setNodes((nds) => {
+    setNodesFromHook((nds) => {
       // Calculate next zIndex
       const maxZIndex = Math.max(...nds.map((n) => n.zIndex || 0), 0);
 
@@ -132,7 +203,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({
     color,
     label,
     getNodes,
-    setNodes,
+    setNodesFromHook,
     handleCloseContextMenu,
   ]);
 
@@ -141,60 +212,17 @@ const RectangleNode: FC<RectangleNodeProps> = ({
       className={`${styles.rectangleNode} ${selected ? styles.selected : ''} ${!isSelectable ? styles.nonSelectable : ''}`}
     >
       {selected && isEditable && (
-        <>
-          <NodeResizeControl
-            style={{
-              background: 'white',
-              border: `2px solid ${DEFAULT_RECTANGLE_COLOR}`,
-              width: RESIZE_CONTROL_SIZE,
-              height: RESIZE_CONTROL_SIZE,
-              borderRadius: 2,
-            }}
-            minWidth={MIN_RESIZE_WIDTH}
-            minHeight={MIN_RESIZE_HEIGHT}
-            onResize={handleResize}
-            position="top-left"
-          />
-          <NodeResizeControl
-            style={{
-              background: 'white',
-              border: `2px solid ${DEFAULT_RECTANGLE_COLOR}`,
-              width: RESIZE_CONTROL_SIZE,
-              height: RESIZE_CONTROL_SIZE,
-              borderRadius: 2,
-            }}
-            minWidth={MIN_RESIZE_WIDTH}
-            minHeight={MIN_RESIZE_HEIGHT}
-            onResize={handleResize}
-            position="top-right"
-          />
-          <NodeResizeControl
-            style={{
-              background: 'white',
-              border: `2px solid ${DEFAULT_RECTANGLE_COLOR}`,
-              width: RESIZE_CONTROL_SIZE,
-              height: RESIZE_CONTROL_SIZE,
-              borderRadius: 2,
-            }}
-            minWidth={MIN_RESIZE_WIDTH}
-            minHeight={MIN_RESIZE_HEIGHT}
-            onResize={handleResize}
-            position="bottom-left"
-          />
-          <NodeResizeControl
-            style={{
-              background: 'white',
-              border: `2px solid ${DEFAULT_RECTANGLE_COLOR}`,
-              width: RESIZE_CONTROL_SIZE,
-              height: RESIZE_CONTROL_SIZE,
-              borderRadius: 2,
-            }}
-            minWidth={MIN_RESIZE_WIDTH}
-            minHeight={MIN_RESIZE_HEIGHT}
-            onResize={handleResize}
-            position="bottom-right"
-          />
-        </>
+        <NodeResizer
+          minWidth={MIN_RESIZE_WIDTH}
+          minHeight={MIN_RESIZE_HEIGHT}
+          keepAspectRatio={false}
+          onResizeStart={handleResizeStart}
+          onResize={handleResize}
+          onResizeEnd={handleResizeEnd}
+          isVisible={selected && isEditable}
+          color="#5570d3"
+          handleClassName={styles.customResizeHandle}
+        />
       )}
 
       <div
