@@ -146,9 +146,22 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
   };
 
   // Handle pane click for auto-completing pen drawing
-  const handlePaneClick = useCallback(() => {
-    // Only auto-complete if we're in pen drawing mode and actually drawing
-    if (drawingMode === DrawingMode.PEN && editMode === EditMode.LAYER && isDrawingPen) {
+  const handlePaneClick = useCallback((event?: any) => {
+    // Check if any modifier keys are pressed - if so, don't auto-complete
+    // This prevents accidental completion when using Shift for line constraints
+    const hasModifierKeys = event && (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey);
+    
+    console.log('📋 ReactFlow pane clicked', {
+      drawingMode,
+      editMode,
+      isDrawingPen,
+      hasModifierKeys,
+      willForceComplete: drawingMode === DrawingMode.PEN && editMode === EditMode.LAYER && isDrawingPen && !hasModifierKeys
+    });
+    
+    // Only auto-complete if we're in pen drawing mode, actually drawing, and no modifier keys are pressed
+    if (drawingMode === DrawingMode.PEN && editMode === EditMode.LAYER && isDrawingPen && !hasModifierKeys) {
+      console.log('🔴 Force completing path from pane click');
       forceComplete();
     }
   }, [drawingMode, editMode, isDrawingPen, forceComplete]);

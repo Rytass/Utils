@@ -68,9 +68,20 @@ export const usePenDrawing = ({
   const handleClick = useCallback((event: MouseEvent) => {
     if (drawingMode !== DrawingMode.PEN || editMode !== EditMode.LAYER) return;
     
-    // Prevent event from bubbling up to React Flow
+    // IMMEDIATELY stop event propagation to prevent React Flow pane click
     event.stopPropagation();
     event.preventDefault();
+    event.stopImmediatePropagation();
+    
+    // Debug log for shift key behavior
+    if (event.shiftKey) {
+      console.log('🖱️ Pen tool click with Shift key pressed - event stopped', {
+        isDrawing: drawingState.isDrawing,
+        pointsCount: drawingState.points.length,
+        lastClickTime: drawingState.lastClickTime,
+        currentTime: Date.now()
+      });
+    }
     
     const currentTime = Date.now();
     const wrapper = containerRef.current;
@@ -103,18 +114,23 @@ export const usePenDrawing = ({
     const isDoubleClick = currentTime - drawingState.lastClickTime < 300;
     
     // Check if clicking on the first point to close the path (only if we have at least 3 points)
+    // IMPORTANT: Use original screen position, not constrained position, to avoid accidental closing when using Shift
     let isClickingFirstPoint = false;
     if (drawingState.isDrawing && drawingState.points.length >= 3) {
       const firstPoint = drawingState.screenPoints[0];
       const distance = Math.sqrt(
-        Math.pow(constrainedScreenPos.x - firstPoint.x, 2) + 
-        Math.pow(constrainedScreenPos.y - firstPoint.y, 2)
+        Math.pow(screenX - firstPoint.x, 2) + 
+        Math.pow(screenY - firstPoint.y, 2)
       );
       // Consider it a click on the first point if within 10 pixels
       isClickingFirstPoint = distance <= 10;
     }
     
     if (isClickingFirstPoint) {
+      console.log('🔵 Pen tool: Closing path by clicking first point', {
+        shiftKey: event.shiftKey,
+        pointsCount: drawingState.points.length
+      });
       // Close the path by adding the first point at the end
       const closedPath = [...drawingState.points, drawingState.points[0]];
       onCreatePath(closedPath);
@@ -129,6 +145,11 @@ export const usePenDrawing = ({
         isShiftPressed: false,
       });
     } else if (isDoubleClick && drawingState.isDrawing) {
+      console.log('🔵 Pen tool: Completing path by double-click', {
+        shiftKey: event.shiftKey,
+        pointsCount: drawingState.points.length,
+        timeDiff: currentTime - drawingState.lastClickTime
+      });
       // Complete and close the path if we have at least 3 points
       if (drawingState.points.length >= 3) {
         // Close the path by adding the first point at the end
@@ -225,13 +246,21 @@ export const usePenDrawing = ({
 
   // Force complete current path (for auto-close on pane click)
   const forceComplete = useCallback(() => {
+    console.log('🔴 forceComplete called', {
+      isDrawing: drawingState.isDrawing,
+      pointsLength: drawingState.points.length,
+      willClose: drawingState.points.length >= 3
+    });
+    
     if (!drawingState.isDrawing || drawingState.points.length < 2) return;
     
     // Auto-close the path if we have 3+ points, otherwise create open path
     if (drawingState.points.length >= 3) {
+      console.log('🔴 Force completing with closed path');
       const closedPath = [...drawingState.points, drawingState.points[0]];
       onCreatePath(closedPath);
     } else {
+      console.log('🔴 Force completing with open path');
       onCreatePath(drawingState.points);
     }
     
@@ -293,12 +322,13 @@ export const usePenDrawing = ({
     const wrapper = containerRef.current;
     if (!wrapper) return;
 
-    wrapper.addEventListener('click', handleClick);
+    // Use capture phase to intercept clicks before React Flow processes them
+    wrapper.addEventListener('click', handleClick, true);
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      wrapper.removeEventListener('click', handleClick);
+      wrapper.removeEventListener('click', handleClick, true);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('keydown', handleKeyDown);
     };
