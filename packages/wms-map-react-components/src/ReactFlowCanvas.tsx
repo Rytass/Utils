@@ -12,8 +12,10 @@ import { DrawingMode, EditMode, ViewMode } from '../typings';
 import ImageNode from './ImageNode';
 import RectangleNode from './RectangleNode';
 import PathNode from './PathNode';
+// PathPointNode removed - using simple overlay approach
 import { useRectangleDrawing } from './hooks/useRectangleDrawing';
 import { usePenDrawing } from './hooks/usePenDrawing';
+// PathPointsOverlay removed - using native PathNode editing instead
 import styles from './reactFlowCanvas.module.scss';
 
 interface ReactFlowCanvasProps {
@@ -35,6 +37,9 @@ interface ReactFlowCanvasProps {
   onCreatePath: (points: { x: number; y: number }[]) => void;
   onSelectionChange?: (params: OnSelectionChangeParams) => void;
   onTextEditComplete?: (id: string, oldText: string, newText: string) => void;
+  onPathPointsChange?: (id: string, oldPoints: { x: number; y: number }[], newPoints: { x: number; y: number }[]) => void;
+  onPathPointDragStateChange?: (isDragging: boolean) => void;
+  isEditingPathPoints?: boolean;
 }
 
 const CustomControls: FC = () => {
@@ -96,6 +101,9 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
   onCreatePath,
   onSelectionChange,
   onTextEditComplete,
+  onPathPointsChange,
+  onPathPointDragStateChange,
+  isEditingPathPoints = false,
 }) => {
   const {
     containerRef: rectContainerRef,
@@ -127,9 +135,18 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
       rectangleNode: (props: any) => (
         <RectangleNode {...props} editMode={editMode} viewMode={viewMode} onTextEditComplete={onTextEditComplete} />
       ),
-      pathNode: (props: any) => <PathNode {...props} editMode={editMode} viewMode={viewMode} onTextEditComplete={onTextEditComplete} />,
+      pathNode: (props: any) => (
+        <PathNode 
+          {...props} 
+          editMode={editMode} 
+          viewMode={viewMode} 
+          onTextEditComplete={onTextEditComplete}
+          onPathPointsChange={onPathPointsChange}
+          onPathPointDragStateChange={onPathPointDragStateChange}
+        />
+      ),
     }),
-    [editMode, viewMode, onTextEditComplete],
+    [editMode, viewMode, onTextEditComplete, onPathPointsChange, onPathPointDragStateChange],
   );
 
   // Use a callback ref to assign both drawing hooks to the same container
@@ -198,6 +215,8 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
         selectNodesOnDrag={false}
         panOnDrag={viewMode === ViewMode.EDIT && drawingMode === DrawingMode.NONE}
         zoomOnDoubleClick={viewMode === ViewMode.EDIT && drawingMode !== DrawingMode.PEN}
+        nodeOrigin={[0, 0]}
+        preventScrolling={false}
       >
         <CustomControls />
         <Background />
@@ -322,6 +341,8 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
             ))}
         </svg>
       )}
+
+      {/* Path points editing is now handled natively in PathNode */}
     </div>
   );
 };
