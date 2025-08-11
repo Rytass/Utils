@@ -64,6 +64,7 @@ const WmsMapContent: FC<{
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
   const [lastCopiedNode, setLastCopiedNode] = useState<Node | null>(null);
+  const [isEditingPathPoints, setIsEditingPathPoints] = useState(false);
   
   // Get React Flow instance for viewport information
   const { getViewport, getNodes, getEdges } = useReactFlow();
@@ -541,6 +542,34 @@ const WmsMapContent: FC<{
     }, 20); // 增加延遲時間確保狀態更新完成
   }, [saveState, flushColorChangeHistory, getNodes, getEdges]);
 
+  // 處理路徑節點點位變更（記錄到歷史中）
+  const handlePathPointsChange = useCallback((id: string, oldPoints: { x: number; y: number }[], newPoints: { x: number; y: number }[]) => {
+    console.log('🔵 路徑節點點位變更，記錄歷史:', { id, oldPoints, newPoints });
+    flushColorChangeHistory(); // 先清理顏色變更記錄
+    
+    // 使用 setTimeout 確保能獲取到更新後的 nodes 狀態
+    setTimeout(() => {
+      // 通過 React Flow hooks 獲取最新的節點和邊狀態
+      const currentNodes = getNodes();
+      const currentEdges = getEdges();
+      
+      console.log('📸 保存路徑點位編輯後的狀態:', {
+        id,
+        nodesCount: currentNodes.length,
+        edgesCount: currentEdges.length,
+        updatedPointsCount: (currentNodes.find((n: any) => n.id === id)?.data?.points as any[])?.length || 0
+      });
+      
+      saveState(currentNodes, currentEdges, `path-edit-${id}`);
+    }, 20);
+  }, [saveState, flushColorChangeHistory, getNodes, getEdges]);
+
+  // 處理路徑點拖曳狀態變更
+  const handlePathPointDragStateChange = useCallback((isDragging: boolean) => {
+    console.log('🎯 路徑點拖曳狀態變更:', isDragging);
+    setIsEditingPathPoints(isDragging);
+  }, []);
+
   // 處理 Command+D 快捷鍵複製並貼上功能
   const handleCopyPaste = useCallback(() => {
     // 決定要複製的節點：優先使用最後複製的節點，否則使用選中的節點
@@ -761,6 +790,9 @@ const WmsMapContent: FC<{
         onCreatePath={handleCreatePath}
         onSelectionChange={handleSelectionChange}
         onTextEditComplete={handleTextEditComplete}
+        onPathPointsChange={handlePathPointsChange}
+        onPathPointDragStateChange={handlePathPointDragStateChange}
+        isEditingPathPoints={isEditingPathPoints}
       />
     </>
   );
