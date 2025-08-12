@@ -1,6 +1,6 @@
 import React, { FC, useEffect, useState } from 'react';
 import { Button } from '@mezzanine-ui/react';
-import { DrawingMode, EditMode, LayerDrawingTool } from '../typings';
+import { DrawingMode, EditMode } from '../typings';
 import { DEFAULT_BACKGROUND_TOOL_COLOR } from './constants';
 import styles from './toolbar.module.scss';
 import PenToolIcon from './icons/pen-tool.svg';
@@ -44,24 +44,11 @@ const Toolbar: FC<ToolbarProps> = ({
   selectedColor: parentSelectedColor,
   colorPalette,
 }) => {
-  const [layerTool, setLayerTool] = useState<LayerDrawingTool>(
-    LayerDrawingTool.SELECT,
-  );
 
   const [showColorMenu, setShowColorMenu] = useState<boolean>(false);
 
   const selectedColor = parentSelectedColor || DEFAULT_BACKGROUND_TOOL_COLOR;
 
-  // 同步圖層工具狀態與繪圖模式
-  useEffect(() => {
-    if (drawingMode === DrawingMode.RECTANGLE) {
-      setLayerTool(LayerDrawingTool.RECTANGLE);
-    } else if (drawingMode === DrawingMode.PEN) {
-      setLayerTool(LayerDrawingTool.PEN);
-    } else {
-      setLayerTool(LayerDrawingTool.SELECT);
-    }
-  }, [drawingMode]);
 
   const handleColorChange = (color: string) => {
     if (onColorChange) {
@@ -188,7 +175,6 @@ const Toolbar: FC<ToolbarProps> = ({
               size="small"
               className={`${styles.toolButton} ${drawingMode === DrawingMode.NONE ? styles.toolButtonActive : ''}`}
               onClick={() => {
-                setLayerTool(LayerDrawingTool.SELECT);
                 // 選擇選取工具時關閉繪圖模式
                 if (drawingMode === DrawingMode.RECTANGLE) {
                   onToggleRectangleTool();
@@ -210,10 +196,7 @@ const Toolbar: FC<ToolbarProps> = ({
               }
               size="small"
               className={`${styles.toolButton} ${drawingMode === DrawingMode.RECTANGLE ? styles.toolButtonActive : ''}`}
-              onClick={() => {
-                setLayerTool(LayerDrawingTool.RECTANGLE);
-                onToggleRectangleTool();
-              }}
+              onClick={onToggleRectangleTool}
               title="矩形工具"
             >
               <img
@@ -228,10 +211,7 @@ const Toolbar: FC<ToolbarProps> = ({
               }
               size="small"
               className={`${styles.toolButton} ${drawingMode === DrawingMode.PEN ? styles.toolButtonActive : ''}`}
-              onClick={() => {
-                setLayerTool(LayerDrawingTool.PEN);
-                onTogglePenTool();
-              }}
+              onClick={onTogglePenTool}
               title="鋼筆工具"
             >
               <img
