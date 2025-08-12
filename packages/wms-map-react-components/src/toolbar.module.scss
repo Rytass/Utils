@@ -50,7 +50,7 @@
     border-color: #4461c2 !important;
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(85, 112, 211, 0.2) !important;
     transform: translateY(0.5px) !important;
-    
+
     &:hover {
       background-color: #4461c2 !important;
       color: white !important;
@@ -74,7 +74,7 @@
   border-color: #4461c2 !important;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(85, 112, 211, 0.2) !important;
   transform: translateY(0.5px) !important;
-  
+
   &:hover {
     background-color: #4461c2 !important;
     color: white !important;
@@ -122,7 +122,7 @@
   gap: 8px;
   z-index: 1000;
   background-color: white;
-  border-radius: 24px;
+  border-radius: 6px;
   padding: 8px 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   border: 1px solid #e0e0e0;
@@ -234,22 +234,30 @@ button:is(.toolButton)[data-variant="contained"] {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  overflow: hidden;
-  border: 2px solid #e0e0e0;
-  background-color: white;
+  background-color: #E7E7E7;
   cursor: default;
 }
 
 .colorDisplay {
-  width: 100%;
-  height: 100%;
+  width: calc(100% - 4px); // 減去外層的 border 寬度
+  height: calc(100% - 4px);
   border-radius: 50%;
-  cursor: default;
-  border: 2px solid white;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+  cursor: pointer; // 改為 pointer 以提示可點擊
+  border: 1px solid rgba(0, 0, 0, 0.1); // 更細的邊框以符合設計圖
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05);
+  transition: all 0.15s ease;
+
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
 }
 
 .colorInput {
@@ -267,4 +275,62 @@ button:is(.toolButton)[data-variant="contained"] {
   margin: 0 8px;
   border-radius: 0.5px;
   box-shadow: 1px 0 0 rgba(255, 255, 255, 0.5);
+}
+
+// 動態顏色選單樣式 - 顯示在顏色工具上方，左側對齊
+.colorMenu {
+  position: absolute;
+  bottom: calc(100% + 15px); // 在顏色工具上方
+  left: -15px; // 左側對齊顏色工具按鈕
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background-color: white;
+  border-radius: 6px; // 與工具列相同的圓角
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1001;
+  white-space: nowrap; // 防止換行，保持水平排列
+  min-width: fit-content; // 自適應寬度
+}
+
+.colorOption {
+  width: 32px;
+  height: 32px;
+  min-width: 32px; // 防止 flex 縮放
+  min-height: 32px;
+  flex-shrink: 0; // 防止縮放
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid #E7E7E7;
+  position: relative;
+  transition: all 0.15s ease;
+
+  &:hover {
+    transform: scale(1.05); // 較小的縮放效果
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.colorOptionSelected {
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 28px;
+    height: 28px;
+    background-image: url('./icons/check-mark.svg');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 1;
+  }
 }

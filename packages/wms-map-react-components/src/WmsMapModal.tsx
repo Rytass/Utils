@@ -35,6 +35,7 @@ interface WmsMapModalProps {
   onClose: () => void;
   open: boolean;
   viewMode?: ViewMode;
+  colorPalette?: string[];
 }
 
 const initialNodes: Node[] = [];
@@ -46,6 +47,7 @@ const WmsMapContent: FC<{
   drawingMode: DrawingMode;
   selectedColor: string;
   viewMode: ViewMode;
+  colorPalette?: string[];
   onEditModeChange: (mode: EditMode) => void;
   onToggleRectangleTool: () => void;
   onTogglePenTool: () => void;
@@ -55,6 +57,7 @@ const WmsMapContent: FC<{
   drawingMode,
   selectedColor,
   viewMode,
+  colorPalette,
   onEditModeChange,
   onToggleRectangleTool,
   onTogglePenTool,
@@ -773,6 +776,7 @@ const WmsMapContent: FC<{
           canRedo={canRedo}
           onColorChange={handleColorChangeInternal}
           selectedColor={selectedColor}
+          colorPalette={colorPalette}
         />
       )}
 
@@ -798,18 +802,32 @@ const WmsMapContent: FC<{
   );
 };
 
-const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open, viewMode: initialViewMode = ViewMode.EDIT }) => {
+const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open, viewMode: initialViewMode = ViewMode.EDIT, colorPalette }) => {
   const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
   const [editMode, setEditMode] = useState<EditMode>(EditMode.BACKGROUND);
   const [drawingMode, setDrawingMode] = useState<DrawingMode>(DrawingMode.NONE);
-  const [selectedColor, setSelectedColor] = useState<string>(
-    DEFAULT_RECTANGLE_COLOR,
-  );
+  const [selectedColor, setSelectedColor] = useState<string>(() => {
+    // 如果有提供 colorPalette，使用第一個顏色作為默認值
+    if (colorPalette && colorPalette.length > 0) {
+      return colorPalette[0];
+    }
+    return DEFAULT_RECTANGLE_COLOR;
+  });
 
   // 同步外部 viewMode 變化
   useEffect(() => {
     setViewMode(initialViewMode);
   }, [initialViewMode]);
+
+  // 當 colorPalette 變化時，確保選中的顏色仍然有效
+  useEffect(() => {
+    if (colorPalette && colorPalette.length > 0) {
+      // 如果當前選中的顏色不在新的 palette 中，切換到第一個顏色
+      if (!colorPalette.includes(selectedColor)) {
+        setSelectedColor(colorPalette[0]);
+      }
+    }
+  }, [colorPalette, selectedColor]);
 
   const handleViewModeToggle = useCallback(() => {
     setViewMode(prev => prev === ViewMode.EDIT ? ViewMode.VIEW : ViewMode.EDIT);
@@ -869,6 +887,7 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open, viewMode: initialVie
               drawingMode={drawingMode}
               selectedColor={selectedColor}
               viewMode={viewMode}
+              colorPalette={colorPalette}
               onEditModeChange={handleEditModeChange}
               onToggleRectangleTool={handleToggleRectangleTool}
               onTogglePenTool={handleTogglePenTool}

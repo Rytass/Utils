@@ -19,6 +19,7 @@ interface ToolbarProps {
   canRedo?: boolean;
   onColorChange?: (color: string) => void;
   selectedColor?: string;
+  colorPalette?: string[];
 }
 
 const Toolbar: FC<ToolbarProps> = ({
@@ -36,10 +37,12 @@ const Toolbar: FC<ToolbarProps> = ({
   canRedo = false,
   onColorChange,
   selectedColor: parentSelectedColor,
+  colorPalette,
 }) => {
   const [layerTool, setLayerTool] = useState<LayerDrawingTool>(
     LayerDrawingTool.SELECT,
   );
+  const [showColorMenu, setShowColorMenu] = useState<boolean>(false);
 
   const selectedColor = parentSelectedColor || DEFAULT_BACKGROUND_TOOL_COLOR;
 
@@ -59,6 +62,36 @@ const Toolbar: FC<ToolbarProps> = ({
       onColorChange(color);
     }
   };
+
+  const handleColorPickerClick = () => {
+    if (colorPalette && colorPalette.length > 0) {
+      setShowColorMenu(!showColorMenu);
+    }
+    // 如果沒有提供 colorPalette，則不執行任何操作（顏色工具將被隱藏）
+  };
+
+  const handleColorSelect = (color: string) => {
+    handleColorChange(color);
+    setShowColorMenu(false);
+  };
+
+  // 點擊外部關閉顏色選單
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const colorPicker = document.querySelector(`.${styles.colorPicker}`);
+      if (colorPicker && !colorPicker.contains(event.target as Node)) {
+        setShowColorMenu(false);
+      }
+    };
+
+    if (showColorMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showColorMenu]);
 
   return (
     <>
@@ -187,21 +220,32 @@ const Toolbar: FC<ToolbarProps> = ({
             >
               🖊️
             </Button>
-            <div className={styles.colorPicker}>
-              <div
-                className={styles.colorDisplay}
-                style={{ backgroundColor: selectedColor }}
-                onClick={() => document.getElementById('colorInput')?.click()}
-              />
-              <input
-                id="colorInput"
-                type="color"
-                value={selectedColor}
-                onChange={(e) => handleColorChange(e.target.value)}
-                className={styles.colorInput}
-                title="選擇顏色"
-              />
-            </div>
+            {/* 顏色工具 - 只有在提供 colorPalette 時才顯示 */}
+            {colorPalette && colorPalette.length > 0 && (
+              <div className={styles.colorPicker}>
+                <div
+                  className={styles.colorDisplay}
+                  style={{ backgroundColor: selectedColor }}
+                  onClick={handleColorPickerClick}
+                  title="選擇顏色"
+                />
+
+                {/* 動態顏色選單 - 顯示在顏色工具上方 */}
+                {showColorMenu && (
+                  <div className={styles.colorMenu}>
+                    {colorPalette.map((color, index) => (
+                      <div
+                        key={index}
+                        className={`${styles.colorOption} ${selectedColor === color ? styles.colorOptionSelected : ''}`}
+                        style={{ backgroundColor: color }}
+                        onClick={() => handleColorSelect(color)}
+                        title={color}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>
