@@ -3,6 +3,11 @@ import { Button } from '@mezzanine-ui/react';
 import { DrawingMode, EditMode, LayerDrawingTool } from '../typings';
 import { DEFAULT_BACKGROUND_TOOL_COLOR } from './constants';
 import styles from './toolbar.module.scss';
+import PenToolIcon from './icons/pen-tool.svg';
+import SquareIcon from './icons/square.svg';
+import PointerIcon from './icons/pointer.svg';
+import RedoIcon from './icons/redo.svg';
+import UndoIcon from './icons/undo.svg';
 
 interface ToolbarProps {
   onUpload: () => void;
@@ -42,6 +47,7 @@ const Toolbar: FC<ToolbarProps> = ({
   const [layerTool, setLayerTool] = useState<LayerDrawingTool>(
     LayerDrawingTool.SELECT,
   );
+
   const [showColorMenu, setShowColorMenu] = useState<boolean>(false);
 
   const selectedColor = parentSelectedColor || DEFAULT_BACKGROUND_TOOL_COLOR;
@@ -79,6 +85,7 @@ const Toolbar: FC<ToolbarProps> = ({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const colorPicker = document.querySelector(`.${styles.colorPicker}`);
+
       if (colorPicker && !colorPicker.contains(event.target as Node)) {
         setShowColorMenu(false);
       }
@@ -150,28 +157,27 @@ const Toolbar: FC<ToolbarProps> = ({
         <Button
           variant="outlined"
           size="small"
-          className={styles.toolButton}
+          className={`${styles.toolButton} ${canUndo ? '' : styles.toolButtonDisabled}`}
           onClick={onUndo}
           disabled={!canUndo}
           title="上一步"
         >
-          ↶
+          <img src={UndoIcon} alt="上一步" className={styles.toolIcon} />
         </Button>
         <Button
           variant="outlined"
           size="small"
-          className={styles.toolButton}
+          className={`${styles.toolButton} ${canRedo ? '' : styles.toolButtonDisabled}`}
           onClick={onRedo}
           disabled={!canRedo}
           title="下一步"
         >
-          ↷
+          <img src={RedoIcon} alt="下一步" className={styles.toolIcon} />
         </Button>
 
         {/* Separator and drawing tools - only in LAYER mode */}
         {editMode === EditMode.LAYER && (
           <>
-            {/* Separator */}
             <div className={styles.separator} />
 
             {/* Drawing tools */}
@@ -192,7 +198,11 @@ const Toolbar: FC<ToolbarProps> = ({
               }}
               title="選取工具"
             >
-              ↖️
+              <img
+                src={PointerIcon}
+                alt="選取工具"
+                className={styles.toolIcon}
+              />
             </Button>
             <Button
               variant={
@@ -206,10 +216,16 @@ const Toolbar: FC<ToolbarProps> = ({
               }}
               title="矩形工具"
             >
-              ⬜
+              <img
+                src={SquareIcon}
+                alt="矩形工具"
+                className={styles.toolIcon}
+              />
             </Button>
             <Button
-              variant={drawingMode === DrawingMode.PEN ? 'contained' : 'outlined'}
+              variant={
+                drawingMode === DrawingMode.PEN ? 'contained' : 'outlined'
+              }
               size="small"
               className={`${styles.toolButton} ${drawingMode === DrawingMode.PEN ? styles.toolButtonActive : ''}`}
               onClick={() => {
@@ -218,33 +234,40 @@ const Toolbar: FC<ToolbarProps> = ({
               }}
               title="鋼筆工具"
             >
-              🖊️
+              <img
+                src={PenToolIcon}
+                alt="鋼筆工具"
+                className={styles.toolIcon}
+              />
             </Button>
             {/* 顏色工具 - 只有在提供 colorPalette 時才顯示 */}
             {colorPalette && colorPalette.length > 0 && (
-              <div className={styles.colorPicker}>
-                <div
-                  className={styles.colorDisplay}
-                  style={{ backgroundColor: selectedColor }}
-                  onClick={handleColorPickerClick}
-                  title="選擇顏色"
-                />
+              <>
+                <div className={styles.separator} />
+                <div className={styles.colorPicker}>
+                  <div
+                    className={styles.colorDisplay}
+                    style={{ backgroundColor: selectedColor }}
+                    onClick={handleColorPickerClick}
+                    title="選擇顏色"
+                  />
 
-                {/* 動態顏色選單 - 顯示在顏色工具上方 */}
-                {showColorMenu && (
-                  <div className={styles.colorMenu}>
-                    {colorPalette.map((color, index) => (
-                      <div
-                        key={index}
-                        className={`${styles.colorOption} ${selectedColor === color ? styles.colorOptionSelected : ''}`}
-                        style={{ backgroundColor: color }}
-                        onClick={() => handleColorSelect(color)}
-                        title={color}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
+                  {/* 動態顏色選單 - 顯示在顏色工具上方 */}
+                  {showColorMenu && (
+                    <div className={styles.colorMenu}>
+                      {colorPalette.map((color, index) => (
+                        <div
+                          key={index}
+                          className={`${styles.colorOption} ${selectedColor === color ? styles.colorOptionSelected : ''}`}
+                          style={{ backgroundColor: color }}
+                          onClick={() => handleColorSelect(color)}
+                          title={color}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
             )}
           </>
         )}

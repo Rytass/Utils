@@ -20,96 +20,62 @@
 }
 
 .toolbarButton {
-  height: 32px !important;
-  padding: 0 16px !important;
-  border: 1px solid #d0d0d0 !important;
-  border-radius: 4px !important;
-  background-color: white !important;
-  color: #666 !important;
-  font-size: 14px !important;
-  min-width: auto !important;
+  height: 32px;
+  padding: 0 16px;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  background-color: white;
+  color: #666;
+  font-size: 14px;
+  min-width: auto;
 
   &:hover {
-    border-color: #b0b0b0 !important;
-    background-color: #f8f8f8 !important;
-    color: #666 !important;
+    border-color: #b0b0b0;
+    background-color: #f8f8f8;
+    color: #666;
   }
 
   &:focus {
-    border-color: #b0b0b0 !important;
-    background-color: #f8f8f8 !important;
-    color: #666 !important;
-    box-shadow: none !important;
+    border-color: #b0b0b0;
+    background-color: #f8f8f8;
+    color: #666;
+    box-shadow: none;
   }
 
   // Active state for contained variant buttons in toolbar
   &[data-variant="contained"],
   &[class*="contained"] {
-    background-color: #5570d3 !important;
-    color: white !important;
-    border-color: #4461c2 !important;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(85, 112, 211, 0.2) !important;
-    transform: translateY(0.5px) !important;
+    background-color: #5570d3;
+    color: white;
+    border-color: #4461c2;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(85, 112, 211, 0.2);
+    transform: translateY(0.5px);
 
     &:hover {
-      background-color: #4461c2 !important;
-      color: white !important;
-      border-color: #3a5bb8 !important;
-      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(68, 97, 194, 0.3) !important;
+      background-color: #4461c2;
+      color: white;
+      border-color: #3a5bb8;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(68, 97, 194, 0.3);
     }
 
     &:focus {
-      background-color: #4461c2 !important;
-      color: white !important;
-      border-color: #3a5bb8 !important;
-      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(68, 97, 194, 0.3) !important;
+      background-color: #4461c2;
+      color: white;
+      border-color: #3a5bb8;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(68, 97, 194, 0.3);
     }
-  }
-}
-
-// Custom active class for toolbar buttons
-.toolbarButtonActive {
-  background-color: #5570d3 !important;
-  color: white !important;
-  border-color: #4461c2 !important;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(85, 112, 211, 0.2) !important;
-  transform: translateY(0.5px) !important;
-
-  &:hover {
-    background-color: #4461c2 !important;
-    color: white !important;
-    border-color: #3a5bb8 !important;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(68, 97, 194, 0.3) !important;
-  }
-
-  &:focus {
-    background-color: #4461c2 !important;
-    color: white !important;
-    border-color: #3a5bb8 !important;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(68, 97, 194, 0.3) !important;
   }
 }
 
 .saveButton {
-  height: 32px !important;
-  padding: 0 16px !important;
-  border: none !important;
-  border-radius: 4px !important;
-  background-color: #5570d3 !important;
-  color: white !important;
-  font-size: 14px !important;
-  min-width: auto !important;
-
-  &:hover {
-    background-color: #4461c2 !important;
-    color: white !important;
-  }
-
-  &:focus {
-    background-color: #4461c2 !important;
-    color: white !important;
-    box-shadow: none !important;
-  }
+  height: 32px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 4px;
+  background-color: #5570d3;
+  color: white;
+  font-size: 14px;
+  min-width: auto;
 }
 
 // 統一工具列樣式 - 總是顯示，內容根據模式動態變化
@@ -129,104 +95,49 @@
 }
 
 .toolButton {
-  width: 40px !important;
-  height: 40px !important;
-  min-width: 40px !important;
-  padding: 0 !important;
-  border: none !important;
-  border-radius: 8px !important;
-  background-color: transparent !important;
-  color: #666 !important;
-  font-size: 18px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background-color: transparent;
+  color: #666;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &:hover {
-    background-color: #f0f0f0 !important;
-    color: #333 !important;
+    background-color: #f0f0f0;
+    color: #333;
   }
 
   &:focus {
-    background-color: #f0f0f0 !important;
-    color: #333 !important;
-    box-shadow: none !important;
+    background-color: #f0f0f0;
+    color: #333;
+    box-shadow: none;
   }
 
-  &:disabled {
-    background-color: transparent !important;
-    color: #ccc !important;
-    cursor: default !important;
+  &.toolButtonDisabled {
+    opacity: 0.5;
+    cursor: default;
   }
 }
 
 // contained variant 按鈕的 active 狀態 - 多重選擇器確保樣式生效
 .toolButton {
-  &[data-variant="contained"],
-  &[class*="contained"] {
-    background-color: #5570d3 !important;
-    color: white !important;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(85, 112, 211, 0.3) !important;
-    transform: translateY(1px) !important;
-    border: 2px solid #4461c2 !important;
-
-    &:hover {
-      background-color: #4461c2 !important;
-      color: white !important;
-      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(68, 97, 194, 0.4) !important;
-    }
-
-    &:focus {
-      background-color: #4461c2 !important;
-      color: white !important;
-      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(68, 97, 194, 0.4) !important;
-    }
-  }
-}
-
-// Mezzanine UI Button 組件的替代選擇器
-button.toolButton[data-variant="contained"],
-.toolButton.mzn-button--contained,
-.toolButton:is([data-variant="contained"]),
-button:is(.toolButton)[data-variant="contained"] {
-  background-color: #5570d3 !important;
-  color: white !important;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(85, 112, 211, 0.3) !important;
-  transform: translateY(1px) !important;
-  border: 2px solid #4461c2 !important;
-
   &:hover {
-    background-color: #4461c2 !important;
-    color: white !important;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(68, 97, 194, 0.4) !important;
+    background-color: rgba(70, 91, 199, 0.20);
   }
 
   &:focus {
-    background-color: #4461c2 !important;
-    color: white !important;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(68, 97, 194, 0.4) !important;
+    background-color: rgba(70, 91, 199, 0.20);
   }
 }
 
-// 自訂 active 類別確保樣式套用
 .toolButtonActive {
-  background-color: #5570d3 !important;
-  color: white !important;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(85, 112, 211, 0.3) !important;
-  transform: translateY(1px) !important;
-  border: 2px solid #4461c2 !important;
-
-  &:hover {
-    background-color: #4461c2 !important;
-    color: white !important;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(68, 97, 194, 0.4) !important;
-  }
-
-  &:focus {
-    background-color: #4461c2 !important;
-    color: white !important;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(68, 97, 194, 0.4) !important;
-  }
+  background-color: rgba(70, 91, 199, 0.20) !important;
 }
 
 .colorPicker {
@@ -234,30 +145,25 @@ button:is(.toolButton)[data-variant="contained"] {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: #E7E7E7;
-  cursor: default;
-}
-
-.colorDisplay {
-  width: calc(100% - 4px); // 減去外層的 border 寬度
-  height: calc(100% - 4px);
-  border-radius: 50%;
-  cursor: pointer; // 改為 pointer 以提示可點擊
-  border: 1px solid rgba(0, 0, 0, 0.1); // 更細的邊框以符合設計圖
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05);
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background-color: transparent;
+  cursor: pointer;
   transition: all 0.15s ease;
 
   &:hover {
-    transform: scale(1.05);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    background-color: rgba(70, 91, 199, 0.20);
   }
+}
 
-  &:active {
-    transform: scale(0.98);
-  }
+.colorDisplay {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid #e0e0e0;
+  transition: all 0.15s ease;
 }
 
 .colorInput {
@@ -293,7 +199,7 @@ button:is(.toolButton)[data-variant="contained"] {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 1001;
   white-space: nowrap; // 防止換行，保持水平排列
-  min-width: fit-content; // 自適應寬度
+  min-width: fit-content;
 }
 
 .colorOption {
@@ -309,7 +215,7 @@ button:is(.toolButton)[data-variant="contained"] {
   transition: all 0.15s ease;
 
   &:hover {
-    transform: scale(1.05); // 較小的縮放效果
+    transform: scale(1.05);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   }
 
@@ -333,4 +239,12 @@ button:is(.toolButton)[data-variant="contained"] {
     background-position: center;
     z-index: 1;
   }
+}
+
+.toolIcon {
+  display: flex;
+  align-items: center;
+  width: 28px;
+  height: 28px;
+  pointer-events: none; // 確保點擊事件傳遞給按鈕
 }
