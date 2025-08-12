@@ -723,8 +723,19 @@ const WmsMapContent: FC<{
         return;
       }
 
-      // Delete 鍵 - 刪除選中節點
+      // Delete 鍵 - 刪除選中節點（但排除文字編輯模式）
       if (event.key === 'Delete' || event.key === 'Backspace') {
+        // 檢查是否有 input 元素正在焦點中（表示正在編輯文字）
+        const activeElement = document.activeElement;
+        const isEditingText = activeElement && 
+          (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA') &&
+          activeElement.getAttribute('type') !== 'color'; // 排除顏色選擇器
+        
+        // 如果正在編輯文字，不執行刪除圖形的操作
+        if (isEditingText) {
+          return; // 讓瀏覽器執行默認的文字刪除行為
+        }
+        
         event.preventDefault();
         handleDeleteSelected();
         return;
