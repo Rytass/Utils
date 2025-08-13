@@ -134,12 +134,13 @@ export class NewebPayBindCardRequest implements BindCardRequest {
       payload.PayTime,
       'yyyy-MM-dd HH:mm:ss',
     ).toJSDate();
+
     this._expireDate = DateTime.fromFormat(payload.Exp, 'yyMM')
       .endOf('month')
       .toJSDate();
 
     this._state = OrderState.COMMITTED;
 
-    this._gateway.emitter.emit(PaymentEvents.ORDER_COMMITTED, this);
+    this._gateway.emitter.emit(PaymentEvents.CARD_BOUND, this);
   }
 }

@@ -1225,6 +1225,7 @@ export class NewebPayPayment<
       (sum, item) => sum + item.unitPrice * item.quantity,
       0,
     );
+
     const description = options.items.map((item) => item.name).join(',');
     const orderId = options.orderId ?? randomBytes(15).toString('hex');
 
