@@ -495,30 +495,20 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode, viewMode, o
               onBlur={handleBlur}
               className="nodrag" // Prevent dragging when editing text
               style={{
-                background: 'rgba(0,0,0,0.5)',
-                border: '1px solid white',
-                borderRadius: '4px',
+                background: 'transparent',
+                border: 'none',
                 outline: 'none',
                 color: 'white',
                 fontSize: '12px',
                 fontWeight: 'bold',
                 textAlign: 'center',
-                width: '100%',
-                padding: '2px 4px',
-                textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                width: '90%',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
               }}
               onClick={(e) => e.stopPropagation()}
             />
           ) : (
-            <span 
-              style={{ 
-                cursor: 'default',
-                background: isClosedPath ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.6)',
-                padding: '2px 6px',
-                borderRadius: '4px',
-                backdropFilter: 'blur(2px)',
-              }}
-            >
+            <span style={{ cursor: 'default' }}>
               {label}
             </span>
           )}
