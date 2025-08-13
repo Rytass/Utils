@@ -23,12 +23,14 @@ export class NewebPayBindCardRequest implements BindCardRequest {
 
   private _failedCode: string | undefined;
   private _failedMessage: string | undefined;
+  private _finishRedirectURL: string | undefined;
 
   constructor(options: NewebPayBindCardRequestOptions) {
     this._id = options.id;
     this._gateway = options.gateway;
     this._form = options.form;
     this._memberId = options.memberId;
+    this._finishRedirectURL = options.finishRedirectURL;
   }
 
   get id(): string {
@@ -65,6 +67,10 @@ export class NewebPayBindCardRequest implements BindCardRequest {
 
   get committable(): boolean {
     return this._state === OrderState.PRE_COMMIT;
+  }
+
+  get finishRedirectURL(): string | undefined {
+    return this._finishRedirectURL;
   }
 
   get failedMessage(): {
