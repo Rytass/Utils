@@ -50,6 +50,7 @@ const CustomControls: FC = () => {
   useOnViewportChange({
     onChange: (viewport) => {
       setZoom(Math.round(viewport.zoom * 100));
+      console.log('🔍 Zoom changed:', viewport.zoom);
     }
   });
 
@@ -183,6 +184,16 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
     }
   }, [drawingMode, editMode, isDrawingPen, forceComplete]);
 
+  // Add wheel event listener for debugging
+  const handleWheel = useCallback((event: React.WheelEvent) => {
+    console.log('🖱️ Wheel event detected:', {
+      deltaY: event.deltaY,
+      ctrlKey: event.ctrlKey,
+      metaKey: event.metaKey,
+      target: event.target
+    });
+  }, []);
+
   return (
     <div
       ref={containerRef}
@@ -191,6 +202,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
         cursor: getCursor(),
         position: 'relative',
       }}
+      onWheel={handleWheel}
     >
       <ReactFlow
         nodes={nodes}
@@ -214,9 +226,11 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
         }
         selectNodesOnDrag={false}
         panOnDrag={viewMode === ViewMode.EDIT && drawingMode === DrawingMode.NONE}
+        panOnScroll={false}
+        zoomOnScroll={true}
         zoomOnDoubleClick={viewMode === ViewMode.EDIT && drawingMode !== DrawingMode.PEN}
         nodeOrigin={[0, 0]}
-        preventScrolling={false}
+        preventScrolling={true}
       >
         <CustomControls />
         <Background />
