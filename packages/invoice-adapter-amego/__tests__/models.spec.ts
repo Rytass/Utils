@@ -560,5 +560,133 @@ describe('AmegoAllowance Model', () => {
       expect(allowance.allowancePrice).toBe(30);
       expect(allowance.items[0].taxType).toBe(TaxType.ZERO_TAX);
     });
+
+    it('should handle invalid allowances when calculating remaining amount', () => {
+      const parentInvoice = new AmegoInvoice({
+        orderId: 'test456',
+        invoiceNumber: 'AC99999999',
+        items: [
+          {
+            name: '測試商品',
+            quantity: 1,
+            unitPrice: 100,
+            taxType: TaxType.TAXED,
+          },
+        ],
+        taxType: TaxType.TAXED,
+        issuedOn: new Date('2025-01-01T00:00:00.000Z'),
+        allowances: [],
+        randomCode: '1234',
+        state: InvoiceState.ISSUED,
+        voidOn: null,
+      });
+
+      // Add an invalid allowance to accumulatedAllowances to test the line 44 branch
+      const invalidAllowance = new AmegoAllowance({
+        allowanceNumber: 'AC99999999AL0001',
+        allowancedOn: new Date('2025-01-02T10:00:00.000Z'),
+        allowancePrice: 30,
+        items: [
+          {
+            name: '無效的折讓',
+            quantity: 1,
+            unitPrice: 30,
+            taxType: TaxType.TAXED,
+          },
+        ],
+        invoiceType: 'G0401',
+        status: InvoiceAllowanceState.INVALID, // Invalid status
+        invalidOn: new Date('2025-01-03T00:00:00.000Z'),
+        parentInvoice,
+      });
+
+      // Put the invalid allowance in the parent invoice accumulatedAllowances
+      parentInvoice.accumulatedAllowances.push(invalidAllowance);
+
+      // Create a new allowance which should test the line 44 branch (ignoring invalid allowances)
+      const newAllowance = new AmegoAllowance({
+        allowanceNumber: 'AC99999999AL0002',
+        allowancedOn: new Date('2025-01-02T11:00:00.000Z'),
+        allowancePrice: 10,
+        items: [
+          {
+            name: '新的折讓',
+            quantity: 1,
+            unitPrice: 10,
+            taxType: TaxType.TAXED,
+          },
+        ],
+        invoiceType: 'G0401',
+        status: InvoiceAllowanceState.ISSUED,
+        invalidOn: null,
+        parentInvoice,
+      });
+
+      // Should calculate remaining amount ignoring the invalid allowance
+      expect(newAllowance.remainingAmount).toBe(100); // 100 - 0 (invalid allowance ignored)
+    });
+
+    it('should handle invalid allowances when constructing invoice', () => {
+      // Create a dummy parent invoice first
+      const dummyParentInvoice = new AmegoInvoice({
+        orderId: 'dummy',
+        invoiceNumber: 'AC99999997',
+        items: [
+          {
+            name: '測試商品',
+            quantity: 1,
+            unitPrice: 50,
+            taxType: TaxType.TAXED,
+          },
+        ],
+        taxType: TaxType.TAXED,
+        issuedOn: new Date('2025-01-01T00:00:00.000Z'),
+        allowances: [],
+        randomCode: '1234',
+        state: InvoiceState.ISSUED,
+        voidOn: null,
+      });
+
+      const invalidAllowance = new AmegoAllowance({
+        allowanceNumber: 'AC99999999AL0001',
+        allowancedOn: new Date('2025-01-02T10:00:00.000Z'),
+        allowancePrice: 30,
+        items: [
+          {
+            name: '無效的折讓',
+            quantity: 1,
+            unitPrice: 30,
+            taxType: TaxType.TAXED,
+          },
+        ],
+        invoiceType: 'G0401',
+        status: InvoiceAllowanceState.INVALID, // Invalid status
+        invalidOn: new Date('2025-01-03T00:00:00.000Z'),
+        parentInvoice: dummyParentInvoice,
+      });
+
+      // Create invoice with invalid allowance to test line 54 branch
+      const invoice = new AmegoInvoice({
+        orderId: 'test789',
+        invoiceNumber: 'AC99999998',
+        items: [
+          {
+            name: '測試商品',
+            quantity: 1,
+            unitPrice: 100,
+            taxType: TaxType.TAXED,
+          },
+        ],
+        taxType: TaxType.TAXED,
+        issuedOn: new Date('2025-01-01T00:00:00.000Z'),
+        allowances: [invalidAllowance], // Include invalid allowance
+        randomCode: '1234',
+        state: InvoiceState.ISSUED,
+        voidOn: null,
+      });
+
+      // nowAmount should be equal to issuedAmount since invalid allowance is ignored
+      expect(invoice.nowAmount).toBe(100); // 100 - 0 (invalid allowance ignored)
+    });
   });
 });

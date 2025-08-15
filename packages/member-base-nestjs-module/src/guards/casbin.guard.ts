@@ -19,8 +19,15 @@ import { type ReflectableDecorator, Reflector } from '@nestjs/core';
 import { IS_ROUTE_PUBLIC } from '../decorators/is-public.decorator';
 import { AllowActions } from '../decorators/action.decorator';
 import { verify } from 'jsonwebtoken';
-import { Request } from 'express';
 import { IS_ROUTE_ONLY_AUTHENTICATED } from '../decorators/authenticated.decorator';
+import { getTokenFromContext } from '../utils/get-token-from-context';
+import { getRequestFromContext } from '../utils/get-request-from-context';
+
+export interface ContextPayload {
+  token: string | null;
+  payload?: Pick<BaseMemberEntity, 'id' | 'account'>;
+  enforcer: Enforcer;
+}
 
 @Injectable()
 export class CasbinGuard implements CanActivate {
@@ -44,12 +51,38 @@ export class CasbinGuard implements CanActivate {
       actions,
     }: {
       enforcer: Enforcer;
-      payload: Pick<BaseMemberEntity, 'id' | 'account'>;
+      payload: { id: string; domain?: string };
       actions: any;
     }) => Promise<boolean>,
   ) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
+  async canActivate(
+    context: ExecutionContext & {
+      enforcer: Enforcer;
+      payload: { id: string; domain?: string };
+    },
+  ): Promise<boolean> {
+    const request = await getRequestFromContext(context);
+    const token = await getTokenFromContext(context, this.cookieMode);
+
+    if (token) {
+      try {
+        const payload = verify(
+          token,
+          this.cookieMode ? this.refreshTokenSecret : this.accessTokenSecret,
+        ) as Pick<BaseMemberEntity, 'id' | 'account'>;
+
+        request.payload = payload;
+      } catch (ex) {
+        request.payload = undefined;
+      }
+    } else {
+      request.payload = undefined;
+    }
+
+    request.enforcer = this.enforcer;
+    request.casbinPermissionChecker = this.permissionChecker;
+
     if (!this.enableGlobalGuard) return true;
 
     const reflector = new Reflector();
@@ -73,77 +106,15 @@ export class CasbinGuard implements CanActivate {
 
     if (!allowActions?.length && !onlyAuthenticated) return false;
 
-    const contextType = context.getType<'http' | 'graphql'>();
-
-    let token: string | null;
-
-    switch (contextType) {
-      case 'graphql': {
-        const { GqlExecutionContext } = await import('@nestjs/graphql');
-
-        const ctx = GqlExecutionContext.create(context).getContext<{
-          req: Request;
-        }>();
-
-        token =
-          (this.cookieMode
-            ? ctx.req.cookies.token
-            : (ctx.req.headers.authorization ?? '')
-                .replace(/^Bearer\s/, '')
-                .trim()) ?? null;
-
-        break;
-      }
-
-      case 'http':
-      default:
-        token = (
-          this.cookieMode
-            ? context.switchToHttp().getRequest().cookies.token
-            : (context.switchToHttp().getRequest().headers.authorization ?? '')
-        )
-          .replace(/^Bearer\s/, '')
-          .trim();
-
-        break;
-    }
-
     if (!token) return false;
 
-    try {
-      const payload = verify(
-        token,
-        this.cookieMode ? this.refreshTokenSecret : this.accessTokenSecret,
-      ) as Pick<BaseMemberEntity, 'id' | 'account'>;
+    if (!request.payload) return false;
+    if (onlyAuthenticated) return true;
 
-      switch (contextType) {
-        case 'graphql': {
-          const { GqlExecutionContext } = await import('@nestjs/graphql');
-
-          const ctx = GqlExecutionContext.create(context).getContext<{
-            token: string | null;
-            payload?: Pick<BaseMemberEntity, 'id' | 'account'>;
-          }>();
-
-          ctx.payload = payload;
-          break;
-        }
-
-        case 'http':
-        default:
-          context.switchToHttp().getRequest().payload = payload;
-          break;
-      }
-
-      if (onlyAuthenticated) return true;
-
-      return this.permissionChecker({
-        enforcer: this.enforcer,
-        payload,
-        actions: allowActions,
-      });
-    } catch (ex) {
-      return false;
-    }
+    return this.permissionChecker({
+      enforcer: this.enforcer,
+      payload: request.payload,
+      actions: allowActions,
+    });
   }
 }

@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.5](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-newebpay@0.2.4...@rytass/payments-adapter-newebpay@0.2.5) (2025-08-13)
+
+### Bug Fixes
+
+- **payments-adapter-newebpay:** implement finishRedirectURL support ([e05bfe6](https://github.com/Rytass/Utils/commit/e05bfe61a924cc14d0019dc154abb5e76d41d076))
+
+## [0.2.4](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-newebpay@0.2.3...@rytass/payments-adapter-newebpay@0.2.4) (2025-08-13)
+
+### Bug Fixes
+
+- **payments-adapter-newebpay:** card bound event type ([c9ec070](https://github.com/Rytass/Utils/commit/c9ec0702dd4ec0e00dc142c9dda61b15ef3c296c))
+
 ## [0.2.3](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-newebpay@0.2.2...@rytass/payments-adapter-newebpay@0.2.3) (2025-07-30)
 
 **Note:** Version bump only for package @rytass/payments-adapter-newebpay

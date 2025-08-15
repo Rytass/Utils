@@ -1,6 +1,6 @@
 {
   "name": "@rytass/member-base-nestjs-module",
-  "version": "0.2.0",
+  "version": "0.2.7",
   "description": "Rytass Member System NestJS Base Module",
   "keywords": [
     "rytass",
@@ -47,5 +47,8 @@
   "devDependencies": {
     "@types/luxon": "^3",
     "@types/ws": "^8"
-  }
+  },
+  "isolateEntries": [
+    "./graphql.ts"
+  ]
 }

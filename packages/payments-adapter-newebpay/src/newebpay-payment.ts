@@ -329,6 +329,16 @@ export class NewebPayPayment<
 
             request.bound(resolvedData);
 
+            if (request.finishRedirectURL) {
+              res.writeHead(302, {
+                location: request.finishRedirectURL,
+              });
+
+              res.end();
+
+              return;
+            }
+
             break;
           }
 
@@ -1209,6 +1219,7 @@ export class NewebPayPayment<
       gateway: this,
       id,
       memberId,
+      finishRedirectURL: options?.finishRedirectURL,
     });
 
     this.bindCardRequestsCache.set(request.id, request);
@@ -1225,6 +1236,7 @@ export class NewebPayPayment<
       (sum, item) => sum + item.unitPrice * item.quantity,
       0,
     );
+
     const description = options.items.map((item) => item.name).join(',');
     const orderId = options.orderId ?? randomBytes(15).toString('hex');
 

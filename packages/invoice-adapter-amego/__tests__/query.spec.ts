@@ -754,6 +754,52 @@ describe('Amego Invoice Query', () => {
           invoiceGateway.query({ orderId: 'nonexistent' })
         ).rejects.toThrow('Amego invoice query failed: Invoice not found');
       });
+
+      it('should handle carrier parsing with carrierId2 when carrierId1 is empty', async () => {
+        mockedAxios.post.mockResolvedValue({
+          data: {
+            code: 0,
+            msg: '',
+            data: {
+              invoice_number: 'AC12364100',
+              invoice_type: 'C0401',
+              invoice_status: 99,
+              invoice_date: '20250606',
+              invoice_time: '14:30:54',
+              buyer_identifier: '55880710',
+              buyer_name: '55880710',
+              sales_amount: 238,
+              tax_type: 1,
+              tax_rate: '0.05',
+              tax_amount: 12,
+              total_amount: 250,
+              random_number: '6476',
+              order_id: '3g49n8',
+              create_date: 1749191454,
+              carrier_type: 'CQ0001',
+              carrier_id1: '', // Empty carrierId1
+              carrier_id2: 'CA123456789', // Using carrierId2
+              product_item: [
+                {
+                  description: '商品',
+                  quantity: 1,
+                  unit_price: 100,
+                  tax_type: 1,
+                  amount: 100,
+                },
+              ],
+              allowance: [],
+            },
+          },
+        });
+
+        const invoice = await invoiceGateway.query({ orderId: '3g49n8' });
+
+        expect(invoice.carrier).toEqual({
+          type: InvoiceCarrierType.MOICA,
+          code: 'CA123456789',
+        });
+      });
     });
   });
 });

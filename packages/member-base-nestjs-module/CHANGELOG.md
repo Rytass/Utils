@@ -3,6 +3,41 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.7](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.6...@rytass/member-base-nestjs-module@0.2.7) (2025-08-04)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** use casbinPermissionChecker on @HasPermission decorator ([5cff1c3](https://github.com/Rytass/Utils/commit/5cff1c30eae4b77f44f8b593ae424a9a2041f9ea))
+
+## [0.2.6](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.5...@rytass/member-base-nestjs-module@0.2.6) (2025-08-04)
+
+**Note:** Version bump only for package @rytass/member-base-nestjs-module
+
+## [0.2.5](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.4...@rytass/member-base-nestjs-module@0.2.5) (2025-08-04)
+
+**Note:** Version bump only for package @rytass/member-base-nestjs-module
+
+## [0.2.4](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.3...@rytass/member-base-nestjs-module@0.2.4) (2025-08-04)
+
+**Note:** Version bump only for package @rytass/member-base-nestjs-module
+
+## [0.2.3](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.2...@rytass/member-base-nestjs-module@0.2.3) (2025-08-04)
+
+**Note:** Version bump only for package @rytass/member-base-nestjs-module
+
+## [0.2.2](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.1...@rytass/member-base-nestjs-module@0.2.2) (2025-08-04)
+
+### Features
+
+- **member-base-nestjs-module:** add enforcer middleware ([d40c9d8](https://github.com/Rytass/Utils/commit/d40c9d88dc15364c58d9fb68b559f0dbc7e3c58f))
+
+## [0.2.1](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.0...@rytass/member-base-nestjs-module@0.2.1) (2025-08-04)
+
+### Features
+
+- **member-base-nestjs-module:** inject enforcer and add @HasPermission param decorator ([d363e52](https://github.com/Rytass/Utils/commit/d363e5214566582822938cc1393d8f17f8cc4c8a))
+- **member-base-nestjs-module:** isolate graphql from package ([cf4b7f9](https://github.com/Rytass/Utils/commit/cf4b7f97ba519043e394f40c25aabc9d79e3dbff))
+
 # [0.2.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.1.65...@rytass/member-base-nestjs-module@0.2.0) (2025-07-28)
 
 ### Bug Fixes

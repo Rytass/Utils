@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.5](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-amego@0.2.4...@rytass/invoice-adapter-amego@0.2.5) (2025-08-08)
+
+### Bug Fixes
+
+- **invoice-adapter-amego:** fix invoice nowAmount calculation ([f207049](https://github.com/Rytass/Utils/commit/f207049ac84812a9613ee14095504a1c23592320))
+- **invoice-adapter-amego:** fix invoice nowAmount calculation after pr reviewed ([508c725](https://github.com/Rytass/Utils/commit/508c7252f9cdebc398aeb5045eda3eb083e3bd44))
+
+## [0.2.4](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-amego@0.2.3...@rytass/invoice-adapter-amego@0.2.4) (2025-08-08)
+
+### Features
+
+- **invoice-adapter-amego:** return invoice type by different code ([4ba2ad2](https://github.com/Rytass/Utils/commit/4ba2ad2e6eb06b5a2c7f35fc2bf615541ea89016))
+
 ## [0.2.3](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-amego@0.2.2...@rytass/invoice-adapter-amego@0.2.3) (2025-08-04)
 
 ### Features

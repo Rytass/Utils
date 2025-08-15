@@ -553,6 +553,7 @@ export interface NewebPayBindCardRequestOptions {
   form: NewebPayMPGMakeOrderPayload;
   id: string;
   memberId: string;
+  finishRedirectURL?: string;
 }
 
 export interface NewebPayCheckoutWithTokenPayload {

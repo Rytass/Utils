@@ -127,6 +127,86 @@ describe('AmegoInvoiceGateway:Allowance', () => {
       expect(result.items[0].name).toBe('口香糖');
     });
 
+    it('should create allowance for consumer invoice (vatNumber 0000000000)', async () => {
+      // Mock query response for consumer invoice
+      mockedAxios.post.mockImplementation(async (url: string, data: any) => {
+        if (url === `${baseUrl}/json/invoice_query`) {
+          return {
+            data: {
+              code: 0,
+              msg: '',
+              data: {
+                invoice_number: 'AC12367706',
+                invoice_type: 'C0401',
+                invoice_status: 99,
+                invoice_date: '20250609',
+                invoice_time: '22:20:29',
+                buyer_identifier: '0000000000', // Consumer vatNumber
+                buyer_name: '消費者',
+                sales_amount: 95,
+                tax_type: 1,
+                tax_rate: '0.05',
+                tax_amount: 5,
+                total_amount: 100,
+                random_number: '6122',
+                order_id: '202506091426231987',
+                detailVat: 1,
+                create_date: 1749478829,
+                carrier_type: '',
+                carrier_id1: '',
+                carrier_id2: '',
+                allowance: [],
+                product_item: [
+                  {
+                    description: '商品',
+                    quantity: 1,
+                    unit_price: 100,
+                    tax_type: 1,
+                    amount: 100,
+                    unit: '',
+                  },
+                ],
+              },
+            },
+          };
+        }
+
+        if (url === `${baseUrl}/json/g0401`) {
+          return {
+            data: {
+              code: 0,
+              msg: '',
+            },
+          };
+        }
+
+        throw new Error(`Unexpected URL: ${url}`);
+      });
+
+      const invoice = await invoiceGateway.query({
+        orderId: '202506091426231987',
+      });
+
+      const result = await invoiceGateway.allowance(invoice, [
+        {
+          name: '商品',
+          unitPrice: 105.26, // 含稅價格
+          quantity: 1,
+          taxType: TaxType.TAXED,
+        },
+      ]);
+
+      expect(result.invoiceNumber).toBe(invoice.invoiceNumber);
+      expect(result.issuedAmount).toBe(100);
+      expect(result.allowances.length).toBe(1);
+      expect(result.allowances[0]).toBeInstanceOf(AmegoAllowance);
+      expect(result.allowances[0].allowancePrice).toBe(105.26);
+      expect(['D0401', 'G0401']).toContain(result.allowances[0].invoiceType);
+      expect(result.allowances[0].status).toBe(InvoiceAllowanceState.ISSUED);
+      expect(result.items.length).toBe(1);
+      expect(result.items[0].name).toBe('商品');
+    });
+
     it('should handle allowance with multiple items', async () => {
       mockedAxios.post.mockImplementation(async (url: string, data: any) => {
         if (url === `${baseUrl}/json/invoice_query`) {

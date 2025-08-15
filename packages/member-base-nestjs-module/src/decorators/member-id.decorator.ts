@@ -1,10 +1,16 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { getPayloadFromContext } from '../utils/get-payload-from-context';
+import { BaseMemberEntity } from '../models/base-member.entity';
+import { getRequestFromContext } from '../utils/get-request-from-context';
 
 export const MemberId = createParamDecorator(
-  (data, context: ExecutionContext): string | null => {
-    const payload = getPayloadFromContext(context);
+  (
+    data,
+    context: ExecutionContext & {
+      payload: Pick<BaseMemberEntity, 'id' | 'account'>;
+    },
+  ): string | null => {
+    const request = getRequestFromContext(context);
 
-    return payload?.id ?? null;
+    return request.payload?.id ?? null;
   },
 );

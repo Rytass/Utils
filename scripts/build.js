@@ -130,6 +130,47 @@ async function build(packageSymbol, packageInfos) {
     packageJson.main = './index.cjs.js';
     packageJson.module = './index.js';
     packageJson.typings = './index.d.ts';
+
+    const isolateEntries = packageJson.isolateEntries || [];
+
+    await isolateEntries
+      .map((entryPath) => async () => {
+        const inputPath = path.resolve(packageSrcPath, entryPath);
+        const filename = entryPath.replace(/^(.+)\.[^.]+$/, '$1');
+
+        if (fse.existsSync(inputPath)) {
+          await rollupBuild({
+            input: inputPath,
+            external: isExternal,
+            output: [
+              {
+                dir: path.resolve(packageDistPath),
+                format: 'es',
+                externalLiveBindings: false,
+                preserveModules: true,
+                preserveModulesRoot: packageSrcPath,
+              },
+              {
+                file: path.resolve(packageDistPath, `${filename}.cjs.js`),
+                format: 'cjs',
+                externalLiveBindings: false,
+              },
+            ],
+            plugins: [
+              swc({
+                tsconfig,
+              }),
+              postcss({
+                modules: true,
+                use: ['sass'],
+                extract: true,
+                minimize: true,
+              }),
+            ],
+          });
+        }
+      })
+      .reduce((prev, next) => prev.then(next), Promise.resolve());
   }
 
   delete packageJson.scripts;
