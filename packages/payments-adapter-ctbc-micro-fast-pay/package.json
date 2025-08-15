@@ -34,6 +34,7 @@
     "@ngrok/ngrok": "^1.5.1"
   },
   "devDependencies": {
+    "@ngrok/ngrok": "1.5.1",
     "@types/debug": "^4.1.12",
     "@types/lru-cache": "^7.10.10",
     "@types/luxon": "^3.4.2"
