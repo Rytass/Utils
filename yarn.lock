@@ -4577,7 +4577,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ngrok/ngrok@npm:^1.5.1":
+"@ngrok/ngrok@npm:1.5.1, @ngrok/ngrok@npm:^1.5.1":
   version: 1.5.1
   resolution: "@ngrok/ngrok@npm:1.5.1"
   dependencies:
@@ -5980,6 +5980,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/payments-adapter-ctbc-micro-fast-pay@workspace:packages/payments-adapter-ctbc-micro-fast-pay"
   dependencies:
+    "@ngrok/ngrok": "npm:1.5.1"
     "@rytass/payments": "npm:^0.2.2"
     "@types/debug": "npm:^4.1.12"
     "@types/lru-cache": "npm:^7.10.10"
