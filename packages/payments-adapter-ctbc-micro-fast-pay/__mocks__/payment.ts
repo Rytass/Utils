@@ -16,8 +16,5 @@ export const mockCTBCPayments = {
   merchantId: '8220123456789',
   merId: '80225',
   txnKey: 'XyBd7FHEquZ93MnsCkWtPjA0',
-  baseUrl: 'https://ccapi.ctbcbank.com',
-  endpoint: 'https://ccapi.ctbcbank.com/mFastPay/TxnServlet',
-  requireCacheHit: true,
-  _server: false,
+  terminalId: '90711223',
 };

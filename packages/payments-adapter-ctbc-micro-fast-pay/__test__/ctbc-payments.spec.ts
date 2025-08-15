@@ -6,6 +6,7 @@ import http, { createServer } from 'http';
 import { CTBCPayment } from '../src/ctbc-payment';
 import { CTBCPaymentOptions } from 'payments-adapter-ctbc-micro-fast-pay/src/typings';
 import { PaymentEvents } from '../../payments/src/typings';
+import { mockCTBCPayments } from '../__mocks__/payment';
 
 describe('CTBCPayment', () => {
   let mockServer: ReturnType<typeof createServer>;
@@ -151,13 +152,8 @@ describe('CTBCPayment', () => {
       expect(spy).toHaveBeenCalledWith(req, res);
     });
 
-    describe('constructor event handlers', () => {
-      const base = {
-        merchantId: 'M',
-        merId: 'MID',
-        txnKey: '123456789012345678901234',
-        terminalId: 'T',
-      } as any;
+    describe('event handlers', () => {
+      const base = mockCTBCPayments;
 
       it('registers onCommit when provided as function', () => {
         const onCommit = jest.fn();
@@ -208,6 +204,26 @@ describe('CTBCPayment', () => {
         expect(onCommit).toHaveBeenCalledTimes(1);
         expect(onCommit).toHaveBeenCalledWith({ ok: 1 });
         expect(onServerListen).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe('caches (behaviorial)', () => {
+      const base = mockCTBCPayments;
+
+      it('creates default LRU-backed caches when not injected (get/set work)', async () => {
+        const p: any = new CTBCPayment(base);
+
+        // order cache
+        await p.orderCache.set('o1', { id: 'order-1' });
+        await p.bindCardRequestsCache.set('r1', { id: 'req-1' });
+
+        await expect(p.orderCache.get('o1')).resolves.toEqual({
+          id: 'order-1',
+        });
+
+        await expect(p.bindCardRequestsCache.get('r1')).resolves.toEqual({
+          id: 'req-1',
+        });
       });
     });
   });
