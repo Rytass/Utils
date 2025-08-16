@@ -12,7 +12,7 @@ import {
   useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { DrawingMode, EditMode, ViewMode } from '../typings';
+import { DrawingMode, EditMode, ViewMode, WmsNodeClickInfo } from '../typings';
 import {
   DEFAULT_PATH_LABEL,
   DEFAULT_RECTANGLE_COLOR,
@@ -23,7 +23,7 @@ import {
   calculateImageSize,
   calculateStaggeredPosition,
 } from './utils/nodeUtils';
-import { logMapData, transformNodesToMapData } from './utils/mapDataTransform';
+import { logMapData, transformNodesToMapData, logNodeData, transformNodeToClickInfo } from './utils/mapDataTransform';
 import { useDirectStateHistory } from './hooks/useDirectStateHistory';
 import Toolbar from './Toolbar';
 import Breadcrumb from './components/breadcrumb/Breadcrumb';
@@ -36,6 +36,7 @@ interface WmsMapModalProps {
   open: boolean;
   viewMode?: ViewMode;
   colorPalette?: string[];
+  onNodeClick?: (nodeInfo: WmsNodeClickInfo) => void;
 }
 
 const initialNodes: Node[] = [];
@@ -52,6 +53,7 @@ const WmsMapContent: FC<{
   onToggleRectangleTool: () => void;
   onTogglePenTool: () => void;
   onColorChange: (color: string) => void;
+  onNodeClick?: (nodeInfo: WmsNodeClickInfo) => void;
 }> = ({
   editMode,
   drawingMode,
@@ -62,6 +64,7 @@ const WmsMapContent: FC<{
   onToggleRectangleTool,
   onTogglePenTool,
   onColorChange,
+  onNodeClick,
 }) => {
   const [nodes, setNodes, onNodesChangeOriginal] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -600,6 +603,28 @@ const WmsMapContent: FC<{
     }
   }, [viewMode]);
 
+  // 處理節點點擊事件 (React Flow 內建事件)
+  const handleNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
+    console.log('🖱️ Node clicked (React Flow)', { 
+      id: node.id.slice(-4), 
+      type: node.type, 
+      viewMode,
+      editMode 
+    });
+    
+    // 輸出詳細的圖形資訊（和儲存時相同的格式）
+    logNodeData(node);
+    
+    // 如果父組件提供了回調函數，將點擊資訊傳遞給父組件
+    if (onNodeClick) {
+      const nodeClickInfo = transformNodeToClickInfo(node);
+      if (nodeClickInfo) {
+        console.log('📤 將點擊資訊傳遞給父組件:', nodeClickInfo);
+        onNodeClick(nodeClickInfo);
+      }
+    }
+  }, [viewMode, editMode, onNodeClick]);
+
   // 處理 Command+D 快捷鍵複製並貼上功能
   const handleCopyPaste = useCallback(() => {
     // 決定要複製的節點：優先使用最後複製的節點，否則使用選中的節點
@@ -838,12 +863,13 @@ const WmsMapContent: FC<{
         hoveredNodeId={hoveredNodeId}
         onNodeMouseEnter={handleNodeMouseEnter}
         onNodeMouseLeave={handleNodeMouseLeave}
+        onNodeClick={handleNodeClick}
       />
     </>
   );
 };
 
-const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open, viewMode: initialViewMode = ViewMode.EDIT, colorPalette }) => {
+const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open, viewMode: initialViewMode = ViewMode.EDIT, colorPalette, onNodeClick }) => {
   const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
   const [editMode, setEditMode] = useState<EditMode>(EditMode.BACKGROUND);
   const [drawingMode, setDrawingMode] = useState<DrawingMode>(DrawingMode.NONE);
@@ -933,6 +959,7 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open, viewMode: initialVie
               onToggleRectangleTool={handleToggleRectangleTool}
               onTogglePenTool={handleTogglePenTool}
               onColorChange={handleColorChange}
+              onNodeClick={onNodeClick}
             />
           </ReactFlowProvider>
         </div>

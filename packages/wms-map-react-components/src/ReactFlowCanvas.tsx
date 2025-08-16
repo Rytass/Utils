@@ -43,6 +43,7 @@ interface ReactFlowCanvasProps {
   hoveredNodeId?: string | null;
   onNodeMouseEnter?: (event: React.MouseEvent, node: Node) => void;
   onNodeMouseLeave?: (event: React.MouseEvent, node: Node) => void;
+  onNodeClick?: (event: React.MouseEvent, node: Node) => void;
 }
 
 const CustomControls: FC = () => {
@@ -111,6 +112,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
   hoveredNodeId,
   onNodeMouseEnter,
   onNodeMouseLeave,
+  onNodeClick,
 }) => {
   const {
     containerRef: rectContainerRef,
@@ -227,6 +229,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
         onPaneClick={handlePaneClick}
         onNodeMouseEnter={onNodeMouseEnter}
         onNodeMouseLeave={onNodeMouseLeave}
+        onNodeClick={onNodeClick}
         nodeTypes={nodeTypes}
         className={styles.reactFlowCanvas}
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
