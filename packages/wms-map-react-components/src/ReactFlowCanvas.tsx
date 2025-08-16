@@ -44,6 +44,7 @@ interface ReactFlowCanvasProps {
   onNodeMouseEnter?: (event: React.MouseEvent, node: Node) => void;
   onNodeMouseLeave?: (event: React.MouseEvent, node: Node) => void;
   onNodeClick?: (event: React.MouseEvent, node: Node) => void;
+  showBackground?: boolean;
 }
 
 const CustomControls: FC = () => {
@@ -113,7 +114,10 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
   onNodeMouseEnter,
   onNodeMouseLeave,
   onNodeClick,
+  showBackground = true,
 }) => {
+  // console.log('🖼️ ReactFlowCanvas 接收到 showBackground:', showBackground);
+  
   const {
     containerRef: rectContainerRef,
     isDrawing: isDrawingRect,
@@ -140,7 +144,14 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
 
   const nodeTypes = useMemo(
     () => ({
-      imageNode: (props: any) => <ImageNode {...props} editMode={editMode} viewMode={viewMode} />,
+      imageNode: (props: any) => (
+        <ImageNode 
+          {...props} 
+          editMode={editMode} 
+          viewMode={viewMode} 
+          showBackground={showBackground}
+        />
+      ),
       rectangleNode: (props: any) => (
         <RectangleNode 
           {...props} 
@@ -162,7 +173,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
         />
       ),
     }),
-    [editMode, viewMode, onTextEditComplete, onPathPointsChange, onPathPointDragStateChange, hoveredNodeId],
+    [editMode, viewMode, onTextEditComplete, onPathPointsChange, onPathPointDragStateChange, hoveredNodeId, showBackground],
   );
 
   // Use a callback ref to assign both drawing hooks to the same container

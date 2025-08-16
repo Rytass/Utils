@@ -29,6 +29,7 @@ import Toolbar from './Toolbar';
 import Breadcrumb from './components/breadcrumb/Breadcrumb';
 import ReactFlowCanvas from './ReactFlowCanvas';
 import ViewModeToggle from './components/ViewModeToggle';
+import ViewModeToolbar from './components/ViewModeToolbar';
 import styles from './wmsMapModal.module.scss';
 
 interface WmsMapModalProps {
@@ -66,12 +67,24 @@ const WmsMapContent: FC<{
   onColorChange,
   onNodeClick,
 }) => {
+  const renderCount = useRef(0);
+  renderCount.current += 1;
+  
+  // console.log('🔄 WmsMapContent 重新渲染:', { 
+  //   editMode, 
+  //   drawingMode, 
+  //   viewMode,
+  //   renderCount: renderCount.current
+  // });
+  
   const [nodes, setNodes, onNodesChangeOriginal] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
   const [lastCopiedNode, setLastCopiedNode] = useState<Node | null>(null);
   const [isEditingPathPoints, setIsEditingPathPoints] = useState(false);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [showBackground, setShowBackground] = useState<boolean>(true);
+  const showBackgroundRef = useRef<boolean>(true);
   
   // Get React Flow instance for viewport information
   const { getViewport, getNodes, getEdges } = useReactFlow();
@@ -625,191 +638,16 @@ const WmsMapContent: FC<{
     }
   }, [viewMode, editMode, onNodeClick]);
 
-  // 處理 Command+D 快捷鍵複製並貼上功能
-  const handleCopyPaste = useCallback(() => {
-    // 決定要複製的節點：優先使用最後複製的節點，否則使用選中的節點
-    let nodeToCopy: Node | null = null;
+  const handleToggleBackground = useCallback((show: boolean) => {
+    console.log('🖼️ 切換底圖顯示:', { showBackground: show });
+    showBackgroundRef.current = show;
+    setShowBackground(show);
+  }, [showBackground]);
 
-    if (lastCopiedNode) {
-      // 如果有最後複製的節點，使用它
-      nodeToCopy = lastCopiedNode;
-    } else if (selectedNodes.length === 1) {
-      // 否則使用選中的節點
-      nodeToCopy = selectedNodes[0];
-    }
-
-    if (!nodeToCopy) return;
-
-    // 只處理可複製的節點類型
-    if (
-      !['rectangleNode', 'pathNode', 'imageNode'].includes(
-        nodeToCopy.type || '',
-      )
-    ) {
-      return;
-    }
-
-
-    // 動態導入 nodeOperations 工具函數
-    import('./utils/nodeOperations').then(
-      ({ createRectangleCopy, createPathCopy, createImageCopy }) => {
-        let newNode: Node;
-
-        switch (nodeToCopy.type) {
-          case 'rectangleNode':
-            newNode = createRectangleCopy({
-              currentNode: nodeToCopy,
-              offsetPercentage: 0.25,
-              nodeType: 'rectangleNode',
-              data: nodeToCopy.data,
-            });
-
-            break;
-          case 'pathNode':
-            newNode = createPathCopy({
-              currentNode: nodeToCopy,
-              offsetPercentage: 0.25,
-              nodeType: 'pathNode',
-              data: nodeToCopy.data,
-            });
-
-            break;
-          case 'imageNode':
-            newNode = createImageCopy({
-              currentNode: nodeToCopy,
-              offsetPercentage: 0.25,
-              nodeType: 'imageNode',
-              data: nodeToCopy.data,
-            });
-
-            break;
-          default:
-            return;
-        }
-
-        setNodes((nds) => {
-          // 計算下一個 zIndex
-          const maxZIndex = Math.max(...nds.map((n) => n.zIndex || 0), 0);
-          const nodeWithZIndex = { ...newNode, zIndex: maxZIndex + 1 };
-          const newNodes = [...nds, nodeWithZIndex];
-
-          // 操作完成後記錄狀態
-          setTimeout(() => {
-            saveState(newNodes, edges, 'copy-paste');
-          }, 10);
-
-          return newNodes;
-        });
-
-        // 更新最後複製的節點為新創建的節點，放在 setNodes 外面以確保狀態正確更新
-        setLastCopiedNode(newNode);
-      },
-    );
-  }, [selectedNodes, lastCopiedNode, setNodes, saveState, edges]);
-
-  // 處理 Delete 鍵刪除選中節點功能
-  const handleDeleteSelected = useCallback(() => {
-    if (selectedNodes.length === 0) return;
-
-
-    const selectedNodeIds = selectedNodes.map((node) => node.id);
-
-    setNodes((nds) => {
-      const newNodes = nds.filter((node) => !selectedNodeIds.includes(node.id));
-      
-      // 操作完成後記錄狀態
-      setTimeout(() => {
-        saveState(newNodes, edges, 'delete-selected');
-      }, 10);
-      
-      return newNodes;
-    });
-
-    // 重置相關狀態
-    setLastCopiedNode(null);
-  }, [selectedNodes, setNodes, saveState, edges]);
-
-  // 鍵盤事件監聽器
+  // 追蹤 showBackground 狀態變化
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Ctrl+Z (Windows/Linux) 或 Cmd+Z (Mac) - 撤消
-      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
-        event.preventDefault();
-        const result = undo();
-        if (result) {
-          setNodes(result.nodes);
-          setEdges(result.edges);
-          console.log('⌨️ 鍵盤快捷鍵 Undo 執行成功');
-        }
-        return;
-      }
-
-      // Ctrl+Shift+Z (Windows/Linux) 或 Cmd+Shift+Z (Mac) - 重做
-      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && event.shiftKey) {
-        event.preventDefault();
-        const result = redo();
-        if (result) {
-          setNodes(result.nodes);
-          setEdges(result.edges);
-          console.log('⌨️ 鍵盤快捷鍵 Redo 執行成功');
-        }
-        return;
-      }
-
-      // Ctrl+Y (Windows/Linux 替代重做快捷鍵)
-      if (event.ctrlKey && event.key === 'y' && !event.metaKey) {
-        event.preventDefault();
-        const result = redo();
-        if (result) {
-          setNodes(result.nodes);
-          setEdges(result.edges);
-          console.log('⌨️ 鍵盤快捷鍵 Redo (Ctrl+Y) 執行成功');
-        }
-        return;
-      }
-
-      // Command+D (Mac) 或 Ctrl+D (Windows/Linux) - 複製並貼上
-      if ((event.metaKey || event.ctrlKey) && event.key === 'd') {
-        event.preventDefault();
-        handleCopyPaste();
-        return;
-      }
-
-      // Delete 鍵 - 刪除選中節點（但排除文字編輯模式）
-      if (event.key === 'Delete' || event.key === 'Backspace') {
-        // 檢查是否有 input 元素正在焦點中（表示正在編輯文字）
-        const activeElement = document.activeElement;
-        const isEditingText = activeElement && 
-          (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA') &&
-          activeElement.getAttribute('type') !== 'color'; // 排除顏色選擇器
-        
-        // 如果正在編輯文字，不執行刪除圖形的操作
-        if (isEditingText) {
-          return; // 讓瀏覽器執行默認的文字刪除行為
-        }
-        
-        event.preventDefault();
-        handleDeleteSelected();
-        return;
-      }
-    };
-
-    // 添加事件監聽器
-    document.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [undo, redo, setNodes, setEdges, handleCopyPaste, handleDeleteSelected]);
-
-  // 清理顏色變更延遲記錄的 timeout
-  useEffect(() => {
-    return () => {
-      if (colorChangeTimeoutRef.current) {
-        clearTimeout(colorChangeTimeoutRef.current);
-      }
-    };
-  }, []);
+    console.log('📊 showBackground 狀態變化:', showBackground);
+  }, [showBackground]);
 
   return (
     <>
@@ -864,6 +702,14 @@ const WmsMapContent: FC<{
         onNodeMouseEnter={handleNodeMouseEnter}
         onNodeMouseLeave={handleNodeMouseLeave}
         onNodeClick={handleNodeClick}
+        showBackground={showBackground}
+      />
+      
+      {/* ViewModeToolbar - 只在檢視模式下顯示 */}
+      <ViewModeToolbar
+        viewMode={viewMode}
+        showBackground={showBackground}
+        onToggleBackground={handleToggleBackground}
       />
     </>
   );

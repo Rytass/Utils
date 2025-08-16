@@ -30,9 +30,10 @@ interface ImageNodeProps extends NodeProps {
   editMode: EditMode;
   viewMode: ViewMode;
   onResizeComplete?: (id: string, oldSize: { width: number; height: number }, newSize: { width: number; height: number }) => void;
+  showBackground?: boolean;
 }
 
-const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode, viewMode }) => {
+const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode, viewMode, showBackground = true }) => {
   const { setNodes } = useReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
 
@@ -198,9 +199,24 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode, viewMode 
     handleCloseContextMenu,
   ]);
 
+  // 計算節點的顯示狀態 - 在檢視模式下受 showBackground 控制
+  const isVisible = viewMode === ViewMode.EDIT || showBackground;
+  
+  // console.log('🖼️ ImageNode 顯示計算:', { 
+  //   id: id.slice(-4), 
+  //   viewMode, 
+  //   showBackground, 
+  //   isVisible 
+  // });
+
   return (
     <div 
       className={`${styles.imageNode} ${selected ? styles.selected : ''} ${!isSelectable ? styles.nonSelectable : ''}`}
+      style={{ 
+        opacity: isVisible ? opacity : 0,
+        pointerEvents: isVisible ? 'auto' : 'none',
+        transition: 'opacity 0.3s ease',
+      }}
     >
       {selected && isEditable && (
         <NodeResizer
