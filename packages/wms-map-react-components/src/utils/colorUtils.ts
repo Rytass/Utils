@@ -12,14 +12,20 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
 
   // 支援 3 位元和 6 位元的十六進制顏色
   const shorthandRegex = /^([a-f\d])([a-f\d])([a-f\d])$/i;
-  const fullHex = cleanHex.replace(shorthandRegex, (m, r, g, b) => r + r + g + g + b + b);
+  const fullHex = cleanHex.replace(
+    shorthandRegex,
+    (m, r, g, b) => r + r + g + g + b + b,
+  );
 
   const result = /^([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(fullHex);
-  return result ? {
-    r: parseInt(result[1], 16),
-    g: parseInt(result[2], 16),
-    b: parseInt(result[3], 16)
-  } : null;
+
+  return result
+    ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16),
+      }
+    : null;
 }
 
 /**
@@ -28,6 +34,7 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
 function rgbToHex(r: number, g: number, b: number): string {
   const toHex = (n: number) => {
     const hex = Math.round(Math.max(0, Math.min(255, n))).toString(16);
+
     return hex.length === 1 ? '0' + hex : hex;
   };
 
@@ -45,11 +52,12 @@ export function increaseBrightness(color: string, percentage: number): string {
 
   if (!rgb) {
     console.warn(`Invalid color format: ${color}`);
+
     return color;
   }
 
   // 計算亮度增加的因子
-  const factor = 1 + (percentage / 100);
+  const factor = 1 + percentage / 100;
 
   // 應用亮度增加，但不能超過 255
   const newR = Math.min(255, rgb.r * factor);

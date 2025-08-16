@@ -1,15 +1,15 @@
 import { Node } from '@xyflow/react';
-import { 
-  Map, 
-  MapBackground, 
-  MapRectangleRange, 
-  MapPolygonRange, 
+import {
+  Map,
+  MapBackground,
+  MapRectangleRange,
+  MapPolygonRange,
   MapRangeType,
   ID,
   WmsNodeClickInfo,
   ImageNodeClickInfo,
   RectangleNodeClickInfo,
-  PathNodeClickInfo
+  PathNodeClickInfo,
 } from '../../typings';
 
 /**
@@ -29,18 +29,18 @@ export const transformNodesToMapData = (nodes: Node[]): Map => {
           width?: number;
           height?: number;
         };
-        
+
         const background: MapBackground = {
           id: node.id as ID,
           filename: imageData.fileName || 'unknown.jpg',
           x: node.position.x,
           y: node.position.y,
         };
-        
+
         backgrounds.push(background);
         break;
       }
-      
+
       case 'rectangleNode': {
         // RectangleNode 轉換為 MapRectangleRange
         const rectData = node.data as {
@@ -49,7 +49,7 @@ export const transformNodesToMapData = (nodes: Node[]): Map => {
           color?: string;
           label?: string;
         };
-        
+
         const rectangleRange: MapRectangleRange = {
           id: node.id as ID,
           type: MapRangeType.RECTANGLE,
@@ -60,11 +60,11 @@ export const transformNodesToMapData = (nodes: Node[]): Map => {
           height: rectData.height || 100,
           text: rectData.label, // 將 React Flow 節點的 label 映射到 text 欄位
         };
-        
+
         ranges.push(rectangleRange);
         break;
       }
-      
+
       case 'pathNode': {
         // PathNode 轉換為 MapPolygonRange
         const pathData = node.data as {
@@ -72,7 +72,7 @@ export const transformNodesToMapData = (nodes: Node[]): Map => {
           color?: string;
           label?: string;
         };
-        
+
         const polygonRange: MapPolygonRange = {
           id: node.id as ID,
           type: MapRangeType.POLYGON,
@@ -80,11 +80,11 @@ export const transformNodesToMapData = (nodes: Node[]): Map => {
           points: pathData.points || [],
           text: pathData.label, // 將 React Flow 節點的 label 映射到 text 欄位
         };
-        
+
         ranges.push(polygonRange);
         break;
       }
-      
+
       default:
         // 忽略未知的節點類型
         console.warn(`Unknown node type: ${node.type}`, node);
@@ -105,7 +105,9 @@ export const transformNodesToMapData = (nodes: Node[]): Map => {
 /**
  * 轉換 React Flow 節點為點擊資訊格式
  */
-export const transformNodeToClickInfo = (node: Node): WmsNodeClickInfo | null => {
+export const transformNodeToClickInfo = (
+  node: Node,
+): WmsNodeClickInfo | null => {
   const baseInfo = {
     id: node.id as ID,
     type: node.type!,
@@ -124,35 +126,35 @@ export const transformNodeToClickInfo = (node: Node): WmsNodeClickInfo | null =>
         originalWidth?: number;
         originalHeight?: number;
       };
-      
+
       const mapBackground: MapBackground = {
         id: node.id as ID,
         filename: imageData.fileName || 'unknown.jpg',
         x: node.position.x,
         y: node.position.y,
       };
-      
+
       const clickInfo: ImageNodeClickInfo = {
         ...baseInfo,
         type: 'imageNode',
         imageData: {
           filename: imageData.fileName || 'unknown.jpg',
-          size: { 
-            width: imageData.width || 0, 
-            height: imageData.height || 0 
+          size: {
+            width: imageData.width || 0,
+            height: imageData.height || 0,
           },
           originalSize: {
             width: imageData.originalWidth || 0,
-            height: imageData.originalHeight || 0
+            height: imageData.originalHeight || 0,
           },
           imageUrl: imageData.imageUrl,
         },
         mapBackground,
       };
-      
+
       return clickInfo;
     }
-    
+
     case 'rectangleNode': {
       const rectData = node.data as {
         width?: number;
@@ -160,7 +162,7 @@ export const transformNodeToClickInfo = (node: Node): WmsNodeClickInfo | null =>
         color?: string;
         label?: string;
       };
-      
+
       const mapRectangleRange: MapRectangleRange = {
         id: node.id as ID,
         type: MapRangeType.RECTANGLE,
@@ -171,24 +173,24 @@ export const transformNodeToClickInfo = (node: Node): WmsNodeClickInfo | null =>
         height: rectData.height || 100,
         text: rectData.label,
       };
-      
+
       const clickInfo: RectangleNodeClickInfo = {
         ...baseInfo,
         type: 'rectangleNode',
         rectangleData: {
           color: rectData.color || '#0000FF',
-          size: { 
-            width: rectData.width || 100, 
-            height: rectData.height || 100 
+          size: {
+            width: rectData.width || 100,
+            height: rectData.height || 100,
           },
           text: rectData.label,
         },
         mapRectangleRange,
       };
-      
+
       return clickInfo;
     }
-    
+
     case 'pathNode': {
       const pathData = node.data as {
         points: { x: number; y: number }[];
@@ -196,14 +198,17 @@ export const transformNodeToClickInfo = (node: Node): WmsNodeClickInfo | null =>
         strokeWidth?: number;
         label?: string;
       };
-      
-      const bounds = pathData.points?.length > 0 ? {
-        minX: Math.min(...pathData.points.map(p => p.x)),
-        minY: Math.min(...pathData.points.map(p => p.y)),
-        maxX: Math.max(...pathData.points.map(p => p.x)),
-        maxY: Math.max(...pathData.points.map(p => p.y)),
-      } : null;
-      
+
+      const bounds =
+        pathData.points?.length > 0
+          ? {
+              minX: Math.min(...pathData.points.map((p) => p.x)),
+              minY: Math.min(...pathData.points.map((p) => p.y)),
+              maxX: Math.max(...pathData.points.map((p) => p.x)),
+              maxY: Math.max(...pathData.points.map((p) => p.y)),
+            }
+          : null;
+
       const mapPolygonRange: MapPolygonRange = {
         id: node.id as ID,
         type: MapRangeType.POLYGON,
@@ -211,7 +216,7 @@ export const transformNodeToClickInfo = (node: Node): WmsNodeClickInfo | null =>
         points: pathData.points || [],
         text: pathData.label,
       };
-      
+
       const clickInfo: PathNodeClickInfo = {
         ...baseInfo,
         type: 'pathNode',
@@ -225,12 +230,13 @@ export const transformNodeToClickInfo = (node: Node): WmsNodeClickInfo | null =>
         },
         mapPolygonRange,
       };
-      
+
       return clickInfo;
     }
-    
+
     default:
       console.warn(`未知的節點類型: ${node.type}`);
+
       return null;
   }
 };
@@ -240,7 +246,7 @@ export const transformNodeToClickInfo = (node: Node): WmsNodeClickInfo | null =>
  */
 export const logNodeData = (node: Node): void => {
   console.group(`🎯 圖形點擊資訊 - ${node.type}`);
-  
+
   console.log('📋 基本資訊:', {
     id: node.id,
     type: node.type,
@@ -259,21 +265,21 @@ export const logNodeData = (node: Node): void => {
         originalWidth?: number;
         originalHeight?: number;
       };
-      
+
       console.log('🖼️ 背景圖片資訊:', {
         filename: imageData.fileName || 'unknown.jpg',
         position: { x: node.position.x, y: node.position.y },
-        size: { 
-          width: imageData.width, 
-          height: imageData.height 
+        size: {
+          width: imageData.width,
+          height: imageData.height,
         },
         originalSize: {
           width: imageData.originalWidth,
-          height: imageData.originalHeight
+          height: imageData.originalHeight,
         },
         imageUrl: imageData.imageUrl?.slice(0, 50) + '...',
       });
-      
+
       // 轉換格式（對應儲存時的格式）
       const background: MapBackground = {
         id: node.id as ID,
@@ -281,11 +287,11 @@ export const logNodeData = (node: Node): void => {
         x: node.position.x,
         y: node.position.y,
       };
-      
+
       console.log('💾 儲存格式 (MapBackground):', background);
       break;
     }
-    
+
     case 'rectangleNode': {
       const rectData = node.data as {
         width?: number;
@@ -293,17 +299,17 @@ export const logNodeData = (node: Node): void => {
         color?: string;
         label?: string;
       };
-      
+
       console.log('📐 矩形資訊:', {
         color: rectData.color,
         position: { x: node.position.x, y: node.position.y },
-        size: { 
-          width: rectData.width || 100, 
-          height: rectData.height || 100 
+        size: {
+          width: rectData.width || 100,
+          height: rectData.height || 100,
         },
         text: rectData.label,
       });
-      
+
       // 轉換格式（對應儲存時的格式）
       const rectangleRange: MapRectangleRange = {
         id: node.id as ID,
@@ -315,11 +321,11 @@ export const logNodeData = (node: Node): void => {
         height: rectData.height || 100,
         text: rectData.label,
       };
-      
+
       console.log('💾 儲存格式 (MapRectangleRange):', rectangleRange);
       break;
     }
-    
+
     case 'pathNode': {
       const pathData = node.data as {
         points: { x: number; y: number }[];
@@ -327,7 +333,7 @@ export const logNodeData = (node: Node): void => {
         strokeWidth?: number;
         label?: string;
       };
-      
+
       console.log('🔗 路徑資訊:', {
         color: pathData.color,
         strokeWidth: pathData.strokeWidth,
@@ -335,14 +341,17 @@ export const logNodeData = (node: Node): void => {
         points: pathData.points,
         text: pathData.label,
         // 計算路徑邊界
-        bounds: pathData.points?.length > 0 ? {
-          minX: Math.min(...pathData.points.map(p => p.x)),
-          minY: Math.min(...pathData.points.map(p => p.y)),
-          maxX: Math.max(...pathData.points.map(p => p.x)),
-          maxY: Math.max(...pathData.points.map(p => p.y)),
-        } : null,
+        bounds:
+          pathData.points?.length > 0
+            ? {
+                minX: Math.min(...pathData.points.map((p) => p.x)),
+                minY: Math.min(...pathData.points.map((p) => p.y)),
+                maxX: Math.max(...pathData.points.map((p) => p.x)),
+                maxY: Math.max(...pathData.points.map((p) => p.y)),
+              }
+            : null,
       });
-      
+
       // 轉換格式（對應儲存時的格式）
       const polygonRange: MapPolygonRange = {
         id: node.id as ID,
@@ -351,16 +360,16 @@ export const logNodeData = (node: Node): void => {
         points: pathData.points || [],
         text: pathData.label,
       };
-      
+
       console.log('💾 儲存格式 (MapPolygonRange):', polygonRange);
       break;
     }
-    
+
     default:
       console.warn(`未知的節點類型: ${node.type}`);
       break;
   }
-  
+
   console.log('🔢 完整節點資料:', node);
   console.groupEnd();
 };
@@ -370,13 +379,13 @@ export const logNodeData = (node: Node): void => {
  */
 export const logMapData = (mapData: Map): void => {
   console.group('🗺️ WMS Map Data Export');
-  
+
   console.log('📋 Map Overview:', {
     id: mapData.id,
     backgroundCount: mapData.backgrounds.length,
     rangeCount: mapData.ranges.length,
   });
-  
+
   if (mapData.backgrounds.length > 0) {
     console.group('🖼️ Background Images');
     mapData.backgrounds.forEach((bg, index) => {
@@ -386,14 +395,16 @@ export const logMapData = (mapData: Map): void => {
         position: { x: bg.x, y: bg.y },
       });
     });
+
     console.groupEnd();
   }
-  
+
   if (mapData.ranges.length > 0) {
     console.group('📐 Ranges');
     mapData.ranges.forEach((range, index) => {
       if (range.type === MapRangeType.RECTANGLE) {
         const rect = range as MapRectangleRange;
+
         console.log(`Rectangle ${index + 1}:`, {
           id: rect.id,
           type: rect.type,
@@ -404,6 +415,7 @@ export const logMapData = (mapData: Map): void => {
         });
       } else if (range.type === MapRangeType.POLYGON) {
         const poly = range as MapPolygonRange;
+
         console.log(`Polygon ${index + 1}:`, {
           id: poly.id,
           type: poly.type,
@@ -414,9 +426,10 @@ export const logMapData = (mapData: Map): void => {
         });
       }
     });
+
     console.groupEnd();
   }
-  
+
   console.log('📄 Complete Map Data:', mapData);
   console.groupEnd();
 };

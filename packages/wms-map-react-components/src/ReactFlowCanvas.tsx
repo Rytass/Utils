@@ -37,7 +37,11 @@ interface ReactFlowCanvasProps {
   onCreatePath: (points: { x: number; y: number }[]) => void;
   onSelectionChange?: (params: OnSelectionChangeParams) => void;
   onTextEditComplete?: (id: string, oldText: string, newText: string) => void;
-  onPathPointsChange?: (id: string, oldPoints: { x: number; y: number }[], newPoints: { x: number; y: number }[]) => void;
+  onPathPointsChange?: (
+    id: string,
+    oldPoints: { x: number; y: number }[],
+    newPoints: { x: number; y: number }[],
+  ) => void;
   onPathPointDragStateChange?: (isDragging: boolean) => void;
   isEditingPathPoints?: boolean;
   hoveredNodeId?: string | null;
@@ -56,7 +60,7 @@ const CustomControls: FC = () => {
     onChange: (viewport) => {
       setZoom(Math.round(viewport.zoom * 100));
       console.log('🔍 Zoom changed:', viewport.zoom);
-    }
+    },
   });
 
   const handleZoomIn = () => {
@@ -117,7 +121,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
   showBackground = true,
 }) => {
   // console.log('🖼️ ReactFlowCanvas 接收到 showBackground:', showBackground);
-  
+
   const {
     containerRef: rectContainerRef,
     isDrawing: isDrawingRect,
@@ -145,18 +149,18 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
   const nodeTypes = useMemo(
     () => ({
       imageNode: (props: any) => (
-        <ImageNode 
-          {...props} 
-          editMode={editMode} 
-          viewMode={viewMode} 
+        <ImageNode
+          {...props}
+          editMode={editMode}
+          viewMode={viewMode}
           showBackground={showBackground}
         />
       ),
       rectangleNode: (props: any) => (
-        <RectangleNode 
-          {...props} 
-          editMode={editMode} 
-          viewMode={viewMode} 
+        <RectangleNode
+          {...props}
+          editMode={editMode}
+          viewMode={viewMode}
           onTextEditComplete={onTextEditComplete}
           isHovered={hoveredNodeId === props.id}
         />
@@ -173,7 +177,15 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
         />
       ),
     }),
-    [editMode, viewMode, onTextEditComplete, onPathPointsChange, onPathPointDragStateChange, hoveredNodeId, showBackground],
+    [
+      editMode,
+      viewMode,
+      onTextEditComplete,
+      onPathPointsChange,
+      onPathPointDragStateChange,
+      hoveredNodeId,
+      showBackground,
+    ],
   );
 
   // Use a callback ref to assign both drawing hooks to the same container
@@ -190,25 +202,39 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
   };
 
   // Handle pane click for auto-completing pen drawing
-  const handlePaneClick = useCallback((event?: any) => {
-    // Check if any modifier keys are pressed - if so, don't auto-complete
-    // This prevents accidental completion when using Shift for line constraints
-    const hasModifierKeys = event && (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey);
+  const handlePaneClick = useCallback(
+    (event?: any) => {
+      // Check if any modifier keys are pressed - if so, don't auto-complete
+      // This prevents accidental completion when using Shift for line constraints
+      const hasModifierKeys =
+        event &&
+        (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey);
 
-    console.log('📋 ReactFlow pane clicked', {
-      drawingMode,
-      editMode,
-      isDrawingPen,
-      hasModifierKeys,
-      willForceComplete: drawingMode === DrawingMode.PEN && editMode === EditMode.LAYER && isDrawingPen && !hasModifierKeys
-    });
+      console.log('📋 ReactFlow pane clicked', {
+        drawingMode,
+        editMode,
+        isDrawingPen,
+        hasModifierKeys,
+        willForceComplete:
+          drawingMode === DrawingMode.PEN &&
+          editMode === EditMode.LAYER &&
+          isDrawingPen &&
+          !hasModifierKeys,
+      });
 
-    // Only auto-complete if we're in pen drawing mode, actually drawing, and no modifier keys are pressed
-    if (drawingMode === DrawingMode.PEN && editMode === EditMode.LAYER && isDrawingPen && !hasModifierKeys) {
-      console.log('🔴 Force completing path from pane click');
-      forceComplete();
-    }
-  }, [drawingMode, editMode, isDrawingPen, forceComplete]);
+      // Only auto-complete if we're in pen drawing mode, actually drawing, and no modifier keys are pressed
+      if (
+        drawingMode === DrawingMode.PEN &&
+        editMode === EditMode.LAYER &&
+        isDrawingPen &&
+        !hasModifierKeys
+      ) {
+        console.log('🔴 Force completing path from pane click');
+        forceComplete();
+      }
+    },
+    [drawingMode, editMode, isDrawingPen, forceComplete],
+  );
 
   // Add wheel event listener for debugging
   const handleWheel = useCallback((event: React.WheelEvent) => {
@@ -216,7 +242,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
       deltaY: event.deltaY,
       ctrlKey: event.ctrlKey,
       metaKey: event.metaKey,
-      target: event.target
+      target: event.target,
     });
   }, []);
 
@@ -258,7 +284,9 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
         }
         panOnScroll={false}
         zoomOnScroll={true}
-        zoomOnDoubleClick={viewMode === ViewMode.EDIT && drawingMode !== DrawingMode.PEN}
+        zoomOnDoubleClick={
+          viewMode === ViewMode.EDIT && drawingMode !== DrawingMode.PEN
+        }
         nodeOrigin={[0, 0]}
         preventScrolling={true}
       >

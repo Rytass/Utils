@@ -1,7 +1,16 @@
 import React, { FC, useState, useEffect } from 'react';
-import { Modal, ModalHeader, ModalBody, ModalFooter, Button } from '@mezzanine-ui/react';
+import {
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+} from '@mezzanine-ui/react';
 import styles from './breadcrumbEditModal.module.scss';
-import { FormFieldsWrapper, InputField } from '@mezzanine-ui/react-hook-form-v2';
+import {
+  FormFieldsWrapper,
+  InputField,
+} from '@mezzanine-ui/react-hook-form-v2';
 import { useForm } from 'react-hook-form';
 
 interface BreadcrumbEditModalProps {
@@ -40,9 +49,7 @@ const BreadcrumbEditModal: FC<BreadcrumbEditModalProps> = ({
 
   return (
     <Modal open={open} onClose={handleCancel}>
-      <ModalHeader>
-        修改當前區域名稱
-      </ModalHeader>
+      <ModalHeader>修改當前區域名稱</ModalHeader>
       <ModalBody>
         <FormFieldsWrapper methods={methods}>
           <div className={styles.modalContent}>
@@ -57,11 +64,7 @@ const BreadcrumbEditModal: FC<BreadcrumbEditModalProps> = ({
         </FormFieldsWrapper>
       </ModalBody>
       <ModalFooter className={styles.modalFooter}>
-        <Button
-          size="large"
-          variant="outlined"
-          onClick={handleCancel}
-        >
+        <Button size="large" variant="outlined" onClick={handleCancel}>
           取消
         </Button>
         <Button

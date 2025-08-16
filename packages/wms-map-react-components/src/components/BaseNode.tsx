@@ -26,7 +26,8 @@ const BaseNode: FC<BaseNodeProps> = ({
 }) => {
   // Only editable in LAYER mode
   const isEditable = editMode === EditMode.LAYER;
-  const opacity = editMode === EditMode.LAYER ? ACTIVE_OPACITY : RECTANGLE_INACTIVE_OPACITY;
+  const opacity =
+    editMode === EditMode.LAYER ? ACTIVE_OPACITY : RECTANGLE_INACTIVE_OPACITY;
 
   // Context menu functionality
   const {
@@ -46,17 +47,17 @@ const BaseNode: FC<BaseNodeProps> = ({
     setEditingText,
     handleDoubleClick,
     handleKeyDown,
-  } = useTextEditing({ id, label, editMode, isEditable });
+  } = useTextEditing({ id, label, isEditable });
 
   return (
     <div className={`${className} ${selected ? 'selected' : ''}`}>
-      <div 
+      <div
         onDoubleClick={handleDoubleClick}
         onContextMenu={handleContextMenu}
         style={{ opacity }}
       >
         {children}
-        
+
         {/* Text editing overlay */}
         {isEditing && (
           <input
@@ -78,7 +79,7 @@ const BaseNode: FC<BaseNodeProps> = ({
           />
         )}
       </div>
-      
+
       {/* Context Menu */}
       <ContextMenu
         visible={contextMenu.visible}

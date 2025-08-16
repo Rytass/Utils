@@ -5,10 +5,18 @@ import styles from './breadcrumb.module.scss';
 interface BreadcrumbProps {
   warehouseIds: string[];
   onWarehouseClick?: (warehouseId: string, index: number) => void;
-  onWarehouseEdit?: (warehouseId: string, newName: string, index: number) => void;
+  onWarehouseEdit?: (
+    warehouseId: string,
+    newName: string,
+    index: number,
+  ) => void;
 }
 
-const Breadcrumb: FC<BreadcrumbProps> = ({ warehouseIds, onWarehouseClick, onWarehouseEdit }) => {
+const Breadcrumb: FC<BreadcrumbProps> = ({
+  warehouseIds,
+  onWarehouseClick,
+  onWarehouseEdit,
+}) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number>(-1);
@@ -123,7 +131,9 @@ const Breadcrumb: FC<BreadcrumbProps> = ({ warehouseIds, onWarehouseClick, onWar
     <>
       <div className={styles.breadcrumbSection}>
         <div className={styles.warehouseIdSection}>
-          {shouldCollapse ? renderCollapsedBreadcrumb() : renderFullBreadcrumb()}
+          {shouldCollapse
+            ? renderCollapsedBreadcrumb()
+            : renderFullBreadcrumb()}
           <button
             className={styles.editButton}
             onClick={handleEditClick}

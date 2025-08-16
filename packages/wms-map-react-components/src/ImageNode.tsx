@@ -29,11 +29,22 @@ interface ImageNodeData {
 interface ImageNodeProps extends NodeProps {
   editMode: EditMode;
   viewMode: ViewMode;
-  onResizeComplete?: (id: string, oldSize: { width: number; height: number }, newSize: { width: number; height: number }) => void;
+  onResizeComplete?: (
+    id: string,
+    oldSize: { width: number; height: number },
+    newSize: { width: number; height: number },
+  ) => void;
   showBackground?: boolean;
 }
 
-const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode, viewMode, showBackground = true }) => {
+const ImageNode: FC<ImageNodeProps> = ({
+  data,
+  selected,
+  id,
+  editMode,
+  viewMode,
+  showBackground = true,
+}) => {
   const { setNodes } = useReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
 
@@ -57,9 +68,13 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode, viewMode,
   // Calculate aspect ratio
   const aspectRatio = originalWidth / originalHeight;
   // Check if this node should be editable based on edit mode and view mode
-  const isEditable = viewMode === ViewMode.EDIT && editMode === EditMode.BACKGROUND;
+  const isEditable =
+    viewMode === ViewMode.EDIT && editMode === EditMode.BACKGROUND;
+
   // Check if this node should be selectable (only in BACKGROUND mode or VIEW mode)
-  const isSelectable = editMode === EditMode.BACKGROUND || viewMode === ViewMode.VIEW;
+  const isSelectable =
+    editMode === EditMode.BACKGROUND || viewMode === ViewMode.VIEW;
+
   const opacity =
     editMode === EditMode.BACKGROUND ? ACTIVE_OPACITY : INACTIVE_OPACITY;
 
@@ -111,7 +126,12 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode, viewMode,
           node.id === id
             ? {
                 ...node,
-                data: { ...node.data, width: newWidth, height: newHeight, isResizing: true },
+                data: {
+                  ...node.data,
+                  width: newWidth,
+                  height: newHeight,
+                  isResizing: true,
+                },
                 position: { x: params.x, y: params.y },
               }
             : node,
@@ -141,7 +161,12 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode, viewMode,
           node.id === id
             ? {
                 ...node,
-                data: { ...node.data, width: newWidth, height: newHeight, isResizing: undefined },
+                data: {
+                  ...node.data,
+                  width: newWidth,
+                  height: newHeight,
+                  isResizing: undefined,
+                },
                 position: { x: params.x, y: params.y },
               }
             : node,
@@ -201,18 +226,18 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode, viewMode,
 
   // 計算節點的顯示狀態 - 在檢視模式下受 showBackground 控制
   const isVisible = viewMode === ViewMode.EDIT || showBackground;
-  
-  // console.log('🖼️ ImageNode 顯示計算:', { 
-  //   id: id.slice(-4), 
-  //   viewMode, 
-  //   showBackground, 
-  //   isVisible 
+
+  // console.log('🖼️ ImageNode 顯示計算:', {
+  //   id: id.slice(-4),
+  //   viewMode,
+  //   showBackground,
+  //   isVisible
   // });
 
   return (
-    <div 
+    <div
       className={`${styles.imageNode} ${selected ? styles.selected : ''} ${!isSelectable ? styles.nonSelectable : ''}`}
-      style={{ 
+      style={{
         opacity: isVisible ? opacity : 0,
         pointerEvents: isVisible ? 'auto' : 'none',
         transition: 'opacity 0.3s ease',
@@ -231,7 +256,12 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode, viewMode,
           handleClassName={styles.customResizeHandle}
         />
       )}
-      <div className={styles.imageContainer} onContextMenu={viewMode === ViewMode.EDIT ? handleContextMenu : undefined}>
+      <div
+        className={styles.imageContainer}
+        onContextMenu={
+          viewMode === ViewMode.EDIT ? handleContextMenu : undefined
+        }
+      >
         <img
           src={imageUrl}
           alt={fileName || 'Uploaded image'}

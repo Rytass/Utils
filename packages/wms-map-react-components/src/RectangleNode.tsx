@@ -1,5 +1,10 @@
 import React, { FC, useCallback, useEffect, useState } from 'react';
-import { NodeProps, NodeResizer, useReactFlow, useUpdateNodeInternals } from '@xyflow/react';
+import {
+  NodeProps,
+  NodeResizer,
+  useReactFlow,
+  useUpdateNodeInternals,
+} from '@xyflow/react';
 import { EditMode, ViewMode } from '../typings';
 import {
   ACTIVE_OPACITY,
@@ -66,22 +71,6 @@ const RectangleNode: FC<RectangleNodeProps> = ({
   const opacity =
     editMode === EditMode.LAYER ? ACTIVE_OPACITY : RECTANGLE_INACTIVE_OPACITY;
 
-  // Update node data function (similar to ImageNode implementation)
-  const updateNodeData = useCallback(
-    (updates: Partial<RectangleNodeData>) => {
-      setNodes((nodes) =>
-        nodes.map((node) =>
-          node.id === id
-            ? { ...node, data: { ...node.data, ...updates } }
-            : node,
-        ),
-      );
-
-      updateNodeInternals(id);
-    },
-    [id, setNodes, updateNodeInternals],
-  );
-
   // Context menu functionality
   const {
     contextMenu,
@@ -103,7 +92,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({
     handleDoubleClick,
     handleKeyDown,
     handleBlur,
-  } = useTextEditing({ id, label, editMode, isEditable, onTextEditComplete });
+  } = useTextEditing({ id, label, isEditable, onTextEditComplete });
 
   // Handle resize start
   const handleResizeStart = useCallback((event: any, params: any) => {
@@ -129,7 +118,12 @@ const RectangleNode: FC<RectangleNodeProps> = ({
           node.id === id
             ? {
                 ...node,
-                data: { ...node.data, width: params.width, height: params.height, isResizing: true },
+                data: {
+                  ...node.data,
+                  width: params.width,
+                  height: params.height,
+                  isResizing: true,
+                },
                 position: { x: params.x, y: params.y },
               }
             : node,
@@ -156,7 +150,12 @@ const RectangleNode: FC<RectangleNodeProps> = ({
           node.id === id
             ? {
                 ...node,
-                data: { ...node.data, width: params.width, height: params.height, isResizing: undefined },
+                data: {
+                  ...node.data,
+                  width: params.width,
+                  height: params.height,
+                  isResizing: undefined,
+                },
                 position: { x: params.x, y: params.y },
               }
             : node,
@@ -211,7 +210,8 @@ const RectangleNode: FC<RectangleNodeProps> = ({
   ]);
 
   // 在檢視模式下計算 hover 顏色
-  const displayColor = viewMode === ViewMode.VIEW && isHovered ? createHoverColor(color) : color;
+  const displayColor =
+    viewMode === ViewMode.VIEW && isHovered ? createHoverColor(color) : color;
 
   return (
     <div
@@ -238,9 +238,10 @@ const RectangleNode: FC<RectangleNodeProps> = ({
           height: `${currentSize.height}px`,
           backgroundColor: `${displayColor}33`, // 20% opacity (33 in hex = 20% * 255)
           opacity: opacity,
-          border: selected && isEditable
-            ? '2px solid #3b82f6'
-            : `2px solid ${displayColor}`, // 100% opacity border
+          border:
+            selected && isEditable
+              ? '2px solid #3b82f6'
+              : `2px solid ${displayColor}`, // 100% opacity border
           borderRadius: '4px',
           display: 'flex',
           alignItems: 'center',
@@ -253,8 +254,12 @@ const RectangleNode: FC<RectangleNodeProps> = ({
           cursor: viewMode === ViewMode.VIEW ? 'pointer' : 'default',
           transition: viewMode === ViewMode.VIEW ? 'all 0.2s ease' : 'none',
         }}
-        onDoubleClick={viewMode === ViewMode.EDIT ? handleDoubleClick : undefined}
-        onContextMenu={viewMode === ViewMode.EDIT ? handleContextMenu : undefined}
+        onDoubleClick={
+          viewMode === ViewMode.EDIT ? handleDoubleClick : undefined
+        }
+        onContextMenu={
+          viewMode === ViewMode.EDIT ? handleContextMenu : undefined
+        }
       >
         {isEditing ? (
           <input
@@ -278,9 +283,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({
             onClick={(e) => e.stopPropagation()}
           />
         ) : (
-          <span style={{ cursor: 'default' }}>
-            {label}
-          </span>
+          <span style={{ cursor: 'default' }}>{label}</span>
         )}
       </div>
 

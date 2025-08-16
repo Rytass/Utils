@@ -1,6 +1,11 @@
 import React, { FC } from 'react';
 import { NodeResizeControl } from '@xyflow/react';
-import { DEFAULT_RECTANGLE_COLOR, RESIZE_CONTROL_SIZE, MIN_RESIZE_WIDTH, MIN_RESIZE_HEIGHT } from '../constants';
+import {
+  DEFAULT_RECTANGLE_COLOR,
+  RESIZE_CONTROL_SIZE,
+  MIN_RESIZE_WIDTH,
+  MIN_RESIZE_HEIGHT,
+} from '../constants';
 
 interface ResizeControlsProps {
   onResize: (event: any, params: any) => void;
@@ -18,7 +23,12 @@ const ResizeControls: FC<ResizeControlsProps> = ({ onResize, isVisible }) => {
     borderRadius: 2,
   };
 
-  const positions = ['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const;
+  const positions = [
+    'top-left',
+    'top-right',
+    'bottom-left',
+    'bottom-right',
+  ] as const;
 
   return (
     <>

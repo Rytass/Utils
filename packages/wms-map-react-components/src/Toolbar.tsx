@@ -44,7 +44,6 @@ const Toolbar: FC<ToolbarProps> = ({
   selectedColor: parentSelectedColor,
   colorPalette,
 }) => {
-
   const [showColorMenu, setShowColorMenu] = useState<boolean>(false);
 
   const selectedColor = parentSelectedColor || DEFAULT_BACKGROUND_TOOL_COLOR;

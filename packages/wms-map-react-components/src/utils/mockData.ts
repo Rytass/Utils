@@ -1,4 +1,10 @@
-import { Map, MapBackground, MapRectangleRange, MapPolygonRange, MapRangeType } from '../../typings';
+import {
+  Map,
+  MapBackground,
+  MapRectangleRange,
+  MapPolygonRange,
+  MapRangeType,
+} from '../../typings';
 
 /**
  * Mock API 資料 - 模擬從後端 API 接收到的地圖資料
@@ -14,7 +20,7 @@ export const mockMapData: Map = {
       x: 50,
       y: 30,
     },
-    // 倉庫分區圖背景  
+    // 倉庫分區圖背景
     {
       id: 'bg-warehouse-zones',
       filename: 'warehouse-zones.jpg',
@@ -34,7 +40,7 @@ export const mockMapData: Map = {
       height: 100,
       text: '收貨區 A',
     } as MapRectangleRange,
-    
+
     // 矩形範圍 - 儲存區 B
     {
       id: 'range-storage-b',
@@ -46,7 +52,7 @@ export const mockMapData: Map = {
       height: 80,
       text: '儲存區 B',
     } as MapRectangleRange,
-    
+
     // 矩形範圍 - 出貨區
     {
       id: 'range-shipping-area',
@@ -58,7 +64,7 @@ export const mockMapData: Map = {
       height: 90,
       text: '出貨區',
     } as MapRectangleRange,
-    
+
     // 多邊形範圍 - 危險品存放區（不規則形狀）
     {
       id: 'range-hazmat-zone',
@@ -74,7 +80,7 @@ export const mockMapData: Map = {
       ],
       text: '危險品區',
     } as MapPolygonRange,
-    
+
     // 多邊形範圍 - 通道（L 型）
     {
       id: 'range-main-corridor',
@@ -90,7 +96,7 @@ export const mockMapData: Map = {
       ],
       text: '主通道',
     } as MapPolygonRange,
-    
+
     // 多邊形範圍 - 辦公區域（三角形）
     {
       id: 'range-office-area',
@@ -103,7 +109,7 @@ export const mockMapData: Map = {
       ],
       text: '辦公區',
     } as MapPolygonRange,
-    
+
     // 矩形範圍 - 冷凍庫
     {
       id: 'range-freezer',
@@ -115,7 +121,7 @@ export const mockMapData: Map = {
       height: 60,
       text: '冷凍庫',
     } as MapRectangleRange,
-    
+
     // 多邊形範圍 - 品檢區（五邊形）
     {
       id: 'range-quality-check',
@@ -158,7 +164,7 @@ export const simpleMapData: Map = {
       height: 80,
       text: '測試矩形',
     } as MapRectangleRange,
-    
+
     // 一個簡單的三角形
     {
       id: 'simple-poly-1',
@@ -196,30 +202,38 @@ export const largeMapData: Map = {
   })),
   ranges: [
     // 生成 20 個矩形
-    ...Array.from({ length: 20 }, (_, i) => ({
-      id: `rect-${i + 1}`,
-      type: MapRangeType.RECTANGLE,
-      color: ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6'][i % 5],
-      x: 100 + (i % 5) * 120,
-      y: 100 + Math.floor(i / 5) * 100,
-      width: 80,
-      height: 60,
-      text: `矩形 ${i + 1}`,
-    } as MapRectangleRange)),
-    
+    ...Array.from(
+      { length: 20 },
+      (_, i) =>
+        ({
+          id: `rect-${i + 1}`,
+          type: MapRangeType.RECTANGLE,
+          color: ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6'][i % 5],
+          x: 100 + (i % 5) * 120,
+          y: 100 + Math.floor(i / 5) * 100,
+          width: 80,
+          height: 60,
+          text: `矩形 ${i + 1}`,
+        }) as MapRectangleRange,
+    ),
+
     // 生成 10 個多邊形
-    ...Array.from({ length: 10 }, (_, i) => ({
-      id: `poly-${i + 1}`,
-      type: MapRangeType.POLYGON,
-      color: ['#06b6d4', '#f97316', '#6b7280', '#ec4899', '#84cc16'][i % 5],
-      points: [
-        { x: 200 + i * 60, y: 500 + i * 10 },
-        { x: 240 + i * 60, y: 490 + i * 10 },
-        { x: 250 + i * 60, y: 520 + i * 10 },
-        { x: 220 + i * 60, y: 540 + i * 10 },
-        { x: 190 + i * 60, y: 530 + i * 10 },
-      ],
-      text: `多邊形 ${i + 1}`,
-    } as MapPolygonRange)),
+    ...Array.from(
+      { length: 10 },
+      (_, i) =>
+        ({
+          id: `poly-${i + 1}`,
+          type: MapRangeType.POLYGON,
+          color: ['#06b6d4', '#f97316', '#6b7280', '#ec4899', '#84cc16'][i % 5],
+          points: [
+            { x: 200 + i * 60, y: 500 + i * 10 },
+            { x: 240 + i * 60, y: 490 + i * 10 },
+            { x: 250 + i * 60, y: 520 + i * 10 },
+            { x: 220 + i * 60, y: 540 + i * 10 },
+            { x: 190 + i * 60, y: 530 + i * 10 },
+          ],
+          text: `多邊形 ${i + 1}`,
+        }) as MapPolygonRange,
+    ),
   ],
 };

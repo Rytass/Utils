@@ -23,8 +23,18 @@ import {
   calculateImageSize,
   calculateStaggeredPosition,
 } from './utils/nodeUtils';
-import { logMapData, transformNodesToMapData, logNodeData, transformNodeToClickInfo } from './utils/mapDataTransform';
+import {
+  logMapData,
+  transformNodesToMapData,
+  logNodeData,
+  transformNodeToClickInfo,
+} from './utils/mapDataTransform';
 import { useDirectStateHistory } from './hooks/useDirectStateHistory';
+import {
+  debugLog,
+  debugSuccess,
+  setDebugMode,
+} from './utils/debugLogger';
 import Toolbar from './Toolbar';
 import Breadcrumb from './components/breadcrumb/Breadcrumb';
 import ReactFlowCanvas from './ReactFlowCanvas';
@@ -40,10 +50,8 @@ interface WmsMapModalProps {
   onNodeClick?: (nodeInfo: WmsNodeClickInfo) => void;
   initialNodes?: Node[];
   initialEdges?: Edge[];
+  debugMode?: boolean; // 新增：控制 debug 模式的開關
 }
-
-const initialNodes: Node[] = [];
-const initialEdges: Edge[] = [];
 
 // 內部組件 - 包含歷史管理邏輯，必須在 ReactFlowProvider 內部
 const WmsMapContent: FC<{
@@ -74,37 +82,39 @@ const WmsMapContent: FC<{
   initialEdges: propsInitialEdges = [],
 }) => {
   const renderCount = useRef(0);
+
   renderCount.current += 1;
-  
-  // console.log('🔄 WmsMapContent 重新渲染:', { 
-  //   editMode, 
-  //   drawingMode, 
+
+  // console.log('🔄 WmsMapContent 重新渲染:', {
+  //   editMode,
+  //   drawingMode,
   //   viewMode,
   //   renderCount: renderCount.current
   // });
-  
-  const [nodes, setNodes, onNodesChangeOriginal] = useNodesState(propsInitialNodes);
+
+  const [nodes, setNodes, onNodesChangeOriginal] =
+    useNodesState(propsInitialNodes);
+
   const [edges, setEdges, onEdgesChange] = useEdgesState(propsInitialEdges);
   const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
-  const [lastCopiedNode, setLastCopiedNode] = useState<Node | null>(null);
   const [isEditingPathPoints, setIsEditingPathPoints] = useState(false);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [showBackground, setShowBackground] = useState<boolean>(true);
   const showBackgroundRef = useRef<boolean>(true);
-  
+
   // Get React Flow instance for viewport information
   const { getViewport, getNodes, getEdges } = useReactFlow();
-  
+
   // 用於延遲顏色變更歷史記錄的 ref
-  const colorChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+  const colorChangeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // 根據編輯模式和視圖模式動態更新所有節點的可選取性和可拖曳性
   useEffect(() => {
     setNodes((nodes) =>
       nodes.map((node) => {
         let shouldBeSelectable = false;
         let shouldBeDraggable = false;
-        
+
         // 檢視模式下所有節點都不可選取和拖曳
         if (viewMode === ViewMode.VIEW) {
           shouldBeSelectable = false;
@@ -118,13 +128,13 @@ const WmsMapContent: FC<{
           shouldBeSelectable = editMode === EditMode.LAYER;
           shouldBeDraggable = editMode === EditMode.LAYER;
         }
-        
+
         return {
           ...node,
           selectable: shouldBeSelectable,
           draggable: shouldBeDraggable,
         };
-      })
+      }),
     );
   }, [editMode, viewMode, setNodes]);
 
@@ -137,24 +147,28 @@ const WmsMapContent: FC<{
     canRedo,
     initializeHistory,
     getHistorySummary,
-  } = useDirectStateHistory({ 
+  } = useDirectStateHistory({
     maxHistorySize: 50,
-    debugMode: true 
+    debugMode: true,
   });
 
   // 調試：監聽歷史狀態變化
   useEffect(() => {
     const summary = getHistorySummary();
-    console.log('📊 直接狀態歷史:', summary);
-    
+
+    debugLog('history', '直接狀態歷史:', summary);
+
     if (summary.operations) {
       const recentOperations = summary.operations
         .slice(-5)
-        .map((op) => `[${op.index}]${op.operation}${op.isCurrent ? ' (當前)' : ''}`)
+        .map(
+          (op) =>
+            `[${op.index}]${op.operation}${op.isCurrent ? ' (當前)' : ''}`,
+        )
         .join(' → ');
-      
+
       if (recentOperations) {
-        console.log('🔄 操作序列:', recentOperations);
+        debugLog('history', '操作序列:', recentOperations);
       }
     }
   }, [getHistorySummary, nodes.length, edges.length]);
@@ -162,10 +176,7 @@ const WmsMapContent: FC<{
   // 初始化歷史記錄
   useEffect(() => {
     initializeHistory(nodes, edges);
-  }, [initializeHistory]);
-
-  // 用於追蹤拖拽操作的 ref
-  const dragTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  }, [edges, initializeHistory, nodes]);
 
   // 立即觸發顏色變更記錄（當執行其他操作時）
   const flushColorChangeHistory = useCallback(() => {
@@ -177,53 +188,60 @@ const WmsMapContent: FC<{
     }
   }, [saveState, nodes, edges]);
 
-
   // 改進的 onNodesChange，記錄各種節點變更操作
-  const onNodesChange = useCallback((changes: any[]) => {
-    // 調試日誌：記錄所有變更類型
-    if (changes.length > 0) {
-      console.log('🔄 onNodesChange 觸發:', changes.map(c => ({ type: c.type, id: c.id || c.item?.id })));
-    }
-    
-    onNodesChangeOriginal(changes);
-    
-    // 檢查是否有拖動結束的操作
-    const hasDragEnd = changes.some(change => 
-      change.type === 'position' && change.dragging === false
-    );
-    
-    // 檢查是否有資料變更（包含文字編輯），但忽略調整大小中的變更
-    const hasDataChange = changes.some(change => 
-      change.type === 'replace' && 
-      // 忽略正在調整大小的節點的資料變更
-      !(change.item?.data?.isResizing)
-    );
-    
-    if (hasDragEnd) {
-      // 拖動結束後記錄狀態
-      setTimeout(() => {
-        saveState(nodes, edges, 'move-shape');
-      }, 10);
-    } else if (hasDataChange) {
-      // 資料變更（包含文字編輯）立即記錄歷史
-      const changedNodeIds = changes
-        .filter(c => c.type === 'replace')
-        .map(c => c.id || c.item?.id)
-        .filter(Boolean);
-      
-      console.log('📝 檢測到資料變更:', { changedNodes: changedNodeIds });
-      
-      // 立即記錄資料變更歷史（文字編輯會自動包含在 React Flow 節點資料中）
-      setTimeout(() => {
-        flushColorChangeHistory(); // 先清理顏色變更記錄
-        saveState(nodes, edges, `data-change-${changedNodeIds.join(',')}`);
-        console.log('💾 立即記錄資料變更歷史:', { 
-          changedNodes: changedNodeIds,
-          operation: `data-change-${changedNodeIds.join(',')}` 
-        });
-      }, 10);
-    }
-  }, [onNodesChangeOriginal, saveState, flushColorChangeHistory, nodes, edges]);
+  const onNodesChange = useCallback(
+    (changes: any[]) => {
+      // 調試日誌：記錄所有變更類型
+      if (changes.length > 0) {
+        debugLog(
+          'reactFlow',
+          'onNodesChange 觸發:',
+          changes.map((c) => ({ type: c.type, id: c.id || c.item?.id })),
+        );
+      }
+
+      onNodesChangeOriginal(changes);
+
+      // 檢查是否有拖動結束的操作
+      const hasDragEnd = changes.some(
+        (change) => change.type === 'position' && change.dragging === false,
+      );
+
+      // 檢查是否有資料變更（包含文字編輯），但忽略調整大小中的變更
+      const hasDataChange = changes.some(
+        (change) =>
+          change.type === 'replace' &&
+          // 忽略正在調整大小的節點的資料變更
+          !change.item?.data?.isResizing,
+      );
+
+      if (hasDragEnd) {
+        // 拖動結束後記錄狀態
+        setTimeout(() => {
+          saveState(nodes, edges, 'move-shape');
+        }, 10);
+      } else if (hasDataChange) {
+        // 資料變更（包含文字編輯）立即記錄歷史
+        const changedNodeIds = changes
+          .filter((c) => c.type === 'replace')
+          .map((c) => c.id || c.item?.id)
+          .filter(Boolean);
+
+        debugLog('nodes', '檢測到資料變更:', { changedNodes: changedNodeIds });
+
+        // 立即記錄資料變更歷史（文字編輯會自動包含在 React Flow 節點資料中）
+        setTimeout(() => {
+          flushColorChangeHistory(); // 先清理顏色變更記錄
+          saveState(nodes, edges, `data-change-${changedNodeIds.join(',')}`);
+          debugSuccess('history', '立即記錄資料變更歷史:', {
+            changedNodes: changedNodeIds,
+            operation: `data-change-${changedNodeIds.join(',')}`,
+          });
+        }, 10);
+      }
+    },
+    [onNodesChangeOriginal, saveState, flushColorChangeHistory, nodes, edges],
+  );
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -253,7 +271,6 @@ const WmsMapContent: FC<{
       const files = Array.from((e.target as HTMLInputElement).files || []);
 
       if (files.length > 0) {
-
         // 處理每個檔案
         files.forEach((file: File, index: number) => {
           // 檢查檔案類型
@@ -278,12 +295,12 @@ const WmsMapContent: FC<{
             // 使用工具函數計算錯開位置，優先使用當前 viewport 位置
             const viewport = getViewport();
             const position = calculateStaggeredPosition(
-              index, 
-              100, 
+              index,
+              100,
               100,
               viewport.x,
               viewport.y,
-              viewport.zoom
+              viewport.zoom,
             );
 
             // 建立新的圖片節點
@@ -330,17 +347,16 @@ const WmsMapContent: FC<{
   };
 
   const handleDeleteAll = useCallback(() => {
-
     if (editMode === EditMode.BACKGROUND) {
       // 刪除所有圖片節點（背景圖片）
       setNodes((nds) => {
         const newNodes = nds.filter((node) => node.type !== 'imageNode');
-        
+
         // 刪除圖片後記錄狀態
         setTimeout(() => {
           saveState(newNodes, edges, 'delete-images');
         }, 10);
-        
+
         return newNodes;
       });
     } else if (editMode === EditMode.LAYER) {
@@ -349,19 +365,19 @@ const WmsMapContent: FC<{
         const newNodes = nds.filter(
           (node) => node.type !== 'rectangleNode' && node.type !== 'pathNode',
         );
-        
+
         // 刪除圖層後記錄狀態
         setTimeout(() => {
           saveState(newNodes, [], 'delete-layers'); // edges 也被清空
         }, 10);
-        
+
         return newNodes;
       });
 
       // 刪除圖層元素時也清除邊線
       setEdges([]);
     }
-  }, [editMode, setNodes, setEdges, saveState]);
+  }, [editMode, setNodes, saveState, edges, setEdges]);
 
   const handleCreateRectangle = useCallback(
     (startX: number, startY: number, endX: number, endY: number) => {
@@ -395,7 +411,7 @@ const WmsMapContent: FC<{
         };
 
         const newNodes = [...nds, newRectangle];
-        
+
         // 創建矩形後記錄狀態
         setTimeout(() => {
           saveState(newNodes, edges, 'draw-rectangle');
@@ -403,10 +419,17 @@ const WmsMapContent: FC<{
 
         return newNodes;
       });
-      
+
       // 保持繪圖模式以進行連續繪圖
     },
-    [setNodes, selectedColor, saveState, edges, flushColorChangeHistory],
+    [
+      flushColorChangeHistory,
+      setNodes,
+      editMode,
+      selectedColor,
+      saveState,
+      edges,
+    ],
   );
 
   const handleCreatePath = useCallback(
@@ -438,7 +461,7 @@ const WmsMapContent: FC<{
         };
 
         const newNodes = [...nds, newPath];
-        
+
         // 創建路徑後記錄狀態
         setTimeout(() => {
           saveState(newNodes, edges, 'draw-path');
@@ -446,49 +469,51 @@ const WmsMapContent: FC<{
 
         return newNodes;
       });
-      
+
       // 保持繪圖模式以進行連續繪圖
     },
-    [setNodes, selectedColor, saveState, edges, flushColorChangeHistory],
+    [
+      flushColorChangeHistory,
+      setNodes,
+      editMode,
+      selectedColor,
+      saveState,
+      edges,
+    ],
   );
 
   // 復原/重做功能實作 - 直接設置狀態
   const handleUndo = useCallback(() => {
-    console.log('🔧 執行 Undo - 按鈕點擊');
+    debugLog('history', '執行 Undo - 按鈕點擊');
     const result = undo();
+
     if (result) {
       setNodes(result.nodes);
       setEdges(result.edges);
-      console.log('🔧 Undo 成功:', { nodes: result.nodes.length, edges: result.edges.length });
+      debugSuccess('history', 'Undo 成功:', {
+        nodes: result.nodes.length,
+        edges: result.edges.length,
+      });
     }
   }, [undo, setNodes, setEdges]);
 
   const handleRedo = useCallback(() => {
-    console.log('🔧 執行 Redo - 按鈕點擊');
+    debugLog('history', '執行 Redo - 按鈕點擊');
     const result = redo();
+
     if (result) {
       setNodes(result.nodes);
       setEdges(result.edges);
-      console.log('🔧 Redo 成功:', { nodes: result.nodes.length, edges: result.edges.length });
+      debugSuccess('history', 'Redo 成功:', {
+        nodes: result.nodes.length,
+        edges: result.edges.length,
+      });
     }
   }, [redo, setNodes, setEdges]);
-
-  // 測試快照函數（用於調試）
-  const handleTestSnapshot = useCallback(() => {
-    console.log('🧪 手動測試快照');
-    saveState(nodes, edges, 'manual-test');
-    const summary = getHistorySummary();
-    console.log('🧪 快照後狀態:', summary);
-  }, [saveState, getHistorySummary, nodes, edges]);
 
   const handleSelectionChange = useCallback(
     (params: OnSelectionChangeParams) => {
       setSelectedNodes(params.nodes);
-
-      // 當用戶選擇不同節點時，重置 lastCopiedNode 以避免連續複製混亂
-      if (params.nodes.length > 0) {
-        setLastCopiedNode(null);
-      }
 
       // 如果選擇了單一可著色節點，更新顏色選擇器以顯示其顏色
       if (
@@ -527,18 +552,18 @@ const WmsMapContent: FC<{
 
             return node;
           });
-          
+
           // 清除之前的延遲記錄
           if (colorChangeTimeoutRef.current) {
             clearTimeout(colorChangeTimeoutRef.current);
           }
-          
+
           // 延遲記錄顏色變更歷史 (800ms 後記錄，避免頻繁切換時產生過多記錄)
           colorChangeTimeoutRef.current = setTimeout(() => {
             saveState(newNodes, edges, 'change-color');
             colorChangeTimeoutRef.current = null;
           }, 800);
-          
+
           return newNodes;
         });
       }
@@ -547,112 +572,155 @@ const WmsMapContent: FC<{
   );
 
   // 處理文字編輯完成（手動觸發歷史記錄）
-  const handleTextEditComplete = useCallback((id: string, oldText: string, newText: string) => {
-    console.log('📝 文字編輯完成，手動記錄歷史:', { id, oldText, newText });
-    flushColorChangeHistory(); // 先清理顏色變更記錄
-    
-    // 使用 setTimeout 確保能獲取到更新後的 nodes 狀態
-    setTimeout(() => {
-      // 通過 React Flow hooks 獲取最新的節點和邊狀態
-      const currentNodes = getNodes();
-      const currentEdges = getEdges();
-      
-      console.log('📸 保存文字編輯後的狀態:', {
+  const handleTextEditComplete = useCallback(
+    (id: string, oldText: string, newText: string) => {
+      debugLog('nodes', '文字編輯完成，手動記錄歷史:', {
         id,
-        nodesCount: currentNodes.length,
-        edgesCount: currentEdges.length,
-        updatedNode: currentNodes.find((n: any) => n.id === id)?.data?.label
+        oldText,
+        newText,
       });
-      
-      saveState(currentNodes, currentEdges, `text-edit-${id}`);
-    }, 20); // 增加延遲時間確保狀態更新完成
-  }, [saveState, flushColorChangeHistory, getNodes, getEdges]);
+
+      flushColorChangeHistory(); // 先清理顏色變更記錄
+
+      // 使用 setTimeout 確保能獲取到更新後的 nodes 狀態
+      setTimeout(() => {
+        // 通過 React Flow hooks 獲取最新的節點和邊狀態
+        const currentNodes = getNodes();
+        const currentEdges = getEdges();
+
+        debugLog('history', '保存文字編輯後的狀態:', {
+          id,
+          nodesCount: currentNodes.length,
+          edgesCount: currentEdges.length,
+          updatedNode: currentNodes.find((n: any) => n.id === id)?.data?.label,
+        });
+
+        saveState(currentNodes, currentEdges, `text-edit-${id}`);
+      }, 20); // 增加延遲時間確保狀態更新完成
+    },
+    [saveState, flushColorChangeHistory, getNodes, getEdges],
+  );
 
   // 處理路徑節點點位變更（記錄到歷史中）
-  const handlePathPointsChange = useCallback((id: string, oldPoints: { x: number; y: number }[], newPoints: { x: number; y: number }[]) => {
-    console.log('🔵 路徑節點點位變更，記錄歷史:', { id, oldPoints, newPoints });
-    flushColorChangeHistory(); // 先清理顏色變更記錄
-    
-    // 使用 setTimeout 確保能獲取到更新後的 nodes 狀態
-    setTimeout(() => {
-      // 通過 React Flow hooks 獲取最新的節點和邊狀態
-      const currentNodes = getNodes();
-      const currentEdges = getEdges();
-      
-      console.log('📸 保存路徑點位編輯後的狀態:', {
+  const handlePathPointsChange = useCallback(
+    (
+      id: string,
+      oldPoints: { x: number; y: number }[],
+      newPoints: { x: number; y: number }[],
+    ) => {
+      debugLog('nodes', '路徑節點點位變更，記錄歷史:', {
         id,
-        nodesCount: currentNodes.length,
-        edgesCount: currentEdges.length,
-        updatedPointsCount: (currentNodes.find((n: any) => n.id === id)?.data?.points as any[])?.length || 0
+        oldPoints,
+        newPoints,
       });
-      
-      saveState(currentNodes, currentEdges, `path-edit-${id}`);
-    }, 20);
-  }, [saveState, flushColorChangeHistory, getNodes, getEdges]);
+
+      flushColorChangeHistory(); // 先清理顏色變更記錄
+
+      // 使用 setTimeout 確保能獲取到更新後的 nodes 狀態
+      setTimeout(() => {
+        // 通過 React Flow hooks 獲取最新的節點和邊狀態
+        const currentNodes = getNodes();
+        const currentEdges = getEdges();
+
+        debugLog('history', '保存路徑點位編輯後的狀態:', {
+          id,
+          nodesCount: currentNodes.length,
+          edgesCount: currentEdges.length,
+          updatedPointsCount:
+            (currentNodes.find((n: any) => n.id === id)?.data?.points as any[])
+              ?.length || 0,
+        });
+
+        saveState(currentNodes, currentEdges, `path-edit-${id}`);
+      }, 20);
+    },
+    [saveState, flushColorChangeHistory, getNodes, getEdges],
+  );
 
   // 處理路徑點拖曳狀態變更
   const handlePathPointDragStateChange = useCallback((isDragging: boolean) => {
-    console.log('🎯 路徑點拖曳狀態變更:', isDragging);
+    debugLog('events', '路徑點拖曳狀態變更:', isDragging);
     setIsEditingPathPoints(isDragging);
   }, []);
 
   // 處理節點 hover 事件 (React Flow 內建事件)
-  const handleNodeMouseEnter = useCallback((event: React.MouseEvent, node: Node) => {
-    // 只在檢視模式下啟用 hover 效果
-    if (viewMode === ViewMode.VIEW && (node.type === 'rectangleNode' || node.type === 'pathNode')) {
-      console.log('🐭 Node hover enter (React Flow)', { 
-        id: node.id.slice(-4), 
-        type: node.type, 
-        viewMode,
-        originalColor: node.data?.color 
-      });
-      setHoveredNodeId(node.id);
-    }
-  }, [viewMode]);
+  const handleNodeMouseEnter = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      // 只在檢視模式下啟用 hover 效果
+      if (
+        viewMode === ViewMode.VIEW &&
+        (node.type === 'rectangleNode' || node.type === 'pathNode')
+      ) {
+        debugLog('events', 'Node hover enter (React Flow)', {
+          id: node.id.slice(-4),
+          type: node.type,
+          viewMode,
+          originalColor: node.data?.color,
+        });
 
-  const handleNodeMouseLeave = useCallback((event: React.MouseEvent, node: Node) => {
-    // 只在檢視模式下處理 hover 效果
-    if (viewMode === ViewMode.VIEW && (node.type === 'rectangleNode' || node.type === 'pathNode')) {
-      console.log('🐭 Node hover leave (React Flow)', { 
-        id: node.id.slice(-4), 
-        type: node.type, 
-        viewMode 
-      });
-      setHoveredNodeId(null);
-    }
-  }, [viewMode]);
+        setHoveredNodeId(node.id);
+      }
+    },
+    [viewMode],
+  );
+
+  const handleNodeMouseLeave = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      // 只在檢視模式下處理 hover 效果
+      if (
+        viewMode === ViewMode.VIEW &&
+        (node.type === 'rectangleNode' || node.type === 'pathNode')
+      ) {
+        debugLog('events', 'Node hover leave (React Flow)', {
+          id: node.id.slice(-4),
+          type: node.type,
+          viewMode,
+        });
+
+        setHoveredNodeId(null);
+      }
+    },
+    [viewMode],
+  );
 
   // 處理節點點擊事件 (React Flow 內建事件)
-  const handleNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
-    console.log('🖱️ Node clicked (React Flow)', { 
-      id: node.id.slice(-4), 
-      type: node.type, 
-      viewMode,
-      editMode 
-    });
-    
-    // 輸出詳細的圖形資訊（和儲存時相同的格式）
-    logNodeData(node);
-    
-    // 如果父組件提供了回調函數，將點擊資訊傳遞給父組件
-    if (onNodeClick) {
-      const nodeClickInfo = transformNodeToClickInfo(node);
-      if (nodeClickInfo) {
-        console.log('📤 將點擊資訊傳遞給父組件:', nodeClickInfo);
-        onNodeClick(nodeClickInfo);
-      }
-    }
-  }, [viewMode, editMode, onNodeClick]);
+  const handleNodeClick = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      debugLog('events', 'Node clicked (React Flow)', {
+        id: node.id.slice(-4),
+        type: node.type,
+        viewMode,
+        editMode,
+      });
 
-  const handleToggleBackground = useCallback((show: boolean) => {
-    console.log('🖼️ 切換底圖顯示:', { showBackground: show });
-    showBackgroundRef.current = show;
-    setShowBackground(show);
-  }, [showBackground]);
+      // 輸出詳細的圖形資訊（和儲存時相同的格式）
+      logNodeData(node);
+
+      // 如果父組件提供了回調函數，將點擊資訊傳遞給父組件
+      if (onNodeClick) {
+        const nodeClickInfo = transformNodeToClickInfo(node);
+
+        if (nodeClickInfo) {
+          debugLog('events', '將點擊資訊傳遞給父組件:', nodeClickInfo);
+          onNodeClick(nodeClickInfo);
+        }
+      }
+    },
+    [viewMode, editMode, onNodeClick],
+  );
+
+  const handleToggleBackground = useCallback(
+    (show: boolean) => {
+      debugLog('ui', '切換底圖顯示:', { showBackground: show });
+      showBackgroundRef.current = show;
+      setShowBackground(show);
+    },
+    [],
+  );
 
   // 追蹤 showBackground 狀態變化
   useEffect(() => {
-    console.log('📊 showBackground 狀態變化:', showBackground);
+    debugLog('ui', 'showBackground 狀態變化:', showBackground);
   }, [showBackground]);
 
   return (
@@ -710,7 +778,7 @@ const WmsMapContent: FC<{
         onNodeClick={handleNodeClick}
         showBackground={showBackground}
       />
-      
+
       {/* ViewModeToolbar - 只在檢視模式下顯示 */}
       <ViewModeToolbar
         viewMode={viewMode}
@@ -721,14 +789,15 @@ const WmsMapContent: FC<{
   );
 };
 
-const WmsMapModal: FC<WmsMapModalProps> = ({ 
-  onClose, 
-  open, 
-  viewMode: initialViewMode = ViewMode.EDIT, 
-  colorPalette, 
+const WmsMapModal: FC<WmsMapModalProps> = ({
+  onClose,
+  open,
+  viewMode: initialViewMode = ViewMode.EDIT,
+  colorPalette,
   onNodeClick,
   initialNodes,
-  initialEdges
+  initialEdges,
+  debugMode = false, // 預設為關閉
 }) => {
   const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
   const [editMode, setEditMode] = useState<EditMode>(EditMode.BACKGROUND);
@@ -738,8 +807,14 @@ const WmsMapModal: FC<WmsMapModalProps> = ({
     if (colorPalette && colorPalette.length > 0) {
       return colorPalette[0];
     }
+
     return DEFAULT_RECTANGLE_COLOR;
   });
+
+  // 設定 debug 模式
+  useEffect(() => {
+    setDebugMode(debugMode);
+  }, [debugMode]);
 
   // 同步外部 viewMode 變化
   useEffect(() => {
@@ -757,16 +832,15 @@ const WmsMapModal: FC<WmsMapModalProps> = ({
   }, [colorPalette, selectedColor]);
 
   const handleViewModeToggle = useCallback(() => {
-    setViewMode(prev => prev === ViewMode.EDIT ? ViewMode.VIEW : ViewMode.EDIT);
+    setViewMode((prev) =>
+      prev === ViewMode.EDIT ? ViewMode.VIEW : ViewMode.EDIT,
+    );
   }, []);
 
-  const handleEditModeChange = useCallback(
-    (mode: EditMode) => {
-      setEditMode(mode);
-      setDrawingMode(DrawingMode.NONE); // 切換編輯模式時重設繪圖模式
-    },
-    [],
-  );
+  const handleEditModeChange = useCallback((mode: EditMode) => {
+    setEditMode(mode);
+    setDrawingMode(DrawingMode.NONE); // 切換編輯模式時重設繪圖模式
+  }, []);
 
   const handleToggleRectangleTool = useCallback(() => {
     if (editMode !== EditMode.LAYER) return;
@@ -784,22 +858,19 @@ const WmsMapModal: FC<WmsMapModalProps> = ({
     );
   }, [editMode]);
 
-  const handleColorChange = useCallback(
-    (color: string) => {
-      setSelectedColor(color);
-    },
-    [],
-  );
+  const handleColorChange = useCallback((color: string) => {
+    setSelectedColor(color);
+  }, []);
 
   return (
     <>
       {/* 浮動在遮罩層上的測試按鈕 */}
-      <ViewModeToggle 
-        viewMode={viewMode} 
+      <ViewModeToggle
+        viewMode={viewMode}
         onToggle={handleViewModeToggle}
         isVisible={open} // 只有當 Modal 開啟時才顯示
       />
-      
+
       <Modal open={open} onClose={onClose} className={styles.modal}>
         <ModalHeader className={styles.modalHeader}>
           <div className={styles.headerLeft}>
