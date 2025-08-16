@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WMS Map Modal - Mock Data 測試</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .test-button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: white;
+            transition: all 0.2s ease;
+        }
+        .test-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .simple { background-color: #3b82f6; }
+        .complex { background-color: #22c55e; }
+        .large { background-color: #f59e0b; }
+        .info-box {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .stats-box {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        pre {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗺️ WMS Map Modal - Mock Data 測試</h1>
+        
+        <div class="info-box">
+            <h3>💡 測試說明</h3>
+            <p>這個頁面展示如何使用 <code>initialNodes</code> prop 來載入 Mock 資料到 WmsMapModal 中。</p>
+            <p>由於這是靜態 HTML 頁面，實際的 React 組件測試需要在 React 開發環境中進行。</p>
+        </div>
+
+        <div class="button-group">
+            <button class="test-button simple" onclick="showTestExample('simple')">
+                簡單測試資料
+                <br><small>(1個背景 + 2個區域)</small>
+            </button>
+            <button class="test-button complex" onclick="showTestExample('complex')">
+                完整倉庫資料
+                <br><small>(2個背景 + 8個區域)</small>
+            </button>
+            <button class="test-button large" onclick="showTestExample('large')">
+                大量測試資料
+                <br><small>(5個背景 + 30個區域)</small>
+            </button>
+        </div>
+
+        <div id="test-result" style="display: none;">
+            <div class="stats-box">
+                <h3>📊 資料統計</h3>
+                <div id="stats-content"></div>
+            </div>
+            
+            <h3>🔧 使用方式</h3>
+            <pre id="code-example"></pre>
+            
+            <h3>📄 原始 Mock 資料</h3>
+            <pre id="mock-data"></pre>
+            
+            <h3>🔄 轉換後的 React Flow 節點</h3>
+            <pre id="transformed-nodes"></pre>
+        </div>
+    </div>
+
+    <script>
+        // 模擬 Mock 資料 (簡化版本)
+        const mockData = {
+            simple: {
+                id: 'simple-test-map',
+                backgrounds: [
+                    { id: 'simple-bg-1', filename: 'simple-background.png', x: 100, y: 50 }
+                ],
+                ranges: [
+                    { id: 'simple-rect-1', type: 'RECTANGLE', color: '#3b82f6', x: 150, y: 100, width: 100, height: 80, text: '測試矩形' },
+                    { id: 'simple-poly-1', type: 'POLYGON', color: '#ef4444', points: [{ x: 300, y: 120 }, { x: 350, y: 120 }, { x: 325, y: 170 }], text: '測試三角形' }
+                ]
+            },
+            complex: {
+                id: 'warehouse-map-001',
+                backgrounds: [
+                    { id: 'bg-warehouse-floor-1', filename: 'warehouse-floor-plan.png', x: 50, y: 30 },
+                    { id: 'bg-warehouse-zones', filename: 'warehouse-zones.jpg', x: 400, y: 200 }
+                ],
+                ranges: [
+                    { id: 'range-receiving-area', type: 'RECTANGLE', color: '#22c55e', x: 100, y: 80, width: 150, height: 100, text: '收貨區 A' },
+                    { id: 'range-storage-b', type: 'RECTANGLE', color: '#3b82f6', x: 300, y: 120, width: 200, height: 80, text: '儲存區 B' },
+                    { id: 'range-shipping-area', type: 'RECTANGLE', color: '#f59e0b', x: 150, y: 250, width: 180, height: 90, text: '出貨區' },
+                    { id: 'range-hazmat-zone', type: 'POLYGON', color: '#ef4444', points: [{ x: 450, y: 100 }, { x: 520, y: 90 }, { x: 540, y: 140 }], text: '危險品區' }
+                ]
+            },
+            large: {
+                id: 'performance-test-map',
+                backgrounds: Array.from({ length: 5 }, (_, i) => ({
+                    id: `bg-${i + 1}`,
+                    filename: `background-${i + 1}.png`,
+                    x: 100 + i * 200,
+                    y: 50 + i * 30
+                })),
+                ranges: Array.from({ length: 30 }, (_, i) => ({
+                    id: `range-${i + 1}`,
+                    type: i % 3 === 0 ? 'POLYGON' : 'RECTANGLE',
+                    color: ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6'][i % 5],
+                    x: 100 + (i % 5) * 120,
+                    y: 100 + Math.floor(i / 5) * 100,
+                    width: 80,
+                    height: 60,
+                    text: `區域 ${i + 1}`
+                }))
+            }
+        };
+
+        function showTestExample(type) {
+            const data = mockData[type];
+            const resultDiv = document.getElementById('test-result');
+            
+            // 計算統計資訊
+            const bgCount = data.backgrounds.length;
+            const rectCount = data.ranges.filter(r => r.type === 'RECTANGLE').length;
+            const polyCount = data.ranges.filter(r => r.type === 'POLYGON').length;
+            const totalNodes = bgCount + rectCount + polyCount;
+            
+            // 更新統計資訊
+            document.getElementById('stats-content').innerHTML = `
+                <p><strong>測試類型:</strong> ${type === 'simple' ? '簡單測試' : type === 'complex' ? '完整倉庫' : '大量測試'}資料</p>
+                <p><strong>總節點數:</strong> ${totalNodes}</p>
+                <p><strong>背景圖片:</strong> ${bgCount}</p>
+                <p><strong>矩形區域:</strong> ${rectCount}</p>
+                <p><strong>多邊形區域:</strong> ${polyCount}</p>
+            `;
+            
+            // 更新使用範例
+            document.getElementById('code-example').textContent = `
+import React, { useState } from 'react';
+import { WmsMapModal, transformApiDataToNodes, ${type}MapData } from '@rytass/wms-map-react-components';
+
+const MyComponent = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [nodes, setNodes] = useState([]);
+
+  const loadTestData = () => {
+    // 轉換 API 資料為 React Flow 節點
+    const transformedNodes = transformApiDataToNodes(${type}MapData);
+    setNodes(transformedNodes);
+    setIsOpen(true);
+  };
+
+  return (
+    <>
+      <button onClick={loadTestData}>載入${type === 'simple' ? '簡單' : type === 'complex' ? '複雜' : '大量'}測試資料</button>
+      
+      <WmsMapModal
+        open={isOpen}
+        onClose={() => setIsOpen(false)}
+        viewMode="VIEW"
+        colorPalette={['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6']}
+        initialNodes={nodes}  // ← 關鍵：使用 initialNodes prop
+        initialEdges={[]}
+        onNodeClick={(nodeInfo) => console.log('點擊:', nodeInfo)}
+      />
+    </>
+  );
+};`;
+            
+            // 更新 Mock 資料
+            document.getElementById('mock-data').textContent = JSON.stringify(data, null, 2);
+            
+            // 模擬轉換後的節點資料
+            const transformedNodes = transformMockData(data);
+            document.getElementById('transformed-nodes').textContent = JSON.stringify(transformedNodes, null, 2);
+            
+            // 顯示結果
+            resultDiv.style.display = 'block';
+            resultDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 簡化的資料轉換函數 (僅用於示例)
+        function transformMockData(mapData) {
+            const nodes = [];
+            let zIndex = 1;
+
+            // 轉換背景
+            mapData.backgrounds.forEach(bg => {
+                nodes.push({
+                    id: bg.id,
+                    type: 'imageNode',
+                    position: { x: bg.x, y: bg.y },
+                    data: {
+                        imageUrl: `https://via.placeholder.com/200x150/4A90E2/ffffff?text=${encodeURIComponent(bg.filename)}`,
+                        fileName: bg.filename,
+                        width: 200,
+                        height: 150
+                    },
+                    zIndex: zIndex++
+                });
+            });
+
+            // 轉換範圍
+            mapData.ranges.forEach(range => {
+                if (range.type === 'RECTANGLE') {
+                    nodes.push({
+                        id: range.id,
+                        type: 'rectangleNode',
+                        position: { x: range.x, y: range.y },
+                        data: {
+                            width: range.width,
+                            height: range.height,
+                            color: range.color,
+                            label: range.text || ''
+                        },
+                        zIndex: zIndex++
+                    });
+                } else if (range.type === 'POLYGON') {
+                    const centerX = range.points.reduce((sum, p) => sum + p.x, 0) / range.points.length;
+                    const centerY = range.points.reduce((sum, p) => sum + p.y, 0) / range.points.length;
+                    
+                    nodes.push({
+                        id: range.id,
+                        type: 'pathNode',
+                        position: { x: centerX, y: centerY },
+                        data: {
+                            points: range.points.map(p => ({ x: p.x - centerX, y: p.y - centerY })),
+                            color: range.color,
+                            label: range.text || ''
+                        },
+                        zIndex: zIndex++
+                    });
+                }
+            });
+
+            return nodes;
+        }
+    </script>
+</body>
+</html>

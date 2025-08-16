@@ -38,6 +38,8 @@ interface WmsMapModalProps {
   viewMode?: ViewMode;
   colorPalette?: string[];
   onNodeClick?: (nodeInfo: WmsNodeClickInfo) => void;
+  initialNodes?: Node[];
+  initialEdges?: Edge[];
 }
 
 const initialNodes: Node[] = [];
@@ -55,6 +57,8 @@ const WmsMapContent: FC<{
   onTogglePenTool: () => void;
   onColorChange: (color: string) => void;
   onNodeClick?: (nodeInfo: WmsNodeClickInfo) => void;
+  initialNodes?: Node[];
+  initialEdges?: Edge[];
 }> = ({
   editMode,
   drawingMode,
@@ -66,6 +70,8 @@ const WmsMapContent: FC<{
   onTogglePenTool,
   onColorChange,
   onNodeClick,
+  initialNodes: propsInitialNodes = [],
+  initialEdges: propsInitialEdges = [],
 }) => {
   const renderCount = useRef(0);
   renderCount.current += 1;
@@ -77,8 +83,8 @@ const WmsMapContent: FC<{
   //   renderCount: renderCount.current
   // });
   
-  const [nodes, setNodes, onNodesChangeOriginal] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChangeOriginal] = useNodesState(propsInitialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(propsInitialEdges);
   const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
   const [lastCopiedNode, setLastCopiedNode] = useState<Node | null>(null);
   const [isEditingPathPoints, setIsEditingPathPoints] = useState(false);
@@ -715,7 +721,15 @@ const WmsMapContent: FC<{
   );
 };
 
-const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open, viewMode: initialViewMode = ViewMode.EDIT, colorPalette, onNodeClick }) => {
+const WmsMapModal: FC<WmsMapModalProps> = ({ 
+  onClose, 
+  open, 
+  viewMode: initialViewMode = ViewMode.EDIT, 
+  colorPalette, 
+  onNodeClick,
+  initialNodes,
+  initialEdges
+}) => {
   const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
   const [editMode, setEditMode] = useState<EditMode>(EditMode.BACKGROUND);
   const [drawingMode, setDrawingMode] = useState<DrawingMode>(DrawingMode.NONE);
@@ -806,6 +820,8 @@ const WmsMapModal: FC<WmsMapModalProps> = ({ onClose, open, viewMode: initialVie
               onTogglePenTool={handleTogglePenTool}
               onColorChange={handleColorChange}
               onNodeClick={onNodeClick}
+              initialNodes={initialNodes}
+              initialEdges={initialEdges}
             />
           </ReactFlowProvider>
         </div>
