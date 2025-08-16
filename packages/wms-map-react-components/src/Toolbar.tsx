@@ -49,7 +49,6 @@ const Toolbar: FC<ToolbarProps> = ({
 
   const selectedColor = parentSelectedColor || DEFAULT_BACKGROUND_TOOL_COLOR;
 
-
   const handleColorChange = (color: string) => {
     if (onColorChange) {
       onColorChange(color);

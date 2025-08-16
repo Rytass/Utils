@@ -137,10 +137,10 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
         <RectangleNode {...props} editMode={editMode} viewMode={viewMode} onTextEditComplete={onTextEditComplete} />
       ),
       pathNode: (props: any) => (
-        <PathNode 
-          {...props} 
-          editMode={editMode} 
-          viewMode={viewMode} 
+        <PathNode
+          {...props}
+          editMode={editMode}
+          viewMode={viewMode}
           onTextEditComplete={onTextEditComplete}
           onPathPointsChange={onPathPointsChange}
           onPathPointDragStateChange={onPathPointDragStateChange}
@@ -168,7 +168,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
     // Check if any modifier keys are pressed - if so, don't auto-complete
     // This prevents accidental completion when using Shift for line constraints
     const hasModifierKeys = event && (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey);
-    
+
     console.log('📋 ReactFlow pane clicked', {
       drawingMode,
       editMode,
@@ -176,7 +176,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
       hasModifierKeys,
       willForceComplete: drawingMode === DrawingMode.PEN && editMode === EditMode.LAYER && isDrawingPen && !hasModifierKeys
     });
-    
+
     // Only auto-complete if we're in pen drawing mode, actually drawing, and no modifier keys are pressed
     if (drawingMode === DrawingMode.PEN && editMode === EditMode.LAYER && isDrawingPen && !hasModifierKeys) {
       console.log('🔴 Force completing path from pane click');
@@ -225,7 +225,10 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
           viewMode === ViewMode.EDIT
         }
         selectNodesOnDrag={false}
-        panOnDrag={viewMode === ViewMode.EDIT && drawingMode === DrawingMode.NONE}
+        panOnDrag={
+          viewMode === ViewMode.VIEW ||
+          (viewMode === ViewMode.EDIT && drawingMode === DrawingMode.NONE)
+        }
         panOnScroll={false}
         zoomOnScroll={true}
         zoomOnDoubleClick={viewMode === ViewMode.EDIT && drawingMode !== DrawingMode.PEN}
