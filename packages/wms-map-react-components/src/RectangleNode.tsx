@@ -14,6 +14,7 @@ import {
 import { useContextMenu } from './hooks/useContextMenu';
 import { useTextEditing } from './hooks/useTextEditing';
 import { createRectangleCopy } from './utils/nodeOperations';
+import { createHoverColor } from './utils/colorUtils';
 import ContextMenu from './ContextMenu';
 import styles from './rectangleNode.module.scss';
 
@@ -28,6 +29,7 @@ interface RectangleNodeProps extends NodeProps {
   editMode: EditMode;
   viewMode: ViewMode;
   onTextEditComplete?: (id: string, oldText: string, newText: string) => void;
+  isHovered?: boolean;
 }
 
 const RectangleNode: FC<RectangleNodeProps> = ({
@@ -37,6 +39,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({
   editMode,
   viewMode,
   onTextEditComplete,
+  isHovered = false,
 }) => {
   const { setNodes } = useReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
@@ -140,9 +143,9 @@ const RectangleNode: FC<RectangleNodeProps> = ({
   const handleResizeEnd = useCallback(
     (event: any, params: any) => {
       const newSize = { width: params.width, height: params.height };
-      
+
       setCurrentSize(newSize);
-      
+
       // 清除調整大小標記
       setIsResizing(false);
 
@@ -195,7 +198,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({
 
       return [...nds, nodeWithZIndex];
     });
-    
+
     handleCloseContextMenu();
   }, [
     id,
@@ -207,9 +210,12 @@ const RectangleNode: FC<RectangleNodeProps> = ({
     handleCloseContextMenu,
   ]);
 
+  // 在檢視模式下計算 hover 顏色
+  const displayColor = viewMode === ViewMode.VIEW && isHovered ? createHoverColor(color) : color;
+
   return (
     <div
-      className={`${styles.rectangleNode} ${selected ? styles.selected : ''} ${!isSelectable ? styles.nonSelectable : ''}`}
+      className={`${styles.rectangleNode} ${selected && isEditable ? styles.selected : ''} ${!isSelectable ? styles.nonSelectable : ''}`}
     >
       {selected && isEditable && (
         <NodeResizer
@@ -230,11 +236,11 @@ const RectangleNode: FC<RectangleNodeProps> = ({
         style={{
           width: `${currentSize.width}px`,
           height: `${currentSize.height}px`,
-          backgroundColor: `${color}33`, // 20% opacity (33 in hex = 20% * 255)
+          backgroundColor: `${displayColor}33`, // 20% opacity (33 in hex = 20% * 255)
           opacity: opacity,
           border: selected && isEditable
             ? '2px solid #3b82f6'
-            : `2px solid ${color}`, // 100% opacity border
+            : `2px solid ${displayColor}`, // 100% opacity border
           borderRadius: '4px',
           display: 'flex',
           alignItems: 'center',
@@ -244,6 +250,8 @@ const RectangleNode: FC<RectangleNodeProps> = ({
           fontWeight: 'bold',
           textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
           position: 'relative',
+          cursor: viewMode === ViewMode.VIEW ? 'pointer' : 'default',
+          transition: viewMode === ViewMode.VIEW ? 'all 0.2s ease' : 'none',
         }}
         onDoubleClick={viewMode === ViewMode.EDIT ? handleDoubleClick : undefined}
         onContextMenu={viewMode === ViewMode.EDIT ? handleContextMenu : undefined}

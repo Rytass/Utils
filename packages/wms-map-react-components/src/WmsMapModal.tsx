@@ -68,6 +68,7 @@ const WmsMapContent: FC<{
   const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
   const [lastCopiedNode, setLastCopiedNode] = useState<Node | null>(null);
   const [isEditingPathPoints, setIsEditingPathPoints] = useState(false);
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   
   // Get React Flow instance for viewport information
   const { getViewport, getNodes, getEdges } = useReactFlow();
@@ -573,6 +574,32 @@ const WmsMapContent: FC<{
     setIsEditingPathPoints(isDragging);
   }, []);
 
+  // 處理節點 hover 事件 (React Flow 內建事件)
+  const handleNodeMouseEnter = useCallback((event: React.MouseEvent, node: Node) => {
+    // 只在檢視模式下啟用 hover 效果
+    if (viewMode === ViewMode.VIEW && (node.type === 'rectangleNode' || node.type === 'pathNode')) {
+      console.log('🐭 Node hover enter (React Flow)', { 
+        id: node.id.slice(-4), 
+        type: node.type, 
+        viewMode,
+        originalColor: node.data?.color 
+      });
+      setHoveredNodeId(node.id);
+    }
+  }, [viewMode]);
+
+  const handleNodeMouseLeave = useCallback((event: React.MouseEvent, node: Node) => {
+    // 只在檢視模式下處理 hover 效果
+    if (viewMode === ViewMode.VIEW && (node.type === 'rectangleNode' || node.type === 'pathNode')) {
+      console.log('🐭 Node hover leave (React Flow)', { 
+        id: node.id.slice(-4), 
+        type: node.type, 
+        viewMode 
+      });
+      setHoveredNodeId(null);
+    }
+  }, [viewMode]);
+
   // 處理 Command+D 快捷鍵複製並貼上功能
   const handleCopyPaste = useCallback(() => {
     // 決定要複製的節點：優先使用最後複製的節點，否則使用選中的節點
@@ -808,6 +835,9 @@ const WmsMapContent: FC<{
         onPathPointsChange={handlePathPointsChange}
         onPathPointDragStateChange={handlePathPointDragStateChange}
         isEditingPathPoints={isEditingPathPoints}
+        hoveredNodeId={hoveredNodeId}
+        onNodeMouseEnter={handleNodeMouseEnter}
+        onNodeMouseLeave={handleNodeMouseLeave}
       />
     </>
   );

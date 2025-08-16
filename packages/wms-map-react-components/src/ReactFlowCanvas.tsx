@@ -40,6 +40,9 @@ interface ReactFlowCanvasProps {
   onPathPointsChange?: (id: string, oldPoints: { x: number; y: number }[], newPoints: { x: number; y: number }[]) => void;
   onPathPointDragStateChange?: (isDragging: boolean) => void;
   isEditingPathPoints?: boolean;
+  hoveredNodeId?: string | null;
+  onNodeMouseEnter?: (event: React.MouseEvent, node: Node) => void;
+  onNodeMouseLeave?: (event: React.MouseEvent, node: Node) => void;
 }
 
 const CustomControls: FC = () => {
@@ -105,6 +108,9 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
   onPathPointsChange,
   onPathPointDragStateChange,
   isEditingPathPoints = false,
+  hoveredNodeId,
+  onNodeMouseEnter,
+  onNodeMouseLeave,
 }) => {
   const {
     containerRef: rectContainerRef,
@@ -134,7 +140,13 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
     () => ({
       imageNode: (props: any) => <ImageNode {...props} editMode={editMode} viewMode={viewMode} />,
       rectangleNode: (props: any) => (
-        <RectangleNode {...props} editMode={editMode} viewMode={viewMode} onTextEditComplete={onTextEditComplete} />
+        <RectangleNode 
+          {...props} 
+          editMode={editMode} 
+          viewMode={viewMode} 
+          onTextEditComplete={onTextEditComplete}
+          isHovered={hoveredNodeId === props.id}
+        />
       ),
       pathNode: (props: any) => (
         <PathNode
@@ -144,10 +156,11 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
           onTextEditComplete={onTextEditComplete}
           onPathPointsChange={onPathPointsChange}
           onPathPointDragStateChange={onPathPointDragStateChange}
+          isHovered={hoveredNodeId === props.id}
         />
       ),
     }),
-    [editMode, viewMode, onTextEditComplete, onPathPointsChange, onPathPointDragStateChange],
+    [editMode, viewMode, onTextEditComplete, onPathPointsChange, onPathPointDragStateChange, hoveredNodeId],
   );
 
   // Use a callback ref to assign both drawing hooks to the same container
@@ -212,6 +225,8 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
         onConnect={onConnect}
         onSelectionChange={onSelectionChange}
         onPaneClick={handlePaneClick}
+        onNodeMouseEnter={onNodeMouseEnter}
+        onNodeMouseLeave={onNodeMouseLeave}
         nodeTypes={nodeTypes}
         className={styles.reactFlowCanvas}
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
@@ -221,9 +236,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
         nodesDraggable={
           viewMode === ViewMode.EDIT && drawingMode === DrawingMode.NONE
         }
-        elementsSelectable={
-          viewMode === ViewMode.EDIT
-        }
+        elementsSelectable={true}
         selectNodesOnDrag={false}
         panOnDrag={
           viewMode === ViewMode.VIEW ||

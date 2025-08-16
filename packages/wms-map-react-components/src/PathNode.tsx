@@ -5,6 +5,7 @@ import { DEFAULT_RECTANGLE_COLOR, DEFAULT_PATH_LABEL, ACTIVE_OPACITY, RECTANGLE_
 import { useContextMenu } from './hooks/useContextMenu';
 import { useTextEditing } from './hooks/useTextEditing';
 import { createPathCopy } from './utils/nodeOperations';
+import { createHoverColor } from './utils/colorUtils';
 import ContextMenu from './ContextMenu';
 import styles from './pathNode.module.scss';
 
@@ -20,9 +21,10 @@ interface PathNodeProps extends NodeProps {
   viewMode: ViewMode;
   onTextEditComplete?: (id: string, oldText: string, newText: string) => void;
   onPathPointsChange?: (id: string, oldPoints: { x: number; y: number }[], newPoints: { x: number; y: number }[]) => void;
+  isHovered?: boolean;
 }
 
-const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode, viewMode, onTextEditComplete, onPathPointsChange }) => {
+const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode, viewMode, onTextEditComplete, onPathPointsChange, isHovered = false }) => {
   const {
     points = [],
     color = DEFAULT_RECTANGLE_COLOR,
@@ -359,8 +361,11 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode, viewMode, o
     handleCloseContextMenu();
   }, [id, points, color, strokeWidth, label, getNodesFromHook, setNodesFromHook, handleCloseContextMenu]);
 
+  // 在檢視模式下計算 hover 顏色
+  const displayColor = viewMode === ViewMode.VIEW && isHovered ? createHoverColor(color) : color;
+
   return (
-    <div className={`${styles.pathNode} ${selected ? styles.selected : ''} ${!isSelectable ? styles.nonSelectable : ''}`}>
+    <div className={`${styles.pathNode} ${selected && isEditable ? styles.selected : ''} ${!isSelectable ? styles.nonSelectable : ''}`}>
       <div 
         className={styles.pathContainer}
         style={{
@@ -370,6 +375,8 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode, viewMode, o
           border: selected && isEditable ? '2px solid #3b82f6' : 'none',
           borderRadius: '4px',
           position: 'relative',
+          cursor: viewMode === ViewMode.VIEW ? 'pointer' : 'default',
+          transition: viewMode === ViewMode.VIEW ? 'all 0.2s ease' : 'none',
         }}
         onDoubleClick={viewMode === ViewMode.EDIT ? handleDoubleClick : undefined}
         onContextMenu={viewMode === ViewMode.EDIT ? handleContextMenu : undefined}
@@ -381,9 +388,9 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode, viewMode, o
         >
           <path
             d={pathString}
-            stroke={color}
+            stroke={displayColor}
             strokeWidth={strokeWidth}
-            fill={isClosedPath ? color : "none"}
+            fill={isClosedPath ? displayColor : "none"}
             fillOpacity={isClosedPath ? 0.2 : 0}
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -442,7 +449,7 @@ const PathNode: FC<PathNodeProps> = ({ data, selected, id, editMode, viewMode, o
                     width: '12px',
                     height: '12px',
                     borderRadius: '50%',
-                    background: color, // Use path color for all points
+                    background: displayColor, // Use path color for all points
                     border: '2px solid white',
                     cursor: isDraggingPoint ? 'grabbing' : 'grab',
                     zIndex: 1001,
