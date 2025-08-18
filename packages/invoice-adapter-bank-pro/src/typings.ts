@@ -8,8 +8,8 @@ import {
 import { BankProInvoice } from './bank-pro-invoice';
 
 export enum BankProBaseUrls {
-  DEVELOPMENT = 'http://webtest.bpscm.com.tw/webapi/api/B2B2CWebApi',
-  PRODUCTION = 'http://www.bpscm.com.tw/webapi/api/B2B2CWebApi',
+  DEVELOPMENT = 'https://webtest.bpscm.com.tw/webapi/api/B2B2CWebApi',
+  PRODUCTION = 'https://www.bpscm.com.tw/webapi/api/B2B2CWebApi',
 }
 
 export interface BankProPaymentItem extends InvoicePaymentItem {
