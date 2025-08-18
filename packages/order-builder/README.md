@@ -546,7 +546,7 @@ const policy2 = new PercentageDiscount(
 const policy3 = new ItemGiveawayDiscount(
   1,
   new ItemIncluded<TestOrderItem>({
-    items: ['B''C', 'D', 'E'],
+    items: ['B', 'C', 'D', 'E'],
   }),
   { onlyMatched: true }
 );
@@ -657,7 +657,7 @@ const policy6 = new StepValueDiscount(
   3000,
   200,
   new ItemIncluded({
-    items: ['C', 'D', 'E', 'F''G', 'H', 'I'],
+    items: ['C', 'D', 'E', 'F', 'G', 'H', 'I'],
   }),
   { stepUnit: 'price', onlyMatched: true }
 );
@@ -1134,7 +1134,7 @@ const order = new OrderBuilder()
 // Policy2: 滿足次數
 order
 .discounts
-.find(discount => discount.id === policy2id)
+.find(discount => discount.id === policy2.id)
 ?.matchedTimes; // step(4500, 1499) = 3
 
 // Policy2: Excluded in calculation.

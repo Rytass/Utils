@@ -1,0 +1,512 @@
+# @rytass/invoice-adapter-ecpay
+
+Taiwan ECPay Electronic Invoice Integration - Complete ECPay (綠界科技) E-Invoice Adapter
+
+## Description
+
+`@rytass/invoice-adapter-ecpay` is a comprehensive Taiwan e-invoice adapter for ECPay (綠界科技), one of Taiwan's largest electronic invoice service providers. This package implements the complete ECPay e-invoice API integration including invoice issuance, allowances (折讓), void operations (作廢), and Taiwan government compliance features.
+
+ECPay provides certified e-invoice services that comply with Taiwan's Ministry of Finance regulations. This adapter handles all the complex API interactions, encryption/decryption, carrier validations, and Taiwan-specific business logic required for legal e-invoice operations.
+
+## Installation
+
+```bash
+npm install @rytass/invoice-adapter-ecpay
+```
+
+## Core Features
+
+### Complete ECPay E-Invoice Operations
+- **Invoice Issuance**: Issue invoices with Taiwan e-invoice compliance
+- **Allowance System**: Create and manage invoice allowances (折讓)
+- **Void Operations**: Void invoices with proper audit trails (作廢)
+- **Query System**: Search and retrieve invoice information
+- **Carrier Validation**: Real-time validation of mobile barcodes and love codes
+- **Award Integration**: Automatic Taiwan invoice lottery integration
+
+### Taiwan E-Invoice Compliance
+- **Ministry of Finance Integration**: Direct integration with Taiwan MOF systems
+- **Real-time Transmission**: Automatic invoice transmission to government databases
+- **Tax Calculations**: Accurate Taiwan business tax (5%) and special tax calculations
+- **VAT Number Validation**: Built-in 統一編號 validation and company lookup
+- **Carrier Management**: Support for all Taiwan carrier types (載具)
+
+### ECPay-Specific Features
+- **AES Encryption**: Secure data transmission using AES-128-CBC encryption
+- **API Authentication**: Merchant ID and cryptographic key management
+- **Error Handling**: Comprehensive ECPay error code handling and recovery
+- **Rate Limiting**: Built-in API rate limiting and retry mechanisms
+- **Testing Support**: Sandbox environment support for development
+
+## Quick Start
+
+### Basic Setup
+
+```typescript
+import { ECPayInvoiceGateway, ECPayBaseUrls } from '@rytass/invoice-adapter-ecpay';
+
+const gateway = new ECPayInvoiceGateway({
+  merchantId: 'YOUR_MERCHANT_ID',
+  aesKey: 'YOUR_AES_KEY',
+  aesIv: 'YOUR_AES_IV',
+  baseUrl: ECPayBaseUrls.DEVELOPMENT, // or PRODUCTION
+});
+```
+
+### Issue Invoice with Taiwan E-Invoice Compliance
+
+```typescript
+import { TaxType, InvoiceCarriers, CustomsMark } from '@rytass/invoice-adapter-ecpay';
+
+const invoice = await gateway.issue({
+  orderId: 'ORDER-2024-001',
+  items: [
+    {
+      name: '商品A',
+      unitPrice: 100,
+      quantity: 2,
+      taxType: TaxType.TAXED, // Taiwan 5% business tax
+      unit: '個',
+      remark: 'Product description'
+    }
+  ],
+  customer: {
+    id: 'CUSTOMER_001',
+    name: '測試客戶',
+    email: 'customer@example.com',
+    mobile: '0912345678'
+  },
+  vatNumber: '12345675', // Taiwan 統一編號
+  carrier: InvoiceCarriers.MOBILE('/ABCD123'), // Mobile barcode carrier
+  customsMark: CustomsMark.NO,
+  remark: 'Invoice remarks'
+});
+
+console.log('Invoice Number:', invoice.invoiceNumber);
+console.log('Random Code:', invoice.randomCode); // For lottery
+```
+
+## Taiwan Carrier Types (載具類型)
+
+ECPay supports all official Taiwan carrier types with real-time validation:
+
+### Mobile Barcode Carrier (手機條碼載具)
+```typescript
+// Mobile barcode - stored in Taiwan government app
+const mobileCarrier = InvoiceCarriers.MOBILE('/ABCD123');
+
+// Validate mobile barcode before use
+const isValidMobile = await gateway.isMobileBarcodeValid('/ABCD123');
+if (!isValidMobile) {
+  throw new Error('Invalid mobile barcode - not found in government system');
+}
+```
+
+### Love Code Carrier (愛心碼)
+```typescript
+// Charity donation - invoice amount donated to registered charity
+const loveCodeCarrier = InvoiceCarriers.LOVE_CODE('789');
+
+// Validate love code before use
+const isValidLoveCode = await gateway.isLoveCodeValid('789');
+if (!isValidLoveCode) {
+  throw new Error('Invalid love code - charity organization not found');
+}
+```
+
+### Other Carrier Types
+```typescript
+// Paper invoice (紙本發票)
+const printCarrier = InvoiceCarriers.PRINT;
+
+// MOICA certificate (自然人憑證載具) 
+const moicaCarrier = InvoiceCarriers.MOICA('/CERT456');
+
+// Store member carrier (會員載具)
+const memberCarrier = InvoiceCarriers.MEMBER({ type: InvoiceCarrierType.MEMBER, code: 'MEMBER123' });
+```
+
+## Advanced Tax Handling
+
+### Taiwan Tax Types with ECPay
+```typescript
+import { TaxType, SpecialTaxCode } from '@rytass/invoice-adapter-ecpay';
+
+// Standard Taiwan business tax (5%)
+const standardItem = {
+  name: '一般商品',
+  unitPrice: 100,
+  quantity: 1,
+  taxType: TaxType.TAXED
+};
+
+// Tax-free items (免稅)
+const taxFreeItem = {
+  name: '免稅商品',
+  unitPrice: 200,
+  quantity: 1,
+  taxType: TaxType.TAX_FREE
+};
+
+// Zero tax for exports (零稅率)
+const exportItem = {
+  name: '出口商品',
+  unitPrice: 300,
+  quantity: 1,
+  taxType: TaxType.ZERO_TAX
+};
+
+// Special tax rates for specific industries
+const specialTaxItem = {
+  name: '特種稅率商品',
+  unitPrice: 400,
+  quantity: 1,
+  taxType: TaxType.SPECIAL
+};
+
+// Issue invoice with special tax code
+const invoiceWithSpecialTax = await gateway.issue({
+  orderId: 'SPECIAL-001',
+  items: [specialTaxItem],
+  customer: { name: '特殊行業客戶' },
+  specialTaxCode: SpecialTaxCode.TEA, // Tea industry special tax
+});
+```
+
+## Allowance Operations (折讓)
+
+Allowances are partial refunds that don't void the original invoice - a key Taiwan e-invoice feature:
+
+```typescript
+// Create allowance for partial refund
+const allowanceItems = [
+  {
+    name: '商品A',
+    unitPrice: 100,
+    quantity: 1, // Partial refund - only 1 out of 2 original items
+    taxType: TaxType.TAXED
+  }
+];
+
+const updatedInvoice = await gateway.allowance(
+  originalInvoice,
+  allowanceItems,
+  {
+    taxType: TaxType.TAXED,
+    buyerName: '買受人姓名',
+    notifyEmail: 'customer@example.com',
+    notifyPhone: '0912345678'
+  }
+);
+
+console.log('Allowance created:', updatedInvoice.allowances);
+console.log('Remaining amount:', updatedInvoice.nowAmount);
+```
+
+### Invalid Allowance
+```typescript
+// Invalidate an allowance if needed
+const allowanceToInvalid = updatedInvoice.allowances[0];
+await gateway.invalidAllowance(allowanceToInvalid);
+```
+
+## Void Operations (作廢)
+
+Complete invoice cancellation with audit trail:
+
+```typescript
+// Void an invoice
+const voidedInvoice = await gateway.void(invoice, {
+  reason: '客戶要求取消訂單' // Reason required for audit
+});
+
+console.log('Invoice voided on:', voidedInvoice.voidOn);
+console.log('Invoice state:', voidedInvoice.state); // InvoiceState.VOID
+```
+
+## Query and Search Operations
+
+### Query by Order ID
+```typescript
+const invoice = await gateway.query({
+  orderId: 'ORDER-2024-001'
+});
+```
+
+### Query by Invoice Number and Date
+```typescript
+const invoice = await gateway.query({
+  invoiceNumber: 'AB12345678',
+  issuedOn: new Date('2024-01-15')
+});
+```
+
+### List Invoices with Filters
+```typescript
+// Query invoice list with date range and filters
+const invoiceList = await gateway.queryList({
+  startDate: '2024-01-01',
+  endDate: '2024-01-31',
+  onlyAward: false,      // Include non-winning invoices
+  onlyInvalid: false     // Include valid invoices
+});
+
+// Check for lottery winners
+const awardWinners = invoiceList.filter(invoice => 
+  invoice.awardType && invoice.awardType !== InvoiceAwardType.NO_AWARD
+);
+```
+
+## Configuration Options
+
+### Gateway Configuration
+```typescript
+interface ECPayInvoiceGatewayOptions {
+  merchantId?: string;    // ECPay merchant ID (default: test merchant)
+  aesKey?: string;        // AES encryption key (default: test key)
+  aesIv?: string;         // AES initialization vector (default: test IV)
+  baseUrl?: ECPayBaseUrls; // API endpoint (DEVELOPMENT or PRODUCTION)
+  skipMobileBarcodeValidation?: boolean; // Skip mobile barcode validation
+  skipLoveCodeValidation?: boolean;      // Skip love code validation
+}
+
+const gateway = new ECPayInvoiceGateway({
+  merchantId: 'PROD_MERCHANT_ID',
+  aesKey: 'your-32-character-aes-key-here',
+  aesIv: 'your-16-char-iv',
+  baseUrl: ECPayBaseUrls.PRODUCTION,
+  skipMobileBarcodeValidation: false, // Always validate in production
+  skipLoveCodeValidation: false
+});
+```
+
+### Environment-Specific Setup
+
+#### Development Environment
+```typescript
+const devGateway = new ECPayInvoiceGateway({
+  baseUrl: ECPayBaseUrls.DEVELOPMENT,
+  // Uses default test credentials
+});
+```
+
+#### Production Environment
+```typescript
+const prodGateway = new ECPayInvoiceGateway({
+  merchantId: process.env.ECPAY_MERCHANT_ID,
+  aesKey: process.env.ECPAY_AES_KEY,
+  aesIv: process.env.ECPAY_AES_IV,
+  baseUrl: ECPayBaseUrls.PRODUCTION,
+});
+```
+
+## Error Handling
+
+### ECPay-Specific Error Codes
+```typescript
+try {
+  const invoice = await gateway.issue(options);
+} catch (error) {
+  switch (error.code) {
+    case 'ECPAY_1':
+      console.error('Success - but check response data');
+      break;
+    case 'ECPAY_1600003':
+      console.error('Invoice not found');
+      break;
+    case 'ECPAY_INVALID_MERCHANT':
+      console.error('Invalid merchant ID or configuration');
+      break;
+    case 'ECPAY_ENCRYPTION_ERROR':
+      console.error('AES encryption/decryption failed');
+      break;
+    default:
+      console.error('Unexpected ECPay error:', error.message);
+  }
+}
+```
+
+### Taiwan E-Invoice Validation Errors
+```typescript
+// Handle Taiwan-specific validation errors
+try {
+  await gateway.issue(options);
+} catch (error) {
+  if (error.type === 'VAT_VALIDATION_ERROR') {
+    console.error('Taiwan VAT number validation failed:', error.vatNumber);
+  } else if (error.type === 'CARRIER_VALIDATION_ERROR') {
+    console.error('Carrier validation failed:', error.carrier);
+  } else if (error.type === 'TAX_CALCULATION_ERROR') {
+    console.error('Taiwan tax calculation error:', error.details);
+  }
+}
+```
+
+## Testing
+
+### Unit Tests
+```bash
+npm test
+```
+
+### Integration Tests with ECPay Sandbox
+```typescript
+// Test with ECPay sandbox environment
+const testGateway = new ECPayInvoiceGateway({
+  baseUrl: ECPayBaseUrls.DEVELOPMENT,
+});
+
+// Test invoice issuance
+const testInvoice = await testGateway.issue({
+  orderId: `TEST-${Date.now()}`,
+  items: [
+    {
+      name: '測試商品',
+      unitPrice: 100,
+      quantity: 1,
+      taxType: TaxType.TAXED
+    }
+  ],
+  customer: {
+    name: '測試客戶',
+    email: 'test@example.com'
+  }
+});
+
+expect(testInvoice.invoiceNumber).toBeDefined();
+expect(testInvoice.state).toBe(InvoiceState.ISSUED);
+```
+
+### Mock ECPay API for Testing
+```typescript
+// Mock ECPay responses for unit testing
+jest.mock('axios');
+const mockedAxios = axios as jest.Mocked<typeof axios>;
+
+mockedAxios.post.mockResolvedValue({
+  data: {
+    RtnCode: 1,
+    RtnMsg: 'Success',
+    InvoiceNo: 'AB12345678',
+    InvoiceDate: '2024-01-15 10:30:00',
+    RandomNumber: '1234'
+  }
+});
+```
+
+## Taiwan Compliance Features
+
+### Ministry of Finance Integration
+- **Real-time Transmission**: Invoices automatically transmitted to MOF within required timeframes
+- **Government Database Sync**: Carrier validations use live government databases
+- **Audit Trail Compliance**: Complete transaction logging for tax authority audits
+- **Format Compliance**: All invoice formats meet MOF e-invoice specifications
+
+### Business Tax Compliance
+- **Accurate Calculations**: Precise Taiwan business tax (5%) calculations
+- **Special Industry Support**: Special tax rates for tea, banking, insurance industries
+- **Mixed Tax Handling**: Support for invoices with multiple tax types
+- **Export Documentation**: Zero-tax rate support with proper customs documentation
+
+### Lottery Integration
+- **Automatic Participation**: All invoices automatically participate in Taiwan's bimonthly lottery
+- **Award Notification**: Automatic award detection and notification
+- **Prize Categories**: Support for all Taiwan invoice lottery prize tiers
+- **Winner Processing**: Streamlined processing for lottery winners
+
+## Performance Optimization
+
+### Caching Strategy
+```typescript
+// Implement caching for carrier validation
+const cache = new Map();
+
+class CachedECPayGateway extends ECPayInvoiceGateway {
+  async isMobileBarcodeValid(code: string): Promise<boolean> {
+    if (cache.has(code)) {
+      return cache.get(code);
+    }
+    
+    const isValid = await super.isMobileBarcodeValid(code);
+    cache.set(code, isValid);
+    return isValid;
+  }
+}
+```
+
+### Batch Operations
+```typescript
+// Process multiple invoices efficiently
+const invoices = await Promise.allSettled(
+  orderIds.map(orderId => 
+    gateway.issue({
+      orderId,
+      items: getItemsForOrder(orderId),
+      customer: getCustomerForOrder(orderId)
+    })
+  )
+);
+
+// Handle results with proper error handling
+invoices.forEach((result, index) => {
+  if (result.status === 'fulfilled') {
+    console.log(`Invoice ${index} created:`, result.value.invoiceNumber);
+  } else {
+    console.error(`Invoice ${index} failed:`, result.reason);
+  }
+});
+```
+
+## Security Considerations
+
+### AES Encryption
+- **Key Management**: Secure storage of AES keys and IVs
+- **Encryption Standards**: AES-128-CBC encryption for all API communications
+- **Key Rotation**: Regular rotation of encryption keys
+- **Environment Separation**: Separate keys for development and production
+
+### Data Protection
+```typescript
+// Secure configuration management
+const config = {
+  merchantId: process.env.ECPAY_MERCHANT_ID,
+  aesKey: process.env.ECPAY_AES_KEY, // 32 characters
+  aesIv: process.env.ECPAY_AES_IV,   // 16 characters
+};
+
+// Validate configuration before use
+if (!config.merchantId || !config.aesKey || !config.aesIv) {
+  throw new Error('Missing required ECPay configuration');
+}
+```
+
+## Dependencies
+
+- `@rytass/invoice`: Core invoice types and interfaces
+- `axios`: HTTP client for ECPay API communication
+- `luxon`: Date/time handling for Taiwan timezone
+- `validator`: Input validation utilities
+
+## Related Packages
+
+### Other Taiwan E-Invoice Adapters
+- `@rytass/invoice-adapter-ezpay`: EZPay (藍新金流) e-invoice integration
+- `@rytass/invoice-adapter-bank-pro`: BankPro e-invoice integration
+- `@rytass/invoice-adapter-amego`: Amego e-invoice integration
+
+### Supporting Packages
+- `@rytass/payments`: Payment processing integration
+- `@rytass/order-builder`: Order management and preparation
+
+## License
+
+MIT
+
+## Support
+
+- **ECPay Documentation**: https://www.ecpay.com.tw/
+- **Taiwan E-Invoice Regulations**: Taiwan Ministry of Finance specifications
+- **GitHub Issues**: https://github.com/Rytass/Utils/issues
+- **Technical Support**: For ECPay-specific issues, contact ECPay technical support
+
+This adapter provides complete ECPay e-invoice integration with full Taiwan regulatory compliance, making it easy to implement legal electronic invoicing for Taiwan businesses.

@@ -1,0 +1,655 @@
+# @rytass/invoice-adapter-amego
+
+Taiwan Amego Electronic Invoice Integration - Complete Amego E-Invoice Adapter
+
+## Description
+
+`@rytass/invoice-adapter-amego` is a comprehensive Taiwan e-invoice adapter for Amego, a growing electronic invoice service provider in Taiwan focused on small to medium businesses and startups. This package implements the complete Amego e-invoice API integration including invoice issuance, allowances (折讓), void operations (作廢), and Taiwan government compliance features.
+
+Amego provides developer-friendly e-invoice services with modern API design, making it particularly suitable for tech startups and SMBs looking for easy integration with Taiwan's e-invoice system. This adapter handles all the complex API interactions, authentication, and Taiwan-specific business logic required for legal e-invoice operations.
+
+## Installation
+
+```bash
+npm install @rytass/invoice-adapter-amego
+```
+
+## Core Features
+
+### Complete Amego E-Invoice Operations
+- **Invoice Issuance**: Issue invoices with Taiwan e-invoice compliance
+- **Allowance System**: Create and manage invoice allowances (折讓)
+- **Void Operations**: Void invoices with proper audit trails (作廢)
+- **Query System**: Search and retrieve invoice information
+- **Carrier Validation**: Real-time validation of mobile barcodes and love codes
+- **Developer-Friendly API**: Modern REST API design with clear documentation
+
+### Taiwan E-Invoice Compliance
+- **Ministry of Finance Integration**: Direct integration with Taiwan MOF systems
+- **Real-time Transmission**: Automatic invoice transmission to government databases
+- **VAT Number Management**: Built-in 統一編號 validation and verification
+- **Tax Calculations**: Accurate Taiwan business tax handling
+- **Lottery Integration**: Automatic participation in Taiwan's invoice lottery system
+
+### Amego-Specific Features
+- **App Key Authentication**: Simple API key-based authentication
+- **SMB Focused**: Optimized for small to medium business needs
+- **Modern API Design**: RESTful API with JSON request/response
+- **Startup Friendly**: Competitive pricing and easy onboarding
+- **Flexible Integration**: Support for various business models and use cases
+
+## Quick Start
+
+### Basic Setup
+
+```typescript
+import { AmegoInvoiceGateway, AmegoBaseUrls } from '@rytass/invoice-adapter-amego';
+
+const gateway = new AmegoInvoiceGateway({
+  appKey: 'YOUR_AMEGO_APP_KEY',
+  vatNumber: '12345675', // Your company's VAT number (統編)
+  baseUrl: AmegoBaseUrls.DEVELOPMENT, // or PRODUCTION
+});
+```
+
+### Issue Invoice for SMB Scenarios
+
+```typescript
+import { TaxType, InvoiceCarriers, CustomsMark } from '@rytass/invoice-adapter-amego';
+
+const invoice = await gateway.issue({
+  orderId: 'SMB-ORDER-2024-001',
+  items: [
+    {
+      name: '手工咖啡豆',
+      unitPrice: 300,
+      quantity: 2,
+      unit: '包',
+      taxType: TaxType.TAXED, // Taiwan 5% business tax
+      remark: '精選阿里山咖啡豆'
+    },
+    {
+      name: '配送服務',
+      unitPrice: 100,
+      quantity: 1,
+      unit: '次',
+      taxType: TaxType.TAXED,
+      remark: '宅配到府服務'
+    }
+  ],
+  customer: {
+    name: '張小明',
+    email: 'customer@example.com',
+    phone: '0912345678'
+  },
+  vatNumber: undefined, // B2C transaction - no VAT number
+  carrier: InvoiceCarriers.MOBILE('/IJKL789'), // Customer's mobile barcode
+  customsMark: CustomsMark.NO,
+  remark: 'Amego 小型商家訂單'
+});
+
+console.log('Invoice Number:', invoice.invoiceNumber);
+console.log('Random Code:', invoice.randomCode); // For Taiwan lottery
+console.log('Invoice Amount:', invoice.issuedAmount);
+```
+
+## SMB and Startup Use Cases
+
+### E-commerce Integration
+```typescript
+// Typical e-commerce order processing
+const ecommerceOrder = {
+  orderId: 'SHOP-2024-001',
+  items: [
+    {
+      name: '有機蔬菜箱',
+      unitPrice: 450,
+      quantity: 1,
+      unit: '箱',
+      taxType: TaxType.TAXED,
+      remark: '當季有機蔬菜組合'
+    },
+    {
+      name: '免運優惠',
+      unitPrice: -50, // Discount as negative amount
+      quantity: 1,
+      unit: '次',
+      taxType: TaxType.TAXED,
+      remark: '滿額免運費優惠'
+    }
+  ],
+  customer: {
+    name: '李美華',
+    email: 'customer@shop.com',
+    phone: '0923456789'
+  },
+  carrier: InvoiceCarriers.MOBILE('/MOBILE123')
+};
+
+const ecommerceInvoice = await gateway.issue(ecommerceOrder);
+```
+
+### Service Business Integration
+```typescript
+// Service-based business (consulting, design, etc.)
+const serviceOrder = {
+  orderId: 'SERVICE-2024-001',
+  items: [
+    {
+      name: '網站設計服務',
+      unitPrice: 30000,
+      quantity: 1,
+      unit: '案',
+      taxType: TaxType.TAXED,
+      remark: '響應式網站設計含SEO優化'
+    },
+    {
+      name: '網站維護服務',
+      unitPrice: 5000,
+      quantity: 6,
+      unit: '月',
+      taxType: TaxType.TAXED,
+      remark: '半年網站維護服務'
+    }
+  ],
+  customer: {
+    name: '創新科技有限公司',
+    vatNumber: '98765432', // B2B client
+    email: 'contact@innovative-tech.com'
+  },
+  vatNumber: '98765432'
+};
+
+const serviceInvoice = await gateway.issue(serviceOrder);
+```
+
+## Tax Handling for Different Business Types
+
+### Standard Business Tax (5%)
+```typescript
+// Most SMB transactions use standard 5% Taiwan business tax
+const standardItems = [
+  {
+    name: '商品',
+    unitPrice: 100,
+    quantity: 1,
+    taxType: TaxType.TAXED // 5% business tax will be calculated
+  }
+];
+```
+
+### Tax-Free Items
+```typescript
+// Certain products or services may be tax-free
+const taxFreeItems = [
+  {
+    name: '教育服務',
+    unitPrice: 1000,
+    quantity: 1,
+    taxType: TaxType.TAX_FREE // No tax applied
+  }
+];
+```
+
+### Zero Tax for Exports
+```typescript
+// Export goods have zero tax rate
+const exportItems = [
+  {
+    name: '出口商品',
+    unitPrice: 2000,
+    quantity: 1,
+    taxType: TaxType.ZERO_TAX // 0% tax for exports
+  }
+];
+```
+
+## Allowance Operations (折讓)
+
+Amego allowances for customer service scenarios:
+
+```typescript
+// Create allowance for quality issues or returns
+const allowanceItems = [
+  {
+    name: '手工咖啡豆',
+    unitPrice: 300,
+    quantity: 1, // Partial return
+    unit: '包',
+    taxType: TaxType.TAXED,
+    remark: '產品品質不符期望'
+  }
+];
+
+const updatedInvoice = await gateway.allowance(
+  originalInvoice,
+  allowanceItems,
+  {
+    taxType: TaxType.TAXED,
+    reason: '客戶不滿意產品品質，部分退費'
+  }
+);
+
+console.log('Allowance Created:', updatedInvoice.allowances.length);
+console.log('Remaining Amount:', updatedInvoice.nowAmount);
+```
+
+### Invalidate Allowance
+```typescript
+// Cancel allowance if customer changes mind
+const allowanceToInvalidate = updatedInvoice.allowances[0];
+await gateway.invalidAllowance(allowanceToInvalidate);
+```
+
+## Void Operations (作廢)
+
+Cancel entire invoices for SMB scenarios:
+
+```typescript
+// Void invoice with reason for audit
+const voidedInvoice = await gateway.void(invoice, {
+  reason: '客戶要求退款，取消訂單' // Clear reason for record keeping
+});
+
+console.log('Invoice Voided On:', voidedInvoice.voidOn);
+console.log('Void Reason:', '客戶要求退款，取消訂單');
+```
+
+## Query and Search Operations
+
+### Query by Order ID
+```typescript
+// Find invoice using your order ID
+const invoice = await gateway.query({
+  orderId: 'SMB-ORDER-2024-001'
+});
+
+console.log('Invoice Found:', invoice.invoiceNumber);
+console.log('Customer Email:', invoice.buyerEmail);
+```
+
+### Query by Invoice Number and Date
+```typescript
+// Find invoice using Amego invoice number
+const invoice = await gateway.query({
+  invoiceNumber: 'AM12345678',
+  issuedOn: new Date('2024-01-15')
+});
+```
+
+## Configuration Options
+
+### Gateway Configuration
+```typescript
+interface AmegoInvoiceGatewayOptions {
+  appKey: string;         // Your Amego app key
+  vatNumber: string;      // Your business VAT number (統編)
+  baseUrl?: AmegoBaseUrls; // API endpoint (DEVELOPMENT or PRODUCTION)
+}
+
+const gateway = new AmegoInvoiceGateway({
+  appKey: 'your-amego-app-key-here',
+  vatNumber: '12345675', // Your registered business VAT number
+  baseUrl: AmegoBaseUrls.PRODUCTION
+});
+```
+
+### Environment Configuration
+
+#### Development Environment
+```typescript
+const devGateway = new AmegoInvoiceGateway({
+  appKey: 'dev-app-key',
+  vatNumber: '99999999', // Test VAT number
+  baseUrl: AmegoBaseUrls.DEVELOPMENT
+});
+```
+
+#### Production Environment
+```typescript
+const prodGateway = new AmegoInvoiceGateway({
+  appKey: process.env.AMEGO_APP_KEY,
+  vatNumber: process.env.COMPANY_VAT_NUMBER,
+  baseUrl: AmegoBaseUrls.PRODUCTION
+});
+```
+
+## Error Handling
+
+### Amego-Specific Errors
+```typescript
+try {
+  const invoice = await gateway.issue(options);
+} catch (error) {
+  switch (error.code) {
+    case 'AMEGO_INVALID_APP_KEY':
+      console.error('Invalid Amego app key - check configuration');
+      break;
+    case 'AMEGO_VAT_NUMBER_ERROR':
+      console.error('VAT number validation failed');
+      break;
+    case 'AMEGO_DUPLICATE_ORDER':
+      console.error('Order ID already exists');
+      break;
+    case 'AMEGO_QUOTA_EXCEEDED':
+      console.error('Monthly invoice quota exceeded');
+      break;
+    case 'AMEGO_API_ERROR':
+      console.error('Amego API error:', error.message);
+      break;
+    default:
+      console.error('Unknown Amego error:', error.message);
+  }
+}
+```
+
+### Business Logic Errors
+```typescript
+// Handle business validation errors
+try {
+  await gateway.issue(options);
+} catch (error) {
+  if (error.type === 'INVALID_ITEM_PRICE') {
+    console.error('Item price must be positive:', error.itemName);
+  } else if (error.type === 'CARRIER_VALIDATION_FAILED') {
+    console.error('Carrier code invalid:', error.carrierCode);
+  } else if (error.type === 'TAX_CALCULATION_ERROR') {
+    console.error('Tax calculation failed:', error.details);
+  }
+}
+```
+
+## Testing
+
+### Unit Tests
+```bash
+npm test
+```
+
+### Integration Testing with Amego
+```typescript
+// Test with Amego development environment
+const testGateway = new AmegoInvoiceGateway({
+  appKey: 'test-app-key',
+  vatNumber: '99999999',
+  baseUrl: AmegoBaseUrls.DEVELOPMENT
+});
+
+describe('Amego Invoice Integration', () => {
+  it('should issue SMB invoice successfully', async () => {
+    const invoice = await testGateway.issue({
+      orderId: `SMB-TEST-${Date.now()}`,
+      items: [
+        {
+          name: '測試商品',
+          unitPrice: 100,
+          quantity: 1,
+          taxType: TaxType.TAXED
+        }
+      ],
+      customer: {
+        name: '測試客戶',
+        email: 'test@smb.com'
+      }
+    });
+
+    expect(invoice.invoiceNumber).toBeDefined();
+    expect(invoice.state).toBe(InvoiceState.ISSUED);
+    expect(invoice.issuedAmount).toBe(105); // 100 + 5% tax
+  });
+
+  it('should handle tax-free items correctly', async () => {
+    const invoice = await testGateway.issue({
+      orderId: `TAX-FREE-TEST-${Date.now()}`,
+      items: [
+        {
+          name: '免稅商品',
+          unitPrice: 200,
+          quantity: 1,
+          taxType: TaxType.TAX_FREE
+        }
+      ],
+      customer: { name: '免稅測試客戶' }
+    });
+
+    expect(invoice.issuedAmount).toBe(200); // No tax added
+  });
+});
+```
+
+### Mock Amego API for Testing
+```typescript
+// Mock Amego responses for unit testing
+jest.mock('axios');
+const mockedAxios = axios as jest.Mocked<typeof axios>;
+
+// Mock successful invoice creation
+mockedAxios.post.mockResolvedValue({
+  data: {
+    success: true,
+    result: {
+      invoiceNumber: 'AM12345678',
+      issueDate: '2024-01-15',
+      randomCode: '5678',
+      totalAmount: 105
+    }
+  }
+});
+```
+
+## SMB Integration Patterns
+
+### POS System Integration
+```typescript
+// Integration with Point of Sale systems
+class POSAmegoIntegration {
+  constructor(private gateway: AmegoInvoiceGateway) {}
+
+  async processPOSSale(sale: POSSale): Promise<Invoice> {
+    const items = sale.items.map(item => ({
+      name: item.productName,
+      unitPrice: item.unitPrice,
+      quantity: item.quantity,
+      unit: item.unit || '個',
+      taxType: TaxType.TAXED,
+      remark: item.notes
+    }));
+
+    return this.gateway.issue({
+      orderId: sale.receiptNumber,
+      items,
+      customer: sale.customer ? {
+        name: sale.customer.name,
+        email: sale.customer.email,
+        phone: sale.customer.phone
+      } : undefined,
+      carrier: sale.customerCarrier || InvoiceCarriers.PRINT
+    });
+  }
+}
+```
+
+### Subscription Service Integration
+```typescript
+// Monthly subscription billing
+class SubscriptionBilling {
+  constructor(private gateway: AmegoInvoiceGateway) {}
+
+  async processMonthlyBilling(subscription: Subscription): Promise<Invoice> {
+    const monthlyItems = [
+      {
+        name: `${subscription.planName} - ${subscription.billingMonth}`,
+        unitPrice: subscription.monthlyFee,
+        quantity: 1,
+        unit: '月',
+        taxType: TaxType.TAXED,
+        remark: `訂閱服務 - ${subscription.billingMonth}`
+      }
+    ];
+
+    if (subscription.additionalCharges) {
+      subscription.additionalCharges.forEach(charge => {
+        monthlyItems.push({
+          name: charge.description,
+          unitPrice: charge.amount,
+          quantity: 1,
+          unit: '次',
+          taxType: TaxType.TAXED,
+          remark: charge.notes
+        });
+      });
+    }
+
+    return this.gateway.issue({
+      orderId: `SUB-${subscription.customerId}-${subscription.billingMonth}`,
+      items: monthlyItems,
+      customer: {
+        name: subscription.customer.name,
+        email: subscription.customer.email,
+        vatNumber: subscription.customer.vatNumber
+      },
+      vatNumber: subscription.customer.vatNumber
+    });
+  }
+}
+```
+
+## Performance Optimization for SMBs
+
+### Caching for High-Volume SMBs
+```typescript
+// Implement caching for busy SMB scenarios
+class CachedAmegoGateway extends AmegoInvoiceGateway {
+  private carrierCache = new Map<string, boolean>();
+  private cacheTimeout = 300000; // 5 minutes
+
+  async isMobileBarcodeValid(code: string): Promise<boolean> {
+    const cached = this.carrierCache.get(`mobile:${code}`);
+    if (cached !== undefined) {
+      return cached;
+    }
+
+    const isValid = await super.isMobileBarcodeValid(code);
+    this.carrierCache.set(`mobile:${code}`, isValid);
+
+    // Clear cache after timeout
+    setTimeout(() => {
+      this.carrierCache.delete(`mobile:${code}`);
+    }, this.cacheTimeout);
+
+    return isValid;
+  }
+}
+```
+
+### Batch Processing for Multiple Locations
+```typescript
+// Handle multiple store locations
+async function processBatchInvoicesForChain(storeOrders: StoreOrder[]) {
+  const results = await Promise.allSettled(
+    storeOrders.map(order => 
+      gateway.issue({
+        orderId: `${order.storeId}-${order.orderId}`,
+        items: order.items,
+        customer: order.customer
+      })
+    )
+  );
+
+  // Group results by store
+  const storeResults = new Map<string, { successful: Invoice[]; failed: any[] }>();
+  
+  results.forEach((result, index) => {
+    const storeId = storeOrders[index].storeId;
+    if (!storeResults.has(storeId)) {
+      storeResults.set(storeId, { successful: [], failed: [] });
+    }
+
+    const storeResult = storeResults.get(storeId)!;
+    if (result.status === 'fulfilled') {
+      storeResult.successful.push(result.value);
+    } else {
+      storeResult.failed.push({ order: storeOrders[index], error: result.reason });
+    }
+  });
+
+  return storeResults;
+}
+```
+
+## Taiwan Compliance Features
+
+### Ministry of Finance Integration
+- **Real-time Transmission**: Invoices transmitted to MOF systems automatically
+- **SMB Compliance**: Simplified compliance process for small businesses
+- **Audit Support**: Complete audit trails suitable for SMB tax filing
+- **Government Validation**: Carrier codes validated against government databases
+
+### Business Tax Compliance
+- **SMB Tax Calculations**: Accurate 5% Taiwan business tax calculations
+- **Mixed Customer Support**: Handle both B2B and B2C customers
+- **Export Support**: Zero-tax rate for export-oriented SMBs
+- **Tax Reporting**: Easy integration with Taiwan tax reporting requirements
+
+### Lottery Integration
+- **Automatic Participation**: All invoices participate in Taiwan lottery
+- **SMB Winner Support**: Simplified winner processing for small businesses
+- **Prize Notifications**: Automatic notification of lottery wins
+- **Customer Engagement**: Lottery participation increases customer satisfaction
+
+## Security Best Practices
+
+### API Key Security
+```typescript
+// Secure app key management
+const secureConfig = {
+  appKey: process.env.AMEGO_APP_KEY,
+  vatNumber: process.env.COMPANY_VAT_NUMBER
+};
+
+// Validate configuration
+if (!secureConfig.appKey) {
+  throw new Error('Amego app key is required');
+}
+
+if (!secureConfig.vatNumber || !/^\d{8}$/.test(secureConfig.vatNumber)) {
+  throw new Error('Valid Taiwan VAT number is required');
+}
+```
+
+### Data Protection for SMBs
+- **Customer Data Protection**: Secure handling of customer information
+- **API Security**: HTTPS-only communication with Amego servers
+- **Audit Logging**: Transaction logs for SMB compliance requirements
+- **Access Control**: App key-based access control for team members
+
+## Dependencies
+
+- `@rytass/invoice`: Core invoice types and interfaces
+- `axios`: HTTP client for Amego API communication
+- `luxon`: Date/time handling for Taiwan timezone
+- `validator`: Input validation utilities
+
+## Related Packages
+
+### Other Taiwan E-Invoice Adapters
+- `@rytass/invoice-adapter-ecpay`: ECPay (綠界科技) e-invoice integration
+- `@rytass/invoice-adapter-ezpay`: EZPay (藍新金流) e-invoice integration
+- `@rytass/invoice-adapter-bank-pro`: BankPro e-invoice integration
+
+### Supporting Packages
+- `@rytass/payments`: Payment processing integration
+- `@rytass/order-builder`: Order management for SMBs
+
+## License
+
+MIT
+
+## Support
+
+- **Amego Documentation**: https://www.amego.tw/
+- **Taiwan E-Invoice Regulations**: Taiwan Ministry of Finance specifications
+- **GitHub Issues**: https://github.com/Rytass/Utils/issues
+- **SMB Support**: Contact Amego for small business technical support
+
+This adapter provides complete Amego e-invoice integration optimized for small to medium businesses with full Taiwan regulatory compliance, making it easy for SMBs and startups to implement legal electronic invoicing.

@@ -1,0 +1,359 @@
+# Rytass Utils - NewebPay Payment Adapter
+
+## Package Information
+- **Package**: `@rytass/payments-adapter-newebpay`
+- **Version**: 0.2.5
+- **Description**: Comprehensive TypeScript payment adapter for NewebPay (formerly MPG - Multi Payment Gateway), Taiwan's leading payment service provider
+- **Author**: Chia Yu Pai <fantasyatelier@gmail.com>
+- **License**: MIT
+- **Repository**: https://github.com/Rytass/Utils
+
+## Overview
+This adapter provides seamless integration with NewebPay's payment ecosystem, offering unified payment processing with support for credit cards, virtual accounts, WebATM, and mobile payment solutions including Android Pay and Samsung Pay. Features built-in callback server, card binding/tokenization, multi-language UI support, and comprehensive payment lifecycle management.
+
+## Installation
+```bash
+npm install @rytass/payments-adapter-newebpay
+# or
+yarn add @rytass/payments-adapter-newebpay
+```
+
+## Dependencies
+- `@rytass/payments`: ^0.2.2
+- `axios`: ^1.7.8
+- `lru-cache`: ^11.0.2
+- `luxon`: ^3.5.0
+
+## Peer Dependencies
+- `@ngrok/ngrok`: ^1.5.1 (for local development)
+
+## Key Features
+- ✅ Credit Card payments with installments (3, 6, 12, 18, 24 months)
+- ✅ Android Pay and Samsung Pay integration
+- ✅ UnionPay card processing
+- ✅ WebATM bank transfers
+- ✅ Virtual Account generation
+- ✅ Card binding and tokenization
+- ✅ Built-in callback server with ngrok support
+- ✅ Multi-language UI (Traditional Chinese, English, Japanese)
+- ✅ Order lifecycle management with event-driven architecture
+- ✅ Trade limits and expiration controls
+- ✅ Refund processing
+- ✅ Real-time order query and status tracking
+
+## Basic Usage
+
+### Simple Credit Card Payment
+```typescript
+import { 
+  NewebPayPayment, 
+  NewebPaymentChannel 
+} from '@rytass/payments-adapter-newebpay';
+import { Channel, PaymentEvents } from '@rytass/payments';
+
+const payment = new NewebPayPayment({
+  merchantId: 'YOUR_NEWEBPAY_MERCHANT_ID',
+  hashKey: 'YOUR_NEWEBPAY_HASH_KEY',
+  hashIv: 'YOUR_NEWEBPAY_HASH_IV',
+  serverHost: 'https://your-domain.com',
+  withServer: true,
+  onCommit: (order) => {
+    console.log('Payment committed:', order);
+  }
+});
+
+// Create credit card order
+const order = payment.prepare({
+  channel: Channel.CREDIT_CARD,
+  items: [
+    {
+      name: 'Premium Product',
+      unitPrice: 1500,
+      quantity: 1
+    }
+  ],
+  language: 'zh-tw',
+  email: 'customer@example.com'
+});
+
+console.log('Checkout URL:', order.checkoutURL);
+```
+
+### Virtual Account Payment
+```typescript
+import { NewebPayVirtualAccountBank } from '@rytass/payments-adapter-newebpay';
+
+const order = payment.prepare({
+  channel: Channel.VIRTUAL_ACCOUNT,
+  items: [{
+    name: 'Monthly Subscription',
+    unitPrice: 999,
+    quantity: 1
+  }],
+  additionalInfo: {
+    bankType: NewebPayVirtualAccountBank.BOT
+  },
+  tradeLimit: 3, // Payment expires in 3 days
+  email: 'customer@example.com'
+});
+
+// Virtual account info available after order creation
+console.log('Account Number:', order.paymentInfo.account);
+console.log('Bank Code:', order.paymentInfo.bankCode);
+```
+
+### Card Binding and Tokenization
+```typescript
+// Enable card binding (memory must be false)
+const payment = new NewebPayPayment({
+  merchantId: 'YOUR_MERCHANT_ID',
+  hashKey: 'YOUR_HASH_KEY',
+  hashIv: 'YOUR_HASH_IV',
+  memory: false, // Required for card binding
+  serverHost: 'https://your-domain.com'
+});
+
+// Bind card for future payments
+const bindRequest = await payment.prepareBindCard({
+  memberId: 'user123',
+  description: '綁定信用卡',
+  finishRedirectURL: 'https://your-site.com/card-bound-success'
+});
+
+// Handle card binding events
+payment.emitter.on(PaymentEvents.CARD_BINDING_SUCCESS, (request) => {
+  console.log('Card bound successfully:', request.cardId);
+  saveCardToken(request.cardId, request.memberId);
+});
+
+// Use bound card for payment
+const boundCardPayment = await payment.checkoutWithBoundCard({
+  memberId: 'user123',
+  cardId: 'saved-card-token',
+  description: 'Subscription Renewal',
+  amount: 999
+});
+```
+
+### Credit Card Installments
+```typescript
+import { NewebPayCreditCardInstallmentOptions } from '@rytass/payments-adapter-newebpay';
+
+const installmentOrder = payment.prepare({
+  channel: Channel.CREDIT_CARD,
+  items: [{
+    name: 'High-value Product',
+    unitPrice: 12000,
+    quantity: 1
+  }],
+  additionalInfo: {
+    installment: NewebPayCreditCardInstallmentOptions.SIX_MONTHS
+  }
+});
+```
+
+## Configuration Options
+
+### NewebPayPaymentInitOptions
+| Property | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
+| `merchantId` | `string` | Yes | - | NewebPay Merchant ID |
+| `hashKey` | `string` | Yes | - | API Hash Key |
+| `hashIv` | `string` | Yes | - | API Hash IV |
+| `serverHost` | `string` | No | `localhost:3000` | Callback server host |
+| `withServer` | `boolean` | No | `false` | Enable built-in callback server |
+| `memory` | `boolean` | No | `true` | Use in-memory order storage |
+| `onCommit` | `function` | No | - | Order commit callback |
+| `onFailed` | `function` | No | - | Payment failure callback |
+
+## Payment Channels
+
+### Supported Channels
+| Channel | Description | Channel Code |
+|---------|-------------|--------------|
+| `CREDIT` | Credit Card | `1` |
+| `ANDROID_PAY` | Android Pay | `2` |
+| `SAMSUNG_PAY` | Samsung Pay | `4` |
+| `UNION_PAY` | UnionPay Cards | `8` |
+| `WEBATM` | WebATM Transfer | `16` |
+| `VACC` | Virtual Account | `32` |
+
+### Multi-Channel Payment
+```typescript
+// Accept multiple payment methods
+const order = payment.prepare({
+  channel: NewebPaymentChannel.CREDIT | 
+           NewebPaymentChannel.ANDROID_PAY | 
+           NewebPaymentChannel.VACC,
+  items: [{
+    name: 'Flexible Payment Product',
+    unitPrice: 999,
+    quantity: 1
+  }]
+});
+```
+
+## Event Handling
+```typescript
+// Payment success
+payment.emitter.on(PaymentEvents.ORDER_COMMITTED, (message) => {
+  console.log(`Order ${message.id} committed`);
+  console.log(`Amount: NT$${message.totalPrice}`);
+  console.log(`Platform Trade Number: ${message.platformTradeNumber}`);
+});
+
+// Payment failure
+payment.emitter.on(PaymentEvents.ORDER_FAILED, (failure) => {
+  console.log(`Payment failed: ${failure.code} - ${failure.message}`);
+});
+
+// Card binding events
+payment.emitter.on(PaymentEvents.CARD_BINDING_FAILED, (request) => {
+  if (request.failedMessage?.code === '10100112') {
+    console.log('Card already exists for member:', request.memberId);
+  }
+});
+```
+
+## Multi-Language Support
+```typescript
+import { AllowUILanguage } from '@rytass/payments-adapter-newebpay';
+
+const order = payment.prepare({
+  channel: Channel.CREDIT_CARD,
+  items: [/* items */],
+  language: AllowUILanguage.EN, // English UI
+  // Available: ZH_TW, EN, JP
+});
+```
+
+## Environment Variables
+```bash
+# .env
+NEWEBPAY_MERCHANT_ID=your_merchant_id
+NEWEBPAY_HASH_KEY=your_hash_key
+NEWEBPAY_HASH_IV=your_hash_iv
+NEWEBPAY_SERVER_HOST=https://your-domain.com
+```
+
+## Testing
+```typescript
+// Development mode with test credentials
+const testPayment = new NewebPayPayment({
+  merchantId: 'MS350015834', // Test merchant ID
+  hashKey: 'Ggo9KBc0JYIQ28ulMOHPOqrJCuPO8Ns8', // Test hash key
+  hashIv: 'x9jt40c4oNWdBJn2', // Test hash IV
+  serverHost: 'https://your-test-domain.com',
+  withServer: true
+});
+```
+
+### Test Credit Cards
+- **VISA**: `4000-2211-1111-1111`
+- **MasterCard**: `5424-1800-0000-0015`
+- **JCB**: `3566-0020-2036-0505`
+
+## Error Handling
+```typescript
+try {
+  const order = payment.prepare({ /* order data */ });
+} catch (error) {
+  if (error.message.includes('merchantId is required')) {
+    console.error('Missing merchant configuration');
+  } else if (error.message.includes('Invalid TXN key')) {
+    console.error('TXN signature key is invalid');
+  } else {
+    console.error('Order preparation failed:', error.message);
+  }
+}
+```
+
+## Integration Examples
+
+### Express.js Integration
+```typescript
+import express from 'express';
+import { NewebPayPayment } from '@rytass/payments-adapter-newebpay';
+
+const app = express();
+const paymentGateway = new NewebPayPayment({
+  merchantId: process.env.NEWEBPAY_MERCHANT_ID!,
+  hashKey: process.env.NEWEBPAY_HASH_KEY!,
+  hashIv: process.env.NEWEBPAY_HASH_IV!,
+  serverHost: process.env.SERVER_HOST!,
+  withServer: false // Use custom Express server
+});
+
+app.use(paymentGateway.defaultServerListener);
+```
+
+### NestJS Integration
+```typescript
+// Use with @rytass/payments-nestjs-module
+import { PaymentsModule } from '@rytass/payments-nestjs-module';
+import { NewebPayPayment } from '@rytass/payments-adapter-newebpay';
+
+@Module({
+  imports: [
+    PaymentsModule.forRoot({
+      gateway: new NewebPayPayment({
+        merchantId: process.env.NEWEBPAY_MERCHANT_ID!,
+        hashKey: process.env.NEWEBPAY_HASH_KEY!,
+        hashIv: process.env.NEWEBPAY_HASH_IV!,
+        serverHost: process.env.SERVER_HOST!,
+        withServer: true
+      })
+    })
+  ]
+})
+export class AppModule {}
+```
+
+## Production Deployment
+
+### Using ngrok for Development
+```bash
+# Install ngrok peer dependency
+npm install @ngrok/ngrok
+
+# Start local server and expose via ngrok
+```
+
+```typescript
+const payment = new NewebPayPayment({
+  merchantId: process.env.NEWEBPAY_MERCHANT_ID!,
+  hashKey: process.env.NEWEBPAY_HASH_KEY!,
+  hashIv: process.env.NEWEBPAY_HASH_IV!,
+  serverHost: 'https://abcd1234.ngrok.io', // ngrok URL
+  withServer: true
+});
+```
+
+## Best Practices
+
+### Security
+- Store credentials in environment variables
+- Use HTTPS for production callback URLs  
+- Implement proper webhook signature validation
+- Log payment events for audit trails
+
+### Performance
+- Enable memory caching for frequent order queries
+- Implement connection pooling for database operations
+- Use appropriate trade limits to prevent expired orders
+
+### User Experience
+- Provide clear payment method options
+- Display accurate payment fees and processing times
+- Implement proper error messages in user's language
+- Offer payment retry mechanisms
+
+## Related Packages
+- `@rytass/payments` - Core payment framework
+- `@rytass/payments-nestjs-module` - NestJS integration module
+- Other adapters: ECPay, HwaNan, CTBC, iCash Pay, Happy Card
+
+## Support
+- GitHub Issues: https://github.com/Rytass/Utils/issues
+- Documentation: Package README and TypeScript definitions
+- Community: Taiwan payment processing developers

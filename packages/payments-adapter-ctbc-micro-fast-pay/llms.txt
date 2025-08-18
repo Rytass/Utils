@@ -1,0 +1,651 @@
+# Rytass Utils - CTBC Micro Fast Pay Adapter
+
+## Package Information
+- **Package**: `@rytass/payments-adapter-ctbc-micro-fast-pay`
+- **Version**: 0.1.3
+- **Description**: Comprehensive TypeScript payment adapter for CTBC (Chinatrust Bank) Micro Fast Pay service, Taiwan's efficient mobile payment solution
+- **Author**: Chia Yu Pai <fantasyatelier@gmail.com>
+- **License**: MIT
+- **Repository**: https://github.com/Rytass/Utils
+
+## Overview
+This adapter provides seamless integration with CTBC's Micro Fast Pay platform, offering fast and secure payment processing with support for credit card transactions, installment plans, mobile-optimized checkout, and comprehensive payment lifecycle management with built-in security and fraud prevention.
+
+## Installation
+```bash
+npm install @rytass/payments-adapter-ctbc-micro-fast-pay
+# or
+yarn add @rytass/payments-adapter-ctbc-micro-fast-pay
+```
+
+## Dependencies
+- `@rytass/payments`: ^0.2.2
+- `axios`: ^1.7.8
+- `luxon`: ^3.5.0
+
+## Peer Dependencies
+None required.
+
+## Key Features
+- ✅ CTBC Micro Fast Pay integration
+- ✅ Credit card payment processing
+- ✅ Installment payment support (3, 6, 12 months)
+- ✅ Mobile-optimized payment interface
+- ✅ Real-time transaction processing
+- ✅ Order lifecycle management
+- ✅ Event-driven architecture
+- ✅ Built-in security and encryption
+- ✅ Refund and reversal operations
+- ✅ Transaction query and status tracking
+- ✅ Production and sandbox environment support
+
+## Basic Usage
+
+### Simple Payment Setup
+```typescript
+import { 
+  CTBCMicroFastPayPayment,
+  CTBCMicroFastPayChannel
+} from '@rytass/payments-adapter-ctbc-micro-fast-pay';
+import { PaymentEvents } from '@rytass/payments';
+
+const payment = new CTBCMicroFastPayPayment({
+  merchantId: 'YOUR_CTBC_MERCHANT_ID',
+  merID: 'YOUR_MER_ID',
+  txnKey: 'YOUR_TXN_KEY',
+  terminalId: 'YOUR_TERMINAL_ID',
+  baseUrl: 'https://testapi.ctbcmicrofastpay.com', // Test environment
+  onCommit: (order) => {
+    console.log('CTBC payment committed:', order);
+  },
+  onFailed: (order) => {
+    console.log('CTBC payment failed:', order);
+  }
+});
+
+// Create basic payment order
+const order = await payment.prepare({
+  channel: CTBCMicroFastPayChannel.CREDIT_CARD,
+  items: [
+    {
+      name: 'Product A',
+      unitPrice: 1200,
+      quantity: 1
+    }
+  ],
+  description: 'Online Purchase',
+  email: 'customer@example.com'
+});
+
+console.log('Order ID:', order.id);
+console.log('Checkout URL:', order.checkoutURL);
+console.log('Total Amount:', order.totalPrice);
+```
+
+### Payment with Installments
+```typescript
+import { CTBCInstallmentOption } from '@rytass/payments-adapter-ctbc-micro-fast-pay';
+
+const installmentOrder = await payment.prepare({
+  channel: CTBCMicroFastPayChannel.CREDIT_CARD,
+  items: [{
+    name: 'High-value Product',
+    unitPrice: 15000,
+    quantity: 1
+  }],
+  additionalInfo: {
+    installment: CTBCInstallmentOption.TWELVE_MONTHS
+  },
+  description: '分期付款商品'
+});
+
+console.log('Installment payment created:', installmentOrder.id);
+```
+
+### Event Handling
+```typescript
+// Handle payment events
+payment.emitter.on(PaymentEvents.ORDER_COMMITTED, (message) => {
+  console.log('Payment successful:', message);
+  console.log('Transaction ID:', message.platformTradeNumber);
+  console.log('Amount Paid:', message.totalPrice);
+  console.log('Committed At:', message.committedAt);
+  
+  // Update your database, send confirmation emails, etc.
+  handleSuccessfulPayment(message);
+});
+
+payment.emitter.on(PaymentEvents.ORDER_FAILED, (failure) => {
+  console.error('Payment failed:', failure);
+  console.error('Error Code:', failure.code);
+  console.error('Error Message:', failure.message);
+  
+  // Handle payment failure
+  handleFailedPayment(failure);
+});
+
+payment.emitter.on(PaymentEvents.ORDER_PRE_COMMIT, (order) => {
+  console.log('Order created and ready for payment:', order.id);
+});
+```
+
+## Configuration Options
+
+### CTBCMicroFastPayPaymentInitOptions
+| Property | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
+| `merchantId` | `string` | Yes | - | CTBC Merchant ID |
+| `merID` | `string` | Yes | - | Merchant Identifier |
+| `txnKey` | `string` | Yes | - | Transaction Key for API authentication |
+| `terminalId` | `string` | Yes | - | Terminal ID |
+| `baseUrl` | `string` | No | Production URL | API base URL (test/production) |
+| `onCommit` | `function` | No | - | Callback when payment commits |
+| `onFailed` | `function` | No | - | Callback when payment fails |
+
+### Environment Configuration
+```typescript
+// Production environment
+const productionPayment = new CTBCMicroFastPayPayment({
+  merchantId: process.env.CTBC_MERCHANT_ID!,
+  merID: process.env.CTBC_MER_ID!,
+  txnKey: process.env.CTBC_TXN_KEY!,
+  terminalId: process.env.CTBC_TERMINAL_ID!,
+  baseUrl: 'https://api.ctbcmicrofastpay.com' // Production
+});
+
+// Test environment
+const testPayment = new CTBCMicroFastPayPayment({
+  merchantId: 'TEST_MERCHANT_ID',
+  merID: 'TEST_MER_ID',
+  txnKey: 'TEST_TXN_KEY',
+  terminalId: 'TEST_TERMINAL_ID',
+  baseUrl: 'https://testapi.ctbcmicrofastpay.com'
+});
+```
+
+## Payment Channels
+
+### Available Channels
+```typescript
+enum CTBCMicroFastPayChannel {
+  CREDIT_CARD = 'CREDIT_CARD',
+  INSTALLMENT = 'INSTALLMENT'
+}
+
+// Channel usage
+const order = await payment.prepare({
+  channel: CTBCMicroFastPayChannel.CREDIT_CARD,
+  items: [/* payment items */]
+});
+```
+
+## Installment Options
+```typescript
+enum CTBCInstallmentOption {
+  THREE_MONTHS = '3',
+  SIX_MONTHS = '6', 
+  TWELVE_MONTHS = '12'
+}
+
+// Using installment option
+const order = await payment.prepare({
+  channel: CTBCMicroFastPayChannel.CREDIT_CARD,
+  items: [{
+    name: 'Premium Service',
+    unitPrice: 6000,
+    quantity: 1
+  }],
+  additionalInfo: {
+    installment: CTBCInstallmentOption.SIX_MONTHS
+  }
+});
+```
+
+## Order Query and Management
+```typescript
+// Query order status
+const orderStatus = await payment.query('ORDER-2024-001');
+
+console.log('Order ID:', orderStatus.id);
+console.log('State:', orderStatus.state);
+console.log('Created At:', orderStatus.createdAt);
+console.log('Committed At:', orderStatus.committedAt);
+console.log('Is Committed:', orderStatus.isCommitted);
+console.log('Is Failed:', orderStatus.isFailed);
+
+// Check payment details
+if (orderStatus.additionalInfo) {
+  console.log('Platform Trade Number:', orderStatus.additionalInfo.platformTradeNumber);
+  console.log('Payment Method:', orderStatus.additionalInfo.paymentMethod);
+}
+```
+
+## Error Handling
+```typescript
+try {
+  const order = await payment.prepare({
+    channel: CTBCMicroFastPayChannel.CREDIT_CARD,
+    items: [{
+      name: 'Test Product',
+      unitPrice: 1000,
+      quantity: 1
+    }]
+  });
+} catch (error) {
+  // Handle different error types
+  if (error.message.includes('Invalid merchant ID')) {
+    console.error('Merchant configuration error');
+  } else if (error.message.includes('Invalid TXN key')) {
+    console.error('Transaction key authentication failed');
+  } else if (error.message.includes('Amount too low')) {
+    console.error('Transaction amount below minimum');
+  } else if (error.message.includes('Amount too high')) {
+    console.error('Transaction amount exceeds maximum');
+  } else {
+    console.error('Payment preparation failed:', error.message);
+  }
+}
+
+// Query errors
+try {
+  const order = await payment.query('INVALID-ORDER-ID');
+} catch (error) {
+  if (error.message.includes('Order not found')) {
+    console.error('Order does not exist');
+  } else {
+    console.error('Query failed:', error.message);
+  }
+}
+```
+
+## Integration Examples
+
+### Express.js API Integration
+```typescript
+import express from 'express';
+import { CTBCMicroFastPayPayment, CTBCMicroFastPayChannel } from '@rytass/payments-adapter-ctbc-micro-fast-pay';
+import { PaymentEvents } from '@rytass/payments';
+
+const app = express();
+app.use(express.json());
+
+const paymentGateway = new CTBCMicroFastPayPayment({
+  merchantId: process.env.CTBC_MERCHANT_ID!,
+  merID: process.env.CTBC_MER_ID!,
+  txnKey: process.env.CTBC_TXN_KEY!,
+  terminalId: process.env.CTBC_TERMINAL_ID!,
+  baseUrl: process.env.NODE_ENV === 'production' 
+    ? 'https://api.ctbcmicrofastpay.com'
+    : 'https://testapi.ctbcmicrofastpay.com'
+});
+
+// Handle payment success globally
+paymentGateway.emitter.on(PaymentEvents.ORDER_COMMITTED, async (message) => {
+  console.log(`CTBC payment committed: ${message.id}`);
+  
+  // Update order status in database
+  await updateOrderStatus(message.id, 'paid');
+  
+  // Send confirmation email
+  await sendPaymentConfirmation(message.id, {
+    amount: message.totalPrice,
+    transactionId: message.platformTradeNumber
+  });
+});
+
+// Create payment endpoint
+app.post('/api/ctbc-payment', async (req, res) => {
+  try {
+    const { items, description, installment } = req.body;
+    
+    const order = await paymentGateway.prepare({
+      channel: CTBCMicroFastPayChannel.CREDIT_CARD,
+      items: items.map(item => ({
+        name: item.name,
+        unitPrice: item.price,
+        quantity: item.quantity
+      })),
+      description,
+      additionalInfo: installment ? { installment } : undefined
+    });
+    
+    res.json({
+      success: true,
+      orderId: order.id,
+      checkoutUrl: order.checkoutURL,
+      totalAmount: order.totalPrice
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Query payment status endpoint
+app.get('/api/ctbc-payment/:orderId', async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const order = await paymentGateway.query(orderId);
+    
+    res.json({
+      success: true,
+      order: {
+        id: order.id,
+        state: order.state,
+        totalAmount: order.totalPrice,
+        isCommitted: order.isCommitted,
+        isFailed: order.isFailed,
+        createdAt: order.createdAt,
+        committedAt: order.committedAt
+      }
+    });
+  } catch (error) {
+    res.status(404).json({
+      success: false,
+      error: 'Order not found'
+    });
+  }
+});
+
+app.listen(3000, () => {
+  console.log('CTBC Micro Fast Pay server running on port 3000');
+});
+```
+
+### NestJS Service Integration  
+```typescript
+import { Injectable, Logger } from '@nestjs/common';
+import { 
+  CTBCMicroFastPayPayment, 
+  CTBCMicroFastPayChannel,
+  CTBCInstallmentOption
+} from '@rytass/payments-adapter-ctbc-micro-fast-pay';
+import { PaymentEvents, OrderState } from '@rytass/payments';
+
+@Injectable()
+export class CTBCPaymentService {
+  private readonly logger = new Logger(CTBCPaymentService.name);
+  private readonly paymentGateway: CTBCMicroFastPayPayment;
+  
+  constructor() {
+    this.paymentGateway = new CTBCMicroFastPayPayment({
+      merchantId: process.env.CTBC_MERCHANT_ID!,
+      merID: process.env.CTBC_MER_ID!,
+      txnKey: process.env.CTBC_TXN_KEY!,
+      terminalId: process.env.CTBC_TERMINAL_ID!,
+      baseUrl: process.env.NODE_ENV === 'production'
+        ? 'https://api.ctbcmicrofastpay.com'
+        : 'https://testapi.ctbcmicrofastpay.com'
+    });
+    
+    this.setupEventHandlers();
+  }
+  
+  private setupEventHandlers() {
+    this.paymentGateway.emitter.on(PaymentEvents.ORDER_COMMITTED, (message) => {
+      this.logger.log(`CTBC payment committed: ${message.id}`);
+      this.handlePaymentSuccess(message);
+    });
+    
+    this.paymentGateway.emitter.on(PaymentEvents.ORDER_FAILED, (failure) => {
+      this.logger.error(`CTBC payment failed: ${failure.code} - ${failure.message}`);
+      this.handlePaymentFailure(failure);
+    });
+  }
+  
+  async createPayment(paymentData: {
+    items: Array<{
+      name: string;
+      price: number;
+      quantity: number;
+    }>;
+    description?: string;
+    installment?: CTBCInstallmentOption;
+  }) {
+    const order = await this.paymentGateway.prepare({
+      channel: CTBCMicroFastPayChannel.CREDIT_CARD,
+      items: paymentData.items.map(item => ({
+        name: item.name,
+        unitPrice: item.price,
+        quantity: item.quantity
+      })),
+      description: paymentData.description,
+      additionalInfo: paymentData.installment ? 
+        { installment: paymentData.installment } : undefined
+    });
+    
+    return {
+      orderId: order.id,
+      checkoutUrl: order.checkoutURL,
+      totalAmount: order.totalPrice,
+      state: order.state
+    };
+  }
+  
+  async getPaymentStatus(orderId: string) {
+    const order = await this.paymentGateway.query(orderId);
+    
+    return {
+      orderId: order.id,
+      state: order.state,
+      totalAmount: order.totalPrice,
+      isCommitted: order.state === OrderState.COMMITTED,
+      isFailed: order.state === OrderState.FAILED,
+      createdAt: order.createdAt,
+      committedAt: order.committedAt
+    };
+  }
+  
+  private async handlePaymentSuccess(message: any) {
+    // Implement your business logic here
+    this.logger.log(`Processing successful payment for order: ${message.id}`);
+  }
+  
+  private async handlePaymentFailure(failure: any) {
+    // Implement failure handling logic
+    this.logger.error(`Processing payment failure: ${failure.code} - ${failure.message}`);
+  }
+}
+```
+
+### React Payment Component
+```typescript
+import React, { useState } from 'react';
+
+interface CTBCPaymentProps {
+  items: Array<{
+    name: string;
+    price: number;
+    quantity: number;
+  }>;
+  onSuccess: (orderId: string) => void;
+  onError: (error: string) => void;
+}
+
+const CTBCPaymentComponent: React.FC<CTBCPaymentProps> = ({
+  items,
+  onSuccess,
+  onError
+}) => {
+  const [loading, setLoading] = useState(false);
+  const [installment, setInstallment] = useState<string>('');
+  
+  const totalAmount = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  
+  const handlePayment = async () => {
+    setLoading(true);
+    
+    try {
+      const response = await fetch('/api/ctbc-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items,
+          description: 'Online Purchase',
+          installment: installment || undefined
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Redirect to CTBC payment page
+        window.location.href = data.checkoutUrl;
+      } else {
+        onError(data.error);
+      }
+    } catch (error) {
+      onError('Payment creation failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  return (
+    <div className="ctbc-payment">
+      <h3>CTBC Micro Fast Pay</h3>
+      
+      <div className="items">
+        {items.map((item, index) => (
+          <div key={index} className="item">
+            <span>{item.name}</span>
+            <span>{item.quantity} x NT${item.price}</span>
+          </div>
+        ))}
+      </div>
+      
+      <div className="total">
+        Total: NT${totalAmount}
+      </div>
+      
+      {totalAmount >= 3000 && (
+        <div className="installment-options">
+          <label>Installment Options:</label>
+          <select 
+            value={installment} 
+            onChange={(e) => setInstallment(e.target.value)}
+          >
+            <option value="">Single Payment</option>
+            <option value="3">3 Months</option>
+            <option value="6">6 Months</option>
+            <option value="12">12 Months</option>
+          </select>
+        </div>
+      )}
+      
+      <button 
+        onClick={handlePayment}
+        disabled={loading}
+        className="pay-button"
+      >
+        {loading ? 'Processing...' : 'Pay with CTBC'}
+      </button>
+    </div>
+  );
+};
+
+export default CTBCPaymentComponent;
+```
+
+## Testing
+
+### Unit Testing
+```typescript
+import { CTBCMicroFastPayPayment, CTBCMicroFastPayChannel } from '@rytass/payments-adapter-ctbc-micro-fast-pay';
+import { OrderState } from '@rytass/payments';
+
+describe('CTBC Micro Fast Pay Integration', () => {
+  let paymentGateway: CTBCMicroFastPayPayment;
+  
+  beforeEach(() => {
+    paymentGateway = new CTBCMicroFastPayPayment({
+      merchantId: 'TEST_MERCHANT',
+      merID: 'TEST_MER_ID',
+      txnKey: 'TEST_TXN_KEY',
+      terminalId: 'TEST_TERMINAL',
+      baseUrl: 'https://testapi.ctbcmicrofastpay.com'
+    });
+  });
+  
+  it('should create payment order', async () => {
+    const order = await paymentGateway.prepare({
+      channel: CTBCMicroFastPayChannel.CREDIT_CARD,
+      items: [{
+        name: 'Test Product',
+        unitPrice: 1000,
+        quantity: 1
+      }]
+    });
+    
+    expect(order.id).toBeDefined();
+    expect(order.totalPrice).toBe(1000);
+    expect(order.state).toBe(OrderState.PRE_COMMIT);
+    expect(order.checkoutURL).toContain('ctbcmicrofastpay.com');
+  });
+  
+  it('should handle installment orders', async () => {
+    const order = await paymentGateway.prepare({
+      channel: CTBCMicroFastPayChannel.CREDIT_CARD,
+      items: [{
+        name: 'Expensive Product',
+        unitPrice: 5000,
+        quantity: 1
+      }],
+      additionalInfo: {
+        installment: CTBCInstallmentOption.SIX_MONTHS
+      }
+    });
+    
+    expect(order.additionalInfo?.installment).toBe('6');
+  });
+});
+```
+
+## Environment Variables
+```bash
+# .env
+CTBC_MERCHANT_ID=your_merchant_id
+CTBC_MER_ID=your_mer_id  
+CTBC_TXN_KEY=your_txn_key
+CTBC_TERMINAL_ID=your_terminal_id
+CTBC_API_BASE_URL=https://api.ctbcmicrofastpay.com
+```
+
+## Best Practices
+
+### Security
+- Store all credentials in environment variables
+- Use HTTPS for all production communications
+- Implement proper error logging without exposing sensitive data
+- Validate transaction amounts and limits
+
+### Performance
+- Implement proper timeout handling for API calls
+- Use connection pooling for high-volume scenarios
+- Cache merchant configuration when possible
+- Monitor payment gateway response times
+
+### User Experience
+- Provide clear installment options for eligible amounts
+- Display processing indicators during payment
+- Implement proper error messages in user's language
+- Offer payment retry mechanisms for failed transactions
+
+### Error Handling
+- Log all payment events for debugging and auditing
+- Implement proper fallback mechanisms
+- Handle network timeouts gracefully
+- Provide meaningful error messages to users
+
+## Related Packages
+- `@rytass/payments` - Core payment framework
+- `@rytass/payments-nestjs-module` - NestJS integration module
+- Other payment adapters: ECPay, NewebPay, HwaNan, iCash Pay, Happy Card
+
+## Support
+- GitHub Issues: https://github.com/Rytass/Utils/issues
+- Documentation: Package README and TypeScript definitions
+- Community: Taiwan payment processing developers
+- CTBC Support: Contact your CTBC account manager for technical issues

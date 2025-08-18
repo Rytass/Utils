@@ -1,0 +1,365 @@
+# @rytass/invoice
+
+Taiwan Electronic Invoice Core Package - Unified Types and Interfaces for Taiwan E-Invoice Regulations
+
+## Description
+
+`@rytass/invoice` is the foundational package for Taiwan electronic invoice (e-invoice) processing within the Rytass Utils monorepo. It provides core TypeScript types, interfaces, and utilities that comply with Taiwan's Ministry of Finance electronic invoice regulations. This package serves as the base for all Taiwan e-invoice adapter implementations (ECPay, EZPay, BankPro, Amego).
+
+Taiwan's electronic invoice system is a government-mandated digital invoicing system that requires businesses to issue, store, and report electronic invoices through certified service providers. The system includes specific requirements for VAT number validation (統一編號), carrier types (載具), and tax calculations.
+
+## Installation
+
+```bash
+npm install @rytass/invoice
+```
+
+## Core Features
+
+### Taiwan E-Invoice Types and Interfaces
+- **Invoice Management**: Core invoice entity with state tracking (INITED, ISSUED, VOID, ALLOWANCED)
+- **Allowance System**: Support for invoice allowances (折讓) - partial refunds without voiding the original invoice
+- **Carrier System**: Support for all Taiwan carrier types (載具) - Print, Mobile, MOICA, Love Code, Member, Platform
+- **Tax System**: Complete tax type support including special tax codes for specific industries
+- **VAT Validation**: Built-in Taiwan VAT number (統一編號) validation with checksum algorithm
+- **Award System**: Support for Taiwan invoice lottery award types and prize categories
+
+### Core Components
+
+#### Invoice Interface
+```typescript
+interface Invoice<Item extends PaymentItem> {
+  readonly invoiceNumber: string;    // Taiwan e-invoice number
+  readonly issuedOn: Date;           // Issue date
+  readonly allowances: InvoiceAllowance<PaymentItem>[];  // Associated allowances
+  readonly issuedAmount: number;     // Original invoice amount
+  readonly randomCode: string;       // 4-digit random code for lottery
+  readonly items: Item[];            // Invoice items
+  state: InvoiceState;              // Current state
+  nowAmount: number;                // Current amount after allowances
+  voidOn: Date | null;              // Void date if applicable
+  setVoid: () => void;              // Method to void invoice
+  awardType?: InvoiceAwardType;     // Lottery award type if won
+}
+```
+
+#### InvoiceGateway Interface
+```typescript
+interface InvoiceGateway<Item extends PaymentItem = PaymentItem, I extends Invoice<Item> = Invoice<Item>, QueryOptions = any> {
+  // Core operations
+  issue(options: InvoiceIssueOptions<Item>): Promise<I>;
+  void(invoice: Invoice<PaymentItem>, options: InvoiceVoidOptions): Promise<Invoice<PaymentItem>>;
+  allowance(invoice: Invoice<PaymentItem>, allowanceItems: InvoicePaymentItem[], options?: InvoiceAllowanceOptions): Promise<Invoice<PaymentItem>>;
+  invalidAllowance(allowance: InvoiceAllowance<PaymentItem>): Promise<Invoice<PaymentItem>>;
+  query(options: QueryOptions): Promise<I>;
+  
+  // Taiwan-specific validations
+  isMobileBarcodeValid(code: string): Promise<boolean>;
+  isLoveCodeValid(code: string): Promise<boolean>;
+}
+```
+
+### Taiwan Carrier Types (載具類型)
+
+Taiwan's e-invoice system supports multiple carrier types for invoice delivery and storage:
+
+```typescript
+enum InvoiceCarrierType {
+  PRINT = 'PRINT',           // Paper invoice (紙本發票)
+  MOBILE = 'MOBILE',         // Mobile barcode carrier (手機條碼載具)
+  MOICA = 'MOICA',          // Natural person certificate (自然人憑證載具)
+  LOVE_CODE = 'LOVE_CODE',   // Donation to charity (愛心碼)
+  MEMBER = 'MEMBER',         // Store member carrier (會員載具)
+  PLATFORM = 'PLATFORM'     // Platform-specific carrier (平台載具)
+}
+```
+
+#### Carrier Usage Examples
+```typescript
+import { InvoiceCarriers } from '@rytass/invoice';
+
+// Paper invoice - customer receives printed receipt
+const printCarrier = InvoiceCarriers.PRINT;
+
+// Mobile barcode - customer scans QR code to store in government app
+const mobileCarrier = InvoiceCarriers.MOBILE('/ABC123');
+
+// MOICA certificate - stored in government certificate system
+const moicaCarrier = InvoiceCarriers.MOICA('/CERT456');
+
+// Charity donation - invoice amount donated to registered charity
+const loveCodeCarrier = InvoiceCarriers.LOVE_CODE('789');
+
+// Store membership - stored in retailer's member system
+const memberCarrier = InvoiceCarriers.MEMBER({ type: InvoiceCarrierType.MEMBER, code: 'member123' });
+```
+
+### Tax Types and Special Codes
+
+Taiwan e-invoice system supports multiple tax types with specific regulations:
+
+```typescript
+enum TaxType {
+  TAXED = 'TAXED',           // Standard 5% business tax (應稅)
+  TAX_FREE = 'TAX_FREE',     // Tax-free items (免稅)
+  ZERO_TAX = 'ZERO_TAX',     // Zero tax rate for exports (零稅率)
+  SPECIAL = 'SPECIAL',       // Special tax rates for specific industries (特種稅率)
+  MIXED = 'MIXED'            // Mixed tax types in single invoice (混合稅率)
+}
+
+enum SpecialTaxCode {
+  TEA = 1,                   // Tea industry special tax
+  CLUB = 2,                  // Club/entertainment special tax
+  BANK_SELF = 3,             // Bank self-use special tax
+  INSURANCE = 4,             // Insurance industry special tax
+  BANK_COMMON = 5,           // Bank common transactions
+  BANK_SELF_SALES_BEFORE_103 = 6,  // Bank self-sales before ROC year 103
+  BANK_SELF_SALES_AFTER_103 = 7,   // Bank self-sales after ROC year 103
+  FREE = 8                   // Free tax transactions
+}
+```
+
+### VAT Number Validation (統一編號驗證)
+
+Taiwan requires 8-digit VAT numbers (統一編號) for business transactions. The package includes built-in validation:
+
+```typescript
+import { verifyVatNumber } from '@rytass/invoice';
+
+// Validate Taiwan VAT numbers
+console.log(verifyVatNumber('12345675')); // true - valid checksum
+console.log(verifyVatNumber('12345678')); // false - invalid checksum
+console.log(verifyVatNumber('1234567'));  // false - wrong length
+console.log(verifyVatNumber(12345675));   // true - number input also supported
+```
+
+The validation algorithm:
+1. Ensures exactly 8 digits
+2. Applies Taiwan's official checksum algorithm using coefficients [1,2,1,2,1,2,4,1]
+3. Handles special case for 7th digit being 7 (allows checksum+1)
+
+### Invoice States and Lifecycle
+
+```typescript
+enum InvoiceState {
+  INITED = 'INITED',         // Invoice created but not issued
+  ISSUED = 'ISSUED',         // Invoice successfully issued
+  VOID = 'VOID',             // Invoice voided (作廢)
+  ALLOWANCED = 'ALLOWANCED'  // Invoice has allowances applied (已開立折讓)
+}
+
+enum InvoiceAllowanceState {
+  INITED = 'INITED',         // Allowance created but not processed
+  ISSUED = 'ISSUED',         // Allowance successfully issued
+  INVALID = 'INVALID'        // Allowance invalidated
+}
+```
+
+### Award System (統一發票獎項)
+
+Taiwan e-invoices participate in a bimonthly lottery system:
+
+```typescript
+enum InvoiceAwardType {
+  TWO_HUNDRED = 6,           // NT$200 prize
+  ONE_THOUSAND = 5,          // NT$1,000 prize
+  FOUR_THOUSAND = 4,         // NT$4,000 prize
+  TEN_THOUSAND = 3,          // NT$10,000 prize
+  FORTY_THOUSAND = 2,        // NT$40,000 prize
+  TWO_HUNDRED_THOUSAND = 1,  // NT$200,000 prize
+  TWO_MILLION = 7,           // NT$2,000,000 grand prize
+  TEN_MILLION = 8,           // NT$10,000,000 special prize
+  CLOUD_TWO_THOUSAND = 9,    // NT$2,000 cloud invoice prize
+  ONE_MILLION = 10,          // NT$1,000,000 additional prize
+  FIVE_HUNDRED = 11,         // NT$500 sixth prize
+  EIGHT_HUNDRED = 12         // NT$800 cloud additional prize
+}
+```
+
+## Usage Examples
+
+### Basic Invoice Types
+```typescript
+import { 
+  InvoicePaymentItem, 
+  TaxType, 
+  InvoiceCarriers,
+  CustomsMark 
+} from '@rytass/invoice';
+
+// Define invoice items with Taiwan-specific tax information
+const items: InvoicePaymentItem[] = [
+  {
+    name: 'Product A',
+    unitPrice: 100,
+    quantity: 2,
+    taxType: TaxType.TAXED  // Standard 5% Taiwan business tax
+  },
+  {
+    name: 'Export Product B',
+    unitPrice: 50,
+    quantity: 1,
+    taxType: TaxType.ZERO_TAX  // Zero tax for exports
+  }
+];
+
+// Invoice issue options
+const issueOptions = {
+  items,
+  vatNumber: '12345675',  // Taiwan VAT number (統一編號)
+  carrier: InvoiceCarriers.MOBILE('/ABC123'),  // Mobile barcode carrier
+  customsMark: CustomsMark.NO  // Not for customs declaration
+};
+```
+
+### Working with Allowances (折讓)
+```typescript
+// Allowances are partial refunds that don't void the original invoice
+const allowanceItems: InvoicePaymentItem[] = [
+  {
+    name: 'Product A',
+    unitPrice: 100,
+    quantity: 1,  // Partial refund
+    taxType: TaxType.TAXED
+  }
+];
+
+// Create allowance
+await gateway.allowance(invoice, allowanceItems, {
+  taxType: TaxType.TAXED  // Must match original item tax type
+});
+```
+
+### Void Operations (作廢)
+```typescript
+// Void an entire invoice
+await gateway.void(invoice, {
+  reason: 'Customer requested cancellation'  // Required reason in Chinese/English
+});
+```
+
+## Taiwan E-Invoice Compliance
+
+### Regulatory Requirements
+- **Ministry of Finance Compliance**: Follows Taiwan MOF e-invoice specifications
+- **Business Tax Law**: Complies with Taiwan Business Tax Law requirements
+- **Data Retention**: Support for required invoice data retention periods
+- **Audit Trail**: Complete transaction logging for tax authority audits
+
+### Key Taiwan E-Invoice Features
+- **Real-time Transmission**: Invoices transmitted to MOF within required timeframes
+- **Lottery Integration**: Automatic participation in Taiwan's invoice lottery system
+- **Carrier Management**: Support for all official Taiwan carrier types
+- **Tax Calculation**: Accurate Taiwan business tax calculations (5% standard rate)
+- **B2B/B2C Support**: Different handling for business and consumer invoices
+
+### Common Integration Patterns
+
+#### Gateway Implementation Pattern
+```typescript
+class CustomInvoiceGateway implements InvoiceGateway {
+  async issue(options: InvoiceIssueOptions): Promise<Invoice> {
+    // 1. Validate VAT number if provided
+    if (options.vatNumber && !verifyVatNumber(options.vatNumber)) {
+      throw new Error('Invalid Taiwan VAT number');
+    }
+    
+    // 2. Validate carrier codes
+    if (options.carrier?.type === InvoiceCarrierType.MOBILE) {
+      const isValid = await this.isMobileBarcodeValid(options.carrier.code);
+      if (!isValid) throw new Error('Invalid mobile barcode');
+    }
+    
+    // 3. Process tax calculations
+    // 4. Submit to Taiwan e-invoice service
+    // 5. Return standardized Invoice object
+  }
+}
+```
+
+## Testing
+
+```bash
+npm test
+```
+
+The package includes comprehensive tests for:
+- VAT number validation with Taiwan-specific test cases
+- Tax type calculations and edge cases
+- Carrier type validation and formatting
+- Award type mappings and prize calculations
+- State transition validation
+
+## Configuration Options
+
+### Tax Configuration
+```typescript
+// Configure tax rates (usually 5% for Taiwan)
+const taxConfig = {
+  standardRate: 0.05,  // Taiwan standard business tax rate
+  specialRates: {      // Industry-specific rates
+    [SpecialTaxCode.TEA]: 0.15,
+    [SpecialTaxCode.CLUB]: 0.25
+  }
+};
+```
+
+### Validation Options
+```typescript
+// Configure validation behaviors
+const validationConfig = {
+  strictVatValidation: true,     // Enforce VAT number validation
+  requireCarrierValidation: true, // Validate carrier codes with providers
+  allowMixedTaxTypes: false      // Allow mixed tax types in single invoice
+};
+```
+
+## Error Handling
+
+### Common Taiwan E-Invoice Errors
+- **Invalid VAT Number**: 8-digit checksum validation failure
+- **Carrier Validation Failed**: Mobile barcode or love code not found in government system
+- **Tax Type Mismatch**: Incorrect tax type for business category
+- **Invoice State Error**: Invalid state transitions (e.g., voiding already voided invoice)
+- **Allowance Exceeds Original**: Allowance amount cannot exceed remaining invoice amount
+
+### Error Handling Pattern
+```typescript
+try {
+  const invoice = await gateway.issue(options);
+} catch (error) {
+  if (error.code === 'INVALID_VAT_NUMBER') {
+    // Handle Taiwan VAT number validation error
+  } else if (error.code === 'CARRIER_VALIDATION_FAILED') {
+    // Handle carrier validation error
+  }
+}
+```
+
+## Dependencies
+
+- `@rytass/payments`: Core payment item types and interfaces
+
+## Related Packages
+
+### Invoice Adapters (Taiwan Service Providers)
+- `@rytass/invoice-adapter-ecpay`: ECPay (綠界科技) e-invoice integration
+- `@rytass/invoice-adapter-ezpay`: EZPay (藍新金流) e-invoice integration  
+- `@rytass/invoice-adapter-bank-pro`: BankPro e-invoice integration
+- `@rytass/invoice-adapter-amego`: Amego e-invoice integration
+
+### Related Utilities
+- `@rytass/payments`: Core payment processing types
+- `@rytass/order-builder`: Order management and invoice preparation
+
+## License
+
+MIT
+
+## Support
+
+- **Taiwan E-Invoice Documentation**: Consult Taiwan Ministry of Finance e-invoice specifications
+- **GitHub Issues**: Report bugs and feature requests at https://github.com/Rytass/Utils/issues
+- **Tax Compliance**: Consult Taiwan tax professionals for regulatory compliance requirements
+
+This package provides the foundation for compliant Taiwan e-invoice processing, ensuring adherence to local regulations while providing a developer-friendly TypeScript interface.

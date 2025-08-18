@@ -1,0 +1,905 @@
+# File Converter Image Transcoder Adapter
+
+High-performance image format conversion adapter powered by Sharp. Provides comprehensive format conversion capabilities with quality control, compression optimization, and extensive format support for modern web applications.
+
+## Package Overview
+
+- **Package**: `@rytass/file-converter-adapter-image-transcoder`
+- **Version**: 0.1.8
+- **Purpose**: Professional image format conversion with Sharp integration
+- **Core Technology**: Sharp (libvips) for high-speed format transcoding
+- **License**: MIT
+
+## Core Features
+
+- **Comprehensive Format Support**: JPEG, PNG, WebP, AVIF, HEIF, GIF, TIFF conversion
+- **Quality Control**: Granular quality and compression settings per format
+- **Format Detection**: Automatic input format detection with validation
+- **Sharp Integration**: Maximum performance through libvips-based processing  
+- **Pipeline Compatible**: Seamless integration with file converter ecosystem
+- **Type Safety**: Full TypeScript support with format-specific options
+- **Memory Efficient**: Stream and Buffer processing with optimized memory usage
+- **Error Handling**: Comprehensive unsupported format detection and error reporting
+
+## Installation
+
+```bash
+npm install @rytass/file-converter-adapter-image-transcoder
+# Core converter and Sharp included as dependencies
+# file-type package included for format detection
+```
+
+## Dependencies
+
+### Production Dependencies
+- **`@rytass/file-converter`**: Core converter interface and pipeline management
+- **`sharp`**: ^0.33.5 - High-performance image processing engine
+- **`file-type`**: ^16 - Reliable file format detection library
+
+### Development Dependencies
+- **`@types/sharp`**: TypeScript definitions for Sharp library
+
+## Supported Formats
+
+### Input Format Detection
+Automatically detects and validates these input formats:
+- **JPEG** (.jpg, .jpeg) - Universal support with quality preservation
+- **PNG** (.png) - Lossless with transparency support
+- **WebP** (.webp) - Modern format with animation support
+- **GIF** (.gif) - Animation and palette support
+- **AVIF** (.avif) - Next-generation format with superior compression
+- **TIFF** (.tiff, .tif) - Professional and scientific imaging
+- **SVG** (.svg) - Vector graphics rasterization
+
+### Output Format Options
+Convert to any of these optimized formats:
+- **JPEG** (`'jpg'` | `'jpeg'`) - Universal compatibility, adjustable quality
+- **PNG** (`'png'`) - Lossless compression, transparency support
+- **WebP** (`'webp'`) - Modern format with excellent compression ratios
+- **AVIF** (`'avif'`) - Superior compression, next-generation standard
+- **HEIF** (`'heif'`) - Apple ecosystem format
+- **GIF** (`'gif'`) - Legacy support with palette optimization
+- **TIFF** (`'tif'` | `'tiff'`) - Professional archival format
+
+## Configuration Options
+
+### Format-Specific TypeScript Interfaces
+```typescript
+// JPEG Output Options
+type JPEGOptions = {
+  targetFormat: 'jpg' | 'jpeg';
+  quality?: number;          // 1-100, default varies
+  progressive?: boolean;     // Progressive JPEG encoding
+  mozjpeg?: boolean;         // Use mozjpeg encoder
+};
+
+// PNG Output Options  
+type PNGOptions = {
+  targetFormat: 'png';
+  compressionLevel?: number; // 0-9, default 6
+  palette?: boolean;         // Use palette mode
+  quality?: number;          // 0-100 for palette mode
+};
+
+// WebP Output Options
+type WEBPOptions = {
+  targetFormat: 'webp';
+  quality?: number;          // 0-100, default 80
+  alphaQuality?: number;     // 0-100 for alpha channel
+  lossless?: boolean;        // Lossless WebP encoding
+  nearLossless?: boolean;    // Near-lossless mode
+};
+
+// AVIF Output Options
+type AVIFOptions = {
+  targetFormat: 'avif';
+  quality?: number;          // 1-100, default 50
+  lossless?: boolean;        // Lossless AVIF encoding
+  effort?: number;           // 0-9 encoding effort, default 4
+};
+
+// Universal Options
+interface ImageTranscoderOptions {
+  targetFormat: string;      // Target output format
+  concurrency?: number;      // Sharp processing concurrency
+  // Plus format-specific options based on targetFormat
+}
+```
+
+## Basic Usage
+
+### Simple Format Conversion
+```typescript
+import { ImageTranscoder } from '@rytass/file-converter-adapter-image-transcoder';
+import { readFileSync, writeFileSync } from 'fs';
+
+// Convert JPEG to WebP with quality control
+const transcoder = new ImageTranscoder({
+  targetFormat: 'webp',
+  quality: 85,
+  alphaQuality: 80
+});
+
+const jpegBuffer = readFileSync('photo.jpg');
+const webpBuffer = await transcoder.convert<Buffer>(jpegBuffer);
+writeFileSync('photo.webp', webpBuffer);
+```
+
+### Next-Generation Format Conversion
+```typescript
+// Convert to AVIF for maximum compression
+const avifTranscoder = new ImageTranscoder({
+  targetFormat: 'avif',
+  quality: 60,
+  effort: 6  // Higher effort for better compression
+});
+
+const originalImage = readFileSync('large-photo.jpg');
+const avifImage = await avifTranscoder.convert<Buffer>(originalImage);
+
+// Typically 50-80% smaller than equivalent JPEG
+console.log(`Compression ratio: ${(originalImage.length / avifImage.length).toFixed(1)}:1`);
+```
+
+### Stream Processing for Large Files
+```typescript
+import { createReadStream, createWriteStream } from 'fs';
+import { Readable } from 'stream';
+
+const transcoder = new ImageTranscoder({
+  targetFormat: 'jpeg',
+  quality: 90,
+  progressive: true
+});
+
+// Process large TIFF file as stream
+const inputStream = createReadStream('large-scan.tiff');
+const convertedStream = await transcoder.convert<Readable>(inputStream);
+
+convertedStream.pipe(createWriteStream('converted.jpg'));
+```
+
+## Format-Specific Usage
+
+### JPEG Optimization
+```typescript
+// High-quality JPEG with progressive encoding
+const jpegOptimizer = new ImageTranscoder({
+  targetFormat: 'jpeg',
+  quality: 95,
+  progressive: true,  // Better perceived loading
+  mozjpeg: true      // Enhanced compression algorithm
+});
+
+// Web-optimized JPEG
+const webJpegOptimizer = new ImageTranscoder({
+  targetFormat: 'jpg',
+  quality: 82,       // Sweet spot for web delivery
+  progressive: true
+});
+```
+
+### PNG Optimization Strategies
+```typescript
+// Lossless PNG compression
+const pngOptimizer = new ImageTranscoder({
+  targetFormat: 'png',
+  compressionLevel: 9,  // Maximum compression
+  palette: false        // True color mode
+});
+
+// Palette-based PNG for illustrations
+const paletteTranscoder = new ImageTranscoder({
+  targetFormat: 'png',
+  palette: true,
+  quality: 90,         // Palette quality
+  compressionLevel: 9
+});
+```
+
+### WebP Advanced Configuration
+```typescript
+// Lossless WebP for critical images
+const losslessWebP = new ImageTranscoder({
+  targetFormat: 'webp',
+  lossless: true,
+  effort: 6           // Higher effort for better lossless compression
+});
+
+// High-quality WebP with alpha optimization
+const alphaWebP = new ImageTranscoder({
+  targetFormat: 'webp',
+  quality: 88,
+  alphaQuality: 85,   // Separate alpha channel quality
+  method: 6           // Encoding method (0-6)
+});
+```
+
+### AVIF for Maximum Compression
+```typescript
+// Production AVIF configuration
+const productionAVIF = new ImageTranscoder({
+  targetFormat: 'avif',
+  quality: 65,        // Excellent quality at small size
+  effort: 8,          // Near-maximum effort for production
+  chromaSubsampling: '4:2:0'  // Standard chroma subsampling
+});
+
+// Archival quality AVIF
+const archivalAVIF = new ImageTranscoder({
+  targetFormat: 'avif',
+  lossless: true,     // Perfect quality preservation
+  effort: 9           // Maximum compression effort
+});
+```
+
+## Pipeline Integration
+
+### Multi-Format Output Pipeline
+```typescript
+import { ConverterManager } from '@rytass/file-converter';
+import { ImageResizer } from '@rytass/file-converter-adapter-image-resizer';
+
+// Create comprehensive image optimization pipeline
+const modernImagePipeline = new ConverterManager([
+  // Step 1: Resize for web delivery
+  new ImageResizer({
+    maxWidth: 1920,
+    maxHeight: 1080,
+    keepAspectRatio: true
+  }),
+  
+  // Step 2: Convert to modern WebP format
+  new ImageTranscoder({
+    targetFormat: 'webp',
+    quality: 85,
+    alphaQuality: 80
+  })
+]);
+
+// Generate multiple formats for progressive enhancement
+class MultiFormatGenerator {
+  private webpTranscoder = new ImageTranscoder({ 
+    targetFormat: 'webp', 
+    quality: 85 
+  });
+  
+  private avifTranscoder = new ImageTranscoder({ 
+    targetFormat: 'avif', 
+    quality: 60 
+  });
+  
+  private jpegFallback = new ImageTranscoder({ 
+    targetFormat: 'jpeg', 
+    quality: 82 
+  });
+
+  async generateResponsiveFormats(originalBuffer: Buffer): Promise<{
+    avif: Buffer;    // Best compression
+    webp: Buffer;    // Good support  
+    jpeg: Buffer;    // Universal fallback
+  }> {
+    const [avif, webp, jpeg] = await Promise.all([
+      this.avifTranscoder.convert<Buffer>(originalBuffer),
+      this.webpTranscoder.convert<Buffer>(originalBuffer),
+      this.jpegFallback.convert<Buffer>(originalBuffer)
+    ]);
+
+    return { avif, webp, jpeg };
+  }
+}
+```
+
+### Progressive Enhancement Strategy
+```typescript
+class ProgressiveImageConverter {
+  async createProgressiveSet(
+    originalImage: Buffer,
+    sizes: { width: number; height: number; suffix: string }[]
+  ): Promise<Record<string, { avif: Buffer; webp: Buffer; jpeg: Buffer }>> {
+    const results: any = {};
+
+    for (const size of sizes) {
+      // Create resizing + transcoding pipeline for each size
+      const pipeline = new ConverterManager([
+        new ImageResizer({
+          maxWidth: size.width,
+          maxHeight: size.height,
+          keepAspectRatio: true
+        }),
+        new ImageTranscoder({
+          targetFormat: 'avif',
+          quality: 60
+        })
+      ]);
+
+      const avif = await pipeline.convert<Buffer>(originalImage);
+
+      // Generate WebP and JPEG variants
+      const webpTranscoder = new ConverterManager([
+        new ImageResizer({
+          maxWidth: size.width,
+          maxHeight: size.height,
+          keepAspectRatio: true
+        }),
+        new ImageTranscoder({
+          targetFormat: 'webp',
+          quality: 85
+        })
+      ]);
+
+      const jpegTranscoder = new ConverterManager([
+        new ImageResizer({
+          maxWidth: size.width,
+          maxHeight: size.height,
+          keepAspectRatio: true
+        }),
+        new ImageTranscoder({
+          targetFormat: 'jpeg',
+          quality: 82
+        })
+      ]);
+
+      const [webp, jpeg] = await Promise.all([
+        webpTranscoder.convert<Buffer>(originalImage),
+        jpegTranscoder.convert<Buffer>(originalImage)
+      ]);
+
+      results[size.suffix] = { avif, webp, jpeg };
+    }
+
+    return results;
+  }
+}
+
+// Usage for responsive images
+const converter = new ProgressiveImageConverter();
+const responsiveImages = await converter.createProgressiveSet(originalImage, [
+  { width: 320, height: 240, suffix: 'mobile' },
+  { width: 768, height: 576, suffix: 'tablet' },
+  { width: 1920, height: 1080, suffix: 'desktop' }
+]);
+
+// Generate HTML picture element
+function generatePictureElement(images: any, alt: string): string {
+  return `
+    <picture>
+      <source type="image/avif" 
+              srcset="${images.mobile.avif} 320w, 
+                      ${images.tablet.avif} 768w, 
+                      ${images.desktop.avif} 1920w" />
+      <source type="image/webp"
+              srcset="${images.mobile.webp} 320w,
+                      ${images.tablet.webp} 768w,
+                      ${images.desktop.webp} 1920w" />
+      <img src="${images.desktop.jpeg}"
+           alt="${alt}"
+           loading="lazy" />
+    </picture>
+  `;
+}
+```
+
+## Advanced Usage Patterns
+
+### Format Detection and Validation
+```typescript
+import { fromBuffer } from 'file-type';
+
+class SmartImageTranscoder {
+  private transcoder: ImageTranscoder;
+
+  constructor(targetFormat: string, options: any = {}) {
+    this.transcoder = new ImageTranscoder({
+      targetFormat,
+      ...options
+    });
+  }
+
+  async convertWithValidation(imageBuffer: Buffer): Promise<{
+    converted: Buffer;
+    originalFormat: string;
+    sizeDifference: number;
+    compressionRatio: number;
+  }> {
+    // Detect original format
+    const originalType = await fromBuffer(imageBuffer);
+    
+    if (!originalType) {
+      throw new Error('Unable to detect image format');
+    }
+
+    // Convert image
+    const converted = await this.transcoder.convert<Buffer>(imageBuffer);
+
+    return {
+      converted,
+      originalFormat: originalType.ext,
+      sizeDifference: imageBuffer.length - converted.length,
+      compressionRatio: imageBuffer.length / converted.length
+    };
+  }
+}
+```
+
+### Batch Format Conversion
+```typescript
+import { readdir, readFile, writeFile } from 'fs/promises';
+import { join, parse } from 'path';
+
+class BatchFormatConverter {
+  private transcoder: ImageTranscoder;
+
+  constructor(targetFormat: string, options: any = {}) {
+    this.transcoder = new ImageTranscoder({
+      targetFormat,
+      concurrency: 4,  // Parallel processing
+      ...options
+    });
+  }
+
+  async convertDirectory(
+    inputDir: string,
+    outputDir: string,
+    options: {
+      extensions?: string[];
+      parallel?: number;
+      preserveNames?: boolean;
+    } = {}
+  ): Promise<Array<{ file: string; success: boolean; error?: string }>> {
+    const { 
+      extensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'], 
+      parallel = 10,
+      preserveNames = false
+    } = options;
+
+    const files = await readdir(inputDir);
+    const imageFiles = files.filter(file =>
+      extensions.some(ext => file.toLowerCase().endsWith(ext))
+    );
+
+    const results = [];
+
+    // Process in parallel batches
+    for (let i = 0; i < imageFiles.length; i += parallel) {
+      const batch = imageFiles.slice(i, i + parallel);
+
+      const batchResults = await Promise.all(
+        batch.map(async (filename) => {
+          try {
+            const inputPath = join(inputDir, filename);
+            const parsedName = parse(filename);
+            const outputFilename = preserveNames 
+              ? filename 
+              : `${parsedName.name}.${this.getTargetExtension()}`;
+            const outputPath = join(outputDir, outputFilename);
+
+            const inputBuffer = await readFile(inputPath);
+            const outputBuffer = await this.transcoder.convert<Buffer>(inputBuffer);
+
+            await writeFile(outputPath, outputBuffer);
+
+            return { 
+              file: filename, 
+              success: true,
+              originalSize: inputBuffer.length,
+              convertedSize: outputBuffer.length
+            };
+          } catch (error) {
+            return { 
+              file: filename, 
+              success: false, 
+              error: error.message 
+            };
+          }
+        })
+      );
+
+      results.push(...batchResults);
+    }
+
+    return results;
+  }
+
+  private getTargetExtension(): string {
+    const format = (this.transcoder as any).options.targetFormat;
+    return format === 'jpeg' ? 'jpg' : format;
+  }
+}
+
+// Usage for batch WebP conversion
+const webpConverter = new BatchFormatConverter('webp', {
+  quality: 85,
+  alphaQuality: 80
+});
+
+const results = await webpConverter.convertDirectory(
+  './original-images',
+  './webp-images',
+  { parallel: 15 }
+);
+
+console.log(`Converted ${results.filter(r => r.success).length}/${results.length} images`);
+```
+
+### Conditional Format Selection
+```typescript
+class AdaptiveFormatConverter {
+  private formatTranscoders = {
+    avif: new ImageTranscoder({ targetFormat: 'avif', quality: 60 }),
+    webp: new ImageTranscoder({ targetFormat: 'webp', quality: 85 }),
+    jpeg: new ImageTranscoder({ targetFormat: 'jpeg', quality: 82 })
+  };
+
+  async convertToOptimalFormat(
+    imageBuffer: Buffer,
+    supportedFormats: string[] = ['jpeg'], // Browser support
+    prioritizeSize: boolean = true
+  ): Promise<{
+    format: string;
+    buffer: Buffer;
+    compressionRatio: number;
+  }> {
+    const candidates: Array<{
+      format: string;
+      buffer: Buffer;
+      size: number;
+    }> = [];
+
+    // Test each supported format
+    for (const format of supportedFormats) {
+      if (this.formatTranscoders[format]) {
+        try {
+          const converted = await this.formatTranscoders[format].convert<Buffer>(imageBuffer);
+          candidates.push({
+            format,
+            buffer: converted,
+            size: converted.length
+          });
+        } catch (error) {
+          console.warn(`Format ${format} conversion failed:`, error.message);
+        }
+      }
+    }
+
+    if (candidates.length === 0) {
+      throw new Error('No supported formats could be generated');
+    }
+
+    // Select optimal format
+    const selected = prioritizeSize
+      ? candidates.reduce((best, current) => current.size < best.size ? current : best)
+      : candidates[0]; // First successful format
+
+    return {
+      format: selected.format,
+      buffer: selected.buffer,
+      compressionRatio: imageBuffer.length / selected.size
+    };
+  }
+
+  // Generate format recommendations based on image characteristics
+  async recommendFormat(imageBuffer: Buffer): Promise<{
+    recommended: string;
+    reasons: string[];
+    alternatives: Array<{ format: string; reason: string }>;
+  }> {
+    const originalType = await fromBuffer(imageBuffer);
+    const hasAlpha = await this.detectAlphaChannel(imageBuffer);
+    const isPhotographic = await this.detectPhotographicContent(imageBuffer);
+    
+    const reasons: string[] = [];
+    const alternatives: Array<{ format: string; reason: string }> = [];
+
+    let recommended = 'jpeg'; // Safe default
+
+    if (hasAlpha) {
+      recommended = 'webp';
+      reasons.push('Image has transparency, WebP recommended');
+      alternatives.push({ format: 'png', reason: 'Universal transparency support' });
+    } else if (isPhotographic) {
+      recommended = 'avif';
+      reasons.push('Photographic content benefits from AVIF compression');
+      alternatives.push({ format: 'webp', reason: 'Good compression with wider support' });
+      alternatives.push({ format: 'jpeg', reason: 'Universal compatibility' });
+    }
+
+    return { recommended, reasons, alternatives };
+  }
+
+  private async detectAlphaChannel(buffer: Buffer): Promise<boolean> {
+    const metadata = await sharp(buffer).metadata();
+    return metadata.hasAlpha || false;
+  }
+
+  private async detectPhotographicContent(buffer: Buffer): Promise<boolean> {
+    // Simple heuristic: check for high color variance
+    const stats = await sharp(buffer).stats();
+    const channels = stats.channels;
+    
+    // High variance across channels suggests photographic content
+    const avgVariance = channels.reduce((sum, ch) => sum + (ch.stdev || 0), 0) / channels.length;
+    return avgVariance > 30; // Threshold for photographic content
+  }
+}
+```
+
+## Performance Optimization
+
+### Sharp Configuration Tuning
+```typescript
+// Optimized transcoder for high-throughput scenarios
+class HighPerformanceTranscoder {
+  private transcoder: ImageTranscoder;
+
+  constructor(targetFormat: string, options: any = {}) {
+    this.transcoder = new ImageTranscoder({
+      targetFormat,
+      concurrency: Math.min(8, require('os').cpus().length), // CPU-aware concurrency
+      ...options
+    });
+
+    // Configure Sharp for maximum performance
+    sharp.cache({ files: 0 }); // Disable file cache
+    sharp.simd(true);          // Enable SIMD instructions
+    sharp.concurrency(options.concurrency || 4);
+  }
+
+  async benchmarkConversion(
+    testBuffer: Buffer,
+    iterations: number = 100
+  ): Promise<{
+    averageTime: number;
+    throughput: number; // MB/s
+    memoryUsage: NodeJS.MemoryUsage;
+  }> {
+    const startTime = Date.now();
+    const startMemory = process.memoryUsage();
+
+    for (let i = 0; i < iterations; i++) {
+      await this.transcoder.convert<Buffer>(testBuffer);
+    }
+
+    const endTime = Date.now();
+    const endMemory = process.memoryUsage();
+
+    const totalTime = endTime - startTime;
+    const avgTime = totalTime / iterations;
+    const totalMB = (testBuffer.length * iterations) / 1024 / 1024;
+    const throughput = totalMB / (totalTime / 1000);
+
+    return {
+      averageTime: avgTime,
+      throughput,
+      memoryUsage: {
+        rss: endMemory.rss - startMemory.rss,
+        heapUsed: endMemory.heapUsed - startMemory.heapUsed,
+        heapTotal: endMemory.heapTotal - startMemory.heapTotal,
+        external: endMemory.external - startMemory.external,
+        arrayBuffers: endMemory.arrayBuffers - startMemory.arrayBuffers
+      }
+    };
+  }
+}
+```
+
+### Memory-Efficient Stream Processing
+```typescript
+import { Transform } from 'stream';
+import { pipeline } from 'stream/promises';
+
+class StreamingTranscoder extends Transform {
+  private transcoder: ImageTranscoder;
+  private chunks: Buffer[] = [];
+
+  constructor(options: ImageTranscoderOptions) {
+    super();
+    this.transcoder = new ImageTranscoder(options);
+  }
+
+  _transform(chunk: any, encoding: string, callback: Function) {
+    this.chunks.push(Buffer.from(chunk));
+    callback();
+  }
+
+  async _flush(callback: Function) {
+    try {
+      const inputBuffer = Buffer.concat(this.chunks);
+      const outputBuffer = await this.transcoder.convert<Buffer>(inputBuffer);
+      this.push(outputBuffer);
+      callback();
+    } catch (error) {
+      callback(error);
+    }
+  }
+}
+
+// Usage for large file processing
+async function processLargeImageFile(inputPath: string, outputPath: string) {
+  const streamTranscoder = new StreamingTranscoder({
+    targetFormat: 'webp',
+    quality: 85
+  });
+
+  await pipeline(
+    createReadStream(inputPath),
+    streamTranscoder,
+    createWriteStream(outputPath)
+  );
+}
+```
+
+## Error Handling
+
+### Comprehensive Error Management
+```typescript
+import { UnsupportedSource } from '@rytass/file-converter-adapter-image-transcoder';
+
+class RobustImageTranscoder {
+  private transcoder: ImageTranscoder;
+  private fallbackTranscoder?: ImageTranscoder;
+
+  constructor(
+    primaryOptions: ImageTranscoderOptions,
+    fallbackOptions?: ImageTranscoderOptions
+  ) {
+    this.transcoder = new ImageTranscoder(primaryOptions);
+    
+    if (fallbackOptions) {
+      this.fallbackTranscoder = new ImageTranscoder(fallbackOptions);
+    }
+  }
+
+  async safeConvert(
+    file: ConvertableFile,
+    retryOnFailure: boolean = true
+  ): Promise<{
+    success: boolean;
+    buffer?: Buffer;
+    error?: string;
+    usedFallback: boolean;
+  }> {
+    try {
+      const buffer = await this.transcoder.convert<Buffer>(file);
+      return { success: true, buffer, usedFallback: false };
+    } catch (error) {
+      console.warn('Primary transcoder failed:', error.message);
+
+      if (error instanceof UnsupportedSource) {
+        return { 
+          success: false, 
+          error: 'Unsupported input format', 
+          usedFallback: false 
+        };
+      }
+
+      // Try fallback transcoder if available
+      if (retryOnFailure && this.fallbackTranscoder) {
+        try {
+          const buffer = await this.fallbackTranscoder.convert<Buffer>(file);
+          return { success: true, buffer, usedFallback: true };
+        } catch (fallbackError) {
+          return { 
+            success: false, 
+            error: fallbackError.message, 
+            usedFallback: true 
+          };
+        }
+      }
+
+      return { success: false, error: error.message, usedFallback: false };
+    }
+  }
+}
+
+// Usage with fallback strategy
+const robustTranscoder = new RobustImageTranscoder(
+  { targetFormat: 'avif', quality: 60 },      // Primary: Modern format
+  { targetFormat: 'jpeg', quality: 85 }       // Fallback: Universal format
+);
+
+const result = await robustTranscoder.safeConvert(imageBuffer);
+if (result.success) {
+  console.log(`Converted successfully${result.usedFallback ? ' (using fallback)' : ''}`);
+} else {
+  console.error('Conversion failed:', result.error);
+}
+```
+
+## Testing
+
+### Format Validation Testing
+```typescript
+import { ImageTranscoder } from '@rytass/file-converter-adapter-image-transcoder';
+import sharp from 'sharp';
+
+describe('ImageTranscoder', () => {
+  it('should convert JPEG to WebP', async () => {
+    const transcoder = new ImageTranscoder({
+      targetFormat: 'webp',
+      quality: 85
+    });
+
+    // Create test JPEG
+    const testJpeg = await sharp({
+      create: { width: 100, height: 100, channels: 3, background: { r: 255, g: 0, b: 0 } }
+    }).jpeg({ quality: 90 }).toBuffer();
+
+    const webpResult = await transcoder.convert<Buffer>(testJpeg);
+    const metadata = await sharp(webpResult).metadata();
+
+    expect(metadata.format).toBe('webp');
+    expect(webpResult.length).toBeLessThan(testJpeg.length); // Should be smaller
+  });
+
+  it('should handle unsupported formats', async () => {
+    const transcoder = new ImageTranscoder({
+      targetFormat: 'webp',
+      quality: 85
+    });
+
+    const unsupportedBuffer = Buffer.from('not-an-image');
+
+    await expect(
+      transcoder.convert<Buffer>(unsupportedBuffer)
+    ).rejects.toThrow('UnsupportedSource');
+  });
+
+  it('should preserve quality settings', async () => {
+    const highQuality = new ImageTranscoder({
+      targetFormat: 'jpeg',
+      quality: 95
+    });
+
+    const lowQuality = new ImageTranscoder({
+      targetFormat: 'jpeg', 
+      quality: 20
+    });
+
+    const testImage = createTestImage();
+    
+    const [highResult, lowResult] = await Promise.all([
+      highQuality.convert<Buffer>(testImage),
+      lowQuality.convert<Buffer>(testImage)
+    ]);
+
+    expect(highResult.length).toBeGreaterThan(lowResult.length);
+  });
+});
+```
+
+## Best Practices
+
+### Format Selection Guidelines
+- **AVIF**: Best compression for modern browsers, use for hero images
+- **WebP**: Good compression with wide support, ideal for general web use  
+- **JPEG**: Universal compatibility, use for fallbacks and legacy support
+- **PNG**: Use only when transparency is required and WebP not supported
+- **TIFF**: Professional workflows and archival purposes only
+
+### Quality Settings Recommendations
+- **AVIF**: 50-70 for photos, 80+ for graphics with fine details
+- **WebP**: 80-90 for photos, 95+ for graphics  
+- **JPEG**: 75-85 for photos, 90+ for graphics
+- **PNG**: Use compression level 6-9 for optimal size/speed balance
+
+### Performance Guidelines
+- Use streams for files >5MB to prevent memory issues
+- Set concurrency based on CPU cores and available memory
+- Implement caching for frequently converted images
+- Monitor conversion performance and adjust quality settings accordingly
+
+## Related Packages
+
+- **`@rytass/file-converter`** - Core conversion pipeline orchestration
+- **`@rytass/file-converter-adapter-image-resizer`** - Image resizing capabilities
+- **`@rytass/file-converter-adapter-image-watermark`** - Watermark application features
+- **`@rytass/storages`** - Storage integration for converted images
+
+## License and Support
+
+**License**: MIT
+**Repository**: https://github.com/Rytass/Utils
+**Issues**: https://github.com/Rytass/Utils/issues
+
+Powered by Sharp for professional-grade image format conversion. Part of the comprehensive Rytass Utils ecosystem for modern web application development.

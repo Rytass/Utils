@@ -1,0 +1,239 @@
+# @rytass/sms-adapter-every8d
+
+Every8d SMS service adapter for Taiwan SMS messaging integration.
+
+## Package Overview
+
+This package provides integration with Every8d (每一天科技), a leading Taiwan SMS service provider. Every8d is known for reliable SMS delivery, competitive pricing, and comprehensive API support for both domestic and international messaging.
+
+## Features
+
+### Every8d Integration
+- **High Delivery Rates**: Leverages Every8d's premium Taiwan mobile carrier connections
+- **API Integration**: Direct integration with Every8d's REST API
+- **Error Handling**: Comprehensive error mapping and handling
+- **Taiwan Focus**: Optimized for Taiwan mobile number validation and formatting
+
+### Messaging Capabilities
+- **Single SMS**: Send individual messages with tracking
+- **Bulk SMS**: Efficient bulk messaging for marketing campaigns
+- **Multi-Target**: One message to multiple recipients
+- **Taiwan Mobile Validation**: Automatic Taiwan mobile number validation
+
+### Service Features
+- **Message Tracking**: Unique message ID for each sent SMS
+- **Delivery Confirmation**: Status tracking for message delivery
+- **Error Reporting**: Detailed error messages and codes
+- **Cost Optimization**: Efficient API usage for cost management
+
+## Usage Examples
+
+### Basic Configuration
+```typescript
+import { Every8DSMSService } from '@rytass/sms-adapter-every8d';
+
+const smsService = new Every8DSMSService({
+  username: 'your-every8d-username',
+  password: 'your-every8d-password',
+  baseUrl: 'https://oms.every8d.com', // Optional: custom API endpoint
+  onlyTaiwanMobileNumber: true // Validate Taiwan mobile numbers only
+});
+```
+
+### Send Individual SMS
+```typescript
+const response = await smsService.send({
+  mobile: '0912345678',
+  text: '您的驗證碼是 123456，請在5分鐘內使用。'
+});
+
+if (response.status === SMSRequestResult.SUCCESS) {
+  console.log('SMS sent successfully:', response.messageId);
+} else {
+  console.error('SMS failed:', response.errorMessage);
+}
+```
+
+### Send Bulk SMS
+```typescript
+const messages = [
+  { mobile: '0912345678', text: '感謝您的訂購，商品將於明天送達。' },
+  { mobile: '0987654321', text: '您的會員點數即將到期，請盡快使用。' },
+  { mobile: '0955123456', text: '新品上市活動開始，立即查看優惠。' }
+];
+
+const responses = await smsService.send(messages);
+responses.forEach(response => {
+  if (response.status === SMSRequestResult.SUCCESS) {
+    console.log(`SMS to ${response.mobile} sent: ${response.messageId}`);
+  } else {
+    console.error(`SMS to ${response.mobile} failed: ${response.errorMessage}`);
+  }
+});
+```
+
+### Multi-Target Broadcasting
+```typescript
+const broadcastResponse = await smsService.send({
+  mobileList: ['0912345678', '0987654321', '0955123456'],
+  text: '系統維護通知：今晚23:00-01:00系統將進行維護，造成不便敬請見諒。'
+});
+
+broadcastResponse.forEach(response => {
+  console.log(`Broadcast to ${response.mobile}: ${response.status}`);
+});
+```
+
+## Configuration Options
+
+### Required Parameters
+```typescript
+interface Every8DSMSRequestInit {
+  username: string;                    // Every8d account username
+  password: string;                    // Every8d account password
+  baseUrl?: string;                    // Custom API endpoint (optional)
+  onlyTaiwanMobileNumber?: boolean;    // Taiwan number validation (default: false)
+}
+```
+
+### Advanced Configuration
+```typescript
+const smsService = new Every8DSMSService({
+  username: process.env.EVERY8D_USERNAME,
+  password: process.env.EVERY8D_PASSWORD,
+  baseUrl: 'https://oms.every8d.com/api/21/sendSMS', // Custom endpoint
+  onlyTaiwanMobileNumber: true, // Strict Taiwan mobile validation
+});
+```
+
+## Error Handling
+
+### Every8d Error Codes
+```typescript
+enum Every8DError {
+  FORMAT_ERROR = -306,  // Message format error
+  UNKNOWN = -99         // Unknown error
+}
+```
+
+### Error Response Structure
+```typescript
+interface Every8DSMSSendResponse extends SMSSendResponse {
+  messageId?: string;
+  status: SMSRequestResult;
+  mobile: string;
+  errorMessage?: string;    // Human-readable error message
+  errorCode?: Every8DError; // Every8d specific error code
+}
+```
+
+### Error Handling Examples
+```typescript
+const response = await smsService.send({
+  mobile: '0912345678',
+  text: 'Test message'
+});
+
+if (response.status === SMSRequestResult.FAILED) {
+  switch (response.errorCode) {
+    case Every8DError.FORMAT_ERROR:
+      console.error('Message format error:', response.errorMessage);
+      break;
+    case Every8DError.UNKNOWN:
+      console.error('Unknown error occurred:', response.errorMessage);
+      break;
+    default:
+      console.error('SMS failed:', response.errorMessage);
+  }
+}
+```
+
+## Taiwan Mobile Integration
+
+### Mobile Number Validation
+When `onlyTaiwanMobileNumber` is enabled:
+- Validates Taiwan mobile number format (09xxxxxxxx)
+- Automatically formats numbers (adds leading 0 if missing)
+- Rejects invalid Taiwan mobile numbers
+- Supports all Taiwan mobile carriers
+
+### Supported Taiwan Mobile Carriers
+- 中華電信 (Chunghwa Telecom): 0919, 0910, 0912, 0913, etc.
+- 台灣大哥大 (Taiwan Mobile): 0930, 0932, 0933, 0934, etc.
+- 遠傳電信 (Far EasTone): 0920, 0921, 0922, 0928, etc.
+- 亞太電信 (APT): 0905, 0906, etc.
+- 台灣之星 (T Star): 0970, 0971, etc.
+
+## Business Use Cases
+
+### E-commerce Applications
+```typescript
+// Order confirmation SMS
+await smsService.send({
+  mobile: customer.mobile,
+  text: `親愛的${customer.name}，您的訂單 ${orderNumber} 已確認，預計${deliveryDate}送達。`
+});
+
+// Shipping notification
+await smsService.send({
+  mobile: customer.mobile,
+  text: `您的包裹已出貨，物流編號：${trackingNumber}，可至官網查詢配送狀態。`
+});
+```
+
+### Authentication Services
+```typescript
+// OTP verification
+const otpCode = generateOTP();
+await smsService.send({
+  mobile: user.mobile,
+  text: `您的驗證碼是 ${otpCode}，請在10分鐘內輸入完成驗證。`
+});
+
+// Login notification
+await smsService.send({
+  mobile: user.mobile,
+  text: `檢測到您的帳號在新裝置上登入，如非本人操作請立即修改密碼。`
+});
+```
+
+### Marketing Campaigns
+```typescript
+// Promotional campaign
+const customerList = await getActiveCustomers();
+const mobileList = customerList.map(c => c.mobile);
+
+await smsService.send({
+  mobileList,
+  text: '限時優惠！全館滿千折百，使用優惠碼 SAVE100，活動至本週日截止。立即購物: https://shop.example.com'
+});
+```
+
+## Every8d Service Benefits
+
+### Service Advantages
+- **High Delivery Rate**: Premium routes with Taiwan carriers
+- **Competitive Pricing**: Cost-effective SMS pricing for Taiwan market
+- **API Reliability**: Stable API with high uptime
+- **Customer Support**: Local Taiwan customer service
+- **Compliance**: Meets Taiwan telecommunications regulations
+
+### Technical Benefits
+- **Real-time Delivery**: Fast SMS delivery across Taiwan
+- **Status Tracking**: Message delivery confirmation
+- **Error Reporting**: Comprehensive error information
+- **Bulk Efficiency**: Optimized for high-volume messaging
+
+## Dependencies
+
+- **@rytass/sms**: Base SMS interfaces and types
+
+## Integration Patterns
+
+This adapter works well with:
+- **NestJS Applications**: Injectable SMS service
+- **Express Applications**: Middleware for SMS notifications
+- **Queue Systems**: Background SMS job processing
+- **Event Systems**: SMS notifications for application events
+
+Perfect for Taiwan-based applications requiring reliable SMS delivery with local carrier optimization and comprehensive Taiwan mobile number support.

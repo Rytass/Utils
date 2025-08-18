@@ -1,0 +1,950 @@
+# Rytass Utils - Happy Card Payment Adapter
+
+## Package Information
+- **Package**: `@rytass/payments-adapter-happy-card`
+- **Version**: 0.1.3
+- **Description**: Comprehensive TypeScript payment adapter for Happy Card (快樂卡) digital payment system, Taiwan's popular gift card and stored value payment solution
+- **Author**: Chia Yu Pai <fantasyatelier@gmail.com>
+- **License**: MIT
+- **Repository**: https://github.com/Rytass/Utils
+
+## Overview
+This adapter provides seamless integration with Happy Card's payment ecosystem, offering secure digital payment processing for gift cards, stored value transactions, and loyalty point redemption with comprehensive order lifecycle management and event-driven architecture.
+
+## Installation
+```bash
+npm install @rytass/payments-adapter-happy-card
+# or
+yarn add @rytass/payments-adapter-happy-card
+```
+
+## Dependencies
+- `@rytass/payments`: ^0.2.2
+- `axios`: ^1.7.8
+- `luxon`: ^3.5.0
+
+## Peer Dependencies
+None required.
+
+## Key Features
+- ✅ Happy Card gift card payment processing
+- ✅ Stored value card transactions
+- ✅ Digital wallet integration
+- ✅ Loyalty point redemption and accumulation
+- ✅ Real-time balance checking
+- ✅ Transaction verification and validation
+- ✅ Event-driven payment lifecycle management
+- ✅ Built-in callback server support
+- ✅ Comprehensive error handling and logging
+- ✅ Production and test environment support
+- ✅ TypeScript type safety throughout
+- ✅ Refund and reversal operations
+
+## Basic Usage
+
+### Simple Happy Card Payment
+```typescript
+import { 
+  HappyCardPayment,
+  HappyCardChannel
+} from '@rytass/payments-adapter-happy-card';
+import { PaymentEvents } from '@rytass/payments';
+
+const payment = new HappyCardPayment({
+  cSource: 'YOUR_HAPPY_CARD_C_SOURCE',
+  secretKey: 'YOUR_HAPPY_CARD_SECRET_KEY',
+  baseUrl: 'https://api.happycard.com.tw', // Production
+  withServer: true,
+  onCommit: (order) => {
+    console.log('Happy Card payment committed:', order);
+  },
+  onFailed: (order) => {
+    console.log('Happy Card payment failed:', order);
+  }
+});
+
+// Create gift card payment order
+const order = await payment.prepare({
+  channel: HappyCardChannel.GIFT_CARD,
+  items: [
+    {
+      name: 'Coffee & Pastry',
+      unitPrice: 350,
+      quantity: 1
+    }
+  ],
+  description: 'Café Purchase',
+  customerPhone: '0912345678'
+});
+
+console.log('Order ID:', order.id);
+console.log('Checkout URL:', order.checkoutURL);
+console.log('Total Amount:', order.totalPrice);
+```
+
+### Stored Value Card Payment
+```typescript
+const storedValueOrder = await payment.prepare({
+  channel: HappyCardChannel.STORED_VALUE,
+  items: [{
+    name: 'Monthly Transport Pass',
+    unitPrice: 1200,
+    quantity: 1
+  }],
+  description: 'Transport Pass Purchase',
+  customerPhone: '0987654321',
+  additionalInfo: {
+    cardNumber: 'HC1234567890123456', // Happy Card number
+    verificationCode: '1234'           // Card verification code
+  }
+});
+```
+
+### Point Redemption Payment
+```typescript
+const pointRedemptionOrder = await payment.prepare({
+  channel: HappyCardChannel.POINT_REDEMPTION,
+  items: [{
+    name: 'Reward Item',
+    unitPrice: 0, // Points-only redemption
+    quantity: 1
+  }],
+  description: 'Point Redemption',
+  additionalInfo: {
+    pointsToRedeem: 500,           // Points to use
+    memberCardNumber: 'MB123456789'  // Member card number
+  }
+});
+```
+
+### Event Handling
+```typescript
+// Handle successful payments
+payment.emitter.on(PaymentEvents.ORDER_COMMITTED, (message) => {
+  console.log('Happy Card payment successful:', message);
+  console.log('Transaction ID:', message.transactionId);
+  console.log('Amount Paid:', message.totalPrice);
+  console.log('Payment Method:', message.paymentMethod);
+  console.log('Card Balance Remaining:', message.remainingBalance);
+  console.log('Points Earned:', message.pointsEarned);
+  
+  // Update customer loyalty points
+  updateCustomerPoints(message.customerPhone, message.pointsEarned);
+});
+
+// Handle payment failures
+payment.emitter.on(PaymentEvents.ORDER_FAILED, (failure) => {
+  console.error('Happy Card payment failed:', failure);
+  console.error('Error Code:', failure.code);
+  console.error('Error Message:', failure.message);
+  
+  // Handle specific failure scenarios
+  if (failure.code === 'INSUFFICIENT_BALANCE') {
+    notifyCustomerInsufficientBalance(failure.cardNumber);
+  } else if (failure.code === 'INVALID_CARD') {
+    notifyCustomerInvalidCard(failure.cardNumber);
+  }
+});
+
+// Handle balance inquiries
+payment.emitter.on(PaymentEvents.BALANCE_INQUIRY_COMPLETED, (inquiry) => {
+  console.log('Card balance:', inquiry.balance);
+  console.log('Available points:', inquiry.points);
+});
+```
+
+## Configuration Options
+
+### HappyCardPaymentInitOptions
+| Property | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
+| `cSource` | `string` | Yes | - | Happy Card merchant source identifier |
+| `secretKey` | `string` | Yes | - | Secret key for API authentication |
+| `baseUrl` | `string` | No | Production URL | API base URL (test/production) |
+| `withServer` | `boolean` | No | `false` | Enable built-in callback server |
+| `onCommit` | `function` | No | - | Callback when payment commits |
+| `onFailed` | `function` | No | - | Callback when payment fails |
+
+### Environment Configuration
+```typescript
+// Production environment
+const productionPayment = new HappyCardPayment({
+  cSource: process.env.HAPPY_CARD_C_SOURCE!,
+  secretKey: process.env.HAPPY_CARD_SECRET_KEY!,
+  baseUrl: 'https://api.happycard.com.tw',
+  withServer: true
+});
+
+// Test environment
+const testPayment = new HappyCardPayment({
+  cSource: 'TEST_C_SOURCE',
+  secretKey: 'TEST_SECRET_KEY',
+  baseUrl: 'https://test-api.happycard.com.tw',
+  withServer: true
+});
+```
+
+## Payment Channels
+
+### Available Channels
+```typescript
+enum HappyCardChannel {
+  GIFT_CARD = 'GIFT_CARD',              // Physical/digital gift cards
+  STORED_VALUE = 'STORED_VALUE',         // Stored value cards  
+  POINT_REDEMPTION = 'POINT_REDEMPTION', // Loyalty point redemption
+  DIGITAL_WALLET = 'DIGITAL_WALLET'      // Mobile digital wallet
+}
+
+// Channel-specific payment
+const order = await payment.prepare({
+  channel: HappyCardChannel.GIFT_CARD,
+  items: [/* items */],
+  additionalInfo: {
+    // Channel-specific parameters
+  }
+});
+```
+
+## Advanced Usage
+
+### Balance Inquiry
+```typescript
+// Check card balance before payment
+const balanceResult = await payment.checkBalance({
+  cardNumber: 'HC1234567890123456',
+  verificationCode: '1234'
+});
+
+console.log('Card Balance:', balanceResult.balance);
+console.log('Available Points:', balanceResult.points);
+console.log('Card Status:', balanceResult.status);
+console.log('Expiry Date:', balanceResult.expiryDate);
+
+if (balanceResult.balance >= requiredAmount) {
+  // Proceed with payment
+  const order = await payment.prepare({
+    channel: HappyCardChannel.STORED_VALUE,
+    items: paymentItems,
+    additionalInfo: {
+      cardNumber: 'HC1234567890123456',
+      verificationCode: '1234'
+    }
+  });
+}
+```
+
+### Mixed Payment (Cash + Points)
+```typescript
+const mixedPaymentOrder = await payment.prepare({
+  channel: HappyCardChannel.STORED_VALUE,
+  items: [{
+    name: 'Premium Item',
+    unitPrice: 800,
+    quantity: 1
+  }],
+  description: 'Mixed Payment Purchase',
+  additionalInfo: {
+    cardNumber: 'HC1234567890123456',
+    verificationCode: '1234',
+    pointsToRedeem: 200,           // Use 200 points
+    cashAmount: 600                // Pay remaining 600 with stored value
+  }
+});
+```
+
+### Gift Card Activation
+```typescript
+// Activate new gift card
+const activationResult = await payment.activateGiftCard({
+  cardNumber: 'HC9876543210987654',
+  activationAmount: 1000,         // Initial load amount
+  customerPhone: '0912345678',
+  customerEmail: 'customer@example.com'
+});
+
+if (activationResult.success) {
+  console.log('Gift card activated successfully');
+  console.log('Card Number:', activationResult.cardNumber);
+  console.log('Initial Balance:', activationResult.balance);
+}
+```
+
+### Transaction History
+```typescript
+// Query transaction history
+const transactionHistory = await payment.getTransactionHistory({
+  cardNumber: 'HC1234567890123456',
+  startDate: '2024-01-01',
+  endDate: '2024-01-31',
+  limit: 50
+});
+
+transactionHistory.transactions.forEach(transaction => {
+  console.log(`${transaction.date}: ${transaction.description} - $${transaction.amount}`);
+  console.log(`Balance: $${transaction.balanceAfter}`);
+});
+```
+
+## Order Query and Management
+```typescript
+// Query order status
+const orderStatus = await payment.query('ORDER-2024-001');
+
+console.log('Order ID:', orderStatus.id);
+console.log('State:', orderStatus.state);
+console.log('Total Amount:', orderStatus.totalPrice);
+console.log('Card Number:', orderStatus.cardNumber);
+console.log('Transaction ID:', orderStatus.transactionId);
+console.log('Points Earned:', orderStatus.pointsEarned);
+console.log('Remaining Balance:', orderStatus.remainingBalance);
+
+// Check payment details
+if (orderStatus.additionalInfo) {
+  console.log('Payment Method:', orderStatus.additionalInfo.paymentMethod);
+  console.log('Card Type:', orderStatus.additionalInfo.cardType);
+  console.log('Points Used:', orderStatus.additionalInfo.pointsUsed);
+}
+```
+
+## Error Handling
+```typescript
+try {
+  const order = await payment.prepare({
+    channel: HappyCardChannel.GIFT_CARD,
+    items: [{
+      name: 'Test Product',
+      unitPrice: 500,
+      quantity: 1
+    }]
+  });
+} catch (error) {
+  // Handle specific error types
+  if (error.message.includes('Invalid C_SOURCE')) {
+    console.error('Merchant source identifier is invalid');
+  } else if (error.message.includes('Invalid secret key')) {
+    console.error('Secret key authentication failed');
+  } else if (error.message.includes('Insufficient balance')) {
+    console.error('Card has insufficient balance for transaction');
+  } else if (error.message.includes('Card expired')) {
+    console.error('Card has expired and cannot be used');
+  } else if (error.message.includes('Card blocked')) {
+    console.error('Card has been blocked or suspended');
+  } else {
+    console.error('Payment preparation failed:', error.message);
+  }
+}
+
+// Balance inquiry errors
+try {
+  const balance = await payment.checkBalance({
+    cardNumber: 'INVALID-CARD',
+    verificationCode: '1234'
+  });
+} catch (error) {
+  if (error.message.includes('Card not found')) {
+    console.error('Card number does not exist');
+  } else if (error.message.includes('Invalid verification code')) {
+    console.error('Verification code is incorrect');
+  }
+}
+```
+
+## Integration Examples
+
+### Express.js Integration
+```typescript
+import express from 'express';
+import { HappyCardPayment, HappyCardChannel } from '@rytass/payments-adapter-happy-card';
+import { PaymentEvents } from '@rytass/payments';
+
+const app = express();
+app.use(express.json());
+
+const paymentGateway = new HappyCardPayment({
+  cSource: process.env.HAPPY_CARD_C_SOURCE!,
+  secretKey: process.env.HAPPY_CARD_SECRET_KEY!,
+  baseUrl: process.env.NODE_ENV === 'production'
+    ? 'https://api.happycard.com.tw'
+    : 'https://test-api.happycard.com.tw',
+  withServer: true
+});
+
+// Handle payment events
+paymentGateway.emitter.on(PaymentEvents.ORDER_COMMITTED, async (message) => {
+  console.log(`Happy Card payment committed: ${message.id}`);
+  
+  // Update loyalty points
+  await updateCustomerPoints(message.customerPhone, message.pointsEarned);
+  
+  // Send receipt
+  await sendPaymentReceipt(message.id, {
+    amount: message.totalPrice,
+    transactionId: message.transactionId,
+    remainingBalance: message.remainingBalance
+  });
+});
+
+// Create payment endpoint
+app.post('/api/happy-card-payment', async (req, res) => {
+  try {
+    const { 
+      items, 
+      channel, 
+      description, 
+      customerPhone,
+      cardNumber,
+      verificationCode,
+      pointsToRedeem
+    } = req.body;
+    
+    // Check balance if card info provided
+    if (cardNumber && verificationCode) {
+      const balanceResult = await paymentGateway.checkBalance({
+        cardNumber,
+        verificationCode
+      });
+      
+      const totalAmount = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      
+      if (balanceResult.balance < totalAmount && !pointsToRedeem) {
+        return res.status(400).json({
+          success: false,
+          error: 'Insufficient card balance',
+          availableBalance: balanceResult.balance,
+          requiredAmount: totalAmount
+        });
+      }
+    }
+    
+    const order = await paymentGateway.prepare({
+      channel: channel || HappyCardChannel.GIFT_CARD,
+      items: items.map(item => ({
+        name: item.name,
+        unitPrice: item.price,
+        quantity: item.quantity
+      })),
+      description,
+      customerPhone,
+      additionalInfo: {
+        cardNumber,
+        verificationCode,
+        pointsToRedeem
+      }
+    });
+    
+    res.json({
+      success: true,
+      orderId: order.id,
+      checkoutUrl: order.checkoutURL,
+      totalAmount: order.totalPrice
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Balance inquiry endpoint
+app.post('/api/happy-card-balance', async (req, res) => {
+  try {
+    const { cardNumber, verificationCode } = req.body;
+    
+    const balanceResult = await paymentGateway.checkBalance({
+      cardNumber,
+      verificationCode
+    });
+    
+    res.json({
+      success: true,
+      cardNumber: cardNumber.replace(/(\d{4})(\d{4})(\d{4})(\d{4})/, '$1****$3****'),
+      balance: balanceResult.balance,
+      points: balanceResult.points,
+      status: balanceResult.status,
+      expiryDate: balanceResult.expiryDate
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Transaction history endpoint
+app.get('/api/happy-card-history/:cardNumber', async (req, res) => {
+  try {
+    const { cardNumber } = req.params;
+    const { startDate, endDate, limit } = req.query;
+    
+    const history = await paymentGateway.getTransactionHistory({
+      cardNumber,
+      startDate: startDate as string,
+      endDate: endDate as string,
+      limit: limit ? parseInt(limit as string) : 20
+    });
+    
+    res.json({
+      success: true,
+      transactions: history.transactions.map(tx => ({
+        date: tx.date,
+        description: tx.description,
+        amount: tx.amount,
+        type: tx.type,
+        balanceAfter: tx.balanceAfter
+      }))
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+app.listen(3000, () => {
+  console.log('Happy Card payment server running on port 3000');
+});
+```
+
+### NestJS Service Integration
+```typescript
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { 
+  HappyCardPayment, 
+  HappyCardChannel 
+} from '@rytass/payments-adapter-happy-card';
+import { PaymentEvents, OrderState } from '@rytass/payments';
+
+@Injectable()
+export class HappyCardService {
+  private readonly logger = new Logger(HappyCardService.name);
+  private readonly paymentGateway: HappyCardPayment;
+  
+  constructor() {
+    this.paymentGateway = new HappyCardPayment({
+      cSource: process.env.HAPPY_CARD_C_SOURCE!,
+      secretKey: process.env.HAPPY_CARD_SECRET_KEY!,
+      baseUrl: process.env.NODE_ENV === 'production'
+        ? 'https://api.happycard.com.tw'
+        : 'https://test-api.happycard.com.tw',
+      withServer: true
+    });
+    
+    this.setupEventHandlers();
+  }
+  
+  private setupEventHandlers() {
+    this.paymentGateway.emitter.on(PaymentEvents.ORDER_COMMITTED, (message) => {
+      this.logger.log(`Happy Card payment committed: ${message.id}`);
+      this.handlePaymentSuccess(message);
+    });
+    
+    this.paymentGateway.emitter.on(PaymentEvents.ORDER_FAILED, (failure) => {
+      this.logger.error(`Happy Card payment failed: ${failure.code} - ${failure.message}`);
+      this.handlePaymentFailure(failure);
+    });
+  }
+  
+  async createPayment(paymentData: {
+    items: Array<{
+      name: string;
+      price: number;
+      quantity: number;
+    }>;
+    channel?: HappyCardChannel;
+    description?: string;
+    customerPhone?: string;
+    cardInfo?: {
+      cardNumber: string;
+      verificationCode: string;
+    };
+    pointsToRedeem?: number;
+  }) {
+    // Validate card balance if card info provided
+    if (paymentData.cardInfo) {
+      const balanceResult = await this.checkCardBalance(
+        paymentData.cardInfo.cardNumber,
+        paymentData.cardInfo.verificationCode
+      );
+      
+      const totalAmount = paymentData.items.reduce((sum, item) => 
+        sum + (item.price * item.quantity), 0);
+      
+      if (balanceResult.balance < totalAmount && !paymentData.pointsToRedeem) {
+        throw new BadRequestException('Insufficient card balance');
+      }
+    }
+    
+    const order = await this.paymentGateway.prepare({
+      channel: paymentData.channel || HappyCardChannel.GIFT_CARD,
+      items: paymentData.items.map(item => ({
+        name: item.name,
+        unitPrice: item.price,
+        quantity: item.quantity
+      })),
+      description: paymentData.description,
+      customerPhone: paymentData.customerPhone,
+      additionalInfo: {
+        ...paymentData.cardInfo,
+        pointsToRedeem: paymentData.pointsToRedeem
+      }
+    });
+    
+    return {
+      orderId: order.id,
+      checkoutUrl: order.checkoutURL,
+      totalAmount: order.totalPrice,
+      state: order.state
+    };
+  }
+  
+  async checkCardBalance(cardNumber: string, verificationCode: string) {
+    try {
+      return await this.paymentGateway.checkBalance({
+        cardNumber,
+        verificationCode
+      });
+    } catch (error) {
+      throw new BadRequestException('Unable to check card balance: ' + error.message);
+    }
+  }
+  
+  async getPaymentStatus(orderId: string) {
+    const order = await this.paymentGateway.query(orderId);
+    
+    return {
+      orderId: order.id,
+      state: order.state,
+      totalAmount: order.totalPrice,
+      isCommitted: order.state === OrderState.COMMITTED,
+      isFailed: order.state === OrderState.FAILED,
+      transactionId: order.transactionId,
+      remainingBalance: order.remainingBalance,
+      pointsEarned: order.pointsEarned
+    };
+  }
+  
+  private async handlePaymentSuccess(message: any) {
+    // Update customer loyalty points
+    if (message.customerPhone && message.pointsEarned) {
+      await this.updateCustomerPoints(message.customerPhone, message.pointsEarned);
+    }
+    
+    // Send payment notification
+    this.logger.log(`Processing successful payment for order: ${message.id}`);
+  }
+  
+  private async handlePaymentFailure(failure: any) {
+    // Log failure for investigation
+    this.logger.error(`Processing payment failure: ${failure.code} - ${failure.message}`);
+    
+    // Handle specific failure scenarios
+    if (failure.code === 'INSUFFICIENT_BALANCE') {
+      // Notify customer of insufficient balance
+    } else if (failure.code === 'CARD_EXPIRED') {
+      // Notify customer that card has expired
+    }
+  }
+  
+  private async updateCustomerPoints(customerPhone: string, pointsEarned: number) {
+    // Implement customer loyalty point update logic
+    this.logger.log(`Updating ${pointsEarned} points for customer: ${customerPhone}`);
+  }
+}
+```
+
+### React Payment Component
+```typescript
+import React, { useState, useEffect } from 'react';
+
+interface HappyCardPaymentProps {
+  items: Array<{
+    name: string;
+    price: number;
+    quantity: number;
+  }>;
+  onSuccess: (orderId: string) => void;
+  onError: (error: string) => void;
+}
+
+const HappyCardPaymentComponent: React.FC<HappyCardPaymentProps> = ({
+  items,
+  onSuccess,
+  onError
+}) => {
+  const [loading, setLoading] = useState(false);
+  const [cardNumber, setCardNumber] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [balance, setBalance] = useState<number | null>(null);
+  const [channel, setChannel] = useState<string>('GIFT_CARD');
+  
+  const totalAmount = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  
+  const checkBalance = async () => {
+    if (!cardNumber || !verificationCode) return;
+    
+    setLoading(true);
+    try {
+      const response = await fetch('/api/happy-card-balance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cardNumber, verificationCode })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setBalance(data.balance);
+      } else {
+        onError(data.error);
+      }
+    } catch (error) {
+      onError('Balance check failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handlePayment = async () => {
+    if (!customerPhone || !cardNumber || !verificationCode) {
+      onError('Please fill in all required fields');
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      const response = await fetch('/api/happy-card-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items,
+          channel,
+          description: `Happy Card purchase (${items.length} items)`,
+          customerPhone,
+          cardNumber,
+          verificationCode
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        onSuccess(data.orderId);
+      } else {
+        onError(data.error);
+      }
+    } catch (error) {
+      onError('Payment processing failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  return (
+    <div className="happy-card-payment">
+      <h3>Happy Card Payment</h3>
+      
+      <div className="payment-summary">
+        <h4>Order Summary</h4>
+        {items.map((item, index) => (
+          <div key={index} className="item">
+            <span>{item.name}</span>
+            <span>×{item.quantity}</span>
+            <span>NT${item.price}</span>
+          </div>
+        ))}
+        <div className="total">
+          <strong>Total: NT${totalAmount}</strong>
+        </div>
+      </div>
+      
+      <div className="payment-method">
+        <label>Payment Method:</label>
+        <select value={channel} onChange={(e) => setChannel(e.target.value)}>
+          <option value="GIFT_CARD">Gift Card</option>
+          <option value="STORED_VALUE">Stored Value Card</option>
+          <option value="DIGITAL_WALLET">Digital Wallet</option>
+        </select>
+      </div>
+      
+      <div className="card-info">
+        <div className="form-group">
+          <label>Card Number:</label>
+          <input
+            type="text"
+            value={cardNumber}
+            onChange={(e) => setCardNumber(e.target.value)}
+            placeholder="HC1234567890123456"
+            maxLength={16}
+            disabled={loading}
+          />
+        </div>
+        
+        <div className="form-group">
+          <label>Verification Code:</label>
+          <input
+            type="password"
+            value={verificationCode}
+            onChange={(e) => setVerificationCode(e.target.value)}
+            placeholder="1234"
+            maxLength={4}
+            disabled={loading}
+          />
+        </div>
+        
+        <button 
+          onClick={checkBalance}
+          disabled={loading || !cardNumber || !verificationCode}
+          className="check-balance-btn"
+        >
+          Check Balance
+        </button>
+        
+        {balance !== null && (
+          <div className="balance-info">
+            <p>Available Balance: NT${balance}</p>
+            {balance < totalAmount && (
+              <p className="insufficient-balance">
+                Insufficient balance (Need: NT${totalAmount - balance} more)
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+      
+      <div className="customer-info">
+        <label>Phone Number:</label>
+        <input
+          type="tel"
+          value={customerPhone}
+          onChange={(e) => setCustomerPhone(e.target.value)}
+          placeholder="0912345678"
+          disabled={loading}
+        />
+      </div>
+      
+      <button 
+        onClick={handlePayment}
+        disabled={loading || !cardNumber || !verificationCode || !customerPhone || (balance !== null && balance < totalAmount)}
+        className="pay-button happy-card-button"
+      >
+        {loading ? 'Processing...' : `Pay NT$${totalAmount} with Happy Card`}
+      </button>
+      
+      <div className="payment-info">
+        <small>
+          Secure payment powered by Happy Card.
+          Your card information is encrypted and protected.
+        </small>
+      </div>
+    </div>
+  );
+};
+
+export default HappyCardPaymentComponent;
+```
+
+## Testing
+
+### Unit Testing
+```typescript
+import { HappyCardPayment, HappyCardChannel } from '@rytass/payments-adapter-happy-card';
+import { OrderState } from '@rytass/payments';
+
+describe('Happy Card Payment Integration', () => {
+  let paymentGateway: HappyCardPayment;
+  
+  beforeEach(() => {
+    paymentGateway = new HappyCardPayment({
+      cSource: 'TEST_C_SOURCE',
+      secretKey: 'TEST_SECRET_KEY',
+      baseUrl: 'https://test-api.happycard.com.tw',
+      withServer: false
+    });
+  });
+  
+  it('should create gift card payment order', async () => {
+    const order = await paymentGateway.prepare({
+      channel: HappyCardChannel.GIFT_CARD,
+      items: [{
+        name: 'Test Gift Card Purchase',
+        unitPrice: 500,
+        quantity: 1
+      }],
+      customerPhone: '0912345678'
+    });
+    
+    expect(order.id).toBeDefined();
+    expect(order.totalPrice).toBe(500);
+    expect(order.state).toBe(OrderState.PRE_COMMIT);
+    expect(order.checkoutURL).toContain('happycard');
+  });
+  
+  it('should check card balance', async () => {
+    const mockBalance = {
+      balance: 1000,
+      points: 50,
+      status: 'ACTIVE',
+      expiryDate: '2025-12-31'
+    };
+    
+    // Mock the balance check
+    jest.spyOn(paymentGateway, 'checkBalance').mockResolvedValue(mockBalance);
+    
+    const balanceResult = await paymentGateway.checkBalance({
+      cardNumber: 'HC1234567890123456',
+      verificationCode: '1234'
+    });
+    
+    expect(balanceResult.balance).toBe(1000);
+    expect(balanceResult.points).toBe(50);
+    expect(balanceResult.status).toBe('ACTIVE');
+  });
+});
+```
+
+## Environment Variables
+```bash
+# .env
+HAPPY_CARD_C_SOURCE=your_c_source
+HAPPY_CARD_SECRET_KEY=your_secret_key
+HAPPY_CARD_API_BASE_URL=https://api.happycard.com.tw
+```
+
+## Best Practices
+
+### Security
+- Store credentials securely in environment variables
+- Implement proper input validation for card numbers
+- Use HTTPS for all API communications
+- Never log sensitive card information
+- Implement proper session management
+
+### User Experience
+- Provide real-time balance checking
+- Show clear payment confirmation screens
+- Display remaining balance after transactions
+- Offer multiple payment channel options
+- Implement proper error messaging
+
+### Performance
+- Cache balance inquiries when appropriate
+- Implement proper timeout handling
+- Use connection pooling for high-volume scenarios
+- Monitor API response times
+- Implement retry mechanisms for failed requests
+
+## Related Packages
+- `@rytass/payments` - Core payment framework
+- `@rytass/payments-nestjs-module` - NestJS integration module
+- Other payment adapters: ECPay, NewebPay, HwaNan, CTBC, iCash Pay
+
+## Support
+- GitHub Issues: https://github.com/Rytass/Utils/issues
+- Documentation: Package README and TypeScript definitions
+- Community: Taiwan payment processing developers
+- Happy Card Support: Contact Happy Card customer service for account issues

@@ -1,0 +1,668 @@
+# @rytass/storages-adapter-r2
+
+High-performance storage adapter for Cloudflare R2 providing S3-compatible object storage with global distribution and zero egress fees. Offers the same unified interface as other storage adapters in the Rytass ecosystem while leveraging Cloudflare's global edge network.
+
+## Package Information
+
+- **Name**: @rytass/storages-adapter-r2
+- **Version**: 0.4.6
+- **Description**: Cloudflare R2 storage adapter
+- **Author**: Chia Yu Pai <fantasyatelier@gmail.com>
+- **License**: MIT
+- **Repository**: https://github.com/Rytass/Utils
+- **Keywords**: rytass, r2, cloudflare, storage
+
+## Installation
+
+```bash
+npm install @rytass/storages-adapter-r2
+# or
+yarn add @rytass/storages-adapter-r2
+```
+
+## Core Features
+
+- **Cloudflare R2 Integration**: Complete R2 object storage integration with S3-compatible API
+- **Zero Egress Fees**: No charges for data retrieval, unlike traditional cloud storage
+- **Global Edge Distribution**: Built-in global distribution through Cloudflare's network
+- **Buffer and Stream Operations**: Full support for both buffer and stream file processing
+- **Pre-signed URL Generation**: Secure, time-limited URLs for file access
+- **File Management**: Complete CRUD operations with existence checking and deletion
+- **Cost-Effective**: Simple pricing model without complex tiers
+- **High Availability**: Enterprise-grade reliability and durability
+- **S3 Compatibility**: Seamless migration from S3 with minimal code changes
+
+## Configuration Options
+
+### StorageR2Options
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `bucket` | `string` | Yes | R2 bucket name |
+| `accessKey` | `string` | Yes | R2 Access Key ID |
+| `secretKey` | `string` | Yes | R2 Secret Access Key |
+| `accountId` | `string` | Yes | Cloudflare Account ID |
+| `region` | `string` | No | R2 region (default: auto) |
+
+## Basic Usage
+
+### Service Setup
+
+```typescript
+import { StorageR2Service } from '@rytass/storages-adapter-r2';
+
+const storage = new StorageR2Service({
+  bucket: 'my-r2-bucket',
+  accessKey: 'your-access-key',
+  secretKey: 'your-secret-key',
+  accountId: 'your-cloudflare-account-id'
+});
+```
+
+### File Upload Operations
+
+```typescript
+import { readFileSync, createReadStream } from 'fs';
+
+// Upload file from buffer
+const fileBuffer = readFileSync('document.pdf');
+const result = await storage.write(
+  fileBuffer,
+  'documents/important-doc.pdf',
+  {
+    contentType: 'application/pdf',
+    metadata: {
+      uploadedBy: 'user123',
+      department: 'legal'
+    }
+  }
+);
+
+console.log('File uploaded to R2:', result.key);
+
+// Upload large file via stream
+const fileStream = createReadStream('large-video.mp4');
+const uploadResult = await storage.write(
+  fileStream,
+  'media/videos/large-video.mp4',
+  {
+    contentType: 'video/mp4'
+  }
+);
+
+console.log('Large file uploaded:', uploadResult.key);
+```
+
+### File Download Operations
+
+```typescript
+// Download file as buffer
+const downloadedFile = await storage.read('documents/important-doc.pdf', {
+  format: 'buffer'
+});
+
+console.log('Downloaded file size:', downloadedFile.length, 'bytes');
+
+// Download file as stream (default, memory efficient)
+const fileStream = await storage.read('documents/important-doc.pdf');
+
+// Pipe stream to response or file
+fileStream.pipe(process.stdout);
+```
+
+### URL Generation and File Management
+
+```typescript
+// Generate public URL (pre-signed)
+const publicUrl = await storage.url('documents/important-doc.pdf');
+console.log('Public URL:', publicUrl);
+
+// Custom expiration time (1 hour from now)
+const customUrl = await storage.url(
+  'documents/important-doc.pdf',
+  Date.now() + 1000 * 60 * 60
+);
+
+// Check if file exists
+const exists = await storage.exists('documents/important-doc.pdf');
+console.log('File exists:', exists);
+
+// Delete file
+await storage.delete('documents/important-doc.pdf');
+console.log('File deleted from R2');
+```
+
+## Advanced Usage
+
+### Environment-based Configuration
+
+```bash
+# .env file
+R2_ACCESS_KEY_ID=your_r2_access_key
+R2_SECRET_ACCESS_KEY=your_r2_secret_key
+CLOUDFLARE_ACCOUNT_ID=your_account_id
+R2_BUCKET_NAME=your-bucket-name
+```
+
+```typescript
+const storage = new StorageR2Service({
+  bucket: process.env.R2_BUCKET_NAME!,
+  accessKey: process.env.R2_ACCESS_KEY_ID!,
+  secretKey: process.env.R2_SECRET_ACCESS_KEY!,
+  accountId: process.env.CLOUDFLARE_ACCOUNT_ID!
+});
+```
+
+### Integration with File Converter
+
+```typescript
+import { ConverterManager } from '@rytass/file-converter';
+import { ImageResizer } from '@rytass/file-converter-adapter-image-resizer';
+import { StorageR2Service } from '@rytass/storages-adapter-r2';
+
+const storage = new StorageR2Service({
+  bucket: 'my-images',
+  accessKey: process.env.R2_ACCESS_KEY!,
+  secretKey: process.env.R2_SECRET_KEY!,
+  accountId: process.env.CLOUDFLARE_ACCOUNT_ID!
+});
+
+const manager = new ConverterManager([
+  new ImageResizer({
+    maxWidth: 1200,
+    maxHeight: 800,
+    keepAspectRatio: true
+  })
+]);
+
+// Process and store image
+async function processAndUpload(imageBuffer: Buffer, filename: string) {
+  // Process image
+  const processedImage = await manager.convert<Buffer>(imageBuffer);
+  
+  // Upload to R2
+  const result = await storage.write(processedImage, {
+    filename: `processed-images/${filename}`,
+    contentType: 'image/jpeg'
+  });
+
+  // Generate public URL
+  const publicUrl = await storage.url(result.key);
+  
+  return {
+    key: result.key,
+    url: publicUrl
+  };
+}
+
+const result = await processAndUpload(originalImage, 'thumbnail.jpg');
+console.log('Processed and uploaded:', result.url);
+```
+
+### Batch File Operations
+
+```typescript
+// Upload multiple files efficiently
+const files = [
+  { buffer: file1Buffer, key: 'batch/file1.jpg' },
+  { buffer: file2Buffer, key: 'batch/file2.png' },
+  { buffer: file3Buffer, key: 'batch/file3.pdf' }
+];
+
+const uploadPromises = files.map(({ buffer, key }) => 
+  storage.write(buffer, { filename: key })
+);
+
+const results = await Promise.all(uploadPromises);
+console.log('Batch upload completed:', results.length, 'files');
+
+// Generate URLs for all uploaded files
+const urlPromises = results.map(result => storage.url(result.key));
+const urls = await Promise.all(urlPromises);
+
+console.log('Generated URLs:', urls);
+```
+
+## Framework Integration
+
+### Express.js File Upload
+
+```typescript
+import express from 'express';
+import multer from 'multer';
+import { StorageR2Service } from '@rytass/storages-adapter-r2';
+
+const app = express();
+const upload = multer({ storage: multer.memoryStorage() });
+const storage = new StorageR2Service({
+  bucket: process.env.R2_BUCKET_NAME!,
+  accessKey: process.env.R2_ACCESS_KEY_ID!,
+  secretKey: process.env.R2_SECRET_ACCESS_KEY!,
+  accountId: process.env.CLOUDFLARE_ACCOUNT_ID!
+});
+
+app.post('/upload', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const timestamp = Date.now();
+    const filename = `uploads/${timestamp}-${req.file.originalname}`;
+
+    const result = await storage.write(req.file.buffer, {
+      filename,
+      contentType: req.file.mimetype
+    });
+
+    const publicUrl = await storage.url(result.key);
+
+    res.json({
+      success: true,
+      key: result.key,
+      url: publicUrl,
+      filename: req.file.originalname,
+      size: req.file.size
+    });
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Upload failed' 
+    });
+  }
+});
+
+// Proxy file download through your server
+app.get('/file/:key(*)', async (req, res) => {
+  try {
+    const key = req.params.key;
+    const fileStream = await storage.read(key);
+    
+    // Set appropriate headers
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    
+    fileStream.pipe(res);
+  } catch (error) {
+    res.status(404).json({ error: 'File not found' });
+  }
+});
+```
+
+### NestJS Service Integration
+
+```typescript
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { StorageR2Service } from '@rytass/storages-adapter-r2';
+
+@Injectable()
+export class CloudStorageService {
+  private storage: StorageR2Service;
+
+  constructor(private configService: ConfigService) {
+    this.storage = new StorageR2Service({
+      bucket: this.configService.get('R2_BUCKET_NAME')!,
+      accessKey: this.configService.get('R2_ACCESS_KEY_ID')!,
+      secretKey: this.configService.get('R2_SECRET_ACCESS_KEY')!,
+      accountId: this.configService.get('CLOUDFLARE_ACCOUNT_ID')!
+    });
+  }
+
+  async uploadUserFile(userId: string, file: Buffer, filename: string, contentType?: string) {
+    const key = `users/${userId}/${Date.now()}-${filename}`;
+    
+    const result = await this.storage.write(file, {
+      filename: key,
+      contentType
+    });
+
+    return {
+      key: result.key,
+      url: await this.storage.url(result.key),
+      uploadedAt: new Date()
+    };
+  }
+
+  async downloadFile(key: string): Promise<Buffer> {
+    return this.storage.read(key, { format: 'buffer' });
+  }
+
+  async getFileUrl(key: string, expiresInHours: number = 24): Promise<string> {
+    const expirationTime = Date.now() + (expiresInHours * 60 * 60 * 1000);
+    return this.storage.url(key, expirationTime);
+  }
+
+  async deleteFile(key: string): Promise<void> {
+    return this.storage.remove(key);
+  }
+
+  async fileExists(key: string): Promise<boolean> {
+    return this.storage.isExists(key);
+  }
+
+  // Cleanup old files
+  async cleanupOldFiles(olderThanDays: number = 30) {
+    // This would require additional R2 API integration for listing
+    // Implement based on your specific cleanup requirements
+    console.log(`Cleanup files older than ${olderThanDays} days`);
+  }
+}
+```
+
+### Static Asset Serving
+
+```typescript
+class StaticAssetManager {
+  private storage: StorageR2Service;
+
+  constructor(storage: StorageR2Service) {
+    this.storage = storage;
+  }
+
+  async uploadStaticAsset(file: Buffer, filename: string, contentType: string) {
+    // Upload with cache-friendly naming
+    const hashedName = this.generateHashedFilename(file, filename);
+    
+    const result = await this.storage.write(file, {
+      filename: `assets/${hashedName}`,
+      contentType
+    });
+
+    // Generate long-lived URL for static assets
+    const longLivedUrl = await this.storage.url(
+      result.key,
+      Date.now() + (365 * 24 * 60 * 60 * 1000) // 1 year
+    );
+
+    return {
+      key: result.key,
+      url: longLivedUrl,
+      filename: hashedName
+    };
+  }
+
+  private generateHashedFilename(buffer: Buffer, originalName: string): string {
+    const crypto = require('crypto');
+    const hash = crypto.createHash('md5').update(buffer).digest('hex');
+    const extension = originalName.split('.').pop();
+    return `${hash}.${extension}`;
+  }
+}
+```
+
+## Error Handling
+
+```typescript
+import { StorageError, ErrorCode } from '@rytass/storages';
+
+try {
+  const result = await storage.write(fileBuffer, 'path/to/file.pdf');
+} catch (error) {
+  if (error instanceof StorageError) {
+    switch (error.code) {
+      case ErrorCode.FILE_NOT_FOUND:
+        console.error('File not found');
+        break;
+      case ErrorCode.PERMISSION_DENIED:
+        console.error('Access denied - check R2 credentials');
+        break;
+      case ErrorCode.QUOTA_EXCEEDED:
+        console.error('Storage quota exceeded');
+        break;
+      default:
+        console.error('Storage error:', error.message);
+    }
+  } else {
+    console.error('Unexpected error:', error);
+  }
+}
+
+// Robust upload with retry logic
+async function uploadWithRetry(
+  storage: StorageR2Service,
+  file: Buffer,
+  key: string,
+  maxRetries: number = 3
+) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await storage.write(file, { filename: key });
+      console.log(`Upload successful on attempt ${attempt}`);
+      return result;
+    } catch (error) {
+      console.warn(`Upload attempt ${attempt} failed:`, error.message);
+      
+      if (attempt === maxRetries) {
+        console.error('All upload attempts failed');
+        throw error;
+      }
+      
+      // Exponential backoff
+      const delayMs = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+}
+```
+
+## Cloudflare R2 Setup
+
+### Creating R2 Bucket and API Tokens
+
+1. **Create R2 Bucket via Dashboard:**
+   - Login to Cloudflare Dashboard
+   - Navigate to R2 Object Storage
+   - Click "Create bucket"
+   - Enter bucket name and select location
+
+2. **Create R2 API Token:**
+   - Go to "Manage R2 API tokens"
+   - Click "Create API token"
+   - Set permissions: `Object Read`, `Object Write`
+   - Copy the Access Key ID and Secret Access Key
+
+3. **Get Account ID:**
+   - Found in the right sidebar of Cloudflare Dashboard
+   - Also available in the URL: `dash.cloudflare.com/{account-id}`
+
+### CLI Setup (Optional)
+
+```bash
+# Install Wrangler CLI
+npm install -g wrangler
+
+# Authenticate
+wrangler login
+
+# Create bucket via CLI
+wrangler r2 bucket create my-bucket
+
+# List buckets
+wrangler r2 bucket list
+```
+
+### CORS Configuration
+
+```typescript
+// Configure CORS for web applications if needed
+// This would typically be done through the Cloudflare dashboard
+// or via the Cloudflare API
+```
+
+## R2 vs S3 Comparison
+
+| Feature | Cloudflare R2 | Amazon S3 |
+|---------|---------------|-----------|
+| **Egress Fees** | **$0** | Charged per GB |
+| **Global Distribution** | Built-in | CloudFront required |
+| **API Compatibility** | S3-compatible | Native |
+| **Pricing Model** | Simple, transparent | Complex tiers |
+| **Edge Computing** | Cloudflare Workers | Lambda@Edge |
+| **CDN Integration** | Native integration | Separate CloudFront setup |
+| **Geographic Reach** | Global edge network | Regional with CDN |
+
+## Migration from S3
+
+The S3-compatible interface makes migration straightforward:
+
+```typescript
+// Minimal code changes required
+// Old S3 configuration
+const s3Storage = new StorageS3Service({
+  region: 'us-west-2',
+  bucket: 's3-bucket',
+  credentials: {
+    accessKeyId: 'aws-key',
+    secretAccessKey: 'aws-secret'
+  }
+});
+
+// New R2 configuration (same interface!)
+const r2Storage = new StorageR2Service({
+  bucket: 'r2-bucket',
+  accessKey: 'r2-key',
+  secretKey: 'r2-secret',
+  accountId: 'cloudflare-account-id'
+});
+
+// Same operations work with both
+const operations = [
+  storage.write(file, { filename: key }),
+  storage.read(key),
+  storage.remove(key),
+  storage.isExists(key),
+  storage.url(key)
+];
+```
+
+## Best Practices
+
+### Cost Optimization
+- Leverage zero egress fees for frequently accessed content
+- Use R2 for serving static assets globally without CDN costs
+- Consider R2 for backup storage with frequent retrievals
+- Implement intelligent caching strategies
+
+### Performance
+- Utilize Cloudflare's global network for faster access
+- Implement proper caching strategies at the edge
+- Use appropriate Content-Type headers for better caching
+- Consider Cloudflare Workers for edge computing
+
+### Security
+- Use API tokens with minimal required permissions
+- Enable bucket-level security policies
+- Implement proper access logging and monitoring
+- Regularly rotate API tokens
+
+### File Organization
+- Use consistent naming conventions for better organization
+- Implement logical folder structures
+- Consider versioning strategies for important files
+- Use metadata for file categorization and search
+
+## Performance Considerations
+
+- **Global Edge Network**: Files served from Cloudflare's global edge locations
+- **Zero Egress Costs**: No charges for data retrieval unlike traditional cloud storage
+- **S3 Compatibility**: Leverages mature S3 ecosystem and tooling
+- **Built-in CDN**: Automatic global distribution without additional setup
+- **Edge Computing**: Integration with Cloudflare Workers for edge processing
+
+## Testing
+
+```typescript
+import { StorageR2Service } from '@rytass/storages-adapter-r2';
+
+describe('R2 Storage Adapter', () => {
+  let storage: StorageR2Service;
+
+  beforeEach(() => {
+    storage = new StorageR2Service({
+      bucket: 'test-bucket',
+      accessKey: 'test-access-key',
+      secretKey: 'test-secret-key',
+      accountId: 'test-account-id'
+    });
+  });
+
+  test('should upload and download files', async () => {
+    const testBuffer = Buffer.from('test content');
+    const result = await storage.write(testBuffer, { filename: 'test.txt' });
+    
+    expect(result.key).toBe('test.txt');
+    
+    const downloaded = await storage.read('test.txt', { format: 'buffer' });
+    expect(downloaded.toString()).toBe('test content');
+  });
+
+  test('should generate pre-signed URLs', async () => {
+    const testBuffer = Buffer.from('test content');
+    await storage.write(testBuffer, { filename: 'test.txt' });
+    
+    const url = await storage.url('test.txt');
+    expect(typeof url).toBe('string');
+    expect(url.length).toBeGreaterThan(0);
+  });
+});
+```
+
+## Dependencies
+
+- **@rytass/storages**: ^0.2.1 - Core storage interface and types
+- **aws-sdk**: ^2.1692.0 - AWS SDK for S3-compatible operations
+- **axios**: ^1.7.8 - HTTP client for API operations
+- **luxon**: ^3.5.0 - Date/time handling for URL expiration
+- **uuid**: ^11.0.3 - UUID generation for unique file identifiers
+
+## Related Packages
+
+- **@rytass/storages**: Core storage interface
+- **@rytass/storages-adapter-s3**: Amazon S3 storage adapter
+- **@rytass/storages-adapter-gcs**: Google Cloud Storage adapter
+- **@rytass/storages-adapter-azure-blob**: Azure Blob Storage adapter
+- **@rytass/storages-adapter-local**: Local file system storage
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Authentication Errors**: Verify R2 API tokens and account ID
+2. **Bucket Access**: Ensure bucket exists and API token has access
+3. **CORS Issues**: Configure CORS settings for web applications
+4. **Network Timeouts**: Implement retry logic for network operations
+5. **Large File Uploads**: Use streams instead of buffers for large files
+
+### Debug Configuration
+
+```typescript
+// Enable debug logging
+process.env.AWS_SDK_LOAD_CONFIG = '1';
+
+// Custom logging for R2 operations
+const storage = new StorageR2Service({
+  bucket: 'debug-bucket',
+  accessKey: process.env.R2_ACCESS_KEY_ID!,
+  secretKey: process.env.R2_SECRET_ACCESS_KEY!,
+  accountId: process.env.CLOUDFLARE_ACCOUNT_ID!
+});
+```
+
+## Support
+
+- **Issues**: https://github.com/Rytass/Utils/issues
+- **Documentation**: https://github.com/Rytass/Utils#readme
+- **Cloudflare R2 Docs**: https://developers.cloudflare.com/r2/
+- **License**: MIT
+
+## Changelog
+
+### Version 0.4.6
+- Enhanced S3 compatibility layer
+- Improved error handling and retry mechanisms
+- Better support for large file uploads
+- Enhanced pre-signed URL generation
+- Performance optimizations for global distribution
+- Updated dependencies for security and performance

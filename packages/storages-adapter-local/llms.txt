@@ -1,0 +1,627 @@
+# @rytass/storages-adapter-local
+
+Local file system storage adapter for the Rytass file storage system providing unified interface for local disk storage operations. Ideal for development, testing, and scenarios where local file storage is preferred over cloud solutions.
+
+## Package Information
+
+- **Name**: @rytass/storages-adapter-local
+- **Version**: 0.2.4
+- **Description**: Rytass Utils Storages local adapter
+- **Author**: MarshallChiang <ambrosia8286@gmail.com>
+- **License**: MIT
+- **Repository**: https://github.com/Rytass/Utils
+- **Keywords**: rytass, storages, local
+
+## Installation
+
+```bash
+npm install @rytass/storages-adapter-local
+# or
+yarn add @rytass/storages-adapter-local
+```
+
+## Core Features
+
+- **Local File System Storage**: Direct file system operations with unified interface
+- **Buffer and Stream Support**: Full support for both buffer and stream file processing
+- **Automatic Directory Creation**: Optional automatic directory creation for file paths
+- **File Extension Support**: Plugin-based file conversion and manipulation support
+- **TypeScript Support**: Full TypeScript definitions and type safety
+- **Cross-Platform**: Works on Windows, macOS, and Linux
+- **High Performance**: Direct file system access without network overhead
+- **Development Friendly**: Perfect for local development and testing environments
+
+## Configuration Options
+
+### StorageLocalOptions
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `directory` | `string` | Yes | Base directory path for file storage |
+| `autoMkdir` | `boolean` | No | Automatically create directories if they don't exist (default: false) |
+| `converters` | `FileConverter[]` | No | Array of file converters for processing files |
+
+## Basic Usage
+
+### Service Setup
+
+```typescript
+import { StorageLocalService } from '@rytass/storages-adapter-local';
+import { resolve } from 'path';
+
+const storage = new StorageLocalService({
+  directory: resolve(__dirname, 'storage'),
+  autoMkdir: true
+});
+```
+
+### File Operations
+
+```typescript
+import { readFileSync, createReadStream } from 'fs';
+
+// Upload file from buffer
+const fileBuffer = readFileSync('source-image.jpg');
+const result = await storage.write(fileBuffer, {
+  filename: 'images/uploaded-image.jpg',
+  contentType: 'image/jpeg'
+});
+
+console.log('File stored at:', result.key);
+
+// Upload file from stream
+const fileStream = createReadStream('large-document.pdf');
+const streamResult = await storage.write(fileStream, {
+  filename: 'documents/large-document.pdf',
+  contentType: 'application/pdf'
+});
+
+// Read file as buffer
+const fileBuffer2 = await storage.read('images/uploaded-image.jpg', { format: 'buffer' });
+
+// Read file as stream (default)
+const fileStream2 = await storage.read('images/uploaded-image.jpg');
+```
+
+### File Management
+
+```typescript
+// Check if file exists
+const exists = await storage.isExists('images/uploaded-image.jpg');
+console.log('File exists:', exists);
+
+// Remove file
+await storage.remove('images/old-file.jpg');
+console.log('File removed successfully');
+
+// Generate local file URL (file:// protocol)
+const localUrl = await storage.url('images/uploaded-image.jpg');
+console.log('Local file URL:', localUrl);
+```
+
+### Batch Operations
+
+```typescript
+// Batch write multiple files
+const files = [
+  readFileSync('file1.txt'),
+  readFileSync('file2.txt'),
+  createReadStream('file3.pdf')
+];
+
+const batchResults = await storage.batchWrite(files);
+batchResults.forEach(result => {
+  console.log('Stored file:', result.key);
+});
+```
+
+## Advanced Usage
+
+### Automatic Directory Creation
+
+```typescript
+const storage = new StorageLocalService({
+  directory: './uploads',
+  autoMkdir: true // Automatically create directories
+});
+
+// This will create 'uploads/user-123/documents/' if it doesn't exist
+const result = await storage.write(fileBuffer, {
+  filename: 'user-123/documents/important.pdf'
+});
+```
+
+### Custom Base Directory Configuration
+
+```typescript
+import { StorageLocalService } from '@rytass/storages-adapter-local';
+import { resolve } from 'path';
+
+// Development configuration
+const devStorage = new StorageLocalService({
+  directory: resolve(process.cwd(), 'dev-uploads'),
+  autoMkdir: true
+});
+
+// Production configuration
+const prodStorage = new StorageLocalService({
+  directory: process.env.UPLOAD_DIR || '/var/lib/app/uploads',
+  autoMkdir: false // Assume directories exist in production
+});
+
+// Environment-based configuration
+const storage = new StorageLocalService({
+  directory: process.env.NODE_ENV === 'production' 
+    ? process.env.UPLOAD_DIR || '/var/lib/app/uploads'
+    : resolve(process.cwd(), 'uploads'),
+  autoMkdir: process.env.NODE_ENV !== 'production'
+});
+```
+
+### Integration with File Converters
+
+```typescript
+import { StorageLocalService } from '@rytass/storages-adapter-local';
+import { ConverterManager } from '@rytass/file-converter';
+import { ImageResizer } from '@rytass/file-converter-adapter-image-resizer';
+import { ImageTranscoder } from '@rytass/file-converter-adapter-image-transcoder';
+
+// Setup storage
+const storage = new StorageLocalService({
+  directory: './processed-images',
+  autoMkdir: true
+});
+
+// Setup converter
+const converter = new ConverterManager([
+  new ImageResizer({
+    maxWidth: 800,
+    maxHeight: 600,
+    keepAspectRatio: true
+  }),
+  new ImageTranscoder({
+    format: 'webp',
+    quality: 85
+  })
+]);
+
+// Process and store image
+async function processAndStore(imagePath: string, outputFilename: string) {
+  const originalBuffer = readFileSync(imagePath);
+  const processedBuffer = await converter.convert<Buffer>(originalBuffer);
+  
+  const result = await storage.write(processedBuffer, {
+    filename: outputFilename,
+    contentType: 'image/webp'
+  });
+  
+  console.log('Processed image stored:', result.key);
+  return result;
+}
+
+const result = await processAndStore('input.jpg', 'processed/output.webp');
+```
+
+## Framework Integration
+
+### Express.js File Upload
+
+```typescript
+import express from 'express';
+import multer from 'multer';
+import { StorageLocalService } from '@rytass/storages-adapter-local';
+import { resolve } from 'path';
+
+const app = express();
+const upload = multer({ storage: multer.memoryStorage() });
+const storage = new StorageLocalService({
+  directory: resolve(__dirname, 'uploads'),
+  autoMkdir: true
+});
+
+app.post('/upload', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const result = await storage.write(req.file.buffer, {
+      filename: `${Date.now()}-${req.file.originalname}`,
+      contentType: req.file.mimetype
+    });
+
+    const localUrl = await storage.url(result.key);
+
+    res.json({
+      success: true,
+      key: result.key,
+      url: localUrl,
+      filename: req.file.originalname,
+      size: req.file.size
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Serve uploaded files
+app.use('/uploads', express.static(resolve(__dirname, 'uploads')));
+
+// Download specific file
+app.get('/download/:filename', async (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const fileBuffer = await storage.read(filename, { format: 'buffer' });
+    
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(fileBuffer);
+  } catch (error) {
+    res.status(404).json({ error: 'File not found' });
+  }
+});
+```
+
+### NestJS Service Integration
+
+```typescript
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { StorageLocalService } from '@rytass/storages-adapter-local';
+import { resolve } from 'path';
+
+@Injectable()
+export class FileStorageService {
+  private storage: StorageLocalService;
+
+  constructor(private configService: ConfigService) {
+    this.storage = new StorageLocalService({
+      directory: this.configService.get('UPLOAD_DIR', resolve(process.cwd(), 'uploads')),
+      autoMkdir: this.configService.get('NODE_ENV') !== 'production'
+    });
+  }
+
+  async uploadFile(file: Buffer, filename: string, contentType?: string) {
+    return this.storage.write(file, { filename, contentType });
+  }
+
+  async downloadFile(key: string): Promise<Buffer> {
+    return this.storage.read(key, { format: 'buffer' });
+  }
+
+  async getFileStream(key: string) {
+    return this.storage.read(key);
+  }
+
+  async getFileUrl(key: string): Promise<string> {
+    return this.storage.url(key);
+  }
+
+  async deleteFile(key: string): Promise<void> {
+    return this.storage.remove(key);
+  }
+
+  async fileExists(key: string): Promise<boolean> {
+    return this.storage.isExists(key);
+  }
+
+  async uploadUserFile(userId: string, file: Buffer, originalName: string) {
+    const timestamp = Date.now();
+    const filename = `users/${userId}/${timestamp}-${originalName}`;
+    
+    return this.uploadFile(file, filename);
+  }
+}
+```
+
+### Development vs Production Configuration
+
+```typescript
+import { StorageLocalService } from '@rytass/storages-adapter-local';
+import { resolve } from 'path';
+
+class FileStorageFactory {
+  static create() {
+    if (process.env.NODE_ENV === 'production') {
+      // Production: use absolute path, no auto-creation
+      return new StorageLocalService({
+        directory: process.env.UPLOAD_DIR || '/var/lib/app/uploads',
+        autoMkdir: false
+      });
+    } else {
+      // Development: relative path with auto-creation
+      return new StorageLocalService({
+        directory: resolve(process.cwd(), 'dev-uploads'),
+        autoMkdir: true
+      });
+    }
+  }
+}
+
+const storage = FileStorageFactory.create();
+```
+
+## File Organization Strategies
+
+### Organized Directory Structure
+
+```typescript
+class OrganizedLocalStorage {
+  private storage: StorageLocalService;
+
+  constructor(baseDir: string) {
+    this.storage = new StorageLocalService({
+      directory: baseDir,
+      autoMkdir: true
+    });
+  }
+
+  async uploadUserDocument(userId: string, file: Buffer, filename: string) {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    
+    const organizedPath = `users/${userId}/documents/${year}/${month}/${filename}`;
+    
+    return this.storage.write(file, { filename: organizedPath });
+  }
+
+  async uploadImage(file: Buffer, category: string, filename: string) {
+    const timestamp = Date.now();
+    const organizedPath = `images/${category}/${timestamp}-${filename}`;
+    
+    return this.storage.write(file, { filename: organizedPath });
+  }
+
+  async uploadTemporaryFile(file: Buffer, filename: string) {
+    const tempPath = `temp/${Date.now()}-${filename}`;
+    return this.storage.write(file, { filename: tempPath });
+  }
+
+  // Cleanup temporary files older than specified hours
+  async cleanupTempFiles(hoursOld: number = 24) {
+    const fs = require('fs').promises;
+    const path = require('path');
+    
+    const tempDir = path.join(this.storage['directory'], 'temp');
+    const cutoffTime = Date.now() - (hoursOld * 60 * 60 * 1000);
+    
+    try {
+      const files = await fs.readdir(tempDir);
+      
+      for (const file of files) {
+        const filePath = path.join(tempDir, file);
+        const stats = await fs.stat(filePath);
+        
+        if (stats.mtime.getTime() < cutoffTime) {
+          await this.storage.remove(`temp/${file}`);
+          console.log(`Cleaned up temporary file: ${file}`);
+        }
+      }
+    } catch (error) {
+      console.warn('Temp cleanup failed:', error.message);
+    }
+  }
+}
+```
+
+## Error Handling
+
+```typescript
+import { StorageError, ErrorCode } from '@rytass/storages';
+
+async function safeFileOperation(storage: StorageLocalService, key: string) {
+  try {
+    // Check if file exists first
+    if (await storage.isExists(key)) {
+      const content = await storage.read(key, { format: 'buffer' });
+      return content;
+    } else {
+      console.log('File does not exist:', key);
+      return null;
+    }
+  } catch (error) {
+    if (error instanceof StorageError) {
+      switch (error.code) {
+        case ErrorCode.READ_FILE_ERROR:
+          console.error('Failed to read file:', key);
+          break;
+        case ErrorCode.WRITE_FILE_ERROR:
+          console.error('Failed to write file:', key);
+          break;
+        default:
+          console.error('Storage error:', error.message);
+      }
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+}
+
+// Robust file upload with error handling
+async function robustUpload(
+  storage: StorageLocalService, 
+  file: Buffer, 
+  filename: string, 
+  maxRetries: number = 3
+) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await storage.write(file, { filename });
+      console.log(`Upload successful on attempt ${attempt}`);
+      return result;
+    } catch (error) {
+      console.warn(`Upload attempt ${attempt} failed:`, error.message);
+      
+      if (attempt === maxRetries) {
+        console.error('All upload attempts failed');
+        throw error;
+      }
+      
+      // Wait before retry
+      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+    }
+  }
+}
+```
+
+## Testing
+
+```typescript
+import { StorageLocalService } from '@rytass/storages-adapter-local';
+import { resolve } from 'path';
+import { mkdtemp, rm } from 'fs/promises';
+import { tmpdir } from 'os';
+
+describe('Local Storage Adapter', () => {
+  let storage: StorageLocalService;
+  let tempDir: string;
+
+  beforeEach(async () => {
+    // Create temporary directory for each test
+    tempDir = await mkdtemp(resolve(tmpdir(), 'storage-test-'));
+    storage = new StorageLocalService({
+      directory: tempDir,
+      autoMkdir: true
+    });
+  });
+
+  afterEach(async () => {
+    // Clean up temporary directory
+    await rm(tempDir, { recursive: true, force: true });
+  });
+
+  test('should upload and download files', async () => {
+    const testBuffer = Buffer.from('test content');
+    const result = await storage.write(testBuffer, { filename: 'test.txt' });
+    
+    expect(result.key).toBe('test.txt');
+    
+    const downloaded = await storage.read('test.txt', { format: 'buffer' });
+    expect(downloaded.toString()).toBe('test content');
+  });
+
+  test('should create directories automatically when autoMkdir is true', async () => {
+    const testBuffer = Buffer.from('nested content');
+    const result = await storage.write(testBuffer, { 
+      filename: 'nested/deep/file.txt' 
+    });
+    
+    expect(result.key).toBe('nested/deep/file.txt');
+    
+    const exists = await storage.isExists('nested/deep/file.txt');
+    expect(exists).toBe(true);
+  });
+
+  test('should handle file removal', async () => {
+    const testBuffer = Buffer.from('will be removed');
+    await storage.write(testBuffer, { filename: 'temp.txt' });
+    
+    let exists = await storage.isExists('temp.txt');
+    expect(exists).toBe(true);
+    
+    await storage.remove('temp.txt');
+    
+    exists = await storage.isExists('temp.txt');
+    expect(exists).toBe(false);
+  });
+});
+```
+
+## Best Practices
+
+### Security
+- Never store sensitive files without proper access controls
+- Validate file names to prevent directory traversal attacks
+- Implement proper file type validation
+- Use appropriate file system permissions
+- Sanitize user-provided file names
+
+### Performance
+- Use streams for large files to reduce memory usage
+- Implement file cleanup strategies for temporary files
+- Consider file system performance characteristics
+- Use appropriate buffer sizes for stream operations
+- Monitor disk space usage
+
+### File Organization
+- Use consistent naming conventions
+- Organize files in logical directory structures
+- Implement proper versioning strategies
+- Consider date-based organization for time-series data
+- Use metadata files for complex file relationships
+
+### Development
+- Use relative paths for development environments
+- Enable auto-directory creation for development
+- Implement proper error handling and logging
+- Use temporary directories for testing
+- Clean up test files after test completion
+
+## Comparison with Cloud Storage
+
+### Advantages
+- **No Network Latency**: Direct file system access
+- **No External Dependencies**: No internet connection required
+- **Lower Costs**: No ongoing storage fees
+- **Full Control**: Complete control over file storage
+- **Privacy**: Files never leave your infrastructure
+
+### Disadvantages
+- **Single Point of Failure**: No built-in redundancy
+- **Scalability Limitations**: Limited by local storage capacity
+- **No Global Distribution**: Files available only from single location
+- **Backup Responsibility**: Manual backup and disaster recovery planning
+
+## Migration to Cloud Storage
+
+The unified interface makes migration to cloud storage straightforward:
+
+```typescript
+// Current local storage
+const localStorage = new StorageLocalService({
+  directory: './uploads'
+});
+
+// Future cloud storage (same interface)
+const cloudStorage = new StorageS3Service({
+  // S3 configuration
+});
+
+// Same operations work with both
+const operations = [
+  storage.write(file, { filename: key }),
+  storage.read(key),
+  storage.remove(key),
+  storage.isExists(key),
+  storage.url(key)
+];
+```
+
+## Dependencies
+
+- **@rytass/storages**: ^0.2.1 - Core storage interface and types
+- **uuid**: ^11.0.3 - UUID generation for unique file identifiers
+
+## Related Packages
+
+- **@rytass/storages**: Core storage interface
+- **@rytass/storages-adapter-s3**: Amazon S3 storage adapter
+- **@rytass/storages-adapter-gcs**: Google Cloud Storage adapter
+- **@rytass/storages-adapter-azure-blob**: Azure Blob Storage adapter
+- **@rytass/storages-adapter-r2**: Cloudflare R2 storage adapter
+
+## Support
+
+- **Issues**: https://github.com/Rytass/Utils/issues
+- **Documentation**: https://github.com/Rytass/Utils#readme
+- **License**: MIT
+
+## Changelog
+
+### Version 0.2.4
+- Enhanced error handling for file system operations
+- Improved TypeScript type definitions
+- Better support for nested directory creation
+- Performance optimizations for large file operations
+- Enhanced testing capabilities

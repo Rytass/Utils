@@ -1,0 +1,82 @@
+# @rytass/logistics
+
+Core logistics interfaces and types for Taiwan logistics providers integration.
+
+## Package Overview
+
+This package provides TypeScript interfaces and error handling for logistics services, serving as the base package for logistics adapters. It defines standard interfaces for tracking shipments and handling logistics operations across different Taiwan logistics providers.
+
+## Core Features
+
+### Base Types
+- **LogisticsInterface**: Base interface for logistics service configuration
+- **LogisticsService**: Generic service interface for tracking operations
+- **LogisticsTraceResponse**: Standardized response format for tracking queries
+- **LogisticsStatusHistory**: Historical status tracking data structure
+
+### Status Management
+- **LogisticsBaseStatus**: Standard status types (DELIVERED, DELIVERING, SHELVED)
+- **LogisticsStatus**: Type-safe status handling with generics
+- **Status History**: Date-stamped status progression tracking
+
+### Error Handling
+- **LogisticsError**: Structured error handling with error codes
+- **ErrorCode**: Standardized error types (NOT_FOUND, PERMISSION_DENIED, INVALID_PARAMETER, NOT_IMPLEMENTED)
+
+## Usage Patterns
+
+### Basic Interface Implementation
+```typescript
+import { LogisticsInterface, LogisticsService } from '@rytass/logistics';
+
+interface MyLogisticsProvider extends LogisticsInterface<'DELIVERED' | 'DELIVERING' | 'SHELVED'> {
+  apiToken: string;
+  baseUrl: string;
+}
+
+class MyLogisticsService implements LogisticsService<MyLogisticsProvider> {
+  async trace(request: string | string[]) {
+    // Implementation
+  }
+}
+```
+
+### Error Handling
+```typescript
+import { LogisticsError, ErrorCode } from '@rytass/logistics';
+
+throw new LogisticsError(ErrorCode.NOT_FOUND_ERROR, 'Tracking number not found');
+```
+
+## Architecture
+
+This package follows the adapter pattern, providing:
+- Base interfaces for consistent API design
+- Generic types for type-safe implementations
+- Standardized error handling
+- Extensible status management
+
+The package is designed to be extended by specific logistics provider adapters (CTC, TCat, etc.) that implement these interfaces with provider-specific functionality.
+
+## Taiwan Logistics Context
+
+Taiwan's logistics ecosystem includes major providers:
+- CTC Express (中華快捷) - Business logistics services
+- TCat (黑貓宅急便) - Consumer delivery services
+- 7-ELEVEN logistics
+- FamilyMart logistics
+
+This package provides the foundation for integrating with these services through consistent TypeScript interfaces.
+
+## Dependencies
+
+- No external dependencies
+- TypeScript-first design
+- Generic type system for extensibility
+
+## Related Packages
+
+- `@rytass/logistics-adapter-ctc` - CTC Express integration
+- `@rytass/logistics-adapter-tcat` - TCat (黑貓宅急便) integration
+
+Used by logistics adapters to ensure consistent API design and type safety across different Taiwan logistics providers.

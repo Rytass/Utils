@@ -1,0 +1,548 @@
+# File Converter Image Resizer Adapter
+
+High-performance image resizing adapter based on the Sharp image processing library. Provides intelligent resizing capabilities with aspect ratio preservation, cropping modes, and performance optimization features.
+
+## Package Overview
+
+- **Package**: `@rytass/file-converter-adapter-image-resizer`
+- **Version**: 0.1.7
+- **Purpose**: Intelligent image resizing with Sharp integration
+- **Core Technology**: Sharp (libvips-based high-performance image processing)
+- **License**: MIT
+
+## Core Features
+
+- **Sharp Integration**: Built on Sharp for maximum performance and memory efficiency
+- **Aspect Ratio Control**: Smart aspect ratio preservation or forced dimensions with cropping
+- **Anti-Upscaling**: Prevents upscaling of small images to maintain quality
+- **Dual Processing Modes**: Support for both Buffer and Stream inputs/outputs
+- **Concurrent Processing**: Configurable Sharp concurrency for optimal performance
+- **Format Agnostic**: Works with all Sharp-supported formats (JPEG, PNG, WebP, TIFF, GIF, AVIF, HEIF, SVG)
+- **Memory Optimized**: Sharp caching disabled to prevent memory leaks
+- **Pipeline Compatible**: Seamlessly integrates with the file converter pipeline architecture
+
+## Installation
+
+```bash
+npm install @rytass/file-converter-adapter-image-resizer
+# Core converter package is included as dependency
+# Sharp is included as dependency for image processing
+```
+
+## Dependencies
+
+### Production Dependencies
+- **`@rytass/file-converter`**: Core converter interface and pipeline management
+- **`sharp`**: ^0.33.5 - High-performance image processing library
+
+### Development Dependencies  
+- **`@types/sharp`**: TypeScript definitions for Sharp
+
+## Basic Usage
+
+### Simple Resizing
+```typescript
+import { ImageResizer } from '@rytass/file-converter-adapter-image-resizer';
+import { readFileSync, writeFileSync } from 'fs';
+
+// Create resizer with dimensions
+const resizer = new ImageResizer({
+  maxWidth: 800,
+  maxHeight: 600,
+  keepAspectRatio: true,
+  concurrency: 4
+});
+
+// Process image buffer
+const imageBuffer = readFileSync('large-photo.jpg');
+const resizedBuffer = await resizer.convert<Buffer>(imageBuffer);
+writeFileSync('resized-photo.jpg', resizedBuffer);
+```
+
+### Stream Processing for Large Images
+```typescript
+import { createReadStream, createWriteStream } from 'fs';
+import { Readable } from 'stream';
+
+const resizer = new ImageResizer({
+  maxWidth: 1200,
+  maxHeight: 800
+});
+
+// Process large image as stream
+const inputStream = createReadStream('large-image.tiff');
+const resizedStream = await resizer.convert<Readable>(inputStream);
+
+// Pipe to output file
+resizedStream.pipe(createWriteStream('resized-large.tiff'));
+```
+
+## Configuration Options
+
+### ImageResizerOptions Interface
+```typescript
+interface ImageResizerOptions {
+  maxWidth?: number;          // Maximum width in pixels
+  maxHeight?: number;         // Maximum height in pixels  
+  keepAspectRatio?: boolean;  // Preserve aspect ratio (default: true)
+  concurrency?: number;       // Sharp processing concurrency (default: 1)
+}
+```
+
+### Option Details
+
+| Property | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
+| `maxWidth` | `number` | Conditional | - | Maximum output width in pixels |
+| `maxHeight` | `number` | Conditional | - | Maximum output height in pixels |
+| `keepAspectRatio` | `boolean` | No | `true` | Maintain original aspect ratio |
+| `concurrency` | `number` | No | `1` | Sharp concurrent operations limit |
+
+**Important**: At least one of `maxWidth` or `maxHeight` must be specified.
+
+## Resizing Behavior
+
+### Aspect Ratio Preservation Mode (`keepAspectRatio: true`)
+- **Fit Strategy**: `'inside'` - Image scaled to fit within specified dimensions
+- **Behavior**: Maintains proportions, may result in smaller dimensions than specified
+- **Use Case**: Thumbnails, profile pictures, responsive images
+
+```typescript
+// 1920x1080 image → maxWidth: 800, maxHeight: 600
+// Result: 800x450 (maintains 16:9 ratio, fits within bounds)
+const aspectPreservingResizer = new ImageResizer({
+  maxWidth: 800,
+  maxHeight: 600,
+  keepAspectRatio: true  // Default behavior
+});
+```
+
+### Exact Dimensions Mode (`keepAspectRatio: false`)
+- **Fit Strategy**: `'cover'` - Image scaled and cropped to exact dimensions
+- **Behavior**: Forces exact output size, may crop content
+- **Use Case**: Avatars, thumbnails with specific size requirements
+
+```typescript
+// 1920x1080 image → maxWidth: 400, maxHeight: 400  
+// Result: 400x400 (crops to square, centers content)
+const exactResizer = new ImageResizer({
+  maxWidth: 400,
+  maxHeight: 400,
+  keepAspectRatio: false  // Enables cropping mode
+});
+```
+
+## Advanced Usage Patterns
+
+### Width-Only or Height-Only Resizing
+```typescript
+// Resize to specific width, auto-calculate height
+const widthOnlyResizer = new ImageResizer({
+  maxWidth: 1200,
+  keepAspectRatio: true
+});
+
+// Resize to specific height, auto-calculate width
+const heightOnlyResizer = new ImageResizer({
+  maxHeight: 800,
+  keepAspectRatio: true
+});
+```
+
+### Responsive Image Generation
+```typescript
+interface ResponsiveImageSizes {
+  thumbnail: Buffer;
+  medium: Buffer;
+  large: Buffer;
+}
+
+class ResponsiveImageGenerator {
+  private thumbnailResizer = new ImageResizer({ maxWidth: 300, maxHeight: 300 });
+  private mediumResizer = new ImageResizer({ maxWidth: 800, maxHeight: 600 });
+  private largeResizer = new ImageResizer({ maxWidth: 1920, maxHeight: 1080 });
+
+  async generateSizes(originalImage: Buffer): Promise<ResponsiveImageSizes> {
+    const [thumbnail, medium, large] = await Promise.all([
+      this.thumbnailResizer.convert<Buffer>(originalImage),
+      this.mediumResizer.convert<Buffer>(originalImage),
+      this.largeResizer.convert<Buffer>(originalImage)
+    ]);
+
+    return { thumbnail, medium, large };
+  }
+}
+```
+
+### Batch Resizing with Concurrency Control
+```typescript
+import { readdir, readFile, writeFile } from 'fs/promises';
+import { join } from 'path';
+
+class BatchImageResizer {
+  private resizer: ImageResizer;
+
+  constructor(options: ImageResizerOptions) {
+    this.resizer = new ImageResizer(options);
+  }
+
+  async resizeDirectory(
+    inputDir: string,
+    outputDir: string,
+    options: { parallel?: number; extensions?: string[] } = {}
+  ) {
+    const { parallel = 5, extensions = ['.jpg', '.png', '.webp'] } = options;
+    
+    const files = await readdir(inputDir);
+    const imageFiles = files.filter(file =>
+      extensions.some(ext => file.toLowerCase().endsWith(ext))
+    );
+
+    // Process in batches
+    for (let i = 0; i < imageFiles.length; i += parallel) {
+      const batch = imageFiles.slice(i, i + parallel);
+      
+      await Promise.all(
+        batch.map(async (filename) => {
+          const inputPath = join(inputDir, filename);
+          const outputPath = join(outputDir, filename);
+          
+          const inputBuffer = await readFile(inputPath);
+          const outputBuffer = await this.resizer.convert<Buffer>(inputBuffer);
+          
+          await writeFile(outputPath, outputBuffer);
+        })
+      );
+
+      console.log(`Processed ${Math.min(i + parallel, imageFiles.length)}/${imageFiles.length} images`);
+    }
+  }
+}
+
+// Usage
+const batchResizer = new BatchImageResizer({
+  maxWidth: 1200,
+  maxHeight: 800,
+  concurrency: 4
+});
+
+await batchResizer.resizeDirectory('./input', './output', { parallel: 10 });
+```
+
+## Pipeline Integration
+
+### Multi-Step Image Processing
+```typescript
+import { ConverterManager } from '@rytass/file-converter';
+import { ImageTranscoder } from '@rytass/file-converter-adapter-image-transcoder';
+import { ImageWatermark } from '@rytass/file-converter-adapter-image-watermark';
+
+// Create comprehensive image processing pipeline
+const imageProcessor = new ConverterManager([
+  // Step 1: Resize to target dimensions
+  new ImageResizer({
+    maxWidth: 1200,
+    maxHeight: 800,
+    keepAspectRatio: true,
+    concurrency: 4
+  }),
+  
+  // Step 2: Apply watermark to resized image
+  new ImageWatermark({
+    watermarks: [{
+      image: './logo.png',
+      gravity: 'southeast'
+    }]
+  }),
+  
+  // Step 3: Convert to optimized format
+  new ImageTranscoder({
+    targetFormat: 'webp',
+    quality: 85
+  })
+]);
+
+// Process image through complete pipeline
+const originalImage = readFileSync('photo.jpg');
+const processedImage = await imageProcessor.convert<Buffer>(originalImage);
+writeFileSync('processed.webp', processedImage);
+```
+
+### Storage Integration Pattern
+```typescript
+import { StorageS3Service } from '@rytass/storages-adapter-s3';
+
+class ImageUploadService {
+  private resizer: ImageResizer;
+  private storage: StorageS3Service;
+
+  constructor(storage: StorageS3Service) {
+    this.storage = storage;
+    this.resizer = new ImageResizer({
+      maxWidth: 1920,
+      maxHeight: 1080,
+      keepAspectRatio: true
+    });
+  }
+
+  async uploadResizedImage(
+    imageBuffer: Buffer,
+    key: string,
+    generateThumbnail: boolean = false
+  ): Promise<{ url: string; thumbnailUrl?: string }> {
+    // Resize main image
+    const resizedImage = await this.resizer.convert<Buffer>(imageBuffer);
+    
+    // Upload main image
+    const mainKey = `images/${key}`;
+    await this.storage.write(resizedImage, mainKey, {
+      contentType: 'image/jpeg',
+      metadata: { resized: 'true' }
+    });
+
+    const result: any = {
+      url: await this.storage.url(mainKey)
+    };
+
+    // Generate and upload thumbnail if requested
+    if (generateThumbnail) {
+      const thumbnailResizer = new ImageResizer({
+        maxWidth: 200,
+        maxHeight: 200,
+        keepAspectRatio: true
+      });
+
+      const thumbnail = await thumbnailResizer.convert<Buffer>(imageBuffer);
+      const thumbnailKey = `thumbnails/${key}`;
+      
+      await this.storage.write(thumbnail, thumbnailKey, {
+        contentType: 'image/jpeg'
+      });
+
+      result.thumbnailUrl = await this.storage.url(thumbnailKey);
+    }
+
+    return result;
+  }
+}
+```
+
+## Performance Optimization
+
+### Sharp Configuration
+```typescript
+import sharp from 'sharp';
+
+// The ImageResizer automatically configures Sharp for optimal performance:
+// - Disables Sharp cache to prevent memory leaks: sharp.cache(false)
+// - Sets concurrency level: sharp.concurrency(options.concurrency ?? 1)
+// - Uses withoutEnlargement: true to prevent quality degradation
+```
+
+### Memory Management Best Practices
+```typescript
+class MemoryEfficientResizer {
+  private resizer: ImageResizer;
+
+  constructor() {
+    this.resizer = new ImageResizer({
+      maxWidth: 1200,
+      maxHeight: 800,
+      concurrency: 2  // Conservative concurrency for memory control
+    });
+  }
+
+  async resizeLargeFile(inputPath: string, outputPath: string): Promise<void> {
+    const inputStream = createReadStream(inputPath);
+    const outputStream = createWriteStream(outputPath);
+
+    try {
+      // Use streams to avoid loading entire file in memory
+      const resizedStream = await this.resizer.convert<Readable>(inputStream);
+      
+      await pipeline(resizedStream, outputStream);
+    } finally {
+      // Ensure cleanup of streams
+      inputStream.destroy();
+      outputStream.destroy();
+    }
+  }
+}
+```
+
+### Performance Benchmarking
+```typescript
+class ResizePerformanceMonitor {
+  async benchmarkResize(imageBuffer: Buffer, iterations: number = 10): Promise<{
+    averageTime: number;
+    memoryUsage: NodeJS.MemoryUsage;
+  }> {
+    const resizer = new ImageResizer({ maxWidth: 800, maxHeight: 600 });
+    
+    const startTime = process.hrtime.bigint();
+    const startMemory = process.memoryUsage();
+    
+    for (let i = 0; i < iterations; i++) {
+      await resizer.convert<Buffer>(imageBuffer);
+    }
+    
+    const endTime = process.hrtime.bigint();
+    const endMemory = process.memoryUsage();
+    
+    return {
+      averageTime: Number(endTime - startTime) / 1000000 / iterations, // ms
+      memoryUsage: {
+        rss: endMemory.rss - startMemory.rss,
+        heapUsed: endMemory.heapUsed - startMemory.heapUsed,
+        heapTotal: endMemory.heapTotal - startMemory.heapTotal,
+        external: endMemory.external - startMemory.external,
+        arrayBuffers: endMemory.arrayBuffers - startMemory.arrayBuffers
+      }
+    };
+  }
+}
+```
+
+## Error Handling
+
+### Common Error Scenarios
+```typescript
+try {
+  const resizer = new ImageResizer({
+    maxWidth: 800,
+    maxHeight: 600
+  });
+  
+  const result = await resizer.convert<Buffer>(imageBuffer);
+} catch (error) {
+  if (error.message.includes('Please provide at least one')) {
+    console.error('Configuration error: Must specify either maxWidth or maxHeight');
+  } else if (error.message.includes('Input file')) {
+    console.error('Invalid input file or unsupported format');
+  } else {
+    console.error('Image processing failed:', error.message);
+  }
+}
+```
+
+### Resilient Processing
+```typescript
+class ResilientImageResizer {
+  private resizer: ImageResizer;
+
+  constructor(options: ImageResizerOptions) {
+    this.resizer = new ImageResizer(options);
+  }
+
+  async safeResize(file: ConvertableFile, fallbackOnError: boolean = true): Promise<Buffer> {
+    try {
+      return await this.resizer.convert<Buffer>(file);
+    } catch (error) {
+      console.error('Resize failed:', error);
+      
+      if (fallbackOnError && Buffer.isBuffer(file)) {
+        console.warn('Returning original buffer as fallback');
+        return file;
+      }
+      
+      throw error;
+    }
+  }
+}
+```
+
+## Testing
+
+### Unit Testing with Sharp Metadata Validation
+```typescript
+import { ImageResizer } from '@rytass/file-converter-adapter-image-resizer';
+import sharp from 'sharp';
+
+describe('ImageResizer', () => {
+  it('should resize maintaining aspect ratio', async () => {
+    const resizer = new ImageResizer({
+      maxWidth: 100,
+      maxHeight: 100,
+      keepAspectRatio: true
+    });
+
+    // Create test image
+    const testImage = await sharp({
+      create: { width: 200, height: 100, channels: 3, background: { r: 255, g: 0, b: 0 } }
+    }).jpeg().toBuffer();
+
+    const resized = await resizer.convert<Buffer>(testImage);
+    const metadata = await sharp(resized).metadata();
+
+    expect(metadata.width).toBe(100);
+    expect(metadata.height).toBe(50); // Maintains 2:1 ratio
+  });
+
+  it('should handle stream input/output', async () => {
+    const resizer = new ImageResizer({ maxWidth: 50, maxHeight: 50 });
+    
+    const testStream = Readable.from(testImageBuffer);
+    const resultStream = await resizer.convert<Readable>(testStream);
+    
+    // Verify stream output
+    const chunks: Buffer[] = [];
+    for await (const chunk of resultStream) {
+      chunks.push(Buffer.from(chunk));
+    }
+    
+    const resultBuffer = Buffer.concat(chunks);
+    const metadata = await sharp(resultBuffer).metadata();
+    
+    expect(metadata.width).toBeLessThanOrEqual(50);
+    expect(metadata.height).toBeLessThanOrEqual(50);
+  });
+});
+```
+
+## Supported Image Formats
+
+### Input Formats (Sharp Support)
+- **JPEG** (.jpg, .jpeg) - Full support with quality preservation
+- **PNG** (.png) - Transparency preserved, optimized compression
+- **WebP** (.webp) - Modern format with excellent compression
+- **TIFF** (.tiff, .tif) - Professional/scientific imagery  
+- **GIF** (.gif) - Animation support, palette optimization
+- **AVIF** (.avif) - Next-generation format with superior compression
+- **HEIF/HEIC** (.heif, .heic) - Apple format support
+- **SVG** (.svg) - Vector graphics rasterization
+
+### Format-Specific Considerations
+- **SVG**: Rasterized to bitmap at specified dimensions
+- **Animated GIF**: Only first frame processed for resizing
+- **TIFF**: Metadata and layers preserved where possible
+- **PNG**: Alpha channel transparency maintained
+- **WebP**: Animation support in newer Sharp versions
+
+## Best Practices
+
+### Configuration Guidelines
+- **Concurrency**: Start with `concurrency: 1`, increase based on CPU cores and memory
+- **Aspect Ratio**: Use `keepAspectRatio: true` for most use cases
+- **Dimension Planning**: Consider target display contexts when setting max dimensions
+- **Performance**: Use streams for files >10MB, buffers for smaller files
+
+### Pipeline Optimization
+- **Order**: Place resizing early in pipeline to reduce processing overhead
+- **Memory**: Monitor memory usage with multiple concurrent operations
+- **Error Handling**: Implement fallbacks for critical applications
+- **Testing**: Validate output dimensions and quality with representative test images
+
+## Related Packages
+
+- **`@rytass/file-converter`** - Core conversion pipeline manager
+- **`@rytass/file-converter-adapter-image-transcoder`** - Format conversion capabilities
+- **`@rytass/file-converter-adapter-image-watermark`** - Watermark application features
+- **`@rytass/storages`** - File storage integration for processed images
+
+## License and Support
+
+**License**: MIT
+**Repository**: https://github.com/Rytass/Utils
+**Issues**: https://github.com/Rytass/Utils/issues
+
+Built with Sharp for maximum performance and reliability. Part of the Rytass Utils ecosystem for comprehensive file processing solutions.

@@ -1,0 +1,642 @@
+# @rytass/storages-adapter-azure-blob
+
+A powerful Azure Blob Storage adapter for the Rytass file storage system providing seamless integration with Azure Blob Storage containers. Features SAS URL generation, stream processing, automatic file type detection, and enterprise-grade reliability for Microsoft Azure cloud storage.
+
+## Package Information
+
+- **Name**: @rytass/storages-adapter-azure-blob
+- **Version**: 0.1.3
+- **Description**: Rytass Utils Storages Azure Blob adapter
+- **Author**: Chia Yu Pai <fantasyatelier@gmail.com>
+- **License**: MIT
+- **Repository**: https://github.com/Rytass/Utils
+- **Keywords**: rytass, storages, azure, blob
+
+## Installation
+
+```bash
+npm install @rytass/storages-adapter-azure-blob @azure/storage-blob
+# or
+yarn add @rytass/storages-adapter-azure-blob @azure/storage-blob
+```
+
+## Core Features
+
+- **Azure Blob Storage Integration**: Complete Azure Blob Storage container integration
+- **SAS URL Generation**: Secure, time-limited URLs for file access using Shared Access Signatures
+- **Buffer and Stream Operations**: Full support for both buffer and stream file processing
+- **Automatic Content Type Detection**: Intelligent MIME type detection
+- **Batch File Operations**: Efficient multiple file upload/download operations
+- **File Existence Checking**: Verify file presence before operations
+- **Connection String Authentication**: Flexible authentication using connection strings
+- **Block Blob Support**: Support for Azure block blob storage type
+- **Enterprise Ready**: Production-grade reliability and comprehensive error handling
+
+## Configuration Options
+
+### AzureBlobOptions
+
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `connectionString` | `string` | Yes | Azure Storage connection string |
+| `container` | `string` | Yes | Blob container name |
+
+## Basic Usage
+
+### Service Configuration
+
+```typescript
+import { StorageAzureBlobService } from '@rytass/storages-adapter-azure-blob';
+
+const storage = new StorageAzureBlobService({
+  connectionString: 'DefaultEndpointsProtocol=https;AccountName=youraccount;AccountKey=yourkey;EndpointSuffix=core.windows.net',
+  container: 'your-container-name'
+});
+```
+
+### File Upload Operations
+
+```typescript
+import { readFileSync, createReadStream } from 'fs';
+
+// Upload buffer
+const imageBuffer = readFileSync('photo.jpg');
+const result = await storage.write(imageBuffer, {
+  filename: 'uploads/photo.jpg',
+  contentType: 'image/jpeg'
+});
+console.log('Uploaded:', result.key);
+
+// Upload stream
+const fileStream = createReadStream('document.pdf');
+const streamResult = await storage.write(fileStream, {
+  filename: 'documents/document.pdf',
+  contentType: 'application/pdf'
+});
+console.log('Uploaded:', streamResult.key);
+
+// Auto-generated filename (based on file content)
+const autoResult = await storage.write(imageBuffer);
+console.log('Auto-generated filename:', autoResult.key);
+```
+
+### File Download Operations
+
+```typescript
+// Download as buffer
+const fileBuffer = await storage.read('uploads/photo.jpg', { format: 'buffer' });
+console.log('Downloaded buffer:', fileBuffer.length, 'bytes');
+
+// Download as stream
+const fileStream = await storage.read('uploads/photo.jpg');
+fileStream.pipe(process.stdout);
+
+// Stream to file
+import { createWriteStream } from 'fs';
+const downloadStream = await storage.read('documents/document.pdf');
+const writeStream = createWriteStream('downloaded-document.pdf');
+downloadStream.pipe(writeStream);
+```
+
+### SAS URL Generation
+
+```typescript
+// Default expiration (24 hours)
+const url = await storage.url('uploads/photo.jpg');
+console.log('SAS URL:', url);
+
+// Custom expiration (1 hour from now)
+const customUrl = await storage.url(
+  'uploads/photo.jpg',
+  Date.now() + 1000 * 60 * 60
+);
+console.log('1-hour URL:', customUrl);
+
+// Use in HTML
+const publicUrl = await storage.url('images/avatar.png');
+// <img src="${publicUrl}" alt="User Avatar" />
+```
+
+### File Management
+
+```typescript
+// Check if file exists
+const exists = await storage.isExists('uploads/photo.jpg');
+if (exists) {
+  console.log('File exists');
+}
+
+// Remove file
+await storage.remove('uploads/old-file.jpg');
+console.log('File removed');
+
+// Batch upload
+const files = [
+  readFileSync('file1.jpg'),
+  readFileSync('file2.png'),
+  createReadStream('file3.pdf')
+];
+
+const batchResults = await storage.batchWrite(files);
+batchResults.forEach(result => {
+  console.log('Uploaded:', result.key);
+});
+```
+
+## Advanced Usage
+
+### Environment-based Configuration
+
+```typescript
+// .env file
+// AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=https;AccountName=...
+// AZURE_STORAGE_CONTAINER=your-container-name
+
+const storage = new StorageAzureBlobService({
+  connectionString: process.env.AZURE_STORAGE_CONNECTION_STRING!,
+  container: process.env.AZURE_STORAGE_CONTAINER!
+});
+```
+
+### Connection String Formats
+
+```typescript
+// Using account name and key
+const storage1 = new StorageAzureBlobService({
+  connectionString: 'DefaultEndpointsProtocol=https;AccountName=mystorageaccount;AccountKey=myaccountkey;EndpointSuffix=core.windows.net',
+  container: 'mycontainer'
+});
+
+// Using SAS token
+const storage2 = new StorageAzureBlobService({
+  connectionString: 'BlobEndpoint=https://mystorageaccount.blob.core.windows.net/;SharedAccessSignature=sv=2020-08-04&ss=b&srt=sco&sp=rwdlacx&se=2024-12-31T23:59:59Z&st=2024-01-01T00:00:00Z&spr=https,http&sig=...',
+  container: 'mycontainer'
+});
+
+// Using connection string from Azure portal
+const storage3 = new StorageAzureBlobService({
+  connectionString: process.env.AZURE_STORAGE_CONNECTION_STRING!,
+  container: 'uploads'
+});
+```
+
+### Stream Processing for Large Files
+
+```typescript
+import { createReadStream, createWriteStream } from 'fs';
+import { pipeline } from 'stream/promises';
+
+async function processLargeFile(inputPath: string, outputKey: string) {
+  // Upload large file as stream
+  const inputStream = createReadStream(inputPath);
+  const uploadResult = await storage.write(inputStream, {
+    filename: outputKey,
+    contentType: 'video/mp4'
+  });
+  
+  console.log('Large file uploaded:', uploadResult.key);
+  
+  // Download large file as stream
+  const downloadStream = await storage.read(outputKey);
+  const outputStream = createWriteStream('downloaded-large-file.mp4');
+  
+  await pipeline(downloadStream, outputStream);
+  console.log('Large file downloaded successfully');
+}
+
+processLargeFile('large-video.mp4', 'videos/large-video.mp4');
+```
+
+## Framework Integration
+
+### Express.js File Upload
+
+```typescript
+import express from 'express';
+import multer from 'multer';
+import { StorageAzureBlobService } from '@rytass/storages-adapter-azure-blob';
+
+const app = express();
+const upload = multer({ storage: multer.memoryStorage() });
+const storage = new StorageAzureBlobService({
+  connectionString: process.env.AZURE_STORAGE_CONNECTION_STRING!,
+  container: 'uploads'
+});
+
+app.post('/upload', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const result = await storage.write(req.file.buffer, {
+      filename: `uploads/${Date.now()}-${req.file.originalname}`,
+      contentType: req.file.mimetype
+    });
+
+    const publicUrl = await storage.url(result.key);
+
+    res.json({
+      success: true,
+      key: result.key,
+      url: publicUrl
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Upload failed' });
+  }
+});
+
+app.get('/download/:filename', async (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const fileBuffer = await storage.read(filename, { format: 'buffer' });
+    
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(fileBuffer);
+  } catch (error) {
+    res.status(404).json({ error: 'File not found' });
+  }
+});
+```
+
+### NestJS Integration
+
+```typescript
+import { Injectable } from '@nestjs/common';
+import { StorageAzureBlobService } from '@rytass/storages-adapter-azure-blob';
+
+@Injectable()
+export class FileService {
+  private storage: StorageAzureBlobService;
+
+  constructor() {
+    this.storage = new StorageAzureBlobService({
+      connectionString: process.env.AZURE_STORAGE_CONNECTION_STRING!,
+      container: process.env.AZURE_STORAGE_CONTAINER!
+    });
+  }
+
+  async uploadFile(file: Buffer, filename: string): Promise<string> {
+    const result = await this.storage.write(file, { filename });
+    return this.storage.url(result.key);
+  }
+
+  async getFile(key: string): Promise<Buffer> {
+    return this.storage.read(key, { format: 'buffer' });
+  }
+
+  async deleteFile(key: string): Promise<void> {
+    await this.storage.remove(key);
+  }
+
+  async fileExists(key: string): Promise<boolean> {
+    return this.storage.isExists(key);
+  }
+
+  async getSignedUrl(key: string, expiresInHours: number = 1): Promise<string> {
+    const expirationTime = Date.now() + (expiresInHours * 60 * 60 * 1000);
+    return this.storage.url(key, expirationTime);
+  }
+}
+```
+
+### Image Processing Pipeline
+
+```typescript
+import { StorageAzureBlobService } from '@rytass/storages-adapter-azure-blob';
+import { ConverterManager } from '@rytass/file-converter';
+import { ImageResizer } from '@rytass/file-converter-adapter-image-resizer';
+import { ImageTranscoder } from '@rytass/file-converter-adapter-image-transcoder';
+
+class AzureImageProcessor {
+  constructor(
+    private storage: StorageAzureBlobService,
+    private converter: ConverterManager
+  ) {}
+
+  async processAndUpload(
+    imageBuffer: Buffer,
+    sizes: { width: number; height: number; suffix: string }[]
+  ): Promise<{ [key: string]: string }> {
+    const results: { [key: string]: string } = {};
+
+    for (const size of sizes) {
+      // Create processor for this size
+      const processor = new ConverterManager([
+        new ImageResizer({
+          maxWidth: size.width,
+          maxHeight: size.height,
+          keepAspectRatio: true
+        }),
+        new ImageTranscoder({
+          format: 'webp',
+          quality: 85
+        })
+      ]);
+
+      // Process image
+      const processedImage = await processor.convert<Buffer>(imageBuffer);
+
+      // Upload to Azure Blob Storage
+      const uploadResult = await this.storage.write(processedImage, {
+        filename: `images/processed-${size.suffix}.webp`,
+        contentType: 'image/webp'
+      });
+
+      // Generate SAS URL
+      results[size.suffix] = await this.storage.url(uploadResult.key);
+    }
+
+    return results;
+  }
+}
+
+// Usage
+const processor = new AzureImageProcessor(storage, converter);
+const urls = await processor.processAndUpload(originalImage, [
+  { width: 150, height: 150, suffix: 'thumbnail' },
+  { width: 800, height: 600, suffix: 'medium' },
+  { width: 1920, height: 1080, suffix: 'large' }
+]);
+
+console.log('Generated URLs:', urls);
+```
+
+## Error Handling
+
+```typescript
+import { StorageError, ErrorCode } from '@rytass/storages';
+
+try {
+  const result = await storage.read('non-existent-file.jpg');
+} catch (error) {
+  if (error instanceof StorageError && error.code === ErrorCode.READ_FILE_ERROR) {
+    console.log('File not found');
+  } else {
+    console.error('Unexpected error:', error);
+  }
+}
+
+// Safe file operations
+async function safeFileOperation(key: string) {
+  try {
+    // Check if file exists first
+    if (await storage.isExists(key)) {
+      const content = await storage.read(key, { format: 'buffer' });
+      return content;
+    } else {
+      console.log('File does not exist:', key);
+      return null;
+    }
+  } catch (error) {
+    console.error('Error reading file:', error);
+    return null;
+  }
+}
+
+// Retry mechanism for transient failures
+async function uploadWithRetry(file: Buffer, filename: string, maxRetries: number = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await storage.write(file, { filename });
+    } catch (error) {
+      console.warn(`Upload attempt ${attempt} failed:`, error.message);
+      if (attempt === maxRetries) throw error;
+      
+      // Exponential backoff
+      await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+    }
+  }
+}
+```
+
+## Azure Setup and Configuration
+
+### Storage Account Creation
+
+```bash
+# Create resource group
+az group create --name myResourceGroup --location eastus
+
+# Create storage account
+az storage account create \
+  --name mystorageaccount \
+  --resource-group myResourceGroup \
+  --location eastus \
+  --sku Standard_LRS \
+  --kind StorageV2
+
+# Get connection string
+az storage account show-connection-string \
+  --name mystorageaccount \
+  --resource-group myResourceGroup \
+  --output tsv
+```
+
+### Container Creation
+
+```bash
+# Create container
+az storage container create \
+  --name mycontainer \
+  --connection-string "DefaultEndpointsProtocol=https;..."
+
+# Set container permissions (optional)
+az storage container set-permission \
+  --name mycontainer \
+  --public-access blob \
+  --connection-string "DefaultEndpointsProtocol=https;..."
+```
+
+### CORS Configuration
+
+```bash
+# Configure CORS for web applications
+az storage cors add \
+  --methods GET POST PUT DELETE \
+  --origins https://yourdomain.com \
+  --allowed-headers "*" \
+  --exposed-headers "*" \
+  --max-age 3600 \
+  --services b \
+  --connection-string "DefaultEndpointsProtocol=https;..."
+```
+
+## Best Practices
+
+### Security
+- Store connection strings securely using environment variables or Azure Key Vault
+- Use managed identities when running on Azure
+- Implement proper access policies and SAS token restrictions
+- Enable audit logging for storage access
+- Regularly rotate access keys and SAS tokens
+
+### Performance
+- Use streams for large files to reduce memory usage
+- Implement proper retry logic for transient failures
+- Use appropriate blob access tiers for your use case
+- Consider using Azure CDN for frequently accessed files
+- Leverage parallel uploads for multiple files
+
+### Cost Optimization
+- Choose appropriate blob access tiers (Hot, Cool, Archive)
+- Set up lifecycle management policies
+- Monitor storage usage and optimize file sizes
+- Use SAS URLs to reduce bandwidth costs
+- Implement intelligent tiering for automatic cost optimization
+
+### File Organization
+- Use consistent naming conventions and folder structures
+- Organize files in logical directory structures
+- Implement proper versioning strategies
+- Consider using metadata for file categorization and search
+
+## Monitoring and Troubleshooting
+
+### Common Issues
+
+1. **Connection String Issues**: Verify connection string format and validity
+2. **Container Access**: Ensure container exists and is accessible
+3. **SAS Token Expiration**: Check token expiration times and permissions
+4. **Network Issues**: Implement retry logic for transient network failures
+5. **Large File Uploads**: Use streams instead of buffers for large files
+
+### Debug Configuration
+
+```typescript
+// Enable debug logging
+process.env.AZURE_LOG_LEVEL = 'verbose';
+
+// Custom error handling
+const storage = new StorageAzureBlobService({
+  connectionString: process.env.AZURE_STORAGE_CONNECTION_STRING!,
+  container: 'debug-container'
+});
+
+// Log operations
+const originalWrite = storage.write;
+storage.write = async function(file, options) {
+  console.log('Uploading file:', options?.filename);
+  const result = await originalWrite.call(this, file, options);
+  console.log('Upload completed:', result.key);
+  return result;
+};
+```
+
+### Performance Monitoring
+
+```typescript
+class MonitoredAzureStorage extends StorageAzureBlobService {
+  async write(file: any, options?: any) {
+    const startTime = Date.now();
+    try {
+      const result = await super.write(file, options);
+      const duration = Date.now() - startTime;
+      console.log(`Upload completed in ${duration}ms:`, result.key);
+      return result;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      console.error(`Upload failed after ${duration}ms:`, error.message);
+      throw error;
+    }
+  }
+}
+```
+
+## Testing
+
+```typescript
+import { StorageAzureBlobService } from '@rytass/storages-adapter-azure-blob';
+
+describe('Azure Blob Storage Adapter', () => {
+  let storage: StorageAzureBlobService;
+
+  beforeEach(() => {
+    storage = new StorageAzureBlobService({
+      connectionString: 'UseDevelopmentStorage=true', // Azure Storage Emulator
+      container: 'test-container'
+    });
+  });
+
+  test('should upload and download files', async () => {
+    const testBuffer = Buffer.from('test content');
+    const result = await storage.write(testBuffer, { filename: 'test.txt' });
+    
+    expect(result.key).toBe('test.txt');
+    
+    const downloaded = await storage.read('test.txt', { format: 'buffer' });
+    expect(downloaded.toString()).toBe('test content');
+  });
+
+  test('should generate SAS URLs', async () => {
+    const testBuffer = Buffer.from('test content');
+    await storage.write(testBuffer, { filename: 'test.txt' });
+    
+    const url = await storage.url('test.txt');
+    expect(url).toContain('sig='); // SAS signature
+  });
+});
+```
+
+## Dependencies
+
+- **@azure/storage-blob**: ^12.26.0 - Official Azure Blob Storage client library
+- **@rytass/storages**: ^0.2.1 - Core storage interface and types
+- **uuid**: ^11.0.3 - UUID generation for unique file identifiers
+
+## Related Packages
+
+- **@rytass/storages**: Core storage interface
+- **@rytass/storages-adapter-s3**: Amazon S3 storage adapter
+- **@rytass/storages-adapter-gcs**: Google Cloud Storage adapter
+- **@rytass/storages-adapter-r2**: Cloudflare R2 storage adapter
+- **@rytass/storages-adapter-local**: Local file system storage
+
+## Performance Considerations
+
+- **Streaming**: Always use streams for large files (>100MB) to avoid memory issues
+- **Block Size**: Azure Blob Storage automatically optimizes block sizes for uploads
+- **Concurrent Operations**: Azure Blob Storage supports high concurrency
+- **Regional Placement**: Choose regions close to your users for better performance
+- **Connection Management**: Azure SDK handles connection pooling automatically
+
+## Migration from Other Providers
+
+```typescript
+// Minimal code changes required due to unified interface
+const azureStorage = new StorageAzureBlobService({
+  connectionString: process.env.AZURE_STORAGE_CONNECTION_STRING!,
+  container: 'my-container'
+});
+
+const s3Storage = new StorageS3Service({
+  // S3 configuration
+});
+
+// Same interface, different storage backend
+const operations = [
+  storage.write(file, { filename: key }),
+  storage.read(key),
+  storage.remove(key),
+  storage.isExists(key),
+  storage.url(key)
+];
+```
+
+## Support
+
+- **Issues**: https://github.com/Rytass/Utils/issues
+- **Documentation**: https://github.com/Rytass/Utils#readme
+- **Azure Blob Storage Docs**: https://docs.microsoft.com/en-us/azure/storage/blobs/
+- **License**: MIT
+
+## Changelog
+
+### Version 0.1.3
+- Updated Azure Blob Storage client to latest version
+- Enhanced error handling and retry mechanisms
+- Improved stream processing capabilities
+- Better TypeScript type definitions
+- Performance optimizations for large files
+- Enhanced SAS URL generation and management

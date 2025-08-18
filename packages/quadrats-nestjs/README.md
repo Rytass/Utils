@@ -4,7 +4,7 @@
 
 ```typescript
 // app.module.ts
-import { Module } from 'nestjs/common';
+import { Module } from '@nestjs/common';
 import { QuadratsModule } from '@rytass/quadrats-nestjs';
 import { ArticleModule } from './article.module';
 
@@ -20,7 +20,7 @@ import { ArticleModule } from './article.module';
 export class AppModule {}
 
 // article.module.ts
-import { Module } from 'nestjs/common';
+import { Module } from '@nestjs/common';
 import { QuadratsModule } from '@rytass/quadrats-nestjs';
 import { ArticleController } from './article.controller';
 import { ArticleService } from './article.service';
@@ -33,7 +33,7 @@ import { ArticleService } from './article.service';
 export class ArticleModule {}
 
 // article.service.ts
-import { Injectable } from 'nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { QuadratsArticleService, type QuadratsArticle } from '@rytass/quadrats-nestjs';
 
 @Injectable()
@@ -48,7 +48,7 @@ export class ArticleService {
 }
 
 // article.controller.ts
-import { Controller, Get, Param } from 'nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 
 @Controller('/articles')
 export class ArticleController {
@@ -67,7 +67,7 @@ export class ArticleController {
 
 ```typescript
 // article.service.ts
-import { Injectable } from 'nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
 class ArticleService {
@@ -76,7 +76,7 @@ class ArticleService {
   ) {}
 
   async addMultiLanguageArticle() {
-    const article = await articleService.create({
+    const article = await this.quadratsArticleService.create({
       title: 'Multiple Language',
       categoryIds: [],
       tags: ['Chinese', 'English'],

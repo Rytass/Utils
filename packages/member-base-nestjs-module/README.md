@@ -5,6 +5,8 @@
 ```typescript
 // app.module.ts
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { MemberBaseRootModule } from '@rytass/member-base-nestjs-module';
 import { MemberEntity } from './models/member.entity.ts';
 
 @Module({
@@ -96,7 +98,8 @@ export class MemberService {
 ```typescript
 // app.module.ts
 import { Module } from '@nestjs/common';
-import { MemberEntity } from './models/member.entity.ts';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { MemberBaseRootModule } from '@rytass/member-base-nestjs-module';
 
 @Module({
   imports: [

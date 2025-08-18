@@ -1,0 +1,139 @@
+# @rytass/logistics-adapter-ctc
+
+CTC Express (中華快捷) logistics adapter for Taiwan business logistics services.
+
+## Package Overview
+
+This package provides integration with CTC Express, a major Taiwan business logistics provider specializing in B2B freight services. CTC Express is known for reliable commercial shipping and comprehensive tracking capabilities across Taiwan.
+
+## Features
+
+### CTC Express Integration
+- **Order Management**: Create and update shipping orders through CTC API
+- **Real-time Tracking**: Track shipments with detailed status history
+- **Status Mapping**: Chinese status messages mapped to standardized English statuses
+- **Business-focused**: Optimized for commercial and B2B logistics needs
+
+### Supported Operations
+- **Shipment Creation**: Generate new shipping orders with tracking numbers
+- **Shipment Updates**: Modify existing orders before dispatch  
+- **Package Tracking**: Real-time tracking with comprehensive status updates
+- **Status History**: Full delivery lifecycle tracking
+
+### Status Types (Chinese → English)
+- 新單 → CREATED
+- 已取件 → PICKED_UP  
+- 取件到站 → PICKUP_ARRIVED_AT_HUB
+- 轉運中 → IN_TRANSIT
+- 轉運到站 → TRANSIT_ARRIVED_AT_HUB
+- 回站保管 → SHELVED
+- 配送中 → DELIVERING
+- 配送完成 → DELIVERED
+- 正常結案 → COMPLETED
+- 取消 → CANCELLED
+
+## Usage Examples
+
+### Basic Setup
+```typescript
+import { CtcLogisticsService } from '@rytass/logistics-adapter-ctc';
+
+const ctcLogistics = new CtcLogisticsService({
+  apiToken: 'your-api-token',
+  url: 'https://tms2.ctc-express.cloud/api/v1/customer/orders',
+  ignoreNotFound: true
+});
+```
+
+### Create Shipping Order
+```typescript
+const orderData = {
+  senderCompany: '發件公司',
+  senderContactName: '發件人',
+  senderAddress: '台北市信義區...',
+  senderMobile: '0912345678',
+  
+  receiverCompany: '收件公司',
+  receiverContactName: '收件人',
+  receiverAddress: '新北市板橋區...',
+  receiverMobile: '0987654321',
+  
+  // Optional tracking number for reference
+  trackingNumber: 'MY-ORDER-001'
+};
+
+const result = await ctcLogistics.createOrder(orderData);
+console.log('Shipping Number:', result.shippingNumber);
+```
+
+### Track Shipments
+```typescript
+// Track single shipment
+const trackingResult = await ctcLogistics.trace('1234567890');
+
+// Track multiple shipments
+const multipleResults = await ctcLogistics.trace(['1234567890', '0987654321']);
+
+// Process tracking results
+trackingResult.forEach(result => {
+  console.log(`Package ${result.logisticsId}:`);
+  result.statusHistory.forEach(status => {
+    console.log(`${status.date}: ${status.status}`);
+  });
+});
+```
+
+## API Configuration
+
+### Required Parameters
+- **apiToken**: CTC Express API authentication token
+- **senderCompany**: Company name for sender (required)
+- **receiverCompany**: Company name for receiver (required) 
+- **receiverContactName**: Contact person name (required)
+- **addresses**: Complete Taiwan addresses for pickup and delivery
+
+### Default Settings
+The adapter uses CTC Express production defaults:
+- **Transportation**: 'truck' (固定)
+- **Shipping Method**: 'land' (固定)
+- **Payment Method**: 'monthly' (月結)
+- **Quantity**: 1 (固定)
+- **Weight/Volume**: 1 (預設值)
+
+## Business Context
+
+### CTC Express (中華快捷)
+CTC Express is a leading Taiwan logistics provider focusing on:
+- **B2B Services**: Commercial freight and logistics
+- **Island-wide Coverage**: Comprehensive Taiwan delivery network
+- **Tracking Technology**: Advanced shipment tracking systems
+- **Corporate Accounts**: Monthly billing and enterprise features
+
+### Use Cases
+- **E-commerce Fulfillment**: Online store order delivery
+- **B2B Logistics**: Inter-company freight services  
+- **Document Delivery**: Important business document transport
+- **Inventory Distribution**: Warehouse-to-store logistics
+
+## Error Handling
+
+The adapter includes robust error handling:
+- **API Errors**: CTC service connectivity and authentication issues
+- **Validation Errors**: Missing required fields or invalid data
+- **Not Found Errors**: Tracking numbers that don't exist
+- **Network Errors**: Connection timeouts and retry logic
+
+## Dependencies
+
+- **@rytass/logistics**: Base logistics interfaces
+- **axios**: HTTP client for CTC API communication  
+- **cheerio**: HTML parsing for tracking page scraping (if needed)
+
+## Taiwan Logistics Integration
+
+This adapter is part of the broader Taiwan logistics ecosystem integration, working alongside:
+- Traditional delivery services (TCat)
+- Convenience store logistics (7-ELEVEN, FamilyMart)
+- Specialized freight services
+
+Designed for businesses requiring reliable B2B logistics with comprehensive tracking and corporate billing features.

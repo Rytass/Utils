@@ -1,0 +1,612 @@
+# @rytass/invoice-adapter-ezpay
+
+Taiwan EZPay Electronic Invoice Integration - Complete EZPay (藍新金流) E-Invoice Adapter
+
+## Description
+
+`@rytass/invoice-adapter-ezpay` is a comprehensive Taiwan e-invoice adapter for EZPay (藍新金流), a major Taiwanese financial technology company providing electronic invoice services. This package implements the complete EZPay e-invoice API integration including invoice issuance, allowances (折讓), void operations (作廢), and Taiwan government compliance features.
+
+EZPay (formerly known as NewebPay for some services) provides certified e-invoice services that comply with Taiwan's Ministry of Finance regulations. This adapter handles all the complex API interactions, data formatting, carrier validations, and Taiwan-specific business logic required for legal e-invoice operations.
+
+## Installation
+
+```bash
+npm install @rytass/invoice-adapter-ezpay
+```
+
+## Core Features
+
+### Complete EZPay E-Invoice Operations
+- **Invoice Issuance**: Issue invoices with Taiwan e-invoice compliance
+- **Allowance System**: Create and manage invoice allowances (折讓)
+- **Void Operations**: Void invoices with proper audit trails (作廢)
+- **Query System**: Search and retrieve invoice information
+- **Carrier Validation**: Real-time validation of mobile barcodes and love codes
+- **Tax Calculations**: Accurate Taiwan business tax and special tax handling
+
+### Taiwan E-Invoice Compliance
+- **Ministry of Finance Integration**: Direct integration with Taiwan MOF systems
+- **Real-time Transmission**: Automatic invoice transmission to government databases
+- **VAT Number Validation**: Built-in 統一編號 validation and verification
+- **Carrier Management**: Support for all Taiwan carrier types (載具)
+- **Lottery Integration**: Automatic participation in Taiwan's invoice lottery system
+
+### EZPay-Specific Features
+- **Multi-format API Support**: Support for both JSON and form-data API formats
+- **Platform Integration**: Multi-platform support for marketplace scenarios
+- **Secure Authentication**: Merchant-based authentication with API keys
+- **Testing Environment**: Comprehensive sandbox support for development
+- **Error Recovery**: Robust error handling for EZPay-specific error scenarios
+
+## Quick Start
+
+### Basic Setup
+
+```typescript
+import { EZPayInvoiceGateway, EZPayBaseUrls } from '@rytass/invoice-adapter-ezpay';
+
+const gateway = new EZPayInvoiceGateway({
+  merchantId: 'YOUR_MERCHANT_ID',
+  hashKey: 'YOUR_HASH_KEY',
+  hashIv: 'YOUR_HASH_IV',
+  baseUrl: EZPayBaseUrls.DEVELOPMENT, // or PRODUCTION
+});
+```
+
+### Issue Invoice with Taiwan E-Invoice Compliance
+
+```typescript
+import { TaxType, InvoiceCarriers, CustomsMark } from '@rytass/invoice-adapter-ezpay';
+
+const invoice = await gateway.issue({
+  orderId: 'ORDER-2024-001',
+  items: [
+    {
+      name: '商品A',
+      unitPrice: 100,
+      quantity: 2,
+      taxType: TaxType.TAXED, // Taiwan 5% business tax
+      unit: '個'
+    },
+    {
+      name: '商品B', 
+      unitPrice: 200,
+      quantity: 1,
+      taxType: TaxType.TAX_FREE // Tax-free item
+    }
+  ],
+  customer: {
+    name: '測試客戶',
+    email: 'customer@example.com',
+    phone: '0912345678',
+    address: '台北市信義區信義路五段7號'
+  },
+  vatNumber: '12345675', // Taiwan 統一編號
+  carrier: InvoiceCarriers.MOBILE('/EFGH456'), // Mobile barcode carrier
+  customsMark: CustomsMark.NO,
+  remark: 'EZPay invoice example'
+});
+
+console.log('Invoice Number:', invoice.invoiceNumber);
+console.log('Random Code:', invoice.randomCode); // For Taiwan lottery
+console.log('Issued Amount:', invoice.issuedAmount);
+```
+
+## Taiwan Carrier Types with EZPay
+
+EZPay supports all official Taiwan carrier types with validation:
+
+### Mobile Barcode Carrier (手機條碼載具)
+```typescript
+// Mobile barcode - stored in Taiwan government app
+const mobileCarrier = InvoiceCarriers.MOBILE('/EFGH456');
+
+// EZPay validates mobile barcodes automatically
+const isValidMobile = await gateway.isMobileBarcodeValid('/EFGH456');
+if (!isValidMobile) {
+  throw new Error('Mobile barcode not found in government system');
+}
+```
+
+### Love Code Carrier (愛心碼) 
+```typescript
+// Charity donation - invoice donated to registered charity
+const loveCodeCarrier = InvoiceCarriers.LOVE_CODE('123');
+
+// Validate love code with EZPay
+const isValidLoveCode = await gateway.isLoveCodeValid('123');
+if (!isValidLoveCode) {
+  throw new Error('Love code charity organization not found');
+}
+```
+
+### Additional Carrier Types
+```typescript
+// Paper invoice (紙本發票)
+const printCarrier = InvoiceCarriers.PRINT;
+
+// MOICA certificate (自然人憑證載具)
+const moicaCarrier = InvoiceCarriers.MOICA('/CERT789');
+
+// Platform-specific carrier for marketplaces
+const platformCarrier = InvoiceCarriers.PLATFORM({ 
+  type: InvoiceCarrierType.PLATFORM, 
+  code: 'PLATFORM123' 
+});
+```
+
+## Advanced Tax Handling with EZPay
+
+### Taiwan Tax Types
+```typescript
+import { TaxType } from '@rytass/invoice-adapter-ezpay';
+
+// Standard Taiwan business tax (5%)
+const standardTaxItem = {
+  name: '標準稅率商品',
+  unitPrice: 100,
+  quantity: 1,
+  taxType: TaxType.TAXED
+};
+
+// Tax-free items (免稅)
+const taxFreeItem = {
+  name: '免稅商品',
+  unitPrice: 200,
+  quantity: 1,
+  taxType: TaxType.TAX_FREE
+};
+
+// Zero tax rate for exports (零稅率)
+const exportItem = {
+  name: '出口商品',
+  unitPrice: 300,
+  quantity: 1,
+  taxType: TaxType.ZERO_TAX
+};
+
+// Mixed tax invoice
+const mixedTaxInvoice = await gateway.issue({
+  orderId: 'MIXED-001',
+  items: [standardTaxItem, taxFreeItem, exportItem],
+  customer: { name: '混合稅率客戶' }
+});
+```
+
+### Special Tax Rates
+```typescript
+// Special tax rate items for specific industries
+const specialTaxItem = {
+  name: '特種稅率商品',
+  unitPrice: 500,
+  quantity: 1,
+  taxType: TaxType.SPECIAL
+};
+
+const specialTaxInvoice = await gateway.issue({
+  orderId: 'SPECIAL-001',
+  items: [specialTaxItem],
+  customer: { name: '特殊稅率客戶' },
+  // EZPay handles special tax rate calculations automatically
+});
+```
+
+## Allowance Operations (折讓)
+
+EZPay allowances provide partial refunds without voiding the original invoice:
+
+```typescript
+// Create allowance for partial refund
+const allowanceItems = [
+  {
+    name: '商品A',
+    unitPrice: 100,
+    quantity: 1, // Partial refund - only 1 out of 2 original
+    taxType: TaxType.TAXED
+  }
+];
+
+const updatedInvoice = await gateway.allowance(
+  originalInvoice,
+  allowanceItems,
+  {
+    taxType: TaxType.TAXED,
+    buyerEmail: 'customer@example.com' // EZPay-specific notification
+  }
+);
+
+console.log('Allowances:', updatedInvoice.allowances);
+console.log('Remaining amount:', updatedInvoice.nowAmount);
+console.log('Original amount:', updatedInvoice.issuedAmount);
+```
+
+### Invalid Allowance
+```typescript
+// Invalidate an allowance
+const allowanceToInvalidate = updatedInvoice.allowances[0];
+await gateway.invalidAllowance(allowanceToInvalidate);
+```
+
+## Void Operations (作廢)
+
+Complete invoice cancellation with EZPay:
+
+```typescript
+// Void an invoice with reason
+const voidedInvoice = await gateway.void(invoice, {
+  reason: '客戶取消訂單' // Required reason for audit trail
+});
+
+console.log('Invoice voided:', voidedInvoice.voidOn);
+console.log('Current state:', voidedInvoice.state); // InvoiceState.VOID
+```
+
+## Query and Search Operations
+
+### Query by Order ID
+```typescript
+// Find invoice by your internal order ID
+const invoice = await gateway.query({
+  orderId: 'ORDER-2024-001'
+});
+
+console.log('Found invoice:', invoice.invoiceNumber);
+console.log('Issue date:', invoice.issuedOn);
+```
+
+### Query by Invoice Details
+```typescript
+// Find invoice by EZPay invoice number and date
+const invoice = await gateway.query({
+  invoiceNumber: 'CD12345678',
+  issuedOn: new Date('2024-01-15')
+});
+```
+
+### Platform-Specific Queries
+```typescript
+// Query with platform ID for marketplace scenarios
+const platformInvoice = await gateway.query({
+  orderId: 'PLATFORM-ORDER-001',
+  platformId: 'YOUR_PLATFORM_ID'
+});
+```
+
+## Configuration Options
+
+### Gateway Configuration
+```typescript
+interface EZPayInvoiceGatewayOptions {
+  merchantId?: string;     // EZPay merchant identifier
+  hashKey?: string;        // EZPay hash key for authentication
+  hashIv?: string;         // EZPay hash IV for authentication
+  baseUrl?: EZPayBaseUrls; // API endpoint (DEVELOPMENT or PRODUCTION)
+  skipCarrierValidation?: boolean; // Skip carrier validation for testing
+}
+
+const gateway = new EZPayInvoiceGateway({
+  merchantId: 'PROD_MERCHANT_ID',
+  hashKey: 'your-ezpay-hash-key',
+  hashIv: 'your-ezpay-hash-iv',
+  baseUrl: EZPayBaseUrls.PRODUCTION,
+  skipCarrierValidation: false // Always validate in production
+});
+```
+
+### Environment Configuration
+
+#### Development Environment
+```typescript
+const devGateway = new EZPayInvoiceGateway({
+  baseUrl: EZPayBaseUrls.DEVELOPMENT,
+  // Uses default test credentials for EZPay sandbox
+});
+```
+
+#### Production Environment  
+```typescript
+const prodGateway = new EZPayInvoiceGateway({
+  merchantId: process.env.EZPAY_MERCHANT_ID,
+  hashKey: process.env.EZPAY_HASH_KEY,
+  hashIv: process.env.EZPAY_HASH_IV,
+  baseUrl: EZPayBaseUrls.PRODUCTION,
+});
+```
+
+## Error Handling
+
+### EZPay-Specific Errors
+```typescript
+try {
+  const invoice = await gateway.issue(options);
+} catch (error) {
+  switch (error.code) {
+    case 'EZPAY_SUCCESS':
+      console.log('Operation completed successfully');
+      break;
+    case 'EZPAY_INVALID_MERCHANT':
+      console.error('Invalid EZPay merchant configuration');
+      break;
+    case 'EZPAY_HASH_ERROR':
+      console.error('Hash key/IV authentication failed');
+      break;
+    case 'EZPAY_INVOICE_EXISTS':
+      console.error('Invoice with this order ID already exists');
+      break;
+    case 'EZPAY_CARRIER_INVALID':
+      console.error('Carrier validation failed');
+      break;
+    default:
+      console.error('EZPay API error:', error.message);
+  }
+}
+```
+
+### Taiwan Compliance Errors
+```typescript
+// Handle Taiwan e-invoice validation errors
+try {
+  await gateway.issue(options);
+} catch (error) {
+  if (error.type === 'VAT_NUMBER_ERROR') {
+    console.error('Invalid Taiwan VAT number:', error.vatNumber);
+  } else if (error.type === 'TAX_CALCULATION_ERROR') {
+    console.error('Taiwan tax calculation failed:', error.details);
+  } else if (error.type === 'CARRIER_NOT_FOUND') {
+    console.error('Carrier not found in government database:', error.carrier);
+  }
+}
+```
+
+## Testing
+
+### Unit Tests
+```bash
+npm test
+```
+
+### Integration Testing with EZPay Sandbox
+```typescript
+// Test with EZPay development environment
+const testGateway = new EZPayInvoiceGateway({
+  baseUrl: EZPayBaseUrls.DEVELOPMENT
+});
+
+describe('EZPay Invoice Integration', () => {
+  it('should issue invoice successfully', async () => {
+    const invoice = await testGateway.issue({
+      orderId: `TEST-${Date.now()}`,
+      items: [
+        {
+          name: '測試商品',
+          unitPrice: 100,
+          quantity: 1,
+          taxType: TaxType.TAXED
+        }
+      ],
+      customer: {
+        name: '測試客戶',
+        email: 'test@example.com'
+      }
+    });
+
+    expect(invoice.invoiceNumber).toBeDefined();
+    expect(invoice.state).toBe(InvoiceState.ISSUED);
+    expect(invoice.randomCode).toMatch(/^\d{4}$/);
+  });
+});
+```
+
+### Mock EZPay API
+```typescript
+// Mock EZPay responses for unit testing
+jest.mock('axios');
+const mockedAxios = axios as jest.Mocked<typeof axios>;
+
+// Mock successful invoice creation
+mockedAxios.post.mockResolvedValue({
+  data: {
+    Status: 'SUCCESS',
+    Result: {
+      InvoiceNumber: 'CD12345678',
+      InvoiceDate: '2024-01-15',
+      RandomNum: '1234',
+      TotalAmt: 105 // Including 5% tax
+    }
+  }
+});
+```
+
+## Platform Integration
+
+### Marketplace Support
+```typescript
+// Issue invoices for marketplace platforms
+const marketplaceInvoice = await gateway.issue({
+  orderId: 'MARKETPLACE-ORDER-001',
+  platformId: 'YOUR_PLATFORM_ID', // EZPay platform identifier
+  items: [
+    {
+      name: '平台商品',
+      unitPrice: 100,
+      quantity: 1,
+      taxType: TaxType.TAXED
+    }
+  ],
+  customer: {
+    name: '平台買家',
+    email: 'buyer@marketplace.com'
+  },
+  carrier: InvoiceCarriers.PLATFORM({ 
+    type: InvoiceCarrierType.PLATFORM, 
+    code: 'PLATFORM_CARRIER_123' 
+  })
+});
+```
+
+### Multi-tenant Setup
+```typescript
+// Support multiple merchants in single application
+class MultiTenantEZPayService {
+  private gateways: Map<string, EZPayInvoiceGateway> = new Map();
+
+  constructor(private tenantConfigs: TenantConfig[]) {
+    tenantConfigs.forEach(config => {
+      this.gateways.set(config.tenantId, new EZPayInvoiceGateway({
+        merchantId: config.ezpayMerchantId,
+        hashKey: config.ezpayHashKey,
+        hashIv: config.ezpayHashIv,
+        baseUrl: config.isProduction 
+          ? EZPayBaseUrls.PRODUCTION 
+          : EZPayBaseUrls.DEVELOPMENT
+      }));
+    });
+  }
+
+  async issueForTenant(tenantId: string, options: EZPayInvoiceIssueOptions) {
+    const gateway = this.gateways.get(tenantId);
+    if (!gateway) throw new Error(`No EZPay gateway configured for tenant: ${tenantId}`);
+    
+    return gateway.issue(options);
+  }
+}
+```
+
+## Performance Optimization
+
+### Caching Strategy
+```typescript
+// Implement carrier validation caching
+class CachedEZPayGateway extends EZPayInvoiceGateway {
+  private validationCache = new Map<string, boolean>();
+  private cacheTimeout = 60000; // 1 minute cache
+
+  async isMobileBarcodeValid(code: string): Promise<boolean> {
+    const cacheKey = `mobile:${code}`;
+    const cached = this.validationCache.get(cacheKey);
+    
+    if (cached !== undefined) {
+      return cached;
+    }
+
+    const isValid = await super.isMobileBarcodeValid(code);
+    this.validationCache.set(cacheKey, isValid);
+    
+    // Clear cache after timeout
+    setTimeout(() => {
+      this.validationCache.delete(cacheKey);
+    }, this.cacheTimeout);
+
+    return isValid;
+  }
+}
+```
+
+### Batch Processing
+```typescript
+// Process multiple invoices efficiently
+async function processBatchInvoices(orders: Order[]) {
+  const results = await Promise.allSettled(
+    orders.map(order => 
+      gateway.issue({
+        orderId: order.id,
+        items: order.items,
+        customer: order.customer,
+        vatNumber: order.vatNumber,
+        carrier: order.preferredCarrier
+      })
+    )
+  );
+
+  const successful: Invoice[] = [];
+  const failed: { order: Order; error: any }[] = [];
+
+  results.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      successful.push(result.value);
+    } else {
+      failed.push({ order: orders[index], error: result.reason });
+    }
+  });
+
+  return { successful, failed };
+}
+```
+
+## Taiwan Compliance Features
+
+### Ministry of Finance Integration
+- **Real-time Transmission**: Invoices transmitted to MOF systems within required timeframes
+- **Government Validation**: Carrier codes validated against live government databases
+- **Audit Compliance**: Complete transaction logging for tax authority audits
+- **Format Standards**: All invoice formats comply with Taiwan MOF specifications
+
+### Business Tax Compliance
+- **Accurate Tax Calculations**: Precise Taiwan business tax (5%) calculations
+- **Mixed Tax Support**: Handle invoices with multiple tax types
+- **Export Documentation**: Zero-tax support with customs compliance
+- **Special Industry Rates**: Support for industry-specific tax rates
+
+### Lottery System Integration
+- **Automatic Entry**: All invoices automatically participate in bimonthly lottery
+- **Winner Notification**: Automatic detection of lottery winners
+- **Prize Processing**: Support for all Taiwan lottery prize categories
+- **Award Management**: Complete award tracking and processing
+
+## Security Best Practices
+
+### Authentication Security
+```typescript
+// Secure credential management
+const secureConfig = {
+  merchantId: process.env.EZPAY_MERCHANT_ID,
+  hashKey: process.env.EZPAY_HASH_KEY,
+  hashIv: process.env.EZPAY_HASH_IV
+};
+
+// Validate all credentials are present
+const requiredFields = ['merchantId', 'hashKey', 'hashIv'];
+requiredFields.forEach(field => {
+  if (!secureConfig[field]) {
+    throw new Error(`Missing required EZPay configuration: ${field}`);
+  }
+});
+```
+
+### Data Protection
+- **Hash-based Authentication**: All API calls authenticated using hash keys
+- **Secure Transmission**: HTTPS-only communication with EZPay servers
+- **PII Protection**: Customer data handled according to Taiwan privacy laws
+- **Audit Logging**: Complete audit trails for compliance requirements
+
+## Dependencies
+
+- `@rytass/invoice`: Core invoice types and interfaces
+- `axios`: HTTP client for EZPay API communication
+- `form-data`: Multi-part form data support for EZPay APIs
+- `luxon`: Date/time handling for Taiwan timezone
+- `validator`: Input validation utilities
+
+## Related Packages
+
+### Other Taiwan E-Invoice Adapters
+- `@rytass/invoice-adapter-ecpay`: ECPay (綠界科技) e-invoice integration
+- `@rytass/invoice-adapter-bank-pro`: BankPro e-invoice integration
+- `@rytass/invoice-adapter-amego`: Amego e-invoice integration
+
+### Supporting Packages  
+- `@rytass/payments`: Payment processing integration
+- `@rytass/order-builder`: Order management and preparation
+
+## License
+
+MIT
+
+## Support
+
+- **EZPay Documentation**: https://www.ezpay.com.tw/
+- **Taiwan E-Invoice Regulations**: Taiwan Ministry of Finance specifications
+- **GitHub Issues**: https://github.com/Rytass/Utils/issues
+- **Technical Support**: For EZPay-specific issues, contact EZPay merchant support
+
+This adapter provides complete EZPay e-invoice integration with full Taiwan regulatory compliance, enabling businesses to implement legal electronic invoicing through EZPay's certified platform.

@@ -1,0 +1,248 @@
+# @rytass/cms-base-nestjs-module
+
+Rytass Content Management System NestJS Base Module - A foundational NestJS module providing content management entities, services, and data loaders for building CMS applications.
+
+## Installation
+
+```bash
+npm install @rytass/cms-base-nestjs-module
+```
+
+## Features
+
+### Core Entities
+- **BaseArticleEntity**: Base article entity with versioning support
+- **BaseArticleVersionEntity**: Article version management
+- **BaseArticleVersionContentEntity**: Multi-language content support
+- **BaseCategoryEntity**: Hierarchical category system
+- **BaseCategoryMultiLanguageNameEntity**: Multi-language category names
+- **BaseSignatureLevelEntity**: Article approval workflow levels
+
+### Services
+- **ArticleBaseService**: Complete CRUD operations for articles with version control, signature workflows, and search functionality
+- **CategoryBaseService**: Category management with hierarchy support
+- **SignatureService**: Article approval workflow management
+
+### Data Loaders
+- **ArticleDataLoader**: Efficient article loading with caching
+- **ArticleVersionDataLoader**: Version-specific data loading
+- **ArticleSignatureDataLoader**: Signature status data loading
+- **CategoryDataLoader**: Category data with relationship loading
+
+### Configuration Options
+- **multipleLanguageMode**: Enable multi-language content (default: false)
+- **allowMultipleParentCategories**: Allow categories with multiple parents (default: false)
+- **allowCircularCategories**: Allow circular category relationships (default: false)
+- **fullTextSearchMode**: Enable full-text search capabilities (default: false)
+- **enableDraftMode**: Enable article draft functionality (default: false)
+- **autoReleaseWhenLatestSignatureApproved**: Auto-release articles after approval (default: false)
+
+## Usage
+
+### Basic Setup
+
+```typescript
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { CMSBaseModule } from '@rytass/cms-base-nestjs-module';
+
+@Module({
+  imports: [
+    TypeOrmModule.forRoot({
+      // database configuration
+    }),
+    CMSBaseModule.forRoot({
+      multipleLanguageMode: true,
+      enableDraftMode: true,
+      signatureLevels: ['draft', 'review', 'approved'],
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+### Async Configuration
+
+```typescript
+@Module({
+  imports: [
+    CMSBaseModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (config: ConfigService) => ({
+        multipleLanguageMode: config.get('CMS_MULTI_LANG'),
+        enableDraftMode: config.get('CMS_DRAFT_MODE'),
+        signatureLevels: config.get('CMS_SIGNATURE_LEVELS'),
+      }),
+      inject: [ConfigService],
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+### Using Services
+
+```typescript
+import { Injectable } from '@nestjs/common';
+import { ArticleBaseService, CategoryBaseService } from '@rytass/cms-base-nestjs-module';
+
+@Injectable()
+export class ContentService {
+  constructor(
+    private readonly articleService: ArticleBaseService,
+    private readonly categoryService: CategoryBaseService,
+  ) {}
+
+  async createArticle(data: ArticleCreateDto) {
+    return this.articleService.createArticle(data);
+  }
+
+  async findArticles(query: ArticleFindAllDto) {
+    return this.articleService.findAll(query);
+  }
+
+  async createCategory(data: CategoryCreateDto) {
+    return this.categoryService.createCategory(data);
+  }
+}
+```
+
+### Article Operations
+
+```typescript
+// Create single language article
+const article = await articleService.createArticle({
+  title: 'Article Title',
+  content: '<p>Article content</p>',
+  categoryIds: ['category-1', 'category-2'],
+  publishedAt: new Date(),
+});
+
+// Create multi-language article (when multipleLanguageMode: true)
+const multiLangArticle = await articleService.createArticle({
+  contents: {
+    'en': { title: 'English Title', content: '<p>English content</p>' },
+    'zh': { title: '中文標題', content: '<p>中文內容</p>' },
+  },
+  categoryIds: ['category-1'],
+});
+
+// Find articles with filtering and pagination
+const articles = await articleService.findAll({
+  categoryIds: ['category-1'],
+  keyword: 'search term',
+  stage: ArticleStage.PUBLISHED,
+  skip: 0,
+  take: 10,
+  sorter: ArticleSorter.PUBLISHED_AT_DESC,
+});
+```
+
+### Category Operations
+
+```typescript
+// Create category
+const category = await categoryService.createCategory({
+  name: 'Technology',
+  slug: 'technology',
+  parentId: 'parent-category-id', // optional
+});
+
+// Multi-language category (when multipleLanguageMode: true)
+const multiLangCategory = await categoryService.createCategory({
+  names: {
+    'en': 'Technology',
+    'zh': '科技',
+  },
+  slug: 'technology',
+});
+
+// Find categories
+const categories = await categoryService.findAll({
+  parentId: null, // root categories
+  take: 20,
+});
+```
+
+## TypeScript Interfaces
+
+```typescript
+interface CMSBaseModuleOptionsDto {
+  multipleLanguageMode?: boolean;
+  allowMultipleParentCategories?: boolean;
+  allowCircularCategories?: boolean;
+  fullTextSearchMode?: boolean;
+  signatureLevels?: string[] | BaseSignatureLevelEntity[];
+  enableDraftMode?: boolean;
+  autoReleaseWhenLatestSignatureApproved?: boolean;
+  articleEntity?: new () => BaseArticleEntity;
+  categoryEntity?: new () => BaseCategoryEntity;
+  // ... other entity customizations
+}
+
+enum ArticleStage {
+  DRAFT = 'draft',
+  PUBLISHED = 'published',
+  ARCHIVED = 'archived',
+}
+
+enum ArticleSorter {
+  CREATED_AT_ASC = 'created_at_asc',
+  CREATED_AT_DESC = 'created_at_desc',
+  PUBLISHED_AT_ASC = 'published_at_asc',
+  PUBLISHED_AT_DESC = 'published_at_desc',
+  UPDATED_AT_ASC = 'updated_at_asc',
+  UPDATED_AT_DESC = 'updated_at_desc',
+}
+```
+
+## Peer Dependencies
+
+- `@nestjs/common`: NestJS framework
+- `@nestjs/typeorm`: TypeORM integration
+- `@node-rs/jieba`: Chinese text segmentation (for full-text search)
+- `@quadrats/core`: Rich content editor support
+- `typeorm`: Database ORM
+
+## Dependencies
+
+- `dataloader`: Efficient data loading with caching
+- `lru-cache`: In-memory caching
+
+## Testing
+
+The module provides base entities and services that can be extended and tested using standard NestJS testing patterns:
+
+```typescript
+import { Test } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { ArticleBaseService } from '@rytass/cms-base-nestjs-module';
+
+describe('ArticleService', () => {
+  let service: ArticleBaseService;
+
+  beforeEach(async () => {
+    const module = await Test.createTestingModule({
+      providers: [
+        ArticleBaseService,
+        {
+          provide: getRepositoryToken(BaseArticleEntity),
+          useValue: mockRepository,
+        },
+      ],
+    }).compile();
+
+    service = module.get<ArticleBaseService>(ArticleBaseService);
+  });
+
+  // tests...
+});
+```
+
+## License
+
+MIT
+
+## Support
+
+For issues and questions, visit the [GitHub repository](https://github.com/Rytass/Utils/issues).

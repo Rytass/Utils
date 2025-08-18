@@ -1,0 +1,361 @@
+# @rytass/cms-base-nestjs-graphql-module
+
+Rytass Content Management System NestJS GraphQL Module - A GraphQL extension for the CMS base module providing GraphQL resolvers, queries, mutations, and DTOs for building GraphQL-enabled CMS applications.
+
+## Installation
+
+```bash
+npm install @rytass/cms-base-nestjs-graphql-module
+```
+
+## Features
+
+### GraphQL Resolvers
+- **ArticleResolver**: Basic article field resolution with author and category relationships
+- **BackstageArticleResolver**: Administrative article management operations
+- **ArticleSignatureResolver**: Article approval workflow resolution
+- **BackstageCategoryResolver**: Administrative category management
+
+### Queries & Mutations
+- **ArticleQueries**: Public article data queries
+- **CategoryQueries**: Public category data queries  
+- **ArticleMutations**: Article CRUD operations
+- **CategoryMutations**: Category CRUD operations
+
+### Data Loaders
+- **ArticleDataLoader**: Efficient GraphQL article loading
+- **MemberDataLoader**: User/author data loading for article relationships
+
+### GraphQL DTOs
+- **ArticleDto**: Public article representation
+- **BackstageArticleDto**: Administrative article with full metadata
+- **CategoryDto**: Public category representation
+- **BackstageCategoryDto**: Administrative category operations
+- **ArticleCollectionDto**: Paginated article collections
+
+### Custom Scalars
+- **QuadratsElementScalar**: Support for rich content editor elements
+
+## Usage
+
+### Basic Setup
+
+```typescript
+import { Module } from '@nestjs/common';
+import { GraphQLModule } from '@nestjs/graphql';
+import { CMSBaseGraphQLModule } from '@rytass/cms-base-nestjs-graphql-module';
+
+@Module({
+  imports: [
+    GraphQLModule.forRoot({
+      autoSchemaFile: true,
+    }),
+    CMSBaseGraphQLModule.forRoot({
+      multipleLanguageMode: true,
+      enableDraftMode: true,
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+### Async Configuration
+
+```typescript
+@Module({
+  imports: [
+    CMSBaseGraphQLModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (config: ConfigService) => ({
+        multipleLanguageMode: config.get('CMS_MULTI_LANG'),
+        enableDraftMode: config.get('CMS_DRAFT_MODE'),
+      }),
+      inject: [ConfigService],
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+## GraphQL Schema Examples
+
+### Article Queries
+
+```graphql
+# Get public articles
+query GetArticles($first: Int!, $after: String) {
+  articles(first: $first, after: $after) {
+    edges {
+      node {
+        articleId
+        title
+        content
+        publishedAt
+        author {
+          id
+          name
+        }
+        categories {
+          id
+          name
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+# Get single article
+query GetArticle($id: ID!) {
+  article(id: $id) {
+    articleId
+    title
+    content
+    publishedAt
+    categories {
+      id
+      name
+    }
+  }
+}
+```
+
+### Backstage Operations
+
+```graphql
+# Create article (admin)
+mutation CreateArticle($input: CreateArticleInput!) {
+  createArticle(input: $input) {
+    id
+    title
+    stage
+    createdAt
+  }
+}
+
+# Update article (admin)
+mutation UpdateArticle($id: ID!, $input: UpdateArticleInput!) {
+  updateArticle(id: $id, input: $input) {
+    id
+    title
+    updatedAt
+  }
+}
+```
+
+### Category Operations
+
+```graphql
+# Get categories
+query GetCategories {
+  categories {
+    id
+    name
+    slug
+    parent {
+      id
+      name
+    }
+    children {
+      id
+      name
+    }
+  }
+}
+
+# Create category (admin)
+mutation CreateCategory($input: CreateCategoryInput!) {
+  createCategory(input: $input) {
+    id
+    name
+    slug
+  }
+}
+```
+
+## TypeScript Integration
+
+### Using GraphQL DTOs
+
+```typescript
+import { Field, ObjectType, ID } from '@nestjs/graphql';
+import { ArticleDto, CategoryDto } from '@rytass/cms-base-nestjs-graphql-module';
+
+@ObjectType()
+export class CustomArticleDto extends ArticleDto {
+  @Field(() => String, { nullable: true })
+  customField?: string;
+}
+```
+
+### Custom Resolvers
+
+```typescript
+import { Resolver, Query, Args } from '@nestjs/graphql';
+import { ArticleDto } from '@rytass/cms-base-nestjs-graphql-module';
+
+@Resolver(() => ArticleDto)
+export class CustomArticleResolver {
+  @Query(() => [ArticleDto])
+  async featuredArticles(): Promise<ArticleDto[]> {
+    // custom logic
+    return [];
+  }
+}
+```
+
+## Configuration Options
+
+Inherits all options from `@rytass/cms-base-nestjs-module` plus:
+
+```typescript
+interface CMSGraphqlBaseModuleOptionsDto extends CMSBaseModuleOptionsDto {
+  // All base CMS options are available
+  multipleLanguageMode?: boolean;
+  enableDraftMode?: boolean;
+  // ... other CMS base options
+}
+```
+
+## Key GraphQL Types
+
+```typescript
+// Article representation
+@ObjectType()
+export class ArticleDto {
+  @Field(() => ID)
+  articleId: string;
+
+  @Field()
+  title: string;
+
+  @Field()
+  content: string;
+
+  @Field(() => Date, { nullable: true })
+  publishedAt?: Date;
+
+  @Field(() => [CategoryDto])
+  categories: CategoryDto[];
+
+  @Field(() => UserDto, { nullable: true })
+  author?: UserDto;
+}
+
+// Category representation
+@ObjectType()
+export class CategoryDto {
+  @Field(() => ID)
+  id: string;
+
+  @Field()
+  name: string;
+
+  @Field()
+  slug: string;
+
+  @Field(() => CategoryDto, { nullable: true })
+  parent?: CategoryDto;
+
+  @Field(() => [CategoryDto])
+  children: CategoryDto[];
+}
+
+// Collection with pagination
+@ObjectType()
+export class ArticleCollectionDto {
+  @Field(() => [ArticleDto])
+  edges: ArticleDto[];
+
+  @Field()
+  totalCount: number;
+
+  @Field(() => PageInfo)
+  pageInfo: PageInfo;
+}
+```
+
+## Data Loading
+
+The module uses DataLoader pattern for efficient N+1 query prevention:
+
+```typescript
+// Automatic batched loading
+@ResolveField(() => UserDto)
+async author(@Root() article: ArticleDto): Promise<UserDto> {
+  return this.memberDataLoader.load(article.authorId);
+}
+
+@ResolveField(() => [CategoryDto])
+async categories(@Root() article: ArticleDto): Promise<CategoryDto[]> {
+  return this.articleDataLoader.loadCategories(article.id);
+}
+```
+
+## Language Support
+
+When `multipleLanguageMode` is enabled:
+
+```typescript
+// Language-aware resolvers
+@ResolveField(() => String)
+title(
+  @Root() article: ArticleDto,
+  @Language() language: string
+): string {
+  return this.getLocalizedContent(article, language, 'title');
+}
+```
+
+## Dependencies
+
+- `@rytass/cms-base-nestjs-module`: Core CMS functionality
+- `@rytass/member-base-nestjs-module`: User management integration
+- `dataloader`: Efficient data loading
+- `lru-cache`: Caching support
+
+## Peer Dependencies
+
+- `@nestjs/common`: NestJS framework
+- `@nestjs/typeorm`: Database integration
+- `@node-rs/jieba`: Text processing
+- `@quadrats/core`: Rich content support
+- `typeorm`: ORM
+
+## Testing
+
+```typescript
+import { Test } from '@nestjs/testing';
+import { ArticleResolver } from '@rytass/cms-base-nestjs-graphql-module';
+
+describe('ArticleResolver', () => {
+  let resolver: ArticleResolver;
+
+  beforeEach(async () => {
+    const module = await Test.createTestingModule({
+      providers: [
+        ArticleResolver,
+        {
+          provide: 'MemberDataLoader',
+          useValue: mockDataLoader,
+        },
+      ],
+    }).compile();
+
+    resolver = module.get<ArticleResolver>(ArticleResolver);
+  });
+
+  // tests...
+});
+```
+
+## License
+
+MIT
+
+## Support
+
+For issues and questions, visit the [GitHub repository](https://github.com/Rytass/Utils/issues).

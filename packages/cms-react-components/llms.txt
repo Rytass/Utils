@@ -1,0 +1,391 @@
+# @rytass/cms-react-components
+
+Rytass Content Management System React Components - Pre-built React components for CMS administration interfaces using Mezzanine UI design system.
+
+## Installation
+
+```bash
+npm install @rytass/cms-react-components
+```
+
+## Features
+
+### Standard CMS Components
+- **StandardCMSTable**: Data table with built-in actions, pagination, and filtering
+- **StandardCMSList**: List view component for content management
+- **StandardCMSFormActions**: Standardized form action buttons (save, cancel, submit)
+- **StandardCMSTabs**: Tab interface for content organization
+
+### CMS-Specific Fields
+- **Textarea**: Enhanced textarea component for content editing
+
+### Modal Components
+- **DeleteWithdrawModal**: Confirmation modal for delete/withdraw operations
+- **LogsModal**: Modal for displaying action logs and history
+- **RejectModal**: Modal for content rejection with reason input
+- **VerifyReleaseModal**: Modal for content release verification
+
+### Context Providers
+- **DialogProvider**: Global dialog management
+- **ModalProvider**: Global modal management
+
+### Utilities
+- **havePermission**: Permission checking utility
+- **useDialog**: Hook for dialog management
+- **useModal**: Hook for modal management
+
+### Icons
+- **VersionLog**: Version history icon
+
+## Usage
+
+### Basic Setup
+
+```tsx
+import React from 'react';
+import { 
+  StandardCMSTable,
+  DialogProvider,
+  ModalProvider 
+} from '@rytass/cms-react-components';
+
+export function App() {
+  return (
+    <DialogProvider>
+      <ModalProvider>
+        <YourCMSApplication />
+      </ModalProvider>
+    </DialogProvider>
+  );
+}
+```
+
+### StandardCMSTable
+
+```tsx
+import { StandardCMSTable } from '@rytass/cms-react-components';
+import { TableColumn } from '@mezzanine-ui/core/table';
+
+interface Article {
+  id: string;
+  title: string;
+  status: string;
+  createdAt: Date;
+}
+
+const columns: TableColumn<Article>[] = [
+  {
+    key: 'title',
+    title: 'Title',
+    dataIndex: 'title',
+  },
+  {
+    key: 'status',
+    title: 'Status',
+    dataIndex: 'status',
+  },
+  {
+    key: 'createdAt',
+    title: 'Created',
+    dataIndex: 'createdAt',
+    render: (date: Date) => date.toLocaleDateString(),
+  },
+];
+
+function ArticleTable() {
+  const [articles, setArticles] = useState<Article[]>([]);
+
+  return (
+    <StandardCMSTable
+      columns={columns}
+      dataSource={articles}
+      loading={false}
+      pagination={{
+        current: 1,
+        pageSize: 10,
+        total: articles.length,
+      }}
+    />
+  );
+}
+```
+
+### StandardCMSFormActions
+
+```tsx
+import { StandardCMSFormActions } from '@rytass/cms-react-components';
+import { useForm } from 'react-hook-form';
+
+function ArticleForm() {
+  const { handleSubmit, formState: { isDirty } } = useForm();
+
+  const onSave = (data: any) => {
+    // Save logic
+  };
+
+  const onCancel = () => {
+    // Cancel logic
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSave)}>
+      {/* Form fields */}
+      
+      <StandardCMSFormActions
+        onSave={handleSubmit(onSave)}
+        onCancel={onCancel}
+        saveDisabled={!isDirty}
+        cancelText="Cancel"
+        saveText="Save"
+      />
+    </form>
+  );
+}
+```
+
+### Modal Usage
+
+```tsx
+import { useModal, DeleteWithdrawModal } from '@rytass/cms-react-components';
+
+function ArticleActions({ articleId }: { articleId: string }) {
+  const { openModal, closeModal } = useModal();
+
+  const handleDelete = () => {
+    openModal(
+      <DeleteWithdrawModal
+        title="Delete Article"
+        message="Are you sure you want to delete this article?"
+        onConfirm={async () => {
+          // Delete logic
+          await deleteArticle(articleId);
+          closeModal();
+        }}
+        onCancel={closeModal}
+      />
+    );
+  };
+
+  return (
+    <button onClick={handleDelete}>
+      Delete Article
+    </button>
+  );
+}
+```
+
+### Dialog Usage
+
+```tsx
+import { useDialog } from '@rytass/cms-react-components';
+
+function ConfirmationExample() {
+  const { openDialog, closeDialog } = useDialog();
+
+  const showConfirmation = () => {
+    openDialog({
+      title: 'Confirm Action',
+      content: 'Are you sure you want to proceed?',
+      onConfirm: () => {
+        // Action logic
+        closeDialog();
+      },
+      onCancel: closeDialog,
+    });
+  };
+
+  return <button onClick={showConfirmation}>Show Dialog</button>;
+}
+```
+
+### StandardCMSTabs
+
+```tsx
+import { StandardCMSTabs } from '@rytass/cms-react-components';
+
+function ArticleEditor() {
+  const tabs = [
+    {
+      key: 'content',
+      label: 'Content',
+      children: <ContentEditor />,
+    },
+    {
+      key: 'settings',
+      label: 'Settings',
+      children: <ArticleSettings />,
+    },
+    {
+      key: 'history',
+      label: 'History',
+      children: <VersionHistory />,
+    },
+  ];
+
+  return (
+    <StandardCMSTabs
+      items={tabs}
+      defaultActiveKey="content"
+    />
+  );
+}
+```
+
+### Permission Checking
+
+```tsx
+import { havePermission } from '@rytass/cms-react-components';
+
+function AdminActions({ userPermissions }: { userPermissions: string[] }) {
+  if (!havePermission(userPermissions, 'admin.articles.delete')) {
+    return null;
+  }
+
+  return (
+    <button>Delete Article</button>
+  );
+}
+```
+
+### LogsModal
+
+```tsx
+import { LogsModal, useModal } from '@rytass/cms-react-components';
+
+function ArticleHistory({ articleId }: { articleId: string }) {
+  const { openModal, closeModal } = useModal();
+
+  const showHistory = () => {
+    openModal(
+      <LogsModal
+        title="Article History"
+        logs={[
+          {
+            id: '1',
+            action: 'Created',
+            timestamp: new Date(),
+            user: 'John Doe',
+            details: 'Article created',
+          },
+          {
+            id: '2',
+            action: 'Updated',
+            timestamp: new Date(),
+            user: 'Jane Smith',
+            details: 'Content updated',
+          },
+        ]}
+        onClose={closeModal}
+      />
+    );
+  };
+
+  return (
+    <button onClick={showHistory}>
+      View History
+    </button>
+  );
+}
+```
+
+## TypeScript Support
+
+```typescript
+import { 
+  StandardCMSTableProps,
+  StandardCMSFormActionsProps,
+  LogEntry 
+} from '@rytass/cms-react-components';
+
+// Table props with generic type support
+interface MyTableProps extends StandardCMSTableProps<MyDataType> {
+  customProp?: string;
+}
+
+// Log entry structure
+interface CustomLogEntry extends LogEntry {
+  customField?: string;
+}
+```
+
+## Styling
+
+Components use CSS modules and are styled with Mezzanine UI design system. Custom styles can be applied:
+
+```scss
+// Override component styles
+.custom-table {
+  :global(.StandardCMSTable) {
+    background-color: #f5f5f5;
+  }
+}
+```
+
+## Peer Dependencies
+
+- `@mezzanine-ui/core`: Design system core
+- `@mezzanine-ui/icons`: Icon components
+- `@mezzanine-ui/react`: React components
+- `@mezzanine-ui/system`: Design system utilities
+- `dayjs`: Date manipulation
+- `lodash`: Utility functions
+- `react`: React framework
+- `react-dom`: React DOM
+- `react-hook-form`: Form management
+
+## Component Architecture
+
+All components are built with:
+- **Provider Pattern**: Context-based state management for modals and dialogs
+- **Composition**: Flexible component composition
+- **Accessibility**: Built-in ARIA support
+- **TypeScript**: Full type safety
+- **CSS Modules**: Scoped styling
+
+## Testing
+
+```tsx
+import { render, screen } from '@testing-library/react';
+import { DialogProvider, useDialog } from '@rytass/cms-react-components';
+
+function TestComponent() {
+  return (
+    <DialogProvider>
+      <YourComponent />
+    </DialogProvider>
+  );
+}
+
+test('renders dialog correctly', () => {
+  render(<TestComponent />);
+  // Test assertions
+});
+```
+
+## Constants
+
+```typescript
+// Available permission constants and utility types
+export const CMS_PERMISSIONS = {
+  ARTICLES: {
+    CREATE: 'cms.articles.create',
+    READ: 'cms.articles.read',
+    UPDATE: 'cms.articles.update',
+    DELETE: 'cms.articles.delete',
+  },
+  CATEGORIES: {
+    CREATE: 'cms.categories.create',
+    READ: 'cms.categories.read',
+    UPDATE: 'cms.categories.update',
+    DELETE: 'cms.categories.delete',
+  },
+};
+```
+
+## License
+
+MIT
+
+## Support
+
+For issues and questions, visit the [GitHub repository](https://github.com/Rytass/Utils/issues).

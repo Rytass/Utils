@@ -1,0 +1,163 @@
+# @rytass/logistics-adapter-tcat
+
+TCat (黑貓宅急便) logistics adapter for Taiwan's leading home delivery service.
+
+## Package Overview
+
+This package provides integration with TCat (黑貓宅急便), Taiwan's most recognized consumer logistics service. TCat is the Taiwanese operation of Yamato Transport, known for reliable home delivery, convenient pickup locations, and comprehensive tracking services.
+
+## Features
+
+### TCat Integration
+- **Package Tracking**: Real-time tracking through TCat's web interface
+- **Status Parsing**: HTML scraping with intelligent status extraction
+- **Flexible Configuration**: Customizable status mapping and error handling
+- **Consumer-focused**: Optimized for B2C and individual package delivery
+
+### Supported Status Types (Chinese → English)
+- 順利送達 → DELIVERED
+- 配送中 → DELIVERING  
+- 轉運中 → TRANSPORTING
+- 取件中 → COLLECTING
+- 已集貨 → CONSOLIDATED
+- 暫置營業所 → SHELVED
+- 調查處理中 → INVESTIGATING
+- 配送中(當配下車) → DELIVERING_TODAY
+- 不在家.公司行號休息 → AWAY_HOME
+- 未順利取件，請洽客服中心 → FAIL_PICKUP
+- 取消取件 → PICKUP_CANCELED
+
+## Usage Examples
+
+### Basic Configuration
+```typescript
+import { TCatLogisticsService, TCatLogistics } from '@rytass/logistics-adapter-tcat';
+
+// Use default configuration
+const tcatService = new TCatLogisticsService(TCatLogistics);
+```
+
+### Custom Configuration
+```typescript
+import { TCatLogisticsService, TCatLogisticsInterface } from '@rytass/logistics-adapter-tcat';
+
+const customTCatConfig: TCatLogisticsInterface<'DELIVERED' | 'DELIVERING' | 'SHELVED' | 'CUSTOM_STATUS'> = {
+  ignoreNotFound: false,
+  url: 'https://www.t-cat.com.tw/Inquire/TraceDetail.aspx',
+  statusMap: (html: string, logisticsId: string) => {
+    // Custom HTML parsing and status mapping logic
+    return statusHistory;
+  }
+};
+
+const customService = new TCatLogisticsService(customTCatConfig);
+```
+
+### Track Packages
+```typescript
+// Track single package
+const result = await tcatService.trace('1234567890');
+
+// Track multiple packages  
+const results = await tcatService.trace(['1234567890', '0987654321']);
+
+// Process results
+results.forEach(tracking => {
+  console.log(`Package ${tracking.logisticsId}:`);
+  tracking.statusHistory.forEach(status => {
+    console.log(`${status.date}: ${status.status} (${status.businessPremise})`);
+  });
+});
+```
+
+### Enhanced Status Information
+```typescript
+// TCat provides additional business premise information
+tracking.statusHistory.forEach(status => {
+  console.log({
+    date: status.date,
+    status: status.status,
+    businessPremise: status.businessPremise, // TCat specific: handling branch/location
+  });
+});
+```
+
+## Technical Implementation
+
+### Web Scraping Architecture
+The adapter uses web scraping to extract tracking information:
+- **Cheerio**: HTML parsing of TCat tracking pages
+- **Status Extraction**: Intelligent parsing of tracking table data
+- **Error Detection**: Handling of invalid tracking numbers
+- **Data Cleaning**: Processing raw HTML into structured data
+
+### Status Mapping Process
+1. **HTML Retrieval**: Fetch tracking page from TCat website
+2. **Table Parsing**: Extract tracking information from HTML table
+3. **Status Translation**: Map Chinese statuses to English equivalents
+4. **Data Structuring**: Format into standardized LogisticsStatusHistory format
+
+### Customization Options
+- **Custom Status Maps**: Define your own status translations
+- **Error Handling**: Configure behavior for not-found packages
+- **URL Configuration**: Use different tracking endpoints if needed
+
+## Business Context
+
+### TCat (黑貓宅急便) Background
+- **Brand Recognition**: Taiwan's most trusted delivery service
+- **Yamato Network**: Part of Japan's Yamato Transport Group
+- **Consumer Focus**: Home delivery, pickup points, and individual services
+- **Coverage**: Island-wide delivery with urban same-day options
+
+### Service Characteristics
+- **Home Delivery**: Direct-to-door residential delivery
+- **Pickup Locations**: Convenience stores and TCat service centers  
+- **Flexible Delivery**: Time slot selection and delivery notifications
+- **Cash on Delivery**: COD services for e-commerce
+
+### Integration Benefits
+- **Customer Trust**: Leverage TCat's strong brand recognition
+- **Delivery Options**: Multiple delivery time slots and locations
+- **Tracking Transparency**: Real-time status updates for customers
+- **Return Services**: Easy return and exchange handling
+
+## Error Handling
+
+### Common Scenarios
+- **Invalid Tracking Numbers**: Graceful handling of non-existent packages
+- **Network Issues**: Retry logic for web scraping failures
+- **Parsing Errors**: Robust HTML parsing with fallback options
+- **Rate Limiting**: Respectful request patterns to avoid blocking
+
+### Configuration Options
+```typescript
+const tcatConfig = {
+  ignoreNotFound: true,  // Skip packages that can't be found
+  url: 'custom-endpoint', // Alternative tracking URL
+  statusMap: customParser // Custom status extraction logic
+};
+```
+
+## Dependencies
+
+- **@rytass/logistics**: Base logistics interfaces and types
+- **axios**: HTTP client for web requests
+- **cheerio**: Server-side HTML parsing and manipulation
+
+## Integration Patterns
+
+### E-commerce Platforms
+Ideal for online stores requiring:
+- Customer-friendly tracking interfaces
+- Flexible delivery options  
+- Reliable last-mile delivery
+- Brand trust and recognition
+
+### Multi-carrier Strategy
+Often used alongside:
+- **CTC Express**: For B2B and bulk shipments
+- **Convenience Store Logistics**: For pickup point delivery
+- **Regional Carriers**: For specialized delivery needs
+
+This adapter enables seamless integration with Taiwan's most trusted consumer logistics service, providing reliable tracking and delivery status information through TCat's comprehensive network.

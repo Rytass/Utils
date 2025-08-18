@@ -1,0 +1,656 @@
+# @rytass/invoice-adapter-bank-pro
+
+Taiwan Bank Pro Electronic Invoice Integration - Complete Bank Pro E-Invoice Adapter
+
+## Description
+
+`@rytass/invoice-adapter-bank-pro` is a comprehensive Taiwan e-invoice adapter for Bank Pro (財金資訊), a financial institution-backed electronic invoice service provider in Taiwan. This package implements the complete Bank Pro B2B2C Web API integration including invoice issuance, allowances (折讓), void operations (作廢), and Taiwan government compliance features.
+
+Bank Pro provides enterprise-grade e-invoice services primarily focused on B2B and B2B2C scenarios, with strong integration into Taiwan's banking and financial systems. This adapter handles all the complex API interactions, authentication, and Taiwan-specific business logic required for legal e-invoice operations.
+
+## Installation
+
+```bash
+npm install @rytass/invoice-adapter-bank-pro
+```
+
+## Core Features
+
+### Complete Bank Pro E-Invoice Operations
+- **Invoice Issuance**: Issue invoices with Taiwan e-invoice compliance
+- **Allowance System**: Create and manage invoice allowances (折讓)
+- **Void Operations**: Void invoices with proper audit trails (作廢)
+- **Query System**: Search and retrieve invoice information
+- **Product Management**: Advanced product/item tracking with barcodes and specifications
+- **Enterprise Integration**: B2B2C integration for complex business scenarios
+
+### Taiwan E-Invoice Compliance
+- **Ministry of Finance Integration**: Direct integration with Taiwan MOF systems
+- **Real-time Transmission**: Automatic invoice transmission to government databases
+- **VAT Number Management**: Built-in 統一編號 validation and seller registration
+- **Tax Calculations**: Accurate Taiwan business tax and enterprise tax handling
+- **Audit Trail Compliance**: Complete enterprise-grade audit logging
+
+### Bank Pro-Specific Features
+- **System OID Management**: Multi-system support for enterprise deployments
+- **Seller BAN Integration**: Business Account Number (統編) management
+- **User Authentication**: User/password based API authentication
+- **Enterprise API**: B2B2C Web API designed for high-volume operations
+- **Financial Integration**: Native integration with banking and payment systems
+
+## Quick Start
+
+### Basic Setup
+
+```typescript
+import { BankProInvoiceGateway, BankProBaseUrls } from '@rytass/invoice-adapter-bank-pro';
+
+const gateway = new BankProInvoiceGateway({
+  user: 'YOUR_API_USER',
+  password: 'YOUR_API_PASSWORD',
+  systemOID: 12345, // Your system identifier
+  sellerBAN: '12345675', // Your business VAT number (統編)
+  baseUrl: BankProBaseUrls.DEVELOPMENT, // or PRODUCTION
+});
+```
+
+### Issue Invoice with Enterprise Features
+
+```typescript
+import { TaxType, InvoiceCarriers, CustomsMark } from '@rytass/invoice-adapter-bank-pro';
+
+const invoice = await gateway.issue({
+  orderId: 'ENT-ORDER-2024-001',
+  items: [
+    {
+      name: '企業產品A',
+      unitPrice: 1000,
+      quantity: 5,
+      unit: '套',
+      taxType: TaxType.TAXED, // Taiwan 5% business tax
+      id: 'PROD-001', // Product ID for tracking
+      barcode: '4710123456789', // Product barcode
+      spec: '規格：標準版', // Product specification
+      remark: '企業級產品'
+    },
+    {
+      name: '服務費',
+      unitPrice: 500,
+      quantity: 1,
+      unit: '次',
+      taxType: TaxType.TAXED,
+      id: 'SERVICE-001'
+    }
+  ],
+  customer: {
+    name: '企業客戶有限公司',
+    vatNumber: '87654321', // Customer's VAT number
+    address: '台北市信義區信義路五段7號35樓',
+    email: 'enterprise@customer.com',
+    phone: '02-2345-6789'
+  },
+  vatNumber: '87654321', // Customer VAT number (統一編號)
+  carrier: InvoiceCarriers.PRINT, // B2B often uses print invoices
+  customsMark: CustomsMark.NO,
+  remark: 'Enterprise transaction via Bank Pro'
+});
+
+console.log('Invoice Number:', invoice.invoiceNumber);
+console.log('System Transaction ID:', invoice.orderId);
+console.log('Total Amount:', invoice.issuedAmount);
+```
+
+## Advanced Product Management
+
+Bank Pro provides enhanced product tracking capabilities:
+
+### Product with Detailed Specifications
+```typescript
+const productItems: BankProPaymentItem[] = [
+  {
+    name: '筆記型電腦',
+    unitPrice: 35000,
+    quantity: 2,
+    unit: '台',
+    taxType: TaxType.TAXED,
+    id: 'LAPTOP-DELL-001', // Internal product ID
+    barcode: '4710123456789', // Product barcode/UPC
+    spec: 'Dell Latitude 5520, Intel i7, 16GB RAM, 512GB SSD',
+    remark: '企業採購，含三年保固'
+  },
+  {
+    name: '安裝服務',
+    unitPrice: 2000,
+    quantity: 2,
+    unit: '次',
+    taxType: TaxType.TAXED,
+    id: 'SERVICE-INSTALL',
+    spec: '到府安裝及設定服務',
+    remark: '包含資料轉移及軟體安裝'
+  }
+];
+
+const enterpriseInvoice = await gateway.issue({
+  orderId: 'B2B-2024-001',
+  items: productItems,
+  customer: {
+    name: '科技股份有限公司',
+    vatNumber: '11223344'
+  },
+  vatNumber: '11223344'
+});
+```
+
+## Tax Handling for Enterprise Scenarios
+
+### B2B Tax Calculations
+```typescript
+// Standard B2B transactions with 5% Taiwan business tax
+const b2bItems = [
+  {
+    name: 'Software License',
+    unitPrice: 100000,
+    quantity: 1,
+    taxType: TaxType.TAXED, // 5% business tax
+    id: 'SW-LICENSE-001'
+  }
+];
+
+// Tax-free items for specific business scenarios
+const taxFreeItems = [
+  {
+    name: 'Export Services',
+    unitPrice: 50000,
+    quantity: 1,
+    taxType: TaxType.TAX_FREE, // No tax for certain services
+    id: 'EXPORT-SERVICE-001'
+  }
+];
+
+// Zero tax for export goods
+const exportItems = [
+  {
+    name: 'Export Goods',
+    unitPrice: 75000,
+    quantity: 1,
+    taxType: TaxType.ZERO_TAX, // 0% for exports
+    id: 'EXPORT-GOODS-001'
+  }
+];
+```
+
+## Allowance Operations (折讓)
+
+Bank Pro allowances for enterprise scenarios:
+
+```typescript
+// Create allowance for quality issues or partial returns
+const allowanceItems = [
+  {
+    name: '筆記型電腦',
+    unitPrice: 35000,
+    quantity: 1, // Partial return - 1 out of 2
+    unit: '台',
+    taxType: TaxType.TAXED,
+    id: 'LAPTOP-DELL-001',
+    remark: '產品瑕疵退貨'
+  }
+];
+
+const updatedInvoice = await gateway.allowance(
+  originalInvoice,
+  allowanceItems,
+  {
+    taxType: TaxType.TAXED,
+    reason: '產品品質問題，部分退貨'
+  }
+);
+
+console.log('Allowance Amount:', allowanceItems[0].unitPrice);
+console.log('Remaining Invoice Amount:', updatedInvoice.nowAmount);
+console.log('Number of Allowances:', updatedInvoice.allowances.length);
+```
+
+### Invalidate Allowance
+```typescript
+// Invalidate allowance if customer decides not to return
+const allowanceToInvalidate = updatedInvoice.allowances[0];
+await gateway.invalidAllowance(allowanceToInvalidate);
+```
+
+## Void Operations (作廢)
+
+Enterprise-grade void operations:
+
+```typescript
+// Void invoice with detailed reason for audit
+const voidedInvoice = await gateway.void(invoice, {
+  reason: '合約終止，訂單取消' // Detailed reason for enterprise audit
+});
+
+console.log('Invoice Voided:', voidedInvoice.voidOn);
+console.log('Void Reason:', '合約終止，訂單取消');
+console.log('Invoice State:', voidedInvoice.state); // InvoiceState.VOID
+```
+
+## Query and Search Operations
+
+### Query by Order ID
+```typescript
+// Find invoice using your internal order ID
+const invoice = await gateway.query({
+  orderId: 'ENT-ORDER-2024-001'
+});
+
+console.log('Found Invoice:', invoice.invoiceNumber);
+console.log('Customer VAT:', invoice.vatNumber);
+```
+
+### Query by Invoice Number and Date
+```typescript
+// Find invoice using Bank Pro invoice number
+const invoice = await gateway.query({
+  invoiceNumber: 'BP12345678',
+  issuedOn: new Date('2024-01-15')
+});
+```
+
+### Enterprise Query with System Context
+```typescript
+// Query with system-specific parameters
+const systemInvoice = await gateway.query({
+  orderId: 'SYS-12345-ORDER-001',
+  systemContext: {
+    systemOID: 12345,
+    sellerBAN: '12345675'
+  }
+});
+```
+
+## Configuration Options
+
+### Gateway Configuration
+```typescript
+interface BankProInvoiceGatewayOptions {
+  user: string;           // Bank Pro API username
+  password: string;       // Bank Pro API password
+  systemOID: number;      // Your system identifier
+  sellerBAN: string;      // Your business VAT number (賣方統編)
+  baseUrl?: BankProBaseUrls; // API endpoint (DEVELOPMENT or PRODUCTION)
+}
+
+const gateway = new BankProInvoiceGateway({
+  user: 'ENTERPRISE_USER',
+  password: 'SECURE_PASSWORD',
+  systemOID: 12345,
+  sellerBAN: '12345675', // Your registered business VAT number
+  baseUrl: BankProBaseUrls.PRODUCTION
+});
+```
+
+### Multi-System Enterprise Setup
+```typescript
+// Support multiple systems for large enterprises
+const systems = [
+  {
+    name: 'Sales System',
+    gateway: new BankProInvoiceGateway({
+      user: 'SALES_USER',
+      password: 'SALES_PASSWORD',
+      systemOID: 10001,
+      sellerBAN: '12345675',
+      baseUrl: BankProBaseUrls.PRODUCTION
+    })
+  },
+  {
+    name: 'Service System', 
+    gateway: new BankProInvoiceGateway({
+      user: 'SERVICE_USER',
+      password: 'SERVICE_PASSWORD',
+      systemOID: 10002,
+      sellerBAN: '12345675',
+      baseUrl: BankProBaseUrls.PRODUCTION
+    })
+  }
+];
+
+// Route invoices to appropriate system
+async function issueInvoiceBySystem(systemName: string, options: BankProInvoiceIssueOptions) {
+  const system = systems.find(s => s.name === systemName);
+  if (!system) throw new Error(`System not found: ${systemName}`);
+  
+  return system.gateway.issue(options);
+}
+```
+
+### Environment Configuration
+
+#### Development Environment
+```typescript
+const devGateway = new BankProInvoiceGateway({
+  user: 'TEST_USER',
+  password: 'TEST_PASSWORD',
+  systemOID: 99999,
+  sellerBAN: '99999999', // Test VAT number
+  baseUrl: BankProBaseUrls.DEVELOPMENT
+});
+```
+
+#### Production Environment
+```typescript
+const prodGateway = new BankProInvoiceGateway({
+  user: process.env.BANKPRO_API_USER,
+  password: process.env.BANKPRO_API_PASSWORD,
+  systemOID: parseInt(process.env.BANKPRO_SYSTEM_OID),
+  sellerBAN: process.env.COMPANY_VAT_NUMBER,
+  baseUrl: BankProBaseUrls.PRODUCTION
+});
+```
+
+## Error Handling
+
+### Bank Pro-Specific Errors
+```typescript
+try {
+  const invoice = await gateway.issue(options);
+} catch (error) {
+  switch (error.code) {
+    case 'BANKPRO_AUTH_FAILED':
+      console.error('Authentication failed - check user/password');
+      break;
+    case 'BANKPRO_INVALID_SYSTEM_OID':
+      console.error('Invalid system OID - check system registration');
+      break;
+    case 'BANKPRO_INVALID_SELLER_BAN':
+      console.error('Invalid seller BAN - VAT number not registered');
+      break;
+    case 'BANKPRO_DUPLICATE_ORDER':
+      console.error('Order ID already exists in system');
+      break;
+    case 'BANKPRO_QUOTA_EXCEEDED':
+      console.error('API quota exceeded for this period');
+      break;
+    default:
+      console.error('Bank Pro API error:', error.message);
+  }
+}
+```
+
+### Enterprise Validation Errors
+```typescript
+// Handle enterprise-specific validation errors
+try {
+  await gateway.issue(options);
+} catch (error) {
+  if (error.type === 'PRODUCT_VALIDATION_ERROR') {
+    console.error('Product validation failed:', error.productId);
+  } else if (error.type === 'B2B_VAT_ERROR') {
+    console.error('B2B VAT number validation failed:', error.vatNumber);
+  } else if (error.type === 'SYSTEM_INTEGRATION_ERROR') {
+    console.error('System integration error:', error.systemOID);
+  }
+}
+```
+
+## Testing
+
+### Unit Tests
+```bash
+npm test
+```
+
+### Integration Testing with Bank Pro
+```typescript
+// Test with Bank Pro development environment
+const testGateway = new BankProInvoiceGateway({
+  user: 'TEST_USER',
+  password: 'TEST_PASSWORD',
+  systemOID: 99999,
+  sellerBAN: '99999999',
+  baseUrl: BankProBaseUrls.DEVELOPMENT
+});
+
+describe('Bank Pro Integration', () => {
+  it('should issue B2B invoice successfully', async () => {
+    const invoice = await testGateway.issue({
+      orderId: `B2B-TEST-${Date.now()}`,
+      items: [
+        {
+          name: '測試企業產品',
+          unitPrice: 10000,
+          quantity: 1,
+          taxType: TaxType.TAXED,
+          id: 'TEST-PROD-001'
+        }
+      ],
+      customer: {
+        name: '測試企業客戶',
+        vatNumber: '88888888'
+      },
+      vatNumber: '88888888'
+    });
+
+    expect(invoice.invoiceNumber).toBeDefined();
+    expect(invoice.state).toBe(InvoiceState.ISSUED);
+    expect(invoice.issuedAmount).toBeGreaterThan(0);
+  });
+
+  it('should handle product specifications correctly', async () => {
+    const productWithSpecs = {
+      name: '高階產品',
+      unitPrice: 50000,
+      quantity: 1,
+      taxType: TaxType.TAXED,
+      id: 'HIGH-END-001',
+      barcode: '4710123456789',
+      spec: '高階規格：CPU Intel i9, RAM 32GB, Storage 1TB NVMe SSD',
+      remark: '企業專用版本'
+    };
+
+    const invoice = await testGateway.issue({
+      orderId: `SPEC-TEST-${Date.now()}`,
+      items: [productWithSpecs],
+      customer: { name: '規格測試客戶' }
+    });
+
+    expect(invoice.items[0].spec).toBeDefined();
+    expect(invoice.items[0].barcode).toBeDefined();
+  });
+});
+```
+
+## Enterprise Integration Patterns
+
+### ERP System Integration
+```typescript
+// Integration with enterprise ERP systems
+class ERPBankProIntegration {
+  constructor(private gateway: BankProInvoiceGateway) {}
+
+  async processERPOrder(erpOrder: ERPOrder): Promise<Invoice> {
+    // Transform ERP order to Bank Pro format
+    const bankProItems = erpOrder.items.map(item => ({
+      name: item.productName,
+      unitPrice: item.price,
+      quantity: item.quantity,
+      unit: item.unit,
+      taxType: this.mapERPTaxType(item.taxCategory),
+      id: item.erpProductId,
+      barcode: item.barcode,
+      spec: item.specifications,
+      remark: item.notes
+    }));
+
+    return this.gateway.issue({
+      orderId: erpOrder.orderNumber,
+      items: bankProItems,
+      customer: {
+        name: erpOrder.customer.companyName,
+        vatNumber: erpOrder.customer.taxId,
+        address: erpOrder.customer.address,
+        email: erpOrder.customer.email,
+        phone: erpOrder.customer.phone
+      },
+      vatNumber: erpOrder.customer.taxId
+    });
+  }
+
+  private mapERPTaxType(erpTaxCategory: string): TaxType {
+    switch (erpTaxCategory) {
+      case 'STANDARD': return TaxType.TAXED;
+      case 'FREE': return TaxType.TAX_FREE;
+      case 'EXPORT': return TaxType.ZERO_TAX;
+      default: return TaxType.TAXED;
+    }
+  }
+}
+```
+
+### Audit and Compliance
+```typescript
+// Enterprise audit trail implementation
+class BankProAuditLogger {
+  constructor(private gateway: BankProInvoiceGateway) {}
+
+  async issueWithAudit(options: BankProInvoiceIssueOptions, auditContext: AuditContext) {
+    // Log pre-issue audit
+    this.logAuditEvent('INVOICE_ISSUE_START', {
+      orderId: options.orderId,
+      user: auditContext.userId,
+      timestamp: new Date(),
+      systemOID: this.gateway.systemOID,
+      customerVAT: options.vatNumber
+    });
+
+    try {
+      const invoice = await this.gateway.issue(options);
+      
+      // Log successful issue
+      this.logAuditEvent('INVOICE_ISSUE_SUCCESS', {
+        orderId: options.orderId,
+        invoiceNumber: invoice.invoiceNumber,
+        amount: invoice.issuedAmount,
+        timestamp: new Date()
+      });
+
+      return invoice;
+    } catch (error) {
+      // Log failure
+      this.logAuditEvent('INVOICE_ISSUE_FAILURE', {
+        orderId: options.orderId,
+        error: error.message,
+        timestamp: new Date()
+      });
+      throw error;
+    }
+  }
+
+  private logAuditEvent(eventType: string, data: any) {
+    // Implement your audit logging system
+    console.log(`AUDIT [${eventType}]:`, JSON.stringify(data, null, 2));
+  }
+}
+```
+
+## Performance Optimization
+
+### Connection Pooling
+```typescript
+// Optimize for high-volume enterprise usage
+class PooledBankProGateway {
+  private connectionPool: BankProInvoiceGateway[] = [];
+  private poolSize = 5;
+  private currentIndex = 0;
+
+  constructor(config: BankProInvoiceGatewayOptions) {
+    for (let i = 0; i < this.poolSize; i++) {
+      this.connectionPool.push(new BankProInvoiceGateway(config));
+    }
+  }
+
+  async issue(options: BankProInvoiceIssueOptions): Promise<Invoice> {
+    const gateway = this.getNextGateway();
+    return gateway.issue(options);
+  }
+
+  private getNextGateway(): BankProInvoiceGateway {
+    const gateway = this.connectionPool[this.currentIndex];
+    this.currentIndex = (this.currentIndex + 1) % this.poolSize;
+    return gateway;
+  }
+}
+```
+
+## Taiwan Compliance Features
+
+### Ministry of Finance Integration
+- **Real-time B2B Transmission**: Enterprise invoices transmitted to MOF systems
+- **VAT Number Validation**: Built-in validation of business VAT numbers (統編)
+- **Audit Compliance**: Enterprise-grade audit trails for tax authorities
+- **Financial System Integration**: Native banking system integration
+
+### Enterprise Tax Compliance
+- **B2B Tax Handling**: Accurate business-to-business tax calculations
+- **Multi-entity Support**: Handle multiple legal entities under single system
+- **Export Documentation**: Complete export transaction support
+- **Financial Reporting**: Integration with Taiwan financial reporting requirements
+
+## Security Best Practices
+
+### Enterprise Authentication
+```typescript
+// Secure credential management for enterprises
+const enterpriseConfig = {
+  user: process.env.BANKPRO_ENTERPRISE_USER,
+  password: process.env.BANKPRO_ENTERPRISE_PASSWORD,
+  systemOID: parseInt(process.env.BANKPRO_SYSTEM_OID),
+  sellerBAN: process.env.COMPANY_VAT_NUMBER
+};
+
+// Validate enterprise configuration
+const validateEnterpriseConfig = (config: any) => {
+  const required = ['user', 'password', 'systemOID', 'sellerBAN'];
+  
+  required.forEach(field => {
+    if (!config[field]) {
+      throw new Error(`Missing required Bank Pro enterprise configuration: ${field}`);
+    }
+  });
+
+  // Validate VAT number format
+  if (!/^\d{8}$/.test(config.sellerBAN)) {
+    throw new Error('Invalid seller BAN format - must be 8 digits');
+  }
+};
+```
+
+## Dependencies
+
+- `@rytass/invoice`: Core invoice types and interfaces
+- `axios`: HTTP client for Bank Pro API communication
+- `luxon`: Date/time handling for Taiwan timezone
+- `validator`: Input validation utilities
+
+## Related Packages
+
+### Other Taiwan E-Invoice Adapters
+- `@rytass/invoice-adapter-ecpay`: ECPay (綠界科技) e-invoice integration
+- `@rytass/invoice-adapter-ezpay`: EZPay (藍新金流) e-invoice integration
+- `@rytass/invoice-adapter-amego`: Amego e-invoice integration
+
+### Supporting Packages
+- `@rytass/payments`: Payment processing integration
+- `@rytass/order-builder`: Enterprise order management
+
+## License
+
+MIT
+
+## Support
+
+- **Bank Pro Documentation**: Contact Bank Pro for enterprise API documentation
+- **Taiwan E-Invoice Regulations**: Taiwan Ministry of Finance specifications
+- **GitHub Issues**: https://github.com/Rytass/Utils/issues
+- **Enterprise Support**: Contact Bank Pro for enterprise technical support
+
+This adapter provides complete Bank Pro e-invoice integration optimized for enterprise and B2B scenarios with full Taiwan regulatory compliance.

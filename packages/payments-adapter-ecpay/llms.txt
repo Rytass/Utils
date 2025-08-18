@@ -1,0 +1,271 @@
+# ECPay Payment Adapter (@rytass/payments-adapter-ecpay)
+
+> TypeScript ECPay (綠界科技) payment gateway adapter providing unified payment processing for Taiwan e-commerce platforms. Supports credit cards, virtual accounts, CVS payments, and installment options with comprehensive webhook handling.
+
+ECPay is one of Taiwan's largest third-party payment service providers, offering diverse payment methods including credit/debit cards, ATM transfers, convenience store payments, and installment plans. This adapter provides a clean, type-safe interface for integrating ECPay services into Node.js applications.
+
+## Core Features
+
+- **Multiple Payment Methods**: Credit cards, virtual accounts, CVS (convenience store) payments, barcode payments, Apple Pay
+- **Installment Support**: 3, 6, 12, 18, 24 installment plans with configurable interest rates
+- **Card Binding**: Secure tokenization for recurring payments and subscription models  
+- **Order Management**: Create, query, refund, and cancel payment transactions
+- **Webhook Security**: Automatic MAC signature verification for payment notifications
+- **Testing Support**: Built-in testing mode with ECPay sandbox environment
+
+## Installation and Setup
+
+```bash
+npm install @rytass/payments-adapter-ecpay
+# Peer dependency for webhook testing
+npm install @ngrok/ngrok
+```
+
+## Payment Methods
+
+### Credit Card Payments
+```typescript
+import { ECPayPayment } from '@rytass/payments-adapter-ecpay';
+
+const gateway = new ECPayPayment({
+  merchantId: 'YOUR_MERCHANT_ID',
+  hashKey: 'YOUR_HASH_KEY', 
+  hashIV: 'YOUR_HASH_IV',
+  baseUrl: 'https://payment-stage.ecpay.com.tw', // or production URL
+});
+
+const order = gateway.order({
+  id: 'ORDER_001',
+  items: [{
+    name: 'Product Name',
+    price: 1000,
+    quantity: 1,
+  }],
+  customer: {
+    name: 'Customer Name',
+    email: 'customer@example.com',
+    phone: '0912345678',
+  },
+});
+
+// Credit card payment with installment
+const result = await order.pay({
+  type: 'CREDIT_CARD',
+  redirectUrls: {
+    success: 'https://yoursite.com/success',
+    failure: 'https://yoursite.com/failure',
+  },
+  installment: 6, // 6 installment payments
+});
+```
+
+### Virtual Account Payments
+```typescript
+const result = await order.pay({
+  type: 'VIRTUAL_ACCOUNT',
+  redirectUrls: {
+    success: 'https://yoursite.com/success',
+    failure: 'https://yoursite.com/failure',
+  },
+  expiredAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days
+});
+```
+
+### CVS (Convenience Store) Payments
+```typescript
+const result = await order.pay({
+  type: 'CVS',
+  redirectUrls: {
+    success: 'https://yoursite.com/success', 
+    failure: 'https://yoursite.com/failure',
+  },
+  expiredAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+});
+```
+
+## Card Binding and Recurring Payments
+
+### Initial Card Binding
+```typescript
+import { ECPayBindCardRequest } from '@rytass/payments-adapter-ecpay';
+
+const bindRequest = new ECPayBindCardRequest({
+  gateway,
+  id: 'BIND_001',
+  customer: {
+    id: 'CUSTOMER_001',
+    name: 'John Doe',
+    email: 'john@example.com',
+  },
+  redirectUrls: {
+    success: 'https://yoursite.com/bind-success',
+    failure: 'https://yoursite.com/bind-failure',
+  },
+});
+
+const bindResult = await bindRequest.commit();
+```
+
+### Using Bound Cards for Payments
+```typescript
+// Pay with previously bound card
+const result = await order.pay({
+  type: 'BOUND_CARD',
+  token: 'CARD_TOKEN_FROM_BINDING',
+  redirectUrls: {
+    success: 'https://yoursite.com/success',
+    failure: 'https://yoursite.com/failure', 
+  },
+});
+```
+
+### Query Bound Card Information
+```typescript
+const cardInfo = await gateway.queryBindCardInfo('CUSTOMER_001');
+console.log('Bound cards:', cardInfo.cards);
+```
+
+## Order Management
+
+### Query Payment Status
+```typescript
+const paymentStatus = await gateway.query({
+  orderId: 'ORDER_001',
+  amount: 1000,
+});
+
+console.log('Payment Status:', paymentStatus.status);
+console.log('Transaction ID:', paymentStatus.transactionId);
+```
+
+### Refund Payments
+```typescript
+const refundResult = await gateway.refund({
+  orderId: 'ORDER_001', 
+  amount: 500, // Partial refund
+  reason: 'Customer requested refund',
+});
+```
+
+### Cancel Payments
+```typescript
+const cancelResult = await gateway.cancel({
+  orderId: 'ORDER_001',
+  amount: 1000,
+});
+```
+
+## Webhook Handling
+
+### Webhook Verification
+```typescript
+import express from 'express';
+
+const app = express();
+
+app.post('/webhook/ecpay', express.raw({ type: 'application/x-www-form-urlencoded' }), (req, res) => {
+  try {
+    // Automatically verifies MAC signature
+    const notification = gateway.parseWebhook(req.body);
+    
+    console.log('Payment notification:', notification);
+    
+    // Process the payment notification
+    if (notification.RtnCode === '1') {
+      // Payment successful
+      console.log('Payment successful for order:', notification.MerchantTradeNo);
+    }
+    
+    res.status(200).send('1|OK'); // ECPay requires this response
+  } catch (error) {
+    console.error('Webhook verification failed:', error);
+    res.status(400).send('0|Error');
+  }
+});
+```
+
+## Configuration Options
+
+### Gateway Configuration
+```typescript
+interface ECPayConfig {
+  merchantId: string;        // ECPay merchant ID
+  hashKey: string;           // Hash key for MAC generation
+  hashIV: string;            // Hash IV for MAC generation
+  baseUrl?: string;          // ECPay API base URL (defaults to production)
+  returnUrl?: string;        // Default return URL
+  clientBackUrl?: string;    // Default client back URL
+  notifyUrl?: string;        // Default webhook notification URL
+}
+```
+
+### Order Configuration
+```typescript
+interface OrderConfig {
+  id: string;               // Unique order ID
+  items: OrderItem[];       // Order items with name, price, quantity
+  customer?: Customer;      // Customer information
+  description?: string;     // Order description
+  currency?: 'TWD';         // Currency (Taiwan Dollar only)
+  installment?: number;     // Installment periods (3,6,12,18,24)
+  expiredAt?: Date;         // Payment expiration date
+}
+```
+
+## Testing and Development
+
+### Using ECPay Staging Environment
+```typescript
+const testGateway = new ECPayPayment({
+  merchantId: '2000132',     // ECPay test merchant ID
+  hashKey: '5294y06JbISpM5x9',
+  hashIV: 'v77hoKGq4kWxNNIS',
+  baseUrl: 'https://payment-stage.ecpay.com.tw',
+});
+```
+
+### Test Credit Card Numbers
+- **成功交易**: 4311-9522-2222-2222
+- **失敗交易**: 4000-2211-1111-1111
+- **授權失敗**: 4000-0000-0000-0002
+
+## Error Handling
+
+```typescript
+import { ECPayError } from '@rytass/payments-adapter-ecpay';
+
+try {
+  const result = await order.pay({
+    type: 'CREDIT_CARD',
+    redirectUrls: { /* ... */ },
+  });
+} catch (error) {
+  if (error instanceof ECPayError) {
+    console.error('ECPay Error:', error.message);
+    console.error('Error Code:', error.code);
+  }
+}
+```
+
+## Dependencies and Requirements
+
+- **Node.js**: Version 16.0.0 or higher
+- **TypeScript**: Full TypeScript support with type definitions
+- **Dependencies**: axios, debug, lru-cache, luxon
+- **Peer Dependencies**: @ngrok/ngrok (for webhook testing)
+
+## Related Packages
+
+- [@rytass/payments](https://www.npmjs.com/package/@rytass/payments): Base payment interfaces and types
+- [@rytass/payments-adapter-newebpay](https://www.npmjs.com/package/@rytass/payments-adapter-newebpay): NewebPay payment adapter
+- [@rytass/payments-nestjs-module](https://www.npmjs.com/package/@rytass/payments-nestjs-module): NestJS integration module
+
+## License
+
+MIT License - Free for commercial use
+
+## Support
+
+- [GitHub Issues](https://github.com/Rytass/Utils/issues)
+- [Documentation](https://github.com/Rytass/Utils/tree/main/packages/payments-adapter-ecpay)
+- [ECPay Official Documentation](https://developers.ecpay.com.tw/)

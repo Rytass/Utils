@@ -1,0 +1,193 @@
+# @rytass/sms
+
+Core SMS service interfaces and utilities for Taiwan SMS providers integration.
+
+## Package Overview
+
+This package provides foundational TypeScript interfaces, types, and utilities for SMS messaging services, serving as the base package for SMS provider adapters. It defines standardized interfaces for sending SMS messages and handling responses across different Taiwan SMS service providers.
+
+## Core Features
+
+### Base Interfaces
+- **SMSService**: Generic interface for SMS provider implementations
+- **SMSRequest**: Standard SMS message request structure
+- **SMSSendResponse**: Unified response format for sent messages
+- **MultiTargetRequest**: Bulk SMS messaging interface
+
+### Message Types
+- **Single Message**: Send SMS to individual recipients
+- **Bulk Messaging**: Send SMS to multiple recipients efficiently
+- **Flexible Targets**: Support for both individual and bulk messaging patterns
+
+### Status Management
+- **SMSRequestResult**: Standardized success/failure status (SUCCESS, FAILED)
+- **Response Tracking**: Message ID tracking for sent messages
+- **Error Handling**: Structured error information for failed sends
+
+## Usage Patterns
+
+### Basic Interface Implementation
+```typescript
+import { SMSService, SMSRequest, SMSSendResponse } from '@rytass/sms';
+
+class MySMSProvider implements SMSService<MySMSRequest, MySMSResponse, MyMultiTarget> {
+  async send(request: MySMSRequest): Promise<MySMSResponse>;
+  async send(request: MySMSRequest[]): Promise<MySMSResponse[]>;
+  async send(request: MyMultiTarget): Promise<MySMSResponse[]>;
+  async send(request: MySMSRequest | MySMSRequest[] | MyMultiTarget) {
+    // Implementation logic
+  }
+}
+```
+
+### Standard Message Structure
+```typescript
+interface SMSRequest {
+  mobile: string;  // Recipient phone number
+  text: string;    // Message content
+}
+
+interface SMSSendResponse {
+  messageId?: string;           // Unique message identifier
+  status: SMSRequestResult;     // SUCCESS or FAILED
+  mobile: string;               // Recipient phone number
+}
+```
+
+### Bulk Messaging Support
+```typescript
+interface MultiTargetRequest {
+  mobileList: string[];  // Array of recipient phone numbers
+  text: string;          // Message content for all recipients
+}
+```
+
+## Taiwan SMS Context
+
+### Taiwan Mobile Numbers
+The package includes Taiwan-specific utilities:
+- **Mobile Number Validation**: Taiwan mobile number format validation
+- **Number Formatting**: Standardize Taiwan phone number formats
+- **Carrier Detection**: Identify Taiwan mobile carriers when needed
+
+### Common Use Cases
+- **OTP Messages**: One-time password delivery for authentication
+- **Marketing Messages**: Promotional SMS campaigns
+- **Notifications**: System alerts and status updates
+- **Transaction Alerts**: E-commerce and banking notifications
+
+## Architecture Design
+
+### Generic Type System
+The package uses generics to enable type-safe implementations:
+```typescript
+interface SMSService<
+  Request extends SMSRequest,
+  SendResponse extends SMSSendResponse, 
+  MultiTarget extends MultiTargetRequest
+> {
+  send(request: Request[]): Promise<SendResponse[]>;
+  send(request: Request): Promise<SendResponse>;
+  send(request: MultiTarget): Promise<SendResponse[]>;
+}
+```
+
+### Flexible Messaging Patterns
+Supports multiple messaging patterns:
+- **Individual Messages**: One message to one recipient
+- **Batch Messages**: Multiple individual messages in one request
+- **Broadcast Messages**: One message to multiple recipients
+
+## Integration Utilities
+
+### Taiwan Mobile Helper
+```typescript
+import { TaiwanMobileValidator } from '@rytass/sms/helpers/taiwan';
+
+// Validate Taiwan mobile numbers
+const isValid = TaiwanMobileValidator.validate('0912345678');
+
+// Format mobile numbers
+const formatted = TaiwanMobileValidator.format('912345678'); // Returns: 0912345678
+```
+
+### Error Response Handling
+```typescript
+import { SMSRequestResult } from '@rytass/sms';
+
+const response = await smsService.send({
+  mobile: '0912345678',
+  text: 'Hello Taiwan!'
+});
+
+if (response.status === SMSRequestResult.SUCCESS) {
+  console.log('SMS sent successfully:', response.messageId);
+} else {
+  console.error('SMS failed for:', response.mobile);
+}
+```
+
+## Provider Integration Patterns
+
+### Adapter Implementation
+SMS provider adapters should:
+- **Extend Base Types**: Use provided interfaces as base types
+- **Add Provider-Specific Fields**: Extend with provider-specific properties
+- **Implement Error Handling**: Map provider errors to standard responses
+- **Support All Patterns**: Handle single, batch, and multi-target messaging
+
+### Example Adapter Structure
+```typescript
+import { SMSService, SMSRequest, SMSSendResponse } from '@rytass/sms';
+
+interface ProviderSMSRequest extends SMSRequest {
+  mobile: string;
+  text: string;
+  // Provider-specific fields
+  priority?: 'high' | 'normal';
+  scheduledTime?: Date;
+}
+
+interface ProviderSMSResponse extends SMSSendResponse {
+  messageId?: string;
+  status: SMSRequestResult;
+  mobile: string;
+  // Provider-specific fields
+  cost?: number;
+  deliveryTime?: Date;
+}
+
+class ProviderSMSService implements SMSService<
+  ProviderSMSRequest, 
+  ProviderSMSResponse, 
+  ProviderMultiTargetRequest
+> {
+  // Implementation
+}
+```
+
+## Quality Standards
+
+### Message Delivery
+- **Delivery Confirmation**: Track message delivery status
+- **Error Reporting**: Comprehensive error information
+- **Rate Limiting**: Respect provider rate limits
+- **Retry Logic**: Implement appropriate retry mechanisms
+
+### Security Considerations
+- **Message Content**: Secure handling of message content
+- **Phone Numbers**: Protect recipient phone number privacy
+- **Authentication**: Secure provider API authentication
+- **Logging**: Appropriate logging without exposing sensitive data
+
+## Dependencies
+
+- **No External Dependencies**: Pure TypeScript interfaces
+- **Type-First Design**: Full TypeScript support with generics
+- **Runtime Agnostic**: Works across different JavaScript environments
+
+## Related Packages
+
+- **@rytass/sms-adapter-every8d**: Every8d SMS provider integration
+
+This package serves as the foundation for all SMS service implementations in the Rytass ecosystem, providing consistent, type-safe interfaces for SMS messaging across different Taiwan SMS providers. It enables standardized integration patterns while allowing provider-specific customizations and optimizations.

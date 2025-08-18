@@ -1,0 +1,942 @@
+# File Converter Image Watermark Adapter
+
+Professional watermark application adapter powered by Sharp. Provides precise watermark positioning, multi-watermark support, and advanced compositing capabilities for image branding and copyright protection.
+
+## Package Overview
+
+- **Package**: `@rytass/file-converter-adapter-image-watermark`
+- **Version**: 0.1.8
+- **Purpose**: Professional watermark application with Sharp compositing engine
+- **Core Technology**: Sharp composite operations with precise positioning control
+- **License**: MIT
+
+## Core Features
+
+- **Multi-Watermark Support**: Apply multiple watermarks in single operation
+- **Precise Positioning**: Gravity-based positioning with Sharp's built-in gravity system
+- **Format Flexibility**: Support for PNG, JPEG, WebP, and other Sharp-compatible watermarks
+- **Sharp Integration**: High-performance compositing with libvips backend
+- **Pipeline Compatible**: Seamless integration with file converter ecosystem
+- **Memory Efficient**: Stream and Buffer processing with optimized memory usage
+- **Concurrent Processing**: Configurable Sharp concurrency for batch operations
+- **Type Safety**: Full TypeScript support with gravity enums and options
+
+## Installation
+
+```bash
+npm install @rytass/file-converter-adapter-image-watermark
+# Core converter and Sharp included as dependencies
+```
+
+## Dependencies
+
+### Production Dependencies
+- **`@rytass/file-converter`**: Core converter interface and pipeline management
+- **`sharp`**: ^0.33.5 - High-performance image processing and compositing engine
+
+### Development Dependencies
+- **`@types/sharp`**: TypeScript definitions for Sharp library
+
+## Watermark Positioning
+
+### Sharp Gravity System
+Sharp provides comprehensive positioning control through gravity values:
+
+```typescript
+import { gravity } from 'sharp';
+
+// Available positioning options
+enum GravityOptions {
+  centre = 'centre',      // Center of image
+  center = 'center',      // Alias for centre
+  north = 'north',        // Top center
+  northeast = 'northeast', // Top right
+  east = 'east',          // Right center
+  southeast = 'southeast', // Bottom right (default)
+  south = 'south',        // Bottom center
+  southwest = 'southwest', // Bottom left
+  west = 'west',          // Left center
+  northwest = 'northwest'  // Top left
+}
+```
+
+### Visual Positioning Guide
+```
+northwest    north    northeast
+    ┌─────────┬─────────┐
+    │         │         │
+west│         │centre   │east
+    │         │         │
+    └─────────┼─────────┘
+southwest    south    southeast
+```
+
+## Configuration Options
+
+### Core Interfaces
+```typescript
+interface Watermark {
+  image: string | Buffer;           // Watermark image (file path or buffer)
+  gravity?: Gravity;                // Position on target image
+}
+
+interface ImageWatermarkOptions {
+  watermarks: Watermark[];          // Array of watermarks to apply
+  concurrency?: number;             // Sharp processing concurrency (default: 1)
+}
+```
+
+### Watermark Configuration Details
+
+| Property | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
+| `image` | `string \| Buffer` | Yes | - | Watermark image source |
+| `gravity` | `Gravity` | No | `southeast` | Positioning within target image |
+| `concurrency` | `number` | No | `1` | Sharp concurrent operations limit |
+
+## Basic Usage
+
+### Single Watermark Application
+```typescript
+import { ImageWatermark } from '@rytass/file-converter-adapter-image-watermark';
+import { gravity } from 'sharp';
+import { readFileSync, writeFileSync } from 'fs';
+
+// Create watermark processor
+const watermarker = new ImageWatermark({
+  watermarks: [{
+    image: './logo.png',              // Path to watermark image
+    gravity: gravity.southeast        // Bottom-right position
+  }],
+  concurrency: 2
+});
+
+// Apply watermark to image
+const originalImage = readFileSync('photo.jpg');
+const watermarkedImage = await watermarker.convert<Buffer>(originalImage);
+writeFileSync('watermarked-photo.jpg', watermarkedImage);
+```
+
+### Buffer-Based Watermark
+```typescript
+import { readFileSync } from 'fs';
+
+// Load watermark into buffer for reuse
+const logoBuffer = readFileSync('./company-logo.png');
+
+const watermarker = new ImageWatermark({
+  watermarks: [{
+    image: logoBuffer,                // Use buffer instead of file path
+    gravity: gravity.northeast        // Top-right position
+  }]
+});
+
+const result = await watermarker.convert<Buffer>(originalImage);
+```
+
+### Stream Processing for Large Images
+```typescript
+import { createReadStream, createWriteStream } from 'fs';
+import { Readable } from 'stream';
+
+const watermarker = new ImageWatermark({
+  watermarks: [{
+    image: './watermark.png',
+    gravity: gravity.center           // Center watermark
+  }]
+});
+
+// Process large image as stream
+const inputStream = createReadStream('large-image.tiff');
+const watermarkedStream = await watermarker.convert<Readable>(inputStream);
+
+watermarkedStream.pipe(createWriteStream('watermarked-large.tiff'));
+```
+
+## Advanced Usage Patterns
+
+### Multiple Watermarks
+```typescript
+// Apply multiple watermarks in single operation
+const multiWatermarker = new ImageWatermark({
+  watermarks: [
+    {
+      image: './logo.png',
+      gravity: gravity.northwest        // Logo in top-left
+    },
+    {
+      image: './copyright.png', 
+      gravity: gravity.southeast        // Copyright in bottom-right
+    },
+    {
+      image: './stamp.png',
+      gravity: gravity.center           // Stamp in center
+    }
+  ],
+  concurrency: 4                      // Higher concurrency for multiple watermarks
+});
+
+const multiWatermarked = await multiWatermarker.convert<Buffer>(originalImage);
+```
+
+### Dynamic Watermark Selection
+```typescript
+class ConditionalWatermarker {
+  private logoWatermarker: ImageWatermark;
+  private copyrightWatermarker: ImageWatermark;
+  private premiumWatermarker: ImageWatermark;
+
+  constructor() {
+    this.logoWatermarker = new ImageWatermark({
+      watermarks: [{ image: './logo.png', gravity: gravity.southeast }]
+    });
+
+    this.copyrightWatermarker = new ImageWatermark({
+      watermarks: [{ image: './copyright.png', gravity: gravity.south }]
+    });
+
+    this.premiumWatermarker = new ImageWatermark({
+      watermarks: [
+        { image: './premium-logo.png', gravity: gravity.northwest },
+        { image: './premium-frame.png', gravity: gravity.center }
+      ]
+    });
+  }
+
+  async applyWatermark(
+    image: Buffer,
+    tier: 'basic' | 'standard' | 'premium'
+  ): Promise<Buffer> {
+    switch (tier) {
+      case 'basic':
+        return this.copyrightWatermarker.convert<Buffer>(image);
+      case 'standard':
+        return this.logoWatermarker.convert<Buffer>(image);
+      case 'premium':
+        return this.premiumWatermarker.convert<Buffer>(image);
+      default:
+        throw new Error(`Unknown tier: ${tier}`);
+    }
+  }
+}
+```
+
+### Responsive Watermark Strategy
+```typescript
+import sharp from 'sharp';
+
+class ResponsiveWatermarker {
+  async applyResponsiveWatermark(
+    image: Buffer,
+    watermarkPath: string
+  ): Promise<Buffer> {
+    // Get image dimensions
+    const metadata = await sharp(image).metadata();
+    const { width = 0, height = 0 } = metadata;
+
+    // Determine watermark size based on image size
+    let watermarkSize: number;
+    let position: string;
+
+    if (width < 500) {
+      // Small image: minimal watermark
+      watermarkSize = Math.min(width, height) * 0.15;
+      position = gravity.southeast;
+    } else if (width < 1200) {
+      // Medium image: standard watermark
+      watermarkSize = Math.min(width, height) * 0.12;
+      position = gravity.southeast;
+    } else {
+      // Large image: prominent watermark
+      watermarkSize = Math.min(width, height) * 0.10;
+      position = gravity.southeast;
+    }
+
+    // Resize watermark to appropriate size
+    const resizedWatermark = await sharp(watermarkPath)
+      .resize(Math.round(watermarkSize), Math.round(watermarkSize), {
+        fit: 'inside',
+        withoutEnlargement: true
+      })
+      .toBuffer();
+
+    // Apply watermark
+    const watermarker = new ImageWatermark({
+      watermarks: [{
+        image: resizedWatermark,
+        gravity: position as any
+      }]
+    });
+
+    return watermarker.convert<Buffer>(image);
+  }
+}
+```
+
+### Batch Watermarking
+```typescript
+import { readdir, readFile, writeFile } from 'fs/promises';
+import { join } from 'path';
+
+class BatchWatermarker {
+  private watermarker: ImageWatermark;
+
+  constructor(watermarkConfig: ImageWatermarkOptions) {
+    this.watermarker = new ImageWatermark(watermarkConfig);
+  }
+
+  async watermarkDirectory(
+    inputDir: string,
+    outputDir: string,
+    options: {
+      extensions?: string[];
+      parallel?: number;
+      preserveNames?: boolean;
+    } = {}
+  ): Promise<Array<{ file: string; success: boolean; error?: string }>> {
+    const { 
+      extensions = ['.jpg', '.jpeg', '.png', '.webp'], 
+      parallel = 8,
+      preserveNames = true 
+    } = options;
+
+    const files = await readdir(inputDir);
+    const imageFiles = files.filter(file =>
+      extensions.some(ext => file.toLowerCase().endsWith(ext))
+    );
+
+    const results = [];
+
+    // Process in parallel batches
+    for (let i = 0; i < imageFiles.length; i += parallel) {
+      const batch = imageFiles.slice(i, i + parallel);
+
+      const batchResults = await Promise.all(
+        batch.map(async (filename) => {
+          try {
+            const inputPath = join(inputDir, filename);
+            const outputPath = join(outputDir, 
+              preserveNames ? filename : `watermarked-${filename}`
+            );
+
+            const inputBuffer = await readFile(inputPath);
+            const watermarkedBuffer = await this.watermarker.convert<Buffer>(inputBuffer);
+
+            await writeFile(outputPath, watermarkedBuffer);
+
+            return { file: filename, success: true };
+          } catch (error) {
+            return { file: filename, success: false, error: error.message };
+          }
+        })
+      );
+
+      results.push(...batchResults);
+
+      console.log(`Processed ${Math.min(i + parallel, imageFiles.length)}/${imageFiles.length} images`);
+    }
+
+    return results;
+  }
+}
+
+// Usage for batch watermarking
+const batchWatermarker = new BatchWatermarker({
+  watermarks: [{
+    image: './brand-watermark.png',
+    gravity: gravity.southeast
+  }],
+  concurrency: 4
+});
+
+const results = await batchWatermarker.watermarkDirectory(
+  './original-photos',
+  './watermarked-photos',
+  { parallel: 12 }
+);
+
+console.log(`Successfully watermarked ${results.filter(r => r.success).length} images`);
+```
+
+## Pipeline Integration
+
+### Complete Image Processing Pipeline
+```typescript
+import { ConverterManager } from '@rytass/file-converter';
+import { ImageResizer } from '@rytass/file-converter-adapter-image-resizer';
+import { ImageTranscoder } from '@rytass/file-converter-adapter-image-transcoder';
+
+// Comprehensive image processing with watermarking
+const imageProcessor = new ConverterManager([
+  // Step 1: Resize for web delivery
+  new ImageResizer({
+    maxWidth: 1200,
+    maxHeight: 800,
+    keepAspectRatio: true
+  }),
+  
+  // Step 2: Apply branding watermark
+  new ImageWatermark({
+    watermarks: [
+      {
+        image: './logo-watermark.png',
+        gravity: gravity.northwest
+      },
+      {
+        image: './copyright-text.png',
+        gravity: gravity.southeast
+      }
+    ]
+  }),
+  
+  // Step 3: Convert to optimized format
+  new ImageTranscoder({
+    targetFormat: 'webp',
+    quality: 85
+  })
+]);
+
+const processedImage = await imageProcessor.convert<Buffer>(originalImage);
+```
+
+### E-commerce Product Image Pipeline
+```typescript
+class ProductImageProcessor {
+  private thumbnailPipeline: ConverterManager;
+  private fullSizePipeline: ConverterManager;
+
+  constructor(brandWatermark: string, copyrightWatermark: string) {
+    // Thumbnail pipeline: minimal watermark
+    this.thumbnailPipeline = new ConverterManager([
+      new ImageResizer({ maxWidth: 300, maxHeight: 300 }),
+      new ImageWatermark({
+        watermarks: [{ 
+          image: copyrightWatermark, 
+          gravity: gravity.southeast 
+        }]
+      }),
+      new ImageTranscoder({ targetFormat: 'webp', quality: 80 })
+    ]);
+
+    // Full-size pipeline: prominent branding
+    this.fullSizePipeline = new ConverterManager([
+      new ImageResizer({ maxWidth: 1920, maxHeight: 1080 }),
+      new ImageWatermark({
+        watermarks: [
+          { image: brandWatermark, gravity: gravity.northwest },
+          { image: copyrightWatermark, gravity: gravity.southeast }
+        ]
+      }),
+      new ImageTranscoder({ targetFormat: 'webp', quality: 90 })
+    ]);
+  }
+
+  async processProductImage(originalImage: Buffer): Promise<{
+    thumbnail: Buffer;
+    fullSize: Buffer;
+    metadata: {
+      thumbnailSize: number;
+      fullSizeSize: number;
+      compressionRatio: number;
+    };
+  }> {
+    const [thumbnail, fullSize] = await Promise.all([
+      this.thumbnailPipeline.convert<Buffer>(originalImage),
+      this.fullSizePipeline.convert<Buffer>(originalImage)
+    ]);
+
+    return {
+      thumbnail,
+      fullSize,
+      metadata: {
+        thumbnailSize: thumbnail.length,
+        fullSizeSize: fullSize.length,
+        compressionRatio: originalImage.length / fullSize.length
+      }
+    };
+  }
+}
+```
+
+### Portfolio Watermarking System
+```typescript
+class PortfolioWatermarker {
+  private photographerWatermarker: ImageWatermark;
+  private clientWatermarker: ImageWatermark;
+  private proofWatermarker: ImageWatermark;
+
+  constructor() {
+    // Photographer branding
+    this.photographerWatermarker = new ImageWatermark({
+      watermarks: [{
+        image: './photographer-signature.png',
+        gravity: gravity.southeast
+      }]
+    });
+
+    // Client delivery  
+    this.clientWatermarker = new ImageWatermark({
+      watermarks: [{
+        image: './discrete-logo.png',
+        gravity: gravity.southwest
+      }]
+    });
+
+    // Proof images with large watermark
+    this.proofWatermarker = new ImageWatermark({
+      watermarks: [{
+        image: './proof-watermark.png',
+        gravity: gravity.center
+      }]
+    });
+  }
+
+  async processPortfolioImage(
+    image: Buffer,
+    type: 'portfolio' | 'client' | 'proof'
+  ): Promise<Buffer> {
+    switch (type) {
+      case 'portfolio':
+        return this.photographerWatermarker.convert<Buffer>(image);
+      case 'client':
+        return this.clientWatermarker.convert<Buffer>(image);
+      case 'proof':
+        return this.proofWatermarker.convert<Buffer>(image);
+      default:
+        throw new Error(`Unknown portfolio type: ${type}`);
+    }
+  }
+
+  async generatePortfolioSet(
+    originalImage: Buffer
+  ): Promise<{
+    portfolio: Buffer;
+    client: Buffer;
+    proof: Buffer;
+  }> {
+    const [portfolio, client, proof] = await Promise.all([
+      this.processPortfolioImage(originalImage, 'portfolio'),
+      this.processPortfolioImage(originalImage, 'client'),
+      this.processPortfolioImage(originalImage, 'proof')
+    ]);
+
+    return { portfolio, client, proof };
+  }
+}
+```
+
+## Advanced Watermark Techniques
+
+### Transparent Watermark Creation
+```typescript
+import sharp from 'sharp';
+
+class TransparentWatermarkGenerator {
+  async createTextWatermark(
+    text: string,
+    options: {
+      width?: number;
+      height?: number;
+      fontSize?: number;
+      color?: string;
+      opacity?: number;
+    } = {}
+  ): Promise<Buffer> {
+    const {
+      width = 300,
+      height = 100,
+      fontSize = 24,
+      color = 'white',
+      opacity = 0.7
+    } = options;
+
+    // Create text watermark using SVG
+    const svgText = `
+      <svg width="${width}" height="${height}">
+        <text x="50%" y="50%" 
+              text-anchor="middle" 
+              dominant-baseline="middle"
+              font-family="Arial, sans-serif"
+              font-size="${fontSize}"
+              fill="${color}"
+              opacity="${opacity}">
+          ${text}
+        </text>
+      </svg>
+    `;
+
+    return sharp(Buffer.from(svgText))
+      .png()
+      .toBuffer();
+  }
+
+  async createFrameWatermark(
+    width: number,
+    height: number,
+    borderWidth: number = 10,
+    color: string = 'black',
+    opacity: number = 0.3
+  ): Promise<Buffer> {
+    const svgFrame = `
+      <svg width="${width}" height="${height}">
+        <rect x="0" y="0" 
+              width="${width}" 
+              height="${height}" 
+              fill="transparent" 
+              stroke="${color}" 
+              stroke-width="${borderWidth}"
+              opacity="${opacity}" />
+      </svg>
+    `;
+
+    return sharp(Buffer.from(svgFrame))
+      .png()
+      .toBuffer();
+  }
+}
+
+// Usage
+const watermarkGen = new TransparentWatermarkGenerator();
+
+const textWatermark = await watermarkGen.createTextWatermark('© 2024 My Company', {
+  width: 400,
+  height: 60,
+  fontSize: 18,
+  color: 'white',
+  opacity: 0.8
+});
+
+const watermarker = new ImageWatermark({
+  watermarks: [{
+    image: textWatermark,
+    gravity: gravity.south
+  }]
+});
+```
+
+### Conditional Watermark Sizing
+```typescript
+class AdaptiveWatermarker {
+  async applyProportionalWatermark(
+    image: Buffer,
+    watermarkPath: string,
+    sizeRatio: number = 0.1  // 10% of image size
+  ): Promise<Buffer> {
+    const imageMetadata = await sharp(image).metadata();
+    const { width = 0, height = 0 } = imageMetadata;
+
+    // Calculate watermark size proportional to image
+    const targetSize = Math.min(width, height) * sizeRatio;
+
+    // Resize watermark to proportional size
+    const resizedWatermark = await sharp(watermarkPath)
+      .resize(Math.round(targetSize), Math.round(targetSize), {
+        fit: 'inside',
+        withoutEnlargement: true
+      })
+      .toBuffer();
+
+    const watermarker = new ImageWatermark({
+      watermarks: [{
+        image: resizedWatermark,
+        gravity: gravity.southeast
+      }]
+    });
+
+    return watermarker.convert<Buffer>(image);
+  }
+}
+```
+
+## Performance Optimization
+
+### Watermark Caching Strategy
+```typescript
+class CachedWatermarker {
+  private watermarkCache = new Map<string, Buffer>();
+  private watermarker: ImageWatermark;
+
+  constructor(private watermarkPaths: string[]) {
+    this.preloadWatermarksIntoCache();
+  }
+
+  private async preloadWatermarksIntoCache(): Promise<void> {
+    for (const path of this.watermarkPaths) {
+      const buffer = await readFile(path);
+      this.watermarkCache.set(path, buffer);
+    }
+
+    // Create watermarker with cached buffers
+    this.watermarker = new ImageWatermark({
+      watermarks: this.watermarkPaths.map(path => ({
+        image: this.watermarkCache.get(path)!,
+        gravity: gravity.southeast
+      })),
+      concurrency: 6
+    });
+  }
+
+  async applyWatermark(image: Buffer): Promise<Buffer> {
+    return this.watermarker.convert<Buffer>(image);
+  }
+
+  // Manually refresh cache if watermarks change
+  async refreshCache(): Promise<void> {
+    this.watermarkCache.clear();
+    await this.preloadWatermarksIntoCache();
+  }
+}
+```
+
+### High-Performance Batch Processing
+```typescript
+class HighPerformanceWatermarker {
+  private watermarker: ImageWatermark;
+  private processingQueue: Array<{
+    input: Buffer;
+    resolve: (result: Buffer) => void;
+    reject: (error: Error) => void;
+  }> = [];
+  
+  private isProcessing = false;
+
+  constructor(watermarkConfig: ImageWatermarkOptions) {
+    this.watermarker = new ImageWatermark({
+      ...watermarkConfig,
+      concurrency: Math.min(8, require('os').cpus().length)
+    });
+  }
+
+  async processImage(image: Buffer): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      this.processingQueue.push({ input: image, resolve, reject });
+      this.processQueue();
+    });
+  }
+
+  private async processQueue(): Promise<void> {
+    if (this.isProcessing || this.processingQueue.length === 0) {
+      return;
+    }
+
+    this.isProcessing = true;
+
+    while (this.processingQueue.length > 0) {
+      // Process in batches
+      const batch = this.processingQueue.splice(0, 10);
+
+      const promises = batch.map(async (item) => {
+        try {
+          const result = await this.watermarker.convert<Buffer>(item.input);
+          item.resolve(result);
+        } catch (error) {
+          item.reject(error);
+        }
+      });
+
+      await Promise.all(promises);
+    }
+
+    this.isProcessing = false;
+  }
+}
+```
+
+## Error Handling
+
+### Robust Watermark Application
+```typescript
+class RobustWatermarker {
+  private watermarker: ImageWatermark;
+  private fallbackWatermarker?: ImageWatermark;
+
+  constructor(
+    primaryConfig: ImageWatermarkOptions,
+    fallbackConfig?: ImageWatermarkOptions
+  ) {
+    this.watermarker = new ImageWatermark(primaryConfig);
+    
+    if (fallbackConfig) {
+      this.fallbackWatermarker = new ImageWatermark(fallbackConfig);
+    }
+  }
+
+  async safeApplyWatermark(
+    image: Buffer,
+    retryOnFailure: boolean = true
+  ): Promise<{
+    success: boolean;
+    result?: Buffer;
+    error?: string;
+    usedFallback: boolean;
+  }> {
+    try {
+      const result = await this.watermarker.convert<Buffer>(image);
+      return { success: true, result, usedFallback: false };
+    } catch (error) {
+      console.warn('Primary watermarker failed:', error.message);
+
+      if (retryOnFailure && this.fallbackWatermarker) {
+        try {
+          const result = await this.fallbackWatermarker.convert<Buffer>(image);
+          return { success: true, result, usedFallback: true };
+        } catch (fallbackError) {
+          return { 
+            success: false, 
+            error: fallbackError.message, 
+            usedFallback: true 
+          };
+        }
+      }
+
+      return { success: false, error: error.message, usedFallback: false };
+    }
+  }
+}
+
+// Usage with error recovery
+const robustWatermarker = new RobustWatermarker(
+  {
+    watermarks: [{ image: './complex-watermark.png', gravity: gravity.center }]
+  },
+  {
+    watermarks: [{ image: './simple-watermark.png', gravity: gravity.southeast }]
+  }
+);
+
+const result = await robustWatermarker.safeApplyWatermark(imageBuffer);
+if (result.success) {
+  console.log(`Watermark applied${result.usedFallback ? ' (fallback used)' : ''}`);
+} else {
+  console.error('Watermarking failed:', result.error);
+}
+```
+
+## Testing
+
+### Watermark Application Testing
+```typescript
+import { ImageWatermark } from '@rytass/file-converter-adapter-image-watermark';
+import { gravity } from 'sharp';
+import sharp from 'sharp';
+
+describe('ImageWatermark', () => {
+  const createTestImage = (width: number, height: number) =>
+    sharp({
+      create: { 
+        width, 
+        height, 
+        channels: 3, 
+        background: { r: 100, g: 100, b: 100 } 
+      }
+    }).jpeg().toBuffer();
+
+  const createTestWatermark = (size: number) =>
+    sharp({
+      create: { 
+        width: size, 
+        height: size, 
+        channels: 4, 
+        background: { r: 255, g: 255, b: 255, alpha: 0.5 } 
+      }
+    }).png().toBuffer();
+
+  it('should apply watermark at specified gravity', async () => {
+    const watermarkBuffer = await createTestWatermark(50);
+    
+    const watermarker = new ImageWatermark({
+      watermarks: [{
+        image: watermarkBuffer,
+        gravity: gravity.northeast
+      }]
+    });
+
+    const testImage = await createTestImage(200, 200);
+    const result = await watermarker.convert<Buffer>(testImage);
+
+    // Verify image is still valid and processed
+    const metadata = await sharp(result).metadata();
+    expect(metadata.width).toBe(200);
+    expect(metadata.height).toBe(200);
+    expect(result.length).toBeGreaterThan(testImage.length);
+  });
+
+  it('should handle multiple watermarks', async () => {
+    const watermark1 = await createTestWatermark(30);
+    const watermark2 = await createTestWatermark(40);
+
+    const watermarker = new ImageWatermark({
+      watermarks: [
+        { image: watermark1, gravity: gravity.northwest },
+        { image: watermark2, gravity: gravity.southeast }
+      ]
+    });
+
+    const testImage = await createTestImage(300, 300);
+    const result = await watermarker.convert<Buffer>(testImage);
+
+    const metadata = await sharp(result).metadata();
+    expect(metadata.width).toBe(300);
+    expect(metadata.height).toBe(300);
+  });
+
+  it('should handle stream input/output', async () => {
+    const watermarkBuffer = await createTestWatermark(25);
+    const testImageBuffer = await createTestImage(150, 150);
+    
+    const watermarker = new ImageWatermark({
+      watermarks: [{ image: watermarkBuffer, gravity: gravity.center }]
+    });
+
+    const testStream = Readable.from(testImageBuffer);
+    const resultStream = await watermarker.convert<Readable>(testStream);
+
+    const chunks: Buffer[] = [];
+    for await (const chunk of resultStream) {
+      chunks.push(Buffer.from(chunk));
+    }
+
+    const resultBuffer = Buffer.concat(chunks);
+    const metadata = await sharp(resultBuffer).metadata();
+    
+    expect(metadata.width).toBe(150);
+    expect(metadata.height).toBe(150);
+  });
+});
+```
+
+## Best Practices
+
+### Watermark Design Guidelines
+- **Size**: Keep watermarks 5-15% of image size for optimal visibility
+- **Position**: Use consistent positioning across your brand (typically southeast)
+- **Opacity**: Use 50-80% opacity for subtle but effective watermarks
+- **Format**: Use PNG with transparency for best results
+- **Quality**: Ensure watermark images are high-resolution for scaling
+
+### Performance Best Practices
+- **Caching**: Pre-load watermark images into memory for repeated use
+- **Concurrency**: Match concurrency to CPU cores and memory availability
+- **Batch Processing**: Process multiple images in batches for efficiency
+- **Stream Processing**: Use streams for large images to manage memory
+
+### Integration Guidelines
+- **Pipeline Position**: Apply watermarks after resizing but before format conversion
+- **Error Handling**: Implement fallback watermarks for critical applications
+- **Testing**: Validate watermark positioning with various image dimensions
+- **Monitoring**: Track watermarking performance in production environments
+
+## Related Packages
+
+- **`@rytass/file-converter`** - Core conversion pipeline orchestration
+- **`@rytass/file-converter-adapter-image-resizer`** - Image resizing capabilities  
+- **`@rytass/file-converter-adapter-image-transcoder`** - Format conversion features
+- **`@rytass/storages`** - Storage integration for watermarked images
+
+## License and Support
+
+**License**: MIT
+**Repository**: https://github.com/Rytass/Utils
+**Issues**: https://github.com/Rytass/Utils/issues
+
+Powered by Sharp compositing engine for professional watermark application. Part of the comprehensive Rytass Utils ecosystem for modern image processing workflows.

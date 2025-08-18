@@ -1,0 +1,101 @@
+# Rytass Utils
+
+> A comprehensive monorepo of TypeScript utility packages providing unified interfaces for Taiwan-specific services and common functionality. Published under the MIT license for free commercial usage.
+
+This project contains 45+ packages that abstract complex integrations with Taiwan service providers, offering developers a consistent API across different payment gateways, invoice systems, logistics providers, and cloud services. The packages follow adapter patterns to minimize vendor lock-in and reduce integration complexity.
+
+## Architecture Documentation
+
+- [Main README](https://github.com/rytass/rytass-utils/blob/main/README.md): Complete overview of all available packages and their purposes
+- [CLAUDE.md](https://github.com/rytass/rytass-utils/blob/main/CLAUDE.md): Development guide and architectural patterns for AI coding assistants
+- [Package Structure](https://github.com/rytass/rytass-utils/tree/main/packages): Monorepo packages organized by service category
+
+## Payment Integration Packages
+
+- [ECPay Payment Adapter](https://www.npmjs.com/package/@rytass/payments-adapter-ecpay): ECPay (綠界) payment gateway integration with credit cards, virtual accounts, and installments
+- [NewebPay Payment Adapter](https://www.npmjs.com/package/@rytass/payments-adapter-newebpay): NewebPay (藍新金流) payment gateway with multi-payment method support
+- [HwaNan Payment Adapter](https://www.npmjs.com/package/@rytass/payments-adapter-hwanan): HwaNan Bank (華南銀行) payment system integration
+- [CTBC Micro Fast Pay](https://www.npmjs.com/package/@rytass/payments-adapter-ctbc-micro-fast-pay): CTBC Bank fast payment and card binding solutions
+- [Unified Payment Types](https://www.npmjs.com/package/@rytass/payments): Common payment interfaces and types shared across all adapters
+
+## Invoice Management Packages
+
+- [ECPay Invoice Adapter](https://www.npmjs.com/package/@rytass/invoice-adapter-ecpay): ECPay electronic invoice generation and management
+- [EZPay Invoice Adapter](https://www.npmjs.com/package/@rytass/invoice-adapter-ezpay): EZPay (簡單付) invoice issuing service
+- [Amego Invoice Adapter](https://www.npmjs.com/package/@rytass/invoice-adapter-amego): Amego invoice management system integration
+- [Bank Pro Invoice Adapter](https://www.npmjs.com/package/@rytass/invoice-adapter-bank-pro): Bank Pro invoice platform integration
+
+## File Storage Packages
+
+- [AWS S3 Adapter](https://www.npmjs.com/package/@rytass/storages-adapter-s3): Amazon S3 storage integration with multipart uploads and streaming
+- [Google Cloud Storage Adapter](https://www.npmjs.com/package/@rytass/storages-adapter-gcs): GCS file storage with bucket management
+- [Azure Blob Storage Adapter](https://www.npmjs.com/package/@rytass/storages-adapter-azure-blob): Azure Blob storage operations
+- [Cloudflare R2 Adapter](https://www.npmjs.com/package/@rytass/storages-adapter-r2): Cloudflare R2 storage with S3-compatible API
+- [Local Storage Adapter](https://www.npmjs.com/package/@rytass/storages-adapter-local): Local filesystem storage for development and testing
+
+## File Processing Packages
+
+- [Image Resizer](https://www.npmjs.com/package/@rytass/file-converter-adapter-image-resizer): Sharp-based image resizing with streaming support
+- [Image Transcoder](https://www.npmjs.com/package/@rytass/file-converter-adapter-image-transcoder): Format conversion between image types (JPEG, PNG, WebP, AVIF)
+- [Image Watermark](https://www.npmjs.com/package/@rytass/file-converter-adapter-image-watermark): Add watermarks to images with positioning options
+- [File Converter Core](https://www.npmjs.com/package/@rytass/file-converter): Base converter manager for chaining file processing operations
+
+## NestJS Integration Packages
+
+- [CMS Base NestJS Module](https://www.npmjs.com/package/@rytass/cms-base-nestjs-module): Content management system with multi-language support, versioning, and approval workflows
+- [CMS GraphQL Module](https://www.npmjs.com/package/@rytass/cms-base-nestjs-graphql-module): GraphQL API layer for CMS operations
+- [Member Base NestJS Module](https://www.npmjs.com/package/@rytass/member-base-nestjs-module): User authentication and authorization with Casbin RBAC
+- [Payments NestJS Module](https://www.npmjs.com/package/@rytass/payments-nestjs-module): NestJS controller for payment webhook handling
+- [Vault NestJS Module](https://www.npmjs.com/package/@rytass/secret-adapter-vault-nestjs): HashiCorp Vault integration for secrets management
+
+## React Components
+
+- [CMS React Components](https://www.npmjs.com/package/@rytass/cms-react-components): Pre-built React components for content management interfaces with Mezzanine UI styling
+
+## Logistics and Communication
+
+- [TCat Logistics Adapter](https://www.npmjs.com/package/@rytass/logistics-adapter-tcat): Black Cat (黑貓宅急便) delivery tracking via web scraping
+- [CTC Logistics Adapter](https://www.npmjs.com/package/@rytass/logistics-adapter-ctc): CTC Express logistics status tracking
+- [Every8d SMS Adapter](https://www.npmjs.com/package/@rytass/sms-adapter-every8d): SMS sending service for Taiwan phone numbers
+
+## Development Tools
+
+- [Order Builder](https://www.npmjs.com/package/@rytass/order-builder): E-commerce order calculation engine with complex discount policies and coupon validation
+- [Quadrats NestJS](https://www.npmjs.com/package/@rytass/quadrats-nestjs): Integration with Quadrats headless CMS platform
+- [Vault Secret Adapter](https://www.npmjs.com/package/@rytass/secret-adapter-vault): HashiCorp Vault client for secret management
+
+## Build System and Configuration
+
+- [Lerna Configuration](https://github.com/rytass/rytass-utils/blob/main/lerna.json): Independent package versioning and publishing setup
+- [NX Configuration](https://github.com/rytass/rytass-utils/blob/main/nx.json): Task orchestration and build caching
+- [TypeScript Base Config](https://github.com/rytass/rytass-utils/blob/main/tsconfig.base.json): Shared TypeScript configuration with strict settings
+- [Jest Configuration](https://github.com/rytass/rytass-utils/blob/main/jest.config.js): Test runner setup with coverage collection
+- [Custom Build Script](https://github.com/rytass/rytass-utils/blob/main/scripts/build.js): Custom build system generating ESM and CommonJS outputs
+
+## Development Commands
+
+```bash
+# Install dependencies and build all packages
+npm install && npm run build
+
+# Run all tests with coverage
+npm run test:coverage
+
+# Lint TypeScript code
+npm run lint
+
+# Release new versions (version bump + publish)
+npm run release
+
+# Start documentation site locally
+npm run docs
+
+# Build documentation for deployment
+npm run docs:build
+```
+
+## Optional
+
+- [Package Documentation](https://github.com/rytass/rytass-utils/tree/main/docs): Detailed usage guides and configuration examples
+- [Coverage Reports](https://github.com/rytass/rytass-utils/tree/main/coverage): Test coverage statistics and HTML reports
+- [Change Logs](https://github.com/rytass/rytass-utils/tree/main/packages): Individual package change logs and version history

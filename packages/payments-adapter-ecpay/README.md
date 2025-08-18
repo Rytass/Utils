@@ -20,12 +20,12 @@
 
 ### Credit Card Payment
 
-**NOTICE** Please use NAT tunnel service (like ngrok) to proxy built-in server if you behind a LAN network.
+**NOTICE:** Please use NAT tunnel service (like ngrok) to proxy built-in server if you are behind a LAN network.
 
 ```typescript
 import { Channel, ECPayChannelCreditCard, ECPayPayment } from '@rytass/payments-adapter-ecpay';
 
-// Use bulit-in server
+// Use built-in server
 const MERCHANT_ID = 'YOUR_ECPAY_MERCHANT_ID';
 const HASH_KEY = 'YOUR_ECPAY_HASH_KEY';
 const HASH_IV = 'YOUR_ECPAY_HASH_IV';
@@ -38,12 +38,12 @@ const payment = new ECPayPayment<ECPayChannelCreditCard>({
   merchantId: MERCHANT_ID,
   hashKey: HASH_KEY,
   hashIv: HASH_IV,
-  serverHost: 'http://localhost:3000', // Built in server listen on localhost:3000 or ngrok url
+  serverHost: 'http://localhost:3000', // Built-in server listens on localhost:3000 or ngrok url
   onCommit: onOrderCommit,
   withServer: true,
 });
 
-// Order id can auto assign or provide from `id` argument
+// Order ID can be auto-assigned or provided from `id` argument
 const order = payment.prepare({
   channel: Channel.CREDIT_CARD,
   items: [{
@@ -65,7 +65,7 @@ const form = order.form;
 // 2. Get HTML including form data and automatic submit script
 const html = order.formHTML;
 
-// 3. Get built-in server URL to auto submit (only works if `withServer` is set)
+// 3. Get built-in server URL to auto-submit (only works if `withServer` is set)
 const url = order.checkoutURL;
 ```
 
@@ -77,7 +77,7 @@ const payment = new ECPayPayment<ECPayChannelCreditCard>({
   merchantId: MERCHANT_ID,
   hashKey: HASH_KEY,
   hashIv: HASH_IV,
-  serverHost: 'http://localhost:3000', // Built in server listen on localhost:3000 or ngrok url
+  serverHost: 'http://localhost:3000', // Built-in server listens on localhost:3000 or ngrok url
   onCommit: onOrderCommit,
   withServer: false,
   // when memory is true, you cannot use this transaction to bind card

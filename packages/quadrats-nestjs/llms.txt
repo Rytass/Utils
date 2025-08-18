@@ -1,0 +1,385 @@
+# @rytass/quadrats-nestjs
+
+NestJS integration module for Quadrats headless CMS platform.
+
+## Package Overview
+
+This package provides a comprehensive NestJS integration for Quadrats CMS, a modern headless content management system. It offers services for managing articles, categories, images, and tags through a clean, type-safe API with full GraphQL support.
+
+## Features
+
+### Quadrats CMS Integration
+- **Headless Architecture**: API-first content management without frontend constraints
+- **GraphQL API**: Native GraphQL integration with type-safe operations
+- **Multi-language Support**: Built-in internationalization and content localization
+- **Image Management**: Integrated image upload and processing capabilities
+
+### Content Management
+- **Article Management**: Create, update, and version control for articles
+- **Category System**: Hierarchical content organization
+- **Tag Management**: Flexible content tagging and categorization
+- **Version Control**: Article versioning with history tracking
+
+### NestJS Integration
+- **Dependency Injection**: Full DI support with service registration
+- **Configuration Module**: Flexible configuration with async setup
+- **Service Layer**: High-level services for content operations
+- **Type Safety**: Complete TypeScript support with generated types
+
+## Usage Examples
+
+### Module Configuration
+```typescript
+import { Module } from '@nestjs/common';
+import { QuadratsModule } from '@rytass/quadrats-nestjs';
+
+@Module({
+  imports: [
+    QuadratsModule.register({
+      host: 'https://api.quadrats.com',
+      accessKey: 'your-access-key',
+      secret: 'your-secret-key'
+    })
+  ]
+})
+export class AppModule {}
+```
+
+### Async Configuration
+```typescript
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { QuadratsModule } from '@rytass/quadrats-nestjs';
+
+@Module({
+  imports: [
+    QuadratsModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        host: configService.get<string>('QUADRATS_HOST'),
+        accessKey: configService.get<string>('QUADRATS_ACCESS_KEY'),
+        secret: configService.get<string>('QUADRATS_SECRET')
+      })
+    })
+  ]
+})
+export class AppModule {}
+```
+
+### Article Management Service
+```typescript
+import { Injectable } from '@nestjs/common';
+import { ArticleService } from '@rytass/quadrats-nestjs';
+
+@Injectable()
+export class ContentService {
+  constructor(private readonly articleService: ArticleService) {}
+
+  async createBlogPost(title: string, content: string, categoryId: string) {
+    const article = await this.articleService.createArticle({
+      title: { 'zh-TW': title },
+      content: { 'zh-TW': content },
+      categoryId,
+      status: 'PUBLISHED',
+      tags: ['blog', 'news']
+    });
+
+    return article;
+  }
+
+  async getArticlesByCategory(categoryId: string, language: string = 'zh-TW') {
+    const articleIds = await this.articleService.findArticleIds({
+      categoryId,
+      language,
+      status: 'PUBLISHED'
+    });
+
+    return Promise.all(
+      articleIds.map(id => this.articleService.getArticle(id, language))
+    );
+  }
+
+  async updateArticleVersion(articleId: string, newContent: string) {
+    const newVersion = await this.articleService.addArticleVersion({
+      articleId,
+      content: { 'zh-TW': newContent },
+      status: 'DRAFT'
+    });
+
+    return newVersion;
+  }
+}
+```
+
+### Category Management
+```typescript
+import { Injectable } from '@nestjs/common';
+import { CategoryService } from '@rytass/quadrats-nestjs';
+
+@Injectable()
+export class CategoryManagementService {
+  constructor(private readonly categoryService: CategoryService) {}
+
+  async setupContentStructure() {
+    // Create main categories
+    const blogCategory = await this.categoryService.createCategory({
+      name: { 'zh-TW': '部落格', 'en': 'Blog' },
+      description: { 'zh-TW': '部落格文章', 'en': 'Blog articles' }
+    });
+
+    const newsCategory = await this.categoryService.createCategory({
+      name: { 'zh-TW': '最新消息', 'en': 'News' },
+      description: { 'zh-TW': '公司最新消息', 'en': 'Company news' }
+    });
+
+    return { blogCategory, newsCategory };
+  }
+
+  async getCategoryTree(language: string = 'zh-TW') {
+    const categories = await this.categoryService.findCategories({
+      language,
+      includeEmpty: false
+    });
+
+    return this.buildCategoryHierarchy(categories);
+  }
+
+  private buildCategoryHierarchy(categories: any[]) {
+    // Build hierarchical structure
+    const categoryMap = new Map();
+    const rootCategories = [];
+
+    categories.forEach(category => {
+      categoryMap.set(category.id, { ...category, children: [] });
+    });
+
+    categories.forEach(category => {
+      if (category.parentId) {
+        const parent = categoryMap.get(category.parentId);
+        if (parent) {
+          parent.children.push(categoryMap.get(category.id));
+        }
+      } else {
+        rootCategories.push(categoryMap.get(category.id));
+      }
+    });
+
+    return rootCategories;
+  }
+}
+```
+
+### Image Management
+```typescript
+import { Injectable } from '@nestjs/common';
+import { ImageService } from '@rytass/quadrats-nestjs';
+
+@Injectable()
+export class MediaService {
+  constructor(private readonly imageService: ImageService) {}
+
+  async uploadArticleImage(file: Express.Multer.File, alt: string) {
+    const imageResult = await this.imageService.uploadImage(file.buffer, {
+      filename: file.originalname,
+      contentType: file.mimetype,
+      alt: { 'zh-TW': alt }
+    });
+
+    return {
+      id: imageResult.id,
+      url: imageResult.url,
+      thumbnailUrl: imageResult.thumbnailUrl,
+      alt: imageResult.alt
+    };
+  }
+
+  async getImageDetails(imageId: string, language: string = 'zh-TW') {
+    const imageDetail = await this.imageService.getImageDetailUrl(imageId);
+    
+    return {
+      original: imageDetail.originalUrl,
+      thumbnail: imageDetail.thumbnailUrl,
+      medium: imageDetail.mediumUrl,
+      large: imageDetail.largeUrl
+    };
+  }
+}
+```
+
+### Tag Management
+```typescript
+import { Injectable } from '@nestjs/common';
+import { TagService } from '@rytass/quadrats-nestjs';
+
+@Injectable()
+export class TaggingService {
+  constructor(private readonly tagService: TagService) {}
+
+  async getPopularTags(limit: number = 10) {
+    const tags = await this.tagService.findTags({
+      orderBy: 'usage_count',
+      limit
+    });
+
+    return tags.map(tag => ({
+      name: tag.name,
+      count: tag.articleCount,
+      slug: tag.slug
+    }));
+  }
+
+  async getArticlesByTag(tagName: string, language: string = 'zh-TW') {
+    const tag = await this.tagService.findTagByName(tagName);
+    if (!tag) return [];
+
+    return this.tagService.getArticlesByTag(tag.id, language);
+  }
+}
+```
+
+## Content Types
+
+### Article Structure
+```typescript
+interface QuadratsArticle {
+  id: string;
+  title: LanguageContents;
+  content: LanguageContents;
+  excerpt?: LanguageContents;
+  categoryId: string;
+  tags: string[];
+  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+  publishedAt?: Date;
+  version: number;
+  metadata?: Record<string, any>;
+}
+```
+
+### Category Structure
+```typescript
+interface QuadratsArticleCategory {
+  id: string;
+  name: LanguageContents;
+  description?: LanguageContents;
+  parentId?: string;
+  slug: string;
+  articleCount: number;
+}
+```
+
+### Multi-language Support
+```typescript
+interface LanguageContents {
+  'zh-TW'?: string;
+  'en'?: string;
+  'ja'?: string;
+  'ko'?: string;
+  [key: string]: string | undefined;
+}
+```
+
+## GraphQL Integration
+
+### Built-in Queries
+- **Articles**: Full-text search, category filtering, tag filtering
+- **Categories**: Hierarchical querying, article counting
+- **Tags**: Usage statistics, related articles
+- **Images**: Metadata, multiple size variants
+
+### Built-in Mutations
+- **Article Operations**: Create, update, version, delete
+- **Category Operations**: Create, update, rename, delete
+- **Image Operations**: Upload, update metadata, delete
+
+## Business Use Cases
+
+### Content Marketing Platform
+```typescript
+@Injectable()
+export class ContentMarketingService {
+  constructor(
+    private readonly articleService: ArticleService,
+    private readonly categoryService: CategoryService,
+    private readonly tagService: TagService
+  ) {}
+
+  async publishMarketingCampaign(campaignData: MarketingCampaign) {
+    // Create campaign category
+    const category = await this.categoryService.createCategory({
+      name: { 'zh-TW': campaignData.title },
+      description: { 'zh-TW': campaignData.description }
+    });
+
+    // Create campaign articles
+    const articles = await Promise.all(
+      campaignData.articles.map(articleData =>
+        this.articleService.createArticle({
+          title: articleData.title,
+          content: articleData.content,
+          categoryId: category.id,
+          tags: ['marketing', 'campaign', ...articleData.tags],
+          status: 'PUBLISHED'
+        })
+      )
+    );
+
+    return { category, articles };
+  }
+}
+```
+
+### Multi-language Website
+```typescript
+@Injectable()
+export class MultiLanguageContentService {
+  async getLocalizedContent(language: string, categorySlug: string) {
+    const category = await this.categoryService.findCategoryBySlug(categorySlug);
+    
+    const articles = await this.articleService.findArticleIds({
+      categoryId: category.id,
+      language,
+      status: 'PUBLISHED'
+    });
+
+    return Promise.all(
+      articles.map(id => 
+        this.articleService.getArticle(id, language)
+      )
+    );
+  }
+
+  async createMultiLanguageArticle(content: MultiLanguageContent) {
+    return this.articleService.createArticle({
+      title: {
+        'zh-TW': content.titleZh,
+        'en': content.titleEn,
+        'ja': content.titleJa
+      },
+      content: {
+        'zh-TW': content.contentZh,
+        'en': content.contentEn,
+        'ja': content.contentJa
+      },
+      categoryId: content.categoryId,
+      status: 'PUBLISHED'
+    });
+  }
+}
+```
+
+## Dependencies
+
+- **@quadrats/core**: Core Quadrats CMS functionality
+- **axios**: HTTP client for API communication
+- **form-data**: Multipart form data for file uploads
+- **@nestjs/common**: NestJS framework integration
+
+## Integration Benefits
+
+- **Headless Flexibility**: Use any frontend framework
+- **Multi-language**: Built-in internationalization support
+- **GraphQL Power**: Efficient, flexible data querying
+- **Type Safety**: Full TypeScript support throughout
+- **Scalable Architecture**: Designed for high-performance content delivery
+
+Perfect for modern web applications requiring flexible content management with strong typing, multi-language support, and seamless NestJS integration.

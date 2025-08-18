@@ -1,0 +1,304 @@
+# @rytass/order-builder
+
+Advanced e-commerce order calculation engine with flexible discount policies and business rules.
+
+## Package Overview
+
+This package provides a sophisticated order calculation system designed for e-commerce applications requiring complex pricing logic, discount policies, and promotional rules. It features a flexible architecture that can handle various business scenarios with precise decimal calculations.
+
+## Core Features
+
+### Order Calculation Engine
+- **Flexible Policy System**: Configurable discount and promotion policies
+- **Precise Mathematics**: Decimal.js integration for accurate financial calculations
+- **Multi-step Policies**: Support for complex, conditional discount chains
+- **Dynamic Pricing**: Real-time price calculation based on cart contents
+
+### Policy Types
+- **Percentage Discounts**: Fixed or stepped percentage reductions
+- **Value Discounts**: Fixed amount reductions
+- **Item Giveaways**: Free item promotions
+- **Step Discounts**: Tiered discounts based on quantity/value thresholds
+- **Conditional Logic**: Requirements and thresholds for policy activation
+
+### Business Rule Engine
+- **Requirements**: Item inclusion/exclusion rules
+- **Thresholds**: Price and quantity-based activation conditions
+- **Validators**: Coupon and promotion code validation
+- **Combinations**: Complex policy combination strategies
+
+## Architecture Components
+
+### Core Classes
+- **OrderBuilder**: Main builder class for order construction and calculation
+- **Order**: Immutable order representation with calculated prices
+- **OrderItem**: Individual item with pricing and quantity information
+- **Policy**: Abstract base for all discount and promotion policies
+
+### Configuration System
+- **DiscountMethod**: How discounts are distributed across items
+- **PolicyPickStrategy**: Strategy for selecting applicable policies
+- **RoundStrategy**: Rounding behavior for calculations
+- **OrderConfig**: Centralized configuration management
+
+## Usage Examples
+
+### Basic Order Creation
+```typescript
+import { OrderBuilder, PercentageDiscount, ValueDiscount } from '@rytass/order-builder';
+
+// Create order builder with policies
+const builder = new OrderBuilder({
+  policies: [
+    new PercentageDiscount({
+      id: 'MEMBER_10',
+      name: '會員九折優惠',
+      percentage: 10,
+      // Conditions and requirements
+    }),
+    new ValueDiscount({
+      id: 'SAVE100',
+      name: '滿千折百',
+      value: 100,
+      requirements: [
+        new PriceThreshold({ threshold: 1000 })
+      ]
+    })
+  ]
+});
+
+// Build order with items and coupons
+const order = builder.build({
+  id: 'ORDER-001',
+  items: [
+    { id: 'ITEM-A', name: '商品A', unitPrice: 500, quantity: 2 },
+    { id: 'ITEM-B', name: '商品B', unitPrice: 300, quantity: 1 }
+  ],
+  coupons: ['MEMBER_10', 'SAVE100']
+});
+
+console.log(`Original: ${order.originalPrice}`);
+console.log(`Final: ${order.finalPrice}`);
+console.log(`Saved: ${order.totalDiscount}`);
+```
+
+### Advanced Policy Configuration
+```typescript
+import { 
+  StepPercentageDiscount, 
+  ItemGiveawayDiscount,
+  ItemRequired,
+  QuantityThreshold,
+  PriceWeightedAverageDiscountMethod
+} from '@rytass/order-builder';
+
+const builder = new OrderBuilder({
+  policies: [
+    // Stepped discount: buy more, save more
+    new StepPercentageDiscount({
+      id: 'BULK_DISCOUNT',
+      name: '大量採購優惠',
+      steps: [
+        { threshold: 5, percentage: 5 },   // 5+ items: 5% off
+        { threshold: 10, percentage: 10 }, // 10+ items: 10% off
+        { threshold: 20, percentage: 15 }  // 20+ items: 15% off
+      ],
+      requirements: [
+        new QuantityThreshold({ threshold: 5 })
+      ]
+    }),
+    
+    // Item giveaway: buy X get Y free
+    new ItemGiveawayDiscount({
+      id: 'BUY2GET1',
+      name: '買二送一',
+      giveawayItems: [{ id: 'GIFT-ITEM', quantity: 1 }],
+      requirements: [
+        new ItemRequired({ 
+          itemId: 'SPECIAL-PRODUCT', 
+          quantity: 2 
+        })
+      ]
+    })
+  ],
+  
+  // Configuration options
+  discountMethod: new PriceWeightedAverageDiscountMethod(),
+  roundStrategy: new FinalPriceOnlyRoundStrategy(),
+  policyPickStrategy: new ItemBasedPolicyPickStrategy()
+});
+```
+
+### Complex Business Rules
+```typescript
+import { 
+  ItemIncluded,
+  ItemExcluded,
+  PriceThreshold,
+  CouponValidator
+} from '@rytass/order-builder';
+
+// VIP customer discount with restrictions
+const vipDiscount = new PercentageDiscount({
+  id: 'VIP_15',
+  name: 'VIP 85折優惠',
+  percentage: 15,
+  requirements: [
+    // Must include VIP eligible items
+    new ItemIncluded({ itemIds: ['VIP-PRODUCT-1', 'VIP-PRODUCT-2'] }),
+    // Cannot include sale items
+    new ItemExcluded({ itemIds: ['SALE-ITEM-1', 'SALE-ITEM-2'] }),
+    // Minimum order value
+    new PriceThreshold({ threshold: 2000 })
+  ],
+  validators: [
+    // Validate VIP coupon
+    new CouponValidator({
+      validate: (coupon: string, order: any) => {
+        return coupon.startsWith('VIP') && isValidVipCustomer();
+      }
+    })
+  ]
+});
+```
+
+### E-commerce Integration
+```typescript
+class ShoppingCartService {
+  private orderBuilder: OrderBuilder;
+  
+  constructor() {
+    this.orderBuilder = new OrderBuilder({
+      policies: [
+        // Regular promotions
+        new ValueDiscount({ id: 'SAVE50', value: 50 }),
+        new PercentageDiscount({ id: 'MEMBER10', percentage: 10 }),
+        
+        // Seasonal campaigns
+        new StepValueDiscount({
+          id: 'SUMMER_SALE',
+          steps: [
+            { threshold: 1000, value: 100 },
+            { threshold: 2000, value: 300 },
+            { threshold: 5000, value: 800 }
+          ]
+        }),
+        
+        // Product bundle deals
+        new ItemGiveawayDiscount({
+          id: 'PHONE_BUNDLE',
+          giveawayItems: [{ id: 'PHONE_CASE', quantity: 1 }],
+          requirements: [
+            new ItemRequired({ itemId: 'SMARTPHONE', quantity: 1 })
+          ]
+        })
+      ],
+      
+      // Business configuration
+      discountMethod: new QuantityWeightedAverageDiscountMethod(),
+      roundStrategy: new EveryCalculationRoundStrategy(),
+      policyPickStrategy: new OrderBasedPolicyPickStrategy()
+    });
+  }
+
+  calculateOrder(cartItems: CartItem[], coupons: string[]): OrderSummary {
+    const order = this.orderBuilder.build({
+      id: generateOrderId(),
+      items: cartItems.map(item => ({
+        id: item.productId,
+        name: item.productName,
+        unitPrice: item.price,
+        quantity: item.quantity,
+        metadata: item.attributes
+      })),
+      coupons,
+      logistics: {
+        id: 'shipping',
+        name: '運費',
+        unitPrice: this.calculateShipping(cartItems),
+        quantity: 1
+      }
+    });
+
+    return {
+      originalPrice: order.originalPrice,
+      finalPrice: order.finalPrice,
+      totalDiscount: order.totalDiscount,
+      appliedPolicies: order.appliedPolicies,
+      itemBreakdown: order.items.map(item => ({
+        id: item.id,
+        name: item.name,
+        originalPrice: item.originalPrice,
+        finalPrice: item.finalPrice,
+        discount: item.discount
+      }))
+    };
+  }
+}
+```
+
+## Policy System
+
+### Discount Policy Types
+- **PercentageDiscount**: Fixed percentage off total or items
+- **ValueDiscount**: Fixed amount reduction
+- **StepPercentageDiscount**: Tiered percentage based on thresholds
+- **StepValueDiscount**: Tiered amount based on thresholds
+- **ItemGiveawayDiscount**: Free items with purchase
+- **StepItemGiveawayDiscount**: Scaled free items based on purchase
+
+### Requirement Types
+- **ItemRequired**: Specific items must be in cart
+- **ItemIncluded**: At least one item from set must be included
+- **ItemExcluded**: Specified items must not be in cart
+- **QuantityRequired**: Minimum quantity requirements
+- **PriceThreshold**: Minimum order value requirements
+- **QuantityThreshold**: Minimum item quantity requirements
+
+### Validation System
+- **CouponValidator**: Custom coupon validation logic
+- **Policy Conditions**: Complex conditional logic for policy activation
+- **Business Rules**: Custom business rule integration
+
+## Configuration Options
+
+### Discount Methods
+- **PriceWeightedAverageDiscountMethod**: Distribute by item price proportion
+- **QuantityWeightedAverageDiscountMethod**: Distribute by quantity proportion
+
+### Rounding Strategies
+- **NoRoundRoundStrategy**: No rounding applied
+- **FinalPriceOnlyRoundStrategy**: Round only final prices
+- **EveryCalculationRoundStrategy**: Round at each calculation step
+
+### Policy Selection
+- **ItemBasedPolicyPickStrategy**: Select policies per item
+- **OrderBasedPolicyPickStrategy**: Select policies for entire order
+
+## Mathematical Precision
+
+The package uses **Decimal.js** for all calculations to ensure:
+- **No Floating Point Errors**: Precise decimal arithmetic
+- **Financial Accuracy**: Correct monetary calculations
+- **Consistent Rounding**: Predictable rounding behavior
+- **Currency Support**: Multi-currency calculation support
+
+## Dependencies
+
+- **decimal.js**: Precise decimal arithmetic for financial calculations
+
+## Use Cases
+
+### E-commerce Platforms
+- Shopping cart price calculations
+- Promotional campaign management
+- Loyalty program discounts
+- Bulk purchase pricing
+
+### Business Applications
+- Quote and proposal generation
+- Invoice calculation systems
+- Subscription pricing models
+- Dynamic pricing strategies
+
+This order builder provides the flexibility and precision needed for sophisticated e-commerce pricing scenarios while maintaining clean, maintainable code architecture.

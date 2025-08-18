@@ -1,0 +1,243 @@
+# @rytass/secret-adapter-vault
+
+HashiCorp Vault adapter for enterprise-grade secret management.
+
+## Package Overview
+
+This package provides a comprehensive integration with HashiCorp Vault, the industry-standard secret management platform. It implements the `@rytass/secret` interface with advanced features like token management, online/offline modes, and event-driven architecture.
+
+## Features
+
+### HashiCorp Vault Integration
+- **Token Authentication**: Username/password authentication with token management
+- **Automatic Token Renewal**: Background token refresh before expiration
+- **Online/Offline Modes**: Flexible operation modes for different environments
+- **Event-Driven Architecture**: Real-time status updates and error handling
+
+### Advanced Secret Management
+- **KV Store Integration**: Vault KV secrets engine support
+- **Version Management**: Secret versioning and metadata handling
+- **TTL Management**: Configurable token time-to-live settings
+- **Error Recovery**: Robust error handling and retry mechanisms
+
+### Operation Modes
+- **Online Mode**: Real-time Vault communication with async operations
+- **Offline Mode**: Cached operation for development or disconnected environments
+- **Hybrid Support**: Seamless switching between modes
+
+## Usage Examples
+
+### Basic Online Configuration
+```typescript
+import { VaultSecret } from '@rytass/secret-adapter-vault';
+
+const vault = new VaultSecret('my-project', {
+  host: 'https://vault.company.com',
+  online: true,
+  auth: {
+    account: 'service-account',
+    password: 'secure-password'
+  },
+  tokenTTL: 3600, // 1 hour
+  onReady: () => console.log('Vault connection ready'),
+  onError: (error) => console.error('Vault error:', error)
+});
+```
+
+### Offline Development Mode
+```typescript
+const vaultDev = new VaultSecret('development', {
+  host: 'https://vault.company.com',
+  online: false, // Offline mode for development
+  auth: {
+    account: 'dev-account', 
+    password: 'dev-password'
+  }
+});
+```
+
+### Secret Operations
+```typescript
+// Online mode (async operations)
+const vault = new VaultSecret('production', { 
+  host: 'https://vault.company.com',
+  online: true,
+  auth: credentials
+});
+
+// Store secret
+await vault.set('database/config', {
+  host: 'db.company.com',
+  username: 'dbuser',
+  password: 'secure-db-pass'
+});
+
+// Retrieve secret
+const dbConfig = await vault.get<DatabaseConfig>('database/config');
+
+// Delete secret
+await vault.delete('database/config');
+```
+
+### Event Handling
+```typescript
+const vault = new VaultSecret('my-project', {
+  host: 'https://vault.company.com',
+  online: true,
+  auth: credentials,
+  onReady: () => {
+    console.log('Vault is ready for operations');
+  },
+  onError: (error) => {
+    console.error('Vault connection error:', error);
+    // Implement error recovery logic
+  }
+});
+
+// Listen for token renewal events
+vault.on('TOKEN_RENEWED', () => {
+  console.log('Vault token renewed successfully');
+});
+```
+
+## Architecture Features
+
+### Token Lifecycle Management
+The adapter handles complete token lifecycle:
+1. **Initial Authentication**: Username/password token acquisition
+2. **Token Storage**: Secure in-memory token storage
+3. **Automatic Renewal**: Background token refresh before expiration
+4. **Error Recovery**: Automatic re-authentication on token failure
+
+### State Management
+```typescript
+enum VaultSecretState {
+  INIT = 'INIT',        // Initial state
+  READY = 'READY',      // Ready for operations
+  TERMINATED = 'TERMINATED' // Connection terminated
+}
+```
+
+### Event System
+```typescript
+enum VaultEvents {
+  INITED = 'INITED',           // Vault initialized
+  READY = 'READY',             // Ready for operations
+  TOKEN_RENEWED = 'TOKEN_RENEWED', // Token refreshed
+  TERMINATED = 'TERMINATED',    // Connection terminated
+  ERROR = 'ERROR'              // Error occurred
+}
+```
+
+## Configuration Options
+
+### Authentication Methods
+```typescript
+interface VaultAuthMethodAccountPassword {
+  account: string;    // Service account username
+  password: string;   // Service account password
+}
+```
+
+### Operational Modes
+```typescript
+// Online mode - full Vault integration
+interface VaultSecretOnlineOptions {
+  host: string;
+  auth: VaultAuthMethods;
+  online: true;
+  tokenTTL?: number;  // Token expiration time
+  onError?: (error: string) => void;
+  onReady?: () => void;
+}
+
+// Offline mode - cached operations
+interface VaultSecretOfflineOptions {
+  host: string;
+  auth: VaultAuthMethods;
+  online?: false;
+  tokenTTL?: number;
+  onError?: (error: string) => void;
+  onReady?: () => void;
+}
+```
+
+## HashiCorp Vault Integration
+
+### Supported Features
+- **KV Secrets Engine**: Version 2 KV store integration
+- **Token Authentication**: Userpass auth method support
+- **API Integration**: Direct Vault HTTP API communication
+- **Metadata Handling**: Secret versioning and metadata support
+
+### API Endpoints
+The adapter integrates with standard Vault endpoints:
+- `/v1/auth/userpass/login/{username}` - Authentication
+- `/v1/secret/data/{path}` - Secret storage and retrieval
+- `/v1/auth/token/self` - Token management
+
+### Security Features
+- **TLS Communication**: Secure HTTPS communication with Vault
+- **Token Security**: Secure token storage and automatic cleanup
+- **Access Policies**: Vault policy-based access control
+- **Audit Integration**: Full integration with Vault audit logs
+
+## Enterprise Use Cases
+
+### Production Environments
+- **Database Credentials**: Secure database connection strings
+- **API Keys**: Third-party service API keys and tokens
+- **Certificates**: SSL certificates and private keys
+- **Configuration**: Sensitive application configuration
+
+### Development Workflow
+- **Local Development**: Offline mode for development environments
+- **CI/CD Integration**: Secure secret injection in pipelines
+- **Environment Promotion**: Consistent secret management across stages
+- **Developer Access**: Secure developer secret access patterns
+
+## Error Handling
+
+### Robust Error Management
+- **Network Errors**: Connection failure handling and retries
+- **Authentication Errors**: Invalid credential management
+- **Permission Errors**: Access denied scenarios
+- **Token Expiration**: Automatic token renewal and recovery
+
+### Error Recovery Patterns
+```typescript
+vault.onError = (error) => {
+  switch(error) {
+    case 'TOKEN_EXPIRED':
+      // Automatic token renewal triggered
+      break;
+    case 'NETWORK_ERROR':
+      // Implement retry logic
+      break;
+    case 'PERMISSION_DENIED':
+      // Alert security team
+      break;
+  }
+};
+```
+
+## Dependencies
+
+- **@rytass/secret**: Base secret management interfaces
+- **axios**: HTTP client for Vault API communication
+
+## Integration Patterns
+
+### NestJS Integration
+Works seamlessly with `@rytass/secret-adapter-vault-nestjs` for:
+- Dependency injection integration
+- Configuration management
+- Service lifecycle management
+- Environment-specific configurations
+
+### Multi-Environment Support
+- **Development**: Offline mode with local caching
+- **Staging**: Online mode with limited token TTL
+- **Production**: Full online mode with monitoring and alerting
+
+This adapter provides enterprise-grade secret management capabilities through HashiCorp Vault, with robust error handling, automatic token management, and flexible operation modes suitable for various deployment environments.

@@ -1,0 +1,486 @@
+# @rytass/storages-adapter-s3
+
+AWS S3 storage adapter providing unified interface implementation for Amazon S3 cloud storage service with complete file upload, download, and management functionality. Supports multiple authentication methods, multipart uploads, pre-signed URLs, and other enterprise-grade features.
+
+## Package Information
+
+- **Name**: @rytass/storages-adapter-s3
+- **Version**: 0.3.3
+- **Description**: AWS S3 storage adapter
+- **Author**: Chia Yu Pai <fantasyatelier@gmail.com>
+- **License**: MIT
+- **Repository**: https://github.com/Rytass/Utils
+- **Keywords**: rytass, s3, aws, storage
+
+## Installation
+
+```bash
+npm install @rytass/storages-adapter-s3
+# or
+yarn add @rytass/storages-adapter-s3
+```
+
+## Core Features
+
+- **AWS S3 Integration**: Complete S3 storage service integration
+- **Buffer and Stream Operations**: Support for both buffer and stream file operations
+- **Pre-signed URLs**: Generate secure, time-limited URLs for file access
+- **Multipart Upload**: Support for large files with multipart upload functionality
+- **File Management**: Complete CRUD operations (create, read, update, delete)
+- **Authentication**: IAM role and access key authentication support
+- **Regional Configuration**: Configurable S3 region settings
+- **Error Handling**: Comprehensive error handling and retry mechanisms
+- **Enterprise Features**: Production-ready with robust error handling
+
+## Configuration Options
+
+### StorageS3Options
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `bucket` | `string` | Yes | S3 bucket name |
+| `accessKey` | `string` | Yes | AWS Access Key ID |
+| `secretKey` | `string` | Yes | AWS Secret Access Key |
+| `region` | `string` | Yes | AWS region (e.g., ap-northeast-1) |
+
+## Basic Usage
+
+### Service Setup
+
+```typescript
+import { StorageS3Service } from '@rytass/storages-adapter-s3';
+
+const storage = new StorageS3Service({
+  bucket: 'my-app-storage',
+  accessKey: 'AKIAIOSFODNN7EXAMPLE',
+  secretKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+  region: 'ap-northeast-1'
+});
+```
+
+### File Upload Operations
+
+```typescript
+import { readFileSync, createReadStream } from 'fs';
+
+// Upload from Buffer
+const fileBuffer = readFileSync('document.pdf');
+const uploadResult = await storage.write(
+  fileBuffer,
+  'documents/user-123/document.pdf',
+  {
+    contentType: 'application/pdf'
+  }
+);
+
+console.log('File uploaded:', uploadResult.url);
+
+// Stream Upload for Large Files (recommended)
+const fileStream = createReadStream('video.mp4');
+const result = await storage.write(
+  fileStream,
+  'videos/user-123/video.mp4',
+  {
+    contentType: 'video/mp4'
+  }
+);
+```
+
+### File Download Operations
+
+```typescript
+// Download as Buffer
+const fileBuffer = await storage.read('documents/user-123/document.pdf', {
+  format: 'buffer'
+});
+
+// Download as Stream
+const fileStream = await storage.read('documents/user-123/document.pdf', {
+  format: 'stream'
+});
+
+// Download as Stream (default)
+const fileStream2 = await storage.read('documents/user-123/document.pdf');
+fileStream.pipe(process.stdout);
+```
+
+### URL Generation
+
+```typescript
+// Generate a signed URL valid for 1 hour
+const signedUrl = await storage.url('documents/user-123/document.pdf');
+console.log('Download URL:', signedUrl);
+
+// URL expires automatically for security
+```
+
+### File Management
+
+```typescript
+// Check if file exists
+const exists = await storage.exists('documents/user-123/document.pdf');
+console.log('File exists:', exists);
+
+// Delete file
+await storage.delete('documents/user-123/document.pdf');
+console.log('File deleted successfully');
+```
+
+## Advanced Usage
+
+### Environment-based Configuration
+
+```typescript
+// Environment variables setup
+// AWS_ACCESS_KEY_ID=your_access_key
+// AWS_SECRET_ACCESS_KEY=your_secret_key
+// AWS_DEFAULT_REGION=ap-northeast-1
+// S3_BUCKET_NAME=your-bucket-name
+
+const storage = new StorageS3Service({
+  bucket: process.env.S3_BUCKET_NAME!,
+  accessKey: process.env.AWS_ACCESS_KEY_ID!,
+  secretKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  region: process.env.AWS_DEFAULT_REGION || 'us-east-1'
+});
+```
+
+### Batch File Operations
+
+```typescript
+// Upload multiple files
+const files = [
+  { buffer: file1Buffer, key: 'images/image1.jpg' },
+  { buffer: file2Buffer, key: 'images/image2.jpg' },
+  { buffer: file3Buffer, key: 'images/image3.jpg' }
+];
+
+const results = await Promise.all(
+  files.map(({ buffer, key }) => 
+    storage.write(buffer, key, { contentType: 'image/jpeg' })
+  )
+);
+
+console.log('All files uploaded:', results.length);
+```
+
+### Integration with File Converter
+
+```typescript
+import { ConverterManager } from '@rytass/file-converter';
+import { ImageResizer } from '@rytass/file-converter-adapter-image-resizer';
+
+// Setup storage
+const storage = new StorageS3Service({
+  bucket: 'my-images',
+  accessKey: process.env.AWS_ACCESS_KEY!,
+  secretKey: process.env.AWS_SECRET_KEY!,
+  region: 'ap-northeast-1'
+});
+
+// Setup converter
+const manager = new ConverterManager([
+  new ImageResizer({
+    maxWidth: 1200,
+    maxHeight: 800,
+    keepAspectRatio: true
+  })
+]);
+
+// Process image and upload to storage
+const imageFile = readFileSync('large-image.jpg');
+const processedImage = await manager.convert<Buffer>(imageFile);
+
+const result = await storage.write(
+  processedImage,
+  'processed-images/thumbnail.jpg',
+  { contentType: 'image/jpeg' }
+);
+
+console.log('Processed image uploaded:', result.key);
+console.log('Access URL:', await storage.url(result.key));
+```
+
+## Framework Integration
+
+### Express.js Integration
+
+```typescript
+import express from 'express';
+import multer from 'multer';
+import { StorageS3Service } from '@rytass/storages-adapter-s3';
+
+const app = express();
+const upload = multer({ storage: multer.memoryStorage() });
+const storage = new StorageS3Service({
+  bucket: process.env.S3_BUCKET_NAME!,
+  accessKey: process.env.AWS_ACCESS_KEY_ID!,
+  secretKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  region: process.env.AWS_DEFAULT_REGION!
+});
+
+app.post('/upload', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const result = await storage.write(req.file.buffer, {
+      filename: `uploads/${Date.now()}-${req.file.originalname}`,
+      contentType: req.file.mimetype
+    });
+
+    const publicUrl = await storage.url(result.key);
+
+    res.json({
+      success: true,
+      key: result.key,
+      url: publicUrl,
+      filename: req.file.originalname
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+app.get('/file/:key(*)', async (req, res) => {
+  try {
+    const key = req.params.key;
+    const fileBuffer = await storage.read(key, { format: 'buffer' });
+    
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.send(fileBuffer);
+  } catch (error) {
+    res.status(404).json({ error: 'File not found' });
+  }
+});
+```
+
+### NestJS Service Integration
+
+```typescript
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { StorageS3Service } from '@rytass/storages-adapter-s3';
+
+@Injectable()
+export class FileStorageService {
+  private storage: StorageS3Service;
+
+  constructor(private configService: ConfigService) {
+    this.storage = new StorageS3Service({
+      region: this.configService.get('AWS_REGION')!,
+      bucket: this.configService.get('S3_BUCKET')!,
+      accessKey: this.configService.get('AWS_ACCESS_KEY_ID')!,
+      secretKey: this.configService.get('AWS_SECRET_ACCESS_KEY')!
+    });
+  }
+
+  async uploadFile(file: Buffer, filename: string, contentType?: string) {
+    return this.storage.write(file, { filename, contentType });
+  }
+
+  async downloadFile(key: string): Promise<Buffer> {
+    return this.storage.read(key, { format: 'buffer' });
+  }
+
+  async getFileUrl(key: string): Promise<string> {
+    return this.storage.url(key);
+  }
+
+  async deleteFile(key: string): Promise<void> {
+    return this.storage.remove(key);
+  }
+
+  async fileExists(key: string): Promise<boolean> {
+    return this.storage.isExists(key);
+  }
+}
+```
+
+## Error Handling
+
+```typescript
+import { StorageError, ErrorCode } from '@rytass/storages';
+
+try {
+  const result = await storage.write(fileBuffer, 'path/to/file.pdf');
+} catch (error) {
+  if (error instanceof StorageError) {
+    switch (error.code) {
+      case ErrorCode.FILE_NOT_FOUND:
+        console.error('File not found');
+        break;
+      case ErrorCode.PERMISSION_DENIED:
+        console.error('Access denied - check AWS credentials');
+        break;
+      case ErrorCode.INVALID_KEY:
+        console.error('Invalid file key or bucket name');
+        break;
+      default:
+        console.error('Storage error:', error.message);
+    }
+  } else {
+    console.error('Unexpected error:', error);
+  }
+}
+```
+
+## AWS Configuration
+
+### IAM Policy Example
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject",
+        "s3:GetObjectVersion"
+      ],
+      "Resource": "arn:aws:s3:::your-bucket-name/*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket",
+        "s3:GetBucketLocation"
+      ],
+      "Resource": "arn:aws:s3:::your-bucket-name"
+    }
+  ]
+}
+```
+
+### Environment Variables Template
+
+```bash
+# .env
+AWS_ACCESS_KEY_ID=your_access_key
+AWS_SECRET_ACCESS_KEY=your_secret_key
+AWS_DEFAULT_REGION=ap-northeast-1
+S3_BUCKET_NAME=your-bucket-name
+```
+
+## Best Practices
+
+### Security
+- Use IAM roles instead of hardcoded access keys
+- Set up appropriate bucket policies
+- Use pre-signed URLs for temporary access permissions
+- Implement proper access logging and monitoring
+- Regularly rotate access keys
+
+### Performance
+- Use stream upload for large files to reduce memory usage
+- Set appropriate Content-Type headers for better CDN caching
+- Consider enabling S3 Transfer Acceleration for global uploads
+- Implement retry logic for transient network failures
+- Use multipart uploads for files larger than 100MB
+
+### Cost Optimization
+- Use appropriate storage classes (Standard, IA, Glacier)
+- Set up lifecycle policies to automatically transition old files
+- Monitor data transfer costs and optimize access patterns
+- Implement intelligent tiering for automatic cost optimization
+- Use CloudFront for frequently accessed files
+
+### File Organization
+- Use consistent naming conventions and folder structures
+- Implement proper versioning strategies
+- Consider metadata for file categorization and search
+- Use prefixes for logical file organization
+
+## Performance Considerations
+
+- **Streaming**: Always use streams for large files (>100MB) to avoid memory issues
+- **Multipart Upload**: Automatically handled for large files
+- **Concurrent Operations**: S3 supports high concurrency for parallel uploads
+- **Regional Proximity**: Choose regions close to your users for better performance
+- **Connection Pooling**: AWS SDK automatically manages connection pooling
+
+## Testing
+
+```typescript
+import { StorageS3Service } from '@rytass/storages-adapter-s3';
+
+describe('S3 Storage Adapter', () => {
+  let storage: StorageS3Service;
+
+  beforeEach(() => {
+    storage = new StorageS3Service({
+      bucket: 'test-bucket',
+      accessKey: 'test-key',
+      secretKey: 'test-secret',
+      region: 'us-east-1'
+    });
+  });
+
+  test('should upload and download files', async () => {
+    const testBuffer = Buffer.from('test content');
+    const result = await storage.write(testBuffer, { filename: 'test.txt' });
+    
+    expect(result.key).toBe('test.txt');
+    
+    const downloaded = await storage.read('test.txt', { format: 'buffer' });
+    expect(downloaded.toString()).toBe('test content');
+  });
+});
+```
+
+## Dependencies
+
+- **@rytass/storages**: ^0.2.1 - Core storage interface and types
+- **aws-sdk**: ^2.1692.0 - AWS SDK for S3 operations
+- **axios**: ^1.7.8 - HTTP client for signed URL generation
+- **luxon**: ^3.5.0 - Date/time handling for URL expiration
+- **uuid**: ^11.0.3 - UUID generation for unique file identifiers
+
+## Related Packages
+
+- **@rytass/storages**: Core storage interface
+- **@rytass/storages-adapter-r2**: Cloudflare R2 (S3-compatible)
+- **@rytass/storages-adapter-gcs**: Google Cloud Storage
+- **@rytass/storages-adapter-azure-blob**: Azure Blob Storage
+- **@rytass/storages-adapter-local**: Local file system storage
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Access Denied Errors**: Verify IAM permissions and bucket policies
+2. **Credential Issues**: Ensure access keys are valid and have necessary permissions
+3. **Region Mismatch**: Verify the bucket exists in the specified region
+4. **Network Timeouts**: Implement retry logic for network operations
+5. **Large File Uploads**: Use streams instead of buffers for large files
+
+### Debug Mode
+
+```typescript
+// Enable debug logging
+process.env.AWS_SDK_LOAD_CONFIG = '1';
+process.env.AWS_SDK_JS_SUPPRESS_MAINTENANCE_MODE_MESSAGE = '1';
+```
+
+## Support
+
+- **Issues**: https://github.com/Rytass/Utils/issues
+- **Documentation**: https://github.com/Rytass/Utils#readme
+- **AWS S3 Documentation**: https://docs.aws.amazon.com/s3/
+- **License**: MIT
+
+## Changelog
+
+### Version 0.3.3
+- Updated AWS SDK to latest version
+- Enhanced error handling and retry mechanisms
+- Improved multipart upload support
+- Better TypeScript type definitions
+- Performance optimizations for large files

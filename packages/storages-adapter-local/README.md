@@ -58,7 +58,7 @@ read file from disk
 
 ```typescript
 const fileStream = await storage.read('targetFile.png');
-const fileBuffer = await storage.read('targetFile.png', { options: 'buffer' });
+const fileBuffer = await storage.read('targetFile.png', { format: 'buffer' });
 ```
 ---
 > ### **_StorageLocalService.remove(key: string):Promise\<void>_**
@@ -81,6 +81,6 @@ write file to disk
 
 #### **Arguments**
 
-| Parameter | Type               | Required | Description                                                                                                                                                                                      |
+| Parameter | Type               | Required | Description                    |
 | --------- | ------------------ | -------- | ------------------------------ |
-| file      | InputFile          | true     | Buffer of Readable stream      |
+| file      | InputFile          | true     | Buffer or Readable stream      |

@@ -1,0 +1,407 @@
+# @rytass/member-base-nestjs-module
+
+Comprehensive NestJS member system with authentication, authorization, and RBAC support.
+
+## Package Overview
+
+This package provides a complete member management system for NestJS applications, featuring JWT authentication, role-based access control (RBAC) with Casbin, OAuth integration, and comprehensive user lifecycle management. Designed for enterprise applications requiring robust security and user management.
+
+## Core Features
+
+### Authentication System
+- **JWT Token Management**: Access and refresh token handling
+- **Password Security**: Argon2 hashing with password history tracking
+- **Multi-factor Options**: Foundation for MFA implementations
+- **Session Management**: Login tracking and session control
+
+### Authorization & RBAC
+- **Casbin Integration**: Policy-based access control with domain support
+- **Role Management**: Hierarchical role assignment and management
+- **Permission System**: Granular permission control with decorators
+- **Domain-based Access**: Multi-tenant permission isolation
+
+### OAuth Integration
+- **Multiple Providers**: Support for various OAuth2 providers
+- **Account Linking**: Link OAuth accounts to existing member profiles
+- **Social Login**: Streamlined social authentication flows
+- **Provider Management**: Flexible OAuth provider configuration
+
+### User Management
+- **Member Profiles**: Comprehensive user profile management
+- **Account Lifecycle**: Registration, activation, deactivation workflows
+- **Audit Logging**: Complete user activity and login history
+- **Data Protection**: GDPR-compliant user data handling
+
+## Usage Examples
+
+### Module Configuration
+```typescript
+import { Module } from '@nestjs/common';
+import { MemberBaseModule } from '@rytass/member-base-nestjs-module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
+@Module({
+  imports: [
+    TypeOrmModule.forRoot({
+      // Database configuration
+    }),
+    MemberBaseModule.forRoot({
+      jwtSecret: process.env.JWT_SECRET,
+      jwtExpiresIn: '24h',
+      refreshTokenExpiresIn: '7d',
+      passwordMinLength: 8,
+      passwordRequireSpecialChar: true,
+      enableOAuth: true,
+      oauthProviders: {
+        google: {
+          clientId: process.env.GOOGLE_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          callbackUrl: '/auth/google/callback'
+        },
+        facebook: {
+          clientId: process.env.FACEBOOK_APP_ID,
+          clientSecret: process.env.FACEBOOK_APP_SECRET,
+          callbackUrl: '/auth/facebook/callback'
+        }
+      },
+      casbin: {
+        modelPath: './rbac_model.conf',
+        policyAdapter: 'database' // Use database adapter
+      }
+    })
+  ]
+})
+export class AppModule {}
+```
+
+### Authentication Service
+```typescript
+import { Injectable } from '@nestjs/common';
+import { MemberBaseService } from '@rytass/member-base-nestjs-module';
+
+@Injectable()
+export class AuthService {
+  constructor(private readonly memberService: MemberBaseService) {}
+
+  async registerMember(email: string, password: string, profile: any) {
+    const member = await this.memberService.createMember({
+      email,
+      password,
+      profile: {
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        phone: profile.phone
+      },
+      roles: ['user'], // Default role
+      isActive: true
+    });
+
+    // Send welcome email
+    await this.sendWelcomeEmail(member);
+    
+    return member;
+  }
+
+  async loginMember(email: string, password: string) {
+    const result = await this.memberService.validateMember(email, password);
+    
+    if (result.success) {
+      // Log successful login
+      await this.memberService.recordLogin(result.member.id, {
+        ipAddress: '127.0.0.1', // From request
+        userAgent: 'Browser Info', // From request
+        success: true
+      });
+
+      // Generate tokens
+      const tokens = await this.memberService.generateTokens(result.member);
+      
+      return {
+        member: result.member,
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken
+      };
+    }
+    
+    throw new UnauthorizedException('Invalid credentials');
+  }
+}
+```
+
+### Authorization with Decorators
+```typescript
+import { Controller, Get, UseGuards } from '@nestjs/common';
+import { 
+  HasPermission, 
+  CasbinGuard, 
+  MemberId, 
+  Account 
+} from '@rytass/member-base-nestjs-module';
+
+@Controller('admin')
+@UseGuards(CasbinGuard)
+export class AdminController {
+  
+  @Get('users')
+  @HasPermission('user:read')
+  async getUsers(@MemberId() memberId: string) {
+    // Only members with 'user:read' permission can access
+    return this.userService.getAllUsers();
+  }
+
+  @Post('users')
+  @HasPermission('user:create')
+  async createUser(@Account() account: any, @Body() userData: any) {
+    // Only members with 'user:create' permission can access
+    return this.userService.createUser(userData);
+  }
+
+  @Put('users/:id')
+  @HasPermission('user:update')
+  async updateUser(@Param('id') userId: string, @Body() updateData: any) {
+    return this.userService.updateUser(userId, updateData);
+  }
+
+  @Delete('users/:id')
+  @HasPermission('user:delete')
+  async deleteUser(@Param('id') userId: string) {
+    return this.userService.deleteUser(userId);
+  }
+}
+```
+
+### Role and Permission Management
+```typescript
+import { Injectable } from '@nestjs/common';
+import { MemberBaseAdminService } from '@rytass/member-base-nestjs-module';
+
+@Injectable()
+export class RoleManagementService {
+  constructor(private readonly adminService: MemberBaseAdminService) {}
+
+  async setupDefaultRoles() {
+    // Create administrator role
+    await this.adminService.addRoleForUser('admin@company.com', 'administrator');
+    await this.adminService.addPermissionForUser('admin@company.com', 'admin:*');
+
+    // Create manager role
+    await this.adminService.addRoleForUser('manager@company.com', 'manager');
+    await this.adminService.addPermissionForUser('manager@company.com', 'user:read');
+    await this.adminService.addPermissionForUser('manager@company.com', 'user:update');
+    await this.adminService.addPermissionForUser('manager@company.com', 'report:read');
+
+    // Create regular user role
+    await this.adminService.addRoleForUser('user@company.com', 'user');
+    await this.adminService.addPermissionForUser('user@company.com', 'profile:read');
+    await this.adminService.addPermissionForUser('user@company.com', 'profile:update');
+  }
+
+  async assignManagerRole(memberEmail: string, department: string) {
+    await this.adminService.addRoleForUser(memberEmail, 'manager', department);
+    
+    // Department-specific permissions
+    await this.adminService.addPermissionForUser(
+      memberEmail, 
+      `department:${department}:manage`,
+      department
+    );
+  }
+
+  async checkPermission(memberEmail: string, permission: string, domain?: string) {
+    return this.adminService.hasPermission(memberEmail, permission, domain);
+  }
+}
+```
+
+### OAuth Integration
+```typescript
+import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { OAuthService } from '@rytass/member-base-nestjs-module';
+
+@Controller('auth')
+export class OAuthController {
+  constructor(private readonly oauthService: OAuthService) {}
+
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  async googleAuth() {
+    // Passport handles redirect to Google
+  }
+
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleCallback(@Req() req: any) {
+    const { user } = req;
+    
+    // Check if user already exists
+    let member = await this.memberService.findByEmail(user.email);
+    
+    if (!member) {
+      // Create new member from OAuth profile
+      member = await this.memberService.createMember({
+        email: user.email,
+        profile: {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          avatar: user.picture
+        },
+        isActive: true,
+        isEmailVerified: true // Google emails are pre-verified
+      });
+    }
+
+    // Link OAuth account
+    await this.oauthService.linkOAuthAccount(member.id, 'google', {
+      providerId: user.providerId,
+      profileData: user
+    });
+
+    // Generate tokens
+    const tokens = await this.memberService.generateTokens(member);
+    
+    return {
+      member,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken
+    };
+  }
+
+  @Get('facebook')
+  @UseGuards(AuthGuard('facebook'))
+  async facebookAuth() {
+    // Facebook OAuth flow
+  }
+
+  @Get('facebook/callback')
+  @UseGuards(AuthGuard('facebook'))
+  async facebookCallback(@Req() req: any) {
+    // Handle Facebook OAuth callback
+    return this.handleOAuthCallback(req.user, 'facebook');
+  }
+}
+```
+
+### GraphQL Integration
+```typescript
+import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
+import { UseGuards } from '@nestjs/common';
+import { 
+  BaseMemberDto, 
+  TokenPairDto, 
+  CasbinGuard,
+  HasPermission,
+  MemberId 
+} from '@rytass/member-base-nestjs-module';
+
+@Resolver(() => BaseMemberDto)
+export class MemberResolver {
+  constructor(private readonly memberService: MemberBaseService) {}
+
+  @Query(() => BaseMemberDto)
+  @UseGuards(CasbinGuard)
+  @HasPermission('profile:read')
+  async me(@MemberId() memberId: string) {
+    return this.memberService.findById(memberId);
+  }
+
+  @Mutation(() => TokenPairDto)
+  async login(
+    @Args('email') email: string,
+    @Args('password') password: string
+  ) {
+    const result = await this.memberService.validateMember(email, password);
+    
+    if (result.success) {
+      return this.memberService.generateTokens(result.member);
+    }
+    
+    throw new Error('Invalid credentials');
+  }
+
+  @Mutation(() => BaseMemberDto)
+  async register(
+    @Args('email') email: string,
+    @Args('password') password: string,
+    @Args('profile') profile: any
+  ) {
+    return this.memberService.createMember({
+      email,
+      password,
+      profile,
+      roles: ['user']
+    });
+  }
+}
+```
+
+## Security Features
+
+### Password Security
+- **Argon2 Hashing**: Industry-standard password hashing
+- **Password History**: Prevent password reuse
+- **Password Policies**: Configurable complexity requirements
+- **Password Expiration**: Optional password rotation policies
+
+### Session Management
+- **JWT Tokens**: Stateless authentication with secure tokens
+- **Refresh Tokens**: Long-term session management
+- **Token Blacklisting**: Revoke compromised tokens
+- **Multi-device Support**: Manage multiple active sessions
+
+### Access Control
+- **RBAC with Casbin**: Policy-based access control
+- **Domain Support**: Multi-tenant permission isolation
+- **Dynamic Permissions**: Runtime permission checking
+- **Audit Trail**: Complete access and permission history
+
+## Database Schema
+
+### Core Entities
+- **BaseMember**: Primary member entity with profile information
+- **MemberLoginLog**: Login attempt and session tracking
+- **MemberOAuthRecord**: OAuth account linking
+- **MemberPasswordHistory**: Password change history
+
+### Relationships
+- One-to-many: Member to LoginLogs, OAuthRecords, PasswordHistory
+- Many-to-many: Member to Roles (via Casbin)
+- Configurable: Custom profile extensions
+
+## Configuration Options
+
+### Security Settings
+```typescript
+interface MemberBaseModuleOptions {
+  jwtSecret: string;
+  jwtExpiresIn: string;
+  refreshTokenExpiresIn: string;
+  passwordMinLength: number;
+  passwordRequireSpecialChar: boolean;
+  passwordHistoryCount: number;
+  maxFailedAttempts: number;
+  lockoutDuration: number;
+}
+```
+
+### OAuth Configuration
+```typescript
+interface OAuthProviderConfig {
+  clientId: string;
+  clientSecret: string;
+  callbackUrl: string;
+  scope?: string[];
+  profileFields?: string[];
+}
+```
+
+## Dependencies
+
+- **@nestjs/typeorm**: Database ORM integration
+- **jsonwebtoken**: JWT token management
+- **argon2**: Secure password hashing
+- **casbin**: Role-based access control
+- **generate-password**: Secure password generation
+- **luxon**: Date/time handling
+
+This comprehensive member system provides enterprise-grade authentication, authorization, and user management capabilities for NestJS applications, with a focus on security, scalability, and developer experience.

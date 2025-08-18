@@ -1,0 +1,300 @@
+# @rytass/secret-adapter-vault-nestjs
+
+NestJS module for HashiCorp Vault secret management integration.
+
+## Package Overview
+
+This package provides a NestJS module wrapper for `@rytass/secret-adapter-vault`, enabling seamless integration of HashiCorp Vault secret management into NestJS applications. It leverages NestJS dependency injection, configuration management, and lifecycle hooks for enterprise-grade secret handling.
+
+## Features
+
+### NestJS Integration
+- **Dependency Injection**: Full DI support with proper service registration
+- **Configuration Module**: Integration with NestJS ConfigModule
+- **Lifecycle Management**: Proper service initialization and cleanup
+- **Environment Support**: Environment-specific Vault configurations
+
+### Module Configuration
+- **Synchronous Setup**: Direct configuration for simple setups
+- **Asynchronous Setup**: Factory-based configuration with dependency injection
+- **Multi-Instance**: Support for multiple Vault connections
+- **Hot Reloading**: Development-friendly configuration reloading
+
+## Usage Examples
+
+### Basic Module Registration
+```typescript
+import { Module } from '@nestjs/common';
+import { VaultSecretModule } from '@rytass/secret-adapter-vault-nestjs';
+
+@Module({
+  imports: [
+    VaultSecretModule.register({
+      host: 'https://vault.company.com',
+      auth: {
+        account: process.env.VAULT_USERNAME,
+        password: process.env.VAULT_PASSWORD
+      },
+      online: true,
+      tokenTTL: 3600
+    })
+  ]
+})
+export class AppModule {}
+```
+
+### Async Configuration with ConfigService
+```typescript
+import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { VaultSecretModule } from '@rytass/secret-adapter-vault-nestjs';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot(),
+    VaultSecretModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        host: configService.get<string>('VAULT_HOST'),
+        auth: {
+          account: configService.get<string>('VAULT_USERNAME'),
+          password: configService.get<string>('VAULT_PASSWORD')
+        },
+        online: configService.get<boolean>('VAULT_ONLINE', true),
+        tokenTTL: configService.get<number>('VAULT_TOKEN_TTL', 3600)
+      })
+    })
+  ]
+})
+export class AppModule {}
+```
+
+### Service Injection and Usage
+```typescript
+import { Injectable } from '@nestjs/common';
+import { VaultSecret } from '@rytass/secret-adapter-vault';
+
+@Injectable()
+export class DatabaseService {
+  constructor(
+    private readonly vaultSecret: VaultSecret
+  ) {}
+
+  async getDatabaseConfig() {
+    interface DatabaseConfig {
+      host: string;
+      port: number;
+      username: string;
+      password: string;
+    }
+
+    return await this.vaultSecret.get<DatabaseConfig>('database/primary');
+  }
+
+  async updateDatabasePassword(newPassword: string) {
+    const config = await this.getDatabaseConfig();
+    
+    await this.vaultSecret.set('database/primary', {
+      ...config,
+      password: newPassword
+    });
+  }
+}
+```
+
+### Multi-Instance Configuration
+```typescript
+import { Module } from '@nestjs/common';
+import { VaultSecretModule } from '@rytass/secret-adapter-vault-nestjs';
+
+@Module({
+  imports: [
+    // Production secrets
+    VaultSecretModule.register({
+      name: 'PRODUCTION_VAULT',
+      host: 'https://vault-prod.company.com',
+      auth: prodCredentials,
+      online: true
+    }),
+    // Development secrets  
+    VaultSecretModule.register({
+      name: 'DEVELOPMENT_VAULT',
+      host: 'https://vault-dev.company.com',
+      auth: devCredentials,
+      online: false // Offline mode for development
+    })
+  ]
+})
+export class AppModule {}
+```
+
+### Custom Service with Multiple Vaults
+```typescript
+import { Injectable, Inject } from '@nestjs/common';
+import { VaultSecret } from '@rytass/secret-adapter-vault';
+
+@Injectable()
+export class MultiVaultService {
+  constructor(
+    @Inject('PRODUCTION_VAULT') private readonly prodVault: VaultSecret,
+    @Inject('DEVELOPMENT_VAULT') private readonly devVault: VaultSecret
+  ) {}
+
+  async getSecret(key: string, environment: 'prod' | 'dev') {
+    const vault = environment === 'prod' ? this.prodVault : this.devVault;
+    return await vault.get(key);
+  }
+}
+```
+
+## Configuration Interface
+
+### Module Options
+```typescript
+interface VaultSecretModuleOptions {
+  name?: string;           // Service injection token
+  host: string;            // Vault server URL
+  auth: {
+    account: string;       // Username for authentication
+    password: string;      // Password for authentication
+  };
+  online?: boolean;        // Online/offline mode
+  tokenTTL?: number;       // Token time-to-live
+  onError?: (error: string) => void;  // Error handler
+  onReady?: () => void;    // Ready callback
+}
+```
+
+### Async Configuration
+```typescript
+interface VaultSecretModuleAsyncOptions {
+  name?: string;
+  imports?: any[];
+  inject?: any[];
+  useFactory: (...args: any[]) => Promise<VaultSecretModuleOptions> | VaultSecretModuleOptions;
+}
+```
+
+## Environment-Specific Patterns
+
+### Development Configuration
+```typescript
+// .env.development
+VAULT_HOST=https://vault-dev.company.com
+VAULT_USERNAME=dev-service-account
+VAULT_PASSWORD=dev-password
+VAULT_ONLINE=false
+VAULT_TOKEN_TTL=7200
+
+// Module configuration
+VaultSecretModule.registerAsync({
+  useFactory: (configService: ConfigService) => ({
+    host: configService.get('VAULT_HOST'),
+    auth: {
+      account: configService.get('VAULT_USERNAME'),
+      password: configService.get('VAULT_PASSWORD')
+    },
+    online: configService.get('VAULT_ONLINE') === 'true',
+    tokenTTL: parseInt(configService.get('VAULT_TOKEN_TTL', '3600'))
+  }),
+  inject: [ConfigService]
+})
+```
+
+### Production Configuration
+```typescript
+// .env.production
+VAULT_HOST=https://vault-prod.company.com
+VAULT_USERNAME=prod-service-account
+VAULT_PASSWORD=${SECURE_VAULT_PASSWORD}
+VAULT_ONLINE=true
+VAULT_TOKEN_TTL=3600
+
+// Production-specific error handling
+VaultSecretModule.registerAsync({
+  useFactory: (configService: ConfigService) => ({
+    host: configService.get('VAULT_HOST'),
+    auth: {
+      account: configService.get('VAULT_USERNAME'),
+      password: configService.get('VAULT_PASSWORD')
+    },
+    online: true,
+    tokenTTL: 3600,
+    onError: (error) => {
+      // Log to monitoring system
+      logger.error('Vault error in production:', error);
+    },
+    onReady: () => {
+      logger.info('Vault connection established in production');
+    }
+  }),
+  inject: [ConfigService]
+})
+```
+
+## Integration Patterns
+
+### Configuration Management Service
+```typescript
+@Injectable()
+export class ConfigurationService {
+  constructor(private readonly vault: VaultSecret) {}
+
+  async getApplicationConfig() {
+    const [database, redis, auth] = await Promise.all([
+      this.vault.get<DatabaseConfig>('database/config'),
+      this.vault.get<RedisConfig>('redis/config'),
+      this.vault.get<AuthConfig>('auth/jwt')
+    ]);
+
+    return { database, redis, auth };
+  }
+}
+```
+
+### Health Check Integration
+```typescript
+import { Injectable } from '@nestjs/common';
+import { HealthIndicator, HealthIndicatorResult, HealthCheckError } from '@nestjs/terminus';
+
+@Injectable()
+export class VaultHealthIndicator extends HealthIndicator {
+  constructor(private readonly vault: VaultSecret) {
+    super();
+  }
+
+  async isHealthy(key: string): Promise<HealthIndicatorResult> {
+    try {
+      // Test Vault connectivity
+      await this.vault.get('health-check');
+      return this.getStatus(key, true);
+    } catch (error) {
+      throw new HealthCheckError('Vault check failed', this.getStatus(key, false));
+    }
+  }
+}
+```
+
+## Dependencies
+
+- **@rytass/secret-adapter-vault**: Core Vault secret management
+- **@nestjs/common**: NestJS common utilities and decorators
+- **@nestjs/config**: Configuration management integration
+- **reflect-metadata**: Metadata reflection for decorators
+
+## Best Practices
+
+### Security Considerations
+- **Environment Variables**: Store Vault credentials in environment variables
+- **Token Rotation**: Configure appropriate token TTL values
+- **Error Handling**: Implement comprehensive error handling for production
+- **Access Control**: Use Vault policies to limit secret access scope
+
+### Performance Optimization
+- **Connection Pooling**: Reuse Vault connections across services
+- **Caching Strategy**: Implement appropriate secret caching for performance
+- **Async Operations**: Use async/await patterns for non-blocking secret access
+- **Lifecycle Management**: Proper service initialization order
+
+This NestJS module provides enterprise-grade secret management integration with HashiCorp Vault, offering flexible configuration options, robust error handling, and seamless integration with NestJS's dependency injection system.

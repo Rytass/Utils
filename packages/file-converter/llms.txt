@@ -1,0 +1,440 @@
+# File Converter - Core Conversion Manager
+
+The main converter orchestration package that provides a unified interface for chaining multiple file conversion operations in a pipeline architecture.
+
+## Package Overview
+
+- **Package**: `@rytass/file-converter`
+- **Version**: 0.1.2
+- **Purpose**: Core file conversion orchestration and pipeline management
+- **Architecture**: Pipeline-based converter orchestration with Stream and Buffer support
+- **License**: MIT
+
+## Core Features
+
+- **Pipeline Architecture**: Chain multiple converters in sequence for complex transformations
+- **Dual Input Support**: Handle both Buffer and Readable Stream inputs seamlessly
+- **Type Safety**: Full TypeScript support with generic type inference
+- **Memory Efficient**: Stream processing support for large files
+- **Extensible Interface**: Simple converter interface for creating custom adapters
+- **Async Processing**: Promise-based API with async/await support
+- **Error Propagation**: Proper error handling through the conversion pipeline
+
+## Installation
+
+```bash
+npm install @rytass/file-converter
+# or
+yarn add @rytass/file-converter
+```
+
+## Core Architecture
+
+### ConvertableFile Type
+```typescript
+type ConvertableFile = Buffer | Readable;
+```
+
+### FileConverter Interface
+```typescript
+interface FileConverter<O extends Record<string, any> = Record<string, any>> {
+  convert<T extends ConvertableFile>(file: ConvertableFile): Promise<T>;
+}
+```
+
+### ConverterManager Class
+```typescript
+class ConverterManager {
+  constructor(converters: FileConverter[]);
+  convert<T extends ConvertableFile>(file: ConvertableFile): Promise<T>;
+}
+```
+
+## Basic Usage
+
+### Simple Pipeline
+```typescript
+import { ConverterManager } from '@rytass/file-converter';
+import { ImageResizer } from '@rytass/file-converter-adapter-image-resizer';
+import { ImageTranscoder } from '@rytass/file-converter-adapter-image-transcoder';
+
+// Create conversion pipeline
+const manager = new ConverterManager([
+  new ImageResizer({ maxWidth: 800, maxHeight: 600 }),
+  new ImageTranscoder({ targetFormat: 'webp', quality: 85 })
+]);
+
+// Process image
+const originalImage = readFileSync('photo.jpg');
+const processedImage = await manager.convert<Buffer>(originalImage);
+writeFileSync('processed.webp', processedImage);
+```
+
+### Stream Processing for Large Files
+```typescript
+import { createReadStream, createWriteStream } from 'fs';
+import { pipeline } from 'stream/promises';
+
+const manager = new ConverterManager([
+  new ImageResizer({ maxWidth: 1920, maxHeight: 1080 }),
+  new ImageTranscoder({ targetFormat: 'jpeg', quality: 90 })
+]);
+
+// Process large file with streams
+const inputStream = createReadStream('large-image.tiff');
+const outputStream = createWriteStream('processed.jpg');
+
+const processedStream = await manager.convert<Readable>(inputStream);
+await pipeline(processedStream, outputStream);
+```
+
+## Available Adapters Ecosystem
+
+### Image Processing Adapters
+- **`@rytass/file-converter-adapter-image-resizer`** - High-performance image resizing with Sharp
+- **`@rytass/file-converter-adapter-image-transcoder`** - Format conversion (JPEG, PNG, WebP, AVIF)
+- **`@rytass/file-converter-adapter-image-watermark`** - Watermark application with positioning
+
+### Pipeline Order Best Practices
+1. **Resizing** - Reduce image dimensions first for performance
+2. **Watermarking** - Apply overlays on correctly sized images
+3. **Format Conversion** - Final step for optimal compression/quality
+
+## Advanced Usage Patterns
+
+### Conditional Pipeline
+```typescript
+function createImagePipeline(options: {
+  resize?: { maxWidth: number; maxHeight: number };
+  watermark?: { image: Buffer; position: string };
+  format?: string;
+}): ConverterManager {
+  const converters: FileConverter[] = [];
+  
+  if (options.resize) {
+    converters.push(new ImageResizer(options.resize));
+  }
+  
+  if (options.watermark) {
+    converters.push(new ImageWatermark({
+      watermarks: [{ image: options.watermark.image }]
+    }));
+  }
+  
+  if (options.format) {
+    converters.push(new ImageTranscoder({ 
+      targetFormat: options.format as any 
+    }));
+  }
+  
+  return new ConverterManager(converters);
+}
+```
+
+### Batch Processing
+```typescript
+class BatchProcessor {
+  constructor(private manager: ConverterManager) {}
+
+  async processDirectory(inputDir: string, outputDir: string, parallel = 5) {
+    const files = await readdir(inputDir);
+    const imageFiles = files.filter(f => /\.(jpg|png|webp)$/i.test(f));
+
+    for (let i = 0; i < imageFiles.length; i += parallel) {
+      const batch = imageFiles.slice(i, i + parallel);
+      
+      await Promise.all(
+        batch.map(async (filename) => {
+          const inputPath = join(inputDir, filename);
+          const outputPath = join(outputDir, filename);
+          
+          const inputBuffer = await readFile(inputPath);
+          const outputBuffer = await this.manager.convert<Buffer>(inputBuffer);
+          
+          await writeFile(outputPath, outputBuffer);
+        })
+      );
+    }
+  }
+}
+```
+
+### Custom Converter Implementation
+```typescript
+import { FileConverter, ConvertableFile } from '@rytass/file-converter';
+import { Readable } from 'stream';
+
+interface CustomConverterOptions {
+  compressionLevel?: number;
+  stripMetadata?: boolean;
+}
+
+export class CustomConverter implements FileConverter<CustomConverterOptions> {
+  constructor(private options: CustomConverterOptions = {}) {}
+
+  async convert<T extends ConvertableFile>(file: ConvertableFile): Promise<T> {
+    // Convert input to Buffer if needed
+    const buffer = Buffer.isBuffer(file) 
+      ? file 
+      : await this.streamToBuffer(file);
+    
+    // Perform custom processing
+    const processed = await this.processBuffer(buffer);
+    
+    // Return in requested format
+    if (file instanceof Readable) {
+      return Readable.from(processed) as T;
+    }
+    
+    return processed as T;
+  }
+
+  private async streamToBuffer(stream: Readable): Promise<Buffer> {
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) {
+      chunks.push(Buffer.from(chunk));
+    }
+    return Buffer.concat(chunks);
+  }
+
+  private async processBuffer(buffer: Buffer): Promise<Buffer> {
+    // Custom processing logic here
+    return buffer;
+  }
+}
+```
+
+## Integration Patterns
+
+### Express.js File Upload
+```typescript
+import express from 'express';
+import multer from 'multer';
+
+const app = express();
+const upload = multer({ storage: multer.memoryStorage() });
+
+const imageProcessor = new ConverterManager([
+  new ImageResizer({ maxWidth: 1200, maxHeight: 800 }),
+  new ImageTranscoder({ targetFormat: 'webp', quality: 85 })
+]);
+
+app.post('/upload', upload.single('image'), async (req, res) => {
+  try {
+    const processedImage = await imageProcessor.convert<Buffer>(req.file!.buffer);
+    
+    res.set('Content-Type', 'image/webp');
+    res.send(processedImage);
+  } catch (error) {
+    res.status(500).json({ error: 'Processing failed' });
+  }
+});
+```
+
+### NestJS Service Integration
+```typescript
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
+export class ImageProcessingService {
+  private thumbnailProcessor: ConverterManager;
+  private fullSizeProcessor: ConverterManager;
+
+  constructor() {
+    this.thumbnailProcessor = new ConverterManager([
+      new ImageResizer({ maxWidth: 300, maxHeight: 300 })
+    ]);
+
+    this.fullSizeProcessor = new ConverterManager([
+      new ImageResizer({ maxWidth: 1920, maxHeight: 1080 }),
+      new ImageWatermark({ 
+        watermarks: [{ image: './watermark.png' }] 
+      }),
+      new ImageTranscoder({ targetFormat: 'webp', quality: 90 })
+    ]);
+  }
+
+  async processImage(buffer: Buffer): Promise<{
+    thumbnail: Buffer;
+    fullSize: Buffer;
+  }> {
+    const [thumbnail, fullSize] = await Promise.all([
+      this.thumbnailProcessor.convert<Buffer>(buffer),
+      this.fullSizeProcessor.convert<Buffer>(buffer)
+    ]);
+
+    return { thumbnail, fullSize };
+  }
+}
+```
+
+### Storage Integration
+```typescript
+import { StorageS3Service } from '@rytass/storages-adapter-s3';
+
+class ImageUploadService {
+  constructor(
+    private processor: ConverterManager,
+    private storage: StorageS3Service
+  ) {}
+
+  async uploadAndProcess(file: Buffer, key: string): Promise<string> {
+    const processedImage = await this.processor.convert<Buffer>(file);
+    
+    const uploadKey = `images/${key}`;
+    await this.storage.write(processedImage, uploadKey, {
+      contentType: 'image/webp',
+      metadata: { processed: 'true' }
+    });
+    
+    return this.storage.url(uploadKey);
+  }
+}
+```
+
+## Performance Optimization
+
+### Memory Management
+```typescript
+class MemoryEfficientConverter {
+  constructor(private manager: ConverterManager) {}
+
+  async convertLargeFile(inputPath: string, outputPath: string): Promise<void> {
+    const inputStream = createReadStream(inputPath);
+    const outputStream = createWriteStream(outputPath);
+    
+    try {
+      const processedStream = await this.manager.convert<Readable>(inputStream);
+      await pipeline(processedStream, outputStream);
+    } finally {
+      inputStream.destroy();
+      outputStream.destroy();
+    }
+  }
+}
+```
+
+### Caching Strategy
+```typescript
+import * as crypto from 'crypto';
+
+class CachedConverter {
+  private cache = new Map<string, Buffer>();
+  
+  constructor(private manager: ConverterManager, private maxCacheSize = 100) {}
+
+  async convert(file: Buffer, cacheKey?: string): Promise<Buffer> {
+    const key = cacheKey || crypto.createHash('md5').update(file).digest('hex');
+    
+    if (this.cache.has(key)) {
+      return this.cache.get(key)!;
+    }
+    
+    const result = await this.manager.convert<Buffer>(file);
+    
+    if (this.cache.size >= this.maxCacheSize) {
+      const firstKey = this.cache.keys().next().value;
+      this.cache.delete(firstKey);
+    }
+    this.cache.set(key, result);
+    
+    return result;
+  }
+}
+```
+
+## Testing
+
+### Unit Testing with Mocks
+```typescript
+import { ConverterManager } from '@rytass/file-converter';
+
+class MockConverter implements FileConverter {
+  async convert<T extends ConvertableFile>(file: ConvertableFile): Promise<T> {
+    const buffer = Buffer.isBuffer(file) ? file : await this.streamToBuffer(file);
+    const marked = Buffer.concat([Buffer.from('MOCK:'), buffer]);
+    return marked as T;
+  }
+
+  private async streamToBuffer(stream: Readable): Promise<Buffer> {
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) {
+      chunks.push(Buffer.from(chunk));
+    }
+    return Buffer.concat(chunks);
+  }
+}
+
+describe('ConverterManager', () => {
+  it('should chain converters in sequence', async () => {
+    const manager = new ConverterManager([new MockConverter(), new MockConverter()]);
+    
+    const input = Buffer.from('test');
+    const result = await manager.convert<Buffer>(input);
+    
+    expect(result.toString()).toBe('MOCK:MOCK:test');
+  });
+});
+```
+
+## Error Handling
+
+### Pipeline Error Recovery
+```typescript
+class SafeConverterManager extends ConverterManager {
+  async convert<T extends ConvertableFile>(file: ConvertableFile): Promise<T> {
+    try {
+      return await super.convert<T>(file);
+    } catch (error) {
+      console.error('Conversion failed:', error);
+      
+      // Implement fallback logic
+      if (error.message.includes('unsupported format')) {
+        return file as T;
+      }
+      
+      throw error;
+    }
+  }
+}
+```
+
+## Best Practices
+
+### Converter Design Principles
+- Keep converters focused on single transformations
+- Support both Buffer and Stream inputs/outputs  
+- Implement proper error handling and validation
+- Make converters configurable through options
+
+### Pipeline Composition
+- Order converters from most destructive to least destructive
+- Consider memory usage when chaining converters
+- Use streams for large file processing
+- Implement progress tracking for long operations
+
+### Performance Guidelines
+- Use streams for files larger than 10MB
+- Implement caching for frequently converted files
+- Process files in parallel when possible
+- Monitor memory usage in production environments
+
+## Dependencies
+
+- **Node.js**: ^14.0.0 or later
+- **TypeScript**: Full type support included
+
+## Related Packages
+
+- **`@rytass/file-converter-adapter-image-resizer`** - Image resizing processor
+- **`@rytass/file-converter-adapter-image-transcoder`** - Format conversion processor  
+- **`@rytass/file-converter-adapter-image-watermark`** - Watermark application processor
+- **`@rytass/storages`** - File storage adapters for saving processed files
+
+## License and Support
+
+**License**: MIT
+**Repository**: https://github.com/Rytass/Utils
+**Issues**: https://github.com/Rytass/Utils/issues
+
+Part of the Rytass Utils monorepo ecosystem providing comprehensive utilities for Taiwan-focused web applications.
