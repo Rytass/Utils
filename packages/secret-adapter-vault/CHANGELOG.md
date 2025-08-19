@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.4.1](https://github.com/Rytass/Utils/compare/@rytass/secret-adapter-vault@0.4.0...@rytass/secret-adapter-vault@0.4.1) (2025-08-19)
+
+**Note:** Version bump only for package @rytass/secret-adapter-vault
+
 # [0.4.0](https://github.com/Rytass/Utils/compare/@rytass/secret-adapter-vault@0.3.2...@rytass/secret-adapter-vault@0.4.0) (2025-07-28)
 
 **Note:** Version bump only for package @rytass/secret-adapter-vault

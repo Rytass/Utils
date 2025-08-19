@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.4](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-bank-pro@0.2.3...@rytass/invoice-adapter-bank-pro@0.2.4) (2025-08-19)
+
+**Note:** Version bump only for package @rytass/invoice-adapter-bank-pro
+
 ## [0.2.3](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-bank-pro@0.2.2...@rytass/invoice-adapter-bank-pro@0.2.3) (2025-08-18)
 
 ### Features

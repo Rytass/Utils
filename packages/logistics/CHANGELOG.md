@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.11](https://github.com/Rytass/Utils/compare/@rytass/logistics@0.0.10...@rytass/logistics@0.0.11) (2025-08-19)
+
+**Note:** Version bump only for package @rytass/logistics
+
 ## [0.0.10](https://github.com/Rytass/Utils/compare/@rytass/logistics@0.0.9...@rytass/logistics@0.0.10) (2025-06-25)
 
 ### Features

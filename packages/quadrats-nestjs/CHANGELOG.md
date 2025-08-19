@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.9](https://github.com/Rytass/Utils/compare/@rytass/quadrats-nestjs@0.1.8...@rytass/quadrats-nestjs@0.1.9) (2025-08-19)
+
+**Note:** Version bump only for package @rytass/quadrats-nestjs
+
 ## [0.1.8](https://github.com/Rytass/Utils/compare/@rytass/quadrats-nestjs@0.1.7...@rytass/quadrats-nestjs@0.1.8) (2024-11-29)
 
 **Note:** Version bump only for package @rytass/quadrats-nestjs

@@ -1,6 +1,6 @@
 {
   "name": "@rytass/sms-adapter-every8d",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Rytass Utils SMS every8d adapter",
   "keywords": [
     "rytass",
@@ -23,6 +23,6 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/sms": "^0.1.0"
+    "@rytass/sms": "^0.1.1"
   }
 }
