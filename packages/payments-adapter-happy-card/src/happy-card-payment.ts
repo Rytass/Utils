@@ -31,7 +31,7 @@ export class HappyCardPayment<
   private readonly STORE_ID = '999999';
   private readonly VERSION = '001';
   private readonly POS_ID = '01';
-  private readonly VALID_PRODUCT_TYPE_SET = new Set(['1', '3']);
+  private readonly VALID_PRODUCT_TYPE_SET = new Set(Object.values(HappyCardProductType));
   private readonly cSource: string;
   private readonly key: string;
 
