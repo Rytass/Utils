@@ -54,6 +54,7 @@ interface WmsMapModalProps {
   onNodeClick?: (nodeInfo: WmsNodeClickInfo) => void;
   onSave?: (mapData: Map) => void;
   onBreadcrumbClick?: (warehouseId: string, index: number) => void; // 新增：breadcrumb 點擊事件
+  onWarehouseNameEdit?: (warehouseId: string, newName: string, index: number) => void; // 新增：修改區域名稱事件
   initialNodes?: Node[];
   initialEdges?: Edge[];
   debugMode?: boolean; // 新增：控制 debug 模式的開關
@@ -73,6 +74,7 @@ const WmsMapContent: FC<{
   onNodeClick?: (nodeInfo: WmsNodeClickInfo) => void;
   onSave?: (mapData: Map) => void;
   onBreadcrumbClick?: (warehouseId: string, index: number) => void;
+  onWarehouseNameEdit?: (warehouseId: string, newName: string, index: number) => void;
   initialNodes?: Node[];
   initialEdges?: Edge[];
 }> = ({
@@ -88,6 +90,7 @@ const WmsMapContent: FC<{
   onNodeClick,
   onSave,
   onBreadcrumbClick,
+  onWarehouseNameEdit,
   initialNodes: propsInitialNodes = [],
   initialEdges: propsInitialEdges = [],
 }) => {
@@ -970,6 +973,7 @@ const WmsMapContent: FC<{
           '100003B',
         ]}
         onWarehouseClick={onBreadcrumbClick}
+        onWarehouseNameEdit={onWarehouseNameEdit}
       />
       {viewMode === ViewMode.EDIT && (
         <Toolbar
@@ -1033,6 +1037,7 @@ const WmsMapModal: FC<WmsMapModalProps> = ({
   onNodeClick,
   onSave,
   onBreadcrumbClick,
+  onWarehouseNameEdit,
   initialNodes,
   initialEdges,
   debugMode = false, // 預設為關閉
@@ -1131,6 +1136,7 @@ const WmsMapModal: FC<WmsMapModalProps> = ({
               onNodeClick={onNodeClick}
               onSave={onSave}
               onBreadcrumbClick={onBreadcrumbClick}
+              onWarehouseNameEdit={onWarehouseNameEdit}
               initialNodes={initialNodes}
               initialEdges={initialEdges}
             />

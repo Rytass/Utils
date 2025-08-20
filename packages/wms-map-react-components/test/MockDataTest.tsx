@@ -158,6 +158,15 @@ const MockDataTest: React.FC = () => {
     }
   };
 
+  // 處理倉庫名稱編輯事件
+  const handleWarehouseNameEdit = (warehouseId: string, newName: string, index: number) => {
+    debugLog('倉庫名稱編輯事件:', { warehouseId, newName, index });
+    addTestStep(`編輯倉庫名稱: ${warehouseId} → ${newName} (索引: ${index})`);
+
+    // 在這裡可以呼叫 API 或執行其他更新邏輯
+    alert(`收到倉庫名稱編輯請求！\n原 ID: ${warehouseId}\n新名稱: ${newName}\n索引: ${index}`);
+  };
+
   // 關閉 Modal
   const handleClose = () => {
     setIsModalOpen(false);
@@ -333,6 +342,15 @@ const MockDataTest: React.FC = () => {
             </ul>
           </li>
           <li>
+            <strong>區域名稱編輯:</strong> 點擊 breadcrumb 旁的編輯按鈕可修改當前區域名稱
+            <ul>
+              <li>輸入新名稱後點擊確認</li>
+              <li>父層會收到 warehouseId、newName 和 index 資訊</li>
+              <li>測試記錄會顯示編輯操作詳情</li>
+              <li>會彈出 alert 確認收到的資料</li>
+            </ul>
+          </li>
+          <li>
             <strong>模式測試:</strong> 切換檢視模式/編輯模式，測試節點狀態規則
           </li>
           <li>
@@ -462,6 +480,7 @@ const MockDataTest: React.FC = () => {
           onNodeClick={handleNodeClick}
           onSave={handleSave}
           onBreadcrumbClick={handleBreadcrumbClick}
+          onWarehouseNameEdit={handleWarehouseNameEdit}
           initialNodes={currentNodes}
           initialEdges={[]} // WMS 地圖通常不需要邊
           debugMode={true} // 啟用 debug 模式以便查看 console 輸出
