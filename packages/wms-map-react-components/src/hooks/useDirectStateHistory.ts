@@ -1,9 +1,11 @@
 import { useState, useCallback, useRef } from 'react';
 import { Node, Edge } from '@xyflow/react';
+import { EditMode } from '../typings';
 
 interface HistoryState {
   nodes: Node[];
   edges: Edge[];
+  editMode: EditMode;
   operation: string;
   timestamp: number;
 }
@@ -35,10 +37,11 @@ export const useDirectStateHistory = ({
 
   // 初始化歷史記錄
   const initializeHistory = useCallback(
-    (initialNodes: Node[], initialEdges: Edge[]) => {
+    (initialNodes: Node[], initialEdges: Edge[], editMode: EditMode) => {
       const initialState: HistoryState = {
         nodes: JSON.parse(JSON.stringify(initialNodes)),
         edges: JSON.parse(JSON.stringify(initialEdges)),
+        editMode,
         operation: 'init',
         timestamp: Date.now(),
       };
@@ -50,6 +53,7 @@ export const useDirectStateHistory = ({
         console.log('🎯 直接狀態歷史系統初始化:', {
           nodes: initialNodes.length,
           edges: initialEdges.length,
+          editMode,
         });
       }
     },
@@ -58,7 +62,7 @@ export const useDirectStateHistory = ({
 
   // 保存狀態快照
   const saveState = useCallback(
-    (nodes: Node[], edges: Edge[], operation: string) => {
+    (nodes: Node[], edges: Edge[], operation: string, editMode: EditMode) => {
       if (isRestoringRef.current) {
         if (debugMode) {
           console.log('🚫 跳過保存 - 正在執行 undo/redo');
@@ -70,6 +74,7 @@ export const useDirectStateHistory = ({
       const newState: HistoryState = {
         nodes: JSON.parse(JSON.stringify(nodes)), // 深拷貝
         edges: JSON.parse(JSON.stringify(edges)), // 深拷貝
+        editMode,
         operation,
         timestamp: Date.now(),
       };
@@ -99,6 +104,7 @@ export const useDirectStateHistory = ({
           console.log(`📸 保存狀態 [${operation}]:`, {
             nodes: nodes.length,
             edges: edges.length,
+            editMode,
             historyIndex: newHistory.length - 1,
             totalHistory: newHistory.length,
           });
@@ -134,6 +140,7 @@ export const useDirectStateHistory = ({
         toIndex: targetIndex,
         nodes: targetState.nodes.length,
         edges: targetState.edges.length,
+        editMode: targetState.editMode,
       });
     }
 
@@ -145,6 +152,7 @@ export const useDirectStateHistory = ({
     return {
       nodes: targetState.nodes,
       edges: targetState.edges,
+      editMode: targetState.editMode,
     };
   }, [canUndo, currentIndex, history, debugMode]);
 
@@ -172,6 +180,7 @@ export const useDirectStateHistory = ({
         toIndex: targetIndex,
         nodes: targetState.nodes.length,
         edges: targetState.edges.length,
+        editMode: targetState.editMode,
       });
     }
 
@@ -183,6 +192,7 @@ export const useDirectStateHistory = ({
     return {
       nodes: targetState.nodes,
       edges: targetState.edges,
+      editMode: targetState.editMode,
     };
   }, [canRedo, currentIndex, history, debugMode]);
 

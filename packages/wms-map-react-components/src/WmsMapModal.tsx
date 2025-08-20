@@ -245,7 +245,7 @@ const WmsMapContent: FC<{
 
       // 重新初始化歷史記錄系統，確保新資料被正確管理
       setTimeout(() => {
-        initializeHistory(nodesWithCorrectStates, propsInitialEdges);
+        initializeHistory(nodesWithCorrectStates, propsInitialEdges, editMode);
         debugSuccess(
           TEXT_MAPPINGS.DEBUG.HISTORY,
           TEXT_MAPPINGS.MESSAGES.HISTORY_REINITIALIZE,
@@ -312,7 +312,7 @@ const WmsMapContent: FC<{
           },
         );
 
-        initializeHistory(nodes, edges);
+        initializeHistory(nodes, edges, editMode);
       }
     }
   }, [edges, initializeHistory, nodes, getHistorySummary]);
@@ -322,10 +322,10 @@ const WmsMapContent: FC<{
     if (colorChangeTimeoutRef.current) {
       clearTimeout(colorChangeTimeoutRef.current);
       // 立即記錄當前狀態
-      saveState(nodes, edges, 'change-color');
+      saveState(nodes, edges, 'change-color', editMode);
       colorChangeTimeoutRef.current = null;
     }
-  }, [saveState, nodes, edges]);
+  }, [saveState, nodes, edges, editMode]);
 
   // 改進的 onNodesChange，記錄各種節點變更操作
   const onNodesChange = useCallback(
@@ -357,7 +357,7 @@ const WmsMapContent: FC<{
       if (hasDragEnd) {
         // 拖動結束後記錄狀態
         setTimeout(() => {
-          saveState(nodes, edges, 'move-shape');
+          saveState(nodes, edges, 'move-shape', editMode);
         }, 10);
       } else if (hasDataChange) {
         // 資料變更（包含文字編輯）立即記錄歷史
@@ -371,7 +371,7 @@ const WmsMapContent: FC<{
         // 立即記錄資料變更歷史（文字編輯會自動包含在 React Flow 節點資料中）
         setTimeout(() => {
           flushColorChangeHistory(); // 先清理顏色變更記錄
-          saveState(nodes, edges, `data-change-${changedNodeIds.join(',')}`);
+          saveState(nodes, edges, `data-change-${changedNodeIds.join(',')}`, editMode);
           debugSuccess('history', '立即記錄資料變更歷史:', {
             changedNodes: changedNodeIds,
             operation: `data-change-${changedNodeIds.join(',')}`,
@@ -379,7 +379,7 @@ const WmsMapContent: FC<{
         }, 10);
       }
     },
-    [onNodesChangeOriginal, saveState, flushColorChangeHistory, nodes, edges],
+    [onNodesChangeOriginal, saveState, flushColorChangeHistory, nodes, edges, editMode],
   );
 
   const onConnect = useCallback(
@@ -470,7 +470,7 @@ const WmsMapContent: FC<{
 
                 // 每張圖片上傳後都記錄狀態
                 setTimeout(() => {
-                  saveState(newNodes, edges, `upload-image-${file.name}`);
+                  saveState(newNodes, edges, `upload-image-${file.name}`, editMode);
                 }, 50);
 
                 return newNodes;
@@ -494,7 +494,7 @@ const WmsMapContent: FC<{
 
         // 刪除圖片後記錄狀態
         setTimeout(() => {
-          saveState(newNodes, edges, 'delete-images');
+          saveState(newNodes, edges, 'delete-images', editMode);
         }, 10);
 
         return newNodes;
@@ -508,7 +508,7 @@ const WmsMapContent: FC<{
 
         // 刪除圖層後記錄狀態
         setTimeout(() => {
-          saveState(newNodes, [], 'delete-layers'); // edges 也被清空
+          saveState(newNodes, [], 'delete-layers', editMode); // edges 也被清空
         }, 10);
 
         return newNodes;
@@ -554,7 +554,7 @@ const WmsMapContent: FC<{
 
         // 創建矩形後記錄狀態
         setTimeout(() => {
-          saveState(newNodes, edges, 'draw-rectangle');
+          saveState(newNodes, edges, 'draw-rectangle', editMode);
         }, 10);
 
         return newNodes;
@@ -604,7 +604,7 @@ const WmsMapContent: FC<{
 
         // 創建路徑後記錄狀態
         setTimeout(() => {
-          saveState(newNodes, edges, 'draw-path');
+          saveState(newNodes, edges, 'draw-path', editMode);
         }, 10);
 
         return newNodes;
@@ -630,12 +630,14 @@ const WmsMapContent: FC<{
     if (result) {
       setNodes(result.nodes);
       setEdges(result.edges);
+      onEditModeChange(result.editMode);
       debugSuccess('history', 'Undo 成功:', {
         nodes: result.nodes.length,
         edges: result.edges.length,
+        editMode: result.editMode,
       });
     }
-  }, [undo, setNodes, setEdges]);
+  }, [undo, setNodes, setEdges, onEditModeChange]);
 
   const handleRedo = useCallback(() => {
     debugLog('history', '執行 Redo - 按鈕點擊');
@@ -644,12 +646,14 @@ const WmsMapContent: FC<{
     if (result) {
       setNodes(result.nodes);
       setEdges(result.edges);
+      onEditModeChange(result.editMode);
       debugSuccess('history', 'Redo 成功:', {
         nodes: result.nodes.length,
         edges: result.edges.length,
+        editMode: result.editMode,
       });
     }
-  }, [redo, setNodes, setEdges]);
+  }, [redo, setNodes, setEdges, onEditModeChange]);
 
   const handleSelectionChange = useCallback(
     (params: OnSelectionChangeParams) => {
@@ -700,7 +704,7 @@ const WmsMapContent: FC<{
 
           // 延遲記錄顏色變更歷史 (800ms 後記錄，避免頻繁切換時產生過多記錄)
           colorChangeTimeoutRef.current = setTimeout(() => {
-            saveState(newNodes, edges, 'change-color');
+            saveState(newNodes, edges, 'change-color', editMode);
             colorChangeTimeoutRef.current = null;
           }, 800);
 
@@ -708,7 +712,7 @@ const WmsMapContent: FC<{
         });
       }
     },
-    [selectedNodes, setNodes, onColorChange, saveState, edges],
+    [selectedNodes, setNodes, onColorChange, saveState, edges, editMode],
   );
 
   // 處理文字編輯完成（手動觸發歷史記錄）
@@ -735,10 +739,10 @@ const WmsMapContent: FC<{
           updatedNode: currentNodes.find((n: any) => n.id === id)?.data?.label,
         });
 
-        saveState(currentNodes, currentEdges, `text-edit-${id}`);
+        saveState(currentNodes, currentEdges, `text-edit-${id}`, editMode);
       }, 20); // 增加延遲時間確保狀態更新完成
     },
-    [saveState, flushColorChangeHistory, getNodes, getEdges],
+    [saveState, flushColorChangeHistory, getNodes, getEdges, editMode],
   );
 
   // 處理路徑節點點位變更（記錄到歷史中）
@@ -771,10 +775,10 @@ const WmsMapContent: FC<{
               ?.length || 0,
         });
 
-        saveState(currentNodes, currentEdges, `path-edit-${id}`);
+        saveState(currentNodes, currentEdges, `path-edit-${id}`, editMode);
       }, 20);
     },
-    [saveState, flushColorChangeHistory, getNodes, getEdges],
+    [saveState, flushColorChangeHistory, getNodes, getEdges, editMode],
   );
 
   // 處理路徑點拖曳狀態變更
@@ -922,7 +926,7 @@ const WmsMapContent: FC<{
 
     // 記錄歷史狀態
     setTimeout(() => {
-      saveState(nodes, edges, 'copy-paste-nodes');
+      saveState(nodes, edges, 'copy-paste-nodes', editMode);
     }, 10);
 
     debugLog(
@@ -933,7 +937,7 @@ const WmsMapContent: FC<{
         copiedNodeTypes: copyableNodes.map((n) => n.type),
       },
     );
-  }, [selectedNodes, setNodes, nodes, edges, saveState]);
+  }, [selectedNodes, setNodes, nodes, edges, saveState, editMode]);
 
   // 全域鍵盤快捷鍵處理 (Command+D 複製貼上)
   useEffect(() => {
