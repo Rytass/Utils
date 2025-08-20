@@ -30,7 +30,7 @@ import {
   calculateImageSize,
   calculateStaggeredPosition,
 } from './utils/nodeUtils';
-import { createRectangleCopy, createPathCopy } from './utils/nodeOperations';
+import { createRectangleCopy, createPathCopy, createImageCopy } from './utils/nodeOperations';
 import {
   logMapData,
   transformNodesToMapData,
@@ -137,10 +137,10 @@ const WmsMapContent: FC<{
           shouldBeDraggable = false;
           shouldBeDeletable = false;
         } else if (node.type === 'imageNode') {
-          // 底圖節點只能在底圖模式下選取和拖曳
+          // 底圖節點只能在底圖模式下選取、拖曳和刪除
           shouldBeSelectable = editMode === EditMode.BACKGROUND;
           shouldBeDraggable = editMode === EditMode.BACKGROUND;
-          shouldBeDeletable = false; // 底圖節點不可刪除
+          shouldBeDeletable = editMode === EditMode.BACKGROUND; // 底圖節點在底圖模式下可刪除
         } else if (node.type === 'rectangleNode') {
           // 矩形節點只能在圖層模式下選取和拖曳
           shouldBeSelectable = editMode === EditMode.LAYER;
@@ -868,9 +868,9 @@ const WmsMapContent: FC<{
       return;
     }
 
-    // 只複製可複製的節點類型（矩形和路徑節點）
+    // 只複製可複製的節點類型（圖片、矩形和路徑節點）
     const copyableNodes = selectedNodes.filter(
-      (node) => node.type === 'rectangleNode' || node.type === 'pathNode',
+      (node) => node.type === 'imageNode' || node.type === 'rectangleNode' || node.type === 'pathNode',
     );
 
     if (copyableNodes.length === 0) {
@@ -886,7 +886,13 @@ const WmsMapContent: FC<{
       copyableNodes.forEach((nodeToClone, index) => {
         let copiedNode;
 
-        if (nodeToClone.type === 'rectangleNode') {
+        if (nodeToClone.type === 'imageNode') {
+          copiedNode = createImageCopy({
+            currentNode: nodeToClone,
+            nodeType: 'imageNode',
+            data: nodeToClone.data,
+          });
+        } else if (nodeToClone.type === 'rectangleNode') {
           copiedNode = createRectangleCopy({
             currentNode: nodeToClone,
             nodeType: 'rectangleNode',
