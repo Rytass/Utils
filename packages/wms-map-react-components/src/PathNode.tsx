@@ -102,7 +102,7 @@ const PathNode: FC<PathNodeProps> = ({
     handleDoubleClick,
     handleKeyDown,
     handleBlur,
-  } = useTextEditing({ id, label, editMode, isEditable, onTextEditComplete });
+  } = useTextEditing({ id, label, isEditable, onTextEditComplete });
 
   // Calculate path dimensions - use fixed bounds during dragging to prevent unwanted shifts
   const getBounds = useCallback(

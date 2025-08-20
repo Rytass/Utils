@@ -12,7 +12,13 @@ import {
   useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { DrawingMode, EditMode, ViewMode, WmsNodeClickInfo } from '../typings';
+import {
+  DrawingMode,
+  EditMode,
+  ViewMode,
+  WmsNodeClickInfo,
+  Map,
+} from '../typings';
 import {
   DEFAULT_PATH_LABEL,
   DEFAULT_RECTANGLE_COLOR,
@@ -30,11 +36,7 @@ import {
   transformNodeToClickInfo,
 } from './utils/mapDataTransform';
 import { useDirectStateHistory } from './hooks/useDirectStateHistory';
-import {
-  debugLog,
-  debugSuccess,
-  setDebugMode,
-} from './utils/debugLogger';
+import { debugLog, debugSuccess, setDebugMode } from './utils/debugLogger';
 import Toolbar from './Toolbar';
 import Breadcrumb from './components/breadcrumb/Breadcrumb';
 import ReactFlowCanvas from './ReactFlowCanvas';
@@ -48,6 +50,7 @@ interface WmsMapModalProps {
   viewMode?: ViewMode;
   colorPalette?: string[];
   onNodeClick?: (nodeInfo: WmsNodeClickInfo) => void;
+  onSave?: (mapData: Map) => void;
   initialNodes?: Node[];
   initialEdges?: Edge[];
   debugMode?: boolean; // 新增：控制 debug 模式的開關
@@ -65,6 +68,7 @@ const WmsMapContent: FC<{
   onTogglePenTool: () => void;
   onColorChange: (color: string) => void;
   onNodeClick?: (nodeInfo: WmsNodeClickInfo) => void;
+  onSave?: (mapData: Map) => void;
   initialNodes?: Node[];
   initialEdges?: Edge[];
 }> = ({
@@ -78,6 +82,7 @@ const WmsMapContent: FC<{
   onTogglePenTool,
   onColorChange,
   onNodeClick,
+  onSave,
   initialNodes: propsInitialNodes = [],
   initialEdges: propsInitialEdges = [],
 }) => {
@@ -106,7 +111,9 @@ const WmsMapContent: FC<{
   const { getViewport, getNodes, getEdges } = useReactFlow();
 
   // 用於延遲顏色變更歷史記錄的 ref
-  const colorChangeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const colorChangeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   // 根據編輯模式和視圖模式動態更新所有節點的可選取性和可拖曳性
   useEffect(() => {
@@ -257,8 +264,9 @@ const WmsMapContent: FC<{
     // 輸出格式化的資料到 console
     logMapData(mapData);
 
-    // TODO: 之後這裡會呼叫 API 來儲存資料
-    // await saveMapData(mapData);
+    if (onSave) {
+      onSave(mapData);
+    }
   };
 
   const handleUpload = () => {
@@ -696,7 +704,7 @@ const WmsMapContent: FC<{
       // 輸出詳細的圖形資訊（和儲存時相同的格式）
       logNodeData(node);
 
-      // 如果父組件提供了回調函數，將點擊資訊傳遞給父組件
+      // 如果父組件提供了 callBack，將點擊資訊傳遞給父組件
       if (onNodeClick) {
         const nodeClickInfo = transformNodeToClickInfo(node);
 
@@ -709,14 +717,11 @@ const WmsMapContent: FC<{
     [viewMode, editMode, onNodeClick],
   );
 
-  const handleToggleBackground = useCallback(
-    (show: boolean) => {
-      debugLog('ui', '切換底圖顯示:', { showBackground: show });
-      showBackgroundRef.current = show;
-      setShowBackground(show);
-    },
-    [],
-  );
+  const handleToggleBackground = useCallback((show: boolean) => {
+    debugLog('ui', '切換底圖顯示:', { showBackground: show });
+    showBackgroundRef.current = show;
+    setShowBackground(show);
+  }, []);
 
   // 追蹤 showBackground 狀態變化
   useEffect(() => {
@@ -795,6 +800,7 @@ const WmsMapModal: FC<WmsMapModalProps> = ({
   viewMode: initialViewMode = ViewMode.EDIT,
   colorPalette,
   onNodeClick,
+  onSave,
   initialNodes,
   initialEdges,
   debugMode = false, // 預設為關閉
@@ -891,6 +897,7 @@ const WmsMapModal: FC<WmsMapModalProps> = ({
               onTogglePenTool={handleTogglePenTool}
               onColorChange={handleColorChange}
               onNodeClick={onNodeClick}
+              onSave={onSave}
               initialNodes={initialNodes}
               initialEdges={initialEdges}
             />

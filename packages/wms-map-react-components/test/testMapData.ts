@@ -222,9 +222,7 @@ export const validateTransformationResult = (
 
   checks.forEach(({ name, expected, actual }) => {
     if (expected !== actual) {
-      debugError(
-        `${name}節點數量不符: 期望 ${expected}, 實際 ${actual}`,
-      );
+      debugError(`${name}節點數量不符: 期望 ${expected}, 實際 ${actual}`);
 
       allValid = false;
     }

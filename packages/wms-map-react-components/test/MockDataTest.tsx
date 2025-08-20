@@ -6,7 +6,7 @@ import {
   simpleMapData,
   largeMapData,
 } from '../src/utils/mockData';
-import { ViewMode } from '../typings';
+import { ViewMode, Map } from '../typings';
 import { debugLog, debugSuccess, debugError } from '../src/utils/debugLogger';
 
 /**
@@ -66,7 +66,15 @@ const MockDataTest: React.FC = () => {
 
   // 處理節點點擊事件
   const handleNodeClick = (nodeInfo: any) => {
-    debugLog('events', '節點點擊事件:', nodeInfo);
+    debugLog('節點點擊事件:', nodeInfo);
+  };
+
+  // 處理儲存事件
+  const handleSave = (mapData: Map) => {
+    debugLog('儲存事件觸發，接收到的資料:', mapData);
+    alert(
+      `儲存成功！接收到 ${mapData.backgrounds.length} 個背景圖片和 ${mapData.ranges.length} 個範圍資料`,
+    );
   };
 
   // 關閉 Modal
@@ -232,6 +240,7 @@ const MockDataTest: React.FC = () => {
             '#06b6d4',
           ]}
           onNodeClick={handleNodeClick}
+          onSave={handleSave}
           initialNodes={currentNodes}
           initialEdges={[]} // WMS 地圖通常不需要邊
           debugMode={true} // 啟用 debug 模式以便查看 console 輸出
