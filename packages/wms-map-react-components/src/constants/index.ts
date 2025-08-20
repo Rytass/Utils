@@ -26,3 +26,7 @@ export const RECTANGLE_INACTIVE_OPACITY = 0.6;
 // 調整大小控制項樣式
 export const RESIZE_CONTROL_SIZE = 16;
 export const IMAGE_RESIZE_CONTROL_SIZE = 20;
+
+// Export text mappings
+export { TEXT_MAPPINGS } from './textMappings';
+export type { TextMappingKey, DebugKey, OperationKey, MessageKey, TestMessageKey } from './textMappings';

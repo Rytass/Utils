@@ -24,11 +24,13 @@ import {
   DEFAULT_RECTANGLE_COLOR,
   DEFAULT_RECTANGLE_LABEL,
   MIN_RECTANGLE_SIZE,
+  TEXT_MAPPINGS,
 } from './constants';
 import {
   calculateImageSize,
   calculateStaggeredPosition,
 } from './utils/nodeUtils';
+import { createRectangleCopy, createPathCopy } from './utils/nodeOperations';
 import {
   logMapData,
   transformNodesToMapData,
@@ -51,6 +53,7 @@ interface WmsMapModalProps {
   colorPalette?: string[];
   onNodeClick?: (nodeInfo: WmsNodeClickInfo) => void;
   onSave?: (mapData: Map) => void;
+  onBreadcrumbClick?: (warehouseId: string, index: number) => void; // 新增：breadcrumb 點擊事件
   initialNodes?: Node[];
   initialEdges?: Edge[];
   debugMode?: boolean; // 新增：控制 debug 模式的開關
@@ -69,6 +72,7 @@ const WmsMapContent: FC<{
   onColorChange: (color: string) => void;
   onNodeClick?: (nodeInfo: WmsNodeClickInfo) => void;
   onSave?: (mapData: Map) => void;
+  onBreadcrumbClick?: (warehouseId: string, index: number) => void;
   initialNodes?: Node[];
   initialEdges?: Edge[];
 }> = ({
@@ -83,6 +87,7 @@ const WmsMapContent: FC<{
   onColorChange,
   onNodeClick,
   onSave,
+  onBreadcrumbClick,
   initialNodes: propsInitialNodes = [],
   initialEdges: propsInitialEdges = [],
 }) => {
@@ -115,35 +120,51 @@ const WmsMapContent: FC<{
     null,
   );
 
-  // 根據編輯模式和視圖模式動態更新所有節點的可選取性和可拖曳性
-  useEffect(() => {
-    setNodes((nodes) =>
-      nodes.map((node) => {
+  // 根據當前模式為節點套用正確的狀態規則
+  const applyNodeStateRules = useCallback(
+    (nodes: Node[]) => {
+      return nodes.map((node) => {
         let shouldBeSelectable = false;
         let shouldBeDraggable = false;
+        let shouldBeDeletable = false;
 
         // 檢視模式下所有節點都不可選取和拖曳
         if (viewMode === ViewMode.VIEW) {
           shouldBeSelectable = false;
           shouldBeDraggable = false;
+          shouldBeDeletable = false;
         } else if (node.type === 'imageNode') {
           // 底圖節點只能在底圖模式下選取和拖曳
           shouldBeSelectable = editMode === EditMode.BACKGROUND;
           shouldBeDraggable = editMode === EditMode.BACKGROUND;
-        } else if (node.type === 'rectangleNode' || node.type === 'pathNode') {
-          // 圖層節點只能在圖層模式下選取和拖曳
+          shouldBeDeletable = false; // 底圖節點不可刪除
+        } else if (node.type === 'rectangleNode') {
+          // 矩形節點只能在圖層模式下選取和拖曳
           shouldBeSelectable = editMode === EditMode.LAYER;
           shouldBeDraggable = editMode === EditMode.LAYER;
+          shouldBeDeletable = false; // 矩形節點不可刪除
+        } else if (node.type === 'pathNode') {
+          // 路徑節點只能在圖層模式下選取、拖曳和刪除
+          shouldBeSelectable = editMode === EditMode.LAYER;
+          shouldBeDraggable = editMode === EditMode.LAYER;
+          shouldBeDeletable = editMode === EditMode.LAYER;
         }
 
         return {
           ...node,
           selectable: shouldBeSelectable,
           draggable: shouldBeDraggable,
+          deletable: shouldBeDeletable,
         };
-      }),
-    );
-  }, [editMode, viewMode, setNodes]);
+      });
+    },
+    [viewMode, editMode],
+  );
+
+  // 根據編輯模式和視圖模式動態更新所有節點的可選取性和可拖曳性
+  useEffect(() => {
+    setNodes((currentNodes) => applyNodeStateRules(currentNodes));
+  }, [editMode, viewMode, setNodes, applyNodeStateRules]);
 
   // 使用直接狀態 undo/redo 系統
   const {
@@ -180,10 +201,118 @@ const WmsMapContent: FC<{
     }
   }, [getHistorySummary, nodes.length, edges.length]);
 
-  // 初始化歷史記錄
+  // 用於追蹤上一次的 initialNodes 以進行比較
+  const prevInitialNodesRef = useRef<Node[]>([]);
+
+  // 監聽 initialNodes 變化，當接收到新資料時清空並載入
   useEffect(() => {
-    initializeHistory(nodes, edges);
-  }, [edges, initializeHistory, nodes]);
+    // 簡單的深度比較：比較節點 ID 和數量
+    const currentNodeIds = propsInitialNodes.map((n) => n.id).sort();
+    const prevNodeIds = prevInitialNodesRef.current.map((n) => n.id).sort();
+    const hasChanged =
+      currentNodeIds.length !== prevNodeIds.length ||
+      currentNodeIds.some((id, index) => id !== prevNodeIds[index]);
+
+    if (hasChanged) {
+      debugLog(
+        TEXT_MAPPINGS.DEBUG.DATA_LOADING,
+        TEXT_MAPPINGS.MESSAGES.DETECT_INITIAL_NODES_CHANGE,
+        {
+          [TEXT_MAPPINGS.MESSAGES.NEW_DATA_NODES]: propsInitialNodes.length,
+          [TEXT_MAPPINGS.MESSAGES.NEW_DATA_EDGES]: propsInitialEdges.length,
+          [TEXT_MAPPINGS.MESSAGES.CURRENT_NODES]: nodes.length,
+          [TEXT_MAPPINGS.MESSAGES.CURRENT_EDGES]: edges.length,
+          [TEXT_MAPPINGS.MESSAGES.NODE_ID_CHANGE]: {
+            [TEXT_MAPPINGS.MESSAGES.NEW_IDS]: currentNodeIds,
+            [TEXT_MAPPINGS.MESSAGES.OLD_IDS]: prevNodeIds,
+          },
+        },
+      );
+
+      // 清空當前資料並載入新資料，套用正確的狀態規則
+      const nodesWithCorrectStates = applyNodeStateRules(propsInitialNodes);
+
+      setNodes(nodesWithCorrectStates);
+      setEdges(propsInitialEdges);
+
+      // 清空相關狀態
+      setSelectedNodes([]);
+      setIsEditingPathPoints(false);
+      setHoveredNodeId(null);
+
+      // 重新初始化歷史記錄系統，確保新資料被正確管理
+      setTimeout(() => {
+        initializeHistory(nodesWithCorrectStates, propsInitialEdges);
+        debugSuccess(
+          TEXT_MAPPINGS.DEBUG.HISTORY,
+          TEXT_MAPPINGS.MESSAGES.HISTORY_REINITIALIZE,
+          {
+            [TEXT_MAPPINGS.MESSAGES.NODE_COUNT]: nodesWithCorrectStates.length,
+            [TEXT_MAPPINGS.MESSAGES.EDGE_COUNT]: propsInitialEdges.length,
+            [TEXT_MAPPINGS.MESSAGES.OPERATION]:
+              TEXT_MAPPINGS.OPERATIONS.LOAD_NEW_DATA,
+          },
+        );
+      }, 50); // 延遲確保 React 狀態更新完成
+
+      // 更新 ref
+      prevInitialNodesRef.current = [...propsInitialNodes];
+
+      debugSuccess(
+        TEXT_MAPPINGS.DEBUG.DATA_LOADING,
+        TEXT_MAPPINGS.MESSAGES.DATA_LOADING_COMPLETE,
+        {
+          [TEXT_MAPPINGS.MESSAGES.LOADED_NODES]: nodesWithCorrectStates.length,
+          [TEXT_MAPPINGS.MESSAGES.LOADED_EDGES]: propsInitialEdges.length,
+          [TEXT_MAPPINGS.MESSAGES.CURRENT_MODE]: { viewMode, editMode },
+          [TEXT_MAPPINGS.MESSAGES.NODE_TYPE_STATS]: {
+            [TEXT_MAPPINGS.MESSAGES.IMAGE_NODE]: nodesWithCorrectStates.filter(
+              (n) => n.type === 'imageNode',
+            ).length,
+            [TEXT_MAPPINGS.MESSAGES.RECTANGLE_NODE]:
+              nodesWithCorrectStates.filter((n) => n.type === 'rectangleNode')
+                .length,
+            [TEXT_MAPPINGS.MESSAGES.PATH_NODE]: nodesWithCorrectStates.filter(
+              (n) => n.type === 'pathNode',
+            ).length,
+          },
+          [TEXT_MAPPINGS.MESSAGES.NODE_STATE_STATS]: {
+            [TEXT_MAPPINGS.MESSAGES.SELECTABLE]: nodesWithCorrectStates.filter(
+              (n) => n.selectable,
+            ).length,
+            [TEXT_MAPPINGS.MESSAGES.DRAGGABLE]: nodesWithCorrectStates.filter(
+              (n) => n.draggable,
+            ).length,
+            [TEXT_MAPPINGS.MESSAGES.DELETABLE]: nodesWithCorrectStates.filter(
+              (n) => n.deletable,
+            ).length,
+          },
+        },
+      );
+    }
+  }, [propsInitialNodes, propsInitialEdges, nodes.length, edges.length, setNodes, setEdges, applyNodeStateRules, viewMode, editMode, initializeHistory]);
+
+  // 初始化歷史記錄（只在組件首次載入或節點/邊清空時執行）
+  useEffect(() => {
+    // 只有在沒有歷史記錄或節點/邊為空時才初始化
+    // 避免與動態載入時的明確初始化衝突
+    if (nodes.length > 0 || edges.length > 0) {
+      const summary = getHistorySummary();
+
+      if (!summary.operations || summary.operations.length === 0) {
+        debugLog(
+          TEXT_MAPPINGS.DEBUG.HISTORY,
+          TEXT_MAPPINGS.MESSAGES.FIRST_HISTORY_INIT,
+          {
+            [TEXT_MAPPINGS.MESSAGES.NODE_COUNT]: nodes.length,
+            [TEXT_MAPPINGS.MESSAGES.EDGE_COUNT]: edges.length,
+          },
+        );
+
+        initializeHistory(nodes, edges);
+      }
+    }
+  }, [edges, initializeHistory, nodes, getHistorySummary]);
 
   // 立即觸發顏色變更記錄（當執行其他操作時）
   const flushColorChangeHistory = useCallback(() => {
@@ -728,6 +857,107 @@ const WmsMapContent: FC<{
     debugLog('ui', 'showBackground 狀態變化:', showBackground);
   }, [showBackground]);
 
+  // 集中式複製貼上功能
+  const handleCopyPasteSelectedNodes = useCallback(() => {
+    if (selectedNodes.length === 0) {
+      debugLog('keyboard', 'Command+D 複製貼上：沒有選中的節點');
+
+      return;
+    }
+
+    // 只複製可複製的節點類型（矩形和路徑節點）
+    const copyableNodes = selectedNodes.filter(
+      (node) => node.type === 'rectangleNode' || node.type === 'pathNode',
+    );
+
+    if (copyableNodes.length === 0) {
+      debugLog('keyboard', 'Command+D 複製貼上：選中的節點中沒有可複製的類型');
+
+      return;
+    }
+
+    setNodes((currentNodes) => {
+      const maxZIndex = Math.max(...currentNodes.map((n) => n.zIndex || 0), 0);
+      const newNodes = [...currentNodes];
+
+      copyableNodes.forEach((nodeToClone, index) => {
+        let copiedNode;
+
+        if (nodeToClone.type === 'rectangleNode') {
+          copiedNode = createRectangleCopy({
+            currentNode: nodeToClone,
+            nodeType: 'rectangleNode',
+            data: nodeToClone.data,
+          });
+        } else if (nodeToClone.type === 'pathNode') {
+          copiedNode = createPathCopy({
+            currentNode: nodeToClone,
+            nodeType: 'pathNode',
+            data: nodeToClone.data,
+          });
+        }
+
+        if (copiedNode) {
+          // 為每個複製的節點設定遞增的 zIndex，確保新節點在最上層
+          const nodeWithZIndex = {
+            ...copiedNode,
+            zIndex: maxZIndex + 1 + index,
+          };
+
+          newNodes.push(nodeWithZIndex);
+        }
+      });
+
+      return newNodes;
+    });
+
+    // 記錄歷史狀態
+    setTimeout(() => {
+      saveState(nodes, edges, 'copy-paste-nodes');
+    }, 10);
+
+    debugLog(
+      'keyboard',
+      `執行 Command+D 複製貼上成功，複製節點數: ${copyableNodes.length}`,
+      {
+        copiedNodeIds: copyableNodes.map((n) => n.id),
+        copiedNodeTypes: copyableNodes.map((n) => n.type),
+      },
+    );
+  }, [selectedNodes, setNodes, nodes, edges, saveState]);
+
+  // 全域鍵盤快捷鍵處理 (Command+D 複製貼上)
+  useEffect(() => {
+    const handleGlobalKeyDown = (event: KeyboardEvent) => {
+      // 檢查是否正在編輯文字 (避免在文字輸入時觸發)
+      const activeElement = document.activeElement;
+      const isEditingText =
+        activeElement &&
+        (activeElement.tagName === 'INPUT' ||
+          activeElement.tagName === 'TEXTAREA') &&
+        activeElement.getAttribute('type') !== 'color';
+
+      if (isEditingText) {
+        return; // 如果正在編輯文字，不處理快捷鍵
+      }
+
+      // Command+D (⌘+D) - 複製並貼上選中的節點
+      if (event.metaKey && event.key.toLowerCase() === 'd') {
+        event.preventDefault(); // 防止瀏覽器的預設書籤行為
+        event.stopPropagation();
+
+        handleCopyPasteSelectedNodes();
+      }
+    };
+
+    // 添加全域鍵盤事件監聽器
+    document.addEventListener('keydown', handleGlobalKeyDown, true);
+
+    return () => {
+      document.removeEventListener('keydown', handleGlobalKeyDown, true);
+    };
+  }, [handleCopyPasteSelectedNodes]); // 依賴 handleCopyPasteSelectedNodes 函數
+
   return (
     <>
       <Breadcrumb
@@ -739,6 +969,7 @@ const WmsMapContent: FC<{
           '100003',
           '100003B',
         ]}
+        onWarehouseClick={onBreadcrumbClick}
       />
       {viewMode === ViewMode.EDIT && (
         <Toolbar
@@ -801,6 +1032,7 @@ const WmsMapModal: FC<WmsMapModalProps> = ({
   colorPalette,
   onNodeClick,
   onSave,
+  onBreadcrumbClick,
   initialNodes,
   initialEdges,
   debugMode = false, // 預設為關閉
@@ -898,6 +1130,7 @@ const WmsMapModal: FC<WmsMapModalProps> = ({
               onColorChange={handleColorChange}
               onNodeClick={onNodeClick}
               onSave={onSave}
+              onBreadcrumbClick={onBreadcrumbClick}
               initialNodes={initialNodes}
               initialEdges={initialEdges}
             />
