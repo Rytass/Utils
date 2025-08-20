@@ -11,12 +11,20 @@ import {
  * 將 API 資料轉換為 React Flow 節點格式
  * 這個函數是 transformNodesToMapData 的反向操作
  */
-export const transformApiDataToNodes = (mapData: Map): Node[] => {
+export const transformApiDataToNodes = (
+  mapData: Map,
+  imageUrlGenerator?: (filename: string) => string,
+): Node[] => {
   const nodes: Node[] = [];
   let zIndexCounter = 1;
 
   // 轉換背景圖片為 ImageNode
   mapData.backgrounds.forEach((background: MapBackground) => {
+    // 如果沒有提供 imageUrlGenerator，則使用 filename 作為 URL (生產環境)
+    const imageUrl = imageUrlGenerator
+      ? imageUrlGenerator(background.filename)
+      : background.filename; // 生產環境應該直接使用真實 URL
+
     const imageNode: Node = {
       id: background.id,
       type: 'imageNode',
@@ -25,7 +33,7 @@ export const transformApiDataToNodes = (mapData: Map): Node[] => {
         y: background.y,
       },
       data: {
-        imageUrl: generateMockImageUrl(background.filename),
+        imageUrl,
         fileName: background.filename,
         width: 200, // 預設寬度，實際應用中可能需要從其他地方獲取
         height: 150, // 預設高度
@@ -104,24 +112,6 @@ export const transformApiDataToNodes = (mapData: Map): Node[] => {
   });
 
   return nodes;
-};
-
-/**
- * 生成模擬圖片 URL
- * 在實際應用中，這應該是真實的圖片 URL 或 API 端點
- */
-const generateMockImageUrl = (filename: string): string => {
-  // 使用 placeholder 服務生成測試圖片
-  const width = 200;
-  const height = 150;
-  const text = encodeURIComponent(filename.split('.')[0]);
-
-  // 根據檔案名稱生成不同的背景色
-  const colors = ['4A90E2', '7ED321', 'F5A623', 'D0021B', '9013FE', '50E3C2'];
-  const colorIndex = filename.length % colors.length;
-  const bgColor = colors[colorIndex];
-
-  return `https://via.placeholder.com/${width}x${height}/${bgColor}/ffffff?text=${text}`;
 };
 
 /**
@@ -233,8 +223,9 @@ export const loadMapDataFromApi = async (mapId: string): Promise<Node[]> => {
       throw new Error('Invalid map data format');
     }
 
-    // 轉換為 React Flow 節點
-    const nodes = transformApiDataToNodes(mockMapData);
+    // 轉換為 React Flow 節點（在測試環境中使用 mock 圖片生成器）
+    const { generateMockImageUrl } = await import('../../test/mockImageUtils');
+    const nodes = transformApiDataToNodes(mockMapData, generateMockImageUrl);
 
     console.log(`✅ 成功載入 ${nodes.length} 個節點`);
     console.log('📊 節點統計:', {

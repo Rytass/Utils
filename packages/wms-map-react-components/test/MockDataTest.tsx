@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import WmsMapModal from '../src/WmsMapModal';
 import { transformApiDataToNodes } from '../src/utils/apiDataTransform';
+import { generateMockImageUrl } from './mockImageUtils';
 import {
   mockMapData,
   simpleMapData,
@@ -64,7 +65,7 @@ const MockDataTest: React.FC = () => {
 
     try {
       // 轉換 API 資料為 React Flow 節點
-      const nodes = transformApiDataToNodes(testData);
+      const nodes = transformApiDataToNodes(testData, generateMockImageUrl);
 
       debugSuccess('testing', `載入 ${typeName}:`, {
         原始資料: testData,
@@ -139,7 +140,7 @@ const MockDataTest: React.FC = () => {
 
     try {
       // 轉換 API 資料為 React Flow 節點
-      const nodes = transformApiDataToNodes(testData);
+      const nodes = transformApiDataToNodes(testData, generateMockImageUrl);
 
       debugSuccess('breadcrumb 觸發載入:', {
         warehouseId,

@@ -12,6 +12,7 @@ import {
   validateMapData,
   loadMapDataFromApi,
 } from '../src/utils/apiDataTransform';
+import { generateMockImageUrl } from './mockImageUtils';
 import {
   transformNodesToMapData,
   logMapData,
@@ -41,7 +42,7 @@ export const testDataTransformation = (): void => {
 
       // 2. 將 API 資料轉換為 React Flow 節點
       debugLog('2️⃣ 轉換 API 資料為 React Flow 節點...');
-      const nodes = transformApiDataToNodes(mockMapData);
+      const nodes = transformApiDataToNodes(mockMapData, generateMockImageUrl);
 
       debugSuccess(`轉換完成，共 ${nodes.length} 個節點`);
 
@@ -97,7 +98,7 @@ export const testDifferentDataSizes = (): void => {
       debugLog(`測試 ${name}...`);
 
       const startTime = performance.now();
-      const nodes = transformApiDataToNodes(data);
+      const nodes = transformApiDataToNodes(data, generateMockImageUrl);
       const endTime = performance.now();
 
       debugLog(`${name} 統計:`, {
@@ -146,7 +147,7 @@ export const generateTestNodes = (
 
   const selectedData = dataMap[testType];
 
-  return transformApiDataToNodes(selectedData);
+  return transformApiDataToNodes(selectedData, generateMockImageUrl);
 };
 
 /**
