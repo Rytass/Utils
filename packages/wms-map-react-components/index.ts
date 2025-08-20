@@ -20,12 +20,3 @@ export {
   calculateNodeZIndex,
 } from './src/utils/apiDataTransform';
 
-// 導出測試工具函數 (可選)
-export {
-  testDataTransformation,
-  testDifferentDataSizes,
-  testApiLoad,
-  generateTestNodes,
-  exportTestData,
-  validateTransformationResult,
-} from './test/testMapData';
