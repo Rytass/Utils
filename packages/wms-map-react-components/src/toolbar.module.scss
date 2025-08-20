@@ -16,7 +16,65 @@
 
 .toolbarLeft {
   display: flex;
+  align-items: center;
   gap: 8px;
+}
+
+.toggleSwitch {
+  position: relative;
+  display: flex;
+  width: 140px;
+  height: 36px;
+  background-color: #E7E7E7;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.toggleSlider {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 68px;
+  height: 32px;
+  background-color: white;
+  border-radius: 4px;
+  transition: transform 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+}
+
+.toggleSliderRight {
+  transform: translateX(68px);
+}
+
+.toggleOption {
+  flex: 1;
+  height: 100%;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+  color: #666;
+  transition: color 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    color: #465BC7;
+  }
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.toggleOptionActive {
+  color: #465BC7;
+  font-weight: 600;
 }
 
 .toolbarButton {
@@ -24,22 +82,65 @@
   padding: 0 16px;
   border: 1px solid #d0d0d0;
   border-radius: 4px;
-  background-color: white;
-  color: #666;
+  background-color: white !important;
+  color: #666 !important;
   font-size: 14px;
   min-width: auto;
+  transition: all 0.15s ease;
+  transform: none;
 
   &:hover {
-    border-color: #b0b0b0;
-    background-color: #f8f8f8;
-    color: #666;
+    border-color: #b0b0b0 !important;
+    background-color: #f8f8f8 !important;
+    color: #666 !important;
+    box-shadow: none !important;
+    transform: none !important;
   }
 
   &:focus {
-    border-color: #b0b0b0;
-    background-color: #f8f8f8;
-    color: #666;
-    box-shadow: none;
+    border-color: #b0b0b0 !important;
+    background-color: #f8f8f8 !important;
+    color: #666 !important;
+    box-shadow: none !important;
+    outline: none !important;
+    transform: none !important;
+  }
+
+  &:active {
+    border-color: #a0a0a0 !important;
+    background-color: #f0f0f0 !important;
+    color: #666 !important;
+    box-shadow: none !important;
+    transform: translateY(0.5px) !important;
+  }
+
+  // 強制重置所有可能的 Mezzanine UI 狀態
+  &:focus-visible {
+    border-color: #b0b0b0 !important;
+    background-color: #f8f8f8 !important;
+    color: #666 !important;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+
+  // 覆蓋所有可能的第三方庫狀態
+  &.Mui-focused,
+  &[data-focus-visible],
+  &[data-focused] {
+    border-color: #b0b0b0 !important;
+    background-color: #f8f8f8 !important;
+    color: #666 !important;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+
+  // 重置後的狀態 - 強制回到初始狀態
+  &:not(:hover):not(:focus):not(:active):not(:focus-visible) {
+    border-color: #d0d0d0 !important;
+    background-color: white !important;
+    color: #666 !important;
+    box-shadow: none !important;
+    transform: none !important;
   }
 
   // Active state for contained variant buttons in toolbar
@@ -89,15 +190,15 @@
   z-index: 1000;
   background-color: white;
   border-radius: 6px;
-  padding: 8px 16px;
+  padding: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   border: 1px solid #e0e0e0;
 }
 
 .toolButton {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
   padding: 0;
   border: none;
   border-radius: 8px;
@@ -138,6 +239,12 @@
 
 .toolButtonActive {
   background-color: rgba(70, 91, 199, 0.20) !important;
+
+  // Active 狀態時讓 SVG 圖標變成藍色
+  .toolIcon {
+    filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(224deg) brightness(102%) contrast(97%);
+    // 這個 filter 會將黑色/灰色的 SVG 轉換成 #465BC7 (藍色)
+  }
 }
 
 .colorPicker {
@@ -247,4 +354,13 @@
   width: 28px;
   height: 28px;
   pointer-events: none; // 確保點擊事件傳遞給按鈕
+  transition: filter 0.2s ease; // 平滑的顏色變化過渡
+}
+
+.buttonWithIcon {
+  :global(.mzn-button__label) {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
 }

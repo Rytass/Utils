@@ -4,6 +4,8 @@ import { DrawingMode, EditMode } from '../typings';
 import { DEFAULT_BACKGROUND_TOOL_COLOR } from './constants';
 import styles from './toolbar.module.scss';
 import PenToolIcon from './icons/pen-tool.svg';
+import DeleteIcon from './icons/delete.svg';
+import ImageIcon from './icons/image.svg';
 import SquareIcon from './icons/square.svg';
 import PointerIcon from './icons/pointer.svg';
 import RedoIcon from './icons/redo.svg';
@@ -89,40 +91,71 @@ const Toolbar: FC<ToolbarProps> = ({
     <>
       <div className={styles.toolbar}>
         <div className={styles.toolbarLeft}>
-          <Button
-            variant={editMode === EditMode.LAYER ? 'contained' : 'outlined'}
-            size="small"
-            className={`${styles.toolbarButton} ${editMode === EditMode.LAYER ? styles.toolbarButtonActive : ''}`}
-            onClick={() => onEditModeChange(EditMode.LAYER)}
-          >
-            圖層
-          </Button>
-          <Button
-            variant={
-              editMode === EditMode.BACKGROUND ? 'contained' : 'outlined'
-            }
-            size="small"
-            className={`${styles.toolbarButton} ${editMode === EditMode.BACKGROUND ? styles.toolbarButtonActive : ''}`}
-            onClick={() => onEditModeChange(EditMode.BACKGROUND)}
-          >
-            底圖
-          </Button>
-          <Button
-            variant="outlined"
-            size="small"
-            className={styles.toolbarButton}
-            onClick={onUpload}
-            disabled={editMode !== EditMode.BACKGROUND}
-          >
-            上傳
-          </Button>
+          {/* Toggle Switch for 圖層/底圖 */}
+          <div className={styles.toggleSwitch}>
+            <div
+              className={`${styles.toggleSlider} ${editMode === EditMode.BACKGROUND ? styles.toggleSliderRight : ''}`}
+            />
+            <button
+              className={`${styles.toggleOption} ${editMode === EditMode.LAYER ? styles.toggleOptionActive : ''}`}
+              onClick={() => onEditModeChange(EditMode.LAYER)}
+            >
+              圖層
+            </button>
+            <button
+              className={`${styles.toggleOption} ${editMode === EditMode.BACKGROUND ? styles.toggleOptionActive : ''}`}
+              onClick={() => onEditModeChange(EditMode.BACKGROUND)}
+            >
+              底圖
+            </button>
+          </div>
+          
+          {/* 分隔線 */}
+          <div className={styles.separator} />
+          
+          {/* 上傳按鈕只在底圖模式時顯示 */}
+          {editMode === EditMode.BACKGROUND && (
+            <Button
+              variant="outlined"
+              size="small"
+              className={`${styles.toolbarButton} ${styles.buttonWithIcon}`}
+              onClick={(e) => {
+                onUpload();
+                // 強制重置按鈕狀態
+                const btn = e.target as HTMLButtonElement;
+
+                btn.blur();
+                // 延遲確保狀態完全重置
+                setTimeout(() => {
+                  btn.blur();
+                }, 0);
+              }}
+            >
+              <img
+                src={ImageIcon}
+                alt="上傳"
+                className={styles.toolIcon}
+              />
+              上傳
+            </Button>
+          )}
 
           <Button
             variant="outlined"
             size="small"
-            className={styles.toolbarButton}
-            onClick={onDeleteAll}
+            className={`${styles.toolbarButton} ${styles.buttonWithIcon}`}
+            onClick={(e) => {
+              onDeleteAll();
+              // 強制重置按鈕狀態
+              const btn = e.target as HTMLButtonElement;
+
+              btn.blur();
+              setTimeout(() => {
+                btn.blur();
+              }, 0);
+            }}
           >
+            <img src={DeleteIcon} alt="刪除全部" className={styles.toolIcon} />
             刪除全部
           </Button>
         </div>
@@ -130,7 +163,16 @@ const Toolbar: FC<ToolbarProps> = ({
           variant="contained"
           size="small"
           className={styles.saveButton}
-          onClick={onSave}
+          onClick={(e) => {
+            onSave();
+            // 強制重置按鈕狀態
+            const btn = e.target as HTMLButtonElement;
+
+            btn.blur();
+            setTimeout(() => {
+              btn.blur();
+            }, 0);
+          }}
         >
           儲存
         </Button>

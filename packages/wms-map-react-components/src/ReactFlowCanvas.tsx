@@ -17,6 +17,7 @@ import { useRectangleDrawing } from './hooks/useRectangleDrawing';
 import { usePenDrawing } from './hooks/usePenDrawing';
 // PathPointsOverlay removed - using native PathNode editing instead
 import styles from './reactFlowCanvas.module.scss';
+import FolderIcon from './icons/folder.svg';
 
 interface ReactFlowCanvasProps {
   nodes: Node[];
@@ -269,6 +270,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
         onNodeClick={onNodeClick}
         nodeTypes={nodeTypes}
         className={styles.reactFlowCanvas}
+        style={{ background: '#F5F5F5' }}
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
         minZoom={0.1}
         maxZoom={4}
@@ -291,13 +293,13 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
         preventScrolling={true}
       >
         <CustomControls />
-        <Background />
+        <Background bgColor="#F5F5F5" />
 
         {nodes.length === 0 && (
           <div className={styles.emptyState}>
-            <div className={styles.emptyIcon}>📁</div>
+            <img src={FolderIcon} alt="空資料夾" className={styles.emptyIcon} />
             <div className={styles.emptyTitle}>目前沒有資料</div>
-            <div className={styles.emptySubText}>請上傳底圖或開始繪製</div>
+            <div className={styles.emptySubText}>請上傳底圖並繪製圖層</div>
           </div>
         )}
       </ReactFlow>
