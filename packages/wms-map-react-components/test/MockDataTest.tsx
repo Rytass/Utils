@@ -5,7 +5,8 @@ import {
   mockMapData,
   simpleMapData,
   largeMapData,
-} from '../src/utils/mockData';
+  closedPolygonTestData,
+} from './mockData';
 import { ViewMode, Map } from '../typings';
 import { debugLog, debugSuccess, debugError } from '../src/utils/debugLogger';
 import { TEXT_MAPPINGS } from '../src/constants';
@@ -36,7 +37,7 @@ const MockDataTest: React.FC = () => {
   };
 
   // 載入不同類型的測試資料
-  const loadTestData = (type: 'simple' | 'complex' | 'large') => {
+  const loadTestData = (type: 'simple' | 'complex' | 'large' | 'polygons') => {
     let testData;
     let typeName;
 
@@ -52,6 +53,10 @@ const MockDataTest: React.FC = () => {
       case 'large':
         testData = largeMapData;
         typeName = TEXT_MAPPINGS.TEST_MESSAGES.LARGE_TEST_DATA;
+        break;
+      case 'polygons':
+        testData = closedPolygonTestData;
+        typeName = '閉合多邊形測試資料';
         break;
       default:
         return;
@@ -223,6 +228,22 @@ const MockDataTest: React.FC = () => {
             完整倉庫資料
             <br />
             <small>(2個背景 + 8個區域)</small>
+          </button>
+
+          <button
+            onClick={() => loadTestData('polygons')}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#ec4899',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+            }}
+          >
+            閉合多邊形測試
+            <br />
+            <small>(6種閉合圖形)</small>
           </button>
 
           <button

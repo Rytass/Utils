@@ -226,7 +226,7 @@ export const loadMapDataFromApi = async (mapId: string): Promise<Node[]> => {
     // const mapData = await response.json();
 
     // 目前使用 mock data 進行測試
-    const { mockMapData } = await import('./mockData');
+    const { mockMapData } = await import('../../test/mockData');
 
     // 驗證資料格式
     if (!validateMapData(mockMapData)) {

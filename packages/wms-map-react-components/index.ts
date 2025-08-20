@@ -20,14 +20,6 @@ export {
   calculateNodeZIndex,
 } from './src/utils/apiDataTransform';
 
-// 導出 Mock 資料
-export {
-  mockMapData,
-  simpleMapData,
-  emptyMapData,
-  largeMapData,
-} from './src/utils/mockData';
-
 // 導出測試工具函數 (可選)
 export {
   testDataTransformation,

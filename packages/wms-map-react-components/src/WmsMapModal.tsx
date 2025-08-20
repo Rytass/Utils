@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
+import React, { FC, useCallback, useEffect, useState, useRef } from 'react';
 import { Modal, ModalHeader } from '@mezzanine-ui/react';
 import {
   addEdge,
@@ -15,9 +15,9 @@ import '@xyflow/react/dist/style.css';
 import {
   DrawingMode,
   EditMode,
-  Map,
   ViewMode,
   WmsNodeClickInfo,
+  Map,
 } from '../typings';
 import {
   DEFAULT_PATH_LABEL,
@@ -30,15 +30,11 @@ import {
   calculateImageSize,
   calculateStaggeredPosition,
 } from './utils/nodeUtils';
-import {
-  createImageCopy,
-  createPathCopy,
-  createRectangleCopy,
-} from './utils/nodeOperations';
+import { createRectangleCopy, createPathCopy, createImageCopy } from './utils/nodeOperations';
 import {
   logMapData,
-  logNodeData,
   transformNodesToMapData,
+  logNodeData,
   transformNodeToClickInfo,
 } from './utils/mapDataTransform';
 import { useDirectStateHistory } from './hooks/useDirectStateHistory';
@@ -58,11 +54,7 @@ interface WmsMapModalProps {
   onNodeClick?: (nodeInfo: WmsNodeClickInfo) => void;
   onSave?: (mapData: Map) => void;
   onBreadcrumbClick?: (warehouseId: string, index: number) => void; // 新增：breadcrumb 點擊事件
-  onWarehouseNameEdit?: (
-    warehouseId: string,
-    newName: string,
-    index: number,
-  ) => void; // 新增：修改區域名稱事件
+  onWarehouseNameEdit?: (warehouseId: string, newName: string, index: number) => void; // 新增：修改區域名稱事件
   initialNodes?: Node[];
   initialEdges?: Edge[];
   debugMode?: boolean; // 新增：控制 debug 模式的開關
@@ -82,11 +74,7 @@ const WmsMapContent: FC<{
   onNodeClick?: (nodeInfo: WmsNodeClickInfo) => void;
   onSave?: (mapData: Map) => void;
   onBreadcrumbClick?: (warehouseId: string, index: number) => void;
-  onWarehouseNameEdit?: (
-    warehouseId: string,
-    newName: string,
-    index: number,
-  ) => void;
+  onWarehouseNameEdit?: (warehouseId: string, newName: string, index: number) => void;
   initialNodes?: Node[];
   initialEdges?: Edge[];
 }> = ({
@@ -305,18 +293,7 @@ const WmsMapContent: FC<{
         },
       );
     }
-  }, [
-    propsInitialNodes,
-    propsInitialEdges,
-    nodes.length,
-    edges.length,
-    setNodes,
-    setEdges,
-    applyNodeStateRules,
-    viewMode,
-    editMode,
-    initializeHistory,
-  ]);
+  }, [propsInitialNodes, propsInitialEdges, nodes.length, edges.length, setNodes, setEdges, applyNodeStateRules, viewMode, editMode, initializeHistory]);
 
   // 初始化歷史記錄（只在組件首次載入或節點/邊清空時執行）
   useEffect(() => {
@@ -893,10 +870,7 @@ const WmsMapContent: FC<{
 
     // 只複製可複製的節點類型（圖片、矩形和路徑節點）
     const copyableNodes = selectedNodes.filter(
-      (node) =>
-        node.type === 'imageNode' ||
-        node.type === 'rectangleNode' ||
-        node.type === 'pathNode',
+      (node) => node.type === 'imageNode' || node.type === 'rectangleNode' || node.type === 'pathNode',
     );
 
     if (copyableNodes.length === 0) {

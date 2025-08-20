@@ -5,7 +5,8 @@ import {
   simpleMapData,
   emptyMapData,
   largeMapData,
-} from '../src/utils/mockData';
+  closedPolygonTestData,
+} from './mockData';
 import {
   transformApiDataToNodes,
   validateMapData,
