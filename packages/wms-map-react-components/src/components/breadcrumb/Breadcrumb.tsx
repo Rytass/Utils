@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useState, useEffect, useRef } from 'react';
 import BreadcrumbEditModal from './BreadcrumbEditModal';
 import styles from './breadcrumb.module.scss';
 
@@ -20,9 +20,27 @@ const Breadcrumb: FC<BreadcrumbProps> = ({
   const [showDropdown, setShowDropdown] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number>(-1);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // 當超過3個項目時，需要收合顯示
   const shouldCollapse = warehouseIds.length > 3;
+
+  // 點擊外部關閉 dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+
+    if (showDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDropdown]);
 
   const handleEditClick = () => {
     // 預設編輯最後一個項目
@@ -65,12 +83,13 @@ const Breadcrumb: FC<BreadcrumbProps> = ({
         </span>
         <span className={styles.separator}>/</span>
 
-        <div
-          className={styles.ellipsisContainer}
-          onMouseEnter={() => setShowDropdown(true)}
-          onMouseLeave={() => setShowDropdown(false)}
-        >
-          <span className={styles.ellipsis}>...</span>
+        <div className={styles.ellipsisContainer} ref={dropdownRef}>
+          <span 
+            className={styles.ellipsis}
+            onClick={() => setShowDropdown(!showDropdown)}
+          >
+            ...
+          </span>
 
           {showDropdown && hiddenItems.length > 0 && (
             <div className={styles.dropdown}>
@@ -78,7 +97,12 @@ const Breadcrumb: FC<BreadcrumbProps> = ({
                 <div
                   key={index}
                   className={styles.dropdownItem}
-                  onClick={() => handleItemClick(id, index + 1)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleItemClick(id, index + 1);
+                    setShowDropdown(false); // 點擊後隱藏 dropdown
+                  }}
                 >
                   {id}
                 </div>
