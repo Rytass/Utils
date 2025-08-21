@@ -8,16 +8,16 @@ import {
   useReactFlow,
   useOnViewportChange,
 } from '@xyflow/react';
-import { DrawingMode, EditMode, ViewMode } from '../typings';
-import ImageNode from './ImageNode';
-import RectangleNode from './RectangleNode';
-import PathNode from './PathNode';
+import { DrawingMode, EditMode, ViewMode } from '../../../typings';
+import ImageNode from '../nodes/ImageNode';
+import RectangleNode from '../nodes/RectangleNode';
+import PathNode from '../nodes/PathNode';
 // PathPointNode removed - using simple overlay approach
-import { useRectangleDrawing } from './hooks/useRectangleDrawing';
-import { usePenDrawing } from './hooks/usePenDrawing';
+import { useRectangleDrawing } from '../../hooks/useRectangleDrawing';
+import { usePenDrawing } from '../../hooks/usePenDrawing';
 // PathPointsOverlay removed - using native PathNode editing instead
 import styles from './reactFlowCanvas.module.scss';
-import FolderIcon from './icons/folder.svg';
+import FolderIcon from '../../icons/folder.svg';
 
 interface ReactFlowCanvasProps {
   nodes: Node[];

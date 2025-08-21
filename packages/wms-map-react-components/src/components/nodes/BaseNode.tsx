@@ -1,10 +1,10 @@
 import React, { FC, ReactNode } from 'react';
 import { NodeProps } from '@xyflow/react';
-import { EditMode } from '../../typings';
-import { ACTIVE_OPACITY, RECTANGLE_INACTIVE_OPACITY } from '../constants';
-import { useContextMenu } from '../hooks/useContextMenu';
-import { useTextEditing } from '../hooks/useTextEditing';
-import ContextMenu from '../ContextMenu';
+import { EditMode } from '../../../typings';
+import { ACTIVE_OPACITY, RECTANGLE_INACTIVE_OPACITY } from '../../constants';
+import { useContextMenu } from '../../hooks/useContextMenu';
+import { useTextEditing } from '../../hooks/useTextEditing';
+import ContextMenu from '../ui/ContextMenu';
 
 interface BaseNodeProps extends NodeProps {
   editMode: EditMode;

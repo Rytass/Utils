@@ -1,17 +1,17 @@
 import React, { FC, useCallback, useState, useRef } from 'react';
 import { NodeProps, useReactFlow } from '@xyflow/react';
-import { EditMode, ViewMode } from '../typings';
+import { EditMode, ViewMode } from '../../../typings';
 import {
   DEFAULT_RECTANGLE_COLOR,
   DEFAULT_PATH_LABEL,
   ACTIVE_OPACITY,
   RECTANGLE_INACTIVE_OPACITY,
-} from './constants';
-import { useContextMenu } from './hooks/useContextMenu';
-import { useTextEditing } from './hooks/useTextEditing';
-import { createPathCopy } from './utils/nodeOperations';
-import { createHoverColor } from './utils/colorUtils';
-import ContextMenu from './ContextMenu';
+} from '../../constants';
+import { useContextMenu } from '../../hooks/useContextMenu';
+import { useTextEditing } from '../../hooks/useTextEditing';
+import { createPathCopy } from '../../utils/nodeOperations';
+import { createHoverColor } from '../../utils/colorUtils';
+import ContextMenu from '../ui/ContextMenu';
 import styles from './pathNode.module.scss';
 
 interface PathNodeData {

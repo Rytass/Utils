@@ -1,15 +1,15 @@
 import React, { FC, useEffect, useState } from 'react';
 import { Button } from '@mezzanine-ui/react';
-import { DrawingMode, EditMode } from '../typings';
-import { DEFAULT_BACKGROUND_TOOL_COLOR } from './constants';
+import { DrawingMode, EditMode } from '../../../typings';
+import { DEFAULT_BACKGROUND_TOOL_COLOR } from '../../constants';
 import styles from './toolbar.module.scss';
-import PenToolIcon from './icons/pen-tool.svg';
-import DeleteIcon from './icons/delete.svg';
-import ImageIcon from './icons/image.svg';
-import SquareIcon from './icons/square.svg';
-import PointerIcon from './icons/pointer.svg';
-import RedoIcon from './icons/redo.svg';
-import UndoIcon from './icons/undo.svg';
+import PenToolIcon from '../../icons/pen-tool.svg';
+import DeleteIcon from '../../icons/delete.svg';
+import ImageIcon from '../../icons/image.svg';
+import SquareIcon from '../../icons/square.svg';
+import PointerIcon from '../../icons/pointer.svg';
+import RedoIcon from '../../icons/redo.svg';
+import UndoIcon from '../../icons/undo.svg';
 
 interface ToolbarProps {
   onUpload: () => void;

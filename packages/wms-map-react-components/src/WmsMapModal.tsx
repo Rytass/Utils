@@ -39,11 +39,11 @@ import {
 } from './utils/mapDataTransform';
 import { useDirectStateHistory } from './hooks/useDirectStateHistory';
 import { debugLog, debugSuccess, setDebugMode } from './utils/debugLogger';
-import Toolbar from './Toolbar';
+import Toolbar from './components/ui/Toolbar';
 import Breadcrumb from './components/breadcrumb/Breadcrumb';
-import ReactFlowCanvas from './ReactFlowCanvas';
-import ViewModeToggle from './components/ViewModeToggle';
-import ViewModeToolbar from './components/ViewModeToolbar';
+import ReactFlowCanvas from './components/canvas/ReactFlowCanvas';
+import ViewModeToggle from './components/ui/ViewModeToggle';
+import ViewModeToolbar from './components/ui/ViewModeToolbar';
 import styles from './wmsMapModal.module.scss';
 
 interface WmsMapModalProps {

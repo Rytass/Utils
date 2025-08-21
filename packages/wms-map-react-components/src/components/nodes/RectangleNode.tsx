@@ -5,7 +5,7 @@ import {
   useReactFlow,
   useUpdateNodeInternals,
 } from '@xyflow/react';
-import { EditMode, ViewMode } from '../typings';
+import { EditMode, ViewMode } from '../../../typings';
 import {
   ACTIVE_OPACITY,
   DEFAULT_RECTANGLE_COLOR,
@@ -15,12 +15,12 @@ import {
   MIN_RESIZE_HEIGHT,
   MIN_RESIZE_WIDTH,
   RECTANGLE_INACTIVE_OPACITY,
-} from './constants';
-import { useContextMenu } from './hooks/useContextMenu';
-import { useTextEditing } from './hooks/useTextEditing';
-import { createRectangleCopy } from './utils/nodeOperations';
-import { createHoverColor } from './utils/colorUtils';
-import ContextMenu from './ContextMenu';
+} from '../../constants';
+import { useContextMenu } from '../../hooks/useContextMenu';
+import { useTextEditing } from '../../hooks/useTextEditing';
+import { createRectangleCopy } from '../../utils/nodeOperations';
+import { createHoverColor } from '../../utils/colorUtils';
+import ContextMenu from '../ui/ContextMenu';
 import styles from './rectangleNode.module.scss';
 
 interface RectangleNodeData {

@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { Button } from '@mezzanine-ui/react';
-import { ViewMode } from '../../typings';
+import { ViewMode } from '../../../typings';
 import styles from './viewModeToggle.module.scss';
 
 interface ViewModeToggleProps {

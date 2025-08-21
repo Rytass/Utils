@@ -5,16 +5,16 @@ import {
   useUpdateNodeInternals,
   useReactFlow,
 } from '@xyflow/react';
-import { EditMode, ViewMode } from '../typings';
+import { EditMode, ViewMode } from '../../../typings';
 import {
   DEFAULT_IMAGE_WIDTH,
   DEFAULT_IMAGE_HEIGHT,
   ACTIVE_OPACITY,
   INACTIVE_OPACITY,
-} from './constants';
-import { useContextMenu } from './hooks/useContextMenu';
-import { createImageCopy } from './utils/nodeOperations';
-import ContextMenu from './ContextMenu';
+} from '../../constants';
+import { useContextMenu } from '../../hooks/useContextMenu';
+import { createImageCopy } from '../../utils/nodeOperations';
+import ContextMenu from '../ui/ContextMenu';
 import styles from './imageNode.module.scss';
 
 interface ImageNodeData {
