@@ -117,32 +117,34 @@ export const transformApiDataToNodes = (
 /**
  * 驗證 API 資料格式是否正確
  */
-export const validateMapData = (data: any): data is Map => {
+export const validateMapData = (data: unknown): data is Map => {
   if (!data || typeof data !== 'object') {
     return false;
   }
 
+  const obj = data as Record<string, any>;
+
   // 檢查必要欄位
-  if (!data.id || typeof data.id !== 'string') {
+  if (!obj.id || typeof obj.id !== 'string') {
     console.error('Map data validation failed: missing or invalid id');
 
     return false;
   }
 
-  if (!Array.isArray(data.backgrounds)) {
+  if (!Array.isArray(obj.backgrounds)) {
     console.error('Map data validation failed: backgrounds must be an array');
 
     return false;
   }
 
-  if (!Array.isArray(data.ranges)) {
+  if (!Array.isArray(obj.ranges)) {
     console.error('Map data validation failed: ranges must be an array');
 
     return false;
   }
 
   // 驗證背景資料
-  for (const bg of data.backgrounds) {
+  for (const bg of obj.backgrounds) {
     if (
       !bg.id ||
       !bg.filename ||
@@ -156,7 +158,7 @@ export const validateMapData = (data: any): data is Map => {
   }
 
   // 驗證範圍資料
-  for (const range of data.ranges) {
+  for (const range of obj.ranges) {
     if (!range.id || !range.type || !range.color) {
       console.error('Map data validation failed: invalid range data', range);
 
@@ -244,7 +246,14 @@ export const loadMapDataFromApi = async (mapId: string): Promise<Node[]> => {
 /**
  * 輔助函數：計算多邊形的邊界框
  */
-export const calculatePolygonBounds = (points: { x: number; y: number }[]) => {
+export const calculatePolygonBounds = (points: { x: number; y: number }[]): {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+  width: number;
+  height: number;
+} => {
   if (points.length === 0) {
     return { minX: 0, minY: 0, maxX: 0, maxY: 0, width: 0, height: 0 };
   }
