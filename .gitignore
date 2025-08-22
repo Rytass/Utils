@@ -46,6 +46,7 @@ testem.log
 /connect.lock
 /coverage
 /typings
+/temp
 
 # System Files
 .DS_Store
@@ -68,3 +69,6 @@ frontend
 # Docusaurus
 docs/.docusaurus
 docs/build
+
+# Environment variables
+.env

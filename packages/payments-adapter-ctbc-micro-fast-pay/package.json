@@ -28,7 +28,8 @@
     "debug": "^4.3.7",
     "iconv-lite": "^0.6.3",
     "lru-cache": "^11.0.2",
-    "luxon": "^3.5.0"
+    "luxon": "^3.5.0",
+    "soap": "^1.0.1"
   },
   "peerDependencies": {
     "@ngrok/ngrok": "^1.5.1"
