@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.4](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.2.3...@rytass/cms-base-nestjs-module@0.2.4) (2025-08-24)
+
+### Features
+
+- **cms-base-nestjs-module:** add default tags empty array ([c0c07e6](https://github.com/Rytass/Utils/commit/c0c07e6fb8fdd499a9775da7d2c836a7d2850715))
+
 ## [0.2.3](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.2.2...@rytass/cms-base-nestjs-module@0.2.3) (2025-08-19)
 
 **Note:** Version bump only for package @rytass/cms-base-nestjs-module
