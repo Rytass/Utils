@@ -27,7 +27,7 @@ export class BaseArticleVersionEntity {
   @PrimaryColumn('int', { default: 0 })
   version: number;
 
-  @Column('jsonb')
+  @Column('jsonb', { default: () => "'[]'::jsonb" })
   tags: string[];
 
   @Column('timestamptz', { nullable: true })
