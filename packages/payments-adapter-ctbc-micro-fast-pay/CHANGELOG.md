@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.8](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.7...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.8) (2025-08-28)
+
+### Features
+
+- **payments-adapter-ctbc-micro-fast-pay:** finish pos api query order, refund, cancelRefund, waiting for implementation of amex ([04717d3](https://github.com/Rytass/Utils/commit/04717d31a4199f7380af3a12e51fb0b3b9dcf35c))
+- **payments-adapter-ctbc-micro-fast-pay:** remove nest js library used and refactor testing codes ([742c4b9](https://github.com/Rytass/Utils/commit/742c4b9da185b5d818cdb6699a2574c1bd4e01f3))
+
 ## [0.1.7](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.6...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.7) (2025-08-19)
 
 **Note:** Version bump only for package @rytass/payments-adapter-ctbc-micro-fast-pay
