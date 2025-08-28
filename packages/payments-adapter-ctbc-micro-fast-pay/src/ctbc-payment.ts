@@ -1,4 +1,3 @@
-import { Logger, NotImplementedException } from '@nestjs/common';
 import {
   AdditionalInfo,
   BindCardPaymentGateway,
@@ -53,8 +52,8 @@ import {
   OrderCache
 } from './typings';
 
-const debugPayment = debug('Rytass:Payment:CTBC');
-const debugPaymentServer = debug('Rytass:Payment:CTBC:Server');
+export const debugPayment = debug('Rytass:Payment:CTBC');
+export const debugPaymentServer = debug('Rytass:Payment:CTBC:Server');
 
 export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMessage>
   implements PaymentGateway<CM, CTBCOrder<CM>>, BindCardPaymentGateway<CM> {
@@ -84,7 +83,6 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
 
   private readonly orderCache: OrderCache<CM>;
   private readonly bindCardRequestsCache: BindCardRequestCache;
-  private readonly logger = new Logger(CTBCPayment.name);
 
   constructor(options: CTBCPaymentOptions) {
     this.merchantId = options.merchantId;
@@ -690,7 +688,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
 
     if (this.isAmex) {
 
-      throw new NotImplementedException('Query AMEX Order From SOAP API is not implemented')
+      throw new Error('Query AMEX Order From SOAP API is not implemented')
       // 使用 AMEX SOAP API 查詢
       // const amexInquiryParams: CTBCAmexInquiryParams = {
       //   merId: this.merId,
@@ -794,16 +792,10 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
           if (result.XID?.trim()) {
             reconstructedOrder.setPosApiInfo(result.XID.trim());
           }
-
-          debugPayment(`Reconstructed committed order ${id} from query result`);
-        } else {
-          debugPayment(`Reconstructed order ${id} from query result, but transaction not successful (RespCode: ${result.RespCode}, QueryCode: ${result.QueryCode})`);
         }
 
         // 將重建的訂單加入快取
         await this.orderCache.set(id, reconstructedOrder);
-
-        debugPayment(`Reconstructed order ${id} from query result and added to cache`);
 
         return reconstructedOrder as OO;
       }

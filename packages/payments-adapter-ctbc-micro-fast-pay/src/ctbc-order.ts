@@ -1,4 +1,3 @@
-import { Logger, NotImplementedException } from '@nestjs/common';
 import {
   AdditionalInfo,
   AsyncOrderInformation,
@@ -10,7 +9,7 @@ import {
   PaymentEvents,
   PaymentItem,
 } from '@rytass/payments';
-import { CTBCPayment } from './ctbc-payment';
+import { CTBCPayment, debugPayment } from './ctbc-payment';
 import { posApiCancelRefund, posApiRefund } from './ctbc-pos-api-utils';
 import {
   CTBCCheckoutWithBoundCardRequestPayload,
@@ -45,8 +44,6 @@ export class CTBCOrder<
 
   // POS API 相關資訊，用於後續操作（如退款）
   private _xid: string | undefined;
-
-  private readonly logger = new Logger(CTBCOrder.name);
 
   constructor(options: OrderCreateInit<OCM>) {
     this._id = options.id;
@@ -251,7 +248,7 @@ export class CTBCOrder<
 
     if (isAmex) {
 
-      throw new NotImplementedException('AMEX refund is not implemented');
+      throw new Error('AMEX refund is not implemented');
       // // 使用 AMEX SOAP API 退款
       // const amexRefundParams: CTBCAmexRefundParams = {
       //   merId: this._gateway.merId,
@@ -303,7 +300,7 @@ export class CTBCOrder<
         };
 
 
-        this.logger.log(`執行 POS API 退款: XID=${this._xid}, AuthCode=${authCode}, 退款金額=${refundAmount}`);
+        debugPayment(`執行 POS API 退款: XID=${this._xid}, AuthCode=${authCode}, 退款金額=${refundAmount}`);
 
         // 執行退款
         const refundResult = await posApiRefund(posApiConfig, refundParams);
@@ -360,7 +357,7 @@ export class CTBCOrder<
     const isAmex = this._cardType === CardType.AE;
 
     if (isAmex) {
-      throw new NotImplementedException('AMEX cancel refund is not implemented');
+      throw new Error('AMEX cancel refund is not implemented');
 
     } else {
       const posApiConfig: CTBCPosApiConfig = {
@@ -388,7 +385,7 @@ export class CTBCOrder<
         };
 
 
-        this.logger.log(`執行 POS API 退款撤銷: XID=${this._xid}, AuthCode=${authCode}, 撤銷金額=${cancelRefundAmount}`);
+        debugPayment(`執行 POS API 退款撤銷: XID=${this._xid}, AuthCode=${authCode}, 撤銷金額=${cancelRefundAmount}`);
 
         // 執行退款撤銷
         const cancelRefundResult = await posApiCancelRefund(posApiConfig, cancelRefundParams);

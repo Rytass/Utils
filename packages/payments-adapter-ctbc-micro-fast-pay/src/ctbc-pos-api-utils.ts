@@ -10,9 +10,7 @@ import {
   CTBCPosApiCancelRefundParams,
   CTBCPosApiResponse,
 } from './typings';
-import { Logger } from '@nestjs/common';
-
-const posApiUtilsLogger = new Logger('CTBCPosApiUtils');
+import { debugPayment } from './ctbc-payment';
 
 function checkMerid(input: string): true | number {
   if (!input) {
@@ -202,7 +200,6 @@ function pkcs5Unpad(data: Buffer): Buffer {
   return result;
 }
 
-// 回應解析 - 對應 PHP 的 parseResponse
 function parseResponse(responseStr: string, macKey: string): CTBCPosApiResponse | number {
   // 解析格式：key1=value1&key2=value2&encryptedData
   const parts = responseStr.split(/[&=]/);
@@ -214,7 +211,7 @@ function parseResponse(responseStr: string, macKey: string): CTBCPosApiResponse 
   const encryptedData = parts[3];
   const decodedData = decodeMacValue(encryptedData, macKey);
 
-  posApiUtilsLogger.log(`decodedData: ${decodedData}`);
+  debugPayment(`decodedData: ${decodedData}`);
 
   // 尋找 JSON 結尾
   const jsonEndIndex = decodedData.lastIndexOf('}');
@@ -252,10 +249,8 @@ async function sendAndGetResponse(
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-    posApiUtilsLogger.log('CTBC API 請求 URL:', config.URL);
-    posApiUtilsLogger.log('CTBC API 請求資料:', requestData);
-    posApiUtilsLogger.log('CTBC API MAC Key:', config.MacKey);
-    posApiUtilsLogger.log('CTBC API 請求資料:', formData.toString());
+    debugPayment('CTBC API 請求 URL:', config.URL);
+    debugPayment('CTBC API 請求資料:', requestData);
 
     // 配置標準的 HTTPS 請求選項
     const fetchOptions: RequestInit = {
@@ -277,12 +272,12 @@ async function sendAndGetResponse(
 
     const responseText = await response.text();
 
-    posApiUtilsLogger.log('CTBC API 回應狀態:', response.status);
-    posApiUtilsLogger.log('CTBC API 回應內容:', responseText);
+    debugPayment('CTBC API 回應狀態:', response.status);
+    debugPayment('CTBC API 回應內容:', responseText);
 
     return parseResponse(responseText, config.MacKey);
   } catch (error) {
-    posApiUtilsLogger.error('CTBC API request failed:', error);
+    debugPayment('CTBC API request failed:', error);
 
     return CTBC_ERROR_CODES.ERR_HOST_CONNECTION_FAILED;
   }
@@ -439,8 +434,6 @@ export async function posApiCancelRefund(
   params: CTBCPosApiCancelRefundParams,
 ): Promise<CTBCPosApiResponse | number> {
 
-  posApiUtilsLogger.log('🔍 posApiCancelRefund 請求參數:', params);
-
   // 參數驗證
   const meridCheck = checkMerid(params.MERID);
 
@@ -516,15 +509,5 @@ export async function posApiCancelRefund(
 
   requestData += '}';
 
-  posApiUtilsLogger.log('🔍 posApiCancelRefund 請求詳情:');
-  posApiUtilsLogger.log('請求 URL:', requestConfig.URL);
-  posApiUtilsLogger.log('請求資料:', requestData);
-
-  const result = await sendAndGetResponse(requestConfig, params.MERID, requestData);
-
-  posApiUtilsLogger.log('🔍 posApiCancelRefund 回應詳情:');
-  posApiUtilsLogger.log('回應類型:', typeof result);
-  posApiUtilsLogger.log('回應內容:', JSON.stringify(result, null, 2));
-
-  return result;
+  return sendAndGetResponse(requestConfig, params.MERID, requestData);
 }
