@@ -17,7 +17,6 @@ import {
   OrderCommitMessage,
   PaymentItem,
 } from '@rytass/payments';
-import { EventEmitter } from 'node:events';
 import { IncomingMessage, ServerResponse } from 'node:http';
 import { CTBCBindCardRequest } from './ctbc-bind-card-request';
 import { CTBCPayment } from './ctbc-payment';
@@ -63,7 +62,7 @@ export interface OrderCreateInit<
 
 export interface CTBCPaymentOptions<
   O extends
-    CTBCOrder<CTBCOrderCommitMessage> = CTBCOrder<CTBCOrderCommitMessage>,
+  CTBCOrder<CTBCOrderCommitMessage> = CTBCOrder<CTBCOrderCommitMessage>,
 > {
   merchantId: string;
   merId: string;
@@ -85,6 +84,7 @@ export interface CTBCPaymentOptions<
   orderCacheTTL?: number; // Order Expire Time is ms
   bindCardRequestsCache?: BindCardRequestCache;
   bindCardRequestsCacheTTL?: number; // Order Expire Time is ms
+  isAmex?: boolean;
 }
 
 export interface CTBCMicroFastPayOptions {
@@ -249,7 +249,7 @@ export interface CTBCOrderCommitResult {
 }
 
 // 為符合 PaymentGateway 的 commit() 型別要求，擴充必要欄位
-export interface CTBCOrderCommitMessage extends OrderCommitMessage {}
+export interface CTBCOrderCommitMessage extends OrderCommitMessage { }
 
 // 提供 prepare() 時所需的訂單建立資料，實際執行時會從 input cast 而來
 export interface CTBCOrderInput {
@@ -319,3 +319,164 @@ export interface CTBCInMacRequestPayload {
   Option: string; // 1 為一般特店，美運時帶空字串
   Key: string;
 }
+
+// POS API 常數定義 - 對應 PHP util.php 中的錯誤代碼
+export const CTBC_ERROR_CODES = {
+  ERR_INVALID_LIDM: 268435457,
+  ERR_INVALID_PAN: 268435458,
+  ERR_INVALID_EXP_DATE: 268435459,
+  ERR_INVALID_PURCH_AMT: 268435460,
+  ERR_INVALID_CURRENCY: 268435461,
+  ERR_INVALID_CAVV: 268435462,
+  ERR_JSON_DECODE_FAILED: 268435463,
+  ERR_INVALID_XID: 268435464,
+  ERR_INVALID_AUTH_RRPID: 268435465,
+  ERR_INVALID_ORDERDESC: 268435466,
+  ERR_INVALID_RECUR_NUM: 268435467,
+  ERR_INVALID_BIRTHDAY: 268435468,
+  ERR_INVALID_PID: 268435469,
+  ERR_INVALID_PROD_CODE: 268435470,
+  ERR_AMOUNT_OVER_LIMIT: 268435471,
+  ERR_INVALID_AUTH_CODE: 268435472,
+  ERR_INVALID_ORG_AMT: 268435473,
+  ERR_INVALID_EXPONENT: 268435475,
+  ERR_INVALID_BATCH_SEQ: 268435476,
+  ERR_INVALID_BATCH_ID: 268435477,
+  ERR_INVALID_MERID: 268435478,
+  ERR_INVALID_ECI: 268435479,
+  ERR_INVALID_RECUR_PARAM: 268435480,
+  ERR_INVALID_TX_TYPE: 268435481,
+  ERR_INVALID_USER_NAME: 268435483,
+  ERR_ORIGINAL_AMT_MISMATCH: 268435484,
+  ERR_HOST_CONNECTION_FAILED: 12,
+  ERR_RESPONSE_PARSE_FAILED: 268435473,
+} as const;
+
+
+// POS API 配置介面
+export interface CTBCPosApiConfig {
+  URL: string;
+  MacKey: string;
+}
+
+// POS API 基本參數
+export interface CTBCPosApiBaseParams {
+  MERID: string;
+  'LID-M': string;
+}
+
+// 查詢 API 參數
+export interface CTBCPosApiQueryParams extends CTBCPosApiBaseParams {
+  TxType?: string;
+  TxID?: string;
+  Tx_ATTRIBUTE?: 'TX_AUTH' | 'TX_SETTLE' | 'TX_VOID' | 'TX_REFUND';
+}
+
+// 退款 API 參數
+export interface CTBCPosApiRefundParams extends CTBCPosApiBaseParams {
+  OrgAmt: string;
+  AuthCode: string;
+  currency?: string;
+  PurchAmt?: string;
+  exponent?: string;
+  XID: string;
+}
+
+// 退款撤銷 API 參數
+export interface CTBCPosApiCancelRefundParams extends CTBCPosApiBaseParams {
+  CredRevAmt: string;
+  AuthCode: string;
+  currency?: string;
+  exponent?: string;
+  XID: string;
+}
+
+// POS API 回應介面
+export interface CTBCPosApiResponse {
+  RespCode: string;
+  ApiVersion?: string;
+  currency?: string;
+  amount?: string;
+  exponent?: string;
+  ErrorDesc?: string;
+  // 查詢相關欄位
+  SwRevision?: string;
+  QueryCode?: string;
+  ErrStatus?: string;
+  ERRDESC?: string;
+  QueryError?: string;
+  ErrCode?: string;
+  VERSION?: string;
+  Txn_date?: string;
+  Txn_time?: string;
+  AuthCode?: string;
+  AuthAmt?: string;
+  PAN?: string;
+  ECI?: string;
+  XID?: string;
+  // 退款相關欄位  
+  RefAmt?: string;
+  // 取消退款相關欄位
+  RetrRef?: string;
+  ResAmt?: string;
+  [key: string]: string | undefined;
+}
+
+// AMEX SOAP API 配置介面
+export interface CTBCAmexConfig {
+  host: string;
+  port: number;
+  wsdlUrl?: string;
+  timeout?: number;
+  sslOptions?: any;
+}
+
+// AMEX 查詢參數
+export interface CTBCAmexInquiryParams {
+  merId: string;
+  lidm: string;
+  xid?: string;
+  IN_MAC_KEY?: string; // MAC Key 是可選的，根據文檔說明
+}
+
+// AMEX 退款參數
+export interface CTBCAmexRefundParams {
+  merId: string;
+  xid: string;
+  lidm: string;
+  credAmt: number;
+  IN_MAC_KEY: string;
+}
+
+// AMEX API 回應介面 (查詢用)
+export interface CTBCAmexInquiryResponse {
+  count: number;
+  mac: string;
+  errCode: string;
+  errDesc: string;
+  poDetails: Array<{
+    aetId?: string;
+    xid?: string;
+    authCode?: string;
+    termSeq?: string;
+    authAmt?: string;
+    errCode?: string;
+    errDesc?: string;
+  }>;
+}
+
+// AMEX API 回應介面 (退款用)
+export interface CTBCAmexRefundResponse {
+  aetId: string;
+  xid: string;
+  credAmt: string;
+  unCredAmt: string;
+  capBatchId: string;
+  capBatchSeq: string;
+  errCode: string;
+  errDesc: string;
+  mac: string;
+}
+
+// AMEX 通用回應類型
+export type CTBCAmexResponse = CTBCAmexInquiryResponse | CTBCAmexRefundResponse;
