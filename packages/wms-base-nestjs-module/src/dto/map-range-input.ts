@@ -1,12 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { Field, Float, ID } from '@nestjs/graphql';
-import {
-  MapRangeColor,
-  MapRangeType,
-} from 'wms-base-nestjs-module/src/typings/warehouse-map.enum';
+import { Field, Float, ID, InputType } from '@nestjs/graphql';
+import { MapRangeColor, MapRangeType } from '../typings/warehouse-map.enum';
 import { MapPolygonRangePointInput } from './map-polygon-range-point.input';
 
-@Injectable()
+@InputType()
 export class MapRangeInput {
   @Field(() => ID)
   id: string;

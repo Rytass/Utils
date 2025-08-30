@@ -2,7 +2,7 @@ import { Repository } from 'typeorm';
 import { WarehouseMapEntity } from '../src/models/warehouse-map.entity';
 import { MapRangeColor, MapRangeType } from '../src/typings/warehouse-map.enum';
 
-export const mockWarehouseMapEntity = {
+export const mockWarehouseMapEntity: WarehouseMapEntity = {
   id: 'A001A',
   mapData: {
     id: 'A001A',
@@ -38,8 +38,6 @@ export const mockWarehouseMapEntity = {
         id: 'A001A2',
         type: MapRangeType.POLYGON,
         color: MapRangeColor.RED,
-        x: 10,
-        y: 10,
         points: [
           {
             x: 10.5,
@@ -61,7 +59,9 @@ export const mockWarehouseMapEntity = {
       },
     ],
   },
-};
+  createdAt: new Date('2025-01-01'),
+  updatedAt: new Date('2025-01-01'),
+} as WarehouseMapEntity;
 
 export const mockWarehouseMapRepo = {
   findOne: jest.fn(),

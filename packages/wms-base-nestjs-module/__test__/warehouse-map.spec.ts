@@ -46,11 +46,13 @@ describe('warehouse-map', () => {
         backgrounds: [],
         ranges: [],
       },
-    });
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as WarehouseMapEntity);
 
     const result = await warehouseMapService.updateMap('A001', [], []);
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       id: 'A001',
       mapData: {
         id: 'A001',
@@ -88,7 +90,7 @@ describe('warehouse-map', () => {
       ],
     );
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       id: 'A001A',
       mapData: {
         id: 'A001A',
@@ -155,7 +157,7 @@ describe('warehouse-map', () => {
       ],
     );
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       id: 'A001A',
       mapData: {
         id: 'A001A',

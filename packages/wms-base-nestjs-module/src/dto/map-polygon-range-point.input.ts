@@ -1,7 +1,6 @@
-import { Injectable } from '@nestjs/common';
-import { Field, Float } from '@nestjs/graphql';
+import { Field, Float, InputType } from '@nestjs/graphql';
 
-@Injectable()
+@InputType()
 export class MapPolygonRangePointInput {
   @Field(() => Float)
   x: number;

@@ -3,7 +3,7 @@ import { MapRangeColor, MapRangeType } from './warehouse-map.enum';
 export type MapData = {
   id: string;
   backgrounds: MapBackground[];
-  ranges: MapRange[];
+  ranges: (MapRectangleRange | MapPolygonRange)[];
 };
 
 export type MapBackground = {

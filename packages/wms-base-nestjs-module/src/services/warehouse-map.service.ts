@@ -2,8 +2,8 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { WarehouseMapEntity } from '../models/warehouse-map.entity';
 import { RESOLVED_WAREHOUSE_MAP_REPO } from '../typings/wms-base-module-providers';
 import { Repository } from 'typeorm';
-import { MapBackgroundInput } from 'wms-base-nestjs-module/dto/map-background.input';
-import { MapRangeInput } from 'wms-base-nestjs-module/dto/map-range-input';
+import { MapBackgroundInput } from '../dto/map-background.input';
+import { MapRangeInput } from '../dto/map-range-input';
 import {
   MapBackground,
   MapData,
@@ -53,18 +53,33 @@ export class WarehouseMapService {
         };
 
         if (range.type === MapRangeType.RECTANGLE) {
+          if (
+            range.x === undefined ||
+            range.y === undefined ||
+            range.width === undefined ||
+            range.height === undefined
+          ) {
+            throw new Error(
+              `Rectangle range "${range.id}" requires x, y, width, and height properties`,
+            );
+          }
           return {
             ...base,
-            x: range.x!,
-            y: range.y!,
-            width: range.width!,
-            height: range.height!,
-          };
+            x: range.x,
+            y: range.y,
+            width: range.width,
+            height: range.height,
+          } as MapRectangleRange;
         } else {
+          if (!range.points || range.points.length === 0) {
+            throw new Error(
+              `Polygon range "${range.id}" requires points array with at least one point`,
+            );
+          }
           return {
             ...base,
-            points: range.points!,
-          };
+            points: range.points,
+          } as MapPolygonRange;
         }
       }),
     };
