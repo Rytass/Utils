@@ -34,6 +34,11 @@ export class OrderBEntity extends OrderEntity {
   customFieldB: string;
 }
 
+jest.mock('../src/models/warehouse-map.entity', () => ({
+  WarehouseMapEntity: class MockWarehouseMapEntity {},
+  WarehouseMapRepo: Symbol('MockWarehouseMapRepo'),
+}));
+
 describe('order', () => {
   let module: TestingModule;
   let orderService: OrderService;

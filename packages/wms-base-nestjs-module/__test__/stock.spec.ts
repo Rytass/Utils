@@ -13,6 +13,11 @@ import {
 import { StockEntity } from '../src/models/stock.entity';
 import { StockService } from '../src/services/stock.service';
 
+jest.mock('../src/models/warehouse-map.entity', () => ({
+  WarehouseMapEntity: class MockWarehouseMapEntity {},
+  WarehouseMapRepo: Symbol('MockWarehouseMapRepo'),
+}));
+
 describe('stock', () => {
   let module: TestingModule;
   let stockService: StockService;

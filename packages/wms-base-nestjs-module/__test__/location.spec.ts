@@ -15,6 +15,11 @@ import {
 import { LocationEntity } from '../src/models/location.entity';
 import { LocationService } from '../src/services/location.service';
 
+jest.mock('../src/models/warehouse-map.entity', () => ({
+  WarehouseMapEntity: class MockWarehouseMapEntity {},
+  WarehouseMapRepo: Symbol('MockWarehouseMapRepo'),
+}));
+
 describe('location', () => {
   let module: TestingModule;
 

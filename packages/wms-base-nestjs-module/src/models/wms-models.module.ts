@@ -7,6 +7,7 @@ import { LocationEntity, LocationRepo } from './location.entity';
 import { MaterialEntity, MaterialRepo } from './material.entity';
 import { OrderEntity, OrderRepo } from './order.entity';
 import { StockEntity, StockRepo } from './stock.entity';
+import { WarehouseMapEntity, WarehouseMapRepo } from './warehouse-map.entity';
 
 const models: [symbol: symbol, cls: EntityClassOrSchema][] = [
   [BatchRepo, BatchEntity],
@@ -14,6 +15,7 @@ const models: [symbol: symbol, cls: EntityClassOrSchema][] = [
   [MaterialRepo, MaterialEntity],
   [LocationRepo, LocationEntity],
   [OrderRepo, OrderEntity],
+  [WarehouseMapRepo, WarehouseMapEntity],
 ];
 
 @Module({

@@ -5,6 +5,11 @@ import { WMSBaseModule } from '../src';
 import { MaterialEntity } from '../src/models/material.entity';
 import { MaterialService } from '../src/services/material.service';
 
+jest.mock('../src/models/warehouse-map.entity', () => ({
+  WarehouseMapEntity: class MockWarehouseMapEntity {},
+  WarehouseMapRepo: Symbol('MockWarehouseMapRepo'),
+}));
+
 describe('material', () => {
   let module: TestingModule;
   let service: MaterialService<CustomMaterialEntity>;
