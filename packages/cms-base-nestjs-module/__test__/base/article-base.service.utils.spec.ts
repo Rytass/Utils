@@ -787,7 +787,16 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
 
   it('should add search filter with FULL_TEXT mode', async () => {
     jest.resetModules(); // Clear previous mocks
-    jest.doMock('@node-rs/jieba', () => ({ cut: () => ['test'] }));
+    jest.doMock('@node-rs/jieba', () => ({
+      __esModule: true,
+      default: {
+        Jieba: class MockJieba {
+          cut() {
+            return ['test'];
+          }
+        },
+      },
+    }));
 
     const mockCreateQueryBuilder = jest.fn().mockReturnValue({
       from: jest.fn().mockReturnThis(),

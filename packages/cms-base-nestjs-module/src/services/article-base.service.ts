@@ -1532,6 +1532,11 @@ export class ArticleBaseService<
     } catch (ex) {
       await runner.rollbackTransaction();
 
+      // If it's already a BadRequestException (including custom errors), rethrow as-is
+      if (ex instanceof BadRequestException) {
+        throw ex;
+      }
+
       throw new BadRequestException(ex);
     } finally {
       await runner.release();
@@ -1703,6 +1708,11 @@ export class ArticleBaseService<
       });
     } catch (ex) {
       await runner.rollbackTransaction();
+
+      // If it's already a BadRequestException (including custom errors), rethrow as-is
+      if (ex instanceof BadRequestException) {
+        throw ex;
+      }
 
       throw new BadRequestException(ex);
     } finally {

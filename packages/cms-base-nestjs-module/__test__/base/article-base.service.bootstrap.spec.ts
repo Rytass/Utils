@@ -3,8 +3,16 @@ import { ArticleBaseService } from '../../src/services/article-base.service';
 import { BaseArticleVersionContentEntity } from '../../src/models/base-article-version-content.entity';
 import { FULL_TEXT_SEARCH_TOKEN_VERSION } from '../../src/constants/full-text-search-token-version';
 
+// Mock the jieba module more simply by skipping its functionality in tests
 jest.mock('@node-rs/jieba', () => ({
-  cut: jest.fn().mockReturnValue(['token1', 'token2']),
+  __esModule: true,
+  default: {
+    Jieba: class MockJieba {
+      cut() {
+        return ['token1', 'token2'];
+      }
+    },
+  },
 }));
 
 describe('ArticleBaseService - bindSearchTokens', () => {
