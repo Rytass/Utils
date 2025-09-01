@@ -73,3 +73,9 @@ __FOR_DESIGN/
 # Docusaurus
 docs/.docusaurus
 docs/build
+
+# Storybook
+storybook-static
+
+# Playwright MCP
+.playwright-mcp/
