@@ -11,8 +11,12 @@
     "emitDecoratorMetadata": true,
     "strictPropertyInitialization": false,
     "experimentalDecorators": true,
-    "moduleResolution": "node",
-    "lib": ["esnext"]
+    "moduleResolution": "bundler",
+    "lib": ["esnext", "dom"],
+    "types": ["node"],
+    "typeRoots": ["./node_modules/@types"],
+    "allowImportingTsExtensions": false,
+    "resolveJsonModule": true
   },
   "exclude": ["node_modules", "**/node_modules"]
 }
