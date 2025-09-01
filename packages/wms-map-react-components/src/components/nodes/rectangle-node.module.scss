@@ -1,0 +1,66 @@
+.rectangleNode {
+  position: relative;
+
+  &.selected {
+    z-index: 1000;
+  }
+
+  &.nonSelectable {
+    cursor: default;
+
+    .rectangleContainer {
+      opacity: 0.5;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+
+      &:hover {
+        box-shadow: none;
+      }
+    }
+  }
+}
+
+.rectangleContainer {
+  position: relative;
+  cursor: default;
+  transition: all 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+}
+
+// 自訂 NodeResizer 樣式類別
+.customResizeHandle {
+  width: 12px !important;
+  height: 12px !important;
+  border: 2px solid #5570d3 !important;
+  border-radius: 3px !important;
+  background: white !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+  transition: all 0.2s ease !important;
+
+  &:hover {
+    background: #5570d3 !important;
+    border-color: #3d5af1 !important;
+    transform: scale(1.3) !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  // 不同位置的控制點使用預設樣式
+  &[data-position='top-left'] {
+    cursor: default !important;
+  }
+
+  &[data-position='top-right'] {
+    cursor: default !important;
+  }
+
+  &[data-position='bottom-left'] {
+    cursor: default !important;
+  }
+
+  &[data-position='bottom-right'] {
+    cursor: default !important;
+  }
+}

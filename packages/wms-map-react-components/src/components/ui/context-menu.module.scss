@@ -1,0 +1,89 @@
+.contextMenu {
+  background: white;
+  border: 1px solid #e1e5e9;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 4px 0;
+  min-width: 120px;
+  user-select: none;
+}
+
+.menuItem {
+  padding: 8px 16px;
+  cursor: default;
+  font-size: 14px;
+  color: #333;
+  transition: background-color 0.15s ease;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-width: 160px;
+
+  &:hover {
+    background-color: #f5f5f5;
+  }
+
+  &:active {
+    background-color: #e9ecef;
+  }
+
+  &.disabled {
+    color: #999;
+    cursor: default;
+
+    &:hover {
+      background-color: transparent;
+    }
+
+    &:active {
+      background-color: transparent;
+    }
+  }
+}
+
+.menuItemContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.menuItemText {
+  flex: 1;
+}
+
+.menuItemShortcut {
+  font-size: 12px;
+  color: #666;
+  margin-left: 16px;
+  font-family: monospace;
+}
+
+.hasSubmenu {
+  position: relative;
+}
+
+.arrow {
+  font-size: 10px;
+  color: #666;
+  margin-left: 8px;
+}
+
+.submenu {
+  background: white;
+  border: 1px solid #e1e5e9;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 4px 0;
+  min-width: 120px;
+  user-select: none;
+
+  .menuItem {
+    padding: 8px 16px;
+
+    &:hover {
+      background-color: #f5f5f5;
+    }
+  }
+}

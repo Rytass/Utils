@@ -1,9 +1,7 @@
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-
-const { default: { utils }} = await import('@commitlint/config-lerna-scopes');
-
 export default {
+  extends: ['@commitlint/config-conventional', '@commitlint/config-lerna-scopes'],
   rules: {
-    'scope-enum': async ctx => [2, 'always', [...(await utils.getPackages(ctx)), 'release']],
+    'subject-case': [0], // 允許任何大小寫格式
+    'header-max-length': [2, 'always', 100],
   },
 };

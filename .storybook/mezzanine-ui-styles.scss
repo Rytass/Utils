@@ -1,0 +1,20 @@
+// Import Mezzanine UI core styles using configured alias
+@use '~@mezzanine-ui/core' as mzn-core;
+@use '~@mezzanine-ui/system' as mzn-system;
+@use '~@mezzanine-ui/system/spacing' as mzn-spacing;
+@use '~@mezzanine-ui/system/z-index' as mzn-z-index;
+@use '~@mezzanine-ui/system/palette' as palette;
+
+// Include all Mezzanine UI styles
+@include mzn-core.styles;
+
+:root {
+  @include mzn-system.common-variables;
+  @include mzn-spacing.variables;
+  @include mzn-z-index.variables;
+  @include palette.variables('light');
+}
+
+* {
+  box-sizing: border-box;
+}

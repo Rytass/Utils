@@ -1,0 +1,72 @@
+.viewModeToolbar {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  z-index: 1000;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  min-width: 120px;
+  border: 1px solid #e0e0e0;
+}
+
+.toolbarContent {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.switch {
+  flex-shrink: 0;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+  .viewModeToolbar {
+    bottom: 16px;
+    left: 16px;
+    padding: 10px 14px;
+  }
+
+  .label {
+    font-size: 13px;
+  }
+}
+
+/* 高對比度模式支持 */
+@media (prefers-contrast: high) {
+  .viewModeToolbar {
+    border: 2px solid #000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .label {
+    color: #000;
+    font-weight: 600;
+  }
+}
+
+/* 暗色主題支持 */
+@media (prefers-color-scheme: dark) {
+  .viewModeToolbar {
+    background: #2d2d2d;
+    border-color: #404040;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .label {
+    color: #f0f0f0;
+  }
+}

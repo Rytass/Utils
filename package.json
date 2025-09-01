@@ -18,7 +18,9 @@
     "prepare": "husky install",
     "release": "lerna version patch && nx run-many -t build --parallel=8 && lerna publish from-package --contents lib",
     "docs": "docusaurus start docs",
-    "docs:build": "docusaurus build docs"
+    "docs:build": "docusaurus build docs",
+    "storybook": "storybook dev -p 6006",
+    "storybook:build": "storybook build"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.6.0",
@@ -33,6 +35,7 @@
     "@mezzanine-ui/core": "^0.16.0",
     "@mezzanine-ui/icons": "^0.16.0",
     "@mezzanine-ui/react": "^0.16.0",
+    "@mezzanine-ui/react-hook-form-v2": "^0.0.87",
     "@mezzanine-ui/system": "^0.16.0",
     "@nestjs/common": "^10.4.12",
     "@nestjs/config": "^3.3.0",
@@ -44,6 +47,9 @@
     "@node-rs/jieba": "^1.10.4",
     "@nrwl/nx-cloud": "^19.1.0",
     "@nx/js": "^20.1.4",
+    "@storybook/addon-essentials": "^9.0.0-alpha.12",
+    "@storybook/react": "^9.1.3",
+    "@storybook/react-vite": "^9.1.3",
     "@swc/core": "^1.9.3",
     "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9",
@@ -53,6 +59,7 @@
     "@types/supertest": "^6.0.2",
     "@typescript-eslint/eslint-plugin": "^8.16.0",
     "@typescript-eslint/parser": "^8.16.0",
+    "@xyflow/react": "^12.8.2",
     "argon2": "^0.41.1",
     "axios": "^1.7.8",
     "clsx": "^2.1.1",
@@ -90,10 +97,12 @@
     "rxjs": "^7.8.1",
     "sass": "^1.89.2",
     "sqlite3": "^5.1.7",
+    "storybook": "^9.1.3",
     "supertest": "^7.0.0",
     "ts-jest": "^29.2.5",
     "typeorm": "^0.3.20",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vite": "^5.4.3"
   },
   "resolutions": {
     "got": "^11",
