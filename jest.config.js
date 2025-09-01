@@ -1,4 +1,10 @@
 module.exports = {
+  testEnvironment: 'node',
+  globals: {
+    TextEncoder: require('util').TextEncoder,
+    TextDecoder: require('util').TextDecoder,
+  },
+  setupFiles: ['<rootDir>/jest.setup.js'],
   transform: {
     '\\.ts$': 'ts-jest',
     '^.+\\.tsx?$': [
