@@ -137,7 +137,15 @@ export class LocalStorage extends Storage {
       const tempFilename = uuid();
       const writeStream = createWriteStream(this.getFileFullPath(tempFilename));
 
+      convertedStream.pipe(writeStream);
+
       this.getStreamFilename(convertedStream).then(async ([filename]) => {
+        // Wait for the write stream to finish before renaming
+        await new Promise<void>((resolve, reject) => {
+          writeStream.on('finish', resolve);
+          writeStream.on('error', reject);
+        });
+
         await rename(
           this.getFileFullPath(tempFilename),
           this.getFileFullPath(filename),
@@ -145,8 +153,6 @@ export class LocalStorage extends Storage {
 
         promiseResolve({ key: filename });
       });
-
-      convertedStream.pipe(writeStream);
     });
   }
 
