@@ -9,12 +9,12 @@ const WMS_DEBUG_NAMESPACE = '__WMS_MAP_DEBUG__';
 
 // 取得 WmsMapModal 專用的 debug 狀態
 const getWmsDebugState = (): boolean => {
-  return (globalThis as any)[WMS_DEBUG_NAMESPACE] || false;
+  return (window as any)[WMS_DEBUG_NAMESPACE] || false;
 };
 
 // 設定 WmsMapModal 專用的 debug 狀態
 const setWmsDebugState = (enabled: boolean): void => {
-  (globalThis as any)[WMS_DEBUG_NAMESPACE] = enabled;
+  (window as any)[WMS_DEBUG_NAMESPACE] = enabled;
 };
 
 /**
@@ -62,7 +62,7 @@ export const debugSuccess = (message: string, ...args: any[]): void => {
 /**
  * 錯誤 debug log
  */
-export const debugError = (message: string, error?: any): void => {
+export const debugError = (message: string, error?: unknown): void => {
   if (!getWmsDebugState()) {
     return;
   }

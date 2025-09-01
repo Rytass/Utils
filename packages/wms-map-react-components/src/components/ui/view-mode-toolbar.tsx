@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { Switch } from '@mezzanine-ui/react';
-import { ViewMode } from '../../../typings';
-import styles from './viewModeToolbar.module.scss';
+import { ViewMode } from '../../typings';
+import styles from './view-mode-toolbar.module.scss';
 
 interface ViewModeToolbarProps {
   viewMode: ViewMode;

@@ -1,18 +1,18 @@
 import React, { FC, useCallback, useState, useRef } from 'react';
 import { NodeProps, useReactFlow } from '@xyflow/react';
-import { EditMode, ViewMode } from '../../../typings';
+import { EditMode, ViewMode } from '../../typings';
 import {
   DEFAULT_RECTANGLE_COLOR,
   DEFAULT_PATH_LABEL,
   ACTIVE_OPACITY,
   RECTANGLE_INACTIVE_OPACITY,
 } from '../../constants';
-import { useContextMenu } from '../../hooks/useContextMenu';
-import { useTextEditing } from '../../hooks/useTextEditing';
-import { createPathCopy } from '../../utils/nodeOperations';
-import { createHoverColor } from '../../utils/colorUtils';
-import ContextMenu from '../ui/ContextMenu';
-import styles from './pathNode.module.scss';
+import { useContextMenu } from '../../hooks/use-context-menu';
+import { useTextEditing } from '../../hooks/use-text-editing';
+import { createPathCopy } from '../../utils/node-operations';
+import { createHoverColor } from '../../utils/color-utils';
+import ContextMenu from '../ui/context-menu';
+import styles from './path-node.module.scss';
 
 interface PathNodeData {
   points: { x: number; y: number }[];
@@ -336,7 +336,8 @@ const PathNode: FC<PathNodeProps> = ({
       onPathPointsChange,
       setNodes,
       getViewport,
-      dragOffset,
+      getBounds,
+      getNodes,
     ],
   );
 
@@ -346,28 +347,36 @@ const PathNode: FC<PathNodeProps> = ({
       ? (() => {
           // Use fixed bounds during drag to maintain stable React Flow node positioning
           const pathPoints = displayPoints.map((p, index) => {
-            let x = p.x - bounds.minX;
-            let y = p.y - bounds.minY;
+            const baseX = p.x - bounds.minX;
+            const baseY = p.y - bounds.minY;
 
             // Apply drag offsets for visual feedback during dragging
-            if (isDraggingPoint && dragPointIndex === index) {
-              x += dragOffset.x;
-              y += dragOffset.y;
-            } else if (isDraggingPoint && isClosedPath && points.length > 2) {
-              // Apply sync offset to opposite point in closed paths
-              const isFirstPoint = index === 0;
-              const isLastPoint = index === points.length - 1;
-              const draggedIsFirst = dragPointIndex === 0;
-              const draggedIsLast = dragPointIndex === points.length - 1;
+            const { x, y } = (() => {
+              if (isDraggingPoint && dragPointIndex === index) {
+                return {
+                  x: baseX + dragOffset.x,
+                  y: baseY + dragOffset.y,
+                };
+              } else if (isDraggingPoint && isClosedPath && points.length > 2) {
+                // Apply sync offset to opposite point in closed paths
+                const isFirstPoint = index === 0;
+                const isLastPoint = index === points.length - 1;
+                const draggedIsFirst = dragPointIndex === 0;
+                const draggedIsLast = dragPointIndex === points.length - 1;
 
-              if (
-                (draggedIsFirst && isLastPoint) ||
-                (draggedIsLast && isFirstPoint)
-              ) {
-                x += dragSyncOffset.x;
-                y += dragSyncOffset.y;
+                if (
+                  (draggedIsFirst && isLastPoint) ||
+                  (draggedIsLast && isFirstPoint)
+                ) {
+                  return {
+                    x: baseX + dragSyncOffset.x,
+                    y: baseY + dragSyncOffset.y,
+                  };
+                }
               }
-            }
+
+              return { x: baseX, y: baseY };
+            })();
 
             return `${x} ${y}`;
           });
@@ -495,28 +504,37 @@ const PathNode: FC<PathNodeProps> = ({
                 dragPointIndex === index && isDraggingPoint;
 
               // Apply visual offset during drag for smooth feedback
-              let visualX = relativeX;
-              let visualY = relativeY;
-
-              if (isBeingDragged) {
-                // Apply drag offset to the dragged point
-                visualX += dragOffset.x;
-                visualY += dragOffset.y;
-              } else if (isDraggingPoint && isClosedPath && points.length > 2) {
-                // Apply sync offset to the opposite point in closed paths
-                const isFirstPoint = index === 0;
-                const isLastPoint = index === points.length - 1;
-                const draggedIsFirst = dragPointIndex === 0;
-                const draggedIsLast = dragPointIndex === points.length - 1;
-
-                if (
-                  (draggedIsFirst && isLastPoint) ||
-                  (draggedIsLast && isFirstPoint)
+              const { visualX, visualY } = (() => {
+                if (isBeingDragged) {
+                  // Apply drag offset to the dragged point
+                  return {
+                    visualX: relativeX + dragOffset.x,
+                    visualY: relativeY + dragOffset.y,
+                  };
+                } else if (
+                  isDraggingPoint &&
+                  isClosedPath &&
+                  points.length > 2
                 ) {
-                  visualX += dragSyncOffset.x;
-                  visualY += dragSyncOffset.y;
+                  // Apply sync offset to the opposite point in closed paths
+                  const isFirstPoint = index === 0;
+                  const isLastPoint = index === points.length - 1;
+                  const draggedIsFirst = dragPointIndex === 0;
+                  const draggedIsLast = dragPointIndex === points.length - 1;
+
+                  if (
+                    (draggedIsFirst && isLastPoint) ||
+                    (draggedIsLast && isFirstPoint)
+                  ) {
+                    return {
+                      visualX: relativeX + dragSyncOffset.x,
+                      visualY: relativeY + dragSyncOffset.y,
+                    };
+                  }
                 }
-              }
+
+                return { visualX: relativeX, visualY: relativeY };
+              })();
 
               return (
                 <div

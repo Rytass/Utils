@@ -1,18 +1,18 @@
 .rectangleNode {
   position: relative;
-  
+
   &.selected {
     z-index: 1000;
   }
 
   &.nonSelectable {
     cursor: default;
-    
+
     .rectangleContainer {
       opacity: 0.5;
       transition: opacity 0.2s ease;
       pointer-events: none;
-      
+
       &:hover {
         box-shadow: none;
       }
@@ -24,7 +24,7 @@
   position: relative;
   cursor: default;
   transition: all 0.2s ease;
-  
+
   &:hover {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   }
@@ -48,19 +48,19 @@
   }
 
   // 不同位置的控制點使用預設樣式
-  &[data-position="top-left"] {
+  &[data-position='top-left'] {
     cursor: default !important;
   }
 
-  &[data-position="top-right"] {
+  &[data-position='top-right'] {
     cursor: default !important;
   }
 
-  &[data-position="bottom-left"] {
+  &[data-position='bottom-left'] {
     cursor: default !important;
   }
 
-  &[data-position="bottom-right"] {
+  &[data-position='bottom-right'] {
     cursor: default !important;
   }
 }

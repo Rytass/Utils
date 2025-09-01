@@ -27,12 +27,12 @@
   &.nonSelectable {
     cursor: default;
     border-color: transparent !important;
-    
+
     &:hover {
       border-color: transparent !important;
       z-index: 1;
     }
-    
+
     .image {
       opacity: 0.7;
       transition: opacity 0.2s ease;
@@ -71,7 +71,6 @@
   text-overflow: ellipsis;
 }
 
-
 // 自訂 NodeResizer 樣式類別
 .customResizeHandle {
   width: 12px !important;
@@ -90,19 +89,19 @@
   }
 
   // 不同位置的控制點使用預設樣式
-  &[data-position="top-left"] {
+  &[data-position='top-left'] {
     cursor: default !important;
   }
 
-  &[data-position="top-right"] {
+  &[data-position='top-right'] {
     cursor: default !important;
   }
 
-  &[data-position="bottom-left"] {
+  &[data-position='bottom-left'] {
     cursor: default !important;
   }
 
-  &[data-position="bottom-right"] {
+  &[data-position='bottom-right'] {
     cursor: default !important;
   }
 }

@@ -1,10 +1,11 @@
 import { useState, useCallback, useRef } from 'react';
 import { Node, Edge } from '@xyflow/react';
 import { EditMode } from '../typings';
+import { FlowNode, FlowEdge } from '../types/react-flow.types';
 
 interface HistoryState {
-  nodes: Node[];
-  edges: Edge[];
+  nodes: FlowNode[];
+  edges: FlowEdge[];
   editMode: EditMode;
   operation: string;
   timestamp: number;
@@ -13,6 +14,51 @@ interface HistoryState {
 interface UseDirectStateHistoryOptions {
   maxHistorySize?: number;
   debugMode?: boolean;
+}
+
+interface HistorySummary {
+  canUndo: boolean;
+  canRedo: boolean;
+  historyLength: number;
+  currentIndex: number;
+  currentOperation?: string;
+  operations?: Array<{
+    index: number;
+    operation: string;
+    nodes: number;
+    edges: number;
+    isCurrent: boolean;
+  }>;
+}
+
+interface UseDirectStateHistoryReturn {
+  saveState: (
+    nodes: FlowNode[],
+    edges: FlowEdge[],
+    operation: string,
+    editMode: EditMode,
+  ) => void;
+  undo: () => {
+    nodes: FlowNode[];
+    edges: FlowEdge[];
+    editMode: EditMode;
+  } | null;
+  redo: () => {
+    nodes: FlowNode[];
+    edges: FlowEdge[];
+    editMode: EditMode;
+  } | null;
+  canUndo: boolean;
+  canRedo: boolean;
+  initializeHistory: (
+    initialNodes: FlowNode[],
+    initialEdges: FlowEdge[],
+    editMode: EditMode,
+  ) => void;
+  clearHistory: () => void;
+  getHistorySummary: () => HistorySummary;
+  history?: HistoryState[];
+  currentIndex?: number;
 }
 
 /**
@@ -27,7 +73,7 @@ interface UseDirectStateHistoryOptions {
 export const useDirectStateHistory = ({
   maxHistorySize = 50,
   debugMode = false,
-}: UseDirectStateHistoryOptions = {}) => {
+}: UseDirectStateHistoryOptions = {}): UseDirectStateHistoryReturn => {
   const [history, setHistory] = useState<HistoryState[]>([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
   const isRestoringRef = useRef(false);
@@ -37,7 +83,11 @@ export const useDirectStateHistory = ({
 
   // 初始化歷史記錄
   const initializeHistory = useCallback(
-    (initialNodes: Node[], initialEdges: Edge[], editMode: EditMode) => {
+    (
+      initialNodes: FlowNode[],
+      initialEdges: FlowEdge[],
+      editMode: EditMode,
+    ): void => {
       const initialState: HistoryState = {
         nodes: JSON.parse(JSON.stringify(initialNodes)),
         edges: JSON.parse(JSON.stringify(initialEdges)),
@@ -62,7 +112,12 @@ export const useDirectStateHistory = ({
 
   // 保存狀態快照
   const saveState = useCallback(
-    (nodes: Node[], edges: Edge[], operation: string, editMode: EditMode) => {
+    (
+      nodes: FlowNode[],
+      edges: FlowEdge[],
+      operation: string,
+      editMode: EditMode,
+    ): void => {
       if (isRestoringRef.current) {
         if (debugMode) {
           console.log('🚫 跳過保存 - 正在執行 undo/redo');
@@ -80,44 +135,54 @@ export const useDirectStateHistory = ({
       };
 
       setHistory((prevHistory) => {
-        let newHistory = [...prevHistory];
-
         // 如果當前不在最後位置，截斷後續歷史
-        if (currentIndex < newHistory.length - 1) {
-          newHistory = newHistory.slice(0, currentIndex + 1);
-        }
+        const truncatedHistory =
+          currentIndex < prevHistory.length - 1
+            ? prevHistory.slice(0, currentIndex + 1)
+            : prevHistory;
 
         // 添加新狀態
-        newHistory.push(newState);
+        const historyWithNewState = [...truncatedHistory, newState];
 
         // 限制歷史大小
-        if (newHistory.length > maxHistorySize) {
-          const removeCount = newHistory.length - maxHistorySize;
+        const finalHistory =
+          historyWithNewState.length > maxHistorySize
+            ? (() => {
+                const removeCount = historyWithNewState.length - maxHistorySize;
+                const trimmedHistory = historyWithNewState.slice(removeCount);
 
-          newHistory = newHistory.slice(removeCount);
-          setCurrentIndex(newHistory.length - 1);
-        } else {
-          setCurrentIndex(newHistory.length - 1);
-        }
+                setCurrentIndex(trimmedHistory.length - 1);
+
+                return trimmedHistory;
+              })()
+            : (() => {
+                setCurrentIndex(historyWithNewState.length - 1);
+
+                return historyWithNewState;
+              })();
 
         if (debugMode) {
           console.log(`📸 保存狀態 [${operation}]:`, {
             nodes: nodes.length,
             edges: edges.length,
             editMode,
-            historyIndex: newHistory.length - 1,
-            totalHistory: newHistory.length,
+            historyIndex: finalHistory.length - 1,
+            totalHistory: finalHistory.length,
           });
         }
 
-        return newHistory;
+        return finalHistory;
       });
     },
     [currentIndex, maxHistorySize, debugMode],
   );
 
   // Undo 操作
-  const undo = useCallback(() => {
+  const undo = useCallback((): {
+    nodes: FlowNode[];
+    edges: FlowEdge[];
+    editMode: EditMode;
+  } | null => {
     if (!canUndo) {
       if (debugMode) {
         console.log('⚠️ 無法 undo - 已在歷史開始');
@@ -157,7 +222,11 @@ export const useDirectStateHistory = ({
   }, [canUndo, currentIndex, history, debugMode]);
 
   // Redo 操作
-  const redo = useCallback(() => {
+  const redo = useCallback((): {
+    nodes: FlowNode[];
+    edges: FlowEdge[];
+    editMode: EditMode;
+  } | null => {
     if (!canRedo) {
       if (debugMode) {
         console.log('⚠️ 無法 redo - 已在歷史末端');
@@ -197,7 +266,7 @@ export const useDirectStateHistory = ({
   }, [canRedo, currentIndex, history, debugMode]);
 
   // 獲取歷史摘要
-  const getHistorySummary = useCallback(() => {
+  const getHistorySummary = useCallback((): HistorySummary => {
     return {
       canUndo,
       canRedo,
@@ -218,7 +287,7 @@ export const useDirectStateHistory = ({
   }, [canUndo, canRedo, history, currentIndex, debugMode]);
 
   // 清除歷史
-  const clearHistory = useCallback(() => {
+  const clearHistory = useCallback((): void => {
     setHistory([]);
     setCurrentIndex(-1);
 

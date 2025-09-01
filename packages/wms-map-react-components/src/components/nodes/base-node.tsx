@@ -1,10 +1,10 @@
 import React, { FC, ReactNode } from 'react';
 import { NodeProps } from '@xyflow/react';
-import { EditMode } from '../../../typings';
+import { EditMode } from '../../typings';
 import { ACTIVE_OPACITY, RECTANGLE_INACTIVE_OPACITY } from '../../constants';
-import { useContextMenu } from '../../hooks/useContextMenu';
-import { useTextEditing } from '../../hooks/useTextEditing';
-import ContextMenu from '../ui/ContextMenu';
+import { useContextMenu } from '../../hooks/use-context-menu';
+import { useTextEditing } from '../../hooks/use-text-editing';
+import ContextMenu from '../ui/context-menu';
 
 interface BaseNodeProps extends NodeProps {
   editMode: EditMode;
@@ -57,9 +57,7 @@ const BaseNode: FC<BaseNodeProps> = ({
         style={{ opacity }}
       >
         {children}
-
-        {/* Text editing overlay */}
-        {isEditing && (
+        {isEditing ? (
           <input
             ref={inputRef}
             type="text"
@@ -77,9 +75,8 @@ const BaseNode: FC<BaseNodeProps> = ({
               fontSize: '12px',
             }}
           />
-        )}
+        ) : null}
       </div>
-
       {/* Context Menu */}
       <ContextMenu
         visible={contextMenu.visible}

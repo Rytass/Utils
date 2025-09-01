@@ -6,7 +6,7 @@ import {
   ModalFooter,
   Button,
 } from '@mezzanine-ui/react';
-import styles from './breadcrumbEditModal.module.scss';
+import styles from './breadcrumb-edit-modal.module.scss';
 import {
   FormFieldsWrapper,
   InputField,

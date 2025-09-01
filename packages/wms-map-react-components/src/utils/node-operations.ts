@@ -14,7 +14,7 @@ export const calculateCopyOffset = (
   width: number,
   height: number,
   offsetPercentage: number = 0.25,
-) => {
+): { offsetX: number; offsetY: number } => {
   return {
     offsetX: width * offsetPercentage,
     offsetY: height * offsetPercentage,

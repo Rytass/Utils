@@ -1,6 +1,6 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useReactFlow } from '@xyflow/react';
-import { EditMode, DrawingMode } from '../../typings';
+import { EditMode, DrawingMode } from '../typings';
 import { MIN_RECTANGLE_SIZE } from '../constants';
 
 interface UseRectangleDrawingProps {
@@ -22,11 +22,22 @@ interface DrawingState {
   currentScreenPos: { x: number; y: number };
 }
 
+interface UseRectangleDrawingReturn {
+  containerRef: React.RefObject<HTMLDivElement | null>;
+  isDrawing: boolean;
+  previewRect: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null;
+}
+
 export const useRectangleDrawing = ({
   editMode,
   drawingMode,
   onCreateRectangle,
-}: UseRectangleDrawingProps) => {
+}: UseRectangleDrawingProps): UseRectangleDrawingReturn => {
   const { screenToFlowPosition } = useReactFlow();
   const containerRef = useRef<HTMLDivElement>(null);
 

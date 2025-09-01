@@ -1,6 +1,6 @@
-import { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useReactFlow } from '@xyflow/react';
-import { EditMode } from '../../typings';
+import { EditMode } from '../typings';
 
 interface UseContextMenuProps {
   id: string;
@@ -22,12 +22,28 @@ interface ContextMenuState {
   y: number;
 }
 
+interface UseContextMenuReturn {
+  contextMenu: ContextMenuState;
+  handleContextMenu: (event: React.MouseEvent) => void;
+  handleCloseContextMenu: () => void;
+  handleDelete: () => void;
+  arrangeActions: {
+    onBringToFront: () => void;
+    onBringForward: () => void;
+    onSendBackward: () => void;
+    onSendToBack: () => void;
+  };
+  arrangeStates: ArrangeStates;
+  getNodes: () => any[];
+  setNodes: (nodes: any[] | ((nodes: any[]) => any[])) => void;
+}
+
 export const useContextMenu = ({
   id,
   editMode,
   isEditable,
   nodeType,
-}: UseContextMenuProps) => {
+}: UseContextMenuProps): UseContextMenuReturn => {
   const { setNodes, getNodes } = useReactFlow();
 
   // Calculate arrange states based on current node position

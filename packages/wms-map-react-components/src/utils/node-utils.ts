@@ -1,6 +1,6 @@
 import { Node } from '@xyflow/react';
 
-export const updateNodeData = <T = any>(
+export const updateNodeData = <T extends Record<string, unknown>>(
   nodes: Node[],
   nodeId: string,
   updates: Partial<T>,
@@ -14,20 +14,21 @@ export const calculateImageSize = (
   originalWidth: number,
   originalHeight: number,
   maxSize: number = 500,
-) => {
-  let width = originalWidth;
-  let height = originalHeight;
+): { width: number; height: number } => {
+  const needsResize = originalWidth > maxSize || originalHeight > maxSize;
 
-  if (width > maxSize || height > maxSize) {
-    const ratio = Math.min(maxSize / width, maxSize / height);
-
-    width = width * ratio;
-    height = height * ratio;
+  if (!needsResize) {
+    return {
+      width: Math.round(originalWidth),
+      height: Math.round(originalHeight),
+    };
   }
 
+  const ratio = Math.min(maxSize / originalWidth, maxSize / originalHeight);
+
   return {
-    width: Math.round(width),
-    height: Math.round(height),
+    width: Math.round(originalWidth * ratio),
+    height: Math.round(originalHeight * ratio),
   };
 };
 
@@ -38,7 +39,7 @@ export const calculateStaggeredPosition = (
   viewportX?: number,
   viewportY?: number,
   viewportZoom?: number,
-) => {
+): { x: number; y: number } => {
   // If viewport information is provided, calculate position within current viewport
   if (
     viewportX !== undefined &&

@@ -2,25 +2,25 @@ import React, { FC, useCallback, useMemo, useState } from 'react';
 import {
   Background,
   Edge,
-  Node,
+  Node as ReactFlowNode,
   OnSelectionChangeParams,
   ReactFlow,
   useReactFlow,
   useOnViewportChange,
 } from '@xyflow/react';
-import { DrawingMode, EditMode, ViewMode } from '../../../typings';
-import ImageNode from '../nodes/ImageNode';
-import RectangleNode from '../nodes/RectangleNode';
-import PathNode from '../nodes/PathNode';
+import { DrawingMode, EditMode, ViewMode } from '../../typings';
+import ImageNode from '../nodes/image-node';
+import RectangleNode from '../nodes/rectangle-node';
+import PathNode from '../nodes/path-node';
 // PathPointNode removed - using simple overlay approach
-import { useRectangleDrawing } from '../../hooks/useRectangleDrawing';
-import { usePenDrawing } from '../../hooks/usePenDrawing';
+import { useRectangleDrawing } from '../../hooks/use-rectangle-drawing';
+import { usePenDrawing } from '../../hooks/use-pen-drawing';
 // PathPointsOverlay removed - using native PathNode editing instead
-import styles from './reactFlowCanvas.module.scss';
-import FolderIcon from '../../icons/folder.svg';
+import styles from './react-flow-canvas.module.scss';
+import { FolderIcon } from '../../icons';
 
 interface ReactFlowCanvasProps {
-  nodes: Node[];
+  nodes: ReactFlowNode[];
   edges: Edge[];
   onNodesChange: (changes: any) => void;
   onEdgesChange: (changes: any) => void;
@@ -46,9 +46,9 @@ interface ReactFlowCanvasProps {
   onPathPointDragStateChange?: (isDragging: boolean) => void;
   isEditingPathPoints?: boolean;
   hoveredNodeId?: string | null;
-  onNodeMouseEnter?: (event: React.MouseEvent, node: Node) => void;
-  onNodeMouseLeave?: (event: React.MouseEvent, node: Node) => void;
-  onNodeClick?: (event: React.MouseEvent, node: Node) => void;
+  onNodeMouseEnter?: (event: React.MouseEvent, node: ReactFlowNode) => void;
+  onNodeMouseLeave?: (event: React.MouseEvent, node: ReactFlowNode) => void;
+  onNodeClick?: (event: React.MouseEvent, node: ReactFlowNode) => void;
   showBackground?: boolean;
 }
 
@@ -192,8 +192,10 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
   // Use a callback ref to assign both drawing hooks to the same container
   const containerRef = useCallback(
     (node: HTMLDivElement | null) => {
-      rectContainerRef.current = node;
-      penContainerRef.current = node;
+      if (node) {
+        rectContainerRef.current = node;
+        penContainerRef.current = node;
+      }
     },
     [rectContainerRef, penContainerRef],
   );
@@ -294,16 +296,14 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
       >
         <CustomControls />
         <Background bgColor="#F5F5F5" />
-
         {nodes.length === 0 && (
           <div className={styles.emptyState}>
-            <img src={FolderIcon} alt="空資料夾" className={styles.emptyIcon} />
+            <FolderIcon className={styles.emptyIcon} />
             <div className={styles.emptyTitle}>目前沒有資料</div>
             <div className={styles.emptySubText}>請上傳底圖並繪製圖層</div>
           </div>
         )}
       </ReactFlow>
-
       {/* Drawing preview rectangle */}
       {previewRect && (
         <div

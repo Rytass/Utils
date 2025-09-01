@@ -1,6 +1,6 @@
 import React, { FC, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import styles from './contextMenu.module.scss';
+import styles from './context-menu.module.scss';
 
 interface ArrangeActions {
   onBringToFront: () => void;

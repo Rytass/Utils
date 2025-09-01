@@ -6,11 +6,11 @@ import {
   MapPolygonRange,
   MapRangeType,
   ID,
-  WmsNodeClickInfo,
+  WMSNodeClickInfo,
   ImageNodeClickInfo,
   RectangleNodeClickInfo,
   PathNodeClickInfo,
-} from '../../typings';
+} from '../typings';
 
 /**
  * 轉換 React Flow 節點資料為 Map 資料格式
@@ -107,7 +107,7 @@ export const transformNodesToMapData = (nodes: Node[]): Map => {
  */
 export const transformNodeToClickInfo = (
   node: Node,
-): WmsNodeClickInfo | null => {
+): WMSNodeClickInfo | null => {
   const baseInfo = {
     id: node.id as ID,
     type: node.type!,

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useReactFlow, useUpdateNodeInternals } from '@xyflow/react';
 
 interface UseTextEditingProps {
@@ -8,12 +8,23 @@ interface UseTextEditingProps {
   onTextEditComplete?: (id: string, oldText: string, newText: string) => void;
 }
 
+interface UseTextEditingReturn {
+  isEditing: boolean;
+  editingText: string;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  setEditingText: React.Dispatch<React.SetStateAction<string>>;
+  handleDoubleClick: (event: React.MouseEvent) => void;
+  handleKeyDown: (event: React.KeyboardEvent) => void;
+  handleBlur: () => void;
+  updateNodeData: (updates: Record<string, unknown>) => void;
+}
+
 export const useTextEditing = ({
   id,
   label,
   isEditable,
   onTextEditComplete,
-}: UseTextEditingProps) => {
+}: UseTextEditingProps): UseTextEditingReturn => {
   const { setNodes } = useReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -29,7 +40,7 @@ export const useTextEditing = ({
   }, [label, isEditing]);
 
   const updateNodeData = useCallback(
-    (updates: any) => {
+    (updates: Record<string, unknown>) => {
       console.log('📝 updateNodeData 調用 (會觸發 React Flow 資料變更):', {
         id,
         updates,

@@ -1,6 +1,6 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useReactFlow } from '@xyflow/react';
-import { EditMode, DrawingMode } from '../../typings';
+import { EditMode, DrawingMode } from '../typings';
 
 interface UsePenDrawingProps {
   editMode: EditMode;
@@ -46,11 +46,21 @@ const constrainToStraightLine = (
   };
 };
 
+interface UsePenDrawingReturn {
+  containerRef: React.RefObject<HTMLDivElement | null>;
+  isDrawing: boolean;
+  previewPath: { x: number; y: number }[] | null;
+  currentPoints: { x: number; y: number }[];
+  firstPoint: { x: number; y: number } | null;
+  canClose: boolean;
+  forceComplete: () => void;
+}
+
 export const usePenDrawing = ({
   editMode,
   drawingMode,
   onCreatePath,
-}: UsePenDrawingProps) => {
+}: UsePenDrawingProps): UsePenDrawingReturn => {
   const { screenToFlowPosition } = useReactFlow();
   const containerRef = useRef<HTMLDivElement>(null);
   const previousModeRef = useRef(drawingMode);
@@ -97,40 +107,61 @@ export const usePenDrawing = ({
       const screenX = event.clientX - rect.left;
       const screenY = event.clientY - rect.top;
 
-      let position = screenToFlowPosition({
+      const basePosition = screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
       });
 
-      let constrainedScreenPos = { x: screenX, y: screenY };
+      const baseScreenPos = { x: screenX, y: screenY };
 
       // Apply straight line constraint if Shift is pressed and we have a previous point
-      if (event.shiftKey && drawingState.points.length > 0) {
+      const { position, constrainedScreenPos } = (() => {
+        if (!event.shiftKey || drawingState.points.length === 0) {
+          return {
+            position: basePosition,
+            constrainedScreenPos: baseScreenPos,
+          };
+        }
+
         const previousPoint =
           drawingState.points[drawingState.points.length - 1];
-
-        position = constrainToStraightLine(position, previousPoint);
+        const constrainedPosition = constrainToStraightLine(
+          basePosition,
+          previousPoint,
+        );
 
         // Also constrain the screen position for consistent preview
-        if (drawingState.screenPoints.length > 0) {
-          const previousScreenPoint =
-            drawingState.screenPoints[drawingState.screenPoints.length - 1];
+        const constrainedScreen =
+          drawingState.screenPoints.length > 0
+            ? (() => {
+                const previousScreenPoint =
+                  drawingState.screenPoints[
+                    drawingState.screenPoints.length - 1
+                  ];
 
-          constrainedScreenPos = constrainToStraightLine(
-            { x: screenX, y: screenY },
-            previousScreenPoint,
-          );
-        }
-      }
+                return constrainToStraightLine(
+                  baseScreenPos,
+                  previousScreenPoint,
+                );
+              })()
+            : baseScreenPos;
+
+        return {
+          position: constrainedPosition,
+          constrainedScreenPos: constrainedScreen,
+        };
+      })();
 
       // Check for double-click (within 300ms)
       const isDoubleClick = currentTime - drawingState.lastClickTime < 300;
 
       // Check if clicking on the first point to close the path (only if we have at least 3 points)
       // IMPORTANT: Use original screen position, not constrained position, to avoid accidental closing when using Shift
-      let isClickingFirstPoint = false;
+      const isClickingFirstPoint = (() => {
+        if (!drawingState.isDrawing || drawingState.points.length < 3) {
+          return false;
+        }
 
-      if (drawingState.isDrawing && drawingState.points.length >= 3) {
         const firstPoint = drawingState.screenPoints[0];
         const distance = Math.sqrt(
           Math.pow(screenX - firstPoint.x, 2) +
@@ -138,8 +169,8 @@ export const usePenDrawing = ({
         );
 
         // Consider it a click on the first point if within 10 pixels
-        isClickingFirstPoint = distance <= 10;
-      }
+        return distance <= 10;
+      })();
 
       if (isClickingFirstPoint) {
         console.log('🔵 Pen tool: Closing path by clicking first point', {
@@ -207,6 +238,7 @@ export const usePenDrawing = ({
       drawingState.lastClickTime,
       drawingState.isDrawing,
       drawingState.points,
+      drawingState.screenPoints,
       onCreatePath,
     ],
   );
@@ -221,22 +253,24 @@ export const usePenDrawing = ({
       if (!wrapper) return;
 
       const rect = wrapper.getBoundingClientRect();
-      let screenX = event.clientX - rect.left;
-      let screenY = event.clientY - rect.top;
+      const baseScreenX = event.clientX - rect.left;
+      const baseScreenY = event.clientY - rect.top;
 
       // Apply constraint to mouse position if Shift is pressed and we're drawing
-      if (event.shiftKey && drawingState.screenPoints.length > 0) {
+      const { screenX, screenY } = (() => {
+        if (!event.shiftKey || drawingState.screenPoints.length === 0) {
+          return { screenX: baseScreenX, screenY: baseScreenY };
+        }
+
         const previousScreenPoint =
           drawingState.screenPoints[drawingState.screenPoints.length - 1];
-
         const constrainedPos = constrainToStraightLine(
-          { x: screenX, y: screenY },
+          { x: baseScreenX, y: baseScreenY },
           previousScreenPoint,
         );
 
-        screenX = constrainedPos.x;
-        screenY = constrainedPos.y;
-      }
+        return { screenX: constrainedPos.x, screenY: constrainedPos.y };
+      })();
 
       setDrawingState((prev) => ({
         ...prev,

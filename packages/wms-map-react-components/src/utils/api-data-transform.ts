@@ -5,7 +5,7 @@ import {
   MapRectangleRange,
   MapPolygonRange,
   MapRangeType,
-} from '../../typings';
+} from '../typings';
 
 /**
  * 將 API 資料轉換為 React Flow 節點格式
@@ -15,103 +15,102 @@ export const transformApiDataToNodes = (
   mapData: Map,
   imageUrlGenerator?: (filename: string) => string,
 ): Node[] => {
-  const nodes: Node[] = [];
-  let zIndexCounter = 1;
-
   // 轉換背景圖片為 ImageNode
-  mapData.backgrounds.forEach((background: MapBackground) => {
-    // 如果沒有提供 imageUrlGenerator，則使用 filename 作為 URL (生產環境)
-    const imageUrl = imageUrlGenerator
-      ? imageUrlGenerator(background.filename)
-      : background.filename; // 生產環境應該直接使用真實 URL
+  const backgroundNodes: Node[] = mapData.backgrounds.map(
+    (background: MapBackground, index: number) => {
+      const imageUrl = imageUrlGenerator
+        ? imageUrlGenerator(background.filename)
+        : background.filename;
 
-    const imageNode: Node = {
-      id: background.id,
-      type: 'imageNode',
-      position: {
-        x: background.x,
-        y: background.y,
-      },
-      data: {
-        imageUrl,
-        fileName: background.filename,
-        width: 200, // 預設寬度，實際應用中可能需要從其他地方獲取
-        height: 150, // 預設高度
-        originalWidth: 200,
-        originalHeight: 150,
-      },
-      zIndex: zIndexCounter++,
-      draggable: true,
-      selectable: true,
-    };
-
-    nodes.push(imageNode);
-  });
-
-  // 轉換範圍為對應的節點
-  mapData.ranges.forEach((range) => {
-    if (range.type === MapRangeType.RECTANGLE) {
-      const rectRange = range as MapRectangleRange;
-      const rectangleNode: Node = {
-        id: rectRange.id,
-        type: 'rectangleNode',
+      return {
+        id: background.id,
+        type: 'imageNode',
         position: {
-          x: rectRange.x,
-          y: rectRange.y,
+          x: background.x,
+          y: background.y,
         },
         data: {
-          width: rectRange.width,
-          height: rectRange.height,
-          color: rectRange.color,
-          label: rectRange.text || '',
+          imageUrl,
+          fileName: background.filename,
+          width: 200,
+          height: 150,
+          originalWidth: 200,
+          originalHeight: 150,
         },
-        zIndex: zIndexCounter++,
+        zIndex: index + 1,
         draggable: true,
         selectable: true,
       };
+    },
+  );
 
-      nodes.push(rectangleNode);
-    } else if (range.type === MapRangeType.POLYGON) {
-      const polyRange = range as MapPolygonRange;
+  // 轉換範圍為對應的節點，使用 functional 方式處理
+  const rangeNodes: Node[] = mapData.ranges
+    .map((range, index) => {
+      const baseZIndex = backgroundNodes.length + index + 1;
 
-      // 計算多邊形的中心點作為節點位置
-      const centerX =
-        polyRange.points.reduce((sum, point) => sum + point.x, 0) /
-        polyRange.points.length;
+      if (range.type === MapRangeType.RECTANGLE) {
+        const rectRange = range as MapRectangleRange;
 
-      const centerY =
-        polyRange.points.reduce((sum, point) => sum + point.y, 0) /
-        polyRange.points.length;
+        return {
+          id: rectRange.id,
+          type: 'rectangleNode',
+          position: {
+            x: rectRange.x,
+            y: rectRange.y,
+          },
+          data: {
+            width: rectRange.width,
+            height: rectRange.height,
+            color: rectRange.color,
+            label: rectRange.text || '',
+          },
+          zIndex: baseZIndex,
+          draggable: true,
+          selectable: true,
+        };
+      } else if (range.type === MapRangeType.POLYGON) {
+        const polyRange = range as MapPolygonRange;
 
-      // 將絕對座標轉換為相對於中心點的座標
-      const relativePoints = polyRange.points.map((point) => ({
-        x: point.x - centerX,
-        y: point.y - centerY,
-      }));
+        // 計算多邊形的中心點作為節點位置
+        const centerX =
+          polyRange.points.reduce((sum, point) => sum + point.x, 0) /
+          polyRange.points.length;
 
-      const pathNode: Node = {
-        id: polyRange.id,
-        type: 'pathNode',
-        position: {
-          x: centerX,
-          y: centerY,
-        },
-        data: {
-          points: relativePoints,
-          color: polyRange.color,
-          label: polyRange.text || '',
-          strokeWidth: 2,
-        },
-        zIndex: zIndexCounter++,
-        draggable: true,
-        selectable: true,
-      };
+        const centerY =
+          polyRange.points.reduce((sum, point) => sum + point.y, 0) /
+          polyRange.points.length;
 
-      nodes.push(pathNode);
-    }
-  });
+        // 將絕對座標轉換為相對於中心點的座標
+        const relativePoints = polyRange.points.map((point) => ({
+          x: point.x - centerX,
+          y: point.y - centerY,
+        }));
 
-  return nodes;
+        return {
+          id: polyRange.id,
+          type: 'pathNode',
+          position: {
+            x: centerX,
+            y: centerY,
+          },
+          data: {
+            points: relativePoints,
+            color: polyRange.color,
+            label: polyRange.text || '',
+            strokeWidth: 2,
+          },
+          zIndex: baseZIndex,
+          draggable: true,
+          selectable: true,
+        };
+      }
+
+      return null;
+    })
+    .filter((node): node is NonNullable<typeof node> => node !== null);
+
+  return [...backgroundNodes, ...rangeNodes];
 };
 
 /**
@@ -217,16 +216,26 @@ export const loadMapDataFromApi = async (mapId: string): Promise<Node[]> => {
     // const response = await fetch(`/api/maps/${mapId}`);
     // const mapData = await response.json();
 
-    // 目前使用 mock data 進行測試
-    const { mockMapData } = await import('../../test/mockData');
+    // TODO: 實際應用中需要替換為真實的 API 呼叫
+    // 這裡暫時提供示例數據結構
+    const mockMapData = {
+      id: mapId,
+      images: [],
+      ranges: [],
+    };
 
     // 驗證資料格式
     if (!validateMapData(mockMapData)) {
       throw new Error('Invalid map data format');
     }
 
-    // 轉換為 React Flow 節點（在測試環境中使用 mock 圖片生成器）
-    const { generateMockImageUrl } = await import('../../test/mockImageUtils');
+    // 轉換為 React Flow 節點
+    const generateMockImageUrl = (filename: string): string => {
+      return `data:image/svg+xml,${encodeURIComponent(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="#f0f0f0"/><text x="50" y="50" text-anchor="middle" dy=".3em" font-family="Arial" font-size="12">${filename}</text></svg>`,
+      )}`;
+    };
+
     const nodes = transformApiDataToNodes(mockMapData, generateMockImageUrl);
 
     console.log(`✅ 成功載入 ${nodes.length} 個節點`);
@@ -246,7 +255,9 @@ export const loadMapDataFromApi = async (mapId: string): Promise<Node[]> => {
 /**
  * 輔助函數：計算多邊形的邊界框
  */
-export const calculatePolygonBounds = (points: { x: number; y: number }[]): {
+export const calculatePolygonBounds = (
+  points: { x: number; y: number }[],
+): {
   minX: number;
   maxX: number;
   minY: number;
