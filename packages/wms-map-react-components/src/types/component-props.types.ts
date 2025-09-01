@@ -15,15 +15,15 @@ export interface WMSMapModalProps {
   onNodeClick?: (nodeInfo: WMSNodeClickInfo) => void;
   onSave?: (mapData: Map) => void;
   onBreadcrumbClick?: (warehouseId: string, index: number) => void;
-  onWarehouseNameEdit?: (
-    warehouseId: string,
-    newName: string,
-    index: number,
-  ) => void;
+  onNameChange?: (name: string) => Promise<void>;
   initialNodes?: FlowNode[];
   initialEdges?: FlowEdge[];
   debugMode?: boolean;
   title?: string;
+  onUpload: (files: File[]) => Promise<string[]>;
+  getFilenameFQDN?: (filename: string) => Promise<string> | string;
+  maxFileSizeKB?: number;
+  warehouseIds?: string[];
 }
 
 export interface WMSMapContentProps {
@@ -39,11 +39,11 @@ export interface WMSMapContentProps {
   onNodeClick?: (nodeInfo: WMSNodeClickInfo) => void;
   onSave?: (mapData: Map) => void;
   onBreadcrumbClick?: (warehouseId: string, index: number) => void;
-  onWarehouseNameEdit?: (
-    warehouseId: string,
-    newName: string,
-    index: number,
-  ) => void;
+  onNameChange?: (name: string) => Promise<void>;
   initialNodes?: FlowNode[];
   initialEdges?: FlowEdge[];
+  onUpload: (files: File[]) => Promise<string[]>;
+  getFilenameFQDN?: (filename: string) => Promise<string> | string;
+  maxFileSizeKB?: number;
+  warehouseIds?: string[];
 }

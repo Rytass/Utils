@@ -49,14 +49,17 @@ import {
   CTBCRawRequest,
   CTBCRequestPrepareBindCardOptions,
   CTBCResponsePayload,
-  OrderCache
+  OrderCache,
 } from './typings';
 
 export const debugPayment = debug('Rytass:Payment:CTBC');
 export const debugPaymentServer = debug('Rytass:Payment:CTBC:Server');
 
-export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMessage>
-  implements PaymentGateway<CM, CTBCOrder<CM>>, BindCardPaymentGateway<CM> {
+export class CTBCPayment<
+    CM extends CTBCOrderCommitMessage = CTBCOrderCommitMessage,
+  >
+  implements PaymentGateway<CM, CTBCOrder<CM>>, BindCardPaymentGateway<CM>
+{
   private serverHost = 'http://localhost:3000';
   private callbackPath = '/payments/ctbc/callback';
   private checkoutPath = '/payments/ctbc/checkout';
@@ -234,6 +237,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
 
         // XID會在需要退款時使用, 先記錄
         const xid = payload.get('xid') as string;
+
         if (xid) {
           order.setPosApiInfo(xid);
         }
@@ -681,14 +685,11 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
   }
 
   async query<OO extends CTBCOrder>(id: string): Promise<OO> {
-
-
     // 先嘗試從快取中獲取訂單
     let order = await this.orderCache.get(id);
 
     if (this.isAmex) {
-
-      throw new Error('Query AMEX Order From SOAP API is not implemented')
+      throw new Error('Query AMEX Order From SOAP API is not implemented');
       // 使用 AMEX SOAP API 查詢
       // const amexInquiryParams: CTBCAmexInquiryParams = {
       //   merId: this.merId,
@@ -735,18 +736,26 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
 
       // 檢查查詢結果
       if (result.ErrCode !== '00') {
-        debugPayment(`Query failed for order ${id}: ${result.ErrCode} - ${result.ERRDESC || 'Unknown error'}`);
-        throw new Error(`Query failed: ${result.ErrCode} - ${result.ERRDESC || 'Unknown error'}`);
+        debugPayment(
+          `Query failed for order ${id}: ${result.ErrCode} - ${result.ERRDESC || 'Unknown error'}`,
+        );
+        throw new Error(
+          `Query failed: ${result.ErrCode} - ${result.ERRDESC || 'Unknown error'}`,
+        );
       }
 
-      debugPayment(`Query successful for order ${id}: ${JSON.stringify(result)}`);
+      debugPayment(
+        `Query successful for order ${id}: ${JSON.stringify(result)}`,
+      );
 
       // 如果快取中沒有訂單，根據查詢結果創建一個
       if (!order) {
         // 解析金額：AuthAmt 格式為 "貨幣碼 金額 指數"，如 "901 1000 0"
         let amount = 0;
+
         if (result.AuthAmt) {
           const amountParts = result.AuthAmt.split(' ');
+
           if (amountParts.length >= 2) {
             amount = parseInt(amountParts[1], 10);
           }
@@ -764,7 +773,9 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
             },
           ],
           // 根據查詢結果設定訂單狀態
-          createdAt: result.Txn_date ? new Date(`${result.Txn_date} ${result.Txn_time || '00:00:00'}`) : new Date(),
+          createdAt: result.Txn_date
+            ? new Date(`${result.Txn_date} ${result.Txn_time || '00:00:00'}`)
+            : new Date(),
         });
 
         // 如果交易成功，直接設定已提交狀態（不使用 commit 方法以避免重複觸發事件）
@@ -839,7 +850,10 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
         return CreditCardECI.VISA_AE_JCB_3D_FAILED;
       default:
         // 未知的 ECI 值，回傳預設值並記錄警告
-        debugPayment(`Unknown ECI value from API: ${apiECI} (normalized: ${normalizedECI}), using default VISA_AE_JCB_3D`);
+        debugPayment(
+          `Unknown ECI value from API: ${apiECI} (normalized: ${normalizedECI}), using default VISA_AE_JCB_3D`,
+        );
+
         return CreditCardECI.VISA_AE_JCB_3D;
     }
   }

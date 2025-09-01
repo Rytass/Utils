@@ -7,10 +7,6 @@ import {
   Button,
 } from '@mezzanine-ui/react';
 import styles from './breadcrumb-edit-modal.module.scss';
-import {
-  FormFieldsWrapper,
-  InputField,
-} from '@mezzanine-ui/react-hook-form-v2';
 import { useForm } from 'react-hook-form';
 
 interface BreadcrumbEditModalProps {
@@ -28,17 +24,26 @@ const BreadcrumbEditModal: FC<BreadcrumbEditModalProps> = ({
 }) => {
   const [editingValue, setEditingValue] = useState(warehouseId);
 
-  const methods = useForm();
+  const methods = useForm({
+    mode: 'onChange',
+    defaultValues: {
+      editingValue: warehouseId,
+    },
+  });
 
   // 當 modal 開啟時更新編輯值
   useEffect(() => {
     if (open) {
       setEditingValue(warehouseId);
+      methods.reset({ editingValue: warehouseId });
     }
-  }, [open, warehouseId]);
+  }, [open, warehouseId, methods]);
 
   const handleConfirm = () => {
-    onConfirm(editingValue);
+    const formData = methods.getValues();
+    const newValue = formData.editingValue?.trim() || editingValue?.trim();
+
+    onConfirm(newValue);
     onClose();
   };
 
@@ -51,17 +56,21 @@ const BreadcrumbEditModal: FC<BreadcrumbEditModalProps> = ({
     <Modal open={open} onClose={handleCancel}>
       <ModalHeader>修改當前區域名稱</ModalHeader>
       <ModalBody>
-        <FormFieldsWrapper methods={methods}>
-          <div className={styles.modalContent}>
-            <label className={styles.fieldLabel}>名稱</label>
-            <InputField
-              registerName="editingValue"
-              value={editingValue}
-              placeholder="請輸入區域名稱"
-              fullWidth
-            />
-          </div>
-        </FormFieldsWrapper>
+        <div className={styles.modalContent}>
+          <label className={styles.fieldLabel}>名稱</label>
+          <input
+            {...methods.register('editingValue', { required: true })}
+            type="text"
+            placeholder="請輸入區域名稱"
+            style={{
+              width: '100%',
+              padding: '8px',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              fontSize: '14px',
+            }}
+          />
+        </div>
       </ModalBody>
       <ModalFooter className={styles.modalFooter}>
         <Button size="large" variant="outlined" onClick={handleCancel}>
@@ -72,7 +81,6 @@ const BreadcrumbEditModal: FC<BreadcrumbEditModalProps> = ({
           variant="contained"
           color="primary"
           onClick={handleConfirm}
-          disabled={!editingValue.trim()}
         >
           確認
         </Button>

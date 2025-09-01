@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "jsx": "react",
+    "target": "esnext",
+    "module": "esnext",
+    "isolatedModules": true,
+    "strict": true,
+    "declaration": true,
+    "esModuleInterop": true,
+    "emitDecoratorMetadata": true,
+    "strictPropertyInitialization": false,
+    "experimentalDecorators": true,
+    "moduleResolution": "node",
+    "lib": ["esnext"],
+    "types": ["node", "reflect-metadata"],
+    "allowImportingTsExtensions": false,
+    "resolveJsonModule": true
+  },
+  "exclude": ["node_modules", "**/node_modules"]
+}

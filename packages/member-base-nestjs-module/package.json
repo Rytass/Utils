@@ -41,11 +41,10 @@
     "axios": "*",
     "casbin": "^5",
     "generate-password": "^1.7.1",
-    "luxon": "^3",
+    "luxon": "^3.7.1",
     "typeorm-adapter": "^1"
   },
   "devDependencies": {
-    "@types/luxon": "^3",
     "@types/ws": "^8"
   },
   "isolateEntries": [

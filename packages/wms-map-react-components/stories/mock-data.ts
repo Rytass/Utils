@@ -39,7 +39,7 @@ export const mockMapData: Map = {
       width: 150,
       height: 100,
       text: '收貨區 A',
-    } as MapRectangleRange,
+    } satisfies MapRectangleRange,
 
     // 矩形範圍 - 儲存區 B
     {
@@ -51,7 +51,7 @@ export const mockMapData: Map = {
       width: 200,
       height: 80,
       text: '儲存區 B',
-    } as MapRectangleRange,
+    } satisfies MapRectangleRange,
 
     // 矩形範圍 - 出貨區
     {
@@ -63,7 +63,7 @@ export const mockMapData: Map = {
       width: 180,
       height: 90,
       text: '出貨區',
-    } as MapRectangleRange,
+    } satisfies MapRectangleRange,
 
     // 多邊形範圍 - 危險品存放區（不規則形狀，閉合）
     {
@@ -80,7 +80,7 @@ export const mockMapData: Map = {
         { x: 450, y: 100 }, // 閉合回到起始點
       ],
       text: '危險品區',
-    } as MapPolygonRange,
+    } satisfies MapPolygonRange,
 
     // 多邊形範圍 - 通道（L 型，閉合）
     {
@@ -97,7 +97,7 @@ export const mockMapData: Map = {
         { x: 80, y: 200 }, // 閉合回到起始點
       ],
       text: '主通道',
-    } as MapPolygonRange,
+    } satisfies MapPolygonRange,
 
     // 多邊形範圍 - 辦公區域（三角形，閉合）
     {
@@ -111,7 +111,7 @@ export const mockMapData: Map = {
         { x: 500, y: 250 }, // 閉合回到起始點
       ],
       text: '辦公區',
-    } as MapPolygonRange,
+    } satisfies MapPolygonRange,
 
     // 矩形範圍 - 冷凍庫
     {
@@ -123,7 +123,7 @@ export const mockMapData: Map = {
       width: 80,
       height: 60,
       text: '冷凍庫',
-    } as MapRectangleRange,
+    } satisfies MapRectangleRange,
 
     // 多邊形範圍 - 品檢區（五邊形，閉合）
     {
@@ -139,7 +139,7 @@ export const mockMapData: Map = {
         { x: 200, y: 400 }, // 閉合回到起始點
       ],
       text: '品檢區',
-    } as MapPolygonRange,
+    } satisfies MapPolygonRange,
   ],
 };
 
@@ -167,7 +167,7 @@ export const simpleMapData: Map = {
       width: 100,
       height: 80,
       text: '測試矩形',
-    } as MapRectangleRange,
+    } satisfies MapRectangleRange,
 
     // 一個簡單的三角形（閉合）
     {
@@ -181,7 +181,7 @@ export const simpleMapData: Map = {
         { x: 300, y: 120 }, // 閉合回到起始點
       ],
       text: '測試三角形',
-    } as MapPolygonRange,
+    } satisfies MapPolygonRange,
   ],
 };
 
@@ -219,7 +219,7 @@ export const largeMapData: Map = {
           width: 80,
           height: 60,
           text: `矩形 ${i + 1}`,
-        }) as MapRectangleRange,
+        }) satisfies MapRectangleRange,
     ),
 
     // 生成 10 個多邊形
@@ -239,7 +239,7 @@ export const largeMapData: Map = {
             { x: 200 + i * 60, y: 500 + i * 10 }, // 閉合回到起始點
           ],
           text: `多邊形 ${i + 1}`,
-        }) as MapPolygonRange,
+        }) satisfies MapPolygonRange,
     ),
   ],
 };
@@ -272,7 +272,7 @@ export const closedPolygonTestData: Map = {
         { x: 100, y: 100 }, // 閉合
       ],
       text: '正方形',
-    } as MapPolygonRange,
+    } satisfies MapPolygonRange,
 
     // 正六邊形 - 6個點完全閉合
     {
@@ -289,7 +289,7 @@ export const closedPolygonTestData: Map = {
         { x: 350, y: 150 }, // 閉合回到頂點
       ],
       text: '六邊形',
-    } as MapPolygonRange,
+    } satisfies MapPolygonRange,
 
     // 星形 - 10個點完全閉合
     {
@@ -310,7 +310,7 @@ export const closedPolygonTestData: Map = {
         { x: 500, y: 100 }, // 閉合回到頂點
       ],
       text: '星形',
-    } as MapPolygonRange,
+    } satisfies MapPolygonRange,
 
     // 箭頭形狀 - 7個點完全閉合
     {
@@ -328,7 +328,7 @@ export const closedPolygonTestData: Map = {
         { x: 150, y: 300 }, // 閉合回到尖端
       ],
       text: '箭頭',
-    } as MapPolygonRange,
+    } satisfies MapPolygonRange,
 
     // L 形狀 - 6個點完全閉合
     {
@@ -345,7 +345,7 @@ export const closedPolygonTestData: Map = {
         { x: 250, y: 280 }, // 閉合回到左上
       ],
       text: 'L形',
-    } as MapPolygonRange,
+    } satisfies MapPolygonRange,
 
     // 圓形近似 - 12個點完全閉合
     {
@@ -366,6 +366,6 @@ export const closedPolygonTestData: Map = {
         { x: 450, y: 300 }, // 閉合回到起點
       ],
       text: '圓形',
-    } as MapPolygonRange,
+    } satisfies MapPolygonRange,
   ],
 };

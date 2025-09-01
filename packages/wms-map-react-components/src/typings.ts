@@ -24,6 +24,8 @@ export interface MapBackground {
   filename: string;
   x: number;
   y: number;
+  width: number;
+  height: number;
 }
 
 export interface Map {

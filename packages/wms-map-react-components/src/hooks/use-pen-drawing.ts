@@ -125,6 +125,7 @@ export const usePenDrawing = ({
 
         const previousPoint =
           drawingState.points[drawingState.points.length - 1];
+
         const constrainedPosition = constrainToStraightLine(
           basePosition,
           previousPoint,
@@ -264,6 +265,7 @@ export const usePenDrawing = ({
 
         const previousScreenPoint =
           drawingState.screenPoints[drawingState.screenPoints.length - 1];
+
         const constrainedPos = constrainToStraightLine(
           { x: baseScreenX, y: baseScreenY },
           previousScreenPoint,

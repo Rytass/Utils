@@ -35,6 +35,8 @@ export const transformNodesToMapData = (nodes: Node[]): Map => {
           filename: imageData.fileName || 'unknown.jpg',
           x: node.position.x,
           y: node.position.y,
+          width: imageData.width || 300,
+          height: imageData.height || 200,
         };
 
         backgrounds.push(background);
@@ -132,6 +134,8 @@ export const transformNodeToClickInfo = (
         filename: imageData.fileName || 'unknown.jpg',
         x: node.position.x,
         y: node.position.y,
+        width: imageData.width || 300,
+        height: imageData.height || 200,
       };
 
       const clickInfo: ImageNodeClickInfo = {
@@ -286,6 +290,8 @@ export const logNodeData = (node: Node): void => {
         filename: imageData.fileName || 'unknown.jpg',
         x: node.position.x,
         y: node.position.y,
+        width: imageData.width || 300,
+        height: imageData.height || 200,
       };
 
       console.log('💾 儲存格式 (MapBackground):', background);

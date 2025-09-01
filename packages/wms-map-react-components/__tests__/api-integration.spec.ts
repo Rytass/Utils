@@ -55,6 +55,7 @@ describe('API Integration Tests', () => {
       await expect(loadMapDataFromApi('invalid-warehouse-id')).rejects.toThrow(
         errorMessage,
       );
+
       expect(mockLoadMapDataFromApi).toHaveBeenCalledWith(
         'invalid-warehouse-id',
       );

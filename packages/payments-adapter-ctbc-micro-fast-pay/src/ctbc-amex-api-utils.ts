@@ -26,7 +26,9 @@ export class CTBCAEGateway {
    * AMEX 查詢功能
    * 對應 PHP amex.php 的 Inquiry 方法
    */
-  async inquiry(params: CTBCAmexInquiryParams): Promise<CTBCAmexInquiryResponse> {
+  async inquiry(
+    params: CTBCAmexInquiryParams,
+  ): Promise<CTBCAmexInquiryResponse> {
     this.response = {
       count: 0,
       mac: '',
@@ -57,7 +59,7 @@ export class CTBCAEGateway {
     } else {
       // 根據 Java ParametersChecker.inquiry()，XID 可以為空
       // 如果沒有提供 XID，我們可以不設置或設置為空字串
-      requestData.xid = '';  // 或者可以不設置這個欄位
+      requestData.xid = ''; // 或者可以不設置這個欄位
     }
 
     // 根據 Java 代碼，查詢操作 (case 2) 的 MAC 組成格式：
@@ -69,9 +71,18 @@ export class CTBCAEGateway {
       const paddedLidm = requestData.lidm.padEnd(24, ' ');
       const macString = paddedMerId + paddedXid + paddedLidm;
 
-      console.log('Java-style MAC String (with quotes):', JSON.stringify(macString));
-      console.log('MAC String UTF-8 hex:', Buffer.from(macString, 'utf8').toString('hex'));
-      console.log('MAC String Big5 hex:', iconv.encode(macString, 'big5').toString('hex'));
+      console.log(
+        'Java-style MAC String (with quotes):',
+        JSON.stringify(macString),
+      );
+      console.log(
+        'MAC String UTF-8 hex:',
+        Buffer.from(macString, 'utf8').toString('hex'),
+      );
+      console.log(
+        'MAC String Big5 hex:',
+        iconv.encode(macString, 'big5').toString('hex'),
+      );
       console.log('MAC String length:', macString.length);
       console.log('MAC Key length:', params.IN_MAC_KEY.length);
 
@@ -93,17 +104,23 @@ export class CTBCAEGateway {
         throw new Error('WSDL URL is required');
       }
 
-      const soapClient = await soap.createClientAsync(this.serverConfig.wsdlUrl, {
-        wsdl_options: this.serverConfig.sslOptions,
-        // timeout: this.serverConfig.timeout || 30000, // timeout 不在 IOptions 中
-      });
+      const soapClient = await soap.createClientAsync(
+        this.serverConfig.wsdlUrl,
+        {
+          wsdl_options: this.serverConfig.sslOptions,
+          // timeout: this.serverConfig.timeout || 30000, // timeout 不在 IOptions 中
+        },
+      );
 
       // 根據 WSDL，這是 RPC style SOAP，參數需要包裝在 request 對象中
       const rpcRequest = {
         request: requestData,
       };
 
-      console.log('RPC SOAP Request structure:', JSON.stringify(rpcRequest, null, 2));
+      console.log(
+        'RPC SOAP Request structure:',
+        JSON.stringify(rpcRequest, null, 2),
+      );
 
       // 調用 SOAP 方法
       const soapResponse: any = await new Promise((resolve, reject) => {
@@ -149,30 +166,40 @@ export class CTBCAEGateway {
       if (inquiryResult.poDetails) {
         this.response.poDetails = Array.isArray(inquiryResult.poDetails)
           ? inquiryResult.poDetails.map((detail: any) => ({
-            aetId: detail.aetid || detail.aetId,
-            xid: detail.xid,
-            authCode: detail.authCode,
-            termSeq: detail.termSeq,
-            authAmt: detail.purchAmt ? detail.purchAmt.toString() : (detail.authAmt || ''),
-            currency: detail.currency || 'TWD',
-            status: detail.status,
-            txnType: detail.txnType,
-            expDate: detail.expDate,
-          }))
-          : [{
-            aetId: inquiryResult.poDetails.aetid || inquiryResult.poDetails.aetId,
-            xid: inquiryResult.poDetails.xid,
-            authCode: inquiryResult.poDetails.authCode,
-            termSeq: inquiryResult.poDetails.termSeq,
-            authAmt: inquiryResult.poDetails.purchAmt ? inquiryResult.poDetails.purchAmt.toString() : (inquiryResult.poDetails.authAmt || ''),
-            currency: inquiryResult.poDetails.currency || 'TWD',
-            status: inquiryResult.poDetails.status,
-            txnType: inquiryResult.poDetails.txnType,
-            expDate: inquiryResult.poDetails.expDate,
-          }];
+              aetId: detail.aetid || detail.aetId,
+              xid: detail.xid,
+              authCode: detail.authCode,
+              termSeq: detail.termSeq,
+              authAmt: detail.purchAmt
+                ? detail.purchAmt.toString()
+                : detail.authAmt || '',
+              currency: detail.currency || 'TWD',
+              status: detail.status,
+              txnType: detail.txnType,
+              expDate: detail.expDate,
+            }))
+          : [
+              {
+                aetId:
+                  inquiryResult.poDetails.aetid ||
+                  inquiryResult.poDetails.aetId,
+                xid: inquiryResult.poDetails.xid,
+                authCode: inquiryResult.poDetails.authCode,
+                termSeq: inquiryResult.poDetails.termSeq,
+                authAmt: inquiryResult.poDetails.purchAmt
+                  ? inquiryResult.poDetails.purchAmt.toString()
+                  : inquiryResult.poDetails.authAmt || '',
+                currency: inquiryResult.poDetails.currency || 'TWD',
+                status: inquiryResult.poDetails.status,
+                txnType: inquiryResult.poDetails.txnType,
+                expDate: inquiryResult.poDetails.expDate,
+              },
+            ];
       }
 
-      const responseSMac = this.sprintf('%08d', this.response.count) + this.padOrTruncate(this.response.errCode, 8);
+      const responseSMac =
+        this.sprintf('%08d', this.response.count) +
+        this.padOrTruncate(this.response.errCode, 8);
 
       // 只有在提供 MAC Key 的情況下才檢查 MAC
       if (params.IN_MAC_KEY) {
@@ -184,7 +211,6 @@ export class CTBCAEGateway {
       const endTime = Date.now();
 
       this.checkTimeOut(startTime, endTime);
-
     } catch (error) {
       console.error('AMEX SOAP Inquiry failed:', error);
       this.response.errCode = 'SOAP_ERROR';
@@ -239,7 +265,9 @@ export class CTBCAEGateway {
       console.log('AMEX SOAP Refund Request:', requestData);
 
       if (!this.serverConfig.wsdlUrl) {
-        console.log('No WSDL URL provided, returning mock response for testing');
+        console.log(
+          'No WSDL URL provided, returning mock response for testing',
+        );
         const mockResponse = {
           aetId: 'MOCK_REFUND_001',
           xid: params.xid,
@@ -261,10 +289,13 @@ export class CTBCAEGateway {
         throw new Error('WSDL URL is required');
       }
 
-      const soapClient = await soap.createClientAsync(this.serverConfig.wsdlUrl, {
-        wsdl_options: this.serverConfig.sslOptions,
-        // timeout: this.serverConfig.timeout || 30000, // timeout 不在 IOptions 中
-      });
+      const soapClient = await soap.createClientAsync(
+        this.serverConfig.wsdlUrl,
+        {
+          wsdl_options: this.serverConfig.sslOptions,
+          // timeout: this.serverConfig.timeout || 30000, // timeout 不在 IOptions 中
+        },
+      );
 
       const soapResponse: any = await new Promise((resolve, reject) => {
         if (typeof soapClient.refund === 'function') {
@@ -288,7 +319,6 @@ export class CTBCAEGateway {
       const endTime = Date.now();
 
       this.checkTimeOut(startTime, endTime);
-
     } catch (error) {
       console.error('AMEX SOAP Refund failed:', error);
       this.response.errCode = 'SOAP_ERROR';
@@ -434,25 +464,29 @@ export class CTBCAEGateway {
     }
 
     try {
-      console.log('Using desMac from ctbc-crypto-core.ts with Big5 encoding (like POS API)');
+      console.log(
+        'Using desMac from ctbc-crypto-core.ts with Big5 encoding (like POS API)',
+      );
       console.log('MAC Key:', macKey);
       console.log('Original data:', data);
 
       // Use Big5 encoding like the successful POS API
       const big5Data = iconv.encode(data, 'big5');
+
       console.log('Big5 encoded data:', big5Data.toString('hex'));
 
       // Use desMac function from ctbc-crypto-core.ts (same as POS API)
       const result = desMac(big5Data, macKey);
+
       console.log('desMac result:', result);
       console.log('Result length:', result.length);
 
       // Return last 8 characters (like POS API pattern)
       const mac8 = result.substring(result.length - 8);
+
       console.log('MAC (last 8 chars):', mac8);
 
       return mac8;
-
     } catch (error) {
       console.error('desMac calculation error:', error);
 
@@ -507,7 +541,9 @@ export class CTBCAEGateway {
     const elapsed = endTime - startTime;
 
     if (elapsed > (this.serverConfig.timeout || 30000)) {
-      console.warn(`SOAP request took ${elapsed}ms, which exceeds timeout threshold`);
+      console.warn(
+        `SOAP request took ${elapsed}ms, which exceeds timeout threshold`,
+      );
     }
   }
 }

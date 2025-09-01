@@ -62,7 +62,7 @@ export interface OrderCreateInit<
 
 export interface CTBCPaymentOptions<
   O extends
-  CTBCOrder<CTBCOrderCommitMessage> = CTBCOrder<CTBCOrderCommitMessage>,
+    CTBCOrder<CTBCOrderCommitMessage> = CTBCOrder<CTBCOrderCommitMessage>,
 > {
   merchantId: string;
   merId: string;
@@ -249,7 +249,7 @@ export interface CTBCOrderCommitResult {
 }
 
 // 為符合 PaymentGateway 的 commit() 型別要求，擴充必要欄位
-export interface CTBCOrderCommitMessage extends OrderCommitMessage { }
+export interface CTBCOrderCommitMessage extends OrderCommitMessage {}
 
 // 提供 prepare() 時所需的訂單建立資料，實際執行時會從 input cast 而來
 export interface CTBCOrderInput {
@@ -352,7 +352,6 @@ export const CTBC_ERROR_CODES = {
   ERR_RESPONSE_PARSE_FAILED: 268435473,
 } as const;
 
-
 // POS API 配置介面
 export interface CTBCPosApiConfig {
   URL: string;
@@ -414,7 +413,7 @@ export interface CTBCPosApiResponse {
   PAN?: string;
   ECI?: string;
   XID?: string;
-  // 退款相關欄位  
+  // 退款相關欄位
   RefAmt?: string;
   // 取消退款相關欄位
   RetrRef?: string;

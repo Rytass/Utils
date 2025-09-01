@@ -13,8 +13,13 @@ import {
   UndoIcon,
 } from '../../icons';
 
+// LoadingIcon 組件
+const LoadingIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <div className={`${styles.loadingIcon} ${className || ''}`} />
+);
+
 interface ToolbarProps {
-  onUpload: () => void;
+  onUpload: (files: File[]) => Promise<void>;
   onDeleteAll: () => void;
   onSave: () => void;
   editMode: EditMode;
@@ -29,6 +34,8 @@ interface ToolbarProps {
   onColorChange?: (color: string) => void;
   selectedColor?: string;
   colorPalette?: string[];
+  isUploading?: boolean;
+  maxFileSizeKB?: number;
 }
 
 const Toolbar: FC<ToolbarProps> = ({
@@ -47,10 +54,52 @@ const Toolbar: FC<ToolbarProps> = ({
   onColorChange,
   selectedColor: parentSelectedColor,
   colorPalette,
+  isUploading = false,
+  maxFileSizeKB = 30720, // 預設 30MB
 }) => {
   const [showColorMenu, setShowColorMenu] = useState<boolean>(false);
 
   const selectedColor = parentSelectedColor || DEFAULT_BACKGROUND_TOOL_COLOR;
+
+  // 檔案選擇處理
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const files = Array.from(event.target.files || []);
+
+    // 檔案類型驗證
+    const validFiles = files.filter((file) => {
+      if (!file.type.match(/^image\//i)) {
+        return false;
+      }
+
+      // 檔案大小驗證 (KB)
+      const fileSizeKB = file.size / 1024;
+
+      if (fileSizeKB > maxFileSizeKB) {
+        console.warn(
+          `檔案 ${file.name} 大小 ${Math.round(fileSizeKB)}KB 超過限制 ${maxFileSizeKB}KB`,
+        );
+
+        return false;
+      }
+
+      return true;
+    });
+
+    if (validFiles.length !== files.length) {
+      const invalidCount = files.length - validFiles.length;
+
+      console.warn(`${invalidCount} 個檔案被跳過：格式不支援或檔案過大`);
+    }
+
+    if (validFiles.length > 0) {
+      await onUpload(validFiles);
+    }
+
+    // 清空 input
+    event.target.value = '';
+  };
 
   const handleColorChange = (color: string) => {
     if (onColorChange) {
@@ -115,27 +164,33 @@ const Toolbar: FC<ToolbarProps> = ({
           {/* 分隔線 */}
           <div className={styles.separator} />
 
-          {/* 上傳按鈕只在底圖模式時顯示 */}
+          {/* 上傳按鈕 - 使用 file input 覆蓋 */}
           {editMode === EditMode.BACKGROUND && (
-            <Button
-              variant="outlined"
-              size="small"
-              className={`${styles.toolbarButton} ${styles.buttonWithIcon}`}
-              onClick={(e) => {
-                onUpload();
-                // 強制重置按鈕狀態
-                const btn = e.target as HTMLButtonElement;
-
-                btn.blur();
-                // 延遲確保狀態完全重置
-                setTimeout(() => {
-                  btn.blur();
-                }, 0);
-              }}
-            >
-              <ImageIcon className={styles.toolIcon} />
-              上傳
-            </Button>
+            <div className={styles.uploadButtonContainer}>
+              <Button
+                variant="outlined"
+                size="small"
+                className={`${styles.toolbarButton} ${styles.buttonWithIcon} ${styles.uploadButton} ${isUploading ? styles.uploading : ''}`}
+                disabled={isUploading}
+              >
+                <div className={styles.buttonContent}>
+                  {isUploading ? (
+                    <LoadingIcon className={styles.toolIcon} />
+                  ) : (
+                    <ImageIcon className={styles.toolIcon} />
+                  )}
+                  {isUploading ? '上傳中...' : '上傳'}
+                </div>
+              </Button>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleFileChange}
+                className={styles.uploadInput}
+                disabled={isUploading}
+              />
+            </div>
           )}
 
           <Button

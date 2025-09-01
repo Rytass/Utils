@@ -31,7 +31,7 @@
     "typeorm": "*"
   },
   "dependencies": {
-    "dataloader": "^2.2.2",
-    "lru-cache": "^11.0.2"
+    "dataloader": "^2.2.3",
+    "lru-cache": "^11.1.0"
   }
 }

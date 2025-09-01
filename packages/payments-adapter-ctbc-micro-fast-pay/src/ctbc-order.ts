@@ -18,12 +18,13 @@ import {
   CTBCPosApiCancelRefundParams,
   CTBCPosApiConfig,
   CTBCPosApiRefundParams,
-  OrderCreateInit
+  OrderCreateInit,
 } from './typings';
 
 export class CTBCOrder<
   OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessage,
-> implements Order<OCM> {
+> implements Order<OCM>
+{
   private readonly _id: string;
   private readonly _items: PaymentItem[];
   private readonly _form: CTBCPayOrderForm | undefined;
@@ -237,7 +238,10 @@ export class CTBCOrder<
     }
 
     // 計算退款金額
-    const totalAmount = this._items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+    const totalAmount = this._items.reduce(
+      (sum, item) => sum + item.unitPrice * item.quantity,
+      0,
+    );
     const refundAmount = amount ?? totalAmount;
 
     if (refundAmount > totalAmount) {
@@ -247,7 +251,6 @@ export class CTBCOrder<
     const isAmex = this._cardType === CardType.AE;
 
     if (isAmex) {
-
       throw new Error('AMEX refund is not implemented');
       // // 使用 AMEX SOAP API 退款
       // const amexRefundParams: CTBCAmexRefundParams = {
@@ -280,14 +283,15 @@ export class CTBCOrder<
       // 檢查是否有必要的 XID 和 AuthCode
       if (!this._xid || !this._additionalInfo) {
         this._state = OrderState.FAILED;
-        this._failedMessage = 'Missing XID or AuthCode for refund operation. Please ensure the order was properly committed with POS API information.';
+        this._failedMessage =
+          'Missing XID or AuthCode for refund operation. Please ensure the order was properly committed with POS API information.';
         throw new Error(this._failedMessage);
       }
 
       try {
         // 執行退款
 
-        const authCode = (this.additionalInfo as CreditCardAuthInfo).authCode
+        const authCode = (this.additionalInfo as CreditCardAuthInfo).authCode;
         const refundParams: CTBCPosApiRefundParams = {
           MERID: this._gateway.merId,
           'LID-M': this._id,
@@ -299,8 +303,9 @@ export class CTBCOrder<
           exponent: '0',
         };
 
-
-        debugPayment(`執行 POS API 退款: XID=${this._xid}, AuthCode=${authCode}, 退款金額=${refundAmount}`);
+        debugPayment(
+          `執行 POS API 退款: XID=${this._xid}, AuthCode=${authCode}, 退款金額=${refundAmount}`,
+        );
 
         // 執行退款
         const refundResult = await posApiRefund(posApiConfig, refundParams);
@@ -320,10 +325,10 @@ export class CTBCOrder<
           // 其他錯誤情況
           this._state = OrderState.FAILED;
           this._failedCode = refundResult.RespCode;
-          this._failedMessage = refundResult.ERRDESC || refundResult.ErrorDesc || 'Refund failed';
+          this._failedMessage =
+            refundResult.ERRDESC || refundResult.ErrorDesc || 'Refund failed';
           throw new Error(this._failedMessage);
         }
-
       } catch (error) {
         // 如果還沒有設定失敗狀態，在這裡設定
         if (this._state !== OrderState.FAILED) {
@@ -334,6 +339,7 @@ export class CTBCOrder<
             this._failedMessage = 'Unknown refund error';
           }
         }
+
         throw error;
       }
     }
@@ -342,12 +348,20 @@ export class CTBCOrder<
   async cancelRefund(amount: number): Promise<void> {
     // 只有已提交的訂單才能進行退款撤銷操作
     // 不需要限制必須是 REFUNDED 狀態，因為部分退款的訂單狀態仍然是 COMMITTED
-    if (this._state !== OrderState.COMMITTED && this._state !== OrderState.REFUNDED) {
-      throw new Error('Only committed or refunded orders can have their refund cancelled');
+    if (
+      this._state !== OrderState.COMMITTED &&
+      this._state !== OrderState.REFUNDED
+    ) {
+      throw new Error(
+        'Only committed or refunded orders can have their refund cancelled',
+      );
     }
 
     // 計算退款撤銷金額
-    const totalAmount = this._items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+    const totalAmount = this._items.reduce(
+      (sum, item) => sum + item.unitPrice * item.quantity,
+      0,
+    );
     const cancelRefundAmount = amount;
 
     if (cancelRefundAmount > totalAmount) {
@@ -358,7 +372,6 @@ export class CTBCOrder<
 
     if (isAmex) {
       throw new Error('AMEX cancel refund is not implemented');
-
     } else {
       const posApiConfig: CTBCPosApiConfig = {
         URL: this._gateway.baseUrl,
@@ -368,7 +381,8 @@ export class CTBCOrder<
       // 檢查是否有必要的 XID 和 AuthCode
       if (!this._xid || !this._additionalInfo) {
         this._state = OrderState.FAILED;
-        this._failedMessage = 'Missing XID or AuthCode for refund cancellation operation. Please ensure the order was properly committed with POS API information.';
+        this._failedMessage =
+          'Missing XID or AuthCode for refund cancellation operation. Please ensure the order was properly committed with POS API information.';
         throw new Error(this._failedMessage);
       }
 
@@ -384,11 +398,15 @@ export class CTBCOrder<
           exponent: '0',
         };
 
-
-        debugPayment(`執行 POS API 退款撤銷: XID=${this._xid}, AuthCode=${authCode}, 撤銷金額=${cancelRefundAmount}`);
+        debugPayment(
+          `執行 POS API 退款撤銷: XID=${this._xid}, AuthCode=${authCode}, 撤銷金額=${cancelRefundAmount}`,
+        );
 
         // 執行退款撤銷
-        const cancelRefundResult = await posApiCancelRefund(posApiConfig, cancelRefundParams);
+        const cancelRefundResult = await posApiCancelRefund(
+          posApiConfig,
+          cancelRefundParams,
+        );
 
         if (typeof cancelRefundResult === 'number') {
           this._state = OrderState.FAILED;
@@ -405,10 +423,12 @@ export class CTBCOrder<
           // 其他錯誤情況
           this._state = OrderState.FAILED;
           this._failedCode = cancelRefundResult.RespCode;
-          this._failedMessage = cancelRefundResult.ERRDESC || cancelRefundResult.ErrorDesc || 'Cancel refund failed';
+          this._failedMessage =
+            cancelRefundResult.ERRDESC ||
+            cancelRefundResult.ErrorDesc ||
+            'Cancel refund failed';
           throw new Error(this._failedMessage);
         }
-
       } catch (error) {
         // 如果還沒有設定失敗狀態，在這裡設定
         if (this._state !== OrderState.FAILED) {
@@ -419,6 +439,7 @@ export class CTBCOrder<
             this._failedMessage = 'Unknown cancel refund error';
           }
         }
+
         throw error;
       }
     }

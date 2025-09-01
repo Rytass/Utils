@@ -1,6 +1,10 @@
 import { Readable, PassThrough } from 'stream';
 import { createHash } from 'crypto';
-import { FileTypeResult, fromBuffer, fromStream } from 'file-type';
+import {
+  FileTypeResult,
+  fileTypeFromBuffer,
+  fileTypeFromStream,
+} from 'file-type';
 import { ConverterManager } from '@rytass/file-converter';
 import {
   FilenameHashAlgorithm,
@@ -39,20 +43,20 @@ export class Storage<O extends Record<string, any> = Record<string, any>>
 
   public getExtension(file: InputFile): Promise<FileTypeResult | undefined> {
     if (file instanceof Buffer) {
-      return fromBuffer(file);
+      return fileTypeFromBuffer(file);
     }
 
     const extensionStream = new PassThrough();
 
     (file as Readable).pipe(extensionStream);
 
-    return fromStream(extensionStream);
+    return fileTypeFromStream(extensionStream);
   }
 
   async getBufferFilename(
     buffer: Buffer,
   ): Promise<[string, string | undefined]> {
-    const extension = await fromBuffer(buffer);
+    const extension = await fileTypeFromBuffer(buffer);
 
     return [
       `${createHash(this.hashAlgorithm).update(buffer).digest('hex')}${extension?.ext ? `.${extension.ext}` : ''}`,
@@ -97,7 +101,7 @@ export class Storage<O extends Record<string, any> = Record<string, any>>
 
               waitingTasks.push(true);
 
-              fromBuffer(targetBuffer).then((result) => {
+              fileTypeFromBuffer(targetBuffer).then((result) => {
                 waitingTasks[taskIndex] = false;
 
                 if (!result && !isEnd) return;

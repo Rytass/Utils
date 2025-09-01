@@ -17,11 +17,15 @@ const WMSMapModalContainer: FC<WMSMapModalProps> = ({
   onNodeClick,
   onSave,
   onBreadcrumbClick,
-  onWarehouseNameEdit,
+  onNameChange,
   initialNodes,
   initialEdges,
   debugMode = false,
   title,
+  onUpload,
+  getFilenameFQDN,
+  maxFileSizeKB,
+  warehouseIds,
 }) => {
   const [editMode, setEditMode] = useState<EditMode>(EditMode.BACKGROUND);
   const [drawingMode, setDrawingMode] = useState<DrawingMode>(DrawingMode.NONE);
@@ -88,9 +92,13 @@ const WMSMapModalContainer: FC<WMSMapModalProps> = ({
             onNodeClick={onNodeClick}
             onSave={onSave}
             onBreadcrumbClick={onBreadcrumbClick}
-            onWarehouseNameEdit={onWarehouseNameEdit}
+            onNameChange={onNameChange}
             initialNodes={initialNodes}
             initialEdges={initialEdges}
+            onUpload={onUpload}
+            getFilenameFQDN={getFilenameFQDN}
+            maxFileSizeKB={maxFileSizeKB}
+            warehouseIds={warehouseIds}
           />
         </ReactFlowProvider>
       </div>

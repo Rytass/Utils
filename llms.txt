@@ -68,7 +68,7 @@ This project contains 45+ packages that abstract complex integrations with Taiwa
 
 - [Lerna Configuration](https://github.com/rytass/rytass-utils/blob/main/lerna.json): Independent package versioning and publishing setup
 - [NX Configuration](https://github.com/rytass/rytass-utils/blob/main/nx.json): Task orchestration and build caching
-- [TypeScript Base Config](https://github.com/rytass/rytass-utils/blob/main/tsconfig.base.json): Shared TypeScript configuration with strict settings
+- [TypeScript Base Config](https://github.com/rytass/rytass-utils/blob/main/tsconfig.base.node.json): Shared TypeScript configuration with strict settings
 - [Jest Configuration](https://github.com/rytass/rytass-utils/blob/main/jest.config.js): Test runner setup with coverage collection
 - [Custom Build Script](https://github.com/rytass/rytass-utils/blob/main/scripts/build.js): Custom build system generating ESM and CommonJS outputs
 

@@ -56,6 +56,7 @@ export class LocalStorage extends Storage {
         )
       ).stdout,
     );
+
     const free = Number(
       (
         await exec(
@@ -63,6 +64,7 @@ export class LocalStorage extends Storage {
         )
       ).stdout,
     );
+
     const total = Number(
       (
         await exec(

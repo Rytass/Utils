@@ -65,6 +65,7 @@ export class HwaNanPayment<
     this.checkoutPath = options.checkoutPath || this.checkoutPath;
     this.customizePageType =
       options.customizePageType || this.customizePageType;
+
     this.customizePageVersion =
       this.customizePageType === HwaNanCustomizePageType.OTHER
         ? options.customizePageVersion
@@ -267,6 +268,7 @@ export class HwaNanPayment<
       const payloadString = Buffer.from(Buffer.concat(bufferArray)).toString(
         'utf8',
       );
+
       const payload = Array.from(
         new URLSearchParams(payloadString).entries(),
       ).reduce(

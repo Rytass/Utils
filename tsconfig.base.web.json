@@ -12,9 +12,8 @@
     "strictPropertyInitialization": false,
     "experimentalDecorators": true,
     "moduleResolution": "bundler",
-    "lib": ["esnext", "dom"],
-    "types": ["node"],
-    "typeRoots": ["./node_modules/@types"],
+    "lib": ["esnext", "dom", "dom.iterable"],
+    "types": ["node", "react", "react-dom"],
     "allowImportingTsExtensions": false,
     "resolveJsonModule": true
   },

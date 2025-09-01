@@ -3,7 +3,13 @@
  */
 import axios from 'axios';
 import { DateTime } from 'luxon';
-import { AmegoBaseUrls, AmegoInvoice, AmegoInvoiceGateway, InvoiceState, TaxType } from '../src';
+import {
+  AmegoBaseUrls,
+  AmegoInvoice,
+  AmegoInvoiceGateway,
+  InvoiceState,
+  TaxType,
+} from '../src';
 
 const baseUrl = AmegoBaseUrls.DEVELOPMENT;
 
@@ -31,12 +37,14 @@ describe('AmegoInvoiceGateway Void Invoice', () => {
       const voidInvoice = new AmegoInvoice({
         orderId: '3g49n0',
         invoiceNumber: 'AC12346555',
-        items: [{
-          quantity: 1,
-          unitPrice: 10,
-          taxType: TaxType.TAXED,
-          name: '橡皮擦',
-        }],
+        items: [
+          {
+            quantity: 1,
+            unitPrice: 10,
+            taxType: TaxType.TAXED,
+            name: '橡皮擦',
+          },
+        ],
         taxType: TaxType.TAXED,
         issuedOn: new Date('2025-05-28T11:28:10.000Z'),
         allowances: [],
@@ -54,7 +62,7 @@ describe('AmegoInvoiceGateway Void Invoice', () => {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
-        })
+        }),
       );
 
       expect(result.orderId).toBe('3g49n0');
@@ -73,12 +81,14 @@ describe('AmegoInvoiceGateway Void Invoice', () => {
       const voidInvoice = new AmegoInvoice({
         orderId: '3g49n1',
         invoiceNumber: 'AC12346556',
-        items: [{
-          quantity: 1,
-          unitPrice: 10,
-          taxType: TaxType.TAXED,
-          name: '橡皮擦',
-        }],
+        items: [
+          {
+            quantity: 1,
+            unitPrice: 10,
+            taxType: TaxType.TAXED,
+            name: '橡皮擦',
+          },
+        ],
         taxType: TaxType.TAXED,
         issuedOn: new Date('2025-05-28T11:28:10.000Z'),
         allowances: [],
@@ -88,7 +98,7 @@ describe('AmegoInvoiceGateway Void Invoice', () => {
       });
 
       await expect(invoiceGateway.void(voidInvoice)).rejects.toThrow(
-        'Amego invoice void failed: Invoice cannot be voided'
+        'Amego invoice void failed: Invoice cannot be voided',
       );
     });
 
@@ -103,12 +113,14 @@ describe('AmegoInvoiceGateway Void Invoice', () => {
       const voidInvoice = new AmegoInvoice({
         orderId: '3g49n2',
         invoiceNumber: 'AC12346557',
-        items: [{
-          quantity: 2,
-          unitPrice: 50,
-          taxType: TaxType.TAX_FREE,
-          name: '免稅商品',
-        }],
+        items: [
+          {
+            quantity: 2,
+            unitPrice: 50,
+            taxType: TaxType.TAX_FREE,
+            name: '免稅商品',
+          },
+        ],
         taxType: TaxType.TAX_FREE,
         issuedOn: new Date('2025-05-28T11:28:10.000Z'),
         allowances: [],
@@ -136,12 +148,14 @@ describe('AmegoInvoiceGateway Void Invoice', () => {
       const voidInvoice = new AmegoInvoice({
         orderId: '3g49n3',
         invoiceNumber: 'AC12346558',
-        items: [{
-          quantity: 1,
-          unitPrice: 100,
-          taxType: TaxType.ZERO_TAX,
-          name: '零稅率商品',
-        }],
+        items: [
+          {
+            quantity: 1,
+            unitPrice: 100,
+            taxType: TaxType.ZERO_TAX,
+            name: '零稅率商品',
+          },
+        ],
         taxType: TaxType.ZERO_TAX,
         issuedOn: new Date('2025-05-28T11:28:10.000Z'),
         allowances: [],
@@ -152,6 +166,7 @@ describe('AmegoInvoiceGateway Void Invoice', () => {
 
       // Test the setVoid method with custom date
       const customVoidDate = new Date('2025-06-01T10:00:00.000Z');
+
       voidInvoice.setVoid(customVoidDate);
 
       expect(voidInvoice.state).toBe(InvoiceState.VOID);

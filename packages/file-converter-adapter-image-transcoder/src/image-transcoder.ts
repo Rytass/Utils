@@ -1,7 +1,7 @@
 import { ConvertableFile, FileConverter } from '@rytass/file-converter';
 import sharp from 'sharp';
 import { Readable } from 'stream';
-import { fromBuffer } from 'file-type';
+import { fileTypeFromBuffer } from 'file-type';
 import { ImageTranscoderOptions } from './typings';
 import { SupportSources } from './constants';
 import { UnsupportedSource } from './errors';
@@ -23,7 +23,7 @@ export class ImageTranscoder implements FileConverter<ImageTranscoderOptions> {
     let converter;
 
     if (file instanceof Buffer) {
-      const extension = await fromBuffer(file);
+      const extension = await fileTypeFromBuffer(file);
 
       if (!extension || !~SupportSources.indexOf(extension.ext)) {
         throw new UnsupportedSource();

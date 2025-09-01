@@ -30,6 +30,7 @@ export class StorageAzureBlobService extends Storage<AzureBlobOptions> {
     this.client = BlobServiceClient.fromConnectionString(
       options.connectionString,
     );
+
     this.container = this.client.getContainerClient(options.container);
   }
 

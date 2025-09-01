@@ -23,6 +23,6 @@
   },
   "dependencies": {
     "@rytass/file-converter": "^0.1.3",
-    "file-type": "^16"
+    "file-type": "^21"
   }
 }

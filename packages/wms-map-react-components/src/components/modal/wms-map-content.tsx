@@ -8,13 +8,7 @@ import {
   useNodesState,
   useReactFlow,
 } from '@xyflow/react';
-import {
-  DrawingMode,
-  EditMode,
-  ViewMode,
-  WMSNodeClickInfo,
-  Map,
-} from '../../typings';
+import { EditMode, ViewMode } from '../../typings';
 import {
   FlowNode,
   FlowEdge,
@@ -26,10 +20,8 @@ import {
   DEFAULT_PATH_LABEL,
   MIN_RECTANGLE_SIZE,
   TEXT_MAPPINGS,
-  DEFAULT_RECTANGLE_COLOR,
   UI_CONFIG,
   DEFAULT_WAREHOUSE_IDS,
-  SUPPORTED_IMAGE_TYPES,
 } from '../../constants';
 import {
   calculateImageSize,
@@ -66,9 +58,13 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
   onNodeClick,
   onSave,
   onBreadcrumbClick,
-  onWarehouseNameEdit,
+  onNameChange,
   initialNodes: propsInitialNodes = [],
   initialEdges: propsInitialEdges = [],
+  onUpload,
+  getFilenameFQDN,
+  maxFileSizeKB = 30720, // 預設 30MB
+  warehouseIds = [...DEFAULT_WAREHOUSE_IDS],
 }) => {
   const renderCount = useRef(0);
 
@@ -83,6 +79,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [showBackground, setShowBackground] = useState<boolean>(true);
   const showBackgroundRef = useRef<boolean>(true);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
 
   const { getViewport, getNodes, getEdges } = useReactFlow();
 
@@ -175,6 +172,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
     const prevNodeIds = prevInitialNodesRef.current
       .map((n: FlowNode) => n.id)
       .sort();
+
     const hasChanged =
       currentNodeIds.length !== prevNodeIds.length ||
       currentNodeIds.some(
@@ -375,86 +373,112 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
     }
   };
 
-  const handleUpload = () => {
-    const input = document.createElement('input');
+  const handleUpload = async (files: File[]): Promise<void> => {
+    if (!onUpload) {
+      console.error('上傳功能未配置：缺少 onUpload');
 
-    input.type = 'file';
-    input.accept = SUPPORTED_IMAGE_TYPES.ACCEPT;
-    input.multiple = true;
-    input.onchange = (e) => {
-      const files = Array.from((e.target as HTMLInputElement).files || []);
+      return;
+    }
 
-      if (files.length > 0) {
-        files.forEach((file: File, index: number) => {
-          if (!file.type.match(SUPPORTED_IMAGE_TYPES.PATTERN)) {
-            alert(
-              `檔案 ${file.name} 不是有效的圖片格式，請選擇 PNG 或 JPG 格式`,
-            );
+    setIsUploading(true);
 
-            return;
-          }
+    try {
+      // 步驟 1: 上傳檔案，取得檔名或 URL 陣列
+      const uploadedResults = await onUpload(files);
 
-          const imageUrl = URL.createObjectURL(file);
-          const img = new Image();
+      if (uploadedResults.length !== files.length) {
+        console.warn('部分檔案上傳失敗');
+      }
 
-          img.onload = () => {
-            const { width, height } = calculateImageSize(img.width, img.height);
-            const viewport = getViewport();
-            const position = calculateStaggeredPosition(
-              index,
-              100,
-              100,
-              viewport.x,
-              viewport.y,
-              viewport.zoom,
-            );
+      // 步驟 2: 處理每個上傳成功的檔案
+      const processPromises = uploadedResults.map(async (result, index) => {
+        try {
+          // 步驟 3: 取得完整 URL（如果有 getFilenameFQDN 則使用，否則假設 result 就是 URL）
+          const imageUrl = getFilenameFQDN
+            ? await Promise.resolve(getFilenameFQDN(result))
+            : result;
 
-            const newNode = {
-              id: `image-${Date.now()}-${index}`,
-              type: 'imageNode',
-              position,
-              selectable: editMode === EditMode.BACKGROUND,
-              draggable: editMode === EditMode.BACKGROUND,
-              data: {
-                imageUrl,
-                width,
-                height,
-                originalWidth: img.width,
-                originalHeight: img.height,
-                fileName: file.name,
-              },
+          // 步驟 4: 載入圖片取得尺寸
+          return new Promise<void>((resolve, reject) => {
+            const img = new Image();
+
+            img.onload = () => {
+              const { width, height } = calculateImageSize(
+                img.width,
+                img.height,
+              );
+              const viewport = getViewport();
+              const position = calculateStaggeredPosition(
+                index,
+                100,
+                100,
+                viewport.x,
+                viewport.y,
+                viewport.zoom,
+              );
+
+              const newNode: FlowNode = {
+                id: `image-${Date.now()}-${index}`,
+                type: 'imageNode',
+                position,
+                selectable: editMode === EditMode.BACKGROUND,
+                draggable: editMode === EditMode.BACKGROUND,
+                data: {
+                  imageUrl,
+                  width,
+                  height,
+                  originalWidth: img.width,
+                  originalHeight: img.height,
+                  fileName: result, // 儲存 onUpload 返回的字串
+                  uploadedUrl: imageUrl,
+                },
+              };
+
+              setTimeout(() => {
+                setNodes((nds: FlowNode[]) => {
+                  const maxZIndex = Math.max(
+                    ...nds.map((n: FlowNode) => n.zIndex || 0),
+                    0,
+                  );
+
+                  const nodeWithZIndex = { ...newNode, zIndex: maxZIndex + 1 };
+                  const newNodes = [...nds, nodeWithZIndex];
+
+                  setTimeout(() => {
+                    saveState(
+                      newNodes,
+                      edges,
+                      `upload-image-${result}`,
+                      editMode,
+                    );
+                  }, UI_CONFIG.NODE_SAVE_DELAY);
+
+                  return newNodes;
+                });
+              }, index * UI_CONFIG.STAGGER_DELAY);
+
+              resolve();
             };
 
-            setTimeout(() => {
-              setNodes((nds: FlowNode[]) => {
-                const maxZIndex = Math.max(
-                  ...nds.map((n: FlowNode) => n.zIndex || 0),
-                  0,
-                );
+            img.onerror = () => {
+              console.error(`圖片載入失敗: ${result} (${imageUrl})`);
+              reject(new Error(`圖片載入失敗: ${result}`));
+            };
 
-                const nodeWithZIndex = { ...newNode, zIndex: maxZIndex + 1 };
-                const newNodes = [...nds, nodeWithZIndex];
+            img.src = imageUrl;
+          });
+        } catch (error) {
+          console.error(`處理檔案失敗: ${result}`, error);
+          throw error;
+        }
+      });
 
-                setTimeout(() => {
-                  saveState(
-                    newNodes,
-                    edges,
-                    `upload-image-${file.name}`,
-                    editMode,
-                  );
-                }, UI_CONFIG.NODE_SAVE_DELAY);
-
-                return newNodes;
-              });
-            }, index * UI_CONFIG.STAGGER_DELAY);
-          };
-
-          img.src = imageUrl;
-        });
-      }
-    };
-
-    input.click();
+      await Promise.allSettled(processPromises);
+    } catch (error) {
+      console.error('上傳過程發生錯誤:', error);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleDeleteAll = useCallback((): void => {
@@ -950,9 +974,9 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
   return (
     <>
       <Breadcrumb
-        warehouseIds={[...DEFAULT_WAREHOUSE_IDS]}
+        warehouseIds={warehouseIds}
         onWarehouseClick={onBreadcrumbClick}
-        onWarehouseNameEdit={onWarehouseNameEdit}
+        onNameChange={onNameChange}
       />
       {viewMode === ViewMode.EDIT && (
         <Toolbar
@@ -971,6 +995,8 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
           onColorChange={handleColorChangeInternal}
           selectedColor={selectedColor}
           colorPalette={colorPalette}
+          isUploading={isUploading}
+          maxFileSizeKB={maxFileSizeKB}
         />
       )}
 

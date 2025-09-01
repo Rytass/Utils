@@ -23,9 +23,16 @@ jest.mock('../src/ctbc-pos-api-utils', () => ({
 
 import * as posApiUtils from '../src/ctbc-pos-api-utils';
 
-const posApiQueryMock = posApiUtils.posApiQuery as jest.MockedFunction<typeof posApiUtils.posApiQuery>;
-const posApiRefundMock = posApiUtils.posApiRefund as jest.MockedFunction<typeof posApiUtils.posApiRefund>;
-const posApiCancelRefundMock = posApiUtils.posApiCancelRefund as jest.MockedFunction<typeof posApiUtils.posApiCancelRefund>;
+const posApiQueryMock = posApiUtils.posApiQuery as jest.MockedFunction<
+  typeof posApiUtils.posApiQuery
+>;
+const posApiRefundMock = posApiUtils.posApiRefund as jest.MockedFunction<
+  typeof posApiUtils.posApiRefund
+>;
+const posApiCancelRefundMock =
+  posApiUtils.posApiCancelRefund as jest.MockedFunction<
+    typeof posApiUtils.posApiCancelRefund
+  >;
 
 describe('CTBC 訂單 Mock 測試', () => {
   const TEST_MERID = 'DUMMY_MERID';
@@ -108,11 +115,13 @@ describe('CTBC 訂單 Mock 測試', () => {
     } as any);
 
     const order = await payment.query<CTBCOrder>(TEST_ORDER_ID);
+
     await order.refund(50);
 
     // 應呼叫 POS Refund 並更新狀態
     expect(posApiRefundMock).toHaveBeenCalledTimes(1);
     const [, refundParams] = (posApiRefundMock.mock.calls[0] || []) as any[];
+
     expect(refundParams.MERID).toBe(TEST_MERID);
     expect(refundParams['LID-M']).toBe(TEST_ORDER_ID);
     expect(refundParams.OrgAmt).toBe('1000');
@@ -147,12 +156,16 @@ describe('CTBC 訂單 Mock 測試', () => {
 
   it('退款失敗：工具回傳數字錯誤碼', async () => {
     mockSuccessfulQuery();
-    posApiRefundMock.mockResolvedValue(CTBC_ERROR_CODES.ERR_INVALID_LIDM as any);
+    posApiRefundMock.mockResolvedValue(
+      CTBC_ERROR_CODES.ERR_INVALID_LIDM as any,
+    );
 
     const order = await payment.query<CTBCOrder>(TEST_ORDER_ID);
+
     await expect(order.refund(50)).rejects.toThrow(
       `Refund failed with error code: ${CTBC_ERROR_CODES.ERR_INVALID_LIDM}`,
     );
+
     expect(order.state).toBe(OrderState.FAILED);
   });
 
@@ -164,6 +177,7 @@ describe('CTBC 訂單 Mock 測試', () => {
     } as any);
 
     const order = await payment.query<CTBCOrder>(TEST_ORDER_ID);
+
     await expect(order.refund(50)).rejects.toThrow('前次退貨交易,尚未確認');
     expect(order.state).toBe(OrderState.FAILED);
   });
@@ -184,7 +198,9 @@ describe('CTBC 訂單 Mock 測試', () => {
 
     // 應呼叫 POS RefundRev 並更新狀態
     expect(posApiCancelRefundMock).toHaveBeenCalledTimes(1);
-    const [, cancelParams] = (posApiCancelRefundMock.mock.calls[0] || []) as any[];
+    const [, cancelParams] = (posApiCancelRefundMock.mock.calls[0] ||
+      []) as any[];
+
     expect(cancelParams.MERID).toBe(TEST_MERID);
     expect(cancelParams['LID-M']).toBe(TEST_ORDER_ID);
     expect(cancelParams.CredRevAmt).toBe('50');
@@ -209,9 +225,12 @@ describe('CTBC 訂單 Mock 測試', () => {
   it('取消退款失敗：工具回傳數字錯誤碼', async () => {
     mockSuccessfulQuery();
     posApiRefundMock.mockResolvedValue({ RespCode: '0' } as any);
-    posApiCancelRefundMock.mockResolvedValue(CTBC_ERROR_CODES.ERR_INVALID_MERID as any);
+    posApiCancelRefundMock.mockResolvedValue(
+      CTBC_ERROR_CODES.ERR_INVALID_MERID as any,
+    );
 
     const order = await payment.query<CTBCOrder>(TEST_ORDER_ID);
+
     await order.refund(50);
 
     await expect(order.cancelRefund(50)).rejects.toThrow(
@@ -230,9 +249,12 @@ describe('CTBC 訂單 Mock 測試', () => {
     } as any);
 
     const order = await payment.query<CTBCOrder>(TEST_ORDER_ID);
+
     await order.refund(50);
 
-    await expect(order.cancelRefund(50)).rejects.toThrow('Cancel refund failed');
+    await expect(order.cancelRefund(50)).rejects.toThrow(
+      'Cancel refund failed',
+    );
     expect(order.state).toBe(OrderState.FAILED);
   });
 });

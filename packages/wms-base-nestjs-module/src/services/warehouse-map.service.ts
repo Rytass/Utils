@@ -63,6 +63,7 @@ export class WarehouseMapService {
               `Rectangle range "${range.id}" requires x, y, width, and height properties`,
             );
           }
+
           return {
             ...base,
             x: range.x,
@@ -76,6 +77,7 @@ export class WarehouseMapService {
               `Polygon range "${range.id}" requires points array with at least one point`,
             );
           }
+
           return {
             ...base,
             points: range.points,

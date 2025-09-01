@@ -5,17 +5,13 @@ import styles from './breadcrumb.module.scss';
 interface BreadcrumbProps {
   warehouseIds: string[];
   onWarehouseClick?: (warehouseId: string, index: number) => void;
-  onWarehouseNameEdit?: (
-    warehouseId: string,
-    newName: string,
-    index: number,
-  ) => void;
+  onNameChange?: (name: string) => Promise<void>;
 }
 
 const Breadcrumb: FC<BreadcrumbProps> = ({
   warehouseIds,
   onWarehouseClick,
-  onWarehouseNameEdit,
+  onNameChange,
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -53,11 +49,12 @@ const Breadcrumb: FC<BreadcrumbProps> = ({
     setShowEditModal(true);
   };
 
-  const handleEditConfirm = (newName: string) => {
-    if (editingIndex >= 0 && onWarehouseNameEdit) {
-      onWarehouseNameEdit(warehouseIds[editingIndex], newName, editingIndex);
+  const handleEditConfirm = async (newName: string) => {
+    if (onNameChange) {
+      await onNameChange(newName);
     }
 
+    setShowEditModal(false);
     setEditingIndex(-1);
   };
 

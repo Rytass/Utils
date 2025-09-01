@@ -60,6 +60,18 @@ export const SUPPORTED_IMAGE_TYPES = {
   EXTENSIONS: ['png', 'jpg', 'jpeg'] as const,
 } as const;
 
+// 檔案上傳限制
+export const UPLOAD_CONFIG = {
+  DEFAULT_MAX_FILE_SIZE_KB: 30720, // 30MB
+  SUPPORTED_MIME_TYPES: [
+    'image/png',
+    'image/jpeg',
+    'image/jpg',
+    'image/gif',
+    'image/webp',
+  ],
+} as const;
+
 // Export text mappings
 export { TEXT_MAPPINGS } from './text-mappings';
 export type {

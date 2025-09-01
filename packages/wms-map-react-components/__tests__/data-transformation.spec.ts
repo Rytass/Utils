@@ -108,6 +108,7 @@ describe('Data Transformation', () => {
       expect(backToMapData.backgrounds.length).toBe(
         mockMapData.backgrounds.length,
       );
+
       expect(backToMapData.ranges.length).toBe(mockMapData.ranges.length);
 
       // 4. 檢查資料結構完整性
@@ -255,6 +256,7 @@ describe('Transformation Result Validation', () => {
       closedPolygonTestData,
       generateMockImageUrl,
     );
+
     const isValid = validateTransformationResult(closedPolygonTestData, nodes);
 
     expect(isValid).toBe(true);

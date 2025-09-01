@@ -42,6 +42,7 @@ export class BankProAllowance implements InvoiceAllowance<BankProPaymentItem> {
     this._items = options.items;
     this._remainingAmount =
       options.parentInvoice.issuedAmount - this.allowancePrice;
+
     this.parentInvoice = options.parentInvoice;
     this.status = options.status;
     this.invalidOn = options.invalidOn ?? null;

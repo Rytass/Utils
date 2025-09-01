@@ -38,20 +38,18 @@ export class AmegoAllowance implements InvoiceAllowance<AmegoPaymentItem> {
     this.parentInvoice = options.parentInvoice;
 
     this._remainingAmount =
-      options.parentInvoice.issuedAmount - options.parentInvoice.accumulatedAllowances.reduce(
-        (sum, allowance) => {
-          if (allowance.status !== InvoiceAllowanceState.ISSUED) {
-            return sum; // 忽略無效的折讓
-          }
+      options.parentInvoice.issuedAmount -
+      options.parentInvoice.accumulatedAllowances.reduce((sum, allowance) => {
+        if (allowance.status !== InvoiceAllowanceState.ISSUED) {
+          return sum; // 忽略無效的折讓
+        }
 
-          if (allowance.invoiceType.endsWith('0401')) {
-            return sum + allowance.allowancePrice;
-          }
+        if (allowance.invoiceType.endsWith('0401')) {
+          return sum + allowance.allowancePrice;
+        }
 
-          return sum - allowance.allowancePrice;
-        },
-        0,
-      );
+        return sum - allowance.allowancePrice;
+      }, 0);
 
     this.status = options.status;
     this.invalidOn = options.invalidOn ?? null;
@@ -63,6 +61,7 @@ export class AmegoAllowance implements InvoiceAllowance<AmegoPaymentItem> {
     if (!this.invalidOn) {
       this.invalidOn = new Date();
     }
+
     this.parentInvoice.nowAmount += this.allowancePrice;
-  }
+  };
 }

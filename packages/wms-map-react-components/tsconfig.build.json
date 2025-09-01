@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "../../tsconfig.base.web.json",
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./lib",
@@ -8,5 +8,5 @@
     "lib": ["esnext", "dom", "dom.iterable"]
   },
   "exclude": ["**/*.spec.*", "**/*.test.*", "test/**/*"],
-  "include": ["./src", "./global.d.ts"]
+  "include": ["./src", "../../global.d.ts"]
 }

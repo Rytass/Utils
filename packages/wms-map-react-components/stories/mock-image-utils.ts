@@ -61,6 +61,7 @@ export const generateMockImageUrl = (filename: string): string => {
         'F3E5F5',
         'E0F2F1',
       ];
+
       const colorIndex = filename.length % colors.length;
       const bgColor = colors[colorIndex];
       const textColor = '757575'; // 灰色文字

@@ -47,7 +47,6 @@ function checkValidSymbol(input: string): boolean {
 }
 
 function checkOrgAmt(input: string): true | number {
-
   if (!isNumeric(input)) {
     return CTBC_ERROR_CODES.ERR_INVALID_ORG_AMT;
   }
@@ -155,7 +154,11 @@ function getMacValue24Sub(dataString: string, macKey: string): string {
 
 // 解密 MAC 值 - 對應 PHP 的 decodeDESMAC
 function decodeMacValue(macValue: string, macKey: string): string {
-  const decipher = crypto.createDecipheriv('des-ede3-cbc', Buffer.from(macKey, 'utf8'), SSLAuthIV);
+  const decipher = crypto.createDecipheriv(
+    'des-ede3-cbc',
+    Buffer.from(macKey, 'utf8'),
+    SSLAuthIV,
+  );
 
   decipher.setAutoPadding(false);
 
@@ -172,10 +175,12 @@ function decodeMacValue(macValue: string, macKey: string): string {
   try {
     // 先嘗試用 Big5 解碼
     const decryptedStr = iconv.decode(decryptedBuffer, 'big5');
+
     return decryptedStr;
   } catch (error) {
     // 如果 Big5 解碼失敗，回退到 UTF-8
     console.warn('Big5 解碼失敗，使用 UTF-8 解碼:', error);
+
     return decryptedBuffer.toString('utf8');
   }
 }
@@ -200,7 +205,10 @@ function pkcs5Unpad(data: Buffer): Buffer {
   return result;
 }
 
-function parseResponse(responseStr: string, macKey: string): CTBCPosApiResponse | number {
+function parseResponse(
+  responseStr: string,
+  macKey: string,
+): CTBCPosApiResponse | number {
   // 解析格式：key1=value1&key2=value2&encryptedData
   const parts = responseStr.split(/[&=]/);
 
@@ -323,7 +331,13 @@ export async function posApiQuery(
   requestData += ',';
   requestData += getJsonString('VERSION', null, 'S', '3.2', '"');
   requestData += ',';
-  requestData += getJsonString('SwRevision', null, 'S', 'MicroQuery Server 3.2 (2019/10/25)', '"');
+  requestData += getJsonString(
+    'SwRevision',
+    null,
+    'S',
+    'MicroQuery Server 3.2 (2019/10/25)',
+    '"',
+  );
 
   if (params.TxType) {
     requestData += ',';
@@ -337,7 +351,13 @@ export async function posApiQuery(
 
   if (params.Tx_ATTRIBUTE) {
     requestData += ',';
-    requestData += getJsonString('Tx_ATTRIBUTE', null, 'S', params.Tx_ATTRIBUTE, '"');
+    requestData += getJsonString(
+      'Tx_ATTRIBUTE',
+      null,
+      'S',
+      params.Tx_ATTRIBUTE,
+      '"',
+    );
   }
 
   requestData += '}';
@@ -389,7 +409,8 @@ export async function posApiRefund(
     refundAmtString = `${params.currency} ${params.PurchAmt} ${params.exponent}`;
   }
 
-  let originalAmtString = ''
+  let originalAmtString = '';
+
   if (params.currency && params.OrgAmt && params.exponent) {
     originalAmtString = `${params.currency} ${params.OrgAmt} ${params.exponent}`;
   }
@@ -421,7 +442,13 @@ export async function posApiRefund(
   requestData += ',';
   requestData += getJsonString('VERSION', null, 'S', '3.2', '"');
   requestData += ',';
-  requestData += getJsonString('SwRevision', null, 'S', 'MicroRefund Server 3.2 (2019/10/25)', '"');
+  requestData += getJsonString(
+    'SwRevision',
+    null,
+    'S',
+    'MicroRefund Server 3.2 (2019/10/25)',
+    '"',
+  );
 
   requestData += '}';
 
@@ -433,7 +460,6 @@ export async function posApiCancelRefund(
   config: CTBCPosApiConfig,
   params: CTBCPosApiCancelRefundParams,
 ): Promise<CTBCPosApiResponse | number> {
-
   // 參數驗證
   const meridCheck = checkMerid(params.MERID);
 
@@ -473,7 +499,8 @@ export async function posApiCancelRefund(
     cancelRefundAmtString = `${params.currency} 0 ${params.exponent}`;
   }
 
-  let originalRefundAmtString = ''
+  let originalRefundAmtString = '';
+
   if (params.currency && params.CredRevAmt && params.exponent) {
     originalRefundAmtString = `${params.currency} ${params.CredRevAmt} ${params.exponent}`;
   }
@@ -492,12 +519,24 @@ export async function posApiCancelRefund(
 
   if (cancelRefundAmtString) {
     requestData += ',';
-    requestData += getJsonString('CredRevAmt', null, null, cancelRefundAmtString, '"');
+    requestData += getJsonString(
+      'CredRevAmt',
+      null,
+      null,
+      cancelRefundAmtString,
+      '"',
+    );
   }
 
   if (originalRefundAmtString) {
     requestData += ',';
-    requestData += getJsonString('OrgAmt', null, null, originalRefundAmtString, '"');
+    requestData += getJsonString(
+      'OrgAmt',
+      null,
+      null,
+      originalRefundAmtString,
+      '"',
+    );
   }
 
   requestData += ',';
@@ -505,7 +544,13 @@ export async function posApiCancelRefund(
   requestData += ',';
   requestData += getJsonString('VERSION', null, 'S', '3.2', '"');
   requestData += ',';
-  requestData += getJsonString('SwRevision', null, 'S', 'MicroRefund Server 3.2 (2019/10/25)', '"');
+  requestData += getJsonString(
+    'SwRevision',
+    null,
+    'S',
+    'MicroRefund Server 3.2 (2019/10/25)',
+    '"',
+  );
 
   requestData += '}';
 

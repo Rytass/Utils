@@ -2,7 +2,13 @@
  * @jest-environment node
  */
 import axios from 'axios';
-import { AmegoBaseUrls, AmegoInvoiceGateway, InvoiceCarrierType, InvoiceState, TaxType } from '../src';
+import {
+  AmegoBaseUrls,
+  AmegoInvoiceGateway,
+  InvoiceCarrierType,
+  InvoiceState,
+  TaxType,
+} from '../src';
 import { DateTime } from 'luxon';
 
 const DEFAULT_VAT_NUMBER = '12345678';
@@ -43,8 +49,9 @@ describe('Amego Invoice Query', () => {
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded',
             },
-          })
+          }),
         );
+
         expect(isValid).toBe(true);
       });
 
@@ -106,7 +113,7 @@ describe('Amego Invoice Query', () => {
 
     it('should throw error as method is not supported', async () => {
       await expect(invoiceGateway.isLoveCodeValid('001')).rejects.toThrow(
-        'Method not supported in Amego API.'
+        'Method not supported in Amego API.',
       );
     });
   });
@@ -179,7 +186,7 @@ describe('Amego Invoice Query', () => {
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded',
             },
-          })
+          }),
         );
 
         expect(invoice.orderId).toBe('3g49n3');
@@ -193,6 +200,7 @@ describe('Amego Invoice Query', () => {
           type: InvoiceCarrierType.MOBILE,
           code: '/DDPD7U2',
         });
+
         expect(invoice.items).toHaveLength(2);
         expect(invoice.items[0]).toEqual({
           taxType: TaxType.TAXED,
@@ -203,6 +211,7 @@ describe('Amego Invoice Query', () => {
           unit: '個',
           remark: '測試商品',
         });
+
         expect(invoice.allowances).toHaveLength(0);
       });
 
@@ -428,7 +437,9 @@ describe('Amego Invoice Query', () => {
           },
         });
 
-        const invoice = await invoiceGateway.query({ orderId: '3g49n7-invalid' });
+        const invoice = await invoiceGateway.query({
+          orderId: '3g49n7-invalid',
+        });
 
         expect(invoice.carrier).toBeUndefined();
       });
@@ -471,7 +482,9 @@ describe('Amego Invoice Query', () => {
           },
         });
 
-        const invoice = await invoiceGateway.query({ orderId: '3g49n7-toolong' });
+        const invoice = await invoiceGateway.query({
+          orderId: '3g49n7-toolong',
+        });
 
         expect(invoice.carrier).toBeUndefined();
       });
@@ -557,7 +570,9 @@ describe('Amego Invoice Query', () => {
           },
         });
 
-        const invoice = await invoiceGateway.query({ orderId: '3g49n5-unknown' });
+        const invoice = await invoiceGateway.query({
+          orderId: '3g49n5-unknown',
+        });
 
         expect(invoice.carrier).toBeUndefined();
       });
@@ -679,7 +694,9 @@ describe('Amego Invoice Query', () => {
           },
         });
 
-        const result = await invoiceGateway.query({ orderId: '202506091426231987' });
+        const result = await invoiceGateway.query({
+          orderId: '202506091426231987',
+        });
 
         expect(result.allowances).toHaveLength(2);
         // Both allowances should be marked as invalid due to their invoice_type
@@ -687,10 +704,11 @@ describe('Amego Invoice Query', () => {
         expect(result.allowances[1].status).toBe('INVALID');
         // Their invalidOn should be set to their allowance date
         expect(result.allowances[0].invalidOn).toEqual(
-          DateTime.fromFormat('20250609', 'yyyyMMdd').toJSDate()
+          DateTime.fromFormat('20250609', 'yyyyMMdd').toJSDate(),
         );
+
         expect(result.allowances[1].invalidOn).toEqual(
-          DateTime.fromFormat('20250610', 'yyyyMMdd').toJSDate()
+          DateTime.fromFormat('20250610', 'yyyyMMdd').toJSDate(),
         );
       });
     });
@@ -734,7 +752,9 @@ describe('Amego Invoice Query', () => {
           },
         });
 
-        const invoice = await invoiceGateway.query({ invoiceNumber: 'AC12364096' });
+        const invoice = await invoiceGateway.query({
+          invoiceNumber: 'AC12364096',
+        });
 
         expect(invoice.orderId).toBe('3g49n3');
         expect(invoice.invoiceNumber).toBe('AC12364096');
@@ -751,7 +771,7 @@ describe('Amego Invoice Query', () => {
         });
 
         await expect(
-          invoiceGateway.query({ orderId: 'nonexistent' })
+          invoiceGateway.query({ orderId: 'nonexistent' }),
         ).rejects.toThrow('Amego invoice query failed: Invoice not found');
       });
 

@@ -143,6 +143,7 @@ describe('ECPay Invoice Query', () => {
     expect(DateTime.fromJSDate(invoice.issuedOn).toFormat('yyyyMMdd')).toBe(
       '20230203',
     );
+
     expect(invoice.state).toBe(InvoiceState.ISSUED);
     expect(invoice.orderId).toBe('f581df41f1a65f05');
   });

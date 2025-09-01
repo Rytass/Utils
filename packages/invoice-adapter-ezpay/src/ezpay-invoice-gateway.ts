@@ -228,19 +228,23 @@ export class EZPayInvoiceGateway
     const carrierType = this.getCarrierTypeCode(
       (options as EZPayInvoiceB2CIssueOptions).carrier,
     );
+
     const carrierCode = this.getCarrierCode(
       (options as EZPayInvoiceB2CIssueOptions).carrier,
     );
+
     const taxTypeCode = EZPayTaxTypeCode[taxType] as '1' | '2' | '3' | '9';
     const taxRate = Number(
       ~[TaxType.TAX_FREE, TaxType.ZERO_TAX].indexOf(taxType)
         ? '0'
         : options.specialTaxPercentage?.toString() || '5',
     );
+
     const totalAmount = options.items.reduce(
       (sum, item) => sum + item.unitPrice * item.quantity,
       0,
     );
+
     const amountWithoutTax = Math.round(
       options.items.reduce(
         (sum, item) =>

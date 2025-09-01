@@ -2,7 +2,13 @@
  * @jest-environment node
  */
 import { DateTime } from 'luxon';
-import { AmegoBaseUrls, AmegoInvoiceGateway, TaxType, InvoiceCarrierType, SpecialTaxCode } from '../src';
+import {
+  AmegoBaseUrls,
+  AmegoInvoiceGateway,
+  TaxType,
+  InvoiceCarrierType,
+  SpecialTaxCode,
+} from '../src';
 import axios from 'axios';
 
 const DEFAULT_VAT_NUMBER = '12345678';
@@ -23,6 +29,7 @@ describe('AmegoInvoiceGateway Issue Invoice', () => {
   describe('constructor', () => {
     it('should create gateway with default options', () => {
       const gateway = new AmegoInvoiceGateway();
+
       expect(gateway).toBeInstanceOf(AmegoInvoiceGateway);
     });
 
@@ -32,6 +39,7 @@ describe('AmegoInvoiceGateway Issue Invoice', () => {
         vatNumber: DEFAULT_VAT_NUMBER,
         baseUrl: AmegoBaseUrls.PRODUCTION,
       });
+
       expect(gateway).toBeInstanceOf(AmegoInvoiceGateway);
     });
   });
@@ -51,7 +59,8 @@ describe('AmegoInvoiceGateway Issue Invoice', () => {
             invoice_time: DateTime.now().toSeconds(),
             random_number: '6121',
             barcode: '11406AC123677056121',
-            qrcode_left: 'AC1236770511406096121000000ee000000fa5588071012345678Kl5uSAlhCfQMd3WjsCxKiQ==:**********:1:2:0:',
+            qrcode_left:
+              'AC1236770511406096121000000ee000000fa5588071012345678Kl5uSAlhCfQMd3WjsCxKiQ==:**********:1:2:0:',
             qrcode_right: '**口香糖:10:10',
           },
         });
@@ -87,7 +96,7 @@ describe('AmegoInvoiceGateway Issue Invoice', () => {
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded',
             },
-          })
+          }),
         );
 
         expect(invoice.orderId).toBe('202506091426231986');
@@ -300,7 +309,7 @@ describe('AmegoInvoiceGateway Issue Invoice', () => {
             ],
             taxType: TaxType.TAXED,
             detailVat: true,
-          })
+          }),
         ).rejects.toThrow('Order ID is required');
       });
 
@@ -319,7 +328,7 @@ describe('AmegoInvoiceGateway Issue Invoice', () => {
             ],
             taxType: TaxType.TAXED,
             detailVat: true,
-          })
+          }),
         ).rejects.toThrow('Invalid VAT number format');
       });
 
@@ -337,8 +346,10 @@ describe('AmegoInvoiceGateway Issue Invoice', () => {
             ],
             taxType: TaxType.TAXED,
             detailVat: false,
-          })
-        ).rejects.toThrow('未稅價發票必須提供統一編號 (DetailVat=0 requires VAT number)');
+          }),
+        ).rejects.toThrow(
+          '未稅價發票必須提供統一編號 (DetailVat=0 requires VAT number)',
+        );
       });
 
       it('should throw error when orderId is too long', async () => {
@@ -356,8 +367,10 @@ describe('AmegoInvoiceGateway Issue Invoice', () => {
             ],
             taxType: TaxType.TAXED,
             detailVat: true,
-          })
-        ).rejects.toThrow('Order ID must be less than or equal to 40 characters');
+          }),
+        ).rejects.toThrow(
+          'Order ID must be less than or equal to 40 characters',
+        );
       });
 
       it('should throw error when no items provided', async () => {
@@ -368,7 +381,7 @@ describe('AmegoInvoiceGateway Issue Invoice', () => {
             items: [],
             taxType: TaxType.TAXED,
             detailVat: true,
-          })
+          }),
         ).rejects.toThrow('At least one product item is required');
       });
 
@@ -387,8 +400,10 @@ describe('AmegoInvoiceGateway Issue Invoice', () => {
             ],
             taxType: TaxType.TAXED,
             detailVat: true,
-          })
-        ).rejects.toThrow('Item description must be less than or equal to 256 characters');
+          }),
+        ).rejects.toThrow(
+          'Item description must be less than or equal to 256 characters',
+        );
       });
 
       it('should throw error when item unit is too long', async () => {
@@ -407,8 +422,10 @@ describe('AmegoInvoiceGateway Issue Invoice', () => {
             ],
             taxType: TaxType.TAXED,
             detailVat: true,
-          })
-        ).rejects.toThrow('Item unit must be less than or equal to 6 characters');
+          }),
+        ).rejects.toThrow(
+          'Item unit must be less than or equal to 6 characters',
+        );
       });
 
       it('should throw error when item remark is too long', async () => {
@@ -427,8 +444,10 @@ describe('AmegoInvoiceGateway Issue Invoice', () => {
             ],
             taxType: TaxType.TAXED,
             detailVat: true,
-          })
-        ).rejects.toThrow('Item remark must be less than or equal to 40 characters');
+          }),
+        ).rejects.toThrow(
+          'Item remark must be less than or equal to 40 characters',
+        );
       });
 
       it('should throw error when platform carrier without email', async () => {
@@ -447,8 +466,10 @@ describe('AmegoInvoiceGateway Issue Invoice', () => {
             ],
             taxType: TaxType.TAXED,
             detailVat: true,
-          })
-        ).rejects.toThrow('Platform carrier should provide buyer email to received notification');
+          }),
+        ).rejects.toThrow(
+          'Platform carrier should provide buyer email to received notification',
+        );
       });
     });
 
@@ -475,7 +496,7 @@ describe('AmegoInvoiceGateway Issue Invoice', () => {
             ],
             taxType: TaxType.TAXED,
             detailVat: true,
-          })
+          }),
         ).rejects.toThrow('Amego invoice issue failed: API Error');
       });
     });
