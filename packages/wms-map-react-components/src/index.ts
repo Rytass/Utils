@@ -1,7 +1,8 @@
 // This file is the entry point for the WMS Map React Components package.
 
 export * from './typings';
-export { default as WmsMapModal } from './src/WmsMapModal';
+export * from './types';
+export { default as WMSMapModal } from './components/modal/wms-map-modal-container';
 
 // 導出資料轉換工具函數
 export {
@@ -9,7 +10,7 @@ export {
   transformNodesToMapData,
   logMapData,
   logNodeData,
-} from './src/utils/mapDataTransform';
+} from './utils/map-data-transform';
 
 // 導出 API 資料轉換工具函數
 export {
@@ -18,5 +19,4 @@ export {
   loadMapDataFromApi,
   calculatePolygonBounds,
   calculateNodeZIndex,
-} from './src/utils/apiDataTransform';
-
+} from './utils/api-data-transform';

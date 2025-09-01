@@ -1,15 +1,17 @@
 import React, { FC, useEffect, useState } from 'react';
 import { Button } from '@mezzanine-ui/react';
-import { DrawingMode, EditMode } from '../../../typings';
+import { DrawingMode, EditMode } from '../../typings';
 import { DEFAULT_BACKGROUND_TOOL_COLOR } from '../../constants';
 import styles from './toolbar.module.scss';
-import PenToolIcon from '../../icons/pen-tool.svg';
-import DeleteIcon from '../../icons/delete.svg';
-import ImageIcon from '../../icons/image.svg';
-import SquareIcon from '../../icons/square.svg';
-import PointerIcon from '../../icons/pointer.svg';
-import RedoIcon from '../../icons/redo.svg';
-import UndoIcon from '../../icons/undo.svg';
+import {
+  PenToolIcon,
+  DeleteIcon,
+  ImageIcon,
+  SquareIcon,
+  PointerIcon,
+  RedoIcon,
+  UndoIcon,
+} from '../../icons';
 
 interface ToolbarProps {
   onUpload: () => void;
@@ -109,10 +111,10 @@ const Toolbar: FC<ToolbarProps> = ({
               底圖
             </button>
           </div>
-          
+
           {/* 分隔線 */}
           <div className={styles.separator} />
-          
+
           {/* 上傳按鈕只在底圖模式時顯示 */}
           {editMode === EditMode.BACKGROUND && (
             <Button
@@ -131,11 +133,7 @@ const Toolbar: FC<ToolbarProps> = ({
                 }, 0);
               }}
             >
-              <img
-                src={ImageIcon}
-                alt="上傳"
-                className={styles.toolIcon}
-              />
+              <ImageIcon className={styles.toolIcon} />
               上傳
             </Button>
           )}
@@ -155,7 +153,7 @@ const Toolbar: FC<ToolbarProps> = ({
               }, 0);
             }}
           >
-            <img src={DeleteIcon} alt="刪除全部" className={styles.toolIcon} />
+            <DeleteIcon className={styles.toolIcon} />
             刪除全部
           </Button>
         </div>
@@ -189,7 +187,7 @@ const Toolbar: FC<ToolbarProps> = ({
           disabled={!canUndo}
           title="上一步"
         >
-          <img src={UndoIcon} alt="上一步" className={styles.toolIcon} />
+          <UndoIcon className={styles.toolIcon} />
         </Button>
         <Button
           variant="outlined"
@@ -199,7 +197,7 @@ const Toolbar: FC<ToolbarProps> = ({
           disabled={!canRedo}
           title="下一步"
         >
-          <img src={RedoIcon} alt="下一步" className={styles.toolIcon} />
+          <RedoIcon className={styles.toolIcon} />
         </Button>
 
         {/* Separator and drawing tools - only in LAYER mode */}
@@ -224,11 +222,7 @@ const Toolbar: FC<ToolbarProps> = ({
               }}
               title="選取工具"
             >
-              <img
-                src={PointerIcon}
-                alt="選取工具"
-                className={styles.toolIcon}
-              />
+              <PointerIcon className={styles.toolIcon} />
             </Button>
             <Button
               variant={
@@ -239,11 +233,7 @@ const Toolbar: FC<ToolbarProps> = ({
               onClick={onToggleRectangleTool}
               title="矩形工具"
             >
-              <img
-                src={SquareIcon}
-                alt="矩形工具"
-                className={styles.toolIcon}
-              />
+              <SquareIcon className={styles.toolIcon} />
             </Button>
             <Button
               variant={
@@ -254,11 +244,7 @@ const Toolbar: FC<ToolbarProps> = ({
               onClick={onTogglePenTool}
               title="鋼筆工具"
             >
-              <img
-                src={PenToolIcon}
-                alt="鋼筆工具"
-                className={styles.toolIcon}
-              />
+              <PenToolIcon className={styles.toolIcon} />
             </Button>
             {/* 顏色工具 - 只有在提供 colorPalette 時才顯示 */}
             {colorPalette && colorPalette.length > 0 && (

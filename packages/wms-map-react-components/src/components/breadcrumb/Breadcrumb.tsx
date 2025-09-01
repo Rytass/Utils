@@ -1,5 +1,5 @@
 import React, { FC, useState, useEffect, useRef } from 'react';
-import BreadcrumbEditModal from './BreadcrumbEditModal';
+import BreadcrumbEditModal from './breadcrumb-edit-modal';
 import styles from './breadcrumb.module.scss';
 
 interface BreadcrumbProps {
@@ -28,7 +28,10 @@ const Breadcrumb: FC<BreadcrumbProps> = ({
   // 點擊外部關閉 dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setShowDropdown(false);
       }
     };
@@ -84,7 +87,7 @@ const Breadcrumb: FC<BreadcrumbProps> = ({
         <span className={styles.separator}>/</span>
 
         <div className={styles.ellipsisContainer} ref={dropdownRef}>
-          <span 
+          <span
             className={styles.ellipsis}
             onClick={() => setShowDropdown(!showDropdown)}
           >

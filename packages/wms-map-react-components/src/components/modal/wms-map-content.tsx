@@ -1,83 +1,59 @@
 import React, { FC, useCallback, useEffect, useState, useRef } from 'react';
-import { Modal, ModalHeader } from '@mezzanine-ui/react';
 import {
   addEdge,
   Connection,
-  Edge,
-  Node,
+  Node as ReactFlowNode,
   OnSelectionChangeParams,
-  ReactFlowProvider,
   useEdgesState,
   useNodesState,
   useReactFlow,
 } from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
 import {
   DrawingMode,
   EditMode,
   ViewMode,
-  WmsNodeClickInfo,
+  WMSNodeClickInfo,
   Map,
-} from '../typings';
+} from '../../typings';
 import {
-  DEFAULT_PATH_LABEL,
-  DEFAULT_RECTANGLE_COLOR,
+  FlowNode,
+  FlowEdge,
+  FlowNodeChange,
+  WMSMapContentProps,
+} from '../../types/index';
+import {
   DEFAULT_RECTANGLE_LABEL,
+  DEFAULT_PATH_LABEL,
   MIN_RECTANGLE_SIZE,
   TEXT_MAPPINGS,
-} from './constants';
+  DEFAULT_RECTANGLE_COLOR,
+  UI_CONFIG,
+  DEFAULT_WAREHOUSE_IDS,
+  SUPPORTED_IMAGE_TYPES,
+} from '../../constants';
 import {
   calculateImageSize,
   calculateStaggeredPosition,
-} from './utils/nodeUtils';
-import { createRectangleCopy, createPathCopy, createImageCopy } from './utils/nodeOperations';
+} from '../../utils/node-utils';
+import {
+  createRectangleCopy,
+  createPathCopy,
+  createImageCopy,
+} from '../../utils/node-operations';
 import {
   logMapData,
   transformNodesToMapData,
   logNodeData,
   transformNodeToClickInfo,
-} from './utils/mapDataTransform';
-import { useDirectStateHistory } from './hooks/useDirectStateHistory';
-import { debugLog, debugSuccess, setDebugMode } from './utils/debugLogger';
-import Toolbar from './components/ui/Toolbar';
-import Breadcrumb from './components/breadcrumb/Breadcrumb';
-import ReactFlowCanvas from './components/canvas/ReactFlowCanvas';
-import ViewModeToggle from './components/ui/ViewModeToggle';
-import ViewModeToolbar from './components/ui/ViewModeToolbar';
-import styles from './wmsMapModal.module.scss';
+} from '../../utils/map-data-transform';
+import { useDirectStateHistory } from '../../hooks/use-direct-state-history';
+import { debugLog, debugSuccess } from '../../utils/debug-logger';
+import Toolbar from '../ui/toolbar';
+import Breadcrumb from '../breadcrumb/breadcrumb';
+import ReactFlowCanvas from '../canvas/react-flow-canvas';
+import ViewModeToolbar from '../ui/view-mode-toolbar';
 
-interface WmsMapModalProps {
-  onClose: () => void;
-  open: boolean;
-  viewMode?: ViewMode;
-  colorPalette?: string[];
-  onNodeClick?: (nodeInfo: WmsNodeClickInfo) => void;
-  onSave?: (mapData: Map) => void;
-  onBreadcrumbClick?: (warehouseId: string, index: number) => void; // 新增：breadcrumb 點擊事件
-  onWarehouseNameEdit?: (warehouseId: string, newName: string, index: number) => void; // 新增：修改區域名稱事件
-  initialNodes?: Node[];
-  initialEdges?: Edge[];
-  debugMode?: boolean; // 新增：控制 debug 模式的開關
-}
-
-// 內部組件 - 包含歷史管理邏輯，必須在 ReactFlowProvider 內部
-const WmsMapContent: FC<{
-  editMode: EditMode;
-  drawingMode: DrawingMode;
-  selectedColor: string;
-  viewMode: ViewMode;
-  colorPalette?: string[];
-  onEditModeChange: (mode: EditMode) => void;
-  onToggleRectangleTool: () => void;
-  onTogglePenTool: () => void;
-  onColorChange: (color: string) => void;
-  onNodeClick?: (nodeInfo: WmsNodeClickInfo) => void;
-  onSave?: (mapData: Map) => void;
-  onBreadcrumbClick?: (warehouseId: string, index: number) => void;
-  onWarehouseNameEdit?: (warehouseId: string, newName: string, index: number) => void;
-  initialNodes?: Node[];
-  initialEdges?: Edge[];
-}> = ({
+const WMSMapContent: FC<WMSMapContentProps> = ({
   editMode,
   drawingMode,
   selectedColor,
@@ -98,75 +74,61 @@ const WmsMapContent: FC<{
 
   renderCount.current += 1;
 
-  // console.log('🔄 WmsMapContent 重新渲染:', {
-  //   editMode,
-  //   drawingMode,
-  //   viewMode,
-  //   renderCount: renderCount.current
-  // });
-
   const [nodes, setNodes, onNodesChangeOriginal] =
     useNodesState(propsInitialNodes);
 
   const [edges, setEdges, onEdgesChange] = useEdgesState(propsInitialEdges);
-  const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
+  const [selectedNodes, setSelectedNodes] = useState<FlowNode[]>([]);
   const [isEditingPathPoints, setIsEditingPathPoints] = useState(false);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [showBackground, setShowBackground] = useState<boolean>(true);
   const showBackgroundRef = useRef<boolean>(true);
 
-  // Get React Flow instance for viewport information
   const { getViewport, getNodes, getEdges } = useReactFlow();
 
-  // 用於延遲顏色變更歷史記錄的 ref
   const colorChangeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
 
   // 根據當前模式為節點套用正確的狀態規則
   const applyNodeStateRules = useCallback(
-    (nodes: Node[]) => {
-      return nodes.map((node) => {
-        let shouldBeSelectable = false;
-        let shouldBeDraggable = false;
-        let shouldBeDeletable = false;
-
-        // 檢視模式下所有節點都不可選取和拖曳
-        if (viewMode === ViewMode.VIEW) {
-          shouldBeSelectable = false;
-          shouldBeDraggable = false;
-          shouldBeDeletable = false;
-        } else if (node.type === 'imageNode') {
-          // 底圖節點只能在底圖模式下選取、拖曳和刪除
-          shouldBeSelectable = editMode === EditMode.BACKGROUND;
-          shouldBeDraggable = editMode === EditMode.BACKGROUND;
-          shouldBeDeletable = editMode === EditMode.BACKGROUND; // 底圖節點在底圖模式下可刪除
-        } else if (node.type === 'rectangleNode') {
-          // 矩形節點只能在圖層模式下選取和拖曳
-          shouldBeSelectable = editMode === EditMode.LAYER;
-          shouldBeDraggable = editMode === EditMode.LAYER;
-          shouldBeDeletable = false; // 矩形節點不可刪除
-        } else if (node.type === 'pathNode') {
-          // 路徑節點只能在圖層模式下選取、拖曳和刪除
-          shouldBeSelectable = editMode === EditMode.LAYER;
-          shouldBeDraggable = editMode === EditMode.LAYER;
-          shouldBeDeletable = editMode === EditMode.LAYER;
-        }
+    (nodes: FlowNode[]): FlowNode[] => {
+      const getNodePermissions = (
+        node: FlowNode,
+      ): { selectable: boolean; draggable: boolean; deletable: boolean } => {
+        const isViewMode = viewMode === ViewMode.VIEW;
+        const isImageNode = node.type === 'imageNode';
+        const isRectangleNode = node.type === 'rectangleNode';
+        const isPathNode = node.type === 'pathNode';
+        const isBackgroundMode = editMode === EditMode.BACKGROUND;
+        const isLayerMode = editMode === EditMode.LAYER;
 
         return {
-          ...node,
-          selectable: shouldBeSelectable,
-          draggable: shouldBeDraggable,
-          deletable: shouldBeDeletable,
+          selectable:
+            !isViewMode &&
+            ((isImageNode && isBackgroundMode) ||
+              ((isRectangleNode || isPathNode) && isLayerMode)),
+          draggable:
+            !isViewMode &&
+            ((isImageNode && isBackgroundMode) ||
+              ((isRectangleNode || isPathNode) && isLayerMode)),
+          deletable:
+            !isViewMode &&
+            ((isImageNode && isBackgroundMode) || (isPathNode && isLayerMode)),
         };
-      });
+      };
+
+      return nodes.map((node) => ({
+        ...node,
+        ...getNodePermissions(node),
+      }));
     },
     [viewMode, editMode],
   );
 
   // 根據編輯模式和視圖模式動態更新所有節點的可選取性和可拖曳性
   useEffect(() => {
-    setNodes((currentNodes) => applyNodeStateRules(currentNodes));
+    setNodes((currentNodes: FlowNode[]) => applyNodeStateRules(currentNodes));
   }, [editMode, viewMode, setNodes, applyNodeStateRules]);
 
   // 使用直接狀態 undo/redo 系統
@@ -179,7 +141,7 @@ const WmsMapContent: FC<{
     initializeHistory,
     getHistorySummary,
   } = useDirectStateHistory({
-    maxHistorySize: 50,
+    maxHistorySize: UI_CONFIG.HISTORY_SIZE,
     debugMode: true,
   });
 
@@ -205,16 +167,19 @@ const WmsMapContent: FC<{
   }, [getHistorySummary, nodes.length, edges.length]);
 
   // 用於追蹤上一次的 initialNodes 以進行比較
-  const prevInitialNodesRef = useRef<Node[]>([]);
+  const prevInitialNodesRef = useRef<FlowNode[]>([]);
 
   // 監聽 initialNodes 變化，當接收到新資料時清空並載入
   useEffect(() => {
-    // 簡單的深度比較：比較節點 ID 和數量
-    const currentNodeIds = propsInitialNodes.map((n) => n.id).sort();
-    const prevNodeIds = prevInitialNodesRef.current.map((n) => n.id).sort();
+    const currentNodeIds = propsInitialNodes.map((n: FlowNode) => n.id).sort();
+    const prevNodeIds = prevInitialNodesRef.current
+      .map((n: FlowNode) => n.id)
+      .sort();
     const hasChanged =
       currentNodeIds.length !== prevNodeIds.length ||
-      currentNodeIds.some((id, index) => id !== prevNodeIds[index]);
+      currentNodeIds.some(
+        (id: string, index: number) => id !== prevNodeIds[index],
+      );
 
     if (hasChanged) {
       debugLog(
@@ -232,18 +197,15 @@ const WmsMapContent: FC<{
         },
       );
 
-      // 清空當前資料並載入新資料，套用正確的狀態規則
       const nodesWithCorrectStates = applyNodeStateRules(propsInitialNodes);
 
       setNodes(nodesWithCorrectStates);
       setEdges(propsInitialEdges);
 
-      // 清空相關狀態
       setSelectedNodes([]);
       setIsEditingPathPoints(false);
       setHoveredNodeId(null);
 
-      // 重新初始化歷史記錄系統，確保新資料被正確管理
       setTimeout(() => {
         initializeHistory(nodesWithCorrectStates, propsInitialEdges, editMode);
         debugSuccess(
@@ -256,9 +218,8 @@ const WmsMapContent: FC<{
               TEXT_MAPPINGS.OPERATIONS.LOAD_NEW_DATA,
           },
         );
-      }, 50); // 延遲確保 React 狀態更新完成
+      }, UI_CONFIG.NODE_SAVE_DELAY);
 
-      // 更新 ref
       prevInitialNodesRef.current = [...propsInitialNodes];
 
       debugSuccess(
@@ -293,12 +254,21 @@ const WmsMapContent: FC<{
         },
       );
     }
-  }, [propsInitialNodes, propsInitialEdges, nodes.length, edges.length, setNodes, setEdges, applyNodeStateRules, viewMode, editMode, initializeHistory]);
+  }, [
+    propsInitialNodes,
+    propsInitialEdges,
+    nodes.length,
+    edges.length,
+    setNodes,
+    setEdges,
+    applyNodeStateRules,
+    viewMode,
+    editMode,
+    initializeHistory,
+  ]);
 
   // 初始化歷史記錄（只在組件首次載入或節點/邊清空時執行）
   useEffect(() => {
-    // 只有在沒有歷史記錄或節點/邊為空時才初始化
-    // 避免與動態載入時的明確初始化衝突
     if (nodes.length > 0 || edges.length > 0) {
       const summary = getHistorySummary();
 
@@ -315,52 +285,46 @@ const WmsMapContent: FC<{
         initializeHistory(nodes, edges, editMode);
       }
     }
-  }, [edges, initializeHistory, nodes, getHistorySummary]);
+  }, [edges, initializeHistory, nodes, getHistorySummary, editMode]);
 
   // 立即觸發顏色變更記錄（當執行其他操作時）
-  const flushColorChangeHistory = useCallback(() => {
+  const flushColorChangeHistory = useCallback((): void => {
     if (colorChangeTimeoutRef.current) {
       clearTimeout(colorChangeTimeoutRef.current);
-      // 立即記錄當前狀態
       saveState(nodes, edges, 'change-color', editMode);
       colorChangeTimeoutRef.current = null;
     }
   }, [saveState, nodes, edges, editMode]);
 
-  // 改進的 onNodesChange，記錄各種節點變更操作
+  // 其他方法保持不變，但移除 console.log
   const onNodesChange = useCallback(
-    (changes: any[]) => {
-      // 調試日誌：記錄所有變更類型
+    (changes: FlowNodeChange[]): void => {
       if (changes.length > 0) {
         debugLog(
           'reactFlow',
           'onNodesChange 觸發:',
-          changes.map((c) => ({ type: c.type, id: c.id || c.item?.id })),
+          changes.map((c) => ({
+            type: c.type,
+            id: 'id' in c ? c.id : 'Unknown',
+          })),
         );
       }
 
       onNodesChangeOriginal(changes);
 
-      // 檢查是否有拖動結束的操作
       const hasDragEnd = changes.some(
         (change) => change.type === 'position' && change.dragging === false,
       );
 
-      // 檢查是否有資料變更（包含文字編輯），但忽略調整大小中的變更
       const hasDataChange = changes.some(
-        (change) =>
-          change.type === 'replace' &&
-          // 忽略正在調整大小的節點的資料變更
-          !change.item?.data?.isResizing,
+        (change) => change.type === 'replace' && !change.item?.data?.isResizing,
       );
 
       if (hasDragEnd) {
-        // 拖動結束後記錄狀態
         setTimeout(() => {
           saveState(nodes, edges, 'move-shape', editMode);
         }, 10);
       } else if (hasDataChange) {
-        // 資料變更（包含文字編輯）立即記錄歷史
         const changedNodeIds = changes
           .filter((c) => c.type === 'replace')
           .map((c) => c.id || c.item?.id)
@@ -368,10 +332,15 @@ const WmsMapContent: FC<{
 
         debugLog('nodes', '檢測到資料變更:', { changedNodes: changedNodeIds });
 
-        // 立即記錄資料變更歷史（文字編輯會自動包含在 React Flow 節點資料中）
         setTimeout(() => {
-          flushColorChangeHistory(); // 先清理顏色變更記錄
-          saveState(nodes, edges, `data-change-${changedNodeIds.join(',')}`, editMode);
+          flushColorChangeHistory();
+          saveState(
+            nodes,
+            edges,
+            `data-change-${changedNodeIds.join(',')}`,
+            editMode,
+          );
+
           debugSuccess('history', '立即記錄資料變更歷史:', {
             changedNodes: changedNodeIds,
             operation: `data-change-${changedNodeIds.join(',')}`,
@@ -379,21 +348,26 @@ const WmsMapContent: FC<{
         }, 10);
       }
     },
-    [onNodesChangeOriginal, saveState, flushColorChangeHistory, nodes, edges, editMode],
+    [
+      onNodesChangeOriginal,
+      saveState,
+      flushColorChangeHistory,
+      nodes,
+      edges,
+      editMode,
+    ],
   );
 
   const onConnect = useCallback(
-    (params: Connection) => {
-      setEdges((eds) => addEdge(params, eds));
+    (params: Connection): void => {
+      setEdges((eds: FlowEdge[]) => addEdge(params, eds));
     },
     [setEdges],
   );
 
   const handleSave = () => {
-    // 轉換 React Flow 節點資料為符合 typings.ts 定義的格式
     const mapData = transformNodesToMapData(nodes);
 
-    // 輸出格式化的資料到 console
     logMapData(mapData);
 
     if (onSave) {
@@ -405,16 +379,14 @@ const WmsMapContent: FC<{
     const input = document.createElement('input');
 
     input.type = 'file';
-    input.accept = 'image/png,image/jpeg,image/jpg';
-    input.multiple = true; // 啟用多檔案選擇
+    input.accept = SUPPORTED_IMAGE_TYPES.ACCEPT;
+    input.multiple = true;
     input.onchange = (e) => {
       const files = Array.from((e.target as HTMLInputElement).files || []);
 
       if (files.length > 0) {
-        // 處理每個檔案
         files.forEach((file: File, index: number) => {
-          // 檢查檔案類型
-          if (!file.type.match(/^image\/(png|jpeg|jpg)$/)) {
+          if (!file.type.match(SUPPORTED_IMAGE_TYPES.PATTERN)) {
             alert(
               `檔案 ${file.name} 不是有效的圖片格式，請選擇 PNG 或 JPG 格式`,
             );
@@ -422,17 +394,11 @@ const WmsMapContent: FC<{
             return;
           }
 
-          // 建立檔案 URL
           const imageUrl = URL.createObjectURL(file);
-
-          // 建立圖片元素以取得尺寸
           const img = new Image();
 
           img.onload = () => {
-            // 使用工具函數計算適當尺寸
             const { width, height } = calculateImageSize(img.width, img.height);
-
-            // 使用工具函數計算錯開位置，優先使用當前 viewport 位置
             const viewport = getViewport();
             const position = calculateStaggeredPosition(
               index,
@@ -443,13 +409,12 @@ const WmsMapContent: FC<{
               viewport.zoom,
             );
 
-            // 建立新的圖片節點
             const newNode = {
               id: `image-${Date.now()}-${index}`,
               type: 'imageNode',
               position,
-              selectable: editMode === EditMode.BACKGROUND, // 根據當前編輯模式設置可選取性
-              draggable: editMode === EditMode.BACKGROUND, // 根據當前編輯模式設置可拖曳性
+              selectable: editMode === EditMode.BACKGROUND,
+              draggable: editMode === EditMode.BACKGROUND,
               data: {
                 imageUrl,
                 width,
@@ -460,22 +425,28 @@ const WmsMapContent: FC<{
               },
             };
 
-            // 在畫布上添加節點，稍微延遲以確保正確堆疊
             setTimeout(() => {
-              setNodes((nds) => {
-                // 計算下一個 zIndex
-                const maxZIndex = Math.max(...nds.map((n) => n.zIndex || 0), 0);
+              setNodes((nds: FlowNode[]) => {
+                const maxZIndex = Math.max(
+                  ...nds.map((n: FlowNode) => n.zIndex || 0),
+                  0,
+                );
+
                 const nodeWithZIndex = { ...newNode, zIndex: maxZIndex + 1 };
                 const newNodes = [...nds, nodeWithZIndex];
 
-                // 每張圖片上傳後都記錄狀態
                 setTimeout(() => {
-                  saveState(newNodes, edges, `upload-image-${file.name}`, editMode);
-                }, 50);
+                  saveState(
+                    newNodes,
+                    edges,
+                    `upload-image-${file.name}`,
+                    editMode,
+                  );
+                }, UI_CONFIG.NODE_SAVE_DELAY);
 
                 return newNodes;
               });
-            }, index * 100); // 每張圖片間隔 100ms 延遲
+            }, index * UI_CONFIG.STAGGER_DELAY);
           };
 
           img.src = imageUrl;
@@ -486,13 +457,13 @@ const WmsMapContent: FC<{
     input.click();
   };
 
-  const handleDeleteAll = useCallback(() => {
+  const handleDeleteAll = useCallback((): void => {
     if (editMode === EditMode.BACKGROUND) {
-      // 刪除所有圖片節點（背景圖片）
-      setNodes((nds) => {
-        const newNodes = nds.filter((node) => node.type !== 'imageNode');
+      setNodes((nds: FlowNode[]) => {
+        const newNodes = nds.filter(
+          (node: FlowNode) => node.type !== 'imageNode',
+        );
 
-        // 刪除圖片後記錄狀態
         setTimeout(() => {
           saveState(newNodes, edges, 'delete-images', editMode);
         }, 10);
@@ -500,21 +471,19 @@ const WmsMapContent: FC<{
         return newNodes;
       });
     } else if (editMode === EditMode.LAYER) {
-      // 刪除所有圖層節點（矩形和路徑）
-      setNodes((nds) => {
+      setNodes((nds: FlowNode[]) => {
         const newNodes = nds.filter(
-          (node) => node.type !== 'rectangleNode' && node.type !== 'pathNode',
+          (node: FlowNode) =>
+            node.type !== 'rectangleNode' && node.type !== 'pathNode',
         );
 
-        // 刪除圖層後記錄狀態
         setTimeout(() => {
-          saveState(newNodes, [], 'delete-layers', editMode); // edges 也被清空
+          saveState(newNodes, [], 'delete-layers', editMode);
         }, 10);
 
         return newNodes;
       });
 
-      // 刪除圖層元素時也清除邊線
       setEdges([]);
     }
   }, [editMode, setNodes, saveState, edges, setEdges]);
@@ -524,15 +493,17 @@ const WmsMapContent: FC<{
       const width = Math.abs(endX - startX);
       const height = Math.abs(endY - startY);
 
-      if (width < MIN_RECTANGLE_SIZE || height < MIN_RECTANGLE_SIZE) return; // 最小尺寸檢查
+      if (width < MIN_RECTANGLE_SIZE || height < MIN_RECTANGLE_SIZE) return;
 
-      flushColorChangeHistory(); // 先清理顏色變更記錄
+      flushColorChangeHistory();
 
-      setNodes((nds) => {
-        // Calculate next zIndex
-        const maxZIndex = Math.max(...nds.map((n) => n.zIndex || 0), 0);
+      setNodes((nds: FlowNode[]) => {
+        const maxZIndex = Math.max(
+          ...nds.map((n: FlowNode) => n.zIndex || 0),
+          0,
+        );
 
-        const newRectangle = {
+        const newRectangle: FlowNode = {
           id: `rectangle-${Date.now()}`,
           type: 'rectangleNode',
           position: {
@@ -540,8 +511,8 @@ const WmsMapContent: FC<{
             y: Math.min(startY, endY),
           },
           zIndex: maxZIndex + 1,
-          selectable: editMode === EditMode.LAYER, // 根據當前編輯模式設置可選取性
-          draggable: editMode === EditMode.LAYER, // 根據當前編輯模式設置可拖曳性
+          selectable: editMode === EditMode.LAYER,
+          draggable: editMode === EditMode.LAYER,
           data: {
             width,
             height,
@@ -552,15 +523,12 @@ const WmsMapContent: FC<{
 
         const newNodes = [...nds, newRectangle];
 
-        // 創建矩形後記錄狀態
         setTimeout(() => {
           saveState(newNodes, edges, 'draw-rectangle', editMode);
         }, 10);
 
         return newNodes;
       });
-
-      // 保持繪圖模式以進行連續繪圖
     },
     [
       flushColorChangeHistory,
@@ -574,15 +542,17 @@ const WmsMapContent: FC<{
 
   const handleCreatePath = useCallback(
     (points: { x: number; y: number }[]) => {
-      if (points.length < 2) return; // 路徑至少需要 2 個點
+      if (points.length < 2) return;
 
-      flushColorChangeHistory(); // 先清理顏色變更記錄
+      flushColorChangeHistory();
 
-      setNodes((nds) => {
-        // Calculate next zIndex
-        const maxZIndex = Math.max(...nds.map((n) => n.zIndex || 0), 0);
+      setNodes((nds: FlowNode[]) => {
+        const maxZIndex = Math.max(
+          ...nds.map((n: FlowNode) => n.zIndex || 0),
+          0,
+        );
 
-        const newPath = {
+        const newPath: FlowNode = {
           id: `path-${Date.now()}`,
           type: 'pathNode',
           position: {
@@ -590,8 +560,8 @@ const WmsMapContent: FC<{
             y: Math.min(...points.map((p) => p.y)),
           },
           zIndex: maxZIndex + 1,
-          selectable: editMode === EditMode.LAYER, // 根據當前編輯模式設置可選取性
-          draggable: editMode === EditMode.LAYER, // 根據當前編輯模式設置可拖曳性
+          selectable: editMode === EditMode.LAYER,
+          draggable: editMode === EditMode.LAYER,
           data: {
             points,
             color: selectedColor,
@@ -602,15 +572,12 @@ const WmsMapContent: FC<{
 
         const newNodes = [...nds, newPath];
 
-        // 創建路徑後記錄狀態
         setTimeout(() => {
           saveState(newNodes, edges, 'draw-path', editMode);
         }, 10);
 
         return newNodes;
       });
-
-      // 保持繪圖模式以進行連續繪圖
     },
     [
       flushColorChangeHistory,
@@ -622,7 +589,7 @@ const WmsMapContent: FC<{
     ],
   );
 
-  // 復原/重做功能實作 - 直接設置狀態
+  // 復原/重做功能實作
   const handleUndo = useCallback(() => {
     debugLog('history', '執行 Undo - 按鈕點擊');
     const result = undo();
@@ -657,9 +624,8 @@ const WmsMapContent: FC<{
 
   const handleSelectionChange = useCallback(
     (params: OnSelectionChangeParams) => {
-      setSelectedNodes(params.nodes);
+      setSelectedNodes(params.nodes as FlowNode[]);
 
-      // 如果選擇了單一可著色節點，更新顏色選擇器以顯示其顏色
       if (
         params.nodes.length === 1 &&
         (params.nodes[0].type === 'rectangleNode' ||
@@ -680,16 +646,17 @@ const WmsMapContent: FC<{
     (color: string) => {
       onColorChange(color);
 
-      // 更新選中可著色節點（矩形和路徑）的顏色
       const selectedColorableNodes = selectedNodes.filter(
         (node) => node.type === 'rectangleNode' || node.type === 'pathNode',
       );
 
       if (selectedColorableNodes.length > 0) {
-        setNodes((nds) => {
-          const newNodes = nds.map((node) => {
+        setNodes((nds: FlowNode[]) => {
+          const newNodes = nds.map((node: FlowNode) => {
             if (
-              selectedColorableNodes.some((selected) => selected.id === node.id)
+              selectedColorableNodes.some(
+                (selected: FlowNode) => selected.id === node.id,
+              )
             ) {
               return { ...node, data: { ...node.data, color } };
             }
@@ -697,16 +664,14 @@ const WmsMapContent: FC<{
             return node;
           });
 
-          // 清除之前的延遲記錄
           if (colorChangeTimeoutRef.current) {
             clearTimeout(colorChangeTimeoutRef.current);
           }
 
-          // 延遲記錄顏色變更歷史 (800ms 後記錄，避免頻繁切換時產生過多記錄)
           colorChangeTimeoutRef.current = setTimeout(() => {
             saveState(newNodes, edges, 'change-color', editMode);
             colorChangeTimeoutRef.current = null;
-          }, 800);
+          }, UI_CONFIG.COLOR_CHANGE_DELAY);
 
           return newNodes;
         });
@@ -715,7 +680,7 @@ const WmsMapContent: FC<{
     [selectedNodes, setNodes, onColorChange, saveState, edges, editMode],
   );
 
-  // 處理文字編輯完成（手動觸發歷史記錄）
+  // 其他回調函數也移除 console.log 並使用 debugLog
   const handleTextEditComplete = useCallback(
     (id: string, oldText: string, newText: string) => {
       debugLog('nodes', '文字編輯完成，手動記錄歷史:', {
@@ -724,11 +689,9 @@ const WmsMapContent: FC<{
         newText,
       });
 
-      flushColorChangeHistory(); // 先清理顏色變更記錄
+      flushColorChangeHistory();
 
-      // 使用 setTimeout 確保能獲取到更新後的 nodes 狀態
       setTimeout(() => {
-        // 通過 React Flow hooks 獲取最新的節點和邊狀態
         const currentNodes = getNodes();
         const currentEdges = getEdges();
 
@@ -736,16 +699,22 @@ const WmsMapContent: FC<{
           id,
           nodesCount: currentNodes.length,
           edgesCount: currentEdges.length,
-          updatedNode: currentNodes.find((n: any) => n.id === id)?.data?.label,
+          updatedNode: (currentNodes as FlowNode[]).find(
+            (n: FlowNode) => n.id === id,
+          )?.data?.label,
         });
 
-        saveState(currentNodes, currentEdges, `text-edit-${id}`, editMode);
-      }, 20); // 增加延遲時間確保狀態更新完成
+        saveState(
+          currentNodes as FlowNode[],
+          currentEdges as FlowEdge[],
+          `text-edit-${id}`,
+          editMode,
+        );
+      }, 20);
     },
     [saveState, flushColorChangeHistory, getNodes, getEdges, editMode],
   );
 
-  // 處理路徑節點點位變更（記錄到歷史中）
   const handlePathPointsChange = useCallback(
     (
       id: string,
@@ -758,11 +727,9 @@ const WmsMapContent: FC<{
         newPoints,
       });
 
-      flushColorChangeHistory(); // 先清理顏色變更記錄
+      flushColorChangeHistory();
 
-      // 使用 setTimeout 確保能獲取到更新後的 nodes 狀態
       setTimeout(() => {
-        // 通過 React Flow hooks 獲取最新的節點和邊狀態
         const currentNodes = getNodes();
         const currentEdges = getEdges();
 
@@ -771,53 +738,60 @@ const WmsMapContent: FC<{
           nodesCount: currentNodes.length,
           edgesCount: currentEdges.length,
           updatedPointsCount:
-            (currentNodes.find((n: any) => n.id === id)?.data?.points as any[])
-              ?.length || 0,
+            (
+              (currentNodes as FlowNode[]).find((n: FlowNode) => n.id === id)
+                ?.data?.points as Array<{ x: number; y: number }>
+            )?.length || 0,
         });
 
-        saveState(currentNodes, currentEdges, `path-edit-${id}`, editMode);
+        saveState(
+          currentNodes as FlowNode[],
+          currentEdges as FlowEdge[],
+          `path-edit-${id}`,
+          editMode,
+        );
       }, 20);
     },
     [saveState, flushColorChangeHistory, getNodes, getEdges, editMode],
   );
 
-  // 處理路徑點拖曳狀態變更
   const handlePathPointDragStateChange = useCallback((isDragging: boolean) => {
     debugLog('events', '路徑點拖曳狀態變更:', isDragging);
     setIsEditingPathPoints(isDragging);
   }, []);
 
-  // 處理節點 hover 事件 (React Flow 內建事件)
   const handleNodeMouseEnter = useCallback(
-    (_event: React.MouseEvent, node: Node) => {
-      // 只在檢視模式下啟用 hover 效果
+    (_event: React.MouseEvent, node: ReactFlowNode) => {
+      const flowNode = node as unknown as FlowNode;
+
       if (
         viewMode === ViewMode.VIEW &&
-        (node.type === 'rectangleNode' || node.type === 'pathNode')
+        (flowNode.type === 'rectangleNode' || flowNode.type === 'pathNode')
       ) {
         debugLog('events', 'Node hover enter (React Flow)', {
-          id: node.id.slice(-4),
-          type: node.type,
+          id: flowNode.id.slice(-4),
+          type: flowNode.type,
           viewMode,
-          originalColor: node.data?.color,
+          originalColor: flowNode.data?.color,
         });
 
-        setHoveredNodeId(node.id);
+        setHoveredNodeId(flowNode.id);
       }
     },
     [viewMode],
   );
 
   const handleNodeMouseLeave = useCallback(
-    (_event: React.MouseEvent, node: Node) => {
-      // 只在檢視模式下處理 hover 效果
+    (_event: React.MouseEvent, node: ReactFlowNode) => {
+      const flowNode = node as unknown as FlowNode;
+
       if (
         viewMode === ViewMode.VIEW &&
-        (node.type === 'rectangleNode' || node.type === 'pathNode')
+        (flowNode.type === 'rectangleNode' || flowNode.type === 'pathNode')
       ) {
         debugLog('events', 'Node hover leave (React Flow)', {
-          id: node.id.slice(-4),
-          type: node.type,
+          id: flowNode.id.slice(-4),
+          type: flowNode.type,
           viewMode,
         });
 
@@ -827,22 +801,21 @@ const WmsMapContent: FC<{
     [viewMode],
   );
 
-  // 處理節點點擊事件 (React Flow 內建事件)
   const handleNodeClick = useCallback(
-    (_event: React.MouseEvent, node: Node) => {
+    (_event: React.MouseEvent, node: ReactFlowNode) => {
+      const flowNode = node as unknown as FlowNode;
+
       debugLog('events', 'Node clicked (React Flow)', {
-        id: node.id.slice(-4),
-        type: node.type,
+        id: flowNode.id.slice(-4),
+        type: flowNode.type,
         viewMode,
         editMode,
       });
 
-      // 輸出詳細的圖形資訊（和儲存時相同的格式）
-      logNodeData(node);
+      logNodeData(flowNode);
 
-      // 如果父組件提供了 callBack，將點擊資訊傳遞給父組件
       if (onNodeClick) {
-        const nodeClickInfo = transformNodeToClickInfo(node);
+        const nodeClickInfo = transformNodeToClickInfo(flowNode);
 
         if (nodeClickInfo) {
           debugLog('events', '將點擊資訊傳遞給父組件:', nodeClickInfo);
@@ -859,12 +832,10 @@ const WmsMapContent: FC<{
     setShowBackground(show);
   }, []);
 
-  // 追蹤 showBackground 狀態變化
   useEffect(() => {
     debugLog('ui', 'showBackground 狀態變化:', showBackground);
   }, [showBackground]);
 
-  // 集中式複製貼上功能
   const handleCopyPasteSelectedNodes = useCallback(() => {
     if (selectedNodes.length === 0) {
       debugLog('keyboard', 'Command+D 複製貼上：沒有選中的節點');
@@ -872,9 +843,11 @@ const WmsMapContent: FC<{
       return;
     }
 
-    // 只複製可複製的節點類型（圖片、矩形和路徑節點）
     const copyableNodes = selectedNodes.filter(
-      (node) => node.type === 'imageNode' || node.type === 'rectangleNode' || node.type === 'pathNode',
+      (node) =>
+        node.type === 'imageNode' ||
+        node.type === 'rectangleNode' ||
+        node.type === 'pathNode',
     );
 
     if (copyableNodes.length === 0) {
@@ -883,48 +856,55 @@ const WmsMapContent: FC<{
       return;
     }
 
-    setNodes((currentNodes) => {
-      const maxZIndex = Math.max(...currentNodes.map((n) => n.zIndex || 0), 0);
+    setNodes((currentNodes: FlowNode[]): FlowNode[] => {
+      const maxZIndex = Math.max(
+        ...currentNodes.map((n: FlowNode) => n.zIndex || 0),
+        0,
+      );
+
       const newNodes = [...currentNodes];
 
-      copyableNodes.forEach((nodeToClone, index) => {
-        let copiedNode;
+      const createCopiedNode = (nodeToClone: FlowNode): FlowNode | null => {
+        const nodeCreationMap: Record<string, () => FlowNode> = {
+          imageNode: () =>
+            createImageCopy({
+              currentNode: nodeToClone,
+              nodeType: 'imageNode',
+              data: nodeToClone.data,
+            }) as FlowNode,
+          rectangleNode: () =>
+            createRectangleCopy({
+              currentNode: nodeToClone,
+              nodeType: 'rectangleNode',
+              data: nodeToClone.data,
+            }) as FlowNode,
+          pathNode: () =>
+            createPathCopy({
+              currentNode: nodeToClone,
+              nodeType: 'pathNode',
+              data: nodeToClone.data,
+            }) as FlowNode,
+        };
 
-        if (nodeToClone.type === 'imageNode') {
-          copiedNode = createImageCopy({
-            currentNode: nodeToClone,
-            nodeType: 'imageNode',
-            data: nodeToClone.data,
-          });
-        } else if (nodeToClone.type === 'rectangleNode') {
-          copiedNode = createRectangleCopy({
-            currentNode: nodeToClone,
-            nodeType: 'rectangleNode',
-            data: nodeToClone.data,
-          });
-        } else if (nodeToClone.type === 'pathNode') {
-          copiedNode = createPathCopy({
-            currentNode: nodeToClone,
-            nodeType: 'pathNode',
-            data: nodeToClone.data,
-          });
-        }
+        return nodeCreationMap[nodeToClone.type]?.() || null;
+      };
 
-        if (copiedNode) {
-          // 為每個複製的節點設定遞增的 zIndex，確保新節點在最上層
-          const nodeWithZIndex = {
-            ...copiedNode,
-            zIndex: maxZIndex + 1 + index,
-          };
+      const copiedNodes = copyableNodes
+        .map((nodeToClone, index) => {
+          const copiedNode = createCopiedNode(nodeToClone);
 
-          newNodes.push(nodeWithZIndex);
-        }
-      });
+          return copiedNode
+            ? {
+                ...copiedNode,
+                zIndex: maxZIndex + 1 + index,
+              }
+            : null;
+        })
+        .filter((node): node is NonNullable<typeof node> => node !== null);
 
-      return newNodes;
+      return [...newNodes, ...copiedNodes];
     });
 
-    // 記錄歷史狀態
     setTimeout(() => {
       saveState(nodes, edges, 'copy-paste-nodes', editMode);
     }, 10);
@@ -939,10 +919,9 @@ const WmsMapContent: FC<{
     );
   }, [selectedNodes, setNodes, nodes, edges, saveState, editMode]);
 
-  // 全域鍵盤快捷鍵處理 (Command+D 複製貼上)
+  // 全域鍵盤快捷鍵處理
   useEffect(() => {
     const handleGlobalKeyDown = (event: KeyboardEvent) => {
-      // 檢查是否正在編輯文字 (避免在文字輸入時觸發)
       const activeElement = document.activeElement;
       const isEditingText =
         activeElement &&
@@ -951,37 +930,27 @@ const WmsMapContent: FC<{
         activeElement.getAttribute('type') !== 'color';
 
       if (isEditingText) {
-        return; // 如果正在編輯文字，不處理快捷鍵
+        return;
       }
 
-      // Command+D (⌘+D) - 複製並貼上選中的節點
       if (event.metaKey && event.key.toLowerCase() === 'd') {
-        event.preventDefault(); // 防止瀏覽器的預設書籤行為
+        event.preventDefault();
         event.stopPropagation();
-
         handleCopyPasteSelectedNodes();
       }
     };
 
-    // 添加全域鍵盤事件監聽器
     document.addEventListener('keydown', handleGlobalKeyDown, true);
 
     return () => {
       document.removeEventListener('keydown', handleGlobalKeyDown, true);
     };
-  }, [handleCopyPasteSelectedNodes]); // 依賴 handleCopyPasteSelectedNodes 函數
+  }, [handleCopyPasteSelectedNodes]);
 
   return (
     <>
       <Breadcrumb
-        warehouseIds={[
-          '10001',
-          '10001A',
-          '10002',
-          '100002B',
-          '100003',
-          '100003B',
-        ]}
+        warehouseIds={[...DEFAULT_WAREHOUSE_IDS]}
         onWarehouseClick={onBreadcrumbClick}
         onWarehouseNameEdit={onWarehouseNameEdit}
       />
@@ -1029,7 +998,6 @@ const WmsMapContent: FC<{
         showBackground={showBackground}
       />
 
-      {/* ViewModeToolbar - 只在檢視模式下顯示 */}
       <ViewModeToolbar
         viewMode={viewMode}
         showBackground={showBackground}
@@ -1039,122 +1007,4 @@ const WmsMapContent: FC<{
   );
 };
 
-const WmsMapModal: FC<WmsMapModalProps> = ({
-  onClose,
-  open,
-  viewMode: initialViewMode = ViewMode.EDIT,
-  colorPalette,
-  onNodeClick,
-  onSave,
-  onBreadcrumbClick,
-  onWarehouseNameEdit,
-  initialNodes,
-  initialEdges,
-  debugMode = false, // 預設為關閉
-}) => {
-  const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
-  const [editMode, setEditMode] = useState<EditMode>(EditMode.BACKGROUND);
-  const [drawingMode, setDrawingMode] = useState<DrawingMode>(DrawingMode.NONE);
-  const [selectedColor, setSelectedColor] = useState<string>(() => {
-    // 如果有提供 colorPalette，使用第一個顏色作為默認值
-    if (colorPalette && colorPalette.length > 0) {
-      return colorPalette[0];
-    }
-
-    return DEFAULT_RECTANGLE_COLOR;
-  });
-
-  // 設定 debug 模式
-  useEffect(() => {
-    setDebugMode(debugMode);
-  }, [debugMode]);
-
-  // 同步外部 viewMode 變化
-  useEffect(() => {
-    setViewMode(initialViewMode);
-  }, [initialViewMode]);
-
-  // 當 colorPalette 變化時，確保選中的顏色仍然有效
-  useEffect(() => {
-    if (colorPalette && colorPalette.length > 0) {
-      // 如果當前選中的顏色不在新的 palette 中，切換到第一個顏色
-      if (!colorPalette.includes(selectedColor)) {
-        setSelectedColor(colorPalette[0]);
-      }
-    }
-  }, [colorPalette, selectedColor]);
-
-  const handleViewModeToggle = useCallback(() => {
-    setViewMode((prev) =>
-      prev === ViewMode.EDIT ? ViewMode.VIEW : ViewMode.EDIT,
-    );
-  }, []);
-
-  const handleEditModeChange = useCallback((mode: EditMode) => {
-    setEditMode(mode);
-    setDrawingMode(DrawingMode.NONE); // 切換編輯模式時重設繪圖模式
-  }, []);
-
-  const handleToggleRectangleTool = useCallback(() => {
-    if (editMode !== EditMode.LAYER) return;
-
-    setDrawingMode((prev) =>
-      prev === DrawingMode.RECTANGLE ? DrawingMode.NONE : DrawingMode.RECTANGLE,
-    );
-  }, [editMode]);
-
-  const handleTogglePenTool = useCallback(() => {
-    if (editMode !== EditMode.LAYER) return;
-
-    setDrawingMode((prev) =>
-      prev === DrawingMode.PEN ? DrawingMode.NONE : DrawingMode.PEN,
-    );
-  }, [editMode]);
-
-  const handleColorChange = useCallback((color: string) => {
-    setSelectedColor(color);
-  }, []);
-
-  return (
-    <>
-      {/* 浮動在遮罩層上的測試按鈕 */}
-      <ViewModeToggle
-        viewMode={viewMode}
-        onToggle={handleViewModeToggle}
-        isVisible={open} // 只有當 Modal 開啟時才顯示
-      />
-
-      <Modal open={open} onClose={onClose} className={styles.modal}>
-        <ModalHeader className={styles.modalHeader}>
-          <div className={styles.headerLeft}>
-            <span className={styles.title}>編輯倉儲空間</span>
-          </div>
-        </ModalHeader>
-
-        <div className={styles.content}>
-          <ReactFlowProvider>
-            <WmsMapContent
-              editMode={editMode}
-              drawingMode={drawingMode}
-              selectedColor={selectedColor}
-              viewMode={viewMode}
-              colorPalette={colorPalette}
-              onEditModeChange={handleEditModeChange}
-              onToggleRectangleTool={handleToggleRectangleTool}
-              onTogglePenTool={handleTogglePenTool}
-              onColorChange={handleColorChange}
-              onNodeClick={onNodeClick}
-              onSave={onSave}
-              onBreadcrumbClick={onBreadcrumbClick}
-              onWarehouseNameEdit={onWarehouseNameEdit}
-              initialNodes={initialNodes}
-              initialEdges={initialEdges}
-            />
-          </ReactFlowProvider>
-        </div>
-      </Modal>
-    </>
-  );
-};
-
-export default WmsMapModal;
+export default WMSMapContent;

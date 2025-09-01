@@ -1,0 +1,14 @@
+.modal {
+  width: 95vw;
+  height: 95vh;
+  max-width: none;
+  max-height: none;
+  margin: 2.5vh auto;
+}
+
+.content {
+  position: relative;
+  height: calc(95vh - 80px); // 減去 header 高度
+  padding: 0;
+  overflow: hidden;
+}

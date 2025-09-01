@@ -136,7 +136,7 @@ export interface PathNodeClickInfo extends NodeClickInfo {
 /**
  * 所有圖形點擊資訊的聯合類型
  */
-export type WmsNodeClickInfo =
+export type WMSNodeClickInfo =
   | ImageNodeClickInfo
   | RectangleNodeClickInfo
   | PathNodeClickInfo;
