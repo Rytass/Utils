@@ -65,40 +65,6 @@ export const exportStoryData = (
 };
 
 /**
- * 取得所有可用的測試資料類型及其描述
- */
-export const getAvailableDataTypes = (): Record<
-  string,
-  { data: Map; name: string; description: string }
-> => ({
-  simple: {
-    data: simpleMapData,
-    name: '簡單測試資料',
-    description: '1個背景 + 2個區域',
-  },
-  complex: {
-    data: mockMapData,
-    name: '完整倉庫資料',
-    description: '2個背景 + 8個區域',
-  },
-  empty: {
-    data: emptyMapData,
-    name: '空白資料',
-    description: '無背景和區域',
-  },
-  large: {
-    data: largeMapData,
-    name: '大量測試資料',
-    description: '5個背景 + 30個區域',
-  },
-  polygons: {
-    data: closedPolygonTestData,
-    name: '閉合多邊形測試',
-    description: '6種閉合圖形',
-  },
-});
-
-/**
  * 驗證轉換結果的完整性（供 Storybook 使用）
  */
 export const validateStoryTransformationResult = (
