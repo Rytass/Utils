@@ -1,0 +1,43 @@
+{
+  "name": "@rytass/wms-map-react-components",
+  "version": "0.1.0",
+  "description": "Rytass Warehouse Management System Map React Components",
+  "keywords": [
+    "rytass",
+    "wms",
+    "react",
+    "map",
+    "warehouse"
+  ],
+  "homepage": "https://github.com/Rytass/Utils#readme",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rytass/Utils.git"
+  },
+  "scripts": {
+    "clean": "npm run build:clean",
+    "build:clean": "node ../../scripts/cleanBuild.js",
+    "build": "npm run build:clean && node ../../scripts/build.js",
+    "release": "lerna version patch && npm run build && lerna publish from-package"
+  },
+  "bugs": {
+    "url": "https://github.com/Rytass/Utils/issues"
+  },
+  "dependencies": {
+    "@xyflow/react": "^12.3.2"
+  },
+  "peerDependencies": {
+    "@mezzanine-ui/react": "*",
+    "@mezzanine-ui/react-hook-form-v2": "*",
+    "react": "*",
+    "react-dom": "*",
+    "react-hook-form": "*"
+  },
+  "devDependencies": {
+    "@storybook/addon-essentials": "^8.6.14",
+    "@storybook/react": "^8.6.14",
+    "@storybook/react-vite": "^8.6.14",
+    "storybook": "^8.6.14"
+  }
+}
