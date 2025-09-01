@@ -5,7 +5,11 @@
 import request from 'supertest';
 import { CVS, OrderState } from '@rytass/payments';
 import { getAddMac } from '../__utils__/add-mac';
-import { Channel, ECPayCallbackPaymentType, ECPayPayment } from '@rytass/payments-adapter-ecpay';
+import {
+  Channel,
+  ECPayCallbackPaymentType,
+  ECPayPayment,
+} from '@rytass/payments-adapter-ecpay';
 import http, { createServer } from 'http';
 import { DateTime } from 'luxon';
 import { ECPayChannelCVS } from 'payments-adapter-ecpay/src/typings';
@@ -22,11 +26,13 @@ describe('ECPayPayment (CVS)', () => {
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
-      mockServer.listen(0, listeningListener);
+    mockedListen.mockImplementationOnce(
+      (port?: any, hostname?: any, listeningListener?: () => void) => {
+        mockServer.listen(0, listeningListener);
 
-      return mockServer;
-    });
+        return mockServer;
+      },
+    );
 
     const mockedClose = jest.spyOn(mockServer, 'close');
 
@@ -44,16 +50,20 @@ describe('ECPayPayment (CVS)', () => {
       const payment = new ECPayPayment<ECPayChannelCVS>({
         withServer: true,
         onServerListen: () => {
-          expect(() => payment.prepare({
-            // @ts-ignore: Unreachable code error
-            channel: Channel.VIRTUAL_ACCOUNT,
-            cvsExpireMinutes: 1100,
-            items: [{
-              name: 'Test',
-              unitPrice: 100,
-              quantity: 1,
-            }],
-          })).rejects.toThrowError();
+          expect(() =>
+            payment.prepare({
+              // @ts-ignore: Unreachable code error
+              channel: Channel.VIRTUAL_ACCOUNT,
+              cvsExpireMinutes: 1100,
+              items: [
+                {
+                  name: 'Test',
+                  unitPrice: 100,
+                  quantity: 1,
+                },
+              ],
+            }),
+          ).rejects.toThrow();
 
           payment._server?.close(done);
         },
@@ -64,25 +74,33 @@ describe('ECPayPayment (CVS)', () => {
       const payment = new ECPayPayment<ECPayChannelCVS>({
         withServer: true,
         onServerListen: () => {
-          expect(() => payment.prepare({
-            channel: Channel.CVS_KIOSK,
-            cvsExpireMinutes: 0,
-            items: [{
-              name: 'Test',
-              unitPrice: 100,
-              quantity: 1,
-            }],
-          })).rejects.toThrowError();
+          expect(() =>
+            payment.prepare({
+              channel: Channel.CVS_KIOSK,
+              cvsExpireMinutes: 0,
+              items: [
+                {
+                  name: 'Test',
+                  unitPrice: 100,
+                  quantity: 1,
+                },
+              ],
+            }),
+          ).rejects.toThrow();
 
-          expect(() => payment.prepare({
-            channel: Channel.CVS_KIOSK,
-            cvsExpireMinutes: 99999,
-            items: [{
-              name: 'Test',
-              unitPrice: 100,
-              quantity: 1,
-            }],
-          })).rejects.toThrowError();
+          expect(() =>
+            payment.prepare({
+              channel: Channel.CVS_KIOSK,
+              cvsExpireMinutes: 99999,
+              items: [
+                {
+                  name: 'Test',
+                  unitPrice: 100,
+                  quantity: 1,
+                },
+              ],
+            }),
+          ).rejects.toThrow();
 
           payment._server?.close(done);
         },
@@ -95,11 +113,13 @@ describe('ECPayPayment (CVS)', () => {
         onServerListen: async () => {
           const order = await payment.prepare({
             channel: Channel.CVS_KIOSK,
-            items: [{
-              name: 'Test',
-              unitPrice: 100,
-              quantity: 1,
-            }],
+            items: [
+              {
+                name: 'Test',
+                unitPrice: 100,
+                quantity: 1,
+              },
+            ],
           });
 
           expect(order.form.StoreExpireDate).toBe('10080');
@@ -113,23 +133,31 @@ describe('ECPayPayment (CVS)', () => {
       const payment = new ECPayPayment<ECPayChannelCVS>({
         withServer: true,
         onServerListen: () => {
-          expect(() => payment.prepare({
-            channel: Channel.CVS_KIOSK,
-            items: [{
-              name: 'Test',
-              unitPrice: 10,
-              quantity: 1,
-            }],
-          })).rejects.toThrowError();
+          expect(() =>
+            payment.prepare({
+              channel: Channel.CVS_KIOSK,
+              items: [
+                {
+                  name: 'Test',
+                  unitPrice: 10,
+                  quantity: 1,
+                },
+              ],
+            }),
+          ).rejects.toThrow();
 
-          expect(() => payment.prepare({
-            channel: Channel.CVS_KIOSK,
-            items: [{
-              name: 'Test',
-              unitPrice: 9990,
-              quantity: 1,
-            }],
-          })).rejects.toThrowError();
+          expect(() =>
+            payment.prepare({
+              channel: Channel.CVS_KIOSK,
+              items: [
+                {
+                  name: 'Test',
+                  unitPrice: 9990,
+                  quantity: 1,
+                },
+              ],
+            }),
+          ).rejects.toThrow();
 
           payment._server?.close(done);
         },
@@ -143,24 +171,30 @@ describe('ECPayPayment (CVS)', () => {
           const order = await payment.prepare({
             channel: Channel.CVS_KIOSK,
             cvsExpireMinutes: 19999,
-            items: [{
-              name: 'Test',
-              unitPrice: 1000,
-              quantity: 1,
-            }],
+            items: [
+              {
+                name: 'Test',
+                unitPrice: 1000,
+                quantity: 1,
+              },
+            ],
           });
 
           expect(order.form.StoreExpireDate).toBe('19999');
-          expect(order.form.PaymentInfoURL).toBe('http://localhost:3000/payments/ecpay/async-informations');
+          expect(order.form.PaymentInfoURL).toBe(
+            'http://localhost:3000/payments/ecpay/async-informations',
+          );
           expect(order.form.ClientRedirectURL).toBe('');
 
           const clientOrder = await payment.prepare({
             channel: Channel.CVS_KIOSK,
-            items: [{
-              name: 'Test',
-              unitPrice: 1000,
-              quantity: 1,
-            }],
+            items: [
+              {
+                name: 'Test',
+                unitPrice: 1000,
+                quantity: 1,
+              },
+            ],
             clientBackUrl: 'https://rytass.com',
           });
 
@@ -177,11 +211,13 @@ describe('ECPayPayment (CVS)', () => {
         onServerListen: async () => {
           const order = await payment.prepare({
             channel: Channel.CVS_KIOSK,
-            items: [{
-              name: 'Test',
-              unitPrice: 1000,
-              quantity: 1,
-            }],
+            items: [
+              {
+                name: 'Test',
+                unitPrice: 1000,
+                quantity: 1,
+              },
+            ],
           });
 
           expect(order.state).toBe(OrderState.INITED);
@@ -222,11 +258,15 @@ describe('ECPayPayment (CVS)', () => {
           expect(res.text).toEqual('1|OK');
           expect(order.state).toBe(OrderState.ASYNC_INFO_RETRIEVED);
           expect(order.asyncInfo?.paymentCode).toBe('LLL22167774958');
-          expect(DateTime.fromJSDate(order.asyncInfo?.expiredAt!).toFormat('yyyy/MM/dd HH:mm:ss')).toBe('2022/06/30 20:26:59');
+          expect(
+            DateTime.fromJSDate(order.asyncInfo?.expiredAt!).toFormat(
+              'yyyy/MM/dd HH:mm:ss',
+            ),
+          ).toBe('2022/06/30 20:26:59');
 
           payment._server?.close(done);
         },
-      })
+      });
     });
 
     it('should default callback handler keep status if get code failed', (done) => {
@@ -235,11 +275,13 @@ describe('ECPayPayment (CVS)', () => {
         onServerListen: async () => {
           const order = await payment.prepare({
             channel: Channel.CVS_KIOSK,
-            items: [{
-              name: 'Test',
-              unitPrice: 1000,
-              quantity: 1,
-            }],
+            items: [
+              {
+                name: 'Test',
+                unitPrice: 1000,
+                quantity: 1,
+              },
+            ],
           });
 
           expect(order.state).toBe(OrderState.INITED);
@@ -279,13 +321,13 @@ describe('ECPayPayment (CVS)', () => {
 
           expect(res.text).toEqual('1|OK');
           expect(order.state).toBe(OrderState.FAILED);
-          expect(order.failedMessage?.code).toBe('0')
+          expect(order.failedMessage?.code).toBe('0');
           expect(order.failedMessage?.message).toBe('Get CVS Code Failed.');
           expect(order.asyncInfo).toBeUndefined();
 
           payment._server?.close(done);
         },
-      })
+      });
     });
 
     it('should received callback of cvs payments', (done) => {
@@ -294,11 +336,13 @@ describe('ECPayPayment (CVS)', () => {
         onServerListen: async () => {
           const order = await payment.prepare<ECPayChannelCVS>({
             channel: Channel.CVS_KIOSK,
-            items: [{
-              name: 'Test',
-              unitPrice: 99,
-              quantity: 1,
-            }],
+            items: [
+              {
+                name: 'Test',
+                unitPrice: 99,
+                quantity: 1,
+              },
+            ],
           });
 
           // Get HTML to trigger pre commit
@@ -397,7 +441,7 @@ describe('ECPayPayment (CVS)', () => {
 
           payment._server?.close(done);
         },
-      })
+      });
     });
   });
 });

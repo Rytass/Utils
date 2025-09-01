@@ -261,6 +261,15 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
     this._gateway.emitter.emit(PaymentEvents.ORDER_FAILED, this);
   }
 
+  prepareForBoundCardCommit(): void {
+    if (this._state !== OrderState.INITED)
+      throw new Error(
+        `Only inited order can prepare for bound card commit, now: ${this._state}`,
+      );
+
+    this._state = OrderState.PRE_COMMIT;
+  }
+
   commit<T extends OCM>(message: T, additionalInfo?: AdditionalInfo<T>): void {
     if (!this.committable)
       throw new Error(
@@ -273,16 +282,19 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
       );
     }
 
-    if (this._form!.MerchantID !== message.merchantId) {
-      throw new Error(
-        `Merchant ID not matched, given: ${message.merchantId} actual: ${this._form!.MerchantID}`,
-      );
-    }
+    // Skip form validation for bound card checkout (no form generated)
+    if (this._form) {
+      if (this._form.MerchantID !== message.merchantId) {
+        throw new Error(
+          `Merchant ID not matched, given: ${message.merchantId} actual: ${this._form.MerchantID}`,
+        );
+      }
 
-    if (Number(this._form!.TotalAmount) !== message.totalPrice) {
-      throw new Error(
-        `Total amount not matched, given: ${message.totalPrice} actual: ${this._form!.TotalAmount}`,
-      );
+      if (Number(this._form.TotalAmount) !== message.totalPrice) {
+        throw new Error(
+          `Total amount not matched, given: ${message.totalPrice} actual: ${this._form.TotalAmount}`,
+        );
+      }
     }
 
     this._additionalInfo = additionalInfo;

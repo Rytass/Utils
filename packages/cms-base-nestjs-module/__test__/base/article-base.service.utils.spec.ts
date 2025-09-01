@@ -71,7 +71,7 @@ describe('queryStagesFeaturesCheck', () => {
 
     expect(() =>
       service['queryStagesFeaturesCheck'](ArticleStage.DRAFT),
-    ).toThrowError('Draft mode is disabled.');
+    ).toThrow('Draft mode is disabled.');
   });
 
   it('should pass silently if stage is REVIEWING and signatureEnabled is true', () => {
@@ -87,7 +87,7 @@ describe('queryStagesFeaturesCheck', () => {
 
     expect(() =>
       service['queryStagesFeaturesCheck'](ArticleStage.REVIEWING),
-    ).toThrowError('Signature mode is disabled.');
+    ).toThrow('Signature mode is disabled.');
   });
 
   it('should pass silently if stage is VERIFIED and signatureEnabled is true', () => {
@@ -103,7 +103,7 @@ describe('queryStagesFeaturesCheck', () => {
 
     expect(() =>
       service['queryStagesFeaturesCheck'](ArticleStage.VERIFIED),
-    ).toThrowError('Signature mode is disabled.');
+    ).toThrow('Signature mode is disabled.');
   });
 
   it('should do nothing for stages not explicitly handled', () => {
@@ -1350,7 +1350,7 @@ describe('optionsCheck', () => {
         submitted: true,
         signatureLevel: 'FINAL',
       }),
-    ).toThrowError(
+    ).toThrow(
       'Signature level is not allowed when submitting an article version.',
     );
   });
@@ -1361,9 +1361,7 @@ describe('optionsCheck', () => {
         submitted: true,
         releasedAt: new Date(),
       }),
-    ).toThrowError(
-      'Released at is not allowed when submitting an article version.',
-    );
+    ).toThrow('Released at is not allowed when submitting an article version.');
   });
 
   it('should throw if releasedAt is set with non-final signature level', () => {
@@ -1372,7 +1370,7 @@ describe('optionsCheck', () => {
         releasedAt: new Date(),
         signatureLevel: 'NOT_FINAL',
       }),
-    ).toThrowError(
+    ).toThrow(
       'Only final signature level is allowed when releasing an article version.',
     );
   });
@@ -1384,7 +1382,7 @@ describe('optionsCheck', () => {
       service['optionsCheck']({
         submitted: true,
       }),
-    ).toThrowError('Signature mode is disabled.');
+    ).toThrow('Signature mode is disabled.');
   });
 
   it('should throw if releasedAt is set and draftMode is disabled', () => {
@@ -1395,7 +1393,7 @@ describe('optionsCheck', () => {
         releasedAt: new Date(),
         signatureLevel: 'FINAL',
       }),
-    ).toThrowError('Draft mode is disabled.');
+    ).toThrow('Draft mode is disabled.');
   });
 
   it('should not throw if only submitted is set and signature mode is enabled', () => {

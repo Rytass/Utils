@@ -2122,7 +2122,7 @@ describe('ArticleBaseService.create', () => {
         title: 'Failing',
         content: [],
       }),
-    ).rejects.toThrowError(CategoryNotFoundError);
+    ).rejects.toThrow(CategoryNotFoundError);
   });
 
   it('should throw if multiLanguageContents is passed but multipleLanguageMode is false', async () => {
@@ -2136,7 +2136,7 @@ describe('ArticleBaseService.create', () => {
           en: { title: 'test', body: 'test' },
         },
       }),
-    ).rejects.toThrowError(new MultipleLanguageModeIsDisabledError());
+    ).rejects.toThrow(new MultipleLanguageModeIsDisabledError());
   });
 
   it('should call approveVersion when signatureLevel is provided', async () => {
@@ -2345,9 +2345,9 @@ describe('ArticleBaseService.rejectVersion', () => {
   it('should throw if article is not in REVIEWING stage', async () => {
     service.findById.mockResolvedValue(null); // simulate not found
 
-    await expect(
-      service.rejectVersion({ id: 'article-1' }),
-    ).rejects.toThrowError('Article article-1 is not in reviewing stage.');
+    await expect(service.rejectVersion({ id: 'article-1' })).rejects.toThrow(
+      'Article article-1 is not in reviewing stage.',
+    );
   });
 
   it('should call signature with REJECTED result if article is in REVIEWING', async () => {

@@ -5,7 +5,13 @@
 import request from 'supertest';
 import { getAddMac } from '../__utils__/add-mac';
 import http, { createServer, IncomingMessage, ServerResponse } from 'http';
-import { ECPayOrder, ECPayPayment, ECPayChannelCreditCard, ECPayCommitMessage, ECPayCallbackPaymentType } from '@rytass/payments-adapter-ecpay';
+import {
+  ECPayOrder,
+  ECPayPayment,
+  ECPayChannelCreditCard,
+  ECPayCommitMessage,
+  ECPayCallbackPaymentType,
+} from '@rytass/payments-adapter-ecpay';
 import { Channel, OrderState, PaymentPeriodType } from '@rytass/payments';
 import { App } from 'supertest/types';
 
@@ -24,11 +30,13 @@ describe('ECPayPayment', () => {
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
-      mockServer.listen(0, listeningListener);
+    mockedListen.mockImplementationOnce(
+      (port?: any, hostname?: any, listeningListener?: () => void) => {
+        mockServer.listen(0, listeningListener);
 
-      return mockServer;
-    });
+        return mockServer;
+      },
+    );
 
     const mockedClose = jest.spyOn(mockServer, 'close');
 
@@ -50,18 +58,23 @@ describe('ECPayPayment', () => {
         },
       });
 
-      expect(() => payment.prepare<ECPayChannelCreditCard>({
-        channel: Channel.CREDIT_CARD,
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }, {
-          name: '中文',
-          unitPrice: 15,
-          quantity: 4,
-        }],
-      })).rejects.toThrow();
+      expect(() =>
+        payment.prepare<ECPayChannelCreditCard>({
+          channel: Channel.CREDIT_CARD,
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            },
+            {
+              name: '中文',
+              unitPrice: 15,
+              quantity: 4,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
     });
   });
 
@@ -72,15 +85,18 @@ describe('ECPayPayment', () => {
     it('should only one form in page', async () => {
       const order = await payment.prepare<ECPayChannelCreditCard>({
         channel: Channel.CREDIT_CARD,
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }, {
-          name: '中文',
-          unitPrice: 15,
-          quantity: 4,
-        }],
+        items: [
+          {
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          },
+          {
+            name: '中文',
+            unitPrice: 15,
+            quantity: 4,
+          },
+        ],
       });
 
       document.body.innerHTML = order.formHTML;
@@ -91,15 +107,18 @@ describe('ECPayPayment', () => {
     it('should set form submit action target', async () => {
       const order = await payment.prepare<ECPayChannelCreditCard>({
         channel: Channel.CREDIT_CARD,
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }, {
-          name: '中文',
-          unitPrice: 15,
-          quantity: 4,
-        }],
+        items: [
+          {
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          },
+          {
+            name: '中文',
+            unitPrice: 15,
+            quantity: 4,
+          },
+        ],
       });
 
       document.body.innerHTML = order.formHTML;
@@ -112,15 +131,18 @@ describe('ECPayPayment', () => {
     it('should set form submit method to post', async () => {
       const order = await payment.prepare<ECPayChannelCreditCard>({
         channel: Channel.CREDIT_CARD,
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }, {
-          name: '中文',
-          unitPrice: 15,
-          quantity: 4,
-        }],
+        items: [
+          {
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          },
+          {
+            name: '中文',
+            unitPrice: 15,
+            quantity: 4,
+          },
+        ],
       });
 
       document.body.innerHTML = order.formHTML;
@@ -135,23 +157,31 @@ describe('ECPayPayment', () => {
     it('should throw if total aomunt between 5 and 199999', () => {
       const payment = new ECPayPayment<ECPayChannelCreditCard>();
 
-      expect(() => payment.prepare({
-        channel: Channel.CREDIT_CARD,
-        items: [{
-          name: 'Test',
-          unitPrice: 3,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError();
+      expect(() =>
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 3,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
 
-      expect(() => payment.prepare({
-        channel: Channel.CREDIT_CARD,
-        items: [{
-          name: 'Test',
-          unitPrice: 200000,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError();
+      expect(() =>
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 200000,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
     });
   });
 
@@ -161,11 +191,13 @@ describe('ECPayPayment', () => {
 
       const order = await payment.prepare({
         channel: Channel.CREDIT_CARD,
-        items: [{
-          name: 'Test',
-          unitPrice: 500,
-          quantity: 1,
-        }],
+        items: [
+          {
+            name: 'Test',
+            unitPrice: 500,
+            quantity: 1,
+          },
+        ],
       });
 
       expect(order.state).toBe(OrderState.INITED);
@@ -181,15 +213,18 @@ describe('ECPayPayment', () => {
         onServerListen: async () => {
           const order = await payment.prepare({
             channel: Channel.CREDIT_CARD,
-            items: [{
-              name: 'Test',
-              unitPrice: 10,
-              quantity: 1,
-            }, {
-              name: '中文',
-              unitPrice: 15,
-              quantity: 4,
-            }],
+            items: [
+              {
+                name: 'Test',
+                unitPrice: 10,
+                quantity: 1,
+              },
+              {
+                name: '中文',
+                unitPrice: 15,
+                quantity: 4,
+              },
+            ],
           });
 
           const res = await request(payment._server as App)
@@ -228,15 +263,18 @@ describe('ECPayPayment', () => {
         onServerListen: async () => {
           const order = await payment.prepare({
             channel: Channel.CREDIT_CARD,
-            items: [{
-              name: 'Test',
-              unitPrice: 10,
-              quantity: 1,
-            }, {
-              name: '中文',
-              unitPrice: 15,
-              quantity: 4,
-            }],
+            items: [
+              {
+                name: 'Test',
+                unitPrice: 10,
+                quantity: 1,
+              },
+              {
+                name: '中文',
+                unitPrice: 15,
+                quantity: 4,
+              },
+            ],
           });
 
           // Get HTML to trigger pre commit
@@ -288,15 +326,18 @@ describe('ECPayPayment', () => {
         onServerListen: async () => {
           const order = await payment.prepare({
             channel: Channel.CREDIT_CARD,
-            items: [{
-              name: 'Test',
-              unitPrice: 10,
-              quantity: 1,
-            }, {
-              name: '中文',
-              unitPrice: 15,
-              quantity: 4,
-            }],
+            items: [
+              {
+                name: 'Test',
+                unitPrice: 10,
+                quantity: 1,
+              },
+              {
+                name: '中文',
+                unitPrice: 15,
+                quantity: 4,
+              },
+            ],
           });
 
           // Get HTML to trigger pre commit
@@ -356,15 +397,18 @@ describe('ECPayPayment', () => {
         onServerListen: async () => {
           const order = await payment.prepare({
             channel: Channel.CREDIT_CARD,
-            items: [{
-              name: 'Test',
-              unitPrice: 10,
-              quantity: 1,
-            }, {
-              name: '中文',
-              unitPrice: 15,
-              quantity: 4,
-            }],
+            items: [
+              {
+                name: 'Test',
+                unitPrice: 10,
+                quantity: 1,
+              },
+              {
+                name: '中文',
+                unitPrice: 15,
+                quantity: 4,
+              },
+            ],
           });
 
           // Get HTML to trigger pre commit
@@ -436,7 +480,8 @@ describe('ECPayPayment', () => {
             TradeAmt: '70',
             TradeDate: '2022/04/18 19:14:51',
             TradeNo: '2204181914513433',
-            CheckMacValue: '3CD5424E742BF5AB43D52A9E43F30F176A655F271730E1F5DBC13A03B346CBDCCCC', // Wrong
+            CheckMacValue:
+              '3CD5424E742BF5AB43D52A9E43F30F176A655F271730E1F5DBC13A03B346CBDCCCC', // Wrong
           };
 
           request(payment._server as App)
@@ -454,7 +499,9 @@ describe('ECPayPayment', () => {
     });
 
     it('should order commit with callback server', (done) => {
-      const mockedOnCommit = jest.fn<void, [ECPayOrder<ECPayCommitMessage>]>(() => { });
+      const mockedOnCommit = jest.fn<void, [ECPayOrder<ECPayCommitMessage>]>(
+        () => {},
+      );
 
       const payment = new ECPayPayment<ECPayChannelCreditCard>({
         withServer: true,
@@ -463,15 +510,18 @@ describe('ECPayPayment', () => {
         onServerListen: async () => {
           const order = await payment.prepare({
             channel: Channel.CREDIT_CARD,
-            items: [{
-              name: 'Test',
-              unitPrice: 10,
-              quantity: 1,
-            }, {
-              name: '中文',
-              unitPrice: 15,
-              quantity: 4,
-            }],
+            items: [
+              {
+                name: 'Test',
+                unitPrice: 10,
+                quantity: 1,
+              },
+              {
+                name: '中文',
+                unitPrice: 15,
+                quantity: 4,
+              },
+            ],
           });
 
           // Get HTML to trigger pre commit
@@ -507,7 +557,12 @@ describe('ECPayPayment', () => {
             .send(new URLSearchParams(successfulResponse).toString())
             .then(() => {
               expect(mockedOnCommit.mock.calls.length).toBe(1);
-              expect((mockedOnCommit.mock.calls[0][0] as unknown as ECPayOrder<ECPayCommitMessage>).id).toBe(order.id);
+              expect(
+                (
+                  mockedOnCommit.mock
+                    .calls[0][0] as unknown as ECPayOrder<ECPayCommitMessage>
+                ).id,
+              ).toBe(order.id);
 
               payment._server?.close(done);
             });
@@ -517,13 +572,15 @@ describe('ECPayPayment', () => {
   });
 
   describe('Custom server listener', () => {
-    const serverListenerMock = jest.fn<void, [IncomingMessage, ServerResponse]>((req, res) => {
-      res.writeHead(200, {
-        'Content-Type': 'text/plain',
-      });
+    const serverListenerMock = jest.fn<void, [IncomingMessage, ServerResponse]>(
+      (req, res) => {
+        res.writeHead(200, {
+          'Content-Type': 'text/plain',
+        });
 
-      res.end('1|OK');
-    });
+        res.end('1|OK');
+      },
+    );
 
     it('should provide custom server listener', (done) => {
       const payment = new ECPayPayment<ECPayChannelCreditCard>({
@@ -532,15 +589,18 @@ describe('ECPayPayment', () => {
         onServerListen: async () => {
           const order = await payment.prepare({
             channel: Channel.CREDIT_CARD,
-            items: [{
-              name: 'Test',
-              unitPrice: 10,
-              quantity: 1,
-            }, {
-              name: '中文',
-              unitPrice: 15,
-              quantity: 4,
-            }],
+            items: [
+              {
+                name: 'Test',
+                unitPrice: 10,
+                quantity: 1,
+              },
+              {
+                name: '中文',
+                unitPrice: 15,
+                quantity: 4,
+              },
+            ],
           });
 
           const successfulResponse = addMac({
@@ -596,28 +656,36 @@ describe('ECPayPayment', () => {
     });
 
     it('should memory card only works on credit channel', () => {
-      expect(() => payment.prepare({
-        // @ts-ignore: Unreachable code error
-        channel: Channel.VIRTUAL_ACCOUNT,
-        memory: true,
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError();
+      expect(() =>
+        payment.prepare({
+          // @ts-ignore: Unreachable code error
+          channel: Channel.VIRTUAL_ACCOUNT,
+          memory: true,
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
     });
 
     it('should reject if no memberId', () => {
-      expect(() => payment.prepare({
-        channel: Channel.CREDIT_CARD,
-        memory: true,
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError();
+      expect(() =>
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          memory: true,
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
     });
 
     it('should memory provide form key', async () => {
@@ -625,11 +693,13 @@ describe('ECPayPayment', () => {
         channel: Channel.CREDIT_CARD,
         memory: true,
         memberId: 'M_ID',
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
+        items: [
+          {
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          },
+        ],
       });
 
       expect(order.form.BindingCard).toBe('1');
@@ -641,27 +711,33 @@ describe('ECPayPayment', () => {
     const payment = new ECPayPayment<ECPayChannelCreditCard>();
 
     it('should throw on not credit card channel allow union pay', () => {
-      expect(() => payment.prepare({
-        // @ts-ignore: Unreachable code error
-        channel: Channel.VIRTUAL_ACCOUNT,
-        allowUnionPay: true,
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError();
+      expect(() =>
+        payment.prepare({
+          // @ts-ignore: Unreachable code error
+          channel: Channel.VIRTUAL_ACCOUNT,
+          allowUnionPay: true,
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
     });
 
     it('should allow union pay represent on form data', async () => {
       const order = await payment.prepare({
         channel: Channel.CREDIT_CARD,
         allowUnionPay: true,
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
+        items: [
+          {
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          },
+        ],
       });
 
       expect(order.form.UnionPay).toBe('0');
@@ -672,27 +748,33 @@ describe('ECPayPayment', () => {
     const payment = new ECPayPayment<ECPayChannelCreditCard>();
 
     it('should throw on not credit card channel allow redeem', () => {
-      expect(() => payment.prepare({
-        // @ts-ignore: Unreachable code error
-        channel: Channel.VIRTUAL_ACCOUNT,
-        allowCreditCardRedeem: true,
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError();
+      expect(() =>
+        payment.prepare({
+          // @ts-ignore: Unreachable code error
+          channel: Channel.VIRTUAL_ACCOUNT,
+          allowCreditCardRedeem: true,
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
     });
 
     it('should allow union pay represent on form data', async () => {
       const order = await payment.prepare<ECPayChannelCreditCard>({
         channel: Channel.CREDIT_CARD,
         allowCreditCardRedeem: true,
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
+        items: [
+          {
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          },
+        ],
       });
 
       expect(order.form.Redeem).toBe('Y');
@@ -703,78 +785,100 @@ describe('ECPayPayment', () => {
     const payment = new ECPayPayment<ECPayChannelCreditCard>();
 
     it('should throw on not credit card channel use installments', () => {
-      expect(() => payment.prepare({
-        // @ts-ignore: Unreachable code error
-        channel: Channel.VIRTUAL_ACCOUNT,
-        installments: '3,6',
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError();
+      expect(() =>
+        payment.prepare({
+          // @ts-ignore: Unreachable code error
+          channel: Channel.VIRTUAL_ACCOUNT,
+          installments: '3,6',
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
     });
 
     it('should throw if allow redeem or period when using installments', () => {
-      expect(() => payment.prepare({
-        channel: Channel.CREDIT_CARD,
-        allowCreditCardRedeem: true,
-        installments: '3,6',
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError();
+      expect(() =>
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          allowCreditCardRedeem: true,
+          installments: '3,6',
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
 
-      expect(() => payment.prepare({
-        channel: Channel.CREDIT_CARD,
-        period: {
-          amountPerPeriod: 100,
-          type: PaymentPeriodType.DAY,
-          frequency: 1,
-          times: 3,
-        },
-        installments: '3,6',
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError();
+      expect(() =>
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          period: {
+            amountPerPeriod: 100,
+            type: PaymentPeriodType.DAY,
+            frequency: 1,
+            times: 3,
+          },
+          installments: '3,6',
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
     });
 
     it('should reject invalid installments format', () => {
-      expect(() => payment.prepare({
-        channel: Channel.CREDIT_CARD,
-        installments: '3,6y',
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError();
+      expect(() =>
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          installments: '3,6y',
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
 
-      expect(() => payment.prepare({
-        channel: Channel.CREDIT_CARD,
-        installments: '3,',
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError();
+      expect(() =>
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          installments: '3,',
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
     });
 
     it('should installments config represent on form data', async () => {
       const order = await payment.prepare({
         channel: Channel.CREDIT_CARD,
         installments: '3,6',
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
+        items: [
+          {
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          },
+        ],
       });
 
       expect(order.form.CreditInstallment).toBe('3,6');
@@ -788,21 +892,25 @@ describe('ECPayPayment', () => {
     });
 
     it('should throw on not credit card channel use period', () => {
-      expect(() => payment.prepare({
-        // @ts-ignore: Unreachable code error
-        channel: Channel.VIRTUAL_ACCOUNT,
-        period: {
-          amountPerPeriod: 100,
-          type: PaymentPeriodType.DAY,
-          frequency: 1,
-          times: 3,
-        },
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError();
+      expect(() =>
+        payment.prepare({
+          // @ts-ignore: Unreachable code error
+          channel: Channel.VIRTUAL_ACCOUNT,
+          period: {
+            amountPerPeriod: 100,
+            type: PaymentPeriodType.DAY,
+            frequency: 1,
+            times: 3,
+          },
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
     });
 
     it('should represent period form data', async () => {
@@ -813,18 +921,22 @@ describe('ECPayPayment', () => {
           type: PaymentPeriodType.DAY,
           times: 3,
         },
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
+        items: [
+          {
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          },
+        ],
       });
 
       expect(order5Days.form.PeriodAmount).toBe('100');
       expect(order5Days.form.PeriodType).toBe('D');
       expect(order5Days.form.Frequency).toBe('1');
       expect(order5Days.form.ExecTimes).toBe('3');
-      expect(order5Days.form.PeriodReturnURL).toBe('http://localhost:9999/callback');
+      expect(order5Days.form.PeriodReturnURL).toBe(
+        'http://localhost:9999/callback',
+      );
       expect(order5Days.form.PeriodReturnURL).toBe(order5Days.form.ReturnURL);
 
       const order5Months = await payment.prepare({
@@ -835,11 +947,13 @@ describe('ECPayPayment', () => {
           frequency: 5,
           times: 3,
         },
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
+        items: [
+          {
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          },
+        ],
       });
 
       expect(order5Months.form.PeriodType).toBe('M');
@@ -853,11 +967,13 @@ describe('ECPayPayment', () => {
           frequency: 1,
           times: 3,
         },
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
+        items: [
+          {
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          },
+        ],
       });
 
       expect(orderYear.form.PeriodType).toBe('Y');
@@ -865,157 +981,197 @@ describe('ECPayPayment', () => {
     });
 
     it('should throw on invalid times provided', () => {
-      expect(() => payment.prepare({
-        channel: Channel.CREDIT_CARD,
-        period: {
-          amountPerPeriod: 100,
-          type: PaymentPeriodType.DAY,
-          frequency: 4,
-          times: 0,
-        },
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError();
+      expect(() =>
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          period: {
+            amountPerPeriod: 100,
+            type: PaymentPeriodType.DAY,
+            frequency: 4,
+            times: 0,
+          },
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
 
-      expect(() => payment.prepare({
-        channel: Channel.CREDIT_CARD,
-        period: {
-          amountPerPeriod: 100,
-          type: PaymentPeriodType.DAY,
-          frequency: 4,
-          times: 1000,
-        },
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError();
+      expect(() =>
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          period: {
+            amountPerPeriod: 100,
+            type: PaymentPeriodType.DAY,
+            frequency: 4,
+            times: 1000,
+          },
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
 
-      expect(() => payment.prepare({
-        channel: Channel.CREDIT_CARD,
-        period: {
-          amountPerPeriod: 100,
-          type: PaymentPeriodType.MONTH,
-          frequency: 4,
-          times: 100,
-        },
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError();
+      expect(() =>
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          period: {
+            amountPerPeriod: 100,
+            type: PaymentPeriodType.MONTH,
+            frequency: 4,
+            times: 100,
+          },
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
 
-      expect(() => payment.prepare({
-        channel: Channel.CREDIT_CARD,
-        period: {
-          amountPerPeriod: 100,
-          type: PaymentPeriodType.YEAR,
-          frequency: 1,
-          times: 10,
-        },
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError();
+      expect(() =>
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          period: {
+            amountPerPeriod: 100,
+            type: PaymentPeriodType.YEAR,
+            frequency: 1,
+            times: 10,
+          },
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
     });
 
     it('should throw on invalid frequency provided', () => {
-      expect(() => payment.prepare({
-        channel: Channel.CREDIT_CARD,
-        period: {
-          amountPerPeriod: 100,
-          type: PaymentPeriodType.DAY,
-          frequency: 0,
-          times: 3,
-        },
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError();
+      expect(() =>
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          period: {
+            amountPerPeriod: 100,
+            type: PaymentPeriodType.DAY,
+            frequency: 0,
+            times: 3,
+          },
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
 
-      expect(() => payment.prepare({
-        channel: Channel.CREDIT_CARD,
-        period: {
-          amountPerPeriod: 100,
-          type: PaymentPeriodType.DAY,
-          frequency: 366,
-          times: 3,
-        },
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError();
+      expect(() =>
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          period: {
+            amountPerPeriod: 100,
+            type: PaymentPeriodType.DAY,
+            frequency: 366,
+            times: 3,
+          },
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
 
-      expect(() => payment.prepare({
-        channel: Channel.CREDIT_CARD,
-        period: {
-          amountPerPeriod: 100,
-          type: PaymentPeriodType.MONTH,
-          frequency: 0,
-          times: 3,
-        },
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError();
+      expect(() =>
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          period: {
+            amountPerPeriod: 100,
+            type: PaymentPeriodType.MONTH,
+            frequency: 0,
+            times: 3,
+          },
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
 
-      expect(() => payment.prepare({
-        channel: Channel.CREDIT_CARD,
-        period: {
-          amountPerPeriod: 100,
-          type: PaymentPeriodType.MONTH,
-          frequency: 13,
-          times: 3,
-        },
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError();
+      expect(() =>
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          period: {
+            amountPerPeriod: 100,
+            type: PaymentPeriodType.MONTH,
+            frequency: 13,
+            times: 3,
+          },
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
 
-      expect(() => payment.prepare({
-        channel: Channel.CREDIT_CARD,
-        period: {
-          amountPerPeriod: 100,
-          type: PaymentPeriodType.YEAR,
-          frequency: 0,
-          times: 3,
-        },
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError();
+      expect(() =>
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          period: {
+            amountPerPeriod: 100,
+            type: PaymentPeriodType.YEAR,
+            frequency: 0,
+            times: 3,
+          },
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
 
-      expect(() => payment.prepare({
-        channel: Channel.CREDIT_CARD,
-        period: {
-          amountPerPeriod: 100,
-          type: PaymentPeriodType.YEAR,
-          frequency: 2,
-          times: 3,
-        },
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError();
+      expect(() =>
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          period: {
+            amountPerPeriod: 100,
+            type: PaymentPeriodType.YEAR,
+            frequency: 2,
+            times: 3,
+          },
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
     });
   });
 
@@ -1026,11 +1182,13 @@ describe('ECPayPayment', () => {
         onServerListen: async () => {
           const order = await testPayment.prepare({
             channel: Channel.CREDIT_CARD,
-            items: [{
-              name: 'Test',
-              unitPrice: 10,
-              quantity: 1,
-            }],
+            items: [
+              {
+                name: 'Test',
+                unitPrice: 10,
+                quantity: 1,
+              },
+            ],
           });
 
           // Get HTML to trigger pre commit
@@ -1078,11 +1236,13 @@ describe('ECPayPayment', () => {
         onServerListen: async () => {
           const order = await testPayment.prepare({
             channel: Channel.CREDIT_CARD,
-            items: [{
-              name: 'Test',
-              unitPrice: 10,
-              quantity: 1,
-            }],
+            items: [
+              {
+                name: 'Test',
+                unitPrice: 10,
+                quantity: 1,
+              },
+            ],
           });
 
           // Get HTML to trigger pre commit
@@ -1136,11 +1296,13 @@ describe('ECPayPayment', () => {
         onServerListen: async () => {
           const order = await testPayment.prepare({
             channel: Channel.CREDIT_CARD,
-            items: [{
-              name: 'Test',
-              unitPrice: 10,
-              quantity: 1,
-            }],
+            items: [
+              {
+                name: 'Test',
+                unitPrice: 10,
+                quantity: 1,
+              },
+            ],
           });
 
           // Get HTML to trigger pre commit

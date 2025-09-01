@@ -4,8 +4,19 @@
  */
 
 import http, { createServer } from 'http';
-import { Channel, VirtualAccountInfo, WebATMPaymentInfo } from '@rytass/payments';
-import { NewebPaymentChannel, NewebPayOrder, NewebPayOrderStatusFromAPI, NewebPayPayment, NewebPayVirtualAccountCommitMessage, NewebPayWebATMCommitMessage } from '../src';
+import {
+  Channel,
+  VirtualAccountInfo,
+  WebATMPaymentInfo,
+} from '@rytass/payments';
+import {
+  NewebPaymentChannel,
+  NewebPayOrder,
+  NewebPayOrderStatusFromAPI,
+  NewebPayPayment,
+  NewebPayVirtualAccountCommitMessage,
+  NewebPayWebATMCommitMessage,
+} from '../src';
 
 const MERCHANT_ID = 'MS154366906';
 const AES_KEY = 'X4vM1RymaxkyzZ9mZHNE67Kba2gpv40c';
@@ -20,11 +31,13 @@ describe('NewebPay Order', () => {
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
-      mockServer.listen(0, listeningListener);
+    mockedListen.mockImplementationOnce(
+      (port?: any, hostname?: any, listeningListener?: () => void) => {
+        mockServer.listen(0, listeningListener);
 
-      return mockServer;
-    });
+        return mockServer;
+      },
+    );
 
     const mockedClose = jest.spyOn(mockServer, 'close');
 
@@ -46,11 +59,13 @@ describe('NewebPay Order', () => {
   it('should failed message return null on committed order', () => {
     const order = new NewebPayOrder({
       id: '123142',
-      items: [{
-        name: 'test',
-        unitPrice: 100,
-        quantity: 2,
-      }],
+      items: [
+        {
+          name: 'test',
+          unitPrice: 100,
+          quantity: 2,
+        },
+      ],
       gateway: payment,
       platformTradeNumber: '213213213',
       createdAt: new Date(),
@@ -65,11 +80,13 @@ describe('NewebPay Order', () => {
   it('should get order platform trade number', () => {
     const order = new NewebPayOrder({
       id: '123142',
-      items: [{
-        name: 'test',
-        unitPrice: 100,
-        quantity: 2,
-      }],
+      items: [
+        {
+          name: 'test',
+          unitPrice: 100,
+          quantity: 2,
+        },
+      ],
       gateway: payment,
       platformTradeNumber: '213213213',
       createdAt: new Date(),
@@ -84,11 +101,13 @@ describe('NewebPay Order', () => {
   it('should throw error when get form if order committed', () => {
     const order = new NewebPayOrder({
       id: '123142',
-      items: [{
-        name: 'test',
-        unitPrice: 100,
-        quantity: 2,
-      }],
+      items: [
+        {
+          name: 'test',
+          unitPrice: 100,
+          quantity: 2,
+        },
+      ],
       gateway: payment,
       platformTradeNumber: '213213213',
       createdAt: new Date(),
@@ -97,22 +116,30 @@ describe('NewebPay Order', () => {
       status: NewebPayOrderStatusFromAPI.COMMITTED,
     });
 
-    expect(() => order.form).toThrowError('Finished order cannot get submit form data');
-    expect(() => order.formHTML).toThrowError('Finished order cannot get submit form url');
+    expect(() => order.form).toThrow(
+      'Finished order cannot get submit form data',
+    );
+    expect(() => order.formHTML).toThrow(
+      'Finished order cannot get submit form url',
+    );
   });
 
   it('should throw error when get checkout url with no server', async () => {
     const order = await payment.prepare({
       id: '123142',
-      items: [{
-        name: 'test',
-        unitPrice: 100,
-        quantity: 2,
-      }],
+      items: [
+        {
+          name: 'test',
+          unitPrice: 100,
+          quantity: 2,
+        },
+      ],
       channel: NewebPaymentChannel.CREDIT,
     });
 
-    expect(() => order.checkoutURL).toThrowError('To use automatic checkout server, please initial payment with `withServer` options.');
+    expect(() => order.checkoutURL).toThrow(
+      'To use automatic checkout server, please initial payment with `withServer` options.',
+    );
   });
 
   it('should get checkout url with server', (done) => {
@@ -126,15 +153,19 @@ describe('NewebPay Order', () => {
       onServerListen: async () => {
         const order = await payment2.prepare({
           id: '123142',
-          items: [{
-            name: 'test',
-            unitPrice: 100,
-            quantity: 2,
-          }],
+          items: [
+            {
+              name: 'test',
+              unitPrice: 100,
+              quantity: 2,
+            },
+          ],
           channel: NewebPaymentChannel.CREDIT,
         });
 
-        expect(order.checkoutURL).toBe('https://rytass.com/newebpay/checkout/123142');
+        expect(order.checkoutURL).toBe(
+          'https://rytass.com/newebpay/checkout/123142',
+        );
 
         await payment2._server?.close();
 
@@ -146,69 +177,87 @@ describe('NewebPay Order', () => {
   it('should throw error when info retrived method call on a not committable order', async () => {
     const order = await payment.prepare({
       id: '123142',
-      items: [{
-        name: 'test',
-        unitPrice: 100,
-        quantity: 2,
-      }],
+      items: [
+        {
+          name: 'test',
+          unitPrice: 100,
+          quantity: 2,
+        },
+      ],
       channel: NewebPaymentChannel.VACC,
     });
 
-    expect(() => order.infoRetrieved<NewebPayVirtualAccountCommitMessage>({
-      channel: Channel.VIRTUAL_ACCOUNT,
-      bankCode: '128',
-      account: '89042',
-      expiredAt: new Date(),
-    } as VirtualAccountInfo)).toThrow();
+    expect(() =>
+      order.infoRetrieved<NewebPayVirtualAccountCommitMessage>({
+        channel: Channel.VIRTUAL_ACCOUNT,
+        bankCode: '128',
+        account: '89042',
+        expiredAt: new Date(),
+      } as VirtualAccountInfo),
+    ).toThrow();
   });
 
   it('should throw error when commit a not committable order', async () => {
     const order = await payment.prepare({
       id: '123142',
-      items: [{
-        name: 'test',
-        unitPrice: 100,
-        quantity: 2,
-      }],
+      items: [
+        {
+          name: 'test',
+          unitPrice: 100,
+          quantity: 2,
+        },
+      ],
       channel: NewebPaymentChannel.WEBATM,
     });
 
-    expect(() => order.commit<NewebPayWebATMCommitMessage>({
-      id: '123142',
-      totalPrice: 200,
-      committedAt: new Date(),
-      platformTradeNumber: '1243980127',
-      channel: NewebPaymentChannel.WEBATM,
-    }, {
-      channel: Channel.WEB_ATM,
-      buyerBankCode: '128',
-      buyerAccountNumber: '89042',
-    } as WebATMPaymentInfo)).toThrow();
+    expect(() =>
+      order.commit<NewebPayWebATMCommitMessage>(
+        {
+          id: '123142',
+          totalPrice: 200,
+          committedAt: new Date(),
+          platformTradeNumber: '1243980127',
+          channel: NewebPaymentChannel.WEBATM,
+        },
+        {
+          channel: Channel.WEB_ATM,
+          buyerBankCode: '128',
+          buyerAccountNumber: '89042',
+        } as WebATMPaymentInfo,
+      ),
+    ).toThrow();
   });
 
   it('should throw error when commit id not matched', async () => {
     const order = await payment.prepare({
       id: '123142',
-      items: [{
-        name: 'test',
-        unitPrice: 100,
-        quantity: 2,
-      }],
+      items: [
+        {
+          name: 'test',
+          unitPrice: 100,
+          quantity: 2,
+        },
+      ],
       channel: NewebPaymentChannel.WEBATM,
     });
 
     order.form;
 
-    expect(() => order.commit<NewebPayWebATMCommitMessage>({
-      id: '123143',
-      totalPrice: 200,
-      committedAt: new Date(),
-      platformTradeNumber: '1243980127',
-      channel: NewebPaymentChannel.WEBATM,
-    }, {
-      channel: Channel.WEB_ATM,
-      buyerBankCode: '128',
-      buyerAccountNumber: '89042',
-    } as WebATMPaymentInfo)).toThrow();
+    expect(() =>
+      order.commit<NewebPayWebATMCommitMessage>(
+        {
+          id: '123143',
+          totalPrice: 200,
+          committedAt: new Date(),
+          platformTradeNumber: '1243980127',
+          channel: NewebPaymentChannel.WEBATM,
+        },
+        {
+          channel: Channel.WEB_ATM,
+          buyerBankCode: '128',
+          buyerAccountNumber: '89042',
+        } as WebATMPaymentInfo,
+      ),
+    ).toThrow();
   });
 });

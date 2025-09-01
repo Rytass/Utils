@@ -1459,6 +1459,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
       throw new Error(responsePayload.RtnMsg);
     }
 
+    order.prepareForBoundCardCommit();
     order.commit<CM>({
       id: order.id,
       totalPrice: totalAmount,

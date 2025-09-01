@@ -2,8 +2,8 @@ import { Readable, PassThrough } from 'stream';
 import { createHash } from 'crypto';
 import {
   FileTypeResult,
-  fileTypeFromBuffer,
-  fileTypeFromStream,
+  fromBuffer as fileTypeFromBuffer,
+  fromStream as fileTypeFromStream,
 } from 'file-type';
 import { ConverterManager } from '@rytass/file-converter';
 import {

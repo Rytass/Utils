@@ -372,7 +372,7 @@ describe('VaultSecret', () => {
           expect(manager.sync())
             .rejects.toThrow()
             .then(() => {
-              expect(onError).toBeCalled();
+              expect(onError).toHaveBeenCalled();
 
               done();
             });
@@ -438,7 +438,7 @@ describe('VaultSecret', () => {
       expect(manager.get('KEY_FROM_UNAUTHORIZED'))
         .rejects.toThrow()
         .then(() => {
-          expect(onError).toBeCalled();
+          expect(onError).toHaveBeenCalled();
 
           manager.terminate();
 
@@ -512,7 +512,7 @@ describe('VaultSecret', () => {
         expect(errorManager.get('what_a_secret'))
           .rejects.toThrow()
           .then(() => {
-            expect(onError).toBeCalled();
+            expect(onError).toHaveBeenCalled();
 
             errorManager.terminate();
 
@@ -555,7 +555,7 @@ describe('VaultSecret', () => {
         expect(errorManager.delete('COULD_NOT_BE_REMOVED', true))
           .rejects.toThrow()
           .then(() => {
-            expect(onError).toBeCalled();
+            expect(onError).toHaveBeenCalled();
 
             errorManager.terminate();
 
@@ -579,7 +579,7 @@ describe('VaultSecret', () => {
         expect(errorManager.set('WILL_FAILED_UPDATE_KEY', 'aaaa', true))
           .rejects.toThrow()
           .then(() => {
-            expect(onError).toBeCalled();
+            expect(onError).toHaveBeenCalled();
 
             errorManager.terminate();
 
@@ -619,7 +619,7 @@ describe('VaultSecret', () => {
       });
 
       setTimeout(() => {
-        expect(onError).toBeCalled();
+        expect(onError).toHaveBeenCalled();
         expect(manager.state).toBe(VaultSecretState.TERMINATED);
 
         post.mockClear();

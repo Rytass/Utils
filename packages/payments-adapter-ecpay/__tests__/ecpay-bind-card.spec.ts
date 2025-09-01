@@ -8,7 +8,10 @@ import { LRUCache } from 'lru-cache';
 import axios from 'axios';
 import { ECPayPayment } from '../src/ecpay-payment';
 import { ECPayBindCardRequest } from '../src/ecpay-bind-card-request';
-import { ECPayBindCardRequestState, ECPayCheckoutWithBoundCardRequestPayload } from '../src/typings';
+import {
+  ECPayBindCardRequestState,
+  ECPayCheckoutWithBoundCardRequestPayload,
+} from '../src/typings';
 import { App } from 'supertest/types';
 
 const BASE_URL = 'https://payment-stage.ecpay.com.tw';
@@ -26,11 +29,13 @@ describe('ECPayPayment Card Binding', () => {
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
-      mockServer.listen(0, listeningListener);
+    mockedListen.mockImplementationOnce(
+      (port?: any, hostname?: any, listeningListener?: () => void) => {
+        mockServer.listen(0, listeningListener);
 
-      return mockServer;
-    });
+        return mockServer;
+      },
+    );
 
     const mockedClose = jest.spyOn(mockServer, 'close');
 
@@ -65,7 +70,8 @@ describe('ECPayPayment Card Binding', () => {
           Card6No: '431195',
           Card4No: '2222',
           BindingDate: '2023/11/25 19:42:31',
-          CheckMacValue: 'A44745C8EF1FCE3741F17CEA9FE6C7D33F502FFF633291DFC6F3B885D0309796',
+          CheckMacValue:
+            'A44745C8EF1FCE3741F17CEA9FE6C7D33F502FFF633291DFC6F3B885D0309796',
         };
 
         request(payment._server as App)
@@ -76,7 +82,9 @@ describe('ECPayPayment Card Binding', () => {
           .then((res) => {
             expect(res.text).toEqual('1|OK');
 
-            expect(bindCardRequest.state).toEqual(ECPayBindCardRequestState.FAILED);
+            expect(bindCardRequest.state).toEqual(
+              ECPayBindCardRequestState.FAILED,
+            );
             expect(bindCardRequest.failedMessage).not.toBeNull();
 
             payment._server?.close(done);
@@ -110,7 +118,8 @@ describe('ECPayPayment Card Binding', () => {
           Card6No: '431195',
           Card4No: '2222',
           BindingDate: '2023/11/25 19:42:31',
-          CheckMacValue: '2C35D59EB0BF5EBA4A5FCA37D6AA697D66B708C98244A061AD4EA9896E30B8C2',
+          CheckMacValue:
+            '2C35D59EB0BF5EBA4A5FCA37D6AA697D66B708C98244A061AD4EA9896E30B8C2',
         };
 
         request(payment._server as App)
@@ -125,8 +134,12 @@ describe('ECPayPayment Card Binding', () => {
             expect(bindCardRequest.cardId).toEqual('187794');
             expect(bindCardRequest.cardNumberPrefix).toEqual('431195');
             expect(bindCardRequest.cardNumberSuffix).toEqual('2222');
-            expect(bindCardRequest.bindingDate?.getTime()).toEqual(new Date('2023/11/25 19:42:31').getTime());
-            expect(bindCardRequest.state).toEqual(ECPayBindCardRequestState.BOUND);
+            expect(bindCardRequest.bindingDate?.getTime()).toEqual(
+              new Date('2023/11/25 19:42:31').getTime(),
+            );
+            expect(bindCardRequest.state).toEqual(
+              ECPayBindCardRequestState.BOUND,
+            );
             expect(bindCardRequest.failedMessage).toBeNull();
 
             payment._server?.close(done);
@@ -158,7 +171,8 @@ describe('ECPayPayment Card Binding', () => {
           Card6No: '431195',
           Card4No: '2222',
           BindingDate: '2023/11/25 19:42:31',
-          CheckMacValue: '2C35D59EB0BF5EBA4A5FCA37D6AA697D66B708C98244A061AD4EA9896E30B8C2',
+          CheckMacValue:
+            '2C35D59EB0BF5EBA4A5FCA37D6AA697D66B708C98244A061AD4EA9896E30B8C2',
         };
 
         request(payment._server as App)
@@ -199,7 +213,8 @@ describe('ECPayPayment Card Binding', () => {
           Card6No: '431195',
           Card4No: '2222',
           BindingDate: '2023/11/25 19:42:31',
-          CheckMacValue: '2C35D59EB0BF5EBA4A5FCA37D6AA697D66B708C98244A061AD4EA9896E30B8C2',
+          CheckMacValue:
+            '2C35D59EB0BF5EBA4A5FCA37D6AA697D66B708C98244A061AD4EA9896E30B8C2',
         };
 
         request(payment._server as App)
@@ -255,13 +270,12 @@ describe('ECPayPayment Card Binding', () => {
     mockPost.mockImplementationOnce(async (url: string, data: any) => {
       expect(url).toBe(`${BASE_URL}/MerchantMember/AuthCardID/V2`);
 
-      const payload = Array.from(new URLSearchParams(data).entries())
-        .reduce(
-          (vars, [key, value]) => ({
-            ...vars,
-            [key]: value,
-          }),
-          {},
+      const payload = Array.from(new URLSearchParams(data).entries()).reduce(
+        (vars, [key, value]) => ({
+          ...vars,
+          [key]: value,
+        }),
+        {},
       ) as ECPayCheckoutWithBoundCardRequestPayload;
 
       expect(payload.MerchantID).toBe(MERCHANT_ID);
@@ -278,9 +292,16 @@ describe('ECPayPayment Card Binding', () => {
       cardId: '187794',
       description: 'Test',
       amount: 15,
+      items: [
+        {
+          name: 'Test Item',
+          unitPrice: 15,
+          quantity: 1,
+        },
+      ],
     });
 
-    expect(response.amount).toBe(15);
+    expect(response.totalPrice).toBe(15);
   });
 
   it('should throw when checkout with bound card received invalid checksum', async () => {
@@ -296,13 +317,12 @@ describe('ECPayPayment Card Binding', () => {
     mockPost.mockImplementationOnce(async (url: string, data: any) => {
       expect(url).toBe(`${BASE_URL}/MerchantMember/AuthCardID/V2`);
 
-      const payload = Array.from(new URLSearchParams(data).entries())
-        .reduce(
-          (vars, [key, value]) => ({
-            ...vars,
-            [key]: value,
-          }),
-          {},
+      const payload = Array.from(new URLSearchParams(data).entries()).reduce(
+        (vars, [key, value]) => ({
+          ...vars,
+          [key]: value,
+        }),
+        {},
       ) as ECPayCheckoutWithBoundCardRequestPayload;
 
       expect(payload.MerchantID).toBe(MERCHANT_ID);
@@ -314,12 +334,21 @@ describe('ECPayPayment Card Binding', () => {
       };
     });
 
-    expect(() => payment.checkoutWithBoundCard({
-      memberId: MEMBER_ID,
-      cardId: '187794',
-      description: 'Test',
-      amount: 15,
-    })).rejects.toThrow();
+    expect(() =>
+      payment.checkoutWithBoundCard({
+        memberId: MEMBER_ID,
+        cardId: '187794',
+        description: 'Test',
+        amount: 15,
+        items: [
+          {
+            name: 'Test Item',
+            unitPrice: 15,
+            quantity: 1,
+          },
+        ],
+      }),
+    ).rejects.toThrow();
   });
 
   it('should throw when checkout with bound card received error', async () => {
@@ -335,13 +364,12 @@ describe('ECPayPayment Card Binding', () => {
     mockPost.mockImplementationOnce(async (url: string, data: any) => {
       expect(url).toBe(`${BASE_URL}/MerchantMember/AuthCardID/V2`);
 
-      const payload = Array.from(new URLSearchParams(data).entries())
-        .reduce(
-          (vars, [key, value]) => ({
-            ...vars,
-            [key]: value,
-          }),
-          {},
+      const payload = Array.from(new URLSearchParams(data).entries()).reduce(
+        (vars, [key, value]) => ({
+          ...vars,
+          [key]: value,
+        }),
+        {},
       ) as ECPayCheckoutWithBoundCardRequestPayload;
 
       expect(payload.MerchantID).toBe(MERCHANT_ID);
@@ -353,12 +381,21 @@ describe('ECPayPayment Card Binding', () => {
       };
     });
 
-    expect(() => payment.checkoutWithBoundCard({
-      memberId: MEMBER_ID,
-      cardId: '187794',
-      description: 'Test',
-      amount: 15,
-    })).rejects.toThrow();
+    expect(() =>
+      payment.checkoutWithBoundCard({
+        memberId: MEMBER_ID,
+        cardId: '187794',
+        description: 'Test',
+        amount: 15,
+        items: [
+          {
+            name: 'Test Item',
+            unitPrice: 15,
+            quantity: 1,
+          },
+        ],
+      }),
+    ).rejects.toThrow();
   });
 
   it('should get binding url', (done) => {
@@ -376,7 +413,9 @@ describe('ECPayPayment Card Binding', () => {
 
         const url = bindRequest.bindingURL;
 
-        expect(url).toEqual('http://localhost:3333/payments/ecpay/bind-card/rytass');
+        expect(url).toEqual(
+          'http://localhost:3333/payments/ecpay/bind-card/rytass',
+        );
 
         request(payment._server as App)
           .get('/payments/ecpay/bind-card/rytass')

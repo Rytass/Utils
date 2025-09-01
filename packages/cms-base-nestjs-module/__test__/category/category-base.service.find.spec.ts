@@ -300,6 +300,7 @@ describe('CategoryBaseService.findById', () => {
       deletedAt: null,
       multiLanguageNames: [{ language: DEFAULT_LANGUAGE, name: 'Test' }],
       children: [],
+      parents: [],
     };
 
     mockQueryBuilder.getOne.mockResolvedValue(mockCategory);

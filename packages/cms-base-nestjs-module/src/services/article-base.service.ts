@@ -358,9 +358,9 @@ export class ArticleBaseService<
   private async bindSearchTokens<
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
   >(articleContent: AVC, tags?: string[], runner?: QueryRunner): Promise<void> {
-    const { Jieba } = await import('@node-rs/jieba');
-
-    const { cut } = new Jieba();
+    const jiebaModule = await import('@node-rs/jieba');
+    const jiebaInstance = new jiebaModule.default.Jieba();
+    const cut = jiebaInstance.cut.bind(jiebaInstance);
 
     const tokens = cut(
       articleContent.content
@@ -609,9 +609,9 @@ export class ArticleBaseService<
           if (!this.fullTextSearchMode)
             throw new Error('Full text search is disabled.');
 
-          const { Jieba } = await import('@node-rs/jieba');
-
-          const { cut } = new Jieba();
+          const jiebaModule = await import('@node-rs/jieba');
+          const jiebaInstance = new jiebaModule.default.Jieba();
+          const cut = jiebaInstance.cut.bind(jiebaInstance);
 
           const tokens = cut(options.searchTerm.trim());
 

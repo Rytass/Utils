@@ -1,7 +1,21 @@
-import { Channel, CreditCardAuthInfo, CreditCardECI, OrderState } from '@rytass/payments';
+import {
+  Channel,
+  CreditCardAuthInfo,
+  CreditCardECI,
+  OrderState,
+} from '@rytass/payments';
 import { DateTime } from 'luxon';
 import http, { createServer } from 'http';
-import { ECPayPayment, ECPayOrderItem, ECPayCallbackPaymentType, ECPayChannelCreditCard, ECPayChannelVirtualAccount, ECPayOrder, ECPayQueryResultStatus, ECPayCreditCardOrderStatus } from '../src';
+import {
+  ECPayPayment,
+  ECPayOrderItem,
+  ECPayCallbackPaymentType,
+  ECPayChannelCreditCard,
+  ECPayChannelVirtualAccount,
+  ECPayOrder,
+  ECPayQueryResultStatus,
+  ECPayCreditCardOrderStatus,
+} from '../src';
 
 describe('ECPayOrder', () => {
   const originCreateServer = createServer;
@@ -12,11 +26,13 @@ describe('ECPayOrder', () => {
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
-      mockServer.listen(0, listeningListener);
+    mockedListen.mockImplementationOnce(
+      (port?: any, hostname?: any, listeningListener?: () => void) => {
+        mockServer.listen(0, listeningListener);
 
-      return mockServer;
-    });
+        return mockServer;
+      },
+    );
 
     const mockedClose = jest.spyOn(mockServer, 'close');
 
@@ -34,15 +50,18 @@ describe('ECPayOrder', () => {
   it('should calculate total price', async () => {
     const order = await payment.prepare<ECPayChannelCreditCard>({
       channel: Channel.CREDIT_CARD,
-      items: [new ECPayOrderItem({
-        name: 'Test',
-        unitPrice: 10,
-        quantity: 1,
-      }), new ECPayOrderItem({
-        name: '中文',
-        unitPrice: 15,
-        quantity: 4,
-      })],
+      items: [
+        new ECPayOrderItem({
+          name: 'Test',
+          unitPrice: 10,
+          quantity: 1,
+        }),
+        new ECPayOrderItem({
+          name: '中文',
+          unitPrice: 15,
+          quantity: 4,
+        }),
+      ],
     });
 
     expect(order.totalPrice).toBe(70);
@@ -51,31 +70,37 @@ describe('ECPayOrder', () => {
   it('should get checkout url throw error when no server', async () => {
     const order = await payment.prepare<ECPayChannelCreditCard>({
       channel: Channel.CREDIT_CARD,
-      items: [new ECPayOrderItem({
-        name: 'Test',
-        unitPrice: 10,
-        quantity: 1,
-      }), new ECPayOrderItem({
-        name: '中文',
-        unitPrice: 15,
-        quantity: 4,
-      })],
+      items: [
+        new ECPayOrderItem({
+          name: 'Test',
+          unitPrice: 10,
+          quantity: 1,
+        }),
+        new ECPayOrderItem({
+          name: '中文',
+          unitPrice: 15,
+          quantity: 4,
+        }),
+      ],
     });
 
-    expect(() => order.checkoutURL).toThrowError();
+    expect(() => order.checkoutURL).toThrow();
   });
 
   it('should fallback channel to all', async () => {
     const allOrder = await payment.prepare<ECPayChannelCreditCard>({
-      items: [{
-        name: 'Test',
-        unitPrice: 10,
-        quantity: 1,
-      }, {
-        name: '中文',
-        unitPrice: 15,
-        quantity: 4,
-      }],
+      items: [
+        {
+          name: 'Test',
+          unitPrice: 10,
+          quantity: 1,
+        },
+        {
+          name: '中文',
+          unitPrice: 15,
+          quantity: 4,
+        },
+      ],
     });
 
     expect(allOrder.paymentType).toBeUndefined();
@@ -87,18 +112,22 @@ describe('ECPayOrder', () => {
       withServer: true,
       serverHost: 'http://localhost:3001',
       onServerListen: async () => {
-        const withServerOrder = await paymentWithServer.prepare<ECPayChannelCreditCard>({
-          channel: Channel.CREDIT_CARD,
-          items: [{
-            name: 'Test',
-            unitPrice: 10,
-            quantity: 1,
-          }, {
-            name: '中文',
-            unitPrice: 15,
-            quantity: 4,
-          }],
-        });
+        const withServerOrder =
+          await paymentWithServer.prepare<ECPayChannelCreditCard>({
+            channel: Channel.CREDIT_CARD,
+            items: [
+              {
+                name: 'Test',
+                unitPrice: 10,
+                quantity: 1,
+              },
+              {
+                name: '中文',
+                unitPrice: 15,
+                quantity: 4,
+              },
+            ],
+          });
 
         const re = new RegExp(`${withServerOrder.id}$`);
 
@@ -116,15 +145,18 @@ describe('ECPayOrder', () => {
       });
 
       const order = await payment.prepare<ECPayChannelCreditCard>({
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }, {
-          name: '中文',
-          unitPrice: 15,
-          quantity: 4,
-        }],
+        items: [
+          {
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          },
+          {
+            name: '中文',
+            unitPrice: 15,
+            quantity: 4,
+          },
+        ],
       });
 
       expect(order.state).toBe(OrderState.INITED);
@@ -154,15 +186,18 @@ describe('ECPayOrder', () => {
 
       const order = await payment.prepare<ECPayChannelCreditCard>({
         channel: Channel.CREDIT_CARD,
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }, {
-          name: '中文',
-          unitPrice: 15,
-          quantity: 4,
-        }],
+        items: [
+          {
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          },
+          {
+            name: '中文',
+            unitPrice: 15,
+            quantity: 4,
+          },
+        ],
       });
 
       // eslint-disable-next-line no-unused-vars
@@ -178,8 +213,8 @@ describe('ECPayOrder', () => {
         paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
       });
 
-      expect(() => order.form).toThrowError();
-      expect(() => order.formHTML).toThrowError();
+      expect(() => order.form).toThrow();
+      expect(() => order.formHTML).toThrow();
     });
 
     it('should get commit message after committed', async () => {
@@ -189,15 +224,18 @@ describe('ECPayOrder', () => {
 
       const order = await payment.prepare<ECPayChannelCreditCard>({
         channel: Channel.CREDIT_CARD,
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }, {
-          name: '中文',
-          unitPrice: 15,
-          quantity: 4,
-        }],
+        items: [
+          {
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          },
+          {
+            name: '中文',
+            unitPrice: 15,
+            quantity: 4,
+          },
+        ],
       });
 
       // eslint-disable-next-line no-unused-vars
@@ -218,15 +256,18 @@ describe('ECPayOrder', () => {
 
       const platformTradeNumber = '517079903259023';
 
-      order.commit({
-        id: order.id,
-        totalPrice: order.totalPrice,
-        committedAt,
-        tradeDate: createdAt,
-        tradeNumber: platformTradeNumber,
-        merchantId: 'mid',
-        paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
-      }, creditCardAuthInfo);
+      order.commit(
+        {
+          id: order.id,
+          totalPrice: order.totalPrice,
+          committedAt,
+          tradeDate: createdAt,
+          tradeNumber: platformTradeNumber,
+          merchantId: 'mid',
+          paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
+        },
+        creditCardAuthInfo,
+      );
 
       expect(order.committedAt).toBe(committedAt);
       expect(order.createdAt).toBe(createdAt);
@@ -242,15 +283,18 @@ describe('ECPayOrder', () => {
 
       const order = await payment.prepare({
         channel: Channel.CREDIT_CARD,
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }, {
-          name: '中文',
-          unitPrice: 15,
-          quantity: 4,
-        }],
+        items: [
+          {
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          },
+          {
+            name: '中文',
+            unitPrice: 15,
+            quantity: 4,
+          },
+        ],
       });
 
       // eslint-disable-next-line no-unused-vars
@@ -266,7 +310,7 @@ describe('ECPayOrder', () => {
           merchantId: 'wrongMerchantId',
           paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
         });
-      }).toThrowError();
+      }).toThrow();
 
       expect(() => {
         order.commit({
@@ -278,7 +322,7 @@ describe('ECPayOrder', () => {
           merchantId: 'mid',
           paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
         });
-      }).toThrowError();
+      }).toThrow();
 
       expect(() => {
         order.commit({
@@ -290,25 +334,30 @@ describe('ECPayOrder', () => {
           merchantId: 'mid',
           paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
         });
-      }).toThrowError();
+      }).toThrow();
     });
 
     it('should reject invalid state order', async () => {
-      const payment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
+      const payment = new ECPayPayment<
+        ECPayChannelCreditCard | ECPayChannelVirtualAccount
+      >({
         merchantId: 'mid',
       });
 
       const order = await payment.prepare({
         channel: Channel.CREDIT_CARD,
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }, {
-          name: '中文',
-          unitPrice: 15,
-          quantity: 4,
-        }],
+        items: [
+          {
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          },
+          {
+            name: '中文',
+            unitPrice: 15,
+            quantity: 4,
+          },
+        ],
       });
 
       expect(() => {
@@ -321,7 +370,7 @@ describe('ECPayOrder', () => {
           merchantId: 'mid',
           paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
         });
-      }).toThrowError();
+      }).toThrow();
     });
   });
 
@@ -331,15 +380,18 @@ describe('ECPayOrder', () => {
 
       const order = await payment.prepare({
         channel: Channel.CREDIT_CARD,
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }, {
-          name: '中文',
-          unitPrice: 15,
-          quantity: 4,
-        }],
+        items: [
+          {
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          },
+          {
+            name: '中文',
+            unitPrice: 15,
+            quantity: 4,
+          },
+        ],
       });
 
       expect(() => order.refund()).rejects.toThrow();
@@ -350,15 +402,18 @@ describe('ECPayOrder', () => {
 
       const order = new ECPayOrder({
         id: 'testorder',
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }, {
-          name: '中文',
-          unitPrice: 15,
-          quantity: 4,
-        }],
+        items: [
+          {
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          },
+          {
+            name: '中文',
+            unitPrice: 15,
+            quantity: 4,
+          },
+        ],
         gateway: payment,
         createdAt: new Date(),
         committedAt: new Date(),
@@ -375,37 +430,46 @@ describe('ECPayOrder', () => {
 
       const order = await payment.prepare({
         channel: Channel.CREDIT_CARD,
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }, {
-          name: '中文',
-          unitPrice: 15,
-          quantity: 4,
-        }],
+        items: [
+          {
+            name: 'Test',
+            unitPrice: 10,
+            quantity: 1,
+          },
+          {
+            name: '中文',
+            unitPrice: 15,
+            quantity: 4,
+          },
+        ],
       });
 
       order.form;
 
-      order.commit({
-        id: order.id,
-        totalPrice: order.totalPrice,
-        committedAt: new Date(),
-        tradeDate: new Date(),
-        tradeNumber: 'fakeid',
-        merchantId: '2000132',
-        paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
-      }, {
-        channel: Channel.CREDIT_CARD,
-        processDate: DateTime.fromFormat('2023/01/27 14:55:00', 'yyyy/MM/dd HH:mm:ss').toJSDate(),
-        authCode: '123456',
-        amount: 1800,
-        eci: CreditCardECI.VISA_AE_JCB_3D,
-        card4Number: '4230',
-        card6Number: '401494',
-        gwsr: '',
-      } as CreditCardAuthInfo);
+      order.commit(
+        {
+          id: order.id,
+          totalPrice: order.totalPrice,
+          committedAt: new Date(),
+          tradeDate: new Date(),
+          tradeNumber: 'fakeid',
+          merchantId: '2000132',
+          paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
+        },
+        {
+          channel: Channel.CREDIT_CARD,
+          processDate: DateTime.fromFormat(
+            '2023/01/27 14:55:00',
+            'yyyy/MM/dd HH:mm:ss',
+          ).toJSDate(),
+          authCode: '123456',
+          amount: 1800,
+          eci: CreditCardECI.VISA_AE_JCB_3D,
+          card4Number: '4230',
+          card6Number: '401494',
+          gwsr: '',
+        } as CreditCardAuthInfo,
+      );
 
       expect(() => order.refund()).rejects.toThrow();
     });
@@ -416,42 +480,56 @@ describe('ECPayOrder', () => {
 
         const order = await payment.prepare({
           channel: Channel.CREDIT_CARD,
-          items: [{
-            name: 'Test',
-            unitPrice: 10,
-            quantity: 1,
-          }, {
-            name: '中文',
-            unitPrice: 15,
-            quantity: 4,
-          }],
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            },
+            {
+              name: '中文',
+              unitPrice: 15,
+              quantity: 4,
+            },
+          ],
         });
 
         order.form;
 
-        order.commit({
-          id: order.id,
-          totalPrice: order.totalPrice,
-          committedAt: new Date(),
-          tradeDate: new Date(),
-          tradeNumber: 'fakeid',
-          merchantId: '2000132',
-          paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
-        }, {
-          channel: Channel.CREDIT_CARD,
-          processDate: DateTime.fromFormat('2023/01/27 14:55:00', 'yyyy/MM/dd HH:mm:ss').toJSDate(),
-          authCode: '123456',
-          amount: 1800,
-          eci: CreditCardECI.VISA_AE_JCB_3D,
-          card4Number: '4230',
-          card6Number: '401494',
-          gwsr: '789104',
-        } as CreditCardAuthInfo);
+        order.commit(
+          {
+            id: order.id,
+            totalPrice: order.totalPrice,
+            committedAt: new Date(),
+            tradeDate: new Date(),
+            tradeNumber: 'fakeid',
+            merchantId: '2000132',
+            paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
+          },
+          {
+            channel: Channel.CREDIT_CARD,
+            processDate: DateTime.fromFormat(
+              '2023/01/27 14:55:00',
+              'yyyy/MM/dd HH:mm:ss',
+            ).toJSDate(),
+            authCode: '123456',
+            amount: 1800,
+            eci: CreditCardECI.VISA_AE_JCB_3D,
+            card4Number: '4230',
+            card6Number: '401494',
+            gwsr: '789104',
+          } as CreditCardAuthInfo,
+        );
 
-        const mockGetCreditCardTradeStatus = jest.spyOn(payment, 'getCreditCardTradeStatus');
+        const mockGetCreditCardTradeStatus = jest.spyOn(
+          payment,
+          'getCreditCardTradeStatus',
+        );
         const mockDoAction = jest.spyOn(payment, 'doOrderAction');
 
-        mockGetCreditCardTradeStatus.mockImplementationOnce(() => Promise.resolve(ECPayCreditCardOrderStatus.CLOSED));
+        mockGetCreditCardTradeStatus.mockImplementationOnce(() =>
+          Promise.resolve(ECPayCreditCardOrderStatus.CLOSED),
+        );
 
         await new Promise<void>((pResolve) => {
           mockDoAction.mockImplementationOnce(async (order, action) => {
@@ -469,42 +547,56 @@ describe('ECPayOrder', () => {
 
         const order = await payment.prepare({
           channel: Channel.CREDIT_CARD,
-          items: [{
-            name: 'Test',
-            unitPrice: 10,
-            quantity: 1,
-          }, {
-            name: '中文',
-            unitPrice: 15,
-            quantity: 4,
-          }],
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            },
+            {
+              name: '中文',
+              unitPrice: 15,
+              quantity: 4,
+            },
+          ],
         });
 
         order.form;
 
-        order.commit({
-          id: order.id,
-          totalPrice: order.totalPrice,
-          committedAt: new Date(),
-          tradeDate: new Date(),
-          tradeNumber: 'fakeid',
-          merchantId: '2000132',
-          paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
-        }, {
-          channel: Channel.CREDIT_CARD,
-          processDate: DateTime.fromFormat('2023/01/27 14:55:00', 'yyyy/MM/dd HH:mm:ss').toJSDate(),
-          authCode: '123456',
-          amount: 1800,
-          eci: CreditCardECI.VISA_AE_JCB_3D,
-          card4Number: '4230',
-          card6Number: '401494',
-          gwsr: '789104',
-        } as CreditCardAuthInfo);
+        order.commit(
+          {
+            id: order.id,
+            totalPrice: order.totalPrice,
+            committedAt: new Date(),
+            tradeDate: new Date(),
+            tradeNumber: 'fakeid',
+            merchantId: '2000132',
+            paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
+          },
+          {
+            channel: Channel.CREDIT_CARD,
+            processDate: DateTime.fromFormat(
+              '2023/01/27 14:55:00',
+              'yyyy/MM/dd HH:mm:ss',
+            ).toJSDate(),
+            authCode: '123456',
+            amount: 1800,
+            eci: CreditCardECI.VISA_AE_JCB_3D,
+            card4Number: '4230',
+            card6Number: '401494',
+            gwsr: '789104',
+          } as CreditCardAuthInfo,
+        );
 
-        const mockGetCreditCardTradeStatus = jest.spyOn(payment, 'getCreditCardTradeStatus');
+        const mockGetCreditCardTradeStatus = jest.spyOn(
+          payment,
+          'getCreditCardTradeStatus',
+        );
         const mockDoAction = jest.spyOn(payment, 'doOrderAction');
 
-        mockGetCreditCardTradeStatus.mockImplementationOnce(() => Promise.resolve(ECPayCreditCardOrderStatus.AUTHORIZED));
+        mockGetCreditCardTradeStatus.mockImplementationOnce(() =>
+          Promise.resolve(ECPayCreditCardOrderStatus.AUTHORIZED),
+        );
 
         await new Promise<void>((pResolve) => {
           mockDoAction.mockImplementationOnce(async (order, action) => {
@@ -522,41 +614,55 @@ describe('ECPayOrder', () => {
 
         const order = await payment.prepare({
           channel: Channel.CREDIT_CARD,
-          items: [{
-            name: 'Test',
-            unitPrice: 10,
-            quantity: 1,
-          }, {
-            name: '中文',
-            unitPrice: 15,
-            quantity: 4,
-          }],
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            },
+            {
+              name: '中文',
+              unitPrice: 15,
+              quantity: 4,
+            },
+          ],
         });
 
         order.form;
 
-        order.commit({
-          id: order.id,
-          totalPrice: order.totalPrice,
-          committedAt: new Date(),
-          tradeDate: new Date(),
-          tradeNumber: 'fakeid',
-          merchantId: '2000132',
-          paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
-        }, {
-          channel: Channel.CREDIT_CARD,
-          processDate: DateTime.fromFormat('2023/01/27 14:55:00', 'yyyy/MM/dd HH:mm:ss').toJSDate(),
-          authCode: '123456',
-          amount: 1800,
-          eci: CreditCardECI.VISA_AE_JCB_3D,
-          card4Number: '4230',
-          card6Number: '401494',
-          gwsr: '789104',
-        } as CreditCardAuthInfo);
+        order.commit(
+          {
+            id: order.id,
+            totalPrice: order.totalPrice,
+            committedAt: new Date(),
+            tradeDate: new Date(),
+            tradeNumber: 'fakeid',
+            merchantId: '2000132',
+            paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
+          },
+          {
+            channel: Channel.CREDIT_CARD,
+            processDate: DateTime.fromFormat(
+              '2023/01/27 14:55:00',
+              'yyyy/MM/dd HH:mm:ss',
+            ).toJSDate(),
+            authCode: '123456',
+            amount: 1800,
+            eci: CreditCardECI.VISA_AE_JCB_3D,
+            card4Number: '4230',
+            card6Number: '401494',
+            gwsr: '789104',
+          } as CreditCardAuthInfo,
+        );
 
-        const mockGetCreditCardTradeStatus = jest.spyOn(payment, 'getCreditCardTradeStatus');
+        const mockGetCreditCardTradeStatus = jest.spyOn(
+          payment,
+          'getCreditCardTradeStatus',
+        );
 
-        mockGetCreditCardTradeStatus.mockImplementationOnce(() => Promise.resolve(ECPayCreditCardOrderStatus.UNAUTHORIZED));
+        mockGetCreditCardTradeStatus.mockImplementationOnce(() =>
+          Promise.resolve(ECPayCreditCardOrderStatus.UNAUTHORIZED),
+        );
 
         expect(() => order.refund()).rejects.toThrow();
       });
@@ -566,46 +672,183 @@ describe('ECPayOrder', () => {
 
         const order = await payment.prepare({
           channel: Channel.CREDIT_CARD,
-          items: [{
-            name: 'Test',
-            unitPrice: 10,
-            quantity: 1,
-          }, {
-            name: '中文',
-            unitPrice: 15,
-            quantity: 4,
-          }],
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            },
+            {
+              name: '中文',
+              unitPrice: 15,
+              quantity: 4,
+            },
+          ],
         });
 
         order.form;
 
-        order.commit({
-          id: order.id,
-          totalPrice: order.totalPrice,
-          committedAt: new Date(),
-          tradeDate: new Date(),
-          tradeNumber: 'fakeid',
-          merchantId: '2000132',
-          paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
-        }, {
-          channel: Channel.CREDIT_CARD,
-          processDate: DateTime.fromFormat('2023/01/27 14:55:00', 'yyyy/MM/dd HH:mm:ss').toJSDate(),
-          authCode: '123456',
-          amount: 1800,
-          eci: CreditCardECI.VISA_AE_JCB_3D,
-          card4Number: '4230',
-          card6Number: '401494',
-          gwsr: '789104',
-        } as CreditCardAuthInfo);
+        order.commit(
+          {
+            id: order.id,
+            totalPrice: order.totalPrice,
+            committedAt: new Date(),
+            tradeDate: new Date(),
+            tradeNumber: 'fakeid',
+            merchantId: '2000132',
+            paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
+          },
+          {
+            channel: Channel.CREDIT_CARD,
+            processDate: DateTime.fromFormat(
+              '2023/01/27 14:55:00',
+              'yyyy/MM/dd HH:mm:ss',
+            ).toJSDate(),
+            authCode: '123456',
+            amount: 1800,
+            eci: CreditCardECI.VISA_AE_JCB_3D,
+            card4Number: '4230',
+            card6Number: '401494',
+            gwsr: '789104',
+          } as CreditCardAuthInfo,
+        );
 
-        const mockGetCreditCardTradeStatus = jest.spyOn(payment, 'getCreditCardTradeStatus');
+        const mockGetCreditCardTradeStatus = jest.spyOn(
+          payment,
+          'getCreditCardTradeStatus',
+        );
 
-        mockGetCreditCardTradeStatus.mockImplementationOnce(() => Promise.resolve(ECPayCreditCardOrderStatus.CANCELLED));
-        mockGetCreditCardTradeStatus.mockImplementationOnce(() => Promise.resolve(ECPayCreditCardOrderStatus.MANUALLY_CANCELLED));
+        mockGetCreditCardTradeStatus.mockImplementationOnce(() =>
+          Promise.resolve(ECPayCreditCardOrderStatus.CANCELLED),
+        );
+        mockGetCreditCardTradeStatus.mockImplementationOnce(() =>
+          Promise.resolve(ECPayCreditCardOrderStatus.MANUALLY_CANCELLED),
+        );
 
         expect(() => order.refund()).rejects.toThrow();
         expect(() => order.refund()).rejects.toThrow();
       });
+    });
+  });
+
+  describe('prepareForBoundCardCommit', () => {
+    it('should transition order from INITED to PRE_COMMIT state', () => {
+      const order = new ECPayOrder({
+        id: 'test-bound-card-1',
+        items: [
+          {
+            name: 'Test Item',
+            unitPrice: 100,
+            quantity: 1,
+          },
+        ],
+        gateway: payment,
+        cardId: 'card-123',
+        memberId: 'member-456',
+      });
+
+      expect(order.state).toBe(OrderState.INITED);
+
+      order.prepareForBoundCardCommit();
+
+      expect(order.state).toBe(OrderState.PRE_COMMIT);
+    });
+
+    it('should throw error if order is not in INITED state', () => {
+      const order = new ECPayOrder({
+        id: 'test-bound-card-2',
+        items: [
+          {
+            name: 'Test Item',
+            unitPrice: 100,
+            quantity: 1,
+          },
+        ],
+        gateway: payment,
+        cardId: 'card-123',
+        memberId: 'member-456',
+      });
+
+      // First transition to PRE_COMMIT
+      order.prepareForBoundCardCommit();
+
+      // Try to prepare again should throw
+      expect(() => order.prepareForBoundCardCommit()).toThrow(
+        'Only inited order can prepare for bound card commit, now: PRE_COMMIT',
+      );
+    });
+  });
+
+  describe('commit with bound card', () => {
+    it('should commit order without form validation for bound card checkout', () => {
+      const order = new ECPayOrder({
+        id: 'test-bound-card-3',
+        items: [
+          {
+            name: 'Test Item',
+            unitPrice: 100,
+            quantity: 1,
+          },
+        ],
+        gateway: payment,
+        cardId: 'card-123',
+        memberId: 'member-456',
+      });
+
+      order.prepareForBoundCardCommit();
+
+      const commitMessage = {
+        id: 'test-bound-card-3',
+        totalPrice: 100,
+        committedAt: new Date(),
+        merchantId: '2000214',
+        tradeNumber: 'TRADE123',
+        tradeDate: new Date(),
+        paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
+      } as ECPayChannelCreditCard;
+
+      expect(() => order.commit(commitMessage)).not.toThrow();
+      expect(order.state).toBe(OrderState.COMMITTED);
+      expect(order.committedAt).toEqual(commitMessage.committedAt);
+      expect(order.platformTradeNumber).toBe('TRADE123');
+    });
+  });
+
+  describe('checkoutMemberId and checkoutCardId', () => {
+    it('should return member and card IDs for bound card checkout', () => {
+      const order = new ECPayOrder({
+        id: 'test-bound-card-4',
+        items: [
+          {
+            name: 'Test Item',
+            unitPrice: 100,
+            quantity: 1,
+          },
+        ],
+        gateway: payment,
+        cardId: 'card-789',
+        memberId: 'member-012',
+      });
+
+      expect(order.checkoutMemberId).toBe('member-012');
+      expect(order.checkoutCardId).toBe('card-789');
+    });
+
+    it('should return null for regular checkout', () => {
+      const order = new ECPayOrder({
+        id: 'test-regular-checkout',
+        items: [
+          {
+            name: 'Test Item',
+            unitPrice: 100,
+            quantity: 1,
+          },
+        ],
+        gateway: payment,
+      });
+
+      expect(order.checkoutMemberId).toBeNull();
+      expect(order.checkoutCardId).toBeNull();
     });
   });
 });

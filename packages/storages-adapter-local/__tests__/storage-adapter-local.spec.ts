@@ -6,17 +6,26 @@ import { LocalStorage } from '../src';
 import { resolve } from 'path';
 import { createHash } from 'crypto';
 import { Readable } from 'stream';
-import { lstatSync, rmSync, mkdirSync, writeFile, readFileSync, createReadStream } from 'fs';
+import {
+  lstatSync,
+  rmSync,
+  mkdirSync,
+  writeFile,
+  readFileSync,
+  createReadStream,
+} from 'fs';
 
 describe('StorageLocalService', () => {
   const workingDirectory = resolve(__dirname, 'tmp');
 
   describe('Basic Features', () => {
     const sampleFilePath = resolve(__dirname, '../__fixtures__/test-image.png');
-    const fakeFileBuffer = Buffer.from([0x1F, 0x49, 0xF2]);
+    const fakeFileBuffer = Buffer.from([0x1f, 0x49, 0xf2]);
     const sampleFileBuffer = readFileSync(sampleFilePath);
 
-    const fakeFilename = createHash('sha256').update(fakeFileBuffer).digest('hex');
+    const fakeFilename = createHash('sha256')
+      .update(fakeFileBuffer)
+      .digest('hex');
     const filename = `${createHash('sha256').update(sampleFileBuffer).digest('hex')}.png`;
 
     const localStorage = new LocalStorage({
@@ -27,7 +36,9 @@ describe('StorageLocalService', () => {
     describe('Write File', () => {
       it('should write buffer file', (done) => {
         localStorage.write(sampleFileBuffer).then(() => {
-          expect(lstatSync(resolve(workingDirectory, filename)).isFile()).toBeTruthy();
+          expect(
+            lstatSync(resolve(workingDirectory, filename)).isFile(),
+          ).toBeTruthy();
 
           done();
         });
@@ -37,7 +48,9 @@ describe('StorageLocalService', () => {
         const stream = createReadStream(sampleFilePath);
 
         localStorage.write(stream).then(() => {
-          expect(lstatSync(resolve(workingDirectory, filename)).isFile()).toBeTruthy();
+          expect(
+            lstatSync(resolve(workingDirectory, filename)).isFile(),
+          ).toBeTruthy();
 
           done();
         });
@@ -46,26 +59,32 @@ describe('StorageLocalService', () => {
       it('should batch write files', (done) => {
         const stream = createReadStream(sampleFilePath);
 
-        localStorage.batchWrite([stream, fakeFileBuffer]).then(async (uploadFiles) => {
-          expect(uploadFiles[0].key).toBe(filename);
-          expect(uploadFiles[1].key).toBe(fakeFilename);
+        localStorage
+          .batchWrite([stream, fakeFileBuffer])
+          .then(async (uploadFiles) => {
+            expect(uploadFiles[0].key).toBe(filename);
+            expect(uploadFiles[1].key).toBe(fakeFilename);
 
-          const savedBuffer = await localStorage.read(filename, { format: 'buffer' });
+            const savedBuffer = await localStorage.read(filename, {
+              format: 'buffer',
+            });
 
-          expect(savedBuffer.compare(sampleFileBuffer)).toBe(0);
+            expect(savedBuffer.compare(sampleFileBuffer)).toBe(0);
 
-          const savedFakeBuffer = await localStorage.read(fakeFilename, { format: 'buffer' });
+            const savedFakeBuffer = await localStorage.read(fakeFilename, {
+              format: 'buffer',
+            });
 
-          expect(savedFakeBuffer.compare(fakeFileBuffer)).toBe(0);
+            expect(savedFakeBuffer.compare(fakeFileBuffer)).toBe(0);
 
-          const usage = await localStorage.getUsageInfo();
+            const usage = await localStorage.getUsageInfo();
 
-          expect(usage.used).toBeGreaterThan(0);
+            expect(usage.used).toBeGreaterThan(0);
 
-          rmSync(resolve(workingDirectory, fakeFilename));
+            rmSync(resolve(workingDirectory, fakeFilename));
 
-          done();
-        });
+            done();
+          });
       });
 
       afterEach(() => {
@@ -77,7 +96,9 @@ describe('StorageLocalService', () => {
       const customFilename = 'aaa.png';
 
       it('should use custom filename when write buffer file', async () => {
-        const { key } = await localStorage.write(sampleFileBuffer, { filename: customFilename });
+        const { key } = await localStorage.write(sampleFileBuffer, {
+          filename: customFilename,
+        });
 
         expect(key).toBe(customFilename);
       });
@@ -85,20 +106,28 @@ describe('StorageLocalService', () => {
       it('should use custom filename when write stream file', async () => {
         const stream = createReadStream(sampleFilePath);
 
-        const { key } = await localStorage.write(stream, { filename: customFilename });
+        const { key } = await localStorage.write(stream, {
+          filename: customFilename,
+        });
 
         expect(key).toBe(customFilename);
       });
 
       afterEach(() => {
-        rmSync(resolve(workingDirectory, customFilename));
+        try {
+          rmSync(resolve(workingDirectory, customFilename));
+        } catch (e) {
+          // File might not exist, ignore the error
+        }
       });
     });
 
     describe('Read File', () => {
       it('should read file buffer', (done) => {
         localStorage.write(sampleFileBuffer).then(async () => {
-          const savedBuffer = await localStorage.read(filename, { format: 'buffer' });
+          const savedBuffer = await localStorage.read(filename, {
+            format: 'buffer',
+          });
 
           expect(savedBuffer.compare(sampleFileBuffer)).toBe(0);
 
@@ -136,7 +165,9 @@ describe('StorageLocalService', () => {
         localStorage.write(sampleFileBuffer).then(async () => {
           await localStorage.remove(filename);
 
-          expect(() => lstatSync(resolve(workingDirectory, filename))).toThrow();
+          expect(() =>
+            lstatSync(resolve(workingDirectory, filename)),
+          ).toThrow();
 
           done();
         });
@@ -167,16 +198,22 @@ describe('StorageLocalService', () => {
 
   describe('Error handlers', () => {
     it('should throw if directory not exists and no auto mkdir config', () => {
-      expect(() => new LocalStorage({
-        directory: workingDirectory,
-      })).toThrow();
+      expect(
+        () =>
+          new LocalStorage({
+            directory: workingDirectory,
+          }),
+      ).toThrow();
     });
 
     it('should throw if directory is a file', (done) => {
       writeFile(workingDirectory, Buffer.from([0x00, 0x01]), () => {
-        expect(() => new LocalStorage({
-          directory: workingDirectory,
-        })).toThrow();
+        expect(
+          () =>
+            new LocalStorage({
+              directory: workingDirectory,
+            }),
+        ).toThrow();
 
         rmSync(workingDirectory, { recursive: true, force: true });
 

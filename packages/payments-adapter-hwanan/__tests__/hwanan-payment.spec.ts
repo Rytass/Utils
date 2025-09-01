@@ -27,11 +27,13 @@ describe('HwaNan Payment', () => {
       });
 
       const order = await payment.prepare({
-        items: [{
-          name: 'Pencil',
-          unitPrice: 10,
-          quantity: 2,
-        }],
+        items: [
+          {
+            name: 'Pencil',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
       });
 
       expect(order.form.MerchantID).toBe(MERCHANT_ID);
@@ -52,11 +54,13 @@ describe('HwaNan Payment', () => {
       });
 
       const order = await payment.prepare({
-        items: [{
-          name: 'Pencil',
-          unitPrice: 10,
-          quantity: 2,
-        }],
+        items: [
+          {
+            name: 'Pencil',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
       });
 
       expect(order.form.customize).toBe(HwaNanCustomizePageType.OTHER);
@@ -73,7 +77,9 @@ describe('HwaNan Payment', () => {
         identifier: IDENTIFIER,
       });
 
-      expect(payment.checkoutActionUrl).toBe('https://hwanan.rytass.com/transaction/api-auth/');
+      expect(payment.checkoutActionUrl).toBe(
+        'https://hwanan.rytass.com/transaction/api-auth/',
+      );
     });
   });
 
@@ -89,11 +95,13 @@ describe('HwaNan Payment', () => {
     it('should prepare order form payload', async () => {
       const order = await payment.prepare({
         id: '202303210001',
-        items: [{
-          name: 'Pencil',
-          unitPrice: 10,
-          quantity: 2,
-        }],
+        items: [
+          {
+            name: 'Pencil',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
       });
 
       expect(order.id).toBe('202303210001');
@@ -105,11 +113,13 @@ describe('HwaNan Payment', () => {
     it('should prepare order form html', async () => {
       const order = await payment.prepare({
         id: '202303210001',
-        items: [{
-          name: 'Pencil',
-          unitPrice: 10,
-          quantity: 2,
-        }],
+        items: [
+          {
+            name: 'Pencil',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
       });
 
       const formHTML = order.formHTML;
@@ -119,20 +129,24 @@ describe('HwaNan Payment', () => {
 
     it('should auto generate order id', async () => {
       const order = await payment.prepare({
-        items: [{
-          name: 'Pencil',
-          unitPrice: 10,
-          quantity: 2,
-        }],
+        items: [
+          {
+            name: 'Pencil',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
       });
 
       expect(order.id).not.toBeNull();
     });
 
     it('should throw error when prepare order with no items', () => {
-      expect(() => payment.prepare({
-        items: [],
-      })).rejects.toThrow();
+      expect(() =>
+        payment.prepare({
+          items: [],
+        }),
+      ).rejects.toThrow();
     });
   });
 
@@ -162,11 +176,13 @@ describe('HwaNan Payment', () => {
         checkoutPath: '/checkout',
         onServerListen: async () => {
           const order = await payment.prepare({
-            items: [{
-              name: 'Pencil',
-              unitPrice: 10,
-              quantity: 2,
-            }],
+            items: [
+              {
+                name: 'Pencil',
+                unitPrice: 10,
+                quantity: 2,
+              },
+            ],
           });
 
           const data = await request(payment._server as App)
@@ -198,13 +214,17 @@ describe('HwaNan Payment', () => {
         },
       });
 
-      expect(() => payment.prepare({
-        items: [{
-          name: 'Pencil',
-          unitPrice: 10,
-          quantity: 2,
-        }],
-      })).rejects.toThrow();
+      expect(() =>
+        payment.prepare({
+          items: [
+            {
+              name: 'Pencil',
+              unitPrice: 10,
+              quantity: 2,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
     });
 
     it('should set port for build-in server', (done) => {
@@ -216,13 +236,15 @@ describe('HwaNan Payment', () => {
 
         const mockedListen = jest.spyOn(mockServer, 'listen');
 
-        mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
-          expect(port).toBe(9876);
+        mockedListen.mockImplementationOnce(
+          (port?: any, hostname?: any, listeningListener?: () => void) => {
+            expect(port).toBe(9876);
 
-          mockServer.listen(0, listeningListener);
+            mockServer.listen(0, listeningListener);
 
-          return mockServer;
-        });
+            return mockServer;
+          },
+        );
 
         const mockedClose = jest.spyOn(mockServer, 'close');
 
@@ -270,11 +292,13 @@ describe('HwaNan Payment', () => {
         onServerListen: async () => {
           const order = await payment.prepare({
             id: '123456789',
-            items: [{
-              name: 'Pencil',
-              unitPrice: 10,
-              quantity: 2,
-            }],
+            items: [
+              {
+                name: 'Pencil',
+                unitPrice: 10,
+                quantity: 2,
+              },
+            ],
           });
 
           expect(order.state).toBe(OrderState.INITED);
@@ -289,26 +313,34 @@ describe('HwaNan Payment', () => {
 
           await request(payment._server as App)
             .post('/callback')
-            .send(new URLSearchParams({
-              status: '0',
-              errcode: '00',
-              authCode: '123456',
-              authAmt: order.totalPrice.toString(),
-              xid,
-              lidm: order.id,
-              merID: MER_ID,
-              Last4digitPAN: '0000',
-              errDesc: '',
-              encOut: '',
-              checkValue: createHash('md5').update(`${createHash('md5').update(`${IDENTIFIER}|${order.id}`).digest('hex')
-                }|0|00|123456|${order.totalPrice}|${xid}`).digest('hex').substring(16),
-              Einvoice: '',
-            }).toString())
+            .send(
+              new URLSearchParams({
+                status: '0',
+                errcode: '00',
+                authCode: '123456',
+                authAmt: order.totalPrice.toString(),
+                xid,
+                lidm: order.id,
+                merID: MER_ID,
+                Last4digitPAN: '0000',
+                errDesc: '',
+                encOut: '',
+                checkValue: createHash('md5')
+                  .update(
+                    `${createHash('md5')
+                      .update(`${IDENTIFIER}|${order.id}`)
+                      .digest('hex')}|0|00|123456|${order.totalPrice}|${xid}`,
+                  )
+                  .digest('hex')
+                  .substring(16),
+                Einvoice: '',
+              }).toString(),
+            )
             .expect(200);
 
           expect(order.committedAt).not.toBeNull();
           expect(order.state).toBe(OrderState.COMMITTED);
-          expect(order.additionalInfo?.card4Number).toBe('0000')
+          expect(order.additionalInfo?.card4Number).toBe('0000');
           expect(order.platformTradeNumber).toBe(xid);
 
           await payment._server?.close();
@@ -334,11 +366,13 @@ describe('HwaNan Payment', () => {
         onServerListen: async () => {
           const order = await payment.prepare({
             id: '123456789',
-            items: [{
-              name: 'Pencil',
-              unitPrice: 10,
-              quantity: 2,
-            }],
+            items: [
+              {
+                name: 'Pencil',
+                unitPrice: 10,
+                quantity: 2,
+              },
+            ],
           });
 
           expect(order.state).toBe(OrderState.INITED);
@@ -353,25 +387,33 @@ describe('HwaNan Payment', () => {
 
           await request(payment._server as App)
             .post('/callback')
-            .send(new URLSearchParams({
-              status: '-1',
-              errcode: '99',
-              authCode: '123456',
-              authAmt: order.totalPrice.toString(),
-              xid,
-              lidm: order.id,
-              merID: MER_ID,
-              Last4digitPAN: '0000',
-              errDesc: 'ERROR',
-              encOut: '',
-              checkValue: createHash('md5').update(`${createHash('md5').update(`${IDENTIFIER}|${order.id}`).digest('hex')
-                }|-1|99|123456|${order.totalPrice}|${xid}`).digest('hex').substring(16),
-              Einvoice: '',
-            }).toString())
+            .send(
+              new URLSearchParams({
+                status: '-1',
+                errcode: '99',
+                authCode: '123456',
+                authAmt: order.totalPrice.toString(),
+                xid,
+                lidm: order.id,
+                merID: MER_ID,
+                Last4digitPAN: '0000',
+                errDesc: 'ERROR',
+                encOut: '',
+                checkValue: createHash('md5')
+                  .update(
+                    `${createHash('md5')
+                      .update(`${IDENTIFIER}|${order.id}`)
+                      .digest('hex')}|-1|99|123456|${order.totalPrice}|${xid}`,
+                  )
+                  .digest('hex')
+                  .substring(16),
+                Einvoice: '',
+              }).toString(),
+            )
             .expect(200);
 
           expect(order.state).toBe(OrderState.FAILED);
-          expect(order.failedMessage?.code).toBe('99')
+          expect(order.failedMessage?.code).toBe('99');
           expect(order.failedMessage?.message).toBe('ERROR');
 
           await payment._server?.close();
@@ -398,40 +440,56 @@ describe('HwaNan Payment', () => {
 
           await request(payment._server as App)
             .post('/callback')
-            .send(new URLSearchParams({
-              status: '0',
-              errcode: '00',
-              authCode: '123456',
-              authAmt: '200',
-              xid: '1',
-              lidm: '11111',
-              merID: MER_ID,
-              Last4digitPAN: '0000',
-              errDesc: '',
-              encOut: '',
-              checkValue: createHash('md5').update(`${createHash('md5').update(`${IDENTIFIER}|11111`).digest('hex')
-                }|0|00|123456|200|1|INVALID_STRING`).digest('hex').substring(16),
-              Einvoice: '',
-            }).toString())
+            .send(
+              new URLSearchParams({
+                status: '0',
+                errcode: '00',
+                authCode: '123456',
+                authAmt: '200',
+                xid: '1',
+                lidm: '11111',
+                merID: MER_ID,
+                Last4digitPAN: '0000',
+                errDesc: '',
+                encOut: '',
+                checkValue: createHash('md5')
+                  .update(
+                    `${createHash('md5')
+                      .update(`${IDENTIFIER}|11111`)
+                      .digest('hex')}|0|00|123456|200|1|INVALID_STRING`,
+                  )
+                  .digest('hex')
+                  .substring(16),
+                Einvoice: '',
+              }).toString(),
+            )
             .expect(400, 'Checksum Invalid');
 
           await request(payment._server as App)
             .post('/callback')
-            .send(new URLSearchParams({
-              status: '0',
-              errcode: '00',
-              authCode: '123456',
-              authAmt: '200',
-              xid: '1',
-              lidm: '11111',
-              merID: MER_ID,
-              Last4digitPAN: '0000',
-              errDesc: '',
-              encOut: '',
-              checkValue: createHash('md5').update(`${createHash('md5').update(`${IDENTIFIER}|11111`).digest('hex')
-                }|0|00|123456|200|1`).digest('hex').substring(16),
-              Einvoice: '',
-            }).toString())
+            .send(
+              new URLSearchParams({
+                status: '0',
+                errcode: '00',
+                authCode: '123456',
+                authAmt: '200',
+                xid: '1',
+                lidm: '11111',
+                merID: MER_ID,
+                Last4digitPAN: '0000',
+                errDesc: '',
+                encOut: '',
+                checkValue: createHash('md5')
+                  .update(
+                    `${createHash('md5')
+                      .update(`${IDENTIFIER}|11111`)
+                      .digest('hex')}|0|00|123456|200|1`,
+                  )
+                  .digest('hex')
+                  .substring(16),
+                Einvoice: '',
+              }).toString(),
+            )
             .expect(400, 'Order Not Found');
 
           await payment._server?.close();
@@ -443,12 +501,57 @@ describe('HwaNan Payment', () => {
   });
 
   describe('Build-in Ngrok Server', () => {
-    const mockConnect = jest.spyOn(ngrok, 'connect');
+    const mockNgrok = {
+      authtoken: jest.fn(),
+      forward: jest.fn(),
+    };
 
-    it('should ngrok server listen', (done) => {
-      mockConnect.mockImplementation(async () => {
-        return 'http://127.0.0.1';
+    beforeAll(() => {
+      // Mock the @ngrok/ngrok module
+      jest.doMock('@ngrok/ngrok', () => ({
+        default: mockNgrok,
+      }));
+
+      // Mock forward to return an object with url() method
+      mockNgrok.forward.mockResolvedValue({
+        url: () => 'https://test-ngrok-url.ngrok.io',
       });
+    });
+
+    afterAll(() => {
+      jest.unmock('@ngrok/ngrok');
+    });
+
+    beforeEach(() => {
+      mockNgrok.authtoken.mockClear();
+      mockNgrok.forward.mockClear();
+    });
+
+    it('should connect to ngrok when withServer is ngrok', (done) => {
+      const payment = new HwaNanPayment({
+        merchantId: MERCHANT_ID,
+        terminalId: TERMINAL_ID,
+        merID: MER_ID,
+        merchantName: 'Rytass Shop',
+        identifier: IDENTIFIER,
+        withServer: 'ngrok',
+        serverHost: 'http://0.0.0.0:3005',
+        onServerListen: () => {
+          expect(mockNgrok.authtoken).toHaveBeenCalledWith(
+            process.env.NGROK_AUTHTOKEN,
+          );
+          expect(mockNgrok.forward).toHaveBeenCalledWith(3005);
+
+          payment._server?.close(done);
+        },
+      });
+    });
+
+    it('should handle ngrok connection failures gracefully', (done) => {
+      // Mock failure
+      mockNgrok.forward.mockRejectedValueOnce(
+        new Error('Ngrok connection failed'),
+      );
 
       const payment = new HwaNanPayment({
         merchantId: MERCHANT_ID,
@@ -458,37 +561,28 @@ describe('HwaNan Payment', () => {
         identifier: IDENTIFIER,
         withServer: 'ngrok',
         serverHost: 'http://0.0.0.0:3005',
-        onServerListen: async () => {
-          expect(mockConnect).toBeCalledWith(3005);
+        onServerListen: () => {
+          expect(mockNgrok.authtoken).toHaveBeenCalledWith('test-token');
+          expect(mockNgrok.forward).toHaveBeenCalled();
 
           payment._server?.close(done);
         },
       });
     });
 
-    it('should ngrok connect failed not effect built-in server', (done) => {
-      mockConnect.mockImplementation(async () => {
-        throw new Error('Error');
-      });
+    it('should throw error when NGROK_AUTHTOKEN is not set', () => {
+      delete process.env.NGROK_AUTHTOKEN;
 
-      const payment = new HwaNanPayment({
-        merchantId: MERCHANT_ID,
-        terminalId: TERMINAL_ID,
-        merID: MER_ID,
-        merchantName: 'Rytass Shop',
-        identifier: IDENTIFIER,
-        withServer: 'ngrok',
-        serverHost: 'http://0.0.0.0:3005',
-        onServerListen: async () => {
-          expect(mockConnect).toBeCalled();
-
-          payment._server?.close(done);
-        },
-      });
-    });
-
-    afterEach(async () => {
-      await mockConnect.mockReset();
+      expect(() => {
+        new HwaNanPayment({
+          merchantId: MERCHANT_ID,
+          terminalId: TERMINAL_ID,
+          merID: MER_ID,
+          merchantName: 'Rytass Shop',
+          identifier: IDENTIFIER,
+          withServer: 'ngrok',
+        });
+      }).toThrow('[HwananPayment] NGROK_AUTHTOKEN is not set');
     });
   });
 });

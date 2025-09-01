@@ -679,7 +679,7 @@ describe('ECPay Invoice Query', () => {
         invoiceNumber: 'ZZ18003921',
         issuedOn: DateTime.fromFormat('20230203', 'yyyyMMdd').toJSDate(),
       }),
-    ).rejects.toThrowError('ECPay gateway error');
+    ).rejects.toThrow('ECPay gateway error');
   });
 
   it('should throw error when ecpay return query error', async () => {

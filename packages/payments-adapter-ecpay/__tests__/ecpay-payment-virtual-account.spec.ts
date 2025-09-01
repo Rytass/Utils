@@ -5,7 +5,15 @@
 import request from 'supertest';
 import { OrderState } from '@rytass/payments';
 import { getAddMac } from '../__utils__/add-mac';
-import { Channel, ECPayCallbackPaymentType, ECPayChannelCreditCard, ECPayChannelVirtualAccount, ECPayCommitMessage, ECPayOrder, ECPayPayment } from '@rytass/payments-adapter-ecpay';
+import {
+  Channel,
+  ECPayCallbackPaymentType,
+  ECPayChannelCreditCard,
+  ECPayChannelVirtualAccount,
+  ECPayCommitMessage,
+  ECPayOrder,
+  ECPayPayment,
+} from '@rytass/payments-adapter-ecpay';
 import http, { createServer } from 'http';
 import { DateTime } from 'luxon';
 import { App } from 'supertest/types';
@@ -21,11 +29,13 @@ describe('ECPayPayment (Virtual Account)', () => {
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
-      mockServer.listen(0, listeningListener);
+    mockedListen.mockImplementationOnce(
+      (port?: any, hostname?: any, listeningListener?: () => void) => {
+        mockServer.listen(0, listeningListener);
 
-      return mockServer;
-    });
+        return mockServer;
+      },
+    );
 
     const mockedClose = jest.spyOn(mockServer, 'close');
 
@@ -39,74 +49,98 @@ describe('ECPayPayment (Virtual Account)', () => {
   });
 
   describe('Virtual account', () => {
-    const payment = new ECPayPayment<ECPayChannelVirtualAccount | ECPayChannelCreditCard>({
+    const payment = new ECPayPayment<
+      ECPayChannelVirtualAccount | ECPayChannelCreditCard
+    >({
       serverHost: 'http://localhost:9999',
       asyncInfoPath: '/callback',
     });
 
     it('should throw error on invalid channel', () => {
-      expect(() => payment.prepare({
-        channel: Channel.CREDIT_CARD,
-        // @ts-ignore: Unreachable code error
-        virtualAccountExpireDays: 9,
-        items: [{
-          name: 'Test',
-          unitPrice: 15,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError();
+      expect(() =>
+        payment.prepare({
+          channel: Channel.CREDIT_CARD,
+          // @ts-ignore: Unreachable code error
+          virtualAccountExpireDays: 9,
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 15,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
     });
 
     it('should `virtualAccountExpireDays` between 1 and 60', () => {
-      expect(() => payment.prepare({
-        channel: Channel.VIRTUAL_ACCOUNT,
-        virtualAccountExpireDays: 0,
-        items: [{
-          name: 'Test',
-          unitPrice: 15,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError();
+      expect(() =>
+        payment.prepare({
+          channel: Channel.VIRTUAL_ACCOUNT,
+          virtualAccountExpireDays: 0,
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 15,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
 
-      expect(() => payment.prepare({
-        channel: Channel.VIRTUAL_ACCOUNT,
-        virtualAccountExpireDays: 99,
-        items: [{
-          name: 'Test',
-          unitPrice: 15,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError();
+      expect(() =>
+        payment.prepare({
+          channel: Channel.VIRTUAL_ACCOUNT,
+          virtualAccountExpireDays: 99,
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 15,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
     });
 
     it('should throw if total aomunt between 11 and 49999', () => {
-      expect(() => payment.prepare({
-        channel: Channel.VIRTUAL_ACCOUNT,
-        items: [{
-          name: 'Test',
-          unitPrice: 10,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError();
+      expect(() =>
+        payment.prepare({
+          channel: Channel.VIRTUAL_ACCOUNT,
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
 
-      expect(() => payment.prepare({
-        channel: Channel.VIRTUAL_ACCOUNT,
-        items: [{
-          name: 'Test',
-          unitPrice: 99990,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError();
+      expect(() =>
+        payment.prepare({
+          channel: Channel.VIRTUAL_ACCOUNT,
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 99990,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow();
     });
 
     it('should default virtual expire day is 3', async () => {
       const order = await payment.prepare({
         channel: Channel.VIRTUAL_ACCOUNT,
-        items: [{
-          name: 'Test',
-          unitPrice: 15,
-          quantity: 1,
-        }],
+        items: [
+          {
+            name: 'Test',
+            unitPrice: 15,
+            quantity: 1,
+          },
+        ],
       });
 
       expect(order.form.ExpireDate).toBe('3');
@@ -116,11 +150,13 @@ describe('ECPayPayment (Virtual Account)', () => {
       const order = await payment.prepare({
         channel: Channel.VIRTUAL_ACCOUNT,
         virtualAccountExpireDays: 7,
-        items: [{
-          name: 'Test',
-          unitPrice: 15,
-          quantity: 1,
-        }],
+        items: [
+          {
+            name: 'Test',
+            unitPrice: 15,
+            quantity: 1,
+          },
+        ],
       });
 
       expect(order.form.ExpireDate).toBe('7');
@@ -130,11 +166,13 @@ describe('ECPayPayment (Virtual Account)', () => {
       const clientOrder = await payment.prepare({
         channel: Channel.VIRTUAL_ACCOUNT,
         virtualAccountExpireDays: 7,
-        items: [{
-          name: 'Test',
-          unitPrice: 15,
-          quantity: 1,
-        }],
+        items: [
+          {
+            name: 'Test',
+            unitPrice: 15,
+            quantity: 1,
+          },
+        ],
         clientBackUrl: 'https://rytass.com',
       });
 
@@ -142,20 +180,27 @@ describe('ECPayPayment (Virtual Account)', () => {
     });
 
     describe('Virtual Account Banks', () => {
-      const mockedOnInfoRetrieved = jest.fn<void, [ECPayOrder<ECPayCommitMessage>]>(() => { });
+      const mockedOnInfoRetrieved = jest.fn<
+        void,
+        [ECPayOrder<ECPayCommitMessage>]
+      >(() => {});
 
       it('should reject invalid channel type', (done) => {
-        const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
+        const testPayment = new ECPayPayment<
+          ECPayChannelCreditCard | ECPayChannelVirtualAccount
+        >({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
             const order = await testPayment.prepare({
               channel: Channel.CREDIT_CARD,
-              items: [{
-                name: 'Test',
-                unitPrice: 15,
-                quantity: 1,
-              }],
+              items: [
+                {
+                  name: 'Test',
+                  unitPrice: 15,
+                  quantity: 1,
+                },
+              ],
             });
 
             // Get HTML to trigger pre commit
@@ -195,19 +240,25 @@ describe('ECPayPayment (Virtual Account)', () => {
       });
 
       it('should default callback handler commit TAISHIN virtual account order', (done) => {
-        const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
+        const testPayment = new ECPayPayment<
+          ECPayChannelCreditCard | ECPayChannelVirtualAccount
+        >({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
-              channel: Channel.VIRTUAL_ACCOUNT,
-              virtualAccountExpireDays: 7,
-              items: [{
-                name: 'Test',
-                unitPrice: 15,
-                quantity: 1,
-              }],
-            });
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>(
+              {
+                channel: Channel.VIRTUAL_ACCOUNT,
+                virtualAccountExpireDays: 7,
+                items: [
+                  {
+                    name: 'Test',
+                    unitPrice: 15,
+                    quantity: 1,
+                  },
+                ],
+              },
+            );
 
             // Get HTML to trigger pre commit
             // eslint-disable-next-line no-unused-vars
@@ -244,7 +295,12 @@ describe('ECPayPayment (Virtual Account)', () => {
             expect(order.asyncInfo?.account).toBe('3453721178769211');
 
             expect(mockedOnInfoRetrieved.mock.calls.length).toBe(1);
-            expect((mockedOnInfoRetrieved.mock.calls[0][0] as unknown as ECPayOrder<ECPayCommitMessage>).id).toBe(order.id);
+            expect(
+              (
+                mockedOnInfoRetrieved.mock
+                  .calls[0][0] as unknown as ECPayOrder<ECPayCommitMessage>
+              ).id,
+            ).toBe(order.id);
 
             testPayment._server?.close(done);
           },
@@ -252,19 +308,25 @@ describe('ECPayPayment (Virtual Account)', () => {
       });
 
       it('should default callback handler commit ESUN virtual account order', (done) => {
-        const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
+        const testPayment = new ECPayPayment<
+          ECPayChannelCreditCard | ECPayChannelVirtualAccount
+        >({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
-              channel: Channel.VIRTUAL_ACCOUNT,
-              virtualAccountExpireDays: 7,
-              items: [{
-                name: 'Test',
-                unitPrice: 15,
-                quantity: 1,
-              }],
-            });
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>(
+              {
+                channel: Channel.VIRTUAL_ACCOUNT,
+                virtualAccountExpireDays: 7,
+                items: [
+                  {
+                    name: 'Test',
+                    unitPrice: 15,
+                    quantity: 1,
+                  },
+                ],
+              },
+            );
 
             // Get HTML to trigger pre commit
             // eslint-disable-next-line no-unused-vars
@@ -306,19 +368,25 @@ describe('ECPayPayment (Virtual Account)', () => {
       });
 
       it('should default callback handler commit BOT virtual account order', (done) => {
-        const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
+        const testPayment = new ECPayPayment<
+          ECPayChannelCreditCard | ECPayChannelVirtualAccount
+        >({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
-              channel: Channel.VIRTUAL_ACCOUNT,
-              virtualAccountExpireDays: 7,
-              items: [{
-                name: 'Test',
-                unitPrice: 1000,
-                quantity: 1,
-              }],
-            });
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>(
+              {
+                channel: Channel.VIRTUAL_ACCOUNT,
+                virtualAccountExpireDays: 7,
+                items: [
+                  {
+                    name: 'Test',
+                    unitPrice: 1000,
+                    quantity: 1,
+                  },
+                ],
+              },
+            );
 
             // Get HTML to trigger pre commit
             // eslint-disable-next-line no-unused-vars
@@ -360,19 +428,25 @@ describe('ECPayPayment (Virtual Account)', () => {
       });
 
       it('should default callback handler commit FUBON virtual account order', (done) => {
-        const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
+        const testPayment = new ECPayPayment<
+          ECPayChannelCreditCard | ECPayChannelVirtualAccount
+        >({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
-              channel: Channel.VIRTUAL_ACCOUNT,
-              virtualAccountExpireDays: 7,
-              items: [{
-                name: 'Test',
-                unitPrice: 15,
-                quantity: 1,
-              }],
-            });
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>(
+              {
+                channel: Channel.VIRTUAL_ACCOUNT,
+                virtualAccountExpireDays: 7,
+                items: [
+                  {
+                    name: 'Test',
+                    unitPrice: 15,
+                    quantity: 1,
+                  },
+                ],
+              },
+            );
 
             // Get HTML to trigger pre commit
             // eslint-disable-next-line no-unused-vars
@@ -414,19 +488,25 @@ describe('ECPayPayment (Virtual Account)', () => {
       });
 
       it('should default callback handler commit CHINATRUST virtual account order', (done) => {
-        const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
+        const testPayment = new ECPayPayment<
+          ECPayChannelCreditCard | ECPayChannelVirtualAccount
+        >({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
-              channel: Channel.VIRTUAL_ACCOUNT,
-              virtualAccountExpireDays: 7,
-              items: [{
-                name: 'Test',
-                unitPrice: 15,
-                quantity: 1,
-              }],
-            });
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>(
+              {
+                channel: Channel.VIRTUAL_ACCOUNT,
+                virtualAccountExpireDays: 7,
+                items: [
+                  {
+                    name: 'Test',
+                    unitPrice: 15,
+                    quantity: 1,
+                  },
+                ],
+              },
+            );
 
             // Get HTML to trigger pre commit
             // eslint-disable-next-line no-unused-vars
@@ -468,19 +548,25 @@ describe('ECPayPayment (Virtual Account)', () => {
       });
 
       it('should default callback handler commit FIRST virtual account order', (done) => {
-        const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
+        const testPayment = new ECPayPayment<
+          ECPayChannelCreditCard | ECPayChannelVirtualAccount
+        >({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
-              channel: Channel.VIRTUAL_ACCOUNT,
-              virtualAccountExpireDays: 7,
-              items: [{
-                name: 'Test',
-                unitPrice: 15,
-                quantity: 1,
-              }],
-            });
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>(
+              {
+                channel: Channel.VIRTUAL_ACCOUNT,
+                virtualAccountExpireDays: 7,
+                items: [
+                  {
+                    name: 'Test',
+                    unitPrice: 15,
+                    quantity: 1,
+                  },
+                ],
+              },
+            );
 
             // Get HTML to trigger pre commit
             // eslint-disable-next-line no-unused-vars
@@ -522,19 +608,25 @@ describe('ECPayPayment (Virtual Account)', () => {
       });
 
       it('should default callback handler commit LAND virtual account order', (done) => {
-        const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
+        const testPayment = new ECPayPayment<
+          ECPayChannelCreditCard | ECPayChannelVirtualAccount
+        >({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
-              channel: Channel.VIRTUAL_ACCOUNT,
-              virtualAccountExpireDays: 7,
-              items: [{
-                name: 'Test',
-                unitPrice: 15,
-                quantity: 1,
-              }],
-            });
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>(
+              {
+                channel: Channel.VIRTUAL_ACCOUNT,
+                virtualAccountExpireDays: 7,
+                items: [
+                  {
+                    name: 'Test',
+                    unitPrice: 15,
+                    quantity: 1,
+                  },
+                ],
+              },
+            );
 
             // Get HTML to trigger pre commit
             // eslint-disable-next-line no-unused-vars
@@ -576,19 +668,25 @@ describe('ECPayPayment (Virtual Account)', () => {
       });
 
       it('should default callback handler commit CATHAY virtual account order', (done) => {
-        const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
+        const testPayment = new ECPayPayment<
+          ECPayChannelCreditCard | ECPayChannelVirtualAccount
+        >({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
-              channel: Channel.VIRTUAL_ACCOUNT,
-              virtualAccountExpireDays: 7,
-              items: [{
-                name: 'Test',
-                unitPrice: 15,
-                quantity: 1,
-              }],
-            });
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>(
+              {
+                channel: Channel.VIRTUAL_ACCOUNT,
+                virtualAccountExpireDays: 7,
+                items: [
+                  {
+                    name: 'Test',
+                    unitPrice: 15,
+                    quantity: 1,
+                  },
+                ],
+              },
+            );
 
             // Get HTML to trigger pre commit
             // eslint-disable-next-line no-unused-vars
@@ -630,19 +728,25 @@ describe('ECPayPayment (Virtual Account)', () => {
       });
 
       it('should default callback handler commit TACHONG virtual account order', (done) => {
-        const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
+        const testPayment = new ECPayPayment<
+          ECPayChannelCreditCard | ECPayChannelVirtualAccount
+        >({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
-              channel: Channel.VIRTUAL_ACCOUNT,
-              virtualAccountExpireDays: 7,
-              items: [{
-                name: 'Test',
-                unitPrice: 15,
-                quantity: 1,
-              }],
-            });
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>(
+              {
+                channel: Channel.VIRTUAL_ACCOUNT,
+                virtualAccountExpireDays: 7,
+                items: [
+                  {
+                    name: 'Test',
+                    unitPrice: 15,
+                    quantity: 1,
+                  },
+                ],
+              },
+            );
 
             // Get HTML to trigger pre commit
             // eslint-disable-next-line no-unused-vars
@@ -677,7 +781,11 @@ describe('ECPayPayment (Virtual Account)', () => {
             expect(order.state).toBe(OrderState.ASYNC_INFO_RETRIEVED);
             expect(order.asyncInfo?.bankCode).toBe('806');
             expect(order.asyncInfo?.account).toBe('3453721178769211');
-            expect(DateTime.fromJSDate(order.asyncInfo?.expiredAt!).toFormat('yyyy/MM/dd')).toBe('2022/04/27');
+            expect(
+              DateTime.fromJSDate(order.asyncInfo?.expiredAt!).toFormat(
+                'yyyy/MM/dd',
+              ),
+            ).toBe('2022/04/27');
 
             testPayment._server?.close(done);
           },
@@ -685,19 +793,25 @@ describe('ECPayPayment (Virtual Account)', () => {
       });
 
       it('should default callback handler commit PANHSIN virtual account order', (done) => {
-        const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
+        const testPayment = new ECPayPayment<
+          ECPayChannelCreditCard | ECPayChannelVirtualAccount
+        >({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
-              channel: Channel.VIRTUAL_ACCOUNT,
-              virtualAccountExpireDays: 7,
-              items: [{
-                name: 'Test',
-                unitPrice: 15,
-                quantity: 1,
-              }],
-            });
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>(
+              {
+                channel: Channel.VIRTUAL_ACCOUNT,
+                virtualAccountExpireDays: 7,
+                items: [
+                  {
+                    name: 'Test',
+                    unitPrice: 15,
+                    quantity: 1,
+                  },
+                ],
+              },
+            );
 
             // Get HTML to trigger pre commit
             // eslint-disable-next-line no-unused-vars
@@ -739,26 +853,40 @@ describe('ECPayPayment (Virtual Account)', () => {
       });
 
       it('should reject info retrived if order not pre-commited', (done) => {
-        const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
+        const testPayment = new ECPayPayment<
+          ECPayChannelCreditCard | ECPayChannelVirtualAccount
+        >({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
-              channel: Channel.VIRTUAL_ACCOUNT,
-              virtualAccountExpireDays: 7,
-              items: [{
-                name: 'Test',
-                unitPrice: 15,
-                quantity: 1,
-              }],
-            });
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>(
+              {
+                channel: Channel.VIRTUAL_ACCOUNT,
+                virtualAccountExpireDays: 7,
+                items: [
+                  {
+                    name: 'Test',
+                    unitPrice: 15,
+                    quantity: 1,
+                  },
+                ],
+              },
+            );
 
-            expect(() => order.infoRetrieved({
-              channel: Channel.VIRTUAL_ACCOUNT,
-              bankCode: '806',
-              account: '3453721178769211',
-              expiredAt: DateTime.fromFormat('2022/04/27', 'yyyy/MM/dd').toJSDate(),
-            }, ECPayCallbackPaymentType.ATM_PANHSIN)).toThrowError();
+            expect(() =>
+              order.infoRetrieved(
+                {
+                  channel: Channel.VIRTUAL_ACCOUNT,
+                  bankCode: '806',
+                  account: '3453721178769211',
+                  expiredAt: DateTime.fromFormat(
+                    '2022/04/27',
+                    'yyyy/MM/dd',
+                  ).toJSDate(),
+                },
+                ECPayCallbackPaymentType.ATM_PANHSIN,
+              ),
+            ).toThrow();
 
             testPayment._server?.close(done);
           },
@@ -766,19 +894,25 @@ describe('ECPayPayment (Virtual Account)', () => {
       });
 
       it('should default async information handler not change status when failed', (done) => {
-        const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
+        const testPayment = new ECPayPayment<
+          ECPayChannelCreditCard | ECPayChannelVirtualAccount
+        >({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
-              channel: Channel.VIRTUAL_ACCOUNT,
-              virtualAccountExpireDays: 7,
-              items: [{
-                name: 'Test',
-                unitPrice: 15,
-                quantity: 1,
-              }],
-            });
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>(
+              {
+                channel: Channel.VIRTUAL_ACCOUNT,
+                virtualAccountExpireDays: 7,
+                items: [
+                  {
+                    name: 'Test',
+                    unitPrice: 15,
+                    quantity: 1,
+                  },
+                ],
+              },
+            );
 
             // Get HTML to trigger pre commit
             // eslint-disable-next-line no-unused-vars
@@ -811,8 +945,10 @@ describe('ECPayPayment (Virtual Account)', () => {
 
             expect(res.text).toEqual('1|OK');
             expect(order.state).toBe(OrderState.FAILED);
-            expect(order.failedMessage?.code).toBe('44444')
-            expect(order.failedMessage?.message).toBe('Get VirtualAccount Failed');
+            expect(order.failedMessage?.code).toBe('44444');
+            expect(order.failedMessage?.message).toBe(
+              'Get VirtualAccount Failed',
+            );
             expect(order.asyncInfo).toBeUndefined();
 
             testPayment._server?.close(done);
@@ -821,19 +957,25 @@ describe('ECPayPayment (Virtual Account)', () => {
       });
 
       it('should received callback of virtual account payments', (done) => {
-        const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
+        const testPayment = new ECPayPayment<
+          ECPayChannelCreditCard | ECPayChannelVirtualAccount
+        >({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
-              channel: Channel.VIRTUAL_ACCOUNT,
-              virtualAccountExpireDays: 7,
-              items: [{
-                name: 'Test',
-                unitPrice: 15,
-                quantity: 1,
-              }],
-            });
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>(
+              {
+                channel: Channel.VIRTUAL_ACCOUNT,
+                virtualAccountExpireDays: 7,
+                items: [
+                  {
+                    name: 'Test',
+                    unitPrice: 15,
+                    quantity: 1,
+                  },
+                ],
+              },
+            );
 
             // Get HTML to trigger pre commit
             // eslint-disable-next-line no-unused-vars
@@ -935,19 +1077,25 @@ describe('ECPayPayment (Virtual Account)', () => {
       });
 
       it('should async information duplicate received be ignored', (done) => {
-        const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
+        const testPayment = new ECPayPayment<
+          ECPayChannelCreditCard | ECPayChannelVirtualAccount
+        >({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
-              channel: Channel.VIRTUAL_ACCOUNT,
-              virtualAccountExpireDays: 7,
-              items: [{
-                name: 'Test',
-                unitPrice: 15,
-                quantity: 1,
-              }],
-            });
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>(
+              {
+                channel: Channel.VIRTUAL_ACCOUNT,
+                virtualAccountExpireDays: 7,
+                items: [
+                  {
+                    name: 'Test',
+                    unitPrice: 15,
+                    quantity: 1,
+                  },
+                ],
+              },
+            );
 
             // Get HTML to trigger pre commit
             // eslint-disable-next-line no-unused-vars
@@ -1016,19 +1164,25 @@ describe('ECPayPayment (Virtual Account)', () => {
       });
 
       it('should reject if virtual account bank not matched', (done) => {
-        const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
+        const testPayment = new ECPayPayment<
+          ECPayChannelCreditCard | ECPayChannelVirtualAccount
+        >({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
           onServerListen: async () => {
-            const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
-              channel: Channel.VIRTUAL_ACCOUNT,
-              virtualAccountExpireDays: 7,
-              items: [{
-                name: 'Test',
-                unitPrice: 15,
-                quantity: 1,
-              }],
-            });
+            const order = await testPayment.prepare<ECPayChannelVirtualAccount>(
+              {
+                channel: Channel.VIRTUAL_ACCOUNT,
+                virtualAccountExpireDays: 7,
+                items: [
+                  {
+                    name: 'Test',
+                    unitPrice: 15,
+                    quantity: 1,
+                  },
+                ],
+              },
+            );
 
             // Get HTML to trigger pre commit
             // eslint-disable-next-line no-unused-vars
@@ -1120,7 +1274,9 @@ describe('ECPayPayment (Virtual Account)', () => {
             expect(resCallback.text).toEqual('0|OrderNotFound');
             expect(order.state).toBe(OrderState.ASYNC_INFO_RETRIEVED);
             expect(order.asyncInfo?.account).toBe('3453721178769211');
-            expect(order.paymentType).toBe(ECPayCallbackPaymentType.ATM_PANHSIN);
+            expect(order.paymentType).toBe(
+              ECPayCallbackPaymentType.ATM_PANHSIN,
+            );
 
             testPayment._server?.close(done);
           },

@@ -3,12 +3,21 @@
  * @jest-environment node
  */
 
-import ngrok from 'ngrok';
 import axios from 'axios';
 import http, { createServer } from 'http';
 import { OrderState } from '@rytass/payments';
 import { createHash, createDecipheriv, randomBytes } from 'crypto';
-import { NewebPayCreditCardBalanceStatus, NewebPayMPGMakeOrderPayload, NewebPaymentChannel, NewebPayOrder, NewebPayPayment, NewebPayOrderStatusFromAPI, NewebPayWebATMCommitMessage, NewebPayAdditionInfoCreditCard, NewebPayCreditCardCommitMessage } from '../src';
+import {
+  NewebPayCreditCardBalanceStatus,
+  NewebPayMPGMakeOrderPayload,
+  NewebPaymentChannel,
+  NewebPayOrder,
+  NewebPayPayment,
+  NewebPayOrderStatusFromAPI,
+  NewebPayWebATMCommitMessage,
+  NewebPayAdditionInfoCreditCard,
+  NewebPayCreditCardCommitMessage,
+} from '../src';
 
 const MERCHANT_ID = 'MS154366906';
 const AES_KEY = 'X4vM1RymaxkyzZ9mZHNE67Kba2gpv40c';
@@ -23,11 +32,13 @@ describe('NewebPay Payments', () => {
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
-      mockServer.listen(0, listeningListener);
+    mockedListen.mockImplementationOnce(
+      (port?: any, hostname?: any, listeningListener?: () => void) => {
+        mockServer.listen(0, listeningListener);
 
-      return mockServer;
-    });
+        return mockServer;
+      },
+    );
 
     const mockedClose = jest.spyOn(mockServer, 'close');
 
@@ -49,72 +60,85 @@ describe('NewebPay Payments', () => {
         baseUrl: 'https://rytass.com',
       });
 
-      expect(payment.checkoutActionUrl).toBe('https://rytass.com/MPG/mpg_gateway');
+      expect(payment.checkoutActionUrl).toBe(
+        'https://rytass.com/MPG/mpg_gateway',
+      );
     });
   });
 
   describe('With Ngrok Server', () => {
-    const mockConnect = jest.spyOn(ngrok, 'connect');
+    const mockNgrok = {
+      authtoken: jest.fn(),
+      forward: jest.fn(),
+    };
 
-    it('should start ngrok to proxy built-in server', (done) => {
-      mockConnect.mockImplementation(async () => {
-        return 'http://127.0.0.1';
+    beforeAll(() => {
+      // Mock the @ngrok/ngrok module
+      jest.doMock('@ngrok/ngrok', () => ({
+        default: mockNgrok,
+      }));
+
+      // Set up environment variable
+      process.env.NGROK_AUTHTOKEN = 'test-token';
+
+      // Mock forward to return an object with url() method
+      mockNgrok.forward.mockResolvedValue({
+        url: () => 'https://test-ngrok-url.ngrok.io',
       });
+    });
 
+    afterAll(() => {
+      jest.unmock('@ngrok/ngrok');
+      delete process.env.NGROK_AUTHTOKEN;
+    });
+
+    beforeEach(() => {
+      mockNgrok.authtoken.mockClear();
+      mockNgrok.forward.mockClear();
+    });
+
+    it('should connect to ngrok when withServer is ngrok', (done) => {
       const payment = new NewebPayPayment({
         merchantId: MERCHANT_ID,
         aesKey: AES_KEY,
         aesIv: AES_IV,
         withServer: 'ngrok',
-        serverHost: 'http://0.0.0.0',
-        onServerListen: async () => {
-          expect(mockConnect).toBeCalledWith(3000);
+        onServerListen: () => {
+          expect(mockNgrok.authtoken).toHaveBeenCalledWith('test-token');
+          expect(mockNgrok.forward).toHaveBeenCalled();
 
           payment._server?.close(done);
         },
       });
     });
 
-    it('should start ngrok with custom port server listen', (done) => {
-      mockConnect.mockImplementation(async () => {
-        return 'http://127.0.0.1';
-      });
-
+    it('should connect to ngrok with custom port', (done) => {
       const payment = new NewebPayPayment({
         merchantId: MERCHANT_ID,
         aesKey: AES_KEY,
         aesIv: AES_IV,
         withServer: 'ngrok',
         serverHost: 'http://0.0.0.0:3005',
-        onServerListen: async () => {
-          expect(mockConnect).toBeCalledWith(3005);
+        onServerListen: () => {
+          expect(mockNgrok.authtoken).toHaveBeenCalledWith('test-token');
+          expect(mockNgrok.forward).toHaveBeenCalledWith(3005);
 
           payment._server?.close(done);
         },
       });
     });
 
-    it('should ngrok connect failed not effect built-in server', (done) => {
-      mockConnect.mockImplementation(async () => {
-        throw new Error('Error');
-      });
+    it('should throw error when NGROK_AUTHTOKEN is not set', () => {
+      delete process.env.NGROK_AUTHTOKEN;
 
-      const payment = new NewebPayPayment({
-        merchantId: MERCHANT_ID,
-        aesKey: AES_KEY,
-        aesIv: AES_IV,
-        withServer: 'ngrok',
-        serverHost: 'http://0.0.0.0:3005',
-        onServerListen: async () => {
-          expect(mockConnect).toBeCalled();
-
-          payment._server?.close(done);
-        },
-      });
-    });
-
-    afterEach(async () => {
-      await mockConnect.mockReset();
+      expect(() => {
+        new NewebPayPayment({
+          merchantId: MERCHANT_ID,
+          aesKey: AES_KEY,
+          aesIv: AES_IV,
+          withServer: 'ngrok',
+        });
+      }).toThrow('[NewebPayment] NGROK_AUTHTOKEN is not set');
     });
   });
 
@@ -134,26 +158,34 @@ describe('NewebPay Payments', () => {
         checkoutPath: '/best/team/in/taiwan',
       });
 
-      expect(payment2.getCheckoutUrl(new NewebPayOrder({
-        gateway: payment2,
-        id: 'Yap',
-        items: [{
-          name: '鉛筆',
-          unitPrice: 10,
-          quantity: 1,
-        }],
-        makePayload: {} as NewebPayMPGMakeOrderPayload,
-      }))).toBe('https://rytass.com/best/team/in/taiwan/Yap');
+      expect(
+        payment2.getCheckoutUrl(
+          new NewebPayOrder({
+            gateway: payment2,
+            id: 'Yap',
+            items: [
+              {
+                name: '鉛筆',
+                unitPrice: 10,
+                quantity: 1,
+              },
+            ],
+            makePayload: {} as NewebPayMPGMakeOrderPayload,
+          }),
+        ),
+      ).toBe('https://rytass.com/best/team/in/taiwan/Yap');
     });
 
     it('should prepare order get encrypted payload', async () => {
       const order = await payment.prepare({
         channel: NewebPaymentChannel.CREDIT,
-        items: [{
-          name: '鉛筆',
-          unitPrice: 10,
-          quantity: 1,
-        }],
+        items: [
+          {
+            name: '鉛筆',
+            unitPrice: 10,
+            quantity: 1,
+          },
+        ],
       });
 
       expect(order).toHaveProperty('id');
@@ -169,28 +201,46 @@ describe('NewebPay Payments', () => {
 
       const decipher = createDecipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
-      const plainInfo = `${decipher.update(order.form.TradeInfo, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(/\x1E/g, '').replace(/\x14/g, '');
+      const plainInfo =
+        `${decipher.update(order.form.TradeInfo, 'hex', 'utf8')}${decipher.final('utf8')}`
+          .replace(/\x1E/g, '')
+          .replace(/\x14/g, '');
       const payload = new URLSearchParams(plainInfo);
 
       expect(Number(payload.get('Amt'))).toBe(order.totalPrice);
       expect(payload.get('MerchantOrderNo')).toBe(order.id);
       expect(payload.get('ItemDesc')).toBe('鉛筆');
-      expect(order.form.TradeSha).toBe(createHash('sha256').update(`HashKey=${AES_KEY}&${order.form.TradeInfo}&HashIV=${AES_IV}`).digest('hex').toUpperCase());
+      expect(order.form.TradeSha).toBe(
+        createHash('sha256')
+          .update(`HashKey=${AES_KEY}&${order.form.TradeInfo}&HashIV=${AES_IV}`)
+          .digest('hex')
+          .toUpperCase(),
+      );
     });
 
     it('should prepare order represent other pay channels', async () => {
       const order = await payment.prepare({
-        channel: NewebPaymentChannel.ANDROID_PAY | NewebPaymentChannel.SAMSUNG_PAY | NewebPaymentChannel.UNION_PAY | NewebPaymentChannel.WEBATM | NewebPaymentChannel.VACC,
-        items: [{
-          name: '鉛筆',
-          unitPrice: 10,
-          quantity: 1,
-        }],
+        channel:
+          NewebPaymentChannel.ANDROID_PAY |
+          NewebPaymentChannel.SAMSUNG_PAY |
+          NewebPaymentChannel.UNION_PAY |
+          NewebPaymentChannel.WEBATM |
+          NewebPaymentChannel.VACC,
+        items: [
+          {
+            name: '鉛筆',
+            unitPrice: 10,
+            quantity: 1,
+          },
+        ],
       });
 
       const decipher = createDecipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
-      const plainInfo = `${decipher.update(order.form.TradeInfo, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(/\x1E/g, '').replace(/\x14/g, '');
+      const plainInfo =
+        `${decipher.update(order.form.TradeInfo, 'hex', 'utf8')}${decipher.final('utf8')}`
+          .replace(/\x1E/g, '')
+          .replace(/\x14/g, '');
       const payload = new URLSearchParams(plainInfo);
 
       expect(payload.get('CREDIT')).toBe('0');
@@ -202,37 +252,49 @@ describe('NewebPay Payments', () => {
     });
 
     it('should throw error on trade limit not valid', () => {
-      expect(() => payment.prepare({
-        channel: NewebPaymentChannel.CREDIT,
-        items: [{
-          name: '鉛筆',
-          unitPrice: 10,
-          quantity: 1,
-        }],
-        tradeLimit: 20,
-      })).rejects.toThrowError('`tradeLimit` should between 60 and 900 (seconds)');
+      expect(() =>
+        payment.prepare({
+          channel: NewebPaymentChannel.CREDIT,
+          items: [
+            {
+              name: '鉛筆',
+              unitPrice: 10,
+              quantity: 1,
+            },
+          ],
+          tradeLimit: 20,
+        }),
+      ).rejects.toThrow('`tradeLimit` should between 60 and 900 (seconds)');
 
-      expect(() => payment.prepare({
-        channel: NewebPaymentChannel.CREDIT,
-        items: [{
-          name: '鉛筆',
-          unitPrice: 10,
-          quantity: 1,
-        }],
-        tradeLimit: 2000,
-      })).rejects.toThrowError('`tradeLimit` should between 60 and 900 (seconds)');
+      expect(() =>
+        payment.prepare({
+          channel: NewebPaymentChannel.CREDIT,
+          items: [
+            {
+              name: '鉛筆',
+              unitPrice: 10,
+              quantity: 1,
+            },
+          ],
+          tradeLimit: 2000,
+        }),
+      ).rejects.toThrow('`tradeLimit` should between 60 and 900 (seconds)');
     });
 
     it('should throw error on invalid expire date', () => {
-      expect(() => payment.prepare({
-        channel: NewebPaymentChannel.CREDIT,
-        items: [{
-          name: '鉛筆',
-          unitPrice: 10,
-          quantity: 1,
-        }],
-        expireDate: '2023-01-31',
-      })).rejects.toThrowError('`expireDate` should be in format of `YYYYMMDD`');
+      expect(() =>
+        payment.prepare({
+          channel: NewebPaymentChannel.CREDIT,
+          items: [
+            {
+              name: '鉛筆',
+              unitPrice: 10,
+              quantity: 1,
+            },
+          ],
+          expireDate: '2023-01-31',
+        }),
+      ).rejects.toThrow('`expireDate` should be in format of `YYYYMMDD`');
     });
 
     it('should throw error before server ready prepare', (done) => {
@@ -246,14 +308,18 @@ describe('NewebPay Payments', () => {
         },
       });
 
-      expect(() => paymentServer.prepare({
-        channel: NewebPaymentChannel.CREDIT,
-        items: [{
-          name: '鉛筆',
-          unitPrice: 10,
-          quantity: 1,
-        }],
-      })).rejects.toThrowError('Please waiting gateway ready');
+      expect(() =>
+        paymentServer.prepare({
+          channel: NewebPaymentChannel.CREDIT,
+          items: [
+            {
+              name: '鉛筆',
+              unitPrice: 10,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow('Please waiting gateway ready');
     });
   });
 
@@ -276,7 +342,12 @@ describe('NewebPay Payments', () => {
         const merchantId = payload.get('MerchantID');
         const merchantOrderNo = payload.get('MerchantOrderNo');
 
-        const checkValue = createHash('sha256').update(`IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`).digest('hex').toUpperCase();
+        const checkValue = createHash('sha256')
+          .update(
+            `IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`,
+          )
+          .digest('hex')
+          .toUpperCase();
 
         expect(payload.get('CheckValue')).toBe(checkValue);
 
@@ -293,7 +364,12 @@ describe('NewebPay Payments', () => {
               PaymentType: 'CREDIT',
               CreateTime: '2023-02-01 21:54:47',
               PayTime: '2023-02-01 21:54:58',
-              CheckCode: createHash('sha256').update(`1HashIV=${AES_IV}&Amt=${amt}&MerchantID=${MERCHANT_ID}&MerchantOrderNo=${merchantOrderNo}&TradeNo=MS197067234&HashKey=${AES_KEY}`).digest('hex').toUpperCase(),
+              CheckCode: createHash('sha256')
+                .update(
+                  `1HashIV=${AES_IV}&Amt=${amt}&MerchantID=${MERCHANT_ID}&MerchantOrderNo=${merchantOrderNo}&TradeNo=MS197067234&HashKey=${AES_KEY}`,
+                )
+                .digest('hex')
+                .toUpperCase(),
               FundTime: '2023-02-25',
               RespondCode: '00',
               Auth: '123456',
@@ -315,7 +391,9 @@ describe('NewebPay Payments', () => {
         };
       });
 
-      expect(() => payment.query(randomBytes(10).toString('hex'), 200)).rejects.toThrowError('CheckCode is not valid');
+      expect(() =>
+        payment.query(randomBytes(10).toString('hex'), 200),
+      ).rejects.toThrow('CheckCode is not valid');
     });
 
     it('should send Composite on gateway is merchantId start with MS5', () => {
@@ -334,7 +412,12 @@ describe('NewebPay Payments', () => {
         const merchantId = payload.get('MerchantID');
         const merchantOrderNo = payload.get('MerchantOrderNo');
 
-        const checkValue = createHash('sha256').update(`IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`).digest('hex').toUpperCase();
+        const checkValue = createHash('sha256')
+          .update(
+            `IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`,
+          )
+          .digest('hex')
+          .toUpperCase();
 
         expect(payload.get('CheckValue')).toBe(checkValue);
         expect(payload.get('Gateway')).toBe('Composite');
@@ -352,7 +435,12 @@ describe('NewebPay Payments', () => {
               PaymentType: 'CREDIT',
               CreateTime: '2023-02-01 21:54:47',
               PayTime: '2023-02-01 21:54:58',
-              CheckCode: createHash('sha256').update(`1HashIV=${AES_IV}&Amt=${amt}&MerchantID=${MERCHANT_ID}&MerchantOrderNo=${merchantOrderNo}&TradeNo=MS197067234&HashKey=${AES_KEY}`).digest('hex').toUpperCase(),
+              CheckCode: createHash('sha256')
+                .update(
+                  `1HashIV=${AES_IV}&Amt=${amt}&MerchantID=${MERCHANT_ID}&MerchantOrderNo=${merchantOrderNo}&TradeNo=MS197067234&HashKey=${AES_KEY}`,
+                )
+                .digest('hex')
+                .toUpperCase(),
               FundTime: '2023-02-25',
               RespondCode: '00',
               Auth: '123456',
@@ -374,7 +462,9 @@ describe('NewebPay Payments', () => {
         };
       });
 
-      expect(() => payment2.query(randomBytes(10).toString('hex'), 200)).rejects.toThrowError('CheckCode is not valid');
+      expect(() =>
+        payment2.query(randomBytes(10).toString('hex'), 200),
+      ).rejects.toThrow('CheckCode is not valid');
     });
 
     it('should query order info from NewebPay server', async () => {
@@ -387,7 +477,12 @@ describe('NewebPay Payments', () => {
         const merchantId = payload.get('MerchantID');
         const merchantOrderNo = payload.get('MerchantOrderNo');
 
-        const checkValue = createHash('sha256').update(`IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`).digest('hex').toUpperCase();
+        const checkValue = createHash('sha256')
+          .update(
+            `IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`,
+          )
+          .digest('hex')
+          .toUpperCase();
 
         expect(payload.get('CheckValue')).toBe(checkValue);
 
@@ -404,7 +499,12 @@ describe('NewebPay Payments', () => {
               PaymentType: 'CREDIT',
               CreateTime: '2023-02-01 21:54:47',
               PayTime: '2023-02-01 21:54:58',
-              CheckCode: createHash('sha256').update(`HashIV=${AES_IV}&Amt=${amt}&MerchantID=${MERCHANT_ID}&MerchantOrderNo=${merchantOrderNo}&TradeNo=MS197067234&HashKey=${AES_KEY}`).digest('hex').toUpperCase(),
+              CheckCode: createHash('sha256')
+                .update(
+                  `HashIV=${AES_IV}&Amt=${amt}&MerchantID=${MERCHANT_ID}&MerchantOrderNo=${merchantOrderNo}&TradeNo=MS197067234&HashKey=${AES_KEY}`,
+                )
+                .digest('hex')
+                .toUpperCase(),
               FundTime: '2023-02-25',
               RespondCode: '00',
               Auth: '123456',
@@ -427,16 +527,23 @@ describe('NewebPay Payments', () => {
       });
 
       const id = randomBytes(10).toString('hex');
-      const order = await payment.query<NewebPayOrder<NewebPayCreditCardCommitMessage>>(id, 200);
+      const order = await payment.query<
+        NewebPayOrder<NewebPayCreditCardCommitMessage>
+      >(id, 200);
 
       expect(order.totalPrice).toBe(200);
       expect(order.id).toBe(id);
       expect(order.items.length).toBe(1);
-      expect(order.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0)).toBe(200);
+      expect(
+        order.items.reduce(
+          (sum, item) => sum + item.quantity * item.unitPrice,
+          0,
+        ),
+      ).toBe(200);
       expect(order.additionalInfo?.card4Number).toBe('8888');
       expect(order.additionalInfo?.card6Number).toBe('000000');
       expect(order.channel).toBe(NewebPaymentChannel.CREDIT);
-      expect(mockPost).toBeCalledTimes(1);
+      expect(mockPost).toHaveBeenCalledTimes(1);
     });
 
     it('should query refunded order info from NewebPay server', async () => {
@@ -449,7 +556,12 @@ describe('NewebPay Payments', () => {
         const merchantId = payload.get('MerchantID');
         const merchantOrderNo = payload.get('MerchantOrderNo');
 
-        const checkValue = createHash('sha256').update(`IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`).digest('hex').toUpperCase();
+        const checkValue = createHash('sha256')
+          .update(
+            `IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`,
+          )
+          .digest('hex')
+          .toUpperCase();
 
         expect(payload.get('CheckValue')).toBe(checkValue);
         expect(payload.get('Gateway')).toBe('');
@@ -467,7 +579,12 @@ describe('NewebPay Payments', () => {
               PaymentType: 'ANDROIDPAY',
               CreateTime: '2023-02-01 21:54:47',
               PayTime: '2023-02-01 21:54:58',
-              CheckCode: createHash('sha256').update(`HashIV=${AES_IV}&Amt=${amt}&MerchantID=${MERCHANT_ID}&MerchantOrderNo=${merchantOrderNo}&TradeNo=MS197067234&HashKey=${AES_KEY}`).digest('hex').toUpperCase(),
+              CheckCode: createHash('sha256')
+                .update(
+                  `HashIV=${AES_IV}&Amt=${amt}&MerchantID=${MERCHANT_ID}&MerchantOrderNo=${merchantOrderNo}&TradeNo=MS197067234&HashKey=${AES_KEY}`,
+                )
+                .digest('hex')
+                .toUpperCase(),
               FundTime: '2023-02-25',
               RespondCode: '00',
               Auth: '123456',
@@ -490,15 +607,22 @@ describe('NewebPay Payments', () => {
       });
 
       const id = randomBytes(10).toString('hex');
-      const order = await payment.query<NewebPayOrder<NewebPayCreditCardCommitMessage>>(id, 200);
+      const order = await payment.query<
+        NewebPayOrder<NewebPayCreditCardCommitMessage>
+      >(id, 200);
 
       expect(order.totalPrice).toBe(200);
       expect(order.id).toBe(id);
       expect(order.state).toBe(OrderState.REFUNDED);
       expect(order.channel).toBe(NewebPaymentChannel.ANDROID_PAY);
-      expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).refundStatus).toBe(NewebPayCreditCardBalanceStatus.SETTLED);
-      expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).remainingBalance).toBe(0);
-      expect(mockPost).toBeCalledTimes(1);
+      expect(
+        (order.additionalInfo as NewebPayAdditionInfoCreditCard).refundStatus,
+      ).toBe(NewebPayCreditCardBalanceStatus.SETTLED);
+      expect(
+        (order.additionalInfo as NewebPayAdditionInfoCreditCard)
+          .remainingBalance,
+      ).toBe(0);
+      expect(mockPost).toHaveBeenCalledTimes(1);
     });
 
     it('should query samsung pay order info from NewebPay server', async () => {
@@ -511,7 +635,12 @@ describe('NewebPay Payments', () => {
         const merchantId = payload.get('MerchantID');
         const merchantOrderNo = payload.get('MerchantOrderNo');
 
-        const checkValue = createHash('sha256').update(`IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`).digest('hex').toUpperCase();
+        const checkValue = createHash('sha256')
+          .update(
+            `IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`,
+          )
+          .digest('hex')
+          .toUpperCase();
 
         expect(payload.get('CheckValue')).toBe(checkValue);
 
@@ -528,7 +657,12 @@ describe('NewebPay Payments', () => {
               PaymentType: 'SAMSUNGPAY',
               CreateTime: '2023-02-01 21:54:47',
               PayTime: '2023-02-01 21:54:58',
-              CheckCode: createHash('sha256').update(`HashIV=${AES_IV}&Amt=${amt}&MerchantID=${MERCHANT_ID}&MerchantOrderNo=${merchantOrderNo}&TradeNo=MS197067234&HashKey=${AES_KEY}`).digest('hex').toUpperCase(),
+              CheckCode: createHash('sha256')
+                .update(
+                  `HashIV=${AES_IV}&Amt=${amt}&MerchantID=${MERCHANT_ID}&MerchantOrderNo=${merchantOrderNo}&TradeNo=MS197067234&HashKey=${AES_KEY}`,
+                )
+                .digest('hex')
+                .toUpperCase(),
               FundTime: '2023-02-25',
               RespondCode: '00',
               Auth: '123456',
@@ -551,12 +685,14 @@ describe('NewebPay Payments', () => {
       });
 
       const id = randomBytes(10).toString('hex');
-      const order = await payment.query<NewebPayOrder<NewebPayCreditCardCommitMessage>>(id, 200);
+      const order = await payment.query<
+        NewebPayOrder<NewebPayCreditCardCommitMessage>
+      >(id, 200);
 
       expect(order.totalPrice).toBe(200);
       expect(order.id).toBe(id);
       expect(order.channel).toBe(NewebPaymentChannel.SAMSUNG_PAY);
-      expect(mockPost).toBeCalledTimes(1);
+      expect(mockPost).toHaveBeenCalledTimes(1);
     });
 
     it('should query union pay order info from NewebPay server', async () => {
@@ -569,7 +705,12 @@ describe('NewebPay Payments', () => {
         const merchantId = payload.get('MerchantID');
         const merchantOrderNo = payload.get('MerchantOrderNo');
 
-        const checkValue = createHash('sha256').update(`IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`).digest('hex').toUpperCase();
+        const checkValue = createHash('sha256')
+          .update(
+            `IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`,
+          )
+          .digest('hex')
+          .toUpperCase();
 
         expect(payload.get('CheckValue')).toBe(checkValue);
 
@@ -586,7 +727,12 @@ describe('NewebPay Payments', () => {
               PaymentType: 'UNIONPAY',
               CreateTime: '2023-02-01 21:54:47',
               PayTime: '2023-02-01 21:54:58',
-              CheckCode: createHash('sha256').update(`HashIV=${AES_IV}&Amt=${amt}&MerchantID=${MERCHANT_ID}&MerchantOrderNo=${merchantOrderNo}&TradeNo=MS197067234&HashKey=${AES_KEY}`).digest('hex').toUpperCase(),
+              CheckCode: createHash('sha256')
+                .update(
+                  `HashIV=${AES_IV}&Amt=${amt}&MerchantID=${MERCHANT_ID}&MerchantOrderNo=${merchantOrderNo}&TradeNo=MS197067234&HashKey=${AES_KEY}`,
+                )
+                .digest('hex')
+                .toUpperCase(),
               FundTime: '2023-02-25',
               RespondCode: '00',
               Auth: '123456',
@@ -609,12 +755,14 @@ describe('NewebPay Payments', () => {
       });
 
       const id = randomBytes(10).toString('hex');
-      const order = await payment.query<NewebPayOrder<NewebPayCreditCardCommitMessage>>(id, 200);
+      const order = await payment.query<
+        NewebPayOrder<NewebPayCreditCardCommitMessage>
+      >(id, 200);
 
       expect(order.totalPrice).toBe(200);
       expect(order.id).toBe(id);
       expect(order.channel).toBe(NewebPaymentChannel.UNION_PAY);
-      expect(mockPost).toBeCalledTimes(1);
+      expect(mockPost).toHaveBeenCalledTimes(1);
     });
 
     it('should query failed installments credit card order info from NewebPay server', async () => {
@@ -627,7 +775,12 @@ describe('NewebPay Payments', () => {
         const merchantId = payload.get('MerchantID');
         const merchantOrderNo = payload.get('MerchantOrderNo');
 
-        const checkValue = createHash('sha256').update(`IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`).digest('hex').toUpperCase();
+        const checkValue = createHash('sha256')
+          .update(
+            `IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`,
+          )
+          .digest('hex')
+          .toUpperCase();
 
         expect(payload.get('CheckValue')).toBe(checkValue);
 
@@ -644,7 +797,12 @@ describe('NewebPay Payments', () => {
               PaymentType: 'CREDIT',
               CreateTime: '2023-02-01 21:54:47',
               PayTime: '',
-              CheckCode: createHash('sha256').update(`HashIV=${AES_IV}&Amt=${amt}&MerchantID=${MERCHANT_ID}&MerchantOrderNo=${merchantOrderNo}&TradeNo=MS197067234&HashKey=${AES_KEY}`).digest('hex').toUpperCase(),
+              CheckCode: createHash('sha256')
+                .update(
+                  `HashIV=${AES_IV}&Amt=${amt}&MerchantID=${MERCHANT_ID}&MerchantOrderNo=${merchantOrderNo}&TradeNo=MS197067234&HashKey=${AES_KEY}`,
+                )
+                .digest('hex')
+                .toUpperCase(),
               FundTime: '2023-02-25',
               RespondCode: '00',
               Auth: '123456',
@@ -667,18 +825,31 @@ describe('NewebPay Payments', () => {
       });
 
       const id = randomBytes(10).toString('hex');
-      const order = await payment.query<NewebPayOrder<NewebPayCreditCardCommitMessage>>(id, 200);
+      const order = await payment.query<
+        NewebPayOrder<NewebPayCreditCardCommitMessage>
+      >(id, 200);
 
       expect(order.totalPrice).toBe(200);
       expect(order.id).toBe(id);
-      expect(order.additionalInfo?.processDate.getTime()).toBe(order.createdAt?.getTime());
+      expect(order.additionalInfo?.processDate.getTime()).toBe(
+        order.createdAt?.getTime(),
+      );
       expect(order.additionalInfo?.card4Number).toBe('8888');
       expect(order.additionalInfo?.card6Number).toBe('000000');
       expect(order.channel).toBe(NewebPaymentChannel.CREDIT);
-      expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).installments?.count).toBe(3);
-      expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).installments?.firstAmount).toBe(67);
-      expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).installments?.eachAmount).toBe(66);
-      expect(mockPost).toBeCalledTimes(1);
+      expect(
+        (order.additionalInfo as NewebPayAdditionInfoCreditCard).installments
+          ?.count,
+      ).toBe(3);
+      expect(
+        (order.additionalInfo as NewebPayAdditionInfoCreditCard).installments
+          ?.firstAmount,
+      ).toBe(67);
+      expect(
+        (order.additionalInfo as NewebPayAdditionInfoCreditCard).installments
+          ?.eachAmount,
+      ).toBe(66);
+      expect(mockPost).toHaveBeenCalledTimes(1);
     });
 
     it('should query unknown type order info from NewebPay server', async () => {
@@ -691,7 +862,12 @@ describe('NewebPay Payments', () => {
         const merchantId = payload.get('MerchantID');
         const merchantOrderNo = payload.get('MerchantOrderNo');
 
-        const checkValue = createHash('sha256').update(`IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`).digest('hex').toUpperCase();
+        const checkValue = createHash('sha256')
+          .update(
+            `IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`,
+          )
+          .digest('hex')
+          .toUpperCase();
 
         expect(payload.get('CheckValue')).toBe(checkValue);
 
@@ -708,7 +884,12 @@ describe('NewebPay Payments', () => {
               PaymentType: 'UNKNOWN',
               CreateTime: '2023-02-01 21:54:47',
               PayTime: '',
-              CheckCode: createHash('sha256').update(`HashIV=${AES_IV}&Amt=${amt}&MerchantID=${MERCHANT_ID}&MerchantOrderNo=${merchantOrderNo}&TradeNo=MS197067234&HashKey=${AES_KEY}`).digest('hex').toUpperCase(),
+              CheckCode: createHash('sha256')
+                .update(
+                  `HashIV=${AES_IV}&Amt=${amt}&MerchantID=${MERCHANT_ID}&MerchantOrderNo=${merchantOrderNo}&TradeNo=MS197067234&HashKey=${AES_KEY}`,
+                )
+                .digest('hex')
+                .toUpperCase(),
               FundTime: '2023-02-25',
             },
           },
@@ -720,7 +901,7 @@ describe('NewebPay Payments', () => {
 
       expect(order.totalPrice).toBe(200);
       expect(order.channel).toBe(NewebPaymentChannel.CREDIT);
-      expect(mockPost).toBeCalledTimes(1);
+      expect(mockPost).toHaveBeenCalledTimes(1);
     });
 
     it('should query webatm order info from NewebPay server', async () => {
@@ -733,7 +914,12 @@ describe('NewebPay Payments', () => {
         const merchantId = payload.get('MerchantID');
         const merchantOrderNo = payload.get('MerchantOrderNo');
 
-        const checkValue = createHash('sha256').update(`IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`).digest('hex').toUpperCase();
+        const checkValue = createHash('sha256')
+          .update(
+            `IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`,
+          )
+          .digest('hex')
+          .toUpperCase();
 
         expect(payload.get('CheckValue')).toBe(checkValue);
 
@@ -750,7 +936,12 @@ describe('NewebPay Payments', () => {
               PaymentType: 'WEBATM',
               CreateTime: '2023-02-01 21:54:47',
               PayTime: '',
-              CheckCode: createHash('sha256').update(`HashIV=${AES_IV}&Amt=${amt}&MerchantID=${MERCHANT_ID}&MerchantOrderNo=${merchantOrderNo}&TradeNo=MS197067234&HashKey=${AES_KEY}`).digest('hex').toUpperCase(),
+              CheckCode: createHash('sha256')
+                .update(
+                  `HashIV=${AES_IV}&Amt=${amt}&MerchantID=${MERCHANT_ID}&MerchantOrderNo=${merchantOrderNo}&TradeNo=MS197067234&HashKey=${AES_KEY}`,
+                )
+                .digest('hex')
+                .toUpperCase(),
               FundTime: '2023-02-25',
               PayInfo: '(012)686168251938',
               ExpireDate: '2023-02-05 23:59:59',
@@ -761,11 +952,13 @@ describe('NewebPay Payments', () => {
       });
 
       const id = randomBytes(10).toString('hex');
-      const order = await payment.query<NewebPayOrder<NewebPayWebATMCommitMessage>>(id, 200);
+      const order = await payment.query<
+        NewebPayOrder<NewebPayWebATMCommitMessage>
+      >(id, 200);
 
       expect(order.totalPrice).toBe(200);
       expect(order.id).toBe(id);
-      expect(mockPost).toBeCalledTimes(1);
+      expect(mockPost).toHaveBeenCalledTimes(1);
       expect(order.channel).toBe(NewebPaymentChannel.WEBATM);
       expect(order.additionalInfo?.buyerAccountNumber).toBe('686168251938');
       expect(order.additionalInfo?.buyerBankCode).toBe('012');
@@ -781,7 +974,12 @@ describe('NewebPay Payments', () => {
         const merchantId = payload.get('MerchantID');
         const merchantOrderNo = payload.get('MerchantOrderNo');
 
-        const checkValue = createHash('sha256').update(`IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`).digest('hex').toUpperCase();
+        const checkValue = createHash('sha256')
+          .update(
+            `IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`,
+          )
+          .digest('hex')
+          .toUpperCase();
 
         expect(payload.get('CheckValue')).toBe(checkValue);
 
@@ -798,7 +996,12 @@ describe('NewebPay Payments', () => {
               PaymentType: 'VACC',
               CreateTime: '2023-02-01 21:54:47',
               PayTime: '',
-              CheckCode: createHash('sha256').update(`HashIV=${AES_IV}&Amt=${amt}&MerchantID=${MERCHANT_ID}&MerchantOrderNo=${merchantOrderNo}&TradeNo=MS197067234&HashKey=${AES_KEY}`).digest('hex').toUpperCase(),
+              CheckCode: createHash('sha256')
+                .update(
+                  `HashIV=${AES_IV}&Amt=${amt}&MerchantID=${MERCHANT_ID}&MerchantOrderNo=${merchantOrderNo}&TradeNo=MS197067234&HashKey=${AES_KEY}`,
+                )
+                .digest('hex')
+                .toUpperCase(),
               FundTime: '2023-02-25',
               PayInfo: '(012)686168251938',
               ExpireDate: '2023-02-05 23:59:59',
@@ -809,11 +1012,13 @@ describe('NewebPay Payments', () => {
       });
 
       const id = randomBytes(10).toString('hex');
-      const order = await payment.query<NewebPayOrder<NewebPayWebATMCommitMessage>>(id, 200);
+      const order = await payment.query<
+        NewebPayOrder<NewebPayWebATMCommitMessage>
+      >(id, 200);
 
       expect(order.totalPrice).toBe(200);
       expect(order.id).toBe(id);
-      expect(mockPost).toBeCalledTimes(1);
+      expect(mockPost).toHaveBeenCalledTimes(1);
       expect(order.channel).toBe(NewebPaymentChannel.VACC);
       expect(order.additionalInfo?.buyerAccountNumber).toBe('686168251938');
       expect(order.additionalInfo?.buyerBankCode).toBe('012');

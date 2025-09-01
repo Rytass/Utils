@@ -211,7 +211,7 @@ describe('ArticleBaseService - findCollection', () => {
 
     await expect(
       service.findCollection({ language: DEFAULT_LANGUAGE } as any),
-    ).rejects.toThrowError(MultipleLanguageModeIsDisabledError);
+    ).rejects.toThrow(MultipleLanguageModeIsDisabledError);
   });
 
   it('should return SingleArticleCollectionDto when language is provided', async () => {
@@ -373,7 +373,7 @@ describe('ArticleBaseService - findAll', () => {
 
     await expect(
       service.findAll({ language: DEFAULT_LANGUAGE } as any),
-    ).rejects.toThrowError(MultipleLanguageModeIsDisabledError);
+    ).rejects.toThrow(MultipleLanguageModeIsDisabledError);
   });
 
   it('should return SingleArticleBaseDto when language is provided', async () => {
