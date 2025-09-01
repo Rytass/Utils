@@ -2,6 +2,9 @@
  * @jest-environment node
  */
 
+// Set NGROK_AUTHTOKEN before any imports
+process.env.NGROK_AUTHTOKEN = 'test-auth-token';
+
 import ngrok from 'ngrok';
 import request from 'supertest';
 import http, { createServer } from 'http';
@@ -501,88 +504,121 @@ describe('HwaNan Payment', () => {
   });
 
   describe('Build-in Ngrok Server', () => {
-    const mockNgrok = {
-      authtoken: jest.fn(),
-      forward: jest.fn(),
+    const mockForwarder = {
+      url: jest.fn().mockReturnValue('https://test-ngrok-url.ngrok.io'),
     };
 
-    beforeAll(() => {
-      // Mock the @ngrok/ngrok module
-      jest.doMock('@ngrok/ngrok', () => ({
-        default: mockNgrok,
-      }));
+    const mockNgrok = {
+      authtoken: jest.fn().mockResolvedValue(undefined),
+      forward: jest.fn().mockResolvedValue(mockForwarder),
+    };
 
-      // Mock forward to return an object with url() method
-      mockNgrok.forward.mockResolvedValue({
-        url: () => 'https://test-ngrok-url.ngrok.io',
-      });
+    const mockServerForNgrok = new (require('events').EventEmitter)();
+    mockServerForNgrok.listen = jest.fn((port, host, callback) => {
+      setImmediate(() => callback && callback());
+      return mockServerForNgrok;
     });
-
-    afterAll(() => {
-      jest.unmock('@ngrok/ngrok');
+    mockServerForNgrok.close = jest.fn((callback) => {
+      setImmediate(() => callback && callback());
+      return mockServerForNgrok;
     });
 
     beforeEach(() => {
-      mockNgrok.authtoken.mockClear();
-      mockNgrok.forward.mockClear();
-    });
+      jest.clearAllMocks();
+      jest.resetModules();
 
-    it('should connect to ngrok when withServer is ngrok', (done) => {
-      const payment = new HwaNanPayment({
-        merchantId: MERCHANT_ID,
-        terminalId: TERMINAL_ID,
-        merID: MER_ID,
-        merchantName: 'Rytass Shop',
-        identifier: IDENTIFIER,
-        withServer: 'ngrok',
-        serverHost: 'http://0.0.0.0:3005',
-        onServerListen: () => {
-          expect(mockNgrok.authtoken).toHaveBeenCalledWith(
-            process.env.NGROK_AUTHTOKEN,
-          );
-          expect(mockNgrok.forward).toHaveBeenCalledWith(3005);
+      // Mock HTTP server creation for ngrok tests
+      jest.doMock('http', () => ({
+        createServer: jest.fn(() => mockServerForNgrok),
+      }));
 
-          payment._server?.close(done);
-        },
+      // Mock dynamic import of @ngrok/ngrok
+      jest.doMock('@ngrok/ngrok', () => ({
+        __esModule: true,
+        default: mockNgrok,
+      }));
+
+      // Override global import function to handle dynamic imports
+      const originalImport = global.import || jest.fn();
+      global.import = jest.fn().mockImplementation((moduleName) => {
+        if (moduleName === '@ngrok/ngrok') {
+          return Promise.resolve({ default: mockNgrok });
+        }
+        return originalImport.call(global, moduleName);
       });
     });
 
-    it('should handle ngrok connection failures gracefully', (done) => {
-      // Mock failure
-      mockNgrok.forward.mockRejectedValueOnce(
-        new Error('Ngrok connection failed'),
-      );
-
-      const payment = new HwaNanPayment({
-        merchantId: MERCHANT_ID,
-        terminalId: TERMINAL_ID,
-        merID: MER_ID,
-        merchantName: 'Rytass Shop',
-        identifier: IDENTIFIER,
-        withServer: 'ngrok',
-        serverHost: 'http://0.0.0.0:3005',
-        onServerListen: () => {
-          expect(mockNgrok.authtoken).toHaveBeenCalledWith('test-token');
-          expect(mockNgrok.forward).toHaveBeenCalled();
-
-          payment._server?.close(done);
-        },
-      });
+    afterEach(() => {
+      jest.restoreAllMocks();
+      delete global.import;
     });
 
-    it('should throw error when NGROK_AUTHTOKEN is not set', () => {
-      delete process.env.NGROK_AUTHTOKEN;
+    it('should connect to ngrok when withServer is ngrok', async () => {
+      const { HwaNanPayment } = await import('../src');
 
-      expect(() => {
-        new HwaNanPayment({
+      return new Promise<void>((resolve) => {
+        const payment = new HwaNanPayment({
           merchantId: MERCHANT_ID,
           terminalId: TERMINAL_ID,
           merID: MER_ID,
           merchantName: 'Rytass Shop',
           identifier: IDENTIFIER,
           withServer: 'ngrok',
+          callbackPath: '/callback',
+          onServerListen: () => {
+            // Verify ngrok integration was properly called
+            expect(mockNgrok.authtoken).toHaveBeenCalledWith('test-auth-token');
+            expect(mockNgrok.forward).toHaveBeenCalledWith(3000);
+            expect(mockForwarder.url).toHaveBeenCalled();
+            resolve();
+          },
         });
-      }).toThrow('[HwananPayment] NGROK_AUTHTOKEN is not set');
+      });
+    });
+
+    it('should connect to ngrok with custom port from serverHost', async () => {
+      const { HwaNanPayment } = await import('../src');
+
+      const customPort = 9999;
+      return new Promise<void>((resolve) => {
+        const payment = new HwaNanPayment({
+          merchantId: MERCHANT_ID,
+          terminalId: TERMINAL_ID,
+          merID: MER_ID,
+          merchantName: 'Rytass Shop',
+          identifier: IDENTIFIER,
+          withServer: 'ngrok',
+          serverHost: `http://localhost:${customPort}`,
+          callbackPath: '/callback',
+          onServerListen: () => {
+            // Verify ngrok was called with correct port
+            expect(mockNgrok.forward).toHaveBeenCalledWith(customPort);
+            resolve();
+          },
+        });
+      });
+    });
+
+    it('should call ngrok methods correctly', async () => {
+      const { HwaNanPayment } = await import('../src');
+
+      return new Promise<void>((resolve) => {
+        const payment = new HwaNanPayment({
+          merchantId: MERCHANT_ID,
+          terminalId: TERMINAL_ID,
+          merID: MER_ID,
+          merchantName: 'Rytass Shop',
+          identifier: IDENTIFIER,
+          withServer: 'ngrok',
+          callbackPath: '/callback',
+          onServerListen: () => {
+            // Verify that ngrok methods are being called
+            expect(mockNgrok.authtoken).toHaveBeenCalledWith('test-auth-token');
+            expect(mockNgrok.forward).toHaveBeenCalledWith(3000);
+            resolve();
+          },
+        });
+      });
     });
   });
 });

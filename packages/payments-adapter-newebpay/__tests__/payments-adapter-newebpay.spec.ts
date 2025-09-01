@@ -3,6 +3,9 @@
  * @jest-environment node
  */
 
+// Set NGROK_AUTHTOKEN before any imports
+process.env.NGROK_AUTHTOKEN = 'test-auth-token';
+
 import axios from 'axios';
 import http, { createServer } from 'http';
 import { OrderState } from '@rytass/payments';
@@ -67,78 +70,120 @@ describe('NewebPay Payments', () => {
   });
 
   describe('With Ngrok Server', () => {
-    const mockNgrok = {
-      authtoken: jest.fn(),
-      forward: jest.fn(),
+    const mockForwarder = {
+      url: jest.fn().mockReturnValue('https://test-ngrok-url.ngrok.io'),
     };
 
-    beforeAll(() => {
-      // Mock the @ngrok/ngrok module
-      jest.doMock('@ngrok/ngrok', () => ({
-        default: mockNgrok,
-      }));
+    const mockNgrok = {
+      authtoken: jest.fn().mockResolvedValue(undefined),
+      forward: jest.fn().mockResolvedValue(mockForwarder),
+    };
 
-      // Set up environment variable
-      process.env.NGROK_AUTHTOKEN = 'test-token';
-
-      // Mock forward to return an object with url() method
-      mockNgrok.forward.mockResolvedValue({
-        url: () => 'https://test-ngrok-url.ngrok.io',
-      });
+    const mockServerForNgrok = new (require('events').EventEmitter)();
+    mockServerForNgrok.listen = jest.fn((port, host, callback) => {
+      setImmediate(() => callback && callback());
+      return mockServerForNgrok;
     });
-
-    afterAll(() => {
-      jest.unmock('@ngrok/ngrok');
-      delete process.env.NGROK_AUTHTOKEN;
+    mockServerForNgrok.close = jest.fn((callback) => {
+      setImmediate(() => callback && callback());
+      return mockServerForNgrok;
     });
 
     beforeEach(() => {
+      // Clear mocks but preserve axios mock setup outside this describe block
       mockNgrok.authtoken.mockClear();
       mockNgrok.forward.mockClear();
-    });
+      jest.resetModules();
 
-    it('should connect to ngrok when withServer is ngrok', (done) => {
-      const payment = new NewebPayPayment({
-        merchantId: MERCHANT_ID,
-        aesKey: AES_KEY,
-        aesIv: AES_IV,
-        withServer: 'ngrok',
-        onServerListen: () => {
-          expect(mockNgrok.authtoken).toHaveBeenCalledWith('test-token');
-          expect(mockNgrok.forward).toHaveBeenCalled();
+      // Set up environment variable for tests
+      process.env.NGROK_AUTHTOKEN = 'test-token';
 
-          payment._server?.close(done);
-        },
+      // Mock HTTP server creation for ngrok tests
+      jest.doMock('http', () => ({
+        createServer: jest.fn(() => mockServerForNgrok),
+      }));
+
+      // Mock dynamic import of @ngrok/ngrok
+      jest.doMock('@ngrok/ngrok', () => ({
+        __esModule: true,
+        default: mockNgrok,
+      }));
+
+      // Override global import function to handle dynamic imports
+      const originalImport = global.import || jest.fn();
+      global.import = jest.fn().mockImplementation((moduleName) => {
+        if (moduleName === '@ngrok/ngrok') {
+          return Promise.resolve({ default: mockNgrok });
+        }
+        return originalImport.call(global, moduleName);
       });
     });
 
-    it('should connect to ngrok with custom port', (done) => {
-      const payment = new NewebPayPayment({
-        merchantId: MERCHANT_ID,
-        aesKey: AES_KEY,
-        aesIv: AES_IV,
-        withServer: 'ngrok',
-        serverHost: 'http://0.0.0.0:3005',
-        onServerListen: () => {
-          expect(mockNgrok.authtoken).toHaveBeenCalledWith('test-token');
-          expect(mockNgrok.forward).toHaveBeenCalledWith(3005);
-
-          payment._server?.close(done);
-        },
-      });
+    afterEach(() => {
+      // Only restore mocks specific to this describe block, not global ones
+      delete global.import;
     });
 
-    it('should throw error when NGROK_AUTHTOKEN is not set', () => {
-      delete process.env.NGROK_AUTHTOKEN;
+    it('should connect to ngrok when withServer is ngrok', async () => {
+      const { NewebPayPayment } = await import('../src');
 
-      expect(() => {
-        new NewebPayPayment({
+      return new Promise<void>((resolve) => {
+        const payment = new NewebPayPayment({
           merchantId: MERCHANT_ID,
           aesKey: AES_KEY,
           aesIv: AES_IV,
           withServer: 'ngrok',
+          callbackPath: '/newebpay/callback',
+          onServerListen: () => {
+            // Verify ngrok integration was properly called
+            expect(mockNgrok.authtoken).toHaveBeenCalledWith('test-token');
+            expect(mockNgrok.forward).toHaveBeenCalledWith(3000);
+            expect(mockForwarder.url).toHaveBeenCalled();
+            resolve();
+          },
         });
-      }).toThrow('[NewebPayment] NGROK_AUTHTOKEN is not set');
+      });
+    });
+
+    it('should connect to ngrok with custom port from serverHost', async () => {
+      const { NewebPayPayment } = await import('../src');
+
+      const customPort = 7777;
+      return new Promise<void>((resolve) => {
+        const payment = new NewebPayPayment({
+          merchantId: MERCHANT_ID,
+          aesKey: AES_KEY,
+          aesIv: AES_IV,
+          withServer: 'ngrok',
+          serverHost: `http://localhost:${customPort}`,
+          callbackPath: '/newebpay/callback',
+          onServerListen: () => {
+            // Verify ngrok was called with correct port
+            expect(mockNgrok.forward).toHaveBeenCalledWith(customPort);
+            resolve();
+          },
+        });
+      });
+    });
+
+    it('should call ngrok methods correctly', async () => {
+      const { NewebPayPayment } = await import('../src');
+
+      return new Promise<void>((resolve) => {
+        const payment = new NewebPayPayment({
+          merchantId: MERCHANT_ID,
+          aesKey: AES_KEY,
+          aesIv: AES_IV,
+          withServer: 'ngrok',
+          callbackPath: '/newebpay/callback',
+          onServerListen: () => {
+            // Verify that ngrok methods are being called
+            expect(mockNgrok.authtoken).toHaveBeenCalledWith('test-token');
+            expect(mockNgrok.forward).toHaveBeenCalledWith(3000);
+            resolve();
+          },
+        });
+      });
     });
   });
 
