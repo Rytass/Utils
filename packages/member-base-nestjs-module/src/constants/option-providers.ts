@@ -39,8 +39,10 @@ import { AllowActions } from '../decorators/action.decorator';
 import { BaseMemberEntity } from '../models/base-member.entity';
 import { DEFAULT_CASBIN_DOMAIN } from './default-casbin-domain';
 
-const TypeORMAdapter: typeof TypeORMAdapterType =
-  require('typeorm-adapter').default;
+const getTypeORMAdapter = async (): Promise<typeof TypeORMAdapterType> => {
+  const module = await import('typeorm-adapter');
+  return module.default;
+};
 
 export const OptionProviders = [
   {
@@ -102,6 +104,7 @@ export const OptionProviders = [
     useFactory: async (options?: MemberBaseModuleOptionsDto) => {
       if (!options?.casbinAdapterOptions) return null;
 
+      const TypeORMAdapter = await getTypeORMAdapter();
       const adapter = await TypeORMAdapter.newAdapter(
         options.casbinAdapterOptions,
       );
