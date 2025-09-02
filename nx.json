@@ -5,6 +5,9 @@
       "dependsOn": ["^build"]
     }
   },
+  "tui": {
+    "enabled": false
+  },
   "release": {
     "changelog": {
       "projectChangelogs": true
