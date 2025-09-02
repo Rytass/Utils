@@ -1,3 +1,15 @@
+// Mock NestJS Logger constructor to prevent DEBUG outputs - MUST be at the top
+jest.mock('@nestjs/common', () => ({
+  ...jest.requireActual('@nestjs/common'),
+  Logger: jest.fn().mockImplementation(() => ({
+    debug: jest.fn(),
+    log: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    verbose: jest.fn(),
+  })),
+}));
+
 import { ArticleStage } from '../../src/typings/article-stage.enum';
 import {
   ArticleNotFoundError,
@@ -40,6 +52,8 @@ describe('ArticleBaseService - deleteVersion', () => {
       {} as any,
       {} as any,
     );
+
+    // Mock the logger to prevent DEBUG outputs
   });
 
   it('should throw ArticleVersionNotFoundError if version not found', async () => {
@@ -771,6 +785,15 @@ describe('putBack', () => {
       mockArticleDataLoader as any,
       { signatureEnabled: true } as any,
     );
+
+    // Override the private logger property to prevent debug outputs
+    (service as any).logger = {
+      debug: jest.fn(),
+      log: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+      verbose: jest.fn(),
+    };
   });
 
   it('should throw if signature mode is disabled', async () => {
@@ -1149,6 +1172,15 @@ describe('ArticleBaseService.addVersion', () => {
       mockDataLoader as any,
       mockSignatureService as any,
     );
+
+    // Override the private logger property to prevent debug outputs
+    (service as any).logger = {
+      debug: jest.fn(),
+      log: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+      verbose: jest.fn(),
+    };
   });
 
   it('should add version with single-language content', async () => {

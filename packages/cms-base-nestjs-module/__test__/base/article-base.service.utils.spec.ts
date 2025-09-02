@@ -1,3 +1,17 @@
+// Mock NestJS Logger constructor to prevent DEBUG outputs - MUST be at the top
+const mockLoggerMethods = {
+  debug: jest.fn(),
+  log: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  verbose: jest.fn(),
+};
+
+jest.mock('@nestjs/common', () => ({
+  ...jest.requireActual('@nestjs/common'),
+  Logger: jest.fn().mockImplementation(() => mockLoggerMethods),
+}));
+
 import { SignatureService } from '../../src/services/signature.service';
 import { ArticleBaseService } from '../../src/services/article-base.service';
 import { ArticleStage } from '../../src/typings/article-stage.enum';
@@ -492,8 +506,6 @@ describe('getDefaultQueryBuilder', () => {
   let service: ArticleBaseService;
   let mockRepo: any;
   let mockRunner: any;
-  let mockLogger: any;
-
   beforeEach(() => {
     mockRepo = {
       createQueryBuilder: jest.fn(() => mockQueryBuilder),
@@ -507,10 +519,6 @@ describe('getDefaultQueryBuilder', () => {
       manager: {
         createQueryBuilder: jest.fn(() => mockQueryBuilder),
       },
-    };
-
-    mockLogger = {
-      warn: jest.fn(),
     };
 
     service = new ArticleBaseService(
@@ -529,8 +537,6 @@ describe('getDefaultQueryBuilder', () => {
       {} as any,
       {} as any,
     );
-
-    (service as any).logger = mockLogger;
     jest.spyOn(service as any, 'queryStagesFeaturesCheck').mockImplementation();
     jest
       .spyOn(service as any, 'limitStageWithQueryBuilder')
@@ -550,7 +556,7 @@ describe('getDefaultQueryBuilder', () => {
       stage: ArticleStage.DRAFT,
     });
 
-    expect(mockLogger.warn).toHaveBeenCalledWith(
+    expect((service as any).logger.warn).toHaveBeenCalledWith(
       'Combining version and stage filters, only version filter will be applied.',
     );
   });

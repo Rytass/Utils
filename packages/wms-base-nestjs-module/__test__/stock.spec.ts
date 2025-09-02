@@ -30,8 +30,7 @@ describe('stock', () => {
           database: ':memory:',
           autoLoadEntities: true,
           synchronize: true,
-          logging: 'all',
-          logger: 'advanced-console',
+          logging: false,
         }),
         WMSBaseModule.forRootAsync({
           imports: [TypeOrmModule.forFeature([StockEntity])],

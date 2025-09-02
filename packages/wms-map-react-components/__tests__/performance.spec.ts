@@ -50,14 +50,6 @@ describe('Performance Tests', () => {
 
         // 驗證性能
         expect(transformTime).toBeLessThan(maxTransformTime);
-
-        // 輸出統計資訊供參考
-        console.log(`${name} 統計:`, {
-          背景數量: data.backgrounds.length,
-          範圍數量: data.ranges.length,
-          轉換後節點數量: nodes.length,
-          轉換時間: `${transformTime.toFixed(2)}ms`,
-        });
       });
     });
   });
@@ -81,12 +73,6 @@ describe('Performance Tests', () => {
       const maxMemoryIncrease = 50 * 1024 * 1024; // 50MB in bytes
 
       expect(memoryIncrease).toBeLessThan(maxMemoryIncrease);
-
-      console.log('Memory usage:', {
-        初始記憶體: `${(initialMemory / 1024 / 1024).toFixed(2)}MB`,
-        轉換後記憶體: `${(afterTransformMemory / 1024 / 1024).toFixed(2)}MB`,
-        記憶體增量: `${(memoryIncrease / 1024 / 1024).toFixed(2)}MB`,
-      });
     });
   });
 
@@ -126,8 +112,6 @@ describe('Performance Tests', () => {
 
       // 時間比例不應該超過大小比例的 3 倍 (允許一些非線性開銷)
       expect(timeRatio).toBeLessThan(sizeRatio * 3);
-
-      console.log('Scalability results:', results);
     });
   });
 
@@ -168,13 +152,6 @@ describe('Performance Tests', () => {
 
       // 性能應該相對穩定，但由於 JIT 編譯和系統負載，允許更大的變異範圍
       expect(maxTime / minTime).toBeLessThan(15);
-
-      console.log('Repeated transformation stats:', {
-        平均時間: `${avgTime.toFixed(2)}ms`,
-        最短時間: `${minTime.toFixed(2)}ms`,
-        最長時間: `${maxTime.toFixed(2)}ms`,
-        執行次數: iterations,
-      });
     });
   });
 });
