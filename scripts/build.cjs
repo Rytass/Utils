@@ -93,9 +93,17 @@ async function build(packageSymbol, packageInfos) {
   if (!(isRoot && !fse.existsSync(indexPath))) {
     const tsconfig = path.resolve(packagePath, 'tsconfig.build.json');
 
-    execSync(
-      `npx tsc --project ${tsconfig} --outDir ${packageDistPath} --emitDeclarationOnly`,
-    );
+    try {
+      execSync(
+        `npx tsc --project ${tsconfig} --outDir ${packageDistPath} --emitDeclarationOnly`,
+        { stdio: 'pipe' }
+      );
+    } catch (error) {
+      console.error(`\n❌ TypeScript compilation failed for ${packageJson.name}:`);
+      console.error(error.stdout?.toString() || error.message);
+      console.error(error.stderr?.toString() || '');
+      process.exit(1);
+    }
 
     await rollupBuild({
       input: indexPath,
