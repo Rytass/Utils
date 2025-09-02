@@ -13,7 +13,7 @@
         "*.spec.*",
         "**/*.md"
       ],
-      "message": "chore: %s",
+      "message": "chore(release): update package versions",
       "conventionalCommits": true,
       "yes": true
     },
