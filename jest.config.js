@@ -8,7 +8,6 @@ export default {
     TextEncoder,
     TextDecoder,
   },
-  setupFiles: ['<rootDir>/jest.setup.js'],
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {
       useESM: true,

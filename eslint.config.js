@@ -29,7 +29,6 @@ export default [
       '**/*.config.cjs',
       '**/*.setup.js',
       'jest.config.js',
-      'jest.setup.js',
       'lint-staged.config.js',
       'scripts/**',
     ],
