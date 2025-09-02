@@ -411,7 +411,7 @@ export class BankProInvoiceGateway
               Email: '',
             },
           ],
-          OrderDetails: invoice.items.map((item, index) => ({
+          OrderDetails: allowanceItems.map((item, index) => ({
             SeqNo: (index + 1).toString(),
             ItemID: item.id ?? '',
             Barcode: item.barcode ?? '',
