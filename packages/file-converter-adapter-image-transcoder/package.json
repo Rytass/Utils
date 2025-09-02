@@ -17,15 +17,15 @@
   },
   "scripts": {
     "clean": "npm run build:clean",
-    "build:clean": "node ../../scripts/cleanBuild.js",
-    "build": "npm run build:clean && node ../../scripts/build.js"
+    "build:clean": "node ../../scripts/cleanBuild.cjs",
+    "build": "npm run build:clean && node ../../scripts/build.cjs"
   },
   "bugs": {
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
     "@rytass/file-converter": "^0.1.3",
-    "file-type": "^16.5.4",
+    "file-type": "^21.0.0",
     "sharp": "^0.34.3"
   },
   "devDependencies": {

@@ -1,9 +1,10 @@
 import { Readable, PassThrough } from 'stream';
 import { createHash } from 'crypto';
+import { Buffer } from 'buffer';
 import {
   FileTypeResult,
-  fromBuffer as fileTypeFromBuffer,
-  fromStream as fileTypeFromStream,
+  fileTypeFromBuffer,
+  fileTypeFromStream,
 } from 'file-type';
 import { ConverterManager } from '@rytass/file-converter';
 import {
@@ -140,13 +141,13 @@ export class Storage<O extends Record<string, any> = Record<string, any>>
     });
   }
 
-  write(file: InputFile, options?: WriteFileOptions): Promise<StorageFile> {
+  write(_file: InputFile, _options?: WriteFileOptions): Promise<StorageFile> {
     throw new Error('Method not implemented.');
   }
 
   batchWrite(
-    files: InputFile[],
-    options?: WriteFileOptions[],
+    _files: InputFile[],
+    _options?: WriteFileOptions[],
   ): Promise<StorageFile[]> {
     throw new Error('Method not implemented.');
   }
@@ -155,17 +156,17 @@ export class Storage<O extends Record<string, any> = Record<string, any>>
   read(key: string, options: ReadBufferFileOptions): Promise<Buffer>;
   read(key: string, options: ReadStreamFileOptions): Promise<Readable>;
   read(
-    key: string,
-    options?: ReadBufferFileOptions | ReadStreamFileOptions,
+    _key: string,
+    _options?: ReadBufferFileOptions | ReadStreamFileOptions,
   ): Promise<Readable> | Promise<Buffer> {
     throw new Error('Method not implemented.');
   }
 
-  remove(key: string): Promise<void> {
+  remove(_key: string): Promise<void> {
     throw new Error('Method not implemented.');
   }
 
-  isExists(key: string): Promise<boolean> {
+  isExists(_key: string): Promise<boolean> {
     throw new Error('Method not implemented.');
   }
 }

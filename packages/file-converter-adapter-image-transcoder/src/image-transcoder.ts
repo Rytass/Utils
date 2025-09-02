@@ -1,7 +1,7 @@
 import { ConvertableFile, FileConverter } from '@rytass/file-converter';
 import sharp from 'sharp';
 import { Readable } from 'stream';
-import { fromBuffer as fileTypeFromBuffer } from 'file-type';
+import { fileTypeFromBuffer } from 'file-type';
 import { ImageTranscoderOptions } from './typings';
 import { SupportSources } from './constants';
 import { UnsupportedSource } from './errors';
