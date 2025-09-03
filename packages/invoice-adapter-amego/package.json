@@ -18,7 +18,8 @@
     "clean": "node ../../scripts/clean-build.cjs",
     "build": "npm run clean && node ../../scripts/build.cjs",
     "lint": "npx eslint src --ext .ts,.tsx --fix",
-    "test": "npx jest --config ../../jest.config.js --testPathPatterns=packages/invoice-adapter-amego --passWithNoTests"
+    "test": "npx jest --config ../../jest.config.js --testPathPatterns=packages/invoice-adapter-amego --passWithNoTests",
+    "test:coverage": "npx jest --coverage --config ../../jest.config.js --testPathPatterns=packages/invoice-adapter-amego --passWithNoTests"
   },
   "bugs": {
     "url": "https://github.com/Rytass/Utils/issues"

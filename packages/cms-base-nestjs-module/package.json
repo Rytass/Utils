@@ -19,7 +19,8 @@
     "build": "npm run clean && node ../../scripts/build.cjs",
     "release": "lerna version patch && npm run build && lerna publish from-package",
     "lint": "npx eslint src --ext .ts,.tsx --fix",
-    "test": "npx jest --config ../../jest.config.js --testPathPatterns=packages/cms-base-nestjs-module --passWithNoTests"
+    "test": "npx jest --config ../../jest.config.js --testPathPatterns=packages/cms-base-nestjs-module --passWithNoTests",
+    "test:coverage": "npx jest --coverage --config ../../jest.config.js --testPathPatterns=packages/cms-base-nestjs-module --passWithNoTests"
   },
   "bugs": {
     "url": "https://github.com/Rytass/Utils/issues"
