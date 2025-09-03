@@ -25,7 +25,14 @@ When you enable signature mode without specifying any signature steps, the syste
 
 ```typescript title="src/app.service.ts"
 import { Injectable } from '@nestjs/common';
-import { ArticleBaseService, ArticleSignatureService, BaseArticleEntity, EMPTY_QUADRATS_ELEMENTS, ArticleSignatureEntity, ArticleBaseDto } from '@rytass/cms-base-nestjs-module';
+import {
+  ArticleBaseService,
+  ArticleSignatureService,
+  BaseArticleEntity,
+  EMPTY_QUADRATS_ELEMENTS,
+  ArticleSignatureEntity,
+  ArticleBaseDto,
+} from '@rytass/cms-base-nestjs-module';
 import { QuadratsElement } from '@quadrats/core';
 
 @Injectable()
@@ -42,7 +49,11 @@ export class AppService {
     });
   }
 
-  addVersion(id: string, title: string, content: QuadratsElement[] = EMPTY_QUADRATS_ELEMENTS): Promise<BaseArticleEntity> {
+  addVersion(
+    id: string,
+    title: string,
+    content: QuadratsElement[] = EMPTY_QUADRATS_ELEMENTS,
+  ): Promise<BaseArticleEntity> {
     return this.articleService.addVersion(id, {
       title,
       content,
@@ -83,7 +94,7 @@ export class AppService {
     let listLatest = await this.findLatest(); // [TestArticleA Version: 0, TestArticleB Version: 0]
     let listApproved = await this.findApproved(); // [TestArticleA Version: 0]
 
-    await this.addVersion(articleA.id, 'TestArticleA2')
+    await this.addVersion(articleA.id, 'TestArticleA2');
 
     let listLatest = await this.findLatest(); // [TestArticleA Version: 1, TestArticleB Version: 0]
     let listApproved = await this.findApproved(); // [TestArticleA Version: 0]
@@ -95,10 +106,16 @@ In the example above, **findApproved** will only return article versions that ha
 
 Additionally, you can use the **ArticleSignatureDataLoader** to retrieve the signature status of a version and compare it with the cache in the **ArticleSignatureService** to determine if the version has been published.
 
-
 ```typescript title="src/app.service.ts"
 import { Injectable } from '@nestjs/common';
-import { ArticleBaseService, ArticleSignatureService, BaseArticleEntity, EMPTY_QUADRATS_ELEMENTS, ArticleSignatureEntity, ArticleBaseDto } from '@rytass/cms-base-nestjs-module';
+import {
+  ArticleBaseService,
+  ArticleSignatureService,
+  BaseArticleEntity,
+  EMPTY_QUADRATS_ELEMENTS,
+  ArticleSignatureEntity,
+  ArticleBaseDto,
+} from '@rytass/cms-base-nestjs-module';
 import { QuadratsElement } from '@quadrats/core';
 
 @Injectable()
@@ -114,7 +131,9 @@ export class AppService {
   async onApplicationBootstrap() {
     const articles = await this.articleService.findAll();
 
-    const articleSignatures = await this.signatureDataLoader.versionSignaturesLoader.loadMany(articles.map(article => `${article.id}|${article.version}`));
+    const articleSignatures = await this.signatureDataLoader.versionSignaturesLoader.loadMany(
+      articles.map(article => `${article.id}|${article.version}`),
+    );
 
     console.log(articleSignatures); // ArticleSignatureEntity[][]
   }

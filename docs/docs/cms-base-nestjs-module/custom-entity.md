@@ -37,7 +37,6 @@ import { ArticleEntity } from './article.entity';
   ],
 })
 export class AppModule {}
-
 ```
 
 After all, when you use **ArticleBaseService**, you can access these custom-defined columns. Remember, You need to inform the **service** of how you’ve defined it through **generics**.
@@ -49,20 +48,16 @@ import { ArticleBaseService, ArticleBaseDto } from '@rytass/cms-base-nestjs-modu
 
 @Injectable()
 export class AppService {
-  constructor(
-    private readonly articleService: ArticleBaseService<ArticleEntity>,
-  ) {}
+  constructor(private readonly articleService: ArticleBaseService<ArticleEntity>) {}
 
   findById(id: string): Promise<ArticleBaseDto<ArticleEntity>> {
     return this.articleService.findById(id);
   }
 }
-
 ```
 
 In addition to defining the **generic** when the **Service** is referenced, you can also override the definition when using a **method**. In this case, the definition provided in the method will take precedence.
 Also, when you create an article and a new version using a custom Entity, the Library will automatically include your custom fields.
-
 
 ```typescript title="src/app.service.ts"
 import { Injectable } from '@nestjs/common';
@@ -71,9 +66,7 @@ import { ArticleBaseService, ArticleBaseDto } from '@rytass/cms-base-nestjs-modu
 
 @Injectable()
 export class AppService {
-  constructor(
-    private readonly articleService: ArticleBaseService,
-  ) {}
+  constructor(private readonly articleService: ArticleBaseService) {}
 
   findById(id: string): Promise<ArticleBaseDto<ArticleEntity>> {
     return this.articleService.findById<ArticleEntity>(id);
@@ -87,5 +80,4 @@ export class AppService {
     });
   }
 }
-
 ```

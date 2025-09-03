@@ -28,9 +28,7 @@ import { QuadratsElement } from '@quadrats/core';
 
 @Injectable()
 export class AppService {
-  constructor(
-    private readonly articleService: ArticleBaseService,
-  ) {}
+  constructor(private readonly articleService: ArticleBaseService) {}
 
   async onApplicationBootstrap() {
     const article = await this.articleService.create({

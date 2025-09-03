@@ -59,7 +59,6 @@ static forRoot(options?: CMSBaseModuleOptionsDto);
 | categoryMultiLanguageNameEntity | TypeORM Entity       | undefined | Custom BaseCategoryMultiLanguageNameEntity                    |
 | signatureLevelEntity            | TypeORM Entity       | undefined | Custom BaseSignatureLevelEntity                               |
 
-
 #### `forRootAsync()`
 
 ```tsx
@@ -68,10 +67,10 @@ static forRootAsync(options: CMSBaseModuleAsyncOptionsDto);
 
 **Parameters:**
 
-| Name             | Type                                        | Default    | Description                                           |
-| ---------------- | ------------------------------------------- | ---------- | ----------------------------------------------------- |
-| imports          | DynamicModule[]                             | []         | Imported module before CMS module                     |
-| useFactory       | (...args: any[]) => CMSBaseModuleOptionsDto | undefined  | Factory method to generate async options              |
-| injects          | any[]                                       | []         | Inject symbol for useFactory method                   |
-| useClass         | Type\<CMSBaseModuleOptionFactory\>          | undefined  | Options provider class                                |
-| useExisting      | Type\<CMSBaseModuleOptionFactory\>          | undefined  | Options provider class symbol                         |
+| Name        | Type                                        | Default   | Description                              |
+| ----------- | ------------------------------------------- | --------- | ---------------------------------------- |
+| imports     | DynamicModule[]                             | []        | Imported module before CMS module        |
+| useFactory  | (...args: any[]) => CMSBaseModuleOptionsDto | undefined | Factory method to generate async options |
+| injects     | any[]                                       | []        | Inject symbol for useFactory method      |
+| useClass    | Type\<CMSBaseModuleOptionFactory\>          | undefined | Options provider class                   |
+| useExisting | Type\<CMSBaseModuleOptionFactory\>          | undefined | Options provider class symbol            |
