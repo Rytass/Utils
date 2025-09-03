@@ -15,10 +15,11 @@
     "url": "git+https://github.com/Rytass/Utils.git"
   },
   "scripts": {
-    "clean": "npm run build:clean",
-    "build:clean": "node ../../scripts/cleanBuild.cjs",
-    "build": "npm run build:clean && node ../../scripts/build.cjs",
-    "release": "lerna version patch && npm run build && lerna publish from-package"
+    "clean": "node ../../scripts/clean-build.cjs",
+    "build": "npm run clean && node ../../scripts/build.cjs",
+    "release": "lerna version patch && npm run build && lerna publish from-package",
+    "lint": "npx eslint src --ext .ts,.tsx --fix",
+    "test": "npx jest --config ../../jest.config.js --testPathPatterns=packages/member-base-nestjs-module --passWithNoTests"
   },
   "bugs": {
     "url": "https://github.com/Rytass/Utils/issues"
@@ -45,6 +46,7 @@
     "typeorm-adapter": "^1"
   },
   "devDependencies": {
+    "@types/generate-password": "^1.5.3",
     "@types/ws": "^8"
   },
   "isolateEntries": [

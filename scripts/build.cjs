@@ -15,12 +15,29 @@ const {
   peerDependencies,
 } = rootPackageJson;
 
+// Node.js built-in modules that should be treated as external
+const nodeBuiltins = [
+  'fs', 'fs/promises', 'path', 'crypto', 'stream', 'events', 'http', 'https', 
+  'util', 'buffer', 'child_process', 'os', 'url', 'querystring', 'readline',
+  'zlib', 'net', 'tls', 'dns', 'dgram', 'cluster', 'worker_threads',
+  'node:fs', 'node:fs/promises', 'node:path', 'node:crypto', 'node:stream', 
+  'node:events', 'node:http', 'node:https', 'node:util', 'node:buffer',
+  'node:child_process', 'node:os', 'node:url', 'node:querystring', 
+  'node:readline', 'node:zlib', 'node:net', 'node:tls', 'node:dns', 
+  'node:dgram', 'node:cluster', 'node:worker_threads'
+];
+
 const externals = [
   ...Object.keys({
     ...dependencies,
     ...peerDependencies,
   }),
   rootPackageName,
+  ...nodeBuiltins,
+  // Common packages that should be treated as external
+  'axios',
+  'debug',
+  'luxon',
 ];
 
 const rootPackageDistPath = path.resolve(rootPackagePath, 'lib');
@@ -68,6 +85,12 @@ async function getPackagesInfos() {
 }
 
 function isExternal(id) {
+  // Handle Node.js built-in modules (both with and without node: prefix)
+  const normalizedId = id.startsWith('node:') ? id.slice(5) : id;
+  if (nodeBuiltins.includes(id) || nodeBuiltins.includes(normalizedId)) {
+    return true;
+  }
+  
   return externals.some((ext) => id.startsWith(ext));
 }
 

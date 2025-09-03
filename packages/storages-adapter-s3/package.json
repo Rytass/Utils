@@ -16,9 +16,10 @@
     "url": "git+https://github.com/Rytass/Utils.git"
   },
   "scripts": {
-    "clean": "npm run build:clean",
-    "build:clean": "node ../../scripts/cleanBuild.cjs",
-    "build": "npm run build:clean && node ../../scripts/build.cjs"
+    "clean": "node ../../scripts/clean-build.cjs",
+    "build": "npm run clean && node ../../scripts/build.cjs",
+    "lint": "npx eslint src --ext .ts,.tsx --fix",
+    "test": "npx jest --config ../../jest.config.js --testPathPatterns=packages/storages-adapter-s3 --passWithNoTests"
   },
   "bugs": {
     "url": "https://github.com/Rytass/Utils/issues"

@@ -3,7 +3,8 @@
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./lib",
-    "declaration": true
+    "declaration": true,
+    "skipLibCheck": true
   },
   "exclude": ["**/*.spec.*"],
   "include": ["./src"]
