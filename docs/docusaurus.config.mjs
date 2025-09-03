@@ -1,4 +1,4 @@
-import {themes as prismThemes} from 'prism-react-renderer';
+import { themes as prismThemes } from 'prism-react-renderer';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -35,8 +35,7 @@ const config = {
       ({
         docs: {
           sidebarPath: './sidebars.ts',
-          editUrl:
-            'https://github.com/Rytass/Utils/tree/main/docs',
+          editUrl: 'https://github.com/Rytass/Utils/tree/main/docs',
         },
         theme: {
           customCss: './src/css/custom.css',

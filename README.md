@@ -69,5 +69,3 @@ Currently, there are numerous network infrastructure providers offering file hos
 - [R2](https://www.npmjs.com/package/@rytass/storages-adapter-r2) - Cloudflare R2
 - [S3](https://www.npmjs.com/package/@rytass/storages-adapter-s3) - AWS Simple Storage Service
 - [Local](https://www.npmjs.com/package/@rytass/storages-adapter-local) - Local file system
-
-

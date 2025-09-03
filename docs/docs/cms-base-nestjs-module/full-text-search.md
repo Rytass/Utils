@@ -43,9 +43,7 @@ import { ArticleBaseService, ArticleBaseDto, ArticleSearchMode } from '@rytass/c
 
 @Injectable()
 export class AppService {
-  constructor(
-    private readonly articleService: ArticleBaseService,
-  ) {}
+  constructor(private readonly articleService: ArticleBaseService) {}
 
   findAll(term: string): Promise<ArticleBaseDto[]> {
     return this.articleService.findAll({
@@ -54,5 +52,4 @@ export class AppService {
     });
   }
 }
-
 ```

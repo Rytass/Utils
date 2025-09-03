@@ -23,8 +23,7 @@ function HomepageHeader() {
 
 export default function Home(): React.JSX.Element {
   return (
-    <Layout
-      title="Documentation Home">
+    <Layout title="Documentation Home">
       <HomepageHeader />
     </Layout>
   );
