@@ -16,7 +16,7 @@ try {
   // Read the current package.json
   const packageJson = readFileSync(packageJsonPath, 'utf8');
   const originalContent = packageJson;
-  
+
   // Temporarily disable ESM mode
   console.log('⚙️  Temporarily switching to CommonJS mode...');
   const modifiedContent = packageJson.replace('"type": "module"', '"_type": "module"');
@@ -31,9 +31,8 @@ try {
   // Restore ESM mode
   console.log('⚙️  Restoring ESM mode...');
   writeFileSync(packageJsonPath, originalContent);
-  
+
   console.log('✅ Documentation built successfully!');
-  
 } catch (error) {
   // Make sure to restore ESM mode even if build fails
   try {
@@ -46,7 +45,7 @@ try {
   } catch (restoreError) {
     console.error('❌ Failed to restore ESM mode:', restoreError.message);
   }
-  
+
   console.error('❌ Documentation build failed:', error.message);
   process.exit(1);
 }

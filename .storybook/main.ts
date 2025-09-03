@@ -6,9 +6,7 @@ const config: StorybookConfig = {
     '../packages/*/stories/**/*.stories.@(js|jsx|mjs|ts|tsx)',
     '../packages/*/src/**/*.stories.@(js|jsx|mjs|ts|tsx)',
   ],
-  addons: [
-    '@storybook/addon-essentials',
-  ],
+  addons: ['@storybook/addon-essentials'],
   framework: {
     name: '@storybook/react-vite',
     options: {},
@@ -21,7 +19,7 @@ const config: StorybookConfig = {
     reactDocgen: 'react-docgen-typescript',
     reactDocgenTypescriptOptions: {
       shouldExtractLiteralValuesFromEnum: true,
-      propFilter: (prop) => {
+      propFilter: prop => {
         if (prop.parent) {
           return !prop.parent.fileName.includes('node_modules');
         }
@@ -29,10 +27,10 @@ const config: StorybookConfig = {
       },
     },
   },
-  viteFinal: async (config) => {
+  viteFinal: async config => {
     // Customize the Vite config here
     const { mergeConfig } = await import('vite');
-    
+
     return mergeConfig(config, {
       // Ensure proper handling of SCSS modules and Sass imports
       css: {

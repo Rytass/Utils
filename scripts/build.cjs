@@ -9,22 +9,54 @@ const postcss = require('rollup-plugin-postcss');
 const { PWD } = process.env;
 const rootPackagePath = PWD;
 const rootPackageJson = require(path.resolve(rootPackagePath, 'package.json'));
-const {
-  name: rootPackageName,
-  dependencies,
-  peerDependencies,
-} = rootPackageJson;
+const { name: rootPackageName, dependencies, peerDependencies } = rootPackageJson;
 
 // Node.js built-in modules that should be treated as external
 const nodeBuiltins = [
-  'fs', 'fs/promises', 'path', 'crypto', 'stream', 'events', 'http', 'https', 
-  'util', 'buffer', 'child_process', 'os', 'url', 'querystring', 'readline',
-  'zlib', 'net', 'tls', 'dns', 'dgram', 'cluster', 'worker_threads',
-  'node:fs', 'node:fs/promises', 'node:path', 'node:crypto', 'node:stream', 
-  'node:events', 'node:http', 'node:https', 'node:util', 'node:buffer',
-  'node:child_process', 'node:os', 'node:url', 'node:querystring', 
-  'node:readline', 'node:zlib', 'node:net', 'node:tls', 'node:dns', 
-  'node:dgram', 'node:cluster', 'node:worker_threads'
+  'fs',
+  'fs/promises',
+  'path',
+  'crypto',
+  'stream',
+  'events',
+  'http',
+  'https',
+  'util',
+  'buffer',
+  'child_process',
+  'os',
+  'url',
+  'querystring',
+  'readline',
+  'zlib',
+  'net',
+  'tls',
+  'dns',
+  'dgram',
+  'cluster',
+  'worker_threads',
+  'node:fs',
+  'node:fs/promises',
+  'node:path',
+  'node:crypto',
+  'node:stream',
+  'node:events',
+  'node:http',
+  'node:https',
+  'node:util',
+  'node:buffer',
+  'node:child_process',
+  'node:os',
+  'node:url',
+  'node:querystring',
+  'node:readline',
+  'node:zlib',
+  'node:net',
+  'node:tls',
+  'node:dns',
+  'node:dgram',
+  'node:cluster',
+  'node:worker_threads',
 ];
 
 const externals = [
@@ -68,9 +100,7 @@ async function getPackagesInfos() {
         return acc;
       }
 
-      throw new Error(
-        `Package name '${name}' should equal '${packageJson.name}'`,
-      );
+      throw new Error(`Package name '${name}' should equal '${packageJson.name}'`);
     }
 
     const packageSymbol = dirs.join('/') || ROOT_SYMBOL;
@@ -90,15 +120,15 @@ function isExternal(id) {
   if (nodeBuiltins.includes(id) || nodeBuiltins.includes(normalizedId)) {
     return true;
   }
-  
-  return externals.some((ext) => id.startsWith(ext));
+
+  return externals.some(ext => id.startsWith(ext));
 }
 
 async function rollupBuild({ output, ...options }) {
   const bundle = await rollup(options);
 
   if (Array.isArray(output)) {
-    await Promise.all(output.map((o) => bundle.write(o)));
+    await Promise.all(output.map(o => bundle.write(o)));
   } else {
     await bundle.write(output);
   }
@@ -117,10 +147,7 @@ async function build(packageSymbol, packageInfos) {
     const tsconfig = path.resolve(packagePath, 'tsconfig.build.json');
 
     try {
-      execSync(
-        `npx tsc --project ${tsconfig} --outDir ${packageDistPath} --emitDeclarationOnly`,
-        { stdio: 'pipe' }
-      );
+      execSync(`npx tsc --project ${tsconfig} --outDir ${packageDistPath} --emitDeclarationOnly`, { stdio: 'pipe' });
     } catch (error) {
       console.error(`\n❌ TypeScript compilation failed for ${packageJson.name}:`);
       console.error(error.stdout?.toString() || error.message);
@@ -165,7 +192,7 @@ async function build(packageSymbol, packageInfos) {
     const isolateEntries = packageJson.isolateEntries || [];
 
     await isolateEntries
-      .map((entryPath) => async () => {
+      .map(entryPath => async () => {
         const inputPath = path.resolve(packageSrcPath, entryPath);
         const filename = entryPath.replace(/^(.+)\.[^.]+$/, '$1');
 
@@ -206,15 +233,9 @@ async function build(packageSymbol, packageInfos) {
 
   delete packageJson.scripts;
 
-  fse.writeFileSync(
-    packageJsonDistPath,
-    `${JSON.stringify(packageJson, undefined, 2)}\n`,
-  );
+  fse.writeFileSync(packageJsonDistPath, `${JSON.stringify(packageJson, undefined, 2)}\n`);
 
-  fse.copySync(
-    packageDistPath,
-    path.resolve(nodeModulesPath, ...packageJson.name.split('/')),
-  );
+  fse.copySync(packageDistPath, path.resolve(nodeModulesPath, ...packageJson.name.split('/')));
 }
 
 async function tryBuild(packagesInfos, packageSymbol, triggerSymbol) {
@@ -231,9 +252,7 @@ async function tryBuild(packagesInfos, packageSymbol, triggerSymbol) {
 
   await build(packageSymbol, packagesInfos[packageSymbol]);
 
-  triggers?.forEach((trigger) =>
-    tryBuild(packagesInfos, trigger, packageSymbol),
-  );
+  triggers?.forEach(trigger => tryBuild(packagesInfos, trigger, packageSymbol));
 }
 
 (async () => {
@@ -247,18 +266,12 @@ async function tryBuild(packagesInfos, packageSymbol, triggerSymbol) {
   /**
    * copy LICENSE
    */
-  fse.copyFileSync(
-    path.resolve(rootPath, 'LICENSE'),
-    path.resolve(rootPackageDistPath, 'LICENSE'),
-  );
+  fse.copyFileSync(path.resolve(rootPath, 'LICENSE'), path.resolve(rootPackageDistPath, 'LICENSE'));
 
   /**
    * copy README.md
    */
-  fse.copyFileSync(
-    path.resolve(rootPackagePath, 'README.md'),
-    path.resolve(rootPackageDistPath, 'README.md'),
-  );
+  fse.copyFileSync(path.resolve(rootPackagePath, 'README.md'), path.resolve(rootPackageDistPath, 'README.md'));
 
   for (const packageSymbol in packagesInfos) {
     tryBuild(packagesInfos, packageSymbol);
