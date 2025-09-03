@@ -4,6 +4,7 @@ import tsparser from '@typescript-eslint/parser';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import importPlugin from 'eslint-plugin-import';
+import globals from 'globals';
 
 export default [
   // Base recommended config
@@ -41,17 +42,9 @@ export default [
       ecmaVersion: 2020,
       sourceType: 'module',
       globals: {
-        browser: true,
-        node: true,
-        jest: true,
-        describe: true,
-        it: true,
-        expect: true,
-        beforeEach: true,
-        afterEach: true,
-        beforeAll: true,
-        afterAll: true,
-        test: true,
+        ...globals.browser,
+        ...globals.node,
+        ...globals.jest,
       },
     },
     plugins: {
@@ -204,17 +197,9 @@ export default [
         project: false, // Disable type-aware linting to reduce memory usage
       },
       globals: {
-        browser: true,
-        node: true,
-        jest: true,
-        describe: true,
-        it: true,
-        expect: true,
-        beforeEach: true,
-        afterEach: true,
-        beforeAll: true,
-        afterAll: true,
-        test: true,
+        ...globals.browser,
+        ...globals.node,
+        ...globals.jest,
       },
     },
     plugins: {
