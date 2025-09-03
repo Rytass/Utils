@@ -1,18 +1,10 @@
 {
-  "packages": [
-    "packages/*"
-  ],
+  "packages": ["packages/*"],
   "npmClient": "yarn",
   "version": "independent",
   "command": {
     "version": {
-      "ignoreChanges": [
-        "**/__fixtures__/**",
-        "**/__mocks__/**",
-        "**/__tests__/**",
-        "*.spec.*",
-        "**/*.md"
-      ],
+      "ignoreChanges": ["**/__fixtures__/**", "**/__mocks__/**", "**/__tests__/**", "*.spec.*", "**/*.md"],
       "message": "chore(release): update package versions",
       "conventionalCommits": true,
       "yes": true

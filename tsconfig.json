@@ -3,20 +3,12 @@
   "compilerOptions": {
     "baseUrl": "./packages",
     "paths": {
-      "@rytass/cms-base-nestjs-graphql-module": [
-        "cms-base-nestjs-graphql-module/src"
-      ],
+      "@rytass/cms-base-nestjs-graphql-module": ["cms-base-nestjs-graphql-module/src"],
       "@rytass/cms-base-nestjs-module": ["cms-base-nestjs-module/src"],
       "@rytass/file-converter": ["file-converter/src"],
-      "@rytass/file-converter-adapter-image-resizer": [
-        "file-converter-adapter-image-resizer/src"
-      ],
-      "@rytass/file-converter-adapter-image-transcoder": [
-        "file-converter-adapter-image-transcoder/src"
-      ],
-      "@rytass/file-converter-adapter-image-watermark": [
-        "file-converter-adapter-image-watermark/src"
-      ],
+      "@rytass/file-converter-adapter-image-resizer": ["file-converter-adapter-image-resizer/src"],
+      "@rytass/file-converter-adapter-image-transcoder": ["file-converter-adapter-image-transcoder/src"],
+      "@rytass/file-converter-adapter-image-watermark": ["file-converter-adapter-image-watermark/src"],
       "@rytass/invoice": ["invoice/src"],
       "@rytass/invoice-adapter-bank-pro": ["invoice-adapter-bank-pro/src"],
       "@rytass/invoice-adapter-ecpay": ["invoice-adapter-ecpay/src"],
@@ -26,24 +18,18 @@
       "@rytass/order-builder": ["order-builder/src"],
       "@rytass/payments": ["payments/src"],
       "@rytass/payments-adapter-ecpay": ["payments-adapter-ecpay/src"],
-      "@rytass/payments-adapter-happy-card": [
-        "payments-adapter-happy-card/src"
-      ],
+      "@rytass/payments-adapter-happy-card": ["payments-adapter-happy-card/src"],
       "@rytass/payments-adapter-hwanan": ["payments-adapter-hwanan/src"],
       "@rytass/payments-adapter-icash-pay": ["payments-adapter-icash-pay/src"],
       "@rytass/payments-adapter-newebpay": ["payments-adapter-newebpay/src"],
       "@rytass/payments-nestjs-module": ["payments-nestjs-module/src"],
       "@rytass/secret": ["secret/src"],
       "@rytass/secret-adapter-vault": ["secret-adapter-vault/src"],
-      "@rytass/secret-adapter-vault-nestjs": [
-        "secret-adapter-vault-nestjs/src"
-      ],
+      "@rytass/secret-adapter-vault-nestjs": ["secret-adapter-vault-nestjs/src"],
       "@rytass/sms": ["sms/src"],
       "@rytass/sms-adapter-every8d": ["sms-adapter-every8d/src"],
       "@rytass/storages": ["storages/src"],
-      "@rytass/storages-adapter-azure-blob": [
-        "storages-adapter-azure-blob/src"
-      ],
+      "@rytass/storages-adapter-azure-blob": ["storages-adapter-azure-blob/src"],
       "@rytass/storages-adapter-gcs": ["storages-adapter-gcs/src"],
       "@rytass/storages-adapter-local": ["storages-adapter-local/src"],
       "@rytass/storages-adapter-r2": ["storages-adapter-r2/src"],
