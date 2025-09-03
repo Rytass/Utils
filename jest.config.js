@@ -1,13 +1,8 @@
-import { TextEncoder, TextDecoder } from 'util';
-
 export default {
   preset: 'ts-jest/presets/default-esm',
   extensionsToTreatAsEsm: ['.ts'],
   testEnvironment: 'node',
-  globals: {
-    TextEncoder,
-    TextDecoder,
-  },
+  setupFiles: ['<rootDir>/jest.setup.mjs'],
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {
       useESM: true,
@@ -15,7 +10,7 @@ export default {
     }],
   },
   testMatch: ['**/+(*.)+(spec|test).+(ts|js)?(x)'],
-  moduleFileExtensions: ['js', 'json', 'ts', 'tsx', 'node'],
+  moduleFileExtensions: ['js', 'json', 'ts', 'tsx', 'mjs', 'node'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^uuid$': 'uuid',
@@ -29,4 +24,5 @@ export default {
   testPathIgnorePatterns: ['/node_modules/'],
   collectCoverageFrom: ['packages/*/src/**/*', '!**/index.ts'],
   coveragePathIgnorePatterns: ['/node_modules/'],
+  passWithNoTests: true,
 };
