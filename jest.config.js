@@ -1,16 +1,18 @@
-export default {
+const config = {
   preset: 'ts-jest/presets/default-esm',
   extensionsToTreatAsEsm: ['.ts'],
   testEnvironment: 'node',
-  setupFiles: ['<rootDir>/jest.setup.mjs'],
+  setupFiles: ['<rootDir>/jest.setup.ts'],
   transform: {
-    '^.+\\.tsx?$': ['ts-jest', {
-      useESM: true,
-      tsconfig: '<rootDir>/tsconfig.spec.json',
-    }],
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        useESM: true,
+        tsconfig: '<rootDir>/tsconfig.spec.json',
+      },
+    ],
   },
   testMatch: ['**/+(*.)+(spec|test).+(ts|js)?(x)'],
-  moduleFileExtensions: ['js', 'json', 'ts', 'tsx', 'mjs', 'node'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^uuid$': 'uuid',
@@ -18,11 +20,11 @@ export default {
     '@rytass/([a-zA-Z-_/]*)$': '<rootDir>/packages/$1/src',
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(file-type|strtok3|token-types|@tokenizer|uint8array-extras))/'
+    'node_modules/(?!(file-type|strtok3|token-types|@tokenizer|uint8array-extras))/',
   ],
   modulePathIgnorePatterns: ['/lib/'],
-  testPathIgnorePatterns: ['/node_modules/'],
   collectCoverageFrom: ['packages/*/src/**/*', '!**/index.ts'],
-  coveragePathIgnorePatterns: ['/node_modules/'],
   passWithNoTests: true,
 };
+
+export default config;
