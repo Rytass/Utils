@@ -11,7 +11,7 @@ export class QuadratsArticleImageService {
     @Inject(API_HOST)
     private readonly apiHost: string,
     @Inject(QUADRATS_AUTH_CLIENT)
-    private readonly auth: { accessKey: string, secret: string },
+    private readonly auth: { accessKey: string; secret: string },
   ) {}
 
   async uploadImage(image: Buffer | Readable, urlMode?: false): Promise<string>;

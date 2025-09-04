@@ -17,9 +17,7 @@ export class ImageTranscoder implements FileConverter<ImageTranscoderOptions> {
     sharp.concurrency(options.concurrency ?? 1);
   }
 
-  async convert<Output extends ConvertableFile>(
-    file: ConvertableFile,
-  ): Promise<Output> {
+  async convert<Output extends ConvertableFile>(file: ConvertableFile): Promise<Output> {
     let converter;
 
     if (file instanceof Buffer) {

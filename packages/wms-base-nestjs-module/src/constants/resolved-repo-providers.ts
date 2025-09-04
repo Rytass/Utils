@@ -27,27 +27,12 @@ const TARGETS = [
   [MaterialRepo, PROVIDE_MATERIAL_ENTITY, RESOLVED_MATERIAL_REPO, false],
   [OrderRepo, PROVIDE_ORDER_ENTITY, RESOLVED_ORDER_REPO, false],
   [StockRepo, PROVIDE_STOCK_ENTITY, RESOLVED_STOCK_REPO, false],
-  [
-    WarehouseMapRepo,
-    PROVIDE_WAREHOUSE_MAP_ENTITY,
-    RESOLVED_WAREHOUSE_MAP_REPO,
-    false,
-  ],
+  [WarehouseMapRepo, PROVIDE_WAREHOUSE_MAP_ENTITY, RESOLVED_WAREHOUSE_MAP_REPO, false],
 ] as const;
 
-export const ResolvedRepoProviders = TARGETS.map<Provider>(
-  ([repo, provide, resolved, isTreeRepo]) => ({
-    provide: resolved,
-    useFactory: <T extends EntitySchema>(
-      baseRepo: Repository<T>,
-      entity: new () => T,
-      dataSource: DataSource,
-    ) =>
-      entity
-        ? isTreeRepo
-          ? dataSource.getTreeRepository(entity)
-          : dataSource.getRepository(entity)
-        : baseRepo,
-    inject: [repo, provide, DataSource],
-  }),
-);
+export const ResolvedRepoProviders = TARGETS.map<Provider>(([repo, provide, resolved, isTreeRepo]) => ({
+  provide: resolved,
+  useFactory: <T extends EntitySchema>(baseRepo: Repository<T>, entity: new () => T, dataSource: DataSource) =>
+    entity ? (isTreeRepo ? dataSource.getTreeRepository(entity) : dataSource.getRepository(entity)) : baseRepo,
+  inject: [repo, provide, DataSource],
+}));

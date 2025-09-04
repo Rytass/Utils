@@ -1,11 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
-import {
-  DataSource,
-  DeepPartial,
-  EntityManager,
-  TreeRepository,
-} from 'typeorm';
+import { DataSource, DeepPartial, EntityManager, TreeRepository } from 'typeorm';
 import {
   LocationAlreadyExistedError,
   LocationCannotArchiveError,
@@ -28,9 +23,7 @@ export class LocationService<Entity extends LocationEntity = LocationEntity> {
     private readonly dataSource: DataSource,
   ) {}
 
-  async create(
-    options: DeepPartial<Entity> & { parentId?: string },
-  ): Promise<DeepPartial<Entity>> {
+  async create(options: DeepPartial<Entity> & { parentId?: string }): Promise<DeepPartial<Entity>> {
     const parent = options.parentId
       ? await this.locationTreeRepo
           .findOneOrFail({
@@ -69,7 +62,7 @@ export class LocationService<Entity extends LocationEntity = LocationEntity> {
       throw new LocationNotFoundError();
     }
 
-    await this.dataSource.transaction(async (manager) => {
+    await this.dataSource.transaction(async manager => {
       const canArchive = await this.canArchive(id, manager);
 
       if (!canArchive) {
@@ -78,7 +71,7 @@ export class LocationService<Entity extends LocationEntity = LocationEntity> {
 
       const descendants = await this.locationTreeRepo.findDescendants(location);
 
-      await this.locationTreeRepo.softDelete(descendants.map((d) => d.id));
+      await this.locationTreeRepo.softDelete(descendants.map(d => d.id));
     });
   }
 
@@ -97,10 +90,7 @@ export class LocationService<Entity extends LocationEntity = LocationEntity> {
     return location;
   }
 
-  private async canArchive(
-    id: string,
-    manager: EntityManager,
-  ): Promise<boolean> {
+  private async canArchive(id: string, manager: EntityManager): Promise<boolean> {
     return this.stockService
       .find(
         {
@@ -108,6 +98,6 @@ export class LocationService<Entity extends LocationEntity = LocationEntity> {
         },
         manager,
       )
-      .then((quantity) => quantity === 0);
+      .then(quantity => quantity === 0);
   }
 }

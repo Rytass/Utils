@@ -1,10 +1,4 @@
-import {
-  ViewMode,
-  WMSNodeClickInfo,
-  Map,
-  EditMode,
-  DrawingMode,
-} from '../typings';
+import { ViewMode, WMSNodeClickInfo, Map, EditMode, DrawingMode } from '../typings';
 import { FlowNode, FlowEdge } from './react-flow.types';
 
 export interface WMSMapModalProps {

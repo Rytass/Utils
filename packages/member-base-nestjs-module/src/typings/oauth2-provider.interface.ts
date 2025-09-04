@@ -36,7 +36,4 @@ export interface CustomOAuth2Provider extends BaseOAuth2Provider {
   getState?: () => string | Promise<string>;
 }
 
-export type OAuth2Provider =
-  | GoogleOAuth2Provider
-  | FacebookOAuth2Provider
-  | CustomOAuth2Provider;
+export type OAuth2Provider = GoogleOAuth2Provider | FacebookOAuth2Provider | CustomOAuth2Provider;

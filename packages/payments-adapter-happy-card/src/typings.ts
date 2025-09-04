@@ -11,9 +11,7 @@ export interface HappyCardPaymentInitOptions {
 
 export interface HappyCardCommitMessage extends OrderCommitMessage {}
 
-export interface HappyCardOrderInitOptions<
-  OCM extends HappyCardCommitMessage = HappyCardCommitMessage,
-> {
+export interface HappyCardOrderInitOptions<OCM extends HappyCardCommitMessage = HappyCardCommitMessage> {
   id: string;
   productType: HappyCardProductType;
   items: HappyCardOrderItem[];
@@ -45,8 +43,7 @@ export interface HappyCardUseRecord {
   amount: number;
 }
 
-export interface HappyCardPayOptions
-  extends PrepareOrderInput<HappyCardOrderItem> {
+export interface HappyCardPayOptions extends PrepareOrderInput<HappyCardOrderItem> {
   id?: string;
   posTradeNo?: string;
   uniMemberGID?: string;

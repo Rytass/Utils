@@ -40,14 +40,14 @@ const storage = new StorageS3Service({
   bucket: 'my-bucket',
   credentials: {
     accessKeyId: 'your-access-key',
-    secretAccessKey: 'your-secret-key'
-  }
+    secretAccessKey: 'your-secret-key',
+  },
 });
 
 // Upload file
 const result = await storage.write(buffer, {
   filename: 'documents/file.pdf',
-  contentType: 'application/pdf'
+  contentType: 'application/pdf',
 });
 
 // Download file
@@ -63,12 +63,12 @@ const url = await storage.url('documents/file.pdf');
 import { StorageLocalService } from '@rytass/storages-adapter-local';
 
 const storage = new StorageLocalService({
-  baseDir: './uploads'
+  baseDir: './uploads',
 });
 
 // Upload file
 const result = await storage.write(buffer, {
-  filename: 'images/photo.jpg'
+  filename: 'images/photo.jpg',
 });
 
 // Read file
@@ -140,12 +140,12 @@ class MultiStorageManager {
       bucket: 'primary-bucket',
       credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!
-      }
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+      },
     });
 
     this.backupStorage = new StorageLocalService({
-      baseDir: './backup-storage'
+      baseDir: './backup-storage',
     });
   }
 
@@ -153,13 +153,13 @@ class MultiStorageManager {
     try {
       // Upload to primary storage
       const primaryResult = await this.primaryStorage.write(file, { filename });
-      
+
       // Backup to local storage
       const backupResult = await this.backupStorage.write(file, { filename });
-      
+
       return {
         primary: primaryResult,
-        backup: backupResult
+        backup: backupResult,
       };
     } catch (error) {
       console.error('Upload failed:', error);
@@ -219,7 +219,7 @@ class CachedStorageProxy extends Storage<any> {
 
   async write(file: InputFile, options?: WriteFileOptions): Promise<StorageFile> {
     const result = await this.baseStorage.write(file, options);
-    
+
     // Invalidate cache if file was overwritten
     if (options?.filename && this.cache.has(options.filename)) {
       this.cache.delete(options.filename);
@@ -263,8 +263,8 @@ const storage = new StorageS3Service({
   bucket: 'uploads-bucket',
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!
-  }
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
 });
 
 app.post('/upload', upload.single('file'), async (req, res) => {
@@ -275,7 +275,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 
     const result = await storage.write(req.file.buffer, {
       filename: `uploads/${Date.now()}-${req.file.originalname}`,
-      contentType: req.file.mimetype
+      contentType: req.file.mimetype,
     });
 
     const publicUrl = await storage.url(result.key);
@@ -284,12 +284,12 @@ app.post('/upload', upload.single('file'), async (req, res) => {
       success: true,
       key: result.key,
       url: publicUrl,
-      filename: req.file.originalname
+      filename: req.file.originalname,
     });
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      error: error.message,
     });
   }
 });
@@ -298,7 +298,7 @@ app.get('/file/:key(*)', async (req, res) => {
   try {
     const key = req.params.key;
     const fileBuffer = await storage.read(key, { format: 'buffer' });
-    
+
     res.setHeader('Content-Type', 'application/octet-stream');
     res.send(fileBuffer);
   } catch (error) {
@@ -328,12 +328,12 @@ export class FileStorageService {
         bucket: this.configService.get('S3_BUCKET')!,
         credentials: {
           accessKeyId: this.configService.get('AWS_ACCESS_KEY_ID')!,
-          secretAccessKey: this.configService.get('AWS_SECRET_ACCESS_KEY')!
-        }
+          secretAccessKey: this.configService.get('AWS_SECRET_ACCESS_KEY')!,
+        },
       });
     } else {
       this.storage = new StorageLocalService({
-        baseDir: this.configService.get('LOCAL_STORAGE_DIR', './uploads')
+        baseDir: this.configService.get('LOCAL_STORAGE_DIR', './uploads'),
       });
     }
   }
@@ -394,7 +394,7 @@ import { Storage } from '@rytass/storages';
 class FileProcessor {
   constructor(
     private storage: Storage<any>,
-    private converter: ConverterManager
+    private converter: ConverterManager,
   ) {}
 
   async processAndStore(originalFile: Buffer, key: string) {
@@ -403,25 +403,25 @@ class FileProcessor {
 
     // Store both original and processed versions
     const [originalResult, processedResult] = await Promise.all([
-      this.storage.write(originalFile, { 
+      this.storage.write(originalFile, {
         filename: `originals/${key}`,
-        contentType: 'image/jpeg'
+        contentType: 'image/jpeg',
       }),
-      this.storage.write(processedFile, { 
+      this.storage.write(processedFile, {
         filename: `processed/${key}`,
-        contentType: 'image/webp'
-      })
+        contentType: 'image/webp',
+      }),
     ]);
 
     return {
       original: {
         key: originalResult.key,
-        url: await this.storage.url(originalResult.key)
+        url: await this.storage.url(originalResult.key),
       },
       processed: {
         key: processedResult.key,
-        url: await this.storage.url(processedResult.key)
-      }
+        url: await this.storage.url(processedResult.key),
+      },
     };
   }
 }
@@ -430,6 +430,7 @@ class FileProcessor {
 ## Best Practices
 
 ### Security
+
 - Use environment variables for credentials
 - Implement proper access controls
 - Validate file types before upload
@@ -437,18 +438,21 @@ class FileProcessor {
 - Use signed URLs for temporary access
 
 ### Performance
+
 - Use streams for large files
 - Implement caching for frequently accessed files
 - Use batch operations when possible
 - Choose appropriate storage classes/tiers
 
 ### Cost Optimization
+
 - Monitor storage usage
 - Set up lifecycle policies
 - Use appropriate redundancy levels
 - Optimize file sizes before storage
 
 ### File Organization
+
 - Use consistent naming conventions
 - Organize files in logical directory structures
 - Implement proper versioning

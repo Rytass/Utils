@@ -72,10 +72,7 @@ const TCatLogisticsStatusMap: { [key: string]: TCatLogisticsStatus } = {
 export const TCatLogistics: TCatLogisticsInterface<TCatLogisticsStatus> = {
   ignoreNotFound: false,
   url: 'https://www.t-cat.com.tw/Inquire/TraceDetail.aspx',
-  statusMap: (
-    reference: string,
-    logisticId: string,
-  ): LogisticsStatusHistory<TCatLogisticsStatus>[] => {
+  statusMap: (reference: string, logisticId: string): LogisticsStatusHistory<TCatLogisticsStatus>[] => {
     const statusHistory: TCatLogisticsStatusHistory<TCatLogisticsStatus>[] = [];
     const $ = load(reference);
     const traceDOM = $('#resultTable tr');
@@ -87,8 +84,7 @@ export const TCatLogistics: TCatLogisticsInterface<TCatLogisticsStatus> = {
 
       const statusArray: string[] = innerText.split(' ').filter(e => e != '');
 
-      const status: TCatLogisticsStatus =
-        TCatLogisticsStatusMap[statusArray[statusArray.length - 4]];
+      const status: TCatLogisticsStatus = TCatLogisticsStatusMap[statusArray[statusArray.length - 4]];
 
       const foundId: string = statusArray[0];
 
@@ -96,9 +92,7 @@ export const TCatLogistics: TCatLogisticsInterface<TCatLogisticsStatus> = {
       if (status)
         statusHistory.push({
           businessPremise: statusArray[statusArray.length - 1],
-          date: `${statusArray[statusArray.length - 3]} ${
-            statusArray[statusArray.length - 2]
-          }`,
+          date: `${statusArray[statusArray.length - 3]} ${statusArray[statusArray.length - 2]}`,
           status: status,
         });
     });

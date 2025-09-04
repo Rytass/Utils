@@ -10,9 +10,7 @@ export class LocationNotFoundError extends BadRequestException {
 
 export class LocationCannotArchiveError extends BadRequestException {
   constructor() {
-    super(
-      'Location cannot archive, please check if there are stocks in this location',
-    );
+    super('Location cannot archive, please check if there are stocks in this location');
   }
 
   code = 101;

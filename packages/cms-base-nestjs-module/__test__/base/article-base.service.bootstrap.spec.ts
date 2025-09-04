@@ -77,18 +77,15 @@ describe('ArticleBaseService - bindSearchTokens', () => {
 
     await service['bindSearchTokens'](articleContent, ['tag1', 'tag2']);
 
-    expect(mockQuery).toHaveBeenCalledWith(
-      expect.stringContaining(`UPDATE "${mockTableName}" SET`),
-      [
-        'Test Title',
-        'tag1 tag2',
-        'Test Desc',
-        'token1 token2',
-        'article-1',
-        2,
-        'en',
-      ],
-    );
+    expect(mockQuery).toHaveBeenCalledWith(expect.stringContaining(`UPDATE "${mockTableName}" SET`), [
+      'Test Title',
+      'tag1 tag2',
+      'Test Desc',
+      'token1 token2',
+      'article-1',
+      2,
+      'en',
+    ]);
   });
 
   it('should use provided QueryRunner if passed', async () => {
@@ -110,16 +107,17 @@ describe('ArticleBaseService - bindSearchTokens', () => {
       ],
     } as unknown as BaseArticleVersionContentEntity;
 
-    await service['bindSearchTokens'](
-      articleContent,
-      undefined,
-      mockRunner as QueryRunner,
-    );
+    await service['bindSearchTokens'](articleContent, undefined, mockRunner as QueryRunner);
 
-    expect(mockRunner.query).toHaveBeenCalledWith(
-      expect.stringContaining(`UPDATE "${mockTableName}" SET`),
-      ['標題', '', '描述', 'token1 token2', 'a2', 5, 'zh'],
-    );
+    expect(mockRunner.query).toHaveBeenCalledWith(expect.stringContaining(`UPDATE "${mockTableName}" SET`), [
+      '標題',
+      '',
+      '描述',
+      'token1 token2',
+      'a2',
+      5,
+      'zh',
+    ]);
   });
 });
 
@@ -173,13 +171,9 @@ describe('ArticleBaseService - onApplicationBootstrap', () => {
       },
     });
 
-    jest
-      .spyOn(service as any, 'getDefaultQueryBuilder')
-      .mockReturnValue(mockQueryBuilder);
+    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue(mockQueryBuilder);
 
-    mockBindSearchTokens = jest
-      .spyOn(service as any, 'bindSearchTokens')
-      .mockResolvedValue(undefined);
+    mockBindSearchTokens = jest.spyOn(service as any, 'bindSearchTokens').mockResolvedValue(undefined);
   });
 
   it('should index articles with missing or outdated search tokens', async () => {
@@ -196,23 +190,16 @@ describe('ArticleBaseService - onApplicationBootstrap', () => {
 
     await service.onApplicationBootstrap();
 
-    expect(mockQueryBuilder.orWhere).toHaveBeenCalledWith(
-      'multiLanguageContents.searchTokens IS NULL',
-    );
+    expect(mockQueryBuilder.orWhere).toHaveBeenCalledWith('multiLanguageContents.searchTokens IS NULL');
 
     expect(mockQueryBuilder.orWhere).toHaveBeenCalledWith(
       'multiLanguageContents.searchTokenVersion != :searchTokenVersion',
       { searchTokenVersion: FULL_TEXT_SEARCH_TOKEN_VERSION },
     );
 
-    expect(mockBindSearchTokens).toHaveBeenCalledWith(
-      mockArticle.versions[0].multiLanguageContents[0],
-      ['tag'],
-    );
+    expect(mockBindSearchTokens).toHaveBeenCalledWith(mockArticle.versions[0].multiLanguageContents[0], ['tag']);
 
-    expect(mockDataSource.query).toHaveBeenCalledWith(
-      expect.stringContaining('CREATE INDEX IF NOT EXISTS'),
-    );
+    expect(mockDataSource.query).toHaveBeenCalledWith(expect.stringContaining('CREATE INDEX IF NOT EXISTS'));
 
     expect(mockLogger.log).toHaveBeenCalledWith('Start indexing articles...');
     expect(mockLogger.log).toHaveBeenCalledWith('Indexing articles done.');
@@ -224,9 +211,7 @@ describe('ArticleBaseService - onApplicationBootstrap', () => {
     await service.onApplicationBootstrap();
 
     expect(mockBindSearchTokens).not.toHaveBeenCalled();
-    expect(mockLogger.log).not.toHaveBeenCalledWith(
-      'Start indexing articles...',
-    );
+    expect(mockLogger.log).not.toHaveBeenCalledWith('Start indexing articles...');
 
     expect(mockLogger.log).not.toHaveBeenCalledWith('Indexing articles done.');
     expect(mockDataSource.query).toHaveBeenCalled();

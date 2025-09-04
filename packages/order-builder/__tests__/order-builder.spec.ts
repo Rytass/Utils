@@ -47,10 +47,7 @@ describe('OrderBuilder', () => {
 
   it('should be allowed to pass policy-based implementation in args', () => {
     const builder = new OrderBuilder({
-      policies: [
-        new PercentageDiscount(0.8, { id: 'MEMBER_DISCOUNT' }),
-        new ValueDiscount(100),
-      ],
+      policies: [new PercentageDiscount(0.8, { id: 'MEMBER_DISCOUNT' }), new ValueDiscount(100)],
     });
 
     expect(builder).toBeDefined();
@@ -92,7 +89,7 @@ describe('OrderBuilder', () => {
     } catch (ex: any) {
       expect(ex).toBeInstanceOf(Error);
       expect(ex?.message).toEqual(
-        'Policy is immutable if builder.build was called. You should call builder.clone first.'
+        'Policy is immutable if builder.build was called. You should call builder.clone first.',
       );
     }
 
@@ -101,7 +98,7 @@ describe('OrderBuilder', () => {
     } catch (ex: any) {
       expect(ex).toBeInstanceOf(Error);
       expect(ex?.message).toEqual(
-        'Policy is immutable if builder.build was called. You should call builder.clone first.'
+        'Policy is immutable if builder.build was called. You should call builder.clone first.',
       );
     }
 
@@ -145,9 +142,7 @@ describe('OrderBuilder', () => {
 
     const builder4 = new OrderBuilder(builder3);
 
-    const order4 = builder4
-      .removePolicy([testDiscount, memberDiscount])
-      .build({ items: order3.items });
+    const order4 = builder4.removePolicy([testDiscount, memberDiscount]).build({ items: order3.items });
 
     expect(JSON.stringify(order3.items)).toEqual(
       JSON.stringify([
@@ -163,7 +158,7 @@ describe('OrderBuilder', () => {
           unitPrice: 70,
           quantity: 2,
         },
-      ])
+      ]),
     );
 
     expect(JSON.stringify(order4.items)).toEqual(JSON.stringify(order4.items));
@@ -177,16 +172,10 @@ describe('OrderBuilder', () => {
 
     builder5
       .addPolicy(
-        new PercentageDiscount(0.5, [
-          new PriceThreshold(1000),
-          new ItemRequired({ id: 'ItemB', quantity: 1 }),
-        ])
+        new PercentageDiscount(0.5, [new PriceThreshold(1000), new ItemRequired({ id: 'ItemB', quantity: 1 })]),
       )
       .addPolicy(
-        new PercentageDiscount(0.5, [
-          new PriceThreshold(2000),
-          new ItemRequired({ id: 'ItemC', quantity: 1 }),
-        ])
+        new PercentageDiscount(0.5, [new PriceThreshold(2000), new ItemRequired({ id: 'ItemC', quantity: 1 })]),
       );
 
     const order5 = builder5.build({
@@ -230,9 +219,7 @@ describe('OrderBuilder', () => {
         ],
       });
 
-      builder.addPolicy(
-        new ValueDiscount(50, [new CouponValidator('DISCOUNT_50')])
-      );
+      builder.addPolicy(new ValueDiscount(50, [new CouponValidator('DISCOUNT_50')]));
 
       const order1 = builder.build({
         items: [
@@ -247,13 +234,11 @@ describe('OrderBuilder', () => {
 
       // throw error "Policy is immutable if builder.build was called."
       try {
-        builder.addPolicy(
-          new ValueDiscount(10, [new CouponValidator('DISCOUNT_10')])
-        );
+        builder.addPolicy(new ValueDiscount(10, [new CouponValidator('DISCOUNT_10')]));
       } catch (ex: any) {
         expect(ex).toBeInstanceOf(Error);
         expect(ex?.message).toEqual(
-          'Policy is immutable if builder.build was called. You should call builder.clone first.'
+          'Policy is immutable if builder.build was called. You should call builder.clone first.',
         );
       }
 
@@ -296,9 +281,7 @@ describe('OrderBuilder', () => {
       expect(builder2).toBeInstanceOf(OrderBuilder);
       expect(builder2 === builder).toEqual(false);
 
-      builder2.addPolicy(
-        new ValueDiscount(10, [new CouponValidator('DISCOUNT_10')])
-      );
+      builder2.addPolicy(new ValueDiscount(10, [new CouponValidator('DISCOUNT_10')]));
 
       builder2.removePolicy('MEMBER_DISCOUNT');
 
@@ -315,7 +298,7 @@ describe('OrderBuilder', () => {
       });
 
       expect(order3.price).toEqual(890); // 1000 - 100 - 10 = 890
-    }
+    },
   );
 });
 
@@ -344,9 +327,7 @@ describe('Order', () => {
     },
   ];
 
-  builder
-    .addPolicy(new ValueDiscount(100))
-    .addPolicy(new PercentageDiscount(0.9, new ItemRequired('ItemA')));
+  builder.addPolicy(new ValueDiscount(100)).addPolicy(new PercentageDiscount(0.9, new ItemRequired('ItemA')));
 
   const coupons = ['COUPON1', 'COUPON2', 'COUPON3'];
 
@@ -393,7 +374,7 @@ describe('Order', () => {
         quantity: 20,
         unitPrice: 100,
       },
-    ])
+    ]),
   );
 
   order.addItem([
@@ -432,7 +413,7 @@ describe('Order', () => {
         quantity: 1,
         unitPrice: 100,
       },
-    ])
+    ]),
   );
 
   order
@@ -475,7 +456,7 @@ describe('Order', () => {
         quantity: 10,
         unitPrice: 2.99,
       },
-    ])
+    ]),
   );
 
   const subOrder = order.addCoupon(['COUPON1', 'COUPON2', 'COUPON3']).subOrder({
@@ -483,9 +464,7 @@ describe('Order', () => {
     subItems: [],
   });
 
-  expect(JSON.stringify(subOrder.coupons)).toEqual(
-    JSON.stringify(['COUPON2', 'COUPON1'])
-  );
+  expect(JSON.stringify(subOrder.coupons)).toEqual(JSON.stringify(['COUPON2', 'COUPON1']));
 
   const subOrder2 = order.subOrder({});
 
@@ -507,7 +486,7 @@ describe('Order', () => {
         unitPrice: 70,
         quantity: 1,
       },
-    ])
+    ]),
   );
 
   const matchedItems = getOnlyMatchedItems(subOrder, [new PriceThreshold(10)]);
@@ -522,7 +501,7 @@ describe('Order', () => {
           items: [],
           conditions: [],
         }),
-        { onlyMatched: true }
+        { onlyMatched: true },
       ),
     ],
   });
@@ -539,7 +518,7 @@ describe('Order', () => {
           items: ['ItemC', 'ItemD'],
           conditions: [],
         }),
-        { onlyMatched: true, strategy: 'HIGH_PRICE_FIRST' }
+        { onlyMatched: true, strategy: 'HIGH_PRICE_FIRST' },
       ),
     ],
   });
@@ -604,9 +583,7 @@ describe('Order', () => {
   expect(Math.round(order5.price)).toEqual(1061);
 
   const builder6 = new OrderBuilder({
-    policies: [
-      new StepPercentageDiscount(500, 0.9, [new PriceThreshold(20000)]),
-    ],
+    policies: [new StepPercentageDiscount(500, 0.9, [new PriceThreshold(20000)])],
   });
 
   const order6 = builder6.build(order5);
@@ -716,10 +693,8 @@ describe('Order', () => {
     // (75.4 - 10) / (7 - 1) === 10.9 (Items except for 'ItemC')
     expect(
       order.itemRecords.every(record =>
-        record.originItem.id === 'ItemC'
-          ? record.discountValue === 10
-          : record.discountValue === 10.9
-      )
+        record.originItem.id === 'ItemC' ? record.discountValue === 10 : record.discountValue === 10.9,
+      ),
     ).toEqual(true);
 
     const builder2 = new OrderBuilder({
@@ -749,9 +724,7 @@ describe('Order', () => {
     // 570 * 0.85 = 484.5
     expect(order2.price).toEqual(484.5);
     // 85.5 / 6 = 14.25
-    expect(
-      order2.itemRecords.every(record => record.discountValue === 14.25)
-    ).toEqual(true);
+    expect(order2.itemRecords.every(record => record.discountValue === 14.25)).toEqual(true);
 
     const builder3 = new OrderBuilder({
       policies: [[]],
@@ -777,9 +750,7 @@ describe('Order', () => {
     });
 
     expect(order3.price).toEqual(570);
-    expect(
-      order3.itemRecords.every(record => record.discountValue === 0)
-    ).toEqual(true);
+    expect(order3.itemRecords.every(record => record.discountValue === 0)).toEqual(true);
 
     expect(order3.discounts.length).toEqual(0);
   });
@@ -828,9 +799,7 @@ describe('Order', () => {
           initialValue: 100,
           discountValue: 20,
           finalPrice: 80,
-          discountRecords: [
-            { policyId: 'DISCOUNT_2', itemId: 'ItemA-1', discountValue: 20 },
-          ],
+          discountRecords: [{ policyId: 'DISCOUNT_2', itemId: 'ItemA-1', discountValue: 20 }],
           appliedPolicies: [policy2],
         },
         {
@@ -839,9 +808,7 @@ describe('Order', () => {
           initialValue: 100,
           discountValue: 20,
           finalPrice: 80,
-          discountRecords: [
-            { policyId: 'DISCOUNT_2', itemId: 'ItemA-2', discountValue: 20 },
-          ],
+          discountRecords: [{ policyId: 'DISCOUNT_2', itemId: 'ItemA-2', discountValue: 20 }],
           appliedPolicies: [policy2],
         },
         {
@@ -850,12 +817,10 @@ describe('Order', () => {
           initialValue: 50,
           discountValue: 10,
           finalPrice: 40,
-          discountRecords: [
-            { policyId: 'DISCOUNT_2', itemId: 'ItemB-1', discountValue: 10 },
-          ],
+          discountRecords: [{ policyId: 'DISCOUNT_2', itemId: 'ItemB-1', discountValue: 10 }],
           appliedPolicies: [policy2],
         },
-      ])
+      ]),
     );
   });
 });
@@ -1001,11 +966,7 @@ describe('Condition', () => {
     policies: [
       new PercentageDiscount(0.9, [
         // 滿件符合 2A + (B|C)
-        new QuantityRequired(3, [
-          { id: 'A', leastQuantity: 2 },
-          { id: 'B' },
-          'C',
-        ]),
+        new QuantityRequired(3, [{ id: 'A', leastQuantity: 2 }, { id: 'B' }, 'C']),
       ]),
     ],
   });
@@ -1027,23 +988,18 @@ describe('Condition', () => {
       new ValueDiscount(100, { id: '1' }),
       new ValueDiscount(100, { id: '2' }),
       new ValueDiscount(100, { id: '3' }),
-      [
-        new ValueDiscount(100, { id: '4' }),
-        new ValueDiscount(100, { id: '5' }),
-      ],
+      [new ValueDiscount(100, { id: '4' }), new ValueDiscount(100, { id: '5' })],
       new ValueDiscount(
         10,
         new ItemIncluded({
           items: [],
           conditions: [new PriceThreshold(1000000)],
-        })
+        }),
       ),
     ],
   });
 
-  const order5 = builder5
-    .removePolicy(['1', '2', '3', '4', '5'])
-    .build({ items });
+  const order5 = builder5.removePolicy(['1', '2', '3', '4', '5']).build({ items });
 
   expect(order5.price).toEqual(31500);
 
@@ -1053,7 +1009,7 @@ describe('Condition', () => {
         100,
         new ItemExcluded({
           items: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'],
-        })
+        }),
       ),
     ],
   });
@@ -1068,7 +1024,7 @@ describe('Condition', () => {
         100,
         new ItemExcluded({
           items: 'A',
-        })
+        }),
       ),
     ],
   });
@@ -1083,20 +1039,20 @@ describe('Condition', () => {
         100,
         new ItemExcluded({
           items: 'A',
-        })
+        }),
       ),
       new ValueDiscount(
         100,
         new ItemExcluded({
           items: [],
-        })
+        }),
       ),
       new ValueDiscount(
         100,
         new ItemExcluded({
           items: 'A',
           conditions: [new PriceThreshold(100000)],
-        })
+        }),
       ),
     ],
   });
@@ -1144,7 +1100,7 @@ describe('Logistics', () => {
         finalPrice: 200,
         discountRecords: [],
         appliedPolicies: [],
-      })
+      }),
     );
 
     const order2 = new OrderBuilder()
@@ -1163,10 +1119,7 @@ describe('Logistics', () => {
       .setLogistics({
         price: 300,
         name: 'ECat',
-        freeConditions: [
-          new PriceThreshold(2000),
-          new ItemIncluded({ items: 'A' }),
-        ],
+        freeConditions: [new PriceThreshold(2000), new ItemIncluded({ items: 'A' })],
       })
       .build({
         items: [
@@ -1193,7 +1146,7 @@ describe('Logistics', () => {
             unitPrice: 200,
           },
         ],
-      }).logisticsRecord
+      }).logisticsRecord,
     ).toEqual(null);
   });
 });
@@ -1224,14 +1177,9 @@ describe('Clone OrderBuilder', () => {
     expect(builder2 === order.builder).toBeFalsy();
 
     try {
-      new OrderBuilder()
-        .addPolicy(new ValueDiscount(200))
-        .build({ items })
-        .builder.addPolicy(new ValueDiscount(50));
+      new OrderBuilder().addPolicy(new ValueDiscount(200)).build({ items }).builder.addPolicy(new ValueDiscount(50));
     } catch (ex: any) {
-      expect(ex.message).toBe(
-        'Policy is immutable if builder.build was called. You should call builder.clone first.'
-      );
+      expect(ex.message).toBe('Policy is immutable if builder.build was called. You should call builder.clone first.');
     }
 
     expect(
@@ -1240,7 +1188,7 @@ describe('Clone OrderBuilder', () => {
         .build({ items })
         .builder.clone() // !! difference
         .addPolicy(new ValueDiscount(50))
-        .build({ items }).price
+        .build({ items }).price,
     ).toBe(1000 - 200 - 50);
   });
 
@@ -1328,7 +1276,7 @@ describe('Clone OrderBuilder', () => {
         isMatchedItem: item => p1IdSet.has(item.id),
         threshold: 2,
       }),
-      { id: 'POLICY_1', onlyMatched: true }
+      { id: 'POLICY_1', onlyMatched: true },
     );
 
     const policy2 = new StepValueDiscount(
@@ -1337,7 +1285,7 @@ describe('Clone OrderBuilder', () => {
       new ItemIncluded({
         items: ['C', 'D', 'E', 'F', 'G', 'H', 'I'],
       }),
-      { id: 'POLICY_2', stepUnit: 'price', onlyMatched: true }
+      { id: 'POLICY_2', stepUnit: 'price', onlyMatched: true },
     );
 
     const builder = new OrderBuilder({
@@ -1354,7 +1302,7 @@ describe('Clone OrderBuilder', () => {
         items: ['Boyy', '飾品H'],
         scope: ['brand', 'name'],
         threshold: 12501,
-      })
+      }),
     );
 
     order = new OrderBuilder().addPolicy(policy3).build({ items });
@@ -1367,7 +1315,7 @@ describe('Clone OrderBuilder', () => {
         items: ['Boyy', '飾品H'],
         scope: ['brand', 'name'],
         conditions: [new PriceThreshold(12500)],
-      })
+      }),
     );
 
     order = new OrderBuilder().addPolicy(policy4).build({ items });
@@ -1381,7 +1329,7 @@ describe('Clone OrderBuilder', () => {
         isMatchedItem: item => item.name !== '飾品H',
         conditions: [new PriceThreshold(12500)],
       }),
-      { onlyMatched: true }
+      { onlyMatched: true },
     );
 
     order = new OrderBuilder().addPolicy(policy5).build({ items });
@@ -1396,7 +1344,7 @@ describe('Clone OrderBuilder', () => {
         scope: 'category',
         conditions: [new PriceThreshold(12500)],
       }),
-      { onlyMatched: true }
+      { onlyMatched: true },
     );
 
     order = new OrderBuilder().addPolicy(policy6).build({ items });
@@ -1410,7 +1358,7 @@ describe('Clone OrderBuilder', () => {
         scope: ['name', 'category'],
         conditions: [new PriceThreshold(12500)],
       }),
-      { onlyMatched: true }
+      { onlyMatched: true },
     );
 
     order = new OrderBuilder().addPolicy(policy7).build({ items });
@@ -1424,7 +1372,7 @@ describe('Clone OrderBuilder', () => {
         scope: ['not-valid-scope'],
         conditions: [new PriceThreshold(12500)],
       }),
-      { onlyMatched: true }
+      { onlyMatched: true },
     );
 
     order = new OrderBuilder().addPolicy(policy8).build({ items });
@@ -1437,7 +1385,7 @@ describe('Clone OrderBuilder', () => {
         items: ['Boyy', '飾品H'],
         scope: ['not-valid-scope'],
       }),
-      { onlyMatched: true }
+      { onlyMatched: true },
     );
 
     order = new OrderBuilder().addPolicy(policy9).build({ items });

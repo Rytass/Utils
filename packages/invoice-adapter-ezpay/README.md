@@ -29,6 +29,7 @@ yarn add @rytass/invoice-adapter-ezpay
 ```
 
 **Peer Dependencies:**
+
 ```bash
 npm install @rytass/invoice
 ```
@@ -45,7 +46,7 @@ const developmentGateway = new EZPayInvoiceGateway({
   hashKey: 'YOUR_DEVELOPMENT_AES_KEY',
   hashIv: 'YOUR_DEVELOPMENT_AES_IV',
   merchantId: 'YOUR_DEVELOPMENT_MERCHANT_ID',
-  baseUrl: EZPayBaseUrls.DEVELOPMENT // https://cinv.ezpay.com.tw
+  baseUrl: EZPayBaseUrls.DEVELOPMENT, // https://cinv.ezpay.com.tw
 });
 
 // Production environment
@@ -53,7 +54,7 @@ const productionGateway = new EZPayInvoiceGateway({
   hashKey: 'YOUR_PRODUCTION_AES_KEY',
   hashIv: 'YOUR_PRODUCTION_AES_IV',
   merchantId: 'YOUR_PRODUCTION_MERCHANT_ID',
-  baseUrl: EZPayBaseUrls.PRODUCTION // https://inv.ezpay.com.tw
+  baseUrl: EZPayBaseUrls.PRODUCTION, // https://inv.ezpay.com.tw
 });
 ```
 
@@ -61,9 +62,9 @@ const productionGateway = new EZPayInvoiceGateway({
 
 ```typescript
 interface EZPayInvoiceGatewayOptions {
-  hashKey?: string;      // EZPay AES encryption key
-  hashIv?: string;       // EZPay AES initialization vector
-  merchantId?: string;   // EZPay merchant identifier
+  hashKey?: string; // EZPay AES encryption key
+  hashIv?: string; // EZPay AES initialization vector
+  merchantId?: string; // EZPay merchant identifier
   baseUrl?: EZPayBaseUrls; // API base URL (development/production)
 }
 ```
@@ -79,7 +80,7 @@ const gateway = new EZPayInvoiceGateway({
   hashKey: process.env.EZPAY_HASH_KEY,
   hashIv: process.env.EZPAY_HASH_IV,
   merchantId: process.env.EZPAY_MERCHANT_ID,
-  baseUrl: EZPayBaseUrls.PRODUCTION
+  baseUrl: EZPayBaseUrls.PRODUCTION,
 });
 
 // Issue B2C invoice with print carrier
@@ -94,16 +95,16 @@ const invoice = await gateway.issue({
       unitPrice: 1000,
       quantity: 2,
       unit: '個',
-      taxType: TaxType.TAXED
+      taxType: TaxType.TAXED,
     },
     {
       name: 'Product B',
       unitPrice: 500,
       quantity: 1,
       unit: '件',
-      taxType: TaxType.TAXED
-    }
-  ]
+      taxType: TaxType.TAXED,
+    },
+  ],
 });
 
 console.log('Invoice Number:', invoice.number);
@@ -132,9 +133,9 @@ const mobileInvoice = await gateway.issue({
       name: 'Digital Service',
       unitPrice: 2000,
       quantity: 1,
-      taxType: TaxType.TAXED
-    }
-  ]
+      taxType: TaxType.TAXED,
+    },
+  ],
 });
 ```
 
@@ -160,9 +161,9 @@ const donationInvoice = await gateway.issue({
       name: 'Charitable Purchase',
       unitPrice: 1500,
       quantity: 1,
-      taxType: TaxType.TAXED
-    }
-  ]
+      taxType: TaxType.TAXED,
+    },
+  ],
 });
 ```
 
@@ -183,16 +184,16 @@ const b2bInvoice = await gateway.issue({
       unitPrice: 50000,
       quantity: 1,
       unit: '式',
-      taxType: TaxType.TAXED
+      taxType: TaxType.TAXED,
     },
     {
       name: '系統維護',
       unitPrice: 20000,
       quantity: 1,
       unit: '月',
-      taxType: TaxType.TAXED
-    }
-  ]
+      taxType: TaxType.TAXED,
+    },
+  ],
 });
 ```
 
@@ -212,21 +213,21 @@ const mixedTaxInvoice = await gateway.issue({
       name: 'Domestic Product',
       unitPrice: 1000,
       quantity: 2,
-      taxType: TaxType.TAXED // 5% tax
+      taxType: TaxType.TAXED, // 5% tax
     },
     {
       name: 'Tax-Free Product',
       unitPrice: 2000,
       quantity: 1,
-      taxType: TaxType.TAX_FREE // No tax
+      taxType: TaxType.TAX_FREE, // No tax
     },
     {
       name: 'Export Product',
       unitPrice: 3000,
       quantity: 1,
-      taxType: TaxType.ZERO_TAX // Export (0% tax)
-    }
-  ]
+      taxType: TaxType.ZERO_TAX, // Export (0% tax)
+    },
+  ],
 });
 ```
 
@@ -247,9 +248,9 @@ const customInvoice = await gateway.issue({
       unitPrice: 10000,
       quantity: 1,
       unit: '次',
-      taxType: TaxType.SPECIAL // Special tax calculation
-    }
-  ]
+      taxType: TaxType.SPECIAL, // Special tax calculation
+    },
+  ],
 });
 ```
 
@@ -259,13 +260,13 @@ const customInvoice = await gateway.issue({
 // Query by invoice number and random code
 const queriedInvoice1 = await gateway.query({
   invoiceNumber: 'ZZ12345678',
-  randomCode: '1234'
+  randomCode: '1234',
 });
 
 // Query by order ID and amount
 const queriedInvoice2 = await gateway.query({
   orderId: 'ORD-2024-001',
-  amount: 2500
+  amount: 2500,
 });
 
 console.log('Invoice State:', queriedInvoice1.state);
@@ -278,7 +279,7 @@ console.log('Upload Status:', queriedInvoice1.uploadStatus);
 ```typescript
 // Void an invoice
 const voidedInvoice = await gateway.void(invoice, {
-  reason: 'Customer requested cancellation due to order error'
+  reason: 'Customer requested cancellation due to order error',
 });
 
 console.log('Void Status:', voidedInvoice.state); // InvoiceState.VOID
@@ -296,13 +297,13 @@ const allowanceInvoice = await gateway.allowance(
       name: 'Returned Product',
       unitPrice: 1000,
       quantity: 1, // Return 1 item
-      taxType: TaxType.TAXED
-    }
+      taxType: TaxType.TAXED,
+    },
   ],
   {
     taxType: TaxType.TAXED,
-    buyerEmail: 'customer@example.com'
-  }
+    buyerEmail: 'customer@example.com',
+  },
 );
 
 console.log('Allowance Number:', allowanceInvoice.allowances[0].number);
@@ -338,9 +339,9 @@ const moicaCarrier = InvoiceCarriers.MOICA('CERT123456789ABC');
 const loveCodeCarrier = InvoiceCarriers.LOVE_CODE('001');
 
 // Platform carrier (e-commerce specific)
-const platformCarrier = { 
-  type: InvoiceCarrierType.PLATFORM, 
-  code: 'PLATFORM001' 
+const platformCarrier = {
+  type: InvoiceCarrierType.PLATFORM,
+  code: 'PLATFORM001',
 };
 ```
 
@@ -374,7 +375,9 @@ if (await validateMobileCarrier(barcode)) {
     orderId: 'ORD-VALIDATED',
     buyerName: 'Validated Customer',
     carrier: InvoiceCarriers.MOBILE(barcode),
-    items: [/* items */]
+    items: [
+      /* items */
+    ],
   });
 }
 ```
@@ -391,7 +394,9 @@ try {
     orderId: 'ERROR-TEST',
     buyerName: 'Test Customer',
     carrier: InvoiceCarriers.PRINT,
-    items: [/* invalid items */]
+    items: [
+      /* invalid items */
+    ],
   });
 } catch (error) {
   if (error.code === ErrorCode.INV10003) {
@@ -453,9 +458,7 @@ const gateway = new EZPayInvoiceGateway({
   hashKey: process.env.EZPAY_HASH_KEY!,
   hashIv: process.env.EZPAY_HASH_IV!,
   merchantId: process.env.EZPAY_MERCHANT_ID!,
-  baseUrl: process.env.NODE_ENV === 'production' 
-    ? EZPayBaseUrls.PRODUCTION 
-    : EZPayBaseUrls.DEVELOPMENT
+  baseUrl: process.env.NODE_ENV === 'production' ? EZPayBaseUrls.PRODUCTION : EZPayBaseUrls.DEVELOPMENT,
 });
 
 // Issue invoice endpoint
@@ -494,8 +497,8 @@ app.post('/api/invoices', async (req, res) => {
         name: item.name,
         unitPrice: item.price,
         quantity: item.quantity,
-        taxType: TaxType.TAXED
-      }))
+        taxType: TaxType.TAXED,
+      })),
     });
 
     res.json({
@@ -506,14 +509,14 @@ app.post('/api/invoices', async (req, res) => {
         amount: invoice.amount,
         taxAmount: invoice.taxAmount,
         qrCodeLeft: invoice.qrCodeLeft,
-        qrCodeRight: invoice.qrCodeRight
-      }
+        qrCodeRight: invoice.qrCodeRight,
+      },
     });
   } catch (error) {
     res.status(400).json({
       success: false,
       error: error.message,
-      code: error.code
+      code: error.code,
     });
   }
 });
@@ -526,7 +529,7 @@ app.get('/api/invoices/:invoiceNumber', async (req, res) => {
 
     const invoice = await gateway.query({
       invoiceNumber,
-      randomCode: randomCode as string
+      randomCode: randomCode as string,
     });
 
     res.json({
@@ -536,13 +539,13 @@ app.get('/api/invoices/:invoiceNumber', async (req, res) => {
         state: invoice.state,
         amount: invoice.amount,
         issuedOn: invoice.issuedOn,
-        uploadStatus: invoice.uploadStatus
-      }
+        uploadStatus: invoice.uploadStatus,
+      },
     });
   } catch (error) {
     res.status(404).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -563,9 +566,7 @@ export class EZPayInvoiceService {
       hashKey: process.env.EZPAY_HASH_KEY!,
       hashIv: process.env.EZPAY_HASH_IV!,
       merchantId: process.env.EZPAY_MERCHANT_ID!,
-      baseUrl: process.env.NODE_ENV === 'production' 
-        ? EZPayBaseUrls.PRODUCTION 
-        : EZPayBaseUrls.DEVELOPMENT
+      baseUrl: process.env.NODE_ENV === 'production' ? EZPayBaseUrls.PRODUCTION : EZPayBaseUrls.DEVELOPMENT,
     });
   }
 
@@ -616,15 +617,15 @@ export class EZPayInvoiceService {
         unitPrice: item.price,
         quantity: item.quantity,
         unit: item.unit || '個',
-        taxType: TaxType.TAXED
-      }))
+        taxType: TaxType.TAXED,
+      })),
     };
 
     // Add B2B specific fields
     if (isB2B) {
       Object.assign(invoiceData, {
         vatNumber: order.customer.vatNumber,
-        buyerAddress: order.customer.address
+        buyerAddress: order.customer.address,
       });
     }
 
@@ -637,19 +638,23 @@ export class EZPayInvoiceService {
       taxAmount: invoice.taxAmount,
       issuedOn: invoice.issuedOn,
       qrCodeLeft: invoice.qrCodeLeft,
-      qrCodeRight: invoice.qrCodeRight
+      qrCodeRight: invoice.qrCodeRight,
     };
   }
 
-  async processRefund(invoiceNumber: string, randomCode: string, refundItems: Array<{
-    name: string;
-    price: number;
-    quantity: number;
-  }>) {
+  async processRefund(
+    invoiceNumber: string,
+    randomCode: string,
+    refundItems: Array<{
+      name: string;
+      price: number;
+      quantity: number;
+    }>,
+  ) {
     // Query original invoice
     const originalInvoice = await this.gateway.query({
       invoiceNumber,
-      randomCode
+      randomCode,
     });
 
     // Create allowance
@@ -659,29 +664,29 @@ export class EZPayInvoiceService {
         name: item.name,
         unitPrice: item.price,
         quantity: item.quantity,
-        taxType: TaxType.TAXED
-      }))
+        taxType: TaxType.TAXED,
+      })),
     );
 
     return {
       allowanceNumber: allowanceInvoice.allowances[0].number,
       allowanceAmount: allowanceInvoice.allowances[0].amount,
-      remainingAmount: allowanceInvoice.allowances[0].remainingAmount
+      remainingAmount: allowanceInvoice.allowances[0].remainingAmount,
     };
   }
 
   async voidInvoice(invoiceNumber: string, randomCode: string, reason: string) {
     const invoice = await this.gateway.query({
       invoiceNumber,
-      randomCode
+      randomCode,
     });
 
     const voidedInvoice = await this.gateway.void(invoice, { reason });
-    
+
     return {
       invoiceNumber: voidedInvoice.number,
       voidedOn: voidedInvoice.voidOn,
-      state: voidedInvoice.state
+      state: voidedInvoice.state,
     };
   }
 }
@@ -753,7 +758,7 @@ class EcommerceInvoiceProcessor {
       unitPrice: item.price,
       quantity: item.quantity,
       unit: '個',
-      taxType: item.isExport ? TaxType.ZERO_TAX : TaxType.TAXED
+      taxType: item.isExport ? TaxType.ZERO_TAX : TaxType.TAXED,
     }));
 
     // Prepare invoice options
@@ -763,14 +768,14 @@ class EcommerceInvoiceProcessor {
       buyerEmail: order.customer.email,
       carrier,
       items: invoiceItems,
-      customsMark: order.shipping.isExport ? CustomsMark.YES : CustomsMark.NO
+      customsMark: order.shipping.isExport ? CustomsMark.YES : CustomsMark.NO,
     };
 
     // Add B2B specific fields
     if (order.type === 'b2b') {
       Object.assign(invoiceOptions, {
         vatNumber: order.customer.vatNumber,
-        buyerAddress: order.customer.address
+        buyerAddress: order.customer.address,
       });
     }
 
@@ -785,7 +790,7 @@ class EcommerceInvoiceProcessor {
       amount: invoice.amount,
       taxAmount: invoice.taxAmount,
       qrCodeLeft: invoice.qrCodeLeft,
-      qrCodeRight: invoice.qrCodeRight
+      qrCodeRight: invoice.qrCodeRight,
     };
   }
 
@@ -798,30 +803,35 @@ class EcommerceInvoiceProcessor {
 ## Best Practices
 
 ### Configuration Management
+
 - Store sensitive credentials in environment variables
 - Use different configurations for development and production
 - Implement proper error handling for credential validation
 - Regularly rotate API keys and credentials
 
 ### Invoice Processing
+
 - Always validate mobile barcodes and love codes before invoice issuance
 - Implement proper error handling for all EZPay API calls
 - Store invoice numbers and random codes for future reference
 - Handle duplicate order IDs appropriately
 
 ### Tax Compliance
+
 - Use correct tax types for different product categories
 - Handle export/import scenarios with appropriate customs marks
 - Validate VAT numbers for B2B transactions
 - Keep audit trails of all invoice operations
 
 ### Performance Optimization
+
 - Implement caching for carrier validation results
 - Use appropriate timeout settings for API calls
 - Batch process invoices when handling high volumes
 - Monitor API rate limits and implement throttling
 
 ### Security
+
 - Validate all input parameters before processing
 - Sanitize customer data and item information
 - Log all invoice operations for audit purposes
@@ -840,7 +850,7 @@ describe('EZPay Invoice Integration', () => {
       hashKey: 'test_hash_key',
       hashIv: 'test_hash_iv',
       merchantId: 'test_merchant',
-      baseUrl: EZPayBaseUrls.DEVELOPMENT
+      baseUrl: EZPayBaseUrls.DEVELOPMENT,
     });
   });
 
@@ -854,9 +864,9 @@ describe('EZPay Invoice Integration', () => {
           name: 'Test Product',
           unitPrice: 1000,
           quantity: 1,
-          taxType: TaxType.TAXED
-        }
-      ]
+          taxType: TaxType.TAXED,
+        },
+      ],
     });
 
     expect(invoice.number).toBeDefined();
@@ -872,7 +882,7 @@ describe('EZPay Invoice Integration', () => {
   it('should query invoice by number', async () => {
     const queriedInvoice = await gateway.query({
       invoiceNumber: 'ZZ12345678',
-      randomCode: '1234'
+      randomCode: '1234',
     });
 
     expect(queriedInvoice.number).toBe('ZZ12345678');

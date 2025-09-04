@@ -6,9 +6,7 @@ import { LRUCache } from 'lru-cache';
 import { BaseCategoryEntity } from '../models/base-category.entity';
 
 @Injectable()
-export class CategoryDataLoader<
-  CategoryEntity extends BaseCategoryEntity = BaseCategoryEntity,
-> {
+export class CategoryDataLoader<CategoryEntity extends BaseCategoryEntity = BaseCategoryEntity> {
   constructor(
     @Inject(RESOLVED_CATEGORY_REPO)
     private readonly categoryRepo: Repository<BaseCategoryEntity>,
@@ -18,26 +16,18 @@ export class CategoryDataLoader<
     async (ids): Promise<(CategoryEntity | null)[]> => {
       const qb = this.categoryRepo.createQueryBuilder('categories');
 
-      qb.innerJoinAndSelect(
-        'categories.multiLanguageNames',
-        'multiLanguageNames',
-      );
+      qb.innerJoinAndSelect('categories.multiLanguageNames', 'multiLanguageNames');
 
       qb.leftJoinAndSelect('categories.parents', 'parents');
-      qb.leftJoinAndSelect(
-        'parents.multiLanguageNames',
-        'childMultiLanguageNames',
-      );
+      qb.leftJoinAndSelect('parents.multiLanguageNames', 'childMultiLanguageNames');
 
       qb.andWhere('categories.id IN (:...ids)', { ids });
 
       const categories = await qb.getMany();
 
-      const categoryMap = new Map(
-        categories.map((category) => [category.id, category as CategoryEntity]),
-      );
+      const categoryMap = new Map(categories.map(category => [category.id, category as CategoryEntity]));
 
-      return ids.map((id) => categoryMap.get(id) ?? null);
+      return ids.map(id => categoryMap.get(id) ?? null);
     },
     {
       cacheMap: new LRUCache<string, Promise<CategoryEntity | null>>({

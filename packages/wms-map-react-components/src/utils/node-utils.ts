@@ -5,9 +5,7 @@ export const updateNodeData = <T extends Record<string, unknown>>(
   nodeId: string,
   updates: Partial<T>,
 ): Node[] => {
-  return nodes.map((node) =>
-    node.id === nodeId ? { ...node, data: { ...node.data, ...updates } } : node,
-  );
+  return nodes.map(node => (node.id === nodeId ? { ...node, data: { ...node.data, ...updates } } : node));
 };
 
 export const calculateImageSize = (
@@ -41,18 +39,12 @@ export const calculateStaggeredPosition = (
   viewportZoom?: number,
 ): { x: number; y: number } => {
   // If viewport information is provided, calculate position within current viewport
-  if (
-    viewportX !== undefined &&
-    viewportY !== undefined &&
-    viewportZoom !== undefined
-  ) {
+  if (viewportX !== undefined && viewportY !== undefined && viewportZoom !== undefined) {
     // Convert viewport coordinates to canvas coordinates
     // The viewport shows the center of the view, so we need to offset from the center
-    const centerX =
-      -viewportX / viewportZoom + window.innerWidth / 2 / viewportZoom;
+    const centerX = -viewportX / viewportZoom + window.innerWidth / 2 / viewportZoom;
 
-    const centerY =
-      -viewportY / viewportZoom + window.innerHeight / 2 / viewportZoom;
+    const centerY = -viewportY / viewportZoom + window.innerHeight / 2 / viewportZoom;
 
     // Position images slightly offset from center
     const offsetX = centerX - 200 + index * 30; // Start 200px left of center

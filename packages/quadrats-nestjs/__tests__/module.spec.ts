@@ -23,7 +23,7 @@ describe('Quadrats Nestjs Module', () => {
 
     const request = jest.spyOn(axios, 'request');
 
-    request.mockImplementationOnce(async (config) => {
+    request.mockImplementationOnce(async config => {
       expect(config.url).toBe(`${HOST}/graphql`);
 
       const data = JSON.parse(config.data as string) as {
@@ -32,8 +32,8 @@ describe('Quadrats Nestjs Module', () => {
           auth: {
             accessKey: string;
             secret: string;
-          }
-        }
+          };
+        };
       };
 
       expect(data.variables.auth.accessKey).toBe(ACCESS_KEY);
@@ -59,7 +59,7 @@ describe('Quadrats Nestjs Module', () => {
 
     const request = jest.spyOn(axios, 'request');
 
-    request.mockImplementationOnce(async (config) => {
+    request.mockImplementationOnce(async config => {
       expect(config.url).toBe(`${QuadratsModule.DEFAULT_HOST}/graphql`);
 
       const data = JSON.parse(config.data as string) as {
@@ -68,8 +68,8 @@ describe('Quadrats Nestjs Module', () => {
           auth: {
             accessKey: string;
             secret: string;
-          }
-        }
+          };
+        };
       };
 
       expect(data.variables.auth.accessKey).toBe(ACCESS_KEY);
@@ -100,7 +100,7 @@ describe('Quadrats Nestjs Module', () => {
 
     const request = jest.spyOn(axios, 'request');
 
-    request.mockImplementationOnce(async (config) => {
+    request.mockImplementationOnce(async config => {
       expect(config.url).toBe(`${HOST}/graphql`);
 
       const data = JSON.parse(config.data as string) as {
@@ -109,8 +109,8 @@ describe('Quadrats Nestjs Module', () => {
           auth: {
             accessKey: string;
             secret: string;
-          }
-        }
+          };
+        };
       };
 
       expect(data.variables.auth.accessKey).toBe(ACCESS_KEY);
@@ -139,7 +139,7 @@ describe('Quadrats Nestjs Module', () => {
 
     const request = jest.spyOn(axios, 'request');
 
-    request.mockImplementationOnce(async (config) => {
+    request.mockImplementationOnce(async config => {
       expect(config.url).toBe(`${QuadratsModule.DEFAULT_HOST}/graphql`);
 
       const data = JSON.parse(config.data as string) as {
@@ -148,8 +148,8 @@ describe('Quadrats Nestjs Module', () => {
           auth: {
             accessKey: string;
             secret: string;
-          }
-        }
+          };
+        };
       };
 
       expect(data.variables.auth.accessKey).toBe(ACCESS_KEY);
@@ -162,7 +162,6 @@ describe('Quadrats Nestjs Module', () => {
   });
 
   it('should inject access key and secret', async () => {
-
     const moduleRef = await Test.createTestingModule({
       imports: [
         QuadratsModule.forRootAsync({
@@ -177,7 +176,7 @@ describe('Quadrats Nestjs Module', () => {
     const tagService = await moduleRef.resolve(QuadratsArticleTagService);
     const request = jest.spyOn(axios, 'request');
 
-    request.mockImplementationOnce(async (config) => {
+    request.mockImplementationOnce(async config => {
       expect(config.url).toBe(`${QuadratsModule.DEFAULT_HOST}/graphql`);
       const data = JSON.parse(config.data as string) as {
         query: string;
@@ -185,8 +184,8 @@ describe('Quadrats Nestjs Module', () => {
           auth: {
             accessKey: string;
             secret: string;
-          }
-        }
+          };
+        };
       };
 
       expect(data.variables.auth.accessKey).toBe(ACCESS_KEY);

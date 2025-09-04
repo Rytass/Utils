@@ -3,11 +3,10 @@ import { DialogContext } from './DialogContext';
 import { DialogHookValue, CancelConfirmDialogConfig } from './typing';
 
 export const useDialog = (): DialogHookValue => {
-  const { openDialog: configOpenDialog, closeDialog } =
-    useContext(DialogContext);
+  const { openDialog: configOpenDialog, closeDialog } = useContext(DialogContext);
 
   const openDialog = ({ ...options }) =>
-    new Promise<boolean>((resolver) => {
+    new Promise<boolean>(resolver => {
       configOpenDialog({
         resolve: resolver,
         ...options,

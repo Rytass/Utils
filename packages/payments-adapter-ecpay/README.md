@@ -46,15 +46,18 @@ const payment = new ECPayPayment<ECPayChannelCreditCard>({
 // Order ID can be auto-assigned or provided from `id` argument
 const order = payment.prepare({
   channel: Channel.CREDIT_CARD,
-  items: [{
-    name: 'Book',
-    unitPrice: 200,
-    quantity: 1,
-  }, {
-    name: '鉛筆',
-    unitPrice: 15,
-    quantity: 2,
-  }],
+  items: [
+    {
+      name: 'Book',
+      unitPrice: 200,
+      quantity: 1,
+    },
+    {
+      name: '鉛筆',
+      unitPrice: 15,
+      quantity: 2,
+    },
+  ],
 });
 
 // You have three ways to pre-commit order
@@ -69,7 +72,6 @@ const html = order.formHTML;
 const url = order.checkoutURL;
 ```
 
-
 ### Bind Card With Transaction
 
 ```typescript
@@ -83,7 +85,6 @@ const payment = new ECPayPayment<ECPayChannelCreditCard>({
   // when memory is true, you cannot use this transaction to bind card
   memory: false,
 });
-
 
 // get the platform
 function onOrderCommit(order: ECPayOrder<ECPayChannelCreditCard>) {
@@ -104,28 +105,21 @@ function onOrderCommit(order: ECPayOrder<ECPayChannelCreditCard>) {
       amount: 100,
     });
   }
-
-
 }
 ```
-
 
 ### Handle Card Already Bound
 
 ```typescript
 const payment = new ECPayPayment();
 
-payment.emitter.on(
-  PaymentEvents.CARD_BINDING_FAILED,
-  (request: ECPayBindCardRequest) => {
-    // Card already bound
-    if (request.failedMessage?.code === '10100112') {
-      console.log(`memberId: ${request.memberId}`);
-      console.log(`cardId: ${request.cardId}`);
-      console.log(`cardNumberPrefix: ${request.cardNumberPrefix}`);
-      console.log(`cardNumberSuffix: ${request.cardNumberSuffix}`);
-    }
-
+payment.emitter.on(PaymentEvents.CARD_BINDING_FAILED, (request: ECPayBindCardRequest) => {
+  // Card already bound
+  if (request.failedMessage?.code === '10100112') {
+    console.log(`memberId: ${request.memberId}`);
+    console.log(`cardId: ${request.cardId}`);
+    console.log(`cardNumberPrefix: ${request.cardNumberPrefix}`);
+    console.log(`cardNumberSuffix: ${request.cardNumberSuffix}`);
   }
-);
+});
 ```

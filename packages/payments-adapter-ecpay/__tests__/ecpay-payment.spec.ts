@@ -25,22 +25,20 @@ describe('ECPayPayment', () => {
   const originCreateServer = createServer;
   const mockedCreateServer = jest.spyOn(http, 'createServer');
 
-  mockedCreateServer.mockImplementation((requestHandler) => {
+  mockedCreateServer.mockImplementation(requestHandler => {
     const mockServer = originCreateServer(requestHandler);
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce(
-      (port?: any, hostname?: any, listeningListener?: () => void) => {
-        mockServer.listen(0, listeningListener);
+    mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
+      mockServer.listen(0, listeningListener);
 
-        return mockServer;
-      },
-    );
+      return mockServer;
+    });
 
     const mockedClose = jest.spyOn(mockServer, 'close');
 
-    mockedClose.mockImplementationOnce((onClosed) => {
+    mockedClose.mockImplementationOnce(onClosed => {
       mockServer.close(onClosed);
 
       return mockServer;
@@ -50,7 +48,7 @@ describe('ECPayPayment', () => {
   });
 
   describe('Waiting withServer mode server listen', () => {
-    it('should reject prepare on server not ready', (done) => {
+    it('should reject prepare on server not ready', done => {
       const payment = new ECPayPayment({
         withServer: true,
         onServerListen: () => {
@@ -206,7 +204,7 @@ describe('ECPayPayment', () => {
   });
 
   describe('Serve checkout server', () => {
-    it('should serve checkout url', (done) => {
+    it('should serve checkout url', done => {
       const payment = new ECPayPayment<ECPayChannelCreditCard>({
         withServer: true,
         serverHost: 'http://localhost',
@@ -241,7 +239,7 @@ describe('ECPayPayment', () => {
   });
 
   describe('Serve callback handler server', () => {
-    it('should response 404 on undefined path request', (done) => {
+    it('should response 404 on undefined path request', done => {
       const payment = new ECPayPayment({
         withServer: true,
         serverHost: 'http://localhost:3005',
@@ -256,7 +254,7 @@ describe('ECPayPayment', () => {
       });
     });
 
-    it('should handle successful request', (done) => {
+    it('should handle successful request', done => {
       const payment = new ECPayPayment<ECPayChannelCreditCard>({
         withServer: true,
         serverHost: 'http://localhost:3005',
@@ -310,7 +308,7 @@ describe('ECPayPayment', () => {
             .send(new URLSearchParams(successfulResponse).toString())
             .expect('Content-Type', 'text/plain')
             .expect(200)
-            .then((res) => {
+            .then(res => {
               expect(res.text).toEqual('1|OK');
 
               payment._server?.close(done);
@@ -319,7 +317,7 @@ describe('ECPayPayment', () => {
       });
     });
 
-    it('should reject committed order', (done) => {
+    it('should reject committed order', done => {
       const payment = new ECPayPayment<ECPayChannelCreditCard>({
         withServer: true,
         serverHost: 'http://localhost:3005',
@@ -381,7 +379,7 @@ describe('ECPayPayment', () => {
             .send(new URLSearchParams(successfulResponse).toString())
             .expect('Content-Type', 'text/plain')
             .expect(400)
-            .then((failedResponse) => {
+            .then(failedResponse => {
               expect(failedResponse.text).toEqual('0|OrderNotFound');
 
               payment._server?.close(done);
@@ -390,7 +388,7 @@ describe('ECPayPayment', () => {
       });
     });
 
-    it('should reject not found order', (done) => {
+    it('should reject not found order', done => {
       const payment = new ECPayPayment<ECPayChannelCreditCard>({
         withServer: true,
         serverHost: 'http://localhost:3005',
@@ -444,7 +442,7 @@ describe('ECPayPayment', () => {
             .send(new URLSearchParams(successfulResponse).toString())
             .expect('Content-Type', 'text/plain')
             .expect(400)
-            .then((failedResponse) => {
+            .then(failedResponse => {
               expect(failedResponse.text).toEqual('0|OrderNotFound');
 
               payment._server?.close(done);
@@ -453,7 +451,7 @@ describe('ECPayPayment', () => {
       });
     });
 
-    it('should check CheckMacValue on callback payload', (done) => {
+    it('should check CheckMacValue on callback payload', done => {
       const payment = new ECPayPayment({
         withServer: true,
         serverHost: 'http://localhost:3004',
@@ -480,8 +478,7 @@ describe('ECPayPayment', () => {
             TradeAmt: '70',
             TradeDate: '2022/04/18 19:14:51',
             TradeNo: '2204181914513433',
-            CheckMacValue:
-              '3CD5424E742BF5AB43D52A9E43F30F176A655F271730E1F5DBC13A03B346CBDCCCC', // Wrong
+            CheckMacValue: '3CD5424E742BF5AB43D52A9E43F30F176A655F271730E1F5DBC13A03B346CBDCCCC', // Wrong
           };
 
           request(payment._server as App)
@@ -489,7 +486,7 @@ describe('ECPayPayment', () => {
             .send(new URLSearchParams(successfulResponse).toString())
             .expect('Content-Type', 'text/plain')
             .expect(400)
-            .then((res) => {
+            .then(res => {
               expect(res.text).toEqual('0|CheckSumInvalid');
 
               payment._server?.close(done);
@@ -498,10 +495,8 @@ describe('ECPayPayment', () => {
       });
     });
 
-    it('should order commit with callback server', (done) => {
-      const mockedOnCommit = jest.fn<void, [ECPayOrder<ECPayCommitMessage>]>(
-        () => {},
-      );
+    it('should order commit with callback server', done => {
+      const mockedOnCommit = jest.fn<void, [ECPayOrder<ECPayCommitMessage>]>(() => {});
 
       const payment = new ECPayPayment<ECPayChannelCreditCard>({
         withServer: true,
@@ -557,12 +552,7 @@ describe('ECPayPayment', () => {
             .send(new URLSearchParams(successfulResponse).toString())
             .then(() => {
               expect(mockedOnCommit.mock.calls.length).toBe(1);
-              expect(
-                (
-                  mockedOnCommit.mock
-                    .calls[0][0] as unknown as ECPayOrder<ECPayCommitMessage>
-                ).id,
-              ).toBe(order.id);
+              expect((mockedOnCommit.mock.calls[0][0] as unknown as ECPayOrder<ECPayCommitMessage>).id).toBe(order.id);
 
               payment._server?.close(done);
             });
@@ -572,17 +562,15 @@ describe('ECPayPayment', () => {
   });
 
   describe('Custom server listener', () => {
-    const serverListenerMock = jest.fn<void, [IncomingMessage, ServerResponse]>(
-      (req, res) => {
-        res.writeHead(200, {
-          'Content-Type': 'text/plain',
-        });
+    const serverListenerMock = jest.fn<void, [IncomingMessage, ServerResponse]>((req, res) => {
+      res.writeHead(200, {
+        'Content-Type': 'text/plain',
+      });
 
-        res.end('1|OK');
-      },
-    );
+      res.end('1|OK');
+    });
 
-    it('should provide custom server listener', (done) => {
+    it('should provide custom server listener', done => {
       const payment = new ECPayPayment<ECPayChannelCreditCard>({
         withServer: true,
         serverHost: 'http://localhost:3007',
@@ -934,9 +922,7 @@ describe('ECPayPayment', () => {
       expect(order5Days.form.PeriodType).toBe('D');
       expect(order5Days.form.Frequency).toBe('1');
       expect(order5Days.form.ExecTimes).toBe('3');
-      expect(order5Days.form.PeriodReturnURL).toBe(
-        'http://localhost:9999/callback',
-      );
+      expect(order5Days.form.PeriodReturnURL).toBe('http://localhost:9999/callback');
       expect(order5Days.form.PeriodReturnURL).toBe(order5Days.form.ReturnURL);
 
       const order5Months = await payment.prepare({
@@ -1176,7 +1162,7 @@ describe('ECPayPayment', () => {
   });
 
   describe('Invalid Payment Type', () => {
-    it('should reject invalid channel on callback', (done) => {
+    it('should reject invalid channel on callback', done => {
       const testPayment = new ECPayPayment<ECPayChannelCreditCard>({
         withServer: true,
         onServerListen: async () => {
@@ -1219,7 +1205,7 @@ describe('ECPayPayment', () => {
             .send(new URLSearchParams(successfulResponse).toString())
             .expect('Content-Type', 'text/plain')
             .expect(400)
-            .then((res) => {
+            .then(res => {
               expect(res.text).toEqual('0|OrderNotFound');
 
               testPayment._server?.close(done);
@@ -1230,7 +1216,7 @@ describe('ECPayPayment', () => {
   });
 
   describe('Payment Result Default Handler', () => {
-    it('should no effect if duplicate result callback', (done) => {
+    it('should no effect if duplicate result callback', done => {
       const testPayment = new ECPayPayment<ECPayChannelCreditCard>({
         withServer: true,
         onServerListen: async () => {
@@ -1278,7 +1264,7 @@ describe('ECPayPayment', () => {
             .send(new URLSearchParams(successfulResponse).toString())
             .expect('Content-Type', 'text/plain')
             .expect(200)
-            .then((res) => {
+            .then(res => {
               expect(res.text).toEqual('1|OK');
               expect(order.state).toBe(OrderState.FAILED);
               expect(order.failedMessage?.code).toBe('2');
@@ -1290,7 +1276,7 @@ describe('ECPayPayment', () => {
       });
     });
 
-    it('should reject if invalid payment type call async info', (done) => {
+    it('should reject if invalid payment type call async info', done => {
       const testPayment = new ECPayPayment<ECPayChannelCreditCard>({
         withServer: true,
         onServerListen: async () => {
@@ -1338,7 +1324,7 @@ describe('ECPayPayment', () => {
             .send(new URLSearchParams(successfulResponse).toString())
             .expect('Content-Type', 'text/plain')
             .expect(400)
-            .then((res) => {
+            .then(res => {
               expect(res.text).toEqual('0|OrderNotFound');
               expect(order.state).toBe(OrderState.PRE_COMMIT);
 

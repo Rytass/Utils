@@ -3,10 +3,7 @@ import { TableDataSourceWithID } from '@mezzanine-ui/core/table';
 import { useDialog } from '../../dialog/useDialog';
 import { useModal } from '../../modal/useModal';
 import { VerifyReleaseModal } from '../../cms-modals/VerifyReleaseModal';
-import {
-  DeleteWithdrawModal,
-  DeleteWithdrawModalRadio,
-} from '../../cms-modals/DeleteWithdrawModal';
+import { DeleteWithdrawModal, DeleteWithdrawModalRadio } from '../../cms-modals/DeleteWithdrawModal';
 import { havePermission } from '../../../utils/havePermission';
 import { StandardCMSTableEventsProps } from '../typings';
 import { ArticleStage, ArticlesPermissions } from '../../../typings';
@@ -59,18 +56,16 @@ export function useTableEvents<T extends TableDataSourceWithID>({
         children: (
           <VerifyReleaseModal
             title={title}
-            withApprove={[ArticleStage.DRAFT, ArticleStage.REVIEWING].includes(
-              stage,
-            )}
+            withApprove={[ArticleStage.DRAFT, ArticleStage.REVIEWING].includes(stage)}
             withReject={stage === ArticleStage.REVIEWING}
             showSeverityIcon={stage === ArticleStage.DRAFT}
-            onRelease={async (releasedAt) => {
+            onRelease={async releasedAt => {
               await actionsEvents.onRelease?.(source, releasedAt);
             }}
             onApprove={async () => {
               await actionsEvents.onApprove?.(source);
             }}
-            onReject={async (reason) => {
+            onReject={async reason => {
               await actionsEvents.onReject?.(source, reason);
             }}
           />

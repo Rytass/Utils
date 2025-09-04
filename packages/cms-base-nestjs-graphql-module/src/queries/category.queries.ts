@@ -1,9 +1,5 @@
 import { Args, ID, Query, Resolver } from '@nestjs/graphql';
-import {
-  CategoryBaseService,
-  DEFAULT_LANGUAGE,
-  MULTIPLE_LANGUAGE_MODE,
-} from '@rytass/cms-base-nestjs-module';
+import { CategoryBaseService, DEFAULT_LANGUAGE, MULTIPLE_LANGUAGE_MODE } from '@rytass/cms-base-nestjs-module';
 import { CategoriesArgs } from '../dto/categories.args';
 import { AllowActions, IsPublic } from '@rytass/member-base-nestjs-module';
 import { CategoryDto } from '../dto/category.dto';
@@ -36,10 +32,7 @@ export class CategoryQueries {
 
   @Query(() => [CategoryDto])
   @IsPublic()
-  categories(
-    @Args() args: CategoriesArgs,
-    @Language() language: string = DEFAULT_LANGUAGE,
-  ): Promise<CategoryDto[]> {
+  categories(@Args() args: CategoriesArgs, @Language() language: string = DEFAULT_LANGUAGE): Promise<CategoryDto[]> {
     return this.categoryService.findAll({
       ...args,
       language: this.multiLanguage ? language : null,
@@ -48,17 +41,13 @@ export class CategoryQueries {
 
   @Query(() => BackstageCategoryDto)
   @AllowActions([[BaseResource.CATEGORY, BaseAction.READ]])
-  backstageCategory(
-    @Args('id', { type: () => ID }) id: string,
-  ): Promise<BackstageCategoryDto> {
+  backstageCategory(@Args('id', { type: () => ID }) id: string): Promise<BackstageCategoryDto> {
     return this.categoryService.findById(id);
   }
 
   @Query(() => [BackstageCategoryDto])
   @AllowActions([[BaseResource.CATEGORY, BaseAction.LIST]])
-  backstageCategories(
-    @Args() args: CategoriesArgs,
-  ): Promise<BackstageCategoryDto[]> {
+  backstageCategories(@Args() args: CategoriesArgs): Promise<BackstageCategoryDto[]> {
     return this.categoryService.findAll(args);
   }
 }

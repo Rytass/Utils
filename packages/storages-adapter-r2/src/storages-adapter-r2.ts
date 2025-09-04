@@ -26,9 +26,7 @@ export class StorageR2Service extends Storage<StorageR2Options> {
     this.bucket = options.bucket;
 
     if (options.customDomain) {
-      const re = new RegExp(
-        `^https://${options.bucket}.${options.account}.r2.cloudflarestorage.com`,
-      );
+      const re = new RegExp(`^https://${options.bucket}.${options.account}.r2.cloudflarestorage.com`);
 
       this.parseSignedURL = (url: string) => {
         return url.replace(re, options.customDomain as string);
@@ -63,10 +61,7 @@ export class StorageR2Service extends Storage<StorageR2Options> {
   read(key: string): Promise<Readable>;
   read(key: string, options: ReadBufferFileOptions): Promise<Buffer>;
   read(key: string, options: ReadStreamFileOptions): Promise<Readable>;
-  async read(
-    key: string,
-    options?: ReadBufferFileOptions | ReadStreamFileOptions,
-  ): Promise<Buffer | Readable> {
+  async read(key: string, options?: ReadBufferFileOptions | ReadStreamFileOptions): Promise<Buffer | Readable> {
     try {
       const response = await this.s3
         .getObject({
@@ -89,10 +84,7 @@ export class StorageR2Service extends Storage<StorageR2Options> {
     }
   }
 
-  private async writeStreamFile(
-    stream: Readable,
-    options?: WriteFileOptions,
-  ): Promise<StorageFile> {
+  private async writeStreamFile(stream: Readable, options?: WriteFileOptions): Promise<StorageFile> {
     const givenFilename = options?.filename;
 
     if (givenFilename) {
@@ -101,9 +93,7 @@ export class StorageR2Service extends Storage<StorageR2Options> {
           Bucket: this.bucket,
           Key: givenFilename,
           Body: stream,
-          ...(options?.contentType
-            ? { ContentType: options?.contentType }
-            : {}),
+          ...(options?.contentType ? { ContentType: options?.contentType } : {}),
         })
         .promise();
 
@@ -126,10 +116,7 @@ export class StorageR2Service extends Storage<StorageR2Options> {
 
     stream.pipe(uploadStream);
 
-    const [[filename, mime]] = await Promise.all([
-      getFilenamePromise,
-      uploadPromise,
-    ]);
+    const [[filename, mime]] = await Promise.all([getFilenamePromise, uploadPromise]);
 
     await this.s3
       .copyObject({
@@ -151,12 +138,8 @@ export class StorageR2Service extends Storage<StorageR2Options> {
     return { key: filename };
   }
 
-  async writeBufferFile(
-    buffer: Buffer,
-    options?: WriteFileOptions,
-  ): Promise<StorageFile> {
-    const fileInfo =
-      options?.filename || (await this.getBufferFilename(buffer));
+  async writeBufferFile(buffer: Buffer, options?: WriteFileOptions): Promise<StorageFile> {
+    const fileInfo = options?.filename || (await this.getBufferFilename(buffer));
 
     const filename = Array.isArray(fileInfo) ? fileInfo[0] : fileInfo;
 
@@ -165,9 +148,7 @@ export class StorageR2Service extends Storage<StorageR2Options> {
         Key: filename,
         Bucket: this.bucket,
         Body: buffer,
-        ...(Array.isArray(fileInfo) && fileInfo[1]
-          ? { ContentType: fileInfo[1] }
-          : {}),
+        ...(Array.isArray(fileInfo) && fileInfo[1] ? { ContentType: fileInfo[1] } : {}),
         ...(options?.contentType ? { ContentType: options?.contentType } : {}),
       })
       .promise();
@@ -184,7 +165,7 @@ export class StorageR2Service extends Storage<StorageR2Options> {
   }
 
   batchWrite(files: InputFile[]): Promise<StorageFile[]> {
-    return Promise.all(files.map((file) => this.write(file)));
+    return Promise.all(files.map(file => this.write(file)));
   }
 
   async remove(key: string): Promise<void> {

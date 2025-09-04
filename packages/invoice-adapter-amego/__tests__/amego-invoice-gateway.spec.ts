@@ -2,11 +2,7 @@
  * @jest-environment node
  */
 
-import {
-  InvoiceState,
-  InvoiceCarrierType,
-  InvoiceAllowanceState,
-} from '@rytass/invoice';
+import { InvoiceState, InvoiceCarrierType, InvoiceAllowanceState } from '@rytass/invoice';
 import { AmegoInvoiceGateway, AmegoBaseUrls } from '../src';
 
 describe('AmegoInvoiceGateway', () => {
@@ -74,51 +70,33 @@ describe('AmegoInvoiceGateway', () => {
 
   describe('getInvoiceAllowanceState', () => {
     it('should return INVALID for B2B allowance void types', () => {
-      expect(gateway.getInvoiceAllowanceState('B0501')).toBe(
-        InvoiceAllowanceState.INVALID,
-      );
+      expect(gateway.getInvoiceAllowanceState('B0501')).toBe(InvoiceAllowanceState.INVALID);
     });
 
     it('should return INVALID for B2C allowance void types', () => {
-      expect(gateway.getInvoiceAllowanceState('D0501')).toBe(
-        InvoiceAllowanceState.INVALID,
-      );
+      expect(gateway.getInvoiceAllowanceState('D0501')).toBe(InvoiceAllowanceState.INVALID);
     });
 
     it('should return INVALID for general allowance void types', () => {
-      expect(gateway.getInvoiceAllowanceState('G0501')).toBe(
-        InvoiceAllowanceState.INVALID,
-      );
+      expect(gateway.getInvoiceAllowanceState('G0501')).toBe(InvoiceAllowanceState.INVALID);
     });
 
     it('should return ISSUED for B2B allowance issue types', () => {
-      expect(gateway.getInvoiceAllowanceState('B0401')).toBe(
-        InvoiceAllowanceState.ISSUED,
-      );
+      expect(gateway.getInvoiceAllowanceState('B0401')).toBe(InvoiceAllowanceState.ISSUED);
     });
 
     it('should return ISSUED for B2C allowance issue types', () => {
-      expect(gateway.getInvoiceAllowanceState('D0401')).toBe(
-        InvoiceAllowanceState.ISSUED,
-      );
+      expect(gateway.getInvoiceAllowanceState('D0401')).toBe(InvoiceAllowanceState.ISSUED);
     });
 
     it('should return ISSUED for general allowance issue types', () => {
-      expect(gateway.getInvoiceAllowanceState('G0401')).toBe(
-        InvoiceAllowanceState.ISSUED,
-      );
+      expect(gateway.getInvoiceAllowanceState('G0401')).toBe(InvoiceAllowanceState.ISSUED);
     });
 
     it('should return INITED for unknown allowance types', () => {
-      expect(gateway.getInvoiceAllowanceState('UNKNOWN')).toBe(
-        InvoiceAllowanceState.INITED,
-      );
-      expect(gateway.getInvoiceAllowanceState('')).toBe(
-        InvoiceAllowanceState.INITED,
-      );
-      expect(gateway.getInvoiceAllowanceState('A0401')).toBe(
-        InvoiceAllowanceState.INITED,
-      );
+      expect(gateway.getInvoiceAllowanceState('UNKNOWN')).toBe(InvoiceAllowanceState.INITED);
+      expect(gateway.getInvoiceAllowanceState('')).toBe(InvoiceAllowanceState.INITED);
+      expect(gateway.getInvoiceAllowanceState('A0401')).toBe(InvoiceAllowanceState.INITED);
     });
   });
 
@@ -267,21 +245,13 @@ describe('AmegoInvoiceGateway', () => {
     });
 
     it('should return undefined for null carrier type', () => {
-      const result = (gateway as any).parseCarrierFromResponse(
-        null,
-        'test',
-        '',
-      );
+      const result = (gateway as any).parseCarrierFromResponse(null, 'test', '');
 
       expect(result).toBeUndefined();
     });
 
     it('should parse mobile carrier type', () => {
-      const result = (gateway as any).parseCarrierFromResponse(
-        '3J0002',
-        '/DDPD7U2',
-        '',
-      );
+      const result = (gateway as any).parseCarrierFromResponse('3J0002', '/DDPD7U2', '');
 
       expect(result).toEqual({
         type: InvoiceCarrierType.MOBILE,
@@ -290,11 +260,7 @@ describe('AmegoInvoiceGateway', () => {
     });
 
     it('should parse mobile carrier type with carrierId2', () => {
-      const result = (gateway as any).parseCarrierFromResponse(
-        '3J0002',
-        '',
-        '/DDPD7U2',
-      );
+      const result = (gateway as any).parseCarrierFromResponse('3J0002', '', '/DDPD7U2');
 
       expect(result).toEqual({
         type: InvoiceCarrierType.MOBILE,
@@ -303,11 +269,7 @@ describe('AmegoInvoiceGateway', () => {
     });
 
     it('should parse moica carrier type', () => {
-      const result = (gateway as any).parseCarrierFromResponse(
-        'CQ0001',
-        'ABCD1234',
-        '',
-      );
+      const result = (gateway as any).parseCarrierFromResponse('CQ0001', 'ABCD1234', '');
 
       expect(result).toEqual({
         type: InvoiceCarrierType.MOICA,
@@ -316,11 +278,7 @@ describe('AmegoInvoiceGateway', () => {
     });
 
     it('should parse platform carrier type', () => {
-      const result = (gateway as any).parseCarrierFromResponse(
-        'amego',
-        'test@example.com',
-        '',
-      );
+      const result = (gateway as any).parseCarrierFromResponse('amego', 'test@example.com', '');
 
       expect(result).toEqual({
         type: InvoiceCarrierType.PLATFORM,
@@ -329,11 +287,7 @@ describe('AmegoInvoiceGateway', () => {
     });
 
     it('should parse love code from unknown carrier type', () => {
-      const result = (gateway as any).parseCarrierFromResponse(
-        'unknown',
-        '123456',
-        '',
-      );
+      const result = (gateway as any).parseCarrierFromResponse('unknown', '123456', '');
 
       expect(result).toEqual({
         type: InvoiceCarrierType.LOVE_CODE,
@@ -342,41 +296,25 @@ describe('AmegoInvoiceGateway', () => {
     });
 
     it('should return undefined for invalid love code (too short)', () => {
-      const result = (gateway as any).parseCarrierFromResponse(
-        'unknown',
-        '12',
-        '',
-      );
+      const result = (gateway as any).parseCarrierFromResponse('unknown', '12', '');
 
       expect(result).toBeUndefined();
     });
 
     it('should return undefined for invalid love code (too long)', () => {
-      const result = (gateway as any).parseCarrierFromResponse(
-        'unknown',
-        '123456789012345678',
-        '',
-      );
+      const result = (gateway as any).parseCarrierFromResponse('unknown', '123456789012345678', '');
 
       expect(result).toBeUndefined();
     });
 
     it('should return undefined for invalid love code (non-numeric)', () => {
-      const result = (gateway as any).parseCarrierFromResponse(
-        'unknown',
-        '12abc6',
-        '',
-      );
+      const result = (gateway as any).parseCarrierFromResponse('unknown', '12abc6', '');
 
       expect(result).toBeUndefined();
     });
 
     it('should return undefined for unknown carrier type with empty code', () => {
-      const result = (gateway as any).parseCarrierFromResponse(
-        'unknown',
-        '',
-        '',
-      );
+      const result = (gateway as any).parseCarrierFromResponse('unknown', '', '');
 
       expect(result).toBeUndefined();
     });
@@ -384,9 +322,7 @@ describe('AmegoInvoiceGateway', () => {
 
   describe('isLoveCodeValid', () => {
     it('should throw error for unsupported method', async () => {
-      await expect(gateway.isLoveCodeValid('123456')).rejects.toThrow(
-        'Method not supported in Amego API.',
-      );
+      await expect(gateway.isLoveCodeValid('123456')).rejects.toThrow('Method not supported in Amego API.');
     });
   });
 });

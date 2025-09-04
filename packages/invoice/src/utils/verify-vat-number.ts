@@ -18,7 +18,7 @@ export function verifyVatNumber(input: string | number): boolean {
   }
 
   const COEFFICIENTS = [1, 2, 1, 2, 1, 2, 4, 1];
-  const digits = vat.split('').map((d) => parseInt(d, 10));
+  const digits = vat.split('').map(d => parseInt(d, 10));
 
   const checksum = digits.reduce((sum, digit, index) => {
     const product = digit * COEFFICIENTS[index];
@@ -28,8 +28,5 @@ export function verifyVatNumber(input: string | number): boolean {
 
   const divisor = 5;
 
-  return (
-    checksum % divisor === 0 ||
-    (digits[6] === 7 && (checksum + 1) % divisor === 0)
-  );
+  return checksum % divisor === 0 || (digits[6] === 7 && (checksum + 1) % divisor === 0);
 }

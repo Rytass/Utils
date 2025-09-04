@@ -27,8 +27,7 @@ import {
   AMEGO_CONSTANTS,
 } from './typings';
 
-export class AmegoInvoiceGateway
-  implements InvoiceGateway<AmegoPaymentItem, AmegoInvoice> {
+export class AmegoInvoiceGateway implements InvoiceGateway<AmegoPaymentItem, AmegoInvoice> {
   private static readonly DEFAULT_ALLOWANCE_TYPE = 2;
   private static readonly COMMON_HEADERS = {
     'Content-Type': 'application/x-www-form-urlencoded',
@@ -55,10 +54,7 @@ export class AmegoInvoiceGateway
 
     this.validateAllowanceItems(allowanceItems);
 
-    const totalAllowanceAmount = allowanceItems.reduce(
-      (sum, item) => sum + item.quantity * item.unitPrice,
-      0,
-    );
+    const totalAllowanceAmount = allowanceItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
 
     const thisAllowanceSeq = invoice.allowances.length + 1;
     const thisAllowanceNumber = `${invoice.invoiceNumber}AL${String(thisAllowanceSeq).padStart(4, '0')}`; // 使用`{訂單編號}:AL:{項次index}`作為 AllowanceNumber
@@ -68,14 +64,8 @@ export class AmegoInvoiceGateway
     const totalTaxAmount = allowanceItems.reduce((acc, item) => {
       const itemTax =
         item.taxType === TaxType.TAXED
-          ? Math.round(
-            ((item.quantity * item.unitPrice) / (1 + invoice.taxRate)) *
-            invoice.taxRate,
-          ) > 1
-            ? Math.round(
-              ((item.quantity * item.unitPrice) / (1 + invoice.taxRate)) *
-              invoice.taxRate,
-            )
+          ? Math.round(((item.quantity * item.unitPrice) / (1 + invoice.taxRate)) * invoice.taxRate) > 1
+            ? Math.round(((item.quantity * item.unitPrice) / (1 + invoice.taxRate)) * invoice.taxRate)
             : 1
           : 0;
 
@@ -88,16 +78,12 @@ export class AmegoInvoiceGateway
       {
         AllowanceNumber: thisAllowanceNumber,
         AllowanceDate: now.toFormat('yyyyMMdd'), // 使用當前日期作為 AllowanceDate
-        AllowanceType:
-          options?.allowanceType || AmegoInvoiceGateway.DEFAULT_ALLOWANCE_TYPE, // 預設為 2 (賣方開立折讓單)
+        AllowanceType: options?.allowanceType || AmegoInvoiceGateway.DEFAULT_ALLOWANCE_TYPE, // 預設為 2 (賣方開立折讓單)
         BuyerIdentifier: invoice.vatNumber,
-        BuyerName:
-          invoice.vatNumber !== '0000000000' ? invoice.vatNumber : '消費者',
-        ProductItem: allowanceItems.map((item) => {
+        BuyerName: invoice.vatNumber !== '0000000000' ? invoice.vatNumber : '消費者',
+        ProductItem: allowanceItems.map(item => {
           // 折讓單價預設為未稅
-          const dutyFreeUnitPrice = Number(
-            (item.unitPrice / (1 + invoice.taxRate)).toFixed(7),
-          );
+          const dutyFreeUnitPrice = Number((item.unitPrice / (1 + invoice.taxRate)).toFixed(7));
 
           const itemTax =
             Math.round(item.quantity * dutyFreeUnitPrice * invoice.taxRate) > 1
@@ -108,17 +94,13 @@ export class AmegoInvoiceGateway
 
           return {
             OriginalInvoiceNumber: invoice.invoiceNumber, // 原發票號碼
-            OriginalInvoiceDate: DateTime.fromJSDate(invoice.issuedOn).toFormat(
-              'yyyyMMdd',
-            ), // 原發票日期
+            OriginalInvoiceDate: DateTime.fromJSDate(invoice.issuedOn).toFormat('yyyyMMdd'), // 原發票日期
             OriginalDescription: item.name,
             Quantity: item.quantity, // 折讓數量
             UnitPrice: dutyFreeUnitPrice, // 折讓單價, 未稅
             Amount: dutyFreeAmount, // 折讓金額, 未稅
             Tax: itemTax,
-            TaxType:
-              Number(AmegoTaxType[item.taxType]) ||
-              Number(AmegoTaxType[TaxType.TAXED]), // 預設為課稅
+            TaxType: Number(AmegoTaxType[item.taxType]) || Number(AmegoTaxType[TaxType.TAXED]), // 預設為課稅
           };
         }),
         TaxAmount: totalTaxAmount, // 折讓稅額, 預設為課稅
@@ -128,10 +110,7 @@ export class AmegoInvoiceGateway
 
     const encodedPayload = this.generateEncodedPayload(JSON.stringify(payload));
 
-    const data = await this.makeApiRequest<{ code: number; msg: string }>(
-      '/json/g0401',
-      encodedPayload,
-    );
+    const data = await this.makeApiRequest<{ code: number; msg: string }>('/json/g0401', encodedPayload);
 
     if (data.code !== 0) {
       throw new Error(`Failed to allowance invoice: ${data.msg}`);
@@ -153,9 +132,7 @@ export class AmegoInvoiceGateway
   }
 
   async query(options: AmegoInvoiceQueryFromOrderIdArgs): Promise<AmegoInvoice>;
-  async query(
-    options: AmegoInvoiceQueryFromInvoiceNumberArgs,
-  ): Promise<AmegoInvoice>;
+  async query(options: AmegoInvoiceQueryFromInvoiceNumberArgs): Promise<AmegoInvoice>;
   async query(options: AmegoInvoiceQueryArgs): Promise<AmegoInvoice> {
     const apiData =
       'orderId' in options
@@ -217,12 +194,9 @@ export class AmegoInvoiceGateway
       throw new Error(`Amego invoice query failed: ${data.msg}`);
     }
 
-    const thisInvoiceItems = data.data.product_item.map((item) => {
+    const thisInvoiceItems = data.data.product_item.map(item => {
       return {
-        taxType: ReverseAmegoTaxType[item.tax_type] as
-          | TaxType.TAXED
-          | TaxType.ZERO_TAX
-          | TaxType.TAX_FREE,
+        taxType: ReverseAmegoTaxType[item.tax_type] as TaxType.TAXED | TaxType.ZERO_TAX | TaxType.TAX_FREE,
         name: item.description,
         unitPrice: item.unit_price,
         quantity: item.quantity,
@@ -232,9 +206,7 @@ export class AmegoInvoiceGateway
       };
     });
 
-    const voidOn = data.data.cancel_date
-      ? DateTime.fromSeconds(data.data.cancel_date).toJSDate()
-      : null;
+    const voidOn = data.data.cancel_date ? DateTime.fromSeconds(data.data.cancel_date).toJSDate() : null;
 
     const state = this.getInvoiceState(data.data.invoice_type);
 
@@ -248,98 +220,74 @@ export class AmegoInvoiceGateway
       items: thisInvoiceItems,
       invoiceNumber: data.data.invoice_number || '',
       randomCode: data.data.random_number || '',
-      carrier: this.parseCarrierFromResponse(
-        data.data.carrier_type,
-        data.data.carrier_id1,
-        data.data.carrier_id2,
-        data.data.npoban,
-      ),
+      carrier: this.parseCarrierFromResponse(data.data.carrier_type, data.data.carrier_id1, data.data.carrier_id2),
       taxType: ReverseAmegoTaxType[data.data.tax_type],
       taxRate: parseFloat(data.data.tax_rate),
       voidOn: voidOn,
       state: state,
     });
 
-    const thisInvoiceAllowances = data.data.allowance.map(
-      (allowanceData, index) => {
-        // 創建一個該 allowance 專用的 invoice 副本
-        const parentInvoice = new AmegoInvoice({ ...thisInvoice });
+    const thisInvoiceAllowances = data.data.allowance.map((allowanceData, index) => {
+      // 創建一個該 allowance 專用的 invoice 副本
+      const parentInvoice = new AmegoInvoice({ ...thisInvoice });
 
-        // 創建當前 allowance 之前的所有 allowances（累積狀態）
-        const previousAllowances = data.data.allowance
-          .slice(0, index) // 只取當前 allowance 之前的
-          .map((prevAllowanceData) => {
-            // 判斷是否為無效狀態
-            const isInvalid =
-              this.getInvoiceAllowanceState(prevAllowanceData.invoice_type) ===
-              InvoiceAllowanceState.INVALID;
+      // 創建當前 allowance 之前的所有 allowances（累積狀態）
+      const previousAllowances = data.data.allowance
+        .slice(0, index) // 只取當前 allowance 之前的
+        .map(prevAllowanceData => {
+          // 判斷是否為無效狀態
+          const isInvalid =
+            this.getInvoiceAllowanceState(prevAllowanceData.invoice_type) === InvoiceAllowanceState.INVALID;
 
-            const prevAllowance = new AmegoAllowance({
-              allowanceNumber: prevAllowanceData.allowance_number,
-              invoiceType: prevAllowanceData.invoice_type,
-              allowancedOn: DateTime.fromFormat(
-                String(prevAllowanceData.allowance_date),
-                'yyyyMMdd',
-              ).toJSDate(),
-              allowancePrice:
-                prevAllowanceData.total_amount + prevAllowanceData.tax_amount,
-              items: [], // Amego does not provide items in allowance query, so we set it to empty array
-              status: this.getInvoiceAllowanceState(
-                prevAllowanceData.invoice_type,
-              ),
-              invalidOn: isInvalid
-                ? DateTime.fromFormat(
-                  String(prevAllowanceData.allowance_date),
-                  'yyyyMMdd',
-                ).toJSDate()
-                : null,
-              parentInvoice: parentInvoice,
-            });
-
-            // 如果是無效類型但狀態還未更新，手動標記為無效
-            if (isInvalid) {
-              prevAllowance.invalid();
-            }
-
-            return prevAllowance;
+          const prevAllowance = new AmegoAllowance({
+            allowanceNumber: prevAllowanceData.allowance_number,
+            invoiceType: prevAllowanceData.invoice_type,
+            allowancedOn: DateTime.fromFormat(String(prevAllowanceData.allowance_date), 'yyyyMMdd').toJSDate(),
+            allowancePrice: prevAllowanceData.total_amount + prevAllowanceData.tax_amount,
+            items: [], // Amego does not provide items in allowance query, so we set it to empty array
+            status: this.getInvoiceAllowanceState(prevAllowanceData.invoice_type),
+            invalidOn: isInvalid
+              ? DateTime.fromFormat(String(prevAllowanceData.allowance_date), 'yyyyMMdd').toJSDate()
+              : null,
+            parentInvoice: parentInvoice,
           });
 
-        // 將之前的 allowances 加入到 parent invoice 中
-        parentInvoice.accumulatedAllowances.push(...previousAllowances);
+          // 如果是無效類型但狀態還未更新，手動標記為無效
+          if (isInvalid) {
+            prevAllowance.invalid();
+          }
 
-        // 判斷當前 allowance 是否為無效狀態
-        const isCurrentInvalid =
-          this.getInvoiceAllowanceState(allowanceData.invoice_type) ===
-          InvoiceAllowanceState.INVALID;
-
-        // 創建當前的 allowance
-        const currentAllowance = new AmegoAllowance({
-          allowanceNumber: allowanceData.allowance_number,
-          invoiceType: allowanceData.invoice_type,
-          allowancedOn: DateTime.fromFormat(
-            String(allowanceData.allowance_date),
-            'yyyyMMdd',
-          ).toJSDate(),
-          allowancePrice: allowanceData.total_amount + allowanceData.tax_amount,
-          items: [], // Amego does not provide items in allowance query, so we set it to empty array
-          status: this.getInvoiceAllowanceState(allowanceData.invoice_type),
-          invalidOn: isCurrentInvalid
-            ? DateTime.fromFormat(
-              String(allowanceData.allowance_date),
-              'yyyyMMdd',
-            ).toJSDate()
-            : null,
-          parentInvoice: parentInvoice,
+          return prevAllowance;
         });
 
-        // 如果是無效類型但狀態還未更新，手動標記為無效
-        if (isCurrentInvalid) {
-          currentAllowance.invalid();
-        }
+      // 將之前的 allowances 加入到 parent invoice 中
+      parentInvoice.accumulatedAllowances.push(...previousAllowances);
 
-        return currentAllowance;
-      },
-    );
+      // 判斷當前 allowance 是否為無效狀態
+      const isCurrentInvalid =
+        this.getInvoiceAllowanceState(allowanceData.invoice_type) === InvoiceAllowanceState.INVALID;
+
+      // 創建當前的 allowance
+      const currentAllowance = new AmegoAllowance({
+        allowanceNumber: allowanceData.allowance_number,
+        invoiceType: allowanceData.invoice_type,
+        allowancedOn: DateTime.fromFormat(String(allowanceData.allowance_date), 'yyyyMMdd').toJSDate(),
+        allowancePrice: allowanceData.total_amount + allowanceData.tax_amount,
+        items: [], // Amego does not provide items in allowance query, so we set it to empty array
+        status: this.getInvoiceAllowanceState(allowanceData.invoice_type),
+        invalidOn: isCurrentInvalid
+          ? DateTime.fromFormat(String(allowanceData.allowance_date), 'yyyyMMdd').toJSDate()
+          : null,
+        parentInvoice: parentInvoice,
+      });
+
+      // 如果是無效類型但狀態還未更新，手動標記為無效
+      if (isCurrentInvalid) {
+        currentAllowance.invalid();
+      }
+
+      return currentAllowance;
+    });
 
     return new AmegoInvoice({
       orderId: data.data.order_id,
@@ -350,12 +298,7 @@ export class AmegoInvoiceGateway
       ).toJSDate(),
       invoiceNumber: data.data.invoice_number || '',
       randomCode: data.data.random_number || '',
-      carrier: this.parseCarrierFromResponse(
-        data.data.carrier_type,
-        data.data.carrier_id1,
-        data.data.carrier_id2,
-        data.data.npoban,
-      ),
+      carrier: this.parseCarrierFromResponse(data.data.carrier_type, data.data.carrier_id1, data.data.carrier_id2),
       taxType: ReverseAmegoTaxType[data.data.tax_type],
       taxRate: parseFloat(data.data.tax_rate),
       voidOn: voidOn,
@@ -370,7 +313,6 @@ export class AmegoInvoiceGateway
       case 'A0401': // B2B發票開立
       case 'C0401': // B2C發票開立
       case 'F0401': // 發票開立
-      // D0501, B0501, G0501 因為折讓作廢之後回到原本開立的狀態
       case 'B0501': // B2B折讓作廢
       case 'D0501': // B2C折讓作廢
       case 'G0501': // 折讓單作廢
@@ -403,10 +345,7 @@ export class AmegoInvoiceGateway
     }
   }
 
-  getCarrierInfo(options: {
-    carrier?: { type?: InvoiceCarrierType; code?: string };
-    buyerEmail?: string;
-  }): {
+  getCarrierInfo(options: { carrier?: { type?: InvoiceCarrierType; code?: string }; buyerEmail?: string }): {
     carrierId: string;
     carrierType: '3J0002' | 'CQ0001' | 'amego' | '';
     buyerEmail: string;
@@ -477,7 +416,7 @@ export class AmegoInvoiceGateway
           type: InvoiceCarrierType.PLATFORM,
           code: carrierId1 || carrierId2 || '',
         };
-      default:
+      default: {
         // 如果是其他未知的載具類型，嘗試判斷是否為愛心碼
         const code = carrierId1 || carrierId2 || loveCode || '';
 
@@ -494,6 +433,7 @@ export class AmegoInvoiceGateway
         }
 
         return undefined;
+      }
     }
   }
 
@@ -502,10 +442,7 @@ export class AmegoInvoiceGateway
       JSON.stringify([{ CancelAllowanceNumber: allowance.allowanceNumber }]),
     );
 
-    const data = await this.makeApiRequest<{ code: number; msg: string }>(
-      '/json/g0501',
-      encodedData,
-    );
+    const data = await this.makeApiRequest<{ code: number; msg: string }>('/json/g0501', encodedData);
 
     if (data.code !== 0) {
       throw new Error(`Amego invoice cancel void failed: ${data.msg}`);
@@ -528,15 +465,11 @@ export class AmegoInvoiceGateway
     }
 
     if (options.detailVat === false && !options.vatNumber) {
-      throw new Error(
-        '未稅價發票必須提供統一編號 (DetailVat=0 requires VAT number)',
-      );
+      throw new Error('未稅價發票必須提供統一編號 (DetailVat=0 requires VAT number)');
     }
 
     if (options.orderId.length > AMEGO_CONSTANTS.MAX_ORDER_ID_LENGTH) {
-      throw new Error(
-        `Order ID must be less than or equal to ${AMEGO_CONSTANTS.MAX_ORDER_ID_LENGTH} characters`,
-      );
+      throw new Error(`Order ID must be less than or equal to ${AMEGO_CONSTANTS.MAX_ORDER_ID_LENGTH} characters`);
     }
 
     if (!options.items || options.items.length === 0) {
@@ -544,60 +477,35 @@ export class AmegoInvoiceGateway
     }
 
     if (
-      options.items.some(
-        (item) =>
-          !item.name ||
-          (item.name &&
-            item.name.length > AMEGO_CONSTANTS.MAX_ITEM_NAME_LENGTH),
-      )
+      options.items.some(item => !item.name || (item.name && item.name.length > AMEGO_CONSTANTS.MAX_ITEM_NAME_LENGTH))
     ) {
       throw new Error(
         `Item description must be less than or equal to ${AMEGO_CONSTANTS.MAX_ITEM_NAME_LENGTH} characters`,
       );
     }
 
-    if (
-      options.items.some(
-        (item) =>
-          item.unit && item.unit.length > AMEGO_CONSTANTS.MAX_ITEM_UNIT_LENGTH,
-      )
-    ) {
-      throw new Error(
-        `Item unit must be less than or equal to ${AMEGO_CONSTANTS.MAX_ITEM_UNIT_LENGTH} characters`,
-      );
+    if (options.items.some(item => item.unit && item.unit.length > AMEGO_CONSTANTS.MAX_ITEM_UNIT_LENGTH)) {
+      throw new Error(`Item unit must be less than or equal to ${AMEGO_CONSTANTS.MAX_ITEM_UNIT_LENGTH} characters`);
     }
 
-    if (
-      options.items.some(
-        (item) =>
-          item.remark &&
-          item.remark.length > AMEGO_CONSTANTS.MAX_ITEM_REMARK_LENGTH,
-      )
-    ) {
-      throw new Error(
-        `Item remark must be less than or equal to ${AMEGO_CONSTANTS.MAX_ITEM_REMARK_LENGTH} characters`,
-      );
+    if (options.items.some(item => item.remark && item.remark.length > AMEGO_CONSTANTS.MAX_ITEM_REMARK_LENGTH)) {
+      throw new Error(`Item remark must be less than or equal to ${AMEGO_CONSTANTS.MAX_ITEM_REMARK_LENGTH} characters`);
     }
 
-    if (
-      options.carrier?.type === InvoiceCarrierType.PLATFORM &&
-      !options.buyerEmail
-    ) {
-      throw new Error(
-        'Platform carrier should provide buyer email to received notification',
-      );
+    if (options.carrier?.type === InvoiceCarrierType.PLATFORM && !options.buyerEmail) {
+      throw new Error('Platform carrier should provide buyer email to received notification');
     }
 
     const salesAmountTaxed = options.items
-      .filter((item) => item.taxType === TaxType.TAXED)
+      .filter(item => item.taxType === TaxType.TAXED)
       .reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
 
     const salesAmountZeroTax = options.items
-      .filter((item) => item.taxType === TaxType.ZERO_TAX)
+      .filter(item => item.taxType === TaxType.ZERO_TAX)
       .reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
 
     const salesAmountTaxFree = options.items
-      .filter((item) => item.taxType === TaxType.TAX_FREE)
+      .filter(item => item.taxType === TaxType.TAX_FREE)
       .reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
 
     const taxType = AmegoTaxType[options.taxType];
@@ -612,28 +520,23 @@ export class AmegoInvoiceGateway
 
     const salesAmount = salesAmountTaxed - taxAmount;
 
-    const totalAmount =
-      salesAmount + salesAmountZeroTax + salesAmountTaxFree + taxAmount;
+    const totalAmount = salesAmount + salesAmountZeroTax + salesAmountTaxFree + taxAmount;
 
-    const { carrierId, carrierType, buyerEmail, loveCode } =
-      this.getCarrierInfo({
-        carrier: options.carrier,
-        buyerEmail: options.buyerEmail,
-      });
+    const { carrierId, carrierType, buyerEmail, loveCode } = this.getCarrierInfo({
+      carrier: options.carrier,
+      buyerEmail: options.buyerEmail,
+    });
 
     const payload = {
       OrderId: options.orderId,
       BuyerIdentifier: options.vatNumber ? options.vatNumber : '0000000000', // 預設為空統一編號
-      BuyerName:
-        options.vatNumber && options.buyerName
-          ? options.buyerName
-          : (options.vatNumber ?? '消費者'),
+      BuyerName: options.vatNumber && options.buyerName ? options.buyerName : (options.vatNumber ?? '消費者'),
       BuyerEmailAddress: buyerEmail,
       CarrierType: carrierType,
       CarrierId1: carrierId ?? '',
       CarrierId2: carrierId ?? '',
       NPOBAN: loveCode,
-      ProductItem: options.items.map((item) => {
+      ProductItem: options.items.map(item => {
         return {
           Description: item.name,
           Quantity: item.quantity,
@@ -657,26 +560,17 @@ export class AmegoInvoiceGateway
 
     const encodedPayload = this.generateEncodedPayload(JSON.stringify(payload));
 
-    const { data } = await axios.post<AmegoIssueInvoiceResponse>(
-      `${this.baseUrl}/json/f0401`,
-      encodedPayload,
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
+    const { data } = await axios.post<AmegoIssueInvoiceResponse>(`${this.baseUrl}/json/f0401`, encodedPayload, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-    );
+    });
 
     if (data.code !== 0) {
       throw new Error(`Amego invoice issue failed: ${data.msg}`);
     }
 
-    const carrier = this.parseCarrierFromResponse(
-      carrierType,
-      carrierId,
-      carrierId,
-      loveCode,
-    );
+    const carrier = this.parseCarrierFromResponse(carrierType, carrierId, carrierId, loveCode);
 
     return new AmegoInvoice({
       orderId: options.orderId,
@@ -695,14 +589,9 @@ export class AmegoInvoiceGateway
   }
 
   async void(invoice: AmegoInvoice): Promise<AmegoInvoice> {
-    const encodedData = this.generateEncodedPayload(
-      JSON.stringify([{ CancelInvoiceNumber: invoice.invoiceNumber }]),
-    );
+    const encodedData = this.generateEncodedPayload(JSON.stringify([{ CancelInvoiceNumber: invoice.invoiceNumber }]));
 
-    const data = await this.makeApiRequest<{ code: number; msg: string }>(
-      '/json/f0501',
-      encodedData,
-    );
+    const data = await this.makeApiRequest<{ code: number; msg: string }>('/json/f0501', encodedData);
 
     if (data.code !== 0) {
       throw new Error(`Amego invoice void failed: ${data.msg}`);
@@ -714,19 +603,14 @@ export class AmegoInvoiceGateway
   }
 
   async isMobileBarcodeValid(code: string): Promise<boolean> {
-    const encodedPayload = this.generateEncodedPayload(
-      JSON.stringify({ barCode: code }),
-    );
+    const encodedPayload = this.generateEncodedPayload(JSON.stringify({ barCode: code }));
 
-    const data = await this.makeApiRequest<{ code: number; msg: string }>(
-      '/json/barcode',
-      encodedPayload,
-    );
+    const data = await this.makeApiRequest<{ code: number; msg: string }>('/json/barcode', encodedPayload);
 
     return data.code === 0;
   }
 
-  async isLoveCodeValid(code: string): Promise<boolean> {
+  async isLoveCodeValid(_code: string): Promise<boolean> {
     throw new Error('Method not supported in Amego API.');
   }
 
@@ -747,15 +631,10 @@ export class AmegoInvoiceGateway
     return `invoice=${payload.invoice}&data=${encodeURIComponent(payload.data)}&time=${payload.time}&sign=${payload.sign}`;
   }
 
-  private async makeApiRequest<T>(
-    endpoint: string,
-    payload: string,
-  ): Promise<T> {
-    const { data } = await axios.post<T>(
-      `${this.baseUrl}${endpoint}`,
-      payload,
-      { headers: AmegoInvoiceGateway.COMMON_HEADERS },
-    );
+  private async makeApiRequest<T>(endpoint: string, payload: string): Promise<T> {
+    const { data } = await axios.post<T>(`${this.baseUrl}${endpoint}`, payload, {
+      headers: AmegoInvoiceGateway.COMMON_HEADERS,
+    });
 
     return data;
   }

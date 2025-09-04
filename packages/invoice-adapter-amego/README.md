@@ -30,6 +30,7 @@ yarn add @rytass/invoice-adapter-amego
 ```
 
 **Peer Dependencies:**
+
 ```bash
 npm install @rytass/invoice
 ```
@@ -45,14 +46,14 @@ import { AmegoInvoiceGateway, AmegoBaseUrls } from '@rytass/invoice-adapter-ameg
 const developmentGateway = new AmegoInvoiceGateway({
   appKey: 'YOUR_DEVELOPMENT_APP_KEY',
   vatNumber: '12345678', // Your company VAT number
-  baseUrl: AmegoBaseUrls.DEVELOPMENT // https://invoice-api.amego.tw
+  baseUrl: AmegoBaseUrls.DEVELOPMENT, // https://invoice-api.amego.tw
 });
 
 // Production environment
 const productionGateway = new AmegoInvoiceGateway({
   appKey: 'YOUR_PRODUCTION_APP_KEY',
   vatNumber: '12345678', // Your company VAT number
-  baseUrl: AmegoBaseUrls.PRODUCTION // https://invoice-api.amego.tw
+  baseUrl: AmegoBaseUrls.PRODUCTION, // https://invoice-api.amego.tw
 });
 ```
 
@@ -60,8 +61,8 @@ const productionGateway = new AmegoInvoiceGateway({
 
 ```typescript
 interface AmegoInvoiceGatewayOptions {
-  appKey: string;         // Amego API application key
-  vatNumber: string;      // Seller's VAT number (統編)
+  appKey: string; // Amego API application key
+  vatNumber: string; // Seller's VAT number (統編)
   baseUrl?: AmegoBaseUrls; // API base URL (development/production)
 }
 ```
@@ -76,7 +77,7 @@ import { AmegoInvoiceGateway, InvoiceCarriers, TaxType } from '@rytass/invoice-a
 const gateway = new AmegoInvoiceGateway({
   appKey: process.env.AMEGO_APP_KEY!,
   vatNumber: process.env.SELLER_VAT_NUMBER!,
-  baseUrl: AmegoBaseUrls.PRODUCTION
+  baseUrl: AmegoBaseUrls.PRODUCTION,
 });
 
 // Issue B2C invoice with print carrier
@@ -94,16 +95,16 @@ const invoice = await gateway.issue({
       unitPrice: 1000, // Including tax
       unit: '個',
       taxType: TaxType.TAXED,
-      remark: '高品質商品'
+      remark: '高品質商品',
     },
     {
       name: 'Standard Service',
       quantity: 1,
       unitPrice: 500, // Including tax
       unit: '次',
-      taxType: TaxType.TAXED
-    }
-  ]
+      taxType: TaxType.TAXED,
+    },
+  ],
 });
 
 console.log('Invoice Number:', invoice.number);
@@ -133,7 +134,7 @@ const b2bInvoice = await gateway.issue({
       unitPrice: 5000,
       unit: '套',
       taxType: TaxType.TAXED,
-      remark: '年度授權'
+      remark: '年度授權',
     },
     {
       name: '技術支援服務',
@@ -141,9 +142,9 @@ const b2bInvoice = await gateway.issue({
       unitPrice: 8000,
       unit: '月',
       taxType: TaxType.TAXED,
-      remark: '24/7支援'
-    }
-  ]
+      remark: '24/7支援',
+    },
+  ],
 });
 ```
 
@@ -171,9 +172,9 @@ const mobileInvoice = await gateway.issue({
       quantity: 1,
       unitPrice: 2000,
       unit: '個',
-      taxType: TaxType.TAXED
-    }
-  ]
+      taxType: TaxType.TAXED,
+    },
+  ],
 });
 ```
 
@@ -193,9 +194,9 @@ const donationInvoice = await gateway.issue({
       quantity: 3,
       unitPrice: 500,
       unit: '份',
-      taxType: TaxType.TAXED
-    }
-  ]
+      taxType: TaxType.TAXED,
+    },
+  ],
 });
 ```
 
@@ -218,7 +219,7 @@ const mixedTaxInvoice = await gateway.issue({
       unitPrice: 1000,
       unit: '個',
       taxType: TaxType.TAXED, // 5% tax
-      remark: '國內商品'
+      remark: '國內商品',
     },
     {
       name: 'Tax-Free Product',
@@ -226,7 +227,7 @@ const mixedTaxInvoice = await gateway.issue({
       unitPrice: 2000,
       unit: '件',
       taxType: TaxType.TAX_FREE, // No tax
-      remark: '免稅商品'
+      remark: '免稅商品',
     },
     {
       name: 'Export Product',
@@ -234,9 +235,9 @@ const mixedTaxInvoice = await gateway.issue({
       unitPrice: 3000,
       unit: '組',
       taxType: TaxType.ZERO_TAX, // Export (0% tax)
-      remark: '出口商品'
-    }
-  ]
+      remark: '出口商品',
+    },
+  ],
 });
 ```
 
@@ -259,9 +260,9 @@ const customTaxInvoice = await gateway.issue({
       quantity: 1,
       unitPrice: 10000, // Excluding tax
       unit: '個',
-      taxType: TaxType.TAXED
-    }
-  ]
+      taxType: TaxType.TAXED,
+    },
+  ],
 });
 ```
 
@@ -270,12 +271,12 @@ const customTaxInvoice = await gateway.issue({
 ```typescript
 // Query by order ID
 const queriedByOrder = await gateway.query({
-  orderId: 'ORD-2024-001'
+  orderId: 'ORD-2024-001',
 });
 
 // Query by invoice number
 const queriedByNumber = await gateway.query({
-  invoiceNumber: 'AA12345678'
+  invoiceNumber: 'AA12345678',
 });
 
 console.log('Invoice State:', queriedByOrder.state);
@@ -288,11 +289,11 @@ console.log('Issue Date:', queriedByOrder.issuedOn);
 ```typescript
 // Query and void an invoice
 const invoiceToVoid = await gateway.query({
-  orderId: 'ORD-2024-001'
+  orderId: 'ORD-2024-001',
 });
 
 const voidedInvoice = await gateway.void(invoiceToVoid, {
-  reason: 'Customer requested cancellation due to product defect'
+  reason: 'Customer requested cancellation due to product defect',
 });
 
 console.log('Void Status:', voidedInvoice.state); // InvoiceState.VOID
@@ -304,7 +305,7 @@ console.log('Voided On:', voidedInvoice.voidOn);
 ```typescript
 // Create allowance for partial refund
 const originalInvoice = await gateway.query({
-  orderId: 'ORD-2024-001'
+  orderId: 'ORD-2024-001',
 });
 
 const allowanceInvoice = await gateway.allowance(
@@ -316,13 +317,13 @@ const allowanceInvoice = await gateway.allowance(
       unitPrice: 1000,
       unit: '個',
       taxType: TaxType.TAXED,
-      remark: '商品瑕疵退貨'
-    }
+      remark: '商品瑕疵退貨',
+    },
   ],
   {
     allowanceType: AmegoAllowanceType.BUYER_ISSUED,
-    issuedAmount: originalInvoice.amount
-  }
+    issuedAmount: originalInvoice.amount,
+  },
 );
 
 console.log('Allowance Number:', allowanceInvoice.allowances[0].number);
@@ -401,7 +402,9 @@ try {
     carrier: InvoiceCarriers.PRINT,
     taxType: TaxType.TAXED,
     detailVat: true,
-    items: [/* invalid items */]
+    items: [
+      /* invalid items */
+    ],
   });
 } catch (error) {
   if (error.message.includes('Order ID is required')) {
@@ -477,9 +480,7 @@ const app = express();
 const gateway = new AmegoInvoiceGateway({
   appKey: process.env.AMEGO_APP_KEY!,
   vatNumber: process.env.SELLER_VAT_NUMBER!,
-  baseUrl: process.env.NODE_ENV === 'production' 
-    ? AmegoBaseUrls.PRODUCTION 
-    : AmegoBaseUrls.DEVELOPMENT
+  baseUrl: process.env.NODE_ENV === 'production' ? AmegoBaseUrls.PRODUCTION : AmegoBaseUrls.DEVELOPMENT,
 });
 
 // Issue invoice endpoint
@@ -526,8 +527,8 @@ app.post('/api/invoices', async (req, res) => {
         unitPrice: item.price,
         unit: item.unit || '個',
         taxType: TaxType.TAXED,
-        remark: item.notes
-      }))
+        remark: item.notes,
+      })),
     });
 
     res.json({
@@ -539,13 +540,13 @@ app.post('/api/invoices', async (req, res) => {
         taxAmount: invoice.taxAmount,
         qrCodeLeft: invoice.qrCodeLeft,
         qrCodeRight: invoice.qrCodeRight,
-        issuedOn: invoice.issuedOn
-      }
+        issuedOn: invoice.issuedOn,
+      },
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -555,7 +556,7 @@ app.get('/api/invoices/:identifier', async (req, res) => {
   try {
     const { identifier } = req.params;
     const { type } = req.query; // 'order' or 'invoice'
-    
+
     let invoice;
     if (type === 'invoice') {
       invoice = await gateway.query({ invoiceNumber: identifier });
@@ -570,13 +571,13 @@ app.get('/api/invoices/:identifier', async (req, res) => {
         orderId: invoice.orderId,
         state: invoice.state,
         amount: invoice.amount,
-        issuedOn: invoice.issuedOn
-      }
+        issuedOn: invoice.issuedOn,
+      },
     });
   } catch (error) {
     res.status(404).json({
       success: false,
-      error: 'Invoice not found'
+      error: 'Invoice not found',
     });
   }
 });
@@ -586,22 +587,22 @@ app.post('/api/invoices/:orderId/void', async (req, res) => {
   try {
     const { orderId } = req.params;
     const { reason } = req.body;
-    
+
     const invoice = await gateway.query({ orderId });
     const voidedInvoice = await gateway.void(invoice, { reason });
-    
+
     res.json({
       success: true,
       invoice: {
         number: voidedInvoice.number,
         state: voidedInvoice.state,
-        voidedOn: voidedInvoice.voidOn
-      }
+        voidedOn: voidedInvoice.voidOn,
+      },
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -621,9 +622,7 @@ export class AmegoInvoiceService {
     this.gateway = new AmegoInvoiceGateway({
       appKey: process.env.AMEGO_APP_KEY!,
       vatNumber: process.env.SELLER_VAT_NUMBER!,
-      baseUrl: process.env.NODE_ENV === 'production' 
-        ? AmegoBaseUrls.PRODUCTION 
-        : AmegoBaseUrls.DEVELOPMENT
+      baseUrl: process.env.NODE_ENV === 'production' ? AmegoBaseUrls.PRODUCTION : AmegoBaseUrls.DEVELOPMENT,
     });
   }
 
@@ -655,7 +654,7 @@ export class AmegoInvoiceService {
     // Determine invoice type and carrier
     const isB2B = !!order.customer.vatNumber;
     let carrier = InvoiceCarriers.PRINT;
-    
+
     if (!isB2B && order.customer.mobileBarcode) {
       carrier = InvoiceCarriers.MOBILE(order.customer.mobileBarcode);
     }
@@ -676,8 +675,8 @@ export class AmegoInvoiceService {
         unitPrice: item.price,
         unit: item.unit || '個',
         taxType: TaxType.TAXED,
-        remark: item.notes
-      }))
+        remark: item.notes,
+      })),
     });
 
     return {
@@ -687,7 +686,7 @@ export class AmegoInvoiceService {
       taxAmount: invoice.taxAmount,
       issuedOn: invoice.issuedOn,
       qrCodeLeft: invoice.qrCodeLeft,
-      qrCodeRight: invoice.qrCodeRight
+      qrCodeRight: invoice.qrCodeRight,
     };
   }
 
@@ -708,7 +707,7 @@ export class AmegoInvoiceService {
         amount: invoice.amount,
         taxAmount: invoice.taxAmount,
         issuedOn: invoice.issuedOn,
-        voidOn: invoice.voidOn
+        voidOn: invoice.voidOn,
       };
     } catch (error) {
       throw new NotFoundException('Invoice not found');
@@ -717,17 +716,17 @@ export class AmegoInvoiceService {
 
   async voidInvoice(orderId: string, reason: string) {
     const invoice = await this.gateway.query({ orderId });
-    
+
     if (invoice.state === InvoiceState.VOID) {
       throw new BadRequestException('Invoice is already voided');
     }
 
     const voidedInvoice = await this.gateway.void(invoice, { reason });
-    
+
     return {
       invoiceNumber: voidedInvoice.number,
       state: voidedInvoice.state,
-      voidedOn: voidedInvoice.voidOn
+      voidedOn: voidedInvoice.voidOn,
     };
   }
 
@@ -739,10 +738,10 @@ export class AmegoInvoiceService {
       quantity: number;
       unit?: string;
       notes?: string;
-    }>
+    }>,
   ) {
     const originalInvoice = await this.gateway.query({ orderId });
-    
+
     const allowanceInvoice = await this.gateway.allowance(
       originalInvoice,
       allowanceItems.map(item => ({
@@ -751,14 +750,14 @@ export class AmegoInvoiceService {
         unitPrice: item.price,
         unit: item.unit || '個',
         taxType: TaxType.TAXED,
-        remark: item.notes
-      }))
+        remark: item.notes,
+      })),
     );
 
     return {
       allowanceNumber: allowanceInvoice.allowances[0].number,
       allowanceAmount: allowanceInvoice.allowances[0].amount,
-      allowancedOn: allowanceInvoice.allowances[0].issuedOn
+      allowancedOn: allowanceInvoice.allowances[0].issuedOn,
     };
   }
 }
@@ -799,13 +798,11 @@ class EcommerceAmegoInvoiceProcessor {
   }) {
     // Determine carrier based on customer preferences
     let carrier = InvoiceCarriers.PRINT;
-    
+
     if (order.customer.preferences.carrier && order.customer.preferences.carrierCode) {
       switch (order.customer.preferences.carrier) {
         case 'mobile':
-          const isValidBarcode = await this.gateway.isMobileBarcodeValid(
-            order.customer.preferences.carrierCode
-          );
+          const isValidBarcode = await this.gateway.isMobileBarcodeValid(order.customer.preferences.carrierCode);
           if (isValidBarcode) {
             carrier = InvoiceCarriers.MOBILE(order.customer.preferences.carrierCode);
           }
@@ -825,8 +822,8 @@ class EcommerceAmegoInvoiceProcessor {
     // Determine tax type based on items
     const hasExportItems = order.items.some(item => item.isExport);
     const hasDomesticItems = order.items.some(item => !item.isExport);
-    const taxType = hasExportItems && hasDomesticItems ? TaxType.MIXED : 
-                   hasExportItems ? TaxType.ZERO_TAX : TaxType.TAXED;
+    const taxType =
+      hasExportItems && hasDomesticItems ? TaxType.MIXED : hasExportItems ? TaxType.ZERO_TAX : TaxType.TAXED;
 
     // Map items with appropriate tax types
     const invoiceItems = order.items.map(item => ({
@@ -835,7 +832,7 @@ class EcommerceAmegoInvoiceProcessor {
       unitPrice: item.price,
       unit: item.unit || '個',
       taxType: item.isExport ? TaxType.ZERO_TAX : TaxType.TAXED,
-      remark: item.notes
+      remark: item.notes,
     }));
 
     const invoice = await this.gateway.issue({
@@ -848,7 +845,7 @@ class EcommerceAmegoInvoiceProcessor {
       detailVat: true,
       customsMark: order.shipping.isExport ? CustomsMark.YES : CustomsMark.NO,
       remark: order.shipping.notes,
-      items: invoiceItems
+      items: invoiceItems,
     });
 
     return {
@@ -857,7 +854,7 @@ class EcommerceAmegoInvoiceProcessor {
       amount: invoice.amount,
       taxAmount: invoice.taxAmount,
       qrCodeLeft: invoice.qrCodeLeft,
-      qrCodeRight: invoice.qrCodeRight
+      qrCodeRight: invoice.qrCodeRight,
     };
   }
 }
@@ -866,30 +863,35 @@ class EcommerceAmegoInvoiceProcessor {
 ## Best Practices
 
 ### Configuration Management
+
 - Store sensitive credentials in environment variables
 - Use different configurations for development and production environments
 - Regularly rotate API keys and credentials
 - Implement proper error handling for authentication failures
 
 ### Invoice Processing
+
 - Always validate mobile barcodes before invoice issuance
 - Implement proper error handling for all Amego API calls
 - Store order IDs and invoice mappings for future reference
 - Handle duplicate order IDs appropriately
 
 ### Tax Compliance
+
 - Use correct tax types for different product categories
 - Handle export/import scenarios with appropriate customs marks
 - Validate VAT numbers for B2B transactions
 - Keep audit trails of all invoice operations
 
 ### Performance Optimization
+
 - Implement caching for carrier validation results
 - Use appropriate timeout settings for API calls
 - Batch process invoices when handling high volumes
 - Monitor API response times and implement alerting
 
 ### Security
+
 - Validate all input parameters before processing
 - Sanitize customer data and item information
 - Log all invoice operations for audit purposes
@@ -907,7 +909,7 @@ describe('Amego Invoice Integration', () => {
     gateway = new AmegoInvoiceGateway({
       appKey: 'test_app_key',
       vatNumber: '12345678',
-      baseUrl: AmegoBaseUrls.DEVELOPMENT
+      baseUrl: AmegoBaseUrls.DEVELOPMENT,
     });
   });
 
@@ -924,9 +926,9 @@ describe('Amego Invoice Integration', () => {
           quantity: 1,
           unitPrice: 1000,
           unit: '個',
-          taxType: TaxType.TAXED
-        }
-      ]
+          taxType: TaxType.TAXED,
+        },
+      ],
     });
 
     expect(invoice.number).toBeDefined();
@@ -941,7 +943,7 @@ describe('Amego Invoice Integration', () => {
 
   it('should query invoice by order ID', async () => {
     const queriedInvoice = await gateway.query({
-      orderId: 'TEST-001'
+      orderId: 'TEST-001',
     });
 
     expect(queriedInvoice.orderId).toBe('TEST-001');
@@ -949,21 +951,18 @@ describe('Amego Invoice Integration', () => {
 
   it('should create allowance successfully', async () => {
     const originalInvoice = await gateway.query({
-      orderId: 'TEST-001'
+      orderId: 'TEST-001',
     });
 
-    const allowanceInvoice = await gateway.allowance(
-      originalInvoice,
-      [
-        {
-          name: 'Returned Product',
-          quantity: 1,
-          unitPrice: 1000,
-          unit: '個',
-          taxType: TaxType.TAXED
-        }
-      ]
-    );
+    const allowanceInvoice = await gateway.allowance(originalInvoice, [
+      {
+        name: 'Returned Product',
+        quantity: 1,
+        unitPrice: 1000,
+        unit: '個',
+        taxType: TaxType.TAXED,
+      },
+    ]);
 
     expect(allowanceInvoice.allowances).toHaveLength(1);
     expect(allowanceInvoice.allowances[0].amount).toBe(1000);
@@ -979,8 +978,8 @@ describe('Amego Invoice Integration', () => {
 
 ```typescript
 interface AmegoInvoiceGatewayOptions {
-  appKey: string;         // Your Amego API application key
-  vatNumber: string;      // Your company's VAT number (統編)
+  appKey: string; // Your Amego API application key
+  vatNumber: string; // Your company's VAT number (統編)
   baseUrl?: AmegoBaseUrls; // API endpoint (DEVELOPMENT or PRODUCTION)
 }
 ```
@@ -992,6 +991,7 @@ interface AmegoInvoiceGatewayOptions {
 Issues a new invoice with the specified options.
 
 **Parameters:**
+
 - `orderId: string` - Unique order identifier
 - `items: AmegoPaymentItem[]` - Invoice line items
 - `taxType: TaxType` - Overall tax type for the invoice
@@ -1007,6 +1007,7 @@ Issues a new invoice with the specified options.
 Queries an invoice by order ID or invoice number.
 
 **Parameters:**
+
 - `orderId?: string` - Order identifier
 - `invoiceNumber?: string` - Invoice number
 
@@ -1015,6 +1016,7 @@ Queries an invoice by order ID or invoice number.
 Creates an allowance (partial refund) for an existing invoice.
 
 **Parameters:**
+
 - `invoice: AmegoInvoice` - Original invoice
 - `items: AmegoPaymentItem[]` - Items to be refunded
 - `options?: AmegoAllowanceOptions` - Additional allowance options
@@ -1024,6 +1026,7 @@ Creates an allowance (partial refund) for an existing invoice.
 Cancels an existing allowance.
 
 **Parameters:**
+
 - `allowance: AmegoAllowance` - Allowance to be invalidated
 
 ##### `void(invoice: AmegoInvoice, options: AmegoInvoiceVoidOptions): Promise<AmegoInvoice>`
@@ -1031,6 +1034,7 @@ Cancels an existing allowance.
 Voids an issued invoice.
 
 **Parameters:**
+
 - `invoice: AmegoInvoice` - Invoice to be voided
 - `options.reason: string` - Reason for voiding
 
@@ -1039,9 +1043,11 @@ Voids an issued invoice.
 Validates a mobile carrier barcode format and existence.
 
 **Parameters:**
+
 - `code: string` - Mobile barcode to validate
 
 **Returns:**
+
 - `Promise<boolean>` - Whether the barcode is valid
 
 ### Type Definitions
@@ -1050,12 +1056,12 @@ Validates a mobile carrier barcode format and existence.
 
 ```typescript
 interface AmegoPaymentItem {
-  name: string;           // Item name (max 256 characters)
-  quantity: number;       // Quantity
-  unitPrice: number;      // Unit price
-  unit?: string;          // Unit of measurement (max 6 characters)
-  taxType: TaxType;       // Tax type for this item
-  remark?: string;        // Additional notes (max 40 characters)
+  name: string; // Item name (max 256 characters)
+  quantity: number; // Quantity
+  unitPrice: number; // Unit price
+  unit?: string; // Unit of measurement (max 6 characters)
+  taxType: TaxType; // Tax type for this item
+  remark?: string; // Additional notes (max 40 characters)
 }
 ```
 
@@ -1063,18 +1069,18 @@ interface AmegoPaymentItem {
 
 ```typescript
 interface AmegoInvoiceIssueOptions {
-  orderId: string;                    // Order ID (max 40 characters)
-  items: AmegoPaymentItem[];          // Invoice items
-  taxType: TaxType;                   // Overall tax type
-  detailVat: boolean;                 // Whether prices include tax
-  buyerEmail?: string;                // Buyer's email
-  buyerName?: string;                 // Buyer's name
-  vatNumber?: string;                 // Buyer's VAT number
-  carrier?: InvoiceCarrier;           // Delivery carrier
-  remark?: string;                    // Additional notes
-  salesAmount?: number;               // Manual sales amount
-  taxAmount?: number;                 // Manual tax amount
-  totalAmount?: number;               // Manual total amount
+  orderId: string; // Order ID (max 40 characters)
+  items: AmegoPaymentItem[]; // Invoice items
+  taxType: TaxType; // Overall tax type
+  detailVat: boolean; // Whether prices include tax
+  buyerEmail?: string; // Buyer's email
+  buyerName?: string; // Buyer's name
+  vatNumber?: string; // Buyer's VAT number
+  carrier?: InvoiceCarrier; // Delivery carrier
+  remark?: string; // Additional notes
+  salesAmount?: number; // Manual sales amount
+  taxAmount?: number; // Manual tax amount
+  totalAmount?: number; // Manual total amount
 }
 ```
 

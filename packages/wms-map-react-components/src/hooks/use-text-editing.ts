@@ -46,13 +46,7 @@ export const useTextEditing = ({
         updates,
       });
 
-      setNodes((nodes) =>
-        nodes.map((node) =>
-          node.id === id
-            ? { ...node, data: { ...node.data, ...updates } }
-            : node,
-        ),
-      );
+      setNodes(nodes => nodes.map(node => (node.id === id ? { ...node, data: { ...node.data, ...updates } } : node)));
 
       updateNodeInternals(id);
     },

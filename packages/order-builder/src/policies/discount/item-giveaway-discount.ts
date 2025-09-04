@@ -5,12 +5,7 @@ import { plus, times } from '../../utils/decimal';
 import { PolicyPrefix } from '../typings';
 import { generateNewPolicyId } from '../utils';
 import { BaseDiscount } from './base-discount';
-import {
-  Discount,
-  DiscountOptions,
-  ItemGiveawayStrategy,
-  PolicyDiscountDescription,
-} from './typings';
+import { Discount, DiscountOptions, ItemGiveawayStrategy, PolicyDiscountDescription } from './typings';
 import {
   getConditionsByDiscountConstructor,
   getOnlyMatchedItems,
@@ -42,22 +37,14 @@ export class ItemGiveawayDiscount implements BaseDiscount {
    * @param {ItemGiveawayDiscountOptions} options ItemGiveawayDiscountOptions
    * @returns {Policy} Policy
    */
-  constructor(
-    value: number,
-    conditions: Condition[],
-    options?: ItemGiveawayDiscountOptions
-  );
+  constructor(value: number, conditions: Condition[], options?: ItemGiveawayDiscountOptions);
   /**
    * @param {Number} value `Number` Quantity of giveaway items.
    * @param {Condition} condition Condition
    * @param {ItemGiveawayDiscountOptions} options ItemGiveawayDiscountOptions
    * @returns {Policy} Policy
    */
-  constructor(
-    value: number,
-    condition: Condition,
-    options?: ItemGiveawayDiscountOptions
-  );
+  constructor(value: number, condition: Condition, options?: ItemGiveawayDiscountOptions);
   /**
    * @param {Number} value `Number` Quantity of giveaway items.
    * @param {ItemGiveawayDiscountOptions} options ItemGiveawayDiscountOptions
@@ -72,7 +59,7 @@ export class ItemGiveawayDiscount implements BaseDiscount {
   constructor(
     value: number,
     arg1?: Condition | Condition[] | ItemGiveawayDiscountOptions,
-    arg2?: ItemGiveawayDiscountOptions
+    arg2?: ItemGiveawayDiscountOptions,
   ) {
     this.options = getOptionsByDiscountConstructor(arg1, arg2);
     this.strategy = this.options?.strategy ?? 'LOW_PRICE_FIRST';
@@ -82,29 +69,20 @@ export class ItemGiveawayDiscount implements BaseDiscount {
   }
 
   matchedItems(order: Order): FlattenOrderItem[] {
-    return (
-      this.options?.onlyMatched
-        ? getOnlyMatchedItems(order, this.conditions)
-        : getOrderItems(order)
-    ).filter(item => times(item.unitPrice, item.quantity));
+    return (this.options?.onlyMatched ? getOnlyMatchedItems(order, this.conditions) : getOrderItems(order)).filter(
+      item => times(item.unitPrice, item.quantity),
+    );
   }
 
   valid(order: Order): boolean {
-    return this.conditions.length
-      ? this.conditions.every(condition => condition.satisfy?.(order))
-      : true;
+    return this.conditions.length ? this.conditions.every(condition => condition.satisfy?.(order)) : true;
   }
 
   discount(giveawayItemValue: number): number {
-    return this.options?.excludedInCalculation
-      ? 0
-      : giveawayItemValue;
+    return this.options?.excludedInCalculation ? 0 : giveawayItemValue;
   }
 
-  description(
-    giveawayItemValue: number,
-    appliedItems: FlattenOrderItem[]
-  ): PolicyDiscountDescription {
+  description(giveawayItemValue: number, appliedItems: FlattenOrderItem[]): PolicyDiscountDescription {
     return {
       id: this.id,
       value: this.value,
@@ -118,10 +96,7 @@ export class ItemGiveawayDiscount implements BaseDiscount {
     };
   }
 
-  resolve<PolicyDiscountDescription>(
-    order: Order,
-    policies: PolicyDiscountDescription[]
-  ): PolicyDiscountDescription[] {
+  resolve<PolicyDiscountDescription>(order: Order, policies: PolicyDiscountDescription[]): PolicyDiscountDescription[] {
     if (this.valid(order)) {
       const matchedItems: FlattenOrderItem[] = this.matchedItems(order);
       const giveawayItems = matchedItems
@@ -141,15 +116,10 @@ export class ItemGiveawayDiscount implements BaseDiscount {
       const giveawayItemValue = order.config.roundStrategy.round(
         // original giveawayItem
         giveawayItems.reduce((total, item) => plus(total, item.unitPrice), 0),
-        'final-price-only'
+        'final-price-only',
       );
 
-      policies.push(
-        this.description(
-          giveawayItemValue,
-          giveawayItems
-        ) as PolicyDiscountDescription
-      );
+      policies.push(this.description(giveawayItemValue, giveawayItems) as PolicyDiscountDescription);
     }
 
     return policies;

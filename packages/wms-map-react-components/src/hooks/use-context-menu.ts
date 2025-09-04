@@ -38,18 +38,13 @@ interface UseContextMenuReturn {
   setNodes: (nodes: any[] | ((nodes: any[]) => any[])) => void;
 }
 
-export const useContextMenu = ({
-  id,
-  editMode,
-  isEditable,
-  nodeType,
-}: UseContextMenuProps): UseContextMenuReturn => {
+export const useContextMenu = ({ id, editMode, isEditable, nodeType }: UseContextMenuProps): UseContextMenuReturn => {
   const { setNodes, getNodes } = useReactFlow();
 
   // Calculate arrange states based on current node position
   const getArrangeStates = useCallback((): ArrangeStates => {
     const nodes = getNodes();
-    const currentNode = nodes.find((node) => node.id === id);
+    const currentNode = nodes.find(node => node.id === id);
 
     if (!currentNode) {
       return {
@@ -61,13 +56,13 @@ export const useContextMenu = ({
     }
 
     const currentZ = currentNode.zIndex || 0;
-    const allZIndexes = nodes.map((n) => n.zIndex || 0).sort((a, b) => a - b);
+    const allZIndexes = nodes.map(n => n.zIndex || 0).sort((a, b) => a - b);
     const maxZ = Math.max(...allZIndexes);
     const minZ = Math.min(...allZIndexes);
 
     // Check if there are nodes above (higher zIndex)
-    const nodesAbove = nodes.filter((n) => (n.zIndex || 0) > currentZ);
-    const nodesBelow = nodes.filter((n) => (n.zIndex || 0) < currentZ);
+    const nodesAbove = nodes.filter(n => (n.zIndex || 0) > currentZ);
+    const nodesBelow = nodes.filter(n => (n.zIndex || 0) < currentZ);
 
     return {
       canBringToFront: currentZ < maxZ, // Can bring to front if not already at max
@@ -90,9 +85,7 @@ export const useContextMenu = ({
       // For rectangle/path nodes, show context menu in LAYER mode
       const shouldShowMenu =
         (nodeType === 'imageNode' && editMode === EditMode.BACKGROUND) ||
-        ((nodeType === 'rectangleNode' || nodeType === 'pathNode') &&
-          editMode === EditMode.LAYER &&
-          isEditable);
+        ((nodeType === 'rectangleNode' || nodeType === 'pathNode') && editMode === EditMode.LAYER && isEditable);
 
       if (!shouldShowMenu) return;
 
@@ -114,20 +107,20 @@ export const useContextMenu = ({
   }, []);
 
   const handleDelete = useCallback(() => {
-    setNodes((nodes) => nodes.filter((node) => node.id !== id));
+    setNodes(nodes => nodes.filter(node => node.id !== id));
     handleCloseContextMenu();
   }, [id, setNodes, handleCloseContextMenu]);
 
   // Arrange functionality
   const handleBringToFront = useCallback(() => {
     console.log('Bringing to front:', id);
-    setNodes((nodes) => {
+    setNodes(nodes => {
       console.log(
         'Current nodes:',
-        nodes.map((n) => n.id),
+        nodes.map(n => n.id),
       );
 
-      const nodeToMove = nodes.find((node) => node.id === id);
+      const nodeToMove = nodes.find(node => node.id === id);
 
       if (!nodeToMove) {
         console.log('Node not found');
@@ -135,9 +128,9 @@ export const useContextMenu = ({
         return nodes;
       }
 
-      const otherNodes = nodes.filter((node) => node.id !== id);
+      const otherNodes = nodes.filter(node => node.id !== id);
       // Calculate highest zIndex
-      const maxZIndex = Math.max(...nodes.map((n) => n.zIndex || 0), 0);
+      const maxZIndex = Math.max(...nodes.map(n => n.zIndex || 0), 0);
 
       const updatedNode = {
         ...nodeToMove,
@@ -148,7 +141,7 @@ export const useContextMenu = ({
 
       console.log(
         'New nodes order:',
-        newNodes.map((n) => `${n.id}(z:${n.zIndex || 0})`),
+        newNodes.map(n => `${n.id}(z:${n.zIndex || 0})`),
       );
 
       return newNodes;
@@ -159,8 +152,8 @@ export const useContextMenu = ({
 
   const handleBringForward = useCallback(() => {
     console.log('Bringing forward:', id);
-    setNodes((nodes) => {
-      const currentNode = nodes.find((node) => node.id === id);
+    setNodes(nodes => {
+      const currentNode = nodes.find(node => node.id === id);
 
       if (!currentNode) {
         console.log('Node not found');
@@ -170,7 +163,7 @@ export const useContextMenu = ({
 
       // Find the node immediately in front (higher zIndex)
       const currentZ = currentNode.zIndex || 0;
-      const nodesAbove = nodes.filter((n) => (n.zIndex || 0) > currentZ);
+      const nodesAbove = nodes.filter(n => (n.zIndex || 0) > currentZ);
 
       if (nodesAbove.length === 0) {
         console.log('Already at front');
@@ -179,12 +172,10 @@ export const useContextMenu = ({
       }
 
       // Find the node with the lowest zIndex above current node
-      const nextNode = nodesAbove.reduce((min, node) =>
-        (node.zIndex || 0) < (min.zIndex || 0) ? node : min,
-      );
+      const nextNode = nodesAbove.reduce((min, node) => ((node.zIndex || 0) < (min.zIndex || 0) ? node : min));
 
       // Swap zIndex values
-      return nodes.map((node) => {
+      return nodes.map(node => {
         if (node.id === id) {
           return { ...node, zIndex: nextNode.zIndex };
         } else if (node.id === nextNode.id) {
@@ -200,8 +191,8 @@ export const useContextMenu = ({
 
   const handleSendBackward = useCallback(() => {
     console.log('Sending backward:', id);
-    setNodes((nodes) => {
-      const currentNode = nodes.find((node) => node.id === id);
+    setNodes(nodes => {
+      const currentNode = nodes.find(node => node.id === id);
 
       if (!currentNode) {
         console.log('Node not found');
@@ -211,7 +202,7 @@ export const useContextMenu = ({
 
       // Find the node immediately behind (lower zIndex)
       const currentZ = currentNode.zIndex || 0;
-      const nodesBelow = nodes.filter((n) => (n.zIndex || 0) < currentZ);
+      const nodesBelow = nodes.filter(n => (n.zIndex || 0) < currentZ);
 
       if (nodesBelow.length === 0) {
         console.log('Already at back');
@@ -220,12 +211,10 @@ export const useContextMenu = ({
       }
 
       // Find the node with the highest zIndex below current node
-      const prevNode = nodesBelow.reduce((max, node) =>
-        (node.zIndex || 0) > (max.zIndex || 0) ? node : max,
-      );
+      const prevNode = nodesBelow.reduce((max, node) => ((node.zIndex || 0) > (max.zIndex || 0) ? node : max));
 
       // Swap zIndex values
-      return nodes.map((node) => {
+      return nodes.map(node => {
         if (node.id === id) {
           return { ...node, zIndex: prevNode.zIndex };
         } else if (node.id === prevNode.id) {
@@ -241,8 +230,8 @@ export const useContextMenu = ({
 
   const handleSendToBack = useCallback(() => {
     console.log('Sending to back:', id);
-    setNodes((nodes) => {
-      const nodeToMove = nodes.find((node) => node.id === id);
+    setNodes(nodes => {
+      const nodeToMove = nodes.find(node => node.id === id);
 
       if (!nodeToMove) {
         console.log('Node not found');
@@ -250,9 +239,9 @@ export const useContextMenu = ({
         return nodes;
       }
 
-      const otherNodes = nodes.filter((node) => node.id !== id);
+      const otherNodes = nodes.filter(node => node.id !== id);
       // Calculate lowest zIndex
-      const minZIndex = Math.min(...nodes.map((n) => n.zIndex || 0), 0);
+      const minZIndex = Math.min(...nodes.map(n => n.zIndex || 0), 0);
 
       const updatedNode = {
         ...nodeToMove,
@@ -263,7 +252,7 @@ export const useContextMenu = ({
 
       console.log(
         'New nodes order:',
-        newNodes.map((n) => `${n.id}(z:${n.zIndex || 0})`),
+        newNodes.map(n => `${n.id}(z:${n.zIndex || 0})`),
       );
 
       return newNodes;

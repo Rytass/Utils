@@ -26,11 +26,7 @@ export const calculateCopyOffset = (
  */
 export const createRectangleCopy = (options: CopyNodeOptions): Node => {
   const { currentNode, offsetPercentage = 0.25, data } = options;
-  const { offsetX, offsetY } = calculateCopyOffset(
-    data.width,
-    data.height,
-    offsetPercentage,
-  );
+  const { offsetX, offsetY } = calculateCopyOffset(data.width, data.height, offsetPercentage);
 
   return {
     id: `rectangle-${Date.now()}`,
@@ -66,11 +62,7 @@ export const createPathCopy = (options: CopyNodeOptions): Node => {
 
   const pathWidth = Math.max(bounds.maxX - bounds.minX, 10);
   const pathHeight = Math.max(bounds.maxY - bounds.minY, 10);
-  const { offsetX, offsetY } = calculateCopyOffset(
-    pathWidth,
-    pathHeight,
-    offsetPercentage,
-  );
+  const { offsetX, offsetY } = calculateCopyOffset(pathWidth, pathHeight, offsetPercentage);
 
   return {
     id: `path-${Date.now()}`,
@@ -93,11 +85,7 @@ export const createPathCopy = (options: CopyNodeOptions): Node => {
  */
 export const createImageCopy = (options: CopyNodeOptions): Node => {
   const { currentNode, offsetPercentage = 0.25, data } = options;
-  const { offsetX, offsetY } = calculateCopyOffset(
-    data.width,
-    data.height,
-    offsetPercentage,
-  );
+  const { offsetX, offsetY } = calculateCopyOffset(data.width, data.height, offsetPercentage);
 
   return {
     id: `image-${Date.now()}`,

@@ -1,41 +1,20 @@
 import { DataSource } from 'typeorm';
 import { Test } from '@nestjs/testing';
-import {
-  BaseArticleRepo,
-  BaseArticleEntity,
-} from '../../src/models/base-article.entity';
-import {
-  BaseArticleVersionRepo,
-  BaseArticleVersionEntity,
-} from '../../src/models/base-article-version.entity';
+import { BaseArticleRepo, BaseArticleEntity } from '../../src/models/base-article.entity';
+import { BaseArticleVersionRepo, BaseArticleVersionEntity } from '../../src/models/base-article-version.entity';
 import {
   BaseArticleVersionContentRepo,
   BaseArticleVersionContentEntity,
 } from '../../src/models/base-article-version-content.entity';
-import {
-  BaseCategoryRepo,
-  BaseCategoryEntity,
-} from '../../src/models/base-category.entity';
+import { BaseCategoryRepo, BaseCategoryEntity } from '../../src/models/base-category.entity';
 import {
   BaseCategoryMultiLanguageNameRepo,
   BaseCategoryMultiLanguageNameEntity,
 } from '../../src/models/base-category-multi-language-name.entity';
-import {
-  BaseSignatureLevelRepo,
-  BaseSignatureLevelEntity,
-} from '../../src/models/base-signature-level.entity';
-import {
-  CategoryRelationRepo,
-  CategoryRelationEntity,
-} from '../../src/models/category-relation.entity';
-import {
-  ArticleCategoryRepo,
-  ArticleCategoryEntity,
-} from '../../src/models/article-category.entity';
-import {
-  ArticleSignatureRepo,
-  ArticleSignatureEntity,
-} from '../../src/models/article-signature.entity';
+import { BaseSignatureLevelRepo, BaseSignatureLevelEntity } from '../../src/models/base-signature-level.entity';
+import { CategoryRelationRepo, CategoryRelationEntity } from '../../src/models/category-relation.entity';
+import { ArticleCategoryRepo, ArticleCategoryEntity } from '../../src/models/article-category.entity';
+import { ArticleSignatureRepo, ArticleSignatureEntity } from '../../src/models/article-signature.entity';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { CMSBaseModelsModule } from '../../src/models/models.module';
 
@@ -47,7 +26,7 @@ describe('CMSBaseModelsModule Factory Functions (direct test)', () => {
     password: '',
   } satisfies TypeOrmModuleOptions;
 
-  const mockGetRepository = jest.fn((entity) => `MockRepo:${entity.name}`);
+  const mockGetRepository = jest.fn(entity => `MockRepo:${entity.name}`);
   const mockDataSource = {
     getRepository: mockGetRepository,
     entityMetadatas: [],
@@ -76,8 +55,7 @@ describe('CMSBaseModelsModule Factory Functions (direct test)', () => {
 
     for (const [token, entity] of tokenEntityPairs) {
       // This is the exact factory function logic from your module
-      const factoryFunction = (dataSource: DataSource) =>
-        dataSource.getRepository(entity);
+      const factoryFunction = (dataSource: DataSource) => dataSource.getRepository(entity);
 
       const result = factoryFunction(mockDataSource);
 

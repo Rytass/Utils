@@ -3,12 +3,7 @@
  * @jest-environment node
  */
 
-import {
-  Channel,
-  CreditCardECI,
-  OrderState,
-  WebATMPaymentInfo,
-} from '@rytass/payments';
+import { Channel, CreditCardECI, OrderState, WebATMPaymentInfo } from '@rytass/payments';
 import { NewebPayCreditCardSpeedCheckoutMode } from '../src/typings';
 import {
   NewebPayAdditionInfoCreditCard,
@@ -50,11 +45,10 @@ describe('NewebPay Settle Order', () => {
 
       decipher.setAutoPadding(false);
 
-      const plainInfo =
-        `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
-          /[\u0000-\u001F\u007F-\u009F]/g,
-          '',
-        );
+      const plainInfo = `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
+        /[\u0000-\u001F\u007F-\u009F]/g,
+        '',
+      );
 
       const requestBody = new URLSearchParams(plainInfo);
 
@@ -118,9 +112,9 @@ describe('NewebPay Settle Order', () => {
     await order.creditCardSettle();
 
     expect(order.state).toBe(OrderState.COMMITTED);
-    expect(
-      (order.additionalInfo as NewebPayAdditionInfoCreditCard).closeStatus,
-    ).toBe(NewebPayCreditCardBalanceStatus.WAITING);
+    expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).closeStatus).toBe(
+      NewebPayCreditCardBalanceStatus.WAITING,
+    );
   });
 
   it('should throw error when settle uncommitted order', () => {
@@ -160,9 +154,7 @@ describe('NewebPay Settle Order', () => {
       } as NewebPayAdditionInfoCreditCard,
     );
 
-    expect(() => order.creditCardSettle()).rejects.toThrow(
-      'Only committed order can be settled',
-    );
+    expect(() => order.creditCardSettle()).rejects.toThrow('Only committed order can be settled');
   });
 
   it('should throw error when settle non credit card order', () => {
@@ -190,9 +182,7 @@ describe('NewebPay Settle Order', () => {
       } as WebATMPaymentInfo,
     );
 
-    expect(() => order.creditCardSettle()).rejects.toThrow(
-      'Only credit card order can be settled',
-    );
+    expect(() => order.creditCardSettle()).rejects.toThrow('Only credit card order can be settled');
   });
 
   it('should throw error on settle failed', () => {
@@ -211,11 +201,10 @@ describe('NewebPay Settle Order', () => {
 
       decipher.setAutoPadding(false);
 
-      const plainInfo =
-        `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
-          /[\u0000-\u001F\u007F-\u009F]/g,
-          '',
-        );
+      const plainInfo = `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
+        /[\u0000-\u001F\u007F-\u009F]/g,
+        '',
+      );
 
       const requestBody = new URLSearchParams(plainInfo);
 
@@ -270,9 +259,7 @@ describe('NewebPay Settle Order', () => {
       } as NewebPayAdditionInfoCreditCard,
     );
 
-    expect(() => order.creditCardSettle()).rejects.toThrow(
-      'Settle order failed',
-    );
+    expect(() => order.creditCardSettle()).rejects.toThrow('Settle order failed');
   });
 
   it('should throw error when settle settled order', async () => {
@@ -312,9 +299,7 @@ describe('NewebPay Settle Order', () => {
       } as NewebPayAdditionInfoCreditCard,
     );
 
-    expect(() => payment.settle(order)).rejects.toThrow(
-      'Only unsettled order can be canceled',
-    );
+    expect(() => payment.settle(order)).rejects.toThrow('Only unsettled order can be canceled');
   });
 
   it('should unsettle order', async () => {
@@ -333,11 +318,10 @@ describe('NewebPay Settle Order', () => {
 
       decipher.setAutoPadding(false);
 
-      const plainInfo =
-        `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
-          /[\u0000-\u001F\u007F-\u009F]/g,
-          '',
-        );
+      const plainInfo = `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
+        /[\u0000-\u001F\u007F-\u009F]/g,
+        '',
+      );
 
       const requestBody = new URLSearchParams(plainInfo);
 
@@ -402,9 +386,9 @@ describe('NewebPay Settle Order', () => {
     await order.refund();
 
     expect(order.state).toBe(OrderState.REFUNDED);
-    expect(
-      (order.additionalInfo as NewebPayAdditionInfoCreditCard).closeStatus,
-    ).toBe(NewebPayCreditCardBalanceStatus.UNSETTLED);
+    expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).closeStatus).toBe(
+      NewebPayCreditCardBalanceStatus.UNSETTLED,
+    );
   });
 
   it('should throw error on unsettle failed', () => {
@@ -423,11 +407,10 @@ describe('NewebPay Settle Order', () => {
 
       decipher.setAutoPadding(false);
 
-      const plainInfo =
-        `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
-          /[\u0000-\u001F\u007F-\u009F]/g,
-          '',
-        );
+      const plainInfo = `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
+        /[\u0000-\u001F\u007F-\u009F]/g,
+        '',
+      );
 
       const requestBody = new URLSearchParams(plainInfo);
 
@@ -523,8 +506,6 @@ describe('NewebPay Settle Order', () => {
       } as NewebPayAdditionInfoCreditCard,
     );
 
-    expect(() => payment.unsettle(order)).rejects.toThrow(
-      'Only waiting order can be unsettle',
-    );
+    expect(() => payment.unsettle(order)).rejects.toThrow('Only waiting order can be unsettle');
   });
 });

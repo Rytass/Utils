@@ -5,6 +5,7 @@ A comprehensive collection of production-ready React components for building con
 ## Features
 
 ### Core Components
+
 - [x] StandardCMSTable - Advanced data table with sorting, filtering, and actions
 - [x] StandardCMSFormActions - Form submission with workflow actions
 - [x] StandardCMSList - List view with pagination and selection
@@ -12,19 +13,22 @@ A comprehensive collection of production-ready React components for building con
 - [x] Textarea with rich text support
 
 ### Modal Components
+
 - [x] DeleteWithdrawModal - Article deletion/withdrawal confirmation
 - [x] RejectModal - Article rejection with reasons
 - [x] VerifyReleaseModal - Release verification workflow
 - [x] LogsModal - Version history and audit logs
 
 ### Context Providers
+
 - [x] DialogProvider - Centralized dialog management
 - [x] ModalProvider - Modal state management
 - [x] Permission utilities for role-based access
 - [x] Built-in form validation with react-hook-form
 
 ### Article Workflow Management
-- [x] Complete article lifecycle (Draft ’ Reviewing ’ Verified ’ Released)
+
+- [x] Complete article lifecycle (Draft ï¿½ Reviewing ï¿½ Verified ï¿½ Released)
 - [x] Permission-based action controls
 - [x] Multi-stage approval workflows
 - [x] Version control integration
@@ -54,9 +58,7 @@ function App() {
   return (
     <CalendarConfigProvider methods={calendarMethodsDayjs}>
       <DialogProvider>
-        <ModalProvider>
-          {/* Your app components */}
-        </ModalProvider>
+        <ModalProvider>{/* Your app components */}</ModalProvider>
       </DialogProvider>
     </CalendarConfigProvider>
   );
@@ -101,16 +103,13 @@ const columns: TableColumn<Article>[] = [
     title: 'Stage',
     dataIndex: 'stage',
     width: 120,
-    render: (stage: ArticleStage) => (
-      <StatusBadge stage={stage} />
-    ),
+    render: (stage: ArticleStage) => <StatusBadge stage={stage} />,
   },
   {
     title: 'Published',
     dataIndex: 'publishedAt',
     width: 150,
-    render: (date: Date | null) => 
-      date ? new Date(date).toLocaleDateString() : '-',
+    render: (date: Date | null) => (date ? new Date(date).toLocaleDateString() : '-'),
   },
 ];
 
@@ -155,7 +154,7 @@ function ArticleManagement() {
       actionColumn={{
         title: 'Actions',
         width: 150,
-        actions: (record) => getActionsForStage(record.stage),
+        actions: record => getActionsForStage(record.stage),
       }}
     />
   );
@@ -169,10 +168,7 @@ Form submission component with integrated workflow actions and validation.
 ```tsx
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { 
-  StandardCMSFormActions,
-  ArticleStage 
-} from '@rytass/cms-react-components';
+import { StandardCMSFormActions, ArticleStage } from '@rytass/cms-react-components';
 
 interface ArticleFormData {
   title: string;
@@ -212,7 +208,7 @@ function ArticleForm({ article, onSubmit }: ArticleFormProps) {
       {/* Form fields */}
       <input {...form.register('title', { required: true })} />
       <textarea {...form.register('content', { required: true })} />
-      
+
       <StandardCMSFormActions
         form={form}
         stage={article?.stage || ArticleStage.DRAFT}
@@ -225,7 +221,7 @@ function ArticleForm({ article, onSubmit }: ArticleFormProps) {
         submitButtonText="Submit for Review"
         publishButtonText="Publish Now"
         showScheduleOption
-        onSchedule={(date) => schedulePublication(data, date)}
+        onSchedule={date => schedulePublication(data, date)}
       />
     </form>
   );
@@ -238,14 +234,11 @@ function ArticleForm({ article, onSubmit }: ArticleFormProps) {
 
 ```tsx
 import React, { useState } from 'react';
-import { 
-  DeleteWithdrawModal,
-  useModal 
-} from '@rytass/cms-react-components';
+import { DeleteWithdrawModal, useModal } from '@rytass/cms-react-components';
 
 function ArticleActions({ article }: { article: Article }) {
   const { openModal, closeModal } = useModal();
-  
+
   const handleDelete = () => {
     openModal({
       component: DeleteWithdrawModal,
@@ -300,7 +293,7 @@ import { RejectModal, useModal } from '@rytass/cms-react-components';
 
 function ReviewActions({ article }: { article: Article }) {
   const { openModal, closeModal } = useModal();
-  
+
   const handleReject = () => {
     openModal({
       component: RejectModal,
@@ -333,14 +326,11 @@ function ReviewActions({ article }: { article: Article }) {
 
 ```tsx
 import React from 'react';
-import { 
-  VerifyReleaseModal,
-  useModal 
-} from '@rytass/cms-react-components';
+import { VerifyReleaseModal, useModal } from '@rytass/cms-react-components';
 
 function PublishActions({ article }: { article: Article }) {
   const { openModal, closeModal } = useModal();
-  
+
   const handleVerifyAndRelease = () => {
     openModal({
       component: VerifyReleaseModal,
@@ -383,23 +373,25 @@ import { LogsModal, useModal, LogEntry } from '@rytass/cms-react-components';
 
 function ArticleHistory({ article }: { article: Article }) {
   const { openModal, closeModal } = useModal();
-  
+
   const handleViewLogs = async () => {
     const logs = await fetchArticleLogs(article.id);
-    
+
     openModal({
       component: LogsModal,
       props: {
         title: `History: ${article.title}`,
-        logs: logs.map((log): LogEntry => ({
-          id: log.id,
-          timestamp: log.createdAt,
-          user: log.user.name,
-          action: log.action,
-          details: log.details,
-          changes: log.changes,
-          version: log.version,
-        })),
+        logs: logs.map(
+          (log): LogEntry => ({
+            id: log.id,
+            timestamp: log.createdAt,
+            user: log.user.name,
+            action: log.action,
+            details: log.details,
+            changes: log.changes,
+            version: log.version,
+          }),
+        ),
         showDiff: true,
         onRevert: async (logId: string) => {
           await revertToVersion(article.id, logId);
@@ -455,7 +447,7 @@ function ContentList() {
       items={items}
       selectedIds={selectedIds}
       onSelect={handleSelect}
-      renderItem={(item) => (
+      renderItem={item => (
         <ContentCard
           key={item.id}
           title={item.title}
@@ -511,13 +503,7 @@ function ArticleEditor() {
   ];
 
   return (
-    <StandardCMSTabs
-      tabs={tabs}
-      activeTab={activeTab}
-      onChange={setActiveTab}
-      variant="contained"
-      fullWidth
-    >
+    <StandardCMSTabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} variant="contained" fullWidth>
       {activeTab === 'content' && <ContentEditor />}
       {activeTab === 'metadata' && <MetadataForm />}
       {activeTab === 'seo' && <SEOSettings />}
@@ -532,31 +518,16 @@ function ArticleEditor() {
 ### Using Permission Utilities
 
 ```tsx
-import { 
-  havePermission,
-  ArticlesPermissions 
-} from '@rytass/cms-react-components';
+import { havePermission, ArticlesPermissions } from '@rytass/cms-react-components';
 
 function ArticleActions({ article, userPermissions }: Props) {
-  const canEdit = havePermission(
-    userPermissions,
-    ArticlesPermissions.UpdateArticleInDraft
-  );
+  const canEdit = havePermission(userPermissions, ArticlesPermissions.UpdateArticleInDraft);
 
-  const canDelete = havePermission(
-    userPermissions,
-    ArticlesPermissions.DeleteArticleInDraft
-  );
+  const canDelete = havePermission(userPermissions, ArticlesPermissions.DeleteArticleInDraft);
 
-  const canSubmit = havePermission(
-    userPermissions,
-    ArticlesPermissions.SubmitPutBackArticle
-  );
+  const canSubmit = havePermission(userPermissions, ArticlesPermissions.SubmitPutBackArticle);
 
-  const canApprove = havePermission(
-    userPermissions,
-    ArticlesPermissions.ApproveRejectArticle
-  );
+  const canApprove = havePermission(userPermissions, ArticlesPermissions.ApproveRejectArticle);
 
   return (
     <div>
@@ -572,15 +543,9 @@ function ArticleActions({ article, userPermissions }: Props) {
 ### Permission-Based Table Actions
 
 ```tsx
-import { 
-  ArticleStage,
-  ArticleTableActions,
-  ArticleTableActionsType 
-} from '@rytass/cms-react-components';
+import { ArticleStage, ArticleTableActions, ArticleTableActionsType } from '@rytass/cms-react-components';
 
-const getTableActions = (
-  permissions: string[]
-): ArticleTableActionsType => {
+const getTableActions = (permissions: string[]): ArticleTableActionsType => {
   const actions: ArticleTableActionsType = {};
 
   // Draft stage actions
@@ -690,7 +655,7 @@ function MyComponent() {
       props: {
         title: 'Custom Modal',
         data: someData,
-        onSave: (result) => {
+        onSave: result => {
           handleSave(result);
           closeModal();
         },
@@ -758,7 +723,7 @@ function ThemedApp() {
 .custom-form-actions {
   .mzn-button-group {
     gap: 8px;
-    
+
     .mzn-button {
       min-width: 120px;
     }
@@ -834,11 +799,14 @@ import { StandardCMSTable } from '@rytass/cms-react-components';
 
 function OptimizedTable() {
   // Memoize columns to prevent re-renders
-  const columns = useMemo(() => [
-    { title: 'Title', dataIndex: 'title', width: 300 },
-    { title: 'Author', dataIndex: 'author', width: 150 },
-    // ... more columns
-  ], []);
+  const columns = useMemo(
+    () => [
+      { title: 'Title', dataIndex: 'title', width: 300 },
+      { title: 'Author', dataIndex: 'author', width: 150 },
+      // ... more columns
+    ],
+    [],
+  );
 
   // Use callback for action handlers
   const handleAction = useCallback((action: string, record: any) => {
@@ -873,14 +841,8 @@ function FormWithErrorHandling() {
   };
 
   return (
-    <ErrorBoundary
-      fallback={<ErrorFallback />}
-      onError={handleError}
-    >
-      <StandardCMSFormActions
-        {...formProps}
-        onError={handleError}
-      />
+    <ErrorBoundary fallback={<ErrorFallback />} onError={handleError}>
+      <StandardCMSFormActions {...formProps} onError={handleError} />
     </ErrorBoundary>
   );
 }
@@ -897,7 +859,7 @@ function AccessibleTable() {
       {...tableProps}
       ariaLabel="Articles management table"
       ariaDescribedBy="table-description"
-      rowAriaLabel={(record) => `Article: ${record.title}`}
+      rowAriaLabel={record => `Article: ${record.title}`}
       actionAriaLabels={{
         edit: 'Edit article',
         delete: 'Delete article',
@@ -923,13 +885,7 @@ describe('StandardCMSTable', () => {
   ];
 
   it('renders table with data', () => {
-    render(
-      <StandardCMSTable
-        columns={columns}
-        dataSource={mockData}
-        rowKey="id"
-      />
-    );
+    render(<StandardCMSTable columns={columns} dataSource={mockData} rowKey="id" />);
 
     expect(screen.getByText('Article 1')).toBeInTheDocument();
     expect(screen.getByText('Article 2')).toBeInTheDocument();
@@ -938,14 +894,7 @@ describe('StandardCMSTable', () => {
   it('handles row actions', async () => {
     const handleAction = jest.fn();
 
-    render(
-      <StandardCMSTable
-        columns={columns}
-        dataSource={mockData}
-        onAction={handleAction}
-        rowKey="id"
-      />
-    );
+    render(<StandardCMSTable columns={columns} dataSource={mockData} onAction={handleAction} rowKey="id" />);
 
     const editButton = screen.getByLabelText('Edit article 1');
     fireEvent.click(editButton);
@@ -994,11 +943,7 @@ describe('useDialog', () => {
 import { Table, Form, Modal } from 'legacy-cms-components';
 
 // After (new)
-import { 
-  StandardCMSTable,
-  StandardCMSFormActions,
-  useModal 
-} from '@rytass/cms-react-components';
+import { StandardCMSTable, StandardCMSFormActions, useModal } from '@rytass/cms-react-components';
 
 // Update table props
 const legacyTableProps = {
@@ -1031,11 +976,7 @@ const newTableProps = {
 import { StandardCMSTable } from '@rytass/cms-react-components';
 
 // Enable debug mode for detailed logging
-<StandardCMSTable
-  {...tableProps}
-  debug
-  onDebugLog={(log) => console.log('Table debug:', log)}
-/>
+<StandardCMSTable {...tableProps} debug onDebugLog={log => console.log('Table debug:', log)} />;
 ```
 
 ## License

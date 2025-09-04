@@ -1,8 +1,5 @@
 import { Args, ID, Mutation, Resolver } from '@nestjs/graphql';
-import {
-  CategoryBaseService,
-  MULTIPLE_LANGUAGE_MODE,
-} from '@rytass/cms-base-nestjs-module';
+import { CategoryBaseService, MULTIPLE_LANGUAGE_MODE } from '@rytass/cms-base-nestjs-module';
 import { CreateCategoryArgs } from '../dto/create-category.args';
 import { AllowActions } from '@rytass/member-base-nestjs-module';
 import { BackstageCategoryDto } from '../dto/backstage-category.dto';
@@ -29,10 +26,7 @@ export class CategoryMutations {
     const extraArgsInput: Record<string, string | object> = {};
 
     if (args.customFields?.length) {
-      Object.assign(
-        extraArgsInput,
-        await this.mapCategoryCustomFieldsToEntityColumns(args.customFields),
-      );
+      Object.assign(extraArgsInput, await this.mapCategoryCustomFieldsToEntityColumns(args.customFields));
     }
 
     const basePayload = {
@@ -49,9 +43,7 @@ export class CategoryMutations {
       };
     }
 
-    const multiLanguageNames = Object.fromEntries(
-      args.multiLanguageNames.map((name) => [name.language, name.name]),
-    );
+    const multiLanguageNames = Object.fromEntries(args.multiLanguageNames.map(name => [name.language, name.name]));
 
     return {
       ...basePayload,
@@ -61,9 +53,7 @@ export class CategoryMutations {
 
   @Mutation(() => BackstageCategoryDto)
   @AllowActions([[BaseResource.CATEGORY, BaseAction.CREATE]])
-  async createCategory(
-    @Args() args: CreateCategoryArgs,
-  ): Promise<BackstageCategoryDto> {
+  async createCategory(@Args() args: CreateCategoryArgs): Promise<BackstageCategoryDto> {
     return this.categoryService.create({
       ...(await this.resolveCreateCategoryArgs(args)),
     });
@@ -71,9 +61,7 @@ export class CategoryMutations {
 
   @Mutation(() => BackstageCategoryDto)
   @AllowActions([[BaseResource.CATEGORY, BaseAction.UPDATE]])
-  async updateCategory(
-    @Args() args: UpdateCategoryArgs,
-  ): Promise<BackstageCategoryDto> {
+  async updateCategory(@Args() args: UpdateCategoryArgs): Promise<BackstageCategoryDto> {
     return this.categoryService.update(args.id, {
       ...(await this.resolveCreateCategoryArgs(args)),
     });
@@ -81,9 +69,7 @@ export class CategoryMutations {
 
   @Mutation(() => Boolean)
   @AllowActions([[BaseResource.CATEGORY, BaseAction.DELETE]])
-  async deleteCategory(
-    @Args('id', { type: () => ID }) id: string,
-  ): Promise<boolean> {
+  async deleteCategory(@Args('id', { type: () => ID }) id: string): Promise<boolean> {
     await this.categoryService.archive(id);
 
     return true;

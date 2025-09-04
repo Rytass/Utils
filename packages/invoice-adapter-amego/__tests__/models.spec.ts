@@ -387,9 +387,7 @@ describe('AmegoAllowance Model', () => {
 
       expect(allowance.allowanceNumber).toBe('AC99999999AL0001');
       expect(allowance.allowancePrice).toBe(50);
-      expect(allowance.allowancedOn).toEqual(
-        new Date('2025-01-02T10:00:00.000Z'),
-      );
+      expect(allowance.allowancedOn).toEqual(new Date('2025-01-02T10:00:00.000Z'));
       expect(allowance.items).toHaveLength(1);
       expect(allowance.status).toBe(InvoiceAllowanceState.ISSUED);
       expect(allowance.invalidOn).toBeNull();

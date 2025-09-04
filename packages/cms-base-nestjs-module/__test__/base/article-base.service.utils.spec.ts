@@ -60,9 +60,7 @@ describe('queryStagesFeaturesCheck', () => {
   });
 
   it('should pass silently if stage is DRAFT and draftMode is enabled', () => {
-    expect(() =>
-      service['queryStagesFeaturesCheck'](ArticleStage.DRAFT),
-    ).not.toThrow();
+    expect(() => service['queryStagesFeaturesCheck'](ArticleStage.DRAFT)).not.toThrow();
   });
 
   it('should throw an error if stage is DRAFT and draftMode is disabled', () => {
@@ -83,55 +81,35 @@ describe('queryStagesFeaturesCheck', () => {
       mockSignatureService as unknown as SignatureService<any>,
     );
 
-    expect(() =>
-      service['queryStagesFeaturesCheck'](ArticleStage.DRAFT),
-    ).toThrow('Draft mode is disabled.');
+    expect(() => service['queryStagesFeaturesCheck'](ArticleStage.DRAFT)).toThrow('Draft mode is disabled.');
   });
 
   it('should pass silently if stage is REVIEWING and signatureEnabled is true', () => {
-    expect(() =>
-      service['queryStagesFeaturesCheck'](ArticleStage.REVIEWING),
-    ).not.toThrow();
+    expect(() => service['queryStagesFeaturesCheck'](ArticleStage.REVIEWING)).not.toThrow();
   });
 
   it('should throw an error if stage is REVIEWING and signatureEnabled is false', () => {
-    jest
-      .spyOn(mockSignatureService, 'signatureEnabled', 'get')
-      .mockReturnValue(false);
+    jest.spyOn(mockSignatureService, 'signatureEnabled', 'get').mockReturnValue(false);
 
-    expect(() =>
-      service['queryStagesFeaturesCheck'](ArticleStage.REVIEWING),
-    ).toThrow('Signature mode is disabled.');
+    expect(() => service['queryStagesFeaturesCheck'](ArticleStage.REVIEWING)).toThrow('Signature mode is disabled.');
   });
 
   it('should pass silently if stage is VERIFIED and signatureEnabled is true', () => {
-    expect(() =>
-      service['queryStagesFeaturesCheck'](ArticleStage.VERIFIED),
-    ).not.toThrow();
+    expect(() => service['queryStagesFeaturesCheck'](ArticleStage.VERIFIED)).not.toThrow();
   });
 
   it('should throw an error if stage is VERIFIED and signatureEnabled is false', () => {
-    jest
-      .spyOn(mockSignatureService, 'signatureEnabled', 'get')
-      .mockReturnValue(false);
+    jest.spyOn(mockSignatureService, 'signatureEnabled', 'get').mockReturnValue(false);
 
-    expect(() =>
-      service['queryStagesFeaturesCheck'](ArticleStage.VERIFIED),
-    ).toThrow('Signature mode is disabled.');
+    expect(() => service['queryStagesFeaturesCheck'](ArticleStage.VERIFIED)).toThrow('Signature mode is disabled.');
   });
 
   it('should do nothing for stages not explicitly handled', () => {
-    expect(() =>
-      service['queryStagesFeaturesCheck'](ArticleStage.RELEASED),
-    ).not.toThrow();
+    expect(() => service['queryStagesFeaturesCheck'](ArticleStage.RELEASED)).not.toThrow();
 
-    expect(() =>
-      service['queryStagesFeaturesCheck'](ArticleStage.UNKNOWN),
-    ).not.toThrow();
+    expect(() => service['queryStagesFeaturesCheck'](ArticleStage.UNKNOWN)).not.toThrow();
 
-    expect(() =>
-      service['queryStagesFeaturesCheck'](ArticleStage.SCHEDULED),
-    ).not.toThrow();
+    expect(() => service['queryStagesFeaturesCheck'](ArticleStage.SCHEDULED)).not.toThrow();
   });
 });
 
@@ -179,13 +157,11 @@ describe('limitStageWithQueryBuilder', () => {
       };
 
       const qb = {
-        innerJoin: jest.fn(
-          (subQueryFactory: any, alias: string, condition: string) => {
-            subQueryFactory(mockSubQueryBuilder);
+        innerJoin: jest.fn((subQueryFactory: any, alias: string, condition: string) => {
+          subQueryFactory(mockSubQueryBuilder);
 
-            return qb;
-          },
-        ),
+          return qb;
+        }),
         andWhere: jest.fn().mockReturnThis(),
       } as unknown as SelectQueryBuilder<any>;
 
@@ -220,33 +196,20 @@ describe('limitStageWithQueryBuilder', () => {
         'stage_ranked."articleId" = versions."articleId" AND stage_ranked."version" = versions."version" AND stage_ranked."rowIndex" = 1',
       );
 
-      expect(mockSubQueryBuilder.from).toHaveBeenCalledWith(
-        'versions',
-        'versions',
-      );
+      expect(mockSubQueryBuilder.from).toHaveBeenCalledWith('versions', 'versions');
 
-      expect(mockSubQueryBuilder.select).toHaveBeenCalledWith(
-        'versions.articleId',
-        'articleId',
-      );
+      expect(mockSubQueryBuilder.select).toHaveBeenCalledWith('versions.articleId', 'articleId');
 
-      expect(mockSubQueryBuilder.addSelect).toHaveBeenCalledWith(
-        'versions.version',
-        'version',
-      );
+      expect(mockSubQueryBuilder.addSelect).toHaveBeenCalledWith('versions.version', 'version');
 
       expect(mockSubQueryBuilder.addSelect).toHaveBeenCalledWith(
         'ROW_NUMBER() OVER (PARTITION BY versions."articleId" ORDER BY versions."createdAt" DESC)',
         'rowIndex',
       );
 
-      expect(mockSubQueryBuilder.andWhere).toHaveBeenCalledWith(
-        'versions.releasedAt IS NULL',
-      );
+      expect(mockSubQueryBuilder.andWhere).toHaveBeenCalledWith('versions.releasedAt IS NULL');
 
-      expect(mockSubQueryBuilder.andWhere).toHaveBeenCalledWith(
-        'versions.submittedAt IS NULL',
-      );
+      expect(mockSubQueryBuilder.andWhere).toHaveBeenCalledWith('versions.submittedAt IS NULL');
     });
   });
 
@@ -289,13 +252,11 @@ describe('limitStageWithQueryBuilder', () => {
       };
 
       const qb = {
-        innerJoin: jest.fn(
-          (subQueryFactory: any, alias: string, condition: string) => {
-            subQueryFactory(mockSubQueryBuilder);
+        innerJoin: jest.fn((subQueryFactory: any, alias: string, condition: string) => {
+          subQueryFactory(mockSubQueryBuilder);
 
-            return qb;
-          },
-        ),
+          return qb;
+        }),
         andWhere: jest.fn().mockReturnThis(),
       } as unknown as SelectQueryBuilder<any>;
 
@@ -345,25 +306,13 @@ describe('limitStageWithQueryBuilder', () => {
 
       service['limitStageWithQueryBuilder'](qb, ArticleStage.VERIFIED);
 
-      expect(mockSubQueryBuilder.from).toHaveBeenCalledWith(
-        'signatures',
-        'signatures',
-      );
+      expect(mockSubQueryBuilder.from).toHaveBeenCalledWith('signatures', 'signatures');
 
-      expect(mockSubQueryBuilder.innerJoin).toHaveBeenCalledWith(
-        'signatures.articleVersion',
-        'articleVersion',
-      );
+      expect(mockSubQueryBuilder.innerJoin).toHaveBeenCalledWith('signatures.articleVersion', 'articleVersion');
 
-      expect(mockSubQueryBuilder.select).toHaveBeenCalledWith(
-        'signatures.articleId',
-        'articleId',
-      );
+      expect(mockSubQueryBuilder.select).toHaveBeenCalledWith('signatures.articleId', 'articleId');
 
-      expect(mockSubQueryBuilder.addSelect).toHaveBeenCalledWith(
-        'signatures.version',
-        'version',
-      );
+      expect(mockSubQueryBuilder.addSelect).toHaveBeenCalledWith('signatures.version', 'version');
 
       expect(mockSubQueryBuilder.addSelect).toHaveBeenCalledWith(
         'ROW_NUMBER() OVER (PARTITION BY signatures."articleId" ORDER BY signatures."signedAt" DESC)',
@@ -423,23 +372,16 @@ describe('limitStageWithQueryBuilder', () => {
 
       service['limitStageWithQueryBuilder'](qb, ArticleStage.SCHEDULED);
 
-      expect(mockSubQueryBuilder.from).toHaveBeenCalledWith(
-        'versions',
-        'versions',
-      );
+      expect(mockSubQueryBuilder.from).toHaveBeenCalledWith('versions', 'versions');
 
       expect(mockSubQueryBuilder.addSelect).toHaveBeenCalledWith(
         'ROW_NUMBER() OVER (PARTITION BY versions."articleId" ORDER BY versions."releasedAt" ASC)',
         'rowIndex',
       );
 
-      expect(mockSubQueryBuilder.andWhere).toHaveBeenCalledWith(
-        'versions.releasedAt IS NOT NULL',
-      );
+      expect(mockSubQueryBuilder.andWhere).toHaveBeenCalledWith('versions.releasedAt IS NOT NULL');
 
-      expect(mockSubQueryBuilder.andWhere).toHaveBeenCalledWith(
-        'versions.releasedAt > CURRENT_TIMESTAMP',
-      );
+      expect(mockSubQueryBuilder.andWhere).toHaveBeenCalledWith('versions.releasedAt > CURRENT_TIMESTAMP');
     });
   });
 
@@ -486,18 +428,11 @@ describe('limitStageWithQueryBuilder', () => {
 
       service['limitStageWithQueryBuilder'](qb, 'NON_EXISTENT' as ArticleStage);
 
-      expect(mockSubQueryBuilder.from).toHaveBeenCalledWith(
-        'versions',
-        'versions',
-      );
+      expect(mockSubQueryBuilder.from).toHaveBeenCalledWith('versions', 'versions');
 
-      expect(mockSubQueryBuilder.andWhere).toHaveBeenCalledWith(
-        'versions.releasedAt IS NOT NULL',
-      );
+      expect(mockSubQueryBuilder.andWhere).toHaveBeenCalledWith('versions.releasedAt IS NOT NULL');
 
-      expect(mockSubQueryBuilder.andWhere).toHaveBeenCalledWith(
-        'versions.releasedAt <= CURRENT_TIMESTAMP',
-      );
+      expect(mockSubQueryBuilder.andWhere).toHaveBeenCalledWith('versions.releasedAt <= CURRENT_TIMESTAMP');
     });
   });
 });
@@ -538,9 +473,7 @@ describe('getDefaultQueryBuilder', () => {
       {} as any,
     );
     jest.spyOn(service as any, 'queryStagesFeaturesCheck').mockImplementation();
-    jest
-      .spyOn(service as any, 'limitStageWithQueryBuilder')
-      .mockImplementation((qb) => qb);
+    jest.spyOn(service as any, 'limitStageWithQueryBuilder').mockImplementation(qb => qb);
   });
 
   const mockQueryBuilder = {
@@ -566,18 +499,13 @@ describe('getDefaultQueryBuilder', () => {
       stage: ArticleStage.RELEASED,
     });
 
-    expect(service['queryStagesFeaturesCheck']).toHaveBeenCalledWith(
-      ArticleStage.RELEASED,
-    );
+    expect(service['queryStagesFeaturesCheck']).toHaveBeenCalledWith(ArticleStage.RELEASED);
   });
 
   it('should use runner.manager.createQueryBuilder if runner is provided', () => {
     service['getDefaultQueryBuilder']('articles', {}, mockRunner as any);
 
-    expect(mockRunner.manager.createQueryBuilder).toHaveBeenCalledWith(
-      'articles',
-      'articles',
-    );
+    expect(mockRunner.manager.createQueryBuilder).toHaveBeenCalledWith('articles', 'articles');
   });
 
   it('should use baseArticleRepo.createQueryBuilder if no runner is provided', () => {
@@ -591,27 +519,18 @@ describe('getDefaultQueryBuilder', () => {
       version: 3,
     });
 
-    expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
-      'articles.categories',
-      'categories',
-    );
+    expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('articles.categories', 'categories');
 
-    expect(mockQueryBuilder.innerJoinAndSelect).toHaveBeenCalledWith(
-      'articles.versions',
-      'versions',
-    );
+    expect(mockQueryBuilder.innerJoinAndSelect).toHaveBeenCalledWith('articles.versions', 'versions');
 
     expect(mockQueryBuilder.innerJoinAndSelect).toHaveBeenCalledWith(
       'versions.multiLanguageContents',
       'multiLanguageContents',
     );
 
-    expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-      'versions.version = :version',
-      {
-        version: 3,
-      },
-    );
+    expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('versions.version = :version', {
+      version: 3,
+    });
 
     expect(result).toBe(mockQueryBuilder);
   });
@@ -645,15 +564,9 @@ describe('getDefaultQueryBuilder', () => {
 
     expect(mockRepo.createQueryBuilder).toHaveBeenCalledWith('articles');
 
-    expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
-      'articles.categories',
-      'categories',
-    );
+    expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('articles.categories', 'categories');
 
-    expect(mockQueryBuilder.innerJoinAndSelect).toHaveBeenCalledWith(
-      'articles.versions',
-      'versions',
-    );
+    expect(mockQueryBuilder.innerJoinAndSelect).toHaveBeenCalledWith('articles.versions', 'versions');
 
     expect(mockQueryBuilder.innerJoinAndSelect).toHaveBeenCalledWith(
       'versions.multiLanguageContents',
@@ -673,13 +586,11 @@ describe('getDefaultQueryBuilder', () => {
       leftJoinAndSelect: jest.fn().mockReturnThis(),
       innerJoinAndSelect: jest.fn().mockReturnThis(),
       andWhere: jest.fn().mockReturnThis(),
-      innerJoin: jest.fn(
-        (subQueryFn: any, alias: string, condition: string) => {
-          subQueryFn(mockSubQueryBuilder);
+      innerJoin: jest.fn((subQueryFn: any, alias: string, condition: string) => {
+        subQueryFn(mockSubQueryBuilder);
 
-          return mockQueryBuilder;
-        },
-      ),
+        return mockQueryBuilder;
+      }),
     } as unknown as SelectQueryBuilder<any>;
 
     const mockRepo = {
@@ -722,24 +633,13 @@ describe('getDefaultQueryBuilder', () => {
       'target.version = versions.version AND target."articleId" = versions."articleId"',
     );
 
-    expect(mockSubQueryBuilder.from).toHaveBeenCalledWith(
-      mockVersionRepo.metadata.tableName,
-      'versions',
-    );
+    expect(mockSubQueryBuilder.from).toHaveBeenCalledWith(mockVersionRepo.metadata.tableName, 'versions');
 
-    expect(mockSubQueryBuilder.select).toHaveBeenCalledWith(
-      'versions.articleId',
-      'articleId',
-    );
+    expect(mockSubQueryBuilder.select).toHaveBeenCalledWith('versions.articleId', 'articleId');
 
-    expect(mockSubQueryBuilder.addSelect).toHaveBeenCalledWith(
-      'MAX(versions.version)',
-      'version',
-    );
+    expect(mockSubQueryBuilder.addSelect).toHaveBeenCalledWith('MAX(versions.version)', 'version');
 
-    expect(mockSubQueryBuilder.groupBy).toHaveBeenCalledWith(
-      'versions.articleId',
-    );
+    expect(mockSubQueryBuilder.groupBy).toHaveBeenCalledWith('versions.articleId');
   });
 });
 
@@ -771,9 +671,7 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
       {} as any, // articleDataLoader
     );
 
-    jest
-      .spyOn(service as any, 'getDefaultQueryBuilder')
-      .mockReturnValue(mockQb);
+    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue(mockQb);
   });
 
   it('should add ids filter if options.ids is provided', async () => {
@@ -785,10 +683,7 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
 
   it('should add language filter if options.language is provided', async () => {
     await service['getFindAllQueryBuilder']({ language: 'en' });
-    expect(mockQb.andWhere).toHaveBeenCalledWith(
-      'multiLanguageContents.language = :language',
-      { language: 'en' },
-    );
+    expect(mockQb.andWhere).toHaveBeenCalledWith('multiLanguageContents.language = :language', { language: 'en' });
   });
 
   it('should add search filter with FULL_TEXT mode', async () => {
@@ -838,9 +733,7 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
       {} as any,
     );
 
-    jest
-      .spyOn(service as any, 'getDefaultQueryBuilder')
-      .mockReturnValue(mockQb);
+    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue(mockQb);
 
     await service['getFindAllQueryBuilder']({
       searchTerm: 'test',
@@ -889,9 +782,7 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
       {} as any,
     );
 
-    jest
-      .spyOn(service as any, 'getDefaultQueryBuilder')
-      .mockReturnValue(mockQb);
+    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue(mockQb);
 
     await service['getFindAllQueryBuilder']({
       searchTerm: 'test',
@@ -911,10 +802,7 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
 
   it('should sort by CREATED_AT_DESC by default', async () => {
     await service['getFindAllQueryBuilder']({});
-    expect(mockQb.addOrderBy).toHaveBeenCalledWith(
-      'articles.createdAt',
-      'DESC',
-    );
+    expect(mockQb.addOrderBy).toHaveBeenCalledWith('articles.createdAt', 'DESC');
   });
 
   it('should construct category filter using real relation metadata', async () => {
@@ -976,41 +864,27 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
       addOrderBy: jest.fn().mockReturnThis(),
     };
 
-    jest
-      .spyOn(service as any, 'getDefaultQueryBuilder')
-      .mockReturnValue(mockQb);
+    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue(mockQb);
 
     await service['getFindAllQueryBuilder']({
       requiredCategoryIds: ['cat-1', 'cat-2'],
     });
 
-    expect(mockFrom).toHaveBeenCalledWith(
-      'public.article_categories',
-      'requiredCategoryRelations0',
-    );
+    expect(mockFrom).toHaveBeenCalledWith('public.article_categories', 'requiredCategoryRelations0');
 
-    expect(mockFrom).toHaveBeenCalledWith(
-      'public.article_categories',
-      'requiredCategoryRelations1',
-    );
+    expect(mockFrom).toHaveBeenCalledWith('public.article_categories', 'requiredCategoryRelations1');
 
-    expect(mockAndWhere).toHaveBeenCalledWith(
-      '"requiredCategoryRelations0"."categoryId" = :requiredCategoryId0',
-      { requiredCategoryId0: 'cat-1' },
-    );
+    expect(mockAndWhere).toHaveBeenCalledWith('"requiredCategoryRelations0"."categoryId" = :requiredCategoryId0', {
+      requiredCategoryId0: 'cat-1',
+    });
 
-    expect(mockAndWhere).toHaveBeenCalledWith(
-      '"requiredCategoryRelations1"."categoryId" = :requiredCategoryId1',
-      { requiredCategoryId1: 'cat-2' },
-    );
+    expect(mockAndWhere).toHaveBeenCalledWith('"requiredCategoryRelations1"."categoryId" = :requiredCategoryId1', {
+      requiredCategoryId1: 'cat-2',
+    });
 
-    expect(mockAndWhere).toHaveBeenCalledWith(
-      '"requiredCategoryRelations0"."articleId" = articles.id',
-    );
+    expect(mockAndWhere).toHaveBeenCalledWith('"requiredCategoryRelations0"."articleId" = articles.id');
 
-    expect(mockAndWhere).toHaveBeenCalledWith(
-      '"requiredCategoryRelations1"."articleId" = articles.id',
-    );
+    expect(mockAndWhere).toHaveBeenCalledWith('"requiredCategoryRelations1"."articleId" = articles.id');
 
     expect(mockQb.andWhereExists).toHaveBeenCalled();
   });
@@ -1072,28 +946,20 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
       {} as any,
     );
 
-    jest
-      .spyOn(service as any, 'getDefaultQueryBuilder')
-      .mockReturnValue(outerQb);
+    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue(outerQb);
 
     await service['getFindAllQueryBuilder']({
       categoryIds: ['c1', 'c2'],
     });
 
     expect(dataSource.createQueryBuilder).toHaveBeenCalled();
-    expect(innerQb.from).toHaveBeenCalledWith(
-      'public.article_categories',
-      'categoryRelations',
-    );
+    expect(innerQb.from).toHaveBeenCalledWith('public.article_categories', 'categoryRelations');
 
-    expect(innerQb.andWhere).toHaveBeenCalledWith(
-      '"categoryRelations"."categoryId" IN (:...categoryIds)',
-      { categoryIds: ['c1', 'c2'] },
-    );
+    expect(innerQb.andWhere).toHaveBeenCalledWith('"categoryRelations"."categoryId" IN (:...categoryIds)', {
+      categoryIds: ['c1', 'c2'],
+    });
 
-    expect(innerQb.andWhere).toHaveBeenCalledWith(
-      '"categoryRelations"."articleId" = articles.id',
-    );
+    expect(innerQb.andWhere).toHaveBeenCalledWith('"categoryRelations"."articleId" = articles.id');
 
     expect(outerQb.andWhereExists).toHaveBeenCalledWith(innerQb);
   });
@@ -1197,9 +1063,7 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
       addOrderBy: jest.fn().mockReturnThis(),
     });
 
-    const { ArticleSearchMode } = await import(
-      '../../src/typings/article-search-mode.enum'
-    );
+    const { ArticleSearchMode } = await import('../../src/typings/article-search-mode.enum');
 
     await service['getFindAllQueryBuilder']({
       searchTerm: 'environment',
@@ -1218,18 +1082,13 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
       andWhere: jest.fn().mockReturnThis(),
     };
 
-    jest
-      .spyOn(service as any, 'getDefaultQueryBuilder')
-      .mockReturnValue(qbMock as any);
+    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue(qbMock as any);
 
     await (service as any).getFindAllQueryBuilder({
       sorter: ArticleSorter.RELEASED_AT_ASC,
     });
 
-    expect(qbMock.addOrderBy).toHaveBeenCalledWith(
-      'versions.releasedAt',
-      'ASC',
-    );
+    expect(qbMock.addOrderBy).toHaveBeenCalledWith('versions.releasedAt', 'ASC');
   });
 
   it('should sort by RELEASED_AT_DESC', async () => {
@@ -1238,18 +1097,13 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
       andWhere: jest.fn().mockReturnThis(),
     };
 
-    jest
-      .spyOn(service as any, 'getDefaultQueryBuilder')
-      .mockReturnValue(qbMock as any);
+    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue(qbMock as any);
 
     await (service as any).getFindAllQueryBuilder({
       sorter: ArticleSorter.RELEASED_AT_DESC,
     });
 
-    expect(qbMock.addOrderBy).toHaveBeenCalledWith(
-      'versions.releasedAt',
-      'DESC',
-    );
+    expect(qbMock.addOrderBy).toHaveBeenCalledWith('versions.releasedAt', 'DESC');
   });
 
   it('should sort by SUBMITTED_AT_ASC', async () => {
@@ -1258,18 +1112,13 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
       andWhere: jest.fn().mockReturnThis(),
     };
 
-    jest
-      .spyOn(service as any, 'getDefaultQueryBuilder')
-      .mockReturnValue(qbMock as any);
+    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue(qbMock as any);
 
     await (service as any).getFindAllQueryBuilder({
       sorter: ArticleSorter.SUBMITTED_AT_ASC,
     });
 
-    expect(qbMock.addOrderBy).toHaveBeenCalledWith(
-      'versions.submittedAt',
-      'ASC',
-    );
+    expect(qbMock.addOrderBy).toHaveBeenCalledWith('versions.submittedAt', 'ASC');
   });
 
   it('should sort by SUBMITTED_AT_DESC', async () => {
@@ -1278,18 +1127,13 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
       andWhere: jest.fn().mockReturnThis(),
     };
 
-    jest
-      .spyOn(service as any, 'getDefaultQueryBuilder')
-      .mockReturnValue(qbMock as any);
+    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue(qbMock as any);
 
     await (service as any).getFindAllQueryBuilder({
       sorter: ArticleSorter.SUBMITTED_AT_DESC,
     });
 
-    expect(qbMock.addOrderBy).toHaveBeenCalledWith(
-      'versions.submittedAt',
-      'DESC',
-    );
+    expect(qbMock.addOrderBy).toHaveBeenCalledWith('versions.submittedAt', 'DESC');
   });
 
   it('should sort by UPDATED_AT_ASC', async () => {
@@ -1298,9 +1142,7 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
       andWhere: jest.fn().mockReturnThis(),
     };
 
-    jest
-      .spyOn(service as any, 'getDefaultQueryBuilder')
-      .mockReturnValue(qbMock as any);
+    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue(qbMock as any);
 
     await (service as any).getFindAllQueryBuilder({
       sorter: ArticleSorter.UPDATED_AT_ASC,
@@ -1315,18 +1157,13 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
       andWhere: jest.fn().mockReturnThis(),
     };
 
-    jest
-      .spyOn(service as any, 'getDefaultQueryBuilder')
-      .mockReturnValue(qbMock as any);
+    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue(qbMock as any);
 
     await (service as any).getFindAllQueryBuilder({
       sorter: ArticleSorter.UPDATED_AT_DESC,
     });
 
-    expect(qbMock.addOrderBy).toHaveBeenCalledWith(
-      'versions.createdAt',
-      'DESC',
-    );
+    expect(qbMock.addOrderBy).toHaveBeenCalledWith('versions.createdAt', 'DESC');
   });
 });
 
@@ -1365,9 +1202,7 @@ describe('optionsCheck', () => {
         submitted: true,
         signatureLevel: 'FINAL',
       }),
-    ).toThrow(
-      'Signature level is not allowed when submitting an article version.',
-    );
+    ).toThrow('Signature level is not allowed when submitting an article version.');
   });
 
   it('should throw if submitted and releasedAt are both set', () => {
@@ -1385,9 +1220,7 @@ describe('optionsCheck', () => {
         releasedAt: new Date(),
         signatureLevel: 'NOT_FINAL',
       }),
-    ).toThrow(
-      'Only final signature level is allowed when releasing an article version.',
-    );
+    ).toThrow('Only final signature level is allowed when releasing an article version.');
   });
 
   it('should throw if submitted is true but signature mode is disabled', () => {

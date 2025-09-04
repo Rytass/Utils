@@ -131,7 +131,7 @@ const ContextMenu: FC<ContextMenuProps> = ({
           >
             <div
               className={`${styles.menuItem} ${!arrangeStates.canBringToFront ? styles.disabled : ''}`}
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 if (arrangeStates.canBringToFront) {
                   arrangeActions.onBringToFront();
@@ -143,7 +143,7 @@ const ContextMenu: FC<ContextMenuProps> = ({
             </div>
             <div
               className={`${styles.menuItem} ${!arrangeStates.canBringForward ? styles.disabled : ''}`}
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 if (arrangeStates.canBringForward) {
                   arrangeActions.onBringForward();
@@ -155,7 +155,7 @@ const ContextMenu: FC<ContextMenuProps> = ({
             </div>
             <div
               className={`${styles.menuItem} ${!arrangeStates.canSendBackward ? styles.disabled : ''}`}
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 if (arrangeStates.canSendBackward) {
                   arrangeActions.onSendBackward();
@@ -167,7 +167,7 @@ const ContextMenu: FC<ContextMenuProps> = ({
             </div>
             <div
               className={`${styles.menuItem} ${!arrangeStates.canSendToBack ? styles.disabled : ''}`}
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 if (arrangeStates.canSendToBack) {
                   arrangeActions.onSendToBack();

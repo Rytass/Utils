@@ -2,11 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import DataLoader from 'dataloader';
 import { Repository } from 'typeorm';
 import { LRUCache } from 'lru-cache';
-import {
-  BaseArticleEntity,
-  DEFAULT_LANGUAGE,
-  RESOLVED_ARTICLE_REPO,
-} from '@rytass/cms-base-nestjs-module';
+import { BaseArticleEntity, DEFAULT_LANGUAGE, RESOLVED_ARTICLE_REPO } from '@rytass/cms-base-nestjs-module';
 import { CategoryDto } from '../dto/category.dto';
 
 @Injectable()
@@ -33,13 +29,10 @@ export class ArticleDataLoader {
       const qb = this.articleRepo.createQueryBuilder('articles');
 
       qb.leftJoinAndSelect('articles.categories', 'categories');
-      qb.leftJoinAndSelect(
-        'categories.multiLanguageNames',
-        'multiLanguageNames',
-      );
+      qb.leftJoinAndSelect('categories.multiLanguageNames', 'multiLanguageNames');
 
       qb.andWhere('articles.id IN (:...ids)', {
-        ids: queryArgs.map((arg) => arg.articleId),
+        ids: queryArgs.map(arg => arg.articleId),
       });
 
       const articles = await qb.getMany();
@@ -52,8 +45,7 @@ export class ArticleDataLoader {
                 (mVars, multiLanguageName) => ({
                   ...mVars,
                   [`${article.id}:${multiLanguageName.language}`]: [
-                    ...(mVars[`${article.id}:${multiLanguageName.language}`] ||
-                      []),
+                    ...(mVars[`${article.id}:${multiLanguageName.language}`] || []),
                     {
                       ...category,
                       ...multiLanguageName,
@@ -67,11 +59,7 @@ export class ArticleDataLoader {
         {},
       );
 
-      return queryArgs.map(
-        (arg) =>
-          categoryMap[`${arg.articleId}:${arg.language ?? DEFAULT_LANGUAGE}`] ??
-          [],
-      );
+      return queryArgs.map(arg => categoryMap[`${arg.articleId}:${arg.language ?? DEFAULT_LANGUAGE}`] ?? []);
     },
     {
       cache: true,
@@ -80,8 +68,7 @@ export class ArticleDataLoader {
         ttlAutopurge: true,
         max: 1000,
       }),
-      cacheKeyFn: (queryArgs) =>
-        `${queryArgs.articleId}:${queryArgs.language ?? DEFAULT_LANGUAGE}`,
+      cacheKeyFn: queryArgs => `${queryArgs.articleId}:${queryArgs.language ?? DEFAULT_LANGUAGE}`,
     },
   );
 }

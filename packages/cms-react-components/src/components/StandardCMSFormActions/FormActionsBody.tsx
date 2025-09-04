@@ -4,9 +4,7 @@ import FormActionsFooter from './FormActionsFooter';
 import { useSubmitButton } from './hooks/useSubmitButton';
 import { StandardCMSFormActionsProps } from './typings';
 
-const FormActionsBody = <T extends FieldValues>(
-  props: StandardCMSFormActionsProps<T>,
-): ReactNode => {
+const FormActionsBody = <T extends FieldValues>(props: StandardCMSFormActionsProps<T>): ReactNode => {
   const {
     className,
     methods,
@@ -20,10 +18,7 @@ const FormActionsBody = <T extends FieldValues>(
 
   const values = methods.watch();
 
-  const isDirty = useMemo(
-    () => methods.formState.isDirty,
-    [methods.formState.isDirty],
-  );
+  const isDirty = useMemo(() => methods.formState.isDirty, [methods.formState.isDirty]);
 
   const submitButton = useSubmitButton<T>({
     values,

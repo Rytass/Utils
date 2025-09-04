@@ -10,7 +10,7 @@ describe('ECPayPayment (Apple Pay)', () => {
   const originCreateServer = createServer;
   const mockedCreateServer = jest.spyOn(http, 'createServer');
 
-  mockedCreateServer.mockImplementation((requestHandler) => {
+  mockedCreateServer.mockImplementation(requestHandler => {
     const mockServer = originCreateServer(requestHandler);
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
@@ -23,7 +23,7 @@ describe('ECPayPayment (Apple Pay)', () => {
 
     const mockedClose = jest.spyOn(mockServer, 'close');
 
-    mockedClose.mockImplementationOnce((onClosed) => {
+    mockedClose.mockImplementationOnce(onClosed => {
       mockServer.close(onClosed);
 
       return mockServer;
@@ -38,11 +38,13 @@ describe('ECPayPayment (Apple Pay)', () => {
     it('should represent apple pay config on form data', async () => {
       const order = await payment.prepare({
         channel: Channel.APPLE_PAY,
-        items: [{
-          name: 'Test',
-          unitPrice: 1000,
-          quantity: 1,
-        }],
+        items: [
+          {
+            name: 'Test',
+            unitPrice: 1000,
+            quantity: 1,
+          },
+        ],
       });
 
       expect(order.form.ChoosePayment).toBe('ApplePay');

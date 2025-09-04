@@ -38,9 +38,7 @@ import { QuadratsArticleService, type QuadratsArticle } from '@rytass/quadrats-n
 
 @Injectable()
 export class ArticleService {
-  constructor(
-    private readonly quadratsArticleService: QuadratsArticleService,
-  ) {}
+  constructor(private readonly quadratsArticleService: QuadratsArticleService) {}
 
   get(id: string): Promise<QuadratsArticle | null> {
     return this.quadratsArticleService.get(id);
@@ -52,9 +50,7 @@ import { Controller, Get, Param } from '@nestjs/common';
 
 @Controller('/articles')
 export class ArticleController {
-  constructor(
-    private readonly articleService: ArticleService,
-  ) {}
+  constructor(private readonly articleService: ArticleService) {}
 
   @Get('/:articleId')
   getArticle(@Param('articleId') id: string): Promise<QuadratsArticle | null> {
@@ -71,28 +67,33 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 class ArticleService {
-  constructor(
-    private readonly quadratsArticleService: QuadratsArticleService,
-  ) {}
+  constructor(private readonly quadratsArticleService: QuadratsArticleService) {}
 
   async addMultiLanguageArticle() {
     const article = await this.quadratsArticleService.create({
       title: 'Multiple Language',
       categoryIds: [],
       tags: ['Chinese', 'English'],
-      languageContents: [{
-        elements: [{
-          type: 'p',
-          children: [{ text: '中文內容' }],
-        }],
-        language: 'zh-Hant',
-      }, {
-        elements: [{
-          type: 'p',
-          children: [{ text: 'English Content' }],
-        }],
-        language: 'en',
-      }],
+      languageContents: [
+        {
+          elements: [
+            {
+              type: 'p',
+              children: [{ text: '中文內容' }],
+            },
+          ],
+          language: 'zh-Hant',
+        },
+        {
+          elements: [
+            {
+              type: 'p',
+              children: [{ text: 'English Content' }],
+            },
+          ],
+          language: 'en',
+        },
+      ],
     });
   }
 }

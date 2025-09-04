@@ -1,10 +1,5 @@
 import React, { FC, useCallback, useEffect, useState } from 'react';
-import {
-  NodeProps,
-  NodeResizer,
-  useReactFlow,
-  useUpdateNodeInternals,
-} from '@xyflow/react';
+import { NodeProps, NodeResizer, useReactFlow, useUpdateNodeInternals } from '@xyflow/react';
 import { EditMode, ViewMode } from '../../typings';
 import {
   ACTIVE_OPACITY,
@@ -68,8 +63,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({
   const isEditable = viewMode === ViewMode.EDIT && editMode === EditMode.LAYER;
   // Check if this node should be selectable (only in LAYER mode)
   const isSelectable = editMode === EditMode.LAYER;
-  const opacity =
-    editMode === EditMode.LAYER ? ACTIVE_OPACITY : RECTANGLE_INACTIVE_OPACITY;
+  const opacity = editMode === EditMode.LAYER ? ACTIVE_OPACITY : RECTANGLE_INACTIVE_OPACITY;
 
   // Context menu functionality
   const {
@@ -84,15 +78,8 @@ const RectangleNode: FC<RectangleNodeProps> = ({
   } = useContextMenu({ id, editMode, isEditable, nodeType: 'rectangleNode' });
 
   // Text editing functionality
-  const {
-    isEditing,
-    editingText,
-    inputRef,
-    setEditingText,
-    handleDoubleClick,
-    handleKeyDown,
-    handleBlur,
-  } = useTextEditing({ id, label, isEditable, onTextEditComplete });
+  const { isEditing, editingText, inputRef, setEditingText, handleDoubleClick, handleKeyDown, handleBlur } =
+    useTextEditing({ id, label, isEditable, onTextEditComplete });
 
   // Handle resize start
   const handleResizeStart = useCallback((event: any, params: any) => {
@@ -113,8 +100,8 @@ const RectangleNode: FC<RectangleNodeProps> = ({
       }
 
       // 即時更新節點以提供視覺回饋，同時更新位置以保持對角錨點
-      setNodes((nodes) =>
-        nodes.map((node) =>
+      setNodes(nodes =>
+        nodes.map(node =>
           node.id === id
             ? {
                 ...node,
@@ -145,8 +132,8 @@ const RectangleNode: FC<RectangleNodeProps> = ({
 
       // 最終更新節點資料，移除 isResizing 標記，同時更新位置
       // 這次更新會觸發歷史記錄（因為沒有 isResizing 標記）
-      setNodes((nodes) =>
-        nodes.map((node) =>
+      setNodes(nodes =>
+        nodes.map(node =>
           node.id === id
             ? {
                 ...node,
@@ -170,7 +157,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({
 
   // Handle copy and paste
   const handleCopyPaste = useCallback(() => {
-    const currentNode = getNodes().find((node) => node.id === id);
+    const currentNode = getNodes().find(node => node.id === id);
 
     if (!currentNode) {
       console.error('Current node not found');
@@ -178,9 +165,9 @@ const RectangleNode: FC<RectangleNodeProps> = ({
       return;
     }
 
-    setNodesFromHook((nds) => {
+    setNodesFromHook(nds => {
       // Calculate next zIndex
-      const maxZIndex = Math.max(...nds.map((n) => n.zIndex || 0), 0);
+      const maxZIndex = Math.max(...nds.map(n => n.zIndex || 0), 0);
 
       const copiedNode = createRectangleCopy({
         currentNode,
@@ -199,19 +186,10 @@ const RectangleNode: FC<RectangleNodeProps> = ({
     });
 
     handleCloseContextMenu();
-  }, [
-    id,
-    currentSize,
-    color,
-    label,
-    getNodes,
-    setNodesFromHook,
-    handleCloseContextMenu,
-  ]);
+  }, [id, currentSize, color, label, getNodes, setNodesFromHook, handleCloseContextMenu]);
 
   // 在檢視模式下計算 hover 顏色
-  const displayColor =
-    viewMode === ViewMode.VIEW && isHovered ? createHoverColor(color) : color;
+  const displayColor = viewMode === ViewMode.VIEW && isHovered ? createHoverColor(color) : color;
 
   return (
     <div
@@ -238,10 +216,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({
           height: `${currentSize.height}px`,
           backgroundColor: `${displayColor}33`, // 20% opacity (33 in hex = 20% * 255)
           opacity: opacity,
-          border:
-            selected && isEditable
-              ? '2px solid #3b82f6'
-              : `2px solid ${displayColor}`, // 100% opacity border
+          border: selected && isEditable ? '2px solid #3b82f6' : `2px solid ${displayColor}`, // 100% opacity border
           borderRadius: '4px',
           display: 'flex',
           alignItems: 'center',
@@ -254,19 +229,15 @@ const RectangleNode: FC<RectangleNodeProps> = ({
           cursor: viewMode === ViewMode.VIEW ? 'pointer' : 'default',
           transition: viewMode === ViewMode.VIEW ? 'all 0.2s ease' : 'none',
         }}
-        onDoubleClick={
-          viewMode === ViewMode.EDIT ? handleDoubleClick : undefined
-        }
-        onContextMenu={
-          viewMode === ViewMode.EDIT ? handleContextMenu : undefined
-        }
+        onDoubleClick={viewMode === ViewMode.EDIT ? handleDoubleClick : undefined}
+        onContextMenu={viewMode === ViewMode.EDIT ? handleContextMenu : undefined}
       >
         {isEditing ? (
           <input
             ref={inputRef}
             type="text"
             value={editingText}
-            onChange={(e) => setEditingText(e.target.value)}
+            onChange={e => setEditingText(e.target.value)}
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
             style={{
@@ -280,7 +251,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({
               width: '90%',
               textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
           />
         ) : (
           <span style={{ cursor: 'default' }}>{label}</span>

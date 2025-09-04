@@ -26,13 +26,13 @@ yarn add @rytass/storages-adapter-r2
 
 ### StorageR2Options
 
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
-| `bucket` | `string` | Yes | R2 bucket name |
-| `accessKey` | `string` | Yes | R2 Access Key ID |
-| `secretKey` | `string` | Yes | R2 Secret Access Key |
-| `accountId` | `string` | Yes | Cloudflare Account ID |
-| `region` | `string` | No | R2 region (default: auto) |
+| Property    | Type     | Required | Description               |
+| ----------- | -------- | -------- | ------------------------- |
+| `bucket`    | `string` | Yes      | R2 bucket name            |
+| `accessKey` | `string` | Yes      | R2 Access Key ID          |
+| `secretKey` | `string` | Yes      | R2 Secret Access Key      |
+| `accountId` | `string` | Yes      | Cloudflare Account ID     |
+| `region`    | `string` | No       | R2 region (default: auto) |
 
 ## Usage
 
@@ -45,7 +45,7 @@ const storage = new StorageR2Service({
   bucket: 'my-r2-bucket',
   accessKey: 'your-access-key',
   secretKey: 'your-secret-key',
-  accountId: 'your-cloudflare-account-id'
+  accountId: 'your-cloudflare-account-id',
 });
 ```
 
@@ -56,21 +56,17 @@ import { readFileSync } from 'fs';
 
 // Upload file
 const fileBuffer = readFileSync('document.pdf');
-const result = await storage.write(
-  fileBuffer,
-  'documents/important-doc.pdf',
-  {
-    contentType: 'application/pdf',
-    metadata: {
-      uploadedBy: 'user123',
-      department: 'legal'
-    }
-  }
-);
+const result = await storage.write(fileBuffer, 'documents/important-doc.pdf', {
+  contentType: 'application/pdf',
+  metadata: {
+    uploadedBy: 'user123',
+    department: 'legal',
+  },
+});
 
 // Download file as buffer
 const downloadedFile = await storage.read('documents/important-doc.pdf', {
-  format: 'buffer'
+  format: 'buffer',
 });
 
 // Download file as stream (default)
@@ -93,13 +89,9 @@ import { createReadStream } from 'fs';
 
 // Upload large file via stream
 const fileStream = createReadStream('large-video.mp4');
-const uploadResult = await storage.write(
-  fileStream,
-  'media/videos/large-video.mp4',
-  {
-    contentType: 'video/mp4'
-  }
-);
+const uploadResult = await storage.write(fileStream, 'media/videos/large-video.mp4', {
+  contentType: 'video/mp4',
+});
 ```
 
 ### Integration with File Converter
@@ -113,7 +105,7 @@ const storage = new StorageR2Service({
   bucket: 'my-images',
   accessKey: process.env.R2_ACCESS_KEY!,
   secretKey: process.env.R2_SECRET_KEY!,
-  accountId: process.env.CLOUDFLARE_ACCOUNT_ID!
+  accountId: process.env.CLOUDFLARE_ACCOUNT_ID!,
 });
 
 const manager = new ConverterManager(
@@ -121,17 +113,13 @@ const manager = new ConverterManager(
     new ImageResizer({
       maxWidth: 1200,
       maxHeight: 800,
-      keepAspectRatio: true
-    })
+      keepAspectRatio: true,
+    }),
   ],
-  storage
+  storage,
 );
 
-const result = await manager.save(
-  imageFile,
-  'processed-images/',
-  'thumbnail.jpg'
-);
+const result = await manager.save(imageFile, 'processed-images/', 'thumbnail.jpg');
 ```
 
 ## Environment Variables
@@ -149,7 +137,7 @@ const storage = new StorageR2Service({
   bucket: process.env.R2_BUCKET_NAME!,
   accessKey: process.env.R2_ACCESS_KEY_ID!,
   secretKey: process.env.R2_SECRET_ACCESS_KEY!,
-  accountId: process.env.CLOUDFLARE_ACCOUNT_ID!
+  accountId: process.env.CLOUDFLARE_ACCOUNT_ID!,
 });
 ```
 
@@ -181,27 +169,30 @@ try {
 
 ## R2 vs S3 Comparison
 
-| Feature | Cloudflare R2 | Amazon S3 |
-|---------|---------------|-----------|
-| Egress Fees | **$0** | Charged per GB |
-| Global Distribution | Built-in | CloudFront required |
-| API Compatibility | S3-compatible | Native |
-| Pricing Model | Simple | Complex tiers |
-| Edge Computing | Cloudflare Workers | Lambda@Edge |
+| Feature             | Cloudflare R2      | Amazon S3           |
+| ------------------- | ------------------ | ------------------- |
+| Egress Fees         | **$0**             | Charged per GB      |
+| Global Distribution | Built-in           | CloudFront required |
+| API Compatibility   | S3-compatible      | Native              |
+| Pricing Model       | Simple             | Complex tiers       |
+| Edge Computing      | Cloudflare Workers | Lambda@Edge         |
 
 ## Best Practices
 
 ### Cost Optimization
+
 - Leverage zero egress fees for frequently accessed content
 - Use R2 for serving static assets globally
 - Consider R2 for backup storage with frequent retrievals
 
 ### Performance
+
 - Utilize Cloudflare's global network for faster access
 - Implement caching strategies at the edge
 - Use appropriate Content-Type headers for better caching
 
 ### Security
+
 - Use IAM tokens with minimal required permissions
 - Enable bucket-level security policies
 - Implement proper access logging
@@ -209,6 +200,7 @@ try {
 ## Cloudflare R2 Setup
 
 1. **Create R2 Bucket:**
+
    ```bash
    # Via Cloudflare Dashboard or API
    curl -X POST "https://api.cloudflare.com/client/v4/accounts/{account-id}/r2/buckets" \
@@ -241,7 +233,7 @@ const storageR2 = new StorageR2Service({
 });
 
 const storageS3 = new StorageS3Service({
-  // S3 configuration  
+  // S3 configuration
 });
 
 // Same interface, different storage backend
@@ -250,7 +242,7 @@ const operations = [
   storage.read(key),
   storage.delete(key),
   storage.exists(key),
-  storage.url(key)
+  storage.url(key),
 ];
 ```
 

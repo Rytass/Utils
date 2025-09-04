@@ -28,9 +28,8 @@ import {
 
 const debugPayment = debug('Rytass:Payment:HwaNan');
 
-export class HwaNanPayment<
-  CM extends HwaNanCommitMessage = HwaNanCreditCardCommitMessage,
-> implements PaymentGateway<CM, HwaNanOrder<CM>>
+export class HwaNanPayment<CM extends HwaNanCommitMessage = HwaNanCreditCardCommitMessage>
+  implements PaymentGateway<CM, HwaNanOrder<CM>>
 {
   private readonly baseUrl: string;
   private readonly merchantId: string;
@@ -40,13 +39,10 @@ export class HwaNanPayment<
   private readonly checkoutPath: string = '/payments/hwanan/checkout';
   private readonly callbackPath: string = '/payments/hwanan/callback';
   private readonly identifier: string;
-  private readonly customizePageType: HwaNanCustomizePageType =
-    HwaNanCustomizePageType.ZH_TW;
+  private readonly customizePageType: HwaNanCustomizePageType = HwaNanCustomizePageType.ZH_TW;
   private readonly customizePageVersion: string | undefined;
   private readonly pendingOrdersCache: OrdersCache<CM, string, HwaNanOrder<CM>>;
-  private readonly serverListener:
-    | ((req: IncomingMessage, res: ServerResponse) => void)
-    | undefined;
+  private readonly serverListener: ((req: IncomingMessage, res: ServerResponse) => void) | undefined;
   private serverHost: string = 'http://localhost:3000';
   private isGatewayReady = false;
 
@@ -63,13 +59,10 @@ export class HwaNanPayment<
     this.serverHost = options.serverHost || this.serverHost;
     this.callbackPath = options.callbackPath || this.callbackPath;
     this.checkoutPath = options.checkoutPath || this.checkoutPath;
-    this.customizePageType =
-      options.customizePageType || this.customizePageType;
+    this.customizePageType = options.customizePageType || this.customizePageType;
 
     this.customizePageVersion =
-      this.customizePageType === HwaNanCustomizePageType.OTHER
-        ? options.customizePageVersion
-        : undefined;
+      this.customizePageType === HwaNanCustomizePageType.OTHER ? options.customizePageVersion : undefined;
 
     const lruCache = options?.ordersCache
       ? undefined
@@ -100,8 +93,7 @@ export class HwaNanPayment<
     if (options?.withServer) {
       this.serverListener =
         options?.serverListener ??
-        ((req: IncomingMessage, res: ServerResponse) =>
-          this.defaultServerListener(req, res));
+        ((req: IncomingMessage, res: ServerResponse) => this.defaultServerListener(req, res));
 
       const url = new URL(this.serverHost);
       const port = Number(url.port);
@@ -111,21 +103,15 @@ export class HwaNanPayment<
       this._server.listen(port, '0.0.0.0', async () => {
         if (options.withServer === 'ngrok') {
           if (!process.env.NGROK_AUTHTOKEN) {
-            debugPayment(
-              '[HwananPayment] NGROK_AUTHTOKEN is not set. Please set it in your environment variables.',
-            );
+            debugPayment('[HwananPayment] NGROK_AUTHTOKEN is not set. Please set it in your environment variables.');
 
-            throw new Error(
-              '[HwananPayment] NGROK_AUTHTOKEN is not set. Please set it in your environment variables.',
-            );
+            throw new Error('[HwananPayment] NGROK_AUTHTOKEN is not set. Please set it in your environment variables.');
           }
 
           try {
             await import('@ngrok/ngrok');
           } catch (ex) {
-            debugPayment(
-              '[HwananPayment] Failed to import ngrok. Please install it to use ngrok feature.',
-            );
+            debugPayment('[HwananPayment] Failed to import ngrok. Please install it to use ngrok feature.');
 
             throw ex;
           }
@@ -138,9 +124,7 @@ export class HwaNanPayment<
 
           this.serverHost = forwarder.url() as string;
 
-          debugPayment(
-            `Callback Server Listen on port ${port} with ngrok url: ${this.serverHost}`,
-          );
+          debugPayment(`Callback Server Listen on port ${port} with ngrok url: ${this.serverHost}`);
         } else {
           debugPayment(`Callback Server Listen on port ${port}`);
         }
@@ -169,9 +153,7 @@ export class HwaNanPayment<
     return `${this.baseUrl}/transaction/api-auth/`;
   }
 
-  public async parseCallbackMessage(
-    payload: HwaNanNotifyPayload,
-  ): Promise<void> {
+  public async parseCallbackMessage(payload: HwaNanNotifyPayload): Promise<void> {
     const order = await this.pendingOrdersCache.get(payload.lidm);
 
     if (!order) throw new Error('Order not found');
@@ -212,19 +194,14 @@ export class HwaNanPayment<
         .update(
           `${createHash('md5')
             .update(`${this.identifier}|${payload.lidm}`)
-            .digest(
-              'hex',
-            )}|${payload.status}|${payload.errcode}|${payload.authCode}|${payload.authAmt}|${payload.xid}`,
+            .digest('hex')}|${payload.status}|${payload.errcode}|${payload.authCode}|${payload.authAmt}|${payload.xid}`,
         )
         .digest('hex')
         .substring(16)
     );
   }
 
-  public async defaultServerListener(
-    req: IncomingMessage,
-    res: ServerResponse,
-  ): Promise<void> {
+  public async defaultServerListener(req: IncomingMessage, res: ServerResponse): Promise<void> {
     const checkoutRe = new RegExp(`^${this.checkoutPath}/([^/]+)$`);
 
     if (req.method === 'GET' && req.url && checkoutRe.test(req.url)) {
@@ -247,11 +224,7 @@ export class HwaNanPayment<
       }
     }
 
-    if (
-      !req.url ||
-      req.method !== 'POST' ||
-      !~[this.callbackPath].indexOf(req.url)
-    ) {
+    if (!req.url || req.method !== 'POST' || !~[this.callbackPath].indexOf(req.url)) {
       res.writeHead(404);
       res.end();
 
@@ -260,18 +233,14 @@ export class HwaNanPayment<
 
     const bufferArray = [] as Buffer[];
 
-    req.on('data', (chunk) => {
+    req.on('data', chunk => {
       bufferArray.push(chunk);
     });
 
     req.on('end', async () => {
-      const payloadString = Buffer.from(Buffer.concat(bufferArray)).toString(
-        'utf8',
-      );
+      const payloadString = Buffer.from(Buffer.concat(bufferArray)).toString('utf8');
 
-      const payload = Array.from(
-        new URLSearchParams(payloadString).entries(),
-      ).reduce(
+      const payload = Array.from(new URLSearchParams(payloadString).entries()).reduce(
         (vars, [key, value]) => ({
           ...vars,
           [key]: value,
@@ -300,17 +269,12 @@ export class HwaNanPayment<
     });
   }
 
-  async prepare<NCM extends CM>(
-    input: HwaNanOrderInput<NCM>,
-  ): Promise<HwaNanOrder<NCM>> {
+  async prepare<NCM extends CM>(input: HwaNanOrderInput<NCM>): Promise<HwaNanOrder<NCM>> {
     if (!this.isGatewayReady) {
       throw new Error('Please waiting gateway ready');
     }
 
-    const totalPrice = input.items.reduce(
-      (sum, item) => sum + item.quantity * item.unitPrice,
-      0,
-    );
+    const totalPrice = input.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
 
     if (totalPrice <= 0) throw new Error('Total price must be greater than 0');
 
@@ -327,9 +291,7 @@ export class HwaNanPayment<
         lidm: id,
         merID: this.merID,
         customize: this.customizePageType,
-        ...(this.customizePageVersion
-          ? { PageVer: this.customizePageVersion }
-          : {}),
+        ...(this.customizePageVersion ? { PageVer: this.customizePageVersion } : {}),
         purchAmt: totalPrice,
         txType: HwaNanTransactionType.ONE_TIME,
         AutoCap: HwaNanAutoCapMode.AUTO,

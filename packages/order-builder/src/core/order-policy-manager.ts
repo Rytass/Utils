@@ -36,23 +36,14 @@ export class OrderPolicyManager {
   public removePolicy<PT extends RemovePolicy>(arg0: PT | PT[]): void {
     const policies = Array.isArray(arg0) ? arg0 : [arg0];
 
-    const toRemovePolicyIdSet = new Set(
-      policies.map(policy =>
-        typeof policy === 'string' ? policy : policy?.id
-      )
-    );
+    const toRemovePolicyIdSet = new Set(policies.map(policy => (typeof policy === 'string' ? policy : policy?.id)));
 
     this._policies = this._policies.reduce((total, policy) => {
       if (Array.isArray(policy)) {
-        return [
-          ...total,
-          policy.filter(candidatePolicy => !toRemovePolicyIdSet.has(candidatePolicy.id)),
-        ]
+        return [...total, policy.filter(candidatePolicy => !toRemovePolicyIdSet.has(candidatePolicy.id))];
       }
 
-      return toRemovePolicyIdSet.has(policy.id)
-          ? total
-          : [...total, policy];
+      return toRemovePolicyIdSet.has(policy.id) ? total : [...total, policy];
     }, [] as Policies[]);
   }
 
@@ -61,14 +52,9 @@ export class OrderPolicyManager {
    */
   get policyMap(): Map<string, Policy> {
     const flattenPolicies = this._policies.reduce((total: Policy[], policy) => {
-      return Array.isArray(policy)
-        ? [...total, ...policy]
-        : [...total, policy]
+      return Array.isArray(policy) ? [...total, ...policy] : [...total, policy];
     }, [] as Policy[]);
 
-    return new Map<string, Policy>(flattenPolicies.map(policy => [
-      policy.id,
-      policy,
-    ] as [string, Policy]));
+    return new Map<string, Policy>(flattenPolicies.map(policy => [policy.id, policy] as [string, Policy]));
   }
 }

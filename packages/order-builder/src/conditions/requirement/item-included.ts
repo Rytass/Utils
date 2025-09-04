@@ -9,16 +9,10 @@ import {
   Requirement,
   RequirementDescription,
 } from './typings';
-import {
-  itemIsMatchedItemFn,
-  itemSpecifiedItems,
-  itemSpecifiedScope,
-} from './utils';
+import { itemIsMatchedItemFn, itemSpecifiedItems, itemSpecifiedScope } from './utils';
 import { ObjRecord } from '../../typings';
 
-export class ItemIncluded<
-  Item extends OrderItem = OrderItem,
-  Options extends ObjRecord = ObjRecord>
+export class ItemIncluded<Item extends OrderItem = OrderItem, Options extends ObjRecord = ObjRecord>
   implements Condition<RequirementDescription, Options>
 {
   readonly type = Requirement.INCLUDED;
@@ -28,9 +22,7 @@ export class ItemIncluded<
   readonly options?: Options;
   private readonly scope: (keyof Item)[] | null;
   private readonly itemSet: Set<string> | null;
-  private readonly isMatchedItem:
-    | ItemSpecifiedResolvedFnInput<any>['isMatchedItem']
-    | null;
+  private readonly isMatchedItem: ItemSpecifiedResolvedFnInput<any>['isMatchedItem'] | null;
 
   /**
    * Item included condition.
@@ -50,12 +42,10 @@ export class ItemIncluded<
     this.itemSet = this.items?.length ? new Set(this.items) : null;
   }
 
-  matchedItems<I extends OrderItem = Item>(
-    order: Order<I>
-  ): FlattenOrderItem<I>[] {
+  matchedItems<I extends OrderItem = Item>(order: Order<I>): FlattenOrderItem<I>[] {
     if (!this.isMatchedItem && this.items.length < 1) return [];
 
-    return order.itemManager.flattenItems.filter((item) => {
+    return order.itemManager.flattenItems.filter(item => {
       if (item.unitPrice <= 0) return false; // is not out of stock.
 
       if (typeof this.isMatchedItem === 'function') {
@@ -75,18 +65,11 @@ export class ItemIncluded<
 
     if (
       this.conditions.length &&
-      !this.conditions.every(condition =>
-        condition.satisfy(order.subOrder({ subItems: matchedItems }))
-      )
+      !this.conditions.every(condition => condition.satisfy(order.subOrder({ subItems: matchedItems })))
     )
       return false;
 
-    return (
-      matchedItems.reduce(
-        (totalQuantity, item) => plus(totalQuantity, item.quantity),
-        0
-      ) >= this.threshold
-    );
+    return matchedItems.reduce((totalQuantity, item) => plus(totalQuantity, item.quantity), 0) >= this.threshold;
   }
 
   private includedItem(item: FlattenOrderItem) {

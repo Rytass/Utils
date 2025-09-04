@@ -1,13 +1,8 @@
 import { Buffer } from 'node:buffer';
 import { encrypt3DES, getDivKey, getMAC } from './ctbc-crypto-core';
-import {
-  CTBCBindCardRequestPayload,
-  CTBCOrderCommitPayload,
-  CTBCTxnPayload,
-} from './typings';
+import { CTBCBindCardRequestPayload, CTBCOrderCommitPayload, CTBCTxnPayload } from './typings';
 
-export const toTxnPayload = <T extends object>(value: T): CTBCTxnPayload =>
-  value as CTBCTxnPayload;
+export const toTxnPayload = <T extends object>(value: T): CTBCTxnPayload => value as CTBCTxnPayload;
 
 export function encodeRequestPayload(
   serviceName: string,
@@ -51,11 +46,7 @@ export function encodeRequestPayload(
         ServiceName: serviceName,
         Version: '1.0',
         MerchantID: gateway.merchantId,
-        RequestTime: new Date()
-          .toISOString()
-          .slice(0, 19)
-          .replace(/-/g, '/')
-          .replace('T', ' '),
+        RequestTime: new Date().toISOString().slice(0, 19).replace(/-/g, '/').replace('T', ' '),
       },
       Data: {
         MAC: mac,

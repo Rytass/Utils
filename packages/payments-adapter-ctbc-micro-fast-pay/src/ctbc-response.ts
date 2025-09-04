@@ -26,7 +26,7 @@ export function decodeResponsePayload<T = Record<string, string>>(
   const decrypted = decrypt3DES(Buffer.from(TXN, 'hex'), divKey);
 
   const obj = Object.fromEntries(
-    decrypted.split('&').map((kv) => {
+    decrypted.split('&').map(kv => {
       const [k, v] = kv.split('=');
 
       return [k, v ?? ''];
@@ -42,11 +42,7 @@ export function decodeResponsePayload<T = Record<string, string>>(
   return obj as T;
 }
 
-export function validateResponseMAC(
-  txnPlaintext: string,
-  mac: string,
-  txnKey: string,
-): boolean {
+export function validateResponseMAC(txnPlaintext: string, mac: string, txnKey: string): boolean {
   const expected = getMAC(txnPlaintext, txnKey);
 
   return expected === mac;

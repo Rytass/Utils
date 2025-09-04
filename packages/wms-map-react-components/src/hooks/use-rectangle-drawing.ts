@@ -6,12 +6,7 @@ import { MIN_RECTANGLE_SIZE } from '../constants';
 interface UseRectangleDrawingProps {
   editMode: EditMode;
   drawingMode: DrawingMode;
-  onCreateRectangle: (
-    startX: number,
-    startY: number,
-    endX: number,
-    endY: number,
-  ) => void;
+  onCreateRectangle: (startX: number, startY: number, endX: number, endY: number) => void;
 }
 
 interface DrawingState {
@@ -51,8 +46,7 @@ export const useRectangleDrawing = ({
 
   const handleMouseDown = useCallback(
     (event: MouseEvent) => {
-      if (drawingMode !== DrawingMode.RECTANGLE || editMode !== EditMode.LAYER)
-        return;
+      if (drawingMode !== DrawingMode.RECTANGLE || editMode !== EditMode.LAYER) return;
 
       const wrapper = containerRef.current;
 
@@ -80,8 +74,7 @@ export const useRectangleDrawing = ({
 
   const handleMouseMove = useCallback(
     (event: MouseEvent) => {
-      if (!drawingState.isDrawing || drawingMode !== DrawingMode.RECTANGLE)
-        return;
+      if (!drawingState.isDrawing || drawingMode !== DrawingMode.RECTANGLE) return;
 
       const wrapper = containerRef.current;
 
@@ -96,7 +89,7 @@ export const useRectangleDrawing = ({
         y: event.clientY,
       });
 
-      setDrawingState((prev) => ({
+      setDrawingState(prev => ({
         ...prev,
         currentPos: position,
         currentScreenPos: { x: screenX, y: screenY },
@@ -107,8 +100,7 @@ export const useRectangleDrawing = ({
 
   const handleMouseUp = useCallback(
     (event: MouseEvent) => {
-      if (!drawingState.isDrawing || drawingMode !== DrawingMode.RECTANGLE)
-        return;
+      if (!drawingState.isDrawing || drawingMode !== DrawingMode.RECTANGLE) return;
 
       const wrapper = containerRef.current;
 
@@ -124,23 +116,12 @@ export const useRectangleDrawing = ({
       const height = Math.abs(endPosition.y - drawingState.startPos.y);
 
       if (width > MIN_RECTANGLE_SIZE && height > MIN_RECTANGLE_SIZE) {
-        onCreateRectangle(
-          drawingState.startPos.x,
-          drawingState.startPos.y,
-          endPosition.x,
-          endPosition.y,
-        );
+        onCreateRectangle(drawingState.startPos.x, drawingState.startPos.y, endPosition.x, endPosition.y);
       }
 
-      setDrawingState((prev) => ({ ...prev, isDrawing: false }));
+      setDrawingState(prev => ({ ...prev, isDrawing: false }));
     },
-    [
-      drawingState.isDrawing,
-      drawingState.startPos,
-      drawingMode,
-      screenToFlowPosition,
-      onCreateRectangle,
-    ],
+    [drawingState.isDrawing, drawingState.startPos, drawingMode, screenToFlowPosition, onCreateRectangle],
   );
 
   // Event listeners setup
@@ -163,20 +144,10 @@ export const useRectangleDrawing = ({
   // Calculate preview rectangle for drawing using screen coordinates
   const previewRect = drawingState.isDrawing
     ? {
-        x: Math.min(
-          drawingState.startScreenPos.x,
-          drawingState.currentScreenPos.x,
-        ),
-        y: Math.min(
-          drawingState.startScreenPos.y,
-          drawingState.currentScreenPos.y,
-        ),
-        width: Math.abs(
-          drawingState.currentScreenPos.x - drawingState.startScreenPos.x,
-        ),
-        height: Math.abs(
-          drawingState.currentScreenPos.y - drawingState.startScreenPos.y,
-        ),
+        x: Math.min(drawingState.startScreenPos.x, drawingState.currentScreenPos.x),
+        y: Math.min(drawingState.startScreenPos.y, drawingState.currentScreenPos.y),
+        width: Math.abs(drawingState.currentScreenPos.x - drawingState.startScreenPos.x),
+        height: Math.abs(drawingState.currentScreenPos.y - drawingState.startScreenPos.y),
       }
     : null;
 

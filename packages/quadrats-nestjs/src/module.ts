@@ -9,7 +9,7 @@ import { QuadratsArticleImageService } from './services/image.service';
 @Global()
 @Module({})
 export class QuadratsModule {
-  static readonly DEFAULT_HOST = 'https://api.quadrats.io'
+  static readonly DEFAULT_HOST = 'https://api.quadrats.io';
 
   static forRoot(options: QuadratsModuleOptions): DynamicModule {
     return {
@@ -50,7 +50,7 @@ export class QuadratsModule {
 
         return host || QuadratsModule.DEFAULT_HOST;
       },
-    }
+    };
 
     return {
       module: QuadratsModule,
@@ -69,11 +69,11 @@ export class QuadratsModule {
         QuadratsArticleTagService,
         QuadratsArticleImageService,
       ],
-    } as DynamicModule
+    } as DynamicModule;
   }
 
   private static createAsyncProviders(options: QuadratsModuleAsyncOptions): Provider[] {
-    return [this.createAsyncOptionsProvider(options)]
+    return [this.createAsyncOptionsProvider(options)];
   }
 
   private static createAsyncOptionsProvider(options: QuadratsModuleAsyncOptions): Provider {
@@ -81,6 +81,6 @@ export class QuadratsModule {
       inject: options.inject || [],
       provide: QUADRATS_AUTH_CLIENT,
       useFactory: options.useFactory,
-    }
+    };
   }
 }

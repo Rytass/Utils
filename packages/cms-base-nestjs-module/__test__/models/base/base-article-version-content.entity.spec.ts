@@ -17,15 +17,11 @@ describe('BaseArticleVersionContentEntity relations', () => {
   }
 
   const relation = getMetadataArgsStorage().relations.find(
-    (r) =>
-      r.target === BaseArticleVersionContentEntity &&
-      r.propertyName === 'articleVersion',
+    r => r.target === BaseArticleVersionContentEntity && r.propertyName === 'articleVersion',
   );
 
   const joinColumns = getMetadataArgsStorage().joinColumns.filter(
-    (jc) =>
-      jc.target === BaseArticleVersionContentEntity &&
-      jc.propertyName === 'articleVersion',
+    jc => jc.target === BaseArticleVersionContentEntity && jc.propertyName === 'articleVersion',
   );
 
   it('should have a ManyToOne relation to BaseArticleVersionEntity', () => {

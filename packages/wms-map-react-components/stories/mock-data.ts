@@ -1,10 +1,4 @@
-import {
-  Map,
-  MapBackground,
-  MapRectangleRange,
-  MapPolygonRange,
-  MapRangeType,
-} from '../src/typings';
+import { Map, MapBackground, MapRectangleRange, MapPolygonRange, MapRangeType } from '../src/typings';
 
 /**
  * Mock API 資料 - 模擬從後端 API 接收到的地圖資料

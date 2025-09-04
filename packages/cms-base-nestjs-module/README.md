@@ -45,7 +45,9 @@ import { CmsBaseModule } from '@rytass/cms-base-nestjs-module';
       username: 'username',
       password: 'password',
       database: 'cms_database',
-      entities: [/* other entities */],
+      entities: [
+        /* other entities */
+      ],
       synchronize: true, // Development environment only
     }),
     CmsBaseModule.forRoot({
@@ -54,11 +56,11 @@ import { CmsBaseModule } from '@rytass/cms-base-nestjs-module';
       signatureLevels: [
         { id: 1, name: 'Editor', level: 1 },
         { id: 2, name: 'Senior Editor', level: 2 },
-        { id: 3, name: 'Chief Editor', level: 3 }
+        { id: 3, name: 'Chief Editor', level: 3 },
       ],
       fullTextSearchMode: true,
-      autoReleaseAfterApproved: false
-    })
+      autoReleaseAfterApproved: false,
+    }),
   ],
 })
 export class AppModule {}
@@ -82,9 +84,9 @@ import { CmsBaseModule } from '@rytass/cms-base-nestjs-module';
         multipleLanguageMode: configService.get('CMS_MULTI_LANGUAGE') === 'true',
         draftMode: configService.get('CMS_DRAFT_MODE') === 'true',
         signatureLevels: JSON.parse(configService.get('CMS_SIGNATURE_LEVELS')),
-        fullTextSearchMode: configService.get('CMS_FULL_TEXT_SEARCH') === 'true'
-      })
-    })
+        fullTextSearchMode: configService.get('CMS_FULL_TEXT_SEARCH') === 'true',
+      }),
+    }),
   ],
 })
 export class AppModule {}
@@ -101,9 +103,7 @@ import { ArticleBaseService } from '@rytass/cms-base-nestjs-module';
 
 @Injectable()
 export class ArticleService {
-  constructor(
-    private readonly articleBaseService: ArticleBaseService
-  ) {}
+  constructor(private readonly articleBaseService: ArticleBaseService) {}
 
   async createArticle(data: CreateArticleDto) {
     return await this.articleBaseService.create({
@@ -112,7 +112,7 @@ export class ArticleService {
       categoryIds: data.categoryIds,
       language: data.language || 'zh-TW',
       authorId: data.authorId,
-      customFields: data.customFields
+      customFields: data.customFields,
     });
   }
 
@@ -135,16 +135,14 @@ import { CategoryBaseService } from '@rytass/cms-base-nestjs-module';
 
 @Injectable()
 export class CategoryService {
-  constructor(
-    private readonly categoryBaseService: CategoryBaseService
-  ) {}
+  constructor(private readonly categoryBaseService: CategoryBaseService) {}
 
   async createCategory(data: CreateCategoryDto) {
     return await this.categoryBaseService.create({
       names: data.names, // Multi-language names
       parentId: data.parentId,
       description: data.description,
-      sortOrder: data.sortOrder
+      sortOrder: data.sortOrder,
     });
   }
 
@@ -153,14 +151,11 @@ export class CategoryService {
   }
 
   async getArticlesByCategory(categoryId: string, options = {}) {
-    return await this.categoryBaseService.findArticles(
-      categoryId, 
-      {
-        page: options.page || 1,
-        limit: options.limit || 10,
-        includeSubCategories: true
-      }
-    );
+    return await this.categoryBaseService.findArticles(categoryId, {
+      page: options.page || 1,
+      limit: options.limit || 10,
+      includeSubCategories: true,
+    });
   }
 }
 ```
@@ -213,21 +208,21 @@ const article = await articleService.createArticle({
   title: {
     'zh-TW': '中文標題',
     'en-US': 'English Title',
-    'ja-JP': '日本語タイトル'
+    'ja-JP': '日本語タイトル',
   },
   content: {
     'zh-TW': '中文內容...',
     'en-US': 'English content...',
-    'ja-JP': '日本語の内容...'
+    'ja-JP': '日本語の内容...',
   },
   categoryIds: ['category-1', 'category-2'],
-  language: 'zh-TW' // Primary language
+  language: 'zh-TW', // Primary language
 });
 
 // Query articles in specific language
 const articles = await articleService.findArticles({
   language: 'en-US',
-  status: 'published'
+  status: 'published',
 });
 ```
 
@@ -239,7 +234,7 @@ const version = await articleService.createVersion(articleId, {
   title: 'Updated Title',
   content: 'Updated content',
   changeReason: 'Fixed typos',
-  authorId: userId
+  authorId: userId,
 });
 
 // Get version history
@@ -258,21 +253,21 @@ const diff = await articleService.compareVersions(articleId, version1Id, version
 // Submit article for approval
 const signatureRequest = await articleService.submitForApproval(articleId, {
   submitterId: userId,
-  comments: 'Please review this article'
+  comments: 'Please review this article',
 });
 
 // Approve article
 await articleService.approveArticle(articleId, {
   approverId: managerId,
   level: 2, // Approval level
-  comments: 'Content looks good, approved'
+  comments: 'Content looks good, approved',
 });
 
 // Reject article
 await articleService.rejectArticle(articleId, {
   reviewerId: managerId,
   reason: 'Content needs revision',
-  suggestions: 'Please add more details'
+  suggestions: 'Please add more details',
 });
 ```
 
@@ -286,10 +281,10 @@ const searchResults = await articleService.searchArticles({
   categories: ['tech', 'news'],
   dateRange: {
     from: new Date('2024-01-01'),
-    to: new Date('2024-12-31')
+    to: new Date('2024-12-31'),
   },
   page: 1,
-  limit: 20
+  limit: 20,
 });
 
 // Search suggestions (auto-complete)
@@ -306,7 +301,7 @@ import { ArticleDataloader, CategoryDataloader } from '@rytass/cms-base-nestjs-m
 export class ArticleResolver {
   constructor(
     private readonly articleDataloader: ArticleDataloader,
-    private readonly categoryDataloader: CategoryDataloader
+    private readonly categoryDataloader: CategoryDataloader,
   ) {}
 
   @ResolveField()
@@ -325,23 +320,23 @@ export class ArticleResolver {
 
 ### CmsBaseModuleOptions
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `multipleLanguageMode` | `boolean` | `false` | Enable multi-language support |
-| `draftMode` | `boolean` | `true` | Enable draft mode |
-| `signatureLevels` | `SignatureLevel[]` | `[]` | Approval level settings |
-| `fullTextSearchMode` | `boolean` | `false` | Enable full-text search |
-| `autoReleaseAfterApproved` | `boolean` | `false` | Auto-publish after approval |
-| `circularCategoryMode` | `boolean` | `false` | Allow circular category references |
-| `multipleCategoryParentMode` | `boolean` | `false` | Allow multiple parent categories |
+| Option                       | Type               | Default | Description                        |
+| ---------------------------- | ------------------ | ------- | ---------------------------------- |
+| `multipleLanguageMode`       | `boolean`          | `false` | Enable multi-language support      |
+| `draftMode`                  | `boolean`          | `true`  | Enable draft mode                  |
+| `signatureLevels`            | `SignatureLevel[]` | `[]`    | Approval level settings            |
+| `fullTextSearchMode`         | `boolean`          | `false` | Enable full-text search            |
+| `autoReleaseAfterApproved`   | `boolean`          | `false` | Auto-publish after approval        |
+| `circularCategoryMode`       | `boolean`          | `false` | Allow circular category references |
+| `multipleCategoryParentMode` | `boolean`          | `false` | Allow multiple parent categories   |
 
 ## Error Handling
 
 ```typescript
-import { 
+import {
   ArticleNotFoundError,
   CategoryNotFoundError,
-  InsufficientPermissionError
+  InsufficientPermissionError,
 } from '@rytass/cms-base-nestjs-module';
 
 try {
@@ -359,18 +354,21 @@ try {
 ## Best Practices
 
 ### Performance
+
 - Use DataLoader to avoid N+1 query problems
 - Set up appropriate database indexes
 - Use pagination for large data queries
 - Enable query caching mechanisms
 
 ### Security
+
 - Implement proper permission controls
 - Validate user inputs
 - Use parameterized queries to prevent SQL injection
 - Log sensitive operation activities
 
 ### Scalability
+
 - Separate read and write operations
 - Use Redis caching for hot content
 - Implement content delivery networks (CDN)

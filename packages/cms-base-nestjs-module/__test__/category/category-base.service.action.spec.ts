@@ -1,10 +1,4 @@
-import {
-  DataSource,
-  EntityManager,
-  In,
-  QueryRunner,
-  Repository,
-} from 'typeorm';
+import { DataSource, EntityManager, In, QueryRunner, Repository } from 'typeorm';
 import { CategoryBaseService } from '../../src/services/category-base.service';
 import { BaseCategoryEntity } from '../../src/models/base-category.entity';
 import {
@@ -41,9 +35,7 @@ describe('CategoryBaseService - archive', () => {
   it('should throw CategoryNotFoundError if category does not exist', async () => {
     baseCategoryRepo.findOne!.mockResolvedValue(null); // not found
 
-    await expect(service.archive('nonexistent-id')).rejects.toThrow(
-      CategoryNotFoundError,
-    );
+    await expect(service.archive('nonexistent-id')).rejects.toThrow(CategoryNotFoundError);
   });
 
   it('should soft delete the category if found', async () => {
@@ -94,7 +86,7 @@ describe('CategoryBaseService - update', () => {
 
     service = new CategoryBaseService(
       {
-        create: jest.fn((input) => input),
+        create: jest.fn(input => input),
       } as unknown as Repository<BaseCategoryMultiLanguageNameEntity>,
       baseCategoryRepo,
       true,
@@ -192,9 +184,7 @@ describe('CategoryBaseService - update', () => {
       return Promise.resolve(null);
     });
 
-    service['checkCircularCategories'] = jest
-      .fn()
-      .mockRejectedValue(new CircularCategoryNotAllowedError());
+    service['checkCircularCategories'] = jest.fn().mockRejectedValue(new CircularCategoryNotAllowedError());
 
     await expect(() =>
       service.update('cat-id', {
@@ -207,7 +197,7 @@ describe('CategoryBaseService - update', () => {
   it('should throw if multiLanguageNames is present but mode is disabled', async () => {
     service = new CategoryBaseService(
       {
-        create: jest.fn((x) => x),
+        create: jest.fn(x => x),
       } as any,
       baseCategoryRepo as any,
       false,
@@ -401,13 +391,9 @@ describe('CategoryBaseService - update', () => {
       getOne: jest.fn().mockResolvedValue(mockCategory),
     });
 
-    (queryRunner.manager as EntityManager).save = jest
-      .fn()
-      .mockResolvedValue(undefined);
+    (queryRunner.manager as EntityManager).save = jest.fn().mockResolvedValue(undefined);
 
-    (queryRunner.manager as EntityManager).remove = jest
-      .fn()
-      .mockResolvedValue(undefined);
+    (queryRunner.manager as EntityManager).remove = jest.fn().mockResolvedValue(undefined);
 
     service.findById = jest.fn().mockResolvedValue({ id: 'cat-id' });
 
@@ -453,17 +439,13 @@ describe('CategoryBaseService - update', () => {
       getOne: jest.fn().mockResolvedValue(mockCategory),
     });
 
-    (queryRunner.manager as EntityManager).save = jest
-      .fn()
-      .mockResolvedValue(undefined);
+    (queryRunner.manager as EntityManager).save = jest.fn().mockResolvedValue(undefined);
 
-    (queryRunner.manager as EntityManager).remove = jest
-      .fn()
-      .mockResolvedValue(undefined);
+    (queryRunner.manager as EntityManager).remove = jest.fn().mockResolvedValue(undefined);
 
     service = new CategoryBaseService(
       {
-        create: jest.fn((x) => x),
+        create: jest.fn(x => x),
       } as any,
       baseCategoryRepo as any,
       true,
@@ -519,16 +501,12 @@ describe('CategoryBaseService - update', () => {
       getOne: jest.fn().mockResolvedValue(mockCategory),
     });
 
-    (queryRunner.manager as EntityManager).save = jest
-      .fn()
-      .mockResolvedValue(undefined);
+    (queryRunner.manager as EntityManager).save = jest.fn().mockResolvedValue(undefined);
 
-    (queryRunner.manager as EntityManager).remove = jest
-      .fn()
-      .mockResolvedValue(undefined);
+    (queryRunner.manager as EntityManager).remove = jest.fn().mockResolvedValue(undefined);
 
     service = new CategoryBaseService(
-      { create: jest.fn((x) => x) } as any,
+      { create: jest.fn(x => x) } as any,
       baseCategoryRepo as any,
       true,
       true,
@@ -619,7 +597,7 @@ describe('CategoryBaseService - update', () => {
       getOne: jest.fn().mockResolvedValue(mockCategory),
     });
 
-    const createSpy = jest.fn((input) => input);
+    const createSpy = jest.fn(input => input);
 
     service = new CategoryBaseService(
       { create: createSpy } as any,
@@ -718,7 +696,7 @@ describe('CategoryBaseService - update', () => {
     queryRunner.manager!.save = jest.fn().mockResolvedValue(undefined);
     queryRunner.manager!.remove = jest.fn().mockResolvedValue(undefined);
 
-    const createSpy = jest.fn((input) => input);
+    const createSpy = jest.fn(input => input);
 
     service = new CategoryBaseService(
       { create: createSpy } as any,
@@ -780,7 +758,7 @@ describe('CategoryBaseService - update', () => {
     queryRunner.manager!.save = jest.fn().mockResolvedValue(undefined);
     queryRunner.manager!.remove = jest.fn().mockResolvedValue(undefined);
 
-    const createSpy = jest.fn((input) => input);
+    const createSpy = jest.fn(input => input);
 
     service = new CategoryBaseService(
       { create: createSpy } as any,
@@ -846,7 +824,7 @@ describe('CategoryBaseService - update', () => {
     queryRunner.manager!.save = jest.fn().mockResolvedValue(undefined);
     queryRunner.manager!.remove = jest.fn().mockResolvedValue(undefined);
 
-    const createSpy = jest.fn((input) => input);
+    const createSpy = jest.fn(input => input);
 
     service = new CategoryBaseService(
       { create: createSpy } as any,
@@ -888,9 +866,7 @@ describe('CategoryBaseService - update', () => {
 describe('CategoryBaseService - create', () => {
   let service: CategoryBaseService;
   let baseCategoryRepo: jest.Mocked<Repository<BaseCategoryEntity>>;
-  let multiLangRepo: jest.Mocked<
-    Repository<BaseCategoryMultiLanguageNameEntity>
-  >;
+  let multiLangRepo: jest.Mocked<Repository<BaseCategoryMultiLanguageNameEntity>>;
 
   let queryRunner: QueryRunner;
   let manager: {
@@ -908,9 +884,7 @@ describe('CategoryBaseService - create', () => {
 
     multiLangRepo = {
       create: jest.fn(),
-    } as unknown as jest.Mocked<
-      Repository<BaseCategoryMultiLanguageNameEntity>
-    >;
+    } as unknown as jest.Mocked<Repository<BaseCategoryMultiLanguageNameEntity>>;
 
     manager = {
       save: jest.fn().mockResolvedValue(undefined),
@@ -955,7 +929,7 @@ describe('CategoryBaseService - create', () => {
 
     baseCategoryRepo.create.mockReturnValue(createdCategory);
     multiLangRepo.create.mockImplementation(
-      (input) =>
+      input =>
         ({
           ...input,
           categoryId: input.categoryId || 'cat-1',
@@ -992,7 +966,7 @@ describe('CategoryBaseService - create', () => {
 
     baseCategoryRepo.create.mockReturnValue(createdCategory);
     multiLangRepo.create.mockImplementation(
-      (input) =>
+      input =>
         ({
           ...input,
           categoryId: input.categoryId || 'cat-2',
@@ -1032,9 +1006,7 @@ describe('CategoryBaseService - create', () => {
       },
     };
 
-    await expect(service.create(input)).rejects.toThrow(
-      'Multiple language mode is not enabled',
-    );
+    await expect(service.create(input)).rejects.toThrow('Multiple language mode is not enabled');
   });
 
   it('should throw ParentCategoryNotFoundError if parentId not found', async () => {
@@ -1050,9 +1022,7 @@ describe('CategoryBaseService - create', () => {
 
     baseCategoryRepo.findOne.mockResolvedValue(null);
 
-    await expect(
-      service.create({ name: 'x', parentId: 'nonexistent' }),
-    ).rejects.toThrow(ParentCategoryNotFoundError);
+    await expect(service.create({ name: 'x', parentId: 'nonexistent' })).rejects.toThrow(ParentCategoryNotFoundError);
   });
 
   it('should throw MultipleParentCategoryNotAllowedError if parentIds is provided but allowMultipleParentCategories is false', async () => {
@@ -1071,9 +1041,7 @@ describe('CategoryBaseService - create', () => {
       parentIds: ['p1', 'p2'],
     };
 
-    await expect(service.create(input)).rejects.toThrow(
-      MultipleParentCategoryNotAllowedError,
-    );
+    await expect(service.create(input)).rejects.toThrow(MultipleParentCategoryNotAllowedError);
   });
 
   it('should find parent categories when parentIds are provided and allowMultipleParentCategories is true', async () => {
@@ -1168,13 +1136,9 @@ describe('CategoryBaseService - create', () => {
       parentIds: ['p1', 'p2'],
     };
 
-    baseCategoryRepo.find.mockResolvedValue([
-      { id: 'p1' } as BaseCategoryEntity,
-    ]); // only 1 found instead of 2
+    baseCategoryRepo.find.mockResolvedValue([{ id: 'p1' } as BaseCategoryEntity]); // only 1 found instead of 2
 
-    await expect(service.create(input)).rejects.toThrow(
-      ParentCategoryNotFoundError,
-    );
+    await expect(service.create(input)).rejects.toThrow(ParentCategoryNotFoundError);
   });
 
   it('should use parentId if allowMultipleParentCategories is false and parent exists', async () => {

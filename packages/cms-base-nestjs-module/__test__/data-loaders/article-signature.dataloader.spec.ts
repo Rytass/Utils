@@ -29,10 +29,7 @@ describe('ArticleSignatureDataLoader', () => {
   });
 
   it('should return signatures grouped by articleId and version', async () => {
-    const mockSignatures = [
-      { id: 's1' } as ArticleSignatureEntity,
-      { id: 's2' } as ArticleSignatureEntity,
-    ];
+    const mockSignatures = [{ id: 's1' } as ArticleSignatureEntity, { id: 's2' } as ArticleSignatureEntity];
 
     const mockVersion = {
       articleId: 'a1',
@@ -59,19 +56,11 @@ describe('ArticleSignatureDataLoader', () => {
     });
 
     expect(result).toEqual(mockSignatures);
-    expect(articleVersionRepo.createQueryBuilder).toHaveBeenCalledWith(
-      'articleVersions',
-    );
+    expect(articleVersionRepo.createQueryBuilder).toHaveBeenCalledWith('articleVersions');
 
-    expect(qb.leftJoinAndSelect).toHaveBeenCalledWith(
-      'articleVersions.signatures',
-      'signatures',
-    );
+    expect(qb.leftJoinAndSelect).toHaveBeenCalledWith('articleVersions.signatures', 'signatures');
 
-    expect(qb.leftJoinAndSelect).toHaveBeenCalledWith(
-      'signatures.signatureLevel',
-      'signatureLevel',
-    );
+    expect(qb.leftJoinAndSelect).toHaveBeenCalledWith('signatures.signatureLevel', 'signatureLevel');
 
     expect(getMany).toHaveBeenCalled();
   });
@@ -150,21 +139,13 @@ describe('ArticleSignatureDataLoader', () => {
       addOrderBy: jest.fn().mockReturnThis(),
     };
 
-    articleVersionRepo.createQueryBuilder.mockReturnValue(
-      mockQueryBuilder as any,
-    );
+    articleVersionRepo.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
 
     await loader.versionSignaturesLoader.load({ id: 'a1', version: 1 });
 
-    expect(mockAndWhere).toHaveBeenCalledWith(
-      'articleVersions.articleId = :id_0',
-      { id_0: 'a1' },
-    );
+    expect(mockAndWhere).toHaveBeenCalledWith('articleVersions.articleId = :id_0', { id_0: 'a1' });
 
-    expect(mockAndWhere).toHaveBeenCalledWith(
-      'articleVersions.version = :version_0',
-      { version_0: 1 },
-    );
+    expect(mockAndWhere).toHaveBeenCalledWith('articleVersions.version = :version_0', { version_0: 1 });
   });
 
   it('should return empty array if args is empty', async () => {

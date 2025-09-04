@@ -1,10 +1,4 @@
-import {
-  InvoiceAllowanceState,
-  InvoiceIssueOptions,
-  InvoicePaymentItem,
-  InvoiceState,
-  TaxType,
-} from '@rytass/invoice';
+import { InvoiceAllowanceState, InvoiceIssueOptions, InvoicePaymentItem, InvoiceState, TaxType } from '@rytass/invoice';
 import { BankProInvoice } from './bank-pro-invoice';
 
 export enum BankProBaseUrls {
@@ -51,12 +45,9 @@ export interface BankProInvoiceQueryFromInvoiceNumberArgs {
   invoiceNumber: string;
 }
 
-export type BankProInvoiceQueryArgs =
-  | BankProInvoiceQueryFromOrderIdArgs
-  | BankProInvoiceQueryFromInvoiceNumberArgs;
+export type BankProInvoiceQueryArgs = BankProInvoiceQueryFromOrderIdArgs | BankProInvoiceQueryFromInvoiceNumberArgs;
 
-export interface BankProInvoiceIssueOptions
-  extends InvoiceIssueOptions<BankProPaymentItem> {
+export interface BankProInvoiceIssueOptions extends InvoiceIssueOptions<BankProPaymentItem> {
   orderId: string;
   sellerCode?: string; // 賣方廠編
   companyName?: string; // 買方公司名稱

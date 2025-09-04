@@ -24,9 +24,8 @@ import {
 import { DateTime } from 'luxon';
 import axios from 'axios';
 
-export class HappyCardPayment<
-  CM extends HappyCardCommitMessage = HappyCardCommitMessage,
-> implements PaymentGateway<CM, HappyCardOrder<CM>>
+export class HappyCardPayment<CM extends HappyCardCommitMessage = HappyCardCommitMessage>
+  implements PaymentGateway<CM, HappyCardOrder<CM>>
 {
   private readonly STORE_ID = '999999';
   private readonly VERSION = '001';
@@ -43,9 +42,7 @@ export class HappyCardPayment<
 
     return {
       check: createHash('md5')
-        .update(
-          `${this.key}?${this.cSource}?${this.STORE_ID}?${now.toFormat('yyyyMMdd')}`,
-        )
+        .update(`${this.key}?${this.cSource}?${this.STORE_ID}?${now.toFormat('yyyyMMdd')}`)
         .digest('hex')
         .toUpperCase(),
       source: this.cSource,
@@ -67,20 +64,12 @@ export class HappyCardPayment<
     this.key = options.key;
   }
 
-  async prepare<P_OCM extends CM>(
-    options: HappyCardPayOptions,
-  ): Promise<HappyCardOrder<P_OCM>> {
+  async prepare<P_OCM extends CM>(options: HappyCardPayOptions): Promise<HappyCardOrder<P_OCM>> {
     const now = DateTime.now();
 
-    const totalItemPrice = options.items.reduce(
-      (sum, item) => sum + item.quantity * item.unitPrice,
-      0,
-    );
+    const totalItemPrice = options.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
 
-    const totalUseAmount = options.useRecords.reduce(
-      (sum, record) => sum + record.amount,
-      0,
-    );
+    const totalUseAmount = options.useRecords.reduce((sum, record) => sum + record.amount, 0);
 
     if (totalItemPrice !== totalUseAmount) {
       throw new Error('Total item price does not match with total use amount');
@@ -88,20 +77,13 @@ export class HappyCardPayment<
 
     const orderId = options.id || this.getOrderId();
 
-    const [records, productType] = await this.getCardBalance(
-      options.cardSerial,
-      true,
-    );
+    const [records, productType] = await this.getCardBalance(options.cardSerial, true);
 
-    const recordBalanceMap = new Map(
-      records.map((record) => [`${record.id}:${record.type}`, record.amount]),
-    );
+    const recordBalanceMap = new Map(records.map(record => [`${record.id}:${record.type}`, record.amount]));
 
     if (
-      options.useRecords.some((record) => {
-        const balanceRecord = recordBalanceMap.get(
-          `${record.id}:${record.type ?? HappyCardRecordType.AMOUNT}`,
-        );
+      options.useRecords.some(record => {
+        const balanceRecord = recordBalanceMap.get(`${record.id}:${record.type ?? HappyCardRecordType.AMOUNT}`);
 
         if (!balanceRecord) return true;
 
@@ -134,7 +116,7 @@ export class HappyCardPayment<
           {
             card_sn: options.cardSerial,
             record_list: [],
-            use_list: options.useRecords.map((record) => ({
+            use_list: options.useRecords.map(record => ({
               record_id: record.id,
               type: record.type ?? HappyCardRecordType.AMOUNT,
               amt: record.amount,
@@ -156,15 +138,11 @@ export class HappyCardPayment<
       ...options.payload,
     };
 
-    const { data } = await axios.post<HappyCardPayResponse>(
-      `${this.baseUrl}/Pay`,
-      JSON.stringify(payload),
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+    const { data } = await axios.post<HappyCardPayResponse>(`${this.baseUrl}/Pay`, JSON.stringify(payload), {
+      headers: {
+        'Content-Type': 'application/json',
       },
-    );
+    });
 
     if (data.resultCode !== HappyCardResultCode.SUCCESS) {
       throw new Error(`[${data.resultCode}] ${data.resultMsg}`);
@@ -211,9 +189,7 @@ export class HappyCardPayment<
     cardSerial: string,
     returnRecords = false,
     isIsland: boolean = false,
-  ): Promise<
-    [number, HappyCardProductType] | [HappyCardRecord[], HappyCardProductType]
-  > {
+  ): Promise<[number, HappyCardProductType] | [HappyCardRecord[], HappyCardProductType]> {
     const { data } = await axios.post<HappyCardSearchCardResponse>(
       `${this.baseUrl}/SearchCard`,
       JSON.stringify({
@@ -234,9 +210,9 @@ export class HappyCardPayment<
     if (returnRecords) {
       return [
         data.data.card_list
-          .filter((card) => this.VALID_PRODUCT_TYPE_SET.has(card.productType))
-          .map((card) =>
-            card.record_list.map((record) => ({
+          .filter(card => this.VALID_PRODUCT_TYPE_SET.has(card.productType))
+          .map(card =>
+            card.record_list.map(record => ({
               id: record.record_id,
               type: record.type,
               amount: record.amt,
@@ -249,7 +225,7 @@ export class HappyCardPayment<
 
     return [
       data.data.card_list
-        .filter((card) => this.VALID_PRODUCT_TYPE_SET.has(card.productType))
+        .filter(card => this.VALID_PRODUCT_TYPE_SET.has(card.productType))
         .reduce((sum, card) => sum + card.amt, 0),
       data.data.card_list[0].productType,
     ];

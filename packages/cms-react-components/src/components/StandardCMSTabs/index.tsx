@@ -11,11 +11,7 @@ export interface StandardCMSTabsProps {
   };
 }
 
-const StandardCMSTabs = ({
-  activeStage,
-  onChange,
-  tabsNaming,
-}: StandardCMSTabsProps): ReactElement => {
+const StandardCMSTabs = ({ activeStage, onChange, tabsNaming }: StandardCMSTabsProps): ReactElement => {
   const tabs = useMemo(
     () => [
       {
@@ -52,12 +48,8 @@ const StandardCMSTabs = ({
   );
 
   return (
-    <Tabs
-      activeKey={activeStage}
-      tabBarClassName={classes.tabBar}
-      onChange={onTabChange}
-    >
-      {tabs.map((tab) => {
+    <Tabs activeKey={activeStage} tabBarClassName={classes.tabBar} onChange={onTabChange}>
+      {tabs.map(tab => {
         return <TabPane key={tab.id} tab={<Tab>{tab.name}</Tab>} />;
       })}
     </Tabs>

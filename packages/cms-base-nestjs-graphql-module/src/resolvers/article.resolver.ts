@@ -3,11 +3,7 @@ import { ArticleDto } from '../dto/article.dto';
 import { MemberDataLoader } from '../data-loaders/members.dataloader';
 import { UserDto } from '../dto/user.dto';
 import { IsPublic } from '@rytass/member-base-nestjs-module';
-import {
-  DEFAULT_LANGUAGE,
-  MULTIPLE_LANGUAGE_MODE,
-  type ArticleBaseDto,
-} from '@rytass/cms-base-nestjs-module';
+import { DEFAULT_LANGUAGE, MULTIPLE_LANGUAGE_MODE, type ArticleBaseDto } from '@rytass/cms-base-nestjs-module';
 import { CategoryDto } from '../dto/category.dto';
 import { ArticleDataLoader } from '../data-loaders/article.dataloader';
 import { Language } from '../decorators/language.decorator';
@@ -31,17 +27,12 @@ export class ArticleResolver {
   @ResolveField(() => UserDto, { nullable: true })
   @IsPublic()
   releasedBy(@Root() article: ArticleBaseDto): Promise<UserDto | null> | null {
-    return article.releasedBy
-      ? this.memberDataloader.loader.load(article.releasedBy)
-      : null;
+    return article.releasedBy ? this.memberDataloader.loader.load(article.releasedBy) : null;
   }
 
   @ResolveField(() => [CategoryDto])
   @IsPublic()
-  categories(
-    @Root() article: ArticleBaseDto,
-    @Language() language: string = DEFAULT_LANGUAGE,
-  ): Promise<CategoryDto[]> {
+  categories(@Root() article: ArticleBaseDto, @Language() language: string = DEFAULT_LANGUAGE): Promise<CategoryDto[]> {
     return this.articleDataloader.categoriesLoader.load({
       articleId: article.id,
       language: this.multiLanguage ? language : DEFAULT_LANGUAGE,

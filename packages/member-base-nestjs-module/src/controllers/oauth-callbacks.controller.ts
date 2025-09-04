@@ -1,19 +1,7 @@
-import {
-  Controller,
-  Get,
-  Inject,
-  NotFoundException,
-  Param,
-  Query,
-  Res,
-} from '@nestjs/common';
+import { Controller, Get, Inject, NotFoundException, Param, Query, Res } from '@nestjs/common';
 import { IsPublic } from '../decorators/is-public.decorator';
 import { OAuth2Provider } from '../typings/oauth2-provider.interface';
-import {
-  COOKIE_MODE,
-  OAUTH2_CLIENT_DEST_URL,
-  OAUTH2_PROVIDERS,
-} from '../typings/member-base-providers';
+import { COOKIE_MODE, OAUTH2_CLIENT_DEST_URL, OAUTH2_PROVIDERS } from '../typings/member-base-providers';
 import { OAuthService } from '../services/oauth.service';
 import type { Response } from 'express';
 
@@ -32,11 +20,8 @@ export class OAuthCallbacksController {
 
   @Get('/login/:channel')
   @IsPublic()
-  async redirectURL(
-    @Param('channel') channel: string,
-    @Res() res: Response,
-  ): Promise<void> {
-    const provider = this.providers.find((p) => p.channel === channel);
+  async redirectURL(@Param('channel') channel: string, @Res() res: Response): Promise<void> {
+    const provider = this.providers.find(p => p.channel === channel);
 
     if (!provider) {
       throw new NotFoundException();
@@ -77,7 +62,7 @@ export class OAuthCallbacksController {
     @Param('channel') channel: string,
     @Res() res: Response,
   ): Promise<void> {
-    const provider = this.providers.find((p) => p.channel === channel);
+    const provider = this.providers.find(p => p.channel === channel);
 
     if (!provider) {
       throw new NotFoundException();
@@ -85,10 +70,7 @@ export class OAuthCallbacksController {
 
     switch (provider.channel) {
       case 'google': {
-        const tokenPair = await this.oauthService.loginWithGoogleOAuth2Code(
-          code,
-          state,
-        );
+        const tokenPair = await this.oauthService.loginWithGoogleOAuth2Code(code, state);
 
         if (this.cookieMode) {
           res.cookie('token', tokenPair.refreshToken, {
@@ -107,10 +89,7 @@ export class OAuthCallbacksController {
       }
 
       case 'facebook': {
-        const tokenPair = await this.oauthService.loginWithFacebookOAuth2Code(
-          code,
-          state,
-        );
+        const tokenPair = await this.oauthService.loginWithFacebookOAuth2Code(code, state);
 
         if (this.cookieMode) {
           res.cookie('token', tokenPair.refreshToken, {
@@ -129,11 +108,7 @@ export class OAuthCallbacksController {
       }
 
       default: {
-        const tokenPair = await this.oauthService.loginWithCustomOAuth2Code(
-          channel,
-          code,
-          state,
-        );
+        const tokenPair = await this.oauthService.loginWithCustomOAuth2Code(channel, code, state);
 
         if (this.cookieMode) {
           res.cookie('token', tokenPair.refreshToken, {

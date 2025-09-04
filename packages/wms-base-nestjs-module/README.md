@@ -55,12 +55,7 @@ export class AppModule {}
 
 ```typescript
 import { Injectable } from '@nestjs/common';
-import { 
-  OrderService, 
-  StockService, 
-  LocationService,
-  MaterialService 
-} from '@rytass/wms-base-nestjs-module';
+import { OrderService, StockService, LocationService, MaterialService } from '@rytass/wms-base-nestjs-module';
 
 @Injectable()
 export class InventoryService {
@@ -145,17 +140,9 @@ import { CustomMaterialEntity } from './models/custom-material.entity';
     TypeOrmModule.forRoot({
       // TypeORM configuration
     }),
-    TypeOrmModule.forFeature([
-      CustomLocationEntity,
-      CustomMaterialEntity,
-    ]),
+    TypeOrmModule.forFeature([CustomLocationEntity, CustomMaterialEntity]),
     WMSBaseModule.forRootAsync({
-      imports: [
-        TypeOrmModule.forFeature([
-          CustomLocationEntity,
-          CustomMaterialEntity,
-        ]),
-      ],
+      imports: [TypeOrmModule.forFeature([CustomLocationEntity, CustomMaterialEntity])],
       useFactory: () => ({
         allowNegativeStock: false,
         locationEntity: CustomLocationEntity,
@@ -402,12 +389,16 @@ export class TransactionalService {
       // Multiple operations in single transaction
       const order1 = await this.orderService.createOrder(OrderEntity, {
         order: {},
-        batches: [/* ... */],
+        batches: [
+          /* ... */
+        ],
       });
 
       const order2 = await this.orderService.createOrder(OrderEntity, {
         order: {},
-        batches: [/* ... */],
+        batches: [
+          /* ... */
+        ],
       });
 
       await queryRunner.commitTransaction();
@@ -430,7 +421,7 @@ Configure the module to allow or prevent negative stock:
 // Module configuration
 WMSBaseModule.forRoot({
   allowNegativeStock: true, // Enable for pre-orders
-})
+});
 
 // In service
 @Injectable()
@@ -548,7 +539,7 @@ export class ReportingService {
 interface WMSBaseModuleOptions {
   // Allow stock to go negative (for pre-orders, backorders)
   allowNegativeStock?: boolean;
-  
+
   // Custom entity classes
   stockEntity?: new () => StockEntity;
   locationEntity?: new () => LocationEntity;
@@ -564,16 +555,16 @@ interface WMSBaseModuleOptions {
 interface StockFindDto {
   // Filter by materials
   materialIds?: string[];
-  
+
   // Filter by locations
   locationIds?: string[];
-  
+
   // Filter by batches
   batchIds?: string[];
-  
+
   // Only exact location match (not children)
   exactLocationMatch?: boolean;
-  
+
   // Date range filters
   createdAfter?: Date;
   createdBefore?: Date;
@@ -612,13 +603,13 @@ export class ErrorHandlingService {
         console.error('Not enough stock available');
         throw new BadRequestException('Insufficient inventory');
       }
-      
+
       if (error instanceof LocationNotFoundError) {
         // Handle location not found
         console.error('Location does not exist');
         throw new NotFoundException('Invalid location');
       }
-      
+
       throw error;
     }
   }
@@ -662,7 +653,7 @@ class TypedOrderEntity extends OrderEntity {
 
 // Avoid - Using base entity with any
 const order = await this.orderService.createOrder(OrderEntity, {
-  order: { anyField: 'value' } as any
+  order: { anyField: 'value' } as any,
 });
 ```
 
@@ -698,16 +689,18 @@ class CustomInventoryService {
 @Injectable()
 class InventoryService {
   constructor(private orderService: OrderService) {}
-  
+
   async updateStock(materialId: string, quantity: number) {
     return this.orderService.createOrder(OrderEntity, {
       order: {},
-      batches: [{
-        id: `ADJUSTMENT-${Date.now()}`,
-        locationId: 'DEFAULT',
-        materialId,
-        quantity,
-      }],
+      batches: [
+        {
+          id: `ADJUSTMENT-${Date.now()}`,
+          locationId: 'DEFAULT',
+          materialId,
+          quantity,
+        },
+      ],
     });
   }
 }

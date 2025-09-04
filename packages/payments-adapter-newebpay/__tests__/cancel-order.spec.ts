@@ -44,11 +44,10 @@ describe('NewebPay Cancel Order', () => {
 
       decipher.setAutoPadding(false);
 
-      const plainInfo =
-        `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
-          /[\u0000-\u001F\u007F-\u009F]/g,
-          '',
-        );
+      const plainInfo = `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
+        /[\u0000-\u001F\u007F-\u009F]/g,
+        '',
+      );
 
       const requestBody = new URLSearchParams(plainInfo);
 
@@ -114,9 +113,9 @@ describe('NewebPay Cancel Order', () => {
     await order.refund();
 
     expect(order.state).toBe(OrderState.REFUNDED);
-    expect(
-      (order.additionalInfo as NewebPayAdditionInfoCreditCard).closeStatus,
-    ).toBe(NewebPayCreditCardBalanceStatus.SETTLED);
+    expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).closeStatus).toBe(
+      NewebPayCreditCardBalanceStatus.SETTLED,
+    );
   });
 
   it('should throw error if order closed', () => {
@@ -156,9 +155,7 @@ describe('NewebPay Cancel Order', () => {
       } as NewebPayAdditionInfoCreditCard,
     );
 
-    expect(() => payment.cancel(order)).rejects.toThrow(
-      'Only unsettled order can be canceled',
-    );
+    expect(() => payment.cancel(order)).rejects.toThrow('Only unsettled order can be canceled');
   });
 
   it('should throw error if CheckCode invalid', () => {
@@ -177,11 +174,10 @@ describe('NewebPay Cancel Order', () => {
 
       decipher.setAutoPadding(false);
 
-      const plainInfo =
-        `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
-          /[\u0000-\u001F\u007F-\u009F]/g,
-          '',
-        );
+      const plainInfo = `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
+        /[\u0000-\u001F\u007F-\u009F]/g,
+        '',
+      );
 
       const requestBody = new URLSearchParams(plainInfo);
 
@@ -260,11 +256,10 @@ describe('NewebPay Cancel Order', () => {
 
       decipher.setAutoPadding(false);
 
-      const plainInfo =
-        `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
-          /[\u0000-\u001F\u007F-\u009F]/g,
-          '',
-        );
+      const plainInfo = `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
+        /[\u0000-\u001F\u007F-\u009F]/g,
+        '',
+      );
 
       const requestBody = new URLSearchParams(plainInfo);
 

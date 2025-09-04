@@ -1,8 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import {
-  RESOLVED_ARTICLE_REPO,
-  RESOLVED_ARTICLE_VERSION_REPO,
-} from '../typings/cms-base-providers';
+import { RESOLVED_ARTICLE_REPO, RESOLVED_ARTICLE_VERSION_REPO } from '../typings/cms-base-providers';
 import { BaseArticleEntity } from '../models/base-article.entity';
 import { Brackets, Repository } from 'typeorm';
 import DataLoader from 'dataloader';
@@ -49,15 +46,12 @@ export class ArticleDataLoader {
       qb.leftJoinAndSelect('versions.signatures', 'signatures');
 
       qb.andWhere(
-        new Brackets((subQb) => {
+        new Brackets(subQb => {
           queryArgs.forEach((args, index) => {
-            subQb.orWhere(
-              `versions.articleId = :id_${index} AND versions.version = :version_${index}`,
-              {
-                [`id_${index}`]: args.id,
-                [`version_${index}`]: args.version,
-              },
-            );
+            subQb.orWhere(`versions.articleId = :id_${index} AND versions.version = :version_${index}`, {
+              [`id_${index}`]: args.id,
+              [`version_${index}`]: args.version,
+            });
           });
 
           return subQb;
@@ -67,7 +61,7 @@ export class ArticleDataLoader {
       const versions = await qb.getMany();
 
       const versionMap = new Map(
-        versions.map((version) => [
+        versions.map(version => [
           `${version.articleId}:${version.version}`,
           (() => {
             if (version.deletedAt) return ArticleStage.DELETED;
@@ -82,11 +76,10 @@ export class ArticleDataLoader {
 
             if (
               version.signatures.some(
-                (sig) =>
+                sig =>
                   sig.result === ArticleSignatureResult.APPROVED &&
                   sig.deletedAt === null &&
-                  sig.signatureLevelId ===
-                    this.signatureService.finalSignatureLevel?.id,
+                  sig.signatureLevelId === this.signatureService.finalSignatureLevel?.id,
               )
             ) {
               return ArticleStage.VERIFIED;
@@ -101,23 +94,16 @@ export class ArticleDataLoader {
         ]),
       );
 
-      return queryArgs.map(
-        (args) =>
-          versionMap.get(`${args.id}:${args.version}`) ?? ArticleStage.UNKNOWN,
-      );
+      return queryArgs.map(args => versionMap.get(`${args.id}:${args.version}`) ?? ArticleStage.UNKNOWN);
     },
     {
       cache: true,
       cacheMap: this.stageCache,
-      cacheKeyFn: (queryArgs) => `${queryArgs.id}:${queryArgs.version}`,
+      cacheKeyFn: queryArgs => `${queryArgs.id}:${queryArgs.version}`,
     },
   );
 
-  readonly categoriesLoader = new DataLoader<
-    string,
-    BaseCategoryEntity[],
-    string
-  >(
+  readonly categoriesLoader = new DataLoader<string, BaseCategoryEntity[], string>(
     async (ids: readonly string[]): Promise<BaseCategoryEntity[][]> => {
       const qb = this.articleRepo.createQueryBuilder('articles');
 
@@ -127,11 +113,9 @@ export class ArticleDataLoader {
 
       const articles = await qb.getMany();
 
-      const categoryMap = new Map(
-        articles.map((article) => [article.id, article.categories]),
-      );
+      const categoryMap = new Map(articles.map(article => [article.id, article.categories]));
 
-      return ids.map((id) => categoryMap.get(id) ?? []);
+      return ids.map(id => categoryMap.get(id) ?? []);
     },
     {
       cache: true,

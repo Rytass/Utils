@@ -29,6 +29,7 @@ yarn add @rytass/payments-adapter-icash-pay
 ```
 
 **Peer Dependencies:**
+
 ```bash
 npm install @rytass/payments
 ```
@@ -54,10 +55,10 @@ const productionGateway = new ICashPayPayment({
   -----END PUBLIC KEY-----`,
   aesKey: {
     id: 'YOUR_AES_KEY_ID',
-    key: 'YOUR_32_CHAR_AES_KEY',      // 32 characters
-    iv: 'YOUR_16_CHAR_AES_IV'        // 16 characters
+    key: 'YOUR_32_CHAR_AES_KEY', // 32 characters
+    iv: 'YOUR_16_CHAR_AES_IV', // 16 characters
   },
-  logLevel: LogLevel.INFO
+  logLevel: LogLevel.INFO,
 });
 
 // Development configuration
@@ -69,9 +70,9 @@ const developmentGateway = new ICashPayPayment({
   aesKey: {
     id: process.env.ICASH_PAY_AES_KEY_ID!,
     key: process.env.ICASH_PAY_AES_KEY!,
-    iv: process.env.ICASH_PAY_AES_IV!
+    iv: process.env.ICASH_PAY_AES_IV!,
   },
-  logLevel: LogLevel.DEBUG
+  logLevel: LogLevel.DEBUG,
 });
 ```
 
@@ -80,18 +81,16 @@ const developmentGateway = new ICashPayPayment({
 ```typescript
 // Secure environment-based setup
 const paymentGateway = new ICashPayPayment({
-  baseUrl: process.env.NODE_ENV === 'production' 
-    ? ICashPayBaseUrls.PRODUCTION 
-    : ICashPayBaseUrls.DEVELOPMENT,
+  baseUrl: process.env.NODE_ENV === 'production' ? ICashPayBaseUrls.PRODUCTION : ICashPayBaseUrls.DEVELOPMENT,
   merchantId: process.env.ICASH_PAY_MERCHANT_ID!,
   clientPrivateKey: process.env.ICASH_PAY_CLIENT_PRIVATE_KEY!,
   serverPublicKey: process.env.ICASH_PAY_SERVER_PUBLIC_KEY!,
   aesKey: {
     id: process.env.ICASH_PAY_AES_KEY_ID!,
     key: process.env.ICASH_PAY_AES_KEY!,
-    iv: process.env.ICASH_PAY_AES_IV!
+    iv: process.env.ICASH_PAY_AES_IV!,
   },
-  logLevel: process.env.NODE_ENV === 'production' ? LogLevel.ERROR : LogLevel.DEBUG
+  logLevel: process.env.NODE_ENV === 'production' ? LogLevel.ERROR : LogLevel.DEBUG,
 });
 ```
 
@@ -111,12 +110,12 @@ const paymentGateway = new ICashPayPayment({
   aesKey: {
     id: process.env.ICASH_PAY_AES_KEY_ID!,
     key: process.env.ICASH_PAY_AES_KEY!,
-    iv: process.env.ICASH_PAY_AES_IV!
-  }
+    iv: process.env.ICASH_PAY_AES_IV!,
+  },
 });
 
 // Setup payment event listeners
-paymentGateway.emitter.on(PaymentEvents.ORDER_COMMITTED, (message) => {
+paymentGateway.emitter.on(PaymentEvents.ORDER_COMMITTED, message => {
   console.log('iCash Pay payment successful:', message.id);
   console.log('Transaction ID:', message.transactionId);
   console.log('Payment Type:', message.paymentType);
@@ -127,21 +126,21 @@ paymentGateway.emitter.on(PaymentEvents.ORDER_COMMITTED, (message) => {
 const order = await paymentGateway.prepare({
   id: 'ORDER-2024-001',
   storeName: 'My Coffee Shop',
-  storeId: 'STORE001',              // Optional store identifier
-  barcode: '280012345678901234',    // Customer's iCash Pay barcode
-  amount: 150,                      // Total transaction amount
+  storeId: 'STORE001', // Optional store identifier
+  barcode: '280012345678901234', // Customer's iCash Pay barcode
+  amount: 150, // Total transaction amount
   items: [
     {
       name: 'Americano Coffee',
       unitPrice: 120,
-      quantity: 1
+      quantity: 1,
     },
     {
       name: 'Service Fee',
       unitPrice: 30,
-      quantity: 1
-    }
-  ]
+      quantity: 1,
+    },
+  ],
 });
 
 console.log('Order ID:', order.id);
@@ -170,25 +169,25 @@ const complexOrder = await paymentGateway.prepare({
   storeName: 'Department Store',
   storeId: 'DS001',
   barcode: '280012345678901234',
-  amount: 1000,                     // Total amount
-  collectedAmount: 800,             // Amount collected by store
-  consignmentAmount: 200,           // Consignment amount
-  nonRedeemAmount: 100,             // Non-redeemable amount
-  collectedNonRedeemAmount: 80,     // Collected non-redeemable amount
-  consignmentNonRedeemAmount: 20,   // Consignment non-redeemable amount
-  nonPointAmount: 50,               // Amount not earning points
+  amount: 1000, // Total amount
+  collectedAmount: 800, // Amount collected by store
+  consignmentAmount: 200, // Consignment amount
+  nonRedeemAmount: 100, // Non-redeemable amount
+  collectedNonRedeemAmount: 80, // Collected non-redeemable amount
+  consignmentNonRedeemAmount: 20, // Consignment non-redeemable amount
+  nonPointAmount: 50, // Amount not earning points
   items: [
     {
       name: 'Premium Product',
       unitPrice: 800,
-      quantity: 1
+      quantity: 1,
     },
     {
       name: 'Consignment Item',
       unitPrice: 200,
-      quantity: 1
-    }
-  ]
+      quantity: 1,
+    },
+  ],
 });
 ```
 
@@ -230,9 +229,9 @@ const invoiceOrder = await paymentGateway.prepare({
       name: 'Smartphone',
       unitPrice: 5000,
       quantity: 1,
-      mobileInvoiceCarrier: '/ABC12345'  // Customer's mobile carrier barcode
-    }
-  ]
+      mobileInvoiceCarrier: '/ABC12345', // Customer's mobile carrier barcode
+    },
+  ],
 });
 
 // After payment, check invoice information
@@ -258,10 +257,10 @@ const memberOrder = await paymentGateway.prepare({
       name: 'Member Special Item',
       unitPrice: 300,
       quantity: 1,
-      memberGID: 'UNI_MEMBER_123456',    // Uni Member ID
-      boundMemberId: 'STORE_MEMBER_789'   // Store's member system ID
-    }
-  ]
+      memberGID: 'UNI_MEMBER_123456', // Uni Member ID
+      boundMemberId: 'STORE_MEMBER_789', // Store's member system ID
+    },
+  ],
 });
 
 // Check member information after payment
@@ -285,9 +284,9 @@ const creditOrder = await paymentGateway.prepare({
     {
       name: 'Online Purchase',
       unitPrice: 2500,
-      quantity: 1
-    }
-  ]
+      quantity: 1,
+    },
+  ],
 });
 
 const creditResult = await creditOrder.commit();
@@ -307,7 +306,7 @@ const fullRefund = await paymentGateway.refund({
   id: 'ORDER-2024-001',
   storeName: 'My Coffee Shop',
   transactionId: 'TXN123456789',
-  requestRefundAmount: 150          // Full amount
+  requestRefundAmount: 150, // Full amount
 });
 
 if (fullRefund.success) {
@@ -320,12 +319,12 @@ if (fullRefund.success) {
 const partialRefund = await paymentGateway.refund({
   id: 'COMPLEX-ORDER-001',
   storeId: 'DS001',
-  storeName: 'Department Store', 
+  storeName: 'Department Store',
   transactionId: 'TXN987654321',
-  requestRefundAmount: 500,                    // Total refund amount
-  requestRefundCollectedAmount: 400,           // Collected amount to refund
-  requestRefundConsignmentAmount: 100,         // Consignment amount to refund
-  refundOrderId: 'REFUND-001'                  // Optional refund order ID
+  requestRefundAmount: 500, // Total refund amount
+  requestRefundCollectedAmount: 400, // Collected amount to refund
+  requestRefundConsignmentAmount: 100, // Consignment amount to refund
+  refundOrderId: 'REFUND-001', // Optional refund order ID
 });
 
 if (partialRefund.success) {
@@ -345,9 +344,9 @@ import { ICashPayPaymentType } from '@rytass/payments-adapter-icash-pay';
 
 // Available payment types
 const paymentTypes = {
-  CREDIT_CARD: ICashPayPaymentType.CREDIT_CARD,  // '0' - Credit card payments
-  I_CASH: ICashPayPaymentType.I_CASH,            // '1' - iCash digital wallet
-  BANK: ICashPayPaymentType.BANK                 // '2' - Bank transfer
+  CREDIT_CARD: ICashPayPaymentType.CREDIT_CARD, // '0' - Credit card payments
+  I_CASH: ICashPayPaymentType.I_CASH, // '1' - iCash digital wallet
+  BANK: ICashPayPaymentType.BANK, // '2' - Bank transfer
 };
 
 // Check payment type after transaction
@@ -375,14 +374,14 @@ import { ICashPayTradeStatus } from '@rytass/payments-adapter-icash-pay';
 
 // Trade status types
 const tradeStatuses = {
-  INITED: ICashPayTradeStatus.INITED,                     // '0' - Transaction initiated
-  COMMITTED: ICashPayTradeStatus.COMMITTED,               // '1' - Transaction completed
-  REFUNDED: ICashPayTradeStatus.REFUNDED,                 // '2' - Fully refunded
+  INITED: ICashPayTradeStatus.INITED, // '0' - Transaction initiated
+  COMMITTED: ICashPayTradeStatus.COMMITTED, // '1' - Transaction completed
+  REFUNDED: ICashPayTradeStatus.REFUNDED, // '2' - Fully refunded
   PARTIAL_REFUNDED: ICashPayTradeStatus.PARTIAL_REFUNDED, // '3' - Partially refunded
-  CANCELLED: ICashPayTradeStatus.CANCELLED,               // '4' - Transaction cancelled
+  CANCELLED: ICashPayTradeStatus.CANCELLED, // '4' - Transaction cancelled
   WAITING_SETTLEMENT: ICashPayTradeStatus.WAITING_SETTLEMENT, // '5' - Waiting for settlement
-  SETTLEMENT_FAILED: ICashPayTradeStatus.SETTLEMENT_FAILED,   // '6' - Settlement failed
-  FAILED: ICashPayTradeStatus.FAILED                      // '7' - Transaction failed
+  SETTLEMENT_FAILED: ICashPayTradeStatus.SETTLEMENT_FAILED, // '6' - Settlement failed
+  FAILED: ICashPayTradeStatus.FAILED, // '7' - Transaction failed
 };
 
 // Handle different trade statuses
@@ -417,47 +416,37 @@ const app = express();
 app.use(express.json());
 
 const paymentGateway = new ICashPayPayment({
-  baseUrl: process.env.NODE_ENV === 'production' 
-    ? ICashPayBaseUrls.PRODUCTION 
-    : ICashPayBaseUrls.DEVELOPMENT,
+  baseUrl: process.env.NODE_ENV === 'production' ? ICashPayBaseUrls.PRODUCTION : ICashPayBaseUrls.DEVELOPMENT,
   merchantId: process.env.ICASH_PAY_MERCHANT_ID!,
   clientPrivateKey: process.env.ICASH_PAY_CLIENT_PRIVATE_KEY!,
   serverPublicKey: process.env.ICASH_PAY_SERVER_PUBLIC_KEY!,
   aesKey: {
     id: process.env.ICASH_PAY_AES_KEY_ID!,
     key: process.env.ICASH_PAY_AES_KEY!,
-    iv: process.env.ICASH_PAY_AES_IV!
-  }
+    iv: process.env.ICASH_PAY_AES_IV!,
+  },
 });
 
 // Handle payment success
-paymentGateway.emitter.on(PaymentEvents.ORDER_COMMITTED, async (message) => {
+paymentGateway.emitter.on(PaymentEvents.ORDER_COMMITTED, async message => {
   // Update database
   await updateOrderStatus(message.id, 'paid');
-  
+
   // Send confirmation
   await sendPaymentConfirmation(message.id, {
     transactionId: message.transactionId,
     paymentType: message.paymentType,
-    paidAmount: message.totalPrice
+    paidAmount: message.totalPrice,
   });
-  
+
   console.log(`iCash Pay payment committed: ${message.id}`);
 });
 
 // Create payment endpoint
 app.post('/api/payments/icash-pay', async (req, res) => {
   try {
-    const { 
-      orderId, 
-      storeName, 
-      storeId, 
-      barcode, 
-      items, 
-      amounts,
-      memberInfo
-    } = req.body;
-    
+    const { orderId, storeName, storeId, barcode, items, amounts, memberInfo } = req.body;
+
     const order = await paymentGateway.prepare({
       id: orderId,
       storeName,
@@ -474,13 +463,13 @@ app.post('/api/payments/icash-pay', async (req, res) => {
         quantity: item.quantity,
         memberGID: memberInfo?.uniGID,
         boundMemberId: memberInfo?.storeMemberId,
-        mobileInvoiceCarrier: item.invoiceCarrier
-      }))
+        mobileInvoiceCarrier: item.invoiceCarrier,
+      })),
     });
-    
+
     // Process payment
     const result = await order.commit();
-    
+
     if (result.success) {
       res.json({
         success: true,
@@ -491,19 +480,19 @@ app.post('/api/payments/icash-pay', async (req, res) => {
           icpAccount: order.icpAccount,
           paidAmount: order.paidAmount,
           bonusAmount: order.bonusAmount,
-          committedAt: order.committedAt
-        }
+          committedAt: order.committedAt,
+        },
       });
     } else {
       res.status(400).json({
         success: false,
-        error: result.error
+        error: result.error,
       });
     }
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -512,9 +501,9 @@ app.post('/api/payments/icash-pay', async (req, res) => {
 app.get('/api/payments/icash-pay/:orderId/status', async (req, res) => {
   try {
     const { orderId } = req.params;
-    
+
     const order = await paymentGateway.query(orderId);
-    
+
     res.json({
       success: true,
       payment: {
@@ -529,13 +518,13 @@ app.get('/api/payments/icash-pay/:orderId/status', async (req, res) => {
         isFailed: order.isFailed,
         isRefunded: order.isRefunded,
         committedAt: order.committedAt,
-        failedMessage: order.failedMessage
-      }
+        failedMessage: order.failedMessage,
+      },
     });
   } catch (error) {
     res.status(404).json({
       success: false,
-      error: 'Payment not found'
+      error: 'Payment not found',
     });
   }
 });
@@ -544,25 +533,19 @@ app.get('/api/payments/icash-pay/:orderId/status', async (req, res) => {
 app.post('/api/payments/icash-pay/:orderId/refund', async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { 
-      storeName, 
-      storeId, 
-      refundAmount, 
-      refundCollectedAmount, 
-      refundConsignmentAmount,
-      refundOrderId
-    } = req.body;
-    
+    const { storeName, storeId, refundAmount, refundCollectedAmount, refundConsignmentAmount, refundOrderId } =
+      req.body;
+
     // Get original order to obtain transaction ID
     const originalOrder = await paymentGateway.query(orderId);
-    
+
     if (!originalOrder.transactionId) {
       return res.status(400).json({
         success: false,
-        error: 'Transaction ID not found for this order'
+        error: 'Transaction ID not found for this order',
       });
     }
-    
+
     const refundResult = await paymentGateway.refund({
       id: orderId,
       storeName,
@@ -571,9 +554,9 @@ app.post('/api/payments/icash-pay/:orderId/refund', async (req, res) => {
       requestRefundAmount: refundAmount,
       requestRefundCollectedAmount: refundCollectedAmount,
       requestRefundConsignmentAmount: refundConsignmentAmount,
-      refundOrderId
+      refundOrderId,
     });
-    
+
     if (refundResult.success) {
       res.json({
         success: true,
@@ -584,19 +567,19 @@ app.post('/api/payments/icash-pay/:orderId/refund', async (req, res) => {
           refundedICPAmount: refundResult.refundedICPAmount,
           refundedBonusAmount: refundResult.refundedBonusAmount,
           originalAmount: refundResult.originalAmount,
-          processedAt: refundResult.processedAt
-        }
+          processedAt: refundResult.processedAt,
+        },
       });
     } else {
       res.status(400).json({
         success: false,
-        error: refundResult.error
+        error: refundResult.error,
       });
     }
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -610,11 +593,11 @@ app.listen(3000, () => {
 
 ```typescript
 import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
-import { 
-  ICashPayPayment, 
-  ICashPayBaseUrls, 
-  ICashPayPaymentType, 
-  ICashPayTradeStatus 
+import {
+  ICashPayPayment,
+  ICashPayBaseUrls,
+  ICashPayPaymentType,
+  ICashPayTradeStatus,
 } from '@rytass/payments-adapter-icash-pay';
 import { PaymentEvents, OrderState } from '@rytass/payments';
 
@@ -622,37 +605,35 @@ import { PaymentEvents, OrderState } from '@rytass/payments';
 export class ICashPayService {
   private readonly logger = new Logger(ICashPayService.name);
   private readonly paymentGateway: ICashPayPayment;
-  
+
   constructor() {
     this.paymentGateway = new ICashPayPayment({
-      baseUrl: process.env.NODE_ENV === 'production' 
-        ? ICashPayBaseUrls.PRODUCTION 
-        : ICashPayBaseUrls.DEVELOPMENT,
+      baseUrl: process.env.NODE_ENV === 'production' ? ICashPayBaseUrls.PRODUCTION : ICashPayBaseUrls.DEVELOPMENT,
       merchantId: process.env.ICASH_PAY_MERCHANT_ID!,
       clientPrivateKey: process.env.ICASH_PAY_CLIENT_PRIVATE_KEY!,
       serverPublicKey: process.env.ICASH_PAY_SERVER_PUBLIC_KEY!,
       aesKey: {
         id: process.env.ICASH_PAY_AES_KEY_ID!,
         key: process.env.ICASH_PAY_AES_KEY!,
-        iv: process.env.ICASH_PAY_AES_IV!
-      }
+        iv: process.env.ICASH_PAY_AES_IV!,
+      },
     });
-    
+
     this.setupEventHandlers();
   }
-  
+
   private setupEventHandlers() {
-    this.paymentGateway.emitter.on(PaymentEvents.ORDER_COMMITTED, (message) => {
+    this.paymentGateway.emitter.on(PaymentEvents.ORDER_COMMITTED, message => {
       this.logger.log(`iCash Pay payment committed: ${message.id}`);
       this.handlePaymentSuccess(message);
     });
-    
-    this.paymentGateway.emitter.on(PaymentEvents.ORDER_FAILED, (failure) => {
+
+    this.paymentGateway.emitter.on(PaymentEvents.ORDER_FAILED, failure => {
       this.logger.error(`iCash Pay payment failed: ${failure.code} - ${failure.message}`);
       this.handlePaymentFailure(failure);
     });
   }
-  
+
   async createPayment(paymentData: {
     orderId?: string;
     storeName: string;
@@ -680,10 +661,10 @@ export class ICashPayService {
     if (!/^\d{18}$/.test(paymentData.barcode)) {
       throw new BadRequestException('Invalid iCash Pay barcode format');
     }
-    
-    const totalAmount = paymentData.amounts?.total || 
-      paymentData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    
+
+    const totalAmount =
+      paymentData.amounts?.total || paymentData.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
     // Create order
     const order = await this.paymentGateway.prepare({
       id: paymentData.orderId,
@@ -701,17 +682,17 @@ export class ICashPayService {
         quantity: item.quantity,
         mobileInvoiceCarrier: item.invoiceCarrier,
         memberGID: paymentData.memberInfo?.uniGID,
-        boundMemberId: paymentData.memberInfo?.storeMemberId
-      }))
+        boundMemberId: paymentData.memberInfo?.storeMemberId,
+      })),
     });
-    
+
     // Process payment
     const result = await order.commit();
-    
+
     if (!result.success) {
       throw new BadRequestException(`Payment failed: ${result.error}`);
     }
-    
+
     return {
       orderId: order.id,
       transactionId: order.transactionId,
@@ -723,20 +704,20 @@ export class ICashPayService {
       committedAt: order.committedAt,
       memberInfo: {
         boundMemberId: order.boundMemberId,
-        uniGID: order.uniGID
+        uniGID: order.uniGID,
       },
       invoiceInfo: {
         mobileCarrier: order.invoiceMobileCarrier,
         isTWQRCode: order.isTWQRCode,
-        twqrIssueCode: order.twqrIssueCode
-      }
+        twqrIssueCode: order.twqrIssueCode,
+      },
     };
   }
-  
+
   async getPaymentStatus(orderId: string) {
     try {
       const order = await this.paymentGateway.query(orderId);
-      
+
       return {
         orderId: order.id,
         transactionId: order.transactionId,
@@ -751,32 +732,35 @@ export class ICashPayService {
         state: order.state,
         createdAt: order.createdAt,
         committedAt: order.committedAt,
-        failedMessage: order.failedMessage
+        failedMessage: order.failedMessage,
       };
     } catch (error) {
       throw new NotFoundException(`Payment ${orderId} not found`);
     }
   }
-  
-  async refundPayment(orderId: string, refundData: {
-    storeName: string;
-    storeId?: string;
-    refundAmount: number;
-    refundCollectedAmount?: number;
-    refundConsignmentAmount?: number;
-    refundOrderId?: string;
-  }) {
+
+  async refundPayment(
+    orderId: string,
+    refundData: {
+      storeName: string;
+      storeId?: string;
+      refundAmount: number;
+      refundCollectedAmount?: number;
+      refundConsignmentAmount?: number;
+      refundOrderId?: string;
+    },
+  ) {
     // Get original order
     const originalOrder = await this.getPaymentStatus(orderId);
-    
+
     if (!originalOrder.isCommitted) {
       throw new BadRequestException('Can only refund committed payments');
     }
-    
+
     if (originalOrder.isRefunded) {
       throw new BadRequestException('Payment has already been refunded');
     }
-    
+
     const refundResult = await this.paymentGateway.refund({
       id: orderId,
       storeName: refundData.storeName,
@@ -785,13 +769,13 @@ export class ICashPayService {
       requestRefundAmount: refundData.refundAmount,
       requestRefundCollectedAmount: refundData.refundCollectedAmount,
       requestRefundConsignmentAmount: refundData.refundConsignmentAmount,
-      refundOrderId: refundData.refundOrderId
+      refundOrderId: refundData.refundOrderId,
     });
-    
+
     if (!refundResult.success) {
       throw new BadRequestException(`Refund failed: ${refundResult.error}`);
     }
-    
+
     return {
       orderId,
       refundTransactionId: refundResult.transactionId,
@@ -799,10 +783,10 @@ export class ICashPayService {
       refundedICPAmount: refundResult.refundedICPAmount,
       refundedBonusAmount: refundResult.refundedBonusAmount,
       originalAmount: refundResult.originalAmount,
-      processedAt: refundResult.processedAt
+      processedAt: refundResult.processedAt,
     };
   }
-  
+
   private getPaymentTypeString(paymentType?: ICashPayPaymentType): string {
     switch (paymentType) {
       case ICashPayPaymentType.CREDIT_CARD:
@@ -815,7 +799,7 @@ export class ICashPayService {
         return 'unknown';
     }
   }
-  
+
   private getTradeStatusString(tradeStatus?: ICashPayTradeStatus): string {
     switch (tradeStatus) {
       case ICashPayTradeStatus.INITED:
@@ -838,12 +822,12 @@ export class ICashPayService {
         return 'unknown';
     }
   }
-  
+
   private async handlePaymentSuccess(message: any) {
     // Handle successful payment - update database, send notifications, etc.
     this.logger.log(`Processing payment success for order: ${message.id}`);
   }
-  
+
   private async handlePaymentFailure(failure: any) {
     // Handle payment failure - log, notify customer, etc.
     this.logger.error(`Processing payment failure: ${failure.code} - ${failure.message}`);
@@ -882,21 +866,21 @@ const ICashPayScanner: React.FC<ICashPayScannerProps> = ({
     storeMemberId: ''
   });
   const barcodeInputRef = useRef<HTMLInputElement>(null);
-  
+
   const totalAmount = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  
+
   const validateBarcode = (code: string): boolean => {
     return /^\d{18}$/.test(code); // 18-digit barcode
   };
-  
+
   const processPayment = async () => {
     if (!validateBarcode(barcode)) {
       onError('Please scan a valid 18-digit iCash Pay barcode');
       return;
     }
-    
+
     setIsProcessing(true);
-    
+
     try {
       const response = await fetch('/api/payments/icash-pay', {
         method: 'POST',
@@ -915,9 +899,9 @@ const ICashPayScanner: React.FC<ICashPayScannerProps> = ({
           }
         })
       });
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         onSuccess(data.payment);
         // Reset form
@@ -932,35 +916,35 @@ const ICashPayScanner: React.FC<ICashPayScannerProps> = ({
       setIsProcessing(false);
     }
   };
-  
+
   const handleBarcodeInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '').slice(0, 18);
     setBarcode(value);
-    
+
     // Auto-process when 18 digits are entered
     if (value.length === 18) {
       setTimeout(() => processPayment(), 100);
     }
   };
-  
+
   useEffect(() => {
     // Focus on barcode input when component mounts
     if (barcodeInputRef.current) {
       barcodeInputRef.current.focus();
     }
   }, []);
-  
+
   return (
     <div className="icash-pay-scanner">
       <h3>iCash Pay Scanner</h3>
-      
+
       <div className="order-summary">
         <h4>Order Summary</h4>
         <div className="store-info">
           <p><strong>Store:</strong> {storeName}</p>
           {storeId && <p><strong>Store ID:</strong> {storeId}</p>}
         </div>
-        
+
         <div className="items">
           {items.map((item, index) => (
             <div key={index} className="item">
@@ -969,12 +953,12 @@ const ICashPayScanner: React.FC<ICashPayScannerProps> = ({
             </div>
           ))}
         </div>
-        
+
         <div className="total">
           <strong>Total: NT${totalAmount}</strong>
         </div>
       </div>
-      
+
       <div className="scanner-section">
         <div className="barcode-input">
           <label>Scan iCash Pay Barcode:</label>
@@ -992,7 +976,7 @@ const ICashPayScanner: React.FC<ICashPayScannerProps> = ({
             Format: {barcode.replace(/(\d{3})(\d{4})(\d{4})(\d{4})(\d{3})/, '$1 $2 $3 $4 $5')}
           </div>
         </div>
-        
+
         <div className="member-section">
           <h5>Member Information (Optional)</h5>
           <div className="member-inputs">
@@ -1012,17 +996,17 @@ const ICashPayScanner: React.FC<ICashPayScannerProps> = ({
             />
           </div>
         </div>
-        
+
         <div className="action-buttons">
-          <button 
+          <button
             onClick={processPayment}
             disabled={!validateBarcode(barcode) || isProcessing}
             className="process-btn"
           >
             {isProcessing ? 'Processing...' : 'Process Payment'}
           </button>
-          
-          <button 
+
+          <button
             onClick={() => {
               setBarcode('');
               if (barcodeInputRef.current) {
@@ -1036,7 +1020,7 @@ const ICashPayScanner: React.FC<ICashPayScannerProps> = ({
           </button>
         </div>
       </div>
-      
+
       <div className="payment-info">
         <h5>Payment Information</h5>
         <ul>
@@ -1063,9 +1047,11 @@ try {
     storeName: 'Test Store',
     barcode: '280012345678901234',
     amount: 1000,
-    items: [/* items */]
+    items: [
+      /* items */
+    ],
   });
-  
+
   const result = await order.commit();
 } catch (error) {
   // Handle different types of errors
@@ -1103,7 +1089,7 @@ try {
     id: 'ORDER-001',
     storeName: 'Test Store',
     transactionId: 'TXN123',
-    requestRefundAmount: 1000
+    requestRefundAmount: 1000,
   });
 } catch (error) {
   if (error.message.includes('Transaction not found')) {
@@ -1125,21 +1111,16 @@ const validateICashPayBarcode = (barcode: string): boolean => {
 };
 
 // Amount validation
-const validateAmounts = (amounts: {
-  total: number;
-  collected?: number;
-  consignment?: number;
-  nonRedeem?: number;
-}) => {
+const validateAmounts = (amounts: { total: number; collected?: number; consignment?: number; nonRedeem?: number }) => {
   if (amounts.total <= 0) {
     throw new Error('Total amount must be greater than 0');
   }
-  
+
   const calculatedTotal = (amounts.collected || 0) + (amounts.consignment || 0);
   if (calculatedTotal > 0 && calculatedTotal !== amounts.total) {
     throw new Error('Collected + Consignment amounts must equal total amount');
   }
-  
+
   if (amounts.nonRedeem && amounts.nonRedeem > amounts.total) {
     throw new Error('Non-redeemable amount cannot exceed total amount');
   }
@@ -1152,13 +1133,13 @@ const processPaymentSafely = async (paymentData: any) => {
     if (!validateICashPayBarcode(paymentData.barcode)) {
       throw new Error('Invalid iCash Pay barcode format');
     }
-    
+
     validateAmounts(paymentData.amounts);
-    
+
     // Process payment
     const order = await paymentGateway.prepare(paymentData);
     const result = await order.commit();
-    
+
     if (result.success) {
       return { success: true, order };
     } else {
@@ -1186,17 +1167,17 @@ const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
   modulusLength: 2048,
   publicKeyEncoding: {
     type: 'spki',
-    format: 'pem'
+    format: 'pem',
   },
   privateKeyEncoding: {
     type: 'pkcs8',
-    format: 'pem'
-  }
+    format: 'pem',
+  },
 });
 
 // Generate AES key and IV
 const aesKey = crypto.randomBytes(32).toString('hex'); // 32 bytes = 256 bits
-const aesIV = crypto.randomBytes(16).toString('hex');  // 16 bytes = 128 bits
+const aesIV = crypto.randomBytes(16).toString('hex'); // 16 bytes = 128 bits
 
 console.log('Client Private Key:', privateKey);
 console.log('AES Key:', aesKey);
@@ -1220,7 +1201,7 @@ import { OrderState } from '@rytass/payments';
 
 describe('iCash Pay Payment Integration', () => {
   let paymentGateway: ICashPayPayment;
-  
+
   beforeEach(() => {
     paymentGateway = new ICashPayPayment({
       baseUrl: ICashPayBaseUrls.DEVELOPMENT,
@@ -1230,11 +1211,11 @@ describe('iCash Pay Payment Integration', () => {
       aesKey: {
         id: 'TEST_KEY_ID',
         key: 'TEST_AES_KEY_32_CHARACTERS_LONG',
-        iv: 'TEST_AES_IV_16C'
-      }
+        iv: 'TEST_AES_IV_16C',
+      },
     });
   });
-  
+
   it('should create order successfully', async () => {
     const order = await paymentGateway.prepare({
       storeName: 'Test Store',
@@ -1244,17 +1225,17 @@ describe('iCash Pay Payment Integration', () => {
         {
           name: 'Test Product',
           unitPrice: 1000,
-          quantity: 1
-        }
-      ]
+          quantity: 1,
+        },
+      ],
     });
-    
+
     expect(order.id).toBeDefined();
     expect(order.totalPrice).toBe(1000);
     expect(order.storeName).toBe('Test Store');
     expect(order.state).toBe(OrderState.PRE_COMMIT);
   });
-  
+
   it('should process payment successfully', async () => {
     const order = await paymentGateway.prepare({
       storeName: 'Test Store',
@@ -1264,44 +1245,44 @@ describe('iCash Pay Payment Integration', () => {
         {
           name: 'Test Item',
           unitPrice: 500,
-          quantity: 1
-        }
-      ]
+          quantity: 1,
+        },
+      ],
     });
-    
+
     const result = await order.commit();
-    
+
     expect(result.success).toBe(true);
     expect(order.state).toBe(OrderState.COMMITTED);
     expect(order.transactionId).toBeDefined();
     expect(order.committedAt).toBeDefined();
   });
-  
+
   it('should query payment status', async () => {
     const order = await paymentGateway.query('TEST-ORDER-001');
-    
+
     expect(order.id).toBe('TEST-ORDER-001');
     expect(order.transactionId).toBeDefined();
     expect(order.tradeStatus).toBeDefined();
   });
-  
+
   it('should handle refunds', async () => {
     const refundResult = await paymentGateway.refund({
       id: 'TEST-ORDER-001',
       storeName: 'Test Store',
       transactionId: 'TEST-TXN-001',
-      requestRefundAmount: 500
+      requestRefundAmount: 500,
     });
-    
+
     expect(refundResult.success).toBe(true);
     expect(refundResult.refundedAmount).toBe(500);
     expect(refundResult.transactionId).toBeDefined();
   });
-  
+
   it('should validate barcode format', () => {
     const validBarcode = '280012345678901234';
     const invalidBarcode = '123456789';
-    
+
     expect(validateICashPayBarcode(validBarcode)).toBe(true);
     expect(validateICashPayBarcode(invalidBarcode)).toBe(false);
   });
@@ -1314,18 +1295,18 @@ describe('iCash Pay Payment Integration', () => {
 
 ```typescript
 interface ICashPayPaymentInitOptions {
-  baseUrl: ICashPayBaseUrls;           // Required: API endpoint URL
-  merchantId: string;                  // Required: iCash Pay merchant ID
-  clientPrivateKey: string;            // Required: RSA private key for signing
-  serverPublicKey: string;             // Required: iCash Pay server public key
-  aesKey: ICashPayAESKey;             // Required: AES encryption configuration
-  logLevel?: LogLevel;                 // Optional: Logging level
+  baseUrl: ICashPayBaseUrls; // Required: API endpoint URL
+  merchantId: string; // Required: iCash Pay merchant ID
+  clientPrivateKey: string; // Required: RSA private key for signing
+  serverPublicKey: string; // Required: iCash Pay server public key
+  aesKey: ICashPayAESKey; // Required: AES encryption configuration
+  logLevel?: LogLevel; // Optional: Logging level
 }
 
 interface ICashPayAESKey {
-  id: string;                          // AES key identifier
-  key: string;                         // 32-character AES key
-  iv: string;                          // 16-character AES IV
+  id: string; // AES key identifier
+  key: string; // 32-character AES key
+  iv: string; // 16-character AES IV
 }
 ```
 
@@ -1336,6 +1317,7 @@ interface ICashPayAESKey {
 Creates a new iCash Pay payment order.
 
 **Parameters:**
+
 - `storeName: string` - Store name for display
 - `barcode: string` - Customer's 18-digit iCash Pay barcode
 - `amount: number` - Total transaction amount
@@ -1352,6 +1334,7 @@ Creates a new iCash Pay payment order.
 Queries payment status by order ID.
 
 **Parameters:**
+
 - `orderId: string` - Order identifier
 
 #### `refund(options: ICashPayRefundOptions): Promise<ICashPayRefundResult>`
@@ -1359,6 +1342,7 @@ Queries payment status by order ID.
 Refunds an iCash Pay transaction.
 
 **Parameters:**
+
 - `id: string` - Original order ID
 - `storeName: string` - Store name
 - `transactionId: string` - Original transaction ID
@@ -1374,33 +1358,33 @@ Refunds an iCash Pay transaction.
 // API endpoints
 enum ICashPayBaseUrls {
   PRODUCTION = 'https://payment.icashpay.com.tw/api/V2/Payment',
-  DEVELOPMENT = 'https://icp-payment-preprod.icashpay.com.tw/api/V2/Payment'
+  DEVELOPMENT = 'https://icp-payment-preprod.icashpay.com.tw/api/V2/Payment',
 }
 
 // Payment types
 enum ICashPayPaymentType {
-  CREDIT_CARD = '0',  // Credit card payments
-  I_CASH = '1',       // iCash digital wallet
-  BANK = '2'          // Bank transfer
+  CREDIT_CARD = '0', // Credit card payments
+  I_CASH = '1', // iCash digital wallet
+  BANK = '2', // Bank transfer
 }
 
 // Trade statuses
 enum ICashPayTradeStatus {
-  INITED = '0',              // Transaction initiated
-  COMMITTED = '1',           // Transaction completed
-  REFUNDED = '2',            // Fully refunded
-  PARTIAL_REFUNDED = '3',    // Partially refunded
-  CANCELLED = '4',           // Transaction cancelled
-  WAITING_SETTLEMENT = '5',  // Waiting for settlement
-  SETTLEMENT_FAILED = '6',   // Settlement failed
-  FAILED = '7'               // Transaction failed
+  INITED = '0', // Transaction initiated
+  COMMITTED = '1', // Transaction completed
+  REFUNDED = '2', // Fully refunded
+  PARTIAL_REFUNDED = '3', // Partially refunded
+  CANCELLED = '4', // Transaction cancelled
+  WAITING_SETTLEMENT = '5', // Waiting for settlement
+  SETTLEMENT_FAILED = '6', // Settlement failed
+  FAILED = '7', // Transaction failed
 }
 
 // Log levels
 enum LogLevel {
-  ERROR = 1,   // Error messages only
-  INFO = 2,    // Info and error messages
-  DEBUG = 4    // All messages including debug
+  ERROR = 1, // Error messages only
+  INFO = 2, // Info and error messages
+  DEBUG = 4, // All messages including debug
 }
 ```
 

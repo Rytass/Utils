@@ -11,10 +11,7 @@ import { applyOrderLogisticAndReturnLogisticsItem, generateNewOrderId, ORDER_LOG
  * @param {Array} items OrderItem[]
  * @param {Array} coupons string[]
  */
-interface OrderBuilderBuildInputs<
-  Item extends OrderItem = OrderItem,
-  Coupon extends string = string
-> {
+interface OrderBuilderBuildInputs<Item extends OrderItem = OrderItem, Coupon extends string = string> {
   id?: string;
   items: Item[];
   coupons?: Coupon[];
@@ -33,10 +30,7 @@ interface OrderBuilderConstructor extends OptionalKeys<OrderConfigOption> {
 /**
  * OrderBuilder
  */
-export class OrderBuilder<
-  Item extends OrderItem = OrderItem,
-  Coupon extends string = string
-> {
+export class OrderBuilder<Item extends OrderItem = OrderItem, Coupon extends string = string> {
   private _hasBuiltOrders: boolean = false;
   private readonly _policyManager: OrderPolicyManager;
   /**
@@ -72,9 +66,7 @@ export class OrderBuilder<
 
     this._policyManager = new OrderPolicyManager(arg0?.policies || []);
     this.config = new OrderConfig(
-      arg0 instanceof OrderBuilder
-        ? arg0.config
-        : (config as OrderConfigOption | undefined)
+      arg0 instanceof OrderBuilder ? arg0.config : (config as OrderConfigOption | undefined),
     );
   }
 
@@ -155,12 +147,8 @@ export class OrderBuilder<
    * @param {Array<Policy>} policies Policy[]
    * @returns {OrderBuilder} OrderBuilder
    */
-  public removePolicy<PT extends RemovePolicy>(
-    policies: PT[]
-  ): OrderBuilder<Item, Coupon>;
-  public removePolicy<PT extends RemovePolicy>(
-    arg0: PT | PT[]
-  ): OrderBuilder<Item, Coupon> {
+  public removePolicy<PT extends RemovePolicy>(policies: PT[]): OrderBuilder<Item, Coupon>;
+  public removePolicy<PT extends RemovePolicy>(arg0: PT | PT[]): OrderBuilder<Item, Coupon> {
     if (this.hasBuiltOrders) {
       throw new Error('Policy is immutable if builder.build was called. You should call builder.clone first.');
     }

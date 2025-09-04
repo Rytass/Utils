@@ -8,13 +8,7 @@ import FormData from 'form-data';
 import { createDecipheriv, createHash } from 'crypto';
 import { DateTime } from 'luxon';
 import { randomBytes } from 'crypto';
-import {
-  EZPayInvoiceGateway,
-  EZPayBaseUrls,
-  InvoiceState,
-  TaxType,
-  InvoiceCarrierType,
-} from '../src';
+import { EZPayInvoiceGateway, EZPayBaseUrls, InvoiceState, TaxType, InvoiceCarrierType } from '../src';
 
 const AES_IV = 'gmY2MPN8PHFvA7KR';
 const AES_KEY = 'cNg3wIe8PkCVcqb37RY0LFbf00FgrNXg';
@@ -52,10 +46,7 @@ describe('EZPay Invoice Query', () => {
       const decipher = createDecipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
       const params = new URLSearchParams(
-        [
-          decipher.update(payload.PostData_, 'hex', 'utf8'),
-          decipher.final('utf8'),
-        ].join(''),
+        [decipher.update(payload.PostData_, 'hex', 'utf8'), decipher.final('utf8')].join(''),
       );
 
       expect(params.get('RespondType')).toBe('JSON');
@@ -132,9 +123,7 @@ describe('EZPay Invoice Query', () => {
     expect(invoice.orderId).toBe('90h31g023476g234g');
     expect(invoice.issuedAmount).toBe(20);
     expect(invoice.state).toBe(InvoiceState.ISSUED);
-    expect(DateTime.fromJSDate(invoice.issuedOn).toFormat('yyyyMMdd')).toBe(
-      '20230203',
-    );
+    expect(DateTime.fromJSDate(invoice.issuedOn).toFormat('yyyyMMdd')).toBe('20230203');
   });
 
   it('should query void invoice with invoice number', async () => {
@@ -161,10 +150,7 @@ describe('EZPay Invoice Query', () => {
       const decipher = createDecipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
       const params = new URLSearchParams(
-        [
-          decipher.update(payload.PostData_, 'hex', 'utf8'),
-          decipher.final('utf8'),
-        ].join(''),
+        [decipher.update(payload.PostData_, 'hex', 'utf8'), decipher.final('utf8')].join(''),
       );
 
       expect(params.get('RespondType')).toBe('JSON');
@@ -267,10 +253,7 @@ describe('EZPay Invoice Query', () => {
       const decipher = createDecipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
       const params = new URLSearchParams(
-        [
-          decipher.update(payload.PostData_, 'hex', 'utf8'),
-          decipher.final('utf8'),
-        ].join(''),
+        [decipher.update(payload.PostData_, 'hex', 'utf8'), decipher.final('utf8')].join(''),
       );
 
       expect(params.get('RespondType')).toBe('JSON');
@@ -372,10 +355,7 @@ describe('EZPay Invoice Query', () => {
       const decipher = createDecipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
       const params = new URLSearchParams(
-        [
-          decipher.update(payload.PostData_, 'hex', 'utf8'),
-          decipher.final('utf8'),
-        ].join(''),
+        [decipher.update(payload.PostData_, 'hex', 'utf8'), decipher.final('utf8')].join(''),
       );
 
       expect(params.get('RespondType')).toBe('JSON');
@@ -474,10 +454,7 @@ describe('EZPay Invoice Query', () => {
       const decipher = createDecipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
       const params = new URLSearchParams(
-        [
-          decipher.update(payload.PostData_, 'hex', 'utf8'),
-          decipher.final('utf8'),
-        ].join(''),
+        [decipher.update(payload.PostData_, 'hex', 'utf8'), decipher.final('utf8')].join(''),
       );
 
       expect(params.get('RespondType')).toBe('JSON');
@@ -576,10 +553,7 @@ describe('EZPay Invoice Query', () => {
       const decipher = createDecipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
       const params = new URLSearchParams(
-        [
-          decipher.update(payload.PostData_, 'hex', 'utf8'),
-          decipher.final('utf8'),
-        ].join(''),
+        [decipher.update(payload.PostData_, 'hex', 'utf8'), decipher.final('utf8')].join(''),
       );
 
       expect(params.get('RespondType')).toBe('JSON');

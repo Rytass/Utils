@@ -18,21 +18,8 @@ const providers = [...OptionProviders, ...ResolvedRepoProviders];
 
 @Module({
   imports: [WMSModelsModule],
-  exports: [
-    LocationService,
-    MaterialService,
-    StockService,
-    OrderService,
-    WarehouseMapService,
-  ],
-  providers: [
-    LocationService,
-    MaterialService,
-    StockService,
-    OrderService,
-    WarehouseMapService,
-    ...providers,
-  ],
+  exports: [LocationService, MaterialService, StockService, OrderService, WarehouseMapService],
+  providers: [LocationService, MaterialService, StockService, OrderService, WarehouseMapService, ...providers],
 })
 export class WMSBaseModule {
   static forRoot(options: WMSBaseModuleOptions): DynamicModule {
@@ -55,9 +42,7 @@ export class WMSBaseModule {
     };
   }
 
-  private static createAsyncProvider(
-    options: WMSBaseModuleAsyncOptions,
-  ): Provider[] {
+  private static createAsyncProvider(options: WMSBaseModuleAsyncOptions): Provider[] {
     if (options.useExisting || options.useFactory) {
       return [this.createAsyncOptionsProvider(options)];
     }
@@ -74,9 +59,7 @@ export class WMSBaseModule {
         : []),
     ];
   }
-  private static createAsyncOptionsProvider(
-    options: WMSBaseModuleAsyncOptions,
-  ): Provider {
+  private static createAsyncOptionsProvider(options: WMSBaseModuleAsyncOptions): Provider {
     if (options.useFactory) {
       return {
         provide: WMS_MODULE_OPTIONS,
@@ -87,12 +70,8 @@ export class WMSBaseModule {
 
     return {
       provide: WMS_MODULE_OPTIONS,
-      useFactory: async (optionsFactory: any) =>
-        await optionsFactory.createWMSBaseModuleOptions(),
-      inject: [
-        (options.useExisting ||
-          options.useClass) as Type<WMSBaseModuleOptionsFactory>,
-      ],
+      useFactory: async (optionsFactory: any) => await optionsFactory.createWMSBaseModuleOptions(),
+      inject: [(options.useExisting || options.useClass) as Type<WMSBaseModuleOptionsFactory>],
     };
   }
 }

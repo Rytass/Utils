@@ -1,8 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import {
-  MULTIPLE_LANGUAGE_MODE,
-  RESOLVED_ARTICLE_REPO,
-} from '../typings/cms-base-providers';
+import { MULTIPLE_LANGUAGE_MODE, RESOLVED_ARTICLE_REPO } from '../typings/cms-base-providers';
 import { Repository } from 'typeorm';
 import { ArticleBaseDto } from '../typings/article-base.dto';
 import DataLoader from 'dataloader';
@@ -35,21 +32,13 @@ export class ArticleVersionDataLoader<
     private readonly signatureService: SignatureService,
   ) {}
 
-  readonly stageVersionsLoader = new DataLoader<
-    string,
-    Record<ArticleStage, ArticleBaseDto<A, AV, AVC> | null>
-  >(
-    async (
-      ids: readonly string[],
-    ): Promise<Record<ArticleStage, ArticleBaseDto<A, AV, AVC> | null>[]> => {
+  readonly stageVersionsLoader = new DataLoader<string, Record<ArticleStage, ArticleBaseDto<A, AV, AVC> | null>>(
+    async (ids: readonly string[]): Promise<Record<ArticleStage, ArticleBaseDto<A, AV, AVC> | null>[]> => {
       const qb = this.articleRepo.createQueryBuilder('articles');
 
       qb.innerJoinAndSelect('articles.versions', 'versions');
       qb.leftJoinAndSelect('versions.signatures', 'signatures');
-      qb.leftJoinAndSelect(
-        'versions.multiLanguageContents',
-        'multiLanguageContents',
-      );
+      qb.leftJoinAndSelect('versions.multiLanguageContents', 'multiLanguageContents');
 
       qb.andWhere('versions.articleId IN (:...ids)', {
         ids: ids,
@@ -58,19 +47,14 @@ export class ArticleVersionDataLoader<
       const articles = await qb.getMany();
 
       const articleMap = new Map(
-        articles.map((article) => [
+        articles.map(article => [
           article.id,
           article.versions.reduce(
-            (
-              vars,
-              version,
-            ): Record<ArticleStage, ArticleBaseDto<A, AV, AVC> | null> => {
+            (vars, version): Record<ArticleStage, ArticleBaseDto<A, AV, AVC> | null> => {
               const articleVersion = (
                 this.multipleLanguageMode
                   ? {
-                      ...removeMultipleLanguageArticleVersionInvalidFields<AV>(
-                        version,
-                      ),
+                      ...removeMultipleLanguageArticleVersionInvalidFields<AV>(version),
                       ...removeArticleInvalidFields<A>(article as Partial<A>),
                       id: article.id,
                       createdAt: article.createdAt,
@@ -80,9 +64,7 @@ export class ArticleVersionDataLoader<
                     }
                   : {
                       ...removeArticleVersionContentInvalidFields<AVC>(
-                        version.multiLanguageContents.find(
-                          (content) => content.language === DEFAULT_LANGUAGE,
-                        ) as AVC,
+                        version.multiLanguageContents.find(content => content.language === DEFAULT_LANGUAGE) as AVC,
                       ),
                       ...removeArticleVersionInvalidFields<AV>(version),
                       ...removeArticleInvalidFields<A>(article as Partial<A>),
@@ -110,11 +92,10 @@ export class ArticleVersionDataLoader<
 
               if (
                 version.signatures.some(
-                  (sig) =>
+                  sig =>
                     sig.result === ArticleSignatureResult.APPROVED &&
                     sig.deletedAt === null &&
-                    sig.signatureLevelId ===
-                      this.signatureService.finalSignatureLevel?.id,
+                    sig.signatureLevelId === this.signatureService.finalSignatureLevel?.id,
                 )
               ) {
                 return {
@@ -146,20 +127,11 @@ export class ArticleVersionDataLoader<
         ]),
       );
 
-      return ids.map(
-        (id) =>
-          articleMap.get(id) as Record<
-            ArticleStage,
-            ArticleBaseDto<A, AV, AVC> | null
-          >,
-      );
+      return ids.map(id => articleMap.get(id) as Record<ArticleStage, ArticleBaseDto<A, AV, AVC> | null>);
     },
     {
       cache: true,
-      cacheMap: new LRUCache<
-        string,
-        Promise<Record<ArticleStage, ArticleBaseDto<A, AV, AVC> | null>>
-      >({
+      cacheMap: new LRUCache<string, Promise<Record<ArticleStage, ArticleBaseDto<A, AV, AVC> | null>>>({
         ttl: 1000 * 10, // Cache for 10 seconds
         max: 1000, // Maximum number of items in cache
         ttlAutopurge: true,
@@ -167,20 +139,14 @@ export class ArticleVersionDataLoader<
     },
   );
 
-  readonly versionsLoader = new DataLoader<
-    string,
-    ArticleBaseDto<A, AV, AVC>[]
-  >(
+  readonly versionsLoader = new DataLoader<string, ArticleBaseDto<A, AV, AVC>[]>(
     async (ids: readonly string[]): Promise<ArticleBaseDto<A, AV, AVC>[][]> => {
       const qb = this.articleRepo.createQueryBuilder('articles');
 
       qb.withDeleted();
       qb.innerJoinAndSelect('articles.versions', 'versions');
       qb.leftJoinAndSelect('versions.signatures', 'signatures');
-      qb.leftJoinAndSelect(
-        'versions.multiLanguageContents',
-        'multiLanguageContents',
-      );
+      qb.leftJoinAndSelect('versions.multiLanguageContents', 'multiLanguageContents');
 
       qb.andWhere('versions.articleId IN (:...ids)', {
         ids: ids,
@@ -191,14 +157,12 @@ export class ArticleVersionDataLoader<
       const articles = await qb.getMany();
 
       const articleMap = new Map(
-        articles.map((article) => [
+        articles.map(article => [
           article.id,
-          article.versions.map((version) =>
+          article.versions.map(version =>
             this.multipleLanguageMode
               ? {
-                  ...removeMultipleLanguageArticleVersionInvalidFields<AV>(
-                    version,
-                  ),
+                  ...removeMultipleLanguageArticleVersionInvalidFields<AV>(version),
                   ...removeArticleInvalidFields<A>(article as Partial<A>),
                   id: article.id,
                   createdAt: article.createdAt,
@@ -208,9 +172,7 @@ export class ArticleVersionDataLoader<
                 }
               : {
                   ...removeArticleVersionContentInvalidFields<AVC>(
-                    version.multiLanguageContents.find(
-                      (content) => content.language === DEFAULT_LANGUAGE,
-                    ) as AVC,
+                    version.multiLanguageContents.find(content => content.language === DEFAULT_LANGUAGE) as AVC,
                   ),
                   ...removeArticleVersionInvalidFields<AV>(version),
                   ...removeArticleInvalidFields<A>(article as Partial<A>),
@@ -224,7 +186,7 @@ export class ArticleVersionDataLoader<
         ]),
       );
 
-      return ids.map((id) => articleMap.get(id) || []);
+      return ids.map(id => articleMap.get(id) || []);
     },
     {
       cache: true,

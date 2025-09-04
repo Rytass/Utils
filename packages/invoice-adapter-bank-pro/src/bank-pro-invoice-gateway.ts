@@ -32,9 +32,7 @@ import {
 } from './typings';
 
 export class BankProInvoiceGateway
-  implements
-    InvoiceGateway<BankProPaymentItem, BankProInvoice, BankProInvoiceQueryArgs>
-{
+  implements InvoiceGateway<BankProPaymentItem, BankProInvoice, BankProInvoiceQueryArgs> {
   private readonly user: string = '80178859AP2AP';
   private readonly password: string = 'a80178859AP2AP';
   private readonly systemOID: number = 185;
@@ -82,27 +80,27 @@ export class BankProInvoiceGateway
       throw new Error('Buyer mobile is too long, max: 20');
     }
 
-    if (options.items.some((item) => item.name.length > 200)) {
+    if (options.items.some(item => item.name.length > 200)) {
       throw new Error('Item name is too long, max: 200');
     }
 
-    if (options.items.some((item) => item.unit && item.unit?.length > 6)) {
+    if (options.items.some(item => item.unit && item.unit?.length > 6)) {
       throw new Error('Item unit is too long, max: 6');
     }
 
-    if (options.items.some((item) => item.quantity <= 0)) {
+    if (options.items.some(item => item.quantity <= 0)) {
       throw new Error('Item quantity should more than zero');
     }
 
-    if (options.items.some((item) => item.remark && item.remark.length > 100)) {
+    if (options.items.some(item => item.remark && item.remark.length > 100)) {
       throw new Error('Item remark is too long, max: 100');
     }
 
-    if (options.items.some((item) => item.id && item.id.length > 40)) {
+    if (options.items.some(item => item.id && item.id.length > 40)) {
       throw new Error('Item ID is too long, max: 40');
     }
 
-    if (options.items.some((item) => item.spec && item.spec.length > 100)) {
+    if (options.items.some(item => item.spec && item.spec.length > 100)) {
       throw new Error('Item spec is too long, max: 100');
     }
 
@@ -115,15 +113,10 @@ export class BankProInvoiceGateway
     const rateType = BankProRateType[taxType];
 
     if (!rateType) {
-      throw new Error(
-        'Tax type not supported, you should split tax type in each invoice',
-      );
+      throw new Error('Tax type not supported, you should split tax type in each invoice');
     }
 
-    const amount = options.items.reduce(
-      (sum, item) => sum + item.quantity * item.unitPrice,
-      0,
-    );
+    const amount = options.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
 
     if (amount <= 0) {
       throw new Error('invoice amount should more than zero');
@@ -162,10 +155,7 @@ export class BankProInvoiceGateway
           BuyerBAN: options.vatNumber ?? '',
           BuyerCompanyName: options.companyName ?? '',
           PaperInvoiceMark: 'N',
-          DonateMark:
-            options.carrier?.type === InvoiceCarrierType.LOVE_CODE
-              ? options.carrier.code
-              : '',
+          DonateMark: options.carrier?.type === InvoiceCarrierType.LOVE_CODE ? options.carrier.code : '',
           MainRemark: options.remark ?? '',
           CarrierType: ((): '3J0002' | 'CQ0001' | '' => {
             switch (options.carrier?.type) {
@@ -186,9 +176,7 @@ export class BankProInvoiceGateway
           RelateNumber3: '',
           Members: [
             {
-              ID: [InvoiceCarrierType.MEMBER, undefined].indexOf(
-                options.carrier?.type,
-              )
+              ID: [InvoiceCarrierType.MEMBER, undefined].indexOf(options.carrier?.type)
                 ? options.buyerEmail
                 : options.orderId,
               Name: options.buyerName ?? '',
@@ -212,8 +200,7 @@ export class BankProInvoiceGateway
             TaxAmount: 0,
             TotalAmount: (item.unitPrice * item.quantity).toString(),
             HealthAmount: 0,
-            RateType:
-              BankProRateType[(item.taxType as TaxType) ?? TaxType.TAXED],
+            RateType: BankProRateType[(item.taxType as TaxType) ?? TaxType.TAXED],
             DiscountAmount: 0,
             DetailRemark: item.remark ?? '',
           })),
@@ -235,13 +222,12 @@ export class BankProInvoiceGateway
       throw new Error('Failed to issue invoice');
     }
 
-    if (data.some((response) => response.ErrorMessage)) {
-      throw new Error(data.map((response) => response.ErrorMessage).join(', '));
+    if (data.some(response => response.ErrorMessage)) {
+      throw new Error(data.map(response => response.ErrorMessage).join(', '));
     }
 
     return new BankProInvoice({
-      issuedOn: DateTime.fromFormat(data[0].InvoiceDate, 'yyyy/MM/dd HH:mm:ss')
-        .toJSDate(),
+      issuedOn: DateTime.fromFormat(data[0].InvoiceDate, 'yyyy/MM/dd HH:mm:ss').startOf('day').toJSDate(),
       items: options.items,
       randomCode: data[0].RandomNumber,
       invoiceNumber: data[0].InvoiceNo,
@@ -271,18 +257,13 @@ export class BankProInvoiceGateway
         {
           No: invoice.orderId,
           OrderStatus: BankProInvoiceStatus.DELETE,
-          OrderDate: DateTime.fromJSDate(invoice.issuedOn).toFormat(
-            'yyyy/MM/dd',
-          ),
+          OrderDate: DateTime.fromJSDate(invoice.issuedOn).toFormat('yyyy/MM/dd'),
           ExpectedShipDate: DateTime.now().toFormat('yyyy/MM/dd'),
           UpdateOrderDate: DateTime.now().toFormat('yyyy/MM/dd'),
           RateType: BankProRateType[invoice.taxType],
           Amount: 0,
           TaxAmount: 0,
-          TotalAmount: invoice.items.reduce(
-            (sum, item) => sum + item.quantity * item.unitPrice,
-            0,
-          ),
+          TotalAmount: invoice.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0),
           SellerBAN: this.sellerBAN,
           SellerCode: '',
           BuyerBAN: '',
@@ -320,8 +301,7 @@ export class BankProInvoiceGateway
             TaxAmount: 0,
             TotalAmount: (item.unitPrice * item.quantity).toString(),
             HealthAmount: 0,
-            RateType:
-              BankProRateType[(item.taxType as TaxType) ?? TaxType.TAXED],
+            RateType: BankProRateType[(item.taxType as TaxType) ?? TaxType.TAXED],
             DiscountAmount: 0,
             DetailRemark: item.remark ?? '',
           })),
@@ -343,8 +323,8 @@ export class BankProInvoiceGateway
       throw new Error('Failed to void invoice');
     }
 
-    if (data.some((response) => response.ErrorMessage)) {
-      throw new Error(data.map((response) => response.ErrorMessage).join(', '));
+    if (data.some(response => response.ErrorMessage)) {
+      throw new Error(data.map(response => response.ErrorMessage).join(', '));
     }
 
     invoice.setVoid();
@@ -352,18 +332,12 @@ export class BankProInvoiceGateway
     return invoice;
   }
 
-  public async allowance(
-    invoice: BankProInvoice,
-    allowanceItems: BankProPaymentItem[],
-  ): Promise<BankProInvoice> {
+  public async allowance(invoice: BankProInvoice, allowanceItems: BankProPaymentItem[]): Promise<BankProInvoice> {
     if (invoice.state !== InvoiceState.ISSUED) {
       throw new Error('Invoice is not issued');
     }
 
-    const allowanceAmount = allowanceItems.reduce(
-      (sum, item) => sum + item.quantity * item.unitPrice,
-      0,
-    );
+    const allowanceAmount = allowanceItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
 
     if (allowanceAmount <= 0) {
       throw new Error('Allowance amount should more than zero');
@@ -377,9 +351,7 @@ export class BankProInvoiceGateway
         {
           No: invoice.orderId,
           OrderStatus: BankProInvoiceStatus.ALLOWANCE,
-          OrderDate: DateTime.fromJSDate(invoice.issuedOn).toFormat(
-            'yyyy/MM/dd',
-          ),
+          OrderDate: DateTime.fromJSDate(invoice.issuedOn).toFormat('yyyy/MM/dd'),
           ExpectedShipDate: DateTime.now().toFormat('yyyy/MM/dd'),
           UpdateOrderDate: DateTime.now().toFormat('yyyy/MM/dd'),
           RateType: BankProRateType[invoice.taxType],
@@ -423,8 +395,7 @@ export class BankProInvoiceGateway
             TaxAmount: 0,
             TotalAmount: (item.unitPrice * item.quantity).toString(),
             HealthAmount: 0,
-            RateType:
-              BankProRateType[(item.taxType as TaxType) ?? TaxType.TAXED],
+            RateType: BankProRateType[(item.taxType as TaxType) ?? TaxType.TAXED],
             DiscountAmount: 0,
             DetailRemark: item.remark ?? '',
           })),
@@ -446,17 +417,14 @@ export class BankProInvoiceGateway
       throw new Error('Failed to allowance invoice');
     }
 
-    if (data.some((response) => response.ErrorMessage)) {
-      throw new Error(data.map((response) => response.ErrorMessage).join(', '));
+    if (data.some(response => response.ErrorMessage)) {
+      throw new Error(data.map(response => response.ErrorMessage).join(', '));
     }
 
     invoice.allowances.push(
       new BankProAllowance({
         allowanceNumber: data[0].AllowanceNo.trim(),
-        allowancedOn: DateTime.fromFormat(
-          data[0].AllowanceDate,
-          'yyyy/MM/dd HH:mm:ss',
-        ).toJSDate(),
+        allowancedOn: DateTime.fromFormat(data[0].AllowanceDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
         allowancePrice: allowanceAmount,
         items: allowanceItems,
         status: InvoiceAllowanceState.ISSUED,
@@ -481,9 +449,7 @@ export class BankProInvoiceGateway
         {
           No: allowance.parentInvoice.orderId,
           OrderStatus: BankProInvoiceStatus.INVALID_ALLOWANCE,
-          OrderDate: DateTime.fromJSDate(
-            allowance.parentInvoice.issuedOn,
-          ).toFormat('yyyy/MM/dd'),
+          OrderDate: DateTime.fromJSDate(allowance.parentInvoice.issuedOn).toFormat('yyyy/MM/dd'),
           ExpectedShipDate: DateTime.now().toFormat('yyyy/MM/dd'),
           UpdateOrderDate: DateTime.now().toFormat('yyyy/MM/dd'),
           RateType: BankProRateType[allowance.parentInvoice.taxType],
@@ -527,8 +493,7 @@ export class BankProInvoiceGateway
             TaxAmount: 0,
             TotalAmount: (item.unitPrice * item.quantity).toString(),
             HealthAmount: 0,
-            RateType:
-              BankProRateType[(item.taxType as TaxType) ?? TaxType.TAXED],
+            RateType: BankProRateType[(item.taxType as TaxType) ?? TaxType.TAXED],
             DiscountAmount: 0,
             DetailRemark: item.remark ?? '',
           })),
@@ -550,8 +515,8 @@ export class BankProInvoiceGateway
       throw new Error('Failed to allowance invoice');
     }
 
-    if (data.some((response) => response.ErrorMessage)) {
-      throw new Error(data.map((response) => response.ErrorMessage).join(', '));
+    if (data.some(response => response.ErrorMessage)) {
+      throw new Error(data.map(response => response.ErrorMessage).join(', '));
     }
 
     allowance.invalidOn = DateTime.now().toJSDate();
@@ -560,28 +525,23 @@ export class BankProInvoiceGateway
     return allowance.parentInvoice;
   }
 
-  async query(
-    options: BankProInvoiceQueryFromOrderIdArgs,
-  ): Promise<BankProInvoice>;
-  async query(
-    options: BankProInvoiceQueryFromInvoiceNumberArgs,
-  ): Promise<BankProInvoice>;
+  async query(options: BankProInvoiceQueryFromOrderIdArgs): Promise<BankProInvoice>;
+  async query(options: BankProInvoiceQueryFromInvoiceNumberArgs): Promise<BankProInvoice>;
   async query(options: BankProInvoiceQueryArgs): Promise<BankProInvoice> {
     const payload =
       'invoiceNumber' in options
         ? ({
-            UserID: this.user,
-            Pwd: this.password,
-            SystemOID: this.systemOID,
-            InvoiceNo:
-              'invoiceNumber' in options ? options.invoiceNumber : undefined,
-          } as BankProQueryInvoiceByInvoiceNumberPayload)
+          UserID: this.user,
+          Pwd: this.password,
+          SystemOID: this.systemOID,
+          InvoiceNo: 'invoiceNumber' in options ? options.invoiceNumber : undefined,
+        } as BankProQueryInvoiceByInvoiceNumberPayload)
         : ({
-            UserID: this.user,
-            Pwd: this.password,
-            SystemOID: this.systemOID,
-            OrderNo: 'orderId' in options ? options.orderId : undefined,
-          } as BankProQueryInvoiceByOrderNumberPayload);
+          UserID: this.user,
+          Pwd: this.password,
+          SystemOID: this.systemOID,
+          OrderNo: 'orderId' in options ? options.orderId : undefined,
+        } as BankProQueryInvoiceByOrderNumberPayload);
 
     const { data } = await axios.post<BankProInvoiceQueryResponse[]>(
       `${this.baseUrl}/${'invoiceNumber' in options ? 'B2B2CInvoice_GetByInvoiceNo' : 'B2B2CInvoice_GetByOrderNo'}`,
@@ -596,10 +556,8 @@ export class BankProInvoiceGateway
     if (data.length !== 1) throw new Error('Invoice not found');
 
     return new BankProInvoice({
-      issuedOn: DateTime.fromFormat(data[0].InvoiceDate, 'yyyy/MM/dd')
-        .startOf('day')
-        .toJSDate(),
-      items: data[0].InvoiceDetails.map((item) => ({
+      issuedOn: DateTime.fromFormat(data[0].InvoiceDate, 'yyyy/MM/dd').startOf('day').toJSDate(),
+      items: data[0].InvoiceDetails.map(item => ({
         name: item.ProductName,
         unitPrice: Number(item.UnitPrice),
         quantity: Number(item.Qty),

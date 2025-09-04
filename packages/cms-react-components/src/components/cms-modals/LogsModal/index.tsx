@@ -1,10 +1,4 @@
-import React, {
-  ReactNode,
-  useState,
-  useMemo,
-  useEffect,
-  useCallback,
-} from 'react';
+import React, { ReactNode, useState, useMemo, useEffect, useCallback } from 'react';
 import { isNumber } from 'lodash';
 import {
   ModalHeader,
@@ -66,43 +60,36 @@ const LogsModal = ({ onGetData, stageWording }: LogsModalProps): ReactNode => {
         case ArticleStage.DRAFT:
           return {
             stageName: stageWording?.[currentStage]?.stageName || '草稿',
-            timeTitle:
-              stageWording?.[currentStage]?.timeTitle || '最後編輯時間',
-            memberTitle:
-              stageWording?.[currentStage]?.memberTitle || '編輯人員',
+            timeTitle: stageWording?.[currentStage]?.timeTitle || '最後編輯時間',
+            memberTitle: stageWording?.[currentStage]?.memberTitle || '編輯人員',
           };
 
         case ArticleStage.REVIEWING:
           return {
             stageName: stageWording?.[currentStage]?.stageName || '待審核',
             timeTitle: stageWording?.[currentStage]?.timeTitle || '送審時間',
-            memberTitle:
-              stageWording?.[currentStage]?.memberTitle || '送審人員',
+            memberTitle: stageWording?.[currentStage]?.memberTitle || '送審人員',
           };
 
         case ArticleStage.VERIFIED:
           return {
             stageName: stageWording?.[currentStage]?.stageName || '可發佈',
             timeTitle: stageWording?.[currentStage]?.timeTitle || '過審時間',
-            memberTitle:
-              stageWording?.[currentStage]?.memberTitle || '審核人員',
+            memberTitle: stageWording?.[currentStage]?.memberTitle || '審核人員',
           };
 
         case ArticleStage.SCHEDULED:
           return {
             stageName: stageWording?.[currentStage]?.stageName || '已預約',
-            timeTitle:
-              stageWording?.[currentStage]?.timeTitle || '預約發佈時間',
-            memberTitle:
-              stageWording?.[currentStage]?.memberTitle || '預約發佈人員',
+            timeTitle: stageWording?.[currentStage]?.timeTitle || '預約發佈時間',
+            memberTitle: stageWording?.[currentStage]?.memberTitle || '預約發佈人員',
           };
 
         case ArticleStage.RELEASED:
           return {
             stageName: stageWording?.[currentStage]?.stageName || '已發佈',
             timeTitle: stageWording?.[currentStage]?.timeTitle || '發佈時間',
-            memberTitle:
-              stageWording?.[currentStage]?.memberTitle || '發佈人員',
+            memberTitle: stageWording?.[currentStage]?.memberTitle || '發佈人員',
           };
 
         default:
@@ -161,9 +148,7 @@ const LogsModal = ({ onGetData, stageWording }: LogsModalProps): ReactNode => {
 
         case ArticleStage.VERIFIED: {
           if (stageMode) {
-            if (
-              [ArticleStage.DRAFT, ArticleStage.REVIEWING].includes(stageMode)
-            ) {
+            if ([ArticleStage.DRAFT, ArticleStage.REVIEWING].includes(stageMode)) {
               return {
                 time: '',
                 member: '',
@@ -188,12 +173,9 @@ const LogsModal = ({ onGetData, stageWording }: LogsModalProps): ReactNode => {
         case ArticleStage.SCHEDULED: {
           if (stageMode) {
             if (
-              [
-                ArticleStage.DRAFT,
-                ArticleStage.REVIEWING,
-                ArticleStage.VERIFIED,
-                ArticleStage.RELEASED,
-              ].includes(stageMode)
+              [ArticleStage.DRAFT, ArticleStage.REVIEWING, ArticleStage.VERIFIED, ArticleStage.RELEASED].includes(
+                stageMode,
+              )
             ) {
               return {
                 time: '',
@@ -218,12 +200,9 @@ const LogsModal = ({ onGetData, stageWording }: LogsModalProps): ReactNode => {
         case ArticleStage.RELEASED: {
           if (stageMode) {
             if (
-              [
-                ArticleStage.DRAFT,
-                ArticleStage.REVIEWING,
-                ArticleStage.VERIFIED,
-                ArticleStage.SCHEDULED,
-              ].includes(stageMode)
+              [ArticleStage.DRAFT, ArticleStage.REVIEWING, ArticleStage.VERIFIED, ArticleStage.SCHEDULED].includes(
+                stageMode,
+              )
             ) {
               return {
                 time: '',
@@ -259,21 +238,11 @@ const LogsModal = ({ onGetData, stageWording }: LogsModalProps): ReactNode => {
 
   const stages = useMemo(() => {
     if (stageMode === ArticleStage.SCHEDULED) {
-      return [
-        ArticleStage.DRAFT,
-        ArticleStage.REVIEWING,
-        ArticleStage.VERIFIED,
-        ArticleStage.SCHEDULED,
-      ];
+      return [ArticleStage.DRAFT, ArticleStage.REVIEWING, ArticleStage.VERIFIED, ArticleStage.SCHEDULED];
     }
 
     if (stageMode === ArticleStage.RELEASED) {
-      return [
-        ArticleStage.DRAFT,
-        ArticleStage.REVIEWING,
-        ArticleStage.VERIFIED,
-        ArticleStage.RELEASED,
-      ];
+      return [ArticleStage.DRAFT, ArticleStage.REVIEWING, ArticleStage.VERIFIED, ArticleStage.RELEASED];
     }
 
     return [
@@ -309,9 +278,7 @@ const LogsModal = ({ onGetData, stageWording }: LogsModalProps): ReactNode => {
                     />
                     <div
                       className={cx(classes.dot, {
-                        [classes.notActive]:
-                          !getStageData(targetStage).time &&
-                          !getStageData(targetStage).member,
+                        [classes.notActive]: !getStageData(targetStage).time && !getStageData(targetStage).member,
                       })}
                     />
                     <div
@@ -357,19 +324,14 @@ const LogsModal = ({ onGetData, stageWording }: LogsModalProps): ReactNode => {
                         </Typography>
                       </div>
                     </div>
-                    {!!getStageData(targetStage).reason &&
-                      targetStage === ArticleStage.DRAFT && (
-                        <div className={classes.reasonWrapper}>
-                          <Icon
-                            icon={ExclamationCircleFilledIcon}
-                            size={24}
-                            color="warning"
-                          />
-                          <Typography variant="input1" color="text-primary">
-                            {getStageData(targetStage).reason}
-                          </Typography>
-                        </div>
-                      )}
+                    {!!getStageData(targetStage).reason && targetStage === ArticleStage.DRAFT && (
+                      <div className={classes.reasonWrapper}>
+                        <Icon icon={ExclamationCircleFilledIcon} size={24} color="warning" />
+                        <Typography variant="input1" color="text-primary">
+                          {getStageData(targetStage).reason}
+                        </Typography>
+                      </div>
+                    )}
                   </div>
                 </div>
               );

@@ -11,11 +11,7 @@ describe('ResolvedRepoProviders', () => {
     } as unknown as DataSource;
 
     const provider = ResolvedRepoProviders[0] as FactoryProvider;
-    const result = provider.useFactory!(
-      {} as Repository<any>,
-      mockEntity,
-      mockDataSource,
-    );
+    const result = provider.useFactory!({} as Repository<any>, mockEntity, mockDataSource);
 
     expect(mockDataSource.getRepository).toHaveBeenCalledWith(mockEntity);
     expect(result).toBe(mockRepo);
@@ -28,11 +24,7 @@ describe('ResolvedRepoProviders', () => {
     } as unknown as DataSource;
 
     const provider = ResolvedRepoProviders[0] as FactoryProvider;
-    const result = provider.useFactory!(
-      mockBaseRepo,
-      undefined as any,
-      mockDataSource,
-    );
+    const result = provider.useFactory!(mockBaseRepo, undefined as any, mockDataSource);
 
     expect(mockDataSource.getRepository).not.toHaveBeenCalled();
     expect(result).toBe(mockBaseRepo);

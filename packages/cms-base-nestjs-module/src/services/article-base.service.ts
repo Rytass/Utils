@@ -1,21 +1,6 @@
 /* eslint-disable quotes */
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  Logger,
-  OnApplicationBootstrap,
-} from '@nestjs/common';
-import {
-  DataSource,
-  In,
-  IsNull,
-  LessThanOrEqual,
-  Not,
-  QueryRunner,
-  Repository,
-  SelectQueryBuilder,
-} from 'typeorm';
+import { BadRequestException, Inject, Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { DataSource, In, IsNull, LessThanOrEqual, Not, QueryRunner, Repository, SelectQueryBuilder } from 'typeorm';
 import { BaseArticleEntity } from '../models/base-article.entity';
 import {
   MultiLanguageArticleCreateDto,
@@ -39,19 +24,12 @@ import {
 import { DEFAULT_LANGUAGE } from '../constants/default-language';
 import { ArticleFindAllDto } from '../typings/article-find-all.dto';
 import { Language } from '../typings/language';
-import {
-  ArticleBaseDto,
-  MultiLanguageArticleBaseDto,
-  SingleArticleBaseDto,
-} from '../typings/article-base.dto';
+import { ArticleBaseDto, MultiLanguageArticleBaseDto, SingleArticleBaseDto } from '../typings/article-base.dto';
 import { BaseCategoryEntity } from '../models/base-category.entity';
 import { ArticleSorter } from '../typings/article-sorter.enum';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { MultipleLanguageModeIsDisabledError } from '../constants/errors/base.errors';
-import {
-  ArticleNotFoundError,
-  ArticleVersionNotFoundError,
-} from '../constants/errors/article.errors';
+import { ArticleNotFoundError, ArticleVersionNotFoundError } from '../constants/errors/article.errors';
 import { CategoryNotFoundError } from '../constants/errors/category.errors';
 import { ArticleSearchMode } from '../typings/article-search-mode.enum';
 import { QuadratsText } from '@quadrats/core';
@@ -59,10 +37,7 @@ import { FULL_TEXT_SEARCH_TOKEN_VERSION } from '../constants/full-text-search-to
 import { ArticleFindByIdBaseDto } from '../typings/article-find-by-id.dto';
 import { ArticleDefaultQueryBuilderDto } from '../typings/article-default-query-builder.dto';
 import { ArticleSignatureResult } from '../typings/article-signature-result.enum';
-import {
-  ArticleCollectionDto,
-  SingleArticleCollectionDto,
-} from '../typings/article-collection.dto';
+import { ArticleCollectionDto, SingleArticleCollectionDto } from '../typings/article-collection.dto';
 import { ArticleStage } from '../typings/article-stage.enum';
 import {
   removeArticleInvalidFields,
@@ -70,10 +45,7 @@ import {
   removeArticleVersionInvalidFields,
   removeMultipleLanguageArticleVersionInvalidFields,
 } from '../utils/remove-invalid-fields';
-import {
-  ArticleSignatureEntity,
-  ArticleSignatureRepo,
-} from '../models/article-signature.entity';
+import { ArticleSignatureEntity, ArticleSignatureRepo } from '../models/article-signature.entity';
 import { BaseSignatureLevelEntity } from '../models/base-signature-level.entity';
 import { SignatureInfoDto } from '../typings/signature-info.dto';
 import { ArticleDataLoader } from '../data-loaders/article.dataloader';
@@ -82,12 +54,9 @@ import { SignatureService } from './signature.service';
 @Injectable()
 export class ArticleBaseService<
   ArticleEntity extends BaseArticleEntity = BaseArticleEntity,
-  ArticleVersionEntity extends
-    BaseArticleVersionEntity = BaseArticleVersionEntity,
-  ArticleVersionContentEntity extends
-    BaseArticleVersionContentEntity = BaseArticleVersionContentEntity,
-  SignatureLevelEntity extends
-    BaseSignatureLevelEntity = BaseSignatureLevelEntity,
+  ArticleVersionEntity extends BaseArticleVersionEntity = BaseArticleVersionEntity,
+  ArticleVersionContentEntity extends BaseArticleVersionContentEntity = BaseArticleVersionContentEntity,
+  SignatureLevelEntity extends BaseSignatureLevelEntity = BaseSignatureLevelEntity,
 > implements OnApplicationBootstrap
 {
   constructor(
@@ -150,11 +119,8 @@ export class ArticleBaseService<
     switch (stage) {
       case ArticleStage.DRAFT:
         qb.innerJoin(
-          (subQb) => {
-            subQb.from(
-              this.baseArticleVersionRepo.metadata.tableName,
-              'versions',
-            );
+          subQb => {
+            subQb.from(this.baseArticleVersionRepo.metadata.tableName, 'versions');
 
             subQb.select('versions.articleId', 'articleId');
             subQb.addSelect('versions.version', 'version');
@@ -178,24 +144,13 @@ export class ArticleBaseService<
         qb.andWhere(`versions.releasedAt IS NULL`);
         qb.andWhere(`versions.submittedAt IS NOT NULL`);
 
-        qb.leftJoin(
-          'versions.signatures',
-          'signatures',
-          `signatures.result = :result`,
-          {
-            result: ArticleSignatureResult.APPROVED,
-          },
-        );
+        qb.leftJoin('versions.signatures', 'signatures', `signatures.result = :result`, {
+          result: ArticleSignatureResult.APPROVED,
+        });
 
-        qb.leftJoin(
-          'signatures.signatureLevel',
-          'signatureLevel',
-          'signatureLevel.name = :signatureLevel',
-          {
-            signatureLevel:
-              signatureLevel ?? this.signatureService.finalSignatureLevel?.name,
-          },
-        );
+        qb.leftJoin('signatures.signatureLevel', 'signatureLevel', 'signatureLevel.name = :signatureLevel', {
+          signatureLevel: signatureLevel ?? this.signatureService.finalSignatureLevel?.name,
+        });
 
         qb.andWhere('signatureLevel.id IS NULL');
 
@@ -204,11 +159,8 @@ export class ArticleBaseService<
       case ArticleStage.VERIFIED:
         qb.andWhere(`versions.releasedAt IS NULL`);
         qb.innerJoin(
-          (subQb) => {
-            subQb.from(
-              this.articleSignatureRepo.metadata.tableName,
-              'signatures',
-            );
+          subQb => {
+            subQb.from(this.articleSignatureRepo.metadata.tableName, 'signatures');
 
             subQb.innerJoin('signatures.articleVersion', 'articleVersion');
 
@@ -219,13 +171,10 @@ export class ArticleBaseService<
               'rowIndex',
             );
 
-            subQb.andWhere(
-              `signatures.result = :result AND signatures."signatureLevelId" = :signatureLevelId`,
-              {
-                result: ArticleSignatureResult.APPROVED,
-                signatureLevelId: this.signatureService.finalSignatureLevel?.id,
-              },
-            );
+            subQb.andWhere(`signatures.result = :result AND signatures."signatureLevelId" = :signatureLevelId`, {
+              result: ArticleSignatureResult.APPROVED,
+              signatureLevelId: this.signatureService.finalSignatureLevel?.id,
+            });
 
             return subQb;
           },
@@ -237,11 +186,8 @@ export class ArticleBaseService<
 
       case ArticleStage.SCHEDULED:
         qb.innerJoin(
-          (subQb) => {
-            subQb.from(
-              this.baseArticleVersionRepo.metadata.tableName,
-              'versions',
-            );
+          subQb => {
+            subQb.from(this.baseArticleVersionRepo.metadata.tableName, 'versions');
 
             subQb.select('versions.articleId', 'articleId');
             subQb.addSelect('versions.version', 'version');
@@ -264,11 +210,8 @@ export class ArticleBaseService<
       case ArticleStage.RELEASED:
       default:
         qb.innerJoin(
-          (subQb) => {
-            subQb.from(
-              this.baseArticleVersionRepo.metadata.tableName,
-              'versions',
-            );
+          subQb => {
+            subQb.from(this.baseArticleVersionRepo.metadata.tableName, 'versions');
 
             subQb.select('versions.articleId', 'articleId');
             subQb.addSelect('versions.version', 'version');
@@ -298,9 +241,7 @@ export class ArticleBaseService<
     runner?: QueryRunner,
   ): SelectQueryBuilder<A> {
     if (options?.version && options?.stage) {
-      this.logger.warn(
-        `Combining version and stage filters, only version filter will be applied.`,
-      );
+      this.logger.warn(`Combining version and stage filters, only version filter will be applied.`);
     }
 
     if (options?.stage) {
@@ -316,10 +257,7 @@ export class ArticleBaseService<
 
     qb.leftJoinAndSelect(`${alias}.categories`, 'categories');
     qb.innerJoinAndSelect(`${alias}.versions`, 'versions');
-    qb.innerJoinAndSelect(
-      'versions.multiLanguageContents',
-      'multiLanguageContents',
-    );
+    qb.innerJoinAndSelect('versions.multiLanguageContents', 'multiLanguageContents');
 
     if (options?.version !== undefined) {
       qb.andWhere('versions.version = :version', {
@@ -329,17 +267,12 @@ export class ArticleBaseService<
       this.limitStageWithQueryBuilder(
         qb,
         options.stage,
-        (options.stage === ArticleStage.REVIEWING
-          ? options?.signatureLevel
-          : undefined) ?? undefined,
+        (options.stage === ArticleStage.REVIEWING ? options?.signatureLevel : undefined) ?? undefined,
       );
     } else {
       qb.innerJoin(
-        (subQb) => {
-          subQb.from(
-            this.baseArticleVersionRepo.metadata.tableName,
-            'versions',
-          );
+        subQb => {
+          subQb.from(this.baseArticleVersionRepo.metadata.tableName, 'versions');
 
           subQb.select('versions.articleId', 'articleId');
           subQb.addSelect('MAX(versions.version)', 'version');
@@ -355,20 +288,22 @@ export class ArticleBaseService<
     return qb as SelectQueryBuilder<A>;
   }
 
-  private async bindSearchTokens<
-    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
-  >(articleContent: AVC, tags?: string[], runner?: QueryRunner): Promise<void> {
+  private async bindSearchTokens<AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity>(
+    articleContent: AVC,
+    tags?: string[],
+    runner?: QueryRunner,
+  ): Promise<void> {
     const jiebaModule = await import('@node-rs/jieba');
     const jiebaInstance = new jiebaModule.default.Jieba();
     const cut = jiebaInstance.cut.bind(jiebaInstance);
 
     const tokens = cut(
       articleContent.content
-        .filter((content) => content.type === 'p')
-        .map((content) =>
+        .filter(content => content.type === 'p')
+        .map(content =>
           content.children
-            .filter((child) => (child as QuadratsText).text)
-            .map((child) => (child as QuadratsText).text)
+            .filter(child => (child as QuadratsText).text)
+            .map(child => (child as QuadratsText).text)
             .join('\n'),
         )
         .join('\n'),
@@ -397,12 +332,9 @@ export class ArticleBaseService<
       const qb = this.getDefaultQueryBuilder('articles');
 
       qb.orWhere('multiLanguageContents.searchTokens IS NULL');
-      qb.orWhere(
-        'multiLanguageContents.searchTokenVersion != :searchTokenVersion',
-        {
-          searchTokenVersion: FULL_TEXT_SEARCH_TOKEN_VERSION,
-        },
-      );
+      qb.orWhere('multiLanguageContents.searchTokenVersion != :searchTokenVersion', {
+        searchTokenVersion: FULL_TEXT_SEARCH_TOKEN_VERSION,
+      });
 
       const articles = await qb.getMany();
 
@@ -411,10 +343,9 @@ export class ArticleBaseService<
 
         await articles
           .map(
-            (article) => () =>
+            article => () =>
               this.bindSearchTokens<ArticleVersionContentEntity>(
-                article.versions[0]
-                  .multiLanguageContents[0] as ArticleVersionContentEntity,
+                article.versions[0].multiLanguageContents[0] as ArticleVersionContentEntity,
                 article.versions[0].tags,
               ),
           )
@@ -433,11 +364,7 @@ export class ArticleBaseService<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
-  >(
-    id: string,
-    options?: ArticleFindByIdBaseDto,
-    runner?: QueryRunner,
-  ): Promise<ArticleBaseDto<A, AV, AVC>>;
+  >(id: string, options?: ArticleFindByIdBaseDto, runner?: QueryRunner): Promise<ArticleBaseDto<A, AV, AVC>>;
   async findById<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
@@ -451,11 +378,7 @@ export class ArticleBaseService<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
-  >(
-    id: string,
-    options?: ArticleFindByIdBaseDto,
-    runner?: QueryRunner,
-  ): Promise<ArticleBaseDto<A, AV, AVC>> {
+  >(id: string, options?: ArticleFindByIdBaseDto, runner?: QueryRunner): Promise<ArticleBaseDto<A, AV, AVC>> {
     if (options?.language && !this.multipleLanguageMode) {
       throw new MultipleLanguageModeIsDisabledError();
     }
@@ -492,8 +415,7 @@ export class ArticleBaseService<
 
     if (options?.language || !this.multipleLanguageMode) {
       const languageContent = article.versions[0].multiLanguageContents.find(
-        (content) =>
-          content.language === (options?.language || DEFAULT_LANGUAGE),
+        content => content.language === (options?.language || DEFAULT_LANGUAGE),
       ) as AVC;
 
       return {
@@ -509,9 +431,7 @@ export class ArticleBaseService<
     }
 
     return {
-      ...removeMultipleLanguageArticleVersionInvalidFields<AV>(
-        article.versions[0],
-      ),
+      ...removeMultipleLanguageArticleVersionInvalidFields<AV>(article.versions[0]),
       ...removeArticleInvalidFields<A>(article),
       id: article.id,
       createdAt: article.createdAt,
@@ -546,12 +466,11 @@ export class ArticleBaseService<
     }
 
     if (options?.requiredCategoryIds?.length) {
-      const relationMetadata =
-        this.baseArticleRepo.metadata.manyToManyRelations.find(
-          (relation) =>
-            `${this.baseArticleRepo.metadata.schema}.${relation.propertyPath}` ===
-            this.baseCategoryRepo.metadata.tablePath,
-        )?.junctionEntityMetadata;
+      const relationMetadata = this.baseArticleRepo.metadata.manyToManyRelations.find(
+        relation =>
+          `${this.baseArticleRepo.metadata.schema}.${relation.propertyPath}` ===
+          this.baseCategoryRepo.metadata.tablePath,
+      )?.junctionEntityMetadata;
 
       options?.requiredCategoryIds?.forEach((categoryId, index) => {
         const relationQb = this.dataSource.createQueryBuilder();
@@ -561,42 +480,30 @@ export class ArticleBaseService<
           `requiredCategoryRelations${index}`,
         );
 
-        relationQb.andWhere(
-          `"requiredCategoryRelations${index}"."categoryId" = :requiredCategoryId${index}`,
-          {
-            [`requiredCategoryId${index}`]: categoryId,
-          },
-        );
+        relationQb.andWhere(`"requiredCategoryRelations${index}"."categoryId" = :requiredCategoryId${index}`, {
+          [`requiredCategoryId${index}`]: categoryId,
+        });
 
-        relationQb.andWhere(
-          `"requiredCategoryRelations${index}"."articleId" = articles.id`,
-        );
+        relationQb.andWhere(`"requiredCategoryRelations${index}"."articleId" = articles.id`);
 
         qb.andWhereExists(relationQb);
       });
     }
 
     if (options?.categoryIds?.length) {
-      const relationMetadata =
-        this.baseArticleRepo.metadata.manyToManyRelations.find(
-          (relation) =>
-            `${this.baseArticleRepo.metadata.schema}.${relation.propertyPath}` ===
-            this.baseCategoryRepo.metadata.tablePath,
-        )?.junctionEntityMetadata;
+      const relationMetadata = this.baseArticleRepo.metadata.manyToManyRelations.find(
+        relation =>
+          `${this.baseArticleRepo.metadata.schema}.${relation.propertyPath}` ===
+          this.baseCategoryRepo.metadata.tablePath,
+      )?.junctionEntityMetadata;
 
       const relationQb = this.dataSource.createQueryBuilder();
 
-      relationQb.from(
-        `${this.baseArticleRepo.metadata.schema}.${relationMetadata?.tableName}`,
-        `categoryRelations`,
-      );
+      relationQb.from(`${this.baseArticleRepo.metadata.schema}.${relationMetadata?.tableName}`, `categoryRelations`);
 
-      relationQb.andWhere(
-        '"categoryRelations"."categoryId" IN (:...categoryIds)',
-        {
-          categoryIds: options.categoryIds,
-        },
-      );
+      relationQb.andWhere('"categoryRelations"."categoryId" IN (:...categoryIds)', {
+        categoryIds: options.categoryIds,
+      });
 
       relationQb.andWhere(`"categoryRelations"."articleId" = articles.id`);
 
@@ -606,8 +513,7 @@ export class ArticleBaseService<
     if (options?.searchTerm) {
       switch (options?.searchMode) {
         case ArticleSearchMode.FULL_TEXT: {
-          if (!this.fullTextSearchMode)
-            throw new Error('Full text search is disabled.');
+          if (!this.fullTextSearchMode) throw new Error('Full text search is disabled.');
 
           const jiebaModule = await import('@node-rs/jieba');
           const jiebaInstance = new jiebaModule.default.Jieba();
@@ -622,12 +528,9 @@ export class ArticleBaseService<
             'contents',
           );
 
-          searchQb.andWhere(
-            "contents.searchTokens @@ to_tsquery('simple', :searchTerm)",
-            {
-              searchTerm: tokens.join('|'),
-            },
-          );
+          searchQb.andWhere("contents.searchTokens @@ to_tsquery('simple', :searchTerm)", {
+            searchTerm: tokens.join('|'),
+          });
 
           searchQb.andWhere('contents."entityName" = :entityName', {
             entityName: this.baseArticleVersionContentRepo.metadata.targetName,
@@ -726,9 +629,7 @@ export class ArticleBaseService<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
-  >(
-    options?: ArticleFindAllDto & { language: Language },
-  ): Promise<SingleArticleCollectionDto<A, AV, AVC>>;
+  >(options?: ArticleFindAllDto & { language: Language }): Promise<SingleArticleCollectionDto<A, AV, AVC>>;
   async findCollection<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
@@ -751,7 +652,7 @@ export class ArticleBaseService<
     const [articles, total] = await qb.getManyAndCount();
 
     if (options?.stage) {
-      articles.forEach((article) => {
+      articles.forEach(article => {
         this.articleDataLoader.stageCache.set(
           `${article.id}:${article.versions[0].version}`,
           Promise.resolve(options.stage as ArticleStage),
@@ -761,12 +662,10 @@ export class ArticleBaseService<
 
     if (options?.language || !this.multipleLanguageMode) {
       return {
-        articles: articles.map((article) => {
-          const languageContent =
-            article.versions[0].multiLanguageContents.find(
-              (content) =>
-                content.language === (options?.language || DEFAULT_LANGUAGE),
-            ) as AVC;
+        articles: articles.map(article => {
+          const languageContent = article.versions[0].multiLanguageContents.find(
+            content => content.language === (options?.language || DEFAULT_LANGUAGE),
+          ) as AVC;
 
           return {
             ...removeArticleVersionContentInvalidFields<AVC>(languageContent),
@@ -787,11 +686,9 @@ export class ArticleBaseService<
 
     return {
       articles: articles.map(
-        (article) =>
+        article =>
           ({
-            ...removeMultipleLanguageArticleVersionInvalidFields(
-              article.versions[0],
-            ),
+            ...removeMultipleLanguageArticleVersionInvalidFields(article.versions[0]),
             ...removeArticleInvalidFields(article),
             id: article.id,
             createdAt: article.createdAt,
@@ -810,9 +707,7 @@ export class ArticleBaseService<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
-  >(
-    options?: ArticleFindAllDto & { language: Language },
-  ): Promise<SingleArticleBaseDto<A, AV, AVC>[]>;
+  >(options?: ArticleFindAllDto & { language: Language }): Promise<SingleArticleBaseDto<A, AV, AVC>[]>;
   async findAll<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
@@ -835,7 +730,7 @@ export class ArticleBaseService<
     const articles = await qb.getMany();
 
     if (options?.stage) {
-      articles.forEach((article) => {
+      articles.forEach(article => {
         this.articleDataLoader.stageCache.set(
           `${article.id}:${article.versions[0].version}`,
           Promise.resolve(options.stage as ArticleStage),
@@ -844,10 +739,9 @@ export class ArticleBaseService<
     }
 
     if (options?.language || !this.multipleLanguageMode) {
-      return articles.map((article) => {
+      return articles.map(article => {
         const languageContent = article.versions[0].multiLanguageContents.find(
-          (content) =>
-            content.language === (options?.language || DEFAULT_LANGUAGE),
+          content => content.language === (options?.language || DEFAULT_LANGUAGE),
         ) as AVC;
 
         return {
@@ -864,11 +758,9 @@ export class ArticleBaseService<
     }
 
     return articles.map(
-      (article) =>
+      article =>
         ({
-          ...removeMultipleLanguageArticleVersionInvalidFields<AV>(
-            article.versions[0],
-          ),
+          ...removeMultipleLanguageArticleVersionInvalidFields<AV>(article.versions[0]),
           ...removeArticleInvalidFields<A>(article),
           id: article.id,
           createdAt: article.createdAt,
@@ -923,16 +815,12 @@ export class ArticleBaseService<
     });
 
     if (![ArticleStage.RELEASED, ArticleStage.SCHEDULED].includes(stage)) {
-      throw new BadRequestException(
-        `Article ${id} is not in released or scheduled stage [${stage}].`,
-      );
+      throw new BadRequestException(`Article ${id} is not in released or scheduled stage [${stage}].`);
     }
 
     const targetPlaceArticle = await this.findById<A, AV, AVC>(id, {
-      stage: this.signatureService.signatureEnabled
-        ? ArticleStage.VERIFIED
-        : ArticleStage.DRAFT,
-    }).catch((ex) => null);
+      stage: this.signatureService.signatureEnabled ? ArticleStage.VERIFIED : ArticleStage.DRAFT,
+    }).catch(ex => null);
 
     this.logger.debug(`Withdraw article ${id} [${article.version}]`);
 
@@ -947,23 +835,17 @@ export class ArticleBaseService<
           `Article ${id} is already in draft or verified [${targetPlaceArticle.version}]. Removing previous version.`,
         );
 
-        await runner.manager.softDelete(
-          this.baseArticleVersionRepo.metadata.tableName,
-          {
-            articleId: id,
-            version: targetPlaceArticle.version,
-          },
-        );
+        await runner.manager.softDelete(this.baseArticleVersionRepo.metadata.tableName, {
+          articleId: id,
+          version: targetPlaceArticle.version,
+        });
       }
 
-      await runner.manager.softDelete(
-        this.baseArticleVersionRepo.metadata.tableName,
-        {
-          articleId: id,
-          releasedAt: LessThanOrEqual(new Date()),
-          version: Not(article.version),
-        },
-      );
+      await runner.manager.softDelete(this.baseArticleVersionRepo.metadata.tableName, {
+        articleId: id,
+        releasedAt: LessThanOrEqual(new Date()),
+        version: Not(article.version),
+      });
 
       await runner.manager.update(
         this.baseArticleVersionRepo.metadata.tableName,
@@ -989,11 +871,7 @@ export class ArticleBaseService<
 
     this.articleDataLoader.stageCache.set(
       `${article.id}:${article.version}`,
-      Promise.resolve(
-        this.signatureService.signatureEnabled
-          ? ArticleStage.VERIFIED
-          : ArticleStage.DRAFT,
-      ),
+      Promise.resolve(this.signatureService.signatureEnabled ? ArticleStage.VERIFIED : ArticleStage.DRAFT),
     );
 
     return this.findById<A, AV, AVC>(article.id, {
@@ -1015,10 +893,8 @@ export class ArticleBaseService<
 
     const shouldDeleteVersion = await this.findById(id, {
       stage:
-        (options?.releasedAt?.getTime() ?? Date.now()) <= Date.now()
-          ? ArticleStage.RELEASED
-          : ArticleStage.SCHEDULED,
-    }).catch((ex) => null);
+        (options?.releasedAt?.getTime() ?? Date.now()) <= Date.now() ? ArticleStage.RELEASED : ArticleStage.SCHEDULED,
+    }).catch(ex => null);
 
     this.logger.debug(`Release article ${id} [${article.version}]`);
 
@@ -1030,21 +906,15 @@ export class ArticleBaseService<
     await runner.startTransaction();
 
     try {
-      if (
-        shouldDeleteVersion &&
-        shouldDeleteVersion.version !== article.version
-      ) {
+      if (shouldDeleteVersion && shouldDeleteVersion.version !== article.version) {
         this.logger.debug(
           `Article ${id} is already scheduled or released [${shouldDeleteVersion.version}]. Removing previous version.`,
         );
 
-        await runner.manager.softRemove(
-          this.baseArticleVersionRepo.metadata.tableName,
-          {
-            articleId: shouldDeleteVersion.id,
-            version: shouldDeleteVersion.version,
-          },
-        );
+        await runner.manager.softRemove(this.baseArticleVersionRepo.metadata.tableName, {
+          articleId: shouldDeleteVersion.id,
+          version: shouldDeleteVersion.version,
+        });
       }
 
       await runner.manager.update(
@@ -1072,11 +942,7 @@ export class ArticleBaseService<
 
     this.articleDataLoader.stageCache.set(
       `${article.id}:${article.version}`,
-      Promise.resolve(
-        willReleasedAt.getTime() > Date.now()
-          ? ArticleStage.SCHEDULED
-          : ArticleStage.RELEASED,
-      ),
+      Promise.resolve(willReleasedAt.getTime() > Date.now() ? ArticleStage.SCHEDULED : ArticleStage.RELEASED),
     );
 
     return this.findById<A, AV, AVC>(article.id, {
@@ -1088,10 +954,7 @@ export class ArticleBaseService<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
-  >(
-    id: string,
-    options?: { userId?: string },
-  ): Promise<ArticleBaseDto<A, AV, AVC>> {
+  >(id: string, options?: { userId?: string }): Promise<ArticleBaseDto<A, AV, AVC>> {
     if (!this.signatureService.signatureEnabled) {
       throw new Error('Signature mode is disabled.');
     }
@@ -1106,7 +969,7 @@ export class ArticleBaseService<
 
     const pendingReviewArticle = await this.findById<A, AV, AVC>(id, {
       stage: ArticleStage.REVIEWING,
-    }).catch((ex) => null);
+    }).catch(ex => null);
 
     const runner = this.dataSource.createQueryRunner();
 
@@ -1119,13 +982,10 @@ export class ArticleBaseService<
           `Article ${id} is already pending review [${pendingReviewArticle.version}]. Removing previous version.`,
         );
 
-        await runner.manager.softRemove(
-          this.baseArticleVersionRepo.metadata.tableName,
-          {
-            articleId: id,
-            version: pendingReviewArticle.version,
-          },
-        );
+        await runner.manager.softRemove(this.baseArticleVersionRepo.metadata.tableName, {
+          articleId: id,
+          version: pendingReviewArticle.version,
+        });
       }
 
       await runner.manager.update(
@@ -1151,10 +1011,7 @@ export class ArticleBaseService<
 
     article.submittedAt = new Date();
 
-    this.articleDataLoader.stageCache.set(
-      `${article.id}:${article.version}`,
-      Promise.resolve(ArticleStage.REVIEWING),
-    );
+    this.articleDataLoader.stageCache.set(`${article.id}:${article.version}`, Promise.resolve(ArticleStage.REVIEWING));
 
     return this.findById<A, AV, AVC>(article.id, {
       version: article.version,
@@ -1172,7 +1029,7 @@ export class ArticleBaseService<
 
     const draftArticle = await this.findById<A, AV, AVC>(id, {
       stage: ArticleStage.DRAFT,
-    }).catch((ex) => null);
+    }).catch(ex => null);
 
     if (draftArticle) {
       const errorMessage = `Article ${id} is already in draft [${draftArticle.version}].`;
@@ -1184,9 +1041,7 @@ export class ArticleBaseService<
     const article = await this.findById<A, AV, AVC>(id);
 
     if (!article.submittedAt) {
-      throw new BadRequestException(
-        `Article ${id} is not submitted yet [${article.version}].`,
-      );
+      throw new BadRequestException(`Article ${id} is not submitted yet [${article.version}].`);
     }
 
     const runner = this.dataSource.createQueryRunner();
@@ -1218,10 +1073,7 @@ export class ArticleBaseService<
 
     article.submittedAt = null;
 
-    this.articleDataLoader.stageCache.set(
-      `${article.id}:${article.version}`,
-      Promise.resolve(ArticleStage.DRAFT),
-    );
+    this.articleDataLoader.stageCache.set(`${article.id}:${article.version}`, Promise.resolve(ArticleStage.DRAFT));
 
     return this.findById<A, AV, AVC>(article.id, {
       version: article.version,
@@ -1268,23 +1120,13 @@ export class ArticleBaseService<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
-  >(
-    options: Omit<
-      | SingleArticleCreateDto<A, AV, AVC>
-      | MultiLanguageArticleCreateDto<A, AV, AVC>,
-      'version'
-    >,
-  ): void {
+  >(options: Omit<SingleArticleCreateDto<A, AV, AVC> | MultiLanguageArticleCreateDto<A, AV, AVC>, 'version'>): void {
     if (options.submitted && options.signatureLevel) {
-      throw new Error(
-        'Signature level is not allowed when submitting an article version.',
-      );
+      throw new Error('Signature level is not allowed when submitting an article version.');
     }
 
     if (options.submitted && options.releasedAt) {
-      throw new Error(
-        'Released at is not allowed when submitting an article version.',
-      );
+      throw new Error('Released at is not allowed when submitting an article version.');
     }
 
     if (
@@ -1292,9 +1134,7 @@ export class ArticleBaseService<
       options.signatureLevel &&
       this.signatureService.finalSignatureLevel?.name !== options.signatureLevel
     ) {
-      throw new Error(
-        'Only final signature level is allowed when releasing an article version.',
-      );
+      throw new Error('Only final signature level is allowed when releasing an article version.');
     }
 
     if (options.submitted && !this.signatureService.signatureEnabled) {
@@ -1310,27 +1150,19 @@ export class ArticleBaseService<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
-  >(
-    id: string,
-    options: SingleArticleCreateDto<A, AV, AVC>,
-  ): Promise<ArticleBaseDto<A, AV, AVC>>;
+  >(id: string, options: SingleArticleCreateDto<A, AV, AVC>): Promise<ArticleBaseDto<A, AV, AVC>>;
+  async addVersion<
+    A extends ArticleEntity = ArticleEntity,
+    AV extends ArticleVersionEntity = ArticleVersionEntity,
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(id: string, options: MultiLanguageArticleCreateDto<A, AV, AVC>): Promise<ArticleBaseDto<A, AV, AVC>>;
   async addVersion<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
   >(
     id: string,
-    options: MultiLanguageArticleCreateDto<A, AV, AVC>,
-  ): Promise<ArticleBaseDto<A, AV, AVC>>;
-  async addVersion<
-    A extends ArticleEntity = ArticleEntity,
-    AV extends ArticleVersionEntity = ArticleVersionEntity,
-    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
-  >(
-    id: string,
-    options:
-      | SingleArticleCreateDto<A, AV, AVC>
-      | MultiLanguageArticleCreateDto<A, AV, AVC>,
+    options: SingleArticleCreateDto<A, AV, AVC> | MultiLanguageArticleCreateDto<A, AV, AVC>,
   ): Promise<ArticleBaseDto<A, AV, AVC>> {
     this.optionsCheck<A, AV, AVC>(options);
 
@@ -1342,7 +1174,7 @@ export class ArticleBaseService<
 
     const placedArticle = await this.findById<A, AV, AVC>(id, {
       stage: placedArticleStage,
-    }).catch((ex) => null);
+    }).catch(ex => null);
 
     const targetCategories = options?.categoryIds?.length
       ? await this.baseCategoryRepo.find({
@@ -1372,8 +1204,7 @@ export class ArticleBaseService<
       );
     }
 
-    const latestQb =
-      this.baseArticleVersionRepo.createQueryBuilder('articleVersions');
+    const latestQb = this.baseArticleVersionRepo.createQueryBuilder('articleVersions');
 
     latestQb.withDeleted();
     latestQb.andWhere('articleVersions.articleId = :id', { id });
@@ -1392,13 +1223,10 @@ export class ArticleBaseService<
 
     try {
       if (placedArticle) {
-        await runner.manager.softRemove(
-          this.baseArticleVersionRepo.metadata.tableName,
-          {
-            articleId: id,
-            version: placedArticle.version,
-          },
-        );
+        await runner.manager.softRemove(this.baseArticleVersionRepo.metadata.tableName, {
+          articleId: id,
+          version: placedArticle.version,
+        });
       }
 
       await runner.manager.save(
@@ -1413,14 +1241,8 @@ export class ArticleBaseService<
         ...removeArticleVersionInvalidFields<AV>(options),
         articleId: article.id,
         version: latestVersion.version + 1,
-        submittedAt:
-          options.submitted || options.releasedAt || options.signatureLevel
-            ? new Date()
-            : null,
-        submittedBy:
-          options.submitted || options.releasedAt || options.signatureLevel
-            ? options.userId
-            : undefined,
+        submittedAt: options.submitted || options.releasedAt || options.signatureLevel ? new Date() : null,
+        submittedBy: options.submitted || options.releasedAt || options.signatureLevel ? options.userId : undefined,
         releasedAt: this.draftMode ? options.releasedAt : new Date(),
         releasedBy: options.releasedAt ? options.userId : undefined,
         createdBy: options.userId,
@@ -1429,16 +1251,10 @@ export class ArticleBaseService<
       await runner.manager.save(version);
 
       if ('multiLanguageContents' in options) {
-        if (!this.multipleLanguageMode)
-          throw new MultipleLanguageModeIsDisabledError();
+        if (!this.multipleLanguageMode) throw new MultipleLanguageModeIsDisabledError();
 
         const savedContents = await runner.manager.save<AVC>(
-          Object.entries(
-            options.multiLanguageContents as Record<
-              Language,
-              SingleVersionContentCreateDto<AVC>
-            >,
-          ).map(
+          Object.entries(options.multiLanguageContents as Record<Language, SingleVersionContentCreateDto<AVC>>).map(
             ([language, content]) =>
               this.baseArticleVersionContentRepo.create({
                 ...removeArticleVersionContentInvalidFields<AVC>(content),
@@ -1451,22 +1267,13 @@ export class ArticleBaseService<
 
         if (this.fullTextSearchMode) {
           await savedContents
-            .map(
-              (articleContent) => () =>
-                this.bindSearchTokens<AVC>(
-                  articleContent as AVC,
-                  options.tags ?? [],
-                  runner,
-                ),
-            )
+            .map(articleContent => () => this.bindSearchTokens<AVC>(articleContent as AVC, options.tags ?? [], runner))
             .reduce((prev, next) => prev.then(next), Promise.resolve());
         }
       } else {
         const savedContent = await runner.manager.save<AVC>(
           this.baseArticleVersionContentRepo.create({
-            ...removeArticleVersionContentInvalidFields<AVC>(
-              options as SingleArticleCreateDto<A, AV, AVC>,
-            ),
+            ...removeArticleVersionContentInvalidFields<AVC>(options as SingleArticleCreateDto<A, AV, AVC>),
             articleId: article.id,
             version: latestVersion.version + 1,
             language: DEFAULT_LANGUAGE,
@@ -1474,11 +1281,7 @@ export class ArticleBaseService<
         );
 
         if (this.fullTextSearchMode) {
-          await this.bindSearchTokens<AVC>(
-            savedContent,
-            options.tags ?? [],
-            runner,
-          );
+          await this.bindSearchTokens<AVC>(savedContent, options.tags ?? [], runner);
         }
       }
 
@@ -1489,9 +1292,7 @@ export class ArticleBaseService<
             version: version.version,
           },
           {
-            signatureLevel:
-              options.signatureLevel ??
-              this.signatureService.finalSignatureLevel?.name,
+            signatureLevel: options.signatureLevel ?? this.signatureService.finalSignatureLevel?.name,
             signerId: options.userId,
             runner,
           },
@@ -1505,14 +1306,11 @@ export class ArticleBaseService<
         Promise.resolve(
           ((): ArticleStage => {
             if (options.releasedAt) {
-              return options.releasedAt.getTime() > Date.now()
-                ? ArticleStage.SCHEDULED
-                : ArticleStage.RELEASED;
+              return options.releasedAt.getTime() > Date.now() ? ArticleStage.SCHEDULED : ArticleStage.RELEASED;
             }
 
             if (options.signatureLevel) {
-              return options.signatureLevel ===
-                this.signatureService.finalSignatureLevel?.name
+              return options.signatureLevel === this.signatureService.finalSignatureLevel?.name
                 ? ArticleStage.VERIFIED
                 : ArticleStage.REVIEWING;
             }
@@ -1547,24 +1345,18 @@ export class ArticleBaseService<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
-  >(
-    options: SingleArticleCreateDto<A, AV, AVC>,
-  ): Promise<ArticleBaseDto<A, AV, AVC>>;
+  >(options: SingleArticleCreateDto<A, AV, AVC>): Promise<ArticleBaseDto<A, AV, AVC>>;
+  async create<
+    A extends ArticleEntity = ArticleEntity,
+    AV extends ArticleVersionEntity = ArticleVersionEntity,
+    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
+  >(options: MultiLanguageArticleCreateDto<A, AV, AVC>): Promise<ArticleBaseDto<A, AV, AVC>>;
   async create<
     A extends ArticleEntity = ArticleEntity,
     AV extends ArticleVersionEntity = ArticleVersionEntity,
     AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
   >(
-    options: MultiLanguageArticleCreateDto<A, AV, AVC>,
-  ): Promise<ArticleBaseDto<A, AV, AVC>>;
-  async create<
-    A extends ArticleEntity = ArticleEntity,
-    AV extends ArticleVersionEntity = ArticleVersionEntity,
-    AVC extends ArticleVersionContentEntity = ArticleVersionContentEntity,
-  >(
-    options:
-      | SingleArticleCreateDto<A, AV, AVC>
-      | MultiLanguageArticleCreateDto<A, AV, AVC>,
+    options: SingleArticleCreateDto<A, AV, AVC> | MultiLanguageArticleCreateDto<A, AV, AVC>,
   ): Promise<ArticleBaseDto<A, AV, AVC>> {
     this.optionsCheck<A, AV, AVC>(options);
 
@@ -1597,14 +1389,8 @@ export class ArticleBaseService<
       const version = this.baseArticleVersionRepo.create({
         ...removeArticleVersionInvalidFields<AV>(options),
         articleId: article.id,
-        submittedAt:
-          options.submitted || options.releasedAt || options.signatureLevel
-            ? new Date()
-            : null,
-        submittedBy:
-          options.submitted || options.releasedAt || options.signatureLevel
-            ? options.userId
-            : undefined,
+        submittedAt: options.submitted || options.releasedAt || options.signatureLevel ? new Date() : null,
+        submittedBy: options.submitted || options.releasedAt || options.signatureLevel ? options.userId : undefined,
         releasedAt: this.draftMode ? options.releasedAt : new Date(),
         releasedBy: options.releasedAt ? options.userId : undefined,
         createdBy: options.userId,
@@ -1613,8 +1399,7 @@ export class ArticleBaseService<
       await runner.manager.save(version);
 
       if ('multiLanguageContents' in options) {
-        if (!this.multipleLanguageMode)
-          throw new MultipleLanguageModeIsDisabledError();
+        if (!this.multipleLanguageMode) throw new MultipleLanguageModeIsDisabledError();
 
         const savedContents = await runner.manager.save(
           Object.entries(options.multiLanguageContents).map(
@@ -1630,14 +1415,7 @@ export class ArticleBaseService<
 
         if (this.fullTextSearchMode) {
           await savedContents
-            .map(
-              (articleContent) => () =>
-                this.bindSearchTokens<AVC>(
-                  articleContent,
-                  options.tags ?? [],
-                  runner,
-                ),
-            )
+            .map(articleContent => () => this.bindSearchTokens<AVC>(articleContent, options.tags ?? [], runner))
             .reduce((prev, next) => prev.then(next), Promise.resolve());
         }
       } else {
@@ -1651,11 +1429,7 @@ export class ArticleBaseService<
         );
 
         if (this.fullTextSearchMode) {
-          await this.bindSearchTokens<AVC>(
-            savedContent,
-            options.tags ?? [],
-            runner,
-          );
+          await this.bindSearchTokens<AVC>(savedContent, options.tags ?? [], runner);
         }
       }
 
@@ -1666,9 +1440,7 @@ export class ArticleBaseService<
             version: version.version,
           },
           {
-            signatureLevel:
-              options.signatureLevel ??
-              this.signatureService.finalSignatureLevel?.name,
+            signatureLevel: options.signatureLevel ?? this.signatureService.finalSignatureLevel?.name,
             signerId: options.userId,
             runner,
           },
@@ -1682,14 +1454,11 @@ export class ArticleBaseService<
         Promise.resolve(
           ((): ArticleStage => {
             if (options.releasedAt) {
-              return options.releasedAt.getTime() > Date.now()
-                ? ArticleStage.SCHEDULED
-                : ArticleStage.RELEASED;
+              return options.releasedAt.getTime() > Date.now() ? ArticleStage.SCHEDULED : ArticleStage.RELEASED;
             }
 
             if (options.signatureLevel) {
-              return options.signatureLevel ===
-                this.signatureService.finalSignatureLevel?.name
+              return options.signatureLevel === this.signatureService.finalSignatureLevel?.name
                 ? ArticleStage.VERIFIED
                 : ArticleStage.REVIEWING;
             }
@@ -1732,24 +1501,15 @@ export class ArticleBaseService<
       runner?: QueryRunner;
     },
   ): Promise<ArticleBaseDto<A, AV, AVC>> {
-    const reviewingArticle = await this.findById<A, AV, AVC>(
-      articleVersion.id,
-      {
-        stage: ArticleStage.REVIEWING,
-      },
-    );
+    const reviewingArticle = await this.findById<A, AV, AVC>(articleVersion.id, {
+      stage: ArticleStage.REVIEWING,
+    });
 
     if (!reviewingArticle) {
-      throw new BadRequestException(
-        `Article ${articleVersion.id} is not in reviewing stage.`,
-      );
+      throw new BadRequestException(`Article ${articleVersion.id} is not in reviewing stage.`);
     }
 
-    return this.signature<A, AV, AVC>(
-      ArticleSignatureResult.REJECTED,
-      reviewingArticle,
-      signatureInfo,
-    );
+    return this.signature<A, AV, AVC>(ArticleSignatureResult.REJECTED, reviewingArticle, signatureInfo);
   }
 
   approveVersion<
@@ -1765,11 +1525,7 @@ export class ArticleBaseService<
       runner?: QueryRunner;
     },
   ): Promise<ArticleBaseDto<A, AV, AVC>> {
-    return this.signature<A, AV, AVC>(
-      ArticleSignatureResult.APPROVED,
-      articleVersion,
-      signatureInfo,
-    );
+    return this.signature<A, AV, AVC>(ArticleSignatureResult.APPROVED, articleVersion, signatureInfo);
   }
 
   private async signature<
@@ -1803,19 +1559,16 @@ export class ArticleBaseService<
             : ArticleStage.DRAFT,
       },
       signatureInfo?.runner,
-    ).catch((ex) => null);
+    ).catch(ex => null);
 
     if (signatureInfo?.runner) {
       if (
-        !(await signatureInfo.runner.manager.exists(
-          this.baseArticleVersionRepo.metadata.tableName,
-          {
-            where: {
-              articleId: articleVersion.id,
-              version: articleVersion.version,
-            },
+        !(await signatureInfo.runner.manager.exists(this.baseArticleVersionRepo.metadata.tableName, {
+          where: {
+            articleId: articleVersion.id,
+            version: articleVersion.version,
           },
-        ))
+        }))
       ) {
         throw new BadRequestException('Invalid article version');
       }
@@ -1830,15 +1583,12 @@ export class ArticleBaseService<
       throw new BadRequestException('Invalid article version');
     }
 
-    if (
-      this.signatureService.signatureLevelsCache.length > 1 &&
-      !signatureInfo?.signatureLevel
-    ) {
+    if (this.signatureService.signatureLevelsCache.length > 1 && !signatureInfo?.signatureLevel) {
       throw new BadRequestException('Signature level is required');
     }
 
     const targetLevelIndex = signatureInfo?.signatureLevel
-      ? this.signatureService.signatureLevelsCache.findIndex((level) =>
+      ? this.signatureService.signatureLevelsCache.findIndex(level =>
           signatureInfo.signatureLevel instanceof BaseSignatureLevelEntity
             ? level.id === signatureInfo.signatureLevel.id
             : level.name === signatureInfo.signatureLevel,
@@ -1857,10 +1607,7 @@ export class ArticleBaseService<
     }
 
     try {
-      const qb = runner.manager.createQueryBuilder(
-        this.articleSignatureRepo.metadata.tableName,
-        'signatures',
-      );
+      const qb = runner.manager.createQueryBuilder(this.articleSignatureRepo.metadata.tableName, 'signatures');
 
       qb.andWhere('signatures.articleId = :articleId', {
         articleId: articleVersion.id,
@@ -1875,27 +1622,19 @@ export class ArticleBaseService<
       const signatures = await qb.getMany();
 
       if (!Number.isNaN(targetLevelIndex)) {
-        const signatureMap = new Map(
-          signatures.map((signature) => [
-            signature.signatureLevelId,
-            signature,
-          ]),
-        );
+        const signatureMap = new Map(signatures.map(signature => [signature.signatureLevelId, signature]));
 
         const needSignTargets = this.signatureService.signatureLevelsCache
           .slice(0, targetLevelIndex + 1)
-          .map((level) => signatureMap.get(level.id) ?? null);
+          .map(level => signatureMap.get(level.id) ?? null);
 
         const targetSignature = needSignTargets[targetLevelIndex];
 
         if (targetSignature) {
           if (targetSignature.result === ArticleSignatureResult.REJECTED) {
-            await runner.manager.softDelete(
-              this.articleSignatureRepo.metadata.tableName,
-              {
-                id: targetSignature.id,
-              },
-            );
+            await runner.manager.softDelete(this.articleSignatureRepo.metadata.tableName, {
+              id: targetSignature.id,
+            });
           } else {
             throw new BadRequestException('Already signed');
           }
@@ -1903,26 +1642,18 @@ export class ArticleBaseService<
 
         if (targetLevelIndex > 0) {
           const previousSignature = needSignTargets[targetLevelIndex - 1];
-          const previousRequiredSignatureLevels =
-            this.signatureService.signatureLevelsCache
-              .slice(0, targetLevelIndex)
-              .filter((level) => level.required);
+          const previousRequiredSignatureLevels = this.signatureService.signatureLevelsCache
+            .slice(0, targetLevelIndex)
+            .filter(level => level.required);
 
           const latestRequireSignatureLevel =
-            previousRequiredSignatureLevels[
-              previousRequiredSignatureLevels.length - 1
-            ];
+            previousRequiredSignatureLevels[previousRequiredSignatureLevels.length - 1];
 
-          if (
-            previousSignature &&
-            previousSignature.result !== ArticleSignatureResult.APPROVED
-          ) {
+          if (previousSignature && previousSignature.result !== ArticleSignatureResult.APPROVED) {
             throw new BadRequestException('Previous valid signature not found');
           }
 
-          const latestRequireSignature = signatureMap.get(
-            latestRequireSignatureLevel.id,
-          );
+          const latestRequireSignature = signatureMap.get(latestRequireSignatureLevel.id);
 
           if (!latestRequireSignature) {
             throw new BadRequestException('Previous valid signature not found');
@@ -1932,14 +1663,10 @@ export class ArticleBaseService<
         const signature = this.articleSignatureRepo.create({
           articleId: articleVersion.id,
           version: articleVersion.version,
-          signatureLevelId:
-            this.signatureService.signatureLevelsCache[targetLevelIndex].id,
+          signatureLevelId: this.signatureService.signatureLevelsCache[targetLevelIndex].id,
           result,
           signerId: signatureInfo?.signerId ?? null,
-          rejectReason:
-            result === ArticleSignatureResult.REJECTED
-              ? (signatureInfo?.reason ?? null)
-              : null,
+          rejectReason: result === ArticleSignatureResult.REJECTED ? (signatureInfo?.reason ?? null) : null,
         });
 
         if (this.draftMode && result === ArticleSignatureResult.REJECTED) {
@@ -1977,13 +1704,10 @@ export class ArticleBaseService<
         await runner.manager.save(signature);
 
         if (placedArticle) {
-          await runner.manager.softDelete(
-            this.baseArticleVersionRepo.metadata.tableName,
-            {
-              articleId: placedArticle.id,
-              version: placedArticle.version,
-            },
-          );
+          await runner.manager.softDelete(this.baseArticleVersionRepo.metadata.tableName, {
+            articleId: placedArticle.id,
+            version: placedArticle.version,
+          });
         }
 
         if (!signatureInfo?.runner) {
@@ -2012,10 +1736,7 @@ export class ArticleBaseService<
         version: articleVersion.version,
         result,
         signerId: signatureInfo?.signerId ?? null,
-        rejectReason:
-          result === ArticleSignatureResult.REJECTED
-            ? (signatureInfo?.reason ?? null)
-            : null,
+        rejectReason: result === ArticleSignatureResult.REJECTED ? (signatureInfo?.reason ?? null) : null,
       });
 
       if (this.draftMode && result === ArticleSignatureResult.REJECTED) {
@@ -2048,13 +1769,10 @@ export class ArticleBaseService<
       await runner.manager.save(signature);
 
       if (placedArticle) {
-        await runner.manager.softDelete(
-          this.baseArticleVersionRepo.metadata.tableName,
-          {
-            articleId: placedArticle.id,
-            version: placedArticle.version,
-          },
-        );
+        await runner.manager.softDelete(this.baseArticleVersionRepo.metadata.tableName, {
+          articleId: placedArticle.id,
+          version: placedArticle.version,
+        });
       }
 
       if (!signatureInfo?.runner) {
@@ -2093,22 +1811,11 @@ export class ArticleBaseService<
     result: ArticleSignatureResult,
   ): void {
     if (result === ArticleSignatureResult.REJECTED) {
-      this.articleDataLoader.stageCache.set(
-        cacheKey,
-        Promise.resolve(ArticleStage.DRAFT),
-      );
-    } else if (
-      signatureLevelId === this.signatureService.finalSignatureLevel?.id
-    ) {
-      this.articleDataLoader.stageCache.set(
-        cacheKey,
-        Promise.resolve(ArticleStage.VERIFIED),
-      );
+      this.articleDataLoader.stageCache.set(cacheKey, Promise.resolve(ArticleStage.DRAFT));
+    } else if (signatureLevelId === this.signatureService.finalSignatureLevel?.id) {
+      this.articleDataLoader.stageCache.set(cacheKey, Promise.resolve(ArticleStage.VERIFIED));
     } else {
-      this.articleDataLoader.stageCache.set(
-        cacheKey,
-        Promise.resolve(ArticleStage.REVIEWING),
-      );
+      this.articleDataLoader.stageCache.set(cacheKey, Promise.resolve(ArticleStage.REVIEWING));
     }
   }
 

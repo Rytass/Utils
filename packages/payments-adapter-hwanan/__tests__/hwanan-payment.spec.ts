@@ -80,9 +80,7 @@ describe('HwaNan Payment', () => {
         identifier: IDENTIFIER,
       });
 
-      expect(payment.checkoutActionUrl).toBe(
-        'https://hwanan.rytass.com/transaction/api-auth/',
-      );
+      expect(payment.checkoutActionUrl).toBe('https://hwanan.rytass.com/transaction/api-auth/');
     });
   });
 
@@ -168,7 +166,7 @@ describe('HwaNan Payment', () => {
   });
 
   describe('Build-in Server', () => {
-    it('should get checkout form from checkout url', (done) => {
+    it('should get checkout form from checkout url', done => {
       const payment = new HwaNanPayment({
         merchantId: MERCHANT_ID,
         terminalId: TERMINAL_ID,
@@ -201,7 +199,7 @@ describe('HwaNan Payment', () => {
       });
     });
 
-    it('should throw error if server not ready', (done) => {
+    it('should throw error if server not ready', done => {
       const payment = new HwaNanPayment({
         merchantId: MERCHANT_ID,
         terminalId: TERMINAL_ID,
@@ -230,28 +228,26 @@ describe('HwaNan Payment', () => {
       ).rejects.toThrow();
     });
 
-    it('should set port for build-in server', (done) => {
+    it('should set port for build-in server', done => {
       const originCreateServer = createServer;
       const mockedCreateServer = jest.spyOn(http, 'createServer');
 
-      mockedCreateServer.mockImplementationOnce((requestHandler) => {
+      mockedCreateServer.mockImplementationOnce(requestHandler => {
         const mockServer = originCreateServer(requestHandler);
 
         const mockedListen = jest.spyOn(mockServer, 'listen');
 
-        mockedListen.mockImplementationOnce(
-          (port?: any, hostname?: any, listeningListener?: () => void) => {
-            expect(port).toBe(9876);
+        mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
+          expect(port).toBe(9876);
 
-            mockServer.listen(0, listeningListener);
+          mockServer.listen(0, listeningListener);
 
-            return mockServer;
-          },
-        );
+          return mockServer;
+        });
 
         const mockedClose = jest.spyOn(mockServer, 'close');
 
-        mockedClose.mockImplementationOnce((onClosed) => {
+        mockedClose.mockImplementationOnce(onClosed => {
           mockServer.close(onClosed);
 
           return mockServer;
@@ -279,7 +275,7 @@ describe('HwaNan Payment', () => {
       });
     });
 
-    it('should handle order commit request', (done) => {
+    it('should handle order commit request', done => {
       const payment = new HwaNanPayment({
         merchantId: MERCHANT_ID,
         terminalId: TERMINAL_ID,
@@ -289,7 +285,7 @@ describe('HwaNan Payment', () => {
         withServer: true,
         checkoutPath: '/checkout',
         callbackPath: '/callback',
-        onCommit: (order) => {
+        onCommit: order => {
           expect(order.id).toBe('123456789');
         },
         onServerListen: async () => {
@@ -353,7 +349,7 @@ describe('HwaNan Payment', () => {
       });
     });
 
-    it('should handle order failed request', (done) => {
+    it('should handle order failed request', done => {
       const payment = new HwaNanPayment({
         merchantId: MERCHANT_ID,
         terminalId: TERMINAL_ID,
@@ -363,7 +359,7 @@ describe('HwaNan Payment', () => {
         withServer: true,
         checkoutPath: '/checkout',
         callbackPath: '/callback',
-        onCommit: (order) => {
+        onCommit: order => {
           expect(order.id).toBe('123456789');
         },
         onServerListen: async () => {
@@ -426,7 +422,7 @@ describe('HwaNan Payment', () => {
       });
     });
 
-    it('should build-in server throw error on invalid request', (done) => {
+    it('should build-in server throw error on invalid request', done => {
       const payment = new HwaNanPayment({
         merchantId: MERCHANT_ID,
         terminalId: TERMINAL_ID,
@@ -457,9 +453,7 @@ describe('HwaNan Payment', () => {
                 encOut: '',
                 checkValue: createHash('md5')
                   .update(
-                    `${createHash('md5')
-                      .update(`${IDENTIFIER}|11111`)
-                      .digest('hex')}|0|00|123456|200|1|INVALID_STRING`,
+                    `${createHash('md5').update(`${IDENTIFIER}|11111`).digest('hex')}|0|00|123456|200|1|INVALID_STRING`,
                   )
                   .digest('hex')
                   .substring(16),
@@ -483,11 +477,7 @@ describe('HwaNan Payment', () => {
                 errDesc: '',
                 encOut: '',
                 checkValue: createHash('md5')
-                  .update(
-                    `${createHash('md5')
-                      .update(`${IDENTIFIER}|11111`)
-                      .digest('hex')}|0|00|123456|200|1`,
-                  )
+                  .update(`${createHash('md5').update(`${IDENTIFIER}|11111`).digest('hex')}|0|00|123456|200|1`)
                   .digest('hex')
                   .substring(16),
                 Einvoice: '',
@@ -518,7 +508,7 @@ describe('HwaNan Payment', () => {
       setImmediate(() => callback && callback());
       return mockServerForNgrok;
     });
-    mockServerForNgrok.close = jest.fn((callback) => {
+    mockServerForNgrok.close = jest.fn(callback => {
       setImmediate(() => callback && callback());
       return mockServerForNgrok;
     });
@@ -540,7 +530,7 @@ describe('HwaNan Payment', () => {
 
       // Override global import function to handle dynamic imports
       const originalImport = global.import || jest.fn();
-      global.import = jest.fn().mockImplementation((moduleName) => {
+      global.import = jest.fn().mockImplementation(moduleName => {
         if (moduleName === '@ngrok/ngrok') {
           return Promise.resolve({ default: mockNgrok });
         }
@@ -556,7 +546,7 @@ describe('HwaNan Payment', () => {
     it('should connect to ngrok when withServer is ngrok', async () => {
       const { HwaNanPayment } = await import('../src');
 
-      return new Promise<void>((resolve) => {
+      return new Promise<void>(resolve => {
         const payment = new HwaNanPayment({
           merchantId: MERCHANT_ID,
           terminalId: TERMINAL_ID,
@@ -580,7 +570,7 @@ describe('HwaNan Payment', () => {
       const { HwaNanPayment } = await import('../src');
 
       const customPort = 9999;
-      return new Promise<void>((resolve) => {
+      return new Promise<void>(resolve => {
         const payment = new HwaNanPayment({
           merchantId: MERCHANT_ID,
           terminalId: TERMINAL_ID,
@@ -602,7 +592,7 @@ describe('HwaNan Payment', () => {
     it('should call ngrok methods correctly', async () => {
       const { HwaNanPayment } = await import('../src');
 
-      return new Promise<void>((resolve) => {
+      return new Promise<void>(resolve => {
         const payment = new HwaNanPayment({
           merchantId: MERCHANT_ID,
           terminalId: TERMINAL_ID,

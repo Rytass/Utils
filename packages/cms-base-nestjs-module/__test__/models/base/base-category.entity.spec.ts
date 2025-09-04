@@ -35,7 +35,7 @@ function resolveInverseSide(value: any): string | undefined {
 describe('BaseCategoryEntity relations', () => {
   it('should have ManyToMany relation to children with correct options', () => {
     const relation = getMetadataArgsStorage().relations.find(
-      (r) => r.target === BaseCategoryEntity && r.propertyName === 'children',
+      r => r.target === BaseCategoryEntity && r.propertyName === 'children',
     );
 
     expect(relation).toBeDefined();
@@ -49,7 +49,7 @@ describe('BaseCategoryEntity relations', () => {
 
   it('should have ManyToMany relation to parents with correct JoinTable', () => {
     const relation = getMetadataArgsStorage().relations.find(
-      (r) => r.target === BaseCategoryEntity && r.propertyName === 'parents',
+      r => r.target === BaseCategoryEntity && r.propertyName === 'parents',
     );
 
     expect(relation).toBeDefined();
@@ -58,7 +58,7 @@ describe('BaseCategoryEntity relations', () => {
     expect(resolveInverseSide(relation?.inverseSideProperty)).toBe('children');
 
     const joinTable = getMetadataArgsStorage().joinTables.find(
-      (jt) => jt.target === BaseCategoryEntity && jt.propertyName === 'parents',
+      jt => jt.target === BaseCategoryEntity && jt.propertyName === 'parents',
     );
 
     expect(joinTable).toBeDefined();
@@ -84,23 +84,19 @@ describe('BaseCategoryEntity relations', () => {
 
   it('should have OneToMany relation to multiLanguageNames', () => {
     const relation = getMetadataArgsStorage().relations.find(
-      (r) =>
-        r.target === BaseCategoryEntity &&
-        r.propertyName === 'multiLanguageNames',
+      r => r.target === BaseCategoryEntity && r.propertyName === 'multiLanguageNames',
     );
 
     expect(relation).toBeDefined();
     expect(relation?.relationType).toBe('one-to-many');
-    expect(resolveTypeName(relation?.type)).toBe(
-      'BaseCategoryMultiLanguageNameEntity',
-    );
+    expect(resolveTypeName(relation?.type)).toBe('BaseCategoryMultiLanguageNameEntity');
 
     expect(resolveInverseSide(relation?.inverseSideProperty)).toBe('category');
   });
 
   it('should have ManyToMany relation to articles with correct options', () => {
     const relation = getMetadataArgsStorage().relations.find(
-      (r) => r.target === BaseCategoryEntity && r.propertyName === 'articles',
+      r => r.target === BaseCategoryEntity && r.propertyName === 'articles',
     );
 
     expect(relation).toBeDefined();
@@ -109,8 +105,6 @@ describe('BaseCategoryEntity relations', () => {
     expect(relation?.options?.onDelete).toBe('CASCADE');
     expect(relation?.options?.onUpdate).toBe('CASCADE');
     expect(relation?.options?.orphanedRowAction).toBe('delete');
-    expect(resolveInverseSide(relation?.inverseSideProperty)).toBe(
-      'categories',
-    );
+    expect(resolveInverseSide(relation?.inverseSideProperty)).toBe('categories');
   });
 });

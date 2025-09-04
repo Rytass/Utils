@@ -13,16 +13,16 @@ export enum Discount {
   STEP_ITEM_GIVEAWAY = 'STEP_ITEM_GIVEAWAY',
 }
 
-export type PolicyDiscountDescription<
-T extends ObjRecord = ObjRecord> = PolicyResult<{
+export type PolicyDiscountDescription<T extends ObjRecord = ObjRecord> = PolicyResult<{
   type: Discount;
   value: number;
   discount: number;
   conditions: Condition[];
   appliedItems: FlattenOrderItem<OrderItem>[];
   matchedTimes: number;
-  policy: BaseDiscount,
-}> & T;
+  policy: BaseDiscount;
+}> &
+  T;
 
 export type DiscountOptions<T extends ObjRecord = ObjRecord> = {
   id?: string;
@@ -33,9 +33,11 @@ export type DiscountOptions<T extends ObjRecord = ObjRecord> = {
 /**
  * @param {"quantity"|"price"} unit "quantity"|"price"
  */
-export type StepDiscountOptions<T extends ObjRecord = ObjRecord> = DiscountOptions<{
-  stepUnit: 'quantity' | 'price';
-  stepLimit?: number;
-} & T>
+export type StepDiscountOptions<T extends ObjRecord = ObjRecord> = DiscountOptions<
+  {
+    stepUnit: 'quantity' | 'price';
+    stepLimit?: number;
+  } & T
+>;
 
 export type ItemGiveawayStrategy = 'LOW_PRICE_FIRST' | 'HIGH_PRICE_FIRST';

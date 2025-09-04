@@ -55,7 +55,7 @@ export class CartesianProduct<T> {
   /**
    * returns `[...this]`.
    */
-   toArray(): NonNullable<T>[][] {
+  toArray(): NonNullable<T>[][] {
     return [...this] as NonNullable<T>[][];
   }
 
@@ -66,7 +66,7 @@ export class CartesianProduct<T> {
       pointer = this.nth(i);
 
       if (pointer.length > 0) {
-        cb(pointer)
+        cb(pointer);
       }
     }
   }

@@ -31,10 +31,10 @@ CTBCPayment               // 主 Gateway，統一提供綁卡與請款服務
 
 ```ts
 const bindCardRequest = payment.createBindCardRequest({
-  MerID: 'MER00001',                       // 銀行提供之網站代號，與 MerchantID 不同
-  MemberID: 'U0000001',                    // 自定義會員代號（不得為電話/E-mail 等敏感資訊）
-  RequestNo: 'ORD20240624001',             // 請求編號（需唯一）
-  TokenURL: 'https://your.site/callback',  // 綁卡完成後的 callback URL
+  MerID: 'MER00001', // 銀行提供之網站代號，與 MerchantID 不同
+  MemberID: 'U0000001', // 自定義會員代號（不得為電話/E-mail 等敏感資訊）
+  RequestNo: 'ORD20240624001', // 請求編號（需唯一）
+  TokenURL: 'https://your.site/callback', // 綁卡完成後的 callback URL
 });
 ```
 
@@ -55,7 +55,7 @@ payment.handleBindCardCallback(req.body.reqjsonpwd);
 5. 成功後觸發事件：
 
 ```ts
-payment.emitter.on(PaymentEvents.CARD_BOUND, (request) => {
+payment.emitter.on(PaymentEvents.CARD_BOUND, request => {
   console.log(request.cardId, request.cardNumberPrefix, request.bindingDate);
 });
 ```
@@ -68,10 +68,10 @@ payment.emitter.on(PaymentEvents.CARD_BOUND, (request) => {
 
 ```ts
 const order = payment.createOrder(
-  'ORD20240624001',        // RequestNo
-  500,                     // PurchAmt
-  'U0000001',              // MemberID
-  'CARDTOKEN123456',       // 綁定卡片的 CardToken
+  'ORD20240624001', // RequestNo
+  500, // PurchAmt
+  'U0000001', // MemberID
+  'CARDTOKEN123456', // 綁定卡片的 CardToken
 );
 ```
 
@@ -107,10 +107,10 @@ payment.emitter.on(PaymentEvents.ORDER_FAILED, (order) => { ... });
 
 ```ts
 const payment = new CTBCPayment({
-  merchantId: 'MER00001',                 // 與 CTBC 申請的特店代碼（非 TXN 中的 MerID）
-  txnKey: process.env.CTBC_KEY,           // 壓碼設定時輸入的明碼（MchKey，24 碼）
-  baseUrl: 'https://ccapi.ctbcbank.com',  // 可省略
-  withServer: true,                       // 若需自動產生 bindingURL，可設 true
+  merchantId: 'MER00001', // 與 CTBC 申請的特店代碼（非 TXN 中的 MerID）
+  txnKey: process.env.CTBC_KEY, // 壓碼設定時輸入的明碼（MchKey，24 碼）
+  baseUrl: 'https://ccapi.ctbcbank.com', // 可省略
+  withServer: true, // 若需自動產生 bindingURL，可設 true
 });
 ```
 
@@ -138,9 +138,9 @@ const payment = new CTBCPayment({
 
 ## 📎 常見錯誤對照表（部分）
 
-| 錯誤代碼 | 說明               |
-|----------|------------------|
-| I0000    | 交易成功          |
-| E0029    | 卡號格式錯誤      |
-| E9998    | 未定義錯誤類型     |
-| MAC_FAIL | 回傳驗證失敗      |
+| 錯誤代碼 | 說明           |
+| -------- | -------------- |
+| I0000    | 交易成功       |
+| E0029    | 卡號格式錯誤   |
+| E9998    | 未定義錯誤類型 |
+| MAC_FAIL | 回傳驗證失敗   |

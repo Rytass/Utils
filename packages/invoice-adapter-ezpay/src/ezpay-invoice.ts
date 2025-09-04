@@ -30,7 +30,7 @@ export class EZPayInvoice implements Invoice<EZPayPaymentItem> {
   constructor(options: EZPayInvoiceOptions) {
     this.issuedOn = options.issuedOn;
     this.items = options.items;
-    this.nowAmount = options.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+    this.nowAmount = options.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
     this.issuedAmount = this.nowAmount;
     this.randomCode = options.randomCode;
     this.invoiceNumber = options.invoiceNumber;
@@ -54,4 +54,3 @@ export class EZPayInvoice implements Invoice<EZPayPaymentItem> {
     this.nowAmount = allowance.remainingAmount;
   }
 }
-

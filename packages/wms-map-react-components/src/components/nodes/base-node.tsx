@@ -26,45 +26,31 @@ const BaseNode: FC<BaseNodeProps> = ({
 }) => {
   // Only editable in LAYER mode
   const isEditable = editMode === EditMode.LAYER;
-  const opacity =
-    editMode === EditMode.LAYER ? ACTIVE_OPACITY : RECTANGLE_INACTIVE_OPACITY;
+  const opacity = editMode === EditMode.LAYER ? ACTIVE_OPACITY : RECTANGLE_INACTIVE_OPACITY;
 
   // Context menu functionality
-  const {
-    contextMenu,
-    handleContextMenu,
-    handleCloseContextMenu,
-    handleDelete,
-    arrangeActions,
-    arrangeStates,
-  } = useContextMenu({ id, editMode, isEditable, nodeType: 'rectangleNode' });
+  const { contextMenu, handleContextMenu, handleCloseContextMenu, handleDelete, arrangeActions, arrangeStates } =
+    useContextMenu({ id, editMode, isEditable, nodeType: 'rectangleNode' });
 
   // Text editing functionality
-  const {
-    isEditing,
-    editingText,
-    inputRef,
-    setEditingText,
-    handleDoubleClick,
-    handleKeyDown,
-  } = useTextEditing({ id, label, isEditable });
+  const { isEditing, editingText, inputRef, setEditingText, handleDoubleClick, handleKeyDown } = useTextEditing({
+    id,
+    label,
+    isEditable,
+  });
 
   return (
     <div className={`${className} ${selected ? 'selected' : ''}`}>
-      <div
-        onDoubleClick={handleDoubleClick}
-        onContextMenu={handleContextMenu}
-        style={{ opacity }}
-      >
+      <div onDoubleClick={handleDoubleClick} onContextMenu={handleContextMenu} style={{ opacity }}>
         {children}
         {isEditing ? (
           <input
             ref={inputRef}
             type="text"
             value={editingText}
-            onChange={(e) => setEditingText(e.target.value)}
+            onChange={e => setEditingText(e.target.value)}
             onKeyDown={handleKeyDown}
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
             style={{
               position: 'absolute',
               zIndex: 1000,

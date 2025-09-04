@@ -1,21 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
-import {
-  RESOLVED_SIGNATURE_LEVEL_REPO,
-  SIGNATURE_LEVELS,
-} from '../typings/cms-base-providers';
+import { RESOLVED_SIGNATURE_LEVEL_REPO, SIGNATURE_LEVELS } from '../typings/cms-base-providers';
 import { BaseSignatureLevelEntity } from '../models/base-signature-level.entity';
 import { DataSource, Repository } from 'typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
-import {
-  ArticleSignatureEntity,
-  ArticleSignatureRepo,
-} from '../models/article-signature.entity';
+import { ArticleSignatureEntity, ArticleSignatureRepo } from '../models/article-signature.entity';
 
 @Injectable()
-export class SignatureService<
-  SignatureLevelEntity extends
-    BaseSignatureLevelEntity = BaseSignatureLevelEntity,
-> {
+export class SignatureService<SignatureLevelEntity extends BaseSignatureLevelEntity = BaseSignatureLevelEntity> {
   constructor(
     @Inject(SIGNATURE_LEVELS)
     private readonly signatureLevels: string[] | SignatureLevelEntity[],
@@ -34,23 +25,18 @@ export class SignatureService<
   signatureLevelsCache: BaseSignatureLevelEntity[] = [];
 
   get finalSignatureLevel(): SignatureLevelEntity | null {
-    return (this.signatureLevelsCache[this.signatureLevelsCache.length - 1] ??
-      null) as SignatureLevelEntity | null;
+    return (this.signatureLevelsCache[this.signatureLevelsCache.length - 1] ?? null) as SignatureLevelEntity | null;
   }
 
   async onApplicationBootstrap(): Promise<void> {
     if (this.signatureEnabled) {
       const signatureLevels = await this.signatureLevelRepo.find();
 
-      const existedMap = new Map(
-        signatureLevels.map((level) => [level.name, level]),
-      );
+      const existedMap = new Map(signatureLevels.map(level => [level.name, level]));
 
       const usedSet = new Set<BaseSignatureLevelEntity>();
       const targetLevelNames = new Set(
-        this.signatureLevels.map((level) =>
-          level instanceof BaseSignatureLevelEntity ? level.name : level,
-        ),
+        this.signatureLevels.map(level => (level instanceof BaseSignatureLevelEntity ? level.name : level)),
       );
 
       const runner = this.dataSource.createQueryRunner();
@@ -60,21 +46,15 @@ export class SignatureService<
 
       try {
         await signatureLevels
-          .filter((level) => !targetLevelNames.has(level.name))
-          .map((level) => async () => {
-            await runner.manager.delete(
-              this.articleSignatureRepo.metadata.tableName,
-              {
-                signatureLevelId: level.id,
-              },
-            );
+          .filter(level => !targetLevelNames.has(level.name))
+          .map(level => async () => {
+            await runner.manager.delete(this.articleSignatureRepo.metadata.tableName, {
+              signatureLevelId: level.id,
+            });
 
-            await runner.manager.softDelete(
-              this.signatureLevelRepo.metadata.tableName,
-              {
-                id: level.id,
-              },
-            );
+            await runner.manager.softDelete(this.signatureLevelRepo.metadata.tableName, {
+              id: level.id,
+            });
           })
           .reduce((prev, next) => prev.then(next), Promise.resolve());
 
@@ -92,9 +72,7 @@ export class SignatureService<
             }
 
             if (existedMap.has(level)) {
-              const existedLevel = existedMap.get(
-                level,
-              ) as BaseSignatureLevelEntity;
+              const existedLevel = existedMap.get(level) as BaseSignatureLevelEntity;
 
               existedLevel.sequence = index;
               existedLevel.required = true;
@@ -118,10 +96,7 @@ export class SignatureService<
 
             return levels;
           })
-          .reduce(
-            (prev, next) => prev.then(next),
-            Promise.resolve([] as BaseSignatureLevelEntity[]),
-          );
+          .reduce((prev, next) => prev.then(next), Promise.resolve([] as BaseSignatureLevelEntity[]));
 
         await runner.commitTransaction();
       } catch (ex) {

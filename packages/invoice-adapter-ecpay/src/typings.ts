@@ -67,20 +67,7 @@ export interface ECPayQueryListInvoiceResponseDecrypted {
     IIS_Remain_Allowance_Amt: number;
     IIS_Print_Flag: '0' | '1';
     IIS_Award_Flag: '0' | '1' | 'X';
-    IIS_Award_Type:
-      | '0'
-      | '6'
-      | '5'
-      | '4'
-      | '3'
-      | '2'
-      | '1'
-      | '12'
-      | '11'
-      | '10'
-      | '9'
-      | '8'
-      | '7';
+    IIS_Award_Type: '0' | '6' | '5' | '4' | '3' | '2' | '1' | '12' | '11' | '10' | '9' | '8' | '7';
     IIS_Carrier_Type: '' | '1' | '2' | '3';
     IIS_Carrier_Num: string;
     IIS_Love_Code: string;
@@ -107,13 +94,11 @@ export type ECPayInvoiceQueryRequestBody =
   | ECPayInvoiceQueryWithOrderIdRequestBody
   | ECPayInvoiceQueryWithInvoiceNumberAndDateRequestBody;
 
-interface ECPayInvoiceQueryWithOrderIdRequestBody
-  extends ECPayInvoiceQueryBasePayload {
+interface ECPayInvoiceQueryWithOrderIdRequestBody extends ECPayInvoiceQueryBasePayload {
   RelateNumber: string;
 }
 
-interface ECPayInvoiceQueryWithInvoiceNumberAndDateRequestBody
-  extends ECPayInvoiceQueryBasePayload {
+interface ECPayInvoiceQueryWithInvoiceNumberAndDateRequestBody extends ECPayInvoiceQueryBasePayload {
   InvoiceNo: string;
   InvoiceDate: string;
 }
@@ -162,20 +147,7 @@ export interface ECPayQueryInvoiceResponseDecrypted {
   IIS_Remain_Allowance_Amt: number;
   IIS_Print_Flag: string;
   IIS_Award_Flag: '0' | '1' | 'X';
-  IIS_Award_Type:
-    | '0'
-    | '1'
-    | '2'
-    | '3'
-    | '4'
-    | '5'
-    | '6'
-    | '7'
-    | '8'
-    | '9'
-    | '10'
-    | '11'
-    | '12';
+  IIS_Award_Type: '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | '11' | '12';
   Items: {
     ItemSeq: number;
     ItemName: string;
@@ -303,16 +275,11 @@ export interface ECPayPaymentItem extends InvoicePaymentItem {
   unitPrice: number;
   quantity: number;
   unit?: string;
-  taxType?:
-    | TaxType.TAXED
-    | TaxType.TAX_FREE
-    | TaxType.ZERO_TAX
-    | TaxType.SPECIAL;
+  taxType?: TaxType.TAXED | TaxType.TAX_FREE | TaxType.ZERO_TAX | TaxType.SPECIAL;
   remark?: string;
 }
 
-export interface ECPayInvoiceIssueOptions
-  extends InvoiceIssueOptions<ECPayPaymentItem> {
+export interface ECPayInvoiceIssueOptions extends InvoiceIssueOptions<ECPayPaymentItem> {
   orderId: string;
   customer: ECPayCustomerInfo;
   remark?: string;

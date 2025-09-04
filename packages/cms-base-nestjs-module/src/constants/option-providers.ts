@@ -21,62 +21,52 @@ import { DEFAULT_SIGNATURE_LEVEL } from './default-signature-level';
 export const OptionProviders = [
   {
     provide: MULTIPLE_LANGUAGE_MODE,
-    useFactory: (options?: CMSBaseModuleOptionsDto) =>
-      options?.multipleLanguageMode ?? false,
+    useFactory: (options?: CMSBaseModuleOptionsDto) => options?.multipleLanguageMode ?? false,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: MULTIPLE_CATEGORY_PARENT_MODE,
-    useFactory: (options?: CMSBaseModuleOptionsDto) =>
-      options?.allowMultipleParentCategories ?? false,
+    useFactory: (options?: CMSBaseModuleOptionsDto) => options?.allowMultipleParentCategories ?? false,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: CIRCULAR_CATEGORY_MODE,
-    useFactory: (options?: CMSBaseModuleOptionsDto) =>
-      options?.allowCircularCategories ?? false,
+    useFactory: (options?: CMSBaseModuleOptionsDto) => options?.allowCircularCategories ?? false,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: SIGNATURE_LEVELS,
-    useFactory: (options?: CMSBaseModuleOptionsDto) =>
-      options?.signatureLevels ?? [DEFAULT_SIGNATURE_LEVEL],
+    useFactory: (options?: CMSBaseModuleOptionsDto) => options?.signatureLevels ?? [DEFAULT_SIGNATURE_LEVEL],
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_ARTICLE_ENTITY,
-    useFactory: (options?: CMSBaseModuleOptionsDto) =>
-      options?.articleEntity ?? null,
+    useFactory: (options?: CMSBaseModuleOptionsDto) => options?.articleEntity ?? null,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_ARTICLE_VERSION_ENTITY,
-    useFactory: (options?: CMSBaseModuleOptionsDto) =>
-      options?.articleVersionEntity ?? null,
+    useFactory: (options?: CMSBaseModuleOptionsDto) => options?.articleVersionEntity ?? null,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_ARTICLE_VERSION_CONTENT_ENTITY,
-    useFactory: (options?: CMSBaseModuleOptionsDto) =>
-      options?.articleVersionContentEntity ?? null,
+    useFactory: (options?: CMSBaseModuleOptionsDto) => options?.articleVersionContentEntity ?? null,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_CATEGORY_ENTITY,
-    useFactory: (options?: CMSBaseModuleOptionsDto) =>
-      options?.categoryEntity ?? null,
+    useFactory: (options?: CMSBaseModuleOptionsDto) => options?.categoryEntity ?? null,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_CATEGORY_MULTI_LANGUAGE_NAME_ENTITY,
-    useFactory: (options?: CMSBaseModuleOptionsDto) =>
-      options?.categoryMultiLanguageNameEntity ?? null,
+    useFactory: (options?: CMSBaseModuleOptionsDto) => options?.categoryMultiLanguageNameEntity ?? null,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_SIGNATURE_LEVEL_ENTITY,
-    useFactory: (options?: CMSBaseModuleOptionsDto) =>
-      options?.signatureLevelEntity ?? null,
+    useFactory: (options?: CMSBaseModuleOptionsDto) => options?.signatureLevelEntity ?? null,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
@@ -89,23 +79,19 @@ export const OptionProviders = [
 
         return true;
       } catch (ex) {
-        throw new Error(
-          'Full Text Search Mode requires @node-rs/jieba module, please install it first.',
-        );
+        throw new Error('Full Text Search Mode requires @node-rs/jieba module, please install it first.');
       }
     },
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: DRAFT_MODE,
-    useFactory: (options?: CMSBaseModuleOptionsDto) =>
-      options?.enableDraftMode ?? true,
+    useFactory: (options?: CMSBaseModuleOptionsDto) => options?.enableDraftMode ?? true,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: AUTO_RELEASE_AFTER_APPROVED,
-    useFactory: (options?: CMSBaseModuleOptionsDto) =>
-      options?.autoReleaseWhenLatestSignatureApproved ?? false,
+    useFactory: (options?: CMSBaseModuleOptionsDto) => options?.autoReleaseWhenLatestSignatureApproved ?? false,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
 ] as Provider[];

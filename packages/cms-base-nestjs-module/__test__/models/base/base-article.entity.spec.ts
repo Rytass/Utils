@@ -18,7 +18,7 @@ function resolveTypeName(type: any): string {
 describe('BaseArticleEntity relations', () => {
   it('should have OneToMany relation to BaseArticleVersionEntity with correct inverse', () => {
     const relation = getMetadataArgsStorage().relations.find(
-      (r) => r.target === BaseArticleEntity && r.propertyName === 'versions',
+      r => r.target === BaseArticleEntity && r.propertyName === 'versions',
     );
 
     expect(relation).toBeDefined();
@@ -26,15 +26,14 @@ describe('BaseArticleEntity relations', () => {
     expect(resolveTypeName(relation?.type)).toBe('BaseArticleVersionEntity');
 
     const inverse = relation?.inverseSideProperty;
-    const result =
-      typeof inverse === 'function' ? inverse({ article: 'mock' }) : undefined;
+    const result = typeof inverse === 'function' ? inverse({ article: 'mock' }) : undefined;
 
     expect(result).toBe('mock');
   });
 
   it('should have ManyToMany relation to BaseCategoryEntity with correct join table', () => {
     const relation = getMetadataArgsStorage().relations.find(
-      (r) => r.target === BaseArticleEntity && r.propertyName === 'categories',
+      r => r.target === BaseArticleEntity && r.propertyName === 'categories',
     );
 
     expect(relation).toBeDefined();
@@ -42,8 +41,7 @@ describe('BaseArticleEntity relations', () => {
     expect(resolveTypeName(relation?.type)).toBe('BaseCategoryEntity');
 
     const joinTable = getMetadataArgsStorage().joinTables.find(
-      (jt) =>
-        jt.target === BaseArticleEntity && jt.propertyName === 'categories',
+      jt => jt.target === BaseArticleEntity && jt.propertyName === 'categories',
     );
 
     expect(joinTable).toBeDefined();
@@ -65,7 +63,7 @@ describe('BaseArticleEntity relations', () => {
 
   it('should define inverse side for categories relation correctly', () => {
     const relation = getMetadataArgsStorage().relations.find(
-      (r) => r.target === BaseArticleEntity && r.propertyName === 'categories',
+      r => r.target === BaseArticleEntity && r.propertyName === 'categories',
     );
 
     const inverse = relation?.inverseSideProperty;

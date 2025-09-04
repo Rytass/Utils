@@ -5,12 +5,14 @@ Comprehensive secret management adapter for HashiCorp Vault, providing secure st
 ## Features
 
 ### Authentication
+
 - [x] Username/Password authentication (userpass)
-- [x] Token-based authentication  
+- [x] Token-based authentication
 - [x] Automatic token renewal
 - [x] Configurable token TTL
 
 ### Secret Engines
+
 - [x] Key-Value V2 engine support
 - [x] Online mode (real-time operations)
 - [x] Offline mode (cached operations)
@@ -18,6 +20,7 @@ Comprehensive secret management adapter for HashiCorp Vault, providing secure st
 - [x] Batch synchronization
 
 ### Advanced Features
+
 - [x] Automatic caching for offline operations
 - [x] Event-driven architecture
 - [x] Error handling and retry mechanisms
@@ -45,8 +48,8 @@ const onlineVault = new VaultSecret('apps/myapp/config', {
   online: true, // Enable online mode
   auth: {
     account: 'myapp-service',
-    password: 'secure-password'
-  }
+    password: 'secure-password',
+  },
 });
 
 // Wait for connection to be ready
@@ -76,21 +79,21 @@ const offlineVault = new VaultSecret('apps/myapp/config', {
   online: false, // Default offline mode
   auth: {
     account: 'myapp-service',
-    password: 'secure-password'
+    password: 'secure-password',
   },
   onReady: async () => {
     console.log('Vault cache ready for offline operations');
-    
+
     // All operations are synchronous and use cache
     const dbHost = offlineVault.get<string>('DATABASE_HOST');
     const dbPort = offlineVault.get<number>('DATABASE_PORT');
-    
+
     // Modify cached values
     offlineVault.set<string>('NEW_FEATURE_FLAG', 'enabled');
-    
+
     // Delete from cache
     offlineVault.delete('DEPRECATED_CONFIG');
-    
+
     // Sync changes to Vault server
     try {
       await offlineVault.sync();
@@ -99,9 +102,9 @@ const offlineVault = new VaultSecret('apps/myapp/config', {
       console.error('Sync failed:', error);
     }
   },
-  onError: (error) => {
+  onError: error => {
     console.error('Vault connection error:', error);
-  }
+  },
 });
 ```
 
@@ -114,9 +117,9 @@ const vault = new VaultSecret('secret/myapp', {
   host: 'https://vault.example.com',
   auth: {
     account: 'service-account',
-    password: 'strong-password'
+    password: 'strong-password',
   },
-  tokenTTL: 3600000 // 1 hour in milliseconds
+  tokenTTL: 3600000, // 1 hour in milliseconds
 });
 ```
 
@@ -127,8 +130,8 @@ const vault = new VaultSecret('secret/myapp', {
 const vault = new VaultSecret('secret/myapp', {
   host: 'https://vault.example.com',
   auth: {
-    token: 'hvs.1234567890abcdef...' // Pre-existing token
-  }
+    token: 'hvs.1234567890abcdef...', // Pre-existing token
+  },
 });
 ```
 
@@ -136,14 +139,14 @@ const vault = new VaultSecret('secret/myapp', {
 
 ### VaultSecretOptions
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| `host` | `string` | Yes | - | Vault server URL |
-| `auth` | `VaultAuthMethods` | Yes | - | Authentication configuration |
-| `online` | `boolean` | No | `false` | Enable online mode for real-time operations |
-| `tokenTTL` | `number` | No | `2764724` | Token TTL in milliseconds |
-| `onReady` | `function` | No | - | Callback when vault is ready |
-| `onError` | `function` | No | - | Error callback |
+| Property   | Type               | Required | Default   | Description                                 |
+| ---------- | ------------------ | -------- | --------- | ------------------------------------------- |
+| `host`     | `string`           | Yes      | -         | Vault server URL                            |
+| `auth`     | `VaultAuthMethods` | Yes      | -         | Authentication configuration                |
+| `online`   | `boolean`          | No       | `false`   | Enable online mode for real-time operations |
+| `tokenTTL` | `number`           | No       | `2764724` | Token TTL in milliseconds                   |
+| `onReady`  | `function`         | No       | -         | Callback when vault is ready                |
+| `onError`  | `function`         | No       | -         | Error callback                              |
 
 ### Authentication Types
 
@@ -154,7 +157,7 @@ interface UsernamePasswordAuth {
   password: string;
 }
 
-// Token auth  
+// Token auth
 interface TokenAuth {
   token: string;
 }
@@ -172,30 +175,30 @@ const devVault = new VaultSecret('apps/myapp/dev', {
   host: 'https://vault-dev.company.com',
   auth: {
     account: process.env.VAULT_USERNAME!,
-    password: process.env.VAULT_PASSWORD!
+    password: process.env.VAULT_PASSWORD!,
   },
   online: true, // Real-time for development
   onReady: () => {
     console.log('Development vault ready');
-  }
+  },
 });
 
-// Production environment  
+// Production environment
 const prodVault = new VaultSecret('apps/myapp/prod', {
   host: 'https://vault-prod.company.com',
   auth: {
     account: process.env.VAULT_PROD_USERNAME!,
-    password: process.env.VAULT_PROD_PASSWORD!
+    password: process.env.VAULT_PROD_PASSWORD!,
   },
   online: false, // Cached for production performance
   tokenTTL: 7200000, // 2 hours
   onReady: () => {
     console.log('Production vault cache loaded');
   },
-  onError: (error) => {
+  onError: error => {
     console.error('Production vault error:', error);
     // Implement alerting/monitoring
-  }
+  },
 });
 ```
 
@@ -229,8 +232,8 @@ class SecretManager {
 
   async getRedisConfig(): Promise<{ url: string; timeout: number }> {
     const url = await this.vault.get<string>('REDIS_URL');
-    const timeout = await this.vault.get<number>('REDIS_TIMEOUT') || 5000;
-    
+    const timeout = (await this.vault.get<number>('REDIS_TIMEOUT')) || 5000;
+
     return { url, timeout };
   }
 
@@ -239,11 +242,11 @@ class SecretManager {
   }
 
   async updateFeatureFlag(flag: keyof AppSecrets['FEATURE_FLAGS'], enabled: boolean): Promise<void> {
-    const currentFlags = await this.vault.get<AppSecrets['FEATURE_FLAGS']>('FEATURE_FLAGS') || {};
-    
+    const currentFlags = (await this.vault.get<AppSecrets['FEATURE_FLAGS']>('FEATURE_FLAGS')) || {};
+
     await this.vault.set<AppSecrets['FEATURE_FLAGS']>('FEATURE_FLAGS', {
       ...currentFlags,
-      [flag]: enabled
+      [flag]: enabled,
     });
   }
 }
@@ -262,7 +265,7 @@ class VaultManager {
       online: false,
       onReady: () => {
         this.startPeriodicSync();
-      }
+      },
     });
   }
 
@@ -283,10 +286,10 @@ class VaultManager {
     try {
       // Create backup of current cache
       const currentCache = { ...this.vault.getCacheData() };
-      
+
       // Force sync (ignore version conflicts)
       await this.vault.sync(true);
-      
+
       console.log('Force sync completed successfully');
     } catch (error) {
       console.error('Force sync failed:', error);
@@ -299,7 +302,7 @@ class VaultManager {
   async smartSync(maxCacheAge: number = 600000): Promise<boolean> {
     const lastSync = this.getLastSyncTime();
     const now = Date.now();
-    
+
     if (now - lastSync > maxCacheAge) {
       try {
         await this.vault.sync();
@@ -310,7 +313,7 @@ class VaultManager {
         return false;
       }
     }
-    
+
     return false; // No sync needed
   }
 
@@ -348,22 +351,22 @@ class AppConfig {
       host: process.env.VAULT_HOST!,
       auth: {
         account: process.env.VAULT_USERNAME!,
-        password: process.env.VAULT_PASSWORD!
+        password: process.env.VAULT_PASSWORD!,
       },
       online: false, // Use cache for better performance
       onReady: () => {
         this.ready = true;
         console.log('Application configuration loaded from Vault');
       },
-      onError: (error) => {
+      onError: error => {
         console.error('Vault configuration error:', error);
         process.exit(1);
-      }
+      },
     });
   }
 
   async waitForReady(): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       if (this.ready) {
         resolve();
       } else {
@@ -378,7 +381,7 @@ class AppConfig {
       port: this.vault.get<number>('DB_PORT'),
       database: this.vault.get<string>('DB_NAME'),
       username: this.vault.get<string>('DB_USER'),
-      password: this.vault.get<string>('DB_PASSWORD')
+      password: this.vault.get<string>('DB_PASSWORD'),
     };
   }
 
@@ -399,15 +402,15 @@ async function startServer() {
   await config.waitForReady();
 
   const app = express();
-  
+
   // Use configuration
   const dbConfig = config.getDatabaseConfig();
   const jwtSecret = config.getJwtSecret();
-  
+
   // Setup database connection
   // Setup JWT middleware
   // ... other setup
-  
+
   const port = process.env.PORT || 3000;
   app.listen(port, () => {
     console.log(`Server running on port ${port}`);
@@ -434,12 +437,12 @@ export class ConfigService implements OnModuleInit {
       host: process.env.VAULT_HOST!,
       auth: {
         account: process.env.VAULT_USERNAME!,
-        password: process.env.VAULT_PASSWORD!
+        password: process.env.VAULT_PASSWORD!,
       },
       online: true, // Real-time for NestJS
       onReady: () => {
         this.configLoaded = true;
-      }
+      },
     });
 
     // Wait for vault to be ready
@@ -479,14 +482,14 @@ class MicroserviceConfig {
       host: process.env.VAULT_HOST!,
       auth: {
         account: `${serviceName}-service`,
-        password: process.env[`${serviceName.toUpperCase()}_VAULT_PASSWORD`]!
+        password: process.env[`${serviceName.toUpperCase()}_VAULT_PASSWORD`]!,
       },
       online: false, // Offline for microservice performance
       tokenTTL: 1800000, // 30 minutes
       onReady: () => {
         console.log(`${serviceName} configuration ready`);
         this.registerHealthCheck();
-      }
+      },
     });
   }
 
@@ -513,21 +516,21 @@ class MicroserviceConfig {
       port: this.vault.get<number>('PORT') || 3000,
       logLevel: this.vault.get<string>('LOG_LEVEL') || 'info',
       timeout: this.vault.get<number>('TIMEOUT') || 30000,
-      retries: this.vault.get<number>('RETRIES') || 3
+      retries: this.vault.get<number>('RETRIES') || 3,
     };
   }
 
   getDatabaseConfig() {
     return {
       url: this.vault.get<string>('DATABASE_URL'),
-      maxConnections: this.vault.get<number>('DB_MAX_CONNECTIONS') || 10
+      maxConnections: this.vault.get<number>('DB_MAX_CONNECTIONS') || 10,
     };
   }
 
   async rotateSecret(key: string, newValue: any) {
     // Store old value for rollback
     const oldValue = this.vault.get(key);
-    
+
     try {
       this.vault.set(key, newValue);
       await this.vault.sync();
@@ -551,15 +554,15 @@ const vault = new VaultSecret('apps/myapp/config', {
   host: 'https://vault.company.com',
   auth: {
     account: 'service-account',
-    password: 'secure-password'
+    password: 'secure-password',
   },
   online: true,
   onReady: () => {
     console.log('Vault connection established');
   },
-  onError: (error) => {
+  onError: error => {
     console.error('Vault error occurred:', error);
-    
+
     // Handle different error types
     if (error.message.includes('authentication')) {
       console.error('Authentication failed - check credentials');
@@ -570,10 +573,10 @@ const vault = new VaultSecret('apps/myapp/config', {
     } else if (error.message.includes('permission')) {
       console.error('Permission denied - check vault policies');
     }
-    
+
     // Implement alerting/monitoring
     sendAlert(`Vault error: ${error.message}`);
-  }
+  },
 });
 
 // Graceful error handling in operations
@@ -594,18 +597,16 @@ async function safeSetSecret(key: string, value: any, maxRetries = 3) {
       return true;
     } catch (error) {
       console.error(`Attempt ${attempt} failed for setting ${key}:`, error);
-      
+
       if (attempt === maxRetries) {
         throw new Error(`Failed to set secret ${key} after ${maxRetries} attempts`);
       }
-      
+
       // Wait before retry (exponential backoff)
-      await new Promise(resolve => 
-        setTimeout(resolve, Math.pow(2, attempt) * 1000)
-      );
+      await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
     }
   }
-  
+
   return false;
 }
 
@@ -652,7 +653,7 @@ const vault = new VaultSecret('apps/myapp/config', {
   host: 'https://vault.company.com', // Always use HTTPS
   auth: {
     account: process.env.VAULT_USERNAME!,
-    password: process.env.VAULT_PASSWORD!
+    password: process.env.VAULT_PASSWORD!,
   },
   // Additional security options could be added
 });
@@ -674,25 +675,25 @@ class OptimizedVaultManager {
   constructor(secretPath: string, vaultConfig: any) {
     this.vault = new VaultSecret(secretPath, {
       ...vaultConfig,
-      online: false // Use offline mode for performance
+      online: false, // Use offline mode for performance
     });
   }
 
   async getCached<T>(key: string): Promise<T> {
     const cached = this.localCache.get(key);
-    
+
     if (cached && cached.expiry > Date.now()) {
       return cached.value;
     }
-    
+
     // Cache miss or expired
     const value = await this.vault.get<T>(key);
-    
+
     this.localCache.set(key, {
       value,
-      expiry: Date.now() + this.cacheTimeout
+      expiry: Date.now() + this.cacheTimeout,
     });
-    
+
     return value;
   }
 
@@ -703,11 +704,11 @@ class OptimizedVaultManager {
   // Batch operations for efficiency
   async getBatch<T>(keys: string[]): Promise<Record<string, T>> {
     const results: Record<string, T> = {};
-    
+
     for (const key of keys) {
       results[key] = await this.vault.get<T>(key);
     }
-    
+
     return results;
   }
 }
@@ -721,7 +722,10 @@ class MockVaultSecret {
   private data = new Map<string, any>();
   private ready = true;
 
-  constructor(private path: string, private options: any) {
+  constructor(
+    private path: string,
+    private options: any,
+  ) {
     // Populate with test data
     this.data.set('TEST_SECRET', 'test-value');
     this.data.set('DB_HOST', 'localhost');

@@ -18,7 +18,7 @@ export class QuadratsArticleService {
     @Inject(API_HOST)
     private readonly apiHost: string,
     @Inject(QUADRATS_AUTH_CLIENT)
-    private readonly auth: { accessKey: string, secret: string },
+    private readonly auth: { accessKey: string; secret: string },
   ) {}
 
   public async addVersion(options: AddArticleVersionOptions): Promise<QuadratsArticle> {
@@ -35,16 +35,17 @@ export class QuadratsArticleService {
         variables: {
           rootId: options.id,
           title: options.title,
-          contents: Array.isArray(options.languageContents) ? (options.languageContents)
-            .map(content => ({
-              ...content,
-              language: content.language,
-            })) : [
-            {
-              language: options.language ?? Language.DEFAULT,
-              elements: options.contents,
-            },
-          ],
+          contents: Array.isArray(options.languageContents)
+            ? options.languageContents.map(content => ({
+                ...content,
+                language: content.language,
+              }))
+            : [
+                {
+                  language: options.language ?? Language.DEFAULT,
+                  elements: options.contents,
+                },
+              ],
           categoryIds: options.categoryIds,
           tags: options.tags,
           releasedAt: options.releasedAt || null,
@@ -69,16 +70,17 @@ export class QuadratsArticleService {
         query: CREATE_ARTICLE_MUTATION,
         variables: {
           title: options.title,
-          contents: Array.isArray(options.languageContents) ? (options.languageContents)
-            .map(content => ({
-              ...content,
-              language: content.language,
-            })) : [
-            {
-              language: options.language ?? Language.DEFAULT,
-              elements: options.contents,
-            },
-          ],
+          contents: Array.isArray(options.languageContents)
+            ? options.languageContents.map(content => ({
+                ...content,
+                language: content.language,
+              }))
+            : [
+                {
+                  language: options.language ?? Language.DEFAULT,
+                  elements: options.contents,
+                },
+              ],
           categoryIds: options.categoryIds,
           tags: options.tags,
           releasedAt: options.releasedAt || null,

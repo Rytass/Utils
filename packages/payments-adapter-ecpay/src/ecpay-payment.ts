@@ -62,12 +62,7 @@ import {
   ECPayBindCardWithTransactionRequestPayload,
   ECPayBoundCardWithTransactionResponsePayload,
 } from './typings';
-import {
-  ECPayChannel,
-  ECPayCVS,
-  ECPayPaymentPeriodType,
-  NUMERIC_CALLBACK_KEYS,
-} from './constants';
+import { ECPayChannel, ECPayCVS, ECPayPaymentPeriodType, NUMERIC_CALLBACK_KEYS } from './constants';
 import { ECPayOrder } from './ecpay-order';
 import { ECPayBindCardRequest } from './ecpay-bind-card-request';
 import { orderBy } from 'lodash';
@@ -97,8 +92,8 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
 
   readonly emitter = new EventEmitter();
 
-  private serverListener: (req: IncomingMessage, res: ServerResponse) => void =
-    (req, res) => this.defaultServerListener(req, res);
+  private serverListener: (req: IncomingMessage, res: ServerResponse) => void = (req, res) =>
+    this.defaultServerListener(req, res);
 
   private readonly pendingOrdersCache: OrdersCache;
   private readonly bindCardRequestsCache: BindCardRequestCache;
@@ -111,8 +106,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
     this.language = options?.language || this.language;
     this.baseUrl = options?.baseUrl || this.baseUrl;
     this.merchantId = options?.merchantId || this.merchantId;
-    this.merchantCheckCode =
-      options?.merchantCheckCode || this.merchantCheckCode;
+    this.merchantCheckCode = options?.merchantCheckCode || this.merchantCheckCode;
 
     this.hashKey = options?.hashKey || this.hashKey;
     this.hashIv = options?.hashIv || this.hashIv;
@@ -122,8 +116,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
     this.checkoutPath = options?.checkoutPath || this.checkoutPath;
     this.bindCardPath = options?.bindCardPath || this.bindCardPath;
     this.boundCardPath = options?.boundCardPath || this.boundCardPath;
-    this.boundCardFinishPath =
-      options?.boundCardFinishPath || this.boundCardFinishPath;
+    this.boundCardFinishPath = options?.boundCardFinishPath || this.boundCardFinishPath;
 
     this.emulateRefund = !!options?.emulateRefund;
 
@@ -140,10 +133,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
     }
 
     if (typeof options?.onInfoRetrieved === 'function') {
-      this.emitter.on(
-        PaymentEvents.ORDER_INFO_RETRIEVED,
-        options.onInfoRetrieved,
-      );
+      this.emitter.on(PaymentEvents.ORDER_INFO_RETRIEVED, options.onInfoRetrieved);
     }
 
     this.emitter.on(PaymentEvents.SERVER_LISTENED, () => {
@@ -187,17 +177,13 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
     return randomBytes(10).toString('hex');
   }
 
-  private addMac<T extends Record<string, string>>(
-    payload: Omit<T, 'CheckMacValue'>,
-  ): T {
+  private addMac<T extends Record<string, string>>(payload: Omit<T, 'CheckMacValue'>): T {
     const mac = createHash('sha256')
       .update(
         encodeURIComponent(
           [
             ['HashKey', this.hashKey],
-            ...Object.entries(payload).sort(([aKey], [bKey]) =>
-              aKey.toLowerCase() < bKey.toLowerCase() ? -1 : 1,
-            ),
+            ...Object.entries(payload).sort(([aKey], [bKey]) => (aKey.toLowerCase() < bKey.toLowerCase() ? -1 : 1)),
             ['HashIV', this.hashIv],
           ]
             .map(([key, value]) => `${key}=${value}`)
@@ -244,21 +230,15 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
     this._server.listen(port, '0.0.0.0', async () => {
       if (useNgrok) {
         if (!process.env.NGROK_AUTHTOKEN) {
-          debugPayment(
-            '[ECPayPayment] NGROK_AUTHTOKEN is not set. Please set it in your environment variables.',
-          );
+          debugPayment('[ECPayPayment] NGROK_AUTHTOKEN is not set. Please set it in your environment variables.');
 
-          throw new Error(
-            '[ECPayPayment] NGROK_AUTHTOKEN is not set. Please set it in your environment variables.',
-          );
+          throw new Error('[ECPayPayment] NGROK_AUTHTOKEN is not set. Please set it in your environment variables.');
         }
 
         try {
           await import('@ngrok/ngrok');
         } catch (ex) {
-          debugPayment(
-            '[ECPayPayment] Failed to import ngrok. Please install it to use ngrok feature.',
-          );
+          debugPayment('[ECPayPayment] Failed to import ngrok. Please install it to use ngrok feature.');
 
           throw ex;
         }
@@ -271,9 +251,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
 
         this.serverHost = forwarder.url() as string;
 
-        debugPayment(
-          `ECPayment Callback Server Listen on port ${port} with ngrok url: ${this.serverHost}`,
-        );
+        debugPayment(`ECPayment Callback Server Listen on port ${port} with ngrok url: ${this.serverHost}`);
       } else {
         debugPayment(`ECPayment Callback Server Listen on port ${port}`);
       }
@@ -282,10 +260,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
     });
   }
 
-  public async defaultServerListener(
-    req: IncomingMessage,
-    res: ServerResponse,
-  ): Promise<void> {
+  public async defaultServerListener(req: IncomingMessage, res: ServerResponse): Promise<void> {
     const checkoutRe = new RegExp(`^${this.checkoutPath}/([^/]+)$`);
     const bindCardRe = new RegExp(`^${this.bindCardPath}/([^/]+)$`);
 
@@ -317,9 +292,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
           const request = await this.bindCardRequestsCache.get(memberId);
 
           if (request) {
-            debugPayment(
-              `ECPayment serve bind card page for member ${memberId}`,
-            );
+            debugPayment(`ECPayment serve bind card page for member ${memberId}`);
 
             res.writeHead(200, {
               'Content-Type': 'text/html; charset=utf-8',
@@ -336,12 +309,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
     if (
       !req.url ||
       req.method !== 'POST' ||
-      !~[
-        this.asyncInfoPath,
-        this.callbackPath,
-        this.boundCardPath,
-        this.boundCardFinishPath,
-      ].indexOf(req.url)
+      !~[this.asyncInfoPath, this.callbackPath, this.boundCardPath, this.boundCardFinishPath].indexOf(req.url)
     ) {
       res.writeHead(404);
       res.end();
@@ -351,24 +319,17 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
 
     const bufferArray = [] as Buffer[];
 
-    req.on('data', (chunk) => {
+    req.on('data', chunk => {
       bufferArray.push(chunk);
     });
 
     req.on('end', async () => {
-      const payloadString = Buffer.from(Buffer.concat(bufferArray)).toString(
-        'utf8',
-      );
+      const payloadString = Buffer.from(Buffer.concat(bufferArray)).toString('utf8');
 
-      const payload = Array.from(
-        new URLSearchParams(payloadString).entries(),
-      ).reduce(
+      const payload = Array.from(new URLSearchParams(payloadString).entries()).reduce(
         (vars, [key, value]) => ({
           ...vars,
-          [key]:
-            value !== '' && ~NUMERIC_CALLBACK_KEYS.indexOf(key)
-              ? Number(value)
-              : value,
+          [key]: value !== '' && ~NUMERIC_CALLBACK_KEYS.indexOf(key) ? Number(value) : value,
         }),
         {},
       ) as ECPayCallbackPayload;
@@ -388,9 +349,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
           case this.asyncInfoPath:
           case this.callbackPath: {
             const paymentPayload = payload as ECPayPaymentCallbackPayload;
-            const order = await this.pendingOrdersCache.get(
-              paymentPayload.MerchantTradeNo,
-            );
+            const order = await this.pendingOrdersCache.get(paymentPayload.MerchantTradeNo);
 
             if (!order || !order.committable) {
               res.writeHead(400, {
@@ -403,15 +362,11 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
             }
 
             if (req.url === this.asyncInfoPath) {
-              debugPayment(
-                `ECPayment handled async information for order ${paymentPayload.MerchantTradeNo}`,
-              );
+              debugPayment(`ECPayment handled async information for order ${paymentPayload.MerchantTradeNo}`);
 
               this.handleAsyncInformation(order, paymentPayload);
             } else {
-              debugPayment(
-                `ECPayment handled payment result for order ${paymentPayload.MerchantTradeNo}`,
-              );
+              debugPayment(`ECPayment handled payment result for order ${paymentPayload.MerchantTradeNo}`);
 
               this.handlePaymentResult(order, paymentPayload);
             }
@@ -423,16 +378,10 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
           case this.boundCardFinishPath: {
             const bindCardPayload = payload as ECPayBindCardCallbackPayload;
             const request = await this.bindCardRequestsCache.get(
-              bindCardPayload.MerchantMemberID.replace(
-                new RegExp(`^${bindCardPayload.MerchantID}`),
-                '',
-              ),
+              bindCardPayload.MerchantMemberID.replace(new RegExp(`^${bindCardPayload.MerchantID}`), ''),
             );
 
-            if (
-              !request ||
-              request.state !== ECPayBindCardRequestState.FORM_GENERATED
-            ) {
+            if (!request || request.state !== ECPayBindCardRequestState.FORM_GENERATED) {
               res.writeHead(400, {
                 'Content-Type': 'text/plain',
               });
@@ -464,10 +413,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
     });
   }
 
-  public handleBindCardResult(
-    request: ECPayBindCardRequest,
-    payload: ECPayBindCardCallbackPayload,
-  ): void {
+  public handleBindCardResult(request: ECPayBindCardRequest, payload: ECPayBindCardCallbackPayload): void {
     // CardNo is existed.
     if (payload.RtnCode === 10100112) {
       request.fail(payload.RtnCode.toString(), payload.RtnMsg, payload);
@@ -484,10 +430,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
     request.bound(payload);
   }
 
-  public handlePaymentResult(
-    order: ECPayOrder<ECPayCommitMessage>,
-    payload: ECPayPaymentCallbackPayload,
-  ): void {
+  public handlePaymentResult(order: ECPayOrder<ECPayCommitMessage>, payload: ECPayPaymentCallbackPayload): void {
     if (payload.RtnCode !== 1) {
       order.fail(payload.RtnCode.toString(), payload.RtnMsg);
 
@@ -501,16 +444,10 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
         order.commit<ECPayOrderBarcodeCommitMessage>({
           id: payload.MerchantTradeNo,
           totalPrice: payload.TradeAmt,
-          committedAt: DateTime.fromFormat(
-            barcodePayload.PaymentDate,
-            'yyyy/MM/dd HH:mm:ss',
-          ).toJSDate(),
+          committedAt: DateTime.fromFormat(barcodePayload.PaymentDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
           merchantId: payload.MerchantID,
           tradeNumber: payload.TradeNo,
-          tradeDate: DateTime.fromFormat(
-            payload.TradeDate,
-            'yyyy/MM/dd HH:mm:ss',
-          ).toJSDate(),
+          tradeDate: DateTime.fromFormat(payload.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
           paymentType: payload.PaymentType,
         });
 
@@ -528,16 +465,10 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
           {
             id: payload.MerchantTradeNo,
             totalPrice: payload.TradeAmt,
-            committedAt: DateTime.fromFormat(
-              cvsInfo.PaymentDate,
-              'yyyy/MM/dd HH:mm:ss',
-            ).toJSDate(),
+            committedAt: DateTime.fromFormat(cvsInfo.PaymentDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
             merchantId: payload.MerchantID,
             tradeNumber: payload.TradeNo,
-            tradeDate: DateTime.fromFormat(
-              payload.TradeDate,
-              'yyyy/MM/dd HH:mm:ss',
-            ).toJSDate(),
+            tradeDate: DateTime.fromFormat(payload.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
             paymentType: payload.PaymentType,
           },
           {
@@ -555,8 +486,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
       case ECPayCallbackPaymentType.ATM_LAND:
       case ECPayCallbackPaymentType.ATM_TACHONG:
       case ECPayCallbackPaymentType.ATM_PANHSIN: {
-        const virtualAccountInfo =
-          payload as ECPayCallbackVirtualAccountPayload;
+        const virtualAccountInfo = payload as ECPayCallbackVirtualAccountPayload;
 
         if (order.paymentType !== payload.PaymentType) {
           throw new Error('Order Not Found');
@@ -566,16 +496,10 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
           {
             id: payload.MerchantTradeNo,
             totalPrice: payload.TradeAmt,
-            committedAt: DateTime.fromFormat(
-              virtualAccountInfo.PaymentDate,
-              'yyyy/MM/dd HH:mm:ss',
-            ).toJSDate(),
+            committedAt: DateTime.fromFormat(virtualAccountInfo.PaymentDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
             merchantId: payload.MerchantID,
             tradeNumber: payload.TradeNo,
-            tradeDate: DateTime.fromFormat(
-              payload.TradeDate,
-              'yyyy/MM/dd HH:mm:ss',
-            ).toJSDate(),
+            tradeDate: DateTime.fromFormat(payload.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
             paymentType: payload.PaymentType,
           },
           {
@@ -595,24 +519,15 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
           {
             id: payload.MerchantTradeNo,
             totalPrice: payload.TradeAmt,
-            committedAt: DateTime.fromFormat(
-              creditCardInfo.PaymentDate,
-              'yyyy/MM/dd HH:mm:ss',
-            ).toJSDate(),
+            committedAt: DateTime.fromFormat(creditCardInfo.PaymentDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
             merchantId: payload.MerchantID,
             tradeNumber: payload.TradeNo,
-            tradeDate: DateTime.fromFormat(
-              payload.TradeDate,
-              'yyyy/MM/dd HH:mm:ss',
-            ).toJSDate(),
+            tradeDate: DateTime.fromFormat(payload.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
             paymentType: payload.PaymentType,
           },
           {
             channel: Channel.CREDIT_CARD,
-            processDate: DateTime.fromFormat(
-              creditCardInfo.process_date,
-              'yyyy/MM/dd HH:mm:ss',
-            ).toJSDate(),
+            processDate: DateTime.fromFormat(creditCardInfo.process_date, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
             authCode: creditCardInfo.auth_code,
             amount: creditCardInfo.amount,
             eci: creditCardInfo.eci,
@@ -630,10 +545,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
     }
   }
 
-  public handleAsyncInformation(
-    order: ECPayOrder<ECPayCommitMessage>,
-    payload: ECPayAsyncInformationPayload,
-  ): void {
+  public handleAsyncInformation(order: ECPayOrder<ECPayCommitMessage>, payload: ECPayAsyncInformationPayload): void {
     if (order.state !== OrderState.PRE_COMMIT) {
       return;
     }
@@ -645,15 +557,8 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
 
           order.infoRetrieved<ECPayOrderBarcodeCommitMessage>({
             channel: Channel.CVS_BARCODE,
-            barcodes: [
-              asyncInfo.Barcode1,
-              asyncInfo.Barcode2,
-              asyncInfo.Barcode3,
-            ],
-            expiredAt: DateTime.fromFormat(
-              asyncInfo.ExpireDate,
-              'yyyy/MM/dd HH:mm:ss',
-            ).toJSDate(),
+            barcodes: [asyncInfo.Barcode1, asyncInfo.Barcode2, asyncInfo.Barcode3],
+            expiredAt: DateTime.fromFormat(asyncInfo.ExpireDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
           } as BarcodeInfo);
         } else {
           order.fail(payload.RtnCode.toString(), payload.RtnMsg);
@@ -675,10 +580,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
             channel: Channel.CVS_KIOSK,
             paymentType: payload.PaymentType,
             paymentCode: asyncInfo.PaymentNo,
-            expiredAt: DateTime.fromFormat(
-              asyncInfo.ExpireDate,
-              'yyyy/MM/dd HH:mm:ss',
-            ).toJSDate(),
+            expiredAt: DateTime.fromFormat(asyncInfo.ExpireDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
           } as CVSInfo);
         } else {
           order.fail(payload.RtnCode.toString(), payload.RtnMsg);
@@ -694,25 +596,19 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
       case ECPayCallbackPaymentType.ATM_LAND:
       case ECPayCallbackPaymentType.ATM_TACHONG:
       case ECPayCallbackPaymentType.ATM_PANHSIN:
-        if (
-          order.paymentType !== ECPayCallbackPaymentType.VIRTUAL_ACCOUNT_WAITING
-        ) {
+        if (order.paymentType !== ECPayCallbackPaymentType.VIRTUAL_ACCOUNT_WAITING) {
           throw new Error('Order Not Found');
         }
 
         if (payload.RtnCode === 2) {
-          const asyncInfo =
-            payload as ECPayAsyncInformationVirtualAccountPayload;
+          const asyncInfo = payload as ECPayAsyncInformationVirtualAccountPayload;
 
           order.infoRetrieved<ECPayOrderVirtualAccountCommitMessage>(
             {
               channel: Channel.VIRTUAL_ACCOUNT,
               bankCode: asyncInfo.BankCode,
               account: asyncInfo.vAccount,
-              expiredAt: DateTime.fromFormat(
-                asyncInfo.ExpireDate,
-                'yyyy/MM/dd',
-              ).toJSDate(),
+              expiredAt: DateTime.fromFormat(asyncInfo.ExpireDate, 'yyyy/MM/dd').toJSDate(),
             } as VirtualAccountInfo,
             payload.PaymentType,
           );
@@ -729,9 +625,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
     }
   }
 
-  async prepare<P extends CM>(
-    orderInput: GetOrderInput<P>,
-  ): Promise<ECPayOrder<P>> {
+  async prepare<P extends CM>(orderInput: GetOrderInput<P>): Promise<ECPayOrder<P>> {
     if (!this.isGatewayReady) {
       throw new Error('Please waiting gateway ready');
     }
@@ -744,53 +638,27 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
       throw new Error('`memory` only use on credit card channel');
     }
 
-    if (
-      'cvsBarcodeExpireDays' in orderInput &&
-      orderInput.channel !== Channel.CVS_BARCODE
-    ) {
-      throw new Error(
-        '`cvsBarcodeExpireDays` only work on virtual account channel',
-      );
+    if ('cvsBarcodeExpireDays' in orderInput && orderInput.channel !== Channel.CVS_BARCODE) {
+      throw new Error('`cvsBarcodeExpireDays` only work on virtual account channel');
     }
 
-    if (
-      'cvsExpireMinutes' in orderInput &&
-      orderInput.channel !== Channel.CVS_KIOSK
-    ) {
-      throw new Error(
-        '`cvsExpireMinutes` only work on virtual account channel',
-      );
+    if ('cvsExpireMinutes' in orderInput && orderInput.channel !== Channel.CVS_KIOSK) {
+      throw new Error('`cvsExpireMinutes` only work on virtual account channel');
     }
 
-    if (
-      'virtualAccountExpireDays' in orderInput &&
-      orderInput.channel !== Channel.VIRTUAL_ACCOUNT
-    ) {
-      throw new Error(
-        '`virtualAccountExpireDays` only work on virtual account channel',
-      );
+    if ('virtualAccountExpireDays' in orderInput && orderInput.channel !== Channel.VIRTUAL_ACCOUNT) {
+      throw new Error('`virtualAccountExpireDays` only work on virtual account channel');
     }
 
-    if (
-      'allowUnionPay' in orderInput &&
-      orderInput.channel &&
-      orderInput.channel !== Channel.CREDIT_CARD
-    ) {
+    if ('allowUnionPay' in orderInput && orderInput.channel && orderInput.channel !== Channel.CREDIT_CARD) {
       throw new Error('Union Pay should use credit card channel');
     }
 
-    if (
-      'allowCreditCardRedeem' in orderInput &&
-      orderInput.channel &&
-      orderInput.channel !== Channel.CREDIT_CARD
-    ) {
+    if ('allowCreditCardRedeem' in orderInput && orderInput.channel && orderInput.channel !== Channel.CREDIT_CARD) {
       throw new Error('`allowCreditCardRedeem` should use credit card channel');
     }
 
-    if (
-      'installments' in orderInput &&
-      orderInput.channel !== Channel.CREDIT_CARD
-    ) {
+    if ('installments' in orderInput && orderInput.channel !== Channel.CREDIT_CARD) {
       throw new Error('`installments` should use credit card channel');
     }
 
@@ -801,27 +669,18 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
     const orderId = orderInput.id || this.getOrderId();
     const now = new Date();
 
-    const totalAmount = orderInput.items.reduce(
-      (sum, item) => sum + item.unitPrice * item.quantity,
-      0,
-    );
+    const totalAmount = orderInput.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
 
     const payload = {
       MerchantID: this.merchantId,
       MerchantTradeNo: orderId,
-      MerchantTradeDate: DateTime.fromJSDate(now).toFormat(
-        'yyyy/MM/dd HH:mm:ss',
-      ),
+      MerchantTradeDate: DateTime.fromJSDate(now).toFormat('yyyy/MM/dd HH:mm:ss'),
       PaymentType: 'aio',
       TotalAmount: totalAmount.toString(),
       TradeDesc: orderInput.description || '-',
-      ItemName: orderInput.items
-        .map((item) => `${item.name.replace(/#/g, '%23')} x${item.quantity}`)
-        .join('#'),
+      ItemName: orderInput.items.map(item => `${item.name.replace(/#/g, '%23')} x${item.quantity}`).join('#'),
       ReturnURL: `${this.serverHost}${this.callbackPath}`,
-      ChoosePayment: orderInput.channel
-        ? ECPayChannel[orderInput.channel]
-        : 'ALL',
+      ChoosePayment: orderInput.channel ? ECPayChannel[orderInput.channel] : 'ALL',
       NeedExtraPaidInfo: 'Y',
       EncryptType: '1',
       OrderResultURL: orderInput.clientBackUrl || '',
@@ -829,7 +688,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
       CustomField1: '',
       CustomField2: '',
       CustomField3: '',
-      CustomField4: orderInput.items.map((item) => item.unitPrice).join('#'),
+      CustomField4: orderInput.items.map(item => item.unitPrice).join('#'),
     } as Omit<ECPayOrderForm, 'CheckMacValue'>;
 
     if (!orderInput.channel || orderInput.channel === Channel.CREDIT_CARD) {
@@ -847,9 +706,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
 
       if (orderInput.installments) {
         if (orderInput.allowCreditCardRedeem) {
-          throw new Error(
-            '`installments` should not working with `allowCreditCardRedeem`',
-          );
+          throw new Error('`installments` should not working with `allowCreditCardRedeem`');
         }
 
         if (orderInput.period) {
@@ -862,9 +719,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
 
         const installments = orderInput.installments!.split(/,/g);
 
-        if (
-          installments.some((period) => !period || Number.isNaN(Number(period)))
-        ) {
+        if (installments.some(period => !period || Number.isNaN(Number(period)))) {
           throw new Error('`installments` format invalid, example: 3,6,9,12');
         }
       }
@@ -874,32 +729,22 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
           switch (orderInput.period.type) {
             case PaymentPeriodType.MONTH:
               if (orderInput.period.frequency < 1)
-                throw new Error(
-                  '`period.frequency` should between 1 and 12 when `period.type` set to MONTH',
-                );
+                throw new Error('`period.frequency` should between 1 and 12 when `period.type` set to MONTH');
               if (orderInput.period.frequency > 12)
-                throw new Error(
-                  '`period.frequency` should between 1 and 12 when `period.type` set to MONTH',
-                );
+                throw new Error('`period.frequency` should between 1 and 12 when `period.type` set to MONTH');
               break;
 
             case PaymentPeriodType.YEAR:
               if (orderInput.period.frequency !== 1)
-                throw new Error(
-                  '`period.frequency` should be 1 when `period.type` set to YEAR',
-                );
+                throw new Error('`period.frequency` should be 1 when `period.type` set to YEAR');
               break;
 
             case PaymentPeriodType.DAY:
             default:
               if (orderInput.period.frequency < 1)
-                throw new Error(
-                  '`period.frequency` should between 1 and 365 when `period.type` set to DAY',
-                );
+                throw new Error('`period.frequency` should between 1 and 365 when `period.type` set to DAY');
               if (orderInput.period.frequency > 365)
-                throw new Error(
-                  '`period.frequency` should between 1 and 365 when `period.type` set to DAY',
-                );
+                throw new Error('`period.frequency` should between 1 and 365 when `period.type` set to DAY');
               break;
           }
         }
@@ -911,24 +756,18 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
         switch (orderInput.period!.type) {
           case PaymentPeriodType.MONTH:
             if (orderInput.period!.times > 99)
-              throw new Error(
-                '`period.times` should below 99 when `period.type` set to MONTH',
-              );
+              throw new Error('`period.times` should below 99 when `period.type` set to MONTH');
             break;
 
           case PaymentPeriodType.YEAR:
             if (orderInput.period!.times > 9)
-              throw new Error(
-                '`period.times` should below 9 when `period.type` set to YEAR',
-              );
+              throw new Error('`period.times` should below 9 when `period.type` set to YEAR');
             break;
 
           case PaymentPeriodType.DAY:
           default:
             if (orderInput.period!.times > 999)
-              throw new Error(
-                '`period.times` should below 999 when `period.type` set to DAY',
-              );
+              throw new Error('`period.times` should below 999 when `period.type` set to DAY');
             break;
         }
       }
@@ -970,13 +809,9 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
 
       if (orderInput.virtualAccountExpireDays !== undefined) {
         if (orderInput.virtualAccountExpireDays < 1)
-          throw new Error(
-            '`virtualAccountExpireDays` should between 1 and 60 days',
-          );
+          throw new Error('`virtualAccountExpireDays` should between 1 and 60 days');
         if (orderInput.virtualAccountExpireDays > 60)
-          throw new Error(
-            '`virtualAccountExpireDays` should between 1 and 60 days',
-          );
+          throw new Error('`virtualAccountExpireDays` should between 1 and 60 days');
       }
 
       if (orderInput.virtualAccountExpireDays) {
@@ -1000,14 +835,9 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
       }
 
       if (orderInput.cvsExpireMinutes !== undefined) {
-        if (orderInput.cvsExpireMinutes < 1)
-          throw new Error(
-            '`cvsExpireMinutes` should between 1 and 43200 miuntes',
-          );
+        if (orderInput.cvsExpireMinutes < 1) throw new Error('`cvsExpireMinutes` should between 1 and 43200 miuntes');
         if (orderInput.cvsExpireMinutes > 43200)
-          throw new Error(
-            '`cvsExpireMinutes` should between 1 and 43200 miuntes',
-          );
+          throw new Error('`cvsExpireMinutes` should between 1 and 43200 miuntes');
       }
 
       if (orderInput.cvsExpireMinutes) {
@@ -1031,10 +861,8 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
 
       if (orderInput.cvsBarcodeExpireDays !== undefined) {
         // Not documented
-        if (orderInput.cvsBarcodeExpireDays < 1)
-          throw new Error('`cvsBarcodeExpireDays` should between 1 and 7 days');
-        if (orderInput.cvsBarcodeExpireDays > 7)
-          throw new Error('`cvsBarcodeExpireDays` should between 1 and 7 days');
+        if (orderInput.cvsBarcodeExpireDays < 1) throw new Error('`cvsBarcodeExpireDays` should between 1 and 7 days');
+        if (orderInput.cvsBarcodeExpireDays > 7) throw new Error('`cvsBarcodeExpireDays` should between 1 and 7 days');
       }
 
       if (orderInput.cvsBarcodeExpireDays) {
@@ -1059,9 +887,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
     return order;
   }
 
-  async query<T extends ECPayOrder<ECPayCommitMessage>>(
-    id: string,
-  ): Promise<T> {
+  async query<T extends ECPayOrder<ECPayCommitMessage>>(id: string): Promise<T> {
     if (!this.isGatewayReady) {
       throw new Error('Please waiting gateway ready');
     }
@@ -1080,9 +906,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
       new URLSearchParams(payload).toString(),
     );
 
-    const response = Array.from(
-      new URLSearchParams(result.data).entries(),
-    ).reduce(
+    const response = Array.from(new URLSearchParams(result.data).entries()).reduce(
       (vars, [key, value]) => ({
         ...vars,
         [key]: value,
@@ -1094,9 +918,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
       throw new Error('Invalid CheckSum');
     }
 
-    const unitPrices = (response.CustomField4 || '')
-      .split(/#/)
-      .filter((unitPrice) => unitPrice !== '');
+    const unitPrices = (response.CustomField4 || '').split(/#/).filter(unitPrice => unitPrice !== '');
 
     const items = response.ItemName.split(/#/).map((itemStr, index) => {
       const [name, quantity] = itemStr.split(/\sx(\d+)$/);
@@ -1105,11 +927,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
         name: name.replace(/%23/g, '#'),
         quantity: Number(quantity),
         unitPrice:
-          unitPrices[index] !== undefined
-            ? Number(unitPrices[index])
-            : index === 0
-              ? Number(response.TradeAmt)
-              : 0,
+          unitPrices[index] !== undefined ? Number(unitPrices[index]) : index === 0 ? Number(response.TradeAmt) : 0,
       };
     });
 
@@ -1117,15 +935,9 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
       id: response.MerchantTradeNo,
       items,
       gateway: this as ECPayPayment<ECPayCommitMessage>,
-      createdAt: DateTime.fromFormat(
-        response.TradeDate,
-        'yyyy/MM/dd HH:mm:ss',
-      ).toJSDate(),
+      createdAt: DateTime.fromFormat(response.TradeDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
       committedAt: response.PaymentDate
-        ? DateTime.fromFormat(
-            response.PaymentDate,
-            'yyyy/MM/dd HH:mm:ss',
-          ).toJSDate()
+        ? DateTime.fromFormat(response.PaymentDate, 'yyyy/MM/dd HH:mm:ss').toJSDate()
         : null,
       platformTradeNumber: response.MerchantTradeNo,
       paymentType: response.PaymentType,
@@ -1134,22 +946,16 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
 
     switch (response.PaymentType) {
       case ECPayCallbackPaymentType.CREDIT_CARD:
-        return new ECPayOrder<ECPayOrderCreditCardCommitMessage>(
-          baseOrderInfo,
-          {
-            channel: Channel.CREDIT_CARD,
-            processDate: DateTime.fromFormat(
-              response.process_date,
-              'yyyy/MM/dd HH:mm:ss',
-            ).toJSDate(),
-            authCode: response.auth_code,
-            amount: Number(response.amount),
-            eci: response.eci,
-            card4Number: response.card4no,
-            card6Number: response.card6no,
-            gwsr: response.gwsr,
-          } as CreditCardAuthInfo,
-        ) as T;
+        return new ECPayOrder<ECPayOrderCreditCardCommitMessage>(baseOrderInfo, {
+          channel: Channel.CREDIT_CARD,
+          processDate: DateTime.fromFormat(response.process_date, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+          authCode: response.auth_code,
+          amount: Number(response.amount),
+          eci: response.eci,
+          card4Number: response.card4no,
+          card6Number: response.card6no,
+          gwsr: response.gwsr,
+        } as CreditCardAuthInfo) as T;
 
       case ECPayCallbackPaymentType.ATM_BOT:
       case ECPayCallbackPaymentType.ATM_CHINATRUST:
@@ -1157,14 +963,11 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
       case ECPayCallbackPaymentType.ATM_LAND:
       case ECPayCallbackPaymentType.ATM_TACHONG:
       case ECPayCallbackPaymentType.ATM_PANHSIN:
-        return new ECPayOrder<ECPayOrderVirtualAccountCommitMessage>(
-          baseOrderInfo,
-          {
-            channel: Channel.VIRTUAL_ACCOUNT,
-            buyerAccountNumber: response.ATMAccNo,
-            buyerBankCode: response.ATMAccBank,
-          } as VirtualAccountPaymentInfo,
-        ) as T;
+        return new ECPayOrder<ECPayOrderVirtualAccountCommitMessage>(baseOrderInfo, {
+          channel: Channel.VIRTUAL_ACCOUNT,
+          buyerAccountNumber: response.ATMAccNo,
+          buyerBankCode: response.ATMAccBank,
+        } as VirtualAccountPaymentInfo) as T;
 
       case ECPayCallbackPaymentType.CVS:
       case ECPayCallbackPaymentType.CVS_FAMILY:
@@ -1240,10 +1043,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
     };
   }
 
-  async getCreditCardTradeStatus(
-    gwsr: string,
-    amount: number,
-  ): Promise<ECPayCreditCardOrderStatus> {
+  async getCreditCardTradeStatus(gwsr: string, amount: number): Promise<ECPayCreditCardOrderStatus> {
     if (!this.isGatewayReady) {
       throw new Error('Please waiting gateway ready');
     }
@@ -1281,11 +1081,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
     };
   }
 
-  async doOrderAction(
-    order: ECPayOrder<ECPayCommitMessage>,
-    action: 'R' | 'N',
-    amount: number,
-  ): Promise<void> {
+  async doOrderAction(order: ECPayOrder<ECPayCommitMessage>, action: 'R' | 'N', amount: number): Promise<void> {
     if (!this.isGatewayReady) {
       throw new Error('Please waiting gateway ready');
     }
@@ -1299,11 +1095,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
     });
 
     const result = this.emulateRefund
-      ? this.getEmulatedOrderActionResponse(
-          this.merchantId,
-          order.id,
-          order.platformTradeNumber as string,
-        )
+      ? this.getEmulatedOrderActionResponse(this.merchantId, order.id, order.platformTradeNumber as string)
       : await axios.post<ECPayOrderDoActionResponse>(
           `${this.baseUrl}/CreditDetail/DoAction`,
           new URLSearchParams(payload).toString(),
@@ -1331,24 +1123,15 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
       new URLSearchParams(payload).toString(),
     );
 
-    const responsePayload = Array.from(
-      new URLSearchParams(data).entries(),
-    ).reduce(
+    const responsePayload = Array.from(new URLSearchParams(data).entries()).reduce(
       (vars, [key, value]) => ({
         ...vars,
-        [key]:
-          value !== '' && ~NUMERIC_CALLBACK_KEYS.indexOf(key)
-            ? Number(value)
-            : value,
+        [key]: value !== '' && ~NUMERIC_CALLBACK_KEYS.indexOf(key) ? Number(value) : value,
       }),
       {},
     ) as ECPayBoundCardWithTransactionResponsePayload;
 
-    if (
-      !this.checkMac<ECPayBoundCardWithTransactionResponsePayload>(
-        responsePayload,
-      )
-    ) {
+    if (!this.checkMac<ECPayBoundCardWithTransactionResponsePayload>(responsePayload)) {
       throw new Error('Invalid CheckSum');
     }
 
@@ -1363,19 +1146,13 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
         cardId: responsePayload.CardID,
         cardNumberPrefix: responsePayload.Card6No,
         cardNumberSuffix: responsePayload.Card4No,
-        bindingDate: DateTime.fromFormat(
-          responsePayload.BindingDate,
-          'yyyy/MM/dd HH:mm:ss',
-        ).toJSDate(),
+        bindingDate: DateTime.fromFormat(responsePayload.BindingDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
       },
       this,
     );
   }
 
-  async prepareBindCard(
-    memberId: string,
-    finishRedirectURL?: string,
-  ): Promise<ECPayBindCardRequest> {
+  async prepareBindCard(memberId: string, finishRedirectURL?: string): Promise<ECPayBindCardRequest> {
     if (!this.isGatewayReady) {
       throw new Error('Please waiting gateway ready');
     }
@@ -1384,8 +1161,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
       MerchantID: this.merchantId,
       MerchantMemberID: `${this.merchantId}${memberId}`,
       ServerReplyURL: `${this.serverHost}${this.boundCardPath}`,
-      ClientRedirectURL:
-        finishRedirectURL ?? `${this.serverHost}${this.boundCardFinishPath}`,
+      ClientRedirectURL: finishRedirectURL ?? `${this.serverHost}${this.boundCardFinishPath}`,
     });
 
     const request = new ECPayBindCardRequest(payload, this);
@@ -1395,9 +1171,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
     return request;
   }
 
-  async checkoutWithBoundCard(
-    options: ECPayCheckoutWithBoundCardPayload,
-  ): Promise<ECPayOrder<CM>> {
+  async checkoutWithBoundCard(options: ECPayCheckoutWithBoundCardPayload): Promise<ECPayOrder<CM>> {
     const orderId = options.orderId || this.getOrderId();
     const order = new ECPayOrder({
       id: orderId,
@@ -1407,10 +1181,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
       memberId: options.memberId,
     });
 
-    const totalAmount = options.items.reduce(
-      (sum, item) => sum + item.unitPrice * item.quantity,
-      0,
-    );
+    const totalAmount = options.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
 
     if (totalAmount <= 0) {
       throw new Error('Total amount should be greater than 0');
@@ -1420,13 +1191,9 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
       MerchantID: this.merchantId,
       MerchantMemberID: `${this.merchantId}${options.memberId}`,
       MerchantTradeNo: options.orderId || this.getOrderId(),
-      MerchantTradeDate: DateTime.fromJSDate(
-        options.tradeTime || new Date(),
-      ).toFormat('yyyy/MM/dd HH:mm:ss'),
+      MerchantTradeDate: DateTime.fromJSDate(options.tradeTime || new Date()).toFormat('yyyy/MM/dd HH:mm:ss'),
       TotalAmount: totalAmount.toString(),
-      TradeDesc: encodeURIComponent(
-        options.items.map((item) => item.name).join(', '),
-      ),
+      TradeDesc: encodeURIComponent(options.items.map(item => item.name).join(', ')),
       CardID: options.cardId,
       stage: (options.installments ?? 0).toString(),
     });
@@ -1436,22 +1203,15 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
       new URLSearchParams(payload).toString(),
     );
 
-    const responsePayload = Array.from(
-      new URLSearchParams(data).entries(),
-    ).reduce(
+    const responsePayload = Array.from(new URLSearchParams(data).entries()).reduce(
       (vars, [key, value]) => ({
         ...vars,
-        [key]:
-          value !== '' && ~NUMERIC_CALLBACK_KEYS.indexOf(key)
-            ? Number(value)
-            : value,
+        [key]: value !== '' && ~NUMERIC_CALLBACK_KEYS.indexOf(key) ? Number(value) : value,
       }),
       {},
     ) as ECPayCheckoutWithBoundCardResponsePayload;
 
-    if (
-      !this.checkMac<ECPayCheckoutWithBoundCardResponsePayload>(responsePayload)
-    ) {
+    if (!this.checkMac<ECPayCheckoutWithBoundCardResponsePayload>(responsePayload)) {
       throw new Error('Invalid CheckSum');
     }
 
@@ -1463,16 +1223,10 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
     order.commit<CM>({
       id: order.id,
       totalPrice: totalAmount,
-      committedAt: DateTime.fromFormat(
-        responsePayload.process_date,
-        'yyyy/MM/dd HH:mm:ss',
-      ).toJSDate(),
+      committedAt: DateTime.fromFormat(responsePayload.process_date, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
       merchantId: this.merchantId,
       tradeNumber: responsePayload.AllpayTradeNo,
-      tradeDate: DateTime.fromFormat(
-        responsePayload.process_date,
-        'yyyy/MM/dd HH:mm:ss',
-      ).toJSDate(),
+      tradeDate: DateTime.fromFormat(responsePayload.process_date, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
       paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
     } as CM);
 
@@ -1490,15 +1244,10 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
       new URLSearchParams(payload).toString(),
     );
 
-    const responsePayload = Array.from(
-      new URLSearchParams(data).entries(),
-    ).reduce(
+    const responsePayload = Array.from(new URLSearchParams(data).entries()).reduce(
       (vars, [key, value]) => ({
         ...vars,
-        [key]:
-          value !== '' && ~NUMERIC_CALLBACK_KEYS.indexOf(key)
-            ? Number(value)
-            : value,
+        [key]: value !== '' && ~NUMERIC_CALLBACK_KEYS.indexOf(key) ? Number(value) : value,
       }),
       {},
     ) as ECPayBoundCardQueryResponsePayload;
@@ -1523,13 +1272,8 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
       cardId: jsonPayload.CardID,
       cardNumberPrefix: jsonPayload.Card6No,
       cardNumberSuffix: jsonPayload.Card4No,
-      bindingDate: DateTime.fromFormat(
-        jsonPayload.BindingDate,
-        'yyyy/MM/dd HH:mm:ss',
-      ).toJSDate(),
-      expireDate: DateTime.fromFormat(jsonPayload.CardExpireDate, 'yyMM')
-        .startOf('month')
-        .toJSDate(),
+      bindingDate: DateTime.fromFormat(jsonPayload.BindingDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
+      expireDate: DateTime.fromFormat(jsonPayload.CardExpireDate, 'yyMM').startOf('month').toJSDate(),
     };
   }
 }

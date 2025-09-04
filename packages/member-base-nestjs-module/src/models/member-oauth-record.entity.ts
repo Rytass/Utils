@@ -1,12 +1,4 @@
-import {
-  Column,
-  Entity,
-  Index,
-  JoinColumn,
-  ManyToOne,
-  PrimaryColumn,
-  type Relation,
-} from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryColumn, type Relation } from 'typeorm';
 import { BaseMemberEntity } from './base-member.entity';
 
 export const MemberOAuthRecordRepo = Symbol('MemberOAuthRecordRepo');
@@ -23,7 +15,7 @@ export class MemberOAuthRecordEntity {
   @Column('varchar')
   channelIdentifier: string;
 
-  @ManyToOne(() => BaseMemberEntity, (member) => member.oauthRecords)
+  @ManyToOne(() => BaseMemberEntity, member => member.oauthRecords)
   @JoinColumn({ name: 'memberId', referencedColumnName: 'id' })
   member: Relation<BaseMemberEntity>;
 }

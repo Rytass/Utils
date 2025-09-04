@@ -1,14 +1,7 @@
-import {
-  ModalProps,
-  ModalHeaderProps,
-  ModalActionsProps,
-  ModalSize,
-} from '@mezzanine-ui/react';
+import { ModalProps, ModalHeaderProps, ModalActionsProps, ModalSize } from '@mezzanine-ui/react';
 import { SeverityWithInfo } from '@mezzanine-ui/system/severity';
 
-export type OpenDialogFunctionType = (
-  config: DialogConfigType,
-) => Promise<boolean>;
+export type OpenDialogFunctionType = (config: DialogConfigType) => Promise<boolean>;
 
 export interface CancelConfirmDialogConfig {
   severity?: SeverityWithInfo;
@@ -20,10 +13,7 @@ export interface CancelConfirmDialogConfig {
   isConfirmDanger?: boolean;
 }
 
-export interface DialogConfigType
-  extends ModalProps,
-    ModalHeaderProps,
-    ModalActionsProps {
+export interface DialogConfigType extends ModalProps, ModalHeaderProps, ModalActionsProps {
   children?: string;
   disableActions?: boolean;
   resolve?: (value: boolean) => void;

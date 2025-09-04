@@ -75,7 +75,7 @@ import { VaultSecretService } from '@rytass/secret-adapter-vault';
 const secretManager = new VaultSecretService('my-project', {
   baseURL: 'https://vault.example.com',
   token: 'your-vault-token',
-  version: 'v1'
+  version: 'v1',
 });
 
 // Store a secret
@@ -122,7 +122,7 @@ await secretManager.set<DatabaseConfig>('db-config', {
   host: 'localhost',
   port: 5432,
   username: 'admin',
-  password: 'secret123'
+  password: 'secret123',
 });
 
 // Retrieve with proper typing
@@ -161,7 +161,10 @@ const dbConfig = await configManager.getDatabaseConfig();
 
 ```typescript
 class SafeSecretManager extends SecretManager {
-  constructor(project: string, private fallbackManager?: SecretManager) {
+  constructor(
+    project: string,
+    private fallbackManager?: SecretManager,
+  ) {
     super(project);
   }
 
@@ -170,12 +173,12 @@ class SafeSecretManager extends SecretManager {
       return await this.primaryGet<T>(key);
     } catch (error) {
       console.warn(`Primary secret retrieval failed for '${key}':`, error);
-      
+
       if (this.fallbackManager) {
         console.log(`Attempting fallback for '${key}'`);
         return this.fallbackManager.get<T>(key);
       }
-      
+
       throw error;
     }
   }
@@ -204,14 +207,14 @@ class CachedSecretManager extends SecretManager {
 
   constructor(
     project: string,
-    private baseManager: SecretManager
+    private baseManager: SecretManager,
   ) {
     super(project);
   }
 
   async get<T>(key: string): Promise<T> {
     const cached = this.cache.get(key);
-    
+
     if (cached && cached.expiry > Date.now()) {
       return cached.value as T;
     }
@@ -219,7 +222,7 @@ class CachedSecretManager extends SecretManager {
     const value = await this.baseManager.get<T>(key);
     this.cache.set(key, {
       value,
-      expiry: Date.now() + this.ttl
+      expiry: Date.now() + this.ttl,
     });
 
     return value;
@@ -253,7 +256,7 @@ import { VaultSecretService } from '@rytass/secret-adapter-vault';
 const app = express();
 const secrets = new VaultSecretService('api-server', {
   baseURL: process.env.VAULT_URL!,
-  token: process.env.VAULT_TOKEN!
+  token: process.env.VAULT_TOKEN!,
 });
 
 // Load configuration from secrets
@@ -262,21 +265,23 @@ async function loadConfig() {
     port: await secrets.get<number>('server-port'),
     jwtSecret: await secrets.get<string>('jwt-secret'),
     dbConfig: await secrets.get<DatabaseConfig>('database'),
-    apiKeys: await secrets.get<Record<string, string>>('external-apis')
+    apiKeys: await secrets.get<Record<string, string>>('external-apis'),
   };
 
   return config;
 }
 
 // Start server with secret-based configuration
-loadConfig().then(config => {
-  app.listen(config.port, () => {
-    console.log(`Server running on port ${config.port}`);
+loadConfig()
+  .then(config => {
+    app.listen(config.port, () => {
+      console.log(`Server running on port ${config.port}`);
+    });
+  })
+  .catch(error => {
+    console.error('Failed to load configuration:', error);
+    process.exit(1);
   });
-}).catch(error => {
-  console.error('Failed to load configuration:', error);
-  process.exit(1);
-});
 ```
 
 ### NestJS Integration
@@ -293,13 +298,10 @@ export class SecretsService implements OnModuleInit {
   constructor(private configService: ConfigService) {}
 
   async onModuleInit() {
-    this.secretManager = new VaultSecretService(
-      this.configService.get('PROJECT_NAME'),
-      {
-        baseURL: this.configService.get('VAULT_URL'),
-        token: this.configService.get('VAULT_TOKEN')
-      }
-    );
+    this.secretManager = new VaultSecretService(this.configService.get('PROJECT_NAME'), {
+      baseURL: this.configService.get('VAULT_URL'),
+      token: this.configService.get('VAULT_TOKEN'),
+    });
   }
 
   async getDatabasePassword(): Promise<string> {
@@ -330,7 +332,7 @@ class DockerSecretManager extends SecretManager {
     try {
       const secretPath = `${this.secretsPath}/${key}`;
       const content = readFileSync(secretPath, 'utf8').trim();
-      
+
       // Try to parse as JSON, fallback to string
       try {
         return JSON.parse(content) as T;
@@ -370,21 +372,22 @@ constructor(project: string)
 
 #### Properties
 
-| Property | Type | Description |
-|----------|------|-------------|
+| Property  | Type     | Description                             |
+| --------- | -------- | --------------------------------------- |
 | `project` | `string` | The project name for organizing secrets |
 
 #### Methods
 
-| Method | Description |
-|--------|-------------|
-| `get<T>(key: string): Promise<T> \| T` | Retrieve a secret by key |
-| `set<T>(key: string, value: T): Promise<void> \| void` | Store a secret |
-| `delete(key: string): Promise<void> \| void` | Delete a secret |
+| Method                                                 | Description              |
+| ------------------------------------------------------ | ------------------------ |
+| `get<T>(key: string): Promise<T> \| T`                 | Retrieve a secret by key |
+| `set<T>(key: string, value: T): Promise<void> \| void` | Store a secret           |
+| `delete(key: string): Promise<void> \| void`           | Delete a secret          |
 
 ## Best Practices
 
 ### Security
+
 - Never log secret values
 - Use environment variables for secret manager credentials
 - Implement proper access controls
@@ -392,18 +395,21 @@ constructor(project: string)
 - Use least-privilege principles
 
 ### Performance
+
 - Implement caching for frequently accessed secrets
 - Use connection pooling for secret backends
 - Cache secret manager instances
 - Implement circuit breakers for resilience
 
 ### Organization
+
 - Use consistent naming conventions for secrets
 - Group related secrets logically
 - Document secret schemas and usage
 - Implement secret lifecycle management
 
 ### Error Handling
+
 - Implement graceful fallbacks
 - Log security events appropriately
 - Handle network failures gracefully
@@ -424,7 +430,7 @@ export interface MyBackendOptions {
 export class MyBackendSecretManager extends SecretManager {
   constructor(
     project: string,
-    private options: MyBackendOptions
+    private options: MyBackendOptions,
   ) {
     super(project);
   }
@@ -433,14 +439,14 @@ export class MyBackendSecretManager extends SecretManager {
     // Implement your backend-specific logic
     const response = await fetch(`${this.options.endpoint}/secrets/${key}`, {
       headers: {
-        'Authorization': `Bearer ${this.options.apiKey}`
-      }
+        Authorization: `Bearer ${this.options.apiKey}`,
+      },
     });
-    
+
     if (!response.ok) {
       throw new Error(`Failed to retrieve secret: ${response.statusText}`);
     }
-    
+
     const data = await response.json();
     return data.value as T;
   }
@@ -450,11 +456,11 @@ export class MyBackendSecretManager extends SecretManager {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.options.apiKey}`
+        Authorization: `Bearer ${this.options.apiKey}`,
       },
-      body: JSON.stringify({ value })
+      body: JSON.stringify({ value }),
     });
-    
+
     if (!response.ok) {
       throw new Error(`Failed to store secret: ${response.statusText}`);
     }
@@ -464,10 +470,10 @@ export class MyBackendSecretManager extends SecretManager {
     const response = await fetch(`${this.options.endpoint}/secrets/${key}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${this.options.apiKey}`
-      }
+        Authorization: `Bearer ${this.options.apiKey}`,
+      },
     });
-    
+
     if (!response.ok) {
       throw new Error(`Failed to delete secret: ${response.statusText}`);
     }

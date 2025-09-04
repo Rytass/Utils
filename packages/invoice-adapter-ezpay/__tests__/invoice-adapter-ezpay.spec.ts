@@ -24,7 +24,11 @@ const getMobileValidationResult = (code: string, isPass = false) => {
   cipher.setAutoPadding(false);
 
   return [
-    cipher.update(`CellphoneBarcode=${encodeURIComponent(code)}&IsExist=${isPass ? 'Y' : 'N'}`.padEnd(64, '\x1b'), 'utf8', 'hex'),
+    cipher.update(
+      `CellphoneBarcode=${encodeURIComponent(code)}&IsExist=${isPass ? 'Y' : 'N'}`.padEnd(64, '\x1b'),
+      'utf8',
+      'hex',
+    ),
     cipher.final('hex'),
   ].join('');
 };
@@ -35,7 +39,11 @@ const getLoveCodeValidationResult = (code: string, isPass = false) => {
   cipher.setAutoPadding(false);
 
   return [
-    cipher.update(`LoveCode=${encodeURIComponent(code)}&IsExist=${isPass ? 'Y' : 'N'}`.padEnd(64, '\x1b'), 'utf8', 'hex'),
+    cipher.update(
+      `LoveCode=${encodeURIComponent(code)}&IsExist=${isPass ? 'Y' : 'N'}`.padEnd(64, '\x1b'),
+      'utf8',
+      'hex',
+    ),
     cipher.final('hex'),
   ].join('');
 };
@@ -63,30 +71,29 @@ const getDefaultResponse = (orderNo: string) => ({
 function parseFormData(formData: FormData, aesKey = DEFAULT_AES_KEY, aseIv = DEFAULT_AES_IV): EZPayInvoiceIssuePayload {
   const payloadArray = parse(formData.getBuffer(), formData.getBoundary());
 
-  const payload = payloadArray.reduce((vars, field) => ({
-    ...vars,
-    [field.name as string]: field.data.toString('utf8'),
-  }), {}) as {
+  const payload = payloadArray.reduce(
+    (vars, field) => ({
+      ...vars,
+      [field.name as string]: field.data.toString('utf8'),
+    }),
+    {},
+  ) as {
     MerchantID_: string;
     PostData_: string;
   };
 
   const decipher = createDecipheriv('aes-256-cbc', DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
-  const plainText = [
-    decipher.update(payload.PostData_, 'hex', 'utf8'),
-    decipher.final('utf8'),
-  ].join('');
+  const plainText = [decipher.update(payload.PostData_, 'hex', 'utf8'), decipher.final('utf8')].join('');
 
-  return plainText.split(/&/)
-    .reduce((vars, item) => {
-      const [key, value] = item.split(/=/);
+  return plainText.split(/&/).reduce((vars, item) => {
+    const [key, value] = item.split(/=/);
 
-      return {
-        ...vars,
-        [key]: decodeURIComponent(value),
-      };
-    }, {}) as EZPayInvoiceIssuePayload;
+    return {
+      ...vars,
+      [key]: decodeURIComponent(value),
+    };
+  }, {}) as EZPayInvoiceIssuePayload;
 }
 
 describe('EZPayInvoiceGateway', () => {
@@ -100,30 +107,29 @@ describe('EZPayInvoiceGateway', () => {
 
         const payloadArray = parse(formData.getBuffer(), formData.getBoundary());
 
-        const payload = payloadArray.reduce((vars, field) => ({
-          ...vars,
-          [field.name as string]: field.data.toString('utf8'),
-        }), {}) as {
+        const payload = payloadArray.reduce(
+          (vars, field) => ({
+            ...vars,
+            [field.name as string]: field.data.toString('utf8'),
+          }),
+          {},
+        ) as {
           MerchantID_: string;
           PostData_: string;
         };
 
         const decipher = createDecipheriv('aes-256-cbc', DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
-        const plainText = [
-          decipher.update(payload.PostData_, 'hex', 'utf8'),
-          decipher.final('utf8'),
-        ].join('');
+        const plainText = [decipher.update(payload.PostData_, 'hex', 'utf8'), decipher.final('utf8')].join('');
 
-        const params = plainText.split(/&/)
-          .reduce((vars, item) => {
-            const [key, value] = item.split(/=/);
+        const params = plainText.split(/&/).reduce((vars, item) => {
+          const [key, value] = item.split(/=/);
 
-            return {
-              ...vars,
-              [key]: decodeURIComponent(value),
-            };
-          }, {}) as EZPayInvoiceIssuePayload;
+          return {
+            ...vars,
+            [key]: decodeURIComponent(value),
+          };
+        }, {}) as EZPayInvoiceIssuePayload;
 
         return {
           data: {
@@ -149,11 +155,13 @@ describe('EZPayInvoiceGateway', () => {
 
     it('should issue with default key', async () => {
       const invoice = await invoiceGateway.issue({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
         buyerName: 'Tester',
         buyerEmail: 'user@rytass.com',
         orderId: '2022100500004',
@@ -187,30 +195,29 @@ describe('EZPayInvoiceGateway', () => {
 
         const payloadArray = parse(formData.getBuffer(), formData.getBoundary());
 
-        const payload = payloadArray.reduce((vars, field) => ({
-          ...vars,
-          [field.name as string]: field.data.toString('utf8'),
-        }), {}) as {
+        const payload = payloadArray.reduce(
+          (vars, field) => ({
+            ...vars,
+            [field.name as string]: field.data.toString('utf8'),
+          }),
+          {},
+        ) as {
           MerchantID_: string;
           PostData_: string;
         };
 
         const decipher = createDecipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
-        const plainText = [
-          decipher.update(payload.PostData_, 'hex', 'utf8'),
-          decipher.final('utf8'),
-        ].join('');
+        const plainText = [decipher.update(payload.PostData_, 'hex', 'utf8'), decipher.final('utf8')].join('');
 
-        const params = plainText.split(/&/)
-          .reduce((vars, item) => {
-            const [key, value] = item.split(/=/);
+        const params = plainText.split(/&/).reduce((vars, item) => {
+          const [key, value] = item.split(/=/);
 
-            return {
-              ...vars,
-              [key]: decodeURIComponent(value),
-            };
-          }, {}) as EZPayInvoiceIssuePayload;
+          return {
+            ...vars,
+            [key]: decodeURIComponent(value),
+          };
+        }, {}) as EZPayInvoiceIssuePayload;
 
         return {
           data: {
@@ -236,11 +243,13 @@ describe('EZPayInvoiceGateway', () => {
 
     it('should call api with custom options', async () => {
       const invoice = await invoiceGateway.issue({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
         buyerName: 'Tester',
         buyerEmail: 'user@rytass.com',
         orderId: '2022100500004',
@@ -267,30 +276,29 @@ describe('EZPayInvoiceGateway', () => {
 
         const payloadArray = parse(formData.getBuffer(), formData.getBoundary());
 
-        const payload = payloadArray.reduce((vars, field) => ({
-          ...vars,
-          [field.name as string]: field.data.toString('utf8'),
-        }), {}) as {
+        const payload = payloadArray.reduce(
+          (vars, field) => ({
+            ...vars,
+            [field.name as string]: field.data.toString('utf8'),
+          }),
+          {},
+        ) as {
           MerchantID_: string;
           PostData_: string;
         };
 
         const decipher = createDecipheriv('aes-256-cbc', DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
-        const plainText = [
-          decipher.update(payload.PostData_, 'hex', 'utf8'),
-          decipher.final('utf8'),
-        ].join('');
+        const plainText = [decipher.update(payload.PostData_, 'hex', 'utf8'), decipher.final('utf8')].join('');
 
-        const params = plainText.split(/&/)
-          .reduce((vars, item) => {
-            const [key, value] = item.split(/=/);
+        const params = plainText.split(/&/).reduce((vars, item) => {
+          const [key, value] = item.split(/=/);
 
-            return {
-              ...vars,
-              [key]: decodeURIComponent(value),
-            };
-          }, {}) as EZPayInvoiceIssuePayload;
+          return {
+            ...vars,
+            [key]: decodeURIComponent(value),
+          };
+        }, {}) as EZPayInvoiceIssuePayload;
 
         return {
           data: {
@@ -315,235 +323,291 @@ describe('EZPayInvoiceGateway', () => {
     });
 
     it('should throw when orderId not valid', () => {
-      expect(() => invoiceGateway.issue({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }, {
-          name: '鉛筆',
-          unitPrice: 8,
-          quantity: 3,
-        }],
-        buyerName: 'Tester',
-        buyerEmail: 'user@rytass.com',
-        orderId: '2022100500004^',
-        carrier: {
-          type: InvoiceCarrierType.PRINT,
-        },
-      })).rejects.toThrow();
+      expect(() =>
+        invoiceGateway.issue({
+          items: [
+            {
+              name: '橡皮擦',
+              unitPrice: 10,
+              quantity: 2,
+            },
+            {
+              name: '鉛筆',
+              unitPrice: 8,
+              quantity: 3,
+            },
+          ],
+          buyerName: 'Tester',
+          buyerEmail: 'user@rytass.com',
+          orderId: '2022100500004^',
+          carrier: {
+            type: InvoiceCarrierType.PRINT,
+          },
+        }),
+      ).rejects.toThrow();
 
-      expect(() => invoiceGateway.issue({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }, {
-          name: '鉛筆',
-          unitPrice: 8,
-          quantity: 3,
-        }],
-        buyerName: 'Tester',
-        buyerEmail: 'user@rytass.com',
-        orderId: '20221005000047401720213472',
-        carrier: {
-          type: InvoiceCarrierType.PRINT,
-        },
-      })).rejects.toThrow();
+      expect(() =>
+        invoiceGateway.issue({
+          items: [
+            {
+              name: '橡皮擦',
+              unitPrice: 10,
+              quantity: 2,
+            },
+            {
+              name: '鉛筆',
+              unitPrice: 8,
+              quantity: 3,
+            },
+          ],
+          buyerName: 'Tester',
+          buyerEmail: 'user@rytass.com',
+          orderId: '20221005000047401720213472',
+          carrier: {
+            type: InvoiceCarrierType.PRINT,
+          },
+        }),
+      ).rejects.toThrow();
     });
 
     it('should throw when vat number invalid', () => {
-      expect(() => invoiceGateway.issue({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }, {
-          name: '鉛筆',
-          unitPrice: 8,
-          quantity: 3,
-        }],
-        vatNumber: '400100000',
-        buyerName: 'Tester',
-        buyerEmail: 'user@rytass.com',
-        orderId: '2022100500004',
-        carrier: {
-          type: InvoiceCarrierType.PRINT,
-        },
-      })).rejects.toThrow();
+      expect(() =>
+        invoiceGateway.issue({
+          items: [
+            {
+              name: '橡皮擦',
+              unitPrice: 10,
+              quantity: 2,
+            },
+            {
+              name: '鉛筆',
+              unitPrice: 8,
+              quantity: 3,
+            },
+          ],
+          vatNumber: '400100000',
+          buyerName: 'Tester',
+          buyerEmail: 'user@rytass.com',
+          orderId: '2022100500004',
+          carrier: {
+            type: InvoiceCarrierType.PRINT,
+          },
+        }),
+      ).rejects.toThrow();
     });
 
     it('should throw when email invalid', () => {
-      expect(() => invoiceGateway.issue({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }, {
-          name: '鉛筆',
-          unitPrice: 8,
-          quantity: 3,
-        }],
-        buyerName: 'Tester',
-        buyerEmail: 'aaaa.com',
-        orderId: '2022100500004',
-        carrier: {
-          type: InvoiceCarrierType.PRINT,
-        },
-      })).rejects.toThrow();
+      expect(() =>
+        invoiceGateway.issue({
+          items: [
+            {
+              name: '橡皮擦',
+              unitPrice: 10,
+              quantity: 2,
+            },
+            {
+              name: '鉛筆',
+              unitPrice: 8,
+              quantity: 3,
+            },
+          ],
+          buyerName: 'Tester',
+          buyerEmail: 'aaaa.com',
+          orderId: '2022100500004',
+          carrier: {
+            type: InvoiceCarrierType.PRINT,
+          },
+        }),
+      ).rejects.toThrow();
     });
 
     it('should throw when issue B2B invoice with carrier', () => {
-      expect(() => invoiceGateway.issue({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }, {
-          name: '鉛筆',
-          unitPrice: 8,
-          quantity: 3,
-        }],
-        vatNumber: '54366906',
-        buyerName: 'Tester',
-        buyerEmail: 'user@rytass.com',
-        orderId: '2022100500004',
-        carrier: {
-          type: InvoiceCarrierType.MOBILE,
-          code: 'FAKE',
-        },
-      })).rejects.toThrow();
+      expect(() =>
+        invoiceGateway.issue({
+          items: [
+            {
+              name: '橡皮擦',
+              unitPrice: 10,
+              quantity: 2,
+            },
+            {
+              name: '鉛筆',
+              unitPrice: 8,
+              quantity: 3,
+            },
+          ],
+          vatNumber: '54366906',
+          buyerName: 'Tester',
+          buyerEmail: 'user@rytass.com',
+          orderId: '2022100500004',
+          carrier: {
+            type: InvoiceCarrierType.MOBILE,
+            code: 'FAKE',
+          },
+        }),
+      ).rejects.toThrow();
     });
 
     it('should throw when buyer invalid', () => {
-      expect(() => invoiceGateway.issue({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }, {
-          name: '鉛筆',
-          unitPrice: 8,
-          quantity: 3,
-        }],
-        buyerEmail: 'user@rytass.com',
-        orderId: '2022100500004',
-        buyerName: '123456789012345678901234567890aaa',
-        carrier: {
-          type: InvoiceCarrierType.PRINT,
-        },
-      })).rejects.toThrow();
+      expect(() =>
+        invoiceGateway.issue({
+          items: [
+            {
+              name: '橡皮擦',
+              unitPrice: 10,
+              quantity: 2,
+            },
+            {
+              name: '鉛筆',
+              unitPrice: 8,
+              quantity: 3,
+            },
+          ],
+          buyerEmail: 'user@rytass.com',
+          orderId: '2022100500004',
+          buyerName: '123456789012345678901234567890aaa',
+          carrier: {
+            type: InvoiceCarrierType.PRINT,
+          },
+        }),
+      ).rejects.toThrow();
     });
 
     it('should throw when use platform carrier without email', () => {
-      expect(() => invoiceGateway.issue({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }, {
-          name: '鉛筆',
-          unitPrice: 8,
-          quantity: 3,
-        }],
-        buyerName: 'Tester',
-        orderId: '2022100500004',
-        carrier: {
-          type: InvoiceCarrierType.PLATFORM,
-          code: 'FAKE',
-        },
-      })).rejects.toThrow();
+      expect(() =>
+        invoiceGateway.issue({
+          items: [
+            {
+              name: '橡皮擦',
+              unitPrice: 10,
+              quantity: 2,
+            },
+            {
+              name: '鉛筆',
+              unitPrice: 8,
+              quantity: 3,
+            },
+          ],
+          buyerName: 'Tester',
+          orderId: '2022100500004',
+          carrier: {
+            type: InvoiceCarrierType.PLATFORM,
+            code: 'FAKE',
+          },
+        }),
+      ).rejects.toThrow();
     });
 
     it('should throw when taxType is Special', () => {
-      expect(() => invoiceGateway.issue({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-          taxType: TaxType.SPECIAL,
-        }, {
-          name: '鉛筆',
-          unitPrice: 8,
-          quantity: 3,
-          taxType: TaxType.SPECIAL,
-        }],
-        buyerName: 'Tester',
-        orderId: '2022100500004',
-        carrier: {
-          type: InvoiceCarrierType.PRINT,
-        },
-      })).rejects.toThrow();
+      expect(() =>
+        invoiceGateway.issue({
+          items: [
+            {
+              name: '橡皮擦',
+              unitPrice: 10,
+              quantity: 2,
+              taxType: TaxType.SPECIAL,
+            },
+            {
+              name: '鉛筆',
+              unitPrice: 8,
+              quantity: 3,
+              taxType: TaxType.SPECIAL,
+            },
+          ],
+          buyerName: 'Tester',
+          orderId: '2022100500004',
+          carrier: {
+            type: InvoiceCarrierType.PRINT,
+          },
+        }),
+      ).rejects.toThrow();
     });
 
     it('should throw when mixed tax type and issue B2B invoice', () => {
-      expect(() => invoiceGateway.issue({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-          taxType: TaxType.TAX_FREE,
-        }, {
-          name: '鉛筆',
-          unitPrice: 8,
-          quantity: 3,
-          taxType: TaxType.TAXED,
-        }],
-        vatNumber: '54366906',
-        buyerName: 'Tester',
-        orderId: '2022100500004',
-        carrier: {
-          type: InvoiceCarrierType.PRINT,
-        },
-      })).rejects.toThrow();
+      expect(() =>
+        invoiceGateway.issue({
+          items: [
+            {
+              name: '橡皮擦',
+              unitPrice: 10,
+              quantity: 2,
+              taxType: TaxType.TAX_FREE,
+            },
+            {
+              name: '鉛筆',
+              unitPrice: 8,
+              quantity: 3,
+              taxType: TaxType.TAXED,
+            },
+          ],
+          vatNumber: '54366906',
+          buyerName: 'Tester',
+          orderId: '2022100500004',
+          carrier: {
+            type: InvoiceCarrierType.PRINT,
+          },
+        }),
+      ).rejects.toThrow();
     });
 
     it('should throw when moica is invalid', () => {
-      expect(() => invoiceGateway.issue({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-          taxType: TaxType.TAX_FREE,
-        }, {
-          name: '鉛筆',
-          unitPrice: 8,
-          quantity: 3,
-          taxType: TaxType.TAXED,
-        }],
-        buyerName: 'Tester',
-        orderId: '2022100500004',
-        carrier: {
-          type: InvoiceCarrierType.MOICA,
-          code: '18090918203',
-        },
-      })).rejects.toThrow();
+      expect(() =>
+        invoiceGateway.issue({
+          items: [
+            {
+              name: '橡皮擦',
+              unitPrice: 10,
+              quantity: 2,
+              taxType: TaxType.TAX_FREE,
+            },
+            {
+              name: '鉛筆',
+              unitPrice: 8,
+              quantity: 3,
+              taxType: TaxType.TAXED,
+            },
+          ],
+          buyerName: 'Tester',
+          orderId: '2022100500004',
+          carrier: {
+            type: InvoiceCarrierType.MOICA,
+            code: '18090918203',
+          },
+        }),
+      ).rejects.toThrow();
     });
 
     it('should throw when total amount is zero', () => {
-      expect(() => invoiceGateway.issue({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 0,
-          quantity: 2,
-          taxType: TaxType.TAX_FREE,
-        }],
-        buyerName: 'Tester',
-        orderId: '2022100500004',
-        carrier: {
-          type: InvoiceCarrierType.PRINT,
-        },
-      })).rejects.toThrow();
+      expect(() =>
+        invoiceGateway.issue({
+          items: [
+            {
+              name: '橡皮擦',
+              unitPrice: 0,
+              quantity: 2,
+              taxType: TaxType.TAX_FREE,
+            },
+          ],
+          buyerName: 'Tester',
+          orderId: '2022100500004',
+          carrier: {
+            type: InvoiceCarrierType.PRINT,
+          },
+        }),
+      ).rejects.toThrow();
     });
 
     it('should issue B2B Invoice', async () => {
       const invoice = await invoiceGateway.issue({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-          taxType: TaxType.TAX_FREE,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+            taxType: TaxType.TAX_FREE,
+          },
+        ],
         vatNumber: '54366906',
         buyerName: 'Tester',
         orderId: '2022100500004',
@@ -557,12 +621,14 @@ describe('EZPayInvoiceGateway', () => {
 
     it('should issue B2C Invoice with platform carrier', async () => {
       const invoice = await invoiceGateway.issue({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-          taxType: TaxType.TAX_FREE,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+            taxType: TaxType.TAX_FREE,
+          },
+        ],
         buyerEmail: 'user@rytass.com',
         buyerName: 'Tester',
         orderId: '2022100500004',
@@ -594,12 +660,14 @@ describe('EZPayInvoiceGateway', () => {
       });
 
       await invoiceGateway.issue({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-          taxType: TaxType.TAX_FREE,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+            taxType: TaxType.TAX_FREE,
+          },
+        ],
         vatNumber: '54366906',
         buyerName: '123456789012345678901234567890123456789012345678901234567890gg',
         orderId: '2022100500004',
@@ -633,12 +701,14 @@ describe('EZPayInvoiceGateway', () => {
       });
 
       await invoiceGateway.issue({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-          taxType: TaxType.TAX_FREE,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+            taxType: TaxType.TAX_FREE,
+          },
+        ],
         buyerName: 'Tester',
         orderId: '2022100500004',
         carrier: {
@@ -658,12 +728,14 @@ describe('EZPayInvoiceGateway', () => {
       });
 
       await invoiceGateway.issue({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-          taxType: TaxType.ZERO_TAX,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+            taxType: TaxType.ZERO_TAX,
+          },
+        ],
         customsMark: CustomsMark.YES,
         buyerName: 'Tester',
         buyerEmail: 'user@rytass.com',
@@ -683,12 +755,14 @@ describe('EZPayInvoiceGateway', () => {
       });
 
       await invoiceGateway.issue({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-          taxType: TaxType.ZERO_TAX,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+            taxType: TaxType.ZERO_TAX,
+          },
+        ],
         customsMark: CustomsMark.NO,
         buyerName: 'Tester',
         buyerEmail: 'user@rytass.com',
@@ -712,17 +786,20 @@ describe('EZPayInvoiceGateway', () => {
       });
 
       await invoiceGateway.issue({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-          taxType: TaxType.TAX_FREE,
-        }, {
-          name: '筆芯',
-          unitPrice: 2,
-          quantity: 7,
-          taxType: TaxType.TAXED,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+            taxType: TaxType.TAX_FREE,
+          },
+          {
+            name: '筆芯',
+            unitPrice: 2,
+            quantity: 7,
+            taxType: TaxType.TAXED,
+          },
+        ],
         buyerEmail: 'user@rytass.com',
         buyerName: 'Tester',
         orderId: '2022100500004',
@@ -743,17 +820,20 @@ describe('EZPayInvoiceGateway', () => {
       });
 
       await invoiceGateway.issue({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-          taxType: TaxType.ZERO_TAX,
-        }, {
-          name: '筆芯',
-          unitPrice: 2,
-          quantity: 7,
-          taxType: TaxType.SPECIAL,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+            taxType: TaxType.ZERO_TAX,
+          },
+          {
+            name: '筆芯',
+            unitPrice: 2,
+            quantity: 7,
+            taxType: TaxType.SPECIAL,
+          },
+        ],
         buyerName: 'Tester',
         buyerEmail: 'user@rytass.com',
         orderId: '2022100500004',
@@ -775,11 +855,13 @@ describe('EZPayInvoiceGateway', () => {
 
       await invoiceGateway.issue({
         specialTaxPercentage: 13,
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
         buyerName: 'Tester',
         buyerEmail: 'user@rytass.com',
         orderId: '2022100500004',
@@ -816,11 +898,13 @@ describe('EZPayInvoiceGateway', () => {
 
       await invoiceGateway.issue({
         specialTaxPercentage: 13,
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
         buyerName: 'Tester',
         orderId: '2022100500004',
         carrier: {
@@ -842,11 +926,13 @@ describe('EZPayInvoiceGateway', () => {
 
       await invoiceGateway.issue({
         specialTaxPercentage: 13,
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
         buyerName: 'Tester',
         orderId: '2022100500004',
         carrier: {
@@ -867,11 +953,13 @@ describe('EZPayInvoiceGateway', () => {
       });
 
       await invoiceGateway.issue({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
         vatNumber: '54366906',
         buyerName: 'Tester',
         orderId: '2022100500004',
@@ -897,19 +985,23 @@ describe('EZPayInvoiceGateway', () => {
         };
       });
 
-      expect(() => invoiceGateway.issue({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }],
-        vatNumber: '54366906',
-        buyerName: 'Tester',
-        orderId: '2022100500004',
-        carrier: {
-          type: InvoiceCarrierType.PRINT,
-        },
-      })).rejects.toThrow();
+      expect(() =>
+        invoiceGateway.issue({
+          items: [
+            {
+              name: '橡皮擦',
+              unitPrice: 10,
+              quantity: 2,
+            },
+          ],
+          vatNumber: '54366906',
+          buyerName: 'Tester',
+          orderId: '2022100500004',
+          carrier: {
+            type: InvoiceCarrierType.PRINT,
+          },
+        }),
+      ).rejects.toThrow();
     });
 
     it('should throw error when mobile validation service down', () => {
@@ -929,20 +1021,24 @@ describe('EZPayInvoiceGateway', () => {
         }
       });
 
-      expect(() => invoiceGateway.issue({
-        specialTaxPercentage: 13,
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }],
-        buyerName: 'Tester',
-        orderId: '2022100500004',
-        carrier: {
-          type: InvoiceCarrierType.MOBILE,
-          code: '/-F-K0DR',
-        },
-      })).rejects.toThrow();
+      expect(() =>
+        invoiceGateway.issue({
+          specialTaxPercentage: 13,
+          items: [
+            {
+              name: '橡皮擦',
+              unitPrice: 10,
+              quantity: 2,
+            },
+          ],
+          buyerName: 'Tester',
+          orderId: '2022100500004',
+          carrier: {
+            type: InvoiceCarrierType.MOBILE,
+            code: '/-F-K0DR',
+          },
+        }),
+      ).rejects.toThrow();
     });
 
     it('should throw error when mobile barcode not valid', () => {
@@ -962,20 +1058,24 @@ describe('EZPayInvoiceGateway', () => {
         }
       });
 
-      expect(() => invoiceGateway.issue({
-        specialTaxPercentage: 13,
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }],
-        buyerName: 'Tester',
-        orderId: '2022100500004',
-        carrier: {
-          type: InvoiceCarrierType.MOBILE,
-          code: '/-F-K0DQ',
-        },
-      })).rejects.toThrow();
+      expect(() =>
+        invoiceGateway.issue({
+          specialTaxPercentage: 13,
+          items: [
+            {
+              name: '橡皮擦',
+              unitPrice: 10,
+              quantity: 2,
+            },
+          ],
+          buyerName: 'Tester',
+          orderId: '2022100500004',
+          carrier: {
+            type: InvoiceCarrierType.MOBILE,
+            code: '/-F-K0DQ',
+          },
+        }),
+      ).rejects.toThrow();
     });
 
     it('should throw error when love code validation service down', async () => {
@@ -995,20 +1095,24 @@ describe('EZPayInvoiceGateway', () => {
         }
       });
 
-      expect(() => invoiceGateway.issue({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-          taxType: TaxType.TAX_FREE,
-        }],
-        buyerName: 'Tester',
-        orderId: '2022100500004',
-        carrier: {
-          type: InvoiceCarrierType.LOVE_CODE,
-          code: '99987',
-        },
-      })).rejects.toThrow();
+      expect(() =>
+        invoiceGateway.issue({
+          items: [
+            {
+              name: '橡皮擦',
+              unitPrice: 10,
+              quantity: 2,
+              taxType: TaxType.TAX_FREE,
+            },
+          ],
+          buyerName: 'Tester',
+          orderId: '2022100500004',
+          carrier: {
+            type: InvoiceCarrierType.LOVE_CODE,
+            code: '99987',
+          },
+        }),
+      ).rejects.toThrow();
     });
 
     it('should throw error when love code not valid', () => {
@@ -1028,20 +1132,24 @@ describe('EZPayInvoiceGateway', () => {
         }
       });
 
-      expect(() => invoiceGateway.issue({
-        specialTaxPercentage: 13,
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }],
-        buyerName: 'Tester',
-        orderId: '2022100500004',
-        carrier: {
-          type: InvoiceCarrierType.LOVE_CODE,
-          code: '99988',
-        },
-      })).rejects.toThrow();
+      expect(() =>
+        invoiceGateway.issue({
+          specialTaxPercentage: 13,
+          items: [
+            {
+              name: '橡皮擦',
+              unitPrice: 10,
+              quantity: 2,
+            },
+          ],
+          buyerName: 'Tester',
+          orderId: '2022100500004',
+          carrier: {
+            type: InvoiceCarrierType.LOVE_CODE,
+            code: '99988',
+          },
+        }),
+      ).rejects.toThrow();
     });
 
     afterEach(() => {

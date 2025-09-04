@@ -1,22 +1,11 @@
-import {
-  Column,
-  Entity,
-  Index,
-  JoinColumn,
-  ManyToOne,
-  PrimaryColumn,
-  type Relation,
-  TableInheritance,
-} from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryColumn, type Relation, TableInheritance } from 'typeorm';
 import { DEFAULT_LANGUAGE } from '../constants/default-language';
 import { QuadratsElement } from '@quadrats/core';
 import { BaseArticleVersionEntity } from './base-article-version.entity';
 import { FULL_TEXT_SEARCH_TOKEN_VERSION } from '../constants/full-text-search-token-version';
 import { EMPTY_QUADRATS_ELEMENTS } from '../constants/empty-quadrats-elements';
 
-export const BaseArticleVersionContentRepo = Symbol(
-  'BaseArticleVersionContentRepo',
-);
+export const BaseArticleVersionContentRepo = Symbol('BaseArticleVersionContentRepo');
 
 @Entity('article_version_contents')
 @Index(['articleId', 'version'])
@@ -48,15 +37,11 @@ export class BaseArticleVersionContentEntity {
   @Column('varchar', { default: FULL_TEXT_SEARCH_TOKEN_VERSION, select: false })
   searchTokenVersion: string;
 
-  @ManyToOne(
-    () => BaseArticleVersionEntity,
-    (articleVersion) => articleVersion.multiLanguageContents,
-    {
-      onUpdate: 'CASCADE',
-      onDelete: 'CASCADE',
-      orphanedRowAction: 'delete',
-    },
-  )
+  @ManyToOne(() => BaseArticleVersionEntity, articleVersion => articleVersion.multiLanguageContents, {
+    onUpdate: 'CASCADE',
+    onDelete: 'CASCADE',
+    orphanedRowAction: 'delete',
+  })
   @JoinColumn([
     { name: 'articleId', referencedColumnName: 'articleId' },
     { name: 'version', referencedColumnName: 'version' },

@@ -1,2 +1,2 @@
-export * from './typings'
-export * from './errors/errors'
+export * from './typings';
+export * from './errors/errors';

@@ -32,7 +32,9 @@ export interface HwaNanCreditCardCommitMessage extends OrderCreditCardCommitMess
   platformTradeNumber: string;
 }
 
-export type HwaNanOrderInput<CM extends HwaNanCommitMessage> = CM extends HwaNanCreditCardCommitMessage ? HwaNanCreditCardOrderInput : never;
+export type HwaNanOrderInput<CM extends HwaNanCommitMessage> = CM extends HwaNanCreditCardCommitMessage
+  ? HwaNanCreditCardOrderInput
+  : never;
 
 export enum HwaNanCustomizePageType {
   ZH_TW = 1,

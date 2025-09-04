@@ -1,11 +1,7 @@
 import { BindCardRequest, PaymentEvents } from '@rytass/payments';
 import { encodeRequestPayload, toTxnPayload } from './ctbc-crypto';
 import { CTBCPayment } from './ctbc-payment';
-import {
-  CTBCBindCardCallbackPayload,
-  CTBCBindCardRequestPayload,
-  CTBCBindCardRequestState,
-} from './typings';
+import { CTBCBindCardCallbackPayload, CTBCBindCardRequestPayload, CTBCBindCardRequestState } from './typings';
 
 export class CTBCBindCardRequest implements BindCardRequest {
   private readonly _gateway: CTBCPayment;
@@ -40,11 +36,7 @@ export class CTBCBindCardRequest implements BindCardRequest {
     this._resolved = true;
 
     return {
-      reqjsonpwd: encodeRequestPayload(
-        'TokenAdd',
-        toTxnPayload(this._payload),
-        this._gateway,
-      ),
+      reqjsonpwd: encodeRequestPayload('TokenAdd', toTxnPayload(this._payload), this._gateway),
     };
   }
 
@@ -52,10 +44,7 @@ export class CTBCBindCardRequest implements BindCardRequest {
     const form = this.form;
 
     const inputs = Object.entries(form)
-      .map(
-        ([key, value]) =>
-          `<input type="hidden" name="${key}" value="${value}" />`,
-      )
+      .map(([key, value]) => `<input type="hidden" name="${key}" value="${value}" />`)
       .join('\n');
 
     return `<!DOCTYPE html>

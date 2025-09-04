@@ -1,9 +1,4 @@
-import {
-  BaseOrderItem,
-  OrderItem,
-  FlattenOrderItem,
-  OrderItemRecord,
-} from './typings';
+import { BaseOrderItem, OrderItem, FlattenOrderItem, OrderItemRecord } from './typings';
 import { OrderItemRecordCollection } from './order-item-record-collection';
 import { Policy } from '../policies';
 import { minus } from '../utils/decimal';
@@ -14,20 +9,13 @@ import { minus } from '../utils/decimal';
 export interface OrderItemManager<Item extends OrderItem = OrderItem>
   extends Pick<
     OrderItemManagerImpl<Item>,
-    | 'items'
-    | 'collectionMap'
-    | 'flattenItems'
-    | 'initCollectionMap'
-    | 'getCurrentItemRecords'
-    | 'updateCollection'
+    'items' | 'collectionMap' | 'flattenItems' | 'initCollectionMap' | 'getCurrentItemRecords' | 'updateCollection'
   > {}
 
 /**
  * OrderItemManagerImpl (Can only accessed by its owner `Order`.)
  */
-export class OrderItemManagerImpl<Item extends OrderItem = OrderItem>
-  implements OrderItemManager<Item>
-{
+export class OrderItemManagerImpl<Item extends OrderItem = OrderItem> implements OrderItemManager<Item> {
   private _collectionMap: Map<string, OrderItemRecordCollection> = new Map();
   private _items: Item[];
 
@@ -55,8 +43,7 @@ export class OrderItemManagerImpl<Item extends OrderItem = OrderItem>
           const uuid = `${item.id}-${index + 1}`;
           const unitPrice = minus(
             item.unitPrice,
-            this._collectionMap.get(`${item.id}-${index + 1}`)?.discountValue ||
-              0
+            this._collectionMap.get(`${item.id}-${index + 1}`)?.discountValue || 0,
           );
 
           return {
@@ -65,7 +52,7 @@ export class OrderItemManagerImpl<Item extends OrderItem = OrderItem>
             uuid,
             quantity: unitPrice ? 1 : 0,
           } as FlattenOrderItem<Item>;
-        })
+        }),
       );
 
       return total;
@@ -80,14 +67,10 @@ export class OrderItemManagerImpl<Item extends OrderItem = OrderItem>
     this._collectionMap.clear();
   }
 
-  public getCurrentItemRecords(
-    policyMap: Map<string, Policy>
-  ): OrderItemRecord<Item>[] {
+  public getCurrentItemRecords(policyMap: Map<string, Policy>): OrderItemRecord<Item>[] {
     return this.flattenItems
-      .map((flattenItem) => {
-        const record =
-          this.collectionMap.get(flattenItem.uuid) ||
-          new OrderItemRecordCollection(flattenItem);
+      .map(flattenItem => {
+        const record = this.collectionMap.get(flattenItem.uuid) || new OrderItemRecordCollection(flattenItem);
 
         this._collectionMap.set(flattenItem.uuid, record);
 
@@ -108,10 +91,9 @@ export class OrderItemManagerImpl<Item extends OrderItem = OrderItem>
 
   public updateCollection<T extends FlattenOrderItem<OrderItem>>(
     item: T,
-    resolve: (record: OrderItemRecordCollection) => OrderItemRecordCollection
+    resolve: (record: OrderItemRecordCollection) => OrderItemRecordCollection,
   ): void {
-    const storedRecord =
-      this._collectionMap.get(item.uuid) || new OrderItemRecordCollection(item);
+    const storedRecord = this._collectionMap.get(item.uuid) || new OrderItemRecordCollection(item);
 
     this._collectionMap.set(item.uuid, resolve(storedRecord));
   }
@@ -124,35 +106,25 @@ export class OrderItemManagerImpl<Item extends OrderItem = OrderItem>
 
   public removeItem<RemoveItem extends BaseOrderItem = BaseOrderItem>(
     arg0: string | RemoveItem | RemoveItem[],
-    arg1?: number
+    arg1?: number,
   ): void {
     const items: RemoveItem[] = Array.isArray(arg0)
       ? arg0
       : [
           {
             id: typeof arg0 === 'string' ? arg0 : arg0.id,
-            quantity:
-              typeof arg0 !== 'string'
-                ? arg0.quantity
-                : typeof arg1 === 'number'
-                ? Math.max(arg1, 0)
-                : 0,
+            quantity: typeof arg0 !== 'string' ? arg0.quantity : typeof arg1 === 'number' ? Math.max(arg1, 0) : 0,
           } as RemoveItem,
         ];
 
-    const toRemoveItemMap = new Map<string, RemoveItem>(
-      items.map(item => [item.id, item])
-    );
+    const toRemoveItemMap = new Map<string, RemoveItem>(items.map(item => [item.id, item]));
 
     this._items = this._items.reduce((items, item) => {
       const matchedToRemoveItem = toRemoveItemMap.get(item.id);
 
       if (!matchedToRemoveItem) return [...items, item];
 
-      const predictQuantity = minus(
-        item.quantity,
-        matchedToRemoveItem.quantity
-      );
+      const predictQuantity = minus(item.quantity, matchedToRemoveItem.quantity);
 
       return predictQuantity > 0
         ? [

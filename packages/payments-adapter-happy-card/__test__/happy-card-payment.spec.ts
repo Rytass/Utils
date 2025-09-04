@@ -1,10 +1,6 @@
 import { HappyCardPayment } from '../src/happy-card-payment';
 import { HappyCardOrder } from '../src/happy-card-order';
-import {
-  HappyCardProductType,
-  HappyCardRecordType,
-  HappyCardResultCode,
-} from '../src/typings';
+import { HappyCardProductType, HappyCardRecordType, HappyCardResultCode } from '../src/typings';
 import axios from 'axios';
 
 jest.mock('../src/happy-card-order');
@@ -153,9 +149,6 @@ describe('HappyCardPayment.getCardBalance (returnRecords = false)', () => {
     const result = await gateway.getCardBalance('123456', false);
 
     expect(mockedAxios.post).toHaveBeenCalled();
-    expect(result).toEqual([
-      150,
-      HappyCardProductType.INVOICE_FIRST_DIGITAL_GIFT_GF,
-    ]);
+    expect(result).toEqual([150, HappyCardProductType.INVOICE_FIRST_DIGITAL_GIFT_GF]);
   });
 });

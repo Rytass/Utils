@@ -37,15 +37,8 @@ export interface ArticleTableActionsType {
     | ArticleTableActions.Release
     | ArticleTableActions.Delete
   )[];
-  [ArticleStage.SCHEDULED]?: (
-    | ArticleTableActions.View
-    | ArticleTableActions.Update
-    | ArticleTableActions.Withdraw
-  )[];
-  [ArticleStage.RELEASED]?: (
-    | ArticleTableActions.Update
-    | ArticleTableActions.Delete
-  )[];
+  [ArticleStage.SCHEDULED]?: (ArticleTableActions.View | ArticleTableActions.Update | ArticleTableActions.Withdraw)[];
+  [ArticleStage.RELEASED]?: (ArticleTableActions.Update | ArticleTableActions.Delete)[];
   [ArticleStage.UNKNOWN]?: [];
 }
 

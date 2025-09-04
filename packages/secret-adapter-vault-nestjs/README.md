@@ -47,9 +47,9 @@ import { VaultModule } from '@rytass/secret-adapter-vault-nestjs';
 @Module({
   imports: [
     VaultModule.forRoot({
-      path: '/secret/data/myapp',  // Vault path for secrets
-      fallbackFile: '.env',         // Optional: fallback env file
-    })
+      path: '/secret/data/myapp', // Vault path for secrets
+      fallbackFile: '.env', // Optional: fallback env file
+    }),
   ],
 })
 export class AppModule {}
@@ -67,8 +67,8 @@ import { VaultModule } from '@rytass/secret-adapter-vault-nestjs';
   imports: [
     VaultModule.forRoot({
       path: '/secret/data/myapp',
-      fallbackFile: '.env'
-    })
+      fallbackFile: '.env',
+    }),
   ],
 })
 export class AppModule {}
@@ -94,7 +94,7 @@ export class ConfigurationService {
       host,
       port,
       username,
-      password
+      password,
     };
   }
 
@@ -185,7 +185,7 @@ export class ResilientConfigService {
 
     return {
       apiUrl,
-      apiKey
+      apiKey,
     };
   }
 }
@@ -201,8 +201,8 @@ Specify a fallback environment file for when Vault is unavailable:
   imports: [
     VaultModule.forRoot({
       path: '/secret/data/production',
-      fallbackFile: '.env.production'  // Fallback to .env.production file
-    })
+      fallbackFile: '.env.production', // Fallback to .env.production file
+    }),
   ],
 })
 export class AppModule {}
@@ -220,7 +220,7 @@ import { VaultModule, VaultService } from '@rytass/secret-adapter-vault-nestjs';
 @Module({
   imports: [
     VaultModule.forRoot({
-      path: '/secret/data/database'
+      path: '/secret/data/database',
     }),
     TypeOrmModule.forRootAsync({
       imports: [VaultModule],
@@ -234,8 +234,8 @@ import { VaultModule, VaultService } from '@rytass/secret-adapter-vault-nestjs';
         database: await vault.get<string>('DB_NAME'),
         synchronize: false,
         logging: true,
-      })
-    })
+      }),
+    }),
   ],
 })
 export class DatabaseModule {}
@@ -251,7 +251,7 @@ import { VaultModule, VaultService } from '@rytass/secret-adapter-vault-nestjs';
 @Module({
   imports: [
     VaultModule.forRoot({
-      path: '/secret/data/auth'
+      path: '/secret/data/auth',
     }),
     JwtModule.registerAsync({
       imports: [VaultModule],
@@ -259,10 +259,10 @@ import { VaultModule, VaultService } from '@rytass/secret-adapter-vault-nestjs';
       useFactory: async (vault: VaultService) => ({
         secret: await vault.get<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: await vault.get<string>('JWT_EXPIRY') || '1h'
-        }
-      })
-    })
+          expiresIn: (await vault.get<string>('JWT_EXPIRY')) || '1h',
+        },
+      }),
+    }),
   ],
 })
 export class AuthModule {}
@@ -285,7 +285,7 @@ async function bootstrap() {
       host: await vault.get<string>('REDIS_HOST'),
       port: await vault.get<number>('REDIS_PORT'),
       password: await vault.get<string>('REDIS_PASSWORD'),
-    }
+    },
   });
 
   await app.startAllMicroservices();
@@ -303,7 +303,7 @@ export class SafeConfigService {
   async getSensitiveConfig() {
     try {
       const secret = await this.vault.get<string>('SENSITIVE_KEY');
-      
+
       if (!secret) {
         throw new Error('Sensitive key not found');
       }
@@ -312,7 +312,7 @@ export class SafeConfigService {
     } catch (error) {
       // When Vault is down, it falls back to env vars automatically
       console.error('Failed to retrieve secret:', error);
-      
+
       // You can implement additional fallback logic
       return process.env.FALLBACK_SENSITIVE_KEY || 'default-value';
     }
@@ -367,13 +367,13 @@ export class ConfigService {
 
 ```typescript
 // auth.module.ts
-VaultModule.forRoot({ path: '/secret/data/auth' })
+VaultModule.forRoot({ path: '/secret/data/auth' });
 
-// database.module.ts  
-VaultModule.forRoot({ path: '/secret/data/database' })
+// database.module.ts
+VaultModule.forRoot({ path: '/secret/data/database' });
 
 // api.module.ts
-VaultModule.forRoot({ path: '/secret/data/external-apis' })
+VaultModule.forRoot({ path: '/secret/data/external-apis' });
 ```
 
 ### 4. Use Environment-Specific Paths
@@ -385,8 +385,8 @@ const environment = process.env.NODE_ENV || 'development';
   imports: [
     VaultModule.forRoot({
       path: `/secret/data/${environment}`,
-      fallbackFile: `.env.${environment}`
-    })
+      fallbackFile: `.env.${environment}`,
+    }),
   ],
 })
 export class AppModule {}
@@ -401,6 +401,7 @@ export class AppModule {}
 Configure the Vault module.
 
 **Options:**
+
 - `path` (string, required): Vault secret path from root
 - `fallbackFile` (string, optional): Path to fallback environment file
 
@@ -411,6 +412,7 @@ Configure the Vault module.
 Retrieve a secret value.
 
 **Parameters:**
+
 - `key`: Secret key name
 
 **Returns:** Promise resolving to the secret value
@@ -420,6 +422,7 @@ Retrieve a secret value.
 Store a secret value.
 
 **Parameters:**
+
 - `key`: Secret key name
 - `value`: Value to store
 - `syncToOnline`: Whether to sync immediately to Vault (default: false)
@@ -429,6 +432,7 @@ Store a secret value.
 Delete a secret.
 
 **Parameters:**
+
 - `key`: Secret key name
 - `syncToOnline`: Whether to sync deletion to Vault (default: false)
 
@@ -439,7 +443,7 @@ Delete a secret.
 @Injectable()
 export class OldService {
   constructor(private config: ConfigService) {}
-  
+
   getValue() {
     return this.config.get('MY_KEY');
   }
@@ -449,7 +453,7 @@ export class OldService {
 @Injectable()
 export class NewService {
   constructor(private vault: VaultService) {}
-  
+
   async getValue() {
     return this.vault.get<string>('MY_KEY');
   }
@@ -461,6 +465,7 @@ export class NewService {
 ### Vault Connection Issues
 
 If you see fallback warnings:
+
 1. Check `VAULT_HOST` is accessible
 2. Verify `VAULT_ACCOUNT` and `VAULT_PASSWORD` are correct
 3. Ensure `VAULT_PATH` exists in Vault

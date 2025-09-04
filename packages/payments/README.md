@@ -51,7 +51,7 @@ const paymentGateway = new ECPayPaymentGateway({
   merchantId: 'YOUR_MERCHANT_ID',
   hashKey: 'YOUR_HASH_KEY',
   hashIV: 'YOUR_HASH_IV',
-  isProduction: false
+  isProduction: false,
 });
 
 // Prepare an order
@@ -60,28 +60,31 @@ const order = await paymentGateway.prepare({
     {
       name: 'Product A',
       unitPrice: 1000,
-      quantity: 2
+      quantity: 2,
     },
     {
       name: 'Product B',
       unitPrice: 500,
-      quantity: 1
-    }
+      quantity: 1,
+    },
   ],
   id: 'ORDER-2024-001',
-  clientBackUrl: 'https://yoursite.com/payment/return'
+  clientBackUrl: 'https://yoursite.com/payment/return',
 });
 
 console.log('Order ID:', order.id);
 console.log('Order State:', order.state);
-console.log('Total Price:', order.items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0));
+console.log(
+  'Total Price:',
+  order.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
+);
 ```
 
 ### Credit Card Payment
 
 ```typescript
 // Listen for payment events
-paymentGateway.emitter.on('ORDER_COMMITTED', (message) => {
+paymentGateway.emitter.on('ORDER_COMMITTED', message => {
   console.log('Payment successful:', message);
   console.log('Card Type:', message.cardType);
   console.log('Committed At:', message.committedAt);
@@ -93,10 +96,10 @@ const creditCardOrder = await paymentGateway.prepare({
     {
       name: 'Premium Service',
       unitPrice: 2000,
-      quantity: 1
-    }
+      quantity: 1,
+    },
   ],
-  id: 'CC-ORDER-001'
+  id: 'CC-ORDER-001',
 });
 
 // The order will be committed automatically when payment is completed
@@ -112,14 +115,14 @@ const vatOrder = await paymentGateway.prepare({
     {
       name: 'Bulk Purchase',
       unitPrice: 10000,
-      quantity: 1
-    }
+      quantity: 1,
+    },
   ],
-  id: 'VAT-ORDER-001'
+  id: 'VAT-ORDER-001',
 });
 
 // Listen for async info retrieval
-paymentGateway.emitter.on('ORDER_INFO_RETRIEVED', (order) => {
+paymentGateway.emitter.on('ORDER_INFO_RETRIEVED', order => {
   if (order.asyncInfo?.channel === Channel.VIRTUAL_ACCOUNT) {
     console.log('Bank Code:', order.asyncInfo.bankCode);
     console.log('Account Number:', order.asyncInfo.account);
@@ -137,14 +140,14 @@ const cvsOrder = await paymentGateway.prepare({
     {
       name: 'Online Purchase',
       unitPrice: 800,
-      quantity: 1
-    }
+      quantity: 1,
+    },
   ],
-  id: 'CVS-ORDER-001'
+  id: 'CVS-ORDER-001',
 });
 
 // Listen for CVS payment code
-paymentGateway.emitter.on('ORDER_INFO_RETRIEVED', (order) => {
+paymentGateway.emitter.on('ORDER_INFO_RETRIEVED', order => {
   if (order.asyncInfo?.channel === Channel.CVS_KIOSK) {
     console.log('Payment Code:', order.asyncInfo.paymentCode);
     console.log('Expires At:', order.asyncInfo.expiredAt);
@@ -163,13 +166,13 @@ The framework supports multiple payment channels:
 import { Channel } from '@rytass/payments';
 
 // Available payment channels
-Channel.CREDIT_CARD     // Credit/Debit card payments
-Channel.WEB_ATM         // Online ATM transfers
-Channel.VIRTUAL_ACCOUNT // Virtual account transfers
-Channel.CVS_KIOSK       // CVS kiosk payments
-Channel.CVS_BARCODE     // CVS barcode payments
-Channel.APPLE_PAY       // Apple Pay payments
-Channel.LINE_PAY        // LINE Pay payments
+Channel.CREDIT_CARD; // Credit/Debit card payments
+Channel.WEB_ATM; // Online ATM transfers
+Channel.VIRTUAL_ACCOUNT; // Virtual account transfers
+Channel.CVS_KIOSK; // CVS kiosk payments
+Channel.CVS_BARCODE; // CVS barcode payments
+Channel.APPLE_PAY; // Apple Pay payments
+Channel.LINE_PAY; // LINE Pay payments
 ```
 
 ### Order Lifecycle
@@ -178,12 +181,12 @@ Channel.LINE_PAY        // LINE Pay payments
 import { OrderState } from '@rytass/payments';
 
 // Order states throughout the payment process
-OrderState.INITED               // Order initialized
-OrderState.PRE_COMMIT           // Order created at gateway
-OrderState.ASYNC_INFO_RETRIEVED // Payment info retrieved (for async payments)
-OrderState.COMMITTED            // Payment completed successfully
-OrderState.FAILED               // Payment failed
-OrderState.REFUNDED             // Payment refunded
+OrderState.INITED; // Order initialized
+OrderState.PRE_COMMIT; // Order created at gateway
+OrderState.ASYNC_INFO_RETRIEVED; // Payment info retrieved (for async payments)
+OrderState.COMMITTED; // Payment completed successfully
+OrderState.FAILED; // Payment failed
+OrderState.REFUNDED; // Payment refunded
 ```
 
 ### Payment Items
@@ -194,9 +197,9 @@ import { PaymentItem } from '@rytass/payments';
 const items: PaymentItem[] = [
   {
     name: 'Product Name',
-    unitPrice: 1000,        // Price per unit in cents or smallest currency unit
-    quantity: 2             // Number of items
-  }
+    unitPrice: 1000, // Price per unit in cents or smallest currency unit
+    quantity: 2, // Number of items
+  },
 ];
 ```
 
@@ -214,7 +217,7 @@ const bindingGateway = paymentGateway as BindCardPaymentGateway;
 const bindRequest = await bindingGateway.prepareBindCard('member-123');
 
 // Listen for binding events
-paymentGateway.emitter.on('CARD_BOUND', (bindingInfo) => {
+paymentGateway.emitter.on('CARD_BOUND', bindingInfo => {
   console.log('Card bound successfully:', bindingInfo.cardId);
 });
 
@@ -227,9 +230,9 @@ const boundCardOrder = await bindingGateway.checkoutWithBoundCard({
     {
       name: 'Subscription Service',
       unitPrice: 2999,
-      quantity: 1
-    }
-  ]
+      quantity: 1,
+    },
+  ],
 });
 ```
 
@@ -239,22 +242,22 @@ const boundCardOrder = await bindingGateway.checkoutWithBoundCard({
 import { PaymentEvents } from '@rytass/payments';
 
 // Listen to all payment events
-paymentGateway.emitter.on(PaymentEvents.ORDER_PRE_COMMIT, (order) => {
+paymentGateway.emitter.on(PaymentEvents.ORDER_PRE_COMMIT, order => {
   console.log('Order created:', order.id);
 });
 
-paymentGateway.emitter.on(PaymentEvents.ORDER_INFO_RETRIEVED, (order) => {
+paymentGateway.emitter.on(PaymentEvents.ORDER_INFO_RETRIEVED, order => {
   console.log('Payment info retrieved for:', order.id);
   // Handle async payment information (VAT, CVS, etc.)
 });
 
-paymentGateway.emitter.on(PaymentEvents.ORDER_COMMITTED, (message) => {
+paymentGateway.emitter.on(PaymentEvents.ORDER_COMMITTED, message => {
   console.log('Payment committed:', message.id);
   console.log('Amount:', message.totalPrice);
   console.log('Committed at:', message.committedAt);
 });
 
-paymentGateway.emitter.on(PaymentEvents.ORDER_FAILED, (failure) => {
+paymentGateway.emitter.on(PaymentEvents.ORDER_FAILED, failure => {
   console.error('Payment failed:', failure.code, failure.message);
 });
 ```
@@ -296,7 +299,7 @@ await order.refund(500); // Refund 500 units
 // Refund with options (gateway-specific)
 await order.refund(1000, {
   reason: 'Customer requested',
-  refundId: 'REFUND-001'
+  refundId: 'REFUND-001',
 });
 ```
 
@@ -325,10 +328,10 @@ const customOrder = await paymentGateway.prepare({
       productId: 'PROD-001',
       category: 'Electronics',
       discount: 200,
-      taxRate: 0.05
-    }
+      taxRate: 0.05,
+    },
   ] as CustomPaymentItem[],
-  id: 'CUSTOM-ORDER-001'
+  id: 'CUSTOM-ORDER-001',
 });
 ```
 
@@ -341,10 +344,7 @@ import { PaymentGateway, Order, OrderCommitMessage } from '@rytass/payments';
 class PaymentService<CM extends OrderCommitMessage> {
   constructor(private gateway: PaymentGateway<CM>) {}
 
-  async processPayment(
-    items: PaymentItem[],
-    orderId: string
-  ): Promise<Order<CM>> {
+  async processPayment(items: PaymentItem[], orderId: string): Promise<Order<CM>> {
     return this.gateway.prepare({ items, id: orderId });
   }
 
@@ -368,11 +368,11 @@ const paymentGateway = new ECPayPaymentGateway({
   merchantId: process.env.ECPAY_MERCHANT_ID!,
   hashKey: process.env.ECPAY_HASH_KEY!,
   hashIV: process.env.ECPAY_HASH_IV!,
-  isProduction: process.env.NODE_ENV === 'production'
+  isProduction: process.env.NODE_ENV === 'production',
 });
 
 // Setup payment event handlers
-paymentGateway.emitter.on(PaymentEvents.ORDER_COMMITTED, async (message) => {
+paymentGateway.emitter.on(PaymentEvents.ORDER_COMMITTED, async message => {
   // Handle successful payment
   await updateOrderStatus(message.id, 'paid');
   await sendConfirmationEmail(message.id);
@@ -386,19 +386,19 @@ app.post('/api/payments/create', async (req, res) => {
     const order = await paymentGateway.prepare({
       items,
       id: orderId,
-      clientBackUrl: returnUrl
+      clientBackUrl: returnUrl,
     });
 
     res.json({
       success: true,
       orderId: order.id,
       paymentUrl: order.checkoutUrl, // Gateway-specific checkout URL
-      state: order.state
+      state: order.state,
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -416,13 +416,13 @@ app.get('/api/payments/:orderId/status', async (req, res) => {
         state: order.state,
         createdAt: order.createdAt,
         committedAt: order.committedAt,
-        totalAmount: order.items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
-      }
+        totalAmount: order.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
+      },
     });
   } catch (error) {
     res.status(404).json({
       success: false,
-      error: 'Order not found'
+      error: 'Order not found',
     });
   }
 });
@@ -456,24 +456,24 @@ export class PaymentService {
       merchantId: process.env.ECPAY_MERCHANT_ID!,
       hashKey: process.env.ECPAY_HASH_KEY!,
       hashIV: process.env.ECPAY_HASH_IV!,
-      isProduction: process.env.NODE_ENV === 'production'
+      isProduction: process.env.NODE_ENV === 'production',
     });
 
     this.setupEventHandlers();
   }
 
   private setupEventHandlers() {
-    this.paymentGateway.emitter.on(PaymentEvents.ORDER_COMMITTED, (message) => {
+    this.paymentGateway.emitter.on(PaymentEvents.ORDER_COMMITTED, message => {
       this.logger.log(`Payment committed: ${message.id}`);
       this.handlePaymentSuccess(message);
     });
 
-    this.paymentGateway.emitter.on(PaymentEvents.ORDER_FAILED, (failure) => {
+    this.paymentGateway.emitter.on(PaymentEvents.ORDER_FAILED, failure => {
       this.logger.error(`Payment failed: ${failure.code} - ${failure.message}`);
       this.handlePaymentFailure(failure);
     });
 
-    this.paymentGateway.emitter.on(PaymentEvents.ORDER_INFO_RETRIEVED, (order) => {
+    this.paymentGateway.emitter.on(PaymentEvents.ORDER_INFO_RETRIEVED, order => {
       this.logger.log(`Payment info retrieved: ${order.id}`);
       this.handleAsyncPaymentInfo(order);
     });
@@ -492,46 +492,46 @@ export class PaymentService {
       items: paymentData.items.map(item => ({
         name: item.name,
         unitPrice: item.price,
-        quantity: item.quantity
+        quantity: item.quantity,
       })),
       id: paymentData.orderId,
-      clientBackUrl: paymentData.returnUrl
+      clientBackUrl: paymentData.returnUrl,
     });
 
     return {
       orderId: order.id,
       state: order.state,
       paymentUrl: order.checkoutUrl,
-      totalAmount: order.items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
+      totalAmount: order.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
     };
   }
 
   async getPaymentStatus(orderId: string) {
     const order = await this.paymentGateway.query(orderId);
-    
+
     return {
       orderId: order.id,
       state: order.state,
       createdAt: order.createdAt,
       committedAt: order.committedAt,
       failedMessage: order.failedMessage,
-      additionalInfo: order.additionalInfo
+      additionalInfo: order.additionalInfo,
     };
   }
 
   async refundPayment(orderId: string, amount?: number) {
     const order = await this.paymentGateway.query(orderId);
-    
+
     if (order.state !== OrderState.COMMITTED) {
       throw new Error('Can only refund committed payments');
     }
 
     await order.refund(amount);
-    
+
     return {
       orderId: order.id,
       state: order.state,
-      refundAmount: amount
+      refundAmount: amount,
     };
   }
 
@@ -589,10 +589,10 @@ const PaymentComponent: React.FC<PaymentProps> = ({
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         setPaymentState(data.state);
-        
+
         // Redirect to payment gateway for credit card payments
         if (data.paymentUrl) {
           window.location.href = data.paymentUrl;
@@ -609,10 +609,10 @@ const PaymentComponent: React.FC<PaymentProps> = ({
     try {
       const response = await fetch(`/api/payments/${orderId}/status`);
       const data = await response.json();
-      
+
       if (data.success) {
         setPaymentState(data.order.state);
-        
+
         if (data.order.state === OrderState.COMMITTED) {
           onSuccess(orderId);
         } else if (data.order.state === OrderState.FAILED) {
@@ -648,20 +648,20 @@ const PaymentComponent: React.FC<PaymentProps> = ({
       <div className="total">
         Total: ${totalAmount}
       </div>
-      
+
       {!paymentState && (
         <button onClick={createPayment}>
           Proceed to Payment
         </button>
       )}
-      
+
       {paymentState === OrderState.ASYNC_INFO_RETRIEVED && (
         <div className="async-payment-info">
           <p>Please complete payment using the provided information</p>
           {/* Display virtual account, CVS code, etc. */}
         </div>
       )}
-      
+
       {paymentState === OrderState.COMMITTED && (
         <div className="success">
           Payment completed successfully!
@@ -677,24 +677,28 @@ export default PaymentComponent;
 ## Best Practices
 
 ### Security
+
 - Store sensitive credentials in environment variables
 - Validate all payment callbacks and webhooks
 - Implement proper HTTPS for all payment-related endpoints
 - Use CSRF protection for payment forms
 
 ### Error Handling
+
 - Always listen for payment failure events
 - Implement proper timeout handling for async payments
 - Provide clear error messages to users
 - Log all payment events for debugging and auditing
 
 ### Performance
+
 - Cache payment gateway instances when possible
 - Implement proper connection pooling for high-volume scenarios
 - Use appropriate timeout settings for payment operations
 - Monitor payment gateway response times
 
 ### State Management
+
 - Track order states throughout the payment lifecycle
 - Implement proper cleanup for expired orders
 - Handle duplicate payment attempts gracefully
@@ -719,10 +723,10 @@ describe('Payment Integration', () => {
         {
           name: 'Test Product',
           unitPrice: 1000,
-          quantity: 1
-        }
+          quantity: 1,
+        },
       ],
-      id: 'TEST-ORDER-001'
+      id: 'TEST-ORDER-001',
     });
 
     expect(order.id).toBe('TEST-ORDER-001');
@@ -732,7 +736,7 @@ describe('Payment Integration', () => {
   it('should handle payment success', async () => {
     const order = await paymentGateway.prepare({
       items: [{ name: 'Test', unitPrice: 1000, quantity: 1 }],
-      id: 'TEST-SUCCESS'
+      id: 'TEST-SUCCESS',
     });
 
     // Simulate payment success
@@ -740,7 +744,7 @@ describe('Payment Integration', () => {
       id: 'TEST-SUCCESS',
       totalPrice: 1000,
       committedAt: new Date(),
-      type: Channel.CREDIT_CARD
+      type: Channel.CREDIT_CARD,
     });
 
     expect(order.state).toBe(OrderState.COMMITTED);
@@ -750,7 +754,7 @@ describe('Payment Integration', () => {
   it('should handle payment failure', async () => {
     const order = await paymentGateway.prepare({
       items: [{ name: 'Test', unitPrice: 1000, quantity: 1 }],
-      id: 'TEST-FAILURE'
+      id: 'TEST-FAILURE',
     });
 
     order.fail('CARD_DECLINED', 'Credit card was declined');

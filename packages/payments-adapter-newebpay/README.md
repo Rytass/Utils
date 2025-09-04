@@ -31,10 +31,7 @@ yarn add @rytass/payments-adapter-newebpay
 ### Credit Card Payment
 
 ```typescript
-import { 
-  NewebPayPayment, 
-  NewebPaymentChannel 
-} from '@rytass/payments-adapter-newebpay';
+import { NewebPayPayment, NewebPaymentChannel } from '@rytass/payments-adapter-newebpay';
 import { Channel } from '@rytass/payments';
 
 const payment = new NewebPayPayment({
@@ -43,10 +40,10 @@ const payment = new NewebPayPayment({
   hashIv: 'YOUR_NEWEBPAY_HASH_IV',
   serverHost: 'https://your-domain.com',
   withServer: true,
-  onCommit: (order) => {
+  onCommit: order => {
     console.log('Payment committed:', order);
     // Handle successful payment
-  }
+  },
 });
 
 // Create credit card order
@@ -56,16 +53,16 @@ const order = payment.prepare({
     {
       name: 'Premium Product',
       unitPrice: 1500,
-      quantity: 1
+      quantity: 1,
     },
     {
       name: 'Shipping Fee',
       unitPrice: 100,
-      quantity: 1
-    }
+      quantity: 1,
+    },
   ],
   language: 'zh-tw',
-  email: 'customer@example.com'
+  email: 'customer@example.com',
 });
 
 // Get checkout URL
@@ -79,18 +76,20 @@ import { NewebPayVirtualAccountBank } from '@rytass/payments-adapter-newebpay';
 
 const order = payment.prepare({
   channel: Channel.VIRTUAL_ACCOUNT,
-  items: [{
-    name: 'Monthly Subscription',
-    unitPrice: 999,
-    quantity: 1
-  }],
+  items: [
+    {
+      name: 'Monthly Subscription',
+      unitPrice: 999,
+      quantity: 1,
+    },
+  ],
   // Specify preferred bank
   additionalInfo: {
-    bankType: NewebPayVirtualAccountBank.BOT
+    bankType: NewebPayVirtualAccountBank.BOT,
   },
   // Set payment expiration (days)
   tradeLimit: 3,
-  email: 'customer@example.com'
+  email: 'customer@example.com',
 });
 
 // Virtual account info will be available after order creation
@@ -105,14 +104,16 @@ import { NewebPayWebATMBank } from '@rytass/payments-adapter-newebpay';
 
 const order = payment.prepare({
   channel: Channel.WEB_ATM,
-  items: [{
-    name: 'Digital Course',
-    unitPrice: 2500,
-    quantity: 1
-  }],
+  items: [
+    {
+      name: 'Digital Course',
+      unitPrice: 2500,
+      quantity: 1,
+    },
+  ],
   additionalInfo: {
-    bankType: NewebPayWebATMBank.TAISHIN
-  }
+    bankType: NewebPayWebATMBank.TAISHIN,
+  },
 });
 ```
 
@@ -120,28 +121,28 @@ const order = payment.prepare({
 
 ### Supported Channels
 
-| Channel | Description | Channel Code |
-|---------|-------------|--------------|
-| `CREDIT` | Credit Card | `1` |
-| `ANDROID_PAY` | Android Pay | `2` |
-| `SAMSUNG_PAY` | Samsung Pay | `4` |
-| `UNION_PAY` | UnionPay Cards | `8` |
-| `WEBATM` | WebATM Transfer | `16` |
-| `VACC` | Virtual Account | `32` |
+| Channel       | Description     | Channel Code |
+| ------------- | --------------- | ------------ |
+| `CREDIT`      | Credit Card     | `1`          |
+| `ANDROID_PAY` | Android Pay     | `2`          |
+| `SAMSUNG_PAY` | Samsung Pay     | `4`          |
+| `UNION_PAY`   | UnionPay Cards  | `8`          |
+| `WEBATM`      | WebATM Transfer | `16`         |
+| `VACC`        | Virtual Account | `32`         |
 
 ### Multi-Channel Payment
 
 ```typescript
 // Accept multiple payment methods
 const order = payment.prepare({
-  channel: NewebPaymentChannel.CREDIT | 
-           NewebPaymentChannel.ANDROID_PAY | 
-           NewebPaymentChannel.VACC,
-  items: [{
-    name: 'Flexible Payment Product',
-    unitPrice: 999,
-    quantity: 1
-  }]
+  channel: NewebPaymentChannel.CREDIT | NewebPaymentChannel.ANDROID_PAY | NewebPaymentChannel.VACC,
+  items: [
+    {
+      name: 'Flexible Payment Product',
+      unitPrice: 999,
+      quantity: 1,
+    },
+  ],
 });
 ```
 
@@ -162,17 +163,17 @@ const payment = new NewebPayPayment({
 const bindRequest = await payment.prepareBindCard({
   memberId: 'user123',
   description: '綁定信用卡',
-  finishRedirectURL: 'https://your-site.com/card-bound-success'
+  finishRedirectURL: 'https://your-site.com/card-bound-success',
 });
 
 // Get the binding URL for user to complete card binding
 console.log('Card binding URL:', bindRequest.checkoutURL);
 
 // Handle card binding completion (usually in callback)
-payment.emitter.on(PaymentEvents.CARD_BINDING_SUCCESS, (request) => {
+payment.emitter.on(PaymentEvents.CARD_BINDING_SUCCESS, request => {
   console.log('Card bound successfully:', request.cardId);
   console.log('Member ID:', request.memberId);
-  
+
   // Store card token for future use
   saveCardToken(request.cardId, request.memberId);
 });
@@ -186,7 +187,7 @@ const boundCardPayment = await payment.checkoutWithBoundCard({
   memberId: 'user123',
   cardId: 'saved-card-token',
   description: 'Subscription Renewal',
-  amount: 999
+  amount: 999,
 });
 
 console.log('Payment Result:', boundCardPayment.status);
@@ -197,7 +198,7 @@ console.log('Payment Result:', boundCardPayment.status);
 ```typescript
 import { PaymentEvents } from '@rytass/payments';
 
-payment.emitter.on(PaymentEvents.CARD_BINDING_FAILED, (request) => {
+payment.emitter.on(PaymentEvents.CARD_BINDING_FAILED, request => {
   if (request.failedMessage?.code === '10100112') {
     // Card already bound
     console.log('Card already exists for member:', request.memberId);
@@ -213,14 +214,16 @@ import { NewebPayCreditCardInstallmentOptions } from '@rytass/payments-adapter-n
 
 const installmentOrder = payment.prepare({
   channel: Channel.CREDIT_CARD,
-  items: [{
-    name: 'High-value Product',
-    unitPrice: 12000,
-    quantity: 1
-  }],
+  items: [
+    {
+      name: 'High-value Product',
+      unitPrice: 12000,
+      quantity: 1,
+    },
+  ],
   additionalInfo: {
-    installment: NewebPayCreditCardInstallmentOptions.SIX_MONTHS
-  }
+    installment: NewebPayCreditCardInstallmentOptions.SIX_MONTHS,
+  },
 });
 ```
 
@@ -236,16 +239,16 @@ const installmentOrder = payment.prepare({
 
 ### NewebPayPaymentInitOptions
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| `merchantId` | `string` | Yes | - | NewebPay Merchant ID |
-| `hashKey` | `string` | Yes | - | API Hash Key |
-| `hashIv` | `string` | Yes | - | API Hash IV |
-| `serverHost` | `string` | No | `localhost:3000` | Callback server host |
-| `withServer` | `boolean` | No | `false` | Enable built-in callback server |
-| `memory` | `boolean` | No | `true` | Use in-memory order storage |
-| `onCommit` | `function` | No | - | Order commit callback |
-| `onFailed` | `function` | No | - | Payment failure callback |
+| Property     | Type       | Required | Default          | Description                     |
+| ------------ | ---------- | -------- | ---------------- | ------------------------------- |
+| `merchantId` | `string`   | Yes      | -                | NewebPay Merchant ID            |
+| `hashKey`    | `string`   | Yes      | -                | API Hash Key                    |
+| `hashIv`     | `string`   | Yes      | -                | API Hash IV                     |
+| `serverHost` | `string`   | No       | `localhost:3000` | Callback server host            |
+| `withServer` | `boolean`  | No       | `false`          | Enable built-in callback server |
+| `memory`     | `boolean`  | No       | `true`           | Use in-memory order storage     |
+| `onCommit`   | `function` | No       | -                | Order commit callback           |
+| `onFailed`   | `function` | No       | -                | Payment failure callback        |
 
 ## Order Management
 
@@ -267,7 +270,7 @@ console.log('Amount:', orderStatus.totalPrice);
 const payment = new NewebPayPayment({
   // ... config
   withServer: true,
-  onCommit: (order) => {
+  onCommit: order => {
     // Order successfully paid
     console.log(`Order ${order.id} committed`);
     console.log(`Amount: NT$${order.totalPrice}`);
@@ -276,7 +279,7 @@ const payment = new NewebPayPayment({
   onFailed: (order, error) => {
     // Payment failed
     console.log(`Order ${order.id} failed:`, error);
-  }
+  },
 });
 ```
 
@@ -287,7 +290,9 @@ import { AllowUILanguage } from '@rytass/payments-adapter-newebpay';
 
 const order = payment.prepare({
   channel: Channel.CREDIT_CARD,
-  items: [/* items */],
+  items: [
+    /* items */
+  ],
   language: AllowUILanguage.EN, // English UI
   // Available: ZH_TW, EN, JP
 });
@@ -300,7 +305,9 @@ const order = payment.prepare({
 ```typescript
 const order = payment.prepare({
   channel: Channel.VIRTUAL_ACCOUNT,
-  items: [/* items */],
+  items: [
+    /* items */
+  ],
   tradeLimit: 7, // Payment expires in 7 days
   expireDate: '2024-12-31', // Or specific date
 });
@@ -311,9 +318,11 @@ const order = payment.prepare({
 ```typescript
 const order = payment.prepare({
   channel: Channel.CREDIT_CARD,
-  items: [/* items */],
+  items: [
+    /* items */
+  ],
   clientBackUrl: 'https://yoursite.com/payment-success',
-  remark: 'Special promotion order'
+  remark: 'Special promotion order',
 });
 ```
 
@@ -333,7 +342,7 @@ const payment = new NewebPayPayment({
   hashKey: process.env.NEWEBPAY_HASH_KEY!,
   hashIv: process.env.NEWEBPAY_HASH_IV!,
   serverHost: process.env.NEWEBPAY_SERVER_HOST!,
-  withServer: true
+  withServer: true,
 });
 ```
 
@@ -345,7 +354,9 @@ import { OrderState } from '@rytass/payments';
 try {
   const order = payment.prepare({
     channel: Channel.CREDIT_CARD,
-    items: [/* invalid items */]
+    items: [
+      /* invalid items */
+    ],
   });
 } catch (error) {
   console.error('Order preparation failed:', error.message);
@@ -354,7 +365,7 @@ try {
 // Handle payment failures
 payment.emitter.on('order_failed', (order, error) => {
   console.log(`Order ${order.id} failed:`, error);
-  
+
   // Implement retry logic or user notification
   notifyUser(`Payment failed: ${error.message}`);
 });
@@ -371,7 +382,7 @@ const testPayment = new NewebPayPayment({
   hashKey: 'Ggo9KBc0JYIQ28ulMOHPOqrJCuPO8Ns8', // Test hash key
   hashIv: 'x9jt40c4oNWdBJn2', // Test hash IV
   serverHost: 'https://your-test-domain.com',
-  withServer: true
+  withServer: true,
 });
 ```
 
@@ -404,7 +415,7 @@ const payment = new NewebPayPayment({
   hashKey: process.env.NEWEBPAY_HASH_KEY!,
   hashIv: process.env.NEWEBPAY_HASH_IV!,
   serverHost: 'https://abcd1234.ngrok.io', // ngrok URL
-  withServer: true
+  withServer: true,
 });
 ```
 
@@ -423,10 +434,10 @@ import { NewebPayPayment } from '@rytass/payments-adapter-newebpay';
         hashKey: process.env.NEWEBPAY_HASH_KEY!,
         hashIv: process.env.NEWEBPAY_HASH_IV!,
         serverHost: process.env.SERVER_HOST!,
-        withServer: true
-      })
-    })
-  ]
+        withServer: true,
+      }),
+    }),
+  ],
 })
 export class AppModule {}
 ```
@@ -434,17 +445,20 @@ export class AppModule {}
 ## Best Practices
 
 ### Security
+
 - Store credentials in environment variables
-- Use HTTPS for production callback URLs  
+- Use HTTPS for production callback URLs
 - Implement proper webhook signature validation
 - Log payment events for audit trails
 
 ### Performance
+
 - Enable memory caching for frequent order queries
 - Implement connection pooling for database operations
 - Use appropriate trade limits to prevent expired orders
 
 ### User Experience
+
 - Provide clear payment method options
 - Display accurate payment fees and processing times
 - Implement proper error messages in user's language

@@ -5,7 +5,17 @@
 import axios from 'axios';
 import { DateTime } from 'luxon';
 import http, { createServer } from 'http';
-import { ECPayPayment, OrderState, ECPayQueryOrderPayload, ECPayCreditCardOrderCloseStatus, ECPayCreditCardDetailQueryPayload, ECPayCreditCardOrderStatus, ECPayOrderActionPayload, ECPayOrder, ECPayOrderForm } from '../src';
+import {
+  ECPayPayment,
+  OrderState,
+  ECPayQueryOrderPayload,
+  ECPayCreditCardOrderCloseStatus,
+  ECPayCreditCardDetailQueryPayload,
+  ECPayCreditCardOrderStatus,
+  ECPayOrderActionPayload,
+  ECPayOrder,
+  ECPayOrderForm,
+} from '../src';
 import { getAddMac } from '../__utils__/add-mac';
 
 const addMac = getAddMac();
@@ -13,11 +23,13 @@ const addMac = getAddMac();
 function checkMac(payload: Record<string, string>): boolean {
   const { CheckMacValue: mac, ...res } = payload;
   const { CheckMacValue: computedMac } = addMac(
-    Object.entries(res)
-      .reduce((vars, [key, value]) => ({
+    Object.entries(res).reduce(
+      (vars, [key, value]) => ({
         ...vars,
-        [key]: (value as unknown as (string | number)).toString(),
-      }), {}),
+        [key]: (value as unknown as string | number).toString(),
+      }),
+      {},
+    ),
   );
 
   if (computedMac !== mac) return false;
@@ -34,7 +46,7 @@ describe('ECPayPayment Refund', () => {
   const originCreateServer = createServer;
   const mockedCreateServer = jest.spyOn(http, 'createServer');
 
-  mockedCreateServer.mockImplementation((requestHandler) => {
+  mockedCreateServer.mockImplementation(requestHandler => {
     const mockServer = originCreateServer(requestHandler);
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
@@ -47,7 +59,7 @@ describe('ECPayPayment Refund', () => {
 
     const mockedClose = jest.spyOn(mockServer, 'close');
 
-    mockedClose.mockImplementationOnce((onClosed) => {
+    mockedClose.mockImplementationOnce(onClosed => {
       mockServer.close(onClosed);
 
       return mockServer;
@@ -57,7 +69,7 @@ describe('ECPayPayment Refund', () => {
   });
 
   describe('Waiting withServer mode server listen', () => {
-    it('should reject credit card trade status getter on server not ready', (done) => {
+    it('should reject credit card trade status getter on server not ready', done => {
       const payment = new ECPayPayment({
         withServer: true,
         onServerListen: async () => {
@@ -68,7 +80,7 @@ describe('ECPayPayment Refund', () => {
       expect(() => payment.getCreditCardTradeStatus('123123', 90)).rejects.toThrow();
     });
 
-    it('should reject order do action request on server not ready', (done) => {
+    it('should reject order do action request on server not ready', done => {
       const payment = new ECPayPayment({
         withServer: true,
         onServerListen: () => {
@@ -76,12 +88,18 @@ describe('ECPayPayment Refund', () => {
         },
       });
 
-      expect(() => payment.doOrderAction(new ECPayOrder({
-        id: '123709129038123',
-        items: [],
-        form: {} as ECPayOrderForm,
-        gateway: payment,
-      }), 'R', 1000)).rejects.toThrow();
+      expect(() =>
+        payment.doOrderAction(
+          new ECPayOrder({
+            id: '123709129038123',
+            items: [],
+            form: {} as ECPayOrderForm,
+            gateway: payment,
+          }),
+          'R',
+          1000,
+        ),
+      ).rejects.toThrow();
     });
   });
 
@@ -90,11 +108,13 @@ describe('ECPayPayment Refund', () => {
 
     axiosPost.mockImplementation(async (url, payload) => {
       if (/\/Cashier\/QueryTradeInfo\/V5$/.test(url)) {
-        const params = Array.from(new URLSearchParams(payload as string).entries())
-          .reduce((vars, [key, value]) => ({
+        const params = Array.from(new URLSearchParams(payload as string).entries()).reduce(
+          (vars, [key, value]) => ({
             ...vars,
             [key]: value,
-          }), {}) as ECPayQueryOrderPayload;
+          }),
+          {},
+        ) as ECPayQueryOrderPayload;
 
         expect(checkMac(params)).toBeTruthy();
 
@@ -151,11 +171,13 @@ describe('ECPayPayment Refund', () => {
       }
 
       if (/\/CreditDetail\/QueryTrade\/V2$/.test(url)) {
-        const params = Array.from(new URLSearchParams(payload as string).entries())
-          .reduce((vars, [key, value]) => ({
+        const params = Array.from(new URLSearchParams(payload as string).entries()).reduce(
+          (vars, [key, value]) => ({
             ...vars,
             [key]: value,
-          }), {}) as ECPayCreditCardDetailQueryPayload;
+          }),
+          {},
+        ) as ECPayCreditCardDetailQueryPayload;
 
         expect(checkMac(params)).toBeTruthy();
         expect(params.CreditCheckCode).toBe(CREDIT_CHECK_CODE);
@@ -183,11 +205,13 @@ describe('ECPayPayment Refund', () => {
       }
 
       if (/\/CreditDetail\/DoAction$/.test(url)) {
-        const params = Array.from(new URLSearchParams(payload as string).entries())
-          .reduce((vars, [key, value]) => ({
+        const params = Array.from(new URLSearchParams(payload as string).entries()).reduce(
+          (vars, [key, value]) => ({
             ...vars,
             [key]: value,
-          }), {}) as ECPayOrderActionPayload;
+          }),
+          {},
+        ) as ECPayOrderActionPayload;
 
         expect(checkMac(params)).toBeTruthy();
 
@@ -196,7 +220,11 @@ describe('ECPayPayment Refund', () => {
             MerchantID: params.MerchantID,
             MerchantTradeNo: params.MerchantTradeNo,
             TradeNo: params.TradeNo,
-            RtnCode: ~[WILL_THROW_UNKNOWN_ERROR_REFUND_ORDER_ID, WILL_REJECT_REFUND_ORDER_ID].indexOf(params.MerchantTradeNo) ? -999 : 1,
+            RtnCode: ~[WILL_THROW_UNKNOWN_ERROR_REFUND_ORDER_ID, WILL_REJECT_REFUND_ORDER_ID].indexOf(
+              params.MerchantTradeNo,
+            )
+              ? -999
+              : 1,
             RtnMsg: params.MerchantTradeNo === WILL_REJECT_REFUND_ORDER_ID ? 'Refund Failed' : '',
           },
         };

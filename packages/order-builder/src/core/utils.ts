@@ -1,9 +1,4 @@
-import {
-  Condition,
-  ItemExcluded,
-  ItemIncluded,
-  PriceThreshold,
-} from '../conditions';
+import { Condition, ItemExcluded, ItemIncluded, PriceThreshold } from '../conditions';
 import { ItemGiveawayDiscount, Policies } from '../policies';
 import { uuid } from '../utils/uuid';
 import { OrderBuilder } from './order-builder';
@@ -19,18 +14,17 @@ export function generateNewOrderId() {
 export const ORDER_LOGISTICS_ID = '__LOGISTICS__';
 export const ORDER_LOGISTICS_NAME = 'logistics';
 
-function getConditions(
-  target: Condition | Condition[] | undefined
-): Condition[] {
+function getConditions(target: Condition | Condition[] | undefined): Condition[] {
   if (Array.isArray(target)) return target;
   if (typeof target === 'undefined') return [];
 
   return [target];
 }
 
-export function applyOrderLogisticAndReturnLogisticsItem<
-  Item extends OrderItem
->(orderBuilder: OrderBuilder, logistics: OrderLogistics): Item {
+export function applyOrderLogisticAndReturnLogisticsItem<Item extends OrderItem>(
+  orderBuilder: OrderBuilder,
+  logistics: OrderLogistics,
+): Item {
   const logisticsItem = {
     id: ORDER_LOGISTICS_ID,
     name: logistics?.name || ORDER_LOGISTICS_NAME,
@@ -56,8 +50,8 @@ export function applyOrderLogisticAndReturnLogisticsItem<
             scope: 'id',
           }),
         ],
-        { id: ORDER_LOGISTICS_ID, onlyMatched: true }
-      )
+        { id: ORDER_LOGISTICS_ID, onlyMatched: true },
+      ),
     );
   }
 

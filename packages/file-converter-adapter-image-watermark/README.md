@@ -34,7 +34,7 @@ const watermarker = new ImageWatermark({
   watermarkPath: './watermark.png',
   position: 'bottom-right',
   opacity: 0.7,
-  margin: 20
+  margin: 20,
 });
 
 // Apply watermark to image
@@ -51,7 +51,7 @@ import { Readable } from 'stream';
 const watermarker = new ImageWatermark({
   watermarkPath: './logo.png',
   position: 'top-left',
-  opacity: 0.5
+  opacity: 0.5,
 });
 
 const inputStream = createReadStream('input.jpg');
@@ -68,19 +68,19 @@ const customWatermarker = new ImageWatermark({
   watermarkPath: './watermark.png',
   position: 'center',
   opacity: 0.6,
-  scale: 0.2,           // Scale watermark to 20% of original size
-  offsetX: 50,          // Horizontal offset from position
-  offsetY: -30          // Vertical offset from position
+  scale: 0.2, // Scale watermark to 20% of original size
+  offsetX: 50, // Horizontal offset from position
+  offsetY: -30, // Vertical offset from position
 });
 
 // Watermark with specific dimensions
 const sizedWatermarker = new ImageWatermark({
   watermarkPath: './logo.svg',
   position: 'bottom-center',
-  width: 200,           // Fixed width
-  height: 100,          // Fixed height
+  width: 200, // Fixed width
+  height: 100, // Fixed height
   opacity: 0.8,
-  margin: 15
+  margin: 15,
 });
 ```
 
@@ -88,21 +88,22 @@ const sizedWatermarker = new ImageWatermark({
 
 ### ImageWatermarkOptions
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| `watermarkPath` | `string` | Yes | - | Path to watermark image file |
-| `position` | `WatermarkPosition` | No | `'bottom-right'` | Watermark position on image |
-| `opacity` | `number` | No | `1.0` | Watermark opacity (0-1) |
-| `scale` | `number` | No | - | Scale watermark relative to base image |
-| `width` | `number` | No | - | Fixed watermark width |
-| `height` | `number` | No | - | Fixed watermark height |
-| `margin` | `number` | No | `0` | Margin from edges |
-| `offsetX` | `number` | No | `0` | Horizontal offset from position |
-| `offsetY` | `number` | No | `0` | Vertical offset from position |
+| Property        | Type                | Required | Default          | Description                            |
+| --------------- | ------------------- | -------- | ---------------- | -------------------------------------- |
+| `watermarkPath` | `string`            | Yes      | -                | Path to watermark image file           |
+| `position`      | `WatermarkPosition` | No       | `'bottom-right'` | Watermark position on image            |
+| `opacity`       | `number`            | No       | `1.0`            | Watermark opacity (0-1)                |
+| `scale`         | `number`            | No       | -                | Scale watermark relative to base image |
+| `width`         | `number`            | No       | -                | Fixed watermark width                  |
+| `height`        | `number`            | No       | -                | Fixed watermark height                 |
+| `margin`        | `number`            | No       | `0`              | Margin from edges                      |
+| `offsetX`       | `number`            | No       | `0`              | Horizontal offset from position        |
+| `offsetY`       | `number`            | No       | `0`              | Vertical offset from position          |
 
 ### Watermark Positions
 
 Available position options:
+
 - `'top-left'`
 - `'top-center'`
 - `'top-right'`
@@ -123,7 +124,7 @@ const logoWatermarker = new ImageWatermark({
   position: 'top-right',
   opacity: 0.4,
   scale: 0.15,
-  margin: 30
+  margin: 30,
 });
 
 const watermarkedProduct = await logoWatermarker.convert<Buffer>(productImage);
@@ -137,7 +138,7 @@ const copyrightWatermarker = new ImageWatermark({
   watermarkPath: './copyright-text.png',
   position: 'bottom-center',
   opacity: 0.6,
-  margin: 10
+  margin: 10,
 });
 ```
 
@@ -148,14 +149,14 @@ const images = ['image1.jpg', 'image2.jpg', 'image3.jpg'];
 const watermarker = new ImageWatermark({
   watermarkPath: './watermark.png',
   position: 'bottom-right',
-  opacity: 0.5
+  opacity: 0.5,
 });
 
 const watermarkedImages = await Promise.all(
-  images.map(async (imagePath) => {
+  images.map(async imagePath => {
     const image = readFileSync(imagePath);
     return await watermarker.convert<Buffer>(image);
-  })
+  }),
 );
 ```
 
@@ -167,7 +168,9 @@ import { ImageResizer } from '@rytass/file-converter-adapter-image-resizer';
 import { ImageWatermark } from '@rytass/file-converter-adapter-image-watermark';
 import { StorageS3Service } from '@rytass/storages-adapter-s3';
 
-const storage = new StorageS3Service({ /* S3 config */ });
+const storage = new StorageS3Service({
+  /* S3 config */
+});
 
 // Processing pipeline: resize then watermark
 const manager = new ConverterManager(
@@ -175,23 +178,19 @@ const manager = new ConverterManager(
     new ImageResizer({
       maxWidth: 1200,
       maxHeight: 800,
-      keepAspectRatio: true
+      keepAspectRatio: true,
     }),
     new ImageWatermark({
       watermarkPath: './brand-watermark.png',
       position: 'bottom-right',
       opacity: 0.7,
-      scale: 0.1
-    })
+      scale: 0.1,
+    }),
   ],
-  storage
+  storage,
 );
 
-const result = await manager.save(
-  uploadedImage,
-  'processed-images/',
-  'watermarked-product.jpg'
-);
+const result = await manager.save(uploadedImage, 'processed-images/', 'watermarked-product.jpg');
 ```
 
 ## Error Handling
@@ -200,9 +199,9 @@ const result = await manager.save(
 try {
   const watermarker = new ImageWatermark({
     watermarkPath: './nonexistent-watermark.png',
-    position: 'center'
+    position: 'center',
   });
-  
+
   const result = await watermarker.convert<Buffer>(imageBuffer);
 } catch (error) {
   if (error.message.includes('watermark file not found')) {
@@ -218,18 +217,21 @@ try {
 ## Best Practices
 
 ### Performance
+
 - Use appropriately sized watermark images to avoid excessive processing
 - Consider using SVG watermarks for vector-based logos
 - Batch process multiple images when possible
 - Use streams for large images to manage memory usage
 
 ### Quality
+
 - Maintain watermark aspect ratio when scaling
 - Use PNG format for watermarks with transparency
 - Test opacity levels for different background images
 - Consider watermark contrast against various image types
 
 ### Security
+
 - Validate watermark file paths to prevent directory traversal
 - Sanitize user-provided positioning parameters
 - Implement rate limiting for watermarking operations

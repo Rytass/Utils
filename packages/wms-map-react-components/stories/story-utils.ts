@@ -1,17 +1,8 @@
 import { Node } from '@xyflow/react';
 import { Map } from '../src/typings';
-import {
-  transformApiDataToNodes,
-  validateMapData,
-} from '../src/utils/api-data-transform';
+import { transformApiDataToNodes, validateMapData } from '../src/utils/api-data-transform';
 import { generateMockImageUrl } from './mock-image-utils';
-import {
-  mockMapData,
-  simpleMapData,
-  emptyMapData,
-  largeMapData,
-  closedPolygonTestData,
-} from './mock-data';
+import { mockMapData, simpleMapData, emptyMapData, largeMapData, closedPolygonTestData } from './mock-data';
 import type { FlowNode } from '../src/types/react-flow.types';
 
 /**
@@ -44,7 +35,7 @@ export const generateStoryNodes = (
  * Helper function to convert Node[] to FlowNode[] for Storybook
  */
 export const convertToFlowNodes = (nodes: Node[]): FlowNode[] => {
-  return nodes.map((node) => ({
+  return nodes.map(node => ({
     ...node,
     type: node.type || 'default', // Ensure type is always a string
   })) as FlowNode[];
@@ -67,44 +58,28 @@ export const exportStoryData = (
 /**
  * 驗證轉換結果的完整性（供 Storybook 使用）
  */
-export const validateStoryTransformationResult = (
-  originalMap: Map,
-  transformedNodes: Node[],
-): boolean => {
-  const expectedNodeCount =
-    originalMap.backgrounds.length + originalMap.ranges.length;
+export const validateStoryTransformationResult = (originalMap: Map, transformedNodes: Node[]): boolean => {
+  const expectedNodeCount = originalMap.backgrounds.length + originalMap.ranges.length;
 
   const actualNodeCount = transformedNodes.length;
 
   if (expectedNodeCount !== actualNodeCount) {
-    console.error(
-      `節點數量不符: 期望 ${expectedNodeCount}, 實際 ${actualNodeCount}`,
-    );
+    console.error(`節點數量不符: 期望 ${expectedNodeCount}, 實際 ${actualNodeCount}`);
 
     return false;
   }
 
   // 檢查節點類型分布
-  const imageNodeCount = transformedNodes.filter(
-    (n) => n.type === 'imageNode',
-  ).length;
+  const imageNodeCount = transformedNodes.filter(n => n.type === 'imageNode').length;
 
-  const rectangleNodeCount = transformedNodes.filter(
-    (n) => n.type === 'rectangleNode',
-  ).length;
+  const rectangleNodeCount = transformedNodes.filter(n => n.type === 'rectangleNode').length;
 
-  const pathNodeCount = transformedNodes.filter(
-    (n) => n.type === 'pathNode',
-  ).length;
+  const pathNodeCount = transformedNodes.filter(n => n.type === 'pathNode').length;
 
   const expectedImageCount = originalMap.backgrounds.length;
-  const expectedRectangleCount = originalMap.ranges.filter(
-    (r) => r.type === 'RECTANGLE',
-  ).length;
+  const expectedRectangleCount = originalMap.ranges.filter(r => r.type === 'RECTANGLE').length;
 
-  const expectedPathCount = originalMap.ranges.filter(
-    (r) => r.type === 'POLYGON',
-  ).length;
+  const expectedPathCount = originalMap.ranges.filter(r => r.type === 'POLYGON').length;
 
   const checks = [
     { name: '背景圖片', expected: expectedImageCount, actual: imageNodeCount },

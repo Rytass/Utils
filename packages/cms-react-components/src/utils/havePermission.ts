@@ -7,5 +7,5 @@ export function havePermission({
   userPermissions: ArticlesPermissions[];
   targetPermission: ArticlesPermissions;
 }): boolean {
-  return !!userPermissions.find((p) => p === targetPermission);
+  return !!userPermissions.find(p => p === targetPermission);
 }

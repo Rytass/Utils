@@ -54,14 +54,11 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
   private _checkoutCardId: string | null = null;
 
   constructor(
-    options:
-      | OrderCreateInit<OCM>
-      | OrderFromServerInit<OCM>
-      | OrderFromBoundCard<OCM>,
+    options: OrderCreateInit<OCM> | OrderFromServerInit<OCM> | OrderFromBoundCard<OCM>,
     additionalInfo?: AdditionalInfo<OCM>,
   ) {
     this._id = options.id;
-    this._items = options.items.map((item) => new ECPayOrderItem(item));
+    this._items = options.items.map(item => new ECPayOrderItem(item));
     this._gateway = options.gateway;
     this._state = OrderState.INITED;
 
@@ -128,10 +125,7 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
   }
 
   get totalPrice(): number {
-    return this.items.reduce(
-      (sum, item) => sum + item.unitPrice * item.quantity,
-      0,
-    );
+    return this.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   }
 
   get form(): ECPayOrderForm {
@@ -159,10 +153,7 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
   <body>
     <form action="${this._gateway.baseUrl}/Cashier/AioCheckOut/V5" method="POST">
       ${Object.entries(this.form)
-        .map(
-          ([key, value]) =>
-            `<input name="${key}" value="${value}" type="hidden" />`,
-        )
+        .map(([key, value]) => `<input name="${key}" value="${value}" type="hidden" />`)
         .join('\n')}
     </form>
     <script>
@@ -176,18 +167,14 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
     this._state = OrderState.PRE_COMMIT;
 
     if (!this._gateway._server) {
-      throw new Error(
-        'To use automatic checkout server, please initial payment with `withServer` options.',
-      );
+      throw new Error('To use automatic checkout server, please initial payment with `withServer` options.');
     }
 
     return this._gateway.getCheckoutUrl(this);
   }
 
   get committable(): boolean {
-    return !!~[OrderState.PRE_COMMIT, OrderState.ASYNC_INFO_RETRIEVED].indexOf(
-      this._state,
-    );
+    return !!~[OrderState.PRE_COMMIT, OrderState.ASYNC_INFO_RETRIEVED].indexOf(this._state);
   }
 
   get state(): OrderState {
@@ -241,8 +228,7 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
     asyncInformation: AsyncOrderInformation<T>,
     paymentType?: ECPayCallbackPaymentType,
   ): void {
-    if (this._state !== OrderState.PRE_COMMIT)
-      throw new Error(`Only pre-commit order can commit, now: ${this._state}`);
+    if (this._state !== OrderState.PRE_COMMIT) throw new Error(`Only pre-commit order can commit, now: ${this._state}`);
 
     this._asyncInfo = asyncInformation;
     this._paymentType = paymentType || this._paymentType;
@@ -263,37 +249,26 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
 
   prepareForBoundCardCommit(): void {
     if (this._state !== OrderState.INITED)
-      throw new Error(
-        `Only inited order can prepare for bound card commit, now: ${this._state}`,
-      );
+      throw new Error(`Only inited order can prepare for bound card commit, now: ${this._state}`);
 
     this._state = OrderState.PRE_COMMIT;
   }
 
   commit<T extends OCM>(message: T, additionalInfo?: AdditionalInfo<T>): void {
-    if (!this.committable)
-      throw new Error(
-        `Only pre-commit, info-retrieved order can commit, now: ${this._state}`,
-      );
+    if (!this.committable) throw new Error(`Only pre-commit, info-retrieved order can commit, now: ${this._state}`);
 
     if (this._id !== message.id) {
-      throw new Error(
-        `Order ID not matched, given: ${message.id} actual: ${this._id}`,
-      );
+      throw new Error(`Order ID not matched, given: ${message.id} actual: ${this._id}`);
     }
 
     // Skip form validation for bound card checkout (no form generated)
     if (this._form) {
       if (this._form.MerchantID !== message.merchantId) {
-        throw new Error(
-          `Merchant ID not matched, given: ${message.merchantId} actual: ${this._form.MerchantID}`,
-        );
+        throw new Error(`Merchant ID not matched, given: ${message.merchantId} actual: ${this._form.MerchantID}`);
       }
 
       if (Number(this._form.TotalAmount) !== message.totalPrice) {
-        throw new Error(
-          `Total amount not matched, given: ${message.totalPrice} actual: ${this._form.TotalAmount}`,
-        );
+        throw new Error(`Total amount not matched, given: ${message.totalPrice} actual: ${this._form.TotalAmount}`);
       }
     }
 
@@ -342,11 +317,7 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
       }
     })();
 
-    await this._gateway.doOrderAction(
-      this,
-      refundAction,
-      amount || this.totalPrice,
-    );
+    await this._gateway.doOrderAction(this, refundAction, amount || this.totalPrice);
 
     this._state = OrderState.REFUNDED;
   }

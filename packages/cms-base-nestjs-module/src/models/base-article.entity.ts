@@ -26,13 +26,10 @@ export class BaseArticleEntity {
   @DeleteDateColumn()
   deletedAt: Date | null;
 
-  @OneToMany(
-    () => BaseArticleVersionEntity,
-    (articleVersion) => articleVersion.article,
-  )
+  @OneToMany(() => BaseArticleVersionEntity, articleVersion => articleVersion.article)
   versions: Relation<BaseArticleVersionEntity[]>;
 
-  @ManyToMany(() => BaseCategoryEntity, (category) => category.articles)
+  @ManyToMany(() => BaseCategoryEntity, category => category.articles)
   @JoinTable({
     name: 'article_categories',
     joinColumn: { name: 'articleId', referencedColumnName: 'id' },

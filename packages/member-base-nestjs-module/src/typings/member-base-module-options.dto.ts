@@ -6,10 +6,7 @@ import type { OAuth2Provider } from './oauth2-provider.interface';
 
 export interface MemberBaseModuleOptionsDto<
   MemberEntity extends BaseMemberEntity = BaseMemberEntity,
-  TokenPayload extends Record<string, any> = Pick<
-    MemberEntity,
-    'id' | 'account'
-  >,
+  TokenPayload extends Record<string, any> = Pick<MemberEntity, 'id' | 'account'>,
 > {
   loginFailedBanThreshold?: number; // default: 5
   resetPasswordTokenExpiration?: number; // default: 60 * 60 * 1 = 1 hour

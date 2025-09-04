@@ -1,10 +1,5 @@
 import React, { ReactNode, useState, useCallback } from 'react';
-import {
-  ModalHeader,
-  ModalBody as MznModalBody,
-  ModalActions,
-  Typography,
-} from '@mezzanine-ui/react';
+import { ModalHeader, ModalBody as MznModalBody, ModalActions, Typography } from '@mezzanine-ui/react';
 import { useModal } from '../../modal/useModal';
 import { Textarea } from '../../cms-fields/Textarea';
 import classes from './index.module.scss';
@@ -37,7 +32,7 @@ const RejectModal = ({ onReject }: RejectModalProps): ReactNode => {
         <Textarea
           label="不通過原因"
           value={rejectReason}
-          onChange={(value) => {
+          onChange={value => {
             setRejectReason(value);
           }}
           autoFocus

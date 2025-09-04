@@ -1,23 +1,10 @@
-import {
-  Order,
-  OrderFailMessage,
-  OrderState,
-  PaymentEvents,
-} from '@rytass/payments';
+import { Order, OrderFailMessage, OrderState, PaymentEvents } from '@rytass/payments';
 import { ICashPayOrderItem } from './icash-pay-order-item';
 import { ICashPayPayment } from './icash-pay-payment';
-import {
-  ICashPayCommitMessage,
-  ICashPayPaymentType,
-  ICashPayOrderInitOptions,
-  ICashPayRefundOptions,
-} from './typing';
+import { ICashPayCommitMessage, ICashPayPaymentType, ICashPayOrderInitOptions, ICashPayRefundOptions } from './typing';
 import { DateTime } from 'luxon';
 
-export class ICashPayOrder<
-  OCM extends ICashPayCommitMessage = ICashPayCommitMessage,
-> implements Order<OCM>
-{
+export class ICashPayOrder<OCM extends ICashPayCommitMessage = ICashPayCommitMessage> implements Order<OCM> {
   private readonly _id: string;
   private readonly _items: ICashPayOrderItem[];
   private readonly _gateway: ICashPayPayment<OCM>;
@@ -149,14 +136,9 @@ export class ICashPayOrder<
     if (!this.committable) throw new Error('Order is not committable');
 
     try {
-      const response = await this._gateway.commit(
-        this._deductEncData as string,
-      );
+      const response = await this._gateway.commit(this._deductEncData as string);
 
-      this._committedAt = DateTime.fromFormat(
-        response.PaymentDate,
-        'yyyy/MM/dd HH:mm:ss',
-      ).toJSDate();
+      this._committedAt = DateTime.fromFormat(response.PaymentDate, 'yyyy/MM/dd HH:mm:ss').toJSDate();
 
       this.transactionId = response.TransactionID;
       this.icpAccount = response.ICPAccount;
@@ -164,13 +146,9 @@ export class ICashPayOrder<
       this.boundMemberId = response.MMemberID || undefined;
       this.invoiceMobileCarrier = response.MobileInvoiceCarry || undefined;
 
-      this.creditCardFirstSix = response.MaskedPan
-        ? response.MaskedPan.slice(0, 6)
-        : undefined;
+      this.creditCardFirstSix = response.MaskedPan ? response.MaskedPan.slice(0, 6) : undefined;
 
-      this.creditCardLastFour = response.MaskedPan
-        ? response.MaskedPan.slice(-4)
-        : undefined;
+      this.creditCardLastFour = response.MaskedPan ? response.MaskedPan.slice(-4) : undefined;
 
       this.isTWQRCode = response.IsFiscTWQC === 1;
       this.twqrIssueCode = response.FiscTWQRIssCode || undefined;
@@ -192,11 +170,7 @@ export class ICashPayOrder<
     requestRefundAmount: number,
     options?: Pick<
       ICashPayRefundOptions,
-      | 'requestRefundCollectedAmount'
-      | 'requestRefundConsignmentAmount'
-      | 'refundOrderId'
-      | 'storeId'
-      | 'storeName'
+      'requestRefundCollectedAmount' | 'requestRefundConsignmentAmount' | 'refundOrderId' | 'storeId' | 'storeName'
     >,
   ): Promise<void> {
     await this.gateway.refund({
@@ -206,8 +180,7 @@ export class ICashPayOrder<
       storeName: options?.storeName ?? '',
       requestRefundAmount,
       requestRefundCollectedAmount: options?.requestRefundCollectedAmount ?? 0,
-      requestRefundConsignmentAmount:
-        options?.requestRefundConsignmentAmount ?? 0,
+      requestRefundConsignmentAmount: options?.requestRefundConsignmentAmount ?? 0,
       refundOrderId: options?.refundOrderId ?? undefined,
     });
   }

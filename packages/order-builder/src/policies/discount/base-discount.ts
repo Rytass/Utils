@@ -7,9 +7,7 @@ import { FlattenOrderItem } from '../../core';
 /**
  * Implement this abstract class to create a new Discount variant.
  */
-export abstract class BaseDiscount
-  implements Policy<PolicyDiscountDescription>
-{
+export abstract class BaseDiscount implements Policy<PolicyDiscountDescription> {
   readonly type!: Discount;
   readonly prefix!: PolicyPrefix;
   readonly id!: string;

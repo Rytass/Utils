@@ -1,8 +1,5 @@
 import { BaseArticleEntity } from '../../src/models/base-article.entity';
-import {
-  RESOLVED_ARTICLE_REPO,
-  MULTIPLE_LANGUAGE_MODE,
-} from '../../src/typings/cms-base-providers';
+import { RESOLVED_ARTICLE_REPO, MULTIPLE_LANGUAGE_MODE } from '../../src/typings/cms-base-providers';
 import { SignatureService } from '../../src/services/signature.service';
 import { Test } from '@nestjs/testing';
 import { Repository } from 'typeorm';
@@ -11,30 +8,26 @@ import { ArticleSignatureResult } from '../../src/typings/article-signature-resu
 import { ArticleVersionDataLoader } from '../../src/data-loaders/article-version.dataloader';
 
 jest.mock('../../src/utils/remove-invalid-fields', () => ({
-  removeArticleVersionContentInvalidFields: jest
-    .fn()
-    .mockImplementation((x) => ({
-      version: x?.version ?? 0,
-      createdAt: x?.createdAt ?? new Date(),
-      createdBy: x?.createdBy ?? 'mock',
-    })),
-  removeArticleVersionInvalidFields: jest.fn().mockImplementation((x) => ({
+  removeArticleVersionContentInvalidFields: jest.fn().mockImplementation(x => ({
     version: x?.version ?? 0,
     createdAt: x?.createdAt ?? new Date(),
     createdBy: x?.createdBy ?? 'mock',
   })),
-  removeArticleInvalidFields: jest.fn().mockImplementation((x) => ({
+  removeArticleVersionInvalidFields: jest.fn().mockImplementation(x => ({
+    version: x?.version ?? 0,
+    createdAt: x?.createdAt ?? new Date(),
+    createdBy: x?.createdBy ?? 'mock',
+  })),
+  removeArticleInvalidFields: jest.fn().mockImplementation(x => ({
     id: x?.id ?? 'id',
     createdAt: x?.createdAt ?? new Date(),
     deletedAt: x?.deletedAt ?? null,
   })),
-  removeMultipleLanguageArticleVersionInvalidFields: jest
-    .fn()
-    .mockImplementation((x) => ({
-      version: x?.version ?? 0,
-      createdAt: x?.createdAt ?? new Date(),
-      createdBy: x?.createdBy ?? 'mock',
-    })),
+  removeMultipleLanguageArticleVersionInvalidFields: jest.fn().mockImplementation(x => ({
+    version: x?.version ?? 0,
+    createdAt: x?.createdAt ?? new Date(),
+    createdBy: x?.createdBy ?? 'mock',
+  })),
 }));
 
 describe('ArticleVersionDataLoader', () => {

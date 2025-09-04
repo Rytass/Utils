@@ -6,14 +6,10 @@ import { Readable } from 'stream';
 import sharp, { gravity } from 'sharp';
 
 describe('Image Transcoder Watermark', () => {
-  const watermarkBuffer = readFileSync(
-    resolve(__dirname, '../__fixtures__/watermark.png'),
-  );
+  const watermarkBuffer = readFileSync(resolve(__dirname, '../__fixtures__/watermark.png'));
 
   it('should add watermark to buffer', async () => {
-    const sourceBuffer = readFileSync(
-      resolve(__dirname, '../__fixtures__/test-image.png'),
-    );
+    const sourceBuffer = readFileSync(resolve(__dirname, '../__fixtures__/test-image.png'));
 
     const transcoder = new ImageWatermark({
       watermarks: [{ image: watermarkBuffer }],
@@ -38,13 +34,9 @@ describe('Image Transcoder Watermark', () => {
   });
 
   it('should add watermark to stream', async () => {
-    const sourceBuffer = readFileSync(
-      resolve(__dirname, '../__fixtures__/test-image.png'),
-    );
+    const sourceBuffer = readFileSync(resolve(__dirname, '../__fixtures__/test-image.png'));
 
-    const readStream = createReadStream(
-      resolve(__dirname, '../__fixtures__/test-image.png'),
-    );
+    const readStream = createReadStream(resolve(__dirname, '../__fixtures__/test-image.png'));
 
     const transcoder = new ImageWatermark({
       watermarks: [{ image: watermarkBuffer }],
@@ -67,8 +59,8 @@ describe('Image Transcoder Watermark', () => {
 
     const hash = createHash('sha256');
 
-    return new Promise<void>((pResolve) => {
-      stream.on('data', (chunk) => {
+    return new Promise<void>(pResolve => {
+      stream.on('data', chunk => {
         hash.update(chunk);
       });
 

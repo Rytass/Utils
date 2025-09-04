@@ -34,8 +34,8 @@ const storage = new StorageGCSService({
   projectId: 'your-gcp-project-id',
   credentials: {
     client_email: 'your-service-account@project.iam.gserviceaccount.com',
-    private_key: '-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n'
-  }
+    private_key: '-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n',
+  },
 });
 ```
 
@@ -48,7 +48,7 @@ import { readFileSync, createReadStream } from 'fs';
 const imageBuffer = readFileSync('photo.jpg');
 const result = await storage.write(imageBuffer, {
   filename: 'uploads/photo.jpg',
-  contentType: 'image/jpeg'
+  contentType: 'image/jpeg',
 });
 console.log('Uploaded:', result.key);
 
@@ -56,7 +56,7 @@ console.log('Uploaded:', result.key);
 const fileStream = createReadStream('document.pdf');
 const streamResult = await storage.write(fileStream, {
   filename: 'documents/document.pdf',
-  contentType: 'application/pdf'
+  contentType: 'application/pdf',
 });
 console.log('Uploaded:', streamResult.key);
 
@@ -91,10 +91,7 @@ const url = await storage.url('uploads/photo.jpg');
 console.log('Signed URL:', url);
 
 // Custom expiration (1 hour from now)
-const customUrl = await storage.url(
-  'uploads/photo.jpg',
-  Date.now() + 1000 * 60 * 60
-);
+const customUrl = await storage.url('uploads/photo.jpg', Date.now() + 1000 * 60 * 60);
 console.log('1-hour URL:', customUrl);
 
 // Use in HTML
@@ -116,11 +113,7 @@ await storage.remove('uploads/old-file.jpg');
 console.log('File removed');
 
 // Batch upload
-const files = [
-  readFileSync('file1.jpg'),
-  readFileSync('file2.png'),
-  createReadStream('file3.pdf')
-];
+const files = [readFileSync('file1.jpg'), readFileSync('file2.png'), createReadStream('file3.pdf')];
 
 const batchResults = await storage.batchWrite(files);
 batchResults.forEach(result => {
@@ -146,8 +139,8 @@ const storage = new StorageGCSService({
   projectId: process.env.GCS_PROJECT_ID!,
   credentials: {
     client_email: process.env.GCS_CLIENT_EMAIL!,
-    private_key: process.env.GCS_PRIVATE_KEY!.replace(/\\n/g, '\n')
-  }
+    private_key: process.env.GCS_PRIVATE_KEY!.replace(/\\n/g, '\n'),
+  },
 });
 ```
 
@@ -157,17 +150,15 @@ const storage = new StorageGCSService({
 import { readFileSync } from 'fs';
 
 // Load service account key from JSON file
-const serviceAccount = JSON.parse(
-  readFileSync('path/to/service-account-key.json', 'utf8')
-);
+const serviceAccount = JSON.parse(readFileSync('path/to/service-account-key.json', 'utf8'));
 
 const storage = new StorageGCSService({
   bucket: 'your-bucket-name',
   projectId: serviceAccount.project_id,
   credentials: {
     client_email: serviceAccount.client_email,
-    private_key: serviceAccount.private_key
-  }
+    private_key: serviceAccount.private_key,
+  },
 });
 ```
 
@@ -177,7 +168,7 @@ const storage = new StorageGCSService({
 // Upload with custom metadata
 const result = await storage.write(fileBuffer, {
   filename: 'uploads/document.pdf',
-  contentType: 'application/pdf'
+  contentType: 'application/pdf',
 });
 
 // The service automatically sets:
@@ -196,15 +187,15 @@ async function processLargeFile(inputPath: string, outputKey: string) {
   // Upload large file as stream
   const inputStream = createReadStream(inputPath);
   const uploadResult = await storage.write(inputStream, {
-    filename: outputKey
+    filename: outputKey,
   });
-  
+
   console.log('Large file uploaded:', uploadResult.key);
-  
+
   // Download large file as stream
   const downloadStream = await storage.read(outputKey);
   const outputStream = createWriteStream('downloaded-large-file');
-  
+
   await pipeline(downloadStream, outputStream);
   console.log('Large file downloaded');
 }
@@ -261,8 +252,8 @@ const storage = new StorageGCSService({
   projectId: 'your-project',
   credentials: {
     client_email: process.env.GCS_CLIENT_EMAIL!,
-    private_key: process.env.GCS_PRIVATE_KEY!
-  }
+    private_key: process.env.GCS_PRIVATE_KEY!,
+  },
 });
 
 app.post('/upload', upload.single('file'), async (req, res) => {
@@ -273,7 +264,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 
     const result = await storage.write(req.file.buffer, {
       filename: `uploads/${Date.now()}-${req.file.originalname}`,
-      contentType: req.file.mimetype
+      contentType: req.file.mimetype,
     });
 
     const publicUrl = await storage.url(result.key);
@@ -281,7 +272,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     res.json({
       success: true,
       key: result.key,
-      url: publicUrl
+      url: publicUrl,
     });
   } catch (error) {
     res.status(500).json({ error: 'Upload failed' });
@@ -305,8 +296,8 @@ export class FileService {
       projectId: process.env.GCS_PROJECT_ID!,
       credentials: {
         client_email: process.env.GCS_CLIENT_EMAIL!,
-        private_key: process.env.GCS_PRIVATE_KEY!.replace(/\\n/g, '\n')
-      }
+        private_key: process.env.GCS_PRIVATE_KEY!.replace(/\\n/g, '\n'),
+      },
     });
   }
 
@@ -340,12 +331,12 @@ import { ImageTranscoder } from '@rytass/file-converter-adapter-image-transcoder
 class ImageProcessor {
   constructor(
     private storage: StorageGCSService,
-    private converter: ConverterManager
+    private converter: ConverterManager,
   ) {}
 
   async processAndUpload(
     imageBuffer: Buffer,
-    sizes: { width: number; height: number; suffix: string }[]
+    sizes: { width: number; height: number; suffix: string }[],
   ): Promise<{ [key: string]: string }> {
     const results: { [key: string]: string } = {};
 
@@ -355,12 +346,12 @@ class ImageProcessor {
         new ImageResizer({
           maxWidth: size.width,
           maxHeight: size.height,
-          keepAspectRatio: true
+          keepAspectRatio: true,
         }),
         new ImageTranscoder({
           format: 'webp',
-          quality: 85
-        })
+          quality: 85,
+        }),
       ]);
 
       // Process image
@@ -369,7 +360,7 @@ class ImageProcessor {
       // Upload to GCS
       const uploadResult = await this.storage.write(processedImage, {
         filename: `images/processed-${size.suffix}.webp`,
-        contentType: 'image/webp'
+        contentType: 'image/webp',
       });
 
       // Generate public URL
@@ -385,7 +376,7 @@ const processor = new ImageProcessor(storage, converter);
 const urls = await processor.processAndUpload(originalImage, [
   { width: 150, height: 150, suffix: 'thumbnail' },
   { width: 800, height: 600, suffix: 'medium' },
-  { width: 1920, height: 1080, suffix: 'large' }
+  { width: 1920, height: 1080, suffix: 'large' },
 ]);
 
 console.log('Generated URLs:', urls);
@@ -395,54 +386,58 @@ console.log('Generated URLs:', urls);
 
 ### GCSOptions
 
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| `bucket` | `string` | Yes | Google Cloud Storage bucket name |
-| `projectId` | `string` | Yes | Google Cloud Project ID |
-| `credentials` | `object` | Yes | Service account credentials |
-| `credentials.client_email` | `string` | Yes | Service account email |
-| `credentials.private_key` | `string` | Yes | Service account private key |
+| Option                     | Type     | Required | Description                      |
+| -------------------------- | -------- | -------- | -------------------------------- |
+| `bucket`                   | `string` | Yes      | Google Cloud Storage bucket name |
+| `projectId`                | `string` | Yes      | Google Cloud Project ID          |
+| `credentials`              | `object` | Yes      | Service account credentials      |
+| `credentials.client_email` | `string` | Yes      | Service account email            |
+| `credentials.private_key`  | `string` | Yes      | Service account private key      |
 
 ### WriteFileOptions
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `filename` | `string` | auto-generated | Custom filename for the uploaded file |
-| `contentType` | `string` | auto-detected | MIME type of the file |
+| Option        | Type     | Default        | Description                           |
+| ------------- | -------- | -------------- | ------------------------------------- |
+| `filename`    | `string` | auto-generated | Custom filename for the uploaded file |
+| `contentType` | `string` | auto-detected  | MIME type of the file                 |
 
 ### ReadBufferFileOptions
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `format` | `'buffer'` | - | Return file as Buffer |
+| Option   | Type       | Default | Description           |
+| -------- | ---------- | ------- | --------------------- |
+| `format` | `'buffer'` | -       | Return file as Buffer |
 
 ### ReadStreamFileOptions
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `format` | `'stream'` | - | Return file as Readable stream |
+| Option   | Type       | Default | Description                    |
+| -------- | ---------- | ------- | ------------------------------ |
+| `format` | `'stream'` | -       | Return file as Readable stream |
 
 ## Best Practices
 
 ### Security
+
 - Store service account credentials securely using environment variables
 - Use IAM roles with minimal required permissions
 - Regularly rotate service account keys
 - Enable audit logging for storage access
 
 ### Performance
+
 - Use streams for large files to reduce memory usage
 - Leverage GZIP compression for text-based files
 - Implement proper error handling and retry logic
 - Use batch operations for multiple file uploads
 
 ### Cost Optimization
+
 - Choose appropriate storage classes for your use case
 - Set up lifecycle policies for automatic data management
 - Monitor storage usage and optimize file sizes
 - Use signed URLs to reduce bandwidth costs
 
 ### File Organization
+
 - Use consistent naming conventions
 - Organize files in logical folder structures
 - Implement proper versioning strategies

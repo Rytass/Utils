@@ -34,11 +34,11 @@ export class StockEntity {
   @Column({ type: 'numeric' })
   quantity: number;
 
-  @ManyToOne(() => MaterialEntity, (material) => material.stocks)
+  @ManyToOne(() => MaterialEntity, material => material.stocks)
   @JoinColumn({ name: 'materialId', referencedColumnName: 'id' })
   material: Relation<MaterialEntity>;
 
-  @ManyToOne(() => BatchEntity, (batch) => batch.stocks)
+  @ManyToOne(() => BatchEntity, batch => batch.stocks)
   @JoinColumn([
     {
       name: 'materialId',
@@ -48,7 +48,7 @@ export class StockEntity {
   ])
   batch: Relation<BatchEntity>;
 
-  @ManyToOne(() => OrderEntity, (order) => order.stocks)
+  @ManyToOne(() => OrderEntity, order => order.stocks)
   @JoinColumn({
     name: 'orderId',
     referencedColumnName: 'id',

@@ -34,7 +34,7 @@ export class BaseCategoryEntity {
   @DeleteDateColumn()
   deletedAt: Date | null;
 
-  @ManyToMany(() => BaseCategoryEntity, (category) => category.children)
+  @ManyToMany(() => BaseCategoryEntity, category => category.children)
   @JoinTable({
     name: 'category_relations',
     joinColumn: { name: 'childId', referencedColumnName: 'id' },
@@ -42,20 +42,17 @@ export class BaseCategoryEntity {
   })
   parents: Relation<BaseCategoryEntity[]>;
 
-  @ManyToMany(() => BaseCategoryEntity, (category) => category.parents, {
+  @ManyToMany(() => BaseCategoryEntity, category => category.parents, {
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
     orphanedRowAction: 'delete',
   })
   children: Relation<BaseCategoryEntity[]>;
 
-  @OneToMany(
-    () => BaseCategoryMultiLanguageNameEntity,
-    (multiLanguageName) => multiLanguageName.category,
-  )
+  @OneToMany(() => BaseCategoryMultiLanguageNameEntity, multiLanguageName => multiLanguageName.category)
   multiLanguageNames: Relation<BaseCategoryMultiLanguageNameEntity[]>;
 
-  @ManyToMany(() => BaseArticleEntity, (article) => article.categories, {
+  @ManyToMany(() => BaseArticleEntity, article => article.categories, {
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
     orphanedRowAction: 'delete',

@@ -2,9 +2,7 @@ import { ObjectType, Field, ID } from '@nestjs/graphql';
 import { MemberLoginLogEntity } from '../../models/member-login-log.entity';
 
 @ObjectType('MemberLoginLog')
-export class MemberLoginLogGraphQLDto
-  implements Omit<MemberLoginLogEntity, 'memberId' | 'member'>
-{
+export class MemberLoginLogGraphQLDto implements Omit<MemberLoginLogEntity, 'memberId' | 'member'> {
   @Field(() => ID)
   id: string;
 

@@ -30,17 +30,21 @@ describe('Quadrats Nestjs Module - Content Empty', () => {
   it('should throw when contents not provided', async () => {
     const articleService = await moduleRef.resolve(QuadratsArticleService);
 
-    expect(() => articleService.create({
-      title: 'Test Article Rytass',
-      categoryIds: [],
-      tags: [],
-    })).rejects.toThrow();
+    expect(() =>
+      articleService.create({
+        title: 'Test Article Rytass',
+        categoryIds: [],
+        tags: [],
+      }),
+    ).rejects.toThrow();
 
-    expect(() => articleService.addVersion({
-      id: 'test-id',
-      title: 'Test Article Rytass',
-      categoryIds: [],
-      tags: [],
-    })).rejects.toThrow();
+    expect(() =>
+      articleService.addVersion({
+        id: 'test-id',
+        title: 'Test Article Rytass',
+        categoryIds: [],
+        tags: [],
+      }),
+    ).rejects.toThrow();
   });
 });

@@ -4,19 +4,11 @@ import { Repository } from 'typeorm';
 import { hash } from 'argon2';
 import { RESOLVED_MEMBER_REPO } from '../typings/member-base-providers';
 import { PasswordValidatorService } from './password-validator.service';
-import {
-  MemberPasswordHistoryEntity,
-  MemberPasswordHistoryRepo,
-} from '../models/member-password-history.entity';
-import {
-  MemberNotFoundError,
-  PasswordDoesNotMeetPolicyError,
-} from '../constants/errors/base.error';
+import { MemberPasswordHistoryEntity, MemberPasswordHistoryRepo } from '../models/member-password-history.entity';
+import { MemberNotFoundError, PasswordDoesNotMeetPolicyError } from '../constants/errors/base.error';
 
 @Injectable()
-export class MemberBaseAdminService<
-  MemberEntity extends BaseMemberEntity = BaseMemberEntity,
-> {
+export class MemberBaseAdminService<MemberEntity extends BaseMemberEntity = BaseMemberEntity> {
   constructor(
     @Inject(RESOLVED_MEMBER_REPO)
     private readonly baseMemberRepo: Repository<BaseMemberEntity>,
@@ -45,10 +37,7 @@ export class MemberBaseAdminService<
     newPassword: string,
     ignorePasswordPolicy = false,
   ): Promise<T> {
-    if (
-      !ignorePasswordPolicy &&
-      !(await this.passwordValidatorService.validatePassword(newPassword, id))
-    ) {
+    if (!ignorePasswordPolicy && !(await this.passwordValidatorService.validatePassword(newPassword, id))) {
       throw new PasswordDoesNotMeetPolicyError();
     }
 

@@ -14,9 +14,7 @@ type InjectedRequest = Request & {
   _injectedEnforcer: symbol;
 };
 
-export const getRequestFromContext = (
-  context: ExecutionContext,
-): InjectedRequest => {
+export const getRequestFromContext = (context: ExecutionContext): InjectedRequest => {
   const contextType = context.getType<'http' | 'graphql'>();
 
   switch (contextType) {

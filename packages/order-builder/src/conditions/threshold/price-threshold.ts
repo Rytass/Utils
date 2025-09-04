@@ -3,9 +3,7 @@ import { Condition } from '../typings';
 import { Threshold, ThresholdDescription } from './typings';
 import { ObjRecord } from '../../typings';
 
-export class PriceThreshold<Options extends ObjRecord = ObjRecord>
-  implements Condition<ThresholdDescription, Options>
-{
+export class PriceThreshold<Options extends ObjRecord = ObjRecord> implements Condition<ThresholdDescription, Options> {
   readonly type = Threshold.PRICE;
   readonly value: number;
   readonly options?: Options;

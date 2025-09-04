@@ -1,10 +1,12 @@
-export type LogisticsBaseStatus = 'DELIVERED' | 'DELIVERING' | 'SHELVED'
+export type LogisticsBaseStatus = 'DELIVERED' | 'DELIVERING' | 'SHELVED';
 
-export type LogisticsStatus<T extends LogisticsInterface<unknown>> = LogisticsBaseStatus extends T['reference'] ? T['reference'] : never
+export type LogisticsStatus<T extends LogisticsInterface<unknown>> = LogisticsBaseStatus extends T['reference']
+  ? T['reference']
+  : never;
 
 export interface LogisticsInterface<T = LogisticsBaseStatus> {
-  reference? : T,
-  url: string,
+  reference?: T;
+  url: string;
 }
 
 export interface LogisticsStatusHistory<T> {
@@ -26,4 +28,3 @@ export interface LogisticsErrorInterface {
   readonly code: string;
   readonly message?: string;
 }
-

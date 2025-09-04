@@ -40,25 +40,21 @@ describe('ArticleBaseService - findById', () => {
       },
     });
 
-    jest
-      .spyOn(service as any, 'getDefaultQueryBuilder')
-      .mockReturnValue(mockQueryBuilder);
+    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue(mockQueryBuilder);
   });
 
   it('should throw if language is provided but multipleLanguageMode is false', async () => {
     service = Object.assign(service, { multipleLanguageMode: false });
 
-    await expect(
-      service.findById('article-1', { language: 'en' }),
-    ).rejects.toThrow(MultipleLanguageModeIsDisabledError);
+    await expect(service.findById('article-1', { language: 'en' })).rejects.toThrow(
+      MultipleLanguageModeIsDisabledError,
+    );
   });
 
   it('should throw ArticleNotFoundError if article is not found', async () => {
     mockQueryBuilder.getOne.mockResolvedValue(null);
 
-    await expect(service.findById('not-found-id')).rejects.toThrow(
-      ArticleNotFoundError,
-    );
+    await expect(service.findById('not-found-id')).rejects.toThrow(ArticleNotFoundError);
   });
 
   it('should return SingleArticleBaseDto when language is provided', async () => {
@@ -153,9 +149,7 @@ describe('ArticleBaseService - findById', () => {
         {
           createdAt: new Date(),
           createdBy: 'user-5',
-          multiLanguageContents: [
-            { language: DEFAULT_LANGUAGE, title: 'Default Language Title' },
-          ],
+          multiLanguageContents: [{ language: DEFAULT_LANGUAGE, title: 'Default Language Title' }],
         },
       ],
     };
@@ -200,18 +194,15 @@ describe('ArticleBaseService - findCollection', () => {
       {} as any,
     );
 
-    getFindAllQueryBuilderMock = jest.spyOn(
-      service as any,
-      'getFindAllQueryBuilder',
-    );
+    getFindAllQueryBuilderMock = jest.spyOn(service as any, 'getFindAllQueryBuilder');
   });
 
   it('should throw if language is provided but multipleLanguageMode is false', async () => {
     (service as any).multipleLanguageMode = false;
 
-    await expect(
-      service.findCollection({ language: DEFAULT_LANGUAGE } as any),
-    ).rejects.toThrow(MultipleLanguageModeIsDisabledError);
+    await expect(service.findCollection({ language: DEFAULT_LANGUAGE } as any)).rejects.toThrow(
+      MultipleLanguageModeIsDisabledError,
+    );
   });
 
   it('should return SingleArticleCollectionDto when language is provided', async () => {
@@ -229,9 +220,7 @@ describe('ArticleBaseService - findCollection', () => {
                 version: 1,
                 createdAt: new Date('2023-01-02'),
                 createdBy: 'user1',
-                multiLanguageContents: [
-                  { language: 'en', title: 'Hello', body: 'World' },
-                ],
+                multiLanguageContents: [{ language: 'en', title: 'Hello', body: 'World' }],
               },
             ],
           },
@@ -313,9 +302,7 @@ describe('ArticleBaseService - findCollection', () => {
           version: 1,
           createdAt: new Date(),
           createdBy: 'admin',
-          multiLanguageContents: [
-            { language: DEFAULT_LANGUAGE, contentField: 'expected' },
-          ],
+          multiLanguageContents: [{ language: DEFAULT_LANGUAGE, contentField: 'expected' }],
         },
       ],
     };
@@ -362,18 +349,15 @@ describe('ArticleBaseService - findAll', () => {
       {} as any,
     );
 
-    getFindAllQueryBuilderMock = jest.spyOn(
-      service as any,
-      'getFindAllQueryBuilder',
-    );
+    getFindAllQueryBuilderMock = jest.spyOn(service as any, 'getFindAllQueryBuilder');
   });
 
   it('should throw if language is provided but multipleLanguageMode is false', async () => {
     (service as any).multipleLanguageMode = false;
 
-    await expect(
-      service.findAll({ language: DEFAULT_LANGUAGE } as any),
-    ).rejects.toThrow(MultipleLanguageModeIsDisabledError);
+    await expect(service.findAll({ language: DEFAULT_LANGUAGE } as any)).rejects.toThrow(
+      MultipleLanguageModeIsDisabledError,
+    );
   });
 
   it('should return SingleArticleBaseDto when language is provided', async () => {
@@ -390,9 +374,7 @@ describe('ArticleBaseService - findAll', () => {
               version: 1,
               createdAt: new Date('2023-01-02'),
               createdBy: 'user1',
-              multiLanguageContents: [
-                { language: 'en', title: 'Hello', body: 'World' },
-              ],
+              multiLanguageContents: [{ language: 'en', title: 'Hello', body: 'World' }],
             },
           ],
         },
@@ -451,10 +433,7 @@ describe('ArticleBaseService - findAll', () => {
 
     await service.findAll({ stage: ArticleStage.RELEASED } as any);
 
-    expect(setMock).toHaveBeenCalledWith(
-      'a1:1',
-      Promise.resolve(ArticleStage.RELEASED),
-    );
+    expect(setMock).toHaveBeenCalledWith('a1:1', Promise.resolve(ArticleStage.RELEASED));
   });
 
   it('should use DEFAULT_LANGUAGE if language is not provided and multipleLanguageMode is false', async () => {
@@ -473,9 +452,7 @@ describe('ArticleBaseService - findAll', () => {
               version: 1,
               createdAt: new Date(),
               createdBy: 'admin',
-              multiLanguageContents: [
-                { language: DEFAULT_LANGUAGE, contentField: 'expected' },
-              ],
+              multiLanguageContents: [{ language: DEFAULT_LANGUAGE, contentField: 'expected' }],
             },
           ],
         },

@@ -18,15 +18,11 @@ function resolveTypeName(type: any): string {
 
 describe('BaseCategoryMultiLanguageNameEntity relation: category', () => {
   const relation = getMetadataArgsStorage().relations.find(
-    (r) =>
-      r.target === BaseCategoryMultiLanguageNameEntity &&
-      r.propertyName === 'category',
+    r => r.target === BaseCategoryMultiLanguageNameEntity && r.propertyName === 'category',
   );
 
   const joinColumn = getMetadataArgsStorage().joinColumns.find(
-    (jc) =>
-      jc.target === BaseCategoryMultiLanguageNameEntity &&
-      jc.propertyName === 'category',
+    jc => jc.target === BaseCategoryMultiLanguageNameEntity && jc.propertyName === 'category',
   );
 
   it('should have a ManyToOne relation to BaseCategoryEntity', () => {

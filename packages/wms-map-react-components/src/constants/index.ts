@@ -44,14 +44,7 @@ export const CANVAS_CONFIG = {
 } as const;
 
 // 預設倉庫 ID (應該從外部傳入)
-export const DEFAULT_WAREHOUSE_IDS = [
-  '10001',
-  '10001A',
-  '10002',
-  '100002B',
-  '100003',
-  '100003B',
-] as const;
+export const DEFAULT_WAREHOUSE_IDS = ['10001', '10001A', '10002', '100002B', '100003', '100003B'] as const;
 
 // 檔案類型
 export const SUPPORTED_IMAGE_TYPES = {
@@ -63,21 +56,9 @@ export const SUPPORTED_IMAGE_TYPES = {
 // 檔案上傳限制
 export const UPLOAD_CONFIG = {
   DEFAULT_MAX_FILE_SIZE_KB: 30720, // 30MB
-  SUPPORTED_MIME_TYPES: [
-    'image/png',
-    'image/jpeg',
-    'image/jpg',
-    'image/gif',
-    'image/webp',
-  ],
+  SUPPORTED_MIME_TYPES: ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'],
 } as const;
 
 // Export text mappings
 export { TEXT_MAPPINGS } from './text-mappings';
-export type {
-  TextMappingKey,
-  DebugKey,
-  OperationKey,
-  MessageKey,
-  TestMessageKey,
-} from './text-mappings';
+export type { TextMappingKey, DebugKey, OperationKey, MessageKey, TestMessageKey } from './text-mappings';

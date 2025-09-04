@@ -22,7 +22,7 @@ describe('ECPayPayment Ngrok binding', () => {
     setImmediate(() => callback && callback());
     return mockServer;
   });
-  mockServer.close = jest.fn((callback) => {
+  mockServer.close = jest.fn(callback => {
     setImmediate(() => callback && callback());
     return mockServer;
   });
@@ -44,7 +44,7 @@ describe('ECPayPayment Ngrok binding', () => {
 
     // Override global import function to handle dynamic imports
     const originalImport = global.import || jest.fn();
-    global.import = jest.fn().mockImplementation((moduleName) => {
+    global.import = jest.fn().mockImplementation(moduleName => {
       if (moduleName === '@ngrok/ngrok') {
         return Promise.resolve({ default: mockNgrok });
       }
@@ -60,7 +60,7 @@ describe('ECPayPayment Ngrok binding', () => {
   it('should connect to ngrok when withServer is ngrok', async () => {
     const { ECPayPayment } = await import('../src');
 
-    return new Promise<void>((resolve) => {
+    return new Promise<void>(resolve => {
       const payment = new ECPayPayment({
         merchantId: '2000132',
         hashKey: '5294y06JbISpM5x9',
@@ -83,7 +83,7 @@ describe('ECPayPayment Ngrok binding', () => {
     const { ECPayPayment } = await import('../src');
 
     const customPort = 8080;
-    return new Promise<void>((resolve) => {
+    return new Promise<void>(resolve => {
       const payment = new ECPayPayment({
         merchantId: '2000132',
         hashKey: '5294y06JbISpM5x9',
@@ -103,7 +103,7 @@ describe('ECPayPayment Ngrok binding', () => {
   it('should call ngrok methods correctly', async () => {
     const { ECPayPayment } = await import('../src');
 
-    return new Promise<void>((resolve) => {
+    return new Promise<void>(resolve => {
       const payment = new ECPayPayment({
         merchantId: '2000132',
         hashKey: '5294y06JbISpM5x9',

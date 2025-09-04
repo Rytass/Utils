@@ -18,9 +18,7 @@ export class CircularCategoryNotAllowedError extends BadRequestException {
 
 export class MultipleParentCategoryNotAllowedError extends BadRequestException {
   constructor() {
-    super(
-      'Multiple parent categories not allowed, please enable on module forRoot options',
-    );
+    super('Multiple parent categories not allowed, please enable on module forRoot options');
   }
 
   code = 302;

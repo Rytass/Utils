@@ -33,12 +33,7 @@ describe('ECPayInvoiceGateway Void', () => {
       const decipher = createDecipheriv('aes-128-cbc', DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
       const plainPayload = JSON.parse(
-        decodeURIComponent(
-          [
-            decipher.update(payload.Data, 'base64', 'utf8'),
-            decipher.final('utf8'),
-          ].join('')
-        )
+        decodeURIComponent([decipher.update(payload.Data, 'base64', 'utf8'), decipher.final('utf8')].join('')),
       ) as {
         InvoiceNo: string;
         InvoiceDate: string;
@@ -60,11 +55,17 @@ describe('ECPayInvoiceGateway Void', () => {
             TransCode: 1,
             TransMsg: 'Success',
             Data: [
-              cipher.update(encodeURIComponent(JSON.stringify({
-                RtnCode: 1600003,
-                RtnMsg: '無發票號碼資料',
-                InvoiceNo: null,
-              })), 'utf8', 'base64'),
+              cipher.update(
+                encodeURIComponent(
+                  JSON.stringify({
+                    RtnCode: 1600003,
+                    RtnMsg: '無發票號碼資料',
+                    InvoiceNo: null,
+                  }),
+                ),
+                'utf8',
+                'base64',
+              ),
               cipher.final('base64'),
             ].join(''),
           },
@@ -81,11 +82,17 @@ describe('ECPayInvoiceGateway Void', () => {
           TransCode: SHOULD_THROW_ERROR_REASON === plainPayload.Reason ? 999 : 1,
           TransMsg: 'Success',
           Data: [
-            cipher.update(encodeURIComponent(JSON.stringify({
-              RtnCode: 1,
-              RtnMsg: '作廢發票成功',
-              InvoiceNo: FAKE_INVOICE_NUMBER,
-            })), 'utf8', 'base64'),
+            cipher.update(
+              encodeURIComponent(
+                JSON.stringify({
+                  RtnCode: 1,
+                  RtnMsg: '作廢發票成功',
+                  InvoiceNo: FAKE_INVOICE_NUMBER,
+                }),
+              ),
+              'utf8',
+              'base64',
+            ),
             cipher.final('base64'),
           ].join(''),
         },
@@ -95,11 +102,13 @@ describe('ECPayInvoiceGateway Void', () => {
 
   it('should void an invoice', async () => {
     const mockInvoice = new ECPayInvoice({
-      items: [{
-        name: '橡皮擦',
-        unitPrice: 10,
-        quantity: 2,
-      }],
+      items: [
+        {
+          name: '橡皮擦',
+          unitPrice: 10,
+          quantity: 2,
+        },
+      ],
       issuedOn: new Date(),
       invoiceNumber: FAKE_INVOICE_NUMBER,
       randomCode: FAKE_RANDOM_CODE,
@@ -116,11 +125,13 @@ describe('ECPayInvoiceGateway Void', () => {
 
   it('should throw error on invoice not found', () => {
     const mockInvoice = new ECPayInvoice({
-      items: [{
-        name: '橡皮擦',
-        unitPrice: 10,
-        quantity: 2,
-      }],
+      items: [
+        {
+          name: '橡皮擦',
+          unitPrice: 10,
+          quantity: 2,
+        },
+      ],
       issuedOn: new Date(),
       invoiceNumber: 'GG00148493',
       randomCode: FAKE_RANDOM_CODE,
@@ -128,19 +139,23 @@ describe('ECPayInvoiceGateway Void', () => {
       taxType: TaxType.TAXED,
     });
 
-    expect(() => invoiceGateway.void(mockInvoice, {
-      reason: '測試作廢',
-    })).rejects.toThrow();
+    expect(() =>
+      invoiceGateway.void(mockInvoice, {
+        reason: '測試作廢',
+      }),
+    ).rejects.toThrow();
   });
 
   describe('Misc', () => {
     it('should throw error when ecpay reject request', () => {
       const mockInvoice = new ECPayInvoice({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
         issuedOn: new Date(),
         invoiceNumber: FAKE_INVOICE_NUMBER,
         randomCode: FAKE_RANDOM_CODE,
@@ -148,9 +163,11 @@ describe('ECPayInvoiceGateway Void', () => {
         taxType: TaxType.TAXED,
       });
 
-      expect(() => invoiceGateway.void(mockInvoice, {
-        reason: SHOULD_THROW_ERROR_REASON,
-      })).rejects.toThrow();
+      expect(() =>
+        invoiceGateway.void(mockInvoice, {
+          reason: SHOULD_THROW_ERROR_REASON,
+        }),
+      ).rejects.toThrow();
     });
   });
 });

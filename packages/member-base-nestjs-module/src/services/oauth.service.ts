@@ -1,9 +1,6 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import axios from 'axios';
-import {
-  OAUTH2_PROVIDERS,
-  RESOLVED_MEMBER_REPO,
-} from '../typings/member-base-providers';
+import { OAUTH2_PROVIDERS, RESOLVED_MEMBER_REPO } from '../typings/member-base-providers';
 import {
   CustomOAuth2Provider,
   FacebookOAuth2Provider,
@@ -11,10 +8,7 @@ import {
   OAuth2Provider,
 } from '../typings/oauth2-provider.interface';
 import { TokenPairDto } from '../dto/token-pair.dto';
-import {
-  MemberOAuthRecordEntity,
-  MemberOAuthRecordRepo,
-} from '../models/member-oauth-record.entity';
+import { MemberOAuthRecordEntity, MemberOAuthRecordRepo } from '../models/member-oauth-record.entity';
 import { Repository } from 'typeorm';
 import { MemberBaseService } from './member-base.service';
 import { BaseMemberEntity } from '../models/base-member.entity';
@@ -33,9 +27,7 @@ export class OAuthService {
   ) {}
 
   async getGoogleOAuthLoginUrl(): Promise<string> {
-    const provider = this.providers.find(
-      (p) => p.channel === 'google',
-    ) as GoogleOAuth2Provider;
+    const provider = this.providers.find(p => p.channel === 'google') as GoogleOAuth2Provider;
 
     if (!provider) {
       throw new BadRequestException('Google OAuth2 provider not found');
@@ -55,9 +47,7 @@ export class OAuthService {
   }
 
   async getFacebookOAuthLoginUrl(): Promise<string> {
-    const provider = this.providers.find(
-      (p) => p.channel === 'facebook',
-    ) as FacebookOAuth2Provider;
+    const provider = this.providers.find(p => p.channel === 'facebook') as FacebookOAuth2Provider;
 
     if (!provider) {
       throw new BadRequestException('Facebook OAuth2 provider not found');
@@ -77,9 +67,7 @@ export class OAuthService {
   }
 
   async getCustomOAuthLoginUrl(channel: string): Promise<string> {
-    const provider = this.providers.find(
-      (p) => p.channel === channel,
-    ) as CustomOAuth2Provider;
+    const provider = this.providers.find(p => p.channel === channel) as CustomOAuth2Provider;
 
     if (!provider) {
       throw new BadRequestException('OAuth2 provider not found');
@@ -98,13 +86,8 @@ export class OAuthService {
     return `${provider.requestUrl}?${params.toString()}`;
   }
 
-  async loginWithGoogleOAuth2Code(
-    code: string,
-    state?: string,
-  ): Promise<TokenPairDto & { state?: string }> {
-    const provider = this.providers.find(
-      (p) => p.channel === 'google',
-    ) as GoogleOAuth2Provider;
+  async loginWithGoogleOAuth2Code(code: string, state?: string): Promise<TokenPairDto & { state?: string }> {
+    const provider = this.providers.find(p => p.channel === 'google') as GoogleOAuth2Provider;
 
     if (!provider) {
       throw new BadRequestException('Google OAuth2 provider not found');
@@ -112,16 +95,13 @@ export class OAuthService {
 
     const {
       data: { access_token },
-    } = await axios.post<{ access_token: string }>(
-      'https://oauth2.googleapis.com/token',
-      {
-        code,
-        client_id: provider.clientId,
-        client_secret: provider.clientSecret,
-        redirect_uri: provider.redirectUri,
-        grant_type: 'authorization_code',
-      },
-    );
+    } = await axios.post<{ access_token: string }>('https://oauth2.googleapis.com/token', {
+      code,
+      client_id: provider.clientId,
+      client_secret: provider.clientSecret,
+      redirect_uri: provider.redirectUri,
+      grant_type: 'authorization_code',
+    });
 
     const { data } = await axios.get<{
       email: string;
@@ -136,10 +116,7 @@ export class OAuthService {
       throw new BadRequestException('Email not verified');
     }
 
-    const tokenPair = await this.loginWithOAuthIdentifier(
-      'google',
-      data.email.toLowerCase(),
-    );
+    const tokenPair = await this.loginWithOAuthIdentifier('google', data.email.toLowerCase());
 
     return {
       ...tokenPair,
@@ -147,13 +124,8 @@ export class OAuthService {
     };
   }
 
-  async loginWithFacebookOAuth2Code(
-    code: string,
-    state?: string,
-  ): Promise<TokenPairDto & { state?: string }> {
-    const provider = this.providers.find(
-      (p) => p.channel === 'facebook',
-    ) as GoogleOAuth2Provider;
+  async loginWithFacebookOAuth2Code(code: string, state?: string): Promise<TokenPairDto & { state?: string }> {
+    const provider = this.providers.find(p => p.channel === 'facebook') as GoogleOAuth2Provider;
 
     if (!provider) {
       throw new BadRequestException('Facebook OAuth2 provider not found');
@@ -161,24 +133,18 @@ export class OAuthService {
 
     const {
       data: { access_token },
-    } = await axios.post<{ access_token: string }>(
-      'https://graph.facebook.com/v22.0/oauth/access_token',
-      {
-        code,
-        client_id: provider.clientId,
-        client_secret: provider.clientSecret,
-        redirect_uri: provider.redirectUri,
-      },
-    );
+    } = await axios.post<{ access_token: string }>('https://graph.facebook.com/v22.0/oauth/access_token', {
+      code,
+      client_id: provider.clientId,
+      client_secret: provider.clientSecret,
+      redirect_uri: provider.redirectUri,
+    });
 
     const { data } = await axios.get<{ email: string }>(
       `https://graph.facebook.com/me?fields=id,name,email&access_token=${access_token}`,
     );
 
-    const tokenPair = await this.loginWithOAuthIdentifier(
-      'facebook',
-      data.email.toLowerCase(),
-    );
+    const tokenPair = await this.loginWithOAuthIdentifier('facebook', data.email.toLowerCase());
 
     return {
       ...tokenPair,
@@ -191,9 +157,7 @@ export class OAuthService {
     code: string,
     state?: string,
   ): Promise<TokenPairDto & { state?: string }> {
-    const provider = this.providers.find(
-      (p) => p.channel === channel,
-    ) as CustomOAuth2Provider;
+    const provider = this.providers.find(p => p.channel === channel) as CustomOAuth2Provider;
 
     if (!provider) {
       throw new BadRequestException('OAuth2 provider not found');
@@ -209,10 +173,7 @@ export class OAuthService {
     };
   }
 
-  private async loginWithOAuthIdentifier(
-    channel: string,
-    identifier: string,
-  ): Promise<TokenPairDto> {
+  private async loginWithOAuthIdentifier(channel: string, identifier: string): Promise<TokenPairDto> {
     const qb = this.memberOAuthRecordRepo.createQueryBuilder('oauthRecords');
 
     qb.innerJoinAndSelect('oauthRecords.member', 'member');
@@ -226,9 +187,7 @@ export class OAuthService {
     if (oauthRecord) {
       return {
         accessToken: this.memberBaseService.signAccessToken(oauthRecord.member),
-        refreshToken: this.memberBaseService.signRefreshToken(
-          oauthRecord.member,
-        ),
+        refreshToken: this.memberBaseService.signRefreshToken(oauthRecord.member),
       };
     } else {
       const existedUnbindMember = await this.baseMemberRepo.findOne({
@@ -245,19 +204,14 @@ export class OAuthService {
         });
 
         return {
-          accessToken:
-            this.memberBaseService.signAccessToken(existedUnbindMember),
-          refreshToken:
-            this.memberBaseService.signRefreshToken(existedUnbindMember),
+          accessToken: this.memberBaseService.signAccessToken(existedUnbindMember),
+          refreshToken: this.memberBaseService.signRefreshToken(existedUnbindMember),
         };
       }
 
-      const [member] = await this.memberBaseService.registerWithoutPassword(
-        identifier,
-        {
-          shouldUpdatePassword: false,
-        },
-      );
+      const [member] = await this.memberBaseService.registerWithoutPassword(identifier, {
+        shouldUpdatePassword: false,
+      });
 
       await this.memberOAuthRecordRepo.save({
         memberId: member.id,

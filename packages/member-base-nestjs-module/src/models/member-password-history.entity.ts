@@ -27,7 +27,7 @@ export class MemberPasswordHistoryEntity {
   @CreateDateColumn()
   createdAt: Date;
 
-  @ManyToOne(() => BaseMemberEntity, (member) => member.passwordHistories)
+  @ManyToOne(() => BaseMemberEntity, member => member.passwordHistories)
   @JoinColumn({ name: 'memberId', referencedColumnName: 'id' })
   member: Relation<BaseMemberEntity>;
 }

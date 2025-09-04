@@ -1,7 +1,13 @@
 import { AdditionalInfo, AsyncOrderInformation, Order, OrderState, PaymentEvents } from '@rytass/payments';
 import { HwaNanOrderItem } from './hwanan-order-item';
 import { HwaNanPayment } from './hwanan-payment';
-import { HwaNanCommitMessage, HwaNanPrepareOrderInit, HwaNanMakeOrderPayload, HwaNanPaymentChannel, HwaNanCreditCardCommitMessage } from './typings';
+import {
+  HwaNanCommitMessage,
+  HwaNanPrepareOrderInit,
+  HwaNanMakeOrderPayload,
+  HwaNanPaymentChannel,
+  HwaNanCreditCardCommitMessage,
+} from './typings';
 
 export class HwaNanOrder<OCM extends HwaNanCommitMessage = HwaNanCreditCardCommitMessage> implements Order<OCM> {
   private readonly _id: string;
@@ -75,9 +81,7 @@ export class HwaNanOrder<OCM extends HwaNanCommitMessage = HwaNanCreditCardCommi
   }
 
   get totalPrice() {
-    return this.items.reduce((sum, item) => (
-      sum + (item.unitPrice * item.quantity)
-    ), 0);
+    return this.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   }
 
   // Additional information
@@ -113,7 +117,9 @@ export class HwaNanOrder<OCM extends HwaNanCommitMessage = HwaNanCreditCardCommi
   </head>
   <body>
     <form action="${this._gateway.checkoutActionUrl}" method="POST">
-      ${Object.entries(this.form).map(([key, value]) => `<input name="${key}" value="${value}" type="hidden" />`).join('\n')}
+      ${Object.entries(this.form)
+        .map(([key, value]) => `<input name="${key}" value="${value}" type="hidden" />`)
+        .join('\n')}
     </form>
     <script>
       document.forms[0].submit();

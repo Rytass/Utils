@@ -32,12 +32,7 @@ interface HistorySummary {
 }
 
 interface UseDirectStateHistoryReturn {
-  saveState: (
-    nodes: FlowNode[],
-    edges: FlowEdge[],
-    operation: string,
-    editMode: EditMode,
-  ) => void;
+  saveState: (nodes: FlowNode[], edges: FlowEdge[], operation: string, editMode: EditMode) => void;
   undo: () => {
     nodes: FlowNode[];
     edges: FlowEdge[];
@@ -50,11 +45,7 @@ interface UseDirectStateHistoryReturn {
   } | null;
   canUndo: boolean;
   canRedo: boolean;
-  initializeHistory: (
-    initialNodes: FlowNode[],
-    initialEdges: FlowEdge[],
-    editMode: EditMode,
-  ) => void;
+  initializeHistory: (initialNodes: FlowNode[], initialEdges: FlowEdge[], editMode: EditMode) => void;
   clearHistory: () => void;
   getHistorySummary: () => HistorySummary;
   history?: HistoryState[];
@@ -83,11 +74,7 @@ export const useDirectStateHistory = ({
 
   // 初始化歷史記錄
   const initializeHistory = useCallback(
-    (
-      initialNodes: FlowNode[],
-      initialEdges: FlowEdge[],
-      editMode: EditMode,
-    ): void => {
+    (initialNodes: FlowNode[], initialEdges: FlowEdge[], editMode: EditMode): void => {
       const initialState: HistoryState = {
         nodes: JSON.parse(JSON.stringify(initialNodes)),
         edges: JSON.parse(JSON.stringify(initialEdges)),
@@ -112,12 +99,7 @@ export const useDirectStateHistory = ({
 
   // 保存狀態快照
   const saveState = useCallback(
-    (
-      nodes: FlowNode[],
-      edges: FlowEdge[],
-      operation: string,
-      editMode: EditMode,
-    ): void => {
+    (nodes: FlowNode[], edges: FlowEdge[], operation: string, editMode: EditMode): void => {
       if (isRestoringRef.current) {
         if (debugMode) {
           console.log('🚫 跳過保存 - 正在執行 undo/redo');
@@ -134,12 +116,10 @@ export const useDirectStateHistory = ({
         timestamp: Date.now(),
       };
 
-      setHistory((prevHistory) => {
+      setHistory(prevHistory => {
         // 如果當前不在最後位置，截斷後續歷史
         const truncatedHistory =
-          currentIndex < prevHistory.length - 1
-            ? prevHistory.slice(0, currentIndex + 1)
-            : prevHistory;
+          currentIndex < prevHistory.length - 1 ? prevHistory.slice(0, currentIndex + 1) : prevHistory;
 
         // 添加新狀態
         const historyWithNewState = [...truncatedHistory, newState];
@@ -272,8 +252,7 @@ export const useDirectStateHistory = ({
       canRedo,
       historyLength: history.length,
       currentIndex,
-      currentOperation:
-        currentIndex >= 0 ? history[currentIndex]?.operation : undefined,
+      currentOperation: currentIndex >= 0 ? history[currentIndex]?.operation : undefined,
       operations: debugMode
         ? history.map((h, index) => ({
             index,

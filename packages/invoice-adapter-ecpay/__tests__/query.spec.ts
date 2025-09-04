@@ -5,12 +5,7 @@
 import { createDecipheriv, createCipheriv } from 'crypto';
 import { DateTime } from 'luxon';
 import axios from 'axios';
-import {
-  ECPayInvoiceGateway,
-  ECPayInvoiceQueryRequestBody,
-  InvoiceState,
-  TaxType,
-} from '../src';
+import { ECPayInvoiceGateway, ECPayInvoiceQueryRequestBody, InvoiceState, TaxType } from '../src';
 
 const DEFAULT_AES_IV = 'q9jcZX8Ib9LM8wYk';
 const DEFAULT_AES_KEY = 'ejCk326UnaZWKisg';
@@ -33,19 +28,10 @@ describe('ECPay Invoice Query', () => {
         Data: string;
       };
 
-      const decipher = createDecipheriv(
-        'aes-128-cbc',
-        DEFAULT_AES_KEY,
-        DEFAULT_AES_IV,
-      );
+      const decipher = createDecipheriv('aes-128-cbc', DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
       const plainInfo = JSON.parse(
-        decodeURIComponent(
-          [
-            decipher.update(payload.Data, 'base64', 'utf8'),
-            decipher.final('utf8'),
-          ].join(''),
-        ),
+        decodeURIComponent([decipher.update(payload.Data, 'base64', 'utf8'), decipher.final('utf8')].join('')),
       ) as ECPayInvoiceQueryRequestBody;
 
       expect(plainInfo.MerchantID).toBe(DEFAULT_MERCHANT_ID);
@@ -54,11 +40,7 @@ describe('ECPay Invoice Query', () => {
         expect(plainInfo.RelateNumber).toBe('f581df41f1a65f05');
       }
 
-      const cipher = createCipheriv(
-        'aes-128-cbc',
-        DEFAULT_AES_KEY,
-        DEFAULT_AES_IV,
-      );
+      const cipher = createCipheriv('aes-128-cbc', DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
       return {
         data: {
@@ -140,9 +122,7 @@ describe('ECPay Invoice Query', () => {
     expect(invoice.issuedAmount).toBe(100);
     expect(invoice.taxType).toBe('TAXED');
     expect(invoice.items.length).toEqual(1);
-    expect(DateTime.fromJSDate(invoice.issuedOn).toFormat('yyyyMMdd')).toBe(
-      '20230203',
-    );
+    expect(DateTime.fromJSDate(invoice.issuedOn).toFormat('yyyyMMdd')).toBe('20230203');
 
     expect(invoice.state).toBe(InvoiceState.ISSUED);
     expect(invoice.orderId).toBe('f581df41f1a65f05');
@@ -162,19 +142,10 @@ describe('ECPay Invoice Query', () => {
         Data: string;
       };
 
-      const decipher = createDecipheriv(
-        'aes-128-cbc',
-        DEFAULT_AES_KEY,
-        DEFAULT_AES_IV,
-      );
+      const decipher = createDecipheriv('aes-128-cbc', DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
       const plainInfo = JSON.parse(
-        decodeURIComponent(
-          [
-            decipher.update(payload.Data, 'base64', 'utf8'),
-            decipher.final('utf8'),
-          ].join(''),
-        ),
+        decodeURIComponent([decipher.update(payload.Data, 'base64', 'utf8'), decipher.final('utf8')].join('')),
       ) as ECPayInvoiceQueryRequestBody;
 
       expect(plainInfo.MerchantID).toBe(DEFAULT_MERCHANT_ID);
@@ -184,11 +155,7 @@ describe('ECPay Invoice Query', () => {
         expect(plainInfo.InvoiceDate).toBe('2023-02-03');
       }
 
-      const cipher = createCipheriv(
-        'aes-128-cbc',
-        DEFAULT_AES_KEY,
-        DEFAULT_AES_IV,
-      );
+      const cipher = createCipheriv('aes-128-cbc', DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
       return {
         data: {
@@ -270,20 +237,14 @@ describe('ECPay Invoice Query', () => {
 
     expect(invoice.invoiceNumber).toBe('ZZ18003921');
     expect(invoice.randomCode).toBe('3321');
-    expect(DateTime.fromJSDate(invoice.issuedOn).toFormat('yyyyMMdd')).toBe(
-      '20230203',
-    );
+    expect(DateTime.fromJSDate(invoice.issuedOn).toFormat('yyyyMMdd')).toBe('20230203');
   });
 
   it('should query zero tax invoice', async () => {
     const mockPost = jest.spyOn(axios, 'post');
 
     mockPost.mockImplementation(async (url: string, data: any) => {
-      const cipher = createCipheriv(
-        'aes-128-cbc',
-        DEFAULT_AES_KEY,
-        DEFAULT_AES_IV,
-      );
+      const cipher = createCipheriv('aes-128-cbc', DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
       return {
         data: {
@@ -371,11 +332,7 @@ describe('ECPay Invoice Query', () => {
     const mockPost = jest.spyOn(axios, 'post');
 
     mockPost.mockImplementation(async (url: string, data: any) => {
-      const cipher = createCipheriv(
-        'aes-128-cbc',
-        DEFAULT_AES_KEY,
-        DEFAULT_AES_IV,
-      );
+      const cipher = createCipheriv('aes-128-cbc', DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
       return {
         data: {
@@ -463,11 +420,7 @@ describe('ECPay Invoice Query', () => {
     const mockPost = jest.spyOn(axios, 'post');
 
     mockPost.mockImplementation(async (url: string, data: any) => {
-      const cipher = createCipheriv(
-        'aes-128-cbc',
-        DEFAULT_AES_KEY,
-        DEFAULT_AES_IV,
-      );
+      const cipher = createCipheriv('aes-128-cbc', DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
       return {
         data: {
@@ -555,11 +508,7 @@ describe('ECPay Invoice Query', () => {
     const mockPost = jest.spyOn(axios, 'post');
 
     mockPost.mockImplementation(async (url: string, data: any) => {
-      const cipher = createCipheriv(
-        'aes-128-cbc',
-        DEFAULT_AES_KEY,
-        DEFAULT_AES_IV,
-      );
+      const cipher = createCipheriv('aes-128-cbc', DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
       return {
         data: {
@@ -686,11 +635,7 @@ describe('ECPay Invoice Query', () => {
     const mockPost = jest.spyOn(axios, 'post');
 
     mockPost.mockImplementation(async (url: string, data: any) => {
-      const cipher = createCipheriv(
-        'aes-128-cbc',
-        DEFAULT_AES_KEY,
-        DEFAULT_AES_IV,
-      );
+      const cipher = createCipheriv('aes-128-cbc', DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
       return {
         data: {

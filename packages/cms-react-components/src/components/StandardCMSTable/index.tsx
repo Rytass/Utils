@@ -7,9 +7,7 @@ import ModalProvider from '../modal/ModalProvider';
 import Table from './Table';
 import { StandardCMSTableProps } from './typings';
 
-const StandardCMSTable = <T extends TableDataSourceWithID>(
-  props: StandardCMSTableProps<T>,
-): ReactElement => {
+const StandardCMSTable = <T extends TableDataSourceWithID>(props: StandardCMSTableProps<T>): ReactElement => {
   return (
     <CalendarConfigProvider methods={calendarMethodsDayjs}>
       <DialogProvider>

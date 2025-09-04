@@ -52,11 +52,8 @@ export function useSubmitButton<T extends FieldValues>({
                   title="審核通過"
                   withApprove
                   showSeverityIcon
-                  onRelease={async (releasedAt) => {
-                    await actionsEvents.onCreateAndRelease?.(
-                      values,
-                      releasedAt,
-                    );
+                  onRelease={async releasedAt => {
+                    await actionsEvents.onCreateAndRelease?.(values, releasedAt);
                   }}
                   onApprove={async () => {
                     await actionsEvents.onCreateAndApprove?.(values);
@@ -137,11 +134,8 @@ export function useSubmitButton<T extends FieldValues>({
                     title="審核通過"
                     withApprove
                     showSeverityIcon
-                    onRelease={async (releasedAt) => {
-                      await actionsEvents.onUpdateAndRelease?.(
-                        values,
-                        releasedAt,
-                      );
+                    onRelease={async releasedAt => {
+                      await actionsEvents.onUpdateAndRelease?.(values, releasedAt);
                     }}
                     onApprove={async () => {
                       await actionsEvents.onUpdateAndApprove?.(values);
@@ -246,11 +240,8 @@ export function useSubmitButton<T extends FieldValues>({
                     title="審核通過"
                     withApprove
                     showSeverityIcon
-                    onRelease={async (releasedAt) => {
-                      await actionsEvents.onUpdateAndRelease?.(
-                        values,
-                        releasedAt,
-                      );
+                    onRelease={async releasedAt => {
+                      await actionsEvents.onUpdateAndRelease?.(values, releasedAt);
                     }}
                     onApprove={async () => {
                       await actionsEvents.onUpdateAndApprove?.(values);
@@ -315,7 +306,7 @@ export function useSubmitButton<T extends FieldValues>({
                   title="審核通過"
                   withApprove
                   showSeverityIcon
-                  onRelease={async (releasedAt) => {
+                  onRelease={async releasedAt => {
                     await actionsEvents.onRelease?.(values, releasedAt);
                   }}
                   onApprove={async () => {
@@ -389,11 +380,8 @@ export function useSubmitButton<T extends FieldValues>({
                     title="審核通過"
                     withApprove
                     showSeverityIcon
-                    onRelease={async (releasedAt) => {
-                      await actionsEvents.onUpdateAndRelease?.(
-                        values,
-                        releasedAt,
-                      );
+                    onRelease={async releasedAt => {
+                      await actionsEvents.onUpdateAndRelease?.(values, releasedAt);
                     }}
                     onApprove={async () => {
                       await actionsEvents.onUpdateAndApprove?.(values);
@@ -458,7 +446,7 @@ export function useSubmitButton<T extends FieldValues>({
                   title="審核通過"
                   withApprove
                   showSeverityIcon
-                  onRelease={async (releasedAt) => {
+                  onRelease={async releasedAt => {
                     await actionsEvents.onRelease?.(values, releasedAt);
                   }}
                   onApprove={async () => {
@@ -514,11 +502,8 @@ export function useSubmitButton<T extends FieldValues>({
                     title="發佈設定"
                     withApprove={false}
                     showSeverityIcon={false}
-                    onRelease={async (releasedAt) => {
-                      await actionsEvents.onUpdateAndRelease?.(
-                        values,
-                        releasedAt,
-                      );
+                    onRelease={async releasedAt => {
+                      await actionsEvents.onUpdateAndRelease?.(values, releasedAt);
                     }}
                   />
                 ),
@@ -549,7 +534,7 @@ export function useSubmitButton<T extends FieldValues>({
                   title="發佈設定"
                   withApprove={false}
                   showSeverityIcon={false}
-                  onRelease={async (releasedAt) => {
+                  onRelease={async releasedAt => {
                     await actionsEvents.onRelease?.(values, releasedAt);
                   }}
                 />
@@ -589,11 +574,8 @@ export function useSubmitButton<T extends FieldValues>({
                     title="發佈設定"
                     withApprove={false}
                     showSeverityIcon={false}
-                    onRelease={async (releasedAt) => {
-                      await actionsEvents.onUpdateAndRelease?.(
-                        values,
-                        releasedAt,
-                      );
+                    onRelease={async releasedAt => {
+                      await actionsEvents.onUpdateAndRelease?.(values, releasedAt);
                     }}
                   />
                 ),
@@ -624,7 +606,7 @@ export function useSubmitButton<T extends FieldValues>({
                   title="發佈設定"
                   withApprove={false}
                   showSeverityIcon={false}
-                  onRelease={async (releasedAt) => {
+                  onRelease={async releasedAt => {
                     await actionsEvents.onRelease?.(values, releasedAt);
                   }}
                 />
@@ -664,11 +646,8 @@ export function useSubmitButton<T extends FieldValues>({
                     title="發佈設定"
                     withApprove={false}
                     showSeverityIcon={false}
-                    onRelease={async (releasedAt) => {
-                      await actionsEvents.onUpdateAndRelease?.(
-                        values,
-                        releasedAt,
-                      );
+                    onRelease={async releasedAt => {
+                      await actionsEvents.onUpdateAndRelease?.(values, releasedAt);
                     }}
                   />
                 ),
@@ -730,7 +709,7 @@ export function useSubmitButton<T extends FieldValues>({
                   title="發佈設定"
                   withApprove={false}
                   showSeverityIcon={false}
-                  onRelease={async (releasedAt) => {
+                  onRelease={async releasedAt => {
                     await actionsEvents.onRelease?.(values, releasedAt);
                   }}
                 />

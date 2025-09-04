@@ -14,44 +14,37 @@ import {
 export const OptionProviders: Provider[] = [
   {
     provide: PROVIDE_LOCATION_ENTITY,
-    useFactory: (options?: WMSBaseModuleOptions) =>
-      options?.locationEntity ?? null,
+    useFactory: (options?: WMSBaseModuleOptions) => options?.locationEntity ?? null,
     inject: [WMS_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_MATERIAL_ENTITY,
-    useFactory: (options?: WMSBaseModuleOptions) =>
-      options?.materialEntity ?? null,
+    useFactory: (options?: WMSBaseModuleOptions) => options?.materialEntity ?? null,
     inject: [WMS_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_BATCH_ENTITY,
-    useFactory: (options?: WMSBaseModuleOptions) =>
-      options?.batchEntity ?? null,
+    useFactory: (options?: WMSBaseModuleOptions) => options?.batchEntity ?? null,
     inject: [WMS_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_ORDER_ENTITY,
-    useFactory: (options?: WMSBaseModuleOptions) =>
-      options?.orderEntity ?? null,
+    useFactory: (options?: WMSBaseModuleOptions) => options?.orderEntity ?? null,
     inject: [WMS_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_STOCK_ENTITY,
-    useFactory: (options?: WMSBaseModuleOptions) =>
-      options?.stockEntity ?? null,
+    useFactory: (options?: WMSBaseModuleOptions) => options?.stockEntity ?? null,
     inject: [WMS_MODULE_OPTIONS],
   },
   {
     provide: ALLOW_NEGATIVE_STOCK,
-    useFactory: (options?: WMSBaseModuleOptions) =>
-      options?.allowNegativeStock ?? false,
+    useFactory: (options?: WMSBaseModuleOptions) => options?.allowNegativeStock ?? false,
     inject: [WMS_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_WAREHOUSE_MAP_ENTITY,
-    useFactory: (options?: WMSBaseModuleOptions) =>
-      options?.warehouseMapEntity ?? null,
+    useFactory: (options?: WMSBaseModuleOptions) => options?.warehouseMapEntity ?? null,
     inject: [WMS_MODULE_OPTIONS],
   },
 ];

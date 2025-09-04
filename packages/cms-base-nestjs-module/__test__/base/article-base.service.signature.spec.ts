@@ -25,7 +25,7 @@ describe('ArticleBaseService.signature', () => {
         })),
         update: jest.fn(),
         softDelete: jest.fn(),
-        save: jest.fn().mockImplementation((data) => Promise.resolve(data)),
+        save: jest.fn().mockImplementation(data => Promise.resolve(data)),
         exists: jest.fn().mockResolvedValue(true),
       },
     };
@@ -82,7 +82,7 @@ describe('ArticleBaseService.signature', () => {
       {} as any,
       {
         metadata: { tableName: 'signatures' },
-        create: jest.fn((input) => input),
+        create: jest.fn(input => input),
       } as any,
       true,
       { createQueryRunner: () => runner } as any,
@@ -94,44 +94,34 @@ describe('ArticleBaseService.signature', () => {
       mockSignatureService,
     );
 
-    jest
-      .spyOn(service, 'findById')
-      .mockResolvedValue({ id: 'article-id', version: 1 });
+    jest.spyOn(service, 'findById').mockResolvedValue({ id: 'article-id', version: 1 });
 
-    jest
-      .spyOn(service, 'updateSignaturedArticleStageCache')
-      .mockImplementation();
+    jest.spyOn(service, 'updateSignaturedArticleStageCache').mockImplementation();
   });
 
   it('should throw if signature mode is disabled', async () => {
     service.signatureService.signatureEnabled = false;
 
-    await expect(
-      service['signature']('APPROVED', { id: 'a1', version: 1 }),
-    ).rejects.toThrow('Signature is not enabled');
+    await expect(service['signature']('APPROVED', { id: 'a1', version: 1 })).rejects.toThrow(
+      'Signature is not enabled',
+    );
   });
 
   it('should throw if article version does not exist', async () => {
     service.baseArticleVersionRepo.exists = jest.fn().mockResolvedValue(false);
 
-    await expect(
-      service['signature']('REJECTED', { id: 'a1', version: 1 }),
-    ).rejects.toThrow('Invalid article version');
+    await expect(service['signature']('REJECTED', { id: 'a1', version: 1 })).rejects.toThrow('Invalid article version');
   });
 
   it('should throw if signature level is required but not provided', async () => {
-    await expect(
-      service['signature']('APPROVED', { id: 'a1', version: 1 }, {}),
-    ).rejects.toThrow('Signature level is required');
+    await expect(service['signature']('APPROVED', { id: 'a1', version: 1 }, {})).rejects.toThrow(
+      'Signature level is required',
+    );
   });
 
   it('should throw if signature level is invalid', async () => {
     await expect(
-      service['signature'](
-        'APPROVED',
-        { id: 'a1', version: 1 },
-        { signatureLevel: 'INVALID' },
-      ),
+      service['signature']('APPROVED', { id: 'a1', version: 1 }, { signatureLevel: 'INVALID' }),
     ).rejects.toThrow('Invalid signature level');
   });
 
@@ -143,11 +133,7 @@ describe('ArticleBaseService.signature', () => {
     }));
 
     await expect(
-      service['signature'](
-        'APPROVED',
-        { id: 'a1', version: 1 },
-        { signatureLevel: 'FINAL' },
-      ),
+      service['signature']('APPROVED', { id: 'a1', version: 1 }, { signatureLevel: 'FINAL' }),
     ).rejects.toThrow('Previous valid signature not found');
   });
 
@@ -155,18 +141,10 @@ describe('ArticleBaseService.signature', () => {
     runner.manager.createQueryBuilder = jest.fn(() => ({
       andWhere: jest.fn().mockReturnThis(),
       setLock: jest.fn().mockReturnThis(),
-      getMany: jest
-        .fn()
-        .mockResolvedValue([
-          { id: 'sig1', signatureLevelId: 'level-1', result: 'REJECTED' },
-        ]),
+      getMany: jest.fn().mockResolvedValue([{ id: 'sig1', signatureLevelId: 'level-1', result: 'REJECTED' }]),
     }));
 
-    await service['signature'](
-      'REJECTED',
-      { id: 'a1', version: 1 },
-      { signatureLevel: 'REVIEW' },
-    );
+    await service['signature']('REJECTED', { id: 'a1', version: 1 }, { signatureLevel: 'REVIEW' });
 
     expect(runner.manager.softDelete).toHaveBeenCalledWith('signatures', {
       id: 'sig1',
@@ -179,19 +157,11 @@ describe('ArticleBaseService.signature', () => {
     runner.manager.createQueryBuilder = jest.fn(() => ({
       andWhere: jest.fn().mockReturnThis(),
       setLock: jest.fn().mockReturnThis(),
-      getMany: jest
-        .fn()
-        .mockResolvedValue([
-          { id: 'sig1', signatureLevelId: 'level-1', result: 'APPROVED' },
-        ]),
+      getMany: jest.fn().mockResolvedValue([{ id: 'sig1', signatureLevelId: 'level-1', result: 'APPROVED' }]),
     }));
 
     await expect(
-      service['signature'](
-        'APPROVED',
-        { id: 'a1', version: 1 },
-        { signatureLevel: 'REVIEW' },
-      ),
+      service['signature']('APPROVED', { id: 'a1', version: 1 }, { signatureLevel: 'REVIEW' }),
     ).rejects.toThrow('Already signed');
   });
 
@@ -223,11 +193,7 @@ describe('ArticleBaseService.signature', () => {
     runner.manager.save = jest.fn().mockRejectedValue(new Error('fail'));
 
     await expect(
-      service['signature'](
-        'APPROVED',
-        { id: 'a1', version: 1 },
-        { signatureLevel: 'REVIEW' },
-      ),
+      service['signature']('APPROVED', { id: 'a1', version: 1 }, { signatureLevel: 'REVIEW' }),
     ).rejects.toThrow('fail');
 
     expect(runner.rollbackTransaction).toHaveBeenCalled();
@@ -301,11 +267,7 @@ describe('ArticleBaseService.signature', () => {
       },
     ];
 
-    const result = await service['signature'](
-      'REJECTED',
-      { id: 'a1', version: 1 },
-      { signerId: 'user1' },
-    );
+    const result = await service['signature']('REJECTED', { id: 'a1', version: 1 }, { signerId: 'user1' });
 
     expect(result).toBeDefined();
   });
@@ -345,11 +307,7 @@ describe('ArticleBaseService.signature', () => {
     }));
 
     await expect(
-      service['signature'](
-        'APPROVED',
-        { id: 'a1', version: 1 },
-        { signatureLevel: 'FINAL', signerId: 'user1' },
-      ),
+      service['signature']('APPROVED', { id: 'a1', version: 1 }, { signatureLevel: 'FINAL', signerId: 'user1' }),
     ).rejects.toThrow('Previous valid signature not found');
   });
 
@@ -391,7 +349,7 @@ describe('ArticleBaseService.signature', () => {
       ]),
     }));
 
-    service.articleSignatureRepo.create = jest.fn((data) => data);
+    service.articleSignatureRepo.create = jest.fn(data => data);
 
     const result = await service['signature'](
       'APPROVED',
@@ -420,9 +378,7 @@ describe('ArticleBaseService.signature', () => {
     runner.manager.createQueryBuilder = jest.fn(() => ({
       andWhere: jest.fn().mockReturnThis(),
       setLock: jest.fn().mockReturnThis(),
-      getMany: jest
-        .fn()
-        .mockResolvedValue([{ id: 'sig1', signatureLevelId: 'level-x' }]),
+      getMany: jest.fn().mockResolvedValue([{ id: 'sig1', signatureLevelId: 'level-x' }]),
     }));
 
     service.signatureService.signatureLevelsCache = [
@@ -437,25 +393,17 @@ describe('ArticleBaseService.signature', () => {
       },
     ];
 
-    jest
-      .spyOn(service.signatureService.signatureLevelsCache, 'findIndex')
-      .mockReturnValue(NaN as any);
+    jest.spyOn(service.signatureService.signatureLevelsCache, 'findIndex').mockReturnValue(NaN as any);
 
     await expect(
-      service['signature'](
-        'APPROVED',
-        { id: 'a1', version: 1 },
-        { signatureLevel: 'INVALID' },
-      ),
+      service['signature']('APPROVED', { id: 'a1', version: 1 }, { signatureLevel: 'INVALID' }),
     ).rejects.toThrow('Already signed');
   });
 
   it('should create a signature without level if targetLevelIndex is NaN and no signatures exist', async () => {
     service.findById = jest.fn().mockResolvedValueOnce(null);
 
-    jest
-      .spyOn(service.signatureService.signatureLevelsCache, 'findIndex' as any)
-      .mockReturnValue(NaN);
+    jest.spyOn(service.signatureService.signatureLevelsCache, 'findIndex' as any).mockReturnValue(NaN);
 
     runner.manager.createQueryBuilder = jest.fn(() => ({
       andWhere: jest.fn().mockReturnThis(),
@@ -463,7 +411,7 @@ describe('ArticleBaseService.signature', () => {
       getMany: jest.fn().mockResolvedValue([]),
     }));
 
-    const mockCreate = jest.fn((data) => data);
+    const mockCreate = jest.fn(data => data);
 
     service.articleSignatureRepo.create = mockCreate;
 
@@ -487,9 +435,7 @@ describe('ArticleBaseService.signature', () => {
   it('should set signerId to null if not provided (targetLevelIndex NaN)', async () => {
     service.findById = jest.fn().mockResolvedValueOnce(null);
 
-    jest
-      .spyOn(service.signatureService.signatureLevelsCache, 'findIndex')
-      .mockReturnValue(NaN as any);
+    jest.spyOn(service.signatureService.signatureLevelsCache, 'findIndex').mockReturnValue(NaN as any);
 
     runner.manager.createQueryBuilder = jest.fn(() => ({
       andWhere: jest.fn().mockReturnThis(),
@@ -497,7 +443,7 @@ describe('ArticleBaseService.signature', () => {
       getMany: jest.fn().mockResolvedValue([]),
     }));
 
-    const mockCreate = jest.fn((data) => {
+    const mockCreate = jest.fn(data => {
       expect(data.signerId).toBeNull();
 
       return data;
@@ -518,9 +464,7 @@ describe('ArticleBaseService.signature', () => {
   it('should set rejectReason to null if REJECTED but no reason given (targetLevelIndex NaN)', async () => {
     service.findById = jest.fn().mockResolvedValueOnce(null);
 
-    jest
-      .spyOn(service.signatureService.signatureLevelsCache, 'findIndex')
-      .mockReturnValue(NaN as any);
+    jest.spyOn(service.signatureService.signatureLevelsCache, 'findIndex').mockReturnValue(NaN as any);
 
     runner.manager.createQueryBuilder = jest.fn(() => ({
       andWhere: jest.fn().mockReturnThis(),
@@ -528,7 +472,7 @@ describe('ArticleBaseService.signature', () => {
       getMany: jest.fn().mockResolvedValue([]),
     }));
 
-    const mockCreate = jest.fn((data) => {
+    const mockCreate = jest.fn(data => {
       expect(data.rejectReason).toBeNull();
 
       return data;
@@ -550,9 +494,7 @@ describe('ArticleBaseService.signature', () => {
   it('should ignore reason and set rejectReason to null if APPROVED (targetLevelIndex NaN)', async () => {
     service.findById = jest.fn().mockResolvedValueOnce(null);
 
-    jest
-      .spyOn(service.signatureService.signatureLevelsCache, 'findIndex')
-      .mockReturnValue(NaN as any);
+    jest.spyOn(service.signatureService.signatureLevelsCache, 'findIndex').mockReturnValue(NaN as any);
 
     runner.manager.createQueryBuilder = jest.fn(() => ({
       andWhere: jest.fn().mockReturnThis(),
@@ -560,7 +502,7 @@ describe('ArticleBaseService.signature', () => {
       getMany: jest.fn().mockResolvedValue([]),
     }));
 
-    const mockCreate = jest.fn((data) => {
+    const mockCreate = jest.fn(data => {
       expect(data.rejectReason).toBeNull(); // reason is ignored
 
       return data;
@@ -599,9 +541,7 @@ describe('ArticleBaseService.signature', () => {
       },
     ];
 
-    jest
-      .spyOn(service.signatureService.signatureLevelsCache, 'findIndex')
-      .mockReturnValue(NaN as any);
+    jest.spyOn(service.signatureService.signatureLevelsCache, 'findIndex').mockReturnValue(NaN as any);
 
     runner.manager.createQueryBuilder = jest.fn(() => ({
       andWhere: jest.fn().mockReturnThis(),
@@ -609,7 +549,7 @@ describe('ArticleBaseService.signature', () => {
       getMany: jest.fn().mockResolvedValue([]),
     }));
 
-    const mockCreate = jest.fn((data) => data);
+    const mockCreate = jest.fn(data => data);
 
     service.articleSignatureRepo.create = mockCreate;
 
@@ -623,13 +563,10 @@ describe('ArticleBaseService.signature', () => {
       },
     );
 
-    expect(runner.manager.softDelete).toHaveBeenCalledWith(
-      service.baseArticleVersionRepo.metadata.tableName,
-      {
-        articleId: 'a1',
-        version: 1,
-      },
-    );
+    expect(runner.manager.softDelete).toHaveBeenCalledWith(service.baseArticleVersionRepo.metadata.tableName, {
+      articleId: 'a1',
+      version: 1,
+    });
   });
 });
 
@@ -670,55 +607,27 @@ describe('ArticleBaseService.updateSignaturedArticleStageCache', () => {
   });
 
   it('should set stage to DRAFT if result is REJECTED', () => {
-    service['updateSignaturedArticleStageCache'](
-      'cache-key-1',
-      'any-level',
-      ArticleSignatureResult.REJECTED,
-    );
+    service['updateSignaturedArticleStageCache']('cache-key-1', 'any-level', ArticleSignatureResult.REJECTED);
 
-    expect(mockStageCacheSet).toHaveBeenCalledWith(
-      'cache-key-1',
-      Promise.resolve(ArticleStage.DRAFT),
-    );
+    expect(mockStageCacheSet).toHaveBeenCalledWith('cache-key-1', Promise.resolve(ArticleStage.DRAFT));
   });
 
   it('should set stage to VERIFIED if level is final and result is APPROVED', () => {
-    service['updateSignaturedArticleStageCache'](
-      'cache-key-2',
-      'final-level',
-      ArticleSignatureResult.APPROVED,
-    );
+    service['updateSignaturedArticleStageCache']('cache-key-2', 'final-level', ArticleSignatureResult.APPROVED);
 
-    expect(mockStageCacheSet).toHaveBeenCalledWith(
-      'cache-key-2',
-      Promise.resolve(ArticleStage.VERIFIED),
-    );
+    expect(mockStageCacheSet).toHaveBeenCalledWith('cache-key-2', Promise.resolve(ArticleStage.VERIFIED));
   });
 
   it('should set stage to REVIEWING for intermediate level and APPROVED result', () => {
-    service['updateSignaturedArticleStageCache'](
-      'cache-key-3',
-      'intermediate-level',
-      ArticleSignatureResult.APPROVED,
-    );
+    service['updateSignaturedArticleStageCache']('cache-key-3', 'intermediate-level', ArticleSignatureResult.APPROVED);
 
-    expect(mockStageCacheSet).toHaveBeenCalledWith(
-      'cache-key-3',
-      Promise.resolve(ArticleStage.REVIEWING),
-    );
+    expect(mockStageCacheSet).toHaveBeenCalledWith('cache-key-3', Promise.resolve(ArticleStage.REVIEWING));
   });
 
   it('should set stage to REVIEWING if signatureLevelId is null and result is APPROVED', () => {
-    service['updateSignaturedArticleStageCache'](
-      'cache-key-4',
-      null,
-      ArticleSignatureResult.APPROVED,
-    );
+    service['updateSignaturedArticleStageCache']('cache-key-4', null, ArticleSignatureResult.APPROVED);
 
-    expect(mockStageCacheSet).toHaveBeenCalledWith(
-      'cache-key-4',
-      Promise.resolve(ArticleStage.REVIEWING),
-    );
+    expect(mockStageCacheSet).toHaveBeenCalledWith('cache-key-4', Promise.resolve(ArticleStage.REVIEWING));
   });
 });
 
@@ -764,9 +673,7 @@ describe('ArticleBaseService.refreshSignatureLevelsCache', () => {
     await service.refreshSignatureLevelsCache();
 
     expect(mockFind).toHaveBeenCalledWith({ order: { sequence: 'ASC' } });
-    expect((service as any).signatureService.signatureLevelsCache).toEqual(
-      mockLevels,
-    );
+    expect((service as any).signatureService.signatureLevelsCache).toEqual(mockLevels);
   });
 
   it('should set empty array if no levels returned', async () => {

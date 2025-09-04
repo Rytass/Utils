@@ -49,33 +49,24 @@ export class BackstageArticleResolver {
   @ResolveField(() => UserDto, { nullable: true })
   @Authenticated()
   submittedBy(@Root() article: ArticleBaseDto): Promise<UserDto | null> | null {
-    return article.submittedBy
-      ? this.memberDataloader.loader.load(article.submittedBy)
-      : null;
+    return article.submittedBy ? this.memberDataloader.loader.load(article.submittedBy) : null;
   }
 
   @ResolveField(() => UserDto, { nullable: true })
   @Authenticated()
   lastEditor(@Root() article: ArticleBaseDto): Promise<UserDto | null> | null {
-    return article.updatedBy
-      ? this.memberDataloader.loader.load(article.updatedBy)
-      : null;
+    return article.updatedBy ? this.memberDataloader.loader.load(article.updatedBy) : null;
   }
 
   @ResolveField(() => UserDto, { nullable: true })
   @Authenticated()
   releasedBy(@Root() article: ArticleBaseDto): Promise<UserDto | null> | null {
-    return article.releasedBy
-      ? this.memberDataloader.loader.load(article.releasedBy)
-      : null;
+    return article.releasedBy ? this.memberDataloader.loader.load(article.releasedBy) : null;
   }
 
   @ResolveField(() => [CategoryDto])
   @Authenticated()
-  categories(
-    @Root() article: ArticleBaseDto,
-    @Language() language: string = DEFAULT_LANGUAGE,
-  ): Promise<CategoryDto[]> {
+  categories(@Root() article: ArticleBaseDto, @Language() language: string = DEFAULT_LANGUAGE): Promise<CategoryDto[]> {
     return this.articleDataloader.categoriesLoader.load({
       articleId: article.id,
       language: this.multiLanguage ? language : DEFAULT_LANGUAGE,
@@ -89,9 +80,7 @@ export class BackstageArticleResolver {
       return article.title;
     }
 
-    throw new BadRequestException(
-      'Title field is not available in multi-language mode.',
-    );
+    throw new BadRequestException('Title field is not available in multi-language mode.');
   }
 
   @ResolveField(() => String, { nullable: true })
@@ -101,9 +90,7 @@ export class BackstageArticleResolver {
       return article.description ?? null;
     }
 
-    throw new BadRequestException(
-      'Description field is not available in multi-language mode.',
-    );
+    throw new BadRequestException('Description field is not available in multi-language mode.');
   }
 
   @ResolveField(() => QuadratsContentScalar)
@@ -113,16 +100,12 @@ export class BackstageArticleResolver {
       return article.content;
     }
 
-    throw new BadRequestException(
-      'Content field is not available in multi-language mode.',
-    );
+    throw new BadRequestException('Content field is not available in multi-language mode.');
   }
 
   @ResolveField(() => [ArticleMultiLanguageContentDto])
   @Authenticated()
-  multiLanguageContents(
-    @Root() article: ArticleBaseDto,
-  ): ArticleMultiLanguageContentDto[] {
+  multiLanguageContents(@Root() article: ArticleBaseDto): ArticleMultiLanguageContentDto[] {
     if ('multiLanguageContents' in article) {
       return article.multiLanguageContents;
     }
@@ -163,11 +146,8 @@ export class BackstageArticleResolver {
 
   @ResolveField(() => ArticleStageVersionDto)
   @Authenticated()
-  async stageVersions(
-    @Root() article: ArticleBaseDto,
-  ): Promise<ArticleStageVersionDto> {
-    const versions =
-      await this.articleVersionDataLoader.stageVersionsLoader.load(article.id);
+  async stageVersions(@Root() article: ArticleBaseDto): Promise<ArticleStageVersionDto> {
+    const versions = await this.articleVersionDataLoader.stageVersionsLoader.load(article.id);
 
     return {
       id: article.id,

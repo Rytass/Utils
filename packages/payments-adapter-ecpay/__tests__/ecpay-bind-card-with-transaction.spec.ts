@@ -23,11 +23,13 @@ const addMac = getAddMac(HASH_KEY, HASH_IV);
 function checkMac(payload: Record<string, string>): boolean {
   const { CheckMacValue: mac, ...res } = payload;
   const { CheckMacValue: computedMac } = addMac(
-    Object.entries(res)
-      .reduce((vars, [key, value]) => ({
+    Object.entries(res).reduce(
+      (vars, [key, value]) => ({
         ...vars,
-        [key]: (value as unknown as (string | number)).toString(),
-      }), {}),
+        [key]: (value as unknown as string | number).toString(),
+      }),
+      {},
+    ),
   );
 
   if (computedMac !== mac) return false;
@@ -57,20 +59,22 @@ describe('ECPayPayment Card Binding With Transaction', () => {
     const cardNumberSuffix = '1233';
     const bindingDate = DateTime.now().toFormat('yyyy/MM/dd HH:mm:ss');
 
-    post.mockImplementation((async (url: string, data: unknown) => {
+    post.mockImplementation(async (url: string, data: unknown) => {
       expect(url).toEqual(`${BASE_URL}/MerchantMember/BindingTrade`);
 
-      const params = Array.from(new URLSearchParams(data as string).entries())
-        .reduce((vars, [key, value]) => ({
+      const params = Array.from(new URLSearchParams(data as string).entries()).reduce(
+        (vars, [key, value]) => ({
           ...vars,
           [key]: value,
-        }), {}) as {
-          MerchantID: string;
-          MerchantMemberID: string;
-          MerchantTradeNo: string;
-          AllpayTradeNo: string;
-          CheckMacValue: string;
-        };
+        }),
+        {},
+      ) as {
+        MerchantID: string;
+        MerchantMemberID: string;
+        MerchantTradeNo: string;
+        AllpayTradeNo: string;
+        CheckMacValue: string;
+      };
 
       expect(checkMac(params)).toBeTruthy();
 
@@ -93,7 +97,7 @@ describe('ECPayPayment Card Binding With Transaction', () => {
           BindingDate: bindingDate,
         }),
       };
-    }));
+    });
 
     const request = await payment.bindCardWithTransaction(memberId, orderIdFromECPay);
 
@@ -111,20 +115,22 @@ describe('ECPayPayment Card Binding With Transaction', () => {
     const cardNumberSuffix = '1233';
     const bindingDate = DateTime.now().toFormat('yyyy/MM/dd HH:mm:ss');
 
-    post.mockImplementation((async (url: string, data: unknown) => {
+    post.mockImplementation(async (url: string, data: unknown) => {
       expect(url).toEqual(`${BASE_URL}/MerchantMember/BindingTrade`);
 
-      const params = Array.from(new URLSearchParams(data as string).entries())
-        .reduce((vars, [key, value]) => ({
+      const params = Array.from(new URLSearchParams(data as string).entries()).reduce(
+        (vars, [key, value]) => ({
           ...vars,
           [key]: value,
-        }), {}) as {
-          MerchantID: string;
-          MerchantMemberID: string;
-          MerchantTradeNo: string;
-          AllpayTradeNo: string;
-          CheckMacValue: string;
-        };
+        }),
+        {},
+      ) as {
+        MerchantID: string;
+        MerchantMemberID: string;
+        MerchantTradeNo: string;
+        AllpayTradeNo: string;
+        CheckMacValue: string;
+      };
 
       expect(checkMac(params)).toBeTruthy();
 
@@ -147,7 +153,7 @@ describe('ECPayPayment Card Binding With Transaction', () => {
           BindingDate: bindingDate,
         }),
       };
-    }));
+    });
 
     const request = await payment.bindCardWithTransaction(memberId, orderIdFromECPay);
 
@@ -166,20 +172,22 @@ describe('ECPayPayment Card Binding With Transaction', () => {
     const merchantTradeNo = '2049790237512';
     const bindingDate = DateTime.now().toFormat('yyyy/MM/dd HH:mm:ss');
 
-    post.mockImplementation((async (url: string, data: unknown) => {
+    post.mockImplementation(async (url: string, data: unknown) => {
       expect(url).toEqual(`${BASE_URL}/MerchantMember/BindingTrade`);
 
-      const params = Array.from(new URLSearchParams(data as string).entries())
-        .reduce((vars, [key, value]) => ({
+      const params = Array.from(new URLSearchParams(data as string).entries()).reduce(
+        (vars, [key, value]) => ({
           ...vars,
           [key]: value,
-        }), {}) as {
-          MerchantID: string;
-          MerchantMemberID: string;
-          MerchantTradeNo: string;
-          AllpayTradeNo: string;
-          CheckMacValue: string;
-        };
+        }),
+        {},
+      ) as {
+        MerchantID: string;
+        MerchantMemberID: string;
+        MerchantTradeNo: string;
+        AllpayTradeNo: string;
+        CheckMacValue: string;
+      };
 
       expect(checkMac(params)).toBeTruthy();
 
@@ -202,13 +210,9 @@ describe('ECPayPayment Card Binding With Transaction', () => {
           BindingDate: bindingDate,
         }),
       };
-    }));
+    });
 
-    const request = await payment.bindCardWithTransaction(
-      memberId,
-      orderIdFromECPay,
-      merchantTradeNo,
-    );
+    const request = await payment.bindCardWithTransaction(memberId, orderIdFromECPay, merchantTradeNo);
 
     expect(request.cardId).toEqual(cardId);
     expect(request.cardNumberPrefix).toEqual(cardNumberPrefix);
@@ -220,20 +224,22 @@ describe('ECPayPayment Card Binding With Transaction', () => {
     const memberId = 'rytass';
     const orderIdFromECPay = '1303151740582564';
 
-    post.mockImplementation((async (url: string, data: unknown) => {
+    post.mockImplementation(async (url: string, data: unknown) => {
       expect(url).toEqual(`${BASE_URL}/MerchantMember/BindingTrade`);
 
-      const params = Array.from(new URLSearchParams(data as string).entries())
-        .reduce((vars, [key, value]) => ({
+      const params = Array.from(new URLSearchParams(data as string).entries()).reduce(
+        (vars, [key, value]) => ({
           ...vars,
           [key]: value,
-        }), {}) as {
-          MerchantID: string;
-          MerchantMemberID: string;
-          MerchantTradeNo: string;
-          AllpayTradeNo: string;
-          CheckMacValue: string;
-        };
+        }),
+        {},
+      ) as {
+        MerchantID: string;
+        MerchantMemberID: string;
+        MerchantTradeNo: string;
+        AllpayTradeNo: string;
+        CheckMacValue: string;
+      };
 
       expect(checkMac(params)).toBeTruthy();
 
@@ -256,7 +262,7 @@ describe('ECPayPayment Card Binding With Transaction', () => {
           BindingDate: '',
         }),
       };
-    }));
+    });
 
     expect(payment.bindCardWithTransaction(memberId, orderIdFromECPay)).rejects.toThrow();
   });
@@ -269,20 +275,22 @@ describe('ECPayPayment Card Binding With Transaction', () => {
     const cardNumberSuffix = '1233';
     const bindingDate = DateTime.now().toFormat('yyyy/MM/dd HH:mm:ss');
 
-    post.mockImplementation((async (url: string, data: unknown) => {
+    post.mockImplementation(async (url: string, data: unknown) => {
       expect(url).toEqual(`${BASE_URL}/MerchantMember/BindingTrade`);
 
-      const params = Array.from(new URLSearchParams(data as string).entries())
-        .reduce((vars, [key, value]) => ({
+      const params = Array.from(new URLSearchParams(data as string).entries()).reduce(
+        (vars, [key, value]) => ({
           ...vars,
           [key]: value,
-        }), {}) as {
-          MerchantID: string;
-          MerchantMemberID: string;
-          MerchantTradeNo: string;
-          AllpayTradeNo: string;
-          CheckMacValue: string;
-        };
+        }),
+        {},
+      ) as {
+        MerchantID: string;
+        MerchantMemberID: string;
+        MerchantTradeNo: string;
+        AllpayTradeNo: string;
+        CheckMacValue: string;
+      };
 
       expect(checkMac(params)).toBeTruthy();
 
@@ -309,7 +317,7 @@ describe('ECPayPayment Card Binding With Transaction', () => {
       return {
         data: payload,
       };
-    }));
+    });
 
     expect(payment.bindCardWithTransaction(memberId, orderIdFromECPay)).rejects.toThrow();
   });

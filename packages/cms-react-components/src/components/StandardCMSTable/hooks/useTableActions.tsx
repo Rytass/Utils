@@ -1,12 +1,7 @@
 import React, { useMemo } from 'react';
 import { Button } from '@mezzanine-ui/react';
 import { TableColumn, TableDataSourceWithID } from '@mezzanine-ui/core/table';
-import {
-  ArticleStage,
-  ArticleTableActions,
-  ArticlesPermissions,
-  ArticleTableActionsType,
-} from '../../../typings';
+import { ArticleStage, ArticleTableActions, ArticlesPermissions, ArticleTableActionsType } from '../../../typings';
 import { defaultTableActions } from '../../../constants';
 import { havePermission } from '../../../utils/havePermission';
 import { StandardCMSTableEventsProps } from '../typings';
@@ -24,59 +19,48 @@ export function useTableActions<T extends TableDataSourceWithID>({
   actionsEvents: StandardCMSTableEventsProps<T>;
   actions?: ArticleTableActionsType;
 }): TableColumn<T>[] {
-  const {
-    onView,
-    onVerifyRelease,
-    onWithdraw,
-    onSubmit,
-    onPutBack,
-    onDelete,
-    onDeleteWithdraw,
-  } = useTableEvents({
+  const { onView, onVerifyRelease, onWithdraw, onSubmit, onPutBack, onDelete, onDeleteWithdraw } = useTableEvents({
     userPermissions,
     actionsEvents,
   });
 
   const tableActions = useMemo((): TableColumn<T>[] => {
-    const currentTableActions =
-      actions?.[currentStage] ?? defaultTableActions[currentStage];
+    const currentTableActions = actions?.[currentStage] ?? defaultTableActions[currentStage];
 
     if (currentTableActions?.length === 0) return [];
 
     switch (currentStage) {
       case ArticleStage.DRAFT: {
-        const actionsFilterByPermissions = currentTableActions?.filter(
-          (action) => {
-            switch (action) {
-              case ArticleTableActions.Update:
-                return havePermission({
-                  userPermissions,
-                  targetPermission: ArticlesPermissions.UpdateArticleInDraft,
-                });
+        const actionsFilterByPermissions = currentTableActions?.filter(action => {
+          switch (action) {
+            case ArticleTableActions.Update:
+              return havePermission({
+                userPermissions,
+                targetPermission: ArticlesPermissions.UpdateArticleInDraft,
+              });
 
-              case ArticleTableActions.Submit:
-                return havePermission({
-                  userPermissions,
-                  targetPermission: ArticlesPermissions.SubmitPutBackArticle,
-                });
+            case ArticleTableActions.Submit:
+              return havePermission({
+                userPermissions,
+                targetPermission: ArticlesPermissions.SubmitPutBackArticle,
+              });
 
-              case ArticleTableActions.Release:
-                return havePermission({
-                  userPermissions,
-                  targetPermission: ArticlesPermissions.ApproveRejectArticle,
-                });
+            case ArticleTableActions.Release:
+              return havePermission({
+                userPermissions,
+                targetPermission: ArticlesPermissions.ApproveRejectArticle,
+              });
 
-              case ArticleTableActions.Delete:
-                return havePermission({
-                  userPermissions,
-                  targetPermission: ArticlesPermissions.DeleteArticleInDraft,
-                });
+            case ArticleTableActions.Delete:
+              return havePermission({
+                userPermissions,
+                targetPermission: ArticlesPermissions.DeleteArticleInDraft,
+              });
 
-              default:
-                return false;
-            }
-          },
-        );
+            default:
+              return false;
+          }
+        });
 
         if (actionsFilterByPermissions?.length === 0) return [];
 
@@ -84,17 +68,13 @@ export function useTableActions<T extends TableDataSourceWithID>({
           {
             title: '',
             align: 'end',
-            render: (source) => (
+            render: source => (
               <div className={classes.tableActions}>
-                {actionsFilterByPermissions?.map((action) => {
+                {actionsFilterByPermissions?.map(action => {
                   switch (action) {
                     case ArticleTableActions.Update: {
                       return (
-                        <Button
-                          type="button"
-                          variant="text"
-                          onClick={onView(source)}
-                        >
+                        <Button type="button" variant="text" onClick={onView(source)}>
                           編輯
                         </Button>
                       );
@@ -102,11 +82,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Submit: {
                       return (
-                        <Button
-                          type="button"
-                          variant="text"
-                          onClick={onSubmit(source)}
-                        >
+                        <Button type="button" variant="text" onClick={onSubmit(source)}>
                           送審
                         </Button>
                       );
@@ -114,11 +90,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Release: {
                       return (
-                        <Button
-                          type="button"
-                          variant="text"
-                          onClick={onVerifyRelease(source, currentStage)}
-                        >
+                        <Button type="button" variant="text" onClick={onVerifyRelease(source, currentStage)}>
                           發佈
                         </Button>
                       );
@@ -126,12 +98,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Delete: {
                       return (
-                        <Button
-                          type="button"
-                          variant="text"
-                          danger
-                          onClick={onDelete(source)}
-                        >
+                        <Button type="button" variant="text" danger onClick={onDelete(source)}>
                           刪除此版本
                         </Button>
                       );
@@ -148,40 +115,36 @@ export function useTableActions<T extends TableDataSourceWithID>({
       }
 
       case ArticleStage.REVIEWING: {
-        const actionsFilterByPermissions = currentTableActions?.filter(
-          (action) => {
-            switch (action) {
-              case ArticleTableActions.Update:
-                return havePermission({
-                  userPermissions,
-                  targetPermission:
-                    ArticlesPermissions.UpdateArticleInReviewing,
-                });
+        const actionsFilterByPermissions = currentTableActions?.filter(action => {
+          switch (action) {
+            case ArticleTableActions.Update:
+              return havePermission({
+                userPermissions,
+                targetPermission: ArticlesPermissions.UpdateArticleInReviewing,
+              });
 
-              case ArticleTableActions.Review:
-                return havePermission({
-                  userPermissions,
-                  targetPermission: ArticlesPermissions.ApproveRejectArticle,
-                });
+            case ArticleTableActions.Review:
+              return havePermission({
+                userPermissions,
+                targetPermission: ArticlesPermissions.ApproveRejectArticle,
+              });
 
-              case ArticleTableActions.Delete:
-                return havePermission({
-                  userPermissions,
-                  targetPermission:
-                    ArticlesPermissions.DeleteArticleInReviewing,
-                });
+            case ArticleTableActions.Delete:
+              return havePermission({
+                userPermissions,
+                targetPermission: ArticlesPermissions.DeleteArticleInReviewing,
+              });
 
-              case ArticleTableActions.PutBack:
-                return havePermission({
-                  userPermissions,
-                  targetPermission: ArticlesPermissions.SubmitPutBackArticle,
-                });
+            case ArticleTableActions.PutBack:
+              return havePermission({
+                userPermissions,
+                targetPermission: ArticlesPermissions.SubmitPutBackArticle,
+              });
 
-              default:
-                return false;
-            }
-          },
-        );
+            default:
+              return false;
+          }
+        });
 
         if (actionsFilterByPermissions?.length === 0) return [];
 
@@ -189,17 +152,13 @@ export function useTableActions<T extends TableDataSourceWithID>({
           {
             title: '',
             align: 'end',
-            render: (source) => (
+            render: source => (
               <div className={classes.tableActions}>
-                {actionsFilterByPermissions?.map((action) => {
+                {actionsFilterByPermissions?.map(action => {
                   switch (action) {
                     case ArticleTableActions.Update: {
                       return (
-                        <Button
-                          type="button"
-                          variant="text"
-                          onClick={onView(source)}
-                        >
+                        <Button type="button" variant="text" onClick={onView(source)}>
                           編輯
                         </Button>
                       );
@@ -207,11 +166,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Review: {
                       return (
-                        <Button
-                          type="button"
-                          variant="text"
-                          onClick={onVerifyRelease(source, currentStage)}
-                        >
+                        <Button type="button" variant="text" onClick={onVerifyRelease(source, currentStage)}>
                           審核
                         </Button>
                       );
@@ -219,12 +174,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Delete: {
                       return (
-                        <Button
-                          type="button"
-                          variant="text"
-                          danger
-                          onClick={onDelete(source)}
-                        >
+                        <Button type="button" variant="text" danger onClick={onDelete(source)}>
                           刪除
                         </Button>
                       );
@@ -232,12 +182,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.PutBack: {
                       return (
-                        <Button
-                          type="button"
-                          variant="text"
-                          danger
-                          onClick={onPutBack(source)}
-                        >
+                        <Button type="button" variant="text" danger onClick={onPutBack(source)}>
                           撤回審核
                         </Button>
                       );
@@ -254,39 +199,36 @@ export function useTableActions<T extends TableDataSourceWithID>({
       }
 
       case ArticleStage.VERIFIED: {
-        const actionsFilterByPermissions = currentTableActions?.filter(
-          (action) => {
-            switch (action) {
-              case ArticleTableActions.View:
-                return !havePermission({
-                  userPermissions,
-                  targetPermission: ArticlesPermissions.UpdateArticleInVerified,
-                });
+        const actionsFilterByPermissions = currentTableActions?.filter(action => {
+          switch (action) {
+            case ArticleTableActions.View:
+              return !havePermission({
+                userPermissions,
+                targetPermission: ArticlesPermissions.UpdateArticleInVerified,
+              });
 
-              case ArticleTableActions.Update:
-                return havePermission({
-                  userPermissions,
-                  targetPermission: ArticlesPermissions.UpdateArticleInVerified,
-                });
+            case ArticleTableActions.Update:
+              return havePermission({
+                userPermissions,
+                targetPermission: ArticlesPermissions.UpdateArticleInVerified,
+              });
 
-              case ArticleTableActions.Release:
-                return havePermission({
-                  userPermissions,
-                  targetPermission:
-                    ArticlesPermissions.ReleaseArticleInVerified,
-                });
+            case ArticleTableActions.Release:
+              return havePermission({
+                userPermissions,
+                targetPermission: ArticlesPermissions.ReleaseArticleInVerified,
+              });
 
-              case ArticleTableActions.Delete:
-                return havePermission({
-                  userPermissions,
-                  targetPermission: ArticlesPermissions.DeleteArticleInVerified,
-                });
+            case ArticleTableActions.Delete:
+              return havePermission({
+                userPermissions,
+                targetPermission: ArticlesPermissions.DeleteArticleInVerified,
+              });
 
-              default:
-                return false;
-            }
-          },
-        );
+            default:
+              return false;
+          }
+        });
 
         if (actionsFilterByPermissions?.length === 0) return [];
 
@@ -294,17 +236,13 @@ export function useTableActions<T extends TableDataSourceWithID>({
           {
             title: '',
             align: 'end',
-            render: (source) => (
+            render: source => (
               <div className={classes.tableActions}>
-                {actionsFilterByPermissions?.map((action) => {
+                {actionsFilterByPermissions?.map(action => {
                   switch (action) {
                     case ArticleTableActions.View: {
                       return (
-                        <Button
-                          type="button"
-                          variant="text"
-                          onClick={onView(source)}
-                        >
+                        <Button type="button" variant="text" onClick={onView(source)}>
                           檢視
                         </Button>
                       );
@@ -312,11 +250,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Update: {
                       return (
-                        <Button
-                          type="button"
-                          variant="text"
-                          onClick={onView(source)}
-                        >
+                        <Button type="button" variant="text" onClick={onView(source)}>
                           編輯
                         </Button>
                       );
@@ -324,11 +258,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Release: {
                       return (
-                        <Button
-                          type="button"
-                          variant="text"
-                          onClick={onVerifyRelease(source, currentStage)}
-                        >
+                        <Button type="button" variant="text" onClick={onVerifyRelease(source, currentStage)}>
                           發佈
                         </Button>
                       );
@@ -336,12 +266,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Delete: {
                       return (
-                        <Button
-                          type="button"
-                          variant="text"
-                          danger
-                          onClick={onDelete(source)}
-                        >
+                        <Button type="button" variant="text" danger onClick={onDelete(source)}>
                           刪除
                         </Button>
                       );
@@ -358,35 +283,30 @@ export function useTableActions<T extends TableDataSourceWithID>({
       }
 
       case ArticleStage.SCHEDULED: {
-        const actionsFilterByPermissions = currentTableActions?.filter(
-          (action) => {
-            switch (action) {
-              case ArticleTableActions.View:
-                return !havePermission({
-                  userPermissions,
-                  targetPermission:
-                    ArticlesPermissions.UpdateArticleInScheduled,
-                });
+        const actionsFilterByPermissions = currentTableActions?.filter(action => {
+          switch (action) {
+            case ArticleTableActions.View:
+              return !havePermission({
+                userPermissions,
+                targetPermission: ArticlesPermissions.UpdateArticleInScheduled,
+              });
 
-              case ArticleTableActions.Update:
-                return havePermission({
-                  userPermissions,
-                  targetPermission:
-                    ArticlesPermissions.UpdateArticleInScheduled,
-                });
+            case ArticleTableActions.Update:
+              return havePermission({
+                userPermissions,
+                targetPermission: ArticlesPermissions.UpdateArticleInScheduled,
+              });
 
-              case ArticleTableActions.Withdraw:
-                return havePermission({
-                  userPermissions,
-                  targetPermission:
-                    ArticlesPermissions.WithdrawArticleInScheduled,
-                });
+            case ArticleTableActions.Withdraw:
+              return havePermission({
+                userPermissions,
+                targetPermission: ArticlesPermissions.WithdrawArticleInScheduled,
+              });
 
-              default:
-                return false;
-            }
-          },
-        );
+            default:
+              return false;
+          }
+        });
 
         if (actionsFilterByPermissions?.length === 0) return [];
 
@@ -394,17 +314,13 @@ export function useTableActions<T extends TableDataSourceWithID>({
           {
             title: '',
             align: 'end',
-            render: (source) => (
+            render: source => (
               <div className={classes.tableActions}>
-                {actionsFilterByPermissions?.map((action) => {
+                {actionsFilterByPermissions?.map(action => {
                   switch (action) {
                     case ArticleTableActions.View: {
                       return (
-                        <Button
-                          type="button"
-                          variant="text"
-                          onClick={onView(source)}
-                        >
+                        <Button type="button" variant="text" onClick={onView(source)}>
                           檢視
                         </Button>
                       );
@@ -412,11 +328,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Update: {
                       return (
-                        <Button
-                          type="button"
-                          variant="text"
-                          onClick={onView(source)}
-                        >
+                        <Button type="button" variant="text" onClick={onView(source)}>
                           編輯
                         </Button>
                       );
@@ -424,12 +336,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Withdraw: {
                       return (
-                        <Button
-                          type="button"
-                          variant="text"
-                          danger
-                          onClick={onWithdraw(source)}
-                        >
+                        <Button type="button" variant="text" danger onClick={onWithdraw(source)}>
                           取消發佈
                         </Button>
                       );
@@ -446,34 +353,30 @@ export function useTableActions<T extends TableDataSourceWithID>({
       }
 
       case ArticleStage.RELEASED: {
-        const actionsFilterByPermissions = currentTableActions?.filter(
-          (action) => {
-            switch (action) {
-              case ArticleTableActions.Update:
-                return havePermission({
+        const actionsFilterByPermissions = currentTableActions?.filter(action => {
+          switch (action) {
+            case ArticleTableActions.Update:
+              return havePermission({
+                userPermissions,
+                targetPermission: ArticlesPermissions.UpdateArticleInReleased,
+              });
+
+            case ArticleTableActions.Delete:
+              return (
+                havePermission({
                   userPermissions,
-                  targetPermission: ArticlesPermissions.UpdateArticleInReleased,
-                });
+                  targetPermission: ArticlesPermissions.WithdrawArticleInReleased,
+                }) ||
+                havePermission({
+                  userPermissions,
+                  targetPermission: ArticlesPermissions.DeleteArticleInReleased,
+                })
+              );
 
-              case ArticleTableActions.Delete:
-                return (
-                  havePermission({
-                    userPermissions,
-                    targetPermission:
-                      ArticlesPermissions.WithdrawArticleInReleased,
-                  }) ||
-                  havePermission({
-                    userPermissions,
-                    targetPermission:
-                      ArticlesPermissions.DeleteArticleInReleased,
-                  })
-                );
-
-              default:
-                return false;
-            }
-          },
-        );
+            default:
+              return false;
+          }
+        });
 
         if (actionsFilterByPermissions?.length === 0) return [];
 
@@ -481,17 +384,13 @@ export function useTableActions<T extends TableDataSourceWithID>({
           {
             title: '',
             align: 'end',
-            render: (source) => (
+            render: source => (
               <div className={classes.tableActions}>
-                {actionsFilterByPermissions?.map((action) => {
+                {actionsFilterByPermissions?.map(action => {
                   switch (action) {
                     case ArticleTableActions.Update: {
                       return (
-                        <Button
-                          type="button"
-                          variant="text"
-                          onClick={onView(source)}
-                        >
+                        <Button type="button" variant="text" onClick={onView(source)}>
                           編輯
                         </Button>
                       );
@@ -499,12 +398,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Delete: {
                       return (
-                        <Button
-                          type="button"
-                          variant="text"
-                          danger
-                          onClick={onDeleteWithdraw(source)}
-                        >
+                        <Button type="button" variant="text" danger onClick={onDeleteWithdraw(source)}>
                           移除
                         </Button>
                       );

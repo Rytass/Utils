@@ -1,48 +1,35 @@
 import { Node } from '@xyflow/react';
-import {
-  Map,
-  MapBackground,
-  MapRectangleRange,
-  MapPolygonRange,
-  MapRangeType,
-} from '../typings';
+import { Map, MapBackground, MapRectangleRange, MapPolygonRange, MapRangeType } from '../typings';
 
 /**
  * 將 API 資料轉換為 React Flow 節點格式
  * 這個函數是 transformNodesToMapData 的反向操作
  */
-export const transformApiDataToNodes = (
-  mapData: Map,
-  imageUrlGenerator?: (filename: string) => string,
-): Node[] => {
+export const transformApiDataToNodes = (mapData: Map, imageUrlGenerator?: (filename: string) => string): Node[] => {
   // 轉換背景圖片為 ImageNode
-  const backgroundNodes: Node[] = mapData.backgrounds.map(
-    (background: MapBackground, index: number) => {
-      const imageUrl = imageUrlGenerator
-        ? imageUrlGenerator(background.filename)
-        : background.filename;
+  const backgroundNodes: Node[] = mapData.backgrounds.map((background: MapBackground, index: number) => {
+    const imageUrl = imageUrlGenerator ? imageUrlGenerator(background.filename) : background.filename;
 
-      return {
-        id: background.id,
-        type: 'imageNode',
-        position: {
-          x: background.x,
-          y: background.y,
-        },
-        data: {
-          imageUrl,
-          fileName: background.filename,
-          width: background.width,
-          height: background.height,
-          originalWidth: background.width,
-          originalHeight: background.height,
-        },
-        zIndex: index + 1,
-        draggable: true,
-        selectable: true,
-      };
-    },
-  );
+    return {
+      id: background.id,
+      type: 'imageNode',
+      position: {
+        x: background.x,
+        y: background.y,
+      },
+      data: {
+        imageUrl,
+        fileName: background.filename,
+        width: background.width,
+        height: background.height,
+        originalWidth: background.width,
+        originalHeight: background.height,
+      },
+      zIndex: index + 1,
+      draggable: true,
+      selectable: true,
+    };
+  });
 
   // 轉換範圍為對應的節點，使用 functional 方式處理
   const rangeNodes: Node[] = mapData.ranges
@@ -73,16 +60,12 @@ export const transformApiDataToNodes = (
         const polyRange = range as MapPolygonRange;
 
         // 計算多邊形的中心點作為節點位置
-        const centerX =
-          polyRange.points.reduce((sum, point) => sum + point.x, 0) /
-          polyRange.points.length;
+        const centerX = polyRange.points.reduce((sum, point) => sum + point.x, 0) / polyRange.points.length;
 
-        const centerY =
-          polyRange.points.reduce((sum, point) => sum + point.y, 0) /
-          polyRange.points.length;
+        const centerY = polyRange.points.reduce((sum, point) => sum + point.y, 0) / polyRange.points.length;
 
         // 將絕對座標轉換為相對於中心點的座標
-        const relativePoints = polyRange.points.map((point) => ({
+        const relativePoints = polyRange.points.map(point => ({
           x: point.x - centerX,
           y: point.y - centerY,
         }));
@@ -144,12 +127,7 @@ export const validateMapData = (data: unknown): data is Map => {
 
   // 驗證背景資料
   for (const bg of obj.backgrounds) {
-    if (
-      !bg.id ||
-      !bg.filename ||
-      typeof bg.x !== 'number' ||
-      typeof bg.y !== 'number'
-    ) {
+    if (!bg.id || !bg.filename || typeof bg.x !== 'number' || typeof bg.y !== 'number') {
       console.error('Map data validation failed: invalid background data', bg);
 
       return false;
@@ -171,29 +149,20 @@ export const validateMapData = (data: unknown): data is Map => {
         typeof range.width !== 'number' ||
         typeof range.height !== 'number'
       ) {
-        console.error(
-          'Map data validation failed: invalid rectangle range data',
-          range,
-        );
+        console.error('Map data validation failed: invalid rectangle range data', range);
 
         return false;
       }
     } else if (range.type === MapRangeType.POLYGON) {
       if (!Array.isArray(range.points) || range.points.length < 3) {
-        console.error(
-          'Map data validation failed: invalid polygon range data',
-          range,
-        );
+        console.error('Map data validation failed: invalid polygon range data', range);
 
         return false;
       }
 
       for (const point of range.points) {
         if (typeof point.x !== 'number' || typeof point.y !== 'number') {
-          console.error(
-            'Map data validation failed: invalid polygon point',
-            point,
-          );
+          console.error('Map data validation failed: invalid polygon point', point);
 
           return false;
         }
@@ -240,9 +209,9 @@ export const loadMapDataFromApi = async (mapId: string): Promise<Node[]> => {
 
     console.log(`✅ 成功載入 ${nodes.length} 個節點`);
     console.log('📊 節點統計:', {
-      imageNodes: nodes.filter((n) => n.type === 'imageNode').length,
-      rectangleNodes: nodes.filter((n) => n.type === 'rectangleNode').length,
-      pathNodes: nodes.filter((n) => n.type === 'pathNode').length,
+      imageNodes: nodes.filter(n => n.type === 'imageNode').length,
+      rectangleNodes: nodes.filter(n => n.type === 'rectangleNode').length,
+      pathNodes: nodes.filter(n => n.type === 'pathNode').length,
     });
 
     return nodes;
@@ -269,8 +238,8 @@ export const calculatePolygonBounds = (
     return { minX: 0, minY: 0, maxX: 0, maxY: 0, width: 0, height: 0 };
   }
 
-  const xs = points.map((p) => p.x);
-  const ys = points.map((p) => p.y);
+  const xs = points.map(p => p.x);
+  const ys = points.map(p => p.y);
 
   const minX = Math.min(...xs);
   const maxX = Math.max(...xs);
@@ -290,15 +259,12 @@ export const calculatePolygonBounds = (
 /**
  * 輔助函數：為節點計算合適的 zIndex
  */
-export const calculateNodeZIndex = (
-  nodes: Node[],
-  nodeType: string,
-): number => {
-  const maxZIndex = Math.max(...nodes.map((n) => n.zIndex || 0), 0);
+export const calculateNodeZIndex = (nodes: Node[], nodeType: string): number => {
+  const maxZIndex = Math.max(...nodes.map(n => n.zIndex || 0), 0);
 
   // 背景圖片應該在最底層
   if (nodeType === 'imageNode') {
-    const imageNodes = nodes.filter((n) => n.type === 'imageNode');
+    const imageNodes = nodes.filter(n => n.type === 'imageNode');
 
     return imageNodes.length;
   }

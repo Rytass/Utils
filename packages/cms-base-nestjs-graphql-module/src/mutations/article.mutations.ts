@@ -1,8 +1,4 @@
-import {
-  ArticleBaseService,
-  DEFAULT_LANGUAGE,
-  MULTIPLE_LANGUAGE_MODE,
-} from '@rytass/cms-base-nestjs-module';
+import { ArticleBaseService, DEFAULT_LANGUAGE, MULTIPLE_LANGUAGE_MODE } from '@rytass/cms-base-nestjs-module';
 import { Args, ID, Int, Mutation, Resolver } from '@nestjs/graphql';
 import { BackstageArticleDto } from '../dto/backstage-article.dto';
 import { CreateArticleArgs } from '../dto/create-article.args';
@@ -30,10 +26,7 @@ export class ArticleMutations {
     const extraArgsInput: Record<string, string | object> = {};
 
     if (args.customFields?.length) {
-      Object.assign(
-        extraArgsInput,
-        await this.mapArticleCustomFieldsToEntityColumns(args.customFields),
-      );
+      Object.assign(extraArgsInput, await this.mapArticleCustomFieldsToEntityColumns(args.customFields));
     }
 
     const basePayload = {
@@ -76,10 +69,7 @@ export class ArticleMutations {
 
   @Mutation(() => BackstageArticleDto)
   @AllowActions([[BaseResource.ARTICLE, BaseAction.CREATE]])
-  async createArticle(
-    @MemberId() memberId: string,
-    @Args() args: CreateArticleArgs,
-  ): Promise<BackstageArticleDto> {
+  async createArticle(@MemberId() memberId: string, @Args() args: CreateArticleArgs): Promise<BackstageArticleDto> {
     return this.articleService.create({
       ...(await this.resolveCreateArticleArgs(args)),
       userId: memberId,
@@ -88,10 +78,7 @@ export class ArticleMutations {
 
   @Mutation(() => BackstageArticleDto)
   @AllowActions([[BaseResource.ARTICLE, BaseAction.UPDATE]])
-  async updateArticle(
-    @MemberId() memberId: string,
-    @Args() args: UpdateArticleArgs,
-  ): Promise<BackstageArticleDto> {
+  async updateArticle(@MemberId() memberId: string, @Args() args: UpdateArticleArgs): Promise<BackstageArticleDto> {
     return this.articleService.addVersion(args.id, {
       ...(await this.resolveCreateArticleArgs(args)),
       userId: memberId,
@@ -100,9 +87,7 @@ export class ArticleMutations {
 
   @Mutation(() => Boolean)
   @AllowActions([[BaseResource.ARTICLE, BaseAction.DELETE]])
-  async deleteArticle(
-    @Args('id', { type: () => ID }) id: string,
-  ): Promise<boolean> {
+  async deleteArticle(@Args('id', { type: () => ID }) id: string): Promise<boolean> {
     await this.articleService.archive(id);
 
     return true;

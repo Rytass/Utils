@@ -13,7 +13,7 @@ export class QuadratsArticleCategoryService {
     @Inject(API_HOST)
     private readonly apiHost: string,
     @Inject(QUADRATS_AUTH_CLIENT)
-    private readonly auth: { accessKey: string, secret: string },
+    private readonly auth: { accessKey: string; secret: string },
   ) {}
 
   public async getAll(): Promise<QuadratsArticleCategory[]> {

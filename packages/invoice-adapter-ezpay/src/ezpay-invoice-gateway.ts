@@ -51,10 +51,7 @@ import {
 } from './typings';
 import { EZPayInvoiceAllowance } from './ezpay-allowance';
 
-export class EZPayInvoiceGateway
-  implements
-    InvoiceGateway<EZPayPaymentItem, EZPayInvoice, EZPayInvoiceQueryOptions>
-{
+export class EZPayInvoiceGateway implements InvoiceGateway<EZPayPaymentItem, EZPayInvoice, EZPayInvoiceQueryOptions> {
   private readonly hashKey: string = 'yoRs5AfTfAWe9HI4DlEYKRorr9YvV3Kr';
   private readonly hashIv: string = 'CrJMQLwDF6zKOeaP';
   private readonly merchantId: string = '34818970';
@@ -69,10 +66,7 @@ export class EZPayInvoiceGateway
 
     cipher.setAutoPadding(true);
 
-    return [
-      cipher.update(encodedData, 'utf8', 'hex'),
-      cipher.final('hex'),
-    ].join('');
+    return [cipher.update(encodedData, 'utf8', 'hex'), cipher.final('hex')].join('');
   }
 
   private decrypt<T>(secret: string): T {
@@ -80,14 +74,10 @@ export class EZPayInvoiceGateway
 
     decipher.setAutoPadding(false);
 
-    return [decipher.update(secret, 'hex', 'utf8'), decipher.final('utf8')]
-      .join('')
-      .replace(/\x1b/g, '') as T;
+    return [decipher.update(secret, 'hex', 'utf8'), decipher.final('utf8')].join('').replace(/\x1b/g, '') as T;
   }
 
-  private getResponseCheckCode<T extends Record<string, any>>(
-    response: T,
-  ): string {
+  private getResponseCheckCode<T extends Record<string, any>>(response: T): string {
     const encodedData = Object.entries(response)
       .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
       .map(([key, value]) => `${key}=${value}`)
@@ -134,11 +124,7 @@ export class EZPayInvoiceGateway
     }
   }
 
-  private getItemTaxRate(
-    item: EZPayPaymentItem,
-    taxType: TaxType,
-    specialTaxPercentage?: number,
-  ) {
+  private getItemTaxRate(item: EZPayPaymentItem, taxType: TaxType, specialTaxPercentage?: number) {
     switch (item.taxType) {
       case TaxType.TAX_FREE:
       case TaxType.ZERO_TAX:
@@ -174,10 +160,7 @@ export class EZPayInvoiceGateway
       throw new Error('`customer.email` is invalid format');
     }
 
-    if (
-      options.vatNumber &&
-      options.carrier?.type !== InvoiceCarrierType.PRINT
-    ) {
+    if (options.vatNumber && options.carrier?.type !== InvoiceCarrierType.PRINT) {
       throw new Error('when `vatNumber` provided, carrier should be PRINT');
     }
 
@@ -185,13 +168,8 @@ export class EZPayInvoiceGateway
       throw new Error('B2C invoice `buyerName` maximum length is 30 chars');
     }
 
-    if (
-      options.carrier?.type === InvoiceCarrierType.PLATFORM &&
-      !options.buyerEmail
-    ) {
-      throw new Error(
-        'Platform carrier should provide buyer email to received notification',
-      );
+    if (options.carrier?.type === InvoiceCarrierType.PLATFORM && !options.buyerEmail) {
+      throw new Error('Platform carrier should provide buyer email to received notification');
     }
 
     const taxType = getTaxTypeFromItems(options.items);
@@ -218,39 +196,25 @@ export class EZPayInvoiceGateway
       }
     }
 
-    if (
-      options.carrier?.type === InvoiceCarrierType.MOICA &&
-      !/^[A-Z]{2}[0-9]{14}$/.test(options.carrier.code)
-    ) {
+    if (options.carrier?.type === InvoiceCarrierType.MOICA && !/^[A-Z]{2}[0-9]{14}$/.test(options.carrier.code)) {
       throw new Error('invalid MOICA code');
     }
 
-    const carrierType = this.getCarrierTypeCode(
-      (options as EZPayInvoiceB2CIssueOptions).carrier,
-    );
+    const carrierType = this.getCarrierTypeCode((options as EZPayInvoiceB2CIssueOptions).carrier);
 
-    const carrierCode = this.getCarrierCode(
-      (options as EZPayInvoiceB2CIssueOptions).carrier,
-    );
+    const carrierCode = this.getCarrierCode((options as EZPayInvoiceB2CIssueOptions).carrier);
 
     const taxTypeCode = EZPayTaxTypeCode[taxType] as '1' | '2' | '3' | '9';
     const taxRate = Number(
-      ~[TaxType.TAX_FREE, TaxType.ZERO_TAX].indexOf(taxType)
-        ? '0'
-        : options.specialTaxPercentage?.toString() || '5',
+      ~[TaxType.TAX_FREE, TaxType.ZERO_TAX].indexOf(taxType) ? '0' : options.specialTaxPercentage?.toString() || '5',
     );
 
-    const totalAmount = options.items.reduce(
-      (sum, item) => sum + item.unitPrice * item.quantity,
-      0,
-    );
+    const totalAmount = options.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
 
     const amountWithoutTax = Math.round(
       options.items.reduce(
         (sum, item) =>
-          sum +
-          (item.quantity * item.unitPrice) /
-            this.getItemTaxRate(item, taxType, options.specialTaxPercentage),
+          sum + (item.quantity * item.unitPrice) / this.getItemTaxRate(item, taxType, options.specialTaxPercentage),
         0,
       ),
     );
@@ -274,48 +238,25 @@ export class EZPayInvoiceGateway
           : options.buyerName
         : options.buyerName,
       BuyerUBN: options.vatNumber ?? '',
-      BuyerAddress:
-        (options.vatNumber
-          ? (options as EZPayInvoiceB2BIssueOptions).buyerAddress
-          : '') ?? '',
+      BuyerAddress: (options.vatNumber ? (options as EZPayInvoiceB2BIssueOptions).buyerAddress : '') ?? '',
       BuyerEmail: options.buyerEmail ?? '',
       CarrierType: carrierType,
       CarrierNum: carrierCode,
-      LoveCode:
-        options.carrier?.type === InvoiceCarrierType.LOVE_CODE
-          ? options.carrier.code
-          : '',
+      LoveCode: options.carrier?.type === InvoiceCarrierType.LOVE_CODE ? options.carrier.code : '',
       PrintFlag:
-        options.vatNumber ||
-        (!carrierType && options.carrier?.type !== InvoiceCarrierType.LOVE_CODE)
-          ? 'Y'
-          : 'N',
-      KioskPrintFlag:
-        options.carrier?.type === InvoiceCarrierType.PLATFORM ? '' : '',
+        options.vatNumber || (!carrierType && options.carrier?.type !== InvoiceCarrierType.LOVE_CODE) ? 'Y' : 'N',
+      KioskPrintFlag: options.carrier?.type === InvoiceCarrierType.PLATFORM ? '' : '',
       TaxType: taxTypeCode,
       TaxRate: taxRate.toString(),
-      CustomsClearance:
-        taxType === TaxType.ZERO_TAX
-          ? options.customsMark === CustomsMark.YES
-            ? '2'
-            : '1'
-          : '',
+      CustomsClearance: taxType === TaxType.ZERO_TAX ? (options.customsMark === CustomsMark.YES ? '2' : '1') : '',
       Amt: amountWithoutTax.toString(),
       AmtSales:
         taxType === TaxType.MIXED
           ? Math.round(
               options.items.reduce((sum, item) => {
-                if (
-                  item.taxType &&
-                  ~[TaxType.TAX_FREE, TaxType.ZERO_TAX].indexOf(item.taxType)
-                )
-                  return sum;
+                if (item.taxType && ~[TaxType.TAX_FREE, TaxType.ZERO_TAX].indexOf(item.taxType)) return sum;
 
-                const itemTaxRate = this.getItemTaxRate(
-                  item,
-                  taxType,
-                  options.specialTaxPercentage,
-                );
+                const itemTaxRate = this.getItemTaxRate(item, taxType, options.specialTaxPercentage);
 
                 return sum + (item.quantity * item.unitPrice) / itemTaxRate;
               }, 0),
@@ -347,31 +288,23 @@ export class EZPayInvoiceGateway
           : '',
       TaxAmt: (totalAmount - amountWithoutTax).toString(),
       TotalAmt: totalAmount.toString(),
-      ItemName: options.items.map((item) => item.name).join('|'),
-      ItemCount: options.items.map((item) => item.quantity).join('|'),
-      ItemUnit: options.items.map((item) => item.unit || '式').join('|'),
+      ItemName: options.items.map(item => item.name).join('|'),
+      ItemCount: options.items.map(item => item.quantity).join('|'),
+      ItemUnit: options.items.map(item => item.unit || '式').join('|'),
       ItemPrice: options.items
-        .map((item) => {
+        .map(item => {
           if (!options.vatNumber) return item.unitPrice;
 
-          const itemTaxRate = this.getItemTaxRate(
-            item,
-            taxType,
-            options.specialTaxPercentage,
-          );
+          const itemTaxRate = this.getItemTaxRate(item, taxType, options.specialTaxPercentage);
 
           return Math.round(item.unitPrice / itemTaxRate);
         })
         .join('|'),
       ItemAmt: options.items
-        .map((item) => {
+        .map(item => {
           if (!options.vatNumber) return item.unitPrice * item.quantity;
 
-          const itemTaxRate = this.getItemTaxRate(
-            item,
-            taxType,
-            options.specialTaxPercentage,
-          );
+          const itemTaxRate = this.getItemTaxRate(item, taxType, options.specialTaxPercentage);
 
           return Math.round((item.quantity * item.unitPrice) / itemTaxRate);
         })
@@ -379,7 +312,7 @@ export class EZPayInvoiceGateway
       ItemTaxType:
         taxType === TaxType.MIXED
           ? options.items
-              .map((item) => {
+              .map(item => {
                 switch (item.taxType) {
                   case TaxType.TAX_FREE:
                     return '3';
@@ -403,15 +336,11 @@ export class EZPayInvoiceGateway
     formData.append('MerchantID_', this.merchantId);
     formData.append('PostData_', postData);
 
-    const { data } = await axios.post<EZPayInvoiceResponse>(
-      `${this.baseUrl}/Api/invoice_issue`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+    const { data } = await axios.post<EZPayInvoiceResponse>(`${this.baseUrl}/Api/invoice_issue`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
       },
-    );
+    });
 
     if (data.Status !== 'SUCCESS') {
       throw new Error(data.Message);
@@ -421,10 +350,7 @@ export class EZPayInvoiceGateway
 
     return new EZPayInvoice({
       items: options.items,
-      issuedOn: DateTime.fromFormat(
-        payload.CreateTime,
-        'yyyy-MM-dd HH:mm:ss',
-      ).toJSDate(),
+      issuedOn: DateTime.fromFormat(payload.CreateTime, 'yyyy-MM-dd HH:mm:ss').toJSDate(),
       invoiceNumber: payload.InvoiceNumber,
       randomCode: payload.RandomNum,
       platformId: payload.InvoiceTransNo,
@@ -510,19 +436,14 @@ export class EZPayInvoiceGateway
 
         return {
           ...vars,
-          [key]: decodeURIComponent(value.trim())
-            .replaceAll('\x1B/', '')
-            .replaceAll('\b', ''),
+          [key]: decodeURIComponent(value.trim()).replaceAll('\x1B/', '').replaceAll('\b', ''),
         };
       }, {}) as EZPayInvoiceLoveCodeValidationSuccessResponse;
 
     return payload.IsExist === 'Y';
   }
 
-  public async void(
-    invoice: EZPayInvoice,
-    options: EZPayInvoiceVoidOptions,
-  ): Promise<EZPayInvoice> {
+  public async void(invoice: EZPayInvoice, options: EZPayInvoiceVoidOptions): Promise<EZPayInvoice> {
     const postData = this.encrypt<EZPayInvoiceVoidPayload>({
       RespondType: 'JSON',
       Version: '1.0',
@@ -536,23 +457,17 @@ export class EZPayInvoiceGateway
     formData.append('MerchantID_', this.merchantId);
     formData.append('PostData_', postData);
 
-    const { data } = await axios.post<EZPayInvoiceResponse>(
-      `${this.baseUrl}/Api/invoice_invalid`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+    const { data } = await axios.post<EZPayInvoiceResponse>(`${this.baseUrl}/Api/invoice_invalid`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
       },
-    );
+    });
 
     if (data.Status !== 'SUCCESS') {
       throw new Error(data.Message);
     }
 
-    const responsePayload = JSON.parse(
-      data.Result,
-    ) as EZPayInvoiceVoidSuccessResponse & {
+    const responsePayload = JSON.parse(data.Result) as EZPayInvoiceVoidSuccessResponse & {
       CheckCode: string;
     };
 
@@ -569,12 +484,7 @@ export class EZPayInvoiceGateway
       throw new Error('Invalid CheckCode');
     }
 
-    invoice.setVoid(
-      DateTime.fromFormat(
-        responsePayload.CreateTime,
-        'yyyy-MM-dd HH:mm:ss',
-      ).toJSDate(),
-    );
+    invoice.setVoid(DateTime.fromFormat(responsePayload.CreateTime, 'yyyy-MM-dd HH:mm:ss').toJSDate());
 
     return invoice;
   }
@@ -584,10 +494,7 @@ export class EZPayInvoiceGateway
     allowanceItems: EZPayPaymentItem[],
     options?: EZPayInvoiceAllowanceOptions,
   ): Promise<EZPayInvoice> {
-    const totalAllowanceAmount = allowanceItems.reduce(
-      (sum, item) => sum + item.unitPrice * item.quantity,
-      0,
-    );
+    const totalAllowanceAmount = allowanceItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
 
     if (totalAllowanceAmount > invoice.nowAmount) {
       throw new Error('No enough amount for allowance');
@@ -603,13 +510,11 @@ export class EZPayInvoiceGateway
       TimeStamp: Math.floor(Date.now() / 1000).toString(),
       InvoiceNo: invoice.invoiceNumber,
       MerchantOrderNo: invoice.orderId,
-      ItemName: allowanceItems.map((item) => item.name).join('|'),
-      ItemCount: allowanceItems.map((item) => item.quantity).join('|'),
-      ItemUnit: allowanceItems.map((item) => item.unit || '式').join('|'),
-      ItemPrice: allowanceItems.map((item) => item.unitPrice).join('|'),
-      ItemAmt: allowanceItems
-        .map((item) => item.unitPrice * item.quantity)
-        .join('|'),
+      ItemName: allowanceItems.map(item => item.name).join('|'),
+      ItemCount: allowanceItems.map(item => item.quantity).join('|'),
+      ItemUnit: allowanceItems.map(item => item.unit || '式').join('|'),
+      ItemPrice: allowanceItems.map(item => item.unitPrice).join('|'),
+      ItemAmt: allowanceItems.map(item => item.unitPrice * item.quantity).join('|'),
       ...(invoice.taxType === TaxType.MIXED && options?.taxType
         ? {
             TaxTypeForMixed: (() => {
@@ -641,23 +546,17 @@ export class EZPayInvoiceGateway
     formData.append('MerchantID_', this.merchantId);
     formData.append('PostData_', postData);
 
-    const { data } = await axios.post<EZPayInvoiceResponse>(
-      `${this.baseUrl}/Api/allowance_issue`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+    const { data } = await axios.post<EZPayInvoiceResponse>(`${this.baseUrl}/Api/allowance_issue`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
       },
-    );
+    });
 
     if (data.Status !== 'SUCCESS') {
       throw new Error(data.Message);
     }
 
-    const responsePayload = JSON.parse(
-      data.Result,
-    ) as EZPayInvoiceAllowanceSuccessResponse & {
+    const responsePayload = JSON.parse(data.Result) as EZPayInvoiceAllowanceSuccessResponse & {
       CheckCode: string;
     };
 
@@ -689,10 +588,7 @@ export class EZPayInvoiceGateway
     return invoice;
   }
 
-  async invalidAllowance(
-    allowance: EZPayInvoiceAllowance,
-    reason?: string,
-  ): Promise<EZPayInvoice> {
+  async invalidAllowance(allowance: EZPayInvoiceAllowance, reason?: string): Promise<EZPayInvoice> {
     if (allowance.status !== InvoiceAllowanceState.ISSUED) {
       throw new Error('Invalid allowance status');
     }
@@ -710,23 +606,17 @@ export class EZPayInvoiceGateway
     formData.append('MerchantID_', this.merchantId);
     formData.append('PostData_', postData);
 
-    const { data } = await axios.post<EZPayInvoiceResponse>(
-      `${this.baseUrl}/Api/allowanceInvalid`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+    const { data } = await axios.post<EZPayInvoiceResponse>(`${this.baseUrl}/Api/allowanceInvalid`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
       },
-    );
+    });
 
     if (data.Status !== 'SUCCESS') {
       throw new Error(data.Message);
     }
 
-    const responsePayload = JSON.parse(
-      data.Result,
-    ) as EZPayInvoiceInvalidAllowanceSuccessResponse & {
+    const responsePayload = JSON.parse(data.Result) as EZPayInvoiceInvalidAllowanceSuccessResponse & {
       CheckCode: string;
     };
 
@@ -743,12 +633,7 @@ export class EZPayInvoiceGateway
       throw new Error('Invalid CheckCode');
     }
 
-    allowance.invalid(
-      DateTime.fromFormat(
-        responsePayload.CreateTime,
-        'yyyy-MM-dd HH:mm:ss',
-      ).toJSDate(),
-    );
+    allowance.invalid(DateTime.fromFormat(responsePayload.CreateTime, 'yyyy-MM-dd HH:mm:ss').toJSDate());
 
     return allowance.parentInvoice;
   }
@@ -770,23 +655,17 @@ export class EZPayInvoiceGateway
     formData.append('MerchantID_', this.merchantId);
     formData.append('PostData_', postData);
 
-    const { data } = await axios.post<EZPayInvoiceQueryResponse>(
-      `${this.baseUrl}/Api/invoice_search`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+    const { data } = await axios.post<EZPayInvoiceQueryResponse>(`${this.baseUrl}/Api/invoice_search`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
       },
-    );
+    });
 
     if (data.Status !== 'SUCCESS') {
       throw new Error(data.Message);
     }
 
-    const responsePayload = JSON.parse(
-      data.Result,
-    ) as EZPayInvoiceQueryResponsePayload & {
+    const responsePayload = JSON.parse(data.Result) as EZPayInvoiceQueryResponsePayload & {
       CheckCode: string;
     };
 
@@ -814,17 +693,14 @@ export class EZPayInvoiceGateway
       }[];
 
       return new EZPayInvoice({
-        state:
-          responsePayload.InvoiceStatus === '1'
-            ? InvoiceState.ISSUED
-            : InvoiceState.VOID,
+        state: responsePayload.InvoiceStatus === '1' ? InvoiceState.ISSUED : InvoiceState.VOID,
         voidOn: responsePayload.InvoiceStatus === '2' ? new Date() : undefined,
-        items: items.map((item) => ({
+        items: items.map(item => ({
           name: item.ItemName,
           unitPrice: item.ItemPrice,
           quantity: item.ItemCount,
           unit: item.ItemWord,
-          taxType: ((taxType) => {
+          taxType: (taxType => {
             switch (taxType) {
               case '1':
                 return TaxType.TAXED;
@@ -840,15 +716,12 @@ export class EZPayInvoiceGateway
             }
           })(item.ItemTaxType),
         })),
-        issuedOn: DateTime.fromFormat(
-          responsePayload.CreateTime,
-          'yyyy-MM-dd HH:mm:ss',
-        ).toJSDate(),
+        issuedOn: DateTime.fromFormat(responsePayload.CreateTime, 'yyyy-MM-dd HH:mm:ss').toJSDate(),
         invoiceNumber: responsePayload.InvoiceNumber,
         randomCode: responsePayload.RandomNum,
         platformId: responsePayload.InvoiceTransNo,
         orderId: responsePayload.MerchantOrderNo,
-        taxType: ((taxType) => {
+        taxType: (taxType => {
           switch (taxType) {
             case '1':
               return TaxType.TAXED;

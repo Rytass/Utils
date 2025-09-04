@@ -27,7 +27,7 @@ describe('Quadrats Nestjs Module - Category Service', () => {
 
     const request = jest.spyOn(axios, 'request');
 
-    request.mockImplementationOnce(async (config) => {
+    request.mockImplementationOnce(async config => {
       expect(config.url).toBe(`${HOST}/graphql`);
 
       const data = JSON.parse(config.data as string) as {
@@ -36,8 +36,8 @@ describe('Quadrats Nestjs Module - Category Service', () => {
           auth: {
             accessKey: string;
             secret: string;
-          }
-        }
+          };
+        };
       };
 
       expect(data.variables.auth.accessKey).toBe(ACCESS_KEY);
@@ -46,11 +46,13 @@ describe('Quadrats Nestjs Module - Category Service', () => {
       return {
         data: {
           data: {
-            findCategories: [{
-              id: '02500000031350000000',
-              name: 'Test Category',
-              subCategories: [],
-            }],
+            findCategories: [
+              {
+                id: '02500000031350000000',
+                name: 'Test Category',
+                subCategories: [],
+              },
+            ],
           },
         },
       };
@@ -67,7 +69,7 @@ describe('Quadrats Nestjs Module - Category Service', () => {
 
     const request = jest.spyOn(axios, 'request');
 
-    request.mockImplementationOnce(async (config) => {
+    request.mockImplementationOnce(async config => {
       expect(config.url).toBe(`${HOST}/graphql`);
 
       const data = JSON.parse(config.data as string) as {
@@ -77,8 +79,8 @@ describe('Quadrats Nestjs Module - Category Service', () => {
           auth: {
             accessKey: string;
             secret: string;
-          }
-        }
+          };
+        };
       };
 
       expect(data.variables.id).toBe('02500000031350000000');
@@ -108,7 +110,7 @@ describe('Quadrats Nestjs Module - Category Service', () => {
 
     const request = jest.spyOn(axios, 'request');
 
-    request.mockImplementationOnce(async (config) => {
+    request.mockImplementationOnce(async config => {
       expect(config.url).toBe(`${HOST}/graphql`);
 
       const data = JSON.parse(config.data as string) as {
@@ -117,8 +119,8 @@ describe('Quadrats Nestjs Module - Category Service', () => {
           auth: {
             accessKey: string;
             secret: string;
-          }
-        }
+          };
+        };
       };
 
       expect(data.variables.auth.accessKey).toBe(ACCESS_KEY);
@@ -143,19 +145,19 @@ describe('Quadrats Nestjs Module - Category Service', () => {
 
     const request = jest.spyOn(axios, 'request');
 
-    request.mockImplementationOnce(async (config) => {
+    request.mockImplementationOnce(async config => {
       expect(config.url).toBe(`${HOST}/graphql`);
 
       const data = JSON.parse(config.data as string) as {
         query: string;
         variables: {
-          name: string,
-          parentId: string | null,
+          name: string;
+          parentId: string | null;
           auth: {
             accessKey: string;
             secret: string;
-          }
-        }
+          };
+        };
       };
 
       expect(data.variables.name).toBe('New Category');
@@ -188,19 +190,19 @@ describe('Quadrats Nestjs Module - Category Service', () => {
 
     let originName = 'Test Category';
 
-    request.mockImplementation(async (config) => {
+    request.mockImplementation(async config => {
       expect(config.url).toBe(`${HOST}/graphql`);
 
       const data = JSON.parse(config.data as string) as {
         query: string;
         variables: {
           id: string;
-          name?: string,
+          name?: string;
           auth: {
             accessKey: string;
             secret: string;
-          }
-        }
+          };
+        };
       };
 
       if (/RenameCategory/.test(data.query)) {

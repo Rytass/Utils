@@ -4,12 +4,7 @@ import { RESOLVED_WAREHOUSE_MAP_REPO } from '../typings/wms-base-module-provider
 import { Repository } from 'typeorm';
 import { MapBackgroundInput } from '../dto/map-background.input';
 import { MapRangeInput } from '../dto/map-range-input';
-import {
-  MapBackground,
-  MapData,
-  MapPolygonRange,
-  MapRectangleRange,
-} from '../typings/warehouse-map';
+import { MapBackground, MapData, MapPolygonRange, MapRectangleRange } from '../typings/warehouse-map';
 import { MapRangeType } from '../typings/warehouse-map.enum';
 
 @Injectable()
@@ -59,9 +54,7 @@ export class WarehouseMapService {
             range.width === undefined ||
             range.height === undefined
           ) {
-            throw new Error(
-              `Rectangle range "${range.id}" requires x, y, width, and height properties`,
-            );
+            throw new Error(`Rectangle range "${range.id}" requires x, y, width, and height properties`);
           }
 
           return {
@@ -73,9 +66,7 @@ export class WarehouseMapService {
           } as MapRectangleRange;
         } else {
           if (!range.points || range.points.length === 0) {
-            throw new Error(
-              `Polygon range "${range.id}" requires points array with at least one point`,
-            );
+            throw new Error(`Polygon range "${range.id}" requires points array with at least one point`);
           }
 
           return {

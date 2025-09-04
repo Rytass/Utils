@@ -1,7 +1,4 @@
-import {
-  ArticleNotFoundError,
-  ArticleVersionNotFoundError,
-} from './article.errors';
+import { ArticleNotFoundError, ArticleVersionNotFoundError } from './article.errors';
 import { MultipleLanguageModeIsDisabledError } from './base.errors';
 import {
   CategoryNotFoundError,
