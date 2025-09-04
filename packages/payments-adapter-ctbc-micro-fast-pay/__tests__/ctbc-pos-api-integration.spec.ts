@@ -130,6 +130,7 @@ describe('CTBC POS API - 類別方法整合測試', () => {
 
       // 驗證 additionalInfo
       expect(result.additionalInfo).toBeDefined();
+
       if (result.additionalInfo) {
         const creditCardInfo = result.additionalInfo as any;
 

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-empty-function */
 import React, { FC, ReactNode, useState, memo } from 'react';
 import { Modal, ModalHeader, ModalBody, ModalActions, cx } from '@mezzanine-ui/react';
 import { DialogContextProvider } from './DialogContext';

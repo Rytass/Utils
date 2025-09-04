@@ -23,6 +23,7 @@ export function getOptionsByDiscountConstructor<Options extends DiscountOptions 
   arg2?: Options,
 ): Options | undefined {
   if (typeof arg1 === 'undefined' && typeof arg2 === 'undefined') return undefined;
+
   if (Array.isArray(arg1)) return arg2;
 
   return typeof (arg1 as Condition)?.satisfy === 'function' ? arg2 : (arg1 as Options);

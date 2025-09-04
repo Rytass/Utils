@@ -16,7 +16,7 @@ export interface OrderItemManager<Item extends OrderItem = OrderItem>
  * OrderItemManagerImpl (Can only accessed by its owner `Order`.)
  */
 export class OrderItemManagerImpl<Item extends OrderItem = OrderItem> implements OrderItemManager<Item> {
-  private _collectionMap: Map<string, OrderItemRecordCollection> = new Map();
+  private readonly _collectionMap: Map<string, OrderItemRecordCollection> = new Map();
   private _items: Item[];
 
   /**

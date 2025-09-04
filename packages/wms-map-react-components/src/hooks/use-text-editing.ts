@@ -57,6 +57,7 @@ export const useTextEditing = ({
   const handleDoubleClick = useCallback(
     (event: React.MouseEvent) => {
       event.stopPropagation();
+
       if (isEditable) {
         setIsEditing(true);
         setEditingText(label);

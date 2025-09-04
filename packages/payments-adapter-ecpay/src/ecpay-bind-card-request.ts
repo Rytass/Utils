@@ -23,7 +23,7 @@ export class ECPayBindCardRequest implements BindCardRequest {
   private _failedCode: string | undefined;
   private _failedMessage: string | undefined;
 
-  private _memberId: string;
+  private readonly _memberId: string;
 
   constructor(
     options: ECPayBindCardRequestPayload | ECPayBindCardWithTransactionRequestOptions,

@@ -25,11 +25,11 @@ export class VaultSecret<Options extends VaultSecretOptions> extends SecretManag
 
   private _state: VaultSecretState = VaultSecretState.INIT;
 
-  private emitter = new EventEmitter();
+  private readonly emitter = new EventEmitter();
 
   private _tokenExpiredOn?: number;
   private _token?: string;
-  private _online = false;
+  private readonly _online: boolean = false;
 
   private _cacheData: Record<string, any> | undefined;
   private _cacheVersion: number | undefined;

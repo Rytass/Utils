@@ -74,31 +74,31 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
 {
   readonly baseUrl: string = 'https://payment-stage.ecpay.com.tw';
 
-  private language = Language.TRADITIONAL_CHINESE;
-  private merchantId = '2000132';
-  private merchantCheckCode = '59997889'; // Production Only
-  private hashKey = '5294y06JbISpM5x9';
-  private hashIv = 'v77hoKGq4kWxNNIS';
+  private readonly language = Language.TRADITIONAL_CHINESE;
+  private readonly merchantId: string = '2000132';
+  private readonly merchantCheckCode: string = '59997889'; // Production Only
+  private readonly hashKey: string = '5294y06JbISpM5x9';
+  private readonly hashIv: string = 'v77hoKGq4kWxNNIS';
   private serverHost = 'http://localhost:3000';
-  private callbackPath = '/payments/ecpay/callback';
-  private asyncInfoPath = '/payments/ecpay/async-informations';
-  private checkoutPath = '/payments/ecpay/checkout';
-  private bindCardPath = '/payments/ecpay/bind-card';
-  private boundCardPath = '/payments/ecpay/bound-card';
-  private boundCardFinishPath = '/payments/ecpay/bound-card-finished';
+  private readonly callbackPath: string = '/payments/ecpay/callback';
+  private readonly asyncInfoPath: string = '/payments/ecpay/async-informations';
+  private readonly checkoutPath: string = '/payments/ecpay/checkout';
+  private readonly bindCardPath: string = '/payments/ecpay/bind-card';
+  private readonly boundCardPath: string = '/payments/ecpay/bound-card';
+  private readonly boundCardFinishPath: string = '/payments/ecpay/bound-card-finished';
 
   private isGatewayReady = false;
-  private emulateRefund = false;
+  private readonly emulateRefund: boolean = false;
 
   readonly emitter = new EventEmitter();
 
-  private serverListener: (req: IncomingMessage, res: ServerResponse) => void = (req, res) =>
+  private readonly serverListener: (req: IncomingMessage, res: ServerResponse) => void = (req, res) =>
     this.defaultServerListener(req, res);
 
   private readonly pendingOrdersCache: OrdersCache;
   private readonly bindCardRequestsCache: BindCardRequestCache;
 
-  private emulateRefundedOrder = new Set<string>();
+  private readonly emulateRefundedOrder = new Set<string>();
 
   _server?: Server;
 
@@ -730,6 +730,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
             case PaymentPeriodType.MONTH:
               if (orderInput.period.frequency < 1)
                 throw new Error('`period.frequency` should between 1 and 12 when `period.type` set to MONTH');
+
               if (orderInput.period.frequency > 12)
                 throw new Error('`period.frequency` should between 1 and 12 when `period.type` set to MONTH');
               break;
@@ -743,6 +744,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
             default:
               if (orderInput.period.frequency < 1)
                 throw new Error('`period.frequency` should between 1 and 365 when `period.type` set to DAY');
+
               if (orderInput.period.frequency > 365)
                 throw new Error('`period.frequency` should between 1 and 365 when `period.type` set to DAY');
               break;
@@ -810,6 +812,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
       if (orderInput.virtualAccountExpireDays !== undefined) {
         if (orderInput.virtualAccountExpireDays < 1)
           throw new Error('`virtualAccountExpireDays` should between 1 and 60 days');
+
         if (orderInput.virtualAccountExpireDays > 60)
           throw new Error('`virtualAccountExpireDays` should between 1 and 60 days');
       }
@@ -836,6 +839,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
 
       if (orderInput.cvsExpireMinutes !== undefined) {
         if (orderInput.cvsExpireMinutes < 1) throw new Error('`cvsExpireMinutes` should between 1 and 43200 miuntes');
+
         if (orderInput.cvsExpireMinutes > 43200)
           throw new Error('`cvsExpireMinutes` should between 1 and 43200 miuntes');
       }
@@ -862,6 +866,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
       if (orderInput.cvsBarcodeExpireDays !== undefined) {
         // Not documented
         if (orderInput.cvsBarcodeExpireDays < 1) throw new Error('`cvsBarcodeExpireDays` should between 1 and 7 days');
+
         if (orderInput.cvsBarcodeExpireDays > 7) throw new Error('`cvsBarcodeExpireDays` should between 1 and 7 days');
       }
 

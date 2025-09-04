@@ -95,6 +95,7 @@ export class CasbinGuard implements CanActivate {
     if (!token) return false;
 
     if (!request.payload) return false;
+
     if (onlyAuthenticated) return true;
 
     return this.permissionChecker({

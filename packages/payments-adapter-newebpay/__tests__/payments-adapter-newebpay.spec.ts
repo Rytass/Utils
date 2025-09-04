@@ -76,12 +76,16 @@ describe('NewebPay Payments', () => {
     };
 
     const mockServerForNgrok = new (require('events').EventEmitter)();
+
     mockServerForNgrok.listen = jest.fn((port, host, callback) => {
       setImmediate(() => callback && callback());
+
       return mockServerForNgrok;
     });
+
     mockServerForNgrok.close = jest.fn(callback => {
       setImmediate(() => callback && callback());
+
       return mockServerForNgrok;
     });
 
@@ -107,10 +111,12 @@ describe('NewebPay Payments', () => {
 
       // Override global import function to handle dynamic imports
       const originalImport = global.import || jest.fn();
+
       global.import = jest.fn().mockImplementation(moduleName => {
         if (moduleName === '@ngrok/ngrok') {
           return Promise.resolve({ default: mockNgrok });
         }
+
         return originalImport.call(global, moduleName);
       });
     });
@@ -145,6 +151,7 @@ describe('NewebPay Payments', () => {
       const { NewebPayPayment } = await import('../src');
 
       const customPort = 7777;
+
       return new Promise<void>(resolve => {
         const payment = new NewebPayPayment({
           merchantId: MERCHANT_ID,
@@ -245,6 +252,7 @@ describe('NewebPay Payments', () => {
       const plainInfo = `${decipher.update(order.form.TradeInfo, 'hex', 'utf8')}${decipher.final('utf8')}`
         .replace(/\x1E/g, '')
         .replace(/\x14/g, '');
+
       const payload = new URLSearchParams(plainInfo);
 
       expect(Number(payload.get('Amt'))).toBe(order.totalPrice);
@@ -280,6 +288,7 @@ describe('NewebPay Payments', () => {
       const plainInfo = `${decipher.update(order.form.TradeInfo, 'hex', 'utf8')}${decipher.final('utf8')}`
         .replace(/\x1E/g, '')
         .replace(/\x14/g, '');
+
       const payload = new URLSearchParams(plainInfo);
 
       expect(payload.get('CREDIT')).toBe('0');
@@ -636,6 +645,7 @@ describe('NewebPay Payments', () => {
       expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).refundStatus).toBe(
         NewebPayCreditCardBalanceStatus.SETTLED,
       );
+
       expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).remainingBalance).toBe(0);
       expect(mockPost).toHaveBeenCalledTimes(1);
     });

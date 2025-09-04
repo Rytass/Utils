@@ -14,7 +14,7 @@ export class OrderItemRecordCollection<Item extends OrderItem = OrderItem> {
   readonly itemId: string;
   readonly initialValue: number;
   readonly originItem: Omit<FlattenOrderItem<Item>, 'uuid' | 'quantity'> | Item;
-  private _discountRecords: ItemDiscountRecord[] = [];
+  private readonly _discountRecords: ItemDiscountRecord[] = [];
 
   get discountRecords(): ItemDiscountRecord[] {
     return this._discountRecords;

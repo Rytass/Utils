@@ -160,6 +160,7 @@ describe('ECPayPayment', () => {
         expect(DateTime.fromJSDate(order.additionalInfo!.processDate).toFormat('yyyy/MM/dd HH:mm:ss')).toBe(
           '2022/04/19 17:21:21',
         );
+
         expect(order.additionalInfo?.authCode).toBe('777777');
         expect(order.additionalInfo?.amount).toBe(70);
         expect(order.additionalInfo?.eci).toBe('0');

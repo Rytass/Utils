@@ -115,6 +115,7 @@ describe('NewebPay Refund Order', () => {
     expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).closeStatus).toBe(
       NewebPayCreditCardBalanceStatus.SETTLED,
     );
+
     expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).refundStatus).toBe(
       NewebPayCreditCardBalanceStatus.WAITING,
     );
@@ -206,6 +207,7 @@ describe('NewebPay Refund Order', () => {
     expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).closeStatus).toBe(
       NewebPayCreditCardBalanceStatus.SETTLED,
     );
+
     expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).refundStatus).toBe(
       NewebPayCreditCardBalanceStatus.WAITING,
     );

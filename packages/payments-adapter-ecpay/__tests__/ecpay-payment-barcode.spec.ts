@@ -216,7 +216,7 @@ describe('ECPayPayment (Barcode)', () => {
           expect(order.state).toBe(OrderState.INITED);
 
           // Get HTML to trigger pre commit
-          // eslint-disable-next-line no-unused-vars
+
           const html = order.formHTML;
 
           const successfulResponse = addMac({
@@ -282,7 +282,7 @@ describe('ECPayPayment (Barcode)', () => {
           expect(order.state).toBe(OrderState.INITED);
 
           // Get HTML to trigger pre commit
-          // eslint-disable-next-line no-unused-vars
+
           const html = order.formHTML;
 
           const successfulResponse = addMac({
@@ -341,7 +341,7 @@ describe('ECPayPayment (Barcode)', () => {
           });
 
           // Get HTML to trigger pre commit
-          // eslint-disable-next-line no-unused-vars
+
           const html = order.formHTML;
 
           const successfulResponse = addMac({
