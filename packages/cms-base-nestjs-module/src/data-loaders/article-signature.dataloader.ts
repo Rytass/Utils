@@ -13,11 +13,7 @@ export class ArticleSignatureDataLoader {
     private readonly articleVersionRepo: Repository<BaseArticleVersionEntity>,
   ) {}
 
-  readonly versionSignaturesLoader = new DataLoader<
-    { id: string; version: number },
-    ArticleSignatureEntity[],
-    string
-  >(
+  readonly versionSignaturesLoader = new DataLoader<{ id: string; version: number }, ArticleSignatureEntity[], string>(
     async (args: readonly { id: string; version: number }[]) => {
       const qb = this.articleVersionRepo.createQueryBuilder('articleVersions');
 
@@ -26,7 +22,7 @@ export class ArticleSignatureDataLoader {
 
       args.forEach(({ id, version }, index) => {
         qb.orWhere(
-          new Brackets((subQb) => {
+          new Brackets(subQb => {
             subQb.andWhere(`articleVersions.articleId = :id_${index}`, {
               [`id_${index}`]: id,
             });
@@ -44,17 +40,9 @@ export class ArticleSignatureDataLoader {
 
       const versions = await qb.getMany();
 
-      const versionMap = new Map(
-        versions.map((version) => [
-          `${version.articleId}|${version.version}`,
-          version,
-        ]),
-      );
+      const versionMap = new Map(versions.map(version => [`${version.articleId}|${version.version}`, version]));
 
-      return args.map(
-        ({ id, version }) =>
-          versionMap.get(`${id}|${version}`)?.signatures ?? [],
-      );
+      return args.map(({ id, version }) => versionMap.get(`${id}|${version}`)?.signatures ?? []);
     },
     {
       cache: true,
@@ -63,8 +51,7 @@ export class ArticleSignatureDataLoader {
         ttl: 1000 * 15, // 15 seconds
         ttlAutopurge: true,
       }),
-      cacheKeyFn: (args: { id: string; version: number }) =>
-        `${args.id}|${args.version}`,
+      cacheKeyFn: (args: { id: string; version: number }) => `${args.id}|${args.version}`,
     },
   );
 }

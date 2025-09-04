@@ -11,23 +11,19 @@ export class PriceWeightedAverageDiscountMethod implements DiscountMethod {
 
   handleOneDescription(order: Order, description: PolicyDiscountDescription) {
     const itemValue = description.appliedItems.reduce(
-      (total, item) =>
-        plus(
-          total,
-          times(item.quantity, item.unitPrice),
-        ),
-      0
+      (total, item) => plus(total, times(item.quantity, item.unitPrice)),
+      0,
     );
 
-    description.appliedItems.forEach((item) => {
+    description.appliedItems.forEach(item => {
       // Core concept.
-      order.itemManager.updateCollection(item, (storedRecord) => {
+      order.itemManager.updateCollection(item, storedRecord => {
         // Discount shared-rate calculated by price-weighted-average method.
         const discountSplitRate = divided(storedRecord.currentValue, itemValue);
 
         const itemDiscountValue = order.config.roundStrategy.round(
           times(description.discount, discountSplitRate),
-          'every-calculation'
+          'every-calculation',
         );
 
         storedRecord.addDiscountRecord({
@@ -36,8 +32,7 @@ export class PriceWeightedAverageDiscountMethod implements DiscountMethod {
           // SubOrder need to be considered.
           discountValue: minus(
             itemDiscountValue,
-            order.parent?.itemManager.collectionMap?.get(item.uuid)
-              ?.discountValue || 0
+            order.parent?.itemManager.collectionMap?.get(item.uuid)?.discountValue || 0,
           ),
         });
 
@@ -50,14 +45,9 @@ export class PriceWeightedAverageDiscountMethod implements DiscountMethod {
     order.itemManager.initCollectionMap();
 
     return order.policies.reduce((descriptions, policy) => {
-      const appendDescriptions = order.config.policyPickStrategy.pick(
-        order,
-        policy
-      );
+      const appendDescriptions = order.config.policyPickStrategy.pick(order, policy);
 
-      appendDescriptions.forEach(description =>
-        this.handleOneDescription(order, description)
-      );
+      appendDescriptions.forEach(description => this.handleOneDescription(order, description));
 
       descriptions.push(...appendDescriptions);
 

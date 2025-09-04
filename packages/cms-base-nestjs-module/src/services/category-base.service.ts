@@ -1,19 +1,6 @@
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { BaseCategoryEntity } from '../models/base-category.entity';
-import {
-  DataSource,
-  DeepPartial,
-  FindOneOptions,
-  FindOptionsWhere,
-  In,
-  Repository,
-  SelectQueryBuilder,
-} from 'typeorm';
+import { DataSource, DeepPartial, FindOneOptions, FindOptionsWhere, In, Repository, SelectQueryBuilder } from 'typeorm';
 import {
   CATEGORY_DATA_LOADER,
   CIRCULAR_CATEGORY_MODE,
@@ -27,10 +14,7 @@ import { BaseCategoryMultiLanguageNameEntity } from '../models/base-category-mul
 import { CategoryFindAllDto } from '../typings/category-find-all.dto';
 import { DEFAULT_LANGUAGE } from '../constants/default-language';
 import { InjectDataSource } from '@nestjs/typeorm';
-import {
-  CategoryBaseDto,
-  MultiLanguageCategoryBaseDto,
-} from '../typings/category-base.dto';
+import { CategoryBaseDto, MultiLanguageCategoryBaseDto } from '../typings/category-base.dto';
 import { Language } from '../typings/language';
 import { CategoryDataLoader } from '../data-loaders/category.dataloader';
 import { CategorySorter } from '../typings/category-sorter.enum';
@@ -45,8 +29,7 @@ import { SingleCategoryBaseDto } from '../typings/category-base.dto';
 @Injectable()
 export class CategoryBaseService<
   C extends BaseCategoryEntity = BaseCategoryEntity,
-  CM extends
-    BaseCategoryMultiLanguageNameEntity = BaseCategoryMultiLanguageNameEntity,
+  CM extends BaseCategoryMultiLanguageNameEntity = BaseCategoryMultiLanguageNameEntity,
 > {
   constructor(
     @Inject(RESOLVED_CATEGORY_MULTI_LANGUAGE_NAME_REPO)
@@ -65,17 +48,12 @@ export class CategoryBaseService<
     private readonly categoryDataLoader: CategoryDataLoader,
   ) {}
 
-  private getDefaultQueryBuilder<T extends C = C>(
-    alias = 'categories',
-  ): SelectQueryBuilder<T> {
+  private getDefaultQueryBuilder<T extends C = C>(alias = 'categories'): SelectQueryBuilder<T> {
     const qb = this.baseCategoryRepo.createQueryBuilder(alias);
 
     qb.innerJoinAndSelect(`${alias}.multiLanguageNames`, 'multiLanguageNames');
     qb.leftJoinAndSelect(`${alias}.children`, 'children');
-    qb.leftJoinAndSelect(
-      'children.multiLanguageNames',
-      'childrenMultiLanguageNames',
-    );
+    qb.leftJoinAndSelect('children.multiLanguageNames', 'childrenMultiLanguageNames');
 
     return qb as SelectQueryBuilder<T>;
   }
@@ -84,25 +62,20 @@ export class CategoryBaseService<
     category: T & { multiLanguageNames: U[] },
     language: Language = DEFAULT_LANGUAGE,
   ): SingleCategoryBaseDto<T, U> {
-    const { children, multiLanguageNames, parents, articles, ...columns } =
-      category;
+    const { children, multiLanguageNames, parents, articles, ...columns } = category;
 
     const multiLanguageName = category.multiLanguageNames.find(
-      (multiLanguageName) => multiLanguageName.language === language,
+      multiLanguageName => multiLanguageName.language === language,
     ) as U;
 
     return {
       ...columns,
       ...multiLanguageName,
-      children: (children ?? []).map((child) =>
-        this.parseSingleLanguageCategory<T, U>(
-          child as T & { multiLanguageNames: U[] },
-        ),
+      children: (children ?? []).map(child =>
+        this.parseSingleLanguageCategory<T, U>(child as T & { multiLanguageNames: U[] }),
       ),
-      parents: (parents ?? []).map((parent) =>
-        this.parseSingleLanguageCategory<T, U>(
-          parent as T & { multiLanguageNames: U[] },
-        ),
+      parents: (parents ?? []).map(parent =>
+        this.parseSingleLanguageCategory<T, U>(parent as T & { multiLanguageNames: U[] }),
       ),
     };
   }
@@ -110,60 +83,38 @@ export class CategoryBaseService<
   private parseToMultiLanguageCategory<T extends C = C, U extends CM = CM>(
     category: T & { multiLanguageNames: U[] },
   ): MultiLanguageCategoryBaseDto<T, U> {
-    const { parents, children, articles, multiLanguageNames, ...columns } =
-      category;
+    const { parents, children, articles, multiLanguageNames, ...columns } = category;
 
     return {
       ...columns,
-      children: (children ?? []).map((child) =>
-        this.parseToMultiLanguageCategory<T, U>(
-          child as T & { multiLanguageNames: U[] },
-        ),
+      children: (children ?? []).map(child =>
+        this.parseToMultiLanguageCategory<T, U>(child as T & { multiLanguageNames: U[] }),
       ),
-      parents: (parents ?? []).map((child) =>
-        this.parseToMultiLanguageCategory<T, U>(
-          child as T & { multiLanguageNames: U[] },
-        ),
+      parents: (parents ?? []).map(child =>
+        this.parseToMultiLanguageCategory<T, U>(child as T & { multiLanguageNames: U[] }),
       ),
       multiLanguageNames,
     };
   }
 
-  private async getParentCategoryIdSet(
-    id: string,
-    givenSet = new Set<string>(),
-  ): Promise<Set<string>> {
-    const foundCategory = (await this.categoryDataLoader.withParentsLoader.load(
-      id,
-    )) as C;
+  private async getParentCategoryIdSet(id: string, givenSet = new Set<string>()): Promise<Set<string>> {
+    const foundCategory = (await this.categoryDataLoader.withParentsLoader.load(id)) as C;
 
     givenSet.add(id);
 
     if (foundCategory.parents.length) {
       return foundCategory.parents
-        .map(
-          (parent) => (set: Set<string>) =>
-            this.getParentCategoryIdSet(parent.id, set),
-        )
+        .map(parent => (set: Set<string>) => this.getParentCategoryIdSet(parent.id, set))
         .reduce((prev, next) => prev.then(next), Promise.resolve(givenSet));
     }
 
     return givenSet;
   }
 
-  private async checkCircularCategories<T extends C = C>(
-    category: T,
-    targetParents: T[],
-  ): Promise<void> {
+  private async checkCircularCategories<T extends C = C>(category: T, targetParents: T[]): Promise<void> {
     const allParentIdSet = await targetParents
-      .map(
-        (parent) => (set: Set<string>) =>
-          this.getParentCategoryIdSet(parent.id, set),
-      )
-      .reduce(
-        (prev, next) => prev.then(next),
-        Promise.resolve(new Set<string>()),
-      );
+      .map(parent => (set: Set<string>) => this.getParentCategoryIdSet(parent.id, set))
+      .reduce((prev, next) => prev.then(next), Promise.resolve(new Set<string>()));
 
     if (allParentIdSet.has(category.id)) {
       throw new CircularCategoryNotAllowedError();
@@ -202,11 +153,8 @@ export class CategoryBaseService<
     const categories = await qb.getMany();
 
     if (options?.language || !this.multipleLanguageMode) {
-      return categories.map((category) =>
-        this.parseSingleLanguageCategory(
-          category as T & { multiLanguageNames: U[] },
-          options?.language ?? undefined,
-        ),
+      return categories.map(category =>
+        this.parseSingleLanguageCategory(category as T & { multiLanguageNames: U[] }, options?.language ?? undefined),
       );
     }
 
@@ -224,24 +172,15 @@ export class CategoryBaseService<
     qb.skip(options?.offset ?? 0);
     qb.take(Math.min(options?.limit ?? 20, 100));
 
-    return categories.map((category) =>
-      this.parseToMultiLanguageCategory(
-        category as T & { multiLanguageNames: U[] },
-      ),
-    );
+    return categories.map(category => this.parseToMultiLanguageCategory(category as T & { multiLanguageNames: U[] }));
   }
 
   async findById<T extends C = C, U extends CM = CM>(
     id: string,
     language: Language,
   ): Promise<SingleCategoryBaseDto<T, U>>;
-  async findById<T extends C = C, U extends CM = CM>(
-    id: string,
-  ): Promise<CategoryBaseDto<T, U>>;
-  async findById<T extends C = C, U extends CM = CM>(
-    id: string,
-    language?: Language,
-  ): Promise<CategoryBaseDto<T, U>> {
+  async findById<T extends C = C, U extends CM = CM>(id: string): Promise<CategoryBaseDto<T, U>>;
+  async findById<T extends C = C, U extends CM = CM>(id: string, language?: Language): Promise<CategoryBaseDto<T, U>> {
     const qb = this.getDefaultQueryBuilder<T>('categories');
 
     qb.andWhere('categories.id = :id', { id });
@@ -253,15 +192,10 @@ export class CategoryBaseService<
     }
 
     if (language || !this.multipleLanguageMode) {
-      return this.parseSingleLanguageCategory<T, U>(
-        category as T & { multiLanguageNames: U[] },
-        language,
-      );
+      return this.parseSingleLanguageCategory<T, U>(category as T & { multiLanguageNames: U[] }, language);
     }
 
-    return this.parseToMultiLanguageCategory<T, U>(
-      category as T & { multiLanguageNames: U[] },
-    );
+    return this.parseToMultiLanguageCategory<T, U>(category as T & { multiLanguageNames: U[] });
   }
 
   async archive(id: string): Promise<void> {
@@ -299,15 +233,10 @@ export class CategoryBaseService<
 
     let parentCategories: C[] = [];
 
-    if (
-      (options.parentIds?.length || options.parentId) &&
-      this.allowMultipleParentCategories
-    ) {
+    if ((options.parentIds?.length || options.parentId) && this.allowMultipleParentCategories) {
       parentCategories = (await this.baseCategoryRepo.find({
         where: {
-          id: In(
-            options.parentIds?.length ? options.parentIds : [options.parentId],
-          ),
+          id: In(options.parentIds?.length ? options.parentIds : [options.parentId]),
         } as FindOptionsWhere<C>,
         relations: ['parents'],
       })) as C[];
@@ -340,29 +269,19 @@ export class CategoryBaseService<
     let willCreateOrUpdateLanguages: U[] = [];
 
     if ('multiLanguageNames' in options) {
-      if (!this.multipleLanguageMode)
-        throw new InternalServerErrorException(
-          'Multiple language mode is not enabled',
-        );
+      if (!this.multipleLanguageMode) throw new InternalServerErrorException('Multiple language mode is not enabled');
 
       const existedLanguage = new Map(
-        category.multiLanguageNames.map((multiLanguageName) => [
-          multiLanguageName.language,
-          multiLanguageName,
-        ]),
+        category.multiLanguageNames.map(multiLanguageName => [multiLanguageName.language, multiLanguageName]),
       );
 
-      const nextLanguageSet = new Set(
-        Object.keys(options.multiLanguageNames ?? {}),
-      );
+      const nextLanguageSet = new Set(Object.keys(options.multiLanguageNames ?? {}));
 
       willRemoveLanguages = category.multiLanguageNames.filter(
-        (multiLanguageName) => !nextLanguageSet.has(multiLanguageName.language),
+        multiLanguageName => !nextLanguageSet.has(multiLanguageName.language),
       ) as U[];
 
-      willCreateOrUpdateLanguages = Object.entries(
-        options.multiLanguageNames ?? {},
-      ).map(([language, name]) => {
+      willCreateOrUpdateLanguages = Object.entries(options.multiLanguageNames ?? {}).map(([language, name]) => {
         const existed = existedLanguage.get(language);
 
         if (existed) {
@@ -380,7 +299,7 @@ export class CategoryBaseService<
       }) as U[];
     } else {
       const defaultLanguage = category.multiLanguageNames.find(
-        (multiLanguageName) => multiLanguageName.language === DEFAULT_LANGUAGE,
+        multiLanguageName => multiLanguageName.language === DEFAULT_LANGUAGE,
       );
 
       if (defaultLanguage) {
@@ -443,15 +362,10 @@ export class CategoryBaseService<
       throw new MultipleParentCategoryNotAllowedError();
     }
 
-    if (
-      (options.parentIds?.length || options.parentId) &&
-      this.allowMultipleParentCategories
-    ) {
+    if ((options.parentIds?.length || options.parentId) && this.allowMultipleParentCategories) {
       parentCategories = (await this.baseCategoryRepo.find({
         where: {
-          id: In(
-            options.parentIds?.length ? options.parentIds : [options.parentId],
-          ),
+          id: In(options.parentIds?.length ? options.parentIds : [options.parentId]),
         } as FindOptionsWhere<T>,
       })) as T[];
 
@@ -489,20 +403,16 @@ export class CategoryBaseService<
       await runner.manager.save(category);
 
       if ('multiLanguageNames' in options) {
-        if (!this.multipleLanguageMode)
-          throw new InternalServerErrorException(
-            'Multiple language mode is not enabled',
-          );
+        if (!this.multipleLanguageMode) throw new InternalServerErrorException('Multiple language mode is not enabled');
 
         await runner.manager.save(
-          Object.entries(options.multiLanguageNames ?? {}).map(
-            ([language, name]) =>
-              this.baseCategoryMultiLanguageNameRepo.create({
-                ...((multiLanguageOptions ?? {}) as U),
-                categoryId: category.id,
-                language,
-                name,
-              }),
+          Object.entries(options.multiLanguageNames ?? {}).map(([language, name]) =>
+            this.baseCategoryMultiLanguageNameRepo.create({
+              ...((multiLanguageOptions ?? {}) as U),
+              categoryId: category.id,
+              language,
+              name,
+            }),
           ),
         );
       } else {

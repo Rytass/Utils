@@ -11,19 +11,14 @@ import {
   PASSWORD_AGE_LIMIT_IN_DAYS,
 } from '../typings/member-base-providers';
 import { BaseMemberEntity } from '../models/base-member.entity';
-import {
-  MemberPasswordHistoryEntity,
-  MemberPasswordHistoryRepo,
-} from '../models/member-password-history.entity';
+import { MemberPasswordHistoryEntity, MemberPasswordHistoryRepo } from '../models/member-password-history.entity';
 import { Repository } from 'typeorm';
 import { DateTime } from 'luxon';
 import { generate } from 'generate-password';
 import { PasswordInHistoryError } from '../constants/errors/base.error';
 
 @Injectable()
-export class PasswordValidatorService<
-  MemberEntity extends BaseMemberEntity = BaseMemberEntity,
-> {
+export class PasswordValidatorService<MemberEntity extends BaseMemberEntity = BaseMemberEntity> {
   constructor(
     @Inject(PASSWORD_SHOULD_INCLUDE_UPPERCASE)
     private readonly passwordShouldIncludeUppercase: boolean,
@@ -55,9 +50,7 @@ export class PasswordValidatorService<
     });
   }
 
-  shouldUpdatePassword<T extends MemberEntity = MemberEntity>(
-    member: T,
-  ): boolean {
+  shouldUpdatePassword<T extends MemberEntity = MemberEntity>(member: T): boolean {
     if (!this.passwordAgeLimitInDays) return false;
 
     const validBefore = DateTime.fromJSDate(member.passwordChangedAt)
@@ -68,10 +61,7 @@ export class PasswordValidatorService<
     return validBefore < DateTime.now().toMillis();
   }
 
-  async validatePassword(
-    password: string,
-    memberId?: string,
-  ): Promise<boolean> {
+  async validatePassword(password: string, memberId?: string): Promise<boolean> {
     const trimmed = password.trim();
 
     if (this.passwordPolicyRegExp) {
@@ -94,10 +84,7 @@ export class PasswordValidatorService<
       return false;
     }
 
-    if (
-      this.passwordShouldIncludeSpecialCharacter &&
-      !/[!><.,?@#$%^&*;:'"|\\/~`()-_+={}[\]]/.test(trimmed)
-    ) {
+    if (this.passwordShouldIncludeSpecialCharacter && !/[!><.,?@#$%^&*;:'"|\\/~`()-_+={}[\]]/.test(trimmed)) {
       return false;
     }
 
@@ -113,7 +100,7 @@ export class PasswordValidatorService<
 
       try {
         await histories
-          .map((history) => async () => {
+          .map(history => async () => {
             const isVerify = await verify(history.password, password);
 
             if (isVerify) {

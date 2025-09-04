@@ -53,14 +53,7 @@ export const generateMockImageUrl = (filename: string): string => {
       const text = encodeURIComponent(filename.split('.')[0]);
 
       // 根據檔案名稱生成不同的背景色（較柔和的顏色）
-      const colors = [
-        'E8F4FD',
-        'F0F9E8',
-        'FFF8E1',
-        'FCE4EC',
-        'F3E5F5',
-        'E0F2F1',
-      ];
+      const colors = ['E8F4FD', 'F0F9E8', 'FFF8E1', 'FCE4EC', 'F3E5F5', 'E0F2F1'];
 
       const colorIndex = filename.length % colors.length;
       const bgColor = colors[colorIndex];
@@ -79,5 +72,5 @@ export const generateMockImageUrl = (filename: string): string => {
  * 清除圖片 URL 緩存（測試用）
  */
 export const clearImageUrlCache = (): void => {
-  Object.keys(imageUrlCache).forEach((key) => delete imageUrlCache[key]);
+  Object.keys(imageUrlCache).forEach(key => delete imageUrlCache[key]);
 };

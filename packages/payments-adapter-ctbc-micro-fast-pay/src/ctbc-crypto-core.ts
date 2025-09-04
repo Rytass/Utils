@@ -24,14 +24,7 @@ export function setSSLAuthIV(iv: Buffer): void {
 
 export function getMacFromParams(params: CTBCInMacRequestPayload): string {
   const buffer = Buffer.from(
-    `|${[
-      params.MerchantID,
-      params.TerminalID,
-      params.lidm,
-      params.purchAmt,
-      params.txType,
-      params.Option,
-    ].join('|')}|`,
+    `|${[params.MerchantID, params.TerminalID, params.lidm, params.purchAmt, params.txType, params.Option].join('|')}|`,
     'utf8',
   );
 
@@ -44,11 +37,7 @@ export function desMac(message: Buffer, key: string): string {
   const padding = Buffer.alloc(padLength, padLength);
   const paddedMsg = Buffer.concat([message, padding]);
 
-  const cipher = crypto.createCipheriv(
-    'des-ede3-cbc',
-    Buffer.from(key, 'utf8'),
-    SSLAuthIV,
-  );
+  const cipher = crypto.createCipheriv('des-ede3-cbc', Buffer.from(key, 'utf8'), SSLAuthIV);
 
   cipher.setAutoPadding(false);
 
@@ -82,17 +71,12 @@ const pkcs5UnPad = (buf: Buffer): Buffer => {
   return Buffer.from(buf.subarray(0, buf.length - pad));
 };
 
-export function encrypt3DES(
-  text: string | Buffer,
-  key: Buffer,
-  padding = true,
-): Buffer {
+export function encrypt3DES(text: string | Buffer, key: Buffer, padding = true): Buffer {
   const cipher = crypto.createCipheriv('des-ede3-cbc', key, IV);
 
   cipher.setAutoPadding(false);
 
-  const inputBuffer =
-    typeof text === 'string' ? Buffer.from(text, 'utf8') : text;
+  const inputBuffer = typeof text === 'string' ? Buffer.from(text, 'utf8') : text;
 
   const input = padding ? pkcs5Pad(inputBuffer, 8) : inputBuffer;
 
@@ -104,10 +88,7 @@ export function decrypt3DES(encrypted: Buffer, key: Buffer): string {
 
   decipher.setAutoPadding(false);
 
-  const decrypted = Buffer.concat([
-    decipher.update(encrypted),
-    decipher.final(),
-  ]);
+  const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
 
   return pkcs5UnPad(decrypted).toString('utf8');
 }
@@ -118,10 +99,7 @@ export function getDivKey(key: string): Buffer {
   const leftKey = hash.slice(0, 32);
   const rightKey = hash.slice(-32);
 
-  const xorKey = xorBuffers(
-    Buffer.from(leftKey, 'hex'),
-    Buffer.from(rightKey, 'hex'),
-  );
+  const xorKey = xorBuffers(Buffer.from(leftKey, 'hex'), Buffer.from(rightKey, 'hex'));
 
   const divKey = Buffer.concat([xorKey, Buffer.from(xorKey.subarray(0, 8))]);
 

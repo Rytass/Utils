@@ -128,7 +128,7 @@ describe('OrderBuilderE2E', () => {
         items: ['A', 'B', 'C', 'D', 'E', 'F'],
         threshold: 3,
       }),
-      { id: 'SPECIFIED_A_F', onlyMatched: true }
+      { id: 'SPECIFIED_A_F', onlyMatched: true },
     );
 
     let builder = new OrderBuilder<TestOrderItem>({
@@ -148,7 +148,7 @@ describe('OrderBuilderE2E', () => {
       new ItemIncluded<TestOrderItem>({
         items: ['C', 'D', 'E', 'F', 'G', 'H', 'I'],
       }),
-      { id: 'SPECIFIED_C_I', stepUnit: 'price', onlyMatched: true }
+      { id: 'SPECIFIED_C_I', stepUnit: 'price', onlyMatched: true },
     );
 
     builder = new OrderBuilder<TestOrderItem>({
@@ -169,7 +169,7 @@ describe('OrderBuilderE2E', () => {
         items: ['shoes'],
         conditions: [new PriceThreshold(4000)],
       }),
-      { id: 'GIVEAWAY_BY_SHOES', onlyMatched: true }
+      { id: 'GIVEAWAY_BY_SHOES', onlyMatched: true },
     );
 
     builder = new OrderBuilder<TestOrderItem>({
@@ -192,7 +192,7 @@ describe('OrderBuilderE2E', () => {
         id: 'SPECIFIED_BRAND_BY_Swell',
         stepUnit: 'quantity',
         onlyMatched: true,
-      }
+      },
     );
 
     builder = new OrderBuilder<TestOrderItem>({
@@ -244,7 +244,7 @@ describe('OrderBuilderE2E', () => {
       new ItemIncluded<TestOrderItem>({
         items: ['B', 'C', 'D', 'E'],
       }),
-      { id: 'P1', onlyMatched: true }
+      { id: 'P1', onlyMatched: true },
     );
 
     // 指定商品（Ｃ～Ｉ）每3000元 折200元
@@ -255,7 +255,7 @@ describe('OrderBuilderE2E', () => {
         items: ['C', 'D', 'E', 'F', 'G', 'H', 'I'],
         scope: 'id',
       }),
-      { id: 'P2', stepUnit: 'price', onlyMatched: true }
+      { id: 'P2', stepUnit: 'price', onlyMatched: true },
     );
 
     // 指定分類（N21）滿2件 折100元
@@ -266,7 +266,7 @@ describe('OrderBuilderE2E', () => {
         scope: 'brand',
         threshold: 2,
       }),
-      { id: 'P3', onlyMatched: true }
+      { id: 'P3', onlyMatched: true },
     );
 
     // 指定分類（飾品）每2件 打9折
@@ -277,7 +277,7 @@ describe('OrderBuilderE2E', () => {
         items: ['accessory'],
         scope: 'category',
       }),
-      { id: 'P4', stepUnit: 'quantity', onlyMatched: true }
+      { id: 'P4', stepUnit: 'quantity', onlyMatched: true },
     );
 
     // 指定分類（Boyy）滿5000元 打9折
@@ -288,7 +288,7 @@ describe('OrderBuilderE2E', () => {
         scope: 'brand',
         conditions: [new PriceThreshold(5000)],
       }),
-      { id: 'P5', onlyMatched: true }
+      { id: 'P5', onlyMatched: true },
     );
 
     // 全館 滿6件 送最低價商品
@@ -332,15 +332,14 @@ describe('OrderBuilderE2E', () => {
         scope: 'brand',
         conditions: [new PriceThreshold(5000)],
       }),
-      { id: 'P2', onlyMatched: true }
+      { id: 'P2', onlyMatched: true },
     );
 
     // 指定商品（Ｂ～Ｅ）無條件 送最低價商品
-    const policy3 = new ItemGiveawayDiscount(
-      1,
-      new ItemIncluded<TestOrderItem>({ items: ['B', 'C', 'D', 'E'] }),
-      { id: 'P3', onlyMatched: true }
-    );
+    const policy3 = new ItemGiveawayDiscount(1, new ItemIncluded<TestOrderItem>({ items: ['B', 'C', 'D', 'E'] }), {
+      id: 'P3',
+      onlyMatched: true,
+    });
 
     // 指定商品（Ｃ～Ｉ）每3000元 折200元
     const policy4 = new StepValueDiscount(
@@ -349,7 +348,7 @@ describe('OrderBuilderE2E', () => {
       new ItemIncluded<TestOrderItem>({
         items: ['C', 'D', 'E', 'F', 'G', 'H', 'I'],
       }),
-      { id: 'P4', stepUnit: 'price', onlyMatched: true }
+      { id: 'P4', stepUnit: 'price', onlyMatched: true },
     );
 
     // 指定分類（鞋子）滿4000元 送最低價商品
@@ -360,7 +359,7 @@ describe('OrderBuilderE2E', () => {
         scope: 'category',
         conditions: [new PriceThreshold(4000)],
       }),
-      { id: 'P5', onlyMatched: true }
+      { id: 'P5', onlyMatched: true },
     );
 
     const builder = new OrderBuilder({
@@ -399,7 +398,7 @@ describe('OrderBuilderE2E', () => {
       new ItemIncluded<TestOrderItem>({
         items: ['C', 'D', 'E', 'F', 'G', 'H', 'I'],
       }),
-      { id: 'POLICY2', onlyMatched: true }
+      { id: 'POLICY2', onlyMatched: true },
     );
 
     // 指定分類（鞋子）滿6000元 送最低價商品
@@ -410,7 +409,7 @@ describe('OrderBuilderE2E', () => {
         scope: 'category',
         conditions: [new PriceThreshold(6000)],
       }),
-      { id: 'P3', onlyMatched: true }
+      { id: 'P3', onlyMatched: true },
     );
 
     // 指定分類（Boyy）滿5000元 打9折
@@ -421,7 +420,7 @@ describe('OrderBuilderE2E', () => {
         items: ['Boyy'],
         conditions: [new PriceThreshold(5000)],
       }),
-      { id: 'P4', onlyMatched: true }
+      { id: 'P4', onlyMatched: true },
     );
 
     // 全館 滿9件 送最低價商品
@@ -434,7 +433,7 @@ describe('OrderBuilderE2E', () => {
       new ItemIncluded({
         items: ['C', 'D', 'E', 'F', 'G', 'H', 'I'],
       }),
-      { id: 'P6', stepUnit: 'price', onlyMatched: true }
+      { id: 'P6', stepUnit: 'price', onlyMatched: true },
     );
 
     const builder = new OrderBuilder({
@@ -473,7 +472,7 @@ describe('OrderBuilderE2E', () => {
         scope: 'category',
         items: ['accessory'],
       }),
-      { id: 'P2', onlyMatched: true }
+      { id: 'P2', onlyMatched: true },
     );
 
     // 指定分類（Swell）滿10,000元 打9折
@@ -484,7 +483,7 @@ describe('OrderBuilderE2E', () => {
         items: ['Swell'],
         conditions: [new PriceThreshold(10000)],
       }),
-      { id: 'P2', onlyMatched: true }
+      { id: 'P2', onlyMatched: true },
     );
 
     // 全館 滿15,000元 送最低價品
@@ -496,7 +495,7 @@ describe('OrderBuilderE2E', () => {
       new ItemIncluded<TestOrderItem>({
         items: ['F', 'G', 'H', 'I'],
       }),
-      { id: 'P4', onlyMatched: true }
+      { id: 'P4', onlyMatched: true },
     );
 
     // 指定分類（Boyy）滿5000 打9折
@@ -507,7 +506,7 @@ describe('OrderBuilderE2E', () => {
         items: ['Boyy'],
         conditions: [new PriceThreshold(5000)],
       }),
-      { id: 'P5', onlyMatched: true }
+      { id: 'P5', onlyMatched: true },
     );
 
     const builder1 = new OrderBuilder({
@@ -552,7 +551,7 @@ describe('OrderBuilderE2E', () => {
       new ItemIncluded<TestOrderItem>({
         items: ['B', 'C', 'D', 'E'],
       }),
-      { id: 'P1', onlyMatched: true }
+      { id: 'P1', onlyMatched: true },
     );
 
     // 全館 滿6件 送最低價商品
@@ -566,7 +565,7 @@ describe('OrderBuilderE2E', () => {
         scope: 'category',
         items: ['accessory'],
       }),
-      { id: 'P3', stepUnit: 'quantity', onlyMatched: true }
+      { id: 'P3', stepUnit: 'quantity', onlyMatched: true },
     );
 
     // 指定分類（鞋子）滿4000元 送最低價商品
@@ -577,7 +576,7 @@ describe('OrderBuilderE2E', () => {
         items: ['shoes'],
         conditions: [new PriceThreshold(4000)],
       }),
-      { id: 'P4', onlyMatched: true }
+      { id: 'P4', onlyMatched: true },
     );
 
     // 指定分類（Boyy）滿5000元 打9折
@@ -588,7 +587,7 @@ describe('OrderBuilderE2E', () => {
         items: ['Boyy'],
         conditions: [new PriceThreshold(5000)],
       }),
-      { id: 'P5', onlyMatched: true }
+      { id: 'P5', onlyMatched: true },
     );
 
     // 全館 滿15,000元 送最低價品
@@ -627,7 +626,7 @@ describe('OrderBuilderE2E', () => {
    * 取最優排列組合：2+4
    * 購物車顯示金額 24856
    */
-   it('情境編號：甲 - 1', () => {
+  it('情境編號：甲 - 1', () => {
     // 指定商品（Ａ～Ｆ）滿3件 打9折
     const policy1 = new PercentageDiscount(
       0.9,
@@ -635,7 +634,7 @@ describe('OrderBuilderE2E', () => {
         items: ['A', 'B', 'C', 'D', 'E', 'F'],
         threshold: 3,
       }),
-      { id: 'SPECIFIED_A_F', onlyMatched: true }
+      { id: 'SPECIFIED_A_F', onlyMatched: true },
     );
 
     // 2. 指定商品（Ｃ～Ｉ）每5000元 折600元
@@ -645,7 +644,7 @@ describe('OrderBuilderE2E', () => {
       new ItemIncluded<TestOrderItem>({
         items: ['C', 'D', 'E', 'F', 'G', 'H', 'I'],
       }),
-      { id: 'SPECIFIED_C_I', stepUnit: 'price', onlyMatched: true }
+      { id: 'SPECIFIED_C_I', stepUnit: 'price', onlyMatched: true },
     );
 
     // 3. 指定分類（鞋子）滿4000元 送最低價商品
@@ -656,7 +655,7 @@ describe('OrderBuilderE2E', () => {
         items: ['shoes'],
         conditions: [new PriceThreshold(4000)],
       }),
-      { id: 'GIVEAWAY_BY_SHOES_1', onlyMatched: true }
+      { id: 'GIVEAWAY_BY_SHOES_1', onlyMatched: true },
     );
 
     // * 4. 指定分類（Swell）每1件 打9折
@@ -671,7 +670,7 @@ describe('OrderBuilderE2E', () => {
         id: 'SPECIFIED_BRAND_BY_Swell_1',
         stepUnit: 'quantity',
         onlyMatched: true,
-      }
+      },
     );
 
     // (1|2)&(3|4)
@@ -687,11 +686,7 @@ describe('OrderBuilderE2E', () => {
 
     const builder2 = new OrderBuilder<TestOrderItem>({
       policyPickStrategy: 'item-based',
-      policies: [
-        [policy1, policy2],
-        policy3,
-        policy4,
-      ],
+      policies: [[policy1, policy2], policy3, policy4],
     });
 
     const order2 = builder2.build({ items });
@@ -703,8 +698,8 @@ describe('OrderBuilderE2E', () => {
 
 describe('TAST v0.0.2', () => {
   type TestOrderItem = OrderItem<{
-    category: string,
-    brand: string,
+    category: string;
+    brand: string;
   }>;
 
   const items: TestOrderItem[] = [
@@ -786,7 +781,7 @@ describe('TAST v0.0.2', () => {
     const order = new OrderBuilder().build({ items });
 
     expect(order.itemValue).toEqual(48500);
-  })
+  });
 
   /**
    *  根據設定此情境為：
@@ -794,12 +789,12 @@ describe('TAST v0.0.2', () => {
    *    b) 不同層級之間採優惠疊加計算 [可疊加]
    *
    *  1	指定商品（Ｂ～Ｅ）滿2件 送最低價商品
- 	 *	2	指定商品（Ｃ～Ｉ）每 4000元 折 200元
- 	 *	3	指定分類（N21）滿2件 折100元
- 	 *	4	指定分類（飾品）每3件 打9折，至多打 2 次
- 	 *	5	指定分類（Swell）滿 4000元 打8折
- 	 *	6	全館 滿6件 送最低價商品
- 	 *	7	全館 每5件 折600元
+   *	2	指定商品（Ｃ～Ｉ）每 4000元 折 200元
+   *	3	指定分類（N21）滿2件 折100元
+   *	4	指定分類（飾品）每3件 打9折，至多打 2 次
+   *	5	指定分類（Swell）滿 4000元 打8折
+   *	6	全館 滿6件 送最低價商品
+   *	7	全館 每5件 折600元
    */
   it('Case 1', () => {
     const policy1 = new ItemGiveawayDiscount(
@@ -817,7 +812,7 @@ describe('TAST v0.0.2', () => {
       new ItemIncluded({
         items: ['C', 'D', 'E', 'F', 'G', 'H', 'I'],
       }),
-      { id: 'POLICY_2', stepUnit: 'price', onlyMatched: true }
+      { id: 'POLICY_2', stepUnit: 'price', onlyMatched: true },
     );
 
     const policy3 = new ValueDiscount(
@@ -829,7 +824,7 @@ describe('TAST v0.0.2', () => {
         // or
         // conditions: [new QuantityThreshold(2)],
       }),
-      { id: 'POLICY_3', onlyMatched: true }
+      { id: 'POLICY_3', onlyMatched: true },
     );
 
     const policy4 = new StepPercentageDiscount(
@@ -839,7 +834,7 @@ describe('TAST v0.0.2', () => {
         scope: 'category',
         items: ['accessory'],
       }),
-      { id: 'POLICY_4', stepUnit: 'quantity', onlyMatched: true }
+      { id: 'POLICY_4', stepUnit: 'quantity', onlyMatched: true },
     );
 
     const policy5 = new PercentageDiscount(
@@ -849,36 +844,22 @@ describe('TAST v0.0.2', () => {
         items: ['Swell'],
         conditions: [new PriceThreshold(4000)],
       }),
-      { id: 'POLICY_5', onlyMatched: true }
+      { id: 'POLICY_5', onlyMatched: true },
     );
 
-    const policy6 = new ItemGiveawayDiscount(
-      1,
-      new QuantityThreshold(5),
-      { id: 'POLICY_6' }
-    );
+    const policy6 = new ItemGiveawayDiscount(1, new QuantityThreshold(5), { id: 'POLICY_6' });
 
-    const policy7 = new StepValueDiscount(
-      7,
-      200,
-      { id: 'POLICY_7', stepUnit: 'quantity' }
-    );
+    const policy7 = new StepValueDiscount(7, 200, { id: 'POLICY_7', stepUnit: 'quantity' });
 
     const builder = new OrderBuilder({
-      policies: [
-        [policy1, policy2],
-      ],
+      policies: [[policy1, policy2]],
     });
 
     const order = builder.build({ id: 'TDD', items });
 
     expect(order.price).toEqual(44000);
 
-    const order2 = new OrderBuilder(order.builder)
-      .addPolicy([
-        [policy3, policy4, policy5],
-      ])
-      .build({ items });
+    const order2 = new OrderBuilder(order.builder).addPolicy([[policy3, policy4, policy5]]).build({ items });
 
     expect(order2.price).toEqual(37341);
 
@@ -886,14 +867,10 @@ describe('TAST v0.0.2', () => {
      * @todo
      * improve algorithm.
      */
-    const order3 = new OrderBuilder(order2.builder)
-      .addPolicy([
-        [policy6, policy7],
-      ])
-      .build({ id: 'TDD3', items });
+    const order3 = new OrderBuilder(order2.builder).addPolicy([[policy6, policy7]]).build({ id: 'TDD3', items });
 
     expect(order3.price).toEqual(34261);
-  })
+  });
 
   it('Logistics Fee', () => {
     const originItems: TestOrderItem[] = [
@@ -933,8 +910,8 @@ describe('TAST v0.0.2', () => {
             items: ['B', 'C', 'D', 'E'],
             threshold: 2,
           }),
-          { onlyMatched: true }
-        )
+          { onlyMatched: true },
+        ),
       )
       .build({
         items: originItems,
@@ -944,11 +921,11 @@ describe('TAST v0.0.2', () => {
     expect(order.price).toEqual(3200);
 
     order = new OrderBuilder(order.builder)
-    .setLogistics({
-      price: 200,
-      threshold: 2000,
-    })
-    .build({ items: originItems });
+      .setLogistics({
+        price: 200,
+        threshold: 2000,
+      })
+      .build({ items: originItems });
 
     // 4500 + 200 - 1500 - 200 = 3000
     expect(order.price).toEqual(3000);
@@ -964,8 +941,8 @@ describe('TAST v0.0.2', () => {
             items: ['B', 'C', 'D', 'E'],
             threshold: 2,
           }),
-          { onlyMatched: true }
-        )
+          { onlyMatched: true },
+        ),
       )
       .build({
         items: originItems,
@@ -995,7 +972,7 @@ describe('TAST v0.0.2', () => {
             brand: 'AJE',
           },
         ],
-      }).price
+      }).price,
     ).toEqual(1000 + 200);
 
     const originItems3: TestOrderItem[] = [
@@ -1040,8 +1017,8 @@ describe('TAST v0.0.2', () => {
             items: ['B', 'C', 'D', 'E'],
             threshold: 2,
           }),
-          { onlyMatched: true }
-        )
+          { onlyMatched: true },
+        ),
       )
       .build({ items: originItems3 });
 
@@ -1097,36 +1074,25 @@ describe('TAST v0.0.2', () => {
 
     // 每 2000 元折 200 元 -> 滿足 2 次
 
-    const policy1 = new StepValueDiscount(
-      2000,
-      200,
-      { id: 'only-matched-policy', stepUnit: 'price' },
-    );
+    const policy1 = new StepValueDiscount(2000, 200, { id: 'only-matched-policy', stepUnit: 'price' });
 
     const builder = new OrderBuilder();
 
-    const policy1MatchedTimes = builder
-      .addPolicy(policy1)
-      .build({ items })
-      .discounts
-      .find(discount => discount.id === policy1.id)
-      ?.matchedTimes || 0;
+    const policy1MatchedTimes =
+      builder
+        .addPolicy(policy1)
+        .build({ items })
+        .discounts.find(discount => discount.id === policy1.id)?.matchedTimes || 0;
 
     expect(policy1MatchedTimes).toBe(2); // step(4500, 2000) = 2
 
-    expect(
-      builder
-        .build({ items })
-        .discountValue
-    ).toBe(policy1.value * policy1MatchedTimes);
+    expect(builder.build({ items }).discountValue).toBe(policy1.value * policy1MatchedTimes);
 
     expect(
       new OrderBuilder()
-        .addPolicy(
-          new StepPercentageDiscount(1499, 0.8, { id: 'p2', stepUnit: 'price' })
-        )
+        .addPolicy(new StepPercentageDiscount(1499, 0.8, { id: 'p2', stepUnit: 'price' }))
         .build({ items })
-        .discounts.find(discount => discount.id === 'p2')?.matchedTimes
+        .discounts.find(discount => discount.id === 'p2')?.matchedTimes,
     ).toBe(3);
 
     let p: Policy = new StepPercentageDiscount(1499, 0.8, {
@@ -1135,52 +1101,52 @@ describe('TAST v0.0.2', () => {
       excludedInCalculation: true,
     });
 
-    let ob = new OrderBuilder()
-      .addPolicy(p)
-      .build({ items });
+    let ob = new OrderBuilder().addPolicy(p).build({ items });
 
     expect(ob.price).toBe(4500);
-    expect(JSON.stringify(ob.discounts)).toBe(JSON.stringify([
-      {
-        id: 'p3',
-        step: 1499,
-        value: 0.8,
-        type: 'STEP_PERCENTAGE',
-        discount: 0,
-        conditions: [],
-        appliedItems: [
-          {
-            id: 'A',
-            name: '外套A',
-            unitPrice: 1000,
-            quantity: 1,
-            category: 'jacket',
-            brand: 'AJE',
-            uuid: 'A-1',
-          },
-          {
-            id: 'B',
-            name: '外套B',
-            unitPrice: 1500,
-            quantity: 1,
-            category: 'jacket',
-            brand: 'N21',
-            uuid: 'B-1',
-          },
-          {
-            id: 'C',
-            name: '鞋子C',
-            unitPrice: 2000,
-            quantity: 1,
-            category: 'shoes',
-            brand: 'N21',
-            uuid: 'C-1',
-          },
-        ],
-        matchedTimes: 3,
-        policy: p,
-      },
-    ]));
+    expect(JSON.stringify(ob.discounts)).toBe(
+      JSON.stringify([
+        {
+          id: 'p3',
+          step: 1499,
+          value: 0.8,
+          type: 'STEP_PERCENTAGE',
+          discount: 0,
+          conditions: [],
+          appliedItems: [
+            {
+              id: 'A',
+              name: '外套A',
+              unitPrice: 1000,
+              quantity: 1,
+              category: 'jacket',
+              brand: 'AJE',
+              uuid: 'A-1',
+            },
+            {
+              id: 'B',
+              name: '外套B',
+              unitPrice: 1500,
+              quantity: 1,
+              category: 'jacket',
+              brand: 'N21',
+              uuid: 'B-1',
+            },
+            {
+              id: 'C',
+              name: '鞋子C',
+              unitPrice: 2000,
+              quantity: 1,
+              category: 'shoes',
+              brand: 'N21',
+              uuid: 'C-1',
+            },
+          ],
+          matchedTimes: 3,
+          policy: p,
+        },
+      ]),
+    );
 
     p = new StepValueDiscount(1499, 200, {
       id: 'p4',
@@ -1188,189 +1154,189 @@ describe('TAST v0.0.2', () => {
       excludedInCalculation: true,
     });
 
-    ob = new OrderBuilder()
-      .addPolicy(p)
-      .build({ items });
+    ob = new OrderBuilder().addPolicy(p).build({ items });
 
     expect(ob.price).toBe(4500);
-    expect(JSON.stringify(ob.discounts)).toBe(JSON.stringify([
-      {
-        id: 'p4',
-        step: 1499,
-        value: 200,
-        type: 'STEP_VALUE',
-        discount: 0,
-        conditions: [],
-        appliedItems: [
-          {
-            id: 'A',
-            name: '外套A',
-            unitPrice: 1000,
-            quantity: 1,
-            category: 'jacket',
-            brand: 'AJE',
-            uuid: 'A-1',
-          },
-          {
-            id: 'B',
-            name: '外套B',
-            unitPrice: 1500,
-            quantity: 1,
-            category: 'jacket',
-            brand: 'N21',
-            uuid: 'B-1',
-          },
-          {
-            id: 'C',
-            name: '鞋子C',
-            unitPrice: 2000,
-            quantity: 1,
-            category: 'shoes',
-            brand: 'N21',
-            uuid: 'C-1',
-          },
-        ],
-        matchedTimes: 3,
-        policy: p,
-      },
-    ]));
+    expect(JSON.stringify(ob.discounts)).toBe(
+      JSON.stringify([
+        {
+          id: 'p4',
+          step: 1499,
+          value: 200,
+          type: 'STEP_VALUE',
+          discount: 0,
+          conditions: [],
+          appliedItems: [
+            {
+              id: 'A',
+              name: '外套A',
+              unitPrice: 1000,
+              quantity: 1,
+              category: 'jacket',
+              brand: 'AJE',
+              uuid: 'A-1',
+            },
+            {
+              id: 'B',
+              name: '外套B',
+              unitPrice: 1500,
+              quantity: 1,
+              category: 'jacket',
+              brand: 'N21',
+              uuid: 'B-1',
+            },
+            {
+              id: 'C',
+              name: '鞋子C',
+              unitPrice: 2000,
+              quantity: 1,
+              category: 'shoes',
+              brand: 'N21',
+              uuid: 'C-1',
+            },
+          ],
+          matchedTimes: 3,
+          policy: p,
+        },
+      ]),
+    );
 
     p = new ValueDiscount(1499, {
       id: 'p5',
       excludedInCalculation: true,
     });
 
-    ob = new OrderBuilder()
-      .addPolicy(p)
-      .build({ items });
+    ob = new OrderBuilder().addPolicy(p).build({ items });
 
     expect(ob.price).toBe(4500);
-    expect(JSON.stringify(ob.discounts)).toBe(JSON.stringify([
-      {
-        id: 'p5',
-        value: 1499,
-        type: 'VALUE',
-        discount: 0,
-        conditions: [],
-        appliedItems: [
-          {
-            id: 'A',
-            name: '外套A',
-            unitPrice: 1000,
-            quantity: 1,
-            category: 'jacket',
-            brand: 'AJE',
-            uuid: 'A-1',
-          },
-          {
-            id: 'B',
-            name: '外套B',
-            unitPrice: 1500,
-            quantity: 1,
-            category: 'jacket',
-            brand: 'N21',
-            uuid: 'B-1',
-          },
-          {
-            id: 'C',
-            name: '鞋子C',
-            unitPrice: 2000,
-            quantity: 1,
-            category: 'shoes',
-            brand: 'N21',
-            uuid: 'C-1',
-          },
-        ],
-        matchedTimes: 1,
-        policy: p,
-      },
-    ]));
+    expect(JSON.stringify(ob.discounts)).toBe(
+      JSON.stringify([
+        {
+          id: 'p5',
+          value: 1499,
+          type: 'VALUE',
+          discount: 0,
+          conditions: [],
+          appliedItems: [
+            {
+              id: 'A',
+              name: '外套A',
+              unitPrice: 1000,
+              quantity: 1,
+              category: 'jacket',
+              brand: 'AJE',
+              uuid: 'A-1',
+            },
+            {
+              id: 'B',
+              name: '外套B',
+              unitPrice: 1500,
+              quantity: 1,
+              category: 'jacket',
+              brand: 'N21',
+              uuid: 'B-1',
+            },
+            {
+              id: 'C',
+              name: '鞋子C',
+              unitPrice: 2000,
+              quantity: 1,
+              category: 'shoes',
+              brand: 'N21',
+              uuid: 'C-1',
+            },
+          ],
+          matchedTimes: 1,
+          policy: p,
+        },
+      ]),
+    );
 
     p = new ItemGiveawayDiscount(1, {
       id: 'p6',
       excludedInCalculation: true,
     });
 
-    ob = new OrderBuilder()
-      .addPolicy(p)
-      .build({ items });
+    ob = new OrderBuilder().addPolicy(p).build({ items });
 
     expect(ob.price).toBe(4500);
-    expect(JSON.stringify(ob.discounts)).toBe(JSON.stringify([
-      {
-        id: 'p6',
-        value: 1,
-        strategy: 'LOW_PRICE_FIRST',
-        type: 'ITEM_GIVEAWAY',
-        discount: 0,
-        conditions: [],
-        appliedItems: [
-          {
-            id: 'A',
-            name: '外套A',
-            unitPrice: 1000,
-            quantity: 1,
-            category: 'jacket',
-            brand: 'AJE',
-            uuid: 'A-1',
-          },
-        ],
-        matchedTimes: 1,
-        policy: p,
-      },
-    ]));
+    expect(JSON.stringify(ob.discounts)).toBe(
+      JSON.stringify([
+        {
+          id: 'p6',
+          value: 1,
+          strategy: 'LOW_PRICE_FIRST',
+          type: 'ITEM_GIVEAWAY',
+          discount: 0,
+          conditions: [],
+          appliedItems: [
+            {
+              id: 'A',
+              name: '外套A',
+              unitPrice: 1000,
+              quantity: 1,
+              category: 'jacket',
+              brand: 'AJE',
+              uuid: 'A-1',
+            },
+          ],
+          matchedTimes: 1,
+          policy: p,
+        },
+      ]),
+    );
 
     p = new PercentageDiscount(0.8, {
       id: 'p7',
       excludedInCalculation: true,
     });
 
-    ob = new OrderBuilder()
-      .addPolicy(p)
-      .build({ items });
+    ob = new OrderBuilder().addPolicy(p).build({ items });
 
     expect(ob.price).toBe(4500);
-    expect(JSON.stringify(ob.discounts)).toBe(JSON.stringify([
-      {
-        id: 'p7',
-        value: 0.8,
-        type: 'PERCENTAGE',
-        discount: 0,
-        conditions: [],
-        appliedItems: [
-          {
-            id: 'A',
-            name: '外套A',
-            unitPrice: 1000,
-            quantity: 1,
-            category: 'jacket',
-            brand: 'AJE',
-            uuid: 'A-1',
-          },
-          {
-            id: 'B',
-            name: '外套B',
-            unitPrice: 1500,
-            quantity: 1,
-            category: 'jacket',
-            brand: 'N21',
-            uuid: 'B-1',
-          },
-          {
-            id: 'C',
-            name: '鞋子C',
-            unitPrice: 2000,
-            quantity: 1,
-            category: 'shoes',
-            brand: 'N21',
-            uuid: 'C-1',
-          },
-        ],
-        matchedTimes: 1,
-        policy: p,
-      },
-    ]));
-  })
+    expect(JSON.stringify(ob.discounts)).toBe(
+      JSON.stringify([
+        {
+          id: 'p7',
+          value: 0.8,
+          type: 'PERCENTAGE',
+          discount: 0,
+          conditions: [],
+          appliedItems: [
+            {
+              id: 'A',
+              name: '外套A',
+              unitPrice: 1000,
+              quantity: 1,
+              category: 'jacket',
+              brand: 'AJE',
+              uuid: 'A-1',
+            },
+            {
+              id: 'B',
+              name: '外套B',
+              unitPrice: 1500,
+              quantity: 1,
+              category: 'jacket',
+              brand: 'N21',
+              uuid: 'B-1',
+            },
+            {
+              id: 'C',
+              name: '鞋子C',
+              unitPrice: 2000,
+              quantity: 1,
+              category: 'shoes',
+              brand: 'N21',
+              uuid: 'C-1',
+            },
+          ],
+          matchedTimes: 1,
+          policy: p,
+        },
+      ]),
+    );
+  });
 
   it('Test discountValue > itemValue Scenario', () => {
     const items: TestOrderItem[] = [
@@ -1402,20 +1368,14 @@ describe('TAST v0.0.2', () => {
 
     const order = new OrderBuilder({
       policyPickStrategy: 'order-based',
-      policies: [
-        new ValueDiscount(200),
-        [new ValueDiscount(2000), new ValueDiscount(100000000)],
-      ],
+      policies: [new ValueDiscount(200), [new ValueDiscount(2000), new ValueDiscount(100000000)]],
     }).build({ items });
 
     expect(order.price).toEqual(0);
 
     const order2 = new OrderBuilder({
       policyPickStrategy: 'order-based',
-      policies: [
-        new ValueDiscount(200),
-        new StepValueDiscount(2, 100000000, { stepUnit: 'quantity' }),
-      ],
+      policies: [new ValueDiscount(200), new StepValueDiscount(2, 100000000, { stepUnit: 'quantity' })],
     }).build({ items });
 
     expect(order2.price).toEqual(0);
@@ -1476,7 +1436,7 @@ describe('TAST v0.0.2', () => {
                 isMatchedItem: item => item.id === 'A',
                 threshold: 2,
               },
-              { onlyMatched: true }
+              { onlyMatched: true },
             ),
           ]),
           // 指定商品Ｂ每 1000元 折 200 元，最多重複 2 次（至多折 400）
@@ -1490,7 +1450,7 @@ describe('TAST v0.0.2', () => {
               stepUnit: 'price',
               stepLimit: 2,
               onlyMatched: true,
-            }
+            },
           ),
         ],
         [
@@ -1501,7 +1461,7 @@ describe('TAST v0.0.2', () => {
             new ItemIncluded<TestOrderItem>({
               isMatchedItem: item => item.brand === 'N21',
             }),
-            { onlyMatched: true }
+            { onlyMatched: true },
           ),
           // 指定分類（鞋子）滿 3 件 打 8 折
           new PercentageDiscount(
@@ -1510,7 +1470,7 @@ describe('TAST v0.0.2', () => {
               isMatchedItem: item => item.category === 'shoes',
               threshold: 3,
             }),
-            { onlyMatched: true }
+            { onlyMatched: true },
           ),
         ],
         // 全館 滿5件 打9折
@@ -1521,13 +1481,9 @@ describe('TAST v0.0.2', () => {
     expect(order.itemValue).toEqual(21000);
     expect(order.price).toEqual(15660);
 
-    const policy1 = new StepItemGiveawayDiscount(
-      2,
-      1,
-      { strategy: 'HIGH_PRICE_FIRST', excludedInCalculation: true }
-    );
+    const policy1 = new StepItemGiveawayDiscount(2, 1, { strategy: 'HIGH_PRICE_FIRST', excludedInCalculation: true });
 
     expect(policy1).toBeInstanceOf(StepItemGiveawayDiscount);
     expect(policy1.resolve(order, []).length).toEqual(1);
-  })
-})
+  });
+});

@@ -54,13 +54,7 @@ describe('order', () => {
           synchronize: true,
         }),
         WMSBaseModule.forRootAsync({
-          imports: [
-            TypeOrmModule.forFeature([
-              OrderAEntity,
-              OrderBEntity,
-              CustomMaterialEntity,
-            ]),
-          ],
+          imports: [TypeOrmModule.forFeature([OrderAEntity, OrderBEntity, CustomMaterialEntity])],
           useFactory: () => ({
             // allowNegativeStock: true,
             materialEntity: CustomMaterialEntity,
@@ -71,11 +65,9 @@ describe('order', () => {
 
     stockService = module.get<StockService>(StockService);
     orderService = module.get<OrderService>(OrderService);
-    const locationService =
-      module.get<LocationService<LocationEntity>>(LocationService);
+    const locationService = module.get<LocationService<LocationEntity>>(LocationService);
 
-    const materialService =
-      module.get<MaterialService<CustomMaterialEntity>>(MaterialService);
+    const materialService = module.get<MaterialService<CustomMaterialEntity>>(MaterialService);
 
     await locationService.create(locationMock.parent);
 
@@ -145,18 +137,12 @@ describe('order', () => {
     expect(orderA).toHaveProperty('stocks');
     expect(orderA.stocks).toHaveLength(2);
     expect(orderA.stocks[0]).toHaveProperty('id');
-    expect(orderA.stocks[0]).toHaveProperty(
-      'locationId',
-      locationMock.child1.id,
-    );
+    expect(orderA.stocks[0]).toHaveProperty('locationId', locationMock.child1.id);
 
     expect(orderA.stocks[0]).toHaveProperty('materialId', materialMock.m1.id);
     expect(orderA.stocks[0]).toHaveProperty('quantity', 1);
     expect(orderA.stocks[1]).toHaveProperty('id');
-    expect(orderA.stocks[1]).toHaveProperty(
-      'locationId',
-      locationMock.parent.id,
-    );
+    expect(orderA.stocks[1]).toHaveProperty('locationId', locationMock.parent.id);
 
     expect(orderA.stocks[1]).toHaveProperty('materialId', materialMock.m1.id);
     expect(orderA.stocks[1]).toHaveProperty('quantity', 2);
@@ -165,18 +151,12 @@ describe('order', () => {
     expect(orderB).toHaveProperty('stocks');
     expect(orderB.stocks).toHaveLength(2);
     expect(orderB.stocks[0]).toHaveProperty('id');
-    expect(orderB.stocks[0]).toHaveProperty(
-      'locationId',
-      locationMock.child1.id,
-    );
+    expect(orderB.stocks[0]).toHaveProperty('locationId', locationMock.child1.id);
 
     expect(orderB.stocks[0]).toHaveProperty('materialId', materialMock.m1.id);
     expect(orderB.stocks[0]).toHaveProperty('quantity', 3);
     expect(orderB.stocks[1]).toHaveProperty('id');
-    expect(orderB.stocks[1]).toHaveProperty(
-      'locationId',
-      locationMock.parent.id,
-    );
+    expect(orderB.stocks[1]).toHaveProperty('locationId', locationMock.parent.id);
 
     expect(orderB.stocks[1]).toHaveProperty('materialId', materialMock.m2.id);
     expect(orderB.stocks[1]).toHaveProperty('quantity', 4);
@@ -236,13 +216,7 @@ describe('order with allowNegativeStock', () => {
           synchronize: true,
         }),
         WMSBaseModule.forRootAsync({
-          imports: [
-            TypeOrmModule.forFeature([
-              OrderAEntity,
-              OrderBEntity,
-              CustomMaterialEntity,
-            ]),
-          ],
+          imports: [TypeOrmModule.forFeature([OrderAEntity, OrderBEntity, CustomMaterialEntity])],
           useFactory: () => ({
             allowNegativeStock: true,
             materialEntity: CustomMaterialEntity,
@@ -253,11 +227,9 @@ describe('order with allowNegativeStock', () => {
 
     stockService = module.get<StockService>(StockService);
     orderService = module.get<OrderService>(OrderService);
-    const locationService =
-      module.get<LocationService<LocationEntity>>(LocationService);
+    const locationService = module.get<LocationService<LocationEntity>>(LocationService);
 
-    const materialService =
-      module.get<MaterialService<CustomMaterialEntity>>(MaterialService);
+    const materialService = module.get<MaterialService<CustomMaterialEntity>>(MaterialService);
 
     await locationService.create(locationMock.parent);
 

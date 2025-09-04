@@ -13,25 +13,13 @@ jest.mock('../src/ctbc-pos-api-utils', () => ({
 }));
 
 import { CTBCPayment } from '../src';
-import {
-  CTBC_ERROR_CODES,
-  CTBCPosApiConfig,
-  CTBCPosApiQueryParams,
-} from '../src/typings';
+import { CTBC_ERROR_CODES, CTBCPosApiConfig, CTBCPosApiQueryParams } from '../src/typings';
 import { OrderState } from '@rytass/payments';
-import {
-  posApiQuery,
-  posApiRefund,
-  posApiCancelRefund,
-} from '../src/ctbc-pos-api-utils';
+import { posApiQuery, posApiRefund, posApiCancelRefund } from '../src/ctbc-pos-api-utils';
 
 const mockPosApiQuery = posApiQuery as jest.MockedFunction<typeof posApiQuery>;
-const mockPosApiRefund = posApiRefund as jest.MockedFunction<
-  typeof posApiRefund
->;
-const mockPosApiCancelRefund = posApiCancelRefund as jest.MockedFunction<
-  typeof posApiCancelRefund
->;
+const mockPosApiRefund = posApiRefund as jest.MockedFunction<typeof posApiRefund>;
+const mockPosApiCancelRefund = posApiCancelRefund as jest.MockedFunction<typeof posApiCancelRefund>;
 
 // Mock fetch for testing
 const mockFetch = jest.fn();
@@ -108,9 +96,7 @@ describe('CTBC POS API - 類別方法整合測試', () => {
         RespCode: '99',
       });
 
-      await expect(payment.query('NONEXISTENT_ORDER')).rejects.toThrow(
-        'Query failed: 01 - Order not found',
-      );
+      await expect(payment.query('NONEXISTENT_ORDER')).rejects.toThrow('Query failed: 01 - Order not found');
     });
 
     it('應該從 API 查詢結果重建訂單當快取中不存在時', async () => {
@@ -191,9 +177,7 @@ describe('CTBC POS API - 類別方法整合測試', () => {
       });
 
       // 訂單剛創建時應該不是已提交狀態
-      await expect((order as any).refund()).rejects.toThrow(
-        'Only committed orders can be refunded',
-      );
+      await expect((order as any).refund()).rejects.toThrow('Only committed orders can be refunded');
     });
 
     it('應該拒絕超過原金額的退款', async () => {
@@ -211,9 +195,7 @@ describe('CTBC POS API - 類別方法整合測試', () => {
       // 模擬設定為已提交狀態
       (order as any)._state = OrderState.COMMITTED;
 
-      await expect((order as any).refund(2000)).rejects.toThrow(
-        'Refund amount cannot exceed original amount',
-      );
+      await expect((order as any).refund(2000)).rejects.toThrow('Refund amount cannot exceed original amount');
     });
 
     it('應該處理全額退款', async () => {
@@ -350,9 +332,7 @@ describe('CTBC POS API - 類別方法整合測試', () => {
         ErrorDesc: 'Transaction failed',
       });
 
-      await expect((order as any).refund()).rejects.toThrow(
-        'Transaction failed',
-      );
+      await expect((order as any).refund()).rejects.toThrow('Transaction failed');
 
       expect((order as any).state).toBe(OrderState.FAILED);
     });
@@ -526,9 +506,7 @@ describe('CTBC POS API - 類別方法整合測試', () => {
         authCode: '345678',
       };
 
-      await expect((order as any).cancelRefund(1000)).rejects.toThrow(
-        'Cancel refund failed',
-      );
+      await expect((order as any).cancelRefund(1000)).rejects.toThrow('Cancel refund failed');
 
       // 驗證失敗後狀態變為失敗
       expect((order as any).state).toBe(OrderState.FAILED);
@@ -536,9 +514,7 @@ describe('CTBC POS API - 類別方法整合測試', () => {
 
     it('應該處理 API 錯誤代碼回應', async () => {
       // Mock API 錯誤代碼回應
-      mockPosApiCancelRefund.mockResolvedValue(
-        CTBC_ERROR_CODES.ERR_INVALID_MERID,
-      );
+      mockPosApiCancelRefund.mockResolvedValue(CTBC_ERROR_CODES.ERR_INVALID_MERID);
 
       const order = await payment.prepare({
         id: 'TEST_ORDER_013',

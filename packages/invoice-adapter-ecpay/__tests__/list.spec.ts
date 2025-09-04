@@ -29,12 +29,7 @@ describe('ECPayInvoiceGateway List', () => {
       const decipher = createDecipheriv('aes-128-cbc', DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
       const plainPayload = JSON.parse(
-        decodeURIComponent(
-          [
-            decipher.update(payload.Data, 'base64', 'utf8'),
-            decipher.final('utf8'),
-          ].join('')
-        )
+        decodeURIComponent([decipher.update(payload.Data, 'base64', 'utf8'), decipher.final('utf8')].join('')),
       ) as ECPayInvoiceListQueryRequestBody;
 
       if (plainPayload.EndDate === '2020-12-31') {
@@ -67,48 +62,47 @@ describe('ECPayInvoiceGateway List', () => {
             ShowingPage: plainPayload.ShowingPage,
             RtnMsg: '成功',
             TotalCount: 201,
-            InvoiceData: Array.from(Array(plainPayload.ShowingPage === 1 ? 200 : 1))
-              .map((n, index) => ({
-                IIS_Identifier: '0000000000',
-                IIS_Number: 'FJ20004474',
-                IIS_Print_Flag: '0',
-                IIS_Relate_Number: '3200119095958',
-                IIS_Carrier_Type: '1',
-                IIS_Award_Type: plainPayload.Query_Award === 1 ? '6' : null,
-                IIS_Clearance_Mark: '',
-                IIS_Issue_Status: '1',
-                IIS_Upload_Status: '1',
-                IIS_Category: 'B2C',
-                IIS_Remain_Allowance_Amt: 2200,
-                IIS_Turnkey_Status: 'C',
-                IIS_Tax_Type: (() => {
-                  switch (index % 5) {
-                    case 0:
-                      return '1';
+            InvoiceData: Array.from(Array(plainPayload.ShowingPage === 1 ? 200 : 1)).map((n, index) => ({
+              IIS_Identifier: '0000000000',
+              IIS_Number: 'FJ20004474',
+              IIS_Print_Flag: '0',
+              IIS_Relate_Number: '3200119095958',
+              IIS_Carrier_Type: '1',
+              IIS_Award_Type: plainPayload.Query_Award === 1 ? '6' : null,
+              IIS_Clearance_Mark: '',
+              IIS_Issue_Status: '1',
+              IIS_Upload_Status: '1',
+              IIS_Category: 'B2C',
+              IIS_Remain_Allowance_Amt: 2200,
+              IIS_Turnkey_Status: 'C',
+              IIS_Tax_Type: (() => {
+                switch (index % 5) {
+                  case 0:
+                    return '1';
 
-                    case 1:
-                      return '2';
+                  case 1:
+                    return '2';
 
-                    case 2:
-                      return '3';
+                  case 2:
+                    return '3';
 
-                    case 3:
-                      return '4';
+                  case 3:
+                    return '4';
 
-                    case 4:
-                      return '9';
-                  }
-                })(),
-                IIS_Tax_Amount: 0,
-                IIS_Tax_Rate: 0.05,
-                IIS_Upload_Date: '2023-04-30 23:47:59',
-                IIS_Carrier_Num: '190F12DD1A38F26E9AE4721C42A66D41',
-                IIS_Sales_Amount: 2200,
-                IIS_Love_Code: '0',
-                IIS_Award_Flag: plainPayload.Query_Award === 1 ? '1' : '',
-                IIS_Create_Date: '2023-04-30 23:47:59',
-                IIS_Invalid_Status: plainPayload.Query_Invalid === 1 ? '1' : '0',
-              })),
+                  case 4:
+                    return '9';
+                }
+              })(),
+              IIS_Tax_Amount: 0,
+              IIS_Tax_Rate: 0.05,
+              IIS_Upload_Date: '2023-04-30 23:47:59',
+              IIS_Carrier_Num: '190F12DD1A38F26E9AE4721C42A66D41',
+              IIS_Sales_Amount: 2200,
+              IIS_Love_Code: '0',
+              IIS_Award_Flag: plainPayload.Query_Award === 1 ? '1' : '',
+              IIS_Create_Date: '2023-04-30 23:47:59',
+              IIS_Invalid_Status: plainPayload.Query_Invalid === 1 ? '1' : '0',
+            })),
             RtnCode: 1,
           },
           TransMsg: 'Success',
@@ -144,7 +138,7 @@ describe('ECPayInvoiceGateway List', () => {
       onlyAward: true,
     });
 
-    invoices.forEach((invoice) => {
+    invoices.forEach(invoice => {
       expect(invoice.awardType).not.toBeFalsy();
     });
   });
@@ -158,7 +152,7 @@ describe('ECPayInvoiceGateway List', () => {
       onlyInvalid: true,
     });
 
-    invoices.forEach((invoice) => {
+    invoices.forEach(invoice => {
       expect(invoice.state).toBe(InvoiceState.VOID);
     });
   });
@@ -178,9 +172,11 @@ describe('ECPayInvoiceGateway List', () => {
   it('should handle server error', async () => {
     const gateway = new ECPayInvoiceGateway();
 
-    expect(gateway.list({
-      startDate: '1990-01-01',
-      endDate: '2000-12-31',
-    })).rejects.toThrow();
+    expect(
+      gateway.list({
+        startDate: '1990-01-01',
+        endDate: '2000-12-31',
+      }),
+    ).rejects.toThrow();
   });
 });

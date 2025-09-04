@@ -56,11 +56,7 @@ interface UsePenDrawingReturn {
   forceComplete: () => void;
 }
 
-export const usePenDrawing = ({
-  editMode,
-  drawingMode,
-  onCreatePath,
-}: UsePenDrawingProps): UsePenDrawingReturn => {
+export const usePenDrawing = ({ editMode, drawingMode, onCreatePath }: UsePenDrawingProps): UsePenDrawingReturn => {
   const { screenToFlowPosition } = useReactFlow();
   const containerRef = useRef<HTMLDivElement>(null);
   const previousModeRef = useRef(drawingMode);
@@ -77,8 +73,7 @@ export const usePenDrawing = ({
 
   const handleClick = useCallback(
     (event: MouseEvent) => {
-      if (drawingMode !== DrawingMode.PEN || editMode !== EditMode.LAYER)
-        return;
+      if (drawingMode !== DrawingMode.PEN || editMode !== EditMode.LAYER) return;
 
       // IMMEDIATELY stop event propagation to prevent React Flow pane click
       event.stopPropagation();
@@ -87,15 +82,12 @@ export const usePenDrawing = ({
 
       // Debug log for shift key behavior
       if (event.shiftKey) {
-        console.log(
-          '🖱️ Pen tool click with Shift key pressed - event stopped',
-          {
-            isDrawing: drawingState.isDrawing,
-            pointsCount: drawingState.points.length,
-            lastClickTime: drawingState.lastClickTime,
-            currentTime: Date.now(),
-          },
-        );
+        console.log('🖱️ Pen tool click with Shift key pressed - event stopped', {
+          isDrawing: drawingState.isDrawing,
+          pointsCount: drawingState.points.length,
+          lastClickTime: drawingState.lastClickTime,
+          currentTime: Date.now(),
+        });
       }
 
       const currentTime = Date.now();
@@ -123,27 +115,17 @@ export const usePenDrawing = ({
           };
         }
 
-        const previousPoint =
-          drawingState.points[drawingState.points.length - 1];
+        const previousPoint = drawingState.points[drawingState.points.length - 1];
 
-        const constrainedPosition = constrainToStraightLine(
-          basePosition,
-          previousPoint,
-        );
+        const constrainedPosition = constrainToStraightLine(basePosition, previousPoint);
 
         // Also constrain the screen position for consistent preview
         const constrainedScreen =
           drawingState.screenPoints.length > 0
             ? (() => {
-                const previousScreenPoint =
-                  drawingState.screenPoints[
-                    drawingState.screenPoints.length - 1
-                  ];
+                const previousScreenPoint = drawingState.screenPoints[drawingState.screenPoints.length - 1];
 
-                return constrainToStraightLine(
-                  baseScreenPos,
-                  previousScreenPoint,
-                );
+                return constrainToStraightLine(baseScreenPos, previousScreenPoint);
               })()
             : baseScreenPos;
 
@@ -164,10 +146,7 @@ export const usePenDrawing = ({
         }
 
         const firstPoint = drawingState.screenPoints[0];
-        const distance = Math.sqrt(
-          Math.pow(screenX - firstPoint.x, 2) +
-            Math.pow(screenY - firstPoint.y, 2),
-        );
+        const distance = Math.sqrt(Math.pow(screenX - firstPoint.x, 2) + Math.pow(screenY - firstPoint.y, 2));
 
         // Consider it a click on the first point if within 10 pixels
         return distance <= 10;
@@ -222,7 +201,7 @@ export const usePenDrawing = ({
         });
       } else {
         // Regular click - add point
-        setDrawingState((prev) => ({
+        setDrawingState(prev => ({
           ...prev,
           isDrawing: true,
           points: [...prev.points, position],
@@ -246,8 +225,7 @@ export const usePenDrawing = ({
 
   const handleMouseMove = useCallback(
     (event: MouseEvent) => {
-      if (drawingMode !== DrawingMode.PEN || editMode !== EditMode.LAYER)
-        return;
+      if (drawingMode !== DrawingMode.PEN || editMode !== EditMode.LAYER) return;
 
       const wrapper = containerRef.current;
 
@@ -263,18 +241,14 @@ export const usePenDrawing = ({
           return { screenX: baseScreenX, screenY: baseScreenY };
         }
 
-        const previousScreenPoint =
-          drawingState.screenPoints[drawingState.screenPoints.length - 1];
+        const previousScreenPoint = drawingState.screenPoints[drawingState.screenPoints.length - 1];
 
-        const constrainedPos = constrainToStraightLine(
-          { x: baseScreenX, y: baseScreenY },
-          previousScreenPoint,
-        );
+        const constrainedPos = constrainToStraightLine({ x: baseScreenX, y: baseScreenY }, previousScreenPoint);
 
         return { screenX: constrainedPos.x, screenY: constrainedPos.y };
       })();
 
-      setDrawingState((prev) => ({
+      setDrawingState(prev => ({
         ...prev,
         currentMousePos: { x: screenX, y: screenY },
         isShiftPressed: event.shiftKey,
@@ -285,12 +259,7 @@ export const usePenDrawing = ({
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
-      if (
-        drawingMode !== DrawingMode.PEN ||
-        editMode !== EditMode.LAYER ||
-        !drawingState.isDrawing
-      )
-        return;
+      if (drawingMode !== DrawingMode.PEN || editMode !== EditMode.LAYER || !drawingState.isDrawing) return;
 
       // Escape key cancels current path
       if (event.key === 'Escape') {
@@ -326,13 +295,7 @@ export const usePenDrawing = ({
         });
       }
     },
-    [
-      drawingMode,
-      editMode,
-      drawingState.isDrawing,
-      drawingState.points,
-      onCreatePath,
-    ],
+    [drawingMode, editMode, drawingState.isDrawing, drawingState.points, onCreatePath],
   );
 
   // Force complete current path (for auto-close on pane click)
@@ -373,15 +336,13 @@ export const usePenDrawing = ({
     const editModeChanged = previousEditModeRef.current !== editMode;
 
     if (modeChanged || editModeChanged) {
-      setDrawingState((prev) => {
+      setDrawingState(prev => {
         // Should we force complete before resetting?
         const shouldForceComplete =
           // Switching away from PEN mode
-          ((previousModeRef.current === DrawingMode.PEN &&
-            drawingMode !== DrawingMode.PEN) ||
+          ((previousModeRef.current === DrawingMode.PEN && drawingMode !== DrawingMode.PEN) ||
             // Switching away from LAYER mode
-            (previousEditModeRef.current === EditMode.LAYER &&
-              editMode !== EditMode.LAYER)) &&
+            (previousEditModeRef.current === EditMode.LAYER && editMode !== EditMode.LAYER)) &&
           prev.isDrawing &&
           prev.points.length >= 2;
 
@@ -445,10 +406,7 @@ export const usePenDrawing = ({
     previewPath,
     currentPoints: drawingState.screenPoints,
     // 提供起始點資訊，用於顯示閉合提示
-    firstPoint:
-      drawingState.screenPoints.length > 0
-        ? drawingState.screenPoints[0]
-        : null,
+    firstPoint: drawingState.screenPoints.length > 0 ? drawingState.screenPoints[0] : null,
     canClose: drawingState.isDrawing && drawingState.screenPoints.length >= 3,
     forceComplete,
   };

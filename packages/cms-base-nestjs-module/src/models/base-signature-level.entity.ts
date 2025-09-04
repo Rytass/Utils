@@ -35,9 +35,6 @@ export class BaseSignatureLevelEntity {
   @DeleteDateColumn()
   deletedAt: Date | null;
 
-  @OneToMany(
-    () => ArticleSignatureEntity,
-    (signature) => signature.signatureLevel,
-  )
+  @OneToMany(() => ArticleSignatureEntity, signature => signature.signatureLevel)
   signatures: Relation<ArticleSignatureEntity[]>;
 }

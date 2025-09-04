@@ -18,15 +18,10 @@ import { CMSGraphqlBaseModuleOptionFactory } from './typings/cms-graphql-base-ro
 
 @Module({})
 export class CMSBaseGraphQLModule {
-  static forRootAsync(
-    options: CMSGraphqlBaseModuleAsyncOptionsDto,
-  ): DynamicModule {
+  static forRootAsync(options: CMSGraphqlBaseModuleAsyncOptionsDto): DynamicModule {
     return {
       module: CMSBaseGraphQLModule,
-      imports: [
-        ...(options.imports || []),
-        CMSBaseModule.forRootAsync(options),
-      ],
+      imports: [...(options.imports || []), CMSBaseModule.forRootAsync(options)],
       exports: [CMSBaseModule],
       providers: [
         ...this.createAsyncProvider(options),
@@ -70,9 +65,7 @@ export class CMSBaseGraphQLModule {
     };
   }
 
-  private static createAsyncProvider(
-    options: CMSGraphqlBaseModuleAsyncOptionsDto,
-  ): Provider[] {
+  private static createAsyncProvider(options: CMSGraphqlBaseModuleAsyncOptionsDto): Provider[] {
     if (options.useExisting || options.useFactory) {
       return [this.createAsyncOptionsProvider(options)];
     }
@@ -90,9 +83,7 @@ export class CMSBaseGraphQLModule {
     ];
   }
 
-  private static createAsyncOptionsProvider(
-    options: CMSGraphqlBaseModuleAsyncOptionsDto,
-  ): Provider {
+  private static createAsyncOptionsProvider(options: CMSGraphqlBaseModuleAsyncOptionsDto): Provider {
     if (options.useFactory) {
       return {
         provide: CMS_BASE_GRAPHQL_MODULE_OPTIONS,
@@ -103,12 +94,8 @@ export class CMSBaseGraphQLModule {
 
     return {
       provide: CMS_BASE_GRAPHQL_MODULE_OPTIONS,
-      useFactory: async (optionsFactory: CMSGraphqlBaseModuleOptionFactory) =>
-        await optionsFactory.createCMSOptions(),
-      inject: [
-        (options.useExisting ||
-          options.useClass) as Type<CMSGraphqlBaseModuleOptionFactory>,
-      ],
+      useFactory: async (optionsFactory: CMSGraphqlBaseModuleOptionFactory) => await optionsFactory.createCMSOptions(),
+      inject: [(options.useExisting || options.useClass) as Type<CMSGraphqlBaseModuleOptionFactory>],
     };
   }
 }

@@ -7,7 +7,15 @@ import axios from 'axios';
 import { createHash } from 'crypto';
 import http, { createServer } from 'http';
 import { DateTime } from 'luxon';
-import { ECPayCommitMessage, ECPayPayment, ECPayOrder, ECPayCallbackPaymentType, ECPayOrderCreditCardCommitMessage, ECPayOrderVirtualAccountCommitMessage, ECPayOrderCVSCommitMessage } from '../src';
+import {
+  ECPayCommitMessage,
+  ECPayPayment,
+  ECPayOrder,
+  ECPayCallbackPaymentType,
+  ECPayOrderCreditCardCommitMessage,
+  ECPayOrderVirtualAccountCommitMessage,
+  ECPayOrderCVSCommitMessage,
+} from '../src';
 import { getAddMac } from '../__utils__/add-mac';
 
 const addMac = getAddMac();
@@ -15,11 +23,13 @@ const addMac = getAddMac();
 function checkMac(payload: Record<string, string>): boolean {
   const { CheckMacValue: mac, ...res } = payload;
   const { CheckMacValue: computedMac } = addMac(
-    Object.entries(res)
-      .reduce((vars, [key, value]) => ({
+    Object.entries(res).reduce(
+      (vars, [key, value]) => ({
         ...vars,
-        [key]: (value as unknown as (string | number)).toString(),
-      }), {}),
+        [key]: (value as unknown as string | number).toString(),
+      }),
+      {},
+    ),
   );
 
   if (computedMac !== mac) return false;
@@ -31,7 +41,7 @@ describe('ECPayPayment', () => {
   const originCreateServer = createServer;
   const mockedCreateServer = jest.spyOn(http, 'createServer');
 
-  mockedCreateServer.mockImplementation((requestHandler) => {
+  mockedCreateServer.mockImplementation(requestHandler => {
     const mockServer = originCreateServer(requestHandler);
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
@@ -44,7 +54,7 @@ describe('ECPayPayment', () => {
 
     const mockedClose = jest.spyOn(mockServer, 'close');
 
-    mockedClose.mockImplementationOnce((onClosed) => {
+    mockedClose.mockImplementationOnce(onClosed => {
       mockServer.close(onClosed);
 
       return mockServer;
@@ -54,7 +64,7 @@ describe('ECPayPayment', () => {
   });
 
   describe('Waiting withServer mode server listen', () => {
-    it('should reject query on server not ready', (done) => {
+    it('should reject query on server not ready', done => {
       const payment = new ECPayPayment({
         withServer: true,
         onServerListen: () => {
@@ -72,21 +82,23 @@ describe('ECPayPayment', () => {
 
     const payment = new ECPayPayment();
 
-    it('should order query response data', (done) => {
+    it('should order query response data', done => {
       post.mockImplementation(async (url: string, data: unknown) => {
         expect(url).toEqual('https://payment-stage.ecpay.com.tw/Cashier/QueryTradeInfo/V5');
 
-        const params = Array.from(new URLSearchParams(data as string).entries())
-          .reduce((vars, [key, value]) => ({
+        const params = Array.from(new URLSearchParams(data as string).entries()).reduce(
+          (vars, [key, value]) => ({
             ...vars,
             [key]: value,
-          }), {}) as {
-            MerchantID: string;
-            MerchantTradeNo: string;
-            PlatformID: string;
-            TimeStamp: string;
-            CheckMacValue: string;
-          };
+          }),
+          {},
+        ) as {
+          MerchantID: string;
+          MerchantTradeNo: string;
+          PlatformID: string;
+          TimeStamp: string;
+          CheckMacValue: string;
+        };
 
         expect(checkMac(params)).toBeTruthy();
 
@@ -142,37 +154,40 @@ describe('ECPayPayment', () => {
         return { data: payload };
       });
 
-      payment.query('6df4782d4514241fcb6f')
-        .then((order: ECPayOrder<ECPayOrderCreditCardCommitMessage>) => {
-          expect(order.id).toBe('6df4782d4514241fcb6f');
-          expect(order.additionalInfo?.channel).toBe(Channel.CREDIT_CARD);
-          expect(DateTime.fromJSDate(order.additionalInfo!.processDate).toFormat('yyyy/MM/dd HH:mm:ss')).toBe('2022/04/19 17:21:21');
-          expect(order.additionalInfo?.authCode).toBe('777777');
-          expect(order.additionalInfo?.amount).toBe(70);
-          expect(order.additionalInfo?.eci).toBe('0');
-          expect(order.additionalInfo?.card4Number).toBe('2222');
-          expect(order.additionalInfo?.card6Number).toBe('431195');
-          expect(order.additionalInfo?.gwsr).toBe('11944770');
+      payment.query('6df4782d4514241fcb6f').then((order: ECPayOrder<ECPayOrderCreditCardCommitMessage>) => {
+        expect(order.id).toBe('6df4782d4514241fcb6f');
+        expect(order.additionalInfo?.channel).toBe(Channel.CREDIT_CARD);
+        expect(DateTime.fromJSDate(order.additionalInfo!.processDate).toFormat('yyyy/MM/dd HH:mm:ss')).toBe(
+          '2022/04/19 17:21:21',
+        );
+        expect(order.additionalInfo?.authCode).toBe('777777');
+        expect(order.additionalInfo?.amount).toBe(70);
+        expect(order.additionalInfo?.eci).toBe('0');
+        expect(order.additionalInfo?.card4Number).toBe('2222');
+        expect(order.additionalInfo?.card6Number).toBe('431195');
+        expect(order.additionalInfo?.gwsr).toBe('11944770');
 
-          done();
-        });
+        done();
+      });
     });
 
-    it('should order query response data in atm mode', (done) => {
+    it('should order query response data in atm mode', done => {
       post.mockImplementation(async (url: string, data: unknown) => {
         expect(url).toEqual('https://payment-stage.ecpay.com.tw/Cashier/QueryTradeInfo/V5');
 
-        const params = Array.from(new URLSearchParams(data as string).entries())
-          .reduce((vars, [key, value]) => ({
+        const params = Array.from(new URLSearchParams(data as string).entries()).reduce(
+          (vars, [key, value]) => ({
             ...vars,
             [key]: value,
-          }), {}) as {
-            MerchantID: string;
-            MerchantTradeNo: string;
-            PlatformID: string;
-            TimeStamp: string;
-            CheckMacValue: string;
-          };
+          }),
+          {},
+        ) as {
+          MerchantID: string;
+          MerchantTradeNo: string;
+          PlatformID: string;
+          TimeStamp: string;
+          CheckMacValue: string;
+        };
 
         expect(checkMac(params)).toBeTruthy();
 
@@ -228,32 +243,33 @@ describe('ECPayPayment', () => {
         return { data: payload };
       });
 
-      payment.query('6df4782d4514241fcb6f')
-        .then((order: ECPayOrder<ECPayOrderVirtualAccountCommitMessage>) => {
-          expect(order.id).toBe('6df4782d4514241fcb6f');
-          expect(order.additionalInfo?.channel).toBe(Channel.VIRTUAL_ACCOUNT);
-          expect(order.additionalInfo?.buyerBankCode).toBe('412');
-          expect(order.additionalInfo?.buyerAccountNumber).toBe('49318901423');
+      payment.query('6df4782d4514241fcb6f').then((order: ECPayOrder<ECPayOrderVirtualAccountCommitMessage>) => {
+        expect(order.id).toBe('6df4782d4514241fcb6f');
+        expect(order.additionalInfo?.channel).toBe(Channel.VIRTUAL_ACCOUNT);
+        expect(order.additionalInfo?.buyerBankCode).toBe('412');
+        expect(order.additionalInfo?.buyerAccountNumber).toBe('49318901423');
 
-          done();
-        });
+        done();
+      });
     });
 
-    it('should order query response data in cvs mode', (done) => {
+    it('should order query response data in cvs mode', done => {
       post.mockImplementation(async (url: string, data: unknown) => {
         expect(url).toEqual('https://payment-stage.ecpay.com.tw/Cashier/QueryTradeInfo/V5');
 
-        const params = Array.from(new URLSearchParams(data as string).entries())
-          .reduce((vars, [key, value]) => ({
+        const params = Array.from(new URLSearchParams(data as string).entries()).reduce(
+          (vars, [key, value]) => ({
             ...vars,
             [key]: value,
-          }), {}) as {
-            MerchantID: string;
-            MerchantTradeNo: string;
-            PlatformID: string;
-            TimeStamp: string;
-            CheckMacValue: string;
-          };
+          }),
+          {},
+        ) as {
+          MerchantID: string;
+          MerchantTradeNo: string;
+          PlatformID: string;
+          TimeStamp: string;
+          CheckMacValue: string;
+        };
 
         expect(checkMac(params)).toBeTruthy();
 
@@ -309,31 +325,32 @@ describe('ECPayPayment', () => {
         return { data: payload };
       });
 
-      payment.query('6df4782d4514241fcb6f')
-        .then((order: ECPayOrder<ECPayOrderCVSCommitMessage>) => {
-          expect(order.id).toBe('6df4782d4514241fcb6f');
-          expect(order.additionalInfo?.channel).toBe(Channel.CVS_KIOSK);
-          expect(order.additionalInfo?.cvsPayFrom).toBe(CVS.FAMILY_MART);
+      payment.query('6df4782d4514241fcb6f').then((order: ECPayOrder<ECPayOrderCVSCommitMessage>) => {
+        expect(order.id).toBe('6df4782d4514241fcb6f');
+        expect(order.additionalInfo?.channel).toBe(Channel.CVS_KIOSK);
+        expect(order.additionalInfo?.cvsPayFrom).toBe(CVS.FAMILY_MART);
 
-          done();
-        });
+        done();
+      });
     });
 
-    it('should order query response data in barcode mode', (done) => {
+    it('should order query response data in barcode mode', done => {
       post.mockImplementation(async (url: string, data: unknown) => {
         expect(url).toEqual('https://payment-stage.ecpay.com.tw/Cashier/QueryTradeInfo/V5');
 
-        const params = Array.from(new URLSearchParams(data as string).entries())
-          .reduce((vars, [key, value]) => ({
+        const params = Array.from(new URLSearchParams(data as string).entries()).reduce(
+          (vars, [key, value]) => ({
             ...vars,
             [key]: value,
-          }), {}) as {
-            MerchantID: string;
-            MerchantTradeNo: string;
-            PlatformID: string;
-            TimeStamp: string;
-            CheckMacValue: string;
-          };
+          }),
+          {},
+        ) as {
+          MerchantID: string;
+          MerchantTradeNo: string;
+          PlatformID: string;
+          TimeStamp: string;
+          CheckMacValue: string;
+        };
 
         expect(checkMac(params)).toBeTruthy();
 
@@ -389,30 +406,31 @@ describe('ECPayPayment', () => {
         return { data: payload };
       });
 
-      payment.query('6df4782d4514241fcb6f')
-        .then((order: ECPayOrder<ECPayOrderCVSCommitMessage>) => {
-          expect(order.id).toBe('6df4782d4514241fcb6f');
-          expect(order.additionalInfo).toBeUndefined();
+      payment.query('6df4782d4514241fcb6f').then((order: ECPayOrder<ECPayOrderCVSCommitMessage>) => {
+        expect(order.id).toBe('6df4782d4514241fcb6f');
+        expect(order.additionalInfo).toBeUndefined();
 
-          done();
-        });
+        done();
+      });
     });
 
     it('should reject invalid checksum', async () => {
       post.mockImplementation(async (url: string, data: unknown) => {
         expect(url).toEqual('https://payment-stage.ecpay.com.tw/Cashier/QueryTradeInfo/V5');
 
-        const params = Array.from(new URLSearchParams(data as string).entries())
-          .reduce((vars, [key, value]) => ({
+        const params = Array.from(new URLSearchParams(data as string).entries()).reduce(
+          (vars, [key, value]) => ({
             ...vars,
             [key]: value,
-          }), {}) as {
-            MerchantID: string;
-            MerchantTradeNo: string;
-            PlatformID: string;
-            TimeStamp: string;
-            CheckMacValue: string;
-          };
+          }),
+          {},
+        ) as {
+          MerchantID: string;
+          MerchantTradeNo: string;
+          PlatformID: string;
+          TimeStamp: string;
+          CheckMacValue: string;
+        };
 
         expect(checkMac(params)).toBeTruthy();
 
@@ -472,21 +490,23 @@ describe('ECPayPayment', () => {
       await expect(payment.query('6df4782d4514241fcb6f')).rejects.toThrow();
     });
 
-    it('should order commit time nullable', (done) => {
+    it('should order commit time nullable', done => {
       post.mockImplementation(async (url: string, data: unknown) => {
         expect(url).toEqual('https://payment-stage.ecpay.com.tw/Cashier/QueryTradeInfo/V5');
 
-        const params = Array.from(new URLSearchParams(data as string).entries())
-          .reduce((vars, [key, value]) => ({
+        const params = Array.from(new URLSearchParams(data as string).entries()).reduce(
+          (vars, [key, value]) => ({
             ...vars,
             [key]: value,
-          }), {}) as {
-            MerchantID: string;
-            MerchantTradeNo: string;
-            PlatformID: string;
-            TimeStamp: string;
-            CheckMacValue: string;
-          };
+          }),
+          {},
+        ) as {
+          MerchantID: string;
+          MerchantTradeNo: string;
+          PlatformID: string;
+          TimeStamp: string;
+          CheckMacValue: string;
+        };
 
         expect(checkMac(params)).toBeTruthy();
 
@@ -542,30 +562,31 @@ describe('ECPayPayment', () => {
         return { data: payload };
       });
 
-      payment.query('6df4782d4514241fcb6f')
-        .then((order: ECPayOrder<ECPayCommitMessage>) => {
-          expect(order.id).toBe('6df4782d4514241fcb6f');
-          expect(order.committedAt).toBeNull();
+      payment.query('6df4782d4514241fcb6f').then((order: ECPayOrder<ECPayCommitMessage>) => {
+        expect(order.id).toBe('6df4782d4514241fcb6f');
+        expect(order.committedAt).toBeNull();
 
-          done();
-        });
+        done();
+      });
     });
 
-    it('should order query failed record can be found', (done) => {
+    it('should order query failed record can be found', done => {
       post.mockImplementation(async (url: string, data: unknown) => {
         expect(url).toEqual('https://payment-stage.ecpay.com.tw/Cashier/QueryTradeInfo/V5');
 
-        const params = Array.from(new URLSearchParams(data as string).entries())
-          .reduce((vars, [key, value]) => ({
+        const params = Array.from(new URLSearchParams(data as string).entries()).reduce(
+          (vars, [key, value]) => ({
             ...vars,
             [key]: value,
-          }), {}) as {
-            MerchantID: string;
-            MerchantTradeNo: string;
-            PlatformID: string;
-            TimeStamp: string;
-            CheckMacValue: string;
-          };
+          }),
+          {},
+        ) as {
+          MerchantID: string;
+          MerchantTradeNo: string;
+          PlatformID: string;
+          TimeStamp: string;
+          CheckMacValue: string;
+        };
 
         expect(checkMac(params)).toBeTruthy();
 
@@ -621,29 +642,30 @@ describe('ECPayPayment', () => {
         return { data: payload };
       });
 
-      payment.query('6df4782d4514241fcb6f')
-        .then((order: ECPayOrder<ECPayCommitMessage>) => {
-          expect(order.state).toBe(OrderState.FAILED);
+      payment.query('6df4782d4514241fcb6f').then((order: ECPayOrder<ECPayCommitMessage>) => {
+        expect(order.state).toBe(OrderState.FAILED);
 
-          done();
-        });
+        done();
+      });
     });
 
-    it('should order query not finished record can be found', (done) => {
+    it('should order query not finished record can be found', done => {
       post.mockImplementation(async (url: string, data: unknown) => {
         expect(url).toEqual('https://payment-stage.ecpay.com.tw/Cashier/QueryTradeInfo/V5');
 
-        const params = Array.from(new URLSearchParams(data as string).entries())
-          .reduce((vars, [key, value]) => ({
+        const params = Array.from(new URLSearchParams(data as string).entries()).reduce(
+          (vars, [key, value]) => ({
             ...vars,
             [key]: value,
-          }), {}) as {
-            MerchantID: string;
-            MerchantTradeNo: string;
-            PlatformID: string;
-            TimeStamp: string;
-            CheckMacValue: string;
-          };
+          }),
+          {},
+        ) as {
+          MerchantID: string;
+          MerchantTradeNo: string;
+          PlatformID: string;
+          TimeStamp: string;
+          CheckMacValue: string;
+        };
 
         expect(checkMac(params)).toBeTruthy();
 
@@ -699,29 +721,30 @@ describe('ECPayPayment', () => {
         return { data: payload };
       });
 
-      payment.query('6df4782d4514241fcb6f')
-        .then((order: ECPayOrder<ECPayCommitMessage>) => {
-          expect(order.state).toBe(OrderState.PRE_COMMIT);
+      payment.query('6df4782d4514241fcb6f').then((order: ECPayOrder<ECPayCommitMessage>) => {
+        expect(order.state).toBe(OrderState.PRE_COMMIT);
 
-          done();
-        });
+        done();
+      });
     });
 
-    it('should order query invalid record can be found', (done) => {
+    it('should order query invalid record can be found', done => {
       post.mockImplementation(async (url: string, data: unknown) => {
         expect(url).toEqual('https://payment-stage.ecpay.com.tw/Cashier/QueryTradeInfo/V5');
 
-        const params = Array.from(new URLSearchParams(data as string).entries())
-          .reduce((vars, [key, value]) => ({
+        const params = Array.from(new URLSearchParams(data as string).entries()).reduce(
+          (vars, [key, value]) => ({
             ...vars,
             [key]: value,
-          }), {}) as {
-            MerchantID: string;
-            MerchantTradeNo: string;
-            PlatformID: string;
-            TimeStamp: string;
-            CheckMacValue: string;
-          };
+          }),
+          {},
+        ) as {
+          MerchantID: string;
+          MerchantTradeNo: string;
+          PlatformID: string;
+          TimeStamp: string;
+          CheckMacValue: string;
+        };
 
         expect(checkMac(params)).toBeTruthy();
 
@@ -777,12 +800,11 @@ describe('ECPayPayment', () => {
         return { data: payload };
       });
 
-      payment.query('6df4782d4514241fcb6f')
-        .then((order: ECPayOrder<ECPayCommitMessage>) => {
-          expect(order.state).toBe(OrderState.INITED);
+      payment.query('6df4782d4514241fcb6f').then((order: ECPayOrder<ECPayCommitMessage>) => {
+        expect(order.state).toBe(OrderState.INITED);
 
-          done();
-        });
+        done();
+      });
     });
   });
 });

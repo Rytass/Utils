@@ -84,12 +84,10 @@ export const TEXT_MAPPINGS = {
     DETECT_DATA_CHANGE: '檢測到資料變更:',
     CHANGED_NODES: '檢測到資料變更:',
     IMMEDIATE_RECORD_DATA_CHANGE: '立即記錄資料變更歷史:',
-    DELAY_RECORD_COLOR_CHANGE:
-      '延遲記錄顏色變更歷史 (800ms 後記錄，避免頻繁切換時產生過多記錄)',
+    DELAY_RECORD_COLOR_CHANGE: '延遲記錄顏色變更歷史 (800ms 後記錄，避免頻繁切換時產生過多記錄)',
 
     // 錯誤處理
-    DELAY_TO_GET_UPDATED_STATE:
-      '使用 setTimeout 確保能獲取到更新後的 nodes 狀態',
+    DELAY_TO_GET_UPDATED_STATE: '使用 setTimeout 確保能獲取到更新後的 nodes 狀態',
     RECORD_TEXT_EDIT_STATE: '保存文字編輯後的狀態:',
     RECORD_PATH_EDIT_STATE: '保存路徑點位編輯後的狀態:',
     UPDATED_POINTS_COUNT: '轉換後節點數:',
@@ -121,8 +119,7 @@ export const TEXT_MAPPINGS = {
     // UI 文字
     WMS_MAP_MODAL_COMPREHENSIVE_TEST: 'WMS Map Modal - 綜合功能測試',
     TEST_DATA_LOADING_DYNAMIC_SWITCH: '測試資料載入與動態切換',
-    LOAD_DIFFERENT_TEST_DATA:
-      '點擊下方按鈕載入不同的測試資料到 WmsMapModal 中，也可以在 Modal 開啟狀態下動態切換：',
+    LOAD_DIFFERENT_TEST_DATA: '點擊下方按鈕載入不同的測試資料到 WmsMapModal 中，也可以在 Modal 開啟狀態下動態切換：',
     SIMPLE_TEST_DATA_BUTTON: '簡單測試資料',
     SIMPLE_TEST_DATA_DESC: '(1個背景 + 2個區域)',
     COMPLEX_WAREHOUSE_BUTTON: '完整倉庫資料',
@@ -147,11 +144,9 @@ export const TEXT_MAPPINGS = {
     DYNAMIC_LOADING: '動態載入:',
     DYNAMIC_LOADING_DESC: 'Modal 開啟狀態下點擊不同按鈕，測試資料動態切換功能',
     HISTORY_RECORD_TEST: '歷史記錄測試:',
-    HISTORY_RECORD_TEST_DESC:
-      '載入資料後進行編輯操作，測試 Undo/Redo 功能是否正常',
+    HISTORY_RECORD_TEST_DESC: '載入資料後進行編輯操作，測試 Undo/Redo 功能是否正常',
     BREADCRUMB_LOADING: 'Breadcrumb 載入:',
-    BREADCRUMB_LOADING_DESC:
-      '點擊 Modal 內的 breadcrumb 路徑可自動載入對應資料：',
+    BREADCRUMB_LOADING_DESC: '點擊 Modal 內的 breadcrumb 路徑可自動載入對應資料：',
     MODE_TEST: '模式測試:',
     MODE_TEST_DESC: '切換檢視模式/編輯模式，測試節點狀態規則',
     LAYER_TEST: '圖層測試:',
@@ -174,14 +169,12 @@ export const TEXT_MAPPINGS = {
 
     // 預期行為
     EXPECTED_BEHAVIOR: '預期行為',
-    NODE_STATE_APPLY_ON_LOAD:
-      '每次載入新資料時，節點狀態會立即套用當前模式的規則',
+    NODE_STATE_APPLY_ON_LOAD: '每次載入新資料時，節點狀態會立即套用當前模式的規則',
     NODE_STATE_RECALC_ON_MODE_CHANGE: '模式切換時，所有節點狀態會重新計算',
     CONSOLE_DETAILED_STATS: 'Console 會顯示詳細的節點狀態統計資訊',
     NO_DATA_MIXING: '動態載入不會出現新舊資料混合或狀態錯誤的情況',
     HISTORY_REINIT_ON_LOAD: '載入新資料後，歷史記錄系統會重新初始化並正常工作',
-    EDIT_OPERATIONS_RECORDED:
-      '編輯操作會被正確記錄，Undo/Redo 按鈕狀態正確更新',
+    EDIT_OPERATIONS_RECORDED: '編輯操作會被正確記錄，Undo/Redo 按鈕狀態正確更新',
 
     // 歷史記錄測試步驟
     HISTORY_TEST_STEPS: '歷史記錄測試步驟',
@@ -207,13 +200,11 @@ export const TEXT_MAPPINGS = {
 
   // Alert 和通知消息
   ALERTS: {
-    LOAD_SUCCESS_WITH_NODES: (typeName: string, nodeCount: number) =>
-      `已載入 ${typeName}！包含 ${nodeCount} 個節點`,
+    LOAD_SUCCESS_WITH_NODES: (typeName: string, nodeCount: number) => `已載入 ${typeName}！包含 ${nodeCount} 個節點`,
     SAVE_SUCCESS_WITH_DATA: (backgroundCount: number, rangeCount: number) =>
       `儲存成功！接收到 ${backgroundCount} 個背景圖片和 ${rangeCount} 個範圍資料`,
     LOAD_FAILED: (error: any) => `載入失敗: ${error}`,
-    INVALID_IMAGE_FORMAT: (fileName: string) =>
-      `檔案 ${fileName} 不是有效的圖片格式，請選擇 PNG 或 JPG 格式`,
+    INVALID_IMAGE_FORMAT: (fileName: string) => `檔案 ${fileName} 不是有效的圖片格式，請選擇 PNG 或 JPG 格式`,
   },
 
   // 時間和計數格式化

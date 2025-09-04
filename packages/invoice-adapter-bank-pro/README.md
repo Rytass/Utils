@@ -27,6 +27,7 @@ yarn add @rytass/invoice-adapter-bank-pro
 ```
 
 **Peer Dependencies:**
+
 ```bash
 npm install @rytass/invoice
 ```
@@ -44,7 +45,7 @@ const developmentGateway = new BankProInvoiceGateway({
   password: 'YOUR_DEVELOPMENT_PASSWORD',
   systemOID: 12345, // Your development system OID
   sellerBAN: '12345678', // Your company VAT number
-  baseUrl: BankProBaseUrls.DEVELOPMENT // http://webtest.bpscm.com.tw/webapi/api/B2B2CWebApi
+  baseUrl: BankProBaseUrls.DEVELOPMENT, // http://webtest.bpscm.com.tw/webapi/api/B2B2CWebApi
 });
 
 // Production environment
@@ -53,7 +54,7 @@ const productionGateway = new BankProInvoiceGateway({
   password: 'YOUR_PRODUCTION_PASSWORD',
   systemOID: 54321, // Your production system OID
   sellerBAN: '12345678', // Your company VAT number
-  baseUrl: BankProBaseUrls.PRODUCTION // http://www.bpscm.com.tw/webapi/api/B2B2CWebApi
+  baseUrl: BankProBaseUrls.PRODUCTION, // http://www.bpscm.com.tw/webapi/api/B2B2CWebApi
 });
 ```
 
@@ -61,10 +62,10 @@ const productionGateway = new BankProInvoiceGateway({
 
 ```typescript
 interface BankProInvoiceGatewayOptions {
-  user: string;          // Bank Pro API user ID
-  password: string;      // Bank Pro API password
-  systemOID: number;     // Bank Pro system identifier
-  sellerBAN: string;     // Seller's VAT number (統編)
+  user: string; // Bank Pro API user ID
+  password: string; // Bank Pro API password
+  systemOID: number; // Bank Pro system identifier
+  sellerBAN: string; // Seller's VAT number (統編)
   baseUrl?: BankProBaseUrls; // API base URL (development/production)
 }
 ```
@@ -81,7 +82,7 @@ const gateway = new BankProInvoiceGateway({
   password: process.env.BANKPRO_PASSWORD!,
   systemOID: parseInt(process.env.BANKPRO_SYSTEM_OID!),
   sellerBAN: process.env.SELLER_VAT_NUMBER!,
-  baseUrl: BankProBaseUrls.PRODUCTION
+  baseUrl: BankProBaseUrls.PRODUCTION,
 });
 
 // Issue B2C invoice
@@ -103,7 +104,7 @@ const invoice = await gateway.issue({
       id: 'PROD-001',
       barcode: '1234567890123',
       spec: '高級款',
-      remark: '限量商品'
+      remark: '限量商品',
     },
     {
       name: 'Standard Service',
@@ -111,9 +112,9 @@ const invoice = await gateway.issue({
       quantity: 2,
       unit: '次',
       taxType: TaxType.TAXED,
-      id: 'SRV-001'
-    }
-  ]
+      id: 'SRV-001',
+    },
+  ],
 });
 
 console.log('Invoice Number:', invoice.number);
@@ -145,7 +146,7 @@ const b2bInvoice = await gateway.issue({
       taxType: TaxType.TAXED,
       id: 'ENT-PLAN-001',
       spec: '專業版',
-      remark: '包含技術支援'
+      remark: '包含技術支援',
     },
     {
       name: '客製化開發',
@@ -153,9 +154,9 @@ const b2bInvoice = await gateway.issue({
       quantity: 1,
       unit: '式',
       taxType: TaxType.TAXED,
-      id: 'CUSTOM-DEV-001'
-    }
-  ]
+      id: 'CUSTOM-DEV-001',
+    },
+  ],
 });
 ```
 
@@ -174,9 +175,9 @@ const mobileInvoice = await gateway.issue({
       unitPrice: 1200,
       quantity: 1,
       unit: '個',
-      taxType: TaxType.TAXED
-    }
-  ]
+      taxType: TaxType.TAXED,
+    },
+  ],
 });
 ```
 
@@ -195,9 +196,9 @@ const donationInvoice = await gateway.issue({
       unitPrice: 1000,
       quantity: 3,
       unit: '份',
-      taxType: TaxType.TAXED
-    }
-  ]
+      taxType: TaxType.TAXED,
+    },
+  ],
 });
 ```
 
@@ -219,23 +220,23 @@ const mixedTaxInvoice = await gateway.issue({
       unitPrice: 1000,
       quantity: 2,
       taxType: TaxType.TAXED, // 5% tax
-      unit: '個'
+      unit: '個',
     },
     {
       name: 'Tax-Free Product',
       unitPrice: 2000,
       quantity: 1,
       taxType: TaxType.TAX_FREE, // No tax
-      unit: '件'
+      unit: '件',
     },
     {
       name: 'Export Product',
       unitPrice: 3000,
       quantity: 1,
       taxType: TaxType.ZERO_TAX, // Export (0% tax)
-      unit: '組'
-    }
-  ]
+      unit: '組',
+    },
+  ],
 });
 ```
 
@@ -257,7 +258,7 @@ const detailedInvoice = await gateway.issue({
       id: 'PHONE-001',
       barcode: '4710543211234',
       spec: '128GB 藍色',
-      remark: '保固一年'
+      remark: '保固一年',
     },
     {
       name: 'Phone Case',
@@ -268,9 +269,9 @@ const detailedInvoice = await gateway.issue({
       id: 'CASE-001',
       barcode: '4710543211241',
       spec: '透明矽膠',
-      remark: '防摔保護'
-    }
-  ]
+      remark: '防摔保護',
+    },
+  ],
 });
 ```
 
@@ -281,7 +282,7 @@ const detailedInvoice = await gateway.issue({
 ```typescript
 // Query invoice using order ID
 const queriedByOrder = await gateway.query({
-  orderId: 'ORD-2024-001'
+  orderId: 'ORD-2024-001',
 });
 
 console.log('Invoice Number:', queriedByOrder.number);
@@ -295,7 +296,7 @@ console.log('Tax Amount:', queriedByOrder.taxAmount);
 ```typescript
 // Query invoice using invoice number
 const queriedByNumber = await gateway.query({
-  invoiceNumber: 'AA12345678'
+  invoiceNumber: 'AA12345678',
 });
 
 console.log('Order ID:', queriedByNumber.orderId);
@@ -311,11 +312,11 @@ console.log('Void Status:', queriedByNumber.state);
 ```typescript
 // Query and void an invoice
 const invoiceToVoid = await gateway.query({
-  orderId: 'ORD-2024-001'
+  orderId: 'ORD-2024-001',
 });
 
 const voidedInvoice = await gateway.void(invoiceToVoid, {
-  reason: 'Customer requested cancellation due to shipping delay'
+  reason: 'Customer requested cancellation due to shipping delay',
 });
 
 console.log('Void Status:', voidedInvoice.state); // InvoiceState.VOID
@@ -327,22 +328,19 @@ console.log('Voided On:', voidedInvoice.voidOn);
 ```typescript
 // Create allowance for partial refund
 const originalInvoice = await gateway.query({
-  orderId: 'ORD-2024-001'
+  orderId: 'ORD-2024-001',
 });
 
-const allowanceInvoice = await gateway.allowance(
-  originalInvoice,
-  [
-    {
-      name: 'Returned Product',
-      unitPrice: 2000,
-      quantity: 1, // Return 1 item
-      unit: '個',
-      taxType: TaxType.TAXED,
-      id: 'RETURN-001'
-    }
-  ]
-);
+const allowanceInvoice = await gateway.allowance(originalInvoice, [
+  {
+    name: 'Returned Product',
+    unitPrice: 2000,
+    quantity: 1, // Return 1 item
+    unit: '個',
+    taxType: TaxType.TAXED,
+    id: 'RETURN-001',
+  },
+]);
 
 console.log('Allowance Number:', allowanceInvoice.allowances[0].number);
 console.log('Allowance Amount:', allowanceInvoice.allowances[0].amount);
@@ -369,7 +367,9 @@ try {
     orderId: 'ERROR-TEST',
     buyerEmail: 'test@example.com',
     carrier: InvoiceCarriers.PRINT,
-    items: [/* invalid items */]
+    items: [
+      /* invalid items */
+    ],
   });
 } catch (error) {
   if (error.message.includes('authentication failed')) {
@@ -389,10 +389,7 @@ try {
 ### Network and System Errors
 
 ```typescript
-async function safeInvoiceOperation<T>(
-  operation: () => Promise<T>,
-  retries: number = 3
-): Promise<T> {
+async function safeInvoiceOperation<T>(operation: () => Promise<T>, retries: number = 3): Promise<T> {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       return await operation();
@@ -400,7 +397,7 @@ async function safeInvoiceOperation<T>(
       if (attempt === retries) {
         throw error;
       }
-      
+
       if (error.code === 'ECONNRESET' || error.code === 'ENOTFOUND') {
         console.warn(`Network error on attempt ${attempt}, retrying...`);
         await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
@@ -409,7 +406,7 @@ async function safeInvoiceOperation<T>(
       }
     }
   }
-  
+
   throw new Error('All retry attempts failed');
 }
 
@@ -419,8 +416,10 @@ const invoice = await safeInvoiceOperation(() =>
     orderId: 'RETRY-001',
     buyerEmail: 'customer@example.com',
     carrier: InvoiceCarriers.PRINT,
-    items: [/* items */]
-  })
+    items: [
+      /* items */
+    ],
+  }),
 );
 ```
 
@@ -438,9 +437,7 @@ const gateway = new BankProInvoiceGateway({
   password: process.env.BANKPRO_PASSWORD!,
   systemOID: parseInt(process.env.BANKPRO_SYSTEM_OID!),
   sellerBAN: process.env.SELLER_VAT_NUMBER!,
-  baseUrl: process.env.NODE_ENV === 'production' 
-    ? BankProBaseUrls.PRODUCTION 
-    : BankProBaseUrls.DEVELOPMENT
+  baseUrl: process.env.NODE_ENV === 'production' ? BankProBaseUrls.PRODUCTION : BankProBaseUrls.DEVELOPMENT,
 });
 
 // Issue invoice endpoint
@@ -455,9 +452,7 @@ app.post('/api/invoices', async (req, res) => {
       buyerAddress: customer.address,
       buyerZipCode: customer.zipCode,
       buyerMobile: customer.mobile,
-      carrier: customer.mobileBarcode 
-        ? InvoiceCarriers.MOBILE(customer.mobileBarcode)
-        : InvoiceCarriers.PRINT,
+      carrier: customer.mobileBarcode ? InvoiceCarriers.MOBILE(customer.mobileBarcode) : InvoiceCarriers.PRINT,
       items: items.map(item => ({
         name: item.name,
         unitPrice: item.price,
@@ -467,15 +462,15 @@ app.post('/api/invoices', async (req, res) => {
         id: item.productId,
         barcode: item.barcode,
         spec: item.specification,
-        remark: item.notes
-      }))
+        remark: item.notes,
+      })),
     };
 
     // Add B2B specific fields
     if (isB2B && customer.vatNumber) {
       Object.assign(invoiceData, {
         vatNumber: customer.vatNumber,
-        companyName: customer.companyName
+        companyName: customer.companyName,
       });
     }
 
@@ -488,13 +483,13 @@ app.post('/api/invoices', async (req, res) => {
         randomCode: invoice.randomCode,
         amount: invoice.amount,
         taxAmount: invoice.taxAmount,
-        issuedOn: invoice.issuedOn
-      }
+        issuedOn: invoice.issuedOn,
+      },
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -503,9 +498,9 @@ app.post('/api/invoices', async (req, res) => {
 app.get('/api/invoices/order/:orderId', async (req, res) => {
   try {
     const { orderId } = req.params;
-    
+
     const invoice = await gateway.query({ orderId });
-    
+
     res.json({
       success: true,
       invoice: {
@@ -513,13 +508,13 @@ app.get('/api/invoices/order/:orderId', async (req, res) => {
         orderId: invoice.orderId,
         state: invoice.state,
         amount: invoice.amount,
-        issuedOn: invoice.issuedOn
-      }
+        issuedOn: invoice.issuedOn,
+      },
     });
   } catch (error) {
     res.status(404).json({
       success: false,
-      error: 'Invoice not found'
+      error: 'Invoice not found',
     });
   }
 });
@@ -529,22 +524,22 @@ app.post('/api/invoices/:orderId/void', async (req, res) => {
   try {
     const { orderId } = req.params;
     const { reason } = req.body;
-    
+
     const invoice = await gateway.query({ orderId });
     const voidedInvoice = await gateway.void(invoice, { reason });
-    
+
     res.json({
       success: true,
       invoice: {
         number: voidedInvoice.number,
         state: voidedInvoice.state,
-        voidedOn: voidedInvoice.voidOn
-      }
+        voidedOn: voidedInvoice.voidOn,
+      },
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -566,9 +561,7 @@ export class BankProInvoiceService {
       password: process.env.BANKPRO_PASSWORD!,
       systemOID: parseInt(process.env.BANKPRO_SYSTEM_OID!),
       sellerBAN: process.env.SELLER_VAT_NUMBER!,
-      baseUrl: process.env.NODE_ENV === 'production' 
-        ? BankProBaseUrls.PRODUCTION 
-        : BankProBaseUrls.DEVELOPMENT
+      baseUrl: process.env.NODE_ENV === 'production' ? BankProBaseUrls.PRODUCTION : BankProBaseUrls.DEVELOPMENT,
     });
   }
 
@@ -598,7 +591,7 @@ export class BankProInvoiceService {
   }) {
     // Determine invoice type
     const isB2B = !!order.customer.vatNumber;
-    
+
     // Determine carrier
     let carrier = InvoiceCarriers.PRINT;
     if (!isB2B && order.customer.mobileBarcode) {
@@ -628,15 +621,15 @@ export class BankProInvoiceService {
         id: item.productId,
         barcode: item.barcode,
         spec: item.specification,
-        remark: item.notes
-      }))
+        remark: item.notes,
+      })),
     };
 
     // Add B2B specific fields
     if (isB2B) {
       Object.assign(invoiceData, {
         vatNumber: order.customer.vatNumber,
-        companyName: order.customer.companyName
+        companyName: order.customer.companyName,
       });
     }
 
@@ -647,7 +640,7 @@ export class BankProInvoiceService {
       randomCode: invoice.randomCode,
       amount: invoice.amount,
       taxAmount: invoice.taxAmount,
-      issuedOn: invoice.issuedOn
+      issuedOn: invoice.issuedOn,
     };
   }
 
@@ -662,7 +655,7 @@ export class BankProInvoiceService {
         amount: invoice.amount,
         taxAmount: invoice.taxAmount,
         issuedOn: invoice.issuedOn,
-        voidOn: invoice.voidOn
+        voidOn: invoice.voidOn,
       };
     } catch (error) {
       throw new NotFoundException('Invoice not found');
@@ -671,32 +664,32 @@ export class BankProInvoiceService {
 
   async voidInvoice(orderId: string, reason: string) {
     const invoice = await this.gateway.query({ orderId });
-    
+
     if (invoice.state === InvoiceState.VOID) {
       throw new BadRequestException('Invoice is already voided');
     }
 
     const voidedInvoice = await this.gateway.void(invoice, { reason });
-    
+
     return {
       invoiceNumber: voidedInvoice.number,
       state: voidedInvoice.state,
-      voidedOn: voidedInvoice.voidOn
+      voidedOn: voidedInvoice.voidOn,
     };
   }
 
   async createAllowance(
-    orderId: string, 
+    orderId: string,
     allowanceItems: Array<{
       name: string;
       price: number;
       quantity: number;
       unit?: string;
       productId?: string;
-    }>
+    }>,
   ) {
     const originalInvoice = await this.gateway.query({ orderId });
-    
+
     const allowanceInvoice = await this.gateway.allowance(
       originalInvoice,
       allowanceItems.map(item => ({
@@ -705,15 +698,15 @@ export class BankProInvoiceService {
         quantity: item.quantity,
         unit: item.unit || '個',
         taxType: TaxType.TAXED,
-        id: item.productId
-      }))
+        id: item.productId,
+      })),
     );
 
     return {
       allowanceNumber: allowanceInvoice.allowances[0].number,
       allowanceAmount: allowanceInvoice.allowances[0].amount,
       remainingAmount: allowanceInvoice.allowances[0].remainingAmount,
-      allowancedOn: allowanceInvoice.allowances[0].issuedOn
+      allowancedOn: allowanceInvoice.allowances[0].issuedOn,
     };
   }
 }
@@ -765,15 +758,13 @@ class EcommerceBankProInvoiceProcessor {
   }) {
     // Determine carrier based on customer preferences
     let carrier = InvoiceCarriers.PRINT;
-    
+
     if (order.type === 'b2c') {
       switch (order.customer.preferences.carrier) {
         case 'mobile':
           if (order.customer.preferences.carrierCode) {
             // Validate mobile barcode if needed
-            const isValidBarcode = await this.gateway.isMobileBarcodeValid(
-              order.customer.preferences.carrierCode
-            );
+            const isValidBarcode = await this.gateway.isMobileBarcodeValid(order.customer.preferences.carrierCode);
             if (isValidBarcode) {
               carrier = InvoiceCarriers.MOBILE(order.customer.preferences.carrierCode);
             }
@@ -781,9 +772,7 @@ class EcommerceBankProInvoiceProcessor {
           break;
         case 'love_code':
           if (order.customer.preferences.carrierCode) {
-            const isValidLoveCode = await this.gateway.isLoveCodeValid(
-              order.customer.preferences.carrierCode
-            );
+            const isValidLoveCode = await this.gateway.isLoveCodeValid(order.customer.preferences.carrierCode);
             if (isValidLoveCode) {
               carrier = InvoiceCarriers.LOVE_CODE(order.customer.preferences.carrierCode);
             }
@@ -802,7 +791,7 @@ class EcommerceBankProInvoiceProcessor {
       id: item.productId,
       barcode: item.barcode,
       spec: item.specification,
-      remark: item.notes
+      remark: item.notes,
     }));
 
     // Prepare invoice options
@@ -817,14 +806,14 @@ class EcommerceBankProInvoiceProcessor {
       sellerCode: order.seller?.code,
       remark: order.shipping.notes,
       items: invoiceItems,
-      customsMark: order.shipping.isExport ? CustomsMark.YES : CustomsMark.NO
+      customsMark: order.shipping.isExport ? CustomsMark.YES : CustomsMark.NO,
     };
 
     // Add B2B specific fields
     if (order.type === 'b2b') {
       Object.assign(invoiceOptions, {
         vatNumber: order.customer.vatNumber,
-        companyName: order.customer.companyName
+        companyName: order.customer.companyName,
       });
     }
 
@@ -838,23 +827,23 @@ class EcommerceBankProInvoiceProcessor {
       randomCode: invoice.randomCode,
       amount: invoice.amount,
       taxAmount: invoice.taxAmount,
-      issuedOn: invoice.issuedOn
+      issuedOn: invoice.issuedOn,
     };
   }
 
   async processOrderRefund(
-    orderId: string, 
+    orderId: string,
     refundItems: Array<{
       productId: string;
       name: string;
       price: number;
       quantity: number;
       unit?: string;
-    }>
+    }>,
   ) {
     // Query original invoice
     const originalInvoice = await this.gateway.query({ orderId });
-    
+
     // Create allowance for refunded items
     const allowanceInvoice = await this.gateway.allowance(
       originalInvoice,
@@ -864,14 +853,14 @@ class EcommerceBankProInvoiceProcessor {
         quantity: item.quantity,
         unit: item.unit || '個',
         taxType: TaxType.TAXED,
-        id: item.productId
-      }))
+        id: item.productId,
+      })),
     );
 
     return {
       allowanceNumber: allowanceInvoice.allowances[0].number,
       allowanceAmount: allowanceInvoice.allowances[0].amount,
-      remainingAmount: allowanceInvoice.allowances[0].remainingAmount
+      remainingAmount: allowanceInvoice.allowances[0].remainingAmount,
     };
   }
 
@@ -884,30 +873,35 @@ class EcommerceBankProInvoiceProcessor {
 ## Best Practices
 
 ### Configuration Management
+
 - Store sensitive credentials in environment variables
 - Use different configurations for development and production environments
 - Regularly rotate API credentials and passwords
 - Implement proper error handling for authentication failures
 
 ### Invoice Processing
+
 - Always validate carrier information before invoice issuance
 - Implement proper retry logic for network failures
 - Store order IDs and invoice mappings for future reference
 - Handle duplicate order IDs appropriately
 
 ### Tax Compliance
+
 - Use correct tax types for different product categories
 - Handle export/import scenarios with appropriate customs marks
 - Validate VAT numbers for B2B transactions
 - Maintain detailed product information for audit purposes
 
 ### Performance Optimization
+
 - Implement connection pooling for high-volume processing
 - Use appropriate timeout settings for API calls
 - Cache frequently accessed invoice data
 - Monitor API response times and implement alerting
 
 ### Security
+
 - Validate all input parameters before processing
 - Sanitize customer data and product information
 - Log all invoice operations for audit trails
@@ -927,7 +921,7 @@ describe('Bank Pro Invoice Integration', () => {
       password: 'test_password',
       systemOID: 12345,
       sellerBAN: '12345678',
-      baseUrl: BankProBaseUrls.DEVELOPMENT
+      baseUrl: BankProBaseUrls.DEVELOPMENT,
     });
   });
 
@@ -943,9 +937,9 @@ describe('Bank Pro Invoice Integration', () => {
           unitPrice: 1000,
           quantity: 1,
           unit: '個',
-          taxType: TaxType.TAXED
-        }
-      ]
+          taxType: TaxType.TAXED,
+        },
+      ],
     });
 
     expect(invoice.number).toBeDefined();
@@ -955,7 +949,7 @@ describe('Bank Pro Invoice Integration', () => {
 
   it('should query invoice by order ID', async () => {
     const queriedInvoice = await gateway.query({
-      orderId: 'TEST-001'
+      orderId: 'TEST-001',
     });
 
     expect(queriedInvoice.orderId).toBe('TEST-001');
@@ -964,21 +958,18 @@ describe('Bank Pro Invoice Integration', () => {
 
   it('should create allowance successfully', async () => {
     const originalInvoice = await gateway.query({
-      orderId: 'TEST-001'
+      orderId: 'TEST-001',
     });
 
-    const allowanceInvoice = await gateway.allowance(
-      originalInvoice,
-      [
-        {
-          name: 'Returned Product',
-          unitPrice: 1000,
-          quantity: 1,
-          unit: '個',
-          taxType: TaxType.TAXED
-        }
-      ]
-    );
+    const allowanceInvoice = await gateway.allowance(originalInvoice, [
+      {
+        name: 'Returned Product',
+        unitPrice: 1000,
+        quantity: 1,
+        unit: '個',
+        taxType: TaxType.TAXED,
+      },
+    ]);
 
     expect(allowanceInvoice.allowances).toHaveLength(1);
     expect(allowanceInvoice.allowances[0].amount).toBe(1050);

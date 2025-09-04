@@ -1,11 +1,5 @@
 import React, { FC, useState, useEffect } from 'react';
-import {
-  Modal,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-} from '@mezzanine-ui/react';
+import { Modal, ModalHeader, ModalBody, ModalFooter, Button } from '@mezzanine-ui/react';
 import styles from './breadcrumb-edit-modal.module.scss';
 import { useForm } from 'react-hook-form';
 
@@ -16,12 +10,7 @@ interface BreadcrumbEditModalProps {
   onConfirm: (newName: string) => void;
 }
 
-const BreadcrumbEditModal: FC<BreadcrumbEditModalProps> = ({
-  open,
-  warehouseId,
-  onClose,
-  onConfirm,
-}) => {
+const BreadcrumbEditModal: FC<BreadcrumbEditModalProps> = ({ open, warehouseId, onClose, onConfirm }) => {
   const [editingValue, setEditingValue] = useState(warehouseId);
 
   const methods = useForm({
@@ -76,12 +65,7 @@ const BreadcrumbEditModal: FC<BreadcrumbEditModalProps> = ({
         <Button size="large" variant="outlined" onClick={handleCancel}>
           取消
         </Button>
-        <Button
-          size="large"
-          variant="contained"
-          color="primary"
-          onClick={handleConfirm}
-        >
+        <Button size="large" variant="contained" color="primary" onClick={handleConfirm}>
           確認
         </Button>
       </ModalFooter>

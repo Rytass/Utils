@@ -29,6 +29,7 @@ yarn add @rytass/payments-adapter-happy-card
 ```
 
 **Peer Dependencies:**
+
 ```bash
 npm install @rytass/payments
 ```
@@ -42,17 +43,17 @@ import { HappyCardPayment, HappyCardBaseUrls } from '@rytass/payments-adapter-ha
 
 // Production environment
 const productionGateway = new HappyCardPayment({
-  cSource: 'YOUR_C_SOURCE',           // Happy Card provided source identifier
-  key: 'YOUR_SECRET_KEY',             // Happy Card provided secret key
-  posId: '01',                        // POS terminal ID (optional, defaults to '01')
-  baseUrl: HappyCardBaseUrls.PRODUCTION // Production API endpoint
+  cSource: 'YOUR_C_SOURCE', // Happy Card provided source identifier
+  key: 'YOUR_SECRET_KEY', // Happy Card provided secret key
+  posId: '01', // POS terminal ID (optional, defaults to '01')
+  baseUrl: HappyCardBaseUrls.PRODUCTION, // Production API endpoint
 });
 
 // Development environment
 const developmentGateway = new HappyCardPayment({
   cSource: 'TEST_C_SOURCE',
   key: 'TEST_SECRET_KEY',
-  baseUrl: HappyCardBaseUrls.DEVELOPMENT // UAT/Testing API endpoint
+  baseUrl: HappyCardBaseUrls.DEVELOPMENT, // UAT/Testing API endpoint
 });
 ```
 
@@ -64,9 +65,7 @@ const paymentGateway = new HappyCardPayment({
   cSource: process.env.HAPPY_CARD_C_SOURCE!,
   key: process.env.HAPPY_CARD_SECRET_KEY!,
   posId: process.env.HAPPY_CARD_POS_ID || '01',
-  baseUrl: process.env.NODE_ENV === 'production' 
-    ? HappyCardBaseUrls.PRODUCTION 
-    : HappyCardBaseUrls.DEVELOPMENT
+  baseUrl: process.env.NODE_ENV === 'production' ? HappyCardBaseUrls.PRODUCTION : HappyCardBaseUrls.DEVELOPMENT,
 });
 ```
 
@@ -75,21 +74,17 @@ const paymentGateway = new HappyCardPayment({
 ### Simple Gift Card Payment
 
 ```typescript
-import { 
-  HappyCardPayment, 
-  HappyCardRecordType, 
-  HappyCardOrderItem 
-} from '@rytass/payments-adapter-happy-card';
+import { HappyCardPayment, HappyCardRecordType, HappyCardOrderItem } from '@rytass/payments-adapter-happy-card';
 import { PaymentEvents } from '@rytass/payments';
 
 const paymentGateway = new HappyCardPayment({
   cSource: process.env.HAPPY_CARD_C_SOURCE!,
   key: process.env.HAPPY_CARD_SECRET_KEY!,
-  baseUrl: HappyCardBaseUrls.PRODUCTION
+  baseUrl: HappyCardBaseUrls.PRODUCTION,
 });
 
 // Setup payment event listeners
-paymentGateway.emitter.on(PaymentEvents.ORDER_COMMITTED, (message) => {
+paymentGateway.emitter.on(PaymentEvents.ORDER_COMMITTED, message => {
   console.log('Happy Card payment successful:', message.id);
   console.log('Total amount charged:', message.totalPrice);
 });
@@ -97,27 +92,27 @@ paymentGateway.emitter.on(PaymentEvents.ORDER_COMMITTED, (message) => {
 // Create order with Happy Card payment
 const order = await paymentGateway.prepare({
   id: 'ORDER-2024-001',
-  cardSerial: 'HC1234567890123456',    // 16-digit Happy Card number
-  type: HappyCardRecordType.BONUS,     // Pay with bonus points
+  cardSerial: 'HC1234567890123456', // 16-digit Happy Card number
+  type: HappyCardRecordType.BONUS, // Pay with bonus points
   items: [
     {
       name: 'Coffee',
       unitPrice: 150,
-      quantity: 2
+      quantity: 2,
     },
     {
       name: 'Pastry',
       unitPrice: 80,
-      quantity: 1
-    }
+      quantity: 1,
+    },
   ],
   useRecords: [
     {
-      id: 12345,                       // Record ID from card inquiry
+      id: 12345, // Record ID from card inquiry
       type: HappyCardRecordType.BONUS, // Using bonus points
-      amount: 380                      // Amount to deduct
-    }
-  ]
+      amount: 380, // Amount to deduct
+    },
+  ],
 });
 
 console.log('Order ID:', order.id);
@@ -133,12 +128,12 @@ const cardInfo = await paymentGateway.searchCard('HC1234567890123456');
 
 if (cardInfo.resultCode === '1') {
   const cardData = cardInfo.data.card_list[0];
-  
+
   console.log('Card Serial:', cardData.card_sn);
   console.log('Available Amount:', cardData.amt);
   console.log('Available Bonus Points:', cardData.bonus);
   console.log('Product Type:', cardData.productTypeName);
-  
+
   // Available records for usage
   cardData.record_list.forEach(record => {
     console.log(`Record ID: ${record.record_id}`);
@@ -162,26 +157,26 @@ const mixedPaymentOrder = await paymentGateway.prepare({
     {
       name: 'Premium Coffee',
       unitPrice: 200,
-      quantity: 1
+      quantity: 1,
     },
     {
       name: 'Special Cake',
       unitPrice: 180,
-      quantity: 1
-    }
+      quantity: 1,
+    },
   ],
   useRecords: [
     {
-      id: 11111,                        // Amount record
+      id: 11111, // Amount record
       type: HappyCardRecordType.AMOUNT,
-      amount: 200                       // Pay NT$200 with stored value
+      amount: 200, // Pay NT$200 with stored value
     },
     {
-      id: 22222,                        // Bonus record
+      id: 22222, // Bonus record
       type: HappyCardRecordType.BONUS,
-      amount: 180                       // Pay NT$180 with bonus points
-    }
-  ]
+      amount: 180, // Pay NT$180 with bonus points
+    },
+  ],
 });
 ```
 
@@ -194,21 +189,21 @@ const mixedPaymentOrder = await paymentGateway.prepare({
 const memberOrder = await paymentGateway.prepare({
   id: 'MEMBER-ORDER-001',
   cardSerial: 'HC1234567890123456',
-  uniMemberGID: 'UNI_MEMBER_123456',    // Uni Member ID
+  uniMemberGID: 'UNI_MEMBER_123456', // Uni Member ID
   items: [
     {
       name: 'Member Special Drink',
       unitPrice: 120,
-      quantity: 1
-    }
+      quantity: 1,
+    },
   ],
   useRecords: [
     {
       id: 33333,
       type: HappyCardRecordType.BONUS,
-      amount: 120
-    }
-  ]
+      amount: 120,
+    },
+  ],
 });
 ```
 
@@ -222,19 +217,19 @@ const ecoOrder = await paymentGateway.prepare({
   items: [
     {
       name: 'Environmentally Friendly Coffee',
-      unitPrice: 100,     // Original price
+      unitPrice: 100, // Original price
       quantity: 1,
-      isOwnCup: true,     // Customer brings own cup
-      cupDiscount: 5      // NT$5 discount for own cup
-    }
+      isOwnCup: true, // Customer brings own cup
+      cupDiscount: 5, // NT$5 discount for own cup
+    },
   ],
   useRecords: [
     {
       id: 44444,
       type: HappyCardRecordType.AMOUNT,
-      amount: 95          // Pay discounted amount
-    }
-  ]
+      amount: 95, // Pay discounted amount
+    },
+  ],
 });
 ```
 
@@ -245,21 +240,21 @@ const ecoOrder = await paymentGateway.prepare({
 const islandOrder = await paymentGateway.prepare({
   id: 'ISLAND-ORDER-001',
   cardSerial: 'HC1234567890123456',
-  isIsland: true,               // Enable island region handling
+  isIsland: true, // Enable island region handling
   items: [
     {
       name: 'Island Special Product',
       unitPrice: 250,
-      quantity: 1
-    }
+      quantity: 1,
+    },
   ],
   useRecords: [
     {
       id: 55555,
       type: HappyCardRecordType.AMOUNT,
-      amount: 250
-    }
-  ]
+      amount: 250,
+    },
+  ],
 });
 ```
 
@@ -269,22 +264,22 @@ const islandOrder = await paymentGateway.prepare({
 // Integration with POS system
 const posOrder = await paymentGateway.prepare({
   id: 'POS-ORDER-001',
-  posTradeNo: 'POS-TXN-20240101-001',  // POS system transaction number
+  posTradeNo: 'POS-TXN-20240101-001', // POS system transaction number
   cardSerial: 'HC1234567890123456',
   items: [
     {
       name: 'POS Item 1',
       unitPrice: 150,
-      quantity: 2
-    }
+      quantity: 2,
+    },
   ],
   useRecords: [
     {
       id: 66666,
       type: HappyCardRecordType.BONUS,
-      amount: 300
-    }
-  ]
+      amount: 300,
+    },
+  ],
 });
 ```
 
@@ -293,10 +288,10 @@ const posOrder = await paymentGateway.prepare({
 ```typescript
 // Refund a Happy Card transaction
 const refundResult = await paymentGateway.refund({
-  id: 'ORDER-2024-001',              // Original order ID
-  cardSerial: 'HC1234567890123456',  // Card serial number
-  posTradeNo: 'POS-TXN-001',         // Optional: POS transaction number
-  isIsland: false                    // Island region flag
+  id: 'ORDER-2024-001', // Original order ID
+  cardSerial: 'HC1234567890123456', // Card serial number
+  posTradeNo: 'POS-TXN-001', // Optional: POS transaction number
+  isIsland: false, // Island region flag
 });
 
 if (refundResult.resultCode === '1') {
@@ -304,7 +299,7 @@ if (refundResult.resultCode === '1') {
   refundResult.data.card_list.forEach(card => {
     console.log('Refunded card:', card.card_sn);
     console.log('Payment number:', card.paymentNo);
-    
+
     card.record_list.forEach(record => {
       console.log(`Refunded record ${record.record_id}: ${record.amt}`);
     });
@@ -324,14 +319,14 @@ import { HappyCardProductType } from '@rytass/payments-adapter-happy-card';
 // Available product types
 const productTypes = {
   // Gift cards with invoice first
-  INVOICE_FIRST_HAPPY_CARD: HappyCardProductType.INVOICE_FIRST_HAPPY_CARD_GF,         // '1'
-  INVOICE_FIRST_DIGITAL_GIFT: HappyCardProductType.INVOICE_FIRST_DIGITAL_GIFT_GF,     // '3'
-  INVOICE_FIRST_PHYSICAL_GIFT: HappyCardProductType.INVOICE_FIRST_PHYSICAL_GIFT_GF,   // '5'
-  
+  INVOICE_FIRST_HAPPY_CARD: HappyCardProductType.INVOICE_FIRST_HAPPY_CARD_GF, // '1'
+  INVOICE_FIRST_DIGITAL_GIFT: HappyCardProductType.INVOICE_FIRST_DIGITAL_GIFT_GF, // '3'
+  INVOICE_FIRST_PHYSICAL_GIFT: HappyCardProductType.INVOICE_FIRST_PHYSICAL_GIFT_GF, // '5'
+
   // Gift cards with invoice later
-  INVOICE_LATER_HAPPY_CARD: HappyCardProductType.INVOICE_LATER_HAPPY_CARD_GS,         // '2'
-  INVOICE_LATER_DIGITAL_GIFT: HappyCardProductType.INVOICE_LATER_DIGITAL_GIFT_GS,     // '4'
-  INVOICE_LATER_PHYSICAL_GIFT: HappyCardProductType.INVOICE_LATER_PHYSICAL_GIFT_GS    // '6'
+  INVOICE_LATER_HAPPY_CARD: HappyCardProductType.INVOICE_LATER_HAPPY_CARD_GS, // '2'
+  INVOICE_LATER_DIGITAL_GIFT: HappyCardProductType.INVOICE_LATER_DIGITAL_GIFT_GS, // '4'
+  INVOICE_LATER_PHYSICAL_GIFT: HappyCardProductType.INVOICE_LATER_PHYSICAL_GIFT_GS, // '6'
 };
 
 // Check supported product types
@@ -356,13 +351,11 @@ app.use(express.json());
 const paymentGateway = new HappyCardPayment({
   cSource: process.env.HAPPY_CARD_C_SOURCE!,
   key: process.env.HAPPY_CARD_SECRET_KEY!,
-  baseUrl: process.env.NODE_ENV === 'production' 
-    ? HappyCardBaseUrls.PRODUCTION 
-    : HappyCardBaseUrls.DEVELOPMENT
+  baseUrl: process.env.NODE_ENV === 'production' ? HappyCardBaseUrls.PRODUCTION : HappyCardBaseUrls.DEVELOPMENT,
 });
 
 // Handle payment success
-paymentGateway.emitter.on(PaymentEvents.ORDER_COMMITTED, async (message) => {
+paymentGateway.emitter.on(PaymentEvents.ORDER_COMMITTED, async message => {
   // Update database
   await updateOrderStatus(message.id, 'paid');
   console.log(`Happy Card payment committed: ${message.id}`);
@@ -372,12 +365,12 @@ paymentGateway.emitter.on(PaymentEvents.ORDER_COMMITTED, async (message) => {
 app.get('/api/happy-card/:cardSerial/balance', async (req, res) => {
   try {
     const { cardSerial } = req.params;
-    
+
     const cardInfo = await paymentGateway.searchCard(cardSerial);
-    
+
     if (cardInfo.resultCode === '1' && cardInfo.data.card_list.length > 0) {
       const card = cardInfo.data.card_list[0];
-      
+
       res.json({
         success: true,
         cardInfo: {
@@ -392,20 +385,20 @@ app.get('/api/happy-card/:cardSerial/balance', async (req, res) => {
             recordId: record.record_id,
             type: record.type,
             amount: record.amt,
-            expiresAt: record.use_limit_date
-          }))
-        }
+            expiresAt: record.use_limit_date,
+          })),
+        },
       });
     } else {
       res.status(404).json({
         success: false,
-        error: cardInfo.resultMsg || 'Card not found'
+        error: cardInfo.resultMsg || 'Card not found',
       });
     }
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -414,7 +407,7 @@ app.get('/api/happy-card/:cardSerial/balance', async (req, res) => {
 app.post('/api/payments/happy-card', async (req, res) => {
   try {
     const { orderId, cardSerial, items, useRecords, memberGid, isIsland } = req.body;
-    
+
     const order = await paymentGateway.prepare({
       id: orderId,
       cardSerial,
@@ -423,18 +416,18 @@ app.post('/api/payments/happy-card', async (req, res) => {
       items: items.map(item => ({
         name: item.name,
         unitPrice: item.price,
-        quantity: item.quantity
+        quantity: item.quantity,
       })),
       useRecords: useRecords.map(record => ({
         id: record.recordId,
         type: record.type,
-        amount: record.amount
-      }))
+        amount: record.amount,
+      })),
     });
-    
+
     // Commit the order immediately for Happy Card
     const commitResult = await order.commit();
-    
+
     res.json({
       success: true,
       order: {
@@ -442,14 +435,14 @@ app.post('/api/payments/happy-card', async (req, res) => {
         totalPrice: order.totalPrice,
         cardSerial: order.cardSerial,
         state: order.state,
-        committedAt: order.committedAt
+        committedAt: order.committedAt,
       },
-      paymentResult: commitResult
+      paymentResult: commitResult,
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -459,31 +452,31 @@ app.post('/api/payments/happy-card/:orderId/refund', async (req, res) => {
   try {
     const { orderId } = req.params;
     const { cardSerial, posTradeNo } = req.body;
-    
+
     const refundResult = await paymentGateway.refund({
       id: orderId,
       cardSerial,
-      posTradeNo
+      posTradeNo,
     });
-    
+
     if (refundResult.resultCode === '1') {
       res.json({
         success: true,
         refund: {
           orderId,
-          cardList: refundResult.data.card_list
-        }
+          cardList: refundResult.data.card_list,
+        },
       });
     } else {
       res.status(400).json({
         success: false,
-        error: refundResult.resultMsg
+        error: refundResult.resultMsg,
       });
     }
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -497,48 +490,42 @@ app.listen(3000, () => {
 
 ```typescript
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
-import { 
-  HappyCardPayment, 
-  HappyCardRecordType, 
-  HappyCardBaseUrls 
-} from '@rytass/payments-adapter-happy-card';
+import { HappyCardPayment, HappyCardRecordType, HappyCardBaseUrls } from '@rytass/payments-adapter-happy-card';
 import { PaymentEvents, OrderState } from '@rytass/payments';
 
 @Injectable()
 export class HappyCardService {
   private readonly paymentGateway: HappyCardPayment;
-  
+
   constructor() {
     this.paymentGateway = new HappyCardPayment({
       cSource: process.env.HAPPY_CARD_C_SOURCE!,
       key: process.env.HAPPY_CARD_SECRET_KEY!,
-      baseUrl: process.env.NODE_ENV === 'production' 
-        ? HappyCardBaseUrls.PRODUCTION 
-        : HappyCardBaseUrls.DEVELOPMENT
+      baseUrl: process.env.NODE_ENV === 'production' ? HappyCardBaseUrls.PRODUCTION : HappyCardBaseUrls.DEVELOPMENT,
     });
-    
+
     this.setupEventHandlers();
   }
-  
+
   private setupEventHandlers() {
-    this.paymentGateway.emitter.on(PaymentEvents.ORDER_COMMITTED, (message) => {
+    this.paymentGateway.emitter.on(PaymentEvents.ORDER_COMMITTED, message => {
       this.handlePaymentSuccess(message);
     });
-    
-    this.paymentGateway.emitter.on(PaymentEvents.ORDER_FAILED, (failure) => {
+
+    this.paymentGateway.emitter.on(PaymentEvents.ORDER_FAILED, failure => {
       this.handlePaymentFailure(failure);
     });
   }
-  
+
   async getCardBalance(cardSerial: string) {
     const cardInfo = await this.paymentGateway.searchCard(cardSerial);
-    
+
     if (cardInfo.resultCode !== '1' || cardInfo.data.card_list.length === 0) {
       throw new NotFoundException('Happy Card not found or invalid');
     }
-    
+
     const card = cardInfo.data.card_list[0];
-    
+
     return {
       cardSerial: card.card_sn,
       memberGid: card.memberGid,
@@ -555,11 +542,11 @@ export class HappyCardService {
         originalAmount: record.original_amt,
         availableAmount: record.amt,
         expiresAt: record.use_limit_date,
-        obtainedAt: record.get_date
-      }))
+        obtainedAt: record.get_date,
+      })),
     };
   }
-  
+
   async createPayment(paymentData: {
     orderId?: string;
     cardSerial: string;
@@ -578,15 +565,15 @@ export class HappyCardService {
   }) {
     // Validate card first
     const cardInfo = await this.getCardBalance(paymentData.cardSerial);
-    
+
     // Calculate total required amount
     const totalAmount = paymentData.useRecords.reduce((sum, record) => sum + record.amount, 0);
-    const itemsTotal = paymentData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    
+    const itemsTotal = paymentData.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
     if (totalAmount !== itemsTotal) {
       throw new BadRequestException('Use records total does not match items total');
     }
-    
+
     // Create order
     const order = await this.paymentGateway.prepare({
       id: paymentData.orderId,
@@ -596,39 +583,39 @@ export class HappyCardService {
       items: paymentData.items.map(item => ({
         name: item.name,
         unitPrice: item.price,
-        quantity: item.quantity
+        quantity: item.quantity,
       })),
       useRecords: paymentData.useRecords.map(record => ({
         id: record.recordId,
         type: record.type === 'amount' ? HappyCardRecordType.AMOUNT : HappyCardRecordType.BONUS,
-        amount: record.amount
-      }))
+        amount: record.amount,
+      })),
     });
-    
+
     // Commit payment
     const result = await order.commit();
-    
+
     return {
       orderId: order.id,
       totalAmount: order.totalPrice,
       cardSerial: order.cardSerial,
       state: order.state,
       committedAt: order.committedAt,
-      paymentResult: result
+      paymentResult: result,
     };
   }
-  
+
   async refundPayment(orderId: string, cardSerial: string, posTradeNo?: string) {
     const refundResult = await this.paymentGateway.refund({
       id: orderId,
       cardSerial,
-      posTradeNo
+      posTradeNo,
     });
-    
+
     if (refundResult.resultCode !== '1') {
       throw new BadRequestException(`Refund failed: ${refundResult.resultMsg}`);
     }
-    
+
     return {
       orderId,
       refundedCards: refundResult.data.card_list.map(card => ({
@@ -638,17 +625,17 @@ export class HappyCardService {
           recordId: record.record_id,
           type: record.type === 1 ? 'amount' : 'bonus',
           refundedAmount: record.amt,
-          originalAmount: record.original_amt
-        }))
-      }))
+          originalAmount: record.original_amt,
+        })),
+      })),
     };
   }
-  
+
   private async handlePaymentSuccess(message: any) {
     // Handle successful payment - update database, send notifications, etc.
     console.log(`Happy Card payment successful: ${message.id}`);
   }
-  
+
   private async handlePaymentFailure(failure: any) {
     // Handle payment failure - log, notify customer, etc.
     console.error(`Happy Card payment failed: ${failure.code} - ${failure.message}`);
@@ -680,19 +667,19 @@ const HappyCardPayment: React.FC<HappyCardPaymentProps> = ({
   const [cardInfo, setCardInfo] = useState<any>(null);
   const [selectedRecords, setSelectedRecords] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const checkCardBalance = async () => {
     if (!cardSerial || cardSerial.length !== 16) {
       onError('Please enter a valid 16-digit Happy Card number');
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
       const response = await fetch(`/api/happy-card/${cardSerial}/balance`);
       const data = await response.json();
-      
+
       if (data.success) {
         setCardInfo(data.cardInfo);
       } else {
@@ -704,23 +691,23 @@ const HappyCardPayment: React.FC<HappyCardPaymentProps> = ({
       setIsLoading(false);
     }
   };
-  
+
   const processPayment = async () => {
     if (selectedRecords.length === 0) {
       onError('Please select payment records');
       return;
     }
-    
+
     const totalSelected = selectedRecords.reduce((sum, record) => sum + record.amount, 0);
     const totalRequired = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    
+
     if (totalSelected < totalRequired) {
       onError(`Insufficient balance. Required: ${totalRequired}, Selected: ${totalSelected}`);
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
       const response = await fetch('/api/payments/happy-card', {
         method: 'POST',
@@ -735,9 +722,9 @@ const HappyCardPayment: React.FC<HappyCardPaymentProps> = ({
           }))
         })
       });
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         onSuccess(data.order);
       } else {
@@ -749,14 +736,14 @@ const HappyCardPayment: React.FC<HappyCardPaymentProps> = ({
       setIsLoading(false);
     }
   };
-  
+
   const totalRequired = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const totalSelected = selectedRecords.reduce((sum, record) => sum + record.amount, 0);
-  
+
   return (
     <div className="happy-card-payment">
       <h3>Happy Card Payment</h3>
-      
+
       <div className="order-summary">
         <h4>Order Items</h4>
         {items.map((item, index) => (
@@ -769,7 +756,7 @@ const HappyCardPayment: React.FC<HappyCardPaymentProps> = ({
           <strong>Total: NT${totalRequired}</strong>
         </div>
       </div>
-      
+
       <div className="card-input">
         <label>Happy Card Number:</label>
         <input
@@ -783,14 +770,14 @@ const HappyCardPayment: React.FC<HappyCardPaymentProps> = ({
           Check Balance
         </button>
       </div>
-      
+
       {cardInfo && (
         <div className="card-info">
           <h4>Card Information</h4>
           <p>Product: {cardInfo.productTypeName}</p>
           <p>Available Amount: NT${cardInfo.availableAmount}</p>
           <p>Available Bonus: NT${cardInfo.availableBonus}</p>
-          
+
           <h5>Available Records:</h5>
           <div className="records">
             {cardInfo.records.map((record: any) => (
@@ -820,13 +807,13 @@ const HappyCardPayment: React.FC<HappyCardPaymentProps> = ({
           </div>
         </div>
       )}
-      
+
       {cardInfo && selectedRecords.length > 0 && (
         <div className="payment-summary">
           <p>Selected Amount: NT${totalSelected}</p>
           <p>Required Amount: NT${totalRequired}</p>
-          <button 
-            onClick={processPayment} 
+          <button
+            onClick={processPayment}
             disabled={isLoading || totalSelected < totalRequired}
             className="pay-button"
           >
@@ -848,7 +835,7 @@ export default HappyCardPayment;
 ```typescript
 try {
   const cardInfo = await paymentGateway.searchCard('HC1234567890123456');
-  
+
   if (cardInfo.resultCode === '0') {
     switch (cardInfo.resultMsg) {
       case 'Card not found':
@@ -878,8 +865,12 @@ try {
 try {
   const order = await paymentGateway.prepare({
     cardSerial: 'HC1234567890123456',
-    items: [/* items */],
-    useRecords: [/* records */]
+    items: [
+      /* items */
+    ],
+    useRecords: [
+      /* records */
+    ],
   });
 } catch (error) {
   if (error.message.includes('Unsupported product type')) {
@@ -905,21 +896,21 @@ const isValidCardSerial = (cardSerial: string): boolean => {
 // Record validation
 const validateUseRecords = (records: any[], totalAmount: number) => {
   const recordsTotal = records.reduce((sum, record) => sum + record.amount, 0);
-  
+
   if (recordsTotal !== totalAmount) {
     throw new Error('Use records total must match order total');
   }
-  
+
   for (const record of records) {
     if (!record.id || record.amount <= 0) {
       throw new Error('Invalid record data');
     }
-    
+
     if (![1, 2].includes(record.type)) {
       throw new Error('Invalid record type');
     }
   }
-  
+
   return true;
 };
 
@@ -930,19 +921,19 @@ const processPaymentSafely = async (paymentData: any) => {
     if (!isValidCardSerial(paymentData.cardSerial)) {
       throw new Error('Invalid Happy Card format');
     }
-    
+
     validateUseRecords(paymentData.useRecords, paymentData.totalAmount);
-    
+
     // Check card balance
     const cardInfo = await paymentGateway.searchCard(paymentData.cardSerial);
     if (cardInfo.resultCode !== '1') {
       throw new Error(`Card error: ${cardInfo.resultMsg}`);
     }
-    
+
     // Process payment
     const order = await paymentGateway.prepare(paymentData);
     const result = await order.commit();
-    
+
     return { success: true, order, result };
   } catch (error) {
     console.error('Payment processing error:', error);
@@ -954,30 +945,35 @@ const processPaymentSafely = async (paymentData: any) => {
 ## Best Practices
 
 ### Configuration Management
+
 - Store sensitive credentials (cSource, key) in environment variables
 - Use different configurations for development and production environments
 - Implement proper error handling for authentication failures
 - Regularly validate API endpoints and credentials
 
 ### Transaction Processing
+
 - Always validate Happy Card serial numbers before processing
 - Check card balance and record availability before creating orders
 - Implement proper error handling for all API calls
 - Use appropriate timeouts for network operations
 
 ### Security
+
 - Validate all input parameters before processing
 - Implement proper logging for audit trails
 - Use HTTPS for all API communications
 - Never log sensitive card information
 
 ### Performance
+
 - Implement caching for card balance inquiries when appropriate
 - Use connection pooling for high-volume scenarios
 - Monitor API response times and implement alerting
 - Handle rate limiting gracefully
 
 ### User Experience
+
 - Provide clear error messages for card-related issues
 - Show available balance and records before payment
 - Support both amount and bonus point payments
@@ -991,15 +987,15 @@ import { OrderState } from '@rytass/payments';
 
 describe('Happy Card Payment Integration', () => {
   let paymentGateway: HappyCardPayment;
-  
+
   beforeEach(() => {
     paymentGateway = new HappyCardPayment({
       cSource: 'TEST_C_SOURCE',
       key: 'TEST_SECRET_KEY',
-      baseUrl: HappyCardBaseUrls.DEVELOPMENT
+      baseUrl: HappyCardBaseUrls.DEVELOPMENT,
     });
   });
-  
+
   it('should create order successfully', async () => {
     const order = await paymentGateway.prepare({
       cardSerial: 'HC1234567890123456',
@@ -1007,32 +1003,32 @@ describe('Happy Card Payment Integration', () => {
         {
           name: 'Test Product',
           unitPrice: 100,
-          quantity: 1
-        }
+          quantity: 1,
+        },
       ],
       useRecords: [
         {
           id: 12345,
           type: HappyCardRecordType.BONUS,
-          amount: 100
-        }
-      ]
+          amount: 100,
+        },
+      ],
     });
-    
+
     expect(order.id).toBeDefined();
     expect(order.totalPrice).toBe(100);
     expect(order.cardSerial).toBe('HC1234567890123456');
     expect(order.state).toBe(OrderState.PRE_COMMIT);
   });
-  
+
   it('should search card successfully', async () => {
     const cardInfo = await paymentGateway.searchCard('HC1234567890123456');
-    
+
     expect(cardInfo.resultCode).toBe('1');
     expect(cardInfo.data.card_list).toHaveLength(1);
     expect(cardInfo.data.card_list[0].card_sn).toBe('HC1234567890123456');
   });
-  
+
   it('should handle payment commitment', async () => {
     const order = await paymentGateway.prepare({
       cardSerial: 'HC1234567890123456',
@@ -1040,31 +1036,31 @@ describe('Happy Card Payment Integration', () => {
         {
           name: 'Test Product',
           unitPrice: 200,
-          quantity: 1
-        }
+          quantity: 1,
+        },
       ],
       useRecords: [
         {
           id: 67890,
           type: HappyCardRecordType.AMOUNT,
-          amount: 200
-        }
-      ]
+          amount: 200,
+        },
+      ],
     });
-    
+
     const result = await order.commit();
-    
+
     expect(result.resultCode).toBe('1');
     expect(order.state).toBe(OrderState.COMMITTED);
     expect(order.committedAt).toBeDefined();
   });
-  
+
   it('should handle refunds', async () => {
     const refundResult = await paymentGateway.refund({
       id: 'TEST-ORDER-001',
-      cardSerial: 'HC1234567890123456'
+      cardSerial: 'HC1234567890123456',
     });
-    
+
     expect(refundResult.resultCode).toBe('1');
     expect(refundResult.data.card_list).toBeDefined();
   });
@@ -1077,10 +1073,10 @@ describe('Happy Card Payment Integration', () => {
 
 ```typescript
 interface HappyCardPaymentInitOptions {
-  cSource: string;                      // Required: Happy Card source identifier
-  key: string;                          // Required: Happy Card secret key
-  posId?: string;                       // Optional: POS terminal ID (default: '01')
-  baseUrl?: HappyCardBaseUrls;         // Optional: API endpoint URL
+  cSource: string; // Required: Happy Card source identifier
+  key: string; // Required: Happy Card secret key
+  posId?: string; // Optional: POS terminal ID (default: '01')
+  baseUrl?: HappyCardBaseUrls; // Optional: API endpoint URL
 }
 ```
 
@@ -1091,6 +1087,7 @@ interface HappyCardPaymentInitOptions {
 Creates a new Happy Card payment order.
 
 **Parameters:**
+
 - `cardSerial: string` - 16-digit Happy Card number
 - `items: HappyCardOrderItem[]` - Order line items
 - `useRecords: HappyCardUseRecord[]` - Payment records to use
@@ -1105,6 +1102,7 @@ Creates a new Happy Card payment order.
 Inquires Happy Card balance and available records.
 
 **Parameters:**
+
 - `cardSerial: string` - 16-digit Happy Card number
 
 #### `refund(options: HappyCardRefundOptions): Promise<HappyCardRefundResponse>`
@@ -1112,6 +1110,7 @@ Inquires Happy Card balance and available records.
 Refunds a Happy Card transaction.
 
 **Parameters:**
+
 - `id: string` - Original order ID
 - `cardSerial: string` - Happy Card number
 - `posTradeNo?: string` - POS transaction number
@@ -1122,6 +1121,7 @@ Refunds a Happy Card transaction.
 Retrieves an existing order by ID.
 
 **Parameters:**
+
 - `orderId: string` - Order identifier
 
 ### Constants and Enums
@@ -1129,30 +1129,30 @@ Retrieves an existing order by ID.
 ```typescript
 // Record types
 enum HappyCardRecordType {
-  AMOUNT = 1,  // Stored value payment
-  BONUS = 2    // Bonus points payment
+  AMOUNT = 1, // Stored value payment
+  BONUS = 2, // Bonus points payment
 }
 
 // API endpoints
 enum HappyCardBaseUrls {
   PRODUCTION = 'https://prd-jp-posapi.azurewebsites.net/api/Pos',
-  DEVELOPMENT = 'https://uat-pos-api.azurewebsites.net/api/Pos'
+  DEVELOPMENT = 'https://uat-pos-api.azurewebsites.net/api/Pos',
 }
 
 // Result codes
 enum HappyCardResultCode {
   FAILED = '0',
-  SUCCESS = '1'
+  SUCCESS = '1',
 }
 
 // Product types
 enum HappyCardProductType {
-  INVOICE_FIRST_HAPPY_CARD_GF = '1',     // Happy Card with invoice first
-  INVOICE_LATER_HAPPY_CARD_GS = '2',     // Happy Card with invoice later
-  INVOICE_FIRST_DIGITAL_GIFT_GF = '3',   // Digital gift card with invoice first
-  INVOICE_LATER_DIGITAL_GIFT_GS = '4',   // Digital gift card with invoice later
-  INVOICE_FIRST_PHYSICAL_GIFT_GF = '5',  // Physical gift card with invoice first
-  INVOICE_LATER_PHYSICAL_GIFT_GS = '6'   // Physical gift card with invoice later
+  INVOICE_FIRST_HAPPY_CARD_GF = '1', // Happy Card with invoice first
+  INVOICE_LATER_HAPPY_CARD_GS = '2', // Happy Card with invoice later
+  INVOICE_FIRST_DIGITAL_GIFT_GF = '3', // Digital gift card with invoice first
+  INVOICE_LATER_DIGITAL_GIFT_GS = '4', // Digital gift card with invoice later
+  INVOICE_FIRST_PHYSICAL_GIFT_GF = '5', // Physical gift card with invoice first
+  INVOICE_LATER_PHYSICAL_GIFT_GS = '6', // Physical gift card with invoice later
 }
 ```
 

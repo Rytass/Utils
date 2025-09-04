@@ -3,15 +3,7 @@ import { Button } from '@mezzanine-ui/react';
 import { DrawingMode, EditMode } from '../../typings';
 import { DEFAULT_BACKGROUND_TOOL_COLOR } from '../../constants';
 import styles from './toolbar.module.scss';
-import {
-  PenToolIcon,
-  DeleteIcon,
-  ImageIcon,
-  SquareIcon,
-  PointerIcon,
-  RedoIcon,
-  UndoIcon,
-} from '../../icons';
+import { PenToolIcon, DeleteIcon, ImageIcon, SquareIcon, PointerIcon, RedoIcon, UndoIcon } from '../../icons';
 
 // LoadingIcon 組件
 const LoadingIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -62,13 +54,11 @@ const Toolbar: FC<ToolbarProps> = ({
   const selectedColor = parentSelectedColor || DEFAULT_BACKGROUND_TOOL_COLOR;
 
   // 檔案選擇處理
-  const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
 
     // 檔案類型驗證
-    const validFiles = files.filter((file) => {
+    const validFiles = files.filter(file => {
       if (!file.type.match(/^image\//i)) {
         return false;
       }
@@ -77,9 +67,7 @@ const Toolbar: FC<ToolbarProps> = ({
       const fileSizeKB = file.size / 1024;
 
       if (fileSizeKB > maxFileSizeKB) {
-        console.warn(
-          `檔案 ${file.name} 大小 ${Math.round(fileSizeKB)}KB 超過限制 ${maxFileSizeKB}KB`,
-        );
+        console.warn(`檔案 ${file.name} 大小 ${Math.round(fileSizeKB)}KB 超過限制 ${maxFileSizeKB}KB`);
 
         return false;
       }
@@ -197,7 +185,7 @@ const Toolbar: FC<ToolbarProps> = ({
             variant="outlined"
             size="small"
             className={`${styles.toolbarButton} ${styles.buttonWithIcon}`}
-            onClick={(e) => {
+            onClick={e => {
               onDeleteAll();
               // 強制重置按鈕狀態
               const btn = e.target as HTMLButtonElement;
@@ -216,7 +204,7 @@ const Toolbar: FC<ToolbarProps> = ({
           variant="contained"
           size="small"
           className={styles.saveButton}
-          onClick={(e) => {
+          onClick={e => {
             onSave();
             // 強制重置按鈕狀態
             const btn = e.target as HTMLButtonElement;
@@ -262,9 +250,7 @@ const Toolbar: FC<ToolbarProps> = ({
 
             {/* Drawing tools */}
             <Button
-              variant={
-                drawingMode === DrawingMode.NONE ? 'contained' : 'outlined'
-              }
+              variant={drawingMode === DrawingMode.NONE ? 'contained' : 'outlined'}
               size="small"
               className={`${styles.toolButton} ${drawingMode === DrawingMode.NONE ? styles.toolButtonActive : ''}`}
               onClick={() => {
@@ -280,9 +266,7 @@ const Toolbar: FC<ToolbarProps> = ({
               <PointerIcon className={styles.toolIcon} />
             </Button>
             <Button
-              variant={
-                drawingMode === DrawingMode.RECTANGLE ? 'contained' : 'outlined'
-              }
+              variant={drawingMode === DrawingMode.RECTANGLE ? 'contained' : 'outlined'}
               size="small"
               className={`${styles.toolButton} ${drawingMode === DrawingMode.RECTANGLE ? styles.toolButtonActive : ''}`}
               onClick={onToggleRectangleTool}
@@ -291,9 +275,7 @@ const Toolbar: FC<ToolbarProps> = ({
               <SquareIcon className={styles.toolIcon} />
             </Button>
             <Button
-              variant={
-                drawingMode === DrawingMode.PEN ? 'contained' : 'outlined'
-              }
+              variant={drawingMode === DrawingMode.PEN ? 'contained' : 'outlined'}
               size="small"
               className={`${styles.toolButton} ${drawingMode === DrawingMode.PEN ? styles.toolButtonActive : ''}`}
               onClick={onTogglePenTool}

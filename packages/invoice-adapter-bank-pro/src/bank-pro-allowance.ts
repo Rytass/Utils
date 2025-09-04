@@ -12,9 +12,7 @@ export class BankProAllowance implements InvoiceAllowance<BankProPaymentItem> {
   readonly _remainingAmount: number;
 
   get remainingAmount(): number {
-    console.warn(
-      'BankPro not support remainingAmount query, this value is cached when allowance is created.',
-    );
+    console.warn('BankPro not support remainingAmount query, this value is cached when allowance is created.');
 
     return this._remainingAmount;
   }
@@ -22,9 +20,7 @@ export class BankProAllowance implements InvoiceAllowance<BankProPaymentItem> {
   readonly _items: BankProPaymentItem[];
 
   get items(): BankProPaymentItem[] {
-    console.warn(
-      'BankPro not support items query, this value is cached when allowance is created.',
-    );
+    console.warn('BankPro not support items query, this value is cached when allowance is created.');
 
     return this._items;
   }
@@ -40,8 +36,7 @@ export class BankProAllowance implements InvoiceAllowance<BankProPaymentItem> {
     this.allowancePrice = options.allowancePrice;
     this.allowancedOn = options.allowancedOn;
     this._items = options.items;
-    this._remainingAmount =
-      options.parentInvoice.issuedAmount - this.allowancePrice;
+    this._remainingAmount = options.parentInvoice.issuedAmount - this.allowancePrice;
 
     this.parentInvoice = options.parentInvoice;
     this.status = options.status;

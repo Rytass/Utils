@@ -23,9 +23,7 @@ describe('Storage', () => {
     });
 
     it('should get stream filename', async () => {
-      const [resolvedFilename] = await storage.getStreamFilename(
-        createReadStream(sampleFilePath)
-      );
+      const [resolvedFilename] = await storage.getStreamFilename(createReadStream(sampleFilePath));
 
       expect(resolvedFilename).toBe(filename);
     });
@@ -33,13 +31,21 @@ describe('Storage', () => {
     it('should no extensions when file type detection failed (Stream)', async () => {
       const [filename] = await storage.getStreamFilename(Readable.from(Buffer.from([0xb5, 0xa1])));
 
-      expect(filename).toBe(createHash('sha256').update(Buffer.from([0xb5, 0xa1])).digest('hex'));
+      expect(filename).toBe(
+        createHash('sha256')
+          .update(Buffer.from([0xb5, 0xa1]))
+          .digest('hex'),
+      );
     });
 
     it('should no extensions when file type detection failed (Buffer)', async () => {
       const [filename] = await storage.getBufferFilename(Buffer.from([0xb5, 0xa1]));
 
-      expect(filename).toBe(createHash('sha256').update(Buffer.from([0xb5, 0xa1])).digest('hex'));
+      expect(filename).toBe(
+        createHash('sha256')
+          .update(Buffer.from([0xb5, 0xa1]))
+          .digest('hex'),
+      );
     });
 
     it('should get extension from buffer', async () => {
@@ -56,7 +62,7 @@ describe('Storage', () => {
       expect(extension?.mime).toBe('image/png');
     });
 
-    it('should get filename stream can handle multiple chunk stream, unknown file type', (done) => {
+    it('should get filename stream can handle multiple chunk stream, unknown file type', done => {
       const stream = new Readable({
         read() {},
       });
@@ -67,15 +73,19 @@ describe('Storage', () => {
         done();
       });
 
-      stream.push(Buffer.from([0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]));
+      stream.push(
+        Buffer.from([0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
+      );
 
       setImmediate(() => {
-        stream.push(Buffer.from([0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]));
+        stream.push(
+          Buffer.from([0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
+        );
         stream.push(null);
       });
     });
 
-    it('should get filename stream can handle multiple chunk stream', (done) => {
+    it('should get filename stream can handle multiple chunk stream', done => {
       const stream = new Readable({
         read() {},
       });
@@ -95,7 +105,7 @@ describe('Storage', () => {
       });
     });
 
-    it('should get filename stream can handle multiple chunk stream, first chunk result', (done) => {
+    it('should get filename stream can handle multiple chunk stream, first chunk result', done => {
       const stream = new Readable({
         read() {},
       });
@@ -114,7 +124,7 @@ describe('Storage', () => {
       });
     });
 
-    it('should get filename stream can handle multiple chunk stream, first chunk result with delay', (done) => {
+    it('should get filename stream can handle multiple chunk stream, first chunk result with delay', done => {
       const stream = new Readable({
         read() {},
       });

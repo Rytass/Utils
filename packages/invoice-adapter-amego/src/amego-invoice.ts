@@ -1,9 +1,16 @@
-import { Invoice, InvoiceAllowance, InvoiceAllowanceState, InvoiceAwardType, InvoiceState, PaymentItem, TaxType } from '@rytass/invoice';
+import {
+  Invoice,
+  InvoiceAllowance,
+  InvoiceAllowanceState,
+  InvoiceAwardType,
+  InvoiceState,
+  PaymentItem,
+  TaxType,
+} from '@rytass/invoice';
 import { AmegoInvoiceOptions, AmegoPaymentItem, AMEGO_CONSTANTS } from './typings';
 import { AmegoAllowance } from './amego-allowance';
 
 export class AmegoInvoice implements Invoice<AmegoPaymentItem> {
-
   invoiceNumber: string;
 
   readonly issuedOn: Date;
@@ -43,13 +50,12 @@ export class AmegoInvoice implements Invoice<AmegoPaymentItem> {
     this.issuedOn = options.issuedOn ?? new Date();
     this.items = options.items ?? [];
 
-    const issuedAmount = options.items.reduce(
-      (sum, item) => { return sum + item.quantity * item.unitPrice; },
-      0,
-    );
+    const issuedAmount = options.items.reduce((sum, item) => {
+      return sum + item.quantity * item.unitPrice;
+    }, 0);
 
-    const totalAllowanceAmount = options.allowances?.reduce(
-      (sum, allowance) => {
+    const totalAllowanceAmount =
+      options.allowances?.reduce((sum, allowance) => {
         if (allowance.status !== InvoiceAllowanceState.ISSUED) {
           return sum; // 忽略無效的折讓
         }
@@ -59,9 +65,7 @@ export class AmegoInvoice implements Invoice<AmegoPaymentItem> {
         }
 
         return sum - allowance.allowancePrice;
-      },
-      0,
-    ) ?? 0;
+      }, 0) ?? 0;
 
     this.nowAmount = issuedAmount - totalAllowanceAmount;
     this.allowances = options.allowances ?? [];

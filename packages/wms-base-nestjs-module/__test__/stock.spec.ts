@@ -2,14 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { locationMock } from '../__mocks__/location.mock';
 import { materialMock } from '../__mocks__/material.mock';
-import {
-  LocationEntity,
-  LocationService,
-  MaterialService,
-  OrderEntity,
-  OrderService,
-  WMSBaseModule,
-} from '../src';
+import { LocationEntity, LocationService, MaterialService, OrderEntity, OrderService, WMSBaseModule } from '../src';
 import { StockEntity } from '../src/models/stock.entity';
 import { StockService } from '../src/services/stock.service';
 
@@ -40,8 +33,7 @@ describe('stock', () => {
     }).compile();
 
     stockService = module.get<StockService>(StockService);
-    const locationService =
-      module.get<LocationService<LocationEntity>>(LocationService);
+    const locationService = module.get<LocationService<LocationEntity>>(LocationService);
 
     const orderService = module.get<OrderService>(OrderService);
     const materialService = module.get<MaterialService>(MaterialService);
@@ -129,13 +121,9 @@ describe('stock', () => {
       });
 
       expect(transactions.transactionLogs).toHaveLength(2);
-      expect(transactions.transactionLogs[0].materialId).toBe(
-        materialMock.m1.id,
-      );
+      expect(transactions.transactionLogs[0].materialId).toBe(materialMock.m1.id);
 
-      expect(transactions.transactionLogs[1].materialId).toBe(
-        materialMock.m1.id,
-      );
+      expect(transactions.transactionLogs[1].materialId).toBe(materialMock.m1.id);
     });
 
     it('should return empty array if no match', async () => {

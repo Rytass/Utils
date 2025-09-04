@@ -9,7 +9,7 @@ import { Decimal } from 'decimal.js';
  * 1.1 + 0.1 // 1.2
  */
 export function plus(a: number, b: number): number {
-  const aD = new Decimal(a)
+  const aD = new Decimal(a);
   const bD = new Decimal(b);
 
   return aD.plus(bD).toNumber();
@@ -24,7 +24,7 @@ export function plus(a: number, b: number): number {
  * 0.3 - 0.1 // 0.2
  */
 export function minus(a: number, b: number): number {
-  const aD = new Decimal(a)
+  const aD = new Decimal(a);
   const bD = new Decimal(b);
 
   return aD.minus(bD).toNumber();
@@ -39,7 +39,7 @@ export function minus(a: number, b: number): number {
  * 200.30 * 3 // 600.9
  */
 export function times(a: number, b: number): number {
-  const aD = new Decimal(a)
+  const aD = new Decimal(a);
   const bD = new Decimal(b);
 
   return aD.times(bD).toNumber();
@@ -54,7 +54,7 @@ export function times(a: number, b: number): number {
  * 600.90 / 3 // 200.3
  */
 export function divided(a: number, b: number): number {
-  const aD = new Decimal(a)
+  const aD = new Decimal(a);
   const bD = new Decimal(b);
 
   return aD.dividedBy(bD).toNumber();
@@ -68,11 +68,11 @@ export function divided(a: number, b: number): number {
  * @example
  * pow(2, 3) // 2^3 = 8
  */
- export function pow(a: number, b: number): number {
-  const aD = new Decimal(a)
+export function pow(a: number, b: number): number {
+  const aD = new Decimal(a);
   const bD = new Decimal(b);
 
-  return aD.pow(bD).toNumber()
+  return aD.pow(bD).toNumber();
 }
 
 /**
@@ -94,8 +94,5 @@ export function round(num: number, digitAfterDecimalPoint: number): number {
 
   const multiplier = pow(10, digitAfterDecimalPoint);
 
-  return divided(
-    Math.round(times(num, multiplier)),
-    multiplier,
-  );
+  return divided(Math.round(times(num, multiplier)), multiplier);
 }

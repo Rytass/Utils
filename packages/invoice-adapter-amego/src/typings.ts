@@ -52,12 +52,11 @@ export interface AmegoInvoiceOptions {
   taxRate?: number; // 稅率, 預設含稅 0.05 (5%)
   carrier?: {
     type: string;
-    code: string
-  }
+    code: string;
+  };
 }
 
-export interface AmegoInvoiceIssueOptions
-  extends InvoiceIssueOptions<AmegoPaymentItem> {
+export interface AmegoInvoiceIssueOptions extends InvoiceIssueOptions<AmegoPaymentItem> {
   orderId: string;
   items: AmegoPaymentItem[];
   salesAmount?: number; // 銷售金額, 預設含稅0
@@ -87,7 +86,7 @@ export const ReverseAmegoTaxType = {
   3: TaxType.TAX_FREE,
 } as Record<number, TaxType>;
 
-export interface AmegoIssueInvoicePayload { }
+export interface AmegoIssueInvoicePayload {}
 
 export interface AmegoIssueInvoiceResponse {
   code: number;
@@ -101,7 +100,7 @@ export interface AmegoIssueInvoiceResponse {
   base64_data: string;
 }
 
-export interface AmegoVoidAllowanceResponse { }
+export interface AmegoVoidAllowanceResponse {}
 
 export interface AmegoAllowanceOptions extends InvoiceAllowanceOptions {
   allowanceNumber: string;
@@ -129,9 +128,7 @@ export interface AmegoInvoiceQueryFromInvoiceNumberArgs {
   invoiceNumber: string;
 }
 
-export type AmegoInvoiceQueryArgs =
-  | AmegoInvoiceQueryFromOrderIdArgs
-  | AmegoInvoiceQueryFromInvoiceNumberArgs;
+export type AmegoInvoiceQueryArgs = AmegoInvoiceQueryFromOrderIdArgs | AmegoInvoiceQueryFromInvoiceNumberArgs;
 
 // 常數定義
 export const AMEGO_CONSTANTS = {

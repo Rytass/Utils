@@ -1,9 +1,9 @@
 export function uuid() {
   // Public Domain/MIT
   let d = new Date().getTime(); //Timestamp
-  let d2 = performance.now() * 1000
+  let d2 = performance.now() * 1000;
 
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
     let r = Math.random() * 16; //random number between 0 and 16
 
     if (d > 0) {

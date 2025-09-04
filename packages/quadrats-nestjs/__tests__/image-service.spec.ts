@@ -39,7 +39,7 @@ describe('Quadrats Nestjs Module - Image Service', () => {
 
     const request = jest.spyOn(axios, 'request');
 
-    request.mockImplementationOnce(async (config) => {
+    request.mockImplementationOnce(async config => {
       expect(config.url).toBe(`${HOST}/images`);
 
       return { data: [randomUUID()] };
@@ -56,7 +56,7 @@ describe('Quadrats Nestjs Module - Image Service', () => {
 
     const request = jest.spyOn(axios, 'request');
 
-    request.mockImplementationOnce(async (config) => {
+    request.mockImplementationOnce(async config => {
       expect(config.url).toBe(`${HOST}/images`);
 
       return { data: [randomUUID()] };
@@ -72,19 +72,21 @@ describe('Quadrats Nestjs Module - Image Service', () => {
 
     const request = jest.spyOn(axios, 'request');
 
-    request.mockImplementationOnce(async (config) => {
+    request.mockImplementationOnce(async config => {
       expect(config.url).toBe(`${HOST}/images`);
 
       const id = randomUUID();
 
       return {
-        data: [{
-          id,
-          preload: `${HOST}/${id}/preload`,
-          thumbnails: `${HOST}/${id}/thumbnails`,
-          public: `${HOST}/${id}/public`,
-          full: `${HOST}/${id}/full`,
-        }],
+        data: [
+          {
+            id,
+            preload: `${HOST}/${id}/preload`,
+            thumbnails: `${HOST}/${id}/thumbnails`,
+            public: `${HOST}/${id}/public`,
+            full: `${HOST}/${id}/full`,
+          },
+        ],
       };
     });
 
@@ -102,19 +104,21 @@ describe('Quadrats Nestjs Module - Image Service', () => {
 
     const request = jest.spyOn(axios, 'request');
 
-    request.mockImplementationOnce(async (config) => {
+    request.mockImplementationOnce(async config => {
       expect(config.url).toBe(`${HOST}/images`);
 
       const id = randomUUID();
 
       return {
-        data: [{
-          id,
-          preload: `${HOST}/${id}/preload`,
-          thumbnails: `${HOST}/${id}/thumbnails`,
-          public: `${HOST}/${id}/public`,
-          full: `${HOST}/${id}/full`,
-        }],
+        data: [
+          {
+            id,
+            preload: `${HOST}/${id}/preload`,
+            thumbnails: `${HOST}/${id}/thumbnails`,
+            public: `${HOST}/${id}/public`,
+            full: `${HOST}/${id}/full`,
+          },
+        ],
       };
     });
 

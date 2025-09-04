@@ -2,13 +2,7 @@
  * @jest-environment node
  */
 
-import {
-  AmegoBaseUrls,
-  AmegoInvoiceGateway,
-  InvoiceAllowanceState,
-  InvoiceState,
-  TaxType,
-} from '../src';
+import { AmegoBaseUrls, AmegoInvoiceGateway, InvoiceAllowanceState, InvoiceState, TaxType } from '../src';
 import { DateTime } from 'luxon';
 import { AmegoInvoice } from '../src/amego-invoice';
 import { AmegoAllowance } from '../src/amego-allowance';
@@ -113,7 +107,7 @@ describe('AmegoInvoiceGateway:Allowance', () => {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
-        })
+        }),
       );
 
       expect(result.invoiceNumber).toBe(invoice.invoiceNumber);
@@ -424,17 +418,14 @@ describe('AmegoInvoiceGateway:Allowance', () => {
         orderId: '202506091426231989',
       });
 
-      const result = await invoiceGateway.allowance(
-        invoice,
-        [
-          {
-            name: '商品',
-            quantity: 1,
-            unitPrice: 50,
-            taxType: TaxType.TAXED,
-          },
-        ]
-      );
+      const result = await invoiceGateway.allowance(invoice, [
+        {
+          name: '商品',
+          quantity: 1,
+          unitPrice: 50,
+          taxType: TaxType.TAXED,
+        },
+      ]);
 
       expect(result.allowances.length).toBe(1);
       expect(result.allowances[0].allowancePrice).toBe(50);
@@ -446,12 +437,14 @@ describe('AmegoInvoiceGateway:Allowance', () => {
       const voidInvoice = new AmegoInvoice({
         orderId: 'test123',
         invoiceNumber: 'AC12367709',
-        items: [{
-          name: '商品',
-          quantity: 1,
-          unitPrice: 100,
-          taxType: TaxType.TAXED,
-        }],
+        items: [
+          {
+            name: '商品',
+            quantity: 1,
+            unitPrice: 100,
+            taxType: TaxType.TAXED,
+          },
+        ],
         taxType: TaxType.TAXED,
         issuedOn: new Date(),
         allowances: [],
@@ -468,7 +461,7 @@ describe('AmegoInvoiceGateway:Allowance', () => {
             unitPrice: 50,
             taxType: TaxType.TAXED,
           },
-        ])
+        ]),
       ).rejects.toThrow('Invoice is not issued');
     });
 
@@ -476,12 +469,14 @@ describe('AmegoInvoiceGateway:Allowance', () => {
       const invoice = new AmegoInvoice({
         orderId: 'test123',
         invoiceNumber: 'AC12367710',
-        items: [{
-          name: '商品',
-          quantity: 1,
-          unitPrice: 100,
-          taxType: TaxType.TAXED,
-        }],
+        items: [
+          {
+            name: '商品',
+            quantity: 1,
+            unitPrice: 100,
+            taxType: TaxType.TAXED,
+          },
+        ],
         taxType: TaxType.TAXED,
         issuedOn: new Date(),
         allowances: [],
@@ -498,7 +493,7 @@ describe('AmegoInvoiceGateway:Allowance', () => {
             unitPrice: 10,
             taxType: TaxType.TAXED,
           },
-        ])
+        ]),
       ).rejects.toThrow('Item 0: quantity must be positive');
     });
 
@@ -506,12 +501,14 @@ describe('AmegoInvoiceGateway:Allowance', () => {
       const invoice = new AmegoInvoice({
         orderId: 'test123',
         invoiceNumber: 'AC12367711',
-        items: [{
-          name: '商品',
-          quantity: 1,
-          unitPrice: 100,
-          taxType: TaxType.TAXED,
-        }],
+        items: [
+          {
+            name: '商品',
+            quantity: 1,
+            unitPrice: 100,
+            taxType: TaxType.TAXED,
+          },
+        ],
         taxType: TaxType.TAXED,
         issuedOn: new Date(),
         allowances: [],
@@ -528,7 +525,7 @@ describe('AmegoInvoiceGateway:Allowance', () => {
             unitPrice: 0,
             taxType: TaxType.TAXED,
           },
-        ])
+        ]),
       ).rejects.toThrow('Item 0: unitPrice must be positive');
     });
 
@@ -536,12 +533,14 @@ describe('AmegoInvoiceGateway:Allowance', () => {
       const invoice = new AmegoInvoice({
         orderId: 'test123',
         invoiceNumber: 'AC12367712',
-        items: [{
-          name: '商品',
-          quantity: 1,
-          unitPrice: 100,
-          taxType: TaxType.TAXED,
-        }],
+        items: [
+          {
+            name: '商品',
+            quantity: 1,
+            unitPrice: 100,
+            taxType: TaxType.TAXED,
+          },
+        ],
         taxType: TaxType.TAXED,
         issuedOn: new Date(),
         allowances: [],
@@ -550,9 +549,7 @@ describe('AmegoInvoiceGateway:Allowance', () => {
         voidOn: null,
       });
 
-      await expect(
-        invoiceGateway.allowance(invoice, [])
-      ).rejects.toThrow('Allowance items cannot be empty');
+      await expect(invoiceGateway.allowance(invoice, [])).rejects.toThrow('Allowance items cannot be empty');
     });
   });
 
@@ -624,7 +621,7 @@ describe('AmegoInvoiceGateway:Allowance', () => {
             unitPrice: 50,
             taxType: TaxType.TAXED,
           },
-        ])
+        ]),
       ).rejects.toThrow('Failed to allowance invoice');
     });
   });
@@ -720,7 +717,7 @@ describe('AmegoInvoiceGateway:Allowance', () => {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
-        })
+        }),
       );
 
       expect(invoice.allowances[0].status).toBe(InvoiceAllowanceState.INVALID);
@@ -745,12 +742,14 @@ describe('AmegoInvoiceGateway:Allowance', () => {
       const mockInvoice = new AmegoInvoice({
         orderId: 'test123',
         invoiceNumber: 'AC12364091',
-        items: [{
-          name: '商品',
-          quantity: 1,
-          unitPrice: 100,
-          taxType: TaxType.TAXED,
-        }],
+        items: [
+          {
+            name: '商品',
+            quantity: 1,
+            unitPrice: 100,
+            taxType: TaxType.TAXED,
+          },
+        ],
         taxType: TaxType.TAXED,
         issuedOn: new Date(),
         allowances: [],
@@ -763,20 +762,22 @@ describe('AmegoInvoiceGateway:Allowance', () => {
         allowanceNumber: 'AC12364091AL0001',
         allowancedOn: new Date(),
         allowancePrice: 50,
-        items: [{
-          name: '商品',
-          quantity: 1,
-          unitPrice: 50,
-          taxType: TaxType.TAXED,
-        }],
+        items: [
+          {
+            name: '商品',
+            quantity: 1,
+            unitPrice: 50,
+            taxType: TaxType.TAXED,
+          },
+        ],
         status: InvoiceAllowanceState.ISSUED,
         invalidOn: null,
         parentInvoice: mockInvoice,
       });
 
-      await expect(
-        invoiceGateway.invalidAllowance(mockAllowance)
-      ).rejects.toThrow('Amego invoice cancel void failed: Cannot invalid allowance');
+      await expect(invoiceGateway.invalidAllowance(mockAllowance)).rejects.toThrow(
+        'Amego invoice cancel void failed: Cannot invalid allowance',
+      );
     });
   });
 });

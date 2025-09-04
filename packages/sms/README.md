@@ -5,7 +5,7 @@ A unified SMS service interface for the Rytass ecosystem. Provides a standardize
 ## Features
 
 - [x] Unified SMS service interface
-- [x] Multiple SMS provider support  
+- [x] Multiple SMS provider support
 - [x] Single and batch SMS sending
 - [x] Multi-target messaging
 - [x] TypeScript with strict typing
@@ -33,13 +33,13 @@ import { Every8dSMSService } from '@rytass/sms-adapter-every8d';
 
 const smsService = new Every8dSMSService({
   username: 'your-username',
-  password: 'your-password'
+  password: 'your-password',
 });
 
 // Send single SMS
 const response = await smsService.send({
   mobile: '+886912345678',
-  text: 'Hello, this is a test message!'
+  text: 'Hello, this is a test message!',
 });
 
 console.log('SMS sent:', response.status);
@@ -52,12 +52,12 @@ console.log('SMS sent:', response.status);
 const responses = await smsService.send([
   {
     mobile: '+886912345678',
-    text: 'Message for first recipient'
+    text: 'Message for first recipient',
   },
   {
-    mobile: '+886987654321', 
-    text: 'Message for second recipient'
-  }
+    mobile: '+886987654321',
+    text: 'Message for second recipient',
+  },
 ]);
 
 responses.forEach(response => {
@@ -71,7 +71,7 @@ responses.forEach(response => {
 // Send same message to multiple recipients
 const responses = await smsService.send({
   mobileList: ['+886912345678', '+886987654321', '+886555666777'],
-  text: 'Same message for all recipients'
+  text: 'Same message for all recipients',
 });
 
 responses.forEach(response => {
@@ -110,7 +110,7 @@ interface MultiTargetRequest {
 ```typescript
 enum SMSRequestResult {
   SUCCESS = 'SUCCESS',
-  FAILED = 'FAILED'
+  FAILED = 'FAILED',
 }
 
 interface SMSSendResponse {
@@ -125,13 +125,7 @@ interface SMSSendResponse {
 ### Custom SMS Service Implementation
 
 ```typescript
-import { 
-  SMSService, 
-  SMSRequest, 
-  SMSSendResponse, 
-  MultiTargetRequest,
-  SMSRequestResult 
-} from '@rytass/sms';
+import { SMSService, SMSRequest, SMSSendResponse, MultiTargetRequest, SMSRequestResult } from '@rytass/sms';
 
 interface CustomSMSRequest extends SMSRequest {
   priority?: 'low' | 'normal' | 'high';
@@ -152,16 +146,12 @@ class CustomSMSService implements SMSService<CustomSMSRequest, CustomSMSResponse
       // Handle batch sending
       return Promise.all(request.map(req => this.sendSingle(req)));
     }
-    
+
     if ('mobileList' in request) {
       // Handle multi-target sending
-      return Promise.all(
-        request.mobileList.map(mobile => 
-          this.sendSingle({ mobile, text: request.text })
-        )
-      );
+      return Promise.all(request.mobileList.map(mobile => this.sendSingle({ mobile, text: request.text })));
     }
-    
+
     // Handle single SMS
     return this.sendSingle(request);
   }
@@ -170,18 +160,18 @@ class CustomSMSService implements SMSService<CustomSMSRequest, CustomSMSResponse
     try {
       // Implement your SMS sending logic here
       const messageId = `msg_${Date.now()}_${Math.random()}`;
-      
+
       return {
         messageId,
         status: SMSRequestResult.SUCCESS,
         mobile: request.mobile,
         cost: 0.05,
-        deliveryTime: new Date()
+        deliveryTime: new Date(),
       };
     } catch (error) {
       return {
         status: SMSRequestResult.FAILED,
-        mobile: request.mobile
+        mobile: request.mobile,
       };
     }
   }
@@ -201,25 +191,25 @@ app.use(express.json());
 
 const smsService = new Every8dSMSService({
   username: process.env.EVERY8D_USERNAME!,
-  password: process.env.EVERY8D_PASSWORD!
+  password: process.env.EVERY8D_PASSWORD!,
 });
 
 app.post('/send-sms', async (req, res) => {
   try {
     const { mobile, text } = req.body;
-    
+
     const response = await smsService.send({ mobile, text });
-    
+
     res.json({
       success: response.status === 'SUCCESS',
       messageId: response.messageId,
       mobile: response.mobile,
-      status: response.status
+      status: response.status,
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to send SMS',
-      message: error.message 
+      message: error.message,
     });
   }
 });
@@ -240,14 +230,14 @@ export class NotificationService {
   constructor(private configService: ConfigService) {
     this.smsService = new Every8dSMSService({
       username: this.configService.get('EVERY8D_USERNAME')!,
-      password: this.configService.get('EVERY8D_PASSWORD')!
+      password: this.configService.get('EVERY8D_PASSWORD')!,
     });
   }
 
   async sendVerificationCode(mobile: string, code: string): Promise<boolean> {
     const response = await this.smsService.send({
       mobile,
-      text: `Your verification code is: ${code}. This code will expire in 10 minutes.`
+      text: `Your verification code is: ${code}. This code will expire in 10 minutes.`,
     });
 
     return response.status === SMSRequestResult.SUCCESS;
@@ -256,12 +246,12 @@ export class NotificationService {
   async sendBulkNotification(mobiles: string[], message: string) {
     const responses = await this.smsService.send({
       mobileList: mobiles,
-      text: message
+      text: message,
     });
 
     return {
       successful: responses.filter(r => r.status === SMSRequestResult.SUCCESS).length,
-      failed: responses.filter(r => r.status === SMSRequestResult.FAILED).length
+      failed: responses.filter(r => r.status === SMSRequestResult.FAILED).length,
     };
   }
 }
@@ -275,7 +265,7 @@ import { SMSRequestResult } from '@rytass/sms';
 async function safeSendSMS(smsService: any, mobile: string, text: string) {
   try {
     const response = await smsService.send({ mobile, text });
-    
+
     if (response.status === SMSRequestResult.SUCCESS) {
       console.log(`SMS sent successfully to ${mobile}`);
       return { success: true, messageId: response.messageId };
@@ -304,11 +294,11 @@ interface SMSService<Request, SendResponse, MultiTarget> {
 
 ### Types and Enums
 
-| Type | Description |
-|------|-------------|
-| `SMSRequestResult` | `'SUCCESS' \| 'FAILED'` |
-| `SMSRequest` | Basic SMS request with mobile and text |
-| `SMSSendResponse` | Response with status and optional messageId |
+| Type                 | Description                                             |
+| -------------------- | ------------------------------------------------------- |
+| `SMSRequestResult`   | `'SUCCESS' \| 'FAILED'`                                 |
+| `SMSRequest`         | Basic SMS request with mobile and text                  |
+| `SMSSendResponse`    | Response with status and optional messageId             |
 | `MultiTargetRequest` | Request for sending same message to multiple recipients |
 
 ## License

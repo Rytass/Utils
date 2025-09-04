@@ -62,45 +62,31 @@ describe('CategoryBaseService.findAll', () => {
     const result = await service.findAll({ language: 'en' });
 
     expect(mockQueryBuilder.getMany).toHaveBeenCalled();
-    expect(result).toEqual([
-      expect.objectContaining({ id: '1', name: 'Test', language: 'en' }),
-    ]);
+    expect(result).toEqual([expect.objectContaining({ id: '1', name: 'Test', language: 'en' })]);
   });
 
   it('should filter by ids', async () => {
     mockQueryBuilder.getMany.mockResolvedValue([]);
     await service.findAll({ ids: ['1', '2'] });
-    expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-      'categories.id IN (:...ids)',
-      { ids: ['1', '2'] },
-    );
+    expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('categories.id IN (:...ids)', { ids: ['1', '2'] });
   });
 
   it('should filter by fromTop', async () => {
     mockQueryBuilder.getMany.mockResolvedValue([]);
     await service.findAll({ fromTop: true });
-    expect(mockQueryBuilder.leftJoin).toHaveBeenCalledWith(
-      'categories.parents',
-      'fromTopParents',
-    );
+    expect(mockQueryBuilder.leftJoin).toHaveBeenCalledWith('categories.parents', 'fromTopParents');
 
-    expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-      'fromTopParents.id IS NULL',
-    );
+    expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('fromTopParents.id IS NULL');
   });
 
   it('should filter by parentIds', async () => {
     mockQueryBuilder.getMany.mockResolvedValue([]);
     await service.findAll({ parentIds: ['p1'] });
-    expect(mockQueryBuilder.innerJoin).toHaveBeenCalledWith(
-      'categories.parents',
-      'parentForFilters',
-    );
+    expect(mockQueryBuilder.innerJoin).toHaveBeenCalledWith('categories.parents', 'parentForFilters');
 
-    expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-      'parentForFilters.id IN (:...parentIds)',
-      { parentIds: ['p1'] },
-    );
+    expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('parentForFilters.id IN (:...parentIds)', {
+      parentIds: ['p1'],
+    });
   });
 
   it('should apply sorting and pagination when language is not provided and multipleLanguageMode is true', async () => {
@@ -111,10 +97,7 @@ describe('CategoryBaseService.findAll', () => {
       limit: 5,
     });
 
-    expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith(
-      'articles.createdAt',
-      'ASC',
-    );
+    expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith('articles.createdAt', 'ASC');
 
     expect(mockQueryBuilder.skip).toHaveBeenCalledWith(10);
     expect(mockQueryBuilder.take).toHaveBeenCalledWith(5);
@@ -123,10 +106,7 @@ describe('CategoryBaseService.findAll', () => {
   it('should fallback to CREATED_AT_DESC if sorter is undefined', async () => {
     mockQueryBuilder.getMany.mockResolvedValue([]);
     await service.findAll();
-    expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith(
-      'articles.createdAt',
-      'DESC',
-    );
+    expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith('articles.createdAt', 'DESC');
   });
 
   it('should limit max results to 100 even if larger limit is provided', async () => {
@@ -155,10 +135,7 @@ describe('CategoryBaseService.findAll', () => {
       sorter: CategorySorter.CREATED_AT_DESC,
     });
 
-    expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith(
-      'articles.createdAt',
-      'DESC',
-    );
+    expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith('articles.createdAt', 'DESC');
   });
 
   it('should return parsed categories with undefined language when language is not provided and multipleLanguageMode is false', async () => {
@@ -179,7 +156,7 @@ describe('CategoryBaseService.findAll', () => {
 
     (service as any).multipleLanguageMode = false;
 
-    const mockParsed = mockCategories.map((c) => ({
+    const mockParsed = mockCategories.map(c => ({
       ...c,
       name: undefined,
       language: undefined,
@@ -312,8 +289,6 @@ describe('CategoryBaseService.findById', () => {
 
   it('should throw CategoryNotFoundError when category does not exist', async () => {
     mockQueryBuilder.getOne.mockResolvedValue(undefined);
-    await expect(service.findById('invalid-id')).rejects.toThrow(
-      CategoryNotFoundError,
-    );
+    await expect(service.findById('invalid-id')).rejects.toThrow(CategoryNotFoundError);
   });
 });

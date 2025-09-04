@@ -19,8 +19,8 @@ describe('delivery-adapter-tcat', () => {
       return { data: resultPage };
     });
 
-    logistics.trace(logisticId).then((responses) => {
-      responses.map((response) => {
+    logistics.trace(logisticId).then(responses => {
+      responses.map(response => {
         expect(response.logisticsId).toEqual(logisticId);
         (response.statusHistory as TCatLogisticsStatusHistory<TCatLogisticsStatus>[]).map((history, index) => {
           switch (index) {
@@ -58,7 +58,7 @@ describe('delivery-adapter-tcat', () => {
 
     const logisticIds = Object.keys(TraceCases);
 
-    get.mockImplementation(async (url) => {
+    get.mockImplementation(async url => {
       const [logisticId] = logisticIds.filter(id => url.includes(id));
 
       return {
@@ -66,8 +66,8 @@ describe('delivery-adapter-tcat', () => {
       };
     });
 
-    logistics.trace(logisticIds).then((responses) => {
-      responses.map((response) => {
+    logistics.trace(logisticIds).then(responses => {
+      responses.map(response => {
         switch (response.logisticsId) {
           case '800978442950':
             (response.statusHistory as TCatLogisticsStatusHistory<TCatLogisticsStatus>[]).map((history, index) => {

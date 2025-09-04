@@ -17,23 +17,10 @@ import { LRUCache } from 'lru-cache';
 import { DateTime } from 'luxon';
 import { createDecipheriv, randomBytes } from 'node:crypto';
 import EventEmitter from 'node:events';
-import {
-  createServer,
-  IncomingMessage,
-  Server,
-  ServerResponse,
-} from 'node:http';
+import { createServer, IncomingMessage, Server, ServerResponse } from 'node:http';
 import { URLSearchParams } from 'node:url';
 import { CTBCBindCardRequest } from './ctbc-bind-card-request';
-import {
-  decrypt3DES,
-  desMac,
-  encrypt3DES,
-  getDivKey,
-  getMAC,
-  getMacFromParams,
-  SSLAuthIV,
-} from './ctbc-crypto-core';
+import { decrypt3DES, desMac, encrypt3DES, getDivKey, getMAC, getMacFromParams, SSLAuthIV } from './ctbc-crypto-core';
 import { CTBCOrder } from './ctbc-order';
 import { posApiQuery } from './ctbc-pos-api-utils';
 import {
@@ -55,9 +42,7 @@ import {
 export const debugPayment = debug('Rytass:Payment:CTBC');
 export const debugPaymentServer = debug('Rytass:Payment:CTBC:Server');
 
-export class CTBCPayment<
-    CM extends CTBCOrderCommitMessage = CTBCOrderCommitMessage,
-  >
+export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMessage>
   implements PaymentGateway<CM, CTBCOrder<CM>>, BindCardPaymentGateway<CM>
 {
   private serverHost = 'http://localhost:3000';
@@ -65,8 +50,7 @@ export class CTBCPayment<
   private checkoutPath = '/payments/ctbc/checkout';
   private bindCardPath = '/payments/ctbc/bind-card';
   private boundCardPath = '/payments/ctbc/bound-card';
-  private boundCardCheckoutResultPath =
-    '/payments/ctbc/bound-card/checkout-result';
+  private boundCardCheckoutResultPath = '/payments/ctbc/bound-card/checkout-result';
   private isAmex = false;
 
   readonly merchantId: string;
@@ -81,8 +65,8 @@ export class CTBCPayment<
   _server?: Server;
 
   private isGatewayReady = false;
-  private serverListener: (req: IncomingMessage, res: ServerResponse) => void =
-    (req, res) => this.defaultServerListener(req, res);
+  private serverListener: (req: IncomingMessage, res: ServerResponse) => void = (req, res) =>
+    this.defaultServerListener(req, res);
 
   private readonly orderCache: OrderCache<CM>;
   private readonly bindCardRequestsCache: BindCardRequestCache;
@@ -98,8 +82,7 @@ export class CTBCPayment<
     this.checkoutPath = options?.checkoutPath || this.checkoutPath;
     this.bindCardPath = options?.bindCardPath || this.bindCardPath;
     this.boundCardPath = options?.boundCardPath || this.boundCardPath;
-    this.boundCardCheckoutResultPath =
-      options?.boundCardCheckoutResultPath || this.boundCardCheckoutResultPath;
+    this.boundCardCheckoutResultPath = options?.boundCardCheckoutResultPath || this.boundCardCheckoutResultPath;
 
     this.isAmex = options?.isAmex ?? this.isAmex;
 
@@ -165,18 +148,11 @@ export class CTBCPayment<
           throw new Error('Missing URLResEnc parameter in callback');
         }
 
-        const decipher = createDecipheriv(
-          'des-ede3-cbc',
-          Buffer.from(this.txnKey, 'utf8'),
-          SSLAuthIV,
-        );
+        const decipher = createDecipheriv('des-ede3-cbc', Buffer.from(this.txnKey, 'utf8'), SSLAuthIV);
 
         decipher.setAutoPadding(false);
 
-        const decrypted = Buffer.concat([
-          decipher.update(Buffer.from(response, 'hex')),
-          decipher.final(),
-        ]);
+        const decrypted = Buffer.concat([decipher.update(Buffer.from(response, 'hex')), decipher.final()]);
 
         const plain = iconv.decode(decrypted, 'big5');
 
@@ -187,9 +163,7 @@ export class CTBCPayment<
           throw new Error('Missing lidm parameter in callback');
         }
 
-        const order = (await this.orderCache.get(
-          requestId,
-        )) as CTBCOrder<OrderCreditCardCommitMessage>;
+        const order = (await this.orderCache.get(requestId)) as CTBCOrder<OrderCreditCardCommitMessage>;
 
         const errorCode = payload.get('errcode');
         const errorMessage = payload.get('errDesc');
@@ -209,9 +183,7 @@ export class CTBCPayment<
               [CardType.VMJ]: 'Card',
             }[order.cardType] ?? 'Unknown';
 
-          throw new Error(
-            `CTBC ${typeLabel} Checkout Failed: ${errorCode} - ${errorMessage}`,
-          );
+          throw new Error(`CTBC ${typeLabel} Checkout Failed: ${errorCode} - ${errorMessage}`);
         }
 
         if (!order) {
@@ -242,9 +214,7 @@ export class CTBCPayment<
           order.setPosApiInfo(xid);
         }
 
-        debugPaymentServer(
-          `CTBCPayment bound card checkout order ${order.id} successful.`,
-        );
+        debugPaymentServer(`CTBCPayment bound card checkout order ${order.id} successful.`);
 
         if (order.clientBackUrl) {
           return {
@@ -266,9 +236,7 @@ export class CTBCPayment<
 
       case this.boundCardPath: {
         const params = new URLSearchParams(body);
-        const payload = JSON.parse(
-          decodeURIComponent(params.get('rspjsonpwd') as string),
-        ) as {
+        const payload = JSON.parse(decodeURIComponent(params.get('rspjsonpwd') as string)) as {
           Response: CTBCResponsePayload;
         };
 
@@ -290,9 +258,7 @@ export class CTBCPayment<
             request.fail(statusCode ?? 'x9999', statusDesc ?? '-');
           }
 
-          throw new Error(
-            `CTBC Bind Card Failed: ${statusCode} - ${statusDesc}`,
-          );
+          throw new Error(`CTBC Bind Card Failed: ${statusCode} - ${statusDesc}`);
         }
 
         if (!request) {
@@ -301,16 +267,11 @@ export class CTBCPayment<
 
         request.bound({
           cardToken: decryptedParams.get('CardToken') as string,
-          cardNoMask: (decryptedParams.get('CardNoMask') as string).replace(
-            /-/g,
-            '',
-          ),
+          cardNoMask: (decryptedParams.get('CardNoMask') as string).replace(/-/g, ''),
           requestNo: requestId,
         });
 
-        debugPaymentServer(
-          `CTBCPayment bound card for request ${requestId} [${request.memberId}]`,
-        );
+        debugPaymentServer(`CTBCPayment bound card for request ${requestId} [${request.memberId}]`);
 
         return {
           status: 200,
@@ -344,9 +305,7 @@ export class CTBCPayment<
             order.fail(statusCode ?? 'x9999', statusDesc ?? '-');
           }
 
-          throw new Error(
-            `CTBC Bound Card Checkout Failed: ${statusCode} - ${statusDesc}`,
-          );
+          throw new Error(`CTBC Bound Card Checkout Failed: ${statusCode} - ${statusDesc}`);
         }
 
         if (!order) {
@@ -359,9 +318,7 @@ export class CTBCPayment<
           committedAt: new Date(),
         } as CM);
 
-        debugPaymentServer(
-          `CTBCPayment bound card checkout order ${order.id} successful.`,
-        );
+        debugPaymentServer(`CTBCPayment bound card checkout order ${order.id} successful.`);
 
         if (order.clientBackUrl) {
           return {
@@ -392,10 +349,7 @@ export class CTBCPayment<
     }
   }
 
-  public async defaultServerListener(
-    req: IncomingMessage,
-    res: ServerResponse,
-  ): Promise<void> {
+  public async defaultServerListener(req: IncomingMessage, res: ServerResponse): Promise<void> {
     const checkoutRe = new RegExp(`^${this.checkoutPath}/([^/]+)$`);
     const bindCardRe = new RegExp(`^${this.bindCardPath}/([^/]+)$`);
 
@@ -411,9 +365,7 @@ export class CTBCPayment<
           const order = await this.orderCache.get(orderId);
 
           if (order) {
-            debugPayment(
-              `CTBCPayment serve checkout page for order ${orderId}`,
-            );
+            debugPayment(`CTBCPayment serve checkout page for order ${orderId}`);
 
             res.writeHead(200, {
               'Content-Type': 'text/html; charset=utf-8',
@@ -433,9 +385,7 @@ export class CTBCPayment<
           const request = await this.bindCardRequestsCache.get(memberId);
 
           if (request) {
-            debugPayment(
-              `CTBCPayment serve bind card page for member ${memberId}`,
-            );
+            debugPayment(`CTBCPayment serve bind card page for member ${memberId}`);
 
             res.writeHead(200, {
               'Content-Type': 'text/html; charset=utf-8',
@@ -452,11 +402,7 @@ export class CTBCPayment<
     if (
       !req.url ||
       req.method !== 'POST' ||
-      !~[
-        this.boundCardPath,
-        this.boundCardCheckoutResultPath,
-        this.callbackPath,
-      ].indexOf(req.url)
+      !~[this.boundCardPath, this.boundCardCheckoutResultPath, this.callbackPath].indexOf(req.url)
     ) {
       res.writeHead(404);
       res.end();
@@ -466,20 +412,15 @@ export class CTBCPayment<
 
     const bufferArray = [] as Buffer[];
 
-    req.on('data', (chunk) => {
+    req.on('data', chunk => {
       bufferArray.push(chunk);
     });
 
     req.on('end', async () => {
-      const payloadString = Buffer.from(Buffer.concat(bufferArray)).toString(
-        'utf8',
-      );
+      const payloadString = Buffer.from(Buffer.concat(bufferArray)).toString('utf8');
 
       try {
-        const response = await this.handleCallbackTextBodyByURLPath(
-          req.url as string,
-          payloadString,
-        );
+        const response = await this.handleCallbackTextBodyByURLPath(req.url as string, payloadString);
 
         res.writeHead(
           response.status || 404,
@@ -494,9 +435,7 @@ export class CTBCPayment<
           res.end();
         }
       } catch (ex) {
-        debugPaymentServer(
-          `CTBCPayment server listener error: ${ex instanceof Error ? ex.message : ex}`,
-        );
+        debugPaymentServer(`CTBCPayment server listener error: ${ex instanceof Error ? ex.message : ex}`);
 
         res.writeHead(400, {
           'Content-Type': 'text/plain',
@@ -517,21 +456,15 @@ export class CTBCPayment<
     this._server.listen(port, '0.0.0.0', async () => {
       if (useNgrok) {
         if (!process.env.NGROK_AUTHTOKEN) {
-          debugPayment(
-            '[CTBCPayment] NGROK_AUTHTOKEN is not set. Please set it in your environment variables.',
-          );
+          debugPayment('[CTBCPayment] NGROK_AUTHTOKEN is not set. Please set it in your environment variables.');
 
-          throw new Error(
-            '[CTBCPayment] NGROK_AUTHTOKEN is not set. Please set it in your environment variables.',
-          );
+          throw new Error('[CTBCPayment] NGROK_AUTHTOKEN is not set. Please set it in your environment variables.');
         }
 
         try {
           await import('@ngrok/ngrok');
         } catch (ex) {
-          debugPayment(
-            '[CTBCPayment] Failed to import ngrok. Please install it to use ngrok feature.',
-          );
+          debugPayment('[CTBCPayment] Failed to import ngrok. Please install it to use ngrok feature.');
 
           throw ex;
         }
@@ -544,9 +477,7 @@ export class CTBCPayment<
 
         this.serverHost = forwarder.url() as string;
 
-        debugPayment(
-          `CTBCPayment Callback Server Listen on port ${port} with ngrok url: ${this.serverHost}`,
-        );
+        debugPayment(`CTBCPayment Callback Server Listen on port ${port} with ngrok url: ${this.serverHost}`);
       } else {
         debugPayment(`CTBCPayment Callback Server Listen on port ${port}`);
       }
@@ -567,15 +498,12 @@ export class CTBCPayment<
       MerID: this.merId,
       MemberID: memberId,
       RequestNo: options.requestId ?? randomBytes(8).toString('hex'),
-      TokenURL:
-        options.finishRedirectURL ?? `${this.serverHost}${this.boundCardPath}`,
+      TokenURL: options.finishRedirectURL ?? `${this.serverHost}${this.boundCardPath}`,
       PromoCode: options.promoCode ?? undefined,
       Pid: options.Pid ?? undefined,
       PhoneNum: options.PhoneNum ?? undefined,
       PhoneNumEditable: options.PhoneNumEditable ?? undefined,
-      Birthday: options.Birthday
-        ? DateTime.fromJSDate(options.Birthday).toFormat('MMddyyyy')
-        : undefined,
+      Birthday: options.Birthday ? DateTime.fromJSDate(options.Birthday).toFormat('MMddyyyy') : undefined,
     } satisfies CTBCBindCardRequestPayload;
 
     const request = new CTBCBindCardRequest(payload, this);
@@ -589,23 +517,16 @@ export class CTBCPayment<
     return request;
   }
 
-  async prepare<N extends CTBCOrderCommitMessage>(
-    options: InputFromOrderCommitMessage<N>,
-  ): Promise<Order<N>> {
+  async prepare<N extends CTBCOrderCommitMessage>(options: InputFromOrderCommitMessage<N>): Promise<Order<N>> {
     if (options.id && options.id.length > 19) {
       throw new Error('Order ID must be less than 20 characters');
     }
 
     if (options.id && /[^0-9a-z_]/i.test(options.id)) {
-      throw new Error(
-        'Order ID can only contain alphanumeric characters and underscores',
-      );
+      throw new Error('Order ID can only contain alphanumeric characters and underscores');
     }
 
-    const totalPrice = options.items.reduce(
-      (sum, item) => sum + item.unitPrice * item.quantity,
-      0,
-    );
+    const totalPrice = options.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
 
     if (totalPrice <= 0) {
       throw new Error('Total price must be greater than 0');
@@ -614,7 +535,7 @@ export class CTBCPayment<
     const orderId = options.id ?? randomBytes(8).toString('hex');
 
     const cardType = options.cardType;
-    const orderDesc = options.items.map((item) => item.name).join(', ');
+    const orderDesc = options.items.map(item => item.name).join(', ');
     const txType = options.cardType === CardType.AE ? '6' : '0';
     const option = options.cardType === CardType.AE ? '' : '1';
 
@@ -656,9 +577,7 @@ export class CTBCPayment<
     params.push(`InMac=${mac}`);
 
     const encPayload = Buffer.concat(
-      params.map((param) =>
-        Buffer.isBuffer(param) ? param : Buffer.from(param, 'utf8'),
-      ),
+      params.map(param => (Buffer.isBuffer(param) ? param : Buffer.from(param, 'utf8'))),
     );
 
     const enc = desMac(encPayload, this.txnKey);
@@ -677,9 +596,7 @@ export class CTBCPayment<
 
     this.orderCache.set(orderId, order);
 
-    debugPayment(
-      `CTBCPayment Checkout URL: ${this.serverHost}${this.checkoutPath}/${orderId}`,
-    );
+    debugPayment(`CTBCPayment Checkout URL: ${this.serverHost}${this.checkoutPath}/${orderId}`);
 
     return order as Order<N>;
   }
@@ -736,17 +653,11 @@ export class CTBCPayment<
 
       // 檢查查詢結果
       if (result.ErrCode !== '00') {
-        debugPayment(
-          `Query failed for order ${id}: ${result.ErrCode} - ${result.ERRDESC || 'Unknown error'}`,
-        );
-        throw new Error(
-          `Query failed: ${result.ErrCode} - ${result.ERRDESC || 'Unknown error'}`,
-        );
+        debugPayment(`Query failed for order ${id}: ${result.ErrCode} - ${result.ERRDESC || 'Unknown error'}`);
+        throw new Error(`Query failed: ${result.ErrCode} - ${result.ERRDESC || 'Unknown error'}`);
       }
 
-      debugPayment(
-        `Query successful for order ${id}: ${JSON.stringify(result)}`,
-      );
+      debugPayment(`Query successful for order ${id}: ${JSON.stringify(result)}`);
 
       // 如果快取中沒有訂單，根據查詢結果創建一個
       if (!order) {
@@ -773,9 +684,7 @@ export class CTBCPayment<
             },
           ],
           // 根據查詢結果設定訂單狀態
-          createdAt: result.Txn_date
-            ? new Date(`${result.Txn_date} ${result.Txn_time || '00:00:00'}`)
-            : new Date(),
+          createdAt: result.Txn_date ? new Date(`${result.Txn_date} ${result.Txn_time || '00:00:00'}`) : new Date(),
         });
 
         // 如果交易成功，直接設定已提交狀態（不使用 commit 方法以避免重複觸發事件）
@@ -870,23 +779,16 @@ export class CTBCPayment<
     return `${this.serverHost}${this.boundCardCheckoutResultPath}`;
   }
 
-  async checkoutWithBoundCard(
-    options: CTBCCheckoutWithBoundCardOptions,
-  ): Promise<CTBCOrder<CM>> {
+  async checkoutWithBoundCard(options: CTBCCheckoutWithBoundCardOptions): Promise<CTBCOrder<CM>> {
     if (options.orderId && options.orderId.length > 19) {
       throw new Error('Order ID must be less than 20 characters');
     }
 
     if (options.orderId && /[^0-9a-z_]/i.test(options.orderId)) {
-      throw new Error(
-        'Order ID can only contain alphanumeric characters and underscores',
-      );
+      throw new Error('Order ID can only contain alphanumeric characters and underscores');
     }
 
-    const totalPrice = options.items.reduce(
-      (sum, item) => sum + item.unitPrice * item.quantity,
-      0,
-    );
+    const totalPrice = options.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
 
     if (totalPrice <= 0) {
       throw new Error('Total price must be greater than 0');

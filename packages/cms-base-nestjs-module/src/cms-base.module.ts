@@ -2,10 +2,7 @@ import { DynamicModule, Global, Module, Provider, Type } from '@nestjs/common';
 import { CMSBaseModelsModule } from './models/models.module';
 import { ArticleBaseService } from './services/article-base.service';
 import { CategoryBaseService } from './services/category-base.service';
-import {
-  ResolvedRepoProviders,
-  TARGETS,
-} from './constants/resolved-repo-providers';
+import { ResolvedRepoProviders, TARGETS } from './constants/resolved-repo-providers';
 import { CategoryDataLoader } from './data-loaders/category.dataloader';
 import {
   ARTICLE_BASE_SERVICE,
@@ -129,9 +126,7 @@ export class CMSBaseModule {
     };
   }
 
-  private static createAsyncProvider(
-    options: CMSBaseModuleAsyncOptionsDto,
-  ): Provider[] {
+  private static createAsyncProvider(options: CMSBaseModuleAsyncOptionsDto): Provider[] {
     if (options.useExisting || options.useFactory) {
       return [this.createAsyncOptionsProvider(options)];
     }
@@ -149,9 +144,7 @@ export class CMSBaseModule {
     ];
   }
 
-  private static createAsyncOptionsProvider(
-    options: CMSBaseModuleAsyncOptionsDto,
-  ): Provider {
+  private static createAsyncOptionsProvider(options: CMSBaseModuleAsyncOptionsDto): Provider {
     if (options.useFactory) {
       return {
         provide: CMS_BASE_MODULE_OPTIONS,
@@ -162,12 +155,8 @@ export class CMSBaseModule {
 
     return {
       provide: CMS_BASE_MODULE_OPTIONS,
-      useFactory: async (optionsFactory: CMSBaseModuleOptionFactory) =>
-        await optionsFactory.createCMSOptions(),
-      inject: [
-        (options.useExisting ||
-          options.useClass) as Type<CMSBaseModuleOptionFactory>,
-      ],
+      useFactory: async (optionsFactory: CMSBaseModuleOptionFactory) => await optionsFactory.createCMSOptions(),
+      inject: [(options.useExisting || options.useClass) as Type<CMSBaseModuleOptionFactory>],
     };
   }
 }

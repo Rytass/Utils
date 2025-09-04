@@ -16,11 +16,10 @@ import { BaseSignatureLevelEntity } from './base-signature-level.entity';
 export const ArticleSignatureRepo = Symbol('ArticleSignatureRepo');
 
 @Entity('article_signatures')
-@Index(
-  'article_signature_article_id_version',
-  ['articleId', 'version', 'signatureLevelId'],
-  { unique: true, where: '"deletedAt" IS NULL' },
-)
+@Index('article_signature_article_id_version', ['articleId', 'version', 'signatureLevelId'], {
+  unique: true,
+  where: '"deletedAt" IS NULL',
+})
 @Index(['articleId', 'version'])
 export class ArticleSignatureEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -54,14 +53,14 @@ export class ArticleSignatureEntity {
   @DeleteDateColumn()
   deletedAt: Date | null;
 
-  @ManyToOne(() => BaseArticleVersionEntity, (version) => version.signatures)
+  @ManyToOne(() => BaseArticleVersionEntity, version => version.signatures)
   @JoinColumn([
     { name: 'articleId', referencedColumnName: 'articleId' },
     { name: 'version', referencedColumnName: 'version' },
   ])
   articleVersion: Relation<BaseArticleVersionEntity>;
 
-  @ManyToOne(() => BaseSignatureLevelEntity, (level) => level.signatures, {
+  @ManyToOne(() => BaseSignatureLevelEntity, level => level.signatures, {
     nullable: true,
   })
   @JoinColumn({ name: 'signatureLevelId', referencedColumnName: 'id' })

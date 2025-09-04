@@ -30,22 +30,20 @@ describe('NewebPay Payments', () => {
   const originCreateServer = createServer;
   const mockedCreateServer = jest.spyOn(http, 'createServer');
 
-  mockedCreateServer.mockImplementation((requestHandler) => {
+  mockedCreateServer.mockImplementation(requestHandler => {
     const mockServer = originCreateServer(requestHandler);
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce(
-      (port?: any, hostname?: any, listeningListener?: () => void) => {
-        mockServer.listen(0, listeningListener);
+    mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
+      mockServer.listen(0, listeningListener);
 
-        return mockServer;
-      },
-    );
+      return mockServer;
+    });
 
     const mockedClose = jest.spyOn(mockServer, 'close');
 
-    mockedClose.mockImplementationOnce((onClosed) => {
+    mockedClose.mockImplementationOnce(onClosed => {
       mockServer.close(onClosed);
 
       return mockServer;
@@ -63,9 +61,7 @@ describe('NewebPay Payments', () => {
         baseUrl: 'https://rytass.com',
       });
 
-      expect(payment.checkoutActionUrl).toBe(
-        'https://rytass.com/MPG/mpg_gateway',
-      );
+      expect(payment.checkoutActionUrl).toBe('https://rytass.com/MPG/mpg_gateway');
     });
   });
 
@@ -84,7 +80,7 @@ describe('NewebPay Payments', () => {
       setImmediate(() => callback && callback());
       return mockServerForNgrok;
     });
-    mockServerForNgrok.close = jest.fn((callback) => {
+    mockServerForNgrok.close = jest.fn(callback => {
       setImmediate(() => callback && callback());
       return mockServerForNgrok;
     });
@@ -111,7 +107,7 @@ describe('NewebPay Payments', () => {
 
       // Override global import function to handle dynamic imports
       const originalImport = global.import || jest.fn();
-      global.import = jest.fn().mockImplementation((moduleName) => {
+      global.import = jest.fn().mockImplementation(moduleName => {
         if (moduleName === '@ngrok/ngrok') {
           return Promise.resolve({ default: mockNgrok });
         }
@@ -127,7 +123,7 @@ describe('NewebPay Payments', () => {
     it('should connect to ngrok when withServer is ngrok', async () => {
       const { NewebPayPayment } = await import('../src');
 
-      return new Promise<void>((resolve) => {
+      return new Promise<void>(resolve => {
         const payment = new NewebPayPayment({
           merchantId: MERCHANT_ID,
           aesKey: AES_KEY,
@@ -149,7 +145,7 @@ describe('NewebPay Payments', () => {
       const { NewebPayPayment } = await import('../src');
 
       const customPort = 7777;
-      return new Promise<void>((resolve) => {
+      return new Promise<void>(resolve => {
         const payment = new NewebPayPayment({
           merchantId: MERCHANT_ID,
           aesKey: AES_KEY,
@@ -169,7 +165,7 @@ describe('NewebPay Payments', () => {
     it('should call ngrok methods correctly', async () => {
       const { NewebPayPayment } = await import('../src');
 
-      return new Promise<void>((resolve) => {
+      return new Promise<void>(resolve => {
         const payment = new NewebPayPayment({
           merchantId: MERCHANT_ID,
           aesKey: AES_KEY,
@@ -246,10 +242,9 @@ describe('NewebPay Payments', () => {
 
       const decipher = createDecipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
-      const plainInfo =
-        `${decipher.update(order.form.TradeInfo, 'hex', 'utf8')}${decipher.final('utf8')}`
-          .replace(/\x1E/g, '')
-          .replace(/\x14/g, '');
+      const plainInfo = `${decipher.update(order.form.TradeInfo, 'hex', 'utf8')}${decipher.final('utf8')}`
+        .replace(/\x1E/g, '')
+        .replace(/\x14/g, '');
       const payload = new URLSearchParams(plainInfo);
 
       expect(Number(payload.get('Amt'))).toBe(order.totalPrice);
@@ -282,10 +277,9 @@ describe('NewebPay Payments', () => {
 
       const decipher = createDecipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
-      const plainInfo =
-        `${decipher.update(order.form.TradeInfo, 'hex', 'utf8')}${decipher.final('utf8')}`
-          .replace(/\x1E/g, '')
-          .replace(/\x14/g, '');
+      const plainInfo = `${decipher.update(order.form.TradeInfo, 'hex', 'utf8')}${decipher.final('utf8')}`
+        .replace(/\x1E/g, '')
+        .replace(/\x14/g, '');
       const payload = new URLSearchParams(plainInfo);
 
       expect(payload.get('CREDIT')).toBe('0');
@@ -342,7 +336,7 @@ describe('NewebPay Payments', () => {
       ).rejects.toThrow('`expireDate` should be in format of `YYYYMMDD`');
     });
 
-    it('should throw error before server ready prepare', (done) => {
+    it('should throw error before server ready prepare', done => {
       const paymentServer = new NewebPayPayment({
         merchantId: MERCHANT_ID,
         aesKey: AES_KEY,
@@ -388,9 +382,7 @@ describe('NewebPay Payments', () => {
         const merchantOrderNo = payload.get('MerchantOrderNo');
 
         const checkValue = createHash('sha256')
-          .update(
-            `IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`,
-          )
+          .update(`IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`)
           .digest('hex')
           .toUpperCase();
 
@@ -436,9 +428,7 @@ describe('NewebPay Payments', () => {
         };
       });
 
-      expect(() =>
-        payment.query(randomBytes(10).toString('hex'), 200),
-      ).rejects.toThrow('CheckCode is not valid');
+      expect(() => payment.query(randomBytes(10).toString('hex'), 200)).rejects.toThrow('CheckCode is not valid');
     });
 
     it('should send Composite on gateway is merchantId start with MS5', () => {
@@ -458,9 +448,7 @@ describe('NewebPay Payments', () => {
         const merchantOrderNo = payload.get('MerchantOrderNo');
 
         const checkValue = createHash('sha256')
-          .update(
-            `IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`,
-          )
+          .update(`IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`)
           .digest('hex')
           .toUpperCase();
 
@@ -507,9 +495,7 @@ describe('NewebPay Payments', () => {
         };
       });
 
-      expect(() =>
-        payment2.query(randomBytes(10).toString('hex'), 200),
-      ).rejects.toThrow('CheckCode is not valid');
+      expect(() => payment2.query(randomBytes(10).toString('hex'), 200)).rejects.toThrow('CheckCode is not valid');
     });
 
     it('should query order info from NewebPay server', async () => {
@@ -523,9 +509,7 @@ describe('NewebPay Payments', () => {
         const merchantOrderNo = payload.get('MerchantOrderNo');
 
         const checkValue = createHash('sha256')
-          .update(
-            `IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`,
-          )
+          .update(`IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`)
           .digest('hex')
           .toUpperCase();
 
@@ -572,19 +556,12 @@ describe('NewebPay Payments', () => {
       });
 
       const id = randomBytes(10).toString('hex');
-      const order = await payment.query<
-        NewebPayOrder<NewebPayCreditCardCommitMessage>
-      >(id, 200);
+      const order = await payment.query<NewebPayOrder<NewebPayCreditCardCommitMessage>>(id, 200);
 
       expect(order.totalPrice).toBe(200);
       expect(order.id).toBe(id);
       expect(order.items.length).toBe(1);
-      expect(
-        order.items.reduce(
-          (sum, item) => sum + item.quantity * item.unitPrice,
-          0,
-        ),
-      ).toBe(200);
+      expect(order.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0)).toBe(200);
       expect(order.additionalInfo?.card4Number).toBe('8888');
       expect(order.additionalInfo?.card6Number).toBe('000000');
       expect(order.channel).toBe(NewebPaymentChannel.CREDIT);
@@ -602,9 +579,7 @@ describe('NewebPay Payments', () => {
         const merchantOrderNo = payload.get('MerchantOrderNo');
 
         const checkValue = createHash('sha256')
-          .update(
-            `IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`,
-          )
+          .update(`IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`)
           .digest('hex')
           .toUpperCase();
 
@@ -652,21 +627,16 @@ describe('NewebPay Payments', () => {
       });
 
       const id = randomBytes(10).toString('hex');
-      const order = await payment.query<
-        NewebPayOrder<NewebPayCreditCardCommitMessage>
-      >(id, 200);
+      const order = await payment.query<NewebPayOrder<NewebPayCreditCardCommitMessage>>(id, 200);
 
       expect(order.totalPrice).toBe(200);
       expect(order.id).toBe(id);
       expect(order.state).toBe(OrderState.REFUNDED);
       expect(order.channel).toBe(NewebPaymentChannel.ANDROID_PAY);
-      expect(
-        (order.additionalInfo as NewebPayAdditionInfoCreditCard).refundStatus,
-      ).toBe(NewebPayCreditCardBalanceStatus.SETTLED);
-      expect(
-        (order.additionalInfo as NewebPayAdditionInfoCreditCard)
-          .remainingBalance,
-      ).toBe(0);
+      expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).refundStatus).toBe(
+        NewebPayCreditCardBalanceStatus.SETTLED,
+      );
+      expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).remainingBalance).toBe(0);
       expect(mockPost).toHaveBeenCalledTimes(1);
     });
 
@@ -681,9 +651,7 @@ describe('NewebPay Payments', () => {
         const merchantOrderNo = payload.get('MerchantOrderNo');
 
         const checkValue = createHash('sha256')
-          .update(
-            `IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`,
-          )
+          .update(`IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`)
           .digest('hex')
           .toUpperCase();
 
@@ -730,9 +698,7 @@ describe('NewebPay Payments', () => {
       });
 
       const id = randomBytes(10).toString('hex');
-      const order = await payment.query<
-        NewebPayOrder<NewebPayCreditCardCommitMessage>
-      >(id, 200);
+      const order = await payment.query<NewebPayOrder<NewebPayCreditCardCommitMessage>>(id, 200);
 
       expect(order.totalPrice).toBe(200);
       expect(order.id).toBe(id);
@@ -751,9 +717,7 @@ describe('NewebPay Payments', () => {
         const merchantOrderNo = payload.get('MerchantOrderNo');
 
         const checkValue = createHash('sha256')
-          .update(
-            `IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`,
-          )
+          .update(`IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`)
           .digest('hex')
           .toUpperCase();
 
@@ -800,9 +764,7 @@ describe('NewebPay Payments', () => {
       });
 
       const id = randomBytes(10).toString('hex');
-      const order = await payment.query<
-        NewebPayOrder<NewebPayCreditCardCommitMessage>
-      >(id, 200);
+      const order = await payment.query<NewebPayOrder<NewebPayCreditCardCommitMessage>>(id, 200);
 
       expect(order.totalPrice).toBe(200);
       expect(order.id).toBe(id);
@@ -821,9 +783,7 @@ describe('NewebPay Payments', () => {
         const merchantOrderNo = payload.get('MerchantOrderNo');
 
         const checkValue = createHash('sha256')
-          .update(
-            `IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`,
-          )
+          .update(`IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`)
           .digest('hex')
           .toUpperCase();
 
@@ -870,30 +830,17 @@ describe('NewebPay Payments', () => {
       });
 
       const id = randomBytes(10).toString('hex');
-      const order = await payment.query<
-        NewebPayOrder<NewebPayCreditCardCommitMessage>
-      >(id, 200);
+      const order = await payment.query<NewebPayOrder<NewebPayCreditCardCommitMessage>>(id, 200);
 
       expect(order.totalPrice).toBe(200);
       expect(order.id).toBe(id);
-      expect(order.additionalInfo?.processDate.getTime()).toBe(
-        order.createdAt?.getTime(),
-      );
+      expect(order.additionalInfo?.processDate.getTime()).toBe(order.createdAt?.getTime());
       expect(order.additionalInfo?.card4Number).toBe('8888');
       expect(order.additionalInfo?.card6Number).toBe('000000');
       expect(order.channel).toBe(NewebPaymentChannel.CREDIT);
-      expect(
-        (order.additionalInfo as NewebPayAdditionInfoCreditCard).installments
-          ?.count,
-      ).toBe(3);
-      expect(
-        (order.additionalInfo as NewebPayAdditionInfoCreditCard).installments
-          ?.firstAmount,
-      ).toBe(67);
-      expect(
-        (order.additionalInfo as NewebPayAdditionInfoCreditCard).installments
-          ?.eachAmount,
-      ).toBe(66);
+      expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).installments?.count).toBe(3);
+      expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).installments?.firstAmount).toBe(67);
+      expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).installments?.eachAmount).toBe(66);
       expect(mockPost).toHaveBeenCalledTimes(1);
     });
 
@@ -908,9 +855,7 @@ describe('NewebPay Payments', () => {
         const merchantOrderNo = payload.get('MerchantOrderNo');
 
         const checkValue = createHash('sha256')
-          .update(
-            `IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`,
-          )
+          .update(`IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`)
           .digest('hex')
           .toUpperCase();
 
@@ -960,9 +905,7 @@ describe('NewebPay Payments', () => {
         const merchantOrderNo = payload.get('MerchantOrderNo');
 
         const checkValue = createHash('sha256')
-          .update(
-            `IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`,
-          )
+          .update(`IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`)
           .digest('hex')
           .toUpperCase();
 
@@ -997,9 +940,7 @@ describe('NewebPay Payments', () => {
       });
 
       const id = randomBytes(10).toString('hex');
-      const order = await payment.query<
-        NewebPayOrder<NewebPayWebATMCommitMessage>
-      >(id, 200);
+      const order = await payment.query<NewebPayOrder<NewebPayWebATMCommitMessage>>(id, 200);
 
       expect(order.totalPrice).toBe(200);
       expect(order.id).toBe(id);
@@ -1020,9 +961,7 @@ describe('NewebPay Payments', () => {
         const merchantOrderNo = payload.get('MerchantOrderNo');
 
         const checkValue = createHash('sha256')
-          .update(
-            `IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`,
-          )
+          .update(`IV=${AES_IV}&Amt=${amt}&MerchantID=${merchantId}&MerchantOrderNo=${merchantOrderNo}&Key=${AES_KEY}`)
           .digest('hex')
           .toUpperCase();
 
@@ -1057,9 +996,7 @@ describe('NewebPay Payments', () => {
       });
 
       const id = randomBytes(10).toString('hex');
-      const order = await payment.query<
-        NewebPayOrder<NewebPayWebATMCommitMessage>
-      >(id, 200);
+      const order = await payment.query<NewebPayOrder<NewebPayWebATMCommitMessage>>(id, 200);
 
       expect(order.totalPrice).toBe(200);
       expect(order.id).toBe(id);

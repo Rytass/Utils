@@ -1,5 +1,20 @@
-import { AdditionalInfo, Channel, CreditCardAuthInfo, OrderCreditCardCommitMessage, PaymentItem, PrepareOrderInput } from '@rytass/payments';
-import { AllowUILanguage, NewebPayAuthBank, NewebPayCommitMessage, NewebPayCreditCardBalanceStatus, NewebPayCreditCardSpeedCheckoutMode, NewebPayCreditCardSubChannel, NewebPaymentChannel } from '../typings';
+import {
+  AdditionalInfo,
+  Channel,
+  CreditCardAuthInfo,
+  OrderCreditCardCommitMessage,
+  PaymentItem,
+  PrepareOrderInput,
+} from '@rytass/payments';
+import {
+  AllowUILanguage,
+  NewebPayAuthBank,
+  NewebPayCommitMessage,
+  NewebPayCreditCardBalanceStatus,
+  NewebPayCreditCardSpeedCheckoutMode,
+  NewebPayCreditCardSubChannel,
+  NewebPaymentChannel,
+} from '../typings';
 
 export enum NewebPayCreditCardInstallmentOptions {
   THREE = 3,
@@ -10,7 +25,9 @@ export enum NewebPayCreditCardInstallmentOptions {
   THIRTY = 30,
 }
 
-export interface NewebPayAdditionInfoCreditCard extends CreditCardAuthInfo, AdditionalInfo<NewebPayCreditCardCommitMessage> {
+export interface NewebPayAdditionInfoCreditCard
+  extends CreditCardAuthInfo,
+    AdditionalInfo<NewebPayCreditCardCommitMessage> {
   channel: Channel.CREDIT_CARD;
   authBank: NewebPayAuthBank;
   subChannel: NewebPayCreditCardSubChannel;

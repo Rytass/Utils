@@ -12,7 +12,7 @@ export function groupBy<Obj extends Iterable<any> | ObjRecord, Key extends any>(
 ): Dictionary<Obj[]> {
   const reflections = new Map<Key, Obj[]>();
 
-  Array.from(collection).forEach((it) => {
+  Array.from(collection).forEach(it => {
     const key = iteratee(it);
 
     const restoredIterators = reflections.get(key) || [];

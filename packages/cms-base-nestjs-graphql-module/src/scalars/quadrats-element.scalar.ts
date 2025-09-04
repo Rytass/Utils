@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  InternalServerErrorException,
-  Logger,
-} from '@nestjs/common';
+import { BadRequestException, InternalServerErrorException, Logger } from '@nestjs/common';
 import { QuadratsElement } from '@quadrats/core';
 import { GraphQLScalarType, Kind, ValueNode } from 'graphql';
 
@@ -23,9 +19,7 @@ export const QuadratsContentScalar = new GraphQLScalarType({
       }
 
       if (!Array.isArray(parsedValue)) {
-        throw new BadRequestException(
-          'Expected a JSON string for QuadratsContent',
-        );
+        throw new BadRequestException('Expected a JSON string for QuadratsContent');
       }
 
       return parsedValue;
@@ -43,9 +37,7 @@ export const QuadratsContentScalar = new GraphQLScalarType({
       return JSON.stringify(value);
     } catch (error) {
       Logger.error(`Error serializing QuadratsContent: ${error}`);
-      throw new InternalServerErrorException(
-        'Error serializing QuadratsElement',
-      );
+      throw new InternalServerErrorException('Error serializing QuadratsElement');
     }
   },
 

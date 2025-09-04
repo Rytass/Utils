@@ -31,7 +31,7 @@ export class MemberEntity extends BaseMemberEntity {
   @Column({ type: 'boolean', default: 0 })
   isVerified: boolean;
 
-  @OneToMany(() => MemberOrderEntity, (order) => order.member)
+  @OneToMany(() => MemberOrderEntity, order => order.member)
   orders: Relation<MemberOrderEntity[]>;
 }
 
@@ -47,7 +47,7 @@ export class MemberOrderEntity {
   @Column('uuid')
   memberId: string;
 
-  @ManyToOne(() => MemberEntity, (member) => member.orders)
+  @ManyToOne(() => MemberEntity, member => member.orders)
   @JoinColumn({ name: 'memberId', referencedColumnName: 'id' })
   member: Relation<MemberEntity>;
 }

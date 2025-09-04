@@ -6,7 +6,7 @@ A comprehensive TypeScript invoice management framework designed for Taiwan's el
 
 - [x] Unified invoice interface across multiple providers
 - [x] Taiwan electronic invoice system compliance
-- [x] Support for B2B and B2C invoice scenarios  
+- [x] Support for B2B and B2C invoice scenarios
 - [x] Multiple carrier types (Mobile, MOICA, Love Code, etc.)
 - [x] VAT number validation and formatting
 - [x] Invoice allowance (partial refund) management
@@ -21,7 +21,7 @@ A comprehensive TypeScript invoice management framework designed for Taiwan's el
 This package provides the core interfaces and types. Use with specific adapter implementations:
 
 - **[@rytass/invoice-adapter-ecpay](https://www.npmjs.com/package/@rytass/invoice-adapter-ecpay)** - ECPay electronic invoice integration
-- **[@rytass/invoice-adapter-ezpay](https://www.npmjs.com/package/@rytass/invoice-adapter-ezpay)** - EZPay invoice service integration  
+- **[@rytass/invoice-adapter-ezpay](https://www.npmjs.com/package/@rytass/invoice-adapter-ezpay)** - EZPay invoice service integration
 - **[@rytass/invoice-adapter-bank-pro](https://www.npmjs.com/package/@rytass/invoice-adapter-bank-pro)** - Bank Pro invoice system integration
 - **[@rytass/invoice-adapter-amego](https://www.npmjs.com/package/@rytass/invoice-adapter-amego)** - Amego invoice platform integration
 
@@ -40,21 +40,15 @@ yarn add @rytass/invoice @rytass/invoice-adapter-ecpay
 ### Invoice Interface Implementation
 
 ```typescript
-import { 
-  InvoiceGateway, 
-  InvoiceIssueOptions,
-  InvoiceCarriers,
-  TaxType,
-  CustomsMark
-} from '@rytass/invoice';
+import { InvoiceGateway, InvoiceIssueOptions, InvoiceCarriers, TaxType, CustomsMark } from '@rytass/invoice';
 import { ECPayInvoiceGateway } from '@rytass/invoice-adapter-ecpay';
 
 // Initialize invoice gateway
 const invoiceGateway: InvoiceGateway = new ECPayInvoiceGateway({
   hashKey: 'YOUR_HASH_KEY',
-  hashIV: 'YOUR_HASH_IV', 
+  hashIV: 'YOUR_HASH_IV',
   merchantId: 'YOUR_MERCHANT_ID',
-  isProduction: false
+  isProduction: false,
 });
 
 // Issue a B2C invoice
@@ -64,17 +58,17 @@ const invoice = await invoiceGateway.issue({
       name: 'Product A',
       unitPrice: 1000,
       quantity: 2,
-      taxType: TaxType.TAXED
+      taxType: TaxType.TAXED,
     },
     {
-      name: 'Product B', 
+      name: 'Product B',
       unitPrice: 500,
       quantity: 1,
-      taxType: TaxType.TAXED
-    }
+      taxType: TaxType.TAXED,
+    },
   ],
   carrier: InvoiceCarriers.MOBILE('AB12345678'), // Mobile barcode
-  customsMark: CustomsMark.NO
+  customsMark: CustomsMark.NO,
 });
 
 console.log('Invoice Number:', invoice.number);
@@ -90,11 +84,11 @@ const b2bInvoice = await invoiceGateway.issue({
       name: 'Professional Service',
       unitPrice: 50000,
       quantity: 1,
-      taxType: TaxType.TAXED
-    }
+      taxType: TaxType.TAXED,
+    },
   ],
   vatNumber: '12345678', // Company VAT number
-  customsMark: CustomsMark.NO
+  customsMark: CustomsMark.NO,
 });
 ```
 
@@ -107,23 +101,23 @@ const mixedTaxInvoice = await invoiceGateway.issue({
       name: 'Taxed Item',
       unitPrice: 1000,
       quantity: 1,
-      taxType: TaxType.TAXED // 5% tax
+      taxType: TaxType.TAXED, // 5% tax
     },
     {
       name: 'Tax-Free Item',
       unitPrice: 2000,
       quantity: 1,
-      taxType: TaxType.TAX_FREE // No tax
+      taxType: TaxType.TAX_FREE, // No tax
     },
     {
       name: 'Zero Tax Export',
       unitPrice: 3000,
       quantity: 1,
-      taxType: TaxType.ZERO_TAX // Export goods
-    }
+      taxType: TaxType.ZERO_TAX, // Export goods
+    },
   ],
   carrier: InvoiceCarriers.PRINT,
-  customsMark: CustomsMark.YES // For export items
+  customsMark: CustomsMark.YES, // For export items
 });
 ```
 
@@ -151,7 +145,7 @@ const loveCodeCarrier = InvoiceCarriers.LOVE_CODE('123');
 // Member carrier (platform-specific)
 const memberCarrier = { type: InvoiceCarrierType.MEMBER, code: 'member123' };
 
-// Platform carrier (e-commerce platforms)  
+// Platform carrier (e-commerce platforms)
 const platformCarrier = { type: InvoiceCarrierType.PLATFORM, code: 'platform456' };
 ```
 
@@ -165,21 +159,21 @@ const taxedItem = {
   name: 'Regular Product',
   unitPrice: 1000,
   quantity: 1,
-  taxType: TaxType.TAXED // 5% business tax
+  taxType: TaxType.TAXED, // 5% business tax
 };
 
 const taxFreeItem = {
   name: 'Exempt Product',
   unitPrice: 1000,
   quantity: 1,
-  taxType: TaxType.TAX_FREE // Tax exempt goods
+  taxType: TaxType.TAX_FREE, // Tax exempt goods
 };
 
 const zeroTaxItem = {
-  name: 'Export Product', 
+  name: 'Export Product',
   unitPrice: 1000,
   quantity: 1,
-  taxType: TaxType.ZERO_TAX // Export goods (0% tax)
+  taxType: TaxType.ZERO_TAX, // Export goods (0% tax)
 };
 
 // Special tax scenarios
@@ -188,7 +182,7 @@ const specialTaxItem = {
   unitPrice: 1000,
   quantity: 1,
   taxType: TaxType.SPECIAL,
-  specialTaxCode: SpecialTaxCode.BANK_COMMON
+  specialTaxCode: SpecialTaxCode.BANK_COMMON,
 };
 ```
 
@@ -198,10 +192,10 @@ const specialTaxItem = {
 import { InvoiceState } from '@rytass/invoice';
 
 // Invoice lifecycle states
-InvoiceState.INITED      // Invoice created but not issued
-InvoiceState.ISSUED      // Invoice successfully issued  
-InvoiceState.VOID        // Invoice voided/cancelled
-InvoiceState.ALLOWANCED  // Invoice has allowances (partial refunds)
+InvoiceState.INITED; // Invoice created but not issued
+InvoiceState.ISSUED; // Invoice successfully issued
+InvoiceState.VOID; // Invoice voided/cancelled
+InvoiceState.ALLOWANCED; // Invoice has allowances (partial refunds)
 ```
 
 ## Advanced Usage
@@ -216,10 +210,10 @@ const originalInvoice = await invoiceGateway.issue({
       name: 'Product A',
       unitPrice: 1000,
       quantity: 3, // Total: 3000
-      taxType: TaxType.TAXED
-    }
+      taxType: TaxType.TAXED,
+    },
   ],
-  carrier: InvoiceCarriers.MOBILE('/ABC1234')
+  carrier: InvoiceCarriers.MOBILE('/ABC1234'),
 });
 
 // Create allowance for partial refund (return 1 item)
@@ -230,12 +224,12 @@ const allowanceInvoice = await invoiceGateway.allowance(
       name: 'Product A',
       unitPrice: 1000,
       quantity: 1, // Refund 1 item
-      taxType: TaxType.TAXED
-    }
+      taxType: TaxType.TAXED,
+    },
   ],
   {
-    taxType: TaxType.TAXED // Allowance tax type
-  }
+    taxType: TaxType.TAXED, // Allowance tax type
+  },
 );
 
 console.log('Allowance created:', allowanceInvoice.allowances.length);
@@ -246,7 +240,7 @@ console.log('Allowance created:', allowanceInvoice.allowances.length);
 ```typescript
 // Void an entire invoice
 const voidedInvoice = await invoiceGateway.void(invoice, {
-  reason: 'Customer requested cancellation'
+  reason: 'Customer requested cancellation',
 });
 
 console.log('Invoice state:', voidedInvoice.state); // InvoiceState.VOID
@@ -289,7 +283,7 @@ import { getTaxTypeFromItems } from '@rytass/invoice';
 
 const items = [
   { name: 'Item 1', unitPrice: 1000, quantity: 1, taxType: TaxType.TAXED },
-  { name: 'Item 2', unitPrice: 2000, quantity: 1, taxType: TaxType.TAXED }
+  { name: 'Item 2', unitPrice: 2000, quantity: 1, taxType: TaxType.TAXED },
 ];
 
 // Automatically determine overall tax type for invoice
@@ -327,10 +321,10 @@ const customInvoice = await invoiceGateway.issue({
       taxType: TaxType.TAXED,
       productId: 'PROD-001',
       category: 'Electronics',
-      discount: 100
-    }
+      discount: 100,
+    },
   ] as CustomInvoiceItem[],
-  carrier: InvoiceCarriers.PRINT
+  carrier: InvoiceCarriers.PRINT,
 });
 ```
 
@@ -346,14 +340,11 @@ class CustomInvoiceService<T extends PaymentItem> {
   async issueInvoice(items: InvoicePaymentItem<T>[]): Promise<Invoice<T>> {
     return this.gateway.issue({
       items,
-      carrier: InvoiceCarriers.PRINT
+      carrier: InvoiceCarriers.PRINT,
     });
   }
 
-  async processRefund(
-    invoice: Invoice<T>, 
-    refundItems: InvoicePaymentItem<T>[]
-  ): Promise<Invoice<T>> {
+  async processRefund(invoice: Invoice<T>, refundItems: InvoicePaymentItem<T>[]): Promise<Invoice<T>> {
     return this.gateway.allowance(invoice, refundItems);
   }
 }
@@ -371,17 +362,17 @@ try {
         name: 'Product',
         unitPrice: 1000,
         quantity: 1,
-        taxType: TaxType.TAXED
-      }
+        taxType: TaxType.TAXED,
+      },
     ],
     vatNumber: '12345678',
-    carrier: InvoiceCarriers.MOBILE('/INVALID')
+    carrier: InvoiceCarriers.MOBILE('/INVALID'),
   });
 } catch (error) {
   if (error.message.includes('invalid mobile barcode')) {
     console.error('Mobile barcode validation failed');
   } else if (error.message.includes('VAT number')) {
-    console.error('VAT number validation failed');  
+    console.error('VAT number validation failed');
   } else if (error.message.includes('tax calculation')) {
     console.error('Tax calculation error');
   } else {
@@ -404,7 +395,7 @@ const invoiceGateway = new ECPayInvoiceGateway({
   hashKey: process.env.ECPAY_HASH_KEY!,
   hashIV: process.env.ECPAY_HASH_IV!,
   merchantId: process.env.ECPAY_MERCHANT_ID!,
-  isProduction: process.env.NODE_ENV === 'production'
+  isProduction: process.env.NODE_ENV === 'production',
 });
 
 app.post('/api/invoices', async (req, res) => {
@@ -425,22 +416,22 @@ app.post('/api/invoices', async (req, res) => {
     const invoice = await invoiceGateway.issue({
       items: items.map(item => ({
         ...item,
-        taxType: TaxType.TAXED
+        taxType: TaxType.TAXED,
       })),
       vatNumber,
-      carrier
+      carrier,
     });
 
     res.json({
       success: true,
       invoiceNumber: invoice.number,
       amount: invoice.amount,
-      state: invoice.state
+      state: invoice.state,
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -462,7 +453,7 @@ export class InvoiceService {
       hashKey: process.env.ECPAY_HASH_KEY!,
       hashIV: process.env.ECPAY_HASH_IV!,
       merchantId: process.env.ECPAY_MERCHANT_ID!,
-      isProduction: process.env.NODE_ENV === 'production'
+      isProduction: process.env.NODE_ENV === 'production',
     });
   }
 
@@ -488,30 +479,31 @@ export class InvoiceService {
         name: item.name,
         unitPrice: item.price,
         quantity: item.quantity,
-        taxType: TaxType.TAXED
+        taxType: TaxType.TAXED,
       })),
       vatNumber: order.customerVat,
-      carrier: order.mobileBarcode 
-        ? InvoiceCarriers.MOBILE(order.mobileBarcode)
-        : InvoiceCarriers.PRINT
+      carrier: order.mobileBarcode ? InvoiceCarriers.MOBILE(order.mobileBarcode) : InvoiceCarriers.PRINT,
     });
 
     return {
       invoiceNumber: invoice.number,
       amount: invoice.amount,
       tax: invoice.taxAmount,
-      state: invoice.state
+      state: invoice.state,
     };
   }
 
-  async processRefund(invoiceNumber: string, refundItems: Array<{
-    name: string;
-    price: number;
-    quantity: number;
-  }>) {
+  async processRefund(
+    invoiceNumber: string,
+    refundItems: Array<{
+      name: string;
+      price: number;
+      quantity: number;
+    }>,
+  ) {
     // Query existing invoice
     const invoice = await this.invoiceGateway.query({ number: invoiceNumber });
-    
+
     // Create allowance
     const updatedInvoice = await this.invoiceGateway.allowance(
       invoice,
@@ -519,13 +511,13 @@ export class InvoiceService {
         name: item.name,
         unitPrice: item.price,
         quantity: item.quantity,
-        taxType: TaxType.TAXED
-      }))
+        taxType: TaxType.TAXED,
+      })),
     );
 
     return {
       allowances: updatedInvoice.allowances,
-      state: updatedInvoice.state
+      state: updatedInvoice.state,
     };
   }
 }
@@ -561,20 +553,18 @@ class EcommerceInvoiceManager {
       name: item.name,
       unitPrice: item.price,
       quantity: item.quantity,
-      taxType: item.isExport ? TaxType.ZERO_TAX : TaxType.TAXED
+      taxType: item.isExport ? TaxType.ZERO_TAX : TaxType.TAXED,
     }));
 
     // Determine carrier based on customer preferences
     let carrier;
     if (order.customer.mobileBarcode) {
-      const isValid = await this.invoiceGateway.isMobileBarcodeValid(
-        order.customer.mobileBarcode
-      );
+      const isValid = await this.invoiceGateway.isMobileBarcodeValid(order.customer.mobileBarcode);
       if (isValid) {
         carrier = InvoiceCarriers.MOBILE(order.customer.mobileBarcode);
       }
     }
-    
+
     if (!carrier) {
       carrier = InvoiceCarriers.PRINT;
     }
@@ -583,7 +573,7 @@ class EcommerceInvoiceManager {
       items: invoiceItems,
       vatNumber: order.customer.vatNumber,
       carrier,
-      customsMark: hasExportItems ? CustomsMark.YES : CustomsMark.NO
+      customsMark: hasExportItems ? CustomsMark.YES : CustomsMark.NO,
     });
 
     // Store invoice reference with order
@@ -601,26 +591,31 @@ class EcommerceInvoiceManager {
 ## Best Practices
 
 ### Configuration Management
+
 - Store API credentials securely using environment variables
 - Use different configurations for staging and production environments
 - Implement proper error handling for credential validation
 
 ### Tax Compliance
+
 - Always validate VAT numbers before issuing B2B invoices
 - Use appropriate tax types for different product categories
 - Handle export/import scenarios with proper customs marks
 
 ### State Management
+
 - Track invoice states throughout their lifecycle
 - Implement proper allowance workflows for partial refunds
 - Handle void operations with proper audit trails
 
 ### Performance
+
 - Cache carrier validation results to reduce API calls
 - Batch invoice operations when processing multiple orders
 - Implement retry logic for network failures
 
 ### Security
+
 - Validate all input parameters before processing
 - Sanitize carrier codes and VAT numbers
 - Log invoice operations for audit purposes
@@ -645,10 +640,10 @@ describe('Invoice Management', () => {
           name: 'Test Product',
           unitPrice: 1000,
           quantity: 1,
-          taxType: TaxType.TAXED
-        }
+          taxType: TaxType.TAXED,
+        },
       ],
-      carrier: InvoiceCarriers.PRINT
+      carrier: InvoiceCarriers.PRINT,
     });
 
     expect(invoice.number).toBeDefined();

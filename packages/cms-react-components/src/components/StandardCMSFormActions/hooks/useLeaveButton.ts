@@ -49,9 +49,7 @@ export function useLeaveButton<T extends FieldValues>({
   if (createMode) {
     return {
       text,
-      onLeave: onLeave(
-        '編輯將不被保存，如果需要保存目前文章編輯進度，請選擇「儲存草稿」。',
-      ),
+      onLeave: onLeave('編輯將不被保存，如果需要保存目前文章編輯進度，請選擇「儲存草稿」。'),
     };
   }
 
@@ -66,9 +64,7 @@ export function useLeaveButton<T extends FieldValues>({
       ) {
         return {
           text,
-          onLeave: onLeave(
-            '編輯將不被保存，如果需要保存目前文章編輯進度，請選擇「新增草稿版本」。',
-          ),
+          onLeave: onLeave('編輯將不被保存，如果需要保存目前文章編輯進度，請選擇「新增草稿版本」。'),
         };
       }
 
@@ -89,9 +85,7 @@ export function useLeaveButton<T extends FieldValues>({
       ) {
         return {
           text,
-          onLeave: onLeave(
-            '編輯將不被保存，如果需要保存目前文章編輯進度，請選擇「儲存草稿」。',
-          ),
+          onLeave: onLeave('編輯將不被保存，如果需要保存目前文章編輯進度，請選擇「儲存草稿」。'),
         };
       }
 
@@ -124,9 +118,7 @@ export function useLeaveButton<T extends FieldValues>({
       ) {
         return {
           text,
-          onLeave: onLeave(
-            '編輯將不被保存，如果需要保存目前文章編輯進度，請選擇「新增草稿版本」。',
-          ),
+          onLeave: onLeave('編輯將不被保存，如果需要保存目前文章編輯進度，請選擇「新增草稿版本」。'),
         };
       }
 
@@ -145,9 +137,7 @@ export function useLeaveButton<T extends FieldValues>({
       ) {
         return {
           text,
-          onLeave: onLeave(
-            '編輯將不被保存，如果需要保存目前文章編輯進度，請選擇「新增草稿版本」。',
-          ),
+          onLeave: onLeave('編輯將不被保存，如果需要保存目前文章編輯進度，請選擇「新增草稿版本」。'),
         };
       }
 
@@ -168,9 +158,7 @@ export function useLeaveButton<T extends FieldValues>({
       ) {
         return {
           text,
-          onLeave: onLeave(
-            '編輯將不被保存，如果需要保存目前文章編輯進度，請選擇「新增草稿版本」。',
-          ),
+          onLeave: onLeave('編輯將不被保存，如果需要保存目前文章編輯進度，請選擇「新增草稿版本」。'),
         };
       }
 
@@ -191,9 +179,7 @@ export function useLeaveButton<T extends FieldValues>({
       ) {
         return {
           text,
-          onLeave: onLeave(
-            '編輯將不被保存，如果需要保存目前文章編輯進度，請選擇「新增草稿版本」。',
-          ),
+          onLeave: onLeave('編輯將不被保存，如果需要保存目前文章編輯進度，請選擇「新增草稿版本」。'),
         };
       }
 

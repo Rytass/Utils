@@ -14,20 +14,22 @@ describe('SMSServiceEvery8D', () => {
     password: 'pwpwpw',
   });
 
-  it('should every8d send sms', (done) => {
+  it('should every8d send sms', done => {
     post.mockImplementationOnce(async (url: string, data: unknown) => {
       expect(url).toEqual('https://api.e8d.tw/API21/HTTP/SendSMS.ashx');
 
-      const params = Array.from(new URLSearchParams(data as string).entries())
-        .reduce((vars, [key, value]) => ({
+      const params = Array.from(new URLSearchParams(data as string).entries()).reduce(
+        (vars, [key, value]) => ({
           ...vars,
           [key]: value,
-        }), {}) as {
-          UID: string;
-          PWD: string;
-          MSG: string;
-          DEST: string;
-        };
+        }),
+        {},
+      ) as {
+        UID: string;
+        PWD: string;
+        MSG: string;
+        DEST: string;
+      };
 
       expect(params.UID).toEqual('uuuuu');
       expect(params.PWD).toEqual('pwpwpw');
@@ -37,34 +39,38 @@ describe('SMSServiceEvery8D', () => {
       return { data: '80.00,1,1,0,b6fbd168-90b7-4119-9e24-87aaeebf6298' };
     });
 
-    smsService.send({
-      mobile: '0969999999',
-      text: 'Testing',
-    }).then((response) => {
-      expect(response.errorCode).toBeUndefined();
-      expect(response.errorMessage).toBeUndefined();
-      expect(response.status).toBe(SMSRequestResult.SUCCESS);
-      expect(response.mobile).toBe('0969999999');
-      expect(response.messageId).toBe('b6fbd168-90b7-4119-9e24-87aaeebf6298');
+    smsService
+      .send({
+        mobile: '0969999999',
+        text: 'Testing',
+      })
+      .then(response => {
+        expect(response.errorCode).toBeUndefined();
+        expect(response.errorMessage).toBeUndefined();
+        expect(response.status).toBe(SMSRequestResult.SUCCESS);
+        expect(response.mobile).toBe('0969999999');
+        expect(response.messageId).toBe('b6fbd168-90b7-4119-9e24-87aaeebf6298');
 
-      done();
-    });
+        done();
+      });
   });
 
-  it('should send batch request', (done) => {
+  it('should send batch request', done => {
     post.mockImplementation(async (url: string, data: unknown) => {
       expect(url).toEqual('https://api.e8d.tw/API21/HTTP/SendSMS.ashx');
 
-      const params = Array.from(new URLSearchParams(data as string).entries())
-        .reduce((vars, [key, value]) => ({
+      const params = Array.from(new URLSearchParams(data as string).entries()).reduce(
+        (vars, [key, value]) => ({
           ...vars,
           [key]: value,
-        }), {}) as {
-          UID: string;
-          PWD: string;
-          MSG: string;
-          DEST: string;
-        };
+        }),
+        {},
+      ) as {
+        UID: string;
+        PWD: string;
+        MSG: string;
+        DEST: string;
+      };
 
       expect(params.UID).toEqual('uuuuu');
       expect(params.PWD).toEqual('pwpwpw');
@@ -75,18 +81,18 @@ describe('SMSServiceEvery8D', () => {
     });
 
     Promise.all([
-      smsService.send([{
-        mobile: '0969999999',
-        text: 'Testing',
-      }, {
-        mobile: '0969999998',
-        text: 'Testing',
-      }]),
+      smsService.send([
+        {
+          mobile: '0969999999',
+          text: 'Testing',
+        },
+        {
+          mobile: '0969999998',
+          text: 'Testing',
+        },
+      ]),
       smsService.send({
-        mobileList: [
-          '0969999999',
-          '0969999998',
-        ],
+        mobileList: ['0969999999', '0969999998'],
         text: 'Testing',
       }),
     ]).then(([responsesA, responsesB]) => {
@@ -122,20 +128,22 @@ describe('SMSServiceEvery8D', () => {
     });
   });
 
-  it('should send batch request with difference message', (done) => {
+  it('should send batch request with difference message', done => {
     post.mockImplementation(async (url: string, data: unknown) => {
       expect(url).toEqual('https://api.e8d.tw/API21/HTTP/SendSMS.ashx');
 
-      const params = Array.from(new URLSearchParams(data as string).entries())
-        .reduce((vars, [key, value]) => ({
+      const params = Array.from(new URLSearchParams(data as string).entries()).reduce(
+        (vars, [key, value]) => ({
           ...vars,
           [key]: value,
-        }), {}) as {
-          UID: string;
-          PWD: string;
-          MSG: string;
-          DEST: string;
-        };
+        }),
+        {},
+      ) as {
+        UID: string;
+        PWD: string;
+        MSG: string;
+        DEST: string;
+      };
 
       expect(params.UID).toEqual('uuuuu');
       expect(params.PWD).toEqual('pwpwpw');
@@ -151,45 +159,52 @@ describe('SMSServiceEvery8D', () => {
       return { data: '80.00,1,1,0,b6fbd168-90b7-4119-9e24-87aaeebf6299' };
     });
 
-    smsService.send([{
-      mobile: '0969999999',
-      text: 'Testing1',
-    }, {
-      mobile: '0969999998',
-      text: 'Testing2',
-    }]).then((responses) => {
-      expect(responses.length).toBe(2);
+    smsService
+      .send([
+        {
+          mobile: '0969999999',
+          text: 'Testing1',
+        },
+        {
+          mobile: '0969999998',
+          text: 'Testing2',
+        },
+      ])
+      .then(responses => {
+        expect(responses.length).toBe(2);
 
-      expect(responses[0].errorCode).toBeUndefined();
-      expect(responses[0].errorMessage).toBeUndefined();
-      expect(responses[0].status).toBe(SMSRequestResult.SUCCESS);
-      expect(responses[0].mobile).toBe('0969999999');
-      expect(responses[0].messageId).toBe('b6fbd168-90b7-4119-9e24-87aaeebf6299');
+        expect(responses[0].errorCode).toBeUndefined();
+        expect(responses[0].errorMessage).toBeUndefined();
+        expect(responses[0].status).toBe(SMSRequestResult.SUCCESS);
+        expect(responses[0].mobile).toBe('0969999999');
+        expect(responses[0].messageId).toBe('b6fbd168-90b7-4119-9e24-87aaeebf6299');
 
-      expect(responses[1].errorCode).toBeUndefined();
-      expect(responses[1].errorMessage).toBeUndefined();
-      expect(responses[1].status).toBe(SMSRequestResult.SUCCESS);
-      expect(responses[1].mobile).toBe('0969999998');
-      expect(responses[1].messageId).toBe('b6fbd168-90b7-4119-9e24-87aaeebf6299');
+        expect(responses[1].errorCode).toBeUndefined();
+        expect(responses[1].errorMessage).toBeUndefined();
+        expect(responses[1].status).toBe(SMSRequestResult.SUCCESS);
+        expect(responses[1].mobile).toBe('0969999998');
+        expect(responses[1].messageId).toBe('b6fbd168-90b7-4119-9e24-87aaeebf6299');
 
-      done();
-    });
+        done();
+      });
   });
 
-  it('should receive format error', (done) => {
+  it('should receive format error', done => {
     post.mockImplementationOnce(async (url: string, data: unknown) => {
       expect(url).toEqual('https://api.e8d.tw/API21/HTTP/SendSMS.ashx');
 
-      const params = Array.from(new URLSearchParams(data as string).entries())
-        .reduce((vars, [key, value]) => ({
+      const params = Array.from(new URLSearchParams(data as string).entries()).reduce(
+        (vars, [key, value]) => ({
           ...vars,
           [key]: value,
-        }), {}) as {
-          UID: string;
-          PWD: string;
-          MSG: string;
-          DEST: string;
-        };
+        }),
+        {},
+      ) as {
+        UID: string;
+        PWD: string;
+        MSG: string;
+        DEST: string;
+      };
 
       expect(params.UID).toEqual('uuuuu');
       expect(params.PWD).toEqual('pwpwpw');
@@ -199,34 +214,38 @@ describe('SMSServiceEvery8D', () => {
       return { data: `-306,手機格式不符:${params.DEST}` };
     });
 
-    smsService.send({
-      mobile: '+1-202-895-1800',
-      text: 'Testing1',
-    }).then((response) => {
-      expect(response.errorCode).toBe(Every8DError.FORMAT_ERROR);
-      expect(response.errorMessage).toBe('手機格式不符:+1-202-895-1800');
-      expect(response.status).toBe(SMSRequestResult.FAILED);
-      expect(response.mobile).toBe('+1-202-895-1800');
-      expect(response.messageId).toBeUndefined();
+    smsService
+      .send({
+        mobile: '+1-202-895-1800',
+        text: 'Testing1',
+      })
+      .then(response => {
+        expect(response.errorCode).toBe(Every8DError.FORMAT_ERROR);
+        expect(response.errorMessage).toBe('手機格式不符:+1-202-895-1800');
+        expect(response.status).toBe(SMSRequestResult.FAILED);
+        expect(response.mobile).toBe('+1-202-895-1800');
+        expect(response.messageId).toBeUndefined();
 
-      done();
-    });
+        done();
+      });
   });
 
-  it('should receive partial error', (done) => {
+  it('should receive partial error', done => {
     post.mockImplementation(async (url: string, data: unknown) => {
       expect(url).toEqual('https://api.e8d.tw/API21/HTTP/SendSMS.ashx');
 
-      const params = Array.from(new URLSearchParams(data as string).entries())
-        .reduce((vars, [key, value]) => ({
+      const params = Array.from(new URLSearchParams(data as string).entries()).reduce(
+        (vars, [key, value]) => ({
           ...vars,
           [key]: value,
-        }), {}) as {
-          UID: string;
-          PWD: string;
-          MSG: string;
-          DEST: string;
-        };
+        }),
+        {},
+      ) as {
+        UID: string;
+        PWD: string;
+        MSG: string;
+        DEST: string;
+      };
 
       expect(params.UID).toEqual('uuuuu');
       expect(params.PWD).toEqual('pwpwpw');
@@ -236,46 +255,50 @@ describe('SMSServiceEvery8D', () => {
       return { data: '80.00,3,1,2,b6fbd168-90b7-4119-9e24-87aaeebf6230' };
     });
 
-    smsService.send({
-      mobileList: ['+1-202-895-1800', '0972-222-223','0972222222'],
-      text: 'Testing1',
-    }).then((responses) => {
-      expect(responses[0].errorCode).toBeUndefined();
-      expect(responses[0].errorMessage).toBeUndefined();
-      expect(responses[0].status).toBe(SMSRequestResult.SUCCESS);
-      expect(responses[0].mobile).toBe('+1-202-895-1800');
-      expect(responses[0].messageId).toBe('b6fbd168-90b7-4119-9e24-87aaeebf6230');
+    smsService
+      .send({
+        mobileList: ['+1-202-895-1800', '0972-222-223', '0972222222'],
+        text: 'Testing1',
+      })
+      .then(responses => {
+        expect(responses[0].errorCode).toBeUndefined();
+        expect(responses[0].errorMessage).toBeUndefined();
+        expect(responses[0].status).toBe(SMSRequestResult.SUCCESS);
+        expect(responses[0].mobile).toBe('+1-202-895-1800');
+        expect(responses[0].messageId).toBe('b6fbd168-90b7-4119-9e24-87aaeebf6230');
 
-      expect(responses[1].errorCode).toBeUndefined();
-      expect(responses[1].errorMessage).toBeUndefined();
-      expect(responses[1].status).toBe(SMSRequestResult.FAILED);
-      expect(responses[1].mobile).toBe('0972222223');
-      expect(responses[1].messageId).toBe('b6fbd168-90b7-4119-9e24-87aaeebf6230');
+        expect(responses[1].errorCode).toBeUndefined();
+        expect(responses[1].errorMessage).toBeUndefined();
+        expect(responses[1].status).toBe(SMSRequestResult.FAILED);
+        expect(responses[1].mobile).toBe('0972222223');
+        expect(responses[1].messageId).toBe('b6fbd168-90b7-4119-9e24-87aaeebf6230');
 
-      expect(responses[2].errorCode).toBeUndefined();
-      expect(responses[2].errorMessage).toBeUndefined();
-      expect(responses[2].status).toBe(SMSRequestResult.FAILED);
-      expect(responses[2].mobile).toBe('0972222222');
-      expect(responses[2].messageId).toBe('b6fbd168-90b7-4119-9e24-87aaeebf6230');
+        expect(responses[2].errorCode).toBeUndefined();
+        expect(responses[2].errorMessage).toBeUndefined();
+        expect(responses[2].status).toBe(SMSRequestResult.FAILED);
+        expect(responses[2].mobile).toBe('0972222222');
+        expect(responses[2].messageId).toBe('b6fbd168-90b7-4119-9e24-87aaeebf6230');
 
-      done();
-    });
+        done();
+      });
   });
 
-  it('should send to oversea number', (done) => {
+  it('should send to oversea number', done => {
     post.mockImplementation(async (url: string, data: unknown) => {
       expect(url).toEqual('https://api.e8d.tw/API21/HTTP/SendSMS.ashx');
 
-      const params = Array.from(new URLSearchParams(data as string).entries())
-        .reduce((vars, [key, value]) => ({
+      const params = Array.from(new URLSearchParams(data as string).entries()).reduce(
+        (vars, [key, value]) => ({
           ...vars,
           [key]: value,
-        }), {}) as {
-          UID: string;
-          PWD: string;
-          MSG: string;
-          DEST: string;
-        };
+        }),
+        {},
+      ) as {
+        UID: string;
+        PWD: string;
+        MSG: string;
+        DEST: string;
+      };
 
       expect(params.UID).toEqual('uuuuu');
       expect(params.PWD).toEqual('pwpwpw');
@@ -286,10 +309,12 @@ describe('SMSServiceEvery8D', () => {
     });
 
     Promise.all([
-      smsService.send([{
-        mobile: '+1-202-895-1800',
-        text: 'Testing1',
-      }]),
+      smsService.send([
+        {
+          mobile: '+1-202-895-1800',
+          text: 'Testing1',
+        },
+      ]),
       smsService.send({
         mobileList: ['+1-202-895-1800'],
         text: 'Testing1',
@@ -318,35 +343,50 @@ describe('SMSServiceEvery8D', () => {
       onlyTaiwanMobileNumber: true,
     });
 
-    expect(smsTaiwanService.send({
-      mobile: '+1-202-895-1800',
-      text: 'Testing1',
-    })).rejects.toThrow();
+    expect(
+      smsTaiwanService.send({
+        mobile: '+1-202-895-1800',
+        text: 'Testing1',
+      }),
+    ).rejects.toThrow();
 
-    expect(smsTaiwanService.send([{
-      mobile: '+1-202-895-1800',
-      text: 'Testing1',
-    }])).rejects.toThrow();
+    expect(
+      smsTaiwanService.send([
+        {
+          mobile: '+1-202-895-1800',
+          text: 'Testing1',
+        },
+      ]),
+    ).rejects.toThrow();
 
-    expect(smsTaiwanService.send([{
-      mobile: '+886-958-999-999',
-      text: 'Testing1',
-    }, {
-      mobile: '+1-202-895-1800',
-      text: 'Testing1',
-    }])).rejects.toThrow();
+    expect(
+      smsTaiwanService.send([
+        {
+          mobile: '+886-958-999-999',
+          text: 'Testing1',
+        },
+        {
+          mobile: '+1-202-895-1800',
+          text: 'Testing1',
+        },
+      ]),
+    ).rejects.toThrow();
 
-    expect(smsTaiwanService.send({
-      mobileList: ['+1-202-895-1800'],
-      text: 'Testing1',
-    })).rejects.toThrow();
+    expect(
+      smsTaiwanService.send({
+        mobileList: ['+1-202-895-1800'],
+        text: 'Testing1',
+      }),
+    ).rejects.toThrow();
   });
 
   it('should reject no target request', () => {
-    expect(smsService.send({
-      mobileList: [],
-      text: 'Testing',
-    })).rejects.toThrow();
+    expect(
+      smsService.send({
+        mobileList: [],
+        text: 'Testing',
+      }),
+    ).rejects.toThrow();
 
     expect(smsService.send([])).rejects.toThrow();
   });

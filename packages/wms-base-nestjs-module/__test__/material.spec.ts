@@ -25,9 +25,7 @@ describe('material', () => {
           logging: false,
         }),
         WMSBaseModule.forRootAsync({
-          imports: [
-            TypeOrmModule.forFeature([MaterialEntity, CustomMaterialEntity]),
-          ],
+          imports: [TypeOrmModule.forFeature([MaterialEntity, CustomMaterialEntity])],
           useFactory: () => ({
             materialEntity: CustomMaterialEntity,
           }),
@@ -35,8 +33,7 @@ describe('material', () => {
       ],
     }).compile();
 
-    service =
-      module.get<MaterialService<CustomMaterialEntity>>(MaterialService);
+    service = module.get<MaterialService<CustomMaterialEntity>>(MaterialService);
   });
 
   afterAll(async () => {

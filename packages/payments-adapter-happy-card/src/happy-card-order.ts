@@ -1,21 +1,10 @@
-import {
-  Order,
-  OrderFailMessage,
-  OrderState,
-  PaymentEvents,
-} from '@rytass/payments';
-import {
-  HappyCardCommitMessage,
-  HappyCardOrderInitOptions,
-  HappyCardProductType,
-} from './typings';
+import { Order, OrderFailMessage, OrderState, PaymentEvents } from '@rytass/payments';
+import { HappyCardCommitMessage, HappyCardOrderInitOptions, HappyCardProductType } from './typings';
 import { HappyCardOrderItem } from './happy-card-order-item';
 import { HappyCardPayment } from './happy-card-payment';
 import { HappyCardPayRequest } from './typings';
 
-export class HappyCardOrder<OCM extends HappyCardCommitMessage>
-  implements Order<OCM>
-{
+export class HappyCardOrder<OCM extends HappyCardCommitMessage> implements Order<OCM> {
   private readonly _id: string;
   private readonly _productType: HappyCardProductType;
   private readonly _items: HappyCardOrderItem[];

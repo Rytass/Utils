@@ -20,11 +20,13 @@ const addMac = getAddMac(HASH_KEY, HASH_IV);
 function checkMac(payload: Record<string, string>): boolean {
   const { CheckMacValue: mac, ...res } = payload;
   const { CheckMacValue: computedMac } = addMac(
-    Object.entries(res)
-      .reduce((vars, [key, value]) => ({
+    Object.entries(res).reduce(
+      (vars, [key, value]) => ({
         ...vars,
-        [key]: (value as unknown as (string | number)).toString(),
-      }), {}),
+        [key]: (value as unknown as string | number).toString(),
+      }),
+      {},
+    ),
   );
 
   if (computedMac !== mac) return false;
@@ -36,7 +38,7 @@ describe('ECPayPayment Query Card Bound Info', () => {
   const originCreateServer = createServer;
   const mockedCreateServer = jest.spyOn(http, 'createServer');
 
-  mockedCreateServer.mockImplementation((requestHandler) => {
+  mockedCreateServer.mockImplementation(requestHandler => {
     const mockServer = originCreateServer(requestHandler);
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
@@ -49,7 +51,7 @@ describe('ECPayPayment Query Card Bound Info', () => {
 
     const mockedClose = jest.spyOn(mockServer, 'close');
 
-    mockedClose.mockImplementationOnce((onClosed) => {
+    mockedClose.mockImplementationOnce(onClosed => {
       mockServer.close(onClosed);
 
       return mockServer;
@@ -75,15 +77,17 @@ describe('ECPayPayment Query Card Bound Info', () => {
     post.mockImplementationOnce(async (url: string, data: unknown) => {
       expect(url).toEqual('https://payment-stage.ecpay.com.tw/MerchantMember/QueryMemberBinding');
 
-      const params = Array.from(new URLSearchParams(data as string).entries())
-        .reduce((vars, [key, value]) => ({
+      const params = Array.from(new URLSearchParams(data as string).entries()).reduce(
+        (vars, [key, value]) => ({
           ...vars,
           [key]: value,
-        }), {}) as {
-          MerchantID: string;
-          MerchantMemberID: string;
-          CheckMacValue: string;
-        };
+        }),
+        {},
+      ) as {
+        MerchantID: string;
+        MerchantMemberID: string;
+        CheckMacValue: string;
+      };
 
       expect(checkMac(params)).toBeTruthy();
 
@@ -105,7 +109,9 @@ describe('ECPayPayment Query Card Bound Info', () => {
 
     const response = await payment.queryBoundCard('192536');
 
-    expect(DateTime.fromJSDate(response.bindingDate as Date).toFormat('yyyy/MM/dd HH:mm:ss')).toEqual(DEFAULT_BINDING_DATE);
+    expect(DateTime.fromJSDate(response.bindingDate as Date).toFormat('yyyy/MM/dd HH:mm:ss')).toEqual(
+      DEFAULT_BINDING_DATE,
+    );
     expect(response.cardId).toEqual('192536');
     expect(response.cardNumberPrefix).toEqual('123456');
     expect(response.cardNumberSuffix).toEqual('9876');
@@ -116,15 +122,17 @@ describe('ECPayPayment Query Card Bound Info', () => {
     post.mockImplementationOnce(async (url: string, data: unknown) => {
       expect(url).toEqual('https://payment-stage.ecpay.com.tw/MerchantMember/QueryMemberBinding');
 
-      const params = Array.from(new URLSearchParams(data as string).entries())
-        .reduce((vars, [key, value]) => ({
+      const params = Array.from(new URLSearchParams(data as string).entries()).reduce(
+        (vars, [key, value]) => ({
           ...vars,
           [key]: value,
-        }), {}) as {
-          MerchantID: string;
-          MerchantMemberID: string;
-          CheckMacValue: string;
-        };
+        }),
+        {},
+      ) as {
+        MerchantID: string;
+        MerchantMemberID: string;
+        CheckMacValue: string;
+      };
 
       expect(checkMac(params)).toBeTruthy();
 
@@ -153,15 +161,17 @@ describe('ECPayPayment Query Card Bound Info', () => {
     post.mockImplementationOnce(async (url: string, data: unknown) => {
       expect(url).toEqual('https://payment-stage.ecpay.com.tw/MerchantMember/QueryMemberBinding');
 
-      const params = Array.from(new URLSearchParams(data as string).entries())
-        .reduce((vars, [key, value]) => ({
+      const params = Array.from(new URLSearchParams(data as string).entries()).reduce(
+        (vars, [key, value]) => ({
           ...vars,
           [key]: value,
-        }), {}) as {
-          MerchantID: string;
-          MerchantMemberID: string;
-          CheckMacValue: string;
-        };
+        }),
+        {},
+      ) as {
+        MerchantID: string;
+        MerchantMemberID: string;
+        CheckMacValue: string;
+      };
 
       expect(checkMac(params)).toBeTruthy();
 
@@ -188,15 +198,17 @@ describe('ECPayPayment Query Card Bound Info', () => {
     post.mockImplementationOnce(async (url: string, data: unknown) => {
       expect(url).toEqual('https://payment-stage.ecpay.com.tw/MerchantMember/QueryMemberBinding');
 
-      const params = Array.from(new URLSearchParams(data as string).entries())
-        .reduce((vars, [key, value]) => ({
+      const params = Array.from(new URLSearchParams(data as string).entries()).reduce(
+        (vars, [key, value]) => ({
           ...vars,
           [key]: value,
-        }), {}) as {
-          MerchantID: string;
-          MerchantMemberID: string;
-          CheckMacValue: string;
-        };
+        }),
+        {},
+      ) as {
+        MerchantID: string;
+        MerchantMemberID: string;
+        CheckMacValue: string;
+      };
 
       expect(checkMac(params)).toBeTruthy();
 
@@ -254,15 +266,17 @@ describe('ECPayPayment Query Card Bound Info', () => {
     post.mockImplementationOnce(async (url: string, data: unknown) => {
       expect(url).toEqual('https://payment-stage.ecpay.com.tw/MerchantMember/QueryMemberBinding');
 
-      const params = Array.from(new URLSearchParams(data as string).entries())
-        .reduce((vars, [key, value]) => ({
+      const params = Array.from(new URLSearchParams(data as string).entries()).reduce(
+        (vars, [key, value]) => ({
           ...vars,
           [key]: value,
-        }), {}) as {
-          MerchantID: string;
-          MerchantMemberID: string;
-          CheckMacValue: string;
-        };
+        }),
+        {},
+      ) as {
+        MerchantID: string;
+        MerchantMemberID: string;
+        CheckMacValue: string;
+      };
 
       expect(checkMac(params)).toBeTruthy();
 

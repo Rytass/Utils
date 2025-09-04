@@ -12,11 +12,7 @@ import {
   TableScrolling,
 } from '@mezzanine-ui/core/table';
 import { LogsModalProps } from '../cms-modals/LogsModal';
-import {
-  ArticleStage,
-  ArticlesPermissions,
-  ArticleTableActionsType,
-} from '../../typings';
+import { ArticleStage, ArticlesPermissions, ArticleTableActionsType } from '../../typings';
 
 export interface StandardCMSTableEventsProps<T extends TableDataSourceWithID> {
   onView?: (source: T) => Promise<void>;

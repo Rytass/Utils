@@ -5,6 +5,7 @@ Comprehensive GraphQL API layer for the CMS Base NestJS Module, providing a comp
 ## Features
 
 ### Core GraphQL API
+
 - [x] Complete GraphQL schema for articles and categories
 - [x] Public and backstage (admin) API endpoints
 - [x] Multi-language content delivery
@@ -12,6 +13,7 @@ Comprehensive GraphQL API layer for the CMS Base NestJS Module, providing a comp
 - [x] Paginated collections with metadata
 
 ### Advanced Content Management
+
 - [x] Article approval workflow resolvers
 - [x] Version control and draft management
 - [x] Category hierarchical relationships
@@ -19,6 +21,7 @@ Comprehensive GraphQL API layer for the CMS Base NestJS Module, providing a comp
 - [x] Full-text search integration
 
 ### Performance Optimization
+
 - [x] DataLoader pattern for N+1 query prevention
 - [x] Member data caching with LRU cache
 - [x] Article relationship optimization
@@ -26,6 +29,7 @@ Comprehensive GraphQL API layer for the CMS Base NestJS Module, providing a comp
 - [x] Query complexity analysis
 
 ### Integration Features
+
 - [x] Member system integration (@rytass/member-base-nestjs-module)
 - [x] Permission-based access control
 - [x] Quadrats rich content editor support
@@ -79,11 +83,11 @@ import { CMSBaseGraphQLModule } from '@rytass/cms-base-nestjs-graphql-module';
       signatureLevels: [
         { id: 1, name: 'Editor', level: 1 },
         { id: 2, name: 'Senior Editor', level: 2 },
-        { id: 3, name: 'Chief Editor', level: 3 }
+        { id: 3, name: 'Chief Editor', level: 3 },
       ],
       fullTextSearchMode: true,
-      autoReleaseAfterApproved: false
-    })
+      autoReleaseAfterApproved: false,
+    }),
   ],
 })
 export class AppModule {}
@@ -107,9 +111,9 @@ import { CMSBaseGraphQLModule } from '@rytass/cms-base-nestjs-graphql-module';
         draftMode: configService.get('CMS_DRAFT_MODE') === 'true',
         signatureLevels: JSON.parse(configService.get('CMS_SIGNATURE_LEVELS') || '[]'),
         fullTextSearchMode: configService.get('CMS_FULL_TEXT_SEARCH') === 'true',
-        autoReleaseAfterApproved: configService.get('CMS_AUTO_RELEASE') === 'true'
-      })
-    })
+        autoReleaseAfterApproved: configService.get('CMS_AUTO_RELEASE') === 'true',
+      }),
+    }),
   ],
 })
 export class AppModule {}
@@ -189,19 +193,8 @@ function ArticlePage({ articleId }: { articleId: string }) {
 #### Query Article Collection
 
 ```graphql
-query GetArticles(
-  $page: Int
-  $limit: Int
-  $categoryId: ID
-  $search: String
-  $language: String
-) {
-  articles(
-    page: $page
-    limit: $limit
-    categoryId: $categoryId
-    search: $search
-  ) {
+query GetArticles($page: Int, $limit: Int, $categoryId: ID, $search: String, $language: String) {
+  articles(page: $page, limit: $limit, categoryId: $categoryId, search: $search) {
     items {
       articleId
       title
@@ -257,8 +250,8 @@ function ArticleList() {
       {data?.articles.items.map((article) => (
         <ArticleCard key={article.articleId} article={article} />
       ))}
-      
-      <Pagination 
+
+      <Pagination
         currentPage={data?.articles.meta.currentPage}
         hasNextPage={data?.articles.meta.hasNextPage}
         onPageChange={setPage}
@@ -273,18 +266,8 @@ function ArticleList() {
 #### Query Articles with Management Data
 
 ```graphql
-query GetBackstageArticles(
-  $page: Int
-  $limit: Int
-  $stage: String
-  $authorId: ID
-) {
-  backstageArticles(
-    page: $page
-    limit: $limit
-    stage: $stage
-    authorId: $authorId
-  ) {
+query GetBackstageArticles($page: Int, $limit: Int, $stage: String, $authorId: ID) {
+  backstageArticles(page: $page, limit: $limit, stage: $stage, authorId: $authorId) {
     items {
       articleId
       title
@@ -386,7 +369,7 @@ function CreateArticleForm() {
           }
         }
       });
-      
+
       console.log('Article created:', data.createArticle);
     } catch (err) {
       console.error('Error creating article:', err);
@@ -418,11 +401,7 @@ mutation UpdateArticle($id: ID!, $input: UpdateArticleInput!) {
 
 ```graphql
 mutation ApproveArticle($articleId: ID!, $level: Int!, $comments: String) {
-  approveArticle(
-    articleId: $articleId
-    level: $level
-    comments: $comments
-  ) {
+  approveArticle(articleId: $articleId, level: $level, comments: $comments) {
     id
     approved
     approvedAt
@@ -441,17 +420,13 @@ mutation ApproveArticle($articleId: ID!, $level: Int!, $comments: String) {
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
 
-export const Language = createParamDecorator(
-  (data: unknown, context: ExecutionContext) => {
-    const ctx = GqlExecutionContext.create(context);
-    const request = ctx.getContext().req;
-    
-    // Extract language from headers, query params, or JWT token
-    return request.headers['accept-language'] || 
-           request.query.language || 
-           'en-US';
-  }
-);
+export const Language = createParamDecorator((data: unknown, context: ExecutionContext) => {
+  const ctx = GqlExecutionContext.create(context);
+  const request = ctx.getContext().req;
+
+  // Extract language from headers, query params, or JWT token
+  return request.headers['accept-language'] || request.query.language || 'en-US';
+});
 ```
 
 ### Multi-Language Queries
@@ -479,7 +454,7 @@ query GetMultiLanguageArticle($id: ID!) {
 // Frontend language switching
 function ArticleWithLanguage({ articleId }: { articleId: string }) {
   const [language, setLanguage] = useState('en-US');
-  
+
   const { data } = useQuery(GET_ARTICLE, {
     variables: { id: articleId },
     context: {
@@ -512,7 +487,6 @@ import { ArticleDto } from '@rytass/cms-base-nestjs-graphql-module';
 
 @Resolver(() => ArticleDto)
 export class CustomArticleResolver {
-  
   @ResolveField(() => String, { nullable: true })
   async seoTitle(@Parent() article: ArticleDto): Promise<string | null> {
     // Custom SEO title logic
@@ -555,22 +529,17 @@ import { Repository, In } from 'typeorm';
 
 @Injectable()
 export class CustomDataLoaderService {
-  
   // Article view count loader
-  public readonly articleViewsLoader = new DataLoader<string, number>(
-    async (articleIds: string[]) => {
-      const viewCounts = await this.getArticleViewCounts(articleIds);
-      return articleIds.map(id => viewCounts[id] || 0);
-    }
-  );
+  public readonly articleViewsLoader = new DataLoader<string, number>(async (articleIds: string[]) => {
+    const viewCounts = await this.getArticleViewCounts(articleIds);
+    return articleIds.map(id => viewCounts[id] || 0);
+  });
 
   // Related articles loader
-  public readonly relatedArticlesLoader = new DataLoader<string, ArticleDto[]>(
-    async (articleIds: string[]) => {
-      const relatedArticles = await this.getRelatedArticles(articleIds);
-      return articleIds.map(id => relatedArticles[id] || []);
-    }
-  );
+  public readonly relatedArticlesLoader = new DataLoader<string, ArticleDto[]>(async (articleIds: string[]) => {
+    const relatedArticles = await this.getRelatedArticles(articleIds);
+    return articleIds.map(id => relatedArticles[id] || []);
+  });
 
   private async getArticleViewCounts(articleIds: string[]): Promise<Record<string, number>> {
     // Implement batch view count fetching
@@ -587,18 +556,8 @@ export class CustomDataLoaderService {
 ### Search Integration
 
 ```graphql
-query SearchArticles(
-  $query: String!
-  $filters: SearchFiltersInput
-  $page: Int
-  $limit: Int
-) {
-  searchArticles(
-    query: $query
-    filters: $filters
-    page: $page
-    limit: $limit
-  ) {
+query SearchArticles($query: String!, $filters: SearchFiltersInput, $page: Int, $limit: Int) {
+  searchArticles(query: $query, filters: $filters, page: $page, limit: $limit) {
     items {
       articleId
       title
@@ -643,7 +602,6 @@ import { BaseResource } from './constants/enum/base-resource.enum';
 
 @Resolver()
 export class PermissionResolver {
-  
   @Query(() => [BackstageArticleDto])
   @RequireActions([BaseAction.READ], BaseResource.ARTICLE)
   async getAllArticles(): Promise<BackstageArticleDto[]> {
@@ -668,11 +626,10 @@ import { Resolver, Query, Context } from '@nestjs/graphql';
 
 @Resolver()
 export class SecurityResolver {
-  
   @Query(() => [ArticleDto])
   async getUserArticles(@Context() context: any): Promise<ArticleDto[]> {
     const userId = context.req.user?.id;
-    
+
     if (!userId) {
       throw new UnauthorizedException('User not authenticated');
     }
@@ -750,7 +707,7 @@ export function ArticleList() {
         },
         updateQuery: (prev, { fetchMoreResult }) => {
           if (!fetchMoreResult) return prev;
-          
+
           return {
             articles: {
               ...fetchMoreResult.articles,
@@ -842,7 +799,7 @@ export const complexityConfig = {
   validators: [createComplexityLimitRule(1000)],
   createError: (max: number, actual: number) => {
     return new Error(`Query is too complex: ${actual}. Maximum allowed complexity: ${max}`);
-  }
+  },
 };
 ```
 
@@ -860,15 +817,14 @@ import { redisStore } from 'cache-manager-redis-store';
       host: 'localhost',
       port: 6379,
       ttl: 600, // 10 minutes
-    })
-  ]
+    }),
+  ],
 })
 export class CacheConfig {}
 
 // Cached resolver
 @Resolver()
 export class CachedArticleResolver {
-  
   @Query(() => [ArticleDto])
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(300) // 5 minutes
@@ -901,7 +857,7 @@ describe('Article Resolver (e2e)', () => {
         CMSBaseGraphQLModule.forRoot({
           multipleLanguageMode: false,
           draftMode: true,
-        })
+        }),
       ],
     }).compile();
 
@@ -924,7 +880,7 @@ describe('Article Resolver (e2e)', () => {
       .post('/graphql')
       .send({ query })
       .expect(200)
-      .expect((res) => {
+      .expect(res => {
         expect(res.body.data.article).toBeDefined();
         expect(res.body.data.article.articleId).toBe('test-id');
       });
@@ -944,7 +900,7 @@ describe('ArticleDataLoader', () => {
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
-      providers: [ArticleDataLoader]
+      providers: [ArticleDataLoader],
     }).compile();
 
     dataLoader = module.get<ArticleDataLoader>(ArticleDataLoader);
@@ -953,7 +909,7 @@ describe('ArticleDataLoader', () => {
   it('should batch load categories', async () => {
     const articleIds = ['article1', 'article2'];
     const categories = await dataLoader.categoriesLoader.loadMany(
-      articleIds.map(id => ({ articleId: id, language: 'en-US' }))
+      articleIds.map(id => ({ articleId: id, language: 'en-US' })),
     );
 
     expect(categories).toHaveLength(2);
@@ -965,24 +921,28 @@ describe('ArticleDataLoader', () => {
 ## Best Practices
 
 ### Schema Design
+
 - Use consistent naming conventions for all GraphQL types
 - Implement proper pagination for all collection queries
 - Design efficient DataLoader patterns to prevent N+1 queries
 - Use nullable fields appropriately to handle missing data
 
 ### Performance
+
 - Implement query complexity analysis to prevent expensive queries
 - Use DataLoader for all relationship queries
 - Cache frequently accessed data with appropriate TTL
 - Optimize database queries with proper indexing
 
 ### Security
+
 - Implement proper authentication and authorization
 - Validate all input parameters and payloads
 - Use rate limiting to prevent abuse
 - Sanitize user-generated content
 
 ### Development
+
 - Write comprehensive tests for all resolvers
 - Use TypeScript for type safety across the GraphQL schema
 - Implement proper error handling and logging

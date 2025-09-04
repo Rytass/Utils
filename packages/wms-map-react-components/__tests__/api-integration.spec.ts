@@ -12,9 +12,7 @@ jest.mock('../src/utils/api-data-transform', () => ({
   loadMapDataFromApi: jest.fn(),
 }));
 
-const mockLoadMapDataFromApi = loadMapDataFromApi as jest.MockedFunction<
-  typeof loadMapDataFromApi
->;
+const mockLoadMapDataFromApi = loadMapDataFromApi as jest.MockedFunction<typeof loadMapDataFromApi>;
 
 describe('API Integration Tests', () => {
   beforeEach(() => {
@@ -52,13 +50,9 @@ describe('API Integration Tests', () => {
 
       mockLoadMapDataFromApi.mockRejectedValueOnce(new Error(errorMessage));
 
-      await expect(loadMapDataFromApi('invalid-warehouse-id')).rejects.toThrow(
-        errorMessage,
-      );
+      await expect(loadMapDataFromApi('invalid-warehouse-id')).rejects.toThrow(errorMessage);
 
-      expect(mockLoadMapDataFromApi).toHaveBeenCalledWith(
-        'invalid-warehouse-id',
-      );
+      expect(mockLoadMapDataFromApi).toHaveBeenCalledWith('invalid-warehouse-id');
     });
 
     it('should handle different warehouse IDs', async () => {
@@ -86,7 +80,7 @@ describe('API Integration Tests', () => {
       }
 
       // 驗證所有調用
-      warehouseIds.forEach((id) => {
+      warehouseIds.forEach(id => {
         expect(mockLoadMapDataFromApi).toHaveBeenCalledWith(id);
       });
     });
@@ -106,9 +100,7 @@ describe('API Integration Tests', () => {
 
       mockLoadMapDataFromApi.mockRejectedValueOnce(timeoutError);
 
-      await expect(loadMapDataFromApi('slow-warehouse')).rejects.toThrow(
-        'Request timeout',
-      );
+      await expect(loadMapDataFromApi('slow-warehouse')).rejects.toThrow('Request timeout');
     });
 
     it('should handle network errors', async () => {
@@ -116,9 +108,7 @@ describe('API Integration Tests', () => {
 
       mockLoadMapDataFromApi.mockRejectedValueOnce(networkError);
 
-      await expect(loadMapDataFromApi('warehouse-offline')).rejects.toThrow(
-        'Network error: Connection failed',
-      );
+      await expect(loadMapDataFromApi('warehouse-offline')).rejects.toThrow('Network error: Connection failed');
     });
 
     it('should handle malformed API responses', async () => {
@@ -126,9 +116,7 @@ describe('API Integration Tests', () => {
 
       mockLoadMapDataFromApi.mockRejectedValueOnce(malformedError);
 
-      await expect(loadMapDataFromApi('warehouse-malformed')).rejects.toThrow(
-        'Invalid API response format',
-      );
+      await expect(loadMapDataFromApi('warehouse-malformed')).rejects.toThrow('Invalid API response format');
     });
   });
 
@@ -177,7 +165,7 @@ describe('API Integration Tests', () => {
       expect(result).toEqual(validApiResponse);
 
       // 驗證每個節點都有必要的屬性
-      result.forEach((node) => {
+      result.forEach(node => {
         expect(node).toHaveProperty('id');
         expect(node).toHaveProperty('type');
         expect(node).toHaveProperty('position');
@@ -194,7 +182,7 @@ describe('API Integration Tests', () => {
 
     it('should handle concurrent API requests', async () => {
       const warehouseIds = ['wh-001', 'wh-002', 'wh-003'];
-      const mockResponses = warehouseIds.map((id) => [
+      const mockResponses = warehouseIds.map(id => [
         {
           id: `${id}-node`,
           type: 'imageNode',
@@ -209,7 +197,7 @@ describe('API Integration Tests', () => {
       });
 
       // 同時發起所有請求
-      const promises = warehouseIds.map((id) => loadMapDataFromApi(id));
+      const promises = warehouseIds.map(id => loadMapDataFromApi(id));
       const results = await Promise.all(promises);
 
       // 驗證結果

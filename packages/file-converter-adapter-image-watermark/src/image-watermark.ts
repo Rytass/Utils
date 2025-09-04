@@ -14,9 +14,7 @@ export class ImageWatermark implements FileConverter<ImageWatermarkOptions> {
     sharp.concurrency(options.concurrency ?? 1);
   }
 
-  async convert<Output extends ConvertableFile>(
-    file: ConvertableFile,
-  ): Promise<Output> {
+  async convert<Output extends ConvertableFile>(file: ConvertableFile): Promise<Output> {
     let converter;
 
     if (file instanceof Buffer) {
@@ -26,7 +24,7 @@ export class ImageWatermark implements FileConverter<ImageWatermarkOptions> {
     }
 
     converter.composite(
-      this.options.watermarks.map((watermark) => ({
+      this.options.watermarks.map(watermark => ({
         input: watermark.image,
         gravity: watermark.gravity || gravity.southeast,
       })),

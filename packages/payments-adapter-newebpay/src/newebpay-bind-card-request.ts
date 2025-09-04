@@ -110,10 +110,7 @@ export class NewebPayBindCardRequest implements BindCardRequest {
   <body>
     <form action="${this._gateway.checkoutActionUrl}" method="POST">
       ${Object.entries(this.form)
-        .map(
-          ([key, value]) =>
-            `<input name="${key}" value="${value}" type="hidden" />`,
-        )
+        .map(([key, value]) => `<input name="${key}" value="${value}" type="hidden" />`)
         .join('\n')}
     </form>
     <script>
@@ -136,14 +133,9 @@ export class NewebPayBindCardRequest implements BindCardRequest {
     this._cardId = payload.TokenValue;
     this._cardNumberPrefix = payload.Card6No;
     this._cardNumberSuffix = payload.Card4No;
-    this._bindingDate = DateTime.fromFormat(
-      payload.PayTime,
-      'yyyy-MM-dd HH:mm:ss',
-    ).toJSDate();
+    this._bindingDate = DateTime.fromFormat(payload.PayTime, 'yyyy-MM-dd HH:mm:ss').toJSDate();
 
-    this._expireDate = DateTime.fromFormat(payload.Exp, 'yyMM')
-      .endOf('month')
-      .toJSDate();
+    this._expireDate = DateTime.fromFormat(payload.Exp, 'yyMM').endOf('month').toJSDate();
 
     this._state = OrderState.COMMITTED;
 

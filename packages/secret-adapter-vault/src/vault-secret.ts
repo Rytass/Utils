@@ -17,9 +17,7 @@ import {
   VaultDeleteType,
 } from './typings';
 
-export class VaultSecret<
-  Options extends VaultSecretOptions,
-> extends SecretManager {
+export class VaultSecret<Options extends VaultSecretOptions> extends SecretManager {
   private readonly _host: string;
   private readonly _auth: VaultAuthMethods;
   private readonly _tokenTTL: number = 2764724;
@@ -47,15 +45,14 @@ export class VaultSecret<
     this.retrieveToken()
       ?.then(async () => {
         if (!this._online) {
-          [this._cacheData, this._cacheVersion] =
-            await this.getSecretVersionOnline();
+          [this._cacheData, this._cacheVersion] = await this.getSecretVersionOnline();
         }
 
         this._state = VaultSecretState.READY;
 
         this.emitter.emit(VaultEvents.READY);
       })
-      .catch((ex) => {
+      .catch(ex => {
         this.emitter.emit(VaultEvents.ERROR, ex);
       });
 
@@ -68,10 +65,7 @@ export class VaultSecret<
     }
 
     if (this._online) {
-      this._sessionInterval = setInterval(
-        () => this.checkRenew(),
-        this._tokenTTL,
-      );
+      this._sessionInterval = setInterval(() => this.checkRenew(), this._tokenTTL);
     }
   }
 
@@ -81,10 +75,7 @@ export class VaultSecret<
 
   private retrieveToken() {
     if (this._auth.account) {
-      return this.retrieveTokenByUserPass(
-        this._auth.account,
-        this._auth.password,
-      );
+      return this.retrieveTokenByUserPass(this._auth.account, this._auth.password);
     }
   }
 
@@ -102,7 +93,7 @@ export class VaultSecret<
     );
 
     if (Array.isArray((data as VaultAPIFailedResponse)?.errors)) {
-      (data as VaultAPIFailedResponse)?.errors.forEach((error) => {
+      (data as VaultAPIFailedResponse)?.errors.forEach(error => {
         this.emitter.emit(VaultEvents.ERROR, error);
       });
 
@@ -113,11 +104,7 @@ export class VaultSecret<
 
     this._token = (data as VaultTokenRetrieveSuccessResponse).auth.client_token;
     this._tokenExpiredOn =
-      Date.now() +
-      Math.max(
-        (data as VaultTokenRetrieveSuccessResponse).auth.lease_duration - 300,
-        0,
-      ); // Calculate safety expires time
+      Date.now() + Math.max((data as VaultTokenRetrieveSuccessResponse).auth.lease_duration - 300, 0); // Calculate safety expires time
   }
 
   private async renewToken() {
@@ -125,18 +112,14 @@ export class VaultSecret<
       return this.retrieveToken();
     }
 
-    const { data } = await axios.post<VaultTokenRetrieveResponse>(
-      `${this._host}/v1/auth/token/renew-self`,
-      null,
-      {
-        headers: {
-          'X-Vault-Token': this._token!,
-        },
+    const { data } = await axios.post<VaultTokenRetrieveResponse>(`${this._host}/v1/auth/token/renew-self`, null, {
+      headers: {
+        'X-Vault-Token': this._token!,
       },
-    );
+    });
 
     if (Array.isArray((data as VaultAPIFailedResponse)?.errors)) {
-      (data as VaultAPIFailedResponse)?.errors.forEach((error) => {
+      (data as VaultAPIFailedResponse)?.errors.forEach(error => {
         this.emitter.emit(VaultEvents.ERROR, error);
       });
 
@@ -146,29 +129,21 @@ export class VaultSecret<
     }
 
     this._token = (data as VaultTokenRetrieveSuccessResponse).auth.client_token;
-    this._tokenExpiredOn =
-      Date.now() +
-      (data as VaultTokenRetrieveSuccessResponse).auth.lease_duration -
-      300; // Calculate safety expires time
+    this._tokenExpiredOn = Date.now() + (data as VaultTokenRetrieveSuccessResponse).auth.lease_duration - 300; // Calculate safety expires time
 
     this.emitter.emit(VaultEvents.TOKEN_RENEWED);
   }
 
-  private async getSecretVersionOnline(): Promise<
-    [Record<string, any>, number]
-  > {
+  private async getSecretVersionOnline(): Promise<[Record<string, any>, number]> {
     try {
-      const { data } = await axios.get<VaultGetSecretResponse>(
-        `${this._host}/v1/secret/data/${this.project}`,
-        {
-          headers: {
-            'X-Vault-Token': this._token!,
-          },
+      const { data } = await axios.get<VaultGetSecretResponse>(`${this._host}/v1/secret/data/${this.project}`, {
+        headers: {
+          'X-Vault-Token': this._token!,
         },
-      );
+      });
 
       if (Array.isArray((data as VaultAPIFailedResponse)?.errors)) {
-        (data as VaultAPIFailedResponse)?.errors.forEach((error) => {
+        (data as VaultAPIFailedResponse)?.errors.forEach(error => {
           this.emitter.emit(VaultEvents.ERROR, error);
         });
 
@@ -204,14 +179,10 @@ export class VaultSecret<
       return this._cacheData![key];
     }
 
-    return this.getSecretVersionOnline().then(
-      ([currentVersion]) => currentVersion[key] || undefined,
-    );
+    return this.getSecretVersionOnline().then(([currentVersion]) => currentVersion[key] || undefined);
   }
 
-  private async fullReplaceSecretValue(
-    newData: Record<string, any>,
-  ): Promise<void> {
+  private async fullReplaceSecretValue(newData: Record<string, any>): Promise<void> {
     await this.renewToken();
 
     const { data } = await axios.post<VaultGetSecretResponse>(
@@ -227,7 +198,7 @@ export class VaultSecret<
     );
 
     if (Array.isArray((data as VaultAPIFailedResponse)?.errors)) {
-      (data as VaultAPIFailedResponse)?.errors.forEach((error) => {
+      (data as VaultAPIFailedResponse)?.errors.forEach(error => {
         this.emitter.emit(VaultEvents.ERROR, error);
       });
 
@@ -257,7 +228,7 @@ export class VaultSecret<
     );
 
     if (Array.isArray((data as VaultAPIFailedResponse)?.errors)) {
-      (data as VaultAPIFailedResponse)?.errors.forEach((error) => {
+      (data as VaultAPIFailedResponse)?.errors.forEach(error => {
         this.emitter.emit(VaultEvents.ERROR, error);
       });
 
@@ -278,17 +249,14 @@ export class VaultSecret<
       `${this._host}/v1/secret/data/${this.project}`,
       JSON.stringify({
         data: {
-          ...Object.entries(currentValue).reduce(
-            (vars, [secretKey, secret]) => {
-              if (secretKey === key) return vars;
+          ...Object.entries(currentValue).reduce((vars, [secretKey, secret]) => {
+            if (secretKey === key) return vars;
 
-              return {
-                ...vars,
-                [secretKey]: secret,
-              };
-            },
-            {},
-          ),
+            return {
+              ...vars,
+              [secretKey]: secret,
+            };
+          }, {}),
         },
         options: {
           cas: currentVersion,
@@ -302,7 +270,7 @@ export class VaultSecret<
     );
 
     if (Array.isArray((data as VaultAPIFailedResponse)?.errors)) {
-      (data as VaultAPIFailedResponse)?.errors.forEach((error) => {
+      (data as VaultAPIFailedResponse)?.errors.forEach(error => {
         this.emitter.emit(VaultEvents.ERROR, error);
       });
 
@@ -338,21 +306,14 @@ export class VaultSecret<
       return this.getSecretValue<T>(key) as VaultGetType<Options, T>;
     }
 
-    if (
-      this._token &&
-      this._tokenExpiredOn &&
-      this._tokenExpiredOn >= Date.now()
-    ) {
+    if (this._token && this._tokenExpiredOn && this._tokenExpiredOn >= Date.now()) {
       return this.getSecretValue<T>(key) as VaultGetType<Options, T>;
     }
 
-    return new Promise<T>((resolve) => {
+    return new Promise<T>(resolve => {
       const onTokenRetrieved = () => {
         this.emitter.removeListener(VaultEvents.READY, onTokenRetrieved);
-        this.emitter.removeListener(
-          VaultEvents.TOKEN_RENEWED,
-          onTokenRetrieved,
-        );
+        this.emitter.removeListener(VaultEvents.TOKEN_RENEWED, onTokenRetrieved);
 
         resolve(this.getSecretValue<T>(key));
       };
@@ -373,21 +334,14 @@ export class VaultSecret<
       return Promise.resolve() as VaultSetType<Options>;
     }
 
-    if (
-      this._token &&
-      this._tokenExpiredOn &&
-      this._tokenExpiredOn >= Date.now()
-    ) {
+    if (this._token && this._tokenExpiredOn && this._tokenExpiredOn >= Date.now()) {
       return this.setSecretValueOnline<T>(key, value) as VaultSetType<Options>;
     }
 
-    return new Promise<void>((resolve) => {
+    return new Promise<void>(resolve => {
       const onTokenRetrieved = async () => {
         this.emitter.removeListener(VaultEvents.READY, onTokenRetrieved);
-        this.emitter.removeListener(
-          VaultEvents.TOKEN_RENEWED,
-          onTokenRetrieved,
-        );
+        this.emitter.removeListener(VaultEvents.TOKEN_RENEWED, onTokenRetrieved);
 
         resolve(this.setSecretValueOnline<T>(key, value));
       };
@@ -408,21 +362,14 @@ export class VaultSecret<
       return Promise.resolve() as VaultSetType<Options>;
     }
 
-    if (
-      this._token &&
-      this._tokenExpiredOn &&
-      this._tokenExpiredOn >= Date.now()
-    ) {
+    if (this._token && this._tokenExpiredOn && this._tokenExpiredOn >= Date.now()) {
       return this.removeSecretKeyOnline(key) as VaultDeleteType<Options>;
     }
 
-    return new Promise<void>((resolve) => {
+    return new Promise<void>(resolve => {
       const onTokenRetrieved = async () => {
         this.emitter.removeListener(VaultEvents.READY, onTokenRetrieved);
-        this.emitter.removeListener(
-          VaultEvents.TOKEN_RENEWED,
-          onTokenRetrieved,
-        );
+        this.emitter.removeListener(VaultEvents.TOKEN_RENEWED, onTokenRetrieved);
 
         resolve(this.removeSecretKeyOnline(key));
       };
@@ -440,9 +387,7 @@ export class VaultSecret<
     const [data, version] = await this.getSecretVersionOnline();
 
     if (version !== this._cacheVersion && !force) {
-      throw new Error(
-        'Online version is not match cached version, please use force mode instead',
-      );
+      throw new Error('Online version is not match cached version, please use force mode instead');
     }
 
     await this.fullReplaceSecretValue(this._cacheData!);

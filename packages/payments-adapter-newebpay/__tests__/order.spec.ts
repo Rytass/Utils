@@ -4,11 +4,7 @@
  */
 
 import http, { createServer } from 'http';
-import {
-  Channel,
-  VirtualAccountInfo,
-  WebATMPaymentInfo,
-} from '@rytass/payments';
+import { Channel, VirtualAccountInfo, WebATMPaymentInfo } from '@rytass/payments';
 import {
   NewebPaymentChannel,
   NewebPayOrder,
@@ -26,22 +22,20 @@ describe('NewebPay Order', () => {
   const originCreateServer = createServer;
   const mockedCreateServer = jest.spyOn(http, 'createServer');
 
-  mockedCreateServer.mockImplementation((requestHandler) => {
+  mockedCreateServer.mockImplementation(requestHandler => {
     const mockServer = originCreateServer(requestHandler);
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce(
-      (port?: any, hostname?: any, listeningListener?: () => void) => {
-        mockServer.listen(0, listeningListener);
+    mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
+      mockServer.listen(0, listeningListener);
 
-        return mockServer;
-      },
-    );
+      return mockServer;
+    });
 
     const mockedClose = jest.spyOn(mockServer, 'close');
 
-    mockedClose.mockImplementationOnce((onClosed) => {
+    mockedClose.mockImplementationOnce(onClosed => {
       mockServer.close(onClosed);
 
       return mockServer;
@@ -116,12 +110,8 @@ describe('NewebPay Order', () => {
       status: NewebPayOrderStatusFromAPI.COMMITTED,
     });
 
-    expect(() => order.form).toThrow(
-      'Finished order cannot get submit form data',
-    );
-    expect(() => order.formHTML).toThrow(
-      'Finished order cannot get submit form url',
-    );
+    expect(() => order.form).toThrow('Finished order cannot get submit form data');
+    expect(() => order.formHTML).toThrow('Finished order cannot get submit form url');
   });
 
   it('should throw error when get checkout url with no server', async () => {
@@ -142,7 +132,7 @@ describe('NewebPay Order', () => {
     );
   });
 
-  it('should get checkout url with server', (done) => {
+  it('should get checkout url with server', done => {
     const payment2 = new NewebPayPayment({
       merchantId: MERCHANT_ID,
       aesKey: AES_KEY,
@@ -163,9 +153,7 @@ describe('NewebPay Order', () => {
           channel: NewebPaymentChannel.CREDIT,
         });
 
-        expect(order.checkoutURL).toBe(
-          'https://rytass.com/newebpay/checkout/123142',
-        );
+        expect(order.checkoutURL).toBe('https://rytass.com/newebpay/checkout/123142');
 
         await payment2._server?.close();
 

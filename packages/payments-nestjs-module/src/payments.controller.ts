@@ -1,14 +1,4 @@
-import {
-  Controller,
-  Get,
-  Inject,
-  NotFoundException,
-  Param,
-  Post,
-  type RawBodyRequest,
-  Req,
-  Res,
-} from '@nestjs/common';
+import { Controller, Get, Inject, NotFoundException, Param, Post, type RawBodyRequest, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import type { PaymentGateway } from '@rytass/payments';
 import { PAYMENTS_GATEWAY } from './typings/symbol';
@@ -24,11 +14,7 @@ export class PaymentsController {
 
   @IsPublic()
   @Get('/checkout/:orderNo')
-  checkout(
-    @Param('orderNo') orderNo: string,
-    @Req() req: RawBodyRequest<Request>,
-    @Res() res: Response,
-  ): void {
+  checkout(@Param('orderNo') orderNo: string, @Req() req: RawBodyRequest<Request>, @Res() res: Response): void {
     if (!this.gateway.defaultServerListener) {
       throw new NotFoundException('Page Not Found');
     }

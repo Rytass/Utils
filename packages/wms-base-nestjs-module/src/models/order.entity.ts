@@ -1,10 +1,4 @@
-import {
-  Entity,
-  OneToMany,
-  PrimaryGeneratedColumn,
-  type Relation,
-  TableInheritance,
-} from 'typeorm';
+import { Entity, OneToMany, PrimaryGeneratedColumn, type Relation, TableInheritance } from 'typeorm';
 import { StockEntity } from './stock.entity';
 
 export const OrderRepo = Symbol('OrderRepo');
@@ -15,6 +9,6 @@ export class OrderEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @OneToMany(() => StockEntity, (stock) => stock.order)
+  @OneToMany(() => StockEntity, stock => stock.order)
   stocks: Relation<StockEntity>[];
 }

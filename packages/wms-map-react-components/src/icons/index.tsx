@@ -7,12 +7,7 @@ export interface IconProps {
   color?: string;
 }
 
-export const PenToolIcon: React.FC<IconProps> = ({
-  width = 24,
-  height = 24,
-  className,
-  color = '#8F8F8F',
-}) => (
+export const PenToolIcon: React.FC<IconProps> = ({ width = 24, height = 24, className, color = '#8F8F8F' }) => (
   <svg
     width={width}
     height={height}
@@ -39,12 +34,7 @@ export const PenToolIcon: React.FC<IconProps> = ({
   </svg>
 );
 
-export const DeleteIcon: React.FC<IconProps> = ({
-  width = 24,
-  height = 24,
-  className,
-  color = '#8F8F8F',
-}) => (
+export const DeleteIcon: React.FC<IconProps> = ({ width = 24, height = 24, className, color = '#8F8F8F' }) => (
   <svg
     width={width}
     height={height}
@@ -53,13 +43,7 @@ export const DeleteIcon: React.FC<IconProps> = ({
     xmlns="http://www.w3.org/2000/svg"
     className={className}
   >
-    <path
-      d="M3 6H5H21"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+    <path d="M3 6H5H21" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     <path
       d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z"
       stroke={color}
@@ -70,12 +54,7 @@ export const DeleteIcon: React.FC<IconProps> = ({
   </svg>
 );
 
-export const ImageIcon: React.FC<IconProps> = ({
-  width = 24,
-  height = 24,
-  className,
-  color = '#8F8F8F',
-}) => (
+export const ImageIcon: React.FC<IconProps> = ({ width = 24, height = 24, className, color = '#8F8F8F' }) => (
   <svg
     width={width}
     height={height}
@@ -84,33 +63,13 @@ export const ImageIcon: React.FC<IconProps> = ({
     xmlns="http://www.w3.org/2000/svg"
     className={className}
   >
-    <rect
-      x="3"
-      y="3"
-      width="18"
-      height="18"
-      rx="2"
-      ry="2"
-      stroke={color}
-      strokeWidth="2"
-    />
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke={color} strokeWidth="2" />
     <circle cx="8.5" cy="8.5" r="1.5" stroke={color} strokeWidth="2" />
-    <path
-      d="M21 15L16 10L5 21"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+    <path d="M21 15L16 10L5 21" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
-export const SquareIcon: React.FC<IconProps> = ({
-  width = 24,
-  height = 24,
-  className,
-  color = '#8F8F8F',
-}) => (
+export const SquareIcon: React.FC<IconProps> = ({ width = 24, height = 24, className, color = '#8F8F8F' }) => (
   <svg
     width={width}
     height={height}
@@ -119,25 +78,11 @@ export const SquareIcon: React.FC<IconProps> = ({
     xmlns="http://www.w3.org/2000/svg"
     className={className}
   >
-    <rect
-      x="3"
-      y="3"
-      width="18"
-      height="18"
-      rx="2"
-      ry="2"
-      stroke={color}
-      strokeWidth="2"
-    />
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke={color} strokeWidth="2" />
   </svg>
 );
 
-export const PointerIcon: React.FC<IconProps> = ({
-  width = 24,
-  height = 24,
-  className,
-  color = '#8F8F8F',
-}) => (
+export const PointerIcon: React.FC<IconProps> = ({ width = 24, height = 24, className, color = '#8F8F8F' }) => (
   <svg
     width={width}
     height={height}
@@ -157,12 +102,7 @@ export const PointerIcon: React.FC<IconProps> = ({
   </svg>
 );
 
-export const RedoIcon: React.FC<IconProps> = ({
-  width = 24,
-  height = 24,
-  className,
-  color = '#8F8F8F',
-}) => (
+export const RedoIcon: React.FC<IconProps> = ({ width = 24, height = 24, className, color = '#8F8F8F' }) => (
   <svg
     width={width}
     height={height}
@@ -171,15 +111,7 @@ export const RedoIcon: React.FC<IconProps> = ({
     xmlns="http://www.w3.org/2000/svg"
     className={className}
   >
-    <mask
-      id="mask0_redo"
-      style={{ maskType: 'alpha' }}
-      maskUnits="userSpaceOnUse"
-      x="0"
-      y="0"
-      width="24"
-      height="24"
-    >
+    <mask id="mask0_redo" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
       <rect width="24" height="24" fill="#D9D9D9" />
     </mask>
     <g mask="url(#mask0_redo)">
@@ -191,12 +123,7 @@ export const RedoIcon: React.FC<IconProps> = ({
   </svg>
 );
 
-export const UndoIcon: React.FC<IconProps> = ({
-  width = 24,
-  height = 24,
-  className,
-  color = '#8F8F8F',
-}) => (
+export const UndoIcon: React.FC<IconProps> = ({ width = 24, height = 24, className, color = '#8F8F8F' }) => (
   <svg
     width={width}
     height={height}
@@ -205,15 +132,7 @@ export const UndoIcon: React.FC<IconProps> = ({
     xmlns="http://www.w3.org/2000/svg"
     className={className}
   >
-    <mask
-      id="mask0_undo"
-      style={{ maskType: 'alpha' }}
-      maskUnits="userSpaceOnUse"
-      x="0"
-      y="0"
-      width="24"
-      height="24"
-    >
+    <mask id="mask0_undo" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
       <rect width="24" height="24" fill="#D9D9D9" />
     </mask>
     <g mask="url(#mask0_undo)">
@@ -225,12 +144,7 @@ export const UndoIcon: React.FC<IconProps> = ({
   </svg>
 );
 
-export const FolderIcon: React.FC<IconProps> = ({
-  width = 24,
-  height = 24,
-  className,
-  color = '#8F8F8F',
-}) => (
+export const FolderIcon: React.FC<IconProps> = ({ width = 24, height = 24, className, color = '#8F8F8F' }) => (
   <svg
     width={width}
     height={height}

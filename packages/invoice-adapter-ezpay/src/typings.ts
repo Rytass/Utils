@@ -28,11 +28,7 @@ export interface EZPayPaymentItem extends InvoicePaymentItem {
   unitPrice: number;
   quantity: number;
   unit?: string;
-  taxType?:
-    | TaxType.TAXED
-    | TaxType.TAX_FREE
-    | TaxType.ZERO_TAX
-    | TaxType.SPECIAL;
+  taxType?: TaxType.TAXED | TaxType.TAX_FREE | TaxType.ZERO_TAX | TaxType.SPECIAL;
 }
 
 export interface EZPayInvoiceOptions {
@@ -47,8 +43,7 @@ export interface EZPayInvoiceOptions {
   state?: InvoiceState;
 }
 
-interface EZPayInvoiceIssueBaseOptions
-  extends InvoiceIssueOptions<EZPayPaymentItem> {
+interface EZPayInvoiceIssueBaseOptions extends InvoiceIssueOptions<EZPayPaymentItem> {
   buyerName: string;
   orderId: string;
   buyerEmail?: string;
@@ -57,21 +52,17 @@ interface EZPayInvoiceIssueBaseOptions
   remark?: string;
 }
 
-export interface EZPayInvoiceB2CIssueOptions
-  extends EZPayInvoiceIssueBaseOptions {
+export interface EZPayInvoiceB2CIssueOptions extends EZPayInvoiceIssueBaseOptions {
   carrier: EZPayAvailableCarrier;
 }
 
-export interface EZPayInvoiceB2BIssueOptions
-  extends EZPayInvoiceIssueBaseOptions {
+export interface EZPayInvoiceB2BIssueOptions extends EZPayInvoiceIssueBaseOptions {
   vatNumber: string;
   buyerAddress?: string;
   carrier: InvoicePrintCarrier;
 }
 
-export type EZPayInvoiceIssueOptions =
-  | EZPayInvoiceB2CIssueOptions
-  | EZPayInvoiceB2BIssueOptions;
+export type EZPayInvoiceIssueOptions = EZPayInvoiceB2CIssueOptions | EZPayInvoiceB2BIssueOptions;
 
 export interface EZPayInvoiceGatewayOptions {
   hashKey?: string;
@@ -294,9 +285,7 @@ export interface EZPayInvoiceInvalidAllowanceSuccessResponse {
   CreateTime: string;
 }
 
-export type EZPayInvoiceQueryOptions =
-  | EZPayInvoiceQueryWithInvoiceNumber
-  | EZPayInvoiceQueryWithOrderId;
+export type EZPayInvoiceQueryOptions = EZPayInvoiceQueryWithInvoiceNumber | EZPayInvoiceQueryWithOrderId;
 
 interface EZPayInvoiceQueryWithInvoiceNumber {
   invoiceNumber: string;

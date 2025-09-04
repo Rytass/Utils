@@ -21,10 +21,7 @@ import {
 describe('OrderBuilderConfig', () => {
   describe('DiscountMethod', () => {
     const builder = new OrderBuilder({
-      policies: [
-        new PercentageDiscount(0.9, { id: 'P1' }),
-        new ValueDiscount(50, { id: 'P2' }),
-      ],
+      policies: [new PercentageDiscount(0.9, { id: 'P1' }), new ValueDiscount(50, { id: 'P2' })],
     });
 
     const order = builder.build({
@@ -82,7 +79,7 @@ describe('OrderBuilderConfig', () => {
             brand: 'N21',
             uuid: 'B-1',
           },
-        ])
+        ]),
       );
 
       expect(descriptions[0].discount).toEqual(100 + 100 + 150);
@@ -119,7 +116,7 @@ describe('OrderBuilderConfig', () => {
             brand: 'N21',
             uuid: 'B-1',
           },
-        ])
+        ]),
       );
 
       // round(350 * 0.2857142857142857) + round(350 * 0.2857142857142857) + round(350 * 0.42857142857142855)
@@ -161,7 +158,7 @@ describe('OrderBuilderConfig', () => {
             brand: 'N21',
             uuid: 'B-1',
           },
-        ])
+        ]),
       );
 
       expect(JSON.stringify(descriptions[1].appliedItems)).toEqual(
@@ -196,7 +193,7 @@ describe('OrderBuilderConfig', () => {
             brand: 'N21',
             uuid: 'B-1',
           },
-        ])
+        ]),
       );
 
       // round(350 * 0.2857142857142857) + round(350 * 0.2857142857142857) + round(350 * 0.42857142857142855)
@@ -238,7 +235,7 @@ describe('OrderBuilderConfig', () => {
             brand: 'N21',
             uuid: 'B-1',
           },
-        ])
+        ]),
       );
 
       expect(JSON.stringify(descriptions[1].appliedItems)).toEqual(
@@ -273,7 +270,7 @@ describe('OrderBuilderConfig', () => {
             brand: 'N21',
             uuid: 'B-1',
           },
-        ])
+        ]),
       );
 
       expect(descriptions[0].discount).toEqual(350);
@@ -287,9 +284,7 @@ describe('OrderBuilderConfig', () => {
       expect(finalPriceOnly.round(1.34, 'final-price-only')).toEqual(1.3);
       expect(finalPriceOnly.round(1.34, 'every-calculation')).toEqual(1.34);
       expect(finalPriceOnly.round(1.34, 'no-round')).toEqual(1.34);
-      expect(
-        finalPriceOnly.round(1.34, ['final-price-only', 'every-calculation'])
-      ).toEqual(1.3);
+      expect(finalPriceOnly.round(1.34, ['final-price-only', 'every-calculation'])).toEqual(1.3);
     });
 
     it('EveryCalculation', () => {
@@ -298,9 +293,7 @@ describe('OrderBuilderConfig', () => {
       expect(everyCalculation.round(1.34, 'final-price-only')).toEqual(1.34);
       expect(everyCalculation.round(1.34, 'every-calculation')).toEqual(1.3);
       expect(everyCalculation.round(1.34, 'no-round')).toEqual(1.34);
-      expect(
-        everyCalculation.round(1.34, ['final-price-only', 'every-calculation'])
-      ).toEqual(1.3);
+      expect(everyCalculation.round(1.34, ['final-price-only', 'every-calculation'])).toEqual(1.3);
     });
 
     it('NoRound', () => {
@@ -310,9 +303,7 @@ describe('OrderBuilderConfig', () => {
       expect(everyCalculation.round(1.34, 'final-price-only')).toEqual(1.34);
       expect(everyCalculation.round(1.34, 'every-calculation')).toEqual(1.34);
       expect(everyCalculation.round(1.34, 'no-round')).toEqual(1.34);
-      expect(
-        everyCalculation.round(1.34, ['final-price-only', 'every-calculation'])
-      ).toEqual(1.34);
+      expect(everyCalculation.round(1.34, ['final-price-only', 'every-calculation'])).toEqual(1.34);
 
       expect(everyCalculation.round(1.34, ['no-round'])).toEqual(1.34);
     });
@@ -407,7 +398,7 @@ describe('OrderBuilderConfig', () => {
           items: ['A', 'B', 'C', 'D', 'E', 'F'],
           threshold: 3,
         }),
-        { id: 'SPECIFIED_A_F', onlyMatched: true }
+        { id: 'SPECIFIED_A_F', onlyMatched: true },
       );
 
       // 2. 指定商品（Ｃ～Ｉ）每5000元 折600元
@@ -417,7 +408,7 @@ describe('OrderBuilderConfig', () => {
         new ItemIncluded<TestOrderItem>({
           items: ['C', 'D', 'E', 'F', 'G', 'H', 'I'],
         }),
-        { id: 'SPECIFIED_C_I', stepUnit: 'price', onlyMatched: true }
+        { id: 'SPECIFIED_C_I', stepUnit: 'price', onlyMatched: true },
       );
 
       // 3. 指定分類（鞋子）滿4000元 送最低價商品
@@ -428,7 +419,7 @@ describe('OrderBuilderConfig', () => {
           items: ['shoes'],
           conditions: [new PriceThreshold(4000)],
         }),
-        { id: 'GIVEAWAY_BY_SHOES', onlyMatched: true }
+        { id: 'GIVEAWAY_BY_SHOES', onlyMatched: true },
       );
 
       // * 4. 指定分類（Swell）每1件 打9折
@@ -443,7 +434,7 @@ describe('OrderBuilderConfig', () => {
           id: 'SPECIFIED_BRAND_BY_Swell',
           stepUnit: 'quantity',
           onlyMatched: true,
-        }
+        },
       );
 
       const builder = new OrderBuilder<TestOrderItem>({

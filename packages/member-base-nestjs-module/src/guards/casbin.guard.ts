@@ -1,9 +1,4 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Inject,
-  Injectable,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Inject, Injectable } from '@nestjs/common';
 import { Enforcer } from 'casbin';
 import {
   ACCESS_TOKEN_SECRET,
@@ -67,10 +62,10 @@ export class CasbinGuard implements CanActivate {
 
     if (token) {
       try {
-        const payload = verify(
-          token,
-          this.cookieMode ? this.refreshTokenSecret : this.accessTokenSecret,
-        ) as Pick<BaseMemberEntity, 'id' | 'account'>;
+        const payload = verify(token, this.cookieMode ? this.refreshTokenSecret : this.accessTokenSecret) as Pick<
+          BaseMemberEntity,
+          'id' | 'account'
+        >;
 
         request.payload = payload;
       } catch (ex) {
@@ -87,22 +82,13 @@ export class CasbinGuard implements CanActivate {
 
     const reflector = new Reflector();
 
-    const isPublic = reflector.get<boolean>(
-      IS_ROUTE_PUBLIC,
-      context.getHandler(),
-    );
+    const isPublic = reflector.get<boolean>(IS_ROUTE_PUBLIC, context.getHandler());
 
-    const onlyAuthenticated = reflector.get<boolean>(
-      IS_ROUTE_ONLY_AUTHENTICATED,
-      context.getHandler(),
-    );
+    const onlyAuthenticated = reflector.get<boolean>(IS_ROUTE_ONLY_AUTHENTICATED, context.getHandler());
 
     if (isPublic) return true;
 
-    const allowActions = reflector.get(
-      this.permissionDecorator ?? AllowActions,
-      context.getHandler(),
-    );
+    const allowActions = reflector.get(this.permissionDecorator ?? AllowActions, context.getHandler());
 
     if (!allowActions?.length && !onlyAuthenticated) return false;
 

@@ -1,14 +1,8 @@
-import {
-  Invoice,
-  InvoiceAllowance,
-  InvoiceAllowanceState,
-} from '@rytass/invoice';
+import { Invoice, InvoiceAllowance, InvoiceAllowanceState } from '@rytass/invoice';
 import { EZPayInvoice } from './ezpay-invoice';
 import { EZPayPaymentItem } from './typings';
 
-export class EZPayInvoiceAllowance
-  implements InvoiceAllowance<EZPayPaymentItem>
-{
+export class EZPayInvoiceAllowance implements InvoiceAllowance<EZPayPaymentItem> {
   readonly allowanceNumber: string;
 
   readonly allowancePrice: number;
@@ -26,10 +20,7 @@ export class EZPayInvoiceAllowance
   invalidOn: Date | null = null;
 
   constructor(
-    options: Omit<
-      InvoiceAllowance<EZPayPaymentItem>,
-      'invalidOn' | 'invalid'
-    > & { parentInvoice: EZPayInvoice },
+    options: Omit<InvoiceAllowance<EZPayPaymentItem>, 'invalidOn' | 'invalid'> & { parentInvoice: EZPayInvoice },
   ) {
     this.allowanceNumber = options.allowanceNumber;
     this.allowancePrice = options.allowancePrice;

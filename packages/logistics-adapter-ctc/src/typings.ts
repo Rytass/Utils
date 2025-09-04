@@ -1,20 +1,20 @@
 import { LogisticsInterface, LogisticsStatusHistory } from '@rytass/logistics';
 
 export enum CtcLogisticsStatusEnum {
-  CREATED = 10,                      // 新單
-  PICKUP_EXCEPTION = 29,             // 取件異常
-  PICKED_UP = 30,                    // 已取件
-  PICKUP_ARRIVED_AT_HUB = 40,        // 取件到站
-  IN_TRANSIT = 50,                   // 轉運中
-  TRANSIT_ARRIVED_AT_HUB = 60,       // 轉運到站
-  SHELVED = 65,                      // 回站保管
-  DELIVERING = 70,                   // 配送中
-  DELIVERY_EXCEPTION = 75,           // 配送異常
-  DELIVERED = 80,                    // 配送完成
-  EMPTY_TRIP = 87,                   // 空趟
-  COMPLETED = 88,                    // 正常結案
-  NOTIFICATION_SENT = 91,            // 通知完成
-  CANCELLED = 99,                    // 取消
+  CREATED = 10, // 新單
+  PICKUP_EXCEPTION = 29, // 取件異常
+  PICKED_UP = 30, // 已取件
+  PICKUP_ARRIVED_AT_HUB = 40, // 取件到站
+  IN_TRANSIT = 50, // 轉運中
+  TRANSIT_ARRIVED_AT_HUB = 60, // 轉運到站
+  SHELVED = 65, // 回站保管
+  DELIVERING = 70, // 配送中
+  DELIVERY_EXCEPTION = 75, // 配送異常
+  DELIVERED = 80, // 配送完成
+  EMPTY_TRIP = 87, // 空趟
+  COMPLETED = 88, // 正常結案
+  NOTIFICATION_SENT = 91, // 通知完成
+  CANCELLED = 99, // 取消
 }
 
 export type CtcLogisticsStatus =
@@ -63,7 +63,7 @@ export const CtcLogistics: CtcLogisticsInterface<CtcLogisticsStatus> = {
   url: 'https://tms2.ctc-express.cloud/api/v1/customer/orders',
   apiToken: 'c5a41fd4ab87598f47eda26c7c54f512',
   ignoreNotFound: true,
-}
+};
 
 export interface CreateOrUpdateCtcLogisticsOptions {
   trackingNumber?: string; // 查件單號, primary key
@@ -129,7 +129,7 @@ export interface CreateOrUpdateCtcLogisticsRequest {
     quantity: number; // 件數 * 固定為 1
     weight: number; // 重量 * 固定為 1
     volume: number; // 材積 * 固定為 1
-  }
+  };
 }
 
 export interface CreateOrUpdateCtcLogisticsResponse {

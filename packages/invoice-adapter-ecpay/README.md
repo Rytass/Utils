@@ -48,20 +48,20 @@ const invoiceGateway = new ECPayInvoiceGateway({
 const invoice = await invoiceGateway.issue({
   orderId: '2024081400001',
   customer: {
-    email: 'customer@example.com'
+    email: 'customer@example.com',
   },
   items: [
     {
       name: 'Premium Software License',
       quantity: 1,
-      unitPrice: 1500 // Tax-included price
+      unitPrice: 1500, // Tax-included price
     },
     {
       name: 'Technical Support',
       quantity: 12,
-      unitPrice: 200
-    }
-  ]
+      unitPrice: 200,
+    },
+  ],
 });
 
 console.log('Invoice Number:', invoice.invoiceNumber);
@@ -80,16 +80,16 @@ import { InvoiceCarriers } from '@rytass/invoice-adapter-ecpay';
 const invoice = await invoiceGateway.issue({
   orderId: '2024081400002',
   customer: {
-    email: 'customer@example.com'
+    email: 'customer@example.com',
   },
   carrier: InvoiceCarriers.MOBILE('/-F-K0PR'), // Mobile barcode
   items: [
     {
       name: 'Coffee Beans',
       quantity: 2,
-      unitPrice: 350
-    }
-  ]
+      unitPrice: 350,
+    },
+  ],
 });
 ```
 
@@ -100,16 +100,16 @@ const invoice = await invoiceGateway.issue({
 const invoice = await invoiceGateway.issue({
   orderId: '2024081400003',
   customer: {
-    email: 'customer@example.com'
+    email: 'customer@example.com',
   },
   carrier: InvoiceCarriers.MOICA('AB12345678901234'), // Digital certificate
   items: [
     {
       name: 'Online Course',
       quantity: 1,
-      unitPrice: 2999
-    }
-  ]
+      unitPrice: 2999,
+    },
+  ],
 });
 ```
 
@@ -122,16 +122,16 @@ const invoice = await invoiceGateway.issue({
   customer: {
     name: 'John Doe',
     address: 'No. 123, Section 1, Roosevelt Rd., Taipei City',
-    email: 'customer@example.com'
+    email: 'customer@example.com',
   },
   carrier: InvoiceCarriers.PRINT,
   items: [
     {
       name: 'Hardware Component',
       quantity: 1,
-      unitPrice: 5000
-    }
-  ]
+      unitPrice: 5000,
+    },
+  ],
 });
 ```
 
@@ -148,20 +148,20 @@ const businessInvoice = await invoiceGateway.issue({
   customer: {
     name: 'ABC Technology Co., Ltd.',
     address: 'No. 456, Section 2, Zhongshan N. Rd., Taipei City 104',
-    email: 'accounting@abctech.com.tw'
+    email: 'accounting@abctech.com.tw',
   },
   items: [
     {
       name: 'Enterprise Software License',
       quantity: 10,
-      unitPrice: 15000
+      unitPrice: 15000,
     },
     {
       name: 'Implementation Service',
       quantity: 1,
-      unitPrice: 50000
-    }
-  ]
+      unitPrice: 50000,
+    },
+  ],
 });
 ```
 
@@ -210,9 +210,9 @@ if (isValidLoveCode) {
       {
         name: 'Charity Donation',
         quantity: 1,
-        unitPrice: 1000
-      }
-    ]
+        unitPrice: 1000,
+      },
+    ],
   });
 } else {
   console.log('Invalid love code');
@@ -235,21 +235,21 @@ const mixedTaxInvoice = await invoiceGateway.issue({
       name: 'Taxable Product',
       quantity: 1,
       unitPrice: 100,
-      taxType: TaxType.TAXED
+      taxType: TaxType.TAXED,
     },
     {
       name: 'Tax-free Service',
       quantity: 1,
       unitPrice: 200,
-      taxType: TaxType.TAX_FREE
+      taxType: TaxType.TAX_FREE,
     },
     {
       name: 'Zero-rate Export',
       quantity: 1,
       unitPrice: 300,
-      taxType: TaxType.ZERO_RATE
-    }
-  ]
+      taxType: TaxType.ZERO_RATE,
+    },
+  ],
 });
 ```
 
@@ -261,12 +261,12 @@ const mixedTaxInvoice = await invoiceGateway.issue({
 // Query by invoice number and issue date
 const invoiceByNumber = await invoiceGateway.query({
   invoiceNumber: 'ZZ12345678',
-  issuedOn: new Date('2024-08-14')
+  issuedOn: new Date('2024-08-14'),
 });
 
 // Query by order ID
 const invoiceByOrderId = await invoiceGateway.query({
-  orderId: '2024081400001'
+  orderId: '2024081400001',
 });
 
 console.log('Invoice Status:', invoiceByOrderId.state);
@@ -279,7 +279,7 @@ console.log('Total Amount:', invoiceByOrderId.totalAmount);
 // Void (cancel) an issued invoice
 const voidResult = await invoiceGateway.void({
   invoiceNumber: 'ZZ12345678',
-  reason: 'Customer cancellation'
+  reason: 'Customer cancellation',
 });
 
 if (voidResult.success) {
@@ -302,10 +302,10 @@ const allowance = await invoiceGateway.issueAllowance({
     {
       name: 'Partial Refund - Product Return',
       quantity: 1,
-      unitPrice: 500 // Allowance amount
-    }
+      unitPrice: 500, // Allowance amount
+    },
   ],
-  reason: 'Product defect'
+  reason: 'Product defect',
 });
 
 console.log('Allowance Number:', allowance.allowanceNumber);
@@ -317,7 +317,7 @@ console.log('Allowance Number:', allowance.allowanceNumber);
 // Void an issued allowance
 const voidAllowanceResult = await invoiceGateway.voidAllowance({
   allowanceNumber: 'AL12345678',
-  reason: 'Incorrect allowance amount'
+  reason: 'Incorrect allowance amount',
 });
 ```
 
@@ -325,14 +325,14 @@ const voidAllowanceResult = await invoiceGateway.voidAllowance({
 
 ### ECPayInvoiceGatewayOptions
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| `merchantId` | `string` | Yes | - | ECPay merchant ID |
-| `aesKey` | `string` | Yes | - | AES encryption key |
-| `aesIv` | `string` | Yes | - | AES initialization vector |
-| `baseUrl` | `string` | No | Development | API base URL |
-| `skipMobileBarcodeValidation` | `boolean` | No | `false` | Skip mobile barcode validation |
-| `skipLoveCodeValidation` | `boolean` | No | `false` | Skip love code validation |
+| Property                      | Type      | Required | Default     | Description                    |
+| ----------------------------- | --------- | -------- | ----------- | ------------------------------ |
+| `merchantId`                  | `string`  | Yes      | -           | ECPay merchant ID              |
+| `aesKey`                      | `string`  | Yes      | -           | AES encryption key             |
+| `aesIv`                       | `string`  | Yes      | -           | AES initialization vector      |
+| `baseUrl`                     | `string`  | No       | Development | API base URL                   |
+| `skipMobileBarcodeValidation` | `boolean` | No       | `false`     | Skip mobile barcode validation |
+| `skipLoveCodeValidation`      | `boolean` | No       | `false`     | Skip love code validation      |
 
 ## Environment Configuration
 
@@ -349,9 +349,10 @@ const invoiceGateway = new ECPayInvoiceGateway({
   merchantId: process.env.ECPAY_MERCHANT_ID!,
   aesKey: process.env.ECPAY_AES_KEY!,
   aesIv: process.env.ECPAY_AES_IV!,
-  baseUrl: process.env.ECPAY_ENVIRONMENT === 'production' 
-    ? 'https://einvoice.ecpay.com.tw'
-    : 'https://einvoice-stage.ecpay.com.tw'
+  baseUrl:
+    process.env.ECPAY_ENVIRONMENT === 'production'
+      ? 'https://einvoice.ecpay.com.tw'
+      : 'https://einvoice-stage.ecpay.com.tw',
 });
 ```
 
@@ -365,7 +366,7 @@ const invoice = await invoiceGateway.issue({
   customer: { email: 'customer@example.com' },
   items: [{ name: 'Product', quantity: 1, unitPrice: 100 }],
   remark: 'Special order - urgent delivery',
-  customerNote: 'Thank you for your business!'
+  customerNote: 'Thank you for your business!',
 });
 ```
 
@@ -384,9 +385,9 @@ const exportInvoice = await invoiceGateway.issue({
       name: 'Export Product',
       quantity: 5,
       unitPrice: 1000,
-      taxType: TaxType.ZERO_RATE
-    }
-  ]
+      taxType: TaxType.ZERO_RATE,
+    },
+  ],
 });
 ```
 
@@ -401,7 +402,7 @@ for (const orderId of orderIds) {
   const invoice = await invoiceGateway.issue({
     orderId,
     customer: { email: 'batch@example.com' },
-    items: [{ name: 'Batch Item', quantity: 1, unitPrice: 100 }]
+    items: [{ name: 'Batch Item', quantity: 1, unitPrice: 100 }],
   });
   invoices.push(invoice);
 }
@@ -418,13 +419,13 @@ try {
   const invoice = await invoiceGateway.issue({
     orderId: 'INVALID_ORDER',
     customer: { email: 'invalid-email' },
-    items: []
+    items: [],
   });
 } catch (error) {
   if (error instanceof ECPayInvoiceError) {
     console.error('ECPay Error Code:', error.code);
     console.error('Error Message:', error.message);
-    
+
     switch (error.code) {
       case '10000999':
         console.log('System error - please try again later');
@@ -452,14 +453,14 @@ const testGateway = new ECPayInvoiceGateway({
   merchantId: '2000132', // Test merchant ID
   aesKey: 'ejCk326UnaZWKisg', // Test AES key
   aesIv: 'q9jcZX8Ib9LM8wYk', // Test AES IV
-  baseUrl: 'https://einvoice-stage.ecpay.com.tw'
+  baseUrl: 'https://einvoice-stage.ecpay.com.tw',
 });
 
 // Test invoice issuance
 const testInvoice = await testGateway.issue({
   orderId: 'TEST_' + Date.now(),
   customer: { email: 'test@example.com' },
-  items: [{ name: 'Test Product', quantity: 1, unitPrice: 100 }]
+  items: [{ name: 'Test Product', quantity: 1, unitPrice: 100 }],
 });
 ```
 
@@ -479,12 +480,12 @@ Use these test values for development:
 class OrderService {
   constructor(
     private invoiceGateway: ECPayInvoiceGateway,
-    private orderRepository: OrderRepository
+    private orderRepository: OrderRepository,
   ) {}
 
   async completeOrder(orderId: string) {
     const order = await this.orderRepository.findById(orderId);
-    
+
     if (!order) throw new Error('Order not found');
 
     try {
@@ -493,20 +494,20 @@ class OrderService {
         orderId: order.id,
         customer: {
           email: order.customerEmail,
-          name: order.customerName
+          name: order.customerName,
         },
         items: order.items.map(item => ({
           name: item.productName,
           quantity: item.quantity,
-          unitPrice: item.unitPrice
+          unitPrice: item.unitPrice,
         })),
-        carrier: order.invoiceCarrier
+        carrier: order.invoiceCarrier,
       });
 
       // Save invoice information
       await this.orderRepository.updateInvoice(orderId, {
         invoiceNumber: invoice.invoiceNumber,
-        issuedOn: invoice.issuedOn
+        issuedOn: invoice.issuedOn,
       });
 
       return { success: true, invoice };
@@ -533,7 +534,7 @@ export class InvoiceService {
       merchantId: process.env.ECPAY_MERCHANT_ID!,
       aesKey: process.env.ECPAY_AES_KEY!,
       aesIv: process.env.ECPAY_AES_IV!,
-      baseUrl: process.env.ECPAY_INVOICE_BASE_URL!
+      baseUrl: process.env.ECPAY_INVOICE_BASE_URL!,
     });
   }
 
@@ -550,18 +551,21 @@ export class InvoiceService {
 ## Best Practices
 
 ### Security
+
 - Store sensitive credentials in environment variables
 - Use production URLs only in production environment
 - Implement proper error handling and logging
 - Validate input data before API calls
 
 ### Performance
+
 - Cache validation results for frequently used codes
 - Implement retry mechanisms for network failures
 - Use batch processing for multiple operations
 - Monitor API rate limits
 
 ### Compliance
+
 - Follow Taiwan electronic invoice regulations
 - Ensure proper VAT calculations
 - Maintain audit trails for all invoice operations

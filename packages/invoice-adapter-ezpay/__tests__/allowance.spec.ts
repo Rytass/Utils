@@ -7,7 +7,16 @@ import FormData from 'form-data';
 import { createDecipheriv, createHash } from 'crypto';
 import { parse } from 'parse-multipart-data';
 import { DateTime } from 'luxon';
-import { EZPayBaseUrls, EZPayInvoice, EZPayInvoiceAllowancePayload, EZPayInvoiceGateway, EZPayInvoiceInvalidAllowancePayload, InvoiceAllowanceState, InvoiceCarrierType, TaxType } from '../src';
+import {
+  EZPayBaseUrls,
+  EZPayInvoice,
+  EZPayInvoiceAllowancePayload,
+  EZPayInvoiceGateway,
+  EZPayInvoiceInvalidAllowancePayload,
+  InvoiceAllowanceState,
+  InvoiceCarrierType,
+  TaxType,
+} from '../src';
 import { ERROR_INVOICE_REMAINING_AMOUNT_NOT_ENOUGH } from '../src/constants';
 
 const AES_IV = 'gmY2MPN8PHFvA7KR';
@@ -49,31 +58,30 @@ describe('EZPayInvoiceGateway:Allowance', () => {
 
       const payloadArray = parse(formData.getBuffer(), formData.getBoundary());
 
-      const payload = payloadArray.reduce((vars, field) => ({
-        ...vars,
-        [field.name as string]: field.data.toString('utf8'),
-      }), {}) as {
+      const payload = payloadArray.reduce(
+        (vars, field) => ({
+          ...vars,
+          [field.name as string]: field.data.toString('utf8'),
+        }),
+        {},
+      ) as {
         MerchantID_: string;
         PostData_: string;
       };
 
       const decipher = createDecipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
-      const plainText = [
-        decipher.update(payload.PostData_, 'hex', 'utf8'),
-        decipher.final('utf8'),
-      ].join('');
+      const plainText = [decipher.update(payload.PostData_, 'hex', 'utf8'), decipher.final('utf8')].join('');
 
       if (/allowance_issue$/.test(url)) {
-        const params = plainText.split(/&/)
-          .reduce((vars, item) => {
-            const [key, value] = item.split(/=/);
+        const params = plainText.split(/&/).reduce((vars, item) => {
+          const [key, value] = item.split(/=/);
 
-            return {
-              ...vars,
-              [key]: decodeURIComponent(value),
-            };
-          }, {}) as EZPayInvoiceAllowancePayload;
+          return {
+            ...vars,
+            [key]: decodeURIComponent(value),
+          };
+        }, {}) as EZPayInvoiceAllowancePayload;
 
         const remaingAmount = INVOICE_REMAINING_AMOUNT[params.InvoiceNo] || 0;
 
@@ -116,15 +124,14 @@ describe('EZPayInvoiceGateway:Allowance', () => {
         };
       }
 
-      const params = plainText.split(/&/)
-        .reduce((vars, item) => {
-          const [key, value] = item.split(/=/);
+      const params = plainText.split(/&/).reduce((vars, item) => {
+        const [key, value] = item.split(/=/);
 
-          return {
-            ...vars,
-            [key]: decodeURIComponent(value),
-          };
-        }, {}) as EZPayInvoiceInvalidAllowancePayload;
+        return {
+          ...vars,
+          [key]: decodeURIComponent(value),
+        };
+      }, {}) as EZPayInvoiceInvalidAllowancePayload;
 
       if (invalidAllowanceSet.has(params.AllowanceNo)) {
         return {
@@ -163,11 +170,13 @@ describe('EZPayInvoiceGateway:Allowance', () => {
     INVOICE_REMAINING_AMOUNT[FAKE_INVOICE_NUMBER] = 20;
 
     const mockInvoice = new EZPayInvoice({
-      items: [{
-        name: '橡皮擦',
-        unitPrice: 10,
-        quantity: 2,
-      }],
+      items: [
+        {
+          name: '橡皮擦',
+          unitPrice: 10,
+          quantity: 2,
+        },
+      ],
       issuedOn: new Date(),
       invoiceNumber: FAKE_INVOICE_NUMBER,
       randomCode: FAKE_RANDOM_CODE,
@@ -178,22 +187,26 @@ describe('EZPayInvoiceGateway:Allowance', () => {
 
     expect(mockInvoice.allowances.length).toBe(0);
 
-    const allowanced = await invoiceGateway.allowance(mockInvoice, [{
-      name: '橡皮擦',
-      unitPrice: 5,
-      quantity: 1,
-    }]);
+    const allowanced = await invoiceGateway.allowance(mockInvoice, [
+      {
+        name: '橡皮擦',
+        unitPrice: 5,
+        quantity: 1,
+      },
+    ]);
 
     expect(allowanced).toBe(mockInvoice);
     expect(allowanced.nowAmount).toBe(15);
     expect(allowanced.allowances.length).toBe(1);
     expect(allowanced.allowances[0].allowancePrice).toBe(5);
 
-    const allowanced2 = await invoiceGateway.allowance(mockInvoice, [{
-      name: '橡皮擦',
-      unitPrice: 10,
-      quantity: 1,
-    }]);
+    const allowanced2 = await invoiceGateway.allowance(mockInvoice, [
+      {
+        name: '橡皮擦',
+        unitPrice: 10,
+        quantity: 1,
+      },
+    ]);
 
     expect(allowanced2).toBe(allowanced);
     expect(allowanced2.nowAmount).toBe(5);
@@ -206,11 +219,13 @@ describe('EZPayInvoiceGateway:Allowance', () => {
       INVOICE_REMAINING_AMOUNT[FAKE_INVOICE_NUMBER] = 20;
 
       const mockInvoice = new EZPayInvoice({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
         issuedOn: new Date(),
         invoiceNumber: FAKE_INVOICE_NUMBER,
         randomCode: FAKE_RANDOM_CODE,
@@ -219,22 +234,28 @@ describe('EZPayInvoiceGateway:Allowance', () => {
         taxType: TaxType.TAXED,
       });
 
-      expect(invoiceGateway.allowance(mockInvoice, [{
-        name: '橡皮擦',
-        unitPrice: 30,
-        quantity: 1,
-      }])).rejects.toThrow();
+      expect(
+        invoiceGateway.allowance(mockInvoice, [
+          {
+            name: '橡皮擦',
+            unitPrice: 30,
+            quantity: 1,
+          },
+        ]),
+      ).rejects.toThrow();
     });
 
     it('should throw error when online check', () => {
       INVOICE_REMAINING_AMOUNT[FAKE_INVOICE_NUMBER] = 10;
 
       const mockInvoice = new EZPayInvoice({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
         issuedOn: new Date(),
         invoiceNumber: FAKE_INVOICE_NUMBER,
         randomCode: FAKE_RANDOM_CODE,
@@ -243,11 +264,15 @@ describe('EZPayInvoiceGateway:Allowance', () => {
         taxType: TaxType.TAXED,
       });
 
-      expect(() => invoiceGateway.allowance(mockInvoice, [{
-        name: '橡皮擦',
-        unitPrice: 15,
-        quantity: 1,
-      }])).rejects.toThrow();
+      expect(() =>
+        invoiceGateway.allowance(mockInvoice, [
+          {
+            name: '橡皮擦',
+            unitPrice: 15,
+            quantity: 1,
+          },
+        ]),
+      ).rejects.toThrow();
     });
   });
 
@@ -256,11 +281,13 @@ describe('EZPayInvoiceGateway:Allowance', () => {
       INVOICE_REMAINING_AMOUNT[FAKE_INVOICE_NUMBER] = 20;
 
       const mockInvoice = new EZPayInvoice({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
         issuedOn: new Date(),
         invoiceNumber: FAKE_INVOICE_NUMBER,
         randomCode: FAKE_RANDOM_CODE,
@@ -269,11 +296,13 @@ describe('EZPayInvoiceGateway:Allowance', () => {
         taxType: TaxType.TAXED,
       });
 
-      await invoiceGateway.allowance(mockInvoice, [{
-        name: '橡皮擦',
-        unitPrice: 8,
-        quantity: 1,
-      }]);
+      await invoiceGateway.allowance(mockInvoice, [
+        {
+          name: '橡皮擦',
+          unitPrice: 8,
+          quantity: 1,
+        },
+      ]);
 
       expect(mockInvoice.allowances[0].status).toBe(InvoiceAllowanceState.ISSUED);
       expect(mockInvoice.nowAmount).toBe(12);
@@ -288,11 +317,13 @@ describe('EZPayInvoiceGateway:Allowance', () => {
       INVOICE_REMAINING_AMOUNT[FAKE_INVOICE_NUMBER] = 20;
 
       const mockInvoice = new EZPayInvoice({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
         issuedOn: new Date(),
         invoiceNumber: FAKE_INVOICE_NUMBER,
         randomCode: FAKE_RANDOM_CODE,
@@ -301,11 +332,13 @@ describe('EZPayInvoiceGateway:Allowance', () => {
         taxType: TaxType.TAXED,
       });
 
-      await invoiceGateway.allowance(mockInvoice, [{
-        name: '橡皮擦',
-        unitPrice: 8,
-        quantity: 1,
-      }]);
+      await invoiceGateway.allowance(mockInvoice, [
+        {
+          name: '橡皮擦',
+          unitPrice: 8,
+          quantity: 1,
+        },
+      ]);
 
       await invoiceGateway.invalidAllowance(mockInvoice.allowances[0]);
 
@@ -316,11 +349,13 @@ describe('EZPayInvoiceGateway:Allowance', () => {
       INVOICE_REMAINING_AMOUNT[FAKE_INVOICE_NUMBER] = 20;
 
       const mockInvoice = new EZPayInvoice({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
         issuedOn: new Date(),
         invoiceNumber: FAKE_INVOICE_NUMBER,
         randomCode: FAKE_RANDOM_CODE,
@@ -329,11 +364,13 @@ describe('EZPayInvoiceGateway:Allowance', () => {
         taxType: TaxType.TAXED,
       });
 
-      await invoiceGateway.allowance(mockInvoice, [{
-        name: '橡皮擦',
-        unitPrice: 8,
-        quantity: 1,
-      }]);
+      await invoiceGateway.allowance(mockInvoice, [
+        {
+          name: '橡皮擦',
+          unitPrice: 8,
+          quantity: 1,
+        },
+      ]);
 
       await invoiceGateway.invalidAllowance(mockInvoice.allowances[0]);
 
@@ -352,11 +389,13 @@ describe('EZPayInvoiceGateway:Allowance', () => {
       INVOICE_REMAINING_AMOUNT[FAKE_INVOICE_NUMBER] = 20;
 
       const mockInvoice = new EZPayInvoice({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
         issuedOn: new Date(),
         invoiceNumber: FAKE_INVOICE_NUMBER,
         randomCode: FAKE_RANDOM_CODE,
@@ -365,13 +404,19 @@ describe('EZPayInvoiceGateway:Allowance', () => {
         taxType: TaxType.MIXED,
       });
 
-      const allowanced = await invoiceGateway.allowance(mockInvoice, [{
-        name: '橡皮擦',
-        unitPrice: 8,
-        quantity: 1,
-      }], {
-        taxType: TaxType.TAXED,
-      });
+      const allowanced = await invoiceGateway.allowance(
+        mockInvoice,
+        [
+          {
+            name: '橡皮擦',
+            unitPrice: 8,
+            quantity: 1,
+          },
+        ],
+        {
+          taxType: TaxType.TAXED,
+        },
+      );
 
       expect(allowanced).toBe(mockInvoice);
       expect(allowanced.nowAmount).toBe(12);
@@ -383,11 +428,13 @@ describe('EZPayInvoiceGateway:Allowance', () => {
       INVOICE_REMAINING_AMOUNT[FAKE_INVOICE_NUMBER] = 20;
 
       const mockInvoice = new EZPayInvoice({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
         issuedOn: new Date(),
         invoiceNumber: FAKE_INVOICE_NUMBER,
         randomCode: FAKE_RANDOM_CODE,
@@ -396,13 +443,19 @@ describe('EZPayInvoiceGateway:Allowance', () => {
         taxType: TaxType.MIXED,
       });
 
-      const allowanced = await invoiceGateway.allowance(mockInvoice, [{
-        name: '橡皮擦',
-        unitPrice: 8,
-        quantity: 1,
-      }], {
-        taxType: TaxType.TAX_FREE,
-      });
+      const allowanced = await invoiceGateway.allowance(
+        mockInvoice,
+        [
+          {
+            name: '橡皮擦',
+            unitPrice: 8,
+            quantity: 1,
+          },
+        ],
+        {
+          taxType: TaxType.TAX_FREE,
+        },
+      );
 
       expect(allowanced).toBe(mockInvoice);
       expect(allowanced.nowAmount).toBe(12);
@@ -414,11 +467,13 @@ describe('EZPayInvoiceGateway:Allowance', () => {
       INVOICE_REMAINING_AMOUNT[FAKE_INVOICE_NUMBER] = 20;
 
       const mockInvoice = new EZPayInvoice({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
         issuedOn: new Date(),
         invoiceNumber: FAKE_INVOICE_NUMBER,
         randomCode: FAKE_RANDOM_CODE,
@@ -427,13 +482,19 @@ describe('EZPayInvoiceGateway:Allowance', () => {
         taxType: TaxType.MIXED,
       });
 
-      const allowanced = await invoiceGateway.allowance(mockInvoice, [{
-        name: '橡皮擦',
-        unitPrice: 8,
-        quantity: 1,
-      }], {
-        taxType: TaxType.ZERO_TAX,
-      });
+      const allowanced = await invoiceGateway.allowance(
+        mockInvoice,
+        [
+          {
+            name: '橡皮擦',
+            unitPrice: 8,
+            quantity: 1,
+          },
+        ],
+        {
+          taxType: TaxType.ZERO_TAX,
+        },
+      );
 
       expect(allowanced).toBe(mockInvoice);
       expect(allowanced.nowAmount).toBe(12);
@@ -445,11 +506,13 @@ describe('EZPayInvoiceGateway:Allowance', () => {
       INVOICE_REMAINING_AMOUNT[FAKE_INVOICE_NUMBER] = 20;
 
       const mockInvoice = new EZPayInvoice({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
         issuedOn: new Date(),
         invoiceNumber: FAKE_INVOICE_NUMBER,
         randomCode: FAKE_RANDOM_CODE,
@@ -458,11 +521,15 @@ describe('EZPayInvoiceGateway:Allowance', () => {
         taxType: TaxType.MIXED,
       });
 
-      expect(() => invoiceGateway.allowance(mockInvoice, [{
-        name: '橡皮擦',
-        unitPrice: 8,
-        quantity: 1,
-      }])).rejects.toThrow();
+      expect(() =>
+        invoiceGateway.allowance(mockInvoice, [
+          {
+            name: '橡皮擦',
+            unitPrice: 8,
+            quantity: 1,
+          },
+        ]),
+      ).rejects.toThrow();
     });
   });
 
@@ -475,11 +542,13 @@ describe('EZPayInvoiceGateway:Allowance', () => {
       INVOICE_REMAINING_AMOUNT[SHOULD_THROW_INVOICE_NUMBER] = 20;
 
       const mockInvoice = new EZPayInvoice({
-        items: [{
-          name: '橡皮擦 II',
-          unitPrice: 10,
-          quantity: 2,
-        }],
+        items: [
+          {
+            name: '橡皮擦 II',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
         issuedOn: new Date(),
         invoiceNumber: SHOULD_THROW_INVOICE_NUMBER,
         randomCode: FAKE_RANDOM_CODE,
@@ -488,22 +557,28 @@ describe('EZPayInvoiceGateway:Allowance', () => {
         taxType: TaxType.TAXED,
       });
 
-      expect(() => invoiceGateway.allowance(mockInvoice, [{
-        name: '橡皮擦',
-        unitPrice: 8,
-        quantity: 1,
-      }])).rejects.toThrow();
+      expect(() =>
+        invoiceGateway.allowance(mockInvoice, [
+          {
+            name: '橡皮擦',
+            unitPrice: 8,
+            quantity: 1,
+          },
+        ]),
+      ).rejects.toThrow();
     });
 
     it('should throw error when check code invalid [invalid allowance]', async () => {
       INVOICE_REMAINING_AMOUNT[FAKE_INVOICE_NUMBER] = 20;
 
       const mockInvoice = new EZPayInvoice({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
         issuedOn: new Date(),
         invoiceNumber: FAKE_INVOICE_NUMBER,
         randomCode: FAKE_RANDOM_CODE,
@@ -512,24 +587,30 @@ describe('EZPayInvoiceGateway:Allowance', () => {
         taxType: TaxType.TAXED,
       });
 
-      await invoiceGateway.allowance(mockInvoice, [{
-        name: '橡皮擦',
-        unitPrice: 8,
-        quantity: 1,
-      }]);
+      await invoiceGateway.allowance(mockInvoice, [
+        {
+          name: '橡皮擦',
+          unitPrice: 8,
+          quantity: 1,
+        },
+      ]);
 
-      expect(() => invoiceGateway.invalidAllowance(mockInvoice.allowances[0], SHOULD_THROW_ALLOWANCE_REASON)).rejects.toThrow();
+      expect(() =>
+        invoiceGateway.invalidAllowance(mockInvoice.allowances[0], SHOULD_THROW_ALLOWANCE_REASON),
+      ).rejects.toThrow();
     });
 
     it('should allowance invoice with buyer email for auto send notification with ezpay', async () => {
       INVOICE_REMAINING_AMOUNT[FAKE_INVOICE_NUMBER] = 20;
 
       const mockInvoice = new EZPayInvoice({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
         issuedOn: new Date(),
         invoiceNumber: FAKE_INVOICE_NUMBER,
         randomCode: FAKE_RANDOM_CODE,
@@ -538,24 +619,32 @@ describe('EZPayInvoiceGateway:Allowance', () => {
         taxType: TaxType.TAXED,
       });
 
-      await invoiceGateway.allowance(mockInvoice, [{
-        name: '橡皮擦',
-        unitPrice: 8,
-        quantity: 1,
-      }], {
-        buyerEmail: 'test@rytass.com',
-      });
+      await invoiceGateway.allowance(
+        mockInvoice,
+        [
+          {
+            name: '橡皮擦',
+            unitPrice: 8,
+            quantity: 1,
+          },
+        ],
+        {
+          buyerEmail: 'test@rytass.com',
+        },
+      );
     });
 
     it('should allowance invalid method can use new Date() for invalid time in default', async () => {
       INVOICE_REMAINING_AMOUNT[FAKE_INVOICE_NUMBER] = 20;
 
       const mockInvoice = new EZPayInvoice({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
         issuedOn: new Date(),
         invoiceNumber: FAKE_INVOICE_NUMBER,
         randomCode: FAKE_RANDOM_CODE,
@@ -564,11 +653,13 @@ describe('EZPayInvoiceGateway:Allowance', () => {
         taxType: TaxType.TAXED,
       });
 
-      await invoiceGateway.allowance(mockInvoice, [{
-        name: '橡皮擦',
-        unitPrice: 8,
-        quantity: 1,
-      }]);
+      await invoiceGateway.allowance(mockInvoice, [
+        {
+          name: '橡皮擦',
+          unitPrice: 8,
+          quantity: 1,
+        },
+      ]);
 
       await invoiceGateway.invalidAllowance(mockInvoice.allowances[0]);
 
@@ -580,4 +671,3 @@ describe('EZPayInvoiceGateway:Allowance', () => {
     });
   });
 });
-

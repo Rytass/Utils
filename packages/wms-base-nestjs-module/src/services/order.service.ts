@@ -20,15 +20,12 @@ export class OrderService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async createOrder<T extends OrderEntity>(
-    customOrder: new () => T,
-    args: OrderCreateDto<T>,
-  ): Promise<T> {
-    const order = await this.dataSource.transaction(async (manager) => {
+  async createOrder<T extends OrderEntity>(customOrder: new () => T, args: OrderCreateDto<T>): Promise<T> {
+    const order = await this.dataSource.transaction(async manager => {
       const uniqueBatches = new Map<string, BatchCreateDto>();
       // key: id:materialId
 
-      args.batches.forEach((batch) => {
+      args.batches.forEach(batch => {
         const key = `${batch.id}:${batch.materialId}`;
 
         if (!uniqueBatches.has(key)) {
@@ -36,9 +33,7 @@ export class OrderService {
         }
       });
 
-      await manager
-        .getRepository(BatchEntity)
-        .insert([...uniqueBatches.values()]);
+      await manager.getRepository(BatchEntity).insert([...uniqueBatches.values()]);
 
       const order = await manager.getRepository(customOrder).save(
         manager.getRepository(customOrder).create({
@@ -46,16 +41,16 @@ export class OrderService {
         }),
       );
 
-      const canCreateStock = await Promise.all(
-        args.batches.map((batch) => this.canCreateStock(batch, manager)),
-      ).then((results) => results.every((result) => result === true));
+      const canCreateStock = await Promise.all(args.batches.map(batch => this.canCreateStock(batch, manager))).then(
+        results => results.every(result => result === true),
+      );
 
       if (!canCreateStock) {
         throw new StockQuantityNotEnoughError();
       }
 
       const stocks = await manager.getRepository(StockEntity).save(
-        args.batches.map((batch) => ({
+        args.batches.map(batch => ({
           orderId: order.id,
           batchId: batch.id,
           locationId: batch.locationId,
@@ -72,10 +67,7 @@ export class OrderService {
     return order;
   }
 
-  async canCreateStock(
-    batch: BatchCreateDto,
-    manager?: EntityManager,
-  ): Promise<boolean> {
+  async canCreateStock(batch: BatchCreateDto, manager?: EntityManager): Promise<boolean> {
     if (this.allowNegativeStock) {
       return true;
     }

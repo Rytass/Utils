@@ -14,4 +14,4 @@ export const ARTICLE_IDS_QUERY = `
       auth: $auth
     )
   }
-`
+`;

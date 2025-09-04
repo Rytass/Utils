@@ -3,7 +3,7 @@ import { CustomsMark, InvoiceCarrierType, TaxType } from '@rytass/invoice';
 export const ECPayCustomsMark = {
   [CustomsMark.NO]: '1',
   [CustomsMark.YES]: '2',
-}
+};
 
 export const ECPayCarrierTypeCode = {
   [InvoiceCarrierType.PRINT]: '',
@@ -12,7 +12,7 @@ export const ECPayCarrierTypeCode = {
   [InvoiceCarrierType.PLATFORM]: '1',
   [InvoiceCarrierType.MOICA]: '2',
   [InvoiceCarrierType.MOBILE]: '3',
-}
+};
 
 export const ECPayTaxTypeCode = {
   [TaxType.TAXED]: '1',
@@ -20,7 +20,7 @@ export const ECPayTaxTypeCode = {
   [TaxType.ZERO_TAX]: '3',
   [TaxType.SPECIAL]: '4',
   [TaxType.MIXED]: '9',
-}
+};
 
 export const ECPAY_INVOICE_SUCCESS_CODE = 1;
 export const ECPAY_INVOICE_NOT_FOUND = 1600003;

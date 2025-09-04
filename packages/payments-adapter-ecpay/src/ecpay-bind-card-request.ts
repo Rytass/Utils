@@ -6,11 +6,7 @@ import {
   ECPayBindCardRequestState,
   ECPayBindCardWithTransactionRequestOptions,
 } from './typings';
-import {
-  BindCardRequest,
-  OrderFailMessage,
-  PaymentEvents,
-} from '@rytass/payments';
+import { BindCardRequest, OrderFailMessage, PaymentEvents } from '@rytass/payments';
 
 export class ECPayBindCardRequest implements BindCardRequest {
   private readonly _form: ECPayBindCardRequestPayload | undefined;
@@ -30,17 +26,12 @@ export class ECPayBindCardRequest implements BindCardRequest {
   private _memberId: string;
 
   constructor(
-    options:
-      | ECPayBindCardRequestPayload
-      | ECPayBindCardWithTransactionRequestOptions,
+    options: ECPayBindCardRequestPayload | ECPayBindCardWithTransactionRequestOptions,
     gateway: ECPayPayment,
   ) {
     if ('ServerReplyURL' in options) {
       this._form = options as ECPayBindCardRequestPayload;
-      this._memberId = options.MerchantMemberID.replace(
-        new RegExp(`^${options.MerchantID}`),
-        '',
-      );
+      this._memberId = options.MerchantMemberID.replace(new RegExp(`^${options.MerchantID}`), '');
     } else {
       this._resolved = true;
       this._memberId = options.memberId;
@@ -74,10 +65,7 @@ export class ECPayBindCardRequest implements BindCardRequest {
   <body>
     <form action="${this._gateway.baseUrl}/MerchantMember/BindingCardID" method="POST">
       ${Object.entries(this.form)
-        .map(
-          ([key, value]) =>
-            `<input name="${key}" value="${value}" type="hidden" />`,
-        )
+        .map(([key, value]) => `<input name="${key}" value="${value}" type="hidden" />`)
         .join('\n')}
     </form>
     <script>
@@ -89,9 +77,7 @@ export class ECPayBindCardRequest implements BindCardRequest {
 
   get bindingURL(): string {
     if (!this._gateway._server) {
-      throw new Error(
-        'To use automatic checkout server, please initial payment with `withServer` options.',
-      );
+      throw new Error('To use automatic checkout server, please initial payment with `withServer` options.');
     }
 
     return this._gateway.getBindingURL(this);
@@ -152,19 +138,12 @@ export class ECPayBindCardRequest implements BindCardRequest {
     this._cardId = payload.CardID;
     this._cardNumberPrefix = payload.Card6No;
     this._cardNumberSuffix = payload.Card4No;
-    this._bindingDate = DateTime.fromFormat(
-      payload.BindingDate,
-      'yyyy/MM/dd HH:mm:ss',
-    ).toJSDate();
+    this._bindingDate = DateTime.fromFormat(payload.BindingDate, 'yyyy/MM/dd HH:mm:ss').toJSDate();
 
     this._gateway.emitter.emit(PaymentEvents.CARD_BOUND, this);
   }
 
-  fail(
-    returnCode: string,
-    message: string,
-    additionalPayload?: ECPayBindCardCallbackPayload,
-  ): void {
+  fail(returnCode: string, message: string, additionalPayload?: ECPayBindCardCallbackPayload): void {
     this._failedCode = returnCode;
     this._failedMessage = message;
 
@@ -172,10 +151,7 @@ export class ECPayBindCardRequest implements BindCardRequest {
       this._cardId = additionalPayload.CardID;
       this._cardNumberPrefix = additionalPayload.Card6No;
       this._cardNumberSuffix = additionalPayload.Card4No;
-      this._bindingDate = DateTime.fromFormat(
-        additionalPayload.BindingDate,
-        'yyyy/MM/dd HH:mm:ss',
-      ).toJSDate();
+      this._bindingDate = DateTime.fromFormat(additionalPayload.BindingDate, 'yyyy/MM/dd HH:mm:ss').toJSDate();
     }
 
     this._gateway.emitter.emit(PaymentEvents.CARD_BINDING_FAILED, this);

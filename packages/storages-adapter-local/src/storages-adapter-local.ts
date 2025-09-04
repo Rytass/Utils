@@ -10,11 +10,7 @@ import {
 } from '@rytass/storages';
 import { v4 as uuid } from 'uuid';
 import { promisify } from 'util';
-import {
-  StorageLocalOptions,
-  StorageLocalUsageInfo,
-  StorageLocalHelperCommands,
-} from './typings';
+import { StorageLocalOptions, StorageLocalUsageInfo, StorageLocalHelperCommands } from './typings';
 import { resolve } from 'path';
 import { Readable } from 'stream';
 import { lstatSync, mkdirSync, createReadStream, createWriteStream } from 'fs';
@@ -49,29 +45,11 @@ export class LocalStorage extends Storage {
 
   // @dev: returns file system usage in 1M-blocks
   private async getFsUsage(): Promise<StorageLocalUsageInfo> {
-    const used = Number(
-      (
-        await exec(
-          StorageLocalHelperCommands.USED.replace('__DIR__', this.directory),
-        )
-      ).stdout,
-    );
+    const used = Number((await exec(StorageLocalHelperCommands.USED.replace('__DIR__', this.directory))).stdout);
 
-    const free = Number(
-      (
-        await exec(
-          StorageLocalHelperCommands.FREE.replace('__DIR__', this.directory),
-        )
-      ).stdout,
-    );
+    const free = Number((await exec(StorageLocalHelperCommands.FREE.replace('__DIR__', this.directory))).stdout);
 
-    const total = Number(
-      (
-        await exec(
-          StorageLocalHelperCommands.TOTAL.replace('__DIR__', this.directory),
-        )
-      ).stdout,
-    );
+    const total = Number((await exec(StorageLocalHelperCommands.TOTAL.replace('__DIR__', this.directory))).stdout);
 
     return {
       used,
@@ -94,14 +72,10 @@ export class LocalStorage extends Storage {
     }
   }
 
-  private async writeBuffer(
-    buffer: Buffer,
-    options?: WriteFileOptions,
-  ): Promise<StorageFile> {
+  private async writeBuffer(buffer: Buffer, options?: WriteFileOptions): Promise<StorageFile> {
     const convertedBuffer = await this.converterManager.convert<Buffer>(buffer);
 
-    const fileInfo =
-      options?.filename || (await this.getBufferFilename(buffer));
+    const fileInfo = options?.filename || (await this.getBufferFilename(buffer));
 
     const filename = Array.isArray(fileInfo) ? fileInfo[0] : fileInfo;
 
@@ -110,18 +84,12 @@ export class LocalStorage extends Storage {
     return { key: filename };
   }
 
-  private async writeStream(
-    stream: Readable,
-    options?: WriteFileOptions,
-  ): Promise<StorageFile> {
-    return new Promise<StorageFile>(async (promiseResolve) => {
-      const convertedStream =
-        await this.converterManager.convert<Readable>(stream);
+  private async writeStream(stream: Readable, options?: WriteFileOptions): Promise<StorageFile> {
+    return new Promise<StorageFile>(async promiseResolve => {
+      const convertedStream = await this.converterManager.convert<Readable>(stream);
 
       if (options?.filename) {
-        const writeStream = createWriteStream(
-          this.getFileFullPath(options.filename),
-        );
+        const writeStream = createWriteStream(this.getFileFullPath(options.filename));
 
         convertedStream.pipe(writeStream);
 
@@ -147,10 +115,7 @@ export class LocalStorage extends Storage {
           writeStream.on('error', reject);
         });
 
-        await rename(
-          this.getFileFullPath(tempFilename),
-          this.getFileFullPath(filename),
-        );
+        await rename(this.getFileFullPath(tempFilename), this.getFileFullPath(filename));
 
         promiseResolve({ key: filename });
       });
@@ -176,10 +141,7 @@ export class LocalStorage extends Storage {
   read(key: string): Promise<Readable>;
   read(key: string, options: ReadBufferFileOptions): Promise<Buffer>;
   read(key: string, options: ReadStreamFileOptions): Promise<Readable>;
-  read(
-    key: string,
-    options?: ReadBufferFileOptions | ReadStreamFileOptions,
-  ): Promise<Readable> | Promise<Buffer> {
+  read(key: string, options?: ReadBufferFileOptions | ReadStreamFileOptions): Promise<Readable> | Promise<Buffer> {
     if (options?.format === 'buffer') {
       return this.readFileBuffer(key);
     }
@@ -187,10 +149,7 @@ export class LocalStorage extends Storage {
     return Promise.resolve(this.readFileStream(key));
   }
 
-  async write(
-    file: InputFile,
-    options?: WriteFileOptions,
-  ): Promise<StorageFile> {
+  async write(file: InputFile, options?: WriteFileOptions): Promise<StorageFile> {
     const convertedFile = await this.converterManager.convert(file);
 
     if (convertedFile instanceof Buffer) {
@@ -200,13 +159,8 @@ export class LocalStorage extends Storage {
     return this.writeStream(convertedFile as Readable, options);
   }
 
-  batchWrite(
-    files: InputFile[],
-    options?: WriteFileOptions[],
-  ): Promise<StorageFile[]> {
-    return Promise.all(
-      files.map((file, index) => this.write(file, options?.[index])),
-    );
+  batchWrite(files: InputFile[], options?: WriteFileOptions[]): Promise<StorageFile[]> {
+    return Promise.all(files.map((file, index) => this.write(file, options?.[index])));
   }
 
   remove(key: string): Promise<void> {

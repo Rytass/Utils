@@ -21,8 +21,7 @@ let secretVersionMap = {
   [VAULT_EMPTY_PROJECT]: 0,
 } as Record<string, number>;
 
-const TOKEN =
-  'hvs.CAESIHKbC7ihFPU3_rCfEaKXxI0NA_lZqdn4BcMLRh_8Y_aXGhgawheoi_u99_20aJtdkahjrSOGhgbC2xVRlM5Um8';
+const TOKEN = 'hvs.CAESIHKbC7ihFPU3_rCfEaKXxI0NA_lZqdn4BcMLRh_8Y_aXGhgawheoi_u99_20aJtdkahjrSOGhgbC2xVRlM5Um8';
 
 const LOGIN_RESPONSE_SAMPLE = {
   request_id: 'fbc5688f-932f-4484-3ab5-9967d10dc3eb',
@@ -120,7 +119,7 @@ describe('VaultSecret', () => {
       throw new AxiosError(404);
     }
 
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       setTimeout(() => {
         resolve({
           data: {
@@ -202,7 +201,7 @@ describe('VaultSecret', () => {
       expect(() => manager.get<string>('test')).toThrow();
     });
 
-    it('should get value on offline mode', (done) => {
+    it('should get value on offline mode', done => {
       const manager = new VaultSecret(VAULT_PROJECT, {
         host: VAULT_HOST,
         auth: {
@@ -219,7 +218,7 @@ describe('VaultSecret', () => {
       });
     });
 
-    it('should set value on offline mode', (done) => {
+    it('should set value on offline mode', done => {
       const manager = new VaultSecret(VAULT_PROJECT, {
         host: VAULT_HOST,
         auth: {
@@ -250,7 +249,7 @@ describe('VaultSecret', () => {
       expect(() => manager.set<string>('test123', 'aabb')).toThrow();
     });
 
-    it('should delete value on offline mode', (done) => {
+    it('should delete value on offline mode', done => {
       const manager = new VaultSecret(VAULT_PROJECT, {
         host: VAULT_HOST,
         auth: {
@@ -281,7 +280,7 @@ describe('VaultSecret', () => {
       expect(() => manager.delete('test123')).toThrow();
     });
 
-    it('should throw error when call sync on online mode', (done) => {
+    it('should throw error when call sync on online mode', done => {
       const manager = new VaultSecret(VAULT_PROJECT, {
         host: VAULT_HOST,
         online: true,
@@ -299,7 +298,7 @@ describe('VaultSecret', () => {
       });
     });
 
-    it('should sync data online', (done) => {
+    it('should sync data online', done => {
       const manager = new VaultSecret(VAULT_PROJECT, {
         host: VAULT_HOST,
         auth: {
@@ -318,7 +317,7 @@ describe('VaultSecret', () => {
       });
     });
 
-    it('should throw on cache version not match', (done) => {
+    it('should throw on cache version not match', done => {
       const manager = new VaultSecret(VAULT_PROJECT, {
         host: VAULT_HOST,
         auth: {
@@ -335,7 +334,7 @@ describe('VaultSecret', () => {
       });
     });
 
-    it('should sync secret on force mode if verison not match', (done) => {
+    it('should sync secret on force mode if verison not match', done => {
       const manager = new VaultSecret(VAULT_PROJECT, {
         host: VAULT_HOST,
         auth: {
@@ -356,7 +355,7 @@ describe('VaultSecret', () => {
       });
     });
 
-    it('should throw error when sync failed', (done) => {
+    it('should throw error when sync failed', done => {
       const onError = jest.fn();
 
       const manager = new VaultSecret(VAULT_PROJECT, {
@@ -382,7 +381,7 @@ describe('VaultSecret', () => {
   });
 
   describe('Project error', () => {
-    it('should return undefined when get empty secret on undefined project', (done) => {
+    it('should return undefined when get empty secret on undefined project', done => {
       const manager = new VaultSecret(VAULT_EMPTY_PROJECT, {
         online: true,
         host: VAULT_HOST,
@@ -392,7 +391,7 @@ describe('VaultSecret', () => {
         },
       });
 
-      manager.get('KEY').then((value) => {
+      manager.get('KEY').then(value => {
         expect(value).toBe(undefined);
 
         manager.terminate();
@@ -401,7 +400,7 @@ describe('VaultSecret', () => {
       });
     });
 
-    it('should create a key when project is undefined', (done) => {
+    it('should create a key when project is undefined', done => {
       const manager = new VaultSecret(VAULT_EMPTY_PROJECT, {
         online: true,
         host: VAULT_HOST,
@@ -422,7 +421,7 @@ describe('VaultSecret', () => {
       });
     });
 
-    it('should throw on call unauthorized project', (done) => {
+    it('should throw on call unauthorized project', done => {
       const onError = jest.fn();
 
       const manager = new VaultSecret('GOD_PROJECT', {
@@ -458,7 +457,7 @@ describe('VaultSecret', () => {
         },
       });
 
-      it('should set value on test and get correct response', (done) => {
+      it('should set value on test and get correct response', done => {
         manager.set<string>('test', '123', true).then(async () => {
           const result = await manager.get<string>('test');
 
@@ -468,7 +467,7 @@ describe('VaultSecret', () => {
         });
       });
 
-      it('should return undefined on key not found', (done) => {
+      it('should return undefined on key not found', done => {
         manager.set<string>('willRemove', '123', true).then(async () => {
           await manager.delete('willRemove', true);
 
@@ -486,7 +485,7 @@ describe('VaultSecret', () => {
     });
 
     describe('Getter/Setter failed case', () => {
-      it('should throw when get value failed', (done) => {
+      it('should throw when get value failed', done => {
         const get = jest.spyOn(axios, 'get');
 
         get.mockImplementationOnce(async (url: string, data: unknown) => {
@@ -520,7 +519,7 @@ describe('VaultSecret', () => {
           });
       });
 
-      it('should throw when delete undefined value', (done) => {
+      it('should throw when delete undefined value', done => {
         const errorManager = new VaultSecret(VAULT_PROJECT, {
           online: true,
           host: VAULT_HOST,
@@ -539,7 +538,7 @@ describe('VaultSecret', () => {
           });
       });
 
-      it('should throw when remove value failed', (done) => {
+      it('should throw when remove value failed', done => {
         const onError = jest.fn();
 
         const errorManager = new VaultSecret(VAULT_PROJECT, {
@@ -563,7 +562,7 @@ describe('VaultSecret', () => {
           });
       });
 
-      it('should throw when set value failed', (done) => {
+      it('should throw when set value failed', done => {
         const onError = jest.fn();
 
         const errorManager = new VaultSecret(VAULT_PROJECT, {
@@ -590,7 +589,7 @@ describe('VaultSecret', () => {
   });
 
   describe('Vault login state management', () => {
-    it('should throw error on renew token', (done) => {
+    it('should throw error on renew token', done => {
       const post = jest.spyOn(axios, 'post');
 
       post.mockImplementation(async (url: string, data: unknown) => {
@@ -628,7 +627,7 @@ describe('VaultSecret', () => {
       }, 200);
     });
 
-    it('should throw error message on login failed', (done) => {
+    it('should throw error message on login failed', done => {
       const post = jest.spyOn(axios, 'post');
 
       let errorPass = false;
@@ -648,7 +647,7 @@ describe('VaultSecret', () => {
           account: VAULT_ACCOUNT,
           password: VAULT_PASSWORD,
         },
-        onError: (error) => {
+        onError: error => {
           if (errorPass) {
             expect(error).toBe('test2');
 
@@ -662,7 +661,7 @@ describe('VaultSecret', () => {
       });
     });
 
-    it('should call renewToken throw when token expires', (done) => {
+    it('should call renewToken throw when token expires', done => {
       const post = jest.spyOn(axios, 'post');
 
       post.mockImplementation(async (url: string, data: unknown) => {
@@ -698,7 +697,7 @@ describe('VaultSecret', () => {
       }, 150);
     });
 
-    it('should call checkRenew every ttl', (done) => {
+    it('should call checkRenew every ttl', done => {
       const post = jest.spyOn(axios, 'post');
 
       post.mockImplementation(async (url: string, data: unknown) => {
@@ -728,13 +727,13 @@ describe('VaultSecret', () => {
       }, 200);
     });
 
-    it('should init state got', (done) => {
+    it('should init state got', done => {
       let initPass = false;
 
       const post = jest.spyOn(axios, 'post');
 
       post.mockImplementationOnce(async (url: string, data: unknown) => {
-        return new Promise((resolve) => {
+        return new Promise(resolve => {
           const interval = setInterval(() => {
             if (!initPass) return;
 
@@ -771,7 +770,7 @@ describe('VaultSecret', () => {
   });
 
   describe('Vault network invalid', () => {
-    it('should emit error message on network failed', (done) => {
+    it('should emit error message on network failed', done => {
       const manager = new VaultSecret(VAULT_PROJECT, {
         host: 'https://not-valid.rytass.com',
         auth: {

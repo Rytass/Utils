@@ -48,7 +48,7 @@ const Table = <T extends TableDataSourceWithID>({
           versionLogsData && {
             title: '',
             width: 60,
-            render: (source) => (
+            render: source => (
               <IconButton
                 type="button"
                 size="small"
@@ -67,14 +67,7 @@ const Table = <T extends TableDataSourceWithID>({
         ...tableActions,
         ...customizedActions,
       ]),
-    [
-      withVersionLogs,
-      versionLogsData,
-      columnsProps,
-      tableActions,
-      customizedActions,
-      openModal,
-    ],
+    [withVersionLogs, versionLogsData, columnsProps, tableActions, customizedActions, openModal],
   );
 
   const baseTableProps = useMemo(
@@ -112,12 +105,7 @@ const Table = <T extends TableDataSourceWithID>({
     ],
   );
 
-  return (
-    <MznTable
-      {...baseTableProps}
-      {...(fetchMore ? { fetchMore } : { pagination })}
-    />
-  );
+  return <MznTable {...baseTableProps} {...(fetchMore ? { fetchMore } : { pagination })} />;
 };
 
 export default Table;

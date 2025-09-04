@@ -1,12 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import React, { FC, ReactNode, useState, memo } from 'react';
-import {
-  Modal,
-  ModalHeader,
-  ModalBody,
-  ModalActions,
-  cx,
-} from '@mezzanine-ui/react';
+import { Modal, ModalHeader, ModalBody, ModalActions, cx } from '@mezzanine-ui/react';
 import { DialogContextProvider } from './DialogContext';
 import { DialogConfigType } from './typing';
 import classes from './index.module.scss';
@@ -43,7 +37,7 @@ const DialogProvider: FC<{ children?: ReactNode }> = ({ children }) => {
     setOpen(false);
 
     // Wait animation end then reset
-    await new Promise((r) => setTimeout(r, 200));
+    await new Promise(r => setTimeout(r, 200));
 
     setDialogConfig({});
   };
@@ -77,10 +71,7 @@ const DialogProvider: FC<{ children?: ReactNode }> = ({ children }) => {
           size={size}
           className={cx(classes.host, className)}
         >
-          <ModalHeader
-            showSeverityIcon={showSeverityIcon}
-            titleLarge={titleLarge}
-          >
+          <ModalHeader showSeverityIcon={showSeverityIcon} titleLarge={titleLarge}>
             {title}
           </ModalHeader>
           <ModalBody className={classes.modalBody}>{dialogChildren}</ModalBody>

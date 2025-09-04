@@ -3,7 +3,15 @@
  */
 
 import { AsyncOrderInformation, Channel } from '@rytass/payments';
-import { HwaNanAutoCapMode, HwaNanCreditCardCommitMessage, HwaNanCustomizePageType, HwaNanOrder, HwaNanPayment, HwaNanPaymentChannel, HwaNanTransactionType } from '../src';
+import {
+  HwaNanAutoCapMode,
+  HwaNanCreditCardCommitMessage,
+  HwaNanCustomizePageType,
+  HwaNanOrder,
+  HwaNanPayment,
+  HwaNanPaymentChannel,
+  HwaNanTransactionType,
+} from '../src';
 
 const MERCHANT_ID = '326650918560582';
 const TERMINAL_ID = '87345985';
@@ -22,11 +30,13 @@ describe('Hwa Nan Order', () => {
   it('should get null if order not failed', () => {
     const order = new HwaNanOrder({
       id: 'test',
-      items: [{
-        name: 'A',
-        unitPrice: 10,
-        quantity: 1,
-      }],
+      items: [
+        {
+          name: 'A',
+          unitPrice: 10,
+          quantity: 1,
+        },
+      ],
       gateway: payment,
       makePayload: {
         MerchantID: MERCHANT_ID,
@@ -50,11 +60,13 @@ describe('Hwa Nan Order', () => {
   it('should throw error on retrieve order info', () => {
     const order = new HwaNanOrder({
       id: 'test',
-      items: [{
-        name: 'A',
-        unitPrice: 10,
-        quantity: 1,
-      }],
+      items: [
+        {
+          name: 'A',
+          unitPrice: 10,
+          quantity: 1,
+        },
+      ],
       gateway: payment,
       makePayload: {
         MerchantID: MERCHANT_ID,
@@ -78,11 +90,13 @@ describe('Hwa Nan Order', () => {
   it('should throw error on refund order', () => {
     const order = new HwaNanOrder({
       id: 'test',
-      items: [{
-        name: 'A',
-        unitPrice: 10,
-        quantity: 1,
-      }],
+      items: [
+        {
+          name: 'A',
+          unitPrice: 10,
+          quantity: 1,
+        },
+      ],
       gateway: payment,
       makePayload: {
         MerchantID: MERCHANT_ID,
@@ -106,11 +120,13 @@ describe('Hwa Nan Order', () => {
   it('should get createdAt after order prepared', () => {
     const order = new HwaNanOrder({
       id: 'test',
-      items: [{
-        name: 'A',
-        unitPrice: 10,
-        quantity: 1,
-      }],
+      items: [
+        {
+          name: 'A',
+          unitPrice: 10,
+          quantity: 1,
+        },
+      ],
       gateway: payment,
       makePayload: {
         MerchantID: MERCHANT_ID,
@@ -134,11 +150,13 @@ describe('Hwa Nan Order', () => {
   it('should formHTML getter throw error if an order committed or failed', () => {
     const order = new HwaNanOrder({
       id: 'test',
-      items: [{
-        name: 'A',
-        unitPrice: 10,
-        quantity: 1,
-      }],
+      items: [
+        {
+          name: 'A',
+          unitPrice: 10,
+          quantity: 1,
+        },
+      ],
       gateway: payment,
       makePayload: {
         MerchantID: MERCHANT_ID,
@@ -173,11 +191,13 @@ describe('Hwa Nan Order', () => {
   it('should throw error on commit at not pre-committed order', () => {
     const order = new HwaNanOrder({
       id: 'test',
-      items: [{
-        name: 'A',
-        unitPrice: 10,
-        quantity: 1,
-      }],
+      items: [
+        {
+          name: 'A',
+          unitPrice: 10,
+          quantity: 1,
+        },
+      ],
       gateway: payment,
       makePayload: {
         MerchantID: MERCHANT_ID,
@@ -195,23 +215,27 @@ describe('Hwa Nan Order', () => {
       },
     });
 
-    expect(() => order.commit({
-      id: order.id,
-      totalPrice: order.totalPrice,
-      committedAt: new Date(),
-      platformTradeNumber: '123456',
-      channel: HwaNanPaymentChannel.CREDIT,
-    })).toThrow();
+    expect(() =>
+      order.commit({
+        id: order.id,
+        totalPrice: order.totalPrice,
+        committedAt: new Date(),
+        platformTradeNumber: '123456',
+        channel: HwaNanPaymentChannel.CREDIT,
+      }),
+    ).toThrow();
   });
 
   it('should throw error when commit id not match', () => {
     const order = new HwaNanOrder({
       id: 'test',
-      items: [{
-        name: 'A',
-        unitPrice: 10,
-        quantity: 1,
-      }],
+      items: [
+        {
+          name: 'A',
+          unitPrice: 10,
+          quantity: 1,
+        },
+      ],
       gateway: payment,
       makePayload: {
         MerchantID: MERCHANT_ID,
@@ -231,12 +255,14 @@ describe('Hwa Nan Order', () => {
 
     expect(order.form).not.toBeNull();
 
-    expect(() => order.commit({
-      id: 'OTHER',
-      totalPrice: order.totalPrice,
-      committedAt: new Date(),
-      platformTradeNumber: '123456',
-      channel: HwaNanPaymentChannel.CREDIT,
-    })).toThrow();
+    expect(() =>
+      order.commit({
+        id: 'OTHER',
+        totalPrice: order.totalPrice,
+        committedAt: new Date(),
+        platformTradeNumber: '123456',
+        channel: HwaNanPaymentChannel.CREDIT,
+      }),
+    ).toThrow();
   });
 });

@@ -30,7 +30,7 @@ export class MemberLoginLogEntity {
   @CreateDateColumn()
   createdAt: Date;
 
-  @ManyToOne(() => BaseMemberEntity, (member) => member.loginLogs)
+  @ManyToOne(() => BaseMemberEntity, member => member.loginLogs)
   @JoinColumn({ name: 'memberId', referencedColumnName: 'id' })
   member: Relation<BaseMemberEntity>;
 }

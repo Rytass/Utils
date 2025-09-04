@@ -58,16 +58,12 @@ const WMSMapModalContainer: FC<WMSMapModalProps> = ({
 
   const handleToggleRectangleTool = useCallback(() => {
     if (editMode !== EditMode.LAYER) return;
-    setDrawingMode((prev) =>
-      prev === DrawingMode.RECTANGLE ? DrawingMode.NONE : DrawingMode.RECTANGLE,
-    );
+    setDrawingMode(prev => (prev === DrawingMode.RECTANGLE ? DrawingMode.NONE : DrawingMode.RECTANGLE));
   }, [editMode]);
 
   const handleTogglePenTool = useCallback(() => {
     if (editMode !== EditMode.LAYER) return;
-    setDrawingMode((prev) =>
-      prev === DrawingMode.PEN ? DrawingMode.NONE : DrawingMode.PEN,
-    );
+    setDrawingMode(prev => (prev === DrawingMode.PEN ? DrawingMode.NONE : DrawingMode.PEN));
   }, [editMode]);
 
   const handleColorChange = useCallback((color: string) => {

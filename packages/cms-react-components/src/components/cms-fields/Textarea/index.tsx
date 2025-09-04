@@ -1,9 +1,5 @@
 import React, { ReactNode, useRef, useEffect } from 'react';
-import {
-  Textarea as MznTextarea,
-  FormLabel,
-  Typography,
-} from '@mezzanine-ui/react';
+import { Textarea as MznTextarea, FormLabel, Typography } from '@mezzanine-ui/react';
 import classes from './index.module.scss';
 
 export interface TextareaProps {
@@ -14,13 +10,7 @@ export interface TextareaProps {
   disabled?: boolean;
 }
 
-export const Textarea = ({
-  label,
-  value,
-  onChange,
-  autoFocus,
-  disabled,
-}: TextareaProps): ReactNode => {
+export const Textarea = ({ label, value, onChange, autoFocus, disabled }: TextareaProps): ReactNode => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -33,11 +23,7 @@ export const Textarea = ({
     <div className={classes.root}>
       <FormLabel>
         {label}
-        <Typography
-          variant="caption"
-          color="error"
-          className={classes.requiredMark}
-        >
+        <Typography variant="caption" color="error" className={classes.requiredMark}>
           *
         </Typography>
       </FormLabel>
@@ -45,7 +31,7 @@ export const Textarea = ({
         textareaRef={textareaRef}
         className={classes.textarea}
         value={value}
-        onChange={(e) => {
+        onChange={e => {
           onChange(e.target.value);
         }}
         placeholder="最多 500 個字元"

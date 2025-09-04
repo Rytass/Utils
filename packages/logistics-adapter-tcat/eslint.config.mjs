@@ -4,12 +4,8 @@ export default {
     node: true,
     jest: true,
   },
-  extends: [
-    'eslint:recommended',
-  ],
-  plugins: [
-    'import',
-  ],
+  extends: ['eslint:recommended'],
+  plugins: ['import'],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 2020,
@@ -41,9 +37,7 @@ export default {
     'no-bitwise': [
       0,
       {
-        allow: [
-          '~',
-        ],
+        allow: ['~'],
         int32Hint: true,
       },
     ],
@@ -63,25 +57,13 @@ export default {
       },
       {
         blankLine: 'always',
-        prev: [
-          'const',
-          'let',
-          'var',
-        ],
+        prev: ['const', 'let', 'var'],
         next: '*',
       },
       {
         blankLine: 'any',
-        prev: [
-          'const',
-          'let',
-          'var',
-        ],
-        next: [
-          'const',
-          'let',
-          'var',
-        ],
+        prev: ['const', 'let', 'var'],
+        next: ['const', 'let', 'var'],
       },
       {
         blankLine: 'always',
@@ -160,24 +142,14 @@ export default {
         allowNamedFunctions: true,
       },
     ],
-    quotes: [
-      2,
-      'single',
-    ],
+    quotes: [2, 'single'],
     'quote-props': [2, 'as-needed'],
   },
   overrides: [
     {
-      files: [
-        './**/*.{ts}',
-      ],
-      extends: [
-        'airbnb-typescript',
-        'plugin:@typescript-eslint/recommended',
-      ],
-      plugins: [
-        '@typescript-eslint',
-      ],
+      files: ['./**/*.{ts}'],
+      extends: ['airbnb-typescript', 'plugin:@typescript-eslint/recommended'],
+      plugins: ['@typescript-eslint'],
       parserOptions: {
         project: './tsconfig.*?.json',
       },
@@ -194,9 +166,7 @@ export default {
       },
     },
     {
-      files: [
-        './**/*.spec.{ts,tsx}',
-      ],
+      files: ['./**/*.spec.{ts,tsx}'],
       rules: {
         '@typescript-eslint/ban-ts-ignore': 0,
         'import/no-extraneous-dependencies': 0,

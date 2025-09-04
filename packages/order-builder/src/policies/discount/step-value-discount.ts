@@ -5,11 +5,7 @@ import { divided, plus, times } from '../../utils/decimal';
 import { PolicyPrefix } from '../typings';
 import { generateNewPolicyId } from '../utils';
 import { BaseDiscount } from './base-discount';
-import {
-  Discount,
-  PolicyDiscountDescription,
-  StepDiscountOptions,
-} from './typings';
+import { Discount, PolicyDiscountDescription, StepDiscountOptions } from './typings';
 import {
   getConditionsByDiscountConstructor,
   getOnlyMatchedItems,
@@ -39,12 +35,7 @@ export class StepValueDiscount implements BaseDiscount {
    * @param {StepDiscountOptions} options StepDiscountOptions
    * @returns {Policy} Policy
    */
-  constructor(
-    step: number,
-    value: number,
-    conditions: Condition[],
-    options?: StepDiscountOptions
-  );
+  constructor(step: number, value: number, conditions: Condition[], options?: StepDiscountOptions);
   /**
    * @param {Number} step `Step` to accumulate discount-value
    * @param {Number} value fixed-value number
@@ -52,12 +43,7 @@ export class StepValueDiscount implements BaseDiscount {
    * @param {StepDiscountOptions} options StepDiscountOptions
    * @returns {Policy} Policy
    */
-  constructor(
-    step: number,
-    value: number,
-    condition: Condition,
-    options?: StepDiscountOptions
-  );
+  constructor(step: number, value: number, condition: Condition, options?: StepDiscountOptions);
   /**
    * @param {Number} step `Step` to accumulate discount-value
    * @param {Number} value fixed-value number
@@ -75,7 +61,7 @@ export class StepValueDiscount implements BaseDiscount {
     step: number,
     value: number,
     arg1?: Condition | Condition[] | StepDiscountOptions,
-    arg2?: StepDiscountOptions
+    arg2?: StepDiscountOptions,
   ) {
     this.options = getOptionsByDiscountConstructor(arg1, arg2);
     this.id = this.options?.id || generateNewPolicyId();
@@ -89,39 +75,25 @@ export class StepValueDiscount implements BaseDiscount {
   }
 
   matchedItems(order: Order): FlattenOrderItem[] {
-    return this.options?.onlyMatched
-      ? getOnlyMatchedItems(order, this.conditions)
-      : getOrderItems(order);
+    return this.options?.onlyMatched ? getOnlyMatchedItems(order, this.conditions) : getOrderItems(order);
   }
 
   valid(order: Order): boolean {
-    return this.conditions.length
-      ? this.conditions.every(condition => condition.satisfy?.(order))
-      : true;
+    return this.conditions.length ? this.conditions.every(condition => condition.satisfy?.(order)) : true;
   }
 
   discount(itemValue: number): number {
     return this.options?.excludedInCalculation
       ? 0
-      : times(
-        this.value,
-        Math.min(this.stepLimit, Math.floor(divided(itemValue, this.step))),
-      );
+      : times(this.value, Math.min(this.stepLimit, Math.floor(divided(itemValue, this.step))));
   }
 
-  description(
-    order: Order,
-    itemValue: number,
-    appliedItems: FlattenOrderItem[]
-  ): PolicyDiscountDescription {
-    const matchedTimes = Math.min(
-      this.stepLimit,
-      Math.floor(divided(itemValue, this.step)),
-    );
+  description(order: Order, itemValue: number, appliedItems: FlattenOrderItem[]): PolicyDiscountDescription {
+    const matchedTimes = Math.min(this.stepLimit, Math.floor(divided(itemValue, this.step)));
 
     const maximumDiscountValue = appliedItems.reduce(
       (total, item) => plus(total, times(item.quantity, item.unitPrice)),
-      0
+      0,
     );
 
     return {
@@ -131,10 +103,7 @@ export class StepValueDiscount implements BaseDiscount {
       type: this.type,
       discount: Math.min(
         maximumDiscountValue,
-        order.config.roundStrategy.round(this.discount(itemValue), [
-        'final-price-only',
-        'every-calculation',
-      ]),
+        order.config.roundStrategy.round(this.discount(itemValue), ['final-price-only', 'every-calculation']),
       ),
       conditions: this.conditions,
       appliedItems,
@@ -143,37 +112,21 @@ export class StepValueDiscount implements BaseDiscount {
     };
   }
 
-  resolve<PolicyDiscountDescription>(
-    order: Order,
-    policies: PolicyDiscountDescription[]
-  ): PolicyDiscountDescription[] {
+  resolve<PolicyDiscountDescription>(order: Order, policies: PolicyDiscountDescription[]): PolicyDiscountDescription[] {
     if (this.valid(order)) {
       const matchedItems: FlattenOrderItem[] = this.matchedItems(order);
 
-      if (
-        this.options?.stepUnit === 'quantity' &&
-        matchedItems.length < this.step
-      )
-        return policies;
+      if (this.options?.stepUnit === 'quantity' && matchedItems.length < this.step) return policies;
 
       const itemValue =
         this.options?.stepUnit === 'quantity'
           ? matchedItems.reduce((total, item) => plus(total, item.quantity), 0)
           : order.config.roundStrategy.round(
-              matchedItems.reduce(
-                (total, item) => plus(total, item.unitPrice),
-                0
-              ),
-              'every-calculation'
+              matchedItems.reduce((total, item) => plus(total, item.unitPrice), 0),
+              'every-calculation',
             );
 
-      policies.push(
-        this.description(
-          order,
-          itemValue,
-          matchedItems
-        ) as PolicyDiscountDescription
-      );
+      policies.push(this.description(order, itemValue, matchedItems) as PolicyDiscountDescription);
     }
 
     return policies;

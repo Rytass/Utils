@@ -28,7 +28,8 @@ type JPEGOptions = {
   targetFormat: 'jpg' | 'jpeg';
 } & JpegOptions;
 
-export type ImageTranscoderOptions = AVIFOptions
+export type ImageTranscoderOptions =
+  | AVIFOptions
   | HEIFOptions
   | GIFOptions
   | TIFFOptions

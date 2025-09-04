@@ -22,14 +22,11 @@ export class QuantityThreshold<Options extends ObjRecord = ObjRecord>
   }
 
   satisfy(order: Order) {
-    return getOrderItems(order).reduce((total, item) => (
-      plus(
-        total,
-        Math.ceil(divided(
-          times(item.quantity, item.unitPrice),
-          item.unitPrice,
-        )),
-      )
-    ), 0) >= this.value;
+    return (
+      getOrderItems(order).reduce(
+        (total, item) => plus(total, Math.ceil(divided(times(item.quantity, item.unitPrice), item.unitPrice))),
+        0,
+      ) >= this.value
+    );
   }
 }

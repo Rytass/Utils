@@ -13,10 +13,7 @@ export * from './models/member-password-history.entity';
 export * from './models/member-oauth-record.entity';
 
 // Resolved Repositories
-export {
-  CASBIN_ENFORCER,
-  RESOLVED_MEMBER_REPO,
-} from './typings/member-base-providers';
+export { CASBIN_ENFORCER, RESOLVED_MEMBER_REPO } from './typings/member-base-providers';
 
 // Casbin
 export * from './guards/casbin.guard';

@@ -43,8 +43,7 @@ const VerifyReleaseModal = ({
 }: VerifyReleaseModalProps): ReactNode => {
   const [acting, setActing] = useState<boolean>(false);
 
-  const [currentRadioValue, setCurrentRadioValue] =
-    useState<VerifyReleaseModalRadio>(defaultRadioValue);
+  const [currentRadioValue, setCurrentRadioValue] = useState<VerifyReleaseModalRadio>(defaultRadioValue);
 
   const [releasedAt, setReleasedAt] = useState<string>('');
   const [rejectReason, setRejectReason] = useState<string>('');
@@ -122,15 +121,7 @@ const VerifyReleaseModal = ({
           closeModal();
         };
     }
-  }, [
-    currentRadioValue,
-    onRelease,
-    closeModal,
-    releasedAt,
-    onApprove,
-    onReject,
-    rejectReason,
-  ]);
+  }, [currentRadioValue, onRelease, closeModal, releasedAt, onApprove, onReject, rejectReason]);
 
   return (
     <>
@@ -140,39 +131,29 @@ const VerifyReleaseModal = ({
           size="large"
           value={currentRadioValue}
           className={classes.radioGroup}
-          onChange={(e) => {
+          onChange={e => {
             setCurrentRadioValue(e.target.value as VerifyReleaseModalRadio);
           }}
         >
-          <Radio value={VerifyReleaseModalRadio.Now}>
-            立即發佈文章至最新版本
-          </Radio>
+          <Radio value={VerifyReleaseModalRadio.Now}>立即發佈文章至最新版本</Radio>
           <div className={classes.radioWrapper}>
-            <Radio value={VerifyReleaseModalRadio.Schedule}>
-              預約發佈文章至最新版本
-            </Radio>
+            <Radio value={VerifyReleaseModalRadio.Schedule}>預約發佈文章至最新版本</Radio>
             <DateTimePicker
               placeholder="yyyy-mm-dd hh:mm:ss"
               size="large"
               value={releasedAt}
-              onChange={(date) => {
+              onChange={date => {
                 setReleasedAt(date ?? '');
               }}
-              isDateDisabled={(date) => dayjs(date).isBefore(dayjs(), 'day')}
+              isDateDisabled={date => dayjs(date).isBefore(dayjs(), 'day')}
               disabled={currentRadioValue !== VerifyReleaseModalRadio.Schedule}
             />
           </div>
           {(withApprove || withReject) && <div className={classes.divider} />}
-          {withApprove && (
-            <Radio value={VerifyReleaseModalRadio.Approve}>
-              即刻通過審查 （文章會將移至可發佈）
-            </Radio>
-          )}
+          {withApprove && <Radio value={VerifyReleaseModalRadio.Approve}>即刻通過審查 （文章會將移至可發佈）</Radio>}
           {withReject && (
             <div className={classes.rejectWrapper}>
-              <Radio value={VerifyReleaseModalRadio.Reject}>
-                不通過 （文章會將移至草稿區）
-              </Radio>
+              <Radio value={VerifyReleaseModalRadio.Reject}>不通過 （文章會將移至草稿區）</Radio>
               {currentRadioValue === VerifyReleaseModalRadio.Reject && (
                 <div className={classes.rejectField}>
                   <Typography variant="body1" color="text-primary">
@@ -181,13 +162,11 @@ const VerifyReleaseModal = ({
                   <Textarea
                     label="不通過原因"
                     value={rejectReason}
-                    onChange={(value) => {
+                    onChange={value => {
                       setRejectReason(value);
                     }}
                     autoFocus
-                    disabled={
-                      currentRadioValue !== VerifyReleaseModalRadio.Reject
-                    }
+                    disabled={currentRadioValue !== VerifyReleaseModalRadio.Reject}
                   />
                 </div>
               )}

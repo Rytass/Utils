@@ -37,16 +37,8 @@ const StandardCMSList = <T extends TableDataSourceWithID>({
 
   return (
     <div className={cx(classes.root, className)}>
-      <StandardCMSTabs
-        activeStage={activeTabId}
-        onChange={onChange}
-        tabsNaming={tabsNaming}
-      />
-      <StandardCMSTable
-        {...tableProps}
-        className={tableClassName}
-        currentStage={activeTabId}
-      />
+      <StandardCMSTabs activeStage={activeTabId} onChange={onChange} tabsNaming={tabsNaming} />
+      <StandardCMSTable {...tableProps} className={tableClassName} currentStage={activeTabId} />
     </div>
   );
 };

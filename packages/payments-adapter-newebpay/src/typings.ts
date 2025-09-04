@@ -1,27 +1,13 @@
-import {
-  CreditCardECI,
-  OrderCommitMessage,
-  PaymentItem,
-  PrepareOrderInput,
-} from '@rytass/payments';
+import { CreditCardECI, OrderCommitMessage, PaymentItem, PrepareOrderInput } from '@rytass/payments';
 import { NewebPayPayment } from './newebpay-payment';
 import { IncomingMessage, ServerResponse } from 'http';
-import {
-  NewebPayCreditCardCommitMessage,
-  NewebPayCreditCardOrderInput,
-} from './typings/credit-card.typing';
-import {
-  NewebPayLinePayCommitMessage,
-  NewebPayLinePayOrderInput,
-} from './typings/line-pay.typing';
+import { NewebPayCreditCardCommitMessage, NewebPayCreditCardOrderInput } from './typings/credit-card.typing';
+import { NewebPayLinePayCommitMessage, NewebPayLinePayOrderInput } from './typings/line-pay.typing';
 import {
   NewebPayVirtualAccountCommitMessage,
   NewebPayVirtualAccountOrderInput,
 } from './typings/virtual-account.typing';
-import {
-  NewebPayWebATMCommitMessage,
-  NewebPayWebATMOrderInput,
-} from './typings/webatm.typing';
+import { NewebPayWebATMCommitMessage, NewebPayWebATMOrderInput } from './typings/webatm.typing';
 import { NewebPayOrder } from './newebpay-order';
 import { NewebPayBindCardRequest } from './newebpay-bind-card-request';
 
@@ -91,13 +77,11 @@ export interface NewebPayOrderInit<OCM extends NewebPayCommitMessage> {
   gateway: NewebPayPayment<OCM>;
 }
 
-export interface NewebPayPrepareOrderInit<OCM extends NewebPayCommitMessage>
-  extends NewebPayOrderInit<OCM> {
+export interface NewebPayPrepareOrderInit<OCM extends NewebPayCommitMessage> extends NewebPayOrderInit<OCM> {
   makePayload: NewebPayMPGMakeOrderPayload;
 }
 
-export interface NewebPayOrderFromServerInit<OCM extends NewebPayCommitMessage>
-  extends NewebPayOrderInit<OCM> {
+export interface NewebPayOrderFromServerInit<OCM extends NewebPayCommitMessage> extends NewebPayOrderInit<OCM> {
   createdAt: Date;
   committedAt: Date | null;
   platformTradeNumber: string;
@@ -105,20 +89,17 @@ export interface NewebPayOrderFromServerInit<OCM extends NewebPayCommitMessage>
   status: NewebPayOrderStatusFromAPI;
 }
 
-export type NewebPayOrderInput<CM extends NewebPayCommitMessage> =
-  CM extends NewebPayCreditCardCommitMessage
-    ? NewebPayCreditCardOrderInput
-    : CM extends NewebPayLinePayCommitMessage
-      ? NewebPayLinePayOrderInput
-      : CM extends NewebPayVirtualAccountCommitMessage
-        ? NewebPayVirtualAccountOrderInput
-        : CM extends NewebPayWebATMCommitMessage
-          ? NewebPayWebATMOrderInput
-          : NewebPayPrepareOrderInput;
+export type NewebPayOrderInput<CM extends NewebPayCommitMessage> = CM extends NewebPayCreditCardCommitMessage
+  ? NewebPayCreditCardOrderInput
+  : CM extends NewebPayLinePayCommitMessage
+    ? NewebPayLinePayOrderInput
+    : CM extends NewebPayVirtualAccountCommitMessage
+      ? NewebPayVirtualAccountOrderInput
+      : CM extends NewebPayWebATMCommitMessage
+        ? NewebPayWebATMOrderInput
+        : NewebPayPrepareOrderInput;
 
-export interface NewebPayPaymentInitOptions<
-  O extends NewebPayOrder<NewebPayCommitMessage>,
-> {
+export interface NewebPayPaymentInitOptions<O extends NewebPayOrder<NewebPayCommitMessage>> {
   baseUrl?: string;
   merchantId: string;
   aesKey: string;
@@ -213,17 +194,8 @@ export type NewebPayAuthBank =
   | 'FirstBank'
   | 'KGI';
 export type NewebPayThirdPartyAuthBank = 'Esun' | 'Linepay';
-export type NewebPayCreditCardSubChannel =
-  | 'CREDIT'
-  | 'FOREIGN'
-  | 'UNIONPAY'
-  | 'GOOGLEPAY'
-  | 'SAMSUNGPAY'
-  | 'DCC';
-export type NewebPayThirdPartySubChannel =
-  | 'LINEPAY'
-  | 'ESUNWALLET'
-  | 'TAIWANPAY';
+export type NewebPayCreditCardSubChannel = 'CREDIT' | 'FOREIGN' | 'UNIONPAY' | 'GOOGLEPAY' | 'SAMSUNGPAY' | 'DCC';
+export type NewebPayThirdPartySubChannel = 'LINEPAY' | 'ESUNWALLET' | 'TAIWANPAY';
 
 export enum NewebPayCreditCardSpeedCheckoutMode {
   NONE = 0,
@@ -278,22 +250,13 @@ export interface NewebPayNotifyEncryptedPayload {
   CVSCOMPhone?: string;
   LgsNo?: string;
   LgsType?: 'B2C' | 'C2C';
-  ChannelID?:
-    | 'ALIPAY'
-    | 'WECHATPAY'
-    | 'ACCLINK'
-    | 'CREDIT'
-    | 'CVS'
-    | 'P2GEACC'
-    | 'VACC'
-    | 'WEBATM';
+  ChannelID?: 'ALIPAY' | 'WECHATPAY' | 'ACCLINK' | 'CREDIT' | 'CVS' | 'P2GEACC' | 'VACC' | 'WEBATM';
   ChannelNo?: string;
   PayAmt?: number;
   RedDisAmt?: number;
 }
 
-export interface NewebPayMPGMakeOrderEncryptedPayload
-  extends Record<string, string | number | undefined> {
+export interface NewebPayMPGMakeOrderEncryptedPayload extends Record<string, string | number | undefined> {
   MerchantID: string;
   RespondType: 'JSON';
   TimeStamp: string;
@@ -375,8 +338,7 @@ export enum NewebPayCreditCardBalanceStatus {
   SETTLED = '3',
 }
 
-export interface NewebPayQueryCreditCardResponsePayload
-  extends NewebPayQueryResponseBasePayload {
+export interface NewebPayQueryCreditCardResponsePayload extends NewebPayQueryResponseBasePayload {
   RespondCode: string;
   Auth: string;
   ECI: CreditCardECI;
@@ -394,21 +356,17 @@ export interface NewebPayQueryCreditCardResponsePayload
   AuthBank: NewebPayAuthBank;
 }
 
-export interface NewebPayQueryATMResponsePayload
-  extends NewebPayQueryResponseBasePayload {
+export interface NewebPayQueryATMResponsePayload extends NewebPayQueryResponseBasePayload {
   PayInfo: string;
   ExpireDate: string; // YYYY-MM-DD HH:mm:ss
   OrderStatus: NewebPayOrderStatusFromAPI;
 }
 
-export type NewebPayQueryBarcodeResponsePayload =
-  NewebPayQueryATMResponsePayload;
+export type NewebPayQueryBarcodeResponsePayload = NewebPayQueryATMResponsePayload;
 export type NewebPayQueryCVSResponsePayload = NewebPayQueryATMResponsePayload;
-export type NewebPayQueryVirtualAccountResponsePayload =
-  NewebPayQueryATMResponsePayload;
+export type NewebPayQueryVirtualAccountResponsePayload = NewebPayQueryATMResponsePayload;
 
-export interface NewebPayQueryLogisticResponsePayload
-  extends NewebPayQueryResponseBasePayload {
+export interface NewebPayQueryLogisticResponsePayload extends NewebPayQueryResponseBasePayload {
   StoreType: '全家' | '7-ELEVEN' | '萊爾富' | 'OK mart';
   StoreCode: string;
   StoreName: string;
@@ -416,8 +374,7 @@ export interface NewebPayQueryLogisticResponsePayload
   LgsType: 'B2C' | 'C2C';
 }
 
-export interface NewebPayQueryThirdPartyResponsePayload
-  extends NewebPayQueryResponseBasePayload {
+export interface NewebPayQueryThirdPartyResponsePayload extends NewebPayQueryResponseBasePayload {
   RespondCode: string;
   CloseAmt: number;
   CloseStatus: NewebPayCreditCardBalanceStatus;
@@ -428,12 +385,9 @@ export interface NewebPayQueryThirdPartyResponsePayload
   AuthBank: NewebPayThirdPartyAuthBank;
 }
 
-export type NewebPayQueryLinePayResponsePayload =
-  NewebPayQueryThirdPartyResponsePayload;
-export type NewebPayQueryEsunWalletResponsePayload =
-  NewebPayQueryThirdPartyResponsePayload;
-export type NewebPayQueryTaiwanPayResponsePayload =
-  NewebPayQueryThirdPartyResponsePayload;
+export type NewebPayQueryLinePayResponsePayload = NewebPayQueryThirdPartyResponsePayload;
+export type NewebPayQueryEsunWalletResponsePayload = NewebPayQueryThirdPartyResponsePayload;
+export type NewebPayQueryTaiwanPayResponsePayload = NewebPayQueryThirdPartyResponsePayload;
 
 export type NewebPayQueryResponsePayload =
   | NewebPayQueryCreditCardResponsePayload
@@ -441,8 +395,7 @@ export type NewebPayQueryResponsePayload =
   | NewebPayQueryLogisticResponsePayload
   | NewebPayQueryThirdPartyResponsePayload;
 
-export interface NewebPayCreditCardCancelRequestPayload
-  extends Record<string, string> {
+export interface NewebPayCreditCardCancelRequestPayload extends Record<string, string> {
   MerchantID_: string;
   PostData_: string;
 }
@@ -464,8 +417,7 @@ export interface NewebPayCreditCardCancelResponse {
   CheckCode: string;
 }
 
-export interface NewebPayCreditCardCloseRequestPayload
-  extends Record<string, string> {
+export interface NewebPayCreditCardCloseRequestPayload extends Record<string, string> {
   MerchantID_: string;
   PostData_: string;
 }
@@ -496,8 +448,7 @@ export interface NewebPayBindCardRequestPayload {
   EncryptType?: 0 | 1 | ''; // 0: AES/CBC/PKCS7Padding, 1: AES/GCM
 }
 
-export interface NewebPayBindCardRequestTradeInfoPayload
-  extends Record<string, string | number | undefined> {
+export interface NewebPayBindCardRequestTradeInfoPayload extends Record<string, string | number | undefined> {
   MerchantID: string;
   RespondType: 'JSON';
   TimeStamp: string; // Unix timestamp in seconds
@@ -562,8 +513,7 @@ export interface NewebPayCheckoutWithTokenPayload {
   Pos_: 'JSON';
 }
 
-export interface NewebPayCheckoutWithTokenPostData
-  extends Record<string, string | number | undefined> {
+export interface NewebPayCheckoutWithTokenPostData extends Record<string, string | number | undefined> {
   TimeStamp: string; // Unix timestamp in seconds
   Version: '2.1';
   P3D?: '1' | '';

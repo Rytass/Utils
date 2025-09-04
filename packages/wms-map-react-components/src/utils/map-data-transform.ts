@@ -19,7 +19,7 @@ export const transformNodesToMapData = (nodes: Node[]): Map => {
   const backgrounds: MapBackground[] = [];
   const ranges: (MapRectangleRange | MapPolygonRange)[] = [];
 
-  nodes.forEach((node) => {
+  nodes.forEach(node => {
     switch (node.type) {
       case 'imageNode': {
         // ImageNode 轉換為 MapBackground
@@ -107,9 +107,7 @@ export const transformNodesToMapData = (nodes: Node[]): Map => {
 /**
  * 轉換 React Flow 節點為點擊資訊格式
  */
-export const transformNodeToClickInfo = (
-  node: Node,
-): WMSNodeClickInfo | null => {
+export const transformNodeToClickInfo = (node: Node): WMSNodeClickInfo | null => {
   const baseInfo = {
     id: node.id as ID,
     type: node.type!,
@@ -206,10 +204,10 @@ export const transformNodeToClickInfo = (
       const bounds =
         pathData.points?.length > 0
           ? {
-              minX: Math.min(...pathData.points.map((p) => p.x)),
-              minY: Math.min(...pathData.points.map((p) => p.y)),
-              maxX: Math.max(...pathData.points.map((p) => p.x)),
-              maxY: Math.max(...pathData.points.map((p) => p.y)),
+              minX: Math.min(...pathData.points.map(p => p.x)),
+              minY: Math.min(...pathData.points.map(p => p.y)),
+              maxX: Math.max(...pathData.points.map(p => p.x)),
+              maxY: Math.max(...pathData.points.map(p => p.y)),
             }
           : null;
 
@@ -350,10 +348,10 @@ export const logNodeData = (node: Node): void => {
         bounds:
           pathData.points?.length > 0
             ? {
-                minX: Math.min(...pathData.points.map((p) => p.x)),
-                minY: Math.min(...pathData.points.map((p) => p.y)),
-                maxX: Math.max(...pathData.points.map((p) => p.x)),
-                maxY: Math.max(...pathData.points.map((p) => p.y)),
+                minX: Math.min(...pathData.points.map(p => p.x)),
+                minY: Math.min(...pathData.points.map(p => p.y)),
+                maxX: Math.max(...pathData.points.map(p => p.x)),
+                maxY: Math.max(...pathData.points.map(p => p.y)),
               }
             : null,
       });

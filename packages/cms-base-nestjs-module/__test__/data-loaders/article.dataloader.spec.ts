@@ -1,10 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { ArticleDataLoader } from '../../src/data-loaders/article.dataloader';
 import { SignatureService } from '../../src/services/signature.service';
-import {
-  RESOLVED_ARTICLE_REPO,
-  RESOLVED_ARTICLE_VERSION_REPO,
-} from '../../src/typings/cms-base-providers';
+import { RESOLVED_ARTICLE_REPO, RESOLVED_ARTICLE_VERSION_REPO } from '../../src/typings/cms-base-providers';
 import { Repository } from 'typeorm';
 import { ArticleSignatureResult } from '../../src/typings/article-signature-result.enum';
 import { ArticleStage } from '../../src/typings/article-stage.enum';
@@ -246,7 +243,7 @@ describe('ArticleDataLoader', () => {
 
     const orWhereMock = jest.fn();
 
-    const andWhereSpy: any = jest.fn((brackets) => {
+    const andWhereSpy: any = jest.fn(brackets => {
       brackets({ orWhere: orWhereMock });
 
       return qb;
@@ -261,13 +258,11 @@ describe('ArticleDataLoader', () => {
 
     versionRepo.createQueryBuilder.mockReturnValue(qb as any);
 
-    const bracketsSpy = jest
-      .spyOn(require('typeorm'), 'Brackets')
-      .mockImplementation((callback: any) => {
-        callback({ orWhere: orWhereMock });
+    const bracketsSpy = jest.spyOn(require('typeorm'), 'Brackets').mockImplementation((callback: any) => {
+      callback({ orWhere: orWhereMock });
 
-        return { __mocked: true } as any;
-      });
+      return { __mocked: true } as any;
+    });
 
     await dataLoader.stageLoader.loadMany(args);
 

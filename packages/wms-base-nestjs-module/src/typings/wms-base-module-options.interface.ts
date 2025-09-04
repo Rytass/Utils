@@ -19,16 +19,11 @@ export interface WMSBaseModuleOptions {
 }
 
 export interface WMSBaseModuleOptionsFactory {
-  createWMSBaseModuleOptions():
-    | Promise<WMSBaseModuleOptions>
-    | WMSBaseModuleOptions;
+  createWMSBaseModuleOptions(): Promise<WMSBaseModuleOptions> | WMSBaseModuleOptions;
 }
 
-export interface WMSBaseModuleAsyncOptions
-  extends Pick<ModuleMetadata, 'imports'> {
-  useFactory?: (
-    ...args: any[]
-  ) => Promise<WMSBaseModuleOptions> | WMSBaseModuleOptions;
+export interface WMSBaseModuleAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
+  useFactory?: (...args: any[]) => Promise<WMSBaseModuleOptions> | WMSBaseModuleOptions;
   inject?: any[];
   useClass?: Type<WMSBaseModuleOptionsFactory>;
   useExisting?: Type<WMSBaseModuleOptionsFactory>;

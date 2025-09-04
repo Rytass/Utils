@@ -2,11 +2,7 @@ export * from './newebpay-order-item';
 export * from './newebpay-order';
 export * from './newebpay-payment';
 
-export {
-  NewebPaymentChannel,
-  NewebPayCreditCardBalanceStatus,
-  NewebPayOrderStatusFromAPI,
-} from './typings';
+export { NewebPaymentChannel, NewebPayCreditCardBalanceStatus, NewebPayOrderStatusFromAPI } from './typings';
 
 export type { NewebPayMPGMakeOrderPayload } from './typings';
 

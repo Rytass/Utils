@@ -28,15 +28,9 @@ const FormActionsFooter = <T extends FieldValues>({
 
   const values = methods.watch();
 
-  const isSubmitting = useMemo(
-    () => methods.formState.isSubmitting,
-    [methods.formState.isSubmitting],
-  );
+  const isSubmitting = useMemo(() => methods.formState.isSubmitting, [methods.formState.isSubmitting]);
 
-  const isDirty = useMemo(
-    () => methods.formState.isDirty,
-    [methods.formState.isDirty],
-  );
+  const isDirty = useMemo(() => methods.formState.isDirty, [methods.formState.isDirty]);
 
   const leaveButton = useLeaveButton<T>({
     values,
@@ -96,9 +90,7 @@ const FormActionsFooter = <T extends FieldValues>({
   const submitDisabled = useMemo(() => {
     const baseCondition = loading;
 
-    return (
-      baseCondition || submitButton.disabled || disableSubmitButton?.(values)
-    );
+    return baseCondition || submitButton.disabled || disableSubmitButton?.(values);
   }, [disableSubmitButton, loading, submitButton.disabled, values]);
 
   const onLeave = useCallback(async () => {
@@ -149,13 +141,7 @@ const FormActionsFooter = <T extends FieldValues>({
           </Button>
         )}
         {submitButtonText && (onSubmitProps || submitButton.onSubmit) && (
-          <Button
-            type="submit"
-            size="large"
-            variant="contained"
-            loading={loading}
-            disabled={submitDisabled}
-          >
+          <Button type="submit" size="large" variant="contained" loading={loading} disabled={submitDisabled}>
             {submitButtonText}
           </Button>
         )}

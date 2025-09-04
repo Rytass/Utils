@@ -14,20 +14,12 @@ type RemovedArticleVersionFields =
   | 'article'
   | 'multiLanguageContents'
   | 'signatures';
-type RemovedMultipleLanguageArticleVersionFields =
-  | RemovedArticleFields
-  | 'articleId'
-  | 'article'
-  | 'signatures';
-type RemovedArticleVersionContentFields =
-  | RemovedArticleVersionFields
-  | 'version'
-  | 'language'
-  | 'articleVersion';
+type RemovedMultipleLanguageArticleVersionFields = RemovedArticleFields | 'articleId' | 'article' | 'signatures';
+type RemovedArticleVersionContentFields = RemovedArticleVersionFields | 'version' | 'language' | 'articleVersion';
 
-export function removeArticleInvalidFields<
-  A extends Partial<BaseArticleEntity> = Partial<BaseArticleEntity>,
->(article: Partial<A>): Omit<A, RemovedArticleFields> {
+export function removeArticleInvalidFields<A extends Partial<BaseArticleEntity> = Partial<BaseArticleEntity>>(
+  article: Partial<A>,
+): Omit<A, RemovedArticleFields> {
   return Object.entries(article)
     .filter(([key]) => !~ArticleNotIncludeFields.indexOf(key))
     .reduce<Omit<A, RemovedArticleFields>>(
@@ -45,23 +37,12 @@ export function removeMultipleLanguageArticleVersionInvalidFields<
   articleVersion: Partial<
     Pick<
       AV,
-      | 'version'
-      | 'tags'
-      | 'submittedAt'
-      | 'submittedBy'
-      | 'releasedAt'
-      | 'releasedBy'
-      | 'createdAt'
-      | 'deletedAt'
+      'version' | 'tags' | 'submittedAt' | 'submittedBy' | 'releasedAt' | 'releasedBy' | 'createdAt' | 'deletedAt'
     >
   >,
 ): Omit<AV, RemovedMultipleLanguageArticleVersionFields> {
   return Object.entries(articleVersion)
-    .filter(
-      ([key]) =>
-        !ArticleVersionNotIncludeFields.includes(key) ||
-        key === 'multiLanguageContents',
-    )
+    .filter(([key]) => !ArticleVersionNotIncludeFields.includes(key) || key === 'multiLanguageContents')
     .reduce<Record<string, any>>(
       (vars, [key, value]) => ({
         ...vars,
@@ -71,20 +52,11 @@ export function removeMultipleLanguageArticleVersionInvalidFields<
     ) as Omit<AV, RemovedMultipleLanguageArticleVersionFields>;
 }
 
-export function removeArticleVersionInvalidFields<
-  AV extends BaseArticleVersionEntity = BaseArticleVersionEntity,
->(
+export function removeArticleVersionInvalidFields<AV extends BaseArticleVersionEntity = BaseArticleVersionEntity>(
   articleVersion: Partial<
     Pick<
       AV,
-      | 'version'
-      | 'tags'
-      | 'submittedAt'
-      | 'submittedBy'
-      | 'releasedAt'
-      | 'releasedBy'
-      | 'createdAt'
-      | 'deletedAt'
+      'version' | 'tags' | 'submittedAt' | 'submittedBy' | 'releasedAt' | 'releasedBy' | 'createdAt' | 'deletedAt'
     >
   >,
 ): Omit<AV, RemovedArticleVersionFields> {
@@ -102,9 +74,7 @@ export function removeArticleVersionInvalidFields<
 export function removeArticleVersionContentInvalidFields<
   AVC extends BaseArticleVersionContentEntity = BaseArticleVersionContentEntity,
 >(
-  articleVersionContent: Partial<
-    Pick<AVC, 'title' | 'description' | 'content'>
-  >,
+  articleVersionContent: Partial<Pick<AVC, 'title' | 'description' | 'content'>>,
 ): Omit<AVC, RemovedArticleVersionContentFields> {
   return Object.entries(articleVersionContent)
     .filter(([key]) => !~ArticleVersionContentNotIncludeFields.indexOf(key))

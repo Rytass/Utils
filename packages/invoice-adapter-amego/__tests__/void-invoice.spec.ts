@@ -3,13 +3,7 @@
  */
 import axios from 'axios';
 import { DateTime } from 'luxon';
-import {
-  AmegoBaseUrls,
-  AmegoInvoice,
-  AmegoInvoiceGateway,
-  InvoiceState,
-  TaxType,
-} from '../src';
+import { AmegoBaseUrls, AmegoInvoice, AmegoInvoiceGateway, InvoiceState, TaxType } from '../src';
 
 const baseUrl = AmegoBaseUrls.DEVELOPMENT;
 

@@ -26,18 +26,16 @@ const App = () => {
 
   return (
     <div>
-      <button onClick={() => setIsOpen(true)}>
-        Open Map Editor
-      </button>
-      
+      <button onClick={() => setIsOpen(true)}>Open Map Editor</button>
+
       <WmsMapModal
         open={isOpen}
         onClose={() => setIsOpen(false)}
         viewMode={ViewMode.EDIT}
-        onSave={(mapData) => {
+        onSave={mapData => {
           console.log('Saved map data:', mapData);
         }}
-        onNodeClick={(nodeInfo) => {
+        onNodeClick={nodeInfo => {
           console.log('Node clicked:', nodeInfo);
         }}
       />
@@ -50,20 +48,20 @@ export default App;
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `open` | `boolean` | - | Controls modal visibility |
-| `onClose` | `() => void` | - | Called when modal should close |
-| `viewMode` | `ViewMode` | `ViewMode.EDIT` | Initial view mode (EDIT/VIEW) |
-| `colorPalette` | `string[]` | - | Available colors for drawing tools |
-| `onNodeClick` | `(nodeInfo: WmsNodeClickInfo) => void` | - | Called when a node is clicked |
-| `onSave` | `(mapData: Map) => void` | - | Called when save button is clicked |
-| `onBreadcrumbClick` | `(warehouseId: string, index: number) => void` | - | Called when breadcrumb is clicked |
-| `onWarehouseNameEdit` | `(warehouseId: string, newName: string, index: number) => void` | - | Called when warehouse name is edited |
-| `initialNodes` | `any[]` | `[]` | Initial nodes for the canvas |
-| `initialEdges` | `any[]` | `[]` | Initial edges for the canvas |
-| `debugMode` | `boolean` | `false` | Enable debug logging |
-| `title` | `string` | `'編輯倉儲空間'` | Modal title |
+| Prop                  | Type                                                            | Default          | Description                          |
+| --------------------- | --------------------------------------------------------------- | ---------------- | ------------------------------------ |
+| `open`                | `boolean`                                                       | -                | Controls modal visibility            |
+| `onClose`             | `() => void`                                                    | -                | Called when modal should close       |
+| `viewMode`            | `ViewMode`                                                      | `ViewMode.EDIT`  | Initial view mode (EDIT/VIEW)        |
+| `colorPalette`        | `string[]`                                                      | -                | Available colors for drawing tools   |
+| `onNodeClick`         | `(nodeInfo: WmsNodeClickInfo) => void`                          | -                | Called when a node is clicked        |
+| `onSave`              | `(mapData: Map) => void`                                        | -                | Called when save button is clicked   |
+| `onBreadcrumbClick`   | `(warehouseId: string, index: number) => void`                  | -                | Called when breadcrumb is clicked    |
+| `onWarehouseNameEdit` | `(warehouseId: string, newName: string, index: number) => void` | -                | Called when warehouse name is edited |
+| `initialNodes`        | `any[]`                                                         | `[]`             | Initial nodes for the canvas         |
+| `initialEdges`        | `any[]`                                                         | `[]`             | Initial edges for the canvas         |
+| `debugMode`           | `boolean`                                                       | `false`          | Enable debug logging                 |
+| `title`               | `string`                                                        | `'編輯倉儲空間'` | Modal title                          |
 
 ## Features
 

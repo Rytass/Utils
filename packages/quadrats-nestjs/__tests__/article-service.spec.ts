@@ -33,7 +33,7 @@ describe('Quadrats Nestjs Module - Article Service', () => {
 
     const request = jest.spyOn(axios, 'request');
 
-    request.mockImplementation(async (config) => {
+    request.mockImplementation(async config => {
       expect(config.url).toBe(`${HOST}/graphql`);
 
       const data = JSON.parse(config.data as string) as {
@@ -43,8 +43,8 @@ describe('Quadrats Nestjs Module - Article Service', () => {
           auth: {
             accessKey: string;
             secret: string;
-          }
-        }
+          };
+        };
       };
 
       expect(data.variables.auth.accessKey).toBe(ACCESS_KEY);
@@ -68,13 +68,17 @@ describe('Quadrats Nestjs Module - Article Service', () => {
               versionId: '02500000031430000001',
               title: 'Test Article',
               categories: [],
-              contents: [{
-                language: 'DEFAULT',
-                elements: [{
-                  type: 'p',
-                  children: [{ text: 'Test Content' }],
-                }],
-              }],
+              contents: [
+                {
+                  language: 'DEFAULT',
+                  elements: [
+                    {
+                      type: 'p',
+                      children: [{ text: 'Test Content' }],
+                    },
+                  ],
+                },
+              ],
               tags: [],
             },
           },
@@ -96,7 +100,7 @@ describe('Quadrats Nestjs Module - Article Service', () => {
 
     const request = jest.spyOn(axios, 'request');
 
-    request.mockImplementation(async (config) => {
+    request.mockImplementation(async config => {
       expect(config.url).toBe(`${HOST}/graphql`);
 
       const data = JSON.parse(config.data as string) as {
@@ -109,8 +113,8 @@ describe('Quadrats Nestjs Module - Article Service', () => {
           auth: {
             accessKey: string;
             secret: string;
-          }
-        }
+          };
+        };
       };
 
       expect(data.variables.auth.accessKey).toBe(ACCESS_KEY);
@@ -119,10 +123,10 @@ describe('Quadrats Nestjs Module - Article Service', () => {
       return {
         data: {
           data: {
-            articleIds: [
-              '02500000031430000000',
-              '02500000031430000002',
-            ].slice(data.variables.offset || 0, (data.variables.limit || 20) + (data.variables.offset || 0)),
+            articleIds: ['02500000031430000000', '02500000031430000002'].slice(
+              data.variables.offset || 0,
+              (data.variables.limit || 20) + (data.variables.offset || 0),
+            ),
           },
         },
       };
@@ -132,7 +136,7 @@ describe('Quadrats Nestjs Module - Article Service', () => {
 
     expect(Array.isArray(articleIds)).toBeTruthy();
 
-    articleIds.forEach((articleId) => {
+    articleIds.forEach(articleId => {
       expect(typeof articleId).toBe('string');
     });
 
@@ -155,7 +159,7 @@ describe('Quadrats Nestjs Module - Article Service', () => {
 
     const request = jest.spyOn(axios, 'request');
 
-    request.mockImplementationOnce(async (config) => {
+    request.mockImplementationOnce(async config => {
       expect(config.url).toBe(`${HOST}/graphql`);
 
       const data = JSON.parse(config.data as string) as {
@@ -172,8 +176,8 @@ describe('Quadrats Nestjs Module - Article Service', () => {
           auth: {
             accessKey: string;
             secret: string;
-          }
-        }
+          };
+        };
       };
 
       expect(data.variables.auth.accessKey).toBe(ACCESS_KEY);
@@ -190,13 +194,17 @@ describe('Quadrats Nestjs Module - Article Service', () => {
               versionId: '02500000031430000001',
               title: 'Test Article Rytass',
               categories: [],
-              contents: [{
-                language: 'DEFAULT',
-                elements: [{
-                  type: 'p',
-                  children: [{ text: 'Test Content' }],
-                }],
-              }],
+              contents: [
+                {
+                  language: 'DEFAULT',
+                  elements: [
+                    {
+                      type: 'p',
+                      children: [{ text: 'Test Content' }],
+                    },
+                  ],
+                },
+              ],
               tags: [],
             },
           },
@@ -208,10 +216,12 @@ describe('Quadrats Nestjs Module - Article Service', () => {
       title: 'Test Article Rytass',
       categoryIds: [],
       tags: [],
-      contents: [{
-        type: 'p',
-        children: [{ text: 'Test Content' }],
-      }],
+      contents: [
+        {
+          type: 'p',
+          children: [{ text: 'Test Content' }],
+        },
+      ],
     });
 
     expect(article.id).toBeDefined();
@@ -225,7 +235,7 @@ describe('Quadrats Nestjs Module - Article Service', () => {
 
     const request = jest.spyOn(axios, 'request');
 
-    request.mockImplementationOnce(async (config) => {
+    request.mockImplementationOnce(async config => {
       expect(config.url).toBe(`${HOST}/graphql`);
 
       const data = JSON.parse(config.data as string) as {
@@ -235,8 +245,8 @@ describe('Quadrats Nestjs Module - Article Service', () => {
           auth: {
             accessKey: string;
             secret: string;
-          }
-        }
+          };
+        };
       };
 
       expect(data.variables.auth.accessKey).toBe(ACCESS_KEY);
@@ -263,7 +273,7 @@ describe('Quadrats Nestjs Module - Article Service', () => {
 
     const request = jest.spyOn(axios, 'request');
 
-    request.mockImplementation(async (config) => {
+    request.mockImplementation(async config => {
       expect(config.url).toBe(`${HOST}/graphql`);
 
       const data = JSON.parse(config.data as string) as {
@@ -281,7 +291,7 @@ describe('Quadrats Nestjs Module - Article Service', () => {
           auth: {
             accessKey: string;
             secret: string;
-          }
+          };
         };
       };
 
@@ -297,13 +307,17 @@ describe('Quadrats Nestjs Module - Article Service', () => {
                 versionId: '02500000031430000001',
                 title: 'Version 1 Title',
                 categories: [],
-                contents: [{
-                  language: 'DEFAULT',
-                  elements: [{
-                    type: 'p',
-                    children: [{ text: 'Test Content' }],
-                  }],
-                }],
+                contents: [
+                  {
+                    language: 'DEFAULT',
+                    elements: [
+                      {
+                        type: 'p',
+                        children: [{ text: 'Test Content' }],
+                      },
+                    ],
+                  },
+                ],
                 tags: [],
               },
             },
@@ -319,16 +333,21 @@ describe('Quadrats Nestjs Module - Article Service', () => {
               versionId: '02500000031430000002',
               title: 'Version 2 Title',
               categories: [],
-              contents: [{
-                language: 'DEFAULT',
-                elements: [{
-                  type: 'p',
-                  children: [{ text: 'Test Content' }],
-                }, {
-                  type: 'p',
-                  children: [{ text: 'Test Content, L2v4' }],
-                }],
-              }],
+              contents: [
+                {
+                  language: 'DEFAULT',
+                  elements: [
+                    {
+                      type: 'p',
+                      children: [{ text: 'Test Content' }],
+                    },
+                    {
+                      type: 'p',
+                      children: [{ text: 'Test Content, L2v4' }],
+                    },
+                  ],
+                },
+              ],
               tags: ['Rytass'],
             },
           },
@@ -344,13 +363,16 @@ describe('Quadrats Nestjs Module - Article Service', () => {
     const newVersionArticle = await articleService.addVersion({
       id: '02500000031430000000',
       title: 'Version 2 Title',
-      contents: [{
-        type: 'p',
-        children: [{ text: 'Test Content' }],
-      }, {
-        type: 'p',
-        children: [{ text: 'Test Content, L2v4' }],
-      }],
+      contents: [
+        {
+          type: 'p',
+          children: [{ text: 'Test Content' }],
+        },
+        {
+          type: 'p',
+          children: [{ text: 'Test Content, L2v4' }],
+        },
+      ],
       categoryIds: [],
       tags: ['Rytass'],
     });
@@ -365,7 +387,7 @@ describe('Quadrats Nestjs Module - Article Service', () => {
 
     const request = jest.spyOn(axios, 'request');
 
-    request.mockImplementationOnce(async (config) => {
+    request.mockImplementationOnce(async config => {
       expect(config.url).toBe(`${HOST}/graphql`);
 
       const data = JSON.parse(config.data as string) as {
@@ -382,8 +404,8 @@ describe('Quadrats Nestjs Module - Article Service', () => {
           auth: {
             accessKey: string;
             secret: string;
-          }
-        }
+          };
+        };
       };
 
       expect(data.variables.auth.accessKey).toBe(ACCESS_KEY);
@@ -412,10 +434,12 @@ describe('Quadrats Nestjs Module - Article Service', () => {
       title: 'Test Article Rytass',
       categoryIds: [],
       tags: [],
-      contents: [{
-        type: 'p',
-        children: [{ text: '中文內容' }],
-      }],
+      contents: [
+        {
+          type: 'p',
+          children: [{ text: '中文內容' }],
+        },
+      ],
       language: Language.ZH_TW,
     });
 
@@ -430,7 +454,7 @@ describe('Quadrats Nestjs Module - Article Service', () => {
 
     const request = jest.spyOn(axios, 'request');
 
-    request.mockImplementationOnce(async (config) => {
+    request.mockImplementationOnce(async config => {
       expect(config.url).toBe(`${HOST}/graphql`);
 
       const data = JSON.parse(config.data as string) as {
@@ -447,8 +471,8 @@ describe('Quadrats Nestjs Module - Article Service', () => {
           auth: {
             accessKey: string;
             secret: string;
-          }
-        }
+          };
+        };
       };
 
       expect(data.variables.auth.accessKey).toBe(ACCESS_KEY);
@@ -478,10 +502,12 @@ describe('Quadrats Nestjs Module - Article Service', () => {
       title: 'Test Article Rytass',
       categoryIds: [],
       tags: [],
-      contents: [{
-        type: 'p',
-        children: [{ text: '中文內容' }],
-      }],
+      contents: [
+        {
+          type: 'p',
+          children: [{ text: '中文內容' }],
+        },
+      ],
       language: Language.ZH_TW,
     });
 
@@ -496,7 +522,7 @@ describe('Quadrats Nestjs Module - Article Service', () => {
 
     const request = jest.spyOn(axios, 'request');
 
-    request.mockImplementationOnce(async (config) => {
+    request.mockImplementationOnce(async config => {
       expect(config.url).toBe(`${HOST}/graphql`);
 
       const data = JSON.parse(config.data as string) as {
@@ -513,8 +539,8 @@ describe('Quadrats Nestjs Module - Article Service', () => {
           auth: {
             accessKey: string;
             secret: string;
-          }
-        }
+          };
+        };
       };
 
       expect(data.variables.auth.accessKey).toBe(ACCESS_KEY);
@@ -543,19 +569,26 @@ describe('Quadrats Nestjs Module - Article Service', () => {
       title: 'Test Article Rytass',
       categoryIds: [],
       tags: [],
-      languageContents: [{
-        elements: [{
-          type: 'p',
-          children: [{ text: '中文內容' }],
-        }],
-        language: Language.ZH_TW,
-      }, {
-        elements: [{
-          type: 'p',
-          children: [{ text: 'English Content' }],
-        }],
-        language: Language.EN_US,
-      }],
+      languageContents: [
+        {
+          elements: [
+            {
+              type: 'p',
+              children: [{ text: '中文內容' }],
+            },
+          ],
+          language: Language.ZH_TW,
+        },
+        {
+          elements: [
+            {
+              type: 'p',
+              children: [{ text: 'English Content' }],
+            },
+          ],
+          language: Language.EN_US,
+        },
+      ],
     });
 
     expect(article.id).toBeDefined();
@@ -576,7 +609,7 @@ describe('Quadrats Nestjs Module - Article Service', () => {
 
     const request = jest.spyOn(axios, 'request');
 
-    request.mockImplementationOnce(async (config) => {
+    request.mockImplementationOnce(async config => {
       expect(config.url).toBe(`${HOST}/graphql`);
 
       const data = JSON.parse(config.data as string) as {
@@ -593,8 +626,8 @@ describe('Quadrats Nestjs Module - Article Service', () => {
           auth: {
             accessKey: string;
             secret: string;
-          }
-        }
+          };
+        };
       };
 
       expect(data.variables.auth.accessKey).toBe(ACCESS_KEY);
@@ -624,19 +657,26 @@ describe('Quadrats Nestjs Module - Article Service', () => {
       title: 'Test Article Rytass',
       categoryIds: [],
       tags: [],
-      languageContents: [{
-        elements: [{
-          type: 'p',
-          children: [{ text: '中文內容' }],
-        }],
-        language: Language.ZH_TW,
-      }, {
-        elements: [{
-          type: 'p',
-          children: [{ text: 'English Content' }],
-        }],
-        language: Language.EN_US,
-      }],
+      languageContents: [
+        {
+          elements: [
+            {
+              type: 'p',
+              children: [{ text: '中文內容' }],
+            },
+          ],
+          language: Language.ZH_TW,
+        },
+        {
+          elements: [
+            {
+              type: 'p',
+              children: [{ text: 'English Content' }],
+            },
+          ],
+          language: Language.EN_US,
+        },
+      ],
     });
 
     expect(article.id).toBeDefined();

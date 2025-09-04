@@ -9,17 +9,11 @@ import {
   Requirement,
   RequirementDescription,
 } from './typings';
-import {
-  itemIsMatchedItemFn,
-  itemSpecifiedItems,
-  itemSpecifiedScope,
-} from './utils';
+import { itemIsMatchedItemFn, itemSpecifiedItems, itemSpecifiedScope } from './utils';
 import { ObjRecord } from '../../typings';
 
-export class ItemExcluded<
-  Item extends OrderItem = OrderItem,
-  Options extends ObjRecord = ObjRecord
-> implements Condition<RequirementDescription, Options>
+export class ItemExcluded<Item extends OrderItem = OrderItem, Options extends ObjRecord = ObjRecord>
+  implements Condition<RequirementDescription, Options>
 {
   readonly type = Requirement.EXCLUDED;
   readonly items: string[];
@@ -28,9 +22,7 @@ export class ItemExcluded<
   readonly options?: Options;
   private readonly scope: (keyof Item)[] | null;
   private readonly itemSet: Set<string> | null;
-  private readonly isMatchedItem:
-    | ItemSpecifiedResolvedFnInput<any>['isMatchedItem']
-    | null;
+  private readonly isMatchedItem: ItemSpecifiedResolvedFnInput<any>['isMatchedItem'] | null;
 
   /**
    * Item excluded condition.
@@ -50,12 +42,10 @@ export class ItemExcluded<
     this.itemSet = this.items?.length ? new Set(this.items) : null;
   }
 
-  matchedItems<I extends OrderItem = Item>(
-    order: Order<I>
-  ): FlattenOrderItem<I>[] {
+  matchedItems<I extends OrderItem = Item>(order: Order<I>): FlattenOrderItem<I>[] {
     if (!this.isMatchedItem && this.items.length < 1) return [];
 
-    return order.itemManager.flattenItems.filter((item) => {
+    return order.itemManager.flattenItems.filter(item => {
       if (typeof this.isMatchedItem === 'function') {
         return item.unitPrice > 0 && !this.isMatchedItem(item);
       }
@@ -73,18 +63,11 @@ export class ItemExcluded<
 
     if (
       this.conditions.length &&
-      !this.conditions.every(condition =>
-        condition.satisfy(order.subOrder({ subItems: matchedItems }))
-      )
+      !this.conditions.every(condition => condition.satisfy(order.subOrder({ subItems: matchedItems })))
     )
       return false;
 
-    return (
-      matchedItems.reduce(
-        (totalQuantity, item) => plus(totalQuantity, item.quantity),
-        0
-      ) >= this.threshold
-    );
+    return matchedItems.reduce((totalQuantity, item) => plus(totalQuantity, item.quantity), 0) >= this.threshold;
   }
 
   private excludedItem(item: FlattenOrderItem) {

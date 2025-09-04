@@ -31,9 +31,7 @@ export class PaymentsModule {
     };
   }
 
-  private static createAsyncProvider(
-    options: PaymentsModuleAsyncOptionsDto,
-  ): Provider[] {
+  private static createAsyncProvider(options: PaymentsModuleAsyncOptionsDto): Provider[] {
     if (options.useExisting || options.useFactory) {
       return [this.createAsyncOptionsProvider(options)];
     }
@@ -51,9 +49,7 @@ export class PaymentsModule {
     ];
   }
 
-  private static createAsyncOptionsProvider(
-    options: PaymentsModuleAsyncOptionsDto,
-  ): Provider {
+  private static createAsyncOptionsProvider(options: PaymentsModuleAsyncOptionsDto): Provider {
     if (options.useFactory) {
       return {
         provide: PAYMENTS_MODULE_OPTIONS,
@@ -64,12 +60,8 @@ export class PaymentsModule {
 
     return {
       provide: PAYMENTS_MODULE_OPTIONS,
-      useFactory: async (optionsFactory: PaymentsModuleOptionFactory) =>
-        await optionsFactory.createPaymentsOptions(),
-      inject: [
-        (options.useExisting ||
-          options.useClass) as Type<PaymentsModuleOptionFactory>,
-      ],
+      useFactory: async (optionsFactory: PaymentsModuleOptionFactory) => await optionsFactory.createPaymentsOptions(),
+      inject: [(options.useExisting || options.useClass) as Type<PaymentsModuleOptionFactory>],
     };
   }
 }

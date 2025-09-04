@@ -32,8 +32,8 @@ import { readFileSync } from 'fs';
 const resizer = new ImageResizer({
   maxWidth: 800,
   maxHeight: 600,
-  keepAspectRatio: true,  // Maintain aspect ratio
-  concurrency: 4         // Concurrent processing count
+  keepAspectRatio: true, // Maintain aspect ratio
+  concurrency: 4, // Concurrent processing count
 });
 
 // Process Buffer
@@ -61,20 +61,20 @@ resizedStream.pipe(createWriteStream('output.jpg'));
 const cropResizer = new ImageResizer({
   maxWidth: 400,
   maxHeight: 400,
-  keepAspectRatio: false,  // No aspect ratio preservation, use cropping mode
-  concurrency: 2
+  keepAspectRatio: false, // No aspect ratio preservation, use cropping mode
+  concurrency: 2,
 });
 
 // Width only specification, height auto-calculated
 const widthOnlyResizer = new ImageResizer({
   maxWidth: 1200,
-  keepAspectRatio: true
+  keepAspectRatio: true,
 });
 
 // Height only specification, width auto-calculated
 const heightOnlyResizer = new ImageResizer({
   maxHeight: 800,
-  keepAspectRatio: true
+  keepAspectRatio: true,
 });
 ```
 
@@ -82,12 +82,12 @@ const heightOnlyResizer = new ImageResizer({
 
 ### ImageResizerOptions
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| `maxWidth` | `number` | No | - | Maximum width in pixels |
-| `maxHeight` | `number` | No | - | Maximum height in pixels |
-| `keepAspectRatio` | `boolean` | No | `true` | Whether to maintain aspect ratio |
-| `concurrency` | `number` | No | `1` | Sharp concurrent processing count |
+| Property          | Type      | Required | Default | Description                       |
+| ----------------- | --------- | -------- | ------- | --------------------------------- |
+| `maxWidth`        | `number`  | No       | -       | Maximum width in pixels           |
+| `maxHeight`       | `number`  | No       | -       | Maximum height in pixels          |
+| `keepAspectRatio` | `boolean` | No       | `true`  | Whether to maintain aspect ratio  |
+| `concurrency`     | `number`  | No       | `1`     | Sharp concurrent processing count |
 
 **Note:** At least one of `maxWidth` or `maxHeight` must be specified.
 
@@ -103,7 +103,7 @@ const storage = new StorageS3Service({
   bucket: 'my-images',
   accessKey: 'ACCESS_KEY',
   secretKey: 'SECRET_KEY',
-  region: 'ap-northeast-1'
+  region: 'ap-northeast-1',
 });
 
 // Setup image processing pipeline
@@ -112,18 +112,14 @@ const manager = new ConverterManager(
     new ImageResizer({
       maxWidth: 1200,
       maxHeight: 800,
-      keepAspectRatio: true
-    })
+      keepAspectRatio: true,
+    }),
   ],
-  storage
+  storage,
 );
 
 // Process uploaded image
-const result = await manager.save(
-  imageFile,
-  'images/processed/',
-  'image.jpg'
-);
+const result = await manager.save(imageFile, 'images/processed/', 'image.jpg');
 
 console.log('Processed image URL:', result.url);
 ```
@@ -141,9 +137,9 @@ console.log('Processed image URL:', result.url);
 try {
   const resizer = new ImageResizer({
     maxWidth: 800,
-    maxHeight: 600
+    maxHeight: 600,
   });
-  
+
   const result = await resizer.convert<Buffer>(imageBuffer);
 } catch (error) {
   if (error.message.includes('Please provide at least one')) {
@@ -157,6 +153,7 @@ try {
 ## Supported Image Formats
 
 Supported input formats:
+
 - JPEG
 - PNG
 - WebP

@@ -6,43 +6,43 @@
 
 ## Features
 
-  - Arbitrary-precision order-calculating based on [decimal.js](https://github.com/MikeMcl/decimal.js/).
-  - Common `Pipe` pattern API.
+- Arbitrary-precision order-calculating based on [decimal.js](https://github.com/MikeMcl/decimal.js/).
+- Common `Pipe` pattern API.
 
 Core API
 
 1. OrderBuilder
-    - config
-      - PolicyPickStrategy
-        - `ItemBasedPolicyPickStrategy`
-        - `OrderBasedPolicyPickStrategy`
-      - DiscountMethod
-        - `PriceWeightedAverageDiscountMethod`
-        - `QuantityWeightedAverageDiscountMethod`
-      - RoundStrategy
-        - `EveryCalculationRoundStrategy`
-        - `FinalPriceRoundStrategy`
-        - `NoRoundRoundStrategy`
+   - config
+     - PolicyPickStrategy
+       - `ItemBasedPolicyPickStrategy`
+       - `OrderBasedPolicyPickStrategy`
+     - DiscountMethod
+       - `PriceWeightedAverageDiscountMethod`
+       - `QuantityWeightedAverageDiscountMethod`
+     - RoundStrategy
+       - `EveryCalculationRoundStrategy`
+       - `FinalPriceRoundStrategy`
+       - `NoRoundRoundStrategy`
 
 2. Policy
-    - discount
-      - `ValueDiscount`
-      - `PercentageDiscount`
-      - `StepValueDiscount`
-      - `StepPercentageDiscount`
-      - `ItemGiveawayDiscount`
+   - discount
+     - `ValueDiscount`
+     - `PercentageDiscount`
+     - `StepValueDiscount`
+     - `StepPercentageDiscount`
+     - `ItemGiveawayDiscount`
 
 3. Condition
-    - threshold
-      - `PriceThreshold`
-      - `QuantityThreshold`
-    - requirement
-      - `ItemIncluded`
-      - `ItemRequired`
-      - `QuantityRequired`
-      - `ItemExcluded`
-    - validator
-      - `CouponValidator`
+   - threshold
+     - `PriceThreshold`
+     - `QuantityThreshold`
+   - requirement
+     - `ItemIncluded`
+     - `ItemRequired`
+     - `QuantityRequired`
+     - `ItemExcluded`
+   - validator
+     - `CouponValidator`
 
 ---
 
@@ -50,22 +50,21 @@ Core API
 
 ### OrderBuilder
 
-| **Arguments**        |  index  | Type                            | Required |
-| -------------------- | ------- | ------------------------------- | -------- |
-| **overload1**        |         |                                 |          |
-| `builder`            | 0       | OrderBuilder                    | `false`  |
-| **overload2**        |         |                                 |          |
-| `options`            | 0       | OrderBuilderConstructor         | `false`  |
+| **Arguments** | index | Type                    | Required |
+| ------------- | ----- | ----------------------- | -------- |
+| **overload1** |       |                         |          |
+| `builder`     | 0     | OrderBuilder            | `false`  |
+| **overload2** |       |                         |          |
+| `options`     | 0     | OrderBuilderConstructor | `false`  |
 
 #### OrderBuilderConstructor
 
-| **Properties**       | Type                     | Required |
-| -------------------- | ------------------------ | -------- |
-| `policies`           | Policy[]                 | `true`   |
-| `discountMethod`     | "price-weighted-average" \| "quantity-weighted-average" | `false` |
-| `roundStrategy`      | "every-calculation" \| "final-price-only" \| "no-round" | `false` |
-| `logistics`          | OrderLogistics           | `false` |
-
+| **Properties**   | Type                                                    | Required |
+| ---------------- | ------------------------------------------------------- | -------- |
+| `policies`       | Policy[]                                                | `true`   |
+| `discountMethod` | "price-weighted-average" \| "quantity-weighted-average" | `false`  |
+| `roundStrategy`  | "every-calculation" \| "final-price-only" \| "no-round" | `false`  |
+| `logistics`      | OrderLogistics                                          | `false`  |
 
 <!-- Disable table formatting because Prettier messing it up. -->
 <!-- prettier-ignore -->
@@ -93,10 +92,10 @@ Core API
 
 #### OrderConstructor
 
-| **Properties**       | Type          | Required |
-| -------------------- | ------------- | -------- |
-| `items`              | OrderItem[]   | `true`   |
-| `coupons`            | string[]      | `false`  |
+| **Properties** | Type        | Required |
+| -------------- | ----------- | -------- |
+| `items`        | OrderItem[] | `true`   |
+| `coupons`      | string[]    | `false`  |
 
 <!-- Disable table formatting because Prettier messing it up. -->
 <!-- prettier-ignore -->
@@ -134,6 +133,7 @@ Core API
 ---
 
 ### Discount
+
 <!-- Disable table formatting because Prettier messing it up. -->
 <!-- prettier-ignore -->
 | **Arguments**        | index   | Type            | Required |
@@ -198,8 +198,8 @@ const order = builder
 
 builder.getPolicy('DISCOUNT_1'); // undefined
 builder.getPolicy('DISCOUNT_2'); // reference to `policy2`
-order.price // 250 * 0.8 = 200
-order.itemRecords
+order.price; // 250 * 0.8 = 200
+order.itemRecords;
 // [
 //   {
 //     itemId: 'ItemA-1',
@@ -229,7 +229,6 @@ order.itemRecords
 //     appliedPolicies: [policy2]
 //   }
 // ]
-
 ```
 
 ## Examples
@@ -255,8 +254,8 @@ import {
 
 // Allow custom order-item dto.
 type TestOrderItem = OrderItem<{
-  category: string,
-  brand: string,
+  category: string;
+  brand: string;
 }>;
 
 const items: TestOrderItem[] = [
@@ -340,7 +339,7 @@ const items: TestOrderItem[] = [
 ```typescript
 /**
  * 情境編號：甲
- * 
+ *
  * 決策法：擇優取一 (order-based)
  *
  * 情境敘述：
@@ -396,7 +395,7 @@ const policy4 = new StepPercentageDiscount(
   {
     stepUnit: 'quantity',
     onlyMatched: true,
-  }
+  },
 );
 
 // 擇優 (1|2) & (3|4)
@@ -410,7 +409,7 @@ const builder = new OrderBuilder({
 
 const order = builder.build({ items });
 
-order.price // 24856
+order.price; // 24856
 ```
 
 ### Scenario 2
@@ -418,7 +417,7 @@ order.price // 24856
 ```typescript
 /**
  * 情境編號：乙
- * 
+ *
  * 決策法：擇優取一 (order-based)
  *
  * 情境敘述：
@@ -440,7 +439,7 @@ const policy1 = new ItemGiveawayDiscount(
   new ItemIncluded<TestOrderItem>({
     items: ['B', 'C', 'D', 'E'],
   }),
-  { onlyMatched: true }
+  { onlyMatched: true },
 );
 
 // 2. 指定商品（Ｃ～Ｉ）每3000元 折200元
@@ -451,7 +450,7 @@ const policy2 = new StepValueDiscount(
     items: ['C', 'D', 'E', 'F', 'G', 'H', 'I'],
     scope: 'id',
   }),
-  { stepUnit: 'price', onlyMatched: true }
+  { stepUnit: 'price', onlyMatched: true },
 );
 
 // 3. 指定分類（N21）滿2件 折100元
@@ -462,7 +461,7 @@ const policy3 = new ValueDiscount(
     scope: 'brand',
     threshold: 2,
   }),
-  { onlyMatched: true }
+  { onlyMatched: true },
 );
 
 // 4. 指定分類（飾品）每2件 打9折
@@ -473,7 +472,7 @@ const policy4 = new StepPercentageDiscount(
     items: ['accessory'],
     scope: 'category',
   }),
-  { stepUnit: 'quantity', onlyMatched: true }
+  { stepUnit: 'quantity', onlyMatched: true },
 );
 
 // 5. 指定分類（Boyy）滿5000元 打9折
@@ -484,7 +483,7 @@ const policy5 = new PercentageDiscount(
     scope: 'brand',
     conditions: [new PriceThreshold(5000)],
   }),
-  { id: 'P5', onlyMatched: true }
+  { id: 'P5', onlyMatched: true },
 );
 
 // 6. 全館 滿6件 送最低價商品
@@ -493,16 +492,12 @@ const policy6 = new ItemGiveawayDiscount(1, new QuantityThreshold(6));
 // 擇優 (1|2) & (3|4|5) & 6
 const builder = new OrderBuilder({
   policyPickStrategy: 'order-based',
-  policies: [
-    [policy1, policy2],
-    [policy3, policy4, policy5],
-    policy6,
-  ],
+  policies: [[policy1, policy2], [policy3, policy4, policy5], policy6],
 });
 
 const order = builder.build({ items });
 
-order.price // 24868
+order.price; // 24868
 ```
 
 ### Scenario 3
@@ -510,7 +505,7 @@ order.price // 24868
 ```typescript
 /**
  * 情境編號：丙 - 1
- * 
+ *
  * 決策法：擇優取一 (order-based)
  *
  * 情境敘述：
@@ -526,10 +521,7 @@ order.price // 24868
  */
 
 // 1. 全館 滿6件 送最低價商品
-const policy1 = new ItemGiveawayDiscount(
-  1,
-  new QuantityThreshold(6),
-);
+const policy1 = new ItemGiveawayDiscount(1, new QuantityThreshold(6));
 
 // 2. 指定分類（Boyy）滿5000元 打9折
 const policy2 = new PercentageDiscount(
@@ -539,7 +531,7 @@ const policy2 = new PercentageDiscount(
     scope: 'brand',
     conditions: [new PriceThreshold(5000)],
   }),
-  { onlyMatched: true }
+  { onlyMatched: true },
 );
 
 // 3. 指定商品（Ｂ～Ｅ）無條件 送最低價商品
@@ -548,7 +540,7 @@ const policy3 = new ItemGiveawayDiscount(
   new ItemIncluded<TestOrderItem>({
     items: ['B', 'C', 'D', 'E'],
   }),
-  { onlyMatched: true }
+  { onlyMatched: true },
 );
 
 // 4. 指定商品（Ｃ～Ｉ）每3000元 折200元
@@ -558,7 +550,7 @@ const policy4 = new StepValueDiscount(
   new ItemIncluded<TestOrderItem>({
     items: ['C', 'D', 'E', 'F', 'G', 'H', 'I'],
   }),
-  { stepUnit: 'price', onlyMatched: true }
+  { stepUnit: 'price', onlyMatched: true },
 );
 
 // 5. 指定分類（鞋子）滿4000元 送最低價商品
@@ -569,23 +561,17 @@ const policy5 = new ItemGiveawayDiscount(
     scope: 'category',
     conditions: [new PriceThreshold(4000)],
   }),
-  { onlyMatched: true }
+  { onlyMatched: true },
 );
 
 const builder = new OrderBuilder({
   policyPickStrategy: 'order-based',
-  policies: [
-    policy1,
-    policy2,
-    policy3,
-    policy4,
-    policy5,
-  ],
+  policies: [policy1, policy2, policy3, policy4, policy5],
 });
 
 const order = builder.build({ items });
 
-order.price // 24677
+order.price; // 24677
 ```
 
 ### Scenario 3 - 2
@@ -593,7 +579,7 @@ order.price // 24677
 ```typescript
 /**
  * 情境編號：丙 - 2
- * 
+ *
  * 決策法：擇優取一 (order-based)
  *
  * 情境敘述：
@@ -610,10 +596,7 @@ order.price // 24677
  */
 
 // 1. 全館 滿14000元 送最低價商品
-const policy1 = new ItemGiveawayDiscount(
-  1,
-  new PriceThreshold(14000),
-);
+const policy1 = new ItemGiveawayDiscount(1, new PriceThreshold(14000));
 
 // 2. 指定商品（Ｃ～Ｅ）無條件 送最低價商品
 const policy2 = new ItemGiveawayDiscount(
@@ -621,7 +604,7 @@ const policy2 = new ItemGiveawayDiscount(
   new ItemIncluded<TestOrderItem>({
     items: ['C', 'D', 'E', 'F', 'G', 'H', 'I'],
   }),
-  { onlyMatched: true }
+  { onlyMatched: true },
 );
 
 // 3. 指定分類（鞋子）滿6000元 送最低價商品
@@ -632,7 +615,7 @@ const policy3 = new ItemGiveawayDiscount(
     scope: 'category',
     conditions: [new PriceThreshold(6000)],
   }),
-  { onlyMatched: true }
+  { onlyMatched: true },
 );
 
 // 4. 指定分類（Boyy）滿5000元 打9折
@@ -643,14 +626,11 @@ const policy4 = new PercentageDiscount(
     items: ['Boyy'],
     conditions: [new PriceThreshold(5000)],
   }),
-  { onlyMatched: true }
+  { onlyMatched: true },
 );
 
 // 5. 全館 滿9件 送最低價商品
-const policy5 = new ItemGiveawayDiscount(
-  1,
-  new QuantityThreshold(9),
-);
+const policy5 = new ItemGiveawayDiscount(1, new QuantityThreshold(9));
 
 // 6. 指定商品（Ｃ～Ｉ）每3000元 折200元
 const policy6 = new StepValueDiscount(
@@ -659,45 +639,38 @@ const policy6 = new StepValueDiscount(
   new ItemIncluded({
     items: ['C', 'D', 'E', 'F', 'G', 'H', 'I'],
   }),
-  { stepUnit: 'price', onlyMatched: true }
+  { stepUnit: 'price', onlyMatched: true },
 );
 
 const builder = new OrderBuilder({
   policyPickStrategy: 'order-based',
   discountMethod: 'price-weighted-average',
-  policies: [
-    policy1,
-    policy2,
-    policy3,
-    policy4,
-    policy5,
-    policy6,
-  ],
+  policies: [policy1, policy2, policy3, policy4, policy5, policy6],
 });
 
 const order = builder.build({ items });
 
-order.price // 26250
+order.price; // 26250
 ```
 
 ### Scenario 4
 
 ```typescript
 /**
-  * 情境編號：丁
-  * 
-  * 決策法：擇優取一 (order-based)
-  *
-  * 情境敘述：
-  * 1. 指定分類（飾品）無條件 折1,000 元
-  * 2. 指定分類（Swell）滿10,000元 打9折
-  * 3. 全館 滿15,000元 送最低價品
-  * 4. 指定商品（Ｆ～Ｉ）無條件 打9折
-  * 5. 指定分類（Boyy）滿5000 打9折
-  *
-  * 預期結果：(1&2&3) | (4&5)
-  * 購物車顯示金額 28070
-  */
+ * 情境編號：丁
+ *
+ * 決策法：擇優取一 (order-based)
+ *
+ * 情境敘述：
+ * 1. 指定分類（飾品）無條件 折1,000 元
+ * 2. 指定分類（Swell）滿10,000元 打9折
+ * 3. 全館 滿15,000元 送最低價品
+ * 4. 指定商品（Ｆ～Ｉ）無條件 打9折
+ * 5. 指定分類（Boyy）滿5000 打9折
+ *
+ * 預期結果：(1&2&3) | (4&5)
+ * 購物車顯示金額 28070
+ */
 
 // 1. 指定分類（飾品）無條件 折1,000 元
 const policy1 = new ValueDiscount(
@@ -706,7 +679,7 @@ const policy1 = new ValueDiscount(
     scope: 'category',
     items: ['accessory'],
   }),
-  { onlyMatched: true }
+  { onlyMatched: true },
 );
 
 // 2. 指定分類（Swell）滿10,000元 打9折
@@ -717,14 +690,11 @@ const policy2 = new PercentageDiscount(
     items: ['Swell'],
     conditions: [new PriceThreshold(10000)],
   }),
-  { onlyMatched: true }
+  { onlyMatched: true },
 );
 
 // 3. 全館 滿15,000元 送最低價品
-const policy3 = new ItemGiveawayDiscount(
-  1,
-  new PriceThreshold(15000),
-);
+const policy3 = new ItemGiveawayDiscount(1, new PriceThreshold(15000));
 
 // 4. 指定商品（Ｆ～Ｉ）無條件 打9折
 const policy4 = new PercentageDiscount(
@@ -732,7 +702,7 @@ const policy4 = new PercentageDiscount(
   new ItemIncluded<TestOrderItem>({
     items: ['F', 'G', 'H', 'I'],
   }),
-  { onlyMatched: true }
+  { onlyMatched: true },
 );
 
 // 5. 指定分類（Boyy）滿5000 打9折
@@ -743,31 +713,24 @@ const policy5 = new PercentageDiscount(
     items: ['Boyy'],
     conditions: [new PriceThreshold(5000)],
   }),
-  { onlyMatched: true }
+  { onlyMatched: true },
 );
 
 const builder1 = new OrderBuilder({
   policyPickStrategy: 'order-based',
-  policies: [
-    policy1,
-    policy2,
-    policy3,
-  ],
+  policies: [policy1, policy2, policy3],
 });
 
 const builder2 = new OrderBuilder({
   policyPickStrategy: 'order-based',
-  policies: [
-    policy4,
-    policy5,
-  ],
+  policies: [policy4, policy5],
 });
 
 const order1 = builder1.build({ items });
 const order2 = builder2.build({ items });
 
-order1.price // 28070
-order2.price // 28765
+order1.price; // 28070
+order2.price; // 28765
 ```
 
 ### Scenario 5
@@ -796,14 +759,11 @@ const policy1 = new ItemGiveawayDiscount(
   new ItemIncluded<TestOrderItem>({
     items: ['B', 'C', 'D', 'E'],
   }),
-  { onlyMatched: true }
+  { onlyMatched: true },
 );
 
 // 2.全館 滿6件 送最低價商品
-const policy2 = new ItemGiveawayDiscount(
-  1,
-  new QuantityThreshold(6),
-);
+const policy2 = new ItemGiveawayDiscount(1, new QuantityThreshold(6));
 
 // 3. 指定分類（飾品）每2件 打9折
 const policy3 = new StepPercentageDiscount(
@@ -813,7 +773,7 @@ const policy3 = new StepPercentageDiscount(
     scope: 'category',
     items: ['accessory'],
   }),
-  { stepUnit: 'quantity', onlyMatched: true }
+  { stepUnit: 'quantity', onlyMatched: true },
 );
 
 // 4. 指定分類（鞋子）滿4000元 送最低價商品
@@ -824,7 +784,7 @@ const policy4 = new ItemGiveawayDiscount(
     items: ['shoes'],
     conditions: [new PriceThreshold(4000)],
   }),
-  { onlyMatched: true }
+  { onlyMatched: true },
 );
 
 // 5. 指定分類（Boyy）滿5000元 打9折
@@ -835,38 +795,27 @@ const policy5 = new PercentageDiscount(
     items: ['Boyy'],
     conditions: [new PriceThreshold(5000)],
   }),
-  { onlyMatched: true }
+  { onlyMatched: true },
 );
 
 // 6. 全館 滿15,000元 送最低價品
-const policy6 = new ItemGiveawayDiscount(
-  1,
-  new PriceThreshold(15000),
-);
+const policy6 = new ItemGiveawayDiscount(1, new PriceThreshold(15000));
 
 const builder1 = new OrderBuilder({
   policyPickStrategy: 'order-based',
-  policies: [
-    policy1,
-    policy2,
-    policy3,
-  ],
+  policies: [policy1, policy2, policy3],
 });
 
 const builder2 = new OrderBuilder({
   policyPickStrategy: 'order-based',
-  policies: [
-    policy4,
-    policy5,
-    policy6,
-  ],
+  policies: [policy4, policy5, policy6],
 });
 
 const order1 = builder1.build({ items });
 const order2 = builder2.build({ items });
 
-order1.price // 24915
-order2.price // 27850
+order1.price; // 24915
+order2.price; // 27850
 ```
 
 ### Scenario 1 - 2
@@ -897,7 +846,7 @@ const policy1 = new PercentageDiscount(
     items: ['A', 'B', 'C', 'D', 'E', 'F'],
     threshold: 3,
   }),
-  { id: 'SPECIFIED_A_F', onlyMatched: true }
+  { id: 'SPECIFIED_A_F', onlyMatched: true },
 );
 
 // 2. 指定商品（Ｃ～Ｉ）每5000元 折600元
@@ -907,7 +856,7 @@ const policy2 = new StepValueDiscount(
   new ItemIncluded<TestOrderItem>({
     items: ['C', 'D', 'E', 'F', 'G', 'H', 'I'],
   }),
-  { id: 'SPECIFIED_C_I', stepUnit: 'price', onlyMatched: true }
+  { id: 'SPECIFIED_C_I', stepUnit: 'price', onlyMatched: true },
 );
 
 // 3. 指定分類（鞋子）滿4000元 送最低價商品
@@ -918,7 +867,7 @@ const policy3 = new ItemGiveawayDiscount(
     items: ['shoes'],
     conditions: [new PriceThreshold(4000)],
   }),
-  { id: 'GIVEAWAY_BY_SHOES_1', onlyMatched: true }
+  { id: 'GIVEAWAY_BY_SHOES_1', onlyMatched: true },
 );
 
 // * 4. 指定分類（Swell）每1件 打9折
@@ -933,7 +882,7 @@ const policy4 = new StepPercentageDiscount(
     id: 'SPECIFIED_BRAND_BY_Swell_1',
     stepUnit: 'quantity',
     onlyMatched: true,
-  }
+  },
 );
 
 // (1|2)&(3|4)
@@ -949,21 +898,17 @@ const order1 = builder1.build({ items });
 
 const builder2 = new OrderBuilder<TestOrderItem>({
   policyPickStrategy: 'item-based',
-  policies: [
-    [policy1, policy2],
-    policy3,
-    policy4,
-  ],
+  policies: [[policy1, policy2], policy3, policy4],
 });
 
 const order2 = builder2.build({ items });
 
-order1.price === order2.price // true
-order1.price // 22491
-order2.price // 22491
+order1.price === order2.price; // true
+order1.price; // 22491
+order2.price; // 22491
 
-order1.itemRecords
-// [ 
+order1.itemRecords;
+// [
 //   {
 //     itemId: 'A-1',
 //     originItem: {
@@ -1062,12 +1007,12 @@ const order = new OrderBuilder()
         items: ['B', 'C', 'D', 'E'],
         threshold: 2,
       }),
-      { onlyMatched: true }
-    )
+      { onlyMatched: true },
+    ),
   )
   .build({ items: originItems });
 
-order.price // 4500 + 200 - 1500 - 200 = 3000
+order.price; // 4500 + 200 - 1500 - 200 = 3000
 ```
 
 ### Matched Times & Excluded Calculating Policy
@@ -1106,37 +1051,22 @@ const items: TestOrderItem[] = [
 ];
 
 // Policy1: 每 2000 元折 200 元
-const policy1 = new StepValueDiscount(
-  2000,
-  200,
-  { stepUnit: 'price' },
-);
+const policy1 = new StepValueDiscount(2000, 200, { stepUnit: 'price' });
 
 // Policy1 滿足次數
 new OrderBuilder()
   .addPolicy(policy1)
   .build({ items })
-  .discounts
-  .find(discount => discount.id === policy1.id)
-  ?.matchedTimes; // step(4500, 2000) = 2
+  .discounts.find(discount => discount.id === policy1.id)?.matchedTimes; // step(4500, 2000) = 2
 
 // Policy2: 每 1499 元打 8折 (Matched only Policy, will not participant in discounting)
-const policy2 = new StepPercentageDiscount(
-  1499,
-  0.8,
-  { stepUnit: 'price', excludedInCalculation: true }
-);
+const policy2 = new StepPercentageDiscount(1499, 0.8, { stepUnit: 'price', excludedInCalculation: true });
 
-const order = new OrderBuilder()
-  .addPolicy(policy2)
-  .build({ items });
+const order = new OrderBuilder().addPolicy(policy2).build({ items });
 
 // Policy2: 滿足次數
-order
-.discounts
-.find(discount => discount.id === policy2.id)
-?.matchedTimes; // step(4500, 1499) = 3
+order.discounts.find(discount => discount.id === policy2.id)?.matchedTimes; // step(4500, 1499) = 3
 
 // Policy2: Excluded in calculation.
-order.discountValue // 0
+order.discountValue; // 0
 ```

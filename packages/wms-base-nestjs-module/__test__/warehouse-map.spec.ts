@@ -1,13 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import {
-  RESOLVED_WAREHOUSE_MAP_REPO,
-  WMSBaseModule,
-} from '@rytass/wms-base-nestjs-module';
-import {
-  mockWarehouseMapEntity,
-  mockWarehouseMapRepo,
-} from '../__mocks__/warehouse-map.mock';
+import { RESOLVED_WAREHOUSE_MAP_REPO, WMSBaseModule } from '@rytass/wms-base-nestjs-module';
+import { mockWarehouseMapEntity, mockWarehouseMapRepo } from '../__mocks__/warehouse-map.mock';
 import { WarehouseMapEntity } from '../src/models/warehouse-map.entity';
 import { WarehouseMapService } from '../src/services/warehouse-map.service';
 import { MapRangeColor, MapRangeType } from '../src/typings/warehouse-map.enum';
@@ -32,9 +26,7 @@ describe('warehouse-map', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockWarehouseMapRepo.save.mockImplementation(
-      async (entity) => entity as WarehouseMapEntity,
-    );
+    mockWarehouseMapRepo.save.mockImplementation(async entity => entity as WarehouseMapEntity);
   });
 
   it('should create a new map entity if not found', async () => {
@@ -224,9 +216,7 @@ describe('warehouse-map', () => {
 
     const result = await warehouseMapService.deleteMapById('A001A');
 
-    expect(mockWarehouseMapRepo.remove).toHaveBeenCalledWith(
-      mockWarehouseMapEntity,
-    );
+    expect(mockWarehouseMapRepo.remove).toHaveBeenCalledWith(mockWarehouseMapEntity);
 
     expect(result).toBe(true);
   });

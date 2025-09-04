@@ -1,10 +1,4 @@
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  Logger,
-  OnApplicationBootstrap,
-} from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { DeepPartial, QueryFailedError, Repository } from 'typeorm';
 import { hash, verify } from 'argon2';
 import { BaseMemberEntity } from '../models/base-member.entity';
@@ -25,17 +19,11 @@ import {
   RESOLVED_MEMBER_REPO,
 } from '../typings/member-base-providers';
 import { sign, verify as verifyJWT } from 'jsonwebtoken';
-import {
-  MemberLoginLogEntity,
-  MemberLoginLogRepo,
-} from '../models/member-login-log.entity';
+import { MemberLoginLogEntity, MemberLoginLogRepo } from '../models/member-login-log.entity';
 import { TokenPairDto } from '../dto/token-pair.dto';
 import { MemberBaseModuleOptionsDto } from '../typings/member-base-module-options.dto';
 import { PasswordValidatorService } from './password-validator.service';
-import {
-  MemberPasswordHistoryEntity,
-  MemberPasswordHistoryRepo,
-} from '../models/member-password-history.entity';
+import { MemberPasswordHistoryEntity, MemberPasswordHistoryRepo } from '../models/member-password-history.entity';
 import {
   InvalidPasswordError,
   InvalidToken,
@@ -50,15 +38,12 @@ import {
 } from '../constants/errors/base.error';
 
 @Injectable()
-export class MemberBaseService<
-  MemberEntity extends BaseMemberEntity = BaseMemberEntity,
-> implements OnApplicationBootstrap
+export class MemberBaseService<MemberEntity extends BaseMemberEntity = BaseMemberEntity>
+  implements OnApplicationBootstrap
 {
   constructor(
     @Inject(MEMBER_BASE_MODULE_OPTIONS)
-    private readonly originalProvidedOptions:
-      | MemberBaseModuleOptionsDto
-      | undefined,
+    private readonly originalProvidedOptions: MemberBaseModuleOptionsDto | undefined,
     @Inject(RESOLVED_MEMBER_REPO)
     private readonly baseMemberRepo: Repository<BaseMemberEntity>,
     @Inject(MemberLoginLogRepo)
@@ -96,13 +81,8 @@ export class MemberBaseService<
   private readonly logger = new Logger(MemberBaseService.name);
 
   onApplicationBootstrap(): void {
-    if (
-      !this.originalProvidedOptions?.accessTokenSecret ||
-      !this.originalProvidedOptions?.refreshTokenSecret
-    ) {
-      this.logger.warn(
-        'No access token secret or refresh token secret provided, using random secret',
-      );
+    if (!this.originalProvidedOptions?.accessTokenSecret || !this.originalProvidedOptions?.refreshTokenSecret) {
+      this.logger.warn('No access token secret or refresh token secret provided, using random secret');
     }
   }
 
@@ -115,10 +95,7 @@ export class MemberBaseService<
       },
       this.refreshTokenSecret,
       {
-        expiresIn: this.validateExpiration(
-          this.refreshTokenExpiration,
-          'REFRESH_TOKEN_EXPIRATION',
-        ),
+        expiresIn: this.validateExpiration(this.refreshTokenExpiration, 'REFRESH_TOKEN_EXPIRATION'),
       },
     );
   }
@@ -131,10 +108,7 @@ export class MemberBaseService<
       },
       this.accessTokenSecret,
       {
-        expiresIn: this.validateExpiration(
-          this.accessTokenExpiration,
-          'ACCESS_TOKEN_EXPIRATION',
-        ),
+        expiresIn: this.validateExpiration(this.accessTokenExpiration, 'ACCESS_TOKEN_EXPIRATION'),
       },
     );
   }
@@ -161,10 +135,7 @@ export class MemberBaseService<
       },
       this.resetPasswordTokenSecret,
       {
-        expiresIn: this.validateExpiration(
-          this.resetPasswordTokenExpiration,
-          'RESET_PASSWORD_TOKEN_EXPIRATION',
-        ),
+        expiresIn: this.validateExpiration(this.resetPasswordTokenExpiration, 'RESET_PASSWORD_TOKEN_EXPIRATION'),
       },
     );
 
@@ -176,9 +147,7 @@ export class MemberBaseService<
     originPassword: string,
     newPassword: string,
   ): Promise<T> {
-    if (
-      !(await this.passwordValidatorService.validatePassword(newPassword, id))
-    ) {
+    if (!(await this.passwordValidatorService.validatePassword(newPassword, id))) {
       throw new PasswordDoesNotMeetPolicyError();
     }
 
@@ -212,19 +181,14 @@ export class MemberBaseService<
     }
   }
 
-  async changePasswordWithToken<T extends MemberEntity = MemberEntity>(
-    token: string,
-    newPassword: string,
-  ): Promise<T> {
+  async changePasswordWithToken<T extends MemberEntity = MemberEntity>(token: string, newPassword: string): Promise<T> {
     try {
-      const { id, requestedOn } = verifyJWT(
-        token,
-        this.resetPasswordTokenSecret,
-      ) as { id: string; requestedOn: number };
+      const { id, requestedOn } = verifyJWT(token, this.resetPasswordTokenSecret) as {
+        id: string;
+        requestedOn: number;
+      };
 
-      if (
-        !(await this.passwordValidatorService.validatePassword(newPassword, id))
-      ) {
+      if (!(await this.passwordValidatorService.validatePassword(newPassword, id))) {
         throw new PasswordDoesNotMeetPolicyError();
       }
 
@@ -327,15 +291,9 @@ export class MemberBaseService<
     return [member as T, password];
   }
 
-  async refreshToken(
-    refreshToken: string,
-    options?: { domain?: string },
-  ): Promise<TokenPairDto> {
+  async refreshToken(refreshToken: string, options?: { domain?: string }): Promise<TokenPairDto> {
     try {
-      const { id, account, passwordChangedAt, exp, domain } = verifyJWT(
-        refreshToken,
-        this.refreshTokenSecret,
-      ) as {
+      const { id, account, passwordChangedAt, exp, domain } = verifyJWT(refreshToken, this.refreshTokenSecret) as {
         id: string;
         account: string;
         passwordChangedAt: number | null;
@@ -356,14 +314,8 @@ export class MemberBaseService<
       }
 
       return {
-        accessToken: this.signAccessToken(
-          member as MemberEntity,
-          options?.domain ?? domain ?? undefined,
-        ),
-        refreshToken: this.signRefreshToken(
-          member as MemberEntity,
-          options?.domain ?? domain ?? undefined,
-        ),
+        accessToken: this.signAccessToken(member as MemberEntity, options?.domain ?? domain ?? undefined),
+        refreshToken: this.signRefreshToken(member as MemberEntity, options?.domain ?? domain ?? undefined),
       };
     } catch (ex) {
       if (ex instanceof BadRequestException) throw ex;
@@ -417,9 +369,7 @@ export class MemberBaseService<
 
         if (
           !latestFailedRecord ||
-          latestFailedRecord.createdAt.getTime() +
-            this.loginFailedAutoUnlockSeconds * 1000 >
-            Date.now()
+          latestFailedRecord.createdAt.getTime() + this.loginFailedAutoUnlockSeconds * 1000 > Date.now()
         ) {
           throw new MemberBannedError();
         }
@@ -436,8 +386,7 @@ export class MemberBaseService<
       throw new PasswordExpiredError();
     }
 
-    const ip =
-      typeof options === 'string' ? options : (options?.ip ?? undefined);
+    const ip = typeof options === 'string' ? options : (options?.ip ?? undefined);
 
     try {
       if (await verify(member.password, password)) {
@@ -456,10 +405,7 @@ export class MemberBaseService<
           ip: ip ? `${ip}/32` : null,
         });
 
-        const domain =
-          typeof options === 'string'
-            ? undefined
-            : (options?.domain ?? undefined);
+        const domain = typeof options === 'string' ? undefined : (options?.domain ?? undefined);
 
         return {
           accessToken: this.signAccessToken(member as MemberEntity, domain),
@@ -492,9 +438,7 @@ export class MemberBaseService<
     }
   }
 
-  async resetLoginFailedCounter<T extends MemberEntity = MemberEntity>(
-    id: string,
-  ): Promise<T> {
+  async resetLoginFailedCounter<T extends MemberEntity = MemberEntity>(id: string): Promise<T> {
     const member = await this.baseMemberRepo.findOne({ where: { id } });
 
     if (!member) {
@@ -510,9 +454,7 @@ export class MemberBaseService<
 
   private validateExpiration(source: unknown, tokenName: string): number {
     if (typeof source !== 'number' || Number.isNaN(source)) {
-      throw new BadRequestException(
-        `[${tokenName}] must be a number (in seconds), but got: ${source}`,
-      );
+      throw new BadRequestException(`[${tokenName}] must be a number (in seconds), but got: ${source}`);
     }
 
     return source;

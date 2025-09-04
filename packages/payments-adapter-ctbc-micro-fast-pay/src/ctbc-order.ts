@@ -21,10 +21,7 @@ import {
   OrderCreateInit,
 } from './typings';
 
-export class CTBCOrder<
-  OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessage,
-> implements Order<OCM>
-{
+export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessage> implements Order<OCM> {
   private readonly _id: string;
   private readonly _items: PaymentItem[];
   private readonly _form: CTBCPayOrderForm | undefined;
@@ -78,10 +75,7 @@ export class CTBCOrder<
   }
 
   get totalPrice(): number {
-    return this.items.reduce(
-      (sum, item) => sum + item.unitPrice * item.quantity,
-      0,
-    );
+    return this.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   }
 
   get form(): CTBCPayOrderForm {
@@ -109,10 +103,7 @@ export class CTBCOrder<
   <body>
     <form action="${this._gateway.baseUrl}/mauth/SSLAuthUI.jsp" method="POST">
       ${Object.entries(this.form)
-        .map(
-          ([key, value]) =>
-            `<input name="${key}" value="${value}" type="hidden" />`,
-        )
+        .map(([key, value]) => `<input name="${key}" value="${value}" type="hidden" />`)
         .join('\n')}
     </form>
     <script>
@@ -123,9 +114,7 @@ export class CTBCOrder<
   }
 
   get committable(): boolean {
-    return !!~[OrderState.PRE_COMMIT, OrderState.ASYNC_INFO_RETRIEVED].indexOf(
-      this._state,
-    );
+    return !!~[OrderState.PRE_COMMIT, OrderState.ASYNC_INFO_RETRIEVED].indexOf(this._state);
   }
   get state(): OrderState {
     return this._state;
@@ -208,9 +197,7 @@ export class CTBCOrder<
 
   get boundCardCheckoutPayload(): CTBCCheckoutWithBoundCardRequestPayload {
     if (!this._checkoutCardId || !this._checkoutMemberId) {
-      throw new Error(
-        'Bound card checkout payload requires checkoutCardId and checkoutMemberId',
-      );
+      throw new Error('Bound card checkout payload requires checkoutCardId and checkoutMemberId');
     }
 
     return {
@@ -225,7 +212,7 @@ export class CTBCOrder<
       Token: this.checkoutCardId as string,
       OrderDesc:
         this.items
-          .map((item) => item.name)
+          .map(item => item.name)
           .join(', ')
           .substring(0, 18) || undefined, // Max 18 characters
       TerminalID: this._gateway.terminalId,
@@ -238,10 +225,7 @@ export class CTBCOrder<
     }
 
     // 計算退款金額
-    const totalAmount = this._items.reduce(
-      (sum, item) => sum + item.unitPrice * item.quantity,
-      0,
-    );
+    const totalAmount = this._items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
     const refundAmount = amount ?? totalAmount;
 
     if (refundAmount > totalAmount) {
@@ -303,9 +287,7 @@ export class CTBCOrder<
           exponent: '0',
         };
 
-        debugPayment(
-          `執行 POS API 退款: XID=${this._xid}, AuthCode=${authCode}, 退款金額=${refundAmount}`,
-        );
+        debugPayment(`執行 POS API 退款: XID=${this._xid}, AuthCode=${authCode}, 退款金額=${refundAmount}`);
 
         // 執行退款
         const refundResult = await posApiRefund(posApiConfig, refundParams);
@@ -325,8 +307,7 @@ export class CTBCOrder<
           // 其他錯誤情況
           this._state = OrderState.FAILED;
           this._failedCode = refundResult.RespCode;
-          this._failedMessage =
-            refundResult.ERRDESC || refundResult.ErrorDesc || 'Refund failed';
+          this._failedMessage = refundResult.ERRDESC || refundResult.ErrorDesc || 'Refund failed';
           throw new Error(this._failedMessage);
         }
       } catch (error) {
@@ -348,20 +329,12 @@ export class CTBCOrder<
   async cancelRefund(amount: number): Promise<void> {
     // 只有已提交的訂單才能進行退款撤銷操作
     // 不需要限制必須是 REFUNDED 狀態，因為部分退款的訂單狀態仍然是 COMMITTED
-    if (
-      this._state !== OrderState.COMMITTED &&
-      this._state !== OrderState.REFUNDED
-    ) {
-      throw new Error(
-        'Only committed or refunded orders can have their refund cancelled',
-      );
+    if (this._state !== OrderState.COMMITTED && this._state !== OrderState.REFUNDED) {
+      throw new Error('Only committed or refunded orders can have their refund cancelled');
     }
 
     // 計算退款撤銷金額
-    const totalAmount = this._items.reduce(
-      (sum, item) => sum + item.unitPrice * item.quantity,
-      0,
-    );
+    const totalAmount = this._items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
     const cancelRefundAmount = amount;
 
     if (cancelRefundAmount > totalAmount) {
@@ -398,15 +371,10 @@ export class CTBCOrder<
           exponent: '0',
         };
 
-        debugPayment(
-          `執行 POS API 退款撤銷: XID=${this._xid}, AuthCode=${authCode}, 撤銷金額=${cancelRefundAmount}`,
-        );
+        debugPayment(`執行 POS API 退款撤銷: XID=${this._xid}, AuthCode=${authCode}, 撤銷金額=${cancelRefundAmount}`);
 
         // 執行退款撤銷
-        const cancelRefundResult = await posApiCancelRefund(
-          posApiConfig,
-          cancelRefundParams,
-        );
+        const cancelRefundResult = await posApiCancelRefund(posApiConfig, cancelRefundParams);
 
         if (typeof cancelRefundResult === 'number') {
           this._state = OrderState.FAILED;
@@ -423,10 +391,7 @@ export class CTBCOrder<
           // 其他錯誤情況
           this._state = OrderState.FAILED;
           this._failedCode = cancelRefundResult.RespCode;
-          this._failedMessage =
-            cancelRefundResult.ERRDESC ||
-            cancelRefundResult.ErrorDesc ||
-            'Cancel refund failed';
+          this._failedMessage = cancelRefundResult.ERRDESC || cancelRefundResult.ErrorDesc || 'Cancel refund failed';
           throw new Error(this._failedMessage);
         }
       } catch (error) {

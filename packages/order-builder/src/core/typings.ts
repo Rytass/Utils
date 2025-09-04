@@ -3,20 +3,16 @@ import { ObjRecord } from '../typings';
 import { ItemDiscountRecord } from './order-item-record-collection';
 import { Condition } from '../conditions';
 
-type OrderItemConditionCb = ((..._:any[]) => boolean);
+type OrderItemConditionCb = (..._: any[]) => boolean;
 
-type OrderItemConditionRef<CB extends OrderItemConditionCb = OrderItemConditionCb> = (
-  CB
-  | string
-  | string[]
-);
+type OrderItemConditionRef<CB extends OrderItemConditionCb = OrderItemConditionCb> = CB | string | string[];
 
 type OrderItemOption = Omit<ObjRecord, 'id' | 'quantity' | 'conditionRef' | 'uniPrice'>;
 
 /**
  * BaseOrderItem
  */
- export type BaseOrderItem<T extends OrderItemConditionRef = OrderItemConditionRef> = {
+export type BaseOrderItem<T extends OrderItemConditionRef = OrderItemConditionRef> = {
   id: string;
   quantity: number;
   conditionRef?: T;
@@ -26,11 +22,13 @@ type OrderItemOption = Omit<ObjRecord, 'id' | 'quantity' | 'conditionRef' | 'uni
  * OrderItem
  */
 export type OrderItem<
-Option extends OrderItemOption = OrderItemOption,
-ConditionRef extends OrderItemConditionRef = OrderItemConditionRef> = {
+  Option extends OrderItemOption = OrderItemOption,
+  ConditionRef extends OrderItemConditionRef = OrderItemConditionRef,
+> = {
   name: string;
   unitPrice: number;
-} & Option & BaseOrderItem<ConditionRef>;
+} & Option &
+  BaseOrderItem<ConditionRef>;
 
 /**
  * Flattened Item which quantity === 1.
@@ -44,7 +42,7 @@ export type FlattenOrderItem<Item extends OrderItem = OrderItem> = Item & {
  */
 export interface OrderItemRecord<Item extends OrderItem> {
   itemId: string;
-  appliedPolicies: Policy[]
+  appliedPolicies: Policy[];
   originItem: Item;
   initialValue: number;
   discountValue: number;

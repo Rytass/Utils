@@ -1,8 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import {
-  BaseMemberEntity,
-  RESOLVED_MEMBER_REPO,
-} from '@rytass/member-base-nestjs-module';
+import { BaseMemberEntity, RESOLVED_MEMBER_REPO } from '@rytass/member-base-nestjs-module';
 import DataLoader from 'dataloader';
 import { LRUCache } from 'lru-cache';
 import { DataSource, Repository } from 'typeorm';
@@ -23,9 +20,9 @@ export class MemberDataLoader {
 
       const users = await qb.getMany();
 
-      const userMap = new Map(users.map((user) => [user.id, user]));
+      const userMap = new Map(users.map(user => [user.id, user]));
 
-      return ids.map((id) => userMap.get(id) ?? null);
+      return ids.map(id => userMap.get(id) ?? null);
     },
     {
       cache: true,

@@ -82,7 +82,7 @@ interface VaultTokenRetrieveAuthResponse {
 
 export type VaultTokenRetrieveSuccessResponse = {
   auth: VaultTokenRetrieveAuthResponse;
-} & VaultAPIBaseInfo<null>
+} & VaultAPIBaseInfo<null>;
 
 export interface VaultAPIFailedResponse {
   errors: string[];
@@ -91,7 +91,7 @@ export interface VaultAPIFailedResponse {
 export type VaultTokenRetrieveResponse = VaultTokenRetrieveSuccessResponse | VaultAPIFailedResponse;
 
 interface VaultTokenGetSecretData {
-  data: Record<string, any>,
+  data: Record<string, any>;
   metadata: {
     created_time: string;
     custom_metadata: null;
@@ -101,6 +101,6 @@ interface VaultTokenGetSecretData {
   };
 }
 
-export type VaultGetSecretSuccessResponse = VaultAPIBaseInfo<VaultTokenGetSecretData>
+export type VaultGetSecretSuccessResponse = VaultAPIBaseInfo<VaultTokenGetSecretData>;
 
 export type VaultGetSecretResponse = VaultGetSecretSuccessResponse | VaultAPIFailedResponse;

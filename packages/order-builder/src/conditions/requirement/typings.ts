@@ -10,36 +10,27 @@ export enum Requirement {
   INCLUDED = 'INCLUDED',
 }
 
-export type RequirementDescription<
-  T extends ObjRecord | string = ObjRecord | string
-> = {
+export type RequirementDescription<T extends ObjRecord | string = ObjRecord | string> = {
   type: Requirement;
   items: T[];
 };
 
 export type ItemSpecifiedScope<T extends ObjRecord = ObjRecord> = keyof T;
-export type OmitItemSpecifiedScope<O extends OrderItem> = Omit<
-  O,
-  'conditionRef' | 'unitPrice' | 'quantity'
->;
+export type OmitItemSpecifiedScope<O extends OrderItem> = Omit<O, 'conditionRef' | 'unitPrice' | 'quantity'>;
 
 type ItemSpecifiedBaseInput = {
   threshold?: number;
   conditions?: Condition[];
 };
 
-export type ItemSpecifiedScopeInput<Item extends OrderItem> =
-  ItemSpecifiedBaseInput & {
-    items: string | string[];
-    scope?:
-      | ItemSpecifiedScope<OmitItemSpecifiedScope<Item>>
-      | ItemSpecifiedScope<OmitItemSpecifiedScope<Item>>[];
-  };
+export type ItemSpecifiedScopeInput<Item extends OrderItem> = ItemSpecifiedBaseInput & {
+  items: string | string[];
+  scope?: ItemSpecifiedScope<OmitItemSpecifiedScope<Item>> | ItemSpecifiedScope<OmitItemSpecifiedScope<Item>>[];
+};
 
-export type ItemSpecifiedResolvedFnInput<Item extends OrderItem> =
-  ItemSpecifiedBaseInput & {
-    isMatchedItem: <II extends FlattenOrderItem<Item>>(item: II) => boolean;
-  };
+export type ItemSpecifiedResolvedFnInput<Item extends OrderItem> = ItemSpecifiedBaseInput & {
+  isMatchedItem: <II extends FlattenOrderItem<Item>>(item: II) => boolean;
+};
 
 export type ItemSpecifiedInput<Item extends OrderItem> =
   | ItemSpecifiedScopeInput<Item>

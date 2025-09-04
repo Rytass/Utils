@@ -19,9 +19,7 @@ export class ItemBasedPolicyPickStrategy implements PolicyPickStrategy {
   type: PolicyPickStrategyType = 'item-based';
 
   pick(order: Order, policies: Policies): PolicyDiscountDescription[] {
-    return Array.isArray(policies)
-      ? this.pickMulti(order, policies)
-      : this.pickOne(order, policies);
+    return Array.isArray(policies) ? this.pickMulti(order, policies) : this.pickOne(order, policies);
   }
 
   pickOne(order: Order, policy: Policy): PolicyDiscountDescription[] {
@@ -32,16 +30,11 @@ export class ItemBasedPolicyPickStrategy implements PolicyPickStrategy {
     const discountPolicies = policies.filter(isDiscountPolicy);
 
     const itemPolicyCombinationMap = discountPolicies.reduce((map, policy) => {
-      policy.matchedItems(order).forEach((matchedItem) => {
-        const storeItemPolicyMemoRecordSet =
-          map.get(matchedItem.uuid) ||
-          new Set<PolicyPickMemoRecord | null>([null]);
+      policy.matchedItems(order).forEach(matchedItem => {
+        const storeItemPolicyMemoRecordSet = map.get(matchedItem.uuid) || new Set<PolicyPickMemoRecord | null>([null]);
 
         // remove null if policies of currentItem is greater than 2.
-        if (
-          storeItemPolicyMemoRecordSet.size === 2 &&
-          storeItemPolicyMemoRecordSet.has(null)
-        ) {
+        if (storeItemPolicyMemoRecordSet.size === 2 && storeItemPolicyMemoRecordSet.has(null)) {
           storeItemPolicyMemoRecordSet.delete(null);
         }
 
@@ -57,32 +50,25 @@ export class ItemBasedPolicyPickStrategy implements PolicyPickStrategy {
     }, new Map<string, Set<PolicyPickMemoRecord | null>>());
 
     // Get all sub-sets of combinations.
-    const itemsCartesianProduct = new CartesianProduct(
-      ...itemPolicyCombinationMap.values()
-    );
+    const itemsCartesianProduct = new CartesianProduct(...itemPolicyCombinationMap.values());
 
     let bestTotalDiscountValue = Number.NEGATIVE_INFINITY;
     let bestSubOrders: Order[] = [];
 
-    itemsCartesianProduct.forEach((itemCombination) => {
-      const policyItemsMap = groupBy(
-        itemCombination,
-        combination => combination.policy.id
-      );
+    itemsCartesianProduct.forEach(itemCombination => {
+      const policyItemsMap = groupBy(itemCombination, combination => combination.policy.id);
 
-      const subOrders = Object.values(policyItemsMap).map(
-        policyItemRecord =>
-          order.subOrder({
-            itemScope: 'uuid',
-            subItems: policyItemRecord.map(record => record.item),
-            subPolicies: policyItemRecord?.[0]?.policy,
-          })
+      const subOrders = Object.values(policyItemsMap).map(policyItemRecord =>
+        order.subOrder({
+          itemScope: 'uuid',
+          subItems: policyItemRecord.map(record => record.item),
+          subPolicies: policyItemRecord?.[0]?.policy,
+        }),
       );
 
       const combinationTotalDiscountValue = subOrders.reduce(
-        (totalDiscount, subOrder) =>
-          plus(totalDiscount, subOrder.discountValue),
-        0
+        (totalDiscount, subOrder) => plus(totalDiscount, subOrder.discountValue),
+        0,
       );
 
       // Choose the higher discountValue sub-set as the best solution so far.
@@ -92,13 +78,10 @@ export class ItemBasedPolicyPickStrategy implements PolicyPickStrategy {
       }
     });
 
-    return bestSubOrders.reduce(
-      (total, subOrder) => {
-        total.push(...subOrder.discounts);
+    return bestSubOrders.reduce((total, subOrder) => {
+      total.push(...subOrder.discounts);
 
-        return total;
-      },
-      [] as PolicyDiscountDescription[]
-    );
+      return total;
+    }, [] as PolicyDiscountDescription[]);
   }
 }

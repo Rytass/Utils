@@ -1,7 +1,15 @@
 import { FinalPriceOnlyRoundStrategy, EveryCalculationRoundStrategy, NoRoundRoundStrategy } from './round-strategy';
 import { QuantityWeightedAverageDiscountMethod, PriceWeightedAverageDiscountMethod } from './discount-method';
 import { ItemBasedPolicyPickStrategy, OrderBasedPolicyPickStrategy } from './policy-pick-strategy';
-import { DiscountMethod, DiscountMethodType, PolicyPickStrategy, PolicyPickStrategyType, RoundPrecision, RoundStrategy, RoundStrategyType } from './typings';
+import {
+  DiscountMethod,
+  DiscountMethodType,
+  PolicyPickStrategy,
+  PolicyPickStrategyType,
+  RoundPrecision,
+  RoundStrategy,
+  RoundStrategyType,
+} from './typings';
 import { OrderLogistics } from './../typings';
 
 export type OrderConfigConstructor = OrderConfigOption | OrderConfig;
@@ -51,52 +59,53 @@ export class OrderConfig {
 
   constructor(config?: OrderConfigConstructor) {
     // Discount method.
-    this.discountMethod = config instanceof OrderConfig
-      ? config.discountMethod
-      : (() => {
-      switch (config?.discountMethod) {
-        case 'quantity-weighted-average':
-          return new QuantityWeightedAverageDiscountMethod();
-        case 'price-weighted-average':
-        default:
-          return new PriceWeightedAverageDiscountMethod();
-      }
-    })();
+    this.discountMethod =
+      config instanceof OrderConfig
+        ? config.discountMethod
+        : (() => {
+            switch (config?.discountMethod) {
+              case 'quantity-weighted-average':
+                return new QuantityWeightedAverageDiscountMethod();
+              case 'price-weighted-average':
+              default:
+                return new PriceWeightedAverageDiscountMethod();
+            }
+          })();
 
     // PolicyPick strategy.
-    this.policyPickStrategy = config instanceof OrderConfig
-      ? config.policyPickStrategy
-      : (() => {
-        switch (config?.policyPickStrategy) {
-          case 'order-based':
-            return new OrderBasedPolicyPickStrategy();
-          case 'item-based':
-          default:
-            return new ItemBasedPolicyPickStrategy();
-          }
-      })();
+    this.policyPickStrategy =
+      config instanceof OrderConfig
+        ? config.policyPickStrategy
+        : (() => {
+            switch (config?.policyPickStrategy) {
+              case 'order-based':
+                return new OrderBasedPolicyPickStrategy();
+              case 'item-based':
+              default:
+                return new ItemBasedPolicyPickStrategy();
+            }
+          })();
 
     // Round strategy.
-    this.roundStrategy = config instanceof OrderConfig
-      ? config.roundStrategy
-      : (() => {
-        const [
-          roundStrategy,
-          precision,
-        ] = config?.roundStrategy && Array.isArray(config.roundStrategy)
-          ? config.roundStrategy as [RoundStrategyType, RoundPrecision]
-          : [config?.roundStrategy || 'every-calculation', 0] as [RoundStrategyType, RoundPrecision];
+    this.roundStrategy =
+      config instanceof OrderConfig
+        ? config.roundStrategy
+        : (() => {
+            const [roundStrategy, precision] =
+              config?.roundStrategy && Array.isArray(config.roundStrategy)
+                ? (config.roundStrategy as [RoundStrategyType, RoundPrecision])
+                : ([config?.roundStrategy || 'every-calculation', 0] as [RoundStrategyType, RoundPrecision]);
 
-        switch (roundStrategy) {
-          case 'no-round':
-            return new NoRoundRoundStrategy(precision);
-          case 'final-price-only':
-            return new FinalPriceOnlyRoundStrategy(precision);
-          case 'every-calculation':
-          default:
-            return new EveryCalculationRoundStrategy(precision);
-        }
-      })();
+            switch (roundStrategy) {
+              case 'no-round':
+                return new NoRoundRoundStrategy(precision);
+              case 'final-price-only':
+                return new FinalPriceOnlyRoundStrategy(precision);
+              case 'every-calculation':
+              default:
+                return new EveryCalculationRoundStrategy(precision);
+            }
+          })();
 
     // Logistics
     this._logistics = config?.logistics;

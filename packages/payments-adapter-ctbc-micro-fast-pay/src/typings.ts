@@ -11,12 +11,7 @@
  * - MAC/TXN 處理通用格式
  */
 
-import {
-  CardType,
-  CheckoutWithBoundCardOptions,
-  OrderCommitMessage,
-  PaymentItem,
-} from '@rytass/payments';
+import { CardType, CheckoutWithBoundCardOptions, OrderCommitMessage, PaymentItem } from '@rytass/payments';
 import { IncomingMessage, ServerResponse } from 'node:http';
 import { CTBCBindCardRequest } from './ctbc-bind-card-request';
 import { CTBCPayment } from './ctbc-payment';
@@ -46,9 +41,7 @@ export enum CTBCOrderFormKey {
 
 export type CTBCPayOrderForm = Record<CTBCOrderFormKey, string>;
 
-export interface OrderCreateInit<
-  OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessage,
-> {
+export interface OrderCreateInit<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessage> {
   id: string;
   items: PaymentItem[];
   form?: CTBCPayOrderForm;
@@ -60,10 +53,7 @@ export interface OrderCreateInit<
   cardType?: CardType; // 卡片類型，預設為 'VMJ'
 }
 
-export interface CTBCPaymentOptions<
-  O extends
-    CTBCOrder<CTBCOrderCommitMessage> = CTBCOrder<CTBCOrderCommitMessage>,
-> {
+export interface CTBCPaymentOptions<O extends CTBCOrder<CTBCOrderCommitMessage> = CTBCOrder<CTBCOrderCommitMessage>> {
   merchantId: string;
   merId: string;
   txnKey: string;
@@ -259,8 +249,7 @@ export interface CTBCOrderInput {
   totalPrice: number;
 }
 
-export interface CTBCCheckoutWithBoundCardOptions
-  extends CheckoutWithBoundCardOptions {
+export interface CTBCCheckoutWithBoundCardOptions extends CheckoutWithBoundCardOptions {
   cardId: string; // 綁定的卡片 ID
   memberId: string; // 綁定會員 ID
   items: PaymentItem[];

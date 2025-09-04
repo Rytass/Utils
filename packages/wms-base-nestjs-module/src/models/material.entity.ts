@@ -28,9 +28,9 @@ export class MaterialEntity {
   @DeleteDateColumn()
   deletedAt: Date | null;
 
-  @OneToMany(() => BatchEntity, (batch) => batch.material)
+  @OneToMany(() => BatchEntity, batch => batch.material)
   batches: Relation<BatchEntity[]>;
 
-  @OneToMany(() => StockEntity, (stock) => stock.material)
+  @OneToMany(() => StockEntity, stock => stock.material)
   stocks: Relation<StockEntity[]>;
 }

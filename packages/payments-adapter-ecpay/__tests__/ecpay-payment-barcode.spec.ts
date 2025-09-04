@@ -6,11 +6,7 @@ import request from 'supertest';
 import { OrderState } from '@rytass/payments';
 import { DateTime } from 'luxon';
 import { getAddMac } from '../__utils__/add-mac';
-import {
-  Channel,
-  ECPayCallbackPaymentType,
-  ECPayPayment,
-} from '@rytass/payments-adapter-ecpay';
+import { Channel, ECPayCallbackPaymentType, ECPayPayment } from '@rytass/payments-adapter-ecpay';
 import http, { createServer } from 'http';
 import { ECPayChannelBarcode } from 'payments-adapter-ecpay/src/typings';
 import { App } from 'supertest/types';
@@ -21,22 +17,20 @@ describe('ECPayPayment (Barcode)', () => {
   const originCreateServer = createServer;
   const mockedCreateServer = jest.spyOn(http, 'createServer');
 
-  mockedCreateServer.mockImplementation((requestHandler) => {
+  mockedCreateServer.mockImplementation(requestHandler => {
     const mockServer = originCreateServer(requestHandler);
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce(
-      (port?: any, hostname?: any, listeningListener?: () => void) => {
-        mockServer.listen(0, listeningListener);
+    mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
+      mockServer.listen(0, listeningListener);
 
-        return mockServer;
-      },
-    );
+      return mockServer;
+    });
 
     const mockedClose = jest.spyOn(mockServer, 'close');
 
-    mockedClose.mockImplementationOnce((onClosed) => {
+    mockedClose.mockImplementationOnce(onClosed => {
       mockServer.close(onClosed);
 
       return mockServer;
@@ -46,7 +40,7 @@ describe('ECPayPayment (Barcode)', () => {
   });
 
   describe('Barcode', () => {
-    it('should throw on not barcode channel set cvsBarcodeExpireDays', (done) => {
+    it('should throw on not barcode channel set cvsBarcodeExpireDays', done => {
       const payment = new ECPayPayment<ECPayChannelBarcode>({
         withServer: true,
         onServerListen: () => {
@@ -70,7 +64,7 @@ describe('ECPayPayment (Barcode)', () => {
       });
     });
 
-    it('should `cvsBarcodeExpireDays` between 1 and 7', (done) => {
+    it('should `cvsBarcodeExpireDays` between 1 and 7', done => {
       const payment = new ECPayPayment<ECPayChannelBarcode>({
         withServer: true,
         onServerListen: () => {
@@ -107,7 +101,7 @@ describe('ECPayPayment (Barcode)', () => {
       });
     });
 
-    it('should default virtual expire days is 7', (done) => {
+    it('should default virtual expire days is 7', done => {
       const payment = new ECPayPayment<ECPayChannelBarcode>({
         withServer: true,
         onServerListen: async () => {
@@ -129,7 +123,7 @@ describe('ECPayPayment (Barcode)', () => {
       });
     });
 
-    it('should throw if total aomunt between 17 and 20000', (done) => {
+    it('should throw if total aomunt between 17 and 20000', done => {
       const payment = new ECPayPayment<ECPayChannelBarcode>({
         withServer: true,
         onServerListen: () => {
@@ -164,7 +158,7 @@ describe('ECPayPayment (Barcode)', () => {
       });
     });
 
-    it('should represent barcode config on form data', (done) => {
+    it('should represent barcode config on form data', done => {
       const payment = new ECPayPayment<ECPayChannelBarcode>({
         withServer: true,
         onServerListen: async () => {
@@ -181,9 +175,7 @@ describe('ECPayPayment (Barcode)', () => {
           });
 
           expect(order.form.StoreExpireDate).toBe('3');
-          expect(order.form.PaymentInfoURL).toBe(
-            'http://localhost:3000/payments/ecpay/async-informations',
-          );
+          expect(order.form.PaymentInfoURL).toBe('http://localhost:3000/payments/ecpay/async-informations');
           expect(order.form.ClientRedirectURL).toBe('');
 
           const clientOrder = await payment.prepare({
@@ -205,7 +197,7 @@ describe('ECPayPayment (Barcode)', () => {
       });
     });
 
-    it('should default callback handler commit order', (done) => {
+    it('should default callback handler commit order', done => {
       const payment = new ECPayPayment<ECPayChannelBarcode>({
         withServer: true,
         onServerListen: async () => {
@@ -262,18 +254,16 @@ describe('ECPayPayment (Barcode)', () => {
           expect(order.asyncInfo?.barcodes[0]).toBe('1106176EA');
           expect(order.asyncInfo?.barcodes[1]).toBe('3453010377039404');
           expect(order.asyncInfo?.barcodes[2]).toBe('061616000001000');
-          expect(
-            DateTime.fromJSDate(order.asyncInfo?.expiredAt!).toFormat(
-              'yyyy/MM/dd HH:mm:ss',
-            ),
-          ).toBe('2022/06/30 20:26:59');
+          expect(DateTime.fromJSDate(order.asyncInfo?.expiredAt!).toFormat('yyyy/MM/dd HH:mm:ss')).toBe(
+            '2022/06/30 20:26:59',
+          );
 
           payment._server?.close(done);
         },
       });
     });
 
-    it('should default callback handler keep order status when get barcode failed', (done) => {
+    it('should default callback handler keep order status when get barcode failed', done => {
       const payment = new ECPayPayment<ECPayChannelBarcode>({
         withServer: true,
         onServerListen: async () => {
@@ -335,7 +325,7 @@ describe('ECPayPayment (Barcode)', () => {
       });
     });
 
-    it('should received callback of cvs payments', (done) => {
+    it('should received callback of cvs payments', done => {
       const payment = new ECPayPayment<ECPayChannelBarcode>({
         withServer: true,
         onServerListen: async () => {

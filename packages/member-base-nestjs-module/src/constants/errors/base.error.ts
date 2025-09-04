@@ -1,7 +1,4 @@
-import {
-  BadRequestException,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { BadRequestException, InternalServerErrorException } from '@nestjs/common';
 
 export class MemberNotFoundError extends BadRequestException {
   constructor() {

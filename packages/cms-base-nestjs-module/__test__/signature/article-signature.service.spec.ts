@@ -3,12 +3,7 @@ import { SignatureService } from '../../src/services/signature.service';
 
 describe('SignatureService.signatureEnabled', () => {
   it('returns true when signatureLevels has items', () => {
-    const service = new SignatureService(
-      ['REVIEW'],
-      {} as any,
-      {} as any,
-      {} as any,
-    );
+    const service = new SignatureService(['REVIEW'], {} as any, {} as any, {} as any);
 
     expect(service.signatureEnabled).toBe(true);
   });
@@ -64,7 +59,7 @@ describe('SignatureService.onApplicationBootstrap', () => {
       manager: {
         delete: jest.fn().mockResolvedValue(undefined),
         softDelete: jest.fn().mockResolvedValue(undefined),
-        save: jest.fn().mockImplementation((entity) => Promise.resolve(entity)),
+        save: jest.fn().mockImplementation(entity => Promise.resolve(entity)),
       },
     };
 
@@ -75,7 +70,7 @@ describe('SignatureService.onApplicationBootstrap', () => {
     mockSignatureLevelRepo = {
       find: jest.fn().mockResolvedValue(existingLevels),
       metadata: { tableName: 'signature_level' },
-      create: jest.fn((data) => ({ id: 'new-id', ...data })),
+      create: jest.fn(data => ({ id: 'new-id', ...data })),
     };
 
     mockSignatureRepo = {
@@ -91,12 +86,7 @@ describe('SignatureService.onApplicationBootstrap', () => {
   });
 
   it('should do nothing if signature is not enabled', async () => {
-    service = new SignatureService(
-      [],
-      mockSignatureLevelRepo as any,
-      mockDataSource as any,
-      mockSignatureRepo as any,
-    );
+    service = new SignatureService([], mockSignatureLevelRepo as any, mockDataSource as any, mockSignatureRepo as any);
 
     const result = await service.onApplicationBootstrap();
 
@@ -111,10 +101,7 @@ describe('SignatureService.onApplicationBootstrap', () => {
       expect.objectContaining({ signatureLevelId: '1' }),
     );
 
-    expect(mockRunner.manager.softDelete).toHaveBeenCalledWith(
-      'signature_level',
-      expect.objectContaining({ id: '1' }),
-    );
+    expect(mockRunner.manager.softDelete).toHaveBeenCalledWith('signature_level', expect.objectContaining({ id: '1' }));
 
     expect(mockRunner.manager.save).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -139,9 +126,7 @@ describe('SignatureService.onApplicationBootstrap', () => {
   });
 
   it('should rollback and rethrow if any error occurs', async () => {
-    mockRunner.manager.save = jest
-      .fn()
-      .mockRejectedValue(new Error('DB Error'));
+    mockRunner.manager.save = jest.fn().mockRejectedValue(new Error('DB Error'));
 
     await expect(service.onApplicationBootstrap()).rejects.toThrow('DB Error');
     expect(mockRunner.rollbackTransaction).toHaveBeenCalled();
@@ -165,7 +150,7 @@ describe('SignatureService.onApplicationBootstrap', () => {
       manager: {
         delete: jest.fn(),
         softDelete: jest.fn(),
-        save: jest.fn().mockImplementation((e) => Promise.resolve(e)),
+        save: jest.fn().mockImplementation(e => Promise.resolve(e)),
       },
     };
 

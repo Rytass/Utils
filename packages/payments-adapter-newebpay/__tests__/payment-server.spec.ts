@@ -3,8 +3,22 @@
  */
 
 import { CreditCardECI, OrderState } from '@rytass/payments';
-import { NewebPaymentChannel, NewebPayVirtualAccountBank, NewebPayPayment, NewebPayWebATMBank, NewebPayWebATMCommitMessage, NewebPayAdditionInfoCreditCard, NewebPayCreditCardCommitMessage, NewebPayVirtualAccountCommitMessage } from '../src';
-import { NewebPayAPIResponseWrapper, NewebPayCreditCardSpeedCheckoutMode, NewebPayInfoRetrieveEncryptedPayload, NewebPayNotifyEncryptedPayload } from '../src/typings';
+import {
+  NewebPaymentChannel,
+  NewebPayVirtualAccountBank,
+  NewebPayPayment,
+  NewebPayWebATMBank,
+  NewebPayWebATMCommitMessage,
+  NewebPayAdditionInfoCreditCard,
+  NewebPayCreditCardCommitMessage,
+  NewebPayVirtualAccountCommitMessage,
+} from '../src';
+import {
+  NewebPayAPIResponseWrapper,
+  NewebPayCreditCardSpeedCheckoutMode,
+  NewebPayInfoRetrieveEncryptedPayload,
+  NewebPayNotifyEncryptedPayload,
+} from '../src/typings';
 import request from 'supertest';
 import { DateTime } from 'luxon';
 import http, { createServer } from 'http';
@@ -19,7 +33,7 @@ describe('NewebPay Payment Server', () => {
   const originCreateServer = createServer;
   const mockedCreateServer = jest.spyOn(http, 'createServer');
 
-  mockedCreateServer.mockImplementation((requestHandler) => {
+  mockedCreateServer.mockImplementation(requestHandler => {
     const mockServer = originCreateServer(requestHandler);
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
@@ -32,7 +46,7 @@ describe('NewebPay Payment Server', () => {
 
     const mockedClose = jest.spyOn(mockServer, 'close');
 
-    mockedClose.mockImplementationOnce((onClosed) => {
+    mockedClose.mockImplementationOnce(onClosed => {
       mockServer.close(onClosed);
 
       return mockServer;
@@ -42,7 +56,7 @@ describe('NewebPay Payment Server', () => {
   });
 
   describe('Default server listener', () => {
-    it('should server received committed credit card callback', (done) => {
+    it('should server received committed credit card callback', done => {
       const payment = new NewebPayPayment({
         merchantId: MERCHANT_ID,
         aesKey: AES_KEY,
@@ -52,11 +66,13 @@ describe('NewebPay Payment Server', () => {
         onServerListen: async () => {
           const order = await payment.prepare({
             channel: NewebPaymentChannel.CREDIT,
-            items: [{
-              name: '湯麵',
-              unitPrice: 50,
-              quantity: 2,
-            }],
+            items: [
+              {
+                name: '湯麵',
+                unitPrice: 50,
+                quantity: 2,
+              },
+            ],
           });
 
           order.form;
@@ -65,59 +81,70 @@ describe('NewebPay Payment Server', () => {
 
           const cipher = createCipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
-          const encryptedResponse = `${cipher.update(JSON.stringify({
-            Status: 'SUCCESS',
-            Message: '',
-            Result: {
-              MerchantID: MERCHANT_ID,
-              Amt: 100,
-              TradeNo: '2098290G803',
-              MerchantOrderNo: order.id,
-              PaymentType: 'CREDIT',
-              RespondType: 'JSON',
-              PayTime: '2023-02-02 14:38:50',
-              IP: '127.0.0.1',
-              EscrowBank: 'HNCB',
-              RespondCode: '00',
-              Auth: '928502',
-              Card6No: '123456',
-              Card4No: '0987',
-              AuthBank: 'KGI',
-              TokenUseStatus: NewebPayCreditCardSpeedCheckoutMode.NONE,
-              ECI: CreditCardECI.MASTER_3D,
-              PaymentMethod: 'CREDIT',
-              ChannelID: 'CREDIT',
-            },
-          } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
+          const encryptedResponse = `${cipher.update(
+            JSON.stringify({
+              Status: 'SUCCESS',
+              Message: '',
+              Result: {
+                MerchantID: MERCHANT_ID,
+                Amt: 100,
+                TradeNo: '2098290G803',
+                MerchantOrderNo: order.id,
+                PaymentType: 'CREDIT',
+                RespondType: 'JSON',
+                PayTime: '2023-02-02 14:38:50',
+                IP: '127.0.0.1',
+                EscrowBank: 'HNCB',
+                RespondCode: '00',
+                Auth: '928502',
+                Card6No: '123456',
+                Card4No: '0987',
+                AuthBank: 'KGI',
+                TokenUseStatus: NewebPayCreditCardSpeedCheckoutMode.NONE,
+                ECI: CreditCardECI.MASTER_3D,
+                PaymentMethod: 'CREDIT',
+                ChannelID: 'CREDIT',
+              },
+            } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>),
+            'utf8',
+            'hex',
+          )}${cipher.final('hex')}`;
 
           await request(payment._server as App)
             .post('/newebpay/callback')
-            .send(new URLSearchParams({
-              Status: 'SUCCESS',
-              MerchantID: MERCHANT_ID,
-              Version: '2.0',
-              TradeInfo: encryptedResponse,
-              TradeSha: createHash('sha256').update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`).digest('hex').toUpperCase(),
-            }).toString())
+            .send(
+              new URLSearchParams({
+                Status: 'SUCCESS',
+                MerchantID: MERCHANT_ID,
+                Version: '2.0',
+                TradeInfo: encryptedResponse,
+                TradeSha: createHash('sha256')
+                  .update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`)
+                  .digest('hex')
+                  .toUpperCase(),
+              }).toString(),
+            )
             .expect(200);
 
           expect(order.state).toBe(OrderState.COMMITTED);
-          expect(order.committedAt?.getTime()).toBe(DateTime.fromFormat('2023-02-02 14:38:50', 'yyyy-MM-dd HH:mm:ss').toMillis());
+          expect(order.committedAt?.getTime()).toBe(
+            DateTime.fromFormat('2023-02-02 14:38:50', 'yyyy-MM-dd HH:mm:ss').toMillis(),
+          );
 
           payment._server?.close(done);
         },
       });
     });
 
-    it('should onCommit called after order commit', (done) => {
+    it('should onCommit called after order commit', done => {
       const payment = new NewebPayPayment({
         merchantId: MERCHANT_ID,
         aesKey: AES_KEY,
         aesIv: AES_IV,
         withServer: true,
         callbackPath: '/newebpay/callback',
-        onCommit: async (order) => {
-          expect(order.id).toBe('123456789')
+        onCommit: async order => {
+          expect(order.id).toBe('123456789');
 
           payment._server?.close(done);
         },
@@ -125,11 +152,13 @@ describe('NewebPay Payment Server', () => {
           const order = await payment.prepare({
             id: '123456789',
             channel: NewebPaymentChannel.CREDIT,
-            items: [{
-              name: '湯麵',
-              unitPrice: 50,
-              quantity: 2,
-            }],
+            items: [
+              {
+                name: '湯麵',
+                unitPrice: 50,
+                quantity: 2,
+              },
+            ],
           });
 
           order.form;
@@ -138,40 +167,49 @@ describe('NewebPay Payment Server', () => {
 
           const cipher = createCipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
-          const encryptedResponse = `${cipher.update(JSON.stringify({
-            Status: 'SUCCESS',
-            Message: '',
-            Result: {
-              MerchantID: MERCHANT_ID,
-              Amt: 100,
-              TradeNo: '2098290G803',
-              MerchantOrderNo: order.id,
-              PaymentType: 'CREDIT',
-              RespondType: 'JSON',
-              PayTime: '2023-02-02 14:38:50',
-              IP: '127.0.0.1',
-              EscrowBank: 'HNCB',
-              RespondCode: '00',
-              Auth: '928502',
-              Card6No: '123456',
-              Card4No: '0987',
-              AuthBank: 'KGI',
-              TokenUseStatus: NewebPayCreditCardSpeedCheckoutMode.NONE,
-              ECI: CreditCardECI.MASTER_3D,
-              PaymentMethod: 'CREDIT',
-              ChannelID: 'CREDIT',
-            },
-          } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
+          const encryptedResponse = `${cipher.update(
+            JSON.stringify({
+              Status: 'SUCCESS',
+              Message: '',
+              Result: {
+                MerchantID: MERCHANT_ID,
+                Amt: 100,
+                TradeNo: '2098290G803',
+                MerchantOrderNo: order.id,
+                PaymentType: 'CREDIT',
+                RespondType: 'JSON',
+                PayTime: '2023-02-02 14:38:50',
+                IP: '127.0.0.1',
+                EscrowBank: 'HNCB',
+                RespondCode: '00',
+                Auth: '928502',
+                Card6No: '123456',
+                Card4No: '0987',
+                AuthBank: 'KGI',
+                TokenUseStatus: NewebPayCreditCardSpeedCheckoutMode.NONE,
+                ECI: CreditCardECI.MASTER_3D,
+                PaymentMethod: 'CREDIT',
+                ChannelID: 'CREDIT',
+              },
+            } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>),
+            'utf8',
+            'hex',
+          )}${cipher.final('hex')}`;
 
           await request(payment._server as App)
             .post('/newebpay/callback')
-            .send(new URLSearchParams({
-              Status: 'SUCCESS',
-              MerchantID: MERCHANT_ID,
-              Version: '2.0',
-              TradeInfo: encryptedResponse,
-              TradeSha: createHash('sha256').update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`).digest('hex').toUpperCase(),
-            }).toString())
+            .send(
+              new URLSearchParams({
+                Status: 'SUCCESS',
+                MerchantID: MERCHANT_ID,
+                Version: '2.0',
+                TradeInfo: encryptedResponse,
+                TradeSha: createHash('sha256')
+                  .update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`)
+                  .digest('hex')
+                  .toUpperCase(),
+              }).toString(),
+            )
             .expect(200);
 
           expect(order.state).toBe(OrderState.COMMITTED);
@@ -179,7 +217,7 @@ describe('NewebPay Payment Server', () => {
       });
     });
 
-    it('should server received committed installments credit card callback', (done) => {
+    it('should server received committed installments credit card callback', done => {
       const payment = new NewebPayPayment<NewebPayCreditCardCommitMessage>({
         merchantId: MERCHANT_ID,
         aesKey: AES_KEY,
@@ -189,11 +227,13 @@ describe('NewebPay Payment Server', () => {
         onServerListen: async () => {
           const order = await payment.prepare<NewebPayCreditCardCommitMessage>({
             channel: NewebPaymentChannel.CREDIT,
-            items: [{
-              name: '湯麵',
-              unitPrice: 50,
-              quantity: 2,
-            }],
+            items: [
+              {
+                name: '湯麵',
+                unitPrice: 50,
+                quantity: 2,
+              },
+            ],
           });
 
           order.form;
@@ -202,43 +242,52 @@ describe('NewebPay Payment Server', () => {
 
           const cipher = createCipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
-          const encryptedResponse = `${cipher.update(JSON.stringify({
-            Status: 'SUCCESS',
-            Message: '',
-            Result: {
-              MerchantID: MERCHANT_ID,
-              Amt: 100,
-              TradeNo: '2098290G803',
-              MerchantOrderNo: order.id,
-              PaymentType: 'CREDIT',
-              RespondType: 'JSON',
-              PayTime: '2023-02-02 14:38:50',
-              IP: '127.0.0.1',
-              EscrowBank: 'HNCB',
-              RespondCode: '00',
-              Auth: '928502',
-              Card6No: '123456',
-              Card4No: '0987',
-              AuthBank: 'KGI',
-              TokenUseStatus: NewebPayCreditCardSpeedCheckoutMode.NONE,
-              ECI: CreditCardECI.MASTER_3D,
-              PaymentMethod: 'CREDIT',
-              ChannelID: 'CREDIT',
-              Inst: 3,
-              InstFirst: 34,
-              InstEach: 33,
-            },
-          } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
+          const encryptedResponse = `${cipher.update(
+            JSON.stringify({
+              Status: 'SUCCESS',
+              Message: '',
+              Result: {
+                MerchantID: MERCHANT_ID,
+                Amt: 100,
+                TradeNo: '2098290G803',
+                MerchantOrderNo: order.id,
+                PaymentType: 'CREDIT',
+                RespondType: 'JSON',
+                PayTime: '2023-02-02 14:38:50',
+                IP: '127.0.0.1',
+                EscrowBank: 'HNCB',
+                RespondCode: '00',
+                Auth: '928502',
+                Card6No: '123456',
+                Card4No: '0987',
+                AuthBank: 'KGI',
+                TokenUseStatus: NewebPayCreditCardSpeedCheckoutMode.NONE,
+                ECI: CreditCardECI.MASTER_3D,
+                PaymentMethod: 'CREDIT',
+                ChannelID: 'CREDIT',
+                Inst: 3,
+                InstFirst: 34,
+                InstEach: 33,
+              },
+            } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>),
+            'utf8',
+            'hex',
+          )}${cipher.final('hex')}`;
 
           await request(payment._server as App)
             .post('/newebpay/callback')
-            .send(new URLSearchParams({
-              Status: 'SUCCESS',
-              MerchantID: MERCHANT_ID,
-              Version: '2.0',
-              TradeInfo: encryptedResponse,
-              TradeSha: createHash('sha256').update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`).digest('hex').toUpperCase(),
-            }).toString())
+            .send(
+              new URLSearchParams({
+                Status: 'SUCCESS',
+                MerchantID: MERCHANT_ID,
+                Version: '2.0',
+                TradeInfo: encryptedResponse,
+                TradeSha: createHash('sha256')
+                  .update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`)
+                  .digest('hex')
+                  .toUpperCase(),
+              }).toString(),
+            )
             .expect(200);
 
           expect(order.state).toBe(OrderState.COMMITTED);
@@ -251,7 +300,7 @@ describe('NewebPay Payment Server', () => {
       });
     });
 
-    it('should server received committed dcc credit card callback', (done) => {
+    it('should server received committed dcc credit card callback', done => {
       const payment = new NewebPayPayment<NewebPayCreditCardCommitMessage>({
         merchantId: MERCHANT_ID,
         aesKey: AES_KEY,
@@ -261,11 +310,13 @@ describe('NewebPay Payment Server', () => {
         onServerListen: async () => {
           const order = await payment.prepare<NewebPayCreditCardCommitMessage>({
             channel: NewebPaymentChannel.CREDIT,
-            items: [{
-              name: '湯麵',
-              unitPrice: 50,
-              quantity: 2,
-            }],
+            items: [
+              {
+                name: '湯麵',
+                unitPrice: 50,
+                quantity: 2,
+              },
+            ],
           });
 
           order.form;
@@ -274,45 +325,54 @@ describe('NewebPay Payment Server', () => {
 
           const cipher = createCipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
-          const encryptedResponse = `${cipher.update(JSON.stringify({
-            Status: 'SUCCESS',
-            Message: '',
-            Result: {
-              MerchantID: MERCHANT_ID,
-              Amt: 100,
-              TradeNo: '2098290G803',
-              MerchantOrderNo: order.id,
-              PaymentType: 'CREDIT',
-              RespondType: 'JSON',
-              PayTime: '2023-02-02 14:38:50',
-              IP: '127.0.0.1',
-              EscrowBank: 'HNCB',
-              RespondCode: '00',
-              Auth: '928502',
-              Card6No: '123456',
-              Card4No: '0987',
-              AuthBank: 'KGI',
-              TokenUseStatus: NewebPayCreditCardSpeedCheckoutMode.NONE,
-              ECI: CreditCardECI.MASTER_3D,
-              PaymentMethod: 'CREDIT',
-              ChannelID: 'CREDIT',
-              DCC_Amt: 100,
-              DCC_Rate: 0.3,
-              DCC_Markup: 2,
-              DCC_Currency: 'TWD',
-              DCC_Currency_Code: 12,
-            },
-          } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
+          const encryptedResponse = `${cipher.update(
+            JSON.stringify({
+              Status: 'SUCCESS',
+              Message: '',
+              Result: {
+                MerchantID: MERCHANT_ID,
+                Amt: 100,
+                TradeNo: '2098290G803',
+                MerchantOrderNo: order.id,
+                PaymentType: 'CREDIT',
+                RespondType: 'JSON',
+                PayTime: '2023-02-02 14:38:50',
+                IP: '127.0.0.1',
+                EscrowBank: 'HNCB',
+                RespondCode: '00',
+                Auth: '928502',
+                Card6No: '123456',
+                Card4No: '0987',
+                AuthBank: 'KGI',
+                TokenUseStatus: NewebPayCreditCardSpeedCheckoutMode.NONE,
+                ECI: CreditCardECI.MASTER_3D,
+                PaymentMethod: 'CREDIT',
+                ChannelID: 'CREDIT',
+                DCC_Amt: 100,
+                DCC_Rate: 0.3,
+                DCC_Markup: 2,
+                DCC_Currency: 'TWD',
+                DCC_Currency_Code: 12,
+              },
+            } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>),
+            'utf8',
+            'hex',
+          )}${cipher.final('hex')}`;
 
           await request(payment._server as App)
             .post('/newebpay/callback')
-            .send(new URLSearchParams({
-              Status: 'SUCCESS',
-              MerchantID: MERCHANT_ID,
-              Version: '2.0',
-              TradeInfo: encryptedResponse,
-              TradeSha: createHash('sha256').update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`).digest('hex').toUpperCase(),
-            }).toString())
+            .send(
+              new URLSearchParams({
+                Status: 'SUCCESS',
+                MerchantID: MERCHANT_ID,
+                Version: '2.0',
+                TradeInfo: encryptedResponse,
+                TradeSha: createHash('sha256')
+                  .update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`)
+                  .digest('hex')
+                  .toUpperCase(),
+              }).toString(),
+            )
             .expect(200);
 
           expect(order.state).toBe(OrderState.COMMITTED);
@@ -327,7 +387,7 @@ describe('NewebPay Payment Server', () => {
       });
     });
 
-    it('should server received committed webatm callback', (done) => {
+    it('should server received committed webatm callback', done => {
       const payment = new NewebPayPayment<NewebPayWebATMCommitMessage>({
         merchantId: MERCHANT_ID,
         aesKey: AES_KEY,
@@ -337,11 +397,13 @@ describe('NewebPay Payment Server', () => {
         onServerListen: async () => {
           const order = await payment.prepare<NewebPayWebATMCommitMessage>({
             channel: NewebPaymentChannel.WEBATM,
-            items: [{
-              name: '湯麵',
-              unitPrice: 50,
-              quantity: 2,
-            }],
+            items: [
+              {
+                name: '湯麵',
+                unitPrice: 50,
+                quantity: 2,
+              },
+            ],
             bankTypes: [NewebPayWebATMBank.BANK_OF_TAIWAN],
           });
 
@@ -351,33 +413,42 @@ describe('NewebPay Payment Server', () => {
 
           const cipher = createCipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
-          const encryptedResponse = `${cipher.update(JSON.stringify({
-            Status: 'SUCCESS',
-            Message: '',
-            Result: {
-              MerchantID: MERCHANT_ID,
-              Amt: 100,
-              TradeNo: '2098290G803',
-              MerchantOrderNo: order.id,
-              PaymentType: 'WEBATM',
-              RespondType: 'JSON',
-              PayTime: '2023-02-02 14:38:50',
-              IP: '127.0.0.1',
-              EscrowBank: 'HNCB',
-              PayBankCode: '012',
-              PayerAccount5Code: '51938',
-            },
-          } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
+          const encryptedResponse = `${cipher.update(
+            JSON.stringify({
+              Status: 'SUCCESS',
+              Message: '',
+              Result: {
+                MerchantID: MERCHANT_ID,
+                Amt: 100,
+                TradeNo: '2098290G803',
+                MerchantOrderNo: order.id,
+                PaymentType: 'WEBATM',
+                RespondType: 'JSON',
+                PayTime: '2023-02-02 14:38:50',
+                IP: '127.0.0.1',
+                EscrowBank: 'HNCB',
+                PayBankCode: '012',
+                PayerAccount5Code: '51938',
+              },
+            } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>),
+            'utf8',
+            'hex',
+          )}${cipher.final('hex')}`;
 
           await request(payment._server as App)
             .post('/newebpay/callback')
-            .send(new URLSearchParams({
-              Status: 'SUCCESS',
-              MerchantID: MERCHANT_ID,
-              Version: '2.0',
-              TradeInfo: encryptedResponse,
-              TradeSha: createHash('sha256').update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`).digest('hex').toUpperCase(),
-            }).toString())
+            .send(
+              new URLSearchParams({
+                Status: 'SUCCESS',
+                MerchantID: MERCHANT_ID,
+                Version: '2.0',
+                TradeInfo: encryptedResponse,
+                TradeSha: createHash('sha256')
+                  .update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`)
+                  .digest('hex')
+                  .toUpperCase(),
+              }).toString(),
+            )
             .expect(200);
 
           expect(order.state).toBe(OrderState.COMMITTED);
@@ -390,7 +461,7 @@ describe('NewebPay Payment Server', () => {
       });
     });
 
-    it('should server received committed virtual account callback', (done) => {
+    it('should server received committed virtual account callback', done => {
       const payment = new NewebPayPayment<NewebPayVirtualAccountCommitMessage>({
         merchantId: MERCHANT_ID,
         aesKey: AES_KEY,
@@ -400,11 +471,13 @@ describe('NewebPay Payment Server', () => {
         onServerListen: async () => {
           const order = await payment.prepare<NewebPayVirtualAccountCommitMessage>({
             channel: NewebPaymentChannel.VACC,
-            items: [{
-              name: '湯麵',
-              unitPrice: 50,
-              quantity: 2,
-            }],
+            items: [
+              {
+                name: '湯麵',
+                unitPrice: 50,
+                quantity: 2,
+              },
+            ],
             bankTypes: [NewebPayVirtualAccountBank.BANK_OF_TAIWAN],
           });
 
@@ -414,33 +487,42 @@ describe('NewebPay Payment Server', () => {
 
           const cipher = createCipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
-          const encryptedResponse = `${cipher.update(JSON.stringify({
-            Status: 'SUCCESS',
-            Message: '',
-            Result: {
-              MerchantID: MERCHANT_ID,
-              Amt: 100,
-              TradeNo: '2098290G803',
-              MerchantOrderNo: order.id,
-              PaymentType: 'VACC',
-              RespondType: 'JSON',
-              PayTime: '2023-02-02 14:38:50',
-              IP: '127.0.0.1',
-              EscrowBank: 'HNCB',
-              PayBankCode: '012',
-              PayerAccount5Code: '51938',
-            },
-          } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
+          const encryptedResponse = `${cipher.update(
+            JSON.stringify({
+              Status: 'SUCCESS',
+              Message: '',
+              Result: {
+                MerchantID: MERCHANT_ID,
+                Amt: 100,
+                TradeNo: '2098290G803',
+                MerchantOrderNo: order.id,
+                PaymentType: 'VACC',
+                RespondType: 'JSON',
+                PayTime: '2023-02-02 14:38:50',
+                IP: '127.0.0.1',
+                EscrowBank: 'HNCB',
+                PayBankCode: '012',
+                PayerAccount5Code: '51938',
+              },
+            } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>),
+            'utf8',
+            'hex',
+          )}${cipher.final('hex')}`;
 
           await request(payment._server as App)
             .post('/newebpay/callback')
-            .send(new URLSearchParams({
-              Status: 'SUCCESS',
-              MerchantID: MERCHANT_ID,
-              Version: '2.0',
-              TradeInfo: encryptedResponse,
-              TradeSha: createHash('sha256').update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`).digest('hex').toUpperCase(),
-            }).toString())
+            .send(
+              new URLSearchParams({
+                Status: 'SUCCESS',
+                MerchantID: MERCHANT_ID,
+                Version: '2.0',
+                TradeInfo: encryptedResponse,
+                TradeSha: createHash('sha256')
+                  .update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`)
+                  .digest('hex')
+                  .toUpperCase(),
+              }).toString(),
+            )
             .expect(200);
 
           expect(order.state).toBe(OrderState.COMMITTED);
@@ -453,7 +535,7 @@ describe('NewebPay Payment Server', () => {
       });
     });
 
-    it('should server ignore received committed callback if order not pre-commit', (done) => {
+    it('should server ignore received committed callback if order not pre-commit', done => {
       const payment = new NewebPayPayment({
         merchantId: MERCHANT_ID,
         aesKey: AES_KEY,
@@ -463,49 +545,60 @@ describe('NewebPay Payment Server', () => {
         onServerListen: async () => {
           const order = await payment.prepare({
             channel: NewebPaymentChannel.CREDIT,
-            items: [{
-              name: '湯麵',
-              unitPrice: 50,
-              quantity: 2,
-            }],
+            items: [
+              {
+                name: '湯麵',
+                unitPrice: 50,
+                quantity: 2,
+              },
+            ],
           });
 
           const cipher = createCipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
-          const encryptedResponse = `${cipher.update(JSON.stringify({
-            Status: 'SUCCESS',
-            Message: '',
-            Result: {
-              MerchantID: MERCHANT_ID,
-              Amt: 100,
-              TradeNo: '2098290G803',
-              MerchantOrderNo: order.id,
-              PaymentType: 'CREDIT',
-              RespondType: 'JSON',
-              PayTime: '2023-02-02 14:38:50',
-              IP: '127.0.0.1',
-              EscrowBank: 'HNCB',
-              RespondCode: '00',
-              Auth: '928502',
-              Card6No: '123456',
-              Card4No: '0987',
-              AuthBank: 'KGI',
-              TokenUseStatus: NewebPayCreditCardSpeedCheckoutMode.NONE,
-              ECI: CreditCardECI.MASTER_3D,
-              PaymentMethod: 'CREDIT',
-              ChannelID: 'CREDIT',
-            },
-          } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
+          const encryptedResponse = `${cipher.update(
+            JSON.stringify({
+              Status: 'SUCCESS',
+              Message: '',
+              Result: {
+                MerchantID: MERCHANT_ID,
+                Amt: 100,
+                TradeNo: '2098290G803',
+                MerchantOrderNo: order.id,
+                PaymentType: 'CREDIT',
+                RespondType: 'JSON',
+                PayTime: '2023-02-02 14:38:50',
+                IP: '127.0.0.1',
+                EscrowBank: 'HNCB',
+                RespondCode: '00',
+                Auth: '928502',
+                Card6No: '123456',
+                Card4No: '0987',
+                AuthBank: 'KGI',
+                TokenUseStatus: NewebPayCreditCardSpeedCheckoutMode.NONE,
+                ECI: CreditCardECI.MASTER_3D,
+                PaymentMethod: 'CREDIT',
+                ChannelID: 'CREDIT',
+              },
+            } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>),
+            'utf8',
+            'hex',
+          )}${cipher.final('hex')}`;
 
           await request(payment._server as App)
             .post('/newebpay/callback')
-            .send(new URLSearchParams({
-              Status: 'SUCCESS',
-              MerchantID: MERCHANT_ID,
-              Version: '2.0',
-              TradeInfo: encryptedResponse,
-              TradeSha: createHash('sha256').update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`).digest('hex').toUpperCase(),
-            }).toString())
+            .send(
+              new URLSearchParams({
+                Status: 'SUCCESS',
+                MerchantID: MERCHANT_ID,
+                Version: '2.0',
+                TradeInfo: encryptedResponse,
+                TradeSha: createHash('sha256')
+                  .update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`)
+                  .digest('hex')
+                  .toUpperCase(),
+              }).toString(),
+            )
             .expect(200);
 
           expect(order.state).toBe(OrderState.INITED);
@@ -515,7 +608,7 @@ describe('NewebPay Payment Server', () => {
       });
     });
 
-    it('should commit callback return 404 on order not found', (done) => {
+    it('should commit callback return 404 on order not found', done => {
       const payment = new NewebPayPayment({
         merchantId: MERCHANT_ID,
         aesKey: AES_KEY,
@@ -525,40 +618,49 @@ describe('NewebPay Payment Server', () => {
         onServerListen: async () => {
           const cipher = createCipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
-          const encryptedResponse = `${cipher.update(JSON.stringify({
-            Status: 'SUCCESS',
-            Message: '',
-            Result: {
-              MerchantID: MERCHANT_ID,
-              Amt: 100,
-              TradeNo: '2098290G803',
-              MerchantOrderNo: 'notexistedid',
-              PaymentType: 'CREDIT',
-              RespondType: 'JSON',
-              PayTime: '2023-02-02 14:38:50',
-              IP: '127.0.0.1',
-              EscrowBank: 'HNCB',
-              RespondCode: '00',
-              Auth: '928502',
-              Card6No: '123456',
-              Card4No: '0987',
-              AuthBank: 'KGI',
-              TokenUseStatus: NewebPayCreditCardSpeedCheckoutMode.NONE,
-              ECI: CreditCardECI.MASTER_3D,
-              PaymentMethod: 'CREDIT',
-              ChannelID: 'CREDIT',
-            },
-          } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
+          const encryptedResponse = `${cipher.update(
+            JSON.stringify({
+              Status: 'SUCCESS',
+              Message: '',
+              Result: {
+                MerchantID: MERCHANT_ID,
+                Amt: 100,
+                TradeNo: '2098290G803',
+                MerchantOrderNo: 'notexistedid',
+                PaymentType: 'CREDIT',
+                RespondType: 'JSON',
+                PayTime: '2023-02-02 14:38:50',
+                IP: '127.0.0.1',
+                EscrowBank: 'HNCB',
+                RespondCode: '00',
+                Auth: '928502',
+                Card6No: '123456',
+                Card4No: '0987',
+                AuthBank: 'KGI',
+                TokenUseStatus: NewebPayCreditCardSpeedCheckoutMode.NONE,
+                ECI: CreditCardECI.MASTER_3D,
+                PaymentMethod: 'CREDIT',
+                ChannelID: 'CREDIT',
+              },
+            } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>),
+            'utf8',
+            'hex',
+          )}${cipher.final('hex')}`;
 
           await request(payment._server as App)
             .post('/newebpay/callback')
-            .send(new URLSearchParams({
-              Status: 'SUCCESS',
-              MerchantID: MERCHANT_ID,
-              Version: '2.0',
-              TradeInfo: encryptedResponse,
-              TradeSha: createHash('sha256').update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`).digest('hex').toUpperCase(),
-            }).toString())
+            .send(
+              new URLSearchParams({
+                Status: 'SUCCESS',
+                MerchantID: MERCHANT_ID,
+                Version: '2.0',
+                TradeInfo: encryptedResponse,
+                TradeSha: createHash('sha256')
+                  .update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`)
+                  .digest('hex')
+                  .toUpperCase(),
+              }).toString(),
+            )
             .expect(404);
 
           payment._server?.close(done);
@@ -566,7 +668,7 @@ describe('NewebPay Payment Server', () => {
       });
     });
 
-    it('should server received async information callback', (done) => {
+    it('should server received async information callback', done => {
       const payment = new NewebPayPayment({
         merchantId: MERCHANT_ID,
         aesKey: AES_KEY,
@@ -576,11 +678,13 @@ describe('NewebPay Payment Server', () => {
         onServerListen: async () => {
           const order = await payment.prepare({
             channel: NewebPaymentChannel.VACC,
-            items: [{
-              name: '湯麵',
-              unitPrice: 50,
-              quantity: 2,
-            }],
+            items: [
+              {
+                name: '湯麵',
+                unitPrice: 50,
+                quantity: 2,
+              },
+            ],
           });
 
           order.form;
@@ -589,44 +693,55 @@ describe('NewebPay Payment Server', () => {
 
           const cipher = createCipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
-          const encryptedResponse = `${cipher.update(JSON.stringify({
-            Status: 'SUCCESS',
-            Message: '',
-            Result: {
-              MerchantID: MERCHANT_ID,
-              Amt: 100,
-              TradeNo: '2098290G803',
-              MerchantOrderNo: order.id,
-              PaymentType: 'VACC',
-              ExpireDate: '2023-02-05',
-              ExpireTime: '15:23:43',
-              BankCode: '012',
-              CodeNo: '686168251938',
-            },
-          } as NewebPayAPIResponseWrapper<NewebPayInfoRetrieveEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
+          const encryptedResponse = `${cipher.update(
+            JSON.stringify({
+              Status: 'SUCCESS',
+              Message: '',
+              Result: {
+                MerchantID: MERCHANT_ID,
+                Amt: 100,
+                TradeNo: '2098290G803',
+                MerchantOrderNo: order.id,
+                PaymentType: 'VACC',
+                ExpireDate: '2023-02-05',
+                ExpireTime: '15:23:43',
+                BankCode: '012',
+                CodeNo: '686168251938',
+              },
+            } as NewebPayAPIResponseWrapper<NewebPayInfoRetrieveEncryptedPayload>),
+            'utf8',
+            'hex',
+          )}${cipher.final('hex')}`;
 
           await request(payment._server as App)
             .post('/newebpay/async-informations')
-            .send(new URLSearchParams({
-              Status: 'SUCCESS',
-              MerchantID: MERCHANT_ID,
-              Version: '2.0',
-              TradeInfo: encryptedResponse,
-              TradeSha: createHash('sha256').update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`).digest('hex').toUpperCase(),
-            }).toString())
+            .send(
+              new URLSearchParams({
+                Status: 'SUCCESS',
+                MerchantID: MERCHANT_ID,
+                Version: '2.0',
+                TradeInfo: encryptedResponse,
+                TradeSha: createHash('sha256')
+                  .update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`)
+                  .digest('hex')
+                  .toUpperCase(),
+              }).toString(),
+            )
             .expect(200);
 
           expect(order.state).toBe(OrderState.ASYNC_INFO_RETRIEVED);
           expect(order.asyncInfo?.bankCode).toBe('012');
           expect(order.asyncInfo?.account).toBe('686168251938');
-          expect(order.asyncInfo?.expiredAt.getTime()).toBe(DateTime.fromFormat('2023-02-05 15:23:43', 'yyyy-MM-dd HH:mm:ss').toJSDate().getTime());
+          expect(order.asyncInfo?.expiredAt.getTime()).toBe(
+            DateTime.fromFormat('2023-02-05 15:23:43', 'yyyy-MM-dd HH:mm:ss').toJSDate().getTime(),
+          );
 
           payment._server?.close(done);
         },
       });
     });
 
-    it('should server ignore received async information callback if order not pre-commit', (done) => {
+    it('should server ignore received async information callback if order not pre-commit', done => {
       const payment = new NewebPayPayment({
         merchantId: MERCHANT_ID,
         aesKey: AES_KEY,
@@ -636,40 +751,51 @@ describe('NewebPay Payment Server', () => {
         onServerListen: async () => {
           const order = await payment.prepare({
             channel: NewebPaymentChannel.VACC,
-            items: [{
-              name: '湯麵',
-              unitPrice: 50,
-              quantity: 2,
-            }],
+            items: [
+              {
+                name: '湯麵',
+                unitPrice: 50,
+                quantity: 2,
+              },
+            ],
           });
 
           const cipher = createCipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
-          const encryptedResponse = `${cipher.update(JSON.stringify({
-            Status: 'SUCCESS',
-            Message: '',
-            Result: {
-              MerchantID: MERCHANT_ID,
-              Amt: 100,
-              TradeNo: '2098290G803',
-              MerchantOrderNo: order.id,
-              PaymentType: 'VACC',
-              ExpireDate: '2023-02-05',
-              ExpireTime: '15:23:43',
-              BankCode: '012',
-              CodeNo: '686168251938',
-            },
-          } as NewebPayAPIResponseWrapper<NewebPayInfoRetrieveEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
+          const encryptedResponse = `${cipher.update(
+            JSON.stringify({
+              Status: 'SUCCESS',
+              Message: '',
+              Result: {
+                MerchantID: MERCHANT_ID,
+                Amt: 100,
+                TradeNo: '2098290G803',
+                MerchantOrderNo: order.id,
+                PaymentType: 'VACC',
+                ExpireDate: '2023-02-05',
+                ExpireTime: '15:23:43',
+                BankCode: '012',
+                CodeNo: '686168251938',
+              },
+            } as NewebPayAPIResponseWrapper<NewebPayInfoRetrieveEncryptedPayload>),
+            'utf8',
+            'hex',
+          )}${cipher.final('hex')}`;
 
           await request(payment._server as App)
             .post('/newebpay/async-informations')
-            .send(new URLSearchParams({
-              Status: 'SUCCESS',
-              MerchantID: MERCHANT_ID,
-              Version: '2.0',
-              TradeInfo: encryptedResponse,
-              TradeSha: createHash('sha256').update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`).digest('hex').toUpperCase(),
-            }).toString())
+            .send(
+              new URLSearchParams({
+                Status: 'SUCCESS',
+                MerchantID: MERCHANT_ID,
+                Version: '2.0',
+                TradeInfo: encryptedResponse,
+                TradeSha: createHash('sha256')
+                  .update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`)
+                  .digest('hex')
+                  .toUpperCase(),
+              }).toString(),
+            )
             .expect(200);
 
           expect(order.state).toBe(OrderState.INITED);
@@ -679,7 +805,7 @@ describe('NewebPay Payment Server', () => {
       });
     });
 
-    it('should async information callback return 404 on order not found', (done) => {
+    it('should async information callback return 404 on order not found', done => {
       const payment = new NewebPayPayment({
         merchantId: MERCHANT_ID,
         aesKey: AES_KEY,
@@ -689,31 +815,40 @@ describe('NewebPay Payment Server', () => {
         onServerListen: async () => {
           const cipher = createCipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
-          const encryptedResponse = `${cipher.update(JSON.stringify({
-            Status: 'SUCCESS',
-            Message: '',
-            Result: {
-              MerchantID: MERCHANT_ID,
-              Amt: 100,
-              TradeNo: '2098290G803',
-              MerchantOrderNo: 'notfoundid',
-              PaymentType: 'VACC',
-              ExpireDate: '2023-02-05',
-              ExpireTime: '15:23:43',
-              BankCode: '012',
-              CodeNo: '686168251938',
-            },
-          } as NewebPayAPIResponseWrapper<NewebPayInfoRetrieveEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
+          const encryptedResponse = `${cipher.update(
+            JSON.stringify({
+              Status: 'SUCCESS',
+              Message: '',
+              Result: {
+                MerchantID: MERCHANT_ID,
+                Amt: 100,
+                TradeNo: '2098290G803',
+                MerchantOrderNo: 'notfoundid',
+                PaymentType: 'VACC',
+                ExpireDate: '2023-02-05',
+                ExpireTime: '15:23:43',
+                BankCode: '012',
+                CodeNo: '686168251938',
+              },
+            } as NewebPayAPIResponseWrapper<NewebPayInfoRetrieveEncryptedPayload>),
+            'utf8',
+            'hex',
+          )}${cipher.final('hex')}`;
 
           await request(payment._server as App)
             .post('/newebpay/async-informations')
-            .send(new URLSearchParams({
-              Status: 'SUCCESS',
-              MerchantID: MERCHANT_ID,
-              Version: '2.0',
-              TradeInfo: encryptedResponse,
-              TradeSha: createHash('sha256').update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`).digest('hex').toUpperCase(),
-            }).toString())
+            .send(
+              new URLSearchParams({
+                Status: 'SUCCESS',
+                MerchantID: MERCHANT_ID,
+                Version: '2.0',
+                TradeInfo: encryptedResponse,
+                TradeSha: createHash('sha256')
+                  .update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`)
+                  .digest('hex')
+                  .toUpperCase(),
+              }).toString(),
+            )
             .expect(404);
 
           payment._server?.close(done);
@@ -721,7 +856,7 @@ describe('NewebPay Payment Server', () => {
       });
     });
 
-    it('should serve checkout order route', (done) => {
+    it('should serve checkout order route', done => {
       const payment = new NewebPayPayment({
         merchantId: MERCHANT_ID,
         aesKey: AES_KEY,
@@ -731,11 +866,13 @@ describe('NewebPay Payment Server', () => {
         onServerListen: async () => {
           const order = await payment.prepare({
             channel: NewebPaymentChannel.CREDIT,
-            items: [{
-              name: 'Test Item',
-              unitPrice: 100,
-              quantity: 2,
-            }],
+            items: [
+              {
+                name: 'Test Item',
+                unitPrice: 100,
+                quantity: 2,
+              },
+            ],
           });
 
           const response = await request(payment._server as App)
@@ -750,7 +887,7 @@ describe('NewebPay Payment Server', () => {
       });
     });
 
-    it('shuold return 404 on no implemented route', (done) => {
+    it('shuold return 404 on no implemented route', done => {
       const payment = new NewebPayPayment({
         merchantId: MERCHANT_ID,
         aesKey: AES_KEY,
@@ -773,7 +910,7 @@ describe('NewebPay Payment Server', () => {
       });
     });
 
-    it('should throw error on callback hash not valid', (done) => {
+    it('should throw error on callback hash not valid', done => {
       const payment = new NewebPayPayment({
         merchantId: MERCHANT_ID,
         aesKey: AES_KEY,
@@ -783,11 +920,13 @@ describe('NewebPay Payment Server', () => {
         onServerListen: async () => {
           const order = await payment.prepare({
             channel: NewebPaymentChannel.CREDIT,
-            items: [{
-              name: '湯麵',
-              unitPrice: 50,
-              quantity: 2,
-            }],
+            items: [
+              {
+                name: '湯麵',
+                unitPrice: 50,
+                quantity: 2,
+              },
+            ],
           });
 
           order.form;
@@ -796,40 +935,49 @@ describe('NewebPay Payment Server', () => {
 
           const cipher = createCipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
-          const encryptedResponse = `${cipher.update(JSON.stringify({
-            Status: 'SUCCESS',
-            Message: '',
-            Result: {
-              MerchantID: MERCHANT_ID,
-              Amt: 100,
-              TradeNo: '2098290G803',
-              MerchantOrderNo: order.id,
-              PaymentType: 'CREDIT',
-              RespondType: 'JSON',
-              PayTime: '2023-02-02 14:38:50',
-              IP: '127.0.0.1',
-              EscrowBank: 'HNCB',
-              RespondCode: '00',
-              Auth: '928502',
-              Card6No: '123456',
-              Card4No: '0987',
-              AuthBank: 'KGI',
-              TokenUseStatus: NewebPayCreditCardSpeedCheckoutMode.NONE,
-              ECI: CreditCardECI.MASTER_3D,
-              PaymentMethod: 'CREDIT',
-              ChannelID: 'CREDIT',
-            },
-          } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
+          const encryptedResponse = `${cipher.update(
+            JSON.stringify({
+              Status: 'SUCCESS',
+              Message: '',
+              Result: {
+                MerchantID: MERCHANT_ID,
+                Amt: 100,
+                TradeNo: '2098290G803',
+                MerchantOrderNo: order.id,
+                PaymentType: 'CREDIT',
+                RespondType: 'JSON',
+                PayTime: '2023-02-02 14:38:50',
+                IP: '127.0.0.1',
+                EscrowBank: 'HNCB',
+                RespondCode: '00',
+                Auth: '928502',
+                Card6No: '123456',
+                Card4No: '0987',
+                AuthBank: 'KGI',
+                TokenUseStatus: NewebPayCreditCardSpeedCheckoutMode.NONE,
+                ECI: CreditCardECI.MASTER_3D,
+                PaymentMethod: 'CREDIT',
+                ChannelID: 'CREDIT',
+              },
+            } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>),
+            'utf8',
+            'hex',
+          )}${cipher.final('hex')}`;
 
           const response = await request(payment._server as App)
             .post('/newebpay/callback')
-            .send(new URLSearchParams({
-              Status: 'SUCCESS',
-              MerchantID: MERCHANT_ID,
-              Version: '2.0',
-              TradeInfo: encryptedResponse,
-              TradeSha: createHash('sha256').update(`1HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`).digest('hex').toUpperCase(),
-            }).toString())
+            .send(
+              new URLSearchParams({
+                Status: 'SUCCESS',
+                MerchantID: MERCHANT_ID,
+                Version: '2.0',
+                TradeInfo: encryptedResponse,
+                TradeSha: createHash('sha256')
+                  .update(`1HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`)
+                  .digest('hex')
+                  .toUpperCase(),
+              }).toString(),
+            )
             .expect(400);
 
           expect(response.text).toBe('Checksum Invalid');
@@ -839,7 +987,7 @@ describe('NewebPay Payment Server', () => {
       });
     });
 
-    it('should throw error on async information hash not valid', (done) => {
+    it('should throw error on async information hash not valid', done => {
       const payment = new NewebPayPayment({
         merchantId: MERCHANT_ID,
         aesKey: AES_KEY,
@@ -849,11 +997,13 @@ describe('NewebPay Payment Server', () => {
         onServerListen: async () => {
           const order = await payment.prepare({
             channel: NewebPaymentChannel.VACC,
-            items: [{
-              name: '湯麵',
-              unitPrice: 50,
-              quantity: 2,
-            }],
+            items: [
+              {
+                name: '湯麵',
+                unitPrice: 50,
+                quantity: 2,
+              },
+            ],
           });
 
           order.form;
@@ -862,31 +1012,40 @@ describe('NewebPay Payment Server', () => {
 
           const cipher = createCipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
-          const encryptedResponse = `${cipher.update(JSON.stringify({
-            Status: 'SUCCESS',
-            Message: '',
-            Result: {
-              MerchantID: MERCHANT_ID,
-              Amt: 100,
-              TradeNo: '2098290G803',
-              MerchantOrderNo: order.id,
-              PaymentType: 'VACC',
-              ExpireDate: '2023-02-05',
-              ExpireTime: '15:23:43',
-              BankCode: '012',
-              CodeNo: '686168251938',
-            },
-          } as NewebPayAPIResponseWrapper<NewebPayInfoRetrieveEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
+          const encryptedResponse = `${cipher.update(
+            JSON.stringify({
+              Status: 'SUCCESS',
+              Message: '',
+              Result: {
+                MerchantID: MERCHANT_ID,
+                Amt: 100,
+                TradeNo: '2098290G803',
+                MerchantOrderNo: order.id,
+                PaymentType: 'VACC',
+                ExpireDate: '2023-02-05',
+                ExpireTime: '15:23:43',
+                BankCode: '012',
+                CodeNo: '686168251938',
+              },
+            } as NewebPayAPIResponseWrapper<NewebPayInfoRetrieveEncryptedPayload>),
+            'utf8',
+            'hex',
+          )}${cipher.final('hex')}`;
 
           const response = await request(payment._server as App)
             .post('/newebpay/async-informations')
-            .send(new URLSearchParams({
-              Status: 'SUCCESS',
-              MerchantID: MERCHANT_ID,
-              Version: '2.0',
-              TradeInfo: encryptedResponse,
-              TradeSha: createHash('sha256').update(`H1ashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`).digest('hex').toUpperCase(),
-            }).toString())
+            .send(
+              new URLSearchParams({
+                Status: 'SUCCESS',
+                MerchantID: MERCHANT_ID,
+                Version: '2.0',
+                TradeInfo: encryptedResponse,
+                TradeSha: createHash('sha256')
+                  .update(`H1ashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`)
+                  .digest('hex')
+                  .toUpperCase(),
+              }).toString(),
+            )
             .expect(400);
 
           expect(response.text).toBe('Checksum Invalid');
@@ -896,7 +1055,7 @@ describe('NewebPay Payment Server', () => {
       });
     });
 
-    it('should handling fail callback', (done) => {
+    it('should handling fail callback', done => {
       const payment = new NewebPayPayment({
         merchantId: MERCHANT_ID,
         aesKey: AES_KEY,
@@ -906,11 +1065,13 @@ describe('NewebPay Payment Server', () => {
         onServerListen: async () => {
           const order = await payment.prepare({
             channel: NewebPaymentChannel.CREDIT,
-            items: [{
-              name: '湯麵',
-              unitPrice: 50,
-              quantity: 2,
-            }],
+            items: [
+              {
+                name: '湯麵',
+                unitPrice: 50,
+                quantity: 2,
+              },
+            ],
           });
 
           order.form;
@@ -919,40 +1080,49 @@ describe('NewebPay Payment Server', () => {
 
           const cipher = createCipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
-          const encryptedResponse = `${cipher.update(JSON.stringify({
-            Status: 'FAIL',
-            Message: '失敗',
-            Result: {
-              MerchantID: MERCHANT_ID,
-              Amt: 100,
-              TradeNo: '2098290G803',
-              MerchantOrderNo: order.id,
-              PaymentType: 'CREDIT',
-              RespondType: 'JSON',
-              PayTime: '2023-02-02 14:38:50',
-              IP: '127.0.0.1',
-              EscrowBank: 'HNCB',
-              RespondCode: '00',
-              Auth: '928502',
-              Card6No: '123456',
-              Card4No: '0987',
-              AuthBank: 'KGI',
-              TokenUseStatus: NewebPayCreditCardSpeedCheckoutMode.NONE,
-              ECI: CreditCardECI.MASTER_3D,
-              PaymentMethod: 'CREDIT',
-              ChannelID: 'CREDIT',
-            },
-          } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
+          const encryptedResponse = `${cipher.update(
+            JSON.stringify({
+              Status: 'FAIL',
+              Message: '失敗',
+              Result: {
+                MerchantID: MERCHANT_ID,
+                Amt: 100,
+                TradeNo: '2098290G803',
+                MerchantOrderNo: order.id,
+                PaymentType: 'CREDIT',
+                RespondType: 'JSON',
+                PayTime: '2023-02-02 14:38:50',
+                IP: '127.0.0.1',
+                EscrowBank: 'HNCB',
+                RespondCode: '00',
+                Auth: '928502',
+                Card6No: '123456',
+                Card4No: '0987',
+                AuthBank: 'KGI',
+                TokenUseStatus: NewebPayCreditCardSpeedCheckoutMode.NONE,
+                ECI: CreditCardECI.MASTER_3D,
+                PaymentMethod: 'CREDIT',
+                ChannelID: 'CREDIT',
+              },
+            } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>),
+            'utf8',
+            'hex',
+          )}${cipher.final('hex')}`;
 
           await request(payment._server as App)
             .post('/newebpay/callback')
-            .send(new URLSearchParams({
-              Status: 'FAIL',
-              MerchantID: MERCHANT_ID,
-              Version: '2.0',
-              TradeInfo: encryptedResponse,
-              TradeSha: createHash('sha256').update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`).digest('hex').toUpperCase(),
-            }).toString())
+            .send(
+              new URLSearchParams({
+                Status: 'FAIL',
+                MerchantID: MERCHANT_ID,
+                Version: '2.0',
+                TradeInfo: encryptedResponse,
+                TradeSha: createHash('sha256')
+                  .update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`)
+                  .digest('hex')
+                  .toUpperCase(),
+              }).toString(),
+            )
             .expect(200);
 
           expect(order.state).toBe(OrderState.FAILED);
@@ -964,7 +1134,7 @@ describe('NewebPay Payment Server', () => {
       });
     });
 
-    it('should handling fail async information callback', (done) => {
+    it('should handling fail async information callback', done => {
       const payment = new NewebPayPayment({
         merchantId: MERCHANT_ID,
         aesKey: AES_KEY,
@@ -974,11 +1144,13 @@ describe('NewebPay Payment Server', () => {
         onServerListen: async () => {
           const order = await payment.prepare({
             channel: NewebPaymentChannel.VACC,
-            items: [{
-              name: '湯麵',
-              unitPrice: 50,
-              quantity: 2,
-            }],
+            items: [
+              {
+                name: '湯麵',
+                unitPrice: 50,
+                quantity: 2,
+              },
+            ],
           });
 
           order.form;
@@ -987,31 +1159,40 @@ describe('NewebPay Payment Server', () => {
 
           const cipher = createCipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
-          const encryptedResponse = `${cipher.update(JSON.stringify({
-            Status: 'FAIL',
-            Message: '失敗',
-            Result: {
-              MerchantID: MERCHANT_ID,
-              Amt: 100,
-              TradeNo: '2098290G803',
-              MerchantOrderNo: order.id,
-              PaymentType: 'VACC',
-              ExpireDate: '2023-02-05',
-              ExpireTime: '15:23:43',
-              BankCode: '012',
-              CodeNo: '686168251938',
-            },
-          } as NewebPayAPIResponseWrapper<NewebPayInfoRetrieveEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
+          const encryptedResponse = `${cipher.update(
+            JSON.stringify({
+              Status: 'FAIL',
+              Message: '失敗',
+              Result: {
+                MerchantID: MERCHANT_ID,
+                Amt: 100,
+                TradeNo: '2098290G803',
+                MerchantOrderNo: order.id,
+                PaymentType: 'VACC',
+                ExpireDate: '2023-02-05',
+                ExpireTime: '15:23:43',
+                BankCode: '012',
+                CodeNo: '686168251938',
+              },
+            } as NewebPayAPIResponseWrapper<NewebPayInfoRetrieveEncryptedPayload>),
+            'utf8',
+            'hex',
+          )}${cipher.final('hex')}`;
 
           await request(payment._server as App)
             .post('/newebpay/async-informations')
-            .send(new URLSearchParams({
-              Status: 'FAIL',
-              MerchantID: MERCHANT_ID,
-              Version: '2.0',
-              TradeInfo: encryptedResponse,
-              TradeSha: createHash('sha256').update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`).digest('hex').toUpperCase(),
-            }).toString())
+            .send(
+              new URLSearchParams({
+                Status: 'FAIL',
+                MerchantID: MERCHANT_ID,
+                Version: '2.0',
+                TradeInfo: encryptedResponse,
+                TradeSha: createHash('sha256')
+                  .update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`)
+                  .digest('hex')
+                  .toUpperCase(),
+              }).toString(),
+            )
             .expect(200);
 
           expect(order.state).toBe(OrderState.FAILED);
@@ -1023,7 +1204,7 @@ describe('NewebPay Payment Server', () => {
       });
     });
 
-    it('should handling invalid order fail callback', (done) => {
+    it('should handling invalid order fail callback', done => {
       const payment = new NewebPayPayment({
         merchantId: MERCHANT_ID,
         aesKey: AES_KEY,
@@ -1033,40 +1214,49 @@ describe('NewebPay Payment Server', () => {
         onServerListen: async () => {
           const cipher = createCipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
-          const encryptedResponse = `${cipher.update(JSON.stringify({
-            Status: 'FAIL',
-            Message: '失敗',
-            Result: {
-              MerchantID: MERCHANT_ID,
-              Amt: 100,
-              TradeNo: '2098290G803',
-              MerchantOrderNo: '123123123123',
-              PaymentType: 'CREDIT',
-              RespondType: 'JSON',
-              PayTime: '2023-02-02 14:38:50',
-              IP: '127.0.0.1',
-              EscrowBank: 'HNCB',
-              RespondCode: '00',
-              Auth: '928502',
-              Card6No: '123456',
-              Card4No: '0987',
-              AuthBank: 'KGI',
-              TokenUseStatus: NewebPayCreditCardSpeedCheckoutMode.NONE,
-              ECI: CreditCardECI.MASTER_3D,
-              PaymentMethod: 'CREDIT',
-              ChannelID: 'CREDIT',
-            },
-          } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
+          const encryptedResponse = `${cipher.update(
+            JSON.stringify({
+              Status: 'FAIL',
+              Message: '失敗',
+              Result: {
+                MerchantID: MERCHANT_ID,
+                Amt: 100,
+                TradeNo: '2098290G803',
+                MerchantOrderNo: '123123123123',
+                PaymentType: 'CREDIT',
+                RespondType: 'JSON',
+                PayTime: '2023-02-02 14:38:50',
+                IP: '127.0.0.1',
+                EscrowBank: 'HNCB',
+                RespondCode: '00',
+                Auth: '928502',
+                Card6No: '123456',
+                Card4No: '0987',
+                AuthBank: 'KGI',
+                TokenUseStatus: NewebPayCreditCardSpeedCheckoutMode.NONE,
+                ECI: CreditCardECI.MASTER_3D,
+                PaymentMethod: 'CREDIT',
+                ChannelID: 'CREDIT',
+              },
+            } as NewebPayAPIResponseWrapper<NewebPayNotifyEncryptedPayload>),
+            'utf8',
+            'hex',
+          )}${cipher.final('hex')}`;
 
           await request(payment._server as App)
             .post('/newebpay/callback')
-            .send(new URLSearchParams({
-              Status: 'FAIL',
-              MerchantID: MERCHANT_ID,
-              Version: '2.0',
-              TradeInfo: encryptedResponse,
-              TradeSha: createHash('sha256').update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`).digest('hex').toUpperCase(),
-            }).toString())
+            .send(
+              new URLSearchParams({
+                Status: 'FAIL',
+                MerchantID: MERCHANT_ID,
+                Version: '2.0',
+                TradeInfo: encryptedResponse,
+                TradeSha: createHash('sha256')
+                  .update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`)
+                  .digest('hex')
+                  .toUpperCase(),
+              }).toString(),
+            )
             .expect(400);
 
           payment._server?.close(done);
@@ -1074,7 +1264,7 @@ describe('NewebPay Payment Server', () => {
       });
     });
 
-    it('should handling invalid order fail async information callback', (done) => {
+    it('should handling invalid order fail async information callback', done => {
       const payment = new NewebPayPayment({
         merchantId: MERCHANT_ID,
         aesKey: AES_KEY,
@@ -1084,31 +1274,40 @@ describe('NewebPay Payment Server', () => {
         onServerListen: async () => {
           const cipher = createCipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
-          const encryptedResponse = `${cipher.update(JSON.stringify({
-            Status: 'FAIL',
-            Message: '失敗',
-            Result: {
-              MerchantID: MERCHANT_ID,
-              Amt: 100,
-              TradeNo: '2098290G803',
-              MerchantOrderNo: '123123',
-              PaymentType: 'VACC',
-              ExpireDate: '2023-02-05',
-              ExpireTime: '15:23:43',
-              BankCode: '012',
-              CodeNo: '686168251938',
-            },
-          } as NewebPayAPIResponseWrapper<NewebPayInfoRetrieveEncryptedPayload>), 'utf8', 'hex')}${cipher.final('hex')}`;
+          const encryptedResponse = `${cipher.update(
+            JSON.stringify({
+              Status: 'FAIL',
+              Message: '失敗',
+              Result: {
+                MerchantID: MERCHANT_ID,
+                Amt: 100,
+                TradeNo: '2098290G803',
+                MerchantOrderNo: '123123',
+                PaymentType: 'VACC',
+                ExpireDate: '2023-02-05',
+                ExpireTime: '15:23:43',
+                BankCode: '012',
+                CodeNo: '686168251938',
+              },
+            } as NewebPayAPIResponseWrapper<NewebPayInfoRetrieveEncryptedPayload>),
+            'utf8',
+            'hex',
+          )}${cipher.final('hex')}`;
 
           await request(payment._server as App)
             .post('/newebpay/async-informations')
-            .send(new URLSearchParams({
-              Status: 'FAIL',
-              MerchantID: MERCHANT_ID,
-              Version: '2.0',
-              TradeInfo: encryptedResponse,
-              TradeSha: createHash('sha256').update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`).digest('hex').toUpperCase(),
-            }).toString())
+            .send(
+              new URLSearchParams({
+                Status: 'FAIL',
+                MerchantID: MERCHANT_ID,
+                Version: '2.0',
+                TradeInfo: encryptedResponse,
+                TradeSha: createHash('sha256')
+                  .update(`HashKey=${AES_KEY}&${encryptedResponse}&HashIV=${AES_IV}`)
+                  .digest('hex')
+                  .toUpperCase(),
+              }).toString(),
+            )
             .expect(400);
 
           payment._server?.close(done);

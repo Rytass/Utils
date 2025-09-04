@@ -3,13 +3,7 @@
  * @jest-environment node
  */
 
-import {
-  AdditionalInfo,
-  Channel,
-  CreditCardECI,
-  OrderState,
-  WebATMPaymentInfo,
-} from '@rytass/payments';
+import { AdditionalInfo, Channel, CreditCardECI, OrderState, WebATMPaymentInfo } from '@rytass/payments';
 import { NewebPayCreditCardSpeedCheckoutMode } from '../src/typings';
 import {
   NewebPayAdditionInfoCreditCard,
@@ -51,11 +45,10 @@ describe('NewebPay Refund Order', () => {
 
       decipher.setAutoPadding(false);
 
-      const plainInfo =
-        `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
-          /[\u0000-\u001F\u007F-\u009F]/g,
-          '',
-        );
+      const plainInfo = `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
+        /[\u0000-\u001F\u007F-\u009F]/g,
+        '',
+      );
 
       const requestBody = new URLSearchParams(plainInfo);
 
@@ -119,12 +112,12 @@ describe('NewebPay Refund Order', () => {
     await order.refund();
 
     expect(order.state).toBe(OrderState.REFUNDED);
-    expect(
-      (order.additionalInfo as NewebPayAdditionInfoCreditCard).closeStatus,
-    ).toBe(NewebPayCreditCardBalanceStatus.SETTLED);
-    expect(
-      (order.additionalInfo as NewebPayAdditionInfoCreditCard).refundStatus,
-    ).toBe(NewebPayCreditCardBalanceStatus.WAITING);
+    expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).closeStatus).toBe(
+      NewebPayCreditCardBalanceStatus.SETTLED,
+    );
+    expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).refundStatus).toBe(
+      NewebPayCreditCardBalanceStatus.WAITING,
+    );
   });
 
   it('should refund working order', async () => {
@@ -143,11 +136,10 @@ describe('NewebPay Refund Order', () => {
 
       decipher.setAutoPadding(false);
 
-      const plainInfo =
-        `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
-          /[\u0000-\u001F\u007F-\u009F]/g,
-          '',
-        );
+      const plainInfo = `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
+        /[\u0000-\u001F\u007F-\u009F]/g,
+        '',
+      );
 
       const requestBody = new URLSearchParams(plainInfo);
 
@@ -211,12 +203,12 @@ describe('NewebPay Refund Order', () => {
     await order.refund();
 
     expect(order.state).toBe(OrderState.REFUNDED);
-    expect(
-      (order.additionalInfo as NewebPayAdditionInfoCreditCard).closeStatus,
-    ).toBe(NewebPayCreditCardBalanceStatus.SETTLED);
-    expect(
-      (order.additionalInfo as NewebPayAdditionInfoCreditCard).refundStatus,
-    ).toBe(NewebPayCreditCardBalanceStatus.WAITING);
+    expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).closeStatus).toBe(
+      NewebPayCreditCardBalanceStatus.SETTLED,
+    );
+    expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).refundStatus).toBe(
+      NewebPayCreditCardBalanceStatus.WAITING,
+    );
   });
 
   it('should throw error when refund uncommitted order', () => {
@@ -256,9 +248,7 @@ describe('NewebPay Refund Order', () => {
       } as NewebPayAdditionInfoCreditCard,
     );
 
-    expect(() => order.refund()).rejects.toThrow(
-      'Only committed order can be refunded',
-    );
+    expect(() => order.refund()).rejects.toThrow('Only committed order can be refunded');
   });
 
   it('should throw error when refund non credit card order', () => {
@@ -286,9 +276,7 @@ describe('NewebPay Refund Order', () => {
       } as WebATMPaymentInfo,
     );
 
-    expect(() => order.refund()).rejects.toThrow(
-      'Only credit card order can be refunded',
-    );
+    expect(() => order.refund()).rejects.toThrow('Only credit card order can be refunded');
   });
 
   it('should throw error on refund order failed', async () => {
@@ -307,11 +295,10 @@ describe('NewebPay Refund Order', () => {
 
       decipher.setAutoPadding(false);
 
-      const plainInfo =
-        `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
-          /[\u0000-\u001F\u007F-\u009F]/g,
-          '',
-        );
+      const plainInfo = `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
+        /[\u0000-\u001F\u007F-\u009F]/g,
+        '',
+      );
 
       const requestBody = new URLSearchParams(plainInfo);
 
@@ -406,9 +393,7 @@ describe('NewebPay Refund Order', () => {
       } as NewebPayAdditionInfoCreditCard,
     );
 
-    expect(() => payment.refund(order)).rejects.toThrow(
-      'Only working/settled order can be refunded',
-    );
+    expect(() => payment.refund(order)).rejects.toThrow('Only working/settled order can be refunded');
   });
 
   it('should throw error when refund a refunding order', async () => {
@@ -467,11 +452,10 @@ describe('NewebPay Refund Order', () => {
 
       decipher.setAutoPadding(false);
 
-      const plainInfo =
-        `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
-          /[\u0000-\u001F\u007F-\u009F]/g,
-          '',
-        );
+      const plainInfo = `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
+        /[\u0000-\u001F\u007F-\u009F]/g,
+        '',
+      );
 
       const requestBody = new URLSearchParams(plainInfo);
 
@@ -536,9 +520,9 @@ describe('NewebPay Refund Order', () => {
     await order.cancelRefund();
 
     expect(order.state).toBe(OrderState.COMMITTED);
-    expect(
-      (order.additionalInfo as NewebPayAdditionInfoCreditCard).refundStatus,
-    ).toBe(NewebPayCreditCardBalanceStatus.UNSETTLED);
+    expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).refundStatus).toBe(
+      NewebPayCreditCardBalanceStatus.UNSETTLED,
+    );
   });
 
   it('should throw error on cancel refund failed', async () => {
@@ -557,11 +541,10 @@ describe('NewebPay Refund Order', () => {
 
       decipher.setAutoPadding(false);
 
-      const plainInfo =
-        `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
-          /[\u0000-\u001F\u007F-\u009F]/g,
-          '',
-        );
+      const plainInfo = `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
+        /[\u0000-\u001F\u007F-\u009F]/g,
+        '',
+      );
 
       const requestBody = new URLSearchParams(plainInfo);
 
@@ -657,9 +640,7 @@ describe('NewebPay Refund Order', () => {
       } as NewebPayAdditionInfoCreditCard,
     );
 
-    expect(() => payment.cancelRefund(order)).rejects.toThrow(
-      'Only settled order can be cancel refund',
-    );
+    expect(() => payment.cancelRefund(order)).rejects.toThrow('Only settled order can be cancel refund');
   });
 
   it('should throw error on cancel refund a never refund order', () => {
@@ -699,9 +680,7 @@ describe('NewebPay Refund Order', () => {
       } as NewebPayAdditionInfoCreditCard,
     );
 
-    expect(() => payment.cancelRefund(order)).rejects.toThrow(
-      'Order not refunding.',
-    );
+    expect(() => payment.cancelRefund(order)).rejects.toThrow('Order not refunding.');
   });
 
   it('should throw error on cancel refund a not refunded order', () => {
@@ -741,8 +720,6 @@ describe('NewebPay Refund Order', () => {
       } as NewebPayAdditionInfoCreditCard,
     );
 
-    expect(() => payment.cancelRefund(order)).rejects.toThrow(
-      'Only refunded order can be cancel refund',
-    );
+    expect(() => payment.cancelRefund(order)).rejects.toThrow('Only refunded order can be cancel refund');
   });
 });

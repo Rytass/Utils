@@ -26,12 +26,12 @@ yarn add @rytass/storages-adapter-s3
 
 ### StorageS3Options
 
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
-| `bucket` | `string` | Yes | S3 bucket name |
-| `accessKey` | `string` | Yes | AWS Access Key ID |
-| `secretKey` | `string` | Yes | AWS Secret Access Key |
-| `region` | `string` | Yes | AWS region (e.g., ap-northeast-1) |
+| Property    | Type     | Required | Description                       |
+| ----------- | -------- | -------- | --------------------------------- |
+| `bucket`    | `string` | Yes      | S3 bucket name                    |
+| `accessKey` | `string` | Yes      | AWS Access Key ID                 |
+| `secretKey` | `string` | Yes      | AWS Secret Access Key             |
+| `region`    | `string` | Yes      | AWS region (e.g., ap-northeast-1) |
 
 ## Usage
 
@@ -44,7 +44,7 @@ const storage = new StorageS3Service({
   bucket: 'my-app-storage',
   accessKey: 'AKIAIOSFODNN7EXAMPLE',
   secretKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
-  region: 'ap-northeast-1'
+  region: 'ap-northeast-1',
 });
 ```
 
@@ -55,13 +55,9 @@ import { readFileSync } from 'fs';
 
 // Upload from Buffer
 const fileBuffer = readFileSync('document.pdf');
-const uploadResult = await storage.write(
-  fileBuffer,
-  'documents/user-123/document.pdf',
-  {
-    contentType: 'application/pdf'
-  }
-);
+const uploadResult = await storage.write(fileBuffer, 'documents/user-123/document.pdf', {
+  contentType: 'application/pdf',
+});
 
 console.log('File uploaded:', uploadResult.url);
 ```
@@ -73,13 +69,9 @@ import { createReadStream } from 'fs';
 
 // Upload from Stream (recommended for large files)
 const fileStream = createReadStream('video.mp4');
-const result = await storage.write(
-  fileStream,
-  'videos/user-123/video.mp4',
-  {
-    contentType: 'video/mp4'
-  }
-);
+const result = await storage.write(fileStream, 'videos/user-123/video.mp4', {
+  contentType: 'video/mp4',
+});
 ```
 
 ### File Download
@@ -87,12 +79,12 @@ const result = await storage.write(
 ```typescript
 // Download as Buffer
 const fileBuffer = await storage.read('documents/user-123/document.pdf', {
-  format: 'buffer'
+  format: 'buffer',
 });
 
-// Download as Stream  
+// Download as Stream
 const fileStream = await storage.read('documents/user-123/document.pdf', {
-  format: 'stream'
+  format: 'stream',
 });
 
 // Download as Stream (default)
@@ -129,13 +121,11 @@ console.log('File deleted successfully');
 const files = [
   { buffer: file1Buffer, key: 'images/image1.jpg' },
   { buffer: file2Buffer, key: 'images/image2.jpg' },
-  { buffer: file3Buffer, key: 'images/image3.jpg' }
+  { buffer: file3Buffer, key: 'images/image3.jpg' },
 ];
 
 const results = await Promise.all(
-  files.map(({ buffer, key }) => 
-    storage.write(buffer, key, { contentType: 'image/jpeg' })
-  )
+  files.map(({ buffer, key }) => storage.write(buffer, key, { contentType: 'image/jpeg' })),
 );
 
 console.log('All files uploaded:', results.length);
@@ -154,7 +144,7 @@ const storage = new StorageS3Service({
   bucket: 'my-images',
   accessKey: process.env.AWS_ACCESS_KEY!,
   secretKey: process.env.AWS_SECRET_KEY!,
-  region: 'ap-northeast-1'
+  region: 'ap-northeast-1',
 });
 
 // Setup converter
@@ -162,19 +152,15 @@ const manager = new ConverterManager([
   new ImageResizer({
     maxWidth: 1200,
     maxHeight: 800,
-    keepAspectRatio: true
-  })
+    keepAspectRatio: true,
+  }),
 ]);
 
 // Process image and upload to storage
 const imageFile = readFileSync('large-image.jpg');
 const processedImage = await manager.convert<Buffer>(imageFile);
 
-const result = await storage.write(
-  processedImage,
-  'processed-images/thumbnail.jpg',
-  { contentType: 'image/jpeg' }
-);
+const result = await storage.write(processedImage, 'processed-images/thumbnail.jpg', { contentType: 'image/jpeg' });
 
 console.log('Processed image uploaded:', result.key);
 console.log('Access URL:', await storage.url(result.key));
@@ -211,16 +197,19 @@ try {
 ## Best Practices
 
 ### Security
+
 - Use IAM roles instead of hardcoded access keys
 - Set up appropriate bucket policies
 - Use pre-signed URLs for temporary access permissions
 
 ### Performance
+
 - Use stream upload for large files
 - Set appropriate Content-Type headers
 - Consider enabling S3 Transfer Acceleration
 
 ### Cost Optimization
+
 - Use appropriate storage classes (Standard, IA, Glacier)
 - Set up lifecycle policies to automatically transition old files
 - Monitor data transfer costs
@@ -241,7 +230,7 @@ const storage = new StorageS3Service({
   bucket: process.env.S3_BUCKET_NAME!,
   accessKey: process.env.AWS_ACCESS_KEY_ID!,
   secretKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  region: process.env.AWS_DEFAULT_REGION || 'us-east-1'
+  region: process.env.AWS_DEFAULT_REGION || 'us-east-1',
 });
 ```
 
@@ -253,20 +242,12 @@ const storage = new StorageS3Service({
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": [
-        "s3:GetObject",
-        "s3:PutObject",
-        "s3:DeleteObject",
-        "s3:GetObjectVersion"
-      ],
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:GetObjectVersion"],
       "Resource": "arn:aws:s3:::your-bucket-name/*"
     },
     {
       "Effect": "Allow",
-      "Action": [
-        "s3:ListBucket",
-        "s3:GetBucketLocation"
-      ],
+      "Action": ["s3:ListBucket", "s3:GetBucketLocation"],
       "Resource": "arn:aws:s3:::your-bucket-name"
     }
   ]

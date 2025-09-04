@@ -1,17 +1,7 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
-import {
-  NodeProps,
-  NodeResizer,
-  useUpdateNodeInternals,
-  useReactFlow,
-} from '@xyflow/react';
+import { NodeProps, NodeResizer, useUpdateNodeInternals, useReactFlow } from '@xyflow/react';
 import { EditMode, ViewMode } from '../../typings';
-import {
-  DEFAULT_IMAGE_WIDTH,
-  DEFAULT_IMAGE_HEIGHT,
-  ACTIVE_OPACITY,
-  INACTIVE_OPACITY,
-} from '../../constants';
+import { DEFAULT_IMAGE_WIDTH, DEFAULT_IMAGE_HEIGHT, ACTIVE_OPACITY, INACTIVE_OPACITY } from '../../constants';
 import { useContextMenu } from '../../hooks/use-context-menu';
 import { createImageCopy } from '../../utils/node-operations';
 import ContextMenu from '../ui/context-menu';
@@ -37,14 +27,7 @@ interface ImageNodeProps extends NodeProps {
   showBackground?: boolean;
 }
 
-const ImageNode: FC<ImageNodeProps> = ({
-  data,
-  selected,
-  id,
-  editMode,
-  viewMode,
-  showBackground = true,
-}) => {
+const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode, viewMode, showBackground = true }) => {
   const { setNodes } = useReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
 
@@ -68,15 +51,12 @@ const ImageNode: FC<ImageNodeProps> = ({
   // Calculate aspect ratio
   const aspectRatio = originalWidth / originalHeight;
   // Check if this node should be editable based on edit mode and view mode
-  const isEditable =
-    viewMode === ViewMode.EDIT && editMode === EditMode.BACKGROUND;
+  const isEditable = viewMode === ViewMode.EDIT && editMode === EditMode.BACKGROUND;
 
   // Check if this node should be selectable (only in BACKGROUND mode or VIEW mode)
-  const isSelectable =
-    editMode === EditMode.BACKGROUND || viewMode === ViewMode.VIEW;
+  const isSelectable = editMode === EditMode.BACKGROUND || viewMode === ViewMode.VIEW;
 
-  const opacity =
-    editMode === EditMode.BACKGROUND ? ACTIVE_OPACITY : INACTIVE_OPACITY;
+  const opacity = editMode === EditMode.BACKGROUND ? ACTIVE_OPACITY : INACTIVE_OPACITY;
 
   // Context menu functionality
   const {
@@ -92,13 +72,7 @@ const ImageNode: FC<ImageNodeProps> = ({
 
   const updateNodeData = useCallback(
     (updates: Partial<ImageNodeData>) => {
-      setNodes((nodes) =>
-        nodes.map((node) =>
-          node.id === id
-            ? { ...node, data: { ...node.data, ...updates } }
-            : node,
-        ),
-      );
+      setNodes(nodes => nodes.map(node => (node.id === id ? { ...node, data: { ...node.data, ...updates } } : node)));
 
       updateNodeInternals(id);
     },
@@ -121,8 +95,8 @@ const ImageNode: FC<ImageNodeProps> = ({
       }
 
       // 即時更新節點以提供視覺回饋
-      setNodes((nodes) =>
-        nodes.map((node) =>
+      setNodes(nodes =>
+        nodes.map(node =>
           node.id === id
             ? {
                 ...node,
@@ -156,8 +130,8 @@ const ImageNode: FC<ImageNodeProps> = ({
 
       // 最終更新節點資料，移除 isResizing 標記
       // 這次更新會觸發歷史記錄（因為沒有 isResizing 標記）
-      setNodes((nodes) =>
-        nodes.map((node) =>
+      setNodes(nodes =>
+        nodes.map(node =>
           node.id === id
             ? {
                 ...node,
@@ -181,7 +155,7 @@ const ImageNode: FC<ImageNodeProps> = ({
 
   // Handle copy and paste
   const handleCopyPaste = useCallback(() => {
-    const currentNode = getNodes().find((node) => node.id === id);
+    const currentNode = getNodes().find(node => node.id === id);
 
     if (!currentNode) {
       console.error('Current node not found');
@@ -189,9 +163,9 @@ const ImageNode: FC<ImageNodeProps> = ({
       return;
     }
 
-    setNodesFromHook((nds) => {
+    setNodesFromHook(nds => {
       // Calculate next zIndex
-      const maxZIndex = Math.max(...nds.map((n) => n.zIndex || 0), 0);
+      const maxZIndex = Math.max(...nds.map(n => n.zIndex || 0), 0);
 
       const copiedNode = createImageCopy({
         currentNode,
@@ -256,12 +230,7 @@ const ImageNode: FC<ImageNodeProps> = ({
           handleClassName={styles.customResizeHandle}
         />
       )}
-      <div
-        className={styles.imageContainer}
-        onContextMenu={
-          viewMode === ViewMode.EDIT ? handleContextMenu : undefined
-        }
-      >
+      <div className={styles.imageContainer} onContextMenu={viewMode === ViewMode.EDIT ? handleContextMenu : undefined}>
         <img
           src={imageUrl}
           alt={fileName || 'Uploaded image'}

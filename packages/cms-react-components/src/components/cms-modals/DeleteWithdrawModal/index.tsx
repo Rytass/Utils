@@ -34,8 +34,7 @@ const DeleteWithdrawModal = ({
 }: DeleteWithdrawModalProps): ReactNode => {
   const [acting, setActing] = useState<boolean>(false);
 
-  const [currentRadioValue, setCurrentRadioValue] =
-    useState<DeleteWithdrawModalRadio>(defaultRadioValue);
+  const [currentRadioValue, setCurrentRadioValue] = useState<DeleteWithdrawModalRadio>(defaultRadioValue);
 
   const { closeModal } = useModal();
 
@@ -75,20 +74,12 @@ const DeleteWithdrawModal = ({
           size="large"
           value={currentRadioValue}
           className={classes.radioGroup}
-          onChange={(e) => {
+          onChange={e => {
             setCurrentRadioValue(e.target.value as DeleteWithdrawModalRadio);
           }}
         >
-          {withWithdraw && (
-            <Radio value={DeleteWithdrawModalRadio.Withdraw}>
-              將文章移至可發佈區
-            </Radio>
-          )}
-          {withDelete && (
-            <Radio value={DeleteWithdrawModalRadio.Delete}>
-              永久刪除文章，此操作無法還原。
-            </Radio>
-          )}
+          {withWithdraw && <Radio value={DeleteWithdrawModalRadio.Withdraw}>將文章移至可發佈區</Radio>}
+          {withDelete && <Radio value={DeleteWithdrawModalRadio.Delete}>永久刪除文章，此操作無法還原。</Radio>}
         </RadioGroup>
       </MznModalBody>
       <ModalActions

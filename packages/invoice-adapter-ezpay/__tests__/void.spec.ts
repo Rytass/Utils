@@ -7,7 +7,14 @@ import FormData from 'form-data';
 import { createDecipheriv, createHash } from 'crypto';
 import { parse } from 'parse-multipart-data';
 import { DateTime } from 'luxon';
-import { EZPayBaseUrls, EZPayInvoice, EZPayInvoiceGateway, EZPayInvoiceVoidPayload, InvoiceState, TaxType } from '../src';
+import {
+  EZPayBaseUrls,
+  EZPayInvoice,
+  EZPayInvoiceGateway,
+  EZPayInvoiceVoidPayload,
+  InvoiceState,
+  TaxType,
+} from '../src';
 
 const AES_IV = 'gmY2MPN8PHFvA7KR';
 const AES_KEY = 'cNg3wIe8PkCVcqb37RY0LFbf00FgrNXg';
@@ -44,30 +51,29 @@ describe('EZPayInvoiceGateway Void', () => {
 
       const payloadArray = parse(formData.getBuffer(), formData.getBoundary());
 
-      const payload = payloadArray.reduce((vars, field) => ({
-        ...vars,
-        [field.name as string]: field.data.toString('utf8'),
-      }), {}) as {
+      const payload = payloadArray.reduce(
+        (vars, field) => ({
+          ...vars,
+          [field.name as string]: field.data.toString('utf8'),
+        }),
+        {},
+      ) as {
         MerchantID_: string;
         PostData_: string;
       };
 
       const decipher = createDecipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
-      const plainText = [
-        decipher.update(payload.PostData_, 'hex', 'utf8'),
-        decipher.final('utf8'),
-      ].join('');
+      const plainText = [decipher.update(payload.PostData_, 'hex', 'utf8'), decipher.final('utf8')].join('');
 
-      const params = plainText.split(/&/)
-        .reduce((vars, item) => {
-          const [key, value] = item.split(/=/);
+      const params = plainText.split(/&/).reduce((vars, item) => {
+        const [key, value] = item.split(/=/);
 
-          return {
-            ...vars,
-            [key]: decodeURIComponent(value),
-          };
-        }, {}) as EZPayInvoiceVoidPayload;
+        return {
+          ...vars,
+          [key]: decodeURIComponent(value),
+        };
+      }, {}) as EZPayInvoiceVoidPayload;
 
       if (params.InvoiceNumber !== FAKE_INVOICE_NUMBER) {
         return {
@@ -102,11 +108,13 @@ describe('EZPayInvoiceGateway Void', () => {
 
   it('should void an invoice', async () => {
     const mockInvoice = new EZPayInvoice({
-      items: [{
-        name: '橡皮擦',
-        unitPrice: 10,
-        quantity: 2,
-      }],
+      items: [
+        {
+          name: '橡皮擦',
+          unitPrice: 10,
+          quantity: 2,
+        },
+      ],
       issuedOn: new Date(),
       invoiceNumber: FAKE_INVOICE_NUMBER,
       randomCode: FAKE_RANDOM_CODE,
@@ -124,11 +132,13 @@ describe('EZPayInvoiceGateway Void', () => {
 
   it('should throw error on invoice not found', () => {
     const mockInvoice = new EZPayInvoice({
-      items: [{
-        name: '橡皮擦',
-        unitPrice: 10,
-        quantity: 2,
-      }],
+      items: [
+        {
+          name: '橡皮擦',
+          unitPrice: 10,
+          quantity: 2,
+        },
+      ],
       issuedOn: new Date(),
       invoiceNumber: 'GG00148493',
       randomCode: FAKE_RANDOM_CODE,
@@ -137,19 +147,23 @@ describe('EZPayInvoiceGateway Void', () => {
       taxType: TaxType.TAXED,
     });
 
-    expect(() => invoiceGateway.void(mockInvoice, {
-      reason: '測試作廢',
-    })).rejects.toThrow();
+    expect(() =>
+      invoiceGateway.void(mockInvoice, {
+        reason: '測試作廢',
+      }),
+    ).rejects.toThrow();
   });
 
   describe('Misc', () => {
     it('should throw error when check code invalid', async () => {
       const mockInvoice = new EZPayInvoice({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
         issuedOn: new Date(),
         invoiceNumber: FAKE_INVOICE_NUMBER,
         randomCode: FAKE_RANDOM_CODE,
@@ -163,11 +177,13 @@ describe('EZPayInvoiceGateway Void', () => {
 
     it('should invoice setVoid method can use new Date() for void time in default', async () => {
       const mockInvoice = new EZPayInvoice({
-        items: [{
-          name: '橡皮擦',
-          unitPrice: 10,
-          quantity: 2,
-        }],
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
         issuedOn: new Date(),
         invoiceNumber: FAKE_INVOICE_NUMBER,
         randomCode: FAKE_RANDOM_CODE,
@@ -183,4 +199,3 @@ describe('EZPayInvoiceGateway Void', () => {
     });
   });
 });
-

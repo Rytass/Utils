@@ -78,8 +78,7 @@ const PathNode: FC<PathNodeProps> = ({
   const isEditable = viewMode === ViewMode.EDIT && editMode === EditMode.LAYER;
   // Check if this node should be selectable (only in LAYER mode)
   const isSelectable = editMode === EditMode.LAYER;
-  const opacity =
-    editMode === EditMode.LAYER ? ACTIVE_OPACITY : RECTANGLE_INACTIVE_OPACITY;
+  const opacity = editMode === EditMode.LAYER ? ACTIVE_OPACITY : RECTANGLE_INACTIVE_OPACITY;
 
   // Context menu functionality
   const {
@@ -94,24 +93,16 @@ const PathNode: FC<PathNodeProps> = ({
   } = useContextMenu({ id, editMode, isEditable, nodeType: 'pathNode' });
 
   // Text editing functionality
-  const {
-    isEditing,
-    editingText,
-    inputRef,
-    setEditingText,
-    handleDoubleClick,
-    handleKeyDown,
-    handleBlur,
-  } = useTextEditing({ id, label, isEditable, onTextEditComplete });
+  const { isEditing, editingText, inputRef, setEditingText, handleDoubleClick, handleKeyDown, handleBlur } =
+    useTextEditing({ id, label, isEditable, onTextEditComplete });
 
   // Calculate path dimensions - use fixed bounds during dragging to prevent unwanted shifts
   const getBounds = useCallback(
     (pointsToUse: { x: number; y: number }[] = points) => {
-      if (pointsToUse.length === 0)
-        return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+      if (pointsToUse.length === 0) return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
 
-      const xs = pointsToUse.map((p) => p.x);
-      const ys = pointsToUse.map((p) => p.y);
+      const xs = pointsToUse.map(p => p.x);
+      const ys = pointsToUse.map(p => p.y);
 
       return {
         minX: Math.min(...xs),
@@ -143,9 +134,7 @@ const PathNode: FC<PathNodeProps> = ({
     id: id.slice(-4),
     isClosedPath,
     pointsCount: points.length,
-    points: points
-      .map((p, i) => `${i}:(${p.x.toFixed(1)},${p.y.toFixed(1)})`)
-      .join(' '),
+    points: points.map((p, i) => `${i}:(${p.x.toFixed(1)},${p.y.toFixed(1)})`).join(' '),
   });
 
   // Performance-optimized drag handling - separate visual updates from data updates
@@ -236,16 +225,10 @@ const PathNode: FC<PathNodeProps> = ({
         if (isClosedPath && newPoints.length > 2) {
           if (isFirstPoint) {
             newPoints[newPoints.length - 1] = targetPoint;
-            console.log(
-              '🔄 Final sync: last point with first point',
-              targetPoint,
-            );
+            console.log('🔄 Final sync: last point with first point', targetPoint);
           } else if (isLastPoint) {
             newPoints[0] = targetPoint;
-            console.log(
-              '🔄 Final sync: first point with last point',
-              targetPoint,
-            );
+            console.log('🔄 Final sync: first point with last point', targetPoint);
           }
         }
 
@@ -275,8 +258,8 @@ const PathNode: FC<PathNodeProps> = ({
           });
 
           // Update both data and position simultaneously (like rectangle resize)
-          setNodes((nodes) =>
-            nodes.map((node) =>
+          setNodes(nodes =>
+            nodes.map(node =>
               node.id === id
                 ? {
                     ...node,
@@ -288,12 +271,8 @@ const PathNode: FC<PathNodeProps> = ({
           );
         } else {
           // Fallback: just update data if node not found
-          setNodes((nodes) =>
-            nodes.map((node) =>
-              node.id === id
-                ? { ...node, data: { ...node.data, points: newPoints } }
-                : node,
-            ),
+          setNodes(nodes =>
+            nodes.map(node => (node.id === id ? { ...node, data: { ...node.data, points: newPoints } } : node)),
           );
         }
 
@@ -328,17 +307,7 @@ const PathNode: FC<PathNodeProps> = ({
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
     },
-    [
-      id,
-      isEditable,
-      points,
-      isClosedPath,
-      onPathPointsChange,
-      setNodes,
-      getViewport,
-      getBounds,
-      getNodes,
-    ],
+    [id, isEditable, points, isClosedPath, onPathPointsChange, setNodes, getViewport, getBounds, getNodes],
   );
 
   // Create SVG path string using fixed bounds during drag to prevent React Flow repositioning
@@ -364,10 +333,7 @@ const PathNode: FC<PathNodeProps> = ({
                 const draggedIsFirst = dragPointIndex === 0;
                 const draggedIsLast = dragPointIndex === points.length - 1;
 
-                if (
-                  (draggedIsFirst && isLastPoint) ||
-                  (draggedIsLast && isFirstPoint)
-                ) {
+                if ((draggedIsFirst && isLastPoint) || (draggedIsLast && isFirstPoint)) {
                   return {
                     x: baseX + dragSyncOffset.x,
                     y: baseY + dragSyncOffset.y,
@@ -398,17 +364,13 @@ const PathNode: FC<PathNodeProps> = ({
     draggedIndex: isDraggingPoint ? dragPointIndex : null,
     pointsCount: displayPoints.length,
     bounds: `(${bounds.minX}, ${bounds.minY}) to (${bounds.maxX}, ${bounds.maxY})`,
-    boundsSource:
-      isDraggingPoint && originalPointsRef.current.length > 0
-        ? 'original (fixed)'
-        : 'current',
-    pathPreview:
-      pathString.substring(0, 50) + (pathString.length > 50 ? '...' : ''),
+    boundsSource: isDraggingPoint && originalPointsRef.current.length > 0 ? 'original (fixed)' : 'current',
+    pathPreview: pathString.substring(0, 50) + (pathString.length > 50 ? '...' : ''),
   });
 
   // Handle copy and paste
   const handleCopyPaste = useCallback(() => {
-    const currentNode = getNodesFromHook().find((node) => node.id === id);
+    const currentNode = getNodesFromHook().find(node => node.id === id);
 
     if (!currentNode) {
       console.error('Current node not found');
@@ -416,9 +378,9 @@ const PathNode: FC<PathNodeProps> = ({
       return;
     }
 
-    setNodesFromHook((nds) => {
+    setNodesFromHook(nds => {
       // Calculate next zIndex
-      const maxZIndex = Math.max(...nds.map((n) => n.zIndex || 0), 0);
+      const maxZIndex = Math.max(...nds.map(n => n.zIndex || 0), 0);
 
       const copiedNode = createPathCopy({
         currentNode,
@@ -432,20 +394,10 @@ const PathNode: FC<PathNodeProps> = ({
     });
 
     handleCloseContextMenu();
-  }, [
-    id,
-    points,
-    color,
-    strokeWidth,
-    label,
-    getNodesFromHook,
-    setNodesFromHook,
-    handleCloseContextMenu,
-  ]);
+  }, [id, points, color, strokeWidth, label, getNodesFromHook, setNodesFromHook, handleCloseContextMenu]);
 
   // 在檢視模式下計算 hover 顏色
-  const displayColor =
-    viewMode === ViewMode.VIEW && isHovered ? createHoverColor(color) : color;
+  const displayColor = viewMode === ViewMode.VIEW && isHovered ? createHoverColor(color) : color;
 
   return (
     <div
@@ -463,12 +415,8 @@ const PathNode: FC<PathNodeProps> = ({
           cursor: viewMode === ViewMode.VIEW ? 'pointer' : 'default',
           transition: viewMode === ViewMode.VIEW ? 'all 0.2s ease' : 'none',
         }}
-        onDoubleClick={
-          viewMode === ViewMode.EDIT ? handleDoubleClick : undefined
-        }
-        onContextMenu={
-          viewMode === ViewMode.EDIT ? handleContextMenu : undefined
-        }
+        onDoubleClick={viewMode === ViewMode.EDIT ? handleDoubleClick : undefined}
+        onContextMenu={viewMode === ViewMode.EDIT ? handleContextMenu : undefined}
       >
         <svg width={width} height={height} style={{ overflow: 'visible' }}>
           <path
@@ -500,8 +448,7 @@ const PathNode: FC<PathNodeProps> = ({
               // Use fixed bounds during dragging to maintain stable positioning
               const relativeX = point.x - bounds.minX;
               const relativeY = point.y - bounds.minY;
-              const isBeingDragged =
-                dragPointIndex === index && isDraggingPoint;
+              const isBeingDragged = dragPointIndex === index && isDraggingPoint;
 
               // Apply visual offset during drag for smooth feedback
               const { visualX, visualY } = (() => {
@@ -511,21 +458,14 @@ const PathNode: FC<PathNodeProps> = ({
                     visualX: relativeX + dragOffset.x,
                     visualY: relativeY + dragOffset.y,
                   };
-                } else if (
-                  isDraggingPoint &&
-                  isClosedPath &&
-                  points.length > 2
-                ) {
+                } else if (isDraggingPoint && isClosedPath && points.length > 2) {
                   // Apply sync offset to the opposite point in closed paths
                   const isFirstPoint = index === 0;
                   const isLastPoint = index === points.length - 1;
                   const draggedIsFirst = dragPointIndex === 0;
                   const draggedIsLast = dragPointIndex === points.length - 1;
 
-                  if (
-                    (draggedIsFirst && isLastPoint) ||
-                    (draggedIsLast && isFirstPoint)
-                  ) {
+                  if ((draggedIsFirst && isLastPoint) || (draggedIsLast && isFirstPoint)) {
                     return {
                       visualX: relativeX + dragSyncOffset.x,
                       visualY: relativeY + dragSyncOffset.y,
@@ -552,14 +492,12 @@ const PathNode: FC<PathNodeProps> = ({
                     cursor: isDraggingPoint ? 'grabbing' : 'grab',
                     zIndex: 1001,
                     pointerEvents: 'auto', // Only points capture events
-                    boxShadow: isBeingDragged
-                      ? '0 4px 8px rgba(0,0,0,0.4)'
-                      : '0 2px 4px rgba(0,0,0,0.3)',
+                    boxShadow: isBeingDragged ? '0 4px 8px rgba(0,0,0,0.4)' : '0 2px 4px rgba(0,0,0,0.3)',
                     transform: isBeingDragged ? 'scale(1.3)' : 'scale(1)',
                     transition: isDraggingPoint ? 'none' : 'all 0.2s ease', // Disable transition during any drag
                     opacity: isBeingDragged ? 0.8 : 1,
                   }}
-                  onMouseDown={(e) => {
+                  onMouseDown={e => {
                     // React Flow best practice: use nodrag class and proper event handling
                     e.stopPropagation();
                     handlePointMouseDown(index, e);
@@ -595,7 +533,7 @@ const PathNode: FC<PathNodeProps> = ({
               ref={inputRef}
               type="text"
               value={editingText}
-              onChange={(e) => setEditingText(e.target.value)}
+              onChange={e => setEditingText(e.target.value)}
               onKeyDown={handleKeyDown}
               onBlur={handleBlur}
               className="nodrag" // Prevent dragging when editing text
@@ -610,7 +548,7 @@ const PathNode: FC<PathNodeProps> = ({
                 width: '90%',
                 textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
               }}
-              onClick={(e) => e.stopPropagation()}
+              onClick={e => e.stopPropagation()}
             />
           ) : (
             <span style={{ cursor: 'default' }}>{label}</span>

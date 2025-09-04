@@ -18,8 +18,7 @@ function resolveTypeName(type: any): string {
 describe('BaseArticleVersionEntity relations', () => {
   it('should have a ManyToOne relation to BaseArticleEntity with correct join column', () => {
     const relation = getMetadataArgsStorage().relations.find(
-      (r) =>
-        r.target === BaseArticleVersionEntity && r.propertyName === 'article',
+      r => r.target === BaseArticleVersionEntity && r.propertyName === 'article',
     );
 
     expect(relation).toBeDefined();
@@ -27,8 +26,7 @@ describe('BaseArticleVersionEntity relations', () => {
     expect(resolveTypeName(relation?.type)).toBe('BaseArticleEntity');
 
     const joinColumn = getMetadataArgsStorage().joinColumns.find(
-      (jc) =>
-        jc.target === BaseArticleVersionEntity && jc.propertyName === 'article',
+      jc => jc.target === BaseArticleVersionEntity && jc.propertyName === 'article',
     );
 
     expect(joinColumn).toEqual(
@@ -41,8 +39,7 @@ describe('BaseArticleVersionEntity relations', () => {
 
   it('should define inverse side for article', () => {
     const relation = getMetadataArgsStorage().relations.find(
-      (r) =>
-        r.target === BaseArticleVersionEntity && r.propertyName === 'article',
+      r => r.target === BaseArticleVersionEntity && r.propertyName === 'article',
     );
 
     expect(relation).toBeDefined();
@@ -56,16 +53,12 @@ describe('BaseArticleVersionEntity relations', () => {
 
   it('should have a OneToMany relation to BaseArticleVersionContentEntity with correct inverse side', () => {
     const relation = getMetadataArgsStorage().relations.find(
-      (r) =>
-        r.target === BaseArticleVersionEntity &&
-        r.propertyName === 'multiLanguageContents',
+      r => r.target === BaseArticleVersionEntity && r.propertyName === 'multiLanguageContents',
     );
 
     expect(relation).toBeDefined();
     expect(relation?.relationType).toBe('one-to-many');
-    expect(resolveTypeName(relation?.type)).toBe(
-      'BaseArticleVersionContentEntity',
-    );
+    expect(resolveTypeName(relation?.type)).toBe('BaseArticleVersionContentEntity');
 
     const inverse = relation?.inverseSideProperty;
     const fn = typeof inverse === 'function' ? inverse : undefined;
@@ -76,9 +69,7 @@ describe('BaseArticleVersionEntity relations', () => {
 
   it('should have a OneToMany relation to ArticleSignatureEntity with correct inverse side', () => {
     const relation = getMetadataArgsStorage().relations.find(
-      (r) =>
-        r.target === BaseArticleVersionEntity &&
-        r.propertyName === 'signatures',
+      r => r.target === BaseArticleVersionEntity && r.propertyName === 'signatures',
     );
 
     expect(relation).toBeDefined();

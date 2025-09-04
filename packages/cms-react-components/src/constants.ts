@@ -1,9 +1,4 @@
-import {
-  ArticleTableActions,
-  ArticlesPermissions,
-  ArticleTableActionsType,
-  ArticleStage,
-} from './typings';
+import { ArticleTableActions, ArticlesPermissions, ArticleTableActionsType, ArticleStage } from './typings';
 
 export const defaultAdminRolePermissions = [
   ArticlesPermissions.CreateArticle,
@@ -65,14 +60,7 @@ export const defaultTableActions: ArticleTableActionsType = {
     ArticleTableActions.Release,
     ArticleTableActions.Delete,
   ],
-  [ArticleStage.SCHEDULED]: [
-    ArticleTableActions.View,
-    ArticleTableActions.Update,
-    ArticleTableActions.Withdraw,
-  ],
-  [ArticleStage.RELEASED]: [
-    ArticleTableActions.Update,
-    ArticleTableActions.Delete,
-  ],
+  [ArticleStage.SCHEDULED]: [ArticleTableActions.View, ArticleTableActions.Update, ArticleTableActions.Withdraw],
+  [ArticleStage.RELEASED]: [ArticleTableActions.Update, ArticleTableActions.Delete],
   [ArticleStage.UNKNOWN]: [],
 };

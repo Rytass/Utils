@@ -22,18 +22,13 @@ export interface InvoiceGateway<
   QueryOptions = any,
 > {
   issue(options: InvoiceIssueOptions<Item>): Promise<I>;
-  void(
-    invoice: Invoice<PaymentItem>,
-    options: InvoiceVoidOptions,
-  ): Promise<Invoice<PaymentItem>>;
+  void(invoice: Invoice<PaymentItem>, options: InvoiceVoidOptions): Promise<Invoice<PaymentItem>>;
   allowance(
     invoice: Invoice<PaymentItem>,
     allowanceItems: InvoicePaymentItem[],
     options?: InvoiceAllowanceOptions,
   ): Promise<Invoice<PaymentItem>>;
-  invalidAllowance(
-    allowance: InvoiceAllowance<PaymentItem>,
-  ): Promise<Invoice<PaymentItem>>;
+  invalidAllowance(allowance: InvoiceAllowance<PaymentItem>): Promise<Invoice<PaymentItem>>;
   query(options: QueryOptions): Promise<I>;
 
   // Utils

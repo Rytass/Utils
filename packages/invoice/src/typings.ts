@@ -32,10 +32,9 @@ export interface InvoiceAllowanceOptions {
   taxType?: Omit<TaxType, TaxType.MIXED | TaxType.SPECIAL>;
 }
 
-export type InvoicePaymentItem<Item extends PaymentItem = PaymentItem> =
-  Item & {
-    taxType?: Omit<TaxType, TaxType.MIXED>;
-  };
+export type InvoicePaymentItem<Item extends PaymentItem = PaymentItem> = Item & {
+  taxType?: Omit<TaxType, TaxType.MIXED>;
+};
 
 export interface InvoiceVoidOptions {
   reason: string;

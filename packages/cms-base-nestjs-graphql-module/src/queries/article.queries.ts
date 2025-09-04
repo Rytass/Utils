@@ -63,9 +63,7 @@ export class ArticleQueries {
 
   @Query(() => BackstageArticleCollectionDto)
   @AllowActions([[BaseResource.ARTICLE, BaseAction.LIST]])
-  backstageArticles(
-    @Args() args: BackstageArticleArgs,
-  ): Promise<BackstageArticleCollectionDto> {
+  backstageArticles(@Args() args: BackstageArticleArgs): Promise<BackstageArticleCollectionDto> {
     return this.articleService.findCollection(args);
   }
 }

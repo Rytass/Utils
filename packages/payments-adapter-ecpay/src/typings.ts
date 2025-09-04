@@ -116,16 +116,14 @@ export interface OrderInit<OCM extends ECPayCommitMessage> {
   gateway: ECPayPayment<OCM>;
 }
 
-export interface OrderCreateInit<OCM extends ECPayCommitMessage>
-  extends OrderInit<OCM> {
+export interface OrderCreateInit<OCM extends ECPayCommitMessage> extends OrderInit<OCM> {
   id: string;
   items: PaymentItem[];
   form: ECPayOrderForm;
   gateway: ECPayPayment<OCM>;
 }
 
-export interface OrderFromServerInit<OCM extends ECPayCommitMessage>
-  extends OrderInit<OCM> {
+export interface OrderFromServerInit<OCM extends ECPayCommitMessage> extends OrderInit<OCM> {
   id: string;
   items: PaymentItem[];
   gateway: ECPayPayment<OCM>;
@@ -138,8 +136,7 @@ export interface OrderFromServerInit<OCM extends ECPayCommitMessage>
   memberId?: string;
 }
 
-export interface OrderFromBoundCard<OCM extends ECPayCommitMessage>
-  extends OrderInit<OCM> {
+export interface OrderFromBoundCard<OCM extends ECPayCommitMessage> extends OrderInit<OCM> {
   id: string;
   items: PaymentItem[];
   gateway: ECPayPayment<OCM>;
@@ -263,8 +260,7 @@ export interface ECPayPaymentCallbackPayload extends ECPayCallbackPayload {
   CustomField4: string;
 }
 
-export interface ECPayCallbackCreditPayload
-  extends ECPayPaymentCallbackPayload {
+export interface ECPayCallbackCreditPayload extends ECPayPaymentCallbackPayload {
   PaymentDate: string;
   PaymentType: ECPayCallbackPaymentType.CREDIT_CARD;
   SimulatePaid: ECPayCallbackSimulatePaidState;
@@ -277,8 +273,7 @@ export interface ECPayCallbackCreditPayload
   card6no: string;
 }
 
-export interface ECPayCallbackVirtualAccountPayload
-  extends ECPayPaymentCallbackPayload {
+export interface ECPayCallbackVirtualAccountPayload extends ECPayPaymentCallbackPayload {
   PaymentDate: string;
   PaymentType: Extract<
     ECPayCallbackPaymentType,
@@ -308,8 +303,7 @@ export interface ECPayCallbackCVSPayload extends ECPayPaymentCallbackPayload {
   PayFrom: string;
 }
 
-export interface ECPayCallbackBarcodePayload
-  extends ECPayPaymentCallbackPayload {
+export interface ECPayCallbackBarcodePayload extends ECPayPaymentCallbackPayload {
   PaymentDate: string;
   PaymentType: ECPayCallbackPaymentType.BARCODE;
   SimulatePaid: ECPayCallbackSimulatePaidState;
@@ -332,8 +326,7 @@ export interface ECPayAsyncInformationPayload {
   CheckMacValue: string;
 }
 
-export interface ECPayAsyncInformationVirtualAccountPayload
-  extends ECPayAsyncInformationPayload {
+export interface ECPayAsyncInformationVirtualAccountPayload extends ECPayAsyncInformationPayload {
   MerchantID: string;
   MerchantTradeNo: string;
   StoreID: string;
@@ -361,8 +354,7 @@ export interface ECPayAsyncInformationVirtualAccountPayload
   ExpireDate: string;
 }
 
-export interface ECPayAsyncInformationCVSPayload
-  extends ECPayAsyncInformationPayload {
+export interface ECPayAsyncInformationCVSPayload extends ECPayAsyncInformationPayload {
   MerchantID: string;
   MerchantTradeNo: string;
   StoreID: string;
@@ -391,8 +383,7 @@ export interface ECPayAsyncInformationCVSPayload
   Barcode3: string;
 }
 
-export interface ECPayAsyncInformationBarcodePayload
-  extends ECPayAsyncInformationPayload {
+export interface ECPayAsyncInformationBarcodePayload extends ECPayAsyncInformationPayload {
   MerchantID: string;
   MerchantTradeNo: string;
   StoreID: string;
@@ -414,8 +405,7 @@ export interface ECPayAsyncInformationBarcodePayload
   Barcode3: string;
 }
 
-export interface ECPayOrderCreditCardCommitMessage
-  extends OrderCreditCardCommitMessage {
+export interface ECPayOrderCreditCardCommitMessage extends OrderCreditCardCommitMessage {
   id: string;
   totalPrice: number;
   committedAt: Date;
@@ -425,8 +415,7 @@ export interface ECPayOrderCreditCardCommitMessage
   paymentType: ECPayCallbackPaymentType.CREDIT_CARD;
 }
 
-export interface ECPayOrderVirtualAccountCommitMessage
-  extends OrderVirtualAccountCommitMessage {
+export interface ECPayOrderVirtualAccountCommitMessage extends OrderVirtualAccountCommitMessage {
   id: string;
   totalPrice: number;
   committedAt: Date | null;
@@ -461,8 +450,7 @@ export interface ECPayOrderCVSCommitMessage extends OrderCVSCommitMessage {
   >;
 }
 
-export interface ECPayOrderBarcodeCommitMessage
-  extends OrderBarcodeCommitMessage {
+export interface ECPayOrderBarcodeCommitMessage extends OrderBarcodeCommitMessage {
   id: string;
   totalPrice: number;
   committedAt: Date | null;
@@ -472,8 +460,7 @@ export interface ECPayOrderBarcodeCommitMessage
   paymentType: ECPayCallbackPaymentType.BARCODE;
 }
 
-export interface ECPayOrderApplePayCommitMessage
-  extends OrderApplePayCommitMessage {
+export interface ECPayOrderApplePayCommitMessage extends OrderApplePayCommitMessage {
   id: string;
   totalPrice: number;
   committedAt: Date | null;
@@ -490,10 +477,7 @@ export interface ECPayCommitMessage extends OrderCommitMessage {
   merchantId: string;
   tradeNumber: string;
   tradeDate: Date;
-  paymentType: Exclude<
-    ECPayCallbackPaymentType,
-    ECPayCallbackPaymentType.VIRTUAL_ACCOUNT_WAITING
-  >;
+  paymentType: Exclude<ECPayCallbackPaymentType, ECPayCallbackPaymentType.VIRTUAL_ACCOUNT_WAITING>;
 }
 
 export enum ECPayQueryResultStatus {
@@ -598,8 +582,7 @@ export interface ECPayOrderActionPayload extends Record<string, string> {
   CheckMacValue: string;
 }
 
-export interface ECPayCreditCardDetailQueryPayload
-  extends Record<string, string> {
+export interface ECPayCreditCardDetailQueryPayload extends Record<string, string> {
   MerchantID: string;
   CreditRefundedId: string;
   CreditAmount: string;
@@ -615,18 +598,17 @@ export interface ECPayQueryOrderPayload extends Record<string, string> {
   CheckMacValue: string;
 }
 
-export type GetOrderInput<CM extends ECPayCommitMessage> =
-  CM extends ECPayOrderCreditCardCommitMessage
-    ? ECPayCreditCardOrderInput
-    : CM extends ECPayOrderVirtualAccountCommitMessage
-      ? ECPayVirtualAccountOrderInput
-      : CM extends ECPayOrderCVSCommitMessage
-        ? ECPayCVSOrderInput
-        : CM extends ECPayOrderBarcodeCommitMessage
-          ? ECPayBarcodeOrderInput
-          : CM extends ECPayOrderApplePayCommitMessage
-            ? ECPayApplePayOrderInput
-            : never;
+export type GetOrderInput<CM extends ECPayCommitMessage> = CM extends ECPayOrderCreditCardCommitMessage
+  ? ECPayCreditCardOrderInput
+  : CM extends ECPayOrderVirtualAccountCommitMessage
+    ? ECPayVirtualAccountOrderInput
+    : CM extends ECPayOrderCVSCommitMessage
+      ? ECPayCVSOrderInput
+      : CM extends ECPayOrderBarcodeCommitMessage
+        ? ECPayBarcodeOrderInput
+        : CM extends ECPayOrderApplePayCommitMessage
+          ? ECPayApplePayOrderInput
+          : never;
 
 export type ECPayChannelCreditCard = ECPayOrderCreditCardCommitMessage;
 export type ECPayChannelVirtualAccount = ECPayOrderVirtualAccountCommitMessage;
@@ -642,8 +624,7 @@ export interface ECPayBindCardRequestPayload extends Record<string, string> {
   CheckMacValue: string;
 }
 
-export interface ECPayBindCardWithTransactionRequestPayload
-  extends Record<string, string> {
+export interface ECPayBindCardWithTransactionRequestPayload extends Record<string, string> {
   MerchantID: string;
   MerchantTradeNo: string;
   AllpayTradeNo: string;
@@ -686,8 +667,7 @@ export enum ECPayBindCardRequestState {
   FAILED = 'FAILED',
 }
 
-export interface ECPayCheckoutWithBoundCardPayload
-  extends CheckoutWithBoundCardOptions {
+export interface ECPayCheckoutWithBoundCardPayload extends CheckoutWithBoundCardOptions {
   installments?: 0 | 3 | 6 | 12 | 18 | 24;
   memberId: string;
   cardId: string;
@@ -696,8 +676,7 @@ export interface ECPayCheckoutWithBoundCardPayload
   orderId?: string; // Order Unique ID
 }
 
-export interface ECPayCheckoutWithBoundCardRequestPayload
-  extends Record<string, string> {
+export interface ECPayCheckoutWithBoundCardRequestPayload extends Record<string, string> {
   MerchantID: string;
   MerchantMemberID: string;
   MerchantTradeNo: string;
@@ -757,8 +736,7 @@ export interface ECPayCheckoutWithBoundCardResponsePayload {
   CheckMacValue: string;
 }
 
-export interface ECPayBoundCardQueryRequestPayload
-  extends Record<string, string> {
+export interface ECPayBoundCardQueryRequestPayload extends Record<string, string> {
   MerchantID: string;
   MerchantMemberID: string;
   CheckMacValue: string;

@@ -17,8 +17,6 @@ export class FinalPriceOnlyRoundStrategy implements RoundStrategy {
   round(num: number, canActive: RoundStrategyType | RoundStrategyType[]): number {
     const canActives = Array.isArray(canActive) ? canActive : [canActive];
 
-    return canActives.includes(this.type)
-      ? round(num, this.precision)
-      : num;
+    return canActives.includes(this.type) ? round(num, this.precision) : num;
   }
 }

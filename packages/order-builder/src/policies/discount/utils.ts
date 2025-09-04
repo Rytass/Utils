@@ -10,35 +10,26 @@ export function isDiscountPolicy(policy: Policy): policy is BaseDiscount {
   return policy.prefix === PolicyPrefix.DISCOUNT;
 }
 
-export function getConditionsByDiscountConstructor<
-Options extends DiscountOptions = DiscountOptions>(
-  arg1?: Options | Condition | Condition[]
+export function getConditionsByDiscountConstructor<Options extends DiscountOptions = DiscountOptions>(
+  arg1?: Options | Condition | Condition[],
 ): BaseDiscount['conditions'] {
   if (Array.isArray(arg1)) return arg1;
 
-  return typeof (arg1 as Condition)?.satisfy === 'function'
-    ? [arg1 as Condition]
-    : [];
+  return typeof (arg1 as Condition)?.satisfy === 'function' ? [arg1 as Condition] : [];
 }
 
-export function getOptionsByDiscountConstructor<
-Options extends DiscountOptions = DiscountOptions>(
+export function getOptionsByDiscountConstructor<Options extends DiscountOptions = DiscountOptions>(
   arg1?: Options | Condition | Condition[],
-  arg2?: Options
+  arg2?: Options,
 ): Options | undefined {
   if (typeof arg1 === 'undefined' && typeof arg2 === 'undefined') return undefined;
   if (Array.isArray(arg1)) return arg2;
 
-  return typeof (arg1 as Condition)?.satisfy === 'function'
-    ? arg2
-    : arg1 as Options
+  return typeof (arg1 as Condition)?.satisfy === 'function' ? arg2 : (arg1 as Options);
 }
 
 /** Get only-matched items */
-export function getOnlyMatchedItems(
-  order: Order,
-  conditions: Condition[],
-) {
+export function getOnlyMatchedItems(order: Order, conditions: Condition[]) {
   let hasSubConstrain = false;
 
   const filteredItems = conditions.reduce((items, condition) => {
@@ -56,11 +47,11 @@ export function getOnlyMatchedItems(
 }
 
 export function getOrderItems(order: Order) {
-  return order.itemManager.flattenItems.filter(item => times(
-    item.quantity,
-    minus(
-      item.unitPrice,
-      order.parent?.itemManager.collectionMap.get(item.uuid)?.discountValue || 0,
-    ),
-  ) > 0)
+  return order.itemManager.flattenItems.filter(
+    item =>
+      times(
+        item.quantity,
+        minus(item.unitPrice, order.parent?.itemManager.collectionMap.get(item.uuid)?.discountValue || 0),
+      ) > 0,
+  );
 }

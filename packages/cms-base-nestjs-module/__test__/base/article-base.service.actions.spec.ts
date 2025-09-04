@@ -11,18 +11,12 @@ jest.mock('@nestjs/common', () => ({
 }));
 
 import { ArticleStage } from '../../src/typings/article-stage.enum';
-import {
-  ArticleNotFoundError,
-  ArticleVersionNotFoundError,
-} from '../../src/constants/errors/article.errors';
+import { ArticleNotFoundError, ArticleVersionNotFoundError } from '../../src/constants/errors/article.errors';
 import { ArticleBaseService } from '../../src/services/article-base.service';
 import { SignatureService } from '../../src/services/signature.service';
 import { BadRequestException } from '@nestjs/common';
 import { CategoryNotFoundError } from '../../src/constants/errors/category.errors';
-import {
-  MultiLanguageArticleCreateDto,
-  SingleArticleCreateDto,
-} from '../../src/typings/article-create.dto';
+import { MultiLanguageArticleCreateDto, SingleArticleCreateDto } from '../../src/typings/article-create.dto';
 import { MultipleLanguageModeIsDisabledError } from '../../src/constants/errors/base.errors';
 import { QuadratsElement } from '@quadrats/core';
 
@@ -64,18 +58,13 @@ describe('ArticleBaseService - deleteVersion', () => {
 
     mockArticleVersionRepo.createQueryBuilder.mockReturnValue(mockQb);
 
-    await expect(service.deleteVersion('article-id', 2)).rejects.toThrow(
-      ArticleVersionNotFoundError,
-    );
+    await expect(service.deleteVersion('article-id', 2)).rejects.toThrow(ArticleVersionNotFoundError);
 
     expect(mockQb.andWhere).toHaveBeenCalledWith('versions.articleId = :id', {
       id: 'article-id',
     });
 
-    expect(mockQb.andWhere).toHaveBeenCalledWith(
-      'versions.version = :version',
-      { version: 2 },
-    );
+    expect(mockQb.andWhere).toHaveBeenCalledWith('versions.version = :version', { version: 2 });
   });
 
   it('should softRemove the found version', async () => {
@@ -126,9 +115,7 @@ describe('ArticleBaseService - archive', () => {
   it('should throw ArticleNotFoundError if article is not found', async () => {
     mockArticleRepo.findOne.mockResolvedValue(null);
 
-    await expect(service.archive('article-id')).rejects.toThrow(
-      ArticleNotFoundError,
-    );
+    await expect(service.archive('article-id')).rejects.toThrow(ArticleNotFoundError);
 
     expect(mockArticleRepo.findOne).toHaveBeenCalledWith({
       where: { id: 'article-id' },
@@ -238,14 +225,11 @@ describe('withdraw', () => {
       mockSignatureService as any, // signatureService
     );
 
-    await expect(service.withdraw('id', 1)).rejects.toThrow(
-      'Draft mode is disabled.',
-    );
+    await expect(service.withdraw('id', 1)).rejects.toThrow('Draft mode is disabled.');
   });
 
   it('should throw if article is not in RELEASED or SCHEDULED stage', async () => {
-    const stageLoader = service['articleDataLoader'].stageLoader
-      .load as jest.Mock;
+    const stageLoader = service['articleDataLoader'].stageLoader.load as jest.Mock;
 
     jest.spyOn(service, 'findById').mockResolvedValue({ id: 'id', version: 1 });
 
@@ -269,8 +253,7 @@ describe('withdraw', () => {
       return Promise.resolve({ id, version: 99 }) as any;
     });
 
-    const stageLoader = service['articleDataLoader'].stageLoader
-      .load as jest.Mock;
+    const stageLoader = service['articleDataLoader'].stageLoader.load as jest.Mock;
 
     stageLoader.mockResolvedValue('RELEASED');
 
@@ -316,8 +299,7 @@ describe('withdraw', () => {
   it('should rollback transaction if error occurs', async () => {
     jest.spyOn(service, 'findById').mockResolvedValue({ id: 'id', version: 1 });
 
-    const stageLoader = service['articleDataLoader'].stageLoader
-      .load as jest.Mock;
+    const stageLoader = service['articleDataLoader'].stageLoader.load as jest.Mock;
 
     stageLoader.mockResolvedValue('RELEASED');
 
@@ -325,9 +307,7 @@ describe('withdraw', () => {
       throw new Error('Soft delete failed');
     });
 
-    await expect(service.withdraw('id', 1)).rejects.toThrow(
-      'Soft delete failed',
-    );
+    await expect(service.withdraw('id', 1)).rejects.toThrow('Soft delete failed');
 
     expect(runner.rollbackTransaction).toHaveBeenCalled();
     expect(runner.release).toHaveBeenCalled();
@@ -367,35 +347,29 @@ describe('withdraw', () => {
       } as any, // signatureService
     );
 
-    const findByIdSpy = jest
-      .spyOn(service, 'findById')
-      .mockImplementation((id, options: any) => {
-        if (options?.stage === ArticleStage.VERIFIED) {
-          return Promise.resolve({ id, version: 2 }) as any;
-        }
+    const findByIdSpy = jest.spyOn(service, 'findById').mockImplementation((id, options: any) => {
+      if (options?.stage === ArticleStage.VERIFIED) {
+        return Promise.resolve({ id, version: 2 }) as any;
+      }
 
-        if (options?.version === 1) {
-          return Promise.resolve({
-            id,
-            version: 1,
-            releasedAt: new Date(),
-          }) as any;
-        }
+      if (options?.version === 1) {
+        return Promise.resolve({
+          id,
+          version: 1,
+          releasedAt: new Date(),
+        }) as any;
+      }
 
-        return Promise.resolve({ id, version: 99 }) as any;
-      });
+      return Promise.resolve({ id, version: 99 }) as any;
+    });
 
     await service.withdraw('id', 1);
 
-    expect(findByIdSpy).toHaveBeenCalledWith(
-      'id',
-      expect.objectContaining({ stage: ArticleStage.VERIFIED }),
-    );
+    expect(findByIdSpy).toHaveBeenCalledWith('id', expect.objectContaining({ stage: ArticleStage.VERIFIED }));
   });
 
   it('should continue even if findById for targetPlaceArticle throws', async () => {
-    const stageLoader = service['articleDataLoader'].stageLoader
-      .load as jest.Mock;
+    const stageLoader = service['articleDataLoader'].stageLoader.load as jest.Mock;
 
     stageLoader.mockResolvedValue(ArticleStage.RELEASED);
 
@@ -482,13 +456,9 @@ describe('release', () => {
 
     jest
       .spyOn(service, 'findById')
-      .mockImplementationOnce(
-        () => Promise.resolve({ id: 'id', version: 1 }) as any,
-      )
+      .mockImplementationOnce(() => Promise.resolve({ id: 'id', version: 1 }) as any)
       .mockImplementationOnce(() => Promise.reject(new Error('not found')))
-      .mockImplementationOnce(
-        () => Promise.resolve({ id: 'id', version: 1 }) as any,
-      );
+      .mockImplementationOnce(() => Promise.resolve({ id: 'id', version: 1 }) as any);
 
     const result = await service.release('id', { releasedAt: now });
 
@@ -508,15 +478,9 @@ describe('release', () => {
   it('should remove existing released/scheduled version if it differs', async () => {
     jest
       .spyOn(service, 'findById')
-      .mockImplementationOnce(
-        () => Promise.resolve({ id: 'id', version: 2 }) as any,
-      )
-      .mockImplementationOnce(
-        () => Promise.resolve({ id: 'id', version: 1 }) as any,
-      )
-      .mockImplementationOnce(
-        () => Promise.resolve({ id: 'id', version: 2 }) as any,
-      );
+      .mockImplementationOnce(() => Promise.resolve({ id: 'id', version: 2 }) as any)
+      .mockImplementationOnce(() => Promise.resolve({ id: 'id', version: 1 }) as any)
+      .mockImplementationOnce(() => Promise.resolve({ id: 'id', version: 2 }) as any);
 
     const result = await service.release('id', { releasedAt: new Date() });
 
@@ -535,19 +499,13 @@ describe('release', () => {
   });
 
   it('should rollback transaction if update fails', async () => {
-    jest
-      .spyOn(service, 'findById')
-      .mockImplementation(
-        () => Promise.resolve({ id: 'id', version: 1 }) as any,
-      );
+    jest.spyOn(service, 'findById').mockImplementation(() => Promise.resolve({ id: 'id', version: 1 }) as any);
 
     runner.manager.update.mockImplementation(() => {
       throw new Error('update failed');
     });
 
-    await expect(
-      service.release('id', { releasedAt: new Date() }),
-    ).rejects.toThrow('update failed');
+    await expect(service.release('id', { releasedAt: new Date() })).rejects.toThrow('update failed');
 
     expect(runner.rollbackTransaction).toHaveBeenCalled();
     expect(runner.release).toHaveBeenCalled();
@@ -556,13 +514,9 @@ describe('release', () => {
   it('should assign releasedBy if userId is provided', async () => {
     jest
       .spyOn(service, 'findById')
-      .mockImplementationOnce(
-        () => Promise.resolve({ id: 'id', version: 1 }) as any,
-      )
+      .mockImplementationOnce(() => Promise.resolve({ id: 'id', version: 1 }) as any)
       .mockImplementationOnce(() => Promise.reject(null))
-      .mockImplementationOnce(
-        () => Promise.resolve({ id: 'id', version: 1 }) as any,
-      );
+      .mockImplementationOnce(() => Promise.resolve({ id: 'id', version: 1 }) as any);
 
     const now = new Date();
 
@@ -576,9 +530,7 @@ describe('release', () => {
   });
 
   it('should default to RELEASED if releasedAt is not provided', async () => {
-    const findByIdSpy = jest
-      .spyOn(service, 'findById')
-      .mockResolvedValue({ id: 'id', version: 1 } as any);
+    const findByIdSpy = jest.spyOn(service, 'findById').mockResolvedValue({ id: 'id', version: 1 } as any);
 
     await service.release('id', { version: 1 });
 
@@ -591,9 +543,7 @@ describe('release', () => {
   });
 
   it('should call findById with SCHEDULED stage if releasedAt is in the future', async () => {
-    const findByIdSpy = jest
-      .spyOn(service, 'findById')
-      .mockResolvedValue({ id: 'id', version: 1 } as any);
+    const findByIdSpy = jest.spyOn(service, 'findById').mockResolvedValue({ id: 'id', version: 1 } as any);
 
     await service.release('id', {
       releasedAt: new Date(Date.now() + 60_000),
@@ -672,9 +622,7 @@ describe('submit', () => {
       { signatureEnabled: false } as any,
     );
 
-    await expect(service.submit('id')).rejects.toThrow(
-      'Signature mode is disabled.',
-    );
+    await expect(service.submit('id')).rejects.toThrow('Signature mode is disabled.');
   });
 
   it('should throw if article is already submitted', async () => {
@@ -684,9 +632,7 @@ describe('submit', () => {
       submittedAt: new Date(),
     } as any);
 
-    await expect(service.submit('id')).rejects.toThrow(
-      'Article id is already submitted',
-    );
+    await expect(service.submit('id')).rejects.toThrow('Article id is already submitted');
   });
 
   it('should softRemove old REVIEWING version if exists and update current version', async () => {
@@ -734,9 +680,7 @@ describe('submit', () => {
   });
 
   it('should rollback transaction if error occurs', async () => {
-    jest
-      .spyOn(service, 'findById')
-      .mockResolvedValue({ id: 'id', version: 1 } as any);
+    jest.spyOn(service, 'findById').mockResolvedValue({ id: 'id', version: 1 } as any);
 
     runner.manager.update.mockImplementation(() => {
       throw new Error('Update failed');
@@ -814,9 +758,7 @@ describe('putBack', () => {
       { signatureEnabled: false } as any,
     );
 
-    await expect(service.putBack('id')).rejects.toThrow(
-      'Signature mode is disabled.',
-    );
+    await expect(service.putBack('id')).rejects.toThrow('Signature mode is disabled.');
   });
 
   it('should throw if draft article already exists', async () => {
@@ -832,9 +774,7 @@ describe('putBack', () => {
       }) as any;
     });
 
-    await expect(service.putBack('id')).rejects.toThrow(
-      'Article id is already in draft [2].',
-    );
+    await expect(service.putBack('id')).rejects.toThrow('Article id is already in draft [2].');
   });
 
   it('should throw if article is not submitted yet', async () => {
@@ -846,9 +786,7 @@ describe('putBack', () => {
       return Promise.resolve({ id, version: 1, submittedAt: null }) as any;
     });
 
-    await expect(service.putBack('id')).rejects.toThrow(
-      'Article id is not submitted yet [1].',
-    );
+    await expect(service.putBack('id')).rejects.toThrow('Article id is not submitted yet [1].');
   });
 
   it('should update submittedAt and submittedBy to null', async () => {
@@ -1092,7 +1030,7 @@ describe('ArticleBaseService.addVersion', () => {
       softRemove: jest.fn(),
       softDelete: jest.fn(),
       update: jest.fn(),
-      create: jest.fn((input) => input),
+      create: jest.fn(input => input),
       createQueryBuilder: jest.fn(),
       metadata: {
         tableName,
@@ -1129,7 +1067,7 @@ describe('ArticleBaseService.addVersion', () => {
       release: jest.fn(),
       query: jest.fn().mockResolvedValue([]),
       manager: {
-        save: jest.fn().mockImplementation((data) => Promise.resolve(data)),
+        save: jest.fn().mockImplementation(data => Promise.resolve(data)),
         softRemove: jest.fn().mockResolvedValue(undefined),
         softDelete: jest.fn().mockResolvedValue(undefined),
         update: jest.fn().mockResolvedValue(undefined),
@@ -1184,10 +1122,7 @@ describe('ArticleBaseService.addVersion', () => {
   });
 
   it('should add version with single-language content', async () => {
-    jest
-      .spyOn(service, 'findById')
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(mockVersion);
+    jest.spyOn(service, 'findById').mockResolvedValueOnce(null).mockResolvedValueOnce(mockVersion);
 
     mockCategoryRepo.find.mockResolvedValue([{ id: 'cat-1', bindable: true }]);
     mockArticleRepo.findOne.mockResolvedValue(mockArticle);
@@ -1213,10 +1148,7 @@ describe('ArticleBaseService.addVersion', () => {
   });
 
   it('should add version with multi-language content', async () => {
-    jest
-      .spyOn(service, 'findById')
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(mockVersion);
+    jest.spyOn(service, 'findById').mockResolvedValueOnce(null).mockResolvedValueOnce(mockVersion);
 
     mockCategoryRepo.find.mockResolvedValue([{ id: 'cat-1', bindable: true }]);
     mockArticleRepo.findOne.mockResolvedValue(mockArticle);
@@ -1298,10 +1230,7 @@ describe('ArticleBaseService.addVersion', () => {
   });
 
   it('should rollback transaction on failure', async () => {
-    jest
-      .spyOn(service, 'findById')
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(mockVersion);
+    jest.spyOn(service, 'findById').mockResolvedValueOnce(null).mockResolvedValueOnce(mockVersion);
 
     mockCategoryRepo.find.mockResolvedValue([{ id: 'cat-1', bindable: true }]);
     mockArticleRepo.findOne.mockResolvedValue(mockArticle);
@@ -1329,14 +1258,9 @@ describe('ArticleBaseService.addVersion', () => {
   });
 
   it('should call approveVersion if signatureLevel or releasedAt is provided', async () => {
-    const approveVersionSpy = jest
-      .spyOn(service, 'approveVersion')
-      .mockResolvedValue({} as any);
+    const approveVersionSpy = jest.spyOn(service, 'approveVersion').mockResolvedValue({} as any);
 
-    jest
-      .spyOn(service, 'findById')
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(mockVersion);
+    jest.spyOn(service, 'findById').mockResolvedValueOnce(null).mockResolvedValueOnce(mockVersion);
 
     mockCategoryRepo.find.mockResolvedValue([{ id: 'cat-1', bindable: true }]);
     mockArticleRepo.findOne.mockResolvedValue(mockArticle);
@@ -1360,10 +1284,7 @@ describe('ArticleBaseService.addVersion', () => {
   });
 
   it('should add version with empty categories if categoryIds is not provided', async () => {
-    jest
-      .spyOn(service, 'findById')
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(mockVersion);
+    jest.spyOn(service, 'findById').mockResolvedValueOnce(null).mockResolvedValueOnce(mockVersion);
 
     mockCategoryRepo.find.mockResolvedValue([]);
     mockArticleRepo.findOne.mockResolvedValue(mockArticle);
@@ -1389,10 +1310,7 @@ describe('ArticleBaseService.addVersion', () => {
   });
 
   it('should not throw CategoryNotFoundError when categoryIds is undefined and targetCategories is empty', async () => {
-    jest
-      .spyOn(service, 'findById')
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(mockVersion);
+    jest.spyOn(service, 'findById').mockResolvedValueOnce(null).mockResolvedValueOnce(mockVersion);
 
     mockCategoryRepo.find.mockResolvedValue([]);
     mockArticleRepo.findOne.mockResolvedValue(mockArticle);
@@ -1417,19 +1335,14 @@ describe('ArticleBaseService.addVersion', () => {
   });
 
   it('should log warning when article has categories and categoryIds is not provided', async () => {
-    const loggerWarnSpy = jest
-      .spyOn(service['logger'], 'warn')
-      .mockImplementation();
+    const loggerWarnSpy = jest.spyOn(service['logger'], 'warn').mockImplementation();
 
     const articleWithCategories = {
       id: 'article-1',
       categories: [{ id: 'cat-a' }, { id: 'cat-b' }],
     };
 
-    jest
-      .spyOn(service, 'findById')
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(mockVersion);
+    jest.spyOn(service, 'findById').mockResolvedValueOnce(null).mockResolvedValueOnce(mockVersion);
 
     mockCategoryRepo.find.mockResolvedValue([]); // should not be called, but safe fallback
     mockArticleRepo.findOne.mockResolvedValue(articleWithCategories);
@@ -1473,10 +1386,7 @@ describe('ArticleBaseService.addVersion', () => {
       mockSignatureService as any,
     );
 
-    jest
-      .spyOn(service, 'findById')
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(mockVersion);
+    jest.spyOn(service, 'findById').mockResolvedValueOnce(null).mockResolvedValueOnce(mockVersion);
 
     mockCategoryRepo.find.mockResolvedValue([]);
     mockArticleRepo.findOne.mockResolvedValue(mockArticle);
@@ -1530,10 +1440,7 @@ describe('ArticleBaseService.addVersion', () => {
       mockSignatureService as any,
     );
 
-    jest
-      .spyOn(service, 'findById')
-      .mockResolvedValueOnce(placedArticle)
-      .mockResolvedValueOnce(latestVersion);
+    jest.spyOn(service, 'findById').mockResolvedValueOnce(placedArticle).mockResolvedValueOnce(latestVersion);
 
     mockCategoryRepo.find.mockResolvedValue([]);
     mockArticleRepo.findOne.mockResolvedValue(mockArticle);
@@ -1553,13 +1460,10 @@ describe('ArticleBaseService.addVersion', () => {
       tags: [],
     });
 
-    expect(runner.manager.softRemove).toHaveBeenCalledWith(
-      mockVersionRepo.metadata.tableName,
-      {
-        articleId: 'article-1',
-        version: 99,
-      },
-    );
+    expect(runner.manager.softRemove).toHaveBeenCalledWith(mockVersionRepo.metadata.tableName, {
+      articleId: 'article-1',
+      version: 99,
+    });
   });
 
   it('should set releasedBy when releasedAt is provided', async () => {
@@ -1571,7 +1475,7 @@ describe('ArticleBaseService.addVersion', () => {
       release: jest.fn(),
       query: jest.fn().mockResolvedValue([]),
       manager: {
-        save: jest.fn().mockImplementation((data) => Promise.resolve(data)),
+        save: jest.fn().mockImplementation(data => Promise.resolve(data)),
         softRemove: jest.fn().mockResolvedValue(undefined),
         softDelete: jest.fn().mockResolvedValue(undefined),
         update: jest.fn().mockResolvedValue(undefined),
@@ -1580,10 +1484,7 @@ describe('ArticleBaseService.addVersion', () => {
       },
     };
 
-    jest
-      .spyOn(service, 'findById')
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(mockVersion);
+    jest.spyOn(service, 'findById').mockResolvedValueOnce(null).mockResolvedValueOnce(mockVersion);
 
     mockCategoryRepo.find.mockResolvedValue([]);
     mockArticleRepo.findOne.mockResolvedValue(mockArticle);
@@ -1664,13 +1565,9 @@ describe('ArticleBaseService.addVersion', () => {
       categories: [],
     });
 
-    (
-      mockVersionRepo.createQueryBuilder().getOne as jest.Mock
-    ).mockResolvedValue(mockVersion);
+    (mockVersionRepo.createQueryBuilder().getOne as jest.Mock).mockResolvedValue(mockVersion);
 
-    await expect(service.addVersion('article-1', dto)).rejects.toThrow(
-      new MultipleLanguageModeIsDisabledError(),
-    );
+    await expect(service.addVersion('article-1', dto)).rejects.toThrow(new MultipleLanguageModeIsDisabledError());
   });
 
   it('should fallback to empty array when options.tags is undefined (multi-language)', async () => {
@@ -1754,9 +1651,7 @@ describe('ArticleBaseService.addVersion', () => {
       getOne: jest.fn().mockResolvedValue(mockVersion),
     });
 
-    const bindSearchTokensMock = jest
-      .spyOn(service as any, 'bindSearchTokens')
-      .mockResolvedValue(undefined);
+    const bindSearchTokensMock = jest.spyOn(service as any, 'bindSearchTokens').mockResolvedValue(undefined);
 
     runner.manager.save.mockImplementation((input: any) => {
       if (Array.isArray(input)) {
@@ -1856,9 +1751,7 @@ describe('ArticleBaseService.addVersion', () => {
       getOne: jest.fn().mockResolvedValue(mockVersion),
     });
 
-    const bindSearchTokensMock = jest
-      .spyOn(service as any, 'bindSearchTokens')
-      .mockResolvedValue(undefined);
+    const bindSearchTokensMock = jest.spyOn(service as any, 'bindSearchTokens').mockResolvedValue(undefined);
 
     runner.manager.save.mockImplementation((input: any) => {
       if (input?.language) {
@@ -1899,9 +1792,7 @@ describe('ArticleBaseService.addVersion', () => {
     runner.manager.exists = jest.fn().mockResolvedValue(true);
     runner.manager.createQueryBuilder = jest.fn(() => mockQueryBuilder);
 
-    const mockContent: QuadratsElement[] = [
-      { type: 'paragraph', children: [{ text: 'Past release' }] },
-    ];
+    const mockContent: QuadratsElement[] = [{ type: 'paragraph', children: [{ text: 'Past release' }] }];
 
     const pastDate = new Date(Date.now() - 10000);
 
@@ -1974,9 +1865,7 @@ describe('ArticleBaseService.addVersion', () => {
     jest.spyOn(service as any, 'bindSearchTokens').mockResolvedValue(undefined);
     jest.spyOn(service as any, 'approveVersion').mockResolvedValue(undefined);
 
-    const mockContent: QuadratsElement[] = [
-      { type: 'paragraph', children: [{ text: 'Verified content' }] },
-    ];
+    const mockContent: QuadratsElement[] = [{ type: 'paragraph', children: [{ text: 'Verified content' }] }];
 
     const dto: SingleArticleCreateDto = {
       userId: 'user-1',
@@ -1997,9 +1886,7 @@ describe('ArticleBaseService.addVersion', () => {
       withDeleted: jest.fn().mockReturnThis(),
       andWhere: jest.fn().mockReturnThis(),
       addOrderBy: jest.fn().mockReturnThis(),
-      getOne: jest
-        .fn()
-        .mockResolvedValue({ articleId: 'article-1', version: 1 }),
+      getOne: jest.fn().mockResolvedValue({ articleId: 'article-1', version: 1 }),
     });
 
     runner.manager.save.mockImplementation((input: any) => {
@@ -2049,7 +1936,7 @@ describe('ArticleBaseService.create', () => {
       find: jest.fn(),
       findOne: jest.fn(),
       save: jest.fn(),
-      create: jest.fn((input) => input),
+      create: jest.fn(input => input),
       metadata: { tableName: 'mock_table' },
     });
 
@@ -2060,7 +1947,7 @@ describe('ArticleBaseService.create', () => {
       rollbackTransaction: jest.fn(),
       release: jest.fn(),
       manager: {
-        save: jest.fn().mockImplementation((data) => Promise.resolve(data)),
+        save: jest.fn().mockImplementation(data => Promise.resolve(data)),
       },
     };
 
@@ -2254,13 +2141,9 @@ describe('ArticleBaseService.create', () => {
 
     expect((versionInput as any).releasedAt).toBeInstanceOf(Date);
 
-    expect((versionInput as any).releasedAt.getTime()).toBeGreaterThanOrEqual(
-      before,
-    );
+    expect((versionInput as any).releasedAt.getTime()).toBeGreaterThanOrEqual(before);
 
-    expect((versionInput as any).releasedAt.getTime()).toBeLessThanOrEqual(
-      after,
-    );
+    expect((versionInput as any).releasedAt.getTime()).toBeLessThanOrEqual(after);
   });
 
   it('should bind search tokens with empty tags when options.tags is undefined', async () => {
@@ -2268,9 +2151,7 @@ describe('ArticleBaseService.create', () => {
     service.fullTextSearchMode = true;
     mockCategoryRepo.find.mockResolvedValue([]);
 
-    const bindSpy = jest
-      .spyOn(service as any, 'bindSearchTokens')
-      .mockResolvedValue(undefined);
+    const bindSpy = jest.spyOn(service as any, 'bindSearchTokens').mockResolvedValue(undefined);
 
     await service.create({
       userId: 'user-1',
@@ -2387,20 +2268,16 @@ describe('ArticleBaseService.rejectVersion', () => {
 
     service.findById.mockResolvedValue(reviewingArticle);
 
-    const result = await service.rejectVersion(
-      { id: 'article-1' },
-      { reason: 'Invalid content', runner: {} as any },
-    );
+    const result = await service.rejectVersion({ id: 'article-1' }, { reason: 'Invalid content', runner: {} as any });
 
     expect(service.findById).toHaveBeenCalledWith('article-1', {
       stage: 'REVIEWING',
     });
 
-    expect(service.signature).toHaveBeenCalledWith(
-      'REJECTED',
-      reviewingArticle,
-      { reason: 'Invalid content', runner: {} },
-    );
+    expect(service.signature).toHaveBeenCalledWith('REJECTED', reviewingArticle, {
+      reason: 'Invalid content',
+      runner: {},
+    });
 
     expect(result).toEqual({ id: 'mock-id' });
   });
@@ -2412,11 +2289,7 @@ describe('ArticleBaseService.rejectVersion', () => {
 
     const result = await service.rejectVersion({ id: 'article-2' });
 
-    expect(service.signature).toHaveBeenCalledWith(
-      'REJECTED',
-      reviewingArticle,
-      undefined,
-    );
+    expect(service.signature).toHaveBeenCalledWith('REJECTED', reviewingArticle, undefined);
 
     expect(result).toEqual({ id: 'mock-id' });
   });

@@ -19,9 +19,7 @@ function resolveTypeName(type: any): string {
 describe('ArticleSignatureEntity relations', () => {
   it('should have a ManyToOne relation to BaseArticleVersionEntity with correct join columns', () => {
     const relation = getMetadataArgsStorage().relations.find(
-      (r) =>
-        r.target === ArticleSignatureEntity &&
-        r.propertyName === 'articleVersion',
+      r => r.target === ArticleSignatureEntity && r.propertyName === 'articleVersion',
     );
 
     expect(relation).toBeDefined();
@@ -29,9 +27,7 @@ describe('ArticleSignatureEntity relations', () => {
     expect(resolveTypeName(relation?.type)).toBe('BaseArticleVersionEntity');
 
     const joinColumns = getMetadataArgsStorage().joinColumns.filter(
-      (jc) =>
-        jc.target === ArticleSignatureEntity &&
-        jc.propertyName === 'articleVersion',
+      jc => jc.target === ArticleSignatureEntity && jc.propertyName === 'articleVersion',
     );
 
     expect(joinColumns).toEqual(
@@ -50,9 +46,7 @@ describe('ArticleSignatureEntity relations', () => {
 
   it('should have a ManyToOne relation to BaseSignatureLevelEntity (nullable)', () => {
     const relation = getMetadataArgsStorage().relations.find(
-      (r) =>
-        r.target === ArticleSignatureEntity &&
-        r.propertyName === 'signatureLevel',
+      r => r.target === ArticleSignatureEntity && r.propertyName === 'signatureLevel',
     );
 
     expect(relation).toBeDefined();
@@ -61,9 +55,7 @@ describe('ArticleSignatureEntity relations', () => {
     expect(relation?.options?.nullable).toBe(true);
 
     const joinColumns = getMetadataArgsStorage().joinColumns.filter(
-      (jc) =>
-        jc.target === ArticleSignatureEntity &&
-        jc.propertyName === 'signatureLevel',
+      jc => jc.target === ArticleSignatureEntity && jc.propertyName === 'signatureLevel',
     );
 
     expect(joinColumns).toEqual(
@@ -78,9 +70,7 @@ describe('ArticleSignatureEntity relations', () => {
 
   it('should define inverse side for articleVersion', () => {
     const relation = getMetadataArgsStorage().relations.find(
-      (r) =>
-        r.target === ArticleSignatureEntity &&
-        r.propertyName === 'articleVersion',
+      r => r.target === ArticleSignatureEntity && r.propertyName === 'articleVersion',
     );
 
     expect(relation).toBeDefined();
@@ -96,9 +86,7 @@ describe('ArticleSignatureEntity relations', () => {
 
   it('should define inverse side for signatureLevel', () => {
     const relation = getMetadataArgsStorage().relations.find(
-      (r) =>
-        r.target === ArticleSignatureEntity &&
-        r.propertyName === 'signatureLevel',
+      r => r.target === ArticleSignatureEntity && r.propertyName === 'signatureLevel',
     );
 
     expect(relation).toBeDefined();

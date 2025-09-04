@@ -27,7 +27,7 @@ describe('Quadrats Nestjs Module - Tag Service', () => {
 
     const request = jest.spyOn(axios, 'request');
 
-    request.mockImplementationOnce(async (config) => {
+    request.mockImplementationOnce(async config => {
       expect(config.url).toBe(`${HOST}/graphql`);
 
       const data = JSON.parse(config.data as string) as {
@@ -36,8 +36,8 @@ describe('Quadrats Nestjs Module - Tag Service', () => {
           auth: {
             accessKey: string;
             secret: string;
-          }
-        }
+          };
+        };
       };
 
       expect(data.variables.auth.accessKey).toBe(ACCESS_KEY);

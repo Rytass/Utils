@@ -53,12 +53,12 @@ export class BaseMemberEntity {
   @DeleteDateColumn()
   deletedAt: Date | null;
 
-  @OneToMany(() => MemberLoginLogEntity, (log) => log.member)
+  @OneToMany(() => MemberLoginLogEntity, log => log.member)
   loginLogs: Relation<MemberLoginLogEntity[]>;
 
-  @OneToMany(() => MemberLoginLogEntity, (log) => log.member)
+  @OneToMany(() => MemberLoginLogEntity, log => log.member)
   passwordHistories: Relation<MemberPasswordHistoryEntity[]>;
 
-  @OneToMany(() => MemberOAuthRecordEntity, (record) => record.member)
+  @OneToMany(() => MemberOAuthRecordEntity, record => record.member)
   oauthRecords: Relation<MemberOAuthRecordEntity[]>;
 }

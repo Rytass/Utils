@@ -1,9 +1,5 @@
 import { LogisticsError } from '@rytass/logistics';
-import {
-  CtcLogisticsService,
-  CtcLogistics,
-  CreateOrUpdateCtcLogisticsOptions,
-} from '../src';
+import { CtcLogisticsService, CtcLogistics, CreateOrUpdateCtcLogisticsOptions } from '../src';
 import axios from 'axios';
 
 describe('delivery-adapter-ctc', () => {
@@ -16,9 +12,7 @@ describe('delivery-adapter-ctc', () => {
       const logisticId = ['R25061100009'];
 
       get.mockImplementationOnce(async (url: string, data: any) => {
-        expect(url).toBe(
-          'https://tms2.ctc-express.cloud/api/v1/customer/orders/R25061100009',
-        );
+        expect(url).toBe('https://tms2.ctc-express.cloud/api/v1/customer/orders/R25061100009');
 
         return {
           status: 200,
@@ -39,9 +33,7 @@ describe('delivery-adapter-ctc', () => {
       try {
         const result = await logisticsService.trace(logisticId);
       } catch (error) {
-        console.error(
-          `Error occurred: ${error instanceof LogisticsError ? error.message : error}`,
-        );
+        console.error(`Error occurred: ${error instanceof LogisticsError ? error.message : error}`);
       }
     });
 
@@ -55,9 +47,7 @@ describe('delivery-adapter-ctc', () => {
       const logisticId = ['R25061100009'];
 
       get.mockImplementationOnce(async (url: string, data: any) => {
-        expect(url).toBe(
-          'https://tms2.ctc-express.cloud/api/v1/customer/orders/ABCD202507170001',
-        );
+        expect(url).toBe('https://tms2.ctc-express.cloud/api/v1/customer/orders/ABCD202507170001');
 
         return {
           status: 200,
@@ -78,9 +68,7 @@ describe('delivery-adapter-ctc', () => {
       try {
         const result = await logisticsService.trace(logisticId);
       } catch (error) {
-        console.error(
-          `Error occurred: ${error instanceof LogisticsError ? error.message : error}`,
-        );
+        console.error(`Error occurred: ${error instanceof LogisticsError ? error.message : error}`);
       }
     });
   });
@@ -131,9 +119,7 @@ describe('delivery-adapter-ctc', () => {
     });
 
     get.mockImplementationOnce(async (url: string, data: any) => {
-      expect(url).toBe(
-        'https://tms2.ctc-express.cloud/api/v1/customer/orders/R25061100009',
-      );
+      expect(url).toBe('https://tms2.ctc-express.cloud/api/v1/customer/orders/R25061100009');
 
       return {
         status: 200,
@@ -152,18 +138,13 @@ describe('delivery-adapter-ctc', () => {
     });
 
     it('should create a new logistics with default configuration', async () => {
-      const result = await logisticsService.create(
-        createOrUpdateCtcLogisticsOptions,
-      );
+      const result = await logisticsService.create(createOrUpdateCtcLogisticsOptions);
     });
 
     it('should update a logistics with default configuration', async () => {
-      createOrUpdateCtcLogisticsOptions.receiverCompany =
-        'Updated Receiver Name';
+      createOrUpdateCtcLogisticsOptions.receiverCompany = 'Updated Receiver Name';
 
-      const result = await logisticsService.update(
-        createOrUpdateCtcLogisticsOptions,
-      );
+      const result = await logisticsService.update(createOrUpdateCtcLogisticsOptions);
     });
   });
 });

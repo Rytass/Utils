@@ -34,6 +34,7 @@ yarn add @rytass/payments-adapter-ecpay @rytass/payments-adapter-newebpay
 ```
 
 **Peer Dependencies:**
+
 ```bash
 npm install @nestjs/common @nestjs/core
 ```
@@ -57,11 +58,11 @@ import { ECPayPayment } from '@rytass/payments-adapter-ecpay';
         hashIv: process.env.ECPAY_HASH_IV!,
         serverHost: process.env.SERVER_HOST || 'http://localhost:3000',
         withServer: true,
-        onCommit: (order) => {
+        onCommit: order => {
           console.log('Payment committed:', order);
-        }
-      })
-    })
+        },
+      }),
+    }),
   ],
   // ...
 })
@@ -90,12 +91,12 @@ import { ECPayPayment } from '@rytass/payments-adapter-ecpay';
           hashIv: configService.get('ECPAY_HASH_IV')!,
           serverHost: configService.get('SERVER_HOST') || 'http://localhost:3000',
           withServer: true,
-          onCommit: (order) => {
+          onCommit: order => {
             // Handle payment completion
-          }
-        })
-      })
-    })
+          },
+        }),
+      }),
+    }),
   ],
 })
 export class AppModule {}
@@ -115,18 +116,18 @@ export class PaymentService {
 
   constructor(
     @Inject(PAYMENTS_GATEWAY)
-    private readonly paymentGateway: PaymentGateway
+    private readonly paymentGateway: PaymentGateway,
   ) {
     this.setupEventListeners();
   }
 
   private setupEventListeners() {
-    this.paymentGateway.emitter?.on(PaymentEvents.ORDER_COMMITTED, (message) => {
+    this.paymentGateway.emitter?.on(PaymentEvents.ORDER_COMMITTED, message => {
       this.logger.log(`Payment committed: ${message.id}`);
       this.handlePaymentSuccess(message);
     });
 
-    this.paymentGateway.emitter?.on(PaymentEvents.ORDER_FAILED, (failure) => {
+    this.paymentGateway.emitter?.on(PaymentEvents.ORDER_FAILED, failure => {
       this.logger.error(`Payment failed: ${failure.code} - ${failure.message}`);
       this.handlePaymentFailure(failure);
     });
@@ -146,10 +147,10 @@ export class PaymentService {
           {
             name: orderData.itemName,
             unitPrice: orderData.amount,
-            quantity: orderData.quantity || 1
-          }
+            quantity: orderData.quantity || 1,
+          },
         ],
-        clientBackUrl: orderData.returnUrl
+        clientBackUrl: orderData.returnUrl,
       });
 
       this.logger.log(`Payment order created: ${order.id}`);
@@ -161,7 +162,7 @@ export class PaymentService {
         formHtml: order.formHTML,
         formData: order.form,
         state: order.state,
-        createdAt: order.createdAt
+        createdAt: order.createdAt,
       };
     } catch (error) {
       this.logger.error(`Failed to create payment: ${error.message}`);
@@ -172,7 +173,7 @@ export class PaymentService {
   async queryPayment(orderId: string) {
     try {
       const order = await this.paymentGateway.query(orderId);
-      
+
       return {
         orderId: order.id,
         state: order.state,
@@ -180,7 +181,7 @@ export class PaymentService {
         createdAt: order.createdAt,
         committedAt: order.committedAt,
         isCommitted: order.state === OrderState.COMMITTED,
-        isFailed: order.state === OrderState.FAILED
+        isFailed: order.state === OrderState.FAILED,
       };
     } catch (error) {
       this.logger.error(`Failed to query payment ${orderId}: ${error.message}`);
@@ -229,14 +230,15 @@ The module automatically provides the following REST endpoints:
 
 ### Payment Endpoints
 
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|---------|
-| `GET` | `/payments/checkout/:orderNo` | Payment checkout page for order | Public |
-| `POST` | `/payments/callbacks` | Payment gateway callbacks and webhooks | Public |
+| Method | Endpoint                      | Description                            | Access |
+| ------ | ----------------------------- | -------------------------------------- | ------ |
+| `GET`  | `/payments/checkout/:orderNo` | Payment checkout page for order        | Public |
+| `POST` | `/payments/callbacks`         | Payment gateway callbacks and webhooks | Public |
 
 ### Endpoint Details
 
 #### Checkout Endpoint
+
 ```typescript
 // GET /payments/checkout/ORDER-2024-001
 // Automatically serves the payment form for the specified order
@@ -244,6 +246,7 @@ The module automatically provides the following REST endpoints:
 ```
 
 #### Callback Endpoint
+
 ```typescript
 // POST /payments/callbacks
 // Handles all payment gateway callbacks including:
@@ -278,10 +281,10 @@ import { HwaNanPayment } from '@rytass/payments-adapter-hwanan';
           hashKey: configService.get('ECPAY_HASH_KEY'),
           hashIv: configService.get('ECPAY_HASH_IV'),
           withServer: true,
-          serverHost: configService.get('SERVER_HOST')
+          serverHost: configService.get('SERVER_HOST'),
         });
       },
-      inject: [ConfigService]
+      inject: [ConfigService],
     },
     {
       provide: 'NEWEBPAY_GATEWAY',
@@ -291,10 +294,10 @@ import { HwaNanPayment } from '@rytass/payments-adapter-hwanan';
           hashKey: configService.get('NEWEBPAY_HASH_KEY'),
           hashIv: configService.get('NEWEBPAY_HASH_IV'),
           withServer: true,
-          serverHost: configService.get('SERVER_HOST')
+          serverHost: configService.get('SERVER_HOST'),
         });
       },
-      inject: [ConfigService]
+      inject: [ConfigService],
     },
     {
       provide: 'HWANAN_GATEWAY',
@@ -305,13 +308,13 @@ import { HwaNanPayment } from '@rytass/payments-adapter-hwanan';
           merID: configService.get('HWANAN_MER_ID'),
           merchantName: configService.get('HWANAN_MERCHANT_NAME'),
           identifier: configService.get('HWANAN_IDENTIFIER'),
-          withServer: true
+          withServer: true,
         });
       },
-      inject: [ConfigService]
-    }
+      inject: [ConfigService],
+    },
   ],
-  exports: ['ECPAY_GATEWAY', 'NEWEBPAY_GATEWAY', 'HWANAN_GATEWAY']
+  exports: ['ECPAY_GATEWAY', 'NEWEBPAY_GATEWAY', 'HWANAN_GATEWAY'],
 })
 export class MultiPaymentsModule {}
 ```
@@ -325,8 +328,8 @@ import { Channel } from '@rytass/payments';
 
 enum PaymentProvider {
   ECPAY = 'ecpay',
-  NEWEBPAY = 'newebpay', 
-  HWANAN = 'hwanan'
+  NEWEBPAY = 'newebpay',
+  HWANAN = 'hwanan',
 }
 
 @Injectable()
@@ -334,7 +337,7 @@ export class MultiPaymentService {
   constructor(
     @Inject('ECPAY_GATEWAY') private ecpayGateway: any,
     @Inject('NEWEBPAY_GATEWAY') private newebpayGateway: any,
-    @Inject('HWANAN_GATEWAY') private hwananGateway: any
+    @Inject('HWANAN_GATEWAY') private hwananGateway: any,
   ) {}
 
   private getGateway(provider: PaymentProvider) {
@@ -350,28 +353,31 @@ export class MultiPaymentService {
     }
   }
 
-  async createPayment(provider: PaymentProvider, orderData: {
-    items: Array<{
-      name: string;
-      unitPrice: number;
-      quantity: number;
-    }>;
-    channel?: Channel;
-    returnUrl?: string;
-  }) {
+  async createPayment(
+    provider: PaymentProvider,
+    orderData: {
+      items: Array<{
+        name: string;
+        unitPrice: number;
+        quantity: number;
+      }>;
+      channel?: Channel;
+      returnUrl?: string;
+    },
+  ) {
     const gateway = this.getGateway(provider);
-    
+
     const order = await gateway.prepare({
       channel: orderData.channel || Channel.CREDIT_CARD,
       items: orderData.items,
-      clientBackUrl: orderData.returnUrl
+      clientBackUrl: orderData.returnUrl,
     });
 
     return {
       provider,
       orderId: order.id,
       checkoutUrl: order.checkoutURL,
-      totalAmount: order.totalPrice
+      totalAmount: order.totalPrice,
     };
   }
 
@@ -399,9 +405,9 @@ export class MultiPaymentService {
 
 ### PaymentsModuleOptions
 
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
-| `gateway` | `PaymentGateway & WithServerGateway` | Yes | Payment gateway instance |
+| Property  | Type                                 | Required | Description              |
+| --------- | ------------------------------------ | -------- | ------------------------ |
+| `gateway` | `PaymentGateway & WithServerGateway` | Yes      | Payment gateway instance |
 
 ### Environment Variables
 
@@ -417,7 +423,7 @@ ECPAY_MERCHANT_ID=your_ecpay_merchant_id
 ECPAY_HASH_KEY=your_ecpay_hash_key
 ECPAY_HASH_IV=your_ecpay_hash_iv
 
-# NewebPay Configuration  
+# NewebPay Configuration
 NEWEBPAY_MERCHANT_ID=your_newebpay_merchant_id
 NEWEBPAY_HASH_KEY=your_newebpay_hash_key
 NEWEBPAY_HASH_IV=your_newebpay_hash_iv
@@ -465,26 +471,25 @@ export class CustomPaymentController {
 
   constructor(
     @Inject(PAYMENTS_GATEWAY)
-    private readonly gateway: any
+    private readonly gateway: any,
   ) {}
 
   @IsPublic()
   @Post('webhook')
   async handleWebhook(@Req() req: Request, @Res() res: Response) {
     this.logger.log('Received payment webhook');
-    
+
     try {
       // Custom pre-processing logic
       await this.preprocessWebhook(req);
-      
+
       // Use built-in webhook handler
       if (this.gateway.defaultServerListener) {
         await this.gateway.defaultServerListener(req, res);
       }
-      
+
       // Custom post-processing logic
       await this.postprocessWebhook(req);
-      
     } catch (error) {
       this.logger.error('Webhook processing failed:', error);
       res.status(400).send('Webhook processing failed');
@@ -493,26 +498,21 @@ export class CustomPaymentController {
 
   @IsPublic()
   @Get('checkout/:orderId')
-  async customCheckout(
-    @Param('orderId') orderId: string,
-    @Req() req: Request, 
-    @Res() res: Response
-  ) {
+  async customCheckout(@Param('orderId') orderId: string, @Req() req: Request, @Res() res: Response) {
     // Custom checkout page logic
     try {
       const order = await this.gateway.query(orderId);
-      
+
       if (!order) {
         return res.status(404).send('Order not found');
       }
-      
+
       // Custom checkout page rendering
       res.render('checkout', {
         order,
         formData: order.form,
-        actionUrl: 'https://payment-gateway.com/submit'
+        actionUrl: 'https://payment-gateway.com/submit',
       });
-      
     } catch (error) {
       this.logger.error(`Checkout failed for order ${orderId}:`, error);
       res.status(500).send('Checkout failed');
@@ -522,7 +522,7 @@ export class CustomPaymentController {
   private async preprocessWebhook(req: Request) {
     // Implement custom validation, logging, etc.
     this.logger.log('Preprocessing webhook data');
-    
+
     // Validate webhook signature
     // Log webhook data for audit
     // Rate limiting checks
@@ -531,7 +531,7 @@ export class CustomPaymentController {
   private async postprocessWebhook(req: Request) {
     // Implement custom business logic
     this.logger.log('Postprocessing webhook data');
-    
+
     // Send notifications
     // Update external systems
     // Trigger business workflows
@@ -557,11 +557,11 @@ export class SmallAmountStrategy implements PaymentStrategy {
   canHandle(amount: number, channel: Channel): boolean {
     return amount <= 1000;
   }
-  
+
   getProvider(): string {
     return 'ecpay'; // ECPay for small amounts
   }
-  
+
   getRecommendedChannel(): Channel {
     return Channel.CREDIT_CARD;
   }
@@ -572,11 +572,11 @@ export class LargeAmountStrategy implements PaymentStrategy {
   canHandle(amount: number, channel: Channel): boolean {
     return amount > 10000;
   }
-  
+
   getProvider(): string {
     return 'ctbc'; // CTBC for large amounts with installments
   }
-  
+
   getRecommendedChannel(): Channel {
     return Channel.CREDIT_CARD;
   }
@@ -584,25 +584,26 @@ export class LargeAmountStrategy implements PaymentStrategy {
 
 @Injectable()
 export class PaymentStrategyService {
-  private strategies: PaymentStrategy[] = [
-    new SmallAmountStrategy(),
-    new LargeAmountStrategy()
-  ];
-  
+  private strategies: PaymentStrategy[] = [new SmallAmountStrategy(), new LargeAmountStrategy()];
+
   selectStrategy(amount: number, preferredChannel?: Channel): PaymentStrategy {
-    return this.strategies.find(strategy => 
-      strategy.canHandle(amount, preferredChannel || Channel.CREDIT_CARD)
-    ) || this.strategies[0]; // Default to first strategy
+    return (
+      this.strategies.find(strategy => strategy.canHandle(amount, preferredChannel || Channel.CREDIT_CARD)) ||
+      this.strategies[0]
+    ); // Default to first strategy
   }
-  
-  getOptimalProvider(amount: number, channel?: Channel): {
+
+  getOptimalProvider(
+    amount: number,
+    channel?: Channel,
+  ): {
     provider: string;
     recommendedChannel: Channel;
   } {
     const strategy = this.selectStrategy(amount, channel);
     return {
       provider: strategy.getProvider(),
-      recommendedChannel: strategy.getRecommendedChannel()
+      recommendedChannel: strategy.getRecommendedChannel(),
     };
   }
 }
@@ -620,37 +621,29 @@ import { PAYMENTS_GATEWAY } from '@rytass/payments-nestjs-module';
 export class CardBindingService {
   constructor(
     @Inject(PAYMENTS_GATEWAY)
-    private readonly gateway: any
+    private readonly gateway: any,
   ) {
     this.setupCardBindingListeners();
   }
 
   private setupCardBindingListeners() {
-    this.gateway.emitter?.on(PaymentEvents.CARD_BOUND, (bindRequest) => {
+    this.gateway.emitter?.on(PaymentEvents.CARD_BOUND, bindRequest => {
       this.handleCardBound(bindRequest);
     });
 
-    this.gateway.emitter?.on(PaymentEvents.CARD_BINDING_FAILED, (bindRequest) => {
+    this.gateway.emitter?.on(PaymentEvents.CARD_BINDING_FAILED, bindRequest => {
       this.handleCardBindingFailed(bindRequest);
     });
   }
 
-  async bindCardWithTransaction(
-    memberId: string, 
-    platformTradeNumber: string, 
-    orderId: string
-  ) {
+  async bindCardWithTransaction(memberId: string, platformTradeNumber: string, orderId: string) {
     try {
       // Check if gateway supports card binding
       if (!this.gateway.bindCardWithTransaction) {
         throw new BadRequestException('Card binding not supported by current gateway');
       }
 
-      const bindRequest = await this.gateway.bindCardWithTransaction(
-        memberId,
-        platformTradeNumber,
-        orderId
-      );
+      const bindRequest = await this.gateway.bindCardWithTransaction(memberId, platformTradeNumber, orderId);
 
       return {
         success: true,
@@ -658,8 +651,8 @@ export class CardBindingService {
         memberId: bindRequest.memberId,
         cardInfo: {
           prefix: bindRequest.cardNumberPrefix,
-          suffix: bindRequest.cardNumberSuffix
-        }
+          suffix: bindRequest.cardNumberSuffix,
+        },
       };
     } catch (error) {
       throw new BadRequestException(`Card binding failed: ${error.message}`);
@@ -682,12 +675,12 @@ export class CardBindingService {
       }
 
       const result = await this.gateway.checkoutWithBoundCard(options);
-      
+
       return {
         success: result.success,
         orderId: result.orderId,
         transactionId: result.transactionId,
-        amount: result.amount
+        amount: result.amount,
       };
     } catch (error) {
       throw new BadRequestException(`Bound card checkout failed: ${error.message}`);
@@ -723,17 +716,17 @@ import { PAYMENTS_GATEWAY } from '@rytass/payments-nestjs-module';
 export class PaymentEventsService implements OnModuleInit {
   constructor(
     @Inject(PAYMENTS_GATEWAY)
-    private readonly gateway: any
+    private readonly gateway: any,
   ) {}
 
   onModuleInit() {
     // Listen to payment events
-    this.gateway.emitter?.on(PaymentEvents.ORDER_COMMITTED, (order) => {
+    this.gateway.emitter?.on(PaymentEvents.ORDER_COMMITTED, order => {
       console.log('Order committed:', order);
       // Handle order completion logic
     });
 
-    this.gateway.emitter?.on(PaymentEvents.ORDER_FAILED, (order) => {
+    this.gateway.emitter?.on(PaymentEvents.ORDER_FAILED, order => {
       console.log('Order failed:', order);
       // Handle payment failure logic
     });
@@ -760,13 +753,13 @@ describe('PaymentService', () => {
 
   beforeEach(async () => {
     mockEmitter = new EventEmitter();
-    
+
     mockGateway = {
       prepare: jest.fn(),
       query: jest.fn(),
       emitter: mockEmitter,
       bindCardWithTransaction: jest.fn(),
-      checkoutWithBoundCard: jest.fn()
+      checkoutWithBoundCard: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -791,16 +784,16 @@ describe('PaymentService', () => {
         form: { key: 'value' },
         totalPrice: 1000,
         state: OrderState.PRE_COMMIT,
-        createdAt: new Date()
+        createdAt: new Date(),
       };
-      
+
       mockGateway.prepare.mockResolvedValue(mockOrder);
 
       const result = await service.createPayment({
         itemName: 'Test Product',
         amount: 1000,
         quantity: 1,
-        channel: Channel.CREDIT_CARD
+        channel: Channel.CREDIT_CARD,
       });
 
       expect(result.orderId).toBe('test-order-001');
@@ -808,22 +801,26 @@ describe('PaymentService', () => {
       expect(result.checkoutUrl).toBe('http://test-checkout.com');
       expect(mockGateway.prepare).toHaveBeenCalledWith({
         channel: Channel.CREDIT_CARD,
-        items: [{
-          name: 'Test Product',
-          unitPrice: 1000,
-          quantity: 1
-        }],
-        clientBackUrl: undefined
+        items: [
+          {
+            name: 'Test Product',
+            unitPrice: 1000,
+            quantity: 1,
+          },
+        ],
+        clientBackUrl: undefined,
       });
     });
 
     it('should handle payment creation error', async () => {
       mockGateway.prepare.mockRejectedValue(new Error('Gateway error'));
 
-      await expect(service.createPayment({
-        itemName: 'Test Product',
-        amount: 1000
-      })).rejects.toThrow('Gateway error');
+      await expect(
+        service.createPayment({
+          itemName: 'Test Product',
+          amount: 1000,
+        }),
+      ).rejects.toThrow('Gateway error');
     });
   });
 
@@ -834,9 +831,9 @@ describe('PaymentService', () => {
         state: OrderState.COMMITTED,
         totalPrice: 1000,
         createdAt: new Date(),
-        committedAt: new Date()
+        committedAt: new Date(),
       };
-      
+
       mockGateway.query.mockResolvedValue(mockOrder);
 
       const result = await service.queryPayment('test-order-001');
@@ -850,18 +847,17 @@ describe('PaymentService', () => {
     it('should handle query error', async () => {
       mockGateway.query.mockRejectedValue(new Error('Order not found'));
 
-      await expect(service.queryPayment('invalid-order'))
-        .rejects.toThrow('Order not found');
+      await expect(service.queryPayment('invalid-order')).rejects.toThrow('Order not found');
     });
   });
 
   describe('payment events', () => {
-    it('should handle payment success event', (done) => {
+    it('should handle payment success event', done => {
       const handleSuccessSpy = jest.spyOn(service as any, 'handlePaymentSuccess');
-      
+
       mockEmitter.emit(PaymentEvents.ORDER_COMMITTED, {
         id: 'test-order-001',
-        totalPrice: 1000
+        totalPrice: 1000,
       });
 
       setTimeout(() => {
@@ -870,12 +866,12 @@ describe('PaymentService', () => {
       }, 100);
     });
 
-    it('should handle payment failure event', (done) => {
+    it('should handle payment failure event', done => {
       const handleFailureSpy = jest.spyOn(service as any, 'handlePaymentFailure');
-      
+
       mockEmitter.emit(PaymentEvents.ORDER_FAILED, {
         code: 'PAYMENT_DECLINED',
-        message: 'Payment was declined'
+        message: 'Payment was declined',
       });
 
       setTimeout(() => {
@@ -906,16 +902,16 @@ describe('Payment Integration', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         PaymentsModule.forRoot({
-          gateway: new MockPaymentGateway() // Use test gateway
-        })
+          gateway: new MockPaymentGateway(), // Use test gateway
+        }),
       ],
       controllers: [PaymentController],
-      providers: [PaymentService]
+      providers: [PaymentService],
     }).compile();
 
     app = moduleFixture.createNestApplication();
     paymentService = moduleFixture.get<PaymentService>(PaymentService);
-    
+
     await app.init();
   });
 
@@ -930,10 +926,10 @@ describe('Payment Integration', () => {
         .send({
           itemName: 'Integration Test Product',
           amount: 2500,
-          quantity: 1
+          quantity: 1,
         })
         .expect(201)
-        .expect((res) => {
+        .expect(res => {
           expect(res.body.orderId).toBeDefined();
           expect(res.body.checkoutUrl).toBeDefined();
           expect(res.body.totalAmount).toBe(2500);
@@ -944,12 +940,10 @@ describe('Payment Integration', () => {
   describe('GET /payment/status/:orderId', () => {
     it('should return payment status', async () => {
       // First create a payment
-      const createResponse = await request(app.getHttpServer())
-        .post('/payment/create')
-        .send({
-          itemName: 'Status Test Product',
-          amount: 1500
-        });
+      const createResponse = await request(app.getHttpServer()).post('/payment/create').send({
+        itemName: 'Status Test Product',
+        amount: 1500,
+      });
 
       const orderId = createResponse.body.orderId;
 
@@ -957,7 +951,7 @@ describe('Payment Integration', () => {
       return request(app.getHttpServer())
         .get(`/payment/status/${orderId}`)
         .expect(200)
-        .expect((res) => {
+        .expect(res => {
           expect(res.body.orderId).toBe(orderId);
           expect(res.body.state).toBeDefined();
           expect(res.body.totalAmount).toBe(1500);
@@ -967,18 +961,14 @@ describe('Payment Integration', () => {
 
   describe('GET /payments/checkout/:orderNo', () => {
     it('should serve checkout page', async () => {
-      const createResponse = await request(app.getHttpServer())
-        .post('/payment/create')
-        .send({
-          itemName: 'Checkout Test Product',
-          amount: 3000
-        });
+      const createResponse = await request(app.getHttpServer()).post('/payment/create').send({
+        itemName: 'Checkout Test Product',
+        amount: 3000,
+      });
 
       const orderId = createResponse.body.orderId;
 
-      return request(app.getHttpServer())
-        .get(`/payments/checkout/${orderId}`)
-        .expect(200);
+      return request(app.getHttpServer()).get(`/payments/checkout/${orderId}`).expect(200);
     });
   });
 
@@ -990,7 +980,7 @@ describe('Payment Integration', () => {
           // Mock callback data
           orderId: 'test-callback-order',
           status: 'success',
-          amount: 1000
+          amount: 1000,
         })
         .expect(200);
     });
@@ -1000,29 +990,29 @@ describe('Payment Integration', () => {
 // Mock gateway for testing
 class MockPaymentGateway {
   emitter = new EventEmitter();
-  
+
   async prepare(options: any) {
     return {
       id: `mock-order-${Date.now()}`,
       checkoutURL: 'http://mock-checkout.com',
       formHTML: '<form>Mock Form</form>',
       form: { mockKey: 'mockValue' },
-      totalPrice: options.items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0),
+      totalPrice: options.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
       state: 'PRE_COMMIT',
-      createdAt: new Date()
+      createdAt: new Date(),
     };
   }
-  
+
   async query(orderId: string) {
     return {
       id: orderId,
       state: 'COMMITTED',
       totalPrice: 1000,
       createdAt: new Date(),
-      committedAt: new Date()
+      committedAt: new Date(),
     };
   }
-  
+
   defaultServerListener(req: any, res: any) {
     res.status(200).send('OK');
   }
@@ -1061,7 +1051,7 @@ describe('Payment E2E', () => {
       .send({
         itemName: 'E2E Test Product',
         amount: 5000,
-        quantity: 2
+        quantity: 2,
       })
       .expect(201);
 
@@ -1073,15 +1063,13 @@ describe('Payment E2E', () => {
     await request(app.getHttpServer())
       .get(`/payment/status/${orderId}`)
       .expect(200)
-      .expect((res) => {
+      .expect(res => {
         expect(res.body.state).toBe('PRE_COMMIT');
         expect(res.body.totalAmount).toBe(10000);
       });
 
     // Step 3: Access checkout page
-    await request(app.getHttpServer())
-      .get(`/payments/checkout/${orderId}`)
-      .expect(200);
+    await request(app.getHttpServer()).get(`/payments/checkout/${orderId}`).expect(200);
 
     // Step 4: Simulate payment callback
     await request(app.getHttpServer())
@@ -1089,7 +1077,7 @@ describe('Payment E2E', () => {
       .send({
         orderId,
         status: 'success',
-        transactionId: 'mock-txn-123'
+        transactionId: 'mock-txn-123',
       })
       .expect(200);
 
@@ -1097,13 +1085,14 @@ describe('Payment E2E', () => {
     await request(app.getHttpServer())
       .get(`/payment/status/${orderId}`)
       .expect(200)
-      .expect((res) => {
+      .expect(res => {
         expect(res.body.isCommitted).toBe(true);
       });
   });
 });
 ```
-```
+
+````
 
 ## Error Handling
 
@@ -1119,18 +1108,18 @@ export class PaymentService {
         channel: Channel.CREDIT_CARD,
         items: orderData.items
       });
-      
+
       return order;
     } catch (error) {
       if (error.message.includes('Invalid item')) {
         throw new BadRequestException('Invalid payment items');
       }
-      
+
       throw new InternalServerErrorException('Payment creation failed');
     }
   }
 }
-```
+````
 
 ## Performance and Monitoring
 
@@ -1146,7 +1135,7 @@ import { PAYMENTS_GATEWAY } from '@rytass/payments-nestjs-module';
 export class PaymentHealthService extends HealthIndicator {
   constructor(
     @Inject(PAYMENTS_GATEWAY)
-    private readonly gateway: any
+    private readonly gateway: any,
   ) {
     super();
   }
@@ -1155,7 +1144,7 @@ export class PaymentHealthService extends HealthIndicator {
     try {
       // Test gateway connectivity
       const testOrderId = `health-check-${Date.now()}`;
-      
+
       // Attempt to query a non-existent order to test gateway
       try {
         await this.gateway.query(testOrderId);
@@ -1165,12 +1154,12 @@ export class PaymentHealthService extends HealthIndicator {
           return this.getStatus(key, true, { gateway: 'responsive' });
         }
       }
-      
+
       return this.getStatus(key, true, { gateway: 'healthy' });
     } catch (error) {
       throw new HealthCheckError(
         'Payment gateway health check failed',
-        this.getStatus(key, false, { error: error.message })
+        this.getStatus(key, false, { error: error.message }),
       );
     }
   }
@@ -1187,31 +1176,31 @@ import { PaymentEvents } from '@rytass/payments';
 @Injectable()
 export class PaymentLoggerService {
   private readonly logger = new Logger(PaymentLoggerService.name);
-  
+
   logPaymentEvent(event: string, data: any) {
     this.logger.log(`Payment Event: ${event}`, {
       event,
       orderId: data.id,
       amount: data.totalPrice,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
-  
+
   logPaymentError(error: any, context: string) {
     this.logger.error(`Payment Error in ${context}:`, {
       error: error.message,
       stack: error.stack,
       context,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
-  
+
   logPerformanceMetric(operation: string, duration: number, success: boolean) {
     this.logger.log(`Payment Performance: ${operation}`, {
       operation,
       duration,
       success,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 }
@@ -1303,30 +1292,35 @@ export class PaymentController {
 ## Best Practices
 
 ### Configuration Management
+
 - Use environment variables for sensitive credentials
 - Implement proper configuration validation
 - Separate development and production configurations
 - Use ConfigService for centralized configuration management
 
 ### Error Handling
+
 - Implement proper exception filters
 - Provide meaningful error messages
 - Log all payment-related errors
 - Handle gateway-specific errors appropriately
 
 ### Security
+
 - Validate all input parameters
 - Implement rate limiting for payment endpoints
 - Use HTTPS for all payment communications
 - Sanitize callback data before processing
 
 ### Performance
+
 - Implement proper caching strategies
 - Use connection pooling for database operations
 - Monitor payment gateway response times
 - Implement circuit breaker pattern for external calls
 
 ### Testing
+
 - Write comprehensive unit tests
 - Implement integration tests for payment flows
 - Use mock gateways for testing
@@ -1337,23 +1331,29 @@ export class PaymentController {
 ### Common Issues
 
 1. **Gateway Not Found Error**
+
    ```
    Error: PAYMENTS_GATEWAY provider not found
    ```
+
    - Ensure PaymentsModule is properly imported
    - Verify gateway configuration is correct
 
 2. **Webhook Not Working**
+
    ```
    Error: defaultServerListener is not a function
    ```
+
    - Ensure gateway has `withServer: true` option
    - Verify server host configuration
 
 3. **Payment Creation Fails**
+
    ```
    Error: Invalid merchant configuration
    ```
+
    - Check environment variables
    - Verify gateway credentials
 
@@ -1361,6 +1361,7 @@ export class PaymentController {
    ```
    Error: PaymentsModule is not a module
    ```
+
    - Ensure proper module import syntax
    - Check for circular dependencies
 
@@ -1372,9 +1373,9 @@ PaymentsModule.forRoot({
   gateway: new ECPayPayment({
     // ... other config
     debug: true, // Enable debug mode
-    logLevel: 'verbose'
-  })
-})
+    logLevel: 'verbose',
+  }),
+});
 ```
 
 ## Changelog

@@ -30,13 +30,13 @@ class AxiosError extends Error {
     this.response.status = status;
   }
 
-  isAxiosError = true
+  isAxiosError = true;
 
   response: {
     status: number;
   } = {
     status: 200,
-  }
+  };
 }
 
 const TOKEN = 'hvs.CAESIHKbC7ihFPU3_rCfEaKXxI0NA_lZqdn4BcMLRh_8Y_aXGhgawheoi_u99_20aJtdkahjrSOGhgbC2xVRlM5Um8';
@@ -52,17 +52,9 @@ const LOGIN_RESPONSE_SAMPLE = {
   auth: {
     client_token: TOKEN,
     accessor: 'C7ShyDLIQ8KBx5fqQGwRAlKrf',
-    policies: [
-      'default',
-      'utils-unit-test',
-    ],
-    token_policies: [
-      'default',
-      'utils-unit-test',
-    ],
-    identity_policies: [
-      'utils-unit-test',
-    ],
+    policies: ['default', 'utils-unit-test'],
+    token_policies: ['default', 'utils-unit-test'],
+    identity_policies: ['utils-unit-test'],
     metadata: {
       username: 'utils',
     },
@@ -112,7 +104,7 @@ describe('VaultSecretNestjsModule', () => {
       throw new AxiosError(404);
     }
 
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       setTimeout(() => {
         resolve({
           data: {
@@ -157,14 +149,14 @@ describe('VaultSecretNestjsModule', () => {
     }
 
     const payload = JSON.parse(data as string) as {
-      data: Record<string, any>,
+      data: Record<string, any>;
       options?: {
         cas: number;
-      },
-    }
+      };
+    };
 
     if (payload.data.WILL_FAILED_UPDATE_KEY) {
-      return { data: { errors: ['FAILED'] }};
+      return { data: { errors: ['FAILED'] } };
     }
 
     if (!payload.data.COULD_NOT_BE_REMOVED) {
@@ -218,7 +210,7 @@ describe('VaultSecretNestjsModule', () => {
     expect(module.providers[1].useValue).toBe('/aaa');
   });
 
-  it('should use fallback env file', (done) => {
+  it('should use fallback env file', done => {
     jest.spyOn(ConfigModule, 'forRoot').mockImplementationOnce((options?: ConfigModuleOptions) => {
       expect(options?.envFilePath).toBe('cache.env');
 

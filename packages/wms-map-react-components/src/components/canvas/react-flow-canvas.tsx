@@ -29,12 +29,7 @@ interface ReactFlowCanvasProps {
   drawingMode: DrawingMode;
   viewMode: ViewMode;
   selectedColor?: string;
-  onCreateRectangle: (
-    startX: number,
-    startY: number,
-    endX: number,
-    endY: number,
-  ) => void;
+  onCreateRectangle: (startX: number, startY: number, endX: number, endY: number) => void;
   onCreatePath: (points: { x: number; y: number }[]) => void;
   onSelectionChange?: (params: OnSelectionChangeParams) => void;
   onTextEditComplete?: (id: string, oldText: string, newText: string) => void;
@@ -58,7 +53,7 @@ const CustomControls: FC = () => {
 
   // Listen for viewport changes (including mouse wheel zoom)
   useOnViewportChange({
-    onChange: (viewport) => {
+    onChange: viewport => {
       setZoom(Math.round(viewport.zoom * 100));
       console.log('🔍 Zoom changed:', viewport.zoom);
     },
@@ -150,12 +145,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
   const nodeTypes = useMemo(
     () => ({
       imageNode: (props: any) => (
-        <ImageNode
-          {...props}
-          editMode={editMode}
-          viewMode={viewMode}
-          showBackground={showBackground}
-        />
+        <ImageNode {...props} editMode={editMode} viewMode={viewMode} showBackground={showBackground} />
       ),
       rectangleNode: (props: any) => (
         <RectangleNode
@@ -209,9 +199,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
     (event?: any) => {
       // Check if any modifier keys are pressed - if so, don't auto-complete
       // This prevents accidental completion when using Shift for line constraints
-      const hasModifierKeys =
-        event &&
-        (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey);
+      const hasModifierKeys = event && (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey);
 
       console.log('📋 ReactFlow pane clicked', {
         drawingMode,
@@ -219,19 +207,11 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
         isDrawingPen,
         hasModifierKeys,
         willForceComplete:
-          drawingMode === DrawingMode.PEN &&
-          editMode === EditMode.LAYER &&
-          isDrawingPen &&
-          !hasModifierKeys,
+          drawingMode === DrawingMode.PEN && editMode === EditMode.LAYER && isDrawingPen && !hasModifierKeys,
       });
 
       // Only auto-complete if we're in pen drawing mode, actually drawing, and no modifier keys are pressed
-      if (
-        drawingMode === DrawingMode.PEN &&
-        editMode === EditMode.LAYER &&
-        isDrawingPen &&
-        !hasModifierKeys
-      ) {
+      if (drawingMode === DrawingMode.PEN && editMode === EditMode.LAYER && isDrawingPen && !hasModifierKeys) {
         console.log('🔴 Force completing path from pane click');
         forceComplete();
       }
@@ -277,20 +257,13 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
         minZoom={0.1}
         maxZoom={4}
         nodesConnectable={false}
-        nodesDraggable={
-          viewMode === ViewMode.EDIT && drawingMode === DrawingMode.NONE
-        }
+        nodesDraggable={viewMode === ViewMode.EDIT && drawingMode === DrawingMode.NONE}
         elementsSelectable={true}
         selectNodesOnDrag={false}
-        panOnDrag={
-          viewMode === ViewMode.VIEW ||
-          (viewMode === ViewMode.EDIT && drawingMode === DrawingMode.NONE)
-        }
+        panOnDrag={viewMode === ViewMode.VIEW || (viewMode === ViewMode.EDIT && drawingMode === DrawingMode.NONE)}
         panOnScroll={false}
         zoomOnScroll={true}
-        zoomOnDoubleClick={
-          viewMode === ViewMode.EDIT && drawingMode !== DrawingMode.PEN
-        }
+        zoomOnDoubleClick={viewMode === ViewMode.EDIT && drawingMode !== DrawingMode.PEN}
         nodeOrigin={[0, 0]}
         preventScrolling={true}
       >
@@ -337,7 +310,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
           {/* Preview path */}
           {previewPath && previewPath.length > 1 && (
             <path
-              d={`M ${previewPath.map((p) => `${p.x} ${p.y}`).join(' L ')}`}
+              d={`M ${previewPath.map(p => `${p.x} ${p.y}`).join(' L ')}`}
               stroke={selectedColor}
               strokeWidth="2"
               strokeDasharray="5,5"
@@ -374,18 +347,8 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
                 strokeWidth="2"
                 opacity="0.6"
               >
-                <animate
-                  attributeName="r"
-                  values="6;10;6"
-                  dur="1.5s"
-                  repeatCount="indefinite"
-                />
-                <animate
-                  attributeName="opacity"
-                  values="0.8;0.3;0.8"
-                  dur="1.5s"
-                  repeatCount="indefinite"
-                />
+                <animate attributeName="r" values="6;10;6" dur="1.5s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.8;0.3;0.8" dur="1.5s" repeatCount="indefinite" />
               </circle>
               {/* Inner circle for first point */}
               <circle

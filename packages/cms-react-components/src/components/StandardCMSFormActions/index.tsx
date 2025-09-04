@@ -7,9 +7,7 @@ import ModalProvider from '../modal/ModalProvider';
 import { StandardCMSFormActionsProps } from './typings';
 import FormActionsBody from './FormActionsBody';
 
-const StandardCMSFormActions = <T extends FieldValues>(
-  props: StandardCMSFormActionsProps<T>,
-): ReactNode => {
+const StandardCMSFormActions = <T extends FieldValues>(props: StandardCMSFormActionsProps<T>): ReactNode => {
   return (
     <CalendarConfigProvider methods={calendarMethodsDayjs}>
       <DialogProvider>

@@ -3,18 +3,8 @@
  */
 
 import { Node } from '@xyflow/react';
-import {
-  mockMapData,
-  simpleMapData,
-  emptyMapData,
-  largeMapData,
-  closedPolygonTestData,
-} from '../stories/mock-data';
-import {
-  transformApiDataToNodes,
-  validateMapData,
-  loadMapDataFromApi,
-} from '../src/utils/api-data-transform';
+import { mockMapData, simpleMapData, emptyMapData, largeMapData, closedPolygonTestData } from '../stories/mock-data';
+import { transformApiDataToNodes, validateMapData, loadMapDataFromApi } from '../src/utils/api-data-transform';
 import { generateMockImageUrl } from '../stories/mock-image-utils';
 import { transformNodesToMapData } from '../src/utils/map-data-transform';
 import { Map } from '../src/typings';
@@ -60,32 +50,24 @@ describe('Data Transformation', () => {
       expect(nodes.length).toBeGreaterThan(0);
 
       // 檢查節點數量是否符合預期 (背景 + 範圍)
-      const expectedNodeCount =
-        mockMapData.backgrounds.length + mockMapData.ranges.length;
+      const expectedNodeCount = mockMapData.backgrounds.length + mockMapData.ranges.length;
 
       expect(nodes.length).toBe(expectedNodeCount);
 
       // 檢查節點類型
-      const imageNodes = nodes.filter((n) => n.type === 'imageNode');
-      const rectangleNodes = nodes.filter((n) => n.type === 'rectangleNode');
-      const pathNodes = nodes.filter((n) => n.type === 'pathNode');
+      const imageNodes = nodes.filter(n => n.type === 'imageNode');
+      const rectangleNodes = nodes.filter(n => n.type === 'rectangleNode');
+      const pathNodes = nodes.filter(n => n.type === 'pathNode');
 
       expect(imageNodes.length).toBe(mockMapData.backgrounds.length);
-      expect(rectangleNodes.length + pathNodes.length).toBe(
-        mockMapData.ranges.length,
-      );
+      expect(rectangleNodes.length + pathNodes.length).toBe(mockMapData.ranges.length);
     });
 
     it('should transform simpleMapData to React Flow nodes', () => {
-      const nodes = transformApiDataToNodes(
-        simpleMapData,
-        generateMockImageUrl,
-      );
+      const nodes = transformApiDataToNodes(simpleMapData, generateMockImageUrl);
 
       expect(Array.isArray(nodes)).toBe(true);
-      expect(nodes.length).toBe(
-        simpleMapData.backgrounds.length + simpleMapData.ranges.length,
-      );
+      expect(nodes.length).toBe(simpleMapData.backgrounds.length + simpleMapData.ranges.length);
     });
 
     it('should handle empty data correctly', () => {
@@ -105,9 +87,7 @@ describe('Data Transformation', () => {
       const backToMapData = transformNodesToMapData(nodes);
 
       // 3. 比較原始資料和轉換後的資料
-      expect(backToMapData.backgrounds.length).toBe(
-        mockMapData.backgrounds.length,
-      );
+      expect(backToMapData.backgrounds.length).toBe(mockMapData.backgrounds.length);
 
       expect(backToMapData.ranges.length).toBe(mockMapData.ranges.length);
 
@@ -140,7 +120,7 @@ describe('Data Transformation', () => {
       const nodes = transformApiDataToNodes(mockMapData, generateMockImageUrl);
 
       // 檢查所有節點都有必要的屬性
-      nodes.forEach((node) => {
+      nodes.forEach(node => {
         expect(node).toHaveProperty('id');
         expect(node).toHaveProperty('type');
         expect(node).toHaveProperty('position');
@@ -148,27 +128,27 @@ describe('Data Transformation', () => {
       });
 
       // 檢查圖片節點
-      const imageNodes = nodes.filter((n) => n.type === 'imageNode');
+      const imageNodes = nodes.filter(n => n.type === 'imageNode');
 
-      imageNodes.forEach((node) => {
+      imageNodes.forEach(node => {
         expect(node.data).toHaveProperty('imageUrl');
         expect(node.data).toHaveProperty('width');
         expect(node.data).toHaveProperty('height');
       });
 
       // 檢查矩形節點
-      const rectangleNodes = nodes.filter((n) => n.type === 'rectangleNode');
+      const rectangleNodes = nodes.filter(n => n.type === 'rectangleNode');
 
-      rectangleNodes.forEach((node) => {
+      rectangleNodes.forEach(node => {
         expect(node.data).toHaveProperty('color');
         expect(node.data).toHaveProperty('width');
         expect(node.data).toHaveProperty('height');
       });
 
       // 檢查路徑節點
-      const pathNodes = nodes.filter((n) => n.type === 'pathNode');
+      const pathNodes = nodes.filter(n => n.type === 'pathNode');
 
-      pathNodes.forEach((node) => {
+      pathNodes.forEach(node => {
         expect(node.data).toHaveProperty('color');
         expect(node.data).toHaveProperty('points');
         expect(Array.isArray(node.data.points)).toBe(true);
@@ -181,12 +161,8 @@ describe('Transformation Result Validation', () => {
   /**
    * 驗證轉換結果的完整性的輔助函數
    */
-  const validateTransformationResult = (
-    originalMap: Map,
-    transformedNodes: Node[],
-  ): boolean => {
-    const expectedNodeCount =
-      originalMap.backgrounds.length + originalMap.ranges.length;
+  const validateTransformationResult = (originalMap: Map, transformedNodes: Node[]): boolean => {
+    const expectedNodeCount = originalMap.backgrounds.length + originalMap.ranges.length;
 
     const actualNodeCount = transformedNodes.length;
 
@@ -195,26 +171,16 @@ describe('Transformation Result Validation', () => {
     }
 
     // 檢查節點類型分布
-    const imageNodeCount = transformedNodes.filter(
-      (n) => n.type === 'imageNode',
-    ).length;
+    const imageNodeCount = transformedNodes.filter(n => n.type === 'imageNode').length;
 
-    const rectangleNodeCount = transformedNodes.filter(
-      (n) => n.type === 'rectangleNode',
-    ).length;
+    const rectangleNodeCount = transformedNodes.filter(n => n.type === 'rectangleNode').length;
 
-    const pathNodeCount = transformedNodes.filter(
-      (n) => n.type === 'pathNode',
-    ).length;
+    const pathNodeCount = transformedNodes.filter(n => n.type === 'pathNode').length;
 
     const expectedImageCount = originalMap.backgrounds.length;
-    const expectedRectangleCount = originalMap.ranges.filter(
-      (r) => r.type === 'RECTANGLE',
-    ).length;
+    const expectedRectangleCount = originalMap.ranges.filter(r => r.type === 'RECTANGLE').length;
 
-    const expectedPathCount = originalMap.ranges.filter(
-      (r) => r.type === 'POLYGON',
-    ).length;
+    const expectedPathCount = originalMap.ranges.filter(r => r.type === 'POLYGON').length;
 
     return (
       imageNodeCount === expectedImageCount &&
@@ -252,10 +218,7 @@ describe('Transformation Result Validation', () => {
   });
 
   it('should validate closedPolygonTestData transformation result', () => {
-    const nodes = transformApiDataToNodes(
-      closedPolygonTestData,
-      generateMockImageUrl,
-    );
+    const nodes = transformApiDataToNodes(closedPolygonTestData, generateMockImageUrl);
 
     const isValid = validateTransformationResult(closedPolygonTestData, nodes);
 

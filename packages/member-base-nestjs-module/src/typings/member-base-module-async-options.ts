@@ -5,10 +5,7 @@ import type { BaseMemberEntity } from '../models/base-member.entity';
 
 export interface MemberBaseModuleAsyncOptionsDto<
   MemberEntity extends BaseMemberEntity = BaseMemberEntity,
-  TokenPayload extends Record<string, any> = Pick<
-    MemberEntity,
-    'id' | 'account'
-  >,
+  TokenPayload extends Record<string, any> = Pick<MemberEntity, 'id' | 'account'>,
 > extends Pick<ModuleMetadata, 'imports'> {
   useFactory?: (
     ...args: any[]

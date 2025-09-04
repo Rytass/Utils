@@ -30,10 +30,7 @@ export class BankProInvoice implements Invoice<BankProPaymentItem> {
   constructor(options: BankProInvoiceOptions) {
     this.issuedOn = options.issuedOn;
     this.items = options.items;
-    this.nowAmount = options.items.reduce(
-      (sum, item) => sum + item.quantity * item.unitPrice,
-      0,
-    );
+    this.nowAmount = options.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
 
     this.issuedAmount = this.nowAmount;
     this.randomCode = options.randomCode;

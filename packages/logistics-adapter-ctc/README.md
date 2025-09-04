@@ -47,7 +47,7 @@ import { CtcLogisticsService, CtcLogisticsInterface } from '@rytass/logistics-ad
 const customConfig: CtcLogisticsInterface<'DELIVERED' | 'DELIVERING' | 'SHELVED'> = {
   url: 'https://tms2.ctc-express.cloud/api/v1/customer/orders',
   apiToken: 'your-api-token',
-  ignoreNotFound: true  // Don't throw error for not found packages
+  ignoreNotFound: true, // Don't throw error for not found packages
 };
 
 const logistics = new CtcLogisticsService(customConfig);
@@ -61,13 +61,13 @@ const logistics = new CtcLogisticsService(customConfig);
 const logistics = new CtcLogisticsService({
   url: 'https://tms2.ctc-express.cloud/api/v1/customer/orders',
   apiToken: 'your-api-token',
-  ignoreNotFound: false
+  ignoreNotFound: false,
 });
 
 // Create new shipping order
 const order = await logistics.create({
-  trackingNumber: 'CUSTOM-TRACKING-001',  // Optional custom tracking number
-  
+  trackingNumber: 'CUSTOM-TRACKING-001', // Optional custom tracking number
+
   // Sender information
   senderCompany: 'Sender Company Ltd.',
   senderContactName: 'John Doe',
@@ -75,7 +75,7 @@ const order = await logistics.create({
   senderMobile: '0912345678',
   senderTel: '02-23456789',
   senderRemark: 'Please handle with care',
-  
+
   // Receiver information
   receiverCompany: 'Receiver Company Ltd.',
   receiverContactName: 'Jane Smith',
@@ -83,12 +83,12 @@ const order = await logistics.create({
   receiverMobile: '0987654321',
   receiverTel: '02-87654321',
   receiverRemark: 'Call before delivery',
-  
+
   // Shipment details (optional - will use defaults)
   shipmentContent: '貨件',
   quantity: 1,
   weight: 1,
-  volume: 1
+  volume: 1,
 });
 
 console.log('Created order:', order);
@@ -101,17 +101,17 @@ console.log('Shipping number:', order.shippingNumber);
 ```typescript
 // Update existing shipping order
 const updatedOrder = await logistics.update({
-  trackingNumber: 'EXISTING-TRACKING-001',  // Required for update
-  
+  trackingNumber: 'EXISTING-TRACKING-001', // Required for update
+
   // Updated receiver information
   receiverContactName: 'New Contact',
   receiverAddress: '新地址',
   receiverMobile: '0911111111',
-  
+
   // Other fields remain the same
   senderCompany: 'Sender Company Ltd.',
   senderAddress: '台北市中正區重慶南路一段122號',
-  receiverCompany: 'Receiver Company Ltd.'
+  receiverCompany: 'Receiver Company Ltd.',
 });
 ```
 
@@ -121,20 +121,20 @@ const updatedOrder = await logistics.update({
 
 ```typescript
 enum CtcLogisticsStatusEnum {
-  CREATED = 10,                   // 新單
-  PICKUP_EXCEPTION = 29,          // 取件異常
-  PICKED_UP = 30,                 // 已取件
-  PICKUP_ARRIVED_AT_HUB = 40,     // 取件到站
-  IN_TRANSIT = 50,                // 轉運中
-  TRANSIT_ARRIVED_AT_HUB = 60,    // 轉運到站
-  SHELVED = 65,                   // 回站保管
-  DELIVERING = 70,                // 配送中
-  DELIVERY_EXCEPTION = 75,        // 配送異常
-  DELIVERED = 80,                 // 配送完成
-  EMPTY_TRIP = 87,                // 空趟
-  COMPLETED = 88,                 // 正常結案
-  NOTIFICATION_SENT = 91,         // 通知完成
-  CANCELLED = 99                  // 取消
+  CREATED = 10, // 新單
+  PICKUP_EXCEPTION = 29, // 取件異常
+  PICKED_UP = 30, // 已取件
+  PICKUP_ARRIVED_AT_HUB = 40, // 取件到站
+  IN_TRANSIT = 50, // 轉運中
+  TRANSIT_ARRIVED_AT_HUB = 60, // 轉運到站
+  SHELVED = 65, // 回站保管
+  DELIVERING = 70, // 配送中
+  DELIVERY_EXCEPTION = 75, // 配送異常
+  DELIVERED = 80, // 配送完成
+  EMPTY_TRIP = 87, // 空趟
+  COMPLETED = 88, // 正常結案
+  NOTIFICATION_SENT = 91, // 通知完成
+  CANCELLED = 99, // 取消
 }
 ```
 
@@ -173,7 +173,7 @@ interface CustomCtcLogistics extends CtcLogisticsInterface<CustomStatus> {
 const customLogistics: CustomCtcLogistics = {
   url: 'https://tms2.ctc-express.cloud/api/v1/customer/orders',
   apiToken: 'your-api-token',
-  ignoreNotFound: false
+  ignoreNotFound: false,
 };
 
 const logistics = new CtcLogisticsService(customLogistics);
@@ -213,14 +213,14 @@ const trackingNumbers = ['800978442950', '903404283301', 'INVALID'];
 // Configure to ignore not found errors
 const logistics = new CtcLogisticsService({
   ...CtcLogistics,
-  ignoreNotFound: true  // Return empty history instead of throwing
+  ignoreNotFound: true, // Return empty history instead of throwing
 });
 
 const results = await logistics.trace(trackingNumbers);
 
 results.forEach((result, index) => {
   console.log(`Tracking ${trackingNumbers[index]}:`);
-  
+
   if (result.statusHistory.length === 0) {
     console.log('  No tracking information available');
   } else {
@@ -284,11 +284,11 @@ export class ShippingService {
 
   async getLatestStatus(trackingNumber: string) {
     const [result] = await this.logistics.trace(trackingNumber);
-    
+
     if (result.statusHistory.length === 0) {
       return null;
     }
-    
+
     return result.statusHistory[result.statusHistory.length - 1];
   }
 }
@@ -302,27 +302,27 @@ Main service class for CTC logistics operations.
 
 #### Methods
 
-| Method | Description | Parameters | Returns |
-|--------|-------------|------------|---------|
-| `trace(logisticsId: string)` | Track single package | Tracking number | `Promise<LogisticsTraceResponse[]>` |
-| `trace(logisticsIds: string[])` | Track multiple packages | Array of tracking numbers | `Promise<LogisticsTraceResponse[]>` |
-| `create(options: CreateOrUpdateCtcLogisticsOptions)` | Create shipping order | Order details | `Promise<CtcLogisticsDto>` |
-| `update(options: CreateOrUpdateCtcLogisticsOptions)` | Update shipping order | Order details with tracking number | `Promise<CtcLogisticsDto>` |
+| Method                                               | Description             | Parameters                         | Returns                             |
+| ---------------------------------------------------- | ----------------------- | ---------------------------------- | ----------------------------------- |
+| `trace(logisticsId: string)`                         | Track single package    | Tracking number                    | `Promise<LogisticsTraceResponse[]>` |
+| `trace(logisticsIds: string[])`                      | Track multiple packages | Array of tracking numbers          | `Promise<LogisticsTraceResponse[]>` |
+| `create(options: CreateOrUpdateCtcLogisticsOptions)` | Create shipping order   | Order details                      | `Promise<CtcLogisticsDto>`          |
+| `update(options: CreateOrUpdateCtcLogisticsOptions)` | Update shipping order   | Order details with tracking number | `Promise<CtcLogisticsDto>`          |
 
 ### Configuration Options
 
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| `url` | string | Yes | CTC API endpoint URL |
-| `apiToken` | string | Yes | API authentication token |
-| `ignoreNotFound` | boolean | No | If true, returns empty history instead of throwing error |
+| Option           | Type    | Required | Description                                              |
+| ---------------- | ------- | -------- | -------------------------------------------------------- |
+| `url`            | string  | Yes      | CTC API endpoint URL                                     |
+| `apiToken`       | string  | Yes      | API authentication token                                 |
+| `ignoreNotFound` | boolean | No       | If true, returns empty history instead of throwing error |
 
 ### Types
 
 ```typescript
 interface CtcLogisticsDto {
-  trackingNumber?: string;  // 查件單號
-  shippingNumber: string;   // 托運單號
+  trackingNumber?: string; // 查件單號
+  shippingNumber: string; // 托運單號
 }
 
 interface CreateOrUpdateCtcLogisticsOptions {

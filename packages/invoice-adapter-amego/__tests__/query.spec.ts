@@ -2,13 +2,7 @@
  * @jest-environment node
  */
 import axios from 'axios';
-import {
-  AmegoBaseUrls,
-  AmegoInvoiceGateway,
-  InvoiceCarrierType,
-  InvoiceState,
-  TaxType,
-} from '../src';
+import { AmegoBaseUrls, AmegoInvoiceGateway, InvoiceCarrierType, InvoiceState, TaxType } from '../src';
 import { DateTime } from 'luxon';
 
 const DEFAULT_VAT_NUMBER = '12345678';
@@ -112,9 +106,7 @@ describe('Amego Invoice Query', () => {
     });
 
     it('should throw error as method is not supported', async () => {
-      await expect(invoiceGateway.isLoveCodeValid('001')).rejects.toThrow(
-        'Method not supported in Amego API.',
-      );
+      await expect(invoiceGateway.isLoveCodeValid('001')).rejects.toThrow('Method not supported in Amego API.');
     });
   });
 
@@ -703,13 +695,9 @@ describe('Amego Invoice Query', () => {
         expect(result.allowances[0].status).toBe('INVALID');
         expect(result.allowances[1].status).toBe('INVALID');
         // Their invalidOn should be set to their allowance date
-        expect(result.allowances[0].invalidOn).toEqual(
-          DateTime.fromFormat('20250609', 'yyyyMMdd').toJSDate(),
-        );
+        expect(result.allowances[0].invalidOn).toEqual(DateTime.fromFormat('20250609', 'yyyyMMdd').toJSDate());
 
-        expect(result.allowances[1].invalidOn).toEqual(
-          DateTime.fromFormat('20250610', 'yyyyMMdd').toJSDate(),
-        );
+        expect(result.allowances[1].invalidOn).toEqual(DateTime.fromFormat('20250610', 'yyyyMMdd').toJSDate());
       });
     });
 
@@ -770,9 +758,9 @@ describe('Amego Invoice Query', () => {
           },
         });
 
-        await expect(
-          invoiceGateway.query({ orderId: 'nonexistent' }),
-        ).rejects.toThrow('Amego invoice query failed: Invoice not found');
+        await expect(invoiceGateway.query({ orderId: 'nonexistent' })).rejects.toThrow(
+          'Amego invoice query failed: Invoice not found',
+        );
       });
 
       it('should handle carrier parsing with carrierId2 when carrierId1 is empty', async () => {

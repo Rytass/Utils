@@ -14,9 +14,7 @@ import { BaseCategoryEntity } from './base-category.entity';
 import type { Language } from '../typings/language';
 import { DEFAULT_LANGUAGE } from '../constants/default-language';
 
-export const BaseCategoryMultiLanguageNameRepo = Symbol(
-  'BaseCategoryMultiLanguageNameRepo',
-);
+export const BaseCategoryMultiLanguageNameRepo = Symbol('BaseCategoryMultiLanguageNameRepo');
 
 @Entity('category_multi_language_names')
 @TableInheritance({ column: { type: 'varchar', name: 'entityName' } })
@@ -37,15 +35,11 @@ export class BaseCategoryMultiLanguageNameEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(
-    () => BaseCategoryEntity,
-    (category) => category.multiLanguageNames,
-    {
-      onUpdate: 'CASCADE',
-      onDelete: 'CASCADE',
-      orphanedRowAction: 'delete',
-    },
-  )
+  @ManyToOne(() => BaseCategoryEntity, category => category.multiLanguageNames, {
+    onUpdate: 'CASCADE',
+    onDelete: 'CASCADE',
+    orphanedRowAction: 'delete',
+  })
   @JoinColumn({ name: 'categoryId', referencedColumnName: 'id' })
   category: Relation<BaseCategoryEntity>;
 }

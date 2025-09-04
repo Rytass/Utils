@@ -100,12 +100,7 @@ interface LogisticsStatusHistory<T> {
 ### Custom Logistics Service
 
 ```typescript
-import { 
-  LogisticsService, 
-  LogisticsInterface, 
-  LogisticsTraceResponse,
-  LogisticsStatus 
-} from '@rytass/logistics';
+import { LogisticsService, LogisticsInterface, LogisticsTraceResponse, LogisticsStatus } from '@rytass/logistics';
 
 interface CustomLogisticsInterface extends LogisticsInterface<'PENDING' | 'SHIPPED' | 'DELIVERED'> {
   reference: 'PENDING' | 'SHIPPED' | 'DELIVERED';
@@ -115,26 +110,26 @@ interface CustomLogisticsInterface extends LogisticsInterface<'PENDING' | 'SHIPP
 class CustomLogisticsService implements LogisticsService<CustomLogisticsInterface> {
   async trace(request: string | string[]): Promise<LogisticsTraceResponse<CustomLogisticsInterface>[]> {
     const trackingNumbers = Array.isArray(request) ? request : [request];
-    
+
     const results = await Promise.all(
-      trackingNumbers.map(async (trackingNumber) => {
+      trackingNumbers.map(async trackingNumber => {
         // Implement your tracking logic here
         return {
           logisticsId: trackingNumber,
           statusHistory: [
             {
               date: '2024-01-01',
-              status: 'PENDING' as const
+              status: 'PENDING' as const,
             },
             {
               date: '2024-01-02',
-              status: 'SHIPPED' as const
-            }
-          ]
+              status: 'SHIPPED' as const,
+            },
+          ],
         };
-      })
+      }),
     );
-    
+
     return results;
   }
 }
@@ -169,12 +164,12 @@ class MultiProviderTracker {
   async trackWithAllProviders(trackingNumber: string) {
     const results = await Promise.allSettled([
       this.tcat.trace(trackingNumber).catch(err => ({ provider: 'TCAT', error: err })),
-      this.ctc.trace(trackingNumber).catch(err => ({ provider: 'CTC', error: err }))
+      this.ctc.trace(trackingNumber).catch(err => ({ provider: 'CTC', error: err })),
     ]);
 
     return results.map((result, index) => ({
       provider: index === 0 ? 'TCAT' : 'CTC',
-      result: result.status === 'fulfilled' ? result.value : result.reason
+      result: result.status === 'fulfilled' ? result.value : result.reason,
     }));
   }
 }
@@ -196,7 +191,7 @@ const ctc = new CTCLogisticsService();
 app.get('/track/:provider/:trackingNumber', async (req, res) => {
   try {
     const { provider, trackingNumber } = req.params;
-    
+
     let results;
     switch (provider.toUpperCase()) {
       case 'TCAT':
@@ -208,17 +203,17 @@ app.get('/track/:provider/:trackingNumber', async (req, res) => {
       default:
         return res.status(400).json({ error: 'Unsupported provider' });
     }
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       trackingNumber,
       provider: provider.toUpperCase(),
-      results 
+      results,
     });
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      error: error.message,
     });
   }
 });
@@ -226,7 +221,7 @@ app.get('/track/:provider/:trackingNumber', async (req, res) => {
 app.post('/track/batch', async (req, res) => {
   try {
     const { provider, trackingNumbers } = req.body;
-    
+
     let results;
     switch (provider.toUpperCase()) {
       case 'TCAT':
@@ -238,16 +233,16 @@ app.post('/track/batch', async (req, res) => {
       default:
         return res.status(400).json({ error: 'Unsupported provider' });
     }
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       provider: provider.toUpperCase(),
-      results 
+      results,
     });
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      error: error.message,
     });
   }
 });
@@ -289,19 +284,19 @@ export class TrackingService {
 
   async getLatestStatus(trackingNumber: string, provider: string) {
     const results = await this.trackPackage(trackingNumber, provider);
-    
+
     if (results.length === 0) {
       throw new Error('No tracking information found');
     }
-    
+
     const latestResult = results[0];
     const latestStatus = latestResult.statusHistory[latestResult.statusHistory.length - 1];
-    
+
     return {
       trackingNumber: latestResult.logisticsId,
       currentStatus: latestStatus.status,
       lastUpdated: latestStatus.date,
-      fullHistory: latestResult.statusHistory
+      fullHistory: latestResult.statusHistory,
     };
   }
 }
@@ -323,17 +318,17 @@ async function safeTrack(trackingNumber: string) {
         success: false,
         error: {
           code: error.code,
-          message: error.message
-        }
+          message: error.message,
+        },
       };
     }
-    
+
     return {
       success: false,
       error: {
         code: 'UNKNOWN_ERROR',
-        message: error.message
-      }
+        message: error.message,
+      },
     };
   }
 }
@@ -352,29 +347,32 @@ interface LogisticsService<LogisticsType> {
 
 ### Types
 
-| Type | Description |
-|------|-------------|
-| `LogisticsBaseStatus` | `'DELIVERED' \| 'DELIVERING' \| 'SHELVED'` |
-| `LogisticsInterface<T>` | Base interface for logistics providers |
-| `LogisticsTraceResponse<K>` | Tracking response with status history |
-| `LogisticsStatusHistory<T>` | Individual status entry with date |
-| `LogisticsErrorInterface` | Error interface with code and message |
+| Type                        | Description                                |
+| --------------------------- | ------------------------------------------ |
+| `LogisticsBaseStatus`       | `'DELIVERED' \| 'DELIVERING' \| 'SHELVED'` |
+| `LogisticsInterface<T>`     | Base interface for logistics providers     |
+| `LogisticsTraceResponse<K>` | Tracking response with status history      |
+| `LogisticsStatusHistory<T>` | Individual status entry with date          |
+| `LogisticsErrorInterface`   | Error interface with code and message      |
 
 ## Best Practices
 
 ### Error Handling
+
 - Always wrap tracking calls in try-catch blocks
 - Implement retry logic for transient failures
 - Validate tracking numbers before making API calls
 - Handle provider-specific error codes appropriately
 
 ### Performance
+
 - Use batch tracking for multiple packages when possible
 - Implement caching for frequently tracked packages
 - Consider rate limiting to avoid provider API limits
 - Use appropriate timeouts for network requests
 
 ### Data Management
+
 - Store tracking results with timestamps
 - Implement data retention policies
 - Consider privacy implications of tracking data
@@ -383,11 +381,13 @@ interface LogisticsService<LogisticsType> {
 ## Taiwan Logistics Providers
 
 ### TCAT (黑貓宅急便)
+
 - One of the largest logistics providers in Taiwan
 - Supports package tracking via tracking number
 - Provides detailed status updates
 
 ### CTC (宅配通)
+
 - Major Taiwan logistics and delivery service
 - Comprehensive tracking capabilities
 - Integration with e-commerce platforms

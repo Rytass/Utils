@@ -2,12 +2,7 @@
  * @jest-environment node
  */
 
-import {
-  mockMapData,
-  simpleMapData,
-  emptyMapData,
-  largeMapData,
-} from '../stories/mock-data';
+import { mockMapData, simpleMapData, emptyMapData, largeMapData } from '../stories/mock-data';
 import { transformApiDataToNodes } from '../src/utils/api-data-transform';
 import { generateMockImageUrl } from '../stories/mock-image-utils';
 
@@ -65,9 +60,7 @@ describe('Performance Tests', () => {
       const memoryIncrease = afterTransformMemory - initialMemory;
 
       // 驗證結果
-      expect(nodes.length).toBe(
-        largeMapData.backgrounds.length + largeMapData.ranges.length,
-      );
+      expect(nodes.length).toBe(largeMapData.backgrounds.length + largeMapData.ranges.length);
 
       // 記憶體使用量不應超過 50MB (這是一個合理的上限)
       const maxMemoryIncrease = 50 * 1024 * 1024; // 50MB in bytes
@@ -132,8 +125,7 @@ describe('Performance Tests', () => {
       const iterations = 10;
 
       // Warm-up iterations using functional approach
-      const performWarmup = () =>
-        transformApiDataToNodes(mockMapData, generateMockImageUrl);
+      const performWarmup = () => transformApiDataToNodes(mockMapData, generateMockImageUrl);
       Array.from({ length: warmupIterations }, performWarmup);
 
       // Performance measurements using functional approach

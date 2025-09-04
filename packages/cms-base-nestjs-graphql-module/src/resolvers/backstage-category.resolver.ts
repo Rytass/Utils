@@ -1,10 +1,6 @@
 import { ResolveField, Resolver, Root } from '@nestjs/graphql';
 import { Authenticated } from '@rytass/member-base-nestjs-module';
-import {
-  type CategoryBaseDto,
-  DEFAULT_LANGUAGE,
-  MULTIPLE_LANGUAGE_MODE,
-} from '@rytass/cms-base-nestjs-module';
+import { type CategoryBaseDto, DEFAULT_LANGUAGE, MULTIPLE_LANGUAGE_MODE } from '@rytass/cms-base-nestjs-module';
 
 import { BadRequestException, Inject } from '@nestjs/common';
 import { CategoryMultiLanguageNameDto } from '../dto/category-multi-language-name.dto';
@@ -24,16 +20,12 @@ export class BackstageCategoryResolver {
       return category.name;
     }
 
-    throw new BadRequestException(
-      'Name field is not available in multi-language mode.',
-    );
+    throw new BadRequestException('Name field is not available in multi-language mode.');
   }
 
   @ResolveField(() => [CategoryMultiLanguageNameDto])
   @Authenticated()
-  multiLanguageNames(
-    @Root() category: CategoryBaseDto,
-  ): CategoryMultiLanguageNameDto[] {
+  multiLanguageNames(@Root() category: CategoryBaseDto): CategoryMultiLanguageNameDto[] {
     if ('multiLanguageNames' in category) {
       return category.multiLanguageNames;
     }

@@ -30,8 +30,9 @@ yarn add @rytass/storages-adapter-azure-blob @azure/storage-blob
 import { StorageAzureBlobService } from '@rytass/storages-adapter-azure-blob';
 
 const storage = new StorageAzureBlobService({
-  connectionString: 'DefaultEndpointsProtocol=https;AccountName=youraccount;AccountKey=yourkey;EndpointSuffix=core.windows.net',
-  container: 'your-container-name'
+  connectionString:
+    'DefaultEndpointsProtocol=https;AccountName=youraccount;AccountKey=yourkey;EndpointSuffix=core.windows.net',
+  container: 'your-container-name',
 });
 ```
 
@@ -44,7 +45,7 @@ import { readFileSync, createReadStream } from 'fs';
 const imageBuffer = readFileSync('photo.jpg');
 const result = await storage.write(imageBuffer, {
   filename: 'uploads/photo.jpg',
-  contentType: 'image/jpeg'
+  contentType: 'image/jpeg',
 });
 console.log('Uploaded:', result.key);
 
@@ -52,7 +53,7 @@ console.log('Uploaded:', result.key);
 const fileStream = createReadStream('document.pdf');
 const streamResult = await storage.write(fileStream, {
   filename: 'documents/document.pdf',
-  contentType: 'application/pdf'
+  contentType: 'application/pdf',
 });
 console.log('Uploaded:', streamResult.key);
 
@@ -87,10 +88,7 @@ const url = await storage.url('uploads/photo.jpg');
 console.log('SAS URL:', url);
 
 // Custom expiration (1 hour from now)
-const customUrl = await storage.url(
-  'uploads/photo.jpg',
-  Date.now() + 1000 * 60 * 60
-);
+const customUrl = await storage.url('uploads/photo.jpg', Date.now() + 1000 * 60 * 60);
 console.log('1-hour URL:', customUrl);
 
 // Use in HTML
@@ -112,11 +110,7 @@ await storage.remove('uploads/old-file.jpg');
 console.log('File removed');
 
 // Batch upload
-const files = [
-  readFileSync('file1.jpg'),
-  readFileSync('file2.png'),
-  createReadStream('file3.pdf')
-];
+const files = [readFileSync('file1.jpg'), readFileSync('file2.png'), createReadStream('file3.pdf')];
 
 const batchResults = await storage.batchWrite(files);
 batchResults.forEach(result => {
@@ -137,7 +131,7 @@ import { StorageAzureBlobService } from '@rytass/storages-adapter-azure-blob';
 
 const storage = new StorageAzureBlobService({
   connectionString: process.env.AZURE_STORAGE_CONNECTION_STRING!,
-  container: process.env.AZURE_STORAGE_CONTAINER!
+  container: process.env.AZURE_STORAGE_CONTAINER!,
 });
 ```
 
@@ -146,20 +140,22 @@ const storage = new StorageAzureBlobService({
 ```typescript
 // Using account name and key
 const storage1 = new StorageAzureBlobService({
-  connectionString: 'DefaultEndpointsProtocol=https;AccountName=mystorageaccount;AccountKey=myaccountkey;EndpointSuffix=core.windows.net',
-  container: 'mycontainer'
+  connectionString:
+    'DefaultEndpointsProtocol=https;AccountName=mystorageaccount;AccountKey=myaccountkey;EndpointSuffix=core.windows.net',
+  container: 'mycontainer',
 });
 
 // Using SAS token
 const storage2 = new StorageAzureBlobService({
-  connectionString: 'BlobEndpoint=https://mystorageaccount.blob.core.windows.net/;SharedAccessSignature=sv=2020-08-04&ss=b&srt=sco&sp=rwdlacx&se=2024-12-31T23:59:59Z&st=2024-01-01T00:00:00Z&spr=https,http&sig=...',
-  container: 'mycontainer'
+  connectionString:
+    'BlobEndpoint=https://mystorageaccount.blob.core.windows.net/;SharedAccessSignature=sv=2020-08-04&ss=b&srt=sco&sp=rwdlacx&se=2024-12-31T23:59:59Z&st=2024-01-01T00:00:00Z&spr=https,http&sig=...',
+  container: 'mycontainer',
 });
 
 // Using connection string from Azure portal
 const storage3 = new StorageAzureBlobService({
   connectionString: process.env.AZURE_STORAGE_CONNECTION_STRING!,
-  container: 'uploads'
+  container: 'uploads',
 });
 ```
 
@@ -209,7 +205,7 @@ const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 const storage = new StorageAzureBlobService({
   connectionString: process.env.AZURE_STORAGE_CONNECTION_STRING!,
-  container: 'uploads'
+  container: 'uploads',
 });
 
 app.post('/upload', upload.single('file'), async (req, res) => {
@@ -220,7 +216,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 
     const result = await storage.write(req.file.buffer, {
       filename: `uploads/${Date.now()}-${req.file.originalname}`,
-      contentType: req.file.mimetype
+      contentType: req.file.mimetype,
     });
 
     const publicUrl = await storage.url(result.key);
@@ -228,7 +224,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     res.json({
       success: true,
       key: result.key,
-      url: publicUrl
+      url: publicUrl,
     });
   } catch (error) {
     res.status(500).json({ error: 'Upload failed' });
@@ -249,7 +245,7 @@ export class FileService {
   constructor() {
     this.storage = new StorageAzureBlobService({
       connectionString: process.env.AZURE_STORAGE_CONNECTION_STRING!,
-      container: process.env.AZURE_STORAGE_CONTAINER!
+      container: process.env.AZURE_STORAGE_CONTAINER!,
     });
   }
 
@@ -276,45 +272,48 @@ export class FileService {
 
 ### AzureBlobOptions
 
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| `connectionString` | `string` | Yes | Azure Storage connection string |
-| `container` | `string` | Yes | Blob container name |
+| Option             | Type     | Required | Description                     |
+| ------------------ | -------- | -------- | ------------------------------- |
+| `connectionString` | `string` | Yes      | Azure Storage connection string |
+| `container`        | `string` | Yes      | Blob container name             |
 
 ### WriteFileOptions
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `filename` | `string` | auto-generated | Custom filename for the uploaded file |
-| `contentType` | `string` | auto-detected | MIME type of the file |
+| Option        | Type     | Default        | Description                           |
+| ------------- | -------- | -------------- | ------------------------------------- |
+| `filename`    | `string` | auto-generated | Custom filename for the uploaded file |
+| `contentType` | `string` | auto-detected  | MIME type of the file                 |
 
 ### ReadBufferFileOptions
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `format` | `'buffer'` | - | Return file as Buffer |
+| Option   | Type       | Default | Description           |
+| -------- | ---------- | ------- | --------------------- |
+| `format` | `'buffer'` | -       | Return file as Buffer |
 
 ### ReadStreamFileOptions
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `format` | `'stream'` | - | Return file as Readable stream |
+| Option   | Type       | Default | Description                    |
+| -------- | ---------- | ------- | ------------------------------ |
+| `format` | `'stream'` | -       | Return file as Readable stream |
 
 ## Best Practices
 
 ### Security
+
 - Store connection strings securely using environment variables or Azure Key Vault
 - Use managed identities when running on Azure
 - Implement proper access policies and SAS token restrictions
 - Enable audit logging for storage access
 
 ### Performance
+
 - Use streams for large files to reduce memory usage
 - Implement proper retry logic for transient failures
 - Use appropriate blob access tiers for your use case
 - Consider using Azure CDN for frequently accessed files
 
 ### Cost Optimization
+
 - Choose appropriate blob access tiers (Hot, Cool, Archive)
 - Set up lifecycle management policies
 - Monitor storage usage and optimize file sizes

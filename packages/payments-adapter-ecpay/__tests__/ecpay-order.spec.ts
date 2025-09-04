@@ -1,9 +1,4 @@
-import {
-  Channel,
-  CreditCardAuthInfo,
-  CreditCardECI,
-  OrderState,
-} from '@rytass/payments';
+import { Channel, CreditCardAuthInfo, CreditCardECI, OrderState } from '@rytass/payments';
 import { DateTime } from 'luxon';
 import http, { createServer } from 'http';
 import {
@@ -21,22 +16,20 @@ describe('ECPayOrder', () => {
   const originCreateServer = createServer;
   const mockedCreateServer = jest.spyOn(http, 'createServer');
 
-  mockedCreateServer.mockImplementation((requestHandler) => {
+  mockedCreateServer.mockImplementation(requestHandler => {
     const mockServer = originCreateServer(requestHandler);
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce(
-      (port?: any, hostname?: any, listeningListener?: () => void) => {
-        mockServer.listen(0, listeningListener);
+    mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
+      mockServer.listen(0, listeningListener);
 
-        return mockServer;
-      },
-    );
+      return mockServer;
+    });
 
     const mockedClose = jest.spyOn(mockServer, 'close');
 
-    mockedClose.mockImplementationOnce((onClosed) => {
+    mockedClose.mockImplementationOnce(onClosed => {
       mockServer.close(onClosed);
 
       return mockServer;
@@ -107,27 +100,26 @@ describe('ECPayOrder', () => {
     expect(allOrder.form.ChoosePayment).toBe('ALL');
   });
 
-  it('should get valid checkout url', (done) => {
+  it('should get valid checkout url', done => {
     const paymentWithServer = new ECPayPayment({
       withServer: true,
       serverHost: 'http://localhost:3001',
       onServerListen: async () => {
-        const withServerOrder =
-          await paymentWithServer.prepare<ECPayChannelCreditCard>({
-            channel: Channel.CREDIT_CARD,
-            items: [
-              {
-                name: 'Test',
-                unitPrice: 10,
-                quantity: 1,
-              },
-              {
-                name: '中文',
-                unitPrice: 15,
-                quantity: 4,
-              },
-            ],
-          });
+        const withServerOrder = await paymentWithServer.prepare<ECPayChannelCreditCard>({
+          channel: Channel.CREDIT_CARD,
+          items: [
+            {
+              name: 'Test',
+              unitPrice: 10,
+              quantity: 1,
+            },
+            {
+              name: '中文',
+              unitPrice: 15,
+              quantity: 4,
+            },
+          ],
+        });
 
         const re = new RegExp(`${withServerOrder.id}$`);
 
@@ -338,9 +330,7 @@ describe('ECPayOrder', () => {
     });
 
     it('should reject invalid state order', async () => {
-      const payment = new ECPayPayment<
-        ECPayChannelCreditCard | ECPayChannelVirtualAccount
-      >({
+      const payment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
         merchantId: 'mid',
       });
 
@@ -458,10 +448,7 @@ describe('ECPayOrder', () => {
         },
         {
           channel: Channel.CREDIT_CARD,
-          processDate: DateTime.fromFormat(
-            '2023/01/27 14:55:00',
-            'yyyy/MM/dd HH:mm:ss',
-          ).toJSDate(),
+          processDate: DateTime.fromFormat('2023/01/27 14:55:00', 'yyyy/MM/dd HH:mm:ss').toJSDate(),
           authCode: '123456',
           amount: 1800,
           eci: CreditCardECI.VISA_AE_JCB_3D,
@@ -508,10 +495,7 @@ describe('ECPayOrder', () => {
           },
           {
             channel: Channel.CREDIT_CARD,
-            processDate: DateTime.fromFormat(
-              '2023/01/27 14:55:00',
-              'yyyy/MM/dd HH:mm:ss',
-            ).toJSDate(),
+            processDate: DateTime.fromFormat('2023/01/27 14:55:00', 'yyyy/MM/dd HH:mm:ss').toJSDate(),
             authCode: '123456',
             amount: 1800,
             eci: CreditCardECI.VISA_AE_JCB_3D,
@@ -521,17 +505,12 @@ describe('ECPayOrder', () => {
           } as CreditCardAuthInfo,
         );
 
-        const mockGetCreditCardTradeStatus = jest.spyOn(
-          payment,
-          'getCreditCardTradeStatus',
-        );
+        const mockGetCreditCardTradeStatus = jest.spyOn(payment, 'getCreditCardTradeStatus');
         const mockDoAction = jest.spyOn(payment, 'doOrderAction');
 
-        mockGetCreditCardTradeStatus.mockImplementationOnce(() =>
-          Promise.resolve(ECPayCreditCardOrderStatus.CLOSED),
-        );
+        mockGetCreditCardTradeStatus.mockImplementationOnce(() => Promise.resolve(ECPayCreditCardOrderStatus.CLOSED));
 
-        await new Promise<void>((pResolve) => {
+        await new Promise<void>(pResolve => {
           mockDoAction.mockImplementationOnce(async (order, action) => {
             expect(action).toBe('R');
 
@@ -575,10 +554,7 @@ describe('ECPayOrder', () => {
           },
           {
             channel: Channel.CREDIT_CARD,
-            processDate: DateTime.fromFormat(
-              '2023/01/27 14:55:00',
-              'yyyy/MM/dd HH:mm:ss',
-            ).toJSDate(),
+            processDate: DateTime.fromFormat('2023/01/27 14:55:00', 'yyyy/MM/dd HH:mm:ss').toJSDate(),
             authCode: '123456',
             amount: 1800,
             eci: CreditCardECI.VISA_AE_JCB_3D,
@@ -588,17 +564,14 @@ describe('ECPayOrder', () => {
           } as CreditCardAuthInfo,
         );
 
-        const mockGetCreditCardTradeStatus = jest.spyOn(
-          payment,
-          'getCreditCardTradeStatus',
-        );
+        const mockGetCreditCardTradeStatus = jest.spyOn(payment, 'getCreditCardTradeStatus');
         const mockDoAction = jest.spyOn(payment, 'doOrderAction');
 
         mockGetCreditCardTradeStatus.mockImplementationOnce(() =>
           Promise.resolve(ECPayCreditCardOrderStatus.AUTHORIZED),
         );
 
-        await new Promise<void>((pResolve) => {
+        await new Promise<void>(pResolve => {
           mockDoAction.mockImplementationOnce(async (order, action) => {
             expect(action).toBe('N');
 
@@ -642,10 +615,7 @@ describe('ECPayOrder', () => {
           },
           {
             channel: Channel.CREDIT_CARD,
-            processDate: DateTime.fromFormat(
-              '2023/01/27 14:55:00',
-              'yyyy/MM/dd HH:mm:ss',
-            ).toJSDate(),
+            processDate: DateTime.fromFormat('2023/01/27 14:55:00', 'yyyy/MM/dd HH:mm:ss').toJSDate(),
             authCode: '123456',
             amount: 1800,
             eci: CreditCardECI.VISA_AE_JCB_3D,
@@ -655,10 +625,7 @@ describe('ECPayOrder', () => {
           } as CreditCardAuthInfo,
         );
 
-        const mockGetCreditCardTradeStatus = jest.spyOn(
-          payment,
-          'getCreditCardTradeStatus',
-        );
+        const mockGetCreditCardTradeStatus = jest.spyOn(payment, 'getCreditCardTradeStatus');
 
         mockGetCreditCardTradeStatus.mockImplementationOnce(() =>
           Promise.resolve(ECPayCreditCardOrderStatus.UNAUTHORIZED),
@@ -700,10 +667,7 @@ describe('ECPayOrder', () => {
           },
           {
             channel: Channel.CREDIT_CARD,
-            processDate: DateTime.fromFormat(
-              '2023/01/27 14:55:00',
-              'yyyy/MM/dd HH:mm:ss',
-            ).toJSDate(),
+            processDate: DateTime.fromFormat('2023/01/27 14:55:00', 'yyyy/MM/dd HH:mm:ss').toJSDate(),
             authCode: '123456',
             amount: 1800,
             eci: CreditCardECI.VISA_AE_JCB_3D,
@@ -713,10 +677,7 @@ describe('ECPayOrder', () => {
           } as CreditCardAuthInfo,
         );
 
-        const mockGetCreditCardTradeStatus = jest.spyOn(
-          payment,
-          'getCreditCardTradeStatus',
-        );
+        const mockGetCreditCardTradeStatus = jest.spyOn(payment, 'getCreditCardTradeStatus');
 
         mockGetCreditCardTradeStatus.mockImplementationOnce(() =>
           Promise.resolve(ECPayCreditCardOrderStatus.CANCELLED),

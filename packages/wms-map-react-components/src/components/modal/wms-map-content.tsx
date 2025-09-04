@@ -9,12 +9,7 @@ import {
   useReactFlow,
 } from '@xyflow/react';
 import { EditMode, ViewMode } from '../../typings';
-import {
-  FlowNode,
-  FlowEdge,
-  FlowNodeChange,
-  WMSMapContentProps,
-} from '../../types/index';
+import { FlowNode, FlowEdge, FlowNodeChange, WMSMapContentProps } from '../../types/index';
 import {
   DEFAULT_RECTANGLE_LABEL,
   DEFAULT_PATH_LABEL,
@@ -23,15 +18,8 @@ import {
   UI_CONFIG,
   DEFAULT_WAREHOUSE_IDS,
 } from '../../constants';
-import {
-  calculateImageSize,
-  calculateStaggeredPosition,
-} from '../../utils/node-utils';
-import {
-  createRectangleCopy,
-  createPathCopy,
-  createImageCopy,
-} from '../../utils/node-operations';
+import { calculateImageSize, calculateStaggeredPosition } from '../../utils/node-utils';
+import { createRectangleCopy, createPathCopy, createImageCopy } from '../../utils/node-operations';
 import {
   logMapData,
   transformNodesToMapData,
@@ -70,8 +58,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
 
   renderCount.current += 1;
 
-  const [nodes, setNodes, onNodesChangeOriginal] =
-    useNodesState(propsInitialNodes);
+  const [nodes, setNodes, onNodesChangeOriginal] = useNodesState(propsInitialNodes);
 
   const [edges, setEdges, onEdgesChange] = useEdgesState(propsInitialEdges);
   const [selectedNodes, setSelectedNodes] = useState<FlowNode[]>([]);
@@ -83,16 +70,12 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
 
   const { getViewport, getNodes, getEdges } = useReactFlow();
 
-  const colorChangeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
+  const colorChangeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 根據當前模式為節點套用正確的狀態規則
   const applyNodeStateRules = useCallback(
     (nodes: FlowNode[]): FlowNode[] => {
-      const getNodePermissions = (
-        node: FlowNode,
-      ): { selectable: boolean; draggable: boolean; deletable: boolean } => {
+      const getNodePermissions = (node: FlowNode): { selectable: boolean; draggable: boolean; deletable: boolean } => {
         const isViewMode = viewMode === ViewMode.VIEW;
         const isImageNode = node.type === 'imageNode';
         const isRectangleNode = node.type === 'rectangleNode';
@@ -102,20 +85,14 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
 
         return {
           selectable:
-            !isViewMode &&
-            ((isImageNode && isBackgroundMode) ||
-              ((isRectangleNode || isPathNode) && isLayerMode)),
+            !isViewMode && ((isImageNode && isBackgroundMode) || ((isRectangleNode || isPathNode) && isLayerMode)),
           draggable:
-            !isViewMode &&
-            ((isImageNode && isBackgroundMode) ||
-              ((isRectangleNode || isPathNode) && isLayerMode)),
-          deletable:
-            !isViewMode &&
-            ((isImageNode && isBackgroundMode) || (isPathNode && isLayerMode)),
+            !isViewMode && ((isImageNode && isBackgroundMode) || ((isRectangleNode || isPathNode) && isLayerMode)),
+          deletable: !isViewMode && ((isImageNode && isBackgroundMode) || (isPathNode && isLayerMode)),
         };
       };
 
-      return nodes.map((node) => ({
+      return nodes.map(node => ({
         ...node,
         ...getNodePermissions(node),
       }));
@@ -129,15 +106,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
   }, [editMode, viewMode, setNodes, applyNodeStateRules]);
 
   // 使用直接狀態 undo/redo 系統
-  const {
-    saveState,
-    undo,
-    redo,
-    canUndo,
-    canRedo,
-    initializeHistory,
-    getHistorySummary,
-  } = useDirectStateHistory({
+  const { saveState, undo, redo, canUndo, canRedo, initializeHistory, getHistorySummary } = useDirectStateHistory({
     maxHistorySize: UI_CONFIG.HISTORY_SIZE,
     debugMode: true,
   });
@@ -151,10 +120,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
     if (summary.operations) {
       const recentOperations = summary.operations
         .slice(-5)
-        .map(
-          (op) =>
-            `[${op.index}]${op.operation}${op.isCurrent ? ' (當前)' : ''}`,
-        )
+        .map(op => `[${op.index}]${op.operation}${op.isCurrent ? ' (當前)' : ''}`)
         .join(' → ');
 
       if (recentOperations) {
@@ -169,31 +135,23 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
   // 監聽 initialNodes 變化，當接收到新資料時清空並載入
   useEffect(() => {
     const currentNodeIds = propsInitialNodes.map((n: FlowNode) => n.id).sort();
-    const prevNodeIds = prevInitialNodesRef.current
-      .map((n: FlowNode) => n.id)
-      .sort();
+    const prevNodeIds = prevInitialNodesRef.current.map((n: FlowNode) => n.id).sort();
 
     const hasChanged =
       currentNodeIds.length !== prevNodeIds.length ||
-      currentNodeIds.some(
-        (id: string, index: number) => id !== prevNodeIds[index],
-      );
+      currentNodeIds.some((id: string, index: number) => id !== prevNodeIds[index]);
 
     if (hasChanged) {
-      debugLog(
-        TEXT_MAPPINGS.DEBUG.DATA_LOADING,
-        TEXT_MAPPINGS.MESSAGES.DETECT_INITIAL_NODES_CHANGE,
-        {
-          [TEXT_MAPPINGS.MESSAGES.NEW_DATA_NODES]: propsInitialNodes.length,
-          [TEXT_MAPPINGS.MESSAGES.NEW_DATA_EDGES]: propsInitialEdges.length,
-          [TEXT_MAPPINGS.MESSAGES.CURRENT_NODES]: nodes.length,
-          [TEXT_MAPPINGS.MESSAGES.CURRENT_EDGES]: edges.length,
-          [TEXT_MAPPINGS.MESSAGES.NODE_ID_CHANGE]: {
-            [TEXT_MAPPINGS.MESSAGES.NEW_IDS]: currentNodeIds,
-            [TEXT_MAPPINGS.MESSAGES.OLD_IDS]: prevNodeIds,
-          },
+      debugLog(TEXT_MAPPINGS.DEBUG.DATA_LOADING, TEXT_MAPPINGS.MESSAGES.DETECT_INITIAL_NODES_CHANGE, {
+        [TEXT_MAPPINGS.MESSAGES.NEW_DATA_NODES]: propsInitialNodes.length,
+        [TEXT_MAPPINGS.MESSAGES.NEW_DATA_EDGES]: propsInitialEdges.length,
+        [TEXT_MAPPINGS.MESSAGES.CURRENT_NODES]: nodes.length,
+        [TEXT_MAPPINGS.MESSAGES.CURRENT_EDGES]: edges.length,
+        [TEXT_MAPPINGS.MESSAGES.NODE_ID_CHANGE]: {
+          [TEXT_MAPPINGS.MESSAGES.NEW_IDS]: currentNodeIds,
+          [TEXT_MAPPINGS.MESSAGES.OLD_IDS]: prevNodeIds,
         },
-      );
+      });
 
       const nodesWithCorrectStates = applyNodeStateRules(propsInitialNodes);
 
@@ -206,51 +164,31 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
 
       setTimeout(() => {
         initializeHistory(nodesWithCorrectStates, propsInitialEdges, editMode);
-        debugSuccess(
-          TEXT_MAPPINGS.DEBUG.HISTORY,
-          TEXT_MAPPINGS.MESSAGES.HISTORY_REINITIALIZE,
-          {
-            [TEXT_MAPPINGS.MESSAGES.NODE_COUNT]: nodesWithCorrectStates.length,
-            [TEXT_MAPPINGS.MESSAGES.EDGE_COUNT]: propsInitialEdges.length,
-            [TEXT_MAPPINGS.MESSAGES.OPERATION]:
-              TEXT_MAPPINGS.OPERATIONS.LOAD_NEW_DATA,
-          },
-        );
+        debugSuccess(TEXT_MAPPINGS.DEBUG.HISTORY, TEXT_MAPPINGS.MESSAGES.HISTORY_REINITIALIZE, {
+          [TEXT_MAPPINGS.MESSAGES.NODE_COUNT]: nodesWithCorrectStates.length,
+          [TEXT_MAPPINGS.MESSAGES.EDGE_COUNT]: propsInitialEdges.length,
+          [TEXT_MAPPINGS.MESSAGES.OPERATION]: TEXT_MAPPINGS.OPERATIONS.LOAD_NEW_DATA,
+        });
       }, UI_CONFIG.NODE_SAVE_DELAY);
 
       prevInitialNodesRef.current = [...propsInitialNodes];
 
-      debugSuccess(
-        TEXT_MAPPINGS.DEBUG.DATA_LOADING,
-        TEXT_MAPPINGS.MESSAGES.DATA_LOADING_COMPLETE,
-        {
-          [TEXT_MAPPINGS.MESSAGES.LOADED_NODES]: nodesWithCorrectStates.length,
-          [TEXT_MAPPINGS.MESSAGES.LOADED_EDGES]: propsInitialEdges.length,
-          [TEXT_MAPPINGS.MESSAGES.CURRENT_MODE]: { viewMode, editMode },
-          [TEXT_MAPPINGS.MESSAGES.NODE_TYPE_STATS]: {
-            [TEXT_MAPPINGS.MESSAGES.IMAGE_NODE]: nodesWithCorrectStates.filter(
-              (n) => n.type === 'imageNode',
-            ).length,
-            [TEXT_MAPPINGS.MESSAGES.RECTANGLE_NODE]:
-              nodesWithCorrectStates.filter((n) => n.type === 'rectangleNode')
-                .length,
-            [TEXT_MAPPINGS.MESSAGES.PATH_NODE]: nodesWithCorrectStates.filter(
-              (n) => n.type === 'pathNode',
-            ).length,
-          },
-          [TEXT_MAPPINGS.MESSAGES.NODE_STATE_STATS]: {
-            [TEXT_MAPPINGS.MESSAGES.SELECTABLE]: nodesWithCorrectStates.filter(
-              (n) => n.selectable,
-            ).length,
-            [TEXT_MAPPINGS.MESSAGES.DRAGGABLE]: nodesWithCorrectStates.filter(
-              (n) => n.draggable,
-            ).length,
-            [TEXT_MAPPINGS.MESSAGES.DELETABLE]: nodesWithCorrectStates.filter(
-              (n) => n.deletable,
-            ).length,
-          },
+      debugSuccess(TEXT_MAPPINGS.DEBUG.DATA_LOADING, TEXT_MAPPINGS.MESSAGES.DATA_LOADING_COMPLETE, {
+        [TEXT_MAPPINGS.MESSAGES.LOADED_NODES]: nodesWithCorrectStates.length,
+        [TEXT_MAPPINGS.MESSAGES.LOADED_EDGES]: propsInitialEdges.length,
+        [TEXT_MAPPINGS.MESSAGES.CURRENT_MODE]: { viewMode, editMode },
+        [TEXT_MAPPINGS.MESSAGES.NODE_TYPE_STATS]: {
+          [TEXT_MAPPINGS.MESSAGES.IMAGE_NODE]: nodesWithCorrectStates.filter(n => n.type === 'imageNode').length,
+          [TEXT_MAPPINGS.MESSAGES.RECTANGLE_NODE]: nodesWithCorrectStates.filter(n => n.type === 'rectangleNode')
+            .length,
+          [TEXT_MAPPINGS.MESSAGES.PATH_NODE]: nodesWithCorrectStates.filter(n => n.type === 'pathNode').length,
         },
-      );
+        [TEXT_MAPPINGS.MESSAGES.NODE_STATE_STATS]: {
+          [TEXT_MAPPINGS.MESSAGES.SELECTABLE]: nodesWithCorrectStates.filter(n => n.selectable).length,
+          [TEXT_MAPPINGS.MESSAGES.DRAGGABLE]: nodesWithCorrectStates.filter(n => n.draggable).length,
+          [TEXT_MAPPINGS.MESSAGES.DELETABLE]: nodesWithCorrectStates.filter(n => n.deletable).length,
+        },
+      });
     }
   }, [
     propsInitialNodes,
@@ -271,14 +209,10 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
       const summary = getHistorySummary();
 
       if (!summary.operations || summary.operations.length === 0) {
-        debugLog(
-          TEXT_MAPPINGS.DEBUG.HISTORY,
-          TEXT_MAPPINGS.MESSAGES.FIRST_HISTORY_INIT,
-          {
-            [TEXT_MAPPINGS.MESSAGES.NODE_COUNT]: nodes.length,
-            [TEXT_MAPPINGS.MESSAGES.EDGE_COUNT]: edges.length,
-          },
-        );
+        debugLog(TEXT_MAPPINGS.DEBUG.HISTORY, TEXT_MAPPINGS.MESSAGES.FIRST_HISTORY_INIT, {
+          [TEXT_MAPPINGS.MESSAGES.NODE_COUNT]: nodes.length,
+          [TEXT_MAPPINGS.MESSAGES.EDGE_COUNT]: edges.length,
+        });
 
         initializeHistory(nodes, edges, editMode);
       }
@@ -301,7 +235,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
         debugLog(
           'reactFlow',
           'onNodesChange 觸發:',
-          changes.map((c) => ({
+          changes.map(c => ({
             type: c.type,
             id: 'id' in c ? c.id : 'Unknown',
           })),
@@ -310,13 +244,9 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
 
       onNodesChangeOriginal(changes);
 
-      const hasDragEnd = changes.some(
-        (change) => change.type === 'position' && change.dragging === false,
-      );
+      const hasDragEnd = changes.some(change => change.type === 'position' && change.dragging === false);
 
-      const hasDataChange = changes.some(
-        (change) => change.type === 'replace' && !change.item?.data?.isResizing,
-      );
+      const hasDataChange = changes.some(change => change.type === 'replace' && !change.item?.data?.isResizing);
 
       if (hasDragEnd) {
         setTimeout(() => {
@@ -324,20 +254,15 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
         }, 10);
       } else if (hasDataChange) {
         const changedNodeIds = changes
-          .filter((c) => c.type === 'replace')
-          .map((c) => c.id || c.item?.id)
+          .filter(c => c.type === 'replace')
+          .map(c => c.id || c.item?.id)
           .filter(Boolean);
 
         debugLog('nodes', '檢測到資料變更:', { changedNodes: changedNodeIds });
 
         setTimeout(() => {
           flushColorChangeHistory();
-          saveState(
-            nodes,
-            edges,
-            `data-change-${changedNodeIds.join(',')}`,
-            editMode,
-          );
+          saveState(nodes, edges, `data-change-${changedNodeIds.join(',')}`, editMode);
 
           debugSuccess('history', '立即記錄資料變更歷史:', {
             changedNodes: changedNodeIds,
@@ -346,14 +271,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
         }, 10);
       }
     },
-    [
-      onNodesChangeOriginal,
-      saveState,
-      flushColorChangeHistory,
-      nodes,
-      edges,
-      editMode,
-    ],
+    [onNodesChangeOriginal, saveState, flushColorChangeHistory, nodes, edges, editMode],
   );
 
   const onConnect = useCallback(
@@ -394,28 +312,16 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
       const processPromises = uploadedResults.map(async (result, index) => {
         try {
           // 步驟 3: 取得完整 URL（如果有 getFilenameFQDN 則使用，否則假設 result 就是 URL）
-          const imageUrl = getFilenameFQDN
-            ? await Promise.resolve(getFilenameFQDN(result))
-            : result;
+          const imageUrl = getFilenameFQDN ? await Promise.resolve(getFilenameFQDN(result)) : result;
 
           // 步驟 4: 載入圖片取得尺寸
           return new Promise<void>((resolve, reject) => {
             const img = new Image();
 
             img.onload = () => {
-              const { width, height } = calculateImageSize(
-                img.width,
-                img.height,
-              );
+              const { width, height } = calculateImageSize(img.width, img.height);
               const viewport = getViewport();
-              const position = calculateStaggeredPosition(
-                index,
-                100,
-                100,
-                viewport.x,
-                viewport.y,
-                viewport.zoom,
-              );
+              const position = calculateStaggeredPosition(index, 100, 100, viewport.x, viewport.y, viewport.zoom);
 
               const newNode: FlowNode = {
                 id: `image-${Date.now()}-${index}`,
@@ -436,21 +342,13 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
 
               setTimeout(() => {
                 setNodes((nds: FlowNode[]) => {
-                  const maxZIndex = Math.max(
-                    ...nds.map((n: FlowNode) => n.zIndex || 0),
-                    0,
-                  );
+                  const maxZIndex = Math.max(...nds.map((n: FlowNode) => n.zIndex || 0), 0);
 
                   const nodeWithZIndex = { ...newNode, zIndex: maxZIndex + 1 };
                   const newNodes = [...nds, nodeWithZIndex];
 
                   setTimeout(() => {
-                    saveState(
-                      newNodes,
-                      edges,
-                      `upload-image-${result}`,
-                      editMode,
-                    );
+                    saveState(newNodes, edges, `upload-image-${result}`, editMode);
                   }, UI_CONFIG.NODE_SAVE_DELAY);
 
                   return newNodes;
@@ -484,9 +382,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
   const handleDeleteAll = useCallback((): void => {
     if (editMode === EditMode.BACKGROUND) {
       setNodes((nds: FlowNode[]) => {
-        const newNodes = nds.filter(
-          (node: FlowNode) => node.type !== 'imageNode',
-        );
+        const newNodes = nds.filter((node: FlowNode) => node.type !== 'imageNode');
 
         setTimeout(() => {
           saveState(newNodes, edges, 'delete-images', editMode);
@@ -496,10 +392,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
       });
     } else if (editMode === EditMode.LAYER) {
       setNodes((nds: FlowNode[]) => {
-        const newNodes = nds.filter(
-          (node: FlowNode) =>
-            node.type !== 'rectangleNode' && node.type !== 'pathNode',
-        );
+        const newNodes = nds.filter((node: FlowNode) => node.type !== 'rectangleNode' && node.type !== 'pathNode');
 
         setTimeout(() => {
           saveState(newNodes, [], 'delete-layers', editMode);
@@ -522,10 +415,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
       flushColorChangeHistory();
 
       setNodes((nds: FlowNode[]) => {
-        const maxZIndex = Math.max(
-          ...nds.map((n: FlowNode) => n.zIndex || 0),
-          0,
-        );
+        const maxZIndex = Math.max(...nds.map((n: FlowNode) => n.zIndex || 0), 0);
 
         const newRectangle: FlowNode = {
           id: `rectangle-${Date.now()}`,
@@ -554,14 +444,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
         return newNodes;
       });
     },
-    [
-      flushColorChangeHistory,
-      setNodes,
-      editMode,
-      selectedColor,
-      saveState,
-      edges,
-    ],
+    [flushColorChangeHistory, setNodes, editMode, selectedColor, saveState, edges],
   );
 
   const handleCreatePath = useCallback(
@@ -571,17 +454,14 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
       flushColorChangeHistory();
 
       setNodes((nds: FlowNode[]) => {
-        const maxZIndex = Math.max(
-          ...nds.map((n: FlowNode) => n.zIndex || 0),
-          0,
-        );
+        const maxZIndex = Math.max(...nds.map((n: FlowNode) => n.zIndex || 0), 0);
 
         const newPath: FlowNode = {
           id: `path-${Date.now()}`,
           type: 'pathNode',
           position: {
-            x: Math.min(...points.map((p) => p.x)),
-            y: Math.min(...points.map((p) => p.y)),
+            x: Math.min(...points.map(p => p.x)),
+            y: Math.min(...points.map(p => p.y)),
           },
           zIndex: maxZIndex + 1,
           selectable: editMode === EditMode.LAYER,
@@ -603,14 +483,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
         return newNodes;
       });
     },
-    [
-      flushColorChangeHistory,
-      setNodes,
-      editMode,
-      selectedColor,
-      saveState,
-      edges,
-    ],
+    [flushColorChangeHistory, setNodes, editMode, selectedColor, saveState, edges],
   );
 
   // 復原/重做功能實作
@@ -652,8 +525,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
 
       if (
         params.nodes.length === 1 &&
-        (params.nodes[0].type === 'rectangleNode' ||
-          params.nodes[0].type === 'pathNode')
+        (params.nodes[0].type === 'rectangleNode' || params.nodes[0].type === 'pathNode')
       ) {
         const selectedNode = params.nodes[0];
         const nodeColor = selectedNode.data?.color;
@@ -671,17 +543,13 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
       onColorChange(color);
 
       const selectedColorableNodes = selectedNodes.filter(
-        (node) => node.type === 'rectangleNode' || node.type === 'pathNode',
+        node => node.type === 'rectangleNode' || node.type === 'pathNode',
       );
 
       if (selectedColorableNodes.length > 0) {
         setNodes((nds: FlowNode[]) => {
           const newNodes = nds.map((node: FlowNode) => {
-            if (
-              selectedColorableNodes.some(
-                (selected: FlowNode) => selected.id === node.id,
-              )
-            ) {
+            if (selectedColorableNodes.some((selected: FlowNode) => selected.id === node.id)) {
               return { ...node, data: { ...node.data, color } };
             }
 
@@ -723,28 +591,17 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
           id,
           nodesCount: currentNodes.length,
           edgesCount: currentEdges.length,
-          updatedNode: (currentNodes as FlowNode[]).find(
-            (n: FlowNode) => n.id === id,
-          )?.data?.label,
+          updatedNode: (currentNodes as FlowNode[]).find((n: FlowNode) => n.id === id)?.data?.label,
         });
 
-        saveState(
-          currentNodes as FlowNode[],
-          currentEdges as FlowEdge[],
-          `text-edit-${id}`,
-          editMode,
-        );
+        saveState(currentNodes as FlowNode[], currentEdges as FlowEdge[], `text-edit-${id}`, editMode);
       }, 20);
     },
     [saveState, flushColorChangeHistory, getNodes, getEdges, editMode],
   );
 
   const handlePathPointsChange = useCallback(
-    (
-      id: string,
-      oldPoints: { x: number; y: number }[],
-      newPoints: { x: number; y: number }[],
-    ) => {
+    (id: string, oldPoints: { x: number; y: number }[], newPoints: { x: number; y: number }[]) => {
       debugLog('nodes', '路徑節點點位變更，記錄歷史:', {
         id,
         oldPoints,
@@ -763,17 +620,14 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
           edgesCount: currentEdges.length,
           updatedPointsCount:
             (
-              (currentNodes as FlowNode[]).find((n: FlowNode) => n.id === id)
-                ?.data?.points as Array<{ x: number; y: number }>
+              (currentNodes as FlowNode[]).find((n: FlowNode) => n.id === id)?.data?.points as Array<{
+                x: number;
+                y: number;
+              }>
             )?.length || 0,
         });
 
-        saveState(
-          currentNodes as FlowNode[],
-          currentEdges as FlowEdge[],
-          `path-edit-${id}`,
-          editMode,
-        );
+        saveState(currentNodes as FlowNode[], currentEdges as FlowEdge[], `path-edit-${id}`, editMode);
       }, 20);
     },
     [saveState, flushColorChangeHistory, getNodes, getEdges, editMode],
@@ -788,10 +642,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
     (_event: React.MouseEvent, node: ReactFlowNode) => {
       const flowNode = node as unknown as FlowNode;
 
-      if (
-        viewMode === ViewMode.VIEW &&
-        (flowNode.type === 'rectangleNode' || flowNode.type === 'pathNode')
-      ) {
+      if (viewMode === ViewMode.VIEW && (flowNode.type === 'rectangleNode' || flowNode.type === 'pathNode')) {
         debugLog('events', 'Node hover enter (React Flow)', {
           id: flowNode.id.slice(-4),
           type: flowNode.type,
@@ -809,10 +660,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
     (_event: React.MouseEvent, node: ReactFlowNode) => {
       const flowNode = node as unknown as FlowNode;
 
-      if (
-        viewMode === ViewMode.VIEW &&
-        (flowNode.type === 'rectangleNode' || flowNode.type === 'pathNode')
-      ) {
+      if (viewMode === ViewMode.VIEW && (flowNode.type === 'rectangleNode' || flowNode.type === 'pathNode')) {
         debugLog('events', 'Node hover leave (React Flow)', {
           id: flowNode.id.slice(-4),
           type: flowNode.type,
@@ -868,10 +716,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
     }
 
     const copyableNodes = selectedNodes.filter(
-      (node) =>
-        node.type === 'imageNode' ||
-        node.type === 'rectangleNode' ||
-        node.type === 'pathNode',
+      node => node.type === 'imageNode' || node.type === 'rectangleNode' || node.type === 'pathNode',
     );
 
     if (copyableNodes.length === 0) {
@@ -881,10 +726,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
     }
 
     setNodes((currentNodes: FlowNode[]): FlowNode[] => {
-      const maxZIndex = Math.max(
-        ...currentNodes.map((n: FlowNode) => n.zIndex || 0),
-        0,
-      );
+      const maxZIndex = Math.max(...currentNodes.map((n: FlowNode) => n.zIndex || 0), 0);
 
       const newNodes = [...currentNodes];
 
@@ -933,14 +775,10 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
       saveState(nodes, edges, 'copy-paste-nodes', editMode);
     }, 10);
 
-    debugLog(
-      'keyboard',
-      `執行 Command+D 複製貼上成功，複製節點數: ${copyableNodes.length}`,
-      {
-        copiedNodeIds: copyableNodes.map((n) => n.id),
-        copiedNodeTypes: copyableNodes.map((n) => n.type),
-      },
-    );
+    debugLog('keyboard', `執行 Command+D 複製貼上成功，複製節點數: ${copyableNodes.length}`, {
+      copiedNodeIds: copyableNodes.map(n => n.id),
+      copiedNodeTypes: copyableNodes.map(n => n.type),
+    });
   }, [selectedNodes, setNodes, nodes, edges, saveState, editMode]);
 
   // 全域鍵盤快捷鍵處理
@@ -949,8 +787,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
       const activeElement = document.activeElement;
       const isEditingText =
         activeElement &&
-        (activeElement.tagName === 'INPUT' ||
-          activeElement.tagName === 'TEXTAREA') &&
+        (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA') &&
         activeElement.getAttribute('type') !== 'color';
 
       if (isEditingText) {
@@ -973,11 +810,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
 
   return (
     <>
-      <Breadcrumb
-        warehouseIds={warehouseIds}
-        onWarehouseClick={onBreadcrumbClick}
-        onNameChange={onNameChange}
-      />
+      <Breadcrumb warehouseIds={warehouseIds} onWarehouseClick={onBreadcrumbClick} onNameChange={onNameChange} />
       {viewMode === ViewMode.EDIT && (
         <Toolbar
           onUpload={handleUpload}
