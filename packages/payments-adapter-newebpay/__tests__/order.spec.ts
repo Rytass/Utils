@@ -1,4 +1,3 @@
-/* eslint-disable no-control-regex */
 /**
  * @jest-environment node
  */

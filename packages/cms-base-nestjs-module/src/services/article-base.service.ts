@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import { BadRequestException, Inject, Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { DataSource, In, IsNull, LessThanOrEqual, Not, QueryRunner, Repository, SelectQueryBuilder } from 'typeorm';
 import { BaseArticleEntity } from '../models/base-article.entity';
@@ -90,7 +89,7 @@ export class ArticleBaseService<
 
   private readonly logger = new Logger(ArticleBaseService.name);
 
-  private queryStagesFeaturesCheck = (stage: ArticleStage) => {
+  private readonly queryStagesFeaturesCheck = (stage: ArticleStage) => {
     switch (stage) {
       case ArticleStage.DRAFT:
         if (!this.draftMode) {

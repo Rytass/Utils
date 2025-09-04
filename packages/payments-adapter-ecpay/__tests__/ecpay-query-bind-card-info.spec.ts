@@ -112,6 +112,7 @@ describe('ECPayPayment Query Card Bound Info', () => {
     expect(DateTime.fromJSDate(response.bindingDate as Date).toFormat('yyyy/MM/dd HH:mm:ss')).toEqual(
       DEFAULT_BINDING_DATE,
     );
+
     expect(response.cardId).toEqual('192536');
     expect(response.cardNumberPrefix).toEqual('123456');
     expect(response.cardNumberSuffix).toEqual('9876');

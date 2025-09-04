@@ -33,7 +33,7 @@ export class CartesianProduct<T> {
 
   nth(n: number): NonNullable<T>[] {
     let bn = Number(n);
-    let result: NonNullable<T>[] = [];
+    const result: NonNullable<T>[] = [];
 
     for (let i = 0; i < this.size; i++) {
       const base = this.seed[i].length;

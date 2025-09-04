@@ -30,15 +30,15 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
   private _additionalInfo?: AdditionalInfo<OCM>;
   private _asyncInfo?: AsyncOrderInformation<OCM>;
   private _committedAt: Date | null = null;
-  private _createdAt: Date | null = null;
+  private readonly _createdAt: Date | null = null;
   private _state: OrderState;
   private _failedCode: string | undefined;
   private _failedMessage: string | undefined;
-  private _clientBackUrl: string | undefined;
+  private readonly _clientBackUrl: string | undefined;
 
-  private _checkoutMemberId: string | null = null;
-  private _checkoutCardId: string | null = null;
-  private _cardType: CardType;
+  private readonly _checkoutMemberId: string | null = null;
+  private readonly _checkoutCardId: string | null = null;
+  private readonly _cardType: CardType;
 
   // POS API 相關資訊，用於後續操作（如退款）
   private _xid: string | undefined;
@@ -269,6 +269,7 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
         this._state = OrderState.FAILED;
         this._failedMessage =
           'Missing XID or AuthCode for refund operation. Please ensure the order was properly committed with POS API information.';
+
         throw new Error(this._failedMessage);
       }
 
@@ -314,6 +315,7 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
         // 如果還沒有設定失敗狀態，在這裡設定
         if (this._state !== OrderState.FAILED) {
           this._state = OrderState.FAILED;
+
           if (error instanceof Error) {
             this._failedMessage = error.message;
           } else {
@@ -356,6 +358,7 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
         this._state = OrderState.FAILED;
         this._failedMessage =
           'Missing XID or AuthCode for refund cancellation operation. Please ensure the order was properly committed with POS API information.';
+
         throw new Error(this._failedMessage);
       }
 
@@ -398,6 +401,7 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
         // 如果還沒有設定失敗狀態，在這裡設定
         if (this._state !== OrderState.FAILED) {
           this._state = OrderState.FAILED;
+
           if (error instanceof Error) {
             this._failedMessage = error.message;
           } else {

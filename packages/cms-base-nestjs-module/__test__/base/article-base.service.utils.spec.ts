@@ -441,6 +441,7 @@ describe('getDefaultQueryBuilder', () => {
   let service: ArticleBaseService;
   let mockRepo: any;
   let mockRunner: any;
+
   beforeEach(() => {
     mockRepo = {
       createQueryBuilder: jest.fn(() => mockQueryBuilder),
@@ -472,6 +473,7 @@ describe('getDefaultQueryBuilder', () => {
       {} as any,
       {} as any,
     );
+
     jest.spyOn(service as any, 'queryStagesFeaturesCheck').mockImplementation();
     jest.spyOn(service as any, 'limitStageWithQueryBuilder').mockImplementation(qb => qb);
   });

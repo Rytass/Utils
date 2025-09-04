@@ -40,13 +40,16 @@ export function getTaxTypeFromItems(items: InvoicePaymentItem[]): TaxType {
 
   if ([hasTaxed, hasTaxFree, hasZeroTax, hasSpecial].reduce((sum, flag) => sum + (flag ? 1 : 0), 0) > 1) {
     if (hasTaxFree && hasZeroTax) throw new Error('Zero tax and tax free item cannot both in one invoice');
+
     if (hasTaxed && hasSpecial) return TaxType.SPECIAL;
 
     return TaxType.MIXED;
   }
 
   if (hasTaxFree) return TaxType.TAX_FREE;
+
   if (hasZeroTax) return TaxType.ZERO_TAX;
+
   if (hasSpecial) return TaxType.SPECIAL;
 
   return TaxType.TAXED;

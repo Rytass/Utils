@@ -46,12 +46,12 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
   implements PaymentGateway<CM, CTBCOrder<CM>>, BindCardPaymentGateway<CM>
 {
   private serverHost = 'http://localhost:3000';
-  private callbackPath = '/payments/ctbc/callback';
-  private checkoutPath = '/payments/ctbc/checkout';
-  private bindCardPath = '/payments/ctbc/bind-card';
-  private boundCardPath = '/payments/ctbc/bound-card';
-  private boundCardCheckoutResultPath = '/payments/ctbc/bound-card/checkout-result';
-  private isAmex = false;
+  private readonly callbackPath: string = '/payments/ctbc/callback';
+  private readonly checkoutPath: string = '/payments/ctbc/checkout';
+  private readonly bindCardPath: string = '/payments/ctbc/bind-card';
+  private readonly boundCardPath: string = '/payments/ctbc/bound-card';
+  private readonly boundCardCheckoutResultPath: string = '/payments/ctbc/bound-card/checkout-result';
+  private readonly isAmex: boolean = false;
 
   readonly merchantId: string;
   readonly merId: string;
@@ -65,7 +65,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
   _server?: Server;
 
   private isGatewayReady = false;
-  private serverListener: (req: IncomingMessage, res: ServerResponse) => void = (req, res) =>
+  private readonly serverListener: (req: IncomingMessage, res: ServerResponse) => void = (req, res) =>
     this.defaultServerListener(req, res);
 
   private readonly orderCache: OrderCache<CM>;
@@ -603,7 +603,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
 
   async query<OO extends CTBCOrder>(id: string): Promise<OO> {
     // 先嘗試從快取中獲取訂單
-    let order = await this.orderCache.get(id);
+    const order = await this.orderCache.get(id);
 
     if (this.isAmex) {
       throw new Error('Query AMEX Order From SOAP API is not implemented');

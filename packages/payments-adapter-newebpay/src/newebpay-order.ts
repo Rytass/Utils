@@ -29,7 +29,7 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage = NewebPayCommitMes
 
   private _committedAt: Date | null = null;
 
-  private _createdAt: Date | null = null;
+  private readonly _createdAt: Date | null = null;
 
   private _platformTradeNumber: string | null = null;
 

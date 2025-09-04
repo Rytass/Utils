@@ -101,6 +101,7 @@ export const debugGroup = (groupName: string, callback: () => void): void => {
   const prefix = `🔧 ${timestamp} [WMS]`;
 
   console.group(`${prefix} ${groupName}`);
+
   try {
     callback();
   } finally {

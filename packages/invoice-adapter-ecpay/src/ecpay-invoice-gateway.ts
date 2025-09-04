@@ -205,6 +205,7 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayPaymentItem, ECP
 
     if (options.customer.id) {
       if (options.customer.id.length > 20) throw new Error('`customer.id` max length is 20');
+
       if (/[0-9a-z_]/gi.test(options.customer.id))
         throw new Error('`customer.id` only allowed number, alphabets and underline');
     }
@@ -218,6 +219,7 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayPaymentItem, ECP
 
     if (options.carrier?.type === InvoiceCarrierType.PRINT) {
       if (!options.customer.name) throw new Error('`customer.name` is required if invoice printed');
+
       if (!options.customer.address) throw new Error('`customer.address` is required if invoice printed');
     }
 

@@ -477,6 +477,7 @@ export class CTBCAEGateway {
 
     return format.replace(/%(?:0(\d+))?[sd%]/g, (match, width) => {
       if (match === '%%') return '%';
+
       if (i < args.length) {
         const arg = args[i++];
 

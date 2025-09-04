@@ -255,6 +255,7 @@ describe('CategoryBaseService - update', () => {
 
     baseCategoryRepo.findOne = jest.fn().mockImplementation(({ where }) => {
       if (where?.id === 'cat-id') return Promise.resolve(mockCategory);
+
       if (where?.id === 'p1') return Promise.resolve(mockParent);
 
       return Promise.resolve(null);
@@ -309,6 +310,7 @@ describe('CategoryBaseService - update', () => {
 
     baseCategoryRepo.findOne = jest.fn().mockImplementation(({ where }) => {
       if (where?.id === 'cat-id') return Promise.resolve(mockCategory);
+
       if (where?.id === 'p1') return Promise.resolve(mockParent);
 
       return Promise.resolve(null);
@@ -379,6 +381,7 @@ describe('CategoryBaseService - update', () => {
 
     baseCategoryRepo.findOne = jest.fn().mockImplementation(({ where }) => {
       if (where?.id === 'cat-id') return Promise.resolve(mockCategory);
+
       if (where?.id === 'p1') return Promise.resolve(mockParent);
 
       return Promise.resolve(null);

@@ -41,6 +41,7 @@ import { DEFAULT_CASBIN_DOMAIN } from './default-casbin-domain';
 
 const getTypeORMAdapter = async (): Promise<typeof TypeORMAdapterType> => {
   const module = await import('typeorm-adapter');
+
   return module.default;
 };
 

@@ -49,9 +49,9 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
 
   private _failedMessage: string | undefined;
 
-  private _checkoutMemberId: string | null = null;
+  private readonly _checkoutMemberId: string | null = null;
 
-  private _checkoutCardId: string | null = null;
+  private readonly _checkoutCardId: string | null = null;
 
   constructor(
     options: OrderCreateInit<OCM> | OrderFromServerInit<OCM> | OrderFromBoundCard<OCM>,

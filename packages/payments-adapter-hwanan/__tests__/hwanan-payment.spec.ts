@@ -504,12 +504,16 @@ describe('HwaNan Payment', () => {
     };
 
     const mockServerForNgrok = new (require('events').EventEmitter)();
+
     mockServerForNgrok.listen = jest.fn((port, host, callback) => {
       setImmediate(() => callback && callback());
+
       return mockServerForNgrok;
     });
+
     mockServerForNgrok.close = jest.fn(callback => {
       setImmediate(() => callback && callback());
+
       return mockServerForNgrok;
     });
 
@@ -530,10 +534,12 @@ describe('HwaNan Payment', () => {
 
       // Override global import function to handle dynamic imports
       const originalImport = global.import || jest.fn();
+
       global.import = jest.fn().mockImplementation(moduleName => {
         if (moduleName === '@ngrok/ngrok') {
           return Promise.resolve({ default: mockNgrok });
         }
+
         return originalImport.call(global, moduleName);
       });
     });
@@ -570,6 +576,7 @@ describe('HwaNan Payment', () => {
       const { HwaNanPayment } = await import('../src');
 
       const customPort = 9999;
+
       return new Promise<void>(resolve => {
         const payment = new HwaNanPayment({
           merchantId: MERCHANT_ID,

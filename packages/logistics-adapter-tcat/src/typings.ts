@@ -89,6 +89,7 @@ export const TCatLogistics: TCatLogisticsInterface<TCatLogisticsStatus> = {
       const foundId: string = statusArray[0];
 
       if (foundId === logisticId) isMatch = true;
+
       if (status)
         statusHistory.push({
           businessPremise: statusArray[statusArray.length - 1],

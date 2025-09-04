@@ -14,6 +14,7 @@ const sampleFileSha256 = `${createHash('sha256').update(sampleFileBuffer).digest
 
 const CONNECTION_STRING =
   'DefaultEndpointsProtocol=https;AccountName=rytass;AccountKey=KubDKwt3J3WHFu1e6QsCy1QjX/wCLWnMj02L/hhspuMIv+ifqR52xNB5mcKbsa4CD5H57AkPhdSjXWe5x+Vygg==;EndpointSuffix=core.windows.net';
+
 const CONTAINER_NAME = 'files';
 const FAKE_URL = 'https://fake.rytass.com';
 const NOT_FOUND_FILE = 'NOT_EXIST';

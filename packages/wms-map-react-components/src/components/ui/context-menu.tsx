@@ -133,6 +133,7 @@ const ContextMenu: FC<ContextMenuProps> = ({
               className={`${styles.menuItem} ${!arrangeStates.canBringToFront ? styles.disabled : ''}`}
               onClick={e => {
                 e.stopPropagation();
+
                 if (arrangeStates.canBringToFront) {
                   arrangeActions.onBringToFront();
                   onClose();
@@ -145,6 +146,7 @@ const ContextMenu: FC<ContextMenuProps> = ({
               className={`${styles.menuItem} ${!arrangeStates.canBringForward ? styles.disabled : ''}`}
               onClick={e => {
                 e.stopPropagation();
+
                 if (arrangeStates.canBringForward) {
                   arrangeActions.onBringForward();
                   onClose();
@@ -157,6 +159,7 @@ const ContextMenu: FC<ContextMenuProps> = ({
               className={`${styles.menuItem} ${!arrangeStates.canSendBackward ? styles.disabled : ''}`}
               onClick={e => {
                 e.stopPropagation();
+
                 if (arrangeStates.canSendBackward) {
                   arrangeActions.onSendBackward();
                   onClose();
@@ -169,6 +172,7 @@ const ContextMenu: FC<ContextMenuProps> = ({
               className={`${styles.menuItem} ${!arrangeStates.canSendToBack ? styles.disabled : ''}`}
               onClick={e => {
                 e.stopPropagation();
+
                 if (arrangeStates.canSendToBack) {
                   arrangeActions.onSendToBack();
                   onClose();

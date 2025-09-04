@@ -9,7 +9,7 @@ const VAULT_PASSWORD = 'utils';
 const VAULT_PROJECT = 'rytass/utils';
 const VAULT_EMPTY_PROJECT = 'rytass/utils_empty';
 
-let secretDataMap = {
+const secretDataMap = {
   [VAULT_PROJECT]: {
     test: 'abc',
     test2: '123',
@@ -18,7 +18,7 @@ let secretDataMap = {
   [VAULT_EMPTY_PROJECT]: undefined,
 } as Record<string, Record<string, any> | undefined>;
 
-let secretVersionMap = {
+const secretVersionMap = {
   [VAULT_PROJECT]: 3,
   [VAULT_EMPTY_PROJECT]: 0,
 } as Record<string, number>;

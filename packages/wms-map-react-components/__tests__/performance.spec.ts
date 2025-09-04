@@ -126,13 +126,16 @@ describe('Performance Tests', () => {
 
       // Warm-up iterations using functional approach
       const performWarmup = () => transformApiDataToNodes(mockMapData, generateMockImageUrl);
+
       Array.from({ length: warmupIterations }, performWarmup);
 
       // Performance measurements using functional approach
       const measurePerformance = () => {
         const startTime = performance.now();
+
         transformApiDataToNodes(mockMapData, generateMockImageUrl);
         const endTime = performance.now();
+
         return endTime - startTime;
       };
 

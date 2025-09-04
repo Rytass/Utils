@@ -16,6 +16,7 @@ export const ORDER_LOGISTICS_NAME = 'logistics';
 
 function getConditions(target: Condition | Condition[] | undefined): Condition[] {
   if (Array.isArray(target)) return target;
+
   if (typeof target === 'undefined') return [];
 
   return [target];

@@ -26,7 +26,7 @@ export class HwaNanOrder<OCM extends HwaNanCommitMessage = HwaNanCreditCardCommi
 
   private _committedAt: Date | null = null;
 
-  private _createdAt: Date | null = null;
+  private readonly _createdAt: Date | null = null;
 
   private _platformTradeNumber: string | null = null;
 

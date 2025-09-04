@@ -36,7 +36,7 @@ export class StockService {
               .select('1')
               .from('locations', 'l2')
               .where('l2.id IN (:...l2Ids)', { l2Ids: options.locationIds })
-              // eslint-disable-next-line quotes
+
               .andWhere("loc.mpath LIKE l2.mpath || '%'")
               .getQuery();
 

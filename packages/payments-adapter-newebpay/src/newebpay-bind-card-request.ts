@@ -14,7 +14,7 @@ export class NewebPayBindCardRequest implements BindCardRequest {
   private readonly _form: NewebPayMPGMakeOrderPayload;
 
   private _state = OrderState.INITED;
-  private _memberId: string;
+  private readonly _memberId: string;
   private _cardId: string | undefined;
   private _cardNumberPrefix: string | undefined;
   private _cardNumberSuffix: string | undefined;
@@ -23,7 +23,7 @@ export class NewebPayBindCardRequest implements BindCardRequest {
 
   private _failedCode: string | undefined;
   private _failedMessage: string | undefined;
-  private _finishRedirectURL: string | undefined;
+  private readonly _finishRedirectURL: string | undefined;
 
   constructor(options: NewebPayBindCardRequestOptions) {
     this._id = options.id;

@@ -152,8 +152,6 @@ describe('ECPayOrder', () => {
       });
 
       expect(order.state).toBe(OrderState.INITED);
-
-      // eslint-disable-next-line no-unused-vars
       const html = order.formHTML;
 
       expect(order.state).toBe(OrderState.PRE_COMMIT);
@@ -192,7 +190,6 @@ describe('ECPayOrder', () => {
         ],
       });
 
-      // eslint-disable-next-line no-unused-vars
       const html = order.formHTML;
 
       order.commit({
@@ -230,7 +227,6 @@ describe('ECPayOrder', () => {
         ],
       });
 
-      // eslint-disable-next-line no-unused-vars
       const html = order.formHTML;
 
       const createdAt = new Date();
@@ -289,7 +285,6 @@ describe('ECPayOrder', () => {
         ],
       });
 
-      // eslint-disable-next-line no-unused-vars
       const html = order.formHTML;
 
       expect(() => {
@@ -682,6 +677,7 @@ describe('ECPayOrder', () => {
         mockGetCreditCardTradeStatus.mockImplementationOnce(() =>
           Promise.resolve(ECPayCreditCardOrderStatus.CANCELLED),
         );
+
         mockGetCreditCardTradeStatus.mockImplementationOnce(() =>
           Promise.resolve(ECPayCreditCardOrderStatus.MANUALLY_CANCELLED),
         );

@@ -9,7 +9,7 @@ export class CTBCBindCardRequest implements BindCardRequest {
 
   private _resolved = false;
 
-  private _memberId: string;
+  private readonly _memberId: string;
   private _cardId?: string;
   private _cardNumberPrefix?: string;
   private _cardNumberSuffix?: string;
@@ -75,7 +75,9 @@ export class CTBCBindCardRequest implements BindCardRequest {
 
   get state(): CTBCBindCardRequestState {
     if (this._failedCode) return CTBCBindCardRequestState.FAILED;
+
     if (this._cardId) return CTBCBindCardRequestState.BOUND;
+
     if (this._resolved) return CTBCBindCardRequestState.FORM_GENERATED;
 
     return CTBCBindCardRequestState.INITED;

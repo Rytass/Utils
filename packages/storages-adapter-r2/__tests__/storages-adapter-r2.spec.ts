@@ -19,6 +19,7 @@ const sampleFileSha256 = `${createHash('sha256').update(sampleFileBuffer).digest
 const FAKE_URL = `https://utils.${ACCOUNT}.r2.cloudflarestorage.com/${sampleFileSha256}.png`;
 const FAKE_URL_WITH_EXPIRES = (expires: number) =>
   `https://utils.${ACCOUNT}.r2.cloudflarestorage.com/${sampleFileSha256}.png?expires=${expires}`;
+
 const NOT_FOUND_FILE = 'NOT_EXIST';
 const GENERAL_ERROR_FILE = 'GENERAL_ERROR_FILE';
 
@@ -452,6 +453,7 @@ describe('Cloudflare R2 storage adapter', () => {
       stream.push(
         Buffer.from([0x00, 0x01, 0x04, 0x00, 0x00, 0x01, 0x04, 0x00, 0x00, 0x01, 0x04, 0x00, 0x00, 0x01, 0x04, 0x00]),
       );
+
       stream.push(null);
     });
 
