@@ -6,14 +6,7 @@ import { LocalStorage } from '../src';
 import { resolve } from 'path';
 import { createHash } from 'crypto';
 import { Readable } from 'stream';
-import {
-  lstatSync,
-  rmSync,
-  mkdirSync,
-  writeFile,
-  readFileSync,
-  createReadStream,
-} from 'fs';
+import { lstatSync, rmSync, mkdirSync, writeFile, readFileSync, createReadStream } from 'fs';
 
 describe('StorageLocalService', () => {
   const workingDirectory = resolve(__dirname, 'tmp');
@@ -23,9 +16,6 @@ describe('StorageLocalService', () => {
     const fakeFileBuffer = Buffer.from([0x1f, 0x49, 0xf2]);
     const sampleFileBuffer = readFileSync(sampleFilePath);
 
-    const fakeFilename = createHash('sha256')
-      .update(fakeFileBuffer)
-      .digest('hex');
     const filename = `${createHash('sha256').update(sampleFileBuffer).digest('hex')}.png`;
 
     const localStorage = new LocalStorage({
@@ -34,23 +24,19 @@ describe('StorageLocalService', () => {
     });
 
     describe('Write File', () => {
-      it('should write buffer file', (done) => {
+      it('should write buffer file', done => {
         localStorage.write(sampleFileBuffer).then(() => {
-          expect(
-            lstatSync(resolve(workingDirectory, filename)).isFile(),
-          ).toBeTruthy();
+          expect(lstatSync(resolve(workingDirectory, filename)).isFile()).toBeTruthy();
 
           done();
         });
       });
 
-      it('should write stream file', (done) => {
+      it('should write stream file', done => {
         const stream = createReadStream(sampleFilePath);
 
         localStorage.write(stream).then(() => {
-          expect(
-            lstatSync(resolve(workingDirectory, filename)).isFile(),
-          ).toBeTruthy();
+          expect(lstatSync(resolve(workingDirectory, filename)).isFile()).toBeTruthy();
 
           done();
         });
@@ -59,10 +45,7 @@ describe('StorageLocalService', () => {
       it('should batch write files', async () => {
         // Skip this test due to race condition issues with concurrent file operations
         // The individual file write tests already cover the core functionality
-        const result = await localStorage.batchWrite([
-          sampleFileBuffer,
-          fakeFileBuffer,
-        ]);
+        const result = await localStorage.batchWrite([sampleFileBuffer, fakeFileBuffer]);
 
         expect(result).toHaveLength(2);
         expect(result[0].key).toBeTruthy();
@@ -72,7 +55,7 @@ describe('StorageLocalService', () => {
         try {
           rmSync(resolve(workingDirectory, result[0].key));
           rmSync(resolve(workingDirectory, result[1].key));
-        } catch (error) {
+        } catch {
           // Ignore cleanup errors
         }
       });
@@ -80,10 +63,11 @@ describe('StorageLocalService', () => {
       afterEach(() => {
         try {
           const filePath = resolve(workingDirectory, filename);
+
           if (lstatSync(filePath).isFile()) {
             rmSync(filePath);
           }
-        } catch (error) {
+        } catch {
           // File might not exist, ignore cleanup error
         }
       });
@@ -113,14 +97,14 @@ describe('StorageLocalService', () => {
       afterEach(() => {
         try {
           rmSync(resolve(workingDirectory, customFilename));
-        } catch (e) {
+        } catch {
           // File might not exist, ignore the error
         }
       });
     });
 
     describe('Read File', () => {
-      it('should read file buffer', (done) => {
+      it('should read file buffer', done => {
         localStorage.write(sampleFileBuffer).then(async () => {
           const savedBuffer = await localStorage.read(filename, {
             format: 'buffer',
@@ -132,7 +116,7 @@ describe('StorageLocalService', () => {
         });
       });
 
-      it('should read file stream', (done) => {
+      it('should read file stream', done => {
         localStorage.write(sampleFileBuffer).then(async () => {
           const stream = await localStorage.read(filename);
 
@@ -140,7 +124,7 @@ describe('StorageLocalService', () => {
 
           let buffer = Buffer.from([]);
 
-          stream.on('data', (chunk) => {
+          stream.on('data', chunk => {
             buffer = Buffer.concat([buffer, chunk]);
           });
 
@@ -155,23 +139,22 @@ describe('StorageLocalService', () => {
       afterEach(() => {
         try {
           const filePath = resolve(workingDirectory, filename);
+
           if (lstatSync(filePath).isFile()) {
             rmSync(filePath);
           }
-        } catch (error) {
+        } catch {
           // File might not exist, ignore cleanup error
         }
       });
     });
 
     describe('Remove File', () => {
-      it('should remove file', (done) => {
+      it('should remove file', done => {
         localStorage.write(sampleFileBuffer).then(async () => {
           await localStorage.remove(filename);
 
-          expect(() =>
-            lstatSync(resolve(workingDirectory, filename)),
-          ).toThrow();
+          expect(() => lstatSync(resolve(workingDirectory, filename))).toThrow();
 
           done();
         });
@@ -210,7 +193,7 @@ describe('StorageLocalService', () => {
       ).toThrow();
     });
 
-    it('should throw if directory is a file', (done) => {
+    it('should throw if directory is a file', done => {
       writeFile(workingDirectory, Buffer.from([0x00, 0x01]), () => {
         expect(
           () =>

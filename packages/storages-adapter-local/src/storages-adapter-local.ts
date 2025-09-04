@@ -125,8 +125,9 @@ export class LocalStorage extends Storage {
 
         convertedStream.pipe(writeStream);
 
-        await new Promise<void>((pResolve) => {
-          stream.on('end', pResolve);
+        await new Promise<void>((resolve, reject) => {
+          writeStream.on('finish', resolve);
+          writeStream.on('error', reject);
         });
 
         promiseResolve({ key: options.filename });
