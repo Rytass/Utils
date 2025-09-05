@@ -19,7 +19,7 @@ const Breadcrumb: FC<BreadcrumbProps> = ({ warehouseIds, onWarehouseClick, onNam
 
   // 點擊外部關閉 dropdown
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent): void => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
       }
@@ -29,12 +29,12 @@ const Breadcrumb: FC<BreadcrumbProps> = ({ warehouseIds, onWarehouseClick, onNam
       document.addEventListener('mousedown', handleClickOutside);
     }
 
-    return () => {
+    return (): void => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showDropdown]);
 
-  const handleEditClick = () => {
+  const handleEditClick = (): void => {
     // 預設編輯最後一個項目
     const lastIndex = warehouseIds.length - 1;
 
@@ -42,7 +42,7 @@ const Breadcrumb: FC<BreadcrumbProps> = ({ warehouseIds, onWarehouseClick, onNam
     setShowEditModal(true);
   };
 
-  const handleEditConfirm = async (newName: string) => {
+  const handleEditConfirm = async (newName: string): Promise<void> => {
     if (onNameChange) {
       await onNameChange(newName);
     }
@@ -51,18 +51,18 @@ const Breadcrumb: FC<BreadcrumbProps> = ({ warehouseIds, onWarehouseClick, onNam
     setEditingIndex(-1);
   };
 
-  const handleEditCancel = () => {
+  const handleEditCancel = (): void => {
     setShowEditModal(false);
     setEditingIndex(-1);
   };
 
-  const renderCollapsedBreadcrumb = () => {
+  const renderCollapsedBreadcrumb = (): React.JSX.Element => {
     const first = warehouseIds[0];
     const secondLast = warehouseIds[warehouseIds.length - 2];
     const last = warehouseIds[warehouseIds.length - 1];
     const hiddenItems = warehouseIds.slice(1, warehouseIds.length - 2);
 
-    const handleItemClick = (warehouseId: string, index: number) => {
+    const handleItemClick = (warehouseId: string, index: number): void => {
       onWarehouseClick?.(warehouseId, index);
     };
 
@@ -116,8 +116,8 @@ const Breadcrumb: FC<BreadcrumbProps> = ({ warehouseIds, onWarehouseClick, onNam
     );
   };
 
-  const renderFullBreadcrumb = () => {
-    const handleItemClick = (warehouseId: string, index: number) => {
+  const renderFullBreadcrumb = (): React.JSX.Element[] => {
+    const handleItemClick = (warehouseId: string, index: number): void => {
       onWarehouseClick?.(warehouseId, index);
     };
 

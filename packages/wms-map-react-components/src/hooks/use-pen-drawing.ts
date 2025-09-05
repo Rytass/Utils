@@ -107,7 +107,10 @@ export const usePenDrawing = ({ editMode, drawingMode, onCreatePath }: UsePenDra
       const baseScreenPos = { x: screenX, y: screenY };
 
       // Apply straight line constraint if Shift is pressed and we have a previous point
-      const { position, constrainedScreenPos } = (() => {
+      const { position, constrainedScreenPos } = ((): {
+        position: { x: number; y: number };
+        constrainedScreenPos: { x: number; y: number };
+      } => {
         if (!event.shiftKey || drawingState.points.length === 0) {
           return {
             position: basePosition,
@@ -122,7 +125,7 @@ export const usePenDrawing = ({ editMode, drawingMode, onCreatePath }: UsePenDra
         // Also constrain the screen position for consistent preview
         const constrainedScreen =
           drawingState.screenPoints.length > 0
-            ? (() => {
+            ? ((): { x: number; y: number } => {
                 const previousScreenPoint = drawingState.screenPoints[drawingState.screenPoints.length - 1];
 
                 return constrainToStraightLine(baseScreenPos, previousScreenPoint);
@@ -140,7 +143,7 @@ export const usePenDrawing = ({ editMode, drawingMode, onCreatePath }: UsePenDra
 
       // Check if clicking on the first point to close the path (only if we have at least 3 points)
       // IMPORTANT: Use original screen position, not constrained position, to avoid accidental closing when using Shift
-      const isClickingFirstPoint = (() => {
+      const isClickingFirstPoint = ((): boolean => {
         if (!drawingState.isDrawing || drawingState.points.length < 3) {
           return false;
         }
@@ -236,7 +239,7 @@ export const usePenDrawing = ({ editMode, drawingMode, onCreatePath }: UsePenDra
       const baseScreenY = event.clientY - rect.top;
 
       // Apply constraint to mouse position if Shift is pressed and we're drawing
-      const { screenX, screenY } = (() => {
+      const { screenX, screenY } = ((): { screenX: number; screenY: number } => {
         if (!event.shiftKey || drawingState.screenPoints.length === 0) {
           return { screenX: baseScreenX, screenY: baseScreenY };
         }
@@ -385,7 +388,7 @@ export const usePenDrawing = ({ editMode, drawingMode, onCreatePath }: UsePenDra
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('keydown', handleKeyDown);
 
-    return () => {
+    return (): void => {
       wrapper.removeEventListener('click', handleClick, true);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('keydown', handleKeyDown);

@@ -44,7 +44,7 @@ const ContextMenu: FC<ContextMenuProps> = ({
   useEffect(() => {
     if (!visible) return;
 
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent): void => {
       const target = event.target as Node;
       const menuElement = menuRef.current;
 
@@ -59,7 +59,7 @@ const ContextMenu: FC<ContextMenuProps> = ({
       }
     };
 
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
       if (event.key === 'Escape') {
         onClose();
       }
@@ -72,7 +72,7 @@ const ContextMenu: FC<ContextMenuProps> = ({
       document.addEventListener('keydown', handleKeyDown, true);
     }, 50);
 
-    return () => {
+    return (): void => {
       clearTimeout(timeoutId);
       document.removeEventListener('mousedown', handleClickOutside, true);
       document.removeEventListener('click', handleClickOutside, true);

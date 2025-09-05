@@ -29,7 +29,7 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
  * 將 RGB 轉換為十六進制顏色
  */
 function rgbToHex(r: number, g: number, b: number): string {
-  const toHex = (n: number) => {
+  const toHex = (n: number): string => {
     const hex = Math.round(Math.max(0, Math.min(255, n))).toString(16);
 
     return hex.length === 1 ? '0' + hex : hex;

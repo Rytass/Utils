@@ -281,7 +281,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
     [setEdges],
   );
 
-  const handleSave = () => {
+  const handleSave = (): void => {
     const mapData = transformNodesToMapData(nodes);
 
     logMapData(mapData);
@@ -318,7 +318,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
           return new Promise<void>((resolve, reject) => {
             const img = new Image();
 
-            img.onload = () => {
+            img.onload = (): void => {
               const { width, height } = calculateImageSize(img.width, img.height);
               const viewport = getViewport();
               const position = calculateStaggeredPosition(index, 100, 100, viewport.x, viewport.y, viewport.zoom);
@@ -358,7 +358,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
               resolve();
             };
 
-            img.onerror = () => {
+            img.onerror = (): void => {
               console.error(`圖片載入失敗: ${result} (${imageUrl})`);
               reject(new Error(`圖片載入失敗: ${result}`));
             };
@@ -783,7 +783,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
 
   // 全域鍵盤快捷鍵處理
   useEffect(() => {
-    const handleGlobalKeyDown = (event: KeyboardEvent) => {
+    const handleGlobalKeyDown = (event: KeyboardEvent): void => {
       const activeElement = document.activeElement;
       const isEditingText =
         activeElement &&
@@ -803,7 +803,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
 
     document.addEventListener('keydown', handleGlobalKeyDown, true);
 
-    return () => {
+    return (): void => {
       document.removeEventListener('keydown', handleGlobalKeyDown, true);
     };
   }, [handleCopyPasteSelectedNodes]);
