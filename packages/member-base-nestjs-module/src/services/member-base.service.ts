@@ -176,7 +176,7 @@ export class MemberBaseService<MemberEntity extends BaseMemberEntity = BaseMembe
       } else {
         throw new InvalidPasswordError();
       }
-    } catch (err) {
+    } catch (_err) {
       throw new PasswordValidationError();
     }
   }
@@ -218,7 +218,7 @@ export class MemberBaseService<MemberEntity extends BaseMemberEntity = BaseMembe
       );
 
       return member as T;
-    } catch (ex) {
+    } catch (_ex) {
       throw new InvalidToken();
     }
   }
@@ -293,7 +293,7 @@ export class MemberBaseService<MemberEntity extends BaseMemberEntity = BaseMembe
 
   async refreshToken(refreshToken: string, options?: { domain?: string }): Promise<TokenPairDto> {
     try {
-      const { id, account, passwordChangedAt, exp, domain } = verifyJWT(refreshToken, this.refreshTokenSecret) as {
+      const { id, account, passwordChangedAt, exp: _exp, domain } = verifyJWT(refreshToken, this.refreshTokenSecret) as {
         id: string;
         account: string;
         passwordChangedAt: number | null;

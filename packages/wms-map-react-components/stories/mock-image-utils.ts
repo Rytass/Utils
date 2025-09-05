@@ -17,7 +17,7 @@ export const generateMockImageUrl = (filename: string): string => {
 
   // 生成固定的種子，基於檔名確保穩定性
   const generateSeed = (name: string): number => {
-    const hash = name.split('').reduce((acc, char, i) => {
+    const hash = name.split('').reduce((acc, _char, i) => {
       const charCode = name.charCodeAt(i);
       const newHash = (acc << 5) - acc + charCode;
 

@@ -10,7 +10,7 @@ export const GraphQLContextTokenResolver = async (context: {
       ...context,
       token,
     };
-  } catch (ex) {
+  } catch (_ex) {
     return {
       ...context,
       token: null,

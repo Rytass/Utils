@@ -4,7 +4,6 @@
 
 import { Node } from '@xyflow/react';
 import { loadMapDataFromApi } from '../src/utils/api-data-transform';
-import { mockMapData } from '../stories/mock-data';
 
 // Mock the API transformation functions since we're testing integration logic
 jest.mock('../src/utils/api-data-transform', () => ({
@@ -68,7 +67,7 @@ describe('API Integration Tests', () => {
       ]);
 
       // 為每個倉庫 ID 設定不同的回應
-      warehouseIds.forEach((id, index) => {
+      warehouseIds.forEach((_id, index) => {
         mockLoadMapDataFromApi.mockResolvedValueOnce(mockResponses[index]);
       });
 

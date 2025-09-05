@@ -1,4 +1,4 @@
-import { DynamicModule, Global, Module, Provider, Type } from '@nestjs/common';
+import { DynamicModule, Global, Module, Provider } from '@nestjs/common';
 import { QuadratsModuleAsyncOptions, QuadratsModuleOptions } from './typings';
 import { API_HOST, QUADRATS_AUTH_CLIENT } from './constants';
 import { QuadratsArticleService } from './services/article.service';

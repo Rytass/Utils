@@ -109,7 +109,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
   onTextEditComplete,
   onPathPointsChange,
   onPathPointDragStateChange,
-  isEditingPathPoints = false,
+  isEditingPathPoints: _isEditingPathPoints = false,
   hoveredNodeId,
   onNodeMouseEnter,
   onNodeMouseLeave,
@@ -120,7 +120,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
 
   const {
     containerRef: rectContainerRef,
-    isDrawing: isDrawingRect,
+    isDrawing: _isDrawingRect,
     previewRect,
   } = useRectangleDrawing({
     editMode,

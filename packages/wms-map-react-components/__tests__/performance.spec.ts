@@ -141,7 +141,7 @@ describe('Performance Tests', () => {
 
       const times = Array.from({ length: iterations }, measurePerformance);
 
-      const avgTime = times.reduce((sum, time) => sum + time, 0) / iterations;
+      times.reduce((sum, time) => sum + time, 0) / iterations;
       const maxTime = Math.max(...times);
       const minTime = Math.min(...times);
 

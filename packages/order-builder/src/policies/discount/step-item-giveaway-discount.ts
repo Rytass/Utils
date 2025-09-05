@@ -2,7 +2,7 @@ import { Condition } from '../../conditions';
 import { FlattenOrderItem } from '../../core';
 import { Order } from '../../core/order';
 import { ObjRecord } from '../../typings';
-import { divided, minus, plus, times } from '../../utils/decimal';
+import { divided, plus, times } from '../../utils/decimal';
 import { PolicyPrefix } from '../typings';
 import { generateNewPolicyId } from '../utils';
 import { BaseDiscount } from './base-discount';

@@ -1,4 +1,4 @@
-import { ModuleMetadata, Provider, Type } from '@nestjs/common';
+import { ModuleMetadata } from '@nestjs/common';
 
 export interface QuadratsModuleOptions {
   host?: string;

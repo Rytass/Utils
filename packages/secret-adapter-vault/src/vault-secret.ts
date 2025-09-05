@@ -11,7 +11,6 @@ import {
   VaultTokenRetrieveSuccessResponse,
   VaultGetSecretSuccessResponse,
   VaultSecretState,
-  VaultSecretOnlineOptions,
   VaultGetType,
   VaultSetType,
   VaultDeleteType,
@@ -384,7 +383,7 @@ export class VaultSecret<Options extends VaultSecretOptions> extends SecretManag
       throw new Error('This feature only works for offline mode');
     }
 
-    const [data, version] = await this.getSecretVersionOnline();
+    const [_data, version] = await this.getSecretVersionOnline();
 
     if (version !== this._cacheVersion && !force) {
       throw new Error('Online version is not match cached version, please use force mode instead');

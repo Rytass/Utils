@@ -4,7 +4,7 @@
 
 import { Node } from '@xyflow/react';
 import { mockMapData, simpleMapData, emptyMapData, largeMapData, closedPolygonTestData } from '../stories/mock-data';
-import { transformApiDataToNodes, validateMapData, loadMapDataFromApi } from '../src/utils/api-data-transform';
+import { transformApiDataToNodes, validateMapData } from '../src/utils/api-data-transform';
 import { generateMockImageUrl } from '../stories/mock-image-utils';
 import { transformNodesToMapData } from '../src/utils/map-data-transform';
 import { Map } from '../src/typings';

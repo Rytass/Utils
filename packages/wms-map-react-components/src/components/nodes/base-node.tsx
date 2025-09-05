@@ -15,7 +15,7 @@ interface BaseNodeProps extends NodeProps {
 }
 
 const BaseNode: FC<BaseNodeProps> = ({
-  data,
+  data: _data,
   selected,
   id,
   editMode,
