@@ -1,4 +1,3 @@
-import { ArticleFindVersionType } from './article-find-version-type.enum';
 import { ArticleSearchMode } from './article-search-mode.enum';
 import { ArticleSorter } from './article-sorter.enum';
 import { ArticleStage } from './article-stage.enum';

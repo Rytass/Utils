@@ -819,7 +819,7 @@ export class ArticleBaseService<
 
     const targetPlaceArticle = await this.findById<A, AV, AVC>(id, {
       stage: this.signatureService.signatureEnabled ? ArticleStage.VERIFIED : ArticleStage.DRAFT,
-    }).catch(ex => null);
+    }).catch(_ex => null);
 
     this.logger.debug(`Withdraw article ${id} [${article.version}]`);
 
@@ -893,7 +893,7 @@ export class ArticleBaseService<
     const shouldDeleteVersion = await this.findById(id, {
       stage:
         (options?.releasedAt?.getTime() ?? Date.now()) <= Date.now() ? ArticleStage.RELEASED : ArticleStage.SCHEDULED,
-    }).catch(ex => null);
+    }).catch(_ex => null);
 
     this.logger.debug(`Release article ${id} [${article.version}]`);
 
@@ -968,7 +968,7 @@ export class ArticleBaseService<
 
     const pendingReviewArticle = await this.findById<A, AV, AVC>(id, {
       stage: ArticleStage.REVIEWING,
-    }).catch(ex => null);
+    }).catch(_ex => null);
 
     const runner = this.dataSource.createQueryRunner();
 
@@ -1028,7 +1028,7 @@ export class ArticleBaseService<
 
     const draftArticle = await this.findById<A, AV, AVC>(id, {
       stage: ArticleStage.DRAFT,
-    }).catch(ex => null);
+    }).catch(_ex => null);
 
     if (draftArticle) {
       const errorMessage = `Article ${id} is already in draft [${draftArticle.version}].`;
@@ -1173,7 +1173,7 @@ export class ArticleBaseService<
 
     const placedArticle = await this.findById<A, AV, AVC>(id, {
       stage: placedArticleStage,
-    }).catch(ex => null);
+    }).catch(_ex => null);
 
     const targetCategories = options?.categoryIds?.length
       ? await this.baseCategoryRepo.find({
@@ -1558,7 +1558,7 @@ export class ArticleBaseService<
             : ArticleStage.DRAFT,
       },
       signatureInfo?.runner,
-    ).catch(ex => null);
+    ).catch(_ex => null);
 
     if (signatureInfo?.runner) {
       if (

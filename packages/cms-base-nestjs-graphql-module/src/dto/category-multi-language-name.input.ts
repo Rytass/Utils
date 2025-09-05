@@ -1,4 +1,4 @@
-import { ArgsType, Field, ID, InputType } from '@nestjs/graphql';
+import { Field, InputType } from '@nestjs/graphql';
 
 @InputType('CategoryMultiLanguageNameInput')
 export class CategoryMultiLanguageNameInput {

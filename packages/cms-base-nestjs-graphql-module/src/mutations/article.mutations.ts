@@ -118,7 +118,7 @@ export class ArticleMutations {
   @Mutation(() => BackstageArticleDto)
   @AllowActions([[BaseResource.ARTICLE, BaseAction.PUT_BACK]])
   async putBackArticle(
-    @MemberId() memberId: string,
+    @MemberId() _memberId: string,
     @Args('id', { type: () => ID }) id: string,
   ): Promise<BackstageArticleDto> {
     return this.articleService.putBack(id);

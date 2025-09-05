@@ -157,7 +157,7 @@ describe('limitStageWithQueryBuilder', () => {
       };
 
       const qb = {
-        innerJoin: jest.fn((subQueryFactory: any, alias: string, condition: string) => {
+        innerJoin: jest.fn((subQueryFactory: any, _alias: string, _condition: string) => {
           subQueryFactory(mockSubQueryBuilder);
 
           return qb;
@@ -252,7 +252,7 @@ describe('limitStageWithQueryBuilder', () => {
       };
 
       const qb = {
-        innerJoin: jest.fn((subQueryFactory: any, alias: string, condition: string) => {
+        innerJoin: jest.fn((subQueryFactory: any, _alias: string, _condition: string) => {
           subQueryFactory(mockSubQueryBuilder);
 
           return qb;
@@ -339,7 +339,7 @@ describe('limitStageWithQueryBuilder', () => {
       };
 
       const qb = {
-        innerJoin: jest.fn((fn, alias, condition) => {
+        innerJoin: jest.fn((fn, _alias, _condition) => {
           fn(mockSubQueryBuilder as any);
 
           return qb;
@@ -395,7 +395,7 @@ describe('limitStageWithQueryBuilder', () => {
       };
 
       const qb = {
-        innerJoin: jest.fn((fn, alias, condition) => {
+        innerJoin: jest.fn((fn, _alias, _condition) => {
           fn(mockSubQueryBuilder as any);
 
           return qb;
@@ -588,7 +588,7 @@ describe('getDefaultQueryBuilder', () => {
       leftJoinAndSelect: jest.fn().mockReturnThis(),
       innerJoinAndSelect: jest.fn().mockReturnThis(),
       andWhere: jest.fn().mockReturnThis(),
-      innerJoin: jest.fn((subQueryFn: any, alias: string, condition: string) => {
+      innerJoin: jest.fn((subQueryFn: any, _alias: string, _condition: string) => {
         subQueryFn(mockSubQueryBuilder);
 
         return mockQueryBuilder;

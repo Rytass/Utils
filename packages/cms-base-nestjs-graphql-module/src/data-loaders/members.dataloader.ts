@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { BaseMemberEntity, RESOLVED_MEMBER_REPO } from '@rytass/member-base-nestjs-module';
 import DataLoader from 'dataloader';
 import { LRUCache } from 'lru-cache';
-import { DataSource, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class MemberDataLoader {

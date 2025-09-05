@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 import { DialogContext } from './DialogContext';
-import { DialogHookValue, CancelConfirmDialogConfig } from './typing';
+import { DialogHookValue } from './typing';
 
 export const useDialog = (): DialogHookValue => {
   const { openDialog: configOpenDialog, closeDialog } = useContext(DialogContext);

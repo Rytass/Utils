@@ -9,7 +9,7 @@ import { useModal } from '../../modal/useModal';
 
 export function useActionButton<T extends FieldValues>({
   values,
-  isDirty,
+  isDirty: _isDirty,
   createMode,
   currentStage,
   userPermissions,
