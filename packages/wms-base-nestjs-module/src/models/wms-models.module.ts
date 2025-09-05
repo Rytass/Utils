@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { EntityClassOrSchema } from '@nestjs/typeorm/dist/interfaces/entity-class-or-schema.type';
-import { DataSource } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { BatchEntity, BatchRepo } from './batch.entity';
 import { LocationEntity, LocationRepo } from './location.entity';
 import { MaterialEntity, MaterialRepo } from './material.entity';
@@ -23,7 +23,7 @@ const models: [symbol: symbol, cls: EntityClassOrSchema][] = [
   providers: models.map(([symbol, entity]) => ({
     provide: symbol,
     inject: [DataSource],
-    useFactory: (dataSource: DataSource) => dataSource.getRepository(entity),
+    useFactory: (dataSource: DataSource): Repository<any> => dataSource.getRepository(entity),
   })),
   exports: models.map(([symbol]) => symbol),
 })

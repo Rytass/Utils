@@ -28,7 +28,7 @@ export class StorageR2Service extends Storage<StorageR2Options> {
     if (options.customDomain) {
       const re = new RegExp(`^https://${options.bucket}.${options.account}.r2.cloudflarestorage.com`);
 
-      this.parseSignedURL = (url: string) => {
+      this.parseSignedURL = (url: string): string => {
         return url.replace(re, options.customDomain as string);
       };
     }

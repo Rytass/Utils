@@ -1,5 +1,5 @@
 import { Provider } from '@nestjs/common';
-import { DataSource, EntitySchema, Repository } from 'typeorm';
+import { DataSource, EntitySchema, Repository, TreeRepository } from 'typeorm';
 import { BatchRepo } from '../models/batch.entity';
 import { LocationRepo } from '../models/location.entity';
 import { MaterialRepo } from '../models/material.entity';
@@ -32,7 +32,11 @@ const TARGETS = [
 
 export const ResolvedRepoProviders = TARGETS.map<Provider>(([repo, provide, resolved, isTreeRepo]) => ({
   provide: resolved,
-  useFactory: <T extends EntitySchema>(baseRepo: Repository<T>, entity: new () => T, dataSource: DataSource) =>
+  useFactory: <T extends EntitySchema>(
+    baseRepo: Repository<T>,
+    entity: new () => T,
+    dataSource: DataSource,
+  ): Repository<T> | TreeRepository<T> =>
     entity ? (isTreeRepo ? dataSource.getTreeRepository(entity) : dataSource.getRepository(entity)) : baseRepo,
   inject: [repo, provide, DataSource],
 }));
