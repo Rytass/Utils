@@ -565,7 +565,7 @@ export class BankProInvoiceGateway
       randomCode: data[0].RandomNumber,
       invoiceNumber: data[0].InvoiceNo,
       orderId: data[0].OrderNo,
-      taxType: (() => {
+      taxType: ((): TaxType => {
         switch (data[0].RateType) {
           case '零稅':
             return TaxType.ZERO_TAX;

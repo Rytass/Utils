@@ -401,7 +401,7 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayPaymentItem, ECP
           MerchantID: this.merchantId,
           InvoiceNo: invoice.invoiceNumber,
           InvoiceDate: DateTime.fromJSDate(invoice.issuedOn).toFormat('yyyy-MM-dd'),
-          AllowanceNotify: (() => {
+          AllowanceNotify: ((): 'S' | 'E' | 'A' | 'N' => {
             if (options?.notifyEmail) {
               if (options?.notifyPhone) {
                 return 'A';
@@ -428,7 +428,7 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayPaymentItem, ECP
             ItemPrice: item.unitPrice,
             ...(invoice.taxType === TaxType.MIXED
               ? {
-                  ItemTaxType: (() => {
+                  ItemTaxType: ((): '1' | '2' | '3' => {
                     switch (options?.taxType) {
                       case TaxType.TAXED:
                         return '1';
@@ -438,6 +438,9 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayPaymentItem, ECP
 
                       case TaxType.TAX_FREE:
                         return '3';
+
+                      default:
+                        return '1';
                     }
                   })(),
                 }
@@ -545,7 +548,7 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayPaymentItem, ECP
           unitPrice: item.ItemPrice,
           quantity: item.ItemCount,
           unit: item.ItemWord,
-          taxType: (taxType => {
+          taxType: ((taxType): TaxType.TAXED | TaxType.TAX_FREE | TaxType.ZERO_TAX | TaxType.SPECIAL | undefined => {
             switch (taxType) {
               case '1':
                 return TaxType.TAXED;
@@ -568,7 +571,7 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayPaymentItem, ECP
         randomCode: payload.IIS_Random_Number,
         orderId: payload.IIS_Relate_Number,
         awardType: Number(payload.IIS_Award_Type),
-        taxType: (taxType => {
+        taxType: ((taxType): TaxType => {
           switch (taxType) {
             case '1':
               return TaxType.TAXED;
@@ -625,7 +628,7 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayPaymentItem, ECP
                 unitPrice: invoice.IIS_Sales_Amount,
                 quantity: 1,
                 unit: '式',
-                taxType: (taxType => {
+                taxType: ((taxType): TaxType.TAXED | TaxType.TAX_FREE | TaxType.ZERO_TAX | TaxType.SPECIAL => {
                   switch (taxType) {
                     case '2':
                       return TaxType.ZERO_TAX;
@@ -650,7 +653,7 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayPaymentItem, ECP
             randomCode: ECPAY_RANDOM_CODE,
             orderId: invoice.IIS_Relate_Number,
             awardType: Number(invoice.IIS_Award_Type),
-            taxType: (taxType => {
+            taxType: ((taxType): TaxType => {
               switch (taxType) {
                 case '2':
                   return TaxType.ZERO_TAX;
