@@ -48,54 +48,55 @@ const getTypeORMAdapter = async (): Promise<typeof TypeORMAdapterType> => {
 export const OptionProviders = [
   {
     provide: LOGIN_FAILED_BAN_THRESHOLD,
-    useFactory: (options?: MemberBaseModuleOptionsDto) => options?.loginFailedBanThreshold ?? 5,
+    useFactory: (options?: MemberBaseModuleOptionsDto): number => options?.loginFailedBanThreshold ?? 5,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: RESET_PASSWORD_TOKEN_EXPIRATION,
-    useFactory: (options?: MemberBaseModuleOptionsDto) => options?.resetPasswordTokenExpiration ?? 60 * 60 * 1,
+    useFactory: (options?: MemberBaseModuleOptionsDto): number => options?.resetPasswordTokenExpiration ?? 60 * 60 * 1,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: RESET_PASSWORD_TOKEN_SECRET,
-    useFactory: (options?: MemberBaseModuleOptionsDto) =>
+    useFactory: (options?: MemberBaseModuleOptionsDto): string =>
       options?.resetPasswordTokenSecret ?? randomBytes(16).toString('hex'),
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_MEMBER_ENTITY,
-    useFactory: (options?: MemberBaseModuleOptionsDto) => options?.memberEntity ?? null,
+    useFactory: (options?: MemberBaseModuleOptionsDto): any => options?.memberEntity ?? null,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: ACCESS_TOKEN_SECRET,
-    useFactory: (options?: MemberBaseModuleOptionsDto) => options?.accessTokenSecret ?? randomBytes(16).toString('hex'),
+    useFactory: (options?: MemberBaseModuleOptionsDto): string =>
+      options?.accessTokenSecret ?? randomBytes(16).toString('hex'),
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: ACCESS_TOKEN_EXPIRATION,
-    useFactory: (options?: MemberBaseModuleOptionsDto) => options?.accessTokenExpiration ?? 60 * 15,
+    useFactory: (options?: MemberBaseModuleOptionsDto): number => options?.accessTokenExpiration ?? 60 * 15,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: REFRESH_TOKEN_SECRET,
-    useFactory: (options?: MemberBaseModuleOptionsDto) =>
+    useFactory: (options?: MemberBaseModuleOptionsDto): string =>
       options?.refreshTokenSecret ?? randomBytes(16).toString('hex'),
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: REFRESH_TOKEN_EXPIRATION,
-    useFactory: (options?: MemberBaseModuleOptionsDto) => options?.refreshTokenExpiration ?? 60 * 60 * 24 * 90,
+    useFactory: (options?: MemberBaseModuleOptionsDto): number => options?.refreshTokenExpiration ?? 60 * 60 * 24 * 90,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: ENABLE_GLOBAL_GUARD,
-    useFactory: (options?: MemberBaseModuleOptionsDto) => options?.enableGlobalGuard ?? true,
+    useFactory: (options?: MemberBaseModuleOptionsDto): boolean => options?.enableGlobalGuard ?? true,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: CASBIN_ENFORCER,
-    useFactory: async (options?: MemberBaseModuleOptionsDto) => {
+    useFactory: async (options?: MemberBaseModuleOptionsDto): Promise<any> => {
       if (!options?.casbinAdapterOptions) return null;
 
       const TypeORMAdapter = await getTypeORMAdapter();
@@ -114,12 +115,13 @@ export const OptionProviders = [
   },
   {
     provide: CASBIN_PERMISSION_DECORATOR,
-    useFactory: async (options?: MemberBaseModuleOptionsDto) => options?.casbinPermissionDecorator ?? AllowActions,
+    useFactory: async (options?: MemberBaseModuleOptionsDto): Promise<any> =>
+      options?.casbinPermissionDecorator ?? AllowActions,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: CASBIN_PERMISSION_CHECKER,
-    useFactory: async (options?: MemberBaseModuleOptionsDto) =>
+    useFactory: async (options?: MemberBaseModuleOptionsDto): Promise<any> =>
       options?.casbinPermissionChecker
         ? options.casbinPermissionChecker
         : ({
@@ -130,7 +132,7 @@ export const OptionProviders = [
             enforcer: Enforcer;
             payload: { id: string; domain?: string };
             actions: [Subject, Action][];
-          }) =>
+          }): Promise<boolean> =>
             Promise.all(
               actions.map(([subject, action]) =>
                 enforcer.enforce(payload.id, payload.domain ?? DEFAULT_CASBIN_DOMAIN, subject, action),
@@ -140,81 +142,86 @@ export const OptionProviders = [
   },
   {
     provide: PASSWORD_SHOULD_INCLUDE_UPPERCASE,
-    useFactory: (options?: MemberBaseModuleOptionsDto) => options?.passwordShouldIncludeUppercase ?? true,
+    useFactory: (options?: MemberBaseModuleOptionsDto): boolean => options?.passwordShouldIncludeUppercase ?? true,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: PASSWORD_SHOULD_INCLUDE_LOWERCASE,
-    useFactory: (options?: MemberBaseModuleOptionsDto) => options?.passwordShouldIncludeLowercase ?? true,
+    useFactory: (options?: MemberBaseModuleOptionsDto): boolean => options?.passwordShouldIncludeLowercase ?? true,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: PASSWORD_SHOULD_INCLUDE_DIGIT,
-    useFactory: (options?: MemberBaseModuleOptionsDto) => options?.passwordShouldIncludeDigit ?? true,
+    useFactory: (options?: MemberBaseModuleOptionsDto): boolean => options?.passwordShouldIncludeDigit ?? true,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: PASSWORD_SHOULD_INCLUDE_SPECIAL_CHARACTER,
-    useFactory: (options?: MemberBaseModuleOptionsDto) => options?.passwordShouldIncludeSpecialCharacters ?? false,
+    useFactory: (options?: MemberBaseModuleOptionsDto): boolean =>
+      options?.passwordShouldIncludeSpecialCharacters ?? false,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: PASSWORD_MIN_LENGTH,
-    useFactory: (options?: MemberBaseModuleOptionsDto) => options?.passwordMinLength ?? 8,
+    useFactory: (options?: MemberBaseModuleOptionsDto): number => options?.passwordMinLength ?? 8,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: PASSWORD_POLICY_REGEXP,
-    useFactory: (options?: MemberBaseModuleOptionsDto) => options?.passwordPolicyRegExp ?? undefined,
+    useFactory: (options?: MemberBaseModuleOptionsDto): RegExp | undefined =>
+      options?.passwordPolicyRegExp ?? undefined,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: PASSWORD_HISTORY_LIMIT,
-    useFactory: (options?: MemberBaseModuleOptionsDto) => options?.passwordHistoryLimit ?? undefined,
+    useFactory: (options?: MemberBaseModuleOptionsDto): number | undefined =>
+      options?.passwordHistoryLimit ?? undefined,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: PASSWORD_AGE_LIMIT_IN_DAYS,
-    useFactory: (options?: MemberBaseModuleOptionsDto) => options?.passwordAgeLimitInDays ?? undefined,
+    useFactory: (options?: MemberBaseModuleOptionsDto): number | undefined =>
+      options?.passwordAgeLimitInDays ?? undefined,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: ONLY_RESET_REFRESH_TOKEN_EXPIRATION_BY_PASSWORD,
-    useFactory: (options?: MemberBaseModuleOptionsDto) => options?.onlyResetRefreshTokenExpirationByPassword ?? false,
+    useFactory: (options?: MemberBaseModuleOptionsDto): boolean =>
+      options?.onlyResetRefreshTokenExpirationByPassword ?? false,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: FORCE_REJECT_LOGIN_ON_PASSWORD_EXPIRED,
-    useFactory: (options?: MemberBaseModuleOptionsDto) => options?.forceRejectLoginOnPasswordExpired ?? false,
+    useFactory: (options?: MemberBaseModuleOptionsDto): boolean => options?.forceRejectLoginOnPasswordExpired ?? false,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: CUSTOMIZED_JWT_PAYLOAD,
-    useFactory: (options?: MemberBaseModuleOptionsDto) =>
+    useFactory: (options?: MemberBaseModuleOptionsDto): ((member: BaseMemberEntity) => any) =>
       options?.customizedJwtPayload ??
-      ((member: BaseMemberEntity) => ({
+      ((member: BaseMemberEntity): any => ({
         id: member.id,
         account: member.account,
       })),
   },
   {
     provide: OAUTH2_PROVIDERS,
-    useFactory: (options?: MemberBaseModuleOptionsDto) => options?.oauth2Providers ?? [],
+    useFactory: (options?: MemberBaseModuleOptionsDto): any[] => options?.oauth2Providers ?? [],
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: OAUTH2_CLIENT_DEST_URL,
-    useFactory: (options?: MemberBaseModuleOptionsDto) => options?.oauth2ClientDestUrl ?? '/login',
+    useFactory: (options?: MemberBaseModuleOptionsDto): string => options?.oauth2ClientDestUrl ?? '/login',
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: COOKIE_MODE,
-    useFactory: (options?: MemberBaseModuleOptionsDto) => options?.cookieMode ?? false,
+    useFactory: (options?: MemberBaseModuleOptionsDto): boolean => options?.cookieMode ?? false,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: LOGIN_FAILED_AUTO_UNLOCK_SECONDS,
-    useFactory: (options?: MemberBaseModuleOptionsDto) => options?.loginFailedAutoUnlockSeconds ?? null,
+    useFactory: (options?: MemberBaseModuleOptionsDto): number | null => options?.loginFailedAutoUnlockSeconds ?? null,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
 ] as Provider[];
