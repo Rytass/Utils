@@ -57,7 +57,7 @@ const xorBuffers = (buf1: Buffer, buf2: Buffer): Buffer => {
   return result;
 };
 
-const pkcs5Pad = (buf: Buffer, blockSize: number) => {
+const pkcs5Pad = (buf: Buffer, blockSize: number): Buffer => {
   const pad = blockSize - (buf.length % blockSize);
 
   return Buffer.concat([buf, Buffer.alloc(pad, pad)]);

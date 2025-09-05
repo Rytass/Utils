@@ -47,15 +47,15 @@ export class HwaNanOrder<OCM extends HwaNanCommitMessage = HwaNanCreditCardCommi
     this._additionalInfo = additionalInfo;
   }
 
-  get id() {
+  get id(): string {
     return this._id;
   }
 
-  get items() {
+  get items(): HwaNanOrderItem[] {
     return this._items;
   }
 
-  get state() {
+  get state(): OrderState {
     return this._state;
   }
 
@@ -71,7 +71,7 @@ export class HwaNanOrder<OCM extends HwaNanCommitMessage = HwaNanCreditCardCommi
     return this._committedAt;
   }
 
-  get failedMessage() {
+  get failedMessage(): { code: string; message: string } | null {
     if (this._state !== OrderState.FAILED) return null;
 
     return {
@@ -80,12 +80,12 @@ export class HwaNanOrder<OCM extends HwaNanCommitMessage = HwaNanCreditCardCommi
     };
   }
 
-  get totalPrice() {
+  get totalPrice(): number {
     return this.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   }
 
   // Additional information
-  get additionalInfo() {
+  get additionalInfo(): AdditionalInfo<OCM> | undefined {
     return this._additionalInfo;
   }
 
@@ -128,7 +128,7 @@ export class HwaNanOrder<OCM extends HwaNanCommitMessage = HwaNanCreditCardCommi
 </html>`;
   }
 
-  fail(returnCode: string, message: string) {
+  fail(returnCode: string, message: string): void {
     this._failedCode = returnCode;
     this._failedMessage = message;
 
@@ -137,11 +137,11 @@ export class HwaNanOrder<OCM extends HwaNanCommitMessage = HwaNanCreditCardCommi
     this._gateway.emitter.emit(PaymentEvents.ORDER_FAILED, this);
   }
 
-  infoRetrieved<T extends OCM>(_asyncInformation: AsyncOrderInformation<T>) {
+  infoRetrieved<T extends OCM>(_asyncInformation: AsyncOrderInformation<T>): void {
     throw new Error('Hwa Nan Bank not support async info retrieve');
   }
 
-  commit<T extends OCM>(message: T, additionalInfo?: AdditionalInfo<T>) {
+  commit<T extends OCM>(message: T, additionalInfo?: AdditionalInfo<T>): void {
     if (!this.committable) throw new Error(`Only pre-commit, info-retrieved order can commit, now: ${this._state}`);
 
     if (this._id !== message.id) {
@@ -157,7 +157,7 @@ export class HwaNanOrder<OCM extends HwaNanCommitMessage = HwaNanCreditCardCommi
     this._gateway.emitter.emit(PaymentEvents.ORDER_COMMITTED, this);
   }
 
-  async refund() {
+  async refund(): Promise<void> {
     throw new Error('Hwa Nan Bank not support refund');
   }
 }

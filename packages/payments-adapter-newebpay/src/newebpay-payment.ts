@@ -98,7 +98,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
     if (options?.withServer) {
       this.serverListener =
         options?.serverListener ??
-        ((req: IncomingMessage, res: ServerResponse) => this.defaultServerListener(req, res));
+        ((req: IncomingMessage, res: ServerResponse): Promise<void> => this.defaultServerListener(req, res));
 
       const url = new URL(this.serverHost);
       const port = Number(url.port || 3000);
@@ -160,8 +160,8 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
         });
 
     this.pendingOrdersCache = options?.ordersCache ?? {
-      get: async (key: string) => lruCache!.get(key),
-      set: async (key: string, value: NewebPayOrder<CM>) => {
+      get: async (key: string): Promise<NewebPayOrder<CM> | undefined> => lruCache!.get(key),
+      set: async (key: string, value: NewebPayOrder<CM>): Promise<void> => {
         lruCache!.set(key, value);
       },
     };
@@ -174,8 +174,8 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
         });
 
     this.bindCardRequestsCache = options?.bindCardRequestsCache ?? {
-      get: async (key: string) => requestLruCache!.get(key),
-      set: async (key: string, value: NewebPayBindCardRequest) => {
+      get: async (key: string): Promise<NewebPayBindCardRequest | undefined> => requestLruCache!.get(key),
+      set: async (key: string, value: NewebPayBindCardRequest): Promise<void> => {
         requestLruCache!.set(key, value);
       },
     };
@@ -354,7 +354,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
   private handleAsyncInformation(
     order: NewebPayOrder<NewebPayCommitMessage>,
     payload: NewebPayInfoRetrieveEncryptedPayload,
-  ) {
+  ): void {
     if (order.state !== OrderState.PRE_COMMIT) return;
 
     switch (payload.PaymentType) {
@@ -373,7 +373,10 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
     }
   }
 
-  private handlePaymentResult(order: NewebPayOrder<NewebPayCommitMessage>, payload: NewebPayNotifyEncryptedPayload) {
+  private handlePaymentResult(
+    order: NewebPayOrder<NewebPayCommitMessage>,
+    payload: NewebPayNotifyEncryptedPayload,
+  ): void {
     if (!~[OrderState.PRE_COMMIT, OrderState.ASYNC_INFO_RETRIEVED].indexOf(order.state)) return;
 
     switch (payload.PaymentType) {
@@ -461,7 +464,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
     }
   }
 
-  private getOrderId() {
+  private getOrderId(): string {
     return randomBytes(10).toString('hex');
   }
 
@@ -654,7 +657,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
         ? DateTime.fromFormat(data.Result.PayTime, 'yyyy-MM-dd HH:mm:ss').toJSDate()
         : null,
       platformTradeNumber: data.Result.TradeNo,
-      channel: (paymentType => {
+      channel: ((paymentType): NewebPaymentChannel => {
         switch (paymentType) {
           case 'ANDROIDPAY':
             return NewebPaymentChannel.ANDROID_PAY;

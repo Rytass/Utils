@@ -150,8 +150,8 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
         });
 
     this.pendingOrdersCache = options?.ordersCache ?? {
-      get: async (key: string) => lruCache!.get(key),
-      set: async (key: string, value: ECPayOrder<CM>) => {
+      get: async (key: string): Promise<ECPayOrder<CM> | undefined> => lruCache!.get(key),
+      set: async (key: string, value: ECPayOrder<CM>): Promise<void> => {
         lruCache!.set(key, value);
       },
     };
@@ -164,14 +164,14 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
         });
 
     this.bindCardRequestsCache = options?.bindCardRequestsCache ?? {
-      get: async (key: string) => requestLruCache!.get(key),
-      set: async (key: string, value: ECPayBindCardRequest) => {
+      get: async (key: string): Promise<ECPayBindCardRequest | undefined> => requestLruCache!.get(key),
+      set: async (key: string, value: ECPayBindCardRequest): Promise<void> => {
         requestLruCache!.set(key, value);
       },
     };
   }
 
-  private getOrderId() {
+  private getOrderId(): string {
     return randomBytes(10).toString('hex');
   }
 
@@ -218,7 +218,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
     return true;
   }
 
-  private createServer(useNgrok: boolean) {
+  private createServer(useNgrok: boolean): void {
     const url = new URL(this.serverHost);
 
     this._server = createServer((req, res) => this.serverListener(req, res));
