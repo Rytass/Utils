@@ -188,7 +188,7 @@ export class Order<Item extends OrderItem = OrderItem, Coupon extends string = s
   /**
    * Mutate hook.
    */
-  private useEffect(next: Function) {
+  private useEffect(next: Function): this {
     this._discountsSubject.next();
     this._itemRecordSubject.next();
     this._discountValueSubject.next();

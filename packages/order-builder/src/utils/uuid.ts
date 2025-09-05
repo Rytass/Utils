@@ -1,4 +1,4 @@
-export function uuid() {
+export function uuid(): string {
   // Public Domain/MIT
   let d = new Date().getTime(); //Timestamp
   let d2 = performance.now() * 1000;

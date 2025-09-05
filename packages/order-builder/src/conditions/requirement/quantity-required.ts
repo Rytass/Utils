@@ -36,7 +36,7 @@ export class QuantityRequired<Options extends ObjRecord = ObjRecord>
     }));
   }
 
-  satisfy(order: Order) {
+  satisfy(order: Order): boolean {
     const validItemClusterMap = new Map<string, { id: string; leastQuantity: number }>(
       this.items.length
         ? this.items.map(item => [item.id, { id: item.id, leastQuantity: item?.leastQuantity || 0 }])

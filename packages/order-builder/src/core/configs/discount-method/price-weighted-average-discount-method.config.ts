@@ -9,7 +9,7 @@ import { DiscountMethod, DiscountMethodType } from '../typings';
 export class PriceWeightedAverageDiscountMethod implements DiscountMethod {
   readonly type: DiscountMethodType = 'price-weighted-average';
 
-  handleOneDescription(order: Order, description: PolicyDiscountDescription) {
+  handleOneDescription(order: Order, description: PolicyDiscountDescription): void {
     const itemValue = description.appliedItems.reduce(
       (total, item) => plus(total, times(item.quantity, item.unitPrice)),
       0,

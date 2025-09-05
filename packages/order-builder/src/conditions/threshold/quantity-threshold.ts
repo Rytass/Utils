@@ -21,7 +21,7 @@ export class QuantityThreshold<Options extends ObjRecord = ObjRecord>
     this.options = options;
   }
 
-  satisfy(order: Order) {
+  satisfy(order: Order): boolean {
     return (
       getOrderItems(order).reduce(
         (total, item) => plus(total, Math.ceil(divided(times(item.quantity, item.unitPrice), item.unitPrice))),
