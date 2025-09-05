@@ -1,7 +1,6 @@
 import {
   AdditionalInfo,
   Channel,
-  CreditCardAuthInfo,
   CreditCardECI,
   PaymentEvents,
   PaymentGateway,
@@ -309,7 +308,7 @@ export class HwaNanPayment<CM extends HwaNanCommitMessage = HwaNanCreditCardComm
     return order;
   }
 
-  async query<T extends HwaNanOrder<CM>>(id: string): Promise<T> {
+  async query<T extends HwaNanOrder<CM>>(_id: string): Promise<T> {
     throw new Error('Hwa Nan Bank does not support query');
   }
 }

@@ -122,6 +122,7 @@ export enum CardType {
   AE = 'AE',
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export interface InputFromOrderCommitMessage<OCM extends OrderCommitMessage> extends PrepareOrderInput {
   id?: string;
   shopName?: string;

@@ -137,7 +137,7 @@ export class HwaNanOrder<OCM extends HwaNanCommitMessage = HwaNanCreditCardCommi
     this._gateway.emitter.emit(PaymentEvents.ORDER_FAILED, this);
   }
 
-  infoRetrieved<T extends OCM>(asyncInformation: AsyncOrderInformation<T>) {
+  infoRetrieved<T extends OCM>(_asyncInformation: AsyncOrderInformation<T>) {
     throw new Error('Hwa Nan Bank not support async info retrieve');
   }
 

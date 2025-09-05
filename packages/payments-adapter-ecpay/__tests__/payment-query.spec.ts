@@ -4,7 +4,6 @@
 
 import { Channel, CVS, OrderState } from '@rytass/payments';
 import axios from 'axios';
-import { createHash } from 'crypto';
 import http, { createServer } from 'http';
 import { DateTime } from 'luxon';
 import {
@@ -46,7 +45,7 @@ describe('ECPayPayment', () => {
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
+    mockedListen.mockImplementationOnce((_port?: any, _hostname?: any, listeningListener?: () => void) => {
       mockServer.listen(0, listeningListener);
 
       return mockServer;

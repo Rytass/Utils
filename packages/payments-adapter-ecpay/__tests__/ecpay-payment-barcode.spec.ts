@@ -22,7 +22,7 @@ describe('ECPayPayment (Barcode)', () => {
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
+    mockedListen.mockImplementationOnce((_port?: any, _hostname?: any, listeningListener?: () => void) => {
       mockServer.listen(0, listeningListener);
 
       return mockServer;
@@ -217,7 +217,7 @@ describe('ECPayPayment (Barcode)', () => {
 
           // Get HTML to trigger pre commit
 
-          const html = order.formHTML;
+          order.formHTML;
 
           const successfulResponse = addMac({
             Barcode1: '1106176EA',
@@ -283,7 +283,7 @@ describe('ECPayPayment (Barcode)', () => {
 
           // Get HTML to trigger pre commit
 
-          const html = order.formHTML;
+          order.formHTML;
 
           const successfulResponse = addMac({
             Barcode1: '1106176EA',
@@ -342,7 +342,7 @@ describe('ECPayPayment (Barcode)', () => {
 
           // Get HTML to trigger pre commit
 
-          const html = order.formHTML;
+          order.formHTML;
 
           const successfulResponse = addMac({
             Barcode1: '1106176EA',

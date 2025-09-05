@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 
-import { AsyncOrderInformation, Channel } from '@rytass/payments';
+import { AsyncOrderInformation } from '@rytass/payments';
 import {
   HwaNanAutoCapMode,
   HwaNanCreditCardCommitMessage,

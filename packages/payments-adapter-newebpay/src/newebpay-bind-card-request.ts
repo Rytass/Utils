@@ -2,7 +2,6 @@ import { BindCardRequest, OrderState, PaymentEvents } from '@rytass/payments';
 import { NewebPayPayment } from './newebpay-payment';
 import {
   NewebPayBindCardRequestOptions,
-  NewebPayBindCardRequestTradeInfoPayload,
   NewebPayBindCardResponseTradeInfoPayload,
   NewebPayMPGMakeOrderPayload,
 } from './typings';

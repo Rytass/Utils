@@ -13,7 +13,7 @@ jest.mock('../src/ctbc-pos-api-utils', () => ({
 }));
 
 import { CTBCPayment } from '../src';
-import { CTBC_ERROR_CODES, CTBCPosApiConfig, CTBCPosApiQueryParams } from '../src/typings';
+import { CTBC_ERROR_CODES } from '../src/typings';
 import { OrderState } from '@rytass/payments';
 import { posApiQuery, posApiRefund, posApiCancelRefund } from '../src/ctbc-pos-api-utils';
 

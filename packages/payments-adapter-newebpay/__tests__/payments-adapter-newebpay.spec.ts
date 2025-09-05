@@ -35,7 +35,7 @@ describe('NewebPay Payments', () => {
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
+    mockedListen.mockImplementationOnce((_port?: any, _hostname?: any, listeningListener?: () => void) => {
       mockServer.listen(0, listeningListener);
 
       return mockServer;
@@ -77,7 +77,7 @@ describe('NewebPay Payments', () => {
 
     const mockServerForNgrok = new (require('events').EventEmitter)();
 
-    mockServerForNgrok.listen = jest.fn((port, host, callback) => {
+    mockServerForNgrok.listen = jest.fn((_port, _host, callback) => {
       setImmediate(() => callback && callback());
 
       return mockServerForNgrok;
@@ -130,7 +130,7 @@ describe('NewebPay Payments', () => {
       const { NewebPayPayment } = await import('../src');
 
       return new Promise<void>(resolve => {
-        const payment = new NewebPayPayment({
+        const _payment = new NewebPayPayment({
           merchantId: MERCHANT_ID,
           aesKey: AES_KEY,
           aesIv: AES_IV,
@@ -153,7 +153,7 @@ describe('NewebPay Payments', () => {
       const customPort = 7777;
 
       return new Promise<void>(resolve => {
-        const payment = new NewebPayPayment({
+        const _payment = new NewebPayPayment({
           merchantId: MERCHANT_ID,
           aesKey: AES_KEY,
           aesIv: AES_IV,
@@ -173,7 +173,7 @@ describe('NewebPay Payments', () => {
       const { NewebPayPayment } = await import('../src');
 
       return new Promise<void>(resolve => {
-        const payment = new NewebPayPayment({
+        const _payment = new NewebPayPayment({
           merchantId: MERCHANT_ID,
           aesKey: AES_KEY,
           aesIv: AES_IV,
