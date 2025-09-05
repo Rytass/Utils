@@ -69,7 +69,7 @@ export class StorageS3Service extends Storage<StorageS3Options> {
     const givenFilename = options?.filename;
 
     if (givenFilename) {
-      const uploadPromise = await this.s3
+      const _uploadPromise = await this.s3
         .upload({
           Bucket: this.bucket,
           Key: givenFilename,

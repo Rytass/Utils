@@ -36,7 +36,7 @@ describe('Cloudflare R2 storage adapter', () => {
   );
 
   const defaultUploadMocked = jest.fn(
-    (params: S3.Types.PutObjectRequest, options?: S3.ManagedUpload.ManagedUploadOptions) => {
+    (params: S3.Types.PutObjectRequest, _options?: S3.ManagedUpload.ManagedUploadOptions) => {
       if (params.Body instanceof Buffer) {
         fakeStorage.set(params.Key, params.Body);
 
@@ -130,7 +130,7 @@ describe('Cloudflare R2 storage adapter', () => {
   });
 
   const urlMocked = jest.fn(
-    options => (operation: string, params: { Bucket: string; Key: string; Expires?: number }) => {
+    _options => (_operation: string, params: { Bucket: string; Key: string; Expires?: number }) => {
       if (params.Expires) return FAKE_URL_WITH_EXPIRES(params.Expires);
 
       return FAKE_URL;
@@ -401,7 +401,7 @@ describe('Cloudflare R2 storage adapter', () => {
   });
 
   it('should write buffer file with content type', async () => {
-    uploadMocked = jest.fn((params: S3.Types.PutObjectRequest, options?: S3.ManagedUpload.ManagedUploadOptions) => {
+    uploadMocked = jest.fn((params: S3.Types.PutObjectRequest, _options?: S3.ManagedUpload.ManagedUploadOptions) => {
       expect(params.ContentType).toBe('image/png');
 
       fakeStorage.set(params.Key, params.Body as Buffer);
@@ -426,7 +426,7 @@ describe('Cloudflare R2 storage adapter', () => {
   });
 
   it('should write unknown stream with content type', async () => {
-    uploadMocked = jest.fn((params: S3.Types.PutObjectRequest, options?: S3.ManagedUpload.ManagedUploadOptions) => {
+    uploadMocked = jest.fn((params: S3.Types.PutObjectRequest, _options?: S3.ManagedUpload.ManagedUploadOptions) => {
       expect(params.ContentType).toBe('image/png');
 
       fakeStorage.set(params.Key, params.Body as Buffer);
@@ -463,7 +463,7 @@ describe('Cloudflare R2 storage adapter', () => {
   });
 
   it('should write stream file with content type', async () => {
-    uploadMocked = jest.fn((params: S3.Types.PutObjectRequest, options?: S3.ManagedUpload.ManagedUploadOptions) => {
+    uploadMocked = jest.fn((params: S3.Types.PutObjectRequest, _options?: S3.ManagedUpload.ManagedUploadOptions) => {
       expect(params.ContentType).toBe('image/png');
 
       return {

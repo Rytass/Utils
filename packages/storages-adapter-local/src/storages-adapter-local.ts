@@ -67,7 +67,7 @@ export class LocalStorage extends Storage {
       if (!lstatSync(fullPath).isFile()) {
         throw new StorageError(ErrorCode.FILE_NOT_FOUND);
       }
-    } catch (ex) {
+    } catch (_ex) {
       throw new StorageError(ErrorCode.FILE_NOT_FOUND);
     }
   }
@@ -178,7 +178,7 @@ export class LocalStorage extends Storage {
       await this.checkFileExists(path);
 
       return true;
-    } catch (ex: any) {
+    } catch (_ex: any) {
       return false;
     }
   }

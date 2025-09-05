@@ -22,7 +22,7 @@ const GENERAL_ERROR_FILE = 'GENERAL_ERROR_FILE';
 
 const fakeStorage = new Map<string, Buffer>();
 
-const getBlobClientMock = jest.fn((filename: string) => ({
+const getBlobClientMock = jest.fn((_filename: string) => ({
   url: FAKE_URL,
   credential: {} as StorageSharedKeyCredential,
 }));
@@ -57,7 +57,7 @@ const downloadMock = jest.fn(
 
 let uploadStreamMock = jest.fn(
   (filename: string) =>
-    (stream: Readable, bufferSize?: number, maxConcurrency?: number, options?: BlockBlobUploadStreamOptions) =>
+    (stream: Readable, _bufferSize?: number, _maxConcurrency?: number, _options?: BlockBlobUploadStreamOptions) =>
       new Promise<void>(resolve => {
         let buffer = Buffer.from([]);
 
@@ -77,7 +77,7 @@ const setHTTPHeadersMock = jest.fn(() => Promise.resolve());
 const beginCopyFromURLMock = jest.fn(() => Promise.resolve());
 const deleteMock = jest.fn(() => Promise.resolve());
 
-let uploadMock = jest.fn((buffer: Buffer, length: number, options: BlockBlobUploadOptions) => {
+let uploadMock = jest.fn((buffer: Buffer, _length: number, _options: BlockBlobUploadOptions) => {
   fakeStorage.set(`${createHash('sha256').update(buffer).digest('hex')}.png`, buffer);
 
   return Promise.resolve();
@@ -101,7 +101,7 @@ const getBlockBlobClientMock = jest.fn((filename: string) => ({
   exists: existsMock(filename),
 }));
 
-const containerClientMock = jest.fn((container: string) => ({
+const containerClientMock = jest.fn((_container: string) => ({
   getBlobClient: getBlobClientMock,
   getBlockBlobClient: getBlockBlobClientMock,
   deleteBlob: deleteBlobMock,
@@ -116,7 +116,7 @@ describe('Azure Blob adapter', () => {
     jest.mock('@azure/storage-blob', () => ({
       BlobSASPermissions: MockBlobSASPermissions,
       BlobServiceClient: {
-        fromConnectionString: (connectionString: string) => ({
+        fromConnectionString: (_connectionString: string) => ({
           getContainerClient: containerClientMock,
         }),
       },
@@ -367,7 +367,7 @@ describe('Azure Blob adapter', () => {
   it('should write buffer file with content type', async () => {
     const originUploadMock = uploadMock;
 
-    uploadMock = jest.fn((buffer: Buffer, length: number, options: BlockBlobUploadOptions) => {
+    uploadMock = jest.fn((buffer: Buffer, _length: number, options: BlockBlobUploadOptions) => {
       expect(options?.blobHTTPHeaders?.blobContentType).toBe('image/png');
 
       fakeStorage.set(
@@ -397,7 +397,7 @@ describe('Azure Blob adapter', () => {
 
     uploadStreamMock = jest.fn(
       (filename: string) =>
-        (stream: Readable, bufferSize?: number, maxConcurrency?: number, options?: BlockBlobUploadStreamOptions) =>
+        (stream: Readable, _bufferSize?: number, _maxConcurrency?: number, options?: BlockBlobUploadStreamOptions) =>
           new Promise<void>(resolve => {
             expect(options?.blobHTTPHeaders?.blobContentType).toBe('image/png');
 

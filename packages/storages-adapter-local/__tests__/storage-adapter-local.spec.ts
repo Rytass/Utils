@@ -32,14 +32,12 @@ describe('StorageLocalService', () => {
         });
       });
 
-      it('should write stream file', done => {
+      it('should write stream file', async () => {
         const stream = createReadStream(sampleFilePath);
 
-        localStorage.write(stream).then(() => {
-          expect(lstatSync(resolve(workingDirectory, filename)).isFile()).toBeTruthy();
+        await localStorage.write(stream);
 
-          done();
-        });
+        expect(lstatSync(resolve(workingDirectory, filename)).isFile()).toBeTruthy();
       });
 
       it('should batch write files', async () => {

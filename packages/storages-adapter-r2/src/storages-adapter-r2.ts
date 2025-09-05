@@ -88,7 +88,7 @@ export class StorageR2Service extends Storage<StorageR2Options> {
     const givenFilename = options?.filename;
 
     if (givenFilename) {
-      const uploadPromise = await this.s3
+      await this.s3
         .upload({
           Bucket: this.bucket,
           Key: givenFilename,
