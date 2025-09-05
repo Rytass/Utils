@@ -92,7 +92,7 @@ export class EZPayInvoiceGateway implements InvoiceGateway<EZPayPaymentItem, EZP
       .toUpperCase();
   }
 
-  private getCarrierTypeCode(carrier: EZPayAvailableCarrier) {
+  private getCarrierTypeCode(carrier: EZPayAvailableCarrier): '' | '0' | '1' | '2' {
     switch (carrier.type) {
       case InvoiceCarrierType.MOBILE:
         return '0';
@@ -108,7 +108,7 @@ export class EZPayInvoiceGateway implements InvoiceGateway<EZPayPaymentItem, EZP
     }
   }
 
-  private getCarrierCode(carrier: EZPayAvailableCarrier) {
+  private getCarrierCode(carrier: EZPayAvailableCarrier): string {
     switch (carrier.type) {
       case InvoiceCarrierType.MOBILE:
       case InvoiceCarrierType.MOICA:
@@ -120,7 +120,7 @@ export class EZPayInvoiceGateway implements InvoiceGateway<EZPayPaymentItem, EZP
     }
   }
 
-  private getItemTaxRate(item: EZPayPaymentItem, _taxType: TaxType, specialTaxPercentage?: number) {
+  private getItemTaxRate(item: EZPayPaymentItem, _taxType: TaxType, specialTaxPercentage?: number): number {
     switch (item.taxType) {
       case TaxType.TAX_FREE:
       case TaxType.ZERO_TAX:
@@ -513,7 +513,7 @@ export class EZPayInvoiceGateway implements InvoiceGateway<EZPayPaymentItem, EZP
       ItemAmt: allowanceItems.map(item => item.unitPrice * item.quantity).join('|'),
       ...(invoice.taxType === TaxType.MIXED && options?.taxType
         ? {
-            TaxTypeForMixed: (() => {
+            TaxTypeForMixed: ((): '1' | '2' | '3' => {
               switch (options.taxType) {
                 case TaxType.TAXED:
                   return '1';
@@ -523,6 +523,9 @@ export class EZPayInvoiceGateway implements InvoiceGateway<EZPayPaymentItem, EZP
 
                 case TaxType.TAX_FREE:
                   return '3';
+
+                default:
+                  return '1';
               }
             })(),
           }
@@ -696,7 +699,7 @@ export class EZPayInvoiceGateway implements InvoiceGateway<EZPayPaymentItem, EZP
           unitPrice: item.ItemPrice,
           quantity: item.ItemCount,
           unit: item.ItemWord,
-          taxType: (taxType => {
+          taxType: ((taxType): TaxType.TAXED | TaxType.TAX_FREE | TaxType.ZERO_TAX | TaxType.SPECIAL | undefined => {
             switch (taxType) {
               case '1':
                 return TaxType.TAXED;
@@ -717,7 +720,7 @@ export class EZPayInvoiceGateway implements InvoiceGateway<EZPayPaymentItem, EZP
         randomCode: responsePayload.RandomNum,
         platformId: responsePayload.InvoiceTransNo,
         orderId: responsePayload.MerchantOrderNo,
-        taxType: (taxType => {
+        taxType: ((taxType): TaxType => {
           switch (taxType) {
             case '1':
               return TaxType.TAXED;
@@ -730,6 +733,9 @@ export class EZPayInvoiceGateway implements InvoiceGateway<EZPayPaymentItem, EZP
 
             case '9':
               return TaxType.MIXED;
+
+            default:
+              return TaxType.TAXED;
           }
         })(responsePayload.TaxType),
       });

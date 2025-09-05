@@ -1,10 +1,4 @@
-import {
-  Invoice,
-  InvoiceAllowanceState,
-  InvoiceAwardType,
-  InvoiceState,
-  TaxType,
-} from '@rytass/invoice';
+import { Invoice, InvoiceAllowanceState, InvoiceAwardType, InvoiceState, TaxType } from '@rytass/invoice';
 import { AmegoInvoiceOptions, AmegoPaymentItem, AMEGO_CONSTANTS } from './typings';
 import { AmegoAllowance } from './amego-allowance';
 
