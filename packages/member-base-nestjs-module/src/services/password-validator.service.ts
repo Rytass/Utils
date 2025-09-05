@@ -100,7 +100,7 @@ export class PasswordValidatorService<MemberEntity extends BaseMemberEntity = Ba
 
       try {
         await histories
-          .map(history => async () => {
+          .map(history => async (): Promise<void> => {
             const isVerify = await verify(history.password, password);
 
             if (isVerify) {

@@ -293,7 +293,13 @@ export class MemberBaseService<MemberEntity extends BaseMemberEntity = BaseMembe
 
   async refreshToken(refreshToken: string, options?: { domain?: string }): Promise<TokenPairDto> {
     try {
-      const { id, account, passwordChangedAt, exp: _exp, domain } = verifyJWT(refreshToken, this.refreshTokenSecret) as {
+      const {
+        id,
+        account,
+        passwordChangedAt,
+        exp: _exp,
+        domain,
+      } = verifyJWT(refreshToken, this.refreshTokenSecret) as {
         id: string;
         account: string;
         passwordChangedAt: number | null;
