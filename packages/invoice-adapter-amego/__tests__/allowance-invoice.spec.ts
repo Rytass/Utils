@@ -3,7 +3,6 @@
  */
 
 import { AmegoBaseUrls, AmegoInvoiceGateway, InvoiceAllowanceState, InvoiceState, TaxType } from '../src';
-import { DateTime } from 'luxon';
 import { AmegoInvoice } from '../src/amego-invoice';
 import { AmegoAllowance } from '../src/amego-allowance';
 import axios from 'axios';
@@ -25,7 +24,7 @@ describe('AmegoInvoiceGateway:Allowance', () => {
   describe('allowance operations', () => {
     it('should create allowance for an invoice', async () => {
       // Mock query response
-      mockedAxios.post.mockImplementation(async (url: string, data: any) => {
+      mockedAxios.post.mockImplementation(async (url: string, _data: any) => {
         if (url === `${baseUrl}/json/invoice_query`) {
           return {
             data: {
@@ -123,7 +122,7 @@ describe('AmegoInvoiceGateway:Allowance', () => {
 
     it('should create allowance for consumer invoice (vatNumber 0000000000)', async () => {
       // Mock query response for consumer invoice
-      mockedAxios.post.mockImplementation(async (url: string, data: any) => {
+      mockedAxios.post.mockImplementation(async (url: string, _data: any) => {
         if (url === `${baseUrl}/json/invoice_query`) {
           return {
             data: {
@@ -202,7 +201,7 @@ describe('AmegoInvoiceGateway:Allowance', () => {
     });
 
     it('should handle allowance with multiple items', async () => {
-      mockedAxios.post.mockImplementation(async (url: string, data: any) => {
+      mockedAxios.post.mockImplementation(async (url: string, _data: any) => {
         if (url === `${baseUrl}/json/invoice_query`) {
           return {
             data: {
@@ -288,7 +287,7 @@ describe('AmegoInvoiceGateway:Allowance', () => {
     });
 
     it('should handle allowance with different tax types', async () => {
-      mockedAxios.post.mockImplementation(async (url: string, data: any) => {
+      mockedAxios.post.mockImplementation(async (url: string, _data: any) => {
         if (url === `${baseUrl}/json/invoice_query`) {
           return {
             data: {
@@ -360,7 +359,7 @@ describe('AmegoInvoiceGateway:Allowance', () => {
     });
 
     it('should handle allowance with custom allowance type', async () => {
-      mockedAxios.post.mockImplementation(async (url: string, data: any) => {
+      mockedAxios.post.mockImplementation(async (url: string, _data: any) => {
         if (url === `${baseUrl}/json/invoice_query`) {
           return {
             data: {
@@ -555,7 +554,7 @@ describe('AmegoInvoiceGateway:Allowance', () => {
 
   describe('allowance API errors', () => {
     it('should throw error when allowance API returns error code', async () => {
-      mockedAxios.post.mockImplementation(async (url: string, data: any) => {
+      mockedAxios.post.mockImplementation(async (url: string, _data: any) => {
         if (url === `${baseUrl}/json/invoice_query`) {
           return {
             data: {
@@ -629,7 +628,7 @@ describe('AmegoInvoiceGateway:Allowance', () => {
   describe('invalidAllowance operations', () => {
     it('should invalid allowance successfully', async () => {
       // Mock query response with allowances
-      mockedAxios.post.mockImplementation(async (url: string, data: any) => {
+      mockedAxios.post.mockImplementation(async (url: string, _data: any) => {
         if (url === `${baseUrl}/json/invoice_query`) {
           return {
             data: {
@@ -726,7 +725,7 @@ describe('AmegoInvoiceGateway:Allowance', () => {
     });
 
     it('should throw error when invalid allowance API returns error code', async () => {
-      mockedAxios.post.mockImplementation(async (url: string, data: any) => {
+      mockedAxios.post.mockImplementation(async (url: string, _data: any) => {
         if (url === `${baseUrl}/json/g0501`) {
           return {
             data: {

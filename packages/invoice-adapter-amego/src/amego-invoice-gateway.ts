@@ -605,7 +605,7 @@ export class AmegoInvoiceGateway implements InvoiceGateway<AmegoPaymentItem, Ame
     return data.code === 0;
   }
 
-  async isLoveCodeValid(code: string): Promise<boolean> {
+  async isLoveCodeValid(_code: string): Promise<boolean> {
     throw new Error('Method not supported in Amego API.');
   }
 

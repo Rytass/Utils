@@ -17,10 +17,10 @@ describe('ECPay Invoice Query', () => {
   it('should query invoice with orderId', async () => {
     const mockPost = jest.spyOn(axios, 'post');
 
-    mockPost.mockImplementation(async (url: string, data: any) => {
+    mockPost.mockImplementation(async (url: string, _data: any) => {
       expect(url).toMatch(/\/B2CInvoice\/GetIssue$/);
 
-      const payload = JSON.parse(data) as {
+      const payload = JSON.parse(_data) as {
         MerchantID: string;
         RqHeader: {
           Timestamp: number;
@@ -131,10 +131,10 @@ describe('ECPay Invoice Query', () => {
   it('should query invoice with invoice number and issued on', async () => {
     const mockPost = jest.spyOn(axios, 'post');
 
-    mockPost.mockImplementation(async (url: string, data: any) => {
+    mockPost.mockImplementation(async (url: string, _data: any) => {
       expect(url).toMatch(/\/B2CInvoice\/GetIssue$/);
 
-      const payload = JSON.parse(data) as {
+      const payload = JSON.parse(_data) as {
         MerchantID: string;
         RqHeader: {
           Timestamp: number;
@@ -243,7 +243,7 @@ describe('ECPay Invoice Query', () => {
   it('should query zero tax invoice', async () => {
     const mockPost = jest.spyOn(axios, 'post');
 
-    mockPost.mockImplementation(async (url: string, data: any) => {
+    mockPost.mockImplementation(async (_url: string, _data: any) => {
       const cipher = createCipheriv('aes-128-cbc', DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
       return {
@@ -331,7 +331,7 @@ describe('ECPay Invoice Query', () => {
   it('should query tax free invoice', async () => {
     const mockPost = jest.spyOn(axios, 'post');
 
-    mockPost.mockImplementation(async (url: string, data: any) => {
+    mockPost.mockImplementation(async (_url: string, _data: any) => {
       const cipher = createCipheriv('aes-128-cbc', DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
       return {
@@ -419,7 +419,7 @@ describe('ECPay Invoice Query', () => {
   it('should query special tax invoice', async () => {
     const mockPost = jest.spyOn(axios, 'post');
 
-    mockPost.mockImplementation(async (url: string, data: any) => {
+    mockPost.mockImplementation(async (_url: string, _data: any) => {
       const cipher = createCipheriv('aes-128-cbc', DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
       return {
@@ -507,7 +507,7 @@ describe('ECPay Invoice Query', () => {
   it('should query mixed tax invoice', async () => {
     const mockPost = jest.spyOn(axios, 'post');
 
-    mockPost.mockImplementation(async (url: string, data: any) => {
+    mockPost.mockImplementation(async (_url: string, _data: any) => {
       const cipher = createCipheriv('aes-128-cbc', DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
       return {
@@ -606,7 +606,7 @@ describe('ECPay Invoice Query', () => {
   it('should throw error when ecpay return gateway error', async () => {
     const mockPost = jest.spyOn(axios, 'post');
 
-    mockPost.mockImplementation(async (url: string, data: any) => {
+    mockPost.mockImplementation(async (_url: string, _data: any) => {
       return {
         data: {
           TransCode: '-999',
@@ -634,7 +634,7 @@ describe('ECPay Invoice Query', () => {
   it('should throw error when ecpay return query error', async () => {
     const mockPost = jest.spyOn(axios, 'post');
 
-    mockPost.mockImplementation(async (url: string, data: any) => {
+    mockPost.mockImplementation(async (_url: string, _data: any) => {
       const cipher = createCipheriv('aes-128-cbc', DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
       return {

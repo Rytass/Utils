@@ -20,7 +20,7 @@ describe('ECPayInvoiceGateway Void', () => {
   const SHOULD_THROW_ERROR_REASON = 'THROWOOOWOWOW';
 
   beforeAll(() => {
-    post.mockImplementation(async (url: string, data: unknown) => {
+    post.mockImplementation(async (_url: string, data: unknown) => {
       const payload = JSON.parse(data as string) as {
         MerchantID: string;
         RqHeader: {

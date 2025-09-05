@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 import { DateTime } from 'luxon';
-import { AmegoBaseUrls, AmegoInvoiceGateway, TaxType, InvoiceCarrierType, SpecialTaxCode } from '../src';
+import { AmegoBaseUrls, AmegoInvoiceGateway, TaxType, InvoiceCarrierType } from '../src';
 import axios from 'axios';
 
 const DEFAULT_VAT_NUMBER = '12345678';

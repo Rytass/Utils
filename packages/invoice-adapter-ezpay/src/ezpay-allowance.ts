@@ -1,4 +1,4 @@
-import { Invoice, InvoiceAllowance, InvoiceAllowanceState } from '@rytass/invoice';
+import { InvoiceAllowance, InvoiceAllowanceState } from '@rytass/invoice';
 import { EZPayInvoice } from './ezpay-invoice';
 import { EZPayPaymentItem } from './typings';
 

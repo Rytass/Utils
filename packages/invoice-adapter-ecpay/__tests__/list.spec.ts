@@ -16,7 +16,7 @@ describe('ECPayInvoiceGateway List', () => {
   const post = jest.spyOn(axios, 'post');
 
   beforeAll(() => {
-    post.mockImplementation(async (url: string, data: unknown) => {
+    post.mockImplementation(async (_url: string, data: unknown) => {
       const payload = JSON.parse(data as string) as {
         MerchantID: string;
         RqHeader: {
@@ -62,7 +62,7 @@ describe('ECPayInvoiceGateway List', () => {
             ShowingPage: plainPayload.ShowingPage,
             RtnMsg: '成功',
             TotalCount: 201,
-            InvoiceData: Array.from(Array(plainPayload.ShowingPage === 1 ? 200 : 1)).map((n, index) => ({
+            InvoiceData: Array.from(Array(plainPayload.ShowingPage === 1 ? 200 : 1)).map((_, index) => ({
               IIS_Identifier: '0000000000',
               IIS_Number: 'FJ20004474',
               IIS_Print_Flag: '0',

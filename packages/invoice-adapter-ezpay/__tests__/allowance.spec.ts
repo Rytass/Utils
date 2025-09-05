@@ -14,7 +14,6 @@ import {
   EZPayInvoiceGateway,
   EZPayInvoiceInvalidAllowancePayload,
   InvoiceAllowanceState,
-  InvoiceCarrierType,
   TaxType,
 } from '../src';
 import { ERROR_INVOICE_REMAINING_AMOUNT_NOT_ENOUGH } from '../src/constants';

@@ -1,5 +1,4 @@
 import {
-  CustomsMark,
   InvoiceIssueOptions,
   InvoiceLoveCodeCarrier,
   InvoiceMobileCarrier,
@@ -11,7 +10,6 @@ import {
   InvoicePlatformCarrier,
   TaxType,
 } from '@rytass/invoice';
-import { EZPayInvoice } from './ezpay-invoice';
 
 export enum EZPayBaseUrls {
   DEVELOPMENT = 'https://cinv.ezpay.com.tw',
