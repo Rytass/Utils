@@ -121,6 +121,7 @@ export class CategoryBaseService<
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public async findAll<T extends C = C, U extends CM = CM>(
     options?: CategoryFindAllDto & { language: Language },
   ): Promise<SingleCategoryBaseDto<C, CM>[]>;

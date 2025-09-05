@@ -1,4 +1,3 @@
-import { ArticleFindVersionType } from './article-find-version-type.enum';
 import { ArticleStage } from './article-stage.enum';
 import { Language } from './language';
 

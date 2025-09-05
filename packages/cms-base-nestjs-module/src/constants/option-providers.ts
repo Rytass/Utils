@@ -1,4 +1,4 @@
-import { Options, Provider } from '@nestjs/common';
+import { Provider } from '@nestjs/common';
 import {
   AUTO_RELEASE_AFTER_APPROVED,
   CIRCULAR_CATEGORY_MODE,
@@ -78,7 +78,7 @@ export const OptionProviders = [
         await import('@node-rs/jieba');
 
         return true;
-      } catch (ex) {
+      } catch (_ex) {
         throw new Error('Full Text Search Mode requires @node-rs/jieba module, please install it first.');
       }
     },

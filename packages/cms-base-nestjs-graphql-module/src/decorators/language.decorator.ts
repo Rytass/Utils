@@ -4,7 +4,7 @@ import { Request } from 'express';
 
 export const LANGUAGE_HEADER_KEY = 'x-language';
 
-export const Language = createParamDecorator(async (data: unknown, context: ExecutionContext): Promise<string> => {
+export const Language = createParamDecorator(async (_data: unknown, context: ExecutionContext): Promise<string> => {
   const contextType = context.getType<'http' | 'graphql'>();
 
   switch (contextType) {
