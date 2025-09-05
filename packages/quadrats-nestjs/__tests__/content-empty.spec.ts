@@ -1,8 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import axios from 'axios';
 import { QuadratsModule } from '../src/module';
 import { QuadratsArticleService } from '../src/services/article.service';
-import type { QuadratsElement, QuadratsText } from '@quadrats/core';
 
 const HOST = 'https://custom-url.com';
 const ACCESS_KEY = '1111111111111';

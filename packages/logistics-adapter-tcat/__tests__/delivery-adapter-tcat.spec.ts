@@ -131,7 +131,7 @@ describe('delivery-adapter-tcat', () => {
 
   it('should throw not found error', () => {
     const logistics = new TCatLogisticsService(TCatLogistics);
-    const logisticId = 'notExsited';
+    const _logisticId = 'notExsited';
 
     get.mockImplementationOnce(async (url: string) => {
       expect(url).toEqual(traceUrl('notExisted'));

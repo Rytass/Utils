@@ -91,7 +91,7 @@ describe('VaultSecretNestjsModule', () => {
   const post = jest.spyOn(axios, 'post');
   const URLRegex = new RegExp(`${VAULT_HOST}/v1/secret/data/(.+)$`);
 
-  get.mockImplementation(async (url: string, data: unknown) => {
+  get.mockImplementation(async (url: string, _data: unknown) => {
     URLRegex.test(url);
 
     const project = RegExp.$1;
@@ -125,7 +125,7 @@ describe('VaultSecretNestjsModule', () => {
     });
   });
 
-  post.mockImplementation(async (url: string, data: unknown, config) => {
+  post.mockImplementation(async (url: string, data: unknown, _config) => {
     if (!url.match(new RegExp(`^${VAULT_HOST}`))) throw new AxiosError(404);
 
     if (url === `${VAULT_HOST}/v1/auth/userpass/login/${VAULT_ACCOUNT}`) {

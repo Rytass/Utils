@@ -108,7 +108,7 @@ export class PasswordValidatorService<MemberEntity extends BaseMemberEntity = Ba
             }
           })
           .reduce((prev, next) => prev.then(next), Promise.resolve());
-      } catch (ex) {
+      } catch (_ex) {
         return false;
       }
     }

@@ -682,7 +682,7 @@ describe('OrderBuilderE2E', () => {
       ],
     });
 
-    const order1 = builder1.build({ items });
+    builder1.build({ items });
 
     const builder2 = new OrderBuilder<TestOrderItem>({
       policyPickStrategy: 'item-based',

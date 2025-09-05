@@ -82,14 +82,14 @@ const RectangleNode: FC<RectangleNodeProps> = ({
     useTextEditing({ id, label, isEditable, onTextEditComplete });
 
   // Handle resize start
-  const handleResizeStart = useCallback((event: any, params: any) => {
+  const handleResizeStart = useCallback((_event: any, _params: any) => {
     // 開始調整大小時可以執行額外的邏輯，例如禁用拖拽
     // 這裡保持空白，但提供了擴展點
   }, []);
 
   // Handle resize with size sync and position update (diagonal anchor)
   const handleResize = useCallback(
-    (event: any, params: any) => {
+    (_event: any, params: any) => {
       const newSize = { width: params.width, height: params.height };
 
       setCurrentSize(newSize);
@@ -122,7 +122,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({
 
   // Handle resize end to ensure final state is saved
   const handleResizeEnd = useCallback(
-    (event: any, params: any) => {
+    (_event: any, params: any) => {
       const newSize = { width: params.width, height: params.height };
 
       setCurrentSize(newSize);

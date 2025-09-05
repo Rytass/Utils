@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { RESOLVED_WAREHOUSE_MAP_REPO, WMSBaseModule } from '@rytass/wms-base-nestjs-module';
+import { RESOLVED_WAREHOUSE_MAP_REPO } from '@rytass/wms-base-nestjs-module';
 import { mockWarehouseMapEntity, mockWarehouseMapRepo } from '../__mocks__/warehouse-map.mock';
 import { WarehouseMapEntity } from '../src/models/warehouse-map.entity';
 import { WarehouseMapService } from '../src/services/warehouse-map.service';

@@ -70,7 +70,7 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode, viewMode,
     setNodes: setNodesFromHook,
   } = useContextMenu({ id, editMode, isEditable, nodeType: 'imageNode' });
 
-  const updateNodeData = useCallback(
+  const _updateNodeData = useCallback(
     (updates: Partial<ImageNodeData>) => {
       setNodes(nodes => nodes.map(node => (node.id === id ? { ...node, data: { ...node.data, ...updates } } : node)));
 
@@ -80,7 +80,7 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode, viewMode,
   );
 
   const handleResize = useCallback(
-    (event: any, params: any) => {
+    (_event: any, params: any) => {
       const newWidth = params.width;
       const newHeight = newWidth / aspectRatio;
 
@@ -115,13 +115,13 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode, viewMode,
     [aspectRatio, id, setNodes, isResizing],
   );
 
-  const handleResizeStart = useCallback((event: any, params: any) => {
+  const handleResizeStart = useCallback((_event: any, _params: any) => {
     // 開始調整大小時可以執行額外的邏輯，例如禁用拖拽
     // 這裡保持空白，但提供了擴展點
   }, []);
 
   const handleResizeEnd = useCallback(
-    (event: any, params: any) => {
+    (_event: any, params: any) => {
       const newWidth = params.width;
       const newHeight = newWidth / aspectRatio;
 

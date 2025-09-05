@@ -68,7 +68,7 @@ export class CasbinGuard implements CanActivate {
         >;
 
         request.payload = payload;
-      } catch (ex) {
+      } catch (_ex) {
         request.payload = undefined;
       }
     } else {

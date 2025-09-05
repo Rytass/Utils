@@ -31,7 +31,7 @@ export class VaultService {
         account: user,
         password: pass,
       },
-      onError: err => {
+      onError: _err => {
         this.fallbackToEnvFile = true;
 
         this.onReadyCallbacks.forEach(done => done(config));

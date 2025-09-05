@@ -62,7 +62,7 @@ export class OrderBuilder<Item extends OrderItem = OrderItem, Coupon extends str
   /** OrderBuilder */
   constructor();
   constructor(arg0?: OrderBuilder<Item, Coupon> | OrderBuilderConstructor) {
-    const { policies = [], ...config } = arg0 || {};
+    const { policies: _policies = [], ...config } = arg0 || {};
 
     this._policyManager = new OrderPolicyManager(arg0?.policies || []);
     this.config = new OrderConfig(

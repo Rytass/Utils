@@ -12,7 +12,7 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
 
   // 支援 3 位元和 6 位元的十六進制顏色
   const shorthandRegex = /^([a-f\d])([a-f\d])([a-f\d])$/i;
-  const fullHex = cleanHex.replace(shorthandRegex, (m, r, g, b) => r + r + g + g + b + b);
+  const fullHex = cleanHex.replace(shorthandRegex, (_m, r, g, b) => r + r + g + g + b + b);
 
   const result = /^([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(fullHex);
 

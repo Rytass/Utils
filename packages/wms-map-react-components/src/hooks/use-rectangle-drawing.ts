@@ -106,7 +106,6 @@ export const useRectangleDrawing = ({
 
       if (!wrapper) return;
 
-      const rect = wrapper.getBoundingClientRect();
       const endPosition = screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,

@@ -11,7 +11,6 @@ import {
   StepValueDiscount,
   ItemIncluded,
   QuantityThreshold,
-  ORDER_LOGISTICS_ID,
   ItemExcluded,
 } from '../src';
 import { Order } from '../src/core/order';
@@ -178,7 +177,7 @@ describe('OrderBuilder', () => {
         new PercentageDiscount(0.5, [new PriceThreshold(2000), new ItemRequired({ id: 'ItemC', quantity: 1 })]),
       );
 
-    const order5 = builder5.build({
+    const _order5 = builder5.build({
       items: [
         {
           id: 'ItemB',
@@ -189,7 +188,7 @@ describe('OrderBuilder', () => {
       ],
     });
 
-    // expect(order5.price).toEqual(570); // 1500 * 0.5 - 100 - 80 = 570
+    // expect(_order5.price).toEqual(570); // 1500 * 0.5 - 100 - 80 = 570
   });
 
   describe(

@@ -101,7 +101,7 @@ export class SMSServiceEvery8D
           },
         );
 
-        const [credit, sended, cost, unsend, batchId] = data.split(/,/);
+        const [credit, sended, _cost, unsend, batchId] = data.split(/,/);
 
         if (batchId) {
           return mobileList.reduce((map, mobile, index) => {

@@ -1,5 +1,4 @@
 import { FlattenOrderItem } from './../core/typings';
-import { OrderItem } from '../core/typings';
 import { Order } from '../core/order';
 import { ObjRecord } from '../typings';
 

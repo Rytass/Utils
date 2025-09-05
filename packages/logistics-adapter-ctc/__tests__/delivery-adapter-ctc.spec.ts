@@ -11,7 +11,7 @@ describe('delivery-adapter-ctc', () => {
 
       const logisticId = ['R25061100009'];
 
-      get.mockImplementationOnce(async (url: string, data: any) => {
+      get.mockImplementationOnce(async (url: string, _data: any) => {
         expect(url).toBe('https://tms2.ctc-express.cloud/api/v1/customer/orders/R25061100009');
 
         return {
@@ -31,7 +31,7 @@ describe('delivery-adapter-ctc', () => {
       });
 
       try {
-        const result = await logisticsService.trace(logisticId);
+        const _result = await logisticsService.trace(logisticId);
       } catch (error) {
         console.error(`Error occurred: ${error instanceof LogisticsError ? error.message : error}`);
       }
@@ -46,7 +46,7 @@ describe('delivery-adapter-ctc', () => {
 
       const logisticId = ['R25061100009'];
 
-      get.mockImplementationOnce(async (url: string, data: any) => {
+      get.mockImplementationOnce(async (url: string, _data: any) => {
         expect(url).toBe('https://tms2.ctc-express.cloud/api/v1/customer/orders/ABCD202507170001');
 
         return {
@@ -66,7 +66,7 @@ describe('delivery-adapter-ctc', () => {
       });
 
       try {
-        const result = await logisticsService.trace(logisticId);
+        const _result = await logisticsService.trace(logisticId);
       } catch (error) {
         console.error(`Error occurred: ${error instanceof LogisticsError ? error.message : error}`);
       }
@@ -106,7 +106,7 @@ describe('delivery-adapter-ctc', () => {
       volume: 1, // 材積, 固定為 1
     } as CreateOrUpdateCtcLogisticsOptions;
 
-    post.mockImplementation(async (url: string, data: any) => {
+    post.mockImplementation(async (url: string, _data: any) => {
       expect(url).toBe('https://tms2.ctc-express.cloud/api/v1/customer/orders');
 
       return {
@@ -118,7 +118,7 @@ describe('delivery-adapter-ctc', () => {
       };
     });
 
-    get.mockImplementationOnce(async (url: string, data: any) => {
+    get.mockImplementationOnce(async (url: string, _data: any) => {
       expect(url).toBe('https://tms2.ctc-express.cloud/api/v1/customer/orders/R25061100009');
 
       return {
@@ -138,13 +138,13 @@ describe('delivery-adapter-ctc', () => {
     });
 
     it('should create a new logistics with default configuration', async () => {
-      const result = await logisticsService.create(createOrUpdateCtcLogisticsOptions);
+      await logisticsService.create(createOrUpdateCtcLogisticsOptions);
     });
 
     it('should update a logistics with default configuration', async () => {
       createOrUpdateCtcLogisticsOptions.receiverCompany = 'Updated Receiver Name';
 
-      const result = await logisticsService.update(createOrUpdateCtcLogisticsOptions);
+      await logisticsService.update(createOrUpdateCtcLogisticsOptions);
     });
   });
 });

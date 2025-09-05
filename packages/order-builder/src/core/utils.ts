@@ -1,5 +1,5 @@
-import { Condition, ItemExcluded, ItemIncluded, PriceThreshold } from '../conditions';
-import { ItemGiveawayDiscount, Policies } from '../policies';
+import { Condition, ItemIncluded, PriceThreshold } from '../conditions';
+import { ItemGiveawayDiscount } from '../policies';
 import { uuid } from '../utils/uuid';
 import { OrderBuilder } from './order-builder';
 import { OrderItem, OrderLogistics } from './typings';
