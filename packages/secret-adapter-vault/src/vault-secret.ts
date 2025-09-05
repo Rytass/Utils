@@ -68,17 +68,17 @@ export class VaultSecret<Options extends VaultSecretOptions> extends SecretManag
     }
   }
 
-  private checkRenew() {
+  private checkRenew(): void {
     if (this._token) this.renewToken();
   }
 
-  private retrieveToken() {
+  private retrieveToken(): Promise<void> | undefined {
     if (this._auth.account) {
       return this.retrieveTokenByUserPass(this._auth.account, this._auth.password);
     }
   }
 
-  private async retrieveTokenByUserPass(account: string, password: string) {
+  private async retrieveTokenByUserPass(account: string, password: string): Promise<void> {
     const { data } = await axios.post<VaultTokenRetrieveResponse>(
       `${this._host}/v1/auth/userpass/login/${account}`,
       JSON.stringify({
@@ -106,7 +106,7 @@ export class VaultSecret<Options extends VaultSecretOptions> extends SecretManag
       Date.now() + Math.max((data as VaultTokenRetrieveSuccessResponse).auth.lease_duration - 300, 0); // Calculate safety expires time
   }
 
-  private async renewToken() {
+  private async renewToken(): Promise<void | Promise<void>> {
     if (this._tokenExpiredOn! < Date.now()) {
       return this.retrieveToken();
     }
@@ -310,7 +310,7 @@ export class VaultSecret<Options extends VaultSecretOptions> extends SecretManag
     }
 
     return new Promise<T>(resolve => {
-      const onTokenRetrieved = () => {
+      const onTokenRetrieved = (): void => {
         this.emitter.removeListener(VaultEvents.READY, onTokenRetrieved);
         this.emitter.removeListener(VaultEvents.TOKEN_RENEWED, onTokenRetrieved);
 
@@ -338,7 +338,7 @@ export class VaultSecret<Options extends VaultSecretOptions> extends SecretManag
     }
 
     return new Promise<void>(resolve => {
-      const onTokenRetrieved = async () => {
+      const onTokenRetrieved = async (): Promise<void> => {
         this.emitter.removeListener(VaultEvents.READY, onTokenRetrieved);
         this.emitter.removeListener(VaultEvents.TOKEN_RENEWED, onTokenRetrieved);
 
@@ -366,7 +366,7 @@ export class VaultSecret<Options extends VaultSecretOptions> extends SecretManag
     }
 
     return new Promise<void>(resolve => {
-      const onTokenRetrieved = async () => {
+      const onTokenRetrieved = async (): Promise<void> => {
         this.emitter.removeListener(VaultEvents.READY, onTokenRetrieved);
         this.emitter.removeListener(VaultEvents.TOKEN_RENEWED, onTokenRetrieved);
 

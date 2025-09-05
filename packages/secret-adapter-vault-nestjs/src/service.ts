@@ -31,12 +31,12 @@ export class VaultService {
         account: user,
         password: pass,
       },
-      onError: _err => {
+      onError: (_err): void => {
         this.fallbackToEnvFile = true;
 
         this.onReadyCallbacks.forEach(done => done(config));
       },
-      onReady: () => {
+      onReady: (): void => {
         this.onReadyCallbacks.forEach(done => done());
       },
     });

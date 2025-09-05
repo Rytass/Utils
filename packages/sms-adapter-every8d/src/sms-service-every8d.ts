@@ -85,50 +85,53 @@ export class SMSServiceEvery8D
     );
 
     const result = await Array.from(batches.entries())
-      .map(([message, mobileList]) => async (resultMap: Map<string, Every8DSMSSendResponse>) => {
-        const { data } = await axios.post<string>(
-          `${this.baseUrl}/API21/HTTP/SendSMS.ashx`,
-          new URLSearchParams({
-            UID: this.username,
-            PWD: this.password,
-            MSG: message,
-            DEST: mobileList.join(','),
-          }),
-          {
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
+      .map(
+        ([message, mobileList]) =>
+          async (resultMap: Map<string, Every8DSMSSendResponse>): Promise<Map<string, Every8DSMSSendResponse>> => {
+            const { data } = await axios.post<string>(
+              `${this.baseUrl}/API21/HTTP/SendSMS.ashx`,
+              new URLSearchParams({
+                UID: this.username,
+                PWD: this.password,
+                MSG: message,
+                DEST: mobileList.join(','),
+              }),
+              {
+                headers: {
+                  'Content-Type': 'application/x-www-form-urlencoded',
+                },
+              },
+            );
+
+            const [credit, sended, _cost, unsend, batchId] = data.split(/,/);
+
+            if (batchId) {
+              return mobileList.reduce((map, mobile, index) => {
+                const sent = index < mobileList.length - Number(unsend);
+
+                map.set(`${message}:${mobile}`, {
+                  messageId: batchId,
+                  status: sent ? SMSRequestResult.SUCCESS : SMSRequestResult.FAILED,
+                  mobile,
+                } as Every8DSMSSendResponse);
+
+                return map;
+              }, resultMap);
+            }
+
+            return mobileList.reduce((map, mobile) => {
+              map.set(`${message}:${mobile}`, {
+                messageId: batchId,
+                status: SMSRequestResult.FAILED,
+                mobile,
+                errorMessage: sended,
+                errorCode: Number(credit) as Every8DError,
+              } as Every8DSMSSendResponse);
+
+              return map;
+            }, resultMap);
           },
-        );
-
-        const [credit, sended, _cost, unsend, batchId] = data.split(/,/);
-
-        if (batchId) {
-          return mobileList.reduce((map, mobile, index) => {
-            const sent = index < mobileList.length - Number(unsend);
-
-            map.set(`${message}:${mobile}`, {
-              messageId: batchId,
-              status: sent ? SMSRequestResult.SUCCESS : SMSRequestResult.FAILED,
-              mobile,
-            } as Every8DSMSSendResponse);
-
-            return map;
-          }, resultMap);
-        }
-
-        return mobileList.reduce((map, mobile) => {
-          map.set(`${message}:${mobile}`, {
-            messageId: batchId,
-            status: SMSRequestResult.FAILED,
-            mobile,
-            errorMessage: sended,
-            errorCode: Number(credit) as Every8DError,
-          } as Every8DSMSSendResponse);
-
-          return map;
-        }, resultMap);
-      })
+      )
       .reduce<Promise<Map<string, Every8DSMSSendResponse>>>(
         (prev, next) => prev.then(next),
         Promise.resolve(new Map<string, Every8DSMSSendResponse>()),
