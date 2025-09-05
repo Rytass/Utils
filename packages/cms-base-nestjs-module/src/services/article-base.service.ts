@@ -89,7 +89,7 @@ export class ArticleBaseService<
 
   private readonly logger = new Logger(ArticleBaseService.name);
 
-  private readonly queryStagesFeaturesCheck = (stage: ArticleStage) => {
+  private readonly queryStagesFeaturesCheck = (stage: ArticleStage): void => {
     switch (stage) {
       case ArticleStage.DRAFT:
         if (!this.draftMode) {
@@ -342,11 +342,12 @@ export class ArticleBaseService<
 
         await articles
           .map(
-            article => () =>
-              this.bindSearchTokens<ArticleVersionContentEntity>(
-                article.versions[0].multiLanguageContents[0] as ArticleVersionContentEntity,
-                article.versions[0].tags,
-              ),
+            (article): (() => Promise<void>) =>
+              (): Promise<void> =>
+                this.bindSearchTokens<ArticleVersionContentEntity>(
+                  article.versions[0].multiLanguageContents[0] as ArticleVersionContentEntity,
+                  article.versions[0].tags,
+                ),
           )
           .reduce((prev, next) => prev.then(next), Promise.resolve());
 
@@ -1087,7 +1088,7 @@ export class ArticleBaseService<
     submitted: boolean;
     releasedAt: Date | null;
     signatureLevel: string | null;
-  }) {
+  }): ArticleStage {
     if (submitted) {
       return ArticleStage.REVIEWING;
     }
@@ -1266,7 +1267,11 @@ export class ArticleBaseService<
 
         if (this.fullTextSearchMode) {
           await savedContents
-            .map(articleContent => () => this.bindSearchTokens<AVC>(articleContent as AVC, options.tags ?? [], runner))
+            .map(
+              (articleContent): (() => Promise<void>) =>
+                (): Promise<void> =>
+                  this.bindSearchTokens<AVC>(articleContent as AVC, options.tags ?? [], runner),
+            )
             .reduce((prev, next) => prev.then(next), Promise.resolve());
         }
       } else {
@@ -1414,7 +1419,11 @@ export class ArticleBaseService<
 
         if (this.fullTextSearchMode) {
           await savedContents
-            .map(articleContent => () => this.bindSearchTokens<AVC>(articleContent, options.tags ?? [], runner))
+            .map(
+              (articleContent): (() => Promise<void>) =>
+                (): Promise<void> =>
+                  this.bindSearchTokens<AVC>(articleContent, options.tags ?? [], runner),
+            )
             .reduce((prev, next) => prev.then(next), Promise.resolve());
         }
       } else {

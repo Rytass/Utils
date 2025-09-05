@@ -113,7 +113,11 @@ export class CategoryBaseService<
 
   private async checkCircularCategories<T extends C = C>(category: T, targetParents: T[]): Promise<void> {
     const allParentIdSet = await targetParents
-      .map(parent => (set: Set<string>) => this.getParentCategoryIdSet(parent.id, set))
+      .map(
+        (parent): ((set: Set<string>) => Promise<Set<string>>) =>
+          (set: Set<string>): Promise<Set<string>> =>
+            this.getParentCategoryIdSet(parent.id, set),
+      )
       .reduce((prev, next) => prev.then(next), Promise.resolve(new Set<string>()));
 
     if (allParentIdSet.has(category.id)) {

@@ -17,61 +17,74 @@ import {
 } from '../typings/cms-base-providers';
 import { CMSBaseModuleOptionsDto } from '../typings/cms-base-root-module-options.dto';
 import { DEFAULT_SIGNATURE_LEVEL } from './default-signature-level';
+import { BaseSignatureLevelEntity } from '../models/base-signature-level.entity';
+import { BaseArticleEntity } from '../models/base-article.entity';
+import { BaseArticleVersionEntity } from '../models/base-article-version.entity';
+import { BaseArticleVersionContentEntity } from '../models/base-article-version-content.entity';
+import { BaseCategoryEntity } from '../models/base-category.entity';
+import { BaseCategoryMultiLanguageNameEntity } from '../models/base-category-multi-language-name.entity';
 
 export const OptionProviders = [
   {
     provide: MULTIPLE_LANGUAGE_MODE,
-    useFactory: (options?: CMSBaseModuleOptionsDto) => options?.multipleLanguageMode ?? false,
+    useFactory: (options?: CMSBaseModuleOptionsDto): boolean => options?.multipleLanguageMode ?? false,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: MULTIPLE_CATEGORY_PARENT_MODE,
-    useFactory: (options?: CMSBaseModuleOptionsDto) => options?.allowMultipleParentCategories ?? false,
+    useFactory: (options?: CMSBaseModuleOptionsDto): boolean => options?.allowMultipleParentCategories ?? false,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: CIRCULAR_CATEGORY_MODE,
-    useFactory: (options?: CMSBaseModuleOptionsDto) => options?.allowCircularCategories ?? false,
+    useFactory: (options?: CMSBaseModuleOptionsDto): boolean => options?.allowCircularCategories ?? false,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: SIGNATURE_LEVELS,
-    useFactory: (options?: CMSBaseModuleOptionsDto) => options?.signatureLevels ?? [DEFAULT_SIGNATURE_LEVEL],
+    useFactory: (options?: CMSBaseModuleOptionsDto): string[] | BaseSignatureLevelEntity[] =>
+      options?.signatureLevels ?? [DEFAULT_SIGNATURE_LEVEL],
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_ARTICLE_ENTITY,
-    useFactory: (options?: CMSBaseModuleOptionsDto) => options?.articleEntity ?? null,
+    useFactory: (options?: CMSBaseModuleOptionsDto): (new () => BaseArticleEntity) | null =>
+      options?.articleEntity ?? null,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_ARTICLE_VERSION_ENTITY,
-    useFactory: (options?: CMSBaseModuleOptionsDto) => options?.articleVersionEntity ?? null,
+    useFactory: (options?: CMSBaseModuleOptionsDto): (new () => BaseArticleVersionEntity) | null =>
+      options?.articleVersionEntity ?? null,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_ARTICLE_VERSION_CONTENT_ENTITY,
-    useFactory: (options?: CMSBaseModuleOptionsDto) => options?.articleVersionContentEntity ?? null,
+    useFactory: (options?: CMSBaseModuleOptionsDto): (new () => BaseArticleVersionContentEntity) | null =>
+      options?.articleVersionContentEntity ?? null,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_CATEGORY_ENTITY,
-    useFactory: (options?: CMSBaseModuleOptionsDto) => options?.categoryEntity ?? null,
+    useFactory: (options?: CMSBaseModuleOptionsDto): (new () => BaseCategoryEntity) | null =>
+      options?.categoryEntity ?? null,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_CATEGORY_MULTI_LANGUAGE_NAME_ENTITY,
-    useFactory: (options?: CMSBaseModuleOptionsDto) => options?.categoryMultiLanguageNameEntity ?? null,
+    useFactory: (options?: CMSBaseModuleOptionsDto): (new () => BaseCategoryMultiLanguageNameEntity) | null =>
+      options?.categoryMultiLanguageNameEntity ?? null,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: PROVIDE_SIGNATURE_LEVEL_ENTITY,
-    useFactory: (options?: CMSBaseModuleOptionsDto) => options?.signatureLevelEntity ?? null,
+    useFactory: (options?: CMSBaseModuleOptionsDto): (new () => BaseSignatureLevelEntity) | null =>
+      options?.signatureLevelEntity ?? null,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: FULL_TEXT_SEARCH_MODE,
-    useFactory: async (options?: CMSBaseModuleOptionsDto) => {
+    useFactory: async (options?: CMSBaseModuleOptionsDto): Promise<boolean> => {
       if (!options?.fullTextSearchMode) return false;
 
       try {
@@ -86,12 +99,13 @@ export const OptionProviders = [
   },
   {
     provide: DRAFT_MODE,
-    useFactory: (options?: CMSBaseModuleOptionsDto) => options?.enableDraftMode ?? true,
+    useFactory: (options?: CMSBaseModuleOptionsDto): boolean => options?.enableDraftMode ?? true,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
   {
     provide: AUTO_RELEASE_AFTER_APPROVED,
-    useFactory: (options?: CMSBaseModuleOptionsDto) => options?.autoReleaseWhenLatestSignatureApproved ?? false,
+    useFactory: (options?: CMSBaseModuleOptionsDto): boolean =>
+      options?.autoReleaseWhenLatestSignatureApproved ?? false,
     inject: [CMS_BASE_MODULE_OPTIONS],
   },
 ] as Provider[];

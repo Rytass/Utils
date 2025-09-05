@@ -51,7 +51,7 @@ export class ArticleSignatureDataLoader {
         ttl: 1000 * 15, // 15 seconds
         ttlAutopurge: true,
       }),
-      cacheKeyFn: (args: { id: string; version: number }) => `${args.id}|${args.version}`,
+      cacheKeyFn: (args: { id: string; version: number }): string => `${args.id}|${args.version}`,
     },
   );
 }

@@ -27,15 +27,15 @@ export function useTableEvents<T extends TableDataSourceWithID>({
   const { openModal } = useModal();
 
   const onView = useCallback(
-    (source: T) => async () => {
+    (source: T) => async (): Promise<void> => {
       await actionsEvents.onView?.(source);
     },
     [actionsEvents],
   );
 
   const onVerifyRelease = useCallback(
-    (source: T, stage: ArticleStage) => async () => {
-      const title = (() => {
+    (source: T, stage: ArticleStage) => async (): Promise<void> => {
+      const title = ((): string => {
         switch (stage) {
           case ArticleStage.DRAFT:
             return '審核通過';
@@ -76,7 +76,7 @@ export function useTableEvents<T extends TableDataSourceWithID>({
   );
 
   const onWithdraw = useCallback(
-    (source: T) => async () => {
+    (source: T) => async (): Promise<void> => {
       const isConfirm = await openDialog({
         severity: 'error',
         title: '確認取消發佈此文章？',
@@ -96,7 +96,7 @@ export function useTableEvents<T extends TableDataSourceWithID>({
   );
 
   const onSubmit = useCallback(
-    (source: T) => async () => {
+    (source: T) => async (): Promise<void> => {
       const isConfirm = await openDialog({
         title: '提交審核此文章',
         children: '文章將移至「待審核」。請確認是否提交審核此文章。',
@@ -118,7 +118,7 @@ export function useTableEvents<T extends TableDataSourceWithID>({
   );
 
   const onPutBack = useCallback(
-    (source: T) => async () => {
+    (source: T) => async (): Promise<void> => {
       const isConfirm = await openDialog({
         severity: 'error',
         title: '確認撤銷審核此文章？',
@@ -138,7 +138,7 @@ export function useTableEvents<T extends TableDataSourceWithID>({
   );
 
   const onDelete = useCallback(
-    (source: T) => async () => {
+    (source: T) => async (): Promise<void> => {
       const isConfirm = await openDialog({
         severity: 'error',
         title: '確認刪除文章？',
@@ -158,7 +158,7 @@ export function useTableEvents<T extends TableDataSourceWithID>({
   );
 
   const onDeleteWithdraw = useCallback(
-    (source: T) => async () => {
+    (source: T) => async (): Promise<void> => {
       openModal({
         size: 'small',
         children: (

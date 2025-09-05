@@ -41,7 +41,7 @@ const DeleteWithdrawModal = ({
   const onConfirm = useMemo(() => {
     switch (currentRadioValue) {
       case DeleteWithdrawModalRadio.Delete:
-        return async () => {
+        return async (): Promise<void> => {
           setActing(true);
           await onDelete();
           setActing(false);
@@ -49,7 +49,7 @@ const DeleteWithdrawModal = ({
         };
 
       case DeleteWithdrawModalRadio.Withdraw:
-        return async () => {
+        return async (): Promise<void> => {
           setActing(true);
           await onWithdraw();
           setActing(false);
@@ -57,7 +57,7 @@ const DeleteWithdrawModal = ({
         };
 
       default:
-        return () => {
+        return (): void => {
           closeModal();
         };
     }

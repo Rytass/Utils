@@ -85,7 +85,7 @@ const VerifyReleaseModal = ({
   const onConfirm = useMemo(() => {
     switch (currentRadioValue) {
       case VerifyReleaseModalRadio.Now:
-        return async () => {
+        return async (): Promise<void> => {
           setActing(true);
           await onRelease(dayjs(Date.now()).toISOString());
           setActing(false);
@@ -93,7 +93,7 @@ const VerifyReleaseModal = ({
         };
 
       case VerifyReleaseModalRadio.Schedule:
-        return async () => {
+        return async (): Promise<void> => {
           setActing(true);
           await onRelease(dayjs(releasedAt).toISOString());
           setActing(false);
@@ -101,7 +101,7 @@ const VerifyReleaseModal = ({
         };
 
       case VerifyReleaseModalRadio.Approve:
-        return async () => {
+        return async (): Promise<void> => {
           setActing(true);
           await onApprove?.();
           setActing(false);
@@ -109,7 +109,7 @@ const VerifyReleaseModal = ({
         };
 
       case VerifyReleaseModalRadio.Reject:
-        return async () => {
+        return async (): Promise<void> => {
           setActing(true);
           await onReject?.(rejectReason);
           setActing(false);
@@ -117,7 +117,7 @@ const VerifyReleaseModal = ({
         };
 
       default:
-        return () => {
+        return (): void => {
           closeModal();
         };
     }
