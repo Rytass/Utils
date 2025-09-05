@@ -4,7 +4,7 @@
 
 import { resolve } from 'path';
 import { Readable, Writable } from 'stream';
-import { readFileSync, createReadStream, createWriteStream } from 'fs';
+import { readFileSync, createReadStream } from 'fs';
 import { createHash } from 'crypto';
 import { FileMetadata } from '@google-cloud/storage';
 
@@ -24,11 +24,11 @@ const GENERAL_ERROR_FILE = 'GENERAL_ERROR_FILE';
 
 const fakeStorage = new Map<string, Buffer>();
 
-let saveMock = jest.fn((filename: string) => (buffer: Buffer, options: Record<string, string>) => {
+let saveMock = jest.fn((filename: string) => (buffer: Buffer, _options: Record<string, string>) => {
   return fakeStorage.set(filename, buffer);
 });
 
-const getSignedUrlMock = jest.fn((filename: string) => (options: Record<string, string>) => {
+const getSignedUrlMock = jest.fn((_filename: string) => (_options: Record<string, string>) => {
   return [FAKE_URL];
 });
 
@@ -56,12 +56,12 @@ const readStreamMock = jest.fn((filename: string) => () => {
   return Readable.from(buffer);
 });
 
-let writeStreamMock = jest.fn((filename: string) => (options: Record<string, string>) => {
+let writeStreamMock = jest.fn((filename: string) => (_options: Record<string, string>) => {
   const stream = new Writable();
 
   let buffer = Buffer.from([]);
 
-  stream._write = (chunk: Buffer, encoding, done) => {
+  stream._write = (chunk: Buffer, _encoding, done) => {
     buffer = Buffer.concat([buffer, chunk]);
 
     done();
@@ -92,7 +92,7 @@ const moveMock = jest.fn((filename: string) => (newFilename: string) => {
   fakeStorage.delete(filename);
 });
 
-const setMetadataMock = jest.fn((filename: string) => (metadata: FileMetadata) => {});
+const setMetadataMock = jest.fn((_filename: string) => (_metadata: FileMetadata) => {});
 
 const fileMock = jest.fn(filename => ({
   save: (buffer: Buffer, options: Record<string, string>) => saveMock(filename)(buffer, options),
@@ -433,7 +433,7 @@ describe('GCS adapter', () => {
 
       let buffer = Buffer.from([]);
 
-      stream._write = (chunk: Buffer, encoding, done) => {
+      stream._write = (chunk: Buffer, _encoding, done) => {
         buffer = Buffer.concat([buffer, chunk]);
 
         done();
