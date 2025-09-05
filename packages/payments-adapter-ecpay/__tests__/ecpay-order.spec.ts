@@ -21,7 +21,7 @@ describe('ECPayOrder', () => {
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
+    mockedListen.mockImplementationOnce((_port?: any, _hostname?: any, listeningListener?: () => void) => {
       mockServer.listen(0, listeningListener);
 
       return mockServer;
@@ -152,7 +152,7 @@ describe('ECPayOrder', () => {
       });
 
       expect(order.state).toBe(OrderState.INITED);
-      const html = order.formHTML;
+      order.formHTML;
 
       expect(order.state).toBe(OrderState.PRE_COMMIT);
 
@@ -190,7 +190,7 @@ describe('ECPayOrder', () => {
         ],
       });
 
-      const html = order.formHTML;
+      order.formHTML;
 
       order.commit({
         id: order.id,
@@ -227,7 +227,7 @@ describe('ECPayOrder', () => {
         ],
       });
 
-      const html = order.formHTML;
+      order.formHTML;
 
       const createdAt = new Date();
       const committedAt = new Date();
@@ -285,7 +285,7 @@ describe('ECPayOrder', () => {
         ],
       });
 
-      const html = order.formHTML;
+      order.formHTML;
 
       expect(() => {
         order.commit({
@@ -506,7 +506,7 @@ describe('ECPayOrder', () => {
         mockGetCreditCardTradeStatus.mockImplementationOnce(() => Promise.resolve(ECPayCreditCardOrderStatus.CLOSED));
 
         await new Promise<void>(pResolve => {
-          mockDoAction.mockImplementationOnce(async (order, action) => {
+          mockDoAction.mockImplementationOnce(async (_order, action) => {
             expect(action).toBe('R');
 
             pResolve();
@@ -567,7 +567,7 @@ describe('ECPayOrder', () => {
         );
 
         await new Promise<void>(pResolve => {
-          mockDoAction.mockImplementationOnce(async (order, action) => {
+          mockDoAction.mockImplementationOnce(async (_order, action) => {
             expect(action).toBe('N');
 
             pResolve();

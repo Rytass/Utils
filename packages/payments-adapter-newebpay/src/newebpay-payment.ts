@@ -46,7 +46,6 @@ import {
   NewebPayBindCardRequestTradeInfoPayload,
   BindCardRequestCache,
   NewebPayBindCardResponseTradeInfoPayload,
-  NewebPayCheckoutWithTokenPayload,
   NewebPayCheckoutWithTokenPostData,
 } from './typings';
 import {
@@ -58,7 +57,6 @@ import { NewebPayWebATMCommitMessage, NewebPayWebATMOrderInput } from './typings
 import { NewebPayVirtualAccountCommitMessage } from './typings/virtual-account.typing';
 import axios from 'axios';
 import { NewebPayBindCardRequest } from './newebpay-bind-card-request';
-import { sum } from 'lodash';
 
 const debugPayment = debug('Rytass:Payment:NewebPay');
 

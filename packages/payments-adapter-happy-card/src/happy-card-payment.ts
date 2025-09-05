@@ -128,7 +128,7 @@ export class HappyCardPayment<CM extends HappyCardCommitMessage = HappyCardCommi
     });
   }
 
-  query<O extends HappyCardOrder<CM>>(id: string): Promise<O> {
+  query<O extends HappyCardOrder<CM>>(_id: string): Promise<O> {
     throw new Error('Method not implemented.');
   }
 

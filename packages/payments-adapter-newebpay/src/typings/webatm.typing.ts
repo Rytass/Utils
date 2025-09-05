@@ -1,4 +1,4 @@
-import { AdditionalInfo, Channel, OrderWebATMCommitMessage, PaymentItem, PrepareOrderInput } from '@rytass/payments';
+import { OrderWebATMCommitMessage, PaymentItem, PrepareOrderInput } from '@rytass/payments';
 import { AllowUILanguage, NewebPayCommitMessage, NewebPaymentChannel } from '../typings';
 
 export enum NewebPayWebATMBank {

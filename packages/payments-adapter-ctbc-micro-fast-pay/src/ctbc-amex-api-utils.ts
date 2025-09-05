@@ -2,11 +2,10 @@ import {
   CTBCAmexConfig,
   CTBCAmexInquiryParams,
   CTBCAmexRefundParams,
-  CTBCAmexResponse,
   CTBCAmexInquiryResponse,
   CTBCAmexRefundResponse,
 } from './typings';
-import { desMac, getTXN, encrypt3DES } from './ctbc-crypto-core';
+import { desMac } from './ctbc-crypto-core';
 import * as soap from 'soap';
 import * as iconv from 'iconv-lite';
 

@@ -43,7 +43,7 @@ describe('ECPayPayment Query Card Bound Info', () => {
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
+    mockedListen.mockImplementationOnce((_port?: any, _hostname?: any, listeningListener?: () => void) => {
       mockServer.listen(0, listeningListener);
 
       return mockServer;

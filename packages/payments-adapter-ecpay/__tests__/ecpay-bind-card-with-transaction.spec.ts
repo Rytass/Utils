@@ -2,13 +2,8 @@
  * @jest-environment node
  */
 
-import request from 'supertest';
-import http, { createServer } from 'http';
-import { LRUCache } from 'lru-cache';
 import axios from 'axios';
 import { ECPayPayment } from '../src/ecpay-payment';
-import { ECPayBindCardRequest } from '../src/ecpay-bind-card-request';
-import { ECPayBindCardRequestState, ECPayCheckoutWithBoundCardRequestPayload } from '../src/typings';
 import { getAddMac } from '../__utils__/add-mac';
 import { DateTime } from 'luxon';
 
@@ -16,7 +11,7 @@ const BASE_URL = 'https://payment-stage.ecpay.com.tw';
 const MERCHANT_ID = '2000214';
 const HASH_KEY = '5294y06JbISpM5x9';
 const HASH_IV = 'v77hoKGq4kWxNNIS';
-const MEMBER_ID = 'rytass';
+const _MEMBER_ID = 'rytass';
 
 const addMac = getAddMac(HASH_KEY, HASH_IV);
 

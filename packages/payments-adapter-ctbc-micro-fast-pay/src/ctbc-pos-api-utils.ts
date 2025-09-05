@@ -1,6 +1,5 @@
 import crypto from 'node:crypto';
 import * as iconv from 'iconv-lite';
-import * as https from 'node:https';
 import { desMac, SSLAuthIV } from './ctbc-crypto-core';
 import {
   CTBC_ERROR_CODES,
@@ -224,7 +223,7 @@ function parseResponse(responseStr: string, macKey: string): CTBCPosApiResponse 
     const jsonDecoded = JSON.parse(jsonStr);
 
     return jsonDecoded;
-  } catch (error) {
+  } catch (_error) {
     return CTBC_ERROR_CODES.ERR_RESPONSE_PARSE_FAILED;
   }
 }

@@ -19,7 +19,7 @@ describe('ECPayPayment Ngrok binding', () => {
 
   const mockServer = new EventEmitter();
 
-  mockServer.listen = jest.fn((port, host, callback) => {
+  mockServer.listen = jest.fn((_port, _host, callback) => {
     setImmediate(() => callback && callback());
 
     return mockServer;
@@ -67,7 +67,7 @@ describe('ECPayPayment Ngrok binding', () => {
     const { ECPayPayment } = await import('../src');
 
     return new Promise<void>(resolve => {
-      const payment = new ECPayPayment({
+      const _payment = new ECPayPayment({
         merchantId: '2000132',
         hashKey: '5294y06JbISpM5x9',
         hashIv: 'v77hoKGq4kWxNNIS',
@@ -91,7 +91,7 @@ describe('ECPayPayment Ngrok binding', () => {
     const customPort = 8080;
 
     return new Promise<void>(resolve => {
-      const payment = new ECPayPayment({
+      const _payment = new ECPayPayment({
         merchantId: '2000132',
         hashKey: '5294y06JbISpM5x9',
         hashIv: 'v77hoKGq4kWxNNIS',
@@ -111,7 +111,7 @@ describe('ECPayPayment Ngrok binding', () => {
     const { ECPayPayment } = await import('../src');
 
     return new Promise<void>(resolve => {
-      const payment = new ECPayPayment({
+      const _payment = new ECPayPayment({
         merchantId: '2000132',
         hashKey: '5294y06JbISpM5x9',
         hashIv: 'v77hoKGq4kWxNNIS',

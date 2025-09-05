@@ -56,7 +56,6 @@ import {
   ECPayCheckoutWithBoundCardPayload,
   ECPayCheckoutWithBoundCardRequestPayload,
   ECPayCheckoutWithBoundCardResponsePayload,
-  ECPayCheckoutWithBoundCardResult,
   ECPayBoundCardInfo,
   ECPayBoundCardQueryResponsePayload,
   ECPayBindCardWithTransactionRequestPayload,
@@ -65,7 +64,6 @@ import {
 import { ECPayChannel, ECPayCVS, ECPayPaymentPeriodType, NUMERIC_CALLBACK_KEYS } from './constants';
 import { ECPayOrder } from './ecpay-order';
 import { ECPayBindCardRequest } from './ecpay-bind-card-request';
-import { orderBy } from 'lodash';
 
 const debugPayment = debug('Rytass:Payment:ECPay');
 
@@ -74,7 +72,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
 {
   readonly baseUrl: string = 'https://payment-stage.ecpay.com.tw';
 
-  private readonly language = Language.TRADITIONAL_CHINESE;
+  private readonly language: Language = Language.TRADITIONAL_CHINESE;
   private readonly merchantId: string = '2000132';
   private readonly merchantCheckCode: string = '59997889'; // Production Only
   private readonly hashKey: string = '5294y06JbISpM5x9';
@@ -403,7 +401,7 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
         });
 
         res.end('1|OK');
-      } catch (ex) {
+      } catch (_ex) {
         res.writeHead(400, {
           'Content-Type': 'text/plain',
         });

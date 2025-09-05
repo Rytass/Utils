@@ -5,7 +5,6 @@
 // Set NGROK_AUTHTOKEN before any imports
 process.env.NGROK_AUTHTOKEN = 'test-auth-token';
 
-import ngrok from 'ngrok';
 import request from 'supertest';
 import http, { createServer } from 'http';
 import { createHash, randomBytes } from 'crypto';
@@ -237,7 +236,7 @@ describe('HwaNan Payment', () => {
 
         const mockedListen = jest.spyOn(mockServer, 'listen');
 
-        mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
+        mockedListen.mockImplementationOnce((port?: any, _hostname?: any, listeningListener?: () => void) => {
           expect(port).toBe(9876);
 
           mockServer.listen(0, listeningListener);
@@ -505,7 +504,7 @@ describe('HwaNan Payment', () => {
 
     const mockServerForNgrok = new (require('events').EventEmitter)();
 
-    mockServerForNgrok.listen = jest.fn((port, host, callback) => {
+    mockServerForNgrok.listen = jest.fn((_port, _host, callback) => {
       setImmediate(() => callback && callback());
 
       return mockServerForNgrok;
@@ -553,7 +552,7 @@ describe('HwaNan Payment', () => {
       const { HwaNanPayment } = await import('../src');
 
       return new Promise<void>(resolve => {
-        const payment = new HwaNanPayment({
+        const _payment = new HwaNanPayment({
           merchantId: MERCHANT_ID,
           terminalId: TERMINAL_ID,
           merID: MER_ID,
@@ -578,7 +577,7 @@ describe('HwaNan Payment', () => {
       const customPort = 9999;
 
       return new Promise<void>(resolve => {
-        const payment = new HwaNanPayment({
+        const _payment = new HwaNanPayment({
           merchantId: MERCHANT_ID,
           terminalId: TERMINAL_ID,
           merID: MER_ID,
@@ -600,7 +599,7 @@ describe('HwaNan Payment', () => {
       const { HwaNanPayment } = await import('../src');
 
       return new Promise<void>(resolve => {
-        const payment = new HwaNanPayment({
+        const _payment = new HwaNanPayment({
           merchantId: MERCHANT_ID,
           terminalId: TERMINAL_ID,
           merID: MER_ID,

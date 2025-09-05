@@ -1,4 +1,3 @@
-import { Buffer } from 'node:buffer';
 import { encrypt3DES, getDivKey, getMAC } from './ctbc-crypto-core';
 import { CTBCBindCardRequestPayload, CTBCOrderCommitPayload, CTBCTxnPayload } from './typings';
 

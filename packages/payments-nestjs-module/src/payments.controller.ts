@@ -14,7 +14,7 @@ export class PaymentsController {
 
   @IsPublic()
   @Get('/checkout/:orderNo')
-  checkout(@Param('orderNo') orderNo: string, @Req() req: RawBodyRequest<Request>, @Res() res: Response): void {
+  checkout(@Param('orderNo') _orderNo: string, @Req() req: RawBodyRequest<Request>, @Res() res: Response): void {
     if (!this.gateway.defaultServerListener) {
       throw new NotFoundException('Page Not Found');
     }

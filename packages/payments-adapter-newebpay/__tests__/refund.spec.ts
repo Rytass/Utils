@@ -3,7 +3,7 @@
  * @jest-environment node
  */
 
-import { AdditionalInfo, Channel, CreditCardECI, OrderState, WebATMPaymentInfo } from '@rytass/payments';
+import { Channel, CreditCardECI, OrderState, WebATMPaymentInfo } from '@rytass/payments';
 import { NewebPayCreditCardSpeedCheckoutMode } from '../src/typings';
 import {
   NewebPayAdditionInfoCreditCard,

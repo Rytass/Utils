@@ -29,7 +29,7 @@ describe('ECPayPayment (Virtual Account)', () => {
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce((port?: any, hostname?: any, listeningListener?: () => void) => {
+    mockedListen.mockImplementationOnce((_port?: any, _hostname?: any, listeningListener?: () => void) => {
       mockServer.listen(0, listeningListener);
 
       return mockServer;
@@ -196,7 +196,7 @@ describe('ECPayPayment (Virtual Account)', () => {
 
             // Get HTML to trigger pre commit
 
-            const html = order.formHTML;
+            order.formHTML;
 
             const successfulResponse = addMac({
               BankCode: '806',
@@ -249,7 +249,7 @@ describe('ECPayPayment (Virtual Account)', () => {
 
             // Get HTML to trigger pre commit
 
-            const html = order.formHTML;
+            order.formHTML;
 
             const successfulResponse = addMac({
               BankCode: '806',
@@ -310,7 +310,7 @@ describe('ECPayPayment (Virtual Account)', () => {
 
             // Get HTML to trigger pre commit
 
-            const html = order.formHTML;
+            order.formHTML;
 
             const successfulResponse = addMac({
               BankCode: '806',
@@ -366,7 +366,7 @@ describe('ECPayPayment (Virtual Account)', () => {
 
             // Get HTML to trigger pre commit
 
-            const html = order.formHTML;
+            order.formHTML;
 
             const successfulResponse = addMac({
               BankCode: '806',
@@ -422,7 +422,7 @@ describe('ECPayPayment (Virtual Account)', () => {
 
             // Get HTML to trigger pre commit
 
-            const html = order.formHTML;
+            order.formHTML;
 
             const successfulResponse = addMac({
               BankCode: '806',
@@ -478,7 +478,7 @@ describe('ECPayPayment (Virtual Account)', () => {
 
             // Get HTML to trigger pre commit
 
-            const html = order.formHTML;
+            order.formHTML;
 
             const successfulResponse = addMac({
               BankCode: '806',
@@ -534,7 +534,7 @@ describe('ECPayPayment (Virtual Account)', () => {
 
             // Get HTML to trigger pre commit
 
-            const html = order.formHTML;
+            order.formHTML;
 
             const successfulResponse = addMac({
               BankCode: '806',
@@ -590,7 +590,7 @@ describe('ECPayPayment (Virtual Account)', () => {
 
             // Get HTML to trigger pre commit
 
-            const html = order.formHTML;
+            order.formHTML;
 
             const successfulResponse = addMac({
               BankCode: '806',
@@ -646,7 +646,7 @@ describe('ECPayPayment (Virtual Account)', () => {
 
             // Get HTML to trigger pre commit
 
-            const html = order.formHTML;
+            order.formHTML;
 
             const successfulResponse = addMac({
               BankCode: '806',
@@ -702,7 +702,7 @@ describe('ECPayPayment (Virtual Account)', () => {
 
             // Get HTML to trigger pre commit
 
-            const html = order.formHTML;
+            order.formHTML;
 
             const successfulResponse = addMac({
               BankCode: '806',
@@ -759,7 +759,7 @@ describe('ECPayPayment (Virtual Account)', () => {
 
             // Get HTML to trigger pre commit
 
-            const html = order.formHTML;
+            order.formHTML;
 
             const successfulResponse = addMac({
               BankCode: '806',
@@ -849,7 +849,7 @@ describe('ECPayPayment (Virtual Account)', () => {
 
             // Get HTML to trigger pre commit
 
-            const html = order.formHTML;
+            order.formHTML;
 
             const successfulResponse = addMac({
               BankCode: '806',
@@ -906,7 +906,7 @@ describe('ECPayPayment (Virtual Account)', () => {
 
             // Get HTML to trigger pre commit
 
-            const html = order.formHTML;
+            order.formHTML;
 
             const successfulResponse = addMac({
               BankCode: '806',
@@ -1022,7 +1022,7 @@ describe('ECPayPayment (Virtual Account)', () => {
 
             // Get HTML to trigger pre commit
 
-            const html = order.formHTML;
+            order.formHTML;
 
             const successfulResponse = addMac({
               BankCode: '806',
@@ -1105,7 +1105,7 @@ describe('ECPayPayment (Virtual Account)', () => {
 
             // Get HTML to trigger pre commit
 
-            const html = order.formHTML;
+            order.formHTML;
 
             const successfulResponse = addMac({
               BankCode: '806',

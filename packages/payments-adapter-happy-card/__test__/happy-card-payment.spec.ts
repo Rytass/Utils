@@ -40,7 +40,7 @@ describe('HappyCardPayment.prepare', () => {
       ],
     };
 
-    const result = await gateway.prepare(options);
+    await gateway.prepare(options);
 
     expect(gateway.getCardBalance).toHaveBeenCalledWith('1234567890', true);
     expect(HappyCardOrder).toHaveBeenCalledWith(
