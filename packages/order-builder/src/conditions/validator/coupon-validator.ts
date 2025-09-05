@@ -20,7 +20,7 @@ export class CouponValidator<Options extends ObjRecord = ObjRecord>
     this.options = options;
   }
 
-  satisfy(order: Order) {
+  satisfy(order: Order): boolean {
     return order.coupons.some(couponId => couponId === this.couponId);
   }
 }

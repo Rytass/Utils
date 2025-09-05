@@ -9,7 +9,7 @@ import { DiscountMethod, DiscountMethodType } from '../typings';
 export class QuantityWeightedAverageDiscountMethod implements DiscountMethod {
   readonly type: DiscountMethodType = 'quantity-weighted-average';
 
-  handleOneDescription(order: Order, description: PolicyDiscountDescription) {
+  handleOneDescription(order: Order, description: PolicyDiscountDescription): void {
     // In quantity-weighted-average method item-price must be sort first to ensure
     // that lower-price items have to be handled in high-priority to prevent
     // no price-quotas to digest rest of total-discount.

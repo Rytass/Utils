@@ -6,8 +6,8 @@ export class CartesianProduct<T> {
   /**
    * Common iterator
    */
-  [Symbol.iterator]() {
-    return (function* (it, len) {
+  [Symbol.iterator](): Generator<NonNullable<T>[]> {
+    return (function* (it, len): Generator<NonNullable<T>[]> {
       for (let i = 0; i < len; i++) yield it.nth(i);
     })(this, this.length);
   }

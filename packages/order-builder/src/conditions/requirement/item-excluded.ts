@@ -56,7 +56,7 @@ export class ItemExcluded<Item extends OrderItem = OrderItem, Options extends Ob
     });
   }
 
-  satisfy(order: Order<Item>) {
+  satisfy(order: Order<Item>): boolean {
     const matchedItems = this.matchedItems<Item>(order);
 
     if (matchedItems.length < 1) return false;
@@ -70,7 +70,7 @@ export class ItemExcluded<Item extends OrderItem = OrderItem, Options extends Ob
     return matchedItems.reduce((totalQuantity, item) => plus(totalQuantity, item.quantity), 0) >= this.threshold;
   }
 
-  private excludedItem(item: FlattenOrderItem) {
+  private excludedItem(item: FlattenOrderItem): string | undefined {
     const keyName = (this.scope as string[]).find(s => s in item);
 
     return keyName ? item[keyName] : undefined;

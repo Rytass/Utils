@@ -70,7 +70,7 @@ export class StepValueDiscount implements BaseDiscount {
     this.conditions = getConditionsByDiscountConstructor(arg1);
   }
 
-  get stepLimit() {
+  get stepLimit(): number {
     return this.options?.stepLimit || Number.MAX_SAFE_INTEGER;
   }
 

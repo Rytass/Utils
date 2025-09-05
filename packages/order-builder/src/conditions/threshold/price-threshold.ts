@@ -17,7 +17,7 @@ export class PriceThreshold<Options extends ObjRecord = ObjRecord> implements Co
     this.options = options;
   }
 
-  satisfy(order: Order) {
+  satisfy(order: Order): boolean {
     return order.itemValue >= this.value;
   }
 }

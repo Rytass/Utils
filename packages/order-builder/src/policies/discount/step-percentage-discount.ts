@@ -75,7 +75,7 @@ export class StepPercentageDiscount implements BaseDiscount {
     this.conditions = getConditionsByDiscountConstructor(arg1);
   }
 
-  get stepLimit() {
+  get stepLimit(): number {
     return this.options?.stepLimit || Number.MAX_SAFE_INTEGER;
   }
 
@@ -119,7 +119,7 @@ export class StepPercentageDiscount implements BaseDiscount {
     };
   }
 
-  private getMultiplier(itemValue: number, items: FlattenOrderItem[]) {
+  private getMultiplier(itemValue: number, items: FlattenOrderItem[]): number {
     return this.options?.stepUnit === 'quantity'
       ? items.reduce((total, item) => plus(total, item.quantity), 0)
       : itemValue;

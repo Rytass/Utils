@@ -30,7 +30,7 @@ export function getOptionsByDiscountConstructor<Options extends DiscountOptions 
 }
 
 /** Get only-matched items */
-export function getOnlyMatchedItems(order: Order, conditions: Condition[]) {
+export function getOnlyMatchedItems(order: Order, conditions: Condition[]): FlattenOrderItem[] {
   let hasSubConstrain = false;
 
   const filteredItems = conditions.reduce((items, condition) => {
@@ -47,7 +47,7 @@ export function getOnlyMatchedItems(order: Order, conditions: Condition[]) {
   return hasSubConstrain && filteredItems.size ? Array.from(filteredItems.values()) : getOrderItems(order);
 }
 
-export function getOrderItems(order: Order) {
+export function getOrderItems(order: Order): FlattenOrderItem[] {
   return order.itemManager.flattenItems.filter(
     item =>
       times(

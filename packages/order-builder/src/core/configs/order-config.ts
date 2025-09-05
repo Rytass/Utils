@@ -62,7 +62,7 @@ export class OrderConfig {
     this.discountMethod =
       config instanceof OrderConfig
         ? config.discountMethod
-        : (() => {
+        : ((): DiscountMethod => {
             switch (config?.discountMethod) {
               case 'quantity-weighted-average':
                 return new QuantityWeightedAverageDiscountMethod();
@@ -76,7 +76,7 @@ export class OrderConfig {
     this.policyPickStrategy =
       config instanceof OrderConfig
         ? config.policyPickStrategy
-        : (() => {
+        : ((): PolicyPickStrategy => {
             switch (config?.policyPickStrategy) {
               case 'order-based':
                 return new OrderBasedPolicyPickStrategy();
@@ -90,7 +90,7 @@ export class OrderConfig {
     this.roundStrategy =
       config instanceof OrderConfig
         ? config.roundStrategy
-        : (() => {
+        : ((): RoundStrategy => {
             const [roundStrategy, precision] =
               config?.roundStrategy && Array.isArray(config.roundStrategy)
                 ? (config.roundStrategy as [RoundStrategyType, RoundPrecision])
@@ -111,7 +111,7 @@ export class OrderConfig {
     this._logistics = config?.logistics;
   }
 
-  public updateLogistics(logistics: OrderLogistics) {
+  public updateLogistics(logistics: OrderLogistics): void {
     this._logistics = logistics;
   }
 }

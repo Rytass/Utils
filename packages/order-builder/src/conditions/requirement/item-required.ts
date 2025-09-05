@@ -34,7 +34,7 @@ export class ItemRequired<Options extends ObjRecord = ObjRecord>
     this.items = items.map(item => (typeof item === 'string' ? { id: item, quantity: 1 } : item));
   }
 
-  satisfy(order: Order) {
+  satisfy(order: Order): boolean {
     const orderItemMap = new Map<string, ItemRequiredInput>(order.items.map(item => [item.id, item]));
 
     return this.items.every(item => (orderItemMap.get(item.id)?.quantity || -1) >= item.quantity);

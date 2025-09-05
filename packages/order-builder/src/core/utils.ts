@@ -5,7 +5,7 @@ import { OrderBuilder } from './order-builder';
 import { OrderItem, OrderLogistics } from './typings';
 
 /** ------------------- Order ------------------- */
-export function generateNewOrderId() {
+export function generateNewOrderId(): string {
   return `ORDER:${uuid()}`;
 }
 
