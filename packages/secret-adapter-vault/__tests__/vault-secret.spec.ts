@@ -106,7 +106,7 @@ describe('VaultSecret', () => {
 
   const URLRegex = new RegExp(`${VAULT_HOST}/v1/secret/data/(.+)$`);
 
-  get.mockImplementation(async (url: string, data: unknown) => {
+  get.mockImplementation(async (url: string, _data: unknown) => {
     URLRegex.test(url);
 
     const project = RegExp.$1;
@@ -140,7 +140,7 @@ describe('VaultSecret', () => {
     });
   });
 
-  post.mockImplementation(async (url: string, data: unknown, config) => {
+  post.mockImplementation(async (url: string, data: unknown, _config) => {
     if (!url.match(new RegExp(`^${VAULT_HOST}`))) throw new AxiosError(404);
 
     if (url === `${VAULT_HOST}/v1/auth/userpass/login/${VAULT_ACCOUNT}`) {
@@ -488,7 +488,7 @@ describe('VaultSecret', () => {
       it('should throw when get value failed', done => {
         const get = jest.spyOn(axios, 'get');
 
-        get.mockImplementationOnce(async (url: string, data: unknown) => {
+        get.mockImplementationOnce(async (_url: string, _data: unknown) => {
           return {
             data: {
               errors: ['TEST1', 'test2'],
@@ -592,7 +592,7 @@ describe('VaultSecret', () => {
     it('should throw error on renew token', done => {
       const post = jest.spyOn(axios, 'post');
 
-      post.mockImplementation(async (url: string, data: unknown) => {
+      post.mockImplementation(async (url: string, _data: unknown) => {
         if (url.match(/renew-self$/)) {
           return {
             data: {
@@ -632,7 +632,7 @@ describe('VaultSecret', () => {
 
       let errorPass = false;
 
-      post.mockImplementationOnce(async (url: string, data: unknown) => {
+      post.mockImplementationOnce(async (_url: string, _data: unknown) => {
         return {
           data: {
             errors: ['TEST1', 'test2'],
@@ -640,7 +640,7 @@ describe('VaultSecret', () => {
         };
       });
 
-      const manager = new VaultSecret(VAULT_PROJECT, {
+      new VaultSecret(VAULT_PROJECT, {
         online: true,
         host: VAULT_HOST,
         auth: {
@@ -664,7 +664,7 @@ describe('VaultSecret', () => {
     it('should call renewToken throw when token expires', done => {
       const post = jest.spyOn(axios, 'post');
 
-      post.mockImplementation(async (url: string, data: unknown) => {
+      post.mockImplementation(async (_url: string, _data: unknown) => {
         return {
           data: {
             ...LOGIN_RESPONSE_SAMPLE,
@@ -700,7 +700,7 @@ describe('VaultSecret', () => {
     it('should call checkRenew every ttl', done => {
       const post = jest.spyOn(axios, 'post');
 
-      post.mockImplementation(async (url: string, data: unknown) => {
+      post.mockImplementation(async (_url: string, _data: unknown) => {
         return {
           data: LOGIN_RESPONSE_SAMPLE,
         };
@@ -732,7 +732,7 @@ describe('VaultSecret', () => {
 
       const post = jest.spyOn(axios, 'post');
 
-      post.mockImplementationOnce(async (url: string, data: unknown) => {
+      post.mockImplementationOnce(async (_url: string, _data: unknown) => {
         return new Promise(resolve => {
           const interval = setInterval(() => {
             if (!initPass) return;
@@ -771,7 +771,7 @@ describe('VaultSecret', () => {
 
   describe('Vault network invalid', () => {
     it('should emit error message on network failed', done => {
-      const manager = new VaultSecret(VAULT_PROJECT, {
+      new VaultSecret(VAULT_PROJECT, {
         host: 'https://not-valid.rytass.com',
         auth: {
           account: VAULT_ACCOUNT,
