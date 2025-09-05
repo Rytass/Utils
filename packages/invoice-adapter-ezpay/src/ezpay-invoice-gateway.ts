@@ -2,14 +2,10 @@
 import {
   CustomsMark,
   getTaxTypeFromItems,
-  Invoice,
-  InvoiceAllowance,
   InvoiceAllowanceState,
   InvoiceCarrierType,
   InvoiceGateway,
   InvoiceState,
-  InvoiceVoidOptions,
-  PaymentItem,
   TaxType,
   verifyVatNumber,
 } from '@rytass/invoice';
@@ -124,7 +120,7 @@ export class EZPayInvoiceGateway implements InvoiceGateway<EZPayPaymentItem, EZP
     }
   }
 
-  private getItemTaxRate(item: EZPayPaymentItem, taxType: TaxType, specialTaxPercentage?: number) {
+  private getItemTaxRate(item: EZPayPaymentItem, _taxType: TaxType, specialTaxPercentage?: number) {
     switch (item.taxType) {
       case TaxType.TAX_FREE:
       case TaxType.ZERO_TAX:
@@ -737,7 +733,7 @@ export class EZPayInvoiceGateway implements InvoiceGateway<EZPayPaymentItem, EZP
           }
         })(responsePayload.TaxType),
       });
-    } catch (ex) {
+    } catch (_ex) {
       throw new Error('Item Parse Failed');
     }
   }

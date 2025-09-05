@@ -236,11 +236,11 @@ export class BankProInvoiceGateway
     });
   }
 
-  async isMobileBarcodeValid(code: string): Promise<boolean> {
+  async isMobileBarcodeValid(_code: string): Promise<boolean> {
     throw new Error('Bank Pro does not support mobile barcode validation');
   }
 
-  async isLoveCodeValid(code: string): Promise<boolean> {
+  async isLoveCodeValid(_code: string): Promise<boolean> {
     throw new Error('Bank Pro does not support love code validation');
   }
 

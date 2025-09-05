@@ -9,7 +9,6 @@ import {
   ECPayInvoiceGateway,
   ECPayInvoiceInvalidAllowanceRequestBody,
   InvoiceAllowanceState,
-  InvoiceState,
   TaxType,
 } from '../src';
 import axios from 'axios';

@@ -35,8 +35,8 @@ describe('ECPayInvoiceGateway', () => {
     it('should issue with default aes options', done => {
       const orderId = randomBytes(15).toString('hex');
 
-      post.mockImplementation(async (url: string, data: unknown) => {
-        const payload = JSON.parse(data as string) as {
+      post.mockImplementation(async (_url: string, _data: unknown) => {
+        const payload = JSON.parse(_data as string) as {
           MerchantID: string;
           RqHeader: {
             Timestamp: number;
@@ -161,7 +161,7 @@ describe('ECPayInvoiceGateway', () => {
     it('should issue common invoice', done => {
       const invoiceDate = '2022-06-17+14:29:59';
 
-      post.mockImplementation(async (url: string, data: unknown) => ({
+      post.mockImplementation(async (_url: string, _data: unknown) => ({
         data: generateIssueResponse({
           RtnCode: 1,
           RtnMsg: '開立發票成功',
@@ -198,7 +198,7 @@ describe('ECPayInvoiceGateway', () => {
     it('should issue failed by ecpay', () => {
       const invoiceDate = '2022-06-17+14:29:59';
 
-      post.mockImplementation(async (url: string, data: unknown) => ({
+      post.mockImplementation(async (_url: string, _data: unknown) => ({
         data: generateIssueResponse({
           RtnCode: -1,
           RtnMsg: '開立發票失敗',
@@ -228,7 +228,7 @@ describe('ECPayInvoiceGateway', () => {
     it('should issue failed by ecpay gateway', () => {
       const invoiceDate = '2022-06-17+14:29:59';
 
-      post.mockImplementation(async (url: string, data: unknown) => {
+      post.mockImplementation(async (_url: string, _data: unknown) => {
         const cipher = createCipheriv('aes-128-cbc', AES_KEY, AES_IV);
 
         cipher.setAutoPadding(true);
@@ -279,7 +279,7 @@ describe('ECPayInvoiceGateway', () => {
     });
 
     it('should print invoice', done => {
-      post.mockImplementation(async (url: string, data: unknown) => {
+      post.mockImplementation(async (_url: string, data: unknown) => {
         const plainPayload = parseRequest(data as string);
 
         expect(plainPayload.Print).toBe('1');
@@ -334,7 +334,7 @@ describe('ECPayInvoiceGateway', () => {
     });
 
     it('should issue tax free invoice', done => {
-      post.mockImplementation(async (url: string, data: unknown) => {
+      post.mockImplementation(async (_url: string, data: unknown) => {
         const plainPayload = parseRequest(data as string);
 
         expect(plainPayload.Print).toBe('1');
@@ -383,7 +383,7 @@ describe('ECPayInvoiceGateway', () => {
     });
 
     it('should issue zero tax invoice', done => {
-      post.mockImplementation(async (url: string, data: unknown) => {
+      post.mockImplementation(async (_url: string, data: unknown) => {
         const plainPayload = parseRequest(data as string);
 
         expect(plainPayload.Print).toBe('1');
@@ -432,7 +432,7 @@ describe('ECPayInvoiceGateway', () => {
     });
 
     it('should issue mixed taxed invoice', done => {
-      post.mockImplementation(async (url: string, data: unknown) => {
+      post.mockImplementation(async (_url: string, data: unknown) => {
         const plainPayload = parseRequest(data as string);
 
         expect(plainPayload.Print).toBe('1');
@@ -486,7 +486,7 @@ describe('ECPayInvoiceGateway', () => {
     });
 
     it('should reject mixed taxed (free and zero) invoice', () => {
-      post.mockImplementation(async (url: string, data: unknown) => {
+      post.mockImplementation(async (_url: string, data: unknown) => {
         const plainPayload = parseRequest(data as string);
 
         expect(plainPayload.Print).toBe('1');
@@ -539,7 +539,7 @@ describe('ECPayInvoiceGateway', () => {
     });
 
     it('should mixed taxed (taxed and special) invoice', done => {
-      post.mockImplementation(async (url: string, data: unknown) => {
+      post.mockImplementation(async (_url: string, data: unknown) => {
         const plainPayload = parseRequest(data as string);
 
         expect(plainPayload.Print).toBe('1');
@@ -594,7 +594,7 @@ describe('ECPayInvoiceGateway', () => {
     });
 
     it('should reject if no special tax code provided', () => {
-      post.mockImplementation(async (url: string, data: unknown) => {
+      post.mockImplementation(async (_url: string, data: unknown) => {
         const plainPayload = parseRequest(data as string);
 
         expect(plainPayload.Print).toBe('1');
@@ -646,7 +646,7 @@ describe('ECPayInvoiceGateway', () => {
     });
 
     it('should issue special tax item invoice', done => {
-      post.mockImplementation(async (url: string, data: unknown) => {
+      post.mockImplementation(async (_url: string, data: unknown) => {
         const plainPayload = parseRequest(data as string);
 
         expect(plainPayload.Print).toBe('1');
@@ -696,7 +696,7 @@ describe('ECPayInvoiceGateway', () => {
     });
 
     it('should allow mobile only customer', done => {
-      post.mockImplementation(async (url: string, data: unknown) => {
+      post.mockImplementation(async (_url: string, data: unknown) => {
         const plainPayload = parseRequest(data as string);
 
         expect(plainPayload.CustomerEmail).toBe('');
@@ -738,7 +738,7 @@ describe('ECPayInvoiceGateway', () => {
     });
 
     it('should issue moica carrier invoice', done => {
-      post.mockImplementation(async (url: string, data: unknown) => {
+      post.mockImplementation(async (_url: string, data: unknown) => {
         const plainPayload = parseRequest(data as string);
 
         expect(plainPayload.Print).toBe('0');
@@ -872,7 +872,7 @@ describe('ECPayInvoiceGateway', () => {
     });
 
     it('should love code validator system error throw', done => {
-      post.mockImplementation(async (url: string, data: unknown) => {
+      post.mockImplementation(async (_url: string, _data: unknown) => {
         return {
           data: generateIssueResponse<ECPayInvoiceLoveCodeValidateResponse>({
             RtnCode: 10000010,
@@ -902,7 +902,7 @@ describe('ECPayInvoiceGateway', () => {
       )
         .rejects.toThrow()
         .then(() => {
-          post.mockImplementation(async (url: string, data: unknown) => {
+          post.mockImplementation(async (_url: string, _data: unknown) => {
             const cipher = createCipheriv('aes-128-cbc', AES_KEY, AES_IV);
 
             cipher.setAutoPadding(true);
@@ -1040,7 +1040,7 @@ describe('ECPayInvoiceGateway', () => {
     });
 
     it('should mobile barcode validator system error throw', done => {
-      post.mockImplementation(async (url: string, data: unknown) => {
+      post.mockImplementation(async (_url: string, _data: unknown) => {
         return {
           data: generateIssueResponse<ECPayInvoiceMobileBarcodeValidateResponse>({
             RtnCode: 10000010,
@@ -1070,7 +1070,7 @@ describe('ECPayInvoiceGateway', () => {
       )
         .rejects.toThrow()
         .then(() => {
-          post.mockImplementation(async (url: string, data: unknown) => {
+          post.mockImplementation(async (_url: string, _data: unknown) => {
             const cipher = createCipheriv('aes-128-cbc', AES_KEY, AES_IV);
 
             cipher.setAutoPadding(true);

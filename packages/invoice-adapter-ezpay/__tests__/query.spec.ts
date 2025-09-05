@@ -7,8 +7,7 @@ import { parse } from 'parse-multipart-data';
 import FormData from 'form-data';
 import { createDecipheriv, createHash } from 'crypto';
 import { DateTime } from 'luxon';
-import { randomBytes } from 'crypto';
-import { EZPayInvoiceGateway, EZPayBaseUrls, InvoiceState, TaxType, InvoiceCarrierType } from '../src';
+import { EZPayInvoiceGateway, EZPayBaseUrls, InvoiceState, TaxType } from '../src';
 
 const AES_IV = 'gmY2MPN8PHFvA7KR';
 const AES_KEY = 'cNg3wIe8PkCVcqb37RY0LFbf00FgrNXg';
@@ -656,7 +655,7 @@ describe('EZPay Invoice Query', () => {
   it('should throw on check code invalid', async () => {
     const mockPost = jest.spyOn(axios, 'post');
 
-    mockPost.mockImplementation(async (url: string, data: any) => {
+    mockPost.mockImplementation(async (_url: string, _data: any) => {
       return {
         data: {
           MerchantID: MERCHANT_ID,
@@ -727,7 +726,7 @@ describe('EZPay Invoice Query', () => {
   it('should throw on item parse failed', async () => {
     const mockPost = jest.spyOn(axios, 'post');
 
-    mockPost.mockImplementation(async (url: string, data: any) => {
+    mockPost.mockImplementation(async (_url: string, _data: any) => {
       return {
         data: {
           MerchantID: MERCHANT_ID,
@@ -798,7 +797,7 @@ describe('EZPay Invoice Query', () => {
   it('should throw error on gateway failed', async () => {
     const mockPost = jest.spyOn(axios, 'post');
 
-    mockPost.mockImplementation(async (url: string, data: any) => {
+    mockPost.mockImplementation(async (_url: string, _data: any) => {
       return {
         data: {
           MerchantID: MERCHANT_ID,
