@@ -119,7 +119,7 @@ export const useTextEditing = ({
 
   // Handle clicking outside to save
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent): void => {
       if (isEditing && inputRef.current) {
         const target = event.target as HTMLElement;
 
@@ -135,7 +135,7 @@ export const useTextEditing = ({
       // 使用 'click' 事件而不是 'mousedown' 以確保更好的兼容性
       document.addEventListener('click', handleClickOutside, true);
 
-      return () => {
+      return (): void => {
         document.removeEventListener('click', handleClickOutside, true);
       };
     }

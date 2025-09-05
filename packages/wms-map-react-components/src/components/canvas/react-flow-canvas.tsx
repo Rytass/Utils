@@ -59,17 +59,17 @@ const CustomControls: FC = () => {
     },
   });
 
-  const handleZoomIn = () => {
+  const handleZoomIn = (): void => {
     zoomIn();
     // No need to manually update zoom state, useOnViewportChange will handle it
   };
 
-  const handleZoomOut = () => {
+  const handleZoomOut = (): void => {
     zoomOut();
     // No need to manually update zoom state, useOnViewportChange will handle it
   };
 
-  const handleFitView = () => {
+  const handleFitView = (): void => {
     fitView();
     // No need to manually update zoom state, useOnViewportChange will handle it
   };
@@ -144,10 +144,10 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
 
   const nodeTypes = useMemo(
     () => ({
-      imageNode: (props: any) => (
+      imageNode: (props: any): React.JSX.Element => (
         <ImageNode {...props} editMode={editMode} viewMode={viewMode} showBackground={showBackground} />
       ),
-      rectangleNode: (props: any) => (
+      rectangleNode: (props: any): React.JSX.Element => (
         <RectangleNode
           {...props}
           editMode={editMode}
@@ -156,7 +156,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
           isHovered={hoveredNodeId === props.id}
         />
       ),
-      pathNode: (props: any) => (
+      pathNode: (props: any): React.JSX.Element => (
         <PathNode
           {...props}
           editMode={editMode}
@@ -190,7 +190,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
     [rectContainerRef, penContainerRef],
   );
 
-  const getCursor = () => {
+  const getCursor = (): string => {
     return 'default';
   };
 

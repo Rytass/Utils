@@ -126,7 +126,7 @@ export const useDirectStateHistory = ({
         // 限制歷史大小
         const finalHistory =
           historyWithNewState.length > maxHistorySize
-            ? (() => {
+            ? ((): HistoryState[] => {
                 const removeCount = historyWithNewState.length - maxHistorySize;
                 const trimmedHistory = historyWithNewState.slice(removeCount);
 
@@ -134,7 +134,7 @@ export const useDirectStateHistory = ({
 
                 return trimmedHistory;
               })()
-            : (() => {
+            : ((): HistoryState[] => {
                 setCurrentIndex(historyWithNewState.length - 1);
 
                 return historyWithNewState;

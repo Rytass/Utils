@@ -28,7 +28,7 @@ const BreadcrumbEditModal: FC<BreadcrumbEditModalProps> = ({ open, warehouseId, 
     }
   }, [open, warehouseId, methods]);
 
-  const handleConfirm = () => {
+  const handleConfirm = (): void => {
     const formData = methods.getValues();
     const newValue = formData.editingValue?.trim() || editingValue?.trim();
 
@@ -36,7 +36,7 @@ const BreadcrumbEditModal: FC<BreadcrumbEditModalProps> = ({ open, warehouseId, 
     onClose();
   };
 
-  const handleCancel = () => {
+  const handleCancel = (): void => {
     setEditingValue(warehouseId); // 重置為原始值
     onClose();
   };

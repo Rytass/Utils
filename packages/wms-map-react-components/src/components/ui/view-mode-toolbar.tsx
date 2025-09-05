@@ -17,7 +17,7 @@ const ViewModeToolbar: FC<ViewModeToolbarProps> = ({ viewMode, showBackground, o
 
   // console.log('🔧 ViewModeToolbar 渲染:', { viewMode, showBackground });
 
-  const handleToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleToggle = (event: React.ChangeEvent<HTMLInputElement>): void => {
     const checked = event.target.checked;
 
     console.log('🔧 Toggle 切換:', { from: showBackground, to: checked });

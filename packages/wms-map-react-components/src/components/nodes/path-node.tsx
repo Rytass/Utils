@@ -166,7 +166,7 @@ const PathNode: FC<PathNodeProps> = ({
       currentDragOffsetRef.current = { x: 0, y: 0 };
       currentSyncOffsetRef.current = { x: 0, y: 0 };
 
-      const handleMouseMove = (e: MouseEvent) => {
+      const handleMouseMove = (e: MouseEvent): void => {
         if (!dragStartRef.current) return;
 
         const viewport = getViewport();
@@ -188,7 +188,7 @@ const PathNode: FC<PathNodeProps> = ({
         }
       };
 
-      const handleMouseUp = () => {
+      const handleMouseUp = (): void => {
         console.log('🏁 Point drag end (performance mode)', {
           id: id.slice(-4),
           pointIndex,
@@ -313,14 +313,14 @@ const PathNode: FC<PathNodeProps> = ({
   // Create SVG path string using fixed bounds during drag to prevent React Flow repositioning
   const pathString =
     displayPoints.length > 0
-      ? (() => {
+      ? ((): string => {
           // Use fixed bounds during drag to maintain stable React Flow node positioning
           const pathPoints = displayPoints.map((p, index) => {
             const baseX = p.x - bounds.minX;
             const baseY = p.y - bounds.minY;
 
             // Apply drag offsets for visual feedback during dragging
-            const { x, y } = (() => {
+            const { x, y } = ((): { x: number; y: number } => {
               if (isDraggingPoint && dragPointIndex === index) {
                 return {
                   x: baseX + dragOffset.x,
@@ -451,7 +451,7 @@ const PathNode: FC<PathNodeProps> = ({
               const isBeingDragged = dragPointIndex === index && isDraggingPoint;
 
               // Apply visual offset during drag for smooth feedback
-              const { visualX, visualY } = (() => {
+              const { visualX, visualY } = ((): { visualX: number; visualY: number } => {
                 if (isBeingDragged) {
                   // Apply drag offset to the dragged point
                   return {

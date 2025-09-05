@@ -54,7 +54,7 @@ const Toolbar: FC<ToolbarProps> = ({
   const selectedColor = parentSelectedColor || DEFAULT_BACKGROUND_TOOL_COLOR;
 
   // 檔案選擇處理
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     const files = Array.from(event.target.files || []);
 
     // 檔案類型驗證
@@ -89,27 +89,27 @@ const Toolbar: FC<ToolbarProps> = ({
     event.target.value = '';
   };
 
-  const handleColorChange = (color: string) => {
+  const handleColorChange = (color: string): void => {
     if (onColorChange) {
       onColorChange(color);
     }
   };
 
-  const handleColorPickerClick = () => {
+  const handleColorPickerClick = (): void => {
     if (colorPalette && colorPalette.length > 0) {
       setShowColorMenu(!showColorMenu);
     }
     // 如果沒有提供 colorPalette，則不執行任何操作（顏色工具將被隱藏）
   };
 
-  const handleColorSelect = (color: string) => {
+  const handleColorSelect = (color: string): void => {
     handleColorChange(color);
     setShowColorMenu(false);
   };
 
   // 點擊外部關閉顏色選單
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent): void => {
       const colorPicker = document.querySelector(`.${styles.colorPicker}`);
 
       if (colorPicker && !colorPicker.contains(event.target as Node)) {
@@ -121,7 +121,7 @@ const Toolbar: FC<ToolbarProps> = ({
       document.addEventListener('mousedown', handleClickOutside);
     }
 
-    return () => {
+    return (): void => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showColorMenu]);
