@@ -68,7 +68,7 @@ export class ArticleDataLoader {
         ttlAutopurge: true,
         max: 1000,
       }),
-      cacheKeyFn: queryArgs => `${queryArgs.articleId}:${queryArgs.language ?? DEFAULT_LANGUAGE}`,
+      cacheKeyFn: (queryArgs): string => `${queryArgs.articleId}:${queryArgs.language ?? DEFAULT_LANGUAGE}`,
     },
   );
 }

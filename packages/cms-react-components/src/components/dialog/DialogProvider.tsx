@@ -11,7 +11,7 @@ const DialogProvider: FC<{ children?: ReactNode }> = ({ children }) => {
 
   const {
     className,
-    resolve = () => {},
+    resolve = (): void => {},
     titleLarge,
     title,
     children: dialogChildren,
@@ -27,21 +27,23 @@ const DialogProvider: FC<{ children?: ReactNode }> = ({ children }) => {
     ...rest
   } = dialogConfig;
 
-  const openDialog = (config: DialogConfigType) => {
+  const openDialog = (config: DialogConfigType): void => {
     setOpen(true);
     setDialogConfig(config);
   };
 
-  const handleCloseDialog = async () => {
+  const handleCloseDialog = async (): Promise<void> => {
     setOpen(false);
 
     // Wait animation end then reset
-    await new Promise(r => setTimeout(r, 200));
+    await new Promise<void>((r): void => {
+      setTimeout(r, 200);
+    });
 
     setDialogConfig({});
   };
 
-  const handleResolveActions = (status: boolean) => {
+  const handleResolveActions = (status: boolean): void => {
     handleCloseDialog();
     resolve?.(status);
   };

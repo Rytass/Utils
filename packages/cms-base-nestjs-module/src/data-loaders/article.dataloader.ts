@@ -63,7 +63,7 @@ export class ArticleDataLoader {
       const versionMap = new Map(
         versions.map(version => [
           `${version.articleId}:${version.version}`,
-          (() => {
+          ((): ArticleStage => {
             if (version.deletedAt) return ArticleStage.DELETED;
 
             if (version.releasedAt) {
@@ -99,7 +99,7 @@ export class ArticleDataLoader {
     {
       cache: true,
       cacheMap: this.stageCache,
-      cacheKeyFn: queryArgs => `${queryArgs.id}:${queryArgs.version}`,
+      cacheKeyFn: (queryArgs): string => `${queryArgs.id}:${queryArgs.version}`,
     },
   );
 

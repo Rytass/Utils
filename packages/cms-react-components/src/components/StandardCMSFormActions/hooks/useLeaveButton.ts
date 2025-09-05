@@ -26,7 +26,7 @@ export function useLeaveButton<T extends FieldValues>({
   const text = useMemo(() => '離開', []);
 
   const onLeave = useCallback(
-    (leaveText: string) => async () => {
+    (leaveText: string) => async (): Promise<void> => {
       const isConfirm = await openDialog({
         severity: 'warning',
         size: 'small',
@@ -70,7 +70,7 @@ export function useLeaveButton<T extends FieldValues>({
 
       return {
         text,
-        onLeave: async () => {
+        onLeave: async (): Promise<void> => {
           await actionsEvents.onLeave?.(values);
         },
       };
@@ -91,7 +91,7 @@ export function useLeaveButton<T extends FieldValues>({
 
       return {
         text,
-        onLeave: async () => {
+        onLeave: async (): Promise<void> => {
           await actionsEvents.onLeave?.(values);
         },
       };
@@ -143,7 +143,7 @@ export function useLeaveButton<T extends FieldValues>({
 
       return {
         text,
-        onLeave: async () => {
+        onLeave: async (): Promise<void> => {
           await actionsEvents.onLeave?.(values);
         },
       };
@@ -164,7 +164,7 @@ export function useLeaveButton<T extends FieldValues>({
 
       return {
         text,
-        onLeave: async () => {
+        onLeave: async (): Promise<void> => {
           await actionsEvents.onLeave?.(values);
         },
       };
@@ -185,7 +185,7 @@ export function useLeaveButton<T extends FieldValues>({
 
       return {
         text,
-        onLeave: async () => {
+        onLeave: async (): Promise<void> => {
           await actionsEvents.onLeave?.(values);
         },
       };
@@ -194,7 +194,7 @@ export function useLeaveButton<T extends FieldValues>({
     default:
       return {
         text,
-        onLeave: async () => {
+        onLeave: async (): Promise<void> => {
           await actionsEvents.onLeave?.(values);
         },
       };

@@ -38,7 +38,7 @@ export function useActionButton<T extends FieldValues>({
     ) {
       return {
         text: '儲存草稿',
-        onAction: async () => {
+        onAction: async (): Promise<void> => {
           await actionsEvents.onCreateToDraft?.(values);
         },
       };
@@ -61,7 +61,7 @@ export function useActionButton<T extends FieldValues>({
       ) {
         return {
           text: '新增草稿版本',
-          onAction: async () => {
+          onAction: async (): Promise<void> => {
             const isConfirm = await openDialog({
               severity: 'info',
               size: 'small',
@@ -99,7 +99,7 @@ export function useActionButton<T extends FieldValues>({
       ) {
         return {
           text: '儲存草稿',
-          onAction: async () => {
+          onAction: async (): Promise<void> => {
             await actionsEvents.onUpdateToDraft?.(values);
           },
         };
@@ -121,7 +121,7 @@ export function useActionButton<T extends FieldValues>({
         return {
           text: '不通過',
           danger: true,
-          onAction: async () => {
+          onAction: async (): Promise<void> => {
             openModal({
               severity: 'error',
               children: (
@@ -144,7 +144,7 @@ export function useActionButton<T extends FieldValues>({
       ) {
         return {
           text: '新增草稿版本',
-          onAction: async () => {
+          onAction: async (): Promise<void> => {
             const isConfirm = await openDialog({
               severity: 'info',
               size: 'small',
@@ -182,7 +182,7 @@ export function useActionButton<T extends FieldValues>({
       ) {
         return {
           text: '新增草稿版本',
-          onAction: async () => {
+          onAction: async (): Promise<void> => {
             const isConfirm = await openDialog({
               severity: 'info',
               size: 'small',
@@ -213,7 +213,7 @@ export function useActionButton<T extends FieldValues>({
       ) {
         return {
           text: '修改內容',
-          onAction: async () => {
+          onAction: async (): Promise<void> => {
             const isConfirm = await openDialog({
               severity: 'info',
               size: 'small',
@@ -251,7 +251,7 @@ export function useActionButton<T extends FieldValues>({
       ) {
         return {
           text: '新增草稿版本',
-          onAction: async () => {
+          onAction: async (): Promise<void> => {
             const isConfirm = await openDialog({
               severity: 'info',
               size: 'small',
@@ -282,7 +282,7 @@ export function useActionButton<T extends FieldValues>({
       ) {
         return {
           text: '修改內容',
-          onAction: async () => {
+          onAction: async (): Promise<void> => {
             const isConfirm = await openDialog({
               severity: 'info',
               size: 'small',
@@ -320,7 +320,7 @@ export function useActionButton<T extends FieldValues>({
       ) {
         return {
           text: '新增草稿版本',
-          onAction: async () => {
+          onAction: async (): Promise<void> => {
             const isConfirm = await openDialog({
               severity: 'info',
               size: 'small',

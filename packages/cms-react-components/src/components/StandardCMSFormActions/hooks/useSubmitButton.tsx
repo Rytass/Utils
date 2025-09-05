@@ -44,7 +44,7 @@ export function useSubmitButton<T extends FieldValues>({
       ) {
         return {
           text: '發佈',
-          onSubmit: async () => {
+          onSubmit: async (): Promise<void> => {
             openModal({
               severity: 'success',
               children: (
@@ -55,7 +55,7 @@ export function useSubmitButton<T extends FieldValues>({
                   onRelease={async releasedAt => {
                     await actionsEvents.onCreateAndRelease?.(values, releasedAt);
                   }}
-                  onApprove={async () => {
+                  onApprove={async (): Promise<void> => {
                     await actionsEvents.onCreateAndApprove?.(values);
                   }}
                 />
@@ -73,7 +73,7 @@ export function useSubmitButton<T extends FieldValues>({
       ) {
         return {
           text: '送審',
-          onSubmit: async () => {
+          onSubmit: async (): Promise<void> => {
             const isConfirm = await openDialog({
               severity: 'info',
               size: 'small',
@@ -126,7 +126,7 @@ export function useSubmitButton<T extends FieldValues>({
         ) {
           return {
             text: '發佈',
-            onSubmit: async () => {
+            onSubmit: async (): Promise<void> => {
               openModal({
                 severity: 'success',
                 children: (
@@ -137,7 +137,7 @@ export function useSubmitButton<T extends FieldValues>({
                     onRelease={async releasedAt => {
                       await actionsEvents.onUpdateAndRelease?.(values, releasedAt);
                     }}
-                    onApprove={async () => {
+                    onApprove={async (): Promise<void> => {
                       await actionsEvents.onUpdateAndApprove?.(values);
                     }}
                   />
@@ -155,7 +155,7 @@ export function useSubmitButton<T extends FieldValues>({
         ) {
           return {
             text: '送審',
-            onSubmit: async () => {
+            onSubmit: async (): Promise<void> => {
               const isConfirm = await openDialog({
                 severity: 'info',
                 size: 'small',
@@ -193,7 +193,7 @@ export function useSubmitButton<T extends FieldValues>({
         return {
           text: '發佈',
           disabled: true,
-          onSubmit: async () => {},
+          onSubmit: async (): Promise<void> => {},
         };
       }
 
@@ -206,7 +206,7 @@ export function useSubmitButton<T extends FieldValues>({
         return {
           text: '送審',
           disabled: true,
-          onSubmit: async () => {},
+          onSubmit: async (): Promise<void> => {},
         };
       }
 
@@ -232,7 +232,7 @@ export function useSubmitButton<T extends FieldValues>({
         ) {
           return {
             text: '發佈',
-            onSubmit: async () => {
+            onSubmit: async (): Promise<void> => {
               openModal({
                 severity: 'success',
                 children: (
@@ -243,7 +243,7 @@ export function useSubmitButton<T extends FieldValues>({
                     onRelease={async releasedAt => {
                       await actionsEvents.onUpdateAndRelease?.(values, releasedAt);
                     }}
-                    onApprove={async () => {
+                    onApprove={async (): Promise<void> => {
                       await actionsEvents.onUpdateAndApprove?.(values);
                     }}
                   />
@@ -261,7 +261,7 @@ export function useSubmitButton<T extends FieldValues>({
         ) {
           return {
             text: '送審',
-            onSubmit: async () => {
+            onSubmit: async (): Promise<void> => {
               const isConfirm = await openDialog({
                 severity: 'info',
                 size: 'small',
@@ -298,7 +298,7 @@ export function useSubmitButton<T extends FieldValues>({
       ) {
         return {
           text: '發佈',
-          onSubmit: async () => {
+          onSubmit: async (): Promise<void> => {
             openModal({
               severity: 'success',
               children: (
@@ -309,7 +309,7 @@ export function useSubmitButton<T extends FieldValues>({
                   onRelease={async releasedAt => {
                     await actionsEvents.onRelease?.(values, releasedAt);
                   }}
-                  onApprove={async () => {
+                  onApprove={async (): Promise<void> => {
                     await actionsEvents.onApprove?.(values);
                   }}
                 />
@@ -327,7 +327,7 @@ export function useSubmitButton<T extends FieldValues>({
       ) {
         return {
           text: '送審',
-          onSubmit: async () => {
+          onSubmit: async (): Promise<void> => {
             const isConfirm = await openDialog({
               severity: 'info',
               size: 'small',
@@ -372,7 +372,7 @@ export function useSubmitButton<T extends FieldValues>({
         ) {
           return {
             text: '審核通過',
-            onSubmit: async () => {
+            onSubmit: async (): Promise<void> => {
               openModal({
                 severity: 'success',
                 children: (
@@ -383,7 +383,7 @@ export function useSubmitButton<T extends FieldValues>({
                     onRelease={async releasedAt => {
                       await actionsEvents.onUpdateAndRelease?.(values, releasedAt);
                     }}
-                    onApprove={async () => {
+                    onApprove={async (): Promise<void> => {
                       await actionsEvents.onUpdateAndApprove?.(values);
                     }}
                   />
@@ -401,7 +401,7 @@ export function useSubmitButton<T extends FieldValues>({
         ) {
           return {
             text: '送審',
-            onSubmit: async () => {
+            onSubmit: async (): Promise<void> => {
               const isConfirm = await openDialog({
                 severity: 'info',
                 size: 'small',
@@ -438,7 +438,7 @@ export function useSubmitButton<T extends FieldValues>({
       ) {
         return {
           text: '審核通過',
-          onSubmit: async () => {
+          onSubmit: async (): Promise<void> => {
             openModal({
               severity: 'success',
               children: (
@@ -449,7 +449,7 @@ export function useSubmitButton<T extends FieldValues>({
                   onRelease={async releasedAt => {
                     await actionsEvents.onRelease?.(values, releasedAt);
                   }}
-                  onApprove={async () => {
+                  onApprove={async (): Promise<void> => {
                     await actionsEvents.onApprove?.(values);
                   }}
                 />
@@ -468,7 +468,7 @@ export function useSubmitButton<T extends FieldValues>({
         return {
           text: '送審',
           disabled: true,
-          onSubmit: async () => {},
+          onSubmit: async (): Promise<void> => {},
         };
       }
 
@@ -494,7 +494,7 @@ export function useSubmitButton<T extends FieldValues>({
         ) {
           return {
             text: '發佈',
-            onSubmit: async () => {
+            onSubmit: async (): Promise<void> => {
               openModal({
                 severity: 'success',
                 children: (
@@ -526,7 +526,7 @@ export function useSubmitButton<T extends FieldValues>({
       ) {
         return {
           text: '發佈設定',
-          onSubmit: async () => {
+          onSubmit: async (): Promise<void> => {
             openModal({
               severity: 'success',
               children: (
@@ -566,7 +566,7 @@ export function useSubmitButton<T extends FieldValues>({
         ) {
           return {
             text: '發佈',
-            onSubmit: async () => {
+            onSubmit: async (): Promise<void> => {
               openModal({
                 severity: 'success',
                 children: (
@@ -598,7 +598,7 @@ export function useSubmitButton<T extends FieldValues>({
       ) {
         return {
           text: '發佈設定',
-          onSubmit: async () => {
+          onSubmit: async (): Promise<void> => {
             openModal({
               severity: 'success',
               children: (
@@ -638,7 +638,7 @@ export function useSubmitButton<T extends FieldValues>({
         ) {
           return {
             text: '發佈',
-            onSubmit: async () => {
+            onSubmit: async (): Promise<void> => {
               openModal({
                 severity: 'success',
                 children: (
@@ -664,7 +664,7 @@ export function useSubmitButton<T extends FieldValues>({
         ) {
           return {
             text: '送審',
-            onSubmit: async () => {
+            onSubmit: async (): Promise<void> => {
               const isConfirm = await openDialog({
                 severity: 'info',
                 size: 'small',
@@ -701,7 +701,7 @@ export function useSubmitButton<T extends FieldValues>({
       ) {
         return {
           text: '發佈設定',
-          onSubmit: async () => {
+          onSubmit: async (): Promise<void> => {
             openModal({
               severity: 'success',
               children: (
@@ -728,7 +728,7 @@ export function useSubmitButton<T extends FieldValues>({
         return {
           text: '送審',
           disabled: true,
-          onSubmit: async () => {},
+          onSubmit: async (): Promise<void> => {},
         };
       }
 

@@ -5,7 +5,7 @@ import { DialogHookValue } from './typing';
 export const useDialog = (): DialogHookValue => {
   const { openDialog: configOpenDialog, closeDialog } = useContext(DialogContext);
 
-  const openDialog = ({ ...options }) =>
+  const openDialog = ({ ...options }): Promise<boolean> =>
     new Promise<boolean>(resolver => {
       configOpenDialog({
         resolve: resolver,

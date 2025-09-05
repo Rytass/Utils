@@ -47,7 +47,7 @@ export class SignatureService<SignatureLevelEntity extends BaseSignatureLevelEnt
       try {
         await signatureLevels
           .filter(level => !targetLevelNames.has(level.name))
-          .map(level => async () => {
+          .map((level): (() => Promise<void>) => async (): Promise<void> => {
             await runner.manager.delete(this.articleSignatureRepo.metadata.tableName, {
               signatureLevelId: level.id,
             });
@@ -59,43 +59,46 @@ export class SignatureService<SignatureLevelEntity extends BaseSignatureLevelEnt
           .reduce((prev, next) => prev.then(next), Promise.resolve());
 
         this.signatureLevelsCache = await this.signatureLevels
-          .map((level, index) => async (levels: BaseSignatureLevelEntity[]) => {
-            if (level instanceof BaseSignatureLevelEntity) {
-              level.sequence = index;
-              level.required = true;
+          .map(
+            (level, index): ((levels: BaseSignatureLevelEntity[]) => Promise<BaseSignatureLevelEntity[]>) =>
+              async (levels: BaseSignatureLevelEntity[]): Promise<BaseSignatureLevelEntity[]> => {
+                if (level instanceof BaseSignatureLevelEntity) {
+                  level.sequence = index;
+                  level.required = true;
 
-              await runner.manager.save(level);
+                  await runner.manager.save(level);
 
-              usedSet.add(level);
+                  usedSet.add(level);
 
-              return [...levels, level];
-            }
+                  return [...levels, level];
+                }
 
-            if (existedMap.has(level)) {
-              const existedLevel = existedMap.get(level) as BaseSignatureLevelEntity;
+                if (existedMap.has(level)) {
+                  const existedLevel = existedMap.get(level) as BaseSignatureLevelEntity;
 
-              existedLevel.sequence = index;
-              existedLevel.required = true;
+                  existedLevel.sequence = index;
+                  existedLevel.required = true;
 
-              await runner.manager.save(existedLevel);
+                  await runner.manager.save(existedLevel);
 
-              usedSet.add(existedLevel);
+                  usedSet.add(existedLevel);
 
-              return [...levels, existedLevel];
-            }
+                  return [...levels, existedLevel];
+                }
 
-            const newLevel = this.signatureLevelRepo.create({
-              name: level,
-              required: true,
-              sequence: index,
-            });
+                const newLevel = this.signatureLevelRepo.create({
+                  name: level,
+                  required: true,
+                  sequence: index,
+                });
 
-            await runner.manager.save(newLevel);
+                await runner.manager.save(newLevel);
 
-            usedSet.add(newLevel);
+                usedSet.add(newLevel);
 
-            return levels;
-          })
+                return levels;
+              },
+          )
           .reduce((prev, next) => prev.then(next), Promise.resolve([] as BaseSignatureLevelEntity[]));
 
         await runner.commitTransaction();

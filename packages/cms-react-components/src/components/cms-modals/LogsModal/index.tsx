@@ -36,7 +36,7 @@ const LogsModal = ({ onGetData, stageWording }: LogsModalProps): ReactNode => {
   const { closeModal } = useModal();
 
   useEffect(() => {
-    (async () => {
+    (async (): Promise<void> => {
       setLoading(true);
 
       const data = await onGetData();
