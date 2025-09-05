@@ -58,11 +58,11 @@ export class LocalStorage extends Storage {
     };
   }
 
-  private getFileFullPath(key: string) {
+  private getFileFullPath(key: string): string {
     return resolve(this.directory, key);
   }
 
-  private checkFileExists(fullPath: string) {
+  private checkFileExists(fullPath: string): void {
     try {
       if (!lstatSync(fullPath).isFile()) {
         throw new StorageError(ErrorCode.FILE_NOT_FOUND);
@@ -85,41 +85,37 @@ export class LocalStorage extends Storage {
   }
 
   private async writeStream(stream: Readable, options?: WriteFileOptions): Promise<StorageFile> {
-    return new Promise<StorageFile>(async promiseResolve => {
-      const convertedStream = await this.converterManager.convert<Readable>(stream);
+    const convertedStream = await this.converterManager.convert<Readable>(stream);
 
-      if (options?.filename) {
-        const writeStream = createWriteStream(this.getFileFullPath(options.filename));
-
-        convertedStream.pipe(writeStream);
-
-        await new Promise<void>((resolve, reject) => {
-          writeStream.on('finish', resolve);
-          writeStream.on('error', reject);
-        });
-
-        promiseResolve({ key: options.filename });
-
-        return;
-      }
-
-      const tempFilename = uuid();
-      const writeStream = createWriteStream(this.getFileFullPath(tempFilename));
+    if (options?.filename) {
+      const writeStream = createWriteStream(this.getFileFullPath(options.filename));
 
       convertedStream.pipe(writeStream);
 
-      this.getStreamFilename(convertedStream).then(async ([filename]) => {
-        // Wait for the write stream to finish before renaming
-        await new Promise<void>((resolve, reject) => {
-          writeStream.on('finish', resolve);
-          writeStream.on('error', reject);
-        });
-
-        await rename(this.getFileFullPath(tempFilename), this.getFileFullPath(filename));
-
-        promiseResolve({ key: filename });
+      await new Promise<void>((resolve, reject) => {
+        writeStream.on('finish', resolve);
+        writeStream.on('error', reject);
       });
+
+      return { key: options.filename };
+    }
+
+    const tempFilename = uuid();
+    const writeStream = createWriteStream(this.getFileFullPath(tempFilename));
+
+    convertedStream.pipe(writeStream);
+
+    const [filename] = await this.getStreamFilename(convertedStream);
+
+    // Wait for the write stream to finish before renaming
+    await new Promise<void>((resolve, reject) => {
+      writeStream.on('finish', resolve);
+      writeStream.on('error', reject);
     });
+
+    await rename(this.getFileFullPath(tempFilename), this.getFileFullPath(filename));
+
+    return { key: filename };
   }
 
   private readFileBuffer(key: string): Promise<Buffer> {
@@ -178,7 +174,7 @@ export class LocalStorage extends Storage {
       await this.checkFileExists(path);
 
       return true;
-    } catch (_ex: any) {
+    } catch (_ex: unknown) {
       return false;
     }
   }
