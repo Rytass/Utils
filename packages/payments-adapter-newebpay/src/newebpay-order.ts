@@ -56,7 +56,7 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage = NewebPayCommitMes
       this._committedAt = options.committedAt;
       this._channel = options.channel;
 
-      this._state = (status => {
+      this._state = ((status): OrderState => {
         switch (status) {
           case NewebPayOrderStatusFromAPI.INITED:
           case NewebPayOrderStatusFromAPI.WAITING_BANK:

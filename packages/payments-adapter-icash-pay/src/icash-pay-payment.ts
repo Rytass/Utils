@@ -61,7 +61,7 @@ export class ICashPayPayment<CM extends ICashPayCommitMessage = ICashPayCommitMe
     iCashPayDebugInfo('Initialized iCashPay Payment Gateway');
   }
 
-  private getOrderId() {
+  private getOrderId(): string {
     return randomBytes(10).toString('hex');
   }
 

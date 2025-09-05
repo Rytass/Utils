@@ -54,7 +54,7 @@ export class HappyCardPayment<CM extends HappyCardCommitMessage = HappyCardCommi
     };
   }
 
-  private getOrderId() {
+  private getOrderId(): string {
     return randomBytes(10).toString('hex');
   }
 

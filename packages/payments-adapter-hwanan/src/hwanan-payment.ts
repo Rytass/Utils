@@ -1,10 +1,4 @@
-import {
-  AdditionalInfo,
-  Channel,
-  CreditCardECI,
-  PaymentEvents,
-  PaymentGateway,
-} from '@rytass/payments';
+import { AdditionalInfo, Channel, CreditCardECI, PaymentEvents, PaymentGateway } from '@rytass/payments';
 import { EventEmitter } from 'events';
 import debug from 'debug';
 import { LRUCache } from 'lru-cache';
@@ -71,8 +65,8 @@ export class HwaNanPayment<CM extends HwaNanCommitMessage = HwaNanCreditCardComm
         });
 
     this.pendingOrdersCache = options?.ordersCache ?? {
-      get: async (key: string) => lruCache!.get(key),
-      set: async (key: string, value: HwaNanOrder<CM>) => {
+      get: async (key: string): Promise<HwaNanOrder<CM> | undefined> => lruCache!.get(key),
+      set: async (key: string, value: HwaNanOrder<CM>): Promise<void> => {
         lruCache!.set(key, value);
       },
     };
@@ -92,7 +86,7 @@ export class HwaNanPayment<CM extends HwaNanCommitMessage = HwaNanCreditCardComm
     if (options?.withServer) {
       this.serverListener =
         options?.serverListener ??
-        ((req: IncomingMessage, res: ServerResponse) => this.defaultServerListener(req, res));
+        ((req: IncomingMessage, res: ServerResponse): Promise<void> => this.defaultServerListener(req, res));
 
       const url = new URL(this.serverHost);
       const port = Number(url.port);
@@ -144,7 +138,7 @@ export class HwaNanPayment<CM extends HwaNanCommitMessage = HwaNanCreditCardComm
       .substring(16);
   }
 
-  private getOrderId() {
+  private getOrderId(): string {
     return randomBytes(10).toString('hex');
   }
 

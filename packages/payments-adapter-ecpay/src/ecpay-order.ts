@@ -64,7 +64,7 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
 
     if ('form' in options) {
       this._form = options.form;
-      this._paymentType = (() => {
+      this._paymentType = ((): ECPayCallbackPaymentType | undefined => {
         switch (options.form.ChoosePayment) {
           case ECPayChannel[Channel.CREDIT_CARD]:
             return ECPayCallbackPaymentType.CREDIT_CARD;
@@ -81,7 +81,7 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
       this._committedAt = options.committedAt;
       this._platformTradeNumber = options.platformTradeNumber;
       this._paymentType = options.paymentType;
-      this._state = (() => {
+      this._state = ((): OrderState => {
         switch (options.status) {
           case ECPayQueryResultStatus.COMMITTED:
             return OrderState.COMMITTED;
@@ -300,7 +300,7 @@ export class ECPayOrder<OCM extends ECPayCommitMessage> implements Order<OCM> {
       amount || this.totalPrice,
     );
 
-    const refundAction = (() => {
+    const refundAction = ((): 'R' | 'N' => {
       switch (creditCardStatus) {
         case ECPayCreditCardOrderStatus.CLOSED:
           return 'R';

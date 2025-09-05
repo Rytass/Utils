@@ -112,8 +112,8 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
     });
 
     this.orderCache = options?.orderCache ?? {
-      get: async (key: string) => orderLruCache!.get(key),
-      set: async (key: string, value: CTBCOrder<CM>) => {
+      get: async (key: string): Promise<CTBCOrder<CM> | undefined> => orderLruCache!.get(key),
+      set: async (key: string, value: CTBCOrder<CM>): Promise<void> => {
         orderLruCache!.set(key, value);
       },
     };
@@ -124,8 +124,8 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
     });
 
     this.bindCardRequestsCache = options?.bindCardRequestsCache ?? {
-      get: async (key: string) => requestLruCache!.get(key),
-      set: async (key: string, value: CTBCBindCardRequest) => {
+      get: async (key: string): Promise<CTBCBindCardRequest | undefined> => requestLruCache!.get(key),
+      set: async (key: string, value: CTBCBindCardRequest): Promise<void> => {
         requestLruCache!.set(key, value);
       },
     };
@@ -446,7 +446,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
     });
   }
 
-  private createServer(useNgrok: boolean) {
+  private createServer(useNgrok: boolean): void {
     const url = new URL(this.serverHost ?? 'http://localhost:3000');
 
     this._server = createServer((req, res) => this.serverListener(req, res));
