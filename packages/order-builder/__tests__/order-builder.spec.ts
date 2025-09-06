@@ -85,18 +85,18 @@ describe('OrderBuilder', () => {
 
     try {
       builder.addPolicy(discountPolicy);
-    } catch (ex: any) {
+    } catch (ex: unknown) {
       expect(ex).toBeInstanceOf(Error);
-      expect(ex?.message).toEqual(
+      expect((ex as Error)?.message).toEqual(
         'Policy is immutable if builder.build was called. You should call builder.clone first.',
       );
     }
 
     try {
       builder.removePolicy('TESTING');
-    } catch (ex: any) {
+    } catch (ex: unknown) {
       expect(ex).toBeInstanceOf(Error);
-      expect(ex?.message).toEqual(
+      expect((ex as Error)?.message).toEqual(
         'Policy is immutable if builder.build was called. You should call builder.clone first.',
       );
     }
@@ -234,9 +234,9 @@ describe('OrderBuilder', () => {
       // throw error "Policy is immutable if builder.build was called."
       try {
         builder.addPolicy(new ValueDiscount(10, [new CouponValidator('DISCOUNT_10')]));
-      } catch (ex: any) {
+      } catch (ex: unknown) {
         expect(ex).toBeInstanceOf(Error);
-        expect(ex?.message).toEqual(
+        expect((ex as Error)?.message).toEqual(
           'Policy is immutable if builder.build was called. You should call builder.clone first.',
         );
       }
@@ -567,9 +567,9 @@ describe('Order', () => {
     new OrderBuilder({
       policies: [new StepPercentageDiscount(2, 1.1)],
     });
-  } catch (ex: any) {
+  } catch (ex: unknown) {
     expect(ex).toBeInstanceOf(Error);
-    expect(ex.message).toEqual('Invalid percentage value.');
+    expect((ex as Error).message).toEqual('Invalid percentage value.');
   }
 
   const builder5 = new OrderBuilder({
@@ -848,9 +848,9 @@ describe('Discount', () => {
   it('PercentageDiscount', () => {
     try {
       new PercentageDiscount(100);
-    } catch (ex: any) {
+    } catch (ex: unknown) {
       expect(ex).toBeInstanceOf(Error);
-      expect(ex.message).toEqual('Invalid percentage value.');
+      expect((ex as Error).message).toEqual('Invalid percentage value.');
     }
 
     const percentageDiscount = new PercentageDiscount(0.1, {
@@ -1177,8 +1177,10 @@ describe('Clone OrderBuilder', () => {
 
     try {
       new OrderBuilder().addPolicy(new ValueDiscount(200)).build({ items }).builder.addPolicy(new ValueDiscount(50));
-    } catch (ex: any) {
-      expect(ex.message).toBe('Policy is immutable if builder.build was called. You should call builder.clone first.');
+    } catch (ex: unknown) {
+      expect((ex as Error).message).toBe(
+        'Policy is immutable if builder.build was called. You should call builder.clone first.',
+      );
     }
 
     expect(
@@ -1272,7 +1274,7 @@ describe('Clone OrderBuilder', () => {
     const policy1 = new ItemGiveawayDiscount(
       1,
       new ItemIncluded({
-        isMatchedItem: item => p1IdSet.has(item.id),
+        isMatchedItem: (item): boolean => p1IdSet.has(item.id),
         threshold: 2,
       }),
       { id: 'POLICY_1', onlyMatched: true },
@@ -1325,7 +1327,7 @@ describe('Clone OrderBuilder', () => {
       500,
       new ItemExcluded({
         // 除了 item.name = '飾品H' 以外的項目才能生效
-        isMatchedItem: item => item.name !== '飾品H',
+        isMatchedItem: (item): boolean => item.name !== '飾品H',
         conditions: [new PriceThreshold(12500)],
       }),
       { onlyMatched: true },

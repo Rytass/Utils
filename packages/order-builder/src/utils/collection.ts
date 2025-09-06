@@ -6,7 +6,7 @@ interface Dictionary<T> {
   [index: string]: T;
 }
 
-export function groupBy<Obj extends Iterable<any> | ObjRecord, Key extends any>(
+export function groupBy<Obj extends Iterable<unknown> | ObjRecord, Key extends string | number | symbol>(
   collection: List<Obj>,
   iteratee: (iterator: Obj) => Key,
 ): Dictionary<Obj[]> {

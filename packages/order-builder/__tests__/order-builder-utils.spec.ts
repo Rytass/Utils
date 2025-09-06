@@ -155,10 +155,10 @@ describe('Decimal', () => {
     it('should throw Error if digitAfterDecimalPoint is not integer', () => {
       try {
         round(10.1, 1.1);
-      } catch (ex: any) {
+      } catch (ex: unknown) {
         expect(ex).toBeDefined();
         expect(ex).toBeInstanceOf(Error);
-        expect(ex.message).toEqual(`${1.1} is not an integer number.`);
+        expect((ex as Error).message).toEqual(`${1.1} is not an integer number.`);
       }
     });
   });

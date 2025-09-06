@@ -17,9 +17,7 @@ export interface Policy<T extends ObjRecord = ObjRecord> {
   conditions?: Condition[];
   matchedItems(order: Order): FlattenOrderItem[];
   valid(order: Order): boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   resolve<TT extends T>(order: Order, ..._: any[]): TT[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   description(..._: any[]): PolicyResult<T>;
 }
 

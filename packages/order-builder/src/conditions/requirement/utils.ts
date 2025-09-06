@@ -4,7 +4,7 @@ import { ItemSpecifiedInput, ItemSpecifiedResolvedFnInput, QuantityRequiredInput
 export function isItemSpecifiedResolvedFnInput<Item extends OrderItem>(
   options: ItemSpecifiedInput<Item>,
 ): options is ItemSpecifiedResolvedFnInput<Item> {
-  return typeof (options as any)?.isMatchedItem === 'function';
+  return typeof (options as ItemSpecifiedResolvedFnInput<Item>)?.isMatchedItem === 'function';
 }
 
 export function itemSpecifiedItems<Item extends OrderItem>(options: ItemSpecifiedInput<Item>): string[] {

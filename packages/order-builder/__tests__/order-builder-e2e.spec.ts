@@ -1433,7 +1433,7 @@ describe('TAST v0.0.2', () => {
           new ValueDiscount(200, [
             new ItemIncluded(
               {
-                isMatchedItem: item => item.id === 'A',
+                isMatchedItem: (item): boolean => item.id === 'A',
                 threshold: 2,
               },
               { onlyMatched: true },
@@ -1444,7 +1444,7 @@ describe('TAST v0.0.2', () => {
             1000,
             200,
             new ItemIncluded({
-              isMatchedItem: item => item.id === 'B',
+              isMatchedItem: (item): boolean => item.id === 'B',
             }),
             {
               stepUnit: 'price',
@@ -1459,7 +1459,7 @@ describe('TAST v0.0.2', () => {
             2,
             1,
             new ItemIncluded<TestOrderItem>({
-              isMatchedItem: item => item.brand === 'N21',
+              isMatchedItem: (item): boolean => item.brand === 'N21',
             }),
             { onlyMatched: true },
           ),
@@ -1467,7 +1467,7 @@ describe('TAST v0.0.2', () => {
           new PercentageDiscount(
             0.8,
             new ItemIncluded<TestOrderItem>({
-              isMatchedItem: item => item.category === 'shoes',
+              isMatchedItem: (item): boolean => item.category === 'shoes',
               threshold: 3,
             }),
             { onlyMatched: true },

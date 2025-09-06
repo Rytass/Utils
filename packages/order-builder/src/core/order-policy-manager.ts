@@ -24,7 +24,7 @@ export class OrderPolicyManager {
   public addPolicy(policy: Policies): void;
   public addPolicy(policies: Policies[]): void;
   public addPolicy(arg0: Policies | Policies[]): void;
-  public addPolicy(arg0: Policies | Policies[]): any {
+  public addPolicy(arg0: Policies | Policies[]): void {
     const policies = Array.isArray(arg0) ? arg0 : [arg0];
 
     this._policies = [...this._policies, ...policies];
