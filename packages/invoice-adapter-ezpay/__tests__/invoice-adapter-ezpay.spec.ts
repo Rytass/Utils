@@ -18,7 +18,7 @@ const AES_IV = randomBytes(8).toString('hex');
 const AES_KEY = randomBytes(16).toString('hex');
 const MERCHANT_ID = '9999999';
 
-const getMobileValidationResult = (code: string, isPass = false) => {
+const getMobileValidationResult = (code: string, isPass = false): string => {
   const cipher = createCipheriv('aes-256-cbc', DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
   cipher.setAutoPadding(false);
@@ -33,7 +33,7 @@ const getMobileValidationResult = (code: string, isPass = false) => {
   ].join('');
 };
 
-const getLoveCodeValidationResult = (code: string, isPass = false) => {
+const getLoveCodeValidationResult = (code: string, isPass = false): string => {
   const cipher = createCipheriv('aes-256-cbc', DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
   cipher.setAutoPadding(false);
@@ -48,7 +48,7 @@ const getLoveCodeValidationResult = (code: string, isPass = false) => {
   ].join('');
 };
 
-const getDefaultResponse = (orderNo: string) => ({
+const getDefaultResponse = (orderNo: string): { data: { Message: string; Status: string; Result: string } } => ({
   data: {
     Message: '發票開立成功',
     Status: 'SUCCESS',
@@ -68,7 +68,11 @@ const getDefaultResponse = (orderNo: string) => ({
   },
 });
 
-function parseFormData(formData: FormData, _aesKey = DEFAULT_AES_KEY, _aseIv = DEFAULT_AES_IV): EZPayInvoiceIssuePayload {
+function parseFormData(
+  formData: FormData,
+  _aesKey = DEFAULT_AES_KEY,
+  _aseIv = DEFAULT_AES_IV,
+): EZPayInvoiceIssuePayload {
   const payloadArray = parse(formData.getBuffer(), formData.getBoundary());
 
   const payload = payloadArray.reduce(

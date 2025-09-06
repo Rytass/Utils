@@ -12,6 +12,7 @@ import {
   ECPayInvoiceMobileBarcodeValidateRequestBody,
   ECPayInvoiceMobileBarcodeValidateResponse,
   ECPayInvoiceRequestBody,
+  ECPayInvoiceResponse,
   ECPayIssuedInvoiceResponse,
   InvoiceCarriers,
   InvoiceCarrierType,
@@ -139,7 +140,9 @@ describe('ECPayInvoiceGateway', () => {
       return plainPayload;
     }
 
-    function generateIssueResponse<T = ECPayIssuedInvoiceResponse>(options: T) {
+    function generateIssueResponse<T = ECPayIssuedInvoiceResponse>(
+      options: T,
+    ): Omit<ECPayInvoiceResponse, 'PlatformID'> {
       const cipher = createCipheriv('aes-128-cbc', AES_KEY, AES_IV);
 
       cipher.setAutoPadding(true);

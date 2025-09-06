@@ -75,7 +75,7 @@ describe('ECPayInvoiceGateway List', () => {
               IIS_Category: 'B2C',
               IIS_Remain_Allowance_Amt: 2200,
               IIS_Turnkey_Status: 'C',
-              IIS_Tax_Type: (() => {
+              IIS_Tax_Type: ((): string => {
                 switch (index % 5) {
                   case 0:
                     return '1';
