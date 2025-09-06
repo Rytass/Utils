@@ -5,7 +5,7 @@ import { TraceCases } from './delivery-adapter-tcat-config.config';
 
 describe('delivery-adapter-tcat', () => {
   const get = jest.spyOn(axios, 'get');
-  const traceUrl = (id: string) =>
+  const traceUrl = (id: string): string =>
     `https://www.t-cat.com.tw/Inquire/TraceDetail.aspx?BillID=${id}&ReturnUrl=Trace.aspx`;
 
   it('should trace single logistic', () => {

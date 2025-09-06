@@ -14,7 +14,7 @@ export class TCatLogisticsService<T extends TCatLogisticsInterface<LogisticsStat
   constructor(configuration: T extends TCatLogisticsInterface<LogisticsStatus<T>> ? T : never) {
     this.configuration = configuration;
   }
-  private getTraceUrl(logisticId: string) {
+  private getTraceUrl(logisticId: string): string {
     return this.configuration.url + `?BillID=${logisticId}&ReturnUrl=Trace.aspx`;
   }
 

@@ -208,7 +208,7 @@ describe('VaultSecret', () => {
           account: VAULT_ACCOUNT,
           password: VAULT_PASSWORD,
         },
-        onReady: () => {
+        onReady: (): void => {
           const data = manager.get<string>('test');
 
           expect(data).toBe('abc');
@@ -225,7 +225,7 @@ describe('VaultSecret', () => {
           account: VAULT_ACCOUNT,
           password: VAULT_PASSWORD,
         },
-        onReady: () => {
+        onReady: (): void => {
           manager.set<string>('test_offline', 'set');
 
           const data = manager.get<string>('test_offline');
@@ -256,7 +256,7 @@ describe('VaultSecret', () => {
           account: VAULT_ACCOUNT,
           password: VAULT_PASSWORD,
         },
-        onReady: () => {
+        onReady: (): void => {
           manager.delete('test_offline');
 
           const data = manager.get<string>('test_offline');
@@ -288,7 +288,7 @@ describe('VaultSecret', () => {
           account: VAULT_ACCOUNT,
           password: VAULT_PASSWORD,
         },
-        onReady: () => {
+        onReady: (): void => {
           expect(manager.sync()).rejects.toThrow();
 
           manager.terminate();
@@ -305,7 +305,7 @@ describe('VaultSecret', () => {
           account: VAULT_ACCOUNT,
           password: VAULT_PASSWORD,
         },
-        onReady: async () => {
+        onReady: async (): Promise<void> => {
           const nowVersion = secretVersionMap[VAULT_PROJECT];
 
           await manager.sync();
@@ -324,7 +324,7 @@ describe('VaultSecret', () => {
           account: VAULT_ACCOUNT,
           password: VAULT_PASSWORD,
         },
-        onReady: async () => {
+        onReady: async (): Promise<void> => {
           secretVersionMap[VAULT_PROJECT] += 1;
 
           expect(manager.sync()).rejects.toThrow();
@@ -341,7 +341,7 @@ describe('VaultSecret', () => {
           account: VAULT_ACCOUNT,
           password: VAULT_PASSWORD,
         },
-        onReady: async () => {
+        onReady: async (): Promise<void> => {
           secretVersionMap[VAULT_PROJECT] += 1;
 
           const nowVersion = secretVersionMap[VAULT_PROJECT];
@@ -365,7 +365,7 @@ describe('VaultSecret', () => {
           password: VAULT_PASSWORD,
         },
         onError,
-        onReady: () => {
+        onReady: (): void => {
           manager.set('WILL_FAILED_UPDATE_KEY', 'FAILED');
 
           expect(manager.sync())
@@ -647,7 +647,7 @@ describe('VaultSecret', () => {
           account: VAULT_ACCOUNT,
           password: VAULT_PASSWORD,
         },
-        onError: error => {
+        onError: (error: any): void => {
           if (errorPass) {
             expect(error).toBe('test2');
 
@@ -777,7 +777,7 @@ describe('VaultSecret', () => {
           account: VAULT_ACCOUNT,
           password: VAULT_PASSWORD,
         },
-        onError: () => {
+        onError: (): void => {
           expect(true).toBeTruthy();
 
           done();
