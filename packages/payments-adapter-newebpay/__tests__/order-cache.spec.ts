@@ -1,5 +1,5 @@
 import { LRUCache } from 'lru-cache';
-import { NewebPayPayment, NewebPaymentChannel } from '../src';
+import { NewebPayPayment, NewebPaymentChannel, NewebPayOrder, NewebPayCommitMessage } from '../src';
 
 const MERCHANT_ID = 'MS154366906';
 const AES_KEY = 'X4vM1RymaxkyzZ9mZHNE67Kba2gpv40c';
@@ -7,7 +7,7 @@ const AES_IV = '6ma4zu0UFWk54oyX';
 
 describe('NewebPay Custom Order Cache', () => {
   it('should use custom order cache', async () => {
-    const lruCache = new LRUCache<string, any>({
+    const lruCache = new LRUCache<string, NewebPayOrder<NewebPayCommitMessage>>({
       ttlAutopurge: true,
       ttl: 10 * 60 * 1000, // default: 10 mins
     });
@@ -17,8 +17,8 @@ describe('NewebPay Custom Order Cache', () => {
       aesKey: AES_KEY,
       aesIv: AES_IV,
       ordersCache: {
-        get: async (key: string) => lruCache!.get(key),
-        set: async (key: string, value: any) => {
+        get: async (key: string): Promise<NewebPayOrder<NewebPayCommitMessage> | undefined> => lruCache!.get(key),
+        set: async (key: string, value: NewebPayOrder<NewebPayCommitMessage>): Promise<void> => {
           lruCache!.set(key, value);
         },
       },

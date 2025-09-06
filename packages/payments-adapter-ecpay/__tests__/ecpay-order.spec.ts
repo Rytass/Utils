@@ -21,7 +21,7 @@ describe('ECPayOrder', () => {
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce((_port?: any, _hostname?: any, listeningListener?: () => void) => {
+    mockedListen.mockImplementationOnce((_port?: number, _hostname?: string, listeningListener?: () => void) => {
       mockServer.listen(0, listeningListener);
 
       return mockServer;
@@ -104,7 +104,7 @@ describe('ECPayOrder', () => {
     const paymentWithServer = new ECPayPayment({
       withServer: true,
       serverHost: 'http://localhost:3001',
-      onServerListen: async () => {
+      onServerListen: async (): Promise<void> => {
         const withServerOrder = await paymentWithServer.prepare<ECPayChannelCreditCard>({
           channel: Channel.CREDIT_CARD,
           items: [

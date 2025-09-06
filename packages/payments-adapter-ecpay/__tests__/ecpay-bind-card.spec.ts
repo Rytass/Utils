@@ -26,7 +26,7 @@ describe('ECPayPayment Card Binding', () => {
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce((_port?: any, _hostname?: any, listeningListener?: () => void) => {
+    mockedListen.mockImplementationOnce((_port?: number, _hostname?: string, listeningListener?: () => void) => {
       mockServer.listen(0, listeningListener);
 
       return mockServer;
@@ -51,7 +51,7 @@ describe('ECPayPayment Card Binding', () => {
       hashKey: HASH_KEY,
       hashIv: HASH_IV,
       baseUrl: BASE_URL,
-      onServerListen: async () => {
+      onServerListen: async (): Promise<void> => {
         const bindCardRequest = await payment.prepareBindCard('rytass');
 
         bindCardRequest.formHTML;
@@ -94,7 +94,7 @@ describe('ECPayPayment Card Binding', () => {
       hashIv: HASH_IV,
       baseUrl: BASE_URL,
       boundCardFinishPath: '/payments/ecpay/bound-card-finished',
-      onServerListen: async () => {
+      onServerListen: async (): Promise<void> => {
         const bindCardRequest = await payment.prepareBindCard('rytass');
 
         bindCardRequest.formHTML;
@@ -144,7 +144,7 @@ describe('ECPayPayment Card Binding', () => {
       hashIv: HASH_IV,
       baseUrl: BASE_URL,
       boundCardPath: '/payments/ecpay/bound-card',
-      onServerListen: async () => {
+      onServerListen: async (): Promise<void> => {
         const bindCardRequest = await payment.prepareBindCard('rytass');
 
         bindCardRequest.formHTML;
@@ -187,7 +187,7 @@ describe('ECPayPayment Card Binding', () => {
       hashIv: HASH_IV,
       baseUrl: BASE_URL,
       boundCardPath: '/payments/ecpay/bound-card',
-      onServerListen: () => {
+      onServerListen: (): void => {
         payment.prepareBindCard('rytass');
 
         const successfulResponse = {
@@ -228,8 +228,8 @@ describe('ECPayPayment Card Binding', () => {
       hashIv: HASH_IV,
       baseUrl: BASE_URL,
       bindCardRequestsCache: {
-        get: async (key: string) => cache.get(key),
-        set: async (key: string, value: ECPayBindCardRequest) => {
+        get: async (key: string): Promise<ECPayBindCardRequest | undefined> => cache.get(key),
+        set: async (key: string, value: ECPayBindCardRequest): Promise<void> => {
           cache.set(key, value);
         },
       },
@@ -252,7 +252,7 @@ describe('ECPayPayment Card Binding', () => {
 
     const mockPost = jest.spyOn(axios, 'post');
 
-    mockPost.mockImplementationOnce(async (url: string, data: any) => {
+    mockPost.mockImplementationOnce(async (url: string, data: string) => {
       expect(url).toBe(`${BASE_URL}/MerchantMember/AuthCardID/V2`);
 
       const payload = Array.from(new URLSearchParams(data).entries()).reduce(
@@ -299,7 +299,7 @@ describe('ECPayPayment Card Binding', () => {
 
     const mockPost = jest.spyOn(axios, 'post');
 
-    mockPost.mockImplementationOnce(async (url: string, data: any) => {
+    mockPost.mockImplementationOnce(async (url: string, data: string) => {
       expect(url).toBe(`${BASE_URL}/MerchantMember/AuthCardID/V2`);
 
       const payload = Array.from(new URLSearchParams(data).entries()).reduce(
@@ -346,7 +346,7 @@ describe('ECPayPayment Card Binding', () => {
 
     const mockPost = jest.spyOn(axios, 'post');
 
-    mockPost.mockImplementationOnce(async (url: string, data: any) => {
+    mockPost.mockImplementationOnce(async (url: string, data: string) => {
       expect(url).toBe(`${BASE_URL}/MerchantMember/AuthCardID/V2`);
 
       const payload = Array.from(new URLSearchParams(data).entries()).reduce(
@@ -393,7 +393,7 @@ describe('ECPayPayment Card Binding', () => {
       baseUrl: BASE_URL,
       bindCardPath: '/payments/ecpay/bind-card',
       boundCardPath: '/payments/ecpay/bound-card',
-      onServerListen: async () => {
+      onServerListen: async (): Promise<void> => {
         const bindRequest = await payment.prepareBindCard('rytass');
 
         const url = bindRequest.bindingURL;

@@ -121,17 +121,13 @@ export class ECPayBindCardRequest implements BindCardRequest {
   get expireDate(): Promise<Date> {
     if (this._expireDate) return Promise.resolve(this._expireDate);
 
-    return new Promise<Date>(async (resolve, reject) => {
-      try {
-        const boundCardInfo = await this._gateway.queryBoundCard(this.memberId);
+    return (async (): Promise<Date> => {
+      const boundCardInfo = await this._gateway.queryBoundCard(this.memberId);
 
-        this._expireDate = boundCardInfo.expireDate as Date;
+      this._expireDate = boundCardInfo.expireDate as Date;
 
-        resolve(boundCardInfo.expireDate as Date);
-      } catch (ex) {
-        reject(ex);
-      }
-    });
+      return boundCardInfo.expireDate as Date;
+    })();
   }
 
   bound(payload: ECPayBindCardCallbackPayload): void {

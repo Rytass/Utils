@@ -74,7 +74,7 @@ describe('ECPayPayment Ngrok binding', () => {
         withServer: 'ngrok',
         serverHost: 'http://localhost:3000',
         callbackPath: '/payments/ecpay/callback',
-        onServerListen: () => {
+        onServerListen: (): void => {
           // Verify ngrok integration was properly called
           expect(mockNgrok.authtoken).toHaveBeenCalledWith('test-auth-token');
           expect(mockNgrok.forward).toHaveBeenCalledWith(3000);
@@ -98,7 +98,7 @@ describe('ECPayPayment Ngrok binding', () => {
         withServer: 'ngrok',
         serverHost: `http://localhost:${customPort}`,
         callbackPath: '/payments/ecpay/callback',
-        onServerListen: () => {
+        onServerListen: (): void => {
           // Verify ngrok was called with correct port
           expect(mockNgrok.forward).toHaveBeenCalledWith(customPort);
           resolve();
@@ -118,7 +118,7 @@ describe('ECPayPayment Ngrok binding', () => {
         withServer: 'ngrok',
         serverHost: 'http://localhost:3000',
         callbackPath: '/payments/ecpay/callback',
-        onServerListen: () => {
+        onServerListen: (): void => {
           // Verify that ngrok methods are being called (demonstrates ngrok integration is working)
           expect(mockNgrok.authtoken).toHaveBeenCalledWith('test-auth-token');
           expect(mockNgrok.forward).toHaveBeenCalledWith(3000);

@@ -174,7 +174,7 @@ describe('HwaNan Payment', () => {
         identifier: IDENTIFIER,
         withServer: true,
         checkoutPath: '/checkout',
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare({
             items: [
               {
@@ -207,7 +207,7 @@ describe('HwaNan Payment', () => {
         identifier: IDENTIFIER,
         withServer: true,
         checkoutPath: '/checkout',
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           await payment._server?.close();
 
           done();
@@ -264,7 +264,7 @@ describe('HwaNan Payment', () => {
         withServer: true,
         serverHost: 'http://localhost:9876',
         checkoutPath: '/checkout',
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           await payment._server?.close();
 
           mockedCreateServer.mockClear();
@@ -284,10 +284,10 @@ describe('HwaNan Payment', () => {
         withServer: true,
         checkoutPath: '/checkout',
         callbackPath: '/callback',
-        onCommit: order => {
+        onCommit: (order: { id: string }): void => {
           expect(order.id).toBe('123456789');
         },
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare({
             id: '123456789',
             items: [
@@ -358,10 +358,10 @@ describe('HwaNan Payment', () => {
         withServer: true,
         checkoutPath: '/checkout',
         callbackPath: '/callback',
-        onCommit: order => {
+        onCommit: (order: { id: string }): void => {
           expect(order.id).toBe('123456789');
         },
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare({
             id: '123456789',
             items: [
@@ -431,7 +431,7 @@ describe('HwaNan Payment', () => {
         withServer: true,
         checkoutPath: '/checkout',
         callbackPath: '/callback',
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           await request(payment._server as App)
             .post('/not_found')
             .expect(404);
@@ -560,7 +560,7 @@ describe('HwaNan Payment', () => {
           identifier: IDENTIFIER,
           withServer: 'ngrok',
           callbackPath: '/callback',
-          onServerListen: () => {
+          onServerListen: (): void => {
             // Verify ngrok integration was properly called
             expect(mockNgrok.authtoken).toHaveBeenCalledWith('test-auth-token');
             expect(mockNgrok.forward).toHaveBeenCalledWith(3000);
@@ -586,7 +586,7 @@ describe('HwaNan Payment', () => {
           withServer: 'ngrok',
           serverHost: `http://localhost:${customPort}`,
           callbackPath: '/callback',
-          onServerListen: () => {
+          onServerListen: (): void => {
             // Verify ngrok was called with correct port
             expect(mockNgrok.forward).toHaveBeenCalledWith(customPort);
             resolve();
@@ -607,7 +607,7 @@ describe('HwaNan Payment', () => {
           identifier: IDENTIFIER,
           withServer: 'ngrok',
           callbackPath: '/callback',
-          onServerListen: () => {
+          onServerListen: (): void => {
             // Verify that ngrok methods are being called
             expect(mockNgrok.authtoken).toHaveBeenCalledWith('test-auth-token');
             expect(mockNgrok.forward).toHaveBeenCalledWith(3000);

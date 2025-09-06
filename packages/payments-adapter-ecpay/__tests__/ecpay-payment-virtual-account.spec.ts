@@ -29,7 +29,7 @@ describe('ECPayPayment (Virtual Account)', () => {
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce((_port?: any, _hostname?: any, listeningListener?: () => void) => {
+    mockedListen.mockImplementationOnce((_port?: number, _hostname?: string, listeningListener?: () => void) => {
       mockServer.listen(0, listeningListener);
 
       return mockServer;
@@ -182,7 +182,7 @@ describe('ECPayPayment (Virtual Account)', () => {
         const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
-          onServerListen: async () => {
+          onServerListen: async (): Promise<void> => {
             const order = await testPayment.prepare({
               channel: Channel.CREDIT_CARD,
               items: [
@@ -234,7 +234,7 @@ describe('ECPayPayment (Virtual Account)', () => {
         const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
-          onServerListen: async () => {
+          onServerListen: async (): Promise<void> => {
             const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
@@ -295,7 +295,7 @@ describe('ECPayPayment (Virtual Account)', () => {
         const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
-          onServerListen: async () => {
+          onServerListen: async (): Promise<void> => {
             const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
@@ -351,7 +351,7 @@ describe('ECPayPayment (Virtual Account)', () => {
         const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
-          onServerListen: async () => {
+          onServerListen: async (): Promise<void> => {
             const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
@@ -407,7 +407,7 @@ describe('ECPayPayment (Virtual Account)', () => {
         const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
-          onServerListen: async () => {
+          onServerListen: async (): Promise<void> => {
             const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
@@ -463,7 +463,7 @@ describe('ECPayPayment (Virtual Account)', () => {
         const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
-          onServerListen: async () => {
+          onServerListen: async (): Promise<void> => {
             const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
@@ -519,7 +519,7 @@ describe('ECPayPayment (Virtual Account)', () => {
         const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
-          onServerListen: async () => {
+          onServerListen: async (): Promise<void> => {
             const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
@@ -575,7 +575,7 @@ describe('ECPayPayment (Virtual Account)', () => {
         const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
-          onServerListen: async () => {
+          onServerListen: async (): Promise<void> => {
             const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
@@ -631,7 +631,7 @@ describe('ECPayPayment (Virtual Account)', () => {
         const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
-          onServerListen: async () => {
+          onServerListen: async (): Promise<void> => {
             const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
@@ -687,7 +687,7 @@ describe('ECPayPayment (Virtual Account)', () => {
         const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
-          onServerListen: async () => {
+          onServerListen: async (): Promise<void> => {
             const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
@@ -744,7 +744,7 @@ describe('ECPayPayment (Virtual Account)', () => {
         const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
-          onServerListen: async () => {
+          onServerListen: async (): Promise<void> => {
             const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
@@ -800,7 +800,7 @@ describe('ECPayPayment (Virtual Account)', () => {
         const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
-          onServerListen: async () => {
+          onServerListen: async (): Promise<void> => {
             const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
@@ -834,7 +834,7 @@ describe('ECPayPayment (Virtual Account)', () => {
         const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
-          onServerListen: async () => {
+          onServerListen: async (): Promise<void> => {
             const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
@@ -891,7 +891,7 @@ describe('ECPayPayment (Virtual Account)', () => {
         const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
-          onServerListen: async () => {
+          onServerListen: async (): Promise<void> => {
             const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
@@ -1007,7 +1007,7 @@ describe('ECPayPayment (Virtual Account)', () => {
         const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
-          onServerListen: async () => {
+          onServerListen: async (): Promise<void> => {
             const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,
@@ -1090,7 +1090,7 @@ describe('ECPayPayment (Virtual Account)', () => {
         const testPayment = new ECPayPayment<ECPayChannelCreditCard | ECPayChannelVirtualAccount>({
           withServer: true,
           onInfoRetrieved: mockedOnInfoRetrieved,
-          onServerListen: async () => {
+          onServerListen: async (): Promise<void> => {
             const order = await testPayment.prepare<ECPayChannelVirtualAccount>({
               channel: Channel.VIRTUAL_ACCOUNT,
               virtualAccountExpireDays: 7,

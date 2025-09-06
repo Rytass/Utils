@@ -20,8 +20,8 @@ describe('HwaNan Custom Order Cache', () => {
       merchantName: 'Rytass Shop',
       identifier: IDENTIFIER,
       ordersCache: {
-        get: async (key: string) => lruCache!.get(key),
-        set: async (key: string, value: any) => {
+        get: async (key: string): Promise<any> => lruCache!.get(key),
+        set: async (key: string, value: any): Promise<void> => {
           lruCache!.set(key, value);
         },
       },

@@ -32,7 +32,7 @@ describe('NewebPay Refund Order', () => {
   it('should refund order', async () => {
     const mockedPost = jest.spyOn(axios, 'post');
 
-    mockedPost.mockImplementation(async (url: string, data: any) => {
+    mockedPost.mockImplementation(async (url: string, data: string) => {
       expect(url).toMatch(/\/API\/CreditCard\/Close$/);
 
       const payload = new URLSearchParams(data);
@@ -124,7 +124,7 @@ describe('NewebPay Refund Order', () => {
   it('should refund working order', async () => {
     const mockedPost = jest.spyOn(axios, 'post');
 
-    mockedPost.mockImplementation(async (url: string, data: any) => {
+    mockedPost.mockImplementation(async (url: string, data: string) => {
       expect(url).toMatch(/\/API\/CreditCard\/Close$/);
 
       const payload = new URLSearchParams(data);
@@ -284,7 +284,7 @@ describe('NewebPay Refund Order', () => {
   it('should throw error on refund order failed', async () => {
     const mockedPost = jest.spyOn(axios, 'post');
 
-    mockedPost.mockImplementation(async (url: string, data: any) => {
+    mockedPost.mockImplementation(async (url: string, data: string) => {
       expect(url).toMatch(/\/API\/CreditCard\/Close$/);
 
       const payload = new URLSearchParams(data);
@@ -441,7 +441,7 @@ describe('NewebPay Refund Order', () => {
   it('should refunded order can be cancel', async () => {
     const mockedPost = jest.spyOn(axios, 'post');
 
-    mockedPost.mockImplementation(async (url: string, data: any) => {
+    mockedPost.mockImplementation(async (url: string, data: string) => {
       expect(url).toMatch(/\/API\/CreditCard\/Close$/);
 
       const payload = new URLSearchParams(data);
@@ -530,7 +530,7 @@ describe('NewebPay Refund Order', () => {
   it('should throw error on cancel refund failed', async () => {
     const mockedPost = jest.spyOn(axios, 'post');
 
-    mockedPost.mockImplementation(async (url: string, data: any) => {
+    mockedPost.mockImplementation(async (url: string, data: string) => {
       expect(url).toMatch(/\/API\/CreditCard\/Close$/);
 
       const payload = new URLSearchParams(data);

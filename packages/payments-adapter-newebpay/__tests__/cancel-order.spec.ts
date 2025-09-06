@@ -31,7 +31,7 @@ describe('NewebPay Cancel Order', () => {
   it('should cancel order', async () => {
     const mockedPost = jest.spyOn(axios, 'post');
 
-    mockedPost.mockImplementation(async (url: string, data: any) => {
+    mockedPost.mockImplementation(async (url: string, data: string) => {
       expect(url).toMatch(/\/API\/CreditCard\/Cancel$/);
 
       const payload = new URLSearchParams(data);
@@ -161,7 +161,7 @@ describe('NewebPay Cancel Order', () => {
   it('should throw error if CheckCode invalid', () => {
     const mockedPost = jest.spyOn(axios, 'post');
 
-    mockedPost.mockImplementation(async (url: string, data: any) => {
+    mockedPost.mockImplementation(async (url: string, data: string) => {
       expect(url).toMatch(/\/API\/CreditCard\/Cancel$/);
 
       const payload = new URLSearchParams(data);
@@ -243,7 +243,7 @@ describe('NewebPay Cancel Order', () => {
   it('should throw error if cancel failed', () => {
     const mockedPost = jest.spyOn(axios, 'post');
 
-    mockedPost.mockImplementation(async (url: string, data: any) => {
+    mockedPost.mockImplementation(async (url: string, data: string) => {
       expect(url).toMatch(/\/API\/CreditCard\/Cancel$/);
 
       const payload = new URLSearchParams(data);

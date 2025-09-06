@@ -32,7 +32,7 @@ describe('NewebPay Settle Order', () => {
   it('should settle order', async () => {
     const mockedPost = jest.spyOn(axios, 'post');
 
-    mockedPost.mockImplementation(async (url: string, data: any) => {
+    mockedPost.mockImplementation(async (url: string, data: string) => {
       expect(url).toMatch(/\/API\/CreditCard\/Close$/);
 
       const payload = new URLSearchParams(data);
@@ -188,7 +188,7 @@ describe('NewebPay Settle Order', () => {
   it('should throw error on settle failed', () => {
     const mockedPost = jest.spyOn(axios, 'post');
 
-    mockedPost.mockImplementation(async (url: string, data: any) => {
+    mockedPost.mockImplementation(async (url: string, data: string) => {
       expect(url).toMatch(/\/API\/CreditCard\/Close$/);
 
       const payload = new URLSearchParams(data);
@@ -305,7 +305,7 @@ describe('NewebPay Settle Order', () => {
   it('should unsettle order', async () => {
     const mockedPost = jest.spyOn(axios, 'post');
 
-    mockedPost.mockImplementation(async (url: string, data: any) => {
+    mockedPost.mockImplementation(async (url: string, data: string) => {
       expect(url).toMatch(/\/API\/CreditCard\/Close$/);
 
       const payload = new URLSearchParams(data);
@@ -394,7 +394,7 @@ describe('NewebPay Settle Order', () => {
   it('should throw error on unsettle failed', () => {
     const mockedPost = jest.spyOn(axios, 'post');
 
-    mockedPost.mockImplementation(async (url: string, data: any) => {
+    mockedPost.mockImplementation(async (url: string, data: string) => {
       expect(url).toMatch(/\/API\/CreditCard\/Close$/);
 
       const payload = new URLSearchParams(data);

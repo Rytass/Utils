@@ -52,7 +52,7 @@ describe('CTBC 訂單 Mock 測試', () => {
     });
   });
 
-  function mockSuccessfulQuery() {
+  function mockSuccessfulQuery(): void {
     posApiQueryMock.mockResolvedValue({
       ErrCode: '00',
       RespCode: '0',

@@ -38,7 +38,7 @@ describe('NewebPay Payment Server', () => {
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce((_port?: any, _hostname?: any, listeningListener?: () => void) => {
+    mockedListen.mockImplementationOnce((_port?: number, _hostname?: string, listeningListener?: () => void) => {
       mockServer.listen(0, listeningListener);
 
       return mockServer;
@@ -63,7 +63,7 @@ describe('NewebPay Payment Server', () => {
         aesIv: AES_IV,
         withServer: true,
         callbackPath: '/newebpay/callback',
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare({
             channel: NewebPaymentChannel.CREDIT,
             items: [
@@ -143,12 +143,12 @@ describe('NewebPay Payment Server', () => {
         aesIv: AES_IV,
         withServer: true,
         callbackPath: '/newebpay/callback',
-        onCommit: async order => {
+        onCommit: async (order): Promise<void> => {
           expect(order.id).toBe('123456789');
 
           payment._server?.close(done);
         },
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare({
             id: '123456789',
             channel: NewebPaymentChannel.CREDIT,
@@ -224,7 +224,7 @@ describe('NewebPay Payment Server', () => {
         aesIv: AES_IV,
         withServer: true,
         callbackPath: '/newebpay/callback',
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare<NewebPayCreditCardCommitMessage>({
             channel: NewebPaymentChannel.CREDIT,
             items: [
@@ -307,7 +307,7 @@ describe('NewebPay Payment Server', () => {
         aesIv: AES_IV,
         withServer: true,
         callbackPath: '/newebpay/callback',
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare<NewebPayCreditCardCommitMessage>({
             channel: NewebPaymentChannel.CREDIT,
             items: [
@@ -394,7 +394,7 @@ describe('NewebPay Payment Server', () => {
         aesIv: AES_IV,
         withServer: true,
         callbackPath: '/newebpay/callback',
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare<NewebPayWebATMCommitMessage>({
             channel: NewebPaymentChannel.WEBATM,
             items: [
@@ -468,7 +468,7 @@ describe('NewebPay Payment Server', () => {
         aesIv: AES_IV,
         withServer: true,
         callbackPath: '/newebpay/callback',
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare<NewebPayVirtualAccountCommitMessage>({
             channel: NewebPaymentChannel.VACC,
             items: [
@@ -542,7 +542,7 @@ describe('NewebPay Payment Server', () => {
         aesIv: AES_IV,
         withServer: true,
         callbackPath: '/newebpay/callback',
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare({
             channel: NewebPaymentChannel.CREDIT,
             items: [
@@ -615,7 +615,7 @@ describe('NewebPay Payment Server', () => {
         aesIv: AES_IV,
         withServer: true,
         callbackPath: '/newebpay/callback',
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const cipher = createCipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
           const encryptedResponse = `${cipher.update(
@@ -675,7 +675,7 @@ describe('NewebPay Payment Server', () => {
         aesIv: AES_IV,
         withServer: true,
         asyncInfoPath: '/newebpay/async-informations',
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare({
             channel: NewebPaymentChannel.VACC,
             items: [
@@ -748,7 +748,7 @@ describe('NewebPay Payment Server', () => {
         aesIv: AES_IV,
         withServer: true,
         asyncInfoPath: '/newebpay/async-informations',
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare({
             channel: NewebPaymentChannel.VACC,
             items: [
@@ -812,7 +812,7 @@ describe('NewebPay Payment Server', () => {
         aesIv: AES_IV,
         withServer: true,
         asyncInfoPath: '/newebpay/async-informations',
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const cipher = createCipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
           const encryptedResponse = `${cipher.update(
@@ -863,7 +863,7 @@ describe('NewebPay Payment Server', () => {
         aesIv: AES_IV,
         withServer: true,
         checkoutPath: '/newebpay/checkout',
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare({
             channel: NewebPaymentChannel.CREDIT,
             items: [
@@ -896,7 +896,7 @@ describe('NewebPay Payment Server', () => {
         checkoutPath: '/newebpay/checkout',
         callbackPath: '/newebpay/callback',
         asyncInfoPath: '/newebpay/async-informations',
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           await request(payment._server as App)
             .post('/notexist')
             .expect(404);
@@ -917,7 +917,7 @@ describe('NewebPay Payment Server', () => {
         aesIv: AES_IV,
         withServer: true,
         callbackPath: '/newebpay/callback',
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare({
             channel: NewebPaymentChannel.CREDIT,
             items: [
@@ -994,7 +994,7 @@ describe('NewebPay Payment Server', () => {
         aesIv: AES_IV,
         withServer: true,
         asyncInfoPath: '/newebpay/async-informations',
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare({
             channel: NewebPaymentChannel.VACC,
             items: [
@@ -1062,7 +1062,7 @@ describe('NewebPay Payment Server', () => {
         aesIv: AES_IV,
         withServer: true,
         callbackPath: '/newebpay/callback',
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare({
             channel: NewebPaymentChannel.CREDIT,
             items: [
@@ -1141,7 +1141,7 @@ describe('NewebPay Payment Server', () => {
         aesIv: AES_IV,
         withServer: true,
         asyncInfoPath: '/newebpay/async-informations',
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare({
             channel: NewebPaymentChannel.VACC,
             items: [
@@ -1211,7 +1211,7 @@ describe('NewebPay Payment Server', () => {
         aesIv: AES_IV,
         withServer: true,
         callbackPath: '/newebpay/callback',
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const cipher = createCipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
           const encryptedResponse = `${cipher.update(
@@ -1271,7 +1271,7 @@ describe('NewebPay Payment Server', () => {
         aesIv: AES_IV,
         withServer: true,
         asyncInfoPath: '/newebpay/async-informations',
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const cipher = createCipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
           const encryptedResponse = `${cipher.update(

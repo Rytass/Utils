@@ -22,7 +22,7 @@ describe('ECPayPayment (CVS)', () => {
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce((_port?: any, _hostname?: any, listeningListener?: () => void) => {
+    mockedListen.mockImplementationOnce((_port?: number, _hostname?: string, listeningListener?: () => void) => {
       mockServer.listen(0, listeningListener);
 
       return mockServer;
@@ -43,7 +43,7 @@ describe('ECPayPayment (CVS)', () => {
     it('should throw on not cvs channel set cvsExpireMinutes', done => {
       const payment = new ECPayPayment<ECPayChannelCVS>({
         withServer: true,
-        onServerListen: () => {
+        onServerListen: (): void => {
           expect(() =>
             payment.prepare({
               // @ts-ignore: Unreachable code error
@@ -67,7 +67,7 @@ describe('ECPayPayment (CVS)', () => {
     it('should `cvsExpireMinutes` between 1 and 43200', done => {
       const payment = new ECPayPayment<ECPayChannelCVS>({
         withServer: true,
-        onServerListen: () => {
+        onServerListen: (): void => {
           expect(() =>
             payment.prepare({
               channel: Channel.CVS_KIOSK,
@@ -104,7 +104,7 @@ describe('ECPayPayment (CVS)', () => {
     it('should default virtual expire minutes is 10080', done => {
       const payment = new ECPayPayment<ECPayChannelCVS>({
         withServer: true,
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare({
             channel: Channel.CVS_KIOSK,
             items: [
@@ -126,7 +126,7 @@ describe('ECPayPayment (CVS)', () => {
     it('should throw if total aomunt between 33 and 6000', done => {
       const payment = new ECPayPayment<ECPayChannelCVS>({
         withServer: true,
-        onServerListen: () => {
+        onServerListen: (): void => {
           expect(() =>
             payment.prepare({
               channel: Channel.CVS_KIOSK,
@@ -161,7 +161,7 @@ describe('ECPayPayment (CVS)', () => {
     it('should represent cvs config on form data', done => {
       const payment = new ECPayPayment<ECPayChannelCVS>({
         withServer: true,
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare({
             channel: Channel.CVS_KIOSK,
             cvsExpireMinutes: 19999,
@@ -200,7 +200,7 @@ describe('ECPayPayment (CVS)', () => {
     it('should default callback handler commit order', done => {
       const payment = new ECPayPayment<ECPayChannelCVS>({
         withServer: true,
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare({
             channel: Channel.CVS_KIOSK,
             items: [
@@ -262,7 +262,7 @@ describe('ECPayPayment (CVS)', () => {
     it('should default callback handler keep status if get code failed', done => {
       const payment = new ECPayPayment<ECPayChannelCVS>({
         withServer: true,
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare({
             channel: Channel.CVS_KIOSK,
             items: [
@@ -323,7 +323,7 @@ describe('ECPayPayment (CVS)', () => {
     it('should received callback of cvs payments', done => {
       const payment = new ECPayPayment<ECPayChannelCVS>({
         withServer: true,
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare<ECPayChannelCVS>({
             channel: Channel.CVS_KIOSK,
             items: [

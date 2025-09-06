@@ -51,7 +51,7 @@ describe('ECPayPayment Refund', () => {
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce((_port?: any, _hostname?: any, listeningListener?: () => void) => {
+    mockedListen.mockImplementationOnce((_port?: number, _hostname?: string, listeningListener?: () => void) => {
       mockServer.listen(0, listeningListener);
 
       return mockServer;
@@ -72,7 +72,7 @@ describe('ECPayPayment Refund', () => {
     it('should reject credit card trade status getter on server not ready', done => {
       const payment = new ECPayPayment({
         withServer: true,
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           payment._server?.close(done);
         },
       });
@@ -83,7 +83,7 @@ describe('ECPayPayment Refund', () => {
     it('should reject order do action request on server not ready', done => {
       const payment = new ECPayPayment({
         withServer: true,
-        onServerListen: () => {
+        onServerListen: (): void => {
           payment._server?.close(done);
         },
       });

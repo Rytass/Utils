@@ -45,7 +45,7 @@ describe('ECPayPayment', () => {
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce((_port?: any, _hostname?: any, listeningListener?: () => void) => {
+    mockedListen.mockImplementationOnce((_port?: number, _hostname?: string, listeningListener?: () => void) => {
       mockServer.listen(0, listeningListener);
 
       return mockServer;
@@ -66,7 +66,7 @@ describe('ECPayPayment', () => {
     it('should reject query on server not ready', done => {
       const payment = new ECPayPayment({
         withServer: true,
-        onServerListen: () => {
+        onServerListen: (): void => {
           payment._server?.close(done);
         },
       });

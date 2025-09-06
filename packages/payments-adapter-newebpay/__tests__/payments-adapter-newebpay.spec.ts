@@ -35,7 +35,7 @@ describe('NewebPay Payments', () => {
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce((_port?: any, _hostname?: any, listeningListener?: () => void) => {
+    mockedListen.mockImplementationOnce((_port?: number, _hostname?: string, listeningListener?: () => void) => {
       mockServer.listen(0, listeningListener);
 
       return mockServer;
@@ -136,7 +136,7 @@ describe('NewebPay Payments', () => {
           aesIv: AES_IV,
           withServer: 'ngrok',
           callbackPath: '/newebpay/callback',
-          onServerListen: () => {
+          onServerListen: (): void => {
             // Verify ngrok integration was properly called
             expect(mockNgrok.authtoken).toHaveBeenCalledWith('test-token');
             expect(mockNgrok.forward).toHaveBeenCalledWith(3000);
@@ -160,7 +160,7 @@ describe('NewebPay Payments', () => {
           withServer: 'ngrok',
           serverHost: `http://localhost:${customPort}`,
           callbackPath: '/newebpay/callback',
-          onServerListen: () => {
+          onServerListen: (): void => {
             // Verify ngrok was called with correct port
             expect(mockNgrok.forward).toHaveBeenCalledWith(customPort);
             resolve();
@@ -179,7 +179,7 @@ describe('NewebPay Payments', () => {
           aesIv: AES_IV,
           withServer: 'ngrok',
           callbackPath: '/newebpay/callback',
-          onServerListen: () => {
+          onServerListen: (): void => {
             // Verify that ngrok methods are being called
             expect(mockNgrok.authtoken).toHaveBeenCalledWith('test-token');
             expect(mockNgrok.forward).toHaveBeenCalledWith(3000);
@@ -351,7 +351,7 @@ describe('NewebPay Payments', () => {
         aesKey: AES_KEY,
         aesIv: AES_IV,
         withServer: true,
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           paymentServer._server!.close(done);
         },
       });
@@ -381,7 +381,7 @@ describe('NewebPay Payments', () => {
     const mockPost = jest.spyOn(axios, 'post');
 
     it('should throw error on check code invalid', () => {
-      mockPost.mockImplementationOnce(async (url: string, data: any) => {
+      mockPost.mockImplementationOnce(async (url: string, data: string) => {
         expect(url).toMatch(/\/API\/QueryTradeInfo/);
 
         const payload = new URLSearchParams(data);
@@ -447,7 +447,7 @@ describe('NewebPay Payments', () => {
         aesIv: AES_IV,
       });
 
-      mockPost.mockImplementationOnce(async (url: string, data: any) => {
+      mockPost.mockImplementationOnce(async (url: string, data: string) => {
         expect(url).toMatch(/\/API\/QueryTradeInfo/);
 
         const payload = new URLSearchParams(data);
@@ -508,7 +508,7 @@ describe('NewebPay Payments', () => {
     });
 
     it('should query order info from NewebPay server', async () => {
-      mockPost.mockImplementationOnce(async (url: string, data: any) => {
+      mockPost.mockImplementationOnce(async (url: string, data: string) => {
         expect(url).toMatch(/\/API\/QueryTradeInfo/);
 
         const payload = new URLSearchParams(data);
@@ -578,7 +578,7 @@ describe('NewebPay Payments', () => {
     });
 
     it('should query refunded order info from NewebPay server', async () => {
-      mockPost.mockImplementationOnce(async (url: string, data: any) => {
+      mockPost.mockImplementationOnce(async (url: string, data: string) => {
         expect(url).toMatch(/\/API\/QueryTradeInfo/);
 
         const payload = new URLSearchParams(data);
@@ -651,7 +651,7 @@ describe('NewebPay Payments', () => {
     });
 
     it('should query samsung pay order info from NewebPay server', async () => {
-      mockPost.mockImplementationOnce(async (url: string, data: any) => {
+      mockPost.mockImplementationOnce(async (url: string, data: string) => {
         expect(url).toMatch(/\/API\/QueryTradeInfo/);
 
         const payload = new URLSearchParams(data);
@@ -717,7 +717,7 @@ describe('NewebPay Payments', () => {
     });
 
     it('should query union pay order info from NewebPay server', async () => {
-      mockPost.mockImplementationOnce(async (url: string, data: any) => {
+      mockPost.mockImplementationOnce(async (url: string, data: string) => {
         expect(url).toMatch(/\/API\/QueryTradeInfo/);
 
         const payload = new URLSearchParams(data);
@@ -783,7 +783,7 @@ describe('NewebPay Payments', () => {
     });
 
     it('should query failed installments credit card order info from NewebPay server', async () => {
-      mockPost.mockImplementationOnce(async (url: string, data: any) => {
+      mockPost.mockImplementationOnce(async (url: string, data: string) => {
         expect(url).toMatch(/\/API\/QueryTradeInfo/);
 
         const payload = new URLSearchParams(data);
@@ -855,7 +855,7 @@ describe('NewebPay Payments', () => {
     });
 
     it('should query unknown type order info from NewebPay server', async () => {
-      mockPost.mockImplementationOnce(async (url: string, data: any) => {
+      mockPost.mockImplementationOnce(async (url: string, data: string) => {
         expect(url).toMatch(/\/API\/QueryTradeInfo/);
 
         const payload = new URLSearchParams(data);
@@ -905,7 +905,7 @@ describe('NewebPay Payments', () => {
     });
 
     it('should query webatm order info from NewebPay server', async () => {
-      mockPost.mockImplementationOnce(async (url: string, data: any) => {
+      mockPost.mockImplementationOnce(async (url: string, data: string) => {
         expect(url).toMatch(/\/API\/QueryTradeInfo/);
 
         const payload = new URLSearchParams(data);
@@ -961,7 +961,7 @@ describe('NewebPay Payments', () => {
     });
 
     it('should query virtual account order info from NewebPay server', async () => {
-      mockPost.mockImplementationOnce(async (url: string, data: any) => {
+      mockPost.mockImplementationOnce(async (url: string, data: string) => {
         expect(url).toMatch(/\/API\/QueryTradeInfo/);
 
         const payload = new URLSearchParams(data);

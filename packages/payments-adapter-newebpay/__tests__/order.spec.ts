@@ -26,7 +26,7 @@ describe('NewebPay Order', () => {
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce((_port?: any, _hostname?: any, listeningListener?: () => void) => {
+    mockedListen.mockImplementationOnce((_port?: number, _hostname?: string, listeningListener?: () => void) => {
       mockServer.listen(0, listeningListener);
 
       return mockServer;
@@ -139,7 +139,7 @@ describe('NewebPay Order', () => {
       withServer: true,
       serverHost: 'https://rytass.com',
       checkoutPath: '/newebpay/checkout',
-      onServerListen: async () => {
+      onServerListen: async (): Promise<void> => {
         const order = await payment2.prepare({
           id: '123142',
           items: [

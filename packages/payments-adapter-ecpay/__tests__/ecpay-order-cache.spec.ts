@@ -1,17 +1,17 @@
 import { LRUCache } from 'lru-cache';
-import { Channel, ECPayChannelCreditCard, ECPayOrderItem, ECPayPayment } from '../src';
+import { Channel, ECPayChannelCreditCard, ECPayOrderItem, ECPayPayment, ECPayOrder, ECPayCommitMessage } from '../src';
 
 describe('ECPayOrder Custom Order Cache', () => {
   it('should use custom order cache', async () => {
-    const lruCache = new LRUCache<string, any>({
+    const lruCache = new LRUCache<string, ECPayOrder<ECPayCommitMessage>>({
       ttlAutopurge: true,
       ttl: 10 * 60 * 1000, // default: 10 mins
     });
 
     const payment = new ECPayPayment({
       ordersCache: {
-        get: async (key: string) => lruCache!.get(key),
-        set: async (key: string, value: any) => {
+        get: async (key: string): Promise<ECPayOrder<ECPayCommitMessage> | undefined> => lruCache!.get(key),
+        set: async (key: string, value: ECPayOrder<ECPayCommitMessage>): Promise<void> => {
           lruCache!.set(key, value);
         },
       },

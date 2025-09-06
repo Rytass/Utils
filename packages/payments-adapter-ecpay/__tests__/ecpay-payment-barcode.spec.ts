@@ -22,7 +22,7 @@ describe('ECPayPayment (Barcode)', () => {
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce((_port?: any, _hostname?: any, listeningListener?: () => void) => {
+    mockedListen.mockImplementationOnce((_port?: number, _hostname?: string, listeningListener?: () => void) => {
       mockServer.listen(0, listeningListener);
 
       return mockServer;
@@ -43,7 +43,7 @@ describe('ECPayPayment (Barcode)', () => {
     it('should throw on not barcode channel set cvsBarcodeExpireDays', done => {
       const payment = new ECPayPayment<ECPayChannelBarcode>({
         withServer: true,
-        onServerListen: () => {
+        onServerListen: (): void => {
           expect(() =>
             payment.prepare({
               // @ts-ignore: Unreachable code error
@@ -67,7 +67,7 @@ describe('ECPayPayment (Barcode)', () => {
     it('should `cvsBarcodeExpireDays` between 1 and 7', done => {
       const payment = new ECPayPayment<ECPayChannelBarcode>({
         withServer: true,
-        onServerListen: () => {
+        onServerListen: (): void => {
           expect(() =>
             payment.prepare({
               channel: Channel.CVS_BARCODE,
@@ -104,7 +104,7 @@ describe('ECPayPayment (Barcode)', () => {
     it('should default virtual expire days is 7', done => {
       const payment = new ECPayPayment<ECPayChannelBarcode>({
         withServer: true,
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare({
             channel: Channel.CVS_BARCODE,
             items: [
@@ -126,7 +126,7 @@ describe('ECPayPayment (Barcode)', () => {
     it('should throw if total aomunt between 17 and 20000', done => {
       const payment = new ECPayPayment<ECPayChannelBarcode>({
         withServer: true,
-        onServerListen: () => {
+        onServerListen: (): void => {
           expect(() =>
             payment.prepare({
               channel: Channel.CVS_BARCODE,
@@ -161,7 +161,7 @@ describe('ECPayPayment (Barcode)', () => {
     it('should represent barcode config on form data', done => {
       const payment = new ECPayPayment<ECPayChannelBarcode>({
         withServer: true,
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare({
             channel: Channel.CVS_BARCODE,
             cvsBarcodeExpireDays: 3,
@@ -200,7 +200,7 @@ describe('ECPayPayment (Barcode)', () => {
     it('should default callback handler commit order', done => {
       const payment = new ECPayPayment<ECPayChannelBarcode>({
         withServer: true,
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare({
             channel: Channel.CVS_BARCODE,
             cvsBarcodeExpireDays: 1,
@@ -266,7 +266,7 @@ describe('ECPayPayment (Barcode)', () => {
     it('should default callback handler keep order status when get barcode failed', done => {
       const payment = new ECPayPayment<ECPayChannelBarcode>({
         withServer: true,
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare({
             channel: Channel.CVS_BARCODE,
             cvsBarcodeExpireDays: 1,
@@ -328,7 +328,7 @@ describe('ECPayPayment (Barcode)', () => {
     it('should received callback of cvs payments', done => {
       const payment = new ECPayPayment<ECPayChannelBarcode>({
         withServer: true,
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare<ECPayChannelBarcode>({
             channel: Channel.CVS_BARCODE,
             items: [

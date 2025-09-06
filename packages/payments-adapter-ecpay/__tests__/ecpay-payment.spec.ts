@@ -30,7 +30,7 @@ describe('ECPayPayment', () => {
 
     const mockedListen = jest.spyOn(mockServer, 'listen');
 
-    mockedListen.mockImplementationOnce((_port?: any, _hostname?: any, listeningListener?: () => void) => {
+    mockedListen.mockImplementationOnce((_port?: number, _hostname?: string, listeningListener?: () => void) => {
       mockServer.listen(0, listeningListener);
 
       return mockServer;
@@ -51,7 +51,7 @@ describe('ECPayPayment', () => {
     it('should reject prepare on server not ready', done => {
       const payment = new ECPayPayment({
         withServer: true,
-        onServerListen: () => {
+        onServerListen: (): void => {
           payment._server?.close(done);
         },
       });
@@ -208,7 +208,7 @@ describe('ECPayPayment', () => {
       const payment = new ECPayPayment<ECPayChannelCreditCard>({
         withServer: true,
         serverHost: 'http://localhost',
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare({
             channel: Channel.CREDIT_CARD,
             items: [
@@ -243,7 +243,7 @@ describe('ECPayPayment', () => {
       const payment = new ECPayPayment({
         withServer: true,
         serverHost: 'http://localhost:3005',
-        onServerListen: () => {
+        onServerListen: (): void => {
           request(payment._server as App)
             .get('/payments/ecpay/notAPath')
             .expect(404)
@@ -258,7 +258,7 @@ describe('ECPayPayment', () => {
       const payment = new ECPayPayment<ECPayChannelCreditCard>({
         withServer: true,
         serverHost: 'http://localhost:3005',
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare({
             channel: Channel.CREDIT_CARD,
             items: [
@@ -321,7 +321,7 @@ describe('ECPayPayment', () => {
       const payment = new ECPayPayment<ECPayChannelCreditCard>({
         withServer: true,
         serverHost: 'http://localhost:3005',
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare({
             channel: Channel.CREDIT_CARD,
             items: [
@@ -392,7 +392,7 @@ describe('ECPayPayment', () => {
       const payment = new ECPayPayment<ECPayChannelCreditCard>({
         withServer: true,
         serverHost: 'http://localhost:3005',
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare({
             channel: Channel.CREDIT_CARD,
             items: [
@@ -455,7 +455,7 @@ describe('ECPayPayment', () => {
       const payment = new ECPayPayment({
         withServer: true,
         serverHost: 'http://localhost:3004',
-        onServerListen: () => {
+        onServerListen: (): void => {
           const successfulResponse = {
             amount: '70',
             auth_code: '777777',
@@ -502,7 +502,7 @@ describe('ECPayPayment', () => {
         withServer: true,
         serverHost: 'http://localhost:3003',
         onCommit: mockedOnCommit,
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare({
             channel: Channel.CREDIT_CARD,
             items: [
@@ -574,7 +574,7 @@ describe('ECPayPayment', () => {
       const payment = new ECPayPayment<ECPayChannelCreditCard>({
         withServer: true,
         serverHost: 'http://localhost:3007',
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await payment.prepare({
             channel: Channel.CREDIT_CARD,
             items: [
@@ -1165,7 +1165,7 @@ describe('ECPayPayment', () => {
     it('should reject invalid channel on callback', done => {
       const testPayment = new ECPayPayment<ECPayChannelCreditCard>({
         withServer: true,
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await testPayment.prepare({
             channel: Channel.CREDIT_CARD,
             items: [
@@ -1219,7 +1219,7 @@ describe('ECPayPayment', () => {
     it('should no effect if duplicate result callback', done => {
       const testPayment = new ECPayPayment<ECPayChannelCreditCard>({
         withServer: true,
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await testPayment.prepare({
             channel: Channel.CREDIT_CARD,
             items: [
@@ -1279,7 +1279,7 @@ describe('ECPayPayment', () => {
     it('should reject if invalid payment type call async info', done => {
       const testPayment = new ECPayPayment<ECPayChannelCreditCard>({
         withServer: true,
-        onServerListen: async () => {
+        onServerListen: async (): Promise<void> => {
           const order = await testPayment.prepare({
             channel: Channel.CREDIT_CARD,
             items: [
