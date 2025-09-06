@@ -19,32 +19,42 @@ import { CategoryNotFoundError } from '../../src/constants/errors/category.error
 import { MultiLanguageArticleCreateDto, SingleArticleCreateDto } from '../../src/typings/article-create.dto';
 import { MultipleLanguageModeIsDisabledError } from '../../src/constants/errors/base.errors';
 import { QuadratsElement } from '@quadrats/core';
+import {
+  MockRepository,
+  MockQueryRunner,
+  SimpleMockRepository,
+  createMockRepository,
+  createMockDataSource,
+  createMockArticleDataLoader,
+  createMockSignatureService,
+} from '../typings/mock-repository.interface';
 
 describe('ArticleBaseService - deleteVersion', () => {
   let service: ArticleBaseService;
-  let mockArticleVersionRepo: any;
+  let mockArticleVersionRepo: MockRepository;
 
   beforeEach(() => {
     mockArticleVersionRepo = {
+      ...createMockRepository('article_versions'),
       createQueryBuilder: jest.fn(),
       softRemove: jest.fn(),
     };
 
     service = new ArticleBaseService(
-      {} as any,
+      createMockRepository('articles'),
       mockArticleVersionRepo,
-      {} as any,
-      {} as any,
+      createMockRepository('article_version_contents'),
+      createMockRepository('categories'),
       true,
       true,
       true,
       [],
-      {} as any,
-      {} as any,
+      createMockRepository('signature_levels'),
+      createMockRepository('article_signatures'),
       true,
-      {} as any,
-      {} as any,
-      {} as any,
+      createMockDataSource(),
+      createMockArticleDataLoader(),
+      createMockSignatureService(),
     );
 
     // Mock the logger to prevent DEBUG outputs
@@ -86,29 +96,30 @@ describe('ArticleBaseService - deleteVersion', () => {
 
 describe('ArticleBaseService - archive', () => {
   let service: ArticleBaseService;
-  let mockArticleRepo: any;
+  let mockArticleRepo: MockRepository;
 
   beforeEach(() => {
     mockArticleRepo = {
+      ...createMockRepository('articles'),
       findOne: jest.fn(),
       softDelete: jest.fn(),
     };
 
     service = new ArticleBaseService(
       mockArticleRepo,
-      {} as any,
-      {} as any,
-      {} as any,
+      createMockRepository('article_versions'),
+      createMockRepository('article_version_contents'),
+      createMockRepository('categories'),
       true,
       true,
       true,
       [],
-      {} as any,
-      {} as any,
+      createMockRepository('signature_levels'),
+      createMockRepository('article_signatures'),
       true,
-      {} as any,
-      {} as any,
-      {} as any,
+      createMockDataSource(),
+      createMockArticleDataLoader(),
+      createMockSignatureService(),
     );
   });
 
@@ -134,8 +145,8 @@ describe('ArticleBaseService - archive', () => {
 
 describe('withdraw', () => {
   let service: ArticleBaseService;
-  let runner: any;
-  let articleSignatureRepo: any;
+  let runner: MockQueryRunner;
+  let articleSignatureRepo: MockRepository;
 
   beforeEach(() => {
     runner = {
@@ -144,85 +155,94 @@ describe('withdraw', () => {
       commitTransaction: jest.fn(),
       rollbackTransaction: jest.fn(),
       release: jest.fn(),
+      query: jest.fn(),
       manager: {
+        save: jest.fn(),
+        softDelete: jest.fn(),
         softDelete: jest.fn(),
         update: jest.fn(),
       },
     };
 
     articleSignatureRepo = {
+      ...createMockRepository('article_signatures'),
       find: jest.fn(),
       save: jest.fn(),
     };
 
     const mockArticleDataLoader = {
-      articleRepo: {} as any,
-      articleVersionRepo: {} as any,
-      signatureService: {} as any,
+      loadByIds: jest.fn(),
+      loadById: jest.fn(),
+      clear: jest.fn(),
+      clearAll: jest.fn(),
       stageLoader: {
         load: jest.fn(),
       },
       stageCache: new Map<string, Promise<ArticleStage>>(),
-      categoryLoader: {} as any,
-      versionLoader: {} as any,
     };
 
-    service = new ArticleBaseService(
-      {} as any, // baseArticleRepo
-      { metadata: { tableName: 'versions' } } as any, // baseArticleVersionRepo
-      {} as any, // baseArticleVersionContentRepo
-      {} as any, // baseCategoryRepo
-      true, // multipleLanguageMode
-      true, // fullTextSearchMode
-      true, // draftMode
-      [], // signatureLevels
-      {} as any, // signatureLevelRepo
-      articleSignatureRepo as any, // ArticleSignatureRepo
-      true, // autoReleaseAfterApproved
-      {
-        createQueryRunner: () => runner,
-      } as any, // dataSource
-      mockArticleDataLoader as any, // articleDataLoader
-      {
-        signatureEnabled: false,
-      } as any, // signatureService
-    );
-  });
-
-  it('should throw if draftMode is disabled', async () => {
-    const mockArticleDataLoader = {
-      articleRepo: {} as any,
-      articleVersionRepo: {} as any,
-      signatureService: {} as any,
-      stageLoader: {
-        load: jest.fn(),
-      },
-      stageCache: new Map(),
-      categoryLoader: {} as any,
-      versionLoader: {} as any,
+    const mockDataSource = {
+      createQueryRunner: (): MockQueryRunner => runner,
+      query: jest.fn(),
     };
 
     const mockSignatureService = {
+      ...createMockSignatureService(),
       signatureEnabled: false,
     };
 
     service = new ArticleBaseService(
-      {} as any, // baseArticleRepo
-      { metadata: { tableName: 'versions' } } as any, // baseArticleVersionRepo
-      {} as any, // baseArticleVersionContentRepo
-      {} as any, // baseCategoryRepo
-      true, // multipleLanguageMode
-      true, // fullTextSearchMode
+      createMockRepository('articles'),
+      createMockRepository('versions'),
+      createMockRepository('version_contents'),
+      createMockRepository('categories'),
+      true,
+      true,
+      true,
+      [],
+      createMockRepository('signature_levels'),
+      articleSignatureRepo,
+      true,
+      mockDataSource,
+      mockArticleDataLoader,
+      mockSignatureService,
+    );
+  });
+
+  it('should throw if draftMode is disabled', async () => {
+    const testMockArticleDataLoader = {
+      ...createMockArticleDataLoader(),
+      stageLoader: {
+        load: jest.fn(),
+      },
+      stageCache: new Map(),
+    };
+
+    const testMockSignatureService = {
+      ...createMockSignatureService(),
+      signatureEnabled: false,
+    };
+
+    const testMockDataSource = {
+      createQueryRunner: (): MockQueryRunner => runner,
+      query: jest.fn(),
+    };
+
+    service = new ArticleBaseService(
+      createMockRepository('articles'),
+      createMockRepository('versions'),
+      createMockRepository('version_contents'),
+      createMockRepository('categories'),
+      true,
+      true,
       false, // draftMode = false
-      [], // signatureLevels
-      {} as any, // signatureLevelRepo
-      {} as any, // articleSignatureRepo (was wrongly mocked before)
-      true, // autoReleaseAfterApproved
-      {
-        createQueryRunner: () => runner,
-      } as any, // dataSource
-      mockArticleDataLoader as any, // articleDataLoader
-      mockSignatureService as any, // signatureService
+      [],
+      createMockRepository('signature_levels'),
+      createMockRepository('article_signatures'),
+      true,
+      testMockDataSource,
+      testMockArticleDataLoader,
+      testMockSignatureService,
     );
 
     await expect(service.withdraw('id', 1)).rejects.toThrow('Draft mode is disabled.');
@@ -241,16 +261,16 @@ describe('withdraw', () => {
   });
 
   it('should withdraw and soft delete correct versions', async () => {
-    jest.spyOn(service, 'findById').mockImplementation((id, options: any) => {
+    jest.spyOn(service, 'findById').mockImplementation((id, options?: { version?: number }) => {
       if (options?.version) {
         return Promise.resolve({
           id,
           version: 1,
           releasedAt: new Date(),
-        }) as any;
+        });
       }
 
-      return Promise.resolve({ id, version: 99 }) as any;
+      return Promise.resolve({ id, version: 99 });
     });
 
     const stageLoader = service['articleDataLoader'].stageLoader.load as jest.Mock;
@@ -315,53 +335,57 @@ describe('withdraw', () => {
 
   it('should use VERIFIED stage when signature is enabled', async () => {
     const mockArticleDataLoader = {
-      articleRepo: {} as any,
-      articleVersionRepo: {} as any,
-      signatureService: {} as any,
+      ...createMockArticleDataLoader(),
       stageLoader: {
         load: jest.fn().mockResolvedValue(ArticleStage.RELEASED),
       },
       stageCache: new Map<string, Promise<ArticleStage>>(),
-      categoryLoader: {} as any,
-      versionLoader: {} as any,
+    };
+
+    const mockDataSourceWithSignature = {
+      createQueryRunner: (): MockQueryRunner => runner,
+      query: jest.fn(),
+    };
+
+    const mockSignatureServiceWithSignature = {
+      ...createMockSignatureService(),
+      signatureEnabled: true,
     };
 
     service = new ArticleBaseService(
-      {} as any, // baseArticleRepo
-      { metadata: { tableName: 'versions' } } as any, // baseArticleVersionRepo
-      {} as any, // baseArticleVersionContentRepo
-      {} as any, // baseCategoryRepo
-      true, // multipleLanguageMode
-      true, // fullTextSearchMode
-      true, // draftMode
-      [], // signatureLevels
-      {} as any, // signatureLevelRepo
-      articleSignatureRepo as any, // ArticleSignatureRepo
-      true, // autoReleaseAfterApproved
-      {
-        createQueryRunner: () => runner,
-      } as any, // dataSource
-      mockArticleDataLoader as any, // articleDataLoader
-      {
-        signatureEnabled: true,
-      } as any, // signatureService
+      createMockRepository('articles'),
+      createMockRepository('versions'),
+      createMockRepository('version_contents'),
+      createMockRepository('categories'),
+      true,
+      true,
+      true,
+      [],
+      createMockRepository('signature_levels'),
+      articleSignatureRepo,
+      true,
+      mockDataSourceWithSignature,
+      mockArticleDataLoader,
+      mockSignatureServiceWithSignature,
     );
 
-    const findByIdSpy = jest.spyOn(service, 'findById').mockImplementation((id, options: any) => {
-      if (options?.stage === ArticleStage.VERIFIED) {
-        return Promise.resolve({ id, version: 2 }) as any;
-      }
+    const findByIdSpy = jest
+      .spyOn(service, 'findById')
+      .mockImplementation((id, options?: { stage?: ArticleStage; version?: number }) => {
+        if (options?.stage === ArticleStage.VERIFIED) {
+          return Promise.resolve({ id, version: 2 });
+        }
 
-      if (options?.version === 1) {
-        return Promise.resolve({
-          id,
-          version: 1,
-          releasedAt: new Date(),
-        }) as any;
-      }
+        if (options?.version === 1) {
+          return Promise.resolve({
+            id,
+            version: 1,
+            releasedAt: new Date(),
+          });
+        }
 
-      return Promise.resolve({ id, version: 99 }) as any;
-    });
+        return Promise.resolve({ id, version: 99 });
+      });
 
     await service.withdraw('id', 1);
 
@@ -373,20 +397,20 @@ describe('withdraw', () => {
 
     stageLoader.mockResolvedValue(ArticleStage.RELEASED);
 
-    jest.spyOn(service, 'findById').mockImplementation((id, options: any) => {
+    jest.spyOn(service, 'findById').mockImplementation((id, options?: { version?: number }) => {
       if (options?.version) {
         return Promise.resolve({
           id,
           version: 1,
           releasedAt: new Date(),
-        }) as any;
+        });
       }
 
       if (options?.stage) {
         return Promise.reject(new Error('fetch failed'));
       }
 
-      return Promise.resolve({ id, version: 99 }) as any;
+      return Promise.resolve({ id, version: 99 });
     });
 
     const result = await service.withdraw('id', 1);
@@ -399,8 +423,7 @@ describe('withdraw', () => {
 
 describe('release', () => {
   let service: ArticleBaseService;
-  let runner: any;
-  const baseArticleVersionRepo = { metadata: { tableName: 'versions' } };
+  let runner: MockQueryRunner;
 
   beforeEach(() => {
     runner = {
@@ -409,44 +432,47 @@ describe('release', () => {
       commitTransaction: jest.fn(),
       rollbackTransaction: jest.fn(),
       release: jest.fn(),
+      query: jest.fn(),
       manager: {
+        save: jest.fn(),
+        softDelete: jest.fn(),
         softRemove: jest.fn(),
         update: jest.fn(),
       },
     };
 
     const mockArticleDataLoader = {
-      articleRepo: {} as any,
-      articleVersionRepo: {} as any,
-      signatureService: {} as any,
+      ...createMockArticleDataLoader(),
       stageLoader: {
         load: jest.fn(),
       },
       stageCache: new Map<string, Promise<ArticleStage>>(),
-      categoryLoader: {} as any,
-      versionLoader: {} as any,
     };
 
     const mockSignatureService = {
+      ...createMockSignatureService(),
       signatureEnabled: false,
-    } as any;
+    };
+
+    const mockDataSource = {
+      createQueryRunner: (): MockQueryRunner => runner,
+      query: jest.fn(),
+    };
 
     service = new ArticleBaseService(
-      {} as any,
-      baseArticleVersionRepo as any,
-      {} as any,
-      {} as any,
+      createMockRepository('articles'),
+      createMockRepository('versions'),
+      createMockRepository('version_contents'),
+      createMockRepository('categories'),
       true,
       true,
       true,
       [],
-      {} as any,
-      {} as any,
+      createMockRepository('signature_levels'),
+      createMockRepository('article_signatures'),
       true,
-      {
-        createQueryRunner: () => runner,
-      } as any,
-      mockArticleDataLoader as any,
+      mockDataSource,
+      mockArticleDataLoader,
       mockSignatureService,
     );
   });
@@ -456,9 +482,9 @@ describe('release', () => {
 
     jest
       .spyOn(service, 'findById')
-      .mockImplementationOnce(() => Promise.resolve({ id: 'id', version: 1 }) as any)
+      .mockImplementationOnce(() => Promise.resolve({ id: 'id', version: 1 }))
       .mockImplementationOnce(() => Promise.reject(new Error('not found')))
-      .mockImplementationOnce(() => Promise.resolve({ id: 'id', version: 1 }) as any);
+      .mockImplementationOnce(() => Promise.resolve({ id: 'id', version: 1 }));
 
     const result = await service.release('id', { releasedAt: now });
 
@@ -1023,7 +1049,7 @@ describe('ArticleBaseService.addVersion', () => {
 
   beforeEach(() => {
     jest.resetAllMocks();
-    mockRepo = (tableName = 'mock_table') => ({
+    mockRepo = (tableName = 'mock_table'): MockRepository => ({
       find: jest.fn(),
       findOne: jest.fn(),
       save: jest.fn(),
@@ -1075,7 +1101,7 @@ describe('ArticleBaseService.addVersion', () => {
     };
 
     mockDataSource = {
-      createQueryRunner: () => runner,
+      createQueryRunner: (): MockQueryRunner => runner,
       query: jest.fn().mockResolvedValue([]),
     };
 
@@ -1932,7 +1958,7 @@ describe('ArticleBaseService.create', () => {
   let mockSignatureService: any;
 
   beforeEach(() => {
-    const mockRepo = () => ({
+    const mockRepo = (): SimpleMockRepository => ({
       find: jest.fn(),
       findOne: jest.fn(),
       save: jest.fn(),

@@ -29,7 +29,7 @@ describe('queryStagesFeaturesCheck', () => {
   class MockSignatureService {
     private _enabled = true;
 
-    setEnabled(value: boolean) {
+    setEnabled(value: boolean): void {
       this._enabled = value;
     }
 
@@ -694,7 +694,7 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
       __esModule: true,
       default: {
         Jieba: class MockJieba {
-          cut() {
+          cut(): string[] {
             return ['test'];
           }
         },

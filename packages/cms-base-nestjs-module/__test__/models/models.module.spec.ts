@@ -1,4 +1,4 @@
-import { DataSource } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Test } from '@nestjs/testing';
 import { BaseArticleRepo, BaseArticleEntity } from '../../src/models/base-article.entity';
 import { BaseArticleVersionRepo, BaseArticleVersionEntity } from '../../src/models/base-article-version.entity';
@@ -55,7 +55,7 @@ describe('CMSBaseModelsModule Factory Functions (direct test)', () => {
 
     for (const [token, entity] of tokenEntityPairs) {
       // This is the exact factory function logic from your module
-      const factoryFunction = (dataSource: DataSource) => dataSource.getRepository(entity);
+      const factoryFunction = (dataSource: DataSource): Repository<any> => dataSource.getRepository(entity);
 
       const result = factoryFunction(mockDataSource);
 
@@ -79,7 +79,7 @@ describe('CMSBaseModelsModule Factory Functions (direct test)', () => {
 
     const providerConfigurations = models.map(([symbol, entity]) => ({
       provide: symbol,
-      useFactory: (dataSource: DataSource) => dataSource.getRepository(entity),
+      useFactory: (dataSource: DataSource): Repository<any> => dataSource.getRepository(entity),
       inject: [DataSource],
     }));
 

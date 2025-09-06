@@ -1,5 +1,6 @@
 import { BaseSignatureLevelEntity } from '../../src/models/base-signature-level.entity';
 import { SignatureService } from '../../src/services/signature.service';
+import { MockQueryRunner } from '../typings/mock-repository.interface';
 
 describe('SignatureService.signatureEnabled', () => {
   it('returns true when signatureLevels has items', () => {
@@ -64,7 +65,7 @@ describe('SignatureService.onApplicationBootstrap', () => {
     };
 
     mockDataSource = {
-      createQueryRunner: () => mockRunner,
+      createQueryRunner: (): MockQueryRunner => mockRunner,
     };
 
     mockSignatureLevelRepo = {
@@ -155,7 +156,7 @@ describe('SignatureService.onApplicationBootstrap', () => {
     };
 
     const mockDataSource = {
-      createQueryRunner: () => mockRunner,
+      createQueryRunner: (): MockQueryRunner => mockRunner,
     };
 
     const mockSignatureLevelRepo = {

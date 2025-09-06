@@ -9,7 +9,6 @@ import { BaseAction } from '../constants/enum/base-action.enum';
 import { BaseResource } from '../constants/enum/base-resource.enum';
 import { MAP_CATEGORY_CUSTOM_FIELDS_TO_ENTITY_COLUMNS } from '../typings/cms-graphql-base-providers';
 import { CustomFieldInput } from '../dto/custom-field.input';
-import { ResolvedCreateCategoryArgsDto } from '../typings/dto/resolved-create-category-args.dto';
 
 @Resolver()
 export class CategoryMutations {

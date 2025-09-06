@@ -4,6 +4,7 @@ import { ArticleBaseService } from '../../src/services/article-base.service';
 import { SignatureService } from '../../src/services/signature.service';
 import { ArticleStage } from '../../src/typings/article-stage.enum';
 import { ArticleSignatureResult } from '../../src/typings/article-signature-result.enum';
+import { MockQueryRunner } from '../typings/mock-repository.interface';
 
 describe('ArticleBaseService.signature', () => {
   let service: any;
@@ -220,7 +221,7 @@ describe('ArticleBaseService.signature', () => {
       release: jest.fn(),
     };
 
-    service.dataSource.createQueryRunner = () => mockRunner;
+    service.dataSource.createQueryRunner = (): MockQueryRunner => mockRunner;
 
     await expect(
       service['signature'](

@@ -9,7 +9,6 @@ import { BaseAction } from '../constants/enum/base-action.enum';
 import { BaseResource } from '../constants/enum/base-resource.enum';
 import { MAP_ARTICLE_CUSTOM_FIELDS_TO_ENTITY_COLUMNS } from '../typings/cms-graphql-base-providers';
 import { CustomFieldInput } from '../dto/custom-field.input';
-import { ResolvedCreateArticleArgsDto } from '../typings/dto/resolved-create-article-args.dto';
 
 @Resolver()
 export class ArticleMutations {

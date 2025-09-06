@@ -8,7 +8,7 @@ jest.mock('@node-rs/jieba', () => ({
   __esModule: true,
   default: {
     Jieba: class MockJieba {
-      cut() {
+      cut(): string[] {
         return ['token1', 'token2'];
       }
     },
