@@ -9,7 +9,7 @@ import '@xyflow/react/dist/style.css';
 const WMSMapModalWrapper: React.FC<any> = props => {
   const [warehouseIds, setWarehouseIds] = useState<string[]>(props.warehouseIds || []);
 
-  const handleNameChange = async (name: string) => {
+  const handleNameChange = async (name: string): Promise<void> => {
     console.log('模擬名稱變更:', name);
     // 模擬 API 調用延遲
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -83,7 +83,7 @@ const meta: Meta<typeof WMSMapModal> = {
     onNodeClick: action('onNodeClick'),
     onSave: action('onSave'),
     onBreadcrumbClick: action('onBreadcrumbClick'),
-    onUpload: async (files: File[]) => {
+    onUpload: async (files: File[]): Promise<string[]> => {
       console.log(
         '模擬上傳:',
         files.map(f => f.name),

@@ -2,6 +2,7 @@
  * @jest-environment node
  */
 
+import { Node } from '@xyflow/react';
 import { mockMapData, simpleMapData, emptyMapData, largeMapData } from '../stories/mock-data';
 import { transformApiDataToNodes } from '../src/utils/api-data-transform';
 import { generateMockImageUrl } from '../stories/mock-image-utils';
@@ -125,12 +126,12 @@ describe('Performance Tests', () => {
       const iterations = 10;
 
       // Warm-up iterations using functional approach
-      const performWarmup = () => transformApiDataToNodes(mockMapData, generateMockImageUrl);
+      const performWarmup = (): Node[] => transformApiDataToNodes(mockMapData, generateMockImageUrl);
 
       Array.from({ length: warmupIterations }, performWarmup);
 
       // Performance measurements using functional approach
-      const measurePerformance = () => {
+      const measurePerformance = (): number => {
         const startTime = performance.now();
 
         transformApiDataToNodes(mockMapData, generateMockImageUrl);

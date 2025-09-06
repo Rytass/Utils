@@ -46,7 +46,7 @@ export const generateMockImageUrl = (filename: string): string => {
   // 如果有對應的圖片映射，使用它；否則生成一個預設圖片
   const finalUrl =
     imageMappings[filename] ||
-    (() => {
+    ((): string => {
       // 預設使用 placeholder 服務生成圖片
       const width = 300;
       const height = 200;
