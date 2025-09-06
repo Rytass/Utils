@@ -22,7 +22,7 @@ export class ItemExcluded<Item extends OrderItem = OrderItem, Options extends Ob
   readonly options?: Options;
   private readonly scope: (keyof Item)[] | null;
   private readonly itemSet: Set<string> | null;
-  private readonly isMatchedItem: ItemSpecifiedResolvedFnInput<any>['isMatchedItem'] | null;
+  private readonly isMatchedItem: ItemSpecifiedResolvedFnInput<Item>['isMatchedItem'] | null;
 
   /**
    * Item excluded condition.
@@ -47,7 +47,7 @@ export class ItemExcluded<Item extends OrderItem = OrderItem, Options extends Ob
 
     return order.itemManager.flattenItems.filter(item => {
       if (typeof this.isMatchedItem === 'function') {
-        return item.unitPrice > 0 && !this.isMatchedItem(item);
+        return item.unitPrice > 0 && !this.isMatchedItem(item as unknown as FlattenOrderItem<Item>);
       }
 
       const excludedItem = this.excludedItem(item);
@@ -73,6 +73,6 @@ export class ItemExcluded<Item extends OrderItem = OrderItem, Options extends Ob
   private excludedItem(item: FlattenOrderItem): string | undefined {
     const keyName = (this.scope as string[]).find(s => s in item);
 
-    return keyName ? item[keyName] : undefined;
+    return keyName ? (item[keyName] as string) : undefined;
   }
 }

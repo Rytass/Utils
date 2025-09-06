@@ -16,11 +16,14 @@ export abstract class BaseDiscount implements Policy<PolicyDiscountDescription> 
   readonly options?: DiscountOptions;
   matchedItems!: (order: Order) => FlattenOrderItem[];
   valid!: (order: Order) => boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   discount!: (..._: any[]) => number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   description!: (..._: any[]) => PolicyDiscountDescription;
   resolve!: <PolicyDiscountDescription>(
     order: Order,
     descriptions: PolicyDiscountDescription[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ..._: any[]
   ) => PolicyDiscountDescription[];
 }

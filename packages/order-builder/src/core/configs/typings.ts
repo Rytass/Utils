@@ -58,7 +58,10 @@ export type PolicyPickStrategyType = 'order-based' | 'item-based';
  */
 export interface PolicyPickStrategy {
   readonly type: PolicyPickStrategyType;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   pick(order: Order, policies: Policies, ..._: any[]): PolicyDiscountDescription[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   pickOne(order: Order, policy: Policy, ..._: any[]): PolicyDiscountDescription[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   pickMulti(order: Order, policies: Policy[], ..._: any[]): PolicyDiscountDescription[];
 }

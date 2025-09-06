@@ -3,6 +3,7 @@ import { ObjRecord } from '../typings';
 import { ItemDiscountRecord } from './order-item-record-collection';
 import { Condition } from '../conditions';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type OrderItemConditionCb = (..._: any[]) => boolean;
 
 type OrderItemConditionRef<CB extends OrderItemConditionCb = OrderItemConditionCb> = CB | string | string[];
