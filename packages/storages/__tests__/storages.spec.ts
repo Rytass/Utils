@@ -64,7 +64,7 @@ describe('Storage', () => {
 
     it('should get filename stream can handle multiple chunk stream, unknown file type', done => {
       const stream = new Readable({
-        read() {},
+        read(): void {},
       });
 
       storage.getStreamFilename(stream).then(([resolvedFilename]) => {
@@ -88,7 +88,7 @@ describe('Storage', () => {
 
     it('should get filename stream can handle multiple chunk stream', done => {
       const stream = new Readable({
-        read() {},
+        read(): void {},
       });
 
       storage.getStreamFilename(stream).then(([resolvedFilename]) => {
@@ -108,7 +108,7 @@ describe('Storage', () => {
 
     it('should get filename stream can handle multiple chunk stream, first chunk result', done => {
       const stream = new Readable({
-        read() {},
+        read(): void {},
       });
 
       storage.getStreamFilename(stream).then(([resolvedFilename]) => {
@@ -127,7 +127,7 @@ describe('Storage', () => {
 
     it('should get filename stream can handle multiple chunk stream, first chunk result with delay', done => {
       const stream = new Readable({
-        read() {},
+        read(): void {},
       });
 
       storage.getStreamFilename(stream).then(([resolvedFilename]) => {

@@ -24,15 +24,18 @@ const GENERAL_ERROR_FILE = 'GENERAL_ERROR_FILE';
 
 const fakeStorage = new Map<string, Buffer>();
 
-let saveMock = jest.fn((filename: string) => (buffer: Buffer, _options: Record<string, string>) => {
-  return fakeStorage.set(filename, buffer);
-});
+let saveMock = jest.fn(
+  (filename: string) =>
+    (buffer: Buffer, _options: Record<string, string>): Map<string, Buffer> => {
+      return fakeStorage.set(filename, buffer);
+    },
+);
 
-const getSignedUrlMock = jest.fn((_filename: string) => (_options: Record<string, string>) => {
+const getSignedUrlMock = jest.fn((_filename: string) => (_options: Record<string, string>): string[] => {
   return [FAKE_URL];
 });
 
-const downloadMock = jest.fn((filename: string) => () => {
+const downloadMock = jest.fn((filename: string) => (): Buffer[] => {
   if (filename === GENERAL_ERROR_FILE) {
     throw new Error('Unknown Error');
   }
@@ -44,7 +47,7 @@ const downloadMock = jest.fn((filename: string) => () => {
   return [buffer];
 });
 
-const readStreamMock = jest.fn((filename: string) => () => {
+const readStreamMock = jest.fn((filename: string) => (): Readable => {
   if (filename === GENERAL_ERROR_FILE) {
     throw new Error('Unknown Error');
   }
@@ -56,12 +59,12 @@ const readStreamMock = jest.fn((filename: string) => () => {
   return Readable.from(buffer);
 });
 
-let writeStreamMock = jest.fn((filename: string) => (_options: Record<string, string>) => {
+let writeStreamMock = jest.fn((filename: string) => (_options: Record<string, string>): Writable => {
   const stream = new Writable();
 
   let buffer = Buffer.from([]);
 
-  stream._write = (chunk: Buffer, _encoding, done) => {
+  stream._write = (chunk: Buffer, _encoding, done): void => {
     buffer = Buffer.concat([buffer, chunk]);
 
     done();
@@ -74,15 +77,15 @@ let writeStreamMock = jest.fn((filename: string) => (_options: Record<string, st
   return stream;
 });
 
-const deleteMock = jest.fn((filename: string) => () => {
+const deleteMock = jest.fn((filename: string) => (): void => {
   fakeStorage.delete(filename);
 });
 
-const existsMock = jest.fn((filename: string) => () => {
+const existsMock = jest.fn((filename: string) => (): boolean[] => {
   return [fakeStorage.has(filename)];
 });
 
-const moveMock = jest.fn((filename: string) => (newFilename: string) => {
+const moveMock = jest.fn((filename: string) => (newFilename: string): void => {
   const buffer = fakeStorage.get(filename);
 
   if (!buffer) throw new Error(`No such object: ${BUCKET}/${filename}`);
@@ -92,18 +95,18 @@ const moveMock = jest.fn((filename: string) => (newFilename: string) => {
   fakeStorage.delete(filename);
 });
 
-const setMetadataMock = jest.fn((_filename: string) => (_metadata: FileMetadata) => {});
+const setMetadataMock = jest.fn((_filename: string) => (_metadata: FileMetadata): void => {});
 
-const fileMock = jest.fn(filename => ({
-  save: (buffer: Buffer, options: Record<string, string>) => saveMock(filename)(buffer, options),
-  download: () => downloadMock(filename)(),
-  delete: () => deleteMock(filename)(),
-  move: (newFilename: string) => moveMock(filename)(newFilename),
-  createReadStream: () => readStreamMock(filename)(),
-  createWriteStream: (options: Record<string, string>) => writeStreamMock(filename)(options),
-  getSignedUrl: (options: Record<string, string>) => getSignedUrlMock(filename)(options),
-  exists: () => existsMock(filename)(),
-  setMetadata: (metadata: FileMetadata) => setMetadataMock(filename)(metadata),
+const fileMock = jest.fn((filename): any => ({
+  save: (buffer: Buffer, options: Record<string, string>): Map<string, Buffer> => saveMock(filename)(buffer, options),
+  download: (): Buffer[] => downloadMock(filename)(),
+  delete: (): void => deleteMock(filename)(),
+  move: (newFilename: string): void => moveMock(filename)(newFilename),
+  createReadStream: (): Readable => readStreamMock(filename)(),
+  createWriteStream: (options: Record<string, string>): Writable => writeStreamMock(filename)(options),
+  getSignedUrl: (options: Record<string, string>): string[] => getSignedUrlMock(filename)(options),
+  exists: (): boolean[] => existsMock(filename)(),
+  setMetadata: (metadata: FileMetadata): void => setMetadataMock(filename)(metadata),
 }));
 
 describe('GCS adapter', () => {
@@ -399,7 +402,7 @@ describe('GCS adapter', () => {
   it('should write buffer file with content type', async () => {
     const originSaveMock = saveMock;
 
-    saveMock = jest.fn((filename: string) => (buffer: Buffer, options: Record<string, string>) => {
+    saveMock = jest.fn((filename: string) => (buffer: Buffer, options: Record<string, string>): Map<string, Buffer> => {
       expect(options.contentType).toBe('image/png');
 
       return fakeStorage.set(filename, buffer);
@@ -426,14 +429,14 @@ describe('GCS adapter', () => {
   it('should write stream file with content type', async () => {
     const originWriteStreamMock = writeStreamMock;
 
-    writeStreamMock = jest.fn((filename: string) => (options: Record<string, string>) => {
+    writeStreamMock = jest.fn((filename: string) => (options: Record<string, string>): Writable => {
       expect(options.contentType).toBe('image/png');
 
       const stream = new Writable();
 
       let buffer = Buffer.from([]);
 
-      stream._write = (chunk: Buffer, _encoding, done) => {
+      stream._write = (chunk: Buffer, _encoding, done): void => {
         buffer = Buffer.concat([buffer, chunk]);
 
         done();

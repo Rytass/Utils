@@ -38,12 +38,12 @@ describe('AWS S3 storage adapter', () => {
         fakeStorage.set(params.Key, params.Body);
 
         return {
-          promise: () => uploadPromiseMocked,
+          promise: (): any => uploadPromiseMocked,
         };
       }
 
       return {
-        promise: () =>
+        promise: (): Promise<any> =>
           new Promise(pResolve => {
             let buffer = Buffer.from([]);
 
@@ -67,7 +67,7 @@ describe('AWS S3 storage adapter', () => {
     fakeStorage.delete(params.Key);
 
     return {
-      promise: () => Promise.resolve(),
+      promise: (): Promise<void> => Promise.resolve(),
     };
   });
 
@@ -75,7 +75,7 @@ describe('AWS S3 storage adapter', () => {
     if (!fakeStorage.has(params.Key)) {
       if (params.Key === GENERAL_ERROR_FILE) {
         return {
-          promise: () => Promise.reject(new Error('Unknown Error')),
+          promise: (): Promise<never> => Promise.reject(new Error('Unknown Error')),
         };
       }
 
@@ -84,12 +84,12 @@ describe('AWS S3 storage adapter', () => {
       notExistsError.name = 'NotFound';
 
       return {
-        promise: () => Promise.reject(notExistsError),
+        promise: (): Promise<never> => Promise.reject(notExistsError),
       };
     }
 
     return {
-      promise: () => Promise.resolve(),
+      promise: (): Promise<void> => Promise.resolve(),
     };
   });
 
@@ -107,7 +107,7 @@ describe('AWS S3 storage adapter', () => {
     }
 
     return {
-      promise: () =>
+      promise: (): Promise<{ Body: Buffer | undefined }> =>
         Promise.resolve({
           Body: fakeStorage.get(params.Key),
         }),
@@ -122,7 +122,7 @@ describe('AWS S3 storage adapter', () => {
     fakeStorage.set(params.Key, fakeStorage.get(oldKey) as Buffer);
 
     return {
-      promise: () => Promise.resolve(),
+      promise: (): Promise<void> => Promise.resolve(),
     };
   });
 
@@ -133,7 +133,7 @@ describe('AWS S3 storage adapter', () => {
   beforeAll(() => {
     jest.mock('aws-sdk', () => ({
       S3: jest.fn(() => ({
-        upload: (params: S3.Types.PutObjectRequest, options?: S3.ManagedUpload.ManagedUploadOptions) =>
+        upload: (params: S3.Types.PutObjectRequest, options?: S3.ManagedUpload.ManagedUploadOptions): any =>
           uploadMocked(params, options),
         getObject: getMocked,
         headObject: headMocked,
@@ -399,7 +399,7 @@ describe('AWS S3 storage adapter', () => {
       fakeStorage.set(params.Key, params.Body as Buffer);
 
       return {
-        promise: () => uploadPromiseMocked,
+        promise: (): any => uploadPromiseMocked,
       };
     });
 
@@ -424,7 +424,7 @@ describe('AWS S3 storage adapter', () => {
       fakeStorage.set(params.Key, params.Body as Buffer);
 
       return {
-        promise: () => uploadPromiseMocked,
+        promise: (): any => uploadPromiseMocked,
       };
     });
 
@@ -438,7 +438,7 @@ describe('AWS S3 storage adapter', () => {
     });
 
     const stream = new Readable({
-      read() {},
+      read(): void {},
     });
 
     setImmediate(() => {
@@ -459,7 +459,7 @@ describe('AWS S3 storage adapter', () => {
       expect(params.ContentType).toBe('image/png');
 
       return {
-        promise: () =>
+        promise: (): Promise<any> =>
           new Promise(pResolve => {
             let buffer = Buffer.from([]);
 

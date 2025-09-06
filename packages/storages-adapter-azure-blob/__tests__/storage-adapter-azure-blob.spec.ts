@@ -28,7 +28,7 @@ const getBlobClientMock = jest.fn((_filename: string) => ({
 }));
 
 const downloadMock = jest.fn(
-  (filename: string) => () =>
+  (filename: string) => (): Promise<any> =>
     Promise.resolve({
       blobBody: Promise.resolve({
         arrayBuffer: () =>
@@ -57,7 +57,12 @@ const downloadMock = jest.fn(
 
 let uploadStreamMock = jest.fn(
   (filename: string) =>
-    (stream: Readable, _bufferSize?: number, _maxConcurrency?: number, _options?: BlockBlobUploadStreamOptions) =>
+    (
+      stream: Readable,
+      _bufferSize?: number,
+      _maxConcurrency?: number,
+      _options?: BlockBlobUploadStreamOptions,
+    ): Promise<void> =>
       new Promise<void>(resolve => {
         let buffer = Buffer.from([]);
 
@@ -89,7 +94,7 @@ const deleteBlobMock = jest.fn(filename => {
   return Promise.resolve();
 });
 
-const existsMock = jest.fn((filename: string) => () => Promise.resolve(filename !== NOT_FOUND_FILE));
+const existsMock = jest.fn((filename: string) => (): Promise<boolean> => Promise.resolve(filename !== NOT_FOUND_FILE));
 
 const getBlockBlobClientMock = jest.fn((filename: string) => ({
   download: downloadMock(filename),
@@ -116,12 +121,12 @@ describe('Azure Blob adapter', () => {
     jest.mock('@azure/storage-blob', () => ({
       BlobSASPermissions: MockBlobSASPermissions,
       BlobServiceClient: {
-        fromConnectionString: (_connectionString: string) => ({
+        fromConnectionString: (_connectionString: string): any => ({
           getContainerClient: containerClientMock,
         }),
       },
-      generateBlobSASQueryParameters: () => ({
-        toString: () => 'a=1',
+      generateBlobSASQueryParameters: (): any => ({
+        toString: (): string => 'a=1',
       }),
     }));
   });
@@ -397,7 +402,12 @@ describe('Azure Blob adapter', () => {
 
     uploadStreamMock = jest.fn(
       (filename: string) =>
-        (stream: Readable, _bufferSize?: number, _maxConcurrency?: number, options?: BlockBlobUploadStreamOptions) =>
+        (
+          stream: Readable,
+          _bufferSize?: number,
+          _maxConcurrency?: number,
+          options?: BlockBlobUploadStreamOptions,
+        ): Promise<void> =>
           new Promise<void>(resolve => {
             expect(options?.blobHTTPHeaders?.blobContentType).toBe('image/png');
 
