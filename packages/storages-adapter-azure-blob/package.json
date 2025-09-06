@@ -18,7 +18,7 @@
   "scripts": {
     "clean": "node ../../scripts/clean-build.cjs",
     "build": "npm run clean && node ../../scripts/build.cjs",
-    "lint": "npx eslint src --ext .ts,.tsx --fix",
+    "lint": "npx eslint . --ext .ts,.tsx --fix",
     "test": "npx jest --config ../../jest.config.js --testPathPatterns=packages/storages-adapter-azure-blob --passWithNoTests",
     "test:coverage": "npx jest --coverage --config ../../jest.config.js --testPathPatterns=packages/storages-adapter-azure-blob --passWithNoTests"
   },
