@@ -24,7 +24,7 @@ describe('EZPay Invoice Query', () => {
   it('should query invoice with invoice number', async () => {
     const mockPost = jest.spyOn(axios, 'post');
 
-    mockPost.mockImplementation(async (url: string, data: any) => {
+    mockPost.mockImplementation(async (url: string, data: unknown) => {
       expect(url).toMatch(/\/Api\/invoice_search$/);
 
       const formData = data as FormData;
@@ -128,7 +128,7 @@ describe('EZPay Invoice Query', () => {
   it('should query void invoice with invoice number', async () => {
     const mockPost = jest.spyOn(axios, 'post');
 
-    mockPost.mockImplementation(async (url: string, data: any) => {
+    mockPost.mockImplementation(async (url: string, data: unknown) => {
       expect(url).toMatch(/\/Api\/invoice_search$/);
 
       const formData = data as FormData;
@@ -231,7 +231,7 @@ describe('EZPay Invoice Query', () => {
   it('should query invoice with orderId', async () => {
     const mockPost = jest.spyOn(axios, 'post');
 
-    mockPost.mockImplementation(async (url: string, data: any) => {
+    mockPost.mockImplementation(async (url: string, data: unknown) => {
       expect(url).toMatch(/\/Api\/invoice_search$/);
 
       const formData = data as FormData;
@@ -333,7 +333,7 @@ describe('EZPay Invoice Query', () => {
   it('should query zero tax invoice with orderId', async () => {
     const mockPost = jest.spyOn(axios, 'post');
 
-    mockPost.mockImplementation(async (url: string, data: any) => {
+    mockPost.mockImplementation(async (url: string, data: unknown) => {
       expect(url).toMatch(/\/Api\/invoice_search$/);
 
       const formData = data as FormData;
@@ -432,7 +432,7 @@ describe('EZPay Invoice Query', () => {
   it('should query tax free invoice with orderId', async () => {
     const mockPost = jest.spyOn(axios, 'post');
 
-    mockPost.mockImplementation(async (url: string, data: any) => {
+    mockPost.mockImplementation(async (url: string, data: unknown) => {
       expect(url).toMatch(/\/Api\/invoice_search$/);
 
       const formData = data as FormData;
@@ -531,7 +531,7 @@ describe('EZPay Invoice Query', () => {
   it('should query mixed tax invoice with orderId', async () => {
     const mockPost = jest.spyOn(axios, 'post');
 
-    mockPost.mockImplementation(async (url: string, data: any) => {
+    mockPost.mockImplementation(async (url: string, data: unknown) => {
       expect(url).toMatch(/\/Api\/invoice_search$/);
 
       const formData = data as FormData;
@@ -655,7 +655,7 @@ describe('EZPay Invoice Query', () => {
   it('should throw on check code invalid', async () => {
     const mockPost = jest.spyOn(axios, 'post');
 
-    mockPost.mockImplementation(async (_url: string, _data: any) => {
+    mockPost.mockImplementation(async (_url: string, _data: unknown) => {
       return {
         data: {
           MerchantID: MERCHANT_ID,
@@ -726,7 +726,7 @@ describe('EZPay Invoice Query', () => {
   it('should throw on item parse failed', async () => {
     const mockPost = jest.spyOn(axios, 'post');
 
-    mockPost.mockImplementation(async (_url: string, _data: any) => {
+    mockPost.mockImplementation(async (_url: string, _data: unknown) => {
       return {
         data: {
           MerchantID: MERCHANT_ID,
@@ -797,7 +797,7 @@ describe('EZPay Invoice Query', () => {
   it('should throw error on gateway failed', async () => {
     const mockPost = jest.spyOn(axios, 'post');
 
-    mockPost.mockImplementation(async (_url: string, _data: any) => {
+    mockPost.mockImplementation(async (_url: string, _data: unknown) => {
       return {
         data: {
           MerchantID: MERCHANT_ID,

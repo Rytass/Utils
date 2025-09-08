@@ -5,6 +5,13 @@
 import { InvoiceState, InvoiceCarrierType, InvoiceAllowanceState } from '@rytass/invoice';
 import { AmegoInvoiceGateway, AmegoBaseUrls } from '../src';
 
+// Interface for testing private properties
+interface AmegoInvoiceGatewayWithPrivates extends AmegoInvoiceGateway {
+  baseUrl: string;
+  vatNumber: string;
+  appKey: string;
+}
+
 describe('AmegoInvoiceGateway', () => {
   let gateway: AmegoInvoiceGateway;
 
@@ -206,9 +213,9 @@ describe('AmegoInvoiceGateway', () => {
       const gateway = new AmegoInvoiceGateway();
 
       // Access private properties via any to test default values
-      expect((gateway as any).baseUrl).toBe(AmegoBaseUrls.DEVELOPMENT);
-      expect((gateway as any).vatNumber).toBe('12345678');
-      expect((gateway as any).appKey).toBe('sHeq7t8G1wiQvhAuIM27');
+      expect((gateway as AmegoInvoiceGatewayWithPrivates).baseUrl).toBe(AmegoBaseUrls.DEVELOPMENT);
+      expect((gateway as AmegoInvoiceGatewayWithPrivates).vatNumber).toBe('12345678');
+      expect((gateway as AmegoInvoiceGatewayWithPrivates).appKey).toBe('sHeq7t8G1wiQvhAuIM27');
     });
 
     it('should use provided options', () => {
@@ -219,9 +226,9 @@ describe('AmegoInvoiceGateway', () => {
       });
 
       // Access private properties via any to test custom values
-      expect((gateway as any).baseUrl).toBe(AmegoBaseUrls.PRODUCTION);
-      expect((gateway as any).vatNumber).toBe('87654321');
-      expect((gateway as any).appKey).toBe('customAppKey');
+      expect((gateway as AmegoInvoiceGatewayWithPrivates).baseUrl).toBe(AmegoBaseUrls.PRODUCTION);
+      expect((gateway as AmegoInvoiceGatewayWithPrivates).vatNumber).toBe('87654321');
+      expect((gateway as AmegoInvoiceGatewayWithPrivates).appKey).toBe('customAppKey');
     });
 
     it('should handle partial options', () => {
@@ -231,27 +238,27 @@ describe('AmegoInvoiceGateway', () => {
       });
 
       // Access private properties via any to test mixed values
-      expect((gateway as any).baseUrl).toBe(AmegoBaseUrls.DEVELOPMENT); // default
-      expect((gateway as any).vatNumber).toBe('87654321'); // provided
-      expect((gateway as any).appKey).toBe('customAppKey'); // provided
+      expect((gateway as AmegoInvoiceGatewayWithPrivates).baseUrl).toBe(AmegoBaseUrls.DEVELOPMENT); // default
+      expect((gateway as AmegoInvoiceGatewayWithPrivates).vatNumber).toBe('87654321'); // provided
+      expect((gateway as AmegoInvoiceGatewayWithPrivates).appKey).toBe('customAppKey'); // provided
     });
   });
 
   describe('parseCarrierFromResponse (private method test)', () => {
     it('should return undefined for empty carrier type', () => {
-      const result = (gateway as any).parseCarrierFromResponse('', 'test', '');
+      const result = (gateway as AmegoInvoiceGatewayWithPrivates).parseCarrierFromResponse('', 'test', '');
 
       expect(result).toBeUndefined();
     });
 
     it('should return undefined for null carrier type', () => {
-      const result = (gateway as any).parseCarrierFromResponse(null, 'test', '');
+      const result = (gateway as AmegoInvoiceGatewayWithPrivates).parseCarrierFromResponse(null, 'test', '');
 
       expect(result).toBeUndefined();
     });
 
     it('should parse mobile carrier type', () => {
-      const result = (gateway as any).parseCarrierFromResponse('3J0002', '/DDPD7U2', '');
+      const result = (gateway as AmegoInvoiceGatewayWithPrivates).parseCarrierFromResponse('3J0002', '/DDPD7U2', '');
 
       expect(result).toEqual({
         type: InvoiceCarrierType.MOBILE,
@@ -260,7 +267,7 @@ describe('AmegoInvoiceGateway', () => {
     });
 
     it('should parse mobile carrier type with carrierId2', () => {
-      const result = (gateway as any).parseCarrierFromResponse('3J0002', '', '/DDPD7U2');
+      const result = (gateway as AmegoInvoiceGatewayWithPrivates).parseCarrierFromResponse('3J0002', '', '/DDPD7U2');
 
       expect(result).toEqual({
         type: InvoiceCarrierType.MOBILE,
@@ -269,7 +276,7 @@ describe('AmegoInvoiceGateway', () => {
     });
 
     it('should parse moica carrier type', () => {
-      const result = (gateway as any).parseCarrierFromResponse('CQ0001', 'ABCD1234', '');
+      const result = (gateway as AmegoInvoiceGatewayWithPrivates).parseCarrierFromResponse('CQ0001', 'ABCD1234', '');
 
       expect(result).toEqual({
         type: InvoiceCarrierType.MOICA,
@@ -278,7 +285,11 @@ describe('AmegoInvoiceGateway', () => {
     });
 
     it('should parse platform carrier type', () => {
-      const result = (gateway as any).parseCarrierFromResponse('amego', 'test@example.com', '');
+      const result = (gateway as AmegoInvoiceGatewayWithPrivates).parseCarrierFromResponse(
+        'amego',
+        'test@example.com',
+        '',
+      );
 
       expect(result).toEqual({
         type: InvoiceCarrierType.PLATFORM,
@@ -287,7 +298,7 @@ describe('AmegoInvoiceGateway', () => {
     });
 
     it('should parse love code from unknown carrier type', () => {
-      const result = (gateway as any).parseCarrierFromResponse('unknown', '123456', '');
+      const result = (gateway as AmegoInvoiceGatewayWithPrivates).parseCarrierFromResponse('unknown', '123456', '');
 
       expect(result).toEqual({
         type: InvoiceCarrierType.LOVE_CODE,
@@ -296,25 +307,29 @@ describe('AmegoInvoiceGateway', () => {
     });
 
     it('should return undefined for invalid love code (too short)', () => {
-      const result = (gateway as any).parseCarrierFromResponse('unknown', '12', '');
+      const result = (gateway as AmegoInvoiceGatewayWithPrivates).parseCarrierFromResponse('unknown', '12', '');
 
       expect(result).toBeUndefined();
     });
 
     it('should return undefined for invalid love code (too long)', () => {
-      const result = (gateway as any).parseCarrierFromResponse('unknown', '123456789012345678', '');
+      const result = (gateway as AmegoInvoiceGatewayWithPrivates).parseCarrierFromResponse(
+        'unknown',
+        '123456789012345678',
+        '',
+      );
 
       expect(result).toBeUndefined();
     });
 
     it('should return undefined for invalid love code (non-numeric)', () => {
-      const result = (gateway as any).parseCarrierFromResponse('unknown', '12abc6', '');
+      const result = (gateway as AmegoInvoiceGatewayWithPrivates).parseCarrierFromResponse('unknown', '12abc6', '');
 
       expect(result).toBeUndefined();
     });
 
     it('should return undefined for unknown carrier type with empty code', () => {
-      const result = (gateway as any).parseCarrierFromResponse('unknown', '', '');
+      const result = (gateway as AmegoInvoiceGatewayWithPrivates).parseCarrierFromResponse('unknown', '', '');
 
       expect(result).toBeUndefined();
     });

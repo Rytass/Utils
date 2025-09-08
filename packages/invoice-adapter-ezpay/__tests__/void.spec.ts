@@ -46,7 +46,7 @@ describe('EZPayInvoiceGateway Void', () => {
   const SHOULD_THROW_REASON = 'THROWWWWW';
 
   beforeAll(() => {
-    post.mockImplementation(async (_url: string, data: any) => {
+    post.mockImplementation(async (_url: string, data: unknown) => {
       const formData = data as FormData;
 
       const payloadArray = parse(formData.getBuffer(), formData.getBoundary());

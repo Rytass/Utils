@@ -73,7 +73,7 @@ export class EZPayInvoiceGateway implements InvoiceGateway<EZPayPaymentItem, EZP
     return [decipher.update(secret, 'hex', 'utf8'), decipher.final('utf8')].join('').replace(/\x1b/g, '') as T;
   }
 
-  private getResponseCheckCode<T extends Record<string, any>>(response: T): string {
+  private getResponseCheckCode<T extends Record<string, unknown>>(response: T): string {
     const encodedData = Object.entries(response)
       .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
       .map(([key, value]) => `${key}=${value}`)

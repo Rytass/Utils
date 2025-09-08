@@ -106,7 +106,7 @@ describe('EZPayInvoiceGateway', () => {
     const invoiceGateway = new EZPayInvoiceGateway();
 
     beforeAll(() => {
-      post.mockImplementation(async (_url: string, data: any) => {
+      post.mockImplementation(async (_url: string, data: unknown) => {
         const formData = data as FormData;
 
         const payloadArray = parse(formData.getBuffer(), formData.getBoundary());
@@ -192,7 +192,7 @@ describe('EZPayInvoiceGateway', () => {
     });
 
     beforeAll(() => {
-      post.mockImplementation(async (url: string, data: any) => {
+      post.mockImplementation(async (url: string, data: unknown) => {
         expect(url).toBe(`${EZPayBaseUrls.PRODUCTION}/Api/invoice_issue`);
 
         const formData = data as FormData;
@@ -275,7 +275,7 @@ describe('EZPayInvoiceGateway', () => {
     const invoiceGateway = new EZPayInvoiceGateway();
 
     beforeAll(() => {
-      post.mockImplementation(async (_url: string, data: any) => {
+      post.mockImplementation(async (_url: string, data: unknown) => {
         const formData = data as FormData;
 
         const payloadArray = parse(formData.getBuffer(), formData.getBoundary());
@@ -655,7 +655,7 @@ describe('EZPayInvoiceGateway', () => {
     const invoiceGateway = new EZPayInvoiceGateway();
 
     it('should use vatNumber when buyer name length large than 61 and B2B invoice', async () => {
-      post.mockImplementationOnce(async (_url: string, data: any) => {
+      post.mockImplementationOnce(async (_url: string, data: unknown) => {
         const params = parseFormData(data as FormData, DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
         expect(params.BuyerName).toBe('54366906');
@@ -682,7 +682,7 @@ describe('EZPayInvoiceGateway', () => {
     });
 
     it('should represent on love code carrier', async () => {
-      post.mockImplementationOnce(async (url: string, data: any) => {
+      post.mockImplementationOnce(async (url: string, data: unknown) => {
         if (url.match(/checkLoveCode$/)) {
           return {
             data: {
@@ -723,7 +723,7 @@ describe('EZPayInvoiceGateway', () => {
     });
 
     it('should represent custom marks', async () => {
-      post.mockImplementationOnce(async (_url: string, data: any) => {
+      post.mockImplementationOnce(async (_url: string, data: unknown) => {
         const params = parseFormData(data as FormData, DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
         expect(params.CustomsClearance).toBe('2');
@@ -750,7 +750,7 @@ describe('EZPayInvoiceGateway', () => {
         },
       });
 
-      post.mockImplementationOnce(async (_url: string, data: any) => {
+      post.mockImplementationOnce(async (_url: string, data: unknown) => {
         const params = parseFormData(data as FormData, DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
         expect(params.CustomsClearance).toBe('1');
@@ -779,7 +779,7 @@ describe('EZPayInvoiceGateway', () => {
     });
 
     it('should represent mixed tax type', async () => {
-      post.mockImplementationOnce(async (_url: string, data: any) => {
+      post.mockImplementationOnce(async (_url: string, data: unknown) => {
         const params = parseFormData(data as FormData, DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
         expect(params.AmtSales).toBe('13');
@@ -813,7 +813,7 @@ describe('EZPayInvoiceGateway', () => {
         },
       });
 
-      post.mockImplementationOnce(async (_url: string, data: any) => {
+      post.mockImplementationOnce(async (_url: string, data: unknown) => {
         const params = parseFormData(data as FormData, DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
         expect(params.AmtSales).toBe('13');
@@ -849,7 +849,7 @@ describe('EZPayInvoiceGateway', () => {
     });
 
     it('should represent on special tax rate', async () => {
-      post.mockImplementationOnce(async (_url: string, data: any) => {
+      post.mockImplementationOnce(async (_url: string, data: unknown) => {
         const params = parseFormData(data as FormData, DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
         expect(params.Amt).toBe('18');
@@ -877,7 +877,7 @@ describe('EZPayInvoiceGateway', () => {
     });
 
     it('should issue with mobile carrier', async () => {
-      post.mockImplementation(async (url: string, data: any) => {
+      post.mockImplementation(async (url: string, data: unknown) => {
         if (url.match(/checkBarCode$/)) {
           return {
             data: {
@@ -919,7 +919,7 @@ describe('EZPayInvoiceGateway', () => {
     });
 
     it('should issue with moica carrier', async () => {
-      post.mockImplementationOnce(async (_url: string, data: any) => {
+      post.mockImplementationOnce(async (_url: string, data: unknown) => {
         const params = parseFormData(data as FormData, DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
         expect(params.CarrierType).toBe('1');
@@ -947,7 +947,7 @@ describe('EZPayInvoiceGateway', () => {
     });
 
     it('should issue with no carrier for B2B invoice', async () => {
-      post.mockImplementationOnce(async (_url: string, data: any) => {
+      post.mockImplementationOnce(async (_url: string, data: unknown) => {
         const params = parseFormData(data as FormData, DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
         expect(params.PrintFlag).toBe('Y');
@@ -974,7 +974,7 @@ describe('EZPayInvoiceGateway', () => {
     });
 
     it('should throw error on server reject', () => {
-      post.mockImplementationOnce(async (_url: string, data: any) => {
+      post.mockImplementationOnce(async (_url: string, data: unknown) => {
         const params = parseFormData(data as FormData, DEFAULT_AES_KEY, DEFAULT_AES_IV);
 
         expect(params.PrintFlag).toBe('Y');
@@ -1009,7 +1009,7 @@ describe('EZPayInvoiceGateway', () => {
     });
 
     it('should throw error when mobile validation service down', () => {
-      post.mockImplementation(async (url: string, _data: any) => {
+      post.mockImplementation(async (url: string, _data: unknown) => {
         if (url.match(/checkBarCode$/)) {
           return {
             data: {
@@ -1046,7 +1046,7 @@ describe('EZPayInvoiceGateway', () => {
     });
 
     it('should throw error when mobile barcode not valid', () => {
-      post.mockImplementation(async (url: string, _data: any) => {
+      post.mockImplementation(async (url: string, _data: unknown) => {
         if (url.match(/checkBarCode$/)) {
           return {
             data: {
@@ -1083,7 +1083,7 @@ describe('EZPayInvoiceGateway', () => {
     });
 
     it('should throw error when love code validation service down', async () => {
-      post.mockImplementationOnce(async (url: string, _data: any) => {
+      post.mockImplementationOnce(async (url: string, _data: unknown) => {
         if (url.match(/checkLoveCode$/)) {
           return {
             data: {
@@ -1120,7 +1120,7 @@ describe('EZPayInvoiceGateway', () => {
     });
 
     it('should throw error when love code not valid', () => {
-      post.mockImplementation(async (url: string, _data: any) => {
+      post.mockImplementation(async (url: string, _data: unknown) => {
         if (url.match(/checkLoveCode$/)) {
           return {
             data: {

@@ -22,7 +22,7 @@ const AES_IV = 'gmY2MPN8PHFvA7KR';
 const AES_KEY = 'cNg3wIe8PkCVcqb37RY0LFbf00FgrNXg';
 const MERCHANT_ID = '31090553';
 
-function getResponseCheckCode<T extends Record<string, any>>(response: T): string {
+function getResponseCheckCode<T extends Record<string, unknown>>(response: T): string {
   const encodedData = Object.entries(response)
     .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
     .map(([key, value]) => `${key}=${value}`)
@@ -52,7 +52,7 @@ describe('EZPayInvoiceGateway:Allowance', () => {
   const SHOULD_THROW_ALLOWANCE_REASON = 'THROWWWW';
 
   beforeAll(() => {
-    post.mockImplementation(async (url: string, data: any) => {
+    post.mockImplementation(async (url: string, data: unknown) => {
       const formData = data as FormData;
 
       const payloadArray = parse(formData.getBuffer(), formData.getBoundary());
