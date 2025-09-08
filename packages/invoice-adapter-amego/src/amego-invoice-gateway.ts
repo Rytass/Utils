@@ -28,8 +28,7 @@ import {
 } from './typings';
 
 export class AmegoInvoiceGateway
-  implements InvoiceGateway<AmegoPaymentItem, AmegoInvoice>
-{
+  implements InvoiceGateway<AmegoPaymentItem, AmegoInvoice> {
   private static readonly DEFAULT_ALLOWANCE_TYPE = 2;
   private static readonly COMMON_HEADERS = {
     'Content-Type': 'application/x-www-form-urlencoded',
@@ -70,13 +69,13 @@ export class AmegoInvoiceGateway
       const itemTax =
         item.taxType === TaxType.TAXED
           ? Math.round(
-              ((item.quantity * item.unitPrice) / (1 + invoice.taxRate)) *
-                invoice.taxRate,
-            ) > 1
+            ((item.quantity * item.unitPrice) / (1 + invoice.taxRate)) *
+            invoice.taxRate,
+          ) > 1
             ? Math.round(
-                ((item.quantity * item.unitPrice) / (1 + invoice.taxRate)) *
-                  invoice.taxRate,
-              )
+              ((item.quantity * item.unitPrice) / (1 + invoice.taxRate)) *
+              invoice.taxRate,
+            )
             : 1
           : 0;
 
@@ -161,13 +160,13 @@ export class AmegoInvoiceGateway
     const apiData =
       'orderId' in options
         ? {
-            type: 'order',
-            order_id: options.orderId,
-          }
+          type: 'order',
+          order_id: options.orderId,
+        }
         : {
-            type: 'invoice',
-            invoice_number: options.invoiceNumber,
-          };
+          type: 'invoice',
+          invoice_number: options.invoiceNumber,
+        };
 
     const encodedPayload = this.generateEncodedPayload(JSON.stringify(apiData));
 
@@ -185,6 +184,7 @@ export class AmegoInvoiceGateway
         carrier_type: string;
         carrier_id1: string;
         carrier_id2: string;
+        npoban: string;
         tax_rate: string;
         tax_type: number;
         allowance: {
@@ -252,6 +252,7 @@ export class AmegoInvoiceGateway
         data.data.carrier_type,
         data.data.carrier_id1,
         data.data.carrier_id2,
+        data.data.npoban,
       ),
       taxType: ReverseAmegoTaxType[data.data.tax_type],
       taxRate: parseFloat(data.data.tax_rate),
@@ -288,9 +289,9 @@ export class AmegoInvoiceGateway
               ),
               invalidOn: isInvalid
                 ? DateTime.fromFormat(
-                    String(prevAllowanceData.allowance_date),
-                    'yyyyMMdd',
-                  ).toJSDate()
+                  String(prevAllowanceData.allowance_date),
+                  'yyyyMMdd',
+                ).toJSDate()
                 : null,
               parentInvoice: parentInvoice,
             });
@@ -324,9 +325,9 @@ export class AmegoInvoiceGateway
           status: this.getInvoiceAllowanceState(allowanceData.invoice_type),
           invalidOn: isCurrentInvalid
             ? DateTime.fromFormat(
-                String(allowanceData.allowance_date),
-                'yyyyMMdd',
-              ).toJSDate()
+              String(allowanceData.allowance_date),
+              'yyyyMMdd',
+            ).toJSDate()
             : null,
           parentInvoice: parentInvoice,
         });
@@ -353,6 +354,7 @@ export class AmegoInvoiceGateway
         data.data.carrier_type,
         data.data.carrier_id1,
         data.data.carrier_id2,
+        data.data.npoban,
       ),
       taxType: ReverseAmegoTaxType[data.data.tax_type],
       taxRate: parseFloat(data.data.tax_rate),
@@ -453,8 +455,9 @@ export class AmegoInvoiceGateway
     carrierType: string,
     carrierId1: string,
     carrierId2: string,
+    loveCode?: string,
   ): { type: InvoiceCarrierType; code: string } | undefined {
-    if (!carrierType || carrierType === '') {
+    if (carrierType === undefined) {
       return undefined;
     }
 
@@ -476,7 +479,7 @@ export class AmegoInvoiceGateway
         };
       default:
         // 如果是其他未知的載具類型，嘗試判斷是否為愛心碼
-        const code = carrierId1 || carrierId2 || '';
+        const code = carrierId1 || carrierId2 || loveCode || '';
 
         if (
           code &&
@@ -668,6 +671,13 @@ export class AmegoInvoiceGateway
       throw new Error(`Amego invoice issue failed: ${data.msg}`);
     }
 
+    const carrier = this.parseCarrierFromResponse(
+      carrierType,
+      carrierId,
+      carrierId,
+      loveCode,
+    );
+
     return new AmegoInvoice({
       orderId: options.orderId,
       vatNumber: options.vatNumber,
@@ -680,6 +690,7 @@ export class AmegoInvoiceGateway
       state: InvoiceState.ISSUED,
       allowances: [],
       taxRate: taxRate,
+      carrier,
     });
   }
 
