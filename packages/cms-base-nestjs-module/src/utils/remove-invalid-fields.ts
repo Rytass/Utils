@@ -6,6 +6,7 @@ import {
 import { BaseArticleVersionContentEntity } from '../models/base-article-version-content.entity';
 import { BaseArticleVersionEntity } from '../models/base-article-version.entity';
 import { BaseArticleEntity } from '../models/base-article.entity';
+import { EntityFieldValue } from '../typings/entity-field-value.type';
 
 type RemovedArticleFields = 'versions' | 'categories';
 type RemovedArticleVersionFields =
@@ -43,7 +44,7 @@ export function removeMultipleLanguageArticleVersionInvalidFields<
 ): Omit<AV, RemovedMultipleLanguageArticleVersionFields> {
   return Object.entries(articleVersion)
     .filter(([key]) => !ArticleVersionNotIncludeFields.includes(key) || key === 'multiLanguageContents')
-    .reduce<Record<string, any>>(
+    .reduce<Record<string, EntityFieldValue>>(
       (vars, [key, value]) => ({
         ...vars,
         [key]: value,
@@ -62,7 +63,7 @@ export function removeArticleVersionInvalidFields<AV extends BaseArticleVersionE
 ): Omit<AV, RemovedArticleVersionFields> {
   return Object.entries(articleVersion)
     .filter(([key]) => !ArticleVersionNotIncludeFields.includes(key))
-    .reduce<Record<string, any>>(
+    .reduce<Record<string, EntityFieldValue>>(
       (vars, [key, value]) => ({
         ...vars,
         [key]: value,

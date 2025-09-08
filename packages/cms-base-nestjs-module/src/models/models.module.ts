@@ -13,6 +13,7 @@ import { CategoryRelationEntity, CategoryRelationRepo } from './category-relatio
 import { ArticleCategoryEntity, ArticleCategoryRepo } from './article-category.entity';
 import { BaseSignatureLevelEntity, BaseSignatureLevelRepo } from './base-signature-level.entity';
 import { ArticleSignatureEntity, ArticleSignatureRepo } from './article-signature.entity';
+import { CmsEntity } from '../typings/cms-entity.type';
 
 const models = [
   [BaseArticleRepo, BaseArticleEntity],
@@ -30,7 +31,7 @@ const models = [
   imports: [TypeOrmModule.forFeature(models.map(model => model[1]))],
   providers: models.map(([symbol, entity]) => ({
     provide: symbol,
-    useFactory: (dataSource: DataSource): Repository<any> => dataSource.getRepository(entity),
+    useFactory: (dataSource: DataSource): Repository<CmsEntity> => dataSource.getRepository(entity),
     inject: [DataSource],
   })),
   exports: models.map(model => model[0]),

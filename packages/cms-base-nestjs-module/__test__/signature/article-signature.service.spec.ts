@@ -1,10 +1,16 @@
 import { BaseSignatureLevelEntity } from '../../src/models/base-signature-level.entity';
 import { SignatureService } from '../../src/services/signature.service';
 import { MockQueryRunner } from '../typings/mock-repository.interface';
+import { createMockRepositoryPartial, createMockDataSourcePartial } from '../typings/mock-types.interface';
 
 describe('SignatureService.signatureEnabled', () => {
   it('returns true when signatureLevels has items', () => {
-    const service = new SignatureService(['REVIEW'], {} as any, {} as any, {} as any);
+    const service = new SignatureService(
+      ['REVIEW'],
+      createMockRepositoryPartial('signature_levels'),
+      createMockDataSourcePartial(),
+      createMockRepositoryPartial('article_signatures'),
+    );
 
     expect(service.signatureEnabled).toBe(true);
   });
@@ -20,7 +26,12 @@ describe('SignatureService.finalSignatureLevel', () => {
       name: 'FINAL',
     });
 
-    const service = new SignatureService([], {} as any, {} as any, {} as any);
+    const service = new SignatureService(
+      [],
+      createMockRepositoryPartial('signature_levels'),
+      createMockDataSourcePartial(),
+      createMockRepositoryPartial('article_signatures'),
+    );
 
     service.signatureLevelsCache = [level1, level2];
 
@@ -28,7 +39,12 @@ describe('SignatureService.finalSignatureLevel', () => {
   });
 
   it('should return null if signatureLevelsCache is empty', () => {
-    const service = new SignatureService([], {} as any, {} as any, {} as any);
+    const service = new SignatureService(
+      [],
+      createMockRepositoryPartial('signature_levels'),
+      createMockDataSourcePartial(),
+      createMockRepositoryPartial('article_signatures'),
+    );
 
     service.signatureLevelsCache = [];
 
@@ -78,16 +94,11 @@ describe('SignatureService.onApplicationBootstrap', () => {
       metadata: { tableName: 'article_signature' },
     };
 
-    service = new SignatureService(
-      newLevels,
-      mockSignatureLevelRepo as any,
-      mockDataSource as any,
-      mockSignatureRepo as any,
-    );
+    service = new SignatureService(newLevels, mockSignatureLevelRepo, mockDataSource, mockSignatureRepo);
   });
 
   it('should do nothing if signature is not enabled', async () => {
-    service = new SignatureService([], mockSignatureLevelRepo as any, mockDataSource as any, mockSignatureRepo as any);
+    service = new SignatureService([], mockSignatureLevelRepo, mockDataSource, mockSignatureRepo);
 
     const result = await service.onApplicationBootstrap();
 
@@ -169,12 +180,7 @@ describe('SignatureService.onApplicationBootstrap', () => {
       metadata: { tableName: 'article_signature' },
     };
 
-    const service = new SignatureService(
-      [levelInstance],
-      mockSignatureLevelRepo as any,
-      mockDataSource as any,
-      mockSignatureRepo as any,
-    );
+    const service = new SignatureService([levelInstance], mockSignatureLevelRepo, mockDataSource, mockSignatureRepo);
 
     await service.onApplicationBootstrap();
 

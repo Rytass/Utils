@@ -20,6 +20,7 @@ import { BaseArticleVersionContentRepo } from '../models/base-article-version-co
 import { BaseCategoryRepo } from '../models/base-category.entity';
 import { BaseSignatureLevelRepo } from '../models/base-signature-level.entity';
 import { BaseCategoryMultiLanguageNameRepo } from '../models/base-category-multi-language-name.entity';
+import { CmsEntity } from '../typings/cms-entity.type';
 
 export const TARGETS = [
   [BaseArticleRepo, PROVIDE_ARTICLE_ENTITY, RESOLVED_ARTICLE_REPO],
@@ -40,6 +41,6 @@ export const ResolvedRepoProviders = TARGETS.map(([repo, provide, resolved]) => 
     baseRepo: Repository<typeof BaseArticleEntity>,
     entity: new () => BaseArticleEntity,
     dataSource: DataSource,
-  ): Repository<any> => (entity ? dataSource.getRepository(entity) : baseRepo),
+  ): Repository<CmsEntity> => (entity ? dataSource.getRepository(entity) : baseRepo),
   inject: [repo, provide, DataSource],
 })) as Provider[];

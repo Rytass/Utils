@@ -1,17 +1,24 @@
 import { QuadratsElement } from '@quadrats/core';
+import { CustomFieldValue } from '../custom-field-value.type';
 
-export interface ResolvedCreateArticleArgsDto {
+type BaseResolvedCreateArticleArgsDto = {
   categoryIds: string[];
   tags: string[];
   submitted?: boolean;
   signatureLevel?: string | null;
   releasedAt?: Date | null;
-  // Single language fields (optional)
-  title?: string;
-  content?: QuadratsElement[];
+  // Allow additional custom fields
+  [key: string]: CustomFieldValue;
+};
+
+export type SingleLanguageResolvedCreateArticleArgsDto = BaseResolvedCreateArticleArgsDto & {
+  title: string;
+  content: QuadratsElement[];
   description?: string;
-  // Multi language fields (optional)
-  multiLanguageContents?: Record<
+};
+
+export type MultiLanguageResolvedCreateArticleArgsDto = BaseResolvedCreateArticleArgsDto & {
+  multiLanguageContents: Record<
     string,
     {
       title: string;
@@ -19,6 +26,8 @@ export interface ResolvedCreateArticleArgsDto {
       content: QuadratsElement[];
     }
   >;
-  // Allow additional custom fields
-  [key: string]: any;
-}
+};
+
+export type ResolvedCreateArticleArgsDto =
+  | SingleLanguageResolvedCreateArticleArgsDto
+  | MultiLanguageResolvedCreateArticleArgsDto;

@@ -2,6 +2,13 @@ import { DataSource, QueryRunner } from 'typeorm';
 import { ArticleBaseService } from '../../src/services/article-base.service';
 import { BaseArticleVersionContentEntity } from '../../src/models/base-article-version-content.entity';
 import { FULL_TEXT_SEARCH_TOKEN_VERSION } from '../../src/constants/full-text-search-token-version';
+import {
+  createMockRepositoryPartial,
+  createMockDataSourcePartial,
+  createMockSignatureServicePartial,
+  createMockQueryBuilder,
+  createMockLogger,
+} from '../typings/mock-types.interface';
 
 // Mock the jieba module more simply by skipping its functionality in tests
 jest.mock('@node-rs/jieba', () => ({
@@ -34,20 +41,20 @@ describe('ArticleBaseService - bindSearchTokens', () => {
     };
 
     service = new ArticleBaseService(
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
+      createMockRepositoryPartial('articles'),
+      createMockRepositoryPartial('versions'),
+      createMockRepositoryPartial('version_contents'),
+      createMockRepositoryPartial('categories'),
       true,
       true,
       true,
       [],
-      {} as any,
-      {} as any,
+      createMockRepositoryPartial('signature_levels'),
+      createMockRepositoryPartial('article_signatures'),
       true,
       mockDataSource,
-      mockBaseArticleVersionContentRepo as any,
-      {} as any,
+      mockBaseArticleVersionContentRepo,
+      createMockSignatureServicePartial(false),
     );
 
     Object.defineProperty(service, 'baseArticleVersionContentRepo', {
@@ -123,40 +130,36 @@ describe('ArticleBaseService - bindSearchTokens', () => {
 
 describe('ArticleBaseService - onApplicationBootstrap', () => {
   let service: ArticleBaseService;
-  let mockQueryBuilder: any;
-  let mockDataSource: any;
-  let mockLogger: any;
+  let mockQueryBuilder: ReturnType<typeof createMockQueryBuilder>;
+  let mockDataSource: ReturnType<typeof createMockDataSourcePartial>;
+  let mockLogger: ReturnType<typeof createMockLogger>;
   let mockBindSearchTokens: jest.SpyInstance;
 
   beforeEach(() => {
-    mockQueryBuilder = {
-      orWhere: jest.fn().mockReturnThis(),
-      getMany: jest.fn(),
-    };
+    mockQueryBuilder = createMockQueryBuilder();
+    mockQueryBuilder.orWhere = jest.fn().mockReturnThis();
+    mockQueryBuilder.getMany = jest.fn();
 
-    mockDataSource = {
-      query: jest.fn(),
-    };
+    mockDataSource = createMockDataSourcePartial();
+    mockDataSource.query = jest.fn();
 
-    mockLogger = {
-      log: jest.fn(),
-    };
+    mockLogger = createMockLogger();
 
     service = new ArticleBaseService(
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
+      createMockRepositoryPartial('articles'),
+      createMockRepositoryPartial('versions'),
+      createMockRepositoryPartial('version_contents'),
+      createMockRepositoryPartial('categories'),
       true, // multipleLanguageMode
       true, // allowMultipleParentCategories
       true, // allowCircularCategories
       [], // articleStageQueryFeatures
-      {} as any,
-      {} as any,
+      createMockRepositoryPartial('signature_levels'),
+      createMockRepositoryPartial('article_signatures'),
       true, // fullTextSearchMode
       mockDataSource,
-      { metadata: { tableName: 'article_version_contents' } } as any,
-      {} as any,
+      { metadata: { tableName: 'article_version_contents' } },
+      createMockSignatureServicePartial(false),
     );
 
     Object.defineProperty(service, 'logger', {
@@ -171,9 +174,11 @@ describe('ArticleBaseService - onApplicationBootstrap', () => {
       },
     });
 
-    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue(mockQueryBuilder);
+    jest.spyOn(service, 'getDefaultQueryBuilder' as keyof ArticleBaseService).mockReturnValue(mockQueryBuilder);
 
-    mockBindSearchTokens = jest.spyOn(service as any, 'bindSearchTokens').mockResolvedValue(undefined);
+    mockBindSearchTokens = jest
+      .spyOn(service, 'bindSearchTokens' as keyof ArticleBaseService)
+      .mockResolvedValue(undefined);
   });
 
   it('should index articles with missing or outdated search tokens', async () => {

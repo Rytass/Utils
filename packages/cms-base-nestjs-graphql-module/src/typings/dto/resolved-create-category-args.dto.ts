@@ -1,9 +1,19 @@
-export interface ResolvedCreateCategoryArgsDto {
+import { CustomFieldValue } from '../custom-field-value.type';
+
+type BaseResolvedCreateCategoryArgsDto = {
   parentIds?: string[] | null;
-  // Single language fields (optional)
-  name?: string;
-  // Multi language fields (optional)
-  multiLanguageNames?: Record<string, string>;
   // Allow additional custom fields
-  [key: string]: any;
-}
+  [key: string]: CustomFieldValue;
+};
+
+export type SingleLanguageResolvedCreateCategoryArgsDto = BaseResolvedCreateCategoryArgsDto & {
+  name: string;
+};
+
+export type MultiLanguageResolvedCreateCategoryArgsDto = BaseResolvedCreateCategoryArgsDto & {
+  multiLanguageNames: Record<string, string>;
+};
+
+export type ResolvedCreateCategoryArgsDto =
+  | SingleLanguageResolvedCreateCategoryArgsDto
+  | MultiLanguageResolvedCreateCategoryArgsDto;
