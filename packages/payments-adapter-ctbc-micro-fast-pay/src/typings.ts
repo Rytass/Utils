@@ -416,7 +416,13 @@ export interface CTBCAmexConfig {
   port: number;
   wsdlUrl?: string;
   timeout?: number;
-  sslOptions?: any;
+  sslOptions?: {
+    key?: string;
+    cert?: string;
+    ca?: string | string[];
+    rejectUnauthorized?: boolean;
+    [key: string]: unknown;
+  };
 }
 
 // AMEX 查詢參數

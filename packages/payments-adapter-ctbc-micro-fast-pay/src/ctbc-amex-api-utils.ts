@@ -108,7 +108,7 @@ export class CTBCAEGateway {
       const soapResponse: any = await new Promise((resolve, reject) => {
         if (typeof soapClient.inquiry === 'function') {
           // RPC style SOAP 需要傳遞 request 參數
-          soapClient.inquiry(rpcRequest, (err: any, result: any) => {
+          soapClient.inquiry(rpcRequest, (err: unknown, result: unknown) => {
             if (err) {
               console.error('SOAP inquiry error:', err);
               reject(err);
@@ -270,7 +270,7 @@ export class CTBCAEGateway {
 
       const soapResponse: any = await new Promise((resolve, reject) => {
         if (typeof soapClient.refund === 'function') {
-          soapClient.refund(requestData, (err: any, result: any) => {
+          soapClient.refund(requestData, (err: unknown, result: unknown) => {
             if (err) {
               reject(err);
             } else {

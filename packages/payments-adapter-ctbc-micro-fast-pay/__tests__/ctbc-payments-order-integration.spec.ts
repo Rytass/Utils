@@ -64,7 +64,7 @@ describe('CTBC 訂單 Mock 測試', () => {
       XID: TEST_XID,
       Txn_date: '2024/08/28',
       Txn_time: '12:00:00',
-    } as any);
+    } as unknown);
   }
 
   it('應可查詢並以 POS 回應重建訂單（COMMITTED）', async () => {
@@ -87,13 +87,13 @@ describe('CTBC 訂單 Mock 測試', () => {
       ErrCode: '01',
       ERRDESC: 'Order not found',
       RespCode: '99',
-    } as any);
+    } as unknown);
 
     await expect(payment.query<CTBCOrder>('NOT_FOUND_ID')).rejects.toThrow('Query failed: 01 - Order not found');
   });
 
   it('查詢失敗：工具回傳數字錯誤碼', async () => {
-    posApiQueryMock.mockResolvedValue(CTBC_ERROR_CODES.ERR_INVALID_LIDM as any);
+    posApiQueryMock.mockResolvedValue(CTBC_ERROR_CODES.ERR_INVALID_LIDM as unknown);
 
     await expect(payment.query<CTBCOrder>('BAD_ID')).rejects.toThrow(
       `Query failed with error code: ${CTBC_ERROR_CODES.ERR_INVALID_LIDM}`,
@@ -105,7 +105,7 @@ describe('CTBC 訂單 Mock 測試', () => {
     posApiRefundMock.mockResolvedValue({
       RespCode: '0',
       RefAmt: '901 50 0',
-    } as any);
+    } as unknown);
 
     const order = await payment.query<CTBCOrder>(TEST_ORDER_ID);
 
@@ -113,7 +113,7 @@ describe('CTBC 訂單 Mock 測試', () => {
 
     // 應呼叫 POS Refund 並更新狀態
     expect(posApiRefundMock).toHaveBeenCalledTimes(1);
-    const [, refundParams] = (posApiRefundMock.mock.calls[0] || []) as any[];
+    const [, refundParams] = (posApiRefundMock.mock.calls[0] || []) as unknown[];
 
     expect(refundParams.MERID).toBe(TEST_MERID);
     expect(refundParams['LID-M']).toBe(TEST_ORDER_ID);
@@ -138,7 +138,7 @@ describe('CTBC 訂單 Mock 測試', () => {
       // XID 缺漏
       Txn_date: '2024/08/28',
       Txn_time: '12:00:00',
-    } as any);
+    } as unknown);
 
     const order = await payment.query<CTBCOrder>(TEST_ORDER_ID);
 
@@ -149,7 +149,7 @@ describe('CTBC 訂單 Mock 測試', () => {
 
   it('退款失敗：工具回傳數字錯誤碼', async () => {
     mockSuccessfulQuery();
-    posApiRefundMock.mockResolvedValue(CTBC_ERROR_CODES.ERR_INVALID_LIDM as any);
+    posApiRefundMock.mockResolvedValue(CTBC_ERROR_CODES.ERR_INVALID_LIDM as unknown);
 
     const order = await payment.query<CTBCOrder>(TEST_ORDER_ID);
 
@@ -165,7 +165,7 @@ describe('CTBC 訂單 Mock 測試', () => {
     posApiRefundMock.mockResolvedValue({
       RespCode: '70',
       ERRDESC: '前次退貨交易,尚未確認',
-    } as any);
+    } as unknown);
 
     const order = await payment.query<CTBCOrder>(TEST_ORDER_ID);
 
@@ -175,8 +175,8 @@ describe('CTBC 訂單 Mock 測試', () => {
 
   it('應可成功取消部分退款（狀態回到 COMMITTED）', async () => {
     mockSuccessfulQuery();
-    posApiRefundMock.mockResolvedValue({ RespCode: '0' } as any);
-    posApiCancelRefundMock.mockResolvedValue({ RespCode: '0' } as any);
+    posApiRefundMock.mockResolvedValue({ RespCode: '0' } as unknown);
+    posApiCancelRefundMock.mockResolvedValue({ RespCode: '0' } as unknown);
 
     const order = await payment.query<CTBCOrder>(TEST_ORDER_ID);
 
@@ -189,7 +189,7 @@ describe('CTBC 訂單 Mock 測試', () => {
 
     // 應呼叫 POS RefundRev 並更新狀態
     expect(posApiCancelRefundMock).toHaveBeenCalledTimes(1);
-    const [, cancelParams] = (posApiCancelRefundMock.mock.calls[0] || []) as any[];
+    const [, cancelParams] = (posApiCancelRefundMock.mock.calls[0] || []) as unknown[];
 
     expect(cancelParams.MERID).toBe(TEST_MERID);
     expect(cancelParams['LID-M']).toBe(TEST_ORDER_ID);
@@ -214,8 +214,8 @@ describe('CTBC 訂單 Mock 測試', () => {
 
   it('取消退款失敗：工具回傳數字錯誤碼', async () => {
     mockSuccessfulQuery();
-    posApiRefundMock.mockResolvedValue({ RespCode: '0' } as any);
-    posApiCancelRefundMock.mockResolvedValue(CTBC_ERROR_CODES.ERR_INVALID_MERID as any);
+    posApiRefundMock.mockResolvedValue({ RespCode: '0' } as unknown);
+    posApiCancelRefundMock.mockResolvedValue(CTBC_ERROR_CODES.ERR_INVALID_MERID as unknown);
 
     const order = await payment.query<CTBCOrder>(TEST_ORDER_ID);
 
@@ -230,11 +230,11 @@ describe('CTBC 訂單 Mock 測試', () => {
 
   it('取消退款失敗：API 回傳錯誤（RespCode 非 0）', async () => {
     mockSuccessfulQuery();
-    posApiRefundMock.mockResolvedValue({ RespCode: '0' } as any);
+    posApiRefundMock.mockResolvedValue({ RespCode: '0' } as unknown);
     posApiCancelRefundMock.mockResolvedValue({
       RespCode: '01',
       ERRDESC: 'Cancel refund failed',
-    } as any);
+    } as unknown);
 
     const order = await payment.query<CTBCOrder>(TEST_ORDER_ID);
 

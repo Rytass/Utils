@@ -704,9 +704,10 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
 
           // 直接設定內部狀態，而不是調用 commit 方法
           // 這樣避免了重複觸發 PaymentEvents.ORDER_COMMITTED 事件
-          (reconstructedOrder as any)._state = OrderState.COMMITTED;
-          (reconstructedOrder as any)._committedAt = new Date();
-          (reconstructedOrder as any)._additionalInfo = additionalInfo;
+          (reconstructedOrder as unknown as { _state: OrderState })._state = OrderState.COMMITTED;
+          (reconstructedOrder as unknown as { _committedAt: Date })._committedAt = new Date();
+          (reconstructedOrder as unknown as { _additionalInfo: typeof additionalInfo })._additionalInfo =
+            additionalInfo;
 
           // 保存 XID（由於 setPosApiInfo 現在只接受 xid 參數）
           if (result.XID?.trim()) {
