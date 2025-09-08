@@ -241,7 +241,6 @@ export class BankProInvoiceGateway
 
     return new BankProInvoice({
       issuedOn: DateTime.fromFormat(data[0].InvoiceDate, 'yyyy/MM/dd HH:mm:ss')
-        .startOf('day')
         .toJSDate(),
       items: options.items,
       randomCode: data[0].RandomNumber,
@@ -411,7 +410,7 @@ export class BankProInvoiceGateway
               Email: '',
             },
           ],
-          OrderDetails: invoice.items.map((item, index) => ({
+          OrderDetails: allowanceItems.map((item, index) => ({
             SeqNo: (index + 1).toString(),
             ItemID: item.id ?? '',
             Barcode: item.barcode ?? '',
