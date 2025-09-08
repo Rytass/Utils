@@ -38,6 +38,8 @@ import type TypeORMAdapterType from 'typeorm-adapter';
 import { AllowActions } from '../decorators/action.decorator';
 import { BaseMemberEntity } from '../models/base-member.entity';
 import { DEFAULT_CASBIN_DOMAIN } from './default-casbin-domain';
+import type { ReflectableDecorator } from '@nestjs/core';
+import type { OAuth2Provider } from '../typings/oauth2-provider.interface';
 
 const getTypeORMAdapter = async (): Promise<typeof TypeORMAdapterType> => {
   const module = await import('typeorm-adapter');
@@ -64,7 +66,8 @@ export const OptionProviders = [
   },
   {
     provide: PROVIDE_MEMBER_ENTITY,
-    useFactory: (options?: MemberBaseModuleOptionsDto): any => options?.memberEntity ?? null,
+    useFactory: (options?: MemberBaseModuleOptionsDto): (new () => BaseMemberEntity) | null =>
+      options?.memberEntity ?? null,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
@@ -96,7 +99,7 @@ export const OptionProviders = [
   },
   {
     provide: CASBIN_ENFORCER,
-    useFactory: async (options?: MemberBaseModuleOptionsDto): Promise<any> => {
+    useFactory: async (options?: MemberBaseModuleOptionsDto): Promise<Enforcer | null> => {
       if (!options?.casbinAdapterOptions) return null;
 
       const TypeORMAdapter = await getTypeORMAdapter();
@@ -115,15 +118,27 @@ export const OptionProviders = [
   },
   {
     provide: CASBIN_PERMISSION_DECORATOR,
-    useFactory: async (options?: MemberBaseModuleOptionsDto): Promise<any> =>
+    useFactory: async (options?: MemberBaseModuleOptionsDto): Promise<ReflectableDecorator<[string, string][]>> =>
       options?.casbinPermissionDecorator ?? AllowActions,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: CASBIN_PERMISSION_CHECKER,
-    useFactory: async (options?: MemberBaseModuleOptionsDto): Promise<any> =>
+    useFactory: async (
+      options?: MemberBaseModuleOptionsDto,
+    ): Promise<
+      (params: {
+        enforcer: Enforcer;
+        payload: { id: string; domain?: string };
+        actions: [Subject, Action][];
+      }) => Promise<boolean>
+    > =>
       options?.casbinPermissionChecker
-        ? options.casbinPermissionChecker
+        ? (options.casbinPermissionChecker as (params: {
+            enforcer: Enforcer;
+            payload: { id: string; domain?: string };
+            actions: [Subject, Action][];
+          }) => Promise<boolean>)
         : ({
             enforcer,
             payload,
@@ -197,16 +212,16 @@ export const OptionProviders = [
   },
   {
     provide: CUSTOMIZED_JWT_PAYLOAD,
-    useFactory: (options?: MemberBaseModuleOptionsDto): ((member: BaseMemberEntity) => any) =>
+    useFactory: (options?: MemberBaseModuleOptionsDto): ((member: BaseMemberEntity) => Record<string, unknown>) =>
       options?.customizedJwtPayload ??
-      ((member: BaseMemberEntity): any => ({
+      ((member: BaseMemberEntity): Record<string, unknown> => ({
         id: member.id,
         account: member.account,
       })),
   },
   {
     provide: OAUTH2_PROVIDERS,
-    useFactory: (options?: MemberBaseModuleOptionsDto): any[] => options?.oauth2Providers ?? [],
+    useFactory: (options?: MemberBaseModuleOptionsDto): OAuth2Provider[] => options?.oauth2Providers ?? [],
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {

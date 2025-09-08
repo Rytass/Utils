@@ -3,7 +3,7 @@ import type { MemberBaseModuleOptionsDto } from './member-base-module-options.dt
 
 export interface MemberBaseModuleOptionFactory<
   MemberEntity extends BaseMemberEntity = BaseMemberEntity,
-  TokenPayload extends Record<string, any> = Pick<MemberEntity, 'id' | 'account'>,
+  TokenPayload extends Record<string, unknown> = Pick<MemberEntity, 'id' | 'account'>,
 > {
   createMemberOptions():
     | Promise<MemberBaseModuleOptionsDto<MemberEntity, TokenPayload>>

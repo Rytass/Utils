@@ -8,9 +8,9 @@ const TARGETS = [[BaseMemberRepo, PROVIDE_MEMBER_ENTITY, RESOLVED_MEMBER_REPO]];
 export const ResolvedRepoProviders = TARGETS.map(([repo, provide, resolved]) => ({
   provide: resolved,
   useFactory: (
-    baseRepo: Repository<typeof BaseMemberEntity>,
+    baseRepo: Repository<BaseMemberEntity>,
     entity: new () => BaseMemberEntity,
     dataSource: DataSource,
-  ): Repository<any> => (entity ? dataSource.getRepository(entity) : baseRepo),
+  ): Repository<BaseMemberEntity> => (entity ? dataSource.getRepository(entity) : baseRepo),
   inject: [repo, provide, DataSource],
 })) as Provider[];

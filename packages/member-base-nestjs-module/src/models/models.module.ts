@@ -17,7 +17,7 @@ const models = [
   imports: [TypeOrmModule.forFeature(models.map(model => model[1]))],
   providers: models.map(([symbol, entity]) => ({
     provide: symbol,
-    useFactory: (dataSource: DataSource): Repository<any> => dataSource.getRepository(entity),
+    useFactory: (dataSource: DataSource): Repository<BaseMemberEntity> => dataSource.getRepository(entity),
     inject: [DataSource],
   })),
   exports: models.map(model => model[0]),

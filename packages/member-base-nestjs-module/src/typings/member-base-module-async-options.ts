@@ -5,14 +5,14 @@ import type { BaseMemberEntity } from '../models/base-member.entity';
 
 export interface MemberBaseModuleAsyncOptionsDto<
   MemberEntity extends BaseMemberEntity = BaseMemberEntity,
-  TokenPayload extends Record<string, any> = Pick<MemberEntity, 'id' | 'account'>,
+  TokenPayload extends Record<string, unknown> = Pick<MemberEntity, 'id' | 'account'>,
 > extends Pick<ModuleMetadata, 'imports'> {
   useFactory?: (
-    ...args: any[]
+    ...args: unknown[]
   ) =>
     | Promise<MemberBaseModuleOptionsDto<MemberEntity, TokenPayload>>
     | MemberBaseModuleOptionsDto<MemberEntity, TokenPayload>;
-  inject?: any[];
+  inject?: (string | symbol | Function | Type)[];
   useClass?: Type<MemberBaseModuleOptionFactory<MemberEntity, TokenPayload>>;
   useExisting?: Type<MemberBaseModuleOptionFactory<MemberEntity, TokenPayload>>;
 }

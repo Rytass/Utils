@@ -6,7 +6,7 @@ import type { OAuth2Provider } from './oauth2-provider.interface';
 
 export interface MemberBaseModuleOptionsDto<
   MemberEntity extends BaseMemberEntity = BaseMemberEntity,
-  TokenPayload extends Record<string, any> = Pick<MemberEntity, 'id' | 'account'>,
+  TokenPayload extends Record<string, unknown> = Pick<MemberEntity, 'id' | 'account'>,
 > {
   loginFailedBanThreshold?: number; // default: 5
   resetPasswordTokenExpiration?: number; // default: 60 * 60 * 1 = 1 hour
@@ -25,7 +25,7 @@ export interface MemberBaseModuleOptionsDto<
   enableGlobalGuard?: boolean; // default: true
   casbinAdapterOptions?: TypeORMAdapterOptions;
   casbinModelString?: string; // default: RBAC with domains
-  casbinPermissionDecorator?: ReflectableDecorator<any[]>;
+  casbinPermissionDecorator?: ReflectableDecorator<[string, string][]>;
   casbinPermissionChecker?: ({
     enforcer,
     payload,
@@ -33,7 +33,7 @@ export interface MemberBaseModuleOptionsDto<
   }: {
     enforcer: Enforcer;
     payload: TokenPayload;
-    actions: any[];
+    actions: [string, string][];
   }) => Promise<boolean>;
 
   // Entities

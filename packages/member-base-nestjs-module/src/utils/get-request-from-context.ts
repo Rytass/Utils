@@ -9,7 +9,7 @@ type InjectedRequest = Request & {
   casbinPermissionChecker?: (options: {
     enforcer: Enforcer;
     payload: Pick<BaseMemberEntity, 'id' | 'account'>;
-    actions: any;
+    actions: [string, string][];
   }) => Promise<boolean>;
   _injectedEnforcer: symbol;
 };

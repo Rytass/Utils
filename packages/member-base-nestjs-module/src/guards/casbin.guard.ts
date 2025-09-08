@@ -38,16 +38,12 @@ export class CasbinGuard implements CanActivate {
     @Inject(ENABLE_GLOBAL_GUARD)
     private readonly enableGlobalGuard: boolean,
     @Inject(CASBIN_PERMISSION_DECORATOR)
-    private readonly permissionDecorator: ReflectableDecorator<any>,
+    private readonly permissionDecorator: ReflectableDecorator<[string, string][]>,
     @Inject(CASBIN_PERMISSION_CHECKER)
-    private readonly permissionChecker: ({
-      enforcer,
-      payload,
-      actions,
-    }: {
+    private readonly permissionChecker: (params: {
       enforcer: Enforcer;
       payload: { id: string; domain?: string };
-      actions: any;
+      actions: [string, string][];
     }) => Promise<boolean>,
   ) {}
 
