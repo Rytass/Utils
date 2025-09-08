@@ -57,7 +57,22 @@ export default [
       'react-hooks': reactHooksPlugin,
     },
     rules: {
-      'prettier/prettier': 'error',
+      'prettier/prettier': [
+        'error',
+        {
+          semi: true,
+          trailingComma: 'all',
+          singleQuote: true,
+          printWidth: 120,
+          tabWidth: 2,
+          useTabs: false,
+          endOfLine: 'lf',
+          arrowParens: 'avoid',
+          bracketSpacing: true,
+          jsxSingleQuote: false,
+          quoteProps: 'as-needed'
+        }
+      ],
       'no-undef': 'off',
       // React rules
       'react-hooks/rules-of-hooks': 'error',
@@ -150,7 +165,22 @@ export default [
         { blankLine: 'any', prev: 'case', next: 'default' },
       ],
       // Prettier
-      'prettier/prettier': 'error',
+      'prettier/prettier': [
+        'error',
+        {
+          semi: true,
+          trailingComma: 'all',
+          singleQuote: true,
+          printWidth: 120,
+          tabWidth: 2,
+          useTabs: false,
+          endOfLine: 'lf',
+          arrowParens: 'avoid',
+          bracketSpacing: true,
+          jsxSingleQuote: false,
+          quoteProps: 'as-needed'
+        }
+      ],
       // React rules
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
