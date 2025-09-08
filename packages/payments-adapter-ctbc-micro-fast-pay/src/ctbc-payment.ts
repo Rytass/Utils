@@ -51,6 +51,7 @@ import {
   CTBCResponsePayload,
   OrderCache,
 } from './typings';
+import { CtbcPaymentFailedError } from './errors';
 
 export const debugPayment = debug('Rytass:Payment:CTBC');
 export const debugPaymentServer = debug('Rytass:Payment:CTBC:Server');
@@ -209,13 +210,11 @@ export class CTBCPayment<
               [CardType.VMJ]: 'Card',
             }[order.cardType] ?? 'Unknown';
 
-          throw new Error(
-            `CTBC ${typeLabel} Checkout Failed: ${errorCode} - ${errorMessage}`,
-          );
+          throw new CtbcPaymentFailedError(`CTBC ${typeLabel} Checkout Failed: ${errorCode} - ${errorMessage}`, order?.id);
         }
 
         if (!order) {
-          throw new Error(`Unknown bound card checkout order: ${requestId}`);
+          throw new Error(`Unknown callback checkout order: ${requestId}`);
         }
 
         order.commit(
@@ -243,7 +242,7 @@ export class CTBCPayment<
         }
 
         debugPaymentServer(
-          `CTBCPayment bound card checkout order ${order.id} successful.`,
+          `CTBCPayment callback checkout order ${order.id} successful.`,
         );
 
         if (order.clientBackUrl) {
