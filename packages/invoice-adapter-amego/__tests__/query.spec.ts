@@ -329,8 +329,9 @@ describe('Amego Invoice Query', () => {
               order_id: '3g49n7',
               create_date: 1749191454,
               carrier_type: 'LOVECODE',
-              carrier_id1: '919',
+              carrier_id1: '',
               carrier_id2: '',
+              npoban: '919', // 3位數愛心碼
               product_item: [
                 {
                   description: '商品',
