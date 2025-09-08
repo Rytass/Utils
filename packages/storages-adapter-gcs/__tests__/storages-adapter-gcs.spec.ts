@@ -8,6 +8,18 @@ import { readFileSync, createReadStream } from 'fs';
 import { createHash } from 'crypto';
 import { FileMetadata } from '@google-cloud/storage';
 
+interface GCSFileMock {
+  save: (buffer: Buffer, options: Record<string, string>) => Map<string, Buffer>;
+  download: () => Buffer[];
+  delete: () => void;
+  move: (newFilename: string) => void;
+  createReadStream: () => Readable;
+  createWriteStream: (options: Record<string, string>) => Writable;
+  getSignedUrl: (options: Record<string, string>) => string[];
+  exists: () => boolean[];
+  setMetadata: (metadata: FileMetadata) => void;
+}
+
 const sampleFile = resolve(__dirname, '../__fixtures__/test-image.png');
 const sampleFileBuffer = readFileSync(sampleFile);
 const sampleFileSha256 = `${createHash('sha256').update(sampleFileBuffer).digest('hex')}.png`;
@@ -97,17 +109,19 @@ const moveMock = jest.fn((filename: string) => (newFilename: string): void => {
 
 const setMetadataMock = jest.fn((_filename: string) => (_metadata: FileMetadata): void => {});
 
-const fileMock = jest.fn((filename): any => ({
-  save: (buffer: Buffer, options: Record<string, string>): Map<string, Buffer> => saveMock(filename)(buffer, options),
-  download: (): Buffer[] => downloadMock(filename)(),
-  delete: (): void => deleteMock(filename)(),
-  move: (newFilename: string): void => moveMock(filename)(newFilename),
-  createReadStream: (): Readable => readStreamMock(filename)(),
-  createWriteStream: (options: Record<string, string>): Writable => writeStreamMock(filename)(options),
-  getSignedUrl: (options: Record<string, string>): string[] => getSignedUrlMock(filename)(options),
-  exists: (): boolean[] => existsMock(filename)(),
-  setMetadata: (metadata: FileMetadata): void => setMetadataMock(filename)(metadata),
-}));
+const fileMock = jest.fn(
+  (filename): GCSFileMock => ({
+    save: (buffer: Buffer, options: Record<string, string>): Map<string, Buffer> => saveMock(filename)(buffer, options),
+    download: (): Buffer[] => downloadMock(filename)(),
+    delete: (): void => deleteMock(filename)(),
+    move: (newFilename: string): void => moveMock(filename)(newFilename),
+    createReadStream: (): Readable => readStreamMock(filename)(),
+    createWriteStream: (options: Record<string, string>): Writable => writeStreamMock(filename)(options),
+    getSignedUrl: (options: Record<string, string>): string[] => getSignedUrlMock(filename)(options),
+    exists: (): boolean[] => existsMock(filename)(),
+    setMetadata: (metadata: FileMetadata): void => setMetadataMock(filename)(metadata),
+  }),
+);
 
 describe('GCS adapter', () => {
   beforeAll(() => {

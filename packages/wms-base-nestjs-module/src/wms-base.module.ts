@@ -70,7 +70,8 @@ export class WMSBaseModule {
 
     return {
       provide: WMS_MODULE_OPTIONS,
-      useFactory: async (optionsFactory: any) => await optionsFactory.createWMSBaseModuleOptions(),
+      useFactory: async (optionsFactory: WMSBaseModuleOptionsFactory) =>
+        await optionsFactory.createWMSBaseModuleOptions(),
       inject: [(options.useExisting || options.useClass) as Type<WMSBaseModuleOptionsFactory>],
     };
   }

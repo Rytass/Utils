@@ -70,8 +70,13 @@ export class StorageAzureBlobService extends Storage<AzureBlobOptions> {
       }
 
       return response.readableStreamBody as Readable;
-    } catch (ex: any) {
-      if (/does not exist/.test(ex.message)) {
+    } catch (ex: unknown) {
+      if (
+        ex &&
+        typeof ex === 'object' &&
+        'message' in ex &&
+        /does not exist/.test((ex as { message: string }).message)
+      ) {
         throw new StorageError(ErrorCode.READ_FILE_ERROR, 'File not found');
       }
 

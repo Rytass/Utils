@@ -7,6 +7,7 @@ import { VAULT_PATH_TOKEN } from './constants';
 export class VaultService {
   private readonly manager?: VaultSecret<VaultSecretOptions>;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly onReadyCallbacks: ((dataSource?: { get: (key: string) => Promise<any> }) => void)[] = [];
 
   private fallbackToEnvFile = false;
@@ -51,7 +52,8 @@ export class VaultService {
       return this.manager!.get(key);
     }
 
-    return new Promise(resolve => {
+    return new Promise<T>(resolve => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.onReadyCallbacks.push((dataSource: { get: (key: string) => Promise<any> } = this.manager!) => {
         resolve(dataSource.get(key));
       });

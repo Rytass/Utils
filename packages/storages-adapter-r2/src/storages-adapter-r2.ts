@@ -75,8 +75,8 @@ export class StorageR2Service extends Storage<StorageR2Options> {
       }
 
       return Readable.from(response.Body as Buffer);
-    } catch (ex: any) {
-      if (ex.name === 'NoSuchKey') {
+    } catch (ex: unknown) {
+      if (ex && typeof ex === 'object' && 'name' in ex && (ex as { name: string }).name === 'NoSuchKey') {
         throw new StorageError(ErrorCode.READ_FILE_ERROR, 'File not found');
       }
 
@@ -187,8 +187,8 @@ export class StorageR2Service extends Storage<StorageR2Options> {
         .promise();
 
       return true;
-    } catch (ex: any) {
-      if (ex.name === 'NotFound') return false;
+    } catch (ex: unknown) {
+      if (ex && typeof ex === 'object' && 'name' in ex && (ex as { name: string }).name === 'NotFound') return false;
 
       throw ex;
     }

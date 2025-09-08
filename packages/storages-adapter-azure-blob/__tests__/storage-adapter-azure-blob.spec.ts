@@ -8,6 +8,22 @@ import { readFileSync, createReadStream } from 'fs';
 import { createHash } from 'crypto';
 import { BlockBlobUploadOptions, BlockBlobUploadStreamOptions, StorageSharedKeyCredential } from '@azure/storage-blob';
 
+interface AzureBlobDownloadResponse {
+  blobBody: Promise<{
+    arrayBuffer: () => Promise<ArrayBuffer>;
+  }>;
+  readableStreamBody?: Readable;
+}
+
+interface MockBlobServiceClient {
+  getContainerClient: (containerName: string) => unknown;
+}
+
+
+interface MockSASQueryParameters {
+  toString: () => string;
+}
+
 const sampleFile = resolve(__dirname, '../__fixtures__/test-image.png');
 const sampleFileBuffer = readFileSync(sampleFile);
 const sampleFileSha256 = `${createHash('sha256').update(sampleFileBuffer).digest('hex')}.png`;
@@ -28,7 +44,7 @@ const getBlobClientMock = jest.fn((_filename: string) => ({
 }));
 
 const downloadMock = jest.fn(
-  (filename: string) => (): Promise<any> =>
+  (filename: string) => (): Promise<AzureBlobDownloadResponse> =>
     Promise.resolve({
       blobBody: Promise.resolve({
         arrayBuffer: () =>
@@ -121,11 +137,11 @@ describe('Azure Blob adapter', () => {
     jest.mock('@azure/storage-blob', () => ({
       BlobSASPermissions: MockBlobSASPermissions,
       BlobServiceClient: {
-        fromConnectionString: (_connectionString: string): any => ({
+        fromConnectionString: (_connectionString: string): MockBlobServiceClient => ({
           getContainerClient: containerClientMock,
         }),
       },
-      generateBlobSASQueryParameters: (): any => ({
+      generateBlobSASQueryParameters: (): MockSASQueryParameters => ({
         toString: (): string => 'a=1',
       }),
     }));

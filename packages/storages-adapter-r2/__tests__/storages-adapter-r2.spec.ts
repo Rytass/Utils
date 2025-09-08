@@ -8,6 +8,10 @@ import { createHash } from 'crypto';
 import { Readable, PassThrough } from 'stream';
 import { createReadStream, readFileSync } from 'fs';
 
+interface S3ManagedUploadMock {
+  promise(): Promise<S3.ManagedUpload.SendData>;
+}
+
 const ACCESS_KEY = 'aaaa';
 const SECRET_KEY = 'bbbb';
 const ACCOUNT = 'cccc';
@@ -41,12 +45,12 @@ describe('Cloudflare R2 storage adapter', () => {
         fakeStorage.set(params.Key, params.Body);
 
         return {
-          promise: (): any => uploadPromiseMocked,
+          promise: (): Promise<S3.ManagedUpload.SendData> => uploadPromiseMocked,
         };
       }
 
       return {
-        promise: (): Promise<any> =>
+        promise: (): Promise<S3.ManagedUpload.SendData> =>
           new Promise(pResolve => {
             let buffer = Buffer.from([]);
 
@@ -141,8 +145,10 @@ describe('Cloudflare R2 storage adapter', () => {
   beforeAll(() => {
     jest.mock('aws-sdk', () => ({
       S3: jest.fn(s3Options => ({
-        upload: (params: S3.Types.PutObjectRequest, options?: S3.ManagedUpload.ManagedUploadOptions): any =>
-          uploadMocked(params, options),
+        upload: (
+          params: S3.Types.PutObjectRequest,
+          options?: S3.ManagedUpload.ManagedUploadOptions,
+        ): S3ManagedUploadMock => uploadMocked(params, options),
         getObject: getMocked,
         headObject: headMocked,
         copyObject: copyMocked,
@@ -408,7 +414,7 @@ describe('Cloudflare R2 storage adapter', () => {
       fakeStorage.set(params.Key, params.Body as Buffer);
 
       return {
-        promise: (): any => uploadPromiseMocked,
+        promise: (): Promise<S3.ManagedUpload.SendData> => uploadPromiseMocked,
       };
     });
 
@@ -433,7 +439,7 @@ describe('Cloudflare R2 storage adapter', () => {
       fakeStorage.set(params.Key, params.Body as Buffer);
 
       return {
-        promise: (): any => uploadPromiseMocked,
+        promise: (): Promise<S3.ManagedUpload.SendData> => uploadPromiseMocked,
       };
     });
 
@@ -468,7 +474,7 @@ describe('Cloudflare R2 storage adapter', () => {
       expect(params.ContentType).toBe('image/png');
 
       return {
-        promise: (): Promise<any> =>
+        promise: (): Promise<S3.ManagedUpload.SendData> =>
           new Promise(pResolve => {
             let buffer = Buffer.from([]);
 

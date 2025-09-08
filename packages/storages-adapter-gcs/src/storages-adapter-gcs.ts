@@ -53,8 +53,13 @@ export class StorageGCSService extends Storage<GCSOptions> {
       }
 
       return file.createReadStream();
-    } catch (ex: any) {
-      if (/No such object/.test(ex.message)) {
+    } catch (ex: unknown) {
+      if (
+        ex &&
+        typeof ex === 'object' &&
+        'message' in ex &&
+        /No such object/.test((ex as { message: string }).message)
+      ) {
         throw new StorageError(ErrorCode.READ_FILE_ERROR, 'File not found');
       }
 

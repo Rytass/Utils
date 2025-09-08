@@ -23,8 +23,8 @@ export interface WMSBaseModuleOptionsFactory {
 }
 
 export interface WMSBaseModuleAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
-  useFactory?: (...args: any[]) => Promise<WMSBaseModuleOptions> | WMSBaseModuleOptions;
-  inject?: any[];
+  useFactory?: (...args: unknown[]) => Promise<WMSBaseModuleOptions> | WMSBaseModuleOptions;
+  inject?: (string | symbol | Function | Type)[];
   useClass?: Type<WMSBaseModuleOptionsFactory>;
   useExisting?: Type<WMSBaseModuleOptionsFactory>;
 }

@@ -8,6 +8,15 @@ import { createHash } from 'crypto';
 import { Readable, PassThrough } from 'stream';
 import { createReadStream, readFileSync } from 'fs';
 
+// Type definitions for AWS S3 operations
+interface S3ManagedUploadMock {
+  promise(): Promise<S3.ManagedUpload.SendData>;
+}
+
+interface S3OperationMock {
+  promise(): Promise<unknown>;
+}
+
 const ACCESS_KEY = 'aaaa';
 const SECRET_KEY = 'bbbb';
 const REGION = 'ap-northeast-1';
@@ -38,12 +47,12 @@ describe('AWS S3 storage adapter', () => {
         fakeStorage.set(params.Key, params.Body);
 
         return {
-          promise: (): any => uploadPromiseMocked,
+          promise: (): Promise<S3.ManagedUpload.SendData> => uploadPromiseMocked,
         };
       }
 
       return {
-        promise: (): Promise<any> =>
+        promise: (): Promise<S3.ManagedUpload.SendData> =>
           new Promise(pResolve => {
             let buffer = Buffer.from([]);
 
@@ -133,8 +142,10 @@ describe('AWS S3 storage adapter', () => {
   beforeAll(() => {
     jest.mock('aws-sdk', () => ({
       S3: jest.fn(() => ({
-        upload: (params: S3.Types.PutObjectRequest, options?: S3.ManagedUpload.ManagedUploadOptions): any =>
-          uploadMocked(params, options),
+        upload: (
+          params: S3.Types.PutObjectRequest,
+          options?: S3.ManagedUpload.ManagedUploadOptions,
+        ): S3ManagedUploadMock => uploadMocked(params, options),
         getObject: getMocked,
         headObject: headMocked,
         copyObject: copyMocked,
@@ -399,7 +410,7 @@ describe('AWS S3 storage adapter', () => {
       fakeStorage.set(params.Key, params.Body as Buffer);
 
       return {
-        promise: (): any => uploadPromiseMocked,
+        promise: (): Promise<S3.ManagedUpload.SendData> => uploadPromiseMocked,
       };
     });
 
@@ -424,7 +435,7 @@ describe('AWS S3 storage adapter', () => {
       fakeStorage.set(params.Key, params.Body as Buffer);
 
       return {
-        promise: (): any => uploadPromiseMocked,
+        promise: (): Promise<S3.ManagedUpload.SendData> => uploadPromiseMocked,
       };
     });
 
@@ -459,7 +470,7 @@ describe('AWS S3 storage adapter', () => {
       expect(params.ContentType).toBe('image/png');
 
       return {
-        promise: (): Promise<any> =>
+        promise: (): Promise<S3.ManagedUpload.SendData> =>
           new Promise(pResolve => {
             let buffer = Buffer.from([]);
 

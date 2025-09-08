@@ -23,7 +23,7 @@ const models: [symbol: symbol, cls: EntityClassOrSchema][] = [
   providers: models.map(([symbol, entity]) => ({
     provide: symbol,
     inject: [DataSource],
-    useFactory: (dataSource: DataSource): Repository<any> => dataSource.getRepository(entity),
+    useFactory: (dataSource: DataSource): Repository<Record<string, unknown>> => dataSource.getRepository(entity),
   })),
   exports: models.map(([symbol]) => symbol),
 })
