@@ -44,7 +44,8 @@ export const debugPayment = debug('Rytass:Payment:CTBC');
 export const debugPaymentServer = debug('Rytass:Payment:CTBC:Server');
 
 export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMessage>
-  implements PaymentGateway<CM, CTBCOrder<CM>>, BindCardPaymentGateway<CM> {
+  implements PaymentGateway<CM, CTBCOrder<CM>>, BindCardPaymentGateway<CM>
+{
   private serverHost = 'http://localhost:3000';
   private readonly callbackPath: string = '/payments/ctbc/callback';
   private readonly checkoutPath: string = '/payments/ctbc/checkout';
@@ -183,7 +184,10 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
               [CardType.VMJ]: 'Card',
             }[order.cardType] ?? 'Unknown';
 
-          throw new CtbcPaymentFailedError(`CTBC ${typeLabel} Checkout Failed: ${errorCode} - ${errorMessage}`, order?.id);
+          throw new CtbcPaymentFailedError(
+            `CTBC ${typeLabel} Checkout Failed: ${errorCode} - ${errorMessage}`,
+            order?.id,
+          );
         }
 
         if (!order) {

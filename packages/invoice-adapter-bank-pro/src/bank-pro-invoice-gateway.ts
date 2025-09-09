@@ -32,7 +32,8 @@ import {
 } from './typings';
 
 export class BankProInvoiceGateway
-  implements InvoiceGateway<BankProPaymentItem, BankProInvoice, BankProInvoiceQueryArgs> {
+  implements InvoiceGateway<BankProPaymentItem, BankProInvoice, BankProInvoiceQueryArgs>
+{
   private readonly user: string = '80178859AP2AP';
   private readonly password: string = 'a80178859AP2AP';
   private readonly systemOID: number = 185;
@@ -531,17 +532,17 @@ export class BankProInvoiceGateway
     const payload =
       'invoiceNumber' in options
         ? ({
-          UserID: this.user,
-          Pwd: this.password,
-          SystemOID: this.systemOID,
-          InvoiceNo: 'invoiceNumber' in options ? options.invoiceNumber : undefined,
-        } as BankProQueryInvoiceByInvoiceNumberPayload)
+            UserID: this.user,
+            Pwd: this.password,
+            SystemOID: this.systemOID,
+            InvoiceNo: 'invoiceNumber' in options ? options.invoiceNumber : undefined,
+          } as BankProQueryInvoiceByInvoiceNumberPayload)
         : ({
-          UserID: this.user,
-          Pwd: this.password,
-          SystemOID: this.systemOID,
-          OrderNo: 'orderId' in options ? options.orderId : undefined,
-        } as BankProQueryInvoiceByOrderNumberPayload);
+            UserID: this.user,
+            Pwd: this.password,
+            SystemOID: this.systemOID,
+            OrderNo: 'orderId' in options ? options.orderId : undefined,
+          } as BankProQueryInvoiceByOrderNumberPayload);
 
     const { data } = await axios.post<BankProInvoiceQueryResponse[]>(
       `${this.baseUrl}/${'invoiceNumber' in options ? 'B2B2CInvoice_GetByInvoiceNo' : 'B2B2CInvoice_GetByOrderNo'}`,
