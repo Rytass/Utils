@@ -11,7 +11,7 @@ describe('delivery-adapter-ctc', () => {
 
       const logisticId = ['R25061100009'];
 
-      get.mockImplementationOnce(async (url: string, _data: any) => {
+      get.mockImplementationOnce(async (url: string, _data: object) => {
         expect(url).toBe('https://tms2.ctc-express.cloud/api/v1/customer/orders/R25061100009');
 
         return {
@@ -46,7 +46,7 @@ describe('delivery-adapter-ctc', () => {
 
       const logisticId = ['R25061100009'];
 
-      get.mockImplementationOnce(async (url: string, _data: any) => {
+      get.mockImplementationOnce(async (url: string, _data: object) => {
         expect(url).toBe('https://tms2.ctc-express.cloud/api/v1/customer/orders/ABCD202507170001');
 
         return {
@@ -106,7 +106,7 @@ describe('delivery-adapter-ctc', () => {
       volume: 1, // 材積, 固定為 1
     } as CreateOrUpdateCtcLogisticsOptions;
 
-    post.mockImplementation(async (url: string, _data: any) => {
+    post.mockImplementation(async (url: string, _data: object) => {
       expect(url).toBe('https://tms2.ctc-express.cloud/api/v1/customer/orders');
 
       return {
@@ -118,7 +118,7 @@ describe('delivery-adapter-ctc', () => {
       };
     });
 
-    get.mockImplementationOnce(async (url: string, _data: any) => {
+    get.mockImplementationOnce(async (url: string, _data: unknown) => {
       expect(url).toBe('https://tms2.ctc-express.cloud/api/v1/customer/orders/R25061100009');
 
       return {
