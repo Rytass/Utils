@@ -10,7 +10,7 @@ import {
   useReactFlow,
 } from '@xyflow/react';
 import { EditMode, ViewMode } from '../../typings';
-import { FlowNode, FlowEdge, FlowNodeChange, WMSMapContentProps } from '../../types/index';
+import { FlowNode, FlowEdge, WMSMapContentProps } from '../../types/index';
 import {
   DEFAULT_RECTANGLE_LABEL,
   DEFAULT_PATH_LABEL,

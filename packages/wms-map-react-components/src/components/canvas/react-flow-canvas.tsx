@@ -169,7 +169,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
           onPathPointsChange={onPathPointsChange}
           onPathPointDragStateChange={
             onPathPointDragStateChange
-              ? (id: string, isDragging: boolean) => onPathPointDragStateChange(isDragging)
+              ? (_id: string, isDragging: boolean): void => onPathPointDragStateChange(isDragging)
               : undefined
           }
           isHovered={hoveredNodeId === props.id}
