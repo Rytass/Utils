@@ -54,10 +54,10 @@ describe('SignatureService.finalSignatureLevel', () => {
 
 describe('SignatureService.onApplicationBootstrap', () => {
   let service: SignatureService;
-  let mockRunner: any;
-  let mockDataSource: any;
-  let mockSignatureRepo: any;
-  let mockSignatureLevelRepo: any;
+  let mockRunner: MockQueryRunner;
+  let mockDataSource: ReturnType<typeof createMockDataSourcePartial>;
+  let mockSignatureRepo: ReturnType<typeof createMockRepositoryPartial>;
+  let mockSignatureLevelRepo: ReturnType<typeof createMockRepositoryPartial>;
 
   const existingLevels = [
     { id: '1', name: 'OLD', sequence: 0, required: false },

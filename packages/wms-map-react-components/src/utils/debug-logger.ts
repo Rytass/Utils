@@ -5,16 +5,19 @@
  */
 
 // WmsMapModal 專用的 debug 命名空間
+interface WindowWithDebug extends Window {
+  [WMS_DEBUG_NAMESPACE]: boolean;
+}
 const WMS_DEBUG_NAMESPACE = '__WMS_MAP_DEBUG__';
 
 // 取得 WmsMapModal 專用的 debug 狀態
 const getWmsDebugState = (): boolean => {
-  return (window as any)[WMS_DEBUG_NAMESPACE] || false;
+  return Boolean((window as unknown as WindowWithDebug)[WMS_DEBUG_NAMESPACE]);
 };
 
 // 設定 WmsMapModal 專用的 debug 狀態
 const setWmsDebugState = (enabled: boolean): void => {
-  (window as any)[WMS_DEBUG_NAMESPACE] = enabled;
+  (window as unknown as WindowWithDebug)[WMS_DEBUG_NAMESPACE] = enabled;
 };
 
 /**
@@ -34,7 +37,7 @@ export const getDebugMode = (): boolean => {
 /**
  * 主要的 debug logger 函數
  */
-export const debugLog = (message: string, ...args: any[]): void => {
+export const debugLog = (message: string, ...args: (string | number | object)[]): void => {
   if (!getWmsDebugState()) {
     return;
   }
@@ -48,7 +51,7 @@ export const debugLog = (message: string, ...args: any[]): void => {
 /**
  * 成功 debug log
  */
-export const debugSuccess = (message: string, ...args: any[]): void => {
+export const debugSuccess = (message: string, ...args: (string | number | object)[]): void => {
   if (!getWmsDebugState()) {
     return;
   }
@@ -76,7 +79,7 @@ export const debugError = (message: string, error?: unknown): void => {
 /**
  * 警告 debug log
  */
-export const debugWarn = (message: string, ...args: any[]): void => {
+export const debugWarn = (message: string, ...args: (string | number | object)[]): void => {
   if (!getWmsDebugState()) {
     return;
   }

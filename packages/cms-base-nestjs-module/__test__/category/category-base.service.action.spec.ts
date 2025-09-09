@@ -10,10 +10,11 @@ import {
 import { BaseCategoryMultiLanguageNameEntity } from '../../src/models/base-category-multi-language-name.entity';
 import { CategoryDataLoader } from '../../src/data-loaders/category.dataloader';
 import { DEFAULT_LANGUAGE } from '@rytass/cms-base-nestjs-module';
+import { MockServiceDataSource } from '../typings/mock-types.interface';
 
 describe('CategoryBaseService - archive', () => {
   let service: CategoryBaseService;
-  let baseCategoryRepo: any;
+  let baseCategoryRepo: jest.Mocked<Repository<BaseCategoryEntity>>;
 
   beforeEach(() => {
     baseCategoryRepo = jest.mocked({
@@ -22,13 +23,13 @@ describe('CategoryBaseService - archive', () => {
     } as Partial<Repository<BaseCategoryEntity>>);
 
     service = new CategoryBaseService(
-      {} as any, // baseCategoryMultiLanguageNameRepo
-      baseCategoryRepo as any, // baseCategoryRepo
+      {} as Repository<BaseCategoryMultiLanguageNameEntity>, // baseCategoryMultiLanguageNameRepo
+      baseCategoryRepo, // baseCategoryRepo
       false, // multipleLanguageMode
       false, // allowMultipleParentCategories
       false, // allowCircularCategories
-      { createQueryRunner: jest.fn() } as any, // dataSource
-      {} as any, // categoryDataLoader
+      { createQueryRunner: jest.fn() } as MockServiceDataSource, // dataSource
+      {} as CategoryDataLoader, // categoryDataLoader
     );
   });
 
@@ -198,15 +199,15 @@ describe('CategoryBaseService - update', () => {
     service = new CategoryBaseService(
       {
         create: jest.fn(x => x),
-      } as any,
-      baseCategoryRepo as any,
+      } as Repository<BaseCategoryMultiLanguageNameEntity>,
+      baseCategoryRepo,
       false,
       false,
       false,
       {
         createQueryRunner: () => queryRunner,
-      } as any,
-      {} as any,
+      } as Repository<BaseCategoryMultiLanguageNameEntity>,
+      {} as CategoryDataLoader,
     );
 
     const mockCategory = {
@@ -288,7 +289,7 @@ describe('CategoryBaseService - update', () => {
       categoryId: 'cat-id',
       createdAt: new Date(),
       updatedAt: new Date(),
-      category: {} as any,
+      category: {} as BaseCategoryEntity,
     } as BaseCategoryMultiLanguageNameEntity;
 
     const mockCategory = {
@@ -350,7 +351,7 @@ describe('CategoryBaseService - update', () => {
         categoryId: 'cat-id',
         createdAt: new Date(),
         updatedAt: new Date(),
-        category: {} as any,
+        category: {} as BaseCategoryEntity,
       },
       {
         language: 'zh',
@@ -358,7 +359,7 @@ describe('CategoryBaseService - update', () => {
         categoryId: 'cat-id',
         createdAt: new Date(),
         updatedAt: new Date(),
-        category: {} as any,
+        category: {} as BaseCategoryEntity,
       },
     ] as BaseCategoryMultiLanguageNameEntity[];
 
@@ -449,15 +450,15 @@ describe('CategoryBaseService - update', () => {
     service = new CategoryBaseService(
       {
         create: jest.fn(x => x),
-      } as any,
-      baseCategoryRepo as any,
+      } as Repository<BaseCategoryMultiLanguageNameEntity>,
+      baseCategoryRepo,
       true,
       true,
       true,
       {
         createQueryRunner: () => queryRunner,
-      } as any,
-      {} as any,
+      } as Repository<BaseCategoryMultiLanguageNameEntity>,
+      {} as CategoryDataLoader,
     );
 
     service.findById = jest.fn().mockResolvedValue({ id: 'cat-id' });
@@ -509,19 +510,19 @@ describe('CategoryBaseService - update', () => {
     (queryRunner.manager as EntityManager).remove = jest.fn().mockResolvedValue(undefined);
 
     service = new CategoryBaseService(
-      { create: jest.fn(x => x) } as any,
-      baseCategoryRepo as any,
+      { create: jest.fn(x => x) } as Repository<BaseCategoryMultiLanguageNameEntity>,
+      baseCategoryRepo,
       true,
       true,
       false,
       {
         createQueryRunner: () => queryRunner,
-      } as any,
+      } as Repository<BaseCategoryMultiLanguageNameEntity>,
       {
         withParentsLoader: {
           load: jest.fn().mockResolvedValue(mockCategory),
         },
-      } as any,
+      } as Repository<BaseCategoryMultiLanguageNameEntity>,
     );
 
     service.findById = jest.fn().mockResolvedValue({ id: 'cat-id' });
@@ -556,13 +557,13 @@ describe('CategoryBaseService - update', () => {
     baseCategoryRepo.find = jest.fn().mockResolvedValue([]); // simulate missing parents
 
     service = new CategoryBaseService(
-      { create: jest.fn() } as any,
-      baseCategoryRepo as any,
+      { create: jest.fn() } as Repository<BaseCategoryMultiLanguageNameEntity>,
+      baseCategoryRepo,
       true, // multipleLanguageMode
       true, // allowMultipleParentCategories
       false, // allowCircularCategories
-      { createQueryRunner: () => queryRunner } as any,
-      {} as any,
+      { createQueryRunner: () => queryRunner } as MockServiceDataSource,
+      {} as CategoryDataLoader,
     );
 
     await expect(() =>
@@ -603,18 +604,18 @@ describe('CategoryBaseService - update', () => {
     const createSpy = jest.fn(input => input);
 
     service = new CategoryBaseService(
-      { create: createSpy } as any,
+      { create: createSpy } as Repository<BaseCategoryMultiLanguageNameEntity>,
       baseCategoryRepo,
       true, // multiLanguageMode
       true, // allowMultipleParents
       false,
-      { createQueryRunner: () => queryRunner } as any,
+      { createQueryRunner: () => queryRunner } as MockServiceDataSource,
       {
         load: jest.fn().mockResolvedValue({ parents: [] }),
         withParentsLoader: {
           load: jest.fn().mockResolvedValue({ parents: [] }),
         },
-      } as any,
+      } as Repository<BaseCategoryMultiLanguageNameEntity>,
     );
 
     service.findById = jest.fn().mockResolvedValue({ id: 'cat-id' });
@@ -702,17 +703,17 @@ describe('CategoryBaseService - update', () => {
     const createSpy = jest.fn(input => input);
 
     service = new CategoryBaseService(
-      { create: createSpy } as any,
+      { create: createSpy } as Repository<BaseCategoryMultiLanguageNameEntity>,
       baseCategoryRepo,
       true, // multiLanguageMode
       false,
       false,
-      { createQueryRunner: () => queryRunner } as any,
+      { createQueryRunner: () => queryRunner } as MockServiceDataSource,
       {
         withParentsLoader: {
           load: jest.fn().mockResolvedValue({ parents: [] }),
         },
-      } as any,
+      } as Repository<BaseCategoryMultiLanguageNameEntity>,
     );
 
     service.findById = jest.fn().mockResolvedValue({ id: 'cat-id' });
@@ -764,17 +765,17 @@ describe('CategoryBaseService - update', () => {
     const createSpy = jest.fn(input => input);
 
     service = new CategoryBaseService(
-      { create: createSpy } as any,
+      { create: createSpy } as Repository<BaseCategoryMultiLanguageNameEntity>,
       baseCategoryRepo,
       true, // multipleLanguageMode
       false,
       false,
-      { createQueryRunner: () => queryRunner } as any,
+      { createQueryRunner: () => queryRunner } as MockServiceDataSource,
       {
         withParentsLoader: {
           load: jest.fn().mockResolvedValue({ parents: [] }),
         },
-      } as any,
+      } as Repository<BaseCategoryMultiLanguageNameEntity>,
     );
 
     service.findById = jest.fn().mockResolvedValue({ id: 'cat-id' });
@@ -830,17 +831,17 @@ describe('CategoryBaseService - update', () => {
     const createSpy = jest.fn(input => input);
 
     service = new CategoryBaseService(
-      { create: createSpy } as any,
+      { create: createSpy } as Repository<BaseCategoryMultiLanguageNameEntity>,
       baseCategoryRepo,
       true,
       false,
       false,
-      { createQueryRunner: () => queryRunner } as any,
+      { createQueryRunner: () => queryRunner } as MockServiceDataSource,
       {
         withParentsLoader: {
           load: jest.fn().mockResolvedValue({ parents: [] }),
         },
-      } as any,
+      } as Repository<BaseCategoryMultiLanguageNameEntity>,
     );
 
     service.findById = jest.fn().mockResolvedValue({ id: 'cat-id' });
@@ -873,8 +874,8 @@ describe('CategoryBaseService - create', () => {
 
   let queryRunner: QueryRunner;
   let manager: {
-    save: jest.MockedFunction<any>;
-    remove: jest.MockedFunction<any>;
+    save: jest.MockedFunction<EntityManager['save']>;
+    remove: jest.MockedFunction<EntityManager['remove']>;
   };
 
   beforeEach(() => {
@@ -909,8 +910,8 @@ describe('CategoryBaseService - create', () => {
       true,
       true,
       false,
-      { createQueryRunner: () => queryRunner } as any,
-      {} as any,
+      { createQueryRunner: () => queryRunner } as MockServiceDataSource,
+      {} as CategoryDataLoader,
     );
   });
 
@@ -936,10 +937,10 @@ describe('CategoryBaseService - create', () => {
         ({
           ...input,
           categoryId: input.categoryId || 'cat-1',
-        }) as any,
+        }) as BaseCategoryEntity,
     );
 
-    jest.spyOn(service, 'findById').mockResolvedValue(createdCategory as any);
+    jest.spyOn(service, 'findById').mockResolvedValue(createdCategory as BaseCategoryEntity);
 
     const result = await service.create(categoryInput);
 
@@ -973,10 +974,10 @@ describe('CategoryBaseService - create', () => {
         ({
           ...input,
           categoryId: input.categoryId || 'cat-2',
-        }) as any,
+        }) as BaseCategoryEntity,
     );
 
-    jest.spyOn(service, 'findById').mockResolvedValue(createdCategory as any);
+    jest.spyOn(service, 'findById').mockResolvedValue(createdCategory as BaseCategoryEntity);
 
     const result = await service.create(categoryInput);
 
@@ -998,8 +999,8 @@ describe('CategoryBaseService - create', () => {
       false,
       true,
       false,
-      { createQueryRunner: () => queryRunner } as any,
-      {} as any,
+      { createQueryRunner: () => queryRunner } as MockServiceDataSource,
+      {} as CategoryDataLoader,
     );
 
     const input = {
@@ -1019,8 +1020,8 @@ describe('CategoryBaseService - create', () => {
       true,
       false,
       false,
-      { createQueryRunner: () => queryRunner } as any,
-      {} as any,
+      { createQueryRunner: () => queryRunner } as MockServiceDataSource,
+      {} as CategoryDataLoader,
     );
 
     baseCategoryRepo.findOne.mockResolvedValue(null);
@@ -1035,8 +1036,8 @@ describe('CategoryBaseService - create', () => {
       true,
       false,
       false,
-      { createQueryRunner: () => queryRunner } as any,
-      {} as any,
+      { createQueryRunner: () => queryRunner } as MockServiceDataSource,
+      {} as CategoryDataLoader,
     );
 
     const input = {
@@ -1054,8 +1055,8 @@ describe('CategoryBaseService - create', () => {
       true,
       true,
       false,
-      { createQueryRunner: () => queryRunner } as any,
-      {} as any,
+      { createQueryRunner: () => queryRunner } as MockServiceDataSource,
+      {} as CategoryDataLoader,
     );
 
     const input = {
@@ -1066,8 +1067,8 @@ describe('CategoryBaseService - create', () => {
     const mockParents = [{ id: 'p1' }, { id: 'p2' }] as BaseCategoryEntity[];
 
     baseCategoryRepo.find.mockResolvedValue(mockParents);
-    baseCategoryRepo.create.mockReturnValue({ id: 'cat-3' } as any);
-    jest.spyOn(service, 'findById').mockResolvedValue({ id: 'cat-3' } as any);
+    baseCategoryRepo.create.mockReturnValue({ id: 'cat-3' } as BaseCategoryEntity);
+    jest.spyOn(service, 'findById').mockResolvedValue({ id: 'cat-3' } as BaseCategoryEntity);
 
     const result = await service.create(input);
 
@@ -1087,8 +1088,8 @@ describe('CategoryBaseService - create', () => {
       true, // multipleLanguageMode
       true, // allowMultipleParentCategories
       false,
-      { createQueryRunner: () => queryRunner } as any,
-      {} as any,
+      { createQueryRunner: () => queryRunner } as MockServiceDataSource,
+      {} as CategoryDataLoader,
     );
 
     const input = {
@@ -1110,7 +1111,7 @@ describe('CategoryBaseService - create', () => {
     } as unknown as BaseCategoryEntity;
 
     baseCategoryRepo.create.mockReturnValue(createdCategory);
-    jest.spyOn(service, 'findById').mockResolvedValue(createdCategory as any);
+    jest.spyOn(service, 'findById').mockResolvedValue(createdCategory as BaseCategoryEntity);
 
     const result = await service.create(input);
 
@@ -1130,8 +1131,8 @@ describe('CategoryBaseService - create', () => {
       true,
       true, // allowMultipleParentCategories = true
       false,
-      { createQueryRunner: () => queryRunner } as any,
-      {} as any,
+      { createQueryRunner: () => queryRunner } as MockServiceDataSource,
+      {} as CategoryDataLoader,
     );
 
     const input = {
@@ -1151,8 +1152,8 @@ describe('CategoryBaseService - create', () => {
       true,
       false, // allowMultipleParentCategories = false
       false,
-      { createQueryRunner: () => queryRunner } as any,
-      {} as any,
+      { createQueryRunner: () => queryRunner } as MockServiceDataSource,
+      {} as CategoryDataLoader,
     );
 
     const input = {
@@ -1173,7 +1174,7 @@ describe('CategoryBaseService - create', () => {
       id: 'cat-single',
       parents: [mockParent],
       multiLanguageNames: [],
-    } as any);
+    } as BaseCategoryEntity);
 
     const result = await service.create(input);
 
@@ -1198,7 +1199,7 @@ describe('CategoryBaseService - create', () => {
     } as unknown as BaseCategoryEntity;
 
     baseCategoryRepo.create.mockReturnValue(createdCategory);
-    jest.spyOn(service, 'findById').mockResolvedValue(createdCategory as any);
+    jest.spyOn(service, 'findById').mockResolvedValue(createdCategory as BaseCategoryEntity);
 
     const saveSpy = jest.spyOn(queryRunner.manager, 'save');
 

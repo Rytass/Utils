@@ -58,7 +58,7 @@ export type PolicyPickStrategyType = 'order-based' | 'item-based';
  */
 export interface PolicyPickStrategy {
   readonly type: PolicyPickStrategyType;
-  pick(order: Order, policies: Policies, ..._: any[]): PolicyDiscountDescription[];
-  pickOne(order: Order, policy: Policy, ..._: any[]): PolicyDiscountDescription[];
-  pickMulti(order: Order, policies: Policy[], ..._: any[]): PolicyDiscountDescription[];
+  pick(order: Order, policies: Policies, ..._: unknown[]): PolicyDiscountDescription[];
+  pickOne(order: Order, policy: Policy, ..._: unknown[]): PolicyDiscountDescription[];
+  pickMulti(order: Order, policies: Policy[], ..._: unknown[]): PolicyDiscountDescription[];
 }

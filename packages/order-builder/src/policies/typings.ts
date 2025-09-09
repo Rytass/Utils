@@ -17,8 +17,8 @@ export interface Policy<T extends ObjRecord = ObjRecord> {
   conditions?: Condition[];
   matchedItems(order: Order): FlattenOrderItem[];
   valid(order: Order): boolean;
-  resolve<TT extends T>(order: Order, ..._: any[]): TT[];
-  description(..._: any[]): PolicyResult<T>;
+  resolve<TT extends T>(order: Order, ..._: unknown[]): TT[];
+  description(..._: unknown[]): PolicyResult<T>;
 }
 
 export type Policies<P extends Policy = Policy> = P | P[];

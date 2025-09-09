@@ -6,6 +6,8 @@ import { Repository } from 'typeorm';
 import { ArticleStage } from '../../src/typings/article-stage.enum';
 import { ArticleSignatureResult } from '../../src/typings/article-signature-result.enum';
 import { ArticleVersionDataLoader } from '../../src/data-loaders/article-version.dataloader';
+import { MockQueryBuilder } from '../typings/mock-types.interface';
+import { MockSignatureService } from '../typings/mock-repository.interface';
 
 jest.mock('../../src/utils/remove-invalid-fields', () => ({
   removeArticleVersionContentInvalidFields: jest.fn().mockImplementation(x => ({
@@ -48,11 +50,11 @@ describe('ArticleVersionDataLoader', () => {
   beforeEach(async () => {
     articleRepo = {
       createQueryBuilder: jest.fn(),
-    } as any;
+    } as jest.Mocked<Repository<BaseArticleEntity>>;
 
     signatureService = {
-      finalSignatureLevel: mockFinalSignatureLevel as any,
-    };
+      finalSignatureLevel: mockFinalSignatureLevel,
+    } as MockSignatureService;
 
     const module = await Test.createTestingModule({
       providers: [
@@ -108,7 +110,7 @@ describe('ArticleVersionDataLoader', () => {
       getMany,
     };
 
-    articleRepo.createQueryBuilder.mockReturnValue(qb as any);
+    articleRepo.createQueryBuilder.mockReturnValue(qb as MockQueryBuilder);
 
     const result = await loader.stageVersionsLoader.load('a1');
 
@@ -150,7 +152,7 @@ describe('ArticleVersionDataLoader', () => {
       getMany,
     };
 
-    articleRepo.createQueryBuilder.mockReturnValue(qb as any);
+    articleRepo.createQueryBuilder.mockReturnValue(qb as MockQueryBuilder);
 
     const result = await loader.stageVersionsLoader.load('a1');
 
@@ -184,7 +186,7 @@ describe('ArticleVersionDataLoader', () => {
       getMany,
     };
 
-    articleRepo.createQueryBuilder.mockReturnValue(qb as any);
+    articleRepo.createQueryBuilder.mockReturnValue(qb as MockQueryBuilder);
 
     const result = await loader.stageVersionsLoader.load('a1');
 
@@ -218,7 +220,7 @@ describe('ArticleVersionDataLoader', () => {
       getMany,
     };
 
-    articleRepo.createQueryBuilder.mockReturnValue(qb as any);
+    articleRepo.createQueryBuilder.mockReturnValue(qb as MockQueryBuilder);
 
     const result = await loader.stageVersionsLoader.load('a1');
 
@@ -261,7 +263,7 @@ describe('ArticleVersionDataLoader', () => {
       getMany,
     };
 
-    articleRepo.createQueryBuilder.mockReturnValue(qb as any);
+    articleRepo.createQueryBuilder.mockReturnValue(qb as MockQueryBuilder);
 
     const result = await loader.versionsLoader.load('a1');
 
@@ -317,7 +319,7 @@ describe('ArticleVersionDataLoader', () => {
       getMany,
     };
 
-    articleRepo.createQueryBuilder.mockReturnValue(qb as any);
+    articleRepo.createQueryBuilder.mockReturnValue(qb as MockQueryBuilder);
 
     const result = await loader.versionsLoader.load('a1');
 
@@ -353,7 +355,7 @@ describe('ArticleVersionDataLoader', () => {
       getMany,
     };
 
-    articleRepo.createQueryBuilder.mockReturnValue(qb as any);
+    articleRepo.createQueryBuilder.mockReturnValue(qb as MockQueryBuilder);
 
     const result = await loader.stageVersionsLoader.load('a1');
 
@@ -409,7 +411,7 @@ describe('ArticleVersionDataLoader', () => {
       getMany,
     };
 
-    articleRepo.createQueryBuilder.mockReturnValue(qb as any);
+    articleRepo.createQueryBuilder.mockReturnValue(qb as MockQueryBuilder);
 
     const result = await loader.stageVersionsLoader.load('a1');
 
@@ -435,7 +437,7 @@ describe('ArticleVersionDataLoader', () => {
       addOrderBy: jest.fn().mockReturnThis(),
     };
 
-    articleRepo.createQueryBuilder.mockReturnValue(qb as any);
+    articleRepo.createQueryBuilder.mockReturnValue(qb as MockQueryBuilder);
 
     const result = await loader.versionsLoader.load('nonexistent-id');
 

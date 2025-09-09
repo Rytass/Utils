@@ -3,10 +3,10 @@ import { Order } from '../../core/order';
 import { divided, plus, times } from '../../utils/decimal';
 import { Condition } from '../typings';
 import { Threshold, ThresholdDescription } from './typings';
-import { ObjRecord } from '../../typings';
+import { ConditionOptionsBase } from '../../typings';
 
-export class QuantityThreshold<Options extends ObjRecord = ObjRecord>
-  implements Condition<ThresholdDescription, ObjRecord>
+export class QuantityThreshold<Options extends ConditionOptionsBase = ConditionOptionsBase>
+  implements Condition<ThresholdDescription, ConditionOptionsBase>
 {
   readonly type = Threshold.QUANTITY;
   readonly value: number;

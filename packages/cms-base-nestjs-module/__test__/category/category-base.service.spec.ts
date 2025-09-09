@@ -11,9 +11,18 @@ import {
 } from '../../src/typings/cms-base-providers';
 import { DEFAULT_LANGUAGE } from '../../src/constants/default-language';
 import { CircularCategoryNotAllowedError } from '../../src/constants/errors/category.errors';
+import { BaseCategoryEntity } from '../../src/models/base-category.entity';
+import { BaseCategoryMultiLanguageNameEntity } from '../../src/models/base-category-multi-language-name.entity';
+
+interface TestableCategoryBaseService {
+  getDefaultQueryBuilder: () => Promise<unknown>;
+  parseSingleLanguageCategory: (category: BaseCategoryEntity, language?: string) => unknown;
+  checkCircularCategories: (category: BaseCategoryEntity, parents: BaseCategoryEntity[]) => Promise<void>;
+  getParentCategoryIdSet: (categoryId: string) => Promise<Set<string>>;
+}
 
 describe('CategoryBaseService.getDefaultQueryBuilder', () => {
-  let service: CategoryBaseService<any, any>;
+  let service: CategoryBaseService<BaseCategoryEntity, BaseCategoryMultiLanguageNameEntity>;
 
   const innerJoinAndSelectMock = jest.fn().mockReturnThis();
   const leftJoinAndSelectMock = jest.fn().mockReturnThis();
@@ -62,11 +71,12 @@ describe('CategoryBaseService.getDefaultQueryBuilder', () => {
       ],
     }).compile();
 
-    service = module.get<CategoryBaseService<any, any>>(CategoryBaseService);
+    service =
+      module.get<CategoryBaseService<BaseCategoryEntity, BaseCategoryMultiLanguageNameEntity>>(CategoryBaseService);
   });
 
   it('should create base query builder with correct joins in findAll()', async () => {
-    const result = await (service as any).getDefaultQueryBuilder();
+    const result = await (service as TestableCategoryBaseService).getDefaultQueryBuilder();
 
     expect(mockCategoryRepo.createQueryBuilder).toHaveBeenCalledWith('categories');
 
@@ -81,7 +91,7 @@ describe('CategoryBaseService.getDefaultQueryBuilder', () => {
 });
 
 describe('CategoryBaseService.parseSingleLanguageCategory', () => {
-  let service: CategoryBaseService<any, any>;
+  let service: CategoryBaseService<BaseCategoryEntity, BaseCategoryMultiLanguageNameEntity>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -97,7 +107,8 @@ describe('CategoryBaseService.parseSingleLanguageCategory', () => {
       ],
     }).compile();
 
-    service = module.get<CategoryBaseService<any, any>>(CategoryBaseService);
+    service =
+      module.get<CategoryBaseService<BaseCategoryEntity, BaseCategoryMultiLanguageNameEntity>>(CategoryBaseService);
   });
 
   it('should default to DEFAULT_LANGUAGE when language is not provided', () => {
@@ -112,16 +123,16 @@ describe('CategoryBaseService.parseSingleLanguageCategory', () => {
         { language: DEFAULT_LANGUAGE, name: 'English Name' },
       ],
       children: [],
-    } as any;
+    } as BaseCategoryEntity;
 
-    const parsed = (service as any).parseSingleLanguageCategory(mockCategory);
+    const parsed = (service as TestableCategoryBaseService).parseSingleLanguageCategory(mockCategory);
 
     expect(parsed.language).toBe(DEFAULT_LANGUAGE);
     expect(parsed.name).toBe('Default Name');
   });
 
   it('should return empty children array when category.children is undefined', () => {
-    const mockCategory: any = {
+    const mockCategory: BaseCategoryEntity = {
       id: '1',
       bindable: true,
       createdAt: new Date(),
@@ -131,13 +142,13 @@ describe('CategoryBaseService.parseSingleLanguageCategory', () => {
       children: undefined,
     };
 
-    const result = (service as any).parseSingleLanguageCategory(mockCategory, 'en');
+    const result = (service as TestableCategoryBaseService).parseSingleLanguageCategory(mockCategory, 'en');
 
     expect(result.children).toEqual([]);
   });
 
   it('should recursively parse children categories', () => {
-    const mockCategory: any = {
+    const mockCategory: BaseCategoryEntity = {
       id: '1',
       bindable: true,
       createdAt: new Date(),
@@ -157,7 +168,7 @@ describe('CategoryBaseService.parseSingleLanguageCategory', () => {
       ],
     };
 
-    const result = (service as any).parseSingleLanguageCategory(mockCategory, DEFAULT_LANGUAGE);
+    const result = (service as TestableCategoryBaseService).parseSingleLanguageCategory(mockCategory, DEFAULT_LANGUAGE);
 
     expect(result.children).toHaveLength(1);
     expect(result.children[0]).toMatchObject({
@@ -170,7 +181,7 @@ describe('CategoryBaseService.parseSingleLanguageCategory', () => {
 });
 
 describe('CategoryBaseService.getParentCategoryIdSet', () => {
-  let service: CategoryBaseService<any, any>;
+  let service: CategoryBaseService<BaseCategoryEntity, BaseCategoryMultiLanguageNameEntity>;
   const loadMock = jest.fn();
 
   beforeEach(async () => {
@@ -192,7 +203,9 @@ describe('CategoryBaseService.getParentCategoryIdSet', () => {
       ],
     }).compile();
 
-    service = module.get<CategoryBaseService<any, any>>(CategoryBaseService);
+    service =
+      module.get<CategoryBaseService<BaseCategoryEntity, BaseCategoryMultiLanguageNameEntity>>(CategoryBaseService);
+
     loadMock.mockReset();
   });
 
@@ -207,7 +220,7 @@ describe('CategoryBaseService.getParentCategoryIdSet', () => {
       parents: [],
     }));
 
-    const result = await (service as any).getParentCategoryIdSet('c1');
+    const result = await (service as TestableCategoryBaseService).getParentCategoryIdSet('c1');
 
     expect(result).toEqual(new Set(['c1', 'p1']));
     expect(loadMock).toHaveBeenCalledTimes(2);
@@ -218,7 +231,7 @@ describe('CategoryBaseService.getParentCategoryIdSet', () => {
   it('should handle categories with no parents', async () => {
     loadMock.mockResolvedValueOnce({ id: 'c1', parents: [] });
 
-    const result = await (service as any).getParentCategoryIdSet('c1');
+    const result = await (service as TestableCategoryBaseService).getParentCategoryIdSet('c1');
 
     expect(result).toEqual(new Set(['c1']));
     expect(loadMock).toHaveBeenCalledWith('c1');
@@ -235,7 +248,7 @@ describe('CategoryBaseService.getParentCategoryIdSet', () => {
       return data[id];
     });
 
-    const result = await (service as any).getParentCategoryIdSet('c1');
+    const result = await (service as TestableCategoryBaseService).getParentCategoryIdSet('c1');
 
     expect(result).toEqual(new Set(['c1', 'p1', 'p2']));
     expect(loadMock).toHaveBeenCalledTimes(3);
@@ -243,10 +256,10 @@ describe('CategoryBaseService.getParentCategoryIdSet', () => {
 });
 
 describe('CategoryBaseService.checkCircularCategories', () => {
-  let service: CategoryBaseService<any, any>;
+  let service: CategoryBaseService<BaseCategoryEntity, BaseCategoryMultiLanguageNameEntity>;
 
-  const mockCategory = { id: 'c1' } as any;
-  const mockParents = [{ id: 'p1' }, { id: 'p2' }] as any[];
+  const mockCategory = { id: 'c1' } as BaseCategoryEntity;
+  const mockParents = [{ id: 'p1' }, { id: 'p2' }] as BaseCategoryEntity[];
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -277,13 +290,14 @@ describe('CategoryBaseService.checkCircularCategories', () => {
       ],
     }).compile();
 
-    service = module.get<CategoryBaseService<any, any>>(CategoryBaseService);
+    service =
+      module.get<CategoryBaseService<BaseCategoryEntity, BaseCategoryMultiLanguageNameEntity>>(CategoryBaseService);
   });
 
   it('should throw CircularCategoryNotAllowedError if circular dependency is found', async () => {
-    await expect((service as any).checkCircularCategories(mockCategory, mockParents)).rejects.toThrow(
-      CircularCategoryNotAllowedError,
-    );
+    await expect(
+      (service as TestableCategoryBaseService).checkCircularCategories(mockCategory, mockParents),
+    ).rejects.toThrow(CircularCategoryNotAllowedError);
   });
 
   it('should not throw if no circular dependency is present', async () => {
@@ -300,7 +314,7 @@ describe('CategoryBaseService.checkCircularCategories', () => {
           useValue: {
             withParentsLoader: {
               load: jest.fn((id: string) => {
-                const mockData: Record<string, any> = {
+                const mockData: Record<string, BaseCategoryEntity> = {
                   p1: { id: 'p1', parents: [] },
                   p2: { id: 'p2', parents: [] },
                 };
@@ -314,8 +328,13 @@ describe('CategoryBaseService.checkCircularCategories', () => {
       ],
     }).compile();
 
-    const s = cleanService.get<CategoryBaseService<any, any>>(CategoryBaseService);
+    const s =
+      cleanService.get<CategoryBaseService<BaseCategoryEntity, BaseCategoryMultiLanguageNameEntity>>(
+        CategoryBaseService,
+      );
 
-    await expect((s as any).checkCircularCategories(mockCategory, mockParents)).resolves.not.toThrow();
+    await expect(
+      (s as TestableCategoryBaseService).checkCircularCategories(mockCategory, mockParents),
+    ).resolves.not.toThrow();
   });
 });

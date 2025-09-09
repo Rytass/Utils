@@ -1,5 +1,13 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
 import { NodeProps, NodeResizer, useUpdateNodeInternals, useReactFlow } from '@xyflow/react';
+
+interface ResizeParams {
+  width: number;
+  height: number;
+  x?: number;
+  y?: number;
+}
+
 import { EditMode, ViewMode } from '../../typings';
 import { DEFAULT_IMAGE_WIDTH, DEFAULT_IMAGE_HEIGHT, ACTIVE_OPACITY, INACTIVE_OPACITY } from '../../constants';
 import { useContextMenu } from '../../hooks/use-context-menu';
@@ -80,7 +88,8 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode, viewMode,
   );
 
   const handleResize = useCallback(
-    (_event: any, params: any) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (_event: any, params: ResizeParams) => {
       const newWidth = params.width;
       const newHeight = newWidth / aspectRatio;
 
@@ -106,7 +115,7 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode, viewMode,
                   height: newHeight,
                   isResizing: true,
                 },
-                position: { x: params.x, y: params.y },
+                position: { x: params.x ?? 0, y: params.y ?? 0 },
               }
             : node,
         ),
@@ -115,13 +124,16 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode, viewMode,
     [aspectRatio, id, setNodes, isResizing],
   );
 
-  const handleResizeStart = useCallback((_event: any, _params: any) => {
+  const handleResizeStart = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (_event: any, _params: ResizeParams) => {
     // 開始調整大小時可以執行額外的邏輯，例如禁用拖拽
     // 這裡保持空白，但提供了擴展點
   }, []);
 
   const handleResizeEnd = useCallback(
-    (_event: any, params: any) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (_event: any, params: ResizeParams) => {
       const newWidth = params.width;
       const newHeight = newWidth / aspectRatio;
 
@@ -141,7 +153,7 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode, viewMode,
                   height: newHeight,
                   isResizing: undefined,
                 },
-                position: { x: params.x, y: params.y },
+                position: { x: params.x ?? 0, y: params.y ?? 0 },
               }
             : node,
         ),

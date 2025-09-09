@@ -1,7 +1,7 @@
 import { Condition } from '../../conditions';
 import { FlattenOrderItem } from '../../core';
 import { Order } from '../../core/order';
-import { ObjRecord } from '../../typings';
+import { OptionsBase } from '../../typings';
 import { divided, plus, times } from '../../utils/decimal';
 import { PolicyPrefix } from '../typings';
 import { generateNewPolicyId } from '../utils';
@@ -14,7 +14,7 @@ import {
   getOrderItems,
 } from './utils';
 
-type StepItemGiveawayDiscountOptions<T extends ObjRecord = ObjRecord> = DiscountOptions<
+type StepItemGiveawayDiscountOptions<T extends OptionsBase = OptionsBase> = DiscountOptions<
   {
     stepLimit?: number;
     strategy?: ItemGiveawayStrategy;

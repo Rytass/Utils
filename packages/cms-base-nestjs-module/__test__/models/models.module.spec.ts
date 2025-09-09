@@ -51,11 +51,11 @@ describe('CMSBaseModelsModule Factory Functions (direct test)', () => {
 
   it('should create correct repository instances via factory functions', () => {
     // Test the factory function logic directly
-    const results: Array<{ token: symbol; entity: any; result: any }> = [];
+    const results: Array<{ token: symbol; entity: unknown; result: unknown }> = [];
 
     for (const [token, entity] of tokenEntityPairs) {
       // This is the exact factory function logic from your module
-      const factoryFunction = (dataSource: DataSource): Repository<any> => dataSource.getRepository(entity);
+      const factoryFunction = (dataSource: DataSource): Repository<unknown> => dataSource.getRepository(entity);
 
       const result = factoryFunction(mockDataSource);
 
@@ -75,11 +75,11 @@ describe('CMSBaseModelsModule Factory Functions (direct test)', () => {
 
   it('should simulate the provider configuration', () => {
     // Fix: Convert readonly tuple to mutable array with proper typing
-    const models = [...tokenEntityPairs] as Array<[symbol, any]>;
+    const models = [...tokenEntityPairs] as Array<[symbol, unknown]>;
 
     const providerConfigurations = models.map(([symbol, entity]) => ({
       provide: symbol,
-      useFactory: (dataSource: DataSource): Repository<any> => dataSource.getRepository(entity),
+      useFactory: (dataSource: DataSource): Repository<unknown> => dataSource.getRepository(entity),
       inject: [DataSource],
     }));
 

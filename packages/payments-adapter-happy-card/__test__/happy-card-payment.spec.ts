@@ -14,7 +14,7 @@ describe('HappyCardPayment.prepare', () => {
       key: 'test-key',
     });
 
-    jest.spyOn(gateway as any, 'getOrderId').mockReturnValue('fixed-order-id');
+    jest.spyOn(gateway as unknown as { getOrderId: () => string }, 'getOrderId').mockReturnValue('fixed-order-id');
 
     // Mock getCardBalance
     jest.spyOn(gateway, 'getCardBalance').mockResolvedValue([

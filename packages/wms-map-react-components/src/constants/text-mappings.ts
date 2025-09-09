@@ -203,7 +203,7 @@ export const TEXT_MAPPINGS = {
     LOAD_SUCCESS_WITH_NODES: (typeName: string, nodeCount: number) => `已載入 ${typeName}！包含 ${nodeCount} 個節點`,
     SAVE_SUCCESS_WITH_DATA: (backgroundCount: number, rangeCount: number) =>
       `儲存成功！接收到 ${backgroundCount} 個背景圖片和 ${rangeCount} 個範圍資料`,
-    LOAD_FAILED: (error: any) => `載入失敗: ${error}`,
+    LOAD_FAILED: (error: unknown) => `載入失敗: ${error}`,
     INVALID_IMAGE_FORMAT: (fileName: string) => `檔案 ${fileName} 不是有效的圖片格式，請選擇 PNG 或 JPG 格式`,
   },
 

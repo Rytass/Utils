@@ -18,9 +18,9 @@ import {
 } from '../src/typings/cms-base-providers';
 
 describe('OptionProviders', () => {
-  function getFactory(token: any): ((options?: any) => any | Promise<any>) | undefined {
+  function getFactory(token: unknown): ((options?: unknown) => unknown | Promise<unknown>) | undefined {
     const provider = OptionProviders.find(
-      (p): p is { provide: any; useFactory: (options?: any) => any } =>
+      (p): p is { provide: unknown; useFactory: (options?: unknown) => unknown } =>
         typeof p === 'object' && 'provide' in p && p.provide === token && 'useFactory' in p,
     );
 

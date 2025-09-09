@@ -647,7 +647,8 @@ describe('VaultSecret', () => {
           account: VAULT_ACCOUNT,
           password: VAULT_PASSWORD,
         },
-        onError: (error: string): void => {
+<<<<<<< Updated upstream
+        onError: (error: unknown): void => {
           if (errorPass) {
             expect(error).toBe('test2');
 

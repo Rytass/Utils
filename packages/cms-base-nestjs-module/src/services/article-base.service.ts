@@ -342,12 +342,11 @@ export class ArticleBaseService<
 
         await articles
           .map(
-            (article): (() => Promise<void>) =>
-              (): Promise<void> =>
-                this.bindSearchTokens<ArticleVersionContentEntity>(
-                  article.versions[0].multiLanguageContents[0] as ArticleVersionContentEntity,
-                  article.versions[0].tags,
-                ),
+            article => (): Promise<void> =>
+              this.bindSearchTokens<ArticleVersionContentEntity>(
+                article.versions[0].multiLanguageContents[0] as ArticleVersionContentEntity,
+                article.versions[0].tags,
+              ),
           )
           .reduce((prev, next) => prev.then(next), Promise.resolve());
 
@@ -820,7 +819,7 @@ export class ArticleBaseService<
 
     const targetPlaceArticle = await this.findById<A, AV, AVC>(id, {
       stage: this.signatureService.signatureEnabled ? ArticleStage.VERIFIED : ArticleStage.DRAFT,
-    }).catch(_ex => null);
+    }).catch(_ => null);
 
     this.logger.debug(`Withdraw article ${id} [${article.version}]`);
 
@@ -894,7 +893,7 @@ export class ArticleBaseService<
     const shouldDeleteVersion = await this.findById(id, {
       stage:
         (options?.releasedAt?.getTime() ?? Date.now()) <= Date.now() ? ArticleStage.RELEASED : ArticleStage.SCHEDULED,
-    }).catch(_ex => null);
+    }).catch(_ => null);
 
     this.logger.debug(`Release article ${id} [${article.version}]`);
 
@@ -969,7 +968,7 @@ export class ArticleBaseService<
 
     const pendingReviewArticle = await this.findById<A, AV, AVC>(id, {
       stage: ArticleStage.REVIEWING,
-    }).catch(_ex => null);
+    }).catch(_ => null);
 
     const runner = this.dataSource.createQueryRunner();
 
@@ -1029,7 +1028,7 @@ export class ArticleBaseService<
 
     const draftArticle = await this.findById<A, AV, AVC>(id, {
       stage: ArticleStage.DRAFT,
-    }).catch(_ex => null);
+    }).catch(_ => null);
 
     if (draftArticle) {
       const errorMessage = `Article ${id} is already in draft [${draftArticle.version}].`;
@@ -1174,7 +1173,7 @@ export class ArticleBaseService<
 
     const placedArticle = await this.findById<A, AV, AVC>(id, {
       stage: placedArticleStage,
-    }).catch(_ex => null);
+    }).catch(_ => null);
 
     const targetCategories = options?.categoryIds?.length
       ? await this.baseCategoryRepo.find({
@@ -1268,9 +1267,8 @@ export class ArticleBaseService<
         if (this.fullTextSearchMode) {
           await savedContents
             .map(
-              (articleContent): (() => Promise<void>) =>
-                (): Promise<void> =>
-                  this.bindSearchTokens<AVC>(articleContent as AVC, options.tags ?? [], runner),
+              articleContent => (): Promise<void> =>
+                this.bindSearchTokens<AVC>(articleContent as AVC, options.tags ?? [], runner),
             )
             .reduce((prev, next) => prev.then(next), Promise.resolve());
         }
@@ -1420,9 +1418,8 @@ export class ArticleBaseService<
         if (this.fullTextSearchMode) {
           await savedContents
             .map(
-              (articleContent): (() => Promise<void>) =>
-                (): Promise<void> =>
-                  this.bindSearchTokens<AVC>(articleContent, options.tags ?? [], runner),
+              articleContent => (): Promise<void> =>
+                this.bindSearchTokens<AVC>(articleContent, options.tags ?? [], runner),
             )
             .reduce((prev, next) => prev.then(next), Promise.resolve());
         }
@@ -1567,7 +1564,7 @@ export class ArticleBaseService<
             : ArticleStage.DRAFT,
       },
       signatureInfo?.runner,
-    ).catch(_ex => null);
+    ).catch(_ => null);
 
     if (signatureInfo?.runner) {
       if (

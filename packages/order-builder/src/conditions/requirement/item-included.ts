@@ -10,9 +10,9 @@ import {
   RequirementDescription,
 } from './typings';
 import { itemIsMatchedItemFn, itemSpecifiedItems, itemSpecifiedScope } from './utils';
-import { ObjRecord } from '../../typings';
+import { ConditionOptionsBase } from '../../typings';
 
-export class ItemIncluded<Item extends OrderItem = OrderItem, Options extends ObjRecord = ObjRecord>
+export class ItemIncluded<Item extends OrderItem = OrderItem, Options extends ConditionOptionsBase = ConditionOptionsBase>
   implements Condition<RequirementDescription, Options>
 {
   readonly type = Requirement.INCLUDED;

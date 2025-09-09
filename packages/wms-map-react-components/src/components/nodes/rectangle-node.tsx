@@ -1,5 +1,13 @@
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { NodeProps, NodeResizer, useReactFlow, useUpdateNodeInternals } from '@xyflow/react';
+
+interface ResizeParams {
+  width: number;
+  height: number;
+  x?: number;
+  y?: number;
+}
+
 import { EditMode, ViewMode } from '../../typings';
 import {
   ACTIVE_OPACITY,
@@ -82,14 +90,17 @@ const RectangleNode: FC<RectangleNodeProps> = ({
     useTextEditing({ id, label, isEditable, onTextEditComplete });
 
   // Handle resize start
-  const handleResizeStart = useCallback((_event: any, _params: any) => {
+  const handleResizeStart = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (_event: any, _params: ResizeParams) => {
     // 開始調整大小時可以執行額外的邏輯，例如禁用拖拽
     // 這裡保持空白，但提供了擴展點
   }, []);
 
   // Handle resize with size sync and position update (diagonal anchor)
   const handleResize = useCallback(
-    (_event: any, params: any) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (_event: any, params: ResizeParams) => {
       const newSize = { width: params.width, height: params.height };
 
       setCurrentSize(newSize);
@@ -111,7 +122,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({
                   height: params.height,
                   isResizing: true,
                 },
-                position: { x: params.x, y: params.y },
+                position: { x: params.x ?? 0, y: params.y ?? 0 },
               }
             : node,
         ),
@@ -122,7 +133,8 @@ const RectangleNode: FC<RectangleNodeProps> = ({
 
   // Handle resize end to ensure final state is saved
   const handleResizeEnd = useCallback(
-    (_event: any, params: any) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (_event: any, params: ResizeParams) => {
       const newSize = { width: params.width, height: params.height };
 
       setCurrentSize(newSize);
@@ -143,7 +155,7 @@ const RectangleNode: FC<RectangleNodeProps> = ({
                   height: params.height,
                   isResizing: undefined,
                 },
-                position: { x: params.x, y: params.y },
+                position: { x: params.x ?? 0, y: params.y ?? 0 },
               }
             : node,
         ),

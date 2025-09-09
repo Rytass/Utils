@@ -3,10 +3,25 @@ import { DEFAULT_LANGUAGE } from '../../src/constants/default-language';
 import { ArticleNotFoundError } from '../../src/constants/errors/article.errors';
 import { MultipleLanguageModeIsDisabledError } from '../../src/constants/errors/base.errors';
 import { ArticleBaseService } from '../../src/services/article-base.service';
+import {
+  MockSignatureServicePartial,
+  createMockRepository,
+  createMockDataSource,
+  createMockArticleDataLoader,
+  createMockSignatureService,
+} from '../typings/mock-repository.interface';
+import {
+  TestableArticleBaseService,
+  FindCollectionTestOptions,
+  TestArticleResult,
+  MockRepositoryForService,
+  MockServiceDataSource,
+  MockServiceDataLoader,
+} from '../typings/mock-types.interface';
 
 describe('ArticleBaseService - findById', () => {
   let service: ArticleBaseService;
-  let mockQueryBuilder: any;
+  let mockQueryBuilder: { andWhere: jest.Mock; getOne: jest.Mock };
   const mockStageCacheSet = jest.fn();
 
   beforeEach(() => {
@@ -16,20 +31,20 @@ describe('ArticleBaseService - findById', () => {
     };
 
     service = new ArticleBaseService(
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
+      createMockRepository(),
+      createMockRepository(),
+      createMockRepository(),
+      createMockRepository(),
       true,
       true,
       true,
       [],
-      {} as any,
-      {} as any,
+      createMockRepository(),
+      createMockRepository(),
       true,
-      {} as any,
-      {} as any,
-      {} as any, // placeholder
+      createMockDataSource(),
+      createMockArticleDataLoader(),
+      createMockSignatureService(),
     );
 
     Object.defineProperty(service, 'articleDataLoader', {
@@ -40,7 +55,12 @@ describe('ArticleBaseService - findById', () => {
       },
     });
 
-    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue(mockQueryBuilder);
+    jest
+      .spyOn(
+        service as ArticleBaseService & { getDefaultQueryBuilder: () => typeof mockQueryBuilder },
+        'getDefaultQueryBuilder',
+      )
+      .mockReturnValue(mockQueryBuilder);
   });
 
   it('should throw if language is provided but multipleLanguageMode is false', async () => {
@@ -113,7 +133,7 @@ describe('ArticleBaseService - findById', () => {
     expect(result.id).toBe('a2');
     expect(result.createdAt).toBeInstanceOf(Date);
     expect(result.updatedBy).toBe('user-2');
-    expect((result as any).multiLanguageContents).toHaveLength(2);
+    expect((result as typeof result & { multiLanguageContents: unknown[] }).multiLanguageContents).toHaveLength(2);
   });
 
   it('should set stage cache if stage is provided', async () => {
@@ -172,35 +192,41 @@ describe('ArticleBaseService - findCollection', () => {
 
   beforeEach(() => {
     service = new ArticleBaseService(
-      { metadata: { schema: 'public', manyToManyRelations: [] } } as any,
-      {} as any,
-      {
-        metadata: {
-          schema: 'public',
-          tableName: 'contents',
-          targetName: 'ArticleVersionContent',
-        },
-      } as any,
-      { metadata: { tablePath: 'public.categories' } } as any,
+      createMockRepository(),
+      createMockRepository(),
+      createMockRepository(),
+      createMockRepository(),
       true, // multipleLanguageMode
       true,
       true,
       [],
-      {} as any,
-      {} as any,
+      createMockRepository(),
+      createMockRepository(),
       true, // fullTextSearchMode
-      { createQueryBuilder: jest.fn() } as any,
-      { stageCache: { set: jest.fn() } } as any,
-      {} as any,
+      createMockDataSource(),
+      createMockArticleDataLoader(),
+      createMockSignatureService(),
     );
 
-    getFindAllQueryBuilderMock = jest.spyOn(service as any, 'getFindAllQueryBuilder');
+    getFindAllQueryBuilderMock = jest.spyOn(
+      service as ArticleBaseService & { getFindAllQueryBuilder: () => unknown },
+      'getFindAllQueryBuilder',
+    );
+
+    // Setup articleDataLoader property for testing
+    Object.defineProperty(service, 'articleDataLoader', {
+      value: {
+        stageCache: {
+          set: jest.fn(),
+        },
+      },
+    });
   });
 
   it('should throw if language is provided but multipleLanguageMode is false', async () => {
-    (service as any).multipleLanguageMode = false;
+    (service as TestableArticleBaseService).multipleLanguageMode = false;
 
-    await expect(service.findCollection({ language: DEFAULT_LANGUAGE } as any)).rejects.toThrow(
+    await expect(service.findCollection({ language: DEFAULT_LANGUAGE } as FindCollectionTestOptions)).rejects.toThrow(
       MultipleLanguageModeIsDisabledError,
     );
   });
@@ -229,14 +255,14 @@ describe('ArticleBaseService - findCollection', () => {
       ]),
     });
 
-    const result = await service.findCollection({ language: 'en' } as any);
+    const result = await service.findCollection({ language: 'en' } as FindCollectionTestOptions);
 
     expect(result.total).toBe(1);
     expect(result.articles[0].title).toBe('Hello');
   });
 
   it('should return MultiLanguageArticleBaseDto when language is not provided', async () => {
-    (service as any).multipleLanguageMode = true;
+    (service as TestableArticleBaseService).multipleLanguageMode = true;
 
     getFindAllQueryBuilderMock.mockResolvedValue({
       skip: jest.fn().mockReturnThis(),
@@ -260,7 +286,7 @@ describe('ArticleBaseService - findCollection', () => {
       ]),
     });
 
-    const result = await service.findCollection({} as any);
+    const result = await service.findCollection({} as FindCollectionTestOptions);
 
     expect(result.total).toBe(1);
     expect(result.articles[0].id).toBe('a1');
@@ -269,7 +295,9 @@ describe('ArticleBaseService - findCollection', () => {
   it('should call stageCache.set if stage is provided', async () => {
     const setMock = jest.fn();
 
-    (service as any).articleDataLoader.stageCache.set = setMock;
+    (
+      service as TestableArticleBaseService & { articleDataLoader: { stageCache: { set: jest.Mock } } }
+    ).articleDataLoader.stageCache.set = setMock;
 
     getFindAllQueryBuilderMock.mockResolvedValue({
       skip: jest.fn().mockReturnThis(),
@@ -285,13 +313,13 @@ describe('ArticleBaseService - findCollection', () => {
       ]),
     });
 
-    await service.findCollection({ stage: 'RELEASED' } as any);
+    await service.findCollection({ stage: 'RELEASED' } as FindCollectionTestOptions);
 
     expect(setMock).toHaveBeenCalledWith('a1:1', Promise.resolve('RELEASED'));
   });
 
   it('should use DEFAULT_LANGUAGE when options.language is not provided', async () => {
-    (service as any).multipleLanguageMode = false;
+    (service as TestableArticleBaseService).multipleLanguageMode = false;
 
     const mockArticle = {
       id: 'a1',
@@ -307,15 +335,15 @@ describe('ArticleBaseService - findCollection', () => {
       ],
     };
 
-    jest.spyOn(service as any, 'getFindAllQueryBuilder').mockResolvedValue({
+    jest.spyOn(service as TestableArticleBaseService, 'getFindAllQueryBuilder').mockResolvedValue({
       skip: jest.fn().mockReturnThis(),
       take: jest.fn().mockReturnThis(),
       getManyAndCount: jest.fn().mockResolvedValue([[mockArticle], 1]),
     });
 
-    const result = await service.findCollection({ language: null } as any);
+    const result = await service.findCollection({ language: null } as FindCollectionTestOptions);
 
-    const article = result.articles[0] as any;
+    const article = result.articles[0] as TestArticleResult;
 
     expect(article.contentField).toBe('expected');
   });
@@ -327,35 +355,35 @@ describe('ArticleBaseService - findAll', () => {
 
   beforeEach(() => {
     service = new ArticleBaseService(
-      { metadata: { schema: 'public', manyToManyRelations: [] } } as any,
-      {} as any,
+      { metadata: { schema: 'public', manyToManyRelations: [] } } as MockRepositoryForService,
+      {} as MockRepositoryForService,
       {
         metadata: {
           schema: 'public',
           tableName: 'contents',
           targetName: 'ArticleVersionContent',
         },
-      } as any,
-      { metadata: { tablePath: 'public.categories' } } as any,
+      } as MockRepositoryForService,
+      { metadata: { tablePath: 'public.categories' } } as MockRepositoryForService,
       true, // multipleLanguageMode
       true,
       true,
       [],
-      {} as any,
-      {} as any,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
       true, // fullTextSearchMode
-      { createQueryBuilder: jest.fn() } as any,
-      { stageCache: { set: jest.fn() } } as any,
-      {} as any,
+      { createQueryBuilder: jest.fn() } as MockServiceDataSource,
+      { stageCache: { set: jest.fn() } } as MockServiceDataLoader,
+      {} as MockSignatureServicePartial,
     );
 
-    getFindAllQueryBuilderMock = jest.spyOn(service as any, 'getFindAllQueryBuilder');
+    getFindAllQueryBuilderMock = jest.spyOn(service as TestableArticleBaseService, 'getFindAllQueryBuilder');
   });
 
   it('should throw if language is provided but multipleLanguageMode is false', async () => {
-    (service as any).multipleLanguageMode = false;
+    (service as TestableArticleBaseService).multipleLanguageMode = false;
 
-    await expect(service.findAll({ language: DEFAULT_LANGUAGE } as any)).rejects.toThrow(
+    await expect(service.findAll({ language: DEFAULT_LANGUAGE } as FindCollectionTestOptions)).rejects.toThrow(
       MultipleLanguageModeIsDisabledError,
     );
   });
@@ -381,14 +409,14 @@ describe('ArticleBaseService - findAll', () => {
       ]),
     });
 
-    const result = await service.findAll({ language: 'en' } as any);
+    const result = await service.findAll({ language: 'en' } as FindCollectionTestOptions);
 
     expect(result).toHaveLength(1);
     expect(result[0].title).toBe('Hello');
   });
 
   it('should return MultiLanguageArticleBaseDto when language is not provided', async () => {
-    (service as any).multipleLanguageMode = true;
+    (service as TestableArticleBaseService).multipleLanguageMode = true;
 
     getFindAllQueryBuilderMock.mockResolvedValue({
       skip: jest.fn().mockReturnThis(),
@@ -409,7 +437,7 @@ describe('ArticleBaseService - findAll', () => {
       ]),
     });
 
-    const result = await service.findAll({} as any);
+    const result = await service.findAll({} as FindCollectionTestOptions);
 
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe('a1');
@@ -418,7 +446,9 @@ describe('ArticleBaseService - findAll', () => {
   it('should call stageCache.set for each article if stage is provided', async () => {
     const setMock = jest.fn();
 
-    (service as any).articleDataLoader.stageCache.set = setMock;
+    (
+      service as TestableArticleBaseService & { articleDataLoader: { stageCache: { set: jest.Mock } } }
+    ).articleDataLoader.stageCache.set = setMock;
 
     getFindAllQueryBuilderMock.mockResolvedValue({
       skip: jest.fn().mockReturnThis(),
@@ -431,13 +461,13 @@ describe('ArticleBaseService - findAll', () => {
       ]),
     });
 
-    await service.findAll({ stage: ArticleStage.RELEASED } as any);
+    await service.findAll({ stage: ArticleStage.RELEASED } as FindCollectionTestOptions);
 
     expect(setMock).toHaveBeenCalledWith('a1:1', Promise.resolve(ArticleStage.RELEASED));
   });
 
   it('should use DEFAULT_LANGUAGE if language is not provided and multipleLanguageMode is false', async () => {
-    (service as any).multipleLanguageMode = false;
+    (service as TestableArticleBaseService).multipleLanguageMode = false;
 
     getFindAllQueryBuilderMock.mockResolvedValue({
       skip: jest.fn().mockReturnThis(),
@@ -459,8 +489,8 @@ describe('ArticleBaseService - findAll', () => {
       ]),
     });
 
-    const result = await service.findAll({} as any);
-    const article = result[0] as any;
+    const result = await service.findAll({} as FindCollectionTestOptions);
+    const article = result[0] as TestArticleResult;
 
     expect(article.contentField).toBe('expected');
   });

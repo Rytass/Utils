@@ -1,7 +1,7 @@
 import { getMetadataArgsStorage } from 'typeorm';
 import { BaseCategoryMultiLanguageNameEntity } from '../../../src/models/base-category-multi-language-name.entity';
 
-function resolveTypeName(type: any): string {
+function resolveTypeName(type: unknown): string {
   try {
     if (typeof type === 'function') {
       const resolved = type();

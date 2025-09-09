@@ -1,8 +1,12 @@
 import React, { FC, useCallback, useMemo, useState } from 'react';
 import {
   Background,
+  Connection,
   Edge,
+  EdgeChange,
   Node as ReactFlowNode,
+  NodeChange,
+  NodeProps,
   OnSelectionChangeParams,
   ReactFlow,
   useReactFlow,
@@ -22,9 +26,9 @@ import { FolderIcon } from '../../icons';
 interface ReactFlowCanvasProps {
   nodes: ReactFlowNode[];
   edges: Edge[];
-  onNodesChange: (changes: any) => void;
-  onEdgesChange: (changes: any) => void;
-  onConnect: (connection: any) => void;
+  onNodesChange: (changes: NodeChange[]) => void;
+  onEdgesChange: (changes: EdgeChange[]) => void;
+  onConnect: (connection: Connection) => void;
   editMode: EditMode;
   drawingMode: DrawingMode;
   viewMode: ViewMode;
@@ -144,10 +148,10 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
 
   const nodeTypes = useMemo(
     () => ({
-      imageNode: (props: any): React.JSX.Element => (
+      imageNode: (props: NodeProps): React.JSX.Element => (
         <ImageNode {...props} editMode={editMode} viewMode={viewMode} showBackground={showBackground} />
       ),
-      rectangleNode: (props: any): React.JSX.Element => (
+      rectangleNode: (props: NodeProps): React.JSX.Element => (
         <RectangleNode
           {...props}
           editMode={editMode}
@@ -156,14 +160,18 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
           isHovered={hoveredNodeId === props.id}
         />
       ),
-      pathNode: (props: any): React.JSX.Element => (
+      pathNode: (props: NodeProps): React.JSX.Element => (
         <PathNode
           {...props}
           editMode={editMode}
           viewMode={viewMode}
           onTextEditComplete={onTextEditComplete}
           onPathPointsChange={onPathPointsChange}
-          onPathPointDragStateChange={onPathPointDragStateChange}
+          onPathPointDragStateChange={
+            onPathPointDragStateChange
+              ? (id: string, isDragging: boolean) => onPathPointDragStateChange(isDragging)
+              : undefined
+          }
           isHovered={hoveredNodeId === props.id}
         />
       ),
@@ -196,7 +204,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
 
   // Handle pane click for auto-completing pen drawing
   const handlePaneClick = useCallback(
-    (event?: any) => {
+    (event?: React.MouseEvent) => {
       // Check if any modifier keys are pressed - if so, don't auto-complete
       // This prevents accidental completion when using Shift for line constraints
       const hasModifierKeys = event && (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey);

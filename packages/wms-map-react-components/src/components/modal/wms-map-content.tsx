@@ -3,6 +3,7 @@ import {
   addEdge,
   Connection,
   Node as ReactFlowNode,
+  NodeChange,
   OnSelectionChangeParams,
   useEdgesState,
   useNodesState,
@@ -230,7 +231,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
 
   // 其他方法保持不變，但移除 console.log
   const onNodesChange = useCallback(
-    (changes: FlowNodeChange[]): void => {
+    (changes: NodeChange[]): void => {
       if (changes.length > 0) {
         debugLog(
           'reactFlow',
@@ -242,7 +243,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
         );
       }
 
-      onNodesChangeOriginal(changes);
+      onNodesChangeOriginal(changes as never);
 
       const hasDragEnd = changes.some(change => change.type === 'position' && change.dragging === false);
 
@@ -634,7 +635,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
   );
 
   const handlePathPointDragStateChange = useCallback((isDragging: boolean) => {
-    debugLog('events', '路徑點拖曳狀態變更:', isDragging);
+    debugLog('events', '路徑點拖曳狀態變更:', String(isDragging));
     setIsEditingPathPoints(isDragging);
   }, []);
 
@@ -705,7 +706,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
   }, []);
 
   useEffect(() => {
-    debugLog('ui', 'showBackground 狀態變化:', showBackground);
+    debugLog('ui', 'showBackground 狀態變化:', String(showBackground));
   }, [showBackground]);
 
   const handleCopyPasteSelectedNodes = useCallback(() => {

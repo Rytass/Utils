@@ -2,11 +2,11 @@ import { getMetadataArgsStorage } from 'typeorm';
 import { BaseSignatureLevelEntity } from '../../../src/models/base-signature-level.entity';
 import { ArticleSignatureEntity } from '../../../src/models/article-signature.entity';
 
-function resolveType(type: any): any {
+function resolveType(type: unknown): unknown {
   return typeof type === 'function' ? type() || type : type;
 }
 
-function resolveInverseSide(value: any): string | undefined {
+function resolveInverseSide(value: unknown): string | undefined {
   if (typeof value === 'function') {
     const dummy = { signatureLevel: 'signatureLevel' };
 

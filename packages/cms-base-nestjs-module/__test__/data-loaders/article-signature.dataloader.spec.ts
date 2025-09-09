@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { BaseArticleVersionEntity } from '../../src/models/base-article-version.entity';
 import { Test } from '@nestjs/testing';
 import { ArticleSignatureEntity } from '../../src/models/article-signature.entity';
+import { MockQueryBuilder } from '../typings/mock-types.interface';
 
 describe('ArticleSignatureDataLoader', () => {
   let loader: ArticleSignatureDataLoader;
@@ -13,7 +14,7 @@ describe('ArticleSignatureDataLoader', () => {
     jest.resetAllMocks();
     articleVersionRepo = {
       createQueryBuilder: jest.fn(),
-    } as any;
+    } as jest.Mocked<Repository<BaseArticleVersionEntity>>;
 
     const module = await Test.createTestingModule({
       providers: [
@@ -48,7 +49,7 @@ describe('ArticleSignatureDataLoader', () => {
       addOrderBy: jest.fn().mockReturnThis(),
     };
 
-    articleVersionRepo.createQueryBuilder.mockReturnValue(qb as any);
+    articleVersionRepo.createQueryBuilder.mockReturnValue(qb as MockQueryBuilder);
 
     const result = await loader.versionSignaturesLoader.load({
       id: 'a1',
@@ -77,7 +78,7 @@ describe('ArticleSignatureDataLoader', () => {
       addOrderBy: jest.fn().mockReturnThis(),
     };
 
-    articleVersionRepo.createQueryBuilder.mockReturnValue(qb as any);
+    articleVersionRepo.createQueryBuilder.mockReturnValue(qb as MockQueryBuilder);
 
     const result = await loader.versionSignaturesLoader.load({
       id: 'not-found',
@@ -107,7 +108,7 @@ describe('ArticleSignatureDataLoader', () => {
       addOrderBy: jest.fn().mockReturnThis(),
     };
 
-    articleVersionRepo.createQueryBuilder.mockReturnValue(qb as any);
+    articleVersionRepo.createQueryBuilder.mockReturnValue(qb as MockQueryBuilder);
 
     const result1 = await loader.versionSignaturesLoader.load({
       id: 'a1',
@@ -130,8 +131,8 @@ describe('ArticleSignatureDataLoader', () => {
 
     const mockQueryBuilder = {
       leftJoinAndSelect: jest.fn().mockReturnThis(),
-      orWhere: jest.fn().mockImplementation((brackets: any) => {
-        brackets.whereFactory(mockSubQb as any);
+      orWhere: jest.fn().mockImplementation((brackets: { whereFactory: (qb: MockQueryBuilder) => void }) => {
+        brackets.whereFactory(mockSubQb as MockQueryBuilder);
 
         return mockQueryBuilder;
       }),
@@ -139,7 +140,7 @@ describe('ArticleSignatureDataLoader', () => {
       addOrderBy: jest.fn().mockReturnThis(),
     };
 
-    articleVersionRepo.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+    articleVersionRepo.createQueryBuilder.mockReturnValue(mockQueryBuilder as MockQueryBuilder);
 
     await loader.versionSignaturesLoader.load({ id: 'a1', version: 1 });
 
@@ -158,7 +159,7 @@ describe('ArticleSignatureDataLoader', () => {
       addOrderBy: jest.fn().mockReturnThis(),
     };
 
-    articleVersionRepo.createQueryBuilder.mockReturnValue(qb as any);
+    articleVersionRepo.createQueryBuilder.mockReturnValue(qb as MockQueryBuilder);
 
     const result = await loader.versionSignaturesLoader.loadMany([]);
 

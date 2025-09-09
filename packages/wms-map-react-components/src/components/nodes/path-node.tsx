@@ -30,6 +30,7 @@ interface PathNodeProps extends NodeProps {
     oldPoints: { x: number; y: number }[],
     newPoints: { x: number; y: number }[],
   ) => void;
+  onPathPointDragStateChange?: (id: string, isDragging: boolean) => void;
   isHovered?: boolean;
 }
 
@@ -41,6 +42,7 @@ const PathNode: FC<PathNodeProps> = ({
   viewMode,
   onTextEditComplete,
   onPathPointsChange,
+  onPathPointDragStateChange,
   isHovered = false,
 }) => {
   const {
@@ -160,6 +162,9 @@ const PathNode: FC<PathNodeProps> = ({
       setDragPointIndex(pointIndex);
       setIsDraggingPoint(true);
 
+      // Notify parent about drag state change
+      onPathPointDragStateChange?.(id, true);
+
       // Reset visual offsets
       setDragOffset({ x: 0, y: 0 });
       setDragSyncOffset({ x: 0, y: 0 });
@@ -234,7 +239,7 @@ const PathNode: FC<PathNodeProps> = ({
 
         // Calculate new bounds and position like rectangle resize
         const newBounds = getBounds(newPoints);
-        const currentNode = getNodes().find((n: any) => n.id === id);
+        const currentNode = getNodes().find(n => n.id === id);
 
         if (currentNode) {
           // Calculate position adjustment based on bounds change (like rectangle anchor)
@@ -295,6 +300,9 @@ const PathNode: FC<PathNodeProps> = ({
         setDragSyncOffset({ x: 0, y: 0 });
         currentDragOffsetRef.current = { x: 0, y: 0 };
         currentSyncOffsetRef.current = { x: 0, y: 0 };
+
+        // Notify parent about drag state change
+        onPathPointDragStateChange?.(id, false);
 
         // Cleanup
         dragStartRef.current = null;

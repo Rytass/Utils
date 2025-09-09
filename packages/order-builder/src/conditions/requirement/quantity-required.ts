@@ -1,10 +1,10 @@
 import { Order } from '../../core/order';
 import { Condition } from '../typings';
 import { QuantityRequiredInput, Requirement, RequirementDescription } from './typings';
-import { ObjRecord } from '../../typings';
+import { ConditionOptionsBase } from '../../typings';
 import { quantityRequiredOptions } from './utils';
 
-export class QuantityRequired<Options extends ObjRecord = ObjRecord>
+export class QuantityRequired<Options extends ConditionOptionsBase = ConditionOptionsBase>
   implements Condition<RequirementDescription<QuantityRequiredInput>, Options>
 {
   readonly type = Requirement.QUANTITY;

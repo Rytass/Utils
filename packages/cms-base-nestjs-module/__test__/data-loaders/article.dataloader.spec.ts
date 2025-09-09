@@ -2,20 +2,26 @@ import { Test } from '@nestjs/testing';
 import { ArticleDataLoader } from '../../src/data-loaders/article.dataloader';
 import { SignatureService } from '../../src/services/signature.service';
 import { RESOLVED_ARTICLE_REPO, RESOLVED_ARTICLE_VERSION_REPO } from '../../src/typings/cms-base-providers';
-import { Repository } from 'typeorm';
 import { ArticleSignatureResult } from '../../src/typings/article-signature-result.enum';
 import { ArticleStage } from '../../src/typings/article-stage.enum';
 import { BaseSignatureLevelEntity } from '../../src/models/base-signature-level.entity';
+import {
+  MockDataLoaderRepository,
+  MockDataLoaderQueryBuilder,
+  createMockDataLoaderRepository,
+  MockBrackets,
+  MockBracketsCallback,
+} from '../typings/mock-types.interface';
 
 describe('ArticleDataLoader', () => {
   let dataLoader: ArticleDataLoader;
-  let articleRepo: jest.Mocked<Repository<any>>;
-  let versionRepo: jest.Mocked<Repository<any>>;
+  let articleRepo: MockDataLoaderRepository;
+  let versionRepo: MockDataLoaderRepository;
   let signatureService: Partial<SignatureService>;
 
   beforeEach(async () => {
-    articleRepo = { createQueryBuilder: jest.fn() } as any;
-    versionRepo = { createQueryBuilder: jest.fn() } as any;
+    articleRepo = createMockDataLoaderRepository();
+    versionRepo = createMockDataLoaderRepository();
     signatureService = {
       finalSignatureLevel: {
         id: 'final',
@@ -56,7 +62,7 @@ describe('ArticleDataLoader', () => {
       getMany: jest.fn().mockResolvedValue([version]),
     };
 
-    versionRepo.createQueryBuilder.mockReturnValue(qb as any);
+    versionRepo.createQueryBuilder.mockReturnValue(qb as MockDataLoaderQueryBuilder);
 
     const result = await dataLoader.stageLoader.load({ id: 'a1', version: 1 });
 
@@ -78,7 +84,7 @@ describe('ArticleDataLoader', () => {
       getMany: jest.fn().mockResolvedValue([version]),
     };
 
-    versionRepo.createQueryBuilder.mockReturnValue(qb as any);
+    versionRepo.createQueryBuilder.mockReturnValue(qb as MockDataLoaderQueryBuilder);
 
     const result = await dataLoader.stageLoader.load({ id: 'a1', version: 1 });
 
@@ -108,7 +114,7 @@ describe('ArticleDataLoader', () => {
       getMany: jest.fn().mockResolvedValue([version]),
     };
 
-    versionRepo.createQueryBuilder.mockReturnValue(qb as any);
+    versionRepo.createQueryBuilder.mockReturnValue(qb as MockDataLoaderQueryBuilder);
 
     const result = await dataLoader.stageLoader.load({ id: 'a1', version: 1 });
 
@@ -132,7 +138,7 @@ describe('ArticleDataLoader', () => {
       getMany: jest.fn().mockResolvedValue([version]),
     };
 
-    versionRepo.createQueryBuilder.mockReturnValue(qb as any);
+    versionRepo.createQueryBuilder.mockReturnValue(qb as MockDataLoaderQueryBuilder);
 
     const result = await dataLoader.stageLoader.load({ id: 'a1', version: 1 });
 
@@ -154,7 +160,7 @@ describe('ArticleDataLoader', () => {
       getMany: jest.fn().mockResolvedValue([version]),
     };
 
-    versionRepo.createQueryBuilder.mockReturnValue(qb as any);
+    versionRepo.createQueryBuilder.mockReturnValue(qb as MockDataLoaderQueryBuilder);
 
     const result = await dataLoader.stageLoader.load({ id: 'a1', version: 1 });
 
@@ -178,7 +184,7 @@ describe('ArticleDataLoader', () => {
       getMany: jest.fn().mockResolvedValue([version]),
     };
 
-    versionRepo.createQueryBuilder.mockReturnValue(qb as any);
+    versionRepo.createQueryBuilder.mockReturnValue(qb as MockDataLoaderQueryBuilder);
 
     const result = await dataLoader.stageLoader.load({ id: 'a1', version: 1 });
 
@@ -193,7 +199,7 @@ describe('ArticleDataLoader', () => {
       getMany: jest.fn().mockResolvedValue([]),
     };
 
-    versionRepo.createQueryBuilder.mockReturnValue(qb as any);
+    versionRepo.createQueryBuilder.mockReturnValue(qb as MockDataLoaderQueryBuilder);
 
     const result = await dataLoader.stageLoader.load({
       id: 'unknown',
@@ -212,7 +218,7 @@ describe('ArticleDataLoader', () => {
       getMany: jest.fn().mockResolvedValue(articles),
     };
 
-    articleRepo.createQueryBuilder.mockReturnValue(qb as any);
+    articleRepo.createQueryBuilder.mockReturnValue(qb as MockDataLoaderQueryBuilder);
 
     const result = await dataLoader.categoriesLoader.load('a1');
 
@@ -227,7 +233,7 @@ describe('ArticleDataLoader', () => {
       getMany: jest.fn().mockResolvedValue([]),
     };
 
-    articleRepo.createQueryBuilder.mockReturnValue(qb as any);
+    articleRepo.createQueryBuilder.mockReturnValue(qb as MockDataLoaderQueryBuilder);
 
     const result = await dataLoader.categoriesLoader.load('a1');
 
@@ -243,7 +249,7 @@ describe('ArticleDataLoader', () => {
 
     const orWhereMock = jest.fn();
 
-    const andWhereSpy: any = jest.fn(brackets => {
+    const andWhereSpy = jest.fn(brackets => {
       brackets({ orWhere: orWhereMock });
 
       return qb;
@@ -256,13 +262,15 @@ describe('ArticleDataLoader', () => {
       getMany: jest.fn().mockResolvedValue([]),
     };
 
-    versionRepo.createQueryBuilder.mockReturnValue(qb as any);
+    versionRepo.createQueryBuilder.mockReturnValue(qb as MockDataLoaderQueryBuilder);
 
-    const bracketsSpy = jest.spyOn(require('typeorm'), 'Brackets').mockImplementation((callback: any) => {
-      callback({ orWhere: orWhereMock });
+    const bracketsSpy = jest
+      .spyOn(require('typeorm'), 'Brackets')
+      .mockImplementation((callback: (cb: MockBracketsCallback) => void) => {
+        callback({ orWhere: orWhereMock });
 
-      return { __mocked: true } as any;
-    });
+        return { __mocked: true } as MockBrackets;
+      });
 
     await dataLoader.stageLoader.loadMany(args);
 

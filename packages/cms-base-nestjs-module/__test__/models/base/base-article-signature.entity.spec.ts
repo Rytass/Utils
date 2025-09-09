@@ -2,7 +2,7 @@ import { getMetadataArgsStorage } from 'typeorm';
 import { ArticleSignatureEntity } from '../../../src/models/article-signature.entity';
 
 // Type resolver helper
-function resolveTypeName(type: any): string {
+function resolveTypeName(type: unknown): string {
   try {
     if (typeof type === 'function') {
       const resolved = type();

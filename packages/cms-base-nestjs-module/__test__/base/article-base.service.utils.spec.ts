@@ -18,6 +18,16 @@ import { ArticleStage } from '../../src/typings/article-stage.enum';
 import { SelectQueryBuilder } from 'typeorm';
 import { BaseArticleEntity } from '../../src/models/base-article.entity';
 import { ArticleSignatureResult } from '../../src/typings/article-signature-result.enum';
+import {
+  TestableArticleBaseService,
+  MockRepositoryForService,
+  MockServiceDataSource,
+  MockServiceDataLoader,
+  MockUtilsRepository,
+  MockUtilsQueryRunner,
+  MockQueryBuilder,
+} from '../typings/mock-types.interface';
+import { MockSignatureService } from '../typings/mock-repository.interface';
 import { ArticleSearchMode } from '../../src/typings/article-search-mode.enum';
 import { ArticleSorter } from '../../src/typings/article-sorter.enum';
 import { BaseSignatureLevelEntity } from '../../src/models/base-signature-level.entity';
@@ -42,20 +52,20 @@ describe('queryStagesFeaturesCheck', () => {
     mockSignatureService = new MockSignatureService();
 
     service = new ArticleBaseService(
-      {} as any, // baseArticleRepo
-      {} as any, // baseArticleVersionRepo
-      {} as any, // baseArticleVersionContentRepo
-      {} as any, // baseCategoryRepo
+      {} as MockRepositoryForService, // baseArticleRepo
+      {} as MockRepositoryForService, // baseArticleVersionRepo
+      {} as MockRepositoryForService, // baseArticleVersionContentRepo
+      {} as MockRepositoryForService, // baseCategoryRepo
       true, // multipleLanguageMode
       true, // fullTextSearchMode
       true, // draftMode
       [], // signatureLevels
-      {} as any, // signatureLevelRepo
-      {} as any, // articleSignatureRepo
+      {} as MockRepositoryForService, // signatureLevelRepo
+      {} as MockRepositoryForService, // articleSignatureRepo
       true, // autoReleaseAfterApproved
-      {} as any, // dataSource
-      {} as any, // articleDataLoader
-      mockSignatureService as unknown as SignatureService<any>,
+      {} as MockServiceDataSource, // dataSource
+      {} as MockServiceDataLoader, // articleDataLoader
+      mockSignatureService as unknown as SignatureService<BaseSignatureLevelEntity>,
     );
   });
 
@@ -65,20 +75,20 @@ describe('queryStagesFeaturesCheck', () => {
 
   it('should throw an error if stage is DRAFT and draftMode is disabled', () => {
     service = new ArticleBaseService(
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
       true,
       true,
       false, // draftMode disabled
       [],
-      {} as any,
-      {} as any,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
       true,
-      {} as any,
-      {} as any,
-      mockSignatureService as unknown as SignatureService<any>,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      mockSignatureService as unknown as SignatureService<BaseSignatureLevelEntity>,
     );
 
     expect(() => service['queryStagesFeaturesCheck'](ArticleStage.DRAFT)).toThrow('Draft mode is disabled.');
@@ -116,33 +126,33 @@ describe('queryStagesFeaturesCheck', () => {
 describe('limitStageWithQueryBuilder', () => {
   let service: ArticleBaseService;
   let qb: jest.Mocked<SelectQueryBuilder<BaseArticleEntity>>;
-  let mockSignatureService: any;
+  let mockSignatureService: MockSignatureService;
 
   beforeEach(() => {
     qb = {
       andWhere: jest.fn().mockReturnThis(),
       innerJoin: jest.fn().mockReturnThis(),
       leftJoin: jest.fn().mockReturnThis(),
-    } as any;
+    } as MockQueryBuilder;
 
     mockSignatureService = {
       finalSignatureLevel: { id: 'level-id', name: 'Final' },
     };
 
     service = new ArticleBaseService(
-      {} as any,
-      { target: 'mock_target' } as any,
-      {} as any,
-      {} as any,
+      {} as MockRepositoryForService,
+      { target: 'mock_target' } as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
       true,
       true,
       true,
       [],
-      {} as any,
-      {} as any,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
       true,
-      {} as any,
-      {} as any,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
       mockSignatureService,
     );
   });
@@ -157,13 +167,13 @@ describe('limitStageWithQueryBuilder', () => {
       };
 
       const qb = {
-        innerJoin: jest.fn((subQueryFactory: any, _alias: string, _condition: string) => {
+        innerJoin: jest.fn((subQueryFactory: (qb: unknown) => unknown, _alias: string, _condition: string) => {
           subQueryFactory(mockSubQueryBuilder);
 
           return qb;
         }),
         andWhere: jest.fn().mockReturnThis(),
-      } as unknown as SelectQueryBuilder<any>;
+      } as unknown as SelectQueryBuilder<BaseArticleEntity>;
 
       const mockBaseArticleVersionRepo = {
         metadata: {
@@ -172,20 +182,20 @@ describe('limitStageWithQueryBuilder', () => {
       };
 
       const service = new ArticleBaseService(
-        {} as any, // baseArticleRepo
-        mockBaseArticleVersionRepo as any, // baseArticleVersionRepo
-        {} as any, // baseArticleVersionContentRepo
-        {} as any, // baseCategoryRepo
+        {} as MockRepositoryForService, // baseArticleRepo
+        mockBaseArticleVersionRepo as MockRepositoryForService, // baseArticleVersionRepo
+        {} as MockRepositoryForService, // baseArticleVersionContentRepo
+        {} as MockRepositoryForService, // baseCategoryRepo
         true, // multipleLanguageMode
         true, // fullTextSearchMode
         true, // draftMode
         [], // signatureLevels
-        {} as any, // signatureLevelRepo
-        {} as any, // articleSignatureRepo
+        {} as MockRepositoryForService, // signatureLevelRepo
+        {} as MockRepositoryForService, // articleSignatureRepo
         true, // autoReleaseAfterApproved
-        {} as any, // dataSource
-        {} as any, // articleDataLoader
-        {} as any, // signatureService
+        {} as MockServiceDataSource, // dataSource
+        {} as MockServiceDataLoader, // articleDataLoader
+        {} as MockRepositoryForService, // signatureService
       );
 
       service['limitStageWithQueryBuilder'](qb, ArticleStage.DRAFT);
@@ -252,13 +262,13 @@ describe('limitStageWithQueryBuilder', () => {
       };
 
       const qb = {
-        innerJoin: jest.fn((subQueryFactory: any, _alias: string, _condition: string) => {
+        innerJoin: jest.fn((subQueryFactory: (qb: unknown) => unknown, _alias: string, _condition: string) => {
           subQueryFactory(mockSubQueryBuilder);
 
           return qb;
         }),
         andWhere: jest.fn().mockReturnThis(),
-      } as unknown as SelectQueryBuilder<any>;
+      } as unknown as SelectQueryBuilder<BaseArticleEntity>;
 
       const mockFinalSignatureLevel: BaseSignatureLevelEntity = {
         id: 'final-level-id',
@@ -280,27 +290,27 @@ describe('limitStageWithQueryBuilder', () => {
         finalSignatureLevel: mockFinalSignatureLevel,
         signatureLevelsCache: [mockFinalSignatureLevel],
         signatureLevels: [],
-        signatureLevelRepo: {} as any,
-        dataSource: {} as any,
+        signatureLevelRepo: {} as MockRepositoryForService,
+        dataSource: {} as MockServiceDataSource,
         articleSignatureRepo: mockArticleSignatureRepo,
         reloadLevels: jest.fn(),
         findSignatureLevel: jest.fn(),
       } as unknown as SignatureService<BaseSignatureLevelEntity>;
 
       const service = new ArticleBaseService(
-        {} as any,
-        {} as any,
-        {} as any,
-        {} as any,
+        {} as MockRepositoryForService,
+        {} as MockRepositoryForService,
+        {} as MockRepositoryForService,
+        {} as MockRepositoryForService,
         true,
         true,
         true,
         [],
-        {} as any,
-        mockArticleSignatureRepo as any,
+        {} as MockRepositoryForService,
+        mockArticleSignatureRepo as MockRepositoryForService,
         true,
-        {} as any,
-        {} as any,
+        {} as MockRepositoryForService,
+        {} as MockRepositoryForService,
         mockSignatureService,
       );
 
@@ -340,12 +350,12 @@ describe('limitStageWithQueryBuilder', () => {
 
       const qb = {
         innerJoin: jest.fn((fn, _alias, _condition) => {
-          fn(mockSubQueryBuilder as any);
+          fn(mockSubQueryBuilder as MockQueryBuilder);
 
           return qb;
         }),
         andWhere: jest.fn().mockReturnThis(),
-      } as any;
+      } as MockQueryBuilder;
 
       const mockBaseArticleVersionRepo = {
         metadata: {
@@ -354,20 +364,20 @@ describe('limitStageWithQueryBuilder', () => {
       };
 
       const service = new ArticleBaseService(
-        {} as any,
-        mockBaseArticleVersionRepo as any,
-        {} as any,
-        {} as any,
+        {} as MockRepositoryForService,
+        mockBaseArticleVersionRepo as MockRepositoryForService,
+        {} as MockRepositoryForService,
+        {} as MockRepositoryForService,
         true,
         true,
         true,
         [],
-        {} as any,
-        {} as any,
+        {} as MockRepositoryForService,
+        {} as MockRepositoryForService,
         true,
-        {} as any,
-        {} as any,
-        {} as any,
+        {} as MockRepositoryForService,
+        {} as MockRepositoryForService,
+        {} as MockRepositoryForService,
       );
 
       service['limitStageWithQueryBuilder'](qb, ArticleStage.SCHEDULED);
@@ -396,12 +406,12 @@ describe('limitStageWithQueryBuilder', () => {
 
       const qb = {
         innerJoin: jest.fn((fn, _alias, _condition) => {
-          fn(mockSubQueryBuilder as any);
+          fn(mockSubQueryBuilder as MockQueryBuilder);
 
           return qb;
         }),
         andWhere: jest.fn().mockReturnThis(),
-      } as any;
+      } as MockQueryBuilder;
 
       const mockBaseArticleVersionRepo = {
         metadata: {
@@ -410,20 +420,20 @@ describe('limitStageWithQueryBuilder', () => {
       };
 
       const service = new ArticleBaseService(
-        {} as any,
-        mockBaseArticleVersionRepo as any,
-        {} as any,
-        {} as any,
+        {} as MockRepositoryForService,
+        mockBaseArticleVersionRepo as MockRepositoryForService,
+        {} as MockRepositoryForService,
+        {} as MockRepositoryForService,
         true,
         true,
         true,
         [],
-        {} as any,
-        {} as any,
+        {} as MockRepositoryForService,
+        {} as MockRepositoryForService,
         true,
-        {} as any,
-        {} as any,
-        {} as any,
+        {} as MockRepositoryForService,
+        {} as MockRepositoryForService,
+        {} as MockRepositoryForService,
       );
 
       service['limitStageWithQueryBuilder'](qb, 'NON_EXISTENT' as ArticleStage);
@@ -439,8 +449,8 @@ describe('limitStageWithQueryBuilder', () => {
 
 describe('getDefaultQueryBuilder', () => {
   let service: ArticleBaseService;
-  let mockRepo: any;
-  let mockRunner: any;
+  let mockRepo: MockUtilsRepository;
+  let mockRunner: MockUtilsQueryRunner;
 
   beforeEach(() => {
     mockRepo = {
@@ -459,23 +469,23 @@ describe('getDefaultQueryBuilder', () => {
 
     service = new ArticleBaseService(
       mockRepo,
-      {} as any,
-      {} as any,
-      {} as any,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
       true,
       true,
       true,
       [],
-      {} as any,
-      {} as any,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
       true,
-      {} as any,
-      {} as any,
-      {} as any,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
     );
 
-    jest.spyOn(service as any, 'queryStagesFeaturesCheck').mockImplementation();
-    jest.spyOn(service as any, 'limitStageWithQueryBuilder').mockImplementation(qb => qb);
+    jest.spyOn(service as TestableArticleBaseService, 'queryStagesFeaturesCheck').mockImplementation();
+    jest.spyOn(service as TestableArticleBaseService, 'limitStageWithQueryBuilder').mockImplementation(qb => qb);
   });
 
   const mockQueryBuilder = {
@@ -491,7 +501,7 @@ describe('getDefaultQueryBuilder', () => {
       stage: ArticleStage.DRAFT,
     });
 
-    expect((service as any).logger.warn).toHaveBeenCalledWith(
+    expect((service as TestableArticleBaseService).logger.warn).toHaveBeenCalledWith(
       'Combining version and stage filters, only version filter will be applied.',
     );
   });
@@ -505,7 +515,7 @@ describe('getDefaultQueryBuilder', () => {
   });
 
   it('should use runner.manager.createQueryBuilder if runner is provided', () => {
-    service['getDefaultQueryBuilder']('articles', {}, mockRunner as any);
+    service['getDefaultQueryBuilder']('articles', {}, mockRunner as MockUtilsQueryRunner);
 
     expect(mockRunner.manager.createQueryBuilder).toHaveBeenCalledWith('articles', 'articles');
   });
@@ -588,12 +598,12 @@ describe('getDefaultQueryBuilder', () => {
       leftJoinAndSelect: jest.fn().mockReturnThis(),
       innerJoinAndSelect: jest.fn().mockReturnThis(),
       andWhere: jest.fn().mockReturnThis(),
-      innerJoin: jest.fn((subQueryFn: any, _alias: string, _condition: string) => {
+      innerJoin: jest.fn((subQueryFn: (qb: unknown) => unknown, _alias: string, _condition: string) => {
         subQueryFn(mockSubQueryBuilder);
 
         return mockQueryBuilder;
       }),
-    } as unknown as SelectQueryBuilder<any>;
+    } as unknown as SelectQueryBuilder<BaseArticleEntity>;
 
     const mockRepo = {
       createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder),
@@ -611,20 +621,20 @@ describe('getDefaultQueryBuilder', () => {
     };
 
     const service = new ArticleBaseService(
-      mockRepo as any, // baseArticleRepo
-      mockVersionRepo as any, // baseArticleVersionRepo
-      {} as any,
-      {} as any,
+      mockRepo as MockUtilsRepository, // baseArticleRepo
+      mockVersionRepo as MockRepositoryForService, // baseArticleVersionRepo
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
       true,
       true,
       true,
       [],
-      {} as any,
-      {} as any,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
       true,
-      {} as any,
-      {} as any,
-      {} as any,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
     );
 
     service['getDefaultQueryBuilder']();
@@ -647,7 +657,7 @@ describe('getDefaultQueryBuilder', () => {
 
 describe('ArticleBaseService - getFindAllQueryBuilder', () => {
   let service: ArticleBaseService;
-  let mockQb: any;
+  let mockQb: MockQueryBuilder;
 
   beforeEach(() => {
     mockQb = {
@@ -657,23 +667,23 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
     };
 
     service = new ArticleBaseService(
-      {} as any, // baseArticleRepo
-      {} as any, // baseArticleVersionRepo
-      {} as any, // baseArticleVersionContentRepo
-      {} as any, // baseCategoryRepo
+      {} as MockRepositoryForService, // baseArticleRepo
+      {} as MockRepositoryForService, // baseArticleVersionRepo
+      {} as MockRepositoryForService, // baseArticleVersionContentRepo
+      {} as MockRepositoryForService, // baseCategoryRepo
       true, // multipleLanguageMode
       true, // allowMultipleParentCategories
       true, // allowCircularCategories
       [],
-      {} as any, // baseArticleContentRepo
-      {} as any, // tagRepo
+      {} as MockRepositoryForService, // baseArticleContentRepo
+      {} as MockRepositoryForService, // tagRepo
       true, // fullTextSearchMode
-      {} as any, // dataSource
-      {} as any, // logger
-      {} as any, // articleDataLoader
+      {} as MockServiceDataSource, // dataSource
+      {} as MockRepositoryForService, // logger
+      {} as MockServiceDataLoader, // articleDataLoader
     );
 
-    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue(mockQb);
+    jest.spyOn(service as TestableArticleBaseService, 'getDefaultQueryBuilder').mockReturnValue(mockQb);
   });
 
   it('should add ids filter if options.ids is provided', async () => {
@@ -711,31 +721,31 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
     };
 
     service = new ArticleBaseService(
-      {} as any,
-      {} as any,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
       {
         metadata: {
           schema: 'public',
           tableName: 'contents',
           targetName: 'ArticleVersionContent',
         },
-      } as any,
+      } as MockRepositoryForService,
       {
         metadata: { tablePath: 'public.categories', manyToManyRelations: [] },
-      } as any,
+      } as MockRepositoryForService,
       true,
       true,
       true,
       [],
-      {} as any,
-      {} as any,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
       true, // fullTextSearchMode set here
-      mockDataSource as any,
-      {} as any,
-      {} as any,
+      mockDataSource as MockServiceDataSource,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
     );
 
-    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue(mockQb);
+    jest.spyOn(service as TestableArticleBaseService, 'getDefaultQueryBuilder').mockReturnValue(mockQb);
 
     await service['getFindAllQueryBuilder']({
       searchTerm: 'test',
@@ -761,30 +771,30 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
     };
 
     service = new ArticleBaseService(
-      {} as any,
-      {} as any,
-      mockBaseArticleVersionContentRepo as any,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      mockBaseArticleVersionContentRepo as MockRepositoryForService,
       {
         metadata: {
           tablePath: 'public.categories',
           manyToManyRelations: [],
         },
-      } as any,
+      } as MockRepositoryForService,
       true,
       true,
       true,
       [],
-      {} as any,
-      {} as any,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
       true,
       {
         createQueryBuilder: mockCreateQueryBuilder,
-      } as any,
-      {} as any,
-      {} as any,
+      } as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
     );
 
-    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue(mockQb);
+    jest.spyOn(service as TestableArticleBaseService, 'getDefaultQueryBuilder').mockReturnValue(mockQb);
 
     await service['getFindAllQueryBuilder']({
       searchTerm: 'test',
@@ -836,28 +846,28 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
     };
 
     service = new ArticleBaseService(
-      baseArticleRepo as any,
-      {} as any,
+      baseArticleRepo as MockRepositoryForService,
+      {} as MockRepositoryForService,
       {
         metadata: {
           schema: 'public',
           tableName: 'contents',
           targetName: 'ArticleVersionContent',
         },
-      } as any,
-      baseCategoryRepo as any,
+      } as MockRepositoryForService,
+      baseCategoryRepo as MockRepositoryForService,
       true,
       true,
       true,
       [],
-      {} as any,
-      {} as any,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
       true,
       {
         createQueryBuilder: mockCreateQueryBuilder,
-      } as any,
-      {} as any,
-      {} as any,
+      } as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
     );
 
     const mockQb = {
@@ -866,7 +876,7 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
       addOrderBy: jest.fn().mockReturnThis(),
     };
 
-    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue(mockQb);
+    jest.spyOn(service as TestableArticleBaseService, 'getDefaultQueryBuilder').mockReturnValue(mockQb);
 
     await service['getFindAllQueryBuilder']({
       requiredCategoryIds: ['cat-1', 'cat-2'],
@@ -926,29 +936,29 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
     };
 
     const service = new ArticleBaseService(
-      baseArticleRepo as any,
-      {} as any,
+      baseArticleRepo as MockRepositoryForService,
+      {} as MockRepositoryForService,
       {
         metadata: {
           schema: 'public',
           tableName: 'contents',
           targetName: 'ArticleVersionContent',
         },
-      } as any,
-      baseCategoryRepo as any,
+      } as MockRepositoryForService,
+      baseCategoryRepo as MockRepositoryForService,
       true,
       true,
       true,
       [],
-      {} as any,
-      {} as any,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
       true,
-      dataSource as any,
-      {} as any,
-      {} as any,
+      dataSource as MockServiceDataSource,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
     );
 
-    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue(outerQb);
+    jest.spyOn(service as TestableArticleBaseService, 'getDefaultQueryBuilder').mockReturnValue(outerQb);
 
     await service['getFindAllQueryBuilder']({
       categoryIds: ['c1', 'c2'],
@@ -973,38 +983,38 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
           schema: 'public',
           manyToManyRelations: [],
         },
-      } as any, // baseArticleRepo
-      {} as any, // baseArticleVersionRepo
+      } as MockRepositoryForService, // baseArticleRepo
+      {} as MockRepositoryForService, // baseArticleVersionRepo
       {
         metadata: {
           schema: 'public',
           tableName: 'contents',
           targetName: 'ArticleVersionContent',
         },
-      } as any, // baseArticleVersionContentRepo
+      } as MockRepositoryForService, // baseArticleVersionContentRepo
       {
         metadata: {
           tablePath: 'public.categories',
         },
-      } as any, // baseCategoryRepo
+      } as MockRepositoryForService, // baseCategoryRepo
       true, // multipleLanguageMode
       false, // fullTextSearchMode = disabled
       true, // draftMode
       [], // signatureLevels
-      {} as any, // signatureLevelRepo
-      {} as any, // articleSignatureRepo
+      {} as MockRepositoryForService, // signatureLevelRepo
+      {} as MockRepositoryForService, // articleSignatureRepo
       true, // autoReleaseAfterApproved
       {
         createQueryBuilder: () => ({
           from: jest.fn().mockReturnThis(),
           andWhere: jest.fn().mockReturnThis(),
         }),
-      } as any, // dataSource
-      {} as any, // articleDataLoader
-      {} as any, // signatureService
+      } as MockRepositoryForService, // dataSource
+      {} as MockServiceDataLoader, // articleDataLoader
+      {} as MockRepositoryForService, // signatureService
     );
 
-    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue({
+    jest.spyOn(service as TestableArticleBaseService, 'getDefaultQueryBuilder').mockReturnValue({
       andWhere: jest.fn().mockReturnThis(),
       andWhereExists: jest.fn().mockReturnThis(),
       addOrderBy: jest.fn().mockReturnThis(),
@@ -1027,26 +1037,26 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
           schema: 'public',
           manyToManyRelations: [],
         },
-      } as any,
-      {} as any,
+      } as MockRepositoryForService,
+      {} as MockRepositoryForService,
       {
         metadata: {
           schema: 'public',
           tableName: 'contents',
           targetName: 'ArticleVersionContent',
         },
-      } as any,
+      } as MockRepositoryForService,
       {
         metadata: {
           tablePath: 'public.categories',
         },
-      } as any,
+      } as MockRepositoryForService,
       true,
       true,
       true,
       [],
-      {} as any,
-      {} as any,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
       true, // fullTextSearchMode
       {
         createQueryBuilder: () => ({
@@ -1054,12 +1064,12 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
           andWhere: jest.fn().mockReturnThis(),
           orWhere: mockOrWhere, // ✅ required
         }),
-      } as any,
-      {} as any,
-      {} as any,
+      } as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
     );
 
-    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue({
+    jest.spyOn(service as TestableArticleBaseService, 'getDefaultQueryBuilder').mockReturnValue({
       andWhere: jest.fn().mockReturnThis(),
       andWhereExists: jest.fn().mockReturnThis(),
       addOrderBy: jest.fn().mockReturnThis(),
@@ -1084,9 +1094,11 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
       andWhere: jest.fn().mockReturnThis(),
     };
 
-    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue(qbMock as any);
+    jest
+      .spyOn(service as TestableArticleBaseService, 'getDefaultQueryBuilder')
+      .mockReturnValue(qbMock as MockQueryBuilder);
 
-    await (service as any).getFindAllQueryBuilder({
+    await (service as TestableArticleBaseService).getFindAllQueryBuilder({
       sorter: ArticleSorter.RELEASED_AT_ASC,
     });
 
@@ -1099,9 +1111,11 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
       andWhere: jest.fn().mockReturnThis(),
     };
 
-    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue(qbMock as any);
+    jest
+      .spyOn(service as TestableArticleBaseService, 'getDefaultQueryBuilder')
+      .mockReturnValue(qbMock as MockQueryBuilder);
 
-    await (service as any).getFindAllQueryBuilder({
+    await (service as TestableArticleBaseService).getFindAllQueryBuilder({
       sorter: ArticleSorter.RELEASED_AT_DESC,
     });
 
@@ -1114,9 +1128,11 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
       andWhere: jest.fn().mockReturnThis(),
     };
 
-    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue(qbMock as any);
+    jest
+      .spyOn(service as TestableArticleBaseService, 'getDefaultQueryBuilder')
+      .mockReturnValue(qbMock as MockQueryBuilder);
 
-    await (service as any).getFindAllQueryBuilder({
+    await (service as TestableArticleBaseService).getFindAllQueryBuilder({
       sorter: ArticleSorter.SUBMITTED_AT_ASC,
     });
 
@@ -1129,9 +1145,11 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
       andWhere: jest.fn().mockReturnThis(),
     };
 
-    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue(qbMock as any);
+    jest
+      .spyOn(service as TestableArticleBaseService, 'getDefaultQueryBuilder')
+      .mockReturnValue(qbMock as MockQueryBuilder);
 
-    await (service as any).getFindAllQueryBuilder({
+    await (service as TestableArticleBaseService).getFindAllQueryBuilder({
       sorter: ArticleSorter.SUBMITTED_AT_DESC,
     });
 
@@ -1144,9 +1162,11 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
       andWhere: jest.fn().mockReturnThis(),
     };
 
-    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue(qbMock as any);
+    jest
+      .spyOn(service as TestableArticleBaseService, 'getDefaultQueryBuilder')
+      .mockReturnValue(qbMock as MockQueryBuilder);
 
-    await (service as any).getFindAllQueryBuilder({
+    await (service as TestableArticleBaseService).getFindAllQueryBuilder({
       sorter: ArticleSorter.UPDATED_AT_ASC,
     });
 
@@ -1159,9 +1179,11 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
       andWhere: jest.fn().mockReturnThis(),
     };
 
-    jest.spyOn(service as any, 'getDefaultQueryBuilder').mockReturnValue(qbMock as any);
+    jest
+      .spyOn(service as TestableArticleBaseService, 'getDefaultQueryBuilder')
+      .mockReturnValue(qbMock as MockQueryBuilder);
 
-    await (service as any).getFindAllQueryBuilder({
+    await (service as TestableArticleBaseService).getFindAllQueryBuilder({
       sorter: ArticleSorter.UPDATED_AT_DESC,
     });
 
@@ -1170,7 +1192,7 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
 });
 
 describe('optionsCheck', () => {
-  let service: any;
+  let service: TestableArticleBaseService;
 
   const mockSignatureService = {
     signatureEnabled: true,
@@ -1181,20 +1203,20 @@ describe('optionsCheck', () => {
 
   beforeEach(() => {
     service = new ArticleBaseService(
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
       true,
       true,
       true, // draftMode
       [], // signatureLevels
-      {} as any,
-      {} as any,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
       true, // autoReleaseAfterApproved
-      {} as any,
-      {} as any,
-      mockSignatureService as any,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      mockSignatureService as MockSignatureService,
     );
   });
 

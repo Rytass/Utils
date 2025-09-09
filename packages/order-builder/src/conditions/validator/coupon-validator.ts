@@ -1,9 +1,9 @@
 import { Order } from '../../core/order';
 import { Condition } from '../typings';
 import { Validator, ValidatorDescription } from './typings';
-import { ObjRecord } from '../../typings';
+import { ConditionOptionsBase } from '../../typings';
 
-export class CouponValidator<Options extends ObjRecord = ObjRecord>
+export class CouponValidator<Options extends ConditionOptionsBase = ConditionOptionsBase>
   implements Condition<ValidatorDescription, Options>
 {
   readonly type = Validator.COUPON;

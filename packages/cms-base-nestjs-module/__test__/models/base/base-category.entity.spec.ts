@@ -1,7 +1,7 @@
 import { getMetadataArgsStorage } from 'typeorm';
 import { BaseCategoryEntity } from '../../../src/models/base-category.entity';
 
-function resolveTypeName(type: any): string {
+function resolveTypeName(type: unknown): string {
   try {
     const resolved = typeof type === 'function' ? type() : type;
 
@@ -11,7 +11,7 @@ function resolveTypeName(type: any): string {
   }
 }
 
-function resolveInverseSide(value: any): string | undefined {
+function resolveInverseSide(value: unknown): string | undefined {
   if (typeof value === 'function') {
     const mockEntity = {
       parents: 'parents',

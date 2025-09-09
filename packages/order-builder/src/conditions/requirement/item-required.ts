@@ -1,14 +1,14 @@
 import { Order } from '../../core/order';
 import { Condition } from '../typings';
 import { Requirement, RequirementDescription } from './typings';
-import { ObjRecord } from '../../typings';
+import { ConditionOptionsBase } from '../../typings';
 
 type ItemRequiredInput = {
   id: string;
   quantity: number;
 };
 
-export class ItemRequired<Options extends ObjRecord = ObjRecord>
+export class ItemRequired<Options extends ConditionOptionsBase = ConditionOptionsBase>
   implements Condition<RequirementDescription<ItemRequiredInput>, Options>
 {
   readonly type = Requirement.ITEM;

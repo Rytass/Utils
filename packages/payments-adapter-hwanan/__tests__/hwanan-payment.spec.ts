@@ -236,7 +236,7 @@ describe('HwaNan Payment', () => {
 
         const mockedListen = jest.spyOn(mockServer, 'listen');
 
-        mockedListen.mockImplementationOnce((port?: any, _hostname?: any, listeningListener?: () => void) => {
+        mockedListen.mockImplementationOnce((port?: number, _hostname?: string, listeningListener?: () => void) => {
           expect(port).toBe(9876);
 
           mockServer.listen(0, listeningListener);

@@ -1,4 +1,4 @@
-import { ModuleMetadata } from '@nestjs/common';
+import { ModuleMetadata, InjectionToken, OptionalFactoryDependency } from '@nestjs/common';
 
 export interface QuadratsModuleOptions {
   host?: string;
@@ -8,6 +8,6 @@ export interface QuadratsModuleOptions {
 
 export interface QuadratsModuleAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
   name?: string;
-  useFactory: (...args: any[]) => Promise<QuadratsModuleOptions> | QuadratsModuleOptions;
-  inject?: any[];
+  useFactory: (...args: unknown[]) => Promise<QuadratsModuleOptions> | QuadratsModuleOptions;
+  inject?: (InjectionToken | OptionalFactoryDependency)[];
 }

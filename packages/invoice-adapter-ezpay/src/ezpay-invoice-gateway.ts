@@ -53,9 +53,9 @@ export class EZPayInvoiceGateway implements InvoiceGateway<EZPayPaymentItem, EZP
   private readonly merchantId: string = '34818970';
   private readonly baseUrl: string = EZPayBaseUrls.DEVELOPMENT;
 
-  private encrypt<T extends Record<string, any>>(data: T): string {
-    const encodedData = Object.entries(data)
-      .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+  private encrypt<T>(data: T): string {
+    const encodedData = Object.entries(data as Record<string, unknown>)
+      .map(([key, value]) => `${key}=${encodeURIComponent(value as string | number | boolean)}`)
       .join('&');
 
     const cipher = createCipheriv('aes-256-cbc', this.hashKey, this.hashIv);

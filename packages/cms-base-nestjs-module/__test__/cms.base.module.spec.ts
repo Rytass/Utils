@@ -46,9 +46,11 @@ describe('CMSBaseModule.forRootAsync (useFactory)', () => {
   });
 
   it('should not include useClass provider when none of the async options are set', () => {
-    const module = CMSBaseModule.forRootAsync({} as any);
+    const module = CMSBaseModule.forRootAsync({});
 
-    const hasUseClassProvider = module.providers?.some((provider: any) => provider.useClass !== undefined);
+    const hasUseClassProvider = module.providers?.some(
+      (provider: { useClass?: unknown }) => provider.useClass !== undefined,
+    );
 
     expect(hasUseClassProvider).toBe(false);
   });
@@ -97,8 +99,11 @@ describe('CMSBaseModule.forRootAsync (useClass)', () => {
     });
 
     const factoryProvider = (module.providers ?? []).find(p => {
-      return typeof (p as any).useFactory === 'function' && (p as any).provide === CMS_BASE_MODULE_OPTIONS;
-    }) as { useFactory: (...args: any[]) => any };
+      return (
+        typeof (p as { useFactory?: unknown; provide?: unknown }).useFactory === 'function' &&
+        (p as { useFactory?: unknown; provide?: unknown }).provide === CMS_BASE_MODULE_OPTIONS
+      );
+    }) as { useFactory: (...args: unknown[]) => unknown };
 
     expect(factoryProvider).toBeDefined();
 

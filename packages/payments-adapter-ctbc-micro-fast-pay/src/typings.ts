@@ -454,6 +454,10 @@ export interface CTBCAmexInquiryResponse {
     authCode?: string;
     termSeq?: string;
     authAmt?: string;
+    currency?: string;
+    status?: string;
+    txnType?: string;
+    expDate?: string;
     errCode?: string;
     errDesc?: string;
   }>;
@@ -474,3 +478,52 @@ export interface CTBCAmexRefundResponse {
 
 // AMEX 通用回應類型
 export type CTBCAmexResponse = CTBCAmexInquiryResponse | CTBCAmexRefundResponse;
+
+// SOAP 操作的參數介面
+export interface SoapRequestData {
+  merId: string;
+  lidm: string;
+  xid?: string;
+  credAmt?: number;
+  IN_MAC_KEY?: string;
+  [key: string]: unknown;
+}
+
+// SOAP 回應的詳細資料項目
+export interface AmexPoDetailItem {
+  aetid?: string;
+  aetId?: string;
+  xid?: string;
+  authCode?: string;
+  termSeq?: string;
+  purchAmt?: string;
+  authAmt?: string;
+  currency?: string;
+  status?: string;
+  txnType?: string;
+  expDate?: string;
+  errCode?: string;
+  errDesc?: string;
+}
+
+// SOAP 回應結果
+export interface SoapInquiryResult {
+  count?: number;
+  errCode?: string;
+  errDesc?: string;
+  mac?: string;
+  poDetails?: AmexPoDetailItem[] | AmexPoDetailItem;
+  aetId?: string;
+  xid?: string;
+  credAmt?: string;
+  unCredAmt?: string;
+  capBatchId?: string;
+  capBatchSeq?: string;
+}
+
+// SOAP 調用回應結構
+export interface SoapResponse {
+  inquiryReturn?: SoapInquiryResult;
+  refundReturn?: SoapInquiryResult;
+  [key: string]: unknown;
+}

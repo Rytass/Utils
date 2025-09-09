@@ -3,7 +3,7 @@ import { ObjRecord } from '../typings';
 import { ItemDiscountRecord } from './order-item-record-collection';
 import { Condition } from '../conditions';
 
-type OrderItemConditionCb = (..._: any[]) => boolean;
+type OrderItemConditionCb = (..._: unknown[]) => boolean;
 
 type OrderItemConditionRef<CB extends OrderItemConditionCb = OrderItemConditionCb> = CB | string | string[];
 

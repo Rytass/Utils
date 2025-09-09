@@ -114,7 +114,7 @@ export interface Order<OCM extends OrderCommitMessage> extends PrepareOrderInput
   fail(code: string, message: string): void;
   commit<T extends OCM>(message: T, additionalInfo?: AdditionalInfo<T>): void;
 
-  refund(amount?: number, options?: any): Promise<void>;
+  refund(amount?: number, options?: unknown): Promise<void>;
 }
 
 export enum CardType {
@@ -138,7 +138,7 @@ export interface PaymentGateway<
 
   prepare<N extends OCM>(input: InputFromOrderCommitMessage<N>): Promise<Order<N>>;
 
-  query<OO extends O>(id: string, options?: any): Promise<OO>;
+  query<OO extends O>(id: string, options?: unknown): Promise<OO>;
 }
 
 export interface BindCardRequest {

@@ -12,9 +12,23 @@ import {
 import { CategorySorter } from '../../src/typings/category-sorter.enum';
 import { CategoryNotFoundError } from '../../src/constants/errors/category.errors';
 import { DEFAULT_LANGUAGE } from '../../src/constants/default-language';
+import { BaseCategoryEntity } from '../../src/models/base-category.entity';
+import { BaseCategoryMultiLanguageNameEntity } from '../../src/models/base-category-multi-language-name.entity';
+
+interface TestableCategoryBaseService {
+  multipleLanguageMode: boolean;
+  parseSingleLanguageCategory: jest.SpyInstance;
+}
+
+interface MockQueryBuilder {
+  andWhere: jest.Mock;
+  getOne: jest.Mock;
+  innerJoinAndSelect: jest.Mock;
+  leftJoinAndSelect: jest.Mock;
+}
 
 describe('CategoryBaseService.findAll', () => {
-  let service: CategoryBaseService<any, any>;
+  let service: CategoryBaseService<BaseCategoryEntity, BaseCategoryMultiLanguageNameEntity>;
   const mockQueryBuilder = {
     innerJoinAndSelect: jest.fn().mockReturnThis(),
     leftJoinAndSelect: jest.fn().mockReturnThis(),
@@ -44,7 +58,9 @@ describe('CategoryBaseService.findAll', () => {
       ],
     }).compile();
 
-    service = module.get<CategoryBaseService<any, any>>(CategoryBaseService);
+    service =
+      module.get<CategoryBaseService<BaseCategoryEntity, BaseCategoryMultiLanguageNameEntity>>(CategoryBaseService);
+
     jest.clearAllMocks();
   });
 
@@ -129,7 +145,7 @@ describe('CategoryBaseService.findAll', () => {
     ];
 
     mockQueryBuilder.getMany.mockResolvedValue(mockCategories);
-    (service as any).multipleLanguageMode = true;
+    (service as TestableCategoryBaseService).multipleLanguageMode = true;
 
     await service.findAll({
       sorter: CategorySorter.CREATED_AT_DESC,
@@ -154,7 +170,7 @@ describe('CategoryBaseService.findAll', () => {
 
     mockQueryBuilder.getMany.mockResolvedValue(mockCategories);
 
-    (service as any).multipleLanguageMode = false;
+    (service as TestableCategoryBaseService).multipleLanguageMode = false;
 
     const mockParsed = mockCategories.map(c => ({
       ...c,
@@ -163,9 +179,9 @@ describe('CategoryBaseService.findAll', () => {
     }));
 
     const parseSpy = jest
-      .spyOn(service as any, 'parseSingleLanguageCategory')
+      .spyOn(service as TestableCategoryBaseService, 'parseSingleLanguageCategory')
       .mockImplementation((...args: unknown[]) => {
-        const [cat, lang] = args as [Record<string, any>, any];
+        const [cat, lang] = args as [BaseCategoryEntity, string];
 
         return {
           ...cat,
@@ -184,8 +200,8 @@ describe('CategoryBaseService.findAll', () => {
 });
 
 describe('CategoryBaseService.findById', () => {
-  let service: CategoryBaseService<any, any>;
-  let mockQueryBuilder: any;
+  let service: CategoryBaseService<BaseCategoryEntity, BaseCategoryMultiLanguageNameEntity>;
+  let mockQueryBuilder: MockQueryBuilder;
 
   beforeEach(async () => {
     mockQueryBuilder = {
@@ -213,7 +229,8 @@ describe('CategoryBaseService.findById', () => {
       ],
     }).compile();
 
-    service = module.get<CategoryBaseService<any, any>>(CategoryBaseService);
+    service =
+      module.get<CategoryBaseService<BaseCategoryEntity, BaseCategoryMultiLanguageNameEntity>>(CategoryBaseService);
   });
 
   it('should return parsed single-language category when language is provided', async () => {
@@ -242,7 +259,7 @@ describe('CategoryBaseService.findById', () => {
   });
 
   it('should return parsed category when language is not provided and multipleLanguageMode is false', async () => {
-    (service as any).multipleLanguageMode = false;
+    (service as TestableCategoryBaseService).multipleLanguageMode = false;
 
     const mockCategory = {
       id: '1',

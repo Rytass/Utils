@@ -9,6 +9,15 @@ import {
 import { Invoice } from './invoice';
 import { InvoiceAllowance } from './invoice-allowance';
 
+// Base interface for invoice query options - flexible approach to support all adapters
+export interface BaseInvoiceQueryOptions {
+  orderId?: string;
+  invoiceNumber?: string;
+  [key: string]: unknown;
+}
+
+export type InvoiceQueryOptions<T = BaseInvoiceQueryOptions> = T;
+
 export interface InvoiceIssueOptions<Item extends PaymentItem = PaymentItem> {
   items: InvoicePaymentItem<Item>[];
   vatNumber?: string;
@@ -19,7 +28,7 @@ export interface InvoiceIssueOptions<Item extends PaymentItem = PaymentItem> {
 export interface InvoiceGateway<
   Item extends PaymentItem = PaymentItem,
   I extends Invoice<Item> = Invoice<Item>,
-  QueryOptions = any,
+  QueryOptions = unknown,
 > {
   issue(options: InvoiceIssueOptions<Item>): Promise<I>;
   void(invoice: Invoice<PaymentItem>, options: InvoiceVoidOptions): Promise<Invoice<PaymentItem>>;

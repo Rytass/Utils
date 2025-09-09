@@ -3,6 +3,7 @@ import { Repository } from 'typeorm';
 import { CategoryDataLoader } from '../../src/data-loaders/category.dataloader';
 import { RESOLVED_CATEGORY_REPO } from '../../src/typings/cms-base-providers';
 import { BaseCategoryEntity } from '../../src/models/base-category.entity';
+import { MockDataLoaderQueryBuilder } from '../typings/mock-types.interface';
 
 describe('CategoryDataLoader', () => {
   let dataLoader: CategoryDataLoader;
@@ -26,7 +27,7 @@ describe('CategoryDataLoader', () => {
   });
 
   it('should return correct category entities for given IDs', async () => {
-    const mockQb: any = {
+    const mockQb: MockDataLoaderQueryBuilder = {
       innerJoinAndSelect: jest.fn().mockReturnThis(),
       leftJoinAndSelect: jest.fn().mockReturnThis(),
       andWhere: jest.fn().mockReturnThis(),
@@ -59,7 +60,7 @@ describe('CategoryDataLoader', () => {
   });
 
   it('should return null for missing categories', async () => {
-    const mockQb: any = {
+    const mockQb: MockDataLoaderQueryBuilder = {
       innerJoinAndSelect: jest.fn().mockReturnThis(),
       leftJoinAndSelect: jest.fn().mockReturnThis(),
       andWhere: jest.fn().mockReturnThis(),
@@ -74,7 +75,7 @@ describe('CategoryDataLoader', () => {
   });
 
   it('should cache results for repeated calls', async () => {
-    const mockQb: any = {
+    const mockQb: MockDataLoaderQueryBuilder = {
       innerJoinAndSelect: jest.fn().mockReturnThis(),
       leftJoinAndSelect: jest.fn().mockReturnThis(),
       andWhere: jest.fn().mockReturnThis(),

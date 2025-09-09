@@ -2,7 +2,7 @@ import { getMetadataArgsStorage } from 'typeorm';
 import { BaseArticleVersionContentEntity } from '../../../src/models/base-article-version-content.entity';
 
 describe('BaseArticleVersionContentEntity relations', () => {
-  function resolveTypeName(type: any): string {
+  function resolveTypeName(type: unknown): string {
     try {
       if (typeof type === 'function') {
         const resolved = type(); // Call the arrow function

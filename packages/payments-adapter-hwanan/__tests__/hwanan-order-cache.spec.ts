@@ -1,5 +1,5 @@
 import { LRUCache } from 'lru-cache';
-import { HwaNanPayment } from '../src';
+import { HwaNanPayment, HwaNanOrder } from '../src';
 
 const MERCHANT_ID = '326650918560582';
 const TERMINAL_ID = '87345985';
@@ -8,7 +8,7 @@ const IDENTIFIER = '8949bf87c8d710a0';
 
 describe('HwaNan Custom Order Cache', () => {
   it('should use custom order cache', async () => {
-    const lruCache = new LRUCache<string, any>({
+    const lruCache = new LRUCache<string, HwaNanOrder>({
       ttlAutopurge: true,
       ttl: 10 * 60 * 1000, // default: 10 mins
     });
@@ -20,8 +20,8 @@ describe('HwaNan Custom Order Cache', () => {
       merchantName: 'Rytass Shop',
       identifier: IDENTIFIER,
       ordersCache: {
-        get: async (key: string): Promise<any> => lruCache!.get(key),
-        set: async (key: string, value: any): Promise<void> => {
+        get: async (key: string): Promise<HwaNanOrder | undefined> => lruCache!.get(key),
+        set: async (key: string, value: HwaNanOrder): Promise<void> => {
           lruCache!.set(key, value);
         },
       },

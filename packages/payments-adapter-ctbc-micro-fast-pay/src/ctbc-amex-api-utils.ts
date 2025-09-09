@@ -4,6 +4,9 @@ import {
   CTBCAmexRefundParams,
   CTBCAmexInquiryResponse,
   CTBCAmexRefundResponse,
+  SoapRequestData,
+  SoapResponse,
+  AmexPoDetailItem,
 } from './typings';
 import { desMac } from './ctbc-crypto-core';
 import * as soap from 'soap';
@@ -15,7 +18,7 @@ import * as iconv from 'iconv-lite';
  */
 export class CTBCAEGateway {
   private serverConfig: CTBCAmexConfig = {} as CTBCAmexConfig;
-  private response: any = {};
+  private response: CTBCAmexInquiryResponse | CTBCAmexRefundResponse = {} as CTBCAmexInquiryResponse;
 
   constructor(config: CTBCAmexConfig) {
     this.serverConfig = config;
@@ -38,21 +41,33 @@ export class CTBCAEGateway {
       return this.response;
     }
 
-    const requestData: any = {};
+    const requestData: SoapRequestData = {} as SoapRequestData;
 
-    if (!(requestData.merId = this.checkMerId(params.merId))) {
+    const merIdResult = this.checkMerId(params.merId);
+
+    if (!merIdResult) {
       return this.response;
     }
 
-    if (!(requestData.lidm = this.checkLidm(params.lidm))) {
+    requestData.merId = merIdResult;
+
+    const lidmResult = this.checkLidm(params.lidm);
+
+    if (!lidmResult) {
       return this.response;
     }
+
+    requestData.lidm = lidmResult;
 
     if (params.xid) {
       // XID 是可選的，只有在提供時才需要驗證
-      if (!(requestData.xid = this.checkXid(params.xid))) {
+      const xidResult = this.checkXid(params.xid);
+
+      if (!xidResult) {
         return this.response;
       }
+
+      requestData.xid = xidResult;
     } else {
       // 根據 Java ParametersChecker.inquiry()，XID 可以為空
       // 如果沒有提供 XID，我們可以不設置或設置為空字串
@@ -105,7 +120,7 @@ export class CTBCAEGateway {
       console.log('RPC SOAP Request structure:', JSON.stringify(rpcRequest, null, 2));
 
       // 調用 SOAP 方法
-      const soapResponse: any = await new Promise((resolve, reject) => {
+      const soapResponse: SoapResponse = await new Promise((resolve, reject) => {
         if (typeof soapClient.inquiry === 'function') {
           // RPC style SOAP 需要傳遞 request 參數
           soapClient.inquiry(rpcRequest, (err: unknown, result: unknown) => {
@@ -114,7 +129,7 @@ export class CTBCAEGateway {
               reject(err);
             } else {
               console.log('SOAP inquiry success:', result);
-              resolve(result);
+              resolve(result as SoapResponse);
             }
           });
         } else {
@@ -129,25 +144,25 @@ export class CTBCAEGateway {
       const inquiryResult = soapResponse?.inquiryReturn || soapResponse;
 
       // 處理 SOAP 回應
-      if (inquiryResult.count !== undefined) {
-        this.response.count = parseInt(inquiryResult.count) || 0;
+      if (inquiryResult.count !== undefined && inquiryResult.count !== null) {
+        this.response.count = parseInt(inquiryResult.count.toString()) || 0;
       }
 
-      if (inquiryResult.errCode !== undefined) {
-        this.response.errCode = inquiryResult.errCode;
+      if (inquiryResult.errCode !== undefined && inquiryResult.errCode !== null) {
+        this.response.errCode = inquiryResult.errCode.toString();
       }
 
-      if (inquiryResult.errDesc !== undefined) {
-        this.response.errDesc = inquiryResult.errDesc;
+      if (inquiryResult.errDesc !== undefined && inquiryResult.errDesc !== null) {
+        this.response.errDesc = inquiryResult.errDesc.toString();
       }
 
-      if (inquiryResult.mac !== undefined) {
-        this.response.mac = inquiryResult.mac;
+      if (inquiryResult.mac !== undefined && inquiryResult.mac !== null) {
+        this.response.mac = inquiryResult.mac.toString();
       }
 
       if (inquiryResult.poDetails) {
         this.response.poDetails = Array.isArray(inquiryResult.poDetails)
-          ? inquiryResult.poDetails.map((detail: any) => ({
+          ? inquiryResult.poDetails.map((detail: AmexPoDetailItem) => ({
               aetId: detail.aetid || detail.aetId,
               xid: detail.xid,
               authCode: detail.authCode,
@@ -160,17 +175,19 @@ export class CTBCAEGateway {
             }))
           : [
               {
-                aetId: inquiryResult.poDetails.aetid || inquiryResult.poDetails.aetId,
-                xid: inquiryResult.poDetails.xid,
-                authCode: inquiryResult.poDetails.authCode,
-                termSeq: inquiryResult.poDetails.termSeq,
-                authAmt: inquiryResult.poDetails.purchAmt
-                  ? inquiryResult.poDetails.purchAmt.toString()
-                  : inquiryResult.poDetails.authAmt || '',
-                currency: inquiryResult.poDetails.currency || 'TWD',
-                status: inquiryResult.poDetails.status,
-                txnType: inquiryResult.poDetails.txnType,
-                expDate: inquiryResult.poDetails.expDate,
+                aetId:
+                  (inquiryResult.poDetails as AmexPoDetailItem).aetid ||
+                  (inquiryResult.poDetails as AmexPoDetailItem).aetId,
+                xid: (inquiryResult.poDetails as AmexPoDetailItem).xid,
+                authCode: (inquiryResult.poDetails as AmexPoDetailItem).authCode,
+                termSeq: (inquiryResult.poDetails as AmexPoDetailItem).termSeq,
+                authAmt: (inquiryResult.poDetails as AmexPoDetailItem).purchAmt
+                  ? (inquiryResult.poDetails as AmexPoDetailItem).purchAmt?.toString() || ''
+                  : (inquiryResult.poDetails as AmexPoDetailItem).authAmt || '',
+                currency: (inquiryResult.poDetails as AmexPoDetailItem).currency || 'TWD',
+                status: (inquiryResult.poDetails as AmexPoDetailItem).status,
+                txnType: (inquiryResult.poDetails as AmexPoDetailItem).txnType,
+                expDate: (inquiryResult.poDetails as AmexPoDetailItem).expDate,
               },
             ];
       }
@@ -179,7 +196,7 @@ export class CTBCAEGateway {
 
       // 只有在提供 MAC Key 的情況下才檢查 MAC
       if (params.IN_MAC_KEY) {
-        this.checkMac(responseSMac, params.IN_MAC_KEY, inquiryResult.mac || '');
+        this.checkMac(responseSMac, params.IN_MAC_KEY, inquiryResult.mac?.toString() || '');
       } else {
         console.log('No MAC Key provided - skipping MAC validation');
       }
@@ -217,19 +234,31 @@ export class CTBCAEGateway {
       return this.response;
     }
 
-    const requestData: any = {};
+    const requestData: SoapRequestData = {} as SoapRequestData;
 
-    if (!(requestData.merId = this.checkMerId(params.merId))) {
+    const merIdResult = this.checkMerId(params.merId);
+
+    if (!merIdResult) {
       return this.response;
     }
 
-    if (!(requestData.xid = this.checkXid(params.xid))) {
+    requestData.merId = merIdResult;
+
+    const xidResult = this.checkXid(params.xid);
+
+    if (!xidResult) {
       return this.response;
     }
 
-    if (!(requestData.credAmt = this.checkCredAmt(params.credAmt))) {
+    requestData.xid = xidResult;
+
+    const credAmtResult = this.checkCredAmt(params.credAmt);
+
+    if (!credAmtResult) {
       return this.response;
     }
+
+    requestData.credAmt = credAmtResult;
 
     const sMac = requestData.merId + requestData.xid + requestData.credAmt;
 
@@ -268,13 +297,13 @@ export class CTBCAEGateway {
         // timeout: this.serverConfig.timeout || 30000, // timeout 不在 IOptions 中
       });
 
-      const soapResponse: any = await new Promise((resolve, reject) => {
+      const soapResponse: SoapResponse = await new Promise((resolve, reject) => {
         if (typeof soapClient.refund === 'function') {
           soapClient.refund(requestData, (err: unknown, result: unknown) => {
             if (err) {
               reject(err);
             } else {
-              resolve(result);
+              resolve(result as SoapResponse);
             }
           });
         } else {
@@ -471,7 +500,7 @@ export class CTBCAEGateway {
   }
 
   // 格式化字串（類似 PHP 的 sprintf）
-  private sprintf(format: string, ...args: any[]): string {
+  private sprintf(format: string, ...args: (string | number)[]): string {
     let i = 0;
 
     return format.replace(/%(?:0(\d+))?[sd%]/g, (match, width) => {
@@ -483,7 +512,7 @@ export class CTBCAEGateway {
         if (match === '%s') return String(arg);
 
         if (match.includes('d')) {
-          const num = String(parseInt(arg, 10) || 0);
+          const num = String(parseInt(String(arg), 10) || 0);
 
           if (width) {
             return num.padStart(parseInt(width, 10), '0');

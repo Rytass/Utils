@@ -2,7 +2,7 @@ import { load } from 'cheerio';
 
 import { LogisticsInterface, LogisticsStatus, LogisticsStatusHistory } from '@rytass/logistics';
 
-export type TCatLogisticsStatus<T extends LogisticsInterface<unknown> = any> =
+export type TCatLogisticsStatus<T extends LogisticsInterface<unknown> = LogisticsInterface<unknown>> =
   | 'DELIVERED'
   | 'TRANSPORTING'
   | 'DELIVERING'

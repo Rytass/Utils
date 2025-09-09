@@ -1,7 +1,7 @@
 import { getMetadataArgsStorage } from 'typeorm';
 import { BaseArticleEntity } from '../../../src/models/base-article.entity';
 
-function resolveTypeName(type: any): string {
+function resolveTypeName(type: unknown): string {
   try {
     if (typeof type === 'function') {
       const resolved = type();
