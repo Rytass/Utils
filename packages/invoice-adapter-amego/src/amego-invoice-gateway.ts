@@ -137,13 +137,13 @@ export class AmegoInvoiceGateway implements InvoiceGateway<AmegoPaymentItem, Ame
     const apiData =
       'orderId' in options
         ? {
-          type: 'order',
-          order_id: options.orderId,
-        }
+            type: 'order',
+            order_id: options.orderId,
+          }
         : {
-          type: 'invoice',
-          invoice_number: options.invoiceNumber,
-        };
+            type: 'invoice',
+            invoice_number: options.invoiceNumber,
+          };
 
     const encodedPayload = this.generateEncodedPayload(JSON.stringify(apiData));
 
