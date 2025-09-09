@@ -12,8 +12,10 @@ import {
 import { itemIsMatchedItemFn, itemSpecifiedItems, itemSpecifiedScope } from './utils';
 import { ConditionOptionsBase } from '../../typings';
 
-export class ItemIncluded<Item extends OrderItem = OrderItem, Options extends ConditionOptionsBase = ConditionOptionsBase>
-  implements Condition<RequirementDescription, Options>
+export class ItemIncluded<
+  Item extends OrderItem = OrderItem,
+  Options extends ConditionOptionsBase = ConditionOptionsBase,
+> implements Condition<RequirementDescription, Options>
 {
   readonly type = Requirement.INCLUDED;
   readonly items: string[];
