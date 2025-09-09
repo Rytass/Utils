@@ -393,7 +393,7 @@ describe('ArticleBaseService.signature', () => {
     expect(result).toBeDefined();
   });
 
-  it('should throw Already signed if targetLevelIndex is NaN and signatures exist', async () => {
+  it('should throw Invalid signature level if targetLevelIndex is NaN and signatures exist', async () => {
     service.findById = jest.fn().mockResolvedValueOnce(null);
 
     runner.manager.createQueryBuilder = jest.fn(() => ({
@@ -418,10 +418,10 @@ describe('ArticleBaseService.signature', () => {
 
     await expect(
       service['signature'](ArticleSignatureResult.APPROVED, { id: 'a1', version: 1 }, { signatureLevel: 'INVALID' }),
-    ).rejects.toThrow('Already signed');
+    ).rejects.toThrow('Invalid signature level');
   });
 
-  it('should create a signature without level if targetLevelIndex is NaN and no signatures exist', async () => {
+  it('should throw Invalid signature level if targetLevelIndex is NaN and no signatures exist', async () => {
     service.findById = jest.fn().mockResolvedValueOnce(null);
 
     jest.spyOn(service.signatureService.signatureLevelsCache, 'findIndex').mockReturnValue(-1);
@@ -436,24 +436,16 @@ describe('ArticleBaseService.signature', () => {
 
     service.articleSignatureRepo.create = mockCreate;
 
-    await service['signature'](
-      ArticleSignatureResult.REJECTED,
-      { id: 'a1', version: 1 },
-      { signerId: 'user-x', reason: 'not good', signatureLevel: 'SOME_LEVEL' },
-    );
-
-    expect(mockCreate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        articleId: 'a1',
-        version: 1,
-        result: ArticleSignatureResult.REJECTED,
-        signerId: 'user-x',
-        rejectReason: 'not good',
-      }),
-    );
+    await expect(
+      service['signature'](
+        ArticleSignatureResult.REJECTED,
+        { id: 'a1', version: 1 },
+        { signerId: 'user-x', reason: 'not good', signatureLevel: 'SOME_LEVEL' },
+      ),
+    ).rejects.toThrow('Invalid signature level');
   });
 
-  it('should set signerId to null if not provided (targetLevelIndex NaN)', async () => {
+  it('should throw Invalid signature level if signatureLevel is unknown', async () => {
     service.findById = jest.fn().mockResolvedValueOnce(null);
 
     jest.spyOn(service.signatureService.signatureLevelsCache, 'findIndex').mockReturnValue(-1);
@@ -464,25 +456,23 @@ describe('ArticleBaseService.signature', () => {
       getMany: jest.fn().mockResolvedValue([]),
     }));
 
-    const mockCreate = jest.fn(data => {
-      expect(data.signerId).toBeNull();
-
-      return data;
-    });
+    const mockCreate = jest.fn(data => data);
 
     service.articleSignatureRepo.create = mockCreate;
 
-    await service['signature'](
-      ArticleSignatureResult.REJECTED,
-      { id: 'a1', version: 1 },
-      {
-        signatureLevel: 'UNKNOWN_LEVEL',
-        reason: 'valid reason', // no signerId
-      },
-    );
+    await expect(
+      service['signature'](
+        ArticleSignatureResult.REJECTED,
+        { id: 'a1', version: 1 },
+        {
+          signatureLevel: 'UNKNOWN_LEVEL',
+          reason: 'valid reason',
+        },
+      ),
+    ).rejects.toThrow('Invalid signature level');
   });
 
-  it('should set rejectReason to null if REJECTED but no reason given (targetLevelIndex NaN)', async () => {
+  it('should throw Invalid signature level for any invalid signature level', async () => {
     service.findById = jest.fn().mockResolvedValueOnce(null);
 
     jest.spyOn(service.signatureService.signatureLevelsCache, 'findIndex').mockReturnValue(-1);
@@ -493,26 +483,23 @@ describe('ArticleBaseService.signature', () => {
       getMany: jest.fn().mockResolvedValue([]),
     }));
 
-    const mockCreate = jest.fn(data => {
-      expect(data.rejectReason).toBeNull();
-
-      return data;
-    });
+    const mockCreate = jest.fn(data => data);
 
     service.articleSignatureRepo.create = mockCreate;
 
-    await service['signature'](
-      ArticleSignatureResult.REJECTED,
-      { id: 'a1', version: 1 },
-      {
-        signatureLevel: 'UNKNOWN_LEVEL',
-        signerId: 'user-1',
-        // no reason
-      },
-    );
+    await expect(
+      service['signature'](
+        ArticleSignatureResult.REJECTED,
+        { id: 'a1', version: 1 },
+        {
+          signatureLevel: 'UNKNOWN_LEVEL',
+          signerId: 'user-1',
+        },
+      ),
+    ).rejects.toThrow('Invalid signature level');
   });
 
-  it('should ignore reason and set rejectReason to null if APPROVED (targetLevelIndex NaN)', async () => {
+  it('should throw Invalid signature level when approving with invalid signature level', async () => {
     service.findById = jest.fn().mockResolvedValueOnce(null);
 
     jest.spyOn(service.signatureService.signatureLevelsCache, 'findIndex').mockReturnValue(-1);
@@ -523,26 +510,24 @@ describe('ArticleBaseService.signature', () => {
       getMany: jest.fn().mockResolvedValue([]),
     }));
 
-    const mockCreate = jest.fn(data => {
-      expect(data.rejectReason).toBeNull(); // reason is ignored
-
-      return data;
-    });
+    const mockCreate = jest.fn(data => data);
 
     service.articleSignatureRepo.create = mockCreate;
 
-    await service['signature'](
-      ArticleSignatureResult.APPROVED,
-      { id: 'a1', version: 1 },
-      {
-        signatureLevel: 'UNKNOWN_LEVEL',
-        signerId: 'user-1',
-        reason: 'this should be ignored',
-      },
-    );
+    await expect(
+      service['signature'](
+        ArticleSignatureResult.APPROVED,
+        { id: 'a1', version: 1 },
+        {
+          signatureLevel: 'UNKNOWN_LEVEL',
+          signerId: 'user-1',
+          reason: 'this should be ignored',
+        },
+      ),
+    ).rejects.toThrow('Invalid signature level');
   });
 
-  it('should soft delete the version if placedArticle exists and targetLevelIndex is NaN', async () => {
+  it('should throw Invalid signature level even when placedArticle exists', async () => {
     const mockPlacedArticle = { id: 'a1', version: 1 };
 
     service.findById = jest
@@ -574,20 +559,17 @@ describe('ArticleBaseService.signature', () => {
 
     service.articleSignatureRepo.create = mockCreate;
 
-    await service['signature'](
-      ArticleSignatureResult.REJECTED,
-      { id: 'a1', version: 1 },
-      {
-        signerId: 'user-x',
-        reason: 'not good',
-        signatureLevel: 'NON_EXISTENT',
-      },
-    );
-
-    expect(runner.manager.softDelete).toHaveBeenCalledWith(service.baseArticleVersionRepo.metadata.tableName, {
-      articleId: 'a1',
-      version: 1,
-    });
+    await expect(
+      service['signature'](
+        ArticleSignatureResult.REJECTED,
+        { id: 'a1', version: 1 },
+        {
+          signerId: 'user-x',
+          reason: 'not good',
+          signatureLevel: 'NON_EXISTENT',
+        },
+      ),
+    ).rejects.toThrow('Invalid signature level');
   });
 });
 
