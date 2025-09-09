@@ -5,7 +5,7 @@
   "command": {
     "version": {
       "ignoreChanges": ["**/__fixtures__/**", "**/__mocks__/**", "**/__tests__/**", "*.spec.*", "**/*.md"],
-      "message": "chore(release): update package versions",
+      "message": "chore: update package versions",
       "conventionalCommits": true,
       "yes": true
     },
