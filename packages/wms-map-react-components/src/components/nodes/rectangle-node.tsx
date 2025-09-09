@@ -93,9 +93,11 @@ const RectangleNode: FC<RectangleNodeProps> = ({
   const handleResizeStart = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (_event: any, _params: ResizeParams) => {
-    // 開始調整大小時可以執行額外的邏輯，例如禁用拖拽
-    // 這裡保持空白，但提供了擴展點
-  }, []);
+      // 開始調整大小時可以執行額外的邏輯，例如禁用拖拽
+      // 這裡保持空白，但提供了擴展點
+    },
+    [],
+  );
 
   // Handle resize with size sync and position update (diagonal anchor)
   const handleResize = useCallback(
