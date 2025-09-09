@@ -315,7 +315,18 @@ const PathNode: FC<PathNodeProps> = ({
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
     },
-    [id, isEditable, points, isClosedPath, onPathPointsChange, setNodes, getViewport, getBounds, getNodes],
+    [
+      id,
+      isEditable,
+      points,
+      isClosedPath,
+      onPathPointsChange,
+      onPathPointDragStateChange,
+      setNodes,
+      getViewport,
+      getBounds,
+      getNodes,
+    ],
   );
 
   // Create SVG path string using fixed bounds during drag to prevent React Flow repositioning
