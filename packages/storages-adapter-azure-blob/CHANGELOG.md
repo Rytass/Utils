@@ -3,6 +3,25 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.5](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-azure-blob@0.1.4...@rytass/storages-adapter-azure-blob@0.1.5) (2025-09-09)
+
+### Bug Fixes
+
+- resolve workspace-level yarn test/build errors ([5977670](https://github.com/Rytass/Utils/commit/597767019b79691cb373d34df089369b585e64fb))
+
+### Features
+
+- add test:coverage script to all packages ([f73bce5](https://github.com/Rytass/Utils/commit/f73bce52024d453755824fa6af784f13da50061f))
+- upgrade file-type from v16.5.4 to v21.0.0 ([eb8217b](https://github.com/Rytass/Utils/commit/eb8217b76c4a0d74061f782c082fd4183961bb12))
+
+### BREAKING CHANGES
+
+- file-type v21 is ESM-only, requires Node.js 18+
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
 ## [0.1.4](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-azure-blob@0.1.3...@rytass/storages-adapter-azure-blob@0.1.4) (2025-08-19)
 
 **Note:** Version bump only for package @rytass/storages-adapter-azure-blob

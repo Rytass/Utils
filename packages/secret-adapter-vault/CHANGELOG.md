@@ -3,6 +3,28 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.4.2](https://github.com/Rytass/Utils/compare/@rytass/secret-adapter-vault@0.4.1...@rytass/secret-adapter-vault@0.4.2) (2025-09-09)
+
+### Bug Fixes
+
+- resolve workspace-level yarn test/build errors ([5977670](https://github.com/Rytass/Utils/commit/597767019b79691cb373d34df089369b585e64fb))
+- **secret-adapter-vault, invoice-adapter-ezpay:** resolve ReferenceError in Jest mocks ([c9f221c](https://github.com/Rytass/Utils/commit/c9f221c6b3d774b9ad9172c818fe3a29c34883b6))
+- **secret-vault:** resolve ESLint no-explicit-any violations ([96f432e](https://github.com/Rytass/Utils/commit/96f432e287213992efe138d9dadcf473889d3fd6))
+- **wms-map-react-components:** resolve TypeScript compilation errors ([5d7ba43](https://github.com/Rytass/Utils/commit/5d7ba43e430a507ed2b443287c97fb886cf83bd3))
+
+### Features
+
+- add test:coverage script to all packages ([f73bce5](https://github.com/Rytass/Utils/commit/f73bce52024d453755824fa6af784f13da50061f))
+- upgrade file-type from v16.5.4 to v21.0.0 ([eb8217b](https://github.com/Rytass/Utils/commit/eb8217b76c4a0d74061f782c082fd4183961bb12))
+
+### BREAKING CHANGES
+
+- file-type v21 is ESM-only, requires Node.js 18+
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
 ## [0.4.1](https://github.com/Rytass/Utils/compare/@rytass/secret-adapter-vault@0.4.0...@rytass/secret-adapter-vault@0.4.1) (2025-08-19)
 
 **Note:** Version bump only for package @rytass/secret-adapter-vault

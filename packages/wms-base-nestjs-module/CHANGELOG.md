@@ -3,6 +3,27 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.2](https://github.com/Rytass/Utils/compare/@rytass/wms-base-nestjs-module@0.1.1...@rytass/wms-base-nestjs-module@0.1.2) (2025-09-09)
+
+### Bug Fixes
+
+- add file-type ESM compatibility and test fixes ([42de851](https://github.com/Rytass/Utils/commit/42de8515f7a111588206d9b2ffb7c20b382bb90d))
+- **wms-base-nestjs-module:** 修復 warehouse-map 功能的程式碼品質問題 ([d2929fd](https://github.com/Rytass/Utils/commit/d2929fd15622228b1e4672e2bd08e89eaf61dc2c))
+
+### Features
+
+- add test:coverage script to all packages ([f73bce5](https://github.com/Rytass/Utils/commit/f73bce52024d453755824fa6af784f13da50061f))
+- upgrade file-type from v16.5.4 to v21.0.0 ([eb8217b](https://github.com/Rytass/Utils/commit/eb8217b76c4a0d74061f782c082fd4183961bb12))
+- Warehouse Location Map ([70006cf](https://github.com/Rytass/Utils/commit/70006cf1a3378f81b8d940609fa798d11e520884))
+
+### BREAKING CHANGES
+
+- file-type v21 is ESM-only, requires Node.js 18+
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
 ## [0.1.1](https://github.com/Rytass/Utils/compare/@rytass/wms-base-nestjs-module@0.1.0...@rytass/wms-base-nestjs-module@0.1.1) (2025-08-19)
 
 **Note:** Version bump only for package @rytass/wms-base-nestjs-module

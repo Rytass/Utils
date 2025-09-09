@@ -3,6 +3,25 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.3.2](https://github.com/Rytass/Utils/compare/@rytass/logistics-adapter-ctc@0.3.1...@rytass/logistics-adapter-ctc@0.3.2) (2025-09-09)
+
+### Bug Fixes
+
+- **logistics-ctc:** resolve ESLint no-explicit-any violations ([bb44fec](https://github.com/Rytass/Utils/commit/bb44fec53a95b15e561f0f66eb9a675743f8fedf))
+
+### Features
+
+- add test:coverage script to all packages ([f73bce5](https://github.com/Rytass/Utils/commit/f73bce52024d453755824fa6af784f13da50061f))
+- upgrade file-type from v16.5.4 to v21.0.0 ([eb8217b](https://github.com/Rytass/Utils/commit/eb8217b76c4a0d74061f782c082fd4183961bb12))
+
+### BREAKING CHANGES
+
+- file-type v21 is ESM-only, requires Node.js 18+
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
 ## [0.3.1](https://github.com/Rytass/Utils/compare/@rytass/logistics-adapter-ctc@0.3.0...@rytass/logistics-adapter-ctc@0.3.1) (2025-08-19)
 
 **Note:** Version bump only for package @rytass/logistics-adapter-ctc

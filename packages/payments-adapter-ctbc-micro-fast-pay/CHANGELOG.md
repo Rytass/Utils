@@ -3,6 +3,28 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.9](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.8...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.9) (2025-09-09)
+
+### Bug Fixes
+
+- **invoice-adapter-amego:** love code issue ([e4be5e3](https://github.com/Rytass/Utils/commit/e4be5e33facd00062f7956a4e82854dc9411fc7e))
+- **payments-ctbc:** resolve @typescript-eslint/no-explicit-any errors in CTBC payment adapter ([b4515dc](https://github.com/Rytass/Utils/commit/b4515dc0226f9c3539ba3fad58078a5c0983d03f))
+- **wms-map-react-components:** resolve TypeScript compilation errors ([5d7ba43](https://github.com/Rytass/Utils/commit/5d7ba43e430a507ed2b443287c97fb886cf83bd3))
+
+### Features
+
+- add test:coverage script to all packages ([f73bce5](https://github.com/Rytass/Utils/commit/f73bce52024d453755824fa6af784f13da50061f))
+- **payments-adapter-ctbc-micro-fast-pay:** add ctbc payments failed error with orderId ([52f42d2](https://github.com/Rytass/Utils/commit/52f42d20efcf9c92b9f41b2dbdcdeb319399a792))
+- upgrade file-type from v16.5.4 to v21.0.0 ([eb8217b](https://github.com/Rytass/Utils/commit/eb8217b76c4a0d74061f782c082fd4183961bb12))
+
+### BREAKING CHANGES
+
+- file-type v21 is ESM-only, requires Node.js 18+
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
 ## [0.1.8](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.7...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.8) (2025-08-28)
 
 ### Features

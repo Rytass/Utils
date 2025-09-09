@@ -3,6 +3,30 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.5](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.2.4...@rytass/cms-base-nestjs-module@0.2.5) (2025-09-09)
+
+### Bug Fixes
+
+- add file-type ESM compatibility and test fixes ([42de851](https://github.com/Rytass/Utils/commit/42de8515f7a111588206d9b2ffb7c20b382bb90d))
+- **cms-base-nestjs-module:** improve Jieba mocking and error handling ([8c12489](https://github.com/Rytass/Utils/commit/8c124891a142741254cb33dd7e68cd627952b859))
+- **cms-base-nestjs-module:** resolve ESLint explicit-function-return-type errors ([92fafa9](https://github.com/Rytass/Utils/commit/92fafa97b4058991038850be0f8309f99eb367e9))
+- **cms-base:** resolve @typescript-eslint/no-explicit-any errors across CMS modules ([3f64a47](https://github.com/Rytass/Utils/commit/3f64a470dff434558ba208709fd24de2d8d3ec6b))
+- **wms-map-react-components:** resolve TypeScript compilation errors ([5d7ba43](https://github.com/Rytass/Utils/commit/5d7ba43e430a507ed2b443287c97fb886cf83bd3))
+
+### Features
+
+- add test:coverage script to all packages ([f73bce5](https://github.com/Rytass/Utils/commit/f73bce52024d453755824fa6af784f13da50061f))
+- **cms-base:** add mock repository interface typings ([8219bcc](https://github.com/Rytass/Utils/commit/8219bccdbea8a22639cda8c5cdf51dcc01f3bfc2))
+- upgrade file-type from v16.5.4 to v21.0.0 ([eb8217b](https://github.com/Rytass/Utils/commit/eb8217b76c4a0d74061f782c082fd4183961bb12))
+
+### BREAKING CHANGES
+
+- file-type v21 is ESM-only, requires Node.js 18+
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
 ## [0.2.4](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.2.3...@rytass/cms-base-nestjs-module@0.2.4) (2025-08-24)
 
 ### Features

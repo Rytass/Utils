@@ -3,6 +3,25 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.12](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.1.11...@rytass/cms-base-nestjs-graphql-module@0.1.12) (2025-09-09)
+
+### Bug Fixes
+
+- **cms-base:** resolve @typescript-eslint/no-explicit-any errors across CMS modules ([3f64a47](https://github.com/Rytass/Utils/commit/3f64a470dff434558ba208709fd24de2d8d3ec6b))
+
+### Features
+
+- add test:coverage script to all packages ([f73bce5](https://github.com/Rytass/Utils/commit/f73bce52024d453755824fa6af784f13da50061f))
+- upgrade file-type from v16.5.4 to v21.0.0 ([eb8217b](https://github.com/Rytass/Utils/commit/eb8217b76c4a0d74061f782c082fd4183961bb12))
+
+### BREAKING CHANGES
+
+- file-type v21 is ESM-only, requires Node.js 18+
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
 ## [0.1.11](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.1.10...@rytass/cms-base-nestjs-graphql-module@0.1.11) (2025-08-24)
 
 **Note:** Version bump only for package @rytass/cms-base-nestjs-graphql-module

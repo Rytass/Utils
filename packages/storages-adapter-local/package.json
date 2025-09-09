@@ -1,6 +1,6 @@
 {
   "name": "@rytass/storages-adapter-local",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "Rytass Utils Storages local adapter",
   "keywords": [
     "rytass",
@@ -25,7 +25,7 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/storages": "^0.2.2",
+    "@rytass/storages": "^0.2.3",
     "uuid": "^11.1.0"
   },
   "devDependencies": {

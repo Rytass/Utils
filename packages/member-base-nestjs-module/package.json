@@ -1,6 +1,6 @@
 {
   "name": "@rytass/member-base-nestjs-module",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "Rytass Member System NestJS Base Module",
   "keywords": [
     "rytass",

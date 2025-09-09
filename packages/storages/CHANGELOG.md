@@ -3,6 +3,26 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.3](https://github.com/Rytass/Utils/compare/@rytass/storages@0.2.2...@rytass/storages@0.2.3) (2025-09-09)
+
+### Bug Fixes
+
+- downgrade file-type to v16.5.4 for compatibility ([ff99d49](https://github.com/Rytass/Utils/commit/ff99d491f581cbba91fb692d0846f1dd4cbe1958))
+- resolve workspace-level yarn test/build errors ([5977670](https://github.com/Rytass/Utils/commit/597767019b79691cb373d34df089369b585e64fb))
+
+### Features
+
+- add test:coverage script to all packages ([f73bce5](https://github.com/Rytass/Utils/commit/f73bce52024d453755824fa6af784f13da50061f))
+- upgrade file-type from v16.5.4 to v21.0.0 ([eb8217b](https://github.com/Rytass/Utils/commit/eb8217b76c4a0d74061f782c082fd4183961bb12))
+
+### BREAKING CHANGES
+
+- file-type v21 is ESM-only, requires Node.js 18+
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
 ## [0.2.2](https://github.com/Rytass/Utils/compare/@rytass/storages@0.2.1...@rytass/storages@0.2.2) (2025-08-19)
 
 **Note:** Version bump only for package @rytass/storages

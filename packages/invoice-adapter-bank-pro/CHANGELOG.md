@@ -3,6 +3,27 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.5](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-bank-pro@0.2.4...@rytass/invoice-adapter-bank-pro@0.2.5) (2025-09-09)
+
+### Bug Fixes
+
+- **invoice-adapter-amego:** love code issue ([e4be5e3](https://github.com/Rytass/Utils/commit/e4be5e33facd00062f7956a4e82854dc9411fc7e))
+- **invoice-adapter-bank-pro:** correct allowance items ([63a6525](https://github.com/Rytass/Utils/commit/63a6525ebabbab82eeca3ac75ee832fd601d3b82))
+- **invoice-adapter-bank-pro:** correct issued on truncated to start of day ([7db3303](https://github.com/Rytass/Utils/commit/7db3303e06c2feae39acdf9e2c0d5a9890d6e074))
+
+### Features
+
+- add test:coverage script to all packages ([f73bce5](https://github.com/Rytass/Utils/commit/f73bce52024d453755824fa6af784f13da50061f))
+- upgrade file-type from v16.5.4 to v21.0.0 ([eb8217b](https://github.com/Rytass/Utils/commit/eb8217b76c4a0d74061f782c082fd4183961bb12))
+
+### BREAKING CHANGES
+
+- file-type v21 is ESM-only, requires Node.js 18+
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
 ## [0.2.4](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-bank-pro@0.2.3...@rytass/invoice-adapter-bank-pro@0.2.4) (2025-08-19)
 
 **Note:** Version bump only for package @rytass/invoice-adapter-bank-pro

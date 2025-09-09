@@ -3,6 +3,27 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.4.4](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ezpay@0.4.3...@rytass/invoice-adapter-ezpay@0.4.4) (2025-09-09)
+
+### Bug Fixes
+
+- **invoice:** resolve @typescript-eslint/no-explicit-any errors in invoice adapters ([70afc66](https://github.com/Rytass/Utils/commit/70afc66a799a10108aae6f86a9350f5e3427d4d0))
+- **secret-adapter-vault, invoice-adapter-ezpay:** resolve ReferenceError in Jest mocks ([c9f221c](https://github.com/Rytass/Utils/commit/c9f221c6b3d774b9ad9172c818fe3a29c34883b6))
+- **wms-map-react-components:** resolve TypeScript compilation errors ([5d7ba43](https://github.com/Rytass/Utils/commit/5d7ba43e430a507ed2b443287c97fb886cf83bd3))
+
+### Features
+
+- add test:coverage script to all packages ([f73bce5](https://github.com/Rytass/Utils/commit/f73bce52024d453755824fa6af784f13da50061f))
+- upgrade file-type from v16.5.4 to v21.0.0 ([eb8217b](https://github.com/Rytass/Utils/commit/eb8217b76c4a0d74061f782c082fd4183961bb12))
+
+### BREAKING CHANGES
+
+- file-type v21 is ESM-only, requires Node.js 18+
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
 ## [0.4.3](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ezpay@0.4.2...@rytass/invoice-adapter-ezpay@0.4.3) (2025-08-19)
 
 **Note:** Version bump only for package @rytass/invoice-adapter-ezpay

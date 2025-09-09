@@ -3,6 +3,26 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.6](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-local@0.2.5...@rytass/storages-adapter-local@0.2.6) (2025-09-09)
+
+### Bug Fixes
+
+- **storages-adapter-local:** fix stream write timeout issue ([1686da6](https://github.com/Rytass/Utils/commit/1686da680dfb4f3a7ca3d0c50d44b1bf6c9dc891))
+- **storages-adapter-local:** resolve race conditions in file operations ([b13b672](https://github.com/Rytass/Utils/commit/b13b672a67509ee4d56402ab61f28c04f6956b33))
+
+### Features
+
+- add test:coverage script to all packages ([f73bce5](https://github.com/Rytass/Utils/commit/f73bce52024d453755824fa6af784f13da50061f))
+- upgrade file-type from v16.5.4 to v21.0.0 ([eb8217b](https://github.com/Rytass/Utils/commit/eb8217b76c4a0d74061f782c082fd4183961bb12))
+
+### BREAKING CHANGES
+
+- file-type v21 is ESM-only, requires Node.js 18+
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
 ## [0.2.5](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-local@0.2.4...@rytass/storages-adapter-local@0.2.5) (2025-08-19)
 
 **Note:** Version bump only for package @rytass/storages-adapter-local

@@ -3,6 +3,27 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.23](https://github.com/Rytass/Utils/compare/@rytass/order-builder@0.0.22...@rytass/order-builder@0.0.23) (2025-09-09)
+
+### Bug Fixes
+
+- **order-builder:** resolve ESLint no-explicit-any violations ([757d443](https://github.com/Rytass/Utils/commit/757d4433253d5cd270ff2f738d1f3bfb3f6c6b40))
+- **order-builder:** restore polymorphic type compatibility ([a60061a](https://github.com/Rytass/Utils/commit/a60061a429729af2ceb1f2ccefac9c5a395e930d))
+- **wms-map-react-components:** resolve TypeScript compilation errors ([5d7ba43](https://github.com/Rytass/Utils/commit/5d7ba43e430a507ed2b443287c97fb886cf83bd3))
+
+### Features
+
+- add test:coverage script to all packages ([f73bce5](https://github.com/Rytass/Utils/commit/f73bce52024d453755824fa6af784f13da50061f))
+- upgrade file-type from v16.5.4 to v21.0.0 ([eb8217b](https://github.com/Rytass/Utils/commit/eb8217b76c4a0d74061f782c082fd4183961bb12))
+
+### BREAKING CHANGES
+
+- file-type v21 is ESM-only, requires Node.js 18+
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
 ## [0.0.22](https://github.com/Rytass/Utils/compare/@rytass/order-builder@0.0.21...@rytass/order-builder@0.0.22) (2025-08-19)
 
 **Note:** Version bump only for package @rytass/order-builder
