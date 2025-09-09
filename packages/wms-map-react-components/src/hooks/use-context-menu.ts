@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { useReactFlow } from '@xyflow/react';
+import { useReactFlow, Node } from '@xyflow/react';
 import { EditMode } from '../typings';
 
 interface UseContextMenuProps {
@@ -34,8 +34,8 @@ interface UseContextMenuReturn {
     onSendToBack: () => void;
   };
   arrangeStates: ArrangeStates;
-  getNodes: () => any[];
-  setNodes: (nodes: any[] | ((nodes: any[]) => any[])) => void;
+  getNodes: () => Node[];
+  setNodes: (nodes: Node[] | ((nodes: Node[]) => Node[])) => void;
 }
 
 export const useContextMenu = ({ id, editMode, isEditable, nodeType }: UseContextMenuProps): UseContextMenuReturn => {

@@ -6,7 +6,12 @@ import { generateStoryNodes, convertToFlowNodes } from './story-utils';
 import '@xyflow/react/dist/style.css';
 
 // Story wrapper component for managing warehouseIds state
-const WMSMapModalWrapper: React.FC<any> = props => {
+interface WrapperProps {
+  warehouseIds?: string[];
+  [key: string]: string | number | boolean | string[] | undefined;
+}
+
+const WMSMapModalWrapper: React.FC<WrapperProps> = props => {
   const [warehouseIds, setWarehouseIds] = useState<string[]>(props.warehouseIds || []);
 
   const handleNameChange = async (name: string): Promise<void> => {

@@ -104,7 +104,7 @@ export const validateMapData = (data: unknown): data is Map => {
     return false;
   }
 
-  const obj = data as Record<string, any>;
+  const obj = data as Record<string, string | number | boolean | object>;
 
   // 檢查必要欄位
   if (!obj.id || typeof obj.id !== 'string') {

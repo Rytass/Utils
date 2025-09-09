@@ -4,6 +4,7 @@ export interface CopyNodeOptions {
   currentNode: Node;
   offsetPercentage?: number;
   nodeType: 'rectangleNode' | 'pathNode' | 'imageNode';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any;
 }
 

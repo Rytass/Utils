@@ -46,7 +46,7 @@ export const convertToFlowNodes = (nodes: Node[]): FlowNode[] => {
  */
 export const exportStoryData = (
   testType: 'simple' | 'complex' | 'empty' | 'large' | 'polygons' = 'simple',
-): { nodes: FlowNode[]; edges: any[] } => {
+): { nodes: FlowNode[]; edges: object[] } => {
   const nodes = generateStoryNodes(testType);
 
   return {
