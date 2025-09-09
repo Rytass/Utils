@@ -91,7 +91,7 @@ export interface VaultAPIFailedResponse {
 export type VaultTokenRetrieveResponse = VaultTokenRetrieveSuccessResponse | VaultAPIFailedResponse;
 
 interface VaultTokenGetSecretData {
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   metadata: {
     created_time: string;
     custom_metadata: null;

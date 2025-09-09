@@ -6,6 +6,7 @@ export interface StorageR2Options extends StorageOptions {
   bucket: string;
   account: string;
   customDomain?: string;
+  [key: string]: unknown;
 }
 
 export interface PresignedURLOptions {

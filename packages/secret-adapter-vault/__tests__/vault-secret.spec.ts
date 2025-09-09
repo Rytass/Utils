@@ -14,7 +14,7 @@ const secretDataMap = {
     COULD_NOT_BE_REMOVED: 'aaa',
   },
   [VAULT_EMPTY_PROJECT]: undefined,
-} as Record<string, Record<string, any> | undefined>;
+} as Record<string, Record<string, unknown> | undefined>;
 
 const secretVersionMap = {
   [VAULT_PROJECT]: 3,
@@ -164,7 +164,7 @@ describe('VaultSecret', () => {
     }
 
     const payload = JSON.parse(data as string) as {
-      data: Record<string, any>;
+      data: Record<string, unknown>;
       options?: {
         cas: number;
       };
@@ -647,7 +647,7 @@ describe('VaultSecret', () => {
           account: VAULT_ACCOUNT,
           password: VAULT_PASSWORD,
         },
-        onError: (error: any): void => {
+        onError: (error: string): void => {
           if (errorPass) {
             expect(error).toBe('test2');
 

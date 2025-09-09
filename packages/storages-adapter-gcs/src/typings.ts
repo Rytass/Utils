@@ -7,4 +7,5 @@ export interface GCSOptions extends StorageOptions {
     client_email: string;
     private_key: string;
   }; // ref: CredentialBody;
+  [key: string]: unknown;
 }

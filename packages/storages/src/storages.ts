@@ -26,7 +26,7 @@ export interface StorageInterface {
 
 const MIN_BUFFER_LENGTH = 16;
 
-export class Storage<O extends Record<string, any> = Record<string, any>> implements StorageInterface {
+export class Storage<O extends Record<string, unknown> = Record<string, unknown>> implements StorageInterface {
   readonly converterManager: ConverterManager;
 
   readonly hashAlgorithm: FilenameHashAlgorithm;

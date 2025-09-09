@@ -30,7 +30,7 @@ export class VaultSecret<Options extends VaultSecretOptions> extends SecretManag
   private _token?: string;
   private readonly _online: boolean = false;
 
-  private _cacheData: Record<string, any> | undefined;
+  private _cacheData: Record<string, unknown> | undefined;
   private _cacheVersion: number | undefined;
 
   constructor(path: string, options: Options) {
@@ -133,7 +133,7 @@ export class VaultSecret<Options extends VaultSecretOptions> extends SecretManag
     this.emitter.emit(VaultEvents.TOKEN_RENEWED);
   }
 
-  private async getSecretVersionOnline(): Promise<[Record<string, any>, number]> {
+  private async getSecretVersionOnline(): Promise<[Record<string, unknown>, number]> {
     try {
       const { data } = await axios.get<VaultGetSecretResponse>(`${this._host}/v1/secret/data/${this.project}`, {
         headers: {
@@ -175,13 +175,13 @@ export class VaultSecret<Options extends VaultSecretOptions> extends SecretManag
 
   private getSecretValue<T>(key: string): Promise<T> | T {
     if (!this._online) {
-      return this._cacheData![key];
+      return this._cacheData![key] as T;
     }
 
-    return this.getSecretVersionOnline().then(([currentVersion]) => currentVersion[key] || undefined);
+    return this.getSecretVersionOnline().then(([currentVersion]) => (currentVersion[key] || undefined) as T);
   }
 
-  private async fullReplaceSecretValue(newData: Record<string, any>): Promise<void> {
+  private async fullReplaceSecretValue(newData: Record<string, unknown>): Promise<void> {
     await this.renewToken();
 
     const { data } = await axios.post<VaultGetSecretResponse>(

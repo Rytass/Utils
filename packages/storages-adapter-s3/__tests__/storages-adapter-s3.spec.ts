@@ -13,10 +13,6 @@ interface S3ManagedUploadMock {
   promise(): Promise<S3.ManagedUpload.SendData>;
 }
 
-interface S3OperationMock {
-  promise(): Promise<unknown>;
-}
-
 const ACCESS_KEY = 'aaaa';
 const SECRET_KEY = 'bbbb';
 const REGION = 'ap-northeast-1';
@@ -34,12 +30,14 @@ const fakeStorage = new Map<string, Buffer>();
 fakeStorage.set('saved-file', sampleFileBuffer);
 
 describe('AWS S3 storage adapter', () => {
-  const uploadPromiseMocked = jest.fn(
-    () =>
-      new Promise(pResolve => {
-        pResolve({ key: sampleFileSha256 });
-      }),
-  );
+  const resolvedSendData: S3.ManagedUpload.SendData = {
+    Location: FAKE_URL,
+    ETag: 'etag',
+    Bucket: BUCKET,
+    Key: sampleFileSha256,
+  };
+
+  const uploadPromiseMocked = jest.fn(async () => resolvedSendData);
 
   const defaultUploadMocked = jest.fn(
     (params: S3.Types.PutObjectRequest, _options?: S3.ManagedUpload.ManagedUploadOptions) => {
@@ -47,7 +45,7 @@ describe('AWS S3 storage adapter', () => {
         fakeStorage.set(params.Key, params.Body);
 
         return {
-          promise: (): Promise<S3.ManagedUpload.SendData> => uploadPromiseMocked,
+          promise: (): Promise<S3.ManagedUpload.SendData> => uploadPromiseMocked(),
         };
       }
 
@@ -63,7 +61,7 @@ describe('AWS S3 storage adapter', () => {
             (params.Body as PassThrough).on('end', () => {
               fakeStorage.set(params.Key, buffer);
 
-              pResolve(uploadPromiseMocked);
+              uploadPromiseMocked().then(pResolve);
             });
           }),
       };
@@ -410,7 +408,7 @@ describe('AWS S3 storage adapter', () => {
       fakeStorage.set(params.Key, params.Body as Buffer);
 
       return {
-        promise: (): Promise<S3.ManagedUpload.SendData> => uploadPromiseMocked,
+        promise: (): Promise<S3.ManagedUpload.SendData> => uploadPromiseMocked(),
       };
     });
 
@@ -435,7 +433,7 @@ describe('AWS S3 storage adapter', () => {
       fakeStorage.set(params.Key, params.Body as Buffer);
 
       return {
-        promise: (): Promise<S3.ManagedUpload.SendData> => uploadPromiseMocked,
+        promise: (): Promise<S3.ManagedUpload.SendData> => uploadPromiseMocked(),
       };
     });
 
@@ -481,7 +479,7 @@ describe('AWS S3 storage adapter', () => {
             (params.Body as PassThrough).on('end', () => {
               fakeStorage.set(params.Key, buffer);
 
-              pResolve(uploadPromiseMocked);
+              uploadPromiseMocked().then(pResolve);
             });
           }),
       };

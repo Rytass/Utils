@@ -19,7 +19,6 @@ interface MockBlobServiceClient {
   getContainerClient: (containerName: string) => unknown;
 }
 
-
 interface MockSASQueryParameters {
   toString: () => string;
 }
@@ -64,7 +63,7 @@ const downloadMock = jest.fn(
               view[index] = sampleFileBuffer[index];
             });
 
-            resolve(view as Buffer);
+            resolve(arrayBuffer);
           }),
       }),
       readableStreamBody: createReadStream(sampleFile),

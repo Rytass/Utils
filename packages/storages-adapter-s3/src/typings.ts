@@ -5,4 +5,5 @@ export interface StorageS3Options extends StorageOptions {
   secretKey: string;
   bucket: string;
   region: string;
+  [key: string]: unknown;
 }

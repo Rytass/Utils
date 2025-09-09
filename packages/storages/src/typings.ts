@@ -12,7 +12,7 @@ export interface ReadStreamFileOptions {
 
 export type FilenameHashAlgorithm = 'sha1' | 'sha256';
 
-export interface StorageOptions<O extends Record<string, any> = Record<string, any>> {
+export interface StorageOptions<O extends Record<string, unknown> = Record<string, unknown>> {
   converters?: FileConverter<O>[];
   hashAlgorithm?: FilenameHashAlgorithm;
 }
