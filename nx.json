@@ -1,14 +1,6 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "plugins": [
-    "@nx/js",
-    {
-      "plugin": "nx/plugins/package-json",
-      "options": {
-        "excludePatterns": ["test", "test:coverage"]
-      }
-    }
-  ],
+  "plugins": [],
   "tasksRunnerOptions": {
     "default": {
       "runner": "nx/tasks-runners/default",
@@ -22,54 +14,78 @@
   },
   "targetDefaults": {
     "build": {
-      "dependsOn": ["^build"],
+      "executor": "nx:run-commands",
+      "dependsOn": ["^build", "clean"],
+      "cache": true,
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "node ../../scripts/build.cjs --outputPath={projectRoot}/lib --main={projectRoot}/src/index.ts --tsConfig={projectRoot}/tsconfig.build.json"
+      },
+      "inputs": ["default"]
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "options": {
+        "jestConfig": "jest.config.js",
+        "testPathPatterns": ["{projectRoot}"],
+        "passWithNoTests": true,
+        "codeCoverage": false
+      },
+      "inputs": ["testing"],
+      "cache": true
+    },
+    "test:watch": {
+      "executor": "@nx/jest:jest",
+      "options": {
+        "jestConfig": "jest.config.js",
+        "testPathPatterns": ["{projectRoot}"],
+        "passWithNoTests": true,
+        "codeCoverage": false,
+        "watch": true
+      },
+      "inputs": ["testing"],
       "cache": true
     },
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npm run lint",
+        "command": "npx eslint . --ext .ts,.tsx,.js,.jsx --fix",
         "cwd": "{projectRoot}"
       },
-      "inputs": ["default", "{workspaceRoot}/.eslintrc.cjs", "{workspaceRoot}/eslint.config.js"],
+      "inputs": ["testing"],
       "cache": true
     },
-    "test": {
+    "clean": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx jest --testPathPatterns=packages/{projectName} --passWithNoTests",
-        "cwd": "{workspaceRoot}"
-      },
-      "inputs": ["default", "{workspaceRoot}/jest.config.js", "{workspaceRoot}/jest.setup.mjs"],
-      "cache": true
-    },
-    "test:coverage": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "npx jest --coverage --testPathPatterns=packages/{projectName} --passWithNoTests",
-        "cwd": "{workspaceRoot}"
-      },
-      "inputs": ["default", "{workspaceRoot}/jest.config.js", "{workspaceRoot}/jest.setup.mjs"],
-      "cache": true
+        "cwd": "{projectRoot}",
+        "command": "node ../../scripts/clean-build.cjs"
+      }
     }
   },
   "namedInputs": {
-    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "default": ["{projectRoot}/src/**/*", "sharedGlobals"],
+    "testing": [
+      "{projectRoot}/__tests__/**/*.spec.ts",
+      "{projectRoot}/__mocks__/**/*.mock.ts",
+      "{projectRoot}/__fixtures__/**/*.ts",
+      "{workspaceRoot}/jest.config.js",
+      "{workspaceRoot}/jest.setup.mjs",
+      "default"
+    ],
+    "linting": ["testing", "{workspaceRoot}/eslint.config.js"],
     "sharedGlobals": [
       "{workspaceRoot}/package.json",
       "{workspaceRoot}/tsconfig.base.node.json",
       "{workspaceRoot}/tsconfig.base.web.json",
       "{workspaceRoot}/tsconfig.json",
       "{workspaceRoot}/nx.json",
-      "{workspaceRoot}/lerna.json"
+      "{workspaceRoot}/lerna.json",
+      "!{projectRoot}/**/dist/**",
+      "!{projectRoot}/**/lib/**",
+      "!{projectRoot}/**/coverage/**"
     ],
-    "production": [
-      "default",
-      "!{projectRoot}/**/*.spec.ts",
-      "!{projectRoot}/**/*.test.ts",
-      "!{projectRoot}/__tests__/**/*",
-      "!{projectRoot}/__test__/**/*"
-    ]
+    "production": ["default"]
   },
   "tui": {
     "enabled": false

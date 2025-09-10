@@ -1,0 +1,23 @@
+{
+  "name": "@rytass/payments-adapter-happy-card",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/payments-adapter-happy-card/src",
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest"
+    },
+    "test:watch": {
+      "executor": "@nx/jest:jest"
+    },
+    "lint": {
+      "executor": "nx:run-commands"
+    },
+    "clean": {
+      "executor": "nx:run-commands"
+    },
+    "build": {
+      "executor": "nx:run-commands"
+    }
+  }
+}

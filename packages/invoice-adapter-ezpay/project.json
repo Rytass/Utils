@@ -1,0 +1,23 @@
+{
+  "name": "@rytass/invoice-adapter-ezpay",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/invoice-adapter-ezpay/src",
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest"
+    },
+    "test:watch": {
+      "executor": "@nx/jest:jest"
+    },
+    "lint": {
+      "executor": "nx:run-commands"
+    },
+    "clean": {
+      "executor": "nx:run-commands"
+    },
+    "build": {
+      "executor": "nx:run-commands"
+    }
+  }
+}
