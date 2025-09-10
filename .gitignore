@@ -82,3 +82,6 @@ storybook-static
 .playwright-mcp/
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
+
+# ESLint Performance Monitoring
+.eslint-performance.json

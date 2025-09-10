@@ -10,6 +10,21 @@ import path from 'path';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Prettier 統一配置
+const prettierConfig = {
+  semi: true,
+  trailingComma: 'all',
+  singleQuote: true,
+  printWidth: 120,
+  tabWidth: 2,
+  useTabs: false,
+  endOfLine: 'lf',
+  arrowParens: 'avoid',
+  bracketSpacing: true,
+  jsxSingleQuote: false,
+  quoteProps: 'as-needed',
+};
+
 export default [
   // Ignore patterns
   {
@@ -57,22 +72,7 @@ export default [
       'react-hooks': reactHooksPlugin,
     },
     rules: {
-      'prettier/prettier': [
-        'error',
-        {
-          semi: true,
-          trailingComma: 'all',
-          singleQuote: true,
-          printWidth: 120,
-          tabWidth: 2,
-          useTabs: false,
-          endOfLine: 'lf',
-          arrowParens: 'avoid',
-          bracketSpacing: true,
-          jsxSingleQuote: false,
-          quoteProps: 'as-needed'
-        }
-      ],
+      'prettier/prettier': ['error', prettierConfig],
       'no-undef': 'off',
       // React rules
       'react-hooks/rules-of-hooks': 'error',
@@ -165,22 +165,7 @@ export default [
         { blankLine: 'any', prev: 'case', next: 'default' },
       ],
       // Prettier
-      'prettier/prettier': [
-        'error',
-        {
-          semi: true,
-          trailingComma: 'all',
-          singleQuote: true,
-          printWidth: 120,
-          tabWidth: 2,
-          useTabs: false,
-          endOfLine: 'lf',
-          arrowParens: 'avoid',
-          bracketSpacing: true,
-          jsxSingleQuote: false,
-          quoteProps: 'as-needed'
-        }
-      ],
+      'prettier/prettier': ['error', prettierConfig],
       // React rules
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
