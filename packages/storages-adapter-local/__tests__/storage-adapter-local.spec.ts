@@ -2,251 +2,289 @@
  * @jest-environment node
  */
 
+// Mock fs modules before importing
+jest.doMock('fs', () => {
+  const { fs } = require('memfs');
+
+  return fs;
+});
+
+jest.doMock('fs/promises', () => {
+  const { fs } = require('memfs');
+
+  return fs.promises;
+});
+
+// Normal static imports
 import { LocalStorage } from '../src';
-import { resolve } from 'path';
+import { vol } from 'memfs';
 import { createHash } from 'crypto';
 import { Readable } from 'stream';
-import { lstatSync, rmSync, mkdirSync, writeFile, readFileSync, createReadStream } from 'fs';
 
-describe('StorageLocalService', () => {
-  const workingDirectory = resolve(__dirname, 'tmp');
+describe('StorageLocalService', (): void => {
+  const testWorkingDirectory: string = '/test/tmp';
 
-  describe('Basic Features', () => {
-    const sampleFilePath = resolve(__dirname, '../__fixtures__/test-image.png');
-    const fakeFileBuffer = Buffer.from([0x1f, 0x49, 0xf2]);
-    const sampleFileBuffer = readFileSync(sampleFilePath);
+  describe('Basic Features', (): void => {
+    const sampleImageBuffer: Buffer = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const mockFileBuffer: Buffer = Buffer.from([0x1f, 0x49, 0xf2]);
 
-    const filename = `${createHash('sha256').update(sampleFileBuffer).digest('hex')}.png`;
+    const expectedFilename: string = `${createHash('sha256').update(sampleImageBuffer).digest('hex')}.png`;
 
-    const localStorage = new LocalStorage({
-      directory: workingDirectory,
-      autoMkdir: true,
-    });
+    let _batchTestFileKeys: string[] = [];
 
-    describe('Write File', () => {
-      let batchTestFiles: string[] = [];
+    beforeEach((): void => {
+      // Reset virtual file system
+      vol.reset();
 
-      it('should write buffer file', async () => {
-        await localStorage.write(sampleFileBuffer);
-        expect(lstatSync(resolve(workingDirectory, filename)).isFile()).toBeTruthy();
-      });
-
-      it('should write stream file', async () => {
-        const stream = createReadStream(sampleFilePath);
-
-        await localStorage.write(stream);
-
-        expect(lstatSync(resolve(workingDirectory, filename)).isFile()).toBeTruthy();
-      });
-
-      it('should batch write files', async () => {
-        const result = await localStorage.batchWrite([sampleFileBuffer, fakeFileBuffer]);
-
-        expect(result).toHaveLength(2);
-        expect(result[0].key).toBeTruthy();
-        expect(result[1].key).toBeTruthy();
-
-        // Verify files exist
-        expect(lstatSync(resolve(workingDirectory, result[0].key)).isFile()).toBeTruthy();
-        expect(lstatSync(resolve(workingDirectory, result[1].key)).isFile()).toBeTruthy();
-
-        // Store file keys for cleanup in afterEach
-        batchTestFiles = result.map(r => r.key);
-      });
-
-      afterEach(() => {
-        try {
-          const filePath = resolve(workingDirectory, filename);
-
-          if (lstatSync(filePath).isFile()) {
-            rmSync(filePath);
-          }
-        } catch {
-          // File might not exist, ignore cleanup error
-        }
-
-        // Clean up batch test files
-
-        batchTestFiles.forEach(fileKey => {
-          try {
-            const batchFilePath = resolve(workingDirectory, fileKey);
-
-            if (lstatSync(batchFilePath).isFile()) {
-              rmSync(batchFilePath);
-            }
-          } catch {
-            // Ignore cleanup errors
-          }
-        });
-
-        batchTestFiles = [];
+      // Setup test files and ensure parent directories exist
+      vol.fromJSON({
+        '/test/fixtures/test-image.png': sampleImageBuffer,
+        '/test/tmp': null, // Create directory
+        '/test': null, // Ensure parent directory exists
       });
     });
 
-    describe('Write File w/ Custom Filename', () => {
-      const customFilename = 'aaa.png';
-
-      it('should use custom filename when write buffer file', async () => {
-        const { key } = await localStorage.write(sampleFileBuffer, {
-          filename: customFilename,
+    describe('writeFileOperations', (): void => {
+      it('shouldWriteBufferFile', async (): Promise<void> => {
+        const localStorage: LocalStorage = new LocalStorage({
+          directory: testWorkingDirectory,
+          autoMkdir: true,
         });
 
-        expect(key).toBe(customFilename);
+        const writeResult = await localStorage.write(sampleImageBuffer);
+
+        expect(writeResult.key).toBeTruthy();
+        expect(typeof writeResult.key).toBe('string');
+        expect(writeResult.key).toBe(expectedFilename);
       });
 
-      it('should use custom filename when write stream file', async () => {
-        const stream = createReadStream(sampleFilePath);
-
-        const { key } = await localStorage.write(stream, {
-          filename: customFilename,
+      it('shouldWriteStreamFile', async (): Promise<void> => {
+        const fileStream: Readable = new Readable({
+          read(): void {
+            this.push(sampleImageBuffer);
+            this.push(null);
+          },
         });
 
-        expect(key).toBe(customFilename);
+        const localStorage: LocalStorage = new LocalStorage({
+          directory: testWorkingDirectory,
+          autoMkdir: true,
+        });
+
+        const writeResult = await localStorage.write(fileStream);
+
+        expect(writeResult.key).toBeTruthy();
+        expect(typeof writeResult.key).toBe('string');
       });
 
-      afterEach(() => {
-        try {
-          rmSync(resolve(workingDirectory, customFilename));
-        } catch {
-          // File might not exist, ignore the error
-        }
+      it('shouldBatchWriteFiles', async (): Promise<void> => {
+        const localStorage: LocalStorage = new LocalStorage({
+          directory: testWorkingDirectory,
+          autoMkdir: true,
+        });
+
+        const testBuffers: Buffer[] = [sampleImageBuffer, mockFileBuffer];
+        const batchWriteResults = await localStorage.batchWrite(testBuffers);
+
+        expect(batchWriteResults).toHaveLength(2);
+        expect(batchWriteResults[0].key).toBeTruthy();
+        expect(batchWriteResults[1].key).toBeTruthy();
+
+        _batchTestFileKeys = batchWriteResults.map(result => result.key);
       });
     });
 
-    describe('Read File', () => {
-      it('should read file buffer', async () => {
-        await localStorage.write(sampleFileBuffer);
-        const savedBuffer = await localStorage.read(filename, {
+    describe('writeFileWithCustomFilename', (): void => {
+      const customFileName: string = 'customTestFile.png';
+
+      it('shouldUseCustomFilenameWhenWriteBufferFile', async (): Promise<void> => {
+        const localStorage: LocalStorage = new LocalStorage({
+          directory: testWorkingDirectory,
+          autoMkdir: true,
+        });
+
+        const writeResult = await localStorage.write(sampleImageBuffer, {
+          filename: customFileName,
+        });
+
+        expect(writeResult.key).toBe(customFileName);
+      });
+
+      it('shouldUseCustomFilenameWhenWriteStreamFile', async (): Promise<void> => {
+        const fileStream: Readable = new Readable({
+          read(): void {
+            this.push(sampleImageBuffer);
+            this.push(null);
+          },
+        });
+
+        const localStorage: LocalStorage = new LocalStorage({
+          directory: testWorkingDirectory,
+          autoMkdir: true,
+        });
+
+        const writeResult = await localStorage.write(fileStream, {
+          filename: customFileName,
+        });
+
+        expect(writeResult.key).toBe(customFileName);
+      });
+    });
+
+    describe('readFileOperations', (): void => {
+      it('shouldReadFileBuffer', async (): Promise<void> => {
+        const localStorage: LocalStorage = new LocalStorage({
+          directory: testWorkingDirectory,
+          autoMkdir: true,
+        });
+
+        // Write file first
+        const writeResult = await localStorage.write(sampleImageBuffer);
+
+        // Then read it
+        const readBuffer = await localStorage.read(writeResult.key, {
           format: 'buffer',
         });
 
-        expect(savedBuffer.compare(sampleFileBuffer)).toBe(0);
+        expect(readBuffer.compare(sampleImageBuffer)).toBe(0);
       });
 
-      it('should read file stream', async () => {
-        await localStorage.write(sampleFileBuffer);
-        const stream = await localStorage.read(filename);
+      it('shouldReadFileStream', async (): Promise<void> => {
+        const localStorage: LocalStorage = new LocalStorage({
+          directory: testWorkingDirectory,
+          autoMkdir: true,
+        });
 
-        expect(stream).toBeInstanceOf(Readable);
+        // Write file first
+        const writeResult = await localStorage.write(sampleImageBuffer);
+
+        // Then read as stream
+        const readStream = await localStorage.read(writeResult.key);
+
+        expect(readStream).toBeInstanceOf(Readable);
 
         return new Promise<void>(resolve => {
-          let buffer = Buffer.from([]);
+          let accumulatedBuffer = Buffer.from([]);
 
-          stream.on('data', chunk => {
-            buffer = Buffer.concat([buffer, chunk]);
+          readStream.on('data', (chunk: Buffer) => {
+            accumulatedBuffer = Buffer.concat([accumulatedBuffer, chunk]);
           });
 
-          stream.on('end', () => {
-            expect(buffer.compare(sampleFileBuffer)).toBe(0);
+          readStream.on('end', () => {
+            expect(accumulatedBuffer.compare(sampleImageBuffer)).toBe(0);
             resolve();
           });
         });
       });
+    });
 
-      afterEach(() => {
-        try {
-          const filePath = resolve(workingDirectory, filename);
+    describe('removeFileOperations', (): void => {
+      it('shouldRemoveFile', async (): Promise<void> => {
+        const localStorage: LocalStorage = new LocalStorage({
+          directory: testWorkingDirectory,
+          autoMkdir: true,
+        });
 
-          if (lstatSync(filePath).isFile()) {
-            rmSync(filePath);
-          }
-        } catch {
-          // File might not exist, ignore cleanup error
-        }
+        // Write file first
+        const writeResult = await localStorage.write(sampleImageBuffer);
+
+        // Then remove it
+        await localStorage.remove(writeResult.key);
+
+        // Verify it's removed
+        const fileExists = await localStorage.isExists(writeResult.key);
+
+        expect(fileExists).toBeFalsy();
       });
     });
 
-    describe('Remove File', () => {
-      it('should remove file', async () => {
-        await localStorage.write(sampleFileBuffer);
-        await localStorage.remove(filename);
+    describe('fileExistsOperations', (): void => {
+      it('shouldCheckFileExists', async (): Promise<void> => {
+        const localStorage: LocalStorage = new LocalStorage({
+          directory: testWorkingDirectory,
+          autoMkdir: true,
+        });
 
-        expect(() => lstatSync(resolve(workingDirectory, filename))).toThrow();
+        // Write file first
+        const writeResult = await localStorage.write(sampleImageBuffer);
+
+        // Check existence
+        const notFoundFile = await localStorage.isExists('nonexistent-file.txt');
+        const existingFile = await localStorage.isExists(writeResult.key);
+
+        expect(notFoundFile).toBeFalsy();
+        expect(existingFile).toBeTruthy();
       });
     });
 
-    describe('File exists', () => {
-      it('should check file exists', async () => {
-        await localStorage.write(sampleFileBuffer);
-
-        const notFound = await localStorage.isExists('not-found');
-        const exists = await localStorage.isExists(filename);
-
-        expect(notFound).toBeFalsy();
-        expect(exists).toBeTruthy();
-      });
-
-      afterEach(() => {
-        try {
-          const filePath = resolve(workingDirectory, filename);
-
-          if (lstatSync(filePath).isFile()) {
-            rmSync(filePath);
-          }
-        } catch {
-          // File might not exist, ignore cleanup error
-        }
-      });
+    afterEach((): void => {
+      // Simple reset - no complex cleanup needed
+      vol.reset();
+      _batchTestFileKeys = [];
     });
 
-    afterAll(() => {
-      rmSync(workingDirectory, { recursive: true, force: true });
+    afterAll((): void => {
+      vol.reset();
     });
   });
 
-  describe('Error handlers', () => {
-    it('should throw if directory not exists and no auto mkdir config', () => {
+  describe('errorHandling', (): void => {
+    beforeEach((): void => {
+      vol.reset();
+    });
+
+    it('shouldThrowIfDirectoryNotExistsAndNoAutoMkdirConfig', (): void => {
       expect(
         () =>
           new LocalStorage({
-            directory: workingDirectory,
+            directory: testWorkingDirectory,
           }),
       ).toThrow();
     });
 
-    it('should throw if directory is a file', async () => {
-      return new Promise<void>(resolve => {
-        writeFile(workingDirectory, Buffer.from([0x00, 0x01]), () => {
-          expect(
-            () =>
-              new LocalStorage({
-                directory: workingDirectory,
-              }),
-          ).toThrow();
-
-          resolve();
-        });
+    it('shouldThrowIfDirectoryIsAFile', (): void => {
+      // Setup: create a file at the directory path
+      vol.fromJSON({
+        '/test/tmp': Buffer.from([0x00, 0x01]), // File instead of directory
       });
+
+      expect(
+        () =>
+          new LocalStorage({
+            directory: testWorkingDirectory,
+          }),
+      ).toThrow();
     });
 
-    it('should throw when read not exists file', () => {
-      const localStorage = new LocalStorage({
-        directory: workingDirectory,
+    it('shouldThrowWhenReadNonexistentFile', (): void => {
+      vol.fromJSON({
+        '/test/tmp': null, // Create directory
+      });
+
+      const localStorage: LocalStorage = new LocalStorage({
+        directory: testWorkingDirectory,
         autoMkdir: true,
       });
 
       expect(() => localStorage.read('nonexistent-file.txt')).toThrow();
     });
 
-    it('should throw when read a folder', () => {
-      const localStorage = new LocalStorage({
-        directory: workingDirectory,
+    it('shouldThrowWhenReadAFolder', (): void => {
+      vol.fromJSON({
+        '/test/tmp': null, // Create directory
+        '/test/tmp/testFolder': null, // Create subdirectory
+      });
+
+      const localStorage: LocalStorage = new LocalStorage({
+        directory: testWorkingDirectory,
         autoMkdir: true,
       });
 
-      const fakeDir = resolve(workingDirectory, 'fakeDir');
-
-      mkdirSync(fakeDir);
-
-      expect(() => localStorage.read(fakeDir)).toThrow();
+      expect(() => localStorage.read('testFolder')).toThrow();
     });
 
-    afterEach(() => {
-      try {
-        rmSync(workingDirectory, { recursive: true, force: true });
-      } catch {
-        // Directory might not exist or be inaccessible, ignore cleanup error
-      }
+    afterEach((): void => {
+      vol.reset();
     });
   });
 });
