@@ -15,12 +15,12 @@
     "url": "git+https://github.com/Rytass/Utils.git"
   },
   "scripts": {
-    "clean": "node ../../scripts/clean-build.cjs",
-    "build": "npm run clean && node ../../scripts/build.cjs",
+    "clean": "nx clean",
+    "build": "nx build",
     "release": "lerna version patch && npm run build && lerna publish from-package",
-    "lint": "npx eslint . --ext .ts,.tsx --fix",
-    "test": "npx jest --config ../../jest.config.js --testPathPatterns=packages/member-base-nestjs-module --passWithNoTests",
-    "test:coverage": "npx jest --coverage --config ../../jest.config.js --testPathPatterns=packages/member-base-nestjs-module --passWithNoTests"
+    "lint": "nx lint",
+    "test": "nx test",
+    "test:watch": "nx test:watch"
   },
   "bugs": {
     "url": "https://github.com/Rytass/Utils/issues"

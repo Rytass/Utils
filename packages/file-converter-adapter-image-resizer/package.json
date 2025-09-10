@@ -16,11 +16,11 @@
     "url": "git+https://github.com/Rytass/Utils.git"
   },
   "scripts": {
-    "clean": "node ../../scripts/clean-build.cjs",
-    "build": "npm run clean && node ../../scripts/build.cjs",
-    "lint": "npx eslint . --ext .ts,.tsx --fix",
-    "test": "npx jest --config ../../jest.config.js --testPathPatterns=packages/file-converter-adapter-image-resizer --passWithNoTests",
-    "test:coverage": "npx jest --coverage --config ../../jest.config.js --testPathPatterns=packages/file-converter-adapter-image-resizer --passWithNoTests"
+    "clean": "nx clean",
+    "build": "nx build",
+    "lint": "nx lint",
+    "test": "nx test",
+    "test:watch": "nx test:watch"
   },
   "bugs": {
     "url": "https://github.com/Rytass/Utils/issues"

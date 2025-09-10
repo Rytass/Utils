@@ -22,7 +22,6 @@ const config = {
   transformIgnorePatterns: ['node_modules/(?!(file-type|strtok3|token-types|@tokenizer|uint8array-extras))/'],
   modulePathIgnorePatterns: ['/lib/'],
   collectCoverageFrom: ['packages/*/src/**/*', '!**/index.ts'],
-  passWithNoTests: true,
 };
 
 export default config;
