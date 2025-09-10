@@ -27,23 +27,17 @@ export class StockService {
           locationIds: options.locationIds,
         });
       } else {
-        const locationIds = this.locationRepo
+        const subQuery = this.locationRepo
           .createQueryBuilder('loc')
-          .select('loc.id', 'id')
-          .where(qb => {
-            const subQuery = qb
-              .subQuery()
-              .select('1')
-              .from('locations', 'l2')
-              .where('l2.id IN (:...l2Ids)', { l2Ids: options.locationIds })
+          .select('loc.id')
+          .innerJoin(
+            'locations',
+            'parent',
+            "parent.id IN (:...parentIds) AND loc.mpath LIKE CONCAT(parent.mpath, '%')",
+            { parentIds: options.locationIds },
+          );
 
-              .andWhere("loc.mpath LIKE l2.mpath || '%'")
-              .getQuery();
-
-            return `EXISTS ${subQuery}`;
-          });
-
-        queryBuilder.addCommonTableExpression(locationIds, 'locationIds').andWhere('stock.locationId IN locationIds');
+        queryBuilder.andWhere(`stock.locationId IN (${subQuery.getQuery()})`).setParameters(subQuery.getParameters());
       }
     }
 
