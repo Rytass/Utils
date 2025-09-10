@@ -228,7 +228,7 @@ export class BankProInvoiceGateway
     }
 
     return new BankProInvoice({
-      issuedOn: DateTime.fromFormat(data[0].InvoiceDate, 'yyyy/MM/dd HH:mm:ss').startOf('day').toJSDate(),
+      issuedOn: DateTime.fromFormat(data[0].InvoiceDate, 'yyyy/MM/dd HH:mm:ss').toJSDate(),
       items: options.items,
       randomCode: data[0].RandomNumber,
       invoiceNumber: data[0].InvoiceNo,
