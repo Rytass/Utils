@@ -3,7 +3,7 @@ import { RESOLVED_WAREHOUSE_MAP_REPO } from '@rytass/wms-base-nestjs-module';
 import { mockWarehouseMapEntity, mockWarehouseMapRepo } from '../__mocks__/warehouse-map.mock';
 import { WarehouseMapEntity } from '../src/models/warehouse-map.entity';
 import { WarehouseMapService } from '../src/services/warehouse-map.service';
-import { MapRangeColor, MapRangeType } from '../src/typings/warehouse-map.enum';
+import { MapRangeType } from '../src/typings/warehouse-map.enum';
 
 describe('warehouse-map', () => {
   let module: TestingModule;
@@ -72,7 +72,7 @@ describe('warehouse-map', () => {
         {
           id: 'A1001A1',
           type: MapRangeType.RECTANGLE,
-          color: MapRangeColor.RED,
+          color: '#FF0000',
           x: 10,
           y: 10,
           width: 100,
@@ -99,7 +99,7 @@ describe('warehouse-map', () => {
           {
             id: 'A1001A1',
             type: MapRangeType.RECTANGLE,
-            color: MapRangeColor.RED,
+            color: '#FF0000',
             x: 10,
             y: 10,
             width: 100,
@@ -129,7 +129,7 @@ describe('warehouse-map', () => {
         {
           id: 'A001A1',
           type: MapRangeType.POLYGON,
-          color: MapRangeColor.YELLOW,
+          color: '#FFFF00',
           points: [
             {
               x: 10.5,
@@ -166,7 +166,7 @@ describe('warehouse-map', () => {
           {
             id: 'A001A1',
             type: MapRangeType.POLYGON,
-            color: MapRangeColor.YELLOW,
+            color: '#FFFF00',
             points: [
               {
                 x: 10.5,

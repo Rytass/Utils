@@ -40,7 +40,6 @@ export interface MapRectangleRange extends MapRange {
   y: number;
   width: number;
   height: number;
-  text?: string;
 }
 
 export interface MapPolygonRangePoint {
@@ -51,7 +50,6 @@ export interface MapPolygonRangePoint {
 export interface MapPolygonRange extends MapRange {
   type: MapRangeType.POLYGON;
   points: MapPolygonRangePoint[];
-  text?: string;
 }
 
 export enum EditMode {
@@ -109,7 +107,6 @@ export interface RectangleNodeClickInfo extends NodeClickInfo {
   rectangleData: {
     color: string;
     size: { width: number; height: number };
-    text?: string;
   };
   mapRectangleRange: MapRectangleRange;
 }
@@ -130,7 +127,6 @@ export interface PathNodeClickInfo extends NodeClickInfo {
       maxX: number;
       maxY: number;
     } | null;
-    text?: string;
   };
   mapPolygonRange: MapPolygonRange;
 }

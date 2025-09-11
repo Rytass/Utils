@@ -1,4 +1,4 @@
-import { MapRangeColor, MapRangeType } from './warehouse-map.enum';
+import { MapRangeType } from './warehouse-map.enum';
 
 export type MapData = {
   id: string;
@@ -18,7 +18,7 @@ export type MapBackground = {
 export interface MapRange {
   id: string;
   type: MapRangeType;
-  color: MapRangeColor;
+  color: string;
 }
 
 export interface MapRectangleRange extends MapRange {

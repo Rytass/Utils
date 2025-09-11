@@ -53,14 +53,13 @@ export const transformNodesToMapData = (nodes: Node[]): Map => {
         };
 
         const rectangleRange: MapRectangleRange = {
-          id: node.id as ID,
+          id: (rectData.label || node.id) as ID, // 將 React Flow 節點的 label 映射到 id 欄位
           type: MapRangeType.RECTANGLE,
           color: rectData.color || '#0000FF', // 預設為藍色
           x: node.position.x,
           y: node.position.y,
           width: rectData.width || 100,
           height: rectData.height || 100,
-          text: rectData.label, // 將 React Flow 節點的 label 映射到 text 欄位
         };
 
         ranges.push(rectangleRange);
@@ -76,11 +75,10 @@ export const transformNodesToMapData = (nodes: Node[]): Map => {
         };
 
         const polygonRange: MapPolygonRange = {
-          id: node.id as ID,
+          id: (pathData.label || node.id) as ID, // 將 React Flow 節點的 label 映射到 id 欄位
           type: MapRangeType.POLYGON,
           color: pathData.color || '#0000FF', // 預設為藍色
           points: pathData.points || [],
-          text: pathData.label, // 將 React Flow 節點的 label 映射到 text 欄位
         };
 
         ranges.push(polygonRange);
@@ -166,14 +164,13 @@ export const transformNodeToClickInfo = (node: Node): WMSNodeClickInfo | null =>
       };
 
       const mapRectangleRange: MapRectangleRange = {
-        id: node.id as ID,
+        id: (rectData.label || node.id) as ID,
         type: MapRangeType.RECTANGLE,
         color: rectData.color || '#0000FF',
         x: node.position.x,
         y: node.position.y,
         width: rectData.width || 100,
         height: rectData.height || 100,
-        text: rectData.label,
       };
 
       const clickInfo: RectangleNodeClickInfo = {
@@ -185,7 +182,6 @@ export const transformNodeToClickInfo = (node: Node): WMSNodeClickInfo | null =>
             width: rectData.width || 100,
             height: rectData.height || 100,
           },
-          text: rectData.label,
         },
         mapRectangleRange,
       };
@@ -212,11 +208,10 @@ export const transformNodeToClickInfo = (node: Node): WMSNodeClickInfo | null =>
           : null;
 
       const mapPolygonRange: MapPolygonRange = {
-        id: node.id as ID,
+        id: (pathData.label || node.id) as ID,
         type: MapRangeType.POLYGON,
         color: pathData.color || '#0000FF',
         points: pathData.points || [],
-        text: pathData.label,
       };
 
       const clickInfo: PathNodeClickInfo = {
@@ -228,7 +223,6 @@ export const transformNodeToClickInfo = (node: Node): WMSNodeClickInfo | null =>
           pointCount: pathData.points?.length || 0,
           points: pathData.points || [],
           bounds,
-          text: pathData.label,
         },
         mapPolygonRange,
       };
@@ -311,7 +305,6 @@ export const logNodeData = (node: Node): void => {
           width: rectData.width || 100,
           height: rectData.height || 100,
         },
-        text: rectData.label,
       });
 
       // 轉換格式（對應儲存時的格式）
@@ -323,7 +316,6 @@ export const logNodeData = (node: Node): void => {
         y: node.position.y,
         width: rectData.width || 100,
         height: rectData.height || 100,
-        text: rectData.label,
       };
 
       console.log('💾 儲存格式 (MapRectangleRange):', rectangleRange);
@@ -343,7 +335,6 @@ export const logNodeData = (node: Node): void => {
         strokeWidth: pathData.strokeWidth,
         pointCount: pathData.points?.length || 0,
         points: pathData.points,
-        text: pathData.label,
         // 計算路徑邊界
         bounds:
           pathData.points?.length > 0
@@ -362,7 +353,6 @@ export const logNodeData = (node: Node): void => {
         type: MapRangeType.POLYGON,
         color: pathData.color || '#0000FF',
         points: pathData.points || [],
-        text: pathData.label,
       };
 
       console.log('💾 儲存格式 (MapPolygonRange):', polygonRange);
@@ -415,7 +405,6 @@ export const logMapData = (mapData: Map): void => {
           color: rect.color,
           position: { x: rect.x, y: rect.y },
           size: { width: rect.width, height: rect.height },
-          text: rect.text,
         });
       } else if (range.type === MapRangeType.POLYGON) {
         const poly = range as MapPolygonRange;
@@ -426,7 +415,6 @@ export const logMapData = (mapData: Map): void => {
           color: poly.color,
           pointCount: poly.points.length,
           points: poly.points,
-          text: poly.text,
         });
       }
     });

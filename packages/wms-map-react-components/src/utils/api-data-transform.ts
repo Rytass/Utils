@@ -50,7 +50,7 @@ export const transformApiDataToNodes = (mapData: Map, imageUrlGenerator?: (filen
             width: rectRange.width,
             height: rectRange.height,
             color: rectRange.color,
-            label: rectRange.text || '',
+            label: rectRange.id,
           },
           zIndex: baseZIndex,
           draggable: true,
@@ -80,7 +80,7 @@ export const transformApiDataToNodes = (mapData: Map, imageUrlGenerator?: (filen
           data: {
             points: relativePoints,
             color: polyRange.color,
-            label: polyRange.text || '',
+            label: polyRange.id,
             strokeWidth: 2,
           },
           zIndex: baseZIndex,

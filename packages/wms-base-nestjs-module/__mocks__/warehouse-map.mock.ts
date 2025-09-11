@@ -1,6 +1,6 @@
 import { Repository } from 'typeorm';
 import { WarehouseMapEntity } from '../src/models/warehouse-map.entity';
-import { MapRangeColor, MapRangeType } from '../src/typings/warehouse-map.enum';
+import { MapRangeType } from '../src/typings/warehouse-map.enum';
 
 export const mockWarehouseMapEntity: WarehouseMapEntity = {
   id: 'A001A',
@@ -28,7 +28,7 @@ export const mockWarehouseMapEntity: WarehouseMapEntity = {
       {
         id: 'A001A1',
         type: MapRangeType.RECTANGLE,
-        color: MapRangeColor.RED,
+        color: '#FF0000',
         x: 10,
         y: 10,
         width: 100,
@@ -37,7 +37,7 @@ export const mockWarehouseMapEntity: WarehouseMapEntity = {
       {
         id: 'A001A2',
         type: MapRangeType.POLYGON,
-        color: MapRangeColor.RED,
+        color: '#FF0000',
         points: [
           {
             x: 10.5,
