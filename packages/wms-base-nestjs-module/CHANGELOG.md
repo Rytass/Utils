@@ -3,6 +3,29 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.3](https://github.com/Rytass/Utils/compare/@rytass/wms-base-nestjs-module@0.1.2...@rytass/wms-base-nestjs-module@0.1.3) (2025-09-11)
+
+### Bug Fixes
+
+- **wms-base-nestjs-module:** correct CTE syntax in StockService ([709a895](https://github.com/Rytass/Utils/commit/709a895c4617cd997066cf3df11aa32843ac358f))
+
+### Features
+
+- align frontend-backend interfaces for WMS map range data ([5b883a7](https://github.com/Rytass/Utils/commit/5b883a7e69c9fab16cf426bf1becfabd3d4b5ba8))
+- migrate to Nx project-based configuration ([c2d9ca4](https://github.com/Rytass/Utils/commit/c2d9ca46c00ace42bcbf69300dcc43a7346cb9aa))
+
+### Tests
+
+- migrate to standardized test structure ([b7dc99e](https://github.com/Rytass/Utils/commit/b7dc99ef85f5951480dfdae6198cefa252c15423))
+
+### BREAKING CHANGES
+
+- Test directory structure changed from **test** to **tests**
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
 ## [0.1.2](https://github.com/Rytass/Utils/compare/@rytass/wms-base-nestjs-module@0.1.1...@rytass/wms-base-nestjs-module@0.1.2) (2025-09-09)
 
 ### Bug Fixes

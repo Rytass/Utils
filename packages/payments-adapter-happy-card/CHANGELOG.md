@@ -3,6 +3,24 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.5](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-happy-card@0.2.4...@rytass/payments-adapter-happy-card@0.2.5) (2025-09-11)
+
+### Features
+
+- migrate to Nx project-based configuration ([c2d9ca4](https://github.com/Rytass/Utils/commit/c2d9ca46c00ace42bcbf69300dcc43a7346cb9aa))
+
+### Tests
+
+- migrate to standardized test structure ([b7dc99e](https://github.com/Rytass/Utils/commit/b7dc99ef85f5951480dfdae6198cefa252c15423))
+
+### BREAKING CHANGES
+
+- Test directory structure changed from **test** to **tests**
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
 ## [0.2.4](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-happy-card@0.2.3...@rytass/payments-adapter-happy-card@0.2.4) (2025-09-09)
 
 ### Bug Fixes

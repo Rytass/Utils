@@ -1,6 +1,6 @@
 {
   "name": "@rytass/invoice-adapter-amego",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Rytass Invoice Gateway - Amego",
   "keywords": [
     "rytass",
@@ -25,7 +25,7 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/invoice": "^0.4.4",
+    "@rytass/invoice": "^0.4.5",
     "axios": "^1.11.0",
     "luxon": "^3.7.1",
     "validator": "^13.15.15"

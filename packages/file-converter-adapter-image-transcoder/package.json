@@ -1,6 +1,6 @@
 {
   "name": "@rytass/file-converter-adapter-image-transcoder",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "Rytass Utils Storages Images Converter",
   "keywords": [
     "rytass",
@@ -26,7 +26,7 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/file-converter": "^0.1.4",
+    "@rytass/file-converter": "^0.1.5",
     "file-type": "^21.0.0",
     "sharp": "^0.34.3"
   },

@@ -1,6 +1,6 @@
 {
   "name": "@rytass/storages-adapter-azure-blob",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Rytass Utils Storages Azure Blob adapter",
   "keywords": [
     "rytass",
@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@azure/storage-blob": "12.28.0",
-    "@rytass/storages": "^0.2.3",
+    "@rytass/storages": "^0.2.4",
     "uuid": "^11.1.0"
   }
 }
