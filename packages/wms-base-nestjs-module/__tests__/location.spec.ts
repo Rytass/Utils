@@ -3,7 +3,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CustomLocationEntity, locationMock } from '../__mocks__/location.mock';
 import { materialMock } from '../__mocks__/material.mock';
 import { MaterialService, OrderEntity, OrderService, WMSBaseModule } from '../src';
-import { LocationAlreadyExistedError, LocationCannotArchiveError } from '../src/constants/errors/base.error';
+import {
+  LocationAlreadyExistedError,
+  LocationCannotArchiveError,
+  LocationNotFoundError,
+} from '../src/constants/errors/base.error';
 import { LocationEntity } from '../src/models/location.entity';
 import { LocationService } from '../src/services/location.service';
 
@@ -84,5 +88,40 @@ describe('location', () => {
     await expect(locationService.archive(locationMock.locationWithStock.id)).rejects.toThrow(
       LocationCannotArchiveError,
     );
+  });
+
+  it('should successfully archive location with no stocks', async () => {
+    const locationService = module.get<LocationService<CustomLocationEntity>>(LocationService);
+
+    await locationService.create({
+      id: 'EmptyLocation',
+      customField: 'Empty Location for Archiving',
+    });
+
+    await expect(locationService.archive('EmptyLocation')).resolves.toBeUndefined();
+  });
+
+  it('should successfully unarchive location', async () => {
+    const locationService = module.get<LocationService<CustomLocationEntity>>(LocationService);
+
+    // First create and archive a location
+    await locationService.create({
+      id: 'LocationToUnarchive',
+      customField: 'Location for Unarchiving Test',
+    });
+
+    await locationService.archive('LocationToUnarchive');
+
+    // Then unarchive it
+    const unArchivedLocation = await locationService.unArchive('LocationToUnarchive');
+
+    expect(unArchivedLocation).toHaveProperty('id', 'LocationToUnarchive');
+    expect(unArchivedLocation).toHaveProperty('customField', 'Location for Unarchiving Test');
+  });
+
+  it('should throw LocationNotFoundError when trying to unarchive non-existent location', async () => {
+    const locationService = module.get<LocationService<CustomLocationEntity>>(LocationService);
+
+    await expect(locationService.unArchive('NonExistentLocation')).rejects.toThrow(LocationNotFoundError);
   });
 });

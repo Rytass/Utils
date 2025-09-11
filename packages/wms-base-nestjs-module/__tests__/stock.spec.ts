@@ -112,6 +112,42 @@ describe('stock', () => {
 
       expect(total).toBe(1 + 2 + 3 + 4);
     });
+
+    it('should respect exactLocationMatch option', async () => {
+      const exactQuantity = await stockService.find({
+        locationIds: [locationMock.parent.id],
+        exactLocationMatch: true,
+      });
+
+      // Should only include stocks directly in parent location, not descendants
+      expect(exactQuantity).toBe(0);
+
+      const descendantsQuantity = await stockService.find({
+        locationIds: [locationMock.child1.id],
+        exactLocationMatch: true,
+      });
+
+      // Should include stocks exactly in child1 location
+      expect(descendantsQuantity).toBe(1 + 2);
+    });
+
+    it('should filter by batchIds', async () => {
+      const batchQuantity = await stockService.find({
+        batchIds: ['BatchId'],
+      });
+
+      expect(batchQuantity).toBe(1 + 2 + 3 + 4);
+    });
+
+    it('should combine multiple filters', async () => {
+      const combinedQuantity = await stockService.find({
+        locationIds: [locationMock.child1.id],
+        materialIds: [materialMock.m1.id],
+        exactLocationMatch: true,
+      });
+
+      expect(combinedQuantity).toBe(1 + 2);
+    });
   });
 
   describe('findTransactions', () => {
@@ -156,6 +192,72 @@ describe('stock', () => {
       });
 
       expect(transactions.transactionLogs).toHaveLength(0);
+    });
+
+    it('should respect limit boundary (max 100)', async () => {
+      const transactions = await stockService.findTransactions({
+        limit: 200,
+      });
+
+      // Should cap at 100 even though requested 200, but we only have 4 records
+      expect(transactions.limit).toBe(100);
+      expect(transactions.transactionLogs).toHaveLength(4);
+    });
+
+    it('should use default limit when not specified', async () => {
+      const transactions = await stockService.findTransactions({});
+
+      expect(transactions.limit).toBe(20);
+      expect(transactions.offset).toBe(0);
+    });
+
+    it('should filter by batchIds in transactions', async () => {
+      const transactions = await stockService.findTransactions({
+        batchIds: ['BatchId'],
+      });
+
+      expect(transactions.transactionLogs).toHaveLength(4);
+      expect(transactions.transactionLogs.every(t => t.batchId === 'BatchId')).toBe(true);
+    });
+
+    it('should filter by locationIds with exactLocationMatch', async () => {
+      const transactions = await stockService.findTransactions({
+        locationIds: [locationMock.child1.id],
+        exactLocationMatch: true,
+      });
+
+      expect(transactions.transactionLogs).toHaveLength(2);
+      expect(transactions.transactionLogs.every(t => t.locationId === locationMock.child1.id)).toBe(true);
+    });
+
+    it('should return total count correctly', async () => {
+      const transactions = await stockService.findTransactions({
+        limit: 2,
+      });
+
+      expect(transactions.total).toBe(4);
+      expect(transactions.transactionLogs).toHaveLength(2);
+    });
+
+    it('should return proper StockCollectionDto structure', async () => {
+      const transactions = await stockService.findTransactions({});
+
+      expect(transactions).toHaveProperty('transactionLogs');
+      expect(transactions).toHaveProperty('total');
+      expect(transactions).toHaveProperty('offset');
+      expect(transactions).toHaveProperty('limit');
+
+      if (transactions.transactionLogs.length > 0) {
+        const log = transactions.transactionLogs[0];
+
+        expect(log).toHaveProperty('id');
+        expect(log).toHaveProperty('materialId');
+        expect(log).toHaveProperty('batchId');
+        expect(log).toHaveProperty('locationId');
+        expect(log).toHaveProperty('orderId');
+        expect(log).toHaveProperty('quantity');
+        expect(log).toHaveProperty('createdAt');
+      }
     });
   });
 });
