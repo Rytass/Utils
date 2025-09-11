@@ -235,7 +235,15 @@ async function build(packageSymbol, packageInfos) {
 
   fse.writeFileSync(packageJsonDistPath, `${JSON.stringify(packageJson, undefined, 2)}\n`);
 
-  fse.copySync(packageDistPath, path.resolve(nodeModulesPath, ...packageJson.name.split('/')));
+  const targetPath = path.resolve(nodeModulesPath, ...packageJson.name.split('/'));
+
+  try {
+    fse.unlinkSync(targetPath);
+  } catch (error) {
+    console.error(`Failed to unlink ${targetPath}: ${error.message}`);
+  }
+
+  fse.copySync(packageDistPath, targetPath);
 }
 
 async function tryBuild(packagesInfos, packageSymbol, triggerSymbol) {
@@ -261,7 +269,7 @@ async function tryBuild(packagesInfos, packageSymbol, triggerSymbol) {
   /**
    * prepare dist
    */
-  fse.mkdirSync(rootPackageDistPath);
+  fse.mkdirSync(rootPackageDistPath, { recursive: true });
 
   /**
    * copy LICENSE

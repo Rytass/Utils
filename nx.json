@@ -15,11 +15,15 @@
   "targetDefaults": {
     "build": {
       "executor": "nx:run-commands",
-      "dependsOn": ["^build", "clean"],
+      "dependsOn": ["^build"],
       "cache": true,
       "options": {
         "cwd": "{projectRoot}",
-        "command": "node ../../scripts/build.cjs --outputPath={projectRoot}/lib --main={projectRoot}/src/index.ts --tsConfig={projectRoot}/tsconfig.build.json"
+        "commands": [
+          "node ../../scripts/clean-build.cjs",
+          "node ../../scripts/build.cjs --outputPath={projectRoot}/lib --main={projectRoot}/src/index.ts --tsConfig={projectRoot}/tsconfig.build.json"
+        ],
+        "parallel": false
       },
       "inputs": ["default"]
     },
