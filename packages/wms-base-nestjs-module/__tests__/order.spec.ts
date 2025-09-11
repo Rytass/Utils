@@ -288,4 +288,134 @@ describe('order with allowNegativeStock', () => {
 
     await expect(stockService.find({})).resolves.toBe(1 - 2);
   });
+
+  it('should handle duplicate batch IDs with same materialId by creating unique batches', async () => {
+    // Create order with duplicate batch ID but same material ID
+    const order = await orderService.createOrder(OrderAEntity, {
+      order: {
+        customFieldA: 'Duplicate batch test',
+        customIntFieldAA: 1,
+      },
+      batches: [
+        {
+          id: 'DUPLICATE_BATCH_ID',
+          locationId: locationMock.child1.id,
+          materialId: materialMock.m1.id,
+          quantity: 5,
+        },
+        {
+          id: 'DUPLICATE_BATCH_ID',
+          locationId: locationMock.child1.id,
+          materialId: materialMock.m1.id,
+          quantity: 3,
+        },
+        {
+          id: 'DUPLICATE_BATCH_ID',
+          locationId: locationMock.child2.id,
+          materialId: materialMock.m2.id,
+          quantity: 2,
+        },
+      ],
+    });
+
+    expect(order.stocks).toHaveLength(3);
+    expect(order.stocks.every(s => s.batchId === 'DUPLICATE_BATCH_ID')).toBe(true);
+
+    // Verify total quantity is correct
+    const totalQuantity = order.stocks.reduce((sum, stock) => sum + stock.quantity, 0);
+
+    expect(totalQuantity).toBe(5 + 3 + 2);
+  });
+
+  it('should test canCreateStock method indirectly through order creation', async () => {
+    // First create positive stock
+    await orderService.createOrder(OrderAEntity, {
+      order: {
+        customFieldA: 'Setup stock',
+        customIntFieldAA: 1,
+      },
+      batches: [
+        {
+          id: 'SETUP_BATCH',
+          locationId: locationMock.child1.id,
+          materialId: materialMock.m1.id,
+          quantity: 10,
+        },
+      ],
+    });
+
+    // Now try to create negative stock that would result in exactly 0 - should succeed
+    const order = await orderService.createOrder(OrderAEntity, {
+      order: {
+        customFieldA: 'Zero result order',
+        customIntFieldAA: 2,
+      },
+      batches: [
+        {
+          id: 'ZERO_BATCH',
+          locationId: locationMock.child1.id,
+          materialId: materialMock.m1.id,
+          quantity: -10,
+        },
+      ],
+    });
+
+    expect(order).toBeDefined();
+    expect(order.stocks).toHaveLength(1);
+    expect(order.stocks[0].quantity).toBe(-10);
+
+    // Verify final stock is 0
+    const finalStock = await stockService.find({
+      locationIds: [locationMock.child1.id],
+      materialIds: [materialMock.m1.id],
+      exactLocationMatch: true,
+    });
+
+    expect(finalStock).toBe(0);
+  });
+
+  it('should handle empty batches array', async () => {
+    const order = await orderService.createOrder(OrderAEntity, {
+      order: {
+        customFieldA: 'Empty batches order',
+        customIntFieldAA: 0,
+      },
+      batches: [],
+    });
+
+    expect(order).toBeDefined();
+    expect(order.stocks).toHaveLength(0);
+  });
+
+  it('should create order with multiple different batch IDs', async () => {
+    const order = await orderService.createOrder(OrderBEntity, {
+      order: {
+        customFieldB: 'Multiple batches test',
+      },
+      batches: [
+        {
+          id: 'BATCH_A',
+          locationId: locationMock.child1.id,
+          materialId: materialMock.m1.id,
+          quantity: 1,
+        },
+        {
+          id: 'BATCH_B',
+          locationId: locationMock.child2.id,
+          materialId: materialMock.m1.id,
+          quantity: 2,
+        },
+        {
+          id: 'BATCH_C',
+          locationId: locationMock.child1.id,
+          materialId: materialMock.m2.id,
+          quantity: 3,
+        },
+      ],
+    });
+
+    expect(order.stocks).toHaveLength(3);
+    expect(order.stocks.map(s => s.batchId).sort()).toEqual(['BATCH_A', 'BATCH_B', 'BATCH_C']);
+    expect(order.stocks.map(s => s.quantity).sort()).toEqual([1, 2, 3]);
+  });
 });

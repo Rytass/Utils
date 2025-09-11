@@ -124,4 +124,82 @@ describe('location', () => {
 
     await expect(locationService.unArchive('NonExistentLocation')).rejects.toThrow(LocationNotFoundError);
   });
+
+  it('should throw LocationNotFoundError when creating location with non-existent parentId', async () => {
+    const locationService = module.get<LocationService<CustomLocationEntity>>(LocationService);
+
+    await expect(
+      locationService.create({
+        id: 'TestLocation',
+        customField: 'Test Location',
+        parentId: 'NonExistentParent',
+      }),
+    ).rejects.toThrow(LocationNotFoundError);
+  });
+
+  it('should create location without parentId successfully', async () => {
+    const locationService = module.get<LocationService<CustomLocationEntity>>(LocationService);
+
+    const location = await locationService.create({
+      id: 'RootLocation',
+      customField: 'Root Location Without Parent',
+    });
+
+    expect(location).toHaveProperty('id', 'RootLocation');
+    expect(location).toHaveProperty('customField', 'Root Location Without Parent');
+  });
+
+  it('should throw LocationNotFoundError when trying to archive non-existent location', async () => {
+    const locationService = module.get<LocationService<CustomLocationEntity>>(LocationService);
+
+    await expect(locationService.archive('NonExistentLocationToArchive')).rejects.toThrow(LocationNotFoundError);
+  });
+
+  it('should archive location and all its descendants', async () => {
+    const locationService = module.get<LocationService<CustomLocationEntity>>(LocationService);
+
+    // Create parent location
+    await locationService.create({
+      id: 'ParentForDescendants',
+      customField: 'Parent with Descendants',
+    });
+
+    // Create child location
+    await locationService.create({
+      id: 'ChildForDescendants',
+      customField: 'Child for Archiving Test',
+      parentId: 'ParentForDescendants',
+    });
+
+    // Create grandchild location
+    await locationService.create({
+      id: 'GrandchildForDescendants',
+      customField: 'Grandchild for Archiving Test',
+      parentId: 'ChildForDescendants',
+    });
+
+    // Archive the parent (should archive all descendants)
+    await expect(locationService.archive('ParentForDescendants')).resolves.toBeUndefined();
+
+    // All descendants should be archived, so we should be able to unarchive them
+    await expect(locationService.unArchive('ParentForDescendants')).resolves.toBeDefined();
+    await expect(locationService.unArchive('ChildForDescendants')).resolves.toBeDefined();
+    await expect(locationService.unArchive('GrandchildForDescendants')).resolves.toBeDefined();
+  });
+
+  it('should handle empty location creation properly', async () => {
+    const locationService = module.get<LocationService<CustomLocationEntity>>(LocationService);
+
+    const location = await locationService.create({
+      id: 'MinimalLocation',
+      customField: '', // Empty custom field
+    });
+
+    expect(location).toHaveProperty('id', 'MinimalLocation');
+    expect(location).toHaveProperty('customField', '');
+  });
+
+  afterAll(async () => {
+    await module.close();
+  });
 });

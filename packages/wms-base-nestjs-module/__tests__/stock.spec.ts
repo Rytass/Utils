@@ -5,6 +5,7 @@ import { materialMock } from '../__mocks__/material.mock';
 import { LocationEntity, LocationService, MaterialService, OrderEntity, OrderService, WMSBaseModule } from '../src';
 import { StockEntity } from '../src/models/stock.entity';
 import { StockService } from '../src/services/stock.service';
+import { StockSorter } from '../src/typings/stock-sorter.enum';
 
 jest.mock('../src/models/warehouse-map.entity', () => ({
   WarehouseMapEntity: class MockWarehouseMapEntity {},
@@ -162,6 +163,43 @@ describe('stock', () => {
       expect(transactions.transactionLogs[1].materialId).toBe(materialMock.m1.id);
     });
 
+    it('should sort transactions by CREATED_AT_ASC when specified', async () => {
+      const transactions = await stockService.findTransactions({
+        sorter: StockSorter.CREATED_AT_ASC,
+      });
+
+      expect(transactions.transactionLogs).toHaveLength(4);
+      // Verify ascending order by checking if first created item is first
+      const firstDate = transactions.transactionLogs[0].createdAt;
+      const lastDate = transactions.transactionLogs[transactions.transactionLogs.length - 1].createdAt;
+
+      expect(firstDate.getTime()).toBeLessThanOrEqual(lastDate.getTime());
+    });
+
+    it('should sort transactions by CREATED_AT_DESC when explicitly specified', async () => {
+      const transactions = await stockService.findTransactions({
+        sorter: StockSorter.CREATED_AT_DESC,
+      });
+
+      expect(transactions.transactionLogs).toHaveLength(4);
+      // Verify descending order by checking if newest item is first
+      const firstDate = transactions.transactionLogs[0].createdAt;
+      const lastDate = transactions.transactionLogs[transactions.transactionLogs.length - 1].createdAt;
+
+      expect(firstDate.getTime()).toBeGreaterThanOrEqual(lastDate.getTime());
+    });
+
+    it('should use CREATED_AT_DESC as default when sorter not specified', async () => {
+      const transactions = await stockService.findTransactions({});
+
+      expect(transactions.transactionLogs).toHaveLength(4);
+      // Should default to descending order
+      const firstDate = transactions.transactionLogs[0].createdAt;
+      const lastDate = transactions.transactionLogs[transactions.transactionLogs.length - 1].createdAt;
+
+      expect(firstDate.getTime()).toBeGreaterThanOrEqual(lastDate.getTime());
+    });
+
     it('should return empty array if no match', async () => {
       const transactions = await stockService.findTransactions({
         materialIds: ['non-existent'],
@@ -259,5 +297,92 @@ describe('stock', () => {
         expect(log).toHaveProperty('createdAt');
       }
     });
+
+    it('should handle empty array filters gracefully', async () => {
+      // Test empty locationIds array
+      const transactionsEmptyLocation = await stockService.findTransactions({
+        locationIds: [],
+      });
+
+      expect(transactionsEmptyLocation.transactionLogs).toHaveLength(4);
+
+      // Test empty materialIds array
+      const transactionsEmptyMaterial = await stockService.findTransactions({
+        materialIds: [],
+      });
+
+      expect(transactionsEmptyMaterial.transactionLogs).toHaveLength(4);
+
+      // Test empty batchIds array
+      const transactionsEmptyBatch = await stockService.findTransactions({
+        batchIds: [],
+      });
+
+      expect(transactionsEmptyBatch.transactionLogs).toHaveLength(4);
+    });
+
+    it('should handle complex filter combinations without exact location match', async () => {
+      const transactions = await stockService.findTransactions({
+        locationIds: [locationMock.parent.id],
+        materialIds: [materialMock.m1.id],
+        batchIds: ['BatchId'],
+        exactLocationMatch: false,
+      });
+
+      expect(transactions.transactionLogs).toHaveLength(2);
+      expect(transactions.transactionLogs.every(t => t.materialId === materialMock.m1.id)).toBe(true);
+    });
+
+    it('should handle offset greater than total records', async () => {
+      const transactions = await stockService.findTransactions({
+        offset: 10,
+        limit: 5,
+      });
+
+      expect(transactions.transactionLogs).toHaveLength(0);
+      expect(transactions.total).toBe(10);
+      expect(transactions.offset).toBe(10);
+      expect(transactions.limit).toBe(5);
+    });
+  });
+
+  describe('find with empty arrays', () => {
+    it('should handle empty locationIds array', async () => {
+      const quantity = await stockService.find({
+        locationIds: [],
+      });
+
+      expect(quantity).toBe(10); // Sum of all stocks
+    });
+
+    it('should handle empty materialIds array', async () => {
+      const quantity = await stockService.find({
+        materialIds: [],
+      });
+
+      expect(quantity).toBe(10); // Sum of all stocks
+    });
+
+    it('should handle empty batchIds array', async () => {
+      const quantity = await stockService.find({
+        batchIds: [],
+      });
+
+      expect(quantity).toBe(10); // Sum of all stocks
+    });
+
+    it('should handle all empty arrays together', async () => {
+      const quantity = await stockService.find({
+        locationIds: [],
+        materialIds: [],
+        batchIds: [],
+      });
+
+      expect(quantity).toBe(10); // Sum of all stocks
+    });
+  });
+
+  afterAll(async () => {
+    await module.close();
   });
 });
