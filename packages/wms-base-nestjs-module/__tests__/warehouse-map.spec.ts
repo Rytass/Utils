@@ -229,4 +229,284 @@ describe('warehouse-map', () => {
 
     expect(result).toBe(true);
   });
+
+  it('should throw error when rectangle range missing required properties', async () => {
+    mockWarehouseMapRepo.findOne.mockResolvedValue(mockWarehouseMapEntity);
+
+    // Missing x property
+    await expect(
+      warehouseMapService.updateMap(
+        'A001A',
+        [],
+        [
+          {
+            id: 'INVALID_RECT1',
+            type: MapRangeType.RECTANGLE,
+            color: '#FF0000',
+            y: 10,
+            width: 100,
+            height: 50,
+          } as Partial<{
+            id: string;
+            type: MapRangeType;
+            color: string;
+            x?: number;
+            y?: number;
+            width?: number;
+            height?: number;
+          }>,
+        ],
+      ),
+    ).rejects.toThrow('Rectangle range "INVALID_RECT1" requires x, y, width, and height properties');
+
+    // Missing y property
+    await expect(
+      warehouseMapService.updateMap(
+        'A001A',
+        [],
+        [
+          {
+            id: 'INVALID_RECT2',
+            type: MapRangeType.RECTANGLE,
+            color: '#FF0000',
+            x: 10,
+            width: 100,
+            height: 50,
+          } as Partial<{
+            id: string;
+            type: MapRangeType;
+            color: string;
+            x?: number;
+            y?: number;
+            width?: number;
+            height?: number;
+          }>,
+        ],
+      ),
+    ).rejects.toThrow('Rectangle range "INVALID_RECT2" requires x, y, width, and height properties');
+
+    // Missing width property
+    await expect(
+      warehouseMapService.updateMap(
+        'A001A',
+        [],
+        [
+          {
+            id: 'INVALID_RECT3',
+            type: MapRangeType.RECTANGLE,
+            color: '#FF0000',
+            x: 10,
+            y: 10,
+            height: 50,
+          } as Partial<{
+            id: string;
+            type: MapRangeType;
+            color: string;
+            x?: number;
+            y?: number;
+            width?: number;
+            height?: number;
+          }>,
+        ],
+      ),
+    ).rejects.toThrow('Rectangle range "INVALID_RECT3" requires x, y, width, and height properties');
+
+    // Missing height property
+    await expect(
+      warehouseMapService.updateMap(
+        'A001A',
+        [],
+        [
+          {
+            id: 'INVALID_RECT4',
+            type: MapRangeType.RECTANGLE,
+            color: '#FF0000',
+            x: 10,
+            y: 10,
+            width: 100,
+          } as Partial<{
+            id: string;
+            type: MapRangeType;
+            color: string;
+            x?: number;
+            y?: number;
+            width?: number;
+            height?: number;
+          }>,
+        ],
+      ),
+    ).rejects.toThrow('Rectangle range "INVALID_RECT4" requires x, y, width, and height properties');
+  });
+
+  it('should throw error when polygon range missing points or has empty points', async () => {
+    mockWarehouseMapRepo.findOne.mockResolvedValue(mockWarehouseMapEntity);
+
+    // Missing points property
+    await expect(
+      warehouseMapService.updateMap(
+        'A001A',
+        [],
+        [
+          {
+            id: 'INVALID_POLYGON1',
+            type: MapRangeType.POLYGON,
+            color: '#FF0000',
+          } as Partial<{ id: string; type: MapRangeType; color: string; points?: Array<{ x: number; y: number }> }>,
+        ],
+      ),
+    ).rejects.toThrow('Polygon range "INVALID_POLYGON1" requires points array with at least one point');
+
+    // Empty points array
+    await expect(
+      warehouseMapService.updateMap(
+        'A001A',
+        [],
+        [
+          {
+            id: 'INVALID_POLYGON2',
+            type: MapRangeType.POLYGON,
+            color: '#FF0000',
+            points: [],
+          },
+        ],
+      ),
+    ).rejects.toThrow('Polygon range "INVALID_POLYGON2" requires points array with at least one point');
+  });
+
+  it('should handle complex map updates with multiple backgrounds and ranges', async () => {
+    mockWarehouseMapRepo.findOne.mockResolvedValue(mockWarehouseMapEntity);
+
+    const result = await warehouseMapService.updateMap(
+      'COMPLEX_MAP',
+      [
+        {
+          id: 'bg1',
+          filename: 'background1.png',
+          x: 0,
+          y: 0,
+          width: 1000,
+          height: 1000,
+        },
+        {
+          id: 'bg2',
+          filename: 'background2.png',
+          x: 500,
+          y: 500,
+          width: 800,
+          height: 600,
+        },
+      ],
+      [
+        {
+          id: 'rect1',
+          type: MapRangeType.RECTANGLE,
+          color: '#FF0000',
+          x: 10,
+          y: 10,
+          width: 100,
+          height: 50,
+        },
+        {
+          id: 'poly1',
+          type: MapRangeType.POLYGON,
+          color: '#00FF00',
+          points: [
+            { x: 200, y: 200 },
+            { x: 300, y: 200 },
+            { x: 250, y: 300 },
+          ],
+        },
+        {
+          id: 'rect2',
+          type: MapRangeType.RECTANGLE,
+          color: '#0000FF',
+          x: 400,
+          y: 400,
+          width: 150,
+          height: 75,
+        },
+      ],
+    );
+
+    expect(result.mapData.backgrounds).toHaveLength(2);
+    expect(result.mapData.ranges).toHaveLength(3);
+    expect(result.mapData.ranges.find(r => r.id === 'rect1')).toMatchObject({
+      id: 'rect1',
+      type: MapRangeType.RECTANGLE,
+      color: '#FF0000',
+      x: 10,
+      y: 10,
+      width: 100,
+      height: 50,
+    });
+
+    expect(result.mapData.ranges.find(r => r.id === 'poly1')).toMatchObject({
+      id: 'poly1',
+      type: MapRangeType.POLYGON,
+      color: '#00FF00',
+      points: [
+        { x: 200, y: 200 },
+        { x: 300, y: 200 },
+        { x: 250, y: 300 },
+      ],
+    });
+  });
+
+  it('should handle edge case with zero dimensions for rectangle', async () => {
+    mockWarehouseMapRepo.findOne.mockResolvedValue(mockWarehouseMapEntity);
+
+    const result = await warehouseMapService.updateMap(
+      'A001A',
+      [],
+      [
+        {
+          id: 'ZERO_RECT',
+          type: MapRangeType.RECTANGLE,
+          color: '#FF0000',
+          x: 0,
+          y: 0,
+          width: 0,
+          height: 0,
+        },
+      ],
+    );
+
+    expect(result.mapData.ranges[0]).toMatchObject({
+      id: 'ZERO_RECT',
+      type: MapRangeType.RECTANGLE,
+      color: '#FF0000',
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0,
+    });
+  });
+
+  it('should handle polygon with single point', async () => {
+    mockWarehouseMapRepo.findOne.mockResolvedValue(mockWarehouseMapEntity);
+
+    const result = await warehouseMapService.updateMap(
+      'A001A',
+      [],
+      [
+        {
+          id: 'SINGLE_POINT_POLY',
+          type: MapRangeType.POLYGON,
+          color: '#FF0000',
+          points: [{ x: 100, y: 100 }],
+        },
+      ],
+    );
+
+    expect(result.mapData.ranges[0]).toMatchObject({
+      id: 'SINGLE_POINT_POLY',
+      type: MapRangeType.POLYGON,
+      color: '#FF0000',
+      points: [{ x: 100, y: 100 }],
+    });
+  });
+
+  afterAll(async () => {
+    await module.close();
+  });
 });
