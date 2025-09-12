@@ -47,7 +47,6 @@
     "typeorm-adapter": "^1"
   },
   "devDependencies": {
-    "@types/generate-password": "^1.5.3",
     "@types/ws": "^8"
   },
   "isolateEntries": [

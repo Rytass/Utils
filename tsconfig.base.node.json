@@ -12,7 +12,7 @@
     "strictPropertyInitialization": false,
     "experimentalDecorators": true,
     "moduleResolution": "node",
-    "lib": ["esnext"],
+    "lib": ["esnext", "dom"],
     "types": ["node", "reflect-metadata"],
     "allowImportingTsExtensions": false,
     "resolveJsonModule": true

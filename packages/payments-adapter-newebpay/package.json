@@ -27,14 +27,11 @@
   },
   "dependencies": {
     "@rytass/payments": "^0.2.5",
-    "axios": "^1.11.0",
+    "axios": "^1.8.2",
     "lru-cache": "^11.1.0",
     "luxon": "^3.7.1"
   },
   "peerDependencies": {
     "@ngrok/ngrok": "^1.5.1"
-  },
-  "devDependencies": {
-    "@types/lru-cache": "^7.10.10"
   }
 }
