@@ -38,7 +38,10 @@ export interface AmegoInvoiceVoidOptions extends InvoiceVoidOptions {
 export interface AmegoInvoiceOptions {
   orderId: string; // 訂單編號
   vatNumber?: string; // 買方統一編號
-  buyerEmail?: string; // 買方電子信箱
+  buyerInfo?: {
+    name: string;
+    email: string;
+  };
 
   items: AmegoPaymentItem[];
   issuedOn?: Date | null;
