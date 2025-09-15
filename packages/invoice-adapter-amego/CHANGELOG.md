@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.9](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-amego@0.2.8...@rytass/invoice-adapter-amego@0.2.9) (2025-09-15)
+
+### Features
+
+- **invoice-adapter-amego:** add buyerInfo when query ([9108529](https://github.com/Rytass/Utils/commit/9108529a59d871cb81e7c857b098598ccc182f70))
+
 ## [0.2.8](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-amego@0.2.7...@rytass/invoice-adapter-amego@0.2.8) (2025-09-11)
 
 ### Features

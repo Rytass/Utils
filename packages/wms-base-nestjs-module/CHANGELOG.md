@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.4](https://github.com/Rytass/Utils/compare/@rytass/wms-base-nestjs-module@0.1.3...@rytass/wms-base-nestjs-module@0.1.4) (2025-09-15)
+
+### Bug Fixes
+
+- **wms-base-nestjs-module:** resolve ESLint rule violations in test files ([dc79d50](https://github.com/Rytass/Utils/commit/dc79d50fbb0ed9c8b82a23223b6018ff0246e119))
+
 ## [0.1.3](https://github.com/Rytass/Utils/compare/@rytass/wms-base-nestjs-module@0.1.2...@rytass/wms-base-nestjs-module@0.1.3) (2025-09-11)
 
 ### Bug Fixes
