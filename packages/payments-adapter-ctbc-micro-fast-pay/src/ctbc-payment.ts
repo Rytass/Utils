@@ -260,8 +260,6 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
         const request = await this.bindCardRequestsCache.get(requestId);
 
         if (statusCode !== 'I0000') {
-          console.log(request);
-
           if (request) {
             request.fail(statusCode ?? 'x9999', statusDesc ?? '-');
           }
