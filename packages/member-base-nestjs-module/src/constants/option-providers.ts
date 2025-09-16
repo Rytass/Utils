@@ -42,9 +42,13 @@ import type { ReflectableDecorator } from '@nestjs/core';
 import type { OAuth2Provider } from '../typings/oauth2-provider.interface';
 
 const getTypeORMAdapter = async (): Promise<typeof TypeORMAdapterType> => {
-  const module = await import('typeorm-adapter');
+  const module = (await import('typeorm-adapter')) as unknown as {
+    default: {
+      default: typeof TypeORMAdapterType;
+    };
+  };
 
-  return module.default;
+  return module.default.default;
 };
 
 export const OptionProviders = [
