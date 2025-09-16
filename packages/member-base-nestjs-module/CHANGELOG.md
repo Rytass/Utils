@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.14](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.13...@rytass/member-base-nestjs-module@0.2.14) (2025-09-16)
+
+### Bug Fixes
+
+- correct typeorm-adapter import for ESM module resolution ([0a62e46](https://github.com/Rytass/Utils/commit/0a62e46bf4ce800ae2e41df10af8877ef855b030))
+
 ## [0.2.13](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.12...@rytass/member-base-nestjs-module@0.2.13) (2025-09-16)
 
 **Note:** Version bump only for package @rytass/member-base-nestjs-module
