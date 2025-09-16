@@ -8,7 +8,8 @@ export interface MemberBaseModuleAsyncOptionsDto<
   TokenPayload extends Record<string, unknown> = Pick<MemberEntity, 'id' | 'account'>,
 > extends Pick<ModuleMetadata, 'imports'> {
   useFactory?: (
-    ...args: (InjectionToken | OptionalFactoryDependency)[]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ...args: any[]
   ) =>
     | Promise<MemberBaseModuleOptionsDto<MemberEntity, TokenPayload>>
     | MemberBaseModuleOptionsDto<MemberEntity, TokenPayload>;

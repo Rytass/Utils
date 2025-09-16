@@ -23,9 +23,8 @@ export interface WMSBaseModuleOptionsFactory {
 }
 
 export interface WMSBaseModuleAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
-  useFactory?: (
-    ...args: (InjectionToken | OptionalFactoryDependency)[]
-  ) => Promise<WMSBaseModuleOptions> | WMSBaseModuleOptions;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  useFactory?: (...args: any[]) => Promise<WMSBaseModuleOptions> | WMSBaseModuleOptions;
   inject?: (InjectionToken | OptionalFactoryDependency)[];
   useClass?: Type<WMSBaseModuleOptionsFactory>;
   useExisting?: Type<WMSBaseModuleOptionsFactory>;
