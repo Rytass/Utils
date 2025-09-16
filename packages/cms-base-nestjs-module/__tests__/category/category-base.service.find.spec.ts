@@ -15,11 +15,6 @@ import { DEFAULT_LANGUAGE } from '../../src/constants/default-language';
 import { BaseCategoryEntity } from '../../src/models/base-category.entity';
 import { BaseCategoryMultiLanguageNameEntity } from '../../src/models/base-category-multi-language-name.entity';
 
-interface TestableCategoryBaseService {
-  multipleLanguageMode: boolean;
-  parseSingleLanguageCategory: jest.SpyInstance;
-}
-
 interface MockQueryBuilder {
   andWhere: jest.Mock;
   getOne: jest.Mock;
@@ -145,7 +140,8 @@ describe('CategoryBaseService.findAll', () => {
     ];
 
     mockQueryBuilder.getMany.mockResolvedValue(mockCategories);
-    (service as TestableCategoryBaseService).multipleLanguageMode = true;
+
+    Reflect.set(service, 'multipleLanguageMode', true);
 
     await service.findAll({
       sorter: CategorySorter.CREATED_AT_DESC,
@@ -170,7 +166,7 @@ describe('CategoryBaseService.findAll', () => {
 
     mockQueryBuilder.getMany.mockResolvedValue(mockCategories);
 
-    (service as TestableCategoryBaseService).multipleLanguageMode = false;
+    Reflect.set(service, 'multipleLanguageMode', false);
 
     const mockParsed = mockCategories.map(c => ({
       ...c,
@@ -178,17 +174,21 @@ describe('CategoryBaseService.findAll', () => {
       language: undefined,
     }));
 
-    const parseSpy = jest
-      .spyOn(service as TestableCategoryBaseService, 'parseSingleLanguageCategory')
-      .mockImplementation((...args: unknown[]) => {
-        const [cat, lang] = args as [BaseCategoryEntity, string];
+    // Type-safe way to spy on private method
+    const serviceWithPrivate = service as unknown as {
+      parseSingleLanguageCategory: (
+        cat: BaseCategoryEntity & { multiLanguageNames: BaseCategoryMultiLanguageNameEntity[] },
+        lang?: string,
+      ) => unknown;
+    };
 
-        return {
-          ...cat,
-          name: undefined,
-          language: lang,
-        };
-      });
+    const parseSpy = jest.spyOn(serviceWithPrivate, 'parseSingleLanguageCategory').mockImplementation((cat, lang) => {
+      return {
+        ...cat,
+        name: undefined,
+        language: lang,
+      };
+    });
 
     const result = await service.findAll({});
 
@@ -259,7 +259,7 @@ describe('CategoryBaseService.findById', () => {
   });
 
   it('should return parsed category when language is not provided and multipleLanguageMode is false', async () => {
-    (service as TestableCategoryBaseService).multipleLanguageMode = false;
+    Reflect.set(service, 'multipleLanguageMode', false);
 
     const mockCategory = {
       id: '1',

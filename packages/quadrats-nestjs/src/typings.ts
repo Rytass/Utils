@@ -8,6 +8,7 @@ export interface QuadratsModuleOptions {
 
 export interface QuadratsModuleAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
   name?: string;
-  useFactory: (...args: unknown[]) => Promise<QuadratsModuleOptions> | QuadratsModuleOptions;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  useFactory: (...args: any[]) => Promise<QuadratsModuleOptions> | QuadratsModuleOptions;
   inject?: (InjectionToken | OptionalFactoryDependency)[];
 }
