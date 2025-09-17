@@ -17,11 +17,12 @@ import {
   RESET_PASSWORD_TOKEN_EXPIRATION,
   RESET_PASSWORD_TOKEN_SECRET,
   RESOLVED_MEMBER_REPO,
-} from '../typings/member-base-providers';
+} from '../typings/member-base.tokens';
 import { sign, verify as verifyJWT } from 'jsonwebtoken';
+import type { AuthTokenPayloadBase } from '../typings/auth-token-payload';
 import { MemberLoginLogEntity, MemberLoginLogRepo } from '../models/member-login-log.entity';
-import { TokenPairDto } from '../dto/token-pair.dto';
-import { MemberBaseModuleOptionsDto } from '../typings/member-base-module-options.dto';
+import { TokenPairDTO } from '../dto/token-pair.dto';
+import { MemberBaseModuleOptionsDTO } from '../typings/member-base-module-options.dto';
 import { PasswordValidatorService } from './password-validator.service';
 import { MemberPasswordHistoryEntity, MemberPasswordHistoryRepo } from '../models/member-password-history.entity';
 import {
@@ -43,7 +44,7 @@ export class MemberBaseService<MemberEntity extends BaseMemberEntity = BaseMembe
 {
   constructor(
     @Inject(MEMBER_BASE_MODULE_OPTIONS)
-    private readonly originalProvidedOptions: MemberBaseModuleOptionsDto | undefined,
+    private readonly originalProvidedOptions: MemberBaseModuleOptionsDTO | undefined,
     @Inject(RESOLVED_MEMBER_REPO)
     private readonly baseMemberRepo: Repository<BaseMemberEntity>,
     @Inject(MemberLoginLogRepo)
@@ -73,9 +74,7 @@ export class MemberBaseService<MemberEntity extends BaseMemberEntity = BaseMembe
     @Inject(PasswordValidatorService)
     private readonly passwordValidatorService: PasswordValidatorService,
     @Inject(CUSTOMIZED_JWT_PAYLOAD)
-    private readonly customizedJwtPayload: (
-      member: MemberEntity,
-    ) => { id: string; account?: string; domain?: string } & Record<string, unknown>,
+    private readonly customizedJwtPayload: (member: MemberEntity) => AuthTokenPayloadBase,
     @Inject(LOGIN_FAILED_AUTO_UNLOCK_SECONDS)
     private readonly loginFailedAutoUnlockSeconds: number | null,
   ) {}
@@ -293,7 +292,7 @@ export class MemberBaseService<MemberEntity extends BaseMemberEntity = BaseMembe
     return [member as T, password];
   }
 
-  async refreshToken(refreshToken: string, options?: { domain?: string }): Promise<TokenPairDto> {
+  async refreshToken(refreshToken: string, options?: { domain?: string }): Promise<TokenPairDTO> {
     try {
       const {
         id,
@@ -336,7 +335,7 @@ export class MemberBaseService<MemberEntity extends BaseMemberEntity = BaseMembe
     account: string,
     password: string,
     ip?: string, // IP address as string
-  ): Promise<TokenPairDto>;
+  ): Promise<TokenPairDTO>;
   async login(
     account: string,
     password: string,
@@ -344,7 +343,7 @@ export class MemberBaseService<MemberEntity extends BaseMemberEntity = BaseMembe
       domain?: string;
       ip?: string;
     },
-  ): Promise<TokenPairDto>;
+  ): Promise<TokenPairDTO>;
   async login(
     account: string,
     password: string,
@@ -354,7 +353,7 @@ export class MemberBaseService<MemberEntity extends BaseMemberEntity = BaseMembe
           ip?: string;
         }
       | string,
-  ): Promise<TokenPairDto> {
+  ): Promise<TokenPairDTO> {
     const member = await this.baseMemberRepo.findOne({
       where: { account },
     });

@@ -1,7 +1,13 @@
 import { Controller, Get, Inject, NotFoundException, Param, Query, Res } from '@nestjs/common';
 import { IsPublic } from '../decorators/is-public.decorator';
 import { OAuth2Provider } from '../typings/oauth2-provider.interface';
-import { COOKIE_MODE, OAUTH2_CLIENT_DEST_URL, OAUTH2_PROVIDERS } from '../typings/member-base-providers';
+import {
+  COOKIE_MODE,
+  OAUTH2_CLIENT_DEST_URL,
+  OAUTH2_PROVIDERS,
+  ACCESS_TOKEN_COOKIE_NAME,
+  REFRESH_TOKEN_COOKIE_NAME,
+} from '../typings/member-base.tokens';
 import { OAuthService } from '../services/oauth.service';
 import type { Response } from 'express';
 
@@ -14,6 +20,10 @@ export class OAuthCallbacksController {
     private readonly clientDestUrl: string,
     @Inject(COOKIE_MODE)
     private readonly cookieMode: boolean,
+    @Inject(ACCESS_TOKEN_COOKIE_NAME)
+    private readonly accessTokenCookieName: string,
+    @Inject(REFRESH_TOKEN_COOKIE_NAME)
+    private readonly refreshTokenCookieName: string,
     @Inject(OAuthService)
     private readonly oauthService: OAuthService,
   ) {}
@@ -73,7 +83,12 @@ export class OAuthCallbacksController {
         const tokenPair = await this.oauthService.loginWithGoogleOAuth2Code(code, state);
 
         if (this.cookieMode) {
-          res.cookie('token', tokenPair.refreshToken, {
+          res.cookie(this.accessTokenCookieName, tokenPair.accessToken, {
+            httpOnly: true,
+            secure: true,
+          });
+
+          res.cookie(this.refreshTokenCookieName, tokenPair.refreshToken, {
             httpOnly: true,
             secure: true,
           });
@@ -92,7 +107,12 @@ export class OAuthCallbacksController {
         const tokenPair = await this.oauthService.loginWithFacebookOAuth2Code(code, state);
 
         if (this.cookieMode) {
-          res.cookie('token', tokenPair.refreshToken, {
+          res.cookie(this.accessTokenCookieName, tokenPair.accessToken, {
+            httpOnly: true,
+            secure: true,
+          });
+
+          res.cookie(this.refreshTokenCookieName, tokenPair.refreshToken, {
             httpOnly: true,
             secure: true,
           });
@@ -111,7 +131,12 @@ export class OAuthCallbacksController {
         const tokenPair = await this.oauthService.loginWithCustomOAuth2Code(channel, code, state);
 
         if (this.cookieMode) {
-          res.cookie('token', tokenPair.refreshToken, {
+          res.cookie(this.accessTokenCookieName, tokenPair.accessToken, {
+            httpOnly: true,
+            secure: true,
+          });
+
+          res.cookie(this.refreshTokenCookieName, tokenPair.refreshToken, {
             httpOnly: true,
             secure: true,
           });

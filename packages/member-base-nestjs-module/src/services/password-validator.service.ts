@@ -9,7 +9,7 @@ import {
   PASSWORD_POLICY_REGEXP,
   PASSWORD_HISTORY_LIMIT,
   PASSWORD_AGE_LIMIT_IN_DAYS,
-} from '../typings/member-base-providers';
+} from '../typings/member-base.tokens';
 import { BaseMemberEntity } from '../models/base-member.entity';
 import { MemberPasswordHistoryEntity, MemberPasswordHistoryRepo } from '../models/member-password-history.entity';
 import { Repository } from 'typeorm';
