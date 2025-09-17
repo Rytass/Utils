@@ -133,14 +133,14 @@ export const OptionProviders = [
     ): Promise<
       (params: {
         enforcer: Enforcer;
-        payload: { id: string; domain?: string };
+        payload: { id: string; account?: string; domain?: string } & Record<string, unknown>;
         actions: [Subject, Action][];
       }) => Promise<boolean>
     > =>
       options?.casbinPermissionChecker
         ? (options.casbinPermissionChecker as (params: {
             enforcer: Enforcer;
-            payload: { id: string; domain?: string };
+            payload: { id: string; account?: string; domain?: string } & Record<string, unknown>;
             actions: [Subject, Action][];
           }) => Promise<boolean>)
         : ({
@@ -149,7 +149,7 @@ export const OptionProviders = [
             actions,
           }: {
             enforcer: Enforcer;
-            payload: { id: string; domain?: string };
+            payload: { id: string; account?: string; domain?: string } & Record<string, unknown>;
             actions: [Subject, Action][];
           }): Promise<boolean> =>
             Promise.all(
@@ -216,9 +216,11 @@ export const OptionProviders = [
   },
   {
     provide: CUSTOMIZED_JWT_PAYLOAD,
-    useFactory: (options?: MemberBaseModuleOptionsDto): ((member: BaseMemberEntity) => Record<string, unknown>) =>
+    useFactory: (
+      options?: MemberBaseModuleOptionsDto,
+    ): ((member: BaseMemberEntity) => { id: string; account?: string; domain?: string } & Record<string, unknown>) =>
       options?.customizedJwtPayload ??
-      ((member: BaseMemberEntity): Record<string, unknown> => ({
+      ((member: BaseMemberEntity): { id: string; account?: string; domain?: string } & Record<string, unknown> => ({
         id: member.id,
         account: member.account,
       })),

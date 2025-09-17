@@ -9,7 +9,6 @@ import {
   ENABLE_GLOBAL_GUARD,
   REFRESH_TOKEN_SECRET,
 } from '../typings/member-base-providers';
-import { BaseMemberEntity } from '../models/base-member.entity';
 import { type ReflectableDecorator, Reflector } from '@nestjs/core';
 import { IS_ROUTE_PUBLIC } from '../decorators/is-public.decorator';
 import { AllowActions } from '../decorators/action.decorator';
@@ -20,7 +19,7 @@ import { getRequestFromContext } from '../utils/get-request-from-context';
 
 export interface ContextPayload {
   token: string | null;
-  payload?: Pick<BaseMemberEntity, 'id' | 'account'>;
+  payload?: { id: string; account?: string; domain?: string } & Record<string, unknown>;
   enforcer: Enforcer;
 }
 
@@ -42,7 +41,7 @@ export class CasbinGuard implements CanActivate {
     @Inject(CASBIN_PERMISSION_CHECKER)
     private readonly permissionChecker: (params: {
       enforcer: Enforcer;
-      payload: { id: string; domain?: string };
+      payload: { id: string; account?: string; domain?: string } & Record<string, unknown>;
       actions: [string, string][];
     }) => Promise<boolean>,
   ) {}
@@ -58,10 +57,11 @@ export class CasbinGuard implements CanActivate {
 
     if (token) {
       try {
-        const payload = verify(token, this.cookieMode ? this.refreshTokenSecret : this.accessTokenSecret) as Pick<
-          BaseMemberEntity,
-          'id' | 'account'
-        >;
+        const payload = verify(token, this.cookieMode ? this.refreshTokenSecret : this.accessTokenSecret) as {
+          id: string;
+          account?: string;
+          domain?: string;
+        } & Record<string, unknown>;
 
         request.payload = payload;
       } catch (_ex) {

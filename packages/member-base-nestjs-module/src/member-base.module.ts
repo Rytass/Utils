@@ -53,7 +53,13 @@ const controllers = [OAuthCallbacksController];
 export class MemberBaseModule {
   static forRootAsync<
     MemberEntity extends BaseMemberEntity = BaseMemberEntity,
-    TokenPayload extends Record<string, unknown> = Pick<MemberEntity, 'id' | 'account'>,
+    TokenPayload extends {
+      id: string;
+      account?: string;
+      domain?: string;
+    } = Pick<MemberEntity, 'id' | 'account'> & {
+      domain?: string;
+    },
   >(options: MemberBaseModuleAsyncOptionsDto<MemberEntity, TokenPayload>): DynamicModule {
     return {
       module: MemberBaseModule,
@@ -66,7 +72,13 @@ export class MemberBaseModule {
 
   static forRoot<
     MemberEntity extends BaseMemberEntity = BaseMemberEntity,
-    TokenPayload extends Record<string, unknown> = Pick<MemberEntity, 'id' | 'account'>,
+    TokenPayload extends {
+      id: string;
+      account?: string;
+      domain?: string;
+    } = Pick<MemberEntity, 'id' | 'account'> & {
+      domain?: string;
+    },
   >(options?: MemberBaseModuleOptionsDto<MemberEntity, TokenPayload>): DynamicModule {
     return {
       module: MemberBaseModule,
@@ -85,7 +97,13 @@ export class MemberBaseModule {
 
   private static createAsyncProvider<
     MemberEntity extends BaseMemberEntity = BaseMemberEntity,
-    TokenPayload extends Record<string, unknown> = Pick<MemberEntity, 'id' | 'account'>,
+    TokenPayload extends {
+      id: string;
+      account?: string;
+      domain?: string;
+    } = Pick<MemberEntity, 'id' | 'account'> & {
+      domain?: string;
+    },
   >(options: MemberBaseModuleAsyncOptionsDto<MemberEntity, TokenPayload>): Provider[] {
     if (options.useExisting || options.useFactory) {
       return [this.createAsyncOptionsProvider<MemberEntity, TokenPayload>(options)];
@@ -106,7 +124,13 @@ export class MemberBaseModule {
 
   private static createAsyncOptionsProvider<
     MemberEntity extends BaseMemberEntity = BaseMemberEntity,
-    TokenPayload extends Record<string, unknown> = Pick<MemberEntity, 'id' | 'account'>,
+    TokenPayload extends {
+      id: string;
+      account?: string;
+      domain?: string;
+    } = Pick<MemberEntity, 'id' | 'account'> & {
+      domain?: string;
+    },
   >(options: MemberBaseModuleAsyncOptionsDto<MemberEntity, TokenPayload>): Provider {
     if (options.useFactory) {
       return {

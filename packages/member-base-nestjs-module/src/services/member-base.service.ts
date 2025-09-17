@@ -73,7 +73,9 @@ export class MemberBaseService<MemberEntity extends BaseMemberEntity = BaseMembe
     @Inject(PasswordValidatorService)
     private readonly passwordValidatorService: PasswordValidatorService,
     @Inject(CUSTOMIZED_JWT_PAYLOAD)
-    private readonly customizedJwtPayload: (member: MemberEntity) => object,
+    private readonly customizedJwtPayload: (
+      member: MemberEntity,
+    ) => { id: string; account?: string; domain?: string } & Record<string, unknown>,
     @Inject(LOGIN_FAILED_AUTO_UNLOCK_SECONDS)
     private readonly loginFailedAutoUnlockSeconds: number | null,
   ) {}

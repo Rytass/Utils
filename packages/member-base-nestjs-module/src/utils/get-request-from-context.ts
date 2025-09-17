@@ -1,14 +1,13 @@
 import { ExecutionContext } from '@nestjs/common';
 import type { Request } from 'express';
 import { Enforcer } from 'casbin';
-import { BaseMemberEntity } from '../models/base-member.entity';
 
 type InjectedRequest = Request & {
   enforcer?: Enforcer;
-  payload?: Pick<BaseMemberEntity, 'id' | 'account'> & { domain?: string };
+  payload?: { id: string; account?: string; domain?: string } & Record<string, unknown>;
   casbinPermissionChecker?: (options: {
     enforcer: Enforcer;
-    payload: Pick<BaseMemberEntity, 'id' | 'account'>;
+    payload: { id: string; account?: string; domain?: string } & Record<string, unknown>;
     actions: [string, string][];
   }) => Promise<boolean>;
   _injectedEnforcer: symbol;
