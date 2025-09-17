@@ -4,6 +4,9 @@ import type { ReflectableDecorator } from '@nestjs/core';
 import type { Enforcer } from 'casbin';
 import type { OAuth2Provider } from './oauth2-provider.interface';
 
+/**
+ * @deprecated Prefer using the alias `MemberBaseModuleOptions` for clarity.
+ */
 export interface MemberBaseModuleOptionsDTO<
   MemberEntity extends BaseMemberEntity = BaseMemberEntity,
   TokenPayload extends {

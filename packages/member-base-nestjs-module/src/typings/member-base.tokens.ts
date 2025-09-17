@@ -2,6 +2,7 @@ import type { MemberBaseModuleOptionsDTO } from './member-base-module-options.dt
 import type { Enforcer } from 'casbin';
 import type { AuthTokenPayloadBase } from './auth-token-payload';
 import type { ReflectableDecorator } from '@nestjs/core';
+import type { Subject, Action } from '../decorators/action.decorator';
 import type { Repository } from 'typeorm';
 import type { BaseMemberEntity } from '../models/base-member.entity';
 import type { OAuth2Provider } from './oauth2-provider.interface';
@@ -15,13 +16,13 @@ export const RESET_PASSWORD_TOKEN_EXPIRATION = Symbol('RESET_PASSWORD_TOKEN_EXPI
 export const RESET_PASSWORD_TOKEN_SECRET = Symbol('RESET_PASSWORD_TOKEN_SECRET') as symbol & { __type: string };
 export const CASBIN_ENFORCER = Symbol('CASBIN_ENFORCER') as symbol & { __type: Enforcer | null };
 export const CASBIN_PERMISSION_DECORATOR = Symbol('CASBIN_PERMISSION_DECORATOR') as symbol & {
-  __type: ReflectableDecorator<[string, string][]>;
+  __type: ReflectableDecorator<[Subject, Action][]>;
 };
 export const CASBIN_PERMISSION_CHECKER = Symbol('CASBIN_PERMISSION_CHECKER') as symbol & {
   __type: (params: {
     enforcer: Enforcer;
     payload: AuthTokenPayloadBase;
-    actions: [string, string][];
+    actions: [Subject, Action][];
   }) => Promise<boolean>;
 };
 export const ACCESS_TOKEN_SECRET = Symbol('ACCESS_TOKEN_SECRET') as symbol & { __type: string };
@@ -88,7 +89,7 @@ export interface MemberBaseProviders {
   RESET_PASSWORD_TOKEN_EXPIRATION: number;
   RESET_PASSWORD_TOKEN_SECRET: string;
   CASBIN_ENFORCER: Enforcer;
-  CASBIN_PERMISSION_DECORATOR: ReflectableDecorator<[string, string][]>;
+  CASBIN_PERMISSION_DECORATOR: ReflectableDecorator<[Subject, Action][]>;
   CASBIN_PERMISSION_CHECKER: Function;
   ACCESS_TOKEN_SECRET: string;
   ACCESS_TOKEN_EXPIRATION: number;

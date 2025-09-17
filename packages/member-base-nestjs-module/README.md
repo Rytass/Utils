@@ -215,6 +215,14 @@ export class AppModule {}
 
 Note: These changes are backward compatible (including type and token aliases). Cookie mode behavior is now stricter and clearer: authorization uses the access token, not the refresh token. If you previously relied on the refresh token for authorization, please switch to the access token.
 
+### Type Names and Tokens
+
+- Prefer the alias types for module options in your imports:
+  - `MemberBaseModuleOptions` (= `MemberBaseModuleOptionsDTO`)
+  - `MemberBaseModuleAsyncOptions` (= `MemberBaseModuleAsyncOptionsDTO`)
+  - `MemberBaseOptionsFactory` (= `MemberBaseModuleOptionFactoryInterface`)
+- All injection tokens are consolidated under a single source and re-exported from the package index. Import them from `@rytass/member-base-nestjs-module` (they originate from `src/typings/member-base.tokens.ts`).
+
 ### Cookie Mode Usage Example
 
 Enable cookie mode and optionally override cookie names via providers. Authorization resolves tokens in this order: Authorization header (Bearer) first, then cookie.

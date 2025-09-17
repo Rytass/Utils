@@ -125,7 +125,7 @@ export const OptionProviders = [
   },
   {
     provide: CASBIN_PERMISSION_DECORATOR,
-    useFactory: async (options?: MemberBaseModuleOptionsDTO): Promise<ReflectableDecorator<[string, string][]>> =>
+    useFactory: async (options?: MemberBaseModuleOptionsDTO): Promise<ReflectableDecorator<[Subject, Action][]>> =>
       options?.casbinPermissionDecorator ?? AllowActions,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },

@@ -3,6 +3,7 @@ import type { AuthTokenPayloadBase } from '../typings/auth-token-payload';
 
 declare module 'express-serve-static-core' {
   interface Request {
+    cookies?: Record<string, string>;
     enforcer?: Enforcer | null;
     payload?: AuthTokenPayloadBase;
     casbinPermissionChecker?: (options: {
@@ -12,4 +13,3 @@ declare module 'express-serve-static-core' {
     }) => Promise<boolean>;
   }
 }
-

@@ -21,7 +21,7 @@ import {
 import { sign, verify as verifyJWT } from 'jsonwebtoken';
 import type { AuthTokenPayloadBase } from '../typings/auth-token-payload';
 import { MemberLoginLogEntity, MemberLoginLogRepo } from '../models/member-login-log.entity';
-import { TokenPairDTO } from '../dto/token-pair.dto';
+import { TokenPairDto } from '../dto/token-pair.dto';
 import { MemberBaseModuleOptionsDTO } from '../typings/member-base-module-options.dto';
 import { PasswordValidatorService } from './password-validator.service';
 import { MemberPasswordHistoryEntity, MemberPasswordHistoryRepo } from '../models/member-password-history.entity';
@@ -292,7 +292,7 @@ export class MemberBaseService<MemberEntity extends BaseMemberEntity = BaseMembe
     return [member as T, password];
   }
 
-  async refreshToken(refreshToken: string, options?: { domain?: string }): Promise<TokenPairDTO> {
+  async refreshToken(refreshToken: string, options?: { domain?: string }): Promise<TokenPairDto> {
     try {
       const {
         id,
@@ -335,7 +335,7 @@ export class MemberBaseService<MemberEntity extends BaseMemberEntity = BaseMembe
     account: string,
     password: string,
     ip?: string, // IP address as string
-  ): Promise<TokenPairDTO>;
+  ): Promise<TokenPairDto>;
   async login(
     account: string,
     password: string,
@@ -343,7 +343,7 @@ export class MemberBaseService<MemberEntity extends BaseMemberEntity = BaseMembe
       domain?: string;
       ip?: string;
     },
-  ): Promise<TokenPairDTO>;
+  ): Promise<TokenPairDto>;
   async login(
     account: string,
     password: string,
@@ -353,7 +353,7 @@ export class MemberBaseService<MemberEntity extends BaseMemberEntity = BaseMembe
           ip?: string;
         }
       | string,
-  ): Promise<TokenPairDTO> {
+  ): Promise<TokenPairDto> {
     const member = await this.baseMemberRepo.findOne({
       where: { account },
     });

@@ -3,6 +3,9 @@ import type { MemberBaseModuleOptionsDTO } from './member-base-module-options.dt
 import type { MemberBaseModuleOptionFactoryInterface } from './member-base-module-option-factory';
 import type { BaseMemberEntity } from '../models/base-member.entity';
 
+/**
+ * @deprecated Prefer using the alias `MemberBaseModuleAsyncOptions` for clarity.
+ */
 export interface MemberBaseModuleAsyncOptionsDTO<
   MemberEntity extends BaseMemberEntity = BaseMemberEntity,
   TokenPayload extends {
