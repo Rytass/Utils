@@ -1,4 +1,4 @@
-import { InjectionToken } from '@nestjs/common';
+import type { InjectionToken } from '@nestjs/common';
 
 /**
  * Represents possible dependency injection tokens
