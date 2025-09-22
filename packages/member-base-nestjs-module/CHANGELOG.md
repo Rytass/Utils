@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.15](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.14...@rytass/member-base-nestjs-module@0.2.15) (2025-09-22)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** align casbin payload typings ([f1d5e1a](https://github.com/Rytass/Utils/commit/f1d5e1af7703805425a33f1267e1c06d3b661f77))
+
+### Features
+
+- **member-base-nestjs-module:** add non-breaking options type aliases ([745f6ab](https://github.com/Rytass/Utils/commit/745f6ab12dc96729ab5183d63c46cfa7e79f78ac))
+- **member-base-nestjs-module:** add token payload type ([9546e78](https://github.com/Rytass/Utils/commit/9546e78f093d19b3c58ba0f24c10449d29fdc332))
+- **member-base-nestjs-module:** centralize injection tokens and add cookie-name tokens ([45c6549](https://github.com/Rytass/Utils/commit/45c654979bcf5b1d3efb7242357fef1d56d55875))
+- **member-base-nestjs-module:** prefer header over cookie and validate access token in utils ([d6eb7e6](https://github.com/Rytass/Utils/commit/d6eb7e69429b47611d4667bf5ca4b0ef1f01f440))
+
 ## [0.2.14](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.13...@rytass/member-base-nestjs-module@0.2.14) (2025-09-16)
 
 ### Bug Fixes
