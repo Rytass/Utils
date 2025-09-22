@@ -193,6 +193,7 @@ export interface CreditCardAuthInfo {
   channel: Channel.CREDIT_CARD;
   processDate: Date;
   authCode: string; // Credit Card Auth Code (6 digits)
+  xid: string;
   amount: number;
   eci: CreditCardECI;
   card4Number: string;

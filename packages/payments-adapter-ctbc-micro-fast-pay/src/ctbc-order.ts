@@ -10,7 +10,9 @@ import {
   PaymentItem,
 } from '@rytass/payments';
 import { CTBCPayment, debugPayment } from './ctbc-payment';
-import { posApiCancelRefund, posApiRefund } from './ctbc-pos-api-utils';
+import { posApiCancelRefund, posApiSmartCancelOrRefund } from './ctbc-pos-api-utils';
+import { amexCancelRefund, amexSmartCancelOrRefund } from './ctbc-amex-api-utils';
+import type { CTBCAmexCancelRefundParams, CTBCAmexConfig, CTBCAmexRefundParams } from './typings';
 import {
   CTBCCheckoutWithBoundCardRequestPayload,
   CTBCOrderCommitMessage,
@@ -20,6 +22,11 @@ import {
   CTBCPosApiRefundParams,
   OrderCreateInit,
 } from './typings';
+
+export type AmexCreditCardAuthInfo = CreditCardAuthInfo & {
+  capBatchId?: string;
+  capBatchSeq?: string;
+};
 
 export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessage> implements Order<OCM> {
   private readonly _id: string;
@@ -39,9 +46,6 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
   private readonly _checkoutMemberId: string | null = null;
   private readonly _checkoutCardId: string | null = null;
   private readonly _cardType: CardType;
-
-  // POS API 相關資訊，用於後續操作（如退款）
-  private _xid: string | undefined;
 
   constructor(options: OrderCreateInit<OCM>) {
     this._id = options.id;
@@ -158,15 +162,6 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
     return this._cardType;
   }
 
-  get xid(): string | undefined {
-    return this._xid;
-  }
-
-  // 設定 POS API 相關資訊（通常在交易成功後調用）
-  setPosApiInfo(xid?: string): void {
-    if (xid) this._xid = xid;
-  }
-
   infoRetrieved(info: AsyncOrderInformation<OCM>): void {
     this._asyncInfo = info;
     this._state = OrderState.ASYNC_INFO_RETRIEVED;
@@ -235,80 +230,114 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
     const isAmex = this._cardType === CardType.AE;
 
     if (isAmex) {
-      throw new Error('AMEX refund is not implemented');
-      // // 使用 AMEX SOAP API 退款
-      // const amexRefundParams: CTBCAmexRefundParams = {
-      //   merId: this._gateway.merId,
-      //   xid: this._id, // 假設使用訂單ID作為交易ID
-      //   lidm: this._id,
-      //   credAmt: refundAmount,
-      //   IN_MAC_KEY: this._gateway.amexApiMacKey!,
-      // };
+      // AE: 使用智慧流程自動判斷 AuthRev / CapRev / Refund
+      try {
+        const base = new URL(this._gateway.baseUrl);
+        const host = base.hostname;
+        const port = base.port ? parseInt(base.port, 10) : base.protocol === 'https:' ? 443 : 80;
+        const wsdlUrl = `${base.protocol}//${host}${port && ![80, 443].includes(port) ? `:${port}` : ''}/HubAgentConsole/services/AEPaymentSoap?wsdl`;
 
-      // const result = await amexRefund(this._gateway.amexApiConfig!, amexRefundParams);
+        const amexConfig: CTBCAmexConfig = {
+          host,
+          port,
+          wsdlUrl,
+        };
 
-      // if (result.errCode !== '00') {
-      //   this._state = OrderState.FAILED;
-      //   this._failedCode = result.errCode;
-      //   this._failedMessage = result.errDesc || 'AMEX refund failed';
+        const amexParams: CTBCAmexRefundParams = {
+          merId: this._gateway.merId,
+          xid: (this.additionalInfo as CreditCardAuthInfo).xid as string,
+          lidm: this._id,
+          orgAmt: totalAmount,
+          purchAmt: refundAmount,
+          IN_MAC_KEY: this._gateway.txnKey,
+        };
 
-      //   throw new Error(this._failedMessage);
-      // }
+        const { action, response } = await amexSmartCancelOrRefund(amexConfig, amexParams);
 
-      // // AMEX 退款成功
-      // this._state = OrderState.REFUNDED;
+        debugPayment(`AMEX flow action=${action}, result=${JSON.stringify(response)}`);
+
+        if (response.RespCode === '0') {
+          // 視為財務已回復（取消或退款成功）
+          this._state = OrderState.REFUNDED;
+
+          const capBatchId = response.capBatchId;
+          const capBatchSeq = response.capBatchSeq;
+
+          if (capBatchId && capBatchSeq && this._additionalInfo) {
+            const updatedInfo: AmexCreditCardAuthInfo = {
+              ...(this._additionalInfo as CreditCardAuthInfo),
+              capBatchId,
+              capBatchSeq,
+            };
+
+            this._additionalInfo = updatedInfo as AdditionalInfo<OCM>;
+          }
+        } else {
+          this._state = OrderState.FAILED;
+          this._failedCode = response.ErrCode ?? response.RespCode;
+          this._failedMessage = response.ERRDESC || 'AMEX refund/cancel flow failed';
+          throw new Error(this._failedMessage);
+        }
+      } catch (error) {
+        if (this._state !== OrderState.FAILED) {
+          this._state = OrderState.FAILED;
+          this._failedMessage = error instanceof Error ? error.message : 'Unknown AMEX refund error';
+        }
+
+        throw error;
+      }
     } else {
-      // 使用 POS API 退款 - 直接使用已保存的 XID 和 AuthCode
+      // 使用 POS API 智慧取消/退款（AuthRev / CapRev / Refund）
       const posApiConfig: CTBCPosApiConfig = {
         URL: this._gateway.baseUrl,
         MacKey: this._gateway.txnKey,
       };
 
       // 檢查是否有必要的 XID 和 AuthCode
-      if (!this._xid || !this._additionalInfo) {
+      if (!(this.additionalInfo as CreditCardAuthInfo).xid && !(this.additionalInfo as CreditCardAuthInfo).authCode) {
         this._state = OrderState.FAILED;
         this._failedMessage =
-          'Missing XID or AuthCode for refund operation. Please ensure the order was properly committed with POS API information.';
+          'Missing XID or AuthCode for refund operation. Please ensure the order was properly committed with information.';
 
         throw new Error(this._failedMessage);
       }
 
       try {
-        // 執行退款
-
+        const xid = (this.additionalInfo as CreditCardAuthInfo).xid;
         const authCode = (this.additionalInfo as CreditCardAuthInfo).authCode;
         const refundParams: CTBCPosApiRefundParams = {
           MERID: this._gateway.merId,
           'LID-M': this._id,
           OrgAmt: totalAmount.toString(),
           AuthCode: authCode,
-          XID: this._xid,
+          XID: xid,
           currency: '901', // NTD
           PurchAmt: refundAmount.toString(),
           exponent: '0',
         };
 
-        debugPayment(`執行 POS API 退款: XID=${this._xid}, AuthCode=${authCode}, 退款金額=${refundAmount}`);
+        debugPayment(`執行 POS 智慧取消/退款: XID=${xid}, AuthCode=${authCode}, 金額=${refundAmount}`);
 
-        // 執行退款
-        const refundResult = await posApiRefund(posApiConfig, refundParams);
+        // 智慧流程：查詢 → 決策 → AuthRev/CapRev/Refund
+        const { action, response } = await posApiSmartCancelOrRefund(posApiConfig, refundParams);
 
-        if (typeof refundResult === 'number') {
+        debugPayment(`POS flow action=${action}, result=${JSON.stringify(response)}`);
+
+        if (typeof response === 'number') {
           this._state = OrderState.FAILED;
-          this._failedCode = refundResult.toString();
-          this._failedMessage = `Refund failed with error code: ${refundResult}`;
+          this._failedCode = response.toString();
+          this._failedMessage = `Refund/Cancel failed with error code: ${response}`;
           throw new Error(this._failedMessage);
         }
 
-        // 檢查退款結果
-        if (refundResult.RespCode === '0') {
-          // 退款成功
+        // 成功（RespCode === '0'）視為金流已回復（取消或退款）
+        if (response.RespCode === '0') {
           this._state = OrderState.REFUNDED;
         } else {
           // 其他錯誤情況
           this._state = OrderState.FAILED;
-          this._failedCode = refundResult.RespCode;
-          this._failedMessage = refundResult.ERRDESC || refundResult.ErrorDesc || 'Refund failed';
+          this._failedCode = response.RespCode;
+          this._failedMessage = response.ERRDESC || response.ErrorDesc || 'Refund/Cancel failed';
           throw new Error(this._failedMessage);
         }
       } catch (error) {
@@ -328,7 +357,13 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
     }
   }
 
-  async cancelRefund(amount: number): Promise<void> {
+  async cancelRefund(
+    amount: number,
+    amexCancelArgs?: {
+      capBatchId: string;
+      capBatchSeq: string;
+    },
+  ): Promise<void> {
     // 只有已提交的訂單才能進行退款撤銷操作
     // 不需要限制必須是 REFUNDED 狀態，因為部分退款的訂單狀態仍然是 COMMITTED
     if (this._state !== OrderState.COMMITTED && this._state !== OrderState.REFUNDED) {
@@ -346,7 +381,76 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
     const isAmex = this._cardType === CardType.AE;
 
     if (isAmex) {
-      throw new Error('AMEX cancel refund is not implemented');
+      if (!this._additionalInfo || !amexCancelArgs) {
+        this._state = OrderState.FAILED;
+        this._failedMessage =
+          'Missing refund metadata for AMEX cancel refund. Please ensure the order was refunded via AMEX flow.';
+
+        throw new Error(this._failedMessage);
+      }
+
+      const amexInfo = this._additionalInfo as AmexCreditCardAuthInfo;
+      const xid = amexInfo.xid;
+      const capBatchId = amexInfo.capBatchId || amexCancelArgs?.capBatchId;
+      const capBatchSeq = amexInfo.capBatchSeq || amexCancelArgs?.capBatchSeq;
+
+      if (!xid || !capBatchId || !capBatchSeq) {
+        this._state = OrderState.FAILED;
+        this._failedMessage =
+          'Missing XID, capBatchId or capBatchSeq for AMEX cancel refund. Please ensure prior AMEX refund was successful.';
+
+        throw new Error(this._failedMessage);
+      }
+
+      try {
+        const base = new URL(this._gateway.baseUrl);
+        const host = base.hostname;
+        const port = base.port ? parseInt(base.port, 10) : base.protocol === 'https:' ? 443 : 80;
+        const wsdlUrl = `${base.protocol}//${host}${port && ![80, 443].includes(port) ? `:${port}` : ''}/HubAgentConsole/services/AEPaymentSoap?wsdl`;
+
+        const amexConfig: CTBCAmexConfig = {
+          host,
+          port,
+          wsdlUrl,
+        };
+
+        const cancelParams: CTBCAmexCancelRefundParams = {
+          merId: this._gateway.merId,
+          lidm: this._id,
+          xid,
+          capBatchId,
+          capBatchSeq,
+          IN_MAC_KEY: this._gateway.txnKey,
+        };
+
+        debugPayment(
+          `執行 AMEX 退款撤銷: XID=${xid}, capBatchId=${capBatchId}, capBatchSeq=${capBatchSeq}, 撤銷金額=${cancelRefundAmount}`,
+        );
+
+        const cancelResponse = await amexCancelRefund(amexConfig, cancelParams);
+
+        debugPayment(`AMEX cancel refund result=${JSON.stringify(cancelResponse)}`);
+
+        if (cancelResponse.RespCode === '0') {
+          this._state = OrderState.COMMITTED;
+
+          const { capBatchId, capBatchSeq, ...restInfo } = amexInfo;
+
+          this._additionalInfo = restInfo as AdditionalInfo<OCM>;
+        } else {
+          this._state = OrderState.FAILED;
+          this._failedCode = cancelResponse.ErrCode ?? cancelResponse.RespCode;
+          this._failedMessage = cancelResponse.ERRDESC || 'AMEX cancel refund failed';
+          throw new Error(this._failedMessage);
+        }
+      } catch (error) {
+        if (this._state !== OrderState.FAILED) {
+          this._state = OrderState.FAILED;
+          this._failedMessage = error instanceof Error ? error.message : 'Unknown AMEX cancel refund error';
+        }
+
+        throw error;
+      }
     } else {
       const posApiConfig: CTBCPosApiConfig = {
         URL: this._gateway.baseUrl,
@@ -354,7 +458,7 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
       };
 
       // 檢查是否有必要的 XID 和 AuthCode
-      if (!this._xid || !this._additionalInfo) {
+      if (!this._additionalInfo) {
         this._state = OrderState.FAILED;
         this._failedMessage =
           'Missing XID or AuthCode for refund cancellation operation. Please ensure the order was properly committed with POS API information.';
@@ -363,18 +467,20 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
       }
 
       try {
+        const xid = (this.additionalInfo as CreditCardAuthInfo).xid;
         const authCode = (this.additionalInfo as CreditCardAuthInfo).authCode;
+
         const cancelRefundParams: CTBCPosApiCancelRefundParams = {
           MERID: this._gateway.merId,
           'LID-M': this._id,
           CredRevAmt: cancelRefundAmount.toString(),
           AuthCode: authCode,
-          XID: this._xid,
+          XID: xid,
           currency: '901', // NTD
           exponent: '0',
         };
 
-        debugPayment(`執行 POS API 退款撤銷: XID=${this._xid}, AuthCode=${authCode}, 撤銷金額=${cancelRefundAmount}`);
+        debugPayment(`執行 POS API 退款撤銷: XID=${xid}, AuthCode=${authCode}, 撤銷金額=${cancelRefundAmount}`);
 
         // 執行退款撤銷
         const cancelRefundResult = await posApiCancelRefund(posApiConfig, cancelRefundParams);

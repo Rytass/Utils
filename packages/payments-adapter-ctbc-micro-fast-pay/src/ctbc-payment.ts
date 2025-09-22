@@ -208,15 +208,9 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
             authCode: payload.get('authCode') as string,
             card6Number: (payload.get('CardNumber') ?? '').substring(0, 6),
             card4Number: payload.get('Last4digitPAN') as string,
+            xid: payload.get('XID') ?? payload.get('xid') ?? undefined,
           } as AdditionalInfo<OrderCreditCardCommitMessage>,
         );
-
-        // XID會在需要退款時使用, 先記錄
-        const xid = payload.get('xid') as string;
-
-        if (xid) {
-          order.setPosApiInfo(xid);
-        }
 
         debugPaymentServer(`CTBCPayment callback checkout order ${order.id} successful.`);
 
@@ -539,7 +533,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
     const orderId = options.id ?? randomBytes(8).toString('hex');
 
     const cardType = options.cardType;
-    const orderDesc = options.items.map(item => item.name).join(', ');
+    const orderDesc = options.items.map(item => item.name).join(',');
     const txType = options.cardType === CardType.AE ? '6' : '0';
     const option = options.cardType === CardType.AE ? '' : '1';
 
@@ -571,7 +565,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
     params.push('OrderDesc=');
 
     if (orderDesc) {
-      params.push(iconv.encode(orderDesc.replace(/\s/g, ''), 'big5'));
+      params.push(this.toBig5MaxBytes(orderDesc, 36, { stripWhitespace: true })); // Max 36 bytes according to CTBC response error message
     }
 
     params.push('&ProdCode=&');
@@ -704,6 +698,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
             // 從 PAN 欄位提取卡號信息（格式如 "400361******7729"）
             card6Number: result.PAN ? result.PAN.substring(0, 6) : '',
             card4Number: result.PAN ? result.PAN.slice(-4) : '',
+            xid: result.XID?.trim() || '',
           };
 
           // 直接設定內部狀態，而不是調用 commit 方法
@@ -712,22 +707,12 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
           (reconstructedOrder as unknown as { _committedAt: Date })._committedAt = new Date();
           (reconstructedOrder as unknown as { _additionalInfo: typeof additionalInfo })._additionalInfo =
             additionalInfo;
-
-          // 保存 XID（由於 setPosApiInfo 現在只接受 xid 參數）
-          if (result.XID?.trim()) {
-            reconstructedOrder.setPosApiInfo(result.XID.trim());
-          }
         }
 
         // 將重建的訂單加入快取
         await this.orderCache.set(id, reconstructedOrder);
 
         return reconstructedOrder as OO;
-      }
-
-      // 如果快取中有訂單，更新其 XID 資訊（如果有的話）
-      if (result.XID?.trim()) {
-        order.setPosApiInfo(result.XID.trim());
       }
 
       return order as OO;
@@ -848,5 +833,21 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
     });
 
     return order;
+  }
+
+  toBig5MaxBytes(str: string, maxBytes = 36, opts: { stripWhitespace?: boolean } = { stripWhitespace: true }): Buffer {
+    const s = opts.stripWhitespace ? str.replace(/\s/g, '') : str; // true=預設移除空白
+    const chunks: Buffer[] = [];
+    let total = 0;
+
+    for (const ch of s) {
+      const b = iconv.encode(ch, 'big5'); // ASCII(含半形 ,) 1 byte；常見中日韓字 2 bytes
+
+      if (total + b.length > maxBytes) break;
+      chunks.push(b);
+      total += b.length;
+    }
+
+    return Buffer.concat(chunks, total);
   }
 }
