@@ -2,23 +2,47 @@ import {
   CTBCAmexConfig,
   CTBCAmexInquiryParams,
   CTBCAmexRefundParams,
-  CTBCAmexInquiryResponse,
-  CTBCAmexRefundResponse,
+  CTBCAmexCancelRefundParams,
+  CTBCAmexAuthRevParams,
+  CTBCAmexCapRevParams,
+  CTBCPosApiResponse,
   SoapRequestData,
   SoapResponse,
   AmexPoDetailItem,
+  SoapInquiryResult,
+  CTBCAmexRefundResponse,
 } from './typings';
-import { desMac } from './ctbc-crypto-core';
+import { desEcbEncryptHex } from './ctbc-crypto-core';
 import * as soap from 'soap';
-import * as iconv from 'iconv-lite';
 
 /**
  * AMEX SOAP 客戶端包裝器
  * 對應 PHP 版本的 CTCBAEGateway 類別
  */
+type SoapClient = Record<string, (args: unknown, cb: (err: unknown, result: unknown) => void) => void>;
+
+type AmexResponse = {
+  errCode?: string;
+  errDesc?: string;
+  mac?: string;
+  // Inquiry
+  count?: number;
+  poDetails?: AmexPoDetailItem[];
+  // Refund / Capture / Cancel
+  aetId?: string;
+  xid?: string;
+  credAmt?: string;
+  unCredAmt?: string;
+  capBatchId?: string;
+  capBatchSeq?: string;
+  capAmt?: string;
+  unCapAmt?: string;
+  termSeq?: string;
+} & Record<string, unknown>;
+
 export class CTBCAEGateway {
   private serverConfig: CTBCAmexConfig = {} as CTBCAmexConfig;
-  private response: CTBCAmexInquiryResponse | CTBCAmexRefundResponse = {} as CTBCAmexInquiryResponse;
+  private response: AmexResponse = {};
 
   constructor(config: CTBCAmexConfig) {
     this.serverConfig = config;
@@ -28,7 +52,7 @@ export class CTBCAEGateway {
    * AMEX 查詢功能
    * 對應 PHP amex.php 的 Inquiry 方法
    */
-  async inquiry(params: CTBCAmexInquiryParams): Promise<CTBCAmexInquiryResponse> {
+  async inquiry(params: CTBCAmexInquiryParams): Promise<CTBCPosApiResponse> {
     this.response = {
       count: 0,
       mac: '',
@@ -38,7 +62,7 @@ export class CTBCAEGateway {
     };
 
     if (!this.checkServer(this.serverConfig)) {
-      return this.response;
+      return this.toPosInquiryResponse(this.response);
     }
 
     const requestData: SoapRequestData = {} as SoapRequestData;
@@ -46,7 +70,7 @@ export class CTBCAEGateway {
     const merIdResult = this.checkMerId(params.merId);
 
     if (!merIdResult) {
-      return this.response;
+      return this.toPosInquiryResponse(this.response);
     }
 
     requestData.merId = merIdResult;
@@ -54,7 +78,7 @@ export class CTBCAEGateway {
     const lidmResult = this.checkLidm(params.lidm);
 
     if (!lidmResult) {
-      return this.response;
+      return this.toPosInquiryResponse(this.response);
     }
 
     requestData.lidm = lidmResult;
@@ -64,7 +88,7 @@ export class CTBCAEGateway {
       const xidResult = this.checkXid(params.xid);
 
       if (!xidResult) {
-        return this.response;
+        return this.toPosInquiryResponse(this.response);
       }
 
       requestData.xid = xidResult;
@@ -74,27 +98,11 @@ export class CTBCAEGateway {
       requestData.xid = ''; // 或者可以不設置這個欄位
     }
 
-    // 根據 Java 代碼，查詢操作 (case 2) 的 MAC 組成格式：
-    // merId (左補零到12位) + xid (右補空格到12位) + lidm (右補空格到24位)
-    // 如果文檔說 MAC 是 optional，我們可以嘗試不提供
-    if (params.IN_MAC_KEY) {
-      const paddedMerId = requestData.merId.padStart(12, '0');
-      const paddedXid = requestData.xid.padEnd(12, ' ');
-      const paddedLidm = requestData.lidm.padEnd(24, ' ');
-      const macString = paddedMerId + paddedXid + paddedLidm;
+    // 查詢 MAC：merId(12,左補0) + lidm(20,右補空白)
+    {
+      const macString = requestData.merId.padStart(12, '0') + requestData.lidm.padEnd(20, ' ');
 
-      console.log('Java-style MAC String (with quotes):', JSON.stringify(macString));
-      console.log('MAC String UTF-8 hex:', Buffer.from(macString, 'utf8').toString('hex'));
-      console.log('MAC String Big5 hex:', iconv.encode(macString, 'big5').toString('hex'));
-      console.log('MAC String length:', macString.length);
-      console.log('MAC Key length:', params.IN_MAC_KEY.length);
-
-      requestData.mac = this.createMac(macString, params.IN_MAC_KEY);
-      console.log('Generated MAC (Java format):', requestData.mac);
-    } else {
-      console.log('No MAC Key provided - testing with empty MAC string');
-      // 嘗試提供空 MAC 字符串
-      requestData.mac = '';
+      requestData.mac = params.IN_MAC_KEY ? this.createMac(macString, params.IN_MAC_KEY) : '';
     }
 
     const startTime = Date.now();
@@ -102,104 +110,112 @@ export class CTBCAEGateway {
     try {
       console.log('AMEX SOAP Inquiry Request:', requestData);
 
-      // 創建 SOAP 客戶端
-      if (!this.serverConfig.wsdlUrl) {
-        throw new Error('WSDL URL is required');
-      }
+      // 組合 WSDL URL（優先使用 wsdlUrl；否則依 host/port 組合，對齊 PHP）
+      const wsdlUrl =
+        this.serverConfig.wsdlUrl ||
+        (this.serverConfig.port
+          ? `http://${this.serverConfig.host}:${this.serverConfig.port}/HubAgentConsole/services/AEPaymentSoap?wsdl`
+          : `https://${this.serverConfig.host}/HubAgentConsole/services/AEPaymentSoap?wsdl`);
 
-      const soapClient = await soap.createClientAsync(this.serverConfig.wsdlUrl, {
+      const soapClient = await soap.createClientAsync(wsdlUrl, {
         wsdl_options: this.serverConfig.sslOptions,
-        // timeout: this.serverConfig.timeout || 30000, // timeout 不在 IOptions 中
       });
 
+      const client = soapClient as SoapClient;
+
       // 根據 WSDL，這是 RPC style SOAP，參數需要包裝在 request 對象中
-      const rpcRequest = {
-        request: requestData,
-      };
+      const rpcRequest: { request: SoapRequestData } = { request: requestData };
 
       console.log('RPC SOAP Request structure:', JSON.stringify(rpcRequest, null, 2));
 
       // 調用 SOAP 方法
-      const soapResponse: SoapResponse = await new Promise((resolve, reject) => {
-        if (typeof soapClient.inquiry === 'function') {
-          // RPC style SOAP 需要傳遞 request 參數
-          soapClient.inquiry(rpcRequest, (err: unknown, result: unknown) => {
-            if (err) {
-              console.error('SOAP inquiry error:', err);
-              reject(err);
-            } else {
-              console.log('SOAP inquiry success:', result);
-              resolve(result as SoapResponse);
-            }
-          });
+      const soapResponse: SoapResponse = await new Promise<SoapResponse>((resolve, reject) => {
+        const call = (name: string, payload: unknown): void =>
+          client[name](payload, (err: unknown, result: unknown) =>
+            err ? reject(err) : resolve(result as SoapResponse),
+          );
+
+        if (typeof client['Inquiry'] === 'function') {
+          call('Inquiry', rpcRequest);
+        } else if (typeof client['inquiry'] === 'function') {
+          call('inquiry', rpcRequest);
         } else {
-          console.error('Available SOAP methods:', Object.keys(soapClient));
-          reject(new Error('SOAP method "inquiry" not found in WSDL'));
+          console.error('Available SOAP methods:', Object.keys(client));
+          reject(new Error('SOAP method "Inquiry" not found in WSDL'));
         }
       });
 
       console.log('AMEX SOAP Response:', soapResponse);
 
       // 處理 RPC style SOAP 回應
-      const inquiryResult = soapResponse?.inquiryReturn || soapResponse;
+      const inquiryResult = (soapResponse.inquiryReturn ?? soapResponse) as SoapInquiryResult | SoapResponse;
 
       // 處理 SOAP 回應
-      if (inquiryResult.count !== undefined && inquiryResult.count !== null) {
-        this.response.count = parseInt(inquiryResult.count.toString()) || 0;
+      if (
+        (inquiryResult as SoapInquiryResult).count !== undefined &&
+        (inquiryResult as SoapInquiryResult).count !== null
+      ) {
+        const c = (inquiryResult as SoapInquiryResult).count;
+
+        this.response.count = typeof c === 'number' ? c : parseInt(String(c)) || 0;
       }
 
-      if (inquiryResult.errCode !== undefined && inquiryResult.errCode !== null) {
-        this.response.errCode = inquiryResult.errCode.toString();
+      if (
+        (inquiryResult as SoapInquiryResult).errCode !== undefined &&
+        (inquiryResult as SoapInquiryResult).errCode !== null
+      ) {
+        this.response.errCode = String((inquiryResult as SoapInquiryResult).errCode);
       }
 
-      if (inquiryResult.errDesc !== undefined && inquiryResult.errDesc !== null) {
-        this.response.errDesc = inquiryResult.errDesc.toString();
+      if (
+        (inquiryResult as SoapInquiryResult).errDesc !== undefined &&
+        (inquiryResult as SoapInquiryResult).errDesc !== null
+      ) {
+        this.response.errDesc = String((inquiryResult as SoapInquiryResult).errDesc);
       }
 
-      if (inquiryResult.mac !== undefined && inquiryResult.mac !== null) {
-        this.response.mac = inquiryResult.mac.toString();
-      }
+      // mac 於下方檢核後以 'Y'/'F'/'N' 形式寫入
 
-      if (inquiryResult.poDetails) {
-        this.response.poDetails = Array.isArray(inquiryResult.poDetails)
-          ? inquiryResult.poDetails.map((detail: AmexPoDetailItem) => ({
-              aetId: detail.aetid || detail.aetId,
-              xid: detail.xid,
-              authCode: detail.authCode,
-              termSeq: detail.termSeq,
-              authAmt: detail.purchAmt ? detail.purchAmt.toString() : detail.authAmt || '',
-              currency: detail.currency || 'TWD',
-              status: detail.status,
-              txnType: detail.txnType,
-              expDate: detail.expDate,
+      const pd = (inquiryResult as SoapInquiryResult).poDetails;
+
+      if (pd) {
+        this.response.poDetails = Array.isArray(pd)
+          ? pd.map(detail => ({
+              aetId: (detail as AmexPoDetailItem).aetid || (detail as AmexPoDetailItem).aetId,
+              xid: (detail as AmexPoDetailItem).xid,
+              authCode: (detail as AmexPoDetailItem).authCode,
+              termSeq: (detail as AmexPoDetailItem).termSeq,
+              authAmt: (detail as AmexPoDetailItem).purchAmt
+                ? String((detail as AmexPoDetailItem).purchAmt)
+                : (detail as AmexPoDetailItem).authAmt || '',
+              currency: (detail as AmexPoDetailItem).currency || 'TWD',
+              status: (detail as AmexPoDetailItem).status,
+              txnType: (detail as AmexPoDetailItem).txnType,
+              expDate: (detail as AmexPoDetailItem).expDate,
             }))
           : [
               {
-                aetId:
-                  (inquiryResult.poDetails as AmexPoDetailItem).aetid ||
-                  (inquiryResult.poDetails as AmexPoDetailItem).aetId,
-                xid: (inquiryResult.poDetails as AmexPoDetailItem).xid,
-                authCode: (inquiryResult.poDetails as AmexPoDetailItem).authCode,
-                termSeq: (inquiryResult.poDetails as AmexPoDetailItem).termSeq,
-                authAmt: (inquiryResult.poDetails as AmexPoDetailItem).purchAmt
-                  ? (inquiryResult.poDetails as AmexPoDetailItem).purchAmt?.toString() || ''
-                  : (inquiryResult.poDetails as AmexPoDetailItem).authAmt || '',
-                currency: (inquiryResult.poDetails as AmexPoDetailItem).currency || 'TWD',
-                status: (inquiryResult.poDetails as AmexPoDetailItem).status,
-                txnType: (inquiryResult.poDetails as AmexPoDetailItem).txnType,
-                expDate: (inquiryResult.poDetails as AmexPoDetailItem).expDate,
+                aetId: (pd as AmexPoDetailItem).aetid || (pd as AmexPoDetailItem).aetId,
+                xid: (pd as AmexPoDetailItem).xid,
+                authCode: (pd as AmexPoDetailItem).authCode,
+                termSeq: (pd as AmexPoDetailItem).termSeq,
+                authAmt: (pd as AmexPoDetailItem).purchAmt
+                  ? String((pd as AmexPoDetailItem).purchAmt)
+                  : (pd as AmexPoDetailItem).authAmt || '',
+                currency: (pd as AmexPoDetailItem).currency || 'TWD',
+                status: (pd as AmexPoDetailItem).status,
+                txnType: (pd as AmexPoDetailItem).txnType,
+                expDate: (pd as AmexPoDetailItem).expDate,
               },
             ];
       }
 
-      const responseSMac = this.sprintf('%08d', this.response.count) + this.padOrTruncate(this.response.errCode, 8);
+      const responseSMac =
+        this.sprintf('%08d', this.response.count ?? 0) + this.padOrTruncate(this.response.errCode || '', 8);
 
-      // 只有在提供 MAC Key 的情況下才檢查 MAC
-      if (params.IN_MAC_KEY) {
-        this.checkMac(responseSMac, params.IN_MAC_KEY, inquiryResult.mac?.toString() || '');
-      } else {
-        console.log('No MAC Key provided - skipping MAC validation');
-      }
+      const recvMac = inquiryResult?.mac?.toString() || '';
+
+      this.checkMac(responseSMac, params.IN_MAC_KEY || '', recvMac);
 
       const endTime = Date.now();
 
@@ -210,14 +226,14 @@ export class CTBCAEGateway {
       this.response.errDesc = `SOAP communication failed: ${error instanceof Error ? error.message : String(error)}`;
     }
 
-    return this.response;
+    return this.toPosInquiryResponse(this.response);
   }
 
   /**
    * AMEX 退款功能
    * 對應 PHP amex.php 的 Cred 方法
    */
-  async refund(params: CTBCAmexRefundParams): Promise<CTBCAmexRefundResponse> {
+  async refund(params: CTBCAmexRefundParams): Promise<CTBCPosApiResponse> {
     this.response = {
       aetId: '',
       xid: '',
@@ -231,7 +247,7 @@ export class CTBCAEGateway {
     };
 
     if (!this.checkServer(this.serverConfig)) {
-      return this.response;
+      return this.toPosRefundResponse(this.response);
     }
 
     const requestData: SoapRequestData = {} as SoapRequestData;
@@ -239,7 +255,7 @@ export class CTBCAEGateway {
     const merIdResult = this.checkMerId(params.merId);
 
     if (!merIdResult) {
-      return this.response;
+      return this.toPosRefundResponse(this.response);
     }
 
     requestData.merId = merIdResult;
@@ -247,21 +263,36 @@ export class CTBCAEGateway {
     const xidResult = this.checkXid(params.xid);
 
     if (!xidResult) {
-      return this.response;
+      return this.toPosRefundResponse(this.response);
     }
 
     requestData.xid = xidResult;
 
-    const credAmtResult = this.checkCredAmt(params.credAmt);
+    const purchAmtResult = this.checkCredAmt(params.purchAmt);
 
-    if (!credAmtResult) {
-      return this.response;
+    if (!purchAmtResult) {
+      return this.toPosRefundResponse(this.response);
     }
 
-    requestData.credAmt = credAmtResult;
+    requestData.credAmt = purchAmtResult;
 
-    const sMac = requestData.merId + requestData.xid + requestData.credAmt;
+    // 退款 MAC：merId(12,左補0) + credAmt(12,左補0) + xid(12,右補空白) + lidm(20,右補空白)
 
+    const lidmResult = this.checkLidm(params.lidm);
+
+    if (!lidmResult) {
+      return this.toPosRefundResponse(this.response);
+    }
+
+    requestData.lidm = lidmResult;
+
+    const sMac =
+      requestData.merId.padStart(12, '0') +
+      String(requestData.credAmt).padStart(12, '0') +
+      requestData.xid.padEnd(12, ' ') +
+      requestData.lidm.padEnd(20, ' ');
+
+    // 按 PHP 規格只送 mac，不送 IN_MAC_KEY
     requestData.mac = this.createMac(sMac, params.IN_MAC_KEY);
 
     const startTime = Date.now();
@@ -269,52 +300,56 @@ export class CTBCAEGateway {
     try {
       console.log('AMEX SOAP Refund Request:', requestData);
 
-      if (!this.serverConfig.wsdlUrl) {
-        console.log('No WSDL URL provided, returning mock response for testing');
-        const mockResponse = {
-          aetId: 'MOCK_REFUND_001',
-          xid: params.xid,
-          credAmt: String(params.credAmt),
-          unCredAmt: '0',
-          capBatchId: 'MOCK_BATCH',
-          capBatchSeq: '001',
-          errCode: '00',
-          errDesc: 'Refund Success (Mock Response)',
-          mac: 'MOCK_MAC',
-        };
+      const wsdlUrl =
+        this.serverConfig.wsdlUrl ||
+        (this.serverConfig.port
+          ? `http://${this.serverConfig.host}:${this.serverConfig.port}/HubAgentConsole/services/AEPaymentSoap?wsdl`
+          : `https://${this.serverConfig.host}/HubAgentConsole/services/AEPaymentSoap?wsdl`);
 
-        Object.assign(this.response, mockResponse);
-
-        return this.response;
-      }
-
-      if (!this.serverConfig.wsdlUrl) {
-        throw new Error('WSDL URL is required');
-      }
-
-      const soapClient = await soap.createClientAsync(this.serverConfig.wsdlUrl, {
+      const soapClient = await soap.createClientAsync(wsdlUrl, {
         wsdl_options: this.serverConfig.sslOptions,
-        // timeout: this.serverConfig.timeout || 30000, // timeout 不在 IOptions 中
       });
 
-      const soapResponse: SoapResponse = await new Promise((resolve, reject) => {
-        if (typeof soapClient.refund === 'function') {
-          soapClient.refund(requestData, (err: unknown, result: unknown) => {
-            if (err) {
-              reject(err);
-            } else {
-              resolve(result as SoapResponse);
-            }
-          });
+      const client = soapClient as SoapClient;
+
+      const soapResponse: SoapResponse = await new Promise<SoapResponse>((resolve, reject) => {
+        const call = (name: string, payload: unknown): void =>
+          client[name](payload, (err: unknown, result: unknown) =>
+            err ? reject(err) : resolve(result as SoapResponse),
+          );
+
+        if (typeof client['Cred'] === 'function') {
+          call('Cred', { request: requestData });
+        } else if (typeof client['cred'] === 'function') {
+          call('cred', { request: requestData });
+        } else if (typeof client['refund'] === 'function') {
+          call('refund', requestData);
         } else {
-          reject(new Error('SOAP method "refund" not found in WSDL'));
+          reject(new Error('SOAP method "Cred"/"refund" not found in WSDL'));
         }
       });
 
       console.log('AMEX SOAP Refund Response:', soapResponse);
 
-      // 處理退款回應
-      Object.assign(this.response, soapResponse);
+      // 處理退款回應（不同實作大小寫可能不同）
+      const respObj = soapResponse as unknown as Record<string, unknown>;
+      const refundResult = (respObj['CredReturn'] ??
+        respObj['credReturn'] ??
+        respObj['refundReturn'] ??
+        soapResponse) as Partial<CTBCAmexRefundResponse> | Record<string, unknown>;
+
+      Object.assign(this.response, refundResult as Record<string, unknown>);
+
+      // 檢核回應 MAC：aetId(16,右補空白) + xid(16,右補空白) + errCode(8,右補空白) + credAmt(16,左補0)
+      const responseSMac =
+        this.padOrTruncate(this.response.aetId || '', 16) +
+        this.padOrTruncate(this.response.xid || '', 16) +
+        this.padOrTruncate(this.response.errCode || '', 8) +
+        this.sprintf('%016d', parseInt(this.response.credAmt || '0', 10));
+
+      const recvMac = String((refundResult as Record<string, unknown>)?.['mac'] ?? '');
+
+      this.checkMac(responseSMac, params.IN_MAC_KEY || '', recvMac);
 
       const endTime = Date.now();
 
@@ -325,25 +360,323 @@ export class CTBCAEGateway {
       this.response.errDesc = `SOAP communication failed: ${error instanceof Error ? error.message : String(error)}`;
     }
 
-    return this.response;
+    return this.toPosRefundResponse(this.response);
+  }
+
+  /**
+   * AMEX 授權取消 (AuthRev)
+   */
+  async authRev(params: CTBCAmexAuthRevParams): Promise<CTBCPosApiResponse> {
+    this.response = {
+      aetId: '',
+      xid: '',
+      termSeq: '',
+      errCode: '',
+      errDesc: '',
+      mac: '',
+    };
+
+    if (!this.checkServer(this.serverConfig)) {
+      return this.toPosCancelRefundResponse(this.response);
+    }
+
+    const requestData: SoapRequestData = {} as SoapRequestData;
+
+    const merIdResult = this.checkMerId(params.merId);
+
+    if (!merIdResult) return this.toPosCancelRefundResponse(this.response);
+    requestData.merId = merIdResult;
+
+    const xidResult = this.checkXid(params.xid);
+
+    if (!xidResult) return this.toPosCancelRefundResponse(this.response);
+    requestData.xid = xidResult;
+
+    const lidmResult = this.checkLidm(params.lidm);
+
+    if (!lidmResult) return this.toPosCancelRefundResponse(this.response);
+    requestData.lidm = lidmResult;
+
+    // sMac: merId(12,0) + xid(12,' ') + lidm(24,' ')
+    const sMac =
+      requestData.merId.padStart(12, '0') + requestData.xid.padEnd(12, ' ') + this.padOrTruncate(requestData.lidm, 24);
+
+    requestData.mac = this.createMac(sMac, params.IN_MAC_KEY);
+
+    const startTime = Date.now();
+
+    console.log('AMEX SOAP AuthRev Request:', requestData);
+
+    try {
+      const wsdlUrl =
+        this.serverConfig.wsdlUrl ||
+        (this.serverConfig.port
+          ? `http://${this.serverConfig.host}:${this.serverConfig.port}/HubAgentConsole/services/AEPaymentSoap?wsdl`
+          : `https://${this.serverConfig.host}/HubAgentConsole/services/AEPaymentSoap?wsdl`);
+
+      const soapClient = await soap.createClientAsync(wsdlUrl, {
+        wsdl_options: this.serverConfig.sslOptions,
+      });
+
+      const client = soapClient as SoapClient;
+      const soapResponse: SoapResponse = await new Promise<SoapResponse>((resolve, reject) => {
+        const call = (name: string, payload: unknown): void =>
+          client[name](payload, (err: unknown, result: unknown) =>
+            err ? reject(err) : resolve(result as SoapResponse),
+          );
+
+        if (typeof client['authRev'] === 'function') {
+          call('authRev', { request: requestData });
+        } else if (typeof client['AuthRev'] === 'function') {
+          call('AuthRev', { request: requestData });
+        } else {
+          reject(new Error('SOAP method "AuthRev" not found in WSDL'));
+        }
+      });
+
+      const revObj = soapResponse as Record<string, unknown>;
+      const revResult = (revObj['authRevReturn'] ?? revObj['AuthRevReturn'] ?? soapResponse) as Record<string, unknown>;
+
+      Object.assign(this.response, revResult);
+
+      // Response sMac: aetId(16) + xid(16) + errCode(8)
+      const responseSMac =
+        this.padOrTruncate(this.response.aetId || '', 16) +
+        this.padOrTruncate(this.response.xid || '', 16) +
+        this.padOrTruncate(this.response.errCode || '', 8);
+
+      const recvMac = String((revResult as Record<string, unknown>)?.['mac'] ?? '');
+
+      this.checkMac(responseSMac, params.IN_MAC_KEY || '', recvMac);
+
+      const endTime = Date.now();
+
+      this.checkTimeOut(startTime, endTime);
+    } catch (error) {
+      console.error('AMEX SOAP AuthRev failed:', error);
+      this.response.errCode = 'SOAP_ERROR';
+      this.response.errDesc = `SOAP communication failed: ${error instanceof Error ? error.message : String(error)}`;
+    }
+
+    return this.toPosCancelRefundResponse(this.response);
+  }
+
+  /**
+   * AMEX 請款取消 (CapRev)
+   */
+  async capRev(params: CTBCAmexCapRevParams): Promise<CTBCPosApiResponse> {
+    this.response = {
+      aetId: '',
+      xid: '',
+      errCode: '',
+      errDesc: '',
+      mac: '',
+    };
+
+    if (!this.checkServer(this.serverConfig)) {
+      return this.toPosCancelRefundResponse(this.response);
+    }
+
+    const requestData: SoapRequestData = {} as SoapRequestData;
+
+    const merIdResult = this.checkMerId(params.merId);
+
+    if (!merIdResult) return this.toPosCancelRefundResponse(this.response);
+    requestData.merId = merIdResult;
+
+    const xidResult = this.checkXid(params.xid);
+
+    if (!xidResult) return this.toPosCancelRefundResponse(this.response);
+    requestData.xid = xidResult;
+
+    const lidmResult = this.checkLidm(params.lidm);
+
+    if (!lidmResult) return this.toPosCancelRefundResponse(this.response);
+    requestData.lidm = lidmResult;
+
+    // sMac: merId(12,0) + xid(12,' ') + lidm(24,' ')
+    const sMac =
+      requestData.merId.padStart(12, '0') + requestData.xid.padEnd(12, ' ') + this.padOrTruncate(requestData.lidm, 24);
+
+    requestData.mac = this.createMac(sMac, params.IN_MAC_KEY);
+
+    const startTime = Date.now();
+
+    try {
+      const wsdlUrl =
+        this.serverConfig.wsdlUrl ||
+        (this.serverConfig.port
+          ? `http://${this.serverConfig.host}:${this.serverConfig.port}/HubAgentConsole/services/AEPaymentSoap?wsdl`
+          : `https://${this.serverConfig.host}/HubAgentConsole/services/AEPaymentSoap?wsdl`);
+
+      const soapClient = await soap.createClientAsync(wsdlUrl, {
+        wsdl_options: this.serverConfig.sslOptions,
+      });
+
+      const client = soapClient as SoapClient;
+      const soapResponse: SoapResponse = await new Promise<SoapResponse>((resolve, reject) => {
+        const call = (name: string, payload: unknown): void =>
+          client[name](payload, (err: unknown, result: unknown) =>
+            err ? reject(err) : resolve(result as SoapResponse),
+          );
+
+        if (typeof client['CapRev'] === 'function') {
+          call('CapRev', { request: requestData });
+        } else if (typeof client['capRev'] === 'function') {
+          call('capRev', { request: requestData });
+        } else {
+          reject(new Error('SOAP method "CapRev" not found in WSDL'));
+        }
+      });
+
+      const revRaw = soapResponse as unknown as Record<string, unknown>;
+      const revResult = (revRaw['CapRevReturn'] ?? revRaw['capRevReturn'] ?? soapResponse) as Record<string, unknown>;
+
+      Object.assign(this.response, revResult);
+
+      // Response sMac: aetId(16) + xid(16) + errCode(8)
+      const responseSMac =
+        this.padOrTruncate(this.response.aetId || '', 16) +
+        this.padOrTruncate(this.response.xid || '', 16) +
+        this.padOrTruncate(this.response.errCode || '', 8);
+
+      const recvMac = String((revResult as Record<string, unknown>)?.['mac'] ?? '');
+
+      this.checkMac(responseSMac, params.IN_MAC_KEY || '', recvMac);
+
+      const endTime = Date.now();
+
+      this.checkTimeOut(startTime, endTime);
+    } catch (error) {
+      console.error('AMEX SOAP CapRev failed:', error);
+      this.response.errCode = 'SOAP_ERROR';
+      this.response.errDesc = `SOAP communication failed: ${error instanceof Error ? error.message : String(error)}`;
+    }
+
+    return this.toPosCancelRefundResponse(this.response);
+  }
+
+  /**
+   * AMEX 取消退款 (CredRev)
+   */
+  async cancelRefund(params: CTBCAmexCancelRefundParams): Promise<CTBCPosApiResponse> {
+    this.response = {
+      aetId: '',
+      xid: '',
+      errCode: '',
+      errDesc: '',
+      mac: '',
+    };
+
+    if (!this.checkServer(this.serverConfig)) {
+      return this.toPosCancelRefundResponse(this.response);
+    }
+
+    const requestData: SoapRequestData = {} as SoapRequestData;
+
+    const merIdResult = this.checkMerId(params.merId);
+
+    if (!merIdResult) return this.toPosCancelRefundResponse(this.response);
+    requestData.merId = merIdResult;
+
+    const xidResult = this.checkXid(params.xid);
+
+    if (!xidResult) return this.toPosCancelRefundResponse(this.response);
+    requestData.xid = xidResult;
+
+    const lidmResult = this.checkLidm(params.lidm);
+
+    if (!lidmResult) return this.toPosCancelRefundResponse(this.response);
+    requestData.lidm = lidmResult;
+
+    const capBatchIdResult = this.checkCapBatchId(params.capBatchId);
+
+    if (!capBatchIdResult) return this.toPosCancelRefundResponse(this.response);
+    requestData.capBatchId = capBatchIdResult;
+
+    const capBatchSeqResult = this.checkCapBatchSeq(params.capBatchSeq);
+
+    if (!capBatchSeqResult) return this.toPosCancelRefundResponse(this.response);
+    requestData.capBatchSeq = capBatchSeqResult;
+
+    // sMac: merId(12,0) + capBatchSeq(12,space) + xid(12,space) + lidm(20,space)
+    const sMac =
+      requestData.merId.padStart(12, '0') +
+      requestData.capBatchSeq.padEnd(12, ' ') +
+      requestData.xid.padEnd(12, ' ') +
+      requestData.lidm.padEnd(20, ' ');
+
+    requestData.mac = this.createMac(sMac, params.IN_MAC_KEY);
+
+    const startTime = Date.now();
+
+    try {
+      const wsdlUrl =
+        this.serverConfig.wsdlUrl ||
+        (this.serverConfig.port
+          ? `http://${this.serverConfig.host}:${this.serverConfig.port}/HubAgentConsole/services/AEPaymentSoap?wsdl`
+          : `https://${this.serverConfig.host}/HubAgentConsole/services/AEPaymentSoap?wsdl`);
+
+      const soapClient = await soap.createClientAsync(wsdlUrl, {
+        wsdl_options: this.serverConfig.sslOptions,
+      });
+
+      const client = soapClient as SoapClient;
+      const soapResponse: SoapResponse = await new Promise<SoapResponse>((resolve, reject) => {
+        const call = (name: string, payload: unknown): void =>
+          client[name](payload, (err: unknown, result: unknown) =>
+            err ? reject(err) : resolve(result as SoapResponse),
+          );
+
+        if (typeof client['CredRev'] === 'function') {
+          call('CredRev', { request: requestData });
+        } else if (typeof client['credRev'] === 'function') {
+          call('credRev', { request: requestData });
+        } else {
+          reject(new Error('SOAP method "CredRev" not found in WSDL'));
+        }
+      });
+
+      const resultObj = soapResponse as Record<string, unknown>;
+      const result = (resultObj['CredRevReturn'] ?? soapResponse) as Record<string, unknown>;
+
+      Object.assign(this.response, result);
+
+      // Response MAC: aetId(16,space) + xid(16,space) + errCode(8,space)
+      const responseSMac =
+        this.padOrTruncate(this.response.aetId || '', 16) +
+        this.padOrTruncate(this.response.xid || '', 16) +
+        this.padOrTruncate(this.response.errCode || '', 8);
+
+      const recvMac = String((result as Record<string, unknown>)?.['mac'] ?? '');
+
+      this.checkMac(responseSMac, params.IN_MAC_KEY || '', recvMac);
+
+      const endTime = Date.now();
+
+      this.checkTimeOut(startTime, endTime);
+    } catch (error) {
+      console.error('AMEX SOAP Cancel Refund failed:', error);
+      this.response.errCode = 'SOAP_ERROR';
+      this.response.errDesc = `SOAP communication failed: ${error instanceof Error ? error.message : String(error)}`;
+    }
+
+    return this.toPosCancelRefundResponse(this.response);
   }
 
   // 驗證伺服器設定
   private checkServer(serverConfig: CTBCAmexConfig): boolean {
     this.serverConfig = serverConfig;
 
-    if (!serverConfig.host) {
-      this.response.errCode = 'CONFIG_ERROR';
-      this.response.errDesc = 'Host is required';
+    // 允許直接提供 wsdlUrl，或提供 host/port 後由外層組合 wsdlUrl
+    if (!serverConfig.wsdlUrl) {
+      if (!serverConfig.host || !serverConfig.port) {
+        this.response.errCode = 'CONFIG_ERROR';
+        this.response.errDesc = 'WSDL URL or (host+port) is required';
 
-      return false;
-    }
-
-    if (!serverConfig.port) {
-      this.response.errCode = 'CONFIG_ERROR';
-      this.response.errDesc = 'Port is required';
-
-      return false;
+        return false;
+      }
+      // 若無 wsdlUrl，預期呼叫端已依 host/port 構造 SOAP endpoint；保留相容，僅通過檢核
     }
 
     return true;
@@ -419,6 +752,91 @@ export class CTBCAEGateway {
     return xid;
   }
 
+  private checkCapBatchId(capBatchId: string): string | false {
+    const id = (capBatchId || '').trim();
+
+    if (id && id.length === 8) return id;
+    this.response.errCode = 'I134';
+    this.response.errDesc = 'capBatchId參數錯誤';
+
+    return false;
+  }
+
+  private checkCapBatchSeq(capBatchSeq: string): string | false {
+    const seq = (capBatchSeq || '').trim();
+
+    if (seq && seq.length === 12) return seq;
+    this.response.errCode = 'I135';
+    this.response.errDesc = 'capBatchSeq參數錯誤';
+
+    return false;
+  }
+
+  // ——— POS-like response mappers ———
+  private mapErrCodeToPos(code?: string): string | undefined {
+    if (!code) return code;
+
+    // AMEX success A000 => POS success 00
+    return code === 'A000' ? '00' : code;
+  }
+
+  private toPosInquiryResponse(amex: AmexResponse): CTBCPosApiResponse {
+    const detail = Array.isArray(amex.poDetails) ? amex.poDetails[0] : amex.poDetails?.[0];
+    const ErrCode = this.mapErrCodeToPos(amex.errCode) || '';
+
+    const resp: CTBCPosApiResponse = {
+      RespCode: ErrCode === '00' ? '0' : '1',
+      ErrCode,
+      ERRDESC: amex.errDesc,
+      XID: detail?.xid,
+      AuthCode: detail?.authCode,
+      AuthAmt: detail?.purchAmt ? String(detail.purchAmt) : detail?.authAmt,
+      PAN: (detail as Record<string, unknown>)?.['pan'] as string | undefined,
+      ECI: undefined,
+      QueryCode: amex.count && amex.count > 0 ? '1' : '0',
+      currency: detail?.currency,
+      // 方便上層判斷 AE 狀態
+      txnType: (detail as Record<string, unknown>)?.['txnType'] as string | undefined,
+      status: (detail as Record<string, unknown>)?.['status'] as string | undefined,
+      CurrentState: '',
+      capBatchId: amex.capBatchId,
+      capBatchSeq: amex.capBatchSeq,
+    };
+
+    return resp;
+  }
+
+  private toPosRefundResponse(amex: AmexResponse): CTBCPosApiResponse {
+    const ErrCode = this.mapErrCodeToPos(amex.errCode) || '';
+    const resp: CTBCPosApiResponse = {
+      RespCode: ErrCode === '00' ? '0' : '1',
+      ErrCode,
+      ERRDESC: amex.errDesc,
+      XID: amex.xid,
+      RefAmt: amex.credAmt ? `901 ${amex.credAmt} 0` : undefined,
+      RetrRef: amex.capBatchId,
+      ResAmt: amex.unCredAmt,
+      capBatchId: amex.capBatchId,
+      capBatchSeq: amex.capBatchSeq,
+      CurrentState: '',
+    };
+
+    return resp;
+  }
+
+  private toPosCancelRefundResponse(amex: AmexResponse): CTBCPosApiResponse {
+    const ErrCode = this.mapErrCodeToPos(amex.errCode) || '';
+    const resp: CTBCPosApiResponse = {
+      RespCode: ErrCode === '00' ? '0' : '1',
+      ErrCode,
+      ERRDESC: amex.errDesc,
+      CurrentState: '',
+      XID: amex.xid,
+    };
+
+    return resp;
+  }
+
   // 驗證退款金額
   private checkCredAmt(credAmt: number): number | false {
     if (credAmt <= 0) {
@@ -438,65 +856,50 @@ export class CTBCAEGateway {
     return credAmt;
   }
 
-  // 驗證 MAC Key
+  // 驗證 MAC Key（允許 0/8/24；0 表示不送 mac）
   private checkInMacKey(macKey: string): boolean {
-    if (!macKey || macKey.length === 0) {
-      this.response.errCode = 'PARAM_ERROR';
-      this.response.errDesc = 'MAC Key is required';
+    if (macKey.length === 0) return false;
 
-      return false;
-    }
+    if (macKey.length === 8) return true;
 
-    if (macKey.length !== 24) {
-      this.response.errCode = 'PARAM_ERROR';
-      this.response.errDesc = 'MAC Key must be 24 characters';
+    if (macKey.length === 24) return true;
+    this.response.errCode = 'PARAM_ERROR';
+    this.response.errDesc = 'MAC Key length must be 0, 8 or 24 characters';
 
-      return false;
-    }
-
-    return true;
+    return false;
   }
 
-  // 創建 MAC - 完全仿照 Java ThreeDES.encrypt() 實現
+  // 創建 MAC - 3DES/ECB，滿 8 bytes 不補，否則補 PKCS#5
   private createMac(data: string, macKey: string): string {
-    if (!this.checkInMacKey(macKey)) {
-      return '';
-    }
+    if (!this.checkInMacKey(macKey)) return '';
 
     try {
-      console.log('Using desMac from ctbc-crypto-core.ts with Big5 encoding (like POS API)');
-      console.log('MAC Key:', macKey);
-      console.log('Original data:', data);
-
-      // Use Big5 encoding like the successful POS API
-      const big5Data = iconv.encode(data, 'big5');
-
-      console.log('Big5 encoded data:', big5Data.toString('hex'));
-
-      // Use desMac function from ctbc-crypto-core.ts (same as POS API)
-      const result = desMac(big5Data, macKey);
-
-      console.log('desMac result:', result);
-      console.log('Result length:', result.length);
-
-      // Return last 8 characters (like POS API pattern)
-      const mac8 = result.substring(result.length - 8);
-
-      console.log('MAC (last 8 chars):', mac8);
-
-      return mac8;
-    } catch (error) {
-      console.error('desMac calculation error:', error);
-
+      return desEcbEncryptHex(data, macKey);
+    } catch (_err) {
       return '';
     }
   }
 
-  // 驗證 MAC
+  // 驗證 MAC，並將結果記錄到 this.response.mac（Y/F/N）
   private checkMac(data: string, macKey: string, receivedMac: string): boolean {
-    const expectedMac = this.createMac(data, macKey);
+    if (!macKey) {
+      this.response.mac = 'N';
 
-    return expectedMac === receivedMac.toUpperCase();
+      return false;
+    }
+
+    if (!receivedMac) {
+      this.response.mac = 'F';
+
+      return false;
+    }
+
+    const expectedMac = this.createMac(data, macKey);
+    const ok = expectedMac === receivedMac.toUpperCase();
+
+    this.response.mac = ok ? 'Y' : 'F';
+
+    return ok;
   }
 
   // 格式化字串（類似 PHP 的 sprintf）
@@ -548,10 +951,7 @@ export class CTBCAEGateway {
 /**
  * AMEX 查詢函數
  */
-export async function amexInquiry(
-  config: CTBCAmexConfig,
-  params: CTBCAmexInquiryParams,
-): Promise<CTBCAmexInquiryResponse> {
+export async function amexInquiry(config: CTBCAmexConfig, params: CTBCAmexInquiryParams): Promise<CTBCPosApiResponse> {
   const gateway = new CTBCAEGateway(config);
 
   return gateway.inquiry(params);
@@ -560,11 +960,109 @@ export async function amexInquiry(
 /**
  * AMEX 退款函數
  */
-export async function amexRefund(
-  config: CTBCAmexConfig,
-  params: CTBCAmexRefundParams,
-): Promise<CTBCAmexRefundResponse> {
+export async function amexRefund(config: CTBCAmexConfig, params: CTBCAmexRefundParams): Promise<CTBCPosApiResponse> {
   const gateway = new CTBCAEGateway(config);
 
   return gateway.refund(params);
+}
+
+/**
+ * AMEX 取消退款函數 (CredRev)
+ */
+export async function amexCancelRefund(
+  config: CTBCAmexConfig,
+  params: CTBCAmexCancelRefundParams,
+): Promise<CTBCPosApiResponse> {
+  const gateway = new CTBCAEGateway(config);
+
+  return gateway.cancelRefund(params);
+}
+
+/**
+ * AMEX 授權取消 (AuthRev)
+ */
+export async function amexAuthRev(config: CTBCAmexConfig, params: CTBCAmexAuthRevParams): Promise<CTBCPosApiResponse> {
+  const gateway = new CTBCAEGateway(config);
+
+  return gateway.authRev(params);
+}
+
+/**
+ * AMEX 請款取消 (CapRev)
+ */
+export async function amexCapRev(config: CTBCAmexConfig, params: CTBCAmexCapRevParams): Promise<CTBCPosApiResponse> {
+  const gateway = new CTBCAEGateway(config);
+
+  return gateway.capRev(params);
+}
+
+export type AmexAction = 'AuthRev' | 'CapRev' | 'Refund' | 'None';
+
+export function getAmexNextActionFromInquiry(inquiryResp: CTBCPosApiResponse): AmexAction {
+  const obj = inquiryResp as unknown as Record<string, unknown>;
+  const txnType = obj['txnType'] as string | undefined;
+  const statusCode = obj['status'] as string | undefined;
+
+  if (txnType === 'AU') {
+    if (statusCode && statusCode === 'AP') return 'AuthRev';
+
+    if (statusCode && statusCode === 'B1') return 'CapRev';
+
+    if (statusCode && statusCode === 'B5') return 'Refund';
+
+    return 'None';
+  }
+
+  // Default to do nothing
+  return 'None';
+}
+
+export async function amexSmartCancelOrRefund(
+  config: CTBCAmexConfig,
+  params: CTBCAmexRefundParams,
+): Promise<{ action: AmexAction; response: CTBCPosApiResponse; inquiry: CTBCPosApiResponse }> {
+  const inquiry = await amexInquiry(config, {
+    merId: params.merId,
+    lidm: params.lidm,
+    xid: params.xid,
+    IN_MAC_KEY: params.IN_MAC_KEY,
+  });
+
+  const action = getAmexNextActionFromInquiry(inquiry);
+
+  console.log('Determined AMEX action:', action);
+  let response: CTBCPosApiResponse;
+
+  if (action === 'AuthRev') {
+    response = await amexAuthRev(config, {
+      merId: params.merId,
+      xid: params.xid,
+      lidm: params.lidm,
+      purchAmt: params.purchAmt,
+      orgAmt: params.orgAmt,
+      IN_MAC_KEY: params.IN_MAC_KEY,
+    });
+  } else if (action === 'CapRev') {
+    response = await amexCapRev(config, {
+      merId: params.merId,
+      xid: params.xid,
+      lidm: params.lidm,
+      purchAmt: params.purchAmt,
+      orgAmt: params.orgAmt,
+      IN_MAC_KEY: params.IN_MAC_KEY,
+    });
+  } else if (action === 'Refund') {
+    response = await amexRefund(config, {
+      merId: params.merId,
+      xid: params.xid,
+      lidm: params.lidm,
+      IN_MAC_KEY: params.IN_MAC_KEY,
+      purchAmt: params.purchAmt,
+      orgAmt: params.orgAmt,
+    });
+  } else {
+    response = { ...inquiry };
+  }
+
+  return { action, response, inquiry };
 }

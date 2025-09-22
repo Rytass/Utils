@@ -198,6 +198,7 @@ export interface CreditCardAuthInfo {
   card4Number: string;
   card6Number: string;
   gwsr?: string;
+  xid?: string;
 }
 
 export interface WebATMPaymentInfo {

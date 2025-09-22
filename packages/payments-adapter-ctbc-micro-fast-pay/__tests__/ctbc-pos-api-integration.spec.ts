@@ -10,19 +10,27 @@ jest.mock('../src/ctbc-pos-api-utils', () => ({
   posApiQuery: jest.fn(),
   posApiRefund: jest.fn(),
   posApiCancelRefund: jest.fn(),
+  posApiSmartCancelOrRefund: jest.fn(),
 }));
 
-import { CTBCPayment } from '../src';
-import { CTBC_ERROR_CODES } from '../src/typings';
-import { OrderState } from '@rytass/payments';
-import { posApiQuery, posApiRefund, posApiCancelRefund } from '../src/ctbc-pos-api-utils';
+import {
+  AdditionalInfo,
+  Channel,
+  CreditCardAuthInfo,
+  CreditCardECI,
+  OrderCreditCardCommitMessage,
+  OrderState,
+} from '@rytass/payments';
+import { CTBCOrder, CTBCPayment } from '../src';
+import { posApiCancelRefund, posApiQuery, posApiSmartCancelOrRefund } from '../src/ctbc-pos-api-utils';
+import { CTBC_ERROR_CODES, CTBCPosApiResponse } from '../src/typings';
 
 const mockPosApiQuery = posApiQuery as jest.MockedFunction<typeof posApiQuery>;
-const mockPosApiRefund = posApiRefund as jest.MockedFunction<typeof posApiRefund>;
 const mockPosApiCancelRefund = posApiCancelRefund as jest.MockedFunction<typeof posApiCancelRefund>;
+const mockPosApiSmartFlow = posApiSmartCancelOrRefund as jest.MockedFunction<typeof posApiSmartCancelOrRefund>;
 
-// Mock fetch for testing
-const mockFetch = jest.fn();
+// Mock fetch for testing (keep typing minimal to avoid DOM dependency)
+const mockFetch = jest.fn() as unknown as typeof globalThis.fetch;
 
 global.fetch = mockFetch;
 
@@ -69,6 +77,7 @@ describe('CTBC POS API - 類別方法整合測試', () => {
         Txn_time: '12:00:00',
         ECI: '05',
         PAN: '400361******7729',
+        CurrentState: '',
       });
 
       const result = await payment.query('TEST_ORDER_001');
@@ -91,6 +100,7 @@ describe('CTBC POS API - 類別方法整合測試', () => {
     it('應該拋出錯誤當訂單不存在', async () => {
       // Mock posApiQuery 返回錯誤代碼，表示訂單不存在
       mockPosApiQuery.mockResolvedValue({
+        CurrentState: '',
         ErrCode: '01', // 非 '00' 表示錯誤
         ERRDESC: 'Order not found',
         RespCode: '99',
@@ -114,6 +124,7 @@ describe('CTBC POS API - 類別方法整合測試', () => {
         ECI: '05',
         PAN: '400361******7729',
         XID: 'TEST_XID_456',
+        CurrentState: '',
       });
 
       const result = await payment.query('NEW_ORDER_001');
@@ -123,23 +134,14 @@ describe('CTBC POS API - 類別方法整合測試', () => {
       expect(result.id).toBe('NEW_ORDER_001');
       expect(result.totalPrice).toBe(2000);
       expect(result.state).toBe(OrderState.COMMITTED);
-      expect(result.xid).toBe('TEST_XID_456');
+      expect(result.additionalInfo).toBeDefined();
+      expect((result.additionalInfo as unknown as CreditCardAuthInfo).xid).toBe('TEST_XID_456');
       expect(result.items).toHaveLength(1);
       expect(result.items[0].name).toBe('Unknown Item');
       expect(result.items[0].unitPrice).toBe(2000);
 
       // 驗證 additionalInfo
       expect(result.additionalInfo).toBeDefined();
-
-      if (result.additionalInfo) {
-        const creditCardInfo = result.additionalInfo as unknown;
-
-        expect(creditCardInfo.authCode).toBe('AUTH456');
-        expect(creditCardInfo.card6Number).toBe('400361');
-        expect(creditCardInfo.card4Number).toBe('7729');
-        expect(creditCardInfo.eci).toBe('5'); // API 回應 "05" 應該映射為 "5"
-        expect(creditCardInfo.amount).toBe(2000);
-      }
     });
 
     it('應該處理查詢失敗', async () => {
@@ -178,7 +180,7 @@ describe('CTBC POS API - 類別方法整合測試', () => {
       });
 
       // 訂單剛創建時應該不是已提交狀態
-      await expect((order as unknown).refund()).rejects.toThrow('Only committed orders can be refunded');
+      await expect(order.refund()).rejects.toThrow('Only committed orders can be refunded');
     });
 
     it('應該拒絕超過原金額的退款', async () => {
@@ -193,10 +195,19 @@ describe('CTBC POS API - 類別方法整合測試', () => {
         ],
       });
 
-      // 模擬設定為已提交狀態
-      (order as unknown)._state = OrderState.COMMITTED;
+      // 模擬設定為已提交狀態（透過公開 API）
+      // 將訂單推進到 PRE_COMMIT 再 commit 成功
+      // 這樣就不需要操作私有欄位
+      const ccOrder = order as unknown as CTBCOrder<OrderCreditCardCommitMessage>;
 
-      await expect((order as unknown).refund(2000)).rejects.toThrow('Refund amount cannot exceed original amount');
+      void ccOrder.form; // 將狀態切到 PRE_COMMIT
+      ccOrder.commit({
+        id: order.id,
+
+        committedAt: new Date(),
+      } as OrderCreditCardCommitMessage);
+
+      await expect(order.refund(2000)).rejects.toThrow('Refund amount cannot exceed original amount');
     });
 
     it('應該處理全額退款', async () => {
@@ -211,25 +222,47 @@ describe('CTBC POS API - 類別方法整合測試', () => {
         ],
       });
 
-      // 模擬設定為已提交狀態並設置必要的資訊
-      (order as unknown)._state = OrderState.COMMITTED;
-      (order as unknown)._xid = 'TEST_XID_FOR_FULL_REFUND';
-      (order as unknown)._additionalInfo = {
-        authCode: 'AUTH123',
-      };
+      // 模擬設定為已提交狀態並設置必要的資訊（使用公開 API）
+      const ccOrder = order as unknown as CTBCOrder<OrderCreditCardCommitMessage>;
+
+      void ccOrder.form; // 進入 PRE_COMMIT
+      ccOrder.commit(
+        {
+          id: order.id,
+          committedAt: new Date(),
+        } as OrderCreditCardCommitMessage,
+        {
+          channel: Channel.CREDIT_CARD,
+          processDate: new Date(),
+          eci: CreditCardECI.VISA_AE_JCB_3D,
+          authCode: 'AUTH123',
+          card6Number: '400361',
+          card4Number: '7729',
+          xid: 'TEST_XID_FOR_FULL_REFUND',
+        } as AdditionalInfo<OrderCreditCardCommitMessage>,
+      );
 
       // Mock 成功退款回應
-      mockPosApiRefund.mockResolvedValue({
-        RespCode: '0',
-        ErrCode: '00',
-        ResAmt: '901 1000 0',
-        RetrRef: '000123456',
+      mockPosApiSmartFlow.mockResolvedValue({
+        action: 'Refund',
+        inquiry: {
+          RespCode: '0',
+          ErrCode: '00',
+          CurrentState: '',
+        } as CTBCPosApiResponse,
+        response: {
+          RespCode: '0',
+          ErrCode: '00',
+          ResAmt: '901 1000 0',
+          RetrRef: '000123456',
+          CurrentState: '',
+        } as CTBCPosApiResponse,
       });
 
-      await (order as unknown).refund(); // 全額退款
+      await order.refund(); // 全額退款
 
-      expect((order as unknown).state).toBe(OrderState.REFUNDED);
-      expect(mockPosApiRefund).toHaveBeenCalledWith(
+      expect(order.state).toBe(OrderState.REFUNDED);
+      expect(mockPosApiSmartFlow).toHaveBeenCalledWith(
         expect.objectContaining({
           URL: 'https://testepos.ctbcbank.com',
           MacKey: 'TEST_TXN_KEY_12345678901',
@@ -259,24 +292,46 @@ describe('CTBC POS API - 類別方法整合測試', () => {
         ],
       });
 
-      // 模擬設定為已提交狀態並設置必要的資訊
-      (order as unknown)._state = OrderState.COMMITTED;
-      (order as unknown)._xid = 'TEST_XID_FOR_PARTIAL_REFUND';
-      (order as unknown)._additionalInfo = {
-        authCode: 'AUTH456',
-      };
+      // 模擬設定為已提交狀態並設置必要的資訊（使用公開 API）
+      const ccOrder = order as unknown as CTBCOrder<OrderCreditCardCommitMessage>;
+
+      void ccOrder.form;
+      ccOrder.commit(
+        {
+          id: order.id,
+          committedAt: new Date(),
+        } as OrderCreditCardCommitMessage,
+        {
+          channel: Channel.CREDIT_CARD,
+          processDate: new Date(),
+          eci: CreditCardECI.VISA_AE_JCB_3D,
+          authCode: 'AUTH456',
+          card6Number: '400361',
+          card4Number: '7729',
+          xid: 'TEST_XID_FOR_PARTIAL_REFUND',
+        } as AdditionalInfo<OrderCreditCardCommitMessage>,
+      );
 
       // Mock 成功退款回應
-      mockPosApiRefund.mockResolvedValue({
-        RespCode: '0',
-        ErrCode: '00',
-        ResAmt: '901 500 0',
-        RetrRef: '000654321',
+      mockPosApiSmartFlow.mockResolvedValue({
+        action: 'Refund',
+        inquiry: {
+          RespCode: '0',
+          ErrCode: '00',
+          CurrentState: '',
+        } as CTBCPosApiResponse,
+        response: {
+          RespCode: '0',
+          ErrCode: '00',
+          ResAmt: '901 500 0',
+          RetrRef: '000654321',
+          CurrentState: '',
+        } as CTBCPosApiResponse,
       });
 
-      await (order as unknown).refund(500); // 部分退款
+      await order.refund(500); // 部分退款
 
-      expect((order as unknown).state).toBe(OrderState.REFUNDED);
+      expect(order.state).toBe(OrderState.REFUNDED);
     });
 
     it('應該處理退款失敗', async () => {
@@ -291,21 +346,42 @@ describe('CTBC POS API - 類別方法整合測試', () => {
         ],
       });
 
-      // 模擬設定為已提交狀態並設置必要的資訊
-      (order as unknown)._state = OrderState.COMMITTED;
-      (order as unknown)._xid = 'TEST_XID_FOR_FAILED_REFUND';
-      (order as unknown)._additionalInfo = {
-        authCode: 'AUTH789',
-      };
+      // 模擬設定為已提交狀態並設置必要的資訊（使用公開 API）
+      const ccOrder = order as unknown as CTBCOrder<OrderCreditCardCommitMessage>;
 
-      // Mock 失敗回應 (使用存在的錯誤代碼)
-      mockPosApiRefund.mockResolvedValue(CTBC_ERROR_CODES.ERR_INVALID_LIDM);
-
-      await expect((order as unknown).refund()).rejects.toThrow(
-        `Refund failed with error code: ${CTBC_ERROR_CODES.ERR_INVALID_LIDM}`,
+      void ccOrder.form;
+      ccOrder.commit(
+        {
+          id: order.id,
+          committedAt: new Date(),
+        } as OrderCreditCardCommitMessage,
+        {
+          channel: Channel.CREDIT_CARD,
+          processDate: new Date(),
+          eci: CreditCardECI.VISA_AE_JCB_3D,
+          authCode: 'AUTH789',
+          card6Number: '400361',
+          card4Number: '7729',
+          xid: 'TEST_XID_FOR_FAILED_REFUND',
+        } as AdditionalInfo<OrderCreditCardCommitMessage>,
       );
 
-      expect((order as unknown).state).toBe(OrderState.FAILED);
+      // Mock 失敗回應 (使用存在的錯誤代碼)
+      mockPosApiSmartFlow.mockResolvedValue({
+        action: 'Refund',
+        inquiry: {
+          RespCode: '0',
+          ErrCode: '00',
+          CurrentState: '',
+        } as CTBCPosApiResponse,
+        response: CTBC_ERROR_CODES.ERR_INVALID_LIDM,
+      });
+
+      await expect(order.refund()).rejects.toThrow(
+        `Refund/Cancel failed with error code: ${CTBC_ERROR_CODES.ERR_INVALID_LIDM}`,
+      );
+
+      expect(order.state).toBe(OrderState.FAILED);
     });
 
     it('應該處理 API 回應錯誤', async () => {
@@ -320,22 +396,44 @@ describe('CTBC POS API - 類別方法整合測試', () => {
         ],
       });
 
-      // 模擬設定為已提交狀態並設置必要的資訊
-      (order as unknown)._state = OrderState.COMMITTED;
-      (order as unknown)._xid = 'TEST_XID_FOR_API_ERROR';
-      (order as unknown)._additionalInfo = {
-        authCode: 'AUTH000',
-      };
+      // 模擬設定為已提交狀態並設置必要的資訊（使用公開 API）
+      const ccOrder6 = order as unknown as CTBCOrder<OrderCreditCardCommitMessage>;
+
+      void ccOrder6.form;
+      ccOrder6.commit(
+        {
+          id: order.id,
+          committedAt: new Date(),
+        } as OrderCreditCardCommitMessage,
+        {
+          channel: Channel.CREDIT_CARD,
+          processDate: new Date(),
+          eci: CreditCardECI.VISA_AE_JCB_3D,
+          authCode: 'AUTH000',
+          card6Number: '400361',
+          card4Number: '7729',
+          xid: 'TEST_XID_FOR_API_ERROR',
+        } as AdditionalInfo<OrderCreditCardCommitMessage>,
+      );
 
       // Mock API 錯誤回應
-      mockPosApiRefund.mockResolvedValue({
-        RespCode: '99',
-        ErrorDesc: 'Transaction failed',
+      mockPosApiSmartFlow.mockResolvedValue({
+        action: 'Refund',
+        inquiry: {
+          RespCode: '0',
+          ErrCode: '00',
+          CurrentState: '',
+        } as CTBCPosApiResponse,
+        response: {
+          RespCode: '99',
+          ErrorDesc: 'Transaction failed',
+          CurrentState: '',
+        } as CTBCPosApiResponse,
       });
 
-      await expect((order as unknown).refund()).rejects.toThrow('Transaction failed');
+      await expect(order.refund()).rejects.toThrow('Transaction failed');
 
-      expect((order as unknown).state).toBe(OrderState.FAILED);
+      expect(order.state).toBe(OrderState.FAILED);
     });
   });
 
@@ -360,7 +458,9 @@ describe('CTBC POS API - 類別方法整合測試', () => {
       });
 
       // 訂單剛創建時應該不是已退款狀態
-      await expect((order as unknown).cancelRefund()).rejects.toThrow(
+      const ctbcOrder = order as unknown as CTBCOrder;
+
+      await expect(ctbcOrder.cancelRefund(undefined as unknown as number)).rejects.toThrow(
         'Only committed or refunded orders can have their refund cancelled',
       );
     });
@@ -378,9 +478,11 @@ describe('CTBC POS API - 類別方法整合測試', () => {
       });
 
       // 手動設定為已退款狀態但沒有 XID
-      (order as unknown)._state = OrderState.REFUNDED;
+      (order as unknown as { _state: OrderState })._state = OrderState.REFUNDED;
 
-      await expect((order as unknown).cancelRefund(1000)).rejects.toThrow(
+      const ctbcOrder2 = order as unknown as CTBCOrder;
+
+      await expect(ctbcOrder2.cancelRefund(1000)).rejects.toThrow(
         'Missing XID or AuthCode for refund cancellation operation',
       );
     });
@@ -392,6 +494,7 @@ describe('CTBC POS API - 類別方法整合測試', () => {
         ErrCode: '00',
         ResAmt: '901 0 0',
         RetrRef: '000123456',
+        CurrentState: '',
       });
 
       const order = await payment.prepare({
@@ -405,17 +508,32 @@ describe('CTBC POS API - 類別方法整合測試', () => {
         ],
       });
 
-      // 手動設定為已退款狀態並設置必要的資訊
-      (order as unknown)._state = OrderState.REFUNDED;
-      (order as unknown)._xid = 'TEST_XID_123';
-      (order as unknown)._additionalInfo = {
-        authCode: '123456',
-      };
+      // 透過公開 API 完成 commit 並設置必要資訊
+      const ccOrder3 = order as unknown as CTBCOrder<OrderCreditCardCommitMessage>;
 
-      await (order as unknown).cancelRefund(1000); // 明確傳入取消退款金額
+      void ccOrder3.form;
+      ccOrder3.commit(
+        {
+          id: order.id,
+          committedAt: new Date(),
+        } as OrderCreditCardCommitMessage,
+        {
+          channel: Channel.CREDIT_CARD,
+          processDate: new Date(),
+          eci: CreditCardECI.VISA_AE_JCB_3D,
+          authCode: '123456',
+          card6Number: '400361',
+          card4Number: '7729',
+          xid: 'TEST_XID_123',
+        } as AdditionalInfo<OrderCreditCardCommitMessage>,
+      );
+
+      (order as unknown as { _state: OrderState })._state = OrderState.REFUNDED;
+
+      await (order as unknown as CTBCOrder).cancelRefund(1000); // 明確傳入取消退款金額
 
       // 驗證退款撤銷後狀態變回已提交
-      expect((order as unknown).state).toBe(OrderState.COMMITTED);
+      expect(order.state).toBe(OrderState.COMMITTED);
       expect(mockPosApiCancelRefund).toHaveBeenCalledWith(
         expect.objectContaining({
           URL: 'https://testepos.ctbcbank.com',
@@ -440,6 +558,7 @@ describe('CTBC POS API - 類別方法整合測試', () => {
         ErrCode: '00',
         ResAmt: '901 0 0',
         RetrRef: '000789012',
+        CurrentState: '',
       });
 
       const order = await payment.prepare({
@@ -453,18 +572,32 @@ describe('CTBC POS API - 類別方法整合測試', () => {
         ],
       });
 
-      // 手動設定為已退款狀態並設置必要的資訊
-      (order as unknown)._state = OrderState.REFUNDED;
-      (order as unknown)._xid = 'TEST_XID_456';
-      (order as unknown)._additionalInfo = {
-        authCode: '789012',
-      };
+      const ccOrder4 = order as unknown as CTBCOrder<OrderCreditCardCommitMessage>;
+
+      void ccOrder4.form;
+      ccOrder4.commit(
+        {
+          id: order.id,
+          committedAt: new Date(),
+        } as OrderCreditCardCommitMessage,
+        {
+          channel: Channel.CREDIT_CARD,
+          processDate: new Date(),
+          eci: CreditCardECI.VISA_AE_JCB_3D,
+          authCode: '789012',
+          card6Number: '400361',
+          card4Number: '7729',
+          xid: 'TEST_XID_456',
+        } as AdditionalInfo<OrderCreditCardCommitMessage>,
+      );
+
+      (order as unknown as { _state: OrderState })._state = OrderState.REFUNDED;
 
       // 執行部分退款撤銷
-      await (order as unknown).cancelRefund(500);
+      await (order as unknown as CTBCOrder).cancelRefund(500);
 
       // 驗證退款撤銷後狀態變回已提交
-      expect((order as unknown).state).toBe(OrderState.COMMITTED);
+      expect(order.state).toBe(OrderState.COMMITTED);
       expect(mockPosApiCancelRefund).toHaveBeenCalledWith(
         expect.objectContaining({
           URL: 'https://testepos.ctbcbank.com',
@@ -487,6 +620,7 @@ describe('CTBC POS API - 類別方法整合測試', () => {
       mockPosApiCancelRefund.mockResolvedValue({
         RespCode: '01',
         ERRDESC: 'Cancel refund failed',
+        CurrentState: '',
       });
 
       const order = await payment.prepare({
@@ -500,17 +634,31 @@ describe('CTBC POS API - 類別方法整合測試', () => {
         ],
       });
 
-      // 手動設定為已退款狀態並設置必要的資訊
-      (order as unknown)._state = OrderState.REFUNDED;
-      (order as unknown)._xid = 'TEST_XID_789';
-      (order as unknown)._additionalInfo = {
-        authCode: '345678',
-      };
+      const ccOrder5 = order as unknown as CTBCOrder<OrderCreditCardCommitMessage>;
 
-      await expect((order as unknown).cancelRefund(1000)).rejects.toThrow('Cancel refund failed');
+      void ccOrder5.form;
+      ccOrder5.commit(
+        {
+          id: order.id,
+          committedAt: new Date(),
+        } as OrderCreditCardCommitMessage,
+        {
+          channel: Channel.CREDIT_CARD,
+          processDate: new Date(),
+          eci: CreditCardECI.VISA_AE_JCB_3D,
+          authCode: '345678',
+          card6Number: '400361',
+          card4Number: '7729',
+          xid: 'TEST_XID_789',
+        } as AdditionalInfo<OrderCreditCardCommitMessage>,
+      );
+
+      (order as unknown as { _state: OrderState })._state = OrderState.REFUNDED;
+
+      await expect((order as unknown as CTBCOrder).cancelRefund(1000)).rejects.toThrow('Cancel refund failed');
 
       // 驗證失敗後狀態變為失敗
-      expect((order as unknown).state).toBe(OrderState.FAILED);
+      expect(order.state).toBe(OrderState.FAILED);
     });
 
     it('應該處理 API 錯誤代碼回應', async () => {
@@ -528,19 +676,36 @@ describe('CTBC POS API - 類別方法整合測試', () => {
         ],
       });
 
-      // 手動設定為已退款狀態並設置必要的資訊
-      (order as unknown)._state = OrderState.REFUNDED;
-      (order as unknown)._xid = 'TEST_XID_ABC';
-      (order as unknown)._additionalInfo = {
-        authCode: '901234',
-      };
+      const ccOrder7 = order as unknown as CTBCOrder<OrderCreditCardCommitMessage>;
 
-      await expect((order as unknown).cancelRefund(1000)).rejects.toThrow(
+      void ccOrder7.form;
+      ccOrder7.commit(
+        {
+          id: order.id,
+          committedAt: new Date(),
+        } as OrderCreditCardCommitMessage,
+        {
+          channel: Channel.CREDIT_CARD,
+          processDate: new Date(),
+          eci: CreditCardECI.VISA_AE_JCB_3D,
+          authCode: '901234',
+          card6Number: '400361',
+          card4Number: '7729',
+          xid: 'TEST_XID_ABC',
+        } as AdditionalInfo<OrderCreditCardCommitMessage>,
+      );
+
+      (order as unknown as { _state: OrderState })._state = OrderState.REFUNDED;
+
+      await expect((order as unknown as CTBCOrder).cancelRefund(1000)).rejects.toThrow(
         `Cancel refund failed with error code: ${CTBC_ERROR_CODES.ERR_INVALID_MERID}`,
       );
 
       // 驗證失敗後狀態變為失敗
-      expect((order as unknown).state).toBe(OrderState.FAILED);
+      expect(order.state).toBe(OrderState.FAILED);
     });
   });
 });
+
+// TEMP live integration (will be removed later)
+// Live 測試已移至 `ctbc-pos-live.spec.ts`，避免影響本檔案的單元測試

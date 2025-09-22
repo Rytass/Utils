@@ -51,6 +51,7 @@ export interface OrderCreateInit<OCM extends CTBCOrderCommitMessage = CTBCOrderC
   checkoutMemberId?: string; // 綁定會員 ID（若有）
   checkoutCardId?: string; // 綁定卡片 ID（若有）
   cardType?: CardType; // 卡片類型，預設為 'VMJ'
+  xid?: string; // 交易 ID（若有）
 }
 
 export interface CTBCPaymentOptions<O extends CTBCOrder<CTBCOrderCommitMessage> = CTBCOrder<CTBCOrderCommitMessage>> {
@@ -362,21 +363,41 @@ export interface CTBCPosApiQueryParams extends CTBCPosApiBaseParams {
 
 // 退款 API 參數
 export interface CTBCPosApiRefundParams extends CTBCPosApiBaseParams {
-  OrgAmt: string;
-  AuthCode: string;
-  currency?: string;
-  PurchAmt?: string;
-  exponent?: string;
   XID: string;
+  AuthCode: string;
+  OrgAmt: string;
+  PurchAmt: string;
+  currency?: string;
+  exponent?: string;
+}
+
+// POS API 授權取消參數 (Reversal)
+export interface CTBCPosApiReversalParams extends CTBCPosApiBaseParams {
+  XID: string;
+  AuthCode: string;
+  OrgAmt: string;
+  AuthNewAmt: string;
+  currency?: string;
+  exponent?: string;
+}
+
+// POS API 請款取消參數 (CapRev)
+export interface CTBCPosApiCapRevParams extends CTBCPosApiBaseParams {
+  XID: string;
+  AuthCode: string;
+  OrgAmt: string;
+  CapRevAmt: string;
+  currency?: string;
+  exponent?: string;
 }
 
 // 退款撤銷 API 參數
 export interface CTBCPosApiCancelRefundParams extends CTBCPosApiBaseParams {
-  CredRevAmt: string;
+  XID: string;
   AuthCode: string;
+  CredRevAmt: string;
   currency?: string;
   exponent?: string;
-  XID: string;
 }
 
 // POS API 回應介面
@@ -388,6 +409,7 @@ export interface CTBCPosApiResponse {
   exponent?: string;
   ErrorDesc?: string;
   // 查詢相關欄位
+  CurrentState: string;
   SwRevision?: string;
   QueryCode?: string;
   ErrStatus?: string;
@@ -407,6 +429,13 @@ export interface CTBCPosApiResponse {
   // 取消退款相關欄位
   RetrRef?: string;
   ResAmt?: string;
+  BatchID?: string;
+  BatchSeq?: string;
+  TermSeq?: string;
+  // amex取消退款相關欄位
+  capBatchSeq?: string;
+  capBatchId?: string;
+  unCredAmt?: string;
   [key: string]: string | undefined;
 }
 
@@ -438,7 +467,48 @@ export interface CTBCAmexRefundParams {
   merId: string;
   xid: string;
   lidm: string;
-  credAmt: number;
+  purchAmt: number;
+  orgAmt: number;
+  IN_MAC_KEY: string;
+}
+
+// // AMEX 請款參數 (Cap)
+// export interface CTBCAmexCaptureParams {
+//   merId: string;
+//   xid: string;
+//   lidm: string;
+//   actionAmt: number;
+//   orgAmt: number;
+//   IN_MAC_KEY: string;
+// }
+
+// AMEX 取消退款參數 (CredRev)
+export interface CTBCAmexCancelRefundParams {
+  merId: string;
+  xid: string;
+  lidm: string;
+  capBatchId: string;
+  capBatchSeq: string;
+  IN_MAC_KEY: string;
+}
+
+// AMEX 授權取消參數 (AuthRev)
+export interface CTBCAmexAuthRevParams {
+  merId: string;
+  xid: string;
+  lidm: string;
+  purchAmt: number;
+  orgAmt: number;
+  IN_MAC_KEY: string;
+}
+
+// AMEX 請款取消參數 (CapRev)
+export interface CTBCAmexCapRevParams {
+  merId: string;
+  xid: string;
+  lidm: string;
+  purchAmt: number;
+  orgAmt: number;
   IN_MAC_KEY: string;
 }
 
@@ -453,6 +523,7 @@ export interface CTBCAmexInquiryResponse {
     xid?: string;
     authCode?: string;
     termSeq?: string;
+    purchAmt?: string;
     authAmt?: string;
     currency?: string;
     status?: string;
@@ -479,12 +550,23 @@ export interface CTBCAmexRefundResponse {
 // AMEX 通用回應類型
 export type CTBCAmexResponse = CTBCAmexInquiryResponse | CTBCAmexRefundResponse;
 
+// AMEX 取消退款回應 (CredRev)
+export interface CTBCAmexCancelRefundResponse {
+  aetId: string;
+  xid: string;
+  errCode: string;
+  errDesc: string;
+  mac: string; // 'Y' | 'F' | 'N'
+}
+
 // SOAP 操作的參數介面
 export interface SoapRequestData {
   merId: string;
   lidm: string;
   xid?: string;
   credAmt?: number;
+  capBatchId?: string;
+  capBatchSeq?: string;
   IN_MAC_KEY?: string;
   [key: string]: unknown;
 }
