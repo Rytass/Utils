@@ -86,6 +86,7 @@ export class AmegoInvoice implements Invoice<AmegoPaymentItem> {
     }, 0);
 
     this.carrier = options.carrier;
+    this.buyerInfo = options.buyerInfo;
   }
 
   public setVoid(voidOn = new Date()): void {
