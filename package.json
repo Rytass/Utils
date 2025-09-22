@@ -23,7 +23,6 @@
     "storybook:build": "storybook build"
   },
   "devDependencies": {
-    "@types/generate-password": "*",
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
     "@commitlint/config-lerna-scopes": "^19.8.1",
@@ -55,6 +54,7 @@
     "@storybook/react-vite": "^9.1.5",
     "@swc/core": "^1.13.5",
     "@types/debug": "^4.1.12",
+    "@types/generate-password": "*",
     "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9",
     "@types/lodash": "^4.17.20",
