@@ -310,7 +310,7 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
           'LID-M': this._id,
           OrgAmt: totalAmount.toString(),
           AuthCode: authCode,
-          XID: xid,
+          XID: xid || '',
           currency: '901', // NTD
           PurchAmt: refundAmount.toString(),
           exponent: '0',
@@ -475,7 +475,7 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
           'LID-M': this._id,
           CredRevAmt: cancelRefundAmount.toString(),
           AuthCode: authCode,
-          XID: xid,
+          XID: xid || '',
           currency: '901', // NTD
           exponent: '0',
         };
