@@ -250,14 +250,6 @@ describe('CTBCPayment core behaviours', () => {
     );
   });
 
-  it('toBig5MaxBytes trims whitespace and respects byte limit', () => {
-    const payment = new CTBCPayment(baseOptions);
-    const result = payment.toBig5MaxBytes('測 試 字 串', 6);
-
-    expect(result.length).toBeLessThanOrEqual(6);
-    expect(iconv.decode(result, 'big5')).toContain('測試');
-  });
-
   it('handleCallbackTextBodyByURLPath resolves success and redirect', async () => {
     const payment = new CTBCPayment(baseOptions);
     const orderStub = {

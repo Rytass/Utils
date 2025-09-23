@@ -533,7 +533,11 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
     const orderId = options.id ?? randomBytes(8).toString('hex');
 
     const cardType = options.cardType;
-    const orderDesc = options.items.map(item => item.name).join(',');
+    const orderDesc = options.items
+      .map(item => item.name)
+      .join(',')
+      .slice(0, 8);
+
     const txType = options.cardType === CardType.AE ? '6' : '0';
     const option = options.cardType === CardType.AE ? '' : '1';
 
@@ -565,7 +569,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
     params.push('OrderDesc=');
 
     if (orderDesc) {
-      params.push(this.toBig5MaxBytes(orderDesc, 36, { stripWhitespace: true })); // Max 36 bytes according to CTBC response error message
+      params.push(orderDesc);
     }
 
     params.push('&ProdCode=&');
@@ -833,21 +837,5 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
     });
 
     return order;
-  }
-
-  toBig5MaxBytes(str: string, maxBytes = 36, opts: { stripWhitespace?: boolean } = { stripWhitespace: true }): Buffer {
-    const s = opts.stripWhitespace ? str.replace(/\s/g, '') : str; // true=預設移除空白
-    const chunks: Buffer[] = [];
-    let total = 0;
-
-    for (const ch of s) {
-      const b = iconv.encode(ch, 'big5'); // ASCII(含半形 ,) 1 byte；常見中日韓字 2 bytes
-
-      if (total + b.length > maxBytes) break;
-      chunks.push(b);
-      total += b.length;
-    }
-
-    return Buffer.concat(chunks, total);
   }
 }
