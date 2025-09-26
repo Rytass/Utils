@@ -1,15 +1,15 @@
 import {
-  StorageError,
   ErrorCode,
-  Storage,
+  InputFile,
   ReadBufferFileOptions,
   ReadStreamFileOptions,
-  InputFile,
+  Storage,
+  StorageError,
   StorageFile,
   WriteFileOptions,
 } from '@rytass/storages';
 import { Credentials, S3 } from 'aws-sdk';
-import { Readable, PassThrough } from 'stream';
+import { PassThrough, Readable } from 'stream';
 import { v4 as uuid } from 'uuid';
 import { StorageS3Options } from './typings';
 
@@ -24,6 +24,7 @@ export class StorageS3Service extends Storage<StorageS3Options> {
     this.bucket = options.bucket;
 
     this.s3 = new S3({
+      endpoint: options.endpoint,
       credentials: new Credentials({
         accessKeyId: options.accessKey,
         secretAccessKey: options.secretKey,
