@@ -47,7 +47,7 @@ export class BankProInvoiceGateway
     this.sellerBAN = options.sellerBAN;
     this.baseUrl = options?.baseUrl || this.baseUrl;
 
-    if (!verifyVatNumber(options.sellerBAN)) {
+    if (verifyVatNumber(options.sellerBAN)) {
       throw new Error('Seller BAN should not be a valid VAT number');
     }
   }
@@ -69,7 +69,7 @@ export class BankProInvoiceGateway
       throw new Error('Buyer name is too long, max: 80');
     }
 
-    if (options.buyerZipCode && !/\d{1,5}/.test(options.buyerZipCode)) {
+    if (options.buyerZipCode && !/^\d{1,5}$/.test(options.buyerZipCode)) {
       throw new Error('Buyer zip code should be 1-5 digits');
     }
 
@@ -120,7 +120,7 @@ export class BankProInvoiceGateway
     const amount = options.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
 
     if (amount <= 0) {
-      throw new Error('invoice amount should more than zero');
+      throw new Error('Invoice amount should more than zero');
     }
 
     const date = DateTime.now().toFormat('yyyy/MM/dd');
