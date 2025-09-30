@@ -109,4 +109,185 @@ describe('with mocked axios, crypto', () => {
       expect(res).toMatchObject(fakePayload);
     });
   });
+
+  describe('ICashPayPayment.query', () => {
+    it('should return new failed order if RtnCode is not a success code', async () => {
+      mockedAxios.post.mockResolvedValueOnce({
+        ...mockAxiosSuccessResponse,
+        data: { ...mockAxiosSuccessResponse.data, RtnCode: '9999', RtnMsg: 'Payment failed' },
+      });
+
+      await expect(payment.query('TEST_ORDER_ID'));
+
+      expect(MockOrder).toHaveBeenCalledTimes(1);
+
+      expect(MockOrder).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'TEST_ORDER_ID',
+          items: [],
+          gateway: payment,
+          createdAt: expect.any(Date),
+          failedCode: '9999',
+          failedMessage: 'Payment failed',
+          isTWQRCode: false,
+          isRefunded: false,
+          paidAmount: 0,
+          bonusAmount: 0,
+        }),
+      );
+    });
+
+    it('should return new failed order if verification failed', async () => {
+      (crypto.verify as jest.Mock).mockReturnValue(false);
+
+      await expect(payment.query('TEST_ORDER_ID'));
+
+      expect(MockOrder).toHaveBeenCalledTimes(1);
+
+      expect(MockOrder).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'TEST_ORDER_ID',
+          items: [],
+          gateway: payment,
+          createdAt: expect.any(Date),
+          failedCode: '-999',
+          failedMessage: 'Signature verification failed',
+          isTWQRCode: false,
+          isRefunded: false,
+          paidAmount: 0,
+          bonusAmount: 0,
+        }),
+      );
+    });
+
+    describe('Failing Trade Status', () => {
+      it('should return new failed order if TradeStatus is FAILED', async () => {
+        fakePayload.TradeStatus = ICashPayTradeStatus.FAILED;
+
+        await expect(payment.query('TEST_ORDER_ID'));
+
+        expect(MockOrder).toHaveBeenCalledTimes(1);
+
+        expect(MockOrder).toHaveBeenCalledWith(
+          expect.objectContaining({
+            id: 'TEST_ORDER_ID',
+            items: [],
+            gateway: payment,
+            createdAt: expect.any(Date),
+            failedCode: '1',
+            failedMessage: 'Success',
+            isTWQRCode: false,
+            isRefunded: false,
+            paidAmount: 0,
+            bonusAmount: 0,
+          }),
+        );
+      });
+
+      it('should return new failed order if TradeStatus is CANCELLED', async () => {
+        fakePayload.TradeStatus = ICashPayTradeStatus.CANCELLED;
+
+        await expect(payment.query('TEST_ORDER_ID'));
+
+        expect(MockOrder).toHaveBeenCalledTimes(1);
+
+        expect(MockOrder).toHaveBeenCalledWith(
+          expect.objectContaining({
+            id: 'TEST_ORDER_ID',
+            items: [],
+            gateway: payment,
+            createdAt: expect.any(Date),
+            failedCode: '1',
+            failedMessage: 'Success',
+            isTWQRCode: false,
+            isRefunded: false,
+            paidAmount: 0,
+            bonusAmount: 0,
+          }),
+        );
+      });
+
+      it('should return new failed order if TradeStatus is SETTLEMENT_FAILED', async () => {
+        fakePayload.TradeStatus = ICashPayTradeStatus.SETTLEMENT_FAILED;
+
+        await expect(payment.query('TEST_ORDER_ID'));
+
+        expect(MockOrder).toHaveBeenCalledTimes(1);
+
+        expect(MockOrder).toHaveBeenCalledWith(
+          expect.objectContaining({
+            id: 'TEST_ORDER_ID',
+            items: [],
+            gateway: payment,
+            createdAt: expect.any(Date),
+            failedCode: '1',
+            failedMessage: 'Success',
+            isTWQRCode: false,
+            isRefunded: false,
+            paidAmount: 0,
+            bonusAmount: 0,
+          }),
+        );
+      });
+
+      it('should return new failed order if TradeStatus is INITED', async () => {
+        fakePayload.TradeStatus = ICashPayTradeStatus.INITED;
+
+        await expect(payment.query('TEST_ORDER_ID'));
+
+        expect(MockOrder).toHaveBeenCalledTimes(1);
+
+        expect(MockOrder).toHaveBeenCalledWith(
+          expect.objectContaining({
+            id: 'TEST_ORDER_ID',
+            items: [],
+            gateway: payment,
+            createdAt: expect.any(Date),
+            failedCode: '1',
+            failedMessage: 'Success',
+            isTWQRCode: false,
+            isRefunded: false,
+            paidAmount: 0,
+            bonusAmount: 0,
+          }),
+        );
+      });
+    });
+
+    it('should return new order if success', async () => {
+      fakePayload.TradeStatus = ICashPayTradeStatus.COMMITTED;
+      await expect(payment.query('TEST_ORDER_ID'));
+
+      expect(MockOrder).toHaveBeenCalledTimes(1);
+
+      expect(MockOrder).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'TEST_ORDER_ID',
+          items: [
+            {
+              name: '服務費',
+              quantity: 1,
+              unitPrice: 20,
+            },
+          ],
+          paidAmount: 15,
+          bonusAmount: 5,
+          gateway: payment,
+          createdAt: expect.any(Date),
+          committedAt: expect.any(Date),
+          transactionId: fakePayload.TransactionID,
+          icpAccount: fakePayload.ICPAccount,
+          paymentType: fakePayload.PaymentType,
+          boundMemberId: fakePayload.MMemberID,
+          invoiceMobileCarrier: fakePayload.MobileInvoiceCarry,
+          creditCardFirstSix: '123456',
+          creditCardLastFour: '7890',
+          isTWQRCode: false,
+          twqrIssueCode: undefined,
+          uniGID: fakePayload.GID,
+          isRefunded: false,
+        }),
+      );
+    });
+  });
 });
