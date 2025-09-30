@@ -9,13 +9,24 @@ import {
   PASSWORD_POLICY_REGEXP,
   PASSWORD_HISTORY_LIMIT,
   PASSWORD_AGE_LIMIT_IN_DAYS,
-} from '../typings/member-base-providers';
+} from '../typings/member-base.tokens';
 import { BaseMemberEntity } from '../models/base-member.entity';
 import { MemberPasswordHistoryEntity, MemberPasswordHistoryRepo } from '../models/member-password-history.entity';
 import { Repository } from 'typeorm';
 import { DateTime } from 'luxon';
-import { generate } from 'generate-password';
 import { PasswordInHistoryError } from '../constants/errors/base.error';
+
+// Use runtime require to avoid depending on @types/generate-password at consumers
+const { generate } = require('generate-password') as {
+  // Minimal typing for our usage
+  generate: (options?: {
+    length?: number;
+    numbers?: boolean;
+    symbols?: boolean;
+    lowercase?: boolean;
+    uppercase?: boolean;
+  }) => string;
+};
 
 @Injectable()
 export class PasswordValidatorService<MemberEntity extends BaseMemberEntity = BaseMemberEntity> {

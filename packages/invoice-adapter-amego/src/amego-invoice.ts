@@ -38,6 +38,11 @@ export class AmegoInvoice implements Invoice<AmegoPaymentItem> {
     code: string;
   };
 
+  readonly buyerInfo?: {
+    name: string;
+    email: string;
+  };
+
   constructor(options: AmegoInvoiceOptions) {
     this.issuedOn = options.issuedOn ?? new Date();
     this.items = options.items ?? [];
@@ -81,6 +86,7 @@ export class AmegoInvoice implements Invoice<AmegoPaymentItem> {
     }, 0);
 
     this.carrier = options.carrier;
+    this.buyerInfo = options.buyerInfo;
   }
 
   public setVoid(voidOn = new Date()): void {

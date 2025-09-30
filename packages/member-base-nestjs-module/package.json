@@ -1,6 +1,6 @@
 {
   "name": "@rytass/member-base-nestjs-module",
-  "version": "0.2.10",
+  "version": "0.2.15",
   "description": "Rytass Member System NestJS Base Module",
   "keywords": [
     "rytass",
@@ -47,7 +47,6 @@
     "typeorm-adapter": "^1"
   },
   "devDependencies": {
-    "@types/generate-password": "^1.5.3",
     "@types/ws": "^8"
   },
   "isolateEntries": [

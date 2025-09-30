@@ -56,7 +56,7 @@ export class BaseMemberEntity {
   @OneToMany(() => MemberLoginLogEntity, log => log.member)
   loginLogs: Relation<MemberLoginLogEntity[]>;
 
-  @OneToMany(() => MemberLoginLogEntity, log => log.member)
+  @OneToMany(() => MemberPasswordHistoryEntity, history => history.member)
   passwordHistories: Relation<MemberPasswordHistoryEntity[]>;
 
   @OneToMany(() => MemberOAuthRecordEntity, record => record.member)

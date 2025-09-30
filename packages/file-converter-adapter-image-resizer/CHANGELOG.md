@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.11](https://github.com/Rytass/Utils/compare/@rytass/file-converter-adapter-image-resizer@0.1.10...@rytass/file-converter-adapter-image-resizer@0.1.11) (2025-09-15)
+
+### Bug Fixes
+
+- resolve all security vulnerabilities detected by GitHub audit ([0fcdf72](https://github.com/Rytass/Utils/commit/0fcdf72a8a4b1708c09ab0124dfc44e0ea781f2f))
+
 ## [0.1.10](https://github.com/Rytass/Utils/compare/@rytass/file-converter-adapter-image-resizer@0.1.9...@rytass/file-converter-adapter-image-resizer@0.1.10) (2025-09-11)
 
 ### Features

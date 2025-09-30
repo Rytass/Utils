@@ -125,7 +125,7 @@ export class OAuthService {
   }
 
   async loginWithFacebookOAuth2Code(code: string, state?: string): Promise<TokenPairDto & { state?: string }> {
-    const provider = this.providers.find(p => p.channel === 'facebook') as GoogleOAuth2Provider;
+    const provider = this.providers.find(p => p.channel === 'facebook') as FacebookOAuth2Provider;
 
     if (!provider) {
       throw new BadRequestException('Facebook OAuth2 provider not found');

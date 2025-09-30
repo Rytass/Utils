@@ -3,6 +3,26 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.17](https://github.com/Rytass/Utils/compare/@rytass/payments-nestjs-module@0.1.16...@rytass/payments-nestjs-module@0.1.17) (2025-09-22)
+
+**Note:** Version bump only for package @rytass/payments-nestjs-module
+
+## [0.1.16](https://github.com/Rytass/Utils/compare/@rytass/payments-nestjs-module@0.1.15...@rytass/payments-nestjs-module@0.1.16) (2025-09-16)
+
+**Note:** Version bump only for package @rytass/payments-nestjs-module
+
+## [0.1.15](https://github.com/Rytass/Utils/compare/@rytass/payments-nestjs-module@0.1.14...@rytass/payments-nestjs-module@0.1.15) (2025-09-16)
+
+**Note:** Version bump only for package @rytass/payments-nestjs-module
+
+## [0.1.14](https://github.com/Rytass/Utils/compare/@rytass/payments-nestjs-module@0.1.13...@rytass/payments-nestjs-module@0.1.14) (2025-09-16)
+
+**Note:** Version bump only for package @rytass/payments-nestjs-module
+
+## [0.1.13](https://github.com/Rytass/Utils/compare/@rytass/payments-nestjs-module@0.1.12...@rytass/payments-nestjs-module@0.1.13) (2025-09-15)
+
+**Note:** Version bump only for package @rytass/payments-nestjs-module
+
 ## [0.1.12](https://github.com/Rytass/Utils/compare/@rytass/payments-nestjs-module@0.1.11...@rytass/payments-nestjs-module@0.1.12) (2025-09-11)
 
 ### Features

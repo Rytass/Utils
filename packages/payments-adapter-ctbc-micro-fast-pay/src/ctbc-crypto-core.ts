@@ -131,3 +131,29 @@ export function getDecTXN(input: string, key: string): string {
 
   return decrypted;
 }
+
+/**
+ * 3DES-ECB encryption used by AMEX SOAP MAC calculations.
+ * - Accepts 8-byte or 24-byte key (8 repeats 3x to 24).
+ * - Pads with PKCS#5 only when input length is NOT multiple of 8.
+ * - Returns uppercase hex string of raw ciphertext.
+ */
+export function desEcbEncryptHex(data: string | Buffer, key: string): string {
+  const normalizeKey = (k: string): Buffer => {
+    if (k.length === 24) return Buffer.from(k, 'utf8');
+
+    if (k.length === 8) return Buffer.from(k.repeat(3), 'utf8');
+    throw new Error('Invalid 3DES key length (must be 8 or 24 chars)');
+  };
+
+  const inputBuf = typeof data === 'string' ? Buffer.from(data, 'utf8') : data;
+  const rem = inputBuf.length % 8;
+  const padded = rem === 0 ? inputBuf : Buffer.concat([inputBuf, Buffer.alloc(8 - rem, 8 - rem)]);
+
+  const cipher = crypto.createCipheriv('des-ede3-ecb', normalizeKey(key), null);
+
+  cipher.setAutoPadding(false);
+  const enc = Buffer.concat([cipher.update(padded), cipher.final()]);
+
+  return enc.toString('hex').toUpperCase();
+}

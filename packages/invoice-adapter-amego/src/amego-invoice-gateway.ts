@@ -161,6 +161,8 @@ export class AmegoInvoiceGateway implements InvoiceGateway<AmegoPaymentItem, Ame
         carrier_type: string;
         carrier_id1: string;
         carrier_id2: string;
+        buyer_name: string;
+        buyer_email_address: string;
         npoban: string;
         tax_rate: string;
         tax_type: number;
@@ -230,6 +232,10 @@ export class AmegoInvoiceGateway implements InvoiceGateway<AmegoPaymentItem, Ame
       taxRate: parseFloat(data.data.tax_rate),
       voidOn: voidOn,
       state: state,
+      buyerInfo: {
+        name: data.data.buyer_name || '',
+        email: data.data.buyer_email_address || '',
+      },
     });
 
     const thisInvoiceAllowances = data.data.allowance.map((allowanceData, index) => {
@@ -315,6 +321,10 @@ export class AmegoInvoiceGateway implements InvoiceGateway<AmegoPaymentItem, Ame
       state: state,
       allowances: thisInvoiceAllowances,
       items: thisInvoiceItems,
+      buyerInfo: {
+        name: data.data.buyer_name || '',
+        email: data.data.buyer_email_address || '',
+      },
     });
   }
 
@@ -581,6 +591,10 @@ export class AmegoInvoiceGateway implements InvoiceGateway<AmegoPaymentItem, Ame
     }
 
     const carrier = this.parseCarrierFromResponse(carrierType, carrierId, carrierId, loveCode);
+    const buyerInfo = {
+      name: options.buyerName || (options.vatNumber ? options.vatNumber : '消費者'),
+      email: buyerEmail,
+    };
 
     return new AmegoInvoice({
       orderId: options.orderId,
@@ -595,6 +609,7 @@ export class AmegoInvoiceGateway implements InvoiceGateway<AmegoPaymentItem, Ame
       allowances: [],
       taxRate: taxRate,
       carrier,
+      buyerInfo,
     });
   }
 

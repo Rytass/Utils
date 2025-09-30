@@ -77,7 +77,7 @@ jobs:
         run: yarn install --immutable
 
       - name: Run security audit
-        run: yarn audit --level moderate
+        run: yarn npm audit --severity moderate
 
       - name: Check for outdated packages
         run: yarn outdated --check || true

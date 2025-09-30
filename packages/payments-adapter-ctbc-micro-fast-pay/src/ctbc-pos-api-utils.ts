@@ -8,6 +8,8 @@ import {
   CTBCPosApiRefundParams,
   CTBCPosApiCancelRefundParams,
   CTBCPosApiResponse,
+  CTBCPosApiReversalParams,
+  CTBCPosApiCapRevParams,
 } from './typings';
 import { debugPayment } from './ctbc-payment';
 
@@ -201,14 +203,18 @@ function parseResponse(responseStr: string, macKey: string): CTBCPosApiResponse 
   // 解析格式：key1=value1&key2=value2&encryptedData
   const parts = responseStr.split(/[&=]/);
 
+  console.log(`response parts length: ${parts.length}`, parts);
+
   if (parts.length < 4) {
     return CTBC_ERROR_CODES.ERR_RESPONSE_PARSE_FAILED;
   }
 
+  console.log(`parts: ${parts}`);
+
   const encryptedData = parts[3];
   const decodedData = decodeMacValue(encryptedData, macKey);
 
-  debugPayment(`decodedData: ${decodedData}`);
+  console.log(`decodedData: ${decodedData}`);
 
   // 尋找 JSON 結尾
   const jsonEndIndex = decodedData.lastIndexOf('}');
@@ -235,6 +241,9 @@ async function sendAndGetResponse(
   requestData: string,
 ): Promise<CTBCPosApiResponse | number> {
   try {
+    console.log('sendAndGetResponse requestData:', requestData);
+    console.log('sendAndGetResponse requestURL:', config.URL);
+
     const macSubString = getMacValueSub(requestData, config.MacKey);
     const apiEncString = getMacValue(requestData + macSubString, config.MacKey);
 
@@ -482,6 +491,8 @@ export async function posApiCancelRefund(
   requestData += getJsonString('MERID', null, 'S', params.MERID, '"');
   requestData += ',';
   requestData += getJsonString('LID-M', null, 'S', params['LID-M'], '"');
+  requestData += ',';
+  requestData += getJsonString('XID', null, 'S', params.XID, '"');
 
   if (params.AuthCode) {
     requestData += ',';
@@ -499,8 +510,6 @@ export async function posApiCancelRefund(
   }
 
   requestData += ',';
-  requestData += getJsonString('XID', null, 'S', params.XID, '"');
-  requestData += ',';
   requestData += getJsonString('VERSION', null, 'S', '3.2', '"');
   requestData += ',';
   requestData += getJsonString('SwRevision', null, 'S', 'MicroRefund Server 3.2 (2019/10/25)', '"');
@@ -508,4 +517,185 @@ export async function posApiCancelRefund(
   requestData += '}';
 
   return sendAndGetResponse(requestConfig, params.MERID, requestData);
+}
+
+// POS API 授權取消 (Reversal)
+export async function posApiReversal(
+  config: CTBCPosApiConfig,
+  params: CTBCPosApiReversalParams,
+): Promise<CTBCPosApiResponse | number> {
+  const meridCheck = checkMerid(params.MERID);
+
+  if (meridCheck !== true) return meridCheck;
+  const lidmCheck = checkLidm(params['LID-M']);
+
+  if (lidmCheck !== true) return lidmCheck;
+
+  const requestConfig = { ...config };
+
+  requestConfig.URL += '/NewPos/Reversal';
+
+  let reversalAmtString = '';
+
+  if (params.currency && params.OrgAmt && params.exponent) {
+    reversalAmtString = `${params.currency} 0 ${params.exponent}`;
+  }
+
+  let originalAmtString = '';
+
+  if (params.currency && params.OrgAmt && params.exponent) {
+    originalAmtString = `${params.currency} ${params.OrgAmt} ${params.exponent}`;
+  }
+
+  let requestData = '{';
+
+  requestData += getJsonString('MERID', null, 'S', params.MERID, '"');
+  requestData += ',' + getJsonString('LID-M', null, 'S', params['LID-M'], '"');
+  requestData += ',' + getJsonString('XID', null, 'S', params.XID, '"');
+  requestData += ',' + getJsonString('AuthCode', null, 'S', params.AuthCode, '"');
+  requestData += ',' + getJsonString('OrgAmt', null, 'S', originalAmtString, '"');
+  requestData += ',' + getJsonString('AuthNewAmt', null, 'S', reversalAmtString, '"');
+  requestData += ',' + getJsonString('VERSION', null, 'S', '3.2', '"');
+  requestData += ',' + getJsonString('SwRevision', null, 'S', 'MicroReversal Server 3.2 (2019/10/25)', '"');
+  requestData += '}';
+
+  return sendAndGetResponse(requestConfig, params.MERID, requestData);
+}
+
+// POS API 請款取消 (CapRev)
+export async function posApiCapRev(
+  config: CTBCPosApiConfig,
+  params: CTBCPosApiCapRevParams,
+): Promise<CTBCPosApiResponse | number> {
+  const meridCheck = checkMerid(params.MERID);
+
+  if (meridCheck !== true) return meridCheck;
+  const lidmCheck = checkLidm(params['LID-M']);
+
+  if (lidmCheck !== true) return lidmCheck;
+
+  const requestConfig = { ...config };
+
+  requestConfig.URL += '/NewPos/CapRev';
+
+  let capRevAmtString = '';
+
+  if (params.currency && params.OrgAmt && params.exponent) {
+    capRevAmtString = `${params.currency} 0 ${params.exponent}`;
+  }
+
+  let originalAmtString = '';
+
+  if (params.currency && params.OrgAmt && params.exponent) {
+    originalAmtString = `${params.currency} ${params.OrgAmt} ${params.exponent}`;
+  }
+
+  let requestData = '{';
+
+  requestData += getJsonString('MERID', null, 'S', params.MERID, '"');
+  requestData += ',' + getJsonString('LID-M', null, 'S', params['LID-M'], '"');
+  requestData += ',' + getJsonString('XID', null, 'S', params.XID, '"');
+  requestData += ',' + getJsonString('AuthCode', null, 'S', params.AuthCode, '"');
+  requestData += ',' + getJsonString('OrgAmt', null, 'S', originalAmtString, '"');
+  requestData += ',' + getJsonString('CapRevAmt', null, 'S', capRevAmtString, '"');
+  requestData += ',' + getJsonString('VERSION', null, 'S', '3.2', '"');
+  requestData += ',' + getJsonString('SwRevision', null, 'S', 'MicroCapRev Server 3.2 (2019/10/25)', '"');
+  requestData += '}';
+
+  return sendAndGetResponse(requestConfig, params.MERID, requestData);
+}
+
+// 根據查詢結果判斷下一步（Reversal / CapRev / Refund）
+export function getPosNextActionFromInquiry(inquiry: CTBCPosApiResponse): 'Reversal' | 'CapRev' | 'Refund' | 'None' {
+  // 以 CurrentState 作為主要判斷依據
+  // 1: 授權成功 → Reversal
+  // 10: 已請款(處理中) → CapRev
+  // 12: 已請款成功 → Refund
+
+  // 不處理的狀態碼：
+  // -1: 授權失敗 → None
+  // 0: 訂單已取消 → None
+  // 11: 已請款處理中 → None
+  // 13: 已請款失敗 → None
+  // 23: 已退款失敗 → None
+  // 20/21: 已退款(處理中) → None
+  // 22: 已退款成功 → None
+  const raw = inquiry.CurrentState;
+
+  if (typeof raw === 'string' && raw.trim().length > 0) {
+    const state = parseInt(raw, 10);
+
+    if (!Number.isNaN(state)) {
+      if (state === 1) return 'Reversal';
+
+      if (state === 10) return 'CapRev';
+
+      if (state === 12) return 'Refund';
+
+      return 'None';
+    }
+  }
+
+  return 'None';
+}
+
+// 智慧取消/退款（POS 版）：查詢 → 決策 → 執行
+export async function posApiSmartCancelOrRefund(
+  config: CTBCPosApiConfig,
+  params: CTBCPosApiRefundParams,
+): Promise<{
+  action: 'Reversal' | 'CapRev' | 'Refund' | 'None';
+  response: CTBCPosApiResponse | number;
+  inquiry: CTBCPosApiResponse | number;
+}> {
+  const inq = await posApiQuery(config, { MERID: params.MERID, 'LID-M': params['LID-M'], Tx_ATTRIBUTE: 'TX_AUTH' });
+
+  console.log('posApiSmartCancelOrRefund inquiry result:', inq);
+
+  // // 若查詢失敗（回傳錯誤碼），預設不處理；否則依查詢結果決策
+  const action: 'Reversal' | 'CapRev' | 'Refund' | 'None' =
+    typeof inq === 'number' ? 'None' : getPosNextActionFromInquiry(inq);
+
+  let response: CTBCPosApiResponse | number;
+
+  if (action === 'Reversal') {
+    response = await posApiReversal(config, {
+      MERID: params.MERID,
+      'LID-M': params['LID-M'],
+      XID: params.XID,
+      AuthCode: params.AuthCode,
+      OrgAmt: params.OrgAmt,
+      AuthNewAmt: params.PurchAmt,
+      currency: params.currency,
+      exponent: params.exponent,
+    });
+  } else if (action === 'CapRev') {
+    response = await posApiCapRev(config, {
+      MERID: params.MERID,
+      'LID-M': params['LID-M'],
+      XID: params.XID,
+      AuthCode: params.AuthCode,
+      OrgAmt: params.OrgAmt,
+      CapRevAmt: params.PurchAmt,
+      currency: params.currency,
+      exponent: params.exponent,
+    });
+
+    response = await posApiReversal(config, {
+      MERID: params.MERID,
+      'LID-M': params['LID-M'],
+      XID: params.XID,
+      AuthCode: params.AuthCode,
+      OrgAmt: params.OrgAmt,
+      AuthNewAmt: params.PurchAmt,
+      currency: params.currency,
+      exponent: params.exponent,
+    });
+  } else if (action === 'Refund') {
+    response = await posApiRefund(config, params);
+  } else {
+    response = inq; // 無需處理，回傳查詢結果
+  }
+
+  return { action, response, inquiry: inq };
 }

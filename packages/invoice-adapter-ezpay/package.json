@@ -1,6 +1,6 @@
 {
   "name": "@rytass/invoice-adapter-ezpay",
-  "version": "0.4.5",
+  "version": "0.4.7",
   "description": "Rytass Invoice Gateway - EZPay",
   "keywords": [
     "rytass",
@@ -25,7 +25,7 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/invoice": "^0.4.5",
+    "@rytass/invoice": "^0.4.8",
     "axios": "^1.11.0",
     "form-data": "^4.0.4",
     "luxon": "^3.7.1",

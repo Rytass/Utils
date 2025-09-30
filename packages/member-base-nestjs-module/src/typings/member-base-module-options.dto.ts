@@ -4,9 +4,18 @@ import type { ReflectableDecorator } from '@nestjs/core';
 import type { Enforcer } from 'casbin';
 import type { OAuth2Provider } from './oauth2-provider.interface';
 
-export interface MemberBaseModuleOptionsDto<
+/**
+ * @deprecated Prefer using the alias `MemberBaseModuleOptions` for clarity.
+ */
+export interface MemberBaseModuleOptionsDTO<
   MemberEntity extends BaseMemberEntity = BaseMemberEntity,
-  TokenPayload extends Record<string, unknown> = Pick<MemberEntity, 'id' | 'account'>,
+  TokenPayload extends {
+    id: string;
+    account?: string;
+    domain?: string;
+  } = Pick<MemberEntity, 'id' | 'account'> & {
+    domain?: string;
+  },
 > {
   loginFailedBanThreshold?: number; // default: 5
   resetPasswordTokenExpiration?: number; // default: 60 * 60 * 1 = 1 hour
@@ -55,3 +64,15 @@ export interface MemberBaseModuleOptionsDto<
   oauth2Providers?: OAuth2Provider[];
   oauth2ClientDestUrl?: string; // default: '/login'
 }
+
+// Non-breaking alias with community-preferred naming
+export type MemberBaseModuleOptions<
+  MemberEntity extends BaseMemberEntity = BaseMemberEntity,
+  TokenPayload extends {
+    id: string;
+    account?: string;
+    domain?: string;
+  } = Pick<MemberEntity, 'id' | 'account'> & {
+    domain?: string;
+  },
+> = MemberBaseModuleOptionsDTO<MemberEntity, TokenPayload>;

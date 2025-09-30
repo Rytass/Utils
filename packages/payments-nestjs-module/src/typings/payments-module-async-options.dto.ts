@@ -3,7 +3,8 @@ import { PaymentsModuleOptionsDto } from './payments-module-options.dto';
 import { PaymentsModuleOptionFactory } from './payments-option-factory';
 
 export interface PaymentsModuleAsyncOptionsDto extends Pick<ModuleMetadata, 'imports'> {
-  useFactory?: (...args: unknown[]) => Promise<PaymentsModuleOptionsDto> | PaymentsModuleOptionsDto;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  useFactory?: (...args: any[]) => Promise<PaymentsModuleOptionsDto> | PaymentsModuleOptionsDto;
   inject?: (InjectionToken | OptionalFactoryDependency)[];
   useClass?: Type<PaymentsModuleOptionFactory>;
   useExisting?: Type<PaymentsModuleOptionFactory>;

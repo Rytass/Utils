@@ -3,6 +3,39 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.15](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.14...@rytass/member-base-nestjs-module@0.2.15) (2025-09-22)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** align casbin payload typings ([f1d5e1a](https://github.com/Rytass/Utils/commit/f1d5e1af7703805425a33f1267e1c06d3b661f77))
+
+### Features
+
+- **member-base-nestjs-module:** add non-breaking options type aliases ([745f6ab](https://github.com/Rytass/Utils/commit/745f6ab12dc96729ab5183d63c46cfa7e79f78ac))
+- **member-base-nestjs-module:** add token payload type ([9546e78](https://github.com/Rytass/Utils/commit/9546e78f093d19b3c58ba0f24c10449d29fdc332))
+- **member-base-nestjs-module:** centralize injection tokens and add cookie-name tokens ([45c6549](https://github.com/Rytass/Utils/commit/45c654979bcf5b1d3efb7242357fef1d56d55875))
+- **member-base-nestjs-module:** prefer header over cookie and validate access token in utils ([d6eb7e6](https://github.com/Rytass/Utils/commit/d6eb7e69429b47611d4667bf5ca4b0ef1f01f440))
+
+## [0.2.14](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.13...@rytass/member-base-nestjs-module@0.2.14) (2025-09-16)
+
+### Bug Fixes
+
+- correct typeorm-adapter import for ESM module resolution ([0a62e46](https://github.com/Rytass/Utils/commit/0a62e46bf4ce800ae2e41df10af8877ef855b030))
+
+## [0.2.13](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.12...@rytass/member-base-nestjs-module@0.2.13) (2025-09-16)
+
+**Note:** Version bump only for package @rytass/member-base-nestjs-module
+
+## [0.2.12](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.11...@rytass/member-base-nestjs-module@0.2.12) (2025-09-16)
+
+**Note:** Version bump only for package @rytass/member-base-nestjs-module
+
+## [0.2.11](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.10...@rytass/member-base-nestjs-module@0.2.11) (2025-09-15)
+
+### Bug Fixes
+
+- resolve all security vulnerabilities detected by GitHub audit ([0fcdf72](https://github.com/Rytass/Utils/commit/0fcdf72a8a4b1708c09ab0124dfc44e0ea781f2f))
+
 ## [0.2.10](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.9...@rytass/member-base-nestjs-module@0.2.10) (2025-09-11)
 
 ### Features

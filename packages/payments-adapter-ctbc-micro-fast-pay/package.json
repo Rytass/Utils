@@ -1,6 +1,6 @@
 {
   "name": "@rytass/payments-adapter-ctbc-micro-fast-pay",
-  "version": "0.1.10",
+  "version": "0.1.13",
   "description": "Rytass Payment Gateway",
   "keywords": [
     "rytass",
@@ -25,8 +25,8 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/payments": "^0.2.5",
-    "axios": "^1.11.0",
+    "@rytass/payments": "^0.2.6",
+    "axios": "^1.6.0",
     "debug": "^4.4.1",
     "iconv-lite": "^0.7.0",
     "lru-cache": "^11.1.0",
@@ -37,7 +37,6 @@
     "@ngrok/ngrok": "^1.5.1"
   },
   "devDependencies": {
-    "@types/debug": "^4.1.12",
-    "@types/lru-cache": "^7.10.10"
+    "@types/debug": "^4.1.12"
   }
 }

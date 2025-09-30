@@ -3,6 +3,26 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.13](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.12...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.13) (2025-09-23)
+
+### Features
+
+- **payments-adapter-ctbc-micro-fast-pay:** fix prepare payments orderDesc length ([feed2fa](https://github.com/Rytass/Utils/commit/feed2fadf1958327a81449415d52f31e09d1d777))
+
+## [0.1.12](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.11...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.12) (2025-09-22)
+
+### Features
+
+- **payments-adapter-ctbc-micro-fast-pay:** fix testing failed ([b93cc3b](https://github.com/Rytass/Utils/commit/b93cc3b5e55886c8988cf766e0dbf3babdd36bc5))
+- **payments-adapter-ctbc-micro-fast-pay:** implementation of payments-adapter-ctbc-micro-fast-pay inquiry, refund, cancelRefund for both pos and amex api ([823473c](https://github.com/Rytass/Utils/commit/823473c8a78a4d9758832f83a2e6eb9f3c48964e))
+- **payments-adapter-ctbc-micro-fast-pay:** improve code coverages ([de6e5c1](https://github.com/Rytass/Utils/commit/de6e5c126a33884dfc5da2980bff67acb8a0f0b6))
+
+## [0.1.11](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.10...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.11) (2025-09-15)
+
+### Bug Fixes
+
+- resolve all security vulnerabilities detected by GitHub audit ([0fcdf72](https://github.com/Rytass/Utils/commit/0fcdf72a8a4b1708c09ab0124dfc44e0ea781f2f))
+
 ## [0.1.10](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.9...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.10) (2025-09-11)
 
 ### Features

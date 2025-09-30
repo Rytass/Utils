@@ -1,6 +1,6 @@
 {
   "name": "@rytass/file-converter-adapter-image-resizer",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "Rytass Utils Storages Images Resizer",
   "keywords": [
     "rytass",
@@ -28,8 +28,5 @@
   "dependencies": {
     "@rytass/file-converter": "^0.1.5",
     "sharp": "^0.34.3"
-  },
-  "devDependencies": {
-    "@types/sharp": "^0.32.0"
   }
 }

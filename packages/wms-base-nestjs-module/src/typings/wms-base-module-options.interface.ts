@@ -1,4 +1,4 @@
-import { ModuleMetadata, Type } from '@nestjs/common';
+import { InjectionToken, ModuleMetadata, OptionalFactoryDependency, Type } from '@nestjs/common';
 import { BatchEntity } from '../models/batch.entity';
 import { LocationEntity } from '../models/location.entity';
 import { MaterialEntity } from '../models/material.entity';
@@ -23,8 +23,9 @@ export interface WMSBaseModuleOptionsFactory {
 }
 
 export interface WMSBaseModuleAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
-  useFactory?: (...args: unknown[]) => Promise<WMSBaseModuleOptions> | WMSBaseModuleOptions;
-  inject?: (string | symbol | Function | Type)[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  useFactory?: (...args: any[]) => Promise<WMSBaseModuleOptions> | WMSBaseModuleOptions;
+  inject?: (InjectionToken | OptionalFactoryDependency)[];
   useClass?: Type<WMSBaseModuleOptionsFactory>;
   useExisting?: Type<WMSBaseModuleOptionsFactory>;
 }
