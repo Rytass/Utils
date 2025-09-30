@@ -2,6 +2,7 @@ import {
   I_CASH_PAY_SUCCESS_CODE,
   ICashPayBaseUrls,
   ICashPayPaymentInitOptions,
+  ICashPayRefundOptions,
   ICashPayResponse,
   ICashPayTradeStatus,
 } from '../src/typing';
@@ -383,6 +384,85 @@ describe('with mocked axios, crypto', () => {
           isRefunded: false,
         }),
       );
+    });
+  });
+
+  describe('ICashPayPayment.refund', () => {
+    const mockPayRefundOptions: ICashPayRefundOptions = {
+      id: 'TEST_ORDER_ID',
+      storeId: 'TEST_STORE_ID',
+      storeName: 'TEST_STORE_NAME',
+      transactionId: 'TEST_TRANSACTION_ID',
+      requestRefundAmount: 100,
+      requestRefundCollectedAmount: 50,
+      requestRefundConsignmentAmount: 50,
+      refundOrderId: 'TEST_REFUND_ORDER_ID',
+    };
+
+    it('should throw error if refunAmount is zero', async () => {
+      await expect(
+        payment.refund({
+          ...mockPayRefundOptions,
+          requestRefundAmount: 0,
+          requestRefundCollectedAmount: 0,
+          requestRefundConsignmentAmount: 0,
+        }),
+      ).rejects.toThrow('Total refund amount must be greater than 0');
+    });
+
+    it('should return new failed order if RtnCode is not a success code', async () => {
+      mockedAxios.post.mockResolvedValueOnce({
+        ...mockAxiosSuccessResponse,
+        data: { ...mockAxiosSuccessResponse.data, RtnCode: '9999', RtnMsg: 'Payment failed' },
+      });
+
+      await expect(payment.refund(mockPayRefundOptions));
+
+      expect(MockOrder).toHaveBeenCalledTimes(1);
+
+      expect(MockOrder).toHaveBeenCalledWith({
+        id: 'TEST_ORDER_ID',
+        items: [],
+        gateway: payment,
+        createdAt: expect.any(Date),
+        committedAt: null,
+        failedCode: '9999',
+        failedMessage: 'Payment failed',
+        isTWQRCode: false,
+        isRefunded: false,
+        paidAmount: 0,
+        bonusAmount: 0,
+      });
+    });
+
+    it('should return new failed order if verification failed', async () => {
+      (crypto.verify as jest.Mock).mockReturnValue(false);
+      await expect(payment.refund(mockPayRefundOptions));
+
+      expect(MockOrder).toHaveBeenCalledTimes(1);
+
+      expect(MockOrder).toHaveBeenCalledWith({
+        id: 'TEST_ORDER_ID',
+        items: [],
+        gateway: payment,
+        createdAt: expect.any(Date),
+        committedAt: null,
+        failedCode: '-999',
+        failedMessage: 'Signature verification failed',
+        isTWQRCode: false,
+        isRefunded: false,
+        paidAmount: 0,
+        bonusAmount: 0,
+      });
+    });
+
+    it('should call query with this orderId', async () => {
+      jest.spyOn(payment, 'query');
+
+      await expect(payment.refund(mockPayRefundOptions));
+
+      expect(payment.query).toHaveBeenCalledTimes(1);
+      expect(payment.query).toHaveBeenCalledWith('TEST_REFUND_ORDER_ID');
     });
   });
 });
