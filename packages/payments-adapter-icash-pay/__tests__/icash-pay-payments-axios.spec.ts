@@ -12,7 +12,23 @@ import { ICashPayOrder } from '../src/icash-pay-order';
 
 jest.mock('node:crypto');
 
-const fakePayload = {
+const fakePayload: {
+  TradeStatus: ICashPayTradeStatus;
+  TotalAmount?: string;
+  ICPAmount?: string;
+  BonusAmt?: string;
+  PaymentDate: string;
+  TransactionID: string;
+  ICPAccount: string;
+  PaymentType: string;
+  MMemberID?: string;
+  MobileInvoiceCarry?: string;
+  MaskedPan?: string;
+  GID?: string;
+  OTotalAmount?: string;
+  OICPAmount?: string;
+  OBonusAmt?: string;
+} = {
   TradeStatus: ICashPayTradeStatus.COMMITTED,
   TotalAmount: '2000',
   ICPAmount: '1500',
@@ -254,7 +270,7 @@ describe('with mocked axios, crypto', () => {
       });
     });
 
-    it('should return new order if success', async () => {
+    it('should return new order if success - base case', async () => {
       fakePayload.TradeStatus = ICashPayTradeStatus.COMMITTED;
       await expect(payment.query('TEST_ORDER_ID'));
 
@@ -282,6 +298,85 @@ describe('with mocked axios, crypto', () => {
           invoiceMobileCarrier: fakePayload.MobileInvoiceCarry,
           creditCardFirstSix: '123456',
           creditCardLastFour: '7890',
+          isTWQRCode: false,
+          twqrIssueCode: undefined,
+          uniGID: fakePayload.GID,
+          isRefunded: false,
+        }),
+      );
+    });
+
+    it('should return new order if success - no TotalAmount, no bonusAmount, no ICPAmount, no OTotalAmount, no OICPAmount, no OBonusAmt', async () => {
+      fakePayload.TotalAmount = undefined;
+      fakePayload.OTotalAmount = undefined;
+      fakePayload.BonusAmt = undefined;
+      fakePayload.ICPAmount = undefined;
+
+      await expect(payment.query('TEST_ORDER_ID'));
+
+      expect(MockOrder).toHaveBeenCalledTimes(1);
+
+      expect(MockOrder).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'TEST_ORDER_ID',
+          items: [],
+          paidAmount: 0,
+          bonusAmount: 0,
+          gateway: payment,
+          createdAt: expect.any(Date),
+          committedAt: expect.any(Date),
+          transactionId: fakePayload.TransactionID,
+          icpAccount: fakePayload.ICPAccount,
+          paymentType: fakePayload.PaymentType,
+          boundMemberId: fakePayload.MMemberID,
+          invoiceMobileCarrier: fakePayload.MobileInvoiceCarry,
+          creditCardFirstSix: '123456',
+          creditCardLastFour: '7890',
+          isTWQRCode: false,
+          twqrIssueCode: undefined,
+          uniGID: fakePayload.GID,
+          isRefunded: false,
+        }),
+      );
+    });
+
+    it('should return new order if success - no TotalAmount, no bonusAmount, no ICPAmount, no MemberId, no MobileInvoiceCarry, no MaskedPan, no GID ', async () => {
+      fakePayload.TotalAmount = undefined;
+      fakePayload.BonusAmt = undefined;
+      fakePayload.ICPAmount = undefined;
+      fakePayload.MMemberID = undefined;
+      fakePayload.MobileInvoiceCarry = undefined;
+      fakePayload.MaskedPan = undefined;
+      fakePayload.GID = undefined;
+      fakePayload.OTotalAmount = '2000';
+      fakePayload.OICPAmount = '1500';
+      fakePayload.OBonusAmt = '500';
+      await expect(payment.query('TEST_ORDER_ID'));
+
+      expect(MockOrder).toHaveBeenCalledTimes(1);
+
+      expect(MockOrder).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'TEST_ORDER_ID',
+          items: [
+            {
+              name: '服務費',
+              quantity: 1,
+              unitPrice: 20,
+            },
+          ],
+          paidAmount: 15,
+          bonusAmount: 5,
+          gateway: payment,
+          createdAt: expect.any(Date),
+          committedAt: expect.any(Date),
+          transactionId: fakePayload.TransactionID,
+          icpAccount: fakePayload.ICPAccount,
+          paymentType: fakePayload.PaymentType,
+          boundMemberId: fakePayload.MMemberID,
+          invoiceMobileCarrier: fakePayload.MobileInvoiceCarry,
+          creditCardFirstSix: undefined,
+          creditCardLastFour: undefined,
           isTWQRCode: false,
           twqrIssueCode: undefined,
           uniGID: fakePayload.GID,
