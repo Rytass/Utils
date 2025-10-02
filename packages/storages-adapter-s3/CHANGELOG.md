@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.3.7](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-s3@0.3.6...@rytass/storages-adapter-s3@0.3.7) (2025-10-02)
+
+### Features
+
+- **storages-adapter-s3:** add endpoint option to StorageS3Options and initialize S3 with it ([cab0767](https://github.com/Rytass/Utils/commit/cab0767e1a9d5eed927a034b4684eed5cd0281f0))
+
 ## [0.3.6](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-s3@0.3.5...@rytass/storages-adapter-s3@0.3.6) (2025-09-11)
 
 ### Features
