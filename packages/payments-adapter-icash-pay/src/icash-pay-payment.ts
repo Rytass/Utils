@@ -291,7 +291,7 @@ export class ICashPayPayment<CM extends ICashPayCommitMessage = ICashPayCommitMe
               {
                 name: '服務費',
                 quantity: 1,
-                unitPrice: Number(responsePayload.TotalAmount ?? responsePayload.OTotalAmount ?? '0') / 100,
+                unitPrice: Number(responsePayload.TotalAmount ?? responsePayload.OTotalAmount) / 100,
               },
             ]
           : []),
