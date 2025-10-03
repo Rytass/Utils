@@ -464,5 +464,37 @@ describe('with mocked axios, crypto', () => {
       expect(payment.query).toHaveBeenCalledTimes(1);
       expect(payment.query).toHaveBeenCalledWith('TEST_REFUND_ORDER_ID');
     });
+
+    it('should call query with this orderId when there is no requestRefundCollectedAmount, refundOrderId, storeId', async () => {
+      jest.spyOn(payment, 'query');
+
+      Reflect.set(payment, 'getOrderId', jest.fn().mockReturnValue('TEST_REFUND_ORDER_ID'));
+
+      await expect(
+        payment.refund({
+          ...mockPayRefundOptions,
+          requestRefundCollectedAmount: undefined,
+          refundOrderId: undefined,
+          storeId: undefined,
+        }),
+      );
+
+      expect(payment.query).toHaveBeenCalledTimes(1);
+      expect(payment.query).toHaveBeenCalledWith('TEST_REFUND_ORDER_ID');
+    });
+
+    it('should call query with this orderId when there is no requestRefundConsignmentAmount', async () => {
+      jest.spyOn(payment, 'query');
+
+      await expect(
+        payment.refund({
+          ...mockPayRefundOptions,
+          requestRefundConsignmentAmount: undefined,
+        }),
+      );
+
+      expect(payment.query).toHaveBeenCalledTimes(1);
+      expect(payment.query).toHaveBeenCalledWith('TEST_REFUND_ORDER_ID');
+    });
   });
 });
