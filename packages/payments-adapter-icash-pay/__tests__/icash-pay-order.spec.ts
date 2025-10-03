@@ -388,3 +388,21 @@ describe('ICashPayOrder', () => {
     });
   });
 });
+
+describe('ICashPayOrderItem', () => {
+  it('should set order items based on options', () => {
+    const options = {
+      name: 'Product A',
+      unitPrice: 1000,
+      quantity: 2,
+    };
+
+    const orderItems = new ICashPayOrderItem(options);
+
+    expect(orderItems).toEqual({
+      name: 'Product A',
+      unitPrice: 1000,
+      quantity: 2,
+    });
+  });
+});
