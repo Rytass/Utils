@@ -69,13 +69,13 @@ describe('ICashPayOrder', () => {
       failSpy.mockRestore();
     });
 
-    it('should change state to COMMITED if commitedAt is present', () => {
+    it('should change state to COMMITTED if committedAt is present', () => {
       const order = new ICashPayOrder({ ...mockOrderOptions, committedAt: new Date() });
 
       expect(Reflect.get(order, '_state')).toBe(OrderState.COMMITTED);
     });
 
-    it('should change state to INITED if commitedAt is not present', () => {
+    it('should change state to INITED if committedAt is not present', () => {
       const order = new ICashPayOrder({ ...mockOrderOptions, committedAt: null });
 
       expect(Reflect.get(order, '_state')).toBe(OrderState.INITED);
@@ -120,7 +120,7 @@ describe('ICashPayOrder', () => {
         expect(order.gateway.emitter.emit).toHaveBeenCalledWith(PaymentEvents.ORDER_COMMITTED, order);
       });
 
-      it('should emit order committed in gateway when no MMemberID, MobileInvoiceCarry, MaskedPan, FiscTWQRIssCode, GID, ICPAmount, BonusAmt, ', async () => {
+      it('should emit order committed event when optional fields are missing', async () => {
         Reflect.set(order, '_gateway', {
           commit: jest.fn().mockResolvedValue({
             PaymentDate: '2025/09/30 12:34:56',
@@ -211,6 +211,10 @@ describe('ICashPayOrder', () => {
     });
 
     describe('other functions', () => {
+      afterEach(() => {
+        jest.restoreAllMocks();
+      });
+
       it('should id getter is called and returns value', () => {
         const order = new ICashPayOrder(mockOrderOptions);
 
@@ -220,8 +224,6 @@ describe('ICashPayOrder', () => {
 
         expect(getterSpy).toHaveBeenCalled();
         expect(result).toBe('order-1');
-
-        getterSpy.mockRestore();
       });
 
       it('should items getter is called and returns value', () => {
@@ -233,8 +235,6 @@ describe('ICashPayOrder', () => {
 
         expect(getterSpy).toHaveBeenCalled();
         expect(result).toBe(mockItems);
-
-        getterSpy.mockRestore();
       });
 
       it('should state getter is called and returns value', () => {
@@ -246,8 +246,6 @@ describe('ICashPayOrder', () => {
 
         expect(getterSpy).toHaveBeenCalled();
         expect(result).toBe(OrderState.COMMITTED);
-
-        getterSpy.mockRestore();
       });
 
       it('should createdAt getter is called and returns value', () => {
@@ -260,8 +258,6 @@ describe('ICashPayOrder', () => {
 
         expect(getterSpy).toHaveBeenCalled();
         expect(result).toBe(date);
-
-        getterSpy.mockRestore();
       });
 
       it('should committedAt getter is called and returns value', () => {
@@ -278,8 +274,6 @@ describe('ICashPayOrder', () => {
 
         expect(getterSpy).toHaveBeenCalled();
         expect(result).toBe(date);
-
-        getterSpy.mockRestore();
       });
 
       it('should failedMessage getter is called and returns null', () => {
@@ -295,8 +289,6 @@ describe('ICashPayOrder', () => {
 
         expect(getterSpy).toHaveBeenCalled();
         expect(result).toBe(null);
-
-        getterSpy.mockRestore();
       });
 
       it('should failedMessage getter is called and returns code and message', () => {
@@ -320,8 +312,6 @@ describe('ICashPayOrder', () => {
 
         expect(getterSpy).toHaveBeenCalled();
         expect(result).toEqual({ code: 'failed-code', message: 'failed-message' });
-
-        getterSpy.mockRestore();
       });
 
       it('should totalAmount getter is called and returns value', () => {
@@ -333,8 +323,6 @@ describe('ICashPayOrder', () => {
 
         expect(getterSpy).toHaveBeenCalled();
         expect(result).toBe(2100);
-
-        getterSpy.mockRestore();
       });
 
       it('should paidAmount getter is called and returns value', () => {
@@ -346,8 +334,6 @@ describe('ICashPayOrder', () => {
 
         expect(getterSpy).toHaveBeenCalled();
         expect(result).toBe(2000);
-
-        getterSpy.mockRestore();
       });
 
       it('should bonusAmount getter is called and returns value', () => {
@@ -359,8 +345,6 @@ describe('ICashPayOrder', () => {
 
         expect(getterSpy).toHaveBeenCalled();
         expect(result).toBe(100);
-
-        getterSpy.mockRestore();
       });
 
       it('should bonusAmount getter is called and returns value also warns if order is PRE_COMMIT', () => {
@@ -376,8 +360,6 @@ describe('ICashPayOrder', () => {
         expect(getterSpy).toHaveBeenCalled();
         expect(warnSpy).toHaveBeenCalled();
         expect(result).toBe(100);
-
-        getterSpy.mockRestore();
       });
 
       it('should throw error if infoRetreived is called', () => {
