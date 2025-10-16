@@ -7,7 +7,6 @@ import {
   InputFromOrderCommitMessage,
   Order,
   OrderCreditCardCommitMessage,
-  OrderState,
   PaymentEvents,
   PaymentGateway,
 } from '@rytass/payments';
@@ -197,15 +196,17 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
           throw new Error(`Unknown callback checkout order: ${requestId}`);
         }
 
+        const now = DateTime.now().toJSDate();
+
         order.commit(
           {
             id: order.id,
             totalPrice: Number(payload.get('authAmt')),
-            committedAt: new Date(),
+            committedAt: now,
           } as OrderCreditCardCommitMessage,
           {
             channel: Channel.CREDIT_CARD,
-            processDate: new Date(),
+            processDate: now,
             amount: Number(payload.get('authAmt')),
             eci: CreditCardECI.VISA_AE_JCB_3D,
             authCode: payload.get('authCode') as string,
@@ -313,10 +314,12 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
           throw new Error(`Unknown bound card checkout order: ${requestId}`);
         }
 
+        const now = DateTime.now().toJSDate();
+
         order.commit({
           id: order.id,
           totalPrice: Number(decryptedParams.get('AuthAmount')),
-          committedAt: new Date(),
+          committedAt: now,
         } as CM);
 
         debugPaymentServer(`CTBCPayment bound card checkout order ${order.id} successful.`);
@@ -601,15 +604,9 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
 
     if (this.isAmex) {
       // 使用 AMEX SOAP API 查詢
-
-      const base = new URL(this.baseUrl);
-      const host = base.hostname;
-      const port = base.port ? Number(base.port) : base.protocol === 'https:' ? 443 : 80;
-      const wsdlUrl = `${base.protocol}//${host}${port && ![80, 443].includes(port) ? `:${port}` : ''}/HubAgentConsole/services/AEPaymentSoap?wsdl`;
+      const wsdlUrl = `${this.baseUrl}/HubAgentConsole/services/AEPaymentSoap?wsdl`;
 
       const amexConfig: CTBCAmexConfig = {
-        host,
-        port,
         wsdlUrl,
       };
 
@@ -632,9 +629,10 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
       if (!order) {
         // 解析金額：AuthAmt 格式為數字字串
         const amount = result.AuthAmt ? Number(result.AuthAmt) : 0;
+        const now = DateTime.now().toJSDate();
 
         // 從查詢結果重建訂單物件
-        const reconstructedOrder = new CTBCOrder({
+        const reconstructedOrder = new CTBCOrder<CTBCOrderCommitMessage>({
           id: id,
           gateway: this,
           items: [
@@ -644,17 +642,21 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
               quantity: 1,
             },
           ],
-          // 根據查詢結果設定訂單狀態
-          createdAt: result.txnDate ? new Date(`${result.txnDate} ${result.txnTime || '00:00:00'}`) : new Date(),
+          createdAt: result.Txn_date
+            ? DateTime.fromFormat(
+                `${result.Txn_date} ${result.Txn_time || '00:00:00'}`,
+                'yyyy-MM-dd HH:mm:ss',
+              ).toJSDate()
+            : now,
           cardType: CardType.AE,
         });
 
         // 如果交易成功，直接設定已提交狀態（不使用 commit 方法以避免重複觸發事件）
         if (result.RespCode === '0') {
           // 建構 AdditionalInfo，包含查詢結果中的重要交易資訊
-          const additionalInfo: AdditionalInfo<OrderCreditCardCommitMessage> = {
+          const additionalInfo: AdditionalInfo<CTBCOrderCommitMessage> = {
             channel: Channel.CREDIT_CARD,
-            processDate: new Date(),
+            processDate: now,
             amount: amount,
             // AMEX API 回應的 ECI 格式為 "05" 等，需要轉換為標準 CreditCardECI 枚舉值
             eci: this.mapECIValue(result.ECI),
@@ -666,12 +668,13 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
             aetId: result.aetId || '',
           };
 
-          // 直接設定內部狀態，而不是調用 commit 方法
-          // 這樣避免了重複觸發 PaymentEvents.ORDER_COMMITTED 事件
-          (reconstructedOrder as unknown as { _state: OrderState })._state = OrderState.COMMITTED;
-          (reconstructedOrder as unknown as { _committedAt: Date })._committedAt = new Date();
-          (reconstructedOrder as unknown as { _additionalInfo: typeof additionalInfo })._additionalInfo =
-            additionalInfo;
+          const cm = {
+            id: reconstructedOrder.id,
+            totalPrice: amount,
+            committedAt: now,
+          } as OrderCreditCardCommitMessage;
+
+          reconstructedOrder.commit(cm, additionalInfo);
         }
 
         // 將重建的訂單加入快取
@@ -723,8 +726,10 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
           }
         }
 
+        const now = DateTime.now().toJSDate();
+
         // 從查詢結果重建訂單物件
-        const reconstructedOrder = new CTBCOrder({
+        const reconstructedOrder = new CTBCOrder<CTBCOrderCommitMessage>({
           id: id,
           gateway: this,
           items: [
@@ -735,15 +740,20 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
             },
           ],
           // 根據查詢結果設定訂單狀態
-          createdAt: result.Txn_date ? new Date(`${result.Txn_date} ${result.Txn_time || '00:00:00'}`) : new Date(),
+          createdAt: result.Txn_date
+            ? DateTime.fromFormat(
+                `${result.Txn_date} ${result.Txn_time || '00:00:00'}`,
+                'yyyy-MM-dd HH:mm:ss',
+              ).toJSDate()
+            : now,
         });
 
         // 如果交易成功，直接設定已提交狀態（不使用 commit 方法以避免重複觸發事件）
         if (result.RespCode === '0' && result.QueryCode === '1') {
           // 建構 AdditionalInfo，包含查詢結果中的重要交易資訊
-          const additionalInfo: AdditionalInfo<OrderCreditCardCommitMessage> = {
+          const additionalInfo: AdditionalInfo<CTBCOrderCommitMessage> = {
             channel: Channel.CREDIT_CARD,
-            processDate: new Date(),
+            processDate: now,
             amount: amount,
             // ECI 映射：API 回應格式（如 "05"）轉換為標準 CreditCardECI 枚舉值
             eci: this.mapECIValue(result.ECI),
@@ -754,12 +764,13 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
             xid: result.XID?.trim() || '',
           };
 
-          // 直接設定內部狀態，而不是調用 commit 方法
-          // 這樣避免了重複觸發 PaymentEvents.ORDER_COMMITTED 事件
-          (reconstructedOrder as unknown as { _state: OrderState })._state = OrderState.COMMITTED;
-          (reconstructedOrder as unknown as { _committedAt: Date })._committedAt = new Date();
-          (reconstructedOrder as unknown as { _additionalInfo: typeof additionalInfo })._additionalInfo =
-            additionalInfo;
+          const cm = {
+            id: reconstructedOrder.id,
+            totalPrice: amount,
+            committedAt: now,
+          } as CM;
+
+          reconstructedOrder.commit(cm, additionalInfo);
         }
 
         // 將重建的訂單加入快取

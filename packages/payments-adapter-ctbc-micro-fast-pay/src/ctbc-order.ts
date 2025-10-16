@@ -22,6 +22,7 @@ import {
   CTBCPosApiRefundParams,
   OrderCreateInit,
 } from './typings';
+import { DateTime } from 'luxon';
 
 export type AmexCreditCardAuthInfo = CreditCardAuthInfo & {
   capBatchId?: string;
@@ -62,7 +63,7 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
       this._state = OrderState.PRE_COMMIT;
     }
 
-    this._createdAt = options.createdAt ?? new Date();
+    this._createdAt = options.createdAt ?? DateTime.now().toJSDate();
     this._cardType = options.cardType ?? CardType.VMJ;
   }
 
@@ -232,14 +233,9 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
     if (isAmex) {
       // AE: 使用智慧流程自動判斷 AuthRev / CapRev / Refund
       try {
-        const base = new URL(this._gateway.baseUrl);
-        const host = base.hostname;
-        const port = base.port ? Number(base.port) : base.protocol === 'https:' ? 443 : 80;
-        const wsdlUrl = `${base.protocol}//${host}${port && ![80, 443].includes(port) ? `:${port}` : ''}/HubAgentConsole/services/AEPaymentSoap?wsdl`;
+        const wsdlUrl = `${this._gateway.baseUrl}/HubAgentConsole/services/AEPaymentSoap?wsdl`;
 
         const amexConfig: CTBCAmexConfig = {
-          host,
-          port,
           wsdlUrl,
         };
 
@@ -403,14 +399,9 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
       }
 
       try {
-        const base = new URL(this._gateway.baseUrl);
-        const host = base.hostname;
-        const port = base.port ? Number(base.port) : base.protocol === 'https:' ? 443 : 80;
-        const wsdlUrl = `${base.protocol}//${host}${port && ![80, 443].includes(port) ? `:${port}` : ''}/HubAgentConsole/services/AEPaymentSoap?wsdl`;
+        const wsdlUrl = `${this._gateway.baseUrl}/HubAgentConsole/services/AEPaymentSoap?wsdl`;
 
         const amexConfig: CTBCAmexConfig = {
-          host,
-          port,
           wsdlUrl,
         };
 

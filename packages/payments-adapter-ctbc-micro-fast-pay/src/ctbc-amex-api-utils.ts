@@ -109,14 +109,7 @@ export class CTBCAEGateway {
     const startTime = Date.now();
 
     try {
-      console.log('AMEX SOAP Inquiry Request:', requestData);
-
-      // 組合 WSDL URL（優先使用 wsdlUrl；否則依 host/port 組合，對齊 PHP）
-      const wsdlUrl =
-        this.serverConfig.wsdlUrl ||
-        (this.serverConfig.port
-          ? `http://${this.serverConfig.host}:${this.serverConfig.port}/HubAgentConsole/services/AEPaymentSoap?wsdl`
-          : `https://${this.serverConfig.host}/HubAgentConsole/services/AEPaymentSoap?wsdl`);
+      const wsdlUrl = this.serverConfig.wsdlUrl;
 
       const soapClient = await soap.createClientAsync(wsdlUrl, {
         wsdl_options: this.serverConfig.sslOptions,
@@ -126,8 +119,6 @@ export class CTBCAEGateway {
 
       // 根據 WSDL，這是 RPC style SOAP，參數需要包裝在 request 對象中
       const rpcRequest: { request: SoapRequestData } = { request: requestData };
-
-      console.log('RPC SOAP Request structure:', JSON.stringify(rpcRequest, null, 2));
 
       // 調用 SOAP 方法
       const soapResponse: SoapResponse = await new Promise<SoapResponse>((resolve, reject) => {
@@ -145,8 +136,6 @@ export class CTBCAEGateway {
           reject(new Error('SOAP method "Inquiry" not found in WSDL'));
         }
       });
-
-      console.log('AMEX SOAP Response:', soapResponse);
 
       // 處理 RPC style SOAP 回應
       const inquiryResult = (soapResponse.inquiryReturn ?? soapResponse) as SoapInquiryResult | SoapResponse;
@@ -303,13 +292,7 @@ export class CTBCAEGateway {
     const startTime = Date.now();
 
     try {
-      console.log('AMEX SOAP Refund Request:', requestData);
-
-      const wsdlUrl =
-        this.serverConfig.wsdlUrl ||
-        (this.serverConfig.port
-          ? `http://${this.serverConfig.host}:${this.serverConfig.port}/HubAgentConsole/services/AEPaymentSoap?wsdl`
-          : `https://${this.serverConfig.host}/HubAgentConsole/services/AEPaymentSoap?wsdl`);
+      const wsdlUrl = this.serverConfig.wsdlUrl;
 
       const soapClient = await soap.createClientAsync(wsdlUrl, {
         wsdl_options: this.serverConfig.sslOptions,
@@ -333,8 +316,6 @@ export class CTBCAEGateway {
           reject(new Error('SOAP method "Cred"/"refund" not found in WSDL'));
         }
       });
-
-      console.log('AMEX SOAP Refund Response:', soapResponse);
 
       // 處理退款回應（不同實作大小寫可能不同）
       const respObj = soapResponse as unknown as Record<string, unknown>;
@@ -410,14 +391,8 @@ export class CTBCAEGateway {
 
     const startTime = Date.now();
 
-    console.log('AMEX SOAP AuthRev Request:', requestData);
-
     try {
-      const wsdlUrl =
-        this.serverConfig.wsdlUrl ||
-        (this.serverConfig.port
-          ? `http://${this.serverConfig.host}:${this.serverConfig.port}/HubAgentConsole/services/AEPaymentSoap?wsdl`
-          : `https://${this.serverConfig.host}/HubAgentConsole/services/AEPaymentSoap?wsdl`);
+      const wsdlUrl = this.serverConfig.wsdlUrl;
 
       const soapClient = await soap.createClientAsync(wsdlUrl, {
         wsdl_options: this.serverConfig.sslOptions,
@@ -508,11 +483,7 @@ export class CTBCAEGateway {
     const startTime = Date.now();
 
     try {
-      const wsdlUrl =
-        this.serverConfig.wsdlUrl ||
-        (this.serverConfig.port
-          ? `http://${this.serverConfig.host}:${this.serverConfig.port}/HubAgentConsole/services/AEPaymentSoap?wsdl`
-          : `https://${this.serverConfig.host}/HubAgentConsole/services/AEPaymentSoap?wsdl`);
+      const wsdlUrl = this.serverConfig.wsdlUrl;
 
       const soapClient = await soap.createClientAsync(wsdlUrl, {
         wsdl_options: this.serverConfig.sslOptions,
@@ -616,11 +587,7 @@ export class CTBCAEGateway {
     const startTime = Date.now();
 
     try {
-      const wsdlUrl =
-        this.serverConfig.wsdlUrl ||
-        (this.serverConfig.port
-          ? `http://${this.serverConfig.host}:${this.serverConfig.port}/HubAgentConsole/services/AEPaymentSoap?wsdl`
-          : `https://${this.serverConfig.host}/HubAgentConsole/services/AEPaymentSoap?wsdl`);
+      const wsdlUrl = this.serverConfig.wsdlUrl;
 
       const soapClient = await soap.createClientAsync(wsdlUrl, {
         wsdl_options: this.serverConfig.sslOptions,
@@ -673,15 +640,8 @@ export class CTBCAEGateway {
   private checkServer(serverConfig: CTBCAmexConfig): boolean {
     this.serverConfig = serverConfig;
 
-    // 允許直接提供 wsdlUrl，或提供 host/port 後由外層組合 wsdlUrl
     if (!serverConfig.wsdlUrl) {
-      if (!serverConfig.host || !serverConfig.port) {
-        this.response.errCode = 'CONFIG_ERROR';
-        this.response.errDesc = 'WSDL URL or (host+port) is required';
-
-        return false;
-      }
-      // 若無 wsdlUrl，預期呼叫端已依 host/port 構造 SOAP endpoint；保留相容，僅通過檢核
+      return false;
     }
 
     return true;
@@ -1036,7 +996,6 @@ export async function amexSmartCancelOrRefund(
 
   const action = getAmexNextActionFromInquiry(inquiry);
 
-  console.log('Determined AMEX action:', action);
   let response: CTBCPosApiResponse;
 
   if (action === 'AuthRev') {

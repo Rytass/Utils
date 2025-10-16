@@ -11,11 +11,11 @@
  * - MAC/TXN 處理通用格式
  */
 
-import { CardType, CheckoutWithBoundCardOptions, OrderCommitMessage, PaymentItem } from '@rytass/payments';
+import { CardType, CheckoutWithBoundCardOptions, OrderCreditCardCommitMessage, PaymentItem } from '@rytass/payments';
 import { IncomingMessage, ServerResponse } from 'node:http';
 import { CTBCBindCardRequest } from './ctbc-bind-card-request';
-import { CTBCPayment } from './ctbc-payment';
 import { CTBCOrder } from './ctbc-order';
+import { CTBCPayment } from './ctbc-payment';
 
 export interface OrderCache<
   CM extends CTBCOrderCommitMessage = CTBCOrderCommitMessage,
@@ -240,7 +240,7 @@ export interface CTBCOrderCommitResult {
 }
 
 // 為符合 PaymentGateway 的 commit() 型別要求，擴充必要欄位
-export interface CTBCOrderCommitMessage extends OrderCommitMessage {}
+export interface CTBCOrderCommitMessage extends OrderCreditCardCommitMessage {}
 
 // 提供 prepare() 時所需的訂單建立資料，實際執行時會從 input cast 而來
 export interface CTBCOrderInput {
@@ -442,9 +442,7 @@ export interface CTBCPosApiResponse {
 
 // AMEX SOAP API 配置介面
 export interface CTBCAmexConfig {
-  host: string;
-  port: number;
-  wsdlUrl?: string;
+  wsdlUrl: string;
   timeout?: number;
   sslOptions?: {
     key?: string;
