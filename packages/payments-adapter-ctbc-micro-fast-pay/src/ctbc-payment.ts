@@ -19,12 +19,16 @@ import { createDecipheriv, randomBytes } from 'node:crypto';
 import EventEmitter from 'node:events';
 import { createServer, IncomingMessage, Server, ServerResponse } from 'node:http';
 import { URLSearchParams } from 'node:url';
+import { amexInquiry } from './ctbc-amex-api-utils';
 import { CTBCBindCardRequest } from './ctbc-bind-card-request';
 import { decrypt3DES, desMac, encrypt3DES, getDivKey, getMAC, getMacFromParams, SSLAuthIV } from './ctbc-crypto-core';
 import { CTBCOrder } from './ctbc-order';
 import { posApiQuery } from './ctbc-pos-api-utils';
+import { CtbcPaymentFailedError } from './errors';
 import {
   BindCardRequestCache,
+  CTBCAmexConfig,
+  CTBCAmexInquiryParams,
   CTBCBindCardRequestPayload,
   CTBCCheckoutWithBoundCardOptions,
   CTBCOrderCommitMessage,
@@ -38,7 +42,6 @@ import {
   CTBCResponsePayload,
   OrderCache,
 } from './typings';
-import { CtbcPaymentFailedError } from './errors';
 
 export const debugPayment = debug('Rytass:Payment:CTBC');
 export const debugPaymentServer = debug('Rytass:Payment:CTBC:Server');
@@ -536,7 +539,9 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
     const orderDesc = options.items
       .map(item => item.name)
       .join(',')
-      .slice(0, 8);
+      .substring(0, 60);
+
+    const orderDescBig5 = iconv.encode(orderDesc, 'big5').subarray(0, 36);
 
     const txType = options.cardType === CardType.AE ? '6' : '0';
     const option = options.cardType === CardType.AE ? '' : '1';
@@ -569,7 +574,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
     params.push('OrderDesc=');
 
     if (orderDesc) {
-      params.push(orderDesc);
+      params.push(orderDescBig5);
     }
 
     params.push('&ProdCode=&');
@@ -608,30 +613,89 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
     const order = await this.orderCache.get(id);
 
     if (this.isAmex) {
-      throw new Error('Query AMEX Order From SOAP API is not implemented');
       // 使用 AMEX SOAP API 查詢
-      // const amexInquiryParams: CTBCAmexInquiryParams = {
-      //   merId: this.merId,
-      //   lidm: id,
-      //   IN_MAC_KEY: this.txnKey,
-      // };
 
-      // const result = await amexInquiry(this.amexApiConfig!, amexInquiryParams);
+      const base = new URL(this.baseUrl);
+      const host = base.hostname;
+      const port = base.port ? parseInt(base.port, 10) : base.protocol === 'https:' ? 443 : 80;
+      const wsdlUrl = `${base.protocol}//${host}${port && ![80, 443].includes(port) ? `:${port}` : ''}/HubAgentConsole/services/AEPaymentSoap?wsdl`;
 
-      // if (result.errCode !== '00') {
-      //   debugPayment(`AMEX Query failed for order ${id}: ${result.errCode} - ${result.errDesc}`);
-      //   throw new Error(`AMEX Query failed: ${result.errCode} - ${result.errDesc || 'Unknown error'}`);
-      // }
+      const amexConfig: CTBCAmexConfig = {
+        host,
+        port,
+        wsdlUrl,
+      };
 
-      // debugPayment(`AMEX Query successful for order ${id}: ${JSON.stringify(result)}`);
+      const amexInquiryParams: CTBCAmexInquiryParams = {
+        merId: this.merId,
+        lidm: id,
+        IN_MAC_KEY: this.txnKey,
+      };
 
-      // // 如果快取中沒有訂單，根據查詢結果創建一個
-      // if (!order) {
-      //   // 這裡需要根據 AMEX 查詢結果創建訂單，但由於缺少必要資訊，暫時拋出錯誤
-      //   throw new Error(`Order not found in cache and cannot reconstruct from AMEX query result: ${id}`);
-      // }
+      const result = await amexInquiry(amexConfig!, amexInquiryParams);
 
-      // return order as OO;
+      console.log(`Amex Inquiry Result:`, result);
+
+      if (result.ErrCode !== '00') {
+        debugPayment(`AMEX Query failed for order ${id}: ${result.ErrCode} - ${result.ErrDesc}`);
+        throw new Error(`AMEX Query failed: ${result.ErrCode} - ${result.ErrDesc || 'Unknown error'}`);
+      }
+
+      debugPayment(`AMEX Query successful for order ${id}: ${JSON.stringify(result)}`);
+
+      // 如果快取中沒有訂單，根據查詢結果創建一個
+      if (!order) {
+        // 解析金額：AuthAmt 格式為數字字串
+        const amount = result.AuthAmt ? parseInt(result.AuthAmt, 10) : 0;
+
+        // 從查詢結果重建訂單物件
+        const reconstructedOrder = new CTBCOrder({
+          id: id,
+          gateway: this,
+          items: [
+            {
+              name: 'Unknown Item', // API 查詢結果通常不包含商品詳情
+              unitPrice: amount || 0,
+              quantity: 1,
+            },
+          ],
+          // 根據查詢結果設定訂單狀態
+          createdAt: result.txnDate ? new Date(`${result.txnDate} ${result.txnTime || '00:00:00'}`) : new Date(),
+          cardType: CardType.AE,
+        });
+
+        // 如果交易成功，直接設定已提交狀態（不使用 commit 方法以避免重複觸發事件）
+        if (result.RespCode === '0') {
+          // 建構 AdditionalInfo，包含查詢結果中的重要交易資訊
+          const additionalInfo: AdditionalInfo<OrderCreditCardCommitMessage> = {
+            channel: Channel.CREDIT_CARD,
+            processDate: new Date(),
+            amount: amount,
+            // AMEX API 回應的 ECI 格式為 "05" 等，需要轉換為標準 CreditCardECI 枚舉值
+            eci: this.mapECIValue(result.ECI),
+            authCode: result.AuthCode || '',
+            // 從 PanMask 欄位提取卡號信息（格式如 "400361******7729"）
+            card6Number: result.panMask ? result.panMask.substring(0, 6) : result.PAN ? result.PAN.substring(0, 6) : '',
+            card4Number: result.panMask ? result.panMask.slice(-4) : result.PAN ? result.PAN.slice(-4) : '',
+            xid: result.xid?.trim() || result.XID?.trim() || '',
+            aetId: result.aetId || '',
+          };
+
+          // 直接設定內部狀態，而不是調用 commit 方法
+          // 這樣避免了重複觸發 PaymentEvents.ORDER_COMMITTED 事件
+          (reconstructedOrder as unknown as { _state: OrderState })._state = OrderState.COMMITTED;
+          (reconstructedOrder as unknown as { _committedAt: Date })._committedAt = new Date();
+          (reconstructedOrder as unknown as { _additionalInfo: typeof additionalInfo })._additionalInfo =
+            additionalInfo;
+        }
+
+        // 將重建的訂單加入快取
+        await this.orderCache.set(id, reconstructedOrder);
+
+        return reconstructedOrder as OO;
+      }
+
+      return order as OO;
     } else {
       // 使用 POS API 查詢
       const posApiConfig: CTBCPosApiConfig = {

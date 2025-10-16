@@ -30,6 +30,7 @@ type AmexResponse = {
   poDetails?: AmexPoDetailItem[];
   // Refund / Capture / Cancel
   aetId?: string;
+  aetid?: string;
   xid?: string;
   credAmt?: string;
   unCredAmt?: string;
@@ -182,7 +183,6 @@ export class CTBCAEGateway {
         this.response.poDetails = Array.isArray(pd)
           ? pd.map(detail => ({
               aetId: (detail as AmexPoDetailItem).aetid || (detail as AmexPoDetailItem).aetId,
-              xid: (detail as AmexPoDetailItem).xid,
               authCode: (detail as AmexPoDetailItem).authCode,
               termSeq: (detail as AmexPoDetailItem).termSeq,
               authAmt: (detail as AmexPoDetailItem).purchAmt
@@ -192,11 +192,13 @@ export class CTBCAEGateway {
               status: (detail as AmexPoDetailItem).status,
               txnType: (detail as AmexPoDetailItem).txnType,
               expDate: (detail as AmexPoDetailItem).expDate,
+              pan: (detail as AmexPoDetailItem).pan,
+              xid: (detail as AmexPoDetailItem).xid,
+              lidm: (detail as AmexPoDetailItem).lidm,
             }))
           : [
               {
                 aetId: (pd as AmexPoDetailItem).aetid || (pd as AmexPoDetailItem).aetId,
-                xid: (pd as AmexPoDetailItem).xid,
                 authCode: (pd as AmexPoDetailItem).authCode,
                 termSeq: (pd as AmexPoDetailItem).termSeq,
                 authAmt: (pd as AmexPoDetailItem).purchAmt
@@ -206,6 +208,9 @@ export class CTBCAEGateway {
                 status: (pd as AmexPoDetailItem).status,
                 txnType: (pd as AmexPoDetailItem).txnType,
                 expDate: (pd as AmexPoDetailItem).expDate,
+                pan: (pd as AmexPoDetailItem).pan,
+                xid: (pd as AmexPoDetailItem).xid,
+                lidm: (pd as AmexPoDetailItem).lidm,
               },
             ];
       }
@@ -791,16 +796,17 @@ export class CTBCAEGateway {
       XID: detail?.xid,
       AuthCode: detail?.authCode,
       AuthAmt: detail?.purchAmt ? String(detail.purchAmt) : detail?.authAmt,
-      PAN: (detail as Record<string, unknown>)?.['pan'] as string | undefined,
+      PAN: detail?.pan,
       ECI: undefined,
       QueryCode: amex.count && amex.count > 0 ? '1' : '0',
       currency: detail?.currency,
       // 方便上層判斷 AE 狀態
-      txnType: (detail as Record<string, unknown>)?.['txnType'] as string | undefined,
-      status: (detail as Record<string, unknown>)?.['status'] as string | undefined,
+      txnType: detail?.txnType,
+      status: detail?.status,
       CurrentState: '',
       capBatchId: amex.capBatchId,
       capBatchSeq: amex.capBatchSeq,
+      aetId: detail?.aetId,
     };
 
     return resp;

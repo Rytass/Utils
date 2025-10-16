@@ -436,6 +436,7 @@ export interface CTBCPosApiResponse {
   capBatchSeq?: string;
   capBatchId?: string;
   unCredAmt?: string;
+  aetId?: string;
   [key: string]: string | undefined;
 }
 
@@ -586,6 +587,8 @@ export interface AmexPoDetailItem {
   expDate?: string;
   errCode?: string;
   errDesc?: string;
+  pan?: string;
+  lidm?: string;
 }
 
 // SOAP 回應結果
