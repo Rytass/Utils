@@ -623,7 +623,7 @@ export function getPosNextActionFromInquiry(inquiry: CTBCPosApiResponse): 'Rever
   const raw = inquiry.CurrentState;
 
   if (typeof raw === 'string' && raw.trim().length > 0) {
-    const state = parseInt(raw, 10);
+    const state = Number(raw);
 
     if (!Number.isNaN(state)) {
       if (state === 1) return 'Reversal';

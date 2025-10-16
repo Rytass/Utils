@@ -234,7 +234,7 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
       try {
         const base = new URL(this._gateway.baseUrl);
         const host = base.hostname;
-        const port = base.port ? parseInt(base.port, 10) : base.protocol === 'https:' ? 443 : 80;
+        const port = base.port ? Number(base.port) : base.protocol === 'https:' ? 443 : 80;
         const wsdlUrl = `${base.protocol}//${host}${port && ![80, 443].includes(port) ? `:${port}` : ''}/HubAgentConsole/services/AEPaymentSoap?wsdl`;
 
         const amexConfig: CTBCAmexConfig = {
@@ -405,7 +405,7 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
       try {
         const base = new URL(this._gateway.baseUrl);
         const host = base.hostname;
-        const port = base.port ? parseInt(base.port, 10) : base.protocol === 'https:' ? 443 : 80;
+        const port = base.port ? Number(base.port) : base.protocol === 'https:' ? 443 : 80;
         const wsdlUrl = `${base.protocol}//${host}${port && ![80, 443].includes(port) ? `:${port}` : ''}/HubAgentConsole/services/AEPaymentSoap?wsdl`;
 
         const amexConfig: CTBCAmexConfig = {

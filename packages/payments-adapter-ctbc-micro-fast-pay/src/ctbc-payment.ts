@@ -534,15 +534,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
     }
 
     const orderId = options.id ?? randomBytes(8).toString('hex');
-
     const cardType = options.cardType;
-    const orderDesc = options.items
-      .map(item => item.name)
-      .join(',')
-      .substring(0, 60);
-
-    const orderDescBig5 = iconv.encode(orderDesc, 'big5').subarray(0, 36);
-
     const txType = options.cardType === CardType.AE ? '6' : '0';
     const option = options.cardType === CardType.AE ? '' : '1';
 
@@ -571,11 +563,6 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
     }
 
     params.push(`&AuthResURL=${`${this.serverHost}${this.callbackPath}`}&`);
-    params.push('OrderDesc=');
-
-    if (orderDesc) {
-      params.push(orderDescBig5);
-    }
 
     params.push('&ProdCode=&');
     params.push('AutoCap=1&');
@@ -617,7 +604,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
 
       const base = new URL(this.baseUrl);
       const host = base.hostname;
-      const port = base.port ? parseInt(base.port, 10) : base.protocol === 'https:' ? 443 : 80;
+      const port = base.port ? Number(base.port) : base.protocol === 'https:' ? 443 : 80;
       const wsdlUrl = `${base.protocol}//${host}${port && ![80, 443].includes(port) ? `:${port}` : ''}/HubAgentConsole/services/AEPaymentSoap?wsdl`;
 
       const amexConfig: CTBCAmexConfig = {
@@ -634,8 +621,6 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
 
       const result = await amexInquiry(amexConfig!, amexInquiryParams);
 
-      console.log(`Amex Inquiry Result:`, result);
-
       if (result.ErrCode !== '00') {
         debugPayment(`AMEX Query failed for order ${id}: ${result.ErrCode} - ${result.ErrDesc}`);
         throw new Error(`AMEX Query failed: ${result.ErrCode} - ${result.ErrDesc || 'Unknown error'}`);
@@ -646,7 +631,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
       // 如果快取中沒有訂單，根據查詢結果創建一個
       if (!order) {
         // 解析金額：AuthAmt 格式為數字字串
-        const amount = result.AuthAmt ? parseInt(result.AuthAmt, 10) : 0;
+        const amount = result.AuthAmt ? Number(result.AuthAmt) : 0;
 
         // 從查詢結果重建訂單物件
         const reconstructedOrder = new CTBCOrder({
@@ -734,7 +719,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
           const amountParts = result.AuthAmt.split(' ');
 
           if (amountParts.length >= 2) {
-            amount = parseInt(amountParts[1], 10);
+            amount = Number(amountParts[1]);
           }
         }
 
@@ -798,7 +783,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
 
     // 將字串轉為數字再轉回字串，這樣可以正確處理前導零
     // "05" -> 5 -> "5", "0" -> 0 -> "0", "00" -> 0 -> "0"
-    const numericECI = parseInt(apiECI, 10);
+    const numericECI = Number(apiECI);
     const normalizedECI = numericECI.toString();
 
     // 根據標準化後的 ECI 值映射到對應的枚舉

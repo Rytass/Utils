@@ -158,7 +158,7 @@ export class CTBCAEGateway {
       ) {
         const c = (inquiryResult as SoapInquiryResult).count;
 
-        this.response.count = typeof c === 'number' ? c : parseInt(String(c)) || 0;
+        this.response.count = typeof c === 'number' ? c : 0;
       }
 
       if (
