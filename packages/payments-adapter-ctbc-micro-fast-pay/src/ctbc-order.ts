@@ -57,6 +57,14 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
       this._form = options.form;
       this._clientBackUrl = options.clientBackUrl ?? undefined;
       this._state = OrderState.INITED;
+    } else if ('commited' in options && options.commited) {
+      this._state = OrderState.COMMITTED;
+      this._committedAt = options.createdAt ?? DateTime.now().toJSDate();
+      this._additionalInfo = options.additionalInfo;
+    } else if ('refunded' in options && options.refunded) {
+      this._state = OrderState.REFUNDED;
+      this._committedAt = options.createdAt ?? DateTime.now().toJSDate();
+      this._additionalInfo = options.additionalInfo;
     } else {
       this._checkoutCardId = options.checkoutCardId ?? null;
       this._checkoutMemberId = options.checkoutMemberId ?? null;

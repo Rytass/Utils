@@ -11,7 +11,13 @@
  * - MAC/TXN 處理通用格式
  */
 
-import { CardType, CheckoutWithBoundCardOptions, OrderCommitMessage, PaymentItem } from '@rytass/payments';
+import {
+  AdditionalInfo,
+  CardType,
+  CheckoutWithBoundCardOptions,
+  OrderCommitMessage,
+  PaymentItem,
+} from '@rytass/payments';
 import { IncomingMessage, ServerResponse } from 'node:http';
 import { CTBCBindCardRequest } from './ctbc-bind-card-request';
 import { CTBCOrder } from './ctbc-order';
@@ -45,6 +51,9 @@ export interface OrderCreateInit<OCM extends CTBCOrderCommitMessage = CTBCOrderC
   id: string;
   items: PaymentItem[];
   form?: CTBCPayOrderForm;
+  commited?: boolean;
+  refunded?: boolean;
+  additionalInfo?: AdditionalInfo<OCM>;
   gateway: CTBCPayment<OCM>;
   clientBackUrl?: string | null;
   createdAt?: Date; // 訂單建立時間，預設為當前時間
