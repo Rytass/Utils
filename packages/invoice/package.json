@@ -1,6 +1,6 @@
 {
   "name": "@rytass/invoice",
-  "version": "0.4.8",
+  "version": "0.4.9",
   "description": "Rytass Invoice Gateway",
   "keywords": [
     "rytass",
@@ -24,6 +24,6 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/payments": "^0.2.6"
+    "@rytass/payments": "^0.2.7"
   }
 }

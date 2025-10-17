@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.14](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.13...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.14) (2025-10-17)
+
+### Features
+
+- **payments-adapter-ctbc-micro-fast-pay:** change ctbc-payments.query function generic type ([bca4dc4](https://github.com/Rytass/Utils/commit/bca4dc47c49495ca455a39adb56da71f6f60efea))
+- **payments-adapter-ctbc-micro-fast-pay:** change ctbc-payments.query function generic type and remove useless code ([8f680eb](https://github.com/Rytass/Utils/commit/8f680eb19b46964e99ba021cceb5e187132d8f21))
+- **payments-adapter-ctbc-micro-fast-pay:** fix after pr reviewed ([ed43cf5](https://github.com/Rytass/Utils/commit/ed43cf5074dca2817c580f047e083bfc811f906e))
+- **payments-adapter-ctbc-micro-fast-pay:** fix ctbc-payment prepare function fail with orderDesc not big 5 ([9bbf8c4](https://github.com/Rytass/Utils/commit/9bbf8c413ba019055234366a2b6faabd133d4b8e))
+- **payments-adapter-ctbc-micro-fast-pay:** fix ctbc-payment prepare function fail with orderDesc not big 5, then remove orderDesc directly ([6ba9c52](https://github.com/Rytass/Utils/commit/6ba9c529a6886aea2e988c491e6764ba2a1398d8))
+
 ## [0.1.13](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.12...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.13) (2025-09-23)
 
 ### Features

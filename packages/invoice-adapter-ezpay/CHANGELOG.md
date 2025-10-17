@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.4.8](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ezpay@0.4.7...@rytass/invoice-adapter-ezpay@0.4.8) (2025-10-17)
+
+**Note:** Version bump only for package @rytass/invoice-adapter-ezpay
+
 ## [0.4.7](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ezpay@0.4.6...@rytass/invoice-adapter-ezpay@0.4.7) (2025-09-23)
 
 **Note:** Version bump only for package @rytass/invoice-adapter-ezpay

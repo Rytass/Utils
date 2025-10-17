@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.7](https://github.com/Rytass/Utils/compare/@rytass/payments@0.2.6...@rytass/payments@0.2.7) (2025-10-17)
+
+### Features
+
+- **payments-adapter-ctbc-micro-fast-pay:** fix ctbc-payment prepare function fail with orderDesc not big 5 ([9bbf8c4](https://github.com/Rytass/Utils/commit/9bbf8c413ba019055234366a2b6faabd133d4b8e))
+
 ## [0.2.6](https://github.com/Rytass/Utils/compare/@rytass/payments@0.2.5...@rytass/payments@0.2.6) (2025-09-22)
 
 ### Features

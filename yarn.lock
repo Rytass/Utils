@@ -6537,7 +6537,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-adapter-amego@workspace:packages/invoice-adapter-amego"
   dependencies:
-    "@rytass/invoice": "npm:^0.4.8"
+    "@rytass/invoice": "npm:^0.4.9"
     axios: "npm:^1.11.0"
     luxon: "npm:^3.7.1"
     validator: "npm:^13.15.15"
@@ -6548,7 +6548,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-adapter-bank-pro@workspace:packages/invoice-adapter-bank-pro"
   dependencies:
-    "@rytass/invoice": "npm:^0.4.8"
+    "@rytass/invoice": "npm:^0.4.9"
     axios: "npm:^1.11.0"
     luxon: "npm:^3.7.1"
     validator: "npm:^13.15.15"
@@ -6559,7 +6559,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-adapter-ecpay@workspace:packages/invoice-adapter-ecpay"
   dependencies:
-    "@rytass/invoice": "npm:^0.4.8"
+    "@rytass/invoice": "npm:^0.4.9"
     "@types/validator": "npm:^13.15.2"
     axios: "npm:^1.11.0"
     luxon: "npm:^3.7.1"
@@ -6571,7 +6571,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-adapter-ezpay@workspace:packages/invoice-adapter-ezpay"
   dependencies:
-    "@rytass/invoice": "npm:^0.4.8"
+    "@rytass/invoice": "npm:^0.4.9"
     axios: "npm:^1.11.0"
     form-data: "npm:^4.0.4"
     luxon: "npm:^3.7.1"
@@ -6579,11 +6579,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rytass/invoice@npm:^0.4.8, @rytass/invoice@workspace:packages/invoice":
+"@rytass/invoice@npm:^0.4.9, @rytass/invoice@workspace:packages/invoice":
   version: 0.0.0-use.local
   resolution: "@rytass/invoice@workspace:packages/invoice"
   dependencies:
-    "@rytass/payments": "npm:^0.2.6"
+    "@rytass/payments": "npm:^0.2.7"
   languageName: unknown
   linkType: soft
 
@@ -6660,7 +6660,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/payments-adapter-ctbc-micro-fast-pay@workspace:packages/payments-adapter-ctbc-micro-fast-pay"
   dependencies:
-    "@rytass/payments": "npm:^0.2.6"
+    "@rytass/payments": "npm:^0.2.7"
     "@types/debug": "npm:^4.1.12"
     axios: "npm:^1.6.0"
     debug: "npm:^4.4.1"
@@ -6677,7 +6677,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/payments-adapter-ecpay@workspace:packages/payments-adapter-ecpay"
   dependencies:
-    "@rytass/payments": "npm:^0.2.6"
+    "@rytass/payments": "npm:^0.2.7"
     "@types/debug": "npm:^4.1.12"
     axios: "npm:^1.8.2"
     debug: "npm:^4.4.1"
@@ -6692,7 +6692,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/payments-adapter-happy-card@workspace:packages/payments-adapter-happy-card"
   dependencies:
-    "@rytass/payments": "npm:^0.2.6"
+    "@rytass/payments": "npm:^0.2.7"
     "@types/lodash": "npm:^4"
     axios: "npm:^1.11.0"
     lodash: "npm:^4.17.21"
@@ -6704,7 +6704,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/payments-adapter-hwanan@workspace:packages/payments-adapter-hwanan"
   dependencies:
-    "@rytass/payments": "npm:^0.2.6"
+    "@rytass/payments": "npm:^0.2.7"
     axios: "npm:^1.11.0"
     lru-cache: "npm:^11.1.0"
   peerDependencies:
@@ -6716,7 +6716,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/payments-adapter-icash-pay@workspace:packages/payments-adapter-icash-pay"
   dependencies:
-    "@rytass/payments": "npm:^0.2.6"
+    "@rytass/payments": "npm:^0.2.7"
     "@types/debug": "npm:^4"
     axios: "npm:^1.11.0"
     debug: "npm:^4.4.1"
@@ -6728,7 +6728,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/payments-adapter-newebpay@workspace:packages/payments-adapter-newebpay"
   dependencies:
-    "@rytass/payments": "npm:^0.2.6"
+    "@rytass/payments": "npm:^0.2.7"
     axios: "npm:^1.8.2"
     lru-cache: "npm:^11.1.0"
     luxon: "npm:^3.7.1"
@@ -6742,13 +6742,13 @@ __metadata:
   resolution: "@rytass/payments-nestjs-module@workspace:packages/payments-nestjs-module"
   dependencies:
     "@rytass/member-base-nestjs-module": "npm:^0.2.15"
-    "@rytass/payments": "npm:^0.2.6"
+    "@rytass/payments": "npm:^0.2.7"
   peerDependencies:
     "@nestjs/common": "*"
   languageName: unknown
   linkType: soft
 
-"@rytass/payments@npm:^0.2.6, @rytass/payments@workspace:packages/payments":
+"@rytass/payments@npm:^0.2.7, @rytass/payments@workspace:packages/payments":
   version: 0.0.0-use.local
   resolution: "@rytass/payments@workspace:packages/payments"
   languageName: unknown
