@@ -654,7 +654,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
         // 如果交易成功，直接設定已提交狀態（不使用 commit 方法以避免重複觸發事件）
         if (result.RespCode === '0') {
           // 建構 AdditionalInfo，包含查詢結果中的重要交易資訊
-          const additionalInfo: AdditionalInfo<CM> = {
+          const additionalInfo = {
             channel: Channel.CREDIT_CARD,
             processDate: now,
             amount: amount,
@@ -751,7 +751,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
         // 如果交易成功，直接設定已提交狀態（不使用 commit 方法以避免重複觸發事件）
         if (result.RespCode === '0' && result.QueryCode === '1') {
           // 建構 AdditionalInfo，包含查詢結果中的重要交易資訊
-          const additionalInfo: AdditionalInfo<CM> = {
+          const additionalInfo = {
             channel: Channel.CREDIT_CARD,
             processDate: now,
             amount: amount,
