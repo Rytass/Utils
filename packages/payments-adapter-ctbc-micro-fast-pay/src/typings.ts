@@ -11,7 +11,7 @@
  * - MAC/TXN 處理通用格式
  */
 
-import { CardType, CheckoutWithBoundCardOptions, OrderCreditCardCommitMessage, PaymentItem } from '@rytass/payments';
+import { CardType, CheckoutWithBoundCardOptions, OrderCommitMessage, PaymentItem } from '@rytass/payments';
 import { IncomingMessage, ServerResponse } from 'node:http';
 import { CTBCBindCardRequest } from './ctbc-bind-card-request';
 import { CTBCOrder } from './ctbc-order';
@@ -240,7 +240,7 @@ export interface CTBCOrderCommitResult {
 }
 
 // 為符合 PaymentGateway 的 commit() 型別要求，擴充必要欄位
-export interface CTBCOrderCommitMessage extends OrderCreditCardCommitMessage {}
+export interface CTBCOrderCommitMessage extends OrderCommitMessage {}
 
 // 提供 prepare() 時所需的訂單建立資料，實際執行時會從 input cast 而來
 export interface CTBCOrderInput {

@@ -632,7 +632,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
         const now = DateTime.now().toJSDate();
 
         // 從查詢結果重建訂單物件
-        const reconstructedOrder = new CTBCOrder<CTBCOrderCommitMessage>({
+        const reconstructedOrder = new CTBCOrder<CM>({
           id: id,
           gateway: this,
           items: [
@@ -654,7 +654,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
         // 如果交易成功，直接設定已提交狀態（不使用 commit 方法以避免重複觸發事件）
         if (result.RespCode === '0') {
           // 建構 AdditionalInfo，包含查詢結果中的重要交易資訊
-          const additionalInfo: AdditionalInfo<CTBCOrderCommitMessage> = {
+          const additionalInfo: AdditionalInfo<CM> = {
             channel: Channel.CREDIT_CARD,
             processDate: now,
             amount: amount,
@@ -666,13 +666,13 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
             card4Number: result.panMask ? result.panMask.slice(-4) : result.PAN ? result.PAN.slice(-4) : '',
             xid: result.xid?.trim() || result.XID?.trim() || '',
             aetId: result.aetId || '',
-          };
+          } as AdditionalInfo<CM>;
 
           const cm = {
             id: reconstructedOrder.id,
             totalPrice: amount,
             committedAt: now,
-          } as OrderCreditCardCommitMessage;
+          } as CM;
 
           reconstructedOrder.commit(cm, additionalInfo);
         }
@@ -729,7 +729,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
         const now = DateTime.now().toJSDate();
 
         // 從查詢結果重建訂單物件
-        const reconstructedOrder = new CTBCOrder<CTBCOrderCommitMessage>({
+        const reconstructedOrder = new CTBCOrder<CM>({
           id: id,
           gateway: this,
           items: [
@@ -751,7 +751,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
         // 如果交易成功，直接設定已提交狀態（不使用 commit 方法以避免重複觸發事件）
         if (result.RespCode === '0' && result.QueryCode === '1') {
           // 建構 AdditionalInfo，包含查詢結果中的重要交易資訊
-          const additionalInfo: AdditionalInfo<CTBCOrderCommitMessage> = {
+          const additionalInfo: AdditionalInfo<CM> = {
             channel: Channel.CREDIT_CARD,
             processDate: now,
             amount: amount,
@@ -762,7 +762,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
             card6Number: result.PAN ? result.PAN.substring(0, 6) : '',
             card4Number: result.PAN ? result.PAN.slice(-4) : '',
             xid: result.XID?.trim() || '',
-          };
+          } as AdditionalInfo<CM>;
 
           const cm = {
             id: reconstructedOrder.id,
