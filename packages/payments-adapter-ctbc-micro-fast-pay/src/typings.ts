@@ -14,8 +14,8 @@
 import { CardType, CheckoutWithBoundCardOptions, OrderCommitMessage, PaymentItem } from '@rytass/payments';
 import { IncomingMessage, ServerResponse } from 'node:http';
 import { CTBCBindCardRequest } from './ctbc-bind-card-request';
-import { CTBCPayment } from './ctbc-payment';
 import { CTBCOrder } from './ctbc-order';
+import { CTBCPayment } from './ctbc-payment';
 
 export interface OrderCache<
   CM extends CTBCOrderCommitMessage = CTBCOrderCommitMessage,
@@ -436,14 +436,13 @@ export interface CTBCPosApiResponse {
   capBatchSeq?: string;
   capBatchId?: string;
   unCredAmt?: string;
+  aetId?: string;
   [key: string]: string | undefined;
 }
 
 // AMEX SOAP API 配置介面
 export interface CTBCAmexConfig {
-  host: string;
-  port: number;
-  wsdlUrl?: string;
+  wsdlUrl: string;
   timeout?: number;
   sslOptions?: {
     key?: string;
@@ -586,6 +585,8 @@ export interface AmexPoDetailItem {
   expDate?: string;
   errCode?: string;
   errDesc?: string;
+  pan?: string;
+  lidm?: string;
 }
 
 // SOAP 回應結果

@@ -203,18 +203,12 @@ function parseResponse(responseStr: string, macKey: string): CTBCPosApiResponse 
   // 解析格式：key1=value1&key2=value2&encryptedData
   const parts = responseStr.split(/[&=]/);
 
-  console.log(`response parts length: ${parts.length}`, parts);
-
   if (parts.length < 4) {
     return CTBC_ERROR_CODES.ERR_RESPONSE_PARSE_FAILED;
   }
 
-  console.log(`parts: ${parts}`);
-
   const encryptedData = parts[3];
   const decodedData = decodeMacValue(encryptedData, macKey);
-
-  console.log(`decodedData: ${decodedData}`);
 
   // 尋找 JSON 結尾
   const jsonEndIndex = decodedData.lastIndexOf('}');
@@ -241,9 +235,6 @@ async function sendAndGetResponse(
   requestData: string,
 ): Promise<CTBCPosApiResponse | number> {
   try {
-    console.log('sendAndGetResponse requestData:', requestData);
-    console.log('sendAndGetResponse requestURL:', config.URL);
-
     const macSubString = getMacValueSub(requestData, config.MacKey);
     const apiEncString = getMacValue(requestData + macSubString, config.MacKey);
 
@@ -623,7 +614,7 @@ export function getPosNextActionFromInquiry(inquiry: CTBCPosApiResponse): 'Rever
   const raw = inquiry.CurrentState;
 
   if (typeof raw === 'string' && raw.trim().length > 0) {
-    const state = parseInt(raw, 10);
+    const state = Number(raw);
 
     if (!Number.isNaN(state)) {
       if (state === 1) return 'Reversal';
@@ -649,8 +640,6 @@ export async function posApiSmartCancelOrRefund(
   inquiry: CTBCPosApiResponse | number;
 }> {
   const inq = await posApiQuery(config, { MERID: params.MERID, 'LID-M': params['LID-M'], Tx_ATTRIBUTE: 'TX_AUTH' });
-
-  console.log('posApiSmartCancelOrRefund inquiry result:', inq);
 
   // // 若查詢失敗（回傳錯誤碼），預設不處理；否則依查詢結果決策
   const action: 'Reversal' | 'CapRev' | 'Refund' | 'None' =

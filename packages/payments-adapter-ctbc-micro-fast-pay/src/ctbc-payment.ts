@@ -7,7 +7,6 @@ import {
   InputFromOrderCommitMessage,
   Order,
   OrderCreditCardCommitMessage,
-  OrderState,
   PaymentEvents,
   PaymentGateway,
 } from '@rytass/payments';
@@ -19,12 +18,16 @@ import { createDecipheriv, randomBytes } from 'node:crypto';
 import EventEmitter from 'node:events';
 import { createServer, IncomingMessage, Server, ServerResponse } from 'node:http';
 import { URLSearchParams } from 'node:url';
+import { amexInquiry } from './ctbc-amex-api-utils';
 import { CTBCBindCardRequest } from './ctbc-bind-card-request';
 import { decrypt3DES, desMac, encrypt3DES, getDivKey, getMAC, getMacFromParams, SSLAuthIV } from './ctbc-crypto-core';
 import { CTBCOrder } from './ctbc-order';
 import { posApiQuery } from './ctbc-pos-api-utils';
+import { CtbcPaymentFailedError } from './errors';
 import {
   BindCardRequestCache,
+  CTBCAmexConfig,
+  CTBCAmexInquiryParams,
   CTBCBindCardRequestPayload,
   CTBCCheckoutWithBoundCardOptions,
   CTBCOrderCommitMessage,
@@ -38,7 +41,6 @@ import {
   CTBCResponsePayload,
   OrderCache,
 } from './typings';
-import { CtbcPaymentFailedError } from './errors';
 
 export const debugPayment = debug('Rytass:Payment:CTBC');
 export const debugPaymentServer = debug('Rytass:Payment:CTBC:Server');
@@ -194,15 +196,17 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
           throw new Error(`Unknown callback checkout order: ${requestId}`);
         }
 
+        const now = DateTime.now().toJSDate();
+
         order.commit(
           {
             id: order.id,
             totalPrice: Number(payload.get('authAmt')),
-            committedAt: new Date(),
+            committedAt: now,
           } as OrderCreditCardCommitMessage,
           {
             channel: Channel.CREDIT_CARD,
-            processDate: new Date(),
+            processDate: now,
             amount: Number(payload.get('authAmt')),
             eci: CreditCardECI.VISA_AE_JCB_3D,
             authCode: payload.get('authCode') as string,
@@ -310,10 +314,12 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
           throw new Error(`Unknown bound card checkout order: ${requestId}`);
         }
 
+        const now = DateTime.now().toJSDate();
+
         order.commit({
           id: order.id,
           totalPrice: Number(decryptedParams.get('AuthAmount')),
-          committedAt: new Date(),
+          committedAt: now,
         } as CM);
 
         debugPaymentServer(`CTBCPayment bound card checkout order ${order.id} successful.`);
@@ -531,13 +537,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
     }
 
     const orderId = options.id ?? randomBytes(8).toString('hex');
-
     const cardType = options.cardType;
-    const orderDesc = options.items
-      .map(item => item.name)
-      .join(',')
-      .slice(0, 8);
-
     const txType = options.cardType === CardType.AE ? '6' : '0';
     const option = options.cardType === CardType.AE ? '' : '1';
 
@@ -566,11 +566,6 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
     }
 
     params.push(`&AuthResURL=${`${this.serverHost}${this.callbackPath}`}&`);
-    params.push('OrderDesc=');
-
-    if (orderDesc) {
-      params.push(orderDesc);
-    }
 
     params.push('&ProdCode=&');
     params.push('AutoCap=1&');
@@ -608,30 +603,87 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
     const order = await this.orderCache.get(id);
 
     if (this.isAmex) {
-      throw new Error('Query AMEX Order From SOAP API is not implemented');
       // 使用 AMEX SOAP API 查詢
-      // const amexInquiryParams: CTBCAmexInquiryParams = {
-      //   merId: this.merId,
-      //   lidm: id,
-      //   IN_MAC_KEY: this.txnKey,
-      // };
+      const wsdlUrl = `${this.baseUrl}/HubAgentConsole/services/AEPaymentSoap?wsdl`;
 
-      // const result = await amexInquiry(this.amexApiConfig!, amexInquiryParams);
+      const amexConfig: CTBCAmexConfig = {
+        wsdlUrl,
+      };
 
-      // if (result.errCode !== '00') {
-      //   debugPayment(`AMEX Query failed for order ${id}: ${result.errCode} - ${result.errDesc}`);
-      //   throw new Error(`AMEX Query failed: ${result.errCode} - ${result.errDesc || 'Unknown error'}`);
-      // }
+      const amexInquiryParams: CTBCAmexInquiryParams = {
+        merId: this.merId,
+        lidm: id,
+        IN_MAC_KEY: this.txnKey,
+      };
 
-      // debugPayment(`AMEX Query successful for order ${id}: ${JSON.stringify(result)}`);
+      const result = await amexInquiry(amexConfig!, amexInquiryParams);
 
-      // // 如果快取中沒有訂單，根據查詢結果創建一個
-      // if (!order) {
-      //   // 這裡需要根據 AMEX 查詢結果創建訂單，但由於缺少必要資訊，暫時拋出錯誤
-      //   throw new Error(`Order not found in cache and cannot reconstruct from AMEX query result: ${id}`);
-      // }
+      if (result.ErrCode !== '00') {
+        debugPayment(`AMEX Query failed for order ${id}: ${result.ErrCode} - ${result.ErrDesc}`);
+        throw new Error(`AMEX Query failed: ${result.ErrCode} - ${result.ErrDesc || 'Unknown error'}`);
+      }
 
-      // return order as OO;
+      debugPayment(`AMEX Query successful for order ${id}: ${JSON.stringify(result)}`);
+
+      // 如果快取中沒有訂單，根據查詢結果創建一個
+      if (!order) {
+        // 解析金額：AuthAmt 格式為數字字串
+        const amount = result.AuthAmt ? Number(result.AuthAmt) : 0;
+        const now = DateTime.now().toJSDate();
+
+        // 從查詢結果重建訂單物件
+        const reconstructedOrder = new CTBCOrder<CM>({
+          id: id,
+          gateway: this,
+          items: [
+            {
+              name: 'Unknown Item', // API 查詢結果通常不包含商品詳情
+              unitPrice: amount || 0,
+              quantity: 1,
+            },
+          ],
+          createdAt: result.Txn_date
+            ? DateTime.fromFormat(
+                `${result.Txn_date} ${result.Txn_time || '00:00:00'}`,
+                'yyyy-MM-dd HH:mm:ss',
+              ).toJSDate()
+            : now,
+          cardType: CardType.AE,
+        });
+
+        // 如果交易成功，直接設定已提交狀態（不使用 commit 方法以避免重複觸發事件）
+        if (result.RespCode === '0') {
+          // 建構 AdditionalInfo，包含查詢結果中的重要交易資訊
+          const additionalInfo = {
+            channel: Channel.CREDIT_CARD,
+            processDate: now,
+            amount: amount,
+            // AMEX API 回應的 ECI 格式為 "05" 等，需要轉換為標準 CreditCardECI 枚舉值
+            eci: this.mapECIValue(result.ECI),
+            authCode: result.AuthCode || '',
+            // 從 PanMask 欄位提取卡號信息（格式如 "400361******7729"）
+            card6Number: result.panMask ? result.panMask.substring(0, 6) : result.PAN ? result.PAN.substring(0, 6) : '',
+            card4Number: result.panMask ? result.panMask.slice(-4) : result.PAN ? result.PAN.slice(-4) : '',
+            xid: result.xid?.trim() || result.XID?.trim() || '',
+            aetId: result.aetId || '',
+          } as AdditionalInfo<CM>;
+
+          const cm = {
+            id: reconstructedOrder.id,
+            totalPrice: amount,
+            committedAt: now,
+          } as CM;
+
+          reconstructedOrder.commit(cm, additionalInfo);
+        }
+
+        // 將重建的訂單加入快取
+        await this.orderCache.set(id, reconstructedOrder);
+
+        return reconstructedOrder as OO;
+      }
+
+      return order as OO;
     } else {
       // 使用 POS API 查詢
       const posApiConfig: CTBCPosApiConfig = {
@@ -670,12 +722,14 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
           const amountParts = result.AuthAmt.split(' ');
 
           if (amountParts.length >= 2) {
-            amount = parseInt(amountParts[1], 10);
+            amount = Number(amountParts[1]);
           }
         }
 
+        const now = DateTime.now().toJSDate();
+
         // 從查詢結果重建訂單物件
-        const reconstructedOrder = new CTBCOrder({
+        const reconstructedOrder = new CTBCOrder<CM>({
           id: id,
           gateway: this,
           items: [
@@ -686,15 +740,20 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
             },
           ],
           // 根據查詢結果設定訂單狀態
-          createdAt: result.Txn_date ? new Date(`${result.Txn_date} ${result.Txn_time || '00:00:00'}`) : new Date(),
+          createdAt: result.Txn_date
+            ? DateTime.fromFormat(
+                `${result.Txn_date} ${result.Txn_time || '00:00:00'}`,
+                'yyyy-MM-dd HH:mm:ss',
+              ).toJSDate()
+            : now,
         });
 
         // 如果交易成功，直接設定已提交狀態（不使用 commit 方法以避免重複觸發事件）
         if (result.RespCode === '0' && result.QueryCode === '1') {
           // 建構 AdditionalInfo，包含查詢結果中的重要交易資訊
-          const additionalInfo: AdditionalInfo<OrderCreditCardCommitMessage> = {
+          const additionalInfo = {
             channel: Channel.CREDIT_CARD,
-            processDate: new Date(),
+            processDate: now,
             amount: amount,
             // ECI 映射：API 回應格式（如 "05"）轉換為標準 CreditCardECI 枚舉值
             eci: this.mapECIValue(result.ECI),
@@ -703,14 +762,15 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
             card6Number: result.PAN ? result.PAN.substring(0, 6) : '',
             card4Number: result.PAN ? result.PAN.slice(-4) : '',
             xid: result.XID?.trim() || '',
-          };
+          } as AdditionalInfo<CM>;
 
-          // 直接設定內部狀態，而不是調用 commit 方法
-          // 這樣避免了重複觸發 PaymentEvents.ORDER_COMMITTED 事件
-          (reconstructedOrder as unknown as { _state: OrderState })._state = OrderState.COMMITTED;
-          (reconstructedOrder as unknown as { _committedAt: Date })._committedAt = new Date();
-          (reconstructedOrder as unknown as { _additionalInfo: typeof additionalInfo })._additionalInfo =
-            additionalInfo;
+          const cm = {
+            id: reconstructedOrder.id,
+            totalPrice: amount,
+            committedAt: now,
+          } as CM;
+
+          reconstructedOrder.commit(cm, additionalInfo);
         }
 
         // 將重建的訂單加入快取
@@ -734,7 +794,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
 
     // 將字串轉為數字再轉回字串，這樣可以正確處理前導零
     // "05" -> 5 -> "5", "0" -> 0 -> "0", "00" -> 0 -> "0"
-    const numericECI = parseInt(apiECI, 10);
+    const numericECI = Number(apiECI);
     const normalizedECI = numericECI.toString();
 
     // 根據標準化後的 ECI 值映射到對應的枚舉
