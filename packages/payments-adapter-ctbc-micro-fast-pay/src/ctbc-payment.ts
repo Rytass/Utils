@@ -670,8 +670,8 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
         const reconstructedOrder = new CTBCOrder<CM>({
           id: id,
           gateway: this,
-          commited: state === OrderState.COMMITTED,
-          refunded: state === OrderState.REFUNDED,
+          committedAt: state === OrderState.COMMITTED ? now : null,
+          refundedAt: state === OrderState.REFUNDED ? now : null,
           additionalInfo: additionalInfo,
           items: [
             {
@@ -771,8 +771,8 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
         const reconstructedOrder = new CTBCOrder<CM>({
           id: id,
           gateway: this,
-          commited: state === OrderState.COMMITTED,
-          refunded: state === OrderState.REFUNDED,
+          committedAt: state === OrderState.COMMITTED ? now : null,
+          refundedAt: state === OrderState.REFUNDED ? now : null,
           additionalInfo: additionalInfo,
           items: [
             {

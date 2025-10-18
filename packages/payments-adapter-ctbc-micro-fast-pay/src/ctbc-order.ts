@@ -38,6 +38,7 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
   private _additionalInfo?: AdditionalInfo<OCM>;
   private _asyncInfo?: AsyncOrderInformation<OCM>;
   private _committedAt: Date | null = null;
+  private _refundedAt: Date | null = null;
   private readonly _createdAt: Date | null = null;
   private _state: OrderState;
   private _failedCode: string | undefined;
@@ -57,13 +58,14 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
       this._form = options.form;
       this._clientBackUrl = options.clientBackUrl ?? undefined;
       this._state = OrderState.INITED;
-    } else if ('commited' in options && options.commited) {
-      this._state = OrderState.COMMITTED;
-      this._committedAt = options.createdAt ?? DateTime.now().toJSDate();
-      this._additionalInfo = options.additionalInfo;
-    } else if ('refunded' in options && options.refunded) {
+    } else if ('refundedAt' in options && options.refundedAt) {
       this._state = OrderState.REFUNDED;
-      this._committedAt = options.createdAt ?? DateTime.now().toJSDate();
+      this._refundedAt = options.refundedAt;
+      this._committedAt = options.committedAt ?? options.refundedAt;
+      this._additionalInfo = options.additionalInfo;
+    } else if ('committedAt' in options && options.committedAt) {
+      this._state = OrderState.COMMITTED;
+      this._committedAt = options.committedAt;
       this._additionalInfo = options.additionalInfo;
     } else {
       this._checkoutCardId = options.checkoutCardId ?? null;
@@ -139,6 +141,10 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
 
   get committedAt(): Date | null {
     return this._committedAt;
+  }
+
+  get refundedAt(): Date | null {
+    return this._refundedAt;
   }
 
   // Additional information
@@ -227,6 +233,8 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
     if (this._state !== OrderState.COMMITTED) {
       throw new Error('Only committed orders can be refunded');
     }
+
+    const now = DateTime.now().toJSDate();
 
     // 計算退款金額
     const totalAmount = this._items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
@@ -359,6 +367,9 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
         throw error;
       }
     }
+
+    this._refundedAt = now;
+    this._state = OrderState.REFUNDED;
   }
 
   async cancelRefund(
@@ -373,6 +384,8 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
     if (this._state !== OrderState.COMMITTED && this._state !== OrderState.REFUNDED) {
       throw new Error('Only committed or refunded orders can have their refund cancelled');
     }
+
+    const now = DateTime.now().toJSDate();
 
     // 計算退款撤銷金額
     const totalAmount = this._items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
@@ -517,5 +530,9 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
         throw error;
       }
     }
+
+    this._refundedAt = null;
+    this._committedAt = now;
+    this._state = OrderState.COMMITTED;
   }
 }

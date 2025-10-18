@@ -51,8 +51,8 @@ export interface OrderCreateInit<OCM extends CTBCOrderCommitMessage = CTBCOrderC
   id: string;
   items: PaymentItem[];
   form?: CTBCPayOrderForm;
-  commited?: boolean;
-  refunded?: boolean;
+  committedAt?: Date | null;
+  refundedAt?: Date | null;
   additionalInfo?: AdditionalInfo<OCM>;
   gateway: CTBCPayment<OCM>;
   clientBackUrl?: string | null;
