@@ -1,6 +1,3 @@
-/**
- * @deprecated Use tokens from './member-base.tokens'. This file re-exports the new tokens to avoid duplication.
- */
 export {
   MEMBER_BASE_MODULE_OPTIONS,
   LOGIN_FAILED_BAN_THRESHOLD,

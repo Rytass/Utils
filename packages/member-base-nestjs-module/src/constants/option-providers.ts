@@ -218,6 +218,7 @@ export const OptionProviders = [
     useFactory: (options?: MemberBaseModuleOptionsDTO): ((member: BaseMemberEntity) => AuthTokenPayloadBase) =>
       options?.customizedJwtPayload ??
       ((member: BaseMemberEntity): AuthTokenPayloadBase => ({ id: member.id, account: member.account })),
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: OAUTH2_PROVIDERS,
