@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.16](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.15...@rytass/member-base-nestjs-module@0.2.16) (2025-10-20)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** add missing inject dependency for CUSTOMIZED_JWT_PAYLOAD ([49855c6](https://github.com/Rytass/Utils/commit/49855c66b42d2b5ff1d6d33f187028d8fe2ed9e2))
+
 ## [0.2.15](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.14...@rytass/member-base-nestjs-module@0.2.15) (2025-09-22)
 
 ### Bug Fixes
