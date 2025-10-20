@@ -73,7 +73,7 @@ describe('CTBC 訂單 Mock 測試', () => {
       XID: TEST_XID,
       Txn_date: '2024/08/28',
       Txn_time: '12:00:00',
-      CurrentState: '0',
+      CurrentState: '1', // '1' means 授權成功 = COMMITTED
     };
 
     posApiQueryMock.mockResolvedValue(resp);
@@ -156,7 +156,7 @@ describe('CTBC 訂單 Mock 測試', () => {
       // XID 缺漏
       Txn_date: '2024/08/28',
       Txn_time: '12:00:00',
-      CurrentState: '0',
+      CurrentState: '1', // 設為 COMMITTED 狀態才能測試退款前置檢查
     };
 
     posApiQueryMock.mockResolvedValue(resp);

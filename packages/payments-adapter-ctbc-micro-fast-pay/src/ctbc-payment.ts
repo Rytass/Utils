@@ -7,6 +7,7 @@ import {
   InputFromOrderCommitMessage,
   Order,
   OrderCreditCardCommitMessage,
+  OrderState,
   PaymentEvents,
   PaymentGateway,
 } from '@rytass/payments';
@@ -602,6 +603,14 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
     // 先嘗試從快取中獲取訂單
     const order = await this.orderCache.get(id);
 
+    // 如果訂單在快取中且不是初始狀態，直接返回
+    if (order && order.state !== OrderState.INITED) {
+      debugPayment(`Order ${id} found in cache with state ${order.state}.`);
+
+      return order as OO;
+    }
+
+    // 如果快取中沒有訂單，根據查詢結果創建一個
     if (this.isAmex) {
       // 使用 AMEX SOAP API 查詢
       const wsdlUrl = `${this.baseUrl}/HubAgentConsole/services/AEPaymentSoap?wsdl`;
@@ -625,16 +634,46 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
 
       debugPayment(`AMEX Query successful for order ${id}: ${JSON.stringify(result)}`);
 
-      // 如果快取中沒有訂單，根據查詢結果創建一個
-      if (!order) {
+      // 如果交易成功，直接設定已提交狀態（不使用 commit 方法以避免重複觸發事件）
+      if (result.RespCode === '0') {
         // 解析金額：AuthAmt 格式為數字字串
         const amount = result.AuthAmt ? Number(result.AuthAmt) : 0;
         const now = DateTime.now().toJSDate();
+        // 建構 AdditionalInfo，包含查詢結果中的重要交易資訊
+        const additionalInfo = {
+          channel: Channel.CREDIT_CARD,
+          processDate: now,
+          amount: amount,
+          // AMEX API 回應的 ECI 格式為 "05" 等，需要轉換為標準 CreditCardECI 枚舉值
+          eci: this.mapECIValue(result.ECI),
+          authCode: result.AuthCode || '',
+          // 從 PanMask 欄位提取卡號信息（格式如 "400361******7729"）
+          card6Number: result.panMask ? result.panMask.substring(0, 6) : result.PAN ? result.PAN.substring(0, 6) : '',
+          card4Number: result.panMask ? result.panMask.slice(-4) : result.PAN ? result.PAN.slice(-4) : '',
+          xid: result.xid?.trim() || result.XID?.trim() || '',
+          aetId: result.aetId || '',
+        } as AdditionalInfo<CM>;
+
+        // ◼ AU -授權交易
+        // ◼ VD -取消授權
+        // ◼ BQ -請款(轉入請款檔)
+        // ◼ BV -請款取消
+        // ◼ RF -退貨交易
+        // ◼ RV -退款取消
+        const state =
+          result.txnType && ['AU', 'BQ', 'RV'].includes(result.txnType)
+            ? OrderState.COMMITTED
+            : result.txnType && ['VD', 'RF', 'BV'].includes(result.txnType)
+              ? OrderState.REFUNDED
+              : OrderState.FAILED;
 
         // 從查詢結果重建訂單物件
         const reconstructedOrder = new CTBCOrder<CM>({
           id: id,
           gateway: this,
+          committedAt: state === OrderState.COMMITTED ? now : null,
+          refundedAt: state === OrderState.REFUNDED ? now : null,
+          additionalInfo: additionalInfo,
           items: [
             {
               name: 'Unknown Item', // API 查詢結果通常不包含商品詳情
@@ -651,39 +690,14 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
           cardType: CardType.AE,
         });
 
-        // 如果交易成功，直接設定已提交狀態（不使用 commit 方法以避免重複觸發事件）
-        if (result.RespCode === '0') {
-          // 建構 AdditionalInfo，包含查詢結果中的重要交易資訊
-          const additionalInfo = {
-            channel: Channel.CREDIT_CARD,
-            processDate: now,
-            amount: amount,
-            // AMEX API 回應的 ECI 格式為 "05" 等，需要轉換為標準 CreditCardECI 枚舉值
-            eci: this.mapECIValue(result.ECI),
-            authCode: result.AuthCode || '',
-            // 從 PanMask 欄位提取卡號信息（格式如 "400361******7729"）
-            card6Number: result.panMask ? result.panMask.substring(0, 6) : result.PAN ? result.PAN.substring(0, 6) : '',
-            card4Number: result.panMask ? result.panMask.slice(-4) : result.PAN ? result.PAN.slice(-4) : '',
-            xid: result.xid?.trim() || result.XID?.trim() || '',
-            aetId: result.aetId || '',
-          } as AdditionalInfo<CM>;
-
-          const cm = {
-            id: reconstructedOrder.id,
-            totalPrice: amount,
-            committedAt: now,
-          } as CM;
-
-          reconstructedOrder.commit(cm, additionalInfo);
-        }
-
         // 將重建的訂單加入快取
         await this.orderCache.set(id, reconstructedOrder);
 
         return reconstructedOrder as OO;
+      } else {
+        debugPayment(`AMEX Query indicates failed transaction for order ${id}: RespCode ${result.RespCode}`);
+        throw new Error(`AMEX Query indicates failed transaction: RespCode ${result.RespCode}`);
       }
-
-      return order as OO;
     } else {
       // 使用 POS API 查詢
       const posApiConfig: CTBCPosApiConfig = {
@@ -713,25 +727,54 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
 
       debugPayment(`Query successful for order ${id}: ${JSON.stringify(result)}`);
 
-      // 如果快取中沒有訂單，根據查詢結果創建一個
-      if (!order) {
+      // 如果交易成功，直接設定已提交狀態（不使用 commit 方法以避免重複觸發事件）
+      if (result.RespCode === '0' && result.QueryCode === '1') {
         // 解析金額：AuthAmt 格式為 "貨幣碼 金額 指數"，如 "901 1000 0"
-        let amount = 0;
-
-        if (result.AuthAmt) {
-          const amountParts = result.AuthAmt.split(' ');
-
-          if (amountParts.length >= 2) {
-            amount = Number(amountParts[1]);
-          }
-        }
+        const amount = result.AuthAmt
+          ? result.AuthAmt.split(' ').length >= 2
+            ? Number(result.AuthAmt.split(' ')[1])
+            : 0
+          : 0;
 
         const now = DateTime.now().toJSDate();
+        const additionalInfo = {
+          channel: Channel.CREDIT_CARD,
+          processDate: now,
+          amount: amount,
+          // ECI 映射：API 回應格式（如 "05"）轉換為標準 CreditCardECI 枚舉值
+          eci: this.mapECIValue(result.ECI),
+          authCode: result.AuthCode || '',
+          // 從 PAN 欄位提取卡號信息（格式如 "400361******7729"）
+          card6Number: result.PAN ? result.PAN.substring(0, 6) : '',
+          card4Number: result.PAN ? result.PAN.slice(-4) : '',
+          xid: result.XID?.trim() || '',
+        } as AdditionalInfo<CM>;
+
+        // ◼ -1 -授權失敗
+        // ◼ 0 -訂單已取消
+        // ◼ 1 -授權成功
+        // ◼ 10 -已請款(請款結帳中)
+        // ◼ 11 -已請款(請款中)
+        // ◼ 12 -已請款(請款成功)
+        // ◼ 13 -已請款(請款失敗)
+        // ◼ 20 -已退款(退款結帳中)
+        // ◼ 21 -已退款(退款中)
+        // ◼ 22 -已退款(退款成功)
+        // ◼ 23 -已退款(退款失敗)
+        const state =
+          result.CurrentState && ['1', '10', '11', '12'].includes(result.CurrentState)
+            ? OrderState.COMMITTED
+            : result.CurrentState && ['0', '20', '21', '22'].includes(result.CurrentState)
+              ? OrderState.REFUNDED
+              : OrderState.FAILED;
 
         // 從查詢結果重建訂單物件
         const reconstructedOrder = new CTBCOrder<CM>({
           id: id,
           gateway: this,
+          committedAt: state === OrderState.COMMITTED ? now : null,
+          refundedAt: state === OrderState.REFUNDED ? now : null,
+          additionalInfo: additionalInfo,
           items: [
             {
               name: 'Unknown Item', // API 查詢結果通常不包含商品詳情
@@ -748,38 +791,13 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
             : now,
         });
 
-        // 如果交易成功，直接設定已提交狀態（不使用 commit 方法以避免重複觸發事件）
-        if (result.RespCode === '0' && result.QueryCode === '1') {
-          // 建構 AdditionalInfo，包含查詢結果中的重要交易資訊
-          const additionalInfo = {
-            channel: Channel.CREDIT_CARD,
-            processDate: now,
-            amount: amount,
-            // ECI 映射：API 回應格式（如 "05"）轉換為標準 CreditCardECI 枚舉值
-            eci: this.mapECIValue(result.ECI),
-            authCode: result.AuthCode || '',
-            // 從 PAN 欄位提取卡號信息（格式如 "400361******7729"）
-            card6Number: result.PAN ? result.PAN.substring(0, 6) : '',
-            card4Number: result.PAN ? result.PAN.slice(-4) : '',
-            xid: result.XID?.trim() || '',
-          } as AdditionalInfo<CM>;
-
-          const cm = {
-            id: reconstructedOrder.id,
-            totalPrice: amount,
-            committedAt: now,
-          } as CM;
-
-          reconstructedOrder.commit(cm, additionalInfo);
-        }
-
-        // 將重建的訂單加入快取
         await this.orderCache.set(id, reconstructedOrder);
 
         return reconstructedOrder as OO;
+      } else {
+        debugPayment(`Query indicates failed transaction for order ${id}: RespCode ${result.RespCode}`);
+        throw new Error(`Query indicates failed transaction: RespCode ${result.RespCode}`);
       }
-
-      return order as OO;
     }
   }
 
