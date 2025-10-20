@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.15](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.14...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.15) (2025-10-20)
+
+### Features
+
+- **api:** fix ctbc order tigger commit event, refactor ctbc order constructor ([c60e8bf](https://github.com/Rytass/Utils/commit/c60e8bff5797a40538a8e1dda6889e333d2ba06c))
+- **api:** refactor ctbc order constructor, add committedAt and refundedAt in constructor of CTBCOrder ([8f744bb](https://github.com/Rytass/Utils/commit/8f744bb4a64a9d0dcd2b06cec24b45bf2fcf8d58))
+- **payments-adapter-ctbc-micro-fast-pay:** fix cicd test failed ([7bb8980](https://github.com/Rytass/Utils/commit/7bb898057796186f865021647c8e47982304961d))
+
 ## [0.1.14](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.13...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.14) (2025-10-17)
 
 ### Features
