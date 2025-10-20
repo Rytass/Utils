@@ -603,8 +603,9 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
     // 先嘗試從快取中獲取訂單
     const order = await this.orderCache.get(id);
 
-    if (order) {
-      debugPayment(`Order ${id} found in cache.`);
+    // 如果訂單在快取中且不是初始狀態，直接返回
+    if (order && order.state !== OrderState.INITED) {
+      debugPayment(`Order ${id} found in cache with state ${order.state}.`);
 
       return order as OO;
     }

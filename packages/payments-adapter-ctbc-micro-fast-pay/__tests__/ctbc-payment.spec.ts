@@ -148,7 +148,7 @@ describe('CTBCPayment core behaviours', () => {
   it('query handles AMEX flag and cached orders', async () => {
     const amexPayment = new CTBCPayment({ ...baseOptions, isAmex: true });
 
-    await expect(amexPayment.query('ORDER1')).rejects.toThrow('Query AMEX Order From SOAP API is not implemented');
+    await expect(amexPayment.query('ORDER1')).rejects.toThrow('AMEX Query failed');
 
     const cachedPayment = new CTBCPayment(baseOptions);
     const cachedOrder = await cachedPayment.prepare({
@@ -164,7 +164,7 @@ describe('CTBCPayment core behaviours', () => {
       },
     });
 
-    mockedPosQuery.mockResolvedValue({ ErrCode: '00', RespCode: '0', QueryCode: '1', CurrentState: '' });
+    mockedPosQuery.mockResolvedValue({ ErrCode: '00', RespCode: '0', QueryCode: '1', CurrentState: '1' });
     await payment.query('ORDER2');
     expect(mockedPosQuery).toHaveBeenCalled();
   });

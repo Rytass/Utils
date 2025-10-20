@@ -124,7 +124,7 @@ describe('CTBC POS API - 類別方法整合測試', () => {
         ECI: '05',
         PAN: '400361******7729',
         XID: 'TEST_XID_456',
-        CurrentState: '',
+        CurrentState: '1', // '1' means 授權成功 = COMMITTED
       });
 
       const result = await payment.query('NEW_ORDER_001');
