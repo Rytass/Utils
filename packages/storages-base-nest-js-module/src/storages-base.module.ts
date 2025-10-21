@@ -6,7 +6,7 @@ import {
   StorageBaseModuleOptionsFactory,
 } from './typings/storage-base-module-options.interface';
 import { STORAGE_ADAPTER, STORAGE_MODULE_OPTIONS } from './typings/storages-base-module-providers';
-import { StorageService } from './services/storage.service';
+import { StorageService } from './services/storages-base.service';
 
 @Global()
 @Module({})

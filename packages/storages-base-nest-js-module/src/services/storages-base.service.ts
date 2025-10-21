@@ -46,15 +46,19 @@ export class StorageService {
     }
   }
 
-  async write(file: InputFile, options?: WriteFileOptions): Promise<StorageFile> {
+  write(file: InputFile, options?: WriteFileOptions): Promise<StorageFile> {
     return this._adapter.write(file, options);
   }
 
-  async batchWrite(files: InputFile[], options?: WriteFileOptions[]): Promise<StorageFile[]> {
+  batchWrite(files: InputFile[], options?: WriteFileOptions[]): Promise<StorageFile[]> {
     return this._adapter.batchWrite(files, options);
   }
 
   async remove(key: string): Promise<void> {
+    return this._adapter.remove(key);
+  }
+
+  removeSync(key: string): Promise<void> {
     return this._adapter.remove(key);
   }
 
