@@ -13,7 +13,8 @@ export type StorageAdapter =
   | StorageS3Service;
 
 export interface StorageBaseModuleOptions {
-  adapter: StorageAdapter;
+  adapter: new (config: unknown) => StorageAdapter;
+  config: unknown;
   formDataFieldName?: string; // default: 'files'
   allowMultiple?: boolean; // default: true
   MaxFileSizeInBytes?: number; // default: 10 * 1024 * 1024

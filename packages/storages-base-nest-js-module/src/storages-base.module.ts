@@ -1,32 +1,60 @@
-import { DynamicModule, Module, Provider, Type } from '@nestjs/common';
+import { DynamicModule, Global, Module, Provider, Type } from '@nestjs/common';
 import {
+  StorageAdapter,
   StorageBaseModuleAsyncOptions,
   StorageBaseModuleOptions,
   StorageBaseModuleOptionsFactory,
 } from './typings/storage-base-module-options.interface';
-import { STORAGE_MODULE_OPTIONS } from './typings/storages-base-module-providers';
+import { STORAGE_ADAPTER, STORAGE_MODULE_OPTIONS } from './typings/storages-base-module-providers';
 import { StorageService } from './services/storage.service';
 
+@Global()
 @Module({})
 export class StorageBaseModule {
   static forRoot(options: StorageBaseModuleOptions): DynamicModule {
+    const optionsProvider = {
+      provide: STORAGE_MODULE_OPTIONS,
+      useValue: options,
+    };
+
+    const adapterProvider = {
+      provide: STORAGE_ADAPTER,
+      useFactory: (): StorageAdapter => {
+        const AdapterClass = options.adapter;
+
+        if (!AdapterClass) {
+          throw new Error('No storage adapter class was provided in forRoot!');
+        }
+
+        return new AdapterClass(options.config);
+      },
+    };
+
     return {
       module: StorageBaseModule,
-      providers: [
-        {
-          provide: STORAGE_MODULE_OPTIONS,
-          useValue: options,
-        },
-        StorageService,
-      ],
+      providers: [optionsProvider, adapterProvider, StorageService],
       exports: [StorageService],
     };
   }
   static forRootAsync(options: StorageBaseModuleAsyncOptions): DynamicModule {
+    const asyncAdapterProviders: Provider = {
+      provide: STORAGE_ADAPTER,
+      useFactory: (options: StorageBaseModuleOptions): StorageAdapter => {
+        const AdapterClass = options.adapter;
+
+        if (!AdapterClass) {
+          throw new Error('No storage adapter class was provided in forRootAsync!');
+        }
+
+        return new AdapterClass(options.config);
+      },
+      inject: [STORAGE_MODULE_OPTIONS],
+    };
+
     return {
       module: StorageBaseModule,
       imports: [...(options?.imports ?? [])],
-      providers: [...this.createAsyncProvider(options), StorageService],
+      providers: [...this.createAsyncProvider(options), asyncAdapterProviders, StorageService],
       exports: [StorageService],
     };
   }
