@@ -435,6 +435,123 @@ describe('CTBC POS API - 類別方法整合測試', () => {
 
       expect(order.state).toBe(OrderState.FAILED);
     });
+
+    it('應該處理 Pending 狀態錯誤', async () => {
+      const order = await payment.prepare({
+        id: 'TEST_ORDER_PENDING',
+        items: [
+          {
+            name: 'Test Item',
+            unitPrice: 1000,
+            quantity: 1,
+          },
+        ],
+      });
+
+      const ccOrder = order as unknown as CTBCOrder<OrderCreditCardCommitMessage>;
+
+      void ccOrder.form;
+      ccOrder.commit(
+        {
+          id: order.id,
+          committedAt: new Date(),
+        } as OrderCreditCardCommitMessage,
+        {
+          channel: Channel.CREDIT_CARD,
+          processDate: new Date(),
+          eci: CreditCardECI.VISA_AE_JCB_3D,
+          authCode: '901234',
+          card6Number: '400361',
+          card4Number: '7729',
+          xid: 'TEST_XID_PENDING',
+        } as AdditionalInfo<OrderCreditCardCommitMessage>,
+      );
+
+      // Mock smart flow 返回 Pending 錯誤
+      mockPosApiSmartFlow.mockRejectedValue(new Error('Transaction is still pending'));
+
+      await expect(order.refund()).rejects.toThrow('Transaction is still pending');
+
+      expect(order.state).toBe(OrderState.FAILED);
+    });
+
+    it('應該處理 Forbidden 狀態錯誤', async () => {
+      const order = await payment.prepare({
+        id: 'TEST_FORBIDDEN',
+        items: [
+          {
+            name: 'Test Item',
+            unitPrice: 1000,
+            quantity: 1,
+          },
+        ],
+      });
+
+      const ccOrder = order as unknown as CTBCOrder<OrderCreditCardCommitMessage>;
+
+      void ccOrder.form;
+      ccOrder.commit(
+        {
+          id: order.id,
+          committedAt: new Date(),
+        } as OrderCreditCardCommitMessage,
+        {
+          channel: Channel.CREDIT_CARD,
+          processDate: new Date(),
+          eci: CreditCardECI.VISA_AE_JCB_3D,
+          authCode: '901234',
+          card6Number: '400361',
+          card4Number: '7729',
+          xid: 'TEST_XID_FORBIDDEN',
+        } as AdditionalInfo<OrderCreditCardCommitMessage>,
+      );
+
+      // Mock smart flow 返回 Forbidden 錯誤
+      mockPosApiSmartFlow.mockRejectedValue(new Error('Transaction is in a forbidden state'));
+
+      await expect(order.refund()).rejects.toThrow('Transaction is in a forbidden state');
+
+      expect(order.state).toBe(OrderState.FAILED);
+    });
+
+    it('應該處理 Failed 狀態錯誤', async () => {
+      const order = await payment.prepare({
+        id: 'TEST_FAILED',
+        items: [
+          {
+            name: 'Test Item',
+            unitPrice: 1000,
+            quantity: 1,
+          },
+        ],
+      });
+
+      const ccOrder = order as unknown as CTBCOrder<OrderCreditCardCommitMessage>;
+
+      void ccOrder.form;
+      ccOrder.commit(
+        {
+          id: order.id,
+          committedAt: new Date(),
+        } as OrderCreditCardCommitMessage,
+        {
+          channel: Channel.CREDIT_CARD,
+          processDate: new Date(),
+          eci: CreditCardECI.VISA_AE_JCB_3D,
+          authCode: '901234',
+          card6Number: '400361',
+          card4Number: '7729',
+          xid: 'TEST_XID_FAILED_STATE',
+        } as AdditionalInfo<OrderCreditCardCommitMessage>,
+      );
+
+      // Mock smart flow 返回 Failed 狀態錯誤
+      mockPosApiSmartFlow.mockRejectedValue(new Error('Transaction has failed'));
+
+      await expect(order.refund()).rejects.toThrow('Transaction has failed');
+
+      expect(order.state).toBe(OrderState.FAILED);
+    });
   });
 
   describe('常數驗證測試', () => {
