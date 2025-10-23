@@ -597,31 +597,48 @@ export async function posApiCapRev(
 }
 
 // 根據查詢結果判斷下一步（Reversal / CapRev / Refund）
-export function getPosNextActionFromInquiry(inquiry: CTBCPosApiResponse): 'Reversal' | 'CapRev' | 'Refund' | 'None' {
+export function getPosNextActionFromInquiry(inquiry: CTBCPosApiResponse): PosAction {
   // 以 CurrentState 作為主要判斷依據
+  // -1: 授權失敗 → Failed
+  // 0: 訂單已取消 → None
   // 1: 授權成功 → Reversal
   // 10: 已請款(處理中) → CapRev
+  // 11: 已請款處理中 → Pending
   // 12: 已請款成功 → Refund
+  // 13: 已請款失敗 → Failed
+  // 20: 已退款(退款結帳中) → Forbidden
+  // 21: 已退款(退款中) → Pending
+  // 22: 已退款成功 → Forbidden
+  // 23: 已退款失敗 → Failed
 
-  // 不處理的狀態碼：
-  // -1: 授權失敗 → None
-  // 0: 訂單已取消 → None
-  // 11: 已請款處理中 → None
-  // 13: 已請款失敗 → None
-  // 23: 已退款失敗 → None
-  // 20/21: 已退款(處理中) → None
-  // 22: 已退款成功 → None
   const raw = inquiry.CurrentState;
+  const nextStepAvailableStates = [1, 10, 12, 20, 22];
+  const pendingStates = [11, 21];
+  const failedStates = [-1, 13, 23];
+  const finishedStates = [0];
 
   if (typeof raw === 'string' && raw.trim().length > 0) {
     const state = Number(raw);
 
     if (!Number.isNaN(state)) {
-      if (state === 1) return 'Reversal';
+      if (nextStepAvailableStates.includes(state)) {
+        // 可進行下一步的狀態
+        if (state === 1) return 'Reversal';
 
-      if (state === 10) return 'CapRev';
+        if (state === 10) return 'CapRev';
 
-      if (state === 12) return 'Refund';
+        if (state === 12) return 'Refund';
+
+        if (state === 20) return 'Forbidden'; // 退款中，不允許重複退款，可取消退款
+
+        if (state === 22) return 'Forbidden'; // 已退款成功，不允許重複退款
+      }
+
+      if (pendingStates.includes(state)) return 'Pending';
+
+      if (failedStates.includes(state)) return 'Failed';
+
+      if (finishedStates.includes(state)) return 'None';
 
       return 'None';
     }
@@ -630,20 +647,21 @@ export function getPosNextActionFromInquiry(inquiry: CTBCPosApiResponse): 'Rever
   return 'None';
 }
 
+export type PosAction = 'Reversal' | 'CapRev' | 'Refund' | 'None' | 'Pending' | 'Failed' | 'Forbidden';
+
 // 智慧取消/退款（POS 版）：查詢 → 決策 → 執行
 export async function posApiSmartCancelOrRefund(
   config: CTBCPosApiConfig,
   params: CTBCPosApiRefundParams,
 ): Promise<{
-  action: 'Reversal' | 'CapRev' | 'Refund' | 'None';
+  action: PosAction;
   response: CTBCPosApiResponse | number;
   inquiry: CTBCPosApiResponse | number;
 }> {
   const inq = await posApiQuery(config, { MERID: params.MERID, 'LID-M': params['LID-M'], Tx_ATTRIBUTE: 'TX_AUTH' });
 
   // // 若查詢失敗（回傳錯誤碼），預設不處理；否則依查詢結果決策
-  const action: 'Reversal' | 'CapRev' | 'Refund' | 'None' =
-    typeof inq === 'number' ? 'None' : getPosNextActionFromInquiry(inq);
+  const action: PosAction = typeof inq === 'number' ? 'None' : getPosNextActionFromInquiry(inq);
 
   let response: CTBCPosApiResponse | number;
 
@@ -682,6 +700,34 @@ export async function posApiSmartCancelOrRefund(
     });
   } else if (action === 'Refund') {
     response = await posApiRefund(config, params);
+
+    response = await posApiCapRev(config, {
+      MERID: params.MERID,
+      'LID-M': params['LID-M'],
+      XID: params.XID,
+      AuthCode: params.AuthCode,
+      OrgAmt: params.OrgAmt,
+      CapRevAmt: params.PurchAmt,
+      currency: params.currency,
+      exponent: params.exponent,
+    });
+
+    response = await posApiReversal(config, {
+      MERID: params.MERID,
+      'LID-M': params['LID-M'],
+      XID: params.XID,
+      AuthCode: params.AuthCode,
+      OrgAmt: params.OrgAmt,
+      AuthNewAmt: params.PurchAmt,
+      currency: params.currency,
+      exponent: params.exponent,
+    });
+  } else if (action === 'Pending') {
+    throw new Error('Transaction is still pending, cannot proceed with cancellation or refund.');
+  } else if (action === 'Forbidden') {
+    throw new Error('Transaction is in a forbidden state for cancellation or refund.');
+  } else if (action === 'Failed') {
+    throw new Error('Transaction has failed, cannot proceed with cancellation or refund.');
   } else {
     response = inq; // 無需處理，回傳查詢結果
   }

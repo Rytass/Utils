@@ -962,21 +962,61 @@ export async function amexCapRev(config: CTBCAmexConfig, params: CTBCAmexCapRevP
   return gateway.capRev(params);
 }
 
-export type AmexAction = 'AuthRev' | 'CapRev' | 'Refund' | 'None';
+export type AmexAction = 'AuthRev' | 'CapRev' | 'Refund' | 'None' | 'Failed' | 'Forbidden' | 'Pending';
 
 export function getAmexNextActionFromInquiry(inquiryResp: CTBCPosApiResponse): AmexAction {
   const obj = inquiryResp as unknown as Record<string, unknown>;
   const txnType = obj['txnType'] as string | undefined;
   const statusCode = obj['status'] as string | undefined;
 
+  // statusCode 可能值:
+  // 2空格: 等待授權回應
+  // TO: 授權交易逾時
+  // AP: 交易核准
+  // VD: 訂單取消
+  // DC: 交易拒絕
+  // B1: 準備產生(退貨)請款檔
+  // B2: (退貨)請款檔產生中
+  // B3: 已產生(退貨)請款檔
+  // B4: 請款資料匯入中
+  // B5: 請款成功
+  // B6: 請款失敗
+  // RV: 退貨取消
+  const pendingStatuses = ['B2', 'B3', 'B4', '  '];
+  const forbiddenStatuses = ['DC', 'TO', 'RV'];
+  const finishedStatuses = ['VD'];
+
+  // txnType 可能值:
+  // ◼ AU -授權交易
+  // ◼ VD -取消授權
+  // ◼ BQ -請款(轉入請款檔)
+  // ◼ BV -請款取消
+  // ◼ RF -退貨交易
+  // ◼ RV -退款取消
   if (txnType === 'AU') {
-    if (statusCode && statusCode === 'AP') return 'AuthRev';
+    if (statusCode) {
+      if (pendingStatuses.includes(statusCode)) return 'Pending';
 
-    if (statusCode && statusCode === 'B1') return 'CapRev';
+      if (forbiddenStatuses.includes(statusCode)) return 'Forbidden';
 
-    if (statusCode && statusCode === 'B5') return 'Refund';
+      if (finishedStatuses.includes(statusCode)) return 'None';
+
+      if (statusCode === 'AP') return 'AuthRev';
+
+      if (statusCode === 'B1') return 'CapRev';
+
+      if (statusCode === 'B5') return 'Refund';
+
+      if (statusCode === 'B6') return 'Failed';
+    }
 
     return 'None';
+  } else if (txnType === 'VD' || txnType === 'BV' || txnType === 'RV') {
+    return 'None';
+  } else if (txnType === 'BQ') {
+    return 'Pending';
+  } else if (txnType === 'RF') {
+    return 'Forbidden';
   }
 
   // Default to do nothing
@@ -1016,6 +1056,15 @@ export async function amexSmartCancelOrRefund(
       orgAmt: params.orgAmt,
       IN_MAC_KEY: params.IN_MAC_KEY,
     });
+
+    response = await amexAuthRev(config, {
+      merId: params.merId,
+      xid: params.xid,
+      lidm: params.lidm,
+      purchAmt: params.purchAmt,
+      orgAmt: params.orgAmt,
+      IN_MAC_KEY: params.IN_MAC_KEY,
+    });
   } else if (action === 'Refund') {
     response = await amexRefund(config, {
       merId: params.merId,
@@ -1025,6 +1074,30 @@ export async function amexSmartCancelOrRefund(
       purchAmt: params.purchAmt,
       orgAmt: params.orgAmt,
     });
+
+    response = await amexCapRev(config, {
+      merId: params.merId,
+      xid: params.xid,
+      lidm: params.lidm,
+      purchAmt: params.purchAmt,
+      orgAmt: params.orgAmt,
+      IN_MAC_KEY: params.IN_MAC_KEY,
+    });
+
+    response = await amexAuthRev(config, {
+      merId: params.merId,
+      xid: params.xid,
+      lidm: params.lidm,
+      purchAmt: params.purchAmt,
+      orgAmt: params.orgAmt,
+      IN_MAC_KEY: params.IN_MAC_KEY,
+    });
+  } else if (action === 'Pending') {
+    throw new Error('Transaction is still pending, cannot proceed with cancellation or refund.');
+  } else if (action === 'Forbidden') {
+    throw new Error('Transaction is in a forbidden state for cancellation or refund.');
+  } else if (action === 'Failed') {
+    throw new Error('Transaction has failed, cannot proceed with cancellation or refund.');
   } else {
     response = { ...inquiry };
   }
