@@ -10,10 +10,11 @@ import {
   SoapResponse,
   AmexPoDetailItem,
   SoapInquiryResult,
-  CTBCAmexRefundResponse,
 } from './typings';
 import { desEcbEncryptHex } from './ctbc-crypto-core';
 import * as soap from 'soap';
+import { OrderState } from '@rytass/payments';
+import { debugPayment } from './ctbc-payment';
 
 /**
  * AMEX SOAP 客戶端包裝器
@@ -33,12 +34,14 @@ type AmexResponse = {
   aetid?: string;
   xid?: string;
   credAmt?: string;
+  capAmt?: string;
   unCredAmt?: string;
+  unCapAmt?: string;
   capBatchId?: string;
   capBatchSeq?: string;
-  capAmt?: string;
-  unCapAmt?: string;
   termSeq?: string;
+  txnType?: string;
+  status?: string;
 } & Record<string, unknown>;
 
 export class CTBCAEGateway {
@@ -137,8 +140,14 @@ export class CTBCAEGateway {
         }
       });
 
+      debugPayment('AMEX SOAP Inquiry soapResponse:', soapResponse);
+
       // 處理 RPC style SOAP 回應
       const inquiryResult = (soapResponse.inquiryReturn ?? soapResponse) as SoapInquiryResult | SoapResponse;
+
+      Object.assign(this.response, inquiryResult);
+
+      debugPayment('AMEX SOAP Inquiry this.response:', this.response);
 
       // 處理 SOAP 回應
       if (
@@ -241,7 +250,7 @@ export class CTBCAEGateway {
     };
 
     if (!this.checkServer(this.serverConfig)) {
-      return this.toPosRefundResponse(this.response);
+      return this.toPosInquiryResponse(this.response);
     }
 
     const requestData: SoapRequestData = {} as SoapRequestData;
@@ -249,7 +258,7 @@ export class CTBCAEGateway {
     const merIdResult = this.checkMerId(params.merId);
 
     if (!merIdResult) {
-      return this.toPosRefundResponse(this.response);
+      return this.toPosInquiryResponse(this.response);
     }
 
     requestData.merId = merIdResult;
@@ -257,7 +266,7 @@ export class CTBCAEGateway {
     const xidResult = this.checkXid(params.xid);
 
     if (!xidResult) {
-      return this.toPosRefundResponse(this.response);
+      return this.toPosInquiryResponse(this.response);
     }
 
     requestData.xid = xidResult;
@@ -265,7 +274,7 @@ export class CTBCAEGateway {
     const purchAmtResult = this.checkCredAmt(params.purchAmt);
 
     if (!purchAmtResult) {
-      return this.toPosRefundResponse(this.response);
+      return this.toPosInquiryResponse(this.response);
     }
 
     requestData.credAmt = purchAmtResult;
@@ -275,7 +284,7 @@ export class CTBCAEGateway {
     const lidmResult = this.checkLidm(params.lidm);
 
     if (!lidmResult) {
-      return this.toPosRefundResponse(this.response);
+      return this.toPosInquiryResponse(this.response);
     }
 
     requestData.lidm = lidmResult;
@@ -317,14 +326,14 @@ export class CTBCAEGateway {
         }
       });
 
-      // 處理退款回應（不同實作大小寫可能不同）
-      const respObj = soapResponse as unknown as Record<string, unknown>;
-      const refundResult = (respObj['CredReturn'] ??
-        respObj['credReturn'] ??
-        respObj['refundReturn'] ??
-        soapResponse) as Partial<CTBCAmexRefundResponse> | Record<string, unknown>;
+      debugPayment('AMEX SOAP Refund soapResponse:', soapResponse);
 
-      Object.assign(this.response, refundResult as Record<string, unknown>);
+      // 處理退款回應（不同實作大小寫可能不同）
+      const refundResult = soapResponse.credReturn ?? soapResponse;
+
+      Object.assign(this.response, refundResult);
+
+      debugPayment('AMEX SOAP Refund this.response:', this.response);
 
       // 檢核回應 MAC：aetId(16,右補空白) + xid(16,右補空白) + errCode(8,右補空白) + credAmt(16,左補0)
       const responseSMac =
@@ -346,7 +355,7 @@ export class CTBCAEGateway {
       this.response.errDesc = `SOAP communication failed: ${error instanceof Error ? error.message : String(error)}`;
     }
 
-    return this.toPosRefundResponse(this.response);
+    return this.toPosInquiryResponse(this.response);
   }
 
   /**
@@ -363,24 +372,24 @@ export class CTBCAEGateway {
     };
 
     if (!this.checkServer(this.serverConfig)) {
-      return this.toPosCancelRefundResponse(this.response);
+      return this.toPosInquiryResponse(this.response);
     }
 
     const requestData: SoapRequestData = {} as SoapRequestData;
 
     const merIdResult = this.checkMerId(params.merId);
 
-    if (!merIdResult) return this.toPosCancelRefundResponse(this.response);
+    if (!merIdResult) return this.toPosInquiryResponse(this.response);
     requestData.merId = merIdResult;
 
     const xidResult = this.checkXid(params.xid);
 
-    if (!xidResult) return this.toPosCancelRefundResponse(this.response);
+    if (!xidResult) return this.toPosInquiryResponse(this.response);
     requestData.xid = xidResult;
 
     const lidmResult = this.checkLidm(params.lidm);
 
-    if (!lidmResult) return this.toPosCancelRefundResponse(this.response);
+    if (!lidmResult) return this.toPosInquiryResponse(this.response);
     requestData.lidm = lidmResult;
 
     // sMac: merId(12,0) + xid(12,' ') + lidm(24,' ')
@@ -414,10 +423,13 @@ export class CTBCAEGateway {
         }
       });
 
-      const revObj = soapResponse as Record<string, unknown>;
-      const revResult = (revObj['authRevReturn'] ?? revObj['AuthRevReturn'] ?? soapResponse) as Record<string, unknown>;
+      debugPayment('AMEX SOAP AuthRev soapResponse:', soapResponse);
 
-      Object.assign(this.response, revResult);
+      const authRevReturn = soapResponse.authRevReturn ?? soapResponse;
+
+      Object.assign(this.response, authRevReturn);
+
+      debugPayment('AMEX SOAP AuthRev this.response:', this.response);
 
       // Response sMac: aetId(16) + xid(16) + errCode(8)
       const responseSMac =
@@ -425,7 +437,7 @@ export class CTBCAEGateway {
         this.padOrTruncate(this.response.xid || '', 16) +
         this.padOrTruncate(this.response.errCode || '', 8);
 
-      const recvMac = String((revResult as Record<string, unknown>)?.['mac'] ?? '');
+      const recvMac = String((authRevReturn as Record<string, unknown>)?.['mac'] ?? '');
 
       this.checkMac(responseSMac, params.IN_MAC_KEY || '', recvMac);
 
@@ -438,7 +450,7 @@ export class CTBCAEGateway {
       this.response.errDesc = `SOAP communication failed: ${error instanceof Error ? error.message : String(error)}`;
     }
 
-    return this.toPosCancelRefundResponse(this.response);
+    return this.toPosInquiryResponse(this.response);
   }
 
   /**
@@ -454,24 +466,24 @@ export class CTBCAEGateway {
     };
 
     if (!this.checkServer(this.serverConfig)) {
-      return this.toPosCancelRefundResponse(this.response);
+      return this.toPosInquiryResponse(this.response);
     }
 
     const requestData: SoapRequestData = {} as SoapRequestData;
 
     const merIdResult = this.checkMerId(params.merId);
 
-    if (!merIdResult) return this.toPosCancelRefundResponse(this.response);
+    if (!merIdResult) return this.toPosInquiryResponse(this.response);
     requestData.merId = merIdResult;
 
     const xidResult = this.checkXid(params.xid);
 
-    if (!xidResult) return this.toPosCancelRefundResponse(this.response);
+    if (!xidResult) return this.toPosInquiryResponse(this.response);
     requestData.xid = xidResult;
 
     const lidmResult = this.checkLidm(params.lidm);
 
-    if (!lidmResult) return this.toPosCancelRefundResponse(this.response);
+    if (!lidmResult) return this.toPosInquiryResponse(this.response);
     requestData.lidm = lidmResult;
 
     // sMac: merId(12,0) + xid(12,' ') + lidm(24,' ')
@@ -505,10 +517,13 @@ export class CTBCAEGateway {
         }
       });
 
-      const revRaw = soapResponse as unknown as Record<string, unknown>;
-      const revResult = (revRaw['CapRevReturn'] ?? revRaw['capRevReturn'] ?? soapResponse) as Record<string, unknown>;
+      debugPayment('AMEX SOAP CapRev soapResponse:', soapResponse);
 
-      Object.assign(this.response, revResult);
+      const capRevReturn = soapResponse.capRevReturn ?? soapResponse;
+
+      Object.assign(this.response, capRevReturn);
+
+      debugPayment('AMEX SOAP CapRev this.response:', this.response);
 
       // Response sMac: aetId(16) + xid(16) + errCode(8)
       const responseSMac =
@@ -516,7 +531,7 @@ export class CTBCAEGateway {
         this.padOrTruncate(this.response.xid || '', 16) +
         this.padOrTruncate(this.response.errCode || '', 8);
 
-      const recvMac = String((revResult as Record<string, unknown>)?.['mac'] ?? '');
+      const recvMac = String((capRevReturn as Record<string, unknown>)?.['mac'] ?? '');
 
       this.checkMac(responseSMac, params.IN_MAC_KEY || '', recvMac);
 
@@ -529,7 +544,7 @@ export class CTBCAEGateway {
       this.response.errDesc = `SOAP communication failed: ${error instanceof Error ? error.message : String(error)}`;
     }
 
-    return this.toPosCancelRefundResponse(this.response);
+    return this.toPosInquiryResponse(this.response);
   }
 
   /**
@@ -545,34 +560,34 @@ export class CTBCAEGateway {
     };
 
     if (!this.checkServer(this.serverConfig)) {
-      return this.toPosCancelRefundResponse(this.response);
+      return this.toPosInquiryResponse(this.response);
     }
 
     const requestData: SoapRequestData = {} as SoapRequestData;
 
     const merIdResult = this.checkMerId(params.merId);
 
-    if (!merIdResult) return this.toPosCancelRefundResponse(this.response);
+    if (!merIdResult) return this.toPosInquiryResponse(this.response);
     requestData.merId = merIdResult;
 
     const xidResult = this.checkXid(params.xid);
 
-    if (!xidResult) return this.toPosCancelRefundResponse(this.response);
+    if (!xidResult) return this.toPosInquiryResponse(this.response);
     requestData.xid = xidResult;
 
     const lidmResult = this.checkLidm(params.lidm);
 
-    if (!lidmResult) return this.toPosCancelRefundResponse(this.response);
+    if (!lidmResult) return this.toPosInquiryResponse(this.response);
     requestData.lidm = lidmResult;
 
     const capBatchIdResult = this.checkCapBatchId(params.capBatchId);
 
-    if (!capBatchIdResult) return this.toPosCancelRefundResponse(this.response);
+    if (!capBatchIdResult) return this.toPosInquiryResponse(this.response);
     requestData.capBatchId = capBatchIdResult;
 
     const capBatchSeqResult = this.checkCapBatchSeq(params.capBatchSeq);
 
-    if (!capBatchSeqResult) return this.toPosCancelRefundResponse(this.response);
+    if (!capBatchSeqResult) return this.toPosInquiryResponse(this.response);
     requestData.capBatchSeq = capBatchSeqResult;
 
     // sMac: merId(12,0) + capBatchSeq(12,space) + xid(12,space) + lidm(20,space)
@@ -609,10 +624,13 @@ export class CTBCAEGateway {
         }
       });
 
-      const resultObj = soapResponse as Record<string, unknown>;
-      const result = (resultObj['CredRevReturn'] ?? soapResponse) as Record<string, unknown>;
+      debugPayment('AMEX SOAP Cancel Refund soapResponse:', soapResponse);
 
-      Object.assign(this.response, result);
+      const credRevReturn = soapResponse.credRevReturn ?? soapResponse;
+
+      Object.assign(this.response, credRevReturn);
+
+      debugPayment('AMEX SOAP Cancel Refund this.response:', this.response);
 
       // Response MAC: aetId(16,space) + xid(16,space) + errCode(8,space)
       const responseSMac =
@@ -620,7 +638,7 @@ export class CTBCAEGateway {
         this.padOrTruncate(this.response.xid || '', 16) +
         this.padOrTruncate(this.response.errCode || '', 8);
 
-      const recvMac = String((result as Record<string, unknown>)?.['mac'] ?? '');
+      const recvMac = String((credRevReturn as Record<string, unknown>)?.['mac'] ?? '');
 
       this.checkMac(responseSMac, params.IN_MAC_KEY || '', recvMac);
 
@@ -633,7 +651,7 @@ export class CTBCAEGateway {
       this.response.errDesc = `SOAP communication failed: ${error instanceof Error ? error.message : String(error)}`;
     }
 
-    return this.toPosCancelRefundResponse(this.response);
+    return this.toPosInquiryResponse(this.response);
   }
 
   // 驗證伺服器設定
@@ -749,55 +767,33 @@ export class CTBCAEGateway {
     const detail = Array.isArray(amex.poDetails) ? amex.poDetails[0] : amex.poDetails?.[0];
     const ErrCode = this.mapErrCodeToPos(amex.errCode) || '';
 
+    const state =
+      amex.txnType && ['AU', 'BQ', 'RV'].includes(amex.txnType)
+        ? OrderState.COMMITTED
+        : amex.txnType && ['VD', 'RF', 'BV'].includes(amex.txnType)
+          ? OrderState.REFUNDED
+          : amex.capBatchId && amex.capBatchSeq
+            ? OrderState.REFUNDED
+            : OrderState.FAILED;
+
     const resp: CTBCPosApiResponse = {
       RespCode: ErrCode === '00' ? '0' : '1',
       ErrCode,
       ERRDESC: amex.errDesc,
-      XID: detail?.xid,
-      AuthCode: detail?.authCode,
-      AuthAmt: detail?.purchAmt ? String(detail.purchAmt) : detail?.authAmt,
+      XID: detail?.xid ?? amex.xid,
+      AuthCode: detail?.authCode ?? '',
+      AuthAmt: detail?.purchAmt ? detail.purchAmt : detail?.authAmt,
       PAN: detail?.pan,
       ECI: undefined,
-      QueryCode: amex.count && amex.count > 0 ? '1' : '0',
-      currency: detail?.currency,
+      QueryCode: undefined,
+      currency: detail?.currency === '901' ? 'TWD' : detail?.currency,
       // 方便上層判斷 AE 狀態
       txnType: detail?.txnType,
       status: detail?.status,
-      CurrentState: '',
-      capBatchId: amex.capBatchId,
-      capBatchSeq: amex.capBatchSeq,
-      aetId: detail?.aetId,
-    };
-
-    return resp;
-  }
-
-  private toPosRefundResponse(amex: AmexResponse): CTBCPosApiResponse {
-    const ErrCode = this.mapErrCodeToPos(amex.errCode) || '';
-    const resp: CTBCPosApiResponse = {
-      RespCode: ErrCode === '00' ? '0' : '1',
-      ErrCode,
-      ERRDESC: amex.errDesc,
-      XID: amex.xid,
-      RefAmt: amex.credAmt ? `901 ${amex.credAmt} 0` : undefined,
-      RetrRef: amex.capBatchId,
-      ResAmt: amex.unCredAmt,
-      capBatchId: amex.capBatchId,
-      capBatchSeq: amex.capBatchSeq,
-      CurrentState: '',
-    };
-
-    return resp;
-  }
-
-  private toPosCancelRefundResponse(amex: AmexResponse): CTBCPosApiResponse {
-    const ErrCode = this.mapErrCodeToPos(amex.errCode) || '';
-    const resp: CTBCPosApiResponse = {
-      RespCode: ErrCode === '00' ? '0' : '1',
-      ErrCode,
-      ERRDESC: amex.errDesc,
-      CurrentState: '',
-      XID: amex.xid,
+      CurrentState: state,
+      capBatchId: amex.capBatchId ?? '',
+      capBatchSeq: amex.capBatchSeq ?? '',
+      aetId: detail?.aetId ?? amex.aetId,
     };
 
     return resp;
@@ -1036,6 +1032,8 @@ export async function amexSmartCancelOrRefund(
 
   const action = getAmexNextActionFromInquiry(inquiry);
 
+  debugPayment(`Determined AMEX action: ${action}, parameters:`, params);
+
   let response: CTBCPosApiResponse;
 
   if (action === 'AuthRev') {
@@ -1073,24 +1071,6 @@ export async function amexSmartCancelOrRefund(
       IN_MAC_KEY: params.IN_MAC_KEY,
       purchAmt: params.purchAmt,
       orgAmt: params.orgAmt,
-    });
-
-    response = await amexCapRev(config, {
-      merId: params.merId,
-      xid: params.xid,
-      lidm: params.lidm,
-      purchAmt: params.purchAmt,
-      orgAmt: params.orgAmt,
-      IN_MAC_KEY: params.IN_MAC_KEY,
-    });
-
-    response = await amexAuthRev(config, {
-      merId: params.merId,
-      xid: params.xid,
-      lidm: params.lidm,
-      purchAmt: params.purchAmt,
-      orgAmt: params.orgAmt,
-      IN_MAC_KEY: params.IN_MAC_KEY,
     });
   } else if (action === 'Pending') {
     throw new Error('Transaction is still pending, cannot proceed with cancellation or refund.');

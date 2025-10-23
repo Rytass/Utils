@@ -663,6 +663,8 @@ export async function posApiSmartCancelOrRefund(
   // // 若查詢失敗（回傳錯誤碼），預設不處理；否則依查詢結果決策
   const action: PosAction = typeof inq === 'number' ? 'None' : getPosNextActionFromInquiry(inq);
 
+  debugPayment(`Determined pos action: ${action}, parameters:`, params);
+
   let response: CTBCPosApiResponse | number;
 
   if (action === 'Reversal') {
@@ -700,28 +702,6 @@ export async function posApiSmartCancelOrRefund(
     });
   } else if (action === 'Refund') {
     response = await posApiRefund(config, params);
-
-    response = await posApiCapRev(config, {
-      MERID: params.MERID,
-      'LID-M': params['LID-M'],
-      XID: params.XID,
-      AuthCode: params.AuthCode,
-      OrgAmt: params.OrgAmt,
-      CapRevAmt: params.PurchAmt,
-      currency: params.currency,
-      exponent: params.exponent,
-    });
-
-    response = await posApiReversal(config, {
-      MERID: params.MERID,
-      'LID-M': params['LID-M'],
-      XID: params.XID,
-      AuthCode: params.AuthCode,
-      OrgAmt: params.OrgAmt,
-      AuthNewAmt: params.PurchAmt,
-      currency: params.currency,
-      exponent: params.exponent,
-    });
   } else if (action === 'Pending') {
     throw new Error('Transaction is still pending, cannot proceed with cancellation or refund.');
   } else if (action === 'Forbidden') {
