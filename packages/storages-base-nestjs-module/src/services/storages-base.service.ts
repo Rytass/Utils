@@ -7,7 +7,7 @@ import { StorageAzureBlobService } from '@rytass/storages-adapter-azure-blob';
 import { StorageGCSService } from '@rytass/storages-adapter-gcs';
 import { StorageS3Service } from '@rytass/storages-adapter-s3';
 import { StorageR2Service } from '@rytass/storages-adapter-r2';
-import { PresignedURLOptions } from 'storages-adapter-r2/src/typings';
+import { PresignedURLOptions } from '@rytass/storages-adapter-r2/src/typings';
 
 @Injectable()
 export class StorageService {
