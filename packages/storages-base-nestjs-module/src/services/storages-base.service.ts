@@ -7,7 +7,6 @@ import { StorageAzureBlobService } from '@rytass/storages-adapter-azure-blob';
 import { StorageGCSService } from '@rytass/storages-adapter-gcs';
 import { StorageS3Service } from '@rytass/storages-adapter-s3';
 import { StorageR2Service } from '@rytass/storages-adapter-r2';
-import { PresignedURLOptions } from '@rytass/storages-adapter-r2/src/typings';
 
 @Injectable()
 export class StorageService {
@@ -24,9 +23,9 @@ export class StorageService {
 
   async url(key: string): Promise<string>;
   async url(key: string, expires: number): Promise<string>;
-  async url(key: string, options?: PresignedURLOptions): Promise<string>;
+  async url(key: string, options?: unknown): Promise<string>;
 
-  async url(key: string, params?: number | PresignedURLOptions): Promise<string> {
+  async url(key: string, params?: number | unknown): Promise<string> {
     if (this._adapter instanceof LocalStorage) {
       throw new Error('LocalStorage does not support URL generation');
     }
@@ -38,7 +37,8 @@ export class StorageService {
     } else if (this._adapter instanceof StorageS3Service) {
       return this._adapter.url(key);
     } else if (this._adapter instanceof StorageR2Service) {
-      const options = params as PresignedURLOptions;
+      type R2Options = Parameters<StorageR2Service['url']>[1];
+      const options = params as R2Options;
 
       return this._adapter.url(key, options);
     } else {
