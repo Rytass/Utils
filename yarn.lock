@@ -6865,9 +6865,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rytass/storages-base-nestjs-module@workspace:packages/storages-base-nest-js-module":
+"@rytass/storages-base-nestjs-module@workspace:packages/storages-base-nestjs-module":
   version: 0.0.0-use.local
-  resolution: "@rytass/storages-base-nestjs-module@workspace:packages/storages-base-nest-js-module"
+  resolution: "@rytass/storages-base-nestjs-module@workspace:packages/storages-base-nestjs-module"
   dependencies:
     "@rytass/storages": "npm:^0.2.4"
     "@rytass/storages-adapter-azure-blob": "npm:^0.1.6"
