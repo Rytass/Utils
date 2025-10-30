@@ -1045,6 +1045,8 @@ export async function amexSmartCancelOrRefund(
       orgAmt: params.orgAmt,
       IN_MAC_KEY: params.IN_MAC_KEY,
     });
+
+    debugPayment('amexSmartCancelOrRefund AuthRev response:', response);
   } else if (action === 'CapRev') {
     response = await amexCapRev(config, {
       merId: params.merId,
@@ -1055,6 +1057,8 @@ export async function amexSmartCancelOrRefund(
       IN_MAC_KEY: params.IN_MAC_KEY,
     });
 
+    debugPayment('amexSmartCancelOrRefund CapRev response:', response);
+
     response = await amexAuthRev(config, {
       merId: params.merId,
       xid: params.xid,
@@ -1063,6 +1067,8 @@ export async function amexSmartCancelOrRefund(
       orgAmt: params.orgAmt,
       IN_MAC_KEY: params.IN_MAC_KEY,
     });
+
+    debugPayment('amexSmartCancelOrRefund AuthRev after CapRev response:', response);
   } else if (action === 'Refund') {
     response = await amexRefund(config, {
       merId: params.merId,
@@ -1072,6 +1078,8 @@ export async function amexSmartCancelOrRefund(
       purchAmt: params.purchAmt,
       orgAmt: params.orgAmt,
     });
+
+    debugPayment('amexSmartCancelOrRefund Refund response:', response);
   } else if (action === 'Pending') {
     throw new Error('Transaction is still pending, cannot proceed with cancellation or refund.');
   } else if (action === 'Forbidden') {

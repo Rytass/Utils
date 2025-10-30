@@ -339,6 +339,8 @@ export async function posApiQuery(
 
   requestData += '}';
 
+  debugPayment('posApiQuery Request Data:', requestData);
+
   return sendAndGetResponse(requestConfig, params.MERID, requestData);
 }
 
@@ -422,6 +424,8 @@ export async function posApiRefund(
   requestData += getJsonString('SwRevision', null, 'S', 'MicroRefund Server 3.2 (2019/10/25)', '"');
 
   requestData += '}';
+
+  debugPayment('posApiRefund Request Data:', requestData);
 
   return sendAndGetResponse(requestConfig, params.MERID, requestData);
 }
@@ -507,6 +511,8 @@ export async function posApiCancelRefund(
 
   requestData += '}';
 
+  debugPayment('posApiCancelRefund Request Data:', requestData);
+
   return sendAndGetResponse(requestConfig, params.MERID, requestData);
 }
 
@@ -550,6 +556,8 @@ export async function posApiReversal(
   requestData += ',' + getJsonString('SwRevision', null, 'S', 'MicroReversal Server 3.2 (2019/10/25)', '"');
   requestData += '}';
 
+  debugPayment('posApiReversal Request Data:', requestData);
+
   return sendAndGetResponse(requestConfig, params.MERID, requestData);
 }
 
@@ -592,6 +600,8 @@ export async function posApiCapRev(
   requestData += ',' + getJsonString('VERSION', null, 'S', '3.2', '"');
   requestData += ',' + getJsonString('SwRevision', null, 'S', 'MicroCapRev Server 3.2 (2019/10/25)', '"');
   requestData += '}';
+
+  debugPayment('posApiCapRev Request Data:', requestData);
 
   return sendAndGetResponse(requestConfig, params.MERID, requestData);
 }
@@ -678,6 +688,8 @@ export async function posApiSmartCancelOrRefund(
       currency: params.currency,
       exponent: params.exponent,
     });
+
+    debugPayment('posApiSmartCancelOrRefund Reversal response:', response);
   } else if (action === 'CapRev') {
     response = await posApiCapRev(config, {
       MERID: params.MERID,
@@ -690,6 +702,8 @@ export async function posApiSmartCancelOrRefund(
       exponent: params.exponent,
     });
 
+    debugPayment('posApiSmartCancelOrRefund CapRev response:', response);
+
     response = await posApiReversal(config, {
       MERID: params.MERID,
       'LID-M': params['LID-M'],
@@ -700,8 +714,12 @@ export async function posApiSmartCancelOrRefund(
       currency: params.currency,
       exponent: params.exponent,
     });
+
+    debugPayment('posApiSmartCancelOrRefund Reversal after CapRev response:', response);
   } else if (action === 'Refund') {
     response = await posApiRefund(config, params);
+
+    debugPayment('posApiSmartCancelOrRefund Refund response:', response);
   } else if (action === 'Pending') {
     throw new Error('Transaction is still pending, cannot proceed with cancellation or refund.');
   } else if (action === 'Forbidden') {
