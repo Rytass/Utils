@@ -34,6 +34,7 @@
       "@rytass/storages-adapter-local": ["storages-adapter-local/src"],
       "@rytass/storages-adapter-r2": ["storages-adapter-r2/src"],
       "@rytass/storages-adapter-s3": ["storages-adapter-s3/src"],
+      "@rytass/storages-base-nestjs-module": ["storages-base-nestjs-module/src"],
       "@rytass/wms-base-nestjs-module": ["wms-base-nestjs-module/src"]
     }
   },
