@@ -1,6 +1,6 @@
 import { DynamicModule, Global, Module, Provider, Type } from '@nestjs/common';
 import {
-  StorageAdapter,
+  IStorageAdapter,
   StorageBaseModuleAsyncOptions,
   StorageBaseModuleOptions,
   StorageBaseModuleOptionsFactory,
@@ -11,7 +11,7 @@ import { StorageService } from './services/storages-base.service';
 @Global()
 @Module({})
 export class StorageBaseModule {
-  static forRoot(options: StorageBaseModuleOptions): DynamicModule {
+  static forRoot<A extends Type<IStorageAdapter>>(options: StorageBaseModuleOptions<A>): DynamicModule {
     const optionsProvider = {
       provide: STORAGE_MODULE_OPTIONS,
       useValue: options,
@@ -19,7 +19,7 @@ export class StorageBaseModule {
 
     const adapterProvider = {
       provide: STORAGE_ADAPTER,
-      useFactory: (): StorageAdapter => {
+      useFactory: (): IStorageAdapter => {
         const AdapterClass = options.adapter;
 
         if (!AdapterClass) {
@@ -28,6 +28,7 @@ export class StorageBaseModule {
 
         return new AdapterClass(options.config);
       },
+      inject: [STORAGE_MODULE_OPTIONS],
     };
 
     return {
@@ -36,10 +37,10 @@ export class StorageBaseModule {
       exports: [StorageService],
     };
   }
-  static forRootAsync(options: StorageBaseModuleAsyncOptions): DynamicModule {
+  static forRootAsync<A extends Type<IStorageAdapter>>(options: StorageBaseModuleAsyncOptions<A>): DynamicModule {
     const asyncAdapterProviders: Provider = {
       provide: STORAGE_ADAPTER,
-      useFactory: (options: StorageBaseModuleOptions): StorageAdapter => {
+      useFactory: (options: StorageBaseModuleOptions<A>): IStorageAdapter => {
         const AdapterClass = options.adapter;
 
         if (!AdapterClass) {
@@ -59,7 +60,9 @@ export class StorageBaseModule {
     };
   }
 
-  private static createAsyncProvider(options: StorageBaseModuleAsyncOptions): Provider[] {
+  private static createAsyncProvider<A extends Type<IStorageAdapter>>(
+    options: StorageBaseModuleAsyncOptions<A>,
+  ): Provider[] {
     if (options.useExisting || options.useFactory) {
       return [this.createAsyncOptionsProvider(options)];
     }
@@ -76,7 +79,9 @@ export class StorageBaseModule {
         : []),
     ];
   }
-  private static createAsyncOptionsProvider(options: StorageBaseModuleAsyncOptions): Provider {
+  private static createAsyncOptionsProvider<A extends Type<IStorageAdapter>>(
+    options: StorageBaseModuleAsyncOptions<A>,
+  ): Provider {
     if (options.useFactory) {
       return {
         provide: STORAGE_MODULE_OPTIONS,
@@ -87,9 +92,9 @@ export class StorageBaseModule {
 
     return {
       provide: STORAGE_MODULE_OPTIONS,
-      useFactory: async (optionsFactory: StorageBaseModuleOptionsFactory) =>
+      useFactory: async (optionsFactory: StorageBaseModuleOptionsFactory<A>) =>
         await optionsFactory.createStorageBaseModuleOptions(),
-      inject: [(options.useExisting || options.useClass) as Type<StorageBaseModuleOptionsFactory>],
+      inject: [(options.useExisting || options.useClass) as Type<StorageBaseModuleOptionsFactory<A>>],
     };
   }
 }

@@ -1,24 +1,34 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { STORAGE_ADAPTER, STORAGE_MODULE_OPTIONS } from '../typings/storages-base-module-providers';
-import type { StorageAdapter, StorageBaseModuleOptions } from '../typings/storage-base-module-options.interface';
+import type { IStorageAdapter, StorageModuleCommonOptions } from '../typings/storage-base-module-options.interface';
 import { InputFile, StorageFile, WriteFileOptions } from '@rytass/storages';
-import { LocalStorage } from '@rytass/storages-adapter-local';
-import { StorageAzureBlobService } from '@rytass/storages-adapter-azure-blob';
-import { StorageGCSService } from '@rytass/storages-adapter-gcs';
-import { StorageS3Service } from '@rytass/storages-adapter-s3';
-import { StorageR2Service } from '@rytass/storages-adapter-r2';
+import type { StorageBaseModuleOptions } from 'storages-base-nestjs-module/lib/typings/storage-base-module-options.interface';
 
 @Injectable()
 export class StorageService {
   private readonly logger = new Logger(StorageService.name);
+  private readonly _commonOptions: StorageModuleCommonOptions;
 
   constructor(
     @Inject(STORAGE_ADAPTER)
-    private readonly _adapter: StorageAdapter,
+    private readonly _adapter: IStorageAdapter,
     @Inject(STORAGE_MODULE_OPTIONS)
     private readonly _options: StorageBaseModuleOptions,
   ) {
     this.logger.log(`Storage adapter: ${this._adapter.constructor.name}`);
+
+    const { commonOptions = {} } = this._options;
+
+    this._commonOptions = {
+      formDataFieldName: commonOptions.formDataFieldName ?? 'files',
+      allowMultiple: commonOptions.allowMultiple ?? true,
+      MaxFileSizeInBytes: commonOptions.MaxFileSizeInBytes ?? 10 * 1024 * 1024,
+      defaultPublic: commonOptions.defaultPublic ?? false,
+    };
+  }
+
+  get commonOptions(): StorageModuleCommonOptions {
+    return this._commonOptions;
   }
 
   async url(key: string): Promise<string>;
@@ -26,21 +36,30 @@ export class StorageService {
   async url(key: string, options?: unknown): Promise<string>;
 
   async url(key: string, params?: number | unknown): Promise<string> {
-    if (this._adapter instanceof LocalStorage) {
+    const adapterName = this._adapter.constructor.name;
+
+    if (adapterName === 'LocalStorage') {
       throw new Error('LocalStorage does not support URL generation');
     }
 
-    if (this._adapter instanceof StorageAzureBlobService || this._adapter instanceof StorageGCSService) {
+    if (adapterName === 'StorageAzureBlobService' || adapterName === 'StorageGCSService') {
       const expires = params as number;
 
-      return this._adapter.url(key, expires);
-    } else if (this._adapter instanceof StorageS3Service) {
-      return this._adapter.url(key);
-    } else if (this._adapter instanceof StorageR2Service) {
-      type R2Options = Parameters<StorageR2Service['url']>[1];
-      const options = params as R2Options;
+      type UrlWithExpires = { url: (k: string, e: number) => Promise<string> };
+      const adapter = this._adapter as unknown as UrlWithExpires;
 
-      return this._adapter.url(key, options);
+      return adapter.url(key, expires);
+    } else if (adapterName === 'StorageS3Service') {
+      type UrlNoOptions = { url: (k: string) => Promise<string> };
+      const adapter = this._adapter as unknown as UrlNoOptions;
+
+      return adapter.url(key);
+    } else if (adapterName === 'StorageR2Service') {
+      type R2Like = { url: (k: string, o?: unknown) => Promise<string> };
+      const r2 = this._adapter as unknown as R2Like;
+      const options = params as unknown;
+
+      return r2.url(key, options);
     } else {
       throw new Error('Unknown storage adapter');
     }

@@ -6839,7 +6839,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rytass/storages-adapter-r2@workspace:packages/storages-adapter-r2":
+"@rytass/storages-adapter-r2@npm:^0.4.9, @rytass/storages-adapter-r2@workspace:packages/storages-adapter-r2":
   version: 0.0.0-use.local
   resolution: "@rytass/storages-adapter-r2@workspace:packages/storages-adapter-r2"
   dependencies:
@@ -6873,6 +6873,7 @@ __metadata:
     "@rytass/storages-adapter-azure-blob": "npm:^0.1.6"
     "@rytass/storages-adapter-gcs": "npm:^0.2.7"
     "@rytass/storages-adapter-local": "npm:0.2.7"
+    "@rytass/storages-adapter-r2": "npm:^0.4.9"
     "@rytass/storages-adapter-s3": "npm:^0.3.7"
   languageName: unknown
   linkType: soft

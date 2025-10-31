@@ -24,6 +24,7 @@
     "@rytass/storages-adapter-azure-blob": "^0.1.6",
     "@rytass/storages-adapter-gcs": "^0.2.7",
     "@rytass/storages-adapter-local": "0.2.7",
+    "@rytass/storages-adapter-r2": "^0.4.9",
     "@rytass/storages-adapter-s3": "^0.3.7"
   }
 }
