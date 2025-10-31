@@ -41,23 +41,23 @@ export class StorageService {
   async url(key: string, params?: number | unknown): Promise<string> {
     const adapterName = this._adapter.constructor.name;
 
-    if (adapterName === 'LocalStorage') {
+    if (adapterName === 'LocalAdapter') {
       throw new Error('LocalStorage does not support URL generation');
     }
 
-    if (adapterName === 'StorageAzureBlobService' || adapterName === 'StorageGCSService') {
+    if (adapterName === 'AzureBlobAdapter' || adapterName === 'GCSAdapter') {
       const expires = params as number;
 
       type UrlWithExpires = { url: (k: string, e: number) => Promise<string> };
       const adapter = this._adapter as unknown as UrlWithExpires;
 
       return adapter.url(key, expires);
-    } else if (adapterName === 'StorageS3Service') {
+    } else if (adapterName === 'S3Adapter') {
       type UrlNoOptions = { url: (k: string) => Promise<string> };
       const adapter = this._adapter as unknown as UrlNoOptions;
 
       return adapter.url(key);
-    } else if (adapterName === 'StorageR2Service') {
+    } else if (adapterName === 'R2Adapter') {
       type R2Like = { url: (k: string, o?: unknown) => Promise<string> };
       const r2 = this._adapter as unknown as R2Like;
       const options = params as unknown;
@@ -77,10 +77,6 @@ export class StorageService {
   }
 
   async remove(key: string): Promise<void> {
-    return this._adapter.remove(key);
-  }
-
-  removeSync(key: string): Promise<void> {
     return this._adapter.remove(key);
   }
 

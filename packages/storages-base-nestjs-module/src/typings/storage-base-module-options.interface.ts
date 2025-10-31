@@ -41,11 +41,10 @@ export interface StorageModuleCommonOptions {
 
 export interface IStorageAdapterUrlOptions {
   expires?: number;
-  [key: string]: unknown;
 }
 
 export interface IStorageAdapter {
-  url(key: string, options?: IStorageAdapterUrlOptions): Promise<string>;
+  url?(key?: string, options?: IStorageAdapterUrlOptions): Promise<string>;
   write(file: InputFile, options?: WriteFileOptions): Promise<StorageFile>;
   remove(key: string): Promise<void>;
   isExists(key: string): Promise<boolean>;

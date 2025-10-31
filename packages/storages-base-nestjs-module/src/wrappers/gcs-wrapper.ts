@@ -8,13 +8,10 @@ import { InputFile, StorageFile, WriteFileOptions } from '@rytass/storages';
 export class GCSAdapter implements IStorageAdapter {
   private readonly gcsService: StorageGCSService;
 
-  // The wrapper's constructor takes the *real* config
   constructor(config: GCSOptions) {
     this.gcsService = new StorageGCSService(config);
   }
 
-  // --- This is the "translation" ---
-  // Your interface expects an 'options' object.
   url(key: string, options?: IStorageAdapterUrlOptions): Promise<string> {
     return this.gcsService.url(key, options?.expires);
   }
