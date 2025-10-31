@@ -753,10 +753,12 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
         // ◼ -1 -授權失敗
         // ◼ 0 -訂單已取消
         // ◼ 1 -授權成功
+        // ---
         // ◼ 10 -已請款(請款結帳中)
         // ◼ 11 -已請款(請款中)
         // ◼ 12 -已請款(請款成功)
         // ◼ 13 -已請款(請款失敗)
+        // ---
         // ◼ 20 -已退款(退款結帳中)
         // ◼ 21 -已退款(退款中)
         // ◼ 22 -已退款(退款成功)

@@ -152,6 +152,54 @@ describe('CTBC AMEX API - 類別方法整合測試', () => {
       await expect(order.refund()).rejects.toThrow('SOAP timeout');
       expect(order.state).toBe(OrderState.FAILED);
     });
+
+    it('應該處理 AMEX Pending 狀態錯誤', async () => {
+      const order = (await payment.prepare({
+        id: 'AMEX_ORDER_PENDING',
+        items: [{ name: 'AMEX Item', unitPrice: 1000, quantity: 1 }],
+        cardType: CardType.AE,
+      })) as CTBCOrder<OrderCreditCardCommitMessage>;
+
+      await commitOrderAsAmex(order);
+
+      // Mock AMEX smart flow 返回 Pending 錯誤
+      mockAmexSmartCancelOrRefund.mockRejectedValue(new Error('Transaction is still pending'));
+
+      await expect(order.refund()).rejects.toThrow('Transaction is still pending');
+      expect(order.state).toBe(OrderState.FAILED);
+    });
+
+    it('應該處理 AMEX Forbidden 狀態錯誤', async () => {
+      const order = (await payment.prepare({
+        id: 'AMEX_FORBIDDEN',
+        items: [{ name: 'AMEX Item', unitPrice: 1000, quantity: 1 }],
+        cardType: CardType.AE,
+      })) as CTBCOrder<OrderCreditCardCommitMessage>;
+
+      await commitOrderAsAmex(order);
+
+      // Mock AMEX smart flow 返回 Forbidden 錯誤
+      mockAmexSmartCancelOrRefund.mockRejectedValue(new Error('Transaction is in a forbidden state'));
+
+      await expect(order.refund()).rejects.toThrow('Transaction is in a forbidden state');
+      expect(order.state).toBe(OrderState.FAILED);
+    });
+
+    it('應該處理 AMEX Failed 狀態錯誤', async () => {
+      const order = (await payment.prepare({
+        id: 'AMEX_FAILED',
+        items: [{ name: 'AMEX Item', unitPrice: 1000, quantity: 1 }],
+        cardType: CardType.AE,
+      })) as CTBCOrder<OrderCreditCardCommitMessage>;
+
+      await commitOrderAsAmex(order);
+
+      // Mock AMEX smart flow 返回 Failed 狀態錯誤
+      mockAmexSmartCancelOrRefund.mockRejectedValue(new Error('Transaction has failed'));
+
+      await expect(order.refund()).rejects.toThrow('Transaction has failed');
+      expect(order.state).toBe(OrderState.FAILED);
+    });
   });
 
   describe('CTBCOrder.cancelRefund() - AMEX 模式', () => {
