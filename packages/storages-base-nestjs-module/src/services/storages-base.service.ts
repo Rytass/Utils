@@ -1,8 +1,11 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, Type } from '@nestjs/common';
 import { STORAGE_ADAPTER, STORAGE_MODULE_OPTIONS } from '../typings/storages-base-module-providers';
-import type { IStorageAdapter, StorageModuleCommonOptions } from '../typings/storage-base-module-options.interface';
+import type {
+  IStorageAdapter,
+  StorageBaseModuleOptions,
+  StorageModuleCommonOptions,
+} from '../typings/storage-base-module-options.interface';
 import { InputFile, StorageFile, WriteFileOptions } from '@rytass/storages';
-import type { StorageBaseModuleOptions } from 'storages-base-nestjs-module/lib/typings/storage-base-module-options.interface';
 
 @Injectable()
 export class StorageService {
@@ -13,7 +16,7 @@ export class StorageService {
     @Inject(STORAGE_ADAPTER)
     private readonly _adapter: IStorageAdapter,
     @Inject(STORAGE_MODULE_OPTIONS)
-    private readonly _options: StorageBaseModuleOptions,
+    private readonly _options: StorageBaseModuleOptions<Type<IStorageAdapter>>,
   ) {
     this.logger.log(`Storage adapter: ${this._adapter.constructor.name}`);
 
