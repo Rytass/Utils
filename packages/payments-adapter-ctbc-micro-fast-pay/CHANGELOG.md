@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.16](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.15...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.16) (2025-10-31)
+
+### Features
+
+- **payments-adapter-ctbc-micro-fast-pay:** add some logs for tracing ([eaebda6](https://github.com/Rytass/Utils/commit/eaebda63413f6c364569024bf1de2d1b25e89556))
+- **payments-adapter-ctbc-micro-fast-pay:** add test case for return error when ctbc cancel or refund in some situations ([b8ad3e9](https://github.com/Rytass/Utils/commit/b8ad3e9cefe5b24e8dc037ec11eaec9fe429fb56))
+- **payments-adapter-ctbc-micro-fast-pay:** refactor ctbc amex api utils ([6ab505d](https://github.com/Rytass/Utils/commit/6ab505d2d2b3b25f028712d9d5e5a8d0e3795c50))
+- **payments-adapter-ctbc-micro-fast-pay:** return error when ctbc cancel or refund in some situations ([94fd39e](https://github.com/Rytass/Utils/commit/94fd39e6e960050ccba0b09aab2f1908c0faa5aa))
+
 ## [0.1.15](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.14...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.15) (2025-10-20)
 
 ### Features

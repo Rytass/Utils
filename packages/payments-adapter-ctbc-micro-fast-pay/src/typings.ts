@@ -608,14 +608,19 @@ export interface SoapInquiryResult {
   aetId?: string;
   xid?: string;
   credAmt?: string;
+  capAmt?: string;
   unCredAmt?: string;
+  unCapAmt?: string;
   capBatchId?: string;
   capBatchSeq?: string;
 }
 
 // SOAP 調用回應結構
 export interface SoapResponse {
-  inquiryReturn?: SoapInquiryResult;
-  refundReturn?: SoapInquiryResult;
+  inquiryReturn?: SoapInquiryResult; // 查詢回應
+  credReturn?: SoapInquiryResult; // 退款回應
+  credRevReturn?: SoapInquiryResult; // 取消退款回應
+  authRevReturn?: SoapInquiryResult; // 授權取消回應
+  capRevReturn?: SoapInquiryResult; // 請款取消回應
   [key: string]: unknown;
 }

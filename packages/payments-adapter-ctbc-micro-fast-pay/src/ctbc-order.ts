@@ -497,6 +497,8 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
         // 執行退款撤銷
         const cancelRefundResult = await posApiCancelRefund(posApiConfig, cancelRefundParams);
 
+        debugPayment(`POS cancel refund result=${JSON.stringify(cancelRefundResult)}`);
+
         if (typeof cancelRefundResult === 'number') {
           this._state = OrderState.FAILED;
           this._failedCode = cancelRefundResult.toString();

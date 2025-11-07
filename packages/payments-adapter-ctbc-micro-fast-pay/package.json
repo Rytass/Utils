@@ -1,6 +1,6 @@
 {
   "name": "@rytass/payments-adapter-ctbc-micro-fast-pay",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "description": "Rytass Payment Gateway",
   "keywords": [
     "rytass",
