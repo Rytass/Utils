@@ -134,6 +134,7 @@ export interface CreateOrUpdateCtcLogisticsRequest {
 
 export interface CreateOrUpdateCtcLogisticsResponse {
   success: boolean; // 是否成功
+  error: string;
   shipping_number: string; // 托運單號
   tracking_number?: string; // 查件單號
 }

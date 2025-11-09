@@ -164,7 +164,11 @@ export class CtcLogisticsService<T extends CtcLogisticsInterface<LogisticsStatus
         },
       });
 
-      if (!data.success) {
+      if (data.error.length || !data.success) {
+        if (data.error.length) {
+          throw new LogisticsError(ErrorCode.INVALID_PARAMETER, `Failed to create logistics, error: ${data.error}`);
+        }
+
         throw new LogisticsError(
           ErrorCode.INVALID_PARAMETER,
           `Failed to create logistics with tracking number: ${options.trackingNumber}, ${JSON.stringify(data)}`,
