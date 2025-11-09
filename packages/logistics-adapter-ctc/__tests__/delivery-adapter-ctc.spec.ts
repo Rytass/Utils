@@ -11,7 +11,7 @@ describe('delivery-adapter-ctc', () => {
 
       const logisticId = ['R25061100009'];
 
-      get.mockImplementationOnce(async (url: string, _data: object) => {
+      get.mockImplementationOnce(async (url: string) => {
         expect(url).toBe('https://tms2.ctc-express.cloud/api/v1/customer/orders/R25061100009');
 
         return {
@@ -31,7 +31,7 @@ describe('delivery-adapter-ctc', () => {
       });
 
       try {
-        const _result = await logisticsService.trace(logisticId);
+        await logisticsService.trace(logisticId);
       } catch (error) {
         console.error(`Error occurred: ${error instanceof LogisticsError ? error.message : error}`);
       }
@@ -46,8 +46,8 @@ describe('delivery-adapter-ctc', () => {
 
       const logisticId = ['R25061100009'];
 
-      get.mockImplementationOnce(async (url: string, _data: object) => {
-        expect(url).toBe('https://tms2.ctc-express.cloud/api/v1/customer/orders/ABCD202507170001');
+      get.mockImplementationOnce(async (url: string) => {
+        expect(url).toBe('https://tms2.ctc-express.cloud/api/v1/customer/orders/R25061100009');
 
         return {
           status: 200,
@@ -66,7 +66,7 @@ describe('delivery-adapter-ctc', () => {
       });
 
       try {
-        const _result = await logisticsService.trace(logisticId);
+        await logisticsService.trace(logisticId);
       } catch (error) {
         console.error(`Error occurred: ${error instanceof LogisticsError ? error.message : error}`);
       }
@@ -76,7 +76,6 @@ describe('delivery-adapter-ctc', () => {
   describe('create or update logistics with default configuration', () => {
     const logisticsService = new CtcLogisticsService(CtcLogistics);
     const post = jest.spyOn(axios, 'post');
-    const get = jest.spyOn(axios, 'get');
 
     const createOrUpdateCtcLogisticsOptions = {
       shippingNumber: 'R25071700027', // 托運單號
@@ -106,33 +105,15 @@ describe('delivery-adapter-ctc', () => {
       volume: 1, // 材積, 固定為 1
     } as CreateOrUpdateCtcLogisticsOptions;
 
-    post.mockImplementation(async (url: string, _data: object) => {
+    post.mockImplementation(async (url: string) => {
       expect(url).toBe('https://tms2.ctc-express.cloud/api/v1/customer/orders');
 
       return {
         data: {
           success: true,
+          error: '', // 添加空的 error 字段表示沒有錯誤
           shipping_number: 'R25071700027',
           tracking_number: 'ABCD202507170001',
-        },
-      };
-    });
-
-    get.mockImplementationOnce(async (url: string, _data: unknown) => {
-      expect(url).toBe('https://tms2.ctc-express.cloud/api/v1/customer/orders/R25061100009');
-
-      return {
-        status: 200,
-        data: {
-          success: true,
-          shipment_history: [
-            {
-              status: '新單測試',
-              code: 10,
-              created_at: '2025-06-11 17:26:10',
-            },
-          ],
-          images: [],
         },
       };
     });
@@ -142,6 +123,26 @@ describe('delivery-adapter-ctc', () => {
     });
 
     it('should update a logistics with default configuration', async () => {
+      // Mock the get request for update operation
+      get.mockImplementationOnce(async (url: string) => {
+        expect(url).toBe('https://tms2.ctc-express.cloud/api/v1/customer/orders/ABCD202507170001');
+
+        return {
+          status: 200,
+          data: {
+            success: true,
+            shipment_history: [
+              {
+                status: '新單測試',
+                code: 10,
+                created_at: '2025-06-11 17:26:10',
+              },
+            ],
+            images: [],
+          },
+        };
+      });
+
       createOrUpdateCtcLogisticsOptions.receiverCompany = 'Updated Receiver Name';
 
       await logisticsService.update(createOrUpdateCtcLogisticsOptions);

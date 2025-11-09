@@ -164,8 +164,8 @@ export class CtcLogisticsService<T extends CtcLogisticsInterface<LogisticsStatus
         },
       });
 
-      if (data.error.length || !data.success) {
-        if (data.error.length) {
+      if (data.error || !data.success) {
+        if (data.error) {
           throw new LogisticsError(ErrorCode.INVALID_PARAMETER, `Failed to create logistics, error: ${data.error}`);
         }
 
