@@ -164,14 +164,17 @@ export class CtcLogisticsService<T extends CtcLogisticsInterface<LogisticsStatus
         },
       });
 
-      if (data.error || !data.success) {
-        if (data.error) {
-          throw new LogisticsError(ErrorCode.INVALID_PARAMETER, `Failed to create logistics, error: ${data.error}`);
+      if (!data.success) {
+        if (options.trackingNumber) {
+          throw new LogisticsError(
+            ErrorCode.INVALID_PARAMETER,
+            `Failed to create logistics with tracking number: ${options.trackingNumber}, ${JSON.stringify(data)}`,
+          );
         }
 
         throw new LogisticsError(
           ErrorCode.INVALID_PARAMETER,
-          `Failed to create logistics with tracking number: ${options.trackingNumber}, ${JSON.stringify(data)}`,
+          `Failed to create logistics, error: ${JSON.stringify(data)}`,
         );
       }
 
@@ -185,10 +188,13 @@ export class CtcLogisticsService<T extends CtcLogisticsInterface<LogisticsStatus
       }
 
       if (axios.isAxiosError(err)) {
-        throw new LogisticsError(
-          ErrorCode.INVALID_PARAMETER,
-          `Failed to create logistics with tracking number: ${options.trackingNumber}, ${err}`,
-        );
+        const response = err.response;
+
+        const errorMessage = options.trackingNumber
+          ? `Failed to create logistics with tracking number: ${options.trackingNumber}, ${response?.data.error}`
+          : `Failed to create logistics, ${response?.data.error}`;
+
+        throw new LogisticsError(ErrorCode.INVALID_PARAMETER, errorMessage);
       }
 
       throw err;
