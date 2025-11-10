@@ -106,7 +106,9 @@ describe('CTBC POS API - 類別方法整合測試', () => {
         RespCode: '99',
       });
 
-      await expect(payment.query('NONEXISTENT_ORDER')).rejects.toThrow('Query failed: 01 - Order not found');
+      await expect(payment.query('NONEXISTENT_ORDER')).rejects.toThrow(
+        'Query failed, RespCode: 99 - ErrCode: 01 - ErrDesc: Order not found',
+      );
     });
 
     it('應該從 API 查詢結果重建訂單當快取中不存在時', async () => {

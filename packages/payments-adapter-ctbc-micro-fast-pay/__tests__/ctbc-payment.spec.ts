@@ -176,7 +176,7 @@ describe('CTBCPayment core behaviours', () => {
     await expect(payment.query('ERR1')).rejects.toThrow('Query failed with error code: 123');
 
     mockedPosQuery.mockResolvedValueOnce({ ErrCode: '01', ERRDESC: 'oops', RespCode: '1', CurrentState: '' });
-    await expect(payment.query('ERR2')).rejects.toThrow('Query failed: 01 - oops');
+    await expect(payment.query('ERR2')).rejects.toThrow('Query failed, RespCode: 1 - ErrCode: 01 - ErrDesc: oops');
   });
 
   it('query reconstructs order from POS response', async () => {

@@ -103,7 +103,9 @@ describe('CTBC 訂單 Mock 測試', () => {
 
     posApiQueryMock.mockResolvedValue(resp);
 
-    await expect(payment.query<CTBCOrder>('NOT_FOUND_ID')).rejects.toThrow('Query failed: 01 - Order not found');
+    await expect(payment.query<CTBCOrder>('NOT_FOUND_ID')).rejects.toThrow(
+      'Query failed, RespCode: 99 - ErrCode: 01 - ErrDesc: Order not found',
+    );
   });
 
   it('查詢失敗：工具回傳數字錯誤碼', async () => {
