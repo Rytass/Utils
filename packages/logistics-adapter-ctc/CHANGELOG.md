@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.3.4](https://github.com/Rytass/Utils/compare/@rytass/logistics-adapter-ctc@0.3.3...@rytass/logistics-adapter-ctc@0.3.4) (2025-11-10)
+
+### Bug Fixes
+
+- **api:** fix logistic test file ([52f9ac5](https://github.com/Rytass/Utils/commit/52f9ac5f62d6f937922f8f275259346f89b20a5d))
+- **api:** fix logistic throw correct error message when error occured ([5dae955](https://github.com/Rytass/Utils/commit/5dae9551ad67446dad144c190dff4d8228d805cb))
+
 ## [0.3.3](https://github.com/Rytass/Utils/compare/@rytass/logistics-adapter-ctc@0.3.2...@rytass/logistics-adapter-ctc@0.3.3) (2025-09-11)
 
 ### Features

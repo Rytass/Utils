@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.17](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.16...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.17) (2025-11-10)
+
+### Features
+
+- **payments-adapter-ctbc-micro-fast-pay:** fix test case ([de349aa](https://github.com/Rytass/Utils/commit/de349aa3f4385a0bd6f5a73fcee1de7203031734))
+- **payments-adapter-ctbc-micro-fast-pay:** refactor error message and update pos api query check response success logic ([6ef23d3](https://github.com/Rytass/Utils/commit/6ef23d3325d62deec66b2ed497f7fdbeebb4924e))
+
 ## [0.1.16](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.15...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.16) (2025-10-31)
 
 ### Features
