@@ -628,8 +628,13 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
       const result = await amexInquiry(amexConfig!, amexInquiryParams);
 
       if (result.ErrCode !== '00') {
-        debugPayment(`AMEX Query failed for order ${id}: ${result.ErrCode} - ${result.ErrDesc}`);
-        throw new Error(`AMEX Query failed: ${result.ErrCode} - ${result.ErrDesc || 'Unknown error'}`);
+        debugPayment(
+          `AMEX Query failed for order ${id}, RespCode: ${result.RespCode} - ErrCode: ${result.ErrCode} - ErrDesc: ${result.ErrDesc}`,
+        );
+
+        throw new Error(
+          `AMEX Query failed: RespCode: ${result.RespCode} - ErrCode: ${result.ErrCode} - ErrDesc: ${result.ErrDesc || 'Unknown error'}`,
+        );
       }
 
       debugPayment(`AMEX Query successful for order ${id}: ${JSON.stringify(result)}`);
@@ -721,14 +726,19 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
 
       // 檢查查詢結果
       if (result.ErrCode !== '00') {
-        debugPayment(`Query failed for order ${id}: ${result.ErrCode} - ${result.ERRDESC || 'Unknown error'}`);
-        throw new Error(`Query failed: ${result.ErrCode} - ${result.ERRDESC || 'Unknown error'}`);
+        debugPayment(
+          `Query failed for order ${id}, RespCode: ${result.RespCode} - ErrCode: ${result.ErrCode} - ErrDesc: ${result.ERRDESC || 'Unknown error'}`,
+        );
+
+        throw new Error(
+          `Query failed, RespCode: ${result.RespCode} - ErrCode: ${result.ErrCode} - ErrDesc: ${result.ERRDESC || 'Unknown error'}`,
+        );
       }
 
       debugPayment(`Query successful for order ${id}: ${JSON.stringify(result)}`);
 
       // 如果交易成功，直接設定已提交狀態（不使用 commit 方法以避免重複觸發事件）
-      if (result.RespCode === '0' && result.QueryCode === '1') {
+      if (result.RespCode === '0' && result.QueryCode && ['1', '2'].includes(result.QueryCode)) {
         // 解析金額：AuthAmt 格式為 "貨幣碼 金額 指數"，如 "901 1000 0"
         const amount = result.AuthAmt
           ? result.AuthAmt.split(' ').length >= 2
