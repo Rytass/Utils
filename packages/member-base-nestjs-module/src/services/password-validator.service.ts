@@ -52,6 +52,16 @@ export class PasswordValidatorService<MemberEntity extends BaseMemberEntity = Ba
   ) {}
 
   generateValidPassword(): string {
+    if (
+      !this.passwordShouldIncludeDigit &&
+      !this.passwordShouldIncludeLowercase &&
+      !this.passwordShouldIncludeSpecialCharacter &&
+      !this.passwordShouldIncludeUppercase
+    ) {
+      // No specific policy, just generate a simple password
+      return generate({ length: this.passwordMinLength, lowercase: true });
+    }
+
     return generate({
       length: this.passwordMinLength,
       numbers: this.passwordShouldIncludeDigit,
