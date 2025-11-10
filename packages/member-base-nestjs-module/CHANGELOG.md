@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.17](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.16...@rytass/member-base-nestjs-module@0.2.17) (2025-11-10)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** ensure generate-password has at least one character type ([5052bc1](https://github.com/Rytass/Utils/commit/5052bc1ead36b07a37af376e68eb3ac09ff996ed))
+
 ## [0.2.16](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.15...@rytass/member-base-nestjs-module@0.2.16) (2025-10-20)
 
 ### Bug Fixes
