@@ -1,0 +1,32 @@
+{
+  "name": "@rytass/storages-base-nestjs-module",
+  "version": "0.0.1",
+  "description": "Rytass Utils Storage NestJS Base Module",
+  "keywords": [
+    "rytass",
+    "storages",
+    "nestjs"
+  ],
+  "author": "",
+  "license": "MIT",
+  "scripts": {
+    "clean": "nx clean",
+    "build": "nx build",
+    "lint": "nx lint",
+    "test": "nx test",
+    "test:watch": "nx test:watch"
+  },
+  "bugs": {
+    "url": "https://github.com/Rytass/Utils/issues"
+  },
+  "dependencies": {
+    "@rytass/storages": "^0.2.4"
+  },
+  "optionalDependencies": {
+    "@rytass/storages-adapter-azure-blob": "^0.1.6",
+    "@rytass/storages-adapter-gcs": "^0.2.7",
+    "@rytass/storages-adapter-local": "0.2.7",
+    "@rytass/storages-adapter-r2": "^0.4.9",
+    "@rytass/storages-adapter-s3": "^0.3.7"
+  }
+}
