@@ -6875,6 +6875,17 @@ __metadata:
     "@rytass/storages-adapter-local": "npm:0.2.7"
     "@rytass/storages-adapter-r2": "npm:^0.4.9"
     "@rytass/storages-adapter-s3": "npm:^0.3.7"
+  dependenciesMeta:
+    "@rytass/storages-adapter-azure-blob":
+      optional: true
+    "@rytass/storages-adapter-gcs":
+      optional: true
+    "@rytass/storages-adapter-local":
+      optional: true
+    "@rytass/storages-adapter-r2":
+      optional: true
+    "@rytass/storages-adapter-s3":
+      optional: true
   languageName: unknown
   linkType: soft
 
