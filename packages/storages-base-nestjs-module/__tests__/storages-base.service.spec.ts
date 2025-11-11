@@ -1,111 +1,119 @@
 import { StorageService } from '../src/services/storages-base.service';
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  IStorageAdapter,
-  IStorageAdapterUrlOptions,
-  StorageBaseModuleOptions,
-} from '../src/typings/storage-base-module-options.interface';
-import { Injectable, Type } from '@nestjs/common';
+import { IStorageAdapter, IStorageAdapterUrlOptions } from '../src/typings/storage-base-module-options.interface';
+import { Type } from '@nestjs/common';
 import { STORAGE_ADAPTER, STORAGE_MODULE_OPTIONS } from '../src/typings/storages-base-module-providers';
 import { jest } from '@jest/globals';
 import { InputFile, StorageFile, WriteFileOptions } from '@rytass/storages';
 
-@Injectable()
-class mockAdapter implements IStorageAdapter {
-  url: jest.Mock<(key: string, options?: IStorageAdapterUrlOptions) => Promise<string>>;
+class MockGCSAdapter implements IStorageAdapter {
+  url: jest.Mock<(key: string, expires?: number) => Promise<string>>;
   write: jest.Mock<(file: InputFile, options?: WriteFileOptions) => Promise<StorageFile>>;
-  batchWrite: jest.Mock<(files: InputFile[]) => Promise<StorageFile[]>>;
+  batchWrite: jest.Mock<(files: InputFile[], options?: WriteFileOptions[]) => Promise<StorageFile[]>>;
   remove: jest.Mock<(key: string) => Promise<void>>;
-  removeSync: jest.Mock<(key: string) => Promise<void>>;
   isExists: jest.Mock<(key: string) => Promise<boolean>>;
 
-  constructor(_config: unknown) {
-    this.url = jest.fn(async (key: string, _options?: IStorageAdapterUrlOptions) => `http://mock-url.com/${key}`);
+  constructor() {
+    this.url = jest.fn(async (key: string, _expires?: number) => `http://mock-url.com/${key}`);
     this.write = jest.fn();
     this.batchWrite = jest.fn();
     this.remove = jest.fn();
-    this.removeSync = jest.fn();
     this.isExists = jest.fn();
   }
 }
 
-const mockOptions: StorageBaseModuleOptions<Type<IStorageAdapter>> = {
-  adapter: mockAdapter,
-  config: {},
-  commonOptions: {
-    MaxFileSizeInBytes: 100,
-  },
-};
+class MockS3Adapter implements IStorageAdapter {
+  url: jest.Mock<(key: string) => Promise<string>>;
+  write: jest.Mock<(file: InputFile, options?: WriteFileOptions) => Promise<StorageFile>>;
+  batchWrite: jest.Mock<(files: InputFile[], options?: WriteFileOptions[]) => Promise<StorageFile[]>>;
+  remove: jest.Mock<(key: string) => Promise<void>>;
+  isExists: jest.Mock<(key: string) => Promise<boolean>>;
+
+  constructor() {
+    this.url = jest.fn(async (key: string) => `http://mock-url.com/${key}`);
+    this.write = jest.fn();
+    this.batchWrite = jest.fn();
+    this.remove = jest.fn();
+    this.isExists = jest.fn();
+  }
+}
+
+class MockR2Adapter implements IStorageAdapter {
+  url: jest.Mock<(key: string, options?: IStorageAdapterUrlOptions) => Promise<string>>;
+  write: jest.Mock<(file: InputFile, options?: WriteFileOptions) => Promise<StorageFile>>;
+  batchWrite: jest.Mock<(files: InputFile[], options?: WriteFileOptions[]) => Promise<StorageFile[]>>;
+  remove: jest.Mock<(key: string) => Promise<void>>;
+  isExists: jest.Mock<(key: string) => Promise<boolean>>;
+
+  constructor() {
+    this.url = jest.fn(async (key: string, _options?: IStorageAdapterUrlOptions) => `http://mock-url.com/${key}`);
+    this.write = jest.fn();
+    this.batchWrite = jest.fn();
+    this.remove = jest.fn();
+    this.isExists = jest.fn();
+  }
+}
+
+class MockLocalAdapter implements IStorageAdapter {
+  write: jest.Mock<(file: InputFile, options?: WriteFileOptions) => Promise<StorageFile>>;
+  batchWrite: jest.Mock<(files: InputFile[], options?: WriteFileOptions[]) => Promise<StorageFile[]>>;
+  remove: jest.Mock<(key: string) => Promise<void>>;
+  isExists: jest.Mock<(key: string) => Promise<boolean>>;
+
+  constructor() {
+    this.write = jest.fn();
+    this.batchWrite = jest.fn();
+    this.remove = jest.fn();
+    this.isExists = jest.fn();
+  }
+}
 
 describe('Storages Base Service', () => {
   let service: StorageService;
   let adapter: IStorageAdapter;
 
   describe('StorageService.url', () => {
-    it('should throw error if adapter is not in the list', async () => {
+    it('should throw error if adapter does not support URL generation', async () => {
+      const localAdapter = new MockLocalAdapter();
+
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           StorageService,
           {
             provide: STORAGE_ADAPTER,
-            useValue: new mockAdapter({}),
+            useValue: localAdapter,
           },
           {
             provide: STORAGE_MODULE_OPTIONS,
-            useValue: mockOptions,
+            useValue: {
+              adapter: MockLocalAdapter as Type<IStorageAdapter>,
+              config: {},
+            },
           },
         ],
       }).compile();
 
       service = module.get(StorageService);
 
-      await expect(service.url('my-key', 3600)).rejects.toThrow('Unknown storage adapter');
+      expect(() => service.url('my-key')).toThrow('This storage adapter does not support URL generation');
     });
 
-    it('should throw error if adapter is LocalAdapter', async () => {
-      const localMockInstance = new mockAdapter({});
-
-      Object.defineProperty(localMockInstance, 'constructor', {
-        value: { name: 'LocalAdapter' },
-      });
+    it('should call url() with expires parameter - GCS-like adapter', async () => {
+      const gcsAdapter = new MockGCSAdapter();
 
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           StorageService,
           {
             provide: STORAGE_ADAPTER,
-            useValue: localMockInstance,
+            useValue: gcsAdapter,
           },
           {
             provide: STORAGE_MODULE_OPTIONS,
-            useValue: mockOptions,
-          },
-        ],
-      }).compile();
-
-      service = module.get(StorageService);
-      adapter = module.get(STORAGE_ADAPTER);
-
-      await expect(service.url('my-key', 3600)).rejects.toThrow('LocalStorage does not support URL generation');
-    });
-
-    it('should call url() with a number - GCS', async () => {
-      const gcsMockInstance = new mockAdapter({});
-
-      Object.defineProperty(gcsMockInstance, 'constructor', {
-        value: { name: 'GCSAdapter' },
-      });
-
-      const module: TestingModule = await Test.createTestingModule({
-        providers: [
-          StorageService,
-          {
-            provide: STORAGE_ADAPTER,
-            useValue: gcsMockInstance,
-          },
-          {
-            provide: STORAGE_MODULE_OPTIONS,
-            useValue: mockOptions,
+            useValue: {
+              adapter: MockGCSAdapter as Type<IStorageAdapter>,
+              config: {},
+            },
           },
         ],
       }).compile();
@@ -116,25 +124,25 @@ describe('Storages Base Service', () => {
       await service.url('my-key', 3600);
 
       expect(adapter.url).toHaveBeenCalledWith('my-key', 3600);
+      expect(adapter.url).toHaveBeenCalledTimes(1);
     });
 
-    it('should call url() with no options - S3', async () => {
-      const s3MockInstance = new mockAdapter({});
-
-      Object.defineProperty(s3MockInstance, 'constructor', {
-        value: { name: 'S3Adapter' },
-      });
+    it('should call url() with only key parameter - S3-like adapter', async () => {
+      const s3Adapter = new MockS3Adapter();
 
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           StorageService,
           {
             provide: STORAGE_ADAPTER,
-            useValue: s3MockInstance,
+            useValue: s3Adapter,
           },
           {
             provide: STORAGE_MODULE_OPTIONS,
-            useValue: mockOptions,
+            useValue: {
+              adapter: MockS3Adapter as Type<IStorageAdapter>,
+              config: {},
+            },
           },
         ],
       }).compile();
@@ -142,28 +150,29 @@ describe('Storages Base Service', () => {
       service = module.get(StorageService);
       adapter = module.get(STORAGE_ADAPTER);
 
-      await service.url('my-key', 3600);
+      // TypeScript should enforce this signature - only key, no expires
+      await service.url('my-key');
 
       expect(adapter.url).toHaveBeenCalledWith('my-key');
+      expect(adapter.url).toHaveBeenCalledTimes(1);
     });
 
-    it('should call url() with options - R2', async () => {
-      const r2MockInstance = new mockAdapter({});
-
-      Object.defineProperty(r2MockInstance, 'constructor', {
-        value: { name: 'R2Adapter' },
-      });
+    it('should call url() with options parameter - R2-like adapter', async () => {
+      const r2Adapter = new MockR2Adapter();
 
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           StorageService,
           {
             provide: STORAGE_ADAPTER,
-            useValue: r2MockInstance,
+            useValue: r2Adapter,
           },
           {
             provide: STORAGE_MODULE_OPTIONS,
-            useValue: mockOptions,
+            useValue: {
+              adapter: MockR2Adapter as Type<IStorageAdapter>,
+              config: {},
+            },
           },
         ],
       }).compile();
@@ -171,20 +180,17 @@ describe('Storages Base Service', () => {
       service = module.get(StorageService);
       adapter = module.get(STORAGE_ADAPTER);
 
-      await service.url('my-key', {
-        expires: 3600,
-      });
+      await service.url('my-key', { expires: 3600 });
 
-      expect(adapter.url).toHaveBeenCalledWith('my-key', {
-        expires: 3600,
-      });
+      expect(adapter.url).toHaveBeenCalledWith('my-key', { expires: 3600 });
+      expect(adapter.url).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('Other Functions', () => {
     const mockFile = Buffer.from('This is a test file content');
 
-    const mockOptions: WriteFileOptions = {
+    const writeOptions: WriteFileOptions = {
       filename: 'my-file-name',
       contentType: 'application/pdf',
     };
@@ -192,22 +198,21 @@ describe('Storages Base Service', () => {
     beforeEach(async () => {
       jest.clearAllMocks();
 
-      const gcsMockInstance = new mockAdapter({});
-
-      Object.defineProperty(gcsMockInstance, 'constructor', {
-        value: { name: 'GCSAdapter' },
-      });
+      const gcsAdapter = new MockGCSAdapter();
 
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           StorageService,
           {
             provide: STORAGE_ADAPTER,
-            useValue: gcsMockInstance,
+            useValue: gcsAdapter,
           },
           {
             provide: STORAGE_MODULE_OPTIONS,
-            useValue: mockOptions,
+            useValue: {
+              adapter: MockGCSAdapter as Type<IStorageAdapter>,
+              config: {},
+            },
           },
         ],
       }).compile();
@@ -217,16 +222,16 @@ describe('Storages Base Service', () => {
     });
 
     it('should write file', async () => {
-      await service.write(mockFile, mockOptions);
+      await service.write(mockFile, writeOptions);
 
-      expect(adapter.write).toHaveBeenCalledWith(mockFile, mockOptions);
+      expect(adapter.write).toHaveBeenCalledWith(mockFile, writeOptions);
       expect(adapter.write).toHaveBeenCalledTimes(1);
     });
 
     it('should batch write files', async () => {
-      await service.batchWrite([mockFile], [mockOptions]);
+      await service.batchWrite([mockFile], [writeOptions]);
 
-      expect(adapter.batchWrite).toHaveBeenCalledWith([mockFile], [mockOptions]);
+      expect(adapter.batchWrite).toHaveBeenCalledWith([mockFile], [writeOptions]);
       expect(adapter.batchWrite).toHaveBeenCalledTimes(1);
     });
 

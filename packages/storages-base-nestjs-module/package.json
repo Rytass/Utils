@@ -20,7 +20,9 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/storages": "^0.2.4",
+    "@rytass/storages": "^0.2.4"
+  },
+  "optionalDependencies": {
     "@rytass/storages-adapter-azure-blob": "^0.1.6",
     "@rytass/storages-adapter-gcs": "^0.2.7",
     "@rytass/storages-adapter-local": "0.2.7",

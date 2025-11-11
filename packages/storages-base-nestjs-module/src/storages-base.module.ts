@@ -19,14 +19,14 @@ export class StorageBaseModule {
 
     const adapterProvider = {
       provide: STORAGE_ADAPTER,
-      useFactory: (): IStorageAdapter => {
+      useFactory: (): InstanceType<A> => {
         const AdapterClass = options.adapter;
 
         if (!AdapterClass) {
           throw new Error('No storage adapter class was provided in forRoot!');
         }
 
-        return new AdapterClass(options.config);
+        return new AdapterClass(options.config) as InstanceType<A>;
       },
       inject: [STORAGE_MODULE_OPTIONS],
     };
@@ -40,14 +40,14 @@ export class StorageBaseModule {
   static forRootAsync<A extends Type<IStorageAdapter>>(options: StorageBaseModuleAsyncOptions<A>): DynamicModule {
     const asyncAdapterProviders: Provider = {
       provide: STORAGE_ADAPTER,
-      useFactory: (options: StorageBaseModuleOptions<A>): IStorageAdapter => {
+      useFactory: (options: StorageBaseModuleOptions<A>): InstanceType<A> => {
         const AdapterClass = options.adapter;
 
         if (!AdapterClass) {
           throw new Error('No storage adapter class was provided in forRootAsync!');
         }
 
-        return new AdapterClass(options.config);
+        return new AdapterClass(options.config) as InstanceType<A>;
       },
       inject: [STORAGE_MODULE_OPTIONS],
     };

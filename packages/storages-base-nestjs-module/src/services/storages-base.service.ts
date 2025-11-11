@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, Type } from '@nestjs/common';
+import { Inject, Injectable, Type } from '@nestjs/common';
 import { STORAGE_ADAPTER, STORAGE_MODULE_OPTIONS } from '../typings/storages-base-module-providers';
 import type {
   IStorageAdapter,
@@ -7,19 +7,22 @@ import type {
 } from '../typings/storage-base-module-options.interface';
 import { InputFile, StorageFile, WriteFileOptions } from '@rytass/storages';
 
+type ParametersOfUrl<A extends IStorageAdapter> =
+  NonNullable<A['url']> extends (...params: infer P) => unknown ? P : never;
+
+type ReturnTypeOfUrl<A extends IStorageAdapter> =
+  NonNullable<A['url']> extends (...params: unknown[]) => infer R ? R : never;
+
 @Injectable()
-export class StorageService {
-  private readonly logger = new Logger(StorageService.name);
+export class StorageService<A extends IStorageAdapter = IStorageAdapter> {
   private readonly _commonOptions: StorageModuleCommonOptions;
 
   constructor(
     @Inject(STORAGE_ADAPTER)
-    private readonly _adapter: IStorageAdapter,
+    private readonly _adapter: A,
     @Inject(STORAGE_MODULE_OPTIONS)
-    private readonly _options: StorageBaseModuleOptions<Type<IStorageAdapter>>,
+    private readonly _options: StorageBaseModuleOptions<Type<A>>,
   ) {
-    this.logger.log(`Storage adapter: ${this._adapter.constructor.name}`);
-
     const { commonOptions = {} } = this._options;
 
     this._commonOptions = {
@@ -30,42 +33,17 @@ export class StorageService {
     };
   }
 
-  get commonOptions(): StorageModuleCommonOptions {
-    return this._commonOptions;
+  url(...args: ParametersOfUrl<A>): ReturnTypeOfUrl<A> {
+    if (!this._adapter.url || typeof this._adapter.url !== 'function') {
+      throw new Error('This storage adapter does not support URL generation');
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return this._adapter.url.apply(this._adapter, args as any) as ReturnTypeOfUrl<A>;
   }
 
-  async url(key: string): Promise<string>;
-  async url(key: string, expires: number): Promise<string>;
-  async url(key: string, options?: unknown): Promise<string>;
-
-  async url(key: string, params?: number | unknown): Promise<string> {
-    const adapterName = this._adapter.constructor.name;
-
-    if (adapterName === 'LocalAdapter') {
-      throw new Error('LocalStorage does not support URL generation');
-    }
-
-    if (adapterName === 'AzureBlobAdapter' || adapterName === 'GCSAdapter') {
-      const expires = params as number;
-
-      type UrlWithExpires = { url: (k: string, e: number) => Promise<string> };
-      const adapter = this._adapter as unknown as UrlWithExpires;
-
-      return adapter.url(key, expires);
-    } else if (adapterName === 'S3Adapter') {
-      type UrlNoOptions = { url: (k: string) => Promise<string> };
-      const adapter = this._adapter as unknown as UrlNoOptions;
-
-      return adapter.url(key);
-    } else if (adapterName === 'R2Adapter') {
-      type R2Like = { url: (k: string, o?: unknown) => Promise<string> };
-      const r2 = this._adapter as unknown as R2Like;
-      const options = params as unknown;
-
-      return r2.url(key, options);
-    } else {
-      throw new Error('Unknown storage adapter');
-    }
+  get commonOptions(): StorageModuleCommonOptions {
+    return this._commonOptions;
   }
 
   write(file: InputFile, options?: WriteFileOptions): Promise<StorageFile> {

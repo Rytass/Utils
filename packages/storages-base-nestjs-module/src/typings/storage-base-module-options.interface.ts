@@ -1,17 +1,5 @@
 import { InjectionToken, ModuleMetadata, OptionalFactoryDependency, Type } from '@nestjs/common';
-import { StorageAzureBlobService } from '@rytass/storages-adapter-azure-blob';
-import { StorageGCSService } from '@rytass/storages-adapter-gcs';
-import { LocalStorage } from '@rytass/storages-adapter-local';
-import { StorageR2Service } from '@rytass/storages-adapter-r2';
-import { StorageS3Service } from '@rytass/storages-adapter-s3';
 import { InputFile, StorageFile, WriteFileOptions } from 'storages/lib';
-
-export type StorageAdapter =
-  | LocalStorage
-  | StorageAzureBlobService
-  | StorageGCSService
-  | StorageR2Service
-  | StorageS3Service;
 
 export interface StorageBaseModuleOptions<A extends Type<IStorageAdapter>> {
   adapter: A;
@@ -44,7 +32,8 @@ export interface IStorageAdapterUrlOptions {
 }
 
 export interface IStorageAdapter {
-  url?(key?: string, options?: IStorageAdapterUrlOptions): Promise<string>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  url?(key: string, ...args: any[]): Promise<string>;
   write(file: InputFile, options?: WriteFileOptions): Promise<StorageFile>;
   remove(key: string): Promise<void>;
   isExists(key: string): Promise<boolean>;
