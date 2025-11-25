@@ -105,7 +105,7 @@ export class BankProInvoiceGateway
       throw new Error('Item spec is too long, max: 100');
     }
 
-    if (!isEmail(options.buyerEmail)) {
+    if (options.buyerEmail && !isEmail(options.buyerEmail)) {
       throw new Error('Buyer email is invalid');
     }
 
