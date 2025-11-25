@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.10](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-bank-pro@0.2.9...@rytass/invoice-adapter-bank-pro@0.2.10) (2025-11-25)
+
+### Features
+
+- **invoice-adapter-bank-pro:** validate buyer email when provided ([a06c329](https://github.com/Rytass/Utils/commit/a06c3298592b52020d58fa02de08ac4d868cdd56))
+
 ## [0.2.9](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-bank-pro@0.2.8...@rytass/invoice-adapter-bank-pro@0.2.9) (2025-10-17)
 
 **Note:** Version bump only for package @rytass/invoice-adapter-bank-pro
