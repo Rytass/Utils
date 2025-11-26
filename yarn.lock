@@ -6808,7 +6808,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rytass/storages-adapter-azure-blob@workspace:packages/storages-adapter-azure-blob":
+"@rytass/storages-adapter-azure-blob@npm:^0.1.6, @rytass/storages-adapter-azure-blob@workspace:packages/storages-adapter-azure-blob":
   version: 0.0.0-use.local
   resolution: "@rytass/storages-adapter-azure-blob@workspace:packages/storages-adapter-azure-blob"
   dependencies:
@@ -6818,7 +6818,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rytass/storages-adapter-gcs@workspace:packages/storages-adapter-gcs":
+"@rytass/storages-adapter-gcs@npm:^0.2.7, @rytass/storages-adapter-gcs@workspace:packages/storages-adapter-gcs":
   version: 0.0.0-use.local
   resolution: "@rytass/storages-adapter-gcs@workspace:packages/storages-adapter-gcs"
   dependencies:
@@ -6829,7 +6829,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rytass/storages-adapter-local@workspace:packages/storages-adapter-local":
+"@rytass/storages-adapter-local@npm:0.2.7, @rytass/storages-adapter-local@workspace:packages/storages-adapter-local":
   version: 0.0.0-use.local
   resolution: "@rytass/storages-adapter-local@workspace:packages/storages-adapter-local"
   dependencies:
@@ -6839,7 +6839,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rytass/storages-adapter-r2@workspace:packages/storages-adapter-r2":
+"@rytass/storages-adapter-r2@npm:^0.4.9, @rytass/storages-adapter-r2@workspace:packages/storages-adapter-r2":
   version: 0.0.0-use.local
   resolution: "@rytass/storages-adapter-r2@workspace:packages/storages-adapter-r2"
   dependencies:
@@ -6852,7 +6852,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rytass/storages-adapter-s3@workspace:packages/storages-adapter-s3":
+"@rytass/storages-adapter-s3@npm:^0.3.7, @rytass/storages-adapter-s3@workspace:packages/storages-adapter-s3":
   version: 0.0.0-use.local
   resolution: "@rytass/storages-adapter-s3@workspace:packages/storages-adapter-s3"
   dependencies:
@@ -6862,6 +6862,30 @@ __metadata:
     axios: "npm:^1.11.0"
     luxon: "npm:^3.7.1"
     uuid: "npm:^11.1.0"
+  languageName: unknown
+  linkType: soft
+
+"@rytass/storages-base-nestjs-module@workspace:packages/storages-base-nestjs-module":
+  version: 0.0.0-use.local
+  resolution: "@rytass/storages-base-nestjs-module@workspace:packages/storages-base-nestjs-module"
+  dependencies:
+    "@rytass/storages": "npm:^0.2.4"
+    "@rytass/storages-adapter-azure-blob": "npm:^0.1.6"
+    "@rytass/storages-adapter-gcs": "npm:^0.2.7"
+    "@rytass/storages-adapter-local": "npm:0.2.7"
+    "@rytass/storages-adapter-r2": "npm:^0.4.9"
+    "@rytass/storages-adapter-s3": "npm:^0.3.7"
+  dependenciesMeta:
+    "@rytass/storages-adapter-azure-blob":
+      optional: true
+    "@rytass/storages-adapter-gcs":
+      optional: true
+    "@rytass/storages-adapter-local":
+      optional: true
+    "@rytass/storages-adapter-r2":
+      optional: true
+    "@rytass/storages-adapter-s3":
+      optional: true
   languageName: unknown
   linkType: soft
 
