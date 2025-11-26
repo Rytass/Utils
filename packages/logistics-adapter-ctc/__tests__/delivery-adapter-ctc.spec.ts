@@ -88,6 +88,7 @@ describe('delivery-adapter-ctc', () => {
       receiverMobile: '0987654321',
       receiverAddress: 'Receiver Address',
 
+      payCode: '客戶宅配',
       customerDepartmentId: 1572, // 客戶部門ID, optional
       senderContactName: 'Sender Contact', // 寄件人聯絡人, optional
       senderTel: '12345678', // 寄件人市話, optional

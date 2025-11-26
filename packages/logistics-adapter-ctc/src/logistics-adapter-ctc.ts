@@ -143,6 +143,7 @@ export class CtcLogisticsService<T extends CtcLogisticsInterface<LogisticsStatus
         receiver_mobile: receiverMobile ?? '',
         receiver_address: options.receiverAddress,
         receiver_remark: options.receiverRemark ?? '',
+        pay_code: options.payCode,
 
         shipment_content: options.shipmentContent ?? '貨件', // 固定為 '貨件'
         transportation: options.transportation ?? 'truck', // 固定為 'truck'
