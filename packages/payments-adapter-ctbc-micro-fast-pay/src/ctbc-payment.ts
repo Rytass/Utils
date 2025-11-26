@@ -58,6 +58,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
   private readonly isAmex: boolean = false;
 
   readonly merchantId: string;
+  readonly merchantName?: string;
   readonly merId: string;
   readonly txnKey: string;
   readonly terminalId: string;
@@ -77,6 +78,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
 
   constructor(options: CTBCPaymentOptions) {
     this.merchantId = options.merchantId;
+    this.merchantName = options.merchantName;
     this.merId = options.merId;
     this.txnKey = options.txnKey;
     this.terminalId = options.terminalId;
@@ -560,7 +562,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
     params.push(`lidm=${orderId}&`);
     params.push(`purchAmt=${totalPrice.toString()}&`);
     params.push(`txType=${txType}&`);
-    params.push('MerchantName=');
+    params.push(`MerchantName=${this.merchantName ?? ''}`);
 
     if (options.shopName) {
       params.push(iconv.encode(options.shopName, 'big5'));

@@ -65,6 +65,7 @@ export interface OrderCreateInit<OCM extends CTBCOrderCommitMessage = CTBCOrderC
 
 export interface CTBCPaymentOptions<O extends CTBCOrder<CTBCOrderCommitMessage> = CTBCOrder<CTBCOrderCommitMessage>> {
   merchantId: string;
+  merchantName?: string;
   merId: string;
   txnKey: string;
   terminalId: string;

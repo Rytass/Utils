@@ -1210,6 +1210,7 @@ describe('CTBC Payment Integration', () => {
 ```typescript
 interface CTBCPaymentOptions {
   merchantId: string; // Required: CTBC merchant ID
+  merchantName?: string; // Optional: Merchant name
   merId: string; // Required: Merchant identifier
   txnKey: string; // Required: MAC/TXN signature key
   terminalId: string; // Required: Terminal identifier
