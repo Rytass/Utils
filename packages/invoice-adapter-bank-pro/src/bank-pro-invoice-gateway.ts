@@ -47,7 +47,7 @@ export class BankProInvoiceGateway
     this.sellerBAN = options.sellerBAN;
     this.baseUrl = options?.baseUrl || this.baseUrl;
 
-    if (verifyVatNumber(options.sellerBAN)) {
+    if (!verifyVatNumber(options.sellerBAN)) {
       throw new Error('Seller BAN should not be a valid VAT number');
     }
   }
