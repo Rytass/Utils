@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.18](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.17...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.18) (2025-11-26)
+
+### Features
+
+- **payments-adapter-ctbc-micro-fast-pay:** create ctbc payments with merchantName ([44aa40a](https://github.com/Rytass/Utils/commit/44aa40a2278f855dcd0ecf8001c4c2c633129e3b))
+
 ## [0.1.17](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.16...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.17) (2025-11-10)
 
 ### Features
