@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.4.10](https://github.com/Rytass/Utils/compare/@rytass/invoice@0.4.9...@rytass/invoice@0.4.10) (2025-11-26)
+
+### Bug Fixes
+
+- **invoice:** correct vat number validation implementation ([b193cdb](https://github.com/Rytass/Utils/commit/b193cdbdf2cbc61d3f1bbf6d959116352f77f6c8))
+
 ## [0.4.9](https://github.com/Rytass/Utils/compare/@rytass/invoice@0.4.8...@rytass/invoice@0.4.9) (2025-10-17)
 
 **Note:** Version bump only for package @rytass/invoice

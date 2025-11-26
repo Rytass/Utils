@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.11](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-bank-pro@0.2.10...@rytass/invoice-adapter-bank-pro@0.2.11) (2025-11-26)
+
+### Bug Fixes
+
+- **bank-pro-invoice-gateway:** correct vat number check ([bc592d7](https://github.com/Rytass/Utils/commit/bc592d7ca53d1b84c2ccbb01f363aa95b59a587c))
+- **invoice-adapter-bank-pro:** update vat validation call ([f11bdbb](https://github.com/Rytass/Utils/commit/f11bdbbcf5fded79274a5bb74e6ee3b1f91c29a3))
+- **invoice:** correct vat number validation implementation ([b193cdb](https://github.com/Rytass/Utils/commit/b193cdbdf2cbc61d3f1bbf6d959116352f77f6c8))
+
 ## [0.2.10](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-bank-pro@0.2.9...@rytass/invoice-adapter-bank-pro@0.2.10) (2025-11-25)
 
 ### Features

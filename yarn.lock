@@ -6537,7 +6537,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-adapter-amego@workspace:packages/invoice-adapter-amego"
   dependencies:
-    "@rytass/invoice": "npm:^0.4.9"
+    "@rytass/invoice": "npm:^0.4.10"
     axios: "npm:^1.11.0"
     luxon: "npm:^3.7.1"
     validator: "npm:^13.15.15"
@@ -6548,7 +6548,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-adapter-bank-pro@workspace:packages/invoice-adapter-bank-pro"
   dependencies:
-    "@rytass/invoice": "npm:^0.4.9"
+    "@rytass/invoice": "npm:^0.4.10"
     axios: "npm:^1.11.0"
     luxon: "npm:^3.7.1"
     validator: "npm:^13.15.15"
@@ -6559,7 +6559,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-adapter-ecpay@workspace:packages/invoice-adapter-ecpay"
   dependencies:
-    "@rytass/invoice": "npm:^0.4.9"
+    "@rytass/invoice": "npm:^0.4.10"
     "@types/validator": "npm:^13.15.2"
     axios: "npm:^1.11.0"
     luxon: "npm:^3.7.1"
@@ -6571,7 +6571,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-adapter-ezpay@workspace:packages/invoice-adapter-ezpay"
   dependencies:
-    "@rytass/invoice": "npm:^0.4.9"
+    "@rytass/invoice": "npm:^0.4.10"
     axios: "npm:^1.11.0"
     form-data: "npm:^4.0.4"
     luxon: "npm:^3.7.1"
@@ -6579,7 +6579,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rytass/invoice@npm:^0.4.9, @rytass/invoice@workspace:packages/invoice":
+"@rytass/invoice@npm:^0.4.10, @rytass/invoice@workspace:packages/invoice":
   version: 0.0.0-use.local
   resolution: "@rytass/invoice@workspace:packages/invoice"
   dependencies:
