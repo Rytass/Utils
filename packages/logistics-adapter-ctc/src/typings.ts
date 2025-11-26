@@ -84,6 +84,7 @@ export interface CreateOrUpdateCtcLogisticsOptions {
   receiverMobile?: string; // 收件人手機
   receiverRemark?: string; // 收件人備註
 
+  payCode: string; // 付款代碼
   shipmentContent?: string; // 貨物內容, 固定為 '貨件'
   transportation?: string; // 運輸工具, 固定為 'truck'
   shippingMethod?: string; // 運送方式, 固定為 'land'
@@ -120,6 +121,7 @@ export interface CreateOrUpdateCtcLogisticsRequest {
     receiver_address: string; // 收件人地址
     receiver_remark?: string; // 收件人備註
 
+    pay_code: string; // 付款代碼
     shipment_content: string; // 貨物內容 * 固定為 '貨件'
     transportation: string; // 運輸工具 * 固定為 'truck'
     shipping_method: string; // 運送方式 * 固定為 'land'
