@@ -80,7 +80,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Features
 
-- **invoice:** add verifyVatNumber utility function and corresponding tests ([ffdb64b](https://github.com/Rytass/Utils/commit/ffdb64bb2b9728e893fdeb886f61a516dbb7ef2d))
+- **invoice:** add isValidVATNumber utility function and corresponding tests ([ffdb64b](https://github.com/Rytass/Utils/commit/ffdb64bb2b9728e893fdeb886f61a516dbb7ef2d))
 
 ## [0.3.2](https://github.com/Rytass/Utils/compare/@rytass/invoice@0.3.1...@rytass/invoice@0.3.2) (2024-11-09)
 

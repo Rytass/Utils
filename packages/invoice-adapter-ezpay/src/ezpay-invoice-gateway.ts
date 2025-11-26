@@ -7,7 +7,7 @@ import {
   InvoiceGateway,
   InvoiceState,
   TaxType,
-  verifyVatNumber,
+  isValidVATNumber,
 } from '@rytass/invoice';
 import { createCipheriv, createHash, createDecipheriv } from 'crypto';
 import axios from 'axios';
@@ -148,7 +148,7 @@ export class EZPayInvoiceGateway implements InvoiceGateway<EZPayPaymentItem, EZP
       throw new Error('`orderId` is required and length less than 20');
     }
 
-    if (options.vatNumber && !verifyVatNumber(options.vatNumber)) {
+    if (options.vatNumber && !isValidVATNumber(options.vatNumber)) {
       throw new Error('Invalid VAT number format');
     }
 

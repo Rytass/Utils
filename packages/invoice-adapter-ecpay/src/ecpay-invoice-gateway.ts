@@ -7,7 +7,7 @@ import {
   InvoiceMobileCarrier,
   InvoiceMoicaCarrier,
   TaxType,
-  verifyVatNumber,
+  isValidVATNumber,
 } from '@rytass/invoice';
 import axios from 'axios';
 import isEmail from 'validator/lib/isEmail';
@@ -83,7 +83,7 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayPaymentItem, ECP
   }
 
   async isValidGUI(gui: string): Promise<[false] | [true, string]> {
-    if (!verifyVatNumber(gui)) {
+    if (!isValidVATNumber(gui)) {
       return [false];
     }
 
@@ -199,7 +199,7 @@ export class ECPayInvoiceGateway implements InvoiceGateway<ECPayPaymentItem, ECP
       throw new Error('`orderId` is required and length less than 30');
     }
 
-    if (options.vatNumber && !verifyVatNumber(options.vatNumber)) {
+    if (options.vatNumber && !isValidVATNumber(options.vatNumber)) {
       throw new Error('Invalid VAT number format');
     }
 

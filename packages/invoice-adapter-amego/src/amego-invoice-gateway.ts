@@ -4,7 +4,7 @@ import {
   InvoiceGateway,
   InvoiceState,
   TaxType,
-  verifyVatNumber,
+  isValidVATNumber,
 } from '@rytass/invoice';
 import axios from 'axios';
 import { createHash } from 'crypto';
@@ -480,7 +480,7 @@ export class AmegoInvoiceGateway implements InvoiceGateway<AmegoPaymentItem, Ame
       throw new Error('Order ID is required');
     }
 
-    if (options.vatNumber && !verifyVatNumber(options.vatNumber)) {
+    if (options.vatNumber && !isValidVATNumber(options.vatNumber)) {
       throw new Error('Invalid VAT number format');
     }
 

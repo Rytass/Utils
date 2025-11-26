@@ -98,7 +98,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Features
 
-- **invoice-adapter-bank-pro:** validate VAT numbers using verifyVatNumber utility ([f3ac53f](https://github.com/Rytass/Utils/commit/f3ac53f4f582fb7139c9539b704f5490a2e4ee97))
+- **invoice-adapter-bank-pro:** validate VAT numbers using isValidVATNumber utility ([f3ac53f](https://github.com/Rytass/Utils/commit/f3ac53f4f582fb7139c9539b704f5490a2e4ee97))
 
 ## [0.1.8](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-bank-pro@0.1.7...@rytass/invoice-adapter-bank-pro@0.1.8) (2025-06-09)
 

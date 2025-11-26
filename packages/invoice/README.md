@@ -265,11 +265,11 @@ if (!isLoveCodeValid) {
 ### VAT Number Validation
 
 ```typescript
-import { verifyVatNumber } from '@rytass/invoice';
+import { isValidVATNumber } from '@rytass/invoice';
 
 // Validate Taiwan VAT number format
 const vatNumber = '12345678';
-const isValid = verifyVatNumber(vatNumber);
+const isValid = isValidVATNumber(vatNumber);
 
 if (!isValid) {
   throw new Error('Invalid VAT number format');

@@ -52,7 +52,7 @@ interface InvoiceGateway<Item extends PaymentItem = PaymentItem, I extends Invoi
   allowance(invoice: Invoice<PaymentItem>, allowanceItems: InvoicePaymentItem[], options?: InvoiceAllowanceOptions): Promise<Invoice<PaymentItem>>;
   invalidAllowance(allowance: InvoiceAllowance<PaymentItem>): Promise<Invoice<PaymentItem>>;
   query(options: QueryOptions): Promise<I>;
-  
+
   // Taiwan-specific validations
   isMobileBarcodeValid(code: string): Promise<boolean>;
   isLoveCodeValid(code: string): Promise<boolean>;
@@ -124,13 +124,13 @@ enum SpecialTaxCode {
 Taiwan requires 8-digit VAT numbers (統一編號) for business transactions. The package includes built-in validation:
 
 ```typescript
-import { verifyVatNumber } from '@rytass/invoice';
+import { isValidVATNumber } from '@rytass/invoice';
 
 // Validate Taiwan VAT numbers
-console.log(verifyVatNumber('12345675')); // true - valid checksum
-console.log(verifyVatNumber('12345678')); // false - invalid checksum
-console.log(verifyVatNumber('1234567'));  // false - wrong length
-console.log(verifyVatNumber(12345675));   // true - number input also supported
+console.log(isValidVATNumber('12345675')); // true - valid checksum
+console.log(isValidVATNumber('12345678')); // false - invalid checksum
+console.log(isValidVATNumber('1234567'));  // false - wrong length
+console.log(isValidVATNumber(12345675));   // true - number input also supported
 ```
 
 The validation algorithm:
@@ -180,11 +180,11 @@ enum InvoiceAwardType {
 
 ### Basic Invoice Types
 ```typescript
-import { 
-  InvoicePaymentItem, 
-  TaxType, 
+import {
+  InvoicePaymentItem,
+  TaxType,
   InvoiceCarriers,
-  CustomsMark 
+  CustomsMark
 } from '@rytass/invoice';
 
 // Define invoice items with Taiwan-specific tax information
@@ -260,16 +260,16 @@ await gateway.void(invoice, {
 class CustomInvoiceGateway implements InvoiceGateway {
   async issue(options: InvoiceIssueOptions): Promise<Invoice> {
     // 1. Validate VAT number if provided
-    if (options.vatNumber && !verifyVatNumber(options.vatNumber)) {
+    if (options.vatNumber && !isValidVATNumber(options.vatNumber)) {
       throw new Error('Invalid Taiwan VAT number');
     }
-    
+
     // 2. Validate carrier codes
     if (options.carrier?.type === InvoiceCarrierType.MOBILE) {
       const isValid = await this.isMobileBarcodeValid(options.carrier.code);
       if (!isValid) throw new Error('Invalid mobile barcode');
     }
-    
+
     // 3. Process tax calculations
     // 4. Submit to Taiwan e-invoice service
     // 5. Return standardized Invoice object
@@ -344,7 +344,7 @@ try {
 
 ### Invoice Adapters (Taiwan Service Providers)
 - `@rytass/invoice-adapter-ecpay`: ECPay (綠界科技) e-invoice integration
-- `@rytass/invoice-adapter-ezpay`: EZPay (藍新金流) e-invoice integration  
+- `@rytass/invoice-adapter-ezpay`: EZPay (藍新金流) e-invoice integration
 - `@rytass/invoice-adapter-bank-pro`: BankPro e-invoice integration
 - `@rytass/invoice-adapter-amego`: Amego e-invoice integration
 

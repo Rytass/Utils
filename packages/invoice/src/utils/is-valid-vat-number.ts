@@ -5,10 +5,10 @@
  * @returns is `input` a valid VAT number
  *
  * @example
- * verifyVatNumber('12345675') // true
- * verifyVatNumber('12345678') // false
+ * isValidVATNumber('12345675') // true
+ * isValidVATNumber('12345678') // false
  */
-export function verifyVatNumber(input: string | number): boolean {
+export function isValidVATNumber(input: string | number): boolean {
   if (typeof input !== 'string' && typeof input !== 'number') return false;
 
   const vat = input.toString();

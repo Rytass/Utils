@@ -82,7 +82,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Features
 
-- **invoice-adapter-ezpay:** validate VAT numbers using verifyVatNumber utility ([b9ed9b4](https://github.com/Rytass/Utils/commit/b9ed9b4f7245e413aa648b463956301a4365a46a))
+- **invoice-adapter-ezpay:** validate VAT numbers using isValidVATNumber utility ([b9ed9b4](https://github.com/Rytass/Utils/commit/b9ed9b4f7245e413aa648b463956301a4365a46a))
 
 ## [0.3.4](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-ezpay@0.3.3...@rytass/invoice-adapter-ezpay@0.3.4) (2025-06-09)
 
