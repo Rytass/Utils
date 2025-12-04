@@ -562,15 +562,16 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
     params.push(`lidm=${orderId}&`);
     params.push(`purchAmt=${totalPrice.toString()}&`);
     params.push(`txType=${txType}&`);
-    params.push(`MerchantName=${this.merchantName ?? ''}`);
 
-    if (options.shopName) {
-      params.push(iconv.encode(options.shopName, 'big5'));
+    if (this.merchantName) {
+      params.push(`MerchantName=`);
+      params.push(iconv.encode(this.merchantName, 'big5'));
+      params.push('&');
     }
 
-    params.push(`&AuthResURL=${`${this.serverHost}${this.callbackPath}`}&`);
+    params.push(`AuthResURL=${`${this.serverHost}${this.callbackPath}`}&`);
 
-    params.push('&ProdCode=&');
+    params.push('ProdCode=&');
     params.push('AutoCap=1&');
     params.push('customize=1&');
     params.push('NumberOfPay=&');
