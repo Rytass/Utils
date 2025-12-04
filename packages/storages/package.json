@@ -25,6 +25,6 @@
   },
   "dependencies": {
     "@rytass/file-converter": "^0.1.5",
-    "file-type": "^21.0.0"
+    "file-type": "^21.1.1"
   }
 }
