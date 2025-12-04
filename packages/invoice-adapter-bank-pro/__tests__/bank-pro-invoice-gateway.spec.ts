@@ -10,7 +10,7 @@ describe('Bank Pro Invoice Gateway', () => {
     user: 'user1',
     password: 'password1',
     systemOID: 108,
-    sellerBAN: '12345678',
+    sellerBAN: '12345675',
     baseUrl: 'http://example.com' as BankProBaseUrls,
   };
 
@@ -48,9 +48,9 @@ describe('Bank Pro Invoice Gateway', () => {
     jest.clearAllMocks();
   });
 
-  it('should throw error if seller BAN is a valid VAT Number', () => {
-    expect(() => (gateway = new BankProInvoiceGateway({ ...mockOptions, sellerBAN: '12345675' }))).toThrow(
-      'Seller BAN should not be a valid VAT number',
+  it('should throw error if seller BAN is an invalid VAT Number', () => {
+    expect(() => (gateway = new BankProInvoiceGateway({ ...mockOptions, sellerBAN: '12345678' }))).toThrow(
+      'Seller BAN should not be a invalid VAT number',
     );
   });
 
