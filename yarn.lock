@@ -352,7 +352,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aws-sdk/client-s3@npm:^3.700.0":
+"@aws-sdk/client-s3@npm:^3.943.0":
   version: 3.943.0
   resolution: "@aws-sdk/client-s3@npm:3.943.0"
   dependencies:
@@ -616,7 +616,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aws-sdk/lib-storage@npm:^3.700.0":
+"@aws-sdk/lib-storage@npm:^3.943.0":
   version: 3.943.0
   resolution: "@aws-sdk/lib-storage@npm:3.943.0"
   dependencies:
@@ -835,7 +835,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aws-sdk/s3-request-presigner@npm:^3.700.0":
+"@aws-sdk/s3-request-presigner@npm:^3.943.0":
   version: 3.943.0
   resolution: "@aws-sdk/s3-request-presigner@npm:3.943.0"
   dependencies:
@@ -7326,14 +7326,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@quadrats/core@npm:^0.7.7":
-  version: 0.7.7
-  resolution: "@quadrats/core@npm:0.7.7"
+"@quadrats/core@npm:^1.1.5":
+  version: 1.1.5
+  resolution: "@quadrats/core@npm:1.1.5"
   dependencies:
     slate: "npm:^0.112.0"
     slate-history: "npm:^0.110.3"
     tslib: "npm:^2.6.2"
-  checksum: 10c0/1160c0e3d5dff8295b06da661b1c463b64707ecf986ab9b28b61f07905e4c1a6127fed03063a61cf2b0ffd8f5e5ac53098409425f7a390bb70fab2aac7e60234
+  checksum: 10c0/1de47f1cf257d71a2320c41566f190ca1c262f939e4e7aa3c040f9c1aeeb6a00d0c7b4939e175e9af052d6c7c2262ee0e04b2bf3cc0b3de02b725a769356035f
   languageName: node
   linkType: hard
 
@@ -7521,7 +7521,7 @@ __metadata:
     "@rytass/cms-base-nestjs-module": "npm:^0.2.9"
     "@rytass/member-base-nestjs-module": "npm:^0.2.17"
     dataloader: "npm:^2.2.3"
-    lru-cache: "npm:^11.1.0"
+    lru-cache: "npm:^11.2.4"
   peerDependencies:
     "@nestjs/common": "*"
     "@nestjs/typeorm": "*"
@@ -7623,7 +7623,7 @@ __metadata:
   resolution: "@rytass/invoice-adapter-ecpay@workspace:packages/invoice-adapter-ecpay"
   dependencies:
     "@rytass/invoice": "npm:^0.4.10"
-    "@types/validator": "npm:^13.15.3"
+    "@types/validator": "npm:^13.15.10"
     axios: "npm:^1.13.2"
     luxon: "npm:^3.7.2"
     validator: "npm:^13.15.23"
@@ -7636,7 +7636,7 @@ __metadata:
   dependencies:
     "@rytass/invoice": "npm:^0.4.10"
     axios: "npm:^1.13.2"
-    form-data: "npm:^4.0.4"
+    form-data: "npm:^4.0.5"
     luxon: "npm:^3.7.2"
     validator: "npm:^13.15.23"
   languageName: unknown
@@ -7655,7 +7655,7 @@ __metadata:
   resolution: "@rytass/logistics-adapter-ctc@workspace:packages/logistics-adapter-ctc"
   dependencies:
     "@rytass/logistics": "npm:^0.0.13"
-    axios: "npm:^1.11.0"
+    axios: "npm:^1.13.2"
     cheerio: "npm:^1.1.2"
   languageName: unknown
   linkType: soft
@@ -7665,7 +7665,7 @@ __metadata:
   resolution: "@rytass/logistics-adapter-tcat@workspace:packages/logistics-adapter-tcat"
   dependencies:
     "@rytass/logistics": "npm:^0.0.13"
-    axios: "npm:^1.11.0"
+    axios: "npm:^1.13.2"
     cheerio: "npm:^1.1.2"
   languageName: unknown
   linkType: soft
@@ -7687,7 +7687,7 @@ __metadata:
     cookie-parser: "npm:*"
     generate-password: "npm:^1.7.1"
     graphql: "npm:*"
-    luxon: "npm:^3.7.1"
+    luxon: "npm:^3.7.2"
     ts-morph: "npm:*"
     typeorm-adapter: "npm:^1"
     ws: "npm:^8"
@@ -7726,11 +7726,11 @@ __metadata:
     "@rytass/payments": "npm:^0.2.7"
     "@types/debug": "npm:^4.1.12"
     axios: "npm:^1.13.2"
-    debug: "npm:^4.4.1"
+    debug: "npm:^4.4.3"
     iconv-lite: "npm:^0.7.0"
     lru-cache: "npm:^11.2.4"
     luxon: "npm:^3.7.2"
-    soap: "npm:^1.3.0"
+    soap: "npm:^1.6.1"
   peerDependencies:
     "@ngrok/ngrok": ^1.5.1
   languageName: unknown
@@ -7743,7 +7743,7 @@ __metadata:
     "@rytass/payments": "npm:^0.2.7"
     "@types/debug": "npm:^4.1.12"
     axios: "npm:^1.13.2"
-    debug: "npm:^4.4.1"
+    debug: "npm:^4.4.3"
     lru-cache: "npm:^11.2.4"
     luxon: "npm:^3.7.2"
   peerDependencies:
@@ -7782,7 +7782,7 @@ __metadata:
     "@rytass/payments": "npm:^0.2.7"
     "@types/debug": "npm:^4"
     axios: "npm:^1.13.2"
-    debug: "npm:^4.4.1"
+    debug: "npm:^4.4.3"
     luxon: "npm:^3.7.2"
   languageName: unknown
   linkType: soft
@@ -7821,9 +7821,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/quadrats-nestjs@workspace:packages/quadrats-nestjs"
   dependencies:
-    "@quadrats/core": "npm:^0.7.7"
-    axios: "npm:^1.11.0"
-    form-data: "npm:^4.0.4"
+    "@quadrats/core": "npm:^1.1.5"
+    axios: "npm:^1.13.2"
+    form-data: "npm:^4.0.5"
   peerDependencies:
     "@nestjs/common": ^9.4.2
   languageName: unknown
@@ -7847,7 +7847,7 @@ __metadata:
   resolution: "@rytass/secret-adapter-vault@workspace:packages/secret-adapter-vault"
   dependencies:
     "@rytass/secret": "npm:^0.1.3"
-    axios: "npm:^1.11.0"
+    axios: "npm:^1.13.2"
   languageName: unknown
   linkType: soft
 
@@ -7877,7 +7877,7 @@ __metadata:
   dependencies:
     "@azure/storage-blob": "npm:^12.29.1"
     "@rytass/storages": "npm:^0.2.4"
-    uuid: "npm:^11.1.0"
+    uuid: "npm:^13.0.0"
   languageName: unknown
   linkType: soft
 
@@ -7887,8 +7887,8 @@ __metadata:
   dependencies:
     "@google-cloud/storage": "npm:^7.18.0"
     "@rytass/storages": "npm:^0.2.4"
-    "@types/uuid": "npm:^10.0.0"
-    uuid: "npm:^11.1.0"
+    "@types/uuid": "npm:^11.0.0"
+    uuid: "npm:^13.0.0"
   languageName: unknown
   linkType: soft
 
@@ -7897,8 +7897,8 @@ __metadata:
   resolution: "@rytass/storages-adapter-local@workspace:packages/storages-adapter-local"
   dependencies:
     "@rytass/storages": "npm:^0.2.4"
-    "@types/uuid": "npm:^10.0.0"
-    uuid: "npm:^11.1.0"
+    "@types/uuid": "npm:^11.0.0"
+    uuid: "npm:^13.0.0"
   languageName: unknown
   linkType: soft
 
@@ -7906,12 +7906,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/storages-adapter-r2@workspace:packages/storages-adapter-r2"
   dependencies:
-    "@aws-sdk/client-s3": "npm:^3.700.0"
-    "@aws-sdk/lib-storage": "npm:^3.700.0"
-    "@aws-sdk/s3-request-presigner": "npm:^3.700.0"
+    "@aws-sdk/client-s3": "npm:^3.943.0"
+    "@aws-sdk/lib-storage": "npm:^3.943.0"
+    "@aws-sdk/s3-request-presigner": "npm:^3.943.0"
     "@rytass/storages": "npm:^0.2.4"
-    "@types/uuid": "npm:^10.0.0"
-    uuid: "npm:^11.1.0"
+    "@types/uuid": "npm:^11.0.0"
+    uuid: "npm:^13.0.0"
   languageName: unknown
   linkType: soft
 
@@ -7919,12 +7919,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/storages-adapter-s3@workspace:packages/storages-adapter-s3"
   dependencies:
-    "@aws-sdk/client-s3": "npm:^3.700.0"
-    "@aws-sdk/lib-storage": "npm:^3.700.0"
-    "@aws-sdk/s3-request-presigner": "npm:^3.700.0"
+    "@aws-sdk/client-s3": "npm:^3.943.0"
+    "@aws-sdk/lib-storage": "npm:^3.943.0"
+    "@aws-sdk/s3-request-presigner": "npm:^3.943.0"
     "@rytass/storages": "npm:^0.2.4"
-    "@types/uuid": "npm:^10.0.0"
-    uuid: "npm:^11.1.0"
+    "@types/uuid": "npm:^11.0.0"
+    uuid: "npm:^13.0.0"
   languageName: unknown
   linkType: soft
 
@@ -7942,7 +7942,7 @@ __metadata:
   resolution: "@rytass/wms-base-nestjs-module@workspace:packages/wms-base-nestjs-module"
   dependencies:
     sqlite3: "npm:^5.1.7"
-    uuid: "npm:^11.1.0"
+    uuid: "npm:^13.0.0"
   languageName: unknown
   linkType: soft
 
@@ -7952,7 +7952,7 @@ __metadata:
   dependencies:
     "@storybook/addon-docs": "npm:^10.1.4"
     "@storybook/react-vite": "npm:^10.1.4"
-    "@xyflow/react": "npm:^12.8.4"
+    "@xyflow/react": "npm:^12.10.0"
     storybook: "npm:^10.1.4"
   peerDependencies:
     "@mezzanine-ui/react": "*"
@@ -10014,13 +10014,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/uuid@npm:^10.0.0":
-  version: 10.0.0
-  resolution: "@types/uuid@npm:10.0.0"
-  checksum: 10c0/9a1404bf287164481cb9b97f6bb638f78f955be57c40c6513b7655160beb29df6f84c915aaf4089a1559c216557dc4d2f79b48d978742d3ae10b937420ddac60
-  languageName: node
-  linkType: hard
-
 "@types/uuid@npm:^11.0.0":
   version: 11.0.0
   resolution: "@types/uuid@npm:11.0.0"
@@ -10030,7 +10023,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/validator@npm:^13.15.10, @types/validator@npm:^13.15.3":
+"@types/validator@npm:^13.15.10":
   version: 13.15.10
   resolution: "@types/validator@npm:13.15.10"
   checksum: 10c0/3e2e65fcd37dd6961ca3fd0535293d0c42f5911dc3ca44b96f458835e6db2392b678ccbb0c9815d8c0a14e653439e6c62c7b8758a6cd1d6e390551c9e56618ac
@@ -10627,37 +10620,6 @@ __metadata:
     react: ">=17"
     react-dom: ">=17"
   checksum: 10c0/cadc1410ef5c7ac1852bac5f222cae9d599963c0ad2552a17dbf49f57aae6647cc13e13f9d82367dc089e4508e1673feb99dd1106851561e8ebeb117050ab6c6
-  languageName: node
-  linkType: hard
-
-"@xyflow/react@npm:^12.8.4":
-  version: 12.9.3
-  resolution: "@xyflow/react@npm:12.9.3"
-  dependencies:
-    "@xyflow/system": "npm:0.0.73"
-    classcat: "npm:^5.0.3"
-    zustand: "npm:^4.4.0"
-  peerDependencies:
-    react: ">=17"
-    react-dom: ">=17"
-  checksum: 10c0/aa6b6503fd3e80d21b5d77db9c1365a7df4eba662796c214520cd1004e783d88e390f8030a7b7860feb966b268fecba3980ca42eabe0427b1118b18c3204a9a3
-  languageName: node
-  linkType: hard
-
-"@xyflow/system@npm:0.0.73":
-  version: 0.0.73
-  resolution: "@xyflow/system@npm:0.0.73"
-  dependencies:
-    "@types/d3-drag": "npm:^3.0.7"
-    "@types/d3-interpolate": "npm:^3.0.4"
-    "@types/d3-selection": "npm:^3.0.10"
-    "@types/d3-transition": "npm:^3.0.8"
-    "@types/d3-zoom": "npm:^3.0.8"
-    d3-drag: "npm:^3.0.0"
-    d3-interpolate: "npm:^3.0.1"
-    d3-selection: "npm:^3.0.0"
-    d3-zoom: "npm:^3.0.0"
-  checksum: 10c0/41b4a42b22d0ce68a07e9620ccd7e7e5f90d1aaabc37046dbc51d502c71a0085fa4266676de33d375ee5968c73c1c0bda851f7cf895cdcfdf88b046d228d8581
   languageName: node
   linkType: hard
 
@@ -11380,15 +11342,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios-ntlm@npm:^1.4.4":
-  version: 1.4.4
-  resolution: "axios-ntlm@npm:1.4.4"
+"axios-ntlm@npm:^1.4.6":
+  version: 1.4.6
+  resolution: "axios-ntlm@npm:1.4.6"
   dependencies:
-    axios: "npm:^1.8.4"
+    axios: "npm:^1.12.2"
     des.js: "npm:^1.1.0"
     dev-null: "npm:^0.1.1"
     js-md4: "npm:^0.3.2"
-  checksum: 10c0/41c76fece41f5b883cebc3a641f2b5924f4bb32ee84b386f6fb14b934cdfbf86eedd44f2db23b53dcdfa073b246490bcddf9a85c2d1eb0711adb67cdbc7bebc8
+  checksum: 10c0/6cd6a14fbd067561eeea93679da5552c99135d806f595b22c144cd3f5a13812acc73c80d01ff16debfd25b5493a6054e72a43ad847a0d85d5a94252637ffebf7
   languageName: node
   linkType: hard
 
@@ -15988,6 +15950,19 @@ __metadata:
     hasown: "npm:^2.0.2"
     mime-types: "npm:^2.1.12"
   checksum: 10c0/373525a9a034b9d57073e55eab79e501a714ffac02e7a9b01be1c820780652b16e4101819785e1e18f8d98f0aee866cc654d660a435c378e16a72f2e7cac9695
+  languageName: node
+  linkType: hard
+
+"form-data@npm:^4.0.5":
+  version: 4.0.5
+  resolution: "form-data@npm:4.0.5"
+  dependencies:
+    asynckit: "npm:^0.4.0"
+    combined-stream: "npm:^1.0.8"
+    es-set-tostringtag: "npm:^2.1.0"
+    hasown: "npm:^2.0.2"
+    mime-types: "npm:^2.1.12"
+  checksum: 10c0/dd6b767ee0bbd6d84039db12a0fa5a2028160ffbfaba1800695713b46ae974a5f6e08b3356c3195137f8530dcd9dfcb5d5ae1eeff53d0db1e5aad863b619ce3b
   languageName: node
   linkType: hard
 
@@ -26523,13 +26498,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"soap@npm:^1.3.0":
-  version: 1.3.0
-  resolution: "soap@npm:1.3.0"
+"soap@npm:^1.6.1":
+  version: 1.6.1
+  resolution: "soap@npm:1.6.1"
   dependencies:
-    axios: "npm:^1.11.0"
-    axios-ntlm: "npm:^1.4.4"
-    debug: "npm:^4.4.1"
+    axios: "npm:^1.13.1"
+    axios-ntlm: "npm:^1.4.6"
+    debug: "npm:^4.4.3"
     formidable: "npm:^3.5.4"
     get-stream: "npm:^6.0.1"
     lodash: "npm:^4.17.21"
@@ -26537,7 +26512,7 @@ __metadata:
     strip-bom: "npm:^3.0.0"
     whatwg-mimetype: "npm:4.0.0"
     xml-crypto: "npm:^6.1.2"
-  checksum: 10c0/1616238db0788d93f6b723ea374df01a1a6fdff717ec892ffa7ff230ce8591556974522bed08eaedca7d2b87d038852632033ba9acd28839426d528a9af426f6
+  checksum: 10c0/52c853b2da6b737e402f734b2e062981c580a397eae0764895852716deeb801249d7307f1a3b6e914dec4e05bfd155375e02eb94535f3df8d76eb6300ced1bd7
   languageName: node
   linkType: hard
 
