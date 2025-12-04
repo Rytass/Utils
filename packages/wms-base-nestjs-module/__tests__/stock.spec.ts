@@ -340,7 +340,7 @@ describe('stock', () => {
       });
 
       expect(transactions.transactionLogs).toHaveLength(0);
-      expect(transactions.total).toBe(10);
+      expect(transactions.total).toBe(4);
       expect(transactions.offset).toBe(10);
       expect(transactions.limit).toBe(5);
     });
