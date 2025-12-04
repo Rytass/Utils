@@ -28,6 +28,6 @@
   "dependencies": {
     "@azure/storage-blob": "^12.29.1",
     "@rytass/storages": "^0.2.4",
-    "uuid": "^11.1.0"
+    "uuid": "^13.0.0"
   }
 }
