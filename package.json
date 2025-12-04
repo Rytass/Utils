@@ -23,9 +23,9 @@
     "storybook:build": "storybook build"
   },
   "devDependencies": {
-    "@commitlint/cli": "^19.8.1",
-    "@commitlint/config-conventional": "^19.8.1",
-    "@commitlint/config-lerna-scopes": "^19.8.1",
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
+    "@commitlint/config-lerna-scopes": "^20.0.0",
     "@docusaurus/core": "^3.8.1",
     "@docusaurus/module-type-aliases": "^3.8.1",
     "@docusaurus/preset-classic": "^3.8.1",
