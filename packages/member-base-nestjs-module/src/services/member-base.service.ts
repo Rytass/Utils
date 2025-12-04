@@ -39,9 +39,9 @@ import {
 } from '../constants/errors/base.error';
 
 @Injectable()
-export class MemberBaseService<MemberEntity extends BaseMemberEntity = BaseMemberEntity>
-  implements OnApplicationBootstrap
-{
+export class MemberBaseService<
+  MemberEntity extends BaseMemberEntity = BaseMemberEntity,
+> implements OnApplicationBootstrap {
   constructor(
     @Inject(MEMBER_BASE_MODULE_OPTIONS)
     private readonly originalProvidedOptions: MemberBaseModuleOptionsDTO | undefined,
