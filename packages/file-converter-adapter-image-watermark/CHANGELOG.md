@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.13](https://github.com/Rytass/Utils/compare/@rytass/file-converter-adapter-image-watermark@0.1.12...@rytass/file-converter-adapter-image-watermark@0.1.13) (2025-12-04)
+
+**Note:** Version bump only for package @rytass/file-converter-adapter-image-watermark
+
 ## [0.1.12](https://github.com/Rytass/Utils/compare/@rytass/file-converter-adapter-image-watermark@0.1.11...@rytass/file-converter-adapter-image-watermark@0.1.12) (2025-09-15)
 
 ### Bug Fixes

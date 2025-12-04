@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.3.8](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-s3@0.3.7...@rytass/storages-adapter-s3@0.3.8) (2025-12-04)
+
+**Note:** Version bump only for package @rytass/storages-adapter-s3
+
 ## [0.3.7](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-s3@0.3.6...@rytass/storages-adapter-s3@0.3.7) (2025-10-02)
 
 ### Features

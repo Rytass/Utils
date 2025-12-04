@@ -7201,7 +7201,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/cms-base-nestjs-graphql-module@workspace:packages/cms-base-nestjs-graphql-module"
   dependencies:
-    "@rytass/cms-base-nestjs-module": "npm:^0.2.8"
+    "@rytass/cms-base-nestjs-module": "npm:^0.2.9"
     "@rytass/member-base-nestjs-module": "npm:^0.2.17"
     dataloader: "npm:^2.2.3"
     lru-cache: "npm:^11.1.0"
@@ -7214,7 +7214,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rytass/cms-base-nestjs-module@npm:^0.2.8, @rytass/cms-base-nestjs-module@workspace:packages/cms-base-nestjs-module":
+"@rytass/cms-base-nestjs-module@npm:^0.2.9, @rytass/cms-base-nestjs-module@workspace:packages/cms-base-nestjs-module":
   version: 0.0.0-use.local
   resolution: "@rytass/cms-base-nestjs-module@workspace:packages/cms-base-nestjs-module"
   dependencies:

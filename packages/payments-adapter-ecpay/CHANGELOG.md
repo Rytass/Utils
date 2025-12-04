@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.4.10](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.4.9...@rytass/payments-adapter-ecpay@0.4.10) (2025-12-04)
+
+**Note:** Version bump only for package @rytass/payments-adapter-ecpay
+
 ## [0.4.9](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.4.8...@rytass/payments-adapter-ecpay@0.4.9) (2025-10-17)
 
 **Note:** Version bump only for package @rytass/payments-adapter-ecpay

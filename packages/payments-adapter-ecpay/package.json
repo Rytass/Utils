@@ -1,6 +1,6 @@
 {
   "name": "@rytass/payments-adapter-ecpay",
-  "version": "0.4.9",
+  "version": "0.4.10",
   "description": "Rytass Payment Gateway",
   "keywords": [
     "rytass",

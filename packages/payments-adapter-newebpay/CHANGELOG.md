@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.12](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-newebpay@0.2.11...@rytass/payments-adapter-newebpay@0.2.12) (2025-12-04)
+
+**Note:** Version bump only for package @rytass/payments-adapter-newebpay
+
 ## [0.2.11](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-newebpay@0.2.10...@rytass/payments-adapter-newebpay@0.2.11) (2025-10-17)
 
 **Note:** Version bump only for package @rytass/payments-adapter-newebpay

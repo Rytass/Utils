@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.12](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-bank-pro@0.2.11...@rytass/invoice-adapter-bank-pro@0.2.12) (2025-12-04)
+
+### Bug Fixes
+
+- **invoice:** resolve security vulnerabilities in dependencies ([c6a725c](https://github.com/Rytass/Utils/commit/c6a725c2b43a94bd20aef6de74ef9fc3c7307265))
+
 ## [0.2.11](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-bank-pro@0.2.10...@rytass/invoice-adapter-bank-pro@0.2.11) (2025-11-26)
 
 ### Bug Fixes

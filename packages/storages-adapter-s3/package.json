@@ -1,6 +1,6 @@
 {
   "name": "@rytass/storages-adapter-s3",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "description": "AWS S3 storage adapter",
   "keywords": [
     "rytass",
