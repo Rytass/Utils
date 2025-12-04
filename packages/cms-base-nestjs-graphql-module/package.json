@@ -36,6 +36,6 @@
     "@rytass/cms-base-nestjs-module": "^0.2.9",
     "@rytass/member-base-nestjs-module": "^0.2.17",
     "dataloader": "^2.2.3",
-    "lru-cache": "^11.1.0"
+    "lru-cache": "^11.2.4"
   }
 }
