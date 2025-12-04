@@ -30,9 +30,9 @@
   "dependencies": {
     "@google-cloud/storage": "^7.18.0",
     "@rytass/storages": "^0.2.4",
-    "uuid": "^11.1.0"
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
-    "@types/uuid": "^10.0.0"
+    "@types/uuid": "^11.0.0"
   }
 }
