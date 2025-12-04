@@ -28,6 +28,6 @@
     "@rytass/invoice": "^0.4.10",
     "axios": "^1.11.0",
     "luxon": "^3.7.1",
-    "validator": "^13.15.15"
+    "validator": "^13.15.23"
   }
 }
