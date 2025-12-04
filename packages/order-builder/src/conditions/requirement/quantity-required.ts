@@ -4,9 +4,10 @@ import { QuantityRequiredInput, Requirement, RequirementDescription } from './ty
 import { ConditionOptionsBase } from '../../typings';
 import { quantityRequiredOptions } from './utils';
 
-export class QuantityRequired<Options extends ConditionOptionsBase = ConditionOptionsBase>
-  implements Condition<RequirementDescription<QuantityRequiredInput>, Options>
-{
+export class QuantityRequired<Options extends ConditionOptionsBase = ConditionOptionsBase> implements Condition<
+  RequirementDescription<QuantityRequiredInput>,
+  Options
+> {
   readonly type = Requirement.QUANTITY;
   readonly items: QuantityRequiredInput[];
   readonly leastQuantity: number;

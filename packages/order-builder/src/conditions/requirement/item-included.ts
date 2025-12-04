@@ -15,8 +15,7 @@ import { ConditionOptionsBase } from '../../typings';
 export class ItemIncluded<
   Item extends OrderItem = OrderItem,
   Options extends ConditionOptionsBase = ConditionOptionsBase,
-> implements Condition<RequirementDescription, Options>
-{
+> implements Condition<RequirementDescription, Options> {
   readonly type = Requirement.INCLUDED;
   readonly items: string[];
   readonly threshold: number;

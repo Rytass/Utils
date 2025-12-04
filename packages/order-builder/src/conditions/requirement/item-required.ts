@@ -8,9 +8,10 @@ type ItemRequiredInput = {
   quantity: number;
 };
 
-export class ItemRequired<Options extends ConditionOptionsBase = ConditionOptionsBase>
-  implements Condition<RequirementDescription<ItemRequiredInput>, Options>
-{
+export class ItemRequired<Options extends ConditionOptionsBase = ConditionOptionsBase> implements Condition<
+  RequirementDescription<ItemRequiredInput>,
+  Options
+> {
   readonly type = Requirement.ITEM;
   readonly items: ItemRequiredInput[];
   readonly options?: Options;

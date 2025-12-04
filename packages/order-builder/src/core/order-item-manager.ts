@@ -6,11 +6,10 @@ import { minus } from '../utils/decimal';
 /**
  * OrderItemManager
  */
-export interface OrderItemManager<Item extends OrderItem = OrderItem>
-  extends Pick<
-    OrderItemManagerImpl<Item>,
-    'items' | 'collectionMap' | 'flattenItems' | 'initCollectionMap' | 'getCurrentItemRecords' | 'updateCollection'
-  > {}
+export interface OrderItemManager<Item extends OrderItem = OrderItem> extends Pick<
+  OrderItemManagerImpl<Item>,
+  'items' | 'collectionMap' | 'flattenItems' | 'initCollectionMap' | 'getCurrentItemRecords' | 'updateCollection'
+> {}
 
 /**
  * OrderItemManagerImpl (Can only accessed by its owner `Order`.)
