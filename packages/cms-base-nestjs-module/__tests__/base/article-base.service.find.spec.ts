@@ -315,7 +315,11 @@ describe('ArticleBaseService - findCollection', () => {
 
     await service.findCollection({ stage: 'RELEASED' } as FindCollectionTestOptions);
 
-    expect(setMock).toHaveBeenCalledWith('a1:1', Promise.resolve('RELEASED'));
+    expect(setMock).toHaveBeenCalledWith('a1:1', expect.any(Promise));
+
+    const actualPromise = setMock.mock.calls[0][1];
+
+    await expect(actualPromise).resolves.toBe('RELEASED');
   });
 
   it('should use DEFAULT_LANGUAGE when options.language is not provided', async () => {
@@ -463,7 +467,11 @@ describe('ArticleBaseService - findAll', () => {
 
     await service.findAll({ stage: ArticleStage.RELEASED } as FindCollectionTestOptions);
 
-    expect(setMock).toHaveBeenCalledWith('a1:1', Promise.resolve(ArticleStage.RELEASED));
+    expect(setMock).toHaveBeenCalledWith('a1:1', expect.any(Promise));
+
+    const actualPromise = setMock.mock.calls[0][1];
+
+    await expect(actualPromise).resolves.toBe(ArticleStage.RELEASED);
   });
 
   it('should use DEFAULT_LANGUAGE if language is not provided and multipleLanguageMode is false', async () => {

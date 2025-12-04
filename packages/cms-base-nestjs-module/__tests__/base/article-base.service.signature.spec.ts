@@ -609,28 +609,44 @@ describe('ArticleBaseService.updateSignaturedArticleStageCache', () => {
     jest.clearAllMocks();
   });
 
-  it('should set stage to DRAFT if result is REJECTED', () => {
+  it('should set stage to DRAFT if result is REJECTED', async () => {
     service['updateSignaturedArticleStageCache']('cache-key-1', 'any-level', ArticleSignatureResult.REJECTED);
 
-    expect(mockStageCacheSet).toHaveBeenCalledWith('cache-key-1', Promise.resolve(ArticleStage.DRAFT));
+    expect(mockStageCacheSet).toHaveBeenCalledWith('cache-key-1', expect.any(Promise));
+
+    const actualPromise = mockStageCacheSet.mock.calls[0][1];
+
+    await expect(actualPromise).resolves.toBe(ArticleStage.DRAFT);
   });
 
-  it('should set stage to VERIFIED if level is final and result is APPROVED', () => {
+  it('should set stage to VERIFIED if level is final and result is APPROVED', async () => {
     service['updateSignaturedArticleStageCache']('cache-key-2', 'final-level', ArticleSignatureResult.APPROVED);
 
-    expect(mockStageCacheSet).toHaveBeenCalledWith('cache-key-2', Promise.resolve(ArticleStage.VERIFIED));
+    expect(mockStageCacheSet).toHaveBeenCalledWith('cache-key-2', expect.any(Promise));
+
+    const actualPromise = mockStageCacheSet.mock.calls[0][1];
+
+    await expect(actualPromise).resolves.toBe(ArticleStage.VERIFIED);
   });
 
-  it('should set stage to REVIEWING for intermediate level and APPROVED result', () => {
+  it('should set stage to REVIEWING for intermediate level and APPROVED result', async () => {
     service['updateSignaturedArticleStageCache']('cache-key-3', 'intermediate-level', ArticleSignatureResult.APPROVED);
 
-    expect(mockStageCacheSet).toHaveBeenCalledWith('cache-key-3', Promise.resolve(ArticleStage.REVIEWING));
+    expect(mockStageCacheSet).toHaveBeenCalledWith('cache-key-3', expect.any(Promise));
+
+    const actualPromise = mockStageCacheSet.mock.calls[0][1];
+
+    await expect(actualPromise).resolves.toBe(ArticleStage.REVIEWING);
   });
 
-  it('should set stage to REVIEWING if signatureLevelId is null and result is APPROVED', () => {
+  it('should set stage to REVIEWING if signatureLevelId is null and result is APPROVED', async () => {
     service['updateSignaturedArticleStageCache']('cache-key-4', null, ArticleSignatureResult.APPROVED);
 
-    expect(mockStageCacheSet).toHaveBeenCalledWith('cache-key-4', Promise.resolve(ArticleStage.REVIEWING));
+    expect(mockStageCacheSet).toHaveBeenCalledWith('cache-key-4', expect.any(Promise));
+
+    const actualPromise = mockStageCacheSet.mock.calls[0][1];
+
+    await expect(actualPromise).resolves.toBe(ArticleStage.REVIEWING);
   });
 });
 
