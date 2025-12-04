@@ -31,9 +31,11 @@ import {
   BankProVoidInvoiceResponse,
 } from './typings';
 
-export class BankProInvoiceGateway
-  implements InvoiceGateway<BankProPaymentItem, BankProInvoice, BankProInvoiceQueryArgs>
-{
+export class BankProInvoiceGateway implements InvoiceGateway<
+  BankProPaymentItem,
+  BankProInvoice,
+  BankProInvoiceQueryArgs
+> {
   private readonly user: string = '80178859AP2AP';
   private readonly password: string = 'a80178859AP2AP';
   private readonly systemOID: number = 185;
