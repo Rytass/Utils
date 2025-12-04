@@ -27,9 +27,9 @@
   },
   "dependencies": {
     "@rytass/payments": "^0.2.7",
-    "axios": "^1.11.0",
+    "axios": "^1.13.2",
     "lodash": "^4.17.21",
-    "luxon": "^3.7.1"
+    "luxon": "^3.7.2"
   },
   "devDependencies": {
     "@types/lodash": "^4"

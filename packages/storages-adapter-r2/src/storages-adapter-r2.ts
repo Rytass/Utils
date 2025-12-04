@@ -8,7 +8,15 @@ import {
   StorageFile,
   WriteFileOptions,
 } from '@rytass/storages';
-import { Credentials, S3 } from 'aws-sdk';
+import {
+  S3Client,
+  GetObjectCommand,
+  DeleteObjectCommand,
+  HeadObjectCommand,
+  CopyObjectCommand,
+} from '@aws-sdk/client-s3';
+import { Upload } from '@aws-sdk/lib-storage';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Readable, PassThrough } from 'stream';
 import { v4 as uuid } from 'uuid';
 import { PresignedURLOptions, StorageR2Options } from './typings';
@@ -16,7 +24,7 @@ import { PresignedURLOptions, StorageR2Options } from './typings';
 export class StorageR2Service extends Storage<StorageR2Options> {
   private readonly bucket: string;
 
-  private readonly s3: S3;
+  private readonly client: S3Client;
 
   private readonly parseSignedURL: ((url: string) => string) | undefined;
 
@@ -33,22 +41,25 @@ export class StorageR2Service extends Storage<StorageR2Options> {
       };
     }
 
-    this.s3 = new S3({
+    this.client = new S3Client({
       endpoint: `https://${options.account}.r2.cloudflarestorage.com`,
-      credentials: new Credentials({
+      credentials: {
         accessKeyId: options.accessKey,
         secretAccessKey: options.secretKey,
-      }),
+      },
       region: 'auto',
-      signatureVersion: 'v4',
+      forcePathStyle: true,
     });
   }
 
   async url(key: string, options?: PresignedURLOptions): Promise<string> {
-    const signedURL = await this.s3.getSignedUrlPromise('getObject', {
+    const command = new GetObjectCommand({
       Bucket: this.bucket,
       Key: key,
-      ...(options?.expires ? { Expires: options?.expires } : {}),
+    });
+
+    const signedURL = await getSignedUrl(this.client, command, {
+      ...(options?.expires ? { expiresIn: options.expires } : {}),
     });
 
     if (this.parseSignedURL) {
@@ -63,18 +74,31 @@ export class StorageR2Service extends Storage<StorageR2Options> {
   read(key: string, options: ReadStreamFileOptions): Promise<Readable>;
   async read(key: string, options?: ReadBufferFileOptions | ReadStreamFileOptions): Promise<Buffer | Readable> {
     try {
-      const response = await this.s3
-        .getObject({
-          Bucket: this.bucket,
-          Key: key,
-        })
-        .promise();
+      const command = new GetObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+      });
 
-      if (options?.format === 'buffer') {
-        return response.Body as Buffer;
+      const response = await this.client.send(command);
+
+      if (!response.Body) {
+        throw new StorageError(ErrorCode.READ_FILE_ERROR, 'Empty response body');
       }
 
-      return Readable.from(response.Body as Buffer);
+      // AWS SDK v3 returns a ReadableStream (web) or Readable (node)
+      const bodyStream = response.Body as Readable;
+
+      if (options?.format === 'buffer') {
+        const chunks: Buffer[] = [];
+
+        for await (const chunk of bodyStream) {
+          chunks.push(Buffer.from(chunk));
+        }
+
+        return Buffer.concat(chunks);
+      }
+
+      return bodyStream;
     } catch (ex: unknown) {
       if (ex && typeof ex === 'object' && 'name' in ex && (ex as { name: string }).name === 'NoSuchKey') {
         throw new StorageError(ErrorCode.READ_FILE_ERROR, 'File not found');
@@ -88,14 +112,17 @@ export class StorageR2Service extends Storage<StorageR2Options> {
     const givenFilename = options?.filename;
 
     if (givenFilename) {
-      await this.s3
-        .upload({
+      const upload = new Upload({
+        client: this.client,
+        params: {
           Bucket: this.bucket,
           Key: givenFilename,
           Body: stream,
           ...(options?.contentType ? { ContentType: options?.contentType } : {}),
-        })
-        .promise();
+        },
+      });
+
+      await upload.done();
 
       return { key: givenFilename };
     }
@@ -105,35 +132,36 @@ export class StorageR2Service extends Storage<StorageR2Options> {
 
     const getFilenamePromise = this.getStreamFilename(stream);
 
-    const uploadPromise = this.s3
-      .upload({
+    const upload = new Upload({
+      client: this.client,
+      params: {
         Bucket: this.bucket,
         Key: tempFilename,
         Body: uploadStream,
         ...(options?.contentType ? { ContentType: options?.contentType } : {}),
-      })
-      .promise();
+      },
+    });
 
     stream.pipe(uploadStream);
 
-    const [[filename, mime]] = await Promise.all([getFilenamePromise, uploadPromise]);
+    const [[filename, mime]] = await Promise.all([getFilenamePromise, upload.done()]);
 
-    await this.s3
-      .copyObject({
-        Bucket: this.bucket,
-        CopySource: `/${this.bucket}/${tempFilename}`,
-        Key: filename,
-        ...(mime ? { ContentType: mime } : {}),
-        ...(options?.contentType ? { ContentType: options?.contentType } : {}),
-      })
-      .promise();
+    const copyCommand = new CopyObjectCommand({
+      Bucket: this.bucket,
+      CopySource: `/${this.bucket}/${tempFilename}`,
+      Key: filename,
+      ...(mime ? { ContentType: mime } : {}),
+      ...(options?.contentType ? { ContentType: options?.contentType } : {}),
+    });
 
-    await this.s3
-      .deleteObject({
-        Bucket: this.bucket,
-        Key: tempFilename,
-      })
-      .promise();
+    await this.client.send(copyCommand);
+
+    const deleteCommand = new DeleteObjectCommand({
+      Bucket: this.bucket,
+      Key: tempFilename,
+    });
+
+    await this.client.send(deleteCommand);
 
     return { key: filename };
   }
@@ -143,15 +171,18 @@ export class StorageR2Service extends Storage<StorageR2Options> {
 
     const filename = Array.isArray(fileInfo) ? fileInfo[0] : fileInfo;
 
-    await this.s3
-      .upload({
+    const upload = new Upload({
+      client: this.client,
+      params: {
         Key: filename,
         Bucket: this.bucket,
         Body: buffer,
         ...(Array.isArray(fileInfo) && fileInfo[1] ? { ContentType: fileInfo[1] } : {}),
         ...(options?.contentType ? { ContentType: options?.contentType } : {}),
-      })
-      .promise();
+      },
+    });
+
+    await upload.done();
 
     return { key: filename };
   }
@@ -169,22 +200,22 @@ export class StorageR2Service extends Storage<StorageR2Options> {
   }
 
   async remove(key: string): Promise<void> {
-    await this.s3
-      .deleteObject({
-        Bucket: this.bucket,
-        Key: key,
-      })
-      .promise();
+    const command = new DeleteObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+    });
+
+    await this.client.send(command);
   }
 
   async isExists(key: string): Promise<boolean> {
     try {
-      await this.s3
-        .headObject({
-          Bucket: this.bucket,
-          Key: key,
-        })
-        .promise();
+      const command = new HeadObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+      });
+
+      await this.client.send(command);
 
       return true;
     } catch (ex: unknown) {

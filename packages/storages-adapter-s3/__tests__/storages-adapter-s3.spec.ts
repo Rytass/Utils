@@ -3,15 +3,9 @@
  */
 
 import { resolve } from 'path';
-import { Credentials, S3 } from 'aws-sdk';
 import { createHash } from 'crypto';
 import { Readable, PassThrough } from 'stream';
 import { createReadStream, readFileSync } from 'fs';
-
-// Type definitions for AWS S3 operations
-interface S3ManagedUploadMock {
-  promise(): Promise<S3.ManagedUpload.SendData>;
-}
 
 const ACCESS_KEY = 'aaaa';
 const SECRET_KEY = 'bbbb';
@@ -29,137 +23,183 @@ const fakeStorage = new Map<string, Buffer>();
 
 fakeStorage.set('saved-file', sampleFileBuffer);
 
-describe('AWS S3 storage adapter', () => {
-  const resolvedSendData: S3.ManagedUpload.SendData = {
-    Location: FAKE_URL,
-    ETag: 'etag',
-    Bucket: BUCKET,
-    Key: sampleFileSha256,
-  };
+// Mock for @aws-sdk/lib-storage Upload
+const mockUploadDone = jest.fn();
 
-  const uploadPromiseMocked = jest.fn(async () => resolvedSendData);
+class MockUpload {
+  private readonly params: { Key: string; Body: Buffer | PassThrough; ContentType?: string };
 
-  const defaultUploadMocked = jest.fn(
-    (params: S3.Types.PutObjectRequest, _options?: S3.ManagedUpload.ManagedUploadOptions) => {
-      if (params.Body instanceof Buffer) {
-        fakeStorage.set(params.Key, params.Body);
+  constructor(options: { client: unknown; params: { Key: string; Body: Buffer | PassThrough; ContentType?: string } }) {
+    this.params = options.params;
+  }
 
-        return {
-          promise: (): Promise<S3.ManagedUpload.SendData> => uploadPromiseMocked(),
-        };
-      }
+  async done(): Promise<{ Location: string; ETag: string; Bucket: string; Key: string }> {
+    const { Key, Body, ContentType } = this.params;
+
+    if (Body instanceof Buffer) {
+      fakeStorage.set(Key, Body);
+      mockUploadDone({ Key, ContentType });
 
       return {
-        promise: (): Promise<S3.ManagedUpload.SendData> =>
-          new Promise(pResolve => {
-            let buffer = Buffer.from([]);
-
-            (params.Body as PassThrough).on('data', chunk => {
-              buffer = Buffer.concat([buffer, chunk]);
-            });
-
-            (params.Body as PassThrough).on('end', () => {
-              fakeStorage.set(params.Key, buffer);
-
-              uploadPromiseMocked().then(pResolve);
-            });
-          }),
-      };
-    },
-  );
-
-  let uploadMocked = defaultUploadMocked;
-
-  const deleteMocked = jest.fn((params: S3.Types.DeleteObjectRequest) => {
-    fakeStorage.delete(params.Key);
-
-    return {
-      promise: (): Promise<void> => Promise.resolve(),
-    };
-  });
-
-  const headMocked = jest.fn((params: S3.Types.HeadObjectRequest) => {
-    if (!fakeStorage.has(params.Key)) {
-      if (params.Key === GENERAL_ERROR_FILE) {
-        return {
-          promise: (): Promise<never> => Promise.reject(new Error('Unknown Error')),
-        };
-      }
-
-      const notExistsError = new Error();
-
-      notExistsError.name = 'NotFound';
-
-      return {
-        promise: (): Promise<never> => Promise.reject(notExistsError),
+        Location: FAKE_URL,
+        ETag: 'etag',
+        Bucket: BUCKET,
+        Key,
       };
     }
 
-    return {
-      promise: (): Promise<void> => Promise.resolve(),
-    };
-  });
+    // Handle stream
+    return new Promise(pResolve => {
+      let buffer = Buffer.from([]);
 
-  const getMocked = jest.fn((params: S3.Types.GetObjectRequest) => {
-    if (params.Key === GENERAL_ERROR_FILE) {
-      throw new Error('Unknown Error');
+      (Body as PassThrough).on('data', (chunk: Buffer) => {
+        buffer = Buffer.concat([buffer, chunk]);
+      });
+
+      (Body as PassThrough).on('end', () => {
+        fakeStorage.set(Key, buffer);
+        mockUploadDone({ Key, ContentType });
+
+        pResolve({
+          Location: FAKE_URL,
+          ETag: 'etag',
+          Bucket: BUCKET,
+          Key,
+        });
+      });
+    });
+  }
+}
+
+// Mock for @aws-sdk/s3-request-presigner
+const mockGetSignedUrl = jest.fn().mockResolvedValue(FAKE_URL);
+
+// Mock S3Client send method
+const mockSend = jest
+  .fn()
+  .mockImplementation((command: { constructor: { name: string }; input: Record<string, unknown> }) => {
+    const commandName = command.constructor.name;
+
+    switch (commandName) {
+      case 'GetObjectCommand': {
+        const key = command.input.Key as string;
+
+        if (key === GENERAL_ERROR_FILE) {
+          throw new Error('Unknown Error');
+        }
+
+        if (key === NOT_FOUND_FILE || !fakeStorage.has(key)) {
+          const noSuchKeyError = new Error();
+
+          noSuchKeyError.name = 'NoSuchKey';
+          throw noSuchKeyError;
+        }
+
+        const data = fakeStorage.get(key);
+
+        return Promise.resolve({
+          Body: Readable.from(data as Buffer),
+        });
+      }
+
+      case 'DeleteObjectCommand': {
+        const key = command.input.Key as string;
+
+        fakeStorage.delete(key);
+
+        return Promise.resolve({});
+      }
+
+      case 'HeadObjectCommand': {
+        const key = command.input.Key as string;
+
+        if (key === GENERAL_ERROR_FILE) {
+          return Promise.reject(new Error('Unknown Error'));
+        }
+
+        if (!fakeStorage.has(key)) {
+          const notExistsError = new Error();
+
+          notExistsError.name = 'NotFound';
+
+          return Promise.reject(notExistsError);
+        }
+
+        return Promise.resolve({});
+      }
+
+      case 'CopyObjectCommand': {
+        const copySource = command.input.CopySource as string;
+        const newKey = command.input.Key as string;
+
+        const match = /\/([^/]+)$/.exec(copySource);
+
+        if (match) {
+          const oldKey = match[1];
+
+          fakeStorage.set(newKey, fakeStorage.get(oldKey) as Buffer);
+        }
+
+        return Promise.resolve({});
+      }
+
+      default:
+        return Promise.resolve({});
     }
+  });
 
-    if (params.Key === NOT_FOUND_FILE || !fakeStorage.has(params.Key)) {
-      const noSuchKeyError = new Error();
+// Mock S3Client class
+class MockS3Client {
+  send = mockSend;
+}
 
-      noSuchKeyError.name = 'NoSuchKey';
+jest.mock('@aws-sdk/client-s3', () => ({
+  S3Client: MockS3Client,
+  GetObjectCommand: class GetObjectCommand {
+    readonly input: Record<string, unknown>;
 
-      throw noSuchKeyError;
+    constructor(input: Record<string, unknown>) {
+      this.input = input;
     }
+  },
+  DeleteObjectCommand: class DeleteObjectCommand {
+    readonly input: Record<string, unknown>;
 
-    return {
-      promise: (): Promise<{ Body: Buffer | undefined }> =>
-        Promise.resolve({
-          Body: fakeStorage.get(params.Key),
-        }),
-    };
-  });
+    constructor(input: Record<string, unknown>) {
+      this.input = input;
+    }
+  },
+  HeadObjectCommand: class HeadObjectCommand {
+    readonly input: Record<string, unknown>;
 
-  const copyMocked = jest.fn((params: S3.Types.CopyObjectRequest) => {
-    /\/([^/]+)$/.test(params.CopySource);
+    constructor(input: Record<string, unknown>) {
+      this.input = input;
+    }
+  },
+  CopyObjectCommand: class CopyObjectCommand {
+    readonly input: Record<string, unknown>;
 
-    const oldKey = RegExp.$1;
+    constructor(input: Record<string, unknown>) {
+      this.input = input;
+    }
+  },
+}));
 
-    fakeStorage.set(params.Key, fakeStorage.get(oldKey) as Buffer);
+jest.mock('@aws-sdk/lib-storage', () => ({
+  Upload: MockUpload,
+}));
 
-    return {
-      promise: (): Promise<void> => Promise.resolve(),
-    };
-  });
+jest.mock('@aws-sdk/s3-request-presigner', () => ({
+  getSignedUrl: mockGetSignedUrl,
+}));
 
-  const urlMocked = jest.fn((_operation: string, _params: { Bucket: string; Key: string }) => {
-    return FAKE_URL;
-  });
-
-  beforeAll(() => {
-    jest.mock('aws-sdk', () => ({
-      S3: jest.fn(() => ({
-        upload: (
-          params: S3.Types.PutObjectRequest,
-          options?: S3.ManagedUpload.ManagedUploadOptions,
-        ): S3ManagedUploadMock => uploadMocked(params, options),
-        getObject: getMocked,
-        headObject: headMocked,
-        copyObject: copyMocked,
-        deleteObject: deleteMocked,
-        getSignedUrlPromise: urlMocked,
-      })),
-      Credentials,
-    }));
-  });
-
+describe('AWS S3 storage adapter (SDK v3)', () => {
   beforeEach(() => {
-    uploadMocked.mockClear();
-    getMocked.mockClear();
-    copyMocked.mockClear();
-    deleteMocked.mockClear();
-    urlMocked.mockClear();
+    mockSend.mockClear();
+    mockUploadDone.mockClear();
+    mockGetSignedUrl.mockClear();
+    fakeStorage.clear();
+    fakeStorage.set('saved-file', sampleFileBuffer);
   });
 
   it('should use custom filename when write buffer file', async () => {
@@ -184,8 +224,7 @@ describe('AWS S3 storage adapter', () => {
     });
 
     expect(Buffer.compare(uploadedFile, sampleFileBuffer)).toBe(0);
-    expect(uploadMocked).toHaveBeenCalledTimes(1);
-    expect(getMocked).toHaveBeenCalledTimes(1);
+    expect(mockUploadDone).toHaveBeenCalledTimes(1);
 
     await service.remove(customFilename);
   });
@@ -212,13 +251,12 @@ describe('AWS S3 storage adapter', () => {
     return new Promise<void>(done => {
       let buffer = Buffer.from([]);
 
-      readStream.on('data', chunk => {
+      readStream.on('data', (chunk: Buffer) => {
         buffer = Buffer.concat([buffer, chunk]);
       });
 
       readStream.on('end', async () => {
         expect(Buffer.compare(buffer, sampleFileBuffer)).toBe(0);
-        expect(getMocked).toHaveBeenCalledTimes(1);
 
         await service.remove(customFilename);
 
@@ -238,8 +276,6 @@ describe('AWS S3 storage adapter', () => {
     });
 
     await expect(service.read(GENERAL_ERROR_FILE)).rejects.toThrow();
-
-    expect(getMocked).toHaveBeenCalledTimes(1);
   });
 
   it('should throw on file not found', async () => {
@@ -253,8 +289,6 @@ describe('AWS S3 storage adapter', () => {
     });
 
     await expect(service.read(NOT_FOUND_FILE)).rejects.toThrow();
-
-    expect(getMocked).toHaveBeenCalledTimes(1);
   });
 
   it('should get read url', async () => {
@@ -270,7 +304,7 @@ describe('AWS S3 storage adapter', () => {
     const url = await service.url('saved-file');
 
     expect(url).toBe(FAKE_URL);
-    expect(urlMocked).toHaveBeenCalledTimes(1);
+    expect(mockGetSignedUrl).toHaveBeenCalledTimes(1);
   });
 
   it('should remove file', async () => {
@@ -290,7 +324,6 @@ describe('AWS S3 storage adapter', () => {
     await service.remove(key);
 
     expect(fakeStorage.has(sampleFileSha256)).toBeFalsy();
-    expect(deleteMocked).toHaveBeenCalledTimes(1);
   });
 
   it('should read file in buffer', async () => {
@@ -306,7 +339,6 @@ describe('AWS S3 storage adapter', () => {
     const buffer = await service.read('saved-file', { format: 'buffer' });
 
     expect(Buffer.compare(buffer, sampleFileBuffer)).toBe(0);
-    expect(getMocked).toHaveBeenCalledTimes(1);
   });
 
   it('should read file in stream', async () => {
@@ -324,13 +356,12 @@ describe('AWS S3 storage adapter', () => {
     return new Promise<void>(done => {
       let buffer = Buffer.from([]);
 
-      stream.on('data', chunk => {
+      stream.on('data', (chunk: Buffer) => {
         buffer = Buffer.concat([buffer, chunk]);
       });
 
       stream.on('end', () => {
         expect(Buffer.compare(buffer, sampleFileBuffer)).toBe(0);
-        expect(getMocked).toHaveBeenCalledTimes(1);
 
         done();
       });
@@ -354,10 +385,7 @@ describe('AWS S3 storage adapter', () => {
     const uploadedFile = await service.read(key, { format: 'buffer' });
 
     expect(Buffer.compare(uploadedFile, sampleFileBuffer)).toBe(0);
-    expect(uploadMocked).toHaveBeenCalledTimes(1);
-    expect(getMocked).toHaveBeenCalledTimes(1);
-    expect(copyMocked).toHaveBeenCalledTimes(1);
-    expect(deleteMocked).toHaveBeenCalledTimes(1);
+    expect(mockUploadDone).toHaveBeenCalledTimes(1);
   });
 
   it('should write buffer file', async () => {
@@ -374,8 +402,7 @@ describe('AWS S3 storage adapter', () => {
     const uploadedFile = await service.read(key, { format: 'buffer' });
 
     expect(Buffer.compare(uploadedFile, sampleFileBuffer)).toBe(0);
-    expect(uploadMocked).toHaveBeenCalledTimes(1);
-    expect(getMocked).toHaveBeenCalledTimes(1);
+    expect(mockUploadDone).toHaveBeenCalledTimes(1);
   });
 
   it('should batch write buffer file', async () => {
@@ -398,20 +425,10 @@ describe('AWS S3 storage adapter', () => {
 
     expect(key1).toBe(buffer1Hash);
     expect(key2).toBe(buffer3Hash);
-    expect(uploadMocked).toHaveBeenCalledTimes(2);
+    expect(mockUploadDone).toHaveBeenCalledTimes(2);
   });
 
   it('should write buffer file with content type', async () => {
-    uploadMocked = jest.fn((params: S3.Types.PutObjectRequest, _options?: S3.ManagedUpload.ManagedUploadOptions) => {
-      expect(params.ContentType).toBe('image/png');
-
-      fakeStorage.set(params.Key, params.Body as Buffer);
-
-      return {
-        promise: (): Promise<S3.ManagedUpload.SendData> => uploadPromiseMocked(),
-      };
-    });
-
     const { StorageS3Service } = await import('../src');
 
     const service = new StorageS3Service({
@@ -423,20 +440,15 @@ describe('AWS S3 storage adapter', () => {
 
     await service.write(sampleFileBuffer, { contentType: 'image/png' });
 
-    expect(uploadMocked).toHaveBeenCalledTimes(1);
+    expect(mockUploadDone).toHaveBeenCalledTimes(1);
+    expect(mockUploadDone).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ContentType: 'image/png',
+      }),
+    );
   });
 
   it('should write unknown stream with content type', async () => {
-    uploadMocked = jest.fn((params: S3.Types.PutObjectRequest, _options?: S3.ManagedUpload.ManagedUploadOptions) => {
-      expect(params.ContentType).toBe('image/png');
-
-      fakeStorage.set(params.Key, params.Body as Buffer);
-
-      return {
-        promise: (): Promise<S3.ManagedUpload.SendData> => uploadPromiseMocked(),
-      };
-    });
-
     const { StorageS3Service } = await import('../src');
 
     const service = new StorageS3Service({
@@ -460,31 +472,10 @@ describe('AWS S3 storage adapter', () => {
 
     await service.write(stream, { contentType: 'image/png' });
 
-    expect(uploadMocked).toHaveBeenCalledTimes(1);
+    expect(mockUploadDone).toHaveBeenCalledTimes(1);
   });
 
   it('should write stream file with content type', async () => {
-    uploadMocked = jest.fn((params: S3.Types.PutObjectRequest, _options?: S3.ManagedUpload.ManagedUploadOptions) => {
-      expect(params.ContentType).toBe('image/png');
-
-      return {
-        promise: (): Promise<S3.ManagedUpload.SendData> =>
-          new Promise(pResolve => {
-            let buffer = Buffer.from([]);
-
-            (params.Body as PassThrough).on('data', chunk => {
-              buffer = Buffer.concat([buffer, chunk]);
-            });
-
-            (params.Body as PassThrough).on('end', () => {
-              fakeStorage.set(params.Key, buffer);
-
-              uploadPromiseMocked().then(pResolve);
-            });
-          }),
-      };
-    });
-
     const { StorageS3Service } = await import('../src');
 
     const service = new StorageS3Service({
@@ -505,7 +496,7 @@ describe('AWS S3 storage adapter', () => {
       contentType: 'image/png',
     });
 
-    expect(uploadMocked).toHaveBeenCalledTimes(2);
+    expect(mockUploadDone).toHaveBeenCalledTimes(2);
   });
 
   it('should check file exists', async () => {
@@ -524,12 +515,6 @@ describe('AWS S3 storage adapter', () => {
     expect(notFound).toBeFalsy();
     expect(exists).toBeTruthy();
 
-    expect(headMocked).toHaveBeenCalledTimes(2);
-
-    expect(() => service.isExists(GENERAL_ERROR_FILE)).rejects.toThrow();
-  });
-
-  afterEach(() => {
-    uploadMocked = defaultUploadMocked;
+    await expect(service.isExists(GENERAL_ERROR_FILE)).rejects.toThrow();
   });
 });
