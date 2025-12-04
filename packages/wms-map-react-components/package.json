@@ -27,7 +27,7 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@xyflow/react": "^12.8.4"
+    "@xyflow/react": "^12.10.0"
   },
   "peerDependencies": {
     "@mezzanine-ui/react": "*",
