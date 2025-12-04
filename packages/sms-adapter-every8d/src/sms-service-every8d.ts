@@ -8,9 +8,11 @@ import {
   Every8DSMSSendResponse,
 } from './typings';
 
-export class SMSServiceEvery8D
-  implements SMSService<Every8DSMSRequest, Every8DSMSSendResponse, Every8DSMSMultiTargetRequest>
-{
+export class SMSServiceEvery8D implements SMSService<
+  Every8DSMSRequest,
+  Every8DSMSSendResponse,
+  Every8DSMSMultiTargetRequest
+> {
   private readonly username: string;
   private readonly password: string;
   private readonly baseUrl: string = 'https://api.e8d.tw';
