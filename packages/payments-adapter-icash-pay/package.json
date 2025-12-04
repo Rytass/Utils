@@ -28,7 +28,7 @@
   "dependencies": {
     "@rytass/payments": "^0.2.7",
     "axios": "^1.13.2",
-    "debug": "^4.4.1",
+    "debug": "^4.4.3",
     "luxon": "^3.7.2"
   },
   "devDependencies": {
