@@ -1,4 +1,4 @@
-import type { Preview } from '@storybook/react';
+import type { Preview } from '@storybook/react-vite';
 
 // Import Mezzanine UI styles
 import './mezzanine-ui-styles.scss';
