@@ -7,8 +7,10 @@ import { ArticleStage } from '../../typings';
 import classes from './index.module.scss';
 import { TableDataSourceWithID } from '@mezzanine-ui/core/table';
 
-export interface StandardCMSListProps<T extends TableDataSourceWithID>
-  extends Omit<StandardCMSTableProps<T>, 'currentStage'> {
+export interface StandardCMSListProps<T extends TableDataSourceWithID> extends Omit<
+  StandardCMSTableProps<T>,
+  'currentStage'
+> {
   defaultStage?: ArticleStage;
   onTabChange?: (stage: ArticleStage) => void;
   tabsNaming?: {

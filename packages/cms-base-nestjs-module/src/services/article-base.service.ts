@@ -56,8 +56,7 @@ export class ArticleBaseService<
   ArticleVersionEntity extends BaseArticleVersionEntity = BaseArticleVersionEntity,
   ArticleVersionContentEntity extends BaseArticleVersionContentEntity = BaseArticleVersionContentEntity,
   SignatureLevelEntity extends BaseSignatureLevelEntity = BaseSignatureLevelEntity,
-> implements OnApplicationBootstrap
-{
+> implements OnApplicationBootstrap {
   constructor(
     @Inject(RESOLVED_ARTICLE_REPO)
     private readonly baseArticleRepo: Repository<BaseArticleEntity>,
