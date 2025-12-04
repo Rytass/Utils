@@ -24,9 +24,10 @@ import {
 import { DateTime } from 'luxon';
 import axios from 'axios';
 
-export class HappyCardPayment<CM extends HappyCardCommitMessage = HappyCardCommitMessage>
-  implements PaymentGateway<CM, HappyCardOrder<CM>>
-{
+export class HappyCardPayment<CM extends HappyCardCommitMessage = HappyCardCommitMessage> implements PaymentGateway<
+  CM,
+  HappyCardOrder<CM>
+> {
   private readonly STORE_ID = '999999';
   private readonly VERSION = '001';
   private readonly POS_ID = '01';

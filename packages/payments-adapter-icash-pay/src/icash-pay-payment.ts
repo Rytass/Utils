@@ -24,9 +24,10 @@ import axios from 'axios';
 import debug from 'debug';
 import { iCashPayDebug, iCashPayDebugInfo, iCashPayDebugError } from './debug';
 
-export class ICashPayPayment<CM extends ICashPayCommitMessage = ICashPayCommitMessage>
-  implements PaymentGateway<CM, ICashPayOrder<CM>>
-{
+export class ICashPayPayment<CM extends ICashPayCommitMessage = ICashPayCommitMessage> implements PaymentGateway<
+  CM,
+  ICashPayOrder<CM>
+> {
   readonly emitter = new EventEmitter();
 
   private readonly baseUrl: ICashPayBaseUrls;

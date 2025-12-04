@@ -21,9 +21,10 @@ import {
 
 const debugPayment = debug('Rytass:Payment:HwaNan');
 
-export class HwaNanPayment<CM extends HwaNanCommitMessage = HwaNanCreditCardCommitMessage>
-  implements PaymentGateway<CM, HwaNanOrder<CM>>
-{
+export class HwaNanPayment<CM extends HwaNanCommitMessage = HwaNanCreditCardCommitMessage> implements PaymentGateway<
+  CM,
+  HwaNanOrder<CM>
+> {
   private readonly baseUrl: string;
   private readonly merchantId: string;
   private readonly terminalId: string;

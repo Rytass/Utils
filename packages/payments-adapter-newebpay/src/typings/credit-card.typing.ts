@@ -26,8 +26,7 @@ export enum NewebPayCreditCardInstallmentOptions {
 }
 
 export interface NewebPayAdditionInfoCreditCard
-  extends CreditCardAuthInfo,
-    AdditionalInfo<NewebPayCreditCardCommitMessage> {
+  extends CreditCardAuthInfo, AdditionalInfo<NewebPayCreditCardCommitMessage> {
   channel: Channel.CREDIT_CARD;
   authBank: NewebPayAuthBank;
   subChannel: NewebPayCreditCardSubChannel;
