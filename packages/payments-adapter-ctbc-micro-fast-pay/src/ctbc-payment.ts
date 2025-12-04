@@ -557,25 +557,21 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
     // Keep Order In Params
     const params: (string | Buffer)[] = [];
 
-    const merchantNameBuffer = this.merchantName ? iconv.encode(this.merchantName, 'big5') : null;
-
     params.push(`MerchantID=${this.merchantId}&`);
     params.push(`TerminalID=${this.terminalId}&`);
     params.push(`lidm=${orderId}&`);
     params.push(`purchAmt=${totalPrice.toString()}&`);
     params.push(`txType=${txType}&`);
 
-    if (merchantNameBuffer) {
-      params.push(`MerchantName=${merchantNameBuffer}`);
+    if (this.merchantName) {
+      params.push(`MerchantName=`);
+      params.push(iconv.encode(this.merchantName, 'big5'));
+      params.push('&');
     }
 
-    if (options.shopName) {
-      params.push(iconv.encode(options.shopName, 'big5'));
-    }
+    params.push(`AuthResURL=${`${this.serverHost}${this.callbackPath}`}&`);
 
-    params.push(`&AuthResURL=${`${this.serverHost}${this.callbackPath}`}&`);
-
-    params.push('&ProdCode=&');
+    params.push('ProdCode=&');
     params.push('AutoCap=1&');
     params.push('customize=1&');
     params.push('NumberOfPay=&');
