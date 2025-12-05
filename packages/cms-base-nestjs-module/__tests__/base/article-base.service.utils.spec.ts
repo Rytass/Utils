@@ -1059,11 +1059,27 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
       {} as MockRepositoryForService,
       true, // fullTextSearchMode
       {
-        createQueryBuilder: () => ({
-          from: jest.fn().mockReturnThis(),
-          andWhere: jest.fn().mockReturnThis(),
-          orWhere: mockOrWhere, // ✅ required
-        }),
+        createQueryBuilder: () => {
+          const qb = {
+            from: jest.fn().mockReturnThis(),
+            orWhere: mockOrWhere,
+          } as unknown as MockQueryBuilder;
+
+          qb.andWhere = jest.fn().mockImplementation((condition: unknown) => {
+            if (
+              condition &&
+              typeof condition === 'object' &&
+              'whereFactory' in condition &&
+              typeof (condition as { whereFactory: unknown }).whereFactory === 'function'
+            ) {
+              (condition as { whereFactory: (qb: MockQueryBuilder) => void }).whereFactory(qb);
+            }
+
+            return qb;
+          });
+
+          return qb;
+        },
       } as MockRepositoryForService,
       {} as MockRepositoryForService,
       {} as MockRepositoryForService,
