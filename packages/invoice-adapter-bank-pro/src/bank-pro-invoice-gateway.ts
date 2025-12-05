@@ -4,8 +4,8 @@ import {
   InvoiceCarrierType,
   InvoiceGateway,
   InvoiceState,
-  TaxType,
   isValidVATNumber,
+  TaxType,
 } from '@rytass/invoice';
 import axios from 'axios';
 import { DateTime } from 'luxon';
@@ -14,13 +14,16 @@ import { BankProAllowance } from './bank-pro-allowance';
 import { BankProInvoice } from './bank-pro-invoice';
 import {
   BankProBaseUrls,
+  BankProInvoiceAllowanceOptions,
   BankProInvoiceGatewayOptions,
+  BankProInvoiceInvalidAllowanceOptions,
   BankProInvoiceIssueOptions,
   BankProInvoiceQueryArgs,
   BankProInvoiceQueryFromInvoiceNumberArgs,
   BankProInvoiceQueryFromOrderIdArgs,
   BankProInvoiceQueryResponse,
   BankProInvoiceStatus,
+  BankProInvoiceVoidOptions,
   BankProIssueInvoicePayload,
   BankProIssueInvoiceResponse,
   BankProPaymentItem,
@@ -247,7 +250,7 @@ export class BankProInvoiceGateway implements InvoiceGateway<
     throw new Error('Bank Pro does not support love code validation');
   }
 
-  public async void(invoice: BankProInvoice): Promise<BankProInvoice> {
+  public async void(invoice: BankProInvoice, options?: BankProInvoiceVoidOptions): Promise<BankProInvoice> {
     if (invoice.state !== InvoiceState.ISSUED) {
       throw new Error('Invoice is not issued');
     }
@@ -268,7 +271,7 @@ export class BankProInvoiceGateway implements InvoiceGateway<
           TaxAmount: 0,
           TotalAmount: invoice.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0),
           SellerBAN: this.sellerBAN,
-          SellerCode: '',
+          SellerCode: options?.sellerCode ?? '',
           BuyerBAN: '',
           BuyerCompanyName: '',
           PaperInvoiceMark: 'N',
@@ -335,7 +338,7 @@ export class BankProInvoiceGateway implements InvoiceGateway<
     return invoice;
   }
 
-  public async allowance(invoice: BankProInvoice, allowanceItems: BankProPaymentItem[]): Promise<BankProInvoice> {
+  public async allowance(invoice: BankProInvoice, allowanceItems: BankProPaymentItem[], options?: BankProInvoiceAllowanceOptions): Promise<BankProInvoice> {
     if (invoice.state !== InvoiceState.ISSUED) {
       throw new Error('Invoice is not issued');
     }
@@ -362,7 +365,7 @@ export class BankProInvoiceGateway implements InvoiceGateway<
           TaxAmount: 0,
           TotalAmount: allowanceAmount,
           SellerBAN: this.sellerBAN,
-          SellerCode: '',
+          SellerCode: options?.sellerCode ?? '',
           BuyerBAN: '',
           BuyerCompanyName: '',
           PaperInvoiceMark: 'N',
@@ -439,7 +442,7 @@ export class BankProInvoiceGateway implements InvoiceGateway<
     return invoice;
   }
 
-  async invalidAllowance(allowance: BankProAllowance): Promise<BankProInvoice> {
+  async invalidAllowance(allowance: BankProAllowance, options?: BankProInvoiceInvalidAllowanceOptions): Promise<BankProInvoice> {
     if (allowance.status !== InvoiceAllowanceState.ISSUED) {
       throw new Error('Allowance is not issued');
     }
@@ -460,7 +463,7 @@ export class BankProInvoiceGateway implements InvoiceGateway<
           TaxAmount: 0,
           TotalAmount: allowance.allowancePrice,
           SellerBAN: this.sellerBAN,
-          SellerCode: '',
+          SellerCode: options?.sellerCode ?? '',
           BuyerBAN: '',
           BuyerCompanyName: '',
           PaperInvoiceMark: 'N',
