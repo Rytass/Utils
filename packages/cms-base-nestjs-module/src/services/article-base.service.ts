@@ -567,7 +567,7 @@ export class ArticleBaseService<
             new Brackets(qb => {
               if (options?.searchMode === ArticleSearchMode.TITLE_AND_TAG) {
                 qb.orWhere(':tagSearchTerm = ANY (SELECT LOWER(value) FROM jsonb_array_elements_text(versions.tags))', {
-                  tagSearchTerm: `${options.searchTerm?.toLocaleLowerCase()}`,
+                  tagSearchTerm: `${options.searchTerm?.toLocaleLowerCase() ?? ''}`,
                 });
               }
 
