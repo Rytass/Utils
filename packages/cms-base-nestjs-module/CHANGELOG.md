@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.10](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.2.9...@rytass/cms-base-nestjs-module@0.2.10) (2025-12-05)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** fix Promise comparison in stageCache tests ([e36e73b](https://github.com/Rytass/Utils/commit/e36e73bf30f965646354425770fc2104fe8677d3))
+
 ## [0.2.9](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.2.8...@rytass/cms-base-nestjs-module@0.2.9) (2025-12-04)
 
 **Note:** Version bump only for package @rytass/cms-base-nestjs-module

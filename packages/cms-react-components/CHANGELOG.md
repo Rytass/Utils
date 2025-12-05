@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.4](https://github.com/Rytass/Utils/compare/@rytass/cms-react-components@0.2.3...@rytass/cms-react-components@0.2.4) (2025-12-05)
+
+**Note:** Version bump only for package @rytass/cms-react-components
+
 ## [0.2.3](https://github.com/Rytass/Utils/compare/@rytass/cms-react-components@0.2.2...@rytass/cms-react-components@0.2.3) (2025-09-11)
 
 ### Features

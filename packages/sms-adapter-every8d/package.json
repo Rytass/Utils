@@ -1,6 +1,6 @@
 {
   "name": "@rytass/sms-adapter-every8d",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Rytass Utils SMS every8d adapter",
   "keywords": [
     "rytass",

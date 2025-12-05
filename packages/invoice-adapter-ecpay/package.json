@@ -1,6 +1,6 @@
 {
   "name": "@rytass/invoice-adapter-ecpay",
-  "version": "0.5.10",
+  "version": "0.5.11",
   "description": "Rytass Invoice Gateway - ECPay",
   "keywords": [
     "rytass",

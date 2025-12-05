@@ -3,6 +3,25 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.3](https://github.com/Rytass/Utils/compare/@rytass/wms-map-react-components@0.1.2...@rytass/wms-map-react-components@0.1.3) (2025-12-05)
+
+### Bug Fixes
+
+- **wms-map-react-components:** use framework package for Storybook imports ([543ace4](https://github.com/Rytass/Utils/commit/543ace43a16bf3bc0d8d5e0dd909d22c8a70c41c))
+
+### chore
+
+- **wms-map-react-components:** upgrade Storybook to v10.1.4 ([8802b34](https://github.com/Rytass/Utils/commit/8802b3441ef82200f95e4eadb7ac0a3e4908b3fc))
+
+### BREAKING CHANGES
+
+- **wms-map-react-components:** Storybook 10 is ESM-only. Configuration files now use
+  import.meta.url for path resolution.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
 ## [0.1.2](https://github.com/Rytass/Utils/compare/@rytass/wms-map-react-components@0.1.1...@rytass/wms-map-react-components@0.1.2) (2025-09-11)
 
 ### Features

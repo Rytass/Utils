@@ -1,6 +1,6 @@
 {
   "name": "@rytass/storages-adapter-s3",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "description": "AWS S3 storage adapter",
   "keywords": [
     "rytass",
@@ -29,7 +29,7 @@
     "@aws-sdk/client-s3": "^3.943.0",
     "@aws-sdk/lib-storage": "^3.943.0",
     "@aws-sdk/s3-request-presigner": "^3.943.0",
-    "@rytass/storages": "^0.2.4",
+    "@rytass/storages": "^0.2.5",
     "uuid": "^13.0.0"
   },
   "devDependencies": {

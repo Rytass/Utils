@@ -7518,8 +7518,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/cms-base-nestjs-graphql-module@workspace:packages/cms-base-nestjs-graphql-module"
   dependencies:
-    "@rytass/cms-base-nestjs-module": "npm:^0.2.9"
-    "@rytass/member-base-nestjs-module": "npm:^0.2.17"
+    "@rytass/cms-base-nestjs-module": "npm:^0.2.10"
+    "@rytass/member-base-nestjs-module": "npm:^0.2.18"
     dataloader: "npm:^2.2.3"
     lru-cache: "npm:^11.2.4"
   peerDependencies:
@@ -7531,7 +7531,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rytass/cms-base-nestjs-module@npm:^0.2.9, @rytass/cms-base-nestjs-module@workspace:packages/cms-base-nestjs-module":
+"@rytass/cms-base-nestjs-module@npm:^0.2.10, @rytass/cms-base-nestjs-module@workspace:packages/cms-base-nestjs-module":
   version: 0.0.0-use.local
   resolution: "@rytass/cms-base-nestjs-module@workspace:packages/cms-base-nestjs-module"
   dependencies:
@@ -7676,7 +7676,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rytass/member-base-nestjs-module@npm:^0.2.17, @rytass/member-base-nestjs-module@workspace:packages/member-base-nestjs-module":
+"@rytass/member-base-nestjs-module@npm:^0.2.18, @rytass/member-base-nestjs-module@workspace:packages/member-base-nestjs-module":
   version: 0.0.0-use.local
   resolution: "@rytass/member-base-nestjs-module@workspace:packages/member-base-nestjs-module"
   dependencies:
@@ -7804,7 +7804,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/payments-nestjs-module@workspace:packages/payments-nestjs-module"
   dependencies:
-    "@rytass/member-base-nestjs-module": "npm:^0.2.17"
+    "@rytass/member-base-nestjs-module": "npm:^0.2.18"
     "@rytass/payments": "npm:^0.2.7"
   peerDependencies:
     "@nestjs/common": "*"
@@ -7833,7 +7833,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/secret-adapter-vault-nestjs@workspace:packages/secret-adapter-vault-nestjs"
   dependencies:
-    "@rytass/secret-adapter-vault": "npm:^0.4.3"
+    "@rytass/secret-adapter-vault": "npm:^0.4.4"
     regenerator-runtime: "npm:^0.14.1"
   peerDependencies:
     "@nestjs/common": "*"
@@ -7842,7 +7842,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rytass/secret-adapter-vault@npm:^0.4.3, @rytass/secret-adapter-vault@workspace:packages/secret-adapter-vault":
+"@rytass/secret-adapter-vault@npm:^0.4.4, @rytass/secret-adapter-vault@workspace:packages/secret-adapter-vault":
   version: 0.0.0-use.local
   resolution: "@rytass/secret-adapter-vault@workspace:packages/secret-adapter-vault"
   dependencies:
@@ -7876,7 +7876,7 @@ __metadata:
   resolution: "@rytass/storages-adapter-azure-blob@workspace:packages/storages-adapter-azure-blob"
   dependencies:
     "@azure/storage-blob": "npm:^12.29.1"
-    "@rytass/storages": "npm:^0.2.4"
+    "@rytass/storages": "npm:^0.2.5"
     uuid: "npm:^13.0.0"
   languageName: unknown
   linkType: soft
@@ -7886,7 +7886,7 @@ __metadata:
   resolution: "@rytass/storages-adapter-gcs@workspace:packages/storages-adapter-gcs"
   dependencies:
     "@google-cloud/storage": "npm:^7.18.0"
-    "@rytass/storages": "npm:^0.2.4"
+    "@rytass/storages": "npm:^0.2.5"
     "@types/uuid": "npm:^11.0.0"
     uuid: "npm:^13.0.0"
   languageName: unknown
@@ -7896,7 +7896,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/storages-adapter-local@workspace:packages/storages-adapter-local"
   dependencies:
-    "@rytass/storages": "npm:^0.2.4"
+    "@rytass/storages": "npm:^0.2.5"
     "@types/uuid": "npm:^11.0.0"
     uuid: "npm:^13.0.0"
   languageName: unknown
@@ -7909,7 +7909,7 @@ __metadata:
     "@aws-sdk/client-s3": "npm:^3.943.0"
     "@aws-sdk/lib-storage": "npm:^3.943.0"
     "@aws-sdk/s3-request-presigner": "npm:^3.943.0"
-    "@rytass/storages": "npm:^0.2.4"
+    "@rytass/storages": "npm:^0.2.5"
     "@types/uuid": "npm:^11.0.0"
     uuid: "npm:^13.0.0"
   languageName: unknown
@@ -7922,13 +7922,13 @@ __metadata:
     "@aws-sdk/client-s3": "npm:^3.943.0"
     "@aws-sdk/lib-storage": "npm:^3.943.0"
     "@aws-sdk/s3-request-presigner": "npm:^3.943.0"
-    "@rytass/storages": "npm:^0.2.4"
+    "@rytass/storages": "npm:^0.2.5"
     "@types/uuid": "npm:^11.0.0"
     uuid: "npm:^13.0.0"
   languageName: unknown
   linkType: soft
 
-"@rytass/storages@npm:^0.2.4, @rytass/storages@workspace:packages/storages":
+"@rytass/storages@npm:^0.2.5, @rytass/storages@workspace:packages/storages":
   version: 0.0.0-use.local
   resolution: "@rytass/storages@workspace:packages/storages"
   dependencies:
