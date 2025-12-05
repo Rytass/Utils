@@ -1,5 +1,15 @@
 import { BadRequestException, Inject, Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
-import { DataSource, In, IsNull, LessThanOrEqual, Not, QueryRunner, Repository, SelectQueryBuilder } from 'typeorm';
+import {
+  DataSource,
+  In,
+  IsNull,
+  LessThanOrEqual,
+  Not,
+  QueryRunner,
+  Repository,
+  SelectQueryBuilder,
+  Brackets,
+} from 'typeorm';
 import { BaseArticleEntity } from '../models/base-article.entity';
 import {
   MultiLanguageArticleCreateDto,
@@ -56,7 +66,8 @@ export class ArticleBaseService<
   ArticleVersionEntity extends BaseArticleVersionEntity = BaseArticleVersionEntity,
   ArticleVersionContentEntity extends BaseArticleVersionContentEntity = BaseArticleVersionContentEntity,
   SignatureLevelEntity extends BaseSignatureLevelEntity = BaseSignatureLevelEntity,
-> implements OnApplicationBootstrap {
+> implements OnApplicationBootstrap
+{
   constructor(
     @Inject(RESOLVED_ARTICLE_REPO)
     private readonly baseArticleRepo: Repository<BaseArticleEntity>,
@@ -552,22 +563,23 @@ export class ArticleBaseService<
             'contents',
           );
 
-          if (options?.searchMode === ArticleSearchMode.TITLE_AND_TAG) {
-            searchQb.orWhere(
-              ':tagSearchTerm = ANY (SELECT LOWER(value) FROM jsonb_array_elements_text(versions.tags))',
-              {
-                tagSearchTerm: `${options.searchTerm?.toLocaleLowerCase()}`,
-              },
-            );
-          }
+          searchQb.andWhere(
+            new Brackets(qb => {
+              if (options?.searchMode === ArticleSearchMode.TITLE_AND_TAG) {
+                qb.orWhere(':tagSearchTerm = ANY (SELECT LOWER(value) FROM jsonb_array_elements_text(versions.tags))', {
+                  tagSearchTerm: `${options.searchTerm?.toLocaleLowerCase()}`,
+                });
+              }
 
-          searchQb.orWhere('contents.title ILIKE :searchTerm', {
-            searchTerm: `%${options.searchTerm}%`,
-          });
+              qb.orWhere('contents.title ILIKE :searchTerm', {
+                searchTerm: `%${options.searchTerm}%`,
+              });
 
-          searchQb.orWhere('contents.description ILIKE :searchTerm', {
-            searchTerm: `%${options.searchTerm}%`,
-          });
+              qb.orWhere('contents.description ILIKE :searchTerm', {
+                searchTerm: `%${options.searchTerm}%`,
+              });
+            }),
+          );
 
           searchQb.andWhere('contents."entityName" = :entityName', {
             entityName: this.baseArticleVersionContentRepo.metadata.targetName,
