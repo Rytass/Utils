@@ -67,7 +67,7 @@ export class BackstageArticleResolver {
   @ResolveField(() => [CategoryDto])
   @Authenticated()
   categories(@Root() article: ArticleBaseDto, @Language() language: string = DEFAULT_LANGUAGE): Promise<CategoryDto[]> {
-    return this.articleDataloader.categoriesLoader.load({
+    return this.articleDataloader.categoriesLoaderNoCache.load({
       articleId: article.id,
       language: this.multiLanguage ? language : DEFAULT_LANGUAGE,
     });
