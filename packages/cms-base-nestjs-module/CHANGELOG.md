@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.11](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.2.10...@rytass/cms-base-nestjs-module@0.2.11) (2025-12-05)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** enhance query builder to handle conditions in andWhere method ([12e6472](https://github.com/Rytass/Utils/commit/12e6472fd7e4eff7ddcabe82b76620ae1e77d8a5))
+- **cms-base-nestjs-module:** fix the search query, using brackets to improve correctness. ([1f0c4b7](https://github.com/Rytass/Utils/commit/1f0c4b77bb9045bc39e18e76cc38b0380da2bb5c))
+- **cms-base-nestjs-module:** handle undefined searchTerm in tag search query ([46dd0eb](https://github.com/Rytass/Utils/commit/46dd0ebcc40caa51380ca92f6ba8b0f0375438e3))
+
 ## [0.2.10](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.2.9...@rytass/cms-base-nestjs-module@0.2.10) (2025-12-05)
 
 ### Bug Fixes

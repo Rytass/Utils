@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.23](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.1.22...@rytass/cms-base-nestjs-graphql-module@0.1.23) (2025-12-05)
+
+### Bug Fixes
+
+- **cms-base-nestjs-graphql-module:** add sorter to articles query for consistent ordering ([6400648](https://github.com/Rytass/Utils/commit/64006485edb04d5e70d6d02f984b1eb2894c5f04))
+- **cms-base-nestjs-graphql-module:** use categoriesLoaderNoCache in BackstageArticleResolver for uncached category loading ([f57f5ab](https://github.com/Rytass/Utils/commit/f57f5ab77d94cbc1bb0cf3bb5b79e5194cda33c2))
+
 ## [0.1.22](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.1.21...@rytass/cms-base-nestjs-graphql-module@0.1.22) (2025-12-05)
 
 **Note:** Version bump only for package @rytass/cms-base-nestjs-graphql-module

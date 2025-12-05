@@ -1,6 +1,6 @@
 {
   "name": "@rytass/invoice-adapter-bank-pro",
-  "version": "0.2.13",
+  "version": "0.2.14",
   "description": "Rytass Invoice Gateway - BankPro",
   "keywords": [
     "rytass",
