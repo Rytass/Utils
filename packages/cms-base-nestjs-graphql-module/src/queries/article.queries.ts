@@ -1,6 +1,7 @@
 import { Args, ID, Int, Query, Resolver } from '@nestjs/graphql';
 import {
   ArticleBaseService,
+  ArticleSorter,
   ArticleStage,
   DEFAULT_LANGUAGE,
   MULTIPLE_LANGUAGE_MODE,
@@ -48,6 +49,7 @@ export class ArticleQueries {
       ...args,
       stage: ArticleStage.RELEASED,
       language: this.multiLanguage ? (language ?? DEFAULT_LANGUAGE) : undefined,
+      sorter: ArticleSorter.RELEASED_AT_DESC,
     }) as Promise<ArticleCollectionDto>;
   }
 
