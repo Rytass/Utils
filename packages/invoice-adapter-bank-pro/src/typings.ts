@@ -1,4 +1,4 @@
-import { InvoiceAllowanceState, InvoiceIssueOptions, InvoicePaymentItem, InvoiceState, TaxType } from '@rytass/invoice';
+import { InvoiceAllowanceOptions, InvoiceAllowanceState, InvoiceIssueOptions, InvoicePaymentItem, InvoiceState, InvoiceVoidOptions, TaxType } from '@rytass/invoice';
 import { BankProInvoice } from './bank-pro-invoice';
 
 export enum BankProBaseUrls {
@@ -57,6 +57,18 @@ export interface BankProInvoiceIssueOptions extends InvoiceIssueOptions<BankProP
   buyerZipCode?: string;
   buyerAddress?: string;
   buyerMobile?: string;
+}
+
+export interface BankProInvoiceAllowanceOptions extends InvoiceAllowanceOptions {
+  sellerCode?: string; // 賣方廠編
+}
+
+export interface BankProInvoiceInvalidAllowanceOptions {
+  sellerCode?: string; // 賣方廠編
+}
+
+export interface BankProInvoiceVoidOptions extends InvoiceVoidOptions {
+  sellerCode?: string; // 賣方廠編
 }
 
 export enum BankProInvoiceStatus {
