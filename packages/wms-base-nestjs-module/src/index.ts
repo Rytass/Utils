@@ -12,6 +12,7 @@ export * from './services/location.service';
 export * from './services/material.service';
 export * from './services/order.service';
 export * from './services/stock.service';
+export * from './services/warehouse-map.service';
 
 export * from './typings/order-create.dto';
 export * from './typings/stock-collection.dto';
