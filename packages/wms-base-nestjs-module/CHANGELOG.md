@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.8](https://github.com/Rytass/Utils/compare/@rytass/wms-base-nestjs-module@0.1.7...@rytass/wms-base-nestjs-module@0.1.8) (2026-01-08)
+
+### Bug Fixes
+
+- **wms-base-nestjs-module:** fix service export ([ba0887a](https://github.com/Rytass/Utils/commit/ba0887af7e531af42771d3aac447f4279a7711eb))
+
 ## [0.1.7](https://github.com/Rytass/Utils/compare/@rytass/wms-base-nestjs-module@0.1.6...@rytass/wms-base-nestjs-module@0.1.7) (2025-12-05)
 
 **Note:** Version bump only for package @rytass/wms-base-nestjs-module
