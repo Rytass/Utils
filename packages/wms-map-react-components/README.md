@@ -57,7 +57,7 @@ export default App;
 | `onNodeClick`         | `(nodeInfo: WmsNodeClickInfo) => void`                          | -                | Called when a node is clicked        |
 | `onSave`              | `(mapData: Map) => void`                                        | -                | Called when save button is clicked   |
 | `onBreadcrumbClick`   | `(warehouseId: string, index: number) => void`                  | -                | Called when breadcrumb is clicked    |
-| `onWarehouseNameEdit` | `(warehouseId: string, newName: string, index: number) => void` | -                | Called when warehouse name is edited |
+| `onNameChange`        | `(name: string) => Promise<void>`                               | -                | Called when warehouse name is changed |
 | `initialNodes`        | `any[]`                                                         | `[]`             | Initial nodes for the canvas         |
 | `initialEdges`        | `any[]`                                                         | `[]`             | Initial edges for the canvas         |
 | `debugMode`           | `boolean`                                                       | `false`          | Enable debug logging                 |
