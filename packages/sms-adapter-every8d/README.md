@@ -47,8 +47,8 @@ const result = await smsService.send({
 });
 
 console.log('Message ID:', result.messageId);
-console.log('Status:', result.status);
-console.log('Cost:', result.cost);
+console.log('Status:', result.status);  // SMSRequestResult.SUCCESS or SMSRequestResult.FAILED
+console.log('Mobile:', result.mobile);
 ```
 
 ### Send to Multiple Recipients (Same Message)
@@ -162,17 +162,19 @@ const result = await smsService.send({
   text: 'Order confirmation: #12345',
 });
 
+import { SMSRequestResult } from '@rytass/sms';
+
 switch (result.status) {
-  case 'success':
+  case SMSRequestResult.SUCCESS:
     console.log('Message sent successfully');
     console.log('Message ID:', result.messageId);
     break;
-  case 'failed':
+  case SMSRequestResult.FAILED:
     console.error('Message delivery failed');
-    console.error('Error:', result.error);
-    break;
-  case 'insufficient_credit':
-    console.error('Insufficient account credit');
+    if (result.errorMessage) {
+      console.error('Error:', result.errorMessage);
+      console.error('Error Code:', result.errorCode);
+    }
     break;
   default:
     console.log('Unknown status:', result.status);
@@ -199,8 +201,8 @@ try {
   });
 
   // Process results
-  const successful = results.filter(r => r.status === 'success').length;
-  const failed = results.filter(r => r.status === 'failed').length;
+  const successful = results.filter(r => r.status === SMSRequestResult.SUCCESS).length;
+  const failed = results.filter(r => r.status === SMSRequestResult.FAILED).length;
 
   console.log(`Batch completed: ${successful} successful, ${failed} failed`);
 } catch (error) {
@@ -289,12 +291,12 @@ class AuthSMSService {
       text: message,
     });
 
-    if (result.status === 'success') {
+    if (result.status === SMSRequestResult.SUCCESS) {
       // Store code in cache/database with expiration
       await this.storeVerificationCode(phoneNumber, code);
       return code;
     } else {
-      throw new Error(`SMS delivery failed: ${result.error}`);
+      throw new Error(`SMS delivery failed: ${result.errorMessage}`);
     }
   }
 
@@ -364,17 +366,15 @@ class MarketingCampaignService {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  private analyzeCampaignResults(results: any[]) {
-    const successful = results.filter(r => r.status === 'success').length;
-    const failed = results.filter(r => r.status === 'failed').length;
-    const totalCost = results.reduce((sum, r) => sum + (r.cost || 0), 0);
+  private analyzeCampaignResults(results: Every8DSMSSendResponse[]) {
+    const successful = results.filter(r => r.status === SMSRequestResult.SUCCESS).length;
+    const failed = results.filter(r => r.status === SMSRequestResult.FAILED).length;
 
     return {
       total: results.length,
       successful,
       failed,
       successRate: (successful / results.length) * 100,
-      totalCost,
     };
   }
 }

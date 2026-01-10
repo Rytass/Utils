@@ -29,9 +29,9 @@ yarn add @rytass/sms
 ### Using Every8D Adapter
 
 ```typescript
-import { Every8dSMSService } from '@rytass/sms-adapter-every8d';
+import { SMSServiceEvery8D } from '@rytass/sms-adapter-every8d';
 
-const smsService = new Every8dSMSService({
+const smsService = new SMSServiceEvery8D({
   username: 'your-username',
   password: 'your-password',
 });
@@ -184,12 +184,12 @@ class CustomSMSService implements SMSService<CustomSMSRequest, CustomSMSResponse
 
 ```typescript
 import express from 'express';
-import { Every8dSMSService } from '@rytass/sms-adapter-every8d';
+import { SMSServiceEvery8D } from '@rytass/sms-adapter-every8d';
 
 const app = express();
 app.use(express.json());
 
-const smsService = new Every8dSMSService({
+const smsService = new SMSServiceEvery8D({
   username: process.env.EVERY8D_USERNAME!,
   password: process.env.EVERY8D_PASSWORD!,
 });
@@ -220,15 +220,15 @@ app.post('/send-sms', async (req, res) => {
 ```typescript
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Every8dSMSService } from '@rytass/sms-adapter-every8d';
+import { SMSServiceEvery8D } from '@rytass/sms-adapter-every8d';
 import { SMSRequestResult } from '@rytass/sms';
 
 @Injectable()
 export class NotificationService {
-  private smsService: Every8dSMSService;
+  private smsService: SMSServiceEvery8D;
 
   constructor(private configService: ConfigService) {
-    this.smsService = new Every8dSMSService({
+    this.smsService = new SMSServiceEvery8D({
       username: this.configService.get('EVERY8D_USERNAME')!,
       password: this.configService.get('EVERY8D_PASSWORD')!,
     });

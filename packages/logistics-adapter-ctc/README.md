@@ -24,11 +24,16 @@ yarn add @rytass/logistics-adapter-ctc
 
 ### Basic Tracking
 
+> **⚠️ Security Warning:** The default `CtcLogistics` configuration contains a **hardcoded test API token**. Do **NOT** use it in production. Always provide your own `apiToken`.
+
 ```typescript
 import { CtcLogisticsService, CtcLogistics } from '@rytass/logistics-adapter-ctc';
 
-// Initialize with default configuration
-const logistics = new CtcLogisticsService(CtcLogistics);
+// ⚠️ IMPORTANT: Replace apiToken with your own production token
+const logistics = new CtcLogisticsService({
+  ...CtcLogistics,
+  apiToken: process.env.CTC_API_TOKEN!, // Use your own token
+});
 
 // Track single package
 const result = await logistics.trace('800978442950');
@@ -239,7 +244,11 @@ import express from 'express';
 import { CtcLogisticsService, CtcLogistics } from '@rytass/logistics-adapter-ctc';
 
 const app = express();
-const logistics = new CtcLogisticsService(CtcLogistics);
+// ⚠️ Replace apiToken with your own production token
+const logistics = new CtcLogisticsService({
+  ...CtcLogistics,
+  apiToken: process.env.CTC_API_TOKEN!,
+});
 
 app.get('/track/:trackingNumber', async (req, res) => {
   try {
@@ -264,14 +273,19 @@ app.post('/shipping/create', express.json(), async (req, res) => {
 
 ```typescript
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { CtcLogisticsService, CtcLogistics } from '@rytass/logistics-adapter-ctc';
 
 @Injectable()
 export class ShippingService {
   private logistics: CtcLogisticsService;
 
-  constructor() {
-    this.logistics = new CtcLogisticsService(CtcLogistics);
+  constructor(private configService: ConfigService) {
+    // ⚠️ Use your own production API token
+    this.logistics = new CtcLogisticsService({
+      ...CtcLogistics,
+      apiToken: this.configService.get('CTC_API_TOKEN')!,
+    });
   }
 
   async trackPackage(trackingNumber: string) {

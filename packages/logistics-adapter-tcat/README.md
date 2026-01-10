@@ -45,16 +45,25 @@ multipleResults.forEach((result, index) => {
 });
 ```
 
-### Default Status Types
+### Default Status Types (TCatLogisticsStatus)
 
-The default configuration provides these standard logistics statuses:
+The default configuration maps TCAT's Chinese status to these English status codes:
 
-- `PENDING` - Package received by TCAT
-- `IN_TRANSIT` - Package in transit
-- `OUT_FOR_DELIVERY` - Package out for delivery
-- `DELIVERED` - Package delivered successfully
-- `FAILED` - Delivery attempt failed
-- `RETURNED` - Package returned to sender
+| Status              | Chinese (中文)                | Description                 |
+| ------------------- | ----------------------------- | --------------------------- |
+| `DELIVERED`         | 順利送達                      | Package delivered           |
+| `TRANSPORTING`      | 轉運中                        | Package in transit          |
+| `DELIVERING`        | 配送中                        | Out for delivery            |
+| `COLLECTING`        | 取件中                        | Pickup in progress          |
+| `CONSOLIDATED`      | 已集貨                        | Package consolidated        |
+| `PICKUP_CANCELED`   | 取消取件                      | Pickup cancelled            |
+| `SHELVED`           | 暫置營業所                    | Stored at branch            |
+| `INVESTIGATING`     | 調查處理中                    | Under investigation         |
+| `DELIVERING_TODAY`  | 配送中(當配下車) (當配上車)   | Same-day delivery           |
+| `FAIL_PICKUP`       | 未順利取件，請洽客服中心      | Pickup failed               |
+| `AWAY_HOME`         | 不在家.公司行號休息           | Recipient not home          |
+
+The `TCatLogisticsStatusHistory` includes additional `businessPremise` field for branch location.
 
 ## Custom Configuration
 

@@ -1,17 +1,16 @@
 # Rytass Utils - File Converter Image Watermark Adapter
 
-Advanced image watermarking processor that adds watermarks to images with flexible positioning, opacity control, and scaling options. Built on Sharp image processing library for high performance and quality output.
+Image watermarking processor that adds watermarks to images using Sharp's gravity-based positioning system. Built on Sharp image processing library for high performance and quality output.
 
 ## Features
 
 - [x] High-performance image watermarking (based on Sharp)
-- [x] Flexible watermark positioning (9-point positioning system)
-- [x] Opacity and transparency control
-- [x] Watermark scaling and sizing options
-- [x] Buffer and Stream input support
+- [x] Gravity-based positioning (9-point positioning system)
+- [x] Support for multiple watermarks
+- [x] Buffer and file path input for watermarks
+- [x] Buffer and Stream input support for source images
 - [x] Multiple image format support
-- [x] Maintains original image quality
-- [x] Batch processing capabilities
+- [x] Concurrency control for batch processing
 
 ## Installation
 
@@ -27,19 +26,23 @@ yarn add @rytass/file-converter-adapter-image-watermark
 
 ```typescript
 import { ImageWatermark } from '@rytass/file-converter-adapter-image-watermark';
-import { readFileSync } from 'fs';
+import { gravity } from 'sharp';
+import { readFileSync, writeFileSync } from 'fs';
 
-// Create watermark processor
+// Create watermark processor with gravity positioning
 const watermarker = new ImageWatermark({
-  watermarkPath: './watermark.png',
-  position: 'bottom-right',
-  opacity: 0.7,
-  margin: 20,
+  watermarks: [
+    {
+      image: readFileSync('./watermark.png'), // Can be Buffer or file path
+      gravity: gravity.southeast, // Position: bottom-right
+    },
+  ],
 });
 
 // Apply watermark to image
 const originalImage = readFileSync('original.jpg');
 const watermarkedImage = await watermarker.convert<Buffer>(originalImage);
+writeFileSync('watermarked.jpg', watermarkedImage);
 ```
 
 ### Stream Processing
@@ -47,11 +50,15 @@ const watermarkedImage = await watermarker.convert<Buffer>(originalImage);
 ```typescript
 import { createReadStream, createWriteStream } from 'fs';
 import { Readable } from 'stream';
+import { gravity } from 'sharp';
 
 const watermarker = new ImageWatermark({
-  watermarkPath: './logo.png',
-  position: 'top-left',
-  opacity: 0.5,
+  watermarks: [
+    {
+      image: './logo.png', // File path also works
+      gravity: gravity.northwest, // Position: top-left
+    },
+  ],
 });
 
 const inputStream = createReadStream('input.jpg');
@@ -60,104 +67,117 @@ const outputStream = await watermarker.convert<Readable>(inputStream);
 outputStream.pipe(createWriteStream('watermarked.jpg'));
 ```
 
-### Advanced Configuration
+### Multiple Watermarks
 
 ```typescript
-// Custom positioning with offset
-const customWatermarker = new ImageWatermark({
-  watermarkPath: './watermark.png',
-  position: 'center',
-  opacity: 0.6,
-  scale: 0.2, // Scale watermark to 20% of original size
-  offsetX: 50, // Horizontal offset from position
-  offsetY: -30, // Vertical offset from position
+import { ImageWatermark } from '@rytass/file-converter-adapter-image-watermark';
+import { gravity } from 'sharp';
+
+// Add multiple watermarks at different positions
+const watermarker = new ImageWatermark({
+  watermarks: [
+    {
+      image: readFileSync('./logo.png'),
+      gravity: gravity.southeast, // Bottom-right
+    },
+    {
+      image: readFileSync('./copyright.png'),
+      gravity: gravity.south, // Bottom-center
+    },
+  ],
+  concurrency: 4, // Optional: parallel processing
 });
 
-// Watermark with specific dimensions
-const sizedWatermarker = new ImageWatermark({
-  watermarkPath: './logo.svg',
-  position: 'bottom-center',
-  width: 200, // Fixed width
-  height: 100, // Fixed height
-  opacity: 0.8,
-  margin: 15,
-});
+const watermarkedImage = await watermarker.convert<Buffer>(originalImage);
 ```
 
 ## Configuration Options
 
 ### ImageWatermarkOptions
 
-| Property        | Type                | Required | Default          | Description                            |
-| --------------- | ------------------- | -------- | ---------------- | -------------------------------------- |
-| `watermarkPath` | `string`            | Yes      | -                | Path to watermark image file           |
-| `position`      | `WatermarkPosition` | No       | `'bottom-right'` | Watermark position on image            |
-| `opacity`       | `number`            | No       | `1.0`            | Watermark opacity (0-1)                |
-| `scale`         | `number`            | No       | -                | Scale watermark relative to base image |
-| `width`         | `number`            | No       | -                | Fixed watermark width                  |
-| `height`        | `number`            | No       | -                | Fixed watermark height                 |
-| `margin`        | `number`            | No       | `0`              | Margin from edges                      |
-| `offsetX`       | `number`            | No       | `0`              | Horizontal offset from position        |
-| `offsetY`       | `number`            | No       | `0`              | Vertical offset from position          |
+| Property      | Type          | Required | Default | Description                          |
+| ------------- | ------------- | -------- | ------- | ------------------------------------ |
+| `watermarks`  | `Watermark[]` | Yes      | -       | Array of watermark configurations    |
+| `concurrency` | `number`      | No       | `1`     | Number of parallel processing threads |
 
-### Watermark Positions
+### Watermark
 
-Available position options:
+| Property  | Type                   | Required | Default | Description                                |
+| --------- | ---------------------- | -------- | ------- | ------------------------------------------ |
+| `image`   | `string` \| `Buffer`   | Yes      | -       | Watermark image (file path or Buffer)      |
+| `gravity` | `Gravity`              | No       | -       | Position using Sharp's gravity constants   |
 
-- `'top-left'`
-- `'top-center'`
-- `'top-right'`
-- `'center-left'`
-- `'center'`
-- `'center-right'`
-- `'bottom-left'`
-- `'bottom-center'`
-- `'bottom-right'`
+### Gravity Positions (from Sharp)
+
+Import gravity from Sharp and use these positioning options:
+
+```typescript
+import { gravity } from 'sharp';
+```
+
+| Position           | Gravity Constant      | Description      |
+| ------------------ | --------------------- | ---------------- |
+| Top-Left (左上)    | `gravity.northwest`   | Northwest corner |
+| Top-Center (上中)  | `gravity.north`       | Top center       |
+| Top-Right (右上)   | `gravity.northeast`   | Northeast corner |
+| Middle-Left (中左) | `gravity.west`        | Middle left      |
+| Center (中央)      | `gravity.center`      | Center           |
+| Middle-Right (中右)| `gravity.east`        | Middle right     |
+| Bottom-Left (左下) | `gravity.southwest`   | Southwest corner |
+| Bottom-Center (下中)| `gravity.south`      | Bottom center    |
+| Bottom-Right (右下)| `gravity.southeast`   | Southeast corner |
 
 ## Usage Examples
 
-### Logo Watermark with Transparency
+### Logo Watermark
 
 ```typescript
+import { ImageWatermark } from '@rytass/file-converter-adapter-image-watermark';
+import { gravity } from 'sharp';
+import { readFileSync, writeFileSync } from 'fs';
+
 const logoWatermarker = new ImageWatermark({
-  watermarkPath: './company-logo.png',
-  position: 'top-right',
-  opacity: 0.4,
-  scale: 0.15,
-  margin: 30,
+  watermarks: [
+    {
+      image: readFileSync('./company-logo.png'),
+      gravity: gravity.northeast, // Top-right corner
+    },
+  ],
 });
 
+const productImage = readFileSync('product.jpg');
 const watermarkedProduct = await logoWatermarker.convert<Buffer>(productImage);
-```
-
-### Copyright Text Overlay
-
-```typescript
-// First create a text watermark image, then apply
-const copyrightWatermarker = new ImageWatermark({
-  watermarkPath: './copyright-text.png',
-  position: 'bottom-center',
-  opacity: 0.6,
-  margin: 10,
-});
+writeFileSync('product-watermarked.jpg', watermarkedProduct);
 ```
 
 ### Batch Watermarking
 
 ```typescript
+import { ImageWatermark } from '@rytass/file-converter-adapter-image-watermark';
+import { gravity } from 'sharp';
+import { readFileSync, writeFileSync } from 'fs';
+
 const images = ['image1.jpg', 'image2.jpg', 'image3.jpg'];
 const watermarker = new ImageWatermark({
-  watermarkPath: './watermark.png',
-  position: 'bottom-right',
-  opacity: 0.5,
+  watermarks: [
+    {
+      image: './watermark.png',
+      gravity: gravity.southeast,
+    },
+  ],
+  concurrency: 4, // Process 4 images in parallel
 });
 
 const watermarkedImages = await Promise.all(
-  images.map(async imagePath => {
+  images.map(async (imagePath) => {
     const image = readFileSync(imagePath);
     return await watermarker.convert<Buffer>(image);
   }),
 );
+
+watermarkedImages.forEach((img, index) => {
+  writeFileSync(`output-${index}.jpg`, img);
+});
 ```
 
 ## Integration with File Converter System
@@ -166,51 +186,55 @@ const watermarkedImages = await Promise.all(
 import { ConverterManager } from '@rytass/file-converter';
 import { ImageResizer } from '@rytass/file-converter-adapter-image-resizer';
 import { ImageWatermark } from '@rytass/file-converter-adapter-image-watermark';
-import { StorageS3Service } from '@rytass/storages-adapter-s3';
+import { ImageTranscoder } from '@rytass/file-converter-adapter-image-transcoder';
+import { gravity } from 'sharp';
+import { readFileSync, writeFileSync } from 'fs';
 
-const storage = new StorageS3Service({
-  /* S3 config */
-});
+// Processing pipeline: resize → watermark → convert to WebP
+const pipeline = new ConverterManager([
+  new ImageResizer({
+    maxWidth: 1200,
+    maxHeight: 800,
+    keepAspectRatio: true,
+  }),
+  new ImageWatermark({
+    watermarks: [
+      {
+        image: readFileSync('./brand-watermark.png'),
+        gravity: gravity.southeast,
+      },
+    ],
+  }),
+  new ImageTranscoder({
+    targetFormat: 'webp',
+    quality: 85,
+  }),
+]);
 
-// Processing pipeline: resize then watermark
-const manager = new ConverterManager(
-  [
-    new ImageResizer({
-      maxWidth: 1200,
-      maxHeight: 800,
-      keepAspectRatio: true,
-    }),
-    new ImageWatermark({
-      watermarkPath: './brand-watermark.png',
-      position: 'bottom-right',
-      opacity: 0.7,
-      scale: 0.1,
-    }),
-  ],
-  storage,
-);
-
-const result = await manager.save(uploadedImage, 'processed-images/', 'watermarked-product.jpg');
+const originalImage = readFileSync('photo.jpg');
+const processedImage = await pipeline.convert<Buffer>(originalImage);
+writeFileSync('processed.webp', processedImage);
 ```
 
 ## Error Handling
 
 ```typescript
+import { ImageWatermark } from '@rytass/file-converter-adapter-image-watermark';
+import { gravity } from 'sharp';
+
 try {
   const watermarker = new ImageWatermark({
-    watermarkPath: './nonexistent-watermark.png',
-    position: 'center',
+    watermarks: [
+      {
+        image: './nonexistent-watermark.png',
+        gravity: gravity.center,
+      },
+    ],
   });
 
   const result = await watermarker.convert<Buffer>(imageBuffer);
 } catch (error) {
-  if (error.message.includes('watermark file not found')) {
-    console.error('Watermark file does not exist');
-  } else if (error.message.includes('invalid image format')) {
-    console.error('Unsupported image format');
-  } else {
-    console.error('Watermarking failed:', error.message);
-  }
+  console.error('Watermarking failed:', error.message);
 }
 ```
 
@@ -219,28 +243,20 @@ try {
 ### Performance
 
 - Use appropriately sized watermark images to avoid excessive processing
-- Consider using SVG watermarks for vector-based logos
-- Batch process multiple images when possible
-- Use streams for large images to manage memory usage
+- Set `concurrency` option based on CPU cores for batch processing
+- Use Buffer input for watermarks when processing many images (avoids repeated file reads)
+- Use streams for large source images to manage memory usage
 
 ### Quality
 
-- Maintain watermark aspect ratio when scaling
 - Use PNG format for watermarks with transparency
-- Test opacity levels for different background images
-- Consider watermark contrast against various image types
-
-### Security
-
-- Validate watermark file paths to prevent directory traversal
-- Sanitize user-provided positioning parameters
-- Implement rate limiting for watermarking operations
-- Store watermark files in secure, read-only locations
+- Pre-resize watermark images to appropriate dimensions
+- Test watermark visibility against various image backgrounds
 
 ## Supported Formats
 
 **Input formats:** JPEG, PNG, WebP, TIFF, GIF, AVIF, HEIF
-**Watermark formats:** PNG (recommended), JPEG, WebP, SVG
+**Watermark formats:** PNG (recommended for transparency), JPEG, WebP
 **Output formats:** Same as input format
 
 ## License
