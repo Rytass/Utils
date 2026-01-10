@@ -56,12 +56,9 @@ import { readFileSync } from 'fs';
 
 // Upload file
 const fileBuffer = readFileSync('document.pdf');
-const result = await storage.write(fileBuffer, 'documents/important-doc.pdf', {
+const result = await storage.write(fileBuffer, {
+  filename: 'documents/important-doc.pdf',
   contentType: 'application/pdf',
-  metadata: {
-    uploadedBy: 'user123',
-    department: 'legal',
-  },
 });
 
 // Download file as buffer
@@ -76,10 +73,10 @@ const fileStream = await storage.read('documents/important-doc.pdf');
 const publicUrl = await storage.url('documents/important-doc.pdf');
 
 // Check if file exists
-const exists = await storage.exists('documents/important-doc.pdf');
+const exists = await storage.isExists('documents/important-doc.pdf');
 
-// Delete file
-await storage.delete('documents/important-doc.pdf');
+// Remove file
+await storage.remove('documents/important-doc.pdf');
 ```
 
 ### Stream Processing
@@ -89,7 +86,8 @@ import { createReadStream } from 'fs';
 
 // Upload large file via stream
 const fileStream = createReadStream('large-video.mp4');
-const uploadResult = await storage.write(fileStream, 'media/videos/large-video.mp4', {
+const uploadResult = await storage.write(fileStream, {
+  filename: 'media/videos/large-video.mp4',
   contentType: 'video/mp4',
 });
 ```
@@ -108,18 +106,22 @@ const storage = new StorageR2Service({
   accountId: process.env.CLOUDFLARE_ACCOUNT_ID!,
 });
 
-const manager = new ConverterManager(
-  [
-    new ImageResizer({
-      maxWidth: 1200,
-      maxHeight: 800,
-      keepAspectRatio: true,
-    }),
-  ],
-  storage,
-);
+const manager = new ConverterManager([
+  new ImageResizer({
+    maxWidth: 1200,
+    maxHeight: 800,
+    keepAspectRatio: true,
+  }),
+]);
 
-const result = await manager.save(imageFile, 'processed-images/', 'thumbnail.jpg');
+// Process the image
+const processedImage = await manager.convert<Buffer>(imageFile);
+
+// Upload to R2
+const result = await storage.write(processedImage, {
+  filename: 'processed-images/thumbnail.jpg',
+  contentType: 'image/jpeg',
+});
 ```
 
 ## Environment Variables
@@ -147,18 +149,18 @@ const storage = new StorageR2Service({
 import { StorageError, ErrorCode } from '@rytass/storages';
 
 try {
-  const result = await storage.write(fileBuffer, 'path/to/file.pdf');
+  const result = await storage.write(fileBuffer, { filename: 'path/to/file.pdf' });
 } catch (error) {
   if (error instanceof StorageError) {
     switch (error.code) {
       case ErrorCode.FILE_NOT_FOUND:
         console.error('File not found');
         break;
-      case ErrorCode.PERMISSION_DENIED:
-        console.error('Access denied - check R2 credentials');
+      case ErrorCode.WRITE_FILE_ERROR:
+        console.error('Failed to write file');
         break;
-      case ErrorCode.QUOTA_EXCEEDED:
-        console.error('Storage quota exceeded');
+      case ErrorCode.READ_FILE_ERROR:
+        console.error('Failed to read file');
         break;
       default:
         console.error('Storage error:', error.message);
@@ -238,10 +240,10 @@ const storageS3 = new StorageS3Service({
 
 // Same interface, different storage backend
 const operations = [
-  storage.write(file, key),
+  storage.write(file, { filename: key }),
   storage.read(key),
-  storage.delete(key),
-  storage.exists(key),
+  storage.remove(key),
+  storage.isExists(key),
   storage.url(key),
 ];
 ```

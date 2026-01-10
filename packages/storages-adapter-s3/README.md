@@ -55,11 +55,12 @@ import { readFileSync } from 'fs';
 
 // Upload from Buffer
 const fileBuffer = readFileSync('document.pdf');
-const uploadResult = await storage.write(fileBuffer, 'documents/user-123/document.pdf', {
+const uploadResult = await storage.write(fileBuffer, {
+  filename: 'documents/user-123/document.pdf',
   contentType: 'application/pdf',
 });
 
-console.log('File uploaded:', uploadResult.url);
+console.log('File uploaded:', uploadResult.key);
 ```
 
 ### Stream Upload for Large Files
@@ -69,7 +70,8 @@ import { createReadStream } from 'fs';
 
 // Upload from Stream (recommended for large files)
 const fileStream = createReadStream('video.mp4');
-const result = await storage.write(fileStream, 'videos/user-123/video.mp4', {
+const result = await storage.write(fileStream, {
+  filename: 'videos/user-123/video.mp4',
   contentType: 'video/mp4',
 });
 ```
@@ -82,13 +84,8 @@ const fileBuffer = await storage.read('documents/user-123/document.pdf', {
   format: 'buffer',
 });
 
-// Download as Stream
-const fileStream = await storage.read('documents/user-123/document.pdf', {
-  format: 'stream',
-});
-
 // Download as Stream (default)
-const fileStream2 = await storage.read('documents/user-123/document.pdf');
+const fileStream = await storage.read('documents/user-123/document.pdf');
 fileStream.pipe(process.stdout);
 ```
 
@@ -106,12 +103,12 @@ console.log('Download URL:', signedUrl);
 
 ```typescript
 // Check if file exists
-const exists = await storage.exists('documents/user-123/document.pdf');
+const exists = await storage.isExists('documents/user-123/document.pdf');
 console.log('File exists:', exists);
 
-// Delete file
-await storage.delete('documents/user-123/document.pdf');
-console.log('File deleted successfully');
+// Remove file
+await storage.remove('documents/user-123/document.pdf');
+console.log('File removed successfully');
 ```
 
 ### Batch Operations
@@ -125,7 +122,7 @@ const files = [
 ];
 
 const results = await Promise.all(
-  files.map(({ buffer, key }) => storage.write(buffer, key, { contentType: 'image/jpeg' })),
+  files.map(({ buffer, key }) => storage.write(buffer, { filename: key, contentType: 'image/jpeg' })),
 );
 
 console.log('All files uploaded:', results.length);
@@ -160,7 +157,7 @@ const manager = new ConverterManager([
 const imageFile = readFileSync('large-image.jpg');
 const processedImage = await manager.convert<Buffer>(imageFile);
 
-const result = await storage.write(processedImage, 'processed-images/thumbnail.jpg', { contentType: 'image/jpeg' });
+const result = await storage.write(processedImage, { filename: 'processed-images/thumbnail.jpg', contentType: 'image/jpeg' });
 
 console.log('Processed image uploaded:', result.key);
 console.log('Access URL:', await storage.url(result.key));
@@ -172,18 +169,18 @@ console.log('Access URL:', await storage.url(result.key));
 import { StorageError, ErrorCode } from '@rytass/storages';
 
 try {
-  const result = await storage.write(fileBuffer, 'path/to/file.pdf');
+  const result = await storage.write(fileBuffer, { filename: 'path/to/file.pdf' });
 } catch (error) {
   if (error instanceof StorageError) {
     switch (error.code) {
       case ErrorCode.FILE_NOT_FOUND:
         console.error('File not found');
         break;
-      case ErrorCode.PERMISSION_DENIED:
-        console.error('Access denied - check AWS credentials');
+      case ErrorCode.WRITE_FILE_ERROR:
+        console.error('Failed to write file');
         break;
-      case ErrorCode.INVALID_KEY:
-        console.error('Invalid file key or bucket name');
+      case ErrorCode.READ_FILE_ERROR:
+        console.error('Failed to read file');
         break;
       default:
         console.error('Storage error:', error.message);
