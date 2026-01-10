@@ -6,7 +6,7 @@
 // app.module.ts
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { MemberBaseRootModule } from '@rytass/member-base-nestjs-module';
+import { MemberBaseModule } from '@rytass/member-base-nestjs-module';
 import { MemberEntity } from './models/member.entity.ts';
 
 @Module({
@@ -14,7 +14,7 @@ import { MemberEntity } from './models/member.entity.ts';
     TypeOrmModule.forRoot({
       // ... typeorm configuration
     }),
-    MemberBaseRootModule.forRoot({
+    MemberBaseModule.forRoot({
       memberEntity: MemberEntity, // register custom child entity
     }),
   ],
@@ -99,14 +99,14 @@ export class MemberService {
 // app.module.ts
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { MemberBaseRootModule } from '@rytass/member-base-nestjs-module';
+import { MemberBaseModule } from '@rytass/member-base-nestjs-module';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot({
       // ... typeorm configuration
     }),
-    MemberBaseRootModule.forRoot({
+    MemberBaseModule.forRoot({
       casbinAdapterOptions: {
         type: 'postgres',
         host: 'localhost',
