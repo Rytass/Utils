@@ -185,7 +185,7 @@ if (isValid) {
 
 ```typescript
 // Validate mobile barcode before use
-const isValidMobile = await invoiceGateway.isValidMobileBarcode('/-F-K0PR');
+const isValidMobile = await invoiceGateway.isMobileBarcodeValid('/-F-K0PR');
 
 if (isValidMobile) {
   // Proceed with mobile carrier invoice
@@ -198,7 +198,7 @@ if (isValidMobile) {
 
 ```typescript
 // Validate donation code (love code)
-const isValidLoveCode = await invoiceGateway.isValidLoveCode('001');
+const isValidLoveCode = await invoiceGateway.isLoveCodeValid('001');
 
 if (isValidLoveCode) {
   // Issue donation invoice
@@ -247,7 +247,7 @@ const mixedTaxInvoice = await invoiceGateway.issue({
       name: 'Zero-rate Export',
       quantity: 1,
       unitPrice: 300,
-      taxType: TaxType.ZERO_RATE,
+      taxType: TaxType.ZERO_TAX,
     },
   ],
 });
@@ -294,31 +294,41 @@ if (voidResult.success) {
 ### Issue Allowance
 
 ```typescript
-// Issue allowance for partial refund
-const allowance = await invoiceGateway.issueAllowance({
+// First, query the invoice
+const invoice = await invoiceGateway.query({
   invoiceNumber: 'ZZ12345678',
-  buyerEmail: 'customer@example.com',
-  items: [
+  issuedOn: new Date('2024-08-14'),
+});
+
+// Issue allowance for partial refund
+const updatedInvoice = await invoiceGateway.allowance(
+  invoice,
+  [
     {
       name: 'Partial Refund - Product Return',
       quantity: 1,
       unitPrice: 500, // Allowance amount
     },
   ],
-  reason: 'Product defect',
-});
+  {
+    buyerName: 'Customer Name',
+    notifyEmail: 'customer@example.com',
+  },
+);
 
-console.log('Allowance Number:', allowance.allowanceNumber);
+console.log('Allowances:', updatedInvoice.allowances);
 ```
 
 ### Void Allowance
 
 ```typescript
-// Void an issued allowance
-const voidAllowanceResult = await invoiceGateway.voidAllowance({
-  allowanceNumber: 'AL12345678',
-  reason: 'Incorrect allowance amount',
-});
+// Void (invalidate) an issued allowance
+// First get the allowance from the invoice
+const allowance = invoice.allowances[0];
+const updatedInvoice = await invoiceGateway.invalidAllowance(
+  allowance,
+  'Incorrect allowance amount',
+);
 ```
 
 ## Configuration Options
@@ -385,7 +395,7 @@ const exportInvoice = await invoiceGateway.issue({
       name: 'Export Product',
       quantity: 5,
       unitPrice: 1000,
-      taxType: TaxType.ZERO_RATE,
+      taxType: TaxType.ZERO_TAX,
     },
   ],
 });
