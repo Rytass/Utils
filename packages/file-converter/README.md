@@ -73,15 +73,17 @@ const manager = new ConverterManager([
 
   // Step 2: Add watermark
   new ImageWatermark({
-    watermarkPath: './logo.png',
-    position: 'bottom-right',
-    opacity: 0.7,
-    margin: 20,
+    watermarks: [
+      {
+        image: './logo.png',
+        gravity: 'southeast', // sharp gravity: northwest, north, northeast, west, center, east, southwest, south, southeast
+      },
+    ],
   }),
 
   // Step 3: Convert to WebP
   new ImageTranscoder({
-    format: 'webp',
+    targetFormat: 'webp',
     quality: 85,
   }),
 ]);
@@ -209,7 +211,7 @@ import { pipeline } from 'stream/promises';
 
 const manager = new ConverterManager([
   new ImageResizer({ maxWidth: 1920, maxHeight: 1080 }),
-  new ImageTranscoder({ format: 'jpeg', quality: 90 }),
+  new ImageTranscoder({ targetFormat: 'jpeg', quality: 90 }),
 ]);
 
 // Process large file with streams
@@ -249,8 +251,7 @@ function createImagePipeline(options: { resize?: boolean; watermark?: boolean; o
   if (options.watermark) {
     converters.push(
       new ImageWatermark({
-        watermarkPath: './watermark.png',
-        position: 'bottom-right',
+        watermarks: [{ image: './watermark.png', gravity: 'southeast' }],
       }),
     );
   }
@@ -258,7 +259,7 @@ function createImagePipeline(options: { resize?: boolean; watermark?: boolean; o
   if (options.optimize) {
     converters.push(
       new ImageTranscoder({
-        format: 'webp',
+        targetFormat: 'webp',
         quality: 85,
       }),
     );
@@ -329,7 +330,7 @@ const upload = multer({ memory: true });
 // Create conversion pipeline
 const imageProcessor = new ConverterManager([
   new ImageResizer({ maxWidth: 1200, maxHeight: 800 }),
-  new ImageTranscoder({ format: 'webp', quality: 85 }),
+  new ImageTranscoder({ targetFormat: 'webp', quality: 85 }),
 ]);
 
 app.post('/upload', upload.single('image'), async (req, res) => {
@@ -367,18 +368,16 @@ export class ImageProcessingService {
     // Thumbnail pipeline
     this.thumbnailProcessor = new ConverterManager([
       new ImageResizer({ maxWidth: 300, maxHeight: 300 }),
-      new ImageTranscoder({ format: 'jpeg', quality: 80 }),
+      new ImageTranscoder({ targetFormat: 'jpeg', quality: 80 }),
     ]);
 
     // Full-size pipeline
     this.fullSizeProcessor = new ConverterManager([
       new ImageResizer({ maxWidth: 1920, maxHeight: 1080 }),
       new ImageWatermark({
-        watermarkPath: './assets/watermark.png',
-        position: 'bottom-right',
-        opacity: 0.5,
+        watermarks: [{ image: './assets/watermark.png', gravity: 'southeast' }],
       }),
-      new ImageTranscoder({ format: 'webp', quality: 90 }),
+      new ImageTranscoder({ targetFormat: 'webp', quality: 90 }),
     ]);
   }
 
@@ -468,7 +467,7 @@ class BatchImageProcessor {
 
 // Usage
 const batchProcessor = new BatchImageProcessor(
-  new ConverterManager([new ImageResizer({ maxWidth: 1200 }), new ImageTranscoder({ format: 'webp' })]),
+  new ConverterManager([new ImageResizer({ maxWidth: 1200 }), new ImageTranscoder({ targetFormat: 'webp' })]),
 );
 
 const results = await batchProcessor.processDirectory('./input-images', './output-images', { parallel: 10 });
