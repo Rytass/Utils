@@ -229,66 +229,59 @@ const articles = await articleService.findArticles({
 ## Version Control
 
 ```typescript
-// Create article version
-const version = await articleService.createVersion(articleId, {
+// Add a new version to an article
+const article = await articleService.addVersion(articleId, {
   title: 'Updated Title',
   content: 'Updated content',
-  changeReason: 'Fixed typos',
-  authorId: userId,
 });
 
-// Get version history
-const versions = await articleService.getVersionHistory(articleId);
+// Get specific version of an article
+const articleWithVersion = await articleService.findById(articleId, {
+  version: 2, // Specific version number
+});
 
-// Revert to specific version
-await articleService.revertToVersion(articleId, versionId);
-
-// Compare version differences
-const diff = await articleService.compareVersions(articleId, version1Id, version2Id);
+// Delete a version
+await articleService.deleteVersion(articleId, versionNumber);
 ```
 
 ## Approval Workflow
 
 ```typescript
 // Submit article for approval
-const signatureRequest = await articleService.submitForApproval(articleId, {
-  submitterId: userId,
-  comments: 'Please review this article',
-});
+await articleService.submit(articleId, { userId });
 
-// Approve article
-await articleService.approveArticle(articleId, {
-  approverId: managerId,
-  level: 2, // Approval level
-  comments: 'Content looks good, approved',
-});
+// Approve a specific article version
+await articleService.approveVersion(
+  { id: articleId, version: 1 },
+  { userId: managerId, signatureLevelId: 'level-2' },
+);
 
-// Reject article
-await articleService.rejectArticle(articleId, {
-  reviewerId: managerId,
-  reason: 'Content needs revision',
-  suggestions: 'Please add more details',
-});
+// Reject a specific article version
+await articleService.rejectVersion(
+  { id: articleId },
+  { userId: managerId, signatureLevelId: 'level-2', reason: 'Content needs revision' },
+);
 ```
 
 ## Full-Text Search
 
 ```typescript
-// Full-text search
-const searchResults = await articleService.searchArticles({
-  query: 'search keywords',
-  language: 'zh-TW',
-  categories: ['tech', 'news'],
-  dateRange: {
-    from: new Date('2024-01-01'),
-    to: new Date('2024-12-31'),
-  },
-  page: 1,
+import { ArticleSearchMode } from '@rytass/cms-base-nestjs-module';
+
+// Full-text search using findCollection with searchTerm
+const searchResults = await articleService.findCollection({
+  searchTerm: 'search keywords',
+  searchMode: ArticleSearchMode.FULL_TEXT, // FULL_TEXT | TITLE | TITLE_AND_TAG
+  offset: 0,
   limit: 20,
 });
 
-// Search suggestions (auto-complete)
-const suggestions = await articleService.getSuggestions('keywords');
+// Title and tag search
+const titleResults = await articleService.findCollection({
+  searchTerm: 'keywords',
+  searchMode: ArticleSearchMode.TITLE_AND_TAG,
+  requiredCategoryIds: ['tech-category-id'],
+});
 ```
 
 ## DataLoader Integration
