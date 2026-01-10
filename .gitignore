@@ -63,9 +63,8 @@ Thumbs.db
 frontend
 
 # Claude Code
-.claude
-CLAUDE.md
-__FOR_DESIGN/
+.claude/*
+!.claude/skills
 
 # Nx
 .nx/cache
