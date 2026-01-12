@@ -15,11 +15,11 @@ const config = {
   testMatch: ['**/+(*.)+(spec|test).+(ts|js)?(x)'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
-    '^uuid$': 'uuid',
+    '^uuid$': '<rootDir>/jest.mocks/uuid.js',
     '^file-type$': '<rootDir>/jest.mocks/file-type.js',
     '@rytass/([a-zA-Z-_/]*)$': '<rootDir>/packages/$1/src',
   },
-  transformIgnorePatterns: ['node_modules/(?!(file-type|strtok3|token-types|@tokenizer|uint8array-extras))/'],
+  transformIgnorePatterns: ['node_modules/(?!(file-type|strtok3|token-types|@tokenizer|uint8array-extras|uuid))/'],
   modulePathIgnorePatterns: ['/lib/'],
   collectCoverageFrom: [
     'packages/*/src/**/*',
