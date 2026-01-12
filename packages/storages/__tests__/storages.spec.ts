@@ -6,7 +6,7 @@ import { resolve } from 'path';
 import { createHash } from 'crypto';
 import { Readable } from 'stream';
 import { readFileSync, createReadStream } from 'fs';
-import { Storage } from '../src';
+import { Storage, StorageError, ErrorCode } from '../src';
 
 describe('Storage', () => {
   describe('Filename getter', () => {
@@ -154,6 +154,40 @@ describe('Storage', () => {
       expect(() => storage.isExists('file')).toThrow();
       expect(() => storage.write(Buffer.from([]))).toThrow();
       expect(() => storage.batchWrite([Buffer.from([])])).toThrow();
+    });
+  });
+
+  describe('StorageError', () => {
+    it('should create error with custom message', () => {
+      const error = new StorageError(ErrorCode.READ_FILE_ERROR, 'Custom error message');
+
+      expect(error.code).toBe(ErrorCode.READ_FILE_ERROR);
+      expect(error.message).toBe('Custom error message');
+    });
+
+    it('should create error with default message', () => {
+      const error = new StorageError(ErrorCode.READ_FILE_ERROR);
+
+      expect(error.code).toBe(ErrorCode.READ_FILE_ERROR);
+      expect(error.message).toBe('READ_FILE_ERROR');
+    });
+
+    it('should create error for each error code', () => {
+      const codes = [
+        ErrorCode.WRITE_FILE_ERROR,
+        ErrorCode.READ_FILE_ERROR,
+        ErrorCode.REMOVE_FILE_ERROR,
+        ErrorCode.UNRECOGNIZED_ERROR,
+        ErrorCode.DIRECTORY_NOT_FOUND,
+        ErrorCode.FILE_NOT_FOUND,
+      ];
+
+      codes.forEach(code => {
+        const error = new StorageError(code);
+
+        expect(error.code).toBe(code);
+        expect(error.message).toBeDefined();
+      });
     });
   });
 });
