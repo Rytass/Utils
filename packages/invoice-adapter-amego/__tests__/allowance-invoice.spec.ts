@@ -557,6 +557,81 @@ describe('AmegoInvoiceGateway:Allowance', () => {
     });
   });
 
+  describe('allowance with undefined taxType (default to TAXED)', () => {
+    it('should use default TAXED when item.taxType is undefined', async () => {
+      mockedAxios.post.mockImplementation(async (url: string, _data: AmegoApiRequestData) => {
+        if (url === `${baseUrl}/json/invoice_query`) {
+          return {
+            data: {
+              code: 0,
+              msg: '',
+              data: {
+                invoice_number: 'AC12367720',
+                invoice_type: 'C0401',
+                invoice_status: 99,
+                invoice_date: '20250609',
+                invoice_time: '22:20:29',
+                buyer_identifier: '55880710',
+                buyer_name: '翔光製帽股份有限公司',
+                sales_amount: 95,
+                tax_type: 1,
+                tax_rate: '0.05',
+                tax_amount: 5,
+                total_amount: 100,
+                random_number: '6121',
+                order_id: '202506091426232000',
+                detailVat: 1,
+                create_date: 1749478829,
+                carrier_type: '',
+                carrier_id1: '',
+                carrier_id2: '',
+                allowance: [],
+                product_item: [
+                  {
+                    description: '商品',
+                    quantity: 1,
+                    unit_price: 100,
+                    tax_type: 1,
+                    amount: 100,
+                    unit: '',
+                  },
+                ],
+              },
+            },
+          };
+        }
+
+        if (url === `${baseUrl}/json/g0401`) {
+          return {
+            data: {
+              code: 0,
+              msg: '',
+            },
+          };
+        }
+
+        throw new Error(`Unexpected URL: ${url}`);
+      });
+
+      const invoice = await invoiceGateway.query({
+        orderId: '202506091426232000',
+      });
+
+      // Create allowance with item that has undefined taxType
+      const result = await invoiceGateway.allowance(invoice, [
+        {
+          name: '商品',
+          quantity: 1,
+          unitPrice: 50,
+          // taxType is intentionally omitted (undefined) - should default to TAXED
+        } as { name: string; quantity: number; unitPrice: number; taxType: TaxType },
+      ]);
+
+      expect(result.allowances.length).toBe(1);
+      expect(result.allowances[0].allowancePrice).toBe(50);
+    });
+  });
+
   describe('allowance API errors', () => {
     it('should throw error when allowance API returns error code', async () => {
       mockedAxios.post.mockImplementation(async (url: string, _data: AmegoApiRequestData) => {

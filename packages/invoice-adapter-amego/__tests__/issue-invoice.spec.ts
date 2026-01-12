@@ -286,6 +286,113 @@ describe('AmegoInvoiceGateway Issue Invoice', () => {
 
         expect(invoice.orderId).toBe('202506091426231995');
       });
+
+      it('should issue invoice with item without taxType (default to TAXED)', async () => {
+        const invoice = await invoiceGateway.issue({
+          orderId: '202506091426231996',
+          vatNumber: '55880710',
+          items: [
+            {
+              name: '商品無稅別',
+              quantity: 1,
+              unitPrice: 100,
+              // taxType is intentionally omitted (undefined) - should default to TAXED
+            } as { name: string; quantity: number; unitPrice: number; taxType: TaxType },
+          ],
+          taxType: TaxType.TAXED,
+          detailVat: true,
+        });
+
+        expect(invoice.orderId).toBe('202506091426231996');
+      });
+
+      it('should issue invoice with null invoice_time from API response (uses default date)', async () => {
+        const beforeTest = new Date();
+
+        mockedAxios.post.mockResolvedValue({
+          data: {
+            code: 0,
+            msg: '',
+            invoice_number: 'AC12367706',
+            invoice_time: null, // Null invoice_time - falls back to constructor default (new Date())
+            random_number: '6121',
+            barcode: '11406AC123677066121',
+            qrcode_left: 'AC1236770611406096121',
+            qrcode_right: '**口香糖:10:10',
+          },
+        });
+
+        const invoice = await invoiceGateway.issue({
+          orderId: '202506091426231997',
+          vatNumber: '55880710',
+          items: [
+            {
+              name: '商品',
+              quantity: 1,
+              unitPrice: 100,
+              taxType: TaxType.TAXED,
+            },
+          ],
+          taxType: TaxType.TAXED,
+          detailVat: true,
+        });
+
+        const afterTest = new Date();
+
+        expect(invoice.orderId).toBe('202506091426231997');
+        // When invoice_time is null, issuedOn falls back to default Date()
+        expect(invoice.issuedOn.getTime()).toBeGreaterThanOrEqual(beforeTest.getTime());
+        expect(invoice.issuedOn.getTime()).toBeLessThanOrEqual(afterTest.getTime());
+      });
+
+      it('should issue invoice without carrier (empty carrierId)', async () => {
+        const invoice = await invoiceGateway.issue({
+          orderId: '202506091426231998',
+          vatNumber: '55880710',
+          items: [
+            {
+              name: '商品',
+              quantity: 1,
+              unitPrice: 100,
+              taxType: TaxType.TAXED,
+            },
+          ],
+          taxType: TaxType.TAXED,
+          detailVat: true,
+          // No carrier specified - carrierId should be empty string
+        });
+
+        expect(invoice.orderId).toBe('202506091426231998');
+        expect(invoice.carrier).toBeUndefined();
+      });
+
+      it('should handle undefined carrierId from getCarrierInfo (fallback to empty string)', async () => {
+        // Spy on getCarrierInfo to return undefined carrierId
+        const getCarrierInfoSpy = jest.spyOn(invoiceGateway, 'getCarrierInfo').mockReturnValue({
+          carrierId: undefined as unknown as string, // Force undefined to test ?? fallback
+          carrierType: '',
+          buyerEmail: 'test@example.com',
+          loveCode: '',
+        });
+
+        const invoice = await invoiceGateway.issue({
+          orderId: '202506091426231999',
+          vatNumber: '55880710',
+          items: [
+            {
+              name: '商品',
+              quantity: 1,
+              unitPrice: 100,
+              taxType: TaxType.TAXED,
+            },
+          ],
+          taxType: TaxType.TAXED,
+          detailVat: true,
+        });
+
+        expect(invoice.orderId).toBe('202506091426231999');
+        getCarrierInfoSpy.mockRestore();
+      });
     });
 
     describe('validation errors', () => {
@@ -554,6 +661,117 @@ describe('AmegoInvoiceGateway Issue Invoice', () => {
         carrierId: '',
         carrierType: '',
         buyerEmail: 'test@example.com',
+        loveCode: '',
+      });
+    });
+
+    it('should handle undefined buyerEmail with platform carrier (fallback to empty string)', () => {
+      const result = invoiceGateway.getCarrierInfo({
+        carrier: { type: InvoiceCarrierType.PLATFORM, code: '' },
+        // buyerEmail intentionally undefined
+      });
+
+      expect(result).toEqual({
+        carrierId: '',
+        carrierType: 'amego',
+        buyerEmail: '',
+        loveCode: '',
+      });
+    });
+
+    it('should handle undefined carrier code with mobile carrier (fallback to empty string)', () => {
+      const result = invoiceGateway.getCarrierInfo({
+        carrier: { type: InvoiceCarrierType.MOBILE }, // code is undefined
+        buyerEmail: 'test@example.com',
+      } as { carrier: { type: InvoiceCarrierType; code?: string }; buyerEmail?: string });
+
+      expect(result).toEqual({
+        carrierId: '',
+        carrierType: '3J0002',
+        buyerEmail: 'test@example.com',
+        loveCode: '',
+      });
+    });
+
+    it('should handle undefined carrier code with MOICA carrier (fallback to empty string)', () => {
+      const result = invoiceGateway.getCarrierInfo({
+        carrier: { type: InvoiceCarrierType.MOICA }, // code is undefined
+        buyerEmail: 'test@example.com',
+      } as { carrier: { type: InvoiceCarrierType; code?: string }; buyerEmail?: string });
+
+      expect(result).toEqual({
+        carrierId: '',
+        carrierType: 'CQ0001',
+        buyerEmail: 'test@example.com',
+        loveCode: '',
+      });
+    });
+
+    it('should handle undefined buyerEmail with MOICA carrier (fallback to empty string)', () => {
+      const result = invoiceGateway.getCarrierInfo({
+        carrier: { type: InvoiceCarrierType.MOICA, code: 'AB12345678901234567890' },
+        // buyerEmail intentionally undefined
+      });
+
+      expect(result).toEqual({
+        carrierId: 'AB12345678901234567890',
+        carrierType: 'CQ0001',
+        buyerEmail: '',
+        loveCode: '',
+      });
+    });
+
+    it('should handle undefined buyerEmail with MOBILE carrier (fallback to empty string)', () => {
+      const result = invoiceGateway.getCarrierInfo({
+        carrier: { type: InvoiceCarrierType.MOBILE, code: '/DDPD7U2' },
+        // buyerEmail intentionally undefined
+      });
+
+      expect(result).toEqual({
+        carrierId: '/DDPD7U2',
+        carrierType: '3J0002',
+        buyerEmail: '',
+        loveCode: '',
+      });
+    });
+
+    it('should handle undefined carrier code with LOVE_CODE carrier (fallback to empty string)', () => {
+      const result = invoiceGateway.getCarrierInfo({
+        carrier: { type: InvoiceCarrierType.LOVE_CODE }, // code is undefined
+        buyerEmail: 'test@example.com',
+      } as { carrier: { type: InvoiceCarrierType; code?: string }; buyerEmail?: string });
+
+      expect(result).toEqual({
+        carrierId: '',
+        carrierType: '',
+        buyerEmail: 'test@example.com',
+        loveCode: '',
+      });
+    });
+
+    it('should handle undefined buyerEmail with LOVE_CODE carrier (fallback to empty string)', () => {
+      const result = invoiceGateway.getCarrierInfo({
+        carrier: { type: InvoiceCarrierType.LOVE_CODE, code: '001' },
+        // buyerEmail intentionally undefined
+      });
+
+      expect(result).toEqual({
+        carrierId: '',
+        carrierType: '',
+        buyerEmail: '',
+        loveCode: '001',
+      });
+    });
+
+    it('should handle undefined buyerEmail with default carrier (fallback to empty string)', () => {
+      const result = invoiceGateway.getCarrierInfo({
+        // No carrier, no buyerEmail
+      });
+
+      expect(result).toEqual({
+        carrierId: '',
+        carrierType: '',
+        buyerEmail: '',
         loveCode: '',
       });
     });

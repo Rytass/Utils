@@ -764,7 +764,7 @@ describe('Amego Invoice Query', () => {
         );
       });
 
-      it('should handle carrier parsing with carrierId2 when carrierId1 is empty', async () => {
+      it('should handle carrier parsing with carrierId2 when carrierId1 is empty (MOICA)', async () => {
         mockedAxios.post.mockResolvedValue({
           data: {
             code: 0,
@@ -808,6 +808,458 @@ describe('Amego Invoice Query', () => {
           type: InvoiceCarrierType.MOICA,
           code: 'CA123456789',
         });
+      });
+
+      it('should handle carrier parsing with carrierId2 when carrierId1 is empty (MOBILE)', async () => {
+        mockedAxios.post.mockResolvedValue({
+          data: {
+            code: 0,
+            msg: '',
+            data: {
+              invoice_number: 'AC12364105',
+              invoice_type: 'C0401',
+              invoice_status: 99,
+              invoice_date: '20250606',
+              invoice_time: '14:30:54',
+              buyer_identifier: '55880710',
+              buyer_name: '55880710',
+              sales_amount: 238,
+              tax_type: 1,
+              tax_rate: '0.05',
+              tax_amount: 12,
+              total_amount: 250,
+              random_number: '6476',
+              order_id: '3g49n14',
+              create_date: 1749191454,
+              carrier_type: '3J0002', // Mobile carrier
+              carrier_id1: '', // Empty carrierId1
+              carrier_id2: '/DDPD7U2', // Using carrierId2
+              product_item: [
+                {
+                  description: '商品',
+                  quantity: 1,
+                  unit_price: 100,
+                  tax_type: 1,
+                  amount: 100,
+                },
+              ],
+              allowance: [],
+            },
+          },
+        });
+
+        const invoice = await invoiceGateway.query({ orderId: '3g49n14' });
+
+        expect(invoice.carrier).toEqual({
+          type: InvoiceCarrierType.MOBILE,
+          code: '/DDPD7U2',
+        });
+      });
+
+      it('should handle carrier parsing with carrierId2 when carrierId1 is empty (PLATFORM)', async () => {
+        mockedAxios.post.mockResolvedValue({
+          data: {
+            code: 0,
+            msg: '',
+            data: {
+              invoice_number: 'AC12364106',
+              invoice_type: 'C0401',
+              invoice_status: 99,
+              invoice_date: '20250606',
+              invoice_time: '14:30:54',
+              buyer_identifier: '55880710',
+              buyer_name: '55880710',
+              sales_amount: 238,
+              tax_type: 1,
+              tax_rate: '0.05',
+              tax_amount: 12,
+              total_amount: 250,
+              random_number: '6476',
+              order_id: '3g49n15',
+              create_date: 1749191454,
+              carrier_type: 'amego', // Platform carrier
+              carrier_id1: '', // Empty carrierId1
+              carrier_id2: 'user2@example.com', // Using carrierId2
+              product_item: [
+                {
+                  description: '商品',
+                  quantity: 1,
+                  unit_price: 100,
+                  tax_type: 1,
+                  amount: 100,
+                },
+              ],
+              allowance: [],
+            },
+          },
+        });
+
+        const invoice = await invoiceGateway.query({ orderId: '3g49n15' });
+
+        expect(invoice.carrier).toEqual({
+          type: InvoiceCarrierType.PLATFORM,
+          code: 'user2@example.com',
+        });
+      });
+
+      it('should handle carrier parsing with empty carrierId1 and carrierId2 (fallback to empty string) - MOBILE', async () => {
+        mockedAxios.post.mockResolvedValue({
+          data: {
+            code: 0,
+            msg: '',
+            data: {
+              invoice_number: 'AC12364107',
+              invoice_type: 'C0401',
+              invoice_status: 99,
+              invoice_date: '20250606',
+              invoice_time: '14:30:54',
+              buyer_identifier: '55880710',
+              buyer_name: '55880710',
+              sales_amount: 238,
+              tax_type: 1,
+              tax_rate: '0.05',
+              tax_amount: 12,
+              total_amount: 250,
+              random_number: '6476',
+              order_id: '3g49n16',
+              create_date: 1749191454,
+              carrier_type: '3J0002', // Mobile carrier
+              carrier_id1: '', // Empty
+              carrier_id2: '', // Also empty - should fallback to empty string
+              product_item: [
+                {
+                  description: '商品',
+                  quantity: 1,
+                  unit_price: 100,
+                  tax_type: 1,
+                  amount: 100,
+                },
+              ],
+              allowance: [],
+            },
+          },
+        });
+
+        const invoice = await invoiceGateway.query({ orderId: '3g49n16' });
+
+        expect(invoice.carrier).toEqual({
+          type: InvoiceCarrierType.MOBILE,
+          code: '',
+        });
+      });
+
+      it('should handle carrier parsing with empty carrierId1 and carrierId2 (fallback to empty string) - MOICA', async () => {
+        mockedAxios.post.mockResolvedValue({
+          data: {
+            code: 0,
+            msg: '',
+            data: {
+              invoice_number: 'AC12364108',
+              invoice_type: 'C0401',
+              invoice_status: 99,
+              invoice_date: '20250606',
+              invoice_time: '14:30:54',
+              buyer_identifier: '55880710',
+              buyer_name: '55880710',
+              sales_amount: 238,
+              tax_type: 1,
+              tax_rate: '0.05',
+              tax_amount: 12,
+              total_amount: 250,
+              random_number: '6476',
+              order_id: '3g49n17',
+              create_date: 1749191454,
+              carrier_type: 'CQ0001', // MOICA carrier
+              carrier_id1: '', // Empty
+              carrier_id2: '', // Also empty - should fallback to empty string
+              product_item: [
+                {
+                  description: '商品',
+                  quantity: 1,
+                  unit_price: 100,
+                  tax_type: 1,
+                  amount: 100,
+                },
+              ],
+              allowance: [],
+            },
+          },
+        });
+
+        const invoice = await invoiceGateway.query({ orderId: '3g49n17' });
+
+        expect(invoice.carrier).toEqual({
+          type: InvoiceCarrierType.MOICA,
+          code: '',
+        });
+      });
+
+      it('should handle carrier parsing with empty carrierId1 and carrierId2 (fallback to empty string) - PLATFORM', async () => {
+        mockedAxios.post.mockResolvedValue({
+          data: {
+            code: 0,
+            msg: '',
+            data: {
+              invoice_number: 'AC12364109',
+              invoice_type: 'C0401',
+              invoice_status: 99,
+              invoice_date: '20250606',
+              invoice_time: '14:30:54',
+              buyer_identifier: '55880710',
+              buyer_name: '55880710',
+              sales_amount: 238,
+              tax_type: 1,
+              tax_rate: '0.05',
+              tax_amount: 12,
+              total_amount: 250,
+              random_number: '6476',
+              order_id: '3g49n18',
+              create_date: 1749191454,
+              carrier_type: 'amego', // Platform carrier
+              carrier_id1: '', // Empty
+              carrier_id2: '', // Also empty - should fallback to empty string
+              product_item: [
+                {
+                  description: '商品',
+                  quantity: 1,
+                  unit_price: 100,
+                  tax_type: 1,
+                  amount: 100,
+                },
+              ],
+              allowance: [],
+            },
+          },
+        });
+
+        const invoice = await invoiceGateway.query({ orderId: '3g49n18' });
+
+        expect(invoice.carrier).toEqual({
+          type: InvoiceCarrierType.PLATFORM,
+          code: '',
+        });
+      });
+
+      it('should return undefined when carrierType is undefined', async () => {
+        mockedAxios.post.mockResolvedValue({
+          data: {
+            code: 0,
+            msg: '',
+            data: {
+              invoice_number: 'AC12364101',
+              invoice_type: 'C0401',
+              invoice_status: 99,
+              invoice_date: '20250606',
+              invoice_time: '14:30:54',
+              buyer_identifier: '55880710',
+              buyer_name: '55880710',
+              sales_amount: 238,
+              tax_type: 1,
+              tax_rate: '0.05',
+              tax_amount: 12,
+              total_amount: 250,
+              random_number: '6476',
+              order_id: '3g49n9',
+              create_date: 1749191454,
+              // carrier_type is not present (undefined)
+              carrier_id1: '',
+              carrier_id2: '',
+              product_item: [
+                {
+                  description: '商品',
+                  quantity: 1,
+                  unit_price: 100,
+                  tax_type: 1,
+                  amount: 100,
+                },
+              ],
+              allowance: [],
+            },
+          },
+        });
+
+        const invoice = await invoiceGateway.query({ orderId: '3g49n9' });
+
+        expect(invoice.carrier).toBeUndefined();
+      });
+
+      it('should handle voided invoice with cancel_date', async () => {
+        mockedAxios.post.mockResolvedValue({
+          data: {
+            code: 0,
+            msg: '',
+            data: {
+              invoice_number: 'AC12364102',
+              invoice_type: 'F0501', // Void invoice type
+              invoice_status: 91,
+              invoice_date: '20250606',
+              invoice_time: '14:30:54',
+              buyer_identifier: '55880710',
+              buyer_name: '55880710',
+              sales_amount: 238,
+              tax_type: 1,
+              tax_rate: '0.05',
+              tax_amount: 12,
+              total_amount: 250,
+              random_number: '6476',
+              order_id: '3g49n10',
+              create_date: 1749191454,
+              cancel_date: 1749200000, // Voided with cancel_date
+              carrier_type: '',
+              carrier_id1: '',
+              carrier_id2: '',
+              product_item: [
+                {
+                  description: '商品',
+                  quantity: 1,
+                  unit_price: 100,
+                  tax_type: 1,
+                  amount: 100,
+                },
+              ],
+              allowance: [],
+            },
+          },
+        });
+
+        const invoice = await invoiceGateway.query({ orderId: '3g49n10' });
+
+        expect(invoice.state).toBe(InvoiceState.VOID);
+        expect(invoice.voidOn).not.toBeNull();
+        expect(invoice.voidOn).toBeInstanceOf(Date);
+      });
+
+      it('should handle invoice without cancel_date (voidOn is null)', async () => {
+        mockedAxios.post.mockResolvedValue({
+          data: {
+            code: 0,
+            msg: '',
+            data: {
+              invoice_number: 'AC12364103',
+              invoice_type: 'C0401',
+              invoice_status: 99,
+              invoice_date: '20250606',
+              invoice_time: '14:30:54',
+              buyer_identifier: '55880710',
+              buyer_name: '55880710',
+              sales_amount: 238,
+              tax_type: 1,
+              tax_rate: '0.05',
+              tax_amount: 12,
+              total_amount: 250,
+              random_number: '6476',
+              order_id: '3g49n11',
+              create_date: 1749191454,
+              cancel_date: null, // No cancel date - voidOn should be null
+              carrier_type: '',
+              carrier_id1: '',
+              carrier_id2: '',
+              product_item: [
+                {
+                  description: '商品',
+                  quantity: 1,
+                  unit_price: 100,
+                  tax_type: 1,
+                  amount: 100,
+                },
+              ],
+              allowance: [],
+            },
+          },
+        });
+
+        const invoice = await invoiceGateway.query({ orderId: '3g49n11' });
+
+        expect(invoice.voidOn).toBeNull();
+      });
+
+      it('should handle invoice with empty invoice_number and random_number (default to empty string)', async () => {
+        mockedAxios.post.mockResolvedValue({
+          data: {
+            code: 0,
+            msg: '',
+            data: {
+              invoice_number: '', // Empty invoice number - should use default ''
+              invoice_type: 'C0401',
+              invoice_status: 99,
+              invoice_date: '20250606',
+              invoice_time: '14:30:54',
+              buyer_identifier: '55880710',
+              buyer_name: '55880710',
+              sales_amount: 238,
+              tax_type: 1,
+              tax_rate: '0.05',
+              tax_amount: 12,
+              total_amount: 250,
+              random_number: '', // Empty random number - should use default ''
+              order_id: '3g49n12',
+              create_date: 1749191454,
+              carrier_type: '',
+              carrier_id1: '',
+              carrier_id2: '',
+              product_item: [
+                {
+                  description: '商品',
+                  quantity: 1,
+                  unit_price: 100,
+                  tax_type: 1,
+                  amount: 100,
+                },
+              ],
+              allowance: [],
+            },
+          },
+        });
+
+        const invoice = await invoiceGateway.query({ orderId: '3g49n12' });
+
+        expect(invoice.invoiceNumber).toBe('');
+        expect(invoice.randomCode).toBe('');
+      });
+
+      it('should handle invoice with empty buyer_name and buyer_email_address (default to empty string)', async () => {
+        mockedAxios.post.mockResolvedValue({
+          data: {
+            code: 0,
+            msg: '',
+            data: {
+              invoice_number: 'AC12364104',
+              invoice_type: 'C0401',
+              invoice_status: 99,
+              invoice_date: '20250606',
+              invoice_time: '14:30:54',
+              buyer_identifier: '55880710',
+              buyer_name: '', // Empty buyer name - should use default ''
+              buyer_email_address: '', // Empty email - should use default ''
+              sales_amount: 238,
+              tax_type: 1,
+              tax_rate: '0.05',
+              tax_amount: 12,
+              total_amount: 250,
+              random_number: '6476',
+              order_id: '3g49n13',
+              create_date: 1749191454,
+              carrier_type: '',
+              carrier_id1: '',
+              carrier_id2: '',
+              product_item: [
+                {
+                  description: '商品',
+                  quantity: 1,
+                  unit_price: 100,
+                  tax_type: 1,
+                  amount: 100,
+                },
+              ],
+              allowance: [],
+            },
+          },
+        });
+
+        const invoice = await invoiceGateway.query({ orderId: '3g49n13' });
+
+        expect(invoice.buyerInfo?.name).toBe('');
+        expect(invoice.buyerInfo?.email).toBe('');
       });
     });
   });

@@ -307,6 +307,63 @@ describe('AmegoInvoice Model', () => {
     });
   });
 
+  describe('default values', () => {
+    it('should use current date when issuedOn is not provided', () => {
+      const beforeDate = new Date();
+
+      const invoice = new AmegoInvoice({
+        orderId: 'test-default-date',
+        invoiceNumber: 'AC12345700',
+        randomCode: '4444',
+        taxType: TaxType.TAXED,
+        // issuedOn is NOT provided
+        items: [
+          {
+            name: '測試商品',
+            quantity: 1,
+            unitPrice: 100,
+            taxType: TaxType.TAXED,
+          },
+        ],
+      });
+
+      const afterDate = new Date();
+
+      expect(invoice.issuedOn.getTime()).toBeGreaterThanOrEqual(beforeDate.getTime());
+      expect(invoice.issuedOn.getTime()).toBeLessThanOrEqual(afterDate.getTime());
+    });
+
+    it('should use empty array when items is an empty array', () => {
+      const invoice = new AmegoInvoice({
+        orderId: 'test-empty-items',
+        invoiceNumber: 'AC12345701',
+        randomCode: '5555',
+        taxType: TaxType.TAXED,
+        issuedOn: new Date('2025-01-01T00:00:00.000Z'),
+        items: [], // Empty array
+      });
+
+      expect(invoice.items).toEqual([]);
+      expect(invoice.issuedAmount).toBe(0);
+    });
+
+    it('should handle undefined items by throwing error (defensive code path)', () => {
+      // This test verifies that when items is undefined (bypassing TypeScript),
+      // the code will fail at options.items.reduce() before the ?? fallback is used
+      // This is expected behavior - the ?? is defensive code that can't be reached
+      expect(() => {
+        new AmegoInvoice({
+          orderId: 'test-undefined-items',
+          invoiceNumber: 'AC12345702',
+          randomCode: '6666',
+          taxType: TaxType.TAXED,
+          issuedOn: new Date('2025-01-01T00:00:00.000Z'),
+          items: undefined as unknown as [],
+        });
+      }).toThrow();
+    });
+  });
+
   describe('mixed item types', () => {
     it('should handle mixed tax types correctly', () => {
       const invoice = new AmegoInvoice({
@@ -688,6 +745,141 @@ describe('AmegoAllowance Model', () => {
 
       // nowAmount should be equal to issuedAmount since invalid allowance is ignored
       expect(invoice.nowAmount).toBe(100); // 100 - 0 (invalid allowance ignored)
+    });
+
+    it('should subtract allowancePrice when invoiceType does not end with 0401 (allowance)', () => {
+      // Test the branch where invoiceType does NOT end with '0401'
+      // In this case, allowancePrice should be subtracted instead of added
+
+      const parentInvoice = new AmegoInvoice({
+        orderId: 'test-non-0401',
+        invoiceNumber: 'AC88888888',
+        items: [
+          {
+            name: '測試商品',
+            quantity: 1,
+            unitPrice: 100,
+            taxType: TaxType.TAXED,
+          },
+        ],
+        taxType: TaxType.TAXED,
+        issuedOn: new Date('2025-01-01T00:00:00.000Z'),
+        allowances: [],
+        randomCode: '1234',
+        state: InvoiceState.ISSUED,
+        voidOn: null,
+      });
+
+      // Create an allowance with invoiceType NOT ending with '0401' (e.g., 'G0501')
+      const allowanceNon0401 = new AmegoAllowance({
+        allowanceNumber: 'AC88888888AL0001',
+        allowancedOn: new Date('2025-01-02T10:00:00.000Z'),
+        allowancePrice: 20,
+        items: [
+          {
+            name: '非0401類型折讓',
+            quantity: 1,
+            unitPrice: 20,
+            taxType: TaxType.TAXED,
+          },
+        ],
+        invoiceType: 'G0501', // Does NOT end with '0401'
+        status: InvoiceAllowanceState.ISSUED,
+        invalidOn: null,
+        parentInvoice,
+      });
+
+      // Add to accumulated allowances
+      parentInvoice.accumulatedAllowances.push(allowanceNon0401);
+
+      // Create second allowance to verify the calculation
+      const secondAllowance = new AmegoAllowance({
+        allowanceNumber: 'AC88888888AL0002',
+        allowancedOn: new Date('2025-01-03T10:00:00.000Z'),
+        allowancePrice: 10,
+        items: [
+          {
+            name: '第二次折讓',
+            quantity: 1,
+            unitPrice: 10,
+            taxType: TaxType.TAXED,
+          },
+        ],
+        invoiceType: 'G0401',
+        status: InvoiceAllowanceState.ISSUED,
+        invalidOn: null,
+        parentInvoice,
+      });
+
+      // remainingAmount = issuedAmount(100) - (sum - 20) = 100 - (-20) = 120
+      // Because invoiceType 'G0501' does NOT end with '0401', so it's sum - allowancePrice
+      expect(secondAllowance.remainingAmount).toBe(120);
+    });
+
+    it('should subtract allowancePrice when invoiceType does not end with 0401 (invoice constructor)', () => {
+      // Create a dummy parent invoice for the allowance
+      const dummyParentInvoice = new AmegoInvoice({
+        orderId: 'dummy-non-0401',
+        invoiceNumber: 'AC77777777',
+        items: [
+          {
+            name: '測試商品',
+            quantity: 1,
+            unitPrice: 50,
+            taxType: TaxType.TAXED,
+          },
+        ],
+        taxType: TaxType.TAXED,
+        issuedOn: new Date('2025-01-01T00:00:00.000Z'),
+        allowances: [],
+        randomCode: '1234',
+        state: InvoiceState.ISSUED,
+        voidOn: null,
+      });
+
+      // Create an allowance with invoiceType NOT ending with '0401'
+      const allowanceNon0401 = new AmegoAllowance({
+        allowanceNumber: 'AC77777777AL0001',
+        allowancedOn: new Date('2025-01-02T10:00:00.000Z'),
+        allowancePrice: 30,
+        items: [
+          {
+            name: '非0401類型折讓',
+            quantity: 1,
+            unitPrice: 30,
+            taxType: TaxType.TAXED,
+          },
+        ],
+        invoiceType: 'D0501', // Does NOT end with '0401'
+        status: InvoiceAllowanceState.ISSUED,
+        invalidOn: null,
+        parentInvoice: dummyParentInvoice,
+      });
+
+      // Create invoice with the non-0401 allowance
+      const invoice = new AmegoInvoice({
+        orderId: 'test-non-0401-invoice',
+        invoiceNumber: 'AC66666666',
+        items: [
+          {
+            name: '測試商品',
+            quantity: 1,
+            unitPrice: 100,
+            taxType: TaxType.TAXED,
+          },
+        ],
+        taxType: TaxType.TAXED,
+        issuedOn: new Date('2025-01-01T00:00:00.000Z'),
+        allowances: [allowanceNon0401],
+        randomCode: '1234',
+        state: InvoiceState.ISSUED,
+        voidOn: null,
+      });
+
+      // nowAmount = issuedAmount(100) - totalAllowanceAmount
+      // totalAllowanceAmount = sum - 30 = 0 - 30 = -30
+      // nowAmount = 100 - (-30) = 130
+      expect(invoice.nowAmount).toBe(130);
     });
   });
 });
