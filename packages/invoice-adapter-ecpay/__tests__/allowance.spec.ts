@@ -570,6 +570,44 @@ describe('ECPayInvoiceGateway:Allowance', () => {
       );
     });
 
+    it('should use default tax type (SPECIAL falls to default) in allowance on mixed taxed invoice', async () => {
+      const invoice = new ECPayInvoice({
+        orderId: FAKE_ORDER_ID,
+        taxType: TaxType.MIXED,
+        issuedOn: new Date(),
+        invoiceNumber: FAKE_INVOICE_NUMBER,
+        randomCode: FAKE_RANDOM_CODE,
+        items: [
+          {
+            name: '特殊稅率商品',
+            quantity: 10,
+            unitPrice: 100,
+          },
+        ],
+      });
+
+      // Reset remaining amount for this invoice
+      INVOICE_REMAINING_AMOUNT[FAKE_INVOICE_NUMBER] = 1000;
+
+      // Test default case (TaxType.SPECIAL falls through to default '1')
+      taxTypeCheckByCustomer.set('SPECIAL_TAX', '1');
+
+      await invoiceGateway.allowance(
+        invoice,
+        [
+          {
+            name: '特殊稅率商品',
+            quantity: 1,
+            unitPrice: 50,
+          },
+        ],
+        {
+          taxType: TaxType.SPECIAL,
+          buyerName: 'SPECIAL_TAX',
+        },
+      );
+    });
+
     it('should throw on allowance failed without predefined reason', () => {
       const invoice = new ECPayInvoice({
         orderId: FAKE_ORDER_ID,

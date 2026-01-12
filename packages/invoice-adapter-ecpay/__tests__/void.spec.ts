@@ -169,5 +169,63 @@ describe('ECPayInvoiceGateway Void', () => {
         }),
       ).rejects.toThrow();
     });
+
+    it('should return invoice without calling setVoid when InvoiceNo is null in response', async () => {
+      const postWithNullInvoice = jest.spyOn(axios, 'post');
+
+      postWithNullInvoice.mockImplementationOnce(async () => {
+        const cipher = createCipheriv('aes-128-cbc', DEFAULT_AES_KEY, DEFAULT_AES_IV);
+
+        cipher.setAutoPadding(true);
+
+        return {
+          data: {
+            MerchantID: DEFAULT_MERCHANT_ID,
+            RpHeader: {
+              Timestamp: Math.round(Date.now() / 1000),
+              Revision: '3.0.0',
+            },
+            TransCode: 1,
+            TransMsg: 'Success',
+            Data: [
+              cipher.update(
+                encodeURIComponent(
+                  JSON.stringify({
+                    RtnCode: 1,
+                    RtnMsg: '作廢發票成功',
+                    InvoiceNo: null, // InvoiceNo is null - should not call setVoid
+                  }),
+                ),
+                'utf8',
+                'base64',
+              ),
+              cipher.final('base64'),
+            ].join(''),
+          },
+        };
+      });
+
+      const mockInvoice = new ECPayInvoice({
+        items: [
+          {
+            name: '橡皮擦',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
+        issuedOn: new Date(),
+        invoiceNumber: FAKE_INVOICE_NUMBER,
+        randomCode: FAKE_RANDOM_CODE,
+        orderId: FAKE_ORDER_ID,
+        taxType: TaxType.TAXED,
+      });
+
+      const result = await invoiceGateway.void(mockInvoice, {
+        reason: '測試作廢',
+      });
+
+      // Invoice is returned but state should not be changed to VOID since InvoiceNo was null
+      expect(result.state).toBe(InvoiceState.ISSUED);
+    });
   });
 });
