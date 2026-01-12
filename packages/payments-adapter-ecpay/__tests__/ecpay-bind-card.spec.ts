@@ -85,6 +85,55 @@ describe('ECPayPayment Card Binding', () => {
     });
   });
 
+  it('should card binding fail with card already exists (RtnCode 10100112)', done => {
+    const payment = new ECPayPayment({
+      withServer: true,
+      serverHost: 'http://localhost:3333',
+      merchantId: MERCHANT_ID,
+      hashKey: HASH_KEY,
+      hashIv: HASH_IV,
+      baseUrl: BASE_URL,
+      onServerListen: async (): Promise<void> => {
+        const bindCardRequest = await payment.prepareBindCard('rytass');
+
+        bindCardRequest.formHTML;
+
+        // RtnCode 10100112 means card number already exists
+        const cardExistsResponse = {
+          RtnCode: '10100112',
+          RtnMsg: 'CardNo is existed',
+          MerchantID: MERCHANT_ID,
+          MerchantMemberID: `${MERCHANT_ID}${MEMBER_ID}`,
+          CardID: '187794',
+          Card6No: '431195',
+          Card4No: '2222',
+          BindingDate: '2023/11/25 19:42:31',
+          CheckMacValue: '9067C1EEA39B0C398D8BBE584694FCB6D9718EEB67A04F31074BECD85085D8B1',
+        };
+
+        request(payment._server as App)
+          .post('/payments/ecpay/bound-card-finished')
+          .send(new URLSearchParams(cardExistsResponse).toString())
+          .expect('Content-Type', 'text/plain')
+          .expect(200)
+          .then(res => {
+            expect(res.text).toEqual('1|OK');
+
+            expect(bindCardRequest.state).toEqual(ECPayBindCardRequestState.FAILED);
+            expect(bindCardRequest.failedMessage).not.toBeNull();
+            expect(bindCardRequest.failedMessage?.code).toEqual('10100112');
+            // When RtnCode is 10100112, additionalPayload is passed to fail()
+            // This covers lines 147-150 in ecpay-bind-card-request.ts
+            expect(bindCardRequest.cardId).toEqual('187794');
+            expect(bindCardRequest.cardNumberPrefix).toEqual('431195');
+            expect(bindCardRequest.cardNumberSuffix).toEqual('2222');
+
+            payment._server?.close(done);
+          });
+      },
+    });
+  });
+
   it('should card binding finish', done => {
     const payment = new ECPayPayment({
       withServer: true,
@@ -383,6 +432,31 @@ describe('ECPayPayment Card Binding', () => {
     ).rejects.toThrow();
   });
 
+  it('should throw when checkout with bound card has zero total amount', async () => {
+    const payment = new ECPayPayment({
+      merchantId: MERCHANT_ID,
+      hashKey: HASH_KEY,
+      hashIv: HASH_IV,
+      baseUrl: BASE_URL,
+    });
+
+    await expect(
+      payment.checkoutWithBoundCard({
+        memberId: MEMBER_ID,
+        cardId: '187794',
+        description: 'Test',
+        amount: 0,
+        items: [
+          {
+            name: 'Test Item',
+            unitPrice: 0,
+            quantity: 1,
+          },
+        ],
+      }),
+    ).rejects.toThrow('Total amount should be greater than 0');
+  });
+
   it('should get binding url', done => {
     const payment = new ECPayPayment({
       withServer: true,
@@ -427,5 +501,25 @@ describe('ECPayPayment Card Binding', () => {
     const bindRequest = await payment.prepareBindCard('rytass');
 
     expect(() => bindRequest.bindingURL).toThrow();
+  });
+
+  it('should throw error when prepareBindCard is called before gateway is ready', async () => {
+    // Create payment with withServer but without waiting for server to be ready
+    const payment = new ECPayPayment({
+      withServer: true,
+      serverHost: 'http://localhost:3333',
+      merchantId: MERCHANT_ID,
+      hashKey: HASH_KEY,
+      hashIv: HASH_IV,
+      baseUrl: BASE_URL,
+    });
+
+    // Call prepareBindCard immediately before server is ready
+    await expect(payment.prepareBindCard('rytass')).rejects.toThrow('Please waiting gateway ready');
+
+    // Clean up
+    if (payment._server) {
+      payment._server.close();
+    }
   });
 });

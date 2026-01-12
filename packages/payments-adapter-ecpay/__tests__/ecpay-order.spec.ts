@@ -771,6 +771,68 @@ describe('ECPayOrder', () => {
     });
   });
 
+  describe('Order from query result status', () => {
+    it('should set state to FAILED for PAY_FAILED status', () => {
+      const order = new ECPayOrder({
+        id: 'test-query-1',
+        items: [{ name: 'Test', unitPrice: 100, quantity: 1 }],
+        gateway: payment,
+        createdAt: new Date(),
+        committedAt: null,
+        platformTradeNumber: 'platformnumber1',
+        paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
+        status: ECPayQueryResultStatus.PAY_FAILED,
+      });
+
+      expect(order.state).toBe(OrderState.FAILED);
+    });
+
+    it('should set state to FAILED for TRANSACTION_REJECTED status', () => {
+      const order = new ECPayOrder({
+        id: 'test-query-2',
+        items: [{ name: 'Test', unitPrice: 100, quantity: 1 }],
+        gateway: payment,
+        createdAt: new Date(),
+        committedAt: null,
+        platformTradeNumber: 'platformnumber2',
+        paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
+        status: ECPayQueryResultStatus.TRANSACTION_REJECTED,
+      });
+
+      expect(order.state).toBe(OrderState.FAILED);
+    });
+
+    it('should set state to FAILED for INCORRECT_CARD_NUMBER status', () => {
+      const order = new ECPayOrder({
+        id: 'test-query-3',
+        items: [{ name: 'Test', unitPrice: 100, quantity: 1 }],
+        gateway: payment,
+        createdAt: new Date(),
+        committedAt: null,
+        platformTradeNumber: 'platformnumber3',
+        paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
+        status: ECPayQueryResultStatus.INCORRECT_CARD_NUMBER,
+      });
+
+      expect(order.state).toBe(OrderState.FAILED);
+    });
+
+    it('should set state to INITED for TRADE_DATA_NOT_FOUND status', () => {
+      const order = new ECPayOrder({
+        id: 'test-query-4',
+        items: [{ name: 'Test', unitPrice: 100, quantity: 1 }],
+        gateway: payment,
+        createdAt: new Date(),
+        committedAt: null,
+        platformTradeNumber: 'platformnumber4',
+        paymentType: ECPayCallbackPaymentType.CREDIT_CARD,
+        status: ECPayQueryResultStatus.TRADE_DATA_NOT_FOUND,
+      });
+
+      expect(order.state).toBe(OrderState.INITED);
+    });
+  });
+
   describe('checkoutMemberId and checkoutCardId', () => {
     it('should return member and card IDs for bound card checkout', () => {
       const order = new ECPayOrder({
