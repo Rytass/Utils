@@ -254,4 +254,70 @@ describe('VaultSecretNestjsModule', () => {
     expect(await service.get('BBB')).toBe('456');
     expect(await service.get('CCC')).toBe('');
   });
+
+  it('should throw error when set is called with fallback enabled', async () => {
+    const configMap = new Map<string, string>();
+
+    const service = new VaultService(configMap as unknown as ConfigService, '/');
+
+    await expect(service.set('key', 'value')).rejects.toThrow('Cannot set value when fallback to env file is enabled.');
+  });
+
+  it('should throw error when delete is called with fallback enabled', async () => {
+    const configMap = new Map<string, string>();
+
+    const service = new VaultService(configMap as unknown as ConfigService, '/');
+
+    await expect(service.delete('key')).rejects.toThrow('Cannot delete value when fallback to env file is enabled.');
+  });
+
+  it('should set value when vault is ready', async () => {
+    const service = new VaultService(mockConfig as unknown as ConfigService, VAULT_PROJECT);
+
+    // Wait for service to be ready by getting a value first
+    await service.get('test');
+
+    // Now set a value
+    await service.set('newKey', 'newValue', true);
+
+    // Verify the set was called (via the mock)
+    expect(post).toHaveBeenCalled();
+  });
+
+  it('should delete value when vault is ready', async () => {
+    const service = new VaultService(mockConfig as unknown as ConfigService, VAULT_PROJECT);
+
+    // Wait for service to be ready by getting a value first
+    await service.get('test');
+
+    // Now delete a value
+    await service.delete('test', true);
+
+    // Verify the post was called for delete (via the mock)
+    expect(post).toHaveBeenCalled();
+  });
+
+  it('should queue set operation when vault is not ready', async () => {
+    const service = new VaultService(mockConfig as unknown as ConfigService, VAULT_PROJECT);
+
+    // Start set operation before ready (will be queued)
+    const setPromise = service.set('queuedKey', 'queuedValue');
+
+    // The operation should complete after ready
+    await setPromise;
+
+    expect(post).toHaveBeenCalled();
+  });
+
+  it('should queue delete operation when vault is not ready', async () => {
+    const service = new VaultService(mockConfig as unknown as ConfigService, VAULT_PROJECT);
+
+    // Start delete operation before ready (will be queued)
+    const deletePromise = service.delete('queuedDeleteKey');
+
+    // The operation should complete after ready
+    await deletePromise;
+
+    expect(post).toHaveBeenCalled();
+  });
 });
