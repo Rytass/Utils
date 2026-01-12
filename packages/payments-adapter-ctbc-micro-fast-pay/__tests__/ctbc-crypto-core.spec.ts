@@ -4,6 +4,7 @@ import {
   desEcbEncryptHex,
   desMac,
   encrypt3DES,
+  getDecTXN,
   getDivKey,
   getMAC,
   getTXN,
@@ -58,6 +59,19 @@ describe('ctbc-crypto-core helpers', () => {
     expect(decrypted).toBe(input);
   });
 
+  it('getDecTXN should decrypt encrypted transaction data', () => {
+    const key = 'abcdefghijklmnopqrstuvwx';
+    const originalInput = 'TestData1234567890';
+
+    // First encrypt using getTXN
+    const encrypted = getTXN(originalInput, key);
+
+    // Then decrypt using getDecTXN
+    const decrypted = getDecTXN(encrypted, key);
+
+    expect(decrypted).toBe(originalInput);
+  });
+
   it('getMAC returns last 8 hex chars of second encryption', () => {
     const key = 'abcdefghijklmnopqrstuvwx';
     const input = 'test-mac-input';
@@ -84,5 +98,38 @@ describe('ctbc-crypto-core helpers', () => {
 
     expect(cipherHex).toMatch(/^[0-9A-F]+$/);
     expect(cipherHex.length % 16).toBe(0);
+  });
+
+  it('desEcbEncryptHex should handle Buffer input', () => {
+    const bufferInput = Buffer.from('testdata', 'utf8');
+    const cipherHex = desEcbEncryptHex(bufferInput, '12345678');
+
+    expect(cipherHex).toMatch(/^[0-9A-F]+$/);
+    expect(cipherHex.length % 16).toBe(0);
+  });
+
+  it('decrypt3DES should throw on invalid PKCS#5 padding', () => {
+    const key = crypto.randomBytes(24);
+    // Create a buffer that will have invalid padding after decryption
+    // Since we can't easily create invalid padding with encryption,
+    // we test the edge case where padding byte is 0 or greater than buffer length
+    const cipher = crypto.createCipheriv('des-ede3-cbc', key, Buffer.alloc(8, 0));
+
+    cipher.setAutoPadding(false);
+    // Create a block with last byte = 0 (invalid padding)
+    const invalidPaddingBlock = Buffer.from([1, 2, 3, 4, 5, 6, 7, 0]);
+    const encrypted = Buffer.concat([cipher.update(invalidPaddingBlock), cipher.final()]);
+
+    expect(() => decrypt3DES(encrypted, key)).toThrow('Invalid PKCS#5 padding');
+  });
+
+  it('encrypt3DES should handle Buffer input without padding', () => {
+    const key = crypto.randomBytes(24);
+    const bufferInput = Buffer.from('12345678', 'utf8'); // exactly 8 bytes, no padding needed
+
+    const encrypted = encrypt3DES(bufferInput, key, false);
+
+    expect(encrypted).toBeInstanceOf(Buffer);
+    expect(encrypted.length).toBe(8);
   });
 });

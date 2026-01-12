@@ -1,3 +1,4 @@
+/* istanbul ignore file: re-export barrel file */
 export { CTBCBindCardRequestState, CTBCOrderState } from './typings';
 
 export type {

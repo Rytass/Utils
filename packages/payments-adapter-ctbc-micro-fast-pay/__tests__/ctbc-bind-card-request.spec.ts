@@ -73,4 +73,66 @@ describe('CTBCBindCardRequest', () => {
 
     await expect(req.expireDate).rejects.toThrow('expireDate not available');
   });
+
+  it('returns the original payload via payload getter', () => {
+    const req = new CTBCBindCardRequest(payload, gateway);
+
+    expect(req.payload).toEqual(payload);
+    expect(req.payload.MerID).toBe('MER123');
+    expect(req.payload.MemberID).toBe('MEM1');
+    expect(req.payload.RequestNo).toBe('REQ1');
+    expect(req.payload.TokenURL).toBe('https://callback');
+  });
+
+  it('returns bindingDate after successful binding', () => {
+    const req = new CTBCBindCardRequest(payload, gateway);
+
+    expect(req.bindingDate).toBeUndefined();
+
+    req.bound({ cardToken: 'CARD123', cardNoMask: '123456******7890', requestNo: 'REQ1' });
+
+    expect(req.bindingDate).toBeInstanceOf(Date);
+  });
+
+  it('resolves expireDate when binding date is available', async () => {
+    const req = new CTBCBindCardRequest(payload, gateway);
+
+    req.bound({ cardToken: 'CARD123', cardNoMask: '123456******7890', requestNo: 'REQ1' });
+
+    const expireDate = await req.expireDate;
+
+    expect(expireDate).toBeInstanceOf(Date);
+  });
+
+  it('returns null from failedMessage when no failure occurred', () => {
+    const req = new CTBCBindCardRequest(payload, gateway);
+
+    expect(req.failedMessage).toBeNull();
+  });
+
+  it('returns memberId from payload', () => {
+    const req = new CTBCBindCardRequest(payload, gateway);
+
+    expect(req.memberId).toBe('MEM1');
+  });
+
+  it('does not set card prefix/suffix when cardNoMask is too short', () => {
+    const req = new CTBCBindCardRequest(payload, gateway);
+
+    req.bound({ cardToken: 'CARD456', cardNoMask: '1234', requestNo: 'REQ2' });
+
+    expect(req.cardId).toBe('CARD456');
+    expect(req.cardNumberPrefix).toBeUndefined();
+    expect(req.cardNumberSuffix).toBeUndefined();
+  });
+
+  it('does not set card prefix/suffix when cardNoMask is undefined', () => {
+    const req = new CTBCBindCardRequest(payload, gateway);
+
+    req.bound({ cardToken: 'CARD789', requestNo: 'REQ3' });
+
+    expect(req.cardId).toBe('CARD789');
+    expect(req.cardNumberPrefix).toBeUndefined();
+    expect(req.cardNumberSuffix).toBeUndefined();
+  });
 });
