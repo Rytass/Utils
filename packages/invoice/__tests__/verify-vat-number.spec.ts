@@ -1,4 +1,4 @@
-import { isValidVATNumber } from '../src';
+import { isValidVATNumber, verifyVatNumber } from '../src';
 
 describe('isValidVATNumber', () => {
   it('should return true for valid VAT numbers', () => {
@@ -52,5 +52,20 @@ describe('isValidVATNumber', () => {
     expect(isValidVATNumber({})).toBe(false);
     // @ts-expect-error
     expect(isValidVATNumber([])).toBe(false);
+  });
+});
+
+describe('verifyVatNumber (deprecated)', () => {
+  it('should work the same as isValidVATNumber but log deprecation warning', () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+
+    expect(verifyVatNumber('12222538')).toBe(true);
+    expect(verifyVatNumber('12345678')).toBe(false);
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      `[DEPRECATION] 'verifyVatNumber' is deprecated and will be removed in future versions. Please use 'isValidVATNumber' instead.`,
+    );
+
+    warnSpy.mockRestore();
   });
 });
