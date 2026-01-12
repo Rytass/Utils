@@ -501,6 +501,46 @@ describe('EZPayInvoiceGateway:Allowance', () => {
       expect(allowanced.allowances[0].allowancePrice).toBe(8);
     });
 
+    it('should use default tax type (SPECIAL falls to default) in allowance on mixed tax invoice', async () => {
+      INVOICE_REMAINING_AMOUNT[FAKE_INVOICE_NUMBER] = 20;
+
+      const mockInvoice = new EZPayInvoice({
+        items: [
+          {
+            name: '特殊稅率商品',
+            unitPrice: 10,
+            quantity: 2,
+          },
+        ],
+        issuedOn: new Date(),
+        invoiceNumber: FAKE_INVOICE_NUMBER,
+        randomCode: FAKE_RANDOM_CODE,
+        platformId: FAKE_PLATFORM_ID,
+        orderId: FAKE_ORDER_ID,
+        taxType: TaxType.MIXED,
+      });
+
+      // TaxType.SPECIAL falls through to default case which returns '1'
+      const allowanced = await invoiceGateway.allowance(
+        mockInvoice,
+        [
+          {
+            name: '特殊稅率商品',
+            unitPrice: 8,
+            quantity: 1,
+          },
+        ],
+        {
+          taxType: TaxType.SPECIAL,
+        },
+      );
+
+      expect(allowanced).toBe(mockInvoice);
+      expect(allowanced.nowAmount).toBe(12);
+      expect(allowanced.allowances.length).toBe(1);
+      expect(allowanced.allowances[0].allowancePrice).toBe(8);
+    });
+
     it('should reject allowance a mixed tax invoice if not specific tax type', async () => {
       INVOICE_REMAINING_AMOUNT[FAKE_INVOICE_NUMBER] = 20;
 

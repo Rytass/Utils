@@ -122,6 +122,7 @@ describe('EZPay Invoice Query', () => {
     expect(invoice.orderId).toBe('90h31g023476g234g');
     expect(invoice.issuedAmount).toBe(20);
     expect(invoice.state).toBe(InvoiceState.ISSUED);
+    expect(invoice.taxType).toBe(TaxType.TAXED); // Default case for TaxType '1'
     expect(DateTime.fromJSDate(invoice.issuedOn).toFormat('yyyyMMdd')).toBe('20230203');
   });
 
@@ -650,6 +651,78 @@ describe('EZPay Invoice Query', () => {
     expect(invoice.items[0].taxType).toBe(TaxType.TAXED);
     expect(invoice.items[1].taxType).toBe(TaxType.TAX_FREE);
     expect(invoice.items[2].taxType).toBe(TaxType.ZERO_TAX);
+  });
+
+  it('should fallback to TAXED for unknown TaxType in query response', async () => {
+    const mockPost = jest.spyOn(axios, 'post');
+
+    mockPost.mockImplementation(async (_url: string, _data: unknown) => {
+      return {
+        data: {
+          MerchantID: MERCHANT_ID,
+          Status: 'SUCCESS',
+          Result: JSON.stringify({
+            Amt: '19',
+            BarCode: '11202FF000000011440',
+            BuyerAddress: '',
+            BuyerEmail: 'user@rytass.com',
+            BuyerName: 'Tester',
+            BuyerPhone: '',
+            BuyerUBN: '',
+            CarrierNum: '',
+            CarrierType: '',
+            Category: 'B2C',
+            CheckCode: createHash('sha256')
+              .update(
+                `HashIV=${AES_IV}&InvoiceTransNo=23020318530290616&MerchantID=${MERCHANT_ID}&MerchantOrderNo=90h31g023476g234g&RandomNum=1440&TotalAmt=20&HashKey=${AES_KEY}`,
+              )
+              .digest('hex')
+              .toUpperCase(),
+            CreateStatusTime: '',
+            CreateTime: '2023-02-03 18:53:02',
+            InvoiceNumber: 'FF00000001',
+            InvoiceStatus: '1',
+            InvoiceTransNo: '23020318530290616',
+            InvoiceType: '07',
+            ItemDetail: JSON.stringify([
+              {
+                ItemAmount: '20',
+                ItemCount: '2',
+                ItemName: '橡皮擦',
+                ItemNum: '1',
+                ItemPrice: '10',
+                ItemRemark: '',
+                ItemTaxType: '',
+                ItemWord: '式',
+                RelateNumber: '',
+              },
+            ]),
+            KioskPrintFlag: '',
+            LoveCode: '',
+            MerchantID: '31090553',
+            MerchantOrderNo: '90h31g023476g234g',
+            PrintFlag: 'Y',
+            QRcodeL:
+              'FF000000011120203144000000013000000140000000001012145GQVWH99zBlXEGWDbB0LloA==:**********:1:1:1:橡皮擦:2:10',
+            QRcodeR: '**',
+            RandomNum: '1440',
+            TaxAmt: '1',
+            TaxRate: '0.05000',
+            TaxType: '5', // Unknown TaxType value - should fallback to TAXED
+            TotalAmt: '20',
+            UploadStatus: '1',
+          }),
+        },
+      };
+    });
+
+    const invoice = await gateway.query({
+      invoiceNumber: 'FF00000001',
+      randomCode: '1440',
+    });
+
+    // Unknown TaxType '5' should fallback to TaxType.TAXED (default case)
+    expect(invoice.taxType).toBe(TaxType.TAXED);
   });
 
   it('should throw on check code invalid', async () => {
