@@ -338,7 +338,11 @@ export class BankProInvoiceGateway implements InvoiceGateway<
     return invoice;
   }
 
-  public async allowance(invoice: BankProInvoice, allowanceItems: BankProPaymentItem[], options?: BankProInvoiceAllowanceOptions): Promise<BankProInvoice> {
+  public async allowance(
+    invoice: BankProInvoice,
+    allowanceItems: BankProPaymentItem[],
+    options?: BankProInvoiceAllowanceOptions,
+  ): Promise<BankProInvoice> {
     if (invoice.state !== InvoiceState.ISSUED) {
       throw new Error('Invoice is not issued');
     }
@@ -442,7 +446,10 @@ export class BankProInvoiceGateway implements InvoiceGateway<
     return invoice;
   }
 
-  async invalidAllowance(allowance: BankProAllowance, options?: BankProInvoiceInvalidAllowanceOptions): Promise<BankProInvoice> {
+  async invalidAllowance(
+    allowance: BankProAllowance,
+    options?: BankProInvoiceInvalidAllowanceOptions,
+  ): Promise<BankProInvoice> {
     if (allowance.status !== InvoiceAllowanceState.ISSUED) {
       throw new Error('Allowance is not issued');
     }

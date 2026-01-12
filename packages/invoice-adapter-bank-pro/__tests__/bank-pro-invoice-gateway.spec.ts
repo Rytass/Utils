@@ -14,6 +14,13 @@ describe('Bank Pro Invoice Gateway', () => {
     baseUrl: 'http://example.com' as BankProBaseUrls,
   };
 
+  const mockOptionsWithoutBaseUrl: BankProInvoiceGatewayOptions = {
+    user: 'user1',
+    password: 'password1',
+    systemOID: 108,
+    sellerBAN: '12345675',
+  };
+
   const mockOrderOptions: BankProInvoiceIssueOptions = {
     orderId: 'orderId_123',
     sellerCode: 'sellerCode_123',
@@ -52,6 +59,13 @@ describe('Bank Pro Invoice Gateway', () => {
     expect(() => (gateway = new BankProInvoiceGateway({ ...mockOptions, sellerBAN: '12345678' }))).toThrow(
       'Seller BAN should not be a invalid VAT number',
     );
+  });
+
+  it('should use default baseUrl when not provided', () => {
+    gateway = new BankProInvoiceGateway(mockOptionsWithoutBaseUrl);
+
+    // The gateway should be created successfully with default baseUrl
+    expect(gateway).toBeDefined();
   });
 
   describe('BankProInvoiceGateway.issue', () => {

@@ -1,4 +1,12 @@
-import { InvoiceAllowanceOptions, InvoiceAllowanceState, InvoiceIssueOptions, InvoicePaymentItem, InvoiceState, InvoiceVoidOptions, TaxType } from '@rytass/invoice';
+import {
+  InvoiceAllowanceOptions,
+  InvoiceAllowanceState,
+  InvoiceIssueOptions,
+  InvoicePaymentItem,
+  InvoiceState,
+  InvoiceVoidOptions,
+  TaxType,
+} from '@rytass/invoice';
 import { BankProInvoice } from './bank-pro-invoice';
 
 export enum BankProBaseUrls {
