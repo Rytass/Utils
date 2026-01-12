@@ -715,6 +715,7 @@ describe('NewebPay Payment Server', () => {
 
           await request(payment._server as App)
             .post('/newebpay/async-informations')
+            .set('Content-Type', 'application/x-www-form-urlencoded')
             .send(
               new URLSearchParams({
                 Status: 'SUCCESS',
@@ -784,6 +785,7 @@ describe('NewebPay Payment Server', () => {
 
           await request(payment._server as App)
             .post('/newebpay/async-informations')
+            .set('Content-Type', 'application/x-www-form-urlencoded')
             .send(
               new URLSearchParams({
                 Status: 'SUCCESS',
@@ -837,6 +839,7 @@ describe('NewebPay Payment Server', () => {
 
           await request(payment._server as App)
             .post('/newebpay/async-informations')
+            .set('Content-Type', 'application/x-www-form-urlencoded')
             .send(
               new URLSearchParams({
                 Status: 'SUCCESS',
