@@ -26,11 +26,11 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@quadrats/core": "^1.1.5",
+    "@quadrats/core": "^1.1.9",
     "axios": "^1.13.2",
     "form-data": "^4.0.5"
   },
   "peerDependencies": {
-    "@nestjs/common": "^9.4.2"
+    "@nestjs/common": "^11.0.0"
   }
 }
