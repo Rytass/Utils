@@ -265,4 +265,23 @@ describe('Hwa Nan Order', () => {
       }),
     ).toThrow();
   });
+
+  it('should create order without makePayload', () => {
+    // Test the branch where makePayload is not provided
+
+    const orderWithoutPayload = new HwaNanOrder({
+      id: 'test-no-payload',
+      items: [
+        {
+          name: 'A',
+          unitPrice: 10,
+          quantity: 1,
+        },
+      ],
+      gateway: payment,
+    } as unknown as ConstructorParameters<typeof HwaNanOrder>[0]);
+
+    expect(orderWithoutPayload.id).toBe('test-no-payload');
+    expect(orderWithoutPayload.totalPrice).toBe(10);
+  });
 });

@@ -546,6 +546,8 @@ describe('HwaNan Payment', () => {
     afterEach(() => {
       jest.restoreAllMocks();
       delete global.import;
+      // Always restore NGROK_AUTHTOKEN after each test
+      process.env.NGROK_AUTHTOKEN = 'test-auth-token';
     });
 
     it('should connect to ngrok when withServer is ngrok', async () => {
