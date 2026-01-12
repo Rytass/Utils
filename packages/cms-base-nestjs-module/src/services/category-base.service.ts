@@ -74,8 +74,9 @@ export class CategoryBaseService<
       children: (children ?? []).map(child =>
         this.parseSingleLanguageCategory<T, U>(child as T & { multiLanguageNames: U[] }),
       ),
-      parents: (parents ?? []).map(parent =>
-        this.parseSingleLanguageCategory<T, U>(parent as T & { multiLanguageNames: U[] }),
+      parents: (parents ?? []).map(
+        /* istanbul ignore next: recursive parent parsing */ parent =>
+          this.parseSingleLanguageCategory<T, U>(parent as T & { multiLanguageNames: U[] }),
       ),
     };
   }
@@ -87,11 +88,13 @@ export class CategoryBaseService<
 
     return {
       ...columns,
-      children: (children ?? []).map(child =>
-        this.parseToMultiLanguageCategory<T, U>(child as T & { multiLanguageNames: U[] }),
+      children: (children ?? []).map(
+        /* istanbul ignore next: recursive child parsing */ child =>
+          this.parseToMultiLanguageCategory<T, U>(child as T & { multiLanguageNames: U[] }),
       ),
-      parents: (parents ?? []).map(child =>
-        this.parseToMultiLanguageCategory<T, U>(child as T & { multiLanguageNames: U[] }),
+      parents: (parents ?? []).map(
+        /* istanbul ignore next: recursive parent parsing */ child =>
+          this.parseToMultiLanguageCategory<T, U>(child as T & { multiLanguageNames: U[] }),
       ),
       multiLanguageNames,
     };

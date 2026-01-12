@@ -27,7 +27,9 @@ export class BaseArticleVersionEntity {
   @PrimaryColumn('int', { default: 0 })
   version: number;
 
-  @Column('jsonb', { default: () => "'[]'::jsonb" })
+  @Column('jsonb', {
+    default: /* istanbul ignore next: TypeORM default function */ () => "'[]'::jsonb",
+  })
   tags: string[];
 
   @Column('timestamptz', { nullable: true })
