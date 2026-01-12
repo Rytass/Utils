@@ -228,6 +228,45 @@ describe('StorageLocalService', (): void => {
     });
   });
 
+  describe('getUsageInfo', (): void => {
+    it('should return filesystem usage info', async (): Promise<void> => {
+      // Use actual filesystem for this test since getUsageInfo uses shell commands
+      const os = await import('os');
+      const path = await import('path');
+      const fs = await import('fs');
+
+      const tempDir = path.join(os.tmpdir(), 'storages-local-test-' + Date.now());
+
+      fs.mkdirSync(tempDir, { recursive: true });
+
+      try {
+        // Re-import to use real fs instead of memfs
+        jest.resetModules();
+        jest.unmock('fs');
+        jest.unmock('fs/promises');
+
+        const { LocalStorage: RealLocalStorage } = await import('../src');
+
+        const localStorage = new RealLocalStorage({
+          directory: tempDir,
+          autoMkdir: true,
+        });
+
+        const usageInfo = await localStorage.getUsageInfo();
+
+        expect(usageInfo).toHaveProperty('used');
+        expect(usageInfo).toHaveProperty('free');
+        expect(usageInfo).toHaveProperty('total');
+        expect(typeof usageInfo.used).toBe('number');
+        expect(typeof usageInfo.free).toBe('number');
+        expect(typeof usageInfo.total).toBe('number');
+      } finally {
+        // Cleanup
+        fs.rmSync(tempDir, { recursive: true, force: true });
+      }
+    });
+  });
+
   describe('errorHandling', (): void => {
     beforeEach((): void => {
       vol.reset();
