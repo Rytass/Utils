@@ -18,6 +18,7 @@ const sampleFileSha256 = `${createHash('sha256').update(sampleFileBuffer).digest
 const FAKE_URL = 'https://fake.rytass.com';
 const NOT_FOUND_FILE = 'NOT_EXIST';
 const GENERAL_ERROR_FILE = 'GENERAL_ERROR_FILE';
+const EMPTY_BODY_FILE = 'EMPTY_BODY_FILE';
 
 const fakeStorage = new Map<string, Buffer>();
 
@@ -86,6 +87,12 @@ const mockSend = jest
 
         if (key === GENERAL_ERROR_FILE) {
           throw new Error('Unknown Error');
+        }
+
+        if (key === EMPTY_BODY_FILE) {
+          return Promise.resolve({
+            Body: undefined,
+          });
         }
 
         if (key === NOT_FOUND_FILE || !fakeStorage.has(key)) {
@@ -289,6 +296,19 @@ describe('AWS S3 storage adapter (SDK v3)', () => {
     });
 
     await expect(service.read(NOT_FOUND_FILE)).rejects.toThrow();
+  });
+
+  it('should throw on empty response body', async () => {
+    const { StorageS3Service } = await import('../src');
+
+    const service = new StorageS3Service({
+      accessKey: ACCESS_KEY,
+      secretKey: SECRET_KEY,
+      region: REGION,
+      bucket: BUCKET,
+    });
+
+    await expect(service.read(EMPTY_BODY_FILE)).rejects.toThrow('Empty response body');
   });
 
   it('should get read url', async () => {
