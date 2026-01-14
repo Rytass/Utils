@@ -1,6 +1,6 @@
 {
   "name": "@rytass/wms-base-nestjs-module",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Rytass Warehouse Management System Module",
   "keywords": [
     "rytass",

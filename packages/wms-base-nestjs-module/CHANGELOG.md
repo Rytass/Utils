@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.9](https://github.com/Rytass/Utils/compare/@rytass/wms-base-nestjs-module@0.1.8...@rytass/wms-base-nestjs-module@0.1.9) (2026-01-14)
+
+### Features
+
+- **wms-base-nestjs-module:** set generated uuid as pk for batch, location, material, and add unique key column ([14b5a89](https://github.com/Rytass/Utils/commit/14b5a89a9e8deedfe6977068e7bf031d2bb6833d))
+- **wms-base-nestjs-module:** set relation column type to uuid and add index ([976c0fd](https://github.com/Rytass/Utils/commit/976c0fde7eca23c1d5bf63545d3170ece0df963f))
+
 ## [0.1.8](https://github.com/Rytass/Utils/compare/@rytass/wms-base-nestjs-module@0.1.7...@rytass/wms-base-nestjs-module@0.1.8) (2026-01-08)
 
 ### Bug Fixes
