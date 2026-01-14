@@ -1,10 +1,10 @@
 import {
   Column,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
-  PrimaryColumn,
   PrimaryGeneratedColumn,
   Unique,
   type Relation,
@@ -21,9 +21,10 @@ export class BatchEntity {
   id: string;
 
   @Column({ type: 'varchar' })
+  @Index()
   key: string;
 
-  @Column('varchar')
+  @Column('uuid')
   materialId: string;
 
   @ManyToOne(() => MaterialEntity, material => material.batches)

@@ -3,8 +3,8 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   OneToMany,
-  PrimaryColumn,
   PrimaryGeneratedColumn,
   type Relation,
   TableInheritance,
@@ -22,6 +22,7 @@ export class MaterialEntity {
   id: string;
 
   @Column({ type: 'varchar', unique: true })
+  @Index()
   key: string;
 
   @CreateDateColumn()

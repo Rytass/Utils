@@ -3,7 +3,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
-  PrimaryColumn,
+  Index,
   PrimaryGeneratedColumn,
   TableInheritance,
   Tree,
@@ -22,6 +22,7 @@ export class LocationEntity {
   id: string;
 
   @Column({ type: 'varchar', unique: true })
+  @Index()
   key: string;
 
   @TreeChildren()

@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -19,16 +20,20 @@ export class StockEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'uuid' })
+  @Index()
   materialId: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'uuid' })
+  @Index()
   batchId: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'uuid' })
+  @Index()
   locationId: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'uuid' })
+  @Index()
   orderId: string;
 
   @Column({ type: 'numeric' })
