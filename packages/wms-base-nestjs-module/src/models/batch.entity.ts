@@ -1,15 +1,30 @@
-import { Entity, JoinColumn, ManyToOne, OneToMany, PrimaryColumn, type Relation } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  Unique,
+  type Relation,
+} from 'typeorm';
 import { MaterialEntity } from './material.entity';
 import { StockEntity } from './stock.entity';
 
 export const BatchRepo = Symbol('BatchRepo');
 
 @Entity('batches')
+@Unique(['key', 'materialId'])
 export class BatchEntity {
-  @PrimaryColumn('varchar')
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @PrimaryColumn('varchar')
+  @Column({ type: 'varchar' })
+  @Index()
+  key: string;
+
+  @Column('uuid')
   materialId: string;
 
   @ManyToOne(() => MaterialEntity, material => material.batches)

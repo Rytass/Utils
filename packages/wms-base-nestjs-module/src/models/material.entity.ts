@@ -1,9 +1,11 @@
 import {
+  Column,
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   OneToMany,
-  PrimaryColumn,
+  PrimaryGeneratedColumn,
   type Relation,
   TableInheritance,
   UpdateDateColumn,
@@ -16,8 +18,12 @@ export const MaterialRepo = Symbol('MaterialRepo');
 @Entity('materials')
 @TableInheritance({ column: { type: 'varchar', name: 'entityName' } })
 export class MaterialEntity {
-  @PrimaryColumn({ type: 'varchar' })
+  @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column({ type: 'varchar', unique: true })
+  @Index()
+  key: string;
 
   @CreateDateColumn()
   createdAt: Date;
