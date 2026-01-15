@@ -44,20 +44,11 @@ export class StockEntity {
   material: Relation<MaterialEntity>;
 
   @ManyToOne(() => BatchEntity, batch => batch.stocks)
-  @JoinColumn([
-    {
-      name: 'materialId',
-      referencedColumnName: 'materialId',
-    },
-    { name: 'batchId', referencedColumnName: 'id' },
-  ])
+  @JoinColumn({ name: 'batchId', referencedColumnName: 'id' })
   batch: Relation<BatchEntity>;
 
   @ManyToOne(() => OrderEntity, order => order.stocks)
-  @JoinColumn({
-    name: 'orderId',
-    referencedColumnName: 'id',
-  })
+  @JoinColumn({ name: 'orderId', referencedColumnName: 'id' })
   order: Relation<OrderEntity>;
 
   @CreateDateColumn()
