@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.3.7](https://github.com/Rytass/Utils/compare/@rytass/logistics-adapter-ctc@0.3.6...@rytass/logistics-adapter-ctc@0.3.7) (2026-01-19)
+
+### Bug Fixes
+
+- **logistics-adapter-ctc:** rename payCode to paidCode in logistics options ([aa40e0a](https://github.com/Rytass/Utils/commit/aa40e0a3b41dc7909cef363644327c5b59c7d242))
+- **logistics-adapter-ctc:** revert paidCode to payCode in changelog ([c90f887](https://github.com/Rytass/Utils/commit/c90f887d871b8aae2e45d907cb531e166759d4ad))
+
 ## [0.3.6](https://github.com/Rytass/Utils/compare/@rytass/logistics-adapter-ctc@0.3.5...@rytass/logistics-adapter-ctc@0.3.6) (2025-12-05)
 
 **Note:** Version bump only for package @rytass/logistics-adapter-ctc
