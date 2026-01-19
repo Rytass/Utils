@@ -211,7 +211,7 @@ interface CreateOrUpdateCtcLogisticsOptions {
   receiverRemark?: string;
 
   // 配送資訊
-  payCode: string;                 // 必填，付款代碼
+  paidCode: string;                 // 必填，付款代碼
   customerDepartmentId?: number;
   customerDepartmentUnitId?: number;
 
@@ -358,7 +358,7 @@ async function manageCtcShipment() {
     receiverAddress: '台北市信義區信義路五段7號',
     receiverMobile: '0987654321',
 
-    payCode: '客戶宅配',
+    paidCode: '客戶宅配',
     quantity: 2,
     weight: 5,
     shipmentContent: '電子產品',

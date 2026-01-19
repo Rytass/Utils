@@ -257,7 +257,7 @@ describe('delivery-adapter-ctc', () => {
       receiverContactName: 'Receiver Contact',
       receiverMobile: '0987654321',
       receiverAddress: 'Receiver Address',
-      payCode: '客戶宅配',
+      paidCode: '客戶宅配',
     };
 
     it('should create logistics successfully', async () => {
@@ -301,7 +301,7 @@ describe('delivery-adapter-ctc', () => {
         receiverContactName: 'Receiver Contact',
         receiverTel: '0287654321', // Use tel instead of mobile
         receiverAddress: 'Receiver Address',
-        payCode: '客戶宅配',
+        paidCode: '客戶宅配',
         trackingNumber: 'ABCD202507170002',
       };
 
@@ -335,7 +335,7 @@ describe('delivery-adapter-ctc', () => {
         receiverContactName: 'Receiver Contact',
         receiverMobile: '0987654321',
         receiverAddress: 'Receiver Address',
-        payCode: '客戶宅配',
+        paidCode: '客戶宅配',
       };
 
       try {
@@ -357,7 +357,7 @@ describe('delivery-adapter-ctc', () => {
         receiverCompany: 'Receiver Name',
         receiverContactName: 'Receiver Contact',
         receiverAddress: 'Receiver Address',
-        payCode: '客戶宅配',
+        paidCode: '客戶宅配',
       };
 
       try {
@@ -495,7 +495,7 @@ describe('delivery-adapter-ctc', () => {
       receiverContactName: 'Receiver Contact',
       receiverMobile: '0987654321',
       receiverAddress: 'Receiver Address',
-      payCode: '客戶宅配',
+      paidCode: '客戶宅配',
     };
 
     it('should update logistics successfully', async () => {
@@ -535,7 +535,7 @@ describe('delivery-adapter-ctc', () => {
         receiverContactName: 'Receiver Contact',
         receiverMobile: '0987654321',
         receiverAddress: 'Receiver Address',
-        payCode: '客戶宅配',
+        paidCode: '客戶宅配',
       };
 
       try {

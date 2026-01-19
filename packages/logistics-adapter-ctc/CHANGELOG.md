@@ -12,7 +12,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 ### Features
 
 - **api:** update logistics ctc lib error handling when create logistics ([0f4a01e](https://github.com/Rytass/Utils/commit/0f4a01e101434029426bdcebdd6c20c155560843))
-- **logistics-adapter-ctc:** create ctc logistics with payCode ([8e8f3d9](https://github.com/Rytass/Utils/commit/8e8f3d93d30b4a2a2761dad123d93388d5a7aedb))
+- **logistics-adapter-ctc:** create ctc logistics with paidCode ([8e8f3d9](https://github.com/Rytass/Utils/commit/8e8f3d93d30b4a2a2761dad123d93388d5a7aedb))
 
 ## [0.3.4](https://github.com/Rytass/Utils/compare/@rytass/logistics-adapter-ctc@0.3.3...@rytass/logistics-adapter-ctc@0.3.4) (2025-11-10)
 
