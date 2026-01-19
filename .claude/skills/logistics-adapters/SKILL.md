@@ -71,7 +71,7 @@ const order = await logistics.create({
   receiverContactName: '收件人',
   receiverAddress: '台北市信義區信義路五段7號',
   receiverMobile: '0987654321',
-  payCode: '客戶宅配',
+  paidCode: '客戶宅配',
 });
 
 console.log(order.shippingNumber); // 託運單號
@@ -87,7 +87,7 @@ const updatedOrder = await logistics.update({
   receiverContactName: '新收件人',
   receiverAddress: '台北市信義區信義路五段7號',
   receiverMobile: '0987654321',
-  payCode: '客戶宅配',
+  paidCode: '客戶宅配',
 });
 ```
 
@@ -117,7 +117,7 @@ interface CreateOrUpdateCtcLogisticsOptions {
   receiverRemark?: string;        // 收件人備註
 
   // 運送資訊
-  payCode: string;                // 付款代碼（必填）
+  paidCode: string;                // 付款代碼（必填）
   shipmentContent?: string;       // 貨物內容（預設 '貨件'）
   transportation?: string;        // 運輸工具（預設 'truck'）
   shippingMethod?: string;        // 運送方式（預設 'land'）
