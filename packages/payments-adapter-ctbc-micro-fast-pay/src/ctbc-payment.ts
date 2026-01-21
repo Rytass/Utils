@@ -166,6 +166,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
         const plain = iconv.decode(decrypted, 'big5');
 
         const payload = new URLSearchParams(plain);
+
         const requestId = payload.get('lidm');
 
         if (!requestId) {
@@ -260,6 +261,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
         const statusCode = decryptedParams.get('StatusCode');
         const statusDesc = decryptedParams.get('StatusDesc');
         const requestId = decryptedParams.get('RequestNo') ?? '';
+
         const request = await this.bindCardRequestsCache.get(requestId);
 
         if (statusCode !== 'I0000') {
