@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.14](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.2.13...@rytass/cms-base-nestjs-module@0.2.14) (2026-02-02)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** handle undefined schema in searchTerm query ([540b719](https://github.com/Rytass/Utils/commit/540b7194233dfab1f11511224e90e38a2082f9c9))
+
 ## [0.2.13](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.2.12...@rytass/cms-base-nestjs-module@0.2.13) (2026-02-02)
 
 ### Bug Fixes
