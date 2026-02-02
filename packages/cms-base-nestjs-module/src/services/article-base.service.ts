@@ -475,15 +475,17 @@ export class ArticleBaseService<
 
     if (options?.requiredCategoryIds?.length) {
       const relationMetadata = this.baseArticleRepo.metadata.manyToManyRelations.find(
-        relation => relation.inverseEntityMetadata === this.baseCategoryRepo.metadata,
+        relation => relation.inverseEntityMetadata.tableName === this.baseCategoryRepo.metadata.tableName,
       )?.junctionEntityMetadata;
+
+      const junctionTableName = relationMetadata?.tableName ?? 'article_categories';
 
       options?.requiredCategoryIds?.forEach((categoryId, index) => {
         const relationQb = this.dataSource.createQueryBuilder();
         const junctionSchema = relationMetadata?.schema;
 
         relationQb.from(
-          junctionSchema ? `${junctionSchema}.${relationMetadata?.tableName}` : (relationMetadata?.tableName ?? ''),
+          junctionSchema ? `${junctionSchema}.${junctionTableName}` : junctionTableName,
           `requiredCategoryRelations${index}`,
         );
 
@@ -499,14 +501,16 @@ export class ArticleBaseService<
 
     if (options?.categoryIds?.length) {
       const relationMetadata = this.baseArticleRepo.metadata.manyToManyRelations.find(
-        relation => relation.inverseEntityMetadata === this.baseCategoryRepo.metadata,
+        relation => relation.inverseEntityMetadata.tableName === this.baseCategoryRepo.metadata.tableName,
       )?.junctionEntityMetadata;
+
+      const junctionTableName = relationMetadata?.tableName ?? 'article_categories';
 
       const relationQb = this.dataSource.createQueryBuilder();
       const junctionSchema = relationMetadata?.schema;
 
       relationQb.from(
-        junctionSchema ? `${junctionSchema}.${relationMetadata?.tableName}` : (relationMetadata?.tableName ?? ''),
+        junctionSchema ? `${junctionSchema}.${junctionTableName}` : junctionTableName,
         `categoryRelations`,
       );
 

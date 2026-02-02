@@ -1456,6 +1456,156 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
 
     expect(qbMock.addOrderBy).toHaveBeenCalledWith('versions.createdAt', 'DESC');
   });
+
+  it('should handle ChildEntity inheritance where metadata objects differ but tableName matches', async () => {
+    // This test simulates the Single Table Inheritance (ChildEntity) scenario
+    // where relation.inverseEntityMetadata points to the parent entity metadata
+    // but baseCategoryRepo.metadata points to the child entity metadata
+    // They are different object references but share the same tableName
+
+    const mockFrom = jest.fn().mockReturnThis();
+    const mockAndWhere = jest.fn().mockReturnThis();
+    const mockCreateQueryBuilder = jest.fn().mockReturnValue({
+      from: mockFrom,
+      andWhere: mockAndWhere,
+    });
+
+    // Parent entity metadata (used in relation.inverseEntityMetadata)
+    const parentCategoryMetadata = {
+      tablePath: 'public.categories',
+      tableName: 'categories', // Same tableName
+    };
+
+    // Child entity metadata (used in baseCategoryRepo.metadata)
+    const childCategoryMetadata = {
+      tablePath: 'public.categories',
+      tableName: 'categories', // Same tableName, but different object reference
+    };
+
+    const mockRelation = {
+      propertyPath: 'categories',
+      junctionEntityMetadata: { tableName: 'article_categories', schema: 'public' },
+      inverseEntityMetadata: parentCategoryMetadata, // Points to parent
+    };
+
+    const baseArticleRepo = {
+      metadata: {
+        schema: 'public',
+        manyToManyRelations: [mockRelation],
+      },
+    };
+
+    const baseCategoryRepo = {
+      metadata: childCategoryMetadata, // Points to child (different object)
+    };
+
+    const localService = new ArticleBaseService(
+      baseArticleRepo as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      {
+        metadata: {
+          schema: 'public',
+          tableName: 'contents',
+          targetName: 'ArticleVersionContent',
+        },
+      } as MockRepositoryForService,
+      baseCategoryRepo as MockRepositoryForService,
+      true,
+      true,
+      true,
+      [],
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      true,
+      {
+        createQueryBuilder: mockCreateQueryBuilder,
+      } as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
+    );
+
+    const mockQb = {
+      andWhere: jest.fn().mockReturnThis(),
+      andWhereExists: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+    };
+
+    jest.spyOn(localService as TestableArticleBaseService, 'getDefaultQueryBuilder').mockReturnValue(mockQb);
+
+    await localService['getFindAllQueryBuilder']({
+      categoryIds: ['cat-1'],
+    });
+
+    // Should correctly find the junction table using tableName comparison
+    expect(mockFrom).toHaveBeenCalledWith('public.article_categories', 'categoryRelations');
+    expect(mockAndWhere).toHaveBeenCalledWith('"categoryRelations"."categoryId" IN (:...categoryIds)', {
+      categoryIds: ['cat-1'],
+    });
+  });
+
+  it('should use fallback table name when relation metadata is not found', async () => {
+    const mockFrom = jest.fn().mockReturnThis();
+    const mockAndWhere = jest.fn().mockReturnThis();
+    const mockCreateQueryBuilder = jest.fn().mockReturnValue({
+      from: mockFrom,
+      andWhere: mockAndWhere,
+    });
+
+    // No matching relation (manyToManyRelations is empty)
+    const baseArticleRepo = {
+      metadata: {
+        schema: undefined,
+        manyToManyRelations: [],
+      },
+    };
+
+    const baseCategoryRepo = {
+      metadata: {
+        tablePath: 'categories',
+        tableName: 'categories',
+      },
+    };
+
+    const localService = new ArticleBaseService(
+      baseArticleRepo as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      {
+        metadata: {
+          schema: undefined,
+          tableName: 'contents',
+          targetName: 'ArticleVersionContent',
+        },
+      } as MockRepositoryForService,
+      baseCategoryRepo as MockRepositoryForService,
+      true,
+      true,
+      true,
+      [],
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      true,
+      {
+        createQueryBuilder: mockCreateQueryBuilder,
+      } as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
+    );
+
+    const mockQb = {
+      andWhere: jest.fn().mockReturnThis(),
+      andWhereExists: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+    };
+
+    jest.spyOn(localService as TestableArticleBaseService, 'getDefaultQueryBuilder').mockReturnValue(mockQb);
+
+    await localService['getFindAllQueryBuilder']({
+      categoryIds: ['cat-1'],
+    });
+
+    // Should use fallback 'article_categories' when relation is not found
+    expect(mockFrom).toHaveBeenCalledWith('article_categories', 'categoryRelations');
+  });
 });
 
 describe('optionsCheck', () => {
