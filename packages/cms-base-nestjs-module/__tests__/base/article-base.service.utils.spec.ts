@@ -1117,6 +1117,116 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
     expect(innerQb.from).toHaveBeenCalledWith('article_categories', 'categoryRelations');
   });
 
+  it('should handle undefined schema in FULL_TEXT search', async () => {
+    jest.resetModules();
+    jest.doMock('@node-rs/jieba', () => ({
+      __esModule: true,
+      default: {
+        Jieba: class MockJieba {
+          cut(): string[] {
+            return ['test'];
+          }
+        },
+      },
+    }));
+
+    const mockFrom = jest.fn().mockReturnThis();
+    const mockCreateQueryBuilder = jest.fn().mockReturnValue({
+      from: mockFrom,
+      andWhere: jest.fn().mockReturnThis(),
+    });
+
+    const mockDataSource = {
+      createQueryBuilder: mockCreateQueryBuilder,
+    };
+
+    service = new ArticleBaseService(
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      {
+        metadata: {
+          schema: undefined, // no schema
+          tableName: 'contents',
+          targetName: 'ArticleVersionContent',
+        },
+      } as MockRepositoryForService,
+      {
+        metadata: { tablePath: 'categories', manyToManyRelations: [] },
+      } as MockRepositoryForService,
+      true,
+      true,
+      true,
+      [],
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      true,
+      mockDataSource as MockServiceDataSource,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
+    );
+
+    jest.spyOn(service as TestableArticleBaseService, 'getDefaultQueryBuilder').mockReturnValue(mockQb);
+
+    await service['getFindAllQueryBuilder']({
+      searchTerm: 'test',
+      searchMode: ArticleSearchMode.FULL_TEXT,
+    });
+
+    // Should use 'contents' without schema prefix (not 'undefined.contents')
+    expect(mockFrom).toHaveBeenCalledWith('contents', 'contents');
+  });
+
+  it('should handle undefined schema in TITLE search', async () => {
+    const mockFrom = jest.fn().mockReturnThis();
+    const mockCreateQueryBuilder = jest.fn().mockReturnValue({
+      from: mockFrom,
+      andWhere: jest.fn().mockReturnThis(),
+      orWhere: jest.fn().mockReturnThis(),
+    });
+
+    const mockBaseArticleVersionContentRepo = {
+      metadata: {
+        schema: undefined, // no schema
+        tableName: 'contents',
+        targetName: 'ArticleVersionContent',
+      },
+    };
+
+    service = new ArticleBaseService(
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      mockBaseArticleVersionContentRepo as MockRepositoryForService,
+      {
+        metadata: {
+          tablePath: 'categories',
+          manyToManyRelations: [],
+        },
+      } as MockRepositoryForService,
+      true,
+      true,
+      true,
+      [],
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      true,
+      {
+        createQueryBuilder: mockCreateQueryBuilder,
+      } as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
+    );
+
+    jest.spyOn(service as TestableArticleBaseService, 'getDefaultQueryBuilder').mockReturnValue(mockQb);
+
+    await service['getFindAllQueryBuilder']({
+      searchTerm: 'test',
+      searchMode: ArticleSearchMode.TITLE,
+    });
+
+    // Should use 'contents' without schema prefix (not 'undefined.contents')
+    expect(mockFrom).toHaveBeenCalledWith('contents', 'contents');
+  });
+
   it('should throw error if fullTextSearchMode is disabled when using FULL_TEXT search', async () => {
     const service = new ArticleBaseService(
       {

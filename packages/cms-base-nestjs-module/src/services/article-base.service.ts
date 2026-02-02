@@ -531,9 +531,12 @@ export class ArticleBaseService<
           const tokens = cut(options.searchTerm.trim());
 
           const searchQb = this.dataSource.createQueryBuilder();
+          const fullTextContentSchema = this.baseArticleVersionContentRepo.metadata.schema;
 
           searchQb.from(
-            `${this.baseArticleVersionContentRepo.metadata.schema}.${this.baseArticleVersionContentRepo.metadata.tableName}`,
+            fullTextContentSchema
+              ? `${fullTextContentSchema}.${this.baseArticleVersionContentRepo.metadata.tableName}`
+              : this.baseArticleVersionContentRepo.metadata.tableName,
             'contents',
           );
 
@@ -557,9 +560,12 @@ export class ArticleBaseService<
         case ArticleSearchMode.TITLE:
         default: {
           const searchQb = this.dataSource.createQueryBuilder();
+          const titleSearchContentSchema = this.baseArticleVersionContentRepo.metadata.schema;
 
           searchQb.from(
-            `${this.baseArticleVersionContentRepo.metadata.schema}.${this.baseArticleVersionContentRepo.metadata.tableName}`,
+            titleSearchContentSchema
+              ? `${titleSearchContentSchema}.${this.baseArticleVersionContentRepo.metadata.tableName}`
+              : this.baseArticleVersionContentRepo.metadata.tableName,
             'contents',
           );
 
