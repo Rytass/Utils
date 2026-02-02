@@ -827,21 +827,22 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
       andWhere: mockAndWhere,
     });
 
+    const baseCategoryRepo = {
+      metadata: {
+        tablePath: 'public.categories',
+      },
+    };
+
     const mockRelation = {
       propertyPath: 'categories',
-      junctionEntityMetadata: { tableName: 'article_categories' },
+      junctionEntityMetadata: { tableName: 'article_categories', schema: 'public' },
+      inverseEntityMetadata: baseCategoryRepo.metadata,
     };
 
     const baseArticleRepo = {
       metadata: {
         schema: 'public',
         manyToManyRelations: [mockRelation],
-      },
-    };
-
-    const baseCategoryRepo = {
-      metadata: {
-        tablePath: 'public.categories',
       },
     };
 
@@ -913,21 +914,22 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
       addOrderBy: jest.fn().mockReturnThis(),
     };
 
+    const baseCategoryRepo = {
+      metadata: {
+        tablePath: 'public.categories',
+      },
+    };
+
     const mockRelation = {
       propertyPath: 'categories',
-      junctionEntityMetadata: { tableName: 'article_categories' },
+      junctionEntityMetadata: { tableName: 'article_categories', schema: 'public' },
+      inverseEntityMetadata: baseCategoryRepo.metadata,
     };
 
     const baseArticleRepo = {
       metadata: {
         schema: 'public',
         manyToManyRelations: [mockRelation],
-      },
-    };
-
-    const baseCategoryRepo = {
-      metadata: {
-        tablePath: 'public.categories',
       },
     };
 
@@ -974,6 +976,145 @@ describe('ArticleBaseService - getFindAllQueryBuilder', () => {
     expect(innerQb.andWhere).toHaveBeenCalledWith('"categoryRelations"."articleId" = articles.id');
 
     expect(outerQb.andWhereExists).toHaveBeenCalledWith(innerQb);
+  });
+
+  it('should handle undefined schema in requiredCategoryIds filter', async () => {
+    jest.resetAllMocks();
+
+    const mockAndWhere = jest.fn().mockReturnThis();
+    const mockFrom = jest.fn().mockReturnThis();
+    const mockCreateQueryBuilder = jest.fn().mockReturnValue({
+      from: mockFrom,
+      andWhere: mockAndWhere,
+    });
+
+    const baseCategoryRepo = {
+      metadata: {
+        tablePath: 'categories',
+      },
+    };
+
+    const mockRelation = {
+      propertyPath: 'categories',
+      junctionEntityMetadata: { tableName: 'article_categories' }, // no schema
+      inverseEntityMetadata: baseCategoryRepo.metadata,
+    };
+
+    const baseArticleRepo = {
+      metadata: {
+        schema: undefined, // no schema
+        manyToManyRelations: [mockRelation],
+      },
+    };
+
+    service = new ArticleBaseService(
+      baseArticleRepo as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      {
+        metadata: {
+          schema: undefined,
+          tableName: 'contents',
+          targetName: 'ArticleVersionContent',
+        },
+      } as MockRepositoryForService,
+      baseCategoryRepo as MockRepositoryForService,
+      true,
+      true,
+      true,
+      [],
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      true,
+      {
+        createQueryBuilder: mockCreateQueryBuilder,
+      } as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
+    );
+
+    const mockQb = {
+      andWhere: jest.fn().mockReturnThis(),
+      andWhereExists: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+    };
+
+    jest.spyOn(service as TestableArticleBaseService, 'getDefaultQueryBuilder').mockReturnValue(mockQb);
+
+    await service['getFindAllQueryBuilder']({
+      requiredCategoryIds: ['cat-1'],
+    });
+
+    // Should use 'article_categories' without schema prefix (not 'undefined.article_categories')
+    expect(mockFrom).toHaveBeenCalledWith('article_categories', 'requiredCategoryRelations0');
+  });
+
+  it('should handle undefined schema in categoryIds filter', async () => {
+    const innerQb = {
+      from: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+    };
+
+    const outerQb = {
+      andWhereExists: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+    };
+
+    const baseCategoryRepo = {
+      metadata: {
+        tablePath: 'categories',
+      },
+    };
+
+    const mockRelation = {
+      propertyPath: 'categories',
+      junctionEntityMetadata: { tableName: 'article_categories' }, // no schema
+      inverseEntityMetadata: baseCategoryRepo.metadata,
+    };
+
+    const baseArticleRepo = {
+      metadata: {
+        schema: undefined, // no schema
+        manyToManyRelations: [mockRelation],
+      },
+    };
+
+    const dataSource = {
+      createQueryBuilder: jest.fn().mockReturnValue(innerQb),
+    };
+
+    const service = new ArticleBaseService(
+      baseArticleRepo as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      {
+        metadata: {
+          schema: undefined,
+          tableName: 'contents',
+          targetName: 'ArticleVersionContent',
+        },
+      } as MockRepositoryForService,
+      baseCategoryRepo as MockRepositoryForService,
+      true,
+      true,
+      true,
+      [],
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
+      true,
+      dataSource as MockServiceDataSource,
+      {} as MockRepositoryForService,
+      {} as MockRepositoryForService,
+    );
+
+    jest.spyOn(service as TestableArticleBaseService, 'getDefaultQueryBuilder').mockReturnValue(outerQb);
+
+    await service['getFindAllQueryBuilder']({
+      categoryIds: ['c1', 'c2'],
+    });
+
+    expect(dataSource.createQueryBuilder).toHaveBeenCalled();
+    // Should use 'article_categories' without schema prefix (not 'undefined.article_categories')
+    expect(innerQb.from).toHaveBeenCalledWith('article_categories', 'categoryRelations');
   });
 
   it('should throw error if fullTextSearchMode is disabled when using FULL_TEXT search', async () => {

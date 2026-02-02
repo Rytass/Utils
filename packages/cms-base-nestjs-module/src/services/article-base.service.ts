@@ -475,16 +475,15 @@ export class ArticleBaseService<
 
     if (options?.requiredCategoryIds?.length) {
       const relationMetadata = this.baseArticleRepo.metadata.manyToManyRelations.find(
-        relation =>
-          `${this.baseArticleRepo.metadata.schema}.${relation.propertyPath}` ===
-          this.baseCategoryRepo.metadata.tablePath,
+        relation => relation.inverseEntityMetadata === this.baseCategoryRepo.metadata,
       )?.junctionEntityMetadata;
 
       options?.requiredCategoryIds?.forEach((categoryId, index) => {
         const relationQb = this.dataSource.createQueryBuilder();
+        const junctionSchema = relationMetadata?.schema;
 
         relationQb.from(
-          `${this.baseArticleRepo.metadata.schema}.${relationMetadata?.tableName}`,
+          junctionSchema ? `${junctionSchema}.${relationMetadata?.tableName}` : (relationMetadata?.tableName ?? ''),
           `requiredCategoryRelations${index}`,
         );
 
@@ -500,14 +499,16 @@ export class ArticleBaseService<
 
     if (options?.categoryIds?.length) {
       const relationMetadata = this.baseArticleRepo.metadata.manyToManyRelations.find(
-        relation =>
-          `${this.baseArticleRepo.metadata.schema}.${relation.propertyPath}` ===
-          this.baseCategoryRepo.metadata.tablePath,
+        relation => relation.inverseEntityMetadata === this.baseCategoryRepo.metadata,
       )?.junctionEntityMetadata;
 
       const relationQb = this.dataSource.createQueryBuilder();
+      const junctionSchema = relationMetadata?.schema;
 
-      relationQb.from(`${this.baseArticleRepo.metadata.schema}.${relationMetadata?.tableName}`, `categoryRelations`);
+      relationQb.from(
+        junctionSchema ? `${junctionSchema}.${relationMetadata?.tableName}` : (relationMetadata?.tableName ?? ''),
+        `categoryRelations`,
+      );
 
       relationQb.andWhere('"categoryRelations"."categoryId" IN (:...categoryIds)', {
         categoryIds: options.categoryIds,
