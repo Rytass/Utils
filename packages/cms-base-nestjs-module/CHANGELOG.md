@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.13](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.2.12...@rytass/cms-base-nestjs-module@0.2.13) (2026-02-02)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** use inverseEntityMetadata for relation lookup ([6f5a46a](https://github.com/Rytass/Utils/commit/6f5a46abeec1a699ea9f0d630e3dbb995e995e14))
+
 ## [0.2.12](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.2.11...@rytass/cms-base-nestjs-module@0.2.12) (2026-01-14)
 
 **Note:** Version bump only for package @rytass/cms-base-nestjs-module
