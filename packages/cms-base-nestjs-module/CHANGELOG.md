@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.16](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.2.15...@rytass/cms-base-nestjs-module@0.2.16) (2026-02-02)
+
+### Bug Fixes
+
+- **cms-base-nestjs-module:** use tableName comparison for category relation lookup ([99fd126](https://github.com/Rytass/Utils/commit/99fd126ed9c66110270352c4fde3571c479e948e))
+
 ## [0.2.15](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-module@0.2.14...@rytass/cms-base-nestjs-module@0.2.15) (2026-02-02)
 
 **Note:** Version bump only for package @rytass/cms-base-nestjs-module

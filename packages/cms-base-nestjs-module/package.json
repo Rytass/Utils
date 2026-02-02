@@ -1,6 +1,6 @@
 {
   "name": "@rytass/cms-base-nestjs-module",
-  "version": "0.2.15",
+  "version": "0.2.16",
   "description": "Rytass Content Management System NestJS Base Module",
   "keywords": [
     "rytass",
