@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.10](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-gcs@0.2.9...@rytass/storages-adapter-gcs@0.2.10) (2026-02-05)
+
+### Features
+
+- **storages-adapter-gcs:** make credentials optional for ADC support ([3b03589](https://github.com/Rytass/Utils/commit/3b035896a1eaf4f22b15734486ca8c78a80c4aec))
+
 ## [0.2.9](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-gcs@0.2.8...@rytass/storages-adapter-gcs@0.2.9) (2025-12-05)
 
 **Note:** Version bump only for package @rytass/storages-adapter-gcs
