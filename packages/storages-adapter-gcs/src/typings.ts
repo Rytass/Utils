@@ -3,9 +3,9 @@ import { StorageOptions } from '@rytass/storages';
 export interface GCSOptions extends StorageOptions {
   bucket: string;
   projectId: string;
-  credentials: {
+  credentials?: {
     client_email: string;
     private_key: string;
-  }; // ref: CredentialBody;
+  }; // ref: CredentialBody; optional for GKE Workload Identity / ADC
   [key: string]: unknown;
 }

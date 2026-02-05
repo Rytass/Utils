@@ -23,7 +23,7 @@ export class StorageGCSService extends Storage<GCSOptions> {
 
     this.storage = new GCSStorage({
       projectId: options.projectId,
-      credentials: options.credentials,
+      ...(options.credentials ? { credentials: options.credentials } : {}),
     });
 
     this.bucket = this.storage.bucket(options.bucket);
