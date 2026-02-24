@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.3.8](https://github.com/Rytass/Utils/compare/@rytass/logistics-adapter-ctc@0.3.7...@rytass/logistics-adapter-ctc@0.3.8) (2026-02-24)
+
+### Bug Fixes
+
+- upgrade axios to ^1.13.5 and lodash to ^4.17.23 for security patches ([55793c3](https://github.com/Rytass/Utils/commit/55793c3be6da21bae8221316b0e4bfbd79463293))
+
 ## [0.3.7](https://github.com/Rytass/Utils/compare/@rytass/logistics-adapter-ctc@0.3.6...@rytass/logistics-adapter-ctc@0.3.7) (2026-01-19)
 
 ### Bug Fixes

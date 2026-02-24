@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.9](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-azure-blob@0.1.8...@rytass/storages-adapter-azure-blob@0.1.9) (2026-02-24)
+
+**Note:** Version bump only for package @rytass/storages-adapter-azure-blob
+
 ## [0.1.8](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-azure-blob@0.1.7...@rytass/storages-adapter-azure-blob@0.1.8) (2025-12-05)
 
 **Note:** Version bump only for package @rytass/storages-adapter-azure-blob

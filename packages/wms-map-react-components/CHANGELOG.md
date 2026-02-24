@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.4](https://github.com/Rytass/Utils/compare/@rytass/wms-map-react-components@0.1.3...@rytass/wms-map-react-components@0.1.4) (2026-02-24)
+
+**Note:** Version bump only for package @rytass/wms-map-react-components
+
 ## [0.1.3](https://github.com/Rytass/Utils/compare/@rytass/wms-map-react-components@0.1.2...@rytass/wms-map-react-components@0.1.3) (2025-12-05)
 
 ### Bug Fixes

@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.15](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-amego@0.2.14...@rytass/invoice-adapter-amego@0.2.15) (2026-02-24)
+
+### Bug Fixes
+
+- upgrade axios to ^1.13.5 and lodash to ^4.17.23 for security patches ([55793c3](https://github.com/Rytass/Utils/commit/55793c3be6da21bae8221316b0e4bfbd79463293))
+
 ## [0.2.14](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-amego@0.2.13...@rytass/invoice-adapter-amego@0.2.14) (2025-12-04)
 
 ### Bug Fixes

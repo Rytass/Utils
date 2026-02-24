@@ -1,6 +1,6 @@
 {
   "name": "@rytass/storages-adapter-r2",
-  "version": "0.4.11",
+  "version": "0.4.12",
   "description": "Cloudflare R2 storage adapter",
   "keywords": [
     "rytass",
@@ -29,7 +29,7 @@
     "@aws-sdk/client-s3": "^3.996.0",
     "@aws-sdk/lib-storage": "^3.996.0",
     "@aws-sdk/s3-request-presigner": "^3.996.0",
-    "@rytass/storages": "^0.2.5",
+    "@rytass/storages": "^0.2.6",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
