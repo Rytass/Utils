@@ -66,8 +66,11 @@ describe('CTBC Payment Ngrok Error Handling', () => {
       // Create payment instance
       new CTBCPayment({
         merchantId: 'TEST_MERCHANT',
+        merId: 'TEST_MERID',
+        terminalId: 'TEST_TERMINAL',
         txnKey: 'abcdefghijklmnop',
-        txnVersion: '1.0.0',
+        sslAuthIV: 'test8iv!',
+        baseUrl: 'https://test.ctbc.example.com',
         withServer: 'ngrok',
         serverHost: 'http://localhost:3000',
         callbackPath: '/callback',
@@ -123,8 +126,11 @@ describe('CTBC Payment Ngrok Error Handling', () => {
       // Create payment instance
       new CTBCPayment({
         merchantId: 'TEST_MERCHANT',
+        merId: 'TEST_MERID',
+        terminalId: 'TEST_TERMINAL',
         txnKey: 'abcdefghijklmnop',
-        txnVersion: '1.0.0',
+        sslAuthIV: 'test8iv!',
+        baseUrl: 'https://test.ctbc.example.com',
         withServer: 'ngrok',
         serverHost: 'http://localhost:3000',
         callbackPath: '/callback',
@@ -189,8 +195,11 @@ describe('CTBC Payment Ngrok Error Handling', () => {
       // Create payment instance
       const payment = new CTBCPayment({
         merchantId: 'TEST_MERCHANT',
+        merId: 'TEST_MERID',
+        terminalId: 'TEST_TERMINAL',
         txnKey: 'abcdefghijklmnop',
-        txnVersion: '1.0.0',
+        sslAuthIV: 'test8iv!',
+        baseUrl: 'https://test.ctbc.example.com',
         withServer: 'ngrok',
         serverHost: 'http://localhost:3000',
         callbackPath: '/callback',

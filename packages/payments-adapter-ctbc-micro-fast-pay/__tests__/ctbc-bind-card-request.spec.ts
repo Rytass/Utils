@@ -13,6 +13,8 @@ describe('CTBCBindCardRequest', () => {
     merId: 'MER123',
     txnKey: 'txn-key-1234567890123',
     terminalId: 'TERM123',
+    sslAuthIV: 'test8iv!',
+    baseUrl: 'https://test.ctbc.example.com',
   });
 
   const payload = {

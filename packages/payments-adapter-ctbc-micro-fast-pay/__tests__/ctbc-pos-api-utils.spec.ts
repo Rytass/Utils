@@ -10,6 +10,7 @@ import {
   posApiSmartCancelOrRefund,
   getPosNextActionFromInquiry,
 } from '../src/ctbc-pos-api-utils';
+import { setSSLAuthIV } from '../src/ctbc-crypto-core';
 import { CTBC_ERROR_CODES, CTBCPosApiConfig, CTBCPosApiResponse } from '../src/typings';
 
 // Mock fetch
@@ -27,6 +28,10 @@ describe('CTBC POS API Utils', () => {
     URL: 'https://test.ctbc.com',
     MacKey: '12345678', // 8 character key for DES
   };
+
+  beforeAll(() => {
+    setSSLAuthIV(Buffer.alloc(8, 0xab));
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();

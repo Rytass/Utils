@@ -41,8 +41,9 @@ describe('CTBC AMEX API - 類別方法整合測試', () => {
       merId: 'TEST_MERID',
       txnKey: 'TEST_TXN_KEY_12345678901',
       terminalId: 'TEST_TERMINAL',
-      baseUrl: 'https://testepos.ctbcbank.com',
+      baseUrl: 'https://test.ctbc.example.com',
       isAmex: true,
+      sslAuthIV: 'test8iv!',
     });
   });
 

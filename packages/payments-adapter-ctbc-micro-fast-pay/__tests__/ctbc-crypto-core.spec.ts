@@ -7,16 +7,23 @@ import {
   getDecTXN,
   getDivKey,
   getMAC,
+  getSSLAuthIV,
   getTXN,
   setIV,
   setSSLAuthIV,
 } from '../src/ctbc-crypto-core';
 
+const TEST_SSL_AUTH_IV = Buffer.alloc(8, 0xab);
+
 describe('ctbc-crypto-core helpers', () => {
+  beforeEach(() => {
+    setSSLAuthIV(TEST_SSL_AUTH_IV);
+  });
+
   afterEach(() => {
     // restore defaults between tests
     setIV(Buffer.alloc(8, 0));
-    setSSLAuthIV(Buffer.from('hywebpg5', 'utf8'));
+    setSSLAuthIV(TEST_SSL_AUTH_IV);
   });
 
   it('setIV should require 8-byte buffer', () => {
@@ -27,6 +34,13 @@ describe('ctbc-crypto-core helpers', () => {
   it('setSSLAuthIV should require 8-byte buffer', () => {
     expect(() => setSSLAuthIV(Buffer.alloc(8, 2))).not.toThrow();
     expect(() => setSSLAuthIV(Buffer.from([3, 4, 5]))).toThrow('SSLAuth IV must be 8 bytes');
+  });
+
+  it('getSSLAuthIV should return the IV after initialization', () => {
+    const iv = Buffer.alloc(8, 0x42);
+
+    setSSLAuthIV(iv);
+    expect(getSSLAuthIV().equals(iv)).toBe(true);
   });
 
   it('encrypt3DES and decrypt3DES should round-trip text', () => {

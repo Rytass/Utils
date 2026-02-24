@@ -46,8 +46,9 @@ describe('CTBC POS API - 類別方法整合測試', () => {
       merId: 'TEST_MERID',
       txnKey: 'TEST_TXN_KEY_12345678901', // 統一的 MAC 金鑰
       terminalId: 'TEST_TERMINAL',
-      baseUrl: 'https://testepos.ctbcbank.com',
+      baseUrl: 'https://test.ctbc.example.com',
       isAmex: false, // 明確指定使用 POS API
+      sslAuthIV: 'test8iv!',
     });
   });
 
@@ -86,7 +87,7 @@ describe('CTBC POS API - 類別方法整合測試', () => {
       expect(result.id).toBe('TEST_ORDER_001');
       expect(mockPosApiQuery).toHaveBeenCalledWith(
         expect.objectContaining({
-          URL: 'https://testepos.ctbcbank.com',
+          URL: 'https://test.ctbc.example.com',
           MacKey: 'TEST_TXN_KEY_12345678901',
         }),
         expect.objectContaining({
@@ -266,7 +267,7 @@ describe('CTBC POS API - 類別方法整合測試', () => {
       expect(order.state).toBe(OrderState.REFUNDED);
       expect(mockPosApiSmartFlow).toHaveBeenCalledWith(
         expect.objectContaining({
-          URL: 'https://testepos.ctbcbank.com',
+          URL: 'https://test.ctbc.example.com',
           MacKey: 'TEST_TXN_KEY_12345678901',
         }),
         expect.objectContaining({
@@ -655,7 +656,7 @@ describe('CTBC POS API - 類別方法整合測試', () => {
       expect(order.state).toBe(OrderState.COMMITTED);
       expect(mockPosApiCancelRefund).toHaveBeenCalledWith(
         expect.objectContaining({
-          URL: 'https://testepos.ctbcbank.com',
+          URL: 'https://test.ctbc.example.com',
           MacKey: 'TEST_TXN_KEY_12345678901',
         }),
         expect.objectContaining({
@@ -719,7 +720,7 @@ describe('CTBC POS API - 類別方法整合測試', () => {
       expect(order.state).toBe(OrderState.COMMITTED);
       expect(mockPosApiCancelRefund).toHaveBeenCalledWith(
         expect.objectContaining({
-          URL: 'https://testepos.ctbcbank.com',
+          URL: 'https://test.ctbc.example.com',
           MacKey: 'TEST_TXN_KEY_12345678901',
         }),
         expect.objectContaining({

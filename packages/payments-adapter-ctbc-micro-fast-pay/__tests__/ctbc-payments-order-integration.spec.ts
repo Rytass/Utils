@@ -42,7 +42,7 @@ describe('CTBC 訂單 Mock 測試', () => {
   const TEST_MERID = 'DUMMY_MERID';
   const TEST_MACKEY = '123456789012345678901234'; // 24 長度，僅作為型別測試
   const TEST_ORDER_ID = 'ORDER123456';
-  const TEST_HOST = 'https://testepos.ctbcbank.com';
+  const TEST_HOST = 'https://test.ctbc.example.com';
   const TEST_XID = 'XID1234567890';
   const TEST_AUTH_CODE = 'A1B2C3';
 
@@ -58,6 +58,7 @@ describe('CTBC 訂單 Mock 測試', () => {
       terminalId: 'dummy-terminal',
       baseUrl: TEST_HOST,
       isAmex: false,
+      sslAuthIV: 'test8iv!',
     });
   });
 

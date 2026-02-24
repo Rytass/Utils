@@ -21,6 +21,8 @@ jest.mock('../src/ctbc-crypto-core', () => ({
   getMAC: jest.fn(() => 'MAC_DATA'),
   encrypt3DES: jest.fn(() => Buffer.from('encrypted-payload', 'utf8')),
   decrypt3DES: jest.fn(() => 'StatusCode=I0000&StatusDesc=OK&RequestNo=REQ1'),
+  getSSLAuthIV: jest.fn(() => Buffer.alloc(8, 0)),
+  setSSLAuthIV: jest.fn(),
 }));
 
 jest.mock('../src/ctbc-crypto', () => ({
@@ -57,6 +59,8 @@ const baseOptions = {
   merId: 'MER1',
   txnKey: '123456789012345678901234',
   terminalId: 'TERM1',
+  sslAuthIV: 'test8iv!',
+  baseUrl: 'https://test.ctbc.example.com',
 };
 
 describe('CTBCPayment core behaviours', () => {
@@ -644,7 +648,7 @@ describe('CTBCPayment core behaviours', () => {
   it('executeURL returns correct URL', () => {
     const payment = new CTBCPayment(baseOptions);
 
-    expect(payment.executeURL).toBe('https://testepos.ctbcbank.com/mFastPay/TxnServlet');
+    expect(payment.executeURL).toBe('https://test.ctbc.example.com/mFastPay/TxnServlet');
   });
 
   it('registers onCommit callback', async () => {

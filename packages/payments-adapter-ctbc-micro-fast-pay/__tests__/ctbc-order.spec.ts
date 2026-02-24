@@ -38,7 +38,7 @@ const amexCancelRefundMock = amexApiUtils.amexCancelRefund as jest.MockedFunctio
 describe('CTBCOrder unit tests', () => {
   const TEST_MERID = 'TEST_MERID';
   const TEST_MACKEY = '123456789012345678901234';
-  const TEST_HOST = 'https://testepos.ctbcbank.com';
+  const TEST_HOST = 'https://test.ctbc.example.com';
 
   let payment: CTBCPayment;
 
@@ -52,6 +52,7 @@ describe('CTBCOrder unit tests', () => {
       terminalId: 'test-terminal',
       baseUrl: TEST_HOST,
       isAmex: false,
+      sslAuthIV: 'test8iv!',
     });
   });
 
@@ -326,6 +327,7 @@ describe('CTBCOrder unit tests', () => {
         terminalId: 'test-terminal',
         baseUrl: TEST_HOST,
         isAmex: true,
+        sslAuthIV: 'test8iv!',
       });
     });
 
@@ -436,6 +438,7 @@ describe('CTBCOrder unit tests', () => {
         terminalId: 'test-terminal',
         baseUrl: TEST_HOST,
         isAmex: true,
+        sslAuthIV: 'test8iv!',
       });
     });
 

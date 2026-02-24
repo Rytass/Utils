@@ -15,7 +15,7 @@
 
 import crypto from 'node:crypto';
 import iconv from 'iconv-lite';
-import { SSLAuthIV } from '../src/ctbc-crypto-core';
+import { getSSLAuthIV, setSSLAuthIV } from '../src/ctbc-crypto-core';
 import { posApiSmartCancelOrRefund, CTBCPosApiConfig, CTBCPosApiRefundParams } from '../src';
 
 // Mock fetch
@@ -35,7 +35,7 @@ function encryptForMockResponse(jsonData: object, macKey: string): string {
   const paddedData = Buffer.concat([big5Data, padding]);
 
   // Encrypt using DES-EDE3-CBC
-  const cipher = crypto.createCipheriv('des-ede3-cbc', Buffer.from(macKey, 'utf8'), SSLAuthIV);
+  const cipher = crypto.createCipheriv('des-ede3-cbc', Buffer.from(macKey, 'utf8'), getSSLAuthIV());
 
   cipher.setAutoPadding(false);
 
@@ -60,6 +60,10 @@ describe('CTBC POS API - Smart Cancel/Refund Action Paths', () => {
     PurchAmt: '500',
     exponent: '0',
   };
+
+  beforeAll(() => {
+    setSSLAuthIV(Buffer.alloc(8, 0xab));
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
