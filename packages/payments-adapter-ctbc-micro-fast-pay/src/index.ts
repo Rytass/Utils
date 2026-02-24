@@ -24,6 +24,7 @@ export type {
 export { CTBCBindCardRequest } from './ctbc-bind-card-request';
 export { CTBCOrder } from './ctbc-order';
 export { CTBCPayment } from './ctbc-payment';
+export { setSSLAuthIV, getSSLAuthIV } from './ctbc-crypto-core';
 
 // POS API 工具函數
 export {

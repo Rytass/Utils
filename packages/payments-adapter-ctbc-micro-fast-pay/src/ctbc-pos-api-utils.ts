@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import * as iconv from 'iconv-lite';
-import { desMac, SSLAuthIV } from './ctbc-crypto-core';
+import { desMac, getSSLAuthIV } from './ctbc-crypto-core';
 import {
   CTBC_ERROR_CODES,
   CTBCPosApiConfig,
@@ -155,7 +155,7 @@ function getMacValue24Sub(dataString: string, macKey: string): string {
 
 // 解密 MAC 值 - 對應 PHP 的 decodeDESMAC
 function decodeMacValue(macValue: string, macKey: string): string {
-  const decipher = crypto.createDecipheriv('des-ede3-cbc', Buffer.from(macKey, 'utf8'), SSLAuthIV);
+  const decipher = crypto.createDecipheriv('des-ede3-cbc', Buffer.from(macKey, 'utf8'), getSSLAuthIV());
 
   decipher.setAutoPadding(false);
 

@@ -21,7 +21,16 @@ import { createServer, IncomingMessage, Server, ServerResponse } from 'node:http
 import { URLSearchParams } from 'node:url';
 import { amexInquiry } from './ctbc-amex-api-utils';
 import { CTBCBindCardRequest } from './ctbc-bind-card-request';
-import { decrypt3DES, desMac, encrypt3DES, getDivKey, getMAC, getMacFromParams, SSLAuthIV } from './ctbc-crypto-core';
+import {
+  decrypt3DES,
+  desMac,
+  encrypt3DES,
+  getDivKey,
+  getMAC,
+  getMacFromParams,
+  getSSLAuthIV,
+  setSSLAuthIV,
+} from './ctbc-crypto-core';
 import { CTBCOrder } from './ctbc-order';
 import { posApiQuery } from './ctbc-pos-api-utils';
 import { CtbcPaymentFailedError } from './errors';
@@ -83,7 +92,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
     this.merId = options.merId;
     this.txnKey = options.txnKey;
     this.terminalId = options.terminalId;
-    this.baseUrl = options.baseUrl ?? 'https://testepos.ctbcbank.com';
+    this.baseUrl = options.baseUrl;
     this.serverHost = options?.serverHost || this.serverHost;
     this.callbackPath = options?.callbackPath || this.callbackPath;
     this.checkoutPath = options?.checkoutPath || this.checkoutPath;
@@ -92,6 +101,8 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
     this.boundCardCheckoutResultPath = options?.boundCardCheckoutResultPath || this.boundCardCheckoutResultPath;
 
     this.isAmex = options?.isAmex ?? this.isAmex;
+
+    setSSLAuthIV(Buffer.from(options.sslAuthIV, 'utf8'));
 
     /* istanbul ignore if: server creation - tested in integration tests */
     if (options?.withServer) {
@@ -157,7 +168,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
           throw new Error('Missing URLResEnc parameter in callback');
         }
 
-        const decipher = createDecipheriv('des-ede3-cbc', Buffer.from(this.txnKey, 'utf8'), SSLAuthIV);
+        const decipher = createDecipheriv('des-ede3-cbc', Buffer.from(this.txnKey, 'utf8'), getSSLAuthIV());
 
         decipher.setAutoPadding(false);
 
@@ -459,7 +470,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
 
   /* istanbul ignore next: server creation - tested in integration tests */
   private createServer(useNgrok: boolean): void {
-    const url = new URL(this.serverHost ?? 'http://localhost:3000');
+    const url = new URL(this.serverHost);
 
     this._server = createServer((req, res) => this.serverListener(req, res));
 

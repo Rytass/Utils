@@ -69,7 +69,8 @@ export interface CTBCPaymentOptions<O extends CTBCOrder<CTBCOrderCommitMessage> 
   merId: string;
   txnKey: string;
   terminalId: string;
-  baseUrl?: string;
+  sslAuthIV: string;
+  baseUrl: string;
   requireCacheHit?: boolean;
   withServer?: boolean | 'ngrok';
   serverHost?: string; // Default: http://localhost:3000
@@ -91,7 +92,7 @@ export interface CTBCPaymentOptions<O extends CTBCOrder<CTBCOrderCommitMessage> 
 export interface CTBCMicroFastPayOptions {
   merchantId: string; // CTBC 配發之商店代碼
   txnKey: string; // MAC/TXN 使用的金鑰（商店自管）
-  baseUrl?: string; // API base URL，預設為 https://ccapi.ctbcbank.com
+  baseUrl: string; // API base URL
   withServer?: boolean; // 是否使用後端伺服器自動產生 bindingURL
 }
 
