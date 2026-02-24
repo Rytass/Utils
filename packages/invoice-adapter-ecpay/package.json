@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@rytass/invoice": "^0.4.10",
-    "axios": "^1.13.2",
+    "axios": "^1.13.5",
     "luxon": "^3.7.2",
     "validator": "^13.15.23"
   },
