@@ -28,10 +28,10 @@
     "@rytass/payments": "^0.2.7",
     "axios": "^1.13.5",
     "debug": "^4.4.3",
-    "iconv-lite": "^0.7.0",
-    "lru-cache": "^11.2.4",
+    "iconv-lite": "^0.7.2",
+    "lru-cache": "^11.2.6",
     "luxon": "^3.7.2",
-    "soap": "^1.6.1"
+    "soap": "^1.7.1"
   },
   "peerDependencies": {
     "@ngrok/ngrok": "^1.5.1"
