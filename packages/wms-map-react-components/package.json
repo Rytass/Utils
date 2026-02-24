@@ -27,7 +27,7 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@xyflow/react": "^12.10.0"
+    "@xyflow/react": "^12.10.1"
   },
   "peerDependencies": {
     "@mezzanine-ui/react": "*",
@@ -37,8 +37,8 @@
     "react-hook-form": "*"
   },
   "devDependencies": {
-    "@storybook/addon-docs": "^10.1.4",
-    "@storybook/react-vite": "^10.1.4",
-    "storybook": "^10.1.4"
+    "@storybook/addon-docs": "^10.2.11",
+    "@storybook/react-vite": "^10.2.11",
+    "storybook": "^10.2.11"
   }
 }
