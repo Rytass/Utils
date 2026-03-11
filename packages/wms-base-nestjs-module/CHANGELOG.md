@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.11](https://github.com/Rytass/Utils/compare/@rytass/wms-base-nestjs-module@0.1.10...@rytass/wms-base-nestjs-module@0.1.11) (2026-03-11)
+
+### Features
+
+- **api:** add batch table inheritance ([9a916f1](https://github.com/Rytass/Utils/commit/9a916f1f00956f8ef706022e050b2e192b5f9689))
+- **api:** add typeorm import ([42dc662](https://github.com/Rytass/Utils/commit/42dc6627146a3e07a84b193601862bf18c1f6c05))
+
 ## [0.1.10](https://github.com/Rytass/Utils/compare/@rytass/wms-base-nestjs-module@0.1.9...@rytass/wms-base-nestjs-module@0.1.10) (2026-01-15)
 
 **Note:** Version bump only for package @rytass/wms-base-nestjs-module
