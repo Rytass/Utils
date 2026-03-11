@@ -6,6 +6,7 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  TableInheritance,
   Unique,
   type Relation,
 } from 'typeorm';
