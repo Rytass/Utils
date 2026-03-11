@@ -6,6 +6,7 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  TableInheritance,
   Unique,
   type Relation,
 } from 'typeorm';
@@ -16,6 +17,7 @@ export const BatchRepo = Symbol('BatchRepo');
 
 @Entity('batches')
 @Unique(['key', 'materialId'])
+@TableInheritance({ column: { type: 'varchar', name: 'entityName' } })
 export class BatchEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
