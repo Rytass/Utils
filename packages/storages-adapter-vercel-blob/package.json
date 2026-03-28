@@ -1,0 +1,32 @@
+{
+  "name": "@rytass/storages-adapter-vercel-blob",
+  "version": "0.0.1",
+  "description": "Vercel Blob storage adapter",
+  "keywords": [
+    "rytass",
+    "vercel",
+    "blob",
+    "storage"
+  ],
+  "author": "Chia Yu Pai <fantasyatelier@gmail.com>",
+  "homepage": "https://github.com/Rytass/Utils#readme",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rytass/Utils.git"
+  },
+  "scripts": {
+    "clean": "nx clean",
+    "build": "nx build",
+    "lint": "nx lint",
+    "test": "nx test",
+    "test:watch": "nx test:watch"
+  },
+  "bugs": {
+    "url": "https://github.com/Rytass/Utils/issues"
+  },
+  "dependencies": {
+    "@rytass/storages": "^0.2.6",
+    "@vercel/blob": "^0.27.1"
+  }
+}
