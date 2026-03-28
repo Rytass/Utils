@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.5.1](https://github.com/Rytass/Utils/compare/@rytass/secret-adapter-vault-nestjs@0.4.5...@rytass/secret-adapter-vault-nestjs@0.5.1) (2026-03-28)
+
+### Features
+
+- **secret-adapter-vault-nestjs:** update peerDependencies for @nestjs/config v4 ([90f0dac](https://github.com/Rytass/Utils/commit/90f0dac6c269372f143e8325bd8d1076e88591b2))
+
 ## [0.4.5](https://github.com/Rytass/Utils/compare/@rytass/secret-adapter-vault-nestjs@0.4.4...@rytass/secret-adapter-vault-nestjs@0.4.5) (2026-02-24)
 
 **Note:** Version bump only for package @rytass/secret-adapter-vault-nestjs
