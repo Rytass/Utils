@@ -78,12 +78,12 @@ export function useTableEvents<T extends TableDataSourceWithId>({
   const onWithdraw = useCallback(
     (source: T) => async (): Promise<void> => {
       const isConfirm = await openDialog({
-        severity: 'error',
+        modalStatusType: 'error',
         title: '確認取消發佈此文章？',
         children: '內容將被移至可發佈區。',
         cancelText: '取消',
         cancelButtonProps: {
-          danger: false,
+          variant: 'base-secondary',
         },
         confirmText: '取消發佈',
       });
@@ -102,11 +102,11 @@ export function useTableEvents<T extends TableDataSourceWithId>({
         children: '文章將移至「待審核」。請確認是否提交審核此文章。',
         cancelText: '取消',
         cancelButtonProps: {
-          danger: false,
+          variant: 'base-secondary',
         },
         confirmText: '提交審核',
         confirmButtonProps: {
-          danger: false,
+          variant: 'base-primary',
         },
       });
 
@@ -120,12 +120,12 @@ export function useTableEvents<T extends TableDataSourceWithId>({
   const onPutBack = useCallback(
     (source: T) => async (): Promise<void> => {
       const isConfirm = await openDialog({
-        severity: 'error',
+        modalStatusType: 'error',
         title: '確認撤銷審核此文章？',
         children: '內容將被移至草稿區。',
         cancelText: '取消',
         cancelButtonProps: {
-          danger: false,
+          variant: 'base-secondary',
         },
         confirmText: '撤銷審核',
       });
@@ -140,12 +140,12 @@ export function useTableEvents<T extends TableDataSourceWithId>({
   const onDelete = useCallback(
     (source: T) => async (): Promise<void> => {
       const isConfirm = await openDialog({
-        severity: 'error',
+        modalStatusType: 'error',
         title: '確認刪除文章？',
         children: '此動作無法復原。',
         cancelText: '取消',
         cancelButtonProps: {
-          danger: false,
+          variant: 'base-secondary',
         },
         confirmText: '刪除文章',
       });

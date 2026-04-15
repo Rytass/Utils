@@ -75,17 +75,16 @@ export function useSubmitButton<T extends FieldValues>({
           text: '送審',
           onSubmit: async (): Promise<void> => {
             const isConfirm = await openDialog({
-              severity: 'info',
-              size: 'small',
+              modalStatusType: 'info',
               title: '提交審核此文章',
               children: '請確認是否提交審核此文章。',
               cancelText: '取消',
               cancelButtonProps: {
-                danger: false,
+                variant: 'base-secondary',
               },
               confirmText: '提交審核',
               confirmButtonProps: {
-                danger: false,
+                variant: 'base-primary',
               },
             });
 
@@ -157,17 +156,16 @@ export function useSubmitButton<T extends FieldValues>({
             text: '送審',
             onSubmit: async (): Promise<void> => {
               const isConfirm = await openDialog({
-                severity: 'info',
-                size: 'small',
+                modalStatusType: 'info',
                 title: '提交審核此文章',
                 children: '請確認是否提交審核此文章。',
                 cancelText: '取消',
                 cancelButtonProps: {
-                  danger: false,
+                  variant: 'base-secondary',
                 },
                 confirmText: '提交審核',
                 confirmButtonProps: {
-                  danger: false,
+                  variant: 'base-primary',
                 },
               });
 
@@ -263,17 +261,16 @@ export function useSubmitButton<T extends FieldValues>({
             text: '送審',
             onSubmit: async (): Promise<void> => {
               const isConfirm = await openDialog({
-                severity: 'info',
-                size: 'small',
+                modalStatusType: 'info',
                 title: '提交審核此文章',
                 children: '請確認是否提交審核此文章。',
                 cancelText: '取消',
                 cancelButtonProps: {
-                  danger: false,
+                  variant: 'base-secondary',
                 },
                 confirmText: '提交審核',
                 confirmButtonProps: {
-                  danger: false,
+                  variant: 'base-primary',
                 },
               });
 
@@ -329,17 +326,16 @@ export function useSubmitButton<T extends FieldValues>({
           text: '送審',
           onSubmit: async (): Promise<void> => {
             const isConfirm = await openDialog({
-              severity: 'info',
-              size: 'small',
+              modalStatusType: 'info',
               title: '提交審核此文章',
               children: '請確認是否提交審核此文章。',
               cancelText: '取消',
               cancelButtonProps: {
-                danger: false,
+                variant: 'base-secondary',
               },
               confirmText: '提交審核',
               confirmButtonProps: {
-                danger: false,
+                variant: 'base-primary',
               },
             });
 
@@ -403,17 +399,16 @@ export function useSubmitButton<T extends FieldValues>({
             text: '送審',
             onSubmit: async (): Promise<void> => {
               const isConfirm = await openDialog({
-                severity: 'info',
-                size: 'small',
+                modalStatusType: 'info',
                 title: '提交審核此文章',
                 children: '請確認是否提交審核此文章。',
                 cancelText: '取消',
                 cancelButtonProps: {
-                  danger: false,
+                  variant: 'base-secondary',
                 },
                 confirmText: '提交審核',
                 confirmButtonProps: {
-                  danger: false,
+                  variant: 'base-primary',
                 },
               });
 
@@ -666,17 +661,16 @@ export function useSubmitButton<T extends FieldValues>({
             text: '送審',
             onSubmit: async (): Promise<void> => {
               const isConfirm = await openDialog({
-                severity: 'info',
-                size: 'small',
+                modalStatusType: 'info',
                 title: '提交審核此文章',
                 children: '請確認是否提交審核此文章。',
                 cancelText: '取消',
                 cancelButtonProps: {
-                  danger: false,
+                  variant: 'base-secondary',
                 },
                 confirmText: '提交審核',
                 confirmButtonProps: {
-                  danger: false,
+                  variant: 'base-primary',
                 },
               });
 
