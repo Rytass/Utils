@@ -1,101 +1,55 @@
-import React, { FC, ReactNode, useState, useMemo, useCallback, memo } from 'react';
-import { Modal } from '@mezzanine-ui/react';
-import { ModalHeaderLayoutProps } from '@mezzanine-ui/react/Modal';
+import React, { FC, ReactNode, useState, memo } from 'react';
 import { ModalContextProvider } from './ModalContext';
-import { ModalConfigType } from './typing';
+import { VerifyReleaseModal } from '../cms-modals/VerifyReleaseModal';
+import type { VerifyReleaseModalProps } from '../cms-modals/VerifyReleaseModal';
+import { DeleteWithdrawModal } from '../cms-modals/DeleteWithdrawModal';
+import type { DeleteWithdrawModalProps } from '../cms-modals/DeleteWithdrawModal';
+import { RejectModal } from '../cms-modals/RejectModal';
+import type { RejectModalProps } from '../cms-modals/RejectModal';
 
 const ModalProvider: FC<{ children?: ReactNode }> = ({ children }) => {
-  const [open, setOpen] = useState<boolean>(false);
-
-  const [modalConfig, setModalConfig] = useState<ModalConfigType>({});
-
-  const {
-    className,
-    title,
-    titleAlign = 'left',
-    modalStatusType,
-    showStatusTypeIcon,
-    size = 'regular',
-    cancelButtonProps,
-    confirmButtonProps,
-    cancelText = '取消',
-    confirmText = '確認',
-    onConfirm,
-    children: modalChildren,
-  } = modalConfig;
-
-  const openModal = useCallback((config: ModalConfigType) => {
-    setOpen(true);
-    setModalConfig(config);
-  }, []);
-
-  const closeModal = useCallback(async () => {
-    setOpen(false);
-
-    // Wait animation end then reset
-    await new Promise(r => setTimeout(r, 250));
-
-    setModalConfig({});
-  }, []);
-
-  const layoutProps = useMemo(
-    (): ModalHeaderLayoutProps =>
-      titleAlign === 'left'
-        ? {
-            statusTypeIconLayout: 'horizontal',
-            titleAlign: 'left',
-          }
-        : {
-            statusTypeIconLayout: 'vertical',
-            titleAlign: 'center',
-          },
-    [titleAlign],
-  );
+  const [verifyReleaseModalProps, setVerifyReleaseModalProps] = useState<VerifyReleaseModalProps | null>(null);
+  const [deleteWithdrawModalProps, setDeleteWithdrawModalProps] = useState<DeleteWithdrawModalProps | null>(null);
+  const [rejectModalProps, setRejectModalProps] = useState<RejectModalProps | null>(null);
 
   return (
     <ModalContextProvider
       value={{
-        open,
-        closeModal: () => {
-          setOpen(false);
-        },
-        openModal,
+        setVerifyReleaseModalProps,
+        setDeleteWithdrawModalProps,
+        setRejectModalProps,
       }}
     >
       <>
         {children}
-        <Modal
-          {...layoutProps}
-          className={className}
-          onClose={() => {
-            closeModal();
-          }}
-          showDismissButton
-          modalType="standard"
-          modalStatusType={modalStatusType}
-          size={size}
-          cancelText={cancelText}
-          confirmText={confirmText}
-          onCancel={() => {
-            closeModal();
-          }}
-          onConfirm={onConfirm}
-          cancelButtonProps={{
-            type: 'button',
-            ...cancelButtonProps,
-          }}
-          confirmButtonProps={{
-            type: 'button',
-            ...confirmButtonProps,
-          }}
-          showStatusTypeIcon={showStatusTypeIcon}
-          title={title ?? ''}
-          open={open}
-          showModalFooter
-          showModalHeader
-        >
-          {modalChildren}
-        </Modal>
+        {verifyReleaseModalProps && (
+          <VerifyReleaseModal
+            open={!!verifyReleaseModalProps}
+            closeModal={() => {
+              setVerifyReleaseModalProps(null);
+            }}
+            {...verifyReleaseModalProps}
+          />
+        )}
+        {deleteWithdrawModalProps && (
+          <DeleteWithdrawModal
+            open={!!deleteWithdrawModalProps}
+            closeModal={() => {
+              setDeleteWithdrawModalProps(null);
+            }}
+            {...deleteWithdrawModalProps}
+          />
+        )}
+
+        {rejectModalProps && (
+          <RejectModal
+            open={!!rejectModalProps}
+            closeModal={() => {
+              setRejectModalProps(null);
+            }}
+            {...rejectModalProps}
+          />
+        )}
       </>
     </ModalContextProvider>
   );

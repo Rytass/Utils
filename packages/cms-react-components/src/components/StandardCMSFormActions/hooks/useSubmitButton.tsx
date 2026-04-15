@@ -1,9 +1,7 @@
-import React from 'react';
 import { FieldValues } from 'react-hook-form';
 import { havePermission } from '../../../utils/havePermission';
 import { StandardCMSFormActionsEventsProps } from '../typings';
 import { ArticleStage, ArticlesPermissions } from '../../../typings';
-import { VerifyReleaseModal } from '../../cms-modals/VerifyReleaseModal';
 import { useDialog } from '../../dialog/useDialog';
 import { useModal } from '../../modal/useModal';
 
@@ -27,7 +25,7 @@ export function useSubmitButton<T extends FieldValues>({
   onSubmit?: () => Promise<void>;
 } {
   const { openDialog } = useDialog();
-  const { openModal } = useModal();
+  const { setVerifyReleaseModalProps } = useModal();
 
   if (createMode) {
     if (
@@ -45,21 +43,16 @@ export function useSubmitButton<T extends FieldValues>({
         return {
           text: '發佈',
           onSubmit: async (): Promise<void> => {
-            openModal({
-              severity: 'success',
-              children: (
-                <VerifyReleaseModal
-                  title="審核通過"
-                  withApprove
-                  showSeverityIcon
-                  onRelease={async releasedAt => {
-                    await actionsEvents.onCreateAndRelease?.(values, releasedAt);
-                  }}
-                  onApprove={async (): Promise<void> => {
-                    await actionsEvents.onCreateAndApprove?.(values);
-                  }}
-                />
-              ),
+            setVerifyReleaseModalProps({
+              title: '審核通過',
+              withApprove: true,
+              showStatusTypeIcon: true,
+              onRelease: async releasedAt => {
+                await actionsEvents.onCreateAndRelease?.(values, releasedAt);
+              },
+              onApprove: async (): Promise<void> => {
+                await actionsEvents.onCreateAndApprove?.(values);
+              },
             });
           },
         };
@@ -126,21 +119,16 @@ export function useSubmitButton<T extends FieldValues>({
           return {
             text: '發佈',
             onSubmit: async (): Promise<void> => {
-              openModal({
-                severity: 'success',
-                children: (
-                  <VerifyReleaseModal
-                    title="審核通過"
-                    withApprove
-                    showSeverityIcon
-                    onRelease={async releasedAt => {
-                      await actionsEvents.onUpdateAndRelease?.(values, releasedAt);
-                    }}
-                    onApprove={async (): Promise<void> => {
-                      await actionsEvents.onUpdateAndApprove?.(values);
-                    }}
-                  />
-                ),
+              setVerifyReleaseModalProps({
+                title: '審核通過',
+                withApprove: true,
+                showStatusTypeIcon: true,
+                onRelease: async releasedAt => {
+                  await actionsEvents.onUpdateAndRelease?.(values, releasedAt);
+                },
+                onApprove: async (): Promise<void> => {
+                  await actionsEvents.onUpdateAndApprove?.(values);
+                },
               });
             },
           };
@@ -231,21 +219,16 @@ export function useSubmitButton<T extends FieldValues>({
           return {
             text: '發佈',
             onSubmit: async (): Promise<void> => {
-              openModal({
-                severity: 'success',
-                children: (
-                  <VerifyReleaseModal
-                    title="審核通過"
-                    withApprove
-                    showSeverityIcon
-                    onRelease={async releasedAt => {
-                      await actionsEvents.onUpdateAndRelease?.(values, releasedAt);
-                    }}
-                    onApprove={async (): Promise<void> => {
-                      await actionsEvents.onUpdateAndApprove?.(values);
-                    }}
-                  />
-                ),
+              setVerifyReleaseModalProps({
+                title: '審核通過',
+                withApprove: true,
+                showStatusTypeIcon: true,
+                onRelease: async releasedAt => {
+                  await actionsEvents.onUpdateAndRelease?.(values, releasedAt);
+                },
+                onApprove: async (): Promise<void> => {
+                  await actionsEvents.onUpdateAndApprove?.(values);
+                },
               });
             },
           };
@@ -296,21 +279,16 @@ export function useSubmitButton<T extends FieldValues>({
         return {
           text: '發佈',
           onSubmit: async (): Promise<void> => {
-            openModal({
-              severity: 'success',
-              children: (
-                <VerifyReleaseModal
-                  title="審核通過"
-                  withApprove
-                  showSeverityIcon
-                  onRelease={async releasedAt => {
-                    await actionsEvents.onRelease?.(values, releasedAt);
-                  }}
-                  onApprove={async (): Promise<void> => {
-                    await actionsEvents.onApprove?.(values);
-                  }}
-                />
-              ),
+            setVerifyReleaseModalProps({
+              title: '審核通過',
+              withApprove: true,
+              showStatusTypeIcon: true,
+              onRelease: async releasedAt => {
+                await actionsEvents.onRelease?.(values, releasedAt);
+              },
+              onApprove: async (): Promise<void> => {
+                await actionsEvents.onApprove?.(values);
+              },
             });
           },
         };
@@ -369,21 +347,16 @@ export function useSubmitButton<T extends FieldValues>({
           return {
             text: '審核通過',
             onSubmit: async (): Promise<void> => {
-              openModal({
-                severity: 'success',
-                children: (
-                  <VerifyReleaseModal
-                    title="審核通過"
-                    withApprove
-                    showSeverityIcon
-                    onRelease={async releasedAt => {
-                      await actionsEvents.onUpdateAndRelease?.(values, releasedAt);
-                    }}
-                    onApprove={async (): Promise<void> => {
-                      await actionsEvents.onUpdateAndApprove?.(values);
-                    }}
-                  />
-                ),
+              setVerifyReleaseModalProps({
+                title: '審核通過',
+                withApprove: true,
+                showStatusTypeIcon: true,
+                onRelease: async releasedAt => {
+                  await actionsEvents.onUpdateAndRelease?.(values, releasedAt);
+                },
+                onApprove: async (): Promise<void> => {
+                  await actionsEvents.onUpdateAndApprove?.(values);
+                },
               });
             },
           };
@@ -434,21 +407,16 @@ export function useSubmitButton<T extends FieldValues>({
         return {
           text: '審核通過',
           onSubmit: async (): Promise<void> => {
-            openModal({
-              severity: 'success',
-              children: (
-                <VerifyReleaseModal
-                  title="審核通過"
-                  withApprove
-                  showSeverityIcon
-                  onRelease={async releasedAt => {
-                    await actionsEvents.onRelease?.(values, releasedAt);
-                  }}
-                  onApprove={async (): Promise<void> => {
-                    await actionsEvents.onApprove?.(values);
-                  }}
-                />
-              ),
+            setVerifyReleaseModalProps({
+              title: '審核通過',
+              withApprove: true,
+              showStatusTypeIcon: true,
+              onRelease: async releasedAt => {
+                await actionsEvents.onRelease?.(values, releasedAt);
+              },
+              onApprove: async (): Promise<void> => {
+                await actionsEvents.onApprove?.(values);
+              },
             });
           },
         };
@@ -490,18 +458,13 @@ export function useSubmitButton<T extends FieldValues>({
           return {
             text: '發佈',
             onSubmit: async (): Promise<void> => {
-              openModal({
-                severity: 'success',
-                children: (
-                  <VerifyReleaseModal
-                    title="發佈設定"
-                    withApprove={false}
-                    showSeverityIcon={false}
-                    onRelease={async releasedAt => {
-                      await actionsEvents.onUpdateAndRelease?.(values, releasedAt);
-                    }}
-                  />
-                ),
+              setVerifyReleaseModalProps({
+                title: '發佈設定',
+                withApprove: false,
+                showStatusTypeIcon: false,
+                onRelease: async releasedAt => {
+                  await actionsEvents.onUpdateAndRelease?.(values, releasedAt);
+                },
               });
             },
           };
@@ -522,18 +485,13 @@ export function useSubmitButton<T extends FieldValues>({
         return {
           text: '發佈設定',
           onSubmit: async (): Promise<void> => {
-            openModal({
-              severity: 'success',
-              children: (
-                <VerifyReleaseModal
-                  title="發佈設定"
-                  withApprove={false}
-                  showSeverityIcon={false}
-                  onRelease={async releasedAt => {
-                    await actionsEvents.onRelease?.(values, releasedAt);
-                  }}
-                />
-              ),
+            setVerifyReleaseModalProps({
+              title: '發佈設定',
+              withApprove: false,
+              showStatusTypeIcon: false,
+              onRelease: async releasedAt => {
+                await actionsEvents.onRelease?.(values, releasedAt);
+              },
             });
           },
         };
@@ -562,18 +520,13 @@ export function useSubmitButton<T extends FieldValues>({
           return {
             text: '發佈',
             onSubmit: async (): Promise<void> => {
-              openModal({
-                severity: 'success',
-                children: (
-                  <VerifyReleaseModal
-                    title="發佈設定"
-                    withApprove={false}
-                    showSeverityIcon={false}
-                    onRelease={async releasedAt => {
-                      await actionsEvents.onUpdateAndRelease?.(values, releasedAt);
-                    }}
-                  />
-                ),
+              setVerifyReleaseModalProps({
+                title: '發佈設定',
+                withApprove: false,
+                showStatusTypeIcon: false,
+                onRelease: async releasedAt => {
+                  await actionsEvents.onUpdateAndRelease?.(values, releasedAt);
+                },
               });
             },
           };
@@ -594,18 +547,13 @@ export function useSubmitButton<T extends FieldValues>({
         return {
           text: '發佈設定',
           onSubmit: async (): Promise<void> => {
-            openModal({
-              severity: 'success',
-              children: (
-                <VerifyReleaseModal
-                  title="發佈設定"
-                  withApprove={false}
-                  showSeverityIcon={false}
-                  onRelease={async releasedAt => {
-                    await actionsEvents.onRelease?.(values, releasedAt);
-                  }}
-                />
-              ),
+            setVerifyReleaseModalProps({
+              title: '發佈設定',
+              withApprove: false,
+              showStatusTypeIcon: false,
+              onRelease: async releasedAt => {
+                await actionsEvents.onRelease?.(values, releasedAt);
+              },
             });
           },
         };
@@ -634,18 +582,13 @@ export function useSubmitButton<T extends FieldValues>({
           return {
             text: '發佈',
             onSubmit: async (): Promise<void> => {
-              openModal({
-                severity: 'success',
-                children: (
-                  <VerifyReleaseModal
-                    title="發佈設定"
-                    withApprove={false}
-                    showSeverityIcon={false}
-                    onRelease={async releasedAt => {
-                      await actionsEvents.onUpdateAndRelease?.(values, releasedAt);
-                    }}
-                  />
-                ),
+              setVerifyReleaseModalProps({
+                title: '發佈設定',
+                withApprove: false,
+                showStatusTypeIcon: false,
+                onRelease: async releasedAt => {
+                  await actionsEvents.onUpdateAndRelease?.(values, releasedAt);
+                },
               });
             },
           };
@@ -696,18 +639,13 @@ export function useSubmitButton<T extends FieldValues>({
         return {
           text: '發佈設定',
           onSubmit: async (): Promise<void> => {
-            openModal({
-              severity: 'success',
-              children: (
-                <VerifyReleaseModal
-                  title="發佈設定"
-                  withApprove={false}
-                  showSeverityIcon={false}
-                  onRelease={async releasedAt => {
-                    await actionsEvents.onRelease?.(values, releasedAt);
-                  }}
-                />
-              ),
+            setVerifyReleaseModalProps({
+              title: '發佈設定',
+              withApprove: false,
+              showStatusTypeIcon: false,
+              onRelease: async releasedAt => {
+                await actionsEvents.onRelease?.(values, releasedAt);
+              },
             });
           },
         };

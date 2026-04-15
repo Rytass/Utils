@@ -1,9 +1,8 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { TableDataSourceWithId } from '@mezzanine-ui/core/table';
 import { useDialog } from '../../dialog/useDialog';
 import { useModal } from '../../modal/useModal';
-import { VerifyReleaseModal } from '../../cms-modals/VerifyReleaseModal';
-import { DeleteWithdrawModal, DeleteWithdrawModalRadio } from '../../cms-modals/DeleteWithdrawModal';
+import { DeleteWithdrawModalRadio } from '../../cms-modals/DeleteWithdrawModal';
 import { havePermission } from '../../../utils/havePermission';
 import { StandardCMSTableEventsProps } from '../typings';
 import { ArticleStage, ArticlesPermissions } from '../../../typings';
@@ -24,7 +23,7 @@ export function useTableEvents<T extends TableDataSourceWithId>({
   onDeleteWithdraw: (source: T) => () => Promise<void>;
 } {
   const { openDialog } = useDialog();
-  const { openModal } = useModal();
+  const { setDeleteWithdrawModalProps, setVerifyReleaseModalProps } = useModal();
 
   const onView = useCallback(
     (source: T) => async (): Promise<void> => {
@@ -51,28 +50,23 @@ export function useTableEvents<T extends TableDataSourceWithId>({
         }
       })();
 
-      openModal({
-        modalStatusType: 'success',
-        children: (
-          <VerifyReleaseModal
-            title={title}
-            withApprove={[ArticleStage.DRAFT, ArticleStage.REVIEWING].includes(stage)}
-            withReject={stage === ArticleStage.REVIEWING}
-            showSeverityIcon={stage === ArticleStage.DRAFT}
-            onRelease={async releasedAt => {
-              await actionsEvents.onRelease?.(source, releasedAt);
-            }}
-            onApprove={async () => {
-              await actionsEvents.onApprove?.(source);
-            }}
-            onReject={async reason => {
-              await actionsEvents.onReject?.(source, reason);
-            }}
-          />
-        ),
+      setVerifyReleaseModalProps({
+        title,
+        withApprove: [ArticleStage.DRAFT, ArticleStage.REVIEWING].includes(stage),
+        withReject: stage === ArticleStage.REVIEWING,
+        showStatusTypeIcon: stage === ArticleStage.DRAFT,
+        onRelease: async releasedAt => {
+          await actionsEvents.onRelease?.(source, releasedAt);
+        },
+        onApprove: async () => {
+          await actionsEvents.onApprove?.(source);
+        },
+        onReject: async reason => {
+          await actionsEvents.onReject?.(source, reason);
+        },
       });
     },
-    [actionsEvents, openModal],
+    [actionsEvents, setVerifyReleaseModalProps],
   );
 
   const onWithdraw = useCallback(
@@ -159,37 +153,31 @@ export function useTableEvents<T extends TableDataSourceWithId>({
 
   const onDeleteWithdraw = useCallback(
     (source: T) => async (): Promise<void> => {
-      openModal({
-        size: 'small',
-        children: (
-          <DeleteWithdrawModal
-            defaultRadioValue={
-              havePermission({
-                userPermissions,
-                targetPermission: ArticlesPermissions.WithdrawArticleInReleased,
-              })
-                ? DeleteWithdrawModalRadio.Withdraw
-                : DeleteWithdrawModalRadio.Delete
-            }
-            withDelete={havePermission({
-              userPermissions,
-              targetPermission: ArticlesPermissions.DeleteArticleInReleased,
-            })}
-            withWithdraw={havePermission({
-              userPermissions,
-              targetPermission: ArticlesPermissions.WithdrawArticleInReleased,
-            })}
-            onDelete={async () => {
-              await actionsEvents.onDelete?.(source);
-            }}
-            onWithdraw={async () => {
-              await actionsEvents.onWithdraw?.(source);
-            }}
-          />
-        ),
+      setDeleteWithdrawModalProps({
+        defaultRadioValue: havePermission({
+          userPermissions,
+          targetPermission: ArticlesPermissions.WithdrawArticleInReleased,
+        })
+          ? DeleteWithdrawModalRadio.Withdraw
+          : DeleteWithdrawModalRadio.Delete,
+
+        withDelete: havePermission({
+          userPermissions,
+          targetPermission: ArticlesPermissions.DeleteArticleInReleased,
+        }),
+        withWithdraw: havePermission({
+          userPermissions,
+          targetPermission: ArticlesPermissions.WithdrawArticleInReleased,
+        }),
+        onDelete: async () => {
+          await actionsEvents.onDelete?.(source);
+        },
+        onWithdraw: async () => {
+          await actionsEvents.onWithdraw?.(source);
+        },
       });
     },
-    [actionsEvents, openModal, userPermissions],
+    [actionsEvents, setDeleteWithdrawModalProps, userPermissions],
   );
 
   return {
