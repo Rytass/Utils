@@ -1,17 +1,8 @@
 import React, { ReactNode, useState, useMemo, useEffect, useCallback } from 'react';
 import { isNumber } from 'lodash';
-import {
-  ModalHeader,
-  ModalBody as MznModalBody,
-  ModalActions,
-  Typography,
-  Button,
-  Icon,
-  Loading,
-  cx,
-} from '@mezzanine-ui/react';
-import { ExclamationCircleFilledIcon } from '@mezzanine-ui/icons';
-import { useModal } from '../../modal/useModal';
+import { Modal, Typography, Button, Icon, cx } from '@mezzanine-ui/react';
+import { ErrorFilledIcon } from '@mezzanine-ui/icons';
+import Loading from '../../Loading';
 import { ArticleStage } from '../../../typings';
 import { LogsStageData } from './typings';
 import classes from './index.module.scss';
@@ -27,13 +18,16 @@ export interface LogsModalProps {
   };
 }
 
-const LogsModal = ({ onGetData, stageWording }: LogsModalProps): ReactNode => {
+type LogsModalWithOpenProps = LogsModalProps & {
+  open: boolean;
+  closeModal: VoidFunction;
+};
+
+const LogsModal = ({ open, closeModal, onGetData, stageWording }: LogsModalWithOpenProps): ReactNode => {
   const [data, setData] = useState<LogsStageData | null>(null);
 
   const [loading, setLoading] = useState<boolean>(false);
   const [stageMode, setStageMode] = useState<ArticleStage | null>(null);
-
-  const { closeModal } = useModal();
 
   useEffect(() => {
     (async (): Promise<void> => {
@@ -255,14 +249,35 @@ const LogsModal = ({ onGetData, stageWording }: LogsModalProps): ReactNode => {
   }, [stageMode]);
 
   return (
-    <>
-      <ModalHeader showSeverityIcon={false}>版本資訊</ModalHeader>
+    <Modal
+      open={open}
+      modalType="standard"
+      title="版本資訊"
+      titleAlign="left"
+      showStatusTypeIcon={false}
+      cancelText="返回"
+      confirmText="關閉"
+      onCancel={() => {
+        setStageMode(null);
+      }}
+      onConfirm={closeModal}
+      cancelButtonProps={{
+        type: 'button',
+        variant: 'base-secondary',
+      }}
+      confirmButtonProps={{
+        type: 'button',
+        variant: 'base-primary',
+      }}
+      showModalHeader
+      showModalFooter
+    >
       {loading ? (
-        <Loading loading />
+        <Loading />
       ) : (
-        <MznModalBody className={classes.modalBody}>
+        <div className={classes.modalBody}>
           {stageMode && (
-            <Typography variant="h6" color="text-primary">
+            <Typography variant="label-primary-highlight" color="text-neutral">
               {`Ver. ${data?.[stageMode]?.version}`}
             </Typography>
           )}
@@ -289,15 +304,15 @@ const LogsModal = ({ onGetData, stageWording }: LogsModalProps): ReactNode => {
                   </div>
                   <div className={classes.contentWrapper}>
                     <div className={classes.stageWrapper}>
-                      <Typography variant="h5" color="text-primary">
+                      <Typography variant="label-primary" color="text-neutral">
                         {getStageWording(targetStage).stageName}
                       </Typography>
                       {!stageMode && isNumber(data?.[targetStage]?.version) && (
                         <Button
                           type="button"
-                          variant="text"
+                          variant="base-ghost"
                           color="secondary"
-                          size="small"
+                          size="minor"
                           onClick={() => {
                             setStageMode(targetStage);
                           }}
@@ -308,26 +323,26 @@ const LogsModal = ({ onGetData, stageWording }: LogsModalProps): ReactNode => {
                     </div>
                     <div className={classes.list}>
                       <div className={classes.option}>
-                        <Typography variant="h6" color="text-secondary">
+                        <Typography variant="label-primary-highlight" color="text-neutral-light">
                           {getStageWording(targetStage).timeTitle}
                         </Typography>
-                        <Typography variant="body2" color="text-primary">
+                        <Typography variant="body" color="text-neutral">
                           {getStageData(targetStage).time || '-'}
                         </Typography>
                       </div>
                       <div className={classes.option}>
-                        <Typography variant="h6" color="text-secondary">
+                        <Typography variant="label-primary-highlight" color="text-neutral-light">
                           {getStageWording(targetStage).memberTitle}
                         </Typography>
-                        <Typography variant="body2" color="text-primary">
+                        <Typography variant="body" color="text-neutral">
                           {getStageData(targetStage).member || '-'}
                         </Typography>
                       </div>
                     </div>
                     {!!getStageData(targetStage).reason && targetStage === ArticleStage.DRAFT && (
                       <div className={classes.reasonWrapper}>
-                        <Icon icon={ExclamationCircleFilledIcon} size={24} color="warning" />
-                        <Typography variant="input1" color="text-primary">
+                        <Icon icon={ErrorFilledIcon} size={24} color="warning" />
+                        <Typography variant="input" color="text-neutral">
                           {getStageData(targetStage).reason}
                         </Typography>
                       </div>
@@ -337,32 +352,9 @@ const LogsModal = ({ onGetData, stageWording }: LogsModalProps): ReactNode => {
               );
             })}
           </div>
-        </MznModalBody>
+        </div>
       )}
-      <ModalActions
-        cancelText="返回"
-        confirmText="關閉"
-        cancelButtonProps={{
-          type: 'button',
-          size: 'large',
-          variant: 'outlined',
-          danger: false,
-          style: {
-            display: stageMode ? 'flex' : 'none',
-          },
-        }}
-        confirmButtonProps={{
-          type: 'button',
-          size: 'large',
-          variant: 'contained',
-          danger: false,
-        }}
-        onCancel={() => {
-          setStageMode(null);
-        }}
-        onConfirm={closeModal}
-      />
-    </>
+    </Modal>
   );
 };
 

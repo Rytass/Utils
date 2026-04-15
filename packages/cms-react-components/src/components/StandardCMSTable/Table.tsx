@@ -1,9 +1,8 @@
-import React, { ReactElement, useMemo } from 'react';
+import React, { ReactElement, useMemo, useState } from 'react';
 import { compact } from 'lodash';
 import { Table as MznTable, Button } from '@mezzanine-ui/react';
 import { TableColumn, TableDataSourceWithId } from '@mezzanine-ui/core/table';
 import { VersionLog } from '../../icons/version-log';
-import { useModal } from '../modal/useModal';
 import { LogsModal } from '../cms-modals/LogsModal';
 import { useTableActions } from './hooks/useTableActions';
 import { StandardCMSTableProps } from './typings';
@@ -30,7 +29,7 @@ const Table = <T extends TableDataSourceWithId>({
   actions,
   customizedActions = [],
 }: StandardCMSTableProps<T>): ReactElement => {
-  const { openModal } = useModal();
+  const [logModalData, setLogModalData] = useState<T | null>(null);
   const tableActions = useTableActions<T>({
     currentStage,
     userPermissions,
@@ -51,10 +50,7 @@ const Table = <T extends TableDataSourceWithId>({
                 type="button"
                 size="minor"
                 onClick={() => {
-                  openModal({
-                    severity: 'info',
-                    children: <LogsModal {...versionLogsData(source)} />,
-                  });
+                  setLogModalData(source);
                 }}
                 icon={VersionLog}
                 iconType="icon-only"
@@ -65,7 +61,7 @@ const Table = <T extends TableDataSourceWithId>({
         ...tableActions,
         ...customizedActions,
       ]),
-    [withVersionLogs, versionLogsData, columnsProps, tableActions, customizedActions, openModal],
+    [columnsProps, customizedActions, tableActions, versionLogsData, withVersionLogs],
   );
 
   const baseTableProps = useMemo(
@@ -100,10 +96,36 @@ const Table = <T extends TableDataSourceWithId>({
   );
 
   if (draggable) {
-    return <MznTable {...baseTableProps} draggable={draggable} />;
+    return (
+      <>
+        <MznTable {...baseTableProps} draggable={draggable} />
+        {logModalData && versionLogsData && (
+          <LogsModal
+            open={!!logModalData}
+            closeModal={() => {
+              setLogModalData(null);
+            }}
+            {...versionLogsData(logModalData)}
+          />
+        )}
+      </>
+    );
   }
 
-  return <MznTable {...baseTableProps} />;
+  return (
+    <>
+      <MznTable {...baseTableProps} />
+      {logModalData && versionLogsData && (
+        <LogsModal
+          open={!!logModalData}
+          closeModal={() => {
+            setLogModalData(null);
+          }}
+          {...versionLogsData(logModalData)}
+        />
+      )}
+    </>
+  );
 };
 
 export default Table;
