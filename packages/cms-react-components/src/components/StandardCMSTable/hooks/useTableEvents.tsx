@@ -52,7 +52,7 @@ export function useTableEvents<T extends TableDataSourceWithId>({
       })();
 
       openModal({
-        severity: 'success',
+        modalStatusType: 'success',
         children: (
           <VerifyReleaseModal
             title={title}
