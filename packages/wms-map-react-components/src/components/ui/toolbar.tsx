@@ -156,8 +156,8 @@ const Toolbar: FC<ToolbarProps> = ({
           {editMode === EditMode.BACKGROUND && (
             <div className={styles.uploadButtonContainer}>
               <Button
-                variant="outlined"
-                size="small"
+                variant="base-secondary"
+                size="minor"
                 className={`${styles.toolbarButton} ${styles.buttonWithIcon} ${styles.uploadButton} ${isUploading ? styles.uploading : ''}`}
                 disabled={isUploading}
               >
@@ -182,8 +182,8 @@ const Toolbar: FC<ToolbarProps> = ({
           )}
 
           <Button
-            variant="outlined"
-            size="small"
+            variant="base-secondary"
+            size="minor"
             className={`${styles.toolbarButton} ${styles.buttonWithIcon}`}
             onClick={e => {
               onDeleteAll();
@@ -201,8 +201,8 @@ const Toolbar: FC<ToolbarProps> = ({
           </Button>
         </div>
         <Button
-          variant="contained"
-          size="small"
+          variant="base-primary"
+          size="minor"
           className={styles.saveButton}
           onClick={e => {
             onSave();
@@ -223,8 +223,8 @@ const Toolbar: FC<ToolbarProps> = ({
       <div className={styles.unifiedTools}>
         {/* Undo/Redo buttons - always visible */}
         <Button
-          variant="outlined"
-          size="small"
+          variant="base-secondary"
+          size="minor"
           className={`${styles.toolButton} ${canUndo ? '' : styles.toolButtonDisabled}`}
           onClick={onUndo}
           disabled={!canUndo}
@@ -233,8 +233,8 @@ const Toolbar: FC<ToolbarProps> = ({
           <UndoIcon className={styles.toolIcon} />
         </Button>
         <Button
-          variant="outlined"
-          size="small"
+          variant="base-secondary"
+          size="minor"
           className={`${styles.toolButton} ${canRedo ? '' : styles.toolButtonDisabled}`}
           onClick={onRedo}
           disabled={!canRedo}
@@ -250,8 +250,8 @@ const Toolbar: FC<ToolbarProps> = ({
 
             {/* Drawing tools */}
             <Button
-              variant={drawingMode === DrawingMode.NONE ? 'contained' : 'outlined'}
-              size="small"
+              variant={drawingMode === DrawingMode.NONE ? 'base-primary' : 'base-secondary'}
+              size="minor"
               className={`${styles.toolButton} ${drawingMode === DrawingMode.NONE ? styles.toolButtonActive : ''}`}
               onClick={() => {
                 // 選擇選取工具時關閉繪圖模式
@@ -266,8 +266,8 @@ const Toolbar: FC<ToolbarProps> = ({
               <PointerIcon className={styles.toolIcon} />
             </Button>
             <Button
-              variant={drawingMode === DrawingMode.RECTANGLE ? 'contained' : 'outlined'}
-              size="small"
+              variant={drawingMode === DrawingMode.RECTANGLE ? 'base-primary' : 'base-secondary'}
+              size="minor"
               className={`${styles.toolButton} ${drawingMode === DrawingMode.RECTANGLE ? styles.toolButtonActive : ''}`}
               onClick={onToggleRectangleTool}
               title="矩形工具"
@@ -275,8 +275,8 @@ const Toolbar: FC<ToolbarProps> = ({
               <SquareIcon className={styles.toolIcon} />
             </Button>
             <Button
-              variant={drawingMode === DrawingMode.PEN ? 'contained' : 'outlined'}
-              size="small"
+              variant={drawingMode === DrawingMode.PEN ? 'base-primary' : 'base-secondary'}
+              size="minor"
               className={`${styles.toolButton} ${drawingMode === DrawingMode.PEN ? styles.toolButtonActive : ''}`}
               onClick={onTogglePenTool}
               title="鋼筆工具"

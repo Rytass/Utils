@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { TableDataSourceWithID } from '@mezzanine-ui/core/table';
+import { TableDataSourceWithId } from '@mezzanine-ui/core/table';
 import { useDialog } from '../../dialog/useDialog';
 import { useModal } from '../../modal/useModal';
 import { VerifyReleaseModal } from '../../cms-modals/VerifyReleaseModal';
@@ -8,7 +8,7 @@ import { havePermission } from '../../../utils/havePermission';
 import { StandardCMSTableEventsProps } from '../typings';
 import { ArticleStage, ArticlesPermissions } from '../../../typings';
 
-export function useTableEvents<T extends TableDataSourceWithID>({
+export function useTableEvents<T extends TableDataSourceWithId>({
   userPermissions,
   actionsEvents,
 }: {

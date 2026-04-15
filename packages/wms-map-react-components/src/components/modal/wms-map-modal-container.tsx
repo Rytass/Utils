@@ -4,7 +4,6 @@ import { ReactFlowProvider } from '@xyflow/react';
 import { DrawingMode, EditMode, ViewMode } from '../../typings';
 import { DEFAULT_RECTANGLE_COLOR } from '../../constants';
 import { WMSMapModalProps } from '../../types';
-import WMSMapHeader from './wms-map-header';
 import WMSMapContent from './wms-map-content';
 import { setDebugMode } from '../../utils/debug-logger';
 import styles from './wms-map-modal-container.module.scss';
@@ -71,8 +70,19 @@ const WMSMapModalContainer: FC<WMSMapModalProps> = ({
   }, []);
 
   return (
-    <Modal open={open} onClose={onClose} className={styles.modal}>
-      <WMSMapHeader title={title} />
+    <Modal
+      open={open}
+      onClose={onClose}
+      className={styles.modal}
+      modalType="standard"
+      title={title ?? '編輯倉儲空間'}
+      titleAlign="left"
+      statusTypeIconLayout="horizontal"
+      showStatusTypeIcon={false}
+      showDismissButton
+      showModalFooter={false}
+      showModalHeader
+    >
       <div className={styles.content}>
         <ReactFlowProvider>
           <WMSMapContent
