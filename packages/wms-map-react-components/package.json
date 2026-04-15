@@ -37,8 +37,8 @@
     "react-hook-form": "*"
   },
   "devDependencies": {
-    "@storybook/addon-docs": "^10.2.11",
-    "@storybook/react-vite": "^10.2.11",
-    "storybook": "^10.2.11"
+    "@storybook/addon-docs": "^10.3.5",
+    "@storybook/react-vite": "^10.3.5",
+    "storybook": "^10.3.5"
   }
 }

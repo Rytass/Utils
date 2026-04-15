@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { action } from '@storybook/addon-actions';
+import { action } from 'storybook/actions';
 import { WMSMapModal, ViewMode } from '../src';
 import { generateStoryNodes, convertToFlowNodes } from './story-utils';
 import '@xyflow/react/dist/style.css';
