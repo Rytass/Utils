@@ -34,7 +34,7 @@ function App() {
         open={isOpen}
         onClose={() => setIsOpen(false)}
         viewMode={ViewMode.EDIT}
-        onSave={(mapData) => {
+        onSave={mapData => {
           console.log('Saved:', mapData);
           // 提交到後端
         }}
@@ -54,21 +54,21 @@ function App() {
 interface WMSMapModalProps {
   open: boolean;
   onClose: () => void;
-  viewMode?: ViewMode;              // EDIT | VIEW（預設 EDIT）
-  title?: string;                   // 模態框標題
-  colorPalette?: string[];          // 區域顏色選項
+  viewMode?: ViewMode; // EDIT | VIEW（預設 EDIT）
+  title?: string; // 模態框標題
+  colorPalette?: string[]; // 區域顏色選項
   onNodeClick?: (info: WMSNodeClickInfo) => void;
   onSave?: (mapData: Map) => void;
   onBreadcrumbClick?: (warehouseId: string, index: number) => void;
-  onNameChange?: (name: string) => Promise<void>;  // 名稱變更回呼
+  onNameChange?: (name: string) => Promise<void>; // 名稱變更回呼
   initialNodes?: FlowNode[];
   initialEdges?: FlowEdge[];
   debugMode?: boolean;
-  maxFileSizeKB?: number;           // 背景圖大小限制（預設 30720 = 30MB）
-  warehouseIds?: string[];          // 倉儲 ID 列表（用於 breadcrumb）
+  maxFileSizeKB?: number; // 背景圖大小限制（預設 30720 = 30MB）
+  warehouseIds?: string[]; // 倉儲 ID 列表（用於 breadcrumb）
 
   // 必要回呼：處理圖片上傳
-  onUpload: (files: File[]) => Promise<string[]>;  // 回傳上傳後的 filename 陣列
+  onUpload: (files: File[]) => Promise<string[]>; // 回傳上傳後的 filename 陣列
 
   // 可選：取得完整圖片 URL
   getFilenameFQDN?: (filename: string) => Promise<string> | string;
@@ -77,21 +77,21 @@ interface WMSMapModalProps {
 
 ### 子元件
 
-| 元件 | 說明 |
-|------|------|
-| `WMSMapHeader` | 工具列與標題 |
+| 元件            | 說明               |
+| --------------- | ------------------ |
+| `WMSMapHeader`  | 工具列與標題       |
 | `WMSMapContent` | 畫布內容與編輯控制 |
-| `Breadcrumb` | 倉儲層級導航 |
-| `ContextMenu` | 右鍵菜單 |
-| `Toolbar` | 編輯工具列 |
+| `Breadcrumb`    | 倉儲層級導航       |
+| `ContextMenu`   | 右鍵菜單           |
+| `Toolbar`       | 編輯工具列         |
 
 ### 節點類型
 
-| 節點 | 說明 |
-|------|------|
-| `ImageNode` | 背景圖節點 |
-| `RectangleNode` | 矩形區域節點 |
-| `PathNode` | 路徑/多邊形節點 |
+| 節點            | 說明            |
+| --------------- | --------------- |
+| `ImageNode`     | 背景圖節點      |
+| `RectangleNode` | 矩形區域節點    |
+| `PathNode`      | 路徑/多邊形節點 |
 
 ## Enums
 
@@ -99,8 +99,8 @@ interface WMSMapModalProps {
 
 ```typescript
 enum ViewMode {
-  EDIT = 'EDIT',   // 編輯模式
-  VIEW = 'VIEW',   // 檢視模式
+  EDIT = 'EDIT', // 編輯模式
+  VIEW = 'VIEW', // 檢視模式
 }
 ```
 
@@ -108,8 +108,8 @@ enum ViewMode {
 
 ```typescript
 enum EditMode {
-  BACKGROUND = 'BACKGROUND',  // 背景圖編輯
-  LAYER = 'LAYER',            // 區域層編輯
+  BACKGROUND = 'BACKGROUND', // 背景圖編輯
+  LAYER = 'LAYER', // 區域層編輯
 }
 ```
 
@@ -117,9 +117,9 @@ enum EditMode {
 
 ```typescript
 enum DrawingMode {
-  NONE = 'NONE',            // 無繪製
-  RECTANGLE = 'RECTANGLE',  // 矩形繪製
-  PEN = 'PEN',              // 自由繪製/路徑
+  NONE = 'NONE', // 無繪製
+  RECTANGLE = 'RECTANGLE', // 矩形繪製
+  PEN = 'PEN', // 自由繪製/路徑
 }
 ```
 
@@ -127,9 +127,9 @@ enum DrawingMode {
 
 ```typescript
 enum LayerDrawingTool {
-  SELECT = 'SELECT',        // 選取工具
-  RECTANGLE = 'RECTANGLE',  // 矩形工具
-  PEN = 'PEN',              // 鋼筆工具
+  SELECT = 'SELECT', // 選取工具
+  RECTANGLE = 'RECTANGLE', // 矩形工具
+  PEN = 'PEN', // 鋼筆工具
 }
 ```
 
@@ -137,8 +137,8 @@ enum LayerDrawingTool {
 
 ```typescript
 enum MapRangeType {
-  RECTANGLE = 'RECTANGLE',  // 矩形區域
-  POLYGON = 'POLYGON',      // 多邊形區域
+  RECTANGLE = 'RECTANGLE', // 矩形區域
+  POLYGON = 'POLYGON', // 多邊形區域
 }
 ```
 
@@ -168,12 +168,12 @@ export type ID = string;
 interface Map {
   id: ID;
   backgrounds: MapBackground[];
-  ranges: MapRange[];  // MapRectangleRange | MapPolygonRange
+  ranges: MapRange[]; // MapRectangleRange | MapPolygonRange
 }
 
 interface MapBackground {
   id: string;
-  filename: string;   // 檔案名稱（非完整 URL）
+  filename: string; // 檔案名稱（非完整 URL）
   width: number;
   height: number;
   x: number;
@@ -181,7 +181,7 @@ interface MapBackground {
 }
 
 interface MapRectangleRange {
-  type: MapRangeType.RECTANGLE;  // 'RECTANGLE'
+  type: MapRangeType.RECTANGLE; // 'RECTANGLE'
   id: string;
   x: number;
   y: number;
@@ -191,7 +191,7 @@ interface MapRectangleRange {
 }
 
 interface MapPolygonRange {
-  type: MapRangeType.POLYGON;  // 'POLYGON'
+  type: MapRangeType.POLYGON; // 'POLYGON'
   id: string;
   points: MapPolygonRangePoint[];
   color: string;
@@ -206,10 +206,7 @@ interface MapPolygonRangePoint {
 ### WMSNodeClickInfo
 
 ```typescript
-type WMSNodeClickInfo =
-  | ImageNodeClickInfo
-  | RectangleNodeClickInfo
-  | PathNodeClickInfo;
+type WMSNodeClickInfo = ImageNodeClickInfo | RectangleNodeClickInfo | PathNodeClickInfo;
 
 // 基礎介面
 interface NodeClickInfo {
@@ -228,7 +225,7 @@ interface ImageNodeClickInfo extends NodeClickInfo {
     originalSize: { width: number; height: number };
     imageUrl: string;
   };
-  mapBackground: MapBackground;  // 可直接傳給後端的格式
+  mapBackground: MapBackground; // 可直接傳給後端的格式
 }
 
 interface RectangleNodeClickInfo extends NodeClickInfo {
@@ -237,7 +234,7 @@ interface RectangleNodeClickInfo extends NodeClickInfo {
     color: string;
     size: { width: number; height: number };
   };
-  mapRectangleRange: MapRectangleRange;  // 可直接傳給後端的格式
+  mapRectangleRange: MapRectangleRange; // 可直接傳給後端的格式
 }
 
 interface PathNodeClickInfo extends NodeClickInfo {
@@ -254,7 +251,7 @@ interface PathNodeClickInfo extends NodeClickInfo {
       maxY: number;
     } | null;
   };
-  mapPolygonRange: MapPolygonRange;  // 可直接傳給後端的格式
+  mapPolygonRange: MapPolygonRange; // 可直接傳給後端的格式
 }
 ```
 
@@ -283,7 +280,7 @@ const mapData = transformNodesToMapData(nodes);
 
 // API 資料 → ReactFlow 節點（支援自訂圖片 URL 產生器）
 const nodes = transformApiDataToNodes(apiData);
-const nodesWithCustomUrl = transformApiDataToNodes(apiData, (filename) => {
+const nodesWithCustomUrl = transformApiDataToNodes(apiData, filename => {
   return `https://cdn.example.com/images/${filename}`;
 });
 
@@ -298,8 +295,8 @@ const bounds = calculatePolygonBounds(points);
 const zIndex = calculateNodeZIndex(existingNodes, 'rectangleNode');
 
 // Debug 工具：格式化輸出資料到 console
-logMapData(mapData);   // 輸出完整地圖資料
-logNodeData(node);     // 輸出單一節點詳細資訊
+logMapData(mapData); // 輸出完整地圖資料
+logNodeData(node); // 輸出單一節點詳細資訊
 ```
 
 ## Complete Example
@@ -329,7 +326,7 @@ function WarehouseMapEditor() {
   // 上傳圖片到後端（必要回呼）
   const handleUpload = useCallback(async (files: File[]): Promise<string[]> => {
     const formData = new FormData();
-    files.forEach((file) => formData.append('files', file));
+    files.forEach(file => formData.append('files', file));
 
     const response = await fetch('/api/warehouse/upload', {
       method: 'POST',
@@ -337,7 +334,7 @@ function WarehouseMapEditor() {
     });
 
     const { filenames } = await response.json();
-    return filenames;  // 回傳 filename 陣列
+    return filenames; // 回傳 filename 陣列
   }, []);
 
   // 取得圖片完整 URL（可選）
@@ -367,7 +364,12 @@ function WarehouseMapEditor() {
 
   return (
     <div>
-      <button onClick={() => { loadMapData(); setIsOpen(true); }}>
+      <button
+        onClick={() => {
+          loadMapData();
+          setIsOpen(true);
+        }}
+      >
         編輯倉儲地圖
       </button>
 
@@ -377,18 +379,18 @@ function WarehouseMapEditor() {
         viewMode={ViewMode.EDIT}
         title="倉庫 A 地圖"
         colorPalette={[
-          '#FF6B6B',  // 紅 - 危險品區
-          '#4ECDC4',  // 青 - 冷藏區
-          '#45B7D1',  // 藍 - 一般存放區
-          '#96CEB4',  // 綠 - 出貨區
-          '#FFEAA7',  // 黃 - 暫存區
+          '#FF6B6B', // 紅 - 危險品區
+          '#4ECDC4', // 青 - 冷藏區
+          '#45B7D1', // 藍 - 一般存放區
+          '#96CEB4', // 綠 - 出貨區
+          '#FFEAA7', // 黃 - 暫存區
         ]}
         initialNodes={mapData ? transformApiDataToNodes(mapData, getFilenameFQDN) : undefined}
         onSave={handleSave}
         onNodeClick={handleNodeClick}
         onUpload={handleUpload}
         getFilenameFQDN={getFilenameFQDN}
-        maxFileSizeKB={30720}  // 30MB（預設值）
+        maxFileSizeKB={30720} // 30MB（預設值）
         warehouseIds={['10001', '10001A']}
       />
     </div>
@@ -399,8 +401,7 @@ function WarehouseMapEditor() {
 function WarehouseMapViewer({ mapData }: { mapData: Map }) {
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
 
-  const getFilenameFQDN = (filename: string) =>
-    `https://cdn.example.com/warehouse-images/${filename}`;
+  const getFilenameFQDN = (filename: string) => `https://cdn.example.com/warehouse-images/${filename}`;
 
   return (
     <WMSMapModal
@@ -408,8 +409,8 @@ function WarehouseMapViewer({ mapData }: { mapData: Map }) {
       onClose={() => {}}
       viewMode={ViewMode.VIEW}
       initialNodes={transformApiDataToNodes(mapData, getFilenameFQDN)}
-      onUpload={async () => []}  // VIEW 模式下可用空實作
-      onNodeClick={(info) => {
+      onUpload={async () => []} // VIEW 模式下可用空實作
+      onNodeClick={info => {
         if (info.type === 'rectangleNode') {
           setSelectedZone(info.id);
         }
@@ -423,9 +424,7 @@ function WarehouseMapViewer({ mapData }: { mapData: Map }) {
 
 ```tsx
 function WarehouseNavigator() {
-  const [breadcrumb, setBreadcrumb] = useState([
-    { id: 'warehouse-1', name: '主倉庫' },
-  ]);
+  const [breadcrumb, setBreadcrumb] = useState([{ id: 'warehouse-1', name: '主倉庫' }]);
 
   const handleBreadcrumbClick = (warehouseId: string, index: number) => {
     // 導航到特定層級
@@ -456,73 +455,75 @@ function WarehouseNavigator() {
 ## Constants
 
 > **注意：** Constants 目前未從主入口導出，若需使用請直接從 constants 路徑導入：
+>
 > ```typescript
 > import { UI_CONFIG, CANVAS_CONFIG } from '@rytass/wms-map-react-components/constants';
 > ```
 
 ```typescript
 // 預設尺寸
-DEFAULT_IMAGE_WIDTH         // 300
-DEFAULT_IMAGE_HEIGHT        // 200
-DEFAULT_RECTANGLE_WIDTH     // 150
-DEFAULT_RECTANGLE_HEIGHT    // 100
+DEFAULT_IMAGE_WIDTH; // 300
+DEFAULT_IMAGE_HEIGHT; // 200
+DEFAULT_RECTANGLE_WIDTH; // 150
+DEFAULT_RECTANGLE_HEIGHT; // 100
 
 // 顏色
-DEFAULT_RECTANGLE_COLOR     // '#3b82f6'
-SELECTION_BORDER_COLOR      // '#3b82f6'
-DEFAULT_BACKGROUND_TOOL_COLOR // '#3b82f6'
+DEFAULT_RECTANGLE_COLOR; // '#3b82f6'
+SELECTION_BORDER_COLOR; // '#3b82f6'
+DEFAULT_BACKGROUND_TOOL_COLOR; // '#3b82f6'
 
 // 最小尺寸
-MIN_RECTANGLE_SIZE          // 10
-MIN_RESIZE_WIDTH            // 50
-MIN_RESIZE_HEIGHT           // 30
+MIN_RECTANGLE_SIZE; // 10
+MIN_RESIZE_WIDTH; // 50
+MIN_RESIZE_HEIGHT; // 30
 
 // 文字標籤
-DEFAULT_RECTANGLE_LABEL     // '矩形區域'
-DEFAULT_PATH_LABEL          // '路徑區域'
+DEFAULT_RECTANGLE_LABEL; // '矩形區域'
+DEFAULT_PATH_LABEL; // '路徑區域'
 
 // 透明度
-ACTIVE_OPACITY              // 1
-INACTIVE_OPACITY            // 0.4
-RECTANGLE_INACTIVE_OPACITY  // 0.6
+ACTIVE_OPACITY; // 1
+INACTIVE_OPACITY; // 0.4
+RECTANGLE_INACTIVE_OPACITY; // 0.6
 
 // 調整大小控制項尺寸
-RESIZE_CONTROL_SIZE         // 16
-IMAGE_RESIZE_CONTROL_SIZE   // 20
+RESIZE_CONTROL_SIZE; // 16
+IMAGE_RESIZE_CONTROL_SIZE; // 20
 
 // UI 配置
-UI_CONFIG.HISTORY_SIZE       // 50 (Undo/Redo 歷史大小)
-UI_CONFIG.COLOR_CHANGE_DELAY // 800ms
-UI_CONFIG.STAGGER_DELAY      // 100ms (圖片上傳間隔)
-UI_CONFIG.NODE_SAVE_DELAY    // 50ms
+UI_CONFIG.HISTORY_SIZE; // 50 (Undo/Redo 歷史大小)
+UI_CONFIG.COLOR_CHANGE_DELAY; // 800ms
+UI_CONFIG.STAGGER_DELAY; // 100ms (圖片上傳間隔)
+UI_CONFIG.NODE_SAVE_DELAY; // 50ms
 
 // Canvas 配置
-CANVAS_CONFIG.MIN_ZOOM        // 0.1
-CANVAS_CONFIG.MAX_ZOOM        // 4
-CANVAS_CONFIG.DEFAULT_VIEWPORT // { x: 0, y: 0, zoom: 1 }
-CANVAS_CONFIG.BACKGROUND_COLOR // '#F5F5F5'
+CANVAS_CONFIG.MIN_ZOOM; // 0.1
+CANVAS_CONFIG.MAX_ZOOM; // 4
+CANVAS_CONFIG.DEFAULT_VIEWPORT; // { x: 0, y: 0, zoom: 1 }
+CANVAS_CONFIG.BACKGROUND_COLOR; // '#F5F5F5'
 
 // 檔案上傳配置
-UPLOAD_CONFIG.DEFAULT_MAX_FILE_SIZE_KB  // 30720 (30MB)
-UPLOAD_CONFIG.SUPPORTED_MIME_TYPES      // ['image/png', 'image/jpeg', ...]
+UPLOAD_CONFIG.DEFAULT_MAX_FILE_SIZE_KB; // 30720 (30MB)
+UPLOAD_CONFIG.SUPPORTED_MIME_TYPES; // ['image/png', 'image/jpeg', ...]
 
 // 支援的圖片類型
-SUPPORTED_IMAGE_TYPES.ACCEPT      // 'image/png,image/jpeg,image/jpg'
-SUPPORTED_IMAGE_TYPES.PATTERN     // /^image\/(png|jpeg|jpg)$/
-SUPPORTED_IMAGE_TYPES.EXTENSIONS  // ['png', 'jpg', 'jpeg']
+SUPPORTED_IMAGE_TYPES.ACCEPT; // 'image/png,image/jpeg,image/jpg'
+SUPPORTED_IMAGE_TYPES.PATTERN; // /^image\/(png|jpeg|jpg)$/
+SUPPORTED_IMAGE_TYPES.EXTENSIONS; // ['png', 'jpg', 'jpeg']
 
 // 預設倉庫 ID
-DEFAULT_WAREHOUSE_IDS  // ['10001', '10001A', '10002', '100002B', '100003', '100003B']
+DEFAULT_WAREHOUSE_IDS; // ['10001', '10001A', '10002', '100002B', '100003', '100003B']
 ```
 
 ## Dependencies
 
 **Required:**
+
 - `@xyflow/react` ^12.10.0
 
 **Peer Dependencies:**
+
 - `@mezzanine-ui/react`
-- `@mezzanine-ui/react-hook-form-v2`
 - `react`, `react-dom`
 - `react-hook-form`
 
@@ -531,6 +532,7 @@ DEFAULT_WAREHOUSE_IDS  // ['10001', '10001A', '10002', '100002B', '100003', '100
 ### 地圖無法顯示
 
 確保 ReactFlow Provider 正確包裝：
+
 ```tsx
 // WMSMapModal 內部已包含 ReactFlowProvider
 // 不需要額外包裝
@@ -549,6 +551,7 @@ DEFAULT_WAREHOUSE_IDS  // ['10001', '10001A', '10002', '100002B', '100003', '100
 `@rytass/wms-map-react-components` 提供以下內部 Hooks，用於地圖編輯器的核心功能。
 
 > **注意：** 這些 Hooks 目前為內部使用，未在主入口匯出。若需使用，請直接從相應檔案導入：
+>
 > ```typescript
 > import { useContextMenu } from '@rytass/wms-map-react-components/hooks/use-context-menu';
 > ```
@@ -559,9 +562,9 @@ DEFAULT_WAREHOUSE_IDS  // ['10001', '10001A', '10002', '100002B', '100003', '100
 
 ```typescript
 interface UseContextMenuProps {
-  id: string;                                    // 節點 ID
-  editMode: EditMode;                            // 當前編輯模式
-  isEditable: boolean;                           // 是否可編輯
+  id: string; // 節點 ID
+  editMode: EditMode; // 當前編輯模式
+  isEditable: boolean; // 是否可編輯
   nodeType?: 'rectangleNode' | 'pathNode' | 'imageNode';
 }
 
@@ -571,10 +574,10 @@ interface UseContextMenuReturn {
   handleCloseContextMenu: () => void;
   handleDelete: () => void;
   arrangeActions: {
-    onBringToFront: () => void;   // 移至最上層
-    onBringForward: () => void;   // 上移一層
-    onSendBackward: () => void;   // 下移一層
-    onSendToBack: () => void;     // 移至最下層
+    onBringToFront: () => void; // 移至最上層
+    onBringForward: () => void; // 上移一層
+    onSendBackward: () => void; // 下移一層
+    onSendToBack: () => void; // 移至最下層
   };
   arrangeStates: {
     canBringToFront: boolean;
@@ -600,8 +603,8 @@ const { contextMenu, handleContextMenu, arrangeActions } = useContextMenu({
 
 ```typescript
 interface UseDirectStateHistoryOptions {
-  maxHistorySize?: number;  // 預設 50
-  debugMode?: boolean;      // 預設 false
+  maxHistorySize?: number; // 預設 50
+  debugMode?: boolean; // 預設 false
 }
 
 interface UseDirectStateHistoryReturn {
@@ -613,18 +616,14 @@ interface UseDirectStateHistoryReturn {
   initializeHistory: (initialNodes: FlowNode[], initialEdges: FlowEdge[], editMode: EditMode) => void;
   clearHistory: () => void;
   getHistorySummary: () => HistorySummary;
-  history?: HistoryState[];       // debugMode 啟用時可用
-  currentIndex?: number;          // debugMode 啟用時可用
+  history?: HistoryState[]; // debugMode 啟用時可用
+  currentIndex?: number; // debugMode 啟用時可用
 }
 
-const {
-  saveState,
-  undo,
-  redo,
-  canUndo,
-  canRedo,
-  initializeHistory,
-} = useDirectStateHistory({ maxHistorySize: 100, debugMode: false });
+const { saveState, undo, redo, canUndo, canRedo, initializeHistory } = useDirectStateHistory({
+  maxHistorySize: 100,
+  debugMode: false,
+});
 
 // 初始化
 initializeHistory(nodes, edges, EditMode.LAYER);
@@ -652,24 +651,19 @@ interface UsePenDrawingProps {
 }
 
 interface UsePenDrawingReturn {
-  containerRef: React.RefObject<HTMLDivElement | null>;  // 綁定到容器
-  isDrawing: boolean;                                     // 是否正在繪製
-  previewPath: { x: number; y: number }[] | null;        // 預覽路徑
-  currentPoints: { x: number; y: number }[];             // 已繪製的點
-  firstPoint: { x: number; y: number } | null;           // 第一個點（閉合提示用）
-  canClose: boolean;                                      // 是否可閉合（>=3 點）
-  forceComplete: () => void;                             // 強制完成繪製
+  containerRef: React.RefObject<HTMLDivElement | null>; // 綁定到容器
+  isDrawing: boolean; // 是否正在繪製
+  previewPath: { x: number; y: number }[] | null; // 預覽路徑
+  currentPoints: { x: number; y: number }[]; // 已繪製的點
+  firstPoint: { x: number; y: number } | null; // 第一個點（閉合提示用）
+  canClose: boolean; // 是否可閉合（>=3 點）
+  forceComplete: () => void; // 強制完成繪製
 }
 
-const {
-  containerRef,
-  isDrawing,
-  previewPath,
-  canClose,
-} = usePenDrawing({
+const { containerRef, isDrawing, previewPath, canClose } = usePenDrawing({
   editMode: EditMode.LAYER,
   drawingMode: DrawingMode.PEN,
-  onCreatePath: (points) => {
+  onCreatePath: points => {
     // 建立路徑節點
     createPathNode(points);
   },
@@ -706,11 +700,7 @@ interface UseRectangleDrawingReturn {
   } | null;
 }
 
-const {
-  containerRef,
-  isDrawing,
-  previewRect,
-} = useRectangleDrawing({
+const { containerRef, isDrawing, previewRect } = useRectangleDrawing({
   editMode: EditMode.LAYER,
   drawingMode: DrawingMode.RECTANGLE,
   onCreateRectangle: (x1, y1, x2, y2) => {
@@ -730,9 +720,9 @@ const {
 
 ```typescript
 interface UseTextEditingProps {
-  id: string;                     // 節點 ID
-  label: string;                  // 當前標籤文字
-  isEditable: boolean;            // 是否可編輯
+  id: string; // 節點 ID
+  label: string; // 當前標籤文字
+  isEditable: boolean; // 是否可編輯
   onTextEditComplete?: (id: string, oldText: string, newText: string) => void;
 }
 
@@ -741,29 +731,22 @@ interface UseTextEditingReturn {
   editingText: string;
   inputRef: React.RefObject<HTMLInputElement | null>;
   setEditingText: React.Dispatch<React.SetStateAction<string>>;
-  handleDoubleClick: (event: React.MouseEvent) => void;  // 雙擊開始編輯
-  handleKeyDown: (event: React.KeyboardEvent) => void;   // 鍵盤事件處理
-  handleBlur: () => void;                                 // 失焦保存
+  handleDoubleClick: (event: React.MouseEvent) => void; // 雙擊開始編輯
+  handleKeyDown: (event: React.KeyboardEvent) => void; // 鍵盤事件處理
+  handleBlur: () => void; // 失焦保存
   updateNodeData: (updates: Record<string, unknown>) => void;
 }
 
-const {
-  isEditing,
-  editingText,
-  inputRef,
-  setEditingText,
-  handleDoubleClick,
-  handleKeyDown,
-  handleBlur,
-} = useTextEditing({
-  id: nodeId,
-  label: 'Zone A',
-  isEditable: true,
-  onTextEditComplete: (id, oldText, newText) => {
-    console.log(`節點 ${id} 標籤從 "${oldText}" 改為 "${newText}"`);
-    saveState(nodes, edges, 'edit-label', editMode);
-  },
-});
+const { isEditing, editingText, inputRef, setEditingText, handleDoubleClick, handleKeyDown, handleBlur } =
+  useTextEditing({
+    id: nodeId,
+    label: 'Zone A',
+    isEditable: true,
+    onTextEditComplete: (id, oldText, newText) => {
+      console.log(`節點 ${id} 標籤從 "${oldText}" 改為 "${newText}"`);
+      saveState(nodes, edges, 'edit-label', editMode);
+    },
+  });
 
 // 操作方式：
 // - 雙擊節點：開始編輯

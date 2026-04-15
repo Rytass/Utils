@@ -31,7 +31,6 @@
   },
   "peerDependencies": {
     "@mezzanine-ui/react": "*",
-    "@mezzanine-ui/react-hook-form-v2": "*",
     "react": "*",
     "react-dom": "*",
     "react-hook-form": "*"
