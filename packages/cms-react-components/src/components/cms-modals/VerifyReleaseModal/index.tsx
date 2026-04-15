@@ -1,15 +1,6 @@
 import React, { ReactNode, useState, useMemo } from 'react';
 import dayjs from 'dayjs';
-import {
-  ModalHeader,
-  ModalBody as MznModalBody,
-  ModalActions,
-  Typography,
-  RadioGroup,
-  Radio,
-  DateTimePicker,
-} from '@mezzanine-ui/react';
-import { useModal } from '../../modal/useModal';
+import { Modal, Typography, RadioGroup, Radio, DateTimePicker } from '@mezzanine-ui/react';
 import { Textarea } from '../../cms-fields/Textarea';
 import classes from './index.module.scss';
 
@@ -22,7 +13,7 @@ export enum VerifyReleaseModalRadio {
 
 export interface VerifyReleaseModalProps {
   title: string;
-  showSeverityIcon?: boolean;
+  showStatusTypeIcon?: boolean;
   defaultRadioValue?: VerifyReleaseModalRadio;
   withApprove?: boolean;
   withReject?: boolean;
@@ -31,24 +22,29 @@ export interface VerifyReleaseModalProps {
   onReject?: (reason: string) => Promise<void>;
 }
 
+type VerifyReleaseModalWithOpenProps = VerifyReleaseModalProps & {
+  open: boolean;
+  closeModal: VoidFunction;
+};
+
 const VerifyReleaseModal = ({
+  open,
+  closeModal,
   title,
-  showSeverityIcon = false,
+  showStatusTypeIcon = false,
   defaultRadioValue = VerifyReleaseModalRadio.Now,
   withApprove = false,
   withReject = false,
   onRelease,
   onApprove,
   onReject,
-}: VerifyReleaseModalProps): ReactNode => {
+}: VerifyReleaseModalWithOpenProps): ReactNode => {
   const [acting, setActing] = useState<boolean>(false);
 
   const [currentRadioValue, setCurrentRadioValue] = useState<VerifyReleaseModalRadio>(defaultRadioValue);
 
   const [releasedAt, setReleasedAt] = useState<string>('');
   const [rejectReason, setRejectReason] = useState<string>('');
-
-  const { closeModal } = useModal();
 
   const confirmText = useMemo(() => {
     switch (currentRadioValue) {
@@ -124,11 +120,33 @@ const VerifyReleaseModal = ({
   }, [currentRadioValue, onRelease, closeModal, releasedAt, onApprove, onReject, rejectReason]);
 
   return (
-    <>
-      <ModalHeader showSeverityIcon={showSeverityIcon}>{title}</ModalHeader>
-      <MznModalBody className={classes.modalBody}>
+    <Modal
+      open={open}
+      modalType="standard"
+      title={title}
+      titleAlign="left"
+      showStatusTypeIcon={showStatusTypeIcon}
+      modalStatusType="success"
+      cancelText="取消"
+      confirmText={confirmText}
+      cancelButtonProps={{
+        type: 'button',
+        variant: 'base-secondary',
+      }}
+      confirmButtonProps={{
+        type: 'button',
+        variant: currentRadioValue === VerifyReleaseModalRadio.Reject ? 'destructive-primary' : 'base-primary',
+        disabled,
+        loading: acting,
+      }}
+      onCancel={closeModal}
+      onConfirm={onConfirm}
+      showModalHeader
+      showModalFooter
+    >
+      <div className={classes.modalBody}>
         <RadioGroup
-          size="large"
+          size="main"
           value={currentRadioValue}
           className={classes.radioGroup}
           onChange={e => {
@@ -139,8 +157,7 @@ const VerifyReleaseModal = ({
           <div className={classes.radioWrapper}>
             <Radio value={VerifyReleaseModalRadio.Schedule}>預約發佈文章至最新版本</Radio>
             <DateTimePicker
-              placeholder="yyyy-mm-dd hh:mm:ss"
-              size="large"
+              size="main"
               value={releasedAt}
               onChange={date => {
                 setReleasedAt(date ?? '');
@@ -156,7 +173,7 @@ const VerifyReleaseModal = ({
               <Radio value={VerifyReleaseModalRadio.Reject}>不通過 （文章會將移至草稿區）</Radio>
               {currentRadioValue === VerifyReleaseModalRadio.Reject && (
                 <div className={classes.rejectField}>
-                  <Typography variant="body1" color="text-primary">
+                  <Typography variant="body" color="text-neutral">
                     當審核未通過時，內容將自動移至草稿區，需修改後重新送審。
                   </Typography>
                   <Textarea
@@ -173,28 +190,8 @@ const VerifyReleaseModal = ({
             </div>
           )}
         </RadioGroup>
-      </MznModalBody>
-      <ModalActions
-        cancelText="取消"
-        confirmText={confirmText}
-        cancelButtonProps={{
-          type: 'button',
-          size: 'large',
-          variant: 'outlined',
-          danger: false,
-        }}
-        confirmButtonProps={{
-          type: 'button',
-          size: 'large',
-          variant: 'contained',
-          disabled,
-          loading: acting,
-          danger: currentRadioValue === VerifyReleaseModalRadio.Reject,
-        }}
-        onCancel={closeModal}
-        onConfirm={onConfirm}
-      />
-    </>
+      </div>
+    </Modal>
   );
 };
 
