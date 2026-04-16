@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Switch } from '@mezzanine-ui/react';
+import { Toggle } from '@mezzanine-ui/react';
 import { ViewMode } from '../../typings';
 import styles from './view-mode-toolbar.module.scss';
 
@@ -28,7 +28,7 @@ const ViewModeToolbar: FC<ViewModeToolbarProps> = ({ viewMode, showBackground, o
     <div className={styles.viewModeToolbar}>
       <div className={styles.toolbarContent}>
         <span className={styles.label}>顯示底圖</span>
-        <Switch checked={showBackground} onChange={handleToggle} size="medium" className={styles.switch} />
+        <Toggle checked={showBackground} onChange={handleToggle} size="medium" className={styles.switch} />
       </div>
     </div>
   );

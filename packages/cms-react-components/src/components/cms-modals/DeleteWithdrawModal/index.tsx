@@ -1,13 +1,5 @@
 import React, { ReactNode, useState, useMemo } from 'react';
-import {
-  ModalHeader,
-  ModalBody as MznModalBody,
-  ModalActions,
-  Typography,
-  RadioGroup,
-  Radio,
-} from '@mezzanine-ui/react';
-import { useModal } from '../../modal/useModal';
+import { Modal, Typography, RadioGroup, Radio } from '@mezzanine-ui/react';
 import classes from './index.module.scss';
 
 export enum DeleteWithdrawModalRadio {
@@ -16,7 +8,7 @@ export enum DeleteWithdrawModalRadio {
 }
 
 export interface DeleteWithdrawModalProps {
-  showSeverityIcon?: boolean;
+  showStatusTypeIcon?: boolean;
   defaultRadioValue: DeleteWithdrawModalRadio;
   withDelete?: boolean;
   withWithdraw?: boolean;
@@ -24,19 +16,24 @@ export interface DeleteWithdrawModalProps {
   onWithdraw: () => Promise<void>;
 }
 
+type DeleteWithdrawModalWithOpenProps = DeleteWithdrawModalProps & {
+  open: boolean;
+  closeModal: VoidFunction;
+};
+
 const DeleteWithdrawModal = ({
-  showSeverityIcon = false,
+  open,
+  closeModal,
+  showStatusTypeIcon = false,
   defaultRadioValue,
   withDelete,
   withWithdraw,
   onDelete,
   onWithdraw,
-}: DeleteWithdrawModalProps): ReactNode => {
+}: DeleteWithdrawModalWithOpenProps): ReactNode => {
   const [acting, setActing] = useState<boolean>(false);
 
   const [currentRadioValue, setCurrentRadioValue] = useState<DeleteWithdrawModalRadio>(defaultRadioValue);
-
-  const { closeModal } = useModal();
 
   const onConfirm = useMemo(() => {
     switch (currentRadioValue) {
@@ -64,14 +61,35 @@ const DeleteWithdrawModal = ({
   }, [closeModal, currentRadioValue, onDelete, onWithdraw]);
 
   return (
-    <>
-      <ModalHeader showSeverityIcon={showSeverityIcon}>移除文章</ModalHeader>
-      <MznModalBody className={classes.modalBody}>
-        <Typography variant="body1" color="text-primary">
+    <Modal
+      open={open}
+      modalType="standard"
+      title="移除文章"
+      titleAlign="left"
+      showStatusTypeIcon={showStatusTypeIcon}
+      cancelText="取消"
+      confirmText="移除文章"
+      cancelButtonProps={{
+        type: 'button',
+        variant: 'base-secondary',
+      }}
+      confirmButtonProps={{
+        type: 'button',
+        variant: 'destructive-primary',
+        disabled: acting,
+        loading: acting,
+      }}
+      onCancel={closeModal}
+      onConfirm={onConfirm}
+      showModalHeader
+      showModalFooter
+    >
+      <div className={classes.modalBody}>
+        <Typography variant="body" color="text-neutral">
           將已發佈文章從前台移除，請確認是否執行此操作。
         </Typography>
         <RadioGroup
-          size="large"
+          size="main"
           value={currentRadioValue}
           className={classes.radioGroup}
           onChange={e => {
@@ -81,28 +99,8 @@ const DeleteWithdrawModal = ({
           {withWithdraw && <Radio value={DeleteWithdrawModalRadio.Withdraw}>將文章移至可發佈區</Radio>}
           {withDelete && <Radio value={DeleteWithdrawModalRadio.Delete}>永久刪除文章，此操作無法還原。</Radio>}
         </RadioGroup>
-      </MznModalBody>
-      <ModalActions
-        cancelText="取消"
-        confirmText="移除文章"
-        cancelButtonProps={{
-          type: 'button',
-          size: 'large',
-          variant: 'outlined',
-          danger: false,
-        }}
-        confirmButtonProps={{
-          type: 'button',
-          size: 'large',
-          variant: 'contained',
-          danger: true,
-          disabled: acting,
-          loading: acting,
-        }}
-        onCancel={closeModal}
-        onConfirm={onConfirm}
-      />
-    </>
+      </div>
+    </Modal>
   );
 };
 

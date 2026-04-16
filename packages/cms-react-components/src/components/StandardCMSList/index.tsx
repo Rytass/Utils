@@ -5,9 +5,9 @@ import { StandardCMSTable } from '../StandardCMSTable';
 import { StandardCMSTableProps } from '../StandardCMSTable/typings';
 import { ArticleStage } from '../../typings';
 import classes from './index.module.scss';
-import { TableDataSourceWithID } from '@mezzanine-ui/core/table';
+import { TableDataSourceWithId } from '@mezzanine-ui/core/table';
 
-export interface StandardCMSListProps<T extends TableDataSourceWithID> extends Omit<
+export interface StandardCMSListProps<T extends TableDataSourceWithId> extends Omit<
   StandardCMSTableProps<T>,
   'currentStage'
 > {
@@ -19,7 +19,7 @@ export interface StandardCMSListProps<T extends TableDataSourceWithID> extends O
   tableClassName?: string;
 }
 
-const StandardCMSList = <T extends TableDataSourceWithID>({
+const StandardCMSList = <T extends TableDataSourceWithId>({
   defaultStage = ArticleStage.DRAFT,
   onTabChange,
   tabsNaming,

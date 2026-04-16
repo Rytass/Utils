@@ -2,11 +2,11 @@ import { useContext } from 'react';
 import { ModalContext, ModalContextValues } from './ModalContext';
 
 export const useModal = (): ModalContextValues => {
-  const { open, openModal, closeModal } = useContext(ModalContext);
+  const { setVerifyReleaseModalProps, setDeleteWithdrawModalProps, setRejectModalProps } = useContext(ModalContext);
 
   return {
-    open,
-    openModal,
-    closeModal,
+    setVerifyReleaseModalProps,
+    setDeleteWithdrawModalProps,
+    setRejectModalProps,
   };
 };

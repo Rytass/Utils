@@ -1,5 +1,5 @@
 import React, { ReactElement, Key, useCallback, useMemo } from 'react';
-import { Tabs, TabPane, Tab } from '@mezzanine-ui/react';
+import { Tab, TabItem } from '@mezzanine-ui/react';
 import { ArticleStage } from '../../typings';
 import classes from './index.module.scss';
 
@@ -48,11 +48,11 @@ const StandardCMSTabs = ({ activeStage, onChange, tabsNaming }: StandardCMSTabsP
   );
 
   return (
-    <Tabs activeKey={activeStage} tabBarClassName={classes.tabBar} onChange={onTabChange}>
-      {tabs.map(tab => {
-        return <TabPane key={tab.id} tab={<Tab>{tab.name}</Tab>} />;
-      })}
-    </Tabs>
+    <Tab activeKey={activeStage} className={classes.tabBar} direction="horizontal" onChange={onTabChange}>
+      {tabs.map(tab => (
+        <TabItem key={tab.id}>{tab.name}</TabItem>
+      ))}
+    </Tab>
   );
 };
 

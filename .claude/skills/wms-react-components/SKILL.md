@@ -79,7 +79,6 @@ interface WMSMapModalProps {
 
 | 元件            | 說明               |
 | --------------- | ------------------ |
-| `WMSMapHeader`  | 工具列與標題       |
 | `WMSMapContent` | 畫布內容與編輯控制 |
 | `Breadcrumb`    | 倉儲層級導航       |
 | `ContextMenu`   | 右鍵菜單           |

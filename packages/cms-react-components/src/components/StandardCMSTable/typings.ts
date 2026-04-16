@@ -1,20 +1,15 @@
-import { ReactNode } from 'react';
-import { EmptyProps } from '@mezzanine-ui/react';
+import { EmptyProps, PaginationProps } from '@mezzanine-ui/react';
 import {
-  ExpandRowBySources,
   TableColumn,
-  TableDataSourceWithID,
+  TableDataSourceWithId,
   TableDraggable,
   TableExpandable,
-  TableFetchMore,
-  TablePagination,
   TableRowSelection,
-  TableScrolling,
 } from '@mezzanine-ui/core/table';
 import { LogsModalProps } from '../cms-modals/LogsModal';
 import { ArticleStage, ArticlesPermissions, ArticleTableActionsType } from '../../typings';
 
-export interface StandardCMSTableEventsProps<T extends TableDataSourceWithID> {
+export interface StandardCMSTableEventsProps<T extends TableDataSourceWithId> {
   onView?: (source: T) => Promise<void>;
   onSubmit?: (source: T) => Promise<void>;
   onPutBack?: (source: T) => Promise<void>;
@@ -25,7 +20,7 @@ export interface StandardCMSTableEventsProps<T extends TableDataSourceWithID> {
   onDelete?: (source: T) => Promise<void>;
 }
 
-export interface StandardCMSTableProps<T extends TableDataSourceWithID> {
+export interface StandardCMSTableProps<T extends TableDataSourceWithId> {
   /**
    * 當下文章狀態
    */
@@ -47,35 +42,21 @@ export interface StandardCMSTableProps<T extends TableDataSourceWithID> {
    */
   columns: TableColumn<T>[];
   /**
-   * Table 滾動設定
-   */
-  scroll?: TableScrolling;
-  /**
-   * 自定義 Table Scroll 區 class
-   */
-  scrollContainerClassName?: string;
-  /**
    * 若為 true，則顯示讀取狀態畫面
    */
   loading?: boolean;
   /**
-   * Table fetchMore 分頁設定
-   */
-  fetchMore?: TableFetchMore;
-  /**
    * Table 分頁設定
    */
-  pagination?: TablePagination;
+  pagination?: PaginationProps;
   /**
    * Table 拖拉功能設定
    */
-  draggable?: TableDraggable;
+  draggable?: TableDraggable<T>;
   /**
    * Table expandable 功能設定
    */
-  expandable?: Omit<TableExpandable<T>, 'expandedRowRender'> & {
-    expandedRowRender(record: T): ReactNode | ExpandRowBySources;
-  };
+  expandable?: TableExpandable<T>;
   /**
    * Table rowSelection 功能設定
    */

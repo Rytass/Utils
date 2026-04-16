@@ -1,23 +1,19 @@
-import React, { ReactElement, useMemo } from 'react';
+import React, { ReactElement, useMemo, useState } from 'react';
 import { compact } from 'lodash';
-import { Table as MznTable, IconButton, Icon } from '@mezzanine-ui/react';
-import { TableColumn, TableDataSourceWithID } from '@mezzanine-ui/core/table';
+import { Table as MznTable, Button } from '@mezzanine-ui/react';
+import { TableColumn, TableDataSourceWithId } from '@mezzanine-ui/core/table';
 import { VersionLog } from '../../icons/version-log';
-import { useModal } from '../modal/useModal';
 import { LogsModal } from '../cms-modals/LogsModal';
 import { useTableActions } from './hooks/useTableActions';
 import { StandardCMSTableProps } from './typings';
 
-const Table = <T extends TableDataSourceWithID>({
+const Table = <T extends TableDataSourceWithId>({
   currentStage,
   userPermissions,
   actionsEvents,
   dataSource,
   columns: columnsProps,
-  scroll,
-  scrollContainerClassName,
   loading,
-  fetchMore,
   pagination,
   draggable,
   expandable,
@@ -33,7 +29,7 @@ const Table = <T extends TableDataSourceWithID>({
   actions,
   customizedActions = [],
 }: StandardCMSTableProps<T>): ReactElement => {
-  const { openModal } = useModal();
+  const [logModalData, setLogModalData] = useState<T | null>(null);
   const tableActions = useTableActions<T>({
     currentStage,
     userPermissions,
@@ -47,27 +43,25 @@ const Table = <T extends TableDataSourceWithID>({
         withVersionLogs &&
           versionLogsData && {
             title: '',
+            key: 'action',
             width: 60,
             render: source => (
-              <IconButton
+              <Button
                 type="button"
-                size="small"
+                size="minor"
                 onClick={() => {
-                  openModal({
-                    severity: 'info',
-                    children: <LogsModal {...versionLogsData(source)} />,
-                  });
+                  setLogModalData(source);
                 }}
-              >
-                <Icon icon={VersionLog} size={16} />
-              </IconButton>
+                icon={VersionLog}
+                iconType="icon-only"
+              />
             ),
           },
         ...columnsProps,
         ...tableActions,
         ...customizedActions,
       ]),
-    [withVersionLogs, versionLogsData, columnsProps, tableActions, customizedActions, openModal],
+    [columnsProps, customizedActions, tableActions, versionLogsData, withVersionLogs],
   );
 
   const baseTableProps = useMemo(
@@ -78,11 +72,9 @@ const Table = <T extends TableDataSourceWithID>({
       bodyRowClassName,
       columns,
       dataSource,
-      scroll,
-      scrollContainerClassName,
       loading,
       loadingTip,
-      draggable,
+      pagination,
       expandable,
       rowSelection,
       emptyProps,
@@ -93,19 +85,47 @@ const Table = <T extends TableDataSourceWithID>({
       className,
       columns,
       dataSource,
-      draggable,
       emptyProps,
       expandable,
       headerClassName,
       loading,
       loadingTip,
+      pagination,
       rowSelection,
-      scroll,
-      scrollContainerClassName,
     ],
   );
 
-  return <MznTable {...baseTableProps} {...(fetchMore ? { fetchMore } : { pagination })} />;
+  if (draggable) {
+    return (
+      <>
+        <MznTable {...baseTableProps} draggable={draggable} />
+        {logModalData && versionLogsData && (
+          <LogsModal
+            open={!!logModalData}
+            closeModal={() => {
+              setLogModalData(null);
+            }}
+            {...versionLogsData(logModalData)}
+          />
+        )}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <MznTable {...baseTableProps} />
+      {logModalData && versionLogsData && (
+        <LogsModal
+          open={!!logModalData}
+          closeModal={() => {
+            setLogModalData(null);
+          }}
+          {...versionLogsData(logModalData)}
+        />
+      )}
+    </>
+  );
 };
 
 export default Table;

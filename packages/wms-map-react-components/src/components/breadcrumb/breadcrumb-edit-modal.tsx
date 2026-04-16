@@ -1,5 +1,5 @@
 import React, { FC, useState, useEffect } from 'react';
-import { Modal, ModalHeader, ModalBody, ModalFooter, Button } from '@mezzanine-ui/react';
+import { Modal } from '@mezzanine-ui/react';
 import styles from './breadcrumb-edit-modal.module.scss';
 import { useForm } from 'react-hook-form';
 
@@ -42,33 +42,47 @@ const BreadcrumbEditModal: FC<BreadcrumbEditModalProps> = ({ open, warehouseId, 
   };
 
   return (
-    <Modal open={open} onClose={handleCancel}>
-      <ModalHeader>修改當前區域名稱</ModalHeader>
-      <ModalBody>
-        <div className={styles.modalContent}>
-          <label className={styles.fieldLabel}>名稱</label>
-          <input
-            {...methods.register('editingValue', { required: true })}
-            type="text"
-            placeholder="請輸入區域名稱"
-            style={{
-              width: '100%',
-              padding: '8px',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              fontSize: '14px',
-            }}
-          />
-        </div>
-      </ModalBody>
-      <ModalFooter className={styles.modalFooter}>
-        <Button size="large" variant="outlined" onClick={handleCancel}>
-          取消
-        </Button>
-        <Button size="large" variant="contained" color="primary" onClick={handleConfirm}>
-          確認
-        </Button>
-      </ModalFooter>
+    <Modal
+      open={open}
+      onClose={handleCancel}
+      modalType="standard"
+      title="修改當前區域名稱"
+      titleAlign="left"
+      statusTypeIconLayout="horizontal"
+      cancelText="取消"
+      confirmText="確認"
+      onCancel={handleCancel}
+      onConfirm={handleConfirm}
+      cancelButtonProps={{
+        type: 'button',
+        size: 'main',
+        variant: 'base-secondary',
+      }}
+      confirmButtonProps={{
+        type: 'button',
+        size: 'main',
+        variant: 'base-primary',
+      }}
+      showStatusTypeIcon={false}
+      showDismissButton
+      showModalFooter
+      showModalHeader
+    >
+      <div className={styles.modalContent}>
+        <label className={styles.fieldLabel}>名稱</label>
+        <input
+          {...methods.register('editingValue', { required: true })}
+          type="text"
+          placeholder="請輸入區域名稱"
+          style={{
+            width: '100%',
+            padding: '8px',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            fontSize: '14px',
+          }}
+        />
+      </div>
     </Modal>
   );
 };
