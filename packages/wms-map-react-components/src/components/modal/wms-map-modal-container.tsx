@@ -3,11 +3,60 @@ import { Modal } from '@mezzanine-ui/react';
 import { ReactFlowProvider } from '@xyflow/react';
 import { DrawingMode, EditMode, ViewMode } from '../../typings';
 import { DEFAULT_RECTANGLE_COLOR } from '../../constants';
-import { WMSMapModalProps } from '../../types';
-import WMSMapHeader from './wms-map-header';
+import { WMSMapContentProps, WMSMapModalProps } from '../../types';
 import WMSMapContent from './wms-map-content';
 import { setDebugMode } from '../../utils/debug-logger';
 import styles from './wms-map-modal-container.module.scss';
+
+export const WMSMapModalContent = ({
+  editMode,
+  drawingMode,
+  selectedColor,
+  viewMode,
+  colorPalette,
+  onEditModeChange,
+  onToggleRectangleTool,
+  onTogglePenTool,
+  onColorChange,
+  onNodeClick,
+  onSave,
+  onBreadcrumbClick,
+  onNameChange,
+  initialNodes,
+  initialEdges,
+  onUpload,
+  getFilenameFQDN,
+  maxFileSizeKB,
+  warehouseIds,
+}: WMSMapContentProps): React.JSX.Element => {
+  return (
+    <div className={styles.content}>
+      <ReactFlowProvider>
+        <WMSMapContent
+          editMode={editMode}
+          drawingMode={drawingMode}
+          selectedColor={selectedColor}
+          viewMode={viewMode}
+          colorPalette={colorPalette}
+          onEditModeChange={onEditModeChange}
+          onToggleRectangleTool={onToggleRectangleTool}
+          onTogglePenTool={onTogglePenTool}
+          onColorChange={onColorChange}
+          onNodeClick={onNodeClick}
+          onSave={onSave}
+          onBreadcrumbClick={onBreadcrumbClick}
+          onNameChange={onNameChange}
+          initialNodes={initialNodes}
+          initialEdges={initialEdges}
+          onUpload={onUpload}
+          getFilenameFQDN={getFilenameFQDN}
+          maxFileSizeKB={maxFileSizeKB}
+          warehouseIds={warehouseIds}
+        />
+      </ReactFlowProvider>
+    </div>
+  );
+};
 
 const WMSMapModalContainer: FC<WMSMapModalProps> = ({
   open,
@@ -71,33 +120,40 @@ const WMSMapModalContainer: FC<WMSMapModalProps> = ({
   }, []);
 
   return (
-    <Modal open={open} onClose={onClose} className={styles.modal}>
-      <WMSMapHeader title={title} />
-      <div className={styles.content}>
-        <ReactFlowProvider>
-          <WMSMapContent
-            editMode={editMode}
-            drawingMode={drawingMode}
-            selectedColor={selectedColor}
-            viewMode={viewMode}
-            colorPalette={colorPalette}
-            onEditModeChange={handleEditModeChange}
-            onToggleRectangleTool={handleToggleRectangleTool}
-            onTogglePenTool={handleTogglePenTool}
-            onColorChange={handleColorChange}
-            onNodeClick={onNodeClick}
-            onSave={onSave}
-            onBreadcrumbClick={onBreadcrumbClick}
-            onNameChange={onNameChange}
-            initialNodes={initialNodes}
-            initialEdges={initialEdges}
-            onUpload={onUpload}
-            getFilenameFQDN={getFilenameFQDN}
-            maxFileSizeKB={maxFileSizeKB}
-            warehouseIds={warehouseIds}
-          />
-        </ReactFlowProvider>
-      </div>
+    <Modal
+      open={open}
+      onClose={onClose}
+      className={styles.modal}
+      modalType="standard"
+      title={title ?? '編輯倉儲空間'}
+      titleAlign="left"
+      statusTypeIconLayout="horizontal"
+      showStatusTypeIcon={false}
+      showDismissButton
+      showModalFooter={false}
+      showModalHeader
+    >
+      <WMSMapModalContent
+        editMode={editMode}
+        drawingMode={drawingMode}
+        selectedColor={selectedColor}
+        viewMode={viewMode}
+        colorPalette={colorPalette}
+        onEditModeChange={handleEditModeChange}
+        onToggleRectangleTool={handleToggleRectangleTool}
+        onTogglePenTool={handleTogglePenTool}
+        onColorChange={handleColorChange}
+        onNodeClick={onNodeClick}
+        onSave={onSave}
+        onBreadcrumbClick={onBreadcrumbClick}
+        onNameChange={onNameChange}
+        initialNodes={initialNodes}
+        initialEdges={initialEdges}
+        onUpload={onUpload}
+        getFilenameFQDN={getFilenameFQDN}
+        maxFileSizeKB={maxFileSizeKB}
+        warehouseIds={warehouseIds}
+      />
     </Modal>
   );
 };

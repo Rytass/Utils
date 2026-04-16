@@ -28,13 +28,12 @@ export function useLeaveButton<T extends FieldValues>({
   const onLeave = useCallback(
     (leaveText: string) => async (): Promise<void> => {
       const isConfirm = await openDialog({
-        severity: 'warning',
-        size: 'small',
+        modalStatusType: 'warning',
         title: '確認離開編輯？',
         children: `${leaveText}`,
         cancelText: '取消',
         cancelButtonProps: {
-          danger: false,
+          variant: 'base-secondary',
         },
         confirmText: '離開編輯',
       });

@@ -1,0 +1,10 @@
+@use '@mezzanine-ui/system/spacing';
+
+.host {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: spacing.semantic-variable(padding, vertical, spacious)
+    spacing.semantic-variable(padding, horizontal, comfort-fixed);
+}

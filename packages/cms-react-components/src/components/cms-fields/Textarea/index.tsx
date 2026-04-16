@@ -21,9 +21,8 @@ export const Textarea = ({ label, value, onChange, autoFocus, disabled }: Textar
 
   return (
     <div className={classes.root}>
-      <FormLabel>
-        {label}
-        <Typography variant="caption" color="error" className={classes.requiredMark}>
+      <FormLabel labelText={label}>
+        <Typography variant="caption" color="text-error" className={classes.requiredMark}>
           *
         </Typography>
       </FormLabel>

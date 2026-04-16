@@ -1,16 +1,18 @@
 import { createContext } from 'react';
-import { ModalConfigType } from './typing';
+import type { VerifyReleaseModalProps } from '../cms-modals/VerifyReleaseModal';
+import type { DeleteWithdrawModalProps } from '../cms-modals/DeleteWithdrawModal';
+import type { RejectModalProps } from '../cms-modals/RejectModal';
 
 export interface ModalContextValues {
-  open: boolean;
-  openModal: (config: ModalConfigType) => void;
-  closeModal: () => void;
+  setVerifyReleaseModalProps: React.Dispatch<React.SetStateAction<VerifyReleaseModalProps | null>>;
+  setDeleteWithdrawModalProps: React.Dispatch<React.SetStateAction<DeleteWithdrawModalProps | null>>;
+  setRejectModalProps: React.Dispatch<React.SetStateAction<RejectModalProps | null>>;
 }
 
 export const ModalContext = createContext<ModalContextValues>({
-  open: false,
-  openModal: () => {},
-  closeModal: () => {},
+  setVerifyReleaseModalProps: () => {},
+  setDeleteWithdrawModalProps: () => {},
+  setRejectModalProps: () => {},
 });
 
 export const ModalContextProvider = ModalContext.Provider;

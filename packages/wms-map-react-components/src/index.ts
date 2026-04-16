@@ -2,7 +2,7 @@
 
 export * from './typings';
 export * from './types';
-export { default as WMSMapModal } from './components/modal/wms-map-modal-container';
+export { WMSMapModalContent, default as WMSMapModal } from './components/modal/wms-map-modal-container';
 
 // 導出資料轉換工具函數
 export { transformNodeToClickInfo, transformNodesToMapData, logMapData, logNodeData } from './utils/map-data-transform';

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { action } from '@storybook/addon-actions';
-import { WMSMapModal, ViewMode } from '../src';
+import { action } from 'storybook/actions';
+import { WMSMapModalContent, WMSMapModal, ViewMode } from '../src';
 import { generateStoryNodes, convertToFlowNodes } from './story-utils';
 import '@xyflow/react/dist/style.css';
 
@@ -111,6 +111,17 @@ type Story = StoryObj<typeof meta>;
 // More on writing stories with args: https://storybook.js.org/docs/writing-stories/args
 export const Default: Story = {
   render: args => <WMSMapModalWrapper {...args} />,
+  args: {
+    title: '倉庫地圖編輯器',
+    viewMode: ViewMode.EDIT,
+    colorPalette: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'],
+    debugMode: false,
+    warehouseIds: ['MAIN-WAREHOUSE', 'SECTION-A', 'ZONE-B1', 'STORAGE-UNIT-42'],
+  },
+};
+
+export const OnlyContent: Story = {
+  render: args => <WMSMapModalContent {...args} />,
   args: {
     title: '倉庫地圖編輯器',
     viewMode: ViewMode.EDIT,

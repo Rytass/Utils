@@ -117,9 +117,8 @@ const FormActionsFooter = <T extends FieldValues>({
     <div className={cx(classes.formActionsFooter, actionsClassName)}>
       <Button
         type="button"
-        size="large"
-        variant="text"
-        danger
+        size="main"
+        variant="destructive-ghost"
         onClick={onLeave}
         loading={loading}
         disabled={leaveDisabled}
@@ -130,10 +129,9 @@ const FormActionsFooter = <T extends FieldValues>({
         {actionButtonText && (onActionProps || actionButton.onAction) && (
           <Button
             type="button"
-            size="large"
-            variant="outlined"
+            size="main"
+            variant={actionButton.danger ? 'destructive-secondary' : 'base-secondary'}
             onClick={onAction}
-            danger={actionButton.danger}
             loading={loading}
             disabled={actionDisabled}
           >
@@ -141,7 +139,7 @@ const FormActionsFooter = <T extends FieldValues>({
           </Button>
         )}
         {submitButtonText && (onSubmitProps || submitButton.onSubmit) && (
-          <Button type="submit" size="large" variant="contained" loading={loading} disabled={submitDisabled}>
+          <Button type="submit" size="main" variant="base-primary" loading={loading} disabled={submitDisabled}>
             {submitButtonText}
           </Button>
         )}

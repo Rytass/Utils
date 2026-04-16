@@ -1,7 +1,5 @@
-import React from 'react';
 import { FieldValues } from 'react-hook-form';
 import { havePermission } from '../../../utils/havePermission';
-import { RejectModal } from '../../cms-modals/RejectModal';
 import { StandardCMSFormActionsEventsProps } from '../typings';
 import { ArticleStage, ArticlesPermissions } from '../../../typings';
 import { useDialog } from '../../dialog/useDialog';
@@ -27,7 +25,7 @@ export function useActionButton<T extends FieldValues>({
   onAction?: () => Promise<void>;
 } {
   const { openDialog } = useDialog();
-  const { openModal } = useModal();
+  const { setRejectModalProps } = useModal();
 
   if (createMode) {
     if (
@@ -63,17 +61,16 @@ export function useActionButton<T extends FieldValues>({
           text: '新增草稿版本',
           onAction: async (): Promise<void> => {
             const isConfirm = await openDialog({
-              severity: 'info',
-              size: 'small',
+              modalStatusType: 'info',
               title: '確認新增草稿版本？',
               children: '內容將被移至所屬的草稿列表頁。',
               cancelText: '取消',
               cancelButtonProps: {
-                danger: false,
+                variant: 'base-secondary',
               },
               confirmText: '新增草稿',
               confirmButtonProps: {
-                danger: false,
+                variant: 'base-primary',
               },
             });
 
@@ -122,15 +119,10 @@ export function useActionButton<T extends FieldValues>({
           text: '不通過',
           danger: true,
           onAction: async (): Promise<void> => {
-            openModal({
-              severity: 'error',
-              children: (
-                <RejectModal
-                  onReject={async reason => {
-                    await actionsEvents.onReject?.(values, reason);
-                  }}
-                />
-              ),
+            setRejectModalProps({
+              onReject: async reason => {
+                await actionsEvents.onReject?.(values, reason);
+              },
             });
           },
         };
@@ -146,17 +138,16 @@ export function useActionButton<T extends FieldValues>({
           text: '新增草稿版本',
           onAction: async (): Promise<void> => {
             const isConfirm = await openDialog({
-              severity: 'info',
-              size: 'small',
+              modalStatusType: 'info',
               title: '確認新增草稿版本？',
               children: '內容將被移至所屬的草稿列表頁。',
               cancelText: '取消',
               cancelButtonProps: {
-                danger: false,
+                variant: 'base-secondary',
               },
               confirmText: '新增草稿',
               confirmButtonProps: {
-                danger: false,
+                variant: 'base-primary',
               },
             });
 
@@ -184,17 +175,16 @@ export function useActionButton<T extends FieldValues>({
           text: '新增草稿版本',
           onAction: async (): Promise<void> => {
             const isConfirm = await openDialog({
-              severity: 'info',
-              size: 'small',
+              modalStatusType: 'info',
               title: '確認新增草稿版本？',
               children: '內容將被移至所屬的草稿列表頁。',
               cancelText: '取消',
               cancelButtonProps: {
-                danger: false,
+                variant: 'base-secondary',
               },
               confirmText: '新增草稿',
               confirmButtonProps: {
-                danger: false,
+                variant: 'base-primary',
               },
             });
 
@@ -215,17 +205,16 @@ export function useActionButton<T extends FieldValues>({
           text: '修改內容',
           onAction: async (): Promise<void> => {
             const isConfirm = await openDialog({
-              severity: 'info',
-              size: 'small',
+              modalStatusType: 'info',
               title: '確定要修改內容？',
               children: '內容將被移至所屬的草稿列表頁，修改後需重新審核。此操作無法還原。',
               cancelText: '取消',
               cancelButtonProps: {
-                danger: false,
+                variant: 'base-secondary',
               },
               confirmText: '修改內容',
               confirmButtonProps: {
-                danger: false,
+                variant: 'base-primary',
               },
             });
 
@@ -253,17 +242,16 @@ export function useActionButton<T extends FieldValues>({
           text: '新增草稿版本',
           onAction: async (): Promise<void> => {
             const isConfirm = await openDialog({
-              severity: 'info',
-              size: 'small',
+              modalStatusType: 'info',
               title: '確認新增草稿版本？',
               children: '內容將被移至所屬的草稿列表頁。',
               cancelText: '取消',
               cancelButtonProps: {
-                danger: false,
+                variant: 'base-secondary',
               },
               confirmText: '新增草稿',
               confirmButtonProps: {
-                danger: false,
+                variant: 'base-primary',
               },
             });
 
@@ -284,17 +272,16 @@ export function useActionButton<T extends FieldValues>({
           text: '修改內容',
           onAction: async (): Promise<void> => {
             const isConfirm = await openDialog({
-              severity: 'info',
-              size: 'small',
+              modalStatusType: 'info',
               title: '確定要修改內容？',
               children: '內容將被移至所屬的草稿列表頁，修改後需重新審核。此操作無法還原。',
               cancelText: '取消',
               cancelButtonProps: {
-                danger: false,
+                variant: 'base-secondary',
               },
               confirmText: '修改內容',
               confirmButtonProps: {
-                danger: false,
+                variant: 'base-primary',
               },
             });
 
@@ -322,17 +309,16 @@ export function useActionButton<T extends FieldValues>({
           text: '新增草稿版本',
           onAction: async (): Promise<void> => {
             const isConfirm = await openDialog({
-              severity: 'info',
-              size: 'small',
+              modalStatusType: 'info',
               title: '確認新增草稿版本？',
               children: '內容將被移至所屬的草稿列表頁。',
               cancelText: '取消',
               cancelButtonProps: {
-                danger: false,
+                variant: 'base-secondary',
               },
               confirmText: '新增草稿',
               confirmButtonProps: {
-                danger: false,
+                variant: 'base-primary',
               },
             });
 

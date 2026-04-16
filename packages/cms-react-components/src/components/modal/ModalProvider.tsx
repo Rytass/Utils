@@ -1,56 +1,55 @@
-import React, { FC, ReactNode, useState, useCallback, memo } from 'react';
-import { Modal } from '@mezzanine-ui/react';
+import React, { FC, ReactNode, useState, memo } from 'react';
 import { ModalContextProvider } from './ModalContext';
-import { ModalConfigType } from './typing';
+import { VerifyReleaseModal } from '../cms-modals/VerifyReleaseModal';
+import type { VerifyReleaseModalProps } from '../cms-modals/VerifyReleaseModal';
+import { DeleteWithdrawModal } from '../cms-modals/DeleteWithdrawModal';
+import type { DeleteWithdrawModalProps } from '../cms-modals/DeleteWithdrawModal';
+import { RejectModal } from '../cms-modals/RejectModal';
+import type { RejectModalProps } from '../cms-modals/RejectModal';
 
 const ModalProvider: FC<{ children?: ReactNode }> = ({ children }) => {
-  const [open, setOpen] = useState<boolean>(false);
-
-  const [modalConfig, setModalConfig] = useState<ModalConfigType>({});
-
-  const {
-    disableCloseOnBackdropClick = false,
-    hideCloseIcon = true,
-    severity,
-    size = 'medium',
-    children: modalChildren,
-    width,
-    className,
-    onClose,
-  } = modalConfig;
-
-  const openModal = useCallback((config: ModalConfigType) => {
-    setOpen(true);
-    setModalConfig(config);
-  }, []);
+  const [verifyReleaseModalProps, setVerifyReleaseModalProps] = useState<VerifyReleaseModalProps | null>(null);
+  const [deleteWithdrawModalProps, setDeleteWithdrawModalProps] = useState<DeleteWithdrawModalProps | null>(null);
+  const [rejectModalProps, setRejectModalProps] = useState<RejectModalProps | null>(null);
 
   return (
     <ModalContextProvider
       value={{
-        open,
-        closeModal: () => {
-          setOpen(false);
-        },
-        openModal,
+        setVerifyReleaseModalProps,
+        setDeleteWithdrawModalProps,
+        setRejectModalProps,
       }}
     >
       <>
         {children}
-        <Modal
-          disableCloseOnBackdropClick={disableCloseOnBackdropClick}
-          hideCloseIcon={hideCloseIcon}
-          severity={severity}
-          size={size}
-          onClose={() => {
-            setOpen(false);
-            onClose?.();
-          }}
-          open={open}
-          style={{ width }}
-          className={className}
-        >
-          {modalChildren}
-        </Modal>
+        {verifyReleaseModalProps && (
+          <VerifyReleaseModal
+            open={!!verifyReleaseModalProps}
+            closeModal={() => {
+              setVerifyReleaseModalProps(null);
+            }}
+            {...verifyReleaseModalProps}
+          />
+        )}
+        {deleteWithdrawModalProps && (
+          <DeleteWithdrawModal
+            open={!!deleteWithdrawModalProps}
+            closeModal={() => {
+              setDeleteWithdrawModalProps(null);
+            }}
+            {...deleteWithdrawModalProps}
+          />
+        )}
+
+        {rejectModalProps && (
+          <RejectModal
+            open={!!rejectModalProps}
+            closeModal={() => {
+              setRejectModalProps(null);
+            }}
+            {...rejectModalProps}
+          />
+        )}
       </>
     </ModalContextProvider>
   );

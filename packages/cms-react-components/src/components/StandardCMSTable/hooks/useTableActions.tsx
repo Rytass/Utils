@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Button } from '@mezzanine-ui/react';
-import { TableColumn, TableDataSourceWithID } from '@mezzanine-ui/core/table';
+import { TableColumn, TableDataSourceWithId } from '@mezzanine-ui/core/table';
 import { ArticleStage, ArticleTableActions, ArticlesPermissions, ArticleTableActionsType } from '../../../typings';
 import { defaultTableActions } from '../../../constants';
 import { havePermission } from '../../../utils/havePermission';
@@ -8,7 +8,7 @@ import { StandardCMSTableEventsProps } from '../typings';
 import { useTableEvents } from './useTableEvents';
 import classes from '../index.module.scss';
 
-export function useTableActions<T extends TableDataSourceWithID>({
+export function useTableActions<T extends TableDataSourceWithId>({
   currentStage,
   userPermissions,
   actionsEvents,
@@ -67,6 +67,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
         return [
           {
             title: '',
+            key: 'actions',
             align: 'end',
             render: source => (
               <div className={classes.tableActions}>
@@ -74,7 +75,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
                   switch (action) {
                     case ArticleTableActions.Update: {
                       return (
-                        <Button type="button" variant="text" onClick={onView(source)}>
+                        <Button type="button" variant="base-ghost" onClick={onView(source)}>
                           編輯
                         </Button>
                       );
@@ -82,7 +83,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Submit: {
                       return (
-                        <Button type="button" variant="text" onClick={onSubmit(source)}>
+                        <Button type="button" variant="base-ghost" onClick={onSubmit(source)}>
                           送審
                         </Button>
                       );
@@ -90,7 +91,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Release: {
                       return (
-                        <Button type="button" variant="text" onClick={onVerifyRelease(source, currentStage)}>
+                        <Button type="button" variant="base-ghost" onClick={onVerifyRelease(source, currentStage)}>
                           發佈
                         </Button>
                       );
@@ -98,7 +99,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Delete: {
                       return (
-                        <Button type="button" variant="text" danger onClick={onDelete(source)}>
+                        <Button type="button" variant="destructive-ghost" onClick={onDelete(source)}>
                           刪除此版本
                         </Button>
                       );
@@ -151,6 +152,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
         return [
           {
             title: '',
+            key: 'actions',
             align: 'end',
             render: source => (
               <div className={classes.tableActions}>
@@ -158,7 +160,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
                   switch (action) {
                     case ArticleTableActions.Update: {
                       return (
-                        <Button type="button" variant="text" onClick={onView(source)}>
+                        <Button type="button" variant="base-ghost" onClick={onView(source)}>
                           編輯
                         </Button>
                       );
@@ -166,7 +168,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Review: {
                       return (
-                        <Button type="button" variant="text" onClick={onVerifyRelease(source, currentStage)}>
+                        <Button type="button" variant="base-ghost" onClick={onVerifyRelease(source, currentStage)}>
                           審核
                         </Button>
                       );
@@ -174,7 +176,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Delete: {
                       return (
-                        <Button type="button" variant="text" danger onClick={onDelete(source)}>
+                        <Button type="button" variant="destructive-ghost" onClick={onDelete(source)}>
                           刪除
                         </Button>
                       );
@@ -182,7 +184,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.PutBack: {
                       return (
-                        <Button type="button" variant="text" danger onClick={onPutBack(source)}>
+                        <Button type="button" variant="destructive-ghost" onClick={onPutBack(source)}>
                           撤回審核
                         </Button>
                       );
@@ -235,6 +237,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
         return [
           {
             title: '',
+            key: 'actions',
             align: 'end',
             render: source => (
               <div className={classes.tableActions}>
@@ -242,7 +245,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
                   switch (action) {
                     case ArticleTableActions.View: {
                       return (
-                        <Button type="button" variant="text" onClick={onView(source)}>
+                        <Button type="button" variant="base-ghost" onClick={onView(source)}>
                           檢視
                         </Button>
                       );
@@ -250,7 +253,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Update: {
                       return (
-                        <Button type="button" variant="text" onClick={onView(source)}>
+                        <Button type="button" variant="base-ghost" onClick={onView(source)}>
                           編輯
                         </Button>
                       );
@@ -258,7 +261,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Release: {
                       return (
-                        <Button type="button" variant="text" onClick={onVerifyRelease(source, currentStage)}>
+                        <Button type="button" variant="base-ghost" onClick={onVerifyRelease(source, currentStage)}>
                           發佈
                         </Button>
                       );
@@ -266,7 +269,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Delete: {
                       return (
-                        <Button type="button" variant="text" danger onClick={onDelete(source)}>
+                        <Button type="button" variant="destructive-ghost" onClick={onDelete(source)}>
                           刪除
                         </Button>
                       );
@@ -313,6 +316,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
         return [
           {
             title: '',
+            key: 'actions',
             align: 'end',
             render: source => (
               <div className={classes.tableActions}>
@@ -320,7 +324,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
                   switch (action) {
                     case ArticleTableActions.View: {
                       return (
-                        <Button type="button" variant="text" onClick={onView(source)}>
+                        <Button type="button" variant="base-ghost" onClick={onView(source)}>
                           檢視
                         </Button>
                       );
@@ -328,7 +332,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Update: {
                       return (
-                        <Button type="button" variant="text" onClick={onView(source)}>
+                        <Button type="button" variant="base-ghost" onClick={onView(source)}>
                           編輯
                         </Button>
                       );
@@ -336,7 +340,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Withdraw: {
                       return (
-                        <Button type="button" variant="text" danger onClick={onWithdraw(source)}>
+                        <Button type="button" variant="destructive-ghost" onClick={onWithdraw(source)}>
                           取消發佈
                         </Button>
                       );
@@ -383,6 +387,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
         return [
           {
             title: '',
+            key: 'actions',
             align: 'end',
             render: source => (
               <div className={classes.tableActions}>
@@ -390,7 +395,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
                   switch (action) {
                     case ArticleTableActions.Update: {
                       return (
-                        <Button type="button" variant="text" onClick={onView(source)}>
+                        <Button type="button" variant="base-ghost" onClick={onView(source)}>
                           編輯
                         </Button>
                       );
@@ -398,7 +403,7 @@ export function useTableActions<T extends TableDataSourceWithID>({
 
                     case ArticleTableActions.Delete: {
                       return (
-                        <Button type="button" variant="text" danger onClick={onDeleteWithdraw(source)}>
+                        <Button type="button" variant="destructive-ghost" onClick={onDeleteWithdraw(source)}>
                           移除
                         </Button>
                       );
