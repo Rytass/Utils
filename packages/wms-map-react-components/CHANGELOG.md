@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.5](https://github.com/Rytass/Utils/compare/@rytass/wms-map-react-components@0.1.4...@rytass/wms-map-react-components@0.1.5) (2026-04-16)
+
+### Bug Fixes
+
+- **packages:** remove @mezzanine-ui/react-hook-form-v2 ([cb366d3](https://github.com/Rytass/Utils/commit/cb366d3123b2a49c8863b9739c866644fbec92da))
+- **packages:** storybook issues ([52f2c3a](https://github.com/Rytass/Utils/commit/52f2c3af2c6c48d09788f23f15f3d07a43fca076))
+
 ## [0.1.4](https://github.com/Rytass/Utils/compare/@rytass/wms-map-react-components@0.1.3...@rytass/wms-map-react-components@0.1.4) (2026-02-24)
 
 **Note:** Version bump only for package @rytass/wms-map-react-components

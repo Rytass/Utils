@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.5](https://github.com/Rytass/Utils/compare/@rytass/cms-react-components@0.2.4...@rytass/cms-react-components@0.2.5) (2026-04-16)
+
+### Bug Fixes
+
+- **packages/cms-react-components:** components props ([f191e21](https://github.com/Rytass/Utils/commit/f191e21c34b1b22faf27f1db3a6a9003763ad983))
+- **packages/cms-react-components:** table props ([61a46e7](https://github.com/Rytass/Utils/commit/61a46e7639cf7bc10fab17a09d95b5871b3bea36))
+
 ## [0.2.4](https://github.com/Rytass/Utils/compare/@rytass/cms-react-components@0.2.3...@rytass/cms-react-components@0.2.4) (2025-12-05)
 
 **Note:** Version bump only for package @rytass/cms-react-components
