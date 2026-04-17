@@ -178,7 +178,11 @@ async function build(packageSymbol, packageInfos) {
         }),
         postcss({
           modules: true,
-          use: ['sass'],
+          use: {
+            sass: {
+              includePaths: [nodeModulesPath],
+            },
+          },
           extract: true,
           minimize: true,
         }),
@@ -220,7 +224,11 @@ async function build(packageSymbol, packageInfos) {
               }),
               postcss({
                 modules: true,
-                use: ['sass'],
+                use: {
+            sass: {
+              includePaths: [nodeModulesPath],
+            },
+          },
                 extract: true,
                 minimize: true,
               }),
