@@ -28,7 +28,7 @@ const ViewModeToolbar: FC<ViewModeToolbarProps> = ({ viewMode, showBackground, o
     <div className={styles.viewModeToolbar}>
       <div className={styles.toolbarContent}>
         <span className={styles.label}>顯示底圖</span>
-        <Toggle checked={showBackground} onChange={handleToggle} size="medium" className={styles.switch} />
+        <Toggle checked={showBackground} onChange={handleToggle} size="main" className={styles.switch} />
       </div>
     </div>
   );
