@@ -15,7 +15,10 @@
     "lib": ["esnext", "dom", "dom.iterable"],
     "types": ["node", "react", "react-dom"],
     "allowImportingTsExtensions": false,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "paths": {
+      "overlayscrollbars-react": ["./typings/overlayscrollbars-react.d.ts"]
+    }
   },
   "exclude": ["node_modules", "**/node_modules"]
 }
