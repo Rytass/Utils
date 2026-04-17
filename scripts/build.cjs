@@ -225,10 +225,10 @@ async function build(packageSymbol, packageInfos) {
               postcss({
                 modules: true,
                 use: {
-            sass: {
-              includePaths: [nodeModulesPath],
-            },
-          },
+                  sass: {
+                    includePaths: [nodeModulesPath],
+                  },
+                },
                 extract: true,
                 minimize: true,
               }),
