@@ -6146,12 +6146,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mezzanine-ui/core@npm:1.0.0":
-  version: 1.0.0
-  resolution: "@mezzanine-ui/core@npm:1.0.0"
+"@mezzanine-ui/core@npm:1.0.2, @mezzanine-ui/core@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "@mezzanine-ui/core@npm:1.0.2"
   dependencies:
-    "@mezzanine-ui/icons": "npm:1.0.0"
-    "@mezzanine-ui/system": "npm:1.0.0"
+    "@mezzanine-ui/icons": "npm:1.0.2"
+    "@mezzanine-ui/system": "npm:1.0.2"
     lodash: "npm:^4.17.21"
     tslib: "npm:^2.8.1"
   peerDependencies:
@@ -6166,58 +6166,27 @@ __metadata:
       optional: true
     moment:
       optional: true
-  checksum: 10c0/dede03e5b72affc89271374fb4591cc14f6173f73845cd31b691fcfbf73c1d8be091024b18bdc27beadd7c458199bfefaeb55196104415ac1e0f99fa12e8b389
+  checksum: 10c0/b77c7ee736ef7c065dec05a6b7eb25c9102ce0792a62c3401c028985c627ea7c2b60777dbd73e86fc640495ea4cc02961b1bf216c55091eedee71d0db336ad38
   languageName: node
   linkType: hard
 
-"@mezzanine-ui/core@npm:^1.0.1":
-  version: 1.0.1
-  resolution: "@mezzanine-ui/core@npm:1.0.1"
-  dependencies:
-    "@mezzanine-ui/icons": "npm:1.0.1"
-    "@mezzanine-ui/system": "npm:1.0.1"
-    lodash: "npm:^4.17.21"
-    tslib: "npm:^2.8.1"
-  peerDependencies:
-    dayjs: ">=1"
-    lodash: ">=4"
-    luxon: ">=3"
-    moment: ">=2"
-  peerDependenciesMeta:
-    dayjs:
-      optional: true
-    luxon:
-      optional: true
-    moment:
-      optional: true
-  checksum: 10c0/cb95b66bc21e4da7398f0059d0b3976861c3f3302d00cd695f2362640b15ef68cb69b0c30eecc42491614fe034332001576093746560ead1afb4b1365f8b3659
+"@mezzanine-ui/icons@npm:1.0.2, @mezzanine-ui/icons@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "@mezzanine-ui/icons@npm:1.0.2"
+  checksum: 10c0/a72ebc8cb5a8a2a47b0d1393cd10923b2ac26879215b472789ec286b75ea137eba4691478dcf9ece56a4fcc6384bf21faa2efbf569e28cbed9519e3eb6968742
   languageName: node
   linkType: hard
 
-"@mezzanine-ui/icons@npm:1.0.0":
-  version: 1.0.0
-  resolution: "@mezzanine-ui/icons@npm:1.0.0"
-  checksum: 10c0/e56b5f86667626c0e631ea1830da36fc76d5c768feab04d96ed4851bfa2ca1664688514009607b387516ae307b66c75bceb835b78be9be85b036643a70a13999
-  languageName: node
-  linkType: hard
-
-"@mezzanine-ui/icons@npm:1.0.1, @mezzanine-ui/icons@npm:^1.0.1":
-  version: 1.0.1
-  resolution: "@mezzanine-ui/icons@npm:1.0.1"
-  checksum: 10c0/a8a96387bb31675f9e640a045d1c6adbbedd6461a85610f4a8e1460e2010a7a5bc9106e2f80f8db2c527a6163f7cd365eb22cfb8cf63a27537ceb3082a66cd84
-  languageName: node
-  linkType: hard
-
-"@mezzanine-ui/react@npm:^1.0.1":
-  version: 1.0.1
-  resolution: "@mezzanine-ui/react@npm:1.0.1"
+"@mezzanine-ui/react@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "@mezzanine-ui/react@npm:1.0.2"
   dependencies:
     "@floating-ui/dom": "npm:^1.7.4"
     "@floating-ui/react-dom": "npm:^2.1.6"
     "@hello-pangea/dnd": "npm:^18.0.1"
-    "@mezzanine-ui/core": "npm:1.0.0"
-    "@mezzanine-ui/icons": "npm:1.0.0"
-    "@mezzanine-ui/system": "npm:1.0.0"
+    "@mezzanine-ui/core": "npm:1.0.2"
+    "@mezzanine-ui/icons": "npm:1.0.2"
+    "@mezzanine-ui/system": "npm:1.0.2"
     "@tanstack/react-virtual": "npm:^3.13.13"
     "@types/react-transition-group": "npm:^4.4.12"
     clsx: "npm:^2.1.1"
@@ -6231,25 +6200,16 @@ __metadata:
     lodash: ">=4"
     react: ">=18"
     react-dom: ">=18"
-  checksum: 10c0/d2899f6eb3f108cc999c73c1150dcfee2405721b4e12619704d5e189f0b5b97c4185072e5998721e9194757542829383c024e816d0b4f1a9a8a87005bd71a79f
+  checksum: 10c0/def579677887abcaafdbbde713b162c2ef2ea3b22de71966cbac4605167adb66013dcf4e1a94c7589d7b5bb36efab5c29315e1a94a46534430eec9939c41ef09
   languageName: node
   linkType: hard
 
-"@mezzanine-ui/system@npm:1.0.0":
-  version: 1.0.0
-  resolution: "@mezzanine-ui/system@npm:1.0.0"
+"@mezzanine-ui/system@npm:1.0.2, @mezzanine-ui/system@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "@mezzanine-ui/system@npm:1.0.2"
   dependencies:
     tslib: "npm:^2.8.1"
-  checksum: 10c0/1e9b0dbf4d3f6544ce84aa35a3ef0c6a4dc5d49ab9fafeeca5183da097dcf699d1806a1801240403d42a6ec2589c0adc00514e46badaa22567af1d2414efa334
-  languageName: node
-  linkType: hard
-
-"@mezzanine-ui/system@npm:1.0.1, @mezzanine-ui/system@npm:^1.0.1":
-  version: 1.0.1
-  resolution: "@mezzanine-ui/system@npm:1.0.1"
-  dependencies:
-    tslib: "npm:^2.8.1"
-  checksum: 10c0/0d6a9cfc188a700cf6bd0c688aa32ce3878493dba03ffae5e1d8806d8d5714862c68fc9ec3004abf4e92b8c94760a0d8b71ca43e9a079ddb8fd1b74cd6c99554
+  checksum: 10c0/715b85a4d2f987e940043ced44208c0e1e2568c8348791410deb61aad0af1a5e4c54536a8a4552f937443537934918d4ba18087200ed977d826ddb9f1b5a9ee5
   languageName: node
   linkType: hard
 
@@ -26703,10 +26663,10 @@ __metadata:
     "@docusaurus/types": "npm:^3.9.2"
     "@eslint/eslintrc": "npm:^3.3.4"
     "@mdx-js/react": "npm:^3.1.1"
-    "@mezzanine-ui/core": "npm:^1.0.1"
-    "@mezzanine-ui/icons": "npm:^1.0.1"
-    "@mezzanine-ui/react": "npm:^1.0.1"
-    "@mezzanine-ui/system": "npm:^1.0.1"
+    "@mezzanine-ui/core": "npm:^1.0.2"
+    "@mezzanine-ui/icons": "npm:^1.0.2"
+    "@mezzanine-ui/react": "npm:^1.0.2"
+    "@mezzanine-ui/system": "npm:^1.0.2"
     "@nestjs/common": "npm:^11.1.14"
     "@nestjs/config": "npm:^4.0.3"
     "@nestjs/core": "npm:^11.1.14"
