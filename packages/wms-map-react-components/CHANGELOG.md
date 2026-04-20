@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.6](https://github.com/Rytass/Utils/compare/@rytass/wms-map-react-components@0.1.5...@rytass/wms-map-react-components@0.1.6) (2026-04-20)
+
+### Bug Fixes
+
+- **packages/wms-map-react-components:** toggle props ([0a2b1f5](https://github.com/Rytass/Utils/commit/0a2b1f554a63b11b087a8d300d9cc9eaf9e4df57))
+
 ## [0.1.5](https://github.com/Rytass/Utils/compare/@rytass/wms-map-react-components@0.1.4...@rytass/wms-map-react-components@0.1.5) (2026-04-16)
 
 ### Bug Fixes
