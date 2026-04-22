@@ -3,7 +3,16 @@ import { Button } from '@mezzanine-ui/react';
 import { DrawingMode, EditMode } from '../../typings';
 import { DEFAULT_BACKGROUND_TOOL_COLOR } from '../../constants';
 import styles from './toolbar.module.scss';
-import { PenToolIcon, DeleteIcon, ImageIcon, SquareIcon, PointerIcon, RedoIcon, UndoIcon } from '../../icons';
+import {
+  PenToolIcon,
+  DeleteIcon,
+  ImageIcon,
+  SquareIcon,
+  PointerIcon,
+  RedoIcon,
+  UndoIcon,
+  CheckMarkIcon,
+} from '../../icons';
 
 // LoadingIcon 組件
 const LoadingIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -305,7 +314,11 @@ const Toolbar: FC<ToolbarProps> = ({
                           style={{ backgroundColor: color }}
                           onClick={() => handleColorSelect(color)}
                           title={color}
-                        />
+                        >
+                          {selectedColor === color && (
+                            <CheckMarkIcon width={28} height={28} className={styles.checkMarkIcon} />
+                          )}
+                        </div>
                       ))}
                     </div>
                   )}
