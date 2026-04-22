@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.7](https://github.com/Rytass/Utils/compare/@rytass/wms-map-react-components@0.1.6...@rytass/wms-map-react-components@0.1.7) (2026-04-22)
+
+### Bug Fixes
+
+- **packages/wms-map-react-components:** fix check icon issue ([b95be70](https://github.com/Rytass/Utils/commit/b95be702ee43fb8736f7f012455e06496e7c6205))
+
 ## [0.1.6](https://github.com/Rytass/Utils/compare/@rytass/wms-map-react-components@0.1.5...@rytass/wms-map-react-components@0.1.6) (2026-04-20)
 
 ### Bug Fixes
