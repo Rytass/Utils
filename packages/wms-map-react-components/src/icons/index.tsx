@@ -144,6 +144,24 @@ export const UndoIcon: React.FC<IconProps> = ({ width = 24, height = 24, classNa
   </svg>
 );
 
+export const CheckMarkIcon: React.FC<IconProps> = ({ width = 24, height = 24, className, color = 'white' }) => (
+  <svg
+    width={width}
+    height={height}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M16.9018 7.5L10.1083 14.301L7.09721 11.2896L6 12.3881L10.1073 16.5L18 8.59845L16.9018 7.5Z"
+      fill={color}
+    />
+  </svg>
+);
+
 export const FolderIcon: React.FC<IconProps> = ({ width = 24, height = 24, className, color = '#8F8F8F' }) => (
   <svg
     width={width}

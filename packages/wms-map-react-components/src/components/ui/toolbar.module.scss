@@ -337,18 +337,11 @@
 }
 
 .colorOptionSelected {
-  &::after {
-    content: '';
+  .checkMarkIcon {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 28px;
-    height: 28px;
-    background-image: url('./icons/check-mark.svg');
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
     z-index: 1;
   }
 }
