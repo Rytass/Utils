@@ -968,15 +968,13 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
   }
 
   async cancelRefund(order: NewebPayOrder<NewebPayCreditCardCommitMessage>, amount?: number): Promise<void> {
-    if (
-      (order.additionalInfo as NewebPayAdditionInfoCreditCard).closeStatus !== NewebPayCreditCardBalanceStatus.SETTLED
-    ) {
+    const additionalInfo = order.additionalInfo as NewebPayAdditionInfoCreditCard;
+
+    if (additionalInfo.closeStatus !== NewebPayCreditCardBalanceStatus.SETTLED) {
       throw new Error('Only settled order can be cancel refund');
     }
 
-    if (
-      (order.additionalInfo as NewebPayAdditionInfoCreditCard).refundStatus !== NewebPayCreditCardBalanceStatus.WAITING
-    ) {
+    if (additionalInfo.refundStatus !== NewebPayCreditCardBalanceStatus.WAITING) {
       throw new Error('Order not refunding.');
     }
 
@@ -984,17 +982,23 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
       throw new Error('Only refunded order can be cancel refund');
     }
 
+    // Cap at refunded-so-far (totalPrice minus any remaining refundable balance).
+    // We can't distinguish pending from settled refund portions from the SDK side,
+    // so this is a permissive but conservative bound — NewebPay's Close API will
+    // reject if the amount doesn't match the actual pending refund.
+    const refundedSoFar = order.totalPrice - (additionalInfo.remainingBalance ?? order.totalPrice);
+
     if (amount !== undefined) {
       if (!Number.isInteger(amount) || amount <= 0) {
         throw new Error('Cancel refund amount must be a positive integer');
       }
 
-      if (amount > order.totalPrice) {
-        throw new Error('Cancel refund amount cannot exceed order total price');
+      if (amount > refundedSoFar) {
+        throw new Error('Cancel refund amount cannot exceed refunded amount');
       }
     }
 
-    const cancelAmount = amount ?? order.totalPrice;
+    const cancelAmount = amount ?? refundedSoFar;
 
     const cipher = createCipheriv('aes-256-cbc', this.aesKey, this.aesIv);
 

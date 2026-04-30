@@ -233,13 +233,31 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage = NewebPayCommitMes
   }
 
   async cancelRefund(amount?: number): Promise<void> {
-    await this._gateway.cancelRefund(this as NewebPayOrder<NewebPayCreditCardCommitMessage>, amount);
+    const ai = this.additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage> | undefined as
+      | NewebPayAdditionInfoCreditCard
+      | undefined;
 
-    (
-      this.additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage> as NewebPayAdditionInfoCreditCard
-    ).refundStatus = NewebPayCreditCardBalanceStatus.UNSETTLED;
+    const refundedSoFar = this.totalPrice - (ai?.remainingBalance ?? this.totalPrice);
+    const cancelAmount = amount ?? refundedSoFar;
 
-    this._state = OrderState.COMMITTED;
+    await this._gateway.cancelRefund(this as NewebPayOrder<NewebPayCreditCardCommitMessage>, cancelAmount);
+
+    if (ai) {
+      ai.remainingBalance = (ai.remainingBalance ?? 0) + cancelAmount;
+
+      // After cancelling, refundStatus only resets to UNSETTLED if no prior refund
+      // remains in flight or completed (i.e. balance restored to totalPrice).
+      // Otherwise the previously-settled portion of the refund history stays SETTLED.
+      if (ai.remainingBalance >= this.totalPrice) {
+        ai.refundStatus = NewebPayCreditCardBalanceStatus.UNSETTLED;
+        this._state = OrderState.COMMITTED;
+      } else {
+        ai.refundStatus = NewebPayCreditCardBalanceStatus.SETTLED;
+        // _state stays REFUNDED — there's still a settled refund on the order
+      }
+    } else {
+      this._state = OrderState.COMMITTED;
+    }
   }
 
   async refund(amount?: number): Promise<void> {
@@ -262,6 +280,10 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage = NewebPayCommitMes
     }
 
     const closeStatus = additionalInfo?.closeStatus;
+
+    if (closeStatus === undefined) {
+      throw new Error('Order closeStatus unknown — call query() first');
+    }
 
     if (
       amount !== undefined &&
@@ -296,7 +318,7 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage = NewebPayCommitMes
       case NewebPayCreditCardBalanceStatus.SETTLED: {
         const refundAmount = amount ?? remainingBalance;
 
-        await this._gateway.refund(this as NewebPayOrder<NewebPayCreditCardCommitMessage>, amount);
+        await this._gateway.refund(this as NewebPayOrder<NewebPayCreditCardCommitMessage>, refundAmount);
 
         const ai = this
           .additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage> as NewebPayAdditionInfoCreditCard;

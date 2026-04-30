@@ -213,7 +213,7 @@ describe('NewebPay Refund Order', () => {
     );
   });
 
-  it('should throw error when refund a fully-refunded order (state=REFUNDED, balance=0)', () => {
+  it('should throw error when refund a fully-refunded order (state=REFUNDED, balance=0)', async () => {
     const order = new NewebPayOrder<NewebPayCreditCardCommitMessage>(
       {
         id: '1291720470214',
@@ -250,7 +250,7 @@ describe('NewebPay Refund Order', () => {
       } as NewebPayAdditionInfoCreditCard,
     );
 
-    expect(order.refund()).rejects.toThrow('Only committed order can be refunded');
+    await expect(order.refund()).rejects.toThrow('Only committed order can be refunded');
   });
 
   it('should throw error when refund non credit card order', () => {
@@ -986,7 +986,9 @@ describe('NewebPay Refund Order', () => {
         bonusAmount: 0,
         closeBalance: 100,
         closeStatus: NewebPayCreditCardBalanceStatus.SETTLED,
-        remainingBalance: 0,
+        // 30 was refunded (pending) → remainingBalance=70.  Cancelling that 30
+        // restores remainingBalance to 100 and returns the order to COMMITTED.
+        remainingBalance: 70,
         refundStatus: NewebPayCreditCardBalanceStatus.WAITING,
       } as NewebPayAdditionInfoCreditCard,
     );
@@ -994,6 +996,7 @@ describe('NewebPay Refund Order', () => {
     await order.cancelRefund(30);
 
     expect(order.state).toBe(OrderState.COMMITTED);
+    expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).remainingBalance).toBe(100);
   });
 
   it('should throw error when partial cancel refund amount exceeds total price', async () => {
@@ -1034,7 +1037,7 @@ describe('NewebPay Refund Order', () => {
     );
 
     await expect(payment.cancelRefund(order, 200)).rejects.toThrow(
-      'Cancel refund amount cannot exceed order total price',
+      'Cancel refund amount cannot exceed refunded amount',
     );
   });
 
@@ -1272,5 +1275,87 @@ describe('NewebPay Refund Order', () => {
     );
 
     await payment.refund(order);
+  });
+
+  it('should round-trip refund(40) → cancelRefund(40) → refund(60) restoring then re-spending balance', async () => {
+    const mockedPost = jest.spyOn(axios, 'post');
+
+    const sentAmts: string[] = [];
+
+    mockedPost.mockImplementation(async (_url: string, data: string) => {
+      const payload = new URLSearchParams(data);
+      const postData = payload.get('PostData_');
+      const decipher = createDecipheriv('aes-256-cbc', AES_KEY, AES_IV);
+
+      const plainInfo = `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`;
+      const requestBody = new URLSearchParams(plainInfo);
+
+      sentAmts.push(`${requestBody.get('Amt')}${requestBody.get('Cancel') ? '/cancel' : ''}`);
+
+      return {
+        data: {
+          Status: 'SUCCESS',
+          Message: '',
+          Result: {
+            CheckCode: createHash('sha256')
+              .update(`HashKey=${AES_KEY}&${postData}&HashIV=${AES_IV}`)
+              .digest('hex')
+              .toUpperCase(),
+          },
+        },
+      };
+    });
+
+    const order = new NewebPayOrder<NewebPayCreditCardCommitMessage>(
+      {
+        id: 'round-trip',
+        channel: NewebPaymentChannel.CREDIT,
+        items: [{ name: 'Test', quantity: 1, unitPrice: 100 }],
+        gateway: payment,
+        platformTradeNumber: '12937917203',
+        createdAt: new Date(),
+        committedAt: new Date(),
+        status: NewebPayOrderStatusFromAPI.COMMITTED,
+      },
+      {
+        channel: Channel.CREDIT_CARD,
+        processDate: new Date(),
+        authCode: '123123',
+        amount: 100,
+        eci: CreditCardECI.MASTER_3D,
+        card4Number: '9234',
+        card6Number: '124902',
+        authBank: 'Taishin',
+        subChannel: 'CREDIT',
+        speedCheckoutMode: NewebPayCreditCardSpeedCheckoutMode.NONE,
+        bonusAmount: 0,
+        closeBalance: 100,
+        closeStatus: NewebPayCreditCardBalanceStatus.SETTLED,
+        remainingBalance: 100,
+        refundStatus: NewebPayCreditCardBalanceStatus.UNSETTLED,
+      } as NewebPayAdditionInfoCreditCard,
+    );
+
+    // First refund of 40 → remainingBalance 60, refundStatus WAITING
+    await order.refund(40);
+    expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).remainingBalance).toBe(60);
+    expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).refundStatus).toBe(
+      NewebPayCreditCardBalanceStatus.WAITING,
+    );
+
+    // Cancel that 40 → remainingBalance back to 100, refundStatus UNSETTLED, state COMMITTED
+    await order.cancelRefund();
+    expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).remainingBalance).toBe(100);
+    expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).refundStatus).toBe(
+      NewebPayCreditCardBalanceStatus.UNSETTLED,
+    );
+
+    expect(order.state).toBe(OrderState.COMMITTED);
+
+    // New refund of 60 should be allowed and use the restored balance
+    await order.refund(60);
+    expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).remainingBalance).toBe(40);
+
+    expect(sentAmts).toEqual(['40', '40/cancel', '60']);
   });
 });
