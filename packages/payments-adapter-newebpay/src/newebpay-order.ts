@@ -232,8 +232,8 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage = NewebPayCommitMes
     ).closeStatus = NewebPayCreditCardBalanceStatus.WAITING;
   }
 
-  async cancelRefund(): Promise<void> {
-    await this._gateway.cancelRefund(this as NewebPayOrder<NewebPayCreditCardCommitMessage>);
+  async cancelRefund(amount?: number): Promise<void> {
+    await this._gateway.cancelRefund(this as NewebPayOrder<NewebPayCreditCardCommitMessage>, amount);
 
     (
       this.additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage> as NewebPayAdditionInfoCreditCard
@@ -242,7 +242,7 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage = NewebPayCommitMes
     this._state = OrderState.COMMITTED;
   }
 
-  async refund(): Promise<void> {
+  async refund(amount?: number): Promise<void> {
     if (this._state !== OrderState.COMMITTED) {
       throw new Error('Only committed order can be refunded');
     }
@@ -254,6 +254,14 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage = NewebPayCommitMes
     const closeStatus = (
       this.additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage> as NewebPayAdditionInfoCreditCard
     ).closeStatus;
+
+    if (
+      amount !== undefined &&
+      closeStatus !== NewebPayCreditCardBalanceStatus.WORKING &&
+      closeStatus !== NewebPayCreditCardBalanceStatus.SETTLED
+    ) {
+      throw new Error('Partial refund only supported on working/settled orders');
+    }
 
     switch (closeStatus) {
       case NewebPayCreditCardBalanceStatus.UNSETTLED:
@@ -278,7 +286,7 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage = NewebPayCommitMes
 
       case NewebPayCreditCardBalanceStatus.WORKING:
       case NewebPayCreditCardBalanceStatus.SETTLED:
-        await this._gateway.refund(this as NewebPayOrder<NewebPayCreditCardCommitMessage>);
+        await this._gateway.refund(this as NewebPayOrder<NewebPayCreditCardCommitMessage>, amount);
 
         (
           this.additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage> as NewebPayAdditionInfoCreditCard

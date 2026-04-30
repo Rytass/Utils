@@ -892,7 +892,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
     }
   }
 
-  async refund(order: NewebPayOrder<NewebPayCreditCardCommitMessage>): Promise<void> {
+  async refund(order: NewebPayOrder<NewebPayCreditCardCommitMessage>, amount?: number): Promise<void> {
     if (
       !~[NewebPayCreditCardBalanceStatus.WORKING, NewebPayCreditCardBalanceStatus.SETTLED].indexOf(
         (order.additionalInfo as NewebPayAdditionInfoCreditCard).closeStatus,
@@ -908,13 +908,25 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
       throw new Error('Order refunding.');
     }
 
+    if (amount !== undefined) {
+      if (!Number.isInteger(amount) || amount <= 0) {
+        throw new Error('Refund amount must be a positive integer');
+      }
+
+      if (amount > order.totalPrice) {
+        throw new Error('Refund amount cannot exceed order total price');
+      }
+    }
+
+    const refundAmount = amount ?? order.totalPrice;
+
     const cipher = createCipheriv('aes-256-cbc', this.aesKey, this.aesIv);
 
     const encrypted = `${cipher.update(
       Object.entries({
         RespondType: 'JSON',
         Version: '1.0',
-        Amt: order.totalPrice,
+        Amt: refundAmount,
         MerchantOrderNo: order.id,
         IndexType: 1,
         TimeStamp: Math.round(Date.now() / 1000).toString(),
@@ -944,7 +956,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
     }
   }
 
-  async cancelRefund(order: NewebPayOrder<NewebPayCreditCardCommitMessage>): Promise<void> {
+  async cancelRefund(order: NewebPayOrder<NewebPayCreditCardCommitMessage>, amount?: number): Promise<void> {
     if (
       (order.additionalInfo as NewebPayAdditionInfoCreditCard).closeStatus !== NewebPayCreditCardBalanceStatus.SETTLED
     ) {
@@ -961,13 +973,25 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
       throw new Error('Only refunded order can be cancel refund');
     }
 
+    if (amount !== undefined) {
+      if (!Number.isInteger(amount) || amount <= 0) {
+        throw new Error('Cancel refund amount must be a positive integer');
+      }
+
+      if (amount > order.totalPrice) {
+        throw new Error('Cancel refund amount cannot exceed order total price');
+      }
+    }
+
+    const cancelAmount = amount ?? order.totalPrice;
+
     const cipher = createCipheriv('aes-256-cbc', this.aesKey, this.aesIv);
 
     const encrypted = `${cipher.update(
       Object.entries({
         RespondType: 'JSON',
         Version: '1.0',
-        Amt: order.totalPrice,
+        Amt: cancelAmount,
         MerchantOrderNo: order.id,
         IndexType: 1,
         TimeStamp: Math.round(Date.now() / 1000).toString(),

@@ -724,4 +724,356 @@ describe('NewebPay Refund Order', () => {
 
     expect(() => payment.cancelRefund(order)).rejects.toThrow('Only refunded order can be cancel refund');
   });
+
+  it('should refund partial amount when amount is provided', async () => {
+    const mockedPost = jest.spyOn(axios, 'post');
+
+    mockedPost.mockImplementation(async (url: string, data: string) => {
+      expect(url).toMatch(/\/API\/CreditCard\/Close$/);
+
+      const payload = new URLSearchParams(data);
+      const postData = payload.get('PostData_');
+      const decipher = createDecipheriv('aes-256-cbc', AES_KEY, AES_IV);
+
+      const plainInfo = `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(/[ --]/g, '');
+
+      const requestBody = new URLSearchParams(plainInfo);
+
+      expect(requestBody.get('CloseType')).toBe('2');
+      expect(requestBody.get('Amt')).toBe('40');
+      expect(requestBody.get('MerchantOrderNo')).toBe('1291720470214');
+
+      return {
+        data: {
+          Status: 'SUCCESS',
+          Message: '',
+          Result: {
+            CheckCode: createHash('sha256')
+              .update(`HashKey=${AES_KEY}&${postData}&HashIV=${AES_IV}`)
+              .digest('hex')
+              .toUpperCase(),
+          },
+        },
+      };
+    });
+
+    const order = new NewebPayOrder<NewebPayCreditCardCommitMessage>(
+      {
+        id: '1291720470214',
+        channel: NewebPaymentChannel.CREDIT,
+        items: [
+          {
+            name: 'Test',
+            quantity: 1,
+            unitPrice: 100,
+          },
+        ],
+        gateway: payment,
+        platformTradeNumber: '12937917203',
+        createdAt: new Date(),
+        committedAt: new Date(),
+        status: NewebPayOrderStatusFromAPI.COMMITTED,
+      },
+      {
+        channel: Channel.CREDIT_CARD,
+        processDate: new Date(),
+        authCode: '123123',
+        amount: 100,
+        eci: CreditCardECI.MASTER_3D,
+        card4Number: '9234',
+        card6Number: '124902',
+        authBank: 'Taishin',
+        subChannel: 'CREDIT',
+        speedCheckoutMode: NewebPayCreditCardSpeedCheckoutMode.NONE,
+        bonusAmount: 0,
+        closeBalance: 100,
+        closeStatus: NewebPayCreditCardBalanceStatus.SETTLED,
+        remainingBalance: 0,
+        refundStatus: NewebPayCreditCardBalanceStatus.UNSETTLED,
+      } as NewebPayAdditionInfoCreditCard,
+    );
+
+    await order.refund(40);
+
+    expect(order.state).toBe(OrderState.REFUNDED);
+  });
+
+  it('should throw error when partial refund amount exceeds total price', async () => {
+    const order = new NewebPayOrder<NewebPayCreditCardCommitMessage>(
+      {
+        id: '1291720470214',
+        channel: NewebPaymentChannel.CREDIT,
+        items: [
+          {
+            name: 'Test',
+            quantity: 1,
+            unitPrice: 100,
+          },
+        ],
+        gateway: payment,
+        platformTradeNumber: '12937917203',
+        createdAt: new Date(),
+        committedAt: new Date(),
+        status: NewebPayOrderStatusFromAPI.COMMITTED,
+      },
+      {
+        channel: Channel.CREDIT_CARD,
+        processDate: new Date(),
+        authCode: '123123',
+        amount: 100,
+        eci: CreditCardECI.MASTER_3D,
+        card4Number: '9234',
+        card6Number: '124902',
+        authBank: 'Taishin',
+        subChannel: 'CREDIT',
+        speedCheckoutMode: NewebPayCreditCardSpeedCheckoutMode.NONE,
+        bonusAmount: 0,
+        closeBalance: 100,
+        closeStatus: NewebPayCreditCardBalanceStatus.SETTLED,
+        remainingBalance: 0,
+        refundStatus: NewebPayCreditCardBalanceStatus.UNSETTLED,
+      } as NewebPayAdditionInfoCreditCard,
+    );
+
+    await expect(payment.refund(order, 200)).rejects.toThrow('Refund amount cannot exceed order total price');
+  });
+
+  it('should throw error when partial refund amount is not a positive integer', async () => {
+    const order = new NewebPayOrder<NewebPayCreditCardCommitMessage>(
+      {
+        id: '1291720470214',
+        channel: NewebPaymentChannel.CREDIT,
+        items: [
+          {
+            name: 'Test',
+            quantity: 1,
+            unitPrice: 100,
+          },
+        ],
+        gateway: payment,
+        platformTradeNumber: '12937917203',
+        createdAt: new Date(),
+        committedAt: new Date(),
+        status: NewebPayOrderStatusFromAPI.COMMITTED,
+      },
+      {
+        channel: Channel.CREDIT_CARD,
+        processDate: new Date(),
+        authCode: '123123',
+        amount: 100,
+        eci: CreditCardECI.MASTER_3D,
+        card4Number: '9234',
+        card6Number: '124902',
+        authBank: 'Taishin',
+        subChannel: 'CREDIT',
+        speedCheckoutMode: NewebPayCreditCardSpeedCheckoutMode.NONE,
+        bonusAmount: 0,
+        closeBalance: 100,
+        closeStatus: NewebPayCreditCardBalanceStatus.SETTLED,
+        remainingBalance: 0,
+        refundStatus: NewebPayCreditCardBalanceStatus.UNSETTLED,
+      } as NewebPayAdditionInfoCreditCard,
+    );
+
+    await expect(payment.refund(order, 0)).rejects.toThrow('Refund amount must be a positive integer');
+    await expect(payment.refund(order, -10)).rejects.toThrow('Refund amount must be a positive integer');
+    await expect(payment.refund(order, 12.5)).rejects.toThrow('Refund amount must be a positive integer');
+  });
+
+  it('should throw error when partial refund requested on unsettled order', async () => {
+    const order = new NewebPayOrder<NewebPayCreditCardCommitMessage>(
+      {
+        id: '1291720470214',
+        channel: NewebPaymentChannel.CREDIT,
+        items: [
+          {
+            name: 'Test',
+            quantity: 1,
+            unitPrice: 100,
+          },
+        ],
+        gateway: payment,
+        platformTradeNumber: '12937917203',
+        createdAt: new Date(),
+        committedAt: new Date(),
+        status: NewebPayOrderStatusFromAPI.COMMITTED,
+      },
+      {
+        channel: Channel.CREDIT_CARD,
+        processDate: new Date(),
+        authCode: '123123',
+        amount: 100,
+        eci: CreditCardECI.MASTER_3D,
+        card4Number: '9234',
+        card6Number: '124902',
+        authBank: 'Taishin',
+        subChannel: 'CREDIT',
+        speedCheckoutMode: NewebPayCreditCardSpeedCheckoutMode.NONE,
+        bonusAmount: 0,
+        closeBalance: 100,
+        closeStatus: NewebPayCreditCardBalanceStatus.UNSETTLED,
+        remainingBalance: 0,
+        refundStatus: NewebPayCreditCardBalanceStatus.UNSETTLED,
+      } as NewebPayAdditionInfoCreditCard,
+    );
+
+    await expect(order.refund(40)).rejects.toThrow('Partial refund only supported on working/settled orders');
+  });
+
+  it('should cancel refund partial amount when amount is provided', async () => {
+    const mockedPost = jest.spyOn(axios, 'post');
+
+    mockedPost.mockImplementation(async (url: string, data: string) => {
+      expect(url).toMatch(/\/API\/CreditCard\/Close$/);
+
+      const payload = new URLSearchParams(data);
+      const postData = payload.get('PostData_');
+      const decipher = createDecipheriv('aes-256-cbc', AES_KEY, AES_IV);
+
+      const plainInfo = `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(/[ --]/g, '');
+
+      const requestBody = new URLSearchParams(plainInfo);
+
+      expect(requestBody.get('CloseType')).toBe('2');
+      expect(requestBody.get('Cancel')).toBe('1');
+      expect(requestBody.get('Amt')).toBe('30');
+      expect(requestBody.get('MerchantOrderNo')).toBe('1291720470214');
+
+      return {
+        data: {
+          Status: 'SUCCESS',
+          Message: '',
+          Result: {
+            CheckCode: createHash('sha256')
+              .update(`HashKey=${AES_KEY}&${postData}&HashIV=${AES_IV}`)
+              .digest('hex')
+              .toUpperCase(),
+          },
+        },
+      };
+    });
+
+    const order = new NewebPayOrder<NewebPayCreditCardCommitMessage>(
+      {
+        id: '1291720470214',
+        channel: NewebPaymentChannel.CREDIT,
+        items: [
+          {
+            name: 'Test',
+            quantity: 1,
+            unitPrice: 100,
+          },
+        ],
+        gateway: payment,
+        platformTradeNumber: '12937917203',
+        createdAt: new Date(),
+        committedAt: new Date(),
+        status: NewebPayOrderStatusFromAPI.REFUNDED,
+      },
+      {
+        channel: Channel.CREDIT_CARD,
+        processDate: new Date(),
+        authCode: '123123',
+        amount: 100,
+        eci: CreditCardECI.MASTER_3D,
+        card4Number: '9234',
+        card6Number: '124902',
+        authBank: 'Taishin',
+        subChannel: 'CREDIT',
+        speedCheckoutMode: NewebPayCreditCardSpeedCheckoutMode.NONE,
+        bonusAmount: 0,
+        closeBalance: 100,
+        closeStatus: NewebPayCreditCardBalanceStatus.SETTLED,
+        remainingBalance: 0,
+        refundStatus: NewebPayCreditCardBalanceStatus.WAITING,
+      } as NewebPayAdditionInfoCreditCard,
+    );
+
+    await order.cancelRefund(30);
+
+    expect(order.state).toBe(OrderState.COMMITTED);
+  });
+
+  it('should throw error when partial cancel refund amount exceeds total price', async () => {
+    const order = new NewebPayOrder<NewebPayCreditCardCommitMessage>(
+      {
+        id: '1291720470214',
+        channel: NewebPaymentChannel.CREDIT,
+        items: [
+          {
+            name: 'Test',
+            quantity: 1,
+            unitPrice: 100,
+          },
+        ],
+        gateway: payment,
+        platformTradeNumber: '12937917203',
+        createdAt: new Date(),
+        committedAt: new Date(),
+        status: NewebPayOrderStatusFromAPI.REFUNDED,
+      },
+      {
+        channel: Channel.CREDIT_CARD,
+        processDate: new Date(),
+        authCode: '123123',
+        amount: 100,
+        eci: CreditCardECI.MASTER_3D,
+        card4Number: '9234',
+        card6Number: '124902',
+        authBank: 'Taishin',
+        subChannel: 'CREDIT',
+        speedCheckoutMode: NewebPayCreditCardSpeedCheckoutMode.NONE,
+        bonusAmount: 0,
+        closeBalance: 100,
+        closeStatus: NewebPayCreditCardBalanceStatus.SETTLED,
+        remainingBalance: 0,
+        refundStatus: NewebPayCreditCardBalanceStatus.WAITING,
+      } as NewebPayAdditionInfoCreditCard,
+    );
+
+    await expect(payment.cancelRefund(order, 200)).rejects.toThrow(
+      'Cancel refund amount cannot exceed order total price',
+    );
+  });
+
+  it('should throw error when partial cancel refund amount is not a positive integer', async () => {
+    const order = new NewebPayOrder<NewebPayCreditCardCommitMessage>(
+      {
+        id: '1291720470214',
+        channel: NewebPaymentChannel.CREDIT,
+        items: [
+          {
+            name: 'Test',
+            quantity: 1,
+            unitPrice: 100,
+          },
+        ],
+        gateway: payment,
+        platformTradeNumber: '12937917203',
+        createdAt: new Date(),
+        committedAt: new Date(),
+        status: NewebPayOrderStatusFromAPI.REFUNDED,
+      },
+      {
+        channel: Channel.CREDIT_CARD,
+        processDate: new Date(),
+        authCode: '123123',
+        amount: 100,
+        eci: CreditCardECI.MASTER_3D,
+        card4Number: '9234',
+        card6Number: '124902',
+        authBank: 'Taishin',
+        subChannel: 'CREDIT',
+        speedCheckoutMode: NewebPayCreditCardSpeedCheckoutMode.NONE,
+        bonusAmount: 0,
+        closeBalance: 100,
+        closeStatus: NewebPayCreditCardBalanceStatus.SETTLED,
+        remainingBalance: 0,
+        refundStatus: NewebPayCreditCardBalanceStatus.WAITING,
+      } as NewebPayAdditionInfoCreditCard,
+    );
+
+    await expect(payment.cancelRefund(order, 0)).rejects.toThrow('Cancel refund amount must be a positive integer');
+    await expect(payment.cancelRefund(order, 25.5)).rejects.toThrow('Cancel refund amount must be a positive integer');
+  });
 });
