@@ -927,6 +927,18 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
       if (amount > remainingBalance) {
         throw new Error('Refund amount cannot exceed remaining refundable balance');
       }
+
+      // NewebPay manual NDNF-1.1.9 §4.5: installments / bonus-discount transactions
+      // only allow full-amount refund (gateway returns TRA10675 otherwise).
+      if (amount < remainingBalance) {
+        if (additionalInfo.installments) {
+          throw new Error('Partial refund not supported for installment payments');
+        }
+
+        if (additionalInfo.bonusAmount && additionalInfo.bonusAmount > 0) {
+          throw new Error('Partial refund not supported for bonus-discount payments');
+        }
+      }
     }
 
     const refundAmount = amount ?? remainingBalance;
@@ -995,6 +1007,18 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
 
       if (amount > refundedSoFar) {
         throw new Error('Cancel refund amount cannot exceed refunded amount');
+      }
+
+      // Mirror the partial-refund restriction in §4.5: installments / bonus-discount
+      // transactions must cancel the refund in full (gateway returns TRA10675 otherwise).
+      if (amount < refundedSoFar) {
+        if (additionalInfo.installments) {
+          throw new Error('Partial cancel refund not supported for installment payments');
+        }
+
+        if (additionalInfo.bonusAmount && additionalInfo.bonusAmount > 0) {
+          throw new Error('Partial cancel refund not supported for bonus-discount payments');
+        }
       }
     }
 

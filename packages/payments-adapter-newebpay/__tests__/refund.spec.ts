@@ -735,7 +735,10 @@ describe('NewebPay Refund Order', () => {
       const postData = payload.get('PostData_');
       const decipher = createDecipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
-      const plainInfo = `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(/[ --]/g, '');
+      const plainInfo = `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
+        /[\u0000-\u001F\u007F-\u009F]/g,
+        '',
+      );
 
       const requestBody = new URLSearchParams(plainInfo);
 
@@ -922,6 +925,141 @@ describe('NewebPay Refund Order', () => {
     await expect(order.refund(40)).rejects.toThrow('Partial refund only supported on working/settled orders');
   });
 
+  it('should throw when partial refund requested on installment order', async () => {
+    const order = new NewebPayOrder<NewebPayCreditCardCommitMessage>(
+      {
+        id: '1291720470214',
+        channel: NewebPaymentChannel.CREDIT,
+        items: [{ name: 'Test', quantity: 1, unitPrice: 1000 }],
+        gateway: payment,
+        platformTradeNumber: '12937917203',
+        createdAt: new Date(),
+        committedAt: new Date(),
+        status: NewebPayOrderStatusFromAPI.COMMITTED,
+      },
+      {
+        channel: Channel.CREDIT_CARD,
+        processDate: new Date(),
+        authCode: '123123',
+        amount: 1000,
+        eci: CreditCardECI.MASTER_3D,
+        card4Number: '9234',
+        card6Number: '124902',
+        authBank: 'Taishin',
+        subChannel: 'CREDIT',
+        speedCheckoutMode: NewebPayCreditCardSpeedCheckoutMode.NONE,
+        installments: { count: 3, firstAmount: 334, eachAmount: 333 },
+        bonusAmount: 0,
+        closeBalance: 1000,
+        closeStatus: NewebPayCreditCardBalanceStatus.SETTLED,
+        remainingBalance: 1000,
+        refundStatus: NewebPayCreditCardBalanceStatus.UNSETTLED,
+      } as NewebPayAdditionInfoCreditCard,
+    );
+
+    await expect(order.refund(400)).rejects.toThrow('Partial refund not supported for installment payments');
+  });
+
+  it('should throw when partial refund requested on bonus-discount order', async () => {
+    const order = new NewebPayOrder<NewebPayCreditCardCommitMessage>(
+      {
+        id: '1291720470214',
+        channel: NewebPaymentChannel.CREDIT,
+        items: [{ name: 'Test', quantity: 1, unitPrice: 1000 }],
+        gateway: payment,
+        platformTradeNumber: '12937917203',
+        createdAt: new Date(),
+        committedAt: new Date(),
+        status: NewebPayOrderStatusFromAPI.COMMITTED,
+      },
+      {
+        channel: Channel.CREDIT_CARD,
+        processDate: new Date(),
+        authCode: '123123',
+        amount: 940,
+        eci: CreditCardECI.MASTER_3D,
+        card4Number: '9234',
+        card6Number: '124902',
+        authBank: 'Taishin',
+        subChannel: 'CREDIT',
+        speedCheckoutMode: NewebPayCreditCardSpeedCheckoutMode.NONE,
+        bonusAmount: 60,
+        closeBalance: 940,
+        closeStatus: NewebPayCreditCardBalanceStatus.SETTLED,
+        remainingBalance: 940,
+        refundStatus: NewebPayCreditCardBalanceStatus.UNSETTLED,
+      } as NewebPayAdditionInfoCreditCard,
+    );
+
+    await expect(order.refund(400)).rejects.toThrow('Partial refund not supported for bonus-discount payments');
+  });
+
+  it('should allow full-amount refund on installment order via refund() (no arg)', async () => {
+    const mockedPost = jest.spyOn(axios, 'post');
+
+    let sentAmt: string | null = null;
+
+    mockedPost.mockImplementation(async (_url: string, data: string) => {
+      const payload = new URLSearchParams(data);
+      const postData = payload.get('PostData_');
+      const decipher = createDecipheriv('aes-256-cbc', AES_KEY, AES_IV);
+
+      const plainInfo = `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`;
+      const requestBody = new URLSearchParams(plainInfo);
+
+      sentAmt = requestBody.get('Amt');
+
+      return {
+        data: {
+          Status: 'SUCCESS',
+          Message: '',
+          Result: {
+            CheckCode: createHash('sha256')
+              .update(`HashKey=${AES_KEY}&${postData}&HashIV=${AES_IV}`)
+              .digest('hex')
+              .toUpperCase(),
+          },
+        },
+      };
+    });
+
+    const order = new NewebPayOrder<NewebPayCreditCardCommitMessage>(
+      {
+        id: '1291720470214',
+        channel: NewebPaymentChannel.CREDIT,
+        items: [{ name: 'Test', quantity: 1, unitPrice: 1000 }],
+        gateway: payment,
+        platformTradeNumber: '12937917203',
+        createdAt: new Date(),
+        committedAt: new Date(),
+        status: NewebPayOrderStatusFromAPI.COMMITTED,
+      },
+      {
+        channel: Channel.CREDIT_CARD,
+        processDate: new Date(),
+        authCode: '123123',
+        amount: 1000,
+        eci: CreditCardECI.MASTER_3D,
+        card4Number: '9234',
+        card6Number: '124902',
+        authBank: 'Taishin',
+        subChannel: 'CREDIT',
+        speedCheckoutMode: NewebPayCreditCardSpeedCheckoutMode.NONE,
+        installments: { count: 3, firstAmount: 334, eachAmount: 333 },
+        bonusAmount: 0,
+        closeBalance: 1000,
+        closeStatus: NewebPayCreditCardBalanceStatus.SETTLED,
+        remainingBalance: 1000,
+        refundStatus: NewebPayCreditCardBalanceStatus.UNSETTLED,
+      } as NewebPayAdditionInfoCreditCard,
+    );
+
+    await order.refund();
+
+    expect(sentAmt).toBe('1000');
+    expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).remainingBalance).toBe(0);
+  });
+
   it('should cancel refund partial amount when amount is provided', async () => {
     const mockedPost = jest.spyOn(axios, 'post');
 
@@ -932,7 +1070,10 @@ describe('NewebPay Refund Order', () => {
       const postData = payload.get('PostData_');
       const decipher = createDecipheriv('aes-256-cbc', AES_KEY, AES_IV);
 
-      const plainInfo = `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(/[ --]/g, '');
+      const plainInfo = `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
+        /[\u0000-\u001F\u007F-\u009F]/g,
+        '',
+      );
 
       const requestBody = new URLSearchParams(plainInfo);
 
@@ -1080,6 +1221,79 @@ describe('NewebPay Refund Order', () => {
 
     await expect(payment.cancelRefund(order, 0)).rejects.toThrow('Cancel refund amount must be a positive integer');
     await expect(payment.cancelRefund(order, 25.5)).rejects.toThrow('Cancel refund amount must be a positive integer');
+  });
+
+  it('should throw when partial cancel refund requested on installment order', async () => {
+    const order = new NewebPayOrder<NewebPayCreditCardCommitMessage>(
+      {
+        id: '1291720470214',
+        channel: NewebPaymentChannel.CREDIT,
+        items: [{ name: 'Test', quantity: 1, unitPrice: 1000 }],
+        gateway: payment,
+        platformTradeNumber: '12937917203',
+        createdAt: new Date(),
+        committedAt: new Date(),
+        status: NewebPayOrderStatusFromAPI.REFUNDED,
+      },
+      {
+        channel: Channel.CREDIT_CARD,
+        processDate: new Date(),
+        authCode: '123123',
+        amount: 1000,
+        eci: CreditCardECI.MASTER_3D,
+        card4Number: '9234',
+        card6Number: '124902',
+        authBank: 'Taishin',
+        subChannel: 'CREDIT',
+        speedCheckoutMode: NewebPayCreditCardSpeedCheckoutMode.NONE,
+        installments: { count: 3, firstAmount: 334, eachAmount: 333 },
+        bonusAmount: 0,
+        closeBalance: 1000,
+        closeStatus: NewebPayCreditCardBalanceStatus.SETTLED,
+        remainingBalance: 0,
+        refundStatus: NewebPayCreditCardBalanceStatus.WAITING,
+      } as NewebPayAdditionInfoCreditCard,
+    );
+
+    await expect(payment.cancelRefund(order, 400)).rejects.toThrow(
+      'Partial cancel refund not supported for installment payments',
+    );
+  });
+
+  it('should throw when partial cancel refund requested on bonus-discount order', async () => {
+    const order = new NewebPayOrder<NewebPayCreditCardCommitMessage>(
+      {
+        id: '1291720470214',
+        channel: NewebPaymentChannel.CREDIT,
+        items: [{ name: 'Test', quantity: 1, unitPrice: 940 }],
+        gateway: payment,
+        platformTradeNumber: '12937917203',
+        createdAt: new Date(),
+        committedAt: new Date(),
+        status: NewebPayOrderStatusFromAPI.REFUNDED,
+      },
+      {
+        channel: Channel.CREDIT_CARD,
+        processDate: new Date(),
+        authCode: '123123',
+        amount: 940,
+        eci: CreditCardECI.MASTER_3D,
+        card4Number: '9234',
+        card6Number: '124902',
+        authBank: 'Taishin',
+        subChannel: 'CREDIT',
+        speedCheckoutMode: NewebPayCreditCardSpeedCheckoutMode.NONE,
+        bonusAmount: 60,
+        closeBalance: 940,
+        closeStatus: NewebPayCreditCardBalanceStatus.SETTLED,
+        remainingBalance: 0,
+        refundStatus: NewebPayCreditCardBalanceStatus.WAITING,
+      } as NewebPayAdditionInfoCreditCard,
+    );
+
+    await expect(payment.cancelRefund(order, 400)).rejects.toThrow(
+      'Partial cancel refund not supported for bonus-discount payments',
+    );
   });
 
   it('should allow another partial refund after a previous refund completed (BackBalance > 0)', async () => {
@@ -1277,7 +1491,7 @@ describe('NewebPay Refund Order', () => {
     await payment.refund(order);
   });
 
-  it('should round-trip refund(40) → cancelRefund(40) → refund(60) restoring then re-spending balance', async () => {
+  it('should round-trip refund(40) → cancelRefund() → refund() defaulting to restored balance', async () => {
     const mockedPost = jest.spyOn(axios, 'post');
 
     const sentAmts: string[] = [];
@@ -1352,10 +1566,10 @@ describe('NewebPay Refund Order', () => {
 
     expect(order.state).toBe(OrderState.COMMITTED);
 
-    // New refund of 60 should be allowed and use the restored balance
-    await order.refund(60);
-    expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).remainingBalance).toBe(40);
+    // refund() with no amount should default to the restored remainingBalance (100)
+    await order.refund();
+    expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).remainingBalance).toBe(0);
 
-    expect(sentAmts).toEqual(['40', '40/cancel', '60']);
+    expect(sentAmts).toEqual(['40', '40/cancel', '100']);
   });
 });
