@@ -68,7 +68,7 @@ Nx target defaults are defined in `nx.json`; every package has a `project.json` 
 
 ## Domain-specific Package Families (examples)
 - **Payments**: `payments`, adapters for ECPay, NewebPay, HwaNan, CTBC Micro Fast Pay, Happy Card, iCash Pay, plus `payments-nestjs-module`.
-- **Invoices**: `invoice`, adapters for ECPay, EZPay, Amego, Bank Pro.
+- **Invoices**: `invoice`, adapters for ECPay, EZPay, Amego, Bank Pro, Universal.
 - **Logistics**: `logistics`, adapters for TCat and CTC.
 - **File Converter**: core `file-converter` plus image adapters (resize, transcode, watermark).
 - **Storage**: `storages` core + adapters (S3, GCS, Azure Blob, R2, Local).

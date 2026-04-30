@@ -12,6 +12,7 @@
       "@rytass/invoice": ["invoice/src"],
       "@rytass/invoice-adapter-bank-pro": ["invoice-adapter-bank-pro/src"],
       "@rytass/invoice-adapter-ecpay": ["invoice-adapter-ecpay/src"],
+      "@rytass/invoice-adapter-universal": ["invoice-adapter-universal/src"],
       "@rytass/logistics": ["logistics/src"],
       "@rytass/logistics-adapter-tcat": ["logistics-adapter-tcat/src"],
       "@rytass/member-base-nestjs-module": ["member-base-nestjs-module/src"],

@@ -1,0 +1,20 @@
+# @rytass/invoice-adapter-universal
+
+InvoiceGateway implementation for Universal / 汎宇 electronic invoice Web API.
+
+Exports:
+
+- `UniversalInvoiceGateway`
+- `UniversalInvoice`
+- `UniversalAllowance`
+- `UniversalBaseUrls`
+- Universal request and response typings
+- All exports from `@rytass/invoice`
+
+Primary methods:
+
+- `issue(options)`
+- `void(invoice, options)`
+- `allowance(invoice, items, options?)`
+- `invalidAllowance(allowance, options?)`
+- `query(options)`

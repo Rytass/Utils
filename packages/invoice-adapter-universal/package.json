@@ -1,0 +1,37 @@
+{
+  "name": "@rytass/invoice-adapter-universal",
+  "version": "0.1.0",
+  "description": "Rytass Invoice Gateway - Universal",
+  "keywords": [
+    "rytass",
+    "invoice",
+    "universal",
+    "汎宇"
+  ],
+  "author": "Chia Yu Pai <fantasyatelier@gmail.com>",
+  "homepage": "https://github.com/Rytass/Utils#readme",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rytass/Utils.git"
+  },
+  "scripts": {
+    "clean": "nx clean",
+    "build": "nx build",
+    "lint": "nx lint",
+    "test": "nx test",
+    "test:watch": "nx test:watch"
+  },
+  "bugs": {
+    "url": "https://github.com/Rytass/Utils/issues"
+  },
+  "dependencies": {
+    "@rytass/invoice": "^0.4.10",
+    "axios": "^1.13.5",
+    "luxon": "^3.7.2",
+    "validator": "^13.15.26"
+  },
+  "devDependencies": {
+    "@types/validator": "^13.15.10"
+  }
+}
