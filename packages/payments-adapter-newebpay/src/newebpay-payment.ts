@@ -893,19 +893,30 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
   }
 
   async refund(order: NewebPayOrder<NewebPayCreditCardCommitMessage>, amount?: number): Promise<void> {
+    const additionalInfo = order.additionalInfo as NewebPayAdditionInfoCreditCard;
+
     if (
       !~[NewebPayCreditCardBalanceStatus.WORKING, NewebPayCreditCardBalanceStatus.SETTLED].indexOf(
-        (order.additionalInfo as NewebPayAdditionInfoCreditCard).closeStatus,
+        additionalInfo.closeStatus,
       )
     ) {
       throw new Error('Only working/settled order can be refunded');
     }
 
+    // A refund is only blocked when one is in flight (WAITING/WORKING). After a previous
+    // partial refund completes (SETTLED), further refunds are allowed as long as the
+    // remaining refundable balance (BackBalance) > 0.
     if (
-      (order.additionalInfo as NewebPayAdditionInfoCreditCard).refundStatus !==
-      NewebPayCreditCardBalanceStatus.UNSETTLED
+      additionalInfo.refundStatus === NewebPayCreditCardBalanceStatus.WAITING ||
+      additionalInfo.refundStatus === NewebPayCreditCardBalanceStatus.WORKING
     ) {
       throw new Error('Order refunding.');
+    }
+
+    const remainingBalance = additionalInfo.remainingBalance ?? order.totalPrice;
+
+    if (remainingBalance <= 0) {
+      throw new Error('Order has no remaining refundable balance');
     }
 
     if (amount !== undefined) {
@@ -913,12 +924,12 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
         throw new Error('Refund amount must be a positive integer');
       }
 
-      if (amount > order.totalPrice) {
-        throw new Error('Refund amount cannot exceed order total price');
+      if (amount > remainingBalance) {
+        throw new Error('Refund amount cannot exceed remaining refundable balance');
       }
     }
 
-    const refundAmount = amount ?? order.totalPrice;
+    const refundAmount = amount ?? remainingBalance;
 
     const cipher = createCipheriv('aes-256-cbc', this.aesKey, this.aesIv);
 
