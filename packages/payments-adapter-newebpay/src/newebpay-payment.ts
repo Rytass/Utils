@@ -999,13 +999,14 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
     // otherwise the SDK can only compute a conservative cumulative bound.
     const refundedSoFar = order.totalPrice - (additionalInfo.remainingBalance ?? order.totalPrice);
     const pendingRefundAmount = order.pendingRefundAmount;
+    const cancelRefundLimit = pendingRefundAmount ?? refundedSoFar;
 
     if (amount !== undefined) {
       if (!Number.isInteger(amount) || amount <= 0) {
         throw new Error('Cancel refund amount must be a positive integer');
       }
 
-      if (amount > refundedSoFar) {
+      if (amount > cancelRefundLimit) {
         throw new Error('Cancel refund amount cannot exceed refunded amount');
       }
 
