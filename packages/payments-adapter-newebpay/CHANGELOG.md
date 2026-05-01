@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.15](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-newebpay@0.2.14...@rytass/payments-adapter-newebpay@0.2.15) (2026-05-01)
+
+### Bug Fixes
+
+- **payments-adapter-newebpay:** address PR [#178](https://github.com/Rytass/Utils/issues/178) review + guard restricted sub-channels ([3b1e221](https://github.com/Rytass/Utils/commit/3b1e2215c988767bd4dd69fa19541e5124f8239b))
+- **payments-adapter-newebpay:** allow re-refund when BackBalance > 0 ([aa2fa42](https://github.com/Rytass/Utils/commit/aa2fa424ac758aea00a0bfa429d6fcc12d2b2528))
+- **payments-adapter-newebpay:** cap cancel refund by pending amount ([45798d2](https://github.com/Rytass/Utils/commit/45798d20850ce6142feae58a9c6c221552e92430))
+- **payments-adapter-newebpay:** preserve bonus refund guard after query ([330a3d0](https://github.com/Rytass/Utils/commit/330a3d0f5cb819f81ae5f0859abaa3728b6aa03f))
+- **payments-adapter-newebpay:** preserve pending refund after partial cancel ([b0bb437](https://github.com/Rytass/Utils/commit/b0bb4377720634a26125952fa5bd441a16e5f96a))
+- **payments-adapter-newebpay:** tighten cancelRefund + close partial-refund gaps ([32ccee6](https://github.com/Rytass/Utils/commit/32ccee675e5f96daed2ef4c80f0dd4dba94549e8))
+- **payments-adapter-newebpay:** track pending refund cancellation amount ([fdbd74e](https://github.com/Rytass/Utils/commit/fdbd74ef2b49fb73f37567348a0a49fc7382d953))
+
+### Features
+
+- **payments-adapter-newebpay:** support partial refund amount ([bdf76a4](https://github.com/Rytass/Utils/commit/bdf76a41edd0e1f4a672451fc475917f626b8144))
+
 ## [0.2.14](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-newebpay@0.2.13...@rytass/payments-adapter-newebpay@0.2.14) (2026-02-24)
 
 ### Bug Fixes
