@@ -39,6 +39,8 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage = NewebPayCommitMes
 
   private _additionalInfo?: AdditionalInfo<OCM>;
 
+  private _pendingRefundAmount: number | undefined;
+
   constructor(
     options: NewebPayPrepareOrderInit<OCM> | NewebPayOrderFromServerInit<OCM>,
     additionalInfo?: AdditionalInfo<OCM>,
@@ -173,6 +175,10 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage = NewebPayCommitMes
     return this._additionalInfo;
   }
 
+  get pendingRefundAmount(): number | undefined {
+    return this._pendingRefundAmount;
+  }
+
   get platformTradeNumber(): string | null {
     return this._platformTradeNumber;
   }
@@ -232,18 +238,56 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage = NewebPayCommitMes
     ).closeStatus = NewebPayCreditCardBalanceStatus.WAITING;
   }
 
-  async cancelRefund(): Promise<void> {
-    await this._gateway.cancelRefund(this as NewebPayOrder<NewebPayCreditCardCommitMessage>);
+  async cancelRefund(amount?: number): Promise<void> {
+    const ai = this.additionalInfo as NewebPayAdditionInfoCreditCard | undefined;
 
-    (
-      this.additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage> as NewebPayAdditionInfoCreditCard
-    ).refundStatus = NewebPayCreditCardBalanceStatus.UNSETTLED;
+    const refundedSoFar = this.totalPrice - (ai?.remainingBalance ?? this.totalPrice);
+    const cancelAmount = amount ?? this._pendingRefundAmount ?? refundedSoFar;
 
-    this._state = OrderState.COMMITTED;
+    await this._gateway.cancelRefund(this as NewebPayOrder<NewebPayCreditCardCommitMessage>, cancelAmount);
+
+    if (ai) {
+      const pendingRefundAmount = this._pendingRefundAmount;
+      const remainingPendingRefundAmount =
+        pendingRefundAmount === undefined ? undefined : pendingRefundAmount - cancelAmount;
+
+      ai.remainingBalance = (ai.remainingBalance ?? 0) + cancelAmount;
+
+      if (remainingPendingRefundAmount !== undefined && remainingPendingRefundAmount > 0) {
+        this._pendingRefundAmount = remainingPendingRefundAmount;
+        ai.refundStatus = NewebPayCreditCardBalanceStatus.WAITING;
+        this._state = OrderState.REFUNDED;
+
+        return;
+      }
+
+      this._pendingRefundAmount = undefined;
+
+      // After cancelling, refundStatus only resets to UNSETTLED if no prior refund
+      // remains in flight or completed (i.e. balance restored to totalPrice).
+      // Otherwise the previously-settled portion of the refund history stays SETTLED.
+      if (ai.remainingBalance >= this.totalPrice) {
+        ai.refundStatus = NewebPayCreditCardBalanceStatus.UNSETTLED;
+        this._state = OrderState.COMMITTED;
+      } else {
+        ai.refundStatus = NewebPayCreditCardBalanceStatus.SETTLED;
+        // _state stays REFUNDED — there's still a settled refund on the order
+      }
+    } else {
+      this._state = OrderState.COMMITTED;
+    }
   }
 
-  async refund(): Promise<void> {
-    if (this._state !== OrderState.COMMITTED) {
+  async refund(amount?: number): Promise<void> {
+    const additionalInfo = this.additionalInfo as NewebPayAdditionInfoCreditCard | undefined;
+
+    const remainingBalance = additionalInfo?.remainingBalance ?? this.totalPrice;
+
+    // Allow OrderState.REFUNDED only when there's still refundable balance —
+    // NewebPay's QueryTradeInfo maps any prior refund (BackStatus !== UNSETTLED) to
+    // OrderStatusFromAPI.REFUNDED, so a partially-refunded order has state=REFUNDED
+    // even though further partial refunds are still permitted.
+    if (this._state !== OrderState.COMMITTED && !(this._state === OrderState.REFUNDED && remainingBalance > 0)) {
       throw new Error('Only committed order can be refunded');
     }
 
@@ -251,9 +295,19 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage = NewebPayCommitMes
       throw new Error('Only credit card order can be refunded');
     }
 
-    const closeStatus = (
-      this.additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage> as NewebPayAdditionInfoCreditCard
-    ).closeStatus;
+    const closeStatus = additionalInfo?.closeStatus;
+
+    if (closeStatus === undefined) {
+      throw new Error('Order closeStatus unknown — call query() first');
+    }
+
+    if (
+      amount !== undefined &&
+      closeStatus !== NewebPayCreditCardBalanceStatus.WORKING &&
+      closeStatus !== NewebPayCreditCardBalanceStatus.SETTLED
+    ) {
+      throw new Error('Partial refund only supported on working/settled orders');
+    }
 
     switch (closeStatus) {
       case NewebPayCreditCardBalanceStatus.UNSETTLED:
@@ -277,19 +331,22 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage = NewebPayCommitMes
         break;
 
       case NewebPayCreditCardBalanceStatus.WORKING:
-      case NewebPayCreditCardBalanceStatus.SETTLED:
-        await this._gateway.refund(this as NewebPayOrder<NewebPayCreditCardCommitMessage>);
+      case NewebPayCreditCardBalanceStatus.SETTLED: {
+        const refundAmount = amount ?? remainingBalance;
 
-        (
-          this.additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage> as NewebPayAdditionInfoCreditCard
-        ).closeStatus = NewebPayCreditCardBalanceStatus.SETTLED;
+        await this._gateway.refund(this as NewebPayOrder<NewebPayCreditCardCommitMessage>, refundAmount);
 
-        (
-          this.additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage> as NewebPayAdditionInfoCreditCard
-        ).refundStatus = NewebPayCreditCardBalanceStatus.WAITING;
+        const ai = this
+          .additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage> as NewebPayAdditionInfoCreditCard;
+
+        ai.closeStatus = NewebPayCreditCardBalanceStatus.SETTLED;
+        ai.refundStatus = NewebPayCreditCardBalanceStatus.WAITING;
+        ai.remainingBalance = remainingBalance - refundAmount;
+        this._pendingRefundAmount = refundAmount;
 
         this._state = OrderState.REFUNDED;
         break;
+      }
     }
   }
 }

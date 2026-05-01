@@ -711,6 +711,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
                 eachAmount: data.Result.InstEach,
               }
             : undefined,
+          bonusAmount: (savedOrder?.additionalInfo as NewebPayAdditionInfoCreditCard | undefined)?.bonusAmount,
           closeStatus: data.Result.CloseStatus,
           closeBalance: Number(data.Result.CloseAmt),
           refundStatus: data.Result.BackStatus,
@@ -892,21 +893,56 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
     }
   }
 
-  async refund(order: NewebPayOrder<NewebPayCreditCardCommitMessage>): Promise<void> {
+  async refund(order: NewebPayOrder<NewebPayCreditCardCommitMessage>, amount?: number): Promise<void> {
+    const additionalInfo = order.additionalInfo as NewebPayAdditionInfoCreditCard;
+
     if (
       !~[NewebPayCreditCardBalanceStatus.WORKING, NewebPayCreditCardBalanceStatus.SETTLED].indexOf(
-        (order.additionalInfo as NewebPayAdditionInfoCreditCard).closeStatus,
+        additionalInfo.closeStatus,
       )
     ) {
       throw new Error('Only working/settled order can be refunded');
     }
 
+    // A refund is only blocked when one is in flight (WAITING/WORKING). After a previous
+    // partial refund completes (SETTLED), further refunds are allowed as long as the
+    // remaining refundable balance (BackBalance) > 0.
     if (
-      (order.additionalInfo as NewebPayAdditionInfoCreditCard).refundStatus !==
-      NewebPayCreditCardBalanceStatus.UNSETTLED
+      additionalInfo.refundStatus === NewebPayCreditCardBalanceStatus.WAITING ||
+      additionalInfo.refundStatus === NewebPayCreditCardBalanceStatus.WORKING
     ) {
       throw new Error('Order refunding.');
     }
+
+    const remainingBalance = additionalInfo.remainingBalance ?? order.totalPrice;
+
+    if (remainingBalance <= 0) {
+      throw new Error('Order has no remaining refundable balance');
+    }
+
+    if (amount !== undefined) {
+      if (!Number.isInteger(amount) || amount <= 0) {
+        throw new Error('Refund amount must be a positive integer');
+      }
+
+      if (amount > remainingBalance) {
+        throw new Error('Refund amount cannot exceed remaining refundable balance');
+      }
+
+      // NewebPay manual NDNF-1.1.9 §4.5: installments / bonus-discount transactions
+      // only allow full-amount refund (gateway returns TRA10675 otherwise).
+      if (amount < remainingBalance) {
+        if (additionalInfo.installments) {
+          throw new Error('Partial refund not supported for installment payments');
+        }
+
+        if ((additionalInfo.bonusAmount ?? 0) > 0) {
+          throw new Error('Partial refund not supported for bonus-discount payments');
+        }
+      }
+    }
+
+    const refundAmount = amount ?? remainingBalance;
 
     const cipher = createCipheriv('aes-256-cbc', this.aesKey, this.aesIv);
 
@@ -914,7 +950,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
       Object.entries({
         RespondType: 'JSON',
         Version: '1.0',
-        Amt: order.totalPrice,
+        Amt: refundAmount,
         MerchantOrderNo: order.id,
         IndexType: 1,
         TimeStamp: Math.round(Date.now() / 1000).toString(),
@@ -944,16 +980,14 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
     }
   }
 
-  async cancelRefund(order: NewebPayOrder<NewebPayCreditCardCommitMessage>): Promise<void> {
-    if (
-      (order.additionalInfo as NewebPayAdditionInfoCreditCard).closeStatus !== NewebPayCreditCardBalanceStatus.SETTLED
-    ) {
+  async cancelRefund(order: NewebPayOrder<NewebPayCreditCardCommitMessage>, amount?: number): Promise<void> {
+    const additionalInfo = order.additionalInfo as NewebPayAdditionInfoCreditCard;
+
+    if (additionalInfo.closeStatus !== NewebPayCreditCardBalanceStatus.SETTLED) {
       throw new Error('Only settled order can be cancel refund');
     }
 
-    if (
-      (order.additionalInfo as NewebPayAdditionInfoCreditCard).refundStatus !== NewebPayCreditCardBalanceStatus.WAITING
-    ) {
+    if (additionalInfo.refundStatus !== NewebPayCreditCardBalanceStatus.WAITING) {
       throw new Error('Order not refunding.');
     }
 
@@ -961,13 +995,44 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
       throw new Error('Only refunded order can be cancel refund');
     }
 
+    // Cap at refunded-so-far (totalPrice minus any remaining refundable balance).
+    // When the same order instance initiated the refund, prefer that pending amount;
+    // otherwise the SDK can only compute a conservative cumulative bound.
+    const refundedSoFar = order.totalPrice - (additionalInfo.remainingBalance ?? order.totalPrice);
+    const pendingRefundAmount = order.pendingRefundAmount;
+    const cancelRefundLimit = pendingRefundAmount ?? refundedSoFar;
+
+    if (amount !== undefined) {
+      if (!Number.isInteger(amount) || amount <= 0) {
+        throw new Error('Cancel refund amount must be a positive integer');
+      }
+
+      if (amount > cancelRefundLimit) {
+        throw new Error('Cancel refund amount cannot exceed refunded amount');
+      }
+
+      // Mirror the partial-refund restriction in §4.5: installments / bonus-discount
+      // transactions must cancel the refund in full (gateway returns TRA10675 otherwise).
+      if (amount < refundedSoFar) {
+        if (additionalInfo.installments) {
+          throw new Error('Partial cancel refund not supported for installment payments');
+        }
+
+        if ((additionalInfo.bonusAmount ?? 0) > 0) {
+          throw new Error('Partial cancel refund not supported for bonus-discount payments');
+        }
+      }
+    }
+
+    const cancelAmount = amount ?? pendingRefundAmount ?? refundedSoFar;
+
     const cipher = createCipheriv('aes-256-cbc', this.aesKey, this.aesIv);
 
     const encrypted = `${cipher.update(
       Object.entries({
         RespondType: 'JSON',
         Version: '1.0',
-        Amt: order.totalPrice,
+        Amt: cancelAmount,
         MerchantOrderNo: order.id,
         IndexType: 1,
         TimeStamp: Math.round(Date.now() / 1000).toString(),
