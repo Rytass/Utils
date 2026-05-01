@@ -936,7 +936,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
           throw new Error('Partial refund not supported for installment payments');
         }
 
-        if (additionalInfo.bonusAmount && additionalInfo.bonusAmount > 0) {
+        if ((additionalInfo.bonusAmount ?? 0) > 0) {
           throw new Error('Partial refund not supported for bonus-discount payments');
         }
       }
@@ -1018,7 +1018,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
           throw new Error('Partial cancel refund not supported for installment payments');
         }
 
-        if (additionalInfo.bonusAmount && additionalInfo.bonusAmount > 0) {
+        if ((additionalInfo.bonusAmount ?? 0) > 0) {
           throw new Error('Partial cancel refund not supported for bonus-discount payments');
         }
       }
