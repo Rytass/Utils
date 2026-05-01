@@ -239,9 +239,7 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage = NewebPayCommitMes
   }
 
   async cancelRefund(amount?: number): Promise<void> {
-    const ai = this.additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage> | undefined as
-      | NewebPayAdditionInfoCreditCard
-      | undefined;
+    const ai = this.additionalInfo as NewebPayAdditionInfoCreditCard | undefined;
 
     const refundedSoFar = this.totalPrice - (ai?.remainingBalance ?? this.totalPrice);
     const cancelAmount = amount ?? this._pendingRefundAmount ?? refundedSoFar;
@@ -281,9 +279,7 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage = NewebPayCommitMes
   }
 
   async refund(amount?: number): Promise<void> {
-    const additionalInfo = this.additionalInfo as AdditionalInfo<NewebPayCreditCardCommitMessage> | undefined as
-      | NewebPayAdditionInfoCreditCard
-      | undefined;
+    const additionalInfo = this.additionalInfo as NewebPayAdditionInfoCreditCard | undefined;
 
     const remainingBalance = additionalInfo?.remainingBalance ?? this.totalPrice;
 
