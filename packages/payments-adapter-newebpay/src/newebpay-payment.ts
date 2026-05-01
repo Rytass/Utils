@@ -711,6 +711,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
                 eachAmount: data.Result.InstEach,
               }
             : undefined,
+          bonusAmount: (savedOrder?.additionalInfo as NewebPayAdditionInfoCreditCard | undefined)?.bonusAmount,
           closeStatus: data.Result.CloseStatus,
           closeBalance: Number(data.Result.CloseAmt),
           refundStatus: data.Result.BackStatus,

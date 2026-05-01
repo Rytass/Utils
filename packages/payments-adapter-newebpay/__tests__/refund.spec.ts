@@ -602,7 +602,7 @@ describe('NewebPay Refund Order', () => {
       } as NewebPayAdditionInfoCreditCard,
     );
 
-    expect(() => order.cancelRefund()).rejects.toThrow('Refund order failed');
+    await expect(order.cancelRefund()).rejects.toThrow('Refund order failed');
   });
 
   it('should throw error on cancel refund a not settled order', () => {

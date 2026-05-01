@@ -8,7 +8,7 @@ process.env.NGROK_AUTHTOKEN = 'test-auth-token';
 
 import axios from 'axios';
 import http, { createServer } from 'http';
-import { OrderState } from '@rytass/payments';
+import { Channel, CreditCardECI, OrderState } from '@rytass/payments';
 import { createHash, createDecipheriv, randomBytes } from 'crypto';
 import {
   NewebPayCreditCardBalanceStatus,
@@ -647,6 +647,107 @@ describe('NewebPay Payments', () => {
       );
 
       expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).remainingBalance).toBe(0);
+      expect(mockPost).toHaveBeenCalledTimes(1);
+    });
+
+    it('should keep cached bonus amount restriction after querying credit card order', async () => {
+      let cachedOrder: NewebPayOrder<NewebPayCreditCardCommitMessage> | undefined;
+      const paymentWithCache = new NewebPayPayment<NewebPayCreditCardCommitMessage>({
+        merchantId: MERCHANT_ID,
+        aesKey: AES_KEY,
+        aesIv: AES_IV,
+        ordersCache: {
+          get: async (): Promise<NewebPayOrder<NewebPayCreditCardCommitMessage> | undefined> => cachedOrder,
+          set: async (_key: string, value: NewebPayOrder<NewebPayCreditCardCommitMessage>): Promise<void> => {
+            cachedOrder = value;
+          },
+        },
+      });
+
+      cachedOrder = new NewebPayOrder<NewebPayCreditCardCommitMessage>(
+        {
+          id: 'bonus-query-order',
+          channel: NewebPaymentChannel.CREDIT,
+          items: [{ name: 'Test', quantity: 1, unitPrice: 200 }],
+          gateway: paymentWithCache,
+          platformTradeNumber: 'MS197067234',
+          createdAt: new Date(),
+          committedAt: new Date(),
+          status: NewebPayOrderStatusFromAPI.COMMITTED,
+        },
+        {
+          channel: Channel.CREDIT_CARD,
+          processDate: new Date(),
+          authCode: '123456',
+          amount: 200,
+          eci: CreditCardECI.MASTER_3D,
+          card4Number: '8888',
+          card6Number: '000000',
+          authBank: 'KGI',
+          subChannel: 'CREDIT',
+          bonusAmount: 60,
+          closeBalance: 200,
+          closeStatus: NewebPayCreditCardBalanceStatus.SETTLED,
+          remainingBalance: 200,
+          refundStatus: NewebPayCreditCardBalanceStatus.UNSETTLED,
+        } as NewebPayAdditionInfoCreditCard,
+      );
+
+      mockPost.mockImplementationOnce(async (url: string, data: string) => {
+        expect(url).toMatch(/\/API\/QueryTradeInfo/);
+
+        const payload = new URLSearchParams(data);
+        const amt = payload.get('Amt');
+        const merchantId = payload.get('MerchantID');
+        const merchantOrderNo = payload.get('MerchantOrderNo');
+
+        return {
+          data: {
+            Status: 'SUCCESS',
+            Message: '',
+            Result: {
+              MerchantID: merchantId,
+              Amt: amt,
+              TradeNo: 'MS197067234',
+              MerchantOrderNo: merchantOrderNo,
+              TradeStatus: NewebPayOrderStatusFromAPI.COMMITTED,
+              PaymentType: 'CREDIT',
+              CreateTime: '2023-02-01 21:54:47',
+              PayTime: '2023-02-01 21:54:58',
+              CheckCode: createHash('sha256')
+                .update(
+                  `HashIV=${AES_IV}&Amt=${amt}&MerchantID=${MERCHANT_ID}&MerchantOrderNo=${merchantOrderNo}&TradeNo=MS197067234&HashKey=${AES_KEY}`,
+                )
+                .digest('hex')
+                .toUpperCase(),
+              FundTime: '2023-02-25',
+              RespondCode: '00',
+              Auth: '123456',
+              ECI: '2',
+              CloseAmt: amt,
+              CloseStatus: NewebPayCreditCardBalanceStatus.SETTLED,
+              BackBalance: '200',
+              BackStatus: NewebPayCreditCardBalanceStatus.UNSETTLED,
+              RespondMsg: '',
+              Inst: '',
+              InstFirst: '',
+              InstEach: '',
+              PaymentMethod: 'CREDIT',
+              Card6No: '000000',
+              Card4No: '8888',
+              AuthBank: 'KGI',
+            },
+          },
+        };
+      });
+
+      const order = await paymentWithCache.query<NewebPayOrder<NewebPayCreditCardCommitMessage>>(
+        'bonus-query-order',
+        200,
+      );
+
+      expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).bonusAmount).toBe(60);
+      await expect(order.refund(40)).rejects.toThrow('Partial refund not supported for bonus-discount payments');
       expect(mockPost).toHaveBeenCalledTimes(1);
     });
 
