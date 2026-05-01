@@ -1729,4 +1729,86 @@ describe('NewebPay Refund Order', () => {
     expect(order.state).toBe(OrderState.REFUNDED);
     expect(sentAmts).toEqual(['20', '20/cancel']);
   });
+
+  it('should keep remaining pending refund after partial cancelRefund amount', async () => {
+    const mockedPost = jest.spyOn(axios, 'post');
+
+    const sentAmts: string[] = [];
+
+    mockedPost.mockImplementation(async (_url: string, data: string) => {
+      const payload = new URLSearchParams(data);
+      const postData = payload.get('PostData_');
+      const decipher = createDecipheriv('aes-256-cbc', AES_KEY, AES_IV);
+
+      const plainInfo = `${decipher.update(postData!, 'hex', 'utf8')}${decipher.final('utf8')}`;
+      const requestBody = new URLSearchParams(plainInfo);
+
+      sentAmts.push(`${requestBody.get('Amt')}${requestBody.get('Cancel') ? '/cancel' : ''}`);
+
+      return {
+        data: {
+          Status: 'SUCCESS',
+          Message: '',
+          Result: {
+            CheckCode: createHash('sha256')
+              .update(`HashKey=${AES_KEY}&${postData}&HashIV=${AES_IV}`)
+              .digest('hex')
+              .toUpperCase(),
+          },
+        },
+      };
+    });
+
+    const order = new NewebPayOrder<NewebPayCreditCardCommitMessage>(
+      {
+        id: 'partial-cancel-keeps-pending',
+        channel: NewebPaymentChannel.CREDIT,
+        items: [{ name: 'Test', quantity: 1, unitPrice: 100 }],
+        gateway: payment,
+        platformTradeNumber: '12937917203',
+        createdAt: new Date(),
+        committedAt: new Date(),
+        status: NewebPayOrderStatusFromAPI.COMMITTED,
+      },
+      {
+        channel: Channel.CREDIT_CARD,
+        processDate: new Date(),
+        authCode: '123123',
+        amount: 100,
+        eci: CreditCardECI.MASTER_3D,
+        card4Number: '9234',
+        card6Number: '124902',
+        authBank: 'Taishin',
+        subChannel: 'CREDIT',
+        speedCheckoutMode: NewebPayCreditCardSpeedCheckoutMode.NONE,
+        bonusAmount: 0,
+        closeBalance: 100,
+        closeStatus: NewebPayCreditCardBalanceStatus.SETTLED,
+        remainingBalance: 100,
+        refundStatus: NewebPayCreditCardBalanceStatus.UNSETTLED,
+      } as NewebPayAdditionInfoCreditCard,
+    );
+
+    await order.refund(40);
+    await order.cancelRefund(10);
+
+    expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).remainingBalance).toBe(70);
+    expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).refundStatus).toBe(
+      NewebPayCreditCardBalanceStatus.WAITING,
+    );
+
+    expect(order.state).toBe(OrderState.REFUNDED);
+
+    await expect(order.refund(10)).rejects.toThrow('Order refunding.');
+
+    await order.cancelRefund();
+
+    expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).remainingBalance).toBe(100);
+    expect((order.additionalInfo as NewebPayAdditionInfoCreditCard).refundStatus).toBe(
+      NewebPayCreditCardBalanceStatus.UNSETTLED,
+    );
+
+    expect(order.state).toBe(OrderState.COMMITTED);
+    expect(sentAmts).toEqual(['40', '10/cancel', '30/cancel']);
+  });
 });
