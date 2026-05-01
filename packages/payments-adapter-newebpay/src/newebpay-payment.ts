@@ -995,10 +995,10 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
     }
 
     // Cap at refunded-so-far (totalPrice minus any remaining refundable balance).
-    // We can't distinguish pending from settled refund portions from the SDK side,
-    // so this is a permissive but conservative bound — NewebPay's Close API will
-    // reject if the amount doesn't match the actual pending refund.
+    // When the same order instance initiated the refund, prefer that pending amount;
+    // otherwise the SDK can only compute a conservative cumulative bound.
     const refundedSoFar = order.totalPrice - (additionalInfo.remainingBalance ?? order.totalPrice);
+    const pendingRefundAmount = order.pendingRefundAmount;
 
     if (amount !== undefined) {
       if (!Number.isInteger(amount) || amount <= 0) {
@@ -1022,7 +1022,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
       }
     }
 
-    const cancelAmount = amount ?? refundedSoFar;
+    const cancelAmount = amount ?? pendingRefundAmount ?? refundedSoFar;
 
     const cipher = createCipheriv('aes-256-cbc', this.aesKey, this.aesIv);
 

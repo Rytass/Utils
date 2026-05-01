@@ -39,6 +39,8 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage = NewebPayCommitMes
 
   private _additionalInfo?: AdditionalInfo<OCM>;
 
+  private _pendingRefundAmount: number | undefined;
+
   constructor(
     options: NewebPayPrepareOrderInit<OCM> | NewebPayOrderFromServerInit<OCM>,
     additionalInfo?: AdditionalInfo<OCM>,
@@ -173,6 +175,10 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage = NewebPayCommitMes
     return this._additionalInfo;
   }
 
+  get pendingRefundAmount(): number | undefined {
+    return this._pendingRefundAmount;
+  }
+
   get platformTradeNumber(): string | null {
     return this._platformTradeNumber;
   }
@@ -238,12 +244,13 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage = NewebPayCommitMes
       | undefined;
 
     const refundedSoFar = this.totalPrice - (ai?.remainingBalance ?? this.totalPrice);
-    const cancelAmount = amount ?? refundedSoFar;
+    const cancelAmount = amount ?? this._pendingRefundAmount ?? refundedSoFar;
 
     await this._gateway.cancelRefund(this as NewebPayOrder<NewebPayCreditCardCommitMessage>, cancelAmount);
 
     if (ai) {
       ai.remainingBalance = (ai.remainingBalance ?? 0) + cancelAmount;
+      this._pendingRefundAmount = undefined;
 
       // After cancelling, refundStatus only resets to UNSETTLED if no prior refund
       // remains in flight or completed (i.e. balance restored to totalPrice).
@@ -326,6 +333,7 @@ export class NewebPayOrder<OCM extends NewebPayCommitMessage = NewebPayCommitMes
         ai.closeStatus = NewebPayCreditCardBalanceStatus.SETTLED;
         ai.refundStatus = NewebPayCreditCardBalanceStatus.WAITING;
         ai.remainingBalance = remainingBalance - refundAmount;
+        this._pendingRefundAmount = refundAmount;
 
         this._state = OrderState.REFUNDED;
         break;
