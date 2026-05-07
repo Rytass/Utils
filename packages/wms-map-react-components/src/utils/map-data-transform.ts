@@ -201,7 +201,6 @@ export const transformNodeToClickInfo = (node: Node): WMSNodeClickInfo | null =>
     }
 
     case 'pathNode': {
-      console.log('node', node);
       const pathData = node.data as {
         points: { x: number; y: number }[];
         color?: string;
