@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.8](https://github.com/Rytass/Utils/compare/@rytass/wms-map-react-components@0.1.7...@rytass/wms-map-react-components@0.1.8) (2026-05-07)
+
+### Bug Fixes
+
+- **packages/wms-map-react-components:** calc points (x,y) correctly ([b2fcd19](https://github.com/Rytass/Utils/commit/b2fcd191b7851fa350a85a08f42b0da177b64f9a))
+
 ## [0.1.7](https://github.com/Rytass/Utils/compare/@rytass/wms-map-react-components@0.1.6...@rytass/wms-map-react-components@0.1.7) (2026-04-22)
 
 ### Bug Fixes
