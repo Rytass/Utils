@@ -59,23 +59,18 @@ export const transformApiDataToNodes = (mapData: Map, imageUrlGenerator?: (filen
       } else if (range.type === MapRangeType.POLYGON) {
         const polyRange = range as MapPolygonRange;
 
-        // 計算多邊形的中心點作為節點位置
-        const centerX = polyRange.points.reduce((sum, point) => sum + point.x, 0) / polyRange.points.length;
-
-        const centerY = polyRange.points.reduce((sum, point) => sum + point.y, 0) / polyRange.points.length;
-
         // 將絕對座標轉換為相對於中心點的座標
         const relativePoints = polyRange.points.map(point => ({
-          x: point.x - centerX,
-          y: point.y - centerY,
+          x: point.x,
+          y: point.y,
         }));
 
         return {
           id: polyRange.id,
           type: 'pathNode',
           position: {
-            x: centerX,
-            y: centerY,
+            x: Math.min(...polyRange.points.map(p => p.x)),
+            y: Math.min(...polyRange.points.map(p => p.y)),
           },
           data: {
             points: relativePoints,

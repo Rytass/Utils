@@ -74,11 +74,22 @@ export const transformNodesToMapData = (nodes: Node[]): Map => {
           label?: string;
         };
 
+        const originSourcePointX = Math.min(...pathData.points.map(p => p.x));
+        const originSourcePointY = Math.min(...pathData.points.map(p => p.y));
+        const deltaX = node.position.x - originSourcePointX;
+        const deltaY = node.position.y - originSourcePointY;
+
+        // 將 node.position 偏移量加到每個 point 上，因為拖曳整個 node 時只更新 position 不更新 data.points
+        const absolutePoints = (pathData.points || []).map(p => ({
+          x: p.x + deltaX,
+          y: p.y + deltaY,
+        }));
+
         const polygonRange: MapPolygonRange = {
           id: (pathData.label || node.id) as ID, // 將 React Flow 節點的 label 映射到 id 欄位
           type: MapRangeType.POLYGON,
           color: pathData.color || '#0000FF', // 預設為藍色
-          points: pathData.points || [],
+          points: absolutePoints,
         };
 
         ranges.push(polygonRange);
@@ -197,22 +208,32 @@ export const transformNodeToClickInfo = (node: Node): WMSNodeClickInfo | null =>
         label?: string;
       };
 
-      const bounds =
-        pathData.points?.length > 0
-          ? {
-              minX: Math.min(...pathData.points.map(p => p.x)),
-              minY: Math.min(...pathData.points.map(p => p.y)),
-              maxX: Math.max(...pathData.points.map(p => p.x)),
-              maxY: Math.max(...pathData.points.map(p => p.y)),
-            }
-          : null;
+      const originSourcePointX = Math.min(...pathData.points.map(p => p.x));
+      const originSourcePointY = Math.min(...pathData.points.map(p => p.y));
+      const deltaX = node.position.x - originSourcePointX;
+      const deltaY = node.position.y - originSourcePointY;
+
+      const absolutePoints = (pathData.points || []).map(p => ({
+        x: p.x + deltaX,
+        y: p.y + deltaY,
+      }));
 
       const mapPolygonRange: MapPolygonRange = {
         id: (pathData.label || node.id) as ID,
         type: MapRangeType.POLYGON,
         color: pathData.color || '#0000FF',
-        points: pathData.points || [],
+        points: absolutePoints,
       };
+
+      const absoluteBounds =
+        absolutePoints.length > 0
+          ? {
+              minX: Math.min(...absolutePoints.map(p => p.x)),
+              minY: Math.min(...absolutePoints.map(p => p.y)),
+              maxX: Math.max(...absolutePoints.map(p => p.x)),
+              maxY: Math.max(...absolutePoints.map(p => p.y)),
+            }
+          : null;
 
       const clickInfo: PathNodeClickInfo = {
         ...baseInfo,
@@ -220,9 +241,9 @@ export const transformNodeToClickInfo = (node: Node): WMSNodeClickInfo | null =>
         pathData: {
           color: pathData.color || '#0000FF',
           strokeWidth: pathData.strokeWidth || 2,
-          pointCount: pathData.points?.length || 0,
-          points: pathData.points || [],
-          bounds,
+          pointCount: absolutePoints.length,
+          points: absolutePoints,
+          bounds: absoluteBounds,
         },
         mapPolygonRange,
       };
@@ -330,6 +351,17 @@ export const logNodeData = (node: Node): void => {
         label?: string;
       };
 
+      const originSourcePointX = Math.min(...pathData.points.map(p => p.x));
+      const originSourcePointY = Math.min(...pathData.points.map(p => p.y));
+      const deltaX = node.position.x - originSourcePointX;
+      const deltaY = node.position.y - originSourcePointY;
+
+      // 轉換格式（對應儲存時的格式）— 加上 node.position 偏移
+      const absoluteLogPoints = (pathData.points || []).map(p => ({
+        x: p.x + deltaX,
+        y: p.y + deltaY,
+      }));
+
       console.log('🔗 路徑資訊:', {
         color: pathData.color,
         strokeWidth: pathData.strokeWidth,
@@ -337,22 +369,21 @@ export const logNodeData = (node: Node): void => {
         points: pathData.points,
         // 計算路徑邊界
         bounds:
-          pathData.points?.length > 0
+          absoluteLogPoints?.length > 0
             ? {
-                minX: Math.min(...pathData.points.map(p => p.x)),
-                minY: Math.min(...pathData.points.map(p => p.y)),
-                maxX: Math.max(...pathData.points.map(p => p.x)),
-                maxY: Math.max(...pathData.points.map(p => p.y)),
+                minX: Math.min(...absoluteLogPoints.map(p => p.x)),
+                minY: Math.min(...absoluteLogPoints.map(p => p.y)),
+                maxX: Math.max(...absoluteLogPoints.map(p => p.x)),
+                maxY: Math.max(...absoluteLogPoints.map(p => p.y)),
               }
             : null,
       });
 
-      // 轉換格式（對應儲存時的格式）
       const polygonRange: MapPolygonRange = {
         id: node.id as ID,
         type: MapRangeType.POLYGON,
         color: pathData.color || '#0000FF',
-        points: pathData.points || [],
+        points: absoluteLogPoints,
       };
 
       console.log('💾 儲存格式 (MapPolygonRange):', polygonRange);
