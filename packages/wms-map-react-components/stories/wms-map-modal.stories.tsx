@@ -86,6 +86,7 @@ const meta: Meta<typeof WMSMapModal> = {
     open: true,
     onClose: action('onClose'),
     onNodeClick: action('onNodeClick'),
+    onNodeDoubleClick: action('onNodeDoubleClick'),
     onSave: action('onSave'),
     onBreadcrumbClick: action('onBreadcrumbClick'),
     onUpload: async (files: File[]): Promise<string[]> => {

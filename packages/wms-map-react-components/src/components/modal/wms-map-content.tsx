@@ -46,6 +46,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
   onTogglePenTool,
   onColorChange,
   onNodeClick,
+  onNodeDoubleClick,
   onSave,
   onBreadcrumbClick,
   onNameChange,
@@ -700,6 +701,31 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
     [viewMode, editMode, onNodeClick],
   );
 
+  const handleNodeDoubleClick = useCallback(
+    (_event: React.MouseEvent, node: ReactFlowNode) => {
+      const flowNode = node as unknown as FlowNode;
+
+      debugLog('events', 'Node double clicked (React Flow)', {
+        id: flowNode.id.slice(-4),
+        type: flowNode.type,
+        viewMode,
+        editMode,
+      });
+
+      logNodeData(flowNode);
+
+      if (onNodeDoubleClick) {
+        const nodeDoubleClickInfo = transformNodeToClickInfo(flowNode);
+
+        if (nodeDoubleClickInfo) {
+          debugLog('events', '將雙擊資訊傳遞給父組件:', nodeDoubleClickInfo);
+          onNodeDoubleClick(nodeDoubleClickInfo);
+        }
+      }
+    },
+    [viewMode, editMode, onNodeDoubleClick],
+  );
+
   const handleToggleBackground = useCallback((show: boolean) => {
     debugLog('ui', '切換底圖顯示:', { showBackground: show });
     showBackgroundRef.current = show;
@@ -862,6 +888,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
         onNodeMouseEnter={handleNodeMouseEnter}
         onNodeMouseLeave={handleNodeMouseLeave}
         onNodeClick={handleNodeClick}
+        onNodeDoubleClick={handleNodeDoubleClick}
         showBackground={showBackground}
       />
 
