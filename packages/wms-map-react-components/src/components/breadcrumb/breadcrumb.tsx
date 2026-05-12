@@ -1,14 +1,16 @@
 import React, { FC, useState, useEffect, useRef } from 'react';
 import BreadcrumbEditModal from './breadcrumb-edit-modal';
+import { ViewMode } from '../../typings';
 import styles from './breadcrumb.module.scss';
 
 interface BreadcrumbProps {
   warehouseIds: string[];
+  viewMode: ViewMode;
   onWarehouseClick?: (warehouseId: string, index: number) => void;
   onNameChange?: (name: string) => Promise<void>;
 }
 
-const Breadcrumb: FC<BreadcrumbProps> = ({ warehouseIds, onWarehouseClick, onNameChange }) => {
+const Breadcrumb: FC<BreadcrumbProps> = ({ warehouseIds, viewMode, onWarehouseClick, onNameChange }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number>(-1);
@@ -141,17 +143,19 @@ const Breadcrumb: FC<BreadcrumbProps> = ({ warehouseIds, onWarehouseClick, onNam
       <div className={styles.breadcrumbSection}>
         <div className={styles.warehouseIdSection}>
           {shouldCollapse ? renderCollapsedBreadcrumb() : renderFullBreadcrumb()}
-          <button className={styles.editButton} onClick={handleEditClick} title="編輯當前區域名稱">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path
-                d="M11.7803 2.21967C12.0732 1.92678 12.5481 1.92678 12.841 2.21967L13.7803 3.15901C14.0732 3.45191 14.0732 3.92678 13.7803 4.21967L5.11364 12.8863L2.66697 13.3333L3.11364 10.8863L11.7803 2.21967Z"
-                stroke="currentColor"
-                strokeWidth="1.33"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
+          {viewMode === ViewMode.EDIT && (
+            <button className={styles.editButton} onClick={handleEditClick} title="編輯當前區域名稱">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M11.7803 2.21967C12.0732 1.92678 12.5481 1.92678 12.841 2.21967L13.7803 3.15901C14.0732 3.45191 14.0732 3.92678 13.7803 4.21967L5.11364 12.8863L2.66697 13.3333L3.11364 10.8863L11.7803 2.21967Z"
+                  stroke="currentColor"
+                  strokeWidth="1.33"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
 

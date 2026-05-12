@@ -811,7 +811,12 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
 
   return (
     <>
-      <Breadcrumb warehouseIds={warehouseIds} onWarehouseClick={onBreadcrumbClick} onNameChange={onNameChange} />
+      <Breadcrumb
+        warehouseIds={warehouseIds}
+        viewMode={viewMode}
+        onWarehouseClick={onBreadcrumbClick}
+        onNameChange={onNameChange}
+      />
       {viewMode === ViewMode.EDIT && (
         <Toolbar
           onUpload={handleUpload}
