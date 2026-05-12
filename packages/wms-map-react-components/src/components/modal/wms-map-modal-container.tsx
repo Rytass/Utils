@@ -14,6 +14,7 @@ export const WMSMapModalContent = ({
   selectedColor,
   viewMode,
   colorPalette,
+  showBreadcrumbEditButton,
   onEditModeChange,
   onToggleRectangleTool,
   onTogglePenTool,
@@ -38,6 +39,7 @@ export const WMSMapModalContent = ({
           selectedColor={selectedColor}
           viewMode={viewMode}
           colorPalette={colorPalette}
+          showBreadcrumbEditButton={showBreadcrumbEditButton}
           onEditModeChange={onEditModeChange}
           onToggleRectangleTool={onToggleRectangleTool}
           onTogglePenTool={onTogglePenTool}
@@ -63,6 +65,7 @@ const WMSMapModalContainer: FC<WMSMapModalProps> = ({
   onClose,
   viewMode = ViewMode.EDIT,
   colorPalette,
+  showBreadcrumbEditButton,
   onNodeClick,
   onSave,
   onBreadcrumbClick,
@@ -139,6 +142,7 @@ const WMSMapModalContainer: FC<WMSMapModalProps> = ({
         selectedColor={selectedColor}
         viewMode={viewMode}
         colorPalette={colorPalette}
+        showBreadcrumbEditButton={showBreadcrumbEditButton}
         onEditModeChange={handleEditModeChange}
         onToggleRectangleTool={handleToggleRectangleTool}
         onTogglePenTool={handleTogglePenTool}

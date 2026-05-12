@@ -6,11 +6,18 @@ import styles from './breadcrumb.module.scss';
 interface BreadcrumbProps {
   warehouseIds: string[];
   viewMode: ViewMode;
+  showBreadcrumbEditButton?: (warehouseIds: string[]) => boolean;
   onWarehouseClick?: (warehouseId: string, index: number) => void;
   onNameChange?: (name: string) => Promise<void>;
 }
 
-const Breadcrumb: FC<BreadcrumbProps> = ({ warehouseIds, viewMode, onWarehouseClick, onNameChange }) => {
+const Breadcrumb: FC<BreadcrumbProps> = ({
+  warehouseIds,
+  viewMode,
+  showBreadcrumbEditButton = (): boolean => true,
+  onWarehouseClick,
+  onNameChange,
+}) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number>(-1);
@@ -143,7 +150,7 @@ const Breadcrumb: FC<BreadcrumbProps> = ({ warehouseIds, viewMode, onWarehouseCl
       <div className={styles.breadcrumbSection}>
         <div className={styles.warehouseIdSection}>
           {shouldCollapse ? renderCollapsedBreadcrumb() : renderFullBreadcrumb()}
-          {viewMode === ViewMode.EDIT && (
+          {viewMode === ViewMode.EDIT && showBreadcrumbEditButton(warehouseIds) && (
             <button className={styles.editButton} onClick={handleEditClick} title="編輯當前區域名稱">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path

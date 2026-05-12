@@ -6,6 +6,7 @@ export interface WMSMapModalProps {
   open: boolean;
   viewMode?: ViewMode;
   colorPalette?: string[];
+  showBreadcrumbEditButton?: (warehouseIds: string[]) => boolean;
   onNodeClick?: (nodeInfo: WMSNodeClickInfo) => void;
   onSave?: (mapData: Map) => void;
   onBreadcrumbClick?: (warehouseId: string, index: number) => void;
@@ -26,6 +27,7 @@ export interface WMSMapContentProps {
   selectedColor: string;
   viewMode: ViewMode;
   colorPalette?: string[];
+  showBreadcrumbEditButton?: (warehouseIds: string[]) => boolean;
   onEditModeChange: (mode: EditMode) => void;
   onToggleRectangleTool: () => void;
   onTogglePenTool: () => void;

@@ -40,6 +40,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
   selectedColor,
   viewMode,
   colorPalette,
+  showBreadcrumbEditButton,
   onEditModeChange,
   onToggleRectangleTool,
   onTogglePenTool,
@@ -814,6 +815,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
       <Breadcrumb
         warehouseIds={warehouseIds}
         viewMode={viewMode}
+        showBreadcrumbEditButton={showBreadcrumbEditButton}
         onWarehouseClick={onBreadcrumbClick}
         onNameChange={onNameChange}
       />
