@@ -274,7 +274,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
         panOnDrag={viewMode === ViewMode.VIEW || (viewMode === ViewMode.EDIT && drawingMode === DrawingMode.NONE)}
         panOnScroll={false}
         zoomOnScroll={true}
-        zoomOnDoubleClick={viewMode === ViewMode.EDIT && drawingMode !== DrawingMode.PEN}
+        zoomOnDoubleClick={false}
         nodeOrigin={[0, 0]}
         preventScrolling={true}
       >

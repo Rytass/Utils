@@ -676,33 +676,50 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
     [viewMode],
   );
 
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const handleNodeClick = useCallback(
     (_event: React.MouseEvent, node: ReactFlowNode) => {
       const flowNode = node as unknown as FlowNode;
 
-      debugLog('events', 'Node clicked (React Flow)', {
-        id: flowNode.id.slice(-4),
-        type: flowNode.type,
-        viewMode,
-        editMode,
-      });
-
-      logNodeData(flowNode);
-
-      if (onNodeClick) {
-        const nodeClickInfo = transformNodeToClickInfo(flowNode);
-
-        if (nodeClickInfo) {
-          debugLog('events', '將點擊資訊傳遞給父組件:', nodeClickInfo);
-          onNodeClick(nodeClickInfo);
-        }
+      // 延遲觸發 click，讓 double click 有機會取消
+      if (clickTimerRef.current) {
+        clearTimeout(clickTimerRef.current);
       }
+
+      clickTimerRef.current = setTimeout(() => {
+        clickTimerRef.current = null;
+
+        debugLog('events', 'Node clicked (React Flow)', {
+          id: flowNode.id.slice(-4),
+          type: flowNode.type,
+          viewMode,
+          editMode,
+        });
+
+        logNodeData(flowNode);
+
+        if (onNodeClick) {
+          const nodeClickInfo = transformNodeToClickInfo(flowNode);
+
+          if (nodeClickInfo) {
+            debugLog('events', '將點擊資訊傳遞給父組件:', nodeClickInfo);
+            onNodeClick(nodeClickInfo);
+          }
+        }
+      }, 350);
     },
     [viewMode, editMode, onNodeClick],
   );
 
   const handleNodeDoubleClick = useCallback(
     (_event: React.MouseEvent, node: ReactFlowNode) => {
+      // 取消待執行的 click，避免 double click 同時觸發 click
+      if (clickTimerRef.current) {
+        clearTimeout(clickTimerRef.current);
+        clickTimerRef.current = null;
+      }
+
       const flowNode = node as unknown as FlowNode;
 
       debugLog('events', 'Node double clicked (React Flow)', {
