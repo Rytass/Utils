@@ -14,11 +14,13 @@ export const WMSMapModalContent = ({
   selectedColor,
   viewMode,
   colorPalette,
+  showBreadcrumbEditButton,
   onEditModeChange,
   onToggleRectangleTool,
   onTogglePenTool,
   onColorChange,
   onNodeClick,
+  onNodeDoubleClick,
   onSave,
   onBreadcrumbClick,
   onNameChange,
@@ -38,11 +40,13 @@ export const WMSMapModalContent = ({
           selectedColor={selectedColor}
           viewMode={viewMode}
           colorPalette={colorPalette}
+          showBreadcrumbEditButton={showBreadcrumbEditButton}
           onEditModeChange={onEditModeChange}
           onToggleRectangleTool={onToggleRectangleTool}
           onTogglePenTool={onTogglePenTool}
           onColorChange={onColorChange}
           onNodeClick={onNodeClick}
+          onNodeDoubleClick={onNodeDoubleClick}
           onSave={onSave}
           onBreadcrumbClick={onBreadcrumbClick}
           onNameChange={onNameChange}
@@ -63,7 +67,9 @@ const WMSMapModalContainer: FC<WMSMapModalProps> = ({
   onClose,
   viewMode = ViewMode.EDIT,
   colorPalette,
+  showBreadcrumbEditButton,
   onNodeClick,
+  onNodeDoubleClick,
   onSave,
   onBreadcrumbClick,
   onNameChange,
@@ -139,11 +145,13 @@ const WMSMapModalContainer: FC<WMSMapModalProps> = ({
         selectedColor={selectedColor}
         viewMode={viewMode}
         colorPalette={colorPalette}
+        showBreadcrumbEditButton={showBreadcrumbEditButton}
         onEditModeChange={handleEditModeChange}
         onToggleRectangleTool={handleToggleRectangleTool}
         onTogglePenTool={handleTogglePenTool}
         onColorChange={handleColorChange}
         onNodeClick={onNodeClick}
+        onNodeDoubleClick={onNodeDoubleClick}
         onSave={onSave}
         onBreadcrumbClick={onBreadcrumbClick}
         onNameChange={onNameChange}

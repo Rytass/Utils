@@ -40,11 +40,13 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
   selectedColor,
   viewMode,
   colorPalette,
+  showBreadcrumbEditButton,
   onEditModeChange,
   onToggleRectangleTool,
   onTogglePenTool,
   onColorChange,
   onNodeClick,
+  onNodeDoubleClick,
   onSave,
   onBreadcrumbClick,
   onNameChange,
@@ -674,11 +676,73 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
     [viewMode],
   );
 
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => (): void => {
+      if (clickTimerRef.current) {
+        clearTimeout(clickTimerRef.current);
+        clickTimerRef.current = null;
+      }
+    },
+    [],
+  );
+
   const handleNodeClick = useCallback(
     (_event: React.MouseEvent, node: ReactFlowNode) => {
       const flowNode = node as unknown as FlowNode;
 
-      debugLog('events', 'Node clicked (React Flow)', {
+      const fireClick = (): void => {
+        debugLog('events', 'Node clicked (React Flow)', {
+          id: flowNode.id.slice(-4),
+          type: flowNode.type,
+          viewMode,
+          editMode,
+        });
+
+        logNodeData(flowNode);
+
+        if (onNodeClick) {
+          const nodeClickInfo = transformNodeToClickInfo(flowNode);
+
+          if (nodeClickInfo) {
+            debugLog('events', '將點擊資訊傳遞給父組件:', nodeClickInfo);
+            onNodeClick(nodeClickInfo);
+          }
+        }
+      };
+
+      // 沒有訂閱雙擊事件時，單擊直接觸發避免引入無謂的 350ms 延遲
+      if (!onNodeDoubleClick) {
+        fireClick();
+
+        return;
+      }
+
+      // 延遲觸發 click，讓 double click 有機會取消
+      if (clickTimerRef.current) {
+        clearTimeout(clickTimerRef.current);
+      }
+
+      clickTimerRef.current = setTimeout(() => {
+        clickTimerRef.current = null;
+        fireClick();
+      }, 350);
+    },
+    [viewMode, editMode, onNodeClick, onNodeDoubleClick],
+  );
+
+  const handleNodeDoubleClick = useCallback(
+    (_event: React.MouseEvent, node: ReactFlowNode) => {
+      // 取消待執行的 click，避免 double click 同時觸發 click
+      if (clickTimerRef.current) {
+        clearTimeout(clickTimerRef.current);
+        clickTimerRef.current = null;
+      }
+
+      const flowNode = node as unknown as FlowNode;
+
+      debugLog('events', 'Node double clicked (React Flow)', {
         id: flowNode.id.slice(-4),
         type: flowNode.type,
         viewMode,
@@ -687,16 +751,16 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
 
       logNodeData(flowNode);
 
-      if (onNodeClick) {
-        const nodeClickInfo = transformNodeToClickInfo(flowNode);
+      if (onNodeDoubleClick) {
+        const nodeDoubleClickInfo = transformNodeToClickInfo(flowNode);
 
-        if (nodeClickInfo) {
-          debugLog('events', '將點擊資訊傳遞給父組件:', nodeClickInfo);
-          onNodeClick(nodeClickInfo);
+        if (nodeDoubleClickInfo) {
+          debugLog('events', '將雙擊資訊傳遞給父組件:', nodeDoubleClickInfo);
+          onNodeDoubleClick(nodeDoubleClickInfo);
         }
       }
     },
-    [viewMode, editMode, onNodeClick],
+    [viewMode, editMode, onNodeDoubleClick],
   );
 
   const handleToggleBackground = useCallback((show: boolean) => {
@@ -811,7 +875,13 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
 
   return (
     <>
-      <Breadcrumb warehouseIds={warehouseIds} onWarehouseClick={onBreadcrumbClick} onNameChange={onNameChange} />
+      <Breadcrumb
+        warehouseIds={warehouseIds}
+        viewMode={viewMode}
+        showBreadcrumbEditButton={showBreadcrumbEditButton}
+        onWarehouseClick={onBreadcrumbClick}
+        onNameChange={onNameChange}
+      />
       {viewMode === ViewMode.EDIT && (
         <Toolbar
           onUpload={handleUpload}
@@ -855,6 +925,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
         onNodeMouseEnter={handleNodeMouseEnter}
         onNodeMouseLeave={handleNodeMouseLeave}
         onNodeClick={handleNodeClick}
+        onNodeDoubleClick={handleNodeDoubleClick}
         showBackground={showBackground}
       />
 

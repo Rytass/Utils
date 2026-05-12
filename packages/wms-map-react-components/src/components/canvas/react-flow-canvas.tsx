@@ -48,6 +48,7 @@ interface ReactFlowCanvasProps {
   onNodeMouseEnter?: (event: React.MouseEvent, node: ReactFlowNode) => void;
   onNodeMouseLeave?: (event: React.MouseEvent, node: ReactFlowNode) => void;
   onNodeClick?: (event: React.MouseEvent, node: ReactFlowNode) => void;
+  onNodeDoubleClick?: (event: React.MouseEvent, node: ReactFlowNode) => void;
   showBackground?: boolean;
 }
 
@@ -118,6 +119,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
   onNodeMouseEnter,
   onNodeMouseLeave,
   onNodeClick,
+  onNodeDoubleClick,
   showBackground = true,
 }) => {
   // console.log('🖼️ ReactFlowCanvas 接收到 showBackground:', showBackground);
@@ -258,6 +260,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
         onNodeMouseEnter={onNodeMouseEnter}
         onNodeMouseLeave={onNodeMouseLeave}
         onNodeClick={onNodeClick}
+        onNodeDoubleClick={onNodeDoubleClick}
         nodeTypes={nodeTypes}
         className={styles.reactFlowCanvas}
         style={{ background: '#F5F5F5' }}
@@ -271,7 +274,7 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
         panOnDrag={viewMode === ViewMode.VIEW || (viewMode === ViewMode.EDIT && drawingMode === DrawingMode.NONE)}
         panOnScroll={false}
         zoomOnScroll={true}
-        zoomOnDoubleClick={viewMode === ViewMode.EDIT && drawingMode !== DrawingMode.PEN}
+        zoomOnDoubleClick={false}
         nodeOrigin={[0, 0]}
         preventScrolling={true}
       >
