@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.9](https://github.com/Rytass/Utils/compare/@rytass/wms-map-react-components@0.1.8...@rytass/wms-map-react-components@0.1.9) (2026-05-12)
+
+### Bug Fixes
+
+- **wms-map-react-components:** avoid 350ms click delay and clear timer on unmount ([16bbb6a](https://github.com/Rytass/Utils/commit/16bbb6a710d0542c63f89abdfc16c0567dd2813a))
+
+### Features
+
+- **packages/wms-map-react-components:** edit breadcrumb only in edit mode ([ffa8734](https://github.com/Rytass/Utils/commit/ffa87347adc2a27b3bc209ee8b238fd89fa5e2e9))
+- **packages/wms-map-react-components:** node double click props ([ae2260f](https://github.com/Rytass/Utils/commit/ae2260f99f17ca79a32af2071ec9eb1bb4e3b848))
+- **packages/wms-map-react-components:** props to show breadcrumb edit button ([7756fc0](https://github.com/Rytass/Utils/commit/7756fc0c6ed57daae472adf7fe0a47719506e9ea))
+
 ## [0.1.8](https://github.com/Rytass/Utils/compare/@rytass/wms-map-react-components@0.1.7...@rytass/wms-map-react-components@0.1.8) (2026-05-07)
 
 ### Bug Fixes
