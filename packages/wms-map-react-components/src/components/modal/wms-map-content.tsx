@@ -678,18 +678,21 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
 
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  useEffect(
+    () => (): void => {
+      if (clickTimerRef.current) {
+        clearTimeout(clickTimerRef.current);
+        clickTimerRef.current = null;
+      }
+    },
+    [],
+  );
+
   const handleNodeClick = useCallback(
     (_event: React.MouseEvent, node: ReactFlowNode) => {
       const flowNode = node as unknown as FlowNode;
 
-      // 延遲觸發 click，讓 double click 有機會取消
-      if (clickTimerRef.current) {
-        clearTimeout(clickTimerRef.current);
-      }
-
-      clickTimerRef.current = setTimeout(() => {
-        clickTimerRef.current = null;
-
+      const fireClick = (): void => {
         debugLog('events', 'Node clicked (React Flow)', {
           id: flowNode.id.slice(-4),
           type: flowNode.type,
@@ -707,9 +710,26 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
             onNodeClick(nodeClickInfo);
           }
         }
+      };
+
+      // 沒有訂閱雙擊事件時，單擊直接觸發避免引入無謂的 350ms 延遲
+      if (!onNodeDoubleClick) {
+        fireClick();
+
+        return;
+      }
+
+      // 延遲觸發 click，讓 double click 有機會取消
+      if (clickTimerRef.current) {
+        clearTimeout(clickTimerRef.current);
+      }
+
+      clickTimerRef.current = setTimeout(() => {
+        clickTimerRef.current = null;
+        fireClick();
       }, 350);
     },
-    [viewMode, editMode, onNodeClick],
+    [viewMode, editMode, onNodeClick, onNodeDoubleClick],
   );
 
   const handleNodeDoubleClick = useCallback(
