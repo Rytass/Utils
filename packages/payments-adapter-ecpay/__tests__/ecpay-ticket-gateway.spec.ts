@@ -46,6 +46,26 @@ describe('ECPayTicketGateway', () => {
     return mockServer;
   });
 
+  afterAll(() => {
+    mockedCreateServer.mockRestore();
+  });
+
+  describe('constructor validation', () => {
+    it('throws when hashKey is not exactly 16 bytes', () => {
+      expect(() => new ECPayTicketGateway({ hashKey: 'tooShort' })).toThrow(/hashKey must be exactly 16 bytes/);
+      expect(() => new ECPayTicketGateway({ hashKey: 'a'.repeat(17) })).toThrow(/hashKey must be exactly 16 bytes/);
+    });
+
+    it('throws when hashIv is not exactly 16 bytes', () => {
+      expect(() => new ECPayTicketGateway({ hashIv: 'tooShort' })).toThrow(/hashIv must be exactly 16 bytes/);
+    });
+
+    it('throws when hashKey contains multibyte characters that exceed 16 bytes', () => {
+      // '中' is 3 bytes in UTF-8; 8 of them = 24 bytes > 16
+      expect(() => new ECPayTicketGateway({ hashKey: '中'.repeat(8) })).toThrow(/hashKey must be exactly 16 bytes/);
+    });
+  });
+
   describe('encrypt/decrypt symmetry', () => {
     it('roundtrip preserves payload exactly', () => {
       const gateway = new ECPayTicketGateway();
@@ -475,6 +495,44 @@ describe('ECPayTicketGateway', () => {
       expect(info.tickets[3].useStatus).toBe(ECPayTicketUseStatus.EXPIRED);
       expect(info.tickets[1].writeOffDate).toBeInstanceOf(Date);
     });
+
+    it('omits date fields when ECPay sends malformed date strings', async () => {
+      const gateway = new ECPayTicketGateway();
+
+      const decrypted: ECPayTicketQueryOrderInfoResponseDecrypted = {
+        RtnCode: 1,
+        RtnMsg: 'OK',
+        MerchantID: '2000132',
+        MerchantTradeNo: 'M-BAD-DATES',
+        TicketTradeNo: 'TT',
+        PaymentProvider: '1',
+        PaymentType: '1',
+        Status: 1,
+        Remark: '',
+        IssueDate: 'not-a-date',
+        IssueType: ECPayIssueType.SERIAL_ONLY,
+        EscrowExpiredDate: 'oops',
+        TotalCount: 1,
+        TradeAmount: 100,
+        RedeemCount: 0,
+        RedeemAmount: 0,
+        RefundCount: 0,
+        RefundAmount: 0,
+        TotalRefundFee: 0,
+        UnUsedCount: 1,
+        UnUsedAmount: 100,
+        ExpiredCount: 0,
+        TicketList: [{ TicketNo: 'TKT-1', UseStatus: 1, TicketType: '1', TicketAmount: 100, StartDate: 'garbage' }],
+      };
+
+      jest.spyOn(axios, 'post').mockImplementation(async () => ({ data: buildTicketResponseEnvelope(decrypted) }));
+
+      const info = await gateway.queryOrderInfo({ merchantTradeNo: 'M-BAD-DATES' });
+
+      expect(info.issueDate).toBeUndefined();
+      expect(info.escrowExpiredDate).toBeUndefined();
+      expect(info.tickets[0].startDate).toBeUndefined();
+    });
   });
 
   describe('built-in callback server', () => {
@@ -657,6 +715,93 @@ describe('ECPayTicketGateway', () => {
       expect(result.ticketNo).toBe('TKT-USE-X');
       expect(result.useStatus).toBe(ECPayTicketUseStatus.REDEEMED);
       expect(emitted).toBe(result);
+    });
+
+    it('handleRefundNotification throws INVALID_PAYLOAD when TicketTradeNo is missing', () => {
+      const gateway = new ECPayTicketGateway();
+
+      const envelope = buildTicketResponseEnvelope({
+        MerchantTradeNo: 'M-X',
+        RefundAmount: 100,
+        // TicketTradeNo intentionally omitted
+      });
+
+      let fired = false;
+
+      gateway.emitter.on(ECPayTicketEvents.TICKET_REFUND_NOTIFIED, () => {
+        fired = true;
+      });
+
+      try {
+        gateway.handleRefundNotification(envelope);
+        throw new Error('expected to throw');
+      } catch (err) {
+        expect(err).toBeInstanceOf(ECPayTicketCallbackError);
+        expect((err as ECPayTicketCallbackError).code).toBe('INVALID_PAYLOAD');
+      }
+
+      expect(fired).toBe(false);
+    });
+
+    it('handleRefundNotification throws INVALID_PAYLOAD when both MerchantTradeNo and FreeTradeNo are absent', () => {
+      const gateway = new ECPayTicketGateway();
+
+      const envelope = buildTicketResponseEnvelope({
+        TicketTradeNo: 'TT-OK',
+        RefundAmount: 50,
+        // No MerchantTradeNo, no FreeTradeNo
+      });
+
+      try {
+        gateway.handleRefundNotification(envelope);
+        throw new Error('expected to throw');
+      } catch (err) {
+        expect((err as ECPayTicketCallbackError).code).toBe('INVALID_PAYLOAD');
+      }
+    });
+
+    it('handleUseStatusNotification throws INVALID_PAYLOAD when UseStatus is missing', () => {
+      const gateway = new ECPayTicketGateway();
+
+      const envelope = buildTicketResponseEnvelope({
+        MerchantTradeNo: 'M-X',
+        TicketTradeNo: 'TT-X',
+        TicketNo: 'TKT-X',
+        // UseStatus intentionally missing — must not default to UNUSED
+      });
+
+      let fired = false;
+
+      gateway.emitter.on(ECPayTicketEvents.TICKET_USE_STATUS_CHANGED, () => {
+        fired = true;
+      });
+
+      try {
+        gateway.handleUseStatusNotification(envelope);
+        throw new Error('expected to throw');
+      } catch (err) {
+        expect((err as ECPayTicketCallbackError).code).toBe('INVALID_PAYLOAD');
+      }
+
+      expect(fired).toBe(false);
+    });
+
+    it('handleUseStatusNotification throws INVALID_PAYLOAD when UseStatus is out of range', () => {
+      const gateway = new ECPayTicketGateway();
+
+      const envelope = buildTicketResponseEnvelope({
+        MerchantTradeNo: 'M-X',
+        TicketTradeNo: 'TT-X',
+        TicketNo: 'TKT-X',
+        UseStatus: 99,
+      });
+
+      try {
+        gateway.handleUseStatusNotification(envelope);
+        throw new Error('expected to throw');
+      } catch (err) {
+        expect((err as ECPayTicketCallbackError).code).toBe('INVALID_PAYLOAD');
+      }
     });
 
     it('handleRefundNotification throws ECPayTicketCallbackError(INVALID_CHECKMAC) on tampered envelope', () => {

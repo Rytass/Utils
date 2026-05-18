@@ -77,6 +77,18 @@ export class ECPayTicketGateway {
     this.baseUrl = options?.baseUrl ?? this.baseUrl;
     this.platformId = options?.platformId;
 
+    if (Buffer.byteLength(this.hashKey, 'utf8') !== 16) {
+      throw new Error(
+        `[ECPayTicketGateway] hashKey must be exactly 16 bytes (ASCII) for AES-128-CBC; got ${Buffer.byteLength(this.hashKey, 'utf8')} bytes.`,
+      );
+    }
+
+    if (Buffer.byteLength(this.hashIv, 'utf8') !== 16) {
+      throw new Error(
+        `[ECPayTicketGateway] hashIv must be exactly 16 bytes (ASCII) for AES-128-CBC; got ${Buffer.byteLength(this.hashIv, 'utf8')} bytes.`,
+      );
+    }
+
     this.backgroundPollingEnabled = options?.issuePoll !== false;
 
     const pollConfig = options?.issuePoll === false ? undefined : options?.issuePoll;
@@ -162,7 +174,9 @@ export class ECPayTicketGateway {
 
   private async postEnvelope<TBody, TDecrypted>(path: string, body: TBody): Promise<TDecrypted> {
     if (!this.isGatewayReady) {
-      throw new Error('Please waiting gateway ready');
+      throw new Error(
+        '[ECPayTicketGateway] Gateway is not ready yet. Wait for the SERVER_LISTENED event before calling API methods.',
+      );
     }
 
     const encryptedData = this.encrypt<TBody>(body);
@@ -192,7 +206,9 @@ export class ECPayTicketGateway {
   private parseDateYMD(s?: string): Date | undefined {
     if (!s) return undefined;
 
-    return DateTime.fromFormat(s, 'yyyyMMdd').toJSDate();
+    const dt = DateTime.fromFormat(s, 'yyyyMMdd');
+
+    return dt.isValid ? dt.toJSDate() : undefined;
   }
 
   private parseTimestamp(s?: string): Date | undefined {
@@ -434,6 +450,11 @@ export class ECPayTicketGateway {
       throw new Error(`Unknown ECPay ticket TicketType: ${raw.TicketType}`);
     }
 
+    const startDate = this.parseDateYMD(raw.StartDate);
+    const writeOffDate = this.parseDateYMD(raw.WriteOffDate);
+    const refundDate = this.parseDateYMD(raw.RefundDate);
+    const expiredDate = this.parseDateYMD(raw.ExpiredDate);
+
     return {
       ticketNo: raw.TicketNo,
       useStatus: parseTicketUseStatus(raw.UseStatus),
@@ -441,15 +462,18 @@ export class ECPayTicketGateway {
       ...(raw.ItemName ? { itemName: raw.ItemName } : {}),
       ticketType,
       ticketAmount: raw.TicketAmount,
-      ...(this.parseDateYMD(raw.StartDate) ? { startDate: this.parseDateYMD(raw.StartDate) } : {}),
-      ...(this.parseDateYMD(raw.WriteOffDate) ? { writeOffDate: this.parseDateYMD(raw.WriteOffDate) } : {}),
-      ...(this.parseDateYMD(raw.RefundDate) ? { refundDate: this.parseDateYMD(raw.RefundDate) } : {}),
-      ...(this.parseDateYMD(raw.ExpiredDate) ? { expiredDate: this.parseDateYMD(raw.ExpiredDate) } : {}),
+      ...(startDate ? { startDate } : {}),
+      ...(writeOffDate ? { writeOffDate } : {}),
+      ...(refundDate ? { refundDate } : {}),
+      ...(expiredDate ? { expiredDate } : {}),
       ...(raw.WriteOffNo ? { writeOffNo: raw.WriteOffNo } : {}),
     };
   }
 
   private mapOrderInfo(decrypted: ECPayTicketQueryOrderInfoResponseDecrypted): ECPayTicketOrderInfo {
+    const issueDate = this.parseTimestamp(decrypted.IssueDate);
+    const escrowExpiredDate = this.parseDateYMD(decrypted.EscrowExpiredDate);
+
     return {
       ...(decrypted.MerchantTradeNo ? { merchantTradeNo: decrypted.MerchantTradeNo } : {}),
       ...(decrypted.FreeTradeNo ? { freeTradeNo: decrypted.FreeTradeNo } : {}),
@@ -459,7 +483,7 @@ export class ECPayTicketGateway {
       ...(decrypted.CreditTradeID !== undefined ? { creditTradeId: decrypted.CreditTradeID } : {}),
       status: decrypted.Status,
       remark: decrypted.Remark,
-      ...(this.parseTimestamp(decrypted.IssueDate) ? { issueDate: this.parseTimestamp(decrypted.IssueDate) } : {}),
+      ...(issueDate ? { issueDate } : {}),
       issueType: decrypted.IssueType,
       ...(decrypted.PrintType ? { printType: decrypted.PrintType } : {}),
       customer: {
@@ -467,9 +491,7 @@ export class ECPayTicketGateway {
         ...(decrypted.CustomerPhone ? { phone: decrypted.CustomerPhone } : {}),
         ...(decrypted.CustomerEmail ? { email: decrypted.CustomerEmail } : {}),
       },
-      ...(this.parseDateYMD(decrypted.EscrowExpiredDate)
-        ? { escrowExpiredDate: this.parseDateYMD(decrypted.EscrowExpiredDate) }
-        : {}),
+      ...(escrowExpiredDate ? { escrowExpiredDate } : {}),
       totalCount: decrypted.TotalCount,
       tradeAmount: decrypted.TradeAmount,
       redeemCount: decrypted.RedeemCount,
@@ -494,11 +516,24 @@ export class ECPayTicketGateway {
     this._server.listen(port, '0.0.0.0', async () => {
       if (useNgrok) {
         if (!process.env.NGROK_AUTHTOKEN) {
-          throw new Error('[ECPayTicketGateway] NGROK_AUTHTOKEN is not set.');
+          debugTicket('[ECPayTicketGateway] NGROK_AUTHTOKEN is not set. Please set it in your environment variables.');
+
+          throw new Error(
+            '[ECPayTicketGateway] NGROK_AUTHTOKEN is not set. Please set it in your environment variables.',
+          );
         }
 
-        const ngrokModule = await import('@ngrok/ngrok');
-        const ngrok = ngrokModule.default;
+        try {
+          await import('@ngrok/ngrok');
+        } catch (ex) {
+          debugTicket(
+            '[ECPayTicketGateway] Failed to import @ngrok/ngrok. Please install it (npm i @ngrok/ngrok) to use the ngrok tunnel feature.',
+          );
+
+          throw ex;
+        }
+
+        const ngrok = (await import('@ngrok/ngrok')).default;
 
         await ngrok.authtoken(process.env.NGROK_AUTHTOKEN);
 
@@ -528,14 +563,52 @@ export class ECPayTicketGateway {
     }
   }
 
+  private requireStringField(decrypted: Record<string, unknown>, field: string): string {
+    const value = decrypted[field];
+
+    if (typeof value !== 'string' || value.length === 0) {
+      throw new ECPayTicketCallbackError('INVALID_PAYLOAD', `Missing or invalid string field: ${field}`);
+    }
+
+    return value;
+  }
+
+  private requireNumericField(decrypted: Record<string, unknown>, field: string): number {
+    const value = decrypted[field];
+
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+
+    if (typeof value === 'string' && value.length > 0) {
+      const parsed = Number(value);
+
+      if (Number.isFinite(parsed)) {
+        return parsed;
+      }
+    }
+
+    throw new ECPayTicketCallbackError('INVALID_PAYLOAD', `Missing or invalid numeric field: ${field}`);
+  }
+
   public handleRefundNotification(envelope: ECPayTicketResponseEnvelope): ECPayTicketRefundNotification {
     const decrypted = this.parseAndVerifyEnvelope(envelope);
+
+    const ticketTradeNo = this.requireStringField(decrypted, 'TicketTradeNo');
+    const refundAmount = this.requireNumericField(decrypted, 'RefundAmount');
+
+    if (typeof decrypted.MerchantTradeNo !== 'string' && typeof decrypted.FreeTradeNo !== 'string') {
+      throw new ECPayTicketCallbackError(
+        'INVALID_PAYLOAD',
+        'Either MerchantTradeNo or FreeTradeNo must be present in the callback payload',
+      );
+    }
 
     const notification: ECPayTicketRefundNotification = {
       ...(typeof decrypted.MerchantTradeNo === 'string' ? { merchantTradeNo: decrypted.MerchantTradeNo } : {}),
       ...(typeof decrypted.FreeTradeNo === 'string' ? { freeTradeNo: decrypted.FreeTradeNo } : {}),
-      ticketTradeNo: String(decrypted.TicketTradeNo ?? ''),
-      refundAmount: Number(decrypted.RefundAmount ?? 0),
+      ticketTradeNo,
+      refundAmount,
       ...(typeof decrypted.Remark === 'string' ? { remark: decrypted.Remark } : {}),
       raw: decrypted,
     };
@@ -548,12 +621,31 @@ export class ECPayTicketGateway {
   public handleUseStatusNotification(envelope: ECPayTicketResponseEnvelope): ECPayTicketUseStatusNotification {
     const decrypted = this.parseAndVerifyEnvelope(envelope);
 
+    const ticketTradeNo = this.requireStringField(decrypted, 'TicketTradeNo');
+    const ticketNo = this.requireStringField(decrypted, 'TicketNo');
+    const useStatusCode = this.requireNumericField(decrypted, 'UseStatus');
+
+    let useStatus: ECPayTicketUseStatusNotification['useStatus'];
+
+    try {
+      useStatus = parseTicketUseStatus(useStatusCode);
+    } catch {
+      throw new ECPayTicketCallbackError('INVALID_PAYLOAD', `Unknown UseStatus code: ${useStatusCode}`);
+    }
+
+    if (typeof decrypted.MerchantTradeNo !== 'string' && typeof decrypted.FreeTradeNo !== 'string') {
+      throw new ECPayTicketCallbackError(
+        'INVALID_PAYLOAD',
+        'Either MerchantTradeNo or FreeTradeNo must be present in the callback payload',
+      );
+    }
+
     const notification: ECPayTicketUseStatusNotification = {
       ...(typeof decrypted.MerchantTradeNo === 'string' ? { merchantTradeNo: decrypted.MerchantTradeNo } : {}),
       ...(typeof decrypted.FreeTradeNo === 'string' ? { freeTradeNo: decrypted.FreeTradeNo } : {}),
-      ticketTradeNo: String(decrypted.TicketTradeNo ?? ''),
-      ticketNo: String(decrypted.TicketNo ?? ''),
-      useStatus: parseTicketUseStatus(Number(decrypted.UseStatus ?? 1)),
+      ticketTradeNo,
+      ticketNo,
+      useStatus,
       raw: decrypted,
     };
 
@@ -600,7 +692,15 @@ export class ECPayTicketGateway {
       } catch (error) {
         if (error instanceof ECPayTicketCallbackError) {
           res.writeHead(400);
-          res.end(`0|${error.code === 'INVALID_CHECKMAC' ? 'InvalidCheckMacValue' : 'InvalidData'}`);
+
+          const tag =
+            error.code === 'INVALID_CHECKMAC'
+              ? 'InvalidCheckMacValue'
+              : error.code === 'INVALID_PAYLOAD'
+                ? 'InvalidPayload'
+                : 'InvalidData';
+
+          res.end(`0|${tag}`);
 
           return;
         }
@@ -612,7 +712,7 @@ export class ECPayTicketGateway {
   }
 }
 
-export type ECPayTicketCallbackErrorCode = 'INVALID_CHECKMAC' | 'INVALID_DATA';
+export type ECPayTicketCallbackErrorCode = 'INVALID_CHECKMAC' | 'INVALID_DATA' | 'INVALID_PAYLOAD';
 
 export class ECPayTicketCallbackError extends Error {
   public readonly code: ECPayTicketCallbackErrorCode;
