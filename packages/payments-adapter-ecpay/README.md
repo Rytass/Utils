@@ -274,3 +274,73 @@ Default callback paths (overridable via `refundNotifyPath` / `useStatusNotifyPat
 - `POST /payments/ecpay/ticket/use-status`
 
 Each callback is verified against its `CheckMacValue` before the event fires; invalid envelopes are rejected with `400 0|InvalidCheckMacValue` and do not emit.
+
+### Receiving Callbacks Without the Built-in Server
+
+If you already run an HTTP framework (Express, NestJS, Fastify, etc.) and prefer it to receive the notifications, pass the parsed JSON envelope to `handleRefundNotification()` / `handleUseStatusNotification()`. Both verify `CheckMacValue`, decrypt `Data`, emit the corresponding event, and return the typed notification. They throw `ECPayTicketCallbackError` on invalid envelopes.
+
+```typescript
+import {
+  ECPayTicketGateway,
+  ECPayTicketCallbackError,
+  ECPayTicketResponseEnvelope,
+} from '@rytass/payments-adapter-ecpay';
+
+const ticket = new ECPayTicketGateway({
+  merchantId: process.env.ECPAY_MERCHANT_ID!,
+  hashKey: process.env.ECPAY_HASH_KEY!,
+  hashIv: process.env.ECPAY_HASH_IV!,
+  // No withServer — your framework handles HTTP
+});
+
+// Pass these URLs to ECPay via the issue() input
+const refundNotifyUrl = 'https://your-app.com/ecpay/ticket/refund';
+const useStatusNotifyUrl = 'https://your-app.com/ecpay/ticket/use-status';
+
+// === Express ===
+import express from 'express';
+const app = express();
+
+app.post('/ecpay/ticket/refund', express.json(), (req, res) => {
+  try {
+    const notification = ticket.handleRefundNotification(req.body as ECPayTicketResponseEnvelope);
+    // notification is also emitted via ticket.emitter
+    res.type('text/plain').send('1|OK');
+  } catch (err) {
+    if (err instanceof ECPayTicketCallbackError) {
+      res.status(400).type('text/plain').send(`0|${err.code}`);
+      return;
+    }
+    res.status(500).type('text/plain').send('0|InternalError');
+  }
+});
+
+app.post('/ecpay/ticket/use-status', express.json(), (req, res) => {
+  try {
+    ticket.handleUseStatusNotification(req.body as ECPayTicketResponseEnvelope);
+    res.type('text/plain').send('1|OK');
+  } catch (err) {
+    res.status(400).type('text/plain').send('0|Invalid');
+  }
+});
+
+// === NestJS ===
+@Controller('ecpay/ticket')
+export class EcpayTicketController {
+  constructor(@Inject('ECPAY_TICKET') private readonly ticket: ECPayTicketGateway) {}
+
+  @Post('refund')
+  refund(@Body() envelope: ECPayTicketResponseEnvelope): string {
+    this.ticket.handleRefundNotification(envelope);
+    return '1|OK';
+  }
+
+  @Post('use-status')
+  useStatus(@Body() envelope: ECPayTicketResponseEnvelope): string {
+    this.ticket.handleUseStatusNotification(envelope);
+    return '1|OK';
+  }
+}
+```
+
+The event listeners registered on `ticket.emitter` fire identically regardless of whether the notification arrived via the built-in server or via these framework-agnostic handlers — pick whichever transport fits your stack.
