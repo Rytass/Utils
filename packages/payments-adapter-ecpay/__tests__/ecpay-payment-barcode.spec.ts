@@ -39,6 +39,10 @@ describe('ECPayPayment (Barcode)', () => {
     return mockServer;
   });
 
+  afterAll(() => {
+    mockedCreateServer.mockRestore();
+  });
+
   describe('Barcode', () => {
     it('should throw on not barcode channel set cvsBarcodeExpireDays', done => {
       const payment = new ECPayPayment<ECPayChannelBarcode>({

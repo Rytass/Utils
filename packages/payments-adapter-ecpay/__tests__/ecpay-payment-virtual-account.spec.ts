@@ -46,6 +46,10 @@ describe('ECPayPayment (Virtual Account)', () => {
     return mockServer;
   });
 
+  afterAll(() => {
+    mockedCreateServer.mockRestore();
+  });
+
   describe('Virtual account', () => {
     const payment = new ECPayPayment<ECPayChannelVirtualAccount | ECPayChannelCreditCard>({
       serverHost: 'http://localhost:9999',

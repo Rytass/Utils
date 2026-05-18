@@ -38,6 +38,10 @@ describe('ECPayOrder', () => {
     return mockServer;
   });
 
+  afterAll(() => {
+    mockedCreateServer.mockRestore();
+  });
+
   const payment = new ECPayPayment();
 
   it('should calculate total price', async () => {

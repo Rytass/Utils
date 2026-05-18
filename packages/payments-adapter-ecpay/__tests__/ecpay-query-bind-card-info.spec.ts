@@ -60,6 +60,10 @@ describe('ECPayPayment Query Card Bound Info', () => {
     return mockServer;
   });
 
+  afterAll(() => {
+    mockedCreateServer.mockRestore();
+  });
+
   const post = jest.spyOn(axios, 'post');
 
   const payment = new ECPayPayment({

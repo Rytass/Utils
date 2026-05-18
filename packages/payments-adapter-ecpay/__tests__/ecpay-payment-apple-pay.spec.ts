@@ -32,6 +32,10 @@ describe('ECPayPayment (Apple Pay)', () => {
     return mockServer;
   });
 
+  afterAll(() => {
+    mockedCreateServer.mockRestore();
+  });
+
   describe('Apple Pay', () => {
     const payment = new ECPayPayment<ECPayChannelApplePay>();
 

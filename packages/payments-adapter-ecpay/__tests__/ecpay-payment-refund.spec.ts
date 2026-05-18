@@ -68,6 +68,10 @@ describe('ECPayPayment Refund', () => {
     return mockServer;
   });
 
+  afterAll(() => {
+    mockedCreateServer.mockRestore();
+  });
+
   describe('Waiting withServer mode server listen', () => {
     it('should reject credit card trade status getter on server not ready', done => {
       const payment = new ECPayPayment({
