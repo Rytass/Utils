@@ -85,10 +85,24 @@ export interface ECPayTicketGatewayOptions {
   baseUrl?: ECPayTicketBaseUrls | string;
   platformId?: string;
 
-  issuePoll?: {
-    intervalMs?: number;
-    timeoutMs?: number;
-  };
+  /**
+   * Background-polling configuration for `issue()`.
+   *
+   * - `undefined` (default) — gateway polls every 30s up to 6min after `issue()`
+   *   resolves, then emits `TICKET_ISSUED` or `TICKET_ISSUE_FAILED`.
+   * - `{ intervalMs, timeoutMs }` — override the defaults.
+   * - `false` — disable background polling entirely. `issue()` returns the
+   *   receipt and does NOT emit issuance events. You must drive polling
+   *   yourself by calling `queryIssueResult()`. `waitForIssuance: true` still
+   *   works per call (it triggers a one-shot poll loop using the default
+   *   interval/timeout regardless of this setting).
+   */
+  issuePoll?:
+    | false
+    | {
+        intervalMs?: number;
+        timeoutMs?: number;
+      };
 
   issuedTicketsCache?: IssuedTicketsCache;
   issuedTicketsCacheTTL?: number;

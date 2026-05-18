@@ -54,6 +54,7 @@ export class ECPayTicketGateway {
 
   private readonly pollIntervalMs: number;
   private readonly pollTimeoutMs: number;
+  private readonly backgroundPollingEnabled: boolean;
 
   private readonly issuedTicketsCache: IssuedTicketsCache;
 
@@ -76,8 +77,12 @@ export class ECPayTicketGateway {
     this.baseUrl = options?.baseUrl ?? this.baseUrl;
     this.platformId = options?.platformId;
 
-    this.pollIntervalMs = options?.issuePoll?.intervalMs ?? DEFAULT_POLL_INTERVAL_MS;
-    this.pollTimeoutMs = options?.issuePoll?.timeoutMs ?? DEFAULT_POLL_TIMEOUT_MS;
+    this.backgroundPollingEnabled = options?.issuePoll !== false;
+
+    const pollConfig = options?.issuePoll === false ? undefined : options?.issuePoll;
+
+    this.pollIntervalMs = pollConfig?.intervalMs ?? DEFAULT_POLL_INTERVAL_MS;
+    this.pollTimeoutMs = pollConfig?.timeoutMs ?? DEFAULT_POLL_TIMEOUT_MS;
 
     this.serverHost = options?.serverHost ?? this.serverHost;
     this.refundNotifyPath = options?.refundNotifyPath ?? this.refundNotifyPath;
@@ -360,10 +365,12 @@ export class ECPayTicketGateway {
       });
     }
 
-    const pollingPromise = this.startBackgroundPolling(receipt.merchantTradeNo, receipt.freeTradeNo);
-
     if (input.waitForIssuance) {
-      return pollingPromise;
+      return this.startBackgroundPolling(receipt.merchantTradeNo, receipt.freeTradeNo);
+    }
+
+    if (this.backgroundPollingEnabled) {
+      void this.startBackgroundPolling(receipt.merchantTradeNo, receipt.freeTradeNo);
     }
 
     return receipt;

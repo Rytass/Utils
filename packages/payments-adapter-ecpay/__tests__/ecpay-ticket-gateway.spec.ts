@@ -213,6 +213,114 @@ describe('ECPayTicketGateway', () => {
       ).rejects.toThrow(/Invalid CheckMacValue/);
     });
 
+    it('with issuePoll: false, does not start background polling after issue()', async () => {
+      const gateway = new ECPayTicketGateway({ issuePoll: false });
+
+      const issueDecrypted: ECPayTicketIssueResponseDecrypted = {
+        RtnCode: 1,
+        RtnMsg: 'OK',
+        MerchantTradeNo: 'M-NO-POLL',
+        TicketTradeNo: 'TT-NO-POLL',
+        TicketData: [],
+      };
+
+      let issueCalls = 0;
+      let queryCalls = 0;
+
+      post.mockImplementation(async (url: string) => {
+        if (url.endsWith('/api/Ticket/Issue')) {
+          issueCalls += 1;
+
+          return { data: buildTicketResponseEnvelope(issueDecrypted) };
+        }
+
+        queryCalls += 1;
+
+        return {
+          data: buildTicketResponseEnvelope<ECPayTicketQueryIssueResultResponseDecrypted>({
+            RtnCode: 1,
+            RtnMsg: 'OK',
+            MerchantTradeNo: 'M-NO-POLL',
+            Status: 3,
+            Remark: '',
+          }),
+        };
+      });
+
+      let issuedFired = false;
+      let issueFailedFired = false;
+
+      gateway.emitter.on(ECPayTicketEvents.TICKET_ISSUED, () => {
+        issuedFired = true;
+      });
+
+      gateway.emitter.on(ECPayTicketEvents.TICKET_ISSUE_FAILED, () => {
+        issueFailedFired = true;
+      });
+
+      await gateway.issue({
+        merchantTradeNo: 'M-NO-POLL',
+        issueType: ECPayIssueType.CVS,
+        operator: 'Tester',
+        tickets: [{ itemNo: 'I1', ticketAmount: 1 }],
+      });
+
+      // Give any (incorrectly-scheduled) timers a chance to run
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      expect(issueCalls).toBe(1);
+      expect(queryCalls).toBe(0);
+      expect(issuedFired).toBe(false);
+      expect(issueFailedFired).toBe(false);
+    });
+
+    it('issuePoll: false still honours waitForIssuance: true on a per-call basis', async () => {
+      const gateway = new ECPayTicketGateway({
+        issuePoll: false,
+      });
+
+      // Override the default poll interval via private field (waitForIssuance path uses defaults)
+      // For a fast test, the public API doesn't allow tuning when issuePoll:false, so we override via reflection:
+      // @ts-expect-error white-box: shrink the poll interval to keep the test fast
+      gateway.pollIntervalMs = 10;
+      // @ts-expect-error
+      gateway.pollTimeoutMs = 1000;
+
+      const issueDecrypted: ECPayTicketIssueResponseDecrypted = {
+        RtnCode: 1,
+        RtnMsg: 'OK',
+        MerchantTradeNo: 'M-NO-POLL-WAIT',
+        TicketTradeNo: 'TT-NO-POLL-WAIT',
+        TicketData: [],
+      };
+
+      post.mockImplementation(async (url: string) => {
+        if (url.endsWith('/api/Ticket/Issue')) {
+          return { data: buildTicketResponseEnvelope(issueDecrypted) };
+        }
+
+        return {
+          data: buildTicketResponseEnvelope<ECPayTicketQueryIssueResultResponseDecrypted>({
+            RtnCode: 1,
+            RtnMsg: 'OK',
+            MerchantTradeNo: 'M-NO-POLL-WAIT',
+            Status: 1,
+            Remark: '',
+          }),
+        };
+      });
+
+      const outcome = (await gateway.issue({
+        merchantTradeNo: 'M-NO-POLL-WAIT',
+        issueType: ECPayIssueType.CVS,
+        operator: 'Tester',
+        tickets: [{ itemNo: 'I1', ticketAmount: 1 }],
+        waitForIssuance: true,
+      })) as ECPayTicketIssueOutcome;
+
+      expect(outcome.status).toBe('success');
+    });
+
     it('with waitForIssuance=true, resolves with the final outcome after polling', async () => {
       const gateway = new ECPayTicketGateway({
         issuePoll: { intervalMs: 10, timeoutMs: 5_000 },
