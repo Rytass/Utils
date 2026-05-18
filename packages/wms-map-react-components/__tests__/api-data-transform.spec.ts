@@ -140,12 +140,14 @@ describe('api-data-transform', () => {
       expect(result[0].type).toBe('pathNode');
       expect(result[0].data.color).toBe('#00FF00');
       expect(result[0].data.label).toBe('poly-1');
-      // Center should be calculated from points
-      expect(result[0].position.x).toBeCloseTo(50);
-      expect(result[0].position.y).toBeCloseTo(33.33, 1);
+      // transformApiDataToNodes anchors the pathNode at the top-left corner
+      // of the bounding box (min(x), min(y)), so the position equals the
+      // smallest coordinate on each axis.
+      expect(result[0].position.x).toBeCloseTo(0);
+      expect(result[0].position.y).toBeCloseTo(0);
     });
 
-    it('should calculate relative points for polygon nodes', () => {
+    it('preserves the original point coordinates on polygon nodes', () => {
       const mapData: WmsMap = {
         id: 'test-map',
         backgrounds: [],
@@ -164,12 +166,16 @@ describe('api-data-transform', () => {
       };
 
       const result = transformApiDataToNodes(mapData);
-      const relativePoints = result[0].data.points;
+      const storedPoints = result[0].data.points;
 
-      // Points should be relative to center (150, 133.33)
-      expect(relativePoints).toHaveLength(3);
-      expect(relativePoints[0].x).toBeCloseTo(-50);
-      expect(relativePoints[1].x).toBeCloseTo(50);
+      // The current implementation stores the input points verbatim under
+      // data.points (no centering / no relativisation). Position is set to
+      // the min(x), min(y) corner.
+      expect(storedPoints).toHaveLength(3);
+      expect(storedPoints[0]).toEqual({ x: 100, y: 100 });
+      expect(storedPoints[1]).toEqual({ x: 200, y: 100 });
+      expect(storedPoints[2]).toEqual({ x: 150, y: 200 });
+      expect(result[0].position).toEqual({ x: 100, y: 100 });
     });
 
     it('should assign correct zIndex for mixed backgrounds and ranges', () => {

@@ -13,11 +13,13 @@ export class CustomMaterialEntity extends MaterialEntity {
 export const materialMock = {
   m1: {
     id: 'M1',
+    key: 'M1',
     name: 'Material 1',
     customField: 'Custom Field 1',
   },
   m2: {
     id: 'M2',
+    key: 'M2',
     name: 'Material 2',
     customField: 'Custom Field 2',
   },

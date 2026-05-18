@@ -43,6 +43,7 @@ describe('material', () => {
   it('should create a custom material entity', async () => {
     const material = await service.create({
       id: 'SOME_MATERIAL_ID',
+      key: 'SOME_MATERIAL_ID',
       name: 'Test Material',
       customField: 'custom value',
     });
@@ -55,6 +56,7 @@ describe('material', () => {
   it('should create material with minimal required fields', async () => {
     const material = await service.create({
       id: 'MINIMAL_MATERIAL',
+      key: 'MINIMAL_MATERIAL',
     });
 
     expect(material).toHaveProperty('id', 'MINIMAL_MATERIAL');
@@ -65,6 +67,7 @@ describe('material', () => {
   it('should create material with all custom fields', async () => {
     const material = await service.create({
       id: 'FULL_MATERIAL',
+      key: 'FULL_MATERIAL',
       name: 'Full Test Material',
       customField: 'Full custom value',
     });
@@ -77,6 +80,7 @@ describe('material', () => {
   it('should handle empty string values', async () => {
     const material = await service.create({
       id: 'EMPTY_STRING_MATERIAL',
+      key: 'EMPTY_STRING_MATERIAL',
       name: '',
       customField: '',
     });
@@ -89,12 +93,14 @@ describe('material', () => {
   it('should create multiple materials with different IDs', async () => {
     const material1 = await service.create({
       id: 'MATERIAL_1',
+      key: 'MATERIAL_1',
       name: 'Material One',
       customField: 'Custom One',
     });
 
     const material2 = await service.create({
       id: 'MATERIAL_2',
+      key: 'MATERIAL_2',
       name: 'Material Two',
       customField: 'Custom Two',
     });
@@ -110,6 +116,7 @@ describe('material', () => {
 
     const material = (await service.create({
       id: 'SPECIAL_CHARS_MATERIAL',
+      key: 'SPECIAL_CHARS_MATERIAL',
       name: specialName,
       customField: specialCustomField,
     })) as CustomMaterialEntity;
@@ -124,6 +131,7 @@ describe('material', () => {
 
     const material = (await service.create({
       id: 'LONG_FIELDS_MATERIAL',
+      key: 'LONG_FIELDS_MATERIAL',
       name: longName,
       customField: longCustomField,
     })) as CustomMaterialEntity;
@@ -135,6 +143,7 @@ describe('material', () => {
   it('should auto-generate timestamps for created material', async () => {
     const material = await service.create({
       id: 'TIMESTAMP_MATERIAL',
+      key: 'TIMESTAMP_MATERIAL',
       name: 'Test Material',
       customField: 'Test Value',
     });

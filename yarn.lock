@@ -6235,11 +6235,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nestjs/common@npm:^11.1.14":
-  version: 11.1.14
-  resolution: "@nestjs/common@npm:11.1.14"
+"@nestjs/common@npm:^11.1.21":
+  version: 11.1.21
+  resolution: "@nestjs/common@npm:11.1.21"
   dependencies:
-    file-type: "npm:21.3.0"
+    file-type: "npm:21.3.4"
     iterare: "npm:1.2.1"
     load-esm: "npm:1.0.3"
     tslib: "npm:2.8.1"
@@ -6254,7 +6254,7 @@ __metadata:
       optional: true
     class-validator:
       optional: true
-  checksum: 10c0/bba35fabdc350dfd362009e15a2cb6b660a53325ee6c1863f04667df0201b51b334226ace2985505969727aaf5b494396dd33f682ce75d0f3b1cab1d206a11e9
+  checksum: 10c0/534c2b2f05f4825e4d9374423607d4e4dc42398e110145a4a5d493ed4e4cdf7d8eba0a95abd17c091280f8628db00195b835db92bbc5a309b90d37630fd85782
   languageName: node
   linkType: hard
 
@@ -6272,14 +6272,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nestjs/core@npm:^11.1.14":
-  version: 11.1.14
-  resolution: "@nestjs/core@npm:11.1.14"
+"@nestjs/core@npm:^11.1.21":
+  version: 11.1.21
+  resolution: "@nestjs/core@npm:11.1.21"
   dependencies:
     "@nuxt/opencollective": "npm:0.4.1"
     fast-safe-stringify: "npm:2.1.1"
     iterare: "npm:1.2.1"
-    path-to-regexp: "npm:8.3.0"
+    path-to-regexp: "npm:8.4.2"
     tslib: "npm:2.8.1"
     uid: "npm:2.0.2"
   peerDependencies:
@@ -6296,7 +6296,7 @@ __metadata:
       optional: true
     "@nestjs/websockets":
       optional: true
-  checksum: 10c0/842c8048fb83bc6df70975d91ec357bacb6d2cc42791e709d122fda16c6343d279cf9f4ec88c5427b02de5c3f40f3271b9c62367c662c39cdad838b5962669e9
+  checksum: 10c0/eede587f133d3e813008e4656a84c4e598d24e28d9d1a9fc049285d3af4197e4221fd7aa62fcd5d0607e86b460b0217b619ec9b88f44ef11b27200cedd218086
   languageName: node
   linkType: hard
 
@@ -8070,7 +8070,7 @@ __metadata:
   resolution: "@rytass/file-converter-adapter-image-transcoder@workspace:packages/file-converter-adapter-image-transcoder"
   dependencies:
     "@rytass/file-converter": "npm:^0.1.5"
-    file-type: "npm:^21.3.0"
+    file-type: "npm:^21.3.4"
     sharp: "npm:^0.34.5"
   languageName: unknown
   linkType: soft
@@ -8095,7 +8095,7 @@ __metadata:
   resolution: "@rytass/invoice-adapter-amego@workspace:packages/invoice-adapter-amego"
   dependencies:
     "@rytass/invoice": "npm:^0.4.10"
-    axios: "npm:^1.13.5"
+    axios: "npm:^1.16.1"
     luxon: "npm:^3.7.2"
     validator: "npm:^13.15.26"
   languageName: unknown
@@ -8106,7 +8106,7 @@ __metadata:
   resolution: "@rytass/invoice-adapter-bank-pro@workspace:packages/invoice-adapter-bank-pro"
   dependencies:
     "@rytass/invoice": "npm:^0.4.10"
-    axios: "npm:^1.13.5"
+    axios: "npm:^1.16.1"
     luxon: "npm:^3.7.2"
     validator: "npm:^13.15.26"
   languageName: unknown
@@ -8118,7 +8118,7 @@ __metadata:
   dependencies:
     "@rytass/invoice": "npm:^0.4.10"
     "@types/validator": "npm:^13.15.10"
-    axios: "npm:^1.13.5"
+    axios: "npm:^1.16.1"
     luxon: "npm:^3.7.2"
     validator: "npm:^13.15.26"
   languageName: unknown
@@ -8129,7 +8129,7 @@ __metadata:
   resolution: "@rytass/invoice-adapter-ezpay@workspace:packages/invoice-adapter-ezpay"
   dependencies:
     "@rytass/invoice": "npm:^0.4.10"
-    axios: "npm:^1.13.5"
+    axios: "npm:^1.16.1"
     form-data: "npm:^4.0.5"
     luxon: "npm:^3.7.2"
     validator: "npm:^13.15.26"
@@ -8142,7 +8142,7 @@ __metadata:
   dependencies:
     "@rytass/invoice": "npm:^0.4.10"
     "@types/validator": "npm:^13.15.10"
-    axios: "npm:^1.13.5"
+    axios: "npm:^1.16.1"
     luxon: "npm:^3.7.2"
     validator: "npm:^13.15.26"
   languageName: unknown
@@ -8161,7 +8161,7 @@ __metadata:
   resolution: "@rytass/logistics-adapter-ctc@workspace:packages/logistics-adapter-ctc"
   dependencies:
     "@rytass/logistics": "npm:^0.0.13"
-    axios: "npm:^1.13.5"
+    axios: "npm:^1.16.1"
     cheerio: "npm:^1.2.0"
   languageName: unknown
   linkType: soft
@@ -8171,7 +8171,7 @@ __metadata:
   resolution: "@rytass/logistics-adapter-tcat@workspace:packages/logistics-adapter-tcat"
   dependencies:
     "@rytass/logistics": "npm:^0.0.13"
-    axios: "npm:^1.13.5"
+    axios: "npm:^1.16.1"
     cheerio: "npm:^1.2.0"
   languageName: unknown
   linkType: soft
@@ -8231,7 +8231,7 @@ __metadata:
   dependencies:
     "@rytass/payments": "npm:^0.2.7"
     "@types/debug": "npm:^4.1.12"
-    axios: "npm:^1.13.5"
+    axios: "npm:^1.16.1"
     debug: "npm:^4.4.3"
     iconv-lite: "npm:^0.7.2"
     lru-cache: "npm:^11.2.6"
@@ -8248,7 +8248,7 @@ __metadata:
   dependencies:
     "@rytass/payments": "npm:^0.2.7"
     "@types/debug": "npm:^4.1.12"
-    axios: "npm:^1.13.5"
+    axios: "npm:^1.16.1"
     debug: "npm:^4.4.3"
     lru-cache: "npm:^11.2.6"
     luxon: "npm:^3.7.2"
@@ -8263,8 +8263,8 @@ __metadata:
   dependencies:
     "@rytass/payments": "npm:^0.2.7"
     "@types/lodash": "npm:^4"
-    axios: "npm:^1.13.5"
-    lodash: "npm:^4.17.23"
+    axios: "npm:^1.16.1"
+    lodash: "npm:^4.18.1"
     luxon: "npm:^3.7.2"
   languageName: unknown
   linkType: soft
@@ -8274,7 +8274,7 @@ __metadata:
   resolution: "@rytass/payments-adapter-hwanan@workspace:packages/payments-adapter-hwanan"
   dependencies:
     "@rytass/payments": "npm:^0.2.7"
-    axios: "npm:^1.13.5"
+    axios: "npm:^1.16.1"
     lru-cache: "npm:^11.2.6"
   peerDependencies:
     "@ngrok/ngrok": ^1.5.1
@@ -8287,7 +8287,7 @@ __metadata:
   dependencies:
     "@rytass/payments": "npm:^0.2.7"
     "@types/debug": "npm:^4"
-    axios: "npm:^1.13.5"
+    axios: "npm:^1.16.1"
     debug: "npm:^4.4.3"
     luxon: "npm:^3.7.2"
   languageName: unknown
@@ -8298,7 +8298,7 @@ __metadata:
   resolution: "@rytass/payments-adapter-newebpay@workspace:packages/payments-adapter-newebpay"
   dependencies:
     "@rytass/payments": "npm:^0.2.7"
-    axios: "npm:^1.13.5"
+    axios: "npm:^1.16.1"
     lru-cache: "npm:^11.2.6"
     luxon: "npm:^3.7.2"
   peerDependencies:
@@ -8328,7 +8328,7 @@ __metadata:
   resolution: "@rytass/quadrats-nestjs@workspace:packages/quadrats-nestjs"
   dependencies:
     "@quadrats/core": "npm:^1.1.9"
-    axios: "npm:^1.13.5"
+    axios: "npm:^1.16.1"
     form-data: "npm:^4.0.5"
   peerDependencies:
     "@nestjs/common": ^11.0.0
@@ -8352,7 +8352,7 @@ __metadata:
   resolution: "@rytass/secret-adapter-vault@workspace:packages/secret-adapter-vault"
   dependencies:
     "@rytass/secret": "npm:^0.1.3"
-    axios: "npm:^1.13.5"
+    axios: "npm:^1.16.1"
   languageName: unknown
   linkType: soft
 
@@ -8447,7 +8447,7 @@ __metadata:
   resolution: "@rytass/storages@workspace:packages/storages"
   dependencies:
     "@rytass/file-converter": "npm:^0.1.5"
-    file-type: "npm:^21.3.0"
+    file-type: "npm:^21.3.4"
   languageName: unknown
   linkType: soft
 
@@ -11979,14 +11979,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^1.13.5":
-  version: 1.13.5
-  resolution: "axios@npm:1.13.5"
+"axios@npm:^1.16.1":
+  version: 1.16.1
+  resolution: "axios@npm:1.16.1"
   dependencies:
-    follow-redirects: "npm:^1.15.11"
+    follow-redirects: "npm:^1.16.0"
     form-data: "npm:^4.0.5"
-    proxy-from-env: "npm:^1.1.0"
-  checksum: 10c0/abf468c34f2d145f3dc7dbc0f1be67e520630624307bda69a41bbe8d386bd672d87b4405c4ee77f9ff54b235ab02f96a9968fb00e75b13ce64706e352a3068fd
+    https-proxy-agent: "npm:^5.0.1"
+    proxy-from-env: "npm:^2.1.0"
+  checksum: 10c0/2f77e37e6552bbff8a772d058fb09500198e9188c6b20dc799d82dbe12a8cb506f6eed4e4e62a9ba612a35cbab496faa26d68f9bff14a53af6d15c3e136391a7
   languageName: node
   linkType: hard
 
@@ -16383,15 +16384,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"file-type@npm:21.3.0, file-type@npm:^21.3.0":
-  version: 21.3.0
-  resolution: "file-type@npm:21.3.0"
+"file-type@npm:21.3.4, file-type@npm:^21.3.4":
+  version: 21.3.4
+  resolution: "file-type@npm:21.3.4"
   dependencies:
     "@tokenizer/inflate": "npm:^0.4.1"
     strtok3: "npm:^10.3.4"
     token-types: "npm:^6.1.1"
     uint8array-extras: "npm:^1.4.0"
-  checksum: 10c0/1b1fa909e6063044a6da1d2ea348ee4d747ed9286382d3f0d4d6532c11fb2ea9f2e7e67b2bc7d745d1bc937e05dee1aa8cb912c64250933bcb393a3744f4e284
+  checksum: 10c0/6f15e7538c5d73f9308d2e897365d253a6647a6751bb1b0d85c78aebc02b8976afb7c6c9b3759687a064b1b3d60246e5504746b8f11e38b0d5a1b339087e00d2
   languageName: node
   linkType: hard
 
@@ -16546,6 +16547,16 @@ __metadata:
     debug:
       optional: true
   checksum: 10c0/d301f430542520a54058d4aeeb453233c564aaccac835d29d15e050beb33f339ad67d9bddbce01739c5dc46a6716dbe3d9d0d5134b1ca203effa11a7ef092343
+  languageName: node
+  linkType: hard
+
+"follow-redirects@npm:^1.16.0":
+  version: 1.16.0
+  resolution: "follow-redirects@npm:1.16.0"
+  peerDependenciesMeta:
+    debug:
+      optional: true
+  checksum: 10c0/a1e2900163e6f1b4d1ed5c221b607f41decbab65534c63fe7e287e40a5d552a6496e7d9d7d976fa4ba77b4c51c11e5e9f683f10b43011ea11e442ff128d0e181
   languageName: node
   linkType: hard
 
@@ -18116,7 +18127,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"https-proxy-agent@npm:^5.0.0":
+"https-proxy-agent@npm:^5.0.0, https-proxy-agent@npm:^5.0.1":
   version: 5.0.1
   resolution: "https-proxy-agent@npm:5.0.1"
   dependencies:
@@ -20568,10 +20579,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash@npm:4.17.23, lodash@npm:^4.17.23":
+"lodash@npm:4.17.23":
   version: 4.17.23
   resolution: "lodash@npm:4.17.23"
   checksum: 10c0/1264a90469f5bb95d4739c43eb6277d15b6d9e186df4ac68c3620443160fc669e2f14c11e7d8b2ccf078b81d06147c01a8ccced9aab9f9f63d50dcf8cace6bf6
+  languageName: node
+  linkType: hard
+
+"lodash@npm:^4.18.1":
+  version: 4.18.1
+  resolution: "lodash@npm:4.18.1"
+  checksum: 10c0/757228fc68805c59789e82185135cf85f05d0b2d3d54631d680ca79ec21944ec8314d4533639a14b8bcfbd97a517e78960933041a5af17ecb693ec6eecb99a27
   languageName: node
   linkType: hard
 
@@ -23746,10 +23764,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"path-to-regexp@npm:8.3.0":
-  version: 8.3.0
-  resolution: "path-to-regexp@npm:8.3.0"
-  checksum: 10c0/ee1544a73a3f294a97a4c663b0ce71bbf1621d732d80c9c9ed201b3e911a86cb628ebad691b9d40f40a3742fe22011e5a059d8eed2cf63ec2cb94f6fb4efe67c
+"path-to-regexp@npm:8.4.2":
+  version: 8.4.2
+  resolution: "path-to-regexp@npm:8.4.2"
+  checksum: 10c0/05b115c49b47ad252ce05faa32930f643f23769c68b8bcfe78ad833545140c48bbffb3266986d6c8d5db13a64cf12e07e0d72d9882cab830efeefa553533ebaf
   languageName: node
   linkType: hard
 
@@ -25309,10 +25327,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"proxy-from-env@npm:^1.1.0":
-  version: 1.1.0
-  resolution: "proxy-from-env@npm:1.1.0"
-  checksum: 10c0/fe7dd8b1bdbbbea18d1459107729c3e4a2243ca870d26d34c2c1bcd3e4425b7bcc5112362df2d93cc7fb9746f6142b5e272fd1cc5c86ddf8580175186f6ad42b
+"proxy-from-env@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "proxy-from-env@npm:2.1.0"
+  checksum: 10c0/ed01729fd4d094eab619cd7e17ce3698b3413b31eb102c4904f9875e677cd207392795d5b4adee9cec359dfd31c44d5ad7595a3a3ad51c40250e141512281c58
   languageName: node
   linkType: hard
 
@@ -26679,9 +26697,9 @@ __metadata:
     "@mezzanine-ui/icons": "npm:^1.0.2"
     "@mezzanine-ui/react": "npm:^1.0.2"
     "@mezzanine-ui/system": "npm:^1.0.2"
-    "@nestjs/common": "npm:^11.1.14"
+    "@nestjs/common": "npm:^11.1.21"
     "@nestjs/config": "npm:^4.0.3"
-    "@nestjs/core": "npm:^11.1.14"
+    "@nestjs/core": "npm:^11.1.21"
     "@nestjs/graphql": "npm:^13.2.4"
     "@nestjs/testing": "npm:^11.1.14"
     "@nestjs/typeorm": "npm:^11.0.0"
@@ -26708,7 +26726,7 @@ __metadata:
     "@typescript-eslint/parser": "npm:^8.56.1"
     "@xyflow/react": "npm:^12.10.1"
     argon2: "npm:^0.44.0"
-    axios: "npm:^1.13.5"
+    axios: "npm:^1.16.1"
     clsx: "npm:^2.1.1"
     cz-conventional-changelog: "npm:^3.3.0"
     dayjs: "npm:^1.11.19"
@@ -26722,7 +26740,7 @@ __metadata:
     eslint-plugin-react: "npm:^7.37.5"
     eslint-plugin-react-hooks: "npm:^7.0.1"
     eslint-plugin-storybook: "npm:^10.3.5"
-    file-type: "npm:^21.3.0"
+    file-type: "npm:^21.3.4"
     fs-extra: "npm:^11.3.3"
     gaxios: "npm:^7.1.3"
     glob: "npm:^13.0.6"
@@ -26735,7 +26753,7 @@ __metadata:
     jsonwebtoken: "npm:^9.0.3"
     lerna: "npm:^9.0.4"
     lint-staged: "npm:^16.2.7"
-    lodash: "npm:^4.17.23"
+    lodash: "npm:^4.18.1"
     memfs: "npm:^4.56.10"
     ngrok: "npm:^5.0.0-beta.2"
     node-gyp: "npm:^12.2.0"
@@ -26760,7 +26778,7 @@ __metadata:
     ts-jest: "npm:^29.4.6"
     typeorm: "npm:^0.3.28"
     typescript: "npm:^5.9.3"
-    vite: "npm:^7.3.1"
+    vite: "npm:^7.3.3"
   languageName: unknown
   linkType: soft
 
@@ -29682,9 +29700,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite@npm:^7.3.1":
-  version: 7.3.1
-  resolution: "vite@npm:7.3.1"
+"vite@npm:^7.3.3":
+  version: 7.3.3
+  resolution: "vite@npm:7.3.3"
   dependencies:
     esbuild: "npm:^0.27.0"
     fdir: "npm:^6.5.0"
@@ -29733,7 +29751,7 @@ __metadata:
       optional: true
   bin:
     vite: bin/vite.js
-  checksum: 10c0/5c7548f5f43a23533e53324304db4ad85f1896b1bfd3ee32ae9b866bac2933782c77b350eb2b52a02c625c8ad1ddd4c000df077419410650c982cd97fde8d014
+  checksum: 10c0/44fed2591d5d0a9d1f6313e0a4330659b7f1eec57e542558f12a924c53b450a84b9fad6d57ac28ec739eca1cf5ff0f62e41b965e3806c47eefdbbe13b74ec9ae
   languageName: node
   linkType: hard
 

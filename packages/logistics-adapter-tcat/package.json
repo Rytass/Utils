@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@rytass/logistics": "^0.0.13",
-    "axios": "^1.13.5",
+    "axios": "^1.16.1",
     "cheerio": "^1.2.0"
   }
 }

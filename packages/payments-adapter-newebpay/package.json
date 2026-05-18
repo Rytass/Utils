@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@rytass/payments": "^0.2.7",
-    "axios": "^1.13.5",
+    "axios": "^1.16.1",
     "lru-cache": "^11.2.6",
     "luxon": "^3.7.2"
   },

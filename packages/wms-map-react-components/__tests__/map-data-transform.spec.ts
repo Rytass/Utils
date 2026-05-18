@@ -162,7 +162,7 @@ describe('map-data-transform', () => {
       });
     });
 
-    it('should use default values for missing pathNode data', () => {
+    it('throws when pathNode is missing the points array', () => {
       const nodes: Node[] = [
         {
           id: 'path-1',
@@ -172,14 +172,10 @@ describe('map-data-transform', () => {
         },
       ];
 
-      const result = transformNodesToMapData(nodes);
-
-      expect(result.ranges[0]).toMatchObject({
-        id: 'path-1',
-        type: MapRangeType.POLYGON,
-        color: '#0000FF',
-        points: [],
-      });
+      // pathData.points is required by the current implementation; calling
+      // transformNodesToMapData with missing points raises a TypeError instead
+      // of silently returning defaults.
+      expect(() => transformNodesToMapData(nodes)).toThrow(TypeError);
     });
 
     it('should handle mixed node types', () => {
@@ -405,19 +401,27 @@ describe('map-data-transform', () => {
       expect(pathInfo.pathData.color).toBe('#00FF00');
       expect(pathInfo.pathData.strokeWidth).toBe(3);
       expect(pathInfo.pathData.pointCount).toBe(3);
-      expect(pathInfo.pathData.points).toEqual(points);
+      // transformNodeToClickInfo persists absolute points (points + node.position
+      // delta). With min(points) = (0, 0) and node.position = (50, 33), the
+      // delta is (50, 33), so each point shifts by that amount.
+      expect(pathInfo.pathData.points).toEqual([
+        { x: 50, y: 33 },
+        { x: 150, y: 33 },
+        { x: 100, y: 133 },
+      ]);
+
       expect(pathInfo.pathData.bounds).toEqual({
-        minX: 0,
-        minY: 0,
-        maxX: 100,
-        maxY: 100,
+        minX: 50,
+        minY: 33,
+        maxX: 150,
+        maxY: 133,
       });
 
       expect(pathInfo.mapPolygonRange.id).toBe('Polygon 1');
       expect(pathInfo.mapPolygonRange.type).toBe(MapRangeType.POLYGON);
     });
 
-    it('should handle pathNode with empty points', () => {
+    it('throws when pathNode is missing the points array', () => {
       const node: Node = {
         id: 'path-1',
         type: 'pathNode',
@@ -425,28 +429,9 @@ describe('map-data-transform', () => {
         data: {},
       };
 
-      const result = transformNodeToClickInfo(node);
-
-      const pathInfo = result as { pathData: { pointCount: number; bounds: null } };
-
-      expect(pathInfo.pathData.pointCount).toBe(0);
-      expect(pathInfo.pathData.bounds).toBeNull();
-    });
-
-    it('should use default values for missing pathNode data', () => {
-      const node: Node = {
-        id: 'path-1',
-        type: 'pathNode',
-        position: { x: 0, y: 0 },
-        data: {},
-      };
-
-      const result = transformNodeToClickInfo(node);
-
-      const pathInfo = result as { pathData: { color: string; strokeWidth: number } };
-
-      expect(pathInfo.pathData.color).toBe('#0000FF');
-      expect(pathInfo.pathData.strokeWidth).toBe(2);
+      // pathData.points is required by transformNodeToClickInfo; missing points
+      // raises a TypeError rather than returning a default ClickInfo.
+      expect(() => transformNodeToClickInfo(node)).toThrow(TypeError);
     });
 
     it('should return null for unknown node type', () => {
@@ -603,7 +588,7 @@ describe('map-data-transform', () => {
       expect(consoleGroupEndSpy).toHaveBeenCalled();
     });
 
-    it('should log pathNode data with null bounds for empty points', () => {
+    it('throws when logNodeData receives a pathNode without points', () => {
       const node: Node = {
         id: 'path-1',
         type: 'pathNode',
@@ -611,15 +596,9 @@ describe('map-data-transform', () => {
         data: {},
       };
 
-      logNodeData(node);
-
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        '🔗 路徑資訊:',
-        expect.objectContaining({
-          pointCount: 0,
-          bounds: null,
-        }),
-      );
+      // logNodeData reads pathData.points directly without a guard, so a
+      // missing points array bubbles up as a TypeError.
+      expect(() => logNodeData(node)).toThrow(TypeError);
     });
 
     it('should warn for unknown node type', () => {

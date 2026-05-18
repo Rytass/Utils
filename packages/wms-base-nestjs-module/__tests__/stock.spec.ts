@@ -48,29 +48,37 @@ describe('stock', () => {
       materialService.create(materialMock.m2),
     ]);
 
+    // BatchEntity.id is now a unique PK, but the user-facing batch identifier
+    // lives on `key` (with `@Unique(['key', 'materialId'])`). Each (key,
+    // materialId) pair therefore needs its own row id; tests below filter on
+    // the per-material ids explicitly.
     await orderService.createOrder(OrderEntity, {
       order: {},
       batches: [
         {
-          id: 'BatchId',
+          id: 'BatchId-M1',
+          key: 'BatchId',
           locationId: locationMock.child1.id,
           materialId: materialMock.m1.id,
           quantity: 1,
         },
         {
-          id: 'BatchId',
+          id: 'BatchId-M1',
+          key: 'BatchId',
           locationId: locationMock.child1.id,
           materialId: materialMock.m1.id,
           quantity: 2,
         },
         {
-          id: 'BatchId',
+          id: 'BatchId-M2',
+          key: 'BatchId',
           locationId: locationMock.child2.id,
           materialId: materialMock.m2.id,
           quantity: 3,
         },
         {
-          id: 'BatchId',
+          id: 'BatchId-M2',
+          key: 'BatchId',
           locationId: locationMock.child2.id,
           materialId: materialMock.m2.id,
           quantity: 4,
@@ -134,7 +142,7 @@ describe('stock', () => {
 
     it('should filter by batchIds', async () => {
       const batchQuantity = await stockService.find({
-        batchIds: ['BatchId'],
+        batchIds: ['BatchId-M1', 'BatchId-M2'],
       });
 
       expect(batchQuantity).toBe(1 + 2 + 3 + 4);
@@ -251,11 +259,13 @@ describe('stock', () => {
 
     it('should filter by batchIds in transactions', async () => {
       const transactions = await stockService.findTransactions({
-        batchIds: ['BatchId'],
+        batchIds: ['BatchId-M1', 'BatchId-M2'],
       });
 
       expect(transactions.transactionLogs).toHaveLength(4);
-      expect(transactions.transactionLogs.every(t => t.batchId === 'BatchId')).toBe(true);
+      expect(transactions.transactionLogs.every(t => t.batchId === 'BatchId-M1' || t.batchId === 'BatchId-M2')).toBe(
+        true,
+      );
     });
 
     it('should filter by locationIds with exactLocationMatch', async () => {
@@ -325,7 +335,7 @@ describe('stock', () => {
       const transactions = await stockService.findTransactions({
         locationIds: [locationMock.parent.id],
         materialIds: [materialMock.m1.id],
-        batchIds: ['BatchId'],
+        batchIds: ['BatchId-M1'],
         exactLocationMatch: false,
       });
 
