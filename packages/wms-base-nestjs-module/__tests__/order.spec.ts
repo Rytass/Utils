@@ -98,12 +98,14 @@ describe('order', () => {
       batches: [
         {
           id: '1',
+          key: '1',
           locationId: locationMock.child1.id,
           materialId: materialMock.m1.id,
           quantity: 1,
         },
         {
           id: '2',
+          key: '2',
           locationId: locationMock.parent.id,
           materialId: materialMock.m1.id,
           quantity: 2,
@@ -117,13 +119,17 @@ describe('order', () => {
       },
       batches: [
         {
-          id: '5',
+          // BatchEntity.id is a unique PK now, so two batches that share the
+          // same user-facing identifier must use different row ids.
+          id: '5-M1',
+          key: '5',
           locationId: locationMock.child1.id,
           materialId: materialMock.m1.id,
           quantity: 3,
         },
         {
-          id: '5',
+          id: '5-M2',
+          key: '5',
           locationId: locationMock.parent.id,
           materialId: materialMock.m2.id,
           quantity: 4,
@@ -172,6 +178,7 @@ describe('order', () => {
         batches: [
           {
             id: '1',
+            key: '1',
             locationId: locationMock.child1.id,
             materialId: materialMock.m1.id,
             quantity: 1,
@@ -191,6 +198,7 @@ describe('order', () => {
         batches: [
           {
             id: '2',
+            key: '2',
             locationId: locationMock.child1.id,
             materialId: materialMock.m1.id,
             quantity: -2,
@@ -260,6 +268,7 @@ describe('order with allowNegativeStock', () => {
       batches: [
         {
           id: '1',
+          key: '1',
           locationId: locationMock.child1.id,
           materialId: materialMock.m1.id,
           quantity: 1,
@@ -278,6 +287,7 @@ describe('order with allowNegativeStock', () => {
         batches: [
           {
             id: '2',
+            key: '2',
             locationId: locationMock.child1.id,
             materialId: materialMock.m1.id,
             quantity: -2,
@@ -290,7 +300,10 @@ describe('order with allowNegativeStock', () => {
   });
 
   it('should handle duplicate batch IDs with same materialId by creating unique batches', async () => {
-    // Create order with duplicate batch ID but same material ID
+    // Create order with the same user-facing batch identifier (`key`) reused
+    // across materials. BatchEntity.id is now a unique PK, so each (id,
+    // materialId) pair must use its own row id; the dedup logic in
+    // OrderService still merges entries with the same row id + materialId.
     const order = await orderService.createOrder(OrderAEntity, {
       order: {
         customFieldA: 'Duplicate batch test',
@@ -298,19 +311,22 @@ describe('order with allowNegativeStock', () => {
       },
       batches: [
         {
-          id: 'DUPLICATE_BATCH_ID',
+          id: 'DUPLICATE_BATCH_ID-M1',
+          key: 'DUPLICATE_BATCH_ID',
           locationId: locationMock.child1.id,
           materialId: materialMock.m1.id,
           quantity: 5,
         },
         {
-          id: 'DUPLICATE_BATCH_ID',
+          id: 'DUPLICATE_BATCH_ID-M1',
+          key: 'DUPLICATE_BATCH_ID',
           locationId: locationMock.child1.id,
           materialId: materialMock.m1.id,
           quantity: 3,
         },
         {
-          id: 'DUPLICATE_BATCH_ID',
+          id: 'DUPLICATE_BATCH_ID-M2',
+          key: 'DUPLICATE_BATCH_ID',
           locationId: locationMock.child2.id,
           materialId: materialMock.m2.id,
           quantity: 2,
@@ -319,7 +335,9 @@ describe('order with allowNegativeStock', () => {
     });
 
     expect(order.stocks).toHaveLength(3);
-    expect(order.stocks.every(s => s.batchId === 'DUPLICATE_BATCH_ID')).toBe(true);
+    expect(
+      order.stocks.every(s => s.batchId === 'DUPLICATE_BATCH_ID-M1' || s.batchId === 'DUPLICATE_BATCH_ID-M2'),
+    ).toBe(true);
 
     // Verify total quantity is correct
     const totalQuantity = order.stocks.reduce((sum, stock) => sum + stock.quantity, 0);
@@ -337,6 +355,7 @@ describe('order with allowNegativeStock', () => {
       batches: [
         {
           id: 'SETUP_BATCH',
+          key: 'SETUP_BATCH',
           locationId: locationMock.child1.id,
           materialId: materialMock.m1.id,
           quantity: 10,
@@ -353,6 +372,7 @@ describe('order with allowNegativeStock', () => {
       batches: [
         {
           id: 'ZERO_BATCH',
+          key: 'ZERO_BATCH',
           locationId: locationMock.child1.id,
           materialId: materialMock.m1.id,
           quantity: -10,
@@ -395,18 +415,21 @@ describe('order with allowNegativeStock', () => {
       batches: [
         {
           id: 'BATCH_A',
+          key: 'BATCH_A',
           locationId: locationMock.child1.id,
           materialId: materialMock.m1.id,
           quantity: 1,
         },
         {
           id: 'BATCH_B',
+          key: 'BATCH_B',
           locationId: locationMock.child2.id,
           materialId: materialMock.m1.id,
           quantity: 2,
         },
         {
           id: 'BATCH_C',
+          key: 'BATCH_C',
           locationId: locationMock.child1.id,
           materialId: materialMock.m2.id,
           quantity: 3,

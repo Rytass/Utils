@@ -78,6 +78,7 @@ describe('location', () => {
       batches: [
         {
           id: 'BatchId',
+          key: 'BatchId',
           locationId: locationMock.locationWithStock.id,
           materialId: materialMock.m1.id,
           quantity: 1,
@@ -95,6 +96,7 @@ describe('location', () => {
 
     await locationService.create({
       id: 'EmptyLocation',
+      key: 'EmptyLocation',
       customField: 'Empty Location for Archiving',
     });
 
@@ -107,6 +109,7 @@ describe('location', () => {
     // First create and archive a location
     await locationService.create({
       id: 'LocationToUnarchive',
+      key: 'LocationToUnarchive',
       customField: 'Location for Unarchiving Test',
     });
 
@@ -131,6 +134,7 @@ describe('location', () => {
     await expect(
       locationService.create({
         id: 'TestLocation',
+        key: 'TestLocation',
         customField: 'Test Location',
         parentId: 'NonExistentParent',
       }),
@@ -142,6 +146,7 @@ describe('location', () => {
 
     const location = await locationService.create({
       id: 'RootLocation',
+      key: 'RootLocation',
       customField: 'Root Location Without Parent',
     });
 
@@ -161,12 +166,14 @@ describe('location', () => {
     // Create parent location
     await locationService.create({
       id: 'ParentForDescendants',
+      key: 'ParentForDescendants',
       customField: 'Parent with Descendants',
     });
 
     // Create child location
     await locationService.create({
       id: 'ChildForDescendants',
+      key: 'ChildForDescendants',
       customField: 'Child for Archiving Test',
       parentId: 'ParentForDescendants',
     });
@@ -174,6 +181,7 @@ describe('location', () => {
     // Create grandchild location
     await locationService.create({
       id: 'GrandchildForDescendants',
+      key: 'GrandchildForDescendants',
       customField: 'Grandchild for Archiving Test',
       parentId: 'ChildForDescendants',
     });
@@ -192,6 +200,7 @@ describe('location', () => {
 
     const location = await locationService.create({
       id: 'MinimalLocation',
+      key: 'MinimalLocation',
       customField: '', // Empty custom field
     });
 
