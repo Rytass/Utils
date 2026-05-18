@@ -158,6 +158,10 @@ const ticket = new ECPayTicketGateway({
     intervalMs: 30_000, // default 30s
     timeoutMs: 6 * 60_000, // default 6min (ECPay claims completion within 5min)
   },
+  // Or disable background polling entirely:
+  // issuePoll: false,   // issue() will not emit TICKET_ISSUED / TICKET_ISSUE_FAILED;
+                       // you are expected to call queryIssueResult() yourself.
+                       // `waitForIssuance: true` still works on a per-call basis.
 });
 
 ticket.emitter.on(ECPayTicketEvents.SERVER_LISTENED, ({ url }) => {
@@ -324,23 +328,164 @@ app.post('/ecpay/ticket/use-status', express.json(), (req, res) => {
   }
 });
 
-// === NestJS ===
+```
+
+The event listeners registered on `ticket.emitter` fire identically regardless of whether the notification arrived via the built-in server or via these framework-agnostic handlers — pick whichever transport fits your stack.
+
+#### NestJS Integration
+
+A complete NestJS setup splits the concerns into three pieces: a module that constructs the gateway from `ConfigService`, a controller that turns ECPay's POSTs into typed events, and a service that subscribes to those events on startup. None of them depend on Node's raw `http` types.
+
+```typescript
+// ecpay-ticket.constants.ts
+export const ECPAY_TICKET_GATEWAY = Symbol('ECPAY_TICKET_GATEWAY');
+```
+
+```typescript
+// ecpay-ticket.module.ts
+import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ECPayTicketBaseUrls, ECPayTicketGateway } from '@rytass/payments-adapter-ecpay';
+import { ECPAY_TICKET_GATEWAY } from './ecpay-ticket.constants';
+import { EcpayTicketController } from './ecpay-ticket.controller';
+import { EcpayTicketEventService } from './ecpay-ticket-event.service';
+
+@Module({
+  imports: [ConfigModule],
+  providers: [
+    {
+      provide: ECPAY_TICKET_GATEWAY,
+      useFactory: (config: ConfigService): ECPayTicketGateway =>
+        new ECPayTicketGateway({
+          merchantId: config.getOrThrow<string>('ECPAY_MERCHANT_ID'),
+          hashKey: config.getOrThrow<string>('ECPAY_HASH_KEY'),
+          hashIv: config.getOrThrow<string>('ECPAY_HASH_IV'),
+          baseUrl:
+            config.get<string>('NODE_ENV') === 'production'
+              ? ECPayTicketBaseUrls.PRODUCTION
+              : ECPayTicketBaseUrls.DEVELOPMENT,
+          // Do NOT enable the built-in server — Nest's HTTP layer receives the callbacks.
+        }),
+      inject: [ConfigService],
+    },
+    EcpayTicketEventService,
+  ],
+  controllers: [EcpayTicketController],
+  exports: [ECPAY_TICKET_GATEWAY],
+})
+export class EcpayTicketModule {}
+```
+
+```typescript
+// ecpay-ticket.controller.ts
+import {
+  Body,
+  Controller,
+  Header,
+  HttpCode,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Logger,
+  Post,
+} from '@nestjs/common';
+import {
+  ECPayTicketCallbackError,
+  ECPayTicketGateway,
+  ECPayTicketResponseEnvelope,
+} from '@rytass/payments-adapter-ecpay';
+import { ECPAY_TICKET_GATEWAY } from './ecpay-ticket.constants';
+
 @Controller('ecpay/ticket')
 export class EcpayTicketController {
-  constructor(@Inject('ECPAY_TICKET') private readonly ticket: ECPayTicketGateway) {}
+  private readonly logger = new Logger(EcpayTicketController.name);
+
+  constructor(@Inject(ECPAY_TICKET_GATEWAY) private readonly ticket: ECPayTicketGateway) {}
 
   @Post('refund')
-  refund(@Body() envelope: ECPayTicketResponseEnvelope): string {
-    this.ticket.handleRefundNotification(envelope);
-    return '1|OK';
+  @HttpCode(HttpStatus.OK)
+  @Header('Content-Type', 'text/plain')
+  handleRefund(@Body() envelope: ECPayTicketResponseEnvelope): string {
+    try {
+      const notification = this.ticket.handleRefundNotification(envelope);
+
+      this.logger.log(`Refund accepted: ${notification.ticketTradeNo}`);
+
+      return '1|OK';
+    } catch (err) {
+      return this.toErrorResponse(err, 'refund');
+    }
   }
 
   @Post('use-status')
-  useStatus(@Body() envelope: ECPayTicketResponseEnvelope): string {
-    this.ticket.handleUseStatusNotification(envelope);
-    return '1|OK';
+  @HttpCode(HttpStatus.OK)
+  @Header('Content-Type', 'text/plain')
+  handleUseStatus(@Body() envelope: ECPayTicketResponseEnvelope): string {
+    try {
+      const notification = this.ticket.handleUseStatusNotification(envelope);
+
+      this.logger.log(`Use status: ${notification.ticketNo} → ${notification.useStatus}`);
+
+      return '1|OK';
+    } catch (err) {
+      return this.toErrorResponse(err, 'use-status');
+    }
+  }
+
+  private toErrorResponse(err: unknown, scope: string): never {
+    if (err instanceof ECPayTicketCallbackError) {
+      this.logger.warn(`Rejected ${scope} callback: ${err.code}`);
+      throw new HttpException(
+        `0|${err.code === 'INVALID_CHECKMAC' ? 'InvalidCheckMacValue' : 'InvalidData'}`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    this.logger.error(`Unexpected ${scope} callback error`, err);
+    throw new HttpException('0|InternalError', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 }
 ```
 
-The event listeners registered on `ticket.emitter` fire identically regardless of whether the notification arrived via the built-in server or via these framework-agnostic handlers — pick whichever transport fits your stack.
+```typescript
+// ecpay-ticket-event.service.ts
+import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  ECPayTicketEvents,
+  ECPayTicketGateway,
+  ECPayTicketRefundNotification,
+  ECPayTicketUseStatusNotification,
+} from '@rytass/payments-adapter-ecpay';
+import { ECPAY_TICKET_GATEWAY } from './ecpay-ticket.constants';
+
+@Injectable()
+export class EcpayTicketEventService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(EcpayTicketEventService.name);
+
+  private readonly onRefund = (n: ECPayTicketRefundNotification): void => {
+    // Persist refund, notify customer, etc.
+    this.logger.log(`Refund received: ${n.ticketTradeNo} amount=${n.refundAmount}`);
+  };
+
+  private readonly onUseStatus = (n: ECPayTicketUseStatusNotification): void => {
+    // Update ticket usage state in your DB
+    this.logger.log(`Ticket ${n.ticketNo} → ${n.useStatus}`);
+  };
+
+  constructor(@Inject(ECPAY_TICKET_GATEWAY) private readonly ticket: ECPayTicketGateway) {}
+
+  onModuleInit(): void {
+    this.ticket.emitter.on(ECPayTicketEvents.TICKET_REFUND_NOTIFIED, this.onRefund);
+    this.ticket.emitter.on(ECPayTicketEvents.TICKET_USE_STATUS_CHANGED, this.onUseStatus);
+  }
+
+  onModuleDestroy(): void {
+    this.ticket.emitter.off(ECPayTicketEvents.TICKET_REFUND_NOTIFIED, this.onRefund);
+    this.ticket.emitter.off(ECPayTicketEvents.TICKET_USE_STATUS_CHANGED, this.onUseStatus);
+  }
+}
+```
+
+**Wiring the notify URLs.** When you call `ticket.issue()`, pass `refundNotifyUrl` and `useStatusNotifyUrl` pointing at the Nest controller routes (e.g. `https://your-domain.com/ecpay/ticket/refund`). Nest's `@Body()` decorator parses the JSON for you, so the controller methods receive the typed envelope directly — no body-parser boilerplate.
+
+**Why `OnModuleDestroy`.** The event listeners are bound in `onModuleInit` and explicitly removed in `onModuleDestroy` so reloading the module (e.g. in tests or with HMR) does not leak duplicate listeners on the long-lived gateway emitter.
