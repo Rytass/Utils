@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from 'crypto';
+import { randomBytes } from 'crypto';
 import {
   PaymentGateway,
   PaymentEvents,
@@ -64,6 +64,7 @@ import {
 import { ECPayChannel, ECPayCVS, ECPayPaymentPeriodType, NUMERIC_CALLBACK_KEYS } from './constants';
 import { ECPayOrder } from './ecpay-order';
 import { ECPayBindCardRequest } from './ecpay-bind-card-request';
+import { ecpaySha256, ecpayUrlEncode } from './ecpay-utils';
 
 const debugPayment = debug('Rytass:Payment:ECPay');
 
@@ -176,28 +177,17 @@ export class ECPayPayment<CM extends ECPayCommitMessage = ECPayCommitMessage>
   }
 
   private addMac<T extends Record<string, string>>(payload: Omit<T, 'CheckMacValue'>): T {
-    const mac = createHash('sha256')
-      .update(
-        encodeURIComponent(
-          [
-            ['HashKey', this.hashKey],
-            ...Object.entries(payload).sort(([aKey], [bKey]) => (aKey.toLowerCase() < bKey.toLowerCase() ? -1 : 1)),
-            ['HashIV', this.hashIv],
-          ]
-            .map(([key, value]) => `${key}=${value}`)
-            .join('&'),
-        )
-          .toLowerCase()
-          .replace(/'/g, '%27')
-          .replace(/~/g, '%7e')
-          .replace(/%20/g, '+'),
-      )
-      .digest('hex')
-      .toUpperCase();
+    const raw = [
+      ['HashKey', this.hashKey],
+      ...Object.entries(payload).sort(([aKey], [bKey]) => (aKey.toLowerCase() < bKey.toLowerCase() ? -1 : 1)),
+      ['HashIV', this.hashIv],
+    ]
+      .map(([key, value]) => `${key}=${value}`)
+      .join('&');
 
     return {
       ...payload,
-      CheckMacValue: mac,
+      CheckMacValue: ecpaySha256(ecpayUrlEncode(raw)),
     } as unknown as T;
   }
 
