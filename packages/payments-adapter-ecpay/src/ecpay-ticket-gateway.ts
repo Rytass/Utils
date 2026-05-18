@@ -508,6 +508,53 @@ export class ECPayTicketGateway {
     });
   }
 
+  private parseAndVerifyEnvelope(envelope: ECPayTicketResponseEnvelope): Record<string, unknown> {
+    if (!this.verifyResponseEnvelope(envelope)) {
+      debugTicket('Invalid CheckMacValue on callback');
+      throw new ECPayTicketCallbackError('INVALID_CHECKMAC', 'Invalid CheckMacValue');
+    }
+
+    try {
+      return this.decrypt<Record<string, unknown>>(envelope.Data);
+    } catch {
+      throw new ECPayTicketCallbackError('INVALID_DATA', 'Failed to decrypt Data');
+    }
+  }
+
+  public handleRefundNotification(envelope: ECPayTicketResponseEnvelope): ECPayTicketRefundNotification {
+    const decrypted = this.parseAndVerifyEnvelope(envelope);
+
+    const notification: ECPayTicketRefundNotification = {
+      ...(typeof decrypted.MerchantTradeNo === 'string' ? { merchantTradeNo: decrypted.MerchantTradeNo } : {}),
+      ...(typeof decrypted.FreeTradeNo === 'string' ? { freeTradeNo: decrypted.FreeTradeNo } : {}),
+      ticketTradeNo: String(decrypted.TicketTradeNo ?? ''),
+      refundAmount: Number(decrypted.RefundAmount ?? 0),
+      ...(typeof decrypted.Remark === 'string' ? { remark: decrypted.Remark } : {}),
+      raw: decrypted,
+    };
+
+    this.emitter.emit(ECPayTicketEvents.TICKET_REFUND_NOTIFIED, notification);
+
+    return notification;
+  }
+
+  public handleUseStatusNotification(envelope: ECPayTicketResponseEnvelope): ECPayTicketUseStatusNotification {
+    const decrypted = this.parseAndVerifyEnvelope(envelope);
+
+    const notification: ECPayTicketUseStatusNotification = {
+      ...(typeof decrypted.MerchantTradeNo === 'string' ? { merchantTradeNo: decrypted.MerchantTradeNo } : {}),
+      ...(typeof decrypted.FreeTradeNo === 'string' ? { freeTradeNo: decrypted.FreeTradeNo } : {}),
+      ticketTradeNo: String(decrypted.TicketTradeNo ?? ''),
+      ticketNo: String(decrypted.TicketNo ?? ''),
+      useStatus: parseTicketUseStatus(Number(decrypted.UseStatus ?? 1)),
+      raw: decrypted,
+    };
+
+    this.emitter.emit(ECPayTicketEvents.TICKET_USE_STATUS_CHANGED, notification);
+
+    return notification;
+  }
+
   public async defaultServerListener(req: IncomingMessage, res: ServerResponse): Promise<void> {
     if (!req.url || req.method !== 'POST' || !~[this.refundNotifyPath, this.useStatusNotifyPath].indexOf(req.url)) {
       res.writeHead(404);
@@ -534,51 +581,38 @@ export class ECPayTicketGateway {
         return;
       }
 
-      if (!this.verifyResponseEnvelope(envelope)) {
-        debugTicket('Invalid CheckMacValue on callback');
-        res.writeHead(400);
-        res.end('0|InvalidCheckMacValue');
-
-        return;
-      }
-
-      let decrypted: Record<string, unknown>;
-
       try {
-        decrypted = this.decrypt<Record<string, unknown>>(envelope.Data);
-      } catch {
-        res.writeHead(400);
-        res.end('0|InvalidData');
+        if (req.url === this.refundNotifyPath) {
+          this.handleRefundNotification(envelope);
+        } else {
+          this.handleUseStatusNotification(envelope);
+        }
 
-        return;
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end('1|OK');
+      } catch (error) {
+        if (error instanceof ECPayTicketCallbackError) {
+          res.writeHead(400);
+          res.end(`0|${error.code === 'INVALID_CHECKMAC' ? 'InvalidCheckMacValue' : 'InvalidData'}`);
+
+          return;
+        }
+
+        res.writeHead(500);
+        res.end('0|InternalError');
       }
-
-      if (req.url === this.refundNotifyPath) {
-        const notification: ECPayTicketRefundNotification = {
-          ...(typeof decrypted.MerchantTradeNo === 'string' ? { merchantTradeNo: decrypted.MerchantTradeNo } : {}),
-          ...(typeof decrypted.FreeTradeNo === 'string' ? { freeTradeNo: decrypted.FreeTradeNo } : {}),
-          ticketTradeNo: String(decrypted.TicketTradeNo ?? ''),
-          refundAmount: Number(decrypted.RefundAmount ?? 0),
-          ...(typeof decrypted.Remark === 'string' ? { remark: decrypted.Remark } : {}),
-          raw: decrypted,
-        };
-
-        this.emitter.emit(ECPayTicketEvents.TICKET_REFUND_NOTIFIED, notification);
-      } else {
-        const notification: ECPayTicketUseStatusNotification = {
-          ...(typeof decrypted.MerchantTradeNo === 'string' ? { merchantTradeNo: decrypted.MerchantTradeNo } : {}),
-          ...(typeof decrypted.FreeTradeNo === 'string' ? { freeTradeNo: decrypted.FreeTradeNo } : {}),
-          ticketTradeNo: String(decrypted.TicketTradeNo ?? ''),
-          ticketNo: String(decrypted.TicketNo ?? ''),
-          useStatus: parseTicketUseStatus(Number(decrypted.UseStatus ?? 1)),
-          raw: decrypted,
-        };
-
-        this.emitter.emit(ECPayTicketEvents.TICKET_USE_STATUS_CHANGED, notification);
-      }
-
-      res.writeHead(200, { 'Content-Type': 'text/plain' });
-      res.end('1|OK');
     });
+  }
+}
+
+export type ECPayTicketCallbackErrorCode = 'INVALID_CHECKMAC' | 'INVALID_DATA';
+
+export class ECPayTicketCallbackError extends Error {
+  public readonly code: ECPayTicketCallbackErrorCode;
+
+  constructor(code: ECPayTicketCallbackErrorCode, message: string) {
+    super(message);
+    this.name = 'ECPayTicketCallbackError';
+    this.code = code;
   }
 }

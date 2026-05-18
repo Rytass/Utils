@@ -27,7 +27,8 @@ export { ECPayPayment } from './ecpay-payment';
 export { ECPayOrder } from './ecpay-order';
 export { ECPayOrderItem } from './ecpay-order-item';
 export { ECPayBindCardRequest } from './ecpay-bind-card-request';
-export { ECPayTicketGateway } from './ecpay-ticket-gateway';
+export { ECPayTicketGateway, ECPayTicketCallbackError } from './ecpay-ticket-gateway';
+export type { ECPayTicketCallbackErrorCode } from './ecpay-ticket-gateway';
 
 export {
   ECPayTicketBaseUrls,
@@ -51,6 +52,8 @@ export type {
   ECPayTicketInfo,
   ECPayTicketRefundNotification,
   ECPayTicketUseStatusNotification,
+  ECPayTicketResponseEnvelope,
+  ECPayTicketRequestEnvelope,
   IssuedTicketsCache,
   IssuedTicketRecord,
 } from './ecpay-ticket-typings';

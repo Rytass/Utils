@@ -8,6 +8,7 @@ import http, { createServer } from 'http';
 import {
   ECPayIssueType,
   ECPayPrintType,
+  ECPayTicketCallbackError,
   ECPayTicketEvents,
   ECPayTicketGateway,
   ECPayTicketIssueOutcome,
@@ -498,6 +499,103 @@ describe('ECPayTicketGateway', () => {
           gateway._server?.close(done);
         },
       });
+    });
+  });
+
+  describe('framework-agnostic notification handlers (no built-in server)', () => {
+    it('handleRefundNotification returns parsed notification and emits event', () => {
+      const gateway = new ECPayTicketGateway();
+
+      const envelope = buildTicketResponseEnvelope({
+        MerchantTradeNo: 'M-REF-1',
+        TicketTradeNo: 'TT-REF-1',
+        RefundAmount: 350,
+        Remark: 'customer requested',
+      });
+
+      let emitted: ECPayTicketRefundNotification | undefined;
+
+      gateway.emitter.on(ECPayTicketEvents.TICKET_REFUND_NOTIFIED, n => {
+        emitted = n;
+      });
+
+      const result = gateway.handleRefundNotification(envelope);
+
+      expect(result.merchantTradeNo).toBe('M-REF-1');
+      expect(result.ticketTradeNo).toBe('TT-REF-1');
+      expect(result.refundAmount).toBe(350);
+      expect(result.remark).toBe('customer requested');
+      expect(emitted).toBe(result);
+    });
+
+    it('handleUseStatusNotification returns parsed notification and emits event', () => {
+      const gateway = new ECPayTicketGateway();
+
+      const envelope = buildTicketResponseEnvelope({
+        MerchantTradeNo: 'M-USE-1',
+        TicketTradeNo: 'TT-USE-1',
+        TicketNo: 'TKT-USE-X',
+        UseStatus: 2,
+      });
+
+      let emitted: ECPayTicketUseStatusNotification | undefined;
+
+      gateway.emitter.on(ECPayTicketEvents.TICKET_USE_STATUS_CHANGED, n => {
+        emitted = n;
+      });
+
+      const result = gateway.handleUseStatusNotification(envelope);
+
+      expect(result.ticketNo).toBe('TKT-USE-X');
+      expect(result.useStatus).toBe(ECPayTicketUseStatus.REDEEMED);
+      expect(emitted).toBe(result);
+    });
+
+    it('handleRefundNotification throws ECPayTicketCallbackError(INVALID_CHECKMAC) on tampered envelope', () => {
+      const gateway = new ECPayTicketGateway();
+
+      const envelope = buildTicketResponseEnvelope({ TicketTradeNo: 'X', RefundAmount: 1 });
+
+      envelope.CheckMacValue = 'TAMPERED';
+
+      let fired = false;
+
+      gateway.emitter.on(ECPayTicketEvents.TICKET_REFUND_NOTIFIED, () => {
+        fired = true;
+      });
+
+      try {
+        gateway.handleRefundNotification(envelope);
+        throw new Error('expected to throw');
+      } catch (err) {
+        expect(err).toBeInstanceOf(ECPayTicketCallbackError);
+        expect((err as ECPayTicketCallbackError).code).toBe('INVALID_CHECKMAC');
+      }
+
+      expect(fired).toBe(false);
+    });
+
+    it('handleUseStatusNotification throws ECPayTicketCallbackError(INVALID_DATA) when Data cannot be decrypted', () => {
+      const gateway = new ECPayTicketGateway();
+
+      const garbageData = 'NOT-A-VALID-AES-BASE64-PAYLOAD';
+      const envelope = {
+        PlatformID: '',
+        MerchantID: '2000132',
+        RpHeader: { Timestamp: Math.round(Date.now() / 1000) },
+        TransCode: 1,
+        TransMsg: '',
+        Data: garbageData,
+        CheckMacValue: computeTicketCheckMacValue(garbageData),
+      };
+
+      try {
+        gateway.handleUseStatusNotification(envelope);
+        throw new Error('expected to throw');
+      } catch (err) {
+        expect(err).toBeInstanceOf(ECPayTicketCallbackError);
+        expect((err as ECPayTicketCallbackError).code).toBe('INVALID_DATA');
+      }
     });
   });
 
