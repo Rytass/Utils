@@ -39,6 +39,10 @@ describe('ECPayPayment (CVS)', () => {
     return mockServer;
   });
 
+  afterAll(() => {
+    mockedCreateServer.mockRestore();
+  });
+
   describe('CVS', () => {
     it('should throw on not cvs channel set cvsExpireMinutes', done => {
       const payment = new ECPayPayment<ECPayChannelCVS>({
