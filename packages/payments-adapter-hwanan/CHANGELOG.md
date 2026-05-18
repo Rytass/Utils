@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.11](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-hwanan@0.2.10...@rytass/payments-adapter-hwanan@0.2.11) (2026-05-18)
+
+**Note:** Version bump only for package @rytass/payments-adapter-hwanan
+
 ## [0.2.10](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-hwanan@0.2.9...@rytass/payments-adapter-hwanan@0.2.10) (2026-02-24)
 
 ### Bug Fixes

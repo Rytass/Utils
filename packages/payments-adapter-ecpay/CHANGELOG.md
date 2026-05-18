@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.4.13](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.4.12...@rytass/payments-adapter-ecpay@0.4.13) (2026-05-18)
+
+### Bug Fixes
+
+- **payments-adapter-ecpay:** tighten ticket gateway input validation and parsing ([d540853](https://github.com/Rytass/Utils/commit/d540853df31b6d98548b8a5033077bdc756ce1d8))
+
+### Features
+
+- **payments-adapter-ecpay:** add ECPayTicketGateway for ECTicket APIs ([2e029f8](https://github.com/Rytass/Utils/commit/2e029f84d903427e36ed2e78e6bbb645d64eaa64))
+- **payments-adapter-ecpay:** add framework-agnostic ticket callback handlers ([472c5eb](https://github.com/Rytass/Utils/commit/472c5eb307e8aea840c608ff01a3046be671e514))
+- **payments-adapter-ecpay:** support disabling background poll via issuePoll: false ([fe81be5](https://github.com/Rytass/Utils/commit/fe81be5f8e169ab867100ff7a28443a49ea9d2e1))
+
 ## [0.4.12](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.4.11...@rytass/payments-adapter-ecpay@0.4.12) (2026-02-24)
 
 ### Bug Fixes

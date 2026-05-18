@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.2](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-universal@0.1.1...@rytass/invoice-adapter-universal@0.1.2) (2026-05-18)
+
+**Note:** Version bump only for package @rytass/invoice-adapter-universal
+
 ## 0.1.1 (2026-04-30)
 
 ### Features
