@@ -43,6 +43,10 @@ describe('ECPayPayment Card Binding', () => {
     return mockServer;
   });
 
+  afterAll(() => {
+    mockedCreateServer.mockRestore();
+  });
+
   it('should card binding fail', done => {
     const payment = new ECPayPayment({
       withServer: true,
@@ -515,7 +519,7 @@ describe('ECPayPayment Card Binding', () => {
     });
 
     // Call prepareBindCard immediately before server is ready
-    await expect(payment.prepareBindCard('rytass')).rejects.toThrow('Please waiting gateway ready');
+    await expect(payment.prepareBindCard('rytass')).rejects.toThrow(/Gateway is not ready yet/);
 
     // Clean up
     if (payment._server) {
