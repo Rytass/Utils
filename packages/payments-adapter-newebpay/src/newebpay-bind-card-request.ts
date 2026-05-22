@@ -129,6 +129,14 @@ export class NewebPayBindCardRequest implements BindCardRequest {
   }
 
   bound(payload: NewebPayBindCardResponseTradeInfoPayload): void {
+    // Idempotency: NewebPay delivers the bind-card result on *both* the
+    // browser ReturnURL POST and the server-to-server NotifyURL — by design,
+    // so the merchant has a fallback when the browser path fails. Without a
+    // state guard, the second arrival would re-run all side effects and
+    // double-emit CARD_BOUND, causing downstream listeners to charge twice,
+    // insert duplicate periods, send duplicate emails, etc.
+    if (this._state === OrderState.COMMITTED) return;
+
     this._cardId = payload.TokenValue;
     this._cardNumberPrefix = payload.Card6No;
     this._cardNumberSuffix = payload.Card4No;

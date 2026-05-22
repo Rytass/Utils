@@ -295,6 +295,49 @@ describe('NewebPay Bind Card', () => {
       expect(boundEventHandler).toHaveBeenCalledWith(request);
     });
 
+    it('should ignore a second bound() call so consumers do not fire CARD_BOUND twice when NewebPay delivers via both ReturnURL and NotifyURL', async () => {
+      const payment = new NewebPayPayment({
+        merchantId: MERCHANT_ID,
+        aesKey: AES_KEY,
+        aesIv: AES_IV,
+        serverHost: 'https://test.rytass.com',
+      });
+
+      const boundEventHandler = jest.fn();
+
+      payment.emitter.on(PaymentEvents.CARD_BOUND, boundEventHandler);
+
+      const request = await payment.prepareBindCard('member-bound-twice');
+
+      const firstPayload = {
+        TokenValue: 'token-first',
+        Card6No: '411111',
+        Card4No: '1111',
+        PayTime: '2025-01-10 14:30:00',
+        Exp: '2812',
+        MerchantOrderNo: request.id,
+        TradeNo: 'TN-first',
+        MerchantID: MERCHANT_ID,
+        Status: 'SUCCESS' as const,
+      };
+
+      request.bound(firstPayload);
+
+      // Simulate the second arrival (e.g. server-to-server NotifyURL after
+      // the browser ReturnURL already committed the request). A misbehaving
+      // gateway could even send a different payload — we still must not
+      // re-run side effects.
+      request.bound({
+        ...firstPayload,
+        TokenValue: 'token-second',
+        TradeNo: 'TN-second',
+      });
+
+      expect(request.state).toBe(OrderState.COMMITTED);
+      expect(request.cardId).toBe('token-first');
+      expect(boundEventHandler).toHaveBeenCalledTimes(1);
+    });
+
     it('should return correct getBindCardUrl', async () => {
       const payment = new NewebPayPayment({
         merchantId: MERCHANT_ID,
