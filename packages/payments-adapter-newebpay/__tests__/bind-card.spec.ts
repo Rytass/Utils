@@ -3,7 +3,7 @@
  */
 
 import http, { createServer, IncomingMessage, ServerResponse } from 'http';
-import { createCipheriv, createHash } from 'crypto';
+import { createCipheriv, createDecipheriv, createHash } from 'crypto';
 import { OrderState, PaymentEvents } from '@rytass/payments';
 import { NewebPayPayment } from '../src';
 
@@ -134,6 +134,31 @@ describe('NewebPay Bind Card', () => {
       });
 
       expect(request.finishRedirectURL).toBe('https://example.com/success');
+    });
+
+    it('should embed NotifyURL alongside ReturnURL so NewebPay has a server-to-server fallback when the browser ReturnURL never fires', async () => {
+      const payment = new NewebPayPayment({
+        merchantId: MERCHANT_ID,
+        aesKey: AES_KEY,
+        aesIv: AES_IV,
+        serverHost: 'https://test.rytass.com',
+        boundCardPath: '/bound-card-callback',
+      });
+
+      const request = await payment.prepareBindCard('member-notify-url');
+      const decipher = createDecipheriv('aes-256-cbc', AES_KEY, AES_IV);
+
+      decipher.setAutoPadding(false);
+
+      const plain = `${decipher.update(request.form.TradeInfo, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
+        /\p{Cc}/gu,
+        '',
+      );
+
+      const decoded = new URLSearchParams(plain);
+
+      expect(decoded.get('ReturnURL')).toBe('https://test.rytass.com/bound-card-callback');
+      expect(decoded.get('NotifyURL')).toBe('https://test.rytass.com/bound-card-callback');
     });
 
     it('should get form data and transition to PRE_COMMIT state', async () => {
@@ -268,6 +293,49 @@ describe('NewebPay Bind Card', () => {
       expect(request.bindingDate).toBeDefined();
       expect(request.expireDate).toBeDefined();
       expect(boundEventHandler).toHaveBeenCalledWith(request);
+    });
+
+    it('should ignore a second bound() call so consumers do not fire CARD_BOUND twice when NewebPay delivers via both ReturnURL and NotifyURL', async () => {
+      const payment = new NewebPayPayment({
+        merchantId: MERCHANT_ID,
+        aesKey: AES_KEY,
+        aesIv: AES_IV,
+        serverHost: 'https://test.rytass.com',
+      });
+
+      const boundEventHandler = jest.fn();
+
+      payment.emitter.on(PaymentEvents.CARD_BOUND, boundEventHandler);
+
+      const request = await payment.prepareBindCard('member-bound-twice');
+
+      const firstPayload = {
+        TokenValue: 'token-first',
+        Card6No: '411111',
+        Card4No: '1111',
+        PayTime: '2025-01-10 14:30:00',
+        Exp: '2812',
+        MerchantOrderNo: request.id,
+        TradeNo: 'TN-first',
+        MerchantID: MERCHANT_ID,
+        Status: 'SUCCESS' as const,
+      };
+
+      request.bound(firstPayload);
+
+      // Simulate the second arrival (e.g. server-to-server NotifyURL after
+      // the browser ReturnURL already committed the request). A misbehaving
+      // gateway could even send a different payload — we still must not
+      // re-run side effects.
+      request.bound({
+        ...firstPayload,
+        TokenValue: 'token-second',
+        TradeNo: 'TN-second',
+      });
+
+      expect(request.state).toBe(OrderState.COMMITTED);
+      expect(request.cardId).toBe('token-first');
+      expect(boundEventHandler).toHaveBeenCalledTimes(1);
     });
 
     it('should return correct getBindCardUrl', async () => {
