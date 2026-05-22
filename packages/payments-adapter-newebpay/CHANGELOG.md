@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.17](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-newebpay@0.2.16...@rytass/payments-adapter-newebpay@0.2.17) (2026-05-22)
+
+### Bug Fixes
+
+- **payments-adapter-newebpay:** guard bound() against double-emit on retry ([2b2ec44](https://github.com/Rytass/Utils/commit/2b2ec44e26bc0edd5898e1660cb1d7038440cfc3))
+- **payments-adapter-newebpay:** include NotifyURL in prepareBindCard payload ([2b389d0](https://github.com/Rytass/Utils/commit/2b389d0f896c6505b6150816d1cbe77aaf2b45f5))
+
 ## [0.2.16](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-newebpay@0.2.15...@rytass/payments-adapter-newebpay@0.2.16) (2026-05-18)
 
 **Note:** Version bump only for package @rytass/payments-adapter-newebpay

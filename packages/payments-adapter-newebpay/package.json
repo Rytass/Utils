@@ -1,6 +1,6 @@
 {
   "name": "@rytass/payments-adapter-newebpay",
-  "version": "0.2.16",
+  "version": "0.2.17",
   "description": "Rytass Payment Gateway Adapter NewebPay",
   "keywords": [
     "rytass",
