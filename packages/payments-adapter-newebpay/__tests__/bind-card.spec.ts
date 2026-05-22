@@ -3,7 +3,7 @@
  */
 
 import http, { createServer, IncomingMessage, ServerResponse } from 'http';
-import { createCipheriv, createHash } from 'crypto';
+import { createCipheriv, createDecipheriv, createHash } from 'crypto';
 import { OrderState, PaymentEvents } from '@rytass/payments';
 import { NewebPayPayment } from '../src';
 
@@ -134,6 +134,31 @@ describe('NewebPay Bind Card', () => {
       });
 
       expect(request.finishRedirectURL).toBe('https://example.com/success');
+    });
+
+    it('should embed NotifyURL alongside ReturnURL so NewebPay has a server-to-server fallback when the browser ReturnURL never fires', async () => {
+      const payment = new NewebPayPayment({
+        merchantId: MERCHANT_ID,
+        aesKey: AES_KEY,
+        aesIv: AES_IV,
+        serverHost: 'https://test.rytass.com',
+        boundCardPath: '/bound-card-callback',
+      });
+
+      const request = await payment.prepareBindCard('member-notify-url');
+      const decipher = createDecipheriv('aes-256-cbc', AES_KEY, AES_IV);
+
+      decipher.setAutoPadding(false);
+
+      const plain = `${decipher.update(request.form.TradeInfo, 'hex', 'utf8')}${decipher.final('utf8')}`.replace(
+        /\p{Cc}/gu,
+        '',
+      );
+
+      const decoded = new URLSearchParams(plain);
+
+      expect(decoded.get('ReturnURL')).toBe('https://test.rytass.com/bound-card-callback');
+      expect(decoded.get('NotifyURL')).toBe('https://test.rytass.com/bound-card-callback');
     });
 
     it('should get form data and transition to PRE_COMMIT state', async () => {

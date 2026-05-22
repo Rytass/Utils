@@ -1090,6 +1090,10 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
       CREDITAEAGREEMENT: 0,
       TokenTerm: memberId,
       ReturnURL: `${this.serverHost}${this.boundCardPath}`,
+      // Server-to-server fallback when the browser ReturnURL redirect
+      // never lands (tab closed, network lost, browser crash, …).
+      // Same handler path — defaultServerListener routes by URL.
+      NotifyURL: `${this.serverHost}${this.boundCardPath}`,
     } satisfies NewebPayBindCardRequestTradeInfoPayload;
 
     const request = new NewebPayBindCardRequest({
