@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.10](https://github.com/Rytass/Utils/compare/@rytass/wms-map-react-components@0.1.9...@rytass/wms-map-react-components@0.1.10) (2026-06-01)
+
+### Features
+
+- **wms-map-react-components:** mark client components with 'use client' ([df7e1fa](https://github.com/Rytass/Utils/commit/df7e1fab69201108ace73411538298ab4ebdbd80))
+
 ## [0.1.9](https://github.com/Rytass/Utils/compare/@rytass/wms-map-react-components@0.1.8...@rytass/wms-map-react-components@0.1.9) (2026-05-12)
 
 ### Bug Fixes
