@@ -108,6 +108,7 @@
     "reflect-metadata": "^0.2.2",
     "rollup": "^4.59.0",
     "rollup-plugin-postcss": "^4.0.2",
+    "rollup-plugin-preserve-directives": "^0.4.0",
     "rollup-plugin-swc3": "^0.12.1",
     "rxjs": "^7.8.2",
     "sass": "^1.97.3",

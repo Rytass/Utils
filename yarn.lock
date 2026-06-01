@@ -7672,6 +7672,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rollup/pluginutils@npm:^5.1.0":
+  version: 5.4.0
+  resolution: "@rollup/pluginutils@npm:5.4.0"
+  dependencies:
+    "@types/estree": "npm:^1.0.0"
+    estree-walker: "npm:^2.0.2"
+    picomatch: "npm:^4.0.2"
+  peerDependencies:
+    rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
+  peerDependenciesMeta:
+    rollup:
+      optional: true
+  checksum: 10c0/ccc2cbd3a05df642df60ab05ffb81b2e564bd945e2a118bb8a474ea75b941033c8f44273133d4865643cca1492d0c80b14de1281f74779a64285a80fc3a194d8
+  languageName: node
+  linkType: hard
+
 "@rollup/rollup-android-arm-eabi@npm:4.53.3":
   version: 4.53.3
   resolution: "@rollup/rollup-android-arm-eabi@npm:4.53.3"
@@ -26412,6 +26428,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"rollup-plugin-preserve-directives@npm:^0.4.0":
+  version: 0.4.0
+  resolution: "rollup-plugin-preserve-directives@npm:0.4.0"
+  dependencies:
+    "@rollup/pluginutils": "npm:^5.1.0"
+    magic-string: "npm:^0.30.5"
+  peerDependencies:
+    rollup: 2.x || 3.x || 4.x
+  checksum: 10c0/83e27b6cefe5d2185a39b79fa860644e60b53ed0c32942e1829023e10aa75a2fdd9c0d57e9a46eec4b60804d3fdb1ae51e847d5762f372b0f22fafcaca8c6a0e
+  languageName: node
+  linkType: hard
+
 "rollup-plugin-swc3@npm:^0.12.1":
   version: 0.12.1
   resolution: "rollup-plugin-swc3@npm:0.12.1"
@@ -26768,6 +26796,7 @@ __metadata:
     reflect-metadata: "npm:^0.2.2"
     rollup: "npm:^4.59.0"
     rollup-plugin-postcss: "npm:^4.0.2"
+    rollup-plugin-preserve-directives: "npm:^0.4.0"
     rollup-plugin-swc3: "npm:^0.12.1"
     rxjs: "npm:^7.8.2"
     sass: "npm:^1.97.3"

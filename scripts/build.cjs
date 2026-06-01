@@ -5,6 +5,7 @@ const { glob } = require('glob');
 const { rollup } = require('rollup');
 const { swc } = require('rollup-plugin-swc3');
 const postcss = require('rollup-plugin-postcss');
+const { preserveDirectives } = require('rollup-plugin-preserve-directives');
 
 const { PWD } = process.env;
 const rootPackagePath = PWD;
@@ -172,6 +173,10 @@ async function build(packageSymbol, packageInfos) {
           externalLiveBindings: false,
         },
       ],
+      onwarn(warning, defaultHandler) {
+        if (warning.code === 'MODULE_LEVEL_DIRECTIVE') return;
+        defaultHandler(warning);
+      },
       plugins: [
         swc({
           tsconfig,
@@ -186,6 +191,7 @@ async function build(packageSymbol, packageInfos) {
           extract: true,
           minimize: true,
         }),
+        preserveDirectives({ suppressPreserveModulesWarning: true }),
       ],
     });
 
@@ -218,6 +224,10 @@ async function build(packageSymbol, packageInfos) {
                 externalLiveBindings: false,
               },
             ],
+            onwarn(warning, defaultHandler) {
+              if (warning.code === 'MODULE_LEVEL_DIRECTIVE') return;
+              defaultHandler(warning);
+            },
             plugins: [
               swc({
                 tsconfig,
@@ -232,6 +242,7 @@ async function build(packageSymbol, packageInfos) {
                 extract: true,
                 minimize: true,
               }),
+              preserveDirectives({ suppressPreserveModulesWarning: true }),
             ],
           });
         }
