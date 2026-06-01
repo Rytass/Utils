@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useReactFlow, useUpdateNodeInternals } from '@xyflow/react';
 

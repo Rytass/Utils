@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useCallback } from 'react';
 import { useReactFlow, Node } from '@xyflow/react';
 import { EditMode } from '../typings';

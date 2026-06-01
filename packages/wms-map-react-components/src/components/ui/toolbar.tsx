@@ -1,3 +1,5 @@
+'use client';
+
 import React, { FC, useEffect, useState } from 'react';
 import { Button } from '@mezzanine-ui/react';
 import { DrawingMode, EditMode } from '../../typings';

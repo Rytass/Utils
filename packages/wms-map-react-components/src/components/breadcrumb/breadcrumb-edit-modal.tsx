@@ -1,3 +1,5 @@
+'use client';
+
 import React, { FC, useState, useEffect } from 'react';
 import { Modal } from '@mezzanine-ui/react';
 import styles from './breadcrumb-edit-modal.module.scss';

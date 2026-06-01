@@ -1,3 +1,5 @@
+'use client';
+
 import React, { FC, useCallback, useEffect, useState, useRef } from 'react';
 import {
   addEdge,

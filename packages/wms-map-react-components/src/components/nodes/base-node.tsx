@@ -1,3 +1,5 @@
+'use client';
+
 import React, { FC, ReactNode } from 'react';
 import { NodeProps } from '@xyflow/react';
 import { EditMode } from '../../typings';

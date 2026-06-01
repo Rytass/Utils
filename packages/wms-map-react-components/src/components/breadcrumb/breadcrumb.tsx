@@ -1,3 +1,5 @@
+'use client';
+
 import React, { FC, useState, useEffect, useRef } from 'react';
 import BreadcrumbEditModal from './breadcrumb-edit-modal';
 import { ViewMode } from '../../typings';

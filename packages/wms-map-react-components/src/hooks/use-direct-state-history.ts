@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useCallback, useRef } from 'react';
 import { EditMode } from '../typings';
 import { FlowNode, FlowEdge } from '../types/react-flow.types';

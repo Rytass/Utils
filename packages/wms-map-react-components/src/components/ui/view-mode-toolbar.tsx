@@ -1,3 +1,5 @@
+'use client';
+
 import React, { FC } from 'react';
 import { Toggle } from '@mezzanine-ui/react';
 import { ViewMode } from '../../typings';
