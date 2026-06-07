@@ -60,6 +60,14 @@ import { NewebPayBindCardRequest } from './newebpay-bind-card-request';
 
 const debugPayment = debug('Rytass:Payment:NewebPay');
 
+// NewebPay's edge (Akamai) returns 403 Access Denied for requests carrying
+// axios's default `axios/<version>` User-Agent, which breaks all server-side
+// API calls (QueryTradeInfo / CreditCard Cancel / CreditCard Close). Send an
+// explicit User-Agent so the requests are not blocked.
+const NEWEBPAY_REQUEST_CONFIG = {
+  headers: { 'User-Agent': 'rytass-payments-adapter-newebpay' },
+};
+
 export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMessage>
   implements PaymentGateway<CM, NewebPayOrder<CM>>, BindCardPaymentGateway<CM>
 {
@@ -627,6 +635,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
     const { data } = await axios.post<NewebPayAPIResponseWrapper<NewebPayQueryResponsePayload>>(
       `${this.baseUrl}/API/QueryTradeInfo`,
       new URLSearchParams(payload).toString(),
+      NEWEBPAY_REQUEST_CONFIG,
     );
 
     const checkCode = createHash('sha256')
@@ -788,6 +797,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
     const { data } = await axios.post<NewebPayAPIResponseWrapper<NewebPayCreditCardCancelResponse>>(
       `${this.baseUrl}/API/CreditCard/Cancel`,
       new URLSearchParams(payload).toString(),
+      NEWEBPAY_REQUEST_CONFIG,
     );
 
     if (data.Status !== 'SUCCESS') {
@@ -840,6 +850,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
     const { data } = await axios.post<NewebPayAPIResponseWrapper<NewebPayCreditCardCloseResponse>>(
       `${this.baseUrl}/API/CreditCard/Close`,
       new URLSearchParams(payload).toString(),
+      NEWEBPAY_REQUEST_CONFIG,
     );
 
     if (data.Status !== 'SUCCESS') {
@@ -884,6 +895,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
     const { data } = await axios.post<NewebPayAPIResponseWrapper<NewebPayCreditCardCloseResponse>>(
       `${this.baseUrl}/API/CreditCard/Close`,
       new URLSearchParams(payload).toString(),
+      NEWEBPAY_REQUEST_CONFIG,
     );
 
     if (data.Status !== 'SUCCESS') {
@@ -971,6 +983,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
     const { data } = await axios.post<NewebPayAPIResponseWrapper<NewebPayCreditCardCloseResponse>>(
       `${this.baseUrl}/API/CreditCard/Close`,
       new URLSearchParams(payload).toString(),
+      NEWEBPAY_REQUEST_CONFIG,
     );
 
     if (data.Status !== 'SUCCESS') {
@@ -1054,6 +1067,7 @@ export class NewebPayPayment<CM extends NewebPayCommitMessage = NewebPayCommitMe
     const { data } = await axios.post<NewebPayAPIResponseWrapper<NewebPayCreditCardCloseResponse>>(
       `${this.baseUrl}/API/CreditCard/Close`,
       new URLSearchParams(payload).toString(),
+      NEWEBPAY_REQUEST_CONFIG,
     );
 
     if (data.Status !== 'SUCCESS') {
