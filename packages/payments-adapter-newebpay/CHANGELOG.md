@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.18](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-newebpay@0.2.17...@rytass/payments-adapter-newebpay@0.2.18) (2026-06-07)
+
+### Bug Fixes
+
+- **payments-adapter-newebpay:** set explicit User-Agent on NewebPay API posts ([f3b301f](https://github.com/Rytass/Utils/commit/f3b301f5170695a356960b959980da251e827df7))
+
 ## [0.2.17](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-newebpay@0.2.16...@rytass/payments-adapter-newebpay@0.2.17) (2026-05-22)
 
 ### Bug Fixes
