@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.4.15](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.4.14...@rytass/payments-adapter-ecpay@0.4.15) (2026-06-08)
+
+### Features
+
+- **payments-adapter-ecpay:** add ECTicket write-off API ([a42c6a1](https://github.com/Rytass/Utils/commit/a42c6a1f544addda6783ea8d5724ec2449cc3c85))
+
 ## [0.4.14](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.4.13...@rytass/payments-adapter-ecpay@0.4.14) (2026-06-08)
 
 ### Bug Fixes
