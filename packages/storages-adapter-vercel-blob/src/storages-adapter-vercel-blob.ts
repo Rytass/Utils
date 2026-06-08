@@ -8,18 +8,35 @@ import {
   StorageFile,
   WriteFileOptions,
 } from '@rytass/storages';
-import { put, del, head, list } from '@vercel/blob';
+import { BlobAccessType, put, del, head, list, issueSignedToken, presignUrl } from '@vercel/blob';
 import { Readable, PassThrough } from 'stream';
 import { StorageVercelBlobOptions } from './typings';
+
+const DEFAULT_SIGNED_URL_EXPIRES_IN = 3600;
+
+// Re-issue a presigned URL once its remaining lifetime drops below this fraction
+// of the configured lifetime, so callers never receive an almost-expired URL.
+const SIGNED_URL_REFRESH_THRESHOLD = 0.1;
+
+interface CachedSignedUrl {
+  url: string;
+  expiresAt: number;
+}
 
 export class StorageVercelBlobService extends Storage<StorageVercelBlobOptions> {
   private readonly token: string;
 
   private readonly pathPrefix: string;
 
-  private readonly access: 'public';
+  private readonly access: BlobAccessType;
 
+  private readonly signedUrlExpiresIn: number;
+
+  // Permanent public URLs — safe to cache for the lifetime of the service.
   private readonly keyUrlCache = new Map<string, string>();
+
+  // Presigned private URLs — expire, so cached together with their expiry timestamp.
+  private readonly signedUrlCache = new Map<string, CachedSignedUrl>();
 
   constructor(options: StorageVercelBlobOptions) {
     super(options);
@@ -36,9 +53,22 @@ export class StorageVercelBlobService extends Storage<StorageVercelBlobOptions> 
     this.token = token;
     this.pathPrefix = options.pathPrefix ?? 'uploads';
     this.access = options.access ?? 'public';
+    this.signedUrlExpiresIn = options.signedUrlExpiresIn ?? DEFAULT_SIGNED_URL_EXPIRES_IN;
+  }
+
+  private pathnameOf(key: string): string {
+    return `${this.pathPrefix}/${key}`;
   }
 
   async url(key: string): Promise<string> {
+    if (this.access === 'private') {
+      return this.privateUrl(key);
+    }
+
+    return this.publicUrl(key);
+  }
+
+  private async publicUrl(key: string): Promise<string> {
     const cached = this.keyUrlCache.get(key);
 
     if (cached) {
@@ -60,6 +90,41 @@ export class StorageVercelBlobService extends Storage<StorageVercelBlobOptions> 
     this.keyUrlCache.set(key, blob.url);
 
     return blob.url;
+  }
+
+  private async issuePresignedUrl(key: string): Promise<CachedSignedUrl> {
+    const pathname = this.pathnameOf(key);
+    const validUntil = Date.now() + this.signedUrlExpiresIn * 1000;
+
+    const signedToken = await issueSignedToken({
+      token: this.token,
+      pathname,
+      operations: ['get'],
+      validUntil,
+    });
+
+    const { presignedUrl } = await presignUrl(signedToken, {
+      access: 'private',
+      operation: 'get',
+      pathname,
+    });
+
+    return { url: presignedUrl, expiresAt: signedToken.validUntil };
+  }
+
+  private async privateUrl(key: string): Promise<string> {
+    const cached = this.signedUrlCache.get(key);
+    const refreshBefore = this.signedUrlExpiresIn * 1000 * SIGNED_URL_REFRESH_THRESHOLD;
+
+    if (cached && cached.expiresAt - Date.now() > refreshBefore) {
+      return cached.url;
+    }
+
+    const fresh = await this.issuePresignedUrl(key);
+
+    this.signedUrlCache.set(key, fresh);
+
+    return fresh.url;
   }
 
   read(key: string): Promise<Readable>;
@@ -99,7 +164,7 @@ export class StorageVercelBlobService extends Storage<StorageVercelBlobOptions> 
       return { key: filename };
     }
 
-    const pathname = `${this.pathPrefix}/${filename}`;
+    const pathname = this.pathnameOf(filename);
 
     const result = await put(pathname, buffer, {
       access: this.access,
@@ -108,7 +173,7 @@ export class StorageVercelBlobService extends Storage<StorageVercelBlobOptions> 
       addRandomSuffix: false,
     });
 
-    this.keyUrlCache.set(filename, result.url);
+    this.cacheWrittenUrl(filename, result.url);
 
     return { key: filename };
   }
@@ -132,7 +197,7 @@ export class StorageVercelBlobService extends Storage<StorageVercelBlobOptions> 
       }
 
       const buffer = Buffer.concat(chunks);
-      const pathname = `${this.pathPrefix}/${givenFilename}`;
+      const pathname = this.pathnameOf(givenFilename);
 
       const result = await put(pathname, buffer, {
         access: this.access,
@@ -141,7 +206,7 @@ export class StorageVercelBlobService extends Storage<StorageVercelBlobOptions> 
         addRandomSuffix: false,
       });
 
-      this.keyUrlCache.set(givenFilename, result.url);
+      this.cacheWrittenUrl(givenFilename, result.url);
 
       return { key: givenFilename };
     }
@@ -171,7 +236,7 @@ export class StorageVercelBlobService extends Storage<StorageVercelBlobOptions> 
     }
 
     const buffer = Buffer.concat(chunks);
-    const pathname = `${this.pathPrefix}/${filename}`;
+    const pathname = this.pathnameOf(filename);
 
     const result = await put(pathname, buffer, {
       access: this.access,
@@ -180,9 +245,18 @@ export class StorageVercelBlobService extends Storage<StorageVercelBlobOptions> 
       addRandomSuffix: false,
     });
 
-    this.keyUrlCache.set(filename, result.url);
+    this.cacheWrittenUrl(filename, result.url);
 
     return { key: filename };
+  }
+
+  // The URL returned by `put` is only directly usable for public blobs. Private
+  // blobs must be served through a freshly presigned URL, so we never cache the
+  // raw private URL.
+  private cacheWrittenUrl(key: string, url: string): void {
+    if (this.access === 'public') {
+      this.keyUrlCache.set(key, url);
+    }
   }
 
   write(file: InputFile, options?: WriteFileOptions): Promise<StorageFile> {
@@ -198,18 +272,15 @@ export class StorageVercelBlobService extends Storage<StorageVercelBlobOptions> 
   }
 
   async remove(key: string): Promise<void> {
-    const fileUrl = await this.url(key);
-
-    await del(fileUrl, { token: this.token });
+    await del(this.pathnameOf(key), { token: this.token });
 
     this.keyUrlCache.delete(key);
+    this.signedUrlCache.delete(key);
   }
 
   async isExists(key: string): Promise<boolean> {
     try {
-      const fileUrl = await this.url(key);
-
-      await head(fileUrl, { token: this.token });
+      await head(this.pathnameOf(key), { token: this.token });
 
       return true;
     } catch {
