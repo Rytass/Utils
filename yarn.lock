@@ -10393,6 +10393,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/nodemailer@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "@types/nodemailer@npm:8.0.0"
+  dependencies:
+    "@types/node": "npm:*"
+  checksum: 10c0/e5031df5d6557f4cdb9a0dbe1a96f3f54dc59c23d47477103fd42b5c9bc925ea1b4e51be560af5620b4d0c66fcfb015ce5ca8f914ed2f3a3086be6149d5932da
+  languageName: node
+  linkType: hard
+
 "@types/normalize-package-data@npm:^2.4.0":
   version: 2.4.4
   resolution: "@types/normalize-package-data@npm:2.4.4"
@@ -22543,6 +22552,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"nodemailer-cloudflare-transport@workspace:packages/nodemailer-cloudflare-transport":
+  version: 0.0.0-use.local
+  resolution: "nodemailer-cloudflare-transport@workspace:packages/nodemailer-cloudflare-transport"
+  peerDependencies:
+    nodemailer: ">=6.0.0"
+  languageName: unknown
+  linkType: soft
+
+"nodemailer@npm:^8.0.10":
+  version: 8.0.10
+  resolution: "nodemailer@npm:8.0.10"
+  checksum: 10c0/b96fd2ea7146de58141219061e094509fd0f19aac5ac86ac35d9ce9c479dbf6c12b143fa7e7050a1be539a3542eb59520c33aabf5a119c8d28fc7d151bde329f
+  languageName: node
+  linkType: hard
+
 "nopt@npm:^5.0.0":
   version: 5.0.0
   resolution: "nopt@npm:5.0.0"
@@ -26738,6 +26762,7 @@ __metadata:
     "@types/jsonwebtoken": "npm:^9"
     "@types/lodash": "npm:^4.17.24"
     "@types/luxon": "npm:^3.7.1"
+    "@types/nodemailer": "npm:^8.0.0"
     "@types/react": "npm:^19.2.14"
     "@types/react-dom": "npm:^19.2.3"
     "@types/supertest": "npm:^6.0.3"
@@ -26778,6 +26803,7 @@ __metadata:
     memfs: "npm:^4.56.10"
     ngrok: "npm:^5.0.0-beta.2"
     node-gyp: "npm:^12.2.0"
+    nodemailer: "npm:^8.0.10"
     nx: "npm:22.5.2"
     parse-multipart-data: "npm:^1.5.0"
     playwright: "npm:^1.58.2"

@@ -1,0 +1,34 @@
+{
+  "name": "nodemailer-cloudflare-transport",
+  "version": "0.1.0",
+  "description": "Nodemailer transport for the Cloudflare Email Service REST API",
+  "keywords": [
+    "nodemailer",
+    "nodemailer-transport",
+    "cloudflare",
+    "cloudflare-email-service",
+    "email",
+    "transactional-email"
+  ],
+  "author": "Chia Yu Pai <fantasyatelier@gmail.com>",
+  "homepage": "https://github.com/Rytass/Utils",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rytass/Utils.git"
+  },
+  "scripts": {
+    "clean": "nx clean",
+    "build": "nx build",
+    "lint": "nx lint",
+    "test": "nx test",
+    "test:watch": "nx test:watch"
+  },
+  "main": "./lib/index.cjs.js",
+  "bugs": {
+    "url": "https://github.com/Rytass/Utils/issues"
+  },
+  "peerDependencies": {
+    "nodemailer": ">=6.0.0"
+  }
+}
