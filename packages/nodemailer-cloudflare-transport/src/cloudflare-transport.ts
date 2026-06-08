@@ -93,9 +93,12 @@ export class CloudflareTransport {
     // Partial-tolerance semantics: succeed as long as at least one recipient was
     // delivered or queued; only fail outright when nothing was accepted.
     if (accepted.length === 0) {
+      // Distinguish "everyone bounced" from "the request was accepted but no
+      // recipient was processed at all" — the latter has no `errors` and would
+      // otherwise surface an unhelpful "unknown error".
       throw rejected.length > 0
         ? CloudflareEmailError.allBounced(response.status, body, rejected)
-        : CloudflareEmailError.fromResponse(response.status, body);
+        : CloudflareEmailError.noRecipientsProcessed(response.status, body);
     }
 
     return {

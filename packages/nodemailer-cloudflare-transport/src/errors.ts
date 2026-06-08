@@ -39,4 +39,21 @@ export class CloudflareEmailError extends Error {
       body.errors ?? [],
     );
   }
+
+  /**
+   * Thrown when Cloudflare accepts the request (HTTP 2xx, `success: true`) but
+   * `delivered`, `queued` and `permanent_bounces` are all empty — i.e. no
+   * recipient was processed at all. The API reports no `errors` in this case,
+   * so surface a diagnostic message pointing at the usual cause rather than a
+   * blank "unknown error".
+   */
+  static noRecipientsProcessed(httpStatus: number, body: CloudflareSendResponse): CloudflareEmailError {
+    return new CloudflareEmailError(
+      'Cloudflare Email Service accepted the request but processed no recipients ' +
+        '(delivered, queued and permanent_bounces were all empty) — ' +
+        'this commonly means the sending domain is not verified or Email Sending is not enabled for the account',
+      httpStatus,
+      body.errors ?? [],
+    );
+  }
 }

@@ -270,17 +270,24 @@ describe('CloudflareTransport', () => {
       ).rejects.toBeInstanceOf(CloudflareEmailError);
     });
 
-    it('rejects when the API reports no accepted and no rejected recipients', async () => {
+    it('rejects with a diagnostic message when the request is accepted but no recipient is processed', async () => {
+      // HTTP 200 / success:true but delivered, queued and permanent_bounces are all empty.
       const fetchImpl = makeFetch(okResult());
 
-      await expect(
-        makeTransporter(fetchImpl).sendMail({
+      const error = await makeTransporter(fetchImpl)
+        .sendMail({
           from: 'no-reply@yourdomain.com',
           to: 'jane@example.com',
           subject: 'Hi',
           text: 'Hello',
-        }),
-      ).rejects.toBeInstanceOf(CloudflareEmailError);
+        })
+        .catch((caught: unknown) => caught);
+
+      expect(error).toBeInstanceOf(CloudflareEmailError);
+      expect((error as CloudflareEmailError).httpStatus).toBe(200);
+      // Must point at the real cause, not the old blank "unknown error".
+      expect((error as CloudflareEmailError).message).toMatch(/processed no recipients/);
+      expect((error as CloudflareEmailError).message).not.toMatch(/unknown error/);
     });
 
     it('rejects with CloudflareEmailError carrying the API error code', async () => {
