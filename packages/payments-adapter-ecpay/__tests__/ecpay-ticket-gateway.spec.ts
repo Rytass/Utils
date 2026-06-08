@@ -24,6 +24,7 @@ import {
 import {
   buildTicketResponseEnvelope,
   computeTicketCheckMacValue,
+  decryptTicketDataToPlaintext,
   encryptTicketData,
 } from '../__utils__/ticket-envelope';
 
@@ -90,6 +91,25 @@ describe('ECPayTicketGateway', () => {
     it('changes when Data changes', () => {
       expect(computeTicketCheckMacValue('AAAA')).not.toBe(computeTicketCheckMacValue('BBBB'));
     });
+
+    it('matches the official ECPay worked example (檢查碼機制 SHA256)', () => {
+      // 鎖定 ECPay 官方「檢查碼機制」附錄的逐步範例，避免測試與實作各自演化卻仍互相通過（自我循環）。
+      // 公式：ToUpper(SHA256(URLEncode(HashKey 值 + Data 明文 JSON + HashIV 值)))
+      // 來源：https://developers.ecpay.com.tw/?p=29998
+      const creds = { hashKey: '7b53896b742849d3', hashIv: '37a0ad3c6ffa428b' };
+      // 官方明文即此物件序列化後的字串：{"MerchantID":"3085676","MerchantTradeNo":"CX202202221540568521"}
+      const plaintext = JSON.stringify({ MerchantID: '3085676', MerchantTradeNo: 'CX202202221540568521' });
+      const expected = 'CE67BBD259EE38BA1C7FB7CC88C3BD91D3F082B46EAEBD4E4E5F2184CB23349A';
+
+      // (1) 測試 helper 與官方規格一致
+      expect(computeTicketCheckMacValue(plaintext, creds)).toBe(expected);
+
+      // (2) production 私有方法亦須符合官方 vector（真正防止實作回歸的斷言）
+      const gateway = new ECPayTicketGateway({ hashKey: creds.hashKey, hashIv: creds.hashIv });
+
+      // @ts-expect-error white-box：直接驗證 private generateCheckMacValue 符合官方 vector
+      expect(gateway.generateCheckMacValue(plaintext)).toBe(expected);
+    });
   });
 
   describe('issue()', () => {
@@ -150,7 +170,10 @@ describe('ECPayTicketGateway', () => {
         expect(parsed.MerchantID).toBe('2000132');
         expect(parsed.RqHeader.Timestamp).toEqual(expect.any(Number));
         expect(typeof parsed.Data).toBe('string');
-        expect(parsed.CheckMacValue).toBe(computeTicketCheckMacValue(parsed.Data));
+        // CheckMacValue 對「加密前的明文字串」計算，故先解密 Data 還原明文再驗證
+        const sentPlaintext = decryptTicketDataToPlaintext(parsed.Data);
+
+        expect(parsed.CheckMacValue).toBe(computeTicketCheckMacValue(sentPlaintext));
 
         return { data: buildTicketResponseEnvelope(decryptedResponse) };
       });
@@ -665,6 +688,87 @@ describe('ECPayTicketGateway', () => {
           gateway._server?.close(done);
         },
       });
+    });
+  });
+
+  describe('destroy()', () => {
+    it('closes the built-in callback server and clears the handle', async () => {
+      const gateway = await new Promise<ECPayTicketGateway>(resolve => {
+        const gw = new ECPayTicketGateway({
+          withServer: true,
+          onServerListen: (): void => resolve(gw),
+        });
+      });
+
+      expect(gateway._server).toBeDefined();
+
+      await gateway.destroy();
+
+      expect(gateway._server).toBeUndefined();
+    });
+
+    it('removes all event listeners', async () => {
+      const gateway = new ECPayTicketGateway();
+
+      gateway.emitter.on(ECPayTicketEvents.TICKET_ISSUED, () => undefined);
+      gateway.emitter.on(ECPayTicketEvents.TICKET_REFUND_NOTIFIED, () => undefined);
+
+      expect(gateway.emitter.listenerCount(ECPayTicketEvents.TICKET_ISSUED)).toBe(1);
+
+      await gateway.destroy();
+
+      expect(gateway.emitter.listenerCount(ECPayTicketEvents.TICKET_ISSUED)).toBe(0);
+      expect(gateway.emitter.listenerCount(ECPayTicketEvents.TICKET_REFUND_NOTIFIED)).toBe(0);
+    });
+
+    it('cancels pending background poll timers so no further query fires', async () => {
+      const gateway = new ECPayTicketGateway({ issuePoll: { intervalMs: 200, timeoutMs: 60_000 } });
+      const post = jest.spyOn(axios, 'post');
+
+      let queryCalls = 0;
+
+      post.mockImplementation(async (url: string) => {
+        if (url.endsWith('/api/Ticket/Issue')) {
+          return {
+            data: buildTicketResponseEnvelope<ECPayTicketIssueResponseDecrypted>({
+              RtnCode: 1,
+              RtnMsg: 'OK',
+              MerchantTradeNo: 'M-DESTROY',
+              TicketTradeNo: 'TT-DESTROY',
+              TicketData: [],
+            }),
+          };
+        }
+
+        queryCalls += 1;
+
+        return {
+          data: buildTicketResponseEnvelope<ECPayTicketQueryIssueResultResponseDecrypted>({
+            RtnCode: 1,
+            RtnMsg: 'OK',
+            MerchantTradeNo: 'M-DESTROY',
+            Status: 3, // processing → 若計時器未被取消，背景會持續輪詢
+            Remark: '',
+          }),
+        };
+      });
+
+      await gateway.issue({
+        merchantTradeNo: 'M-DESTROY',
+        issueType: ECPayIssueType.CVS,
+        operator: 'Tester',
+        tickets: [{ itemNo: 'I1', ticketAmount: 1 }],
+      });
+
+      // issue() 已在背景排程第一次輪詢(+200ms)；在它觸發前呼叫 destroy() 取消
+      await gateway.destroy();
+
+      // 等待超過一個輪詢週期，確認沒有任何 query 被觸發
+      await new Promise(resolve => setTimeout(resolve, 350));
+
+      expect(queryCalls).toBe(0);
+
+      post.mockRestore();
     });
   });
 

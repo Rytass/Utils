@@ -1,5 +1,5 @@
-import { createCipheriv } from 'crypto';
-import { ecpaySha256, ecpayUrlEncode } from '../src/ecpay-utils';
+import { createCipheriv, createDecipheriv } from 'crypto';
+import { computeTicketCheckMacValue as computeMac } from '../src/ecpay-utils';
 
 export interface TicketCreds {
   hashKey: string;
@@ -20,8 +20,17 @@ export function encryptTicketData<T>(data: T, creds: TicketCreds = DEFAULT_TICKE
   return [cipher.update(encoded, 'utf8', 'base64'), cipher.final('base64')].join('');
 }
 
-export function computeTicketCheckMacValue(encryptedData: string, creds: TicketCreds = DEFAULT_TICKET_CREDS): string {
-  return ecpaySha256(ecpayUrlEncode(`HashKey=${creds.hashKey}&Data=${encryptedData}&HashIV=${creds.hashIv}`));
+// 對稱於 production 的 decryptToPlaintext：解密並還原成「加密前的原始明文字串」(尚未 JSON.parse)，
+// 供測試以與 ECPay server 相同的字串基準計算 CheckMacValue。
+export function decryptTicketDataToPlaintext(encryptedData: string, creds: TicketCreds = DEFAULT_TICKET_CREDS): string {
+  const decipher = createDecipheriv('aes-128-cbc', creds.hashKey, creds.hashIv);
+
+  return decodeURIComponent([decipher.update(encryptedData, 'base64', 'utf8'), decipher.final('utf8')].join(''));
+}
+
+// 委派 ecpay-utils 的唯一實作，僅補上測試預設憑證，確保測試與 production 用同一套 MAC 演算法。
+export function computeTicketCheckMacValue(plaintext: string, creds: TicketCreds = DEFAULT_TICKET_CREDS): string {
+  return computeMac(plaintext, creds);
 }
 
 export function buildTicketResponseEnvelope<T>(
@@ -42,6 +51,8 @@ export function buildTicketResponseEnvelope<T>(
   CheckMacValue: string;
 } {
   const creds = options?.creds ?? DEFAULT_TICKET_CREDS;
+  // 與 production 一致：同一份明文字串既拿去加密成 Data，也拿去計算 CheckMacValue
+  const plaintext = JSON.stringify(decryptedData);
   const encrypted = encryptTicketData(decryptedData, creds);
 
   return {
@@ -51,6 +62,6 @@ export function buildTicketResponseEnvelope<T>(
     TransCode: options?.transCode ?? 1,
     TransMsg: options?.transMsg ?? '',
     Data: encrypted,
-    CheckMacValue: computeTicketCheckMacValue(encrypted, creds),
+    CheckMacValue: computeTicketCheckMacValue(plaintext, creds),
   };
 }
