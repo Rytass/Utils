@@ -152,15 +152,15 @@ export class ECPayTicketGateway {
     );
   }
 
-  private generateCheckMacValue(encryptedData: string): string {
-    return ecpaySha256(ecpayUrlEncode(`HashKey=${this.hashKey}&Data=${encryptedData}&HashIV=${this.hashIv}`));
+  private generateCheckMacValue(data: unknown): string {
+    return ecpaySha256(ecpayUrlEncode(`${this.hashKey}${JSON.stringify(data)}${this.hashIv}`));
   }
 
-  private verifyResponseEnvelope(envelope: ECPayTicketResponseEnvelope): boolean {
-    return this.generateCheckMacValue(envelope.Data) === envelope.CheckMacValue;
+  private verifyResponseEnvelope(data: unknown, envelope: ECPayTicketResponseEnvelope): boolean {
+    return this.generateCheckMacValue(data) === envelope.CheckMacValue;
   }
 
-  private buildEnvelope(encryptedData: string): ECPayTicketRequestEnvelope {
+  private buildEnvelope(body: unknown, encryptedData: string): ECPayTicketRequestEnvelope {
     return {
       ...(this.platformId ? { PlatformID: this.platformId } : {}),
       MerchantID: this.merchantId,
@@ -168,7 +168,7 @@ export class ECPayTicketGateway {
         Timestamp: Math.round(Date.now() / 1000),
       },
       Data: encryptedData,
-      CheckMacValue: this.generateCheckMacValue(encryptedData),
+      CheckMacValue: this.generateCheckMacValue(body),
     };
   }
 
@@ -180,7 +180,7 @@ export class ECPayTicketGateway {
     }
 
     const encryptedData = this.encrypt<TBody>(body);
-    const envelope = this.buildEnvelope(encryptedData);
+    const envelope = this.buildEnvelope(body, encryptedData);
 
     const { data } = await axios.post<ECPayTicketResponseEnvelope>(`${this.baseUrl}${path}`, JSON.stringify(envelope), {
       headers: { 'Content-Type': 'application/json' },
@@ -190,11 +190,13 @@ export class ECPayTicketGateway {
       throw new Error(`ECPay ticket transport error: (${data.TransCode}) ${data.TransMsg}`);
     }
 
-    if (!this.verifyResponseEnvelope(data)) {
+    const decryptedData = this.decrypt<TDecrypted>(data.Data);
+
+    if (!this.verifyResponseEnvelope(decryptedData, data)) {
       throw new Error('Invalid CheckMacValue');
     }
 
-    return this.decrypt<TDecrypted>(data.Data);
+    return decryptedData;
   }
 
   private formatDate(date?: Date): string | undefined {
@@ -551,16 +553,20 @@ export class ECPayTicketGateway {
   }
 
   private parseAndVerifyEnvelope(envelope: ECPayTicketResponseEnvelope): Record<string, unknown> {
-    if (!this.verifyResponseEnvelope(envelope)) {
+    let decrypted: Record<string, unknown>;
+
+    try {
+      decrypted = this.decrypt<Record<string, unknown>>(envelope.Data);
+    } catch {
+      throw new ECPayTicketCallbackError('INVALID_DATA', 'Failed to decrypt Data');
+    }
+
+    if (!this.verifyResponseEnvelope(decrypted, envelope)) {
       debugTicket('Invalid CheckMacValue on callback');
       throw new ECPayTicketCallbackError('INVALID_CHECKMAC', 'Invalid CheckMacValue');
     }
 
-    try {
-      return this.decrypt<Record<string, unknown>>(envelope.Data);
-    } catch {
-      throw new ECPayTicketCallbackError('INVALID_DATA', 'Failed to decrypt Data');
-    }
+    return decrypted;
   }
 
   private requireStringField(decrypted: Record<string, unknown>, field: string): string {
