@@ -5,7 +5,7 @@ import { EventEmitter } from 'events';
 import { createServer, IncomingMessage, Server, ServerResponse } from 'http';
 import { LRUCache } from 'lru-cache';
 import { DateTime } from 'luxon';
-import { ecpaySha256, ecpayUrlEncode } from './ecpay-utils';
+import { computeTicketCheckMacValue } from './ecpay-utils';
 import {
   ECPAY_TICKET_RTN_CODE_SUCCESS,
   ECPAY_TICKET_TRANS_CODE_SUCCESS,
@@ -69,6 +69,9 @@ export class ECPayTicketGateway {
 
   readonly emitter = new EventEmitter();
   _server?: Server;
+
+  // 追蹤所有背景輪詢計時器，供 destroy() 清理，避免測試 / 程式結束後計時器殘留觸發 axios
+  private readonly pollTimers = new Set<ReturnType<typeof setTimeout>>();
 
   constructor(options?: ECPayTicketGatewayOptions) {
     this.merchantId = options?.merchantId ?? this.merchantId;
@@ -135,8 +138,8 @@ export class ECPayTicketGateway {
     }
   }
 
-  private encrypt<T>(data: T): string {
-    const encodedData = encodeURIComponent(JSON.stringify(data));
+  private encrypt(plaintext: string): string {
+    const encodedData = encodeURIComponent(plaintext);
     const cipher = createCipheriv('aes-128-cbc', this.hashKey, this.hashIv);
 
     cipher.setAutoPadding(true);
@@ -144,23 +147,27 @@ export class ECPayTicketGateway {
     return [cipher.update(encodedData, 'utf8', 'base64'), cipher.final('base64')].join('');
   }
 
-  private decrypt<T>(encryptedData: string): T {
+  private decryptToPlaintext(encryptedData: string): string {
     const decipher = createDecipheriv('aes-128-cbc', this.hashKey, this.hashIv);
 
-    return JSON.parse(
-      decodeURIComponent([decipher.update(encryptedData, 'base64', 'utf8'), decipher.final('utf8')].join('')),
-    );
+    return decodeURIComponent([decipher.update(encryptedData, 'base64', 'utf8'), decipher.final('utf8')].join(''));
   }
 
-  private generateCheckMacValue(encryptedData: string): string {
-    return ecpaySha256(ecpayUrlEncode(`HashKey=${this.hashKey}&Data=${encryptedData}&HashIV=${this.hashIv}`));
+  private decrypt<T>(encryptedData: string): T {
+    return JSON.parse(this.decryptToPlaintext(encryptedData));
   }
 
-  private verifyResponseEnvelope(envelope: ECPayTicketResponseEnvelope): boolean {
-    return this.generateCheckMacValue(envelope.Data) === envelope.CheckMacValue;
+  // CheckMacValue 須以「加密前的原始明文字串」(而非重新序列化的物件)計算，
+  // 避免 JSON round-trip(空白 / 欄位順序 / 跳脫)導致誤判。演算法統一委派 ecpay-utils.computeTicketCheckMacValue。
+  private generateCheckMacValue(plaintext: string): string {
+    return computeTicketCheckMacValue(plaintext, { hashKey: this.hashKey, hashIv: this.hashIv });
   }
 
-  private buildEnvelope(encryptedData: string): ECPayTicketRequestEnvelope {
+  private verifyResponseEnvelope(plaintext: string, envelope: ECPayTicketResponseEnvelope): boolean {
+    return this.generateCheckMacValue(plaintext) === envelope.CheckMacValue;
+  }
+
+  private buildEnvelope(plaintext: string, encryptedData: string): ECPayTicketRequestEnvelope {
     return {
       ...(this.platformId ? { PlatformID: this.platformId } : {}),
       MerchantID: this.merchantId,
@@ -168,7 +175,7 @@ export class ECPayTicketGateway {
         Timestamp: Math.round(Date.now() / 1000),
       },
       Data: encryptedData,
-      CheckMacValue: this.generateCheckMacValue(encryptedData),
+      CheckMacValue: this.generateCheckMacValue(plaintext),
     };
   }
 
@@ -179,8 +186,10 @@ export class ECPayTicketGateway {
       );
     }
 
-    const encryptedData = this.encrypt<TBody>(body);
-    const envelope = this.buildEnvelope(encryptedData);
+    // 同一份明文字串同時用於加密與 CheckMacValue，確保兩者一致
+    const plaintext = JSON.stringify(body);
+    const encryptedData = this.encrypt(plaintext);
+    const envelope = this.buildEnvelope(plaintext, encryptedData);
 
     const { data } = await axios.post<ECPayTicketResponseEnvelope>(`${this.baseUrl}${path}`, JSON.stringify(envelope), {
       headers: { 'Content-Type': 'application/json' },
@@ -190,11 +199,14 @@ export class ECPayTicketGateway {
       throw new Error(`ECPay ticket transport error: (${data.TransCode}) ${data.TransMsg}`);
     }
 
-    if (!this.verifyResponseEnvelope(data)) {
+    // 對「解密後的原始明文字串」驗證 MAC，再行 parse，避免 round-trip 破壞 MAC 比對
+    const decryptedPlaintext = this.decryptToPlaintext(data.Data);
+
+    if (!this.verifyResponseEnvelope(decryptedPlaintext, data)) {
       throw new Error('Invalid CheckMacValue');
     }
 
-    return this.decrypt<TDecrypted>(data.Data);
+    return JSON.parse(decryptedPlaintext) as TDecrypted;
   }
 
   private formatDate(date?: Date): string | undefined {
@@ -290,6 +302,39 @@ export class ECPayTicketGateway {
     }
   }
 
+  // 釋放 gateway 持有的資源：取消所有背景輪詢計時器、關閉 callback server、移除事件監聽。
+  // 在使用完畢(或測試 afterEach)時呼叫，避免殘留的計時器 / server handle 造成資源洩漏。
+  async destroy(): Promise<void> {
+    for (const timer of this.pollTimers) {
+      clearTimeout(timer);
+    }
+
+    this.pollTimers.clear();
+
+    this.emitter.removeAllListeners();
+
+    if (this._server) {
+      const server = this._server;
+
+      this._server = undefined;
+
+      await new Promise<void>(resolve => server.close(() => resolve()));
+    }
+  }
+
+  private schedulePoll(poll: () => Promise<void>): void {
+    const timer = setTimeout(() => {
+      this.pollTimers.delete(timer);
+
+      void poll();
+    }, this.pollIntervalMs);
+
+    // 不讓背景輪詢計時器阻擋 process / 測試環境結束
+    timer.unref?.();
+
+    this.pollTimers.add(timer);
+  }
+
   private startBackgroundPolling(merchantTradeNo?: string, freeTradeNo?: string): Promise<ECPayTicketIssueOutcome> {
     const deadline = Date.now() + this.pollTimeoutMs;
 
@@ -326,7 +371,7 @@ export class ECPayTicketGateway {
             return;
           }
 
-          setTimeout(poll, this.pollIntervalMs);
+          this.schedulePoll(poll);
         } catch (error) {
           const errorOutcome: ECPayTicketIssueOutcome = {
             status: 'failed',
@@ -340,7 +385,7 @@ export class ECPayTicketGateway {
         }
       };
 
-      setTimeout(poll, this.pollIntervalMs);
+      this.schedulePoll(poll);
     });
   }
 
@@ -551,15 +596,24 @@ export class ECPayTicketGateway {
   }
 
   private parseAndVerifyEnvelope(envelope: ECPayTicketResponseEnvelope): Record<string, unknown> {
-    if (!this.verifyResponseEnvelope(envelope)) {
+    let plaintext: string;
+
+    try {
+      plaintext = this.decryptToPlaintext(envelope.Data);
+    } catch {
+      throw new ECPayTicketCallbackError('INVALID_DATA', 'Failed to decrypt Data');
+    }
+
+    // 對「解密後的原始明文字串」驗證 MAC，再行 parse
+    if (!this.verifyResponseEnvelope(plaintext, envelope)) {
       debugTicket('Invalid CheckMacValue on callback');
       throw new ECPayTicketCallbackError('INVALID_CHECKMAC', 'Invalid CheckMacValue');
     }
 
     try {
-      return this.decrypt<Record<string, unknown>>(envelope.Data);
+      return JSON.parse(plaintext) as Record<string, unknown>;
     } catch {
-      throw new ECPayTicketCallbackError('INVALID_DATA', 'Failed to decrypt Data');
+      throw new ECPayTicketCallbackError('INVALID_DATA', 'Failed to parse Data');
     }
   }
 
