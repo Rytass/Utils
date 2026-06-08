@@ -30,6 +30,11 @@ import {
   ECPayTicketResponseEnvelope,
   ECPayTicketType,
   ECPayTicketUseStatusNotification,
+  ECPayTicketWriteOffAction,
+  ECPayTicketWriteOffInput,
+  ECPayTicketWriteOffRequestBody,
+  ECPayTicketWriteOffResponseDecrypted,
+  ECPayTicketWriteOffResult,
   IssuedTicketRecord,
   IssuedTicketsCache,
   parseTicketUseStatus,
@@ -486,6 +491,52 @@ export class ECPayTicketGateway {
     }
 
     return this.mapOrderInfo(decrypted);
+  }
+
+  /**
+   * 核銷(或取消核銷)一張票券。
+   *
+   * 對應綠界電子票證「核銷票券 API」(POST /api/Ticket/WriteOff)。
+   * 以 WriteOffNo(核銷代碼)為操作對象，透過 action 區分核銷 / 取消核銷。
+   *
+   * 失敗(RtnCode !== 1)時拋出 Error，與 issue() / query 系列方法一致。
+   */
+  async writeOff(input: ECPayTicketWriteOffInput): Promise<ECPayTicketWriteOffResult> {
+    if (!input.writeOffNo) {
+      throw new Error('writeOffNo must be provided');
+    }
+
+    const action = input.action ?? ECPayTicketWriteOffAction.WRITE_OFF;
+
+    // 取消核銷時綠界要求帶上取消原因，提前驗證以免錯誤要等 RtnCode 才浮現。
+    if (action === ECPayTicketWriteOffAction.CANCEL && !input.cancelReason) {
+      throw new Error('cancelReason is required when action is CANCEL');
+    }
+
+    const body: ECPayTicketWriteOffRequestBody = {
+      MerchantID: this.merchantId,
+      WriteOffNo: input.writeOffNo,
+      Action: action,
+      ...(input.cancelReason ? { CancelReason: input.cancelReason } : {}),
+      ...(input.storeId ? { StoreID: input.storeId } : {}),
+      Operator: input.operator,
+    };
+
+    const decrypted = await this.postEnvelope<ECPayTicketWriteOffRequestBody, ECPayTicketWriteOffResponseDecrypted>(
+      '/api/Ticket/WriteOff',
+      body,
+    );
+
+    if (decrypted.RtnCode !== ECPAY_TICKET_RTN_CODE_SUCCESS) {
+      throw new Error(`ECPay ticket write-off failed: (${decrypted.RtnCode}) ${decrypted.RtnMsg}`);
+    }
+
+    return {
+      writeOffNo: input.writeOffNo,
+      action,
+      rtnCode: decrypted.RtnCode,
+      rtnMsg: decrypted.RtnMsg,
+    };
   }
 
   private mapTicket(raw: ECPayTicketListResponseItem): ECPayTicketInfo {

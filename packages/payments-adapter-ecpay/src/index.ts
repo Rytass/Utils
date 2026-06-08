@@ -39,6 +39,7 @@ export {
   ECPayTicketIssueStatusCode,
   ECPayTicketUseStatus,
   ECPayTicketType,
+  ECPayTicketWriteOffAction,
   parseTicketUseStatus,
 } from './ecpay-ticket-typings';
 
@@ -50,6 +51,8 @@ export type {
   ECPayTicketIssueOutcome,
   ECPayTicketOrderInfo,
   ECPayTicketInfo,
+  ECPayTicketWriteOffInput,
+  ECPayTicketWriteOffResult,
   ECPayTicketRefundNotification,
   ECPayTicketUseStatusNotification,
   ECPayTicketResponseEnvelope,

@@ -36,6 +36,11 @@ export enum ECPayTicketIssueStatusCode {
   PROCESSING = 3,
 }
 
+export enum ECPayTicketWriteOffAction {
+  WRITE_OFF = '1',
+  CANCEL = '2',
+}
+
 export enum ECPayTicketUseStatus {
   UNUSED = 'unused',
   REDEEMED = 'redeemed',
@@ -223,6 +228,29 @@ export interface ECPayTicketOrderInfo {
   tickets: ECPayTicketInfo[];
 }
 
+export interface ECPayTicketWriteOffInput {
+  /** 核銷代碼(WriteOffNo)，由開立票券時取得，最長 18 字元。 */
+  writeOffNo: string;
+  /**
+   * 執行動作。預設為核銷(WRITE_OFF)。
+   * 取消核銷(CANCEL)時必須提供 cancelReason。
+   */
+  action?: ECPayTicketWriteOffAction;
+  /** 取消原因，最長 50 字元；action 為 CANCEL 時必填。 */
+  cancelReason?: string;
+  /** 分店編號，最長 20 字元。 */
+  storeId?: string;
+  /** 建立人員，最長 10 字元。 */
+  operator: string;
+}
+
+export interface ECPayTicketWriteOffResult {
+  writeOffNo: string;
+  action: ECPayTicketWriteOffAction;
+  rtnCode: number;
+  rtnMsg: string;
+}
+
 export interface ECPayTicketRefundNotification {
   merchantTradeNo?: string;
   freeTradeNo?: string;
@@ -372,6 +400,20 @@ export interface ECPayTicketQueryOrderInfoResponseDecrypted {
   UnUsedAmount: number;
   ExpiredCount: number;
   TicketList: ECPayTicketListResponseItem[];
+}
+
+export interface ECPayTicketWriteOffRequestBody {
+  MerchantID: string;
+  WriteOffNo: string;
+  Action: ECPayTicketWriteOffAction;
+  CancelReason?: string;
+  StoreID?: string;
+  Operator: string;
+}
+
+export interface ECPayTicketWriteOffResponseDecrypted {
+  RtnCode: number;
+  RtnMsg: string;
 }
 
 export const ECPAY_TICKET_TRANS_CODE_SUCCESS = 1;
