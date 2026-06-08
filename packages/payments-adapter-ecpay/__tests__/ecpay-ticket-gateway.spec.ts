@@ -15,11 +15,14 @@ import {
   ECPayTicketRefundNotification,
   ECPayTicketUseStatus,
   ECPayTicketUseStatusNotification,
+  ECPayTicketWriteOffAction,
 } from '../src';
 import {
   ECPayTicketIssueResponseDecrypted,
   ECPayTicketQueryIssueResultResponseDecrypted,
   ECPayTicketQueryOrderInfoResponseDecrypted,
+  ECPayTicketWriteOffRequestBody,
+  ECPayTicketWriteOffResponseDecrypted,
 } from '../src/ecpay-ticket-typings';
 import {
   buildTicketResponseEnvelope,
@@ -555,6 +558,116 @@ describe('ECPayTicketGateway', () => {
       expect(info.issueDate).toBeUndefined();
       expect(info.escrowExpiredDate).toBeUndefined();
       expect(info.tickets[0].startDate).toBeUndefined();
+    });
+  });
+
+  describe('writeOff()', () => {
+    let post: jest.SpyInstance;
+
+    beforeEach(() => {
+      post = jest.spyOn(axios, 'post');
+    });
+
+    afterEach(() => {
+      post.mockRestore();
+    });
+
+    // 解出綠界實際收到的 request Data(明文 JSON)，以驗證 Action / CancelReason 等欄位確實送出
+    function decodeRequestBody(rawBody: unknown): ECPayTicketWriteOffRequestBody {
+      const envelope = JSON.parse(rawBody as string) as { Data: string };
+
+      return JSON.parse(decryptTicketDataToPlaintext(envelope.Data)) as ECPayTicketWriteOffRequestBody;
+    }
+
+    it('writes off a ticket (default action = WRITE_OFF)', async () => {
+      const gateway = new ECPayTicketGateway();
+
+      const decrypted: ECPayTicketWriteOffResponseDecrypted = { RtnCode: 1, RtnMsg: 'OK' };
+
+      let sentBody: ECPayTicketWriteOffRequestBody | undefined;
+
+      post.mockImplementation(async (url: string, rawBody: unknown) => {
+        expect(url).toBe('https://ecticket-stage.ecpay.com.tw/api/Ticket/WriteOff');
+        sentBody = decodeRequestBody(rawBody);
+
+        return { data: buildTicketResponseEnvelope(decrypted) };
+      });
+
+      const result = await gateway.writeOff({ writeOffNo: 'WO-0001', operator: 'cashier01' });
+
+      expect(result).toEqual({
+        writeOffNo: 'WO-0001',
+        action: ECPayTicketWriteOffAction.WRITE_OFF,
+        rtnCode: 1,
+        rtnMsg: 'OK',
+      });
+
+      expect(sentBody?.Action).toBe(ECPayTicketWriteOffAction.WRITE_OFF);
+      expect(sentBody?.WriteOffNo).toBe('WO-0001');
+      expect(sentBody?.Operator).toBe('cashier01');
+      expect(sentBody?.CancelReason).toBeUndefined();
+      // 未提供 storeId 時不應帶入 StoreID 欄位(避免送出空字串給綠界)
+      expect(sentBody?.StoreID).toBeUndefined();
+    });
+
+    it('cancels a write-off with a cancel reason (action = CANCEL)', async () => {
+      const gateway = new ECPayTicketGateway();
+
+      let sentBody: ECPayTicketWriteOffRequestBody | undefined;
+
+      post.mockImplementation(async (_url: string, rawBody: unknown) => {
+        sentBody = decodeRequestBody(rawBody);
+
+        return { data: buildTicketResponseEnvelope({ RtnCode: 1, RtnMsg: 'OK' }) };
+      });
+
+      const result = await gateway.writeOff({
+        writeOffNo: 'WO-0002',
+        action: ECPayTicketWriteOffAction.CANCEL,
+        cancelReason: 'customer changed mind',
+        storeId: 'STORE-1',
+        operator: 'cashier02',
+      });
+
+      expect(result).toMatchObject({
+        writeOffNo: 'WO-0002',
+        action: ECPayTicketWriteOffAction.CANCEL,
+        rtnCode: 1,
+        rtnMsg: 'OK',
+      });
+
+      expect(sentBody?.Action).toBe(ECPayTicketWriteOffAction.CANCEL);
+      expect(sentBody?.CancelReason).toBe('customer changed mind');
+      expect(sentBody?.StoreID).toBe('STORE-1');
+    });
+
+    it('rejects when writeOffNo is missing', async () => {
+      const gateway = new ECPayTicketGateway();
+
+      await expect(gateway.writeOff({ writeOffNo: '', operator: 'op' })).rejects.toThrow(/writeOffNo must be provided/);
+    });
+
+    it('rejects CANCEL action without a cancelReason', async () => {
+      const gateway = new ECPayTicketGateway();
+
+      await expect(
+        gateway.writeOff({ writeOffNo: 'WO-0003', action: ECPayTicketWriteOffAction.CANCEL, operator: 'op' }),
+      ).rejects.toThrow(/cancelReason is required/);
+    });
+
+    it('throws when ECPay returns RtnCode != 1', async () => {
+      const gateway = new ECPayTicketGateway();
+
+      post.mockImplementation(async () => ({
+        data: buildTicketResponseEnvelope<ECPayTicketWriteOffResponseDecrypted>({
+          RtnCode: 10200073,
+          RtnMsg: 'Ticket already written off',
+        }),
+      }));
+
+      await expect(gateway.writeOff({ writeOffNo: 'WO-0004', operator: 'op' })).rejects.toThrow(
+        /write-off failed: \(10200073\) Ticket already written off/,
+      );
     });
   });
 
