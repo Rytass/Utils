@@ -58,8 +58,8 @@ const mockDel = jest.fn().mockImplementation((urlOrPathname: string): Promise<vo
 const mockHead = jest
   .fn()
   .mockImplementation((urlOrPathname: string): Promise<{ size: number; contentType: string }> => {
-    for (const value of fakeStorage.values()) {
-      if (value.url === urlOrPathname) {
+    for (const [key, value] of fakeStorage.entries()) {
+      if (value.url === urlOrPathname || key === urlOrPathname) {
         return Promise.resolve({
           size: value.buffer.length,
           contentType: value.contentType ?? 'application/octet-stream',
@@ -82,11 +82,32 @@ const mockList = jest
     return Promise.resolve({ blobs });
   });
 
+const mockIssueSignedToken = jest.fn().mockImplementation(
+  (options: {
+    pathname: string;
+    validUntil: number;
+  }): Promise<{ delegationToken: string; clientSigningToken: string; validUntil: number }> =>
+    Promise.resolve({
+      delegationToken: `delegation-${options.pathname}`,
+      clientSigningToken: `signing-${options.pathname}`,
+      validUntil: options.validUntil,
+    }),
+);
+
+const mockPresignUrl = jest.fn().mockImplementation(
+  (_signedToken: unknown, options: { pathname: string }): Promise<{ presignedUrl: string }> =>
+    Promise.resolve({
+      presignedUrl: `${FAKE_BLOB_BASE}/${options.pathname}?signed=true`,
+    }),
+);
+
 jest.mock('@vercel/blob', () => ({
   put: mockPut,
   del: mockDel,
   head: mockHead,
   list: mockList,
+  issueSignedToken: mockIssueSignedToken,
+  presignUrl: mockPresignUrl,
 }));
 
 describe('Vercel Blob storage adapter', () => {
@@ -96,6 +117,8 @@ describe('Vercel Blob storage adapter', () => {
     mockDel.mockClear();
     mockHead.mockClear();
     mockList.mockClear();
+    mockIssueSignedToken.mockClear();
+    mockPresignUrl.mockClear();
 
     // Pre-load a saved file
     const savedPathname = `${PATH_PREFIX}/saved-file.png`;
@@ -399,11 +422,9 @@ describe('Vercel Blob storage adapter', () => {
       pathPrefix: PATH_PREFIX,
     });
 
-    const expectedUrl = `${FAKE_BLOB_BASE}/${PATH_PREFIX}/saved-file.png`;
-
     await service.remove('saved-file.png');
 
-    expect(mockDel).toHaveBeenCalledWith(expectedUrl, { token: TOKEN });
+    expect(mockDel).toHaveBeenCalledWith(`${PATH_PREFIX}/saved-file.png`, { token: TOKEN });
 
     // Cache should be cleared — next url() call should query list() again
     await expect(service.url('saved-file.png')).rejects.toThrow();
@@ -490,5 +511,205 @@ describe('Vercel Blob storage adapter', () => {
     await service.write(sampleFileBuffer);
 
     expect(mockPut).not.toHaveBeenCalled(); // File exists with default prefix, so dedup skips upload
+  });
+});
+
+describe('Vercel Blob storage adapter (private access)', () => {
+  beforeEach(() => {
+    fakeStorage.clear();
+    mockPut.mockClear();
+    mockDel.mockClear();
+    mockHead.mockClear();
+    mockList.mockClear();
+    mockIssueSignedToken.mockClear();
+    mockPresignUrl.mockClear();
+
+    const savedPathname = `${PATH_PREFIX}/saved-file.png`;
+
+    fakeStorage.set(savedPathname, {
+      buffer: sampleFileBuffer,
+      url: `${FAKE_BLOB_BASE}/${savedPathname}`,
+      pathname: savedPathname,
+      contentType: 'image/png',
+    });
+  });
+
+  it('should upload with private access', async () => {
+    const { StorageVercelBlobService } = await import('../src');
+
+    const service = new StorageVercelBlobService({
+      token: TOKEN,
+      pathPrefix: PATH_PREFIX,
+      access: 'private',
+    });
+
+    await service.write(sampleFileBuffer, { filename: 'private-file.png' });
+
+    expect(mockPut).toHaveBeenCalledWith(
+      `${PATH_PREFIX}/private-file.png`,
+      sampleFileBuffer,
+      expect.objectContaining({
+        access: 'private',
+        token: TOKEN,
+        addRandomSuffix: false,
+      }),
+    );
+  });
+
+  it('should return a presigned url for private blobs', async () => {
+    const { StorageVercelBlobService } = await import('../src');
+
+    const service = new StorageVercelBlobService({
+      token: TOKEN,
+      pathPrefix: PATH_PREFIX,
+      access: 'private',
+    });
+
+    const url = await service.url('saved-file.png');
+
+    expect(url).toBe(`${FAKE_BLOB_BASE}/${PATH_PREFIX}/saved-file.png?signed=true`);
+    expect(mockList).not.toHaveBeenCalled();
+    expect(mockIssueSignedToken).toHaveBeenCalledWith(
+      expect.objectContaining({
+        token: TOKEN,
+        pathname: `${PATH_PREFIX}/saved-file.png`,
+        operations: ['get'],
+      }),
+    );
+
+    expect(mockPresignUrl).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        access: 'private',
+        operation: 'get',
+        pathname: `${PATH_PREFIX}/saved-file.png`,
+      }),
+    );
+  });
+
+  it('should reuse a cached presigned url before it nears expiry', async () => {
+    const { StorageVercelBlobService } = await import('../src');
+
+    const service = new StorageVercelBlobService({
+      token: TOKEN,
+      pathPrefix: PATH_PREFIX,
+      access: 'private',
+    });
+
+    await service.url('saved-file.png');
+    await service.url('saved-file.png');
+
+    expect(mockIssueSignedToken).toHaveBeenCalledTimes(1);
+    expect(mockPresignUrl).toHaveBeenCalledTimes(1);
+  });
+
+  it('should re-issue a presigned url once it is close to expiry', async () => {
+    const { StorageVercelBlobService } = await import('../src');
+
+    // 10s lifetime → 1s refresh threshold (10%). Advancing the clock past 90%
+    // of the lifetime should drop the cached url below the threshold and trigger
+    // a re-issue on the next url() call.
+    const service = new StorageVercelBlobService({
+      token: TOKEN,
+      pathPrefix: PATH_PREFIX,
+      access: 'private',
+      signedUrlExpiresIn: 10,
+    });
+
+    jest.useFakeTimers();
+
+    try {
+      await service.url('saved-file.png');
+
+      expect(mockIssueSignedToken).toHaveBeenCalledTimes(1);
+
+      jest.advanceTimersByTime(9_500); // 0.5s remaining < 1s threshold
+
+      await service.url('saved-file.png');
+
+      expect(mockIssueSignedToken).toHaveBeenCalledTimes(2);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('should respect a custom signed url lifetime', async () => {
+    const { StorageVercelBlobService } = await import('../src');
+
+    const service = new StorageVercelBlobService({
+      token: TOKEN,
+      pathPrefix: PATH_PREFIX,
+      access: 'private',
+      signedUrlExpiresIn: 900,
+    });
+
+    const before = Date.now();
+
+    await service.url('saved-file.png');
+
+    const { validUntil } = mockIssueSignedToken.mock.calls[0][0] as { validUntil: number };
+
+    expect(validUntil).toBeGreaterThanOrEqual(before + 900 * 1000);
+    expect(validUntil).toBeLessThanOrEqual(Date.now() + 900 * 1000);
+  });
+
+  it('should read a private blob through its presigned url', async () => {
+    const { StorageVercelBlobService } = await import('../src');
+
+    const service = new StorageVercelBlobService({
+      token: TOKEN,
+      pathPrefix: PATH_PREFIX,
+      access: 'private',
+    });
+
+    const fetchSpy = jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(sampleFileBuffer, { status: 200 }));
+
+    const buffer = await service.read('saved-file.png', { format: 'buffer' });
+
+    expect(Buffer.isBuffer(buffer)).toBe(true);
+    expect(Buffer.compare(buffer, sampleFileBuffer)).toBe(0);
+    expect(fetchSpy).toHaveBeenCalledWith(`${FAKE_BLOB_BASE}/${PATH_PREFIX}/saved-file.png?signed=true`);
+
+    fetchSpy.mockRestore();
+  });
+
+  it('should check existence via pathname for private blobs', async () => {
+    const { StorageVercelBlobService } = await import('../src');
+
+    const service = new StorageVercelBlobService({
+      token: TOKEN,
+      pathPrefix: PATH_PREFIX,
+      access: 'private',
+    });
+
+    const exists = await service.isExists('saved-file.png');
+    const notExists = await service.isExists('nonexistent-file');
+
+    expect(exists).toBe(true);
+    expect(notExists).toBe(false);
+    expect(mockHead).toHaveBeenCalledWith(`${PATH_PREFIX}/saved-file.png`, { token: TOKEN });
+  });
+
+  it('should clear the presigned url cache on remove', async () => {
+    const { StorageVercelBlobService } = await import('../src');
+
+    const service = new StorageVercelBlobService({
+      token: TOKEN,
+      pathPrefix: PATH_PREFIX,
+      access: 'private',
+    });
+
+    await service.url('saved-file.png');
+
+    expect(mockIssueSignedToken).toHaveBeenCalledTimes(1);
+
+    await service.remove('saved-file.png');
+
+    expect(mockDel).toHaveBeenCalledWith(`${PATH_PREFIX}/saved-file.png`, { token: TOKEN });
+
+    // Re-issuing after removal proves the cache entry was dropped.
+    await service.url('saved-file.png');
+
+    expect(mockIssueSignedToken).toHaveBeenCalledTimes(2);
   });
 });

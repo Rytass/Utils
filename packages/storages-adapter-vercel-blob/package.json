@@ -1,6 +1,6 @@
 {
   "name": "@rytass/storages-adapter-vercel-blob",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "description": "Vercel Blob storage adapter",
   "keywords": [
     "rytass",
@@ -27,6 +27,6 @@
   },
   "dependencies": {
     "@rytass/storages": "^0.2.7",
-    "@vercel/blob": "^0.27.1"
+    "@vercel/blob": "^2.4.0"
   }
 }
