@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.4.14](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.4.13...@rytass/payments-adapter-ecpay@0.4.14) (2026-06-08)
+
+### Bug Fixes
+
+- **payments-adapter-ecpay:** compute ticket CheckMacValue over plaintext ([fc3736b](https://github.com/Rytass/Utils/commit/fc3736b724aeeee3030e7f355ed878de0f4d208a))
+- **payments-adapter-ecpay:** MAC verify & type safety ([20a50d1](https://github.com/Rytass/Utils/commit/20a50d1f6ae735ce72ff42ca8c0d6e26b1eb9f3b))
+
 ## [0.4.13](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.4.12...@rytass/payments-adapter-ecpay@0.4.13) (2026-05-18)
 
 ### Bug Fixes
