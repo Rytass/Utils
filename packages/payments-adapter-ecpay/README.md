@@ -18,6 +18,7 @@
 - [x] Ticket Issue (ECTicket)
 - [x] Query Ticket Issue Result
 - [x] Query Ticket Order Info
+- [x] Ticket Write-off (核銷 / 取消核銷)
 
 ## Getting Started
 
@@ -255,6 +256,34 @@ console.log(info.redeemCount, info.refundCount, info.unUsedCount);
 
 info.tickets.forEach(t => {
   console.log(t.ticketNo, t.useStatus); // 'unused' | 'redeemed' | 'refunded' | 'expired'
+});
+```
+
+### Write-off Tickets (核銷 / 取消核銷)
+
+Redeem (write-off) or cancel a redemption for a single ticket, addressed by its `WriteOffNo` (核銷代碼). The action defaults to write-off; pass `ECPayTicketWriteOffAction.CANCEL` together with a `cancelReason` to reverse a redemption. A non-`1` `RtnCode` from ECPay throws, mirroring `issue()` / the query methods.
+
+```typescript
+import {
+  ECPayTicketGateway,
+  ECPayTicketWriteOffAction,
+} from '@rytass/payments-adapter-ecpay';
+
+// Write off (redeem) a ticket
+const result = await ticket.writeOff({
+  writeOffNo: 'WO0123456789012345', // up to 18 chars, from the issued ticket
+  storeId: 'STORE-001', // optional, up to 20 chars
+  operator: 'cashier01', // up to 10 chars
+});
+
+console.log(result.rtnCode, result.rtnMsg); // 1, 'Success'
+
+// Cancel a previous write-off (cancelReason is required)
+await ticket.writeOff({
+  writeOffNo: 'WO0123456789012345',
+  action: ECPayTicketWriteOffAction.CANCEL,
+  cancelReason: 'customer requested re-entry',
+  operator: 'cashier01',
 });
 ```
 
