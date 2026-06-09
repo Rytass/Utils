@@ -228,7 +228,8 @@ export class BankProInvoiceGateway implements InvoiceGateway<
       throw new Error('Failed to issue invoice');
     }
 
-    if (data.some(response => response.ErrorMessage)) {
+    // 「ER016會員地址欄位不可空白！」still returns valid invoice data on production — treat it as a non-fatal warning
+    if (data.some(response => response.ErrorMessage && response.ErrorMessage !== 'ER016會員地址欄位不可空白！')) {
       throw new Error(data.map(response => response.ErrorMessage).join(', '));
     }
 
