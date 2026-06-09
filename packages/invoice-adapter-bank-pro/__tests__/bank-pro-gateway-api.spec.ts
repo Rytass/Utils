@@ -82,6 +82,61 @@ describe('BankProInvoiceGateway API Tests', () => {
       await expect(gateway.issue(mockIssueOptions)).rejects.toThrow('Some error occurred');
     });
 
+    it('should treat ER016 error as non-fatal and still return the issued invoice', async () => {
+      mockedAxios.post.mockResolvedValueOnce({
+        data: [
+          {
+            InvoiceNo: 'AB12345678',
+            RandomNumber: '1234',
+            InvoiceDate: '2025/01/10 10:00:00',
+            ErrorMessage: 'ER016會員地址欄位不可空白！',
+          },
+        ],
+      });
+
+      const invoice = await gateway.issue(mockIssueOptions);
+
+      expect(invoice.invoiceNumber).toBe('AB12345678');
+      expect(invoice.randomCode).toBe('1234');
+    });
+
+    it('should match non-fatal error by ER016 code prefix regardless of trailing message', async () => {
+      mockedAxios.post.mockResolvedValueOnce({
+        data: [
+          {
+            InvoiceNo: 'AB12345678',
+            RandomNumber: '1234',
+            InvoiceDate: '2025/01/10 10:00:00',
+            ErrorMessage: 'ER016 address field is empty',
+          },
+        ],
+      });
+
+      const invoice = await gateway.issue(mockIssueOptions);
+
+      expect(invoice.invoiceNumber).toBe('AB12345678');
+    });
+
+    it('should still throw when a fatal error coexists with ER016, excluding ER016 from the message', async () => {
+      mockedAxios.post.mockResolvedValueOnce({
+        data: [
+          {
+            InvoiceNo: 'AB12345678',
+            RandomNumber: '1234',
+            InvoiceDate: '2025/01/10 10:00:00',
+            ErrorMessage: 'ER016會員地址欄位不可空白！',
+          },
+          {
+            ErrorMessage: 'Some fatal error',
+          },
+        ],
+      });
+
+      await expect(gateway.issue(mockIssueOptions)).rejects.toThrow(
+        expect.objectContaining({ message: 'Some fatal error' }),
+      );
+    });
+
     it('should handle mobile carrier type', async () => {
       mockedAxios.post.mockResolvedValueOnce({
         data: [

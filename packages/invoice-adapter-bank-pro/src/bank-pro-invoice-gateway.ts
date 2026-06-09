@@ -34,6 +34,12 @@ import {
   BankProVoidInvoiceResponse,
 } from './typings';
 
+// 開立發票時，部分錯誤碼（如 ER016「會員地址欄位不可空白！」）在正式環境仍會回傳有效的發票資料，視為非致命警告
+const NON_FATAL_ISSUE_ERROR_CODES: readonly string[] = ['ER016'];
+
+const isNonFatalIssueError = (errorMessage: string): boolean =>
+  NON_FATAL_ISSUE_ERROR_CODES.some(code => errorMessage.startsWith(code));
+
 export class BankProInvoiceGateway implements InvoiceGateway<
   BankProPaymentItem,
   BankProInvoice,
@@ -228,8 +234,12 @@ export class BankProInvoiceGateway implements InvoiceGateway<
       throw new Error('Failed to issue invoice');
     }
 
-    if (data.some(response => response.ErrorMessage)) {
-      throw new Error(data.map(response => response.ErrorMessage).join(', '));
+    const fatalErrorMessages = data
+      .map(response => response.ErrorMessage)
+      .filter(errorMessage => errorMessage && !isNonFatalIssueError(errorMessage));
+
+    if (fatalErrorMessages.length > 0) {
+      throw new Error(fatalErrorMessages.join(', '));
     }
 
     return new BankProInvoice({
