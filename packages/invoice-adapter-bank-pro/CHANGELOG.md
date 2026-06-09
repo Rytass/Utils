@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.18](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-bank-pro@0.2.17...@rytass/invoice-adapter-bank-pro@0.2.18) (2026-06-09)
+
+### Bug Fixes
+
+- **invoice-adapter-bank-pro:** skip ER016 error on invoice issue ([64c0009](https://github.com/Rytass/Utils/commit/64c000903b992894772e7fa7e5c1c9b426a61bdd))
+
 ## [0.2.17](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-bank-pro@0.2.16...@rytass/invoice-adapter-bank-pro@0.2.17) (2026-05-18)
 
 **Note:** Version bump only for package @rytass/invoice-adapter-bank-pro
