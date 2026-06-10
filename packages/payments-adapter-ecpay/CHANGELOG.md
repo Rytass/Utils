@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.4.16](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.4.15...@rytass/payments-adapter-ecpay@0.4.16) (2026-06-10)
+
+### Bug Fixes
+
+- **payments-adapter-ecpay:** use encodeURIComponent for ticket MAC ([5865f06](https://github.com/Rytass/Utils/commit/5865f06b53e6cbe437ac5c5c6d1cb87792c678ca))
+
 ## [0.4.15](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.4.14...@rytass/payments-adapter-ecpay@0.4.15) (2026-06-08)
 
 ### Features
