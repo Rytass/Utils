@@ -197,6 +197,79 @@ import { GraphQLContextTokenResolver } from '@rytass/member-base-nestjs-module';
 export class AppModule {}
 ```
 
+## Request-Aware Authorization (casbinDomainResolver and Decision Tracing)
+
+By default, the built-in permission checker enforces against `payload.domain ?? DEFAULT_CASBIN_DOMAIN`. For per-resource multi-domain models (e.g. the target domain depends on GraphQL arguments), provide a `casbinDomainResolver`. The resolver receives the original Nest `ExecutionContext` (and the underlying request), returns one or more candidate domains, and the default checker allows the call if ANY returned domain passes ANY declared action (the same OR semantics as `AllowActions`). Returning an empty array denies immediately.
+
+The checker result is normalized into a `CasbinAuthorizationDecision` and attached to `request.casbinDecision`, so downstream interceptors / services can audit which domain actually granted access.
+
+```typescript
+// app.module.ts
+import { Module } from '@nestjs/common';
+import { GqlExecutionContext } from '@nestjs/graphql';
+import { MemberBaseModule } from '@rytass/member-base-nestjs-module';
+import type { CasbinDomainResolverParams } from '@rytass/member-base-nestjs-module';
+
+@Module({
+  imports: [
+    MemberBaseModule.forRoot({
+      casbinAdapterOptions: {
+        /* ... */
+      },
+      // Resolve target domains from the request instead of the token payload.
+      casbinDomainResolver: ({ context, payload }: CasbinDomainResolverParams): string[] => {
+        if (!context) return [];
+
+        // GraphQL: read resource ids from resolver args, e.g. query documents(projectId: ID!)
+        const args = GqlExecutionContext.create(context).getArgs<{ projectId?: string; organizationId?: string }>();
+
+        // Multi-layer domain fallback: project first, then its organization, then the tenant.
+        return [
+          ...(args.projectId ? [`project:${args.projectId}`] : []),
+          ...(args.organizationId ? [`organization:${args.organizationId}`] : []),
+          ...(typeof payload.tenantId === 'string' ? [`tenant:${payload.tenantId}`] : []),
+        ];
+      },
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+Reading the decision for auditing (e.g. logging when access was granted through organization inheritance):
+
+```typescript
+// interceptors/authorization-audit.interceptor.ts
+import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
+import { GqlExecutionContext } from '@nestjs/graphql';
+import type { CasbinAuthorizationDecision } from '@rytass/member-base-nestjs-module';
+import { Observable } from 'rxjs';
+
+@Injectable()
+export class AuthorizationAuditInterceptor implements NestInterceptor {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+    const request = GqlExecutionContext.create(context).getContext<{
+      req: { casbinDecision?: CasbinAuthorizationDecision };
+    }>().req;
+
+    const decision = request.casbinDecision;
+
+    if (decision?.allowed && decision.matchedDomain?.startsWith('organization:')) {
+      // Access was granted via an inherited organization-level policy; keep an audit trail.
+      console.log('organization inheritance access', decision.matchedDomain, decision.matchedAction);
+    }
+
+    return next.handle();
+  }
+}
+```
+
+Notes:
+
+- `casbinDomainResolver` only affects the DEFAULT checker. When a custom `casbinPermissionChecker` is provided, the resolver is ignored — the custom checker receives `context` / `request` in its params (`CasbinPermissionCheckerParams`) and decides on its own.
+- Custom checkers may keep returning `Promise<boolean>` (legacy signature, fully backward compatible) or return a rich `CasbinAuthorizationDecision` (`{ allowed, matchedDomain?, matchedAction?, meta? }`) for tracing.
+- Without `casbinDomainResolver`, the default checker behavior is unchanged (`payload.domain ?? DEFAULT_CASBIN_DOMAIN`).
+
 ## Recent Changes (Types and Authorization Behavior)
 
 - Centralized token payload type: added `AuthTokenPayloadBase` to standardize `{ id; account?; domain? }` across the module.
