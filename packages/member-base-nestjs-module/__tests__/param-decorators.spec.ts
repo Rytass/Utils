@@ -174,10 +174,11 @@ describe('Param Decorators', () => {
       expect(result).toBe(false);
     });
 
-    it('should call casbinPermissionChecker with correct parameters', () => {
+    it('should call casbinPermissionChecker with correct parameters (including context and request)', () => {
       const mockPermissionChecker = jest.fn().mockReturnValue(true);
       const mockEnforcer = { enforce: jest.fn() };
       const mockPayload = { id: 'user-123', account: 'user@example.com' };
+      const mockContext = {};
 
       const mockRequest = {
         payload: mockPayload,
@@ -188,12 +189,14 @@ describe('Param Decorators', () => {
       mockGetRequestFromContext.mockReturnValue(mockRequest as ReturnType<typeof getRequestFromContext>);
 
       const factory = getParamDecoratorFactoryWithData(HasPermission, ['resource', 'write']);
-      const result = factory(['resource', 'write'], {});
+      const result = factory(['resource', 'write'], mockContext);
 
       expect(mockPermissionChecker).toHaveBeenCalledWith({
         enforcer: mockEnforcer,
         payload: mockPayload,
         actions: [['resource', 'write']],
+        context: mockContext,
+        request: mockRequest,
       });
 
       expect(result).toBe(true);
@@ -213,6 +216,61 @@ describe('Param Decorators', () => {
       const result = factory(['admin', 'delete'], {});
 
       expect(result).toBe(false);
+    });
+
+    it('should normalize a rich decision object into a boolean', () => {
+      const mockPermissionChecker = jest.fn().mockReturnValue({
+        allowed: true,
+        matchedDomain: 'project:42',
+        matchedAction: ['resource', 'read'],
+      });
+
+      const mockRequest = {
+        payload: { id: 'user-123' },
+        enforcer: {},
+        casbinPermissionChecker: mockPermissionChecker,
+      };
+
+      mockGetRequestFromContext.mockReturnValue(mockRequest as ReturnType<typeof getRequestFromContext>);
+
+      const factory = getParamDecoratorFactoryWithData(HasPermission, ['resource', 'read']);
+      const result = factory(['resource', 'read'], {});
+
+      expect(result).toBe(true);
+    });
+
+    it('should normalize an async rich decision object into a boolean', async () => {
+      const mockPermissionChecker = jest.fn().mockResolvedValue({ allowed: false });
+
+      const mockRequest = {
+        payload: { id: 'user-123' },
+        enforcer: {},
+        casbinPermissionChecker: mockPermissionChecker,
+      };
+
+      mockGetRequestFromContext.mockReturnValue(mockRequest as ReturnType<typeof getRequestFromContext>);
+
+      const factory = getParamDecoratorFactoryWithData(HasPermission, ['resource', 'read']);
+      const result = factory(['resource', 'read'], {});
+
+      await expect(result).resolves.toBe(false);
+    });
+
+    it('should keep resolving to a boolean for legacy async checkers', async () => {
+      const mockPermissionChecker = jest.fn().mockResolvedValue(true);
+
+      const mockRequest = {
+        payload: { id: 'user-123' },
+        enforcer: {},
+        casbinPermissionChecker: mockPermissionChecker,
+      };
+
+      mockGetRequestFromContext.mockReturnValue(mockRequest as ReturnType<typeof getRequestFromContext>);
+
+      const factory = getParamDecoratorFactoryWithData(HasPermission, ['resource', 'read']);
+      const result = factory(['resource', 'read'], {});
+
+      await expect(result).resolves.toBe(true);
     });
   });
 });
