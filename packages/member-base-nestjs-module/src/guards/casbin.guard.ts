@@ -16,7 +16,9 @@ import { verify } from 'jsonwebtoken';
 import { IS_ROUTE_ONLY_AUTHENTICATED } from '../decorators/authenticated.decorator';
 import { getTokenFromContext } from '../utils/get-token-from-context';
 import { getRequestFromContext } from '../utils/get-request-from-context';
+import { normalizeCasbinDecision } from '../utils/normalize-casbin-decision';
 import type { AuthTokenPayloadBase } from '../typings/auth-token-payload';
+import type { CasbinPermissionChecker } from '../typings/casbin-permission';
 
 @Injectable()
 export class CasbinGuard implements CanActivate {
@@ -32,11 +34,7 @@ export class CasbinGuard implements CanActivate {
     @Inject(CASBIN_PERMISSION_DECORATOR)
     private readonly permissionDecorator: ReflectableDecorator<[Subject, Action][]>,
     @Inject(CASBIN_PERMISSION_CHECKER)
-    private readonly permissionChecker: (params: {
-      enforcer: Enforcer;
-      payload: AuthTokenPayloadBase;
-      actions: [Subject, Action][];
-    }) => Promise<boolean>,
+    private readonly permissionChecker: CasbinPermissionChecker,
     @Inject(ACCESS_TOKEN_COOKIE_NAME)
     private readonly accessTokenCookieName: string,
   ) {}
@@ -87,6 +85,18 @@ export class CasbinGuard implements CanActivate {
 
     if (!this.enforcer) return false;
 
-    return this.permissionChecker({ enforcer: this.enforcer, payload: request.payload, actions: allowActions });
+    const result = await this.permissionChecker({
+      enforcer: this.enforcer,
+      payload: request.payload,
+      actions: allowActions,
+      context,
+      request,
+    });
+
+    const decision = normalizeCasbinDecision(result);
+
+    request.casbinDecision = decision;
+
+    return decision.allowed;
   }
 }

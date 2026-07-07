@@ -1,8 +1,12 @@
 import type { TypeORMAdapterOptions } from 'typeorm-adapter';
 import type { BaseMemberEntity } from '../models/base-member.entity';
 import type { ReflectableDecorator } from '@nestjs/core';
-import type { Enforcer } from 'casbin';
 import type { OAuth2Provider } from './oauth2-provider.interface';
+import type {
+  CasbinDomainResolver,
+  CasbinPermissionCheckerParams,
+  CasbinPermissionCheckerResult,
+} from './casbin-permission';
 
 export interface MemberBaseModuleOptionsDTO<
   MemberEntity extends BaseMemberEntity = BaseMemberEntity,
@@ -32,15 +36,8 @@ export interface MemberBaseModuleOptionsDTO<
   casbinAdapterOptions?: TypeORMAdapterOptions;
   casbinModelString?: string; // default: RBAC with domains
   casbinPermissionDecorator?: ReflectableDecorator<[string, string][]>;
-  casbinPermissionChecker?: ({
-    enforcer,
-    payload,
-    actions,
-  }: {
-    enforcer: Enforcer;
-    payload: TokenPayload;
-    actions: [string, string][];
-  }) => Promise<boolean>;
+  casbinPermissionChecker?: (params: CasbinPermissionCheckerParams<TokenPayload>) => CasbinPermissionCheckerResult;
+  casbinDomainResolver?: CasbinDomainResolver<TokenPayload>; // default: undefined, only affects the default checker
 
   // Entities
   memberEntity?: new () => MemberEntity; // default: MemberEntity

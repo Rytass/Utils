@@ -43,6 +43,12 @@ import { DEFAULT_CASBIN_DOMAIN } from './default-casbin-domain';
 import type { ReflectableDecorator } from '@nestjs/core';
 import type { OAuth2Provider } from '../typings/oauth2-provider.interface';
 import type { AuthTokenPayloadBase } from '../typings/auth-token-payload';
+import type {
+  CasbinAuthorizationDecision,
+  CasbinDomainResolver,
+  CasbinPermissionChecker,
+  CasbinPermissionCheckerParams,
+} from '../typings/casbin-permission';
 
 const getTypeORMAdapter = async (): Promise<typeof TypeORMAdapterType> => {
   const module = (await import('typeorm-adapter')) as unknown as {
@@ -131,31 +137,51 @@ export const OptionProviders = [
   },
   {
     provide: CASBIN_PERMISSION_CHECKER,
-    useFactory: async (
-      options?: MemberBaseModuleOptionsDTO,
-    ): Promise<
-      (params: { enforcer: Enforcer; payload: AuthTokenPayloadBase; actions: [Subject, Action][] }) => Promise<boolean>
-    > =>
-      options?.casbinPermissionChecker
-        ? (options.casbinPermissionChecker as (params: {
-            enforcer: Enforcer;
-            payload: AuthTokenPayloadBase;
-            actions: [Subject, Action][];
-          }) => Promise<boolean>)
-        : ({
-            enforcer,
-            payload,
-            actions,
-          }: {
-            enforcer: Enforcer;
-            payload: AuthTokenPayloadBase;
-            actions: [Subject, Action][];
-          }): Promise<boolean> =>
-            Promise.all(
-              actions.map(([subject, action]) =>
-                enforcer.enforce(payload.id, payload.domain ?? DEFAULT_CASBIN_DOMAIN, subject, action),
-              ),
-            ).then(results => results.some(result => result)),
+    useFactory: async (options?: MemberBaseModuleOptionsDTO): Promise<CasbinPermissionChecker> => {
+      if (options?.casbinPermissionChecker) {
+        return options.casbinPermissionChecker as CasbinPermissionChecker;
+      }
+
+      const domainResolver = options?.casbinDomainResolver as CasbinDomainResolver | undefined;
+
+      if (!domainResolver) {
+        return ({ enforcer, payload, actions }: CasbinPermissionCheckerParams): Promise<boolean> =>
+          Promise.all(
+            actions.map(([subject, action]) =>
+              enforcer.enforce(payload.id, payload.domain ?? DEFAULT_CASBIN_DOMAIN, subject, action),
+            ),
+          ).then(results => results.some(result => result));
+      }
+
+      return async ({
+        enforcer,
+        payload,
+        actions,
+        context,
+        request,
+      }: CasbinPermissionCheckerParams): Promise<CasbinAuthorizationDecision> => {
+        const resolved = await domainResolver({ context, request, payload, actions });
+        const domains = Array.isArray(resolved) ? resolved : [resolved];
+
+        if (!domains.length) return { allowed: false };
+
+        const candidates = domains.flatMap(domain => actions.map(action => ({ domain, action })));
+
+        const results = await Promise.all(
+          candidates.map(({ domain, action }) => enforcer.enforce(payload.id, domain, action[0], action[1])),
+        );
+
+        const matchedIndex = results.findIndex(result => result);
+
+        if (matchedIndex === -1) return { allowed: false };
+
+        return {
+          allowed: true,
+          matchedDomain: candidates[matchedIndex].domain,
+          matchedAction: candidates[matchedIndex].action,
+        };
+      };
+    },
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {

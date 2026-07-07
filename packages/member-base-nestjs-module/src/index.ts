@@ -41,6 +41,15 @@ export type {
   MemberBaseModuleOptionFactoryInterface,
 } from './typings/member-base-module-option-factory';
 export type { AuthTokenPayloadBase } from './typings/auth-token-payload';
+export type {
+  CasbinPermissionCheckerParams,
+  CasbinPermissionChecker,
+  CasbinPermissionCheckerResult,
+  CasbinPermissionCheckerSyncResult,
+  CasbinAuthorizationDecision,
+  CasbinDomainResolver,
+  CasbinDomainResolverParams,
+} from './typings/casbin-permission';
 
 // Casbin
 export * from './guards/casbin.guard';
@@ -53,6 +62,7 @@ export * from './decorators/has-permission.decorator';
 
 // Helpers
 export * from './helpers/graphql-context-token-resolver';
+export { normalizeCasbinDecision } from './utils/normalize-casbin-decision';
 
 // Errors
 export * from './constants/errors/index';

@@ -6,6 +6,7 @@ import type { Subject, Action } from '../decorators/action.decorator';
 import type { Repository } from 'typeorm';
 import type { BaseMemberEntity } from '../models/base-member.entity';
 import type { OAuth2Provider } from './oauth2-provider.interface';
+import type { CasbinPermissionChecker } from './casbin-permission';
 
 // Typed injection tokens for better type safety (using Symbol with type annotations)
 export const MEMBER_BASE_MODULE_OPTIONS = Symbol('MEMBER_BASE_MODULE_OPTIONS') as symbol & {
@@ -19,11 +20,7 @@ export const CASBIN_PERMISSION_DECORATOR = Symbol('CASBIN_PERMISSION_DECORATOR')
   __type: ReflectableDecorator<[Subject, Action][]>;
 };
 export const CASBIN_PERMISSION_CHECKER = Symbol('CASBIN_PERMISSION_CHECKER') as symbol & {
-  __type: (params: {
-    enforcer: Enforcer;
-    payload: AuthTokenPayloadBase;
-    actions: [Subject, Action][];
-  }) => Promise<boolean>;
+  __type: CasbinPermissionChecker<AuthTokenPayloadBase>;
 };
 export const ACCESS_TOKEN_SECRET = Symbol('ACCESS_TOKEN_SECRET') as symbol & { __type: string };
 export const ACCESS_TOKEN_EXPIRATION = Symbol('ACCESS_TOKEN_EXPIRATION') as symbol & { __type: number };

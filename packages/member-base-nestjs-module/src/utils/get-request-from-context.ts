@@ -2,15 +2,20 @@ import { ExecutionContext } from '@nestjs/common';
 import type { Request } from 'express';
 import type { Enforcer } from 'casbin';
 import type { AuthTokenPayloadBase } from '../typings/auth-token-payload';
+import type {
+  CasbinAuthorizationDecision,
+  CasbinPermissionCheckerParams,
+  CasbinPermissionCheckerResult,
+  CasbinPermissionCheckerSyncResult,
+} from '../typings/casbin-permission';
 
 type InjectedRequest = Request & {
   enforcer?: Enforcer | null;
   payload?: AuthTokenPayloadBase;
-  casbinPermissionChecker?: (options: {
-    enforcer: Enforcer;
-    payload: AuthTokenPayloadBase;
-    actions: [string, string][];
-  }) => Promise<boolean>;
+  casbinPermissionChecker?: (
+    options: CasbinPermissionCheckerParams,
+  ) => CasbinPermissionCheckerResult | CasbinPermissionCheckerSyncResult;
+  casbinDecision?: CasbinAuthorizationDecision;
 };
 
 export const getRequestFromContext = (context: ExecutionContext): InjectedRequest => {
