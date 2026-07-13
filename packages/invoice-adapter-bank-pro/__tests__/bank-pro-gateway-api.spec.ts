@@ -64,6 +64,26 @@ describe('BankProInvoiceGateway API Tests', () => {
       );
     });
 
+    it('should send PaymentType as empty string in the issue payload', async () => {
+      mockedAxios.post.mockResolvedValueOnce({
+        data: [
+          {
+            InvoiceNo: 'AB12345678',
+            RandomNumber: '1234',
+            InvoiceDate: '2025/01/10 10:00:00',
+            ErrorMessage: '',
+          },
+        ],
+      });
+
+      await gateway.issue(mockIssueOptions);
+
+      const callArg = mockedAxios.post.mock.calls[0][1] as string;
+      const payload = JSON.parse(callArg);
+
+      expect(payload.Orders[0].PaymentType).toBe('');
+    });
+
     it('should throw error when API returns empty array', async () => {
       mockedAxios.post.mockResolvedValueOnce({ data: [] });
 
@@ -284,6 +304,7 @@ describe('BankProInvoiceGateway API Tests', () => {
 
       const invoice = await gateway.issue({
         ...mockIssueOptions,
+        memberId: 'MEMBER123',
         carrier: {
           type: InvoiceCarrierType.MEMBER,
           code: 'MEMBER123',
@@ -294,8 +315,53 @@ describe('BankProInvoiceGateway API Tests', () => {
       const callArg = mockedAxios.post.mock.calls[0][1] as string;
       const payload = JSON.parse(callArg);
 
-      // MEMBER type uses orderId as Members.ID (indexOf returns 0 which is falsy)
-      expect(payload.Orders[0].Members[0].ID).toBe('ORDER123');
+      // Members.ID carries the provided memberId
+      expect(payload.Orders[0].Members[0].ID).toBe('MEMBER123');
+    });
+
+    it('should use provided memberId as Members.ID regardless of carrier type', async () => {
+      mockedAxios.post.mockResolvedValueOnce({
+        data: [
+          {
+            InvoiceNo: 'AB12345678',
+            RandomNumber: '1234',
+            InvoiceDate: '2025/01/10 10:00:00',
+            ErrorMessage: '',
+          },
+        ],
+      });
+
+      const invoice = await gateway.issue({
+        ...mockIssueOptions,
+        memberId: 'MEMBER999',
+      });
+
+      expect(invoice).toBeDefined();
+      const callArg = mockedAxios.post.mock.calls[0][1] as string;
+      const payload = JSON.parse(callArg);
+
+      expect(payload.Orders[0].Members[0].ID).toBe('MEMBER999');
+    });
+
+    it('should fallback Members.ID to empty string when memberId is not provided', async () => {
+      mockedAxios.post.mockResolvedValueOnce({
+        data: [
+          {
+            InvoiceNo: 'AB12345678',
+            RandomNumber: '1234',
+            InvoiceDate: '2025/01/10 10:00:00',
+            ErrorMessage: '',
+          },
+        ],
+      });
+
+      const invoice = await gateway.issue(mockIssueOptions);
+
+      expect(invoice).toBeDefined();
+      const callArg = mockedAxios.post.mock.calls[0][1] as string;
+      const payload = JSON.parse(callArg);
+
+      expect(payload.Orders[0].Members[0].ID).toBe('');
     });
 
     it('should handle issue with MOBILE carrier but undefined code (fallback to empty string)', async () => {
@@ -428,6 +494,7 @@ describe('BankProInvoiceGateway API Tests', () => {
       const payload = JSON.parse(callArg);
 
       expect(payload.Orders[0].SellerCode).toBe('SELLER001');
+      expect(payload.Orders[0].PaymentType).toBe('');
     });
   });
 
@@ -462,6 +529,11 @@ describe('BankProInvoiceGateway API Tests', () => {
       expect(result.allowances).toHaveLength(1);
       expect(result.allowances[0].allowanceNumber).toBe('ALW123456');
       expect(result.allowances[0].allowancePrice).toBe(50);
+
+      const callArg = mockedAxios.post.mock.calls[0][1] as string;
+      const payload = JSON.parse(callArg);
+
+      expect(payload.Orders[0].PaymentType).toBe('');
     });
 
     it('should throw error when invoice is not issued', async () => {
@@ -535,6 +607,12 @@ describe('BankProInvoiceGateway API Tests', () => {
       expect(result).toBe(invoice);
       expect(invoice.allowances[0].status).toBe(InvoiceAllowanceState.INVALID);
       expect(invoice.allowances[0].invalidOn).not.toBeNull();
+
+      // Second call is the invalid-allowance payload
+      const callArg = mockedAxios.post.mock.calls[1][1] as string;
+      const payload = JSON.parse(callArg);
+
+      expect(payload.Orders[0].PaymentType).toBe('');
     });
 
     it('should throw error when allowance is not issued', async () => {

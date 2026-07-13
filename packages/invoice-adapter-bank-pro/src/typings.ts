@@ -62,6 +62,7 @@ export interface BankProInvoiceIssueOptions extends InvoiceIssueOptions<BankProP
   remark?: string;
   buyerEmail: string;
   buyerName?: string;
+  memberId?: string;
   buyerZipCode?: string;
   buyerAddress?: string;
   buyerMobile?: string;
@@ -134,8 +135,9 @@ export interface BankProIssueInvoicePayload {
     RelateNumber1: string;
     RelateNumber2: string;
     RelateNumber3: string;
+    PaymentType: string;
     Members: {
-      ID: string; // User Email
+      ID: string; // Member ID
       Name: string;
       ZipCode: string;
       Address: string;
