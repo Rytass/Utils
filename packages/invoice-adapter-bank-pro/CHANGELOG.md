@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.19](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-bank-pro@0.2.18...@rytass/invoice-adapter-bank-pro@0.2.19) (2026-07-13)
+
+### Bug Fixes
+
+- **invoice-adapter-bank-pro:** use memberId for member ID field ([2d1e84f](https://github.com/Rytass/Utils/commit/2d1e84fc3ddd07af3357a10253b72c7c7d11d87b))
+
+### Features
+
+- **invoice-adapter-bank-pro:** add PaymentType field ([144ff20](https://github.com/Rytass/Utils/commit/144ff20ba5cafdbf06fcd67994d5088f7cec1804))
+
 ## [0.2.18](https://github.com/Rytass/Utils/compare/@rytass/invoice-adapter-bank-pro@0.2.17...@rytass/invoice-adapter-bank-pro@0.2.18) (2026-06-09)
 
 ### Bug Fixes
