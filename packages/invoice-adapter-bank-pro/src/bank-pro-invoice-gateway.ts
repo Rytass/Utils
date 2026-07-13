@@ -186,6 +186,7 @@ export class BankProInvoiceGateway implements InvoiceGateway<
           RelateNumber1: '',
           RelateNumber2: '',
           RelateNumber3: '',
+          PaymentType: '',
           Members: [
             {
               ID: [InvoiceCarrierType.MEMBER, undefined].indexOf(options.carrier?.type)
@@ -293,6 +294,7 @@ export class BankProInvoiceGateway implements InvoiceGateway<
           RelateNumber1: '',
           RelateNumber2: '',
           RelateNumber3: '',
+          PaymentType: '',
           Members: [
             {
               ID: '',
@@ -391,6 +393,7 @@ export class BankProInvoiceGateway implements InvoiceGateway<
           RelateNumber1: '',
           RelateNumber2: '',
           RelateNumber3: '',
+          PaymentType: '',
           Members: [
             {
               ID: '',
@@ -492,6 +495,7 @@ export class BankProInvoiceGateway implements InvoiceGateway<
           RelateNumber1: '',
           RelateNumber2: allowance.allowanceNumber,
           RelateNumber3: '',
+          PaymentType: '',
           Members: [
             {
               ID: '',

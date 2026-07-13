@@ -134,6 +134,7 @@ export interface BankProIssueInvoicePayload {
     RelateNumber1: string;
     RelateNumber2: string;
     RelateNumber3: string;
+    PaymentType: string;
     Members: {
       ID: string; // User Email
       Name: string;
