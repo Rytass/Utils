@@ -62,6 +62,7 @@ export interface BankProInvoiceIssueOptions extends InvoiceIssueOptions<BankProP
   remark?: string;
   buyerEmail: string;
   buyerName?: string;
+  memberId?: string;
   buyerZipCode?: string;
   buyerAddress?: string;
   buyerMobile?: string;

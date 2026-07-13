@@ -189,9 +189,7 @@ export class BankProInvoiceGateway implements InvoiceGateway<
           PaymentType: '',
           Members: [
             {
-              ID: [InvoiceCarrierType.MEMBER, undefined].indexOf(options.carrier?.type)
-                ? options.buyerEmail
-                : options.orderId,
+              ID: options.memberId ?? '',
               Name: options.buyerName ?? '',
               ZipCode: options.buyerZipCode ?? '',
               Address: options.buyerAddress ?? '',
