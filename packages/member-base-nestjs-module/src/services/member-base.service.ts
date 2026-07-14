@@ -208,6 +208,9 @@ export class MemberBaseService<
       member.passwordChangedAt = new Date();
       member.shouldUpdatePassword = false;
       member.resetPasswordRequestedAt = null;
+      // Completing the reset-token flow proves email ownership, so clear the
+      // login failure lock to keep a self-service recovery path for banned members.
+      member.loginFailedCounter = 0;
 
       await this.baseMemberRepo.save(member);
 
