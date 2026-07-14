@@ -30,6 +30,8 @@ import {
   LOGIN_FAILED_AUTO_UNLOCK_SECONDS,
   ACCESS_TOKEN_COOKIE_NAME,
   REFRESH_TOKEN_COOKIE_NAME,
+  DEFAULT_ADMIN_ACCOUNT,
+  DEFAULT_ADMIN_PASSWORD,
 } from '../typings/member-base.tokens';
 import { Enforcer, newEnforcer, newModelFromString } from 'casbin';
 import { MemberBaseModuleOptionsDTO } from '../typings/member-base-module-options.dto';
@@ -39,16 +41,11 @@ import { CASBIN_MODEL } from './casbin-models/rbac-with-domains';
 import type TypeORMAdapterType from 'typeorm-adapter';
 import { AllowActions } from '../decorators/action.decorator';
 import { BaseMemberEntity } from '../models/base-member.entity';
-import { DEFAULT_CASBIN_DOMAIN } from './default-casbin-domain';
+import { createDefaultPermissionChecker } from './default-permission-checker';
 import type { ReflectableDecorator } from '@nestjs/core';
 import type { OAuth2Provider } from '../typings/oauth2-provider.interface';
 import type { AuthTokenPayloadBase } from '../typings/auth-token-payload';
-import type {
-  CasbinAuthorizationDecision,
-  CasbinDomainResolver,
-  CasbinPermissionChecker,
-  CasbinPermissionCheckerParams,
-} from '../typings/casbin-permission';
+import type { CasbinDomainResolver, CasbinPermissionChecker } from '../typings/casbin-permission';
 
 const getTypeORMAdapter = async (): Promise<typeof TypeORMAdapterType> => {
   const module = (await import('typeorm-adapter')) as unknown as {
@@ -142,45 +139,7 @@ export const OptionProviders = [
         return options.casbinPermissionChecker as CasbinPermissionChecker;
       }
 
-      const domainResolver = options?.casbinDomainResolver as CasbinDomainResolver | undefined;
-
-      if (!domainResolver) {
-        return ({ enforcer, payload, actions }: CasbinPermissionCheckerParams): Promise<boolean> =>
-          Promise.all(
-            actions.map(([subject, action]) =>
-              enforcer.enforce(payload.id, payload.domain ?? DEFAULT_CASBIN_DOMAIN, subject, action),
-            ),
-          ).then(results => results.some(result => result));
-      }
-
-      return async ({
-        enforcer,
-        payload,
-        actions,
-        context,
-        request,
-      }: CasbinPermissionCheckerParams): Promise<CasbinAuthorizationDecision> => {
-        const resolved = await domainResolver({ context, request, payload, actions });
-        const domains = Array.isArray(resolved) ? resolved : [resolved];
-
-        if (!domains.length) return { allowed: false };
-
-        const candidates = domains.flatMap(domain => actions.map(action => ({ domain, action })));
-
-        const results = await Promise.all(
-          candidates.map(({ domain, action }) => enforcer.enforce(payload.id, domain, action[0], action[1])),
-        );
-
-        const matchedIndex = results.findIndex(result => result);
-
-        if (matchedIndex === -1) return { allowed: false };
-
-        return {
-          allowed: true,
-          matchedDomain: candidates[matchedIndex].domain,
-          matchedAction: candidates[matchedIndex].action,
-        };
-      };
+      return createDefaultPermissionChecker(options?.casbinDomainResolver as CasbinDomainResolver | undefined);
     },
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
@@ -274,6 +233,16 @@ export const OptionProviders = [
   {
     provide: LOGIN_FAILED_AUTO_UNLOCK_SECONDS,
     useFactory: (options?: MemberBaseModuleOptionsDTO): number | null => options?.loginFailedAutoUnlockSeconds ?? null,
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: DEFAULT_ADMIN_ACCOUNT,
+    useFactory: (options?: MemberBaseModuleOptionsDTO): string | null => options?.defaultAdminAccount ?? null,
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: DEFAULT_ADMIN_PASSWORD,
+    useFactory: (options?: MemberBaseModuleOptionsDTO): string | null => options?.defaultAdminPassword ?? null,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
 ] as Provider[];

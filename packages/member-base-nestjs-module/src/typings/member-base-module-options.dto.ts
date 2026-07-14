@@ -57,6 +57,10 @@ export interface MemberBaseModuleOptionsDTO<
   // OAuth2
   oauth2Providers?: OAuth2Provider[];
   oauth2ClientDestUrl?: string; // default: '/login'
+
+  // Default Admin
+  defaultAdminAccount?: string; // default: undefined, if set, will auto-create this account with super-admin permissions on startup
+  defaultAdminPassword?: string; // default: undefined, if omitted (and defaultAdminAccount set), a policy-compliant random password is generated and logged once
 }
 
 // Non-breaking alias with community-preferred naming

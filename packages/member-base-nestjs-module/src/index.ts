@@ -69,3 +69,4 @@ export * from './constants/errors/index';
 
 // Constants
 export * from './constants/default-casbin-domain';
+export * from './constants/super-admin-role';

@@ -79,6 +79,10 @@ export const CUSTOMIZED_JWT_PAYLOAD = Symbol('CUSTOMIZED_JWT_PAYLOAD') as symbol
 export const OAUTH2_PROVIDERS = Symbol('OAUTH2_PROVIDERS') as symbol & { __type: OAuth2Provider[] };
 export const OAUTH2_CLIENT_DEST_URL = Symbol('OAUTH2_CLIENT_DEST_URL') as symbol & { __type: string };
 
+// Default Admin Providers
+export const DEFAULT_ADMIN_ACCOUNT = Symbol('DEFAULT_ADMIN_ACCOUNT') as symbol & { __type: string | null };
+export const DEFAULT_ADMIN_PASSWORD = Symbol('DEFAULT_ADMIN_PASSWORD') as symbol & { __type: string | null };
+
 // Provider types mapping for enhanced type safety
 export interface MemberBaseProviders {
   MEMBER_BASE_MODULE_OPTIONS: MemberBaseModuleOptionsDTO;
@@ -112,6 +116,8 @@ export interface MemberBaseProviders {
   CUSTOMIZED_JWT_PAYLOAD: Function;
   OAUTH2_PROVIDERS: OAuth2Provider[];
   OAUTH2_CLIENT_DEST_URL: string;
+  DEFAULT_ADMIN_ACCOUNT: string | null;
+  DEFAULT_ADMIN_PASSWORD: string | null;
 }
 
 export type MemberBaseProviderToken = keyof MemberBaseProviders;

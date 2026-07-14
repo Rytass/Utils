@@ -17,6 +17,7 @@ import { CasbinGuard } from './guards/casbin.guard';
 import { MemberBaseModuleOptionsDTO } from './typings/member-base-module-options.dto';
 import { MemberBaseModuleOptionFactoryInterface } from './typings/member-base-module-option-factory';
 import { PasswordValidatorService } from './services/password-validator.service';
+import { DefaultAdminBootstrapService } from './services/default-admin-bootstrap.service';
 import { OAuthService } from './services/oauth.service';
 import { OAuthCallbacksController } from './controllers/oauth-callbacks.controller';
 import { BaseMemberEntity } from './models/base-member.entity';
@@ -27,6 +28,7 @@ const providers = [
   PasswordValidatorService,
   MemberBaseService,
   MemberBaseAdminService,
+  DefaultAdminBootstrapService,
   OAuthService,
   {
     provide: APP_GUARD,
