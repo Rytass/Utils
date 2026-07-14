@@ -17,7 +17,8 @@ const checkerProvider = OptionProviders.find(
 const buildChecker = (options?: MemberBaseModuleOptionsDTO): Promise<CasbinPermissionChecker> =>
   (checkerProvider.useFactory as (options?: MemberBaseModuleOptionsDTO) => Promise<CasbinPermissionChecker>)(options);
 
-const buildEnforcer = (enforce: jest.Mock): Enforcer => ({ enforce }) as unknown as Enforcer;
+const buildEnforcer = (enforce: jest.Mock): Enforcer =>
+  ({ enforce, hasGroupingPolicy: jest.fn().mockResolvedValue(false) }) as unknown as Enforcer;
 
 describe('CASBIN_PERMISSION_CHECKER option provider', () => {
   describe('backward compatibility regression (no new options)', () => {

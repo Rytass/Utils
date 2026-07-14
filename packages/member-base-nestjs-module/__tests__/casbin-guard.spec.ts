@@ -219,8 +219,9 @@ describe('CasbinGuard', () => {
 
     it('should call the default checker with the same enforce arguments as before when no new option is set', async () => {
       const enforce = jest.fn().mockResolvedValue(true);
+      const hasGroupingPolicy = jest.fn().mockResolvedValue(false);
       const checker = await buildDefaultChecker(undefined);
-      const guard = buildGuard({ checker, enforcer: { enforce } as unknown as Enforcer });
+      const guard = buildGuard({ checker, enforcer: { enforce, hasGroupingPolicy } as unknown as Enforcer });
       const request = createRequest();
       const context = createHttpContext(request, TestController.prototype.guardedRoute);
 
@@ -302,7 +303,8 @@ describe('CasbinGuard', () => {
 
       const checker = await buildDefaultChecker({ casbinDomainResolver: domainResolver });
       const enforce = jest.fn().mockResolvedValue(true);
-      const guard = buildGuard({ checker, enforcer: { enforce } as unknown as Enforcer });
+      const hasGroupingPolicy = jest.fn().mockResolvedValue(false);
+      const guard = buildGuard({ checker, enforcer: { enforce, hasGroupingPolicy } as unknown as Enforcer });
       const request = createRequest();
       const context = createGraphqlContext(request, TestController.prototype.guardedRoute, { projectId: '42' });
 
