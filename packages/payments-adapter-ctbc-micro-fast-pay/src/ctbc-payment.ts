@@ -33,7 +33,7 @@ import {
 } from './ctbc-crypto-core';
 import { CTBCOrder } from './ctbc-order';
 import { posApiQuery } from './ctbc-pos-api-utils';
-import { CtbcPaymentFailedError } from './errors';
+import { CtbcPaymentFailedError, CTBCPosQueryFailedError } from './errors';
 import {
   BindCardRequestCache,
   CTBCAmexConfig,
@@ -750,9 +750,7 @@ export class CTBCPayment<CM extends CTBCOrderCommitMessage = CTBCOrderCommitMess
           `Query failed for order ${id}, RespCode: ${result.RespCode} - ErrCode: ${result.ErrCode} - ErrDesc: ${result.ERRDESC || 'Unknown error'}`,
         );
 
-        throw new Error(
-          `Query failed, RespCode: ${result.RespCode} - ErrCode: ${result.ErrCode} - ErrDesc: ${result.ERRDESC || 'Unknown error'}`,
-        );
+        throw new CTBCPosQueryFailedError(result.RespCode, result.ErrCode, result.ERRDESC);
       }
 
       debugPayment(`Query successful for order ${id}: ${JSON.stringify(result)}`);
