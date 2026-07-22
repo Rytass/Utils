@@ -9,6 +9,7 @@ import {
   posApiCapRev,
   posApiSmartCancelOrRefund,
   getPosNextActionFromInquiry,
+  CTBCHtmlErrorResponseError,
 } from '../src/ctbc-pos-api-utils';
 import { setSSLAuthIV } from '../src/ctbc-crypto-core';
 import { CTBC_ERROR_CODES, CTBCPosApiConfig, CTBCPosApiResponse } from '../src/typings';
@@ -850,6 +851,65 @@ describe('CTBC POS API Utils', () => {
       });
 
       // Since the decryption will fail or produce invalid data, we expect an error
+      expect(typeof result).toBe('number');
+    });
+  });
+
+  describe('CTBCHtmlErrorResponseError', () => {
+    const htmlErrorResponse =
+      '<html><head><meta http-equiv,"Content-Type" content,"text/html; charset,UTF-8"><style></style></head>' +
+      '<body lang,ZH-TW style,\'text-justify-trim:punctuation\'><p><b><u>,#37325;,#35201;,#20844;,#21578;</u></b></p>' +
+      '<p>,#30446;,#21069;,#27491;,#36914;,#34892;,#31995;,#32113;,#32173;,#35703;,#20013;,#65292;,#36896;,#25104;,#19981;,#20415;,#65292;,#25964;,#35531;,#35211;,#35538;!</p>' +
+      '<p>,nbsp;</p><p>,#20013;,#22283;,#20449;,#35351; ,#25964;,#21855;</p></body></html>';
+
+    it('should throw CTBCHtmlErrorResponseError when CTBC returns an HTML error page', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: jest.fn().mockResolvedValue(htmlErrorResponse),
+      });
+
+      await expect(
+        posApiQuery(validConfig, {
+          MERID: '123456789012345',
+          'LID-M': 'TEST_ORDER_123',
+        }),
+      ).rejects.toThrow(CTBCHtmlErrorResponseError);
+    });
+
+    it('should carry the raw response text on the responseText property', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: jest.fn().mockResolvedValue(htmlErrorResponse),
+      });
+
+      let caughtError: unknown;
+
+      try {
+        await posApiQuery(validConfig, {
+          MERID: '123456789012345',
+          'LID-M': 'TEST_ORDER_123',
+        });
+      } catch (error) {
+        caughtError = error;
+      }
+
+      expect(caughtError).toBeInstanceOf(CTBCHtmlErrorResponseError);
+      expect((caughtError as CTBCHtmlErrorResponseError).responseText).toBe(htmlErrorResponse);
+      expect((caughtError as CTBCHtmlErrorResponseError).message).toContain(htmlErrorResponse);
+      expect((caughtError as CTBCHtmlErrorResponseError).name).toBe('CTBCHtmlErrorResponseError');
+    });
+
+    it('should not throw for a normal (non-HTML) response', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: jest.fn().mockResolvedValue('short=response'),
+      });
+
+      const result = await posApiQuery(validConfig, {
+        MERID: '123456789012345',
+        'LID-M': 'TEST_ORDER_123',
+      });
+
       expect(typeof result).toBe('number');
     });
   });

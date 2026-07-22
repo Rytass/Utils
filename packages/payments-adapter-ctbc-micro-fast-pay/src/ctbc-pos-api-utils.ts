@@ -199,6 +199,21 @@ function pkcs5Unpad(data: Buffer): Buffer {
   return result;
 }
 
+export class CTBCHtmlErrorResponseError extends Error {
+  readonly responseText: string;
+
+  constructor(responseText: string) {
+    super(`CTBC API returned an HTML error page: ${responseText}`);
+
+    this.name = 'CTBCHtmlErrorResponseError';
+    this.responseText = responseText;
+  }
+}
+
+function isHtmlErrorResponse(responseText: string): boolean {
+  return /^\s*<html/i.test(responseText);
+}
+
 function parseResponse(responseStr: string, macKey: string): CTBCPosApiResponse | number {
   // 解析格式：key1=value1&key2=value2&encryptedData
   const parts = responseStr.split(/[&=]/);
@@ -272,8 +287,16 @@ async function sendAndGetResponse(
     debugPayment('CTBC API 回應狀態:', response.status);
     debugPayment('CTBC API 回應內容:', responseText);
 
+    if (isHtmlErrorResponse(responseText)) {
+      throw new CTBCHtmlErrorResponseError(responseText);
+    }
+
     return parseResponse(responseText, config.MacKey);
   } catch (error) {
+    if (error instanceof CTBCHtmlErrorResponseError) {
+      throw error;
+    }
+
     debugPayment('CTBC API request failed:', error);
 
     return CTBC_ERROR_CODES.ERR_HOST_CONNECTION_FAILED;
