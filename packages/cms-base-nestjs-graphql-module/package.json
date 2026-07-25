@@ -30,11 +30,11 @@
     "@nestjs/typeorm": "*",
     "@node-rs/jieba": "*",
     "@quadrats/core": "*",
+    "@rytass/cms-base-nestjs-module": ">=0.2.17",
+    "@rytass/member-base-nestjs-module": ">=0.4.0",
     "typeorm": "*"
   },
   "dependencies": {
-    "@rytass/cms-base-nestjs-module": "^0.2.17",
-    "@rytass/member-base-nestjs-module": "^0.3.0",
     "dataloader": "^2.2.3",
     "lru-cache": "^11.2.6"
   }
