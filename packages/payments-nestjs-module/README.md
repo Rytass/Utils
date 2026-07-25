@@ -37,7 +37,21 @@ yarn add @rytass/payments-adapter-ecpay @rytass/payments-adapter-newebpay
 
 ```bash
 npm install @nestjs/common @nestjs/core
+npm install @rytass/member-base-nestjs-module
 ```
+
+### Breaking change in 0.2.0: `@rytass/member-base-nestjs-module` is now a peer dependency
+
+It moved from `dependencies` to `peerDependencies`. Add it to your own `package.json`
+(npm 7+ auto-installs missing peers, so an existing install usually keeps working).
+
+Why: this module applies member-base's `IsPublic` decorator to its controller routes,
+and member-base's `CasbinGuard` reads that metadata. With two installed copies, the
+decorator writes its metadata key into one copy while the guard reads from the other —
+so a route marked `@IsPublic()` **is no longer treated as public**, silently, with no
+error anywhere. The previous `^0.3.0` range could not resolve member-base 0.4.x at all,
+which made that duplication the default outcome. As a peer dependency there is exactly
+one copy.
 
 ## Basic Usage
 

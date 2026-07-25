@@ -31,6 +31,16 @@ npm install @rytass/wms-base-nestjs-module
 yarn add @rytass/wms-base-nestjs-module
 ```
 
+**Peer Dependencies:**
+
+```bash
+npm install @nestjs/common @nestjs/typeorm @nestjs/graphql typeorm
+```
+
+All four are required. They were previously undeclared, so npm could not warn you about
+an incompatible version — `@nestjs/graphql` in particular is needed at load time because
+the exported `WarehouseMapService` reaches DTOs that apply `@InputType()` decorators.
+
 ### Minimal Setup
 ```typescript
 // app.module.ts

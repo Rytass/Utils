@@ -20,6 +20,25 @@
 - [x] Query Ticket Order Info
 - [x] Ticket Write-off (核銷 / 取消核銷)
 
+## Installation
+
+```bash
+npm install @rytass/payments-adapter-ecpay
+# or
+yarn add @rytass/payments-adapter-ecpay
+```
+
+**Peer Dependencies:**
+
+```bash
+# Optional: For local development with ngrok
+npm install @ngrok/ngrok
+```
+
+`@ngrok/ngrok` is an **optional** peer dependency, so it is not installed for you — it
+is only loaded (via dynamic `import`) when you enable the built-in ngrok tunnel, and it
+would otherwise pull a platform-specific native binary into every install.
+
 ## Getting Started
 
 ### Credit Card Payment

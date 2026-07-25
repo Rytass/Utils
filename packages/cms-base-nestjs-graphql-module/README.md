@@ -39,12 +39,28 @@ Comprehensive GraphQL API layer for the CMS Base NestJS Module, providing a comp
 ## Installation
 
 ```bash
-npm install @rytass/cms-base-nestjs-graphql-module @rytass/cms-base-nestjs-module
+npm install @rytass/cms-base-nestjs-graphql-module
 # Peer dependencies
+npm install @rytass/cms-base-nestjs-module @rytass/member-base-nestjs-module
 npm install @nestjs/common @nestjs/typeorm @nestjs/graphql typeorm
 # or
-yarn add @rytass/cms-base-nestjs-graphql-module @rytass/cms-base-nestjs-module
+yarn add @rytass/cms-base-nestjs-graphql-module
+yarn add @rytass/cms-base-nestjs-module @rytass/member-base-nestjs-module
 ```
+
+### Breaking change in 0.2.0: sibling `@rytass` packages are now peer dependencies
+
+`@rytass/cms-base-nestjs-module` and `@rytass/member-base-nestjs-module` moved from
+`dependencies` to `peerDependencies`. Add both to your own `package.json` — npm 7+
+auto-installs missing peers, so an existing install usually keeps working, but declaring
+them explicitly is what pins the version you actually want.
+
+Why: both packages expose their NestJS injection tokens as non-registered `Symbol()`
+values, and this module injects them (`MULTIPLE_LANGUAGE_MODE`, `DEFAULT_LANGUAGE`,
+`AllowActions`, …). As regular dependencies, a version range that did not overlap with
+the copy you installed directly resulted in **two installed copies and two distinct sets
+of symbols**, which Nest reports as an unresolvable dependency. Declaring them as peers
+guarantees a single shared copy.
 
 ## Basic Setup
 

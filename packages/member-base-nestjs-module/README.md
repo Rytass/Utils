@@ -1,5 +1,50 @@
 # Member Base System for NestJS Projects
 
+## Installation
+
+```bash
+npm install @rytass/member-base-nestjs-module
+```
+
+Required peer dependencies:
+
+```bash
+npm install @nestjs/common @nestjs/typeorm typeorm argon2 jsonwebtoken
+```
+
+Optional peer dependencies — install only the ones you use:
+
+| Package | Needed when |
+| ------------------------ | ------------------------------------------------------------- |
+| `typeorm-adapter` | You set `casbinAdapterOptions` (database-backed Casbin policy) |
+| `@nestjs/graphql`, `graphql` | You import from `@rytass/member-base-nestjs-module/graphql` |
+
+### Breaking change in 0.5.0: `typeorm-adapter` is no longer bundled
+
+`typeorm-adapter` used to be a regular dependency of this package. It is now an
+**optional peer dependency**. If you set `casbinAdapterOptions`, install it yourself:
+
+```bash
+npm install typeorm-adapter
+```
+
+Nothing to do if you do not set `casbinAdapterOptions`.
+
+Why: `typeorm-adapter` declares `typeorm` as its own `dependency` (`^0.3.17`) rather
+than a peer dependency. While it was bundled here, any consumer whose `typeorm`
+version fell outside that range got a **second copy of TypeORM** installed under
+`node_modules/typeorm-adapter/node_modules/`. Because `getMetadataArgsStorage()` is a
+module-level singleton, the two copies split the entity metadata registry and produced
+errors such as `Entity metadata for X was not found` — with nothing pointing back to
+this package. The same nesting also pulled in `reflect-metadata@^0.1.13` alongside the
+`^0.2.x` that NestJS 11 and TypeORM require, splitting the `Reflect` polyfill too.
+
+Making it optional means your `typeorm` version is the only one installed.
+
+If you set `casbinAdapterOptions` without installing `typeorm-adapter`, the module
+throws at startup with an explicit message rather than booting into a broken
+authorization state.
+
 ## Inheritance
 
 ```typescript
