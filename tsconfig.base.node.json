@@ -12,6 +12,7 @@
     "strictPropertyInitialization": false,
     "experimentalDecorators": true,
     "moduleResolution": "node",
+    "skipLibCheck": true,
     "lib": ["esnext", "dom"],
     "types": ["node", "reflect-metadata"],
     "allowImportingTsExtensions": false,

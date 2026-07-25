@@ -7975,8 +7975,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/cms-base-nestjs-graphql-module@workspace:packages/cms-base-nestjs-graphql-module"
   dependencies:
-    "@rytass/cms-base-nestjs-module": "npm:^0.2.17"
-    "@rytass/member-base-nestjs-module": "npm:^0.3.0"
     dataloader: "npm:^2.2.3"
     lru-cache: "npm:^11.2.6"
   peerDependencies:
@@ -7984,11 +7982,13 @@ __metadata:
     "@nestjs/typeorm": "*"
     "@node-rs/jieba": "*"
     "@quadrats/core": "*"
+    "@rytass/cms-base-nestjs-module": ">=0.2.17"
+    "@rytass/member-base-nestjs-module": ">=0.4.0"
     typeorm: "*"
   languageName: unknown
   linkType: soft
 
-"@rytass/cms-base-nestjs-module@npm:^0.2.17, @rytass/cms-base-nestjs-module@workspace:packages/cms-base-nestjs-module":
+"@rytass/cms-base-nestjs-module@workspace:packages/cms-base-nestjs-module":
   version: 0.0.0-use.local
   resolution: "@rytass/cms-base-nestjs-module@workspace:packages/cms-base-nestjs-module"
   dependencies:
@@ -8023,7 +8023,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/file-converter-adapter-image-resizer@workspace:packages/file-converter-adapter-image-resizer"
   dependencies:
-    "@rytass/file-converter": "npm:^0.1.5"
+    "@rytass/file-converter": "npm:>=0.1.5 <1"
     sharp: "npm:^0.34.5"
   languageName: unknown
   linkType: soft
@@ -8032,7 +8032,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/file-converter-adapter-image-transcoder@workspace:packages/file-converter-adapter-image-transcoder"
   dependencies:
-    "@rytass/file-converter": "npm:^0.1.5"
+    "@rytass/file-converter": "npm:>=0.1.5 <1"
     file-type: "npm:^21.3.4"
     sharp: "npm:^0.34.5"
   languageName: unknown
@@ -8042,12 +8042,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/file-converter-adapter-image-watermark@workspace:packages/file-converter-adapter-image-watermark"
   dependencies:
-    "@rytass/file-converter": "npm:^0.1.5"
+    "@rytass/file-converter": "npm:>=0.1.5 <1"
     sharp: "npm:^0.34.5"
   languageName: unknown
   linkType: soft
 
-"@rytass/file-converter@npm:^0.1.5, @rytass/file-converter@workspace:packages/file-converter":
+"@rytass/file-converter@npm:>=0.1.5 <1, @rytass/file-converter@workspace:packages/file-converter":
   version: 0.0.0-use.local
   resolution: "@rytass/file-converter@workspace:packages/file-converter"
   languageName: unknown
@@ -8057,7 +8057,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-adapter-amego@workspace:packages/invoice-adapter-amego"
   dependencies:
-    "@rytass/invoice": "npm:^0.4.10"
+    "@rytass/invoice": "npm:>=0.4.10 <1"
     axios: "npm:^1.16.1"
     luxon: "npm:^3.7.2"
     validator: "npm:^13.15.26"
@@ -8068,7 +8068,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-adapter-bank-pro@workspace:packages/invoice-adapter-bank-pro"
   dependencies:
-    "@rytass/invoice": "npm:^0.4.10"
+    "@rytass/invoice": "npm:>=0.4.10 <1"
     axios: "npm:^1.16.1"
     luxon: "npm:^3.7.2"
     validator: "npm:^13.15.26"
@@ -8079,7 +8079,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-adapter-ecpay@workspace:packages/invoice-adapter-ecpay"
   dependencies:
-    "@rytass/invoice": "npm:^0.4.10"
+    "@rytass/invoice": "npm:>=0.4.10 <1"
     "@types/validator": "npm:^13.15.10"
     axios: "npm:^1.16.1"
     luxon: "npm:^3.7.2"
@@ -8091,7 +8091,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-adapter-ezpay@workspace:packages/invoice-adapter-ezpay"
   dependencies:
-    "@rytass/invoice": "npm:^0.4.10"
+    "@rytass/invoice": "npm:>=0.4.10 <1"
     axios: "npm:^1.16.1"
     form-data: "npm:^4.0.5"
     luxon: "npm:^3.7.2"
@@ -8103,7 +8103,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-adapter-universal@workspace:packages/invoice-adapter-universal"
   dependencies:
-    "@rytass/invoice": "npm:^0.4.10"
+    "@rytass/invoice": "npm:>=0.4.10 <1"
     "@types/validator": "npm:^13.15.10"
     axios: "npm:^1.16.1"
     luxon: "npm:^3.7.2"
@@ -8111,11 +8111,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rytass/invoice@npm:^0.4.10, @rytass/invoice@workspace:packages/invoice":
+"@rytass/invoice@npm:>=0.4.10 <1, @rytass/invoice@workspace:packages/invoice":
   version: 0.0.0-use.local
   resolution: "@rytass/invoice@workspace:packages/invoice"
   dependencies:
-    "@rytass/payments": "npm:^0.2.7"
+    "@rytass/payments": "npm:>=0.2.7 <1"
   languageName: unknown
   linkType: soft
 
@@ -8123,7 +8123,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/logistics-adapter-ctc@workspace:packages/logistics-adapter-ctc"
   dependencies:
-    "@rytass/logistics": "npm:^0.0.13"
+    "@rytass/logistics": "npm:>=0.0.13 <1"
     axios: "npm:^1.16.1"
     cheerio: "npm:^1.2.0"
   languageName: unknown
@@ -8133,49 +8133,41 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/logistics-adapter-tcat@workspace:packages/logistics-adapter-tcat"
   dependencies:
-    "@rytass/logistics": "npm:^0.0.13"
+    "@rytass/logistics": "npm:>=0.0.13 <1"
     axios: "npm:^1.16.1"
     cheerio: "npm:^1.2.0"
   languageName: unknown
   linkType: soft
 
-"@rytass/logistics@npm:^0.0.13, @rytass/logistics@workspace:packages/logistics":
+"@rytass/logistics@npm:>=0.0.13 <1, @rytass/logistics@workspace:packages/logistics":
   version: 0.0.0-use.local
   resolution: "@rytass/logistics@workspace:packages/logistics"
   languageName: unknown
   linkType: soft
 
-"@rytass/member-base-nestjs-module@npm:^0.3.0, @rytass/member-base-nestjs-module@workspace:packages/member-base-nestjs-module":
+"@rytass/member-base-nestjs-module@workspace:packages/member-base-nestjs-module":
   version: 0.0.0-use.local
   resolution: "@rytass/member-base-nestjs-module@workspace:packages/member-base-nestjs-module"
   dependencies:
-    "@nestjs/graphql": "npm:*"
-    "@types/ws": "npm:^8"
     axios: "npm:^1.16.1"
     casbin: "npm:^5"
-    cookie-parser: "npm:*"
     generate-password: "npm:^1.7.1"
-    graphql: "npm:*"
     luxon: "npm:^3.7.2"
-    ts-morph: "npm:*"
-    typeorm-adapter: "npm:^1"
-    ws: "npm:^8"
   peerDependencies:
     "@nestjs/common": "*"
+    "@nestjs/graphql": "*"
     "@nestjs/typeorm": "*"
     argon2: "*"
+    graphql: "*"
     jsonwebtoken: "*"
     typeorm: "*"
-  dependenciesMeta:
+    typeorm-adapter: ">=1"
+  peerDependenciesMeta:
     "@nestjs/graphql":
-      optional: true
-    cookie-parser:
       optional: true
     graphql:
       optional: true
-    ts-morph:
-      optional: true
-    ws:
+    typeorm-adapter:
       optional: true
   languageName: unknown
   linkType: soft
@@ -8192,7 +8184,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/payments-adapter-ctbc-micro-fast-pay@workspace:packages/payments-adapter-ctbc-micro-fast-pay"
   dependencies:
-    "@rytass/payments": "npm:^0.2.7"
+    "@rytass/payments": "npm:>=0.2.7 <1"
     "@types/debug": "npm:^4.1.12"
     axios: "npm:^1.16.1"
     debug: "npm:^4.4.3"
@@ -8201,7 +8193,10 @@ __metadata:
     luxon: "npm:^3.7.2"
     soap: "npm:^1.7.1"
   peerDependencies:
-    "@ngrok/ngrok": ^1.5.1
+    "@ngrok/ngrok": ">=1"
+  peerDependenciesMeta:
+    "@ngrok/ngrok":
+      optional: true
   languageName: unknown
   linkType: soft
 
@@ -8209,14 +8204,17 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/payments-adapter-ecpay@workspace:packages/payments-adapter-ecpay"
   dependencies:
-    "@rytass/payments": "npm:^0.2.7"
+    "@rytass/payments": "npm:>=0.2.7 <1"
     "@types/debug": "npm:^4.1.12"
     axios: "npm:^1.16.1"
     debug: "npm:^4.4.3"
     lru-cache: "npm:^11.2.6"
     luxon: "npm:^3.7.2"
   peerDependencies:
-    "@ngrok/ngrok": ^1.5.1
+    "@ngrok/ngrok": ">=1"
+  peerDependenciesMeta:
+    "@ngrok/ngrok":
+      optional: true
   languageName: unknown
   linkType: soft
 
@@ -8224,7 +8222,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/payments-adapter-happy-card@workspace:packages/payments-adapter-happy-card"
   dependencies:
-    "@rytass/payments": "npm:^0.2.7"
+    "@rytass/payments": "npm:>=0.2.7 <1"
     "@types/lodash": "npm:^4"
     axios: "npm:^1.16.1"
     lodash: "npm:^4.18.1"
@@ -8236,11 +8234,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/payments-adapter-hwanan@workspace:packages/payments-adapter-hwanan"
   dependencies:
-    "@rytass/payments": "npm:^0.2.7"
+    "@rytass/payments": "npm:>=0.2.7 <1"
     axios: "npm:^1.16.1"
     lru-cache: "npm:^11.2.6"
   peerDependencies:
-    "@ngrok/ngrok": ^1.5.1
+    "@ngrok/ngrok": ">=1"
+  peerDependenciesMeta:
+    "@ngrok/ngrok":
+      optional: true
   languageName: unknown
   linkType: soft
 
@@ -8248,7 +8249,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/payments-adapter-icash-pay@workspace:packages/payments-adapter-icash-pay"
   dependencies:
-    "@rytass/payments": "npm:^0.2.7"
+    "@rytass/payments": "npm:>=0.2.7 <1"
     "@types/debug": "npm:^4"
     axios: "npm:^1.16.1"
     debug: "npm:^4.4.3"
@@ -8260,12 +8261,15 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/payments-adapter-newebpay@workspace:packages/payments-adapter-newebpay"
   dependencies:
-    "@rytass/payments": "npm:^0.2.7"
+    "@rytass/payments": "npm:>=0.2.7 <1"
     axios: "npm:^1.16.1"
     lru-cache: "npm:^11.2.6"
     luxon: "npm:^3.7.2"
   peerDependencies:
-    "@ngrok/ngrok": ^1.5.1
+    "@ngrok/ngrok": ">=1"
+  peerDependenciesMeta:
+    "@ngrok/ngrok":
+      optional: true
   languageName: unknown
   linkType: soft
 
@@ -8273,14 +8277,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/payments-nestjs-module@workspace:packages/payments-nestjs-module"
   dependencies:
-    "@rytass/member-base-nestjs-module": "npm:^0.3.0"
-    "@rytass/payments": "npm:^0.2.7"
+    "@rytass/payments": "npm:>=0.2.7 <1"
   peerDependencies:
     "@nestjs/common": "*"
+    "@rytass/member-base-nestjs-module": ">=0.4.0"
   languageName: unknown
   linkType: soft
 
-"@rytass/payments@npm:^0.2.7, @rytass/payments@workspace:packages/payments":
+"@rytass/payments@npm:>=0.2.7 <1, @rytass/payments@workspace:packages/payments":
   version: 0.0.0-use.local
   resolution: "@rytass/payments@workspace:packages/payments"
   languageName: unknown
@@ -8294,7 +8298,7 @@ __metadata:
     axios: "npm:^1.16.1"
     form-data: "npm:^4.0.5"
   peerDependencies:
-    "@nestjs/common": ^11.0.0
+    "@nestjs/common": ">=11"
   languageName: unknown
   linkType: soft
 
@@ -8302,24 +8306,24 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/secret-adapter-vault-nestjs@workspace:packages/secret-adapter-vault-nestjs"
   dependencies:
-    "@rytass/secret-adapter-vault": "npm:^0.4.6"
+    "@rytass/secret-adapter-vault": "npm:>=0.4.6 <1"
     regenerator-runtime: "npm:^0.14.1"
   peerDependencies:
-    "@nestjs/common": ^10.0.0 || ^11.0.0
-    "@nestjs/config": ^4.0.0
+    "@nestjs/common": ">=10"
+    "@nestjs/config": ">=4"
   languageName: unknown
   linkType: soft
 
-"@rytass/secret-adapter-vault@npm:^0.4.6, @rytass/secret-adapter-vault@workspace:packages/secret-adapter-vault":
+"@rytass/secret-adapter-vault@npm:>=0.4.6 <1, @rytass/secret-adapter-vault@workspace:packages/secret-adapter-vault":
   version: 0.0.0-use.local
   resolution: "@rytass/secret-adapter-vault@workspace:packages/secret-adapter-vault"
   dependencies:
-    "@rytass/secret": "npm:^0.1.3"
+    "@rytass/secret": "npm:>=0.1.3 <1"
     axios: "npm:^1.16.1"
   languageName: unknown
   linkType: soft
 
-"@rytass/secret@npm:^0.1.3, @rytass/secret@workspace:packages/secret":
+"@rytass/secret@npm:>=0.1.3 <1, @rytass/secret@workspace:packages/secret":
   version: 0.0.0-use.local
   resolution: "@rytass/secret@workspace:packages/secret"
   languageName: unknown
@@ -8329,11 +8333,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/sms-adapter-every8d@workspace:packages/sms-adapter-every8d"
   dependencies:
-    "@rytass/sms": "npm:^0.1.3"
+    "@rytass/sms": "npm:>=0.1.3 <1"
   languageName: unknown
   linkType: soft
 
-"@rytass/sms@npm:^0.1.3, @rytass/sms@workspace:packages/sms":
+"@rytass/sms@npm:>=0.1.3 <1, @rytass/sms@workspace:packages/sms":
   version: 0.0.0-use.local
   resolution: "@rytass/sms@workspace:packages/sms"
   languageName: unknown
@@ -8344,7 +8348,7 @@ __metadata:
   resolution: "@rytass/storages-adapter-azure-blob@workspace:packages/storages-adapter-azure-blob"
   dependencies:
     "@azure/storage-blob": "npm:^12.31.0"
-    "@rytass/storages": "npm:^0.2.7"
+    "@rytass/storages": "npm:>=0.2.7 <1"
     uuid: "npm:^13.0.0"
   languageName: unknown
   linkType: soft
@@ -8354,7 +8358,7 @@ __metadata:
   resolution: "@rytass/storages-adapter-gcs@workspace:packages/storages-adapter-gcs"
   dependencies:
     "@google-cloud/storage": "npm:^7.19.0"
-    "@rytass/storages": "npm:^0.2.7"
+    "@rytass/storages": "npm:>=0.2.7 <1"
     "@types/uuid": "npm:^11.0.0"
     uuid: "npm:^13.0.0"
   languageName: unknown
@@ -8364,7 +8368,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/storages-adapter-local@workspace:packages/storages-adapter-local"
   dependencies:
-    "@rytass/storages": "npm:^0.2.7"
+    "@rytass/storages": "npm:>=0.2.7 <1"
     "@types/uuid": "npm:^11.0.0"
     uuid: "npm:^13.0.0"
   languageName: unknown
@@ -8377,7 +8381,7 @@ __metadata:
     "@aws-sdk/client-s3": "npm:^3.996.0"
     "@aws-sdk/lib-storage": "npm:^3.996.0"
     "@aws-sdk/s3-request-presigner": "npm:^3.996.0"
-    "@rytass/storages": "npm:^0.2.7"
+    "@rytass/storages": "npm:>=0.2.7 <1"
     "@types/uuid": "npm:^11.0.0"
     uuid: "npm:^13.0.0"
   languageName: unknown
@@ -8390,7 +8394,7 @@ __metadata:
     "@aws-sdk/client-s3": "npm:^3.996.0"
     "@aws-sdk/lib-storage": "npm:^3.996.0"
     "@aws-sdk/s3-request-presigner": "npm:^3.996.0"
-    "@rytass/storages": "npm:^0.2.7"
+    "@rytass/storages": "npm:>=0.2.7 <1"
     "@types/uuid": "npm:^11.0.0"
     uuid: "npm:^13.0.0"
   languageName: unknown
@@ -8400,16 +8404,16 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/storages-adapter-vercel-blob@workspace:packages/storages-adapter-vercel-blob"
   dependencies:
-    "@rytass/storages": "npm:^0.2.7"
+    "@rytass/storages": "npm:>=0.2.7 <1"
     "@vercel/blob": "npm:^2.4.0"
   languageName: unknown
   linkType: soft
 
-"@rytass/storages@npm:^0.2.7, @rytass/storages@workspace:packages/storages":
+"@rytass/storages@npm:>=0.2.7 <1, @rytass/storages@workspace:packages/storages":
   version: 0.0.0-use.local
   resolution: "@rytass/storages@workspace:packages/storages"
   dependencies:
-    "@rytass/file-converter": "npm:^0.1.5"
+    "@rytass/file-converter": "npm:>=0.1.5 <1"
     file-type: "npm:^21.3.4"
   languageName: unknown
   linkType: soft
@@ -8420,6 +8424,11 @@ __metadata:
   dependencies:
     sqlite3: "npm:^5.1.7"
     uuid: "npm:^13.0.0"
+  peerDependencies:
+    "@nestjs/common": "*"
+    "@nestjs/graphql": "*"
+    "@nestjs/typeorm": "*"
+    typeorm: "*"
   languageName: unknown
   linkType: soft
 
@@ -9686,14 +9695,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ts-morph/common@npm:~0.27.0":
-  version: 0.27.0
-  resolution: "@ts-morph/common@npm:0.27.0"
+"@ts-morph/common@npm:~0.28.1":
+  version: 0.28.1
+  resolution: "@ts-morph/common@npm:0.28.1"
   dependencies:
-    fast-glob: "npm:^3.3.3"
     minimatch: "npm:^10.0.1"
     path-browserify: "npm:^1.0.1"
-  checksum: 10c0/3daa267bd78114ff504eb064c5215da6e46589e775b781ec0da4998d999b0d7130eff287e70d6e13e0a0a897ea16e9387f4cd885b4b9d6d628f318cecb81d473
+    tinyglobby: "npm:^0.2.14"
+  checksum: 10c0/d51276d840997e0f8f83e04f8b1689135bb12588a7ddbed575f87848d5737eeae31e242685d6449de27573e8ed30892157fea643393cb875e175f2711200bc50
   languageName: node
   linkType: hard
 
@@ -10461,7 +10470,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/ws@npm:^8, @types/ws@npm:^8.18.1, @types/ws@npm:^8.5.10":
+"@types/ws@npm:^8.18.1, @types/ws@npm:^8.5.10":
   version: 8.18.1
   resolution: "@types/ws@npm:8.18.1"
   dependencies:
@@ -13416,23 +13425,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cookie-parser@npm:*":
-  version: 1.4.7
-  resolution: "cookie-parser@npm:1.4.7"
-  dependencies:
-    cookie: "npm:0.7.2"
-    cookie-signature: "npm:1.0.6"
-  checksum: 10c0/46bef553de409031b69a6074ce512d131a98e4fa12612669f1a9c3dd98d56897a31db86a3f4338d4a3a895c6f8d5cfd6fa4d99cdf588e0e8eda655efc3f384dc
-  languageName: node
-  linkType: hard
-
-"cookie-signature@npm:1.0.6":
-  version: 1.0.6
-  resolution: "cookie-signature@npm:1.0.6"
-  checksum: 10c0/b36fd0d4e3fef8456915fcf7742e58fbfcc12a17a018e0eb9501c9d5ef6893b596466f03b0564b81af29ff2538fd0aa4b9d54fe5ccbfb4c90ea50ad29fe2d221
-  languageName: node
-  linkType: hard
-
 "cookie-signature@npm:^1.2.2":
   version: 1.2.2
   resolution: "cookie-signature@npm:1.2.2"
@@ -13447,7 +13439,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cookie@npm:0.7.2, cookie@npm:~0.7.1":
+"cookie@npm:~0.7.1":
   version: 0.7.2
   resolution: "cookie@npm:0.7.2"
   checksum: 10c0/9596e8ccdbf1a3a88ae02cf5ee80c1c50959423e1022e4e60b91dd87c622af1da309253d8abdb258fb5e3eacb4f08e579dc58b4897b8087574eee0fd35dfa5d2
@@ -17173,7 +17165,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graphql@npm:*, graphql@npm:^16.13.0":
+"graphql@npm:^16.13.0":
   version: 16.13.0
   resolution: "graphql@npm:16.13.0"
   checksum: 10c0/c20e7909c6c8d405a30f8caeae5aaf604b9f949bdcdf80bdb3d3561123e6099181c39eae697cf4fcdc5dd301ab215363b8def0aa0ff51f03cc7e4b48a8c2c2b1
@@ -23311,7 +23303,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"picomatch@npm:^4.0.5":
+"picomatch@npm:^4.0.4, picomatch@npm:^4.0.5":
   version: 4.0.5
   resolution: "picomatch@npm:4.0.5"
   checksum: 10c0/947bc6b6e1ff1e6c5aaf95b107a0839d12802f4f7b867663f67d47accba939ca1cb582cf99dfc30438efa1c4648ac5990967e783e8929c36b03e8440704ef1bd
@@ -25342,13 +25334,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"reflect-metadata@npm:^0.1.13":
-  version: 0.1.14
-  resolution: "reflect-metadata@npm:0.1.14"
-  checksum: 10c0/3a6190c7f6cb224f26a012d11f9e329360c01c1945e2cbefea23976a8bacf9db6b794aeb5bf18adcb673c448a234fbc06fc41853c00a6c206b30f0777ecf019e
-  languageName: node
-  linkType: hard
-
 "reflect-metadata@npm:^0.2.2":
   version: 0.2.2
   resolution: "reflect-metadata@npm:0.2.2"
@@ -26168,7 +26153,9 @@ __metadata:
     supertest: "npm:^7.2.2"
     teeny-request: "npm:^10.1.0"
     ts-jest: "npm:^29.4.6"
+    ts-morph: "npm:^27.0.0"
     typeorm: "npm:^0.3.28"
+    typeorm-adapter: "npm:^1.7.0"
     typescript: "npm:^5.9.3"
     vite: "npm:^7.3.3"
   languageName: unknown
@@ -28025,6 +28012,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tinyglobby@npm:^0.2.14":
+  version: 0.2.17
+  resolution: "tinyglobby@npm:0.2.17"
+  dependencies:
+    fdir: "npm:^6.5.0"
+    picomatch: "npm:^4.0.4"
+  checksum: 10c0/7f7bb0f197c88bc4b20c231e0deca4240ca3bf313a88f5a7fee93a872b84966a4d50220947c0455ad07a60b3b360961c5b7fd979222aeb716a9f99b412002e4c
+  languageName: node
+  linkType: hard
+
 "tinypool@npm:^1.0.2":
   version: 1.1.1
   resolution: "tinypool@npm:1.1.1"
@@ -28250,13 +28247,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-morph@npm:*":
-  version: 26.0.0
-  resolution: "ts-morph@npm:26.0.0"
+"ts-morph@npm:^27.0.0":
+  version: 27.0.2
+  resolution: "ts-morph@npm:27.0.2"
   dependencies:
-    "@ts-morph/common": "npm:~0.27.0"
+    "@ts-morph/common": "npm:~0.28.1"
     code-block-writer: "npm:^13.0.3"
-  checksum: 10c0/c6880d90a1eefe0ce6555bf8c11cc104b1f36f84bd36a37a82b9ae0b974f51fe6b1bc91bb0ec42550158dc1c812329d6433e1237cba64f1ef515c129b321dd5d
+  checksum: 10c0/224715cc6d97b8ff5afd3986f9629f912a0ebd83eaecbdca91c35cf10a98f607c663f666e7ea5e6afab00563d00dc80fa7a13552cc7f1cef735261c3217d0863
   languageName: node
   linkType: hard
 
@@ -28477,14 +28474,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typeorm-adapter@npm:^1":
-  version: 1.7.0
-  resolution: "typeorm-adapter@npm:1.7.0"
+"typeorm-adapter@npm:^1.7.0":
+  version: 1.10.0
+  resolution: "typeorm-adapter@npm:1.10.0"
   dependencies:
     casbin: "npm:^5.27.0"
-    reflect-metadata: "npm:^0.1.13"
-    typeorm: "npm:^0.3.17"
-  checksum: 10c0/da0edf7a1c6eb4a7aeaf76b1bc82bc73aa5d07717483c3650bfb0fa673addb756e20bc72474aab26e4807a5d3653a2b4bba7f64f6e0032ad0881ce8326c2844b
+    reflect-metadata: "npm:^0.2.2"
+    typeorm: "npm:^1.0.0"
+  checksum: 10c0/9eb9f7f2bedd91e88ae1f7672eb14eff99dcfa4075af2338be7201e8ac4b8270defed8881cdfaa5b1bab7b33e212614d4c0ab5ae675a7ec5e1011cac53ad8972
   languageName: node
   linkType: hard
 

@@ -118,11 +118,14 @@
     "supertest": "^7.2.2",
     "teeny-request": "^10.1.0",
     "ts-jest": "^29.4.6",
+    "ts-morph": "^27.0.0",
     "typeorm": "^0.3.28",
+    "typeorm-adapter": "^1.7.0",
     "typescript": "^5.9.3",
     "vite": "^7.3.3"
   },
   "resolutions": {
+    "reflect-metadata": "^0.2.2",
     "@nestjs/common": "^11.1.21",
     "@nestjs/core": "^11.1.21",
     "@nestjs/typeorm": "^11.0.0",
