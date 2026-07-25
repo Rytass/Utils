@@ -24,12 +24,12 @@
   "bugs": {
     "url": "https://github.com/Rytass/Utils/issues"
   },
-  "dependencies": {
-    "@rytass/member-base-nestjs-module": "^0.3.0",
-    "@rytass/payments": "^0.2.7"
-  },
   "peerDependencies": {
-    "@nestjs/common": "*"
+    "@nestjs/common": "*",
+    "@rytass/member-base-nestjs-module": ">=0.4.0"
   },
-  "main": "lib/index.cjs.js"
+  "main": "lib/index.cjs.js",
+  "dependencies": {
+    "@rytass/payments": ">=0.2.7 <1"
+  }
 }
