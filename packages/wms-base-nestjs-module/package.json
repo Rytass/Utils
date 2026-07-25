@@ -24,10 +24,16 @@
   "bugs": {
     "url": "https://github.com/Rytass/Utils/issues"
   },
-  "devDependencies": {
-    "sqlite3": "^5.1.7"
+  "peerDependencies": {
+    "@nestjs/common": "*",
+    "@nestjs/graphql": "*",
+    "@nestjs/typeorm": "*",
+    "typeorm": "*"
   },
   "dependencies": {
     "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "sqlite3": "^5.1.7"
   }
 }
