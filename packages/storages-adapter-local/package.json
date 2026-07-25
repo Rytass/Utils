@@ -25,7 +25,7 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/storages": "^0.2.7",
+    "@rytass/storages": ">=0.2.7 <1",
     "uuid": "^13.0.0"
   },
   "devDependencies": {

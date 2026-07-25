@@ -26,7 +26,7 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/invoice": "^0.4.10",
+    "@rytass/invoice": ">=0.4.10 <1",
     "axios": "^1.16.1",
     "luxon": "^3.7.2",
     "validator": "^13.15.26"

@@ -26,7 +26,7 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/payments": "^0.2.7",
+    "@rytass/payments": ">=0.2.7 <1",
     "axios": "^1.16.1",
     "lodash": "^4.18.1",
     "luxon": "^3.7.2"

@@ -24,6 +24,6 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/payments": "^0.2.7"
+    "@rytass/payments": ">=0.2.7 <1"
   }
 }
