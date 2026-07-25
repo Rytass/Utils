@@ -38,24 +38,14 @@ import { MemberBaseModuleOptionsDTO } from '../typings/member-base-module-option
 import { Provider } from '@nestjs/common';
 import { Subject, Action } from '../decorators/action.decorator';
 import { CASBIN_MODEL } from './casbin-models/rbac-with-domains';
-import type TypeORMAdapterType from 'typeorm-adapter';
 import { AllowActions } from '../decorators/action.decorator';
 import { BaseMemberEntity } from '../models/base-member.entity';
 import { createDefaultPermissionChecker } from './default-permission-checker';
+import { getTypeORMAdapter } from './load-typeorm-adapter';
 import type { ReflectableDecorator } from '@nestjs/core';
 import type { OAuth2Provider } from '../typings/oauth2-provider.interface';
 import type { AuthTokenPayloadBase } from '../typings/auth-token-payload';
 import type { CasbinDomainResolver, CasbinPermissionChecker } from '../typings/casbin-permission';
-
-const getTypeORMAdapter = async (): Promise<typeof TypeORMAdapterType> => {
-  const module = (await import('typeorm-adapter')) as unknown as {
-    default: {
-      default: typeof TypeORMAdapterType;
-    };
-  };
-
-  return module.default.default;
-};
 
 export const OptionProviders = [
   {
