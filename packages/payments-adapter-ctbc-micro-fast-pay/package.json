@@ -25,7 +25,7 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/payments": "^0.2.7",
+    "@rytass/payments": ">=0.2.7 <1",
     "axios": "^1.16.1",
     "debug": "^4.4.3",
     "iconv-lite": "^0.7.2",
@@ -34,9 +34,14 @@
     "soap": "^1.7.1"
   },
   "peerDependencies": {
-    "@ngrok/ngrok": "^1.5.1"
+    "@ngrok/ngrok": ">=1"
   },
   "devDependencies": {
     "@types/debug": "^4.1.12"
+  },
+  "peerDependenciesMeta": {
+    "@ngrok/ngrok": {
+      "optional": true
+    }
   }
 }

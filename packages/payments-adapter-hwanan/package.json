@@ -26,11 +26,16 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/payments": "^0.2.7",
+    "@rytass/payments": ">=0.2.7 <1",
     "axios": "^1.16.1",
     "lru-cache": "^11.2.6"
   },
   "peerDependencies": {
-    "@ngrok/ngrok": "^1.5.1"
+    "@ngrok/ngrok": ">=1"
+  },
+  "peerDependenciesMeta": {
+    "@ngrok/ngrok": {
+      "optional": true
+    }
   }
 }
