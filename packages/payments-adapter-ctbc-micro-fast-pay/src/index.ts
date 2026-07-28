@@ -35,7 +35,6 @@ export {
   posApiCapRev,
   posApiSmartCancelOrRefund,
   getPosNextActionFromInquiry,
-  CTBCHtmlErrorResponseError,
 } from './ctbc-pos-api-utils';
 
 // AMEX SOAP 工具函數（回傳與 POS 統一的 CTBCPosApiResponse）

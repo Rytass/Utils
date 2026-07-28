@@ -9,10 +9,12 @@ import {
   posApiCapRev,
   posApiSmartCancelOrRefund,
   getPosNextActionFromInquiry,
-  CTBCHtmlErrorResponseError,
 } from '../src/ctbc-pos-api-utils';
 import { setSSLAuthIV } from '../src/ctbc-crypto-core';
+import { CTBCHtmlErrorResponseError } from '../src/errors';
 import { CTBC_ERROR_CODES, CTBCPosApiConfig, CTBCPosApiResponse } from '../src/typings';
+import crypto from 'node:crypto';
+import * as iconv from 'iconv-lite';
 
 // Mock fetch
 const mockFetch = jest.fn();
@@ -30,8 +32,24 @@ describe('CTBC POS API Utils', () => {
     MacKey: '12345678', // 8 character key for DES
   };
 
+  const sslAuthIV = Buffer.alloc(8, 0xab);
+
+  // 組出與 CTBC 相同格式的回應：MERID=...&ApiEnc=<3DES 加密的 Big5 JSON>
+  const buildEncryptedResponse = (payload: Record<string, string>): string => {
+    const big5 = iconv.encode(JSON.stringify(payload), 'big5');
+    const padLength = 8 - (big5.length % 8);
+    const padded = Buffer.concat([big5, Buffer.alloc(padLength, padLength)]);
+    const cipher = crypto.createCipheriv('des-ede3-cbc', Buffer.from(validConfig.MacKey, 'utf8'), sslAuthIV);
+
+    cipher.setAutoPadding(false);
+
+    const encrypted = Buffer.concat([cipher.update(padded), cipher.final()]);
+
+    return `MERID=123456789012345&ApiEnc=${encrypted.toString('hex')}`;
+  };
+
   beforeAll(() => {
-    setSSLAuthIV(Buffer.alloc(8, 0xab));
+    setSSLAuthIV(sslAuthIV);
   });
 
   beforeEach(() => {
@@ -420,6 +438,8 @@ describe('CTBC POS API Utils', () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 500,
+        headers: new Headers({ 'content-type': 'text/plain' }),
+        text: jest.fn().mockResolvedValue('Internal Server Error'),
       });
 
       const result = await posApiQuery(validConfig, {
@@ -858,61 +878,134 @@ describe('CTBC POS API Utils', () => {
   });
 
   describe('CTBCHtmlErrorResponseError', () => {
+    // CTBC 系統維護期間實際回傳的公告頁
     const htmlErrorResponse =
-      '<html><head><meta http-equiv,"Content-Type" content,"text/html; charset,UTF-8"><style></style></head>' +
-      '<body lang,ZH-TW style,\'text-justify-trim:punctuation\'><p><b><u>,#37325;,#35201;,#20844;,#21578;</u></b></p>' +
-      '<p>,#30446;,#21069;,#27491;,#36914;,#34892;,#31995;,#32113;,#32173;,#35703;,#20013;,#65292;,#36896;,#25104;,#19981;,#20415;,#65292;,#25964;,#35531;,#35211;,#35538;!</p>' +
-      '<p>,nbsp;</p><p>,#20013;,#22283;,#20449;,#35351; ,#25964;,#21855;</p></body></html>';
+      '<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><style></style></head>' +
+      "<body lang=ZH-TW style='text-justify-trim:punctuation'><p><b><u>&#37325;&#35201;&#20844;&#21578;</u></b></p>" +
+      '<p>&#30446;&#21069;&#27491;&#36914;&#34892;&#31995;&#32113;&#32173;&#35703;&#20013;&#65292;&#36896;&#25104;&#19981;&#20415;&#65292;&#25964;&#35531;&#35211;&#35538;!</p>' +
+      '<p>&nbsp;</p><p>&#20013;&#22283;&#20449;&#35351; &#25964;&#21855;</p></body></html>';
+
+    const queryParams = {
+      MERID: '123456789012345',
+      'LID-M': 'TEST_ORDER_123',
+    };
 
     it('should throw CTBCHtmlErrorResponseError when CTBC returns an HTML error page', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'text/html; charset=UTF-8' }),
         text: jest.fn().mockResolvedValue(htmlErrorResponse),
       });
 
-      await expect(
-        posApiQuery(validConfig, {
-          MERID: '123456789012345',
-          'LID-M': 'TEST_ORDER_123',
-        }),
-      ).rejects.toThrow(CTBCHtmlErrorResponseError);
+      await expect(posApiQuery(validConfig, queryParams)).rejects.toThrow(CTBCHtmlErrorResponseError);
+    });
+
+    it('should detect a DOCTYPE-prefixed HTML page', async () => {
+      const doctypeResponse = `<!DOCTYPE html>\n<html><body>系統維護中</body></html>`;
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers(),
+        text: jest.fn().mockResolvedValue(doctypeResponse),
+      });
+
+      await expect(posApiQuery(validConfig, queryParams)).rejects.toThrow(CTBCHtmlErrorResponseError);
+    });
+
+    it('should detect an HTML error page served with a non-2xx status code', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        headers: new Headers({ 'content-type': 'text/html' }),
+        text: jest.fn().mockResolvedValue(htmlErrorResponse),
+      });
+
+      await expect(posApiQuery(validConfig, queryParams)).rejects.toThrow(CTBCHtmlErrorResponseError);
+    });
+
+    it('should detect an HTML page by content-type even when the body is not recognisable', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'text/html; charset=big5' }),
+        text: jest.fn().mockResolvedValue('<!-- maintenance -->\n<body>系統維護中</body>'),
+      });
+
+      await expect(posApiQuery(validConfig, queryParams)).rejects.toThrow(CTBCHtmlErrorResponseError);
     });
 
     it('should carry the raw response text on the responseText property', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'text/html' }),
         text: jest.fn().mockResolvedValue(htmlErrorResponse),
       });
 
       let caughtError: unknown;
 
       try {
-        await posApiQuery(validConfig, {
-          MERID: '123456789012345',
-          'LID-M': 'TEST_ORDER_123',
-        });
+        await posApiQuery(validConfig, queryParams);
       } catch (error) {
         caughtError = error;
       }
 
       expect(caughtError).toBeInstanceOf(CTBCHtmlErrorResponseError);
       expect((caughtError as CTBCHtmlErrorResponseError).responseText).toBe(htmlErrorResponse);
-      expect((caughtError as CTBCHtmlErrorResponseError).message).toContain(htmlErrorResponse);
       expect((caughtError as CTBCHtmlErrorResponseError).name).toBe('CTBCHtmlErrorResponseError');
     });
 
-    it('should not throw for a normal (non-HTML) response', async () => {
+    it('should truncate the embedded page in the error message but keep it whole on responseText', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'text/html' }),
+        text: jest.fn().mockResolvedValue(htmlErrorResponse),
+      });
+
+      let caughtError: unknown;
+
+      try {
+        await posApiQuery(validConfig, queryParams);
+      } catch (error) {
+        caughtError = error;
+      }
+
+      const error = caughtError as CTBCHtmlErrorResponseError;
+
+      expect(htmlErrorResponse.length).toBeGreaterThan(200);
+      expect(error.message).toContain(htmlErrorResponse.slice(0, 200));
+      expect(error.message).not.toContain(htmlErrorResponse);
+      expect(error.message.length).toBeLessThan(htmlErrorResponse.length);
+      expect(error.responseText).toBe(htmlErrorResponse);
+    });
+
+    it('should parse a normal (non-HTML) response instead of throwing', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'text/plain' }),
+        text: jest.fn().mockResolvedValue(buildEncryptedResponse({ RespCode: '0', ErrCode: '00', CurrentState: '1' })),
+      });
+
+      const result = await posApiQuery(validConfig, queryParams);
+
+      expect(result).toEqual(expect.objectContaining({ RespCode: '0', ErrCode: '00', CurrentState: '1' }));
+    });
+
+    it('should still return ERR_RESPONSE_PARSE_FAILED for a malformed non-HTML response', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'text/plain' }),
         text: jest.fn().mockResolvedValue('short=response'),
       });
 
-      const result = await posApiQuery(validConfig, {
-        MERID: '123456789012345',
-        'LID-M': 'TEST_ORDER_123',
-      });
+      const result = await posApiQuery(validConfig, queryParams);
 
-      expect(typeof result).toBe('number');
+      expect(result).toBe(CTBC_ERROR_CODES.ERR_RESPONSE_PARSE_FAILED);
     });
   });
 

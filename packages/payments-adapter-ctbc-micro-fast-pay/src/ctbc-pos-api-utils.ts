@@ -12,6 +12,7 @@ import {
   CTBCPosApiCapRevParams,
 } from './typings';
 import { debugPayment } from './ctbc-payment';
+import { CTBCHtmlErrorResponseError } from './errors';
 
 function checkMerid(input: string): true | number {
   if (!input) {
@@ -199,19 +200,13 @@ function pkcs5Unpad(data: Buffer): Buffer {
   return result;
 }
 
-export class CTBCHtmlErrorResponseError extends Error {
-  readonly responseText: string;
-
-  constructor(responseText: string) {
-    super(`CTBC API returned an HTML error page: ${responseText}`);
-
-    this.name = 'CTBCHtmlErrorResponseError';
-    this.responseText = responseText;
+// CTBC 系統維護時會回傳 HTML 公告頁，可能帶 <!DOCTYPE>、BOM，也可能搭配 5xx 狀態碼
+function isHtmlErrorResponse(contentType: string | null, responseText: string): boolean {
+  if (contentType && /text\/html/i.test(contentType)) {
+    return true;
   }
-}
 
-function isHtmlErrorResponse(responseText: string): boolean {
-  return /^\s*<html/i.test(responseText);
+  return /^[\s\uFEFF]*(?:<!doctype\s+html|<html)/i.test(responseText);
 }
 
 function parseResponse(responseStr: string, macKey: string): CTBCPosApiResponse | number {
@@ -244,6 +239,7 @@ function parseResponse(responseStr: string, macKey: string): CTBCPosApiResponse 
 }
 
 // 網路請求發送與回應處理
+// @throws {CTBCHtmlErrorResponseError} CTBC 回傳 HTML 錯誤／維護公告頁時拋出；其餘錯誤一律以錯誤碼回傳
 async function sendAndGetResponse(
   config: CTBCPosApiConfig,
   merid: string,
@@ -278,17 +274,18 @@ async function sendAndGetResponse(
 
     clearTimeout(timeoutId);
 
-    if (!response.ok) {
-      return CTBC_ERROR_CODES.ERR_HOST_CONNECTION_FAILED;
-    }
-
     const responseText = await response.text();
 
     debugPayment('CTBC API 回應狀態:', response.status);
     debugPayment('CTBC API 回應內容:', responseText);
 
-    if (isHtmlErrorResponse(responseText)) {
+    // 維護公告頁常伴隨 5xx 狀態碼，需先於 response.ok 判斷，否則會被誤判為連線失敗
+    if (isHtmlErrorResponse(response.headers?.get('content-type') ?? null, responseText)) {
       throw new CTBCHtmlErrorResponseError(responseText);
+    }
+
+    if (!response.ok) {
+      return CTBC_ERROR_CODES.ERR_HOST_CONNECTION_FAILED;
     }
 
     return parseResponse(responseText, config.MacKey);
@@ -304,6 +301,7 @@ async function sendAndGetResponse(
 }
 
 // POS API 查詢功能
+// @throws {CTBCHtmlErrorResponseError} CTBC 回傳 HTML 錯誤／維護公告頁時拋出；其餘錯誤以錯誤碼回傳
 export async function posApiQuery(
   config: CTBCPosApiConfig,
   params: CTBCPosApiQueryParams,
@@ -368,6 +366,7 @@ export async function posApiQuery(
 }
 
 // POS API 退款功能
+// @throws {CTBCHtmlErrorResponseError} CTBC 回傳 HTML 錯誤／維護公告頁時拋出；其餘錯誤以錯誤碼回傳
 export async function posApiRefund(
   config: CTBCPosApiConfig,
   params: CTBCPosApiRefundParams,
@@ -454,6 +453,7 @@ export async function posApiRefund(
 }
 
 // POS API 退款撤銷功能
+// @throws {CTBCHtmlErrorResponseError} CTBC 回傳 HTML 錯誤／維護公告頁時拋出；其餘錯誤以錯誤碼回傳
 export async function posApiCancelRefund(
   config: CTBCPosApiConfig,
   params: CTBCPosApiCancelRefundParams,
@@ -540,6 +540,7 @@ export async function posApiCancelRefund(
 }
 
 // POS API 授權取消 (Reversal)
+// @throws {CTBCHtmlErrorResponseError} CTBC 回傳 HTML 錯誤／維護公告頁時拋出；其餘錯誤以錯誤碼回傳
 export async function posApiReversal(
   config: CTBCPosApiConfig,
   params: CTBCPosApiReversalParams,
@@ -585,6 +586,7 @@ export async function posApiReversal(
 }
 
 // POS API 請款取消 (CapRev)
+// @throws {CTBCHtmlErrorResponseError} CTBC 回傳 HTML 錯誤／維護公告頁時拋出；其餘錯誤以錯誤碼回傳
 export async function posApiCapRev(
   config: CTBCPosApiConfig,
   params: CTBCPosApiCapRevParams,
@@ -683,6 +685,7 @@ export function getPosNextActionFromInquiry(inquiry: CTBCPosApiResponse): PosAct
 export type PosAction = 'Reversal' | 'CapRev' | 'Refund' | 'None' | 'Pending' | 'Failed' | 'Forbidden';
 
 // 智慧取消/退款（POS 版）：查詢 → 決策 → 執行
+// @throws {CTBCHtmlErrorResponseError} CTBC 回傳 HTML 錯誤／維護公告頁時拋出；其餘錯誤以錯誤碼回傳
 export async function posApiSmartCancelOrRefund(
   config: CTBCPosApiConfig,
   params: CTBCPosApiRefundParams,
