@@ -960,7 +960,7 @@ The package exports typed error classes so callers can branch on the failure cau
 | `CTBCPosQueryFailedError`    | The POS gateway answers a query with a non-`00` `ErrCode`                      | `respCode`, `errCode`, `errDesc` |
 | `CtbcPaymentFailedError`     | A payment is rejected by the gateway                                           | `orderId`                        |
 
-> **Behaviour change (since 0.1.25):** the `posApi*` helpers previously signalled every failure by
+> **Behaviour change:** the `posApi*` helpers previously signalled every failure by
 > returning a numeric error code from `CTBC_ERROR_CODES`. They now **throw**
 > `CTBCHtmlErrorResponseError` when CTBC serves an HTML page — this case used to be masked as
 > `ERR_HOST_CONNECTION_FAILED`, which was indistinguishable from a genuine network failure. All other
