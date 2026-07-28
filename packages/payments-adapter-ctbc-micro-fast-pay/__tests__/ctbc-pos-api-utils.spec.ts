@@ -36,6 +36,8 @@ describe('CTBC POS API Utils', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // clearAllMocks 不會清掉未被消費的 mockResolvedValueOnce 佇列，殘留值會汙染後續測試
+    mockFetch.mockReset();
   });
 
   describe('Parameter Validation Functions', () => {
