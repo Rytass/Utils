@@ -982,6 +982,33 @@ describe('CTBC POS API Utils', () => {
       expect(result).toEqual(expect.objectContaining({ RespCode: '0', ErrCode: '00', CurrentState: '1' }));
     });
 
+    it('should not hang when a non-2xx response never finishes streaming its body', async () => {
+      jest.useFakeTimers();
+
+      const abortAwareText = (signal: AbortSignal): Promise<string> =>
+        new Promise((_resolve, reject) => {
+          signal.addEventListener('abort', () => reject(new Error('The operation was aborted')));
+        });
+
+      mockFetch.mockImplementationOnce((_url: string, options: RequestInit) =>
+        Promise.resolve({
+          ok: false,
+          status: 503,
+          headers: new Headers({ 'content-type': 'text/plain' }),
+          text: () => abortAwareText(options.signal as AbortSignal),
+        }),
+      );
+
+      const pending = posApiQuery(validConfig, queryParams);
+
+      await Promise.resolve();
+      jest.advanceTimersByTime(30000);
+
+      await expect(pending).resolves.toBe(CTBC_ERROR_CODES.ERR_HOST_CONNECTION_FAILED);
+
+      jest.useRealTimers();
+    });
+
     it('should still return ERR_RESPONSE_PARSE_FAILED for a malformed non-HTML response', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,

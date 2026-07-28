@@ -245,6 +245,9 @@ async function sendAndGetResponse(
   merid: string,
   requestData: string,
 ): Promise<CTBCPosApiResponse | number> {
+  const controller = new AbortController();
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
   try {
     const macSubString = getMacValueSub(requestData, config.MacKey);
     const apiEncString = getMacValue(requestData + macSubString, config.MacKey);
@@ -254,8 +257,7 @@ async function sendAndGetResponse(
       MERID: merid,
     });
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    timeoutId = setTimeout(() => controller.abort(), 30000);
 
     debugPayment('CTBC API 請求 URL:', config.URL);
     debugPayment('CTBC API 請求資料:', requestData);
@@ -272,8 +274,7 @@ async function sendAndGetResponse(
 
     const response = await fetch(config.URL, fetchOptions);
 
-    clearTimeout(timeoutId);
-
+    // 逾時必須涵蓋 body 讀取：維護頁可能只回 header 就把 body 掛住
     const responseText = await response.text();
 
     debugPayment('CTBC API 回應狀態:', response.status);
@@ -297,6 +298,8 @@ async function sendAndGetResponse(
     debugPayment('CTBC API request failed:', error);
 
     return CTBC_ERROR_CODES.ERR_HOST_CONNECTION_FAILED;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
