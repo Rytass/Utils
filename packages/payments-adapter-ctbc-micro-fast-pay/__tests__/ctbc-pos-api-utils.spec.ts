@@ -407,19 +407,6 @@ describe('CTBC POS API Utils', () => {
     });
   });
 
-  describe('posApiSmartCancelOrRefund - Error Cases', () => {
-    it('should throw error when transaction is pending', async () => {
-      // Mock a successful query that returns pending state
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        text: jest.fn().mockResolvedValue('MERID=123&ApiEnc=encrypted_data_here'),
-      });
-
-      // We can't easily test this without more complex mocking of the encryption
-      // Skip for now as the validation tests cover the main paths
-    });
-  });
-
   describe('API Error Handling', () => {
     it('should return error code when fetch fails', async () => {
       mockFetch.mockRejectedValueOnce(new Error('Network error'));
