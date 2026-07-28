@@ -200,12 +200,20 @@ function pkcs5Unpad(data: Buffer): Buffer {
   return result;
 }
 
-// 合法回應為 key1=value1&key2=value2&<hex>，第 4 段必為十六進位密文。
+// 合法回應為 key1=value1&key2=value2&<hex>，第 4 段必為 3DES 密文，
+// 因此長度必為 8-byte 區塊的倍數（16 個十六進位字元）。單純檢查「是否為 hex」不夠：
+// HTML 頁面裡一個 <a href="?a=1&b=2"> 就會讓第 4 段變成 'b'，剛好通過而繞開偵測。
 // 先確認是合法封包再判 HTML，避免 CTBC 對正常回應誤標 text/html 時整條金流被擋下。
 function looksLikeCtbcEnvelope(responseText: string): boolean {
   const parts = responseText.trim().split(/[&=]/);
 
-  return parts.length >= 4 && /^[0-9a-f]+$/i.test(parts[3]);
+  if (parts.length < 4) {
+    return false;
+  }
+
+  const ciphertext = parts[3];
+
+  return ciphertext.length >= 16 && ciphertext.length % 16 === 0 && /^[0-9a-f]+$/i.test(ciphertext);
 }
 
 // 維護公告頁前面可能夾 BOM、XML 宣告或 proxy/WAF 注入的註解，需逐層剝除後再比對

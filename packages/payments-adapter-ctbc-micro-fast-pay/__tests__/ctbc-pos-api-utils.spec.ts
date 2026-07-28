@@ -1004,6 +1004,18 @@ describe('CTBC POS API Utils', () => {
       await expect(posApiQuery(validConfig, queryParams)).rejects.toThrow(CTBCHtmlErrorResponseError);
     });
 
+    it('should not be fooled by an HTML page whose links mimic an envelope', async () => {
+      // <a href="/help?a=1&b=2"> 讓 split 後的第 4 段變成 'b'，是合法 hex 但不是 3DES 密文長度
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'text/html; charset=UTF-8' }),
+        text: jest.fn().mockResolvedValue('<html><body><a href="/help?a=1&b=2">status</a></body></html>'),
+      });
+
+      await expect(posApiQuery(validConfig, queryParams)).rejects.toThrow(CTBCHtmlErrorResponseError);
+    });
+
     it('should NOT reject a valid CTBC envelope that is mislabelled as text/html', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
