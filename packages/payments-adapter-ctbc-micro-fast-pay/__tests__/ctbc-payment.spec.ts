@@ -41,7 +41,7 @@ jest.mock('../src/ctbc-amex-api-utils', () => ({
 
 import { CardType, PaymentEvents } from '@rytass/payments';
 import iconv from 'iconv-lite';
-import { CtbcPaymentFailedError } from '../src/errors';
+import { CtbcPaymentFailedError, CTBCPosQueryFailedError } from '../src/errors';
 import { CTBCBindCardRequest } from '../src/ctbc-bind-card-request';
 import { CTBCPayment } from '../src/ctbc-payment';
 import { CTBCOrder } from '../src/ctbc-order';
@@ -195,6 +195,46 @@ describe('CTBCPayment core behaviours', () => {
 
     mockedPosQuery.mockResolvedValueOnce({ ErrCode: '01', ERRDESC: 'oops', RespCode: '1', CurrentState: '' });
     await expect(payment.query('ERR2')).rejects.toThrow('Query failed, RespCode: 1 - ErrCode: 01 - ErrDesc: oops');
+  });
+
+  it('query throws CTBCPosQueryFailedError with RespCode/ErrCode/ErrDesc on POS gateway error', async () => {
+    const payment = new CTBCPayment(baseOptions);
+
+    mockedPosQuery.mockResolvedValueOnce({ ErrCode: '01', ERRDESC: 'oops', RespCode: '1', CurrentState: '' });
+
+    let caughtError: unknown;
+
+    try {
+      await payment.query('ERR2');
+    } catch (error) {
+      caughtError = error;
+    }
+
+    expect(caughtError).toBeInstanceOf(CTBCPosQueryFailedError);
+    expect((caughtError as CTBCPosQueryFailedError).respCode).toBe('1');
+    expect((caughtError as CTBCPosQueryFailedError).errCode).toBe('01');
+    expect((caughtError as CTBCPosQueryFailedError).errDesc).toBe('oops');
+    expect((caughtError as CTBCPosQueryFailedError).name).toBe('CTBCPosQueryFailedError');
+  });
+
+  it('query defaults errDesc to "Unknown error" when ERRDESC is missing', async () => {
+    const payment = new CTBCPayment(baseOptions);
+
+    mockedPosQuery.mockResolvedValueOnce({ ErrCode: '02', RespCode: '1', CurrentState: '' });
+
+    let caughtError: unknown;
+
+    try {
+      await payment.query('ERR3');
+    } catch (error) {
+      caughtError = error;
+    }
+
+    expect(caughtError).toBeInstanceOf(CTBCPosQueryFailedError);
+    expect((caughtError as CTBCPosQueryFailedError).errDesc).toBe('Unknown error');
+    expect((caughtError as CTBCPosQueryFailedError).message).toBe(
+      'Query failed, RespCode: 1 - ErrCode: 02 - ErrDesc: Unknown error',
+    );
   });
 
   it('query reconstructs order from POS response', async () => {

@@ -1,5 +1,5 @@
 /* istanbul ignore file: re-export barrel file */
-export { CTBCBindCardRequestState, CTBCOrderState } from './typings';
+export { CTBCBindCardRequestState, CTBCOrderState, CTBC_ERROR_CODES } from './typings';
 
 export type {
   CTBCBindCardRequestPayload,
@@ -12,7 +12,6 @@ export type {
   CTBCPosApiRefundParams,
   CTBCPosApiCancelRefundParams,
   CTBCPosApiResponse,
-  CTBC_ERROR_CODES,
   CTBCAmexConfig,
   CTBCAmexInquiryParams,
   CTBCAmexRefundParams,

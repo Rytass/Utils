@@ -950,6 +950,77 @@ export default CTBCPayment;
 
 ## Error Handling
 
+### Typed Errors
+
+The package exports typed error classes so callers can branch on the failure cause instead of matching error messages:
+
+| Error class                  | Thrown when                                                                    | Extra properties                 |
+| ---------------------------- | ------------------------------------------------------------------------------ | -------------------------------- |
+| `CTBCHtmlErrorResponseError` | CTBC returns an HTML page (maintenance notice, WAF block) instead of a payload | `responseText`                   |
+| `CTBCPosQueryFailedError`    | The POS gateway answers a query with a non-`00` `ErrCode`                      | `respCode`, `errCode`, `errDesc` |
+| `CtbcPaymentFailedError`     | A payment is rejected by the gateway                                           | `orderId`                        |
+
+> **Behaviour change:** the `posApi*` helpers previously signalled every failure by
+> returning a numeric error code from `CTBC_ERROR_CODES`. They now **throw**
+> `CTBCHtmlErrorResponseError` when CTBC serves an HTML page — this case used to be masked as
+> `ERR_HOST_CONNECTION_FAILED`, which was indistinguishable from a genuine network failure. All other
+> failures still come back as numeric codes. Code that only checks `typeof result === 'number'` should
+> add a `try`/`catch`.
+
+```typescript
+import {
+  posApiQuery,
+  CTBCHtmlErrorResponseError,
+  CTBCPosQueryFailedError,
+  CTBC_ERROR_CODES,
+} from '@rytass/payments-adapter-ctbc-micro-fast-pay';
+
+try {
+  const result = await posApiQuery(posApiConfig, queryParams);
+
+  if (typeof result === 'number') {
+    // Validation / network / parsing failures still surface as numeric codes
+    console.error('Query failed with error code:', result);
+
+    return;
+  }
+
+  console.log('Current state:', result.CurrentState);
+} catch (error) {
+  if (error instanceof CTBCHtmlErrorResponseError) {
+    // CTBC is under maintenance — safe to retry later, do NOT treat as a payment failure.
+    // `message` carries a truncated preview; `responseText` holds the full page for diagnostics.
+    console.error('CTBC returned an HTML error page:', error.message);
+    await alerting.notify('ctbc-maintenance', error.responseText);
+
+    return;
+  }
+
+  throw error;
+}
+```
+
+`CTBCPayment.query()` wraps the same failure modes: it throws `CTBCPosQueryFailedError` when the POS
+gateway reports a query error, and lets `CTBCHtmlErrorResponseError` propagate untouched.
+
+```typescript
+try {
+  const order = await paymentGateway.query('ORDER_ID');
+} catch (error) {
+  if (error instanceof CTBCHtmlErrorResponseError) {
+    console.error('CTBC under maintenance, retry later');
+  } else if (error instanceof CTBCPosQueryFailedError) {
+    console.error(`Query rejected: ${error.errCode} - ${error.errDesc}`);
+  } else {
+    throw error;
+  }
+}
+```
+
+When a refund or refund cancellation hits an HTML error page, the order is marked `FAILED` with
+`failedCode` set to `CTBC_HTML_ERROR_RESPONSE_FAILED_CODE` (`'HTML_ERROR_RESPONSE'`) before the error
+is re-thrown.
+
 ### Common Error Scenarios
 
 ```typescript

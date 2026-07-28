@@ -12,6 +12,7 @@ import {
 import { CTBCPayment, debugPayment } from './ctbc-payment';
 import { posApiCancelRefund, posApiSmartCancelOrRefund } from './ctbc-pos-api-utils';
 import { amexCancelRefund, amexSmartCancelOrRefund } from './ctbc-amex-api-utils';
+import { CTBC_HTML_ERROR_RESPONSE_FAILED_CODE, CTBCHtmlErrorResponseError } from './errors';
 import type { CTBCAmexCancelRefundParams, CTBCAmexConfig, CTBCAmexRefundParams } from './typings';
 import {
   CTBCCheckoutWithBoundCardRequestPayload,
@@ -357,7 +358,10 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
         if (this._state !== OrderState.FAILED) {
           this._state = OrderState.FAILED;
 
-          if (error instanceof Error) {
+          if (error instanceof CTBCHtmlErrorResponseError) {
+            this._failedCode = CTBC_HTML_ERROR_RESPONSE_FAILED_CODE;
+            this._failedMessage = error.message;
+          } else if (error instanceof Error) {
             this._failedMessage = error.message;
           } else {
             this._failedMessage = 'Unknown refund error';
@@ -522,7 +526,10 @@ export class CTBCOrder<OCM extends CTBCOrderCommitMessage = CTBCOrderCommitMessa
         if (this._state !== OrderState.FAILED) {
           this._state = OrderState.FAILED;
 
-          if (error instanceof Error) {
+          if (error instanceof CTBCHtmlErrorResponseError) {
+            this._failedCode = CTBC_HTML_ERROR_RESPONSE_FAILED_CODE;
+            this._failedMessage = error.message;
+          } else if (error instanceof Error) {
             this._failedMessage = error.message;
           } else {
             this._failedMessage = 'Unknown cancel refund error';
