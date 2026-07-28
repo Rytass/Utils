@@ -200,13 +200,40 @@ function pkcs5Unpad(data: Buffer): Buffer {
   return result;
 }
 
-// CTBC 系統維護時會回傳 HTML 公告頁，可能帶 <!DOCTYPE>、BOM，也可能搭配 5xx 狀態碼
+// 合法回應為 key1=value1&key2=value2&<hex>，第 4 段必為十六進位密文。
+// 先確認是合法封包再判 HTML，避免 CTBC 對正常回應誤標 text/html 時整條金流被擋下。
+function looksLikeCtbcEnvelope(responseText: string): boolean {
+  const parts = responseText.trim().split(/[&=]/);
+
+  return parts.length >= 4 && /^[0-9a-f]+$/i.test(parts[3]);
+}
+
+// 維護公告頁前面可能夾 BOM、XML 宣告或 proxy/WAF 注入的註解，需逐層剝除後再比對
+function stripLeadingNoise(responseText: string): string {
+  let rest = responseText.replace(/^[\s\uFEFF]+/, '');
+
+  for (;;) {
+    const next = rest.replace(/^<\?xml[^>]*\?>\s*/i, '').replace(/^<!--[\s\S]*?-->\s*/, '');
+
+    if (next === rest) {
+      return rest;
+    }
+
+    rest = next;
+  }
+}
+
+// CTBC 系統維護時會回傳 HTML 公告頁，可能帶 <!DOCTYPE>，也可能搭配 5xx 狀態碼
 function isHtmlErrorResponse(contentType: string | null, responseText: string): boolean {
-  if (contentType && /text\/html/i.test(contentType)) {
+  if (looksLikeCtbcEnvelope(responseText)) {
+    return false;
+  }
+
+  if (contentType && /^\s*(?:text\/html|application\/xhtml\+xml)\s*(?:;|$)/i.test(contentType)) {
     return true;
   }
 
-  return /^[\s\uFEFF]*(?:<!doctype\s+html|<html)/i.test(responseText);
+  return /^(?:<!doctype\s+html|<html|<head|<body)/i.test(stripLeadingNoise(responseText));
 }
 
 function parseResponse(responseStr: string, macKey: string): CTBCPosApiResponse | number {

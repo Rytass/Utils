@@ -982,6 +982,41 @@ describe('CTBC POS API Utils', () => {
       expect(result).toEqual(expect.objectContaining({ RespCode: '0', ErrCode: '00', CurrentState: '1' }));
     });
 
+    it('should detect an HTML page hidden behind a proxy comment or XML declaration', async () => {
+      const wrapped = '<!-- proxy banner --><html><body><a href="/?x=1&y=2">blocked</a></body></html>';
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'text/plain' }),
+        text: jest.fn().mockResolvedValue(wrapped),
+      });
+
+      await expect(posApiQuery(validConfig, queryParams)).rejects.toThrow(CTBCHtmlErrorResponseError);
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'text/plain' }),
+        text: jest.fn().mockResolvedValue('<?xml version="1.0"?><html><body>maintenance</body></html>'),
+      });
+
+      await expect(posApiQuery(validConfig, queryParams)).rejects.toThrow(CTBCHtmlErrorResponseError);
+    });
+
+    it('should NOT reject a valid CTBC envelope that is mislabelled as text/html', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'text/html; charset=UTF-8' }),
+        text: jest.fn().mockResolvedValue(buildEncryptedResponse({ RespCode: '0', ErrCode: '00', CurrentState: '1' })),
+      });
+
+      const result = await posApiQuery(validConfig, queryParams);
+
+      expect(result).toEqual(expect.objectContaining({ RespCode: '0', ErrCode: '00' }));
+    });
+
     it('should not hang when a non-2xx response never finishes streaming its body', async () => {
       jest.useFakeTimers();
 
