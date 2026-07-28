@@ -7,6 +7,7 @@ import { CardType, OrderState, PaymentEvents } from '@rytass/payments';
 import { CTBCOrder } from '../src/ctbc-order';
 import { CTBCPayment } from '../src/ctbc-payment';
 import { CTBCOrderCommitMessage } from '../src/typings';
+import { CTBC_HTML_ERROR_RESPONSE_FAILED_CODE, CTBCHtmlErrorResponseError } from '../src/errors';
 
 // Mock POS API utils
 jest.mock('../src/ctbc-pos-api-utils', () => ({
@@ -34,6 +35,10 @@ const amexSmartFlowMock = amexApiUtils.amexSmartCancelOrRefund as jest.MockedFun
 >;
 
 const amexCancelRefundMock = amexApiUtils.amexCancelRefund as jest.MockedFunction<typeof amexApiUtils.amexCancelRefund>;
+
+const posApiCancelRefundMock = posApiUtils.posApiCancelRefund as jest.MockedFunction<
+  typeof posApiUtils.posApiCancelRefund
+>;
 
 describe('CTBCOrder unit tests', () => {
   const TEST_MERID = 'TEST_MERID';
@@ -424,6 +429,51 @@ describe('CTBCOrder unit tests', () => {
 
       await expect(order.refund(50)).rejects.toBe('Unknown error type');
       expect(order.state).toBe(OrderState.FAILED);
+    });
+
+    it('should propagate CTBCHtmlErrorResponseError and tag the order with the HTML failure code', async () => {
+      const order = new CTBCOrder({
+        id: 'ORDER024',
+        items: [{ name: 'Item', unitPrice: 100, quantity: 1 }],
+        gateway: payment,
+        committedAt: new Date(),
+        additionalInfo: { xid: 'XID123', authCode: 'AUTH123' },
+      });
+
+      const htmlError = new CTBCHtmlErrorResponseError('<html><body>系統維護中</body></html>');
+
+      posApiSmartFlowMock.mockRejectedValue(htmlError);
+
+      await expect(order.refund(50)).rejects.toBe(htmlError);
+      expect(order.state).toBe(OrderState.FAILED);
+      expect(order.failedMessage).toEqual({
+        code: CTBC_HTML_ERROR_RESPONSE_FAILED_CODE,
+        message: htmlError.message,
+      });
+    });
+  });
+
+  describe('cancelRefund with POS API', () => {
+    it('should propagate CTBCHtmlErrorResponseError and tag the order with the HTML failure code', async () => {
+      const order = new CTBCOrder({
+        id: 'ORDER025',
+        items: [{ name: 'Item', unitPrice: 100, quantity: 1 }],
+        gateway: payment,
+        committedAt: new Date(),
+        refundedAt: new Date(),
+        additionalInfo: { xid: 'XID123', authCode: 'AUTH123' },
+      });
+
+      const htmlError = new CTBCHtmlErrorResponseError('<html><body>系統維護中</body></html>');
+
+      posApiCancelRefundMock.mockRejectedValue(htmlError);
+
+      await expect(order.cancelRefund(50)).rejects.toBe(htmlError);
+      expect(order.state).toBe(OrderState.FAILED);
+      expect(order.failedMessage).toEqual({
+        code: CTBC_HTML_ERROR_RESPONSE_FAILED_CODE,
+        message: htmlError.message,
+      });
     });
   });
 

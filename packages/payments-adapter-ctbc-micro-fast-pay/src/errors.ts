@@ -11,6 +11,9 @@ export class CtbcPaymentFailedError extends Error {
 // 錯誤訊息中僅保留開頭片段，完整內容請取用 responseText，避免維護公告頁灌爆 log
 const HTML_ERROR_PREVIEW_LENGTH = 200;
 
+// CTBC 回傳 HTML 錯誤頁時，訂單上記錄的失敗代碼（POS 錯誤碼為數字，故以字串常數區隔）
+export const CTBC_HTML_ERROR_RESPONSE_FAILED_CODE = 'HTML_ERROR_RESPONSE';
+
 export class CTBCHtmlErrorResponseError extends Error {
   readonly responseText: string;
 
