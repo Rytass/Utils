@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.25](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.24...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.25) (2026-07-29)
+
+### Features
+
+- **payments-adapter-ctbc-micro-fast-pay:** detect HTML error pages ([9f70976](https://github.com/Rytass/Utils/commit/9f709765254ae334359de1cf5143a2d3237b8710))
+- **payments-adapter-ctbc-micro-fast-pay:** add CTBCPosQueryFailedError ([2746140](https://github.com/Rytass/Utils/commit/27461401c2433ada0b1823f8b09741f804a4bb01))
+
+### Bug Fixes
+
+- mark @ngrok/ngrok as an optional peer dependency in payment adapters ([36b8246](https://github.com/Rytass/Utils/commit/36b824653860081ecf152e760062f4cc1daf4c54))
+- **payments-adapter-ctbc-micro-fast-pay:** detect HTML error pages behind doctype and non-2xx responses ([9c4a606](https://github.com/Rytass/Utils/commit/9c4a606a4be5242fbbfc4295ef3984d75a0b202c))
+- **payments-adapter-ctbc-micro-fast-pay:** tag orders failed by HTML error pages with a failure code ([112c3eb](https://github.com/Rytass/Utils/commit/112c3eb3956af7250a2277303d34bc37eb23ca3e))
+- **payments-adapter-ctbc-micro-fast-pay:** keep the request timeout covering the body read ([1da5fb3](https://github.com/Rytass/Utils/commit/1da5fb35b955b8ae64301a249defc567fb4b1b57))
+- **payments-adapter-ctbc-micro-fast-pay:** harden HTML detection against false positives and wrapped pages ([9a09560](https://github.com/Rytass/Utils/commit/9a095600ba001b78ffd9d60db0eff895156f797c))
+- **payments-adapter-ctbc-micro-fast-pay:** export CTBC_ERROR_CODES as a value ([106f25e](https://github.com/Rytass/Utils/commit/106f25e779505cec575704bc1bf904ede8fbe8d6))
+- **payments-adapter-ctbc-micro-fast-pay:** require block-aligned ciphertext in the envelope guard ([a226810](https://github.com/Rytass/Utils/commit/a226810b3135fbf3b4f6aef6607a3db1eb6b30e3))
+
 ## [0.1.24](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.23...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.24) (2026-05-18)
 
 **Note:** Version bump only for package @rytass/payments-adapter-ctbc-micro-fast-pay
