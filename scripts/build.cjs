@@ -156,8 +156,33 @@ async function build(packageSymbol, packageInfos) {
       process.exit(1);
     }
 
+    const isolateEntries = packageJson.isolateEntries || [];
+
+    // Every entry point is built in a SINGLE rollup pass.
+    //
+    // Building them separately makes rollup plan chunks in isolation, which
+    // breaks two ways once an isolate entry shares a module with the index:
+    //   - the ESM outputs share one `dir` with preserveModules, so the later
+    //     build overwrites the earlier build's shared modules with a variant
+    //     tree-shaken for that entry alone (missing exports at runtime);
+    //   - each CJS bundle inlines its own copy of every shared module, so
+    //     Symbol() injection tokens and entity classes exist twice and stop
+    //     matching across entries.
+    // One pass lets rollup hoist the shared modules into chunks both entries
+    // import, so a module has exactly one instance no matter how it is reached.
+    const entryInputs = isolateEntries.reduce(
+      (acc, entryPath) => {
+        const inputPath = path.resolve(packageSrcPath, entryPath);
+
+        if (!fse.existsSync(inputPath)) return acc;
+
+        return { ...acc, [entryPath.replace(/^(?:\.\/)?(.+)\.[^.]+$/, '$1')]: inputPath };
+      },
+      { index: indexPath },
+    );
+
     await rollupBuild({
-      input: indexPath,
+      input: entryInputs,
       external: isExternal,
       output: [
         {
@@ -168,9 +193,11 @@ async function build(packageSymbol, packageInfos) {
           preserveModulesRoot: packageSrcPath,
         },
         {
-          file: path.resolve(packageDistPath, 'index.cjs.js'),
+          dir: path.resolve(packageDistPath),
           format: 'cjs',
           externalLiveBindings: false,
+          entryFileNames: '[name].cjs.js',
+          chunkFileNames: 'chunks/[name]-[hash].cjs.js',
         },
       ],
       onwarn(warning, defaultHandler) {
@@ -199,55 +226,33 @@ async function build(packageSymbol, packageInfos) {
     packageJson.module = './index.js';
     packageJson.typings = './index.d.ts';
 
-    const isolateEntries = packageJson.isolateEntries || [];
+    // An exports map is only emitted for packages that actually publish
+    // subpaths. Adding one everywhere would close off deep paths that
+    // consumers may already import from packages with a single entry point.
+    const subpathNames = Object.keys(entryInputs).filter(name => name !== 'index');
 
-    await isolateEntries
-      .map(entryPath => async () => {
-        const inputPath = path.resolve(packageSrcPath, entryPath);
-        const filename = entryPath.replace(/^(.+)\.[^.]+$/, '$1');
-
-        if (fse.existsSync(inputPath)) {
-          await rollupBuild({
-            input: inputPath,
-            external: isExternal,
-            output: [
-              {
-                dir: path.resolve(packageDistPath),
-                format: 'es',
-                externalLiveBindings: false,
-                preserveModules: true,
-                preserveModulesRoot: packageSrcPath,
-              },
-              {
-                file: path.resolve(packageDistPath, `${filename}.cjs.js`),
-                format: 'cjs',
-                externalLiveBindings: false,
-              },
-            ],
-            onwarn(warning, defaultHandler) {
-              if (warning.code === 'MODULE_LEVEL_DIRECTIVE') return;
-              defaultHandler(warning);
+    if (subpathNames.length) {
+      packageJson.exports = {
+        '.': {
+          types: './index.d.ts',
+          import: './index.js',
+          require: './index.cjs.js',
+        },
+        ...subpathNames.reduce(
+          (acc, name) => ({
+            ...acc,
+            [`./${name}`]: {
+              types: `./${name}.d.ts`,
+              import: `./${name}.js`,
+              require: `./${name}.cjs.js`,
             },
-            plugins: [
-              swc({
-                tsconfig,
-              }),
-              postcss({
-                modules: true,
-                use: {
-                  sass: {
-                    includePaths: [nodeModulesPath],
-                  },
-                },
-                extract: true,
-                minimize: true,
-              }),
-              preserveDirectives({ suppressPreserveModulesWarning: true }),
-            ],
-          });
-        }
-      })
-      .reduce((prev, next) => prev.then(next), Promise.resolve());
+          }),
+          {},
+        ),
+        // Tooling (nx, lerna, bundler plugins) reads this directly.
+        './package.json': './package.json',
+      };
+    }
   }
 
   delete packageJson.scripts;
