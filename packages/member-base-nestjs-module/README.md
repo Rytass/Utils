@@ -344,6 +344,101 @@ Notes:
 - Custom checkers may keep returning `Promise<boolean>` (legacy signature, fully backward compatible) or return a rich `CasbinAuthorizationDecision` (`{ allowed, matchedDomain?, matchedAction?, meta? }`) for tracing.
 - Without `casbinDomainResolver`, the default checker behavior is unchanged (`payload.domain ?? DEFAULT_CASBIN_DOMAIN`).
 
+## Authentication Gateway
+
+Authentication sources are pluggable. The built-in account/password provider is always registered and is the only one registered by default, so an application that configures nothing behaves exactly as before.
+
+```ts
+import { AuthenticationGateway, PASSWORD_CHANNEL } from '@rytass/member-base-nestjs-module';
+
+// Authenticate through any registered channel and get the local member back
+const { member, identity } = await gateway.authenticate(PASSWORD_CHANNEL, { account, password }, { ip });
+
+// Or authenticate and receive a member-base token pair in one call
+const tokenPair = await gateway.login(PASSWORD_CHANNEL, { account, password }, { ip, domain });
+```
+
+### Registering another source
+
+A provider answers "who is this subject"; the gateway maps that answer onto a local member.
+
+```ts
+import type { AuthenticationProvider, AuthenticatedIdentity } from '@rytass/member-base-nestjs-module';
+
+class DirectoryAuthProvider implements AuthenticationProvider<{ account: string; password: string }> {
+  readonly channel = 'ldap';
+  readonly kind = 'credential' as const;
+
+  async authenticate(credentials): Promise<AuthenticatedIdentity> {
+    const entry = await bindAndSearch(credentials);
+
+    return {
+      channel: this.channel,
+      identifier: entry.objectGUID, // immutable, unlike an account name
+      identifierVerified: true,
+      attributes: { name: entry.displayName, groups: entry.memberOf },
+    };
+  }
+}
+
+MemberBaseModule.forRoot({
+  authProviders: [new DirectoryAuthProvider()],
+});
+```
+
+Prefer an identifier the directory cannot change (an OIDC `sub`, an Active Directory `objectGUID`) over an account name or email — the local binding is keyed on it.
+
+### Resolving an identity to a member
+
+```
+identity (channel, identifier, verified?)
+        |
+        +-- identity carries memberId ----------------> member (password provider)
+        |
+        v
+  lookup binding (channel, identifier)
+        |
+        +-- found ------------------------------------> member
+        |
+        v
+  lookup local member where account = identifier
+        |
+        +-- found and linking allowed ----------------> link + warn -> member
+        +-- found and linking refused ----------------> reject
+        |
+        v
+  autoProvision
+        +-- true -------------------------------------> provision passwordless member
+        +-- function ---------------------------------> member id, or null to reject
+        +-- false ------------------------------------> reject
+```
+
+Bindings are stored in `member_oauth_records`, exported under the clearer aliases `MemberExternalIdentityEntity` / `MemberExternalIdentityRepo`.
+
+### Provisioning and linking policy
+
+| Option | Default | Effect |
+| --- | --- | --- |
+| `autoProvision` | `true` | Provision a passwordless member the first time an unknown external identity authenticates |
+| `autoProvision` | `false` | Reject identities that have no local member yet |
+| `autoProvision` | `(identity) => Promise<string \| null>` | Decide per identity — a directory group check, an approval workflow |
+| `linkExistingAccount` | `true` | An unbound external identity claims a local member whose `account` equals the identifier |
+| `linkExistingAccount` | `'verified-only'` | Same, but only when the provider reported `identifierVerified: true` |
+| `linkExistingAccount` | `false` | Never link; fall through to provisioning |
+
+```ts
+MemberBaseModule.forRoot({
+  autoProvision: async identity => {
+    const groups = (identity.attributes?.groups ?? []) as string[];
+
+    return groups.includes('APP_USERS') ? (await findOrCreate(identity)).id : null;
+  },
+  linkExistingAccount: 'verified-only',
+});
+```
+
+> **Account takeover warning.** With `linkExistingAccount: true` (the default, matching the behaviour the OAuth2 flows always had), any provider that does not verify its identifier lets a matching local account be claimed. The bundled Facebook flow, for instance, never checks an email verification flag. A warning is printed on boot while linking is enabled, and again on every actual takeover with the channel, identifier and member id. Set `'verified-only'` to require verification.
+
 ## Credential Verification Without Tokens
 
 `login()` authenticates and immediately issues a member-base token pair. Flows that own their own session mechanics — an OIDC provider interaction, a custom SSO bridge — would throw those tokens away, so `verifyCredentials()` performs the identical checks and returns the member instead.

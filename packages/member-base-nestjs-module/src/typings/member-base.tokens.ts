@@ -7,6 +7,11 @@ import type { Repository } from 'typeorm';
 import type { BaseMemberEntity } from '../models/base-member.entity';
 import type { OAuth2Provider } from './oauth2-provider.interface';
 import type { CasbinPermissionChecker } from './casbin-permission';
+import type {
+  AuthenticationProvider,
+  AutoProvisionStrategy,
+  LinkExistingAccountStrategy,
+} from './authentication-provider.interface';
 
 // Typed injection tokens for better type safety (using Symbol with type annotations)
 export const MEMBER_BASE_MODULE_OPTIONS = Symbol('MEMBER_BASE_MODULE_OPTIONS') as symbol & {
@@ -79,6 +84,13 @@ export const CUSTOMIZED_JWT_PAYLOAD = Symbol('CUSTOMIZED_JWT_PAYLOAD') as symbol
 export const OAUTH2_PROVIDERS = Symbol('OAUTH2_PROVIDERS') as symbol & { __type: OAuth2Provider[] };
 export const OAUTH2_CLIENT_DEST_URL = Symbol('OAUTH2_CLIENT_DEST_URL') as symbol & { __type: string };
 
+// Authentication Gateway
+export const AUTH_PROVIDERS = Symbol('AUTH_PROVIDERS') as symbol & { __type: AuthenticationProvider[] };
+export const AUTO_PROVISION = Symbol('AUTO_PROVISION') as symbol & { __type: AutoProvisionStrategy };
+export const LINK_EXISTING_ACCOUNT = Symbol('LINK_EXISTING_ACCOUNT') as symbol & {
+  __type: LinkExistingAccountStrategy;
+};
+
 // Default Admin Providers
 export const DEFAULT_ADMIN_ACCOUNT = Symbol('DEFAULT_ADMIN_ACCOUNT') as symbol & { __type: string | null };
 export const DEFAULT_ADMIN_PASSWORD = Symbol('DEFAULT_ADMIN_PASSWORD') as symbol & { __type: string | null };
@@ -116,6 +128,9 @@ export interface MemberBaseProviders {
   CUSTOMIZED_JWT_PAYLOAD: Function;
   OAUTH2_PROVIDERS: OAuth2Provider[];
   OAUTH2_CLIENT_DEST_URL: string;
+  AUTH_PROVIDERS: AuthenticationProvider[];
+  AUTO_PROVISION: AutoProvisionStrategy;
+  LINK_EXISTING_ACCOUNT: LinkExistingAccountStrategy;
   DEFAULT_ADMIN_ACCOUNT: string | null;
   DEFAULT_ADMIN_PASSWORD: string | null;
 }

@@ -3,6 +3,11 @@ import type { BaseMemberEntity } from '../models/base-member.entity';
 import type { ReflectableDecorator } from '@nestjs/core';
 import type { OAuth2Provider } from './oauth2-provider.interface';
 import type {
+  AuthenticationProvider,
+  AutoProvisionStrategy,
+  LinkExistingAccountStrategy,
+} from './authentication-provider.interface';
+import type {
   CasbinDomainResolver,
   CasbinPermissionCheckerParams,
   CasbinPermissionCheckerResult,
@@ -57,6 +62,30 @@ export interface MemberBaseModuleOptionsDTO<
   // OAuth2
   oauth2Providers?: OAuth2Provider[];
   oauth2ClientDestUrl?: string; // default: '/login'
+
+  // Authentication Gateway
+  /**
+   * Extra authentication sources registered alongside the built-in
+   * account/password provider (an LDAP directory, an upstream OIDC issuer...).
+   * The password provider is always present and cannot be removed.
+   */
+  authProviders?: AuthenticationProvider[];
+  /**
+   * What to do when an external identity has no local member yet.
+   * default: true — provision a passwordless member on first login.
+   * Pass false to reject unknown identities, or a function to decide per
+   * identity (a directory group check, an approval workflow).
+   */
+  autoProvision?: AutoProvisionStrategy;
+  /**
+   * Whether an unbound external identity may claim an existing local member
+   * whose account equals the identifier.
+   * default: true — matches the behaviour the OAuth2 flows always had.
+   * Set 'verified-only' to require the provider to have verified the
+   * identifier, or false to disable linking. A warning is emitted on boot and
+   * on every actual takeover while linking is enabled.
+   */
+  linkExistingAccount?: LinkExistingAccountStrategy;
 
   // Default Admin
   defaultAdminAccount?: string; // default: undefined, if set, will auto-create this account with super-admin permissions on startup

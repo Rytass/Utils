@@ -32,7 +32,16 @@ import {
   REFRESH_TOKEN_COOKIE_NAME,
   DEFAULT_ADMIN_ACCOUNT,
   DEFAULT_ADMIN_PASSWORD,
+  AUTH_PROVIDERS,
+  AUTO_PROVISION,
+  LINK_EXISTING_ACCOUNT,
 } from '../typings/member-base.tokens';
+import { PasswordAuthProvider } from '../providers/password-auth.provider';
+import type {
+  AuthenticationProvider,
+  AutoProvisionStrategy,
+  LinkExistingAccountStrategy,
+} from '../typings/authentication-provider.interface';
 import { Enforcer, newEnforcer, newModelFromString } from 'casbin';
 import { MemberBaseModuleOptionsDTO } from '../typings/member-base-module-options.dto';
 import { Provider } from '@nestjs/common';
@@ -233,6 +242,28 @@ export const OptionProviders = [
   {
     provide: DEFAULT_ADMIN_PASSWORD,
     useFactory: (options?: MemberBaseModuleOptionsDTO): string | null => options?.defaultAdminPassword ?? null,
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    // The built-in password provider always leads the list, so an application
+    // that configures nothing keeps exactly the behaviour it had before the
+    // gateway existed.
+    provide: AUTH_PROVIDERS,
+    useFactory: (
+      passwordProvider: PasswordAuthProvider,
+      options?: MemberBaseModuleOptionsDTO,
+    ): AuthenticationProvider[] => [passwordProvider, ...(options?.authProviders ?? [])],
+    inject: [PasswordAuthProvider, MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: AUTO_PROVISION,
+    useFactory: (options?: MemberBaseModuleOptionsDTO): AutoProvisionStrategy => options?.autoProvision ?? true,
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: LINK_EXISTING_ACCOUNT,
+    useFactory: (options?: MemberBaseModuleOptionsDTO): LinkExistingAccountStrategy =>
+      options?.linkExistingAccount ?? true,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
 ] as Provider[];

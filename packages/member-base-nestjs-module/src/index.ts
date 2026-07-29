@@ -5,12 +5,19 @@ export * from './member-base.module';
 export * from './services/member-base.service';
 export * from './services/member-base-admin.service';
 export * from './services/password-validator.service';
+export * from './services/oauth.service';
+export { AuthenticationGateway, type AuthenticationResult } from './services/authentication-gateway.service';
+
+// Authentication Providers
+export { PasswordAuthProvider, type PasswordCredentials } from './providers/password-auth.provider';
+export { PASSWORD_CHANNEL } from './constants/password-channel';
 
 // Models
 export { BaseMemberEntity } from './models/base-member.entity';
 export * from './models/member-login-log.entity';
 export * from './models/member-password-history.entity';
 export * from './models/member-oauth-record.entity';
+export * from './models/member-external-identity.entity';
 export { BaseMemberRepo as BASE_MEMBER_REPOSITORY } from './models/base-member.entity';
 
 // Tokens / Resolved Repositories
@@ -28,6 +35,9 @@ export {
   COOKIE_MODE,
   ACCESS_TOKEN_COOKIE_NAME,
   REFRESH_TOKEN_COOKIE_NAME,
+  AUTH_PROVIDERS,
+  AUTO_PROVISION,
+  LINK_EXISTING_ACCOUNT,
 } from './typings/member-base.tokens';
 
 // Types
@@ -42,6 +52,14 @@ export type {
 } from './typings/member-base-module-option-factory';
 export type { AuthTokenPayloadBase } from './typings/auth-token-payload';
 export type { SignTokenOptions } from './typings/sign-token-options';
+export type {
+  AuthContext,
+  AuthenticatedIdentity,
+  AuthenticationProvider,
+  AuthProviderKind,
+  AutoProvisionStrategy,
+  LinkExistingAccountStrategy,
+} from './typings/authentication-provider.interface';
 export type {
   CasbinPermissionCheckerParams,
   CasbinPermissionChecker,

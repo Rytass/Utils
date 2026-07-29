@@ -87,3 +87,27 @@ export class PasswordInHistoryError extends BadRequestException {
 
   code = 110;
 }
+
+export class AuthProviderNotFoundError extends BadRequestException {
+  constructor(channel?: string) {
+    super(channel ? `Authentication provider not found: ${channel}` : 'Authentication provider not found');
+  }
+
+  code = 111;
+}
+
+export class ExternalIdentityNotLinkedError extends BadRequestException {
+  constructor() {
+    super('External identity is not linked to any member');
+  }
+
+  code = 112;
+}
+
+export class AuthProviderMisconfiguredError extends InternalServerErrorException {
+  constructor(message?: string) {
+    super(message ?? 'Authentication provider is misconfigured');
+  }
+
+  code = 113;
+}

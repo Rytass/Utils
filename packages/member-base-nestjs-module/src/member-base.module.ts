@@ -7,6 +7,7 @@ import {
   ACCESS_TOKEN_COOKIE_NAME,
   ACCESS_TOKEN_EXPIRATION,
   ACCESS_TOKEN_SECRET,
+  AUTH_PROVIDERS,
   CASBIN_ENFORCER,
   CASBIN_PERMISSION_CHECKER,
   COOKIE_MODE,
@@ -29,6 +30,8 @@ import { DefaultAdminBootstrapService } from './services/default-admin-bootstrap
 import { OAuthService } from './services/oauth.service';
 import { OAuthCallbacksController } from './controllers/oauth-callbacks.controller';
 import { BaseMemberEntity } from './models/base-member.entity';
+import { AuthenticationGateway } from './services/authentication-gateway.service';
+import { PasswordAuthProvider } from './providers/password-auth.provider';
 
 const providers = [
   ...OptionProviders,
@@ -38,6 +41,8 @@ const providers = [
   MemberBaseAdminService,
   DefaultAdminBootstrapService,
   OAuthService,
+  PasswordAuthProvider,
+  AuthenticationGateway,
   {
     provide: APP_GUARD,
     useClass: CasbinGuard,
@@ -50,6 +55,9 @@ const exportInjectable = [
   MemberBaseService,
   MemberBaseAdminService,
   OAuthService,
+  AuthenticationGateway,
+  PasswordAuthProvider,
+  AUTH_PROVIDERS,
   CASBIN_ENFORCER,
   ACCESS_TOKEN_SECRET,
   ENABLE_GLOBAL_GUARD,
