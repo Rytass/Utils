@@ -33,9 +33,9 @@
     "graphql": "*",
     "jsonwebtoken": "*",
     "ldapts": "*",
+    "oidc-provider": ">=9",
     "typeorm": "*",
-    "typeorm-adapter": ">=1",
-    "oidc-provider": ">=9"
+    "typeorm-adapter": ">=1"
   },
   "peerDependenciesMeta": {
     "@nestjs/graphql": {
@@ -47,10 +47,10 @@
     "ldapts": {
       "optional": true
     },
-    "typeorm-adapter": {
+    "oidc-provider": {
       "optional": true
     },
-    "oidc-provider": {
+    "typeorm-adapter": {
       "optional": true
     }
   },
