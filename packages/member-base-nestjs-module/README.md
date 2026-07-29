@@ -1,5 +1,35 @@
 # Member Base System for NestJS Projects
 
+Members, passwords, tokens and Casbin authorization for NestJS — plus a pluggable authentication gateway and an optional OpenID Connect provider endpoint.
+
+## What you can build with it
+
+| Capability | Entry point | Status |
+| --------------------------------------------- | ---------------------------- | ------------------- |
+| Members, password policy, JWT session, Casbin | package root                 | always on           |
+| Account/password login                        | package root                 | always on           |
+| Google / Facebook / custom OAuth2 login       | package root                 | configure to enable |
+| Login against any OIDC issuer (relying party) | package root                 | configure to enable |
+| Login against an LDAP / Active Directory      | `/ldap`                      | opt-in subpath      |
+| **Be** an OIDC provider for other services    | `/oidc-provider`             | opt-in subpath      |
+| GraphQL DTOs                                  | `/graphql`                   | opt-in subpath      |
+
+Authentication sources and the issuer endpoint are independent: any source can back the issuer. Jump to [Deployment Topologies](#deployment-topologies) for complete, copy-pasteable setups of each combination.
+
+```
+        authentication sources                    this application
+  ┌─────────────────────────────┐           ┌──────────────────────────┐
+  │ account + password (built-in)│──┐        │  AuthenticationGateway   │
+  │ Google / Facebook / OAuth2   │──┤        │           │              │
+  │ any OIDC issuer              │──┼───────▶│    member + Casbin       │
+  │ LDAP / Active Directory      │──┤        │           │              │
+  │ your own provider            │──┘        │  ┌────────┴───────────┐  │
+  └─────────────────────────────┘           │  │ own API (guarded)  │  │
+                                             │  │ OIDC endpoint      │──┼──▶ other services
+                                             │  └────────────────────┘  │
+                                             └──────────────────────────┘
+```
+
 ## Installation
 
 ```bash
@@ -18,6 +48,10 @@ Optional peer dependencies — install only the ones you use:
 | ------------------------ | ------------------------------------------------------------- |
 | `typeorm-adapter` | You set `casbinAdapterOptions` (database-backed Casbin policy) |
 | `@nestjs/graphql`, `graphql` | You import from `@rytass/member-base-nestjs-module/graphql` |
+| `ldapts` | You import from `@rytass/member-base-nestjs-module/ldap` |
+| `oidc-provider` | You import from `@rytass/member-base-nestjs-module/oidc-provider` |
+
+Nothing is pulled in by importing the package root: an entry point you never import is never resolved, so its dependency is never required and its tables are never created. See [Subpath isolation](#subpath-isolation).
 
 ### Breaking change in 0.5.0: `typeorm-adapter` is no longer bundled
 
@@ -343,6 +377,342 @@ Notes:
 - `casbinDomainResolver` only affects the DEFAULT checker. When a custom `casbinPermissionChecker` is provided, the resolver is ignored — the custom checker receives `context` / `request` in its params (`CasbinPermissionCheckerParams`) and decides on its own.
 - Custom checkers may keep returning `Promise<boolean>` (legacy signature, fully backward compatible) or return a rich `CasbinAuthorizationDecision` (`{ allowed, matchedDomain?, matchedAction?, meta? }`) for tracing.
 - Without `casbinDomainResolver`, the default checker behavior is unchanged (`payload.domain ?? DEFAULT_CASBIN_DOMAIN`).
+
+## Deployment Topologies
+
+Five combinations cover nearly every deployment. Each is complete — the module configuration plus whatever `main.ts` needs.
+
+### Choosing one
+
+| Question | Topology |
+| ------------------------------------------------------------- | ------------------------- |
+| Users have accounts here, nothing else involved | [A. Standalone](#a-standalone) |
+| Users sign in with Google/Facebook too | [B. Social login](#b-standalone-with-social-login) |
+| Corporate directory owns the passwords | [C. Directory-backed](#c-directory-backed-active-directory) |
+| Another system already owns identity, this app consumes it | [D. Relying party](#d-relying-party-of-an-existing-issuer) |
+| Other services should authenticate against **this** app | [E. Identity provider](#e-identity-provider) |
+| Directory owns passwords **and** other services need identity | [F. Directory-backed issuer](#f-directory-backed-identity-provider) |
+
+### A. Standalone
+
+The baseline: local accounts, local authorization, nothing external.
+
+```ts
+@Module({
+  imports: [
+    MemberBaseModule.forRoot({
+      memberEntity: MemberEntity,
+      accessTokenSecret: process.env.JWT_ACCESS_SECRET,
+      refreshTokenSecret: process.env.JWT_REFRESH_SECRET,
+      cookieMode: true,
+      casbinAdapterOptions: { type: 'postgres' /* ... */ },
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+```ts
+const { accessToken, refreshToken } = await memberBaseService.login(account, password, { ip });
+```
+
+Nothing else to install. No subpath, no extra table.
+
+### B. Standalone with social login
+
+Adds Google/Facebook on top of A. The callback controller is registered automatically.
+
+```ts
+MemberBaseModule.forRoot({
+  // ...everything from A
+  oauth2Providers: [
+    { channel: 'google', clientId, clientSecret, redirectUri: 'https://app.example.com/oauth2/google/callback' },
+  ],
+  oauth2ClientDestUrl: '/login',
+
+  // Social identifiers are email addresses, so restrict account takeover to
+  // providers that actually verified them.
+  linkExistingAccount: 'verified-only',
+});
+```
+
+> The bundled Facebook flow does not check an email verification flag. With the default `linkExistingAccount: true` that is an account takeover path — see [Provisioning and linking policy](#provisioning-and-linking-policy).
+
+### C. Directory-backed (Active Directory)
+
+The directory owns passwords; this application owns roles. No password is ever stored locally.
+
+```bash
+npm install ldapts
+```
+
+```ts
+import { LdapAuthProvider } from '@rytass/member-base-nestjs-module/ldap';
+
+MemberBaseModule.forRoot({
+  // ...everything from A
+  authProviders: [
+    new LdapAuthProvider({
+      url: 'ldaps://dc.corp.local',
+      bindDN: 'CN=svc-account,OU=Service,DC=corp,DC=local',
+      bindPassword: process.env.LDAP_BIND_PASSWORD,
+      baseDN: 'DC=corp,DC=local',
+    }),
+  ],
+
+  // Having a domain account does not imply being entitled to this system.
+  // Returning null rejects the login; returning a member id accepts it.
+  autoProvision: async identity => {
+    const groups = (identity.attributes?.groups ?? []) as string[];
+
+    if (!groups.includes('APP_USERS')) return null;
+
+    const existing = await memberBaseService.findByAccount(identity.identifier);
+
+    if (existing) return existing.id;
+
+    const [member] = await memberBaseService.registerWithoutPassword(identity.identifier);
+
+    return member.id;
+  },
+});
+```
+
+```ts
+const { member } = await gateway.authenticate('ldap', { account, password }, { ip });
+const tokenPair = await gateway.login('ldap', { account, password }, { ip });
+```
+
+Local accounts still work — the password provider is always registered, so an emergency admin account is unaffected by directory outages.
+
+### D. Relying party of an existing issuer
+
+Someone else runs the IdP; this application consumes it. Members are provisioned on first login and carry local roles.
+
+```ts
+import { OidcAuthProvider } from '@rytass/member-base-nestjs-module';
+
+MemberBaseModule.forRoot({
+  // ...everything from A
+  authProviders: [
+    new OidcAuthProvider({
+      channel: 'corp-idp',
+      issuer: 'https://idp.example.com/oidc',
+      clientId,
+      clientSecret,
+      redirectUri: 'https://app.example.com/auth/callback',
+    }),
+  ],
+});
+```
+
+The provider holds no per-attempt state, so the application decides where the PKCE verifier and nonce live:
+
+```ts
+@Controller('auth')
+export class SsoController {
+  constructor(private readonly gateway: AuthenticationGateway) {}
+
+  @IsPublic()
+  @Get('login')
+  async login(@Res() res: Response): Promise<void> {
+    const request = await this.gateway.getProvider('corp-idp').createAuthorizationRequest!();
+
+    res.cookie('oidc_tx', JSON.stringify(request), { httpOnly: true, sameSite: 'lax', maxAge: 600_000 });
+    res.redirect(request.url);
+  }
+
+  @IsPublic()
+  @Get('callback')
+  async callback(@Req() req: Request, @Res() res: Response, @Query('code') code: string, @Query('state') state: string): Promise<void> {
+    const tx = JSON.parse(req.cookies.oidc_tx ?? '{}');
+
+    if (!tx.state || tx.state !== state) throw new BadRequestException('Invalid state');
+
+    const { member } = await this.gateway.handleCallback('corp-idp', { code, codeVerifier: tx.codeVerifier, nonce: tx.nonce });
+
+    res.clearCookie('oidc_tx');
+    res.cookie('access_token', this.memberBaseService.signAccessToken(member), { httpOnly: true });
+    res.redirect('/');
+  }
+}
+```
+
+State validation stays with the caller because the caller is what persisted it.
+
+### E. Identity provider
+
+Other services authenticate against this application. Members sign in with local passwords.
+
+```bash
+npm install oidc-provider
+```
+
+```ts
+import { MemberBaseOidcProviderModule } from '@rytass/member-base-nestjs-module/oidc-provider';
+
+@Module({
+  imports: [
+    MemberBaseModule.forRoot({
+      // ...everything from A. cookieMode: true is required for session bridging.
+    }),
+    MemberBaseOidcProviderModule.forRoot({
+      issuer: 'https://idp.example.com/oidc',
+      jwks: JSON.parse(process.env.OIDC_JWKS),
+      cookieKeys: [process.env.OIDC_COOKIE_KEY],
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+```ts
+// main.ts — must run before listen()
+import { mountMemberBaseOidcProvider } from '@rytass/member-base-nestjs-module/oidc-provider';
+
+const app = await NestFactory.create(AppModule);
+
+mountMemberBaseOidcProvider(app);
+
+await app.listen(3000);
+```
+
+Register a service provider through the admin API (guarded by your own Casbin policy):
+
+```bash
+curl -X POST https://idp.example.com/oidc-clients \
+  -H 'content-type: application/json' \
+  -H "authorization: Bearer $ADMIN_TOKEN" \
+  -d '{"name":"Reporting","redirectUris":["https://reporting.example.com/auth/callback"],"skipConsent":true}'
+# => { "clientId": "...", "clientSecret": "...", ... }  secret shown once
+```
+
+This application remains a normal resource server at the same time: its own guarded endpoints keep working, and a member who signs in at the interaction page is also signed in locally (see [Session bridging](#session-bridging)).
+
+### F. Directory-backed identity provider
+
+C and E combined, and the reason the two layers are separate. Active Directory owns the passwords; this application issues OIDC identities to every downstream service; roles stay with each service.
+
+```bash
+npm install ldapts oidc-provider
+```
+
+```ts
+import { LdapAuthProvider } from '@rytass/member-base-nestjs-module/ldap';
+import { MemberBaseOidcProviderModule } from '@rytass/member-base-nestjs-module/oidc-provider';
+
+@Module({
+  imports: [
+    MemberBaseModule.forRoot({
+      memberEntity: MemberEntity,
+      accessTokenSecret: process.env.JWT_ACCESS_SECRET,
+      refreshTokenSecret: process.env.JWT_REFRESH_SECRET,
+      cookieMode: true,
+      casbinAdapterOptions: { type: 'postgres' /* ... */ },
+
+      authProviders: [
+        new LdapAuthProvider({
+          url: process.env.LDAP_URL,
+          bindDN: process.env.LDAP_BIND_DN,
+          bindPassword: process.env.LDAP_BIND_PASSWORD,
+          baseDN: process.env.LDAP_BASE_DN,
+        }),
+      ],
+    }),
+
+    MemberBaseOidcProviderModule.forRoot({
+      issuer: process.env.OIDC_ISSUER,
+      jwks: JSON.parse(process.env.OIDC_JWKS),
+      cookieKeys: [process.env.OIDC_COOKIE_KEY],
+
+      interaction: {
+        // Directory first; the local password provider stays available for
+        // break-glass accounts when the directory is unreachable.
+        allowedChannels: ['ldap', 'password'],
+      },
+
+      claims: {
+        // Identity attributes only. Roles are deliberately not published.
+        extra: async member => ({ name: member.name, email: member.email }),
+      },
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+```ts
+// main.ts
+mountMemberBaseOidcProvider(app);
+
+await app.listen(3000);
+```
+
+End to end:
+
+```
+ [User] --account/password--> [interaction page]
+                                    |
+                                    v
+                          gateway.authenticate('ldap')
+                                    |
+                          bind against directory
+                                    |
+                          resolve or provision member
+                                    |
+                                    v
+                       accountId = local member id
+                                    |
+                                    v
+        [OIDC endpoint] --id_token--> [Service A] --> its own Casbin decides
+                        --id_token--> [Service B] --> its own Casbin decides
+```
+
+The subject is the local member id rather than the directory's identifier, so renaming or re-creating a directory account does not break any downstream binding.
+
+## Configuration Reference
+
+### `MemberBaseModule` — authentication gateway options
+
+| Option | Type | Default | Purpose |
+| ---------------------- | ---------------------------------- | -------- | ----------------------------------------------- |
+| `authProviders` | `AuthenticationProvider[]` | `[]` | Extra sources; password is always registered |
+| `autoProvision` | `boolean \| (identity) => Promise<string \| null>` | `true` | What happens when an external identity has no member |
+| `linkExistingAccount` | `boolean \| 'verified-only'` | `true` | Whether an external identity may claim a matching local account |
+| `oauth2Providers` | `OAuth2Provider[]` | `[]` | Google / Facebook / custom OAuth2 |
+| `oauth2ClientDestUrl` | `string` | `'/login'` | Where the OAuth2 callback redirects |
+
+Every pre-existing option (token secrets and lifetimes, password policy, Casbin, cookie mode, default admin) is unchanged and documented in its own section below.
+
+### `MemberBaseOidcProviderModule` options
+
+| Option | Type | Default | Purpose |
+| ------------------------ | ------------------------- | ---------------- | ------------------------------------------ |
+| `issuer` | `string` | required | Issuer identifier; must match the public URL |
+| `jwks` | `{ keys: [] }` | ephemeral + warn | Signing keys; required outside development |
+| `cookieKeys` | `string[]` | random | Keys protecting the provider's cookies |
+| `routePrefix` | `string` | `'oidc'` | Path the endpoints are mounted on |
+| `interaction.renderLogin` | `(params) => string` | built-in page | Your own login page |
+| `interaction.allowedChannels` | `string[]` | all credential channels | Which sources the login form may use |
+| `interaction.autoConsent` | `boolean \| (clientId) => boolean` | client's `skipConsent` | Skip the consent step |
+| `claims.extra` | `(member) => object` | — | Additional identity claims |
+| `claims.additionalScopes` | `string[]` | — | Extra accepted scopes |
+| `claims.scopeClaims` | `Record<string, string[]>` | — | Which claims each scope releases |
+| `ssoBridge.*` | see [Session bridging](#session-bridging) | all enabled | Local/issuer session interop |
+| `ttl` | `Partial<Record<...>>` | 1h access, 14d refresh | Token lifetimes |
+| `purgeIntervalSeconds` | `number` | `3600` | Expired payload sweep; `0` disables |
+| `advanced` | `Record<string, unknown>` | — | Merged last into oidc-provider config |
+
+### Which tables exist
+
+| Table | Created by |
+| ---------------------------- | ------------------------------------ |
+| `members` (+ your subclass) | package root, always |
+| `member_login_logs` | package root, always |
+| `member_password_histories` | package root, always |
+| `member_oauth_records` | package root, always |
+| `casbin_rule` | `casbinAdapterOptions` |
+| `oidc_payloads`, `oidc_clients` | importing `/oidc-provider` only |
 
 ## Authentication Gateway
 
