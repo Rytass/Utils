@@ -4,10 +4,18 @@ import { MemberBaseService } from './services/member-base.service';
 import { MemberBaseAdminService } from './services/member-base-admin.service';
 import { ResolvedRepoProviders } from './constants/resolved-repo-providers';
 import {
+  ACCESS_TOKEN_COOKIE_NAME,
+  ACCESS_TOKEN_EXPIRATION,
   ACCESS_TOKEN_SECRET,
   CASBIN_ENFORCER,
+  CASBIN_PERMISSION_CHECKER,
+  COOKIE_MODE,
+  CUSTOMIZED_JWT_PAYLOAD,
   ENABLE_GLOBAL_GUARD,
   MEMBER_BASE_MODULE_OPTIONS,
+  REFRESH_TOKEN_COOKIE_NAME,
+  REFRESH_TOKEN_EXPIRATION,
+  REFRESH_TOKEN_SECRET,
   RESOLVED_MEMBER_REPO,
 } from './typings/member-base.tokens';
 import { APP_GUARD } from '@nestjs/core';
@@ -46,6 +54,18 @@ const exportInjectable = [
   ACCESS_TOKEN_SECRET,
   ENABLE_GLOBAL_GUARD,
   RESOLVED_MEMBER_REPO,
+  // Exported so modules layered on top of member-base (an OIDC provider
+  // endpoint bridging its own session with the member-base one, for instance)
+  // can read the same token and cookie configuration instead of duplicating it.
+  MEMBER_BASE_MODULE_OPTIONS,
+  ACCESS_TOKEN_EXPIRATION,
+  REFRESH_TOKEN_SECRET,
+  REFRESH_TOKEN_EXPIRATION,
+  COOKIE_MODE,
+  ACCESS_TOKEN_COOKIE_NAME,
+  REFRESH_TOKEN_COOKIE_NAME,
+  CASBIN_PERMISSION_CHECKER,
+  CUSTOMIZED_JWT_PAYLOAD,
 ];
 
 const controllers = [OAuthCallbacksController];

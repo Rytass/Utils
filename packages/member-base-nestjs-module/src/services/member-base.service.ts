@@ -20,6 +20,8 @@ import {
 } from '../typings/member-base.tokens';
 import { sign, verify as verifyJWT } from 'jsonwebtoken';
 import type { AuthTokenPayloadBase } from '../typings/auth-token-payload';
+import type { SignTokenOptions } from '../typings/sign-token-options';
+import { currentEpochSeconds } from '../utils/current-epoch-seconds';
 import { MemberLoginLogEntity, MemberLoginLogRepo } from '../models/member-login-log.entity';
 import { TokenPairDto } from '../dto/token-pair.dto';
 import { MemberBaseModuleOptionsDTO } from '../typings/member-base-module-options.dto';
@@ -37,6 +39,16 @@ import {
   PasswordShouldUpdatePasswordError,
   PasswordValidationError,
 } from '../constants/errors/base.error';
+
+/**
+ * Resolve the authTime claim fragment for a token payload.
+ *
+ * Omitted options mean "authenticating right now"; an explicit null means the
+ * authentication time is unknown (a refresh of a token issued before the claim
+ * existed) and the claim must stay absent rather than be invented.
+ */
+const resolveAuthTimeClaim = (options?: SignTokenOptions): { authTime?: number } =>
+  options?.authTime === null ? {} : { authTime: options?.authTime ?? currentEpochSeconds() };
 
 @Injectable()
 export class MemberBaseService<
@@ -87,11 +99,12 @@ export class MemberBaseService<
     }
   }
 
-  signRefreshToken(member: MemberEntity, domain?: string): string {
+  signRefreshToken(member: MemberEntity, domain?: string, options?: SignTokenOptions): string {
     return sign(
       {
         ...this.customizedJwtPayload(member),
         passwordChangedAt: member.passwordChangedAt?.getTime() ?? null,
+        ...resolveAuthTimeClaim(options),
         ...(domain ? { domain } : {}),
       },
       this.refreshTokenSecret,
@@ -101,10 +114,11 @@ export class MemberBaseService<
     );
   }
 
-  signAccessToken(member: MemberEntity, domain?: string): string {
+  signAccessToken(member: MemberEntity, domain?: string, options?: SignTokenOptions): string {
     return sign(
       {
         ...this.customizedJwtPayload(member),
+        ...resolveAuthTimeClaim(options),
         ...(domain ? { domain } : {}),
       },
       this.accessTokenSecret,
@@ -303,12 +317,14 @@ export class MemberBaseService<
         passwordChangedAt,
         exp: _exp,
         domain,
+        authTime,
       } = verifyJWT(refreshToken, this.refreshTokenSecret) as {
         id: string;
         account: string;
         passwordChangedAt: number | null;
         exp: number;
         domain?: string;
+        authTime?: number;
       };
 
       const member = await this.baseMemberRepo.findOne({
@@ -323,9 +339,20 @@ export class MemberBaseService<
         throw new PasswordChangedError();
       }
 
+      // Carry the original authentication time forward. Re-stamping it here
+      // would make every refresh look like a fresh login to anything that
+      // relies on authTime (OIDC max_age / prompt=login, step-up auth).
+      // Tokens issued before the claim existed resolve to null so the claim is
+      // omitted rather than fabricated.
+      const signOptions: SignTokenOptions = { authTime: authTime ?? null };
+
       return {
-        accessToken: this.signAccessToken(member as MemberEntity, options?.domain ?? domain ?? undefined),
-        refreshToken: this.signRefreshToken(member as MemberEntity, options?.domain ?? domain ?? undefined),
+        accessToken: this.signAccessToken(member as MemberEntity, options?.domain ?? domain ?? undefined, signOptions),
+        refreshToken: this.signRefreshToken(
+          member as MemberEntity,
+          options?.domain ?? domain ?? undefined,
+          signOptions,
+        ),
       };
     } catch (ex) {
       if (ex instanceof BadRequestException) throw ex;
@@ -357,6 +384,72 @@ export class MemberBaseService<
         }
       | string,
   ): Promise<TokenPairDto> {
+    const { member, isPasswordExpired } = await this.authenticateMember(account, password, options);
+
+    const domain = typeof options === 'string' ? undefined : (options?.domain ?? undefined);
+
+    // Token signing stays inside an identical try/catch so the error taxonomy
+    // is unchanged: BadRequestException passes through, anything else is
+    // reported as PasswordValidationError.
+    try {
+      return {
+        accessToken: this.signAccessToken(member, domain),
+        refreshToken: this.signRefreshToken(member, domain),
+        ...(this.passwordAgeLimitInDays
+          ? {
+              shouldUpdatePassword: isPasswordExpired,
+              passwordChangedAt: member.passwordChangedAt?.toISOString(),
+            }
+          : {}),
+      };
+    } catch (err) {
+      if (err instanceof BadRequestException) throw err;
+
+      throw new PasswordValidationError();
+    }
+  }
+
+  /**
+   * Verify a member's credentials without issuing any token.
+   *
+   * Runs the exact same checks as login (ban threshold with optional auto
+   * unlock, password expiry, argon2 verification) and keeps the same side
+   * effects (failure counter, login log). Intended for flows that own their own
+   * session mechanics — an OIDC provider interaction, for example — where the
+   * member-base token pair would be discarded anyway.
+   */
+  async verifyCredentials<T extends MemberEntity = MemberEntity>(
+    account: string,
+    password: string,
+    options?: { ip?: string },
+  ): Promise<T> {
+    const { member } = await this.authenticateMember(account, password, options);
+
+    return member as T;
+  }
+
+  async findById<T extends MemberEntity = MemberEntity>(id: string): Promise<T | null> {
+    const member = await this.baseMemberRepo.findOne({ where: { id } });
+
+    return (member as T) ?? null;
+  }
+
+  async findByAccount<T extends MemberEntity = MemberEntity>(account: string): Promise<T | null> {
+    const member = await this.baseMemberRepo.findOne({ where: { account } });
+
+    return (member as T) ?? null;
+  }
+
+  private async authenticateMember(
+    account: string,
+    password: string,
+    options?:
+      | {
+          domain?: string;
+          ip?: string;
+        }
+      | string,
+  ): Promise<{ member: MemberEntity; isPasswordExpired: boolean }> {
     const member = await this.baseMemberRepo.findOne({
       where: { account },
     });
@@ -415,18 +508,7 @@ export class MemberBaseService<
           ip: ip ? `${ip}/32` : null,
         });
 
-        const domain = typeof options === 'string' ? undefined : (options?.domain ?? undefined);
-
-        return {
-          accessToken: this.signAccessToken(member as MemberEntity, domain),
-          refreshToken: this.signRefreshToken(member as MemberEntity, domain),
-          ...(this.passwordAgeLimitInDays
-            ? {
-                shouldUpdatePassword: isPasswordExpired,
-                passwordChangedAt: member.passwordChangedAt?.toISOString(),
-              }
-            : {}),
-        };
+        return { member: member as MemberEntity, isPasswordExpired };
       }
 
       member.loginFailedCounter += 1;

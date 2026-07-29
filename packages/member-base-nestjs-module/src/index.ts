@@ -41,6 +41,7 @@ export type {
   MemberBaseModuleOptionFactoryInterface,
 } from './typings/member-base-module-option-factory';
 export type { AuthTokenPayloadBase } from './typings/auth-token-payload';
+export type { SignTokenOptions } from './typings/sign-token-options';
 export type {
   CasbinPermissionCheckerParams,
   CasbinPermissionChecker,

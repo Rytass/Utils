@@ -344,6 +344,62 @@ Notes:
 - Custom checkers may keep returning `Promise<boolean>` (legacy signature, fully backward compatible) or return a rich `CasbinAuthorizationDecision` (`{ allowed, matchedDomain?, matchedAction?, meta? }`) for tracing.
 - Without `casbinDomainResolver`, the default checker behavior is unchanged (`payload.domain ?? DEFAULT_CASBIN_DOMAIN`).
 
+## Credential Verification Without Tokens
+
+`login()` authenticates and immediately issues a member-base token pair. Flows that own their own session mechanics — an OIDC provider interaction, a custom SSO bridge — would throw those tokens away, so `verifyCredentials()` performs the identical checks and returns the member instead.
+
+```ts
+// Same checks as login(): ban threshold (with optional auto unlock), password
+// expiry policy, argon2 verification. Same side effects: failure counter reset
+// or increment, login log entry.
+const member = await memberBaseService.verifyCredentials(account, password, { ip });
+```
+
+Two lookups are also available for flows that need to resolve a member outside a login:
+
+```ts
+const byId = await memberBaseService.findById(id); // MemberEntity | null
+const byAccount = await memberBaseService.findByAccount(account); // MemberEntity | null
+```
+
+## The `authTime` Claim
+
+Access and refresh tokens carry an `authTime` claim (epoch seconds) recording when the member actually proved its identity. `refreshToken()` forwards the original value rather than re-stamping it, so a long-lived session cannot masquerade as freshly authenticated — which is what any downstream `max_age` / `prompt=login` / step-up check depends on.
+
+```ts
+// Fresh login: authTime = now
+const pair = await memberBaseService.login(account, password);
+
+// Explicit control when signing directly
+memberBaseService.signAccessToken(member, domain, { authTime: 1700000000 });
+
+// Omit the claim entirely (authentication time unknown)
+memberBaseService.signAccessToken(member, domain, { authTime: null });
+```
+
+Refresh tokens issued before this release carry no `authTime`. Refreshing one leaves the claim absent rather than inventing a value, so checks that require a known authentication time fail closed.
+
+## Upgrade Notes
+
+### Unique index on `member_oauth_records`
+
+`MemberOAuthRecordEntity` now declares a unique index on `(channel, channelIdentifier)`. The primary key already guaranteed "one binding per member per channel"; this adds the complementary guarantee that one external identity maps to exactly one member, and gives the reverse lookup an index.
+
+If you run with `synchronize: true`, index creation fails at startup when duplicates already exist. If you manage migrations yourself, generate one for this index. Check first:
+
+```sql
+SELECT channel, "channelIdentifier", count(*)
+FROM member_oauth_records
+GROUP BY 1, 2
+HAVING count(*) > 1;
+```
+
+Any row returned is a pre-existing data anomaly (one external identity bound to several members) and needs a decision before the index can be created.
+
+### Additional exported injection tokens
+
+`MemberBaseModule` now also exports `MEMBER_BASE_MODULE_OPTIONS`, `ACCESS_TOKEN_EXPIRATION`, `REFRESH_TOKEN_SECRET`, `REFRESH_TOKEN_EXPIRATION`, `COOKIE_MODE`, `ACCESS_TOKEN_COOKIE_NAME`, `REFRESH_TOKEN_COOKIE_NAME`, `CASBIN_PERMISSION_CHECKER` and `CUSTOMIZED_JWT_PAYLOAD`, so modules layered on top can read the same configuration instead of duplicating it. This is additive; nothing that was exported before has changed.
+
 ## Recent Changes (Types and Authorization Behavior)
 
 - Centralized token payload type: added `AuthTokenPayloadBase` to standardize `{ id; account?; domain? }` across the module.
