@@ -50,6 +50,25 @@ export interface AuthenticatedIdentity {
   attributes?: Readonly<Record<string, unknown>>;
 }
 
+/**
+ * Everything a redirect provider needs the caller to hold on to between the
+ * authorization request and the callback.
+ *
+ * Providers stay stateless: the caller persists these values (a signed cookie,
+ * typically) and hands them back through handleCallback. Keeping them out of
+ * the provider is what lets the application run more than one instance.
+ */
+export interface AuthorizationRequest {
+  /** Where to send the user agent. */
+  url: string;
+  /** CSRF token echoed back on the callback. */
+  state: string;
+  /** PKCE verifier, when the provider uses PKCE. */
+  codeVerifier?: string;
+  /** Replay guard echoed inside the id token, when the provider verifies one. */
+  nonce?: string;
+}
+
 export type AuthProviderKind = 'credential' | 'redirect';
 
 /**
@@ -69,6 +88,12 @@ export interface AuthenticationProvider<Credentials = unknown> {
 
   /** Required for `redirect` providers: where to send the user agent. */
   getAuthorizationUrl?(state: string, context?: AuthContext): Promise<string>;
+
+  /**
+   * Richer alternative to getAuthorizationUrl for providers that need the
+   * caller to carry per-attempt secrets (PKCE verifier, nonce) to the callback.
+   */
+  createAuthorizationRequest?(context?: AuthContext): Promise<AuthorizationRequest>;
 
   /** Required for `redirect` providers: resolve the identity from callback params. */
   handleCallback?(params: Record<string, string>, context?: AuthContext): Promise<AuthenticatedIdentity>;

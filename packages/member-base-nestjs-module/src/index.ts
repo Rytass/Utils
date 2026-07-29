@@ -11,6 +11,8 @@ export { AuthenticationGateway, type AuthenticationResult } from './services/aut
 // Authentication Providers
 export { PasswordAuthProvider, type PasswordCredentials } from './providers/password-auth.provider';
 export { PASSWORD_CHANNEL } from './constants/password-channel';
+export { OidcAuthProvider, type OidcAuthProviderOptions } from './providers/oidc/oidc-auth.provider';
+export { OidcMetadataResolver, type OidcDiscoveryDocument } from './providers/oidc/oidc-discovery';
 
 // Models
 export { BaseMemberEntity } from './models/base-member.entity';
@@ -56,6 +58,7 @@ export type {
   AuthContext,
   AuthenticatedIdentity,
   AuthenticationProvider,
+  AuthorizationRequest,
   AuthProviderKind,
   AutoProvisionStrategy,
   LinkExistingAccountStrategy,

@@ -439,6 +439,55 @@ MemberBaseModule.forRoot({
 
 > **Account takeover warning.** With `linkExistingAccount: true` (the default, matching the behaviour the OAuth2 flows always had), any provider that does not verify its identifier lets a matching local account be claimed. The bundled Facebook flow, for instance, never checks an email verification flag. A warning is printed on boot while linking is enabled, and again on every actual takeover with the channel, identifier and member id. Set `'verified-only'` to require verification.
 
+## Authenticating Against an OIDC Issuer
+
+`OidcAuthProvider` makes this module a relying party for any standards-compliant OIDC issuer. Unlike the bundled OAuth2 flows it performs discovery, uses PKCE, and verifies the id token signature, issuer, audience and nonce before trusting any claim.
+
+```ts
+import { OidcAuthProvider } from '@rytass/member-base-nestjs-module';
+
+MemberBaseModule.forRoot({
+  authProviders: [
+    new OidcAuthProvider({
+      channel: 'corp-idp',
+      issuer: 'https://idp.example.com/oidc', // discovery target
+      clientId,
+      clientSecret,
+      redirectUri: 'https://app.example.com/auth/callback',
+      scope: ['openid', 'profile', 'email'],
+    }),
+  ],
+});
+```
+
+The provider is stateless, so the application decides where the per-attempt secrets live:
+
+```ts
+// 1. Start the flow — persist the returned values (a signed cookie works well)
+const request = await gateway.getProvider('corp-idp').createAuthorizationRequest();
+
+res.cookie('oidc_tx', JSON.stringify(request), { httpOnly: true, maxAge: 600_000 });
+res.redirect(request.url);
+
+// 2. On the callback — validate state yourself, then hand the secrets back
+const tx = JSON.parse(req.cookies.oidc_tx);
+
+if (tx.state !== req.query.state) throw new BadRequestException('Invalid state');
+
+const { member } = await gateway.handleCallback('corp-idp', {
+  code: String(req.query.code),
+  codeVerifier: tx.codeVerifier,
+  nonce: tx.nonce,
+});
+```
+
+Notes:
+
+- `identifierClaim` defaults to `sub`, the only claim an issuer guarantees is stable. Pointing it at `email` makes the binding follow a mutable value and defers `identifierVerified` to the `email_verified` claim.
+- Signature algorithms are pinned to the asymmetric families. An issuer cannot downgrade to HMAC and have its own public key accepted as a shared secret.
+- Signing keys are cached and refetched on a `kid` miss, so key rotation needs no restart. A failed discovery is never cached.
+- No extra dependency: id tokens are verified with Node's built-in JWK support.
+
 ## Credential Verification Without Tokens
 
 `login()` authenticates and immediately issues a member-base token pair. Flows that own their own session mechanics — an OIDC provider interaction, a custom SSO bridge — would throw those tokens away, so `verifyCredentials()` performs the identical checks and returns the member instead.
