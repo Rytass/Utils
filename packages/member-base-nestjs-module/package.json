@@ -32,6 +32,7 @@
     "argon2": "*",
     "graphql": "*",
     "jsonwebtoken": "*",
+    "ldapts": "*",
     "typeorm": "*",
     "typeorm-adapter": ">=1"
   },
@@ -40,6 +41,9 @@
       "optional": true
     },
     "graphql": {
+      "optional": true
+    },
+    "ldapts": {
       "optional": true
     },
     "typeorm-adapter": {
@@ -53,6 +57,7 @@
     "luxon": "^3.7.2"
   },
   "isolateEntries": [
-    "./graphql.ts"
+    "./graphql.ts",
+    "./ldap.ts"
   ]
 }

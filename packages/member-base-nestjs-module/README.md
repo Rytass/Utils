@@ -439,6 +439,46 @@ MemberBaseModule.forRoot({
 
 > **Account takeover warning.** With `linkExistingAccount: true` (the default, matching the behaviour the OAuth2 flows always had), any provider that does not verify its identifier lets a matching local account be claimed. The bundled Facebook flow, for instance, never checks an email verification flag. A warning is printed on boot while linking is enabled, and again on every actual takeover with the channel, identifier and member id. Set `'verified-only'` to require verification.
 
+## Authenticating Against an LDAP Directory
+
+Shipped behind its own entry point so `ldapts` is only needed by applications that actually talk to a directory.
+
+```bash
+npm install ldapts   # optional peer dependency
+```
+
+```ts
+import { LdapAuthProvider } from '@rytass/member-base-nestjs-module/ldap';
+
+MemberBaseModule.forRoot({
+  authProviders: [
+    new LdapAuthProvider({
+      url: 'ldaps://dc.corp.local',
+      bindDN: 'CN=svc-account,OU=Service,DC=corp,DC=local',
+      bindPassword,
+      baseDN: 'DC=corp,DC=local',
+      accountAttribute: 'sAMAccountName', // or userPrincipalName
+    }),
+  ],
+});
+
+const { member } = await gateway.authenticate('ldap', { account, password });
+```
+
+The password is never stored or hashed locally — the service account locates the user, then the user's own DN is bound with the supplied password.
+
+Behaviour worth knowing:
+
+- The local binding is keyed on `objectGUID`, not the account name, so renaming an account in the directory does not orphan its member.
+- A typed `DOMAIN\account` has its NetBIOS prefix stripped; `sAMAccountName` cannot contain a backslash, so passing it through verbatim would fail a perfectly valid login. UPNs pass through untouched.
+- Filter values are escaped (RFC 4515), so an account containing `*` or `(` is matched literally instead of altering the filter.
+- An empty password is rejected before any bind is attempted — many directories treat a bind with no password as an anonymous bind and accept it.
+- Accounts flagged disabled in `userAccountControl` are rejected before the password is verified (`rejectDisabledAccounts: false` to opt out).
+
+### Subpath isolation
+
+An application that never imports `@rytass/member-base-nestjs-module/ldap` never resolves that module, so `ldapts` is never required and its absence is not an error. This is a property of module resolution rather than bundler tree-shaking — backend builds externalize `node_modules` and do not tree-shake them at all — and is covered by a regression test.
+
 ## Authenticating Against an OIDC Issuer
 
 `OidcAuthProvider` makes this module a relying party for any standards-compliant OIDC issuer. Unlike the bundled OAuth2 flows it performs discovery, uses PKCE, and verifies the id token signature, issuer, audience and nonce before trusting any claim.

@@ -8160,12 +8160,15 @@ __metadata:
     argon2: "*"
     graphql: "*"
     jsonwebtoken: "*"
+    ldapts: "*"
     typeorm: "*"
     typeorm-adapter: ">=1"
   peerDependenciesMeta:
     "@nestjs/graphql":
       optional: true
     graphql:
+      optional: true
+    ldapts:
       optional: true
     typeorm-adapter:
       optional: true
@@ -19841,6 +19844,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ldapts@npm:^9.0.0":
+  version: 9.0.0
+  resolution: "ldapts@npm:9.0.0"
+  dependencies:
+    strict-event-emitter-types: "npm:2.0.0"
+  checksum: 10c0/8de19089748724065a36082b7aeaa7410faa5223302f34226d19e2d48b83283ec394c8073c29cc66741fc9510b66b4c08f2780e597089c987cb73861e9f92c54
+  languageName: node
+  linkType: hard
+
 "lerna@npm:^9.0.4":
   version: 9.0.4
   resolution: "lerna@npm:9.0.4"
@@ -26127,6 +26139,7 @@ __metadata:
     jest: "npm:^30.2.0"
     jest-environment-jsdom: "npm:^30.2.0"
     jsonwebtoken: "npm:^9.0.3"
+    ldapts: "npm:^9.0.0"
     lerna: "npm:^9.0.4"
     lint-staged: "npm:^16.2.7"
     lodash: "npm:^4.18.1"
@@ -27271,6 +27284,13 @@ __metadata:
   version: 1.0.3
   resolution: "stream-shift@npm:1.0.3"
   checksum: 10c0/939cd1051ca750d240a0625b106a2b988c45fb5a3be0cebe9a9858cb01bc1955e8c7b9fac17a9462976bea4a7b704e317c5c2200c70f0ca715a3363b9aa4fd3b
+  languageName: node
+  linkType: hard
+
+"strict-event-emitter-types@npm:2.0.0":
+  version: 2.0.0
+  resolution: "strict-event-emitter-types@npm:2.0.0"
+  checksum: 10c0/7a2985b81908c2a7d1de10afe3be1de3423b8ce6188dc32aeb3dbaf66d4ac3f11029d6931c67d972a3bb976bbd04d27ee090eeed1cbd089c5ba3e899a04ed1b7
   languageName: node
   linkType: hard
 

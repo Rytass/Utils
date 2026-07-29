@@ -92,6 +92,7 @@
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
     "jsonwebtoken": "^9.0.3",
+    "ldapts": "^9.0.0",
     "lerna": "^9.0.4",
     "lint-staged": "^16.2.7",
     "lodash": "^4.18.1",
