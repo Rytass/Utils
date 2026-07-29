@@ -439,6 +439,89 @@ MemberBaseModule.forRoot({
 
 > **Account takeover warning.** With `linkExistingAccount: true` (the default, matching the behaviour the OAuth2 flows always had), any provider that does not verify its identifier lets a matching local account be claimed. The bundled Facebook flow, for instance, never checks an email verification flag. A warning is printed on boot while linking is enabled, and again on every actual takeover with the channel, identifier and member id. Set `'verified-only'` to require verification.
 
+## Acting as an OpenID Connect Provider
+
+The application becomes an issuer other services can authenticate against, on top of whatever authentication sources the gateway has registered. Shipped behind its own entry point: without importing it, neither the dependency nor the two tables exist.
+
+```bash
+npm install oidc-provider   # optional peer dependency
+```
+
+```ts
+import { MemberBaseOidcProviderModule } from '@rytass/member-base-nestjs-module/oidc-provider';
+
+@Module({
+  imports: [
+    MemberBaseModule.forRoot({ /* ... */ }),
+    MemberBaseOidcProviderModule.forRoot({
+      issuer: 'https://idp.example.com/oidc',
+      jwks: JSON.parse(process.env.OIDC_JWKS),
+      cookieKeys: [process.env.OIDC_COOKIE_KEY],
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+### Mounting the protocol endpoints
+
+The protocol endpoints **cannot** be a Nest controller and must be mounted from `main.ts`:
+
+```ts
+import { mountMemberBaseOidcProvider } from '@rytass/member-base-nestjs-module/oidc-provider';
+
+const app = await NestFactory.create(AppModule);
+
+mountMemberBaseOidcProvider(app); // before listen()
+
+await app.listen(3000);
+```
+
+`oidc-provider` is a Koa application that reads the raw request stream. Middleware registered through `configure(consumer)` runs *after* Nest's body parser, which has already consumed that stream, so every form-encoded POST (`/token`, `/introspection`, `/revocation`) would break. Mounting before `listen()` puts the provider ahead of the body parser.
+
+| Endpoint | Protection |
+| --- | --- |
+| `/oidc/.well-known/openid-configuration`, `/auth`, `/token`, `/me`, `/jwks`, `/session/end` | Public (mounted middleware) |
+| `/oidc/interaction/:uid`, `/oidc/interaction/:uid/login` | `@IsPublic()` |
+| `/oidc-clients` (registration CRUD) | `@AllowActions([['OidcClient', 'read' \| 'write']])` |
+
+Client administration runs through **your own Casbin policy** — the same rules that govern every other resource decide who may register a service provider. The global guard stays on; nothing has to be disabled.
+
+### Authorization stays with each service provider
+
+`findAccount` publishes identity claims only. **No roles are emitted.** This issuer answers *who a subject is*; what that subject may do is each service provider's decision, made against data it controls rather than a claim frozen into a token whose lifetime it cannot influence. Add identity attributes via `claims.extra`:
+
+```ts
+claims: {
+  extra: async member => ({ name: member.name, email: member.email }),
+}
+```
+
+### Session bridging
+
+An application that is both an issuer and a resource server has two session concepts. The bridge is on by default and keeps them consistent:
+
+| Direction | Behaviour |
+| --- | --- |
+| Issuer to local | A successful interaction login also sets the member-base cookies |
+| Local to issuer | An existing member-base session satisfies the login prompt |
+| Logout | Clears both |
+
+Two request parameters are always honoured, because ignoring them would void the relying party's own security decision:
+
+- `prompt=login` — always shows the login page, whatever local session exists
+- `max_age` — a session older than the client accepts cannot stand in; a token predating the `authTime` claim can never satisfy it and fails closed. `max_age=0` is treated as `prompt=login`.
+
+Requires `cookieMode: true`; a redirect-based login cannot hand a header-bearer token to a browser, and a warning is logged if the combination is misconfigured.
+
+### Operational notes
+
+- **JWKS**: omitting `jwks` generates an ephemeral key with a loud warning. Every restart invalidates issued tokens and multiple instances sign with different keys — development only.
+- **Bundlers cannot see this dependency.** `oidc-provider` is ESM-only and is loaded through an opaque dynamic import, so it will not appear in a generated `package.json` (Nx `generatePackageJson`). List it in your application's own dependencies; a missing install fails at boot with an explicit message rather than mysteriously at runtime.
+- **Payload sweep**: `oidc-provider` never deletes expired artefacts. A sweep runs hourly by default (`purgeIntervalSeconds`); set it to `0` and drive `OidcMaintenanceService.purgeExpired()` from your own scheduler.
+- **Consent**: defaults to each client's own `skipConsent` column, so a third-party client never has consent granted on its behalf. Override with `interaction.autoConsent`.
+- PKCE is required for every client.
+
 ## Authenticating Against an LDAP Directory
 
 Shipped behind its own entry point so `ldapts` is only needed by applications that actually talk to a directory.

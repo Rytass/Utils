@@ -51,6 +51,33 @@ describeBuilt('subpath isolation', () => {
     expect(loaded.some(file => file.includes('/ldapts/'))).toBe(true);
   });
 
+  it('should not reach the oidc provider entry from the package root', () => {
+    const loaded = loadInIsolation([builtIndex]);
+
+    expect(loaded.some(file => file.endsWith('oidc-provider.cjs.js'))).toBe(false);
+  });
+
+  it('should not register the oidc tables when only the package root is imported', () => {
+    loadInIsolation([builtIndex]);
+
+    // autoLoadEntities only ever sees an entity once a module registering it
+    // enters the graph, so an unregistered entity means no table.
+    const { getMetadataArgsStorage } = require('typeorm') as typeof import('typeorm');
+    const tables = getMetadataArgsStorage().tables.map(table => table.name);
+
+    expect(tables).not.toContain('oidc_payloads');
+    expect(tables).not.toContain('oidc_clients');
+  });
+
+  it('should register the oidc tables once the provider entry is imported', () => {
+    loadInIsolation([builtIndex, resolve(libPath, 'oidc-provider.cjs.js')]);
+
+    const { getMetadataArgsStorage } = require('typeorm') as typeof import('typeorm');
+    const tables = getMetadataArgsStorage().tables.map(table => table.name);
+
+    expect(tables).toEqual(expect.arrayContaining(['oidc_payloads', 'oidc_clients']));
+  });
+
   it('should share one module instance between the root and a subpath', () => {
     // Separate rollup passes per entry used to inline a private copy of every
     // shared module, which broke Symbol() injection tokens and entity classes.
@@ -69,7 +96,7 @@ describeBuilt('subpath isolation', () => {
     };
 
     expect(Object.keys(packageJson.exports ?? {})).toEqual(
-      expect.arrayContaining(['.', './graphql', './ldap', './package.json']),
+      expect.arrayContaining(['.', './graphql', './ldap', './oidc-provider', './package.json']),
     );
   });
 });
