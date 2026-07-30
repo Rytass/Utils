@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.6.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.5.0...@rytass/member-base-nestjs-module@0.6.0) (2026-07-30)
+
+### Features
+
+- **member-base-nestjs-module:** route oidc back-channel calls to an internal base ([dda71ae](https://github.com/Rytass/Utils/commit/dda71ae37a90f9ad48a5221d4b1e8cc687bd5fb6))
+
 # [0.5.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.4.0...@rytass/member-base-nestjs-module@0.5.0) (2026-07-30)
 
 ### Bug Fixes
