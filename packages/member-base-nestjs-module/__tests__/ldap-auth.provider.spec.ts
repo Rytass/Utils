@@ -295,3 +295,51 @@ describe('LdapAuthProvider directory queries', () => {
     expect(provider.toIdentity(entry!).attributes?.disabled).toBe(true);
   });
 });
+
+describe('LdapAuthProvider connection and search scoping', () => {
+  it('should pass tls options through for a self-signed ldaps endpoint', async () => {
+    const { Client } = jest.requireMock('ldapts') as { Client: jest.Mock };
+
+    Client.mockClear();
+
+    await buildProvider({ tlsOptions: { rejectUnauthorized: false } }).findAllUsers();
+
+    expect(Client).toHaveBeenCalledWith(expect.objectContaining({ tlsOptions: { rejectUnauthorized: false } }));
+  });
+
+  it('should omit tls options entirely when not configured', async () => {
+    const { Client } = jest.requireMock('ldapts') as { Client: jest.Mock };
+
+    Client.mockClear();
+
+    await buildProvider().findAllUsers();
+
+    expect(Client).toHaveBeenCalledWith(expect.not.objectContaining({ tlsOptions: expect.anything() }));
+  });
+
+  // A directory that keeps active users in several containers, and disabled
+  // ones in another, must be reconcilable without pulling in what it should
+  // be ignoring.
+  it('should search an overridden base dn', async () => {
+    await buildProvider().findAllUsers({ baseDN: 'OU=field_user,DC=corp,DC=local' });
+
+    expect(clients[0].search).toHaveBeenCalledWith('OU=field_user,DC=corp,DC=local', expect.anything());
+  });
+
+  it('should accept a per-call filter override', async () => {
+    await buildProvider().findAllUsers({
+      filter: '(&(objectClass=user)(!(userAccountControl:1.2.840.113556.1.4.803:=2)))',
+    });
+
+    expect(clients[0].search).toHaveBeenCalledWith(
+      'DC=corp,DC=local',
+      expect.objectContaining({ filter: '(&(objectClass=user)(!(userAccountControl:1.2.840.113556.1.4.803:=2)))' }),
+    );
+  });
+
+  it('should fall back to the configured base dn', async () => {
+    await buildProvider().findAllUsers();
+
+    expect(clients[0].search).toHaveBeenCalledWith('DC=corp,DC=local', expect.anything());
+  });
+});

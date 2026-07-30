@@ -59,6 +59,14 @@ export interface LdapAuthProviderOptions {
   rejectDisabledAccounts?: boolean;
   /** Socket timeout in milliseconds. default: 5000 */
   timeout?: number;
+  /**
+   * TLS options passed to the client, for ldaps:// connections.
+   *
+   * A directory fronted by a private or self-signed certificate needs
+   * `{ rejectUnauthorized: false }` (or a `ca`) or every bind fails at the
+   * handshake.
+   */
+  tlsOptions?: Record<string, unknown>;
 }
 
 const DEFAULT_ATTRIBUTES = [
@@ -141,9 +149,14 @@ export class LdapAuthProvider implements AuthenticationProvider<LdapCredentials>
    * Intended for reconciliation against a directory that has changed
    * out-of-band (departments moved, accounts disabled). Potentially a large
    * result set, so the caller owns the scheduling and the pacing.
+   *
+   * `baseDN` overrides the configured search base for this call, which is how
+   * a directory that keeps active users in several containers (and disabled
+   * ones in another) is reconciled without pulling in the containers it should
+   * be ignoring.
    */
-  async findAllUsers(): Promise<LdapDirectoryEntry[]> {
-    return this.search(this.options.listFilter ?? '(objectClass=user)');
+  async findAllUsers(options?: { baseDN?: string; filter?: string }): Promise<LdapDirectoryEntry[]> {
+    return this.search(options?.filter ?? this.options.listFilter ?? '(objectClass=user)', undefined, options?.baseDN);
   }
 
   /** Look an entry up by its distinguished name. */
@@ -218,7 +231,7 @@ export class LdapAuthProvider implements AuthenticationProvider<LdapCredentials>
     ];
   }
 
-  private async search(filter: string, sizeLimit?: number): Promise<LdapDirectoryEntry[]> {
+  private async search(filter: string, sizeLimit?: number, baseDN?: string): Promise<LdapDirectoryEntry[]> {
     const client = this.createClient();
 
     try {
@@ -231,7 +244,7 @@ export class LdapAuthProvider implements AuthenticationProvider<LdapCredentials>
         ...(sizeLimit ? { sizeLimit } : {}),
       };
 
-      const { searchEntries } = await client.search(this.options.baseDN, searchOptions);
+      const { searchEntries } = await client.search(baseDN ?? this.options.baseDN, searchOptions);
 
       return searchEntries as LdapDirectoryEntry[];
     } finally {
@@ -252,7 +265,11 @@ export class LdapAuthProvider implements AuthenticationProvider<LdapCredentials>
   }
 
   private createClient(): Client {
-    return new Client({ url: this.options.url, timeout: this.options.timeout ?? 5000 });
+    return new Client({
+      url: this.options.url,
+      timeout: this.options.timeout ?? 5000,
+      ...(this.options.tlsOptions ? { tlsOptions: this.options.tlsOptions } : {}),
+    });
   }
 
   private async safeUnbind(client: Client): Promise<void> {
