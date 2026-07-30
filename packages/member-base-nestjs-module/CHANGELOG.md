@@ -5,9 +5,15 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 # [0.6.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.5.0...@rytass/member-base-nestjs-module@0.6.0) (2026-07-30)
 
+### Bug Fixes
+
+- **member-base-nestjs-module:** pass oidc interaction requests through to nest ([c100695](https://github.com/Rytass/Utils/commit/c1006951))
+
 ### Features
 
 - **member-base-nestjs-module:** route oidc back-channel calls to an internal base ([dda71ae](https://github.com/Rytass/Utils/commit/dda71ae37a90f9ad48a5221d4b1e8cc687bd5fb6))
+- **member-base-nestjs-module:** expose directory queries and an opt-in sync hook ([459b0d9](https://github.com/Rytass/Utils/commit/459b0d96))
+- **member-base-nestjs-module:** support ldaps tls options and per-call search base ([4de65ad](https://github.com/Rytass/Utils/commit/4de65ad0))
 
 # [0.5.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.4.0...@rytass/member-base-nestjs-module@0.5.0) (2026-07-30)
 
