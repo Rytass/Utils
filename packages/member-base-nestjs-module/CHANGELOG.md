@@ -3,6 +3,29 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.5.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.4.0...@rytass/member-base-nestjs-module@0.5.0) (2026-07-30)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** make typeorm-adapter an optional peer dependency ([df6f12d](https://github.com/Rytass/Utils/commit/df6f12d2f60416cc7ffbf9523259e6b3e570b7f5))
+
+### Features
+
+- **member-base-nestjs-module:** add credential verification and authTime claim ([7b0270f](https://github.com/Rytass/Utils/commit/7b0270f60534329a5313a9e8f12a7d882fb51b9a))
+- **member-base-nestjs-module:** add ldap authentication source ([83beb5d](https://github.com/Rytass/Utils/commit/83beb5dc92341f433bbbc729a160b2071d76fcff))
+- **member-base-nestjs-module:** add opt-in openid connect provider endpoint ([bdd5ade](https://github.com/Rytass/Utils/commit/bdd5ade7f6287cdde9a3a30dce4de66454d8c84c))
+- **member-base-nestjs-module:** add pluggable authentication gateway ([89ee356](https://github.com/Rytass/Utils/commit/89ee356a309d1efcf40b432d77ee2cc3910548e4))
+- **member-base-nestjs-module:** add standards-compliant oidc relying party ([03719f1](https://github.com/Rytass/Utils/commit/03719f1f77204fa4e6adc4e19b97e22e71cc8b1b))
+
+### BREAKING CHANGES
+
+- **member-base-nestjs-module:** consumers that set casbinAdapterOptions must now install
+  typeorm-adapter themselves. The module throws at startup with an explicit
+  message instead of booting into a broken authorization state.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_012F8e8DwRa31CuqD5UdXsJ6
+
 # [0.3.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.18...@rytass/member-base-nestjs-module@0.3.0) (2026-07-07)
 
 ### Features
