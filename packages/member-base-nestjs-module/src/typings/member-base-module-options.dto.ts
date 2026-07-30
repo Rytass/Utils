@@ -5,6 +5,7 @@ import type { OAuth2Provider } from './oauth2-provider.interface';
 import type {
   AuthenticationProvider,
   AutoProvisionStrategy,
+  IdentitySyncHandler,
   LinkExistingAccountStrategy,
 } from './authentication-provider.interface';
 import type {
@@ -86,6 +87,14 @@ export interface MemberBaseModuleOptionsDTO<
    * on every actual takeover while linking is enabled.
    */
   linkExistingAccount?: LinkExistingAccountStrategy;
+  /**
+   * Write directory attributes back to the member after an external identity
+   * resolves.
+   * default: undefined — nothing is written, because a write per login and the
+   * choice of which fields a directory may overwrite are the application's
+   * decisions, not this module's.
+   */
+  syncOnAuthenticate?: IdentitySyncHandler<MemberEntity>;
 
   // Default Admin
   defaultAdminAccount?: string; // default: undefined, if set, will auto-create this account with super-admin permissions on startup

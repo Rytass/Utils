@@ -57,6 +57,7 @@ beforeEach(() => {
   searchEntries = [
     {
       dn: USER_DN,
+      sAMAccountName: 'wangxx',
       displayName: 'Wang',
       mail: 'wang@corp.local',
       department: 'Finance',
@@ -214,5 +215,83 @@ describe('LdapAuthProvider', () => {
 
     expect(clients).toHaveLength(2);
     clients.forEach(client => expect(client.unbind).toHaveBeenCalled());
+  });
+});
+
+// A directory is a source of truth for attributes, not only for passwords.
+// These are plain queries: nothing here runs unless the caller calls it.
+describe('LdapAuthProvider directory queries', () => {
+  it('should look a single entry up by the account attribute', async () => {
+    const entry = await buildProvider().findUser('CORP\\wangxx');
+
+    expect(entry?.dn).toBe(USER_DN);
+    expect(clients[0].search).toHaveBeenCalledWith(
+      'DC=corp,DC=local',
+      expect.objectContaining({ filter: '(&(objectClass=user)(sAMAccountName=wangxx))', sizeLimit: 1 }),
+    );
+  });
+
+  it('should list every user entry with the default filter', async () => {
+    const entries = await buildProvider().findAllUsers();
+
+    expect(entries).toHaveLength(1);
+    expect(clients[0].search).toHaveBeenCalledWith(
+      'DC=corp,DC=local',
+      expect.objectContaining({ filter: '(objectClass=user)' }),
+    );
+  });
+
+  it('should honour a custom list filter', async () => {
+    await buildProvider({ listFilter: '(&(objectClass=user)(department=Finance))' }).findAllUsers();
+
+    expect(clients[0].search).toHaveBeenCalledWith(
+      'DC=corp,DC=local',
+      expect.objectContaining({ filter: '(&(objectClass=user)(department=Finance))' }),
+    );
+  });
+
+  it('should look an entry up by dn with a base scope', async () => {
+    const entry = await buildProvider().findByDn(USER_DN);
+
+    expect(entry?.dn).toBe(USER_DN);
+    expect(clients[0].search).toHaveBeenCalledWith(USER_DN, expect.objectContaining({ scope: 'base' }));
+  });
+
+  it('should resolve an unknown dn to null instead of throwing', async () => {
+    const provider = buildProvider();
+
+    clients.length = 0;
+    searchEntries = [];
+
+    await expect(provider.findByDn('CN=ghost,DC=corp,DC=local')).resolves.toBeNull();
+  });
+
+  it('should map an entry onto the identity the gateway consumes', async () => {
+    const provider = buildProvider();
+    const entry = await provider.findUser('wangxx');
+    const identity = provider.toIdentity(entry!);
+
+    expect(identity).toMatchObject({
+      channel: 'ldap',
+      identifier: '12345678-1234-5678-9abc-def012345678',
+      identifierVerified: true,
+    });
+
+    expect(identity.attributes).toMatchObject({
+      account: 'wangxx',
+      name: 'Wang',
+      department: 'Finance',
+      groups: ['Finance', 'AllStaff'],
+      disabled: false,
+    });
+  });
+
+  it('should surface the disabled flag so reconciliation can act on it', async () => {
+    searchEntries[0].userAccountControl = '514';
+
+    const provider = buildProvider();
+    const entry = await provider.findUser('wangxx');
+
+    expect(provider.toIdentity(entry!).attributes?.disabled).toBe(true);
   });
 });

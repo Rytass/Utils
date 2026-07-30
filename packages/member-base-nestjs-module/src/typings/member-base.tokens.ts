@@ -10,6 +10,7 @@ import type { CasbinPermissionChecker } from './casbin-permission';
 import type {
   AuthenticationProvider,
   AutoProvisionStrategy,
+  IdentitySyncHandler,
   LinkExistingAccountStrategy,
 } from './authentication-provider.interface';
 
@@ -90,6 +91,9 @@ export const AUTO_PROVISION = Symbol('AUTO_PROVISION') as symbol & { __type: Aut
 export const LINK_EXISTING_ACCOUNT = Symbol('LINK_EXISTING_ACCOUNT') as symbol & {
   __type: LinkExistingAccountStrategy;
 };
+export const SYNC_ON_AUTHENTICATE = Symbol('SYNC_ON_AUTHENTICATE') as symbol & {
+  __type: IdentitySyncHandler | null;
+};
 
 // Default Admin Providers
 export const DEFAULT_ADMIN_ACCOUNT = Symbol('DEFAULT_ADMIN_ACCOUNT') as symbol & { __type: string | null };
@@ -131,6 +135,7 @@ export interface MemberBaseProviders {
   AUTH_PROVIDERS: AuthenticationProvider[];
   AUTO_PROVISION: AutoProvisionStrategy;
   LINK_EXISTING_ACCOUNT: LinkExistingAccountStrategy;
+  SYNC_ON_AUTHENTICATE: IdentitySyncHandler | null;
   DEFAULT_ADMIN_ACCOUNT: string | null;
   DEFAULT_ADMIN_PASSWORD: string | null;
 }

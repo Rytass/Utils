@@ -4,7 +4,7 @@
 // applications that actually authenticate against a directory. Importing the
 // package root never reaches this module.
 export { LdapAuthProvider } from './providers/ldap/ldap-auth.provider';
-export type { LdapAuthProviderOptions, LdapCredentials } from './providers/ldap/ldap-auth.provider';
+export type { LdapAuthProviderOptions, LdapCredentials, LdapDirectoryEntry } from './providers/ldap/ldap-auth.provider';
 export {
   normalizeAccountInput,
   escapeFilterValue,

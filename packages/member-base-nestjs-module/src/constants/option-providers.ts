@@ -35,11 +35,13 @@ import {
   AUTH_PROVIDERS,
   AUTO_PROVISION,
   LINK_EXISTING_ACCOUNT,
+  SYNC_ON_AUTHENTICATE,
 } from '../typings/member-base.tokens';
 import { PasswordAuthProvider } from '../providers/password-auth.provider';
 import type {
   AuthenticationProvider,
   AutoProvisionStrategy,
+  IdentitySyncHandler,
   LinkExistingAccountStrategy,
 } from '../typings/authentication-provider.interface';
 import { Enforcer, newEnforcer, newModelFromString } from 'casbin';
@@ -258,6 +260,12 @@ export const OptionProviders = [
   {
     provide: AUTO_PROVISION,
     useFactory: (options?: MemberBaseModuleOptionsDTO): AutoProvisionStrategy => options?.autoProvision ?? true,
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: SYNC_ON_AUTHENTICATE,
+    useFactory: (options?: MemberBaseModuleOptionsDTO): IdentitySyncHandler | null =>
+      (options?.syncOnAuthenticate as IdentitySyncHandler | undefined) ?? null,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {

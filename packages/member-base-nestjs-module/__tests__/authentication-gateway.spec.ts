@@ -39,6 +39,7 @@ const buildGateway = (options?: {
   linkExistingAccount?: LinkExistingAccountStrategy;
   seedMembers?: BaseMemberEntity[];
   seedBindings?: MemberOAuthRecordEntity[];
+  syncOnAuthenticate?: jest.Mock;
 }): Harness => {
   const members = new Map<string, BaseMemberEntity>((options?.seedMembers ?? []).map(member => [member.id, member]));
   const bindings: MemberOAuthRecordEntity[] = [...(options?.seedBindings ?? [])];
@@ -84,6 +85,7 @@ const buildGateway = (options?: {
     memberBaseService as unknown as MemberBaseService,
     options?.autoProvision ?? true,
     options?.linkExistingAccount ?? true,
+    options?.syncOnAuthenticate ?? null,
   );
 
   return { gateway, members, bindings, recordRepo, memberRepo, registerWithoutPassword };
@@ -317,5 +319,57 @@ describe('AuthenticationGateway login', () => {
 
     expect(pair.accessToken).toBe('access-m-7');
     expect(pair.refreshToken).toBe('refresh-m-7');
+  });
+});
+
+// Writing directory attributes back on every login is a side effect the
+// application opts into, so the default must be to do nothing at all.
+describe('AuthenticationGateway attribute sync', () => {
+  it('should not touch the member when no sync handler is configured', async () => {
+    const { gateway, recordRepo } = buildGateway();
+
+    await gateway.resolve(directoryIdentity());
+
+    // Only the binding write from provisioning; no extra lookup or write.
+    expect(recordRepo.save).toHaveBeenCalledTimes(1);
+  });
+
+  it('should invoke the handler for a newly provisioned member', async () => {
+    const syncOnAuthenticate = jest.fn();
+    const { gateway } = buildGateway({ syncOnAuthenticate });
+
+    await gateway.resolve(directoryIdentity({ attributes: { department: 'Finance' } }));
+
+    expect(syncOnAuthenticate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provisioned: true,
+        member: expect.objectContaining({ id: 'provisioned-guid-1' }),
+        identity: expect.objectContaining({ attributes: { department: 'Finance' } }),
+      }),
+    );
+  });
+
+  it('should invoke the handler for an already bound member and report it as not provisioned', async () => {
+    const syncOnAuthenticate = jest.fn();
+    const member = asMember('m-9', 'bob');
+    const binding = { memberId: 'm-9', channel: 'ldap', channelIdentifier: 'guid-1' } as MemberOAuthRecordEntity;
+
+    const { gateway } = buildGateway({ seedMembers: [member], seedBindings: [binding], syncOnAuthenticate });
+
+    await gateway.resolve(directoryIdentity({ attributes: { department: 'Logistics' } }));
+
+    expect(syncOnAuthenticate).toHaveBeenCalledWith(
+      expect.objectContaining({ provisioned: false, member: expect.objectContaining({ id: 'm-9' }) }),
+    );
+  });
+
+  it('should treat a password identity as already known', async () => {
+    const syncOnAuthenticate = jest.fn();
+    const member = asMember('m-10', 'alice');
+    const { gateway } = buildGateway({ seedMembers: [member], syncOnAuthenticate });
+
+    await gateway.resolve({ channel: PASSWORD_CHANNEL, identifier: 'alice', memberId: 'm-10' });
+
+    expect(syncOnAuthenticate).toHaveBeenCalledWith(expect.objectContaining({ provisioned: false }));
   });
 });

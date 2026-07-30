@@ -40,6 +40,7 @@ export {
   AUTH_PROVIDERS,
   AUTO_PROVISION,
   LINK_EXISTING_ACCOUNT,
+  SYNC_ON_AUTHENTICATE,
 } from './typings/member-base.tokens';
 
 // Types
@@ -61,6 +62,7 @@ export type {
   AuthorizationRequest,
   AuthProviderKind,
   AutoProvisionStrategy,
+  IdentitySyncHandler,
   LinkExistingAccountStrategy,
 } from './typings/authentication-provider.interface';
 export type {

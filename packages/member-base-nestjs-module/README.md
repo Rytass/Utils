@@ -679,6 +679,7 @@ The subject is the local member id rather than the directory's identifier, so re
 | `authProviders` | `AuthenticationProvider[]` | `[]` | Extra sources; password is always registered |
 | `autoProvision` | `boolean \| (identity) => Promise<string \| null>` | `true` | What happens when an external identity has no member |
 | `linkExistingAccount` | `boolean \| 'verified-only'` | `true` | Whether an external identity may claim a matching local account |
+| `syncOnAuthenticate` | `(params) => Promise<void>` | — | Write directory attributes back after resolution; nothing runs by default |
 | `oauth2Providers` | `OAuth2Provider[]` | `[]` | Google / Facebook / custom OAuth2 |
 | `oauth2ClientDestUrl` | `string` | `'/login'` | Where the OAuth2 callback redirects |
 
@@ -927,6 +928,56 @@ Behaviour worth knowing:
 - Filter values are escaped (RFC 4515), so an account containing `*` or `(` is matched literally instead of altering the filter.
 - An empty password is rejected before any bind is attempted — many directories treat a bind with no password as an anonymous bind and accept it.
 - Accounts flagged disabled in `userAccountControl` are rejected before the password is verified (`rejectDisabledAccounts: false` to opt out).
+
+### Reading the directory without a login
+
+A directory is a source of truth for attributes, not only for passwords. These are plain queries — **nothing is scheduled and nothing runs unless you call it**:
+
+```ts
+const provider = gateway.getProvider('ldap') as LdapAuthProvider;
+
+await provider.findUser('wangxx');                 // by account attribute
+await provider.findAllUsers();                     // everything under baseDN
+await provider.findByDn('CN=Wang,OU=Users,DC=...'); // by distinguished name
+
+// Map an entry onto the identity shape the gateway consumes, so a
+// reconciliation job and a login share one attribute mapping.
+const identity = provider.toIdentity(entry);
+```
+
+`toIdentity` surfaces `attributes.disabled`, so a reconciliation job can act on accounts that were disabled in the directory out-of-band.
+
+### Writing directory attributes back (opt-in)
+
+By default a login **never** writes directory attributes to the member: that costs a write per authentication, and which fields a directory may overwrite is an application decision. Opt in with `syncOnAuthenticate`:
+
+```ts
+MemberBaseModule.forRoot({
+  syncOnAuthenticate: async ({ identity, member, provisioned }) => {
+    await memberRepo.update(member.id, {
+      name: identity.attributes?.name as string,
+      department: identity.attributes?.department as string,
+    });
+  },
+});
+```
+
+The same hook runs when directory entries are fed through `gateway.resolve()`, so a scheduled reconciliation reuses the login path rather than duplicating it:
+
+```ts
+// Your application owns the schedule — interval, pacing and failure handling
+// are its decisions, so no scheduler ships in this module.
+@Cron(CronExpression.EVERY_HOUR)
+async reconcile(): Promise<void> {
+  const entries = await provider.findAllUsers();
+
+  for (const entry of entries) {
+    await gateway.resolve(provider.toIdentity(entry));
+  }
+}
+```
+
+`provisioned` tells the handler whether the member was just created or already existed.
 
 ### Subpath isolation
 

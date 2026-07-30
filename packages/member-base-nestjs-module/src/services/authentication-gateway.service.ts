@@ -8,12 +8,14 @@ import {
   AUTO_PROVISION,
   LINK_EXISTING_ACCOUNT,
   RESOLVED_MEMBER_REPO,
+  SYNC_ON_AUTHENTICATE,
 } from '../typings/member-base.tokens';
 import type {
   AuthContext,
   AuthenticatedIdentity,
   AuthenticationProvider,
   AutoProvisionStrategy,
+  IdentitySyncHandler,
   LinkExistingAccountStrategy,
 } from '../typings/authentication-provider.interface';
 import {
@@ -54,6 +56,8 @@ export class AuthenticationGateway<
     private readonly autoProvision: AutoProvisionStrategy,
     @Inject(LINK_EXISTING_ACCOUNT)
     private readonly linkExistingAccount: LinkExistingAccountStrategy,
+    @Inject(SYNC_ON_AUTHENTICATE)
+    private readonly syncOnAuthenticate: IdentitySyncHandler<MemberEntity> | null,
   ) {}
 
   onApplicationBootstrap(): void {
@@ -154,9 +158,26 @@ export class AuthenticationGateway<
    * along the way when policy allows it.
    */
   async resolve(identity: AuthenticatedIdentity): Promise<AuthenticationResult<MemberEntity>> {
+    const before = await this.countKnownMember(identity);
     const member = await this.resolveMember(identity);
 
+    // Opt-in: nothing is written back unless the application asked for it.
+    await this.syncOnAuthenticate?.({ identity, member, provisioned: !before });
+
     return { member, identity };
+  }
+
+  /** Whether this identity already mapped to a member before resolution. */
+  private async countKnownMember(identity: AuthenticatedIdentity): Promise<boolean> {
+    if (!this.syncOnAuthenticate) return true;
+
+    if (identity.memberId) return true;
+
+    const record = await this.externalIdentityRepo.findOne({
+      where: { channel: identity.channel, channelIdentifier: identity.identifier },
+    });
+
+    return Boolean(record);
   }
 
   private async resolveMember(identity: AuthenticatedIdentity): Promise<MemberEntity> {

@@ -15,6 +15,9 @@ import type {
   AuthProviderKind,
 } from '../../typings/authentication-provider.interface';
 
+/** A raw directory entry, as returned by the server. */
+export type LdapDirectoryEntry = Record<string, unknown>;
+
 export interface LdapCredentials {
   account: string;
   password: string;
@@ -42,6 +45,11 @@ export interface LdapAuthProviderOptions {
   identifierAttribute?: string;
   /** Override the whole search filter. Receives the normalized account. */
   searchFilter?: (account: string) => string;
+  /**
+   * Filter used by findAllUsers.
+   * default: '(objectClass=user)'
+   */
+  listFilter?: string;
   /** Extra attributes to request and expose on the identity. */
   extraAttributes?: string[];
   /**
@@ -107,21 +115,80 @@ export class LdapAuthProvider implements AuthenticationProvider<LdapCredentials>
 
     await this.verifyPassword(dn, credentials.password);
 
-    const identifier = formatObjectGuid(entry[this.options.identifierAttribute ?? 'objectGUID']);
+    return this.toIdentity(entry);
+  }
+
+  /**
+   * Look a single directory entry up by the configured account attribute.
+   *
+   * Exposed because a directory is also a source of truth for attributes, not
+   * only for passwords: reconciliation jobs need to read entries without
+   * anyone logging in. Nothing here is scheduled — the caller decides when.
+   */
+  async findUser(account: string): Promise<LdapDirectoryEntry | null> {
+    const filter =
+      this.options.searchFilter?.(normalizeAccountInput(account)) ??
+      `(&(objectClass=user)(${this.accountAttribute()}=${escapeFilterValue(normalizeAccountInput(account))}))`;
+
+    const [entry] = await this.search(filter, 1);
+
+    return entry ?? null;
+  }
+
+  /**
+   * Every user entry under the configured base DN.
+   *
+   * Intended for reconciliation against a directory that has changed
+   * out-of-band (departments moved, accounts disabled). Potentially a large
+   * result set, so the caller owns the scheduling and the pacing.
+   */
+  async findAllUsers(): Promise<LdapDirectoryEntry[]> {
+    return this.search(this.options.listFilter ?? '(objectClass=user)');
+  }
+
+  /** Look an entry up by its distinguished name. */
+  async findByDn(dn: string): Promise<LdapDirectoryEntry | null> {
+    const client = this.createClient();
+
+    try {
+      await client.bind(this.options.bindDN, this.options.bindPassword);
+
+      const { searchEntries } = await client.search(dn, {
+        scope: 'base',
+        filter: '(objectClass=*)',
+        attributes: this.requestedAttributes(),
+      });
+
+      return (searchEntries[0] as LdapDirectoryEntry | undefined) ?? null;
+    } catch {
+      // A missing DN surfaces as a search error rather than an empty result.
+      return null;
+    } finally {
+      await this.safeUnbind(client);
+    }
+  }
+
+  /**
+   * Map a directory entry onto the identity shape the gateway consumes.
+   *
+   * Lets a reconciliation job feed entries through the same resolution path a
+   * login takes, instead of duplicating the attribute mapping.
+   */
+  toIdentity(entry: LdapDirectoryEntry): AuthenticatedIdentity {
+    const identifier = formatObjectGuid(entry[this.identifierAttribute()]);
 
     if (!identifier) {
-      throw new AuthProviderMisconfiguredError(
-        `Directory entry for "${account}" has no ${this.options.identifierAttribute ?? 'objectGUID'} to bind on`,
-      );
+      throw new AuthProviderMisconfiguredError(`Directory entry has no ${this.identifierAttribute()} to bind on`);
     }
+
+    const account = firstString(entry[this.accountAttribute()]) ?? firstString(entry.dn) ?? identifier;
 
     return {
       channel: this.channel,
       identifier,
-      // The directory is authoritative for its own entries.
       identifierVerified: true,
       attributes: {
-        dn,
+        dn: firstString(entry.dn),
         account,
         name: firstString(entry.displayName) ?? account,
         email: firstString(entry.mail),
@@ -129,34 +196,44 @@ export class LdapAuthProvider implements AuthenticationProvider<LdapCredentials>
         department: firstString(entry.department),
         description: firstString(entry.description),
         groups: extractGroupNames(entry.memberOf),
+        disabled: isAccountDisabled(entry.userAccountControl),
       },
     };
   }
 
-  private async findUser(account: string): Promise<Record<string, unknown> | null> {
+  private accountAttribute(): string {
+    return this.options.accountAttribute ?? 'sAMAccountName';
+  }
+
+  private identifierAttribute(): string {
+    return this.options.identifierAttribute ?? 'objectGUID';
+  }
+
+  private requestedAttributes(): string[] {
+    return [
+      ...DEFAULT_ATTRIBUTES,
+      this.identifierAttribute(),
+      this.accountAttribute(),
+      ...(this.options.extraAttributes ?? []),
+    ];
+  }
+
+  private async search(filter: string, sizeLimit?: number): Promise<LdapDirectoryEntry[]> {
     const client = this.createClient();
 
     try {
       await client.bind(this.options.bindDN, this.options.bindPassword);
 
-      const filter =
-        this.options.searchFilter?.(account) ??
-        `(&(objectClass=user)(${this.options.accountAttribute ?? 'sAMAccountName'}=${escapeFilterValue(account)}))`;
-
       const searchOptions: SearchOptions = {
         scope: 'sub',
         filter,
-        attributes: [
-          ...DEFAULT_ATTRIBUTES,
-          this.options.identifierAttribute ?? 'objectGUID',
-          this.options.accountAttribute ?? 'sAMAccountName',
-          ...(this.options.extraAttributes ?? []),
-        ],
+        attributes: this.requestedAttributes(),
+        ...(sizeLimit ? { sizeLimit } : {}),
       };
 
       const { searchEntries } = await client.search(this.options.baseDN, searchOptions);
 
-      return (searchEntries[0] as Record<string, unknown> | undefined) ?? null;
+      return searchEntries as LdapDirectoryEntry[];
     } finally {
       await this.safeUnbind(client);
     }

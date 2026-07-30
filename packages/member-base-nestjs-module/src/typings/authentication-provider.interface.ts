@@ -117,3 +117,23 @@ export type AutoProvisionStrategy = boolean | ((identity: AuthenticatedIdentity)
  * identifier is an email address.
  */
 export type LinkExistingAccountStrategy = boolean | 'verified-only';
+
+/**
+ * Called after an external identity has been resolved to an existing member,
+ * so attributes that changed in the source directory can be written back.
+ *
+ * Disabled by default. A directory is authoritative for its own attributes, but
+ * writing to the local member on every login is a side effect an application
+ * has to opt into — it costs a write per authentication and decides which
+ * fields the directory is allowed to overwrite.
+ *
+ * Also usable for reconciliation: feeding directory entries through
+ * `AuthenticationGateway.resolve()` runs this same hook, so a scheduled job and
+ * a login share one mapping.
+ */
+export type IdentitySyncHandler<MemberEntity = unknown> = (params: {
+  identity: AuthenticatedIdentity;
+  member: MemberEntity;
+  /** True when the member was created by this resolution rather than found. */
+  provisioned: boolean;
+}) => Promise<void> | void;
