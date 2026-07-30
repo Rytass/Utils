@@ -15,6 +15,25 @@ export interface OidcAuthProviderOptions {
   channel: string;
   /** Issuer identifier; discovery is performed against `${issuer}/.well-known/openid-configuration`. */
   issuer: string;
+
+  /**
+   * Base URL to use for back-channel calls (discovery, token, JWKS, userinfo)
+   * in place of the issuer's public origin.
+   *
+   * The issuer identifier is a stable public name that also appears in the id
+   * token, so it cannot be swapped for an internal address without breaking
+   * verification. But when the provider runs next to the issuer — a sidecar
+   * container, a service on the same cluster — routing server-to-server calls
+   * through the public hostname means leaving and re-entering the network for
+   * no reason, and often does not resolve at all.
+   *
+   * Endpoints are rewritten by replacing the issuer prefix, so
+   * `https://idp.example.com/oidc/token` becomes
+   * `http://localhost:4530/oidc/token`. The user-facing authorization URL is
+   * never rewritten: the browser has to reach the public address.
+   */
+  internalBaseUrl?: string;
+
   clientId: string;
   clientSecret?: string;
   redirectUri: string;
@@ -87,7 +106,7 @@ export class OidcAuthProvider implements AuthenticationProvider {
 
   constructor(private readonly options: OidcAuthProviderOptions) {
     this.channel = options.channel;
-    this.metadata = new OidcMetadataResolver(options.issuer);
+    this.metadata = new OidcMetadataResolver(options.issuer, options.internalBaseUrl);
   }
 
   async createAuthorizationRequest(_context?: AuthContext): Promise<AuthorizationRequest> {
@@ -192,7 +211,11 @@ export class OidcAuthProvider implements AuthenticationProvider {
       headers.authorization = `Basic ${Buffer.from(credentials).toString('base64')}`;
     }
 
-    const response = await fetch(tokenEndpoint, { method: 'POST', headers, body: body.toString() });
+    const response = await fetch(this.metadata.toInternalUrl(tokenEndpoint), {
+      method: 'POST',
+      headers,
+      body: body.toString(),
+    });
 
     if (!response.ok) {
       throw new InvalidToken();
@@ -235,7 +258,7 @@ export class OidcAuthProvider implements AuthenticationProvider {
 
     if (!userinfoEndpoint) return {};
 
-    const response = await fetch(userinfoEndpoint, {
+    const response = await fetch(this.metadata.toInternalUrl(userinfoEndpoint), {
       headers: { authorization: `Bearer ${accessToken}` },
     });
 

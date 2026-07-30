@@ -38,7 +38,26 @@ export class OidcMetadataResolver {
   private discovery: Promise<OidcDiscoveryDocument> | null = null;
   private keys: Map<string, KeyObject> | null = null;
 
-  constructor(private readonly issuer: string) {}
+  constructor(
+    private readonly issuer: string,
+    private readonly internalBaseUrl?: string,
+  ) {}
+
+  /**
+   * Rewrite a published endpoint to its back-channel equivalent.
+   *
+   * Only the issuer prefix is replaced, and only when an internal base is
+   * configured; anything the issuer publishes on a different origin is left
+   * alone rather than being blindly redirected.
+   */
+  toInternalUrl(url: string): string {
+    if (!this.internalBaseUrl) return url;
+
+    const publicPrefix = this.issuer.replace(/\/$/, '');
+    const internalPrefix = this.internalBaseUrl.replace(/\/$/, '');
+
+    return url.startsWith(publicPrefix) ? `${internalPrefix}${url.slice(publicPrefix.length)}` : url;
+  }
 
   async getDiscovery(): Promise<OidcDiscoveryDocument> {
     if (!this.discovery) {
@@ -81,7 +100,8 @@ export class OidcMetadataResolver {
   }
 
   private async fetchDiscovery(): Promise<OidcDiscoveryDocument> {
-    const url = `${this.issuer.replace(/\/$/, '')}/.well-known/openid-configuration`;
+    const publicUrl = `${this.issuer.replace(/\/$/, '')}/.well-known/openid-configuration`;
+    const url = this.toInternalUrl(publicUrl);
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -105,7 +125,7 @@ export class OidcMetadataResolver {
 
   private async refreshKeys(): Promise<void> {
     const { jwks_uri: jwksUri } = await this.getDiscovery();
-    const response = await fetch(jwksUri);
+    const response = await fetch(this.toInternalUrl(jwksUri));
 
     if (!response.ok) {
       throw new AuthProviderMisconfiguredError(`Failed to fetch JWKS with status ${response.status} from ${jwksUri}`);

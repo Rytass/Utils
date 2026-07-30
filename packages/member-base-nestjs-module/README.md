@@ -974,6 +974,26 @@ const { member } = await gateway.handleCallback('corp-idp', {
 });
 ```
 
+### Back-channel calls on an internal address
+
+When this application runs next to the issuer — a sidecar container, a service on the same cluster — routing server-to-server calls through the public hostname leaves and re-enters the network for no reason, and often does not resolve at all.
+
+```ts
+new OidcAuthProvider({
+  channel: 'corp-idp',
+  issuer: 'https://idp.example.com/oidc', // public identity, appears in the id token
+  internalBaseUrl: 'http://localhost:4530/oidc', // where back-channel calls actually go
+  // ...
+});
+```
+
+Discovery, token exchange, JWKS and userinfo are rewritten by replacing the issuer prefix. Two things deliberately do not change:
+
+- **The authorization URL is never rewritten** — the browser has to reach the public address.
+- **The issuer is still validated against its public identifier** — the discovery document must declare the public issuer even when served from the internal address, otherwise id token verification would break.
+
+Endpoints the issuer publishes on a different origin are left untouched rather than blindly redirected.
+
 Notes:
 
 - `identifierClaim` defaults to `sub`, the only claim an issuer guarantees is stable. Pointing it at `email` makes the binding follow a mutable value and defers `identifierVerified` to the `email_verified` claim.

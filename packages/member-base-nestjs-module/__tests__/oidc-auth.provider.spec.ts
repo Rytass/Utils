@@ -277,3 +277,64 @@ describe('OidcAuthProvider callback', () => {
     ).rejects.toBeInstanceOf(AuthProviderMisconfiguredError);
   });
 });
+
+describe('OidcAuthProvider internal base url', () => {
+  const INTERNAL = 'http://localhost:4530/oidc';
+
+  const internalProvider = (): OidcAuthProvider => buildProvider({ internalBaseUrl: INTERNAL });
+
+  it('should fetch discovery through the internal base', async () => {
+    await internalProvider().createAuthorizationRequest();
+
+    const discoveryCall = stub.calls.find(call => call.url.includes('.well-known'));
+
+    expect(discoveryCall?.url).toBe(`${INTERNAL}/.well-known/openid-configuration`);
+  });
+
+  // The browser has to reach the issuer's public address; rewriting this would
+  // send the user agent to a host only reachable from inside the cluster.
+  it('should never rewrite the user-facing authorization url', async () => {
+    const request = await internalProvider().createAuthorizationRequest();
+
+    expect(request.url.startsWith(`${ISSUER}/auth`)).toBe(true);
+    expect(request.url).not.toContain('localhost:4530');
+  });
+
+  it('should exchange the code and fetch jwks through the internal base', async () => {
+    stub.tokenResponse = { access_token: 'at', id_token: issueIdToken({}) };
+
+    await internalProvider().handleCallback({ code: 'c' });
+
+    expect(stub.calls.some(call => call.url === `${INTERNAL}/token`)).toBe(true);
+    expect(stub.calls.some(call => call.url === `${INTERNAL}/jwks`)).toBe(true);
+    expect(stub.calls.some(call => call.url.startsWith(ISSUER))).toBe(false);
+  });
+
+  it('should fetch userinfo through the internal base', async () => {
+    stub.tokenResponse = { access_token: 'at', id_token: issueIdToken({}) };
+    stub.userinfoResponse = { sub: 'subject-1' };
+
+    await buildProvider({ internalBaseUrl: INTERNAL, fetchUserinfo: true }).handleCallback({ code: 'c' });
+
+    expect(stub.calls.some(call => call.url === `${INTERNAL}/me`)).toBe(true);
+  });
+
+  it('should still validate the issuer against its public identifier', async () => {
+    // The document is served from the internal address but must still declare
+    // the public issuer, otherwise id token verification would break.
+    stub.discoveryOverride = { ...DISCOVERY, issuer: INTERNAL };
+
+    await expect(internalProvider().createAuthorizationRequest()).rejects.toBeInstanceOf(
+      AuthProviderMisconfiguredError,
+    );
+  });
+
+  it('should leave endpoints published on another origin untouched', async () => {
+    stub.discoveryOverride = { ...DISCOVERY, token_endpoint: 'https://tokens.elsewhere.test/token' };
+    stub.tokenResponse = { access_token: 'at', id_token: issueIdToken({}) };
+
+    await internalProvider().handleCallback({ code: 'c' });
+
+    expect(stub.calls.some(call => call.url === 'https://tokens.elsewhere.test/token')).toBe(true);
+  });
+});
