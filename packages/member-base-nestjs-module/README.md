@@ -201,7 +201,7 @@ export class AppModule {}
 
 // controllers/article.controller.ts
 import { Controller, Get, Post } from '@nestjs/common';
-import { IsPublic, AllowedActions } from '@rytass/member-base-nestjs-module';
+import { IsPublic, AllowActions } from '@rytass/member-base-nestjs-module';
 
 @Controller('/articles')
 export class ArticleController {
@@ -212,8 +212,8 @@ export class ArticleController {
   }
 
   @Post('/')
-  @AllowedActions([
-    ['articles', 'article', 'create'], // Domain, Subject, Action
+  @AllowActions([
+    ['article', 'create'], // [Subject, Action] — the domain is not declared here
   ])
   create() {
     // Only allowed members
@@ -249,6 +249,21 @@ export class MemberService {
 ```
 
 You can use MemberBaseService.login to get accessToken and put it in header (Authorization) with Bearer prefix to authorize the request.
+
+### How a declared action becomes an enforcement
+
+The model is `r = sub, dom, obj, act`, and the guard calls `enforcer.enforce(memberId, domain, subject, action)`. Only `subject` and `action` come from the decorator; **`domain` is never declared on the route**:
+
+| Part      | Where it comes from                                                              |
+| --------- | -------------------------------------------------------------------------------- |
+| `sub`     | The member id in the access token                                                |
+| `dom`     | `payload.domain` from the token, falling back to `DEFAULT_CASBIN_DOMAIN`         |
+| `obj`     | The first element of each `AllowActions` pair                                    |
+| `act`     | The second element                                                               |
+
+So the policy `addPolicy('article-admin', 'articles', 'article', 'create')` above is matched by `@AllowActions([['article', 'create']])` when the caller's token carries `domain: 'articles'` — which `login(account, password, { domain: 'articles' })` puts there.
+
+Listing several pairs is an **OR**: the call is allowed if any one of them passes. To decide the domain per request instead of taking it from the token — when the target depends on GraphQL arguments, say — supply a [`casbinDomainResolver`](#request-aware-authorization-casbindomainresolver-and-decision-tracing). To use your own decorator in place of `AllowActions`, set `casbinPermissionDecorator`.
 
 ## Default Admin Bootstrap
 

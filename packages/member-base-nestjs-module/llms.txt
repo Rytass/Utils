@@ -121,7 +121,9 @@ export class ArticleController {
 }
 ```
 
-`AllowActions` is a `Reflector.createDecorator<[Subject, Action][]>()`, so it is read with `reflector.get(AllowActions, handler)`. `HasPermission` is a **parameter** decorator that injects a permission check result, not a route guard. Guard metadata is read from the **handler**, so a class-level decorator has no effect.
+`AllowActions` is a `Reflector.createDecorator<[Subject, Action][]>()`. The Casbin model is `r = sub, dom, obj, act` and the guard calls `enforcer.enforce(memberId, domain, subject, action)`, so the decorator supplies only `obj` and `act`. **The domain is never declared on the route**: it comes from `payload.domain` in the access token (put there by `login(account, password, { domain })`), falling back to `DEFAULT_CASBIN_DOMAIN`, or from `casbinDomainResolver` when one is configured. Several pairs are an OR — any one passing allows the call.
+
+A member holding `SUPER_ADMIN_ROLE` grouped in `DEFAULT_CASBIN_DOMAIN` short-circuits every check. `HasPermission` is a **parameter** decorator that injects a permission check result, not a route guard. Guard metadata is read from the **handler**, so a class-level decorator has no effect. `casbinPermissionDecorator` replaces `AllowActions` with your own.
 
 ## Authentication Gateway
 
