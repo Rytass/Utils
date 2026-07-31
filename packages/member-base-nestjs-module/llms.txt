@@ -1,407 +1,380 @@
 # @rytass/member-base-nestjs-module
 
-Comprehensive NestJS member system with authentication, authorization, and RBAC support.
+NestJS member system: authentication, Casbin authorization, pluggable identity sources, and an optional OpenID Connect provider endpoint.
 
 ## Package Overview
 
-This package provides a complete member management system for NestJS applications, featuring JWT authentication, role-based access control (RBAC) with Casbin, OAuth integration, and comprehensive user lifecycle management. Designed for enterprise applications requiring robust security and user management.
+A member system for NestJS applications. Members are identified by an **`account`** string (not an email), authenticate through a pluggable gateway, and are authorized by Casbin. On top of that the package can act as an OIDC **relying party** (sign in against someone else's issuer) or as an OIDC **provider** (be the issuer other services authenticate against).
 
-## Core Features
+## Entry Points
 
-### Authentication System
-- **JWT Token Management**: Access and refresh token handling
-- **Password Security**: Argon2 hashing with password history tracking
-- **Multi-factor Options**: Foundation for MFA implementations
-- **Session Management**: Login tracking and session control
+Nothing is pulled in by importing the package root: an entry point you never import is never resolved, so its dependency is never required and its tables are never created.
 
-### Authorization & RBAC
-- **Casbin Integration**: Policy-based access control with domain support
-- **Role Management**: Hierarchical role assignment and management
-- **Permission System**: Granular permission control with decorators
-- **Domain-based Access**: Multi-tenant permission isolation
+| Import path | Provides | Requires |
+| ----------------------------------------------- | ----------------------------------------- | ---------------- |
+| `@rytass/member-base-nestjs-module` | `MemberBaseModule`, services, decorators | — |
+| `@rytass/member-base-nestjs-module/graphql` | GraphQL DTOs | `@nestjs/graphql` |
+| `@rytass/member-base-nestjs-module/ldap` | `LdapAuthProvider` | `ldapts` |
+| `@rytass/member-base-nestjs-module/oidc-provider` | `MemberBaseOidcProviderModule` (issuer) | `oidc-provider` |
 
-### OAuth Integration
-- **Multiple Providers**: Support for various OAuth2 providers
-- **Account Linking**: Link OAuth accounts to existing member profiles
-- **Social Login**: Streamlined social authentication flows
-- **Provider Management**: Flexible OAuth provider configuration
+Required peers: `@nestjs/common`, `@nestjs/core`, `@nestjs/typeorm`, `typeorm`, `argon2`, `jsonwebtoken`.
+Optional peers: `typeorm-adapter` (when `casbinAdapterOptions` is set), `@nestjs/graphql` + `graphql`, `ldapts`, `oidc-provider`.
 
-### User Management
-- **Member Profiles**: Comprehensive user profile management
-- **Account Lifecycle**: Registration, activation, deactivation workflows
-- **Audit Logging**: Complete user activity and login history
-- **Data Protection**: GDPR-compliant user data handling
+## Module Configuration
 
-## Usage Examples
-
-### Module Configuration
 ```typescript
 import { Module } from '@nestjs/common';
-import { MemberBaseModule } from '@rytass/member-base-nestjs-module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { MemberBaseModule } from '@rytass/member-base-nestjs-module';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      // Database configuration
-    }),
+    TypeOrmModule.forRoot({ /* ... */ }),
     MemberBaseModule.forRoot({
-      jwtSecret: process.env.JWT_SECRET,
-      jwtExpiresIn: '24h',
-      refreshTokenExpiresIn: '7d',
+      memberEntity: MemberEntity,              // optional subclass of BaseMemberEntity
+
+      accessTokenSecret: process.env.JWT_ACCESS_SECRET,
+      refreshTokenSecret: process.env.JWT_REFRESH_SECRET,
+      accessTokenExpiration: 60 * 15,          // seconds, default 15 minutes
+      refreshTokenExpiration: 60 * 60 * 24 * 90,
+      cookieMode: false,                       // true puts tokens in cookies instead of headers
+
+      // Password policy
       passwordMinLength: 8,
-      passwordRequireSpecialChar: true,
-      enableOAuth: true,
-      oauthProviders: {
-        google: {
-          clientId: process.env.GOOGLE_CLIENT_ID,
-          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-          callbackUrl: '/auth/google/callback'
-        },
-        facebook: {
-          clientId: process.env.FACEBOOK_APP_ID,
-          clientSecret: process.env.FACEBOOK_APP_SECRET,
-          callbackUrl: '/auth/facebook/callback'
-        }
-      },
-      casbin: {
-        modelPath: './rbac_model.conf',
-        policyAdapter: 'database' // Use database adapter
-      }
-    })
-  ]
+      passwordShouldIncludeUppercase: true,
+      passwordShouldIncludeLowercase: true,
+      passwordShouldIncludeDigit: true,
+      passwordShouldIncludeSpecialCharacters: false,
+      passwordHistoryLimit: 3,
+      passwordAgeLimitInDays: 90,
+
+      // Lockout
+      loginFailedBanThreshold: 5,
+      loginFailedAutoUnlockSeconds: 900,
+
+      // Casbin
+      enableGlobalGuard: true,
+      casbinAdapterOptions: { type: 'postgres', host: 'localhost', database: 'rytass' },
+    }),
+  ],
 })
 export class AppModule {}
 ```
 
-### Authentication Service
+`MemberBaseModule.forRootAsync({ useFactory, inject })` is also available.
+
+Note: without `casbinAdapterOptions` the enforcer is `null`, and with `enableGlobalGuard: true` every route that is not `@IsPublic()` or `@Authenticated()` is denied.
+
+## MemberBaseService
+
 ```typescript
-import { Injectable } from '@nestjs/common';
 import { MemberBaseService } from '@rytass/member-base-nestjs-module';
 
-@Injectable()
-export class AuthService {
-  constructor(private readonly memberService: MemberBaseService) {}
+// Registration
+await memberBaseService.register(account, password, memberOptions?);
+await memberBaseService.registerWithoutPassword(account, memberOptions?);
 
-  async registerMember(email: string, password: string, profile: any) {
-    const member = await this.memberService.createMember({
-      email,
-      password,
-      profile: {
-        firstName: profile.firstName,
-        lastName: profile.lastName,
-        phone: profile.phone
+// Authentication — returns { accessToken, refreshToken }
+await memberBaseService.login(account, password, { ip, domain });
+await memberBaseService.refreshToken(refreshToken, { domain });
+
+// Verify without issuing tokens (returns the member)
+await memberBaseService.verifyCredentials(account, password, { ip });
+
+// Lookup
+await memberBaseService.findById(id);
+await memberBaseService.findByAccount(account);
+
+// Passwords
+await memberBaseService.changePassword(id, oldPassword, newPassword);
+await memberBaseService.getResetPasswordToken(account);
+await memberBaseService.changePasswordWithToken(token, newPassword);
+
+// Lockout
+await memberBaseService.resetLoginFailedCounter(id);
+
+// Token signing (used by layered modules)
+memberBaseService.signAccessToken(member, domain?, { authTime });
+memberBaseService.signRefreshToken(member, domain?, { authTime });
+```
+
+`MemberBaseAdminService` provides `archiveMember(id)`.
+
+## Decorators
+
+```typescript
+import { IsPublic, Authenticated, AllowActions, MemberId, Account, HasPermission } from '@rytass/member-base-nestjs-module';
+
+@Controller('/articles')
+export class ArticleController {
+  @Get('/')
+  @IsPublic()                                   // bypass the global guard entirely
+  list() {}
+
+  @Get('/mine')
+  @Authenticated()                              // any valid token, no policy check
+  mine(@MemberId() memberId: string, @Account() account: string) {}
+
+  @Post('/')
+  @AllowActions([['article', 'create']])        // [Subject, Action][], checked against Casbin
+  create() {}
+}
+```
+
+`AllowActions` is a `Reflector.createDecorator<[Subject, Action][]>()`, so it is read with `reflector.get(AllowActions, handler)`. `HasPermission` is a **parameter** decorator that injects a permission check result, not a route guard. Guard metadata is read from the **handler**, so a class-level decorator has no effect.
+
+## Authentication Gateway
+
+Authentication sources are pluggable. The account/password provider is always registered under the `password` channel.
+
+```typescript
+import { AuthenticationGateway, PASSWORD_CHANNEL } from '@rytass/member-base-nestjs-module';
+
+gateway.listProviders();                                   // readonly AuthenticationProvider[]
+gateway.getProvider(channel);
+await gateway.authenticate(channel, credentials, { ip });  // => { member, identity }
+await gateway.login(channel, credentials, { ip, domain }); // => { accessToken, refreshToken }
+await gateway.getAuthorizationUrl(channel, state, ctx);    // redirect providers
+await gateway.handleCallback(channel, params, ctx);
+await gateway.resolve(identity);                           // map an identity onto a local member
+```
+
+Provisioning and linking policy is set on the module: `autoProvision`, `linkExistingAccount` (`true | 'verified-only' | false`), `syncOnAuthenticate`.
+
+## OAuth2 Social Login
+
+```typescript
+MemberBaseModule.forRoot({
+  oauth2Providers: [
+    { channel: 'google', clientId, clientSecret, redirectUri, scope: ['email', 'profile'] },
+    { channel: 'facebook', clientId, clientSecret, redirectUri },
+    {
+      channel: 'line',
+      clientId, clientSecret, redirectUri, scope: ['profile'],
+      requestUrl: 'https://access.line.me/oauth2/v2.1/authorize',
+      getAccessTokenFromCode: async code => '...',
+      getAccountFromAccessToken: async accessToken => '...',
+    },
+  ],
+  oauth2ClientDestUrl: '/login',
+});
+```
+
+`OAuthCallbacksController` is registered automatically at `GET /auth/login/:channel` and `GET /auth/callbacks/:channel`. `OAuthService` exposes `getGoogleOAuthLoginUrl()`, `getFacebookOAuthLoginUrl()`, `getCustomOAuthLoginUrl(channel)`, `loginWithGoogleOAuth2Code(code, state?)`, `loginWithFacebookOAuth2Code(...)`, `loginWithCustomOAuth2Code(...)`.
+
+## LDAP / Active Directory
+
+```typescript
+import { LdapAuthProvider } from '@rytass/member-base-nestjs-module/ldap';
+
+MemberBaseModule.forRoot({
+  authProviders: [
+    new LdapAuthProvider({ url, bindDN, bindPassword, baseDN, tlsOptions, channel: 'ldap' }),
+  ],
+});
+```
+
+## Relying Party: Signing In Against Another Issuer
+
+```typescript
+import { OidcAuthProvider } from '@rytass/member-base-nestjs-module';
+
+MemberBaseModule.forRoot({
+  authProviders: [
+    new OidcAuthProvider({
+      channel: 'corp-sso',
+      issuer: 'https://idp.example.com/oidc',
+      internalBaseUrl: 'http://idp.internal:4530',  // back-channel calls only
+      clientId, clientSecret,
+      redirectUri: 'https://app.example.com/auth/callbacks/corp-sso',
+      scope: ['openid', 'profile', 'email'],
+      usePKCE: true,
+      identifierClaim: 'sub',
+      fetchUserinfo: false,
+    }),
+  ],
+});
+```
+
+Discovery runs against `${issuer}/.well-known/openid-configuration`. State validation stays with the caller, because the caller is what persisted it.
+
+## Provider: Becoming the Issuer
+
+```bash
+npm install oidc-provider
+```
+
+```typescript
+import { MemberBaseOidcProviderModule, mountMemberBaseOidcProvider } from '@rytass/member-base-nestjs-module/oidc-provider';
+
+@Module({
+  imports: [
+    MemberBaseModule.forRoot({ cookieMode: true /* required for session bridging */ }),
+    MemberBaseOidcProviderModule.forRoot({
+      issuer: 'https://idp.example.com/oidc',
+      jwks: JSON.parse(process.env.OIDC_JWKS),
+      cookieKeys: [process.env.OIDC_COOKIE_KEY],
+      routePrefix: 'oidc',
+      interaction: {
+        loginPageUrl: '/sign-in',
+        consentPageUrl: '/authorize',
       },
-      roles: ['user'], // Default role
-      isActive: true
-    });
-
-    // Send welcome email
-    await this.sendWelcomeEmail(member);
-    
-    return member;
-  }
-
-  async loginMember(email: string, password: string) {
-    const result = await this.memberService.validateMember(email, password);
-    
-    if (result.success) {
-      // Log successful login
-      await this.memberService.recordLogin(result.member.id, {
-        ipAddress: '127.0.0.1', // From request
-        userAgent: 'Browser Info', // From request
-        success: true
-      });
-
-      // Generate tokens
-      const tokens = await this.memberService.generateTokens(result.member);
-      
-      return {
-        member: result.member,
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken
-      };
-    }
-    
-    throw new UnauthorizedException('Invalid credentials');
-  }
-}
+    }),
+  ],
+})
+export class AppModule {}
 ```
 
-### Authorization with Decorators
 ```typescript
-import { Controller, Get, UseGuards } from '@nestjs/common';
-import { 
-  HasPermission, 
-  CasbinGuard, 
-  MemberId, 
-  Account 
-} from '@rytass/member-base-nestjs-module';
+// main.ts — must run before listen()
+const app = await NestFactory.create(AppModule);
 
-@Controller('admin')
-@UseGuards(CasbinGuard)
-export class AdminController {
-  
-  @Get('users')
-  @HasPermission('user:read')
-  async getUsers(@MemberId() memberId: string) {
-    // Only members with 'user:read' permission can access
-    return this.userService.getAllUsers();
-  }
+app.use(cookieParser());              // required when the SSO bridge is enabled
+mountMemberBaseOidcProvider(app);
 
-  @Post('users')
-  @HasPermission('user:create')
-  async createUser(@Account() account: any, @Body() userData: any) {
-    // Only members with 'user:create' permission can access
-    return this.userService.createUser(userData);
-  }
-
-  @Put('users/:id')
-  @HasPermission('user:update')
-  async updateUser(@Param('id') userId: string, @Body() updateData: any) {
-    return this.userService.updateUser(userId, updateData);
-  }
-
-  @Delete('users/:id')
-  @HasPermission('user:delete')
-  async deleteUser(@Param('id') userId: string) {
-    return this.userService.deleteUser(userId);
-  }
-}
+await app.listen(3000);
 ```
 
-### Role and Permission Management
+The protocol endpoints **cannot** be a Nest controller: `oidc-provider` is a Koa app that reads the raw request stream, and middleware registered through `configure(consumer)` runs after Nest's body parser has already consumed it. Mounting from `main.ts` puts the provider ahead of the parser.
+
+`mountMemberBaseOidcProvider` registers its middleware **without** a mount path on purpose. `app.use(path, handler)` makes Express strip the path and then put it back before the next layer, which would leave Nest matching interaction routes against a path they are not registered under. Nest's global prefix is reapplied to passed-through interaction requests.
+
+Endpoints: `/oidc/.well-known/openid-configuration`, `/oidc/auth`, `/oidc/token`, `/oidc/me`, `/oidc/jwks`, `/oidc/session/end`. PKCE is required for every client. Tables created: `oidc_payloads`, `oidc_clients`.
+
+### Client Registration
+
+`OidcAdminController` is registered at `/oidc-clients` and guarded by your own Casbin policy via `@AllowActions([['OidcClient', 'read' | 'write']])`.
+
+```bash
+curl -X POST https://idp.example.com/oidc-clients \
+  -H 'content-type: application/json' -H "authorization: Bearer $ADMIN_TOKEN" \
+  -d '{"name":"Reporting","redirectUris":["https://reporting.example.com/cb"],"skipConsent":true}'
+# => { clientId, clientSecret, ... }   secret returned exactly once
+```
+
+`skipConsent: true` suits a first-party client. Leave it `false` for anything third-party so the member is actually asked to authorize the release of claims.
+
+### The Interaction API
+
+This package is a backend module: the application owns the login and consent **pages and their URLs**, and the module exposes the API that resolves the interaction. All paths are relative to `/<routePrefix>/interaction/:uid`.
+
+| Method | Path | Body | Purpose |
+| ------ | ------------------ | --------------------------------------- | ----------------------------------------------- |
+| `GET` | *(the uid itself)* | — | Entry point; resolves or redirects to your page |
+| `GET` | `/details` | — | Everything the page needs to render |
+| `POST` | `/login` | `{ account, password, channel? }` | Verify credentials and resolve the prompt |
+| `POST` | `/session` | — | Resolve it from an existing member-base session |
+| `POST` | `/consent` | `{ scopes?, claims?, resourceScopes? }` | Record the grant |
+| `POST` | `/abort` | `{ errorDescription? }` | Refuse; client is told `access_denied` |
+
+Every route lives under `interaction/:uid` because `oidc-provider` scopes the `_interaction` cookie to the path it redirected to, and **that cookie — not the uid in the path — identifies the interaction**. Call with `credentials: 'include'`; the cookie is `SameSite=Lax`, so the page must share a registrable domain with the issuer unless you override `advanced.cookies.short.sameSite`.
+
+The POST endpoints negotiate their response by `Accept`:
+
+| Caller | `Accept` | Response |
+| ----------------------- | ------------------------- | ----------------------- |
+| `fetch` / `axios` | `*/*`, `application/json` | `200 { redirectTo }` |
+| Browser form submission | `text/html,...` | `303` to the same place |
+
+Failure statuses: `400` (bad channel, wrong prompt, no authenticated subject), `401` (`{ error: 'invalid_credentials' }` on login; `reauthentication_required` on `/session`), `403` (`/session` when `ssoBridge.acceptLocalSession` is off). The login failure is deliberately generic so the endpoint cannot be used as an account oracle.
+
+`GET /details` returns:
+
 ```typescript
-import { Injectable } from '@nestjs/common';
-import { MemberBaseAdminService } from '@rytass/member-base-nestjs-module';
-
-@Injectable()
-export class RoleManagementService {
-  constructor(private readonly adminService: MemberBaseAdminService) {}
-
-  async setupDefaultRoles() {
-    // Create administrator role
-    await this.adminService.addRoleForUser('admin@company.com', 'administrator');
-    await this.adminService.addPermissionForUser('admin@company.com', 'admin:*');
-
-    // Create manager role
-    await this.adminService.addRoleForUser('manager@company.com', 'manager');
-    await this.adminService.addPermissionForUser('manager@company.com', 'user:read');
-    await this.adminService.addPermissionForUser('manager@company.com', 'user:update');
-    await this.adminService.addPermissionForUser('manager@company.com', 'report:read');
-
-    // Create regular user role
-    await this.adminService.addRoleForUser('user@company.com', 'user');
-    await this.adminService.addPermissionForUser('user@company.com', 'profile:read');
-    await this.adminService.addPermissionForUser('user@company.com', 'profile:update');
-  }
-
-  async assignManagerRole(memberEmail: string, department: string) {
-    await this.adminService.addRoleForUser(memberEmail, 'manager', department);
-    
-    // Department-specific permissions
-    await this.adminService.addPermissionForUser(
-      memberEmail, 
-      `department:${department}:manage`,
-      department
-    );
-  }
-
-  async checkPermission(memberEmail: string, permission: string, domain?: string) {
-    return this.adminService.hasPermission(memberEmail, permission, domain);
-  }
+{
+  uid: string;
+  prompt: { name: 'login' | 'consent'; reasons: string[] };
+  client: { clientId: string; name: string } | null;   // never the secret
+  params: { clientId, scope, redirectUri, responseType, state, prompt, maxAge };
+  channels: string[];                                   // empty unless a login is pending
+  consent: { missingScopes: string[]; missingClaims: string[]; missingResourceScopes: Record<string, string[]> } | null;
+  session: { accountId: string; account: string | null } | null;
 }
 ```
 
-### OAuth Integration
+A page driving the flow:
+
 ```typescript
-import { Controller, Get, Req, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-import { OAuthService } from '@rytass/member-base-nestjs-module';
+const base = `/oidc/interaction/${uid}`;
 
-@Controller('auth')
-export class OAuthController {
-  constructor(private readonly oauthService: OAuthService) {}
+const details = await fetch(`${base}/details`, { credentials: 'include' }).then(r => r.json());
 
-  @Get('google')
-  @UseGuards(AuthGuard('google'))
-  async googleAuth() {
-    // Passport handles redirect to Google
-  }
+const res = await fetch(`${base}/login`, {
+  method: 'POST',
+  credentials: 'include',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ account, password }),
+});
 
-  @Get('google/callback')
-  @UseGuards(AuthGuard('google'))
-  async googleCallback(@Req() req: any) {
-    const { user } = req;
-    
-    // Check if user already exists
-    let member = await this.memberService.findByEmail(user.email);
-    
-    if (!member) {
-      // Create new member from OAuth profile
-      member = await this.memberService.createMember({
-        email: user.email,
-        profile: {
-          firstName: user.firstName,
-          lastName: user.lastName,
-          avatar: user.picture
-        },
-        isActive: true,
-        isEmailVerified: true // Google emails are pre-verified
-      });
-    }
+if (res.status === 401) return showError('Invalid account or password');
 
-    // Link OAuth account
-    await this.oauthService.linkOAuthAccount(member.id, 'google', {
-      providerId: user.providerId,
-      profileData: user
-    });
-
-    // Generate tokens
-    const tokens = await this.memberService.generateTokens(member);
-    
-    return {
-      member,
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken
-    };
-  }
-
-  @Get('facebook')
-  @UseGuards(AuthGuard('facebook'))
-  async facebookAuth() {
-    // Facebook OAuth flow
-  }
-
-  @Get('facebook/callback')
-  @UseGuards(AuthGuard('facebook'))
-  async facebookCallback(@Req() req: any) {
-    // Handle Facebook OAuth callback
-    return this.handleOAuthCallback(req.user, 'facebook');
-  }
-}
+location.assign((await res.json()).redirectTo);
 ```
 
-### GraphQL Integration
+Consent posts to `/consent`; an empty body grants everything the prompt lists, while naming `scopes` / `claims` / `resourceScopes` narrows the grant to the **intersection** of what was requested and what was chosen. All three kinds of outstanding request are granted together and an existing grant is extended rather than replaced — granting only the scope would leave claims outstanding and the prompt would fire again, producing a redirect loop.
+
+If the page runs its own login flow, `POST /session` closes the interaction from the member-base session it established. A session whose `authTime` is later than the interaction's issue time proves the member authenticated during this flow and therefore satisfies `prompt=login` and `max_age`; anything older falls back to the ordinary skip rules.
+
+### Interaction Options and Fallbacks
+
+Resolution order is `loginPageUrl` -> `renderLogin` -> built-in page (which logs a warning), and the same for consent.
+
 ```typescript
-import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
-import { 
-  BaseMemberDto, 
-  TokenPairDto, 
-  CasbinGuard,
-  HasPermission,
-  MemberId 
-} from '@rytass/member-base-nestjs-module';
-
-@Resolver(() => BaseMemberDto)
-export class MemberResolver {
-  constructor(private readonly memberService: MemberBaseService) {}
-
-  @Query(() => BaseMemberDto)
-  @UseGuards(CasbinGuard)
-  @HasPermission('profile:read')
-  async me(@MemberId() memberId: string) {
-    return this.memberService.findById(memberId);
-  }
-
-  @Mutation(() => TokenPairDto)
-  async login(
-    @Args('email') email: string,
-    @Args('password') password: string
-  ) {
-    const result = await this.memberService.validateMember(email, password);
-    
-    if (result.success) {
-      return this.memberService.generateTokens(result.member);
-    }
-    
-    throw new Error('Invalid credentials');
-  }
-
-  @Mutation(() => BaseMemberDto)
-  async register(
-    @Args('email') email: string,
-    @Args('password') password: string,
-    @Args('profile') profile: any
-  ) {
-    return this.memberService.createMember({
-      email,
-      password,
-      profile,
-      roles: ['user']
-    });
-  }
+interaction: {
+  loginPageUrl: '/sign-in',                    // string: uid, prompt, client_id (and error) appended
+  consentPageUrl: ({ uid, clientId, params }) => `/authorize?uid=${uid}`,   // or a function
+  renderLogin: ({ uid, channels, error, submitUrl }) => '<form ...>',
+  renderConsent: ({ clientName, missingScopes, submitUrl, abortUrl }) => '<form ...>',
+  allowedChannels: ['ldap', 'password'],
+  autoConsent: clientId => clientId.startsWith('first-party-'),  // default: client's skipConsent column
 }
 ```
 
-## Security Features
+Exported helpers and types: `renderDefaultLoginPage`, `renderDefaultConsentPage`, `escapeHtml`, `OidcInteractionDetailsView`, `OidcConsentBody`, `OidcAbortBody`, `OidcInteractionPageUrl`, `OidcInteractionPageParams`, `OidcLoginRenderParams`, `OidcConsentRenderParams`, `OidcPromptDetails`.
 
-### Password Security
-- **Argon2 Hashing**: Industry-standard password hashing
-- **Password History**: Prevent password reuse
-- **Password Policies**: Configurable complexity requirements
-- **Password Expiration**: Optional password rotation policies
+### Claims and Session Bridging
 
-### Session Management
-- **JWT Tokens**: Stateless authentication with secure tokens
-- **Refresh Tokens**: Long-term session management
-- **Token Blacklisting**: Revoke compromised tokens
-- **Multi-device Support**: Manage multiple active sessions
+`findAccount` publishes identity claims only — **no roles are emitted**. The issuer answers who a subject is; what that subject may do is each service provider's decision, made against data it controls rather than a claim frozen into a token whose lifetime it cannot influence.
 
-### Access Control
-- **RBAC with Casbin**: Policy-based access control
-- **Domain Support**: Multi-tenant permission isolation
-- **Dynamic Permissions**: Runtime permission checking
-- **Audit Trail**: Complete access and permission history
+```typescript
+claims: {
+  extra: async member => ({ name: member.name, email: member.email }),
+  additionalScopes: ['reports'],
+  scopeClaims: { reports: ['department'] },
+}
+```
+
+The SSO bridge (on by default, requires `cookieMode: true`) issues member-base cookies after an interaction login, lets an existing member-base session satisfy a login prompt, and clears both on logout. `prompt=login` and `max_age` are always honoured.
+
+Other provider options: `ttl`, `purgeIntervalSeconds` (expired-payload sweep; `0` disables and you drive `OidcMaintenanceService.purgeExpired()` yourself), `advanced` (merged last into the `oidc-provider` configuration).
+
+Note: `oidc-provider` is ESM-only and is loaded through an opaque dynamic import, so bundlers cannot see it and it will not appear in a generated `package.json` (Nx `generatePackageJson`). List it in your application's own dependencies.
 
 ## Database Schema
 
-### Core Entities
-- **BaseMember**: Primary member entity with profile information
-- **MemberLoginLog**: Login attempt and session tracking
-- **MemberOAuthRecord**: OAuth account linking
-- **MemberPasswordHistory**: Password change history
+| Table | Created by |
+| ------------------------------- | ------------------------------- |
+| `members` (+ your subclass) | package root, always |
+| `member_login_logs` | package root, always |
+| `member_password_histories` | package root, always |
+| `member_oauth_records` | package root, always |
+| `casbin_rule` | `casbinAdapterOptions` |
+| `oidc_payloads`, `oidc_clients` | importing `/oidc-provider` only |
 
-### Relationships
-- One-to-many: Member to LoginLogs, OAuthRecords, PasswordHistory
-- Many-to-many: Member to Roles (via Casbin)
-- Configurable: Custom profile extensions
+Entities: `BaseMemberEntity`, `MemberLoginLogEntity`, `MemberPasswordHistoryEntity`, `MemberOAuthRecordEntity`, `OidcPayloadEntity`, `OidcClientEntity`.
 
-## Configuration Options
+`MemberExternalIdentityEntity` / `MemberExternalIdentityRepo` are **aliases** for `MemberOAuthRecordEntity` / `MemberOAuthRecordRepo`, not a separate table. The binding table was introduced for OAuth2, but its shape — a channel plus an identifier owned by that channel — applies to every external source, so the aliases let LDAP and OIDC call sites read correctly without a migration. `member_oauth_records` carries a unique index on `(channel, channelIdentifier)`.
 
-### Security Settings
-```typescript
-interface MemberBaseModuleOptions {
-  jwtSecret: string;
-  jwtExpiresIn: string;
-  refreshTokenExpiresIn: string;
-  passwordMinLength: number;
-  passwordRequireSpecialChar: boolean;
-  passwordHistoryCount: number;
-  maxFailedAttempts: number;
-  lockoutDuration: number;
-}
-```
+`MemberLoginLogEntity.ip` is a PostgreSQL `cidr` column, so this package requires PostgreSQL.
 
-### OAuth Configuration
-```typescript
-interface OAuthProviderConfig {
-  clientId: string;
-  clientSecret: string;
-  callbackUrl: string;
-  scope?: string[];
-  profileFields?: string[];
-}
-```
+## Security Notes
+
+- Argon2 password hashing, optional password history and age limits.
+- Login failure lockout with optional auto-unlock.
+- Casbin RBAC with domain support; the enforcer is exported as `CASBIN_ENFORCER`.
+- `authTime` is issued on tokens and is what makes OIDC `max_age` / `prompt=login` enforceable.
+- Omitting `jwks` generates an ephemeral signing key with a loud warning: every restart invalidates issued tokens and multiple instances sign with different keys. Development only.
 
 ## Dependencies
 
-- **@nestjs/typeorm**: Database ORM integration
-- **jsonwebtoken**: JWT token management
-- **argon2**: Secure password hashing
-- **casbin**: Role-based access control
-- **generate-password**: Secure password generation
-- **luxon**: Date/time handling
-
-This comprehensive member system provides enterprise-grade authentication, authorization, and user management capabilities for NestJS applications, with a focus on security, scalability, and developer experience.
+`@nestjs/typeorm`, `typeorm`, `jsonwebtoken`, `argon2`, `casbin`, `generate-password`, `luxon`, `axios`.

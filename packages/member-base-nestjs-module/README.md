@@ -39,7 +39,7 @@ npm install @rytass/member-base-nestjs-module
 Required peer dependencies:
 
 ```bash
-npm install @nestjs/common @nestjs/typeorm typeorm argon2 jsonwebtoken
+npm install @nestjs/common @nestjs/core @nestjs/typeorm typeorm argon2 jsonwebtoken
 ```
 
 Optional peer dependencies — install only the ones you use:
@@ -560,6 +560,11 @@ import { MemberBaseOidcProviderModule } from '@rytass/member-base-nestjs-module/
       issuer: 'https://idp.example.com/oidc',
       jwks: JSON.parse(process.env.OIDC_JWKS),
       cookieKeys: [process.env.OIDC_COOKIE_KEY],
+      // Your pages. The module redirects here and exposes an API they drive.
+      interaction: {
+        loginPageUrl: '/sign-in',
+        consentPageUrl: '/authorize',
+      },
     }),
   ],
 })
@@ -586,6 +591,8 @@ curl -X POST https://idp.example.com/oidc-clients \
   -d '{"name":"Reporting","redirectUris":["https://reporting.example.com/auth/callback"],"skipConsent":true}'
 # => { "clientId": "...", "clientSecret": "...", ... }  secret shown once
 ```
+
+`skipConsent: true` suits a first-party client. Leave it false for anything third-party and the member is asked to authorize the release of claims — see [The interaction API](#the-interaction-api).
 
 This application remains a normal resource server at the same time: its own guarded endpoints keep working, and a member who signs in at the interaction page is also signed in locally (see [Session bridging](#session-bridging)).
 
@@ -629,6 +636,9 @@ import { MemberBaseOidcProviderModule } from '@rytass/member-base-nestjs-module/
         // Directory first; the local password provider stays available for
         // break-glass accounts when the directory is unreachable.
         allowedChannels: ['ldap', 'password'],
+
+        loginPageUrl: '/sign-in',
+        consentPageUrl: '/authorize',
       },
 
       claims: {
@@ -687,22 +697,25 @@ Every pre-existing option (token secrets and lifetimes, password policy, Casbin,
 
 ### `MemberBaseOidcProviderModule` options
 
-| Option | Type | Default | Purpose |
-| ------------------------ | ------------------------- | ---------------- | ------------------------------------------ |
-| `issuer` | `string` | required | Issuer identifier; must match the public URL |
-| `jwks` | `{ keys: [] }` | ephemeral + warn | Signing keys; required outside development |
-| `cookieKeys` | `string[]` | random | Keys protecting the provider's cookies |
-| `routePrefix` | `string` | `'oidc'` | Path the endpoints are mounted on |
-| `interaction.renderLogin` | `(params) => string` | built-in page | Your own login page |
-| `interaction.allowedChannels` | `string[]` | all credential channels | Which sources the login form may use |
-| `interaction.autoConsent` | `boolean \| (clientId) => boolean` | client's `skipConsent` | Skip the consent step |
-| `claims.extra` | `(member) => object` | — | Additional identity claims |
-| `claims.additionalScopes` | `string[]` | — | Extra accepted scopes |
-| `claims.scopeClaims` | `Record<string, string[]>` | — | Which claims each scope releases |
-| `ssoBridge.*` | see [Session bridging](#session-bridging) | all enabled | Local/issuer session interop |
-| `ttl` | `Partial<Record<...>>` | 1h access, 14d refresh | Token lifetimes |
-| `purgeIntervalSeconds` | `number` | `3600` | Expired payload sweep; `0` disables |
-| `advanced` | `Record<string, unknown>` | — | Merged last into oidc-provider config |
+| Option                        | Type                                      | Default                | Purpose                                                          |
+| ----------------------------- | ----------------------------------------- | ---------------------- | ---------------------------------------------------------------- |
+| `issuer`                      | `string`                                  | required               | Issuer identifier; must match the public URL                     |
+| `jwks`                        | `{ keys: [] }`                            | ephemeral + warn       | Signing keys; required outside development                       |
+| `cookieKeys`                  | `string[]`                                | random                 | Keys protecting the provider's cookies                           |
+| `routePrefix`                 | `string`                                  | `'oidc'`               | Path the endpoints are mounted on                                |
+| `interaction.loginPageUrl`    | `string \| (params) => string`            | built-in page          | Your own login page; the browser is redirected here              |
+| `interaction.consentPageUrl`  | `string \| (params) => string`            | built-in page          | Your own consent page                                            |
+| `interaction.renderLogin`     | `(params) => string`                      | built-in page          | Render login HTML in-process; ignored when `loginPageUrl` is set |
+| `interaction.renderConsent`   | `(params) => string`                      | built-in page          | Render consent HTML in-process; ignored when `consentPageUrl` is set |
+| `interaction.allowedChannels` | `string[]`                                | all credential channels | Which sources the login form may use                            |
+| `interaction.autoConsent`     | `boolean \| (clientId) => boolean`        | client's `skipConsent` | Skip the consent step entirely                                   |
+| `claims.extra`                | `(member) => object`                      | —                      | Additional identity claims                                       |
+| `claims.additionalScopes`     | `string[]`                                | —                      | Extra accepted scopes                                            |
+| `claims.scopeClaims`          | `Record<string, string[]>`                | —                      | Which claims each scope releases                                 |
+| `ssoBridge.*`                 | see [Session bridging](#session-bridging) | all enabled            | Local/issuer session interop                                     |
+| `ttl`                         | `Partial<Record<...>>`                    | 1h access, 14d refresh | Token lifetimes                                                  |
+| `purgeIntervalSeconds`        | `number`                                  | `3600`                 | Expired payload sweep; `0` disables                              |
+| `advanced`                    | `Record<string, unknown>`                 | —                      | Merged last into oidc-provider config                            |
 
 ### Which tables exist
 
@@ -828,6 +841,13 @@ import { MemberBaseOidcProviderModule } from '@rytass/member-base-nestjs-module/
       issuer: 'https://idp.example.com/oidc',
       jwks: JSON.parse(process.env.OIDC_JWKS),
       cookieKeys: [process.env.OIDC_COOKIE_KEY],
+
+      // Your own pages. Omitting them serves a built-in development page and
+      // logs a warning — see The interaction API below.
+      interaction: {
+        loginPageUrl: '/sign-in',
+        consentPageUrl: '/authorize',
+      },
     }),
   ],
 })
@@ -853,10 +873,245 @@ await app.listen(3000);
 | Endpoint | Protection |
 | --- | --- |
 | `/oidc/.well-known/openid-configuration`, `/auth`, `/token`, `/me`, `/jwks`, `/session/end` | Public (mounted middleware) |
-| `/oidc/interaction/:uid`, `/oidc/interaction/:uid/login` | `@IsPublic()` |
+| `/oidc/interaction/:uid` and everything under it | `@IsPublic()` |
 | `/oidc-clients` (registration CRUD) | `@AllowActions([['OidcClient', 'read' \| 'write']])` |
 
 Client administration runs through **your own Casbin policy** — the same rules that govern every other resource decide who may register a service provider. The global guard stays on; nothing has to be disabled.
+
+The middleware is registered without a mount path. `app.use(path, handler)` would make Express strip the path for the handler and then put it back before the request reaches Nest's router, which registers the interaction routes without the prefix — every interaction would 404. Stripping it inside the middleware makes the rewrite outlive it, and Nest's global prefix (if any) is put back on the way through.
+
+### The interaction API
+
+This package is a backend module. The intended arrangement is that **your application owns the login and consent pages and their URLs**; the module redirects the browser to them and exposes the API that resolves the interaction.
+
+```
+SP ---> GET /oidc/auth ---> 303 /oidc/interaction/{uid}
+                                      |  this module
+                 +--------------------+--------------------+
+                 |                    |                    |
+           SSO bridge           auto consent        303 to your page
+           resolves it          resolves it         /sign-in?uid=..&prompt=..
+                                                             |
+                              +------------------------------+ your page calls
+                              |                              |
+                  GET .../{uid}/details          POST .../{uid}/login
+                  (what to render)               POST .../{uid}/consent
+                                                 POST .../{uid}/session
+                                                 POST .../{uid}/abort
+                                                             |
+                                                             v  200 { redirectTo }
+                                                  location.assign(redirectTo)
+```
+
+All paths below are relative to `/<routePrefix>/interaction/:uid` (default prefix `oidc`).
+
+| Method | Path               | Body                                    | Purpose                                         |
+| ------ | ------------------ | --------------------------------------- | ----------------------------------------------- |
+| `GET`  | *(the uid itself)* | —                                       | Entry point; resolves or redirects to your page |
+| `GET`  | `/details`         | —                                       | Everything the page needs to render             |
+| `POST` | `/login`           | `{ account, password, channel? }`       | Verify credentials and resolve the prompt       |
+| `POST` | `/session`         | —                                       | Resolve it from an existing member-base session |
+| `POST` | `/consent`         | `{ scopes?, claims?, resourceScopes? }` | Record the grant                                |
+| `POST` | `/abort`           | `{ errorDescription? }`                 | Refuse; the client is told `access_denied`      |
+
+Every route lives under `interaction/:uid` because `oidc-provider` scopes the `_interaction` cookie to the path it redirected to, and **that cookie — not the uid in the path — is what identifies the interaction**. Two consequences worth knowing before you deploy:
+
+- Your page must call these endpoints with credentials included (`fetch(url, { credentials: 'include' })`).
+- The cookie is `SameSite=Lax`, so the page has to be on the same registrable domain as the issuer (`app.example.com` and `idp.example.com` are fine). For a genuinely different domain, set `advanced: { cookies: { keys: [...], short: { sameSite: 'none', secure: true } } }` and enable CORS with credentials. `advanced` is merged last, so repeat `keys` when you override `cookies`.
+- A request without that cookie — a page opened directly, or an interaction that has expired (`ttl.Interaction`, one hour by default) — is rejected by `oidc-provider` before any handler here runs. Treat it as "start again from `/oidc/auth`" rather than as a recoverable error.
+
+#### Response shape
+
+The POST endpoints answer according to the request's `Accept` header, so one endpoint serves both a fetch-driven page and a plain HTML form:
+
+| Caller                  | `Accept`                  | Response                |
+| ----------------------- | ------------------------- | ----------------------- |
+| `fetch` / `axios`       | `*/*`, `application/json` | `200 { redirectTo }`    |
+| Browser form submission | `text/html,...`           | `303` to the same place |
+
+`*/*` deliberately does not count as a request for HTML: an API client wants the location as data, since a redirect it cannot read is no use to it. The success status is explicitly `200` rather than Nest's default `201` for a POST, which would claim a resource was created at a `Location` the response does not carry.
+
+Failures are reported as status codes, never as a redirect that would read as success:
+
+| Status | Endpoint   | Meaning                                                                             |
+| ------ | ---------- | ----------------------------------------------------------------------------------- |
+| `400`  | `/login`   | `channel` is not in `interaction.allowedChannels`                                     |
+| `401`  | `/login`   | `{ error: 'invalid_credentials', message: 'Invalid account or password' }`            |
+| `400`  | `/consent` | The interaction awaits a different prompt, or carries no authenticated subject        |
+| `403`  | `/session` | `ssoBridge.acceptLocalSession` is off                                                 |
+| `400`  | `/session` | The interaction awaits consent, not login                                             |
+| `401`  | `/session` | No member-base session, its member is gone, or `reauthentication_required`            |
+
+The login failure is deliberately generic. Distinguishing "no such account" from "wrong password" would turn the endpoint into an account oracle, so the same 401 is returned for both. A browser form gets the page again with the message rendered instead.
+
+#### What `/details` returns
+
+```ts
+{
+  uid: string;
+  prompt: { name: 'login' | 'consent'; reasons: string[] };
+  client: { clientId: string; name: string } | null;
+  params: {
+    clientId: string;
+    scope: string | null;
+    redirectUri: string | null;
+    responseType: string | null;
+    state: string | null;
+    prompt: string | null;      // what the client asked for, e.g. 'login'
+    maxAge: number | null;
+  };
+  channels: string[];           // credential channels; empty unless a login is pending
+  consent: {                    // null unless a consent is pending
+    missingScopes: string[];
+    missingClaims: string[];
+    missingResourceScopes: Record<string, string[]>;
+  } | null;
+  session: { accountId: string; account: string | null } | null;
+}
+```
+
+The client is reported by id and name only. The registration row carries a secret and this response is assembled field by field rather than spread, so the secret can never reach a page.
+
+#### Where the browser is sent
+
+`loginPageUrl` and `consentPageUrl` accept a string or a function.
+
+A **string** keeps whatever query it already carries and gains the three values a page cannot work without — plus `error` when the browser is being sent back after a failed submission:
+
+```ts
+interaction: { loginPageUrl: '/sign-in?theme=dark' }
+// => 303 /sign-in?theme=dark&uid=<uid>&prompt=login&client_id=reporting
+```
+
+A relative URL stays relative and an absolute one stays absolute; `https://app.example.com/sign-in` is redirected to verbatim with the same parameters appended.
+
+A **function** receives the whole interaction and decides for itself:
+
+```ts
+interaction: {
+  loginPageUrl: ({ uid, promptName, promptReasons, clientId, params, error }) =>
+    params.prompt === 'login' ? `/sign-in/step-up?uid=${uid}` : `/sign-in?uid=${uid}`,
+}
+```
+
+| Field           | Type                      | Notes                                                        |
+| --------------- | ------------------------- | ------------------------------------------------------------ |
+| `uid`           | `string`                  | The interaction identifier                                   |
+| `promptName`    | `string`                  | `'login'` or `'consent'`                                     |
+| `promptReasons` | `readonly string[]`       | Why the prompt fired, from `oidc-provider`                   |
+| `clientId`      | `string`                  | The requesting service provider                              |
+| `params`        | `Record<string, unknown>` | The raw authorization request, including `prompt`, `max_age` |
+| `error`         | `string \| undefined`     | Set only when returning after a failed login                 |
+
+#### A page driving the flow
+
+```tsx
+// /sign-in?uid=...&prompt=login&client_id=...
+const uid = searchParams.get('uid');
+const base = `/oidc/interaction/${uid}`;
+
+const details = await fetch(`${base}/details`, { credentials: 'include' }).then(r => r.json());
+// => { prompt: { name: 'login' }, client: { name: 'Reporting' }, channels: ['password'], ... }
+
+const res = await fetch(`${base}/login`, {
+  method: 'POST',
+  credentials: 'include',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ account, password }),
+});
+
+if (res.status === 401) return setError('Invalid account or password');
+
+const { redirectTo } = await res.json();
+
+location.assign(redirectTo);
+```
+
+The consent page is the same shape, reading `details.consent` and posting to `/consent` (or `/abort` on refusal):
+
+```ts
+// details.consent => { missingScopes, missingClaims, missingResourceScopes }
+await fetch(`${base}/consent`, { method: 'POST', credentials: 'include', headers, body: JSON.stringify({}) });
+```
+
+An empty body grants everything the prompt lists. Naming `scopes` / `claims` / `resourceScopes` narrows the grant to the **intersection** of what was requested and what was chosen, so a page can never grant something the client did not ask for. Leaving out something the client requires means the prompt fires again on the retry, so only narrow deliberately.
+
+#### When your login page runs its own flow
+
+If the page authenticates by itself — a social sign-in, or your own GraphQL mutation — it does not need `/login`. Once it has established a member-base session, `POST .../session` closes the interaction:
+
+```ts
+await fetch(`${base}/session`, { method: 'POST', credentials: 'include' }).then(r => r.json());
+```
+
+A session whose `authTime` is later than the interaction's own issue time proves the member authenticated *during this flow*, which is exactly what `prompt=login` and `max_age` ask for. An older session falls back to the ordinary skip rules, so the relying party's demand for a fresh login is never silently voided. Without this endpoint the only route back is a full-page redirect to `/oidc/interaction/{uid}`, which loops forever under `prompt=login`.
+
+#### Rendering HTML in-process instead
+
+Serving the page from a URL is the intended arrangement, but `renderLogin` / `renderConsent` return HTML directly when that suits better. Each is used only when the matching `*PageUrl` is absent, so the resolution order is:
+
+```
+loginPageUrl    ->  renderLogin    ->  built-in login page    (+ warning)
+consentPageUrl  ->  renderConsent  ->  built-in consent page  (+ warning)
+```
+
+Both receive the absolute path to post to, so the returned HTML never has to guess how a relative action resolves:
+
+```ts
+interaction: {
+  renderLogin: ({ uid, channels, error, submitUrl }) => `
+    <form method="post" action="${submitUrl}">
+      ${error ? `<p>${error}</p>` : ''}
+      <input name="account"><input name="password" type="password">
+      <button>Sign in</button>
+    </form>`,
+
+  renderConsent: ({ uid, clientId, clientName, missingScopes, missingClaims, missingResourceScopes, submitUrl, abortUrl }) => `
+    <h1>${clientName} wants access</h1>
+    <ul>${missingScopes.map(s => `<li>${s}</li>`).join('')}</ul>
+    <form method="post" action="${abortUrl}"><button>Deny</button></form>
+    <form method="post" action="${submitUrl}"><button>Allow</button></form>`,
+}
+```
+
+A form submitted this way arrives with `Accept: text/html` and therefore gets a `303`, so no JavaScript is required.
+
+#### The built-in pages
+
+When neither option is configured, a plain built-in page is served and a warning is logged the first time it is reached. They exist so the endpoint is usable the moment it is mounted, and are **not** intended for production — no branding, no translations. Consent falling back to a page is a change from earlier versions, which answered `400` and simply failed the authorization.
+
+Both are exported if you want to start from them:
+
+```ts
+import { renderDefaultLoginPage, renderDefaultConsentPage, escapeHtml } from '@rytass/member-base-nestjs-module/oidc-provider';
+```
+
+#### Types
+
+Everything the interaction layer exchanges is exported from the same entry point, so a page or a custom renderer can be typed against it rather than against `unknown`:
+
+| Type                         | Describes                                                          |
+| ---------------------------- | ------------------------------------------------------------------ |
+| `OidcInteractionDetailsView` | The `GET /details` response                                        |
+| `OidcConsentBody`            | The `POST /consent` body                                           |
+| `OidcAbortBody`              | The `POST /abort` body                                             |
+| `OidcInteractionPageUrl`     | `loginPageUrl` / `consentPageUrl` — a string or a function         |
+| `OidcInteractionPageParams`  | What the function form of those options receives                   |
+| `OidcLoginRenderParams`      | What `renderLogin` receives                                        |
+| `OidcConsentRenderParams`    | What `renderConsent` receives                                      |
+| `OidcPromptDetails`          | `missingOIDCScope` / `missingOIDCClaims` / `missingResourceScopes` |
+
+```ts
+import type {
+  OidcInteractionDetailsView,
+  OidcConsentBody,
+  OidcConsentRenderParams,
+} from '@rytass/member-base-nestjs-module/oidc-provider';
+
+const details: OidcInteractionDetailsView = await fetch(`${base}/details`, {
+  credentials: 'include',
+}).then(r => r.json());
+```
 
 ### Authorization stays with each service provider
 
@@ -876,6 +1131,7 @@ An application that is both an issuer and a resource server has two session conc
 | --- | --- |
 | Issuer to local | A successful interaction login also sets the member-base cookies |
 | Local to issuer | An existing member-base session satisfies the login prompt |
+| Local to issuer, on demand | `POST /oidc/interaction/:uid/session` closes the prompt from a session your own login flow established |
 | Logout | Clears both |
 
 Two request parameters are always honoured, because ignoring them would void the relying party's own security decision:
@@ -890,7 +1146,8 @@ Requires `cookieMode: true`; a redirect-based login cannot hand a header-bearer 
 - **JWKS**: omitting `jwks` generates an ephemeral key with a loud warning. Every restart invalidates issued tokens and multiple instances sign with different keys — development only.
 - **Bundlers cannot see this dependency.** `oidc-provider` is ESM-only and is loaded through an opaque dynamic import, so it will not appear in a generated `package.json` (Nx `generatePackageJson`). List it in your application's own dependencies; a missing install fails at boot with an explicit message rather than mysteriously at runtime.
 - **Payload sweep**: `oidc-provider` never deletes expired artefacts. A sweep runs hourly by default (`purgeIntervalSeconds`); set it to `0` and drive `OidcMaintenanceService.purgeExpired()` from your own scheduler.
-- **Consent**: defaults to each client's own `skipConsent` column, so a third-party client never has consent granted on its behalf. Override with `interaction.autoConsent`.
+- **Consent**: defaults to each client's own `skipConsent` column, so a third-party client never has consent granted on its behalf. Override with `interaction.autoConsent`. Anything not auto-consented goes to `interaction.consentPageUrl` — see [The interaction API](#the-interaction-api).
+- **Grants answer the whole prompt.** Scopes, claims and resource scopes are all granted together, and an existing grant is extended rather than replaced. Granting only the scope would leave the claims outstanding, the prompt would fire again on the retry, and the flow would become a redirect loop rather than a clean failure.
 - PKCE is required for every client.
 
 ## Authenticating Against an LDAP Directory
@@ -1088,6 +1345,20 @@ memberBaseService.signAccessToken(member, domain, { authTime: null });
 Refresh tokens issued before this release carry no `authTime`. Refreshing one leaves the claim absent rather than inventing a value, so checks that require a known authentication time fail closed.
 
 ## Upgrade Notes
+
+### The OIDC interaction layer is now API-first
+
+Four changes to `@rytass/member-base-nestjs-module/oidc-provider`. Full documentation in [The interaction API](#the-interaction-api).
+
+**The interaction routes are now actually reachable.** `mountMemberBaseOidcProvider` used to register its middleware with `app.use('/oidc', handler)`. Express strips a mount path for the handler and then **puts it back** before the request reaches the next layer, so Nest — which registers the interaction routes without the prefix — never matched `/oidc/interaction/:uid` and every interactive login answered `404`. The middleware is now registered without a mount path and strips the prefix itself, which makes the rewrite outlive it. Nest's global prefix, if you set one, is put back on the way through. Nothing in your application changes; the flow simply works.
+
+**Consent has a user-facing path.** Previously a client with `skipConsent: false` and no `autoConsent` override got `400 Consent is required for this client but no consent screen is configured` — third-party authorization could not complete at all. Now the member is sent to `interaction.consentPageUrl`, or to `renderConsent`, or to a built-in page. Set `consentPageUrl` before you register a third-party client.
+
+**Grants answer the whole prompt.** Consent used to grant only the requested scope. Claims and resource scopes are now granted too, and an existing grant is extended rather than replaced. A client requesting a claim outside the scope mapping previously re-triggered the consent prompt forever; that redirect loop is gone.
+
+**The POST endpoints negotiate their response.** `POST /oidc/interaction/:uid/login` answers `200 { redirectTo }` to an API client and `303` to a browser form. A page built on `renderLogin` with a plain `<form>` is unaffected — it sends `Accept: text/html` and still gets the redirect. `renderLogin`'s parameter object gained `submitUrl`; existing renderers that ignore it keep working, though the built-in page's form action was also corrected (a relative `interaction/<uid>/login` resolved to `/oidc/interaction/interaction/<uid>/login`), so a custom renderer that copied that pattern should switch to `submitUrl`.
+
+`@nestjs/core` is now declared as a peer dependency. It was always imported — by `MemberBaseModule` for `APP_GUARD` among others — just never declared, so any working installation already has it.
 
 ### Unique index on `member_oauth_records`
 
