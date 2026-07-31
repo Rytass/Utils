@@ -1,14 +1,83 @@
 import type { ModuleMetadata, Type } from '@nestjs/common';
 import type { BaseMemberEntity } from '../models/base-member.entity';
 
+/** What the redirect target is told about the interaction it has to resolve. */
+export interface OidcInteractionPageParams {
+  uid: string;
+  promptName: string;
+  promptReasons: readonly string[];
+  clientId: string;
+  /** The original authorization request parameters, notably `prompt` and `max_age`. */
+  params: Record<string, unknown>;
+  /** Set when the browser is being sent back after a failed submission. */
+  error?: string;
+}
+
+/**
+ * Where the browser is sent when an interaction needs the end user.
+ *
+ * A string is used as-is with `uid`, `prompt` and `client_id` appended to its
+ * query (any query it already carries is kept); a function is handed the whole
+ * of {@link OidcInteractionPageParams} and decides for itself.
+ */
+export type OidcInteractionPageUrl = string | ((params: OidcInteractionPageParams) => string);
+
+/** Everything the consent page needs to describe what is being asked for. */
+export interface OidcConsentRenderParams {
+  uid: string;
+  clientId: string;
+  clientName: string;
+  missingScopes: readonly string[];
+  missingClaims: readonly string[];
+  missingResourceScopes: Readonly<Record<string, readonly string[]>>;
+  /** Absolute path the approval must be posted to. */
+  submitUrl: string;
+  /** Absolute path a refusal must be posted to. */
+  abortUrl: string;
+}
+
+export interface OidcLoginRenderParams {
+  uid: string;
+  channels: readonly string[];
+  error?: string;
+  /** Absolute path the credentials must be posted to. */
+  submitUrl: string;
+}
+
+/**
+ * How the end user is asked to log in and to consent.
+ *
+ * This package is a backend module: the intended arrangement is that the
+ * application owns those two pages and their URLs, and drives the interaction
+ * through the JSON API under `/<routePrefix>/interaction/<uid>`. Rendering HTML
+ * in-process is the fallback, and the built-in pages are a development
+ * convenience that logs a warning when they are reached.
+ *
+ * Resolution order is `loginPageUrl` → `renderLogin` → built-in page, and the
+ * same for consent.
+ */
 export interface OidcInteractionOptions {
+  /** The application's own login page. Preferred over `renderLogin`. */
+  loginPageUrl?: OidcInteractionPageUrl;
+
+  /** The application's own consent page. Preferred over `renderConsent`. */
+  consentPageUrl?: OidcInteractionPageUrl;
+
   /**
-   * Render the login page. Receives the interaction uid, the channels the
-   * gateway has registered, and an error message on a retry.
+   * Render the login page in-process. Receives the interaction uid, the
+   * channels the gateway has registered, an error message on a retry, and the
+   * path the credentials have to be posted to.
    *
-   * A deliberately plain built-in page is used when omitted.
+   * Secondary to `loginPageUrl`, and ignored when that is set.
    */
-  renderLogin?: (params: { uid: string; channels: readonly string[]; error?: string }) => string;
+  renderLogin?: (params: OidcLoginRenderParams) => string;
+
+  /**
+   * Render the consent page in-process.
+   *
+   * Secondary to `consentPageUrl`, and ignored when that is set.
+   */
+  renderConsent?: (params: OidcConsentRenderParams) => string;
 
   /**
    * Which gateway channels the login form may authenticate against.

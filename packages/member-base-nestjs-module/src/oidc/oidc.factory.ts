@@ -4,12 +4,35 @@ import type { OidcAdapterConstructor } from './oidc-adapter';
 export interface OidcGrant {
   addOIDCScope(scope: string): void;
   addOIDCClaims(claims: string[]): void;
+  addResourceScope(indicator: string, scope: string): void;
   save(): Promise<string>;
+}
+
+export interface OidcGrantConstructor {
+  new (props: { accountId: string; clientId: string }): OidcGrant;
+  /** Resolves to undefined once the grant has expired. */
+  find(id: string): Promise<OidcGrant | undefined>;
+}
+
+/**
+ * What a consent prompt is still waiting on.
+ *
+ * Every key is optional because the prompt only carries what is actually
+ * outstanding; granting a subset of them leaves the rest missing and the
+ * prompt fires again.
+ */
+export interface OidcPromptDetails extends Record<string, unknown> {
+  missingOIDCScope?: string[];
+  missingOIDCClaims?: string[];
+  missingResourceScopes?: Record<string, string[]>;
 }
 
 export interface OidcInteractionDetails {
   uid: string;
-  prompt: { name: string; details: Record<string, unknown>; reasons?: string[] };
+  /** Issued-at of the interaction itself, in epoch seconds. */
+  iat: number;
+  exp: number;
+  prompt: { name: string; details: OidcPromptDetails; reasons?: string[] };
   params: Record<string, unknown>;
   session?: { accountId?: string };
   grantId?: string;
@@ -22,12 +45,32 @@ export interface OidcAccount {
 
 export type FindAccountFn = (ctx: unknown, sub: string) => Promise<OidcAccount | undefined>;
 
+export interface OidcInteractionResultOptions {
+  mergeWithLastSubmission?: boolean;
+}
+
 export interface OidcProviderLike {
   proxy: boolean;
   callback(): (req: unknown, res: unknown) => void;
   interactionDetails(req: unknown, res: unknown): Promise<OidcInteractionDetails>;
-  interactionFinished(req: unknown, res: unknown, result: Record<string, unknown>, options?: unknown): Promise<void>;
-  Grant: new (props: { accountId: string; clientId: string }) => OidcGrant;
+  interactionFinished(
+    req: unknown,
+    res: unknown,
+    result: Record<string, unknown>,
+    options?: OidcInteractionResultOptions,
+  ): Promise<void>;
+  /**
+   * Records the outcome and returns where the browser has to go next, without
+   * touching the response. interactionFinished is this plus a 303, which is no
+   * use to a caller that wants the location as data.
+   */
+  interactionResult(
+    req: unknown,
+    res: unknown,
+    result: Record<string, unknown>,
+    options?: OidcInteractionResultOptions,
+  ): Promise<string>;
+  Grant: OidcGrantConstructor;
 }
 
 type ProviderConstructor = new (issuer: string, configuration: Record<string, unknown>) => OidcProviderLike;

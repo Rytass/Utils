@@ -8,7 +8,12 @@ export { mountMemberBaseOidcProvider } from './oidc/mount-oidc-provider';
 
 export { OidcSsoBridge, type LocalSessionClaims } from './oidc/sso-bridge.service';
 export { OidcMaintenanceService } from './oidc/oidc-maintenance.service';
-export { OidcInteractionsController } from './oidc/interactions.controller';
+export {
+  OidcInteractionsController,
+  type OidcInteractionDetailsView,
+  type OidcConsentBody,
+  type OidcAbortBody,
+} from './oidc/interactions.controller';
 export { OidcAdminController, type OidcClientView, type UpsertOidcClientBody } from './oidc/oidc-admin.controller';
 
 export { OidcPayloadEntity, OidcPayloadRepo } from './oidc/models/oidc-payload.entity';
@@ -25,6 +30,8 @@ export {
 } from './oidc/oidc-adapter';
 
 export { renderDefaultLoginPage } from './oidc/default-login-page';
+export { renderDefaultConsentPage } from './oidc/default-consent-page';
+export { escapeHtml } from './oidc/escape-html';
 
 export { MEMBER_BASE_OIDC_OPTIONS, OIDC_PROVIDER_INSTANCE, OIDC_ROUTE_PREFIX } from './oidc/oidc.tokens';
 
@@ -33,6 +40,10 @@ export type {
   MemberBaseOidcProviderAsyncOptions,
   MemberBaseOidcProviderOptionsFactory,
   OidcInteractionOptions,
+  OidcInteractionPageParams,
+  OidcInteractionPageUrl,
+  OidcLoginRenderParams,
+  OidcConsentRenderParams,
   OidcClaimsOptions,
   OidcSsoBridgeOptions,
 } from './oidc/oidc-provider.options';
@@ -40,7 +51,10 @@ export type {
 export type {
   OidcProviderLike,
   OidcInteractionDetails,
+  OidcInteractionResultOptions,
+  OidcPromptDetails,
   OidcAccount,
   OidcGrant,
+  OidcGrantConstructor,
   FindAccountFn,
 } from './oidc/oidc.factory';

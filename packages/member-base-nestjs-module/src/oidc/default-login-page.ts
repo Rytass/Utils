@@ -1,36 +1,37 @@
-const escapeHtml = (value: string): string =>
-  value.replace(/[&<>"']/g, character => {
-    switch (character) {
-      case '&':
-        return '&amp;';
-      case '<':
-        return '&lt;';
-      case '>':
-        return '&gt;';
-      case '"':
-        return '&quot;';
-      default:
-        return '&#39;';
-    }
-  });
+import { escapeHtml } from './escape-html';
 
 /**
  * A deliberately plain, dependency-free login page.
  *
- * Applications are expected to supply their own via `interaction.renderLogin`;
- * this exists so the endpoint is usable the moment it is mounted rather than
- * requiring a template before it can be tried at all.
+ * This is a development convenience, not the intended arrangement: reaching it
+ * logs a warning. An application is expected to host its own page and point
+ * `interaction.loginPageUrl` at it, or — if it would rather render in-process —
+ * to supply `interaction.renderLogin`. The page exists so the endpoint is
+ * usable the moment it is mounted rather than requiring a template before it
+ * can be tried at all.
+ *
+ * The form posts as a normal browser navigation, so the submission carries
+ * `Accept: text/html` and the interaction endpoints answer it with a 303 rather
+ * than the JSON an API client gets.
  */
 export const renderDefaultLoginPage = ({
   uid,
   channels,
   error,
+  submitUrl,
 }: {
   uid: string;
   channels: readonly string[];
   error?: string;
+  /** default: resolved relative to the page's own URL. */
+  submitUrl?: string;
 }): string => {
   const banner = error ? `<p class="error">${escapeHtml(error)}</p>` : '';
+
+  // The page is served from `<prefix>/interaction/<uid>`, so a relative action
+  // resolves against `<prefix>/interaction/` — the uid has to be repeated and
+  // the `interaction` segment must not be.
+  const action = submitUrl ?? `${encodeURIComponent(uid)}/login`;
 
   const channelField =
     channels.length > 1
@@ -65,7 +66,7 @@ button:hover{background:#0167c1}
 </style>
 </head>
 <body>
-<form method="post" action="interaction/${encodeURIComponent(uid)}/login">
+<form method="post" action="${escapeHtml(action)}">
   <h1>Sign in</h1>
   ${banner}
   ${channelField}
