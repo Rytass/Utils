@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.6.1](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.6.0...@rytass/member-base-nestjs-module@0.6.1) (2026-07-31)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** declare @nestjs/core as a peer dependency ([ea2d631](https://github.com/Rytass/Utils/commit/ea2d631e7ba30dbb7e7e8780aa179b9ebfa0f188))
+- **member-base-nestjs-module:** make oidc interaction routes reachable ([6815a92](https://github.com/Rytass/Utils/commit/6815a92402a27b1867c5ae0c4d8ea4d1f2d84da2))
+- **member-base-nestjs-module:** pass oidc interaction requests through to nest ([c100695](https://github.com/Rytass/Utils/commit/c1006951aca1c6cd7382c486e385d0a792ee3263))
+
+### Features
+
+- **member-base-nestjs-module:** expose directory queries and an opt-in sync hook ([459b0d9](https://github.com/Rytass/Utils/commit/459b0d969c6db92655f2e570a7f2b2e372609dfb))
+- **member-base-nestjs-module:** give oidc consent a user-facing path ([1e2872c](https://github.com/Rytass/Utils/commit/1e2872c9dbb644188807bab96d31cb79aa244347))
+- **member-base-nestjs-module:** support ldaps tls options and per-call search base ([4de65ad](https://github.com/Rytass/Utils/commit/4de65ad010015f690da5d357cd2a0c94a544336e))
+
 # [0.6.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.5.0...@rytass/member-base-nestjs-module@0.6.0) (2026-07-30)
 
 ### Bug Fixes

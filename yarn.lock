@@ -8181,6 +8181,7 @@ __metadata:
     luxon: "npm:^3.7.2"
   peerDependencies:
     "@nestjs/common": "*"
+    "@nestjs/core": "*"
     "@nestjs/graphql": "*"
     "@nestjs/typeorm": "*"
     argon2: "*"
