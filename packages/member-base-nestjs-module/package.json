@@ -27,6 +27,7 @@
   },
   "peerDependencies": {
     "@nestjs/common": "*",
+    "@nestjs/core": "*",
     "@nestjs/graphql": "*",
     "@nestjs/typeorm": "*",
     "argon2": "*",
