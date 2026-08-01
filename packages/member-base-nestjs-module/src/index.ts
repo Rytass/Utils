@@ -20,7 +20,10 @@ export * from './models/member-login-log.entity';
 export * from './models/member-password-history.entity';
 export * from './models/member-oauth-record.entity';
 export * from './models/member-external-identity.entity';
-export { BaseMemberRepo as BASE_MEMBER_REPOSITORY } from './models/base-member.entity';
+// Both names, matching RESOLVED_MEMBER_REPO below: the alias was added without
+// withdrawing the original, and exporting only the alias made the original
+// unimportable from the package root.
+export { BaseMemberRepo, BaseMemberRepo as BASE_MEMBER_REPOSITORY } from './models/base-member.entity';
 
 // Tokens / Resolved Repositories
 export {
