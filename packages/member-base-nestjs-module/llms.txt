@@ -39,6 +39,15 @@ import { MemberBaseModule } from '@rytass/member-base-nestjs-module';
       refreshTokenExpiration: 60 * 60 * 24 * 90,
       cookieMode: false,                       // true puts tokens in cookies instead of headers
 
+      // Cookies. Every one is optional and shown at its default; the two
+      // commented-out ones have no static default and are derived per request.
+      accessTokenCookieName: 'access_token',
+      refreshTokenCookieName: 'refresh_token',
+      cookiePath: '/',
+      cookieSameSite: 'lax',
+      // cookieSecure: true,                   // omit: derived from the request
+      // cookieDomain: '.example.com',         // omit: host-only
+
       // Password policy
       passwordMinLength: 8,
       passwordShouldIncludeUppercase: true,
@@ -62,6 +71,26 @@ export class AppModule {}
 ```
 
 `MemberBaseModule.forRootAsync({ useFactory, inject })` is also available.
+
+### Cookie behaviour
+
+`cookieMode: true` makes the module **read** the access token from a cookie on every request. It **writes** cookies only where it completes a login itself — the OAuth2 callback and, when mounted, the OIDC session bridge. `memberBaseService.login(...)` returns a token pair and writes nothing.
+
+Each attribute has a working default, so no configuration is needed in either development or production:
+
+| Attribute  | Default                                                                              |
+| ---------- | ------------------------------------------------------------------------------------ |
+| `Secure`   | On when the request is https, and for every host except `localhost` / `127.0.0.1` / `::1` |
+| `Domain`   | Not emitted — host-only. Set `cookieDomain: '.example.com'` to share across subdomains |
+| `Path`     | `/`                                                                                   |
+| `Max-Age`  | From `accessTokenExpiration` / `refreshTokenExpiration`                                |
+| `HttpOnly` | Always on; not configurable                                                           |
+
+Enable `app.set('trust proxy', 1)` behind a reverse proxy so `X-Forwarded-Proto` settles `Secure`; otherwise a proxy that does not forward the original `Host` makes an https deployment look like localhost. `OidcSsoBridge` is exempt — it takes `Secure` from the OIDC `issuer`, which no proxy can rewrite.
+
+**Do not** override the `ACCESS_TOKEN_COOKIE_NAME` / `REFRESH_TOKEN_COOKIE_NAME` DI tokens from an application `providers` array — Nest resolves providers per module, so it has no effect and reports nothing. `CasbinGuard` and `OAuthCallbacksController` are declared by `MemberBaseModule` and resolve its own binding; `OidcSsoBridge` is declared in the OIDC module and reaches the same binding through the `@Global()` export, injecting it `@Optional()` with a hardcoded fallback to the default names. Use the options above.
+
+`resolveCookieOptions(req, config)` is exported for anything that writes its own cookies and wants the same behaviour.
 
 Note: without `casbinAdapterOptions` the enforcer is `null`, and with `enableGlobalGuard: true` every route that is not `@IsPublic()` or `@Authenticated()` is denied.
 

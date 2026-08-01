@@ -708,6 +708,23 @@ The subject is the local member id rather than the directory's identifier, so re
 | `oauth2Providers` | `OAuth2Provider[]` | `[]` | Google / Facebook / custom OAuth2 |
 | `oauth2ClientDestUrl` | `string` | `'/login'` | Where the OAuth2 callback redirects |
 
+### Cookie options
+
+Mainly used when `cookieMode: true`. Left unset, each attribute has a working default that needs no configuration in either development or production — derived from the request, except that the OIDC session bridge takes `Secure` from its configured `issuer` instead (see [Cookie Mode Usage Example](#cookie-mode-usage-example)).
+
+`accessTokenCookieName`, `cookiePath` and `cookieDomain` are also used by the OIDC session bridge when reading a session and when clearing one at logout, neither of which is gated on `cookieMode`.
+
+| Option                   | Type                             | Default                     | Purpose                                             |
+| ------------------------ | -------------------------------- | --------------------------- | --------------------------------------------------- |
+| `accessTokenCookieName`  | `string`                         | `'access_token'`            | Name of the access token cookie                     |
+| `refreshTokenCookieName` | `string`                         | `'refresh_token'`           | Name of the refresh token cookie                    |
+| `cookiePath`             | `string`                         | `'/'`                       | Path attribute                                      |
+| `cookieSameSite`         | `'lax' \| 'strict' \| 'none'`    | `'lax'`                     | SameSite attribute                                  |
+| `cookieSecure`           | `boolean`                        | `true`, except on loopback  | Secure attribute                                    |
+| `cookieDomain`           | `string`                         | absent (host-only)          | Domain attribute; set to share across subdomains    |
+
+`httpOnly` is not configurable and is always on: a session token readable from JavaScript is a session token one XSS away from being stolen.
+
 Every pre-existing option (token secrets and lifetimes, password policy, Casbin, cookie mode, default admin) is unchanged and documented in its own section below.
 
 ### `MemberBaseOidcProviderModule` options
@@ -1361,6 +1378,32 @@ Refresh tokens issued before this release carry no `authTime`. Refreshing one le
 
 ## Upgrade Notes
 
+### Cookie names and attributes are configurable
+
+`accessTokenCookieName`, `refreshTokenCookieName`, `cookiePath`, `cookieSameSite`, `cookieSecure` and `cookieDomain` are now module options — see [Cookie Mode Usage Example](#cookie-mode-usage-example). The cookie **names** are unchanged, and so is every attribute the OIDC session bridge writes. The OAuth callback cookies change.
+
+Overriding `ACCESS_TOKEN_COOKIE_NAME` / `REFRESH_TOKEN_COOKIE_NAME` from your own `providers` array — which this document used to recommend — never took effect for the module's own guard, controller and session bridge, and failed silently. If you have that override in place it has been doing nothing; move the value to the options.
+
+The OAuth callback passed only `httpOnly` and `secure: true` and let Express supply the rest. What it emits changes in three ways:
+
+| Attribute       | Before                        | After                                          |
+| --------------- | ----------------------------- | ---------------------------------------------- |
+| `Secure`        | Always                        | Derived from the request; `cookieSecure` overrides |
+| `Max-Age`       | Absent — a session cookie     | From `accessTokenExpiration` / `refreshTokenExpiration` |
+| `SameSite`      | Absent — browser default      | `Lax`, or `cookieSameSite`                      |
+| `Path`          | `/` (Express' default)        | `/`, or `cookiePath`                            |
+
+`Path` is unchanged in practice; it is written explicitly so `cookiePath` can move it and so clearing uses the same value.
+
+Two of these are worth a moment before you upgrade:
+
+- **The cookies are no longer session cookies.** They now outlive the browser window, for as long as the configured token lifetimes.
+- **`SameSite=Lax` is now explicit.** Chrome already applies Lax by default, but its default carries a two-minute grace period for top-level POSTs that an explicit `Lax` does not, and Safari and Firefox differ again. If your OAuth callback is reached by a cross-site POST, check it.
+
+**One case needs a look.** Because `Secure` is no longer unconditional, a deployment that terminates TLS at a proxy which neither sets `X-Forwarded-Proto` with `trust proxy` enabled **nor** forwards the original `Host` — nginx sends `Host: localhost` upstream whenever `proxy_set_header Host` is omitted — now looks like plain localhost to the application, and the OAuth callback cookie loses `Secure`. Set `cookieSecure: true` explicitly for that topology. The OIDC session bridge is unaffected: it takes the flag from its configured `issuer`, which describes the public URL and cannot be rewritten by a proxy.
+
+**One case needs a look before you upgrade.** Because the callback's `Secure` flag is no longer unconditional, a deployment that terminates TLS at a proxy which neither sets `X-Forwarded-Proto` with `trust proxy` enabled **nor** forwards the original `Host` — nginx sends `Host: localhost` upstream whenever `proxy_set_header Host` is omitted — now looks like plain localhost to the application, and the OAuth callback cookie loses `Secure`. Set `cookieSecure: true` explicitly for that topology. The OIDC session bridge is unaffected: it takes the flag from its configured `issuer`, which describes the public URL and cannot be rewritten by a proxy.
+
 ### The OIDC interaction layer is now API-first
 
 Four changes to `@rytass/member-base-nestjs-module/oidc-provider`. Full documentation in [The interaction API](#the-interaction-api).
@@ -1422,37 +1465,76 @@ Note: These changes are backward compatible (including type and token aliases). 
 
 ### Cookie Mode Usage Example
 
-Enable cookie mode and optionally override cookie names via providers. Authorization resolves tokens in this order: Authorization header (Bearer) first, then cookie.
+`cookieMode: true` makes the module read the access token from a cookie on every request. Authorization still resolves tokens header-first: `Authorization: Bearer` wins, then the cookie.
+
+Writing is narrower. The module sets cookies only where it completes a login itself — the OAuth2 callback at `/auth/callbacks/:channel`, and the OIDC session bridge when `/oidc-provider` is mounted. A login you drive yourself (`memberBaseService.login(...)`) returns a token pair and writes nothing; use the exported `resolveCookieOptions` to set it with the same attributes.
+
+Names and attributes are module options. Nothing here is required — each has a working default:
 
 ```ts
 // app.module.ts
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import {
-  MemberBaseModule,
-  ACCESS_TOKEN_COOKIE_NAME,
-  REFRESH_TOKEN_COOKIE_NAME,
-} from '@rytass/member-base-nestjs-module';
+import { MemberBaseModule } from '@rytass/member-base-nestjs-module';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot({ /* ... */ }),
     MemberBaseModule.forRoot({
       cookieMode: true,
-      // other options...
+
+      // All optional. Shown with the values they already default to, except
+      // the names, which are changed here to avoid colliding with another
+      // service on the same host.
+      accessTokenCookieName: 'sid',
+      refreshTokenCookieName: 'sid_r',
+      cookiePath: '/',
+      cookieSameSite: 'lax',
+      // cookieSecure — omitted: https gets Secure, localhost does not
+      // cookieDomain — omitted: host-only, so only this host can read it
     }),
-  ],
-  providers: [
-    // Optional: override cookie names
-    { provide: ACCESS_TOKEN_COOKIE_NAME, useValue: 'access_token' },
-    { provide: REFRESH_TOKEN_COOKIE_NAME, useValue: 'refresh_token' },
   ],
 })
 export class AppModule {}
 ```
 
-Recommended cookie attributes when setting cookies at the edge (reverse proxy or Nest):
-- `httpOnly: true` to prevent access from JavaScript
-- `secure: true` to limit to HTTPS
-- `sameSite: 'lax' | 'strict'` depending on your cross-site needs
-- `domain` and `path` as needed for your deployment
+An OAuth callback on `https://app.example.com` then answers with:
+
+```
+Set-Cookie: sid=...; Max-Age=900; Path=/; Expires=<GMT date>; HttpOnly; Secure; SameSite=Lax
+```
+
+and on `http://localhost:3000` the same cookie without `Secure`, so local development works without a separate configuration. (`Expires` is Express mirroring `Max-Age`; it is not separately configurable.)
+
+#### What each default adapts to
+
+| Attribute  | Adapts how                                                                                      |
+| ---------- | ----------------------------------------------------------------------------------------------- |
+| `Secure`   | Set when the request is https, and for every host except `localhost`, `127.0.0.1` and `::1`, where a Secure cookie is never stored over plain http |
+| `Domain`   | Not emitted, so the browser scopes the cookie to exactly the host that served the response      |
+| `Path`     | `/`, so one cookie serves every route                                                            |
+| `Max-Age`  | From `accessTokenExpiration` / `refreshTokenExpiration`                                          |
+| `HttpOnly` | Always on, not configurable                                                                      |
+
+Behind a reverse proxy, enable `app.set('trust proxy', 1)`. `X-Forwarded-Proto` then settles the `Secure` flag directly, which matters because a proxy that does not forward the original `Host` — nginx's default when `proxy_set_header Host` is omitted — otherwise makes an https deployment look like plain localhost. `cookieSecure: true` forces the flag if neither signal is available.
+
+The OIDC provider module is not subject to any of this: `OidcSsoBridge` takes `Secure` from the `issuer` it was configured with, since that describes the public URL and no proxy can rewrite it. `cookieSecure` still overrides it.
+
+#### Sharing a session across subdomains
+
+The default is host-only: a cookie set by `idp.example.com` is not sent to `app.example.com`. To share one session across siblings, name the parent explicitly:
+
+```ts
+MemberBaseModule.forRoot({ cookieMode: true, cookieDomain: '.example.com' });
+```
+
+This is opt-in on purpose. Every subdomain under that name can then read the session, including any hosted by someone else, so it should be a deliberate decision rather than a default.
+
+#### Do not override the DI tokens
+
+Earlier versions of this document suggested overriding `ACCESS_TOKEN_COOKIE_NAME` / `REFRESH_TOKEN_COOKIE_NAME` from the application's `providers` array. **That does not work**, because Nest resolves providers per module:
+
+- `CasbinGuard` and `OAuthCallbacksController` are declared by `MemberBaseModule` itself, so they resolve its own binding directly.
+- `OidcSsoBridge` is declared in the OIDC provider module and reaches the same binding through `MemberBaseModule`'s `@Global()` export — falling back to the default names if it is absent, since it injects them `@Optional()`.
+
+An application-level provider reaches only the application's own components. The module keeps writing the default names, with no error or warning to indicate it. Use the options above.
