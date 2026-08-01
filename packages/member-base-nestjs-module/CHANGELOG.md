@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.6.3](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.6.2...@rytass/member-base-nestjs-module@0.6.3) (2026-08-01)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** export BaseMemberRepo under its own name ([9c09c6a](https://github.com/Rytass/Utils/commit/9c09c6ad1146b60f914b5187ae9fcb92eed28045))
+- **member-base-nestjs-module:** read the real cookie in the graphql resolver ([e0846a3](https://github.com/Rytass/Utils/commit/e0846a37f3fbfba524bf0b3c69c720d88679f446))
+
 ## [0.6.2](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.6.1...@rytass/member-base-nestjs-module@0.6.2) (2026-08-01)
 
 ### Bug Fixes
