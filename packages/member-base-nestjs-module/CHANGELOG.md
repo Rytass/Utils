@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.6.2](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.6.1...@rytass/member-base-nestjs-module@0.6.2) (2026-08-01)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** stop oauth callback cookies breaking local http ([359767b](https://github.com/Rytass/Utils/commit/359767b8ed13d2f4558a4cfb84e995cd411f17ca))
+
+### Features
+
+- **member-base-nestjs-module:** make session cookie names configurable ([cd2789b](https://github.com/Rytass/Utils/commit/cd2789b95b9715e34467448ccf76cf12300720ee))
+
 ## [0.6.1](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.6.0...@rytass/member-base-nestjs-module@0.6.1) (2026-07-31)
 
 ### Bug Fixes
