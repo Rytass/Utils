@@ -6,9 +6,15 @@ import {
   ACCESS_TOKEN_EXPIRATION,
   ACCESS_TOKEN_SECRET,
   COOKIE_MODE,
+  COOKIE_OPTIONS,
   REFRESH_TOKEN_COOKIE_NAME,
   REFRESH_TOKEN_EXPIRATION,
 } from '../typings/member-base.tokens';
+import {
+  resolveCookieOptions,
+  type CookieOptionsConfig,
+  type ResolvedCookieOptions,
+} from '../utils/resolve-cookie-options';
 import { MEMBER_BASE_OIDC_OPTIONS } from './oidc.tokens';
 import type { MemberBaseOidcProviderOptions } from './oidc-provider.options';
 import type { BaseMemberEntity } from '../models/base-member.entity';
@@ -16,6 +22,8 @@ import type { BaseMemberEntity } from '../models/base-member.entity';
 interface CookieCapableResponse {
   cookie?(name: string, value: string, options: Record<string, unknown>): unknown;
   clearCookie?(name: string, options: Record<string, unknown>): unknown;
+  /** Express hangs the request off the response, which is where the host lives. */
+  req?: { headers?: Record<string, string | string[] | undefined>; hostname?: string };
 }
 
 interface CookieCapableRequest {
@@ -60,6 +68,9 @@ export class OidcSsoBridge implements OnApplicationBootstrap {
     @Optional()
     @Inject(REFRESH_TOKEN_COOKIE_NAME)
     private readonly refreshTokenCookieName: string = 'refresh_token',
+    @Optional()
+    @Inject(COOKIE_OPTIONS)
+    private readonly cookieOptions: CookieOptionsConfig = { path: '/', sameSite: 'lax' },
   ) {}
 
   onApplicationBootstrap(): void {
@@ -100,7 +111,7 @@ export class OidcSsoBridge implements OnApplicationBootstrap {
 
     if (typeof response.cookie !== 'function') return;
 
-    const common = { httpOnly: true, sameSite: 'lax' as const, path: '/', secure: this.isSecure() };
+    const common = this.cookieAttributes(response);
 
     response.cookie(this.accessTokenCookieName, this.memberBaseService.signAccessToken(member), {
       ...common,
@@ -120,8 +131,31 @@ export class OidcSsoBridge implements OnApplicationBootstrap {
 
     if (typeof response.clearCookie !== 'function') return;
 
-    response.clearCookie(this.accessTokenCookieName, { path: '/' });
-    response.clearCookie(this.refreshTokenCookieName, { path: '/' });
+    // Path and domain have to match what the cookie was set with, or the
+    // browser treats this as a different cookie and leaves the session in place.
+    const { path, domain } = this.cookieAttributes(response);
+
+    response.clearCookie(this.accessTokenCookieName, { path, ...(domain ? { domain } : {}) });
+    response.clearCookie(this.refreshTokenCookieName, { path, ...(domain ? { domain } : {}) });
+  }
+
+  /**
+   * The issuer decides `secure`, not the request.
+   *
+   * This module is configured with its own public URL, which is a far more
+   * reliable signal than the Host header: a reverse proxy that does not rewrite
+   * Host — nginx's default when `proxy_set_header Host` is omitted — hands the
+   * application `localhost`, and deriving the flag from that would silently
+   * stop marking session cookies Secure on an https deployment.
+   *
+   * An explicit `cookieSecure` still wins, for a deployment where TLS
+   * terminates somewhere the issuer does not describe.
+   */
+  private cookieAttributes(response: CookieCapableResponse): ResolvedCookieOptions {
+    return resolveCookieOptions(response.req, {
+      ...this.cookieOptions,
+      secure: this.cookieOptions.secure ?? this.isSecure(),
+    });
   }
 
   /**

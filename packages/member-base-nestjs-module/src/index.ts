@@ -37,6 +37,7 @@ export {
   COOKIE_MODE,
   ACCESS_TOKEN_COOKIE_NAME,
   REFRESH_TOKEN_COOKIE_NAME,
+  COOKIE_OPTIONS,
   AUTH_PROVIDERS,
   AUTO_PROVISION,
   LINK_EXISTING_ACCOUNT,
@@ -87,6 +88,12 @@ export * from './decorators/has-permission.decorator';
 // Helpers
 export * from './helpers/graphql-context-token-resolver';
 export { normalizeCasbinDecision } from './utils/normalize-casbin-decision';
+export {
+  resolveCookieOptions,
+  type CookieOptionsConfig,
+  type ResolvedCookieOptions,
+  type CookieSameSite,
+} from './utils/resolve-cookie-options';
 
 // Errors
 export * from './constants/errors/index';

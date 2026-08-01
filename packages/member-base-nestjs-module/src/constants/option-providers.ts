@@ -30,6 +30,7 @@ import {
   LOGIN_FAILED_AUTO_UNLOCK_SECONDS,
   ACCESS_TOKEN_COOKIE_NAME,
   REFRESH_TOKEN_COOKIE_NAME,
+  COOKIE_OPTIONS,
   DEFAULT_ADMIN_ACCOUNT,
   DEFAULT_ADMIN_PASSWORD,
   AUTH_PROVIDERS,
@@ -46,6 +47,7 @@ import type {
 } from '../typings/authentication-provider.interface';
 import { Enforcer, newEnforcer, newModelFromString } from 'casbin';
 import { MemberBaseModuleOptionsDTO } from '../typings/member-base-module-options.dto';
+import type { CookieOptionsConfig } from '../utils/resolve-cookie-options';
 import { Provider } from '@nestjs/common';
 import { Subject, Action } from '../decorators/action.decorator';
 import { CASBIN_MODEL } from './casbin-models/rbac-with-domains';
@@ -223,12 +225,25 @@ export const OptionProviders = [
   },
   {
     provide: ACCESS_TOKEN_COOKIE_NAME,
-    useFactory: (_options?: MemberBaseModuleOptionsDTO): string => 'access_token',
+    useFactory: (options?: MemberBaseModuleOptionsDTO): string => options?.accessTokenCookieName ?? 'access_token',
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {
     provide: REFRESH_TOKEN_COOKIE_NAME,
-    useFactory: (_options?: MemberBaseModuleOptionsDTO): string => 'refresh_token',
+    useFactory: (options?: MemberBaseModuleOptionsDTO): string => options?.refreshTokenCookieName ?? 'refresh_token',
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: COOKIE_OPTIONS,
+    // secure and domain stay undefined when unset: they are resolved per
+    // request, since a Secure flag and a Domain attribute both depend on the
+    // host the response is actually being written for.
+    useFactory: (options?: MemberBaseModuleOptionsDTO): CookieOptionsConfig => ({
+      path: options?.cookiePath ?? '/',
+      sameSite: options?.cookieSameSite ?? 'lax',
+      secure: options?.cookieSecure,
+      domain: options?.cookieDomain,
+    }),
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {

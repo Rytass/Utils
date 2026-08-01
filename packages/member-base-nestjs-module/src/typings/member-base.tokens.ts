@@ -7,6 +7,7 @@ import type { Repository } from 'typeorm';
 import type { BaseMemberEntity } from '../models/base-member.entity';
 import type { OAuth2Provider } from './oauth2-provider.interface';
 import type { CasbinPermissionChecker } from './casbin-permission';
+import type { CookieOptionsConfig } from '../utils/resolve-cookie-options';
 import type {
   AuthenticationProvider,
   AutoProvisionStrategy,
@@ -42,6 +43,12 @@ export const LOGIN_FAILED_AUTO_UNLOCK_SECONDS = Symbol('LOGIN_FAILED_AUTO_UNLOCK
 };
 export const ACCESS_TOKEN_COOKIE_NAME = Symbol('ACCESS_TOKEN_COOKIE_NAME') as symbol & { __type: string };
 export const REFRESH_TOKEN_COOKIE_NAME = Symbol('REFRESH_TOKEN_COOKIE_NAME') as symbol & { __type: string };
+/**
+ * Path, sameSite, secure and domain as configured, before the request is
+ * consulted. One token rather than four: these are always read together, and
+ * the two cookie-name tokens above are already public API that must not change.
+ */
+export const COOKIE_OPTIONS = Symbol('COOKIE_OPTIONS') as symbol & { __type: CookieOptionsConfig };
 
 // Options Entity Providers
 export const PROVIDE_MEMBER_ENTITY = Symbol('PROVIDE_MEMBER_ENTITY') as symbol & { __type: new () => BaseMemberEntity };
@@ -118,6 +125,7 @@ export interface MemberBaseProviders {
   LOGIN_FAILED_AUTO_UNLOCK_SECONDS: number;
   ACCESS_TOKEN_COOKIE_NAME: string;
   REFRESH_TOKEN_COOKIE_NAME: string;
+  COOKIE_OPTIONS: CookieOptionsConfig;
   PROVIDE_MEMBER_ENTITY: new () => BaseMemberEntity;
   RESOLVED_MEMBER_REPO: Repository<BaseMemberEntity>;
   PASSWORD_SHOULD_INCLUDE_UPPERCASE: boolean;

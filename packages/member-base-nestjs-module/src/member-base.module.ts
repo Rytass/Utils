@@ -5,6 +5,7 @@ import { MemberBaseAdminService } from './services/member-base-admin.service';
 import { ResolvedRepoProviders } from './constants/resolved-repo-providers';
 import {
   ACCESS_TOKEN_COOKIE_NAME,
+  COOKIE_OPTIONS,
   ACCESS_TOKEN_EXPIRATION,
   ACCESS_TOKEN_SECRET,
   AUTH_PROVIDERS,
@@ -72,6 +73,7 @@ const exportInjectable = [
   COOKIE_MODE,
   ACCESS_TOKEN_COOKIE_NAME,
   REFRESH_TOKEN_COOKIE_NAME,
+  COOKIE_OPTIONS,
   CASBIN_PERMISSION_CHECKER,
   CUSTOMIZED_JWT_PAYLOAD,
 ];

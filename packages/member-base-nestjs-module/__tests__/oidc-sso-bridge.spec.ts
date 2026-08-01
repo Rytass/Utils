@@ -3,6 +3,7 @@ import { OidcSsoBridge } from '../src/oidc/sso-bridge.service';
 import { MemberBaseService } from '../src/services/member-base.service';
 import { BaseMemberEntity } from '../src/models/base-member.entity';
 import type { MemberBaseOidcProviderOptions } from '../src/oidc/oidc-provider.options';
+import type { CookieOptionsConfig } from '../src/utils/resolve-cookie-options';
 
 const ACCESS_TOKEN_SECRET = 'access-secret';
 const MEMBER = { id: 'member-1', account: 'alice' } as BaseMemberEntity;
@@ -11,7 +12,11 @@ const now = (): number => Math.floor(Date.now() / 1000);
 
 interface Harness {
   readonly bridge: OidcSsoBridge;
-  readonly res: { cookie: jest.Mock; clearCookie: jest.Mock };
+  readonly res: {
+    cookie: jest.Mock;
+    clearCookie: jest.Mock;
+    req?: { headers?: Record<string, string> };
+  };
 }
 
 const buildBridge = (options?: {
@@ -19,6 +24,8 @@ const buildBridge = (options?: {
   cookieMode?: boolean;
   issuer?: string;
   members?: BaseMemberEntity[];
+  cookieNames?: { access: string; refresh: string };
+  cookieOptions?: CookieOptionsConfig;
 }): Harness => {
   const members = options?.members ?? [MEMBER];
 
@@ -38,8 +45,9 @@ const buildBridge = (options?: {
     ACCESS_TOKEN_SECRET,
     900,
     7776000,
-    'access_token',
-    'refresh_token',
+    options?.cookieNames?.access ?? 'access_token',
+    options?.cookieNames?.refresh ?? 'refresh_token',
+    options?.cookieOptions ?? { path: '/', sameSite: 'lax' },
   );
 
   return { bridge, res: { cookie: jest.fn(), clearCookie: jest.fn() } };
@@ -108,6 +116,103 @@ describe('OidcSsoBridge session issuance', () => {
     bridge.clearSession(res);
 
     expect(res.clearCookie).not.toHaveBeenCalled();
+  });
+});
+
+describe('OidcSsoBridge cookie configuration', () => {
+  it('should write the configured names', () => {
+    const { bridge, res } = buildBridge({
+      cookieNames: { access: 'sid', refresh: 'sid_r' },
+    });
+
+    bridge.issueSession(res, MEMBER);
+
+    expect(res.cookie).toHaveBeenCalledWith('sid', 'signed-access', expect.anything());
+    expect(res.cookie).toHaveBeenCalledWith('sid_r', 'signed-refresh', expect.anything());
+  });
+
+  it('should apply the configured attributes', () => {
+    const { bridge, res } = buildBridge({
+      cookieOptions: { path: '/app', sameSite: 'strict', domain: '.example.com' },
+    });
+
+    bridge.issueSession(res, MEMBER);
+
+    expect(res.cookie).toHaveBeenCalledWith(
+      'access_token',
+      'signed-access',
+      expect.objectContaining({ path: '/app', sameSite: 'strict', domain: '.example.com', httpOnly: true }),
+    );
+  });
+
+  // A browser only removes a cookie when the path and domain match the ones it
+  // was stored under; anything else just writes a second, different cookie.
+  it('should clear with exactly the path and domain it set', () => {
+    const cookieOptions = { path: '/app', sameSite: 'lax' as const, domain: '.example.com' };
+    const { bridge, res } = buildBridge({ cookieOptions });
+
+    bridge.issueSession(res, MEMBER);
+    bridge.clearSession(res);
+
+    const [, , setOptions] = res.cookie.mock.calls[0] as [string, string, Record<string, unknown>];
+    const [, clearOptions] = res.clearCookie.mock.calls[0] as [string, Record<string, unknown>];
+
+    expect(clearOptions).toEqual({ path: setOptions.path, domain: setOptions.domain });
+  });
+
+  it('should clear without a domain when none was set', () => {
+    const { bridge, res } = buildBridge();
+
+    bridge.clearSession(res);
+
+    expect(res.clearCookie).toHaveBeenCalledWith('access_token', { path: '/' });
+  });
+
+  it('should take secure from the issuer', () => {
+    const secure = buildBridge({ issuer: 'https://idp.example.com/oidc' });
+
+    secure.bridge.issueSession(secure.res, MEMBER);
+
+    expect(secure.res.cookie).toHaveBeenCalledWith(
+      'access_token',
+      'signed-access',
+      expect.objectContaining({ secure: true }),
+    );
+
+    const insecure = buildBridge({ issuer: 'http://localhost:3000/oidc' });
+
+    insecure.bridge.issueSession(insecure.res, MEMBER);
+
+    expect(insecure.res.cookie).toHaveBeenCalledWith(
+      'access_token',
+      'signed-access',
+      expect.objectContaining({ secure: false }),
+    );
+  });
+
+  // nginx sends `Host: localhost` upstream whenever `proxy_set_header Host` is
+  // omitted, which is its default. Deriving the flag from that would drop
+  // Secure from the session cookie of an https deployment, with nothing to
+  // indicate it had happened.
+  it('should keep secure from the issuer even when a proxy rewrites the host to localhost', () => {
+    const { bridge, res } = buildBridge({ issuer: 'https://idp.example.com/oidc' });
+
+    res.req = { headers: { host: 'localhost:4123' } };
+
+    bridge.issueSession(res, MEMBER);
+
+    expect(res.cookie).toHaveBeenCalledWith('access_token', 'signed-access', expect.objectContaining({ secure: true }));
+  });
+
+  it('should let an explicit cookieSecure override the issuer', () => {
+    const { bridge, res } = buildBridge({
+      issuer: 'http://idp.internal:3000/oidc',
+      cookieOptions: { path: '/', sameSite: 'lax', secure: true },
+    });
+
+    bridge.issueSession(res, MEMBER);
+
+    expect(res.cookie).toHaveBeenCalledWith('access_token', 'signed-access', expect.objectContaining({ secure: true }));
   });
 });
 
