@@ -30,6 +30,23 @@ Authentication sources and the issuer endpoint are independent: any source can b
                                              └──────────────────────────┘
 ```
 
+### How this document is arranged
+
+It is long because the package covers a lot; you are not meant to read it start to finish.
+
+| If you want to | Read |
+| --------------------------------------------- | ------------------------------------------------------------------ |
+| Get something running | [Installation](#installation), [Defining Your Member Entity](#defining-your-member-entity), then the topology that matches you |
+| Understand permissions | [RBAC with Domains](#rbac-with-domains-configuration) and [Request-Aware Authorization](#request-aware-authorization-casbindomainresolver-and-decision-tracing) |
+| Seed the first administrator | [Default Admin Bootstrap](#default-admin-bootstrap) |
+| Serve GraphQL | [GraphQL Support](#graphql-support) |
+| Put the session in a cookie | [Sessions and Cookies](#sessions-and-cookies) |
+| Look up an option | [Configuration Reference](#configuration-reference) |
+| Add a login source | [Authentication Gateway](#authentication-gateway), [LDAP](#authenticating-against-an-ldap-directory), [OIDC issuer](#authenticating-against-an-oidc-issuer) |
+| Become an issuer yourself | [Acting as an OpenID Connect Provider](#acting-as-an-openid-connect-provider) |
+| Upgrade an existing install | [Upgrade Notes](#upgrade-notes) |
+| Find what something is called | [Type Aliases and Injection Tokens](#type-aliases-and-injection-tokens) |
+
 ## Installation
 
 ```bash
@@ -79,7 +96,7 @@ If you set `casbinAdapterOptions` without installing `typeorm-adapter`, the modu
 throws at startup with an explicit message rather than booting into a broken
 authorization state.
 
-## Inheritance
+## Defining Your Member Entity
 
 ```typescript
 // app.module.ts
@@ -265,60 +282,9 @@ So the policy `addPolicy('article-admin', 'articles', 'article', 'create')` abov
 
 Listing several pairs is an **OR**: the call is allowed if any one of them passes. To decide the domain per request instead of taking it from the token — when the target depends on GraphQL arguments, say — supply a [`casbinDomainResolver`](#request-aware-authorization-casbindomainresolver-and-decision-tracing). To use your own decorator in place of `AllowActions`, set `casbinPermissionDecorator`.
 
-## Default Admin Bootstrap
+With `enableGlobalGuard` on (the default) and no `casbinAdapterOptions`, there is no enforcer at all: `CASBIN_ENFORCER` resolves to `null`, and the guard then **denies** every route carrying `@AllowActions()`. A route marked only `@Authenticated()` still passes on a valid token, and `@IsPublic()` still bypasses the guard entirely. That is the failure direction you want, but it does mean a policy-guarded route is unreachable until the adapter is configured.
 
-Instead of hand-writing the seeding code above, you can declare a default administrator directly in the module options. On application startup the module will create the account and grant it **super-admin (allow-all) permissions**.
-
-```typescript
-MemberBaseModule.forRoot({
-  memberEntity: MyMemberEntity,
-  casbinAdapterOptions: { type: 'postgres', /* ... */ }, // required to grant permissions
-  defaultAdminAccount: 'root',
-  // defaultAdminPassword: 'Sup3rStr0ng', // optional — omit to auto-generate
-});
-```
-
-Behavior:
-
-- **On first startup**, the `defaultAdminAccount` is created and bound to the well-known `SUPER_ADMIN_ROLE` grouping (in `DEFAULT_CASBIN_DOMAIN`). The built-in permission checker treats any member holding this role as allow-all — it passes every guarded action regardless of domain, without enumerating policies.
-- **Idempotent**: if the account already exists at startup, the module does nothing (safe across restarts).
-- **Password**: if `defaultAdminPassword` is omitted, a policy-compliant random password is generated and written to the log **once** (at creation). Supplied passwords are never logged; a supplied password that fails the policy aborts startup with `PasswordDoesNotMeetPolicyError`.
-- **No Casbin configured**: if `casbinAdapterOptions` is not set (the enforcer is unavailable), the account is still created but the super-admin grant is skipped with a warning.
-- **Custom checker caveat**: the allow-all short-circuit lives in the module's default permission checker. If you provide your own `casbinPermissionChecker`, honor `SUPER_ADMIN_ROLE` yourself if you want the same behavior.
-
-`SUPER_ADMIN_ROLE` is exported, so you can grant super-admin to other members too:
-
-```typescript
-import { SUPER_ADMIN_ROLE, DEFAULT_CASBIN_DOMAIN, CASBIN_ENFORCER } from '@rytass/member-base-nestjs-module';
-
-await enforcer.addGroupingPolicy(member.id, SUPER_ADMIN_ROLE, DEFAULT_CASBIN_DOMAIN);
-```
-
-### GraphQL Support
-
-You should resolve token into graphql context named **token** by yourself or use module provided helper.
-
-```typescript
-// app.module.ts
-import { Module } from '@nestjs/common';
-import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
-import { GraphQLModule } from '@nestjs/graphql';
-import { GraphQLContextTokenResolver } from '@rytass/member-base-nestjs-module';
-
-@Module({
-  imports: [
-    GraphQLModule.forRoot<ApolloDriverConfig>({
-      driver: ApolloDriver,
-      fieldResolverEnhancers: ['guards'], // Important!!
-      debug: true,
-      playground: true,
-      autoTransformHttpErrors: true,
-      context: GraphQLContextTokenResolver, // ({ req }: { req: Request }) => { token: string | null }
-    }),
-  ],
-})
-export class AppModule {}
-```
+Turning `enableGlobalGuard` off inverts this: the guard returns before any of those checks, so `@AllowActions()` routes are all **allowed** rather than all denied. Decorate deliberately if you take that route.
 
 ## Request-Aware Authorization (casbinDomainResolver and Decision Tracing)
 
@@ -392,6 +358,165 @@ Notes:
 - `casbinDomainResolver` only affects the DEFAULT checker. When a custom `casbinPermissionChecker` is provided, the resolver is ignored — the custom checker receives `context` / `request` in its params (`CasbinPermissionCheckerParams`) and decides on its own.
 - Custom checkers may keep returning `Promise<boolean>` (legacy signature, fully backward compatible) or return a rich `CasbinAuthorizationDecision` (`{ allowed, matchedDomain?, matchedAction?, meta? }`) for tracing.
 - Without `casbinDomainResolver`, the default checker behavior is unchanged (`payload.domain ?? DEFAULT_CASBIN_DOMAIN`).
+
+## Default Admin Bootstrap
+
+Instead of hand-writing the seeding code above, you can declare a default administrator directly in the module options. On application startup the module will create the account and grant it **super-admin (allow-all) permissions**.
+
+```typescript
+MemberBaseModule.forRoot({
+  memberEntity: MyMemberEntity,
+  casbinAdapterOptions: { type: 'postgres', /* ... */ }, // required to grant permissions
+  defaultAdminAccount: 'root',
+  // defaultAdminPassword: 'Sup3rStr0ng', // optional — omit to auto-generate
+});
+```
+
+Behavior:
+
+- **On first startup**, the `defaultAdminAccount` is created and bound to the well-known `SUPER_ADMIN_ROLE` grouping (in `DEFAULT_CASBIN_DOMAIN`). The built-in permission checker treats any member holding this role as allow-all — it passes every guarded action regardless of domain, without enumerating policies.
+- **Idempotent**: if the account already exists at startup, the module does nothing (safe across restarts).
+- **Password**: if `defaultAdminPassword` is omitted, a policy-compliant random password is generated and written to the log **once** (at creation). Supplied passwords are never logged; a supplied password that fails the policy aborts startup with `PasswordDoesNotMeetPolicyError`.
+- **No Casbin configured**: if `casbinAdapterOptions` is not set (the enforcer is unavailable), the account is still created but the super-admin grant is skipped with a warning.
+- **Custom checker caveat**: the allow-all short-circuit lives in the module's default permission checker. If you provide your own `casbinPermissionChecker`, honor `SUPER_ADMIN_ROLE` yourself if you want the same behavior.
+
+`SUPER_ADMIN_ROLE` is exported, so you can grant super-admin to other members too:
+
+```typescript
+import { SUPER_ADMIN_ROLE, DEFAULT_CASBIN_DOMAIN, CASBIN_ENFORCER } from '@rytass/member-base-nestjs-module';
+
+await enforcer.addGroupingPolicy(member.id, SUPER_ADMIN_ROLE, DEFAULT_CASBIN_DOMAIN);
+```
+
+## GraphQL Support
+
+Guards work over GraphQL exactly as they do over HTTP — `@AllowActions()`, `@Authenticated()` and `@IsPublic()` all behave the same, and `CasbinGuard` reads the underlying request itself. The one thing to remember is `fieldResolverEnhancers`, without which field resolvers run unguarded:
+
+```typescript
+// app.module.ts
+import { Module } from '@nestjs/common';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { GraphQLModule } from '@nestjs/graphql';
+import { GraphQLContextTokenResolver } from '@rytass/member-base-nestjs-module';
+
+@Module({
+  imports: [
+    GraphQLModule.forRoot<ApolloDriverConfig>({
+      driver: ApolloDriver,
+      fieldResolverEnhancers: ['guards'], // Important!! Field resolvers are unguarded without it.
+      debug: true,
+      playground: true,
+      autoTransformHttpErrors: true,
+      // Optional: publishes the caller's token as context.token for your own resolvers.
+      context: GraphQLContextTokenResolver,
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+`GraphQLContextTokenResolver` is a **convenience for your own resolvers**, not part of authorization: it puts the raw token on `context.token`, header first and cookie second. Authorization does not go through it, so omitting it changes nothing about who may call what.
+
+The pre-built export assumes the defaults. Build your own whenever the module is configured differently, so that `context.token` agrees with what the guard actually accepted:
+
+```typescript
+import { createGraphQLContextTokenResolver } from '@rytass/member-base-nestjs-module';
+
+context: createGraphQLContextTokenResolver({
+  cookieName: 'sid',   // match accessTokenCookieName
+  cookieMode: true,    // match cookieMode
+});
+```
+
+Both mirror the module's own options. `cookieMode: false` matters in particular: the guard ignores cookies entirely in that mode, and a resolver that kept reading them would hand your resolvers a token the guard had refused — one left over from before the mode was turned off, for instance.
+
+## Sessions and Cookies
+
+By default a caller presents its token in the `Authorization` header and the module writes no cookies at all. `cookieMode: true` adds the cookie as a second source.
+
+**Reading** then happens on every request, header first: `Authorization: Bearer` wins, and the cookie is consulted only if there is no header. Only the **access token** cookie is ever read. The module never reads the refresh token cookie at all — it only writes it, so that a refresh route of your own can pick it up and hand the value to `memberBaseService.refreshToken(token)`. There is no refresh endpoint in this package, and no route it provides will accept a refresh token as a session.
+
+**Writing** is narrower than reading. The module sets cookies only where it completes a login itself, and both cookies are written together so the caller does not need an immediate refresh round trip:
+
+| Where                          | When                                                              | Writes           |
+| ------------------------------ | ----------------------------------------------------------------- | ---------------- |
+| `GET /auth/callbacks/:channel` | An OAuth2 provider is configured                                   | access + refresh |
+| [`OidcSsoBridge`](#session-bridging) | `/oidc-provider` is mounted and the bridge is on             | access + refresh |
+
+A login you drive yourself — `memberBaseService.login(...)` — returns a token pair and writes nothing. Set it with the exported `resolveCookieOptions` to get the same attributes the module would have used.
+
+Names and attributes come from the [cookie options](#cookie-options); each `Max-Age` follows its own token's lifetime.
+
+All of it is configured through the [cookie options](#cookie-options). Nothing is required — each has a working default:
+
+```ts
+// app.module.ts
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { MemberBaseModule } from '@rytass/member-base-nestjs-module';
+
+@Module({
+  imports: [
+    TypeOrmModule.forRoot({ /* ... */ }),
+    MemberBaseModule.forRoot({
+      cookieMode: true,
+
+      // All optional. Shown with the values they already default to, except
+      // the names, which are changed here to avoid colliding with another
+      // service on the same host.
+      accessTokenCookieName: 'sid',
+      refreshTokenCookieName: 'sid_r',
+      cookiePath: '/',
+      cookieSameSite: 'lax',
+      // cookieSecure — omitted: https gets Secure, localhost does not
+      // cookieDomain — omitted: host-only, so only this host can read it
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+An OAuth callback on `https://app.example.com` then answers with:
+
+```
+Set-Cookie: sid=...;   Max-Age=900;     Path=/; Expires=<GMT date>; HttpOnly; Secure; SameSite=Lax
+Set-Cookie: sid_r=...; Max-Age=7776000; Path=/; Expires=<GMT date>; HttpOnly; Secure; SameSite=Lax
+```
+
+Both cookies are written, each with its own token's lifetime as `Max-Age`. On `http://localhost:3000` they are identical but without `Secure`, so local development works without a separate configuration. (`Expires` is Express mirroring `Max-Age`; it is not separately configurable.)
+
+### What each default adapts to
+
+| Attribute  | Adapts how                                                                                      |
+| ---------- | ----------------------------------------------------------------------------------------------- |
+| `Secure`   | Set when the request is https, and for every host except `localhost`, `127.0.0.1` and `::1`, where a Secure cookie is never stored over plain http |
+| `Domain`   | Not emitted, so the browser scopes the cookie to exactly the host that served the response      |
+| `Path`     | `/`, so one cookie serves every route                                                            |
+| `Max-Age`  | From `accessTokenExpiration` / `refreshTokenExpiration`                                          |
+| `HttpOnly` | Always on, not configurable                                                                      |
+
+Behind a reverse proxy, enable `app.set('trust proxy', 1)`. `X-Forwarded-Proto` then settles the `Secure` flag directly, which matters because a proxy that does not forward the original `Host` — nginx's default when `proxy_set_header Host` is omitted — otherwise makes an https deployment look like plain localhost. `cookieSecure: true` forces the flag if neither signal is available.
+
+The OIDC provider module is not subject to any of this: `OidcSsoBridge` takes `Secure` from the `issuer` it was configured with, since that describes the public URL and no proxy can rewrite it. `cookieSecure` still overrides it.
+
+### Sharing a session across subdomains
+
+The default is host-only: a cookie set by `idp.example.com` is not sent to `app.example.com`. To share one session across siblings, name the parent explicitly:
+
+```ts
+MemberBaseModule.forRoot({ cookieMode: true, cookieDomain: '.example.com' });
+```
+
+This is opt-in on purpose. Every subdomain under that name can then read the session, including any hosted by someone else, so it should be a deliberate decision rather than a default.
+
+### Do not override the DI tokens
+
+Earlier versions of this document suggested overriding `ACCESS_TOKEN_COOKIE_NAME` / `REFRESH_TOKEN_COOKIE_NAME` from the application's `providers` array. **That does not work**, because Nest resolves providers per module:
+
+- `CasbinGuard` and `OAuthCallbacksController` are declared by `MemberBaseModule` itself, so they resolve its own binding directly.
+- `OidcSsoBridge` is declared in the OIDC provider module and reaches the same binding through `MemberBaseModule`'s `@Global()` export — falling back to the default names if it is absent, since it injects them `@Optional()`.
+
+An application-level provider reaches only the application's own components. The module keeps writing the default names, with no error or warning to indicate it. Use the options above.
 
 ## Deployment Topologies
 
@@ -708,9 +833,25 @@ The subject is the local member id rather than the directory's identifier, so re
 | `oauth2Providers` | `OAuth2Provider[]` | `[]` | Google / Facebook / custom OAuth2 |
 | `oauth2ClientDestUrl` | `string` | `'/login'` | Where the OAuth2 callback redirects |
 
+`OAuth2Provider` is a union. Everything shared lives on `BaseOAuth2Provider` — `channel`, `clientId`, `clientSecret`, `redirectUri` and an optional `getState` — and each member adds only what it needs. Google and Facebook add an optional `scope`; anything else is a custom provider and has to say how to exchange a code and read an identifier back:
+
+```ts
+oauth2Providers: [
+  { channel: 'google', clientId, clientSecret, redirectUri, scope: ['email', 'profile'] },
+  {
+    channel: 'line',
+    clientId, clientSecret, redirectUri,
+    scope: ['profile'],
+    requestUrl: 'https://access.line.me/oauth2/v2.1/authorize',
+    getAccessTokenFromCode: async code => '...',
+    getAccountFromAccessToken: async accessToken => '...',
+  },
+];
+```
+
 ### Cookie options
 
-Mainly used when `cookieMode: true`. Left unset, each attribute has a working default that needs no configuration in either development or production — derived from the request, except that the OIDC session bridge takes `Secure` from its configured `issuer` instead (see [Cookie Mode Usage Example](#cookie-mode-usage-example)).
+Mainly used when `cookieMode: true`. Left unset, each attribute has a working default that needs no configuration in either development or production — derived from the request, except that the OIDC session bridge takes `Secure` from its configured `issuer` instead (see [Sessions and Cookies](#sessions-and-cookies)).
 
 `accessTokenCookieName`, `cookiePath` and `cookieDomain` are also used by the OIDC session bridge when reading a session and when clearing one at logout, neither of which is gated on `cookieMode`.
 
@@ -720,7 +861,7 @@ Mainly used when `cookieMode: true`. Left unset, each attribute has a working de
 | `refreshTokenCookieName` | `string`                         | `'refresh_token'`           | Name of the refresh token cookie                    |
 | `cookiePath`             | `string`                         | `'/'`                       | Path attribute                                      |
 | `cookieSameSite`         | `'lax' \| 'strict' \| 'none'`    | `'lax'`                     | SameSite attribute                                  |
-| `cookieSecure`           | `boolean`                        | `true`, except on loopback  | Secure attribute                                    |
+| `cookieSecure`           | `boolean`                        | https, or any non-loopback host | Secure attribute                                 |
 | `cookieDomain`           | `string`                         | absent (host-only)          | Domain attribute; set to share across subdomains    |
 
 `httpOnly` is not configurable and is always on: a session token readable from JavaScript is a session token one XSS away from being stolen.
@@ -1378,9 +1519,17 @@ Refresh tokens issued before this release carry no `authTime`. Refreshing one le
 
 ## Upgrade Notes
 
+### `GraphQLContextTokenResolver` reads the right cookie
+
+It read a cookie named `token`, which this package has never written under any configuration. `context.token` was therefore always empty for a caller that authenticated by cookie rather than by header. It now reads `access_token`, and `createGraphQLContextTokenResolver({ cookieName, cookieMode })` mirrors a customised module configuration.
+
+Authorization was never affected — `CasbinGuard` reads the request directly — so this only matters if your own resolvers consume `context.token`. If you were setting a `token` cookie yourself to work around it, either rename it or pass `{ cookieName: 'token' }`.
+
+One smaller change comes with it: the `Bearer` prefix is now stripped case-insensitively. The guard started doing that when header precedence was introduced, and this helper was left behind — so a caller sending `authorization: bearer <token>` had the whole string, scheme included, land in `context.token`, while the guard authorized it perfectly well from the clean token. The two now agree.
+
 ### Cookie names and attributes are configurable
 
-`accessTokenCookieName`, `refreshTokenCookieName`, `cookiePath`, `cookieSameSite`, `cookieSecure` and `cookieDomain` are now module options — see [Cookie Mode Usage Example](#cookie-mode-usage-example). The cookie **names** are unchanged, and so is every attribute the OIDC session bridge writes. The OAuth callback cookies change.
+`accessTokenCookieName`, `refreshTokenCookieName`, `cookiePath`, `cookieSameSite`, `cookieSecure` and `cookieDomain` are now module options — see [Sessions and Cookies](#sessions-and-cookies). The cookie **names** are unchanged, and so is every attribute the OIDC session bridge writes. The OAuth callback cookies change.
 
 Overriding `ACCESS_TOKEN_COOKIE_NAME` / `REFRESH_TOKEN_COOKIE_NAME` from your own `providers` array — which this document used to recommend — never took effect for the module's own guard, controller and session bridge, and failed silently. If you have that override in place it has been doing nothing; move the value to the options.
 
@@ -1399,8 +1548,6 @@ Two of these are worth a moment before you upgrade:
 
 - **The cookies are no longer session cookies.** They now outlive the browser window, for as long as the configured token lifetimes.
 - **`SameSite=Lax` is now explicit.** Chrome already applies Lax by default, but its default carries a two-minute grace period for top-level POSTs that an explicit `Lax` does not, and Safari and Firefox differ again. If your OAuth callback is reached by a cross-site POST, check it.
-
-**One case needs a look.** Because `Secure` is no longer unconditional, a deployment that terminates TLS at a proxy which neither sets `X-Forwarded-Proto` with `trust proxy` enabled **nor** forwards the original `Host` — nginx sends `Host: localhost` upstream whenever `proxy_set_header Host` is omitted — now looks like plain localhost to the application, and the OAuth callback cookie loses `Secure`. Set `cookieSecure: true` explicitly for that topology. The OIDC session bridge is unaffected: it takes the flag from its configured `issuer`, which describes the public URL and cannot be rewritten by a proxy.
 
 **One case needs a look before you upgrade.** Because the callback's `Secure` flag is no longer unconditional, a deployment that terminates TLS at a proxy which neither sets `X-Forwarded-Proto` with `trust proxy` enabled **nor** forwards the original `Host` — nginx sends `Host: localhost` upstream whenever `proxy_set_header Host` is omitted — now looks like plain localhost to the application, and the OAuth callback cookie loses `Secure`. Set `cookieSecure: true` explicitly for that topology. The OIDC session bridge is unaffected: it takes the flag from its configured `issuer`, which describes the public URL and cannot be rewritten by a proxy.
 
@@ -1437,104 +1584,26 @@ Any row returned is a pre-existing data anomaly (one external identity bound to 
 
 `MemberBaseModule` now also exports `MEMBER_BASE_MODULE_OPTIONS`, `ACCESS_TOKEN_EXPIRATION`, `REFRESH_TOKEN_SECRET`, `REFRESH_TOKEN_EXPIRATION`, `COOKIE_MODE`, `ACCESS_TOKEN_COOKIE_NAME`, `REFRESH_TOKEN_COOKIE_NAME`, `CASBIN_PERMISSION_CHECKER` and `CUSTOMIZED_JWT_PAYLOAD`, so modules layered on top can read the same configuration instead of duplicating it. This is additive; nothing that was exported before has changed.
 
-## Recent Changes (Types and Authorization Behavior)
 
-- Centralized token payload type: added `AuthTokenPayloadBase` to standardize `{ id; account?; domain? }` across the module.
-- Cookie mode refinements:
-  - Guard now validates the access token stored in a cookie; the refresh token is only used for refreshing, not for general authorization.
-  - New configurable cookie-name tokens: `ACCESS_TOKEN_COOKIE_NAME` (default `access_token`) and `REFRESH_TOKEN_COOKIE_NAME` (default `refresh_token`).
-  - In cookie mode, the OAuth2 callback sets BOTH `access_token` and `refresh_token` cookies (`httpOnly` + `secure`) to avoid an immediate refresh roundtrip.
-  - Token resolution order: Authorization header (Bearer) first, then cookie (when cookie mode is enabled).
-- RBAC safety:
-  - `CASBIN_ENFORCER` may be `null`. If a route requires RBAC via `@AllowActions()` and no enforcer is present, access is denied; if the route only has `@Authenticated()`, a valid token is sufficient.
-- Naming consistency (non-breaking):
-  - Added aliases: `MemberBaseModuleOptions` (= `MemberBaseModuleOptionsDTO`), `MemberBaseModuleAsyncOptions` (= `MemberBaseModuleAsyncOptionsDTO`), `MemberBaseOptionsFactory` (= `MemberBaseModuleOptionFactoryInterface`).
-  - Added repository token aliases: `BASE_MEMBER_REPOSITORY`, `RESOLVED_MEMBER_REPOSITORY`.
-- OAuth2 interface cleanup:
-  - `GoogleOAuth2Provider`/`FacebookOAuth2Provider` declare only delta fields (e.g., `scope?`); shared properties live in `BaseOAuth2Provider`.
+## Type Aliases and Injection Tokens
 
-Note: These changes are backward compatible (including type and token aliases). Cookie mode behavior is now stricter and clearer: authorization uses the access token, not the refresh token. If you previously relied on the refresh token for authorization, please switch to the access token.
+Every injection token has a single definition and is re-exported from the package root, so they are imported from `@rytass/member-base-nestjs-module` rather than from a deep path.
 
-### Type Names and Tokens
+Several things carry two names. **Both are exported in every case** — the aliases were added without withdrawing anything, so no import needs changing.
 
-- Prefer the alias types for module options in your imports:
-  - `MemberBaseModuleOptions` (= `MemberBaseModuleOptionsDTO`)
-  - `MemberBaseModuleAsyncOptions` (= `MemberBaseModuleAsyncOptionsDTO`)
-  - `MemberBaseOptionsFactory` (= `MemberBaseModuleOptionFactoryInterface`)
-- All injection tokens are consolidated under a single source and re-exported from the package index. Import them from `@rytass/member-base-nestjs-module` (they originate from `src/typings/member-base.tokens.ts`).
+The option types have shorter aliases, which are the ones to prefer in new code:
 
-### Cookie Mode Usage Example
+| Prefer                         | Also exported as                         |
+| ------------------------------ | ---------------------------------------- |
+| `MemberBaseModuleOptions`      | `MemberBaseModuleOptionsDTO`             |
+| `MemberBaseModuleAsyncOptions` | `MemberBaseModuleAsyncOptionsDTO`        |
+| `MemberBaseOptionsFactory`     | `MemberBaseModuleOptionFactoryInterface` |
 
-`cookieMode: true` makes the module read the access token from a cookie on every request. Authorization still resolves tokens header-first: `Authorization: Bearer` wins, then the cookie.
+The repository tokens have longer, more explicit aliases. Either name resolves to the same symbol, so pick whichever reads better:
 
-Writing is narrower. The module sets cookies only where it completes a login itself — the OAuth2 callback at `/auth/callbacks/:channel`, and the OIDC session bridge when `/oidc-provider` is mounted. A login you drive yourself (`memberBaseService.login(...)`) returns a token pair and writes nothing; use the exported `resolveCookieOptions` to set it with the same attributes.
+| Token                  | Also exported as             |
+| ---------------------- | ---------------------------- |
+| `BaseMemberRepo`       | `BASE_MEMBER_REPOSITORY`     |
+| `RESOLVED_MEMBER_REPO` | `RESOLVED_MEMBER_REPOSITORY` |
 
-Names and attributes are module options. Nothing here is required — each has a working default:
-
-```ts
-// app.module.ts
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { MemberBaseModule } from '@rytass/member-base-nestjs-module';
-
-@Module({
-  imports: [
-    TypeOrmModule.forRoot({ /* ... */ }),
-    MemberBaseModule.forRoot({
-      cookieMode: true,
-
-      // All optional. Shown with the values they already default to, except
-      // the names, which are changed here to avoid colliding with another
-      // service on the same host.
-      accessTokenCookieName: 'sid',
-      refreshTokenCookieName: 'sid_r',
-      cookiePath: '/',
-      cookieSameSite: 'lax',
-      // cookieSecure — omitted: https gets Secure, localhost does not
-      // cookieDomain — omitted: host-only, so only this host can read it
-    }),
-  ],
-})
-export class AppModule {}
-```
-
-An OAuth callback on `https://app.example.com` then answers with:
-
-```
-Set-Cookie: sid=...; Max-Age=900; Path=/; Expires=<GMT date>; HttpOnly; Secure; SameSite=Lax
-```
-
-and on `http://localhost:3000` the same cookie without `Secure`, so local development works without a separate configuration. (`Expires` is Express mirroring `Max-Age`; it is not separately configurable.)
-
-#### What each default adapts to
-
-| Attribute  | Adapts how                                                                                      |
-| ---------- | ----------------------------------------------------------------------------------------------- |
-| `Secure`   | Set when the request is https, and for every host except `localhost`, `127.0.0.1` and `::1`, where a Secure cookie is never stored over plain http |
-| `Domain`   | Not emitted, so the browser scopes the cookie to exactly the host that served the response      |
-| `Path`     | `/`, so one cookie serves every route                                                            |
-| `Max-Age`  | From `accessTokenExpiration` / `refreshTokenExpiration`                                          |
-| `HttpOnly` | Always on, not configurable                                                                      |
-
-Behind a reverse proxy, enable `app.set('trust proxy', 1)`. `X-Forwarded-Proto` then settles the `Secure` flag directly, which matters because a proxy that does not forward the original `Host` — nginx's default when `proxy_set_header Host` is omitted — otherwise makes an https deployment look like plain localhost. `cookieSecure: true` forces the flag if neither signal is available.
-
-The OIDC provider module is not subject to any of this: `OidcSsoBridge` takes `Secure` from the `issuer` it was configured with, since that describes the public URL and no proxy can rewrite it. `cookieSecure` still overrides it.
-
-#### Sharing a session across subdomains
-
-The default is host-only: a cookie set by `idp.example.com` is not sent to `app.example.com`. To share one session across siblings, name the parent explicitly:
-
-```ts
-MemberBaseModule.forRoot({ cookieMode: true, cookieDomain: '.example.com' });
-```
-
-This is opt-in on purpose. Every subdomain under that name can then read the session, including any hosted by someone else, so it should be a deliberate decision rather than a default.
-
-#### Do not override the DI tokens
-
-Earlier versions of this document suggested overriding `ACCESS_TOKEN_COOKIE_NAME` / `REFRESH_TOKEN_COOKIE_NAME` from the application's `providers` array. **That does not work**, because Nest resolves providers per module:
-
-- `CasbinGuard` and `OAuthCallbacksController` are declared by `MemberBaseModule` itself, so they resolve its own binding directly.
-- `OidcSsoBridge` is declared in the OIDC provider module and reaches the same binding through `MemberBaseModule`'s `@Global()` export — falling back to the default names if it is absent, since it injects them `@Optional()`.
-
-An application-level provider reaches only the application's own components. The module keeps writing the default names, with no error or warning to indicate it. Use the options above.
+`AuthTokenPayloadBase` is the shared shape of a decoded token — `{ id; account?; domain? }` — and is what `casbinPermissionChecker` and `casbinDomainResolver` receive.

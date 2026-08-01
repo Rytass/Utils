@@ -92,6 +92,22 @@ Enable `app.set('trust proxy', 1)` behind a reverse proxy so `X-Forwarded-Proto`
 
 `resolveCookieOptions(req, config)` is exported for anything that writes its own cookies and wants the same behaviour.
 
+## GraphQL
+
+Guards behave identically over GraphQL; `CasbinGuard` reads the underlying request through `getRequestFromContext`. Set `fieldResolverEnhancers: ['guards']` on `GraphQLModule` or field resolvers run unguarded.
+
+```typescript
+import { GraphQLContextTokenResolver, createGraphQLContextTokenResolver } from '@rytass/member-base-nestjs-module';
+
+GraphQLModule.forRoot({
+  fieldResolverEnhancers: ['guards'],
+  context: GraphQLContextTokenResolver,   // assumes accessTokenCookieName + cookieMode defaults
+  // context: createGraphQLContextTokenResolver({ cookieName: 'sid', cookieMode: true }),
+});
+```
+
+The resolver only publishes the raw token as `context.token` for an application's own resolvers, header first then cookie. Authorization does not depend on it. Mirror the module's `accessTokenCookieName` and `cookieMode` in the factory, or `context.token` can disagree with what the guard accepted — with `cookieMode: false` the guard ignores cookies entirely.
+
 Note: without `casbinAdapterOptions` the enforcer is `null`, and with `enableGlobalGuard: true` every route that is not `@IsPublic()` or `@Authenticated()` is denied.
 
 ## MemberBaseService
