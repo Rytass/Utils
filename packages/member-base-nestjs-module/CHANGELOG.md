@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.6.7](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.6.6...@rytass/member-base-nestjs-module@0.6.7) (2026-08-02)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** only claim typeorm-adapter is missing when it is ([a7665c6](https://github.com/Rytass/Utils/commit/a7665c6fea8f18e668da19d09814a1b892d4885c))
+
 ## [0.6.6](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.6.5...@rytass/member-base-nestjs-module@0.6.6) (2026-08-02)
 
 ### Bug Fixes
