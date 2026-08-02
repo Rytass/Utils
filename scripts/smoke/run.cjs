@@ -107,7 +107,13 @@ function verifyInternalSpecifiers(libDir) {
 
     return [...source.matchAll(pattern)]
       .map(match => match[2])
-      .filter(specifier => !fs.existsSync(path.resolve(path.dirname(filePath), specifier)))
+      .filter(specifier => {
+        const target = path.resolve(path.dirname(filePath), specifier);
+
+        // A directory is not a valid target: ESM never applies directory
+        // resolution, so `existsSync` alone would pass a broken specifier.
+        return !fs.existsSync(target) || !fs.statSync(target).isFile();
+      })
       .map(specifier => `${path.relative(libDir, filePath)} references missing '${specifier}'`);
   });
 }
@@ -230,12 +236,18 @@ function describe(error, specifier) {
     message: error.message.split('\\n')[0],
     missingModule: quoted ? quoted[1] : null,
     selfMissing: quoted ? quoted[1] === specifier : false,
+    // The importer that issued the failing require. Without it, ownership of a
+    // CommonJS MODULE_NOT_FOUND cannot be decided: the message carries no
+    // "imported from" the way the ESM loader's does.
+    importer: Array.isArray(error.requireStack) ? error.requireStack[0] : null,
   };
 }
 
 process.stdout.write(JSON.stringify(report));
 `,
   esm: `
+import { existsSync } from 'node:fs';
+
 const name = process.argv[2];
 const entries = JSON.parse(process.argv[3]);
 const resolveOnly = process.argv[4] === 'resolve-only';
@@ -249,6 +261,14 @@ for (const entry of entries) {
     record.resolved = new URL(import.meta.resolve(specifier)).pathname;
   } catch (error) {
     record.error = describe(error, specifier);
+    report[entry] = record;
+    continue;
+  }
+
+  // import.meta.resolve maps the specifier without touching the disk, so an
+  // exports map pointing at a file that was never emitted still "resolves".
+  if (!existsSync(record.resolved)) {
+    record.error = { code: 'RESOLVED_TARGET_MISSING', message: \`exports map points at \${record.resolved}, which does not exist\`, missingModule: null, selfMissing: true };
     report[entry] = record;
     continue;
   }
@@ -401,11 +421,18 @@ function ownsFailure(pkg, error) {
   if (error.selfMissing) return true;
   if (error.missingModule && error.missingModule.startsWith(pkg.packageJson.name)) return true;
 
-  const importer = /imported from (\S+)/.exec(error.message);
+  const insidePackage = filePath => filePath.includes(`node_modules/${pkg.packageJson.name}/`);
+  // ESM reports the importer in the message; CommonJS reports it as a require
+  // stack, whose first frame is the file that issued the failing require.
+  const esmImporter = /imported from (\S+)/.exec(error.message);
 
-  if (importer) return importer[1].includes(`node_modules/${pkg.packageJson.name}/`);
+  if (esmImporter) return insidePackage(esmImporter[1]);
+  if (error.importer) return insidePackage(error.importer);
 
-  return !error.missingModule;
+  // Undecidable failures count as ours: a guard rail that guesses "not my
+  // problem" reports a broken package as green, which is the failure mode it
+  // exists to prevent.
+  return true;
 }
 
 function verify(pkg, entries, cjs, esm) {
