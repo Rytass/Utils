@@ -68,7 +68,12 @@
     }
   },
   "namedInputs": {
-    "default": ["{projectRoot}/src/**/*", "sharedGlobals"],
+    "default": [
+      "{projectRoot}/src/**/*",
+      "{projectRoot}/package.json",
+      "{projectRoot}/tsconfig.build.json",
+      "sharedGlobals"
+    ],
     "testing": [
       "{projectRoot}/__tests__/**/*.spec.ts",
       "{projectRoot}/__mocks__/**/*.mock.ts",
@@ -79,6 +84,8 @@
     ],
     "linting": ["testing", "{workspaceRoot}/eslint.config.js"],
     "sharedGlobals": [
+      "{workspaceRoot}/scripts/build.cjs",
+      "{workspaceRoot}/scripts/clean-build.cjs",
       "{workspaceRoot}/package.json",
       "{workspaceRoot}/tsconfig.base.node.json",
       "{workspaceRoot}/tsconfig.base.web.json",

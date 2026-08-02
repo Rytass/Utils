@@ -82,6 +82,109 @@ const ROOT_SYMBOL = '__ROOT__';
 const DEPS_SET_RECORD = {};
 const TRIGGERS_SET_RECORD = {};
 
+// Node 20.19 is the floor: it is the first LTS with require(ESM), which keeps any
+// deep path we did not anticipate loadable from CommonJS, and the dependency tree
+// (typeorm -> uuid, file-type v21) already refuses to run on anything older.
+const DEFAULT_ENGINES = { node: '>=20.19.0' };
+
+/**
+ * Relative specifiers inside emitted declarations carry no extension, which
+ * breaks `moduleResolution: nodenext` consumers (TS2305) once the package is
+ * ESM. Resolution is done against the emitted files rather than by pattern:
+ * `./member-base.module` must not be mistaken for something already carrying an
+ * extension, and `./models` has to become `./models/index.js`.
+ */
+const DECLARATION_SPECIFIER = /(\bfrom\s*|\bimport\s*\(\s*|\brequire\s*\(\s*|\bmodule\s+)(['"])(\.{1,2}\/[^'"]*)\2/g;
+
+function addDeclarationExtensions(filePath) {
+  const dir = path.dirname(filePath);
+  const source = fse.readFileSync(filePath, 'utf8');
+
+  const patched = source.replace(DECLARATION_SPECIFIER, (match, head, quote, specifier) => {
+    const resolved = path.resolve(dir, specifier);
+
+    if (fse.existsSync(`${resolved}.d.ts`)) return `${head}${quote}${specifier}.js${quote}`;
+    if (fse.existsSync(path.join(resolved, 'index.d.ts'))) return `${head}${quote}${specifier}/index.js${quote}`;
+
+    // Anything else (asset imports such as `./x.module.scss`, already-suffixed
+    // specifiers) is left untouched on purpose.
+    return match;
+  });
+
+  if (patched !== source) fse.writeFileSync(filePath, patched);
+}
+
+/**
+ * A CommonJS consumer on `moduleResolution: node16` resolves the `require`
+ * condition's types; if those are ESM-flavoured declarations it fails with
+ * TS1479 even though the runtime is fine. So the whole declaration tree is
+ * mirrored as `.d.cts` with `.js` specifiers rewritten to `.cjs` — mirroring
+ * only the entry points would dangle for consumers with `skipLibCheck: false`.
+ */
+function writeCommonJsDeclarations(declarationFiles) {
+  declarationFiles.forEach(filePath => {
+    const source = fse.readFileSync(filePath, 'utf8');
+
+    fse.writeFileSync(filePath.replace(/\.d\.ts$/, '.d.cts'), source.replace(/(['"])(\.{1,2}\/[^'"]*?)\.js\1/g, '$1$2.cjs$1'));
+  });
+}
+
+function collectFiles(dir, predicate, acc = []) {
+  fse.readdirSync(dir, { withFileTypes: true }).forEach(entry => {
+    const entryPath = path.join(dir, entry.name);
+
+    if (entry.isDirectory()) collectFiles(entryPath, predicate, acc);
+    else if (predicate(entryPath)) acc.push(entryPath);
+  });
+
+  return acc;
+}
+
+function conditionsFor(name) {
+  // `types` must sit inside every condition and before `default`: TypeScript
+  // takes the first match and stops.
+  return {
+    import: { types: `./${name}.d.ts`, default: `./${name}.js` },
+    require: { types: `./${name}.d.cts`, default: `./${name}.cjs` },
+  };
+}
+
+/**
+ * Directories that a consumer may address without a filename. ESM never applies
+ * directory resolution, so `@rytass/pkg/typings` only works when the map spells
+ * the index file out.
+ */
+function directoryEntries(distPath) {
+  return fse
+    .readdirSync(distPath, { withFileTypes: true })
+    .filter(entry => entry.isDirectory())
+    .filter(entry => fse.existsSync(path.resolve(distPath, entry.name, 'index.js')))
+    .map(entry => entry.name);
+}
+
+function buildExportsMap(distPath, subpathNames) {
+  const wildcard = {
+    import: { types: './*.d.ts', default: './*.js' },
+    require: { types: './*.d.cts', default: './*.cjs' },
+  };
+
+  return {
+    '.': conditionsFor('index'),
+    ...subpathNames.reduce((acc, name) => ({ ...acc, [`./${name}`]: conditionsFor(name) }), {}),
+    ...directoryEntries(distPath).reduce((acc, name) => ({ ...acc, [`./${name}`]: conditionsFor(`${name}/index`) }), {}),
+    // Tooling (nx, lerna, bundler plugins) reads this directly.
+    './package.json': './package.json',
+    './*.css': './*.css',
+    './*.json': './*.json',
+    // Both wildcards are needed: Node picks the more specific pattern, so
+    // `./x.js` keeps its extension while a bare `./x` gains one. An array
+    // fallback (`["./*", "./*.js"]`) does NOT work — Node only falls through on
+    // unmatched conditions, never on a missing file.
+    './*.js': wildcard,
+    './*': wildcard,
+  };
+}
+
 async function getPackagesInfos() {
   const files = await glob('**/package.json');
 
@@ -184,6 +287,10 @@ async function build(packageSymbol, packageInfos) {
     await rollupBuild({
       input: entryInputs,
       external: isExternal,
+      // Both formats preserve modules so the two trees are mirror images. That
+      // keeps every deep path addressable in either format (the exports map can
+      // then use symmetric wildcards) and guarantees a shared module has exactly
+      // one instance per format no matter which entry reaches it.
       output: [
         {
           dir: path.resolve(packageDistPath),
@@ -196,8 +303,12 @@ async function build(packageSymbol, packageInfos) {
           dir: path.resolve(packageDistPath),
           format: 'cjs',
           externalLiveBindings: false,
-          entryFileNames: '[name].cjs.js',
-          chunkFileNames: 'chunks/[name]-[hash].cjs.js',
+          preserveModules: true,
+          preserveModulesRoot: packageSrcPath,
+          // Rollup writes the cross-references itself, so naming the outputs
+          // `.cjs` is all it takes — no post-hoc rewriting of require() paths.
+          entryFileNames: '[name].cjs',
+          chunkFileNames: '[name].cjs',
         },
       ],
       onwarn(warning, defaultHandler) {
@@ -222,37 +333,26 @@ async function build(packageSymbol, packageInfos) {
       ],
     });
 
-    packageJson.main = './index.cjs.js';
+    const declarationFiles = collectFiles(packageDistPath, filePath => filePath.endsWith('.d.ts'));
+
+    declarationFiles.forEach(addDeclarationExtensions);
+    writeCommonJsDeclarations(declarationFiles);
+
+    packageJson.type = 'module';
+    packageJson.main = './index.cjs';
     packageJson.module = './index.js';
+    packageJson.types = './index.d.ts';
     packageJson.typings = './index.d.ts';
+    packageJson.engines = { ...DEFAULT_ENGINES, ...packageJson.engines };
 
-    // An exports map is only emitted for packages that actually publish
-    // subpaths. Adding one everywhere would close off deep paths that
-    // consumers may already import from packages with a single entry point.
-    const subpathNames = Object.keys(entryInputs).filter(name => name !== 'index');
-
-    if (subpathNames.length) {
-      packageJson.exports = {
-        '.': {
-          types: './index.d.ts',
-          import: './index.js',
-          require: './index.cjs.js',
-        },
-        ...subpathNames.reduce(
-          (acc, name) => ({
-            ...acc,
-            [`./${name}`]: {
-              types: `./${name}.d.ts`,
-              import: `./${name}.js`,
-              require: `./${name}.cjs.js`,
-            },
-          }),
-          {},
-        ),
-        // Tooling (nx, lerna, bundler plugins) reads this directly.
-        './package.json': './package.json',
-      };
-    }
+    // Every package gets an exports map: without one, Node's ESM resolver falls
+    // back to `main` and hands an ESM consumer the CommonJS build, which would
+    // defeat the point of shipping ESM by default. Wildcards keep deep paths
+    // open so existing imports do not break.
+    packageJson.exports = buildExportsMap(
+      packageDistPath,
+      Object.keys(entryInputs).filter(name => name !== 'index'),
+    );
   }
 
   delete packageJson.scripts;
@@ -261,11 +361,11 @@ async function build(packageSymbol, packageInfos) {
 
   const targetPath = path.resolve(nodeModulesPath, ...packageJson.name.split('/'));
 
-  try {
-    fse.unlinkSync(targetPath);
-  } catch (error) {
-    console.error(`Failed to unlink ${targetPath}: ${error.message}`);
-  }
+  // `unlinkSync` only works on the workspace symlink yarn creates; once this
+  // script has replaced it with a real directory the call fails and the copy
+  // below merges into stale output, leaving orphaned files behind. `rmSync`
+  // handles both cases (on a symlink it removes the link, not the target).
+  fse.rmSync(targetPath, { recursive: true, force: true });
 
   fse.copySync(packageDistPath, targetPath);
 }
