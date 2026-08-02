@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.6.4](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.6.3...@rytass/member-base-nestjs-module@0.6.4) (2026-08-02)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** import jsonwebtoken as a default export ([89ec5af](https://github.com/Rytass/Utils/commit/89ec5af122f20273f1db1d525fc1112244d8b4e4))
+- **member-base-nestjs-module:** stop the esm build calling bare require() ([e631f67](https://github.com/Rytass/Utils/commit/e631f67575633d20197ed33220a5df8536e75d0e))
+
 ## [0.6.3](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.6.2...@rytass/member-base-nestjs-module@0.6.3) (2026-08-01)
 
 ### Bug Fixes
