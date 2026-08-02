@@ -16,18 +16,23 @@ jest.mock('sharp', () => {
   mockSharp.cache = jest.fn();
   mockSharp.concurrency = jest.fn();
 
+  // Real sharp is CommonJS: `gravity` hangs off module.exports, i.e. off the
+  // default export. Exposing it only as a named export made the mock diverge
+  // from reality and hid the fact that ESM consumers get no named bindings.
+  mockSharp.gravity = {
+    southeast: 'southeast',
+    northwest: 'northwest',
+    center: 'center',
+    north: 'north',
+    south: 'south',
+    east: 'east',
+    west: 'west',
+  };
+
   return {
     default: mockSharp,
     __esModule: true,
-    gravity: {
-      southeast: 'southeast',
-      northwest: 'northwest',
-      center: 'center',
-      north: 'north',
-      south: 'south',
-      east: 'east',
-      west: 'west',
-    },
+    gravity: mockSharp.gravity,
   };
 });
 

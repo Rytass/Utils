@@ -1,7 +1,11 @@
 import { ConvertableFile, FileConverter } from '@rytass/file-converter';
-import sharp, { gravity } from 'sharp';
+// `sharp` is CommonJS and cjs-module-lexer cannot see through its exports, so
+// an ESM consumer gets no named bindings — only the default import survives.
+import sharp from 'sharp';
 import { Readable } from 'stream';
 import { ImageWatermarkOptions } from './typings';
+
+const { gravity } = sharp;
 
 sharp.cache(false);
 
