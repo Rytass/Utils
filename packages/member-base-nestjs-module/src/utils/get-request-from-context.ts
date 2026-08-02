@@ -30,6 +30,18 @@ interface GraphQLModule {
 
 let graphqlModule: GraphQLModule | null = null;
 
+const GRAPHQL_PACKAGE = '@nestjs/graphql';
+
+/**
+ * Whether an error means this specific package was not found, as opposed to
+ * something the package itself threw once it had been located.
+ */
+const isGraphQLPackageMissing = (error: unknown): boolean => {
+  const { code, message } = (error ?? {}) as { code?: string; message?: string };
+
+  return code === 'MODULE_NOT_FOUND' && typeof message === 'string' && message.includes(GRAPHQL_PACKAGE);
+};
+
 /**
  * Load `@nestjs/graphql` on the first GraphQL request.
  *
@@ -39,23 +51,51 @@ let graphqlModule: GraphQLModule | null = null;
  * getRequestFromContext synchronously and Nest resolves their value inline.
  * That leaves a synchronous require.
  *
- * The CommonJS build has one. The ES module build does not, and a bare
- * `require()` there is a ReferenceError that takes down the whole entry point —
- * so it falls back to `createRequire`, anchored on the application root, which
- * is where a peer dependency lives anyway. `typeof` on an undeclared binding is
- * safe in both, and `import.meta.url` is deliberately not used: it cannot be
- * parsed by a CommonJS test runner.
+ * The CommonJS build has one and resolves relative to itself. The ES module
+ * build does not — a bare `require()` there is a ReferenceError that takes down
+ * the whole entry point — so it has to give `createRequire` an anchor, and the
+ * anchor decides where the lookup starts.
+ *
+ * The entry script is tried first because it sits inside the application tree
+ * whatever directory the process was started from. The working directory is
+ * only a fallback: anchoring on it alone made this fail on the first GraphQL
+ * request of any application launched from somewhere other than its own root.
+ *
+ * `import.meta.url` would be the natural anchor and is deliberately not used:
+ * it cannot be parsed by a CommonJS test runner, and this source is compiled
+ * for both.
  *
  * Cached, because a guard runs on every request.
  */
 const loadGraphQLModule = (): GraphQLModule => {
   if (graphqlModule) return graphqlModule;
 
-  const load = typeof require === 'function' ? require : createRequire(join(process.cwd(), 'package.json'));
+  if (typeof require === 'function') {
+    graphqlModule = require(GRAPHQL_PACKAGE) as GraphQLModule;
 
-  graphqlModule = load('@nestjs/graphql') as GraphQLModule;
+    return graphqlModule;
+  }
 
-  return graphqlModule;
+  const anchors = [process.argv[1], join(process.cwd(), 'package.json')].filter(
+    (anchor): anchor is string => typeof anchor === 'string' && anchor !== '',
+  );
+
+  for (const anchor of anchors) {
+    try {
+      graphqlModule = createRequire(anchor)(GRAPHQL_PACKAGE) as GraphQLModule;
+
+      return graphqlModule;
+    } catch (error) {
+      // Only a package that is not there is worth another anchor for. Anything
+      // thrown from inside it is the real answer and must not be swallowed.
+      if (!isGraphQLPackageMissing(error)) throw error;
+    }
+  }
+
+  throw new Error(
+    `${GRAPHQL_PACKAGE} could not be resolved from ${anchors.join(' or ')}. ` +
+      'It is an optional peer dependency and must be installed by the application that serves GraphQL.',
+  );
 };
 
 export const getRequestFromContext = (context: ExecutionContext): InjectedRequest => {
