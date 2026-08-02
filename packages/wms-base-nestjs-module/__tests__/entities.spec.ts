@@ -31,7 +31,7 @@ describe('Entity Models and Relationships', () => {
       ],
     }).compile();
 
-    dataSource = module.get<DataSource>(DataSource);
+    _dataSource = module.get<DataSource>(DataSource);
   });
 
   afterEach(async () => {
