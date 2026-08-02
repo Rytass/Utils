@@ -142,30 +142,39 @@ function collectFiles(dir, predicate, acc = []) {
 
 function conditionsFor(name) {
   // `types` must sit inside every condition and before `default`: TypeScript
-  // takes the first match and stops.
+  // takes the first match and stops. The trailing `default` is for resolvers
+  // that understand neither `import` nor `require`.
   return {
     import: { types: `./${name}.d.ts`, default: `./${name}.js` },
     require: { types: `./${name}.d.cts`, default: `./${name}.cjs` },
+    default: `./${name}.js`,
   };
 }
 
 /**
- * Directories that a consumer may address without a filename. ESM never applies
- * directory resolution, so `@rytass/pkg/typings` only works when the map spells
- * the index file out.
+ * Directories a consumer may address without a filename, at any depth. ESM never
+ * applies directory resolution and the `./*` wildcard would map
+ * `components/Table` to a non-existent `components/Table.js`, so every directory
+ * holding an index has to be spelled out. CommonJS consumers could resolve these
+ * before the package had an exports map, and an exports map turns that off.
  */
-function directoryEntries(distPath) {
+function directoryEntries(distPath, prefix = '') {
   return fse
-    .readdirSync(distPath, { withFileTypes: true })
+    .readdirSync(path.resolve(distPath, prefix), { withFileTypes: true })
     .filter(entry => entry.isDirectory())
-    .filter(entry => fse.existsSync(path.resolve(distPath, entry.name, 'index.js')))
-    .map(entry => entry.name);
+    .flatMap(entry => {
+      const relativePath = prefix ? `${prefix}/${entry.name}` : entry.name;
+      const hasIndex = fse.existsSync(path.resolve(distPath, relativePath, 'index.js'));
+
+      return [...(hasIndex ? [relativePath] : []), ...directoryEntries(distPath, relativePath)];
+    });
 }
 
 function buildExportsMap(distPath, subpathNames) {
   const wildcard = {
     import: { types: './*.d.ts', default: './*.js' },
     require: { types: './*.d.cts', default: './*.cjs' },
+    default: './*.js',
   };
 
   return {
