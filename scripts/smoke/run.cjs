@@ -100,7 +100,9 @@ function isBundlerOnly(packageDir) {
  * third-party packages being loadable.
  */
 function verifyInternalSpecifiers(libDir) {
-  const pattern = /(?:\bfrom\s*|\bimport\s*\(\s*|\brequire\s*\(\s*)(['"])(\.{1,2}\/[^'"]*)\1/g;
+  // `\bimport\s*` also covers side-effect-only imports (`import './x.js';`),
+  // which carry no `from` clause and would otherwise go unchecked.
+  const pattern = /(?:\bfrom\s*|\bimport\s*\(?\s*|\brequire\s*\(\s*)(['"])(\.{1,2}\/[^'"]*)\1/g;
 
   return collect(libDir, filePath => /\.(js|cjs|mjs)$/.test(filePath)).flatMap(filePath => {
     const source = fs.readFileSync(filePath, 'utf8');
