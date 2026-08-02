@@ -33,16 +33,6 @@ let graphqlModule: GraphQLModule | null = null;
 const GRAPHQL_PACKAGE = '@nestjs/graphql';
 
 /**
- * Whether an error means this specific package was not found, as opposed to
- * something the package itself threw once it had been located.
- */
-const isGraphQLPackageMissing = (error: unknown): boolean => {
-  const { code, message } = (error ?? {}) as { code?: string; message?: string };
-
-  return code === 'MODULE_NOT_FOUND' && typeof message === 'string' && message.includes(GRAPHQL_PACKAGE);
-};
-
-/**
  * Load `@nestjs/graphql` on the first GraphQL request.
  *
  * It is an optional peer, so it cannot be a static import: an application that
@@ -81,15 +71,25 @@ const loadGraphQLModule = (): GraphQLModule => {
   );
 
   for (const anchor of anchors) {
-    try {
-      graphqlModule = createRequire(anchor)(GRAPHQL_PACKAGE) as GraphQLModule;
+    const resolveFrom = createRequire(anchor);
+    let resolved: string;
 
-      return graphqlModule;
-    } catch (error) {
-      // Only a package that is not there is worth another anchor for. Anything
-      // thrown from inside it is the real answer and must not be swallowed.
-      if (!isGraphQLPackageMissing(error)) throw error;
+    // Locating and loading are kept separate on purpose. A failure to locate is
+    // the only thing another anchor can fix, and inspecting the error to tell
+    // the two apart does not work: Node embeds a "Require stack" naming the file
+    // that did the requiring, so a package that is installed but throws
+    // MODULE_NOT_FOUND for one of its own dependencies produces a message
+    // containing this package's name, and would be misreported as absent.
+    try {
+      resolved = resolveFrom.resolve(GRAPHQL_PACKAGE);
+    } catch {
+      continue;
     }
+
+    // Anything thrown from here belongs to the package itself and is the answer.
+    graphqlModule = resolveFrom(resolved) as GraphQLModule;
+
+    return graphqlModule;
   }
 
   throw new Error(
