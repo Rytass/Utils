@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.6.6](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.6.5...@rytass/member-base-nestjs-module@0.6.6) (2026-08-02)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** stop misreporting a broken graphql peer ([215b7f8](https://github.com/Rytass/Utils/commit/215b7f838790c0a19652c11a110653c0b0e5a4e3))
+
 ## [0.6.5](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.6.4...@rytass/member-base-nestjs-module@0.6.5) (2026-08-02)
 
 ### Bug Fixes
