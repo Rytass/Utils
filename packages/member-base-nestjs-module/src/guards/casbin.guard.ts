@@ -12,7 +12,7 @@ import {
 import { type ReflectableDecorator, Reflector } from '@nestjs/core';
 import { IS_ROUTE_PUBLIC } from '../decorators/is-public.decorator';
 import { AllowActions, type Subject, type Action } from '../decorators/action.decorator';
-import { verify } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { IS_ROUTE_ONLY_AUTHENTICATED } from '../decorators/authenticated.decorator';
 import { getTokenFromContext } from '../utils/get-token-from-context';
 import { getRequestFromContext } from '../utils/get-request-from-context';
@@ -50,7 +50,7 @@ export class CasbinGuard implements CanActivate {
 
     if (token) {
       try {
-        const payload = verify(token, this.accessTokenSecret) as AuthTokenPayloadBase;
+        const payload = jwt.verify(token, this.accessTokenSecret) as AuthTokenPayloadBase;
 
         request.payload = payload;
       } catch (_ex) {

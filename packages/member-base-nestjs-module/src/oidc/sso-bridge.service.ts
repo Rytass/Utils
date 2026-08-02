@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, OnApplicationBootstrap, Optional } from '@nestjs/common';
-import { verify as verifyJWT } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { MemberBaseService } from '../services/member-base.service';
 import {
   ACCESS_TOKEN_COOKIE_NAME,
@@ -209,7 +209,7 @@ export class OidcSsoBridge implements OnApplicationBootstrap {
     if (!token) return null;
 
     try {
-      const payload = verifyJWT(token, this.accessTokenSecret) as { id?: string; authTime?: number };
+      const payload = jwt.verify(token, this.accessTokenSecret) as { id?: string; authTime?: number };
 
       return typeof payload.id === 'string' ? { id: payload.id, authTime: payload.authTime } : null;
     } catch {

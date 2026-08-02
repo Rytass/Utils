@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
-import { verify as verifyJWT } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { OidcMetadataResolver } from './oidc-discovery';
 import { AuthProviderMisconfiguredError, InvalidToken } from '../../constants/errors/base.error';
 import type {
@@ -232,7 +232,7 @@ export class OidcAuthProvider implements AuthenticationProvider {
     let claims: IdTokenClaims;
 
     try {
-      claims = verifyJWT(idToken, key, {
+      claims = jwt.verify(idToken, key, {
         issuer,
         audience: this.options.clientId,
         // Pinned to asymmetric algorithms: accepting the token's own alg would

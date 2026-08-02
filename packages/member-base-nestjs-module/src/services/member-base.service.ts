@@ -18,7 +18,7 @@ import {
   RESET_PASSWORD_TOKEN_SECRET,
   RESOLVED_MEMBER_REPO,
 } from '../typings/member-base.tokens';
-import { sign, verify as verifyJWT } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import type { AuthTokenPayloadBase } from '../typings/auth-token-payload';
 import type { SignTokenOptions } from '../typings/sign-token-options';
 import { currentEpochSeconds } from '../utils/current-epoch-seconds';
@@ -100,7 +100,7 @@ export class MemberBaseService<
   }
 
   signRefreshToken(member: MemberEntity, domain?: string, options?: SignTokenOptions): string {
-    return sign(
+    return jwt.sign(
       {
         ...this.customizedJwtPayload(member),
         passwordChangedAt: member.passwordChangedAt?.getTime() ?? null,
@@ -115,7 +115,7 @@ export class MemberBaseService<
   }
 
   signAccessToken(member: MemberEntity, domain?: string, options?: SignTokenOptions): string {
-    return sign(
+    return jwt.sign(
       {
         ...this.customizedJwtPayload(member),
         ...resolveAuthTimeClaim(options),
@@ -143,7 +143,7 @@ export class MemberBaseService<
 
     await this.baseMemberRepo.save(member);
 
-    const token = sign(
+    const token = jwt.sign(
       {
         id: member.id,
         requestedOn: requestedOn.getTime(),
@@ -198,7 +198,7 @@ export class MemberBaseService<
 
   async changePasswordWithToken<T extends MemberEntity = MemberEntity>(token: string, newPassword: string): Promise<T> {
     try {
-      const { id, requestedOn } = verifyJWT(token, this.resetPasswordTokenSecret) as {
+      const { id, requestedOn } = jwt.verify(token, this.resetPasswordTokenSecret) as {
         id: string;
         requestedOn: number;
       };
@@ -318,7 +318,7 @@ export class MemberBaseService<
         exp: _exp,
         domain,
         authTime,
-      } = verifyJWT(refreshToken, this.refreshTokenSecret) as {
+      } = jwt.verify(refreshToken, this.refreshTokenSecret) as {
         id: string;
         account: string;
         passwordChangedAt: number | null;
