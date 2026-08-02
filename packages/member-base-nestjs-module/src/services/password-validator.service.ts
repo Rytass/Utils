@@ -15,18 +15,9 @@ import { MemberPasswordHistoryEntity, MemberPasswordHistoryRepo } from '../model
 import { Repository } from 'typeorm';
 import { DateTime } from 'luxon';
 import { PasswordInHistoryError } from '../constants/errors/base.error';
-
-// Use runtime require to avoid depending on @types/generate-password at consumers
-const { generate } = require('generate-password') as {
-  // Minimal typing for our usage
-  generate: (options?: {
-    length?: number;
-    numbers?: boolean;
-    symbols?: boolean;
-    lowercase?: boolean;
-    uppercase?: boolean;
-  }) => string;
-};
+// generate-password ships its own types, so the runtime require this used to
+// need — which is a ReferenceError in the ES module build — buys nothing.
+import { generate } from 'generate-password';
 
 @Injectable()
 export class PasswordValidatorService<MemberEntity extends BaseMemberEntity = BaseMemberEntity> {
