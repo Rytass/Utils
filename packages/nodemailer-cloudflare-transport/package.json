@@ -1,6 +1,6 @@
 {
   "name": "nodemailer-cloudflare-transport",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Nodemailer transport for the Cloudflare Email Service REST API",
   "keywords": [
     "nodemailer",

@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.3.0](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-newebpay@0.2.18...@rytass/payments-adapter-newebpay@0.3.0) (2026-08-02)
+
+### Bug Fixes
+
+- mark @ngrok/ngrok as an optional peer dependency in payment adapters ([36b8246](https://github.com/Rytass/Utils/commit/36b824653860081ecf152e760062f4cc1daf4c54))
+
 ## [0.2.18](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-newebpay@0.2.17...@rytass/payments-adapter-newebpay@0.2.18) (2026-06-07)
 
 ### Bug Fixes

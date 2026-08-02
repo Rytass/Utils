@@ -8049,7 +8049,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/file-converter-adapter-image-resizer@workspace:packages/file-converter-adapter-image-resizer"
   dependencies:
-    "@rytass/file-converter": "npm:>=0.1.5 <1"
+    "@rytass/file-converter": "npm:^0.2.0"
     sharp: "npm:^0.34.5"
   languageName: unknown
   linkType: soft
@@ -8058,7 +8058,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/file-converter-adapter-image-transcoder@workspace:packages/file-converter-adapter-image-transcoder"
   dependencies:
-    "@rytass/file-converter": "npm:>=0.1.5 <1"
+    "@rytass/file-converter": "npm:^0.2.0"
     file-type: "npm:^21.3.4"
     sharp: "npm:^0.34.5"
   languageName: unknown
@@ -8068,12 +8068,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/file-converter-adapter-image-watermark@workspace:packages/file-converter-adapter-image-watermark"
   dependencies:
-    "@rytass/file-converter": "npm:>=0.1.5 <1"
+    "@rytass/file-converter": "npm:^0.2.0"
     sharp: "npm:^0.34.5"
   languageName: unknown
   linkType: soft
 
-"@rytass/file-converter@npm:>=0.1.5 <1, @rytass/file-converter@workspace:packages/file-converter":
+"@rytass/file-converter@npm:^0.2.0, @rytass/file-converter@workspace:packages/file-converter":
   version: 0.0.0-use.local
   resolution: "@rytass/file-converter@workspace:packages/file-converter"
   languageName: unknown
@@ -8083,7 +8083,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-adapter-amego@workspace:packages/invoice-adapter-amego"
   dependencies:
-    "@rytass/invoice": "npm:>=0.4.10 <1"
+    "@rytass/invoice": "npm:^0.5.0"
     axios: "npm:^1.16.1"
     luxon: "npm:^3.7.2"
     validator: "npm:^13.15.26"
@@ -8094,7 +8094,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-adapter-bank-pro@workspace:packages/invoice-adapter-bank-pro"
   dependencies:
-    "@rytass/invoice": "npm:>=0.4.10 <1"
+    "@rytass/invoice": "npm:^0.5.0"
     axios: "npm:^1.16.1"
     luxon: "npm:^3.7.2"
     validator: "npm:^13.15.26"
@@ -8105,7 +8105,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-adapter-ecpay@workspace:packages/invoice-adapter-ecpay"
   dependencies:
-    "@rytass/invoice": "npm:>=0.4.10 <1"
+    "@rytass/invoice": "npm:^0.5.0"
     "@types/validator": "npm:^13.15.10"
     axios: "npm:^1.16.1"
     luxon: "npm:^3.7.2"
@@ -8117,7 +8117,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-adapter-ezpay@workspace:packages/invoice-adapter-ezpay"
   dependencies:
-    "@rytass/invoice": "npm:>=0.4.10 <1"
+    "@rytass/invoice": "npm:^0.5.0"
     axios: "npm:^1.16.1"
     form-data: "npm:^4.0.5"
     luxon: "npm:^3.7.2"
@@ -8129,7 +8129,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-adapter-universal@workspace:packages/invoice-adapter-universal"
   dependencies:
-    "@rytass/invoice": "npm:>=0.4.10 <1"
+    "@rytass/invoice": "npm:^0.5.0"
     "@types/validator": "npm:^13.15.10"
     axios: "npm:^1.16.1"
     luxon: "npm:^3.7.2"
@@ -8137,11 +8137,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rytass/invoice@npm:>=0.4.10 <1, @rytass/invoice@workspace:packages/invoice":
+"@rytass/invoice@npm:^0.5.0, @rytass/invoice@workspace:packages/invoice":
   version: 0.0.0-use.local
   resolution: "@rytass/invoice@workspace:packages/invoice"
   dependencies:
-    "@rytass/payments": "npm:>=0.2.7 <1"
+    "@rytass/payments": "npm:^0.3.0"
   languageName: unknown
   linkType: soft
 
@@ -8149,7 +8149,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/logistics-adapter-ctc@workspace:packages/logistics-adapter-ctc"
   dependencies:
-    "@rytass/logistics": "npm:>=0.0.13 <1"
+    "@rytass/logistics": "npm:^0.1.0"
     axios: "npm:^1.16.1"
     cheerio: "npm:^1.2.0"
   languageName: unknown
@@ -8159,13 +8159,13 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/logistics-adapter-tcat@workspace:packages/logistics-adapter-tcat"
   dependencies:
-    "@rytass/logistics": "npm:>=0.0.13 <1"
+    "@rytass/logistics": "npm:^0.1.0"
     axios: "npm:^1.16.1"
     cheerio: "npm:^1.2.0"
   languageName: unknown
   linkType: soft
 
-"@rytass/logistics@npm:>=0.0.13 <1, @rytass/logistics@workspace:packages/logistics":
+"@rytass/logistics@npm:^0.1.0, @rytass/logistics@workspace:packages/logistics":
   version: 0.0.0-use.local
   resolution: "@rytass/logistics@workspace:packages/logistics"
   languageName: unknown
@@ -8217,7 +8217,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/payments-adapter-ctbc-micro-fast-pay@workspace:packages/payments-adapter-ctbc-micro-fast-pay"
   dependencies:
-    "@rytass/payments": "npm:>=0.2.7 <1"
+    "@rytass/payments": "npm:^0.3.0"
     "@types/debug": "npm:^4.1.12"
     axios: "npm:^1.16.1"
     debug: "npm:^4.4.3"
@@ -8237,7 +8237,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/payments-adapter-ecpay@workspace:packages/payments-adapter-ecpay"
   dependencies:
-    "@rytass/payments": "npm:>=0.2.7 <1"
+    "@rytass/payments": "npm:^0.3.0"
     "@types/debug": "npm:^4.1.12"
     axios: "npm:^1.16.1"
     debug: "npm:^4.4.3"
@@ -8255,7 +8255,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/payments-adapter-happy-card@workspace:packages/payments-adapter-happy-card"
   dependencies:
-    "@rytass/payments": "npm:>=0.2.7 <1"
+    "@rytass/payments": "npm:^0.3.0"
     "@types/lodash": "npm:^4"
     axios: "npm:^1.16.1"
     lodash: "npm:^4.18.1"
@@ -8267,7 +8267,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/payments-adapter-hwanan@workspace:packages/payments-adapter-hwanan"
   dependencies:
-    "@rytass/payments": "npm:>=0.2.7 <1"
+    "@rytass/payments": "npm:^0.3.0"
     axios: "npm:^1.16.1"
     lru-cache: "npm:^11.2.6"
   peerDependencies:
@@ -8282,7 +8282,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/payments-adapter-icash-pay@workspace:packages/payments-adapter-icash-pay"
   dependencies:
-    "@rytass/payments": "npm:>=0.2.7 <1"
+    "@rytass/payments": "npm:^0.3.0"
     "@types/debug": "npm:^4"
     axios: "npm:^1.16.1"
     debug: "npm:^4.4.3"
@@ -8294,7 +8294,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/payments-adapter-newebpay@workspace:packages/payments-adapter-newebpay"
   dependencies:
-    "@rytass/payments": "npm:>=0.2.7 <1"
+    "@rytass/payments": "npm:^0.3.0"
     axios: "npm:^1.16.1"
     lru-cache: "npm:^11.2.6"
     luxon: "npm:^3.7.2"
@@ -8310,14 +8310,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/payments-nestjs-module@workspace:packages/payments-nestjs-module"
   dependencies:
-    "@rytass/payments": "npm:>=0.2.7 <1"
+    "@rytass/payments": "npm:^0.3.0"
   peerDependencies:
     "@nestjs/common": "*"
     "@rytass/member-base-nestjs-module": ">=0.4.0"
   languageName: unknown
   linkType: soft
 
-"@rytass/payments@npm:>=0.2.7 <1, @rytass/payments@workspace:packages/payments":
+"@rytass/payments@npm:^0.3.0, @rytass/payments@workspace:packages/payments":
   version: 0.0.0-use.local
   resolution: "@rytass/payments@workspace:packages/payments"
   languageName: unknown
@@ -8339,7 +8339,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/secret-adapter-vault-nestjs@workspace:packages/secret-adapter-vault-nestjs"
   dependencies:
-    "@rytass/secret-adapter-vault": "npm:>=0.4.6 <1"
+    "@rytass/secret-adapter-vault": "npm:^0.5.0"
     regenerator-runtime: "npm:^0.14.1"
   peerDependencies:
     "@nestjs/common": ">=10"
@@ -8347,16 +8347,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rytass/secret-adapter-vault@npm:>=0.4.6 <1, @rytass/secret-adapter-vault@workspace:packages/secret-adapter-vault":
+"@rytass/secret-adapter-vault@npm:^0.5.0, @rytass/secret-adapter-vault@workspace:packages/secret-adapter-vault":
   version: 0.0.0-use.local
   resolution: "@rytass/secret-adapter-vault@workspace:packages/secret-adapter-vault"
   dependencies:
-    "@rytass/secret": "npm:>=0.1.3 <1"
+    "@rytass/secret": "npm:^0.2.0"
     axios: "npm:^1.16.1"
   languageName: unknown
   linkType: soft
 
-"@rytass/secret@npm:>=0.1.3 <1, @rytass/secret@workspace:packages/secret":
+"@rytass/secret@npm:^0.2.0, @rytass/secret@workspace:packages/secret":
   version: 0.0.0-use.local
   resolution: "@rytass/secret@workspace:packages/secret"
   languageName: unknown
@@ -8366,11 +8366,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/sms-adapter-every8d@workspace:packages/sms-adapter-every8d"
   dependencies:
-    "@rytass/sms": "npm:>=0.1.3 <1"
+    "@rytass/sms": "npm:^0.2.0"
   languageName: unknown
   linkType: soft
 
-"@rytass/sms@npm:>=0.1.3 <1, @rytass/sms@workspace:packages/sms":
+"@rytass/sms@npm:^0.2.0, @rytass/sms@workspace:packages/sms":
   version: 0.0.0-use.local
   resolution: "@rytass/sms@workspace:packages/sms"
   languageName: unknown
@@ -8381,7 +8381,7 @@ __metadata:
   resolution: "@rytass/storages-adapter-azure-blob@workspace:packages/storages-adapter-azure-blob"
   dependencies:
     "@azure/storage-blob": "npm:^12.31.0"
-    "@rytass/storages": "npm:>=0.2.7 <1"
+    "@rytass/storages": "npm:^0.3.0"
     uuid: "npm:^13.0.0"
   languageName: unknown
   linkType: soft
@@ -8391,7 +8391,7 @@ __metadata:
   resolution: "@rytass/storages-adapter-gcs@workspace:packages/storages-adapter-gcs"
   dependencies:
     "@google-cloud/storage": "npm:^7.19.0"
-    "@rytass/storages": "npm:>=0.2.7 <1"
+    "@rytass/storages": "npm:^0.3.0"
     "@types/uuid": "npm:^11.0.0"
     uuid: "npm:^13.0.0"
   languageName: unknown
@@ -8401,7 +8401,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/storages-adapter-local@workspace:packages/storages-adapter-local"
   dependencies:
-    "@rytass/storages": "npm:>=0.2.7 <1"
+    "@rytass/storages": "npm:^0.3.0"
     "@types/uuid": "npm:^11.0.0"
     uuid: "npm:^13.0.0"
   languageName: unknown
@@ -8414,7 +8414,7 @@ __metadata:
     "@aws-sdk/client-s3": "npm:^3.996.0"
     "@aws-sdk/lib-storage": "npm:^3.996.0"
     "@aws-sdk/s3-request-presigner": "npm:^3.996.0"
-    "@rytass/storages": "npm:>=0.2.7 <1"
+    "@rytass/storages": "npm:^0.3.0"
     "@types/uuid": "npm:^11.0.0"
     uuid: "npm:^13.0.0"
   languageName: unknown
@@ -8427,7 +8427,7 @@ __metadata:
     "@aws-sdk/client-s3": "npm:^3.996.0"
     "@aws-sdk/lib-storage": "npm:^3.996.0"
     "@aws-sdk/s3-request-presigner": "npm:^3.996.0"
-    "@rytass/storages": "npm:>=0.2.7 <1"
+    "@rytass/storages": "npm:^0.3.0"
     "@types/uuid": "npm:^11.0.0"
     uuid: "npm:^13.0.0"
   languageName: unknown
@@ -8437,16 +8437,16 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/storages-adapter-vercel-blob@workspace:packages/storages-adapter-vercel-blob"
   dependencies:
-    "@rytass/storages": "npm:>=0.2.7 <1"
+    "@rytass/storages": "npm:^0.3.0"
     "@vercel/blob": "npm:^2.4.0"
   languageName: unknown
   linkType: soft
 
-"@rytass/storages@npm:>=0.2.7 <1, @rytass/storages@workspace:packages/storages":
+"@rytass/storages@npm:^0.3.0, @rytass/storages@workspace:packages/storages":
   version: 0.0.0-use.local
   resolution: "@rytass/storages@workspace:packages/storages"
   dependencies:
-    "@rytass/file-converter": "npm:>=0.1.5 <1"
+    "@rytass/file-converter": "npm:^0.2.0"
     file-type: "npm:^21.3.4"
   languageName: unknown
   linkType: soft

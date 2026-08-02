@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.2.0](https://github.com/Rytass/Utils/compare/@rytass/quadrats-nestjs@0.1.16...@rytass/quadrats-nestjs@0.2.0) (2026-08-02)
+
+### Bug Fixes
+
+- **quadrats-nestjs:** drop the @nestjs/common peer dependency upper bound ([575cc50](https://github.com/Rytass/Utils/commit/575cc50a6475d9ca66dffe2ab156b58a1fce6a89))
+
 ## [0.1.16](https://github.com/Rytass/Utils/compare/@rytass/quadrats-nestjs@0.1.15...@rytass/quadrats-nestjs@0.1.16) (2026-05-18)
 
 **Note:** Version bump only for package @rytass/quadrats-nestjs

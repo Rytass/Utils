@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.2.0](https://github.com/Rytass/Utils/compare/@rytass/file-converter-adapter-image-watermark@0.1.13...@rytass/file-converter-adapter-image-watermark@0.2.0) (2026-08-02)
+
+### Bug Fixes
+
+- **file-converter-adapter-image-watermark:** import gravity off sharp's default ([4cab060](https://github.com/Rytass/Utils/commit/4cab0605afb346fa56291b0ce6f556bb3471bfc8))
+- widen internal [@rytass](https://github.com/rytass) dependency ranges to survive minor bumps ([fe1dd64](https://github.com/Rytass/Utils/commit/fe1dd6425f69a5098903f51bd62eefb29f2f5bd1))
+
 ## [0.1.13](https://github.com/Rytass/Utils/compare/@rytass/file-converter-adapter-image-watermark@0.1.12...@rytass/file-converter-adapter-image-watermark@0.1.13) (2025-12-04)
 
 **Note:** Version bump only for package @rytass/file-converter-adapter-image-watermark

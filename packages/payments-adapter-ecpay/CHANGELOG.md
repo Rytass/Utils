@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.5.0](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.4.16...@rytass/payments-adapter-ecpay@0.5.0) (2026-08-02)
+
+### Bug Fixes
+
+- mark @ngrok/ngrok as an optional peer dependency in payment adapters ([36b8246](https://github.com/Rytass/Utils/commit/36b824653860081ecf152e760062f4cc1daf4c54))
+
 ## [0.4.16](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ecpay@0.4.15...@rytass/payments-adapter-ecpay@0.4.16) (2026-06-10)
 
 ### Bug Fixes

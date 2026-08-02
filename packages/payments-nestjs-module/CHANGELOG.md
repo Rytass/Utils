@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.2.0](https://github.com/Rytass/Utils/compare/@rytass/payments-nestjs-module@0.1.22...@rytass/payments-nestjs-module@0.2.0) (2026-08-02)
+
+### Bug Fixes
+
+- **payments-nestjs-module:** export the module's public API ([9c89f47](https://github.com/Rytass/Utils/commit/9c89f47433c6469b4a391977de4cb4b9c65763ac))
+- **payments-nestjs-module:** relax [@rytass](https://github.com/rytass) dependency declarations ([b2f640c](https://github.com/Rytass/Utils/commit/b2f640c2bd6d2712bc4560331f387fd39588e97c))
+
+### BREAKING CHANGES
+
+- **payments-nestjs-module:** consumers must declare @rytass/member-base-nestjs-module in
+  their own package.json.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_012F8e8DwRa31CuqD5UdXsJ6
+
 ## [0.1.22](https://github.com/Rytass/Utils/compare/@rytass/payments-nestjs-module@0.1.21...@rytass/payments-nestjs-module@0.1.22) (2026-07-07)
 
 **Note:** Version bump only for package @rytass/payments-nestjs-module

@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.3.0](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-gcs@0.2.12...@rytass/storages-adapter-gcs@0.3.0) (2026-08-02)
+
+### Bug Fixes
+
+- widen internal [@rytass](https://github.com/rytass) dependency ranges to survive minor bumps ([fe1dd64](https://github.com/Rytass/Utils/commit/fe1dd6425f69a5098903f51bd62eefb29f2f5bd1))
+
 ## [0.2.12](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-gcs@0.2.11...@rytass/storages-adapter-gcs@0.2.12) (2026-05-18)
 
 **Note:** Version bump only for package @rytass/storages-adapter-gcs

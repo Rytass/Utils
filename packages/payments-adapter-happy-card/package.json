@@ -1,6 +1,6 @@
 {
   "name": "@rytass/payments-adapter-happy-card",
-  "version": "0.2.11",
+  "version": "0.3.0",
   "description": "Rytass Payment Gateway",
   "keywords": [
     "rytass",
@@ -26,7 +26,7 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "dependencies": {
-    "@rytass/payments": ">=0.2.7 <1",
+    "@rytass/payments": "^0.3.0",
     "axios": "^1.16.1",
     "lodash": "^4.18.1",
     "luxon": "^3.7.2"

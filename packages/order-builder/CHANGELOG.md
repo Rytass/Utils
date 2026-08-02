@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.1.0](https://github.com/Rytass/Utils/compare/@rytass/order-builder@0.0.25...@rytass/order-builder@0.1.0) (2026-08-02)
+
+**Note:** Version bump only for package @rytass/order-builder
+
 ## [0.0.25](https://github.com/Rytass/Utils/compare/@rytass/order-builder@0.0.24...@rytass/order-builder@0.0.25) (2025-12-05)
 
 **Note:** Version bump only for package @rytass/order-builder

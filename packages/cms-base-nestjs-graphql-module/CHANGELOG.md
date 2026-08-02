@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.2.0](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.1.30...@rytass/cms-base-nestjs-graphql-module@0.2.0) (2026-08-02)
+
+### Bug Fixes
+
+- **cms-base-nestjs-graphql-module:** move sibling [@rytass](https://github.com/rytass) modules to peer dependencies ([3232cca](https://github.com/Rytass/Utils/commit/3232cca49849b11ec1f191f8df94ea721fc31169))
+
+### BREAKING CHANGES
+
+- **cms-base-nestjs-graphql-module:** consumers must declare @rytass/cms-base-nestjs-module and
+  @rytass/member-base-nestjs-module in their own package.json.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_012F8e8DwRa31CuqD5UdXsJ6
+
 ## [0.1.30](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.1.29...@rytass/cms-base-nestjs-graphql-module@0.1.30) (2026-07-07)
 
 **Note:** Version bump only for package @rytass/cms-base-nestjs-graphql-module

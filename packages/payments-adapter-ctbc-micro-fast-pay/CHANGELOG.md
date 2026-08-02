@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.2.0](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.25...@rytass/payments-adapter-ctbc-micro-fast-pay@0.2.0) (2026-08-02)
+
+**Note:** Version bump only for package @rytass/payments-adapter-ctbc-micro-fast-pay
+
 ## [0.1.25](https://github.com/Rytass/Utils/compare/@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.24...@rytass/payments-adapter-ctbc-micro-fast-pay@0.1.25) (2026-07-29)
 
 ### Features

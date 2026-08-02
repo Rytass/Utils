@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.2.0](https://github.com/Rytass/Utils/compare/@rytass/wms-base-nestjs-module@0.1.12...@rytass/wms-base-nestjs-module@0.2.0) (2026-08-02)
+
+### Bug Fixes
+
+- **wms-base-nestjs-module:** declare missing NestJS and TypeORM peer dependencies ([ffb8d87](https://github.com/Rytass/Utils/commit/ffb8d8790abe965a78e9622240c0c2dc9aa8b3be))
+
 ## [0.1.12](https://github.com/Rytass/Utils/compare/@rytass/wms-base-nestjs-module@0.1.11...@rytass/wms-base-nestjs-module@0.1.12) (2026-05-18)
 
 **Note:** Version bump only for package @rytass/wms-base-nestjs-module
