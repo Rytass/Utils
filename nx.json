@@ -25,7 +25,8 @@
         ],
         "parallel": false
       },
-      "inputs": ["default"]
+      "inputs": ["default"],
+      "outputs": ["{projectRoot}/lib"]
     },
     "test": {
       "executor": "@nx/jest:jest",
