@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.6.5](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.6.4...@rytass/member-base-nestjs-module@0.6.5) (2026-08-02)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** resolve the graphql peer independently of cwd ([6e0c4e9](https://github.com/Rytass/Utils/commit/6e0c4e9f887f561270b39fc26073a2c536eb76f4))
+
 ## [0.6.4](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.6.3...@rytass/member-base-nestjs-module@0.6.4) (2026-08-02)
 
 ### Bug Fixes
