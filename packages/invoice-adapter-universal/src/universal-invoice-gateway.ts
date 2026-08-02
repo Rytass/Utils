@@ -11,7 +11,9 @@ import {
 import axios from 'axios';
 import { createHmac } from 'crypto';
 import { DateTime } from 'luxon';
-import isEmail from 'validator/lib/isEmail';
+// The extension is required: `validator` publishes no exports map, and Node's
+// ESM resolver does not add one for deep paths inside node_modules.
+import isEmail from 'validator/lib/isEmail.js';
 import {
   UNIVERSAL_B2C_BUYER_ID,
   UNIVERSAL_DEFAULT_INVOICE_TYPE,

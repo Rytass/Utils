@@ -10,7 +10,9 @@ import {
   isValidVATNumber,
 } from '@rytass/invoice';
 import axios from 'axios';
-import isEmail from 'validator/lib/isEmail';
+// The extension is required: `validator` publishes no exports map, and Node's
+// ESM resolver does not add one for deep paths inside node_modules.
+import isEmail from 'validator/lib/isEmail.js';
 import { DateTime } from 'luxon';
 import { createCipheriv, createDecipheriv } from 'crypto';
 import {

@@ -9,7 +9,9 @@ import {
 } from '@rytass/invoice';
 import axios from 'axios';
 import { DateTime } from 'luxon';
-import isEmail from 'validator/lib/isEmail';
+// The extension is required: `validator` publishes no exports map, and Node's
+// ESM resolver does not add one for deep paths inside node_modules.
+import isEmail from 'validator/lib/isEmail.js';
 import { BankProAllowance } from './bank-pro-allowance';
 import { BankProInvoice } from './bank-pro-invoice';
 import {
