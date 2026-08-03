@@ -11,14 +11,27 @@ export const OidcClientRepo = Symbol('OidcClientRepo');
  */
 @Entity('oidc_clients')
 export class OidcClientEntity {
+  /**
+   * Stays bounded: it is the primary key, and a btree index key has a hard
+   * limit of its own. 255 is far past any real client id and turns an absurd
+   * one into a clear rejection rather than an index-level failure.
+   */
   @PrimaryColumn('varchar', { length: 255 })
   clientId: string;
 
-  /** Null for public clients, which authenticate with PKCE alone. */
-  @Column('varchar', { length: 255, nullable: true })
+  /**
+   * Null for public clients, which authenticate with PKCE alone.
+   *
+   * `text` rather than a bounded varchar: with `clients.secretCipher` the
+   * stored value is whatever the application's cipher produces, and a package
+   * cannot know how long that is. A KMS ciphertext blob overruns 255 on its
+   * own. Postgres stores the two identically, so the bound bought nothing.
+   */
+  @Column('text', { nullable: true })
   clientSecret: string | null;
 
-  @Column('varchar', { length: 255 })
+  /** Free text supplied by whoever registers the client. */
+  @Column('text')
   name: string;
 
   @Column('simple-array')
@@ -33,7 +46,8 @@ export class OidcClientEntity {
   @Column('simple-array', { nullable: true })
   responseTypes: string[] | null;
 
-  @Column('varchar', { length: 512, nullable: true })
+  /** Space-delimited, and a client with many resource scopes outgrows any bound. */
+  @Column('text', { nullable: true })
   scope: string | null;
 
   /**
@@ -43,6 +57,7 @@ export class OidcClientEntity {
   @Column('boolean', { default: false })
   skipConsent: boolean;
 
+  /** Also bounded: the values are a fixed set the specs define, none over 30 characters. */
   @Column('varchar', { length: 64, nullable: true })
   tokenEndpointAuthMethod: string | null;
 
