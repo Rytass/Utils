@@ -111,3 +111,15 @@ export class AuthProviderMisconfiguredError extends InternalServerErrorException
 
   code = 113;
 }
+
+/**
+ * Thrown by OidcClientService. It lives here rather than under oidc/ so every
+ * error code the package can raise is assigned in one file and cannot collide.
+ */
+export class OidcClientNotFoundError extends BadRequestException {
+  constructor(clientId?: string) {
+    super(clientId ? `Oidc client not found: ${clientId}` : 'Oidc client not found');
+  }
+
+  code = 114;
+}

@@ -8,7 +8,7 @@ import { createOidcAdapterFactory } from './oidc-adapter';
 import { assertOidcProviderInstalled, createOidcProvider, type FindAccountFn } from './oidc.factory';
 import { MEMBER_BASE_OIDC_OPTIONS, OIDC_PROVIDER_INSTANCE, OIDC_ROUTE_PREFIX } from './oidc.tokens';
 import { OidcInteractionsController } from './interactions.controller';
-import { OidcAdminController } from './oidc-admin.controller';
+import { OidcClientService } from './oidc-client.service';
 import { OidcSsoBridge } from './sso-bridge.service';
 import { OidcMaintenanceService } from './oidc-maintenance.service';
 import { MemberBaseService } from '../services/member-base.service';
@@ -104,9 +104,26 @@ const routePrefixProvider: Provider = {
   inject: [MEMBER_BASE_OIDC_OPTIONS],
 };
 
-const sharedProviders = [providerFactory, routePrefixProvider, OidcSsoBridge, OidcMaintenanceService];
-const sharedExports = [OIDC_PROVIDER_INSTANCE, OIDC_ROUTE_PREFIX, MEMBER_BASE_OIDC_OPTIONS, OidcSsoBridge];
-const controllers = [OidcInteractionsController, OidcAdminController];
+const sharedProviders = [
+  providerFactory,
+  routePrefixProvider,
+  OidcSsoBridge,
+  OidcMaintenanceService,
+  OidcClientService,
+];
+
+const sharedExports = [
+  OIDC_PROVIDER_INSTANCE,
+  OIDC_ROUTE_PREFIX,
+  MEMBER_BASE_OIDC_OPTIONS,
+  OidcSsoBridge,
+  OidcClientService,
+];
+
+// Only the interaction routes are registered. Client administration is exported
+// as OidcClientService instead, so the host application decides whether it is
+// reachable at all, over which transport, and behind which permission.
+const controllers = [OidcInteractionsController];
 
 /**
  * Turns the host application into an OpenID Connect provider.

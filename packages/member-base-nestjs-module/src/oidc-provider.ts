@@ -14,7 +14,15 @@ export {
   type OidcConsentBody,
   type OidcAbortBody,
 } from './oidc/interactions.controller';
-export { OidcAdminController, type OidcClientView, type UpsertOidcClientBody } from './oidc/oidc-admin.controller';
+export { OidcClientNotFoundError } from './constants/errors/base.error';
+export {
+  OidcClientService,
+  type OidcClientView,
+  type CreateOidcClientInput,
+  type UpdateOidcClientInput,
+  type CreatedOidcClient,
+  type RotatedOidcClientSecret,
+} from './oidc/oidc-client.service';
 
 export { OidcPayloadEntity, OidcPayloadRepo } from './oidc/models/oidc-payload.entity';
 export { OidcClientEntity, OidcClientRepo } from './oidc/models/oidc-client.entity';
