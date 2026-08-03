@@ -4,15 +4,15 @@ Members, passwords, tokens and Casbin authorization for NestJS — plus a plugga
 
 ## What you can build with it
 
-| Capability | Entry point | Status |
-| --------------------------------------------- | ---------------------------- | ------------------- |
-| Members, password policy, JWT session, Casbin | package root                 | always on           |
-| Account/password login                        | package root                 | always on           |
-| Google / Facebook / custom OAuth2 login       | package root                 | configure to enable |
-| Login against any OIDC issuer (relying party) | package root                 | configure to enable |
-| Login against an LDAP / Active Directory      | `/ldap`                      | opt-in subpath      |
-| **Be** an OIDC provider for other services    | `/oidc-provider`             | opt-in subpath      |
-| GraphQL DTOs                                  | `/graphql`                   | opt-in subpath      |
+| Capability                                    | Entry point      | Status              |
+| --------------------------------------------- | ---------------- | ------------------- |
+| Members, password policy, JWT session, Casbin | package root     | always on           |
+| Account/password login                        | package root     | always on           |
+| Google / Facebook / custom OAuth2 login       | package root     | configure to enable |
+| Login against any OIDC issuer (relying party) | package root     | configure to enable |
+| Login against an LDAP / Active Directory      | `/ldap`          | opt-in subpath      |
+| **Be** an OIDC provider for other services    | `/oidc-provider` | opt-in subpath      |
+| GraphQL DTOs                                  | `/graphql`       | opt-in subpath      |
 
 Authentication sources and the issuer endpoint are independent: any source can back the issuer. Jump to [Deployment Topologies](#deployment-topologies) for complete, copy-pasteable setups of each combination.
 
@@ -34,18 +34,18 @@ Authentication sources and the issuer endpoint are independent: any source can b
 
 It is long because the package covers a lot; you are not meant to read it start to finish.
 
-| If you want to | Read |
-| --------------------------------------------- | ------------------------------------------------------------------ |
-| Get something running | [Installation](#installation), [Defining Your Member Entity](#defining-your-member-entity), then the topology that matches you |
-| Understand permissions | [RBAC with Domains](#rbac-with-domains-configuration) and [Request-Aware Authorization](#request-aware-authorization-casbindomainresolver-and-decision-tracing) |
-| Seed the first administrator | [Default Admin Bootstrap](#default-admin-bootstrap) |
-| Serve GraphQL | [GraphQL Support](#graphql-support) |
-| Put the session in a cookie | [Sessions and Cookies](#sessions-and-cookies) |
-| Look up an option | [Configuration Reference](#configuration-reference) |
-| Add a login source | [Authentication Gateway](#authentication-gateway), [LDAP](#authenticating-against-an-ldap-directory), [OIDC issuer](#authenticating-against-an-oidc-issuer) |
-| Become an issuer yourself | [Acting as an OpenID Connect Provider](#acting-as-an-openid-connect-provider) |
-| Upgrade an existing install | [Upgrade Notes](#upgrade-notes) |
-| Find what something is called | [Type Aliases and Injection Tokens](#type-aliases-and-injection-tokens) |
+| If you want to                | Read                                                                                                                                                            |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Get something running         | [Installation](#installation), [Defining Your Member Entity](#defining-your-member-entity), then the topology that matches you                                  |
+| Understand permissions        | [RBAC with Domains](#rbac-with-domains-configuration) and [Request-Aware Authorization](#request-aware-authorization-casbindomainresolver-and-decision-tracing) |
+| Seed the first administrator  | [Default Admin Bootstrap](#default-admin-bootstrap)                                                                                                             |
+| Serve GraphQL                 | [GraphQL Support](#graphql-support)                                                                                                                             |
+| Put the session in a cookie   | [Sessions and Cookies](#sessions-and-cookies)                                                                                                                   |
+| Look up an option             | [Configuration Reference](#configuration-reference)                                                                                                             |
+| Add a login source            | [Authentication Gateway](#authentication-gateway), [LDAP](#authenticating-against-an-ldap-directory), [OIDC issuer](#authenticating-against-an-oidc-issuer)     |
+| Become an issuer yourself     | [Acting as an OpenID Connect Provider](#acting-as-an-openid-connect-provider)                                                                                   |
+| Upgrade an existing install   | [Upgrade Notes](#upgrade-notes)                                                                                                                                 |
+| Find what something is called | [Type Aliases and Injection Tokens](#type-aliases-and-injection-tokens)                                                                                         |
 
 ## Installation
 
@@ -61,12 +61,12 @@ npm install @nestjs/common @nestjs/core @nestjs/typeorm typeorm argon2 jsonwebto
 
 Optional peer dependencies — install only the ones you use:
 
-| Package | Needed when |
-| ------------------------ | ------------------------------------------------------------- |
-| `typeorm-adapter` | You set `casbinAdapterOptions` (database-backed Casbin policy) |
-| `@nestjs/graphql`, `graphql` | You import from `@rytass/member-base-nestjs-module/graphql` |
-| `ldapts` | You import from `@rytass/member-base-nestjs-module/ldap` |
-| `oidc-provider` | You import from `@rytass/member-base-nestjs-module/oidc-provider` |
+| Package                      | Needed when                                                       |
+| ---------------------------- | ----------------------------------------------------------------- |
+| `typeorm-adapter`            | You set `casbinAdapterOptions` (database-backed Casbin policy)    |
+| `@nestjs/graphql`, `graphql` | You import from `@rytass/member-base-nestjs-module/graphql`       |
+| `ldapts`                     | You import from `@rytass/member-base-nestjs-module/ldap`          |
+| `oidc-provider`              | You import from `@rytass/member-base-nestjs-module/oidc-provider` |
 
 Nothing is pulled in by importing the package root: an entry point you never import is never resolved, so its dependency is never required and its tables are never created. See [Subpath isolation](#subpath-isolation).
 
@@ -271,12 +271,12 @@ You can use MemberBaseService.login to get accessToken and put it in header (Aut
 
 The model is `r = sub, dom, obj, act`, and the guard calls `enforcer.enforce(memberId, domain, subject, action)`. Only `subject` and `action` come from the decorator; **`domain` is never declared on the route**:
 
-| Part      | Where it comes from                                                              |
-| --------- | -------------------------------------------------------------------------------- |
-| `sub`     | The member id in the access token                                                |
-| `dom`     | `payload.domain` from the token, falling back to `DEFAULT_CASBIN_DOMAIN`         |
-| `obj`     | The first element of each `AllowActions` pair                                    |
-| `act`     | The second element                                                               |
+| Part  | Where it comes from                                                      |
+| ----- | ------------------------------------------------------------------------ |
+| `sub` | The member id in the access token                                        |
+| `dom` | `payload.domain` from the token, falling back to `DEFAULT_CASBIN_DOMAIN` |
+| `obj` | The first element of each `AllowActions` pair                            |
+| `act` | The second element                                                       |
 
 So the policy `addPolicy('article-admin', 'articles', 'article', 'create')` above is matched by `@AllowActions([['article', 'create']])` when the caller's token carries `domain: 'articles'` — which `login(account, password, { domain: 'articles' })` puts there.
 
@@ -366,7 +366,7 @@ Instead of hand-writing the seeding code above, you can declare a default admini
 ```typescript
 MemberBaseModule.forRoot({
   memberEntity: MyMemberEntity,
-  casbinAdapterOptions: { type: 'postgres', /* ... */ }, // required to grant permissions
+  casbinAdapterOptions: { type: 'postgres' /* ... */ }, // required to grant permissions
   defaultAdminAccount: 'root',
   // defaultAdminPassword: 'Sup3rStr0ng', // optional — omit to auto-generate
 });
@@ -423,8 +423,8 @@ The pre-built export assumes the defaults. Build your own whenever the module is
 import { createGraphQLContextTokenResolver } from '@rytass/member-base-nestjs-module';
 
 context: createGraphQLContextTokenResolver({
-  cookieName: 'sid',   // match accessTokenCookieName
-  cookieMode: true,    // match cookieMode
+  cookieName: 'sid', // match accessTokenCookieName
+  cookieMode: true, // match cookieMode
 });
 ```
 
@@ -438,10 +438,10 @@ By default a caller presents its token in the `Authorization` header and the mod
 
 **Writing** is narrower than reading. The module sets cookies only where it completes a login itself, and both cookies are written together so the caller does not need an immediate refresh round trip:
 
-| Where                          | When                                                              | Writes           |
-| ------------------------------ | ----------------------------------------------------------------- | ---------------- |
-| `GET /auth/callbacks/:channel` | An OAuth2 provider is configured                                   | access + refresh |
-| [`OidcSsoBridge`](#session-bridging) | `/oidc-provider` is mounted and the bridge is on             | access + refresh |
+| Where                                | When                                             | Writes           |
+| ------------------------------------ | ------------------------------------------------ | ---------------- |
+| `GET /auth/callbacks/:channel`       | An OAuth2 provider is configured                 | access + refresh |
+| [`OidcSsoBridge`](#session-bridging) | `/oidc-provider` is mounted and the bridge is on | access + refresh |
 
 A login you drive yourself — `memberBaseService.login(...)` — returns a token pair and writes nothing. Set it with the exported `resolveCookieOptions` to get the same attributes the module would have used.
 
@@ -457,7 +457,9 @@ import { MemberBaseModule } from '@rytass/member-base-nestjs-module';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({ /* ... */ }),
+    TypeOrmModule.forRoot({
+      /* ... */
+    }),
     MemberBaseModule.forRoot({
       cookieMode: true,
 
@@ -487,13 +489,13 @@ Both cookies are written, each with its own token's lifetime as `Max-Age`. On `h
 
 ### What each default adapts to
 
-| Attribute  | Adapts how                                                                                      |
-| ---------- | ----------------------------------------------------------------------------------------------- |
+| Attribute  | Adapts how                                                                                                                                         |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Secure`   | Set when the request is https, and for every host except `localhost`, `127.0.0.1` and `::1`, where a Secure cookie is never stored over plain http |
-| `Domain`   | Not emitted, so the browser scopes the cookie to exactly the host that served the response      |
-| `Path`     | `/`, so one cookie serves every route                                                            |
-| `Max-Age`  | From `accessTokenExpiration` / `refreshTokenExpiration`                                          |
-| `HttpOnly` | Always on, not configurable                                                                      |
+| `Domain`   | Not emitted, so the browser scopes the cookie to exactly the host that served the response                                                         |
+| `Path`     | `/`, so one cookie serves every route                                                                                                              |
+| `Max-Age`  | From `accessTokenExpiration` / `refreshTokenExpiration`                                                                                            |
+| `HttpOnly` | Always on, not configurable                                                                                                                        |
 
 Behind a reverse proxy, enable `app.set('trust proxy', 1)`. `X-Forwarded-Proto` then settles the `Secure` flag directly, which matters because a proxy that does not forward the original `Host` — nginx's default when `proxy_set_header Host` is omitted — otherwise makes an https deployment look like plain localhost. `cookieSecure: true` forces the flag if neither signal is available.
 
@@ -524,13 +526,13 @@ Five combinations cover nearly every deployment. Each is complete — the module
 
 ### Choosing one
 
-| Question | Topology |
-| ------------------------------------------------------------- | ------------------------- |
-| Users have accounts here, nothing else involved | [A. Standalone](#a-standalone) |
-| Users sign in with Google/Facebook too | [B. Social login](#b-standalone-with-social-login) |
-| Corporate directory owns the passwords | [C. Directory-backed](#c-directory-backed-active-directory) |
-| Another system already owns identity, this app consumes it | [D. Relying party](#d-relying-party-of-an-existing-issuer) |
-| Other services should authenticate against **this** app | [E. Identity provider](#e-identity-provider) |
+| Question                                                      | Topology                                                            |
+| ------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Users have accounts here, nothing else involved               | [A. Standalone](#a-standalone)                                      |
+| Users sign in with Google/Facebook too                        | [B. Social login](#b-standalone-with-social-login)                  |
+| Corporate directory owns the passwords                        | [C. Directory-backed](#c-directory-backed-active-directory)         |
+| Another system already owns identity, this app consumes it    | [D. Relying party](#d-relying-party-of-an-existing-issuer)          |
+| Other services should authenticate against **this** app       | [E. Identity provider](#e-identity-provider)                        |
 | Directory owns passwords **and** other services need identity | [F. Directory-backed issuer](#f-directory-backed-identity-provider) |
 
 ### A. Standalone
@@ -664,12 +666,21 @@ export class SsoController {
 
   @IsPublic()
   @Get('callback')
-  async callback(@Req() req: Request, @Res() res: Response, @Query('code') code: string, @Query('state') state: string): Promise<void> {
+  async callback(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Query('code') code: string,
+    @Query('state') state: string,
+  ): Promise<void> {
     const tx = JSON.parse(req.cookies.oidc_tx ?? '{}');
 
     if (!tx.state || tx.state !== state) throw new BadRequestException('Invalid state');
 
-    const { member } = await this.gateway.handleCallback('corp-idp', { code, codeVerifier: tx.codeVerifier, nonce: tx.nonce });
+    const { member } = await this.gateway.handleCallback('corp-idp', {
+      code,
+      codeVerifier: tx.codeVerifier,
+      nonce: tx.nonce,
+    });
 
     res.clearCookie('oidc_tx');
     res.cookie('access_token', this.memberBaseService.signAccessToken(member), { httpOnly: true });
@@ -824,14 +835,14 @@ The subject is the local member id rather than the directory's identifier, so re
 
 ### `MemberBaseModule` — authentication gateway options
 
-| Option | Type | Default | Purpose |
-| ---------------------- | ---------------------------------- | -------- | ----------------------------------------------- |
-| `authProviders` | `AuthenticationProvider[]` | `[]` | Extra sources; password is always registered |
-| `autoProvision` | `boolean \| (identity) => Promise<string \| null>` | `true` | What happens when an external identity has no member |
-| `linkExistingAccount` | `boolean \| 'verified-only'` | `true` | Whether an external identity may claim a matching local account |
-| `syncOnAuthenticate` | `(params) => Promise<void>` | — | Write directory attributes back after resolution; nothing runs by default |
-| `oauth2Providers` | `OAuth2Provider[]` | `[]` | Google / Facebook / custom OAuth2 |
-| `oauth2ClientDestUrl` | `string` | `'/login'` | Where the OAuth2 callback redirects |
+| Option                | Type                                               | Default    | Purpose                                                                   |
+| --------------------- | -------------------------------------------------- | ---------- | ------------------------------------------------------------------------- |
+| `authProviders`       | `AuthenticationProvider[]`                         | `[]`       | Extra sources; password is always registered                              |
+| `autoProvision`       | `boolean \| (identity) => Promise<string \| null>` | `true`     | What happens when an external identity has no member                      |
+| `linkExistingAccount` | `boolean \| 'verified-only'`                       | `true`     | Whether an external identity may claim a matching local account           |
+| `syncOnAuthenticate`  | `(params) => Promise<void>`                        | —          | Write directory attributes back after resolution; nothing runs by default |
+| `oauth2Providers`     | `OAuth2Provider[]`                                 | `[]`       | Google / Facebook / custom OAuth2                                         |
+| `oauth2ClientDestUrl` | `string`                                           | `'/login'` | Where the OAuth2 callback redirects                                       |
 
 `OAuth2Provider` is a union. Everything shared lives on `BaseOAuth2Provider` — `channel`, `clientId`, `clientSecret`, `redirectUri` and an optional `getState` — and each member adds only what it needs. Google and Facebook add an optional `scope`; anything else is a custom provider and has to say how to exchange a code and read an identifier back:
 
@@ -840,7 +851,9 @@ oauth2Providers: [
   { channel: 'google', clientId, clientSecret, redirectUri, scope: ['email', 'profile'] },
   {
     channel: 'line',
-    clientId, clientSecret, redirectUri,
+    clientId,
+    clientSecret,
+    redirectUri,
     scope: ['profile'],
     requestUrl: 'https://access.line.me/oauth2/v2.1/authorize',
     getAccessTokenFromCode: async code => '...',
@@ -855,14 +868,14 @@ Mainly used when `cookieMode: true`. Left unset, each attribute has a working de
 
 `accessTokenCookieName`, `cookiePath` and `cookieDomain` are also used by the OIDC session bridge when reading a session and when clearing one at logout, neither of which is gated on `cookieMode`.
 
-| Option                   | Type                             | Default                     | Purpose                                             |
-| ------------------------ | -------------------------------- | --------------------------- | --------------------------------------------------- |
-| `accessTokenCookieName`  | `string`                         | `'access_token'`            | Name of the access token cookie                     |
-| `refreshTokenCookieName` | `string`                         | `'refresh_token'`           | Name of the refresh token cookie                    |
-| `cookiePath`             | `string`                         | `'/'`                       | Path attribute                                      |
-| `cookieSameSite`         | `'lax' \| 'strict' \| 'none'`    | `'lax'`                     | SameSite attribute                                  |
-| `cookieSecure`           | `boolean`                        | https, or any non-loopback host | Secure attribute                                 |
-| `cookieDomain`           | `string`                         | absent (host-only)          | Domain attribute; set to share across subdomains    |
+| Option                   | Type                          | Default                         | Purpose                                          |
+| ------------------------ | ----------------------------- | ------------------------------- | ------------------------------------------------ |
+| `accessTokenCookieName`  | `string`                      | `'access_token'`                | Name of the access token cookie                  |
+| `refreshTokenCookieName` | `string`                      | `'refresh_token'`               | Name of the refresh token cookie                 |
+| `cookiePath`             | `string`                      | `'/'`                           | Path attribute                                   |
+| `cookieSameSite`         | `'lax' \| 'strict' \| 'none'` | `'lax'`                         | SameSite attribute                               |
+| `cookieSecure`           | `boolean`                     | https, or any non-loopback host | Secure attribute                                 |
+| `cookieDomain`           | `string`                      | absent (host-only)              | Domain attribute; set to share across subdomains |
 
 `httpOnly` is not configurable and is always on: a session token readable from JavaScript is a session token one XSS away from being stolen.
 
@@ -870,35 +883,35 @@ Every pre-existing option (token secrets and lifetimes, password policy, Casbin,
 
 ### `MemberBaseOidcProviderModule` options
 
-| Option                        | Type                                      | Default                | Purpose                                                          |
-| ----------------------------- | ----------------------------------------- | ---------------------- | ---------------------------------------------------------------- |
-| `issuer`                      | `string`                                  | required               | Issuer identifier; must match the public URL                     |
-| `jwks`                        | `{ keys: [] }`                            | ephemeral + warn       | Signing keys; required outside development                       |
-| `cookieKeys`                  | `string[]`                                | random                 | Keys protecting the provider's cookies                           |
-| `routePrefix`                 | `string`                                  | `'oidc'`               | Path the endpoints are mounted on                                |
-| `interaction.loginPageUrl`    | `string \| (params) => string`            | built-in page          | Your own login page; the browser is redirected here              |
-| `interaction.consentPageUrl`  | `string \| (params) => string`            | built-in page          | Your own consent page                                            |
-| `interaction.renderLogin`     | `(params) => string`                      | built-in page          | Render login HTML in-process; ignored when `loginPageUrl` is set |
-| `interaction.renderConsent`   | `(params) => string`                      | built-in page          | Render consent HTML in-process; ignored when `consentPageUrl` is set |
-| `interaction.allowedChannels` | `string[]`                                | all credential channels | Which sources the login form may use                            |
-| `interaction.autoConsent`     | `boolean \| (clientId) => boolean`        | client's `skipConsent` | Skip the consent step entirely                                   |
-| `claims.extra`                | `(member) => object`                      | —                      | Additional identity claims                                       |
-| `claims.additionalScopes`     | `string[]`                                | —                      | Extra accepted scopes                                            |
-| `claims.scopeClaims`          | `Record<string, string[]>`                | —                      | Which claims each scope releases                                 |
-| `ssoBridge.*`                 | see [Session bridging](#session-bridging) | all enabled            | Local/issuer session interop                                     |
-| `ttl`                         | `Partial<Record<...>>`                    | 1h access, 14d refresh | Token lifetimes                                                  |
-| `purgeIntervalSeconds`        | `number`                                  | `3600`                 | Expired payload sweep; `0` disables                              |
-| `advanced`                    | `Record<string, unknown>`                 | —                      | Merged last into oidc-provider config                            |
+| Option                        | Type                                      | Default                 | Purpose                                                              |
+| ----------------------------- | ----------------------------------------- | ----------------------- | -------------------------------------------------------------------- |
+| `issuer`                      | `string`                                  | required                | Issuer identifier; must match the public URL                         |
+| `jwks`                        | `{ keys: [] }`                            | ephemeral + warn        | Signing keys; required outside development                           |
+| `cookieKeys`                  | `string[]`                                | random                  | Keys protecting the provider's cookies                               |
+| `routePrefix`                 | `string`                                  | `'oidc'`                | Path the endpoints are mounted on                                    |
+| `interaction.loginPageUrl`    | `string \| (params) => string`            | built-in page           | Your own login page; the browser is redirected here                  |
+| `interaction.consentPageUrl`  | `string \| (params) => string`            | built-in page           | Your own consent page                                                |
+| `interaction.renderLogin`     | `(params) => string`                      | built-in page           | Render login HTML in-process; ignored when `loginPageUrl` is set     |
+| `interaction.renderConsent`   | `(params) => string`                      | built-in page           | Render consent HTML in-process; ignored when `consentPageUrl` is set |
+| `interaction.allowedChannels` | `string[]`                                | all credential channels | Which sources the login form may use                                 |
+| `interaction.autoConsent`     | `boolean \| (clientId) => boolean`        | client's `skipConsent`  | Skip the consent step entirely                                       |
+| `claims.extra`                | `(member) => object`                      | —                       | Additional identity claims                                           |
+| `claims.additionalScopes`     | `string[]`                                | —                       | Extra accepted scopes                                                |
+| `claims.scopeClaims`          | `Record<string, string[]>`                | —                       | Which claims each scope releases                                     |
+| `ssoBridge.*`                 | see [Session bridging](#session-bridging) | all enabled             | Local/issuer session interop                                         |
+| `ttl`                         | `Partial<Record<...>>`                    | 1h access, 14d refresh  | Token lifetimes                                                      |
+| `purgeIntervalSeconds`        | `number`                                  | `3600`                  | Expired payload sweep; `0` disables                                  |
+| `advanced`                    | `Record<string, unknown>`                 | —                       | Merged last into oidc-provider config                                |
 
 ### Which tables exist
 
-| Table | Created by |
-| ---------------------------- | ------------------------------------ |
-| `members` (+ your subclass) | package root, always |
-| `member_login_logs` | package root, always |
-| `member_password_histories` | package root, always |
-| `member_oauth_records` | package root, always |
-| `casbin_rule` | `casbinAdapterOptions` |
+| Table                           | Created by                      |
+| ------------------------------- | ------------------------------- |
+| `members` (+ your subclass)     | package root, always            |
+| `member_login_logs`             | package root, always            |
+| `member_password_histories`     | package root, always            |
+| `member_oauth_records`          | package root, always            |
+| `casbin_rule`                   | `casbinAdapterOptions`          |
 | `oidc_payloads`, `oidc_clients` | importing `/oidc-provider` only |
 
 ## Authentication Gateway
@@ -974,14 +987,14 @@ Bindings are stored in `member_oauth_records`, exported under the clearer aliase
 
 ### Provisioning and linking policy
 
-| Option | Default | Effect |
-| --- | --- | --- |
-| `autoProvision` | `true` | Provision a passwordless member the first time an unknown external identity authenticates |
-| `autoProvision` | `false` | Reject identities that have no local member yet |
-| `autoProvision` | `(identity) => Promise<string \| null>` | Decide per identity — a directory group check, an approval workflow |
-| `linkExistingAccount` | `true` | An unbound external identity claims a local member whose `account` equals the identifier |
-| `linkExistingAccount` | `'verified-only'` | Same, but only when the provider reported `identifierVerified: true` |
-| `linkExistingAccount` | `false` | Never link; fall through to provisioning |
+| Option                | Default                                 | Effect                                                                                    |
+| --------------------- | --------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `autoProvision`       | `true`                                  | Provision a passwordless member the first time an unknown external identity authenticates |
+| `autoProvision`       | `false`                                 | Reject identities that have no local member yet                                           |
+| `autoProvision`       | `(identity) => Promise<string \| null>` | Decide per identity — a directory group check, an approval workflow                       |
+| `linkExistingAccount` | `true`                                  | An unbound external identity claims a local member whose `account` equals the identifier  |
+| `linkExistingAccount` | `'verified-only'`                       | Same, but only when the provider reported `identifierVerified: true`                      |
+| `linkExistingAccount` | `false`                                 | Never link; fall through to provisioning                                                  |
 
 ```ts
 MemberBaseModule.forRoot({
@@ -1009,7 +1022,9 @@ import { MemberBaseOidcProviderModule } from '@rytass/member-base-nestjs-module/
 
 @Module({
   imports: [
-    MemberBaseModule.forRoot({ /* ... */ }),
+    MemberBaseModule.forRoot({
+      /* ... */
+    }),
     MemberBaseOidcProviderModule.forRoot({
       issuer: 'https://idp.example.com/oidc',
       jwks: JSON.parse(process.env.OIDC_JWKS),
@@ -1041,13 +1056,13 @@ mountMemberBaseOidcProvider(app); // before listen()
 await app.listen(3000);
 ```
 
-`oidc-provider` is a Koa application that reads the raw request stream. Middleware registered through `configure(consumer)` runs *after* Nest's body parser, which has already consumed that stream, so every form-encoded POST (`/token`, `/introspection`, `/revocation`) would break. Mounting before `listen()` puts the provider ahead of the body parser.
+`oidc-provider` is a Koa application that reads the raw request stream. Middleware registered through `configure(consumer)` runs _after_ Nest's body parser, which has already consumed that stream, so every form-encoded POST (`/token`, `/introspection`, `/revocation`) would break. Mounting before `listen()` puts the provider ahead of the body parser.
 
-| Endpoint | Protection |
-| --- | --- |
-| `/oidc/.well-known/openid-configuration`, `/auth`, `/token`, `/me`, `/jwks`, `/session/end` | Public (mounted middleware) |
-| `/oidc/interaction/:uid` and everything under it | `@IsPublic()` |
-| `/oidc-clients` (registration CRUD) | `@AllowActions([['OidcClient', 'read' \| 'write']])` |
+| Endpoint                                                                                    | Protection                                           |
+| ------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| `/oidc/.well-known/openid-configuration`, `/auth`, `/token`, `/me`, `/jwks`, `/session/end` | Public (mounted middleware)                          |
+| `/oidc/interaction/:uid` and everything under it                                            | `@IsPublic()`                                        |
+| `/oidc-clients` (registration CRUD)                                                         | `@AllowActions([['OidcClient', 'read' \| 'write']])` |
 
 Client administration runs through **your own Casbin policy** — the same rules that govern every other resource decide who may register a service provider. The global guard stays on; nothing has to be disabled.
 
@@ -1080,7 +1095,7 @@ All paths below are relative to `/<routePrefix>/interaction/:uid` (default prefi
 
 | Method | Path               | Body                                    | Purpose                                         |
 | ------ | ------------------ | --------------------------------------- | ----------------------------------------------- |
-| `GET`  | *(the uid itself)* | —                                       | Entry point; resolves or redirects to your page |
+| `GET`  | _(the uid itself)_ | —                                       | Entry point; resolves or redirects to your page |
 | `GET`  | `/details`         | —                                       | Everything the page needs to render             |
 | `POST` | `/login`           | `{ account, password, channel? }`       | Verify credentials and resolve the prompt       |
 | `POST` | `/session`         | —                                       | Resolve it from an existing member-base session |
@@ -1106,14 +1121,14 @@ The POST endpoints answer according to the request's `Accept` header, so one end
 
 Failures are reported as status codes, never as a redirect that would read as success:
 
-| Status | Endpoint   | Meaning                                                                             |
-| ------ | ---------- | ----------------------------------------------------------------------------------- |
-| `400`  | `/login`   | `channel` is not in `interaction.allowedChannels`                                     |
-| `401`  | `/login`   | `{ error: 'invalid_credentials', message: 'Invalid account or password' }`            |
-| `400`  | `/consent` | The interaction awaits a different prompt, or carries no authenticated subject        |
-| `403`  | `/session` | `ssoBridge.acceptLocalSession` is off                                                 |
-| `400`  | `/session` | The interaction awaits consent, not login                                             |
-| `401`  | `/session` | No member-base session, its member is gone, or `reauthentication_required`            |
+| Status | Endpoint   | Meaning                                                                        |
+| ------ | ---------- | ------------------------------------------------------------------------------ |
+| `400`  | `/login`   | `channel` is not in `interaction.allowedChannels`                              |
+| `401`  | `/login`   | `{ error: 'invalid_credentials', message: 'Invalid account or password' }`     |
+| `400`  | `/consent` | The interaction awaits a different prompt, or carries no authenticated subject |
+| `403`  | `/session` | `ssoBridge.acceptLocalSession` is off                                          |
+| `400`  | `/session` | The interaction awaits consent, not login                                      |
+| `401`  | `/session` | No member-base session, its member is gone, or `reauthentication_required`     |
 
 The login failure is deliberately generic. Distinguishing "no such account" from "wrong password" would turn the endpoint into an account oracle, so the same 401 is returned for both. A browser form gets the page again with the message rendered instead.
 
@@ -1152,7 +1167,9 @@ The client is reported by id and name only. The registration row carries a secre
 A **string** keeps whatever query it already carries and gains the three values a page cannot work without — plus `error` when the browser is being sent back after a failed submission:
 
 ```ts
-interaction: { loginPageUrl: '/sign-in?theme=dark' }
+interaction: {
+  loginPageUrl: '/sign-in?theme=dark';
+}
 // => 303 /sign-in?theme=dark&uid=<uid>&prompt=login&client_id=reporting
 ```
 
@@ -1217,7 +1234,7 @@ If the page authenticates by itself — a social sign-in, or your own GraphQL mu
 await fetch(`${base}/session`, { method: 'POST', credentials: 'include' }).then(r => r.json());
 ```
 
-A session whose `authTime` is later than the interaction's own issue time proves the member authenticated *during this flow*, which is exactly what `prompt=login` and `max_age` ask for. An older session falls back to the ordinary skip rules, so the relying party's demand for a fresh login is never silently voided. Without this endpoint the only route back is a full-page redirect to `/oidc/interaction/{uid}`, which loops forever under `prompt=login`.
+A session whose `authTime` is later than the interaction's own issue time proves the member authenticated _during this flow_, which is exactly what `prompt=login` and `max_age` ask for. An older session falls back to the ordinary skip rules, so the relying party's demand for a fresh login is never silently voided. Without this endpoint the only route back is a full-page redirect to `/oidc/interaction/{uid}`, which loops forever under `prompt=login`.
 
 #### Rendering HTML in-process instead
 
@@ -1256,7 +1273,11 @@ When neither option is configured, a plain built-in page is served and a warning
 Both are exported if you want to start from them:
 
 ```ts
-import { renderDefaultLoginPage, renderDefaultConsentPage, escapeHtml } from '@rytass/member-base-nestjs-module/oidc-provider';
+import {
+  renderDefaultLoginPage,
+  renderDefaultConsentPage,
+  escapeHtml,
+} from '@rytass/member-base-nestjs-module/oidc-provider';
 ```
 
 #### Types
@@ -1288,7 +1309,7 @@ const details: OidcInteractionDetailsView = await fetch(`${base}/details`, {
 
 ### Authorization stays with each service provider
 
-`findAccount` publishes identity claims only. **No roles are emitted.** This issuer answers *who a subject is*; what that subject may do is each service provider's decision, made against data it controls rather than a claim frozen into a token whose lifetime it cannot influence. Add identity attributes via `claims.extra`:
+`findAccount` publishes identity claims only. **No roles are emitted.** This issuer answers _who a subject is_; what that subject may do is each service provider's decision, made against data it controls rather than a claim frozen into a token whose lifetime it cannot influence. Add identity attributes via `claims.extra`:
 
 ```ts
 claims: {
@@ -1300,12 +1321,12 @@ claims: {
 
 An application that is both an issuer and a resource server has two session concepts. The bridge is on by default and keeps them consistent:
 
-| Direction | Behaviour |
-| --- | --- |
-| Issuer to local | A successful interaction login also sets the member-base cookies |
-| Local to issuer | An existing member-base session satisfies the login prompt |
+| Direction                  | Behaviour                                                                                              |
+| -------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Issuer to local            | A successful interaction login also sets the member-base cookies                                       |
+| Local to issuer            | An existing member-base session satisfies the login prompt                                             |
 | Local to issuer, on demand | `POST /oidc/interaction/:uid/session` closes the prompt from a session your own login flow established |
-| Logout | Clears both |
+| Logout                     | Clears both                                                                                            |
 
 Two request parameters are always honoured, because ignoring them would void the relying party's own security decision:
 
@@ -1366,8 +1387,8 @@ A directory is a source of truth for attributes, not only for passwords. These a
 ```ts
 const provider = gateway.getProvider('ldap') as LdapAuthProvider;
 
-await provider.findUser('wangxx');                 // by account attribute
-await provider.findAllUsers();                     // everything under baseDN
+await provider.findUser('wangxx'); // by account attribute
+await provider.findAllUsers(); // everything under baseDN
 await provider.findByDn('CN=Wang,OU=Users,DC=...'); // by distinguished name
 
 // Map an entry onto the identity shape the gateway consumes, so a
@@ -1535,12 +1556,12 @@ Overriding `ACCESS_TOKEN_COOKIE_NAME` / `REFRESH_TOKEN_COOKIE_NAME` from your ow
 
 The OAuth callback passed only `httpOnly` and `secure: true` and let Express supply the rest. What it emits changes in three ways:
 
-| Attribute       | Before                        | After                                          |
-| --------------- | ----------------------------- | ---------------------------------------------- |
-| `Secure`        | Always                        | Derived from the request; `cookieSecure` overrides |
-| `Max-Age`       | Absent — a session cookie     | From `accessTokenExpiration` / `refreshTokenExpiration` |
-| `SameSite`      | Absent — browser default      | `Lax`, or `cookieSameSite`                      |
-| `Path`          | `/` (Express' default)        | `/`, or `cookiePath`                            |
+| Attribute  | Before                    | After                                                   |
+| ---------- | ------------------------- | ------------------------------------------------------- |
+| `Secure`   | Always                    | Derived from the request; `cookieSecure` overrides      |
+| `Max-Age`  | Absent — a session cookie | From `accessTokenExpiration` / `refreshTokenExpiration` |
+| `SameSite` | Absent — browser default  | `Lax`, or `cookieSameSite`                              |
+| `Path`     | `/` (Express' default)    | `/`, or `cookiePath`                                    |
 
 `Path` is unchanged in practice; it is written explicitly so `cookiePath` can move it and so clearing uses the same value.
 
@@ -1583,7 +1604,6 @@ Any row returned is a pre-existing data anomaly (one external identity bound to 
 ### Additional exported injection tokens
 
 `MemberBaseModule` now also exports `MEMBER_BASE_MODULE_OPTIONS`, `ACCESS_TOKEN_EXPIRATION`, `REFRESH_TOKEN_SECRET`, `REFRESH_TOKEN_EXPIRATION`, `COOKIE_MODE`, `ACCESS_TOKEN_COOKIE_NAME`, `REFRESH_TOKEN_COOKIE_NAME`, `CASBIN_PERMISSION_CHECKER` and `CUSTOMIZED_JWT_PAYLOAD`, so modules layered on top can read the same configuration instead of duplicating it. This is additive; nothing that was exported before has changed.
-
 
 ## Type Aliases and Injection Tokens
 
