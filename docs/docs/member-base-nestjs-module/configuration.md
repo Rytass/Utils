@@ -28,7 +28,7 @@ import { MemberBaseModule } from '@rytass/member-base-nestjs-module';
       autoLoadEntities: true,
       uuidExtension: 'uuid-ossp',
     }),
-    CMSBaseModule.forRoot(),
+    MemberBaseModule.forRoot(),
   ],
 })
 export class AppModule {}
@@ -41,51 +41,78 @@ export class AppModule {}
 #### `forRoot()`
 
 ```tsx
-static forRoot(options?: CMSBaseModuleOptionsDto);
+static forRoot(options?: MemberBaseModuleOptions);
 ```
 
 **Parameters:**
 
-| Name                                      | Type                  | Default        | Description                                                |
-| ----------------------------------------- | --------------------- | -------------- | ---------------------------------------------------------- |
-| loginFailedBanThreshold                   | number                | 5              | Number of allowed password attempts                        |
-| resetPasswordTokenExpiration              | number                | 3600           | Seconds of reset password token expiration                 |
-| resetPasswordTokenSecret                  | string                |                | Reset password token secret, will generate automatically   |
-| cookieMode                                | boolean               |                | Use cookie [token] to replace header authorization token   |
-| accessTokenSecret                         | string                |                | Access token secret, will generate automatically           |
-| accessTokenExpiration                     | number                | 900            | Seconds of access token expiration                         |
-| refreshTokenSecret                        | string                |                | Refresh token secret, will generate automatically          |
-| refreshTokenExpiration                    | number                | 900            | Seconds of refresh token expiration                        |
-| onlyResetRefreshTokenExpirationByPassword | boolean               | false          | Refresh token expiration only reassign by password request |
-| enableGlobalGuard                         | boolean               | true           | Enable Casbin globally                                     |
-| casbinAdapterOptions                      | TypeORMAdapterOptions |                | TypeORM configuration for casbin policies storage          |
-| casbinModelString                         | string                | RBAC w/ Domain | Casbin modal string                                        |
-| memberEntity                              | TypeORM Entity        | undefined      | Custom BaseMemberEntity                                    |
-| passwordShouldIncludeUppercase            | boolean               | true           | Password Policy: Uppercase                                 |
-| passwordShouldIncludeLowercase            | boolean               | true           | Password Policy: Lowercase                                 |
-| passwordShouldIncludeDigit                | boolean               | true           | Password Policy: Digit                                     |
-| passwordShouldIncludeSpecialCharacters    | boolean               | false          | Password Policy: Special Characters                        |
-| passwordMinLength                         | number                | 8              | Password Policy: Min Length                                |
-| passwordPolicyRegExp                      | RegExp                |                | Password Policy: RegExp (Will overwrite above configure)   |
-| passwordHistoryLimit                      | number                |                | Password Policy: Password History Check (Not duplicate)    |
-| passwordAgeLimitInDays                    | number                |                | Password Policy: Change reminder (When expired)            |
-| forceRejectLoginOnPasswordExpired         | boolean               | false          | If true, reject login when password is expired             |
-| customizedJwtPayload                      | (member) => Payload   |                | Customize jwt access token payload                         |
-| oauth2Providers                           | OAuth2Provider[]      |                | Configure OAuth2 login channel                             |
-| oauth2ClientDestUrl                       | string                | /login         | After oauth2 logged in, url redirect target in client      |
+| Name                                      | Type                       | Default           | Description                                                       |
+| ----------------------------------------- | -------------------------- | ----------------- | ----------------------------------------------------------------- |
+| loginFailedBanThreshold                   | number                     | 5                 | Number of allowed password attempts                               |
+| loginFailedAutoUnlockSeconds              | number                     | null              | Auto-unlock a banned account after this many seconds              |
+| forceRejectLoginOnPasswordExpired         | boolean                    | false             | Reject login when the password has expired                        |
+| loginLogEnabled                           | boolean                    | true              | Write a row to `member_login_logs` on every attempt               |
+| loginLogRecordIp                          | boolean                    | true              | Store the caller's address with that row                          |
+| resetPasswordTokenExpiration              | number                     | 3600              | Seconds of reset password token expiration                        |
+| resetPasswordTokenSecret                  | string                     | random            | Reset password token secret                                       |
+| accessTokenSecret                         | string                     | random            | Access token secret                                               |
+| accessTokenExpiration                     | number                     | 900               | Seconds of access token expiration                                |
+| refreshTokenSecret                        | string                     | random            | Refresh token secret                                              |
+| refreshTokenExpiration                    | number                     | 7776000           | Seconds of refresh token expiration (90 days)                     |
+| onlyResetRefreshTokenExpirationByPassword | boolean                    | false             | Refresh token expiration only reassigned by password change       |
+| customizedJwtPayload                      | (member) => Payload        | -                 | Customize the JWT access token payload                            |
+| cookieMode                                | boolean                    | false             | Use cookies instead of the authorization header                   |
+| accessTokenCookieName                     | string                     | `access_token`    | Access token cookie name                                          |
+| refreshTokenCookieName                    | string                     | `refresh_token`   | Refresh token cookie name                                         |
+| cookiePath                                | string                     | `/`               | Cookie Path attribute                                             |
+| cookieSameSite                            | 'lax'/'strict'/'none'      | `lax`             | Cookie SameSite attribute                                         |
+| cookieSecure                              | boolean                    | derived           | Secure attribute; defaults to https or any non-loopback host      |
+| cookieDomain                              | string                     | absent            | Domain attribute; set to share across subdomains                  |
+| enableGlobalGuard                         | boolean                    | true              | Enable Casbin globally                                            |
+| casbinAdapterOptions                      | TypeORMAdapterOptions      | -                 | TypeORM configuration for casbin policies storage                 |
+| casbinModelString                         | string                     | RBAC w/ Domain    | Casbin model string                                               |
+| casbinPermissionDecorator                 | ReflectableDecorator       | AllowActions      | Custom permission decorator                                       |
+| casbinPermissionChecker                   | (params) => result         | built-in          | Custom permission check function                                  |
+| casbinDomainResolver                      | (params) => domain         | -                 | Resolve the domain per request (default checker only)             |
+| superAdminRole                            | string                     | `::SUPER_ADMIN::` | Role the default checker treats as allow-all                      |
+| defaultCasbinDomain                       | string                     | `::DEFAULT::`     | Domain that grouping is keyed to                                  |
+| memberEntity                              | TypeORM Entity             | BaseMemberEntity  | Custom member entity                                              |
+| passwordShouldIncludeUppercase            | boolean                    | true              | Password Policy: Uppercase                                        |
+| passwordShouldIncludeLowercase            | boolean                    | true              | Password Policy: Lowercase                                        |
+| passwordShouldIncludeDigit                | boolean                    | true              | Password Policy: Digit                                            |
+| passwordShouldIncludeSpecialCharacters    | boolean                    | false             | Password Policy: Special Characters                               |
+| passwordMinLength                         | number                     | 8                 | Password Policy: Min Length                                       |
+| passwordPolicyRegExp                      | RegExp                     | -                 | Password Policy: RegExp (overrides the options above)             |
+| passwordHistoryLimit                      | number                     | -                 | Password Policy: reject reuse of the last N passwords             |
+| passwordAgeLimitInDays                    | number                     | -                 | Password Policy: change reminder when expired                     |
+| passwordHashOptions                       | PasswordHashOptions        | argon2 default    | argon2 cost parameters for every password hashed                  |
+| authProviders                             | AuthenticationProvider[]   | []                | Extra authentication sources; password is always registered       |
+| autoProvision                             | boolean \| function        | true              | What happens when an external identity has no member              |
+| linkExistingAccount                       | boolean \| 'verified-only' | true              | Whether an external identity may claim a matching account         |
+| syncOnAuthenticate                        | (params) => Promise        | -                 | Write directory attributes back after resolution                  |
+| defaultAdminAccount                       | string                     | -                 | Create this account with super-admin on startup                   |
+| defaultAdminPassword                      | string                     | generated         | Omit and a policy-compliant password is generated and logged once |
+| oauth2Providers                           | OAuth2Provider[]           | []                | Configure OAuth2 login channels                                   |
+| oauth2ClientDestUrl                       | string                     | `/login`          | Redirect target in the client after OAuth2 login                  |
+
+`httpOnly` is not configurable and is always on. Cookie attributes left unset are derived per request, so neither development nor production needs to set them.
+
+`passwordHashOptions` only affects hashes produced from then on — argon2 reads each hash's parameters out of the hash itself, so raising the cost never invalidates an existing password.
+
+`loginLogEnabled: false` also disables `loginFailedAutoUnlockSeconds`, which reads the last failed attempt out of `member_login_logs`; the combination logs a warning on boot.
 
 #### `forRootAsync()`
 
 ```tsx
-static forRootAsync(options: CMSBaseModuleAsyncOptionsDto);
+static forRootAsync(options: MemberBaseModuleAsyncOptions);
 ```
 
 **Parameters:**
 
 | Name        | Type                                        | Default   | Description                              |
 | ----------- | ------------------------------------------- | --------- | ---------------------------------------- |
-| imports     | DynamicModule[]                             | []        | Imported module before CMS module        |
-| useFactory  | (...args: any[]) => CMSBaseModuleOptionsDto | undefined | Factory method to generate async options |
-| injects     | any[]                                       | []        | Inject symbol for useFactory method      |
-| useClass    | Type\<CMSBaseModuleOptionFactory\>          | undefined | Options provider class                   |
-| useExisting | Type\<CMSBaseModuleOptionFactory\>          | undefined | Options provider class symbol            |
+| imports     | DynamicModule[]                             | []        | Modules imported before this one         |
+| useFactory  | (...args: any[]) => MemberBaseModuleOptions | undefined | Factory method to generate async options |
+| inject      | any[]                                       | []        | Tokens injected into useFactory          |
+| useClass    | Type\<MemberBaseOptionsFactory\>            | undefined | Options provider class                   |
+| useExisting | Type\<MemberBaseOptionsFactory\>            | undefined | Existing options provider class          |
