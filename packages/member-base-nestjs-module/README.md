@@ -733,14 +733,15 @@ mountMemberBaseOidcProvider(app);
 await app.listen(3000);
 ```
 
-Register a service provider through the admin API (guarded by your own Casbin policy):
+Register a service provider through `OidcClientService`. The module exposes no administration endpoint of its own — see [Administering service providers](#administering-service-providers):
 
-```bash
-curl -X POST https://idp.example.com/oidc-clients \
-  -H 'content-type: application/json' \
-  -H "authorization: Bearer $ADMIN_TOKEN" \
-  -d '{"name":"Reporting","redirectUris":["https://reporting.example.com/auth/callback"],"skipConsent":true}'
-# => { "clientId": "...", "clientSecret": "...", ... }  secret shown once
+```ts
+const created = await this.oidcClientService.create({
+  name: 'Reporting',
+  redirectUris: ['https://reporting.example.com/auth/callback'],
+  skipConsent: true,
+});
+// => { clientId: '...', clientSecret: '...', ... }  secret readable once
 ```
 
 `skipConsent: true` suits a first-party client. Leave it false for anything third-party and the member is asked to authorize the release of claims — see [The interaction API](#the-interaction-api).
@@ -1058,13 +1059,12 @@ await app.listen(3000);
 
 `oidc-provider` is a Koa application that reads the raw request stream. Middleware registered through `configure(consumer)` runs _after_ Nest's body parser, which has already consumed that stream, so every form-encoded POST (`/token`, `/introspection`, `/revocation`) would break. Mounting before `listen()` puts the provider ahead of the body parser.
 
-| Endpoint                                                                                    | Protection                                           |
-| ------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| `/oidc/.well-known/openid-configuration`, `/auth`, `/token`, `/me`, `/jwks`, `/session/end` | Public (mounted middleware)                          |
-| `/oidc/interaction/:uid` and everything under it                                            | `@IsPublic()`                                        |
-| `/oidc-clients` (registration CRUD)                                                         | `@AllowActions([['OidcClient', 'read' \| 'write']])` |
+| Endpoint                                                                                    | Protection                  |
+| ------------------------------------------------------------------------------------------- | --------------------------- |
+| `/oidc/.well-known/openid-configuration`, `/auth`, `/token`, `/me`, `/jwks`, `/session/end` | Public (mounted middleware) |
+| `/oidc/interaction/:uid` and everything under it                                            | `@IsPublic()`               |
 
-Client administration runs through **your own Casbin policy** — the same rules that govern every other resource decide who may register a service provider. The global guard stays on; nothing has to be disabled.
+Those are the only routes the module registers. Client administration is **not** among them: it ships as [`OidcClientService`](#administering-service-providers), so nothing is reachable until your application chooses to expose it.
 
 The middleware is registered without a mount path. `app.use(path, handler)` would make Express strip the path for the handler and then put it back before the request reaches Nest's router, which registers the interaction routes without the prefix — every interaction would 404. Stripping it inside the middleware makes the rewrite outlive it, and Nest's global prefix (if any) is put back on the way through.
 
@@ -1307,6 +1307,37 @@ const details: OidcInteractionDetailsView = await fetch(`${base}/details`, {
 }).then(r => r.json());
 ```
 
+### Administering service providers
+
+Registering a client is a management operation, so the module ships it as a **service and no endpoint**: `OidcClientService` is exported by `MemberBaseOidcProviderModule` and nothing is reachable until your application decides to expose it. That keeps the transport (REST, GraphQL, a CLI, a seeding script), the route, the payload shape and the permission name yours — a GraphQL-only application gains no REST surface it did not ask for.
+
+| Method                    | Returns                      | Notes                                                                       |
+| ------------------------- | ---------------------------- | --------------------------------------------------------------------------- |
+| `list()`                  | `OidcClientView[]`           | Newest first, never includes the stored secret                              |
+| `findOne(clientId)`       | `OidcClientView \| null`     | For nullable lookups                                                        |
+| `get(clientId)`           | `OidcClientView`             | Throws `OidcClientNotFoundError`                                            |
+| `create(input)`           | `CreatedOidcClient`          | The generated secret is readable **once**, here; `null` for a public client |
+| `update(clientId, input)` | `OidcClientView`             | Replaces the record — an omitted field is cleared; never touches the secret |
+| `rotateSecret(clientId)`  | `{ clientId, clientSecret }` | Explicit, never a side effect of an edit                                    |
+| `remove(clientId)`        | `void`                       | Soft removes                                                                |
+
+`OidcClientView` is the entity minus `clientSecret`, plus `hasSecret: boolean`. Pass `confidential: false` to `create` to register a public client that authenticates with PKCE alone.
+
+Expose it under whichever guard your application already uses:
+
+```ts
+@Resolver()
+export class OidcClientResolver {
+  constructor(private readonly oidcClientService: OidcClientService) {}
+
+  @AllowActions([['OidcClient', 'write']])
+  @Mutation(() => OidcClientDto)
+  async createOidcClient(@Args('input') input: CreateOidcClientArgs): Promise<OidcClientView> {
+    return this.oidcClientService.create(input);
+  }
+}
+```
+
 ### Authorization stays with each service provider
 
 `findAccount` publishes identity claims only. **No roles are emitted.** This issuer answers _who a subject is_; what that subject may do is each service provider's decision, made against data it controls rather than a claim frozen into a token whose lifetime it cannot influence. Add identity attributes via `claims.extra`:
@@ -1539,6 +1570,35 @@ memberBaseService.signAccessToken(member, domain, { authTime: null });
 Refresh tokens issued before this release carry no `authTime`. Refreshing one leaves the claim absent rather than inventing a value, so checks that require a known authentication time fail closed.
 
 ## Upgrade Notes
+
+### OIDC client administration is a service, not a controller
+
+`MemberBaseOidcProviderModule` used to register `OidcAdminController` unconditionally, so importing it added six REST routes under `/oidc-clients` whether or not the application wanted them. The controller has been removed, along with its export. `OidcClientService` — exported from the same module — carries the same behaviour, and `UpsertOidcClientBody` is replaced by `CreateOidcClientInput` / `UpdateOidcClientInput`.
+
+The routes were guarded (`@AllowActions([['OidcClient', 'read' | 'write']])`), so this is not a security fix. It is a scope decision: whether service-provider administration is reachable at all, over which transport, at which path and under which permission name belongs to the host application, not to this package.
+
+If you were calling those endpoints, re-expose exactly the ones you need — see [Administering service providers](#administering-service-providers):
+
+```ts
+@Controller('oidc-clients')
+export class OidcClientsController {
+  constructor(private readonly oidcClientService: OidcClientService) {}
+
+  @AllowActions([['OidcClient', 'read']])
+  @Get()
+  list(): Promise<OidcClientView[]> {
+    return this.oidcClientService.list();
+  }
+
+  @AllowActions([['OidcClient', 'write']])
+  @Post()
+  create(@Body() body: CreateOidcClientInput): Promise<CreatedOidcClient> {
+    return this.oidcClientService.create(body);
+  }
+}
+```
+
+Two response shapes differ from the old controller, both deliberately: `create` now always carries `clientSecret`, `null` for a public client rather than the key being absent, and `remove` resolves to `void` instead of `{ clientId }`. A missing client raises `OidcClientNotFoundError` (a `BadRequestException`, code `114`) rather than `NotFoundException`, matching every other error this package throws; map it to a 404 in your own handler if you were relying on the status.
 
 ### `GraphQLContextTokenResolver` reads the right cookie
 
