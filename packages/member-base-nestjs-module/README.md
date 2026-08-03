@@ -44,7 +44,7 @@ It is long because the package covers a lot; you are not meant to read it start 
 | Look up an option             | [Configuration Reference](#configuration-reference)                                                                                                             |
 | Add a login source            | [Authentication Gateway](#authentication-gateway), [LDAP](#authenticating-against-an-ldap-directory), [OIDC issuer](#authenticating-against-an-oidc-issuer)     |
 | Become an issuer yourself     | [Acting as an OpenID Connect Provider](#acting-as-an-openid-connect-provider)                                                                                   |
-| Upgrade an existing install   | [Upgrade Notes](#upgrade-notes)                                                                                                                                 |
+| Upgrade an existing install   | [CHANGELOG.md](./CHANGELOG.md) — each release carries its own migration notes                                                                                   |
 | Find what something is called | [Type Aliases and Injection Tokens](#type-aliases-and-injection-tokens)                                                                                         |
 
 ## Installation
@@ -70,31 +70,26 @@ Optional peer dependencies — install only the ones you use:
 
 Nothing is pulled in by importing the package root: an entry point you never import is never resolved, so its dependency is never required and its tables are never created. See [Subpath isolation](#subpath-isolation).
 
-### Breaking change in 0.5.0: `typeorm-adapter` is no longer bundled
+### `typeorm-adapter` is an optional peer dependency
 
-`typeorm-adapter` used to be a regular dependency of this package. It is now an
-**optional peer dependency**. If you set `casbinAdapterOptions`, install it yourself:
+Install it yourself when you set `casbinAdapterOptions`, and not otherwise:
 
 ```bash
 npm install typeorm-adapter
 ```
 
-Nothing to do if you do not set `casbinAdapterOptions`.
+It is not bundled because `typeorm-adapter` declares `typeorm` as its own `dependency`
+(`^0.3.17`) rather than a peer dependency. Bundled, any consumer whose `typeorm` version
+fell outside that range got a **second copy of TypeORM** under
+`node_modules/typeorm-adapter/node_modules/`. `getMetadataArgsStorage()` is a
+module-level singleton, so the two copies split the entity metadata registry and produced
+errors such as `Entity metadata for X was not found`, with nothing pointing back to this
+package. The same nesting pulled in `reflect-metadata@^0.1.13` alongside the `^0.2.x` that
+NestJS 11 and TypeORM require, splitting the `Reflect` polyfill too. Keeping it optional
+means your `typeorm` version is the only one installed.
 
-Why: `typeorm-adapter` declares `typeorm` as its own `dependency` (`^0.3.17`) rather
-than a peer dependency. While it was bundled here, any consumer whose `typeorm`
-version fell outside that range got a **second copy of TypeORM** installed under
-`node_modules/typeorm-adapter/node_modules/`. Because `getMetadataArgsStorage()` is a
-module-level singleton, the two copies split the entity metadata registry and produced
-errors such as `Entity metadata for X was not found` — with nothing pointing back to
-this package. The same nesting also pulled in `reflect-metadata@^0.1.13` alongside the
-`^0.2.x` that NestJS 11 and TypeORM require, splitting the `Reflect` polyfill too.
-
-Making it optional means your `typeorm` version is the only one installed.
-
-If you set `casbinAdapterOptions` without installing `typeorm-adapter`, the module
-throws at startup with an explicit message rather than booting into a broken
-authorization state.
+Setting `casbinAdapterOptions` without installing it throws at startup with an explicit
+message rather than booting into a broken authorization state.
 
 ## Defining Your Member Entity
 
@@ -882,6 +877,28 @@ Mainly used when `cookieMode: true`. Left unset, each attribute has a working de
 
 Every pre-existing option (token secrets and lifetimes, password policy, Casbin, cookie mode, default admin) is unchanged and documented in its own section below.
 
+### Hashing, Casbin naming and the login log
+
+| Option                | Type                  | Default             | Purpose                                             |
+| --------------------- | --------------------- | ------------------- | --------------------------------------------------- |
+| `passwordHashOptions` | `PasswordHashOptions` | argon2's own        | argon2 cost parameters for every password hashed    |
+| `superAdminRole`      | `string`              | `'::SUPER_ADMIN::'` | Role the default checker treats as allow-all        |
+| `defaultCasbinDomain` | `string`              | `'::DEFAULT::'`     | Domain that grouping is keyed to                    |
+| `loginLogEnabled`     | `boolean`             | `true`              | Write a row to `member_login_logs` on every attempt |
+| `loginLogRecordIp`    | `boolean`             | `true`              | Store the caller's address with that row            |
+
+**Hash cost.** The right cost is a property of the hardware, so the package does not pick one for you. Raising it does not invalidate existing hashes — argon2 reads each hash's parameters out of the hash itself, so old passwords keep verifying and are re-hashed at the new cost the next time they are changed.
+
+```ts
+passwordHashOptions: { memoryCost: 65536, timeCost: 3, parallelism: 4 },
+```
+
+**Casbin naming.** Change these only when an existing policy table already uses those strings for something else. Every grouping policy keeps the name it was written with, so renaming after members hold the grouping leaves them without it — grant the new name before switching.
+
+**Login log.** `loginLogRecordIp: false` keeps recording attempts without retaining an address, which is usually what a retention policy actually asks for. Turning the log off entirely also disables `loginFailedAutoUnlockSeconds`, which reads the last failed attempt out of that table; the combination logs a warning on boot rather than leaving an account locked for reasons nobody can find.
+
+The address is stored as a `cidr`, so it carries the prefix length for its family — `/32` for IPv4 and `/128` for IPv6. `toInetCidr(ip)` is exported if you write your own rows into that table and need the same format.
+
 ### `MemberBaseOidcProviderModule` options
 
 | Option                        | Type                                      | Default                 | Purpose                                                              |
@@ -900,9 +917,23 @@ Every pre-existing option (token secrets and lifetimes, password policy, Casbin,
 | `claims.additionalScopes`     | `string[]`                                | —                       | Extra accepted scopes                                                |
 | `claims.scopeClaims`          | `Record<string, string[]>`                | —                       | Which claims each scope releases                                     |
 | `ssoBridge.*`                 | see [Session bridging](#session-bridging) | all enabled             | Local/issuer session interop                                         |
+| `clients.allowPublic`         | `boolean`                                 | `true`                  | Whether public (PKCE-only) clients may be registered                 |
+| `clients.validate`            | `(input, context) => void \| Promise`     | —                       | Extra registration rules; throw to reject                            |
+| `clients.secretCipher`        | `{ encrypt, decrypt }`                    | plaintext               | Encrypt `client_secret` at rest                                      |
+| `features.rpInitiatedLogout`  | `boolean`                                 | `true`                  | `/session/end`                                                       |
+| `features.revocation`         | `boolean`                                 | `true`                  | `/revocation`                                                        |
+| `features.introspection`      | `boolean`                                 | `true`                  | `/introspection`                                                     |
+| `features.userinfo`           | `boolean`                                 | `true`                  | `/me`                                                                |
+| `requirePkce`                 | `boolean`                                 | `true`                  | Turn off only for a legacy client that cannot be changed             |
+| `proxy`                       | `boolean`                                 | `true`                  | Trust `X-Forwarded-*` when deriving request URLs                     |
+| `clientBasedCors`             | `boolean`                                 | `true`                  | Answer preflights from a client's registered origins                 |
 | `ttl`                         | `Partial<Record<...>>`                    | 1h access, 14d refresh  | Token lifetimes                                                      |
 | `purgeIntervalSeconds`        | `number`                                  | `3600`                  | Expired payload sweep; `0` disables                                  |
 | `advanced`                    | `Record<string, unknown>`                 | —                       | Merged last into oidc-provider config                                |
+
+`features` merges one key at a time, so turning a single endpoint off leaves the rest alone. `advanced.features` replaces the whole object instead — that is what the typed toggles exist to avoid, and `advanced` deliberately keeps the last word. `devInteractions` is not configurable: it would shadow this module's interaction routes.
+
+`buildOidcConfiguration(params)` is exported for when you want to see what all of this resolves to. It returns the object handed to oidc-provider without loading the ESM-only dependency, so it can be asserted on from a test.
 
 ### Which tables exist
 
@@ -914,6 +945,8 @@ Every pre-existing option (token secrets and lifetimes, password policy, Casbin,
 | `member_oauth_records`          | package root, always            |
 | `casbin_rule`                   | `casbinAdapterOptions`          |
 | `oidc_payloads`, `oidc_clients` | importing `/oidc-provider` only |
+
+Column bounds follow one rule: **bounded when this package or a spec decides the value, unbounded when the application does.** So `oidc_clients.clientSecret`, `.name` and `.scope` are `text` — their length is the application's business, and with `secretCipher` the stored secret is whatever an external cipher produced. `clientId` stays `varchar(255)` because it is the primary key and a btree key cannot be unbounded, and `tokenEndpointAuthMethod` stays `varchar(64)` because the specs fix its values. Everything in `oidc_payloads` is generated by oidc-provider, so all of it is bounded.
 
 ## Authentication Gateway
 
@@ -1311,19 +1344,126 @@ const details: OidcInteractionDetailsView = await fetch(`${base}/details`, {
 
 Registering a client is a management operation, so the module ships it as a **service and no endpoint**: `OidcClientService` is exported by `MemberBaseOidcProviderModule` and nothing is reachable until your application decides to expose it. That keeps the transport (REST, GraphQL, a CLI, a seeding script), the route, the payload shape and the permission name yours — a GraphQL-only application gains no REST surface it did not ask for.
 
-| Method                    | Returns                      | Notes                                                                       |
-| ------------------------- | ---------------------------- | --------------------------------------------------------------------------- |
-| `list()`                  | `OidcClientView[]`           | Newest first, never includes the stored secret                              |
-| `findOne(clientId)`       | `OidcClientView \| null`     | For nullable lookups                                                        |
-| `get(clientId)`           | `OidcClientView`             | Throws `OidcClientNotFoundError`                                            |
-| `create(input)`           | `CreatedOidcClient`          | The generated secret is readable **once**, here; `null` for a public client |
-| `update(clientId, input)` | `OidcClientView`             | Replaces the record — an omitted field is cleared; never touches the secret |
-| `rotateSecret(clientId)`  | `{ clientId, clientSecret }` | Explicit, never a side effect of an edit                                    |
-| `remove(clientId)`        | `void`                       | Soft removes                                                                |
+| Method                             | Returns                      | Notes                                                                       |
+| ---------------------------------- | ---------------------------- | --------------------------------------------------------------------------- |
+| Method                             | Returns                      | Notes                                                                       |
+| ---------------------------------- | ---------------------------- | --------------------------------------------------------------------------- |
+| `list()`                           | `OidcClientView[]`           | Newest first, never includes the stored secret                              |
+| `findOne(clientId)`                | `OidcClientView \| null`     | For nullable lookups                                                        |
+| `get(clientId)`                    | `OidcClientView`             | Throws `OidcClientNotFoundError`                                            |
+| `create(input)`                    | `CreatedOidcClient`          | The generated secret is readable **once**, here; `null` for a public client |
+| `update(clientId, input, options)` | `OidcClientView`             | `mode: 'replace'` (default) or `'merge'`; never touches the secret          |
+| `rotateSecret(clientId)`           | `{ clientId, clientSecret }` | Explicit, never a side effect of an edit                                    |
+| `remove(clientId)`                 | `OidcClientView`             | Soft removes, and returns what was removed                                  |
+| `restore(clientId)`                | `OidcClientView`             | Brings a removed client back, secret and all                                |
 
 `OidcClientView` is the entity minus `clientSecret`, plus `hasSecret: boolean`. Pass `confidential: false` to `create` to register a public client that authenticates with PKCE alone.
 
-Expose it under whichever guard your application already uses:
+#### Replace or merge
+
+`update` defaults to replacing the record, which is right for a PUT and wrong for an edit form that forgot to submit a field — the field is cleared, and the symptom (`invalid_client`) looks nothing like the cause (a missing `grant_types`). Pass `mode: 'merge'` to leave omitted fields alone:
+
+```ts
+await this.oidcClientService.update(clientId, { name: 'Renamed' }, { mode: 'merge' });
+```
+
+Validation runs against the merged result either way, so a patch cannot produce a combination a full replace would have rejected.
+
+#### What is rejected before it reaches the database
+
+Three checks are built in, because without them the failure is either silent corruption or an `invalid_client` with nothing wrong visible in the table:
+
+| Rejected                                                      | Raises                              | Why                                                            |
+| ------------------------------------------------------------- | ----------------------------------- | -------------------------------------------------------------- |
+| A comma in `redirectUris` / `postLogoutRedirectUris`          | `InvalidOidcRedirectUriError`       | The columns are `simple-array`; the uri would be stored as two |
+| A fragment in `redirectUris`                                  | `InvalidOidcRedirectUriError`       | Forbidden by OIDC Core 3.1.2.1                                 |
+| `responseTypes` with `code` but no `authorization_code` grant | `InconsistentOidcClientGrantsError` | Every request from that client answers `invalid_client`        |
+| An id already held by a live client                           | `OidcClientAlreadyExistsError`      | `save` on an existing key overwrites it, secret and all        |
+| An id held by a removed client                                | `OidcClientIdRetiredError`          | `clientId` is the primary key and removal is soft              |
+| A public client while `allowPublic: false`                    | `PublicOidcClientNotAllowedError`   | The deployment registers confidential clients only             |
+
+Use `restore(clientId)` rather than reusing a retired id. Every one of these extends `BadRequestException` and carries a `code`, so a resolver can map them to whatever its transport expects:
+
+| Error                               | `code` |
+| ----------------------------------- | ------ |
+| `OidcClientNotFoundError`           | 114    |
+| `OidcClientAlreadyExistsError`      | 115    |
+| `OidcClientIdRetiredError`          | 116    |
+| `PublicOidcClientNotAllowedError`   | 117    |
+| `InvalidOidcRedirectUriError`       | 118    |
+| `InconsistentOidcClientGrantsError` | 119    |
+
+All six are exported from `@rytass/member-base-nestjs-module/oidc-provider`.
+
+Anything beyond those three is your policy, not this module's, and goes in `clients.validate`:
+
+```ts
+MemberBaseOidcProviderModule.forRoot({
+  issuer: 'https://idp.example.com/oidc',
+  clients: {
+    allowPublic: false, // a deployment-level "every client is confidential"
+    validate: (input, { operation, clientId, existing }) => {
+      if (input.redirectUris?.some(uri => !uri.startsWith('https://'))) {
+        throw new BadRequestException('redirect uris must be https');
+      }
+    },
+  },
+});
+```
+
+The hook receives the complete state about to be written — on a merge that is the merged result — so it never has to reconstruct what the record will look like.
+
+#### Encrypting `client_secret` at rest
+
+The column cannot be hashed: `client_secret_basic` is compared against the plaintext by oidc-provider, and `client_secret_jwt` uses it as an HMAC key. Reversible encryption is the only option that keeps the protocol working, and `clients.secretCipher` keeps the key out of this package:
+
+```ts
+interface OidcSecretCipher {
+  encrypt(plain: string): string | Promise<string>;
+  decrypt(stored: string): string | Promise<string>;
+}
+```
+
+Either may be async, so a Vault Transit or KMS call is as valid an implementation as local AES. It is called in exactly two places: `create` / `rotateSecret` before the value is stored, and the adapter before the metadata reaches oidc-provider. `list`, `get` and `findOne` never touch the column, so they never call it.
+
+A local AES-256-GCM implementation, with a version prefix so a future key rotation can tell old ciphertext apart:
+
+```ts
+import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
+
+const key = Buffer.from(process.env.OIDC_CLIENT_SECRET_KEY, 'base64'); // 32 bytes
+
+clients: {
+  secretCipher: {
+    encrypt: plain => {
+      const iv = randomBytes(12);
+      const cipher = createCipheriv('aes-256-gcm', key, iv);
+      const body = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()]);
+
+      return ['v1', iv, cipher.getAuthTag(), body].map(part => part.toString('base64url')).join('.');
+    },
+    decrypt: stored => {
+      const [version, iv, tag, body] = stored.split('.');
+
+      if (version !== 'v1') throw new Error(`Unknown client secret cipher version: ${version}`);
+
+      const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(iv, 'base64url'));
+
+      decipher.setAuthTag(Buffer.from(tag, 'base64url'));
+
+      return Buffer.concat([decipher.update(Buffer.from(body, 'base64url')), decipher.final()]).toString('utf8');
+    },
+  },
+}
+```
+
+The column is `text`, so ciphertext length is not a consideration — local AES, Vault Transit's `vault:v1:…` and a KMS blob all fit.
+
+One thing to know: **a secret that cannot be decrypted throws.** Returning nothing would answer `invalid_client` on every request with a perfectly normal-looking row, so the adapter raises instead, naming the client.
+
+Turning it on does **not** migrate rows already stored in plaintext: their decrypt fails on the next token request. Rotate every existing client's secret when you enable it.
+
+Expose the service under whichever guard your application already uses:
 
 ```ts
 @Resolver()
@@ -1567,103 +1707,7 @@ memberBaseService.signAccessToken(member, domain, { authTime: 1700000000 });
 memberBaseService.signAccessToken(member, domain, { authTime: null });
 ```
 
-Refresh tokens issued before this release carry no `authTime`. Refreshing one leaves the claim absent rather than inventing a value, so checks that require a known authentication time fail closed.
-
-## Upgrade Notes
-
-### OIDC client administration is a service, not a controller
-
-`MemberBaseOidcProviderModule` used to register `OidcAdminController` unconditionally, so importing it added six REST routes under `/oidc-clients` whether or not the application wanted them. The controller has been removed, along with its export. `OidcClientService` — exported from the same module — carries the same behaviour, and `UpsertOidcClientBody` is replaced by `CreateOidcClientInput` / `UpdateOidcClientInput`.
-
-The routes were guarded (`@AllowActions([['OidcClient', 'read' | 'write']])`), so this is not a security fix. It is a scope decision: whether service-provider administration is reachable at all, over which transport, at which path and under which permission name belongs to the host application, not to this package.
-
-If you were calling those endpoints, re-expose exactly the ones you need — see [Administering service providers](#administering-service-providers):
-
-```ts
-@Controller('oidc-clients')
-export class OidcClientsController {
-  constructor(private readonly oidcClientService: OidcClientService) {}
-
-  @AllowActions([['OidcClient', 'read']])
-  @Get()
-  list(): Promise<OidcClientView[]> {
-    return this.oidcClientService.list();
-  }
-
-  @AllowActions([['OidcClient', 'write']])
-  @Post()
-  create(@Body() body: CreateOidcClientInput): Promise<CreatedOidcClient> {
-    return this.oidcClientService.create(body);
-  }
-}
-```
-
-Two response shapes differ from the old controller, both deliberately: `create` now always carries `clientSecret`, `null` for a public client rather than the key being absent, and `remove` resolves to `void` instead of `{ clientId }`. A missing client raises `OidcClientNotFoundError` (a `BadRequestException`, code `114`) rather than `NotFoundException`, matching every other error this package throws; map it to a 404 in your own handler if you were relying on the status.
-
-### `GraphQLContextTokenResolver` reads the right cookie
-
-It read a cookie named `token`, which this package has never written under any configuration. `context.token` was therefore always empty for a caller that authenticated by cookie rather than by header. It now reads `access_token`, and `createGraphQLContextTokenResolver({ cookieName, cookieMode })` mirrors a customised module configuration.
-
-Authorization was never affected — `CasbinGuard` reads the request directly — so this only matters if your own resolvers consume `context.token`. If you were setting a `token` cookie yourself to work around it, either rename it or pass `{ cookieName: 'token' }`.
-
-One smaller change comes with it: the `Bearer` prefix is now stripped case-insensitively. The guard started doing that when header precedence was introduced, and this helper was left behind — so a caller sending `authorization: bearer <token>` had the whole string, scheme included, land in `context.token`, while the guard authorized it perfectly well from the clean token. The two now agree.
-
-### Cookie names and attributes are configurable
-
-`accessTokenCookieName`, `refreshTokenCookieName`, `cookiePath`, `cookieSameSite`, `cookieSecure` and `cookieDomain` are now module options — see [Sessions and Cookies](#sessions-and-cookies). The cookie **names** are unchanged, and so is every attribute the OIDC session bridge writes. The OAuth callback cookies change.
-
-Overriding `ACCESS_TOKEN_COOKIE_NAME` / `REFRESH_TOKEN_COOKIE_NAME` from your own `providers` array — which this document used to recommend — never took effect for the module's own guard, controller and session bridge, and failed silently. If you have that override in place it has been doing nothing; move the value to the options.
-
-The OAuth callback passed only `httpOnly` and `secure: true` and let Express supply the rest. What it emits changes in three ways:
-
-| Attribute  | Before                    | After                                                   |
-| ---------- | ------------------------- | ------------------------------------------------------- |
-| `Secure`   | Always                    | Derived from the request; `cookieSecure` overrides      |
-| `Max-Age`  | Absent — a session cookie | From `accessTokenExpiration` / `refreshTokenExpiration` |
-| `SameSite` | Absent — browser default  | `Lax`, or `cookieSameSite`                              |
-| `Path`     | `/` (Express' default)    | `/`, or `cookiePath`                                    |
-
-`Path` is unchanged in practice; it is written explicitly so `cookiePath` can move it and so clearing uses the same value.
-
-Two of these are worth a moment before you upgrade:
-
-- **The cookies are no longer session cookies.** They now outlive the browser window, for as long as the configured token lifetimes.
-- **`SameSite=Lax` is now explicit.** Chrome already applies Lax by default, but its default carries a two-minute grace period for top-level POSTs that an explicit `Lax` does not, and Safari and Firefox differ again. If your OAuth callback is reached by a cross-site POST, check it.
-
-**One case needs a look before you upgrade.** Because the callback's `Secure` flag is no longer unconditional, a deployment that terminates TLS at a proxy which neither sets `X-Forwarded-Proto` with `trust proxy` enabled **nor** forwards the original `Host` — nginx sends `Host: localhost` upstream whenever `proxy_set_header Host` is omitted — now looks like plain localhost to the application, and the OAuth callback cookie loses `Secure`. Set `cookieSecure: true` explicitly for that topology. The OIDC session bridge is unaffected: it takes the flag from its configured `issuer`, which describes the public URL and cannot be rewritten by a proxy.
-
-### The OIDC interaction layer is now API-first
-
-Four changes to `@rytass/member-base-nestjs-module/oidc-provider`. Full documentation in [The interaction API](#the-interaction-api).
-
-**The interaction routes are now actually reachable.** `mountMemberBaseOidcProvider` used to register its middleware with `app.use('/oidc', handler)`. Express strips a mount path for the handler and then **puts it back** before the request reaches the next layer, so Nest — which registers the interaction routes without the prefix — never matched `/oidc/interaction/:uid` and every interactive login answered `404`. The middleware is now registered without a mount path and strips the prefix itself, which makes the rewrite outlive it. Nest's global prefix, if you set one, is put back on the way through. Nothing in your application changes; the flow simply works.
-
-**Consent has a user-facing path.** Previously a client with `skipConsent: false` and no `autoConsent` override got `400 Consent is required for this client but no consent screen is configured` — third-party authorization could not complete at all. Now the member is sent to `interaction.consentPageUrl`, or to `renderConsent`, or to a built-in page. Set `consentPageUrl` before you register a third-party client.
-
-**Grants answer the whole prompt.** Consent used to grant only the requested scope. Claims and resource scopes are now granted too, and an existing grant is extended rather than replaced. A client requesting a claim outside the scope mapping previously re-triggered the consent prompt forever; that redirect loop is gone.
-
-**The POST endpoints negotiate their response.** `POST /oidc/interaction/:uid/login` answers `200 { redirectTo }` to an API client and `303` to a browser form. A page built on `renderLogin` with a plain `<form>` is unaffected — it sends `Accept: text/html` and still gets the redirect. `renderLogin`'s parameter object gained `submitUrl`; existing renderers that ignore it keep working, though the built-in page's form action was also corrected (a relative `interaction/<uid>/login` resolved to `/oidc/interaction/interaction/<uid>/login`), so a custom renderer that copied that pattern should switch to `submitUrl`.
-
-`@nestjs/core` is now declared as a peer dependency. It was always imported — by `MemberBaseModule` for `APP_GUARD` among others — just never declared, so any working installation already has it.
-
-### Unique index on `member_oauth_records`
-
-`MemberOAuthRecordEntity` now declares a unique index on `(channel, channelIdentifier)`. The primary key already guaranteed "one binding per member per channel"; this adds the complementary guarantee that one external identity maps to exactly one member, and gives the reverse lookup an index.
-
-If you run with `synchronize: true`, index creation fails at startup when duplicates already exist. If you manage migrations yourself, generate one for this index. Check first:
-
-```sql
-SELECT channel, "channelIdentifier", count(*)
-FROM member_oauth_records
-GROUP BY 1, 2
-HAVING count(*) > 1;
-```
-
-Any row returned is a pre-existing data anomaly (one external identity bound to several members) and needs a decision before the index can be created.
-
-### Additional exported injection tokens
-
-`MemberBaseModule` now also exports `MEMBER_BASE_MODULE_OPTIONS`, `ACCESS_TOKEN_EXPIRATION`, `REFRESH_TOKEN_SECRET`, `REFRESH_TOKEN_EXPIRATION`, `COOKIE_MODE`, `ACCESS_TOKEN_COOKIE_NAME`, `REFRESH_TOKEN_COOKIE_NAME`, `CASBIN_PERMISSION_CHECKER` and `CUSTOMIZED_JWT_PAYLOAD`, so modules layered on top can read the same configuration instead of duplicating it. This is additive; nothing that was exported before has changed.
+A refresh token that carries no `authTime` — one issued before the claim existed — leaves it absent on refresh rather than inventing a value, so a check that requires a known authentication time fails closed.
 
 ## Type Aliases and Injection Tokens
 

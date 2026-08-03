@@ -3,6 +3,69 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.8.1](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.8.0...@rytass/member-base-nestjs-module@0.8.1) (2026-08-03)
+
+### Features
+
+- **member-base-nestjs-module:** make the oidc provider configurable ([6f7c717](https://github.com/Rytass/Utils/commit/6f7c717e0346b714a87a951f138301aa5ae4106b))
+- **member-base-nestjs-module:** make hashing, casbin naming and the login log configurable ([e4ec3d7](https://github.com/Rytass/Utils/commit/e4ec3d70010b90d60dd5e0d91f6a9596d716450e))
+- **member-base-nestjs-module:** let the client secret cipher be async ([22ae539](https://github.com/Rytass/Utils/commit/22ae539db3d96db4afa071de9a2ba434242275b1))
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** stop bounding oidc client columns this package cannot size ([ba14be9](https://github.com/Rytass/Utils/commit/ba14be9f9c2b069bf356203949d3d2b0723efb3c))
+- **member-base-nestjs-module:** record ipv6 login addresses with the right prefix length ([e4ec3d7](https://github.com/Rytass/Utils/commit/e4ec3d70010b90d60dd5e0d91f6a9596d716450e))
+
+### Migration
+
+**`oidc_clients` widens three columns.** `clientSecret`, `name` and `scope` become `text` — the only schema change in this release. With `synchronize: true` nothing is needed. Otherwise:
+
+```sql
+ALTER TABLE oidc_clients
+  ALTER COLUMN "clientSecret" TYPE text,
+  ALTER COLUMN "name" TYPE text,
+  ALTER COLUMN "scope" TYPE text;
+```
+
+Postgres treats `varchar(n)` to `text` as binary coercible, so no table rewrite happens; the statement takes a brief `ACCESS EXCLUSIVE` lock and returns. Existing rows are untouched and every value that fit before still fits.
+
+**Client registration validates.** Input that 0.8.0 accepted can now be rejected: a comma or fragment in a redirect uri, a `code` response type without the `authorization_code` grant, and an id already held by a live or removed client. Each previously produced either silent corruption or an `invalid_client` with nothing wrong visible in the table, so the rejection is the point — but a seeding script writing one of those shapes now fails at the call.
+
+**Two `OidcClientService` signatures changed.** `remove(clientId)` resolves to the removed `OidcClientView` instead of `void`, and `update` takes a third argument `{ mode: 'replace' | 'merge' }` that defaults to the previous replace semantics.
+
+**The login log records IPv6 correctly.** The address was written as `${ip}/32` regardless of family; on IPv6 that describes a network and Postgres rejects it, so a single login from an IPv6 client aborted the insert. Rows already written are untouched.
+
+## [0.8.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.7.0...@rytass/member-base-nestjs-module@0.8.0) (2026-08-03)
+
+### Features
+
+- **member-base-nestjs-module:** expose oidc client administration as a service ([2ac44b7](https://github.com/Rytass/Utils/commit/2ac44b7fe576c31c9a4c3f2ce6459a0d609bddad))
+
+### BREAKING CHANGES
+
+`OidcAdminController` is removed along with the six `/oidc-clients` routes it registered, and `UpsertOidcClientBody` is replaced by `CreateOidcClientInput` / `UpdateOidcClientInput`.
+
+`MemberBaseOidcProviderModule` used to register that controller unconditionally, so importing it added REST routes whether or not the application wanted them. The routes were guarded, so this is not a security fix — it is a scope decision: whether service-provider administration is reachable at all, over which transport, at which path and under which permission name belongs to the host application.
+
+### Migration
+
+Wrap `OidcClientService` in your own resolver or controller and re-expose only what you need:
+
+```ts
+@Controller('oidc-clients')
+export class OidcClientsController {
+  constructor(private readonly oidcClientService: OidcClientService) {}
+
+  @AllowActions([['OidcClient', 'read']])
+  @Get()
+  list(): Promise<OidcClientView[]> {
+    return this.oidcClientService.list();
+  }
+}
+```
+
+Two response shapes differ from the old controller, both deliberately: `create` always carries `clientSecret`, `null` for a public client rather than the key being absent, and a missing client raises `OidcClientNotFoundError` (a `BadRequestException`, code `114`) rather than `NotFoundException` — map it to a 404 in your own handler if you relied on the status.
+
 # [0.7.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.6.7...@rytass/member-base-nestjs-module@0.7.0) (2026-08-02)
 
 **Note:** Version bump only for package @rytass/member-base-nestjs-module
@@ -39,6 +102,12 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 - **member-base-nestjs-module:** export BaseMemberRepo under its own name ([9c09c6a](https://github.com/Rytass/Utils/commit/9c09c6ad1146b60f914b5187ae9fcb92eed28045))
 - **member-base-nestjs-module:** read the real cookie in the graphql resolver ([e0846a3](https://github.com/Rytass/Utils/commit/e0846a37f3fbfba524bf0b3c69c720d88679f446))
 
+### Migration
+
+`GraphQLContextTokenResolver` read a cookie named `token`, which this package has never written under any configuration, so `context.token` was always empty for a caller that authenticated by cookie. It now reads `access_token`, and `createGraphQLContextTokenResolver({ cookieName, cookieMode })` mirrors a customised module configuration. Authorization was never affected — `CasbinGuard` reads the request directly — so this only matters if your own resolvers consume `context.token`. If you set a `token` cookie yourself to work around it, either rename it or pass `{ cookieName: 'token' }`.
+
+The `Bearer` prefix is now stripped case-insensitively, matching what the guard already did.
+
 ## [0.6.2](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.6.1...@rytass/member-base-nestjs-module@0.6.2) (2026-08-01)
 
 ### Bug Fixes
@@ -48,6 +117,23 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 ### Features
 
 - **member-base-nestjs-module:** make session cookie names configurable ([cd2789b](https://github.com/Rytass/Utils/commit/cd2789b95b9715e34467448ccf76cf12300720ee))
+
+### Migration
+
+Cookie names and attributes became module options. The cookie **names** are unchanged, and so is every attribute the OIDC session bridge writes; the OAuth callback cookies change.
+
+Overriding `ACCESS_TOKEN_COOKIE_NAME` / `REFRESH_TOKEN_COOKIE_NAME` from your own `providers` array never took effect for the module's own guard, controller and session bridge, and failed silently. Move the value to the options.
+
+| Attribute  | Before                    | After                                                   |
+| ---------- | ------------------------- | ------------------------------------------------------- |
+| `Secure`   | Always                    | Derived from the request; `cookieSecure` overrides      |
+| `Max-Age`  | Absent — a session cookie | From `accessTokenExpiration` / `refreshTokenExpiration` |
+| `SameSite` | Absent — browser default  | `Lax`, or `cookieSameSite`                              |
+| `Path`     | `/` (Express' default)    | `/`, or `cookiePath`                                    |
+
+Two consequences are worth checking: the callback cookies are no longer session cookies, and `SameSite=Lax` is now explicit — Chrome's implicit default carries a two-minute grace period for top-level POSTs that an explicit `Lax` does not.
+
+One topology needs attention: because `Secure` is no longer unconditional, a deployment terminating TLS at a proxy that neither sets `X-Forwarded-Proto` with `trust proxy` enabled **nor** forwards the original `Host` (nginx sends `Host: localhost` upstream when `proxy_set_header Host` is omitted) looks like plain localhost to the application, and the callback cookie loses `Secure`. Set `cookieSecure: true` for that case. The OIDC session bridge is unaffected: it takes the flag from its configured `issuer`.
 
 ## [0.6.1](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.6.0...@rytass/member-base-nestjs-module@0.6.1) (2026-07-31)
 
@@ -62,6 +148,20 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 - **member-base-nestjs-module:** expose directory queries and an opt-in sync hook ([459b0d9](https://github.com/Rytass/Utils/commit/459b0d969c6db92655f2e570a7f2b2e372609dfb))
 - **member-base-nestjs-module:** give oidc consent a user-facing path ([1e2872c](https://github.com/Rytass/Utils/commit/1e2872c9dbb644188807bab96d31cb79aa244347))
 - **member-base-nestjs-module:** support ldaps tls options and per-call search base ([4de65ad](https://github.com/Rytass/Utils/commit/4de65ad010015f690da5d357cd2a0c94a544336e))
+
+### Migration
+
+The OIDC interaction layer became API-first, in four parts.
+
+**The interaction routes are now reachable.** `mountMemberBaseOidcProvider` registered its middleware with `app.use('/oidc', handler)`. Express strips a mount path for the handler and puts it back before the next layer, so Nest — which registers the interaction routes without the prefix — never matched `/oidc/interaction/:uid` and every interactive login answered `404`. The middleware is now registered without a mount path and strips the prefix itself. Nothing in your application changes.
+
+**Consent has a user-facing path.** A client with `skipConsent: false` and no `autoConsent` override previously got `400 Consent is required for this client but no consent screen is configured`. The member is now sent to `interaction.consentPageUrl`, to `renderConsent`, or to a built-in page. Set `consentPageUrl` before registering a third-party client.
+
+**Grants answer the whole prompt.** Scopes, claims and resource scopes are granted together and an existing grant is extended rather than replaced, which removes a redirect loop for clients requesting a claim outside the scope mapping.
+
+**The POST endpoints negotiate their response.** `POST /oidc/interaction/:uid/login` answers `200 { redirectTo }` to an API client and `303` to a browser form. `renderLogin`'s parameter object gained `submitUrl`; a custom renderer that copied the built-in page's old relative form action should switch to it.
+
+`@nestjs/core` is now declared as a peer dependency. It was always imported, just never declared.
 
 # [0.6.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.5.0...@rytass/member-base-nestjs-module@0.6.0) (2026-07-30)
 
@@ -97,6 +197,21 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_012F8e8DwRa31CuqD5UdXsJ6
+
+### Migration
+
+`MemberOAuthRecordEntity` declares a unique index on `(channel, channelIdentifier)`. The primary key already guaranteed one binding per member per channel; this adds the complementary guarantee that one external identity maps to exactly one member.
+
+With `synchronize: true`, index creation fails at startup when duplicates already exist. Check first:
+
+```sql
+SELECT channel, "channelIdentifier", count(*)
+FROM member_oauth_records
+GROUP BY 1, 2
+HAVING count(*) > 1;
+```
+
+Any row returned is a pre-existing anomaly and needs a decision before the index can be created.
 
 # [0.3.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.2.18...@rytass/member-base-nestjs-module@0.3.0) (2026-07-07)
 
