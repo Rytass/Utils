@@ -5,6 +5,7 @@
 // the package root never reaches this module.
 export { MemberBaseOidcProviderModule } from './oidc/oidc-provider.module';
 export { mountMemberBaseOidcProvider } from './oidc/mount-oidc-provider';
+export { buildOidcConfiguration } from './oidc/oidc.factory';
 
 export { OidcSsoBridge, type LocalSessionClaims } from './oidc/sso-bridge.service';
 export { OidcMaintenanceService } from './oidc/oidc-maintenance.service';
@@ -14,12 +15,21 @@ export {
   type OidcConsentBody,
   type OidcAbortBody,
 } from './oidc/interactions.controller';
-export { OidcClientNotFoundError } from './constants/errors/base.error';
+export {
+  OidcClientNotFoundError,
+  OidcClientAlreadyExistsError,
+  OidcClientIdRetiredError,
+  PublicOidcClientNotAllowedError,
+  InvalidOidcRedirectUriError,
+  InconsistentOidcClientGrantsError,
+} from './constants/errors/base.error';
 export {
   OidcClientService,
   type OidcClientView,
   type CreateOidcClientInput,
   type UpdateOidcClientInput,
+  type PatchOidcClientInput,
+  type UpdateOidcClientOptions,
   type CreatedOidcClient,
   type RotatedOidcClientSecret,
 } from './oidc/oidc-client.service';
@@ -30,6 +40,8 @@ export { MemberBaseOidcModelsModule } from './oidc/models/oidc-models.module';
 
 export {
   createOidcAdapterFactory,
+  DEFAULT_CLIENT_GRANT_TYPES,
+  DEFAULT_CLIENT_RESPONSE_TYPES,
   purgeExpiredOidcPayloads,
   countNonExpiringOidcPayloads,
   type OidcAdapter,
@@ -54,6 +66,10 @@ export type {
   OidcConsentRenderParams,
   OidcClaimsOptions,
   OidcSsoBridgeOptions,
+  OidcClientsOptions,
+  OidcFeatureToggles,
+  OidcClientValidationContext,
+  OidcSecretCipher,
 } from './oidc/oidc-provider.options';
 
 export type {

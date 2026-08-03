@@ -1,6 +1,17 @@
 import { IsNull, LessThan, Repository } from 'typeorm';
 import { OidcPayloadEntity } from './models/oidc-payload.entity';
 import { OidcClientEntity } from './models/oidc-client.entity';
+import type { OidcSecretCipher } from './oidc-provider.options';
+
+/**
+ * What a client gets when it declares neither. Exported because
+ * OidcClientService validates against the same values: a grant/response
+ * combination that looks consistent at registration but not at the adapter
+ * would fail as `invalid_client` on every request, with nothing wrong visible
+ * in the table.
+ */
+export const DEFAULT_CLIENT_GRANT_TYPES = ['authorization_code', 'refresh_token'];
+export const DEFAULT_CLIENT_RESPONSE_TYPES = ['code'];
 
 export interface AdapterPayload extends Record<string, unknown> {
   grantId?: string;
@@ -25,17 +36,40 @@ export interface OidcAdapter {
 
 export type OidcAdapterConstructor = new (model: string) => OidcAdapter;
 
-const toClientMetadata = (client: OidcClientEntity): AdapterPayload => ({
-  client_id: client.clientId,
-  ...(client.clientSecret ? { client_secret: client.clientSecret } : {}),
-  client_name: client.name,
-  redirect_uris: client.redirectUris,
-  ...(client.postLogoutRedirectUris ? { post_logout_redirect_uris: client.postLogoutRedirectUris } : {}),
-  grant_types: client.grantTypes ?? ['authorization_code', 'refresh_token'],
-  response_types: client.responseTypes ?? ['code'],
-  ...(client.scope ? { scope: client.scope } : {}),
-  token_endpoint_auth_method: client.tokenEndpointAuthMethod ?? (client.clientSecret ? 'client_secret_basic' : 'none'),
-});
+/**
+ * A secret that cannot be read back is worse than a loud failure: every token
+ * request would answer `invalid_client` while the row looks perfectly fine.
+ * So a cipher that rejects the stored value throws rather than degrading.
+ */
+const readSecret = async (client: OidcClientEntity, cipher?: OidcSecretCipher): Promise<string | null> => {
+  if (!client.clientSecret || !cipher) return client.clientSecret;
+
+  try {
+    return await cipher.decrypt(client.clientSecret);
+  } catch (error) {
+    throw new Error(
+      `Failed to decrypt the stored client_secret for "${client.clientId}". ` +
+        'A secret written before secretCipher was configured, or with a different key, cannot be read — ' +
+        `rotate this client's secret. Cause: ${(error as Error).message}`,
+    );
+  }
+};
+
+const toClientMetadata = async (client: OidcClientEntity, cipher?: OidcSecretCipher): Promise<AdapterPayload> => {
+  const clientSecret = await readSecret(client, cipher);
+
+  return {
+    client_id: client.clientId,
+    ...(clientSecret ? { client_secret: clientSecret } : {}),
+    client_name: client.name,
+    redirect_uris: client.redirectUris,
+    ...(client.postLogoutRedirectUris ? { post_logout_redirect_uris: client.postLogoutRedirectUris } : {}),
+    grant_types: client.grantTypes ?? DEFAULT_CLIENT_GRANT_TYPES,
+    response_types: client.responseTypes ?? DEFAULT_CLIENT_RESPONSE_TYPES,
+    ...(client.scope ? { scope: client.scope } : {}),
+    token_endpoint_auth_method: client.tokenEndpointAuthMethod ?? (clientSecret ? 'client_secret_basic' : 'none'),
+  };
+};
 
 /**
  * Builds the Adapter class oidc-provider instantiates once per model.
@@ -46,6 +80,7 @@ const toClientMetadata = (client: OidcClientEntity): AdapterPayload => ({
 export const createOidcAdapterFactory = (
   payloadRepo: Repository<OidcPayloadEntity>,
   clientRepo: Repository<OidcClientEntity>,
+  secretCipher?: OidcSecretCipher,
 ): OidcAdapterConstructor =>
   class TypeOrmOidcAdapter implements OidcAdapter {
     constructor(private readonly model: string) {}
@@ -68,7 +103,7 @@ export const createOidcAdapterFactory = (
       if (this.model === 'Client') {
         const client = await clientRepo.findOne({ where: { clientId: id } });
 
-        return client ? toClientMetadata(client) : undefined;
+        return client ? await toClientMetadata(client, secretCipher) : undefined;
       }
 
       const record = await payloadRepo.findOne({ where: { model: this.model, id } });

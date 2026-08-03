@@ -123,3 +123,48 @@ export class OidcClientNotFoundError extends BadRequestException {
 
   code = 114;
 }
+
+export class OidcClientAlreadyExistsError extends BadRequestException {
+  constructor(clientId: string) {
+    super(`Oidc client already registered: ${clientId}`);
+  }
+
+  code = 115;
+}
+
+/**
+ * `clientId` is the primary key and removal is soft, so a removed id keeps
+ * occupying it. Saying so is the difference between a fixable message and a
+ * unique-violation stack trace from the driver.
+ */
+export class OidcClientIdRetiredError extends BadRequestException {
+  constructor(clientId: string) {
+    super(`Oidc client id belongs to a removed client and cannot be reused: ${clientId}`);
+  }
+
+  code = 116;
+}
+
+export class PublicOidcClientNotAllowedError extends BadRequestException {
+  constructor() {
+    super('Public oidc clients are disabled; register a confidential client');
+  }
+
+  code = 117;
+}
+
+export class InvalidOidcRedirectUriError extends BadRequestException {
+  constructor(uri: string, reason: string) {
+    super(`Invalid redirect uri (${reason}): ${uri}`);
+  }
+
+  code = 118;
+}
+
+export class InconsistentOidcClientGrantsError extends BadRequestException {
+  constructor(message: string) {
+    super(message);
+  }
+
+  code = 119;
+}

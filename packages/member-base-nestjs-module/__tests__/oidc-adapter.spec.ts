@@ -6,6 +6,7 @@ import {
 } from '../src/oidc/oidc-adapter';
 import { OidcPayloadEntity } from '../src/oidc/models/oidc-payload.entity';
 import { OidcClientEntity } from '../src/oidc/models/oidc-client.entity';
+import type { OidcSecretCipher } from '../src/oidc/oidc-provider.options';
 
 interface Harness {
   readonly Adapter: ReturnType<typeof createOidcAdapterFactory>;
@@ -14,7 +15,7 @@ interface Harness {
   readonly payloadRepo: Repository<OidcPayloadEntity>;
 }
 
-const buildHarness = (): Harness => {
+const buildHarness = (secretCipher?: OidcSecretCipher): Harness => {
   const rows: OidcPayloadEntity[] = [];
   const clients: OidcClientEntity[] = [];
 
@@ -75,7 +76,12 @@ const buildHarness = (): Harness => {
     ),
   } as unknown as Repository<OidcClientEntity>;
 
-  return { Adapter: createOidcAdapterFactory(payloadRepo, clientRepo), rows, clients, payloadRepo };
+  return {
+    Adapter: createOidcAdapterFactory(payloadRepo, clientRepo, secretCipher),
+    rows,
+    clients,
+    payloadRepo,
+  };
 };
 
 describe('oidc adapter payload lifecycle', () => {
@@ -215,6 +221,96 @@ describe('oidc adapter client model', () => {
     const { Adapter } = buildHarness();
 
     await expect(new Adapter('Client').find('nope')).resolves.toBeUndefined();
+  });
+
+  describe('secret at rest', () => {
+    const cipher: OidcSecretCipher = {
+      encrypt: plain => `enc:${plain}`,
+      decrypt: stored => {
+        if (!stored.startsWith('enc:')) throw new Error('not encrypted with this key');
+
+        return stored.slice(4);
+      },
+    };
+
+    const pushClient = (clients: OidcClientEntity[], clientSecret: string | null): void => {
+      clients.push({
+        clientId: 'sp-1',
+        clientSecret,
+        name: 'Service Provider',
+        redirectUris: ['https://sp.example.com/cb'],
+        postLogoutRedirectUris: null,
+        grantTypes: null,
+        responseTypes: null,
+        scope: null,
+        skipConsent: false,
+        tokenEndpointAuthMethod: null,
+      } as OidcClientEntity);
+    };
+
+    it('should hand the provider the decrypted secret', async () => {
+      const { Adapter, clients } = buildHarness(cipher);
+
+      pushClient(clients, 'enc:the-real-secret');
+
+      // The provider compares client_secret_basic against this value, so it
+      // has to be the plaintext however the column stores it.
+      await expect(new Adapter('Client').find('sp-1')).resolves.toMatchObject({
+        client_secret: 'the-real-secret',
+        token_endpoint_auth_method: 'client_secret_basic',
+      });
+    });
+
+    it('should leave a public client alone', async () => {
+      const { Adapter, clients } = buildHarness(cipher);
+
+      pushClient(clients, null);
+
+      await expect(new Adapter('Client').find('sp-1')).resolves.toMatchObject({
+        token_endpoint_auth_method: 'none',
+      });
+    });
+
+    it('should accept an async cipher, so a kms or vault call can back it', async () => {
+      const asyncCipher: OidcSecretCipher = {
+        encrypt: async plain => `enc:${plain}`,
+        decrypt: async stored => stored.slice(4),
+      };
+
+      const { Adapter, clients } = buildHarness(asyncCipher);
+
+      pushClient(clients, 'enc:the-real-secret');
+
+      await expect(new Adapter('Client').find('sp-1')).resolves.toMatchObject({
+        client_secret: 'the-real-secret',
+      });
+    });
+
+    it('should fail loudly on a rejected async decrypt', async () => {
+      const failing: OidcSecretCipher = {
+        encrypt: async plain => plain,
+        decrypt: async () => {
+          throw new Error('kms: AccessDeniedException');
+        },
+      };
+
+      const { Adapter, clients } = buildHarness(failing);
+
+      pushClient(clients, 'enc:whatever');
+
+      await expect(new Adapter('Client').find('sp-1')).rejects.toThrow(/AccessDeniedException/);
+    });
+
+    it('should fail loudly on a secret it cannot decrypt', async () => {
+      const { Adapter, clients } = buildHarness(cipher);
+
+      pushClient(clients, 'written-before-the-cipher-was-configured');
+
+      // Returning undefined here would answer invalid_client on every request
+      // with nothing wrong visible in the table — the exact failure this
+      // package keeps trying to make impossible.
+      await expect(new Adapter('Client').find('sp-1')).rejects.toThrow(/rotate this client's secret/);
+    });
   });
 });
 

@@ -1,5 +1,6 @@
 import { AuthProviderMisconfiguredError } from '../constants/errors/base.error';
 import type { OidcAdapterConstructor } from './oidc-adapter';
+import type { OidcFeatureToggles } from './oidc-provider.options';
 
 export interface OidcGrant {
   addOIDCScope(scope: string): void;
@@ -120,13 +121,40 @@ export interface CreateOidcProviderParams {
   scopes: string[];
   claims: Record<string, string[]>;
   ttl: Record<string, number>;
+  features?: OidcFeatureToggles;
+  /** default: true */
+  requirePkce?: boolean;
+  /** default: true */
+  proxy?: boolean;
+  /** default: true */
+  clientBasedCors?: boolean;
   advanced?: Record<string, unknown>;
 }
 
-export const createOidcProvider = async (params: CreateOidcProviderParams): Promise<OidcProviderLike> => {
-  const { default: Provider } = await importOidcProvider('oidc-provider');
+/**
+ * devInteractions is not configurable: enabling it would shadow the interaction
+ * routes this package registers with oidc-provider's development pages.
+ */
+const resolveFeatures = (features?: OidcFeatureToggles): Record<string, { enabled: boolean }> => ({
+  devInteractions: { enabled: false },
+  rpInitiatedLogout: { enabled: features?.rpInitiatedLogout ?? true },
+  revocation: { enabled: features?.revocation ?? true },
+  introspection: { enabled: features?.introspection ?? true },
+  userinfo: { enabled: features?.userinfo ?? true },
+});
 
-  const provider = new Provider(params.issuer, {
+/**
+ * The configuration handed to oidc-provider.
+ *
+ * Separate from createOidcProvider so it can be asserted on without loading an
+ * ESM-only dependency, and because `advanced` spreads over the result: what
+ * that overrides is worth being able to see.
+ */
+export const buildOidcConfiguration = (params: CreateOidcProviderParams): Record<string, unknown> => {
+  const clientBasedCors = params.clientBasedCors ?? true;
+  const requirePkce = params.requirePkce ?? true;
+
+  return {
     adapter: params.adapter,
     jwks: params.jwks,
     cookies: { keys: params.cookieKeys },
@@ -134,31 +162,31 @@ export const createOidcProvider = async (params: CreateOidcProviderParams): Prom
     scopes: params.scopes,
     claims: params.claims,
     ttl: params.ttl,
-    features: {
-      devInteractions: { enabled: false },
-      rpInitiatedLogout: { enabled: true },
-      revocation: { enabled: true },
-      introspection: { enabled: true },
-      userinfo: { enabled: true },
-    },
+    features: resolveFeatures(params.features),
     // Mandatory for public clients and harmless for confidential ones; without
     // it an intercepted authorization code is enough to obtain tokens.
-    pkce: { required: (): boolean => true },
+    pkce: { required: (): boolean => requirePkce },
     interactions: {
       url(_ctx: unknown, interaction: { uid: string }): string {
         return `/${params.routePrefix}/interaction/${interaction.uid}`;
       },
     },
     clientBasedCORS(): boolean {
-      return true;
+      return clientBasedCors;
     },
     ...params.advanced,
-  });
+  };
+};
+
+export const createOidcProvider = async (params: CreateOidcProviderParams): Promise<OidcProviderLike> => {
+  const { default: Provider } = await importOidcProvider('oidc-provider');
+
+  const provider = new Provider(params.issuer, buildOidcConfiguration(params));
 
   // The endpoint is nearly always behind a reverse proxy or ingress; without
   // this the provider derives request URLs from the internal hostname and the
   // issued redirects point somewhere unreachable.
-  provider.proxy = true;
+  provider.proxy = params.proxy ?? true;
 
   return provider;
 };

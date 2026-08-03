@@ -84,7 +84,7 @@ const providerFactory: Provider = {
 
     return createOidcProvider({
       issuer: options.issuer,
-      adapter: createOidcAdapterFactory(payloadRepo, clientRepo),
+      adapter: createOidcAdapterFactory(payloadRepo, clientRepo, options.clients?.secretCipher),
       findAccount,
       jwks: options.jwks ?? generateEphemeralJwks(),
       cookieKeys: options.cookieKeys ?? [randomBytes(32).toString('hex')],
@@ -92,6 +92,10 @@ const providerFactory: Provider = {
       scopes: [...DEFAULT_SCOPES, ...(options.claims?.additionalScopes ?? [])],
       claims: { ...DEFAULT_SCOPE_CLAIMS, ...options.claims?.scopeClaims },
       ttl: { ...DEFAULT_TTL, ...options.ttl },
+      features: options.features,
+      requirePkce: options.requirePkce,
+      proxy: options.proxy,
+      clientBasedCors: options.clientBasedCors,
       advanced: options.advanced,
     });
   },
