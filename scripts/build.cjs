@@ -414,6 +414,19 @@ async function tryBuild(packagesInfos, packageSymbol, triggerSymbol) {
    */
   fse.copyFileSync(path.resolve(rootPackagePath, 'README.md'), path.resolve(rootPackageDistPath, 'README.md'));
 
+  /**
+   * copy CHANGELOG.md
+   *
+   * Published alongside the README, which links to it for migration notes —
+   * without this that link is dead on npm. Not every package has one yet, so
+   * its absence is not an error.
+   */
+  const changelogPath = path.resolve(rootPackagePath, 'CHANGELOG.md');
+
+  if (fse.existsSync(changelogPath)) {
+    fse.copyFileSync(changelogPath, path.resolve(rootPackageDistPath, 'CHANGELOG.md'));
+  }
+
   for (const packageSymbol in packagesInfos) {
     tryBuild(packagesInfos, packageSymbol);
   }
