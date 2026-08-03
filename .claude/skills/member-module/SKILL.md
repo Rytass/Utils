@@ -1,7 +1,7 @@
 ---
 name: member-module
 description: |
-  Member system NestJS module (會員系統 NestJS 模組). Use when working with user authentication (用戶認證), JWT tokens, OAuth2 integration (Google/Facebook), RBAC/ABAC permission control (權限控制), password policies (密碼策略), or Casbin integration. Keywords: 會員, 用戶, 認證, 授權, 權限, 登入, JWT, OAuth, Casbin, RBAC, ABAC, member, user, authentication, authorization, login, password
+  Member system NestJS module (會員系統 NestJS 模組). Use when working with user authentication (用戶認證), JWT tokens, OAuth2 integration (Google/Facebook), RBAC/ABAC permission control (權限控制), password policies (密碼策略), Casbin integration, LDAP directory login, or acting as an OIDC provider (OIDC 發行者/單一登入). Keywords: 會員, 用戶, 認證, 授權, 權限, 登入, 單一登入, JWT, OAuth, OIDC, SSO, LDAP, Casbin, RBAC, ABAC, member, user, authentication, authorization, login, password, identity provider
 ---
 
 # Member Base NestJS Module (會員系統模組)
@@ -25,10 +25,12 @@ import { MemberBaseModule } from '@rytass/member-base-nestjs-module';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({ /* 資料庫配置 */ }),
+    TypeOrmModule.forRoot({
+      /* 資料庫配置 */
+    }),
     MemberBaseModule.forRoot({
-      accessTokenExpiration: 900,       // 15 分鐘
-      refreshTokenExpiration: 7776000,  // 90 天
+      accessTokenExpiration: 900, // 15 分鐘
+      refreshTokenExpiration: 7776000, // 90 天
       passwordMinLength: 12,
       casbinAdapterOptions: {
         type: 'postgres',
@@ -81,14 +83,14 @@ Client → [Bearer Token] → CasbinGuard → Verify JWT → Extract Payload →
 
 ### 權限裝飾器
 
-| 裝飾器 | 用途 | 範例 |
-|--------|------|------|
-| `@IsPublic()` | 完全公開 | 登入、註冊頁面 |
-| `@Authenticated()` | 僅需有效 Token | 個人資料頁面 |
-| `@AllowActions([...])` | RBAC 權限檢查 | 管理功能 |
-| `@HasPermission([subject, action])` | 動態權限檢查 | 參數裝飾器，用於 Field Resolver |
-| `@MemberId()` | 注入會員 ID | 參數裝飾器 |
-| `@Account()` | 注入會員帳號 | 參數裝飾器 |
+| 裝飾器                              | 用途           | 範例                            |
+| ----------------------------------- | -------------- | ------------------------------- |
+| `@IsPublic()`                       | 完全公開       | 登入、註冊頁面                  |
+| `@Authenticated()`                  | 僅需有效 Token | 個人資料頁面                    |
+| `@AllowActions([...])`              | RBAC 權限檢查  | 管理功能                        |
+| `@HasPermission([subject, action])` | 動態權限檢查   | 參數裝飾器，用於 Field Resolver |
+| `@MemberId()`                       | 注入會員 ID    | 參數裝飾器                      |
+| `@Account()`                        | 注入會員帳號   | 參數裝飾器                      |
 
 ### RBAC+Domain 模型
 
@@ -144,7 +146,7 @@ MemberBaseModule.forRootAsync({
       database: config.get('DB_NAME'),
     },
   }),
-})
+});
 ```
 
 ### OAuth2 整合
@@ -152,7 +154,12 @@ MemberBaseModule.forRootAsync({
 支援三種 OAuth2 Provider 類型：
 
 ```typescript
-import { OAuth2Provider, GoogleOAuth2Provider, FacebookOAuth2Provider, CustomOAuth2Provider } from '@rytass/member-base-nestjs-module';
+import {
+  OAuth2Provider,
+  GoogleOAuth2Provider,
+  FacebookOAuth2Provider,
+  CustomOAuth2Provider,
+} from '@rytass/member-base-nestjs-module';
 
 // Google Provider
 const googleProvider: GoogleOAuth2Provider = {
@@ -160,8 +167,8 @@ const googleProvider: GoogleOAuth2Provider = {
   clientId: process.env.GOOGLE_CLIENT_ID!,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
   redirectUri: 'https://app.com/auth/callbacks/google',
-  scope: ['profile', 'email'],  // 可選
-  getState: () => crypto.randomUUID(),  // 可選
+  scope: ['profile', 'email'], // 可選
+  getState: () => crypto.randomUUID(), // 可選
 };
 
 // Facebook Provider
@@ -175,21 +182,25 @@ const facebookProvider: FacebookOAuth2Provider = {
 
 // Custom OAuth2 Provider（自訂 OAuth2 服務）
 const customProvider: CustomOAuth2Provider = {
-  channel: 'line',  // 自訂名稱（非 google/facebook）
+  channel: 'line', // 自訂名稱（非 google/facebook）
   clientId: process.env.LINE_CLIENT_ID!,
   clientSecret: process.env.LINE_CLIENT_SECRET!,
   redirectUri: 'https://app.com/auth/callbacks/line',
-  scope: ['profile', 'openid'],  // 必填
-  requestUrl: 'https://access.line.me/oauth2/v2.1/authorize',  // 必填
-  getAccessTokenFromCode: async (code) => {
+  scope: ['profile', 'openid'], // 必填
+  requestUrl: 'https://access.line.me/oauth2/v2.1/authorize', // 必填
+  getAccessTokenFromCode: async code => {
     // 實作從 code 取得 access token 的邏輯
-    const response = await fetch('https://api.line.me/oauth2/v2.1/token', { /* ... */ });
+    const response = await fetch('https://api.line.me/oauth2/v2.1/token', {
+      /* ... */
+    });
     return response.access_token;
   },
-  getAccountFromAccessToken: async (accessToken) => {
+  getAccountFromAccessToken: async accessToken => {
     // 實作從 access token 取得使用者識別的邏輯
-    const profile = await fetch('https://api.line.me/v2/profile', { /* ... */ });
-    return profile.userId;  // 回傳唯一識別碼
+    const profile = await fetch('https://api.line.me/v2/profile', {
+      /* ... */
+    });
+    return profile.userId; // 回傳唯一識別碼
   },
 };
 
@@ -291,20 +302,20 @@ export class CustomMember extends BaseMemberEntity {
 // 模組配置
 MemberBaseModule.forRoot({
   memberEntity: CustomMember,
-})
+});
 ```
 
 ### 自訂 JWT Payload
 
 ```typescript
 MemberBaseModule.forRoot({
-  customizedJwtPayload: (member) => ({
+  customizedJwtPayload: member => ({
     id: member.id,
     account: member.account,
     displayName: member.displayName,
     roles: member.roles,
   }),
-})
+});
 ```
 
 ### 會員註冊
@@ -317,14 +328,14 @@ export class RegistrationService {
   // 一般註冊
   async register(account: string, password: string) {
     return this.memberService.register(account, password, {
-      displayName: 'New User',  // 可傳入自訂欄位
+      displayName: 'New User', // 可傳入自訂欄位
     });
   }
 
   // 無密碼註冊（系統產生密碼）
   async registerWithoutPassword(account: string) {
     const [member, generatedPassword] = await this.memberService.registerWithoutPassword(account, {
-      shouldUpdatePassword: true,  // 預設 true
+      shouldUpdatePassword: true, // 預設 true
     });
     // 發送 email 包含臨時密碼
     return member;
@@ -403,7 +414,7 @@ export class AdminManagementService {
   async resetMemberPassword(
     memberId: string,
     newPassword: string,
-    ignorePasswordPolicy?: boolean  // 預設 false
+    ignorePasswordPolicy?: boolean, // 預設 false
   ) {
     return this.adminService.resetMemberPassword(memberId, newPassword, ignorePasswordPolicy);
   }
@@ -445,10 +456,12 @@ import { GraphQLContextTokenResolver } from '@rytass/member-base-nestjs-module';
 @Module({
   imports: [
     GraphQLModule.forRoot({
-      context: GraphQLContextTokenResolver,  // 自動提取 Token
+      context: GraphQLContextTokenResolver, // 自動提取 Token
       fieldResolverEnhancers: ['guards'],
     }),
-    MemberBaseModule.forRoot({ /* ... */ }),
+    MemberBaseModule.forRoot({
+      /* ... */
+    }),
   ],
 })
 export class AppModule {}
@@ -458,68 +471,205 @@ export class AppModule {}
 
 ### 認證選項
 
-| 選項 | 預設 | 說明 |
-|------|------|------|
-| `accessTokenSecret` | 隨機 | JWT Access Token 簽署密鑰 |
-| `accessTokenExpiration` | 900 | Access Token 過期時間（秒）|
-| `refreshTokenSecret` | 隨機 | Refresh Token 密鑰 |
-| `refreshTokenExpiration` | 7776000 | Refresh Token 過期時間（秒）|
-| `onlyResetRefreshTokenExpirationByPassword` | false | 僅在密碼變更時重設 Refresh Token 過期時間 |
-| `cookieMode` | false | 使用 HTTP-only Cookie（分兩個 cookie: ACCESS_TOKEN 和 REFRESH_TOKEN）|
-| `accessTokenCookieName` | 'ACCESS_TOKEN' | Access Token Cookie 名稱（cookieMode 時有效）|
-| `refreshTokenCookieName` | 'REFRESH_TOKEN' | Refresh Token Cookie 名稱（cookieMode 時有效）|
+| 選項                                        | 預設    | 說明                                      |
+| ------------------------------------------- | ------- | ----------------------------------------- |
+| `accessTokenSecret`                         | 隨機    | JWT Access Token 簽署密鑰                 |
+| `accessTokenExpiration`                     | 900     | Access Token 過期時間（秒）               |
+| `refreshTokenSecret`                        | 隨機    | Refresh Token 密鑰                        |
+| `refreshTokenExpiration`                    | 7776000 | Refresh Token 過期時間（秒）              |
+| `onlyResetRefreshTokenExpirationByPassword` | false   | 僅在密碼變更時重設 Refresh Token 過期時間 |
+
+### Cookie（主要用於 cookieMode）
+
+未設定時每個屬性都會依請求推導，開發與正式環境都不必特別配置。`accessTokenCookieName`、`cookiePath`、`cookieDomain` 也會被 OIDC session bridge 使用，不受 `cookieMode` 影響。
+
+| 選項                     | 預設                     | 說明                                            |
+| ------------------------ | ------------------------ | ----------------------------------------------- |
+| `cookieMode`             | false                    | 使用 HTTP-only Cookie 取代 header authorization |
+| `accessTokenCookieName`  | `'access_token'`         | Access Token Cookie 名稱                        |
+| `refreshTokenCookieName` | `'refresh_token'`        | Refresh Token Cookie 名稱                       |
+| `cookiePath`             | `'/'`                    | Path 屬性                                       |
+| `cookieSameSite`         | `'lax'`                  | SameSite 屬性                                   |
+| `cookieSecure`           | https 或非 loopback host | Secure 屬性                                     |
+| `cookieDomain`           | 無（host-only）          | Domain 屬性；設 `.example.com` 才能跨子網域共用 |
+
+`httpOnly` 不可設定且永遠開啟。
 
 ### 密碼重設
 
-| 選項 | 預設 | 說明 |
-|------|------|------|
-| `resetPasswordTokenSecret` | 隨機 | 密碼重設 Token 簽署密鑰 |
-| `resetPasswordTokenExpiration` | 3600 | 密碼重設 Token 過期時間（秒，預設 1 小時）|
+| 選項                           | 預設 | 說明                                       |
+| ------------------------------ | ---- | ------------------------------------------ |
+| `resetPasswordTokenSecret`     | 隨機 | 密碼重設 Token 簽署密鑰                    |
+| `resetPasswordTokenExpiration` | 3600 | 密碼重設 Token 過期時間（秒，預設 1 小時） |
 
 ### 密碼策略
 
-| 選項 | 預設 | 說明 |
-|------|------|------|
-| `passwordMinLength` | 8 | 最小長度 |
-| `passwordShouldIncludeUppercase` | true | 需含大寫 |
-| `passwordShouldIncludeLowercase` | true | 需含小寫 |
-| `passwordShouldIncludeDigit` | true | 需含數字 |
-| `passwordShouldIncludeSpecialCharacters` | false | 需含特殊字符 |
-| `passwordPolicyRegExp` | undefined | 自訂密碼驗證 RegExp（設定後覆蓋上述選項）|
-| `passwordHistoryLimit` | undefined | 密碼歷史限制（禁止重複使用最近 N 組密碼）|
-| `passwordAgeLimitInDays` | undefined | 密碼有效天數 |
+| 選項                                     | 預設        | 說明                                                                                            |
+| ---------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------- |
+| `passwordMinLength`                      | 8           | 最小長度                                                                                        |
+| `passwordShouldIncludeUppercase`         | true        | 需含大寫                                                                                        |
+| `passwordShouldIncludeLowercase`         | true        | 需含小寫                                                                                        |
+| `passwordShouldIncludeDigit`             | true        | 需含數字                                                                                        |
+| `passwordShouldIncludeSpecialCharacters` | false       | 需含特殊字符                                                                                    |
+| `passwordPolicyRegExp`                   | undefined   | 自訂密碼驗證 RegExp（設定後覆蓋上述選項）                                                       |
+| `passwordHistoryLimit`                   | undefined   | 密碼歷史限制（禁止重複使用最近 N 組密碼）                                                       |
+| `passwordAgeLimitInDays`                 | undefined   | 密碼有效天數                                                                                    |
+| `passwordHashOptions`                    | argon2 預設 | argon2 成本參數（`memoryCost` / `timeCost` / `parallelism` / `type` / `hashLength` / `secret`） |
+
+`passwordHashOptions` 只影響之後產生的雜湊。argon2 會從雜湊字串本身讀出參數，所以調高成本不會讓既有密碼失效，舊密碼會在下次變更時以新成本重算。
 
 ### 登入安全
 
-| 選項 | 預設 | 說明 |
-|------|------|------|
-| `loginFailedBanThreshold` | 5 | 失敗次數上限 |
-| `loginFailedAutoUnlockSeconds` | null | 自動解鎖時間（秒）|
-| `forceRejectLoginOnPasswordExpired` | false | 密碼過期時拒絕登入 |
+| 選項                                | 預設  | 說明                         |
+| ----------------------------------- | ----- | ---------------------------- |
+| `loginFailedBanThreshold`           | 5     | 失敗次數上限                 |
+| `loginFailedAutoUnlockSeconds`      | null  | 自動解鎖時間（秒）           |
+| `forceRejectLoginOnPasswordExpired` | false | 密碼過期時拒絕登入           |
+| `loginLogEnabled`                   | true  | 是否寫入 `member_login_logs` |
+| `loginLogRecordIp`                  | true  | 是否連同來源 IP 一起記錄     |
+
+`loginLogRecordIp: false` 仍會記錄嘗試但不保留位址。`loginLogEnabled: false` 會連帶讓 `loginFailedAutoUnlockSeconds` 失效（自動解鎖靠讀該表最後一筆失敗記錄），兩者同時設定時啟動會出現警告。IP 以 `cidr` 儲存，IPv4 為 `/32`、IPv6 為 `/128`。
 
 ### Casbin 權限控制
 
-| 選項 | 預設 | 說明 |
-|------|------|------|
-| `enableGlobalGuard` | true | 啟用全域 Guard |
-| `casbinAdapterOptions` | - | TypeORM Adapter 配置 |
-| `casbinModelString` | RBAC with domains | Casbin Model 定義 |
-| `casbinPermissionDecorator` | - | 自訂權限裝飾器 |
-| `casbinPermissionChecker` | - | 自訂權限檢查函式 |
+| 選項                        | 預設              | 說明                 |
+| --------------------------- | ----------------- | -------------------- |
+| `enableGlobalGuard`         | true              | 啟用全域 Guard       |
+| `casbinAdapterOptions`      | -                 | TypeORM Adapter 配置 |
+| `casbinModelString`         | RBAC with domains | Casbin Model 定義    |
+| `casbinPermissionDecorator` | -                 | 自訂權限裝飾器       |
+| `casbinPermissionChecker`   | -                 | 自訂權限檢查函式     |
 
 ### 實體與 Payload
 
-| 選項 | 預設 | 說明 |
-|------|------|------|
-| `memberEntity` | BaseMemberEntity | 自訂會員實體類別 |
-| `customizedJwtPayload` | - | 自訂 JWT Payload 產生函式 |
+| 選項                   | 預設             | 說明                      |
+| ---------------------- | ---------------- | ------------------------- |
+| `memberEntity`         | BaseMemberEntity | 自訂會員實體類別          |
+| `customizedJwtPayload` | -                | 自訂 JWT Payload 產生函式 |
 
 ### OAuth2
 
-| 選項 | 預設 | 說明 |
-|------|------|------|
-| `oauth2Providers` | - | OAuth2 Provider 陣列 |
+| 選項                  | 預設     | 說明                    |
+| --------------------- | -------- | ----------------------- |
+| `oauth2Providers`     | -        | OAuth2 Provider 陣列    |
 | `oauth2ClientDestUrl` | '/login' | OAuth2 登入後重導向 URL |
+
+### Authentication Gateway
+
+帳號密碼 provider 永遠註冊且不可移除，其餘為額外來源（LDAP、上游 OIDC issuer…）。
+
+| 選項                  | 預設 | 說明                                                         |
+| --------------------- | ---- | ------------------------------------------------------------ |
+| `authProviders`       | `[]` | 額外認證來源                                                 |
+| `autoProvision`       | true | 外部身分尚無對應會員時的處理；可傳函式逐一決定               |
+| `linkExistingAccount` | true | 外部身分可否認領帳號相同的既有會員；亦可設 `'verified-only'` |
+| `syncOnAuthenticate`  | -    | 認證後把目錄屬性寫回會員；預設不寫入                         |
+
+### Default Admin
+
+| 選項                   | 預設 | 說明                                       |
+| ---------------------- | ---- | ------------------------------------------ |
+| `defaultAdminAccount`  | -    | 設定後於啟動時建立該帳號並授予 super-admin |
+| `defaultAdminPassword` | -    | 省略時產生符合策略的隨機密碼並記錄一次     |
+
+## 作為 OIDC Provider（`/oidc-provider` 子路徑）
+
+讓本應用成為 OpenID Connect 發行者，供其他服務（SP）登入。**獨立 entry point**，不 import 就不會拉入 `oidc-provider` 依賴，也不會建立 `oidc_payloads` / `oidc_clients` 兩張表。
+
+```bash
+npm install oidc-provider   # 需自行安裝，bundler 看不到這個相依
+```
+
+```typescript
+import { MemberBaseOidcProviderModule } from '@rytass/member-base-nestjs-module/oidc-provider';
+
+MemberBaseOidcProviderModule.forRoot({
+  issuer: 'https://idp.example.com/oidc',
+  jwks: JSON.parse(process.env.OIDC_JWKS), // 省略會每次啟動產生臨時金鑰並警告
+  cookieKeys: [process.env.OIDC_COOKIE_KEY],
+  interaction: {
+    loginPageUrl: '/sign-in', // 由你的應用提供登入／同意頁
+    consentPageUrl: '/authorize',
+  },
+});
+```
+
+協定端點必須在 `main.ts` 的 `listen()` 之前掛載（`oidc-provider` 是 Koa app，要在 body parser 之前）：
+
+```typescript
+import { mountMemberBaseOidcProvider } from '@rytass/member-base-nestjs-module/oidc-provider';
+
+const app = await NestFactory.create(AppModule);
+mountMemberBaseOidcProvider(app);
+await app.listen(3000);
+```
+
+### 模組選項
+
+| 選項                                                                          | 預設                       | 說明                                   |
+| ----------------------------------------------------------------------------- | -------------------------- | -------------------------------------- |
+| `issuer`                                                                      | 必填                       | 發行者識別，須等於對外公開 URL         |
+| `jwks`                                                                        | 臨時金鑰＋警告             | 簽署 id token 的金鑰                   |
+| `cookieKeys`                                                                  | 隨機                       | 保護 provider 自身 cookie              |
+| `routePrefix`                                                                 | `'oidc'`                   | 掛載路徑                               |
+| `interaction.loginPageUrl` / `.consentPageUrl`                                | 內建頁面                   | 你的登入／同意頁                       |
+| `interaction.renderLogin` / `.renderConsent`                                  | 內建頁面                   | 就地算繪 HTML（次於 URL 設定）         |
+| `interaction.allowedChannels`                                                 | 全部                       | 登入表單可用的認證來源                 |
+| `interaction.autoConsent`                                                     | 依 client 的 `skipConsent` | 略過同意步驟                           |
+| `claims.extra` / `.additionalScopes` / `.scopeClaims`                         | -                          | 額外身分 claim 與 scope 對應           |
+| `ssoBridge.*`                                                                 | 全開                       | 本地 session 與 issuer session 互通    |
+| `clients.allowPublic`                                                         | true                       | 是否允許註冊 public（PKCE-only）client |
+| `clients.validate`                                                            | -                          | 額外註冊驗證，throw 即拒絕             |
+| `clients.secretCipher`                                                        | 明文儲存                   | client secret 靜態加密                 |
+| `features.rpInitiatedLogout` / `.revocation` / `.introspection` / `.userinfo` | 全 true                    | 協定端點開關                           |
+| `requirePkce`                                                                 | true                       | 強制 PKCE                              |
+| `proxy`                                                                       | true                       | 是否信任 `X-Forwarded-*`               |
+| `clientBasedCors`                                                             | true                       | 依 client 註冊來源回應 CORS preflight  |
+| `ttl`                                                                         | 1h access / 14d refresh    | Token 生命週期                         |
+| `purgeIntervalSeconds`                                                        | 3600                       | 過期 payload 清掃；0 為停用            |
+| `advanced`                                                                    | -                          | 最後合併進 oidc-provider 設定          |
+
+`features` 是逐鍵合併，關掉一個不影響其他；`advanced.features` 則是整包取代。`devInteractions` 不開放，開了會蓋掉本模組的 interaction 路由。
+
+### 管理 Service Provider（`OidcClientService`）
+
+模組**不提供任何管理端點**，只匯出 service，由應用自行決定要不要曝露、用什麼傳輸、掛什麼權限。
+
+| 方法                               | 回傳                         | 說明                                         |
+| ---------------------------------- | ---------------------------- | -------------------------------------------- |
+| `list()`                           | `OidcClientView[]`           | 由新到舊，不含 secret                        |
+| `findOne(clientId)`                | `OidcClientView \| null`     | 查無回 null                                  |
+| `get(clientId)`                    | `OidcClientView`             | 查無丟 `OidcClientNotFoundError`             |
+| `create(input)`                    | `CreatedOidcClient`          | secret 只在此回傳一次；public client 為 null |
+| `update(clientId, input, options)` | `OidcClientView`             | `mode: 'replace'`（預設）或 `'merge'`        |
+| `rotateSecret(clientId)`           | `{ clientId, clientSecret }` | 換發 secret                                  |
+| `remove(clientId)`                 | `OidcClientView`             | 軟刪除並回傳被刪的資料                       |
+| `restore(clientId)`                | `OidcClientView`             | 還原軟刪除的 client                          |
+
+```typescript
+@Resolver()
+export class OidcClientResolver {
+  constructor(private readonly oidcClientService: OidcClientService) {}
+
+  @AllowActions([['OidcClient', 'write']])
+  @Mutation(() => OidcClientDto)
+  async createOidcClient(@Args('input') input: CreateOidcClientArgs): Promise<OidcClientView> {
+    return this.oidcClientService.create(input);
+  }
+}
+```
+
+**內建驗證**（無法關閉，因為缺了會造成資料靜默毀損或難以追查的 `invalid_client`）：redirect uri 不得含逗號（欄位是 `simple-array`，會被切成兩筆）或 fragment（OIDC Core 3.1.2.1）；`responseTypes` 含 `code` 時 `grantTypes` 必須含 `authorization_code`；clientId 不得與現存或已軟刪除的 client 重複。
+
+**`update` 預設是整筆取代**，沒帶的欄位會被清空。後台編輯表單請用 `{ mode: 'merge' }`。
+
+**secret 靜態加密**：`clients.secretCipher` 的 `encrypt` / `decrypt` 可同步或非同步（可接 Vault Transit、KMS）。欄位是 `text`，長度不受限。無法解密時會拋錯並指名該 client，不會退化成 `invalid_client`。啟用時既有明文 secret 需逐一 `rotateSecret()`。
+
+### 注意事項
+
+- 授權資訊不放進 token：`findAccount` 只發身分 claim，不發角色。各 SP 自行決定權限。
+- Session bridge 需要 `cookieMode: true`。
+- `oidc-provider` 是 ESM-only 且透過動態 import 載入，不會出現在 Nx `generatePackageJson` 產出的相依清單，要自行列入應用的 dependencies。
 
 ## Symbol Tokens
 
@@ -528,15 +678,15 @@ export class AppModule {}
 ```typescript
 import {
   // Repository Token
-  RESOLVED_MEMBER_REPO,         // Repository<BaseMemberEntity>
-  RESOLVED_MEMBER_REPOSITORY,   // 別名，等同 RESOLVED_MEMBER_REPO
-  BASE_MEMBER_REPOSITORY,       // BaseMemberRepo Symbol
+  RESOLVED_MEMBER_REPO, // Repository<BaseMemberEntity>
+  RESOLVED_MEMBER_REPOSITORY, // 別名，等同 RESOLVED_MEMBER_REPO
+  BASE_MEMBER_REPOSITORY, // BaseMemberRepo Symbol
 
   // Casbin
-  CASBIN_ENFORCER,              // Casbin Enforcer 實例
+  CASBIN_ENFORCER, // Casbin Enforcer 實例
 
   // Module Options
-  MEMBER_BASE_MODULE_OPTIONS,   // 完整模組配置
+  MEMBER_BASE_MODULE_OPTIONS, // 完整模組配置
 
   // Token Settings
   ACCESS_TOKEN_SECRET,
@@ -550,6 +700,21 @@ import {
   COOKIE_MODE,
   ACCESS_TOKEN_COOKIE_NAME,
   REFRESH_TOKEN_COOKIE_NAME,
+  COOKIE_OPTIONS, // { path, sameSite, secure, domain }
+  LOGIN_FAILED_AUTO_UNLOCK_SECONDS,
+
+  // Authentication Gateway
+  AUTH_PROVIDERS,
+  AUTO_PROVISION,
+  LINK_EXISTING_ACCOUNT,
+  SYNC_ON_AUTHENTICATE,
+
+  // Password / Casbin naming / Login log
+  PASSWORD_HASH_OPTIONS, // argon2 成本參數
+  SUPER_ADMIN_ROLE_NAME, // 解析後的 super admin 角色名
+  DEFAULT_CASBIN_DOMAIN_NAME, // 解析後的預設 domain 名
+  LOGIN_LOG_ENABLED,
+  LOGIN_LOG_RECORD_IP,
 } from '@rytass/member-base-nestjs-module';
 
 // 使用範例
@@ -567,16 +732,30 @@ export class CustomService {
 
 ## Constants
 
-### DEFAULT_CASBIN_DOMAIN
-
-預設的 Casbin Domain 值：
+### DEFAULT_CASBIN_DOMAIN / SUPER_ADMIN_ROLE
 
 ```typescript
-import { DEFAULT_CASBIN_DOMAIN } from '@rytass/member-base-nestjs-module';
+import { DEFAULT_CASBIN_DOMAIN, SUPER_ADMIN_ROLE } from '@rytass/member-base-nestjs-module';
 
-// 值: '::DEFAULT::'
-// 用於未指定 domain 時的預設 domain
+// DEFAULT_CASBIN_DOMAIN = '::DEFAULT::'  未指定 domain 時的預設值
+// SUPER_ADMIN_ROLE      = '::SUPER_ADMIN::'  預設 checker 視為 allow-all 的角色
+
+// 授予其他會員 super-admin
+await enforcer.addGroupingPolicy(memberId, SUPER_ADMIN_ROLE, DEFAULT_CASBIN_DOMAIN);
 ```
+
+兩者是 `superAdminRole` / `defaultCasbinDomain` 未設定時的預設值。若已改設定，請改用 `SUPER_ADMIN_ROLE_NAME` / `DEFAULT_CASBIN_DOMAIN_NAME` 這兩個注入 token 取得實際生效的值。
+
+### toInetCidr
+
+```typescript
+import { toInetCidr } from '@rytass/member-base-nestjs-module';
+
+toInetCidr('10.0.0.1'); // '10.0.0.1/32'
+toInetCidr('2001:db8::1'); // '2001:db8::1/128'
+```
+
+login log 的 `ip` 欄位格式；自行寫入該表時使用。
 
 ## Additional Exported Entities
 
@@ -589,7 +768,7 @@ import {
   MemberOAuthRecordEntity,
 
   // 實體 Repository Symbols
-  MemberLoginLogRepo,           // Symbol('MemberLoginLogRepo')
+  MemberLoginLogRepo, // Symbol('MemberLoginLogRepo')
 } from '@rytass/member-base-nestjs-module';
 ```
 
@@ -605,28 +784,28 @@ import {
 
 ```typescript
 interface TokenPairDto {
-  accessToken: string;           // JWT Access Token
-  refreshToken: string;          // Refresh Token
+  accessToken: string; // JWT Access Token
+  refreshToken: string; // Refresh Token
   shouldUpdatePassword?: boolean; // 密碼是否需要更新（僅啟用密碼過期檢查時返回）
-  passwordChangedAt?: string;    // ISO8601 格式，上次密碼更改時間
+  passwordChangedAt?: string; // ISO8601 格式，上次密碼更改時間
 }
 ```
 
 ## Error Codes
 
-| 代碼 | 錯誤類別 | 說明 |
-|------|----------|------|
-| 100 | `MemberNotFoundError` | 找不到會員 |
-| 101 | `PasswordDoesNotMeetPolicyError` | 密碼不符合策略 |
-| 102 | `InvalidPasswordError` | 密碼錯誤 |
-| 103 | `PasswordValidationError` | 密碼驗證失敗 |
-| 104 | `InvalidToken` | Token 無效 |
-| 105 | `MemberAlreadyExistedError` | 會員已存在 |
-| 106 | `PasswordChangedError` | 密碼已變更 |
-| 107 | `MemberBannedError` | 會員已被停權 |
-| 108 | `PasswordExpiredError` | 密碼已過期 |
-| 109 | `PasswordShouldUpdatePasswordError` | 需要更新密碼 |
-| 110 | `PasswordInHistoryError` | 密碼在歷史記錄中（不能重複使用）|
+| 代碼 | 錯誤類別                            | 說明                             |
+| ---- | ----------------------------------- | -------------------------------- |
+| 100  | `MemberNotFoundError`               | 找不到會員                       |
+| 101  | `PasswordDoesNotMeetPolicyError`    | 密碼不符合策略                   |
+| 102  | `InvalidPasswordError`              | 密碼錯誤                         |
+| 103  | `PasswordValidationError`           | 密碼驗證失敗                     |
+| 104  | `InvalidToken`                      | Token 無效                       |
+| 105  | `MemberAlreadyExistedError`         | 會員已存在                       |
+| 106  | `PasswordChangedError`              | 密碼已變更                       |
+| 107  | `MemberBannedError`                 | 會員已被停權                     |
+| 108  | `PasswordExpiredError`              | 密碼已過期                       |
+| 109  | `PasswordShouldUpdatePasswordError` | 需要更新密碼                     |
+| 110  | `PasswordInHistoryError`            | 密碼在歷史記錄中（不能重複使用） |
 
 ### Errors 物件導出
 
@@ -672,5 +851,6 @@ if (error instanceof Errors.MemberNotFoundError) {
 ### 密碼策略錯誤
 
 錯誤代碼 101: `PasswordDoesNotMeetPolicyError`
+
 - 檢查密碼長度、大小寫、數字、特殊字符要求
 - 使用 `PasswordValidatorService.validatePassword()` 測試
