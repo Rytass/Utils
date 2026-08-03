@@ -89,6 +89,9 @@ const buildHarness = async (): Promise<Harness> => {
     passwordValidatorService,
     customizedJwtPayload,
     null,
+    {},
+    true,
+    true,
   );
 
   return { service, member, loginLogRepo };

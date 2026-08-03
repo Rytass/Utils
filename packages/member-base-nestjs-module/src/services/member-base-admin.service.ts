@@ -5,6 +5,8 @@ import { hash } from 'argon2';
 import { RESOLVED_MEMBER_REPO } from '../typings/member-base-providers';
 import { PasswordValidatorService } from './password-validator.service';
 import { MemberPasswordHistoryEntity, MemberPasswordHistoryRepo } from '../models/member-password-history.entity';
+import { PASSWORD_HASH_OPTIONS } from '../typings/member-base.tokens';
+import type { PasswordHashOptions } from '../typings/password-hash-options';
 import { MemberNotFoundError, PasswordDoesNotMeetPolicyError } from '../constants/errors/base.error';
 
 @Injectable()
@@ -16,6 +18,8 @@ export class MemberBaseAdminService<MemberEntity extends BaseMemberEntity = Base
     private readonly passwordValidatorService: PasswordValidatorService,
     @Inject(MemberPasswordHistoryRepo)
     private readonly memberPasswordHistoryRepo: Repository<MemberPasswordHistoryEntity>,
+    @Inject(PASSWORD_HASH_OPTIONS)
+    private readonly passwordHashOptions: PasswordHashOptions,
   ) {}
 
   async archiveMember(id: string): Promise<void> {
@@ -51,7 +55,7 @@ export class MemberBaseAdminService<MemberEntity extends BaseMemberEntity = Base
       throw new MemberNotFoundError();
     }
 
-    member.password = await hash(newPassword);
+    member.password = await hash(newPassword, this.passwordHashOptions);
     member.passwordChangedAt = new Date();
     // An admin-forced password reset is expected to also unlock the account,
     // mirroring the self-service reset flow (changePasswordWithToken).

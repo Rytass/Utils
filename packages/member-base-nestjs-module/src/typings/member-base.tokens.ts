@@ -14,6 +14,7 @@ import type {
   IdentitySyncHandler,
   LinkExistingAccountStrategy,
 } from './authentication-provider.interface';
+import type { PasswordHashOptions } from './password-hash-options';
 
 // Typed injection tokens for better type safety (using Symbol with type annotations)
 export const MEMBER_BASE_MODULE_OPTIONS = Symbol('MEMBER_BASE_MODULE_OPTIONS') as symbol & {
@@ -106,6 +107,18 @@ export const SYNC_ON_AUTHENTICATE = Symbol('SYNC_ON_AUTHENTICATE') as symbol & {
 export const DEFAULT_ADMIN_ACCOUNT = Symbol('DEFAULT_ADMIN_ACCOUNT') as symbol & { __type: string | null };
 export const DEFAULT_ADMIN_PASSWORD = Symbol('DEFAULT_ADMIN_PASSWORD') as symbol & { __type: string | null };
 
+/** argon2 cost parameters. Empty object means the library's own defaults. */
+export const PASSWORD_HASH_OPTIONS = Symbol('PASSWORD_HASH_OPTIONS') as symbol & { __type: PasswordHashOptions };
+
+// Casbin naming. Resolved through DI rather than read from the exported
+// constants, so a deployment whose policy table already uses these strings for
+// something else can move the module out of the way.
+export const SUPER_ADMIN_ROLE_NAME = Symbol('SUPER_ADMIN_ROLE_NAME') as symbol & { __type: string };
+export const DEFAULT_CASBIN_DOMAIN_NAME = Symbol('DEFAULT_CASBIN_DOMAIN_NAME') as symbol & { __type: string };
+
+export const LOGIN_LOG_ENABLED = Symbol('LOGIN_LOG_ENABLED') as symbol & { __type: boolean };
+export const LOGIN_LOG_RECORD_IP = Symbol('LOGIN_LOG_RECORD_IP') as symbol & { __type: boolean };
+
 // Provider types mapping for enhanced type safety
 export interface MemberBaseProviders {
   MEMBER_BASE_MODULE_OPTIONS: MemberBaseModuleOptionsDTO;
@@ -146,6 +159,11 @@ export interface MemberBaseProviders {
   SYNC_ON_AUTHENTICATE: IdentitySyncHandler | null;
   DEFAULT_ADMIN_ACCOUNT: string | null;
   DEFAULT_ADMIN_PASSWORD: string | null;
+  PASSWORD_HASH_OPTIONS: PasswordHashOptions;
+  SUPER_ADMIN_ROLE_NAME: string;
+  DEFAULT_CASBIN_DOMAIN_NAME: string;
+  LOGIN_LOG_ENABLED: boolean;
+  LOGIN_LOG_RECORD_IP: boolean;
 }
 
 export type MemberBaseProviderToken = keyof MemberBaseProviders;

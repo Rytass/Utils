@@ -41,6 +41,8 @@ interface BuildOptions {
   readonly shouldUpdatePassword?: boolean;
   readonly latestFailedLog?: MemberLoginLogEntity | null;
   readonly onMemberSave?: (member: BaseMemberEntity) => void;
+  readonly loginLogEnabled?: boolean;
+  readonly loginLogRecordIp?: boolean;
 }
 
 interface BuiltService {
@@ -119,6 +121,9 @@ const buildService = async (options: BuildOptions = {}): Promise<BuiltService> =
     passwordValidatorService,
     customizedJwtPayload,
     options.loginFailedAutoUnlockSeconds ?? null,
+    {},
+    options.loginLogEnabled ?? true,
+    options.loginLogRecordIp ?? true,
   );
 
   return { service, member, memberRepo, loginLogRepo };
@@ -197,6 +202,32 @@ describe('MemberBaseService.login characterization', () => {
       await service.login('member', CORRECT_PASSWORD, { ip: '10.0.0.2' });
 
       expect(loginLogRepo.save).toHaveBeenCalledWith(expect.objectContaining({ ip: '10.0.0.2/32', success: true }));
+    });
+
+    it('should store an ipv6 address with its own prefix length', async () => {
+      const { service, loginLogRepo } = await buildService();
+
+      // /32 on an IPv6 address describes a network, and the inet column
+      // rejects it — one login from an IPv6 client used to abort the write.
+      await service.login('member', CORRECT_PASSWORD, '2001:db8::1');
+
+      expect(loginLogRepo.save).toHaveBeenCalledWith(expect.objectContaining({ ip: '2001:db8::1/128' }));
+    });
+
+    it('should omit the address when loginLogRecordIp is false', async () => {
+      const { service, loginLogRepo } = await buildService({ loginLogRecordIp: false });
+
+      await service.login('member', CORRECT_PASSWORD, '10.0.0.1');
+
+      expect(loginLogRepo.save).toHaveBeenCalledWith(expect.objectContaining({ ip: null, success: true }));
+    });
+
+    it('should not write a record at all when loginLogEnabled is false', async () => {
+      const { service, loginLogRepo } = await buildService({ loginLogEnabled: false });
+
+      await service.login('member', CORRECT_PASSWORD, '10.0.0.1');
+
+      expect(loginLogRepo.save).not.toHaveBeenCalled();
     });
   });
 

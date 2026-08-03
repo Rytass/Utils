@@ -79,6 +79,9 @@ const buildService = (overrides?: { accessTokenExpiration?: unknown }): BuiltSer
     passwordValidatorService,
     customizedJwtPayload,
     null,
+    {},
+    true,
+    true,
   );
 
   return { service, member };

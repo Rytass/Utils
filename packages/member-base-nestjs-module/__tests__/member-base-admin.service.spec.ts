@@ -31,7 +31,12 @@ describe('MemberBaseAdminService.resetMemberPassword', () => {
       validatePassword: jest.fn(async () => true),
     } as unknown as PasswordValidatorService;
 
-    const service = new MemberBaseAdminService(createMemberRepo(member), passwordValidatorService, createHistoryRepo());
+    const service = new MemberBaseAdminService(
+      createMemberRepo(member),
+      passwordValidatorService,
+      createHistoryRepo(),
+      {},
+    );
 
     await service.resetMemberPassword(member.id, 'BrandNewPassw0rd!');
 

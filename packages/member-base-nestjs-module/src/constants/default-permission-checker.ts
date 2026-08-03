@@ -17,16 +17,28 @@ import { SUPER_ADMIN_ROLE } from './super-admin-role';
 //
 // The checker is only invoked with a non-null enforcer (the guard denies
 // policy-guarded routes when the enforcer is null before reaching here).
-export const createDefaultPermissionChecker = (domainResolver?: CasbinDomainResolver): CasbinPermissionChecker => {
+/** Overrides for the two well-known names, when a policy table already uses them. */
+export interface DefaultPermissionCheckerNames {
+  superAdminRole?: string;
+  defaultDomain?: string;
+}
+
+export const createDefaultPermissionChecker = (
+  domainResolver?: CasbinDomainResolver,
+  names?: DefaultPermissionCheckerNames,
+): CasbinPermissionChecker => {
+  const superAdminRole = names?.superAdminRole ?? SUPER_ADMIN_ROLE;
+  const defaultDomain = names?.defaultDomain ?? DEFAULT_CASBIN_DOMAIN;
+
   if (!domainResolver) {
     return async ({ enforcer, payload, actions }: CasbinPermissionCheckerParams): Promise<boolean> => {
-      if (await enforcer.hasGroupingPolicy(payload.id, SUPER_ADMIN_ROLE, DEFAULT_CASBIN_DOMAIN)) {
+      if (await enforcer.hasGroupingPolicy(payload.id, superAdminRole, defaultDomain)) {
         return true;
       }
 
       return Promise.all(
         actions.map(([subject, action]) =>
-          enforcer.enforce(payload.id, payload.domain ?? DEFAULT_CASBIN_DOMAIN, subject, action),
+          enforcer.enforce(payload.id, payload.domain ?? defaultDomain, subject, action),
         ),
       ).then(results => results.some(result => result));
     };
@@ -39,8 +51,8 @@ export const createDefaultPermissionChecker = (domainResolver?: CasbinDomainReso
     context,
     request,
   }: CasbinPermissionCheckerParams): Promise<CasbinAuthorizationDecision> => {
-    if (await enforcer.hasGroupingPolicy(payload.id, SUPER_ADMIN_ROLE, DEFAULT_CASBIN_DOMAIN)) {
-      return { allowed: true, matchedDomain: DEFAULT_CASBIN_DOMAIN };
+    if (await enforcer.hasGroupingPolicy(payload.id, superAdminRole, defaultDomain)) {
+      return { allowed: true, matchedDomain: defaultDomain };
     }
 
     const resolved = await domainResolver({ context, request, payload, actions });

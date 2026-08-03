@@ -70,6 +70,8 @@ describe('DefaultAdminBootstrapService — integration with real Casbin', () => 
       enforcer,
       memberBaseService,
       passwordValidator,
+      SUPER_ADMIN_ROLE,
+      DEFAULT_CASBIN_DOMAIN,
     );
 
     await service.onApplicationBootstrap();
@@ -116,6 +118,8 @@ describe('DefaultAdminBootstrapService — integration with real Casbin', () => 
       enforcer,
       memberBaseService,
       createRealPasswordValidator(),
+      SUPER_ADMIN_ROLE,
+      DEFAULT_CASBIN_DOMAIN,
     );
 
     await service.onApplicationBootstrap();

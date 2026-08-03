@@ -8,10 +8,10 @@ import {
   CASBIN_ENFORCER,
   DEFAULT_ADMIN_ACCOUNT,
   DEFAULT_ADMIN_PASSWORD,
+  DEFAULT_CASBIN_DOMAIN_NAME,
   RESOLVED_MEMBER_REPO,
+  SUPER_ADMIN_ROLE_NAME,
 } from '../typings/member-base.tokens';
-import { DEFAULT_CASBIN_DOMAIN } from '../constants/default-casbin-domain';
-import { SUPER_ADMIN_ROLE } from '../constants/super-admin-role';
 import { MemberAlreadyExistedError } from '../constants/errors/base.error';
 
 const GENERATE_PASSWORD_MAX_ATTEMPTS = 20;
@@ -35,6 +35,10 @@ export class DefaultAdminBootstrapService implements OnApplicationBootstrap {
     private readonly memberBaseService: MemberBaseService,
     @Inject(PasswordValidatorService)
     private readonly passwordValidatorService: PasswordValidatorService,
+    @Inject(SUPER_ADMIN_ROLE_NAME)
+    private readonly superAdminRole: string,
+    @Inject(DEFAULT_CASBIN_DOMAIN_NAME)
+    private readonly defaultCasbinDomain: string,
   ) {}
 
   private readonly logger = new Logger(DefaultAdminBootstrapService.name);
@@ -82,7 +86,7 @@ export class DefaultAdminBootstrapService implements OnApplicationBootstrap {
     }
 
     if (this.enforcer) {
-      await this.enforcer.addGroupingPolicy(member.id, SUPER_ADMIN_ROLE, DEFAULT_CASBIN_DOMAIN);
+      await this.enforcer.addGroupingPolicy(member.id, this.superAdminRole, this.defaultCasbinDomain);
 
       this.logger.log(`Default admin account "${account}" created with super-admin permissions.`);
     } else {

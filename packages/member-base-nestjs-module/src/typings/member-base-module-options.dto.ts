@@ -13,6 +13,7 @@ import type {
   CasbinPermissionCheckerParams,
   CasbinPermissionCheckerResult,
 } from './casbin-permission';
+import type { PasswordHashOptions } from './password-hash-options';
 
 export interface MemberBaseModuleOptionsDTO<
   MemberEntity extends BaseMemberEntity = BaseMemberEntity,
@@ -58,6 +59,17 @@ export interface MemberBaseModuleOptionsDTO<
 
   // Casbin
   enableGlobalGuard?: boolean; // default: true
+  /**
+   * The role treated as allow-all by the default permission checker, and the
+   * domain that grouping is keyed to.
+   *
+   * default: SUPER_ADMIN_ROLE ('::SUPER_ADMIN::') and DEFAULT_CASBIN_DOMAIN
+   * ('::DEFAULT::'). Change them only when an existing policy table already
+   * uses those strings for something else — every grouping policy written by
+   * an earlier configuration keeps the name it was written with.
+   */
+  superAdminRole?: string;
+  defaultCasbinDomain?: string;
   casbinAdapterOptions?: TypeORMAdapterOptions;
   casbinModelString?: string; // default: RBAC with domains
   casbinPermissionDecorator?: ReflectableDecorator<[string, string][]>;
@@ -78,6 +90,26 @@ export interface MemberBaseModuleOptionsDTO<
   passwordAgeLimitInDays?: number; // default undefined, if set, will enable password age check
   forceRejectLoginOnPasswordExpired?: boolean; // default: false, if true, will reject login when password is expired
   customizedJwtPayload?: (member: MemberEntity) => TokenPayload; // default: undefined
+  /**
+   * argon2 cost parameters used for every password this module hashes.
+   * default: argon2's own defaults — the right cost depends on the hardware,
+   * which this package cannot know. Raising it does not invalidate existing
+   * hashes; argon2 reads each hash's parameters from the hash itself.
+   */
+  passwordHashOptions?: PasswordHashOptions;
+
+  // Login Log
+  /**
+   * Record an attempt in member_login_logs on every login.
+   * default: true
+   */
+  loginLogEnabled?: boolean;
+  /**
+   * Store the caller's IP with that record.
+   * default: true. Set false to keep logging attempts without retaining an
+   * address, which is often what a data-retention policy actually asks for.
+   */
+  loginLogRecordIp?: boolean;
 
   // OAuth2
   oauth2Providers?: OAuth2Provider[];

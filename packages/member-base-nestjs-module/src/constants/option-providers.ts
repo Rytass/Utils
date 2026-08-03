@@ -37,6 +37,11 @@ import {
   AUTO_PROVISION,
   LINK_EXISTING_ACCOUNT,
   SYNC_ON_AUTHENTICATE,
+  PASSWORD_HASH_OPTIONS,
+  SUPER_ADMIN_ROLE_NAME,
+  DEFAULT_CASBIN_DOMAIN_NAME,
+  LOGIN_LOG_ENABLED,
+  LOGIN_LOG_RECORD_IP,
 } from '../typings/member-base.tokens';
 import { PasswordAuthProvider } from '../providers/password-auth.provider';
 import type {
@@ -54,6 +59,9 @@ import { CASBIN_MODEL } from './casbin-models/rbac-with-domains';
 import { AllowActions } from '../decorators/action.decorator';
 import { BaseMemberEntity } from '../models/base-member.entity';
 import { createDefaultPermissionChecker } from './default-permission-checker';
+import { SUPER_ADMIN_ROLE } from './super-admin-role';
+import { DEFAULT_CASBIN_DOMAIN } from './default-casbin-domain';
+import type { PasswordHashOptions } from '../typings/password-hash-options';
 import { getTypeORMAdapter } from './load-typeorm-adapter';
 import type { ReflectableDecorator } from '@nestjs/core';
 import type { OAuth2Provider } from '../typings/oauth2-provider.interface';
@@ -142,7 +150,10 @@ export const OptionProviders = [
         return options.casbinPermissionChecker as CasbinPermissionChecker;
       }
 
-      return createDefaultPermissionChecker(options?.casbinDomainResolver as CasbinDomainResolver | undefined);
+      return createDefaultPermissionChecker(options?.casbinDomainResolver as CasbinDomainResolver | undefined, {
+        superAdminRole: options?.superAdminRole,
+        defaultDomain: options?.defaultCasbinDomain,
+      });
     },
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
@@ -287,6 +298,31 @@ export const OptionProviders = [
     provide: LINK_EXISTING_ACCOUNT,
     useFactory: (options?: MemberBaseModuleOptionsDTO): LinkExistingAccountStrategy =>
       options?.linkExistingAccount ?? true,
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: PASSWORD_HASH_OPTIONS,
+    useFactory: (options?: MemberBaseModuleOptionsDTO): PasswordHashOptions => options?.passwordHashOptions ?? {},
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: SUPER_ADMIN_ROLE_NAME,
+    useFactory: (options?: MemberBaseModuleOptionsDTO): string => options?.superAdminRole ?? SUPER_ADMIN_ROLE,
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: DEFAULT_CASBIN_DOMAIN_NAME,
+    useFactory: (options?: MemberBaseModuleOptionsDTO): string => options?.defaultCasbinDomain ?? DEFAULT_CASBIN_DOMAIN,
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: LOGIN_LOG_ENABLED,
+    useFactory: (options?: MemberBaseModuleOptionsDTO): boolean => options?.loginLogEnabled ?? true,
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: LOGIN_LOG_RECORD_IP,
+    useFactory: (options?: MemberBaseModuleOptionsDTO): boolean => options?.loginLogRecordIp ?? true,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
 ] as Provider[];

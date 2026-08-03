@@ -64,6 +64,8 @@ const buildService = (
     enforcer,
     memberBaseService,
     passwordValidatorService,
+    SUPER_ADMIN_ROLE,
+    DEFAULT_CASBIN_DOMAIN,
   );
 
   return {

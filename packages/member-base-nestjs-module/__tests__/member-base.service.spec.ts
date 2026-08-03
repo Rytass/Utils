@@ -75,6 +75,9 @@ const buildService = (
     passwordValidatorService,
     customizedJwtPayload,
     null, // loginFailedAutoUnlockSeconds
+    {}, // passwordHashOptions
+    true, // loginLogEnabled
+    true, // loginLogRecordIp
   );
 
   return { service, memberRepo };

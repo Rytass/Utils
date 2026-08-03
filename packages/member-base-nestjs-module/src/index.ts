@@ -45,6 +45,11 @@ export {
   AUTO_PROVISION,
   LINK_EXISTING_ACCOUNT,
   SYNC_ON_AUTHENTICATE,
+  PASSWORD_HASH_OPTIONS,
+  SUPER_ADMIN_ROLE_NAME,
+  DEFAULT_CASBIN_DOMAIN_NAME,
+  LOGIN_LOG_ENABLED,
+  LOGIN_LOG_RECORD_IP,
 } from './typings/member-base.tokens';
 
 // Types
@@ -58,6 +63,7 @@ export type {
   MemberBaseModuleOptionFactoryInterface,
 } from './typings/member-base-module-option-factory';
 export type { AuthTokenPayloadBase } from './typings/auth-token-payload';
+export type { PasswordHashOptions } from './typings/password-hash-options';
 export type { SignTokenOptions } from './typings/sign-token-options';
 export type {
   AuthContext,
@@ -91,6 +97,7 @@ export * from './decorators/has-permission.decorator';
 // Helpers
 export * from './helpers/graphql-context-token-resolver';
 export { normalizeCasbinDecision } from './utils/normalize-casbin-decision';
+export { toInetCidr } from './utils/to-inet-cidr';
 export {
   resolveCookieOptions,
   type CookieOptionsConfig,
@@ -102,5 +109,9 @@ export {
 export * from './constants/errors/index';
 
 // Constants
+export {
+  createDefaultPermissionChecker,
+  type DefaultPermissionCheckerNames,
+} from './constants/default-permission-checker';
 export * from './constants/default-casbin-domain';
 export * from './constants/super-admin-role';

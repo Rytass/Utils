@@ -9,7 +9,10 @@ import {
   FORCE_REJECT_LOGIN_ON_PASSWORD_EXPIRED,
   LOGIN_FAILED_AUTO_UNLOCK_SECONDS,
   LOGIN_FAILED_BAN_THRESHOLD,
+  LOGIN_LOG_ENABLED,
+  LOGIN_LOG_RECORD_IP,
   MEMBER_BASE_MODULE_OPTIONS,
+  PASSWORD_HASH_OPTIONS,
   ONLY_RESET_REFRESH_TOKEN_EXPIRATION_BY_PASSWORD,
   PASSWORD_AGE_LIMIT_IN_DAYS,
   REFRESH_TOKEN_EXPIRATION,
@@ -22,6 +25,8 @@ import jwt from 'jsonwebtoken';
 import type { AuthTokenPayloadBase } from '../typings/auth-token-payload';
 import type { SignTokenOptions } from '../typings/sign-token-options';
 import { currentEpochSeconds } from '../utils/current-epoch-seconds';
+import { toInetCidr } from '../utils/to-inet-cidr';
+import type { PasswordHashOptions } from '../typings/password-hash-options';
 import { MemberLoginLogEntity, MemberLoginLogRepo } from '../models/member-login-log.entity';
 import { TokenPairDto } from '../dto/token-pair.dto';
 import { MemberBaseModuleOptionsDTO } from '../typings/member-base-module-options.dto';
@@ -89,13 +94,44 @@ export class MemberBaseService<
     private readonly customizedJwtPayload: (member: MemberEntity) => AuthTokenPayloadBase,
     @Inject(LOGIN_FAILED_AUTO_UNLOCK_SECONDS)
     private readonly loginFailedAutoUnlockSeconds: number | null,
+    @Inject(PASSWORD_HASH_OPTIONS)
+    private readonly passwordHashOptions: PasswordHashOptions,
+    @Inject(LOGIN_LOG_ENABLED)
+    private readonly loginLogEnabled: boolean,
+    @Inject(LOGIN_LOG_RECORD_IP)
+    private readonly loginLogRecordIp: boolean,
   ) {}
 
   private readonly logger = new Logger(MemberBaseService.name);
 
+  /**
+   * Deliberately not awaited: an attempt is recorded alongside the login, not
+   * as a step the caller waits on.
+   */
+  private recordLoginAttempt(memberId: string, success: boolean, ip?: string): void {
+    if (!this.loginLogEnabled) return;
+
+    this.memberLoginLogRepo.save({
+      memberId,
+      success,
+      ip: ip && this.loginLogRecordIp ? toInetCidr(ip) : null,
+    });
+  }
+
   onApplicationBootstrap(): void {
     if (!this.originalProvidedOptions?.accessTokenSecret || !this.originalProvidedOptions?.refreshTokenSecret) {
       this.logger.warn('No access token secret or refresh token secret provided, using random secret');
+    }
+
+    // Auto-unlock reads the timestamp of the last failed attempt out of the
+    // login log, so turning the log off silently disables it. Say so rather
+    // than leave an account locked until someone works out why.
+    if (!this.loginLogEnabled && this.loginFailedAutoUnlockSeconds) {
+      this.logger.warn(
+        'loginFailedAutoUnlockSeconds is set but loginLogEnabled is false; auto unlock reads the last failed ' +
+          'attempt from member_login_logs and cannot work without it. A banned account will stay banned until ' +
+          'its loginFailedCounter is reset.',
+      );
     }
   }
 
@@ -174,7 +210,7 @@ export class MemberBaseService<
 
     try {
       if (await verify(member.password, originPassword)) {
-        member.password = await hash(newPassword);
+        member.password = await hash(newPassword, this.passwordHashOptions);
         member.passwordChangedAt = new Date();
         member.shouldUpdatePassword = false;
 
@@ -218,7 +254,7 @@ export class MemberBaseService<
         throw new InvalidToken();
       }
 
-      member.password = await hash(newPassword);
+      member.password = await hash(newPassword, this.passwordHashOptions);
       member.passwordChangedAt = new Date();
       member.shouldUpdatePassword = false;
       member.resetPasswordRequestedAt = null;
@@ -252,7 +288,7 @@ export class MemberBaseService<
 
     let member = this.baseMemberRepo.create({ account });
 
-    member.password = await hash(password);
+    member.password = await hash(password, this.passwordHashOptions);
 
     try {
       member = await this.baseMemberRepo.save({
@@ -284,7 +320,7 @@ export class MemberBaseService<
 
     let member = this.baseMemberRepo.create({ account });
 
-    member.password = await hash(password);
+    member.password = await hash(password, this.passwordHashOptions);
 
     try {
       member = await this.baseMemberRepo.save({
@@ -501,12 +537,7 @@ export class MemberBaseService<
 
         await this.baseMemberRepo.save(member);
 
-        // async log
-        this.memberLoginLogRepo.save({
-          memberId: member.id,
-          success: true,
-          ip: ip ? `${ip}/32` : null,
-        });
+        this.recordLoginAttempt(member.id, true, ip);
 
         return { member: member as MemberEntity, isPasswordExpired };
       }
@@ -515,12 +546,7 @@ export class MemberBaseService<
 
       await this.baseMemberRepo.save(member);
 
-      // async log
-      this.memberLoginLogRepo.save({
-        memberId: member.id,
-        success: false,
-        ip: ip ? `${ip}/32` : null,
-      });
+      this.recordLoginAttempt(member.id, false, ip);
 
       throw new InvalidPasswordError();
     } catch (err) {
