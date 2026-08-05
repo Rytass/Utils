@@ -1,0 +1,47 @@
+# @rytass/erp-oracle-fusion-nestjs
+
+NestJS module for `@rytass/erp-oracle-fusion` (Oracle Fusion Cloud ERP REST client and FBDI toolkit).
+
+## Package Overview
+
+Wires the framework-agnostic Fusion client into NestJS dependency injection. Configuration comes
+from any provider (ConfigService, Vault, literal values); the observability sink is bound through DI;
+the NestJS `Logger` is bridged into the client automatically.
+
+All client behaviour (REST calls, retry policy, error semantics, FBDI template engine, ESS jobs)
+lives in the core package — see its `llms.txt`. This package only covers module assembly.
+
+## Features
+
+### Module Registration
+- `FusionClientModule.forRoot({ config, isGlobal?, callLogSink?, disableLogger? })`
+- `FusionClientModule.forRootAsync({ imports, inject, useFactory, ... })` — config resolved from
+  any injectable provider
+- Provides `FusionRestClient` and `FusionFbdiService`
+- Exports `FUSION_CLIENT_OPTIONS` and `FUSION_CALL_LOG_SINK` DI tokens
+
+### Observability Sink Binding
+- `callLogSink: { useExisting }` — reuse a provider exported by another module
+- `callLogSink: { useClass }` — let this module instantiate it
+- `callLogSink: { useFactory, inject }` — factory binding
+- Defaults to `NoopFusionCallLogSink` when omitted, so the module works with no observability setup
+
+### Logger Bridging
+NestJS `Logger` is adapted to the core `FusionLogger` interface automatically; pass
+`disableLogger: true` to silence the client entirely.
+
+## Critical Constraints
+
+- **`forRoot(Async)` must be called exactly once.** Calling it twice creates two clients with
+  independent OAuth token caches. To share across modules, wrap it in one module that does
+  `exports: [FusionClientModule]` and have consumers import that wrapper.
+- **The sink's module must not depend on `FusionRestClient`.** The module needs the sink at startup,
+  so a sink module that also consumes the client forms a module cycle. Keep the sink in a small
+  module that depends only on its own storage layer.
+- Prefer the wrapper-module topology over `isGlobal: true`: dependencies stay visible in module
+  definitions and tests can assemble only what they need.
+
+## Requirements
+
+- `@nestjs/common` >= 10 (peer)
+- `@rytass/erp-oracle-fusion` (dependency)

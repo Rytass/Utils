@@ -1,0 +1,36 @@
+{
+  "name": "@rytass/erp-oracle-fusion-nestjs",
+  "version": "0.1.0",
+  "description": "NestJS module for Oracle Fusion Cloud ERP REST client",
+  "keywords": [
+    "rytass",
+    "erp",
+    "oracle",
+    "fusion",
+    "fbdi",
+    "nestjs"
+  ],
+  "author": "Chia Yu Pai <fantasyatelier@gmail.com>",
+  "homepage": "https://github.com/Rytass/Utils#readme",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rytass/Utils.git"
+  },
+  "scripts": {
+    "clean": "nx clean",
+    "build": "nx build",
+    "lint": "nx lint",
+    "test": "nx test",
+    "test:watch": "nx test:watch"
+  },
+  "bugs": {
+    "url": "https://github.com/Rytass/Utils/issues"
+  },
+  "peerDependencies": {
+    "@nestjs/common": ">=10"
+  },
+  "dependencies": {
+    "@rytass/erp-oracle-fusion": "^0.1.0"
+  }
+}
