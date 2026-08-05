@@ -1,0 +1,118 @@
+# @rytass/erp-oracle-fusion
+
+Oracle Fusion Cloud ERP REST client and FBDI toolkit. Zero runtime dependencies, framework-agnostic.
+
+## Package Overview
+
+This package handles five concerns when integrating with Oracle Fusion Cloud ERP: authentication,
+retry policy, error classification, observability instrumentation, and FBDI packaging. Everything
+above that (scheduling, outbox, dead-letter, document state machines, master-data mapping) is
+deliberately left to the consuming application.
+
+For NestJS projects use `@rytass/erp-oracle-fusion-nestjs`, which wires this package into DI.
+
+## Features
+
+### REST Client (`FusionRestClient`)
+- **Methods**: `get`, `getAll` (offset/limit pagination), `post`, `patch`, `delete`
+- **Idempotency-aware retry**: `get`/`getAll` retry `FusionTransientError` with exponential backoff;
+  write methods never auto-retry (their options type omits `maxRetries` entirely)
+- **URL composition**: `{baseUrl}/{namespace}/resources/{apiVersion}/{path}`; namespace and version
+  are configurable globally or per call. Paths starting with `/` are treated as pod-absolute;
+  full URLs pass through unchanged
+- **Timeout**: `timeoutMs` (default 60000) via `AbortSignal.timeout`, classified as retryable
+- **Transport injection**: `fetchImpl` for corporate proxies, client certificates, or test doubles
+- **Pagination correctness**: `getAll` advances by the page size the *server* reports, not the
+  requested one — Fusion may cap `limit`, and advancing by the requested value skips rows silently
+- **Framework version**: `restFrameworkVersion` pins the `REST-Framework-Version` header. Fusion
+  defaults to version 1 when absent; payload shapes and child-collection pagination differ by version
+- **Retry etiquette**: honours `Retry-After` on 429/503, otherwise exponential backoff with jitter
+- **Error media type**: sends `application/vnd.oracle.adf.error+json` so Oracle returns structured
+  errors; codes are read from the nested `o:errorDetails` array as well as the top level
+
+### Authentication (`FusionAuthProvider`)
+Fusion's `oracle/multi_token_over_ssl_rest_service_policy` accepts OAuth 2.0, JWT, SAML bearer and
+Basic over SSL. Three of the four are implemented; SAML assertions must be exchanged externally and
+passed through the `jwt` strategy.
+- `oauth2_client_credentials` — **default**, `type` may be omitted. TTL cache with early refresh.
+  `scope` accepts a string or an array (joined per RFC 6749)
+- `jwt` — pre-issued bearer token; `token` may be a function, invoked per request (no caching)
+- `basic` — test pods and probe scripts; must be stated explicitly. Not suitable for production
+
+### Error Classification
+- `FusionAuthError` (401/403) — not retryable, usually a role/permission problem
+- `FusionValidationError` (400) — not retryable, retains Oracle's error body including `o:errorCode`
+- `FusionTransientError` (429/5xx/network/timeout/404) — retryable for idempotent calls
+- `isFusionRequestError()` type guard
+
+### Observability
+- `FusionCallLogSink` interface with a single `record(entry)` method; contract requires it never throws
+- One entry per call (success and final failure), `latencyMs`/`attempt` span the entire retry cycle
+- `operation` is typed `FusionOperation` (built-in enum OR any string) so non-GL modules can classify
+  meaningfully via `operationResolver`
+- `refs` is an open `Record<string, string>` populated from `responseRefKeys` — no module-specific
+  fields hard-coded into the contract
+- Redaction: `endpoint` always stripped of query string; `responseSummary` whitelist-only
+
+### FBDI Engine
+FBDI CSVs are headerless and purely positional. This package models "which field sits in which
+column" as template data, so any FBDI import works through one engine.
+
+- `defineFbdiFile` / `defineFbdiTemplate` — validate index collisions, out-of-range indexes and
+  duplicate file names at definition time
+- `buildFbdiRow` — **throws on unknown column names** (silent drops are near-impossible to debug)
+- `buildFbdiZip` / `zipFiles` — **multi-file zip support**, required by AP/AR style imports that
+  need header + lines CSVs in one archive. Hand-rolled STORED zip with CRC-32, no dependencies
+- `buildFbdiImportPayload` — assembles the `importBulkData` payload, target overridable per call
+- **`JobOptions` / `CallbackURL`** — Oracle requires job options on FBDI imports; without them error
+  files are not extracted back to UCM and callbacks never fire. `FUSION_EXTRACT_ALL_FILES` is the
+  safe baseline; `InterfaceDetails` is job-specific and community-sourced for GL, so the built-in
+  template does not apply it by default
+- `deriveGroupId` — deterministic batch key derived from a source document id, used as the
+  idempotency anchor when resending
+
+### Data Extraction (`FusionExportService`)
+Output never returns in the response; Fusion uploads it to UCM as
+`ExportBulkData_<jobDefName>_<requestId>.zip`.
+- `submitExport()` — runs the reporting job, returns request id plus the file prefix its output will use.
+  **Rejects `ReqstId: "-1"`**: `erpintegrations` returns HTTP 200 even when submission fails (unknown
+  job path, missing privilege), and `-1` is the only signal — verified against a live pod
+- `findDocumentIds()` — resolves UCM document ids from that prefix. **GET with a finder**, unlike the
+  POST-based operations; unused finder parameters must be sent as `#NULL`
+- `downloadDocument()` — fetches and base64-decodes the archive
+- `waitForDocuments()` / `runExport()` — polling helper and the whole flow in one call
+- `uploadFile()` — stages a file in UCM for the two-step import flow (`submitEssJob({ documentId })`)
+- `extractFileType` narrows the output archive (22B+); multiple types join with semicolons
+
+### ESS Jobs (`FusionFbdiService`)
+- `import()` — package and submit, returns the parent ESS request id
+- `submitEssJob()` — trigger any ESS job directly
+- `getEssStatus()` / `classifyEssStatus()` — **`PAUSED` is in-progress, not terminal** (the parent
+  job reports it while waiting on child jobs); unknown statuses are conservatively non-terminal
+- `waitForEss()` — polling helper for scripts and short flows
+- `downloadEssLog()` — retrieve execution log as **Buffer**; Fusion returns a ZIP, not plain text.
+  Payload fields are `ReqstId`/`FileType` (PascalCase) — the `requestId`/`fileType` spelling found in
+  community sources is rejected with 400. Verified against a live pod
+- `downloadEssLogText()` — same, unpacked to text. An import's archive holds the parent log plus one
+  per child job
+- `unzipFiles()` — reads STORED and DEFLATE archives using Node's built-in zlib
+- ⚠️ `ESSJobStatusRF` only resolves requests submitted through `erpintegrations`; UI-scheduled jobs
+  return an empty status even when complete
+
+### Built-in Template: GL Journal Import
+149-column `GL_INTERFACE` mapping taken from Oracle's official 25c FBDI template
+(`JournalImportTemplate.xlsm`) and verified end-to-end against a live Fusion pod.
+`buildJournalImportParameterList` produces the 7-position parameter string — **this format is
+Journal Import specific and must not be reused for other ESS jobs**.
+
+## Usage Notes
+
+- `new FusionRestClient(options)` — no framework, no DI container required
+- Write calls that need retry MUST carry their own idempotency key; `importBulkData` has no native dedup
+- Column counts and indexes for custom templates must come from the FBDI template matching your
+  Fusion version (`https://www.oracle.com/webfolder/technetwork/docs/fbdi-<version>/`)
+
+## Requirements
+
+- Node.js 18+ (uses built-in `fetch`, `Buffer`, `URLSearchParams`)
+- No runtime dependencies
