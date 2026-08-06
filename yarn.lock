@@ -8045,6 +8045,22 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@rytass/erp-oracle-fusion-nestjs@workspace:packages/erp-oracle-fusion-nestjs":
+  version: 0.0.0-use.local
+  resolution: "@rytass/erp-oracle-fusion-nestjs@workspace:packages/erp-oracle-fusion-nestjs"
+  dependencies:
+    "@rytass/erp-oracle-fusion": "npm:^0.1.0"
+  peerDependencies:
+    "@nestjs/common": ">=10"
+  languageName: unknown
+  linkType: soft
+
+"@rytass/erp-oracle-fusion@npm:^0.1.0, @rytass/erp-oracle-fusion@workspace:packages/erp-oracle-fusion":
+  version: 0.0.0-use.local
+  resolution: "@rytass/erp-oracle-fusion@workspace:packages/erp-oracle-fusion"
+  languageName: unknown
+  linkType: soft
+
 "@rytass/file-converter-adapter-image-resizer@workspace:packages/file-converter-adapter-image-resizer":
   version: 0.0.0-use.local
   resolution: "@rytass/file-converter-adapter-image-resizer@workspace:packages/file-converter-adapter-image-resizer"
