@@ -3,6 +3,57 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.9.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.8.1...@rytass/member-base-nestjs-module@0.9.0) (2026-08-13)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** throw distinguishable exceptions from CasbinGuard ([9d2e5a2](https://github.com/Rytass/Utils/commit/9d2e5a26))
+
+### BREAKING CHANGES
+
+**`CasbinGuard` no longer returns `false`; it throws.** The guard denied a call with a bare `return false` in five unrelated situations, and Nest turns every one of them into the same `ForbiddenException('Forbidden resource')`. An application had no way to tell an unauthenticated caller from an authenticated one lacking a permission — the only signal was a message string that is true of both. Each cause now carries its own exception:
+
+| Cause                                                        | Exception                             | Status | Message                              | `code` |
+| ------------------------------------------------------------ | ------------------------------------- | ------ | ------------------------------------ | ------ |
+| No token presented                                           | `MissingAccessTokenError`             | 401    | `Access token is missing`            | 120    |
+| Token did not verify (bad signature, expired, malformed)     | `InvalidAccessTokenError`             | 401    | `Access token is invalid or expired` | 121    |
+| Authenticated, policy said no                                | `PermissionDeniedError`               | 403    | `Permission denied`                  | 122    |
+| Handler carries no permission decorator                      | `RouteMissingPermissionMetadataError` | 403    | `Route has no permission metadata`   | 123    |
+| `@AllowActions()` route with `CASBIN_ENFORCER` set to `null` | `CasbinEnforcerUnavailableError`      | 403    | `Casbin enforcer is not configured`  | 124    |
+
+All five are exported from the package root.
+
+### Migration
+
+**Nothing to do if you only check whether a call was blocked.** All five denials remain 4xx and all five still stop the handler from running. What changed is the status code and the message.
+
+**Replace any match on `'Forbidden resource'`.** That string no longer appears. Match the exception or the status instead:
+
+```ts
+import { MissingAccessTokenError, InvalidAccessTokenError } from '@rytass/member-base-nestjs-module';
+
+const sessionIsGone = error instanceof MissingAccessTokenError || error instanceof InvalidAccessTokenError;
+```
+
+**Over GraphQL, add a `formatError`.** The status arrives as `extensions.originalError.statusCode`; map it once and every resolver gets the right code:
+
+```ts
+formatError: (error: GraphQLFormattedError): GraphQLFormattedError => {
+  const status = (error.extensions?.originalError as { statusCode?: number } | undefined)?.statusCode;
+
+  if (status === 401) return { ...error, extensions: { ...error.extensions, code: 'UNAUTHENTICATED' } };
+  if (status === 403) return { ...error, extensions: { ...error.extensions, code: 'FORBIDDEN' } };
+
+  return error;
+},
+```
+
+Until you do, a partially-successful response still carries the denial as an untyped error. Note that graceful degradation additionally requires the denied field to be **nullable** — a denial on a non-null field null-propagates to the root and `data` comes back `null`.
+
+**Two responses that were 403 for a bad reason are now 401.** A missing or expired token on any guarded route — including a route marked only `@Authenticated()` — answers 401. If a client treated 403 as "session expired", it was logging users out on permission denials; that inversion is what this release fixes, and the client-side check needs to move to 401.
+
+**An undecorated handler now warns.** A handler carrying none of `@AllowActions()`, `@Authenticated()` or `@IsPublic()` was silently unreachable. It still is — the deny direction is unchanged — but it is now logged once per handler, naming it. Expect one line per such handler on the first request that reaches it.
+
 ## [0.8.1](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.8.0...@rytass/member-base-nestjs-module@0.8.1) (2026-08-03)
 
 ### Features
