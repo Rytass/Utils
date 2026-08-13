@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Inject, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Inject, Injectable, Logger } from '@nestjs/common';
 import { Enforcer } from 'casbin';
 import {
   ACCESS_TOKEN_SECRET,
@@ -19,6 +19,45 @@ import { getRequestFromContext } from '../utils/get-request-from-context';
 import { normalizeCasbinDecision } from '../utils/normalize-casbin-decision';
 import type { AuthTokenPayloadBase } from '../typings/auth-token-payload';
 import type { CasbinPermissionChecker } from '../typings/casbin-permission';
+import {
+  CasbinEnforcerUnavailableError,
+  InvalidAccessTokenError,
+  MissingAccessTokenError,
+  PermissionDeniedError,
+  RouteMissingPermissionMetadataError,
+} from '../constants/errors/base.error';
+
+const logger = new Logger('CasbinGuard');
+
+/**
+ * Handlers already reported as undecorated.
+ *
+ * Module level rather than per instance so a second guard instance — a
+ * request-scoped one, a second module importing the guard — does not restart
+ * the reporting, and weak so a handler can still be collected. The condition is
+ * a property of the handler, not of the request, so one line per handler for
+ * the lifetime of the process is the whole signal.
+ */
+const reportedUndecoratedHandlers = new WeakSet<object>();
+
+const warnMissingPermissionMetadata = (context: ExecutionContext): void => {
+  const handler = context.getHandler();
+
+  if (reportedUndecoratedHandlers.has(handler)) return;
+
+  reportedUndecoratedHandlers.add(handler);
+
+  // getClass is the one context method this guard did not already need, and it
+  // is reached only when something is misconfigured — a partial context (a
+  // consumer's own guard test, say) must not turn the intended 403 into a
+  // TypeError.
+  const controllerName = context.getClass?.()?.name ?? 'unknown';
+
+  logger.warn(
+    `Route ${controllerName}.${handler.name} carries none of @AllowActions(), @Authenticated() or ` +
+      '@IsPublic(), so it is denied to everyone including a super admin. Decorate it or remove it.',
+  );
+};
 
 @Injectable()
 export class CasbinGuard implements CanActivate {
@@ -75,15 +114,21 @@ export class CasbinGuard implements CanActivate {
 
     const allowActions = reflector.get(this.permissionDecorator ?? AllowActions, context.getHandler());
 
-    if (!allowActions?.length && !onlyAuthenticated) return false;
+    // Checked before the token, because a handler nobody decorated is broken
+    // for every caller — who is asking does not change the answer.
+    if (!allowActions?.length && !onlyAuthenticated) {
+      warnMissingPermissionMetadata(context);
 
-    if (!token) return false;
+      throw new RouteMissingPermissionMetadataError();
+    }
 
-    if (!request.payload) return false;
+    if (!token) throw new MissingAccessTokenError();
+
+    if (!request.payload) throw new InvalidAccessTokenError();
 
     if (onlyAuthenticated) return true;
 
-    if (!this.enforcer) return false;
+    if (!this.enforcer) throw new CasbinEnforcerUnavailableError();
 
     const result = await this.permissionChecker({
       enforcer: this.enforcer,
@@ -95,8 +140,12 @@ export class CasbinGuard implements CanActivate {
 
     const decision = normalizeCasbinDecision(result);
 
+    // Written before the throw: an exception filter reading the request is the
+    // only place left that can still see which domain and action were tried.
     request.casbinDecision = decision;
 
-    return decision.allowed;
+    if (!decision.allowed) throw new PermissionDeniedError(decision);
+
+    return true;
   }
 }

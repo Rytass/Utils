@@ -107,6 +107,15 @@ export {
 
 // Errors
 export * from './constants/errors/index';
+// The five ways CasbinGuard denies, exported by name so an application can tell
+// them apart with instanceof instead of comparing an exception message.
+export {
+  MissingAccessTokenError,
+  InvalidAccessTokenError,
+  PermissionDeniedError,
+  RouteMissingPermissionMetadataError,
+  CasbinEnforcerUnavailableError,
+} from './constants/errors/base.error';
 
 // Constants
 export {

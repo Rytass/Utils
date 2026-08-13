@@ -1,4 +1,9 @@
-import { BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import {
   MemberNotFoundError,
   PasswordDoesNotMeetPolicyError,
@@ -11,6 +16,11 @@ import {
   PasswordExpiredError,
   PasswordShouldUpdatePasswordError,
   PasswordInHistoryError,
+  MissingAccessTokenError,
+  InvalidAccessTokenError,
+  PermissionDeniedError,
+  RouteMissingPermissionMetadataError,
+  CasbinEnforcerUnavailableError,
 } from '../src/constants/errors/base.error';
 
 describe('Member Base Errors', () => {
@@ -231,6 +241,126 @@ describe('Member Base Errors', () => {
       const error = new PasswordInHistoryError();
 
       expect(error.code).toBe(110);
+    });
+  });
+
+  describe('MissingAccessTokenError', () => {
+    it('should be an instance of UnauthorizedException', () => {
+      const error = new MissingAccessTokenError();
+
+      expect(error).toBeInstanceOf(UnauthorizedException);
+      expect(error.getStatus()).toBe(401);
+    });
+
+    it('should have correct message', () => {
+      const error = new MissingAccessTokenError();
+
+      expect(error.message).toBe('Access token is missing');
+    });
+
+    it('should have code 120', () => {
+      const error = new MissingAccessTokenError();
+
+      expect(error.code).toBe(120);
+    });
+  });
+
+  describe('InvalidAccessTokenError', () => {
+    it('should be an instance of UnauthorizedException', () => {
+      const error = new InvalidAccessTokenError();
+
+      expect(error).toBeInstanceOf(UnauthorizedException);
+      expect(error.getStatus()).toBe(401);
+    });
+
+    it('should have correct message', () => {
+      const error = new InvalidAccessTokenError();
+
+      expect(error.message).toBe('Access token is invalid or expired');
+    });
+
+    it('should have code 121', () => {
+      const error = new InvalidAccessTokenError();
+
+      expect(error.code).toBe(121);
+    });
+  });
+
+  describe('PermissionDeniedError', () => {
+    it('should be an instance of ForbiddenException', () => {
+      const error = new PermissionDeniedError();
+
+      expect(error).toBeInstanceOf(ForbiddenException);
+      expect(error.getStatus()).toBe(403);
+    });
+
+    it('should have correct message', () => {
+      const error = new PermissionDeniedError();
+
+      expect(error.message).toBe('Permission denied');
+    });
+
+    it('should take its message from the decision reason when one is given', () => {
+      const error = new PermissionDeniedError({ allowed: false, reason: 'Read access to audit-log only' });
+
+      expect(error.message).toBe('Read access to audit-log only');
+    });
+
+    it('should keep the decision for an exception filter to read', () => {
+      const decision = { allowed: false, matchedDomain: 'project:42' };
+      const error = new PermissionDeniedError(decision);
+
+      expect(error.decision).toBe(decision);
+      // The decision is not part of the serialized response body.
+      expect(error.getResponse()).not.toHaveProperty('matchedDomain');
+    });
+
+    it('should have code 122', () => {
+      const error = new PermissionDeniedError();
+
+      expect(error.code).toBe(122);
+    });
+  });
+
+  describe('RouteMissingPermissionMetadataError', () => {
+    it('should be an instance of ForbiddenException', () => {
+      const error = new RouteMissingPermissionMetadataError();
+
+      expect(error).toBeInstanceOf(ForbiddenException);
+      expect(error.getStatus()).toBe(403);
+    });
+
+    it('should have correct message', () => {
+      const error = new RouteMissingPermissionMetadataError();
+
+      expect(error.message).toBe('Route has no permission metadata');
+    });
+
+    it('should have code 123', () => {
+      const error = new RouteMissingPermissionMetadataError();
+
+      expect(error.code).toBe(123);
+    });
+  });
+
+  describe('CasbinEnforcerUnavailableError', () => {
+    it('should be an instance of ForbiddenException', () => {
+      const error = new CasbinEnforcerUnavailableError();
+
+      expect(error).toBeInstanceOf(ForbiddenException);
+      expect(error.getStatus()).toBe(403);
+    });
+
+    it('should have correct message', () => {
+      const error = new CasbinEnforcerUnavailableError();
+
+      expect(error.message).toBe('Casbin enforcer is not configured');
+    });
+
+    it('should have code 124', () => {
+      const error = new CasbinEnforcerUnavailableError();
+
+      expect(error.code).toBe(124);
     });
   });
 });

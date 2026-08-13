@@ -170,6 +170,8 @@ export class ArticleController {
 
 A member holding `SUPER_ADMIN_ROLE` grouped in `DEFAULT_CASBIN_DOMAIN` short-circuits every check. `HasPermission` is a **parameter** decorator that injects a permission check result, not a route guard. Guard metadata is read from the **handler**, so a class-level decorator has no effect. `casbinPermissionDecorator` replaces `AllowActions` with your own.
 
+The guard denies by throwing, never by returning `false`, so the cause is recoverable: `MissingAccessTokenError` (401), `InvalidAccessTokenError` (401), `PermissionDeniedError` (403, message from `decision.reason`, carries `.decision`), `RouteMissingPermissionMetadataError` (403, configuration mistake, also warned once per handler) and `CasbinEnforcerUnavailableError` (403, `casbinAdapterOptions` not set). All five are exported from the package root. Only the 401s mean the session is unusable — treating a 403 as an expired session logs out users who merely hit a field they lack permission for. Over GraphQL the status arrives as `extensions.originalError.statusCode`; map it to `UNAUTHENTICATED` / `FORBIDDEN` in `formatError`.
+
 ## Authentication Gateway
 
 Authentication sources are pluggable. The account/password provider is always registered under the `password` channel.

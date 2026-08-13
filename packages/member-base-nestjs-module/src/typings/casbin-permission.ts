@@ -21,6 +21,12 @@ export type CasbinAuthorizationDecision = {
   matchedDomain?: string;
   matchedAction?: [string, string];
   meta?: Record<string, unknown>;
+  /**
+   * Why the call was denied. Becomes the message of the 403 the guard throws,
+   * so it reaches the client — put here only what the caller may read, and keep
+   * anything internal in `meta`.
+   */
+  reason?: string;
 };
 
 export type CasbinPermissionCheckerSyncResult = boolean | CasbinAuthorizationDecision;

@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { ForbiddenException, Logger, UnauthorizedException } from '@nestjs/common';
 import type { ExecutionContext, FactoryProvider } from '@nestjs/common';
 import type { Enforcer } from 'casbin';
 
@@ -18,6 +19,13 @@ import type {
   CasbinDomainResolverParams,
   CasbinPermissionChecker,
 } from '../src/typings/casbin-permission';
+import {
+  CasbinEnforcerUnavailableError,
+  InvalidAccessTokenError,
+  MissingAccessTokenError,
+  PermissionDeniedError,
+  RouteMissingPermissionMetadataError,
+} from '../src/constants/errors/base.error';
 
 const mockVerify = verify as jest.MockedFunction<typeof verify>;
 
@@ -44,6 +52,13 @@ class TestController {
   guardedRoute(): void {}
 
   plainRoute(): void {}
+
+  // The undecorated-handler warning is deduplicated per handler for the
+  // lifetime of the process, so a test asserting on it needs a handler no other
+  // test has already reported.
+  firstUnreportedPlainRoute(): void {}
+
+  secondUnreportedPlainRoute(): void {}
 }
 
 const createHttpContext = (request: MutableRequest, handler: () => void): ExecutionContext =>
@@ -51,6 +66,7 @@ const createHttpContext = (request: MutableRequest, handler: () => void): Execut
     getType: jest.fn().mockReturnValue('http'),
     switchToHttp: jest.fn().mockReturnValue({ getRequest: () => request }),
     getHandler: () => handler,
+    getClass: () => TestController,
   }) as unknown as ExecutionContext;
 
 const createGraphqlContext = (
@@ -61,6 +77,7 @@ const createGraphqlContext = (
   const context = {
     getType: jest.fn().mockReturnValue('graphql'),
     getHandler: () => handler,
+    getClass: () => TestController,
   } as unknown as ExecutionContext;
 
   GqlExecutionContext.create.mockImplementation((source: ExecutionContext) =>
@@ -184,9 +201,150 @@ describe('CasbinGuard', () => {
       const request = createRequest();
       const context = createHttpContext(request, TestController.prototype.guardedRoute);
 
-      await expect(guard.canActivate(context as Parameters<CasbinGuard['canActivate']>[0])).resolves.toBe(false);
+      await expect(guard.canActivate(context as Parameters<CasbinGuard['canActivate']>[0])).rejects.toThrow(
+        PermissionDeniedError,
+      );
 
       expect(request.casbinDecision).toEqual({ allowed: false });
+    });
+  });
+
+  describe('distinguishable denials', () => {
+    const denyingContext = (
+      handler: () => void,
+      token = 'valid-token',
+    ): { request: MutableRequest; context: ExecutionContext } => {
+      const request = createRequest(token);
+
+      return { request, context: createHttpContext(request, handler) };
+    };
+
+    it('should answer 401 when no token was presented', async () => {
+      const checker = jest.fn();
+      const guard = buildGuard({ checker });
+      const { context } = denyingContext(TestController.prototype.guardedRoute, '');
+
+      const error = await guard
+        .canActivate(context as Parameters<CasbinGuard['canActivate']>[0])
+        .catch((ex: unknown) => ex);
+
+      expect(error).toBeInstanceOf(MissingAccessTokenError);
+      expect(error).toBeInstanceOf(UnauthorizedException);
+      expect((error as MissingAccessTokenError).getStatus()).toBe(401);
+      expect((error as MissingAccessTokenError).message).toBe('Access token is missing');
+      expect(checker).not.toHaveBeenCalled();
+    });
+
+    // The reporting case: an @Authenticated() route reached without a session
+    // is the one denial an application genuinely should log the user out for,
+    // and it used to be indistinguishable from a policy denial.
+    it('should answer 401 on an authenticated-only route without a token', async () => {
+      const guard = buildGuard({ checker: jest.fn() });
+      const { context } = denyingContext(TestController.prototype.authenticatedRoute, '');
+
+      await expect(guard.canActivate(context as Parameters<CasbinGuard['canActivate']>[0])).rejects.toThrow(
+        MissingAccessTokenError,
+      );
+    });
+
+    it('should answer 401 when the token does not verify', async () => {
+      mockVerify.mockImplementation(() => {
+        throw new Error('jwt expired');
+      });
+
+      const guard = buildGuard({ checker: jest.fn() });
+      const { context } = denyingContext(TestController.prototype.guardedRoute);
+
+      const error = await guard
+        .canActivate(context as Parameters<CasbinGuard['canActivate']>[0])
+        .catch((ex: unknown) => ex);
+
+      expect(error).toBeInstanceOf(InvalidAccessTokenError);
+      expect((error as InvalidAccessTokenError).getStatus()).toBe(401);
+      expect((error as InvalidAccessTokenError).message).toBe('Access token is invalid or expired');
+    });
+
+    it('should answer 403 when the policy denies an authenticated caller', async () => {
+      const guard = buildGuard({ checker: jest.fn().mockResolvedValue({ allowed: false }) });
+      const { context } = denyingContext(TestController.prototype.guardedRoute);
+
+      const error = await guard
+        .canActivate(context as Parameters<CasbinGuard['canActivate']>[0])
+        .catch((ex: unknown) => ex);
+
+      expect(error).toBeInstanceOf(PermissionDeniedError);
+      expect(error).toBeInstanceOf(ForbiddenException);
+      expect((error as PermissionDeniedError).getStatus()).toBe(403);
+      expect((error as PermissionDeniedError).message).toBe('Permission denied');
+    });
+
+    it('should carry the decision on the thrown 403', async () => {
+      const decision: CasbinAuthorizationDecision = {
+        allowed: false,
+        matchedDomain: 'project:42',
+        reason: 'Editing a locked document is not permitted',
+      };
+
+      const guard = buildGuard({ checker: jest.fn().mockResolvedValue(decision) });
+      const { request, context } = denyingContext(TestController.prototype.guardedRoute);
+
+      const error = await guard
+        .canActivate(context as Parameters<CasbinGuard['canActivate']>[0])
+        .catch((ex: unknown) => ex);
+
+      expect((error as PermissionDeniedError).message).toBe('Editing a locked document is not permitted');
+      expect((error as PermissionDeniedError).decision).toBe(decision);
+      // Also on the request, for an exception filter that reads it from there.
+      expect(request.casbinDecision).toBe(decision);
+    });
+
+    it('should answer 403 with a configuration error when the handler carries no metadata', async () => {
+      const guard = buildGuard({ checker: jest.fn() });
+      const { context } = denyingContext(TestController.prototype.plainRoute);
+
+      const error = await guard
+        .canActivate(context as Parameters<CasbinGuard['canActivate']>[0])
+        .catch((ex: unknown) => ex);
+
+      expect(error).toBeInstanceOf(RouteMissingPermissionMetadataError);
+      expect((error as RouteMissingPermissionMetadataError).getStatus()).toBe(403);
+      expect((error as RouteMissingPermissionMetadataError).message).toBe('Route has no permission metadata');
+    });
+
+    it('should answer 403 with a configuration error when no enforcer is configured', async () => {
+      const guard = buildGuard({ checker: jest.fn(), enforcer: null });
+      const { context } = denyingContext(TestController.prototype.guardedRoute);
+
+      const error = await guard
+        .canActivate(context as Parameters<CasbinGuard['canActivate']>[0])
+        .catch((ex: unknown) => ex);
+
+      expect(error).toBeInstanceOf(CasbinEnforcerUnavailableError);
+      expect((error as CasbinEnforcerUnavailableError).getStatus()).toBe(403);
+      expect((error as CasbinEnforcerUnavailableError).message).toBe('Casbin enforcer is not configured');
+    });
+
+    it('should warn once per undecorated handler, naming it', async () => {
+      const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+      const guard = buildGuard({ checker: jest.fn() });
+
+      const deny = async (handler: () => void): Promise<void> => {
+        const { context } = denyingContext(handler);
+
+        await guard.canActivate(context as Parameters<CasbinGuard['canActivate']>[0]).catch(() => undefined);
+      };
+
+      await deny(TestController.prototype.firstUnreportedPlainRoute);
+      await deny(TestController.prototype.firstUnreportedPlainRoute);
+
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn.mock.calls[0][0]).toContain('TestController.firstUnreportedPlainRoute');
+
+      await deny(TestController.prototype.secondUnreportedPlainRoute);
+
+      expect(warn).toHaveBeenCalledTimes(2);
+
+      warn.mockRestore();
     });
   });
 
@@ -257,7 +415,9 @@ describe('CasbinGuard', () => {
       const guard = buildGuard({ checker: jest.fn() });
       const context = createHttpContext(createRequest(), TestController.prototype.plainRoute);
 
-      await expect(guard.canActivate(context as Parameters<CasbinGuard['canActivate']>[0])).resolves.toBe(false);
+      await expect(guard.canActivate(context as Parameters<CasbinGuard['canActivate']>[0])).rejects.toThrow(
+        RouteMissingPermissionMetadataError,
+      );
     });
 
     it('should deny guarded routes without a token', async () => {
@@ -265,7 +425,9 @@ describe('CasbinGuard', () => {
       const guard = buildGuard({ checker });
       const context = createHttpContext(createRequest(''), TestController.prototype.guardedRoute);
 
-      await expect(guard.canActivate(context as Parameters<CasbinGuard['canActivate']>[0])).resolves.toBe(false);
+      await expect(guard.canActivate(context as Parameters<CasbinGuard['canActivate']>[0])).rejects.toThrow(
+        MissingAccessTokenError,
+      );
 
       expect(checker).not.toHaveBeenCalled();
     });
@@ -274,7 +436,9 @@ describe('CasbinGuard', () => {
       const guard = buildGuard({ checker: jest.fn(), enforcer: null });
       const context = createHttpContext(createRequest(), TestController.prototype.guardedRoute);
 
-      await expect(guard.canActivate(context as Parameters<CasbinGuard['canActivate']>[0])).resolves.toBe(false);
+      await expect(guard.canActivate(context as Parameters<CasbinGuard['canActivate']>[0])).rejects.toThrow(
+        CasbinEnforcerUnavailableError,
+      );
     });
 
     it('should bypass checks but still decorate the request when the global guard is disabled', async () => {

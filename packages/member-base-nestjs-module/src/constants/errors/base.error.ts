@@ -1,4 +1,10 @@
-import { BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import type { CasbinAuthorizationDecision } from '../../typings/casbin-permission';
 
 export class MemberNotFoundError extends BadRequestException {
   constructor() {
@@ -167,4 +173,80 @@ export class InconsistentOidcClientGrantsError extends BadRequestException {
   }
 
   code = 119;
+}
+
+/**
+ * The five outcomes CasbinGuard can deny with.
+ *
+ * They exist because a guard that returns `false` produces exactly one thing —
+ * `ForbiddenException('Forbidden resource')` — for causes that are not the same
+ * question. An application deciding between 401 and 403, or between "log this
+ * user out" and "hide this field", was left comparing that one string, which is
+ * true of both an absent token and a policy denial. Each cause now carries its
+ * own class and status.
+ *
+ * `InvalidToken` (code 104) is deliberately not reused: it is a
+ * BadRequestException, and 400 is the wrong answer to a credential the guard
+ * could not accept.
+ */
+
+/** No credential was presented at all. */
+export class MissingAccessTokenError extends UnauthorizedException {
+  constructor() {
+    super('Access token is missing');
+  }
+
+  code = 120;
+}
+
+/** A credential was presented and did not verify — bad signature, expired, malformed. */
+export class InvalidAccessTokenError extends UnauthorizedException {
+  constructor() {
+    super('Access token is invalid or expired');
+  }
+
+  code = 121;
+}
+
+/**
+ * Authenticated, and the policy said no.
+ *
+ * `decision` carries whatever the permission checker reported (matched domain,
+ * matched action, meta) for an exception filter or audit log to read. Nest
+ * serializes only `getResponse()`, so it never reaches the client; only
+ * `decision.reason`, which the application's own checker chose, becomes the
+ * message.
+ */
+export class PermissionDeniedError extends ForbiddenException {
+  constructor(readonly decision?: CasbinAuthorizationDecision) {
+    super(decision?.reason ?? 'Permission denied');
+  }
+
+  code = 122;
+}
+
+/**
+ * The handler carries none of `@AllowActions()`, `@Authenticated()` or
+ * `@IsPublic()`, so it is unreachable for everyone including a super admin.
+ *
+ * That is a configuration mistake rather than a runtime denial, and it stays a
+ * 403 rather than a 500 on purpose: the deny direction is the correct one, and
+ * a route nobody declared should not page whoever watches the 5xx rate. The
+ * handler is named in a warning on the server, not in this message.
+ */
+export class RouteMissingPermissionMetadataError extends ForbiddenException {
+  constructor() {
+    super('Route has no permission metadata');
+  }
+
+  code = 123;
+}
+
+/** An `@AllowActions()` route was reached while `CASBIN_ENFORCER` resolved to null. */
+export class CasbinEnforcerUnavailableError extends ForbiddenException {
+  constructor() {
+    super('Casbin enforcer is not configured');
+  }
+
+  code = 124;
 }

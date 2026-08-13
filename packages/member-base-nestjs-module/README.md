@@ -38,6 +38,7 @@ It is long because the package covers a lot; you are not meant to read it start 
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Get something running         | [Installation](#installation), [Defining Your Member Entity](#defining-your-member-entity), then the topology that matches you                                  |
 | Understand permissions        | [RBAC with Domains](#rbac-with-domains-configuration) and [Request-Aware Authorization](#request-aware-authorization-casbindomainresolver-and-decision-tracing) |
+| Tell 401 from 403             | [How the Guard Reports a Denial](#how-the-guard-reports-a-denial)                                                                                               |
 | Seed the first administrator  | [Default Admin Bootstrap](#default-admin-bootstrap)                                                                                                             |
 | Serve GraphQL                 | [GraphQL Support](#graphql-support)                                                                                                                             |
 | Put the session in a cookie   | [Sessions and Cookies](#sessions-and-cookies)                                                                                                                   |
@@ -277,7 +278,7 @@ So the policy `addPolicy('article-admin', 'articles', 'article', 'create')` abov
 
 Listing several pairs is an **OR**: the call is allowed if any one of them passes. To decide the domain per request instead of taking it from the token — when the target depends on GraphQL arguments, say — supply a [`casbinDomainResolver`](#request-aware-authorization-casbindomainresolver-and-decision-tracing). To use your own decorator in place of `AllowActions`, set `casbinPermissionDecorator`.
 
-With `enableGlobalGuard` on (the default) and no `casbinAdapterOptions`, there is no enforcer at all: `CASBIN_ENFORCER` resolves to `null`, and the guard then **denies** every route carrying `@AllowActions()`. A route marked only `@Authenticated()` still passes on a valid token, and `@IsPublic()` still bypasses the guard entirely. That is the failure direction you want, but it does mean a policy-guarded route is unreachable until the adapter is configured.
+With `enableGlobalGuard` on (the default) and no `casbinAdapterOptions`, there is no enforcer at all: `CASBIN_ENFORCER` resolves to `null`, and the guard then **denies** every route carrying `@AllowActions()` with a `CasbinEnforcerUnavailableError` (403). A route marked only `@Authenticated()` still passes on a valid token, and `@IsPublic()` still bypasses the guard entirely. That is the failure direction you want, but it does mean a policy-guarded route is unreachable until the adapter is configured.
 
 Turning `enableGlobalGuard` off inverts this: the guard returns before any of those checks, so `@AllowActions()` routes are all **allowed** rather than all denied. Decorate deliberately if you take that route.
 
@@ -353,6 +354,74 @@ Notes:
 - `casbinDomainResolver` only affects the DEFAULT checker. When a custom `casbinPermissionChecker` is provided, the resolver is ignored — the custom checker receives `context` / `request` in its params (`CasbinPermissionCheckerParams`) and decides on its own.
 - Custom checkers may keep returning `Promise<boolean>` (legacy signature, fully backward compatible) or return a rich `CasbinAuthorizationDecision` (`{ allowed, matchedDomain?, matchedAction?, meta? }`) for tracing.
 - Without `casbinDomainResolver`, the default checker behavior is unchanged (`payload.domain ?? DEFAULT_CASBIN_DOMAIN`).
+
+## How the Guard Reports a Denial
+
+`CasbinGuard` can refuse a call for five unrelated reasons, and it throws a different exception for each. Every class is exported from the package root, so an application distinguishes them with `instanceof` rather than by reading a message:
+
+| Cause                                                        | Exception                             | Status | Message                              | `code` |
+| ------------------------------------------------------------ | ------------------------------------- | ------ | ------------------------------------ | ------ |
+| No token presented                                           | `MissingAccessTokenError`             | 401    | `Access token is missing`            | 120    |
+| Token did not verify (bad signature, expired, malformed)     | `InvalidAccessTokenError`             | 401    | `Access token is invalid or expired` | 121    |
+| Authenticated, policy said no                                | `PermissionDeniedError`               | 403    | `Permission denied`                  | 122    |
+| Handler carries no permission decorator                      | `RouteMissingPermissionMetadataError` | 403    | `Route has no permission metadata`   | 123    |
+| `@AllowActions()` route with `CASBIN_ENFORCER` set to `null` | `CasbinEnforcerUnavailableError`      | 403    | `Casbin enforcer is not configured`  | 124    |
+
+The two 401s are the only denials that mean the session is unusable. Everything else means the session is fine and this particular call is not allowed — a distinction worth honouring, because treating a 403 as an expired session logs out a user who was merely reading a page containing one field they lack permission for.
+
+The last two rows are configuration mistakes rather than runtime denials. They stay 403 so the deny direction is unchanged and a route nobody declared does not page whoever watches the 5xx rate, but they are separate classes because they are fixed by editing code, not by granting a policy. The undecorated-handler case is additionally logged once per handler, naming it:
+
+```
+WARN [CasbinGuard] Route ArticleController.archive carries none of @AllowActions(), @Authenticated() or @IsPublic(), so it is denied to everyone including a super admin. Decorate it or remove it.
+```
+
+A checker returning a `CasbinAuthorizationDecision` may set `reason`, which becomes the message of the 403 — so keep it fit for the caller to read, and put anything internal in `meta`. The whole decision is attached to the thrown `PermissionDeniedError` as `.decision` and to the request as `request.casbinDecision`, neither of which is serialized into the response:
+
+```typescript
+// filters/authorization.filter.ts
+import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
+import { PermissionDeniedError } from '@rytass/member-base-nestjs-module';
+
+@Catch(PermissionDeniedError)
+export class AuthorizationFilter implements ExceptionFilter {
+  catch(exception: PermissionDeniedError, host: ArgumentsHost): void {
+    // exception.decision?.matchedDomain / .matchedAction / .meta
+    console.warn('denied', exception.decision);
+
+    // ... respond as usual
+  }
+}
+```
+
+### Over GraphQL
+
+This package cannot set a GraphQL error code itself — that would make `graphql` a hard dependency rather than an optional peer. What it can do is give Apollo an exception carrying a status, which arrives as `extensions.originalError.statusCode`. Map it once in `formatError` and every resolver gets the right code:
+
+```typescript
+// app.module.ts
+GraphQLModule.forRoot<ApolloDriverConfig>({
+  driver: ApolloDriver,
+  formatError: (error: GraphQLFormattedError): GraphQLFormattedError => {
+    const status = (error.extensions?.originalError as { statusCode?: number } | undefined)?.statusCode;
+
+    if (status === 401) return { ...error, extensions: { ...error.extensions, code: 'UNAUTHENTICATED' } };
+    if (status === 403) return { ...error, extensions: { ...error.extensions, code: 'FORBIDDEN' } };
+
+    return error;
+  },
+});
+```
+
+A GraphQL response then carries `FORBIDDEN` on the one field the caller lacks permission for while the rest returns data, which is what lets a page degrade gracefully instead of the client concluding the session ended:
+
+```json
+{
+  "data": { "auditTrail": "...", "memberOptions": null },
+  "errors": [{ "path": ["memberOptions"], "extensions": { "code": "FORBIDDEN" } }]
+}
+```
+
+That the denied field be **nullable** is the condition for it, and it is your schema's decision, not this package's: a denial on a non-null field null-propagates to the root, so `data` comes back `null` and there is nothing left to degrade to.
 
 ## Default Admin Bootstrap
 
