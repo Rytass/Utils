@@ -1,21 +1,12 @@
 import { FusionAuthProvider } from '../auth/fusion-auth-provider';
-import {
-  buildResponseSummary,
-  classifyOutcome,
-  deriveOperation,
-  extractFusionRefs,
-  redactEndpoint,
-} from '../call-log/call-log-helpers';
-import {
-  classifyFusionHttpError,
-  FusionTransientError,
-  isFusionRequestError,
-  wrapNetworkError,
-} from '../errors/fusion-errors';
-import { FusionApiOutcome } from '../typings/call-log';
-import type { FusionCallContext, FusionCallLogEntry, FusionHttpMethod, FusionOperation } from '../typings/call-log';
+import { buildResponseSummary, deriveOperation, extractFusionRefs, redactEndpoint } from '../call-log/call-log-helpers';
+import { classifyFusionHttpError } from '../errors/fusion-errors';
+import { FusionHttpTransport } from '../transport/fusion-http-transport';
+import type { FusionCallContext } from '../typings/call-log';
 import type { FusionClientOptions, ResolvedFusionClientOptions } from '../typings/client-options';
 import { resolveFusionClientOptions } from './resolve-options';
+
+export { parseRetryAfter } from '../transport/fusion-http-transport';
 
 /**
  * Standard shape of a Fusion collection response.
@@ -53,7 +44,7 @@ export interface FusionRequestOptions {
 export type FusionWriteOptions = Omit<FusionRequestOptions, 'maxRetries'>;
 
 interface ExecuteSpec {
-  readonly method: FusionHttpMethod;
+  readonly method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   readonly pathWithQuery: string;
   readonly body?: unknown;
   /** 是否允許對 `FusionTransientError` 自動重試（只有冪等 method 為 true）。 */
@@ -61,36 +52,6 @@ interface ExecuteSpec {
   readonly options?: FusionRequestOptions;
   /** 是否允許空 body 回應（DELETE 慣例回 204）。 */
   readonly allowEmptyBody?: boolean;
-}
-
-function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-/**
- * Parses a `Retry-After` header, which Fusion sends on 429 and some 503 responses.
- * Accepts both delay-seconds and an HTTP date; returns null when absent or unparsable.
- */
-export function parseRetryAfter(headerValue: string | null, now: number = Date.now()): number | null {
-  if (!headerValue) return null;
-
-  const seconds = Number(headerValue);
-
-  if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
-
-  const date = Date.parse(headerValue);
-
-  return Number.isNaN(date) ? null : Math.max(0, date - now);
-}
-
-/**
- * Full jitter on top of exponential backoff. Without it, every client that failed on the same
- * upstream blip retries in lockstep and re-creates the spike.
- */
-function backoffWithJitter(baseDelayMs: number, attempt: number): number {
-  const window = baseDelayMs * 2 ** (attempt - 1);
-
-  return window === 0 ? 0 : Math.round(window / 2 + Math.random() * (window / 2));
 }
 
 /**
@@ -106,15 +67,18 @@ function backoffWithJitter(baseDelayMs: number, attempt: number): number {
  *   絕對路徑，以 `http(s)://` 開頭時原樣使用。
  *
  * 本類別不依賴任何框架，可直接 `new` 使用；NestJS 專案請改用
- * `@rytass/erp-oracle-fusion-nestjs`。
+ * `@rytass/erp-oracle-fusion-nestjs`。SOAP 端點（如 CustomerAccountService）請用
+ * `FusionSoapClient`——兩者共用同一組認證與觀測設定。
  */
 export class FusionRestClient {
   private readonly options: ResolvedFusionClientOptions;
   private readonly auth: FusionAuthProvider;
+  private readonly transport: FusionHttpTransport;
 
   constructor(options: FusionClientOptions) {
     this.options = resolveFusionClientOptions(options);
     this.auth = new FusionAuthProvider(this.options);
+    this.transport = new FusionHttpTransport(this.options, this.auth);
   }
 
   /** 授權標頭供應者（供診斷、或需要自行發請求時取用）。 */
@@ -145,127 +109,6 @@ export class FusionRestClient {
     return `${baseUrl}/${namespace}/resources/${apiVersion}/${pathWithQuery}`;
   }
 
-  /** 埋點寫入包一層防守（sink 契約已要求不拋出，此處為雙重保險）。 */
-  private async logCallSafely(entry: FusionCallLogEntry): Promise<void> {
-    if (!this.options.callLogSink) return;
-
-    try {
-      await this.options.callLogSink.record(entry);
-    } catch (error) {
-      this.options.logger?.warn(
-        `Fusion call log sink failed (original call unaffected): ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      );
-    }
-  }
-
-  /** 統一的請求執行：認證 → 送出 → 分類 → （必要時）重試 → 埋點。 */
-  private async execute<T>(spec: ExecuteSpec): Promise<T> {
-    const { method, pathWithQuery, body, retryable, options, allowEmptyBody } = spec;
-
-    const startedAt = Date.now();
-    const resolveOperation = this.options.operationResolver ?? deriveOperation;
-    const operation = resolveOperation(method, pathWithQuery, body);
-    const endpoint = redactEndpoint(pathWithQuery);
-    const maxRetries = retryable ? (options?.maxRetries ?? this.options.maxRetries) : 0;
-    const description = `${method} ${pathWithQuery}`;
-
-    const authorization = await this.auth.getAuthorizationHeader();
-    const url = this.resourceUrl(pathWithQuery, options);
-
-    const frameworkVersion = options?.restFrameworkVersion ?? this.options.restFrameworkVersion;
-
-    const headers: Record<string, string> = {
-      Authorization: authorization,
-      // The Oracle error media type is required for structured `o:errorDetails` responses;
-      // without it Fusion may return an unstructured error body.
-      Accept: 'application/json, application/vnd.oracle.adf.error+json',
-      ...(frameworkVersion !== null && frameworkVersion !== undefined
-        ? { 'REST-Framework-Version': String(frameworkVersion) }
-        : {}),
-      ...(body !== undefined ? { 'Content-Type': 'application/vnd.oracle.adf.resourceitem+json' } : {}),
-      ...(options?.headers ?? {}),
-    };
-
-    const fetchImpl = this.options.fetchImpl ?? globalThis.fetch;
-    let attempt = 0;
-
-    for (;;) {
-      try {
-        const response = await fetchImpl(url, {
-          method,
-          headers,
-          ...(this.options.timeoutMs > 0 ? { signal: AbortSignal.timeout(this.options.timeoutMs) } : {}),
-          ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
-        });
-
-        if (!response.ok) {
-          const bodyText = await response.text();
-          const error = classifyFusionHttpError(response.status, bodyText, description);
-
-          if (error instanceof FusionTransientError && attempt < maxRetries) {
-            attempt += 1;
-
-            // Honour Retry-After when the server states one; otherwise back off with jitter.
-            const retryAfterMs = parseRetryAfter(response.headers?.get?.('retry-after') ?? null);
-            const delayMs = retryAfterMs ?? backoffWithJitter(this.options.retryBaseDelayMs, attempt);
-
-            this.options.logger?.warn(
-              `Fusion ${description} transient error, retry ${attempt}/${maxRetries} in ${delayMs}ms`,
-            );
-
-            await delay(delayMs);
-
-            continue;
-          }
-
-          throw error;
-        }
-
-        const json = await this.parseBody<T>(response, allowEmptyBody === true);
-
-        await this.logCallSafely({
-          operation,
-          httpMethod: method,
-          endpoint,
-          correlationType: options?.context?.correlationType,
-          correlationId: options?.context?.correlationId,
-          refs: extractFusionRefs(json, this.options.responseRefKeys),
-          httpStatus: response.status,
-          outcome: FusionApiOutcome.SUCCESS,
-          latencyMs: Date.now() - startedAt,
-          attempt: attempt + 1,
-          responseSummary: buildResponseSummary(json, this.options.responseSummaryKeys, this.options.maxTextLength),
-        });
-
-        return json;
-      } catch (error) {
-        // 已分類的 Fusion 錯誤：重試決策在上面做完了，走到這裡代表確定失敗。
-        if (isFusionRequestError(error)) {
-          await this.logFailure(error, { operation, method, endpoint, options, startedAt, attempt });
-
-          throw error;
-        }
-
-        // fetch 網路層錯誤（DNS／連線失敗）或 AbortSignal 逾時
-        if (attempt < maxRetries) {
-          attempt += 1;
-          this.options.logger?.warn(`Fusion ${description} network error, retry ${attempt}/${maxRetries}`);
-          await delay(backoffWithJitter(this.options.retryBaseDelayMs, attempt));
-
-          continue;
-        }
-
-        const wrapped = wrapNetworkError(error, description);
-
-        await this.logFailure(wrapped, { operation, method, endpoint, options, startedAt, attempt });
-
-        throw wrapped;
-      }
-    }
-  }
-
   private async parseBody<T>(response: Response, allowEmptyBody: boolean): Promise<T> {
     if (!allowEmptyBody) {
       return (await response.json()) as T;
@@ -276,31 +119,37 @@ export class FusionRestClient {
     return (bodyText ? JSON.parse(bodyText) : null) as T;
   }
 
-  private async logFailure(
-    error: unknown,
-    meta: {
-      readonly operation: FusionOperation;
-      readonly method: FusionHttpMethod;
-      readonly endpoint: string;
-      readonly options?: FusionRequestOptions;
-      readonly startedAt: number;
-      readonly attempt: number;
-    },
-  ): Promise<void> {
-    const classified = classifyOutcome(error, this.options.maxTextLength);
+  /** 組出傳輸層請求並交由 `FusionHttpTransport` 執行。 */
+  private async execute<T>(spec: ExecuteSpec): Promise<T> {
+    const { method, pathWithQuery, body, retryable, options, allowEmptyBody } = spec;
 
-    await this.logCallSafely({
-      operation: meta.operation,
-      httpMethod: meta.method,
-      endpoint: meta.endpoint,
-      correlationType: meta.options?.context?.correlationType,
-      correlationId: meta.options?.context?.correlationId,
-      httpStatus: classified.httpStatus,
-      outcome: classified.outcome,
-      errorCode: classified.errorCode,
-      errorMessage: classified.errorMessage,
-      latencyMs: Date.now() - meta.startedAt,
-      attempt: meta.attempt + 1,
+    const resolveOperation = this.options.operationResolver ?? deriveOperation;
+    const frameworkVersion = options?.restFrameworkVersion ?? this.options.restFrameworkVersion;
+
+    return this.transport.execute<T>({
+      method,
+      url: this.resourceUrl(pathWithQuery, options),
+      headers: {
+        // The Oracle error media type is required for structured `o:errorDetails` responses;
+        // without it Fusion may return an unstructured error body.
+        Accept: 'application/json, application/vnd.oracle.adf.error+json',
+        ...(frameworkVersion !== null && frameworkVersion !== undefined
+          ? { 'REST-Framework-Version': String(frameworkVersion) }
+          : {}),
+        ...(body !== undefined ? { 'Content-Type': 'application/vnd.oracle.adf.resourceitem+json' } : {}),
+        ...(options?.headers ?? {}),
+      },
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      description: `${method} ${pathWithQuery}`,
+      operation: resolveOperation(method, pathWithQuery, body),
+      endpoint: redactEndpoint(pathWithQuery),
+      ...(options?.context ? { context: options.context } : {}),
+      maxRetries: retryable ? (options?.maxRetries ?? this.options.maxRetries) : 0,
+      classifyError: classifyFusionHttpError,
+      parseResponse: (response: Response) => this.parseBody<T>(response, allowEmptyBody === true),
+      extractRefs: (result: T) => extractFusionRefs(result, this.options.responseRefKeys),
+      buildSummary: (result: T) =>
+        buildResponseSummary(result, this.options.responseSummaryKeys, this.options.maxTextLength),
     });
   }
 
