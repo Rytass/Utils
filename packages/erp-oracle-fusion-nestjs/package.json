@@ -1,13 +1,14 @@
 {
   "name": "@rytass/erp-oracle-fusion-nestjs",
   "version": "0.1.0",
-  "description": "NestJS module for Oracle Fusion Cloud ERP REST client",
+  "description": "NestJS module for Oracle Fusion Cloud ERP REST/SOAP client",
   "keywords": [
     "rytass",
     "erp",
     "oracle",
     "fusion",
     "fbdi",
+    "soap",
     "nestjs"
   ],
   "author": "Chia Yu Pai <fantasyatelier@gmail.com>",

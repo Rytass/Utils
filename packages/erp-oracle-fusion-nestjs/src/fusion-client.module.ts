@@ -1,5 +1,11 @@
 import { DynamicModule, Logger, Module, Provider } from '@nestjs/common';
-import { FusionFbdiService, FusionRestClient } from '@rytass/erp-oracle-fusion';
+import {
+  FusionCustomerAccountService,
+  FusionCustomerProfileService,
+  FusionFbdiService,
+  FusionRestClient,
+  FusionSoapClient,
+} from '@rytass/erp-oracle-fusion';
 import type { FusionCallLogSink, FusionClientOptions, FusionLogger } from '@rytass/erp-oracle-fusion';
 import { FUSION_CALL_LOG_SINK, FUSION_CLIENT_OPTIONS } from './constants';
 import { NoopFusionCallLogSink } from './noop-call-log.sink';
@@ -58,11 +64,47 @@ function buildClientProviders(disableLogger?: boolean): Provider[] {
       useFactory: (client: FusionRestClient): FusionFbdiService => new FusionFbdiService(client),
       inject: [FusionRestClient],
     },
+    // SOAP client 與 REST client 共用同一份設定（含認證與觀測 sink），因此兩邊的呼叫會落在
+    // 同一組觀測紀錄裡，可依 correlationId 串起一筆單據的完整整合軌跡。
+    {
+      provide: FusionSoapClient,
+      useFactory: (config: FusionClientModuleConfig, callLogSink: FusionCallLogSink): FusionSoapClient =>
+        new FusionSoapClient({
+          ...config,
+          callLogSink,
+          ...(disableLogger ? {} : { logger: createNestLogger() }),
+        } as FusionClientOptions),
+      inject: [FUSION_CLIENT_OPTIONS, FUSION_CALL_LOG_SINK],
+    },
+    {
+      provide: FusionCustomerAccountService,
+      useFactory: (client: FusionSoapClient): FusionCustomerAccountService => new FusionCustomerAccountService(client),
+      inject: [FusionSoapClient],
+    },
+    {
+      provide: FusionCustomerProfileService,
+      useFactory: (client: FusionSoapClient): FusionCustomerProfileService => new FusionCustomerProfileService(client),
+      inject: [FusionSoapClient],
+    },
   ];
 }
 
+/** `forRoot` 與 `forRootAsync` 共用的匯出清單。 */
+const EXPORTED_PROVIDERS = [
+  FusionRestClient,
+  FusionFbdiService,
+  FusionSoapClient,
+  FusionCustomerAccountService,
+  FusionCustomerProfileService,
+  FUSION_CLIENT_OPTIONS,
+];
+
 /**
- * Oracle Fusion REST 整合的 NestJS 入口 module。
+ * Oracle Fusion 整合的 NestJS 入口 module。
+ *
+ * 一次註冊即提供 REST（`FusionRestClient`／`FusionFbdiService`）與 SOAP
+ * （`FusionSoapClient`／`FusionCustomerAccountService`／`FusionCustomerProfileService`）
+ * 兩條通路，共用同一份設定與觀測 sink。客戶帳戶與 AR 信用檔沒有 REST 資源，只能走 SOAP。
  *
  * ```ts
  * FusionClientModule.forRootAsync({
@@ -97,7 +139,7 @@ export class FusionClientModule {
         buildCallLogSinkProvider(options.callLogSink),
         ...buildClientProviders(options.disableLogger),
       ],
-      exports: [FusionRestClient, FusionFbdiService, FUSION_CLIENT_OPTIONS],
+      exports: EXPORTED_PROVIDERS,
     };
   }
 
@@ -115,7 +157,7 @@ export class FusionClientModule {
         buildCallLogSinkProvider(options.callLogSink),
         ...buildClientProviders(options.disableLogger),
       ],
-      exports: [FusionRestClient, FusionFbdiService, FUSION_CLIENT_OPTIONS],
+      exports: EXPORTED_PROVIDERS,
     };
   }
 }
