@@ -44,6 +44,68 @@ export {
   DEFAULT_TIMEOUT_MS,
 } from './client/resolve-options';
 export { FusionAuthProvider } from './auth/fusion-auth-provider';
+export { FusionHttpTransport, backoffWithJitter, type FusionTransportRequest } from './transport/fusion-http-transport';
+
+// ---------------------------------------------------------------------------
+// SOAP client
+//
+// Fusion 有一批業務物件沒有對應的 REST 資源（客戶帳戶、AR 信用檔），只能走 SOAP。
+// 與 REST client 共用同一組認證、重試與觀測設定。
+// ---------------------------------------------------------------------------
+export { FusionSoapClient, type FusionSoapCallOptions, type FusionSoapService } from './soap/fusion-soap-client';
+export {
+  buildSoapEnvelope,
+  escapeXml,
+  serializeElement,
+  ADF_TYPES_NAMESPACE,
+  SOAP_ENVELOPE_NAMESPACE,
+  XSI_NAMESPACE,
+  type BuildSoapEnvelopeOptions,
+  type SoapNamespacePrefix,
+  type SoapObject,
+  type SoapParameter,
+  type SoapValue,
+} from './soap/envelope';
+export {
+  buildSoapFaultError,
+  classifySoapHttpError,
+  findSoapFaultNode,
+  normalizeParsedXml,
+  parseSoapXml,
+} from './soap/soap-fault';
+export {
+  buildFindCriteria,
+  buildFindControl,
+  type FusionFindCriteriaOptions,
+  type FusionFindFilterItem,
+  type FusionFindOperator,
+} from './soap/find-criteria';
+export {
+  FusionCustomerAccountService,
+  FUSION_CUSTOMER_ACCOUNT_SERVICE,
+  type FusionCustomerAccountCallOptions,
+} from './soap/services/fusion-customer-account.service';
+export {
+  FusionCustomerProfileService,
+  FUSION_CUSTOMER_PROFILE_SERVICE,
+  type FusionCustomerProfileCallOptions,
+} from './soap/services/fusion-customer-profile.service';
+export type {
+  FusionSoapInput,
+  FusionSoapOutput,
+  FusionSoapRecord,
+  FusionSoapScalar,
+  FusionSoapScalarInput,
+} from './typings/soap';
+export type {
+  CustomerAccount,
+  CustomerAccountFields,
+  CustomerAccountInput,
+  CustomerAccountSite,
+  CustomerAccountSiteFields,
+  CustomerAccountSiteInput,
+} from './typings/customer-account';
+export type { CustomerProfile, CustomerProfileFields, CustomerProfileInput } from './typings/customer-profile';
 
 // ---------------------------------------------------------------------------
 // 設定與型別
@@ -69,11 +131,13 @@ export type { FusionLogger } from './typings/logger';
 export {
   classifyFusionHttpError,
   FusionAuthError,
+  FusionSoapFaultError,
   FusionTransientError,
   FusionValidationError,
   isFusionRequestError,
   wrapNetworkError,
   type FusionRequestError,
+  type FusionSoapAttributeError,
 } from './errors/fusion-errors';
 
 // ---------------------------------------------------------------------------

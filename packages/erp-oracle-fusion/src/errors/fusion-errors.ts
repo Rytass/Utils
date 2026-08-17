@@ -41,6 +41,53 @@ export class FusionTransientError extends Error {
   }
 }
 
+/** SOAP fault 的欄位級錯誤（`ServiceAttrValErrorMessage`），供資料修正時定位問題欄位。 */
+export interface FusionSoapAttributeError {
+  readonly attributeName: string | null;
+  readonly objectName: string | null;
+  readonly message: string | null;
+}
+
+/**
+ * Fusion SOAP fault。
+ *
+ * **刻意繼承 `FusionValidationError`**，理由是「可否重試」的決策：SOAP fault 一律以
+ * HTTP 500 回傳，若沿用 REST 的 status 分類會被判為 `FusionTransientError` 而自動重試——
+ * 對 `createCustomerAccount` 這類非冪等寫入是危險的。繼承驗證錯誤讓它天然屬於
+ * `FusionRequestError`（`isFusionRequestError` 為 true）且不可重試。
+ */
+export class FusionSoapFaultError extends FusionValidationError {
+  /** SOAP 層的 `faultcode`，如 `env:Server`／`env:Client`。 */
+  readonly faultCode: string | null;
+  /** Oracle 應用層錯誤碼，如 `FND:::FND_CMN_RCRD_MSNG`。 */
+  readonly errorCode: string | null;
+  readonly severity: string | null;
+  readonly exceptionClassName: string | null;
+  /** 遞迴 `detail` 中所有欄位級錯誤，順序為 Fusion 回傳順序。 */
+  readonly attributeErrors: readonly FusionSoapAttributeError[];
+
+  constructor(
+    status: number,
+    message: string,
+    body: unknown,
+    details: {
+      readonly faultCode?: string | null;
+      readonly errorCode?: string | null;
+      readonly severity?: string | null;
+      readonly exceptionClassName?: string | null;
+      readonly attributeErrors?: readonly FusionSoapAttributeError[];
+    } = {},
+  ) {
+    super(status, message, body);
+    this.name = 'FusionSoapFaultError';
+    this.faultCode = details.faultCode ?? null;
+    this.errorCode = details.errorCode ?? null;
+    this.severity = details.severity ?? null;
+    this.exceptionClassName = details.exceptionClassName ?? null;
+    this.attributeErrors = details.attributeErrors ?? [];
+  }
+}
+
 export type FusionRequestError = FusionAuthError | FusionValidationError | FusionTransientError;
 
 function tryParseJson(text: string): unknown {

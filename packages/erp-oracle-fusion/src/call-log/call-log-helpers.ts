@@ -1,5 +1,10 @@
 import { FUSION_ERP_OPERATIONS, FUSION_FINDERS, FUSION_RESOURCES } from '../constants/resources';
-import { FusionAuthError, FusionTransientError, FusionValidationError } from '../errors/fusion-errors';
+import {
+  FusionAuthError,
+  FusionSoapFaultError,
+  FusionTransientError,
+  FusionValidationError,
+} from '../errors/fusion-errors';
 import { FusionApiOperation, FusionApiOutcome } from '../typings/call-log';
 import type { FusionHttpMethod } from '../typings/call-log';
 
@@ -201,6 +206,16 @@ export function classifyOutcome(error: unknown, maxTextLength: number = DEFAULT_
       outcome: FusionApiOutcome.AUTH_ERROR,
       httpStatus: error.status,
       errorCode: 'FusionAuthError',
+      errorMessage: truncate(error.message, maxTextLength),
+    };
+  }
+
+  // 必須排在 FusionValidationError 之前：FusionSoapFaultError 繼承自它，且帶有更精確的錯誤碼。
+  if (error instanceof FusionSoapFaultError) {
+    return {
+      outcome: FusionApiOutcome.VALIDATION_ERROR,
+      httpStatus: error.status,
+      errorCode: error.errorCode ?? error.faultCode ?? 'FusionSoapFaultError',
       errorMessage: truncate(error.message, maxTextLength),
     };
   }

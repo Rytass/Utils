@@ -8058,6 +8058,8 @@ __metadata:
 "@rytass/erp-oracle-fusion@npm:^0.1.0, @rytass/erp-oracle-fusion@workspace:packages/erp-oracle-fusion":
   version: 0.0.0-use.local
   resolution: "@rytass/erp-oracle-fusion@workspace:packages/erp-oracle-fusion"
+  dependencies:
+    fast-xml-parser: "npm:^5.10.0"
   languageName: unknown
   linkType: soft
 
