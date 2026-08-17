@@ -54,6 +54,16 @@ import { FusionClientModule } from '@rytass/erp-oracle-fusion-nestjs';
 export class AppModule {}
 ```
 
+That one registration provides and exports five injectables:
+
+| Provider                       | Protocol | Purpose                                                     |
+| ------------------------------ | -------- | ----------------------------------------------------------- |
+| `FusionRestClient`             | REST     | `get`, `getAll`, `post`, `patch`, `delete`                  |
+| `FusionFbdiService`            | REST     | FBDI imports and ESS jobs                                   |
+| `FusionSoapClient`             | SOAP     | Generic `call()` for any Fusion SOAP service                |
+| `FusionCustomerAccountService` | SOAP     | Customer accounts — no REST resource exists for these       |
+| `FusionCustomerProfileService` | SOAP     | AR credit profiles — credit limit, credit hold, terms       |
+
 When configuration comes from a provider, use `forRootAsync`:
 
 ```ts

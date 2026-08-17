@@ -16,10 +16,15 @@ For NestJS applications, use [`@rytass/erp-oracle-fusion-nestjs`](../erp-oracle-
 
 ## Features
 
+### Authentication
+
 - [x] OAuth 2.0 client credentials (default) with TTL cache and early refresh
 - [x] Pre-issued JWT bearer tokens, static or refreshed per request
 - [x] HTTP Basic for test pods
 - [ ] SAML 2.0 bearer assertions (obtain the token yourself and pass it as a JWT)
+
+### REST
+
 - [x] Idempotency-aware retry: exponential backoff for reads, never for writes
 - [x] Error classification that drives retry decisions (auth / validation / transient)
 - [x] Automatic pagination that follows the server's page size, not the requested one
@@ -29,9 +34,22 @@ For NestJS applications, use [`@rytass/erp-oracle-fusion-nestjs`](../erp-oracle-
 - [x] Configurable REST namespace and API version (`fscmRestApi`, `crmRestApi`, `hcmRestApi`, ...)
 - [x] Query builder for Fusion's `q` / `finder` / pagination syntax, with the right escaping
 - [x] Constants for the resources, finders and UCM accounts the package understands
-- [x] Request timeout via `AbortSignal`, classified as retryable
-- [x] Injectable `fetch` implementation for corporate proxies and client certificates
-- [x] Pluggable observability sink with a redaction contract
+
+### SOAP
+
+For the business objects Fusion does not expose over REST. See [SOAP Services](#soap-services).
+
+- [x] **Customer accounts** — create, update, read and query (`CustomerAccountService`)
+- [x] **AR credit profiles** — credit limits, credit hold, payment terms (`ReceivablesCustomerProfileService`)
+- [x] HTTP Basic over SSL; no WS-Security signing, encryption or runtime WSDL parsing
+- [x] Partial updates: omitted fields keep their value, `null` clears them
+- [x] Fault parsing with Oracle error codes and attribute-level validation errors
+- [x] Faults classified as terminal, so a failed write is never resent
+- [x] ADF `FindCriteria` builder, emitted in the order the schema requires
+- [x] Generic `call()` for any other Fusion SOAP service
+
+### FBDI and data extraction
+
 - [x] FBDI template engine: every import defined as data, not code
 - [x] Multi-file ZIP archives, required by AP and AR style imports
 - [x] `JobOptions` and `CallbackURL` on imports
@@ -41,9 +59,13 @@ For NestJS applications, use [`@rytass/erp-oracle-fusion-nestjs`](../erp-oracle-
 - [x] ESS job submission, status polling and execution log retrieval
 - [x] ZIP reading (STORED and DEFLATE) for the archives Fusion returns
 - [ ] Built-in AP / AR / FA templates (define your own through the template API)
-- [x] SOAP client for services with no REST equivalent, sharing the REST client's auth and observability
-- [x] Customer accounts (`CustomerAccountService`) and AR credit profiles (`ReceivablesCustomerProfileService`)
-- [x] SOAP fault parsing with Oracle error codes and attribute-level validation errors
+
+### Cross-cutting
+
+- [x] One transport shared by REST and SOAP: identical auth, timeout, retry and observability
+- [x] Request timeout via `AbortSignal`, classified as retryable
+- [x] Injectable `fetch` implementation for corporate proxies and client certificates
+- [x] Pluggable observability sink with a redaction contract
 - [ ] BI Publisher / OTBI
 
 ## Installation
@@ -72,6 +94,25 @@ const client = new FusionRestClient({
 
 const ledgers = await client.get<{ items: Ledger[] }>('ledgersLOV?limit=5');
 ```
+
+Not everything in Fusion has a REST resource. Customer accounts and AR credit profiles are the ones
+most integrations hit first — they exist only as SOAP services, and `FusionSoapClient` takes the same
+configuration:
+
+```ts
+import { FusionSoapClient, FusionCustomerProfileService } from '@rytass/erp-oracle-fusion';
+
+const profiles = new FusionCustomerProfileService(new FusionSoapClient({ baseUrl, auth }));
+
+// Only these two fields change; everything else on the profile is left alone.
+await profiles.updateCustomerProfile({
+  CustomerAccountProfileId: '300000003278056',
+  CreditLimit: 900000,
+  CreditHold: 'Y',
+});
+```
+
+Full details in [SOAP Services](#soap-services).
 
 ## Configuration
 
@@ -290,6 +331,21 @@ try {
 Write methods do not retry by design. If you retry them yourself you **must** supply an idempotency
 key: `importBulkData` has no native deduplication, so a blind resend creates duplicate documents.
 `deriveGroupId()` exists for exactly this.
+
+SOAP calls raise a fourth class, `FusionSoapFaultError`. It extends `FusionValidationError`, so code
+written against the three classes above already routes it correctly — as a terminal failure, never a
+retry. Catch it directly when you want Oracle's error code or the field-level messages:
+
+```ts
+try {
+  await profiles.createCustomerProfile(input);
+} catch (error) {
+  if (error instanceof FusionSoapFaultError) {
+    error.errorCode; // 'FND:::FND_CMN_RCRD_MSNG', '27024', ...
+    error.attributeErrors; // which fields Fusion rejected, and why
+  }
+}
+```
 
 ## FBDI
 
@@ -738,6 +794,17 @@ One record is written per call, for successes and final failures alike, with `la
 enum or any string) and `refs` is an open `Record<string, string>`, so no module-specific fields are
 baked into the contract.
 
+`FusionSoapClient` writes to the same sink, using the SOAP operation name as `operation` and the
+service path as `endpoint`. Passing the same `context` to both clients is therefore enough to trace
+one business transaction across both protocols:
+
+```ts
+const context = { correlationType: 'customer-onboarding', correlationId: orderId };
+
+await rest.post('accounts', { OrganizationName }, { namespace: 'crmRestApi', context });
+await accounts.createCustomerAccount({ PartyId, CreatedByModule: 'HZ_WS' }, { context });
+```
+
 **Redaction contract:** `endpoint` always has its query string removed and `responseSummary` carries
 allow-listed fields only. Never add `DocumentContent` (base64 file payloads), tokens or whole
 request bodies to `responseSummaryKeys`.
@@ -914,8 +981,10 @@ Genuine transport problems (a 500 with no fault body, 502-504, network errors) s
 ## Requirements
 
 - Node.js 18 or later, for the built-in `fetch`, `Buffer` and `URLSearchParams`
-- No runtime dependencies. ZIP archives are produced by a hand-rolled STORED implementation with
-  CRC-32, so no compression library is required.
+- One runtime dependency, `fast-xml-parser`, used to read SOAP responses. ZIP archives are still
+  produced by a hand-rolled STORED implementation with CRC-32, so no compression library is
+  required, and no SOAP library is involved either — envelopes are built directly and Fusion accepts
+  HTTP Basic over SSL.
 
 ## Development
 
