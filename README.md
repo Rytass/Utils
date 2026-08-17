@@ -6,6 +6,15 @@ We provide a unified interface that allows developers to quickly switch between 
 
 ## Available Tools
 
+### ERP
+
+Integration with enterprise resource planning systems, covering both the REST and SOAP surfaces a
+real deployment needs, plus the bulk data pipelines (FBDI) that most ERP integrations end up
+requiring.
+
+- [Oracle Fusion](https://www.npmjs.com/package/@rytass/erp-oracle-fusion) - Oracle Fusion Cloud ERP REST/SOAP client, FBDI import engine and data extraction
+- [Oracle Fusion NestJS Module](https://www.npmjs.com/package/@rytass/erp-oracle-fusion-nestjs) - NestJS module wrapper for the Oracle Fusion client
+
 ### File Converter
 
 This is an interface for uploading file middleware, used with storages adapters. It's pipe-able api on readable/writable stream.

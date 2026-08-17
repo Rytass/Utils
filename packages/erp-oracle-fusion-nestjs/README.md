@@ -1,11 +1,12 @@
 # Rytass Utils - Oracle Fusion ERP Client (NestJS)
 
-NestJS module for [`@rytass/erp-oracle-fusion`](../erp-oracle-fusion). Wires the Fusion REST client
-and FBDI service into dependency injection, resolves configuration from any provider, binds the
-observability sink through DI, and bridges the NestJS logger.
+NestJS module for [`@rytass/erp-oracle-fusion`](../erp-oracle-fusion). Wires the Fusion REST client,
+SOAP client, FBDI service and the customer account / AR credit profile services into dependency
+injection, resolves configuration from any provider, binds the observability sink through DI, and
+bridges the NestJS logger.
 
-Client behaviour itself, meaning REST semantics, error classification, the FBDI template engine and
-ESS jobs, is documented in the [core package README](../erp-oracle-fusion/README.md). This document
+Client behaviour itself — REST and SOAP semantics, error classification, the FBDI template engine and
+ESS jobs — is documented in the [core package README](../erp-oracle-fusion/README.md). This document
 covers module assembly only.
 
 ## Features
@@ -13,6 +14,8 @@ covers module assembly only.
 - [x] Synchronous and asynchronous module registration
 - [x] Configuration from any injectable provider (ConfigService, Vault, literals)
 - [x] `FusionRestClient` and `FusionFbdiService` as injectable providers
+- [x] `FusionSoapClient` plus the customer account and AR credit profile services, from the same registration
+- [x] REST and SOAP calls share one configuration and one observability sink
 - [x] Observability sink bound through DI (`useClass`, `useExisting`, `useFactory`)
 - [x] NestJS `Logger` bridged into the client automatically
 - [x] Optional global registration
@@ -104,6 +107,31 @@ export class LedgerService {
 }
 ```
 
+Customer accounts and AR credit profiles have no REST resource, so they are served by SOAP providers
+registered by the same module:
+
+```ts
+@Injectable()
+export class CustomerService {
+  constructor(
+    private readonly accounts: FusionCustomerAccountService,
+    private readonly profiles: FusionCustomerProfileService,
+  ) {}
+
+  async setCreditLimit(accountProfileId: string, limit: number): Promise<void> {
+    await this.profiles.updateCustomerProfile(
+      { CustomerAccountProfileId: accountProfileId, CreditLimit: limit, CreditCurrencyCode: 'TWD' },
+      { context: { correlationType: 'credit-review', correlationId: accountProfileId } },
+    );
+  }
+}
+```
+
+Because both clients share the sink, passing the same `context` to REST and SOAP calls lets you trace
+one business transaction across both protocols. See
+[`@rytass/erp-oracle-fusion`](../erp-oracle-fusion#soap-services) for the full SOAP guide, including
+the partial-update semantics and required fields.
+
 ## Sharing the Client Across Modules
 
 `forRoot` and `forRootAsync` must be called **exactly once**. Calling either twice creates two
@@ -163,8 +191,12 @@ FusionClientModule.forRootAsync({
 | `FUSION_CALL_LOG_SINK`      | DI token holding the bound observability sink |
 | `FusionClientModuleOptions` | Module option types                           |
 
+All of `FusionRestClient`, `FusionFbdiService`, `FusionSoapClient`, `FusionCustomerAccountService`
+and `FusionCustomerProfileService` are provided and exported by a single `forRoot(Async)` call.
+
 For convenience this package re-exports the core symbols most applications need
-(`FusionRestClient`, `FusionFbdiService`, the three error classes, `FusionCallLogEntry` and so on).
+(the clients and services above, the error classes including `FusionSoapFaultError`,
+`CustomerAccountInput`, `CustomerProfileInput`, `FusionCallLogEntry` and so on).
 The full FBDI template API (`defineFbdiTemplate`, `GL_JOURNAL_TEMPLATE` and friends) should be
 imported directly from [`@rytass/erp-oracle-fusion`](../erp-oracle-fusion).
 
@@ -172,7 +204,14 @@ imported directly from [`@rytass/erp-oracle-fusion`](../erp-oracle-fusion).
 
 **`Nest can't resolve dependencies of the FusionRestClient`.** The consuming module does not import
 a module that provides the client. Either wrap `forRoot(Async)` in a module that exports
-`FusionClientModule`, or register with `isGlobal: true`.
+`FusionClientModule`, or register with `isGlobal: true`. The same applies to `FusionSoapClient`,
+`FusionCustomerAccountService` and `FusionCustomerProfileService` — all five come from one
+registration, so if one resolves the others will too.
+
+**SOAP calls are missing from the observability sink.** They should not be: both clients receive the
+same bound sink. Check that the call is actually reaching Fusion (a failure thrown before the request
+leaves, such as a validation error in your own code, never reaches the sink), and that you are reading
+the same sink instance the module bound.
 
 **`A circular dependency between modules`.** The module hosting the observability sink depends on
 `FusionRestClient`. Move the sink into a module that depends only on its storage layer.

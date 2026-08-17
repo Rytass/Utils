@@ -51,6 +51,7 @@ This is a **monorepo** using **Lerna** and **Yarn Workspaces** containing **util
 6. **Secret Management** (`secret-*`): HashiCorp Vault integration
 7. **Logistics** (`logistics-*`): Taiwan logistics providers integration
 8. **SMS** (`sms-*`): SMS service providers integration
+9. **ERP** (`erp-*`): Enterprise resource planning integration (Oracle Fusion REST + SOAP clients, FBDI bulk import)
 
 ### Build System
 

@@ -1,8 +1,12 @@
 # Rytass Utils - Oracle Fusion ERP Client
 
-REST client and FBDI toolkit for Oracle Fusion Cloud ERP. Handles authentication, retry policy,
-error classification, observability instrumentation and FBDI packaging, with zero runtime
-dependencies and no framework coupling.
+REST and SOAP client plus FBDI toolkit for Oracle Fusion Cloud ERP. Handles authentication, retry
+policy, error classification, observability instrumentation and FBDI packaging, with no framework
+coupling and a single runtime dependency (`fast-xml-parser`, used for SOAP responses).
+
+Both protocols share one transport, so authentication, timeouts, retry backoff and observability
+behave identically whichever surface an object happens to live on — and some objects, such as
+customer accounts and AR credit profiles, are only reachable over SOAP.
 
 Scheduling, outbox patterns, dead-letter handling, document state machines and master-data mapping
 are deliberately left to the consuming application, which is the only layer that knows when a
@@ -37,7 +41,10 @@ For NestJS applications, use [`@rytass/erp-oracle-fusion-nestjs`](../erp-oracle-
 - [x] ESS job submission, status polling and execution log retrieval
 - [x] ZIP reading (STORED and DEFLATE) for the archives Fusion returns
 - [ ] Built-in AP / AR / FA templates (define your own through the template API)
-- [ ] SOAP, BI Publisher / OTBI
+- [x] SOAP client for services with no REST equivalent, sharing the REST client's auth and observability
+- [x] Customer accounts (`CustomerAccountService`) and AR credit profiles (`ReceivablesCustomerProfileService`)
+- [x] SOAP fault parsing with Oracle error codes and attribute-level validation errors
+- [ ] BI Publisher / OTBI
 
 ## Installation
 
@@ -527,6 +534,183 @@ await fbdi.submitEssJob({ jobPackageName, jobDefName, parameters, documentId });
 
 Ordinary FBDI imports should still use `FusionFbdiService.import`, which does both in one call.
 
+## SOAP Services
+
+Some Fusion business objects have **no REST resource at all**. Customer accounts and AR credit
+profiles are the common example: `crmRestApi`'s `accounts` is the *Sales* account (a TCA party plus
+a sales profile), not the AR customer account, and there is no `customerAccounts` or
+`customerProfiles` resource to fall back to. Those objects are reachable only over SOAP.
+
+`FusionSoapClient` is built on the same transport as `FusionRestClient`, so authentication, timeouts,
+retry backoff and the observability sink behave identically. The WSDL policy is
+`wss11_saml_or_username_token_with_message_protection_service_policy`, whose name suggests WS-Security
+message protection is mandatory — in practice Fusion SaaS accepts HTTP Basic over SSL, so no signing,
+encryption or runtime WSDL parsing is required.
+
+```ts
+import {
+  FusionSoapClient,
+  FusionCustomerAccountService,
+  FusionCustomerProfileService,
+} from '@rytass/erp-oracle-fusion';
+
+const soap = new FusionSoapClient({ baseUrl, auth });
+const accounts = new FusionCustomerAccountService(soap);
+const profiles = new FusionCustomerProfileService(soap);
+```
+
+### Creating a Customer Account
+
+A customer account always belongs to an existing TCA party — `CustomerAccountService` will not create
+one for you. Build the party first through REST, then the account, then the credit profile:
+
+```ts
+// 1. Party. Use `accounts`, not `hubOrganizations`: the latter is rejected with HZ-120421
+//    ("no party usage assigned") because it does not assign a party usage.
+const org = await rest.post<{ PartyId: number }>(
+  'accounts',
+  { OrganizationName: 'Acme Ltd' },
+  { namespace: 'crmRestApi' },
+);
+
+// 2. Customer account. PartyId and CreatedByModule are both required.
+const account = await accounts.createCustomerAccount({
+  PartyId: String(org.PartyId),
+  AccountName: 'Acme Ltd',
+  CustomerType: 'R',
+  Status: 'A',
+  CreatedByModule: 'HZ_WS',
+});
+
+// 3. Credit profile. CustomerAccountId *and* PartyId are both required.
+await profiles.createCustomerProfile({
+  CustomerAccountId: account!.CustomerAccountId!,
+  PartyId: String(org.PartyId),
+  ProfileClassName: 'DEFAULT',
+  CreditLimit: 500000,
+  CreditCurrencyCode: 'TWD',
+  CreditChecking: 'Y',
+  CreditHold: 'N',
+});
+```
+
+Omitting `CreatedByModule` fails with a bare `JBO-27024: Failed to validate a row` that does **not**
+name the offending attribute, which makes it a slow thing to debug. Always send it.
+
+### Partial Updates
+
+`undefined` and `null` mean different things, which is what makes partial updates work:
+
+| Value in the input        | Wire format             | Effect in Fusion            |
+|---------------------------|-------------------------|-----------------------------|
+| omitted / `undefined`     | element not sent        | field keeps its value       |
+| `null`                    | `xsi:nil="true"`        | field is cleared            |
+| any scalar                | `<svc:Field>value<...>` | field is set                |
+
+```ts
+// Only these two fields change; the currency, order limit and profile class are untouched.
+await profiles.updateCustomerProfile({
+  CustomerAccountProfileId: '300000003278056',
+  CreditLimit: 900000,
+  CreditHold: 'Y',
+});
+```
+
+Watch out for one asymmetry: the **response** of `create`/`update` on the profile service contains
+only the fields you sent, with everything else `null`. That does not mean those fields were cleared —
+read them back with `getActiveCustomerProfile` if you need the current state. The account service, by
+contrast, does return a full snapshot.
+
+Note that `Y`/`N` flags such as `CreditChecking` and `CreditHold` are typed `string` in the schema,
+so pass `'Y'`/`'N'` rather than JS booleans.
+
+One thing the serializer does silently: characters that XML 1.0 forbids outright (control characters
+other than tab, newline and carriage return) are **stripped** from outgoing values. They cannot be
+entity-escaped, and leaving them in makes the *entire* envelope invalid — Fusion then rejects the
+whole call with an error that does not point at the offending field. Imported customer names and
+addresses occasionally carry them. If your data must be written verbatim, validate before calling
+rather than relying on this.
+
+### Querying
+
+`findCustomerAccount` takes ADF find criteria. The full SDO includes every site and contact, so limit
+the attributes when you only need a few:
+
+```ts
+const found = await accounts.findCustomerAccount({
+  fetchSize: 10,
+  filters: [{ attribute: 'AccountNumber', operator: '=', value: '4' }],
+  findAttributes: ['CustomerAccountId', 'AccountNumber', 'Status'],
+});
+
+const profile = await profiles.getActiveCustomerProfile({ AccountNumber: '4' });
+```
+
+The two find methods return `Partial<CustomerAccount>[]` rather than `CustomerAccount[]`, because
+`findAttributes` makes Fusion return **only** the requested fields — everything else is `undefined`,
+not `null`. Typing them as complete would let `account.Status === 'A'` compile while always being
+false. The other operations do return every declared field, so they keep the complete type.
+
+Values come back as strings, never numbers — Fusion ids are `long` and would lose precision as JS
+numbers, and account numbers such as `0012` would lose their leading zeros. `xsi:nil="true"` becomes
+`null`.
+
+### SOAP Faults
+
+SOAP faults always arrive as HTTP 500, so the REST rule "5xx is transient, retry it" would be wrong
+here: a validation failure never succeeds on retry, and retrying a non-idempotent write is dangerous.
+`FusionSoapFaultError` therefore extends `FusionValidationError` and is never retried.
+
+```ts
+try {
+  await profiles.createCustomerProfile(input);
+} catch (error) {
+  if (error instanceof FusionSoapFaultError) {
+    error.errorCode; // 'FND:::FND_CMN_RCRD_MSNG' or '27024'
+    error.faultCode; // 'env:Server'
+    error.attributeErrors; // [{ attributeName: 'PartyId', objectName: 'CustomerProfileDEO', message: ... }]
+  }
+}
+```
+
+`attributeErrors` is collected recursively from the nested `detail` tree, which is where Fusion puts
+the per-field messages when one call fails several validations at once.
+
+### Calling Other SOAP Services
+
+Any Fusion SOAP service works through `FusionSoapClient.call()`. Supply the three namespaces
+explicitly — they are not derivable from one another, as the two built-in services show
+(`CustomerProfileService` uses `{service}types/` while `CustomerAccountService` uses
+`{service}applicationModule/types/`):
+
+```ts
+const result = await soap.call(
+  {
+    path: '/fscmService/SomeService',
+    serviceNamespace: 'http://xmlns.oracle.com/apps/.../someService/',
+    typesNamespace: 'http://xmlns.oracle.com/apps/.../someService/types/',
+    soapActionNamespace: 'http://xmlns.oracle.com/apps/.../someService/',
+  },
+  'someOperation',
+  [{ name: 'someParameter', value: { Field: 'value' } }],
+  { maxRetries: 2 }, // read-only operations only; writes default to 0
+);
+```
+
+Parameter values follow the same rules as the typed services. A parameter whose schema type is
+`maxOccurs="unbounded"` (such as `processCustomerAccount`'s `customerAccount`) takes an array and is
+emitted as the element repeated:
+
+```ts
+[{ name: 'customerAccount', value: [{ PartyId: '1' }, { PartyId: '2' }] }]
+// → <typ:customerAccount><svc:PartyId>1</svc:PartyId></typ:customerAccount>
+//   <typ:customerAccount><svc:PartyId>2</svc:PartyId></typ:customerAccount>
+```
+
+Parameters carrying ADF shared types rather than the service's own SDO — `findCriteria` and
+`findControl` are the ones you will meet — need `contentPrefix: 'adf'`, otherwise their fields land in
+the wrong namespace and Fusion rejects the call.
+
 ## Observability
 
 Implement `FusionCallLogSink` to persist every call:
@@ -566,13 +750,27 @@ below for brevity.
 
 ### Client
 
-| Export                                                                                                                                      | Description                                                   |
-| ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| `FusionRestClient`                                                                                                                          | `get`, `getAll`, `post`, `patch`, `delete`, `resourceUrl`     |
-| `FusionAuthProvider`                                                                                                                        | `getAuthorizationHeader`, `getAccessToken`, `invalidateToken` |
-| `resolveFusionClientOptions`                                                                                                                | Applies defaults; useful when assembling the client manually  |
-| `parseRetryAfter`                                                                                                                           | Parses `Retry-After` (delay-seconds or HTTP date)             |
-| `DEFAULT_NAMESPACE`, `DEFAULT_API_VERSION`, `DEFAULT_MAX_RETRIES`, `DEFAULT_RETRY_BASE_DELAY_MS`, `DEFAULT_PAGE_SIZE`, `DEFAULT_TIMEOUT_MS` | Default values applied by `resolveFusionClientOptions`        |
+| Export                                                                                                                                      | Description                                                         |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `FusionRestClient`                                                                                                                          | `get`, `getAll`, `post`, `patch`, `delete`, `resourceUrl`           |
+| `FusionAuthProvider`                                                                                                                        | `getAuthorizationHeader`, `getAccessToken`, `invalidateToken`       |
+| `resolveFusionClientOptions`                                                                                                                | Applies defaults; useful when assembling the client manually        |
+| `parseRetryAfter`                                                                                                                           | Parses `Retry-After` (delay-seconds or HTTP date)                   |
+| `FusionHttpTransport`                                                                                                                       | Shared transport (auth, timeout, retry, call log) for REST and SOAP |
+| `DEFAULT_NAMESPACE`, `DEFAULT_API_VERSION`, `DEFAULT_MAX_RETRIES`, `DEFAULT_RETRY_BASE_DELAY_MS`, `DEFAULT_PAGE_SIZE`, `DEFAULT_TIMEOUT_MS` | Default values applied by `resolveFusionClientOptions`              |
+
+### SOAP
+
+| Export                                                               | Description                                                                                                                                  |
+| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `FusionSoapClient`                                                   | `call(service, operation, parameters, options)`, `serviceUrl`                                                                                |
+| `FusionCustomerAccountService`                                       | `createCustomerAccount`, `updateCustomerAccount`, `getCustomerAccount`, `findCustomerAccount`, `getCustomerAccountByOriginalSystemReference` |
+| `FusionCustomerProfileService`                                       | `createCustomerProfile`, `updateCustomerProfile`, `getActiveCustomerProfile`                                                                 |
+| `FUSION_CUSTOMER_ACCOUNT_SERVICE`, `FUSION_CUSTOMER_PROFILE_SERVICE` | Service coordinates (path and the three namespaces)                                                                                          |
+| `buildFindCriteria`, `buildFindControl`                              | ADF find criteria, emitted in the order the schema requires                                                                                  |
+| `buildSoapEnvelope`, `serializeElement`, `escapeXml`                 | Envelope construction for services not wrapped here                                                                                          |
+| `parseSoapXml`, `normalizeParsedXml`, `findSoapFaultNode`            | Response parsing (`xsi:nil` becomes `null`, values stay strings)                                                                             |
+| `classifySoapHttpError`, `buildSoapFaultError`                       | SOAP-specific classification: faults are never transient                                                                                     |
 
 ### Query and Constants
 
@@ -586,11 +784,12 @@ below for brevity.
 
 ### Errors
 
-| Export                                                             | Description                               |
-| ------------------------------------------------------------------ | ----------------------------------------- |
-| `FusionAuthError`, `FusionValidationError`, `FusionTransientError` | The three error classes                   |
-| `isFusionRequestError`                                             | Type guard                                |
-| `classifyFusionHttpError`, `wrapNetworkError`                      | Classification helpers for custom callers |
+| Export                                                             | Description                                                        |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| `FusionAuthError`, `FusionValidationError`, `FusionTransientError` | The three error classes                                            |
+| `FusionSoapFaultError`                                             | SOAP fault; extends `FusionValidationError` so it is never retried |
+| `isFusionRequestError`                                             | Type guard                                                         |
+| `classifyFusionHttpError`, `wrapNetworkError`                      | Classification helpers for custom callers                          |
 
 ### Observability
 
@@ -676,6 +875,41 @@ the worst case for an idempotent GET is `timeoutMs * (maxRetries + 1)`.
 **Observability slows down business flows.** `record()` is awaited before the call returns. It must
 never throw and should be fast; batch or queue writes inside your own sink if the backing store is
 slow.
+
+### SOAP
+
+**`500 Unknown method`.** The operation element is in the wrong namespace. It belongs to
+`typesNamespace`, not the WSDL's `targetNamespace`, and the two differ per service — this is the
+first thing everyone hits. The built-in service constants already have the right values; when
+defining your own, read them off the WSDL rather than deriving them.
+
+**`JBO-27024: Failed to validate a row` with no attribute in `attributeErrors`.** Most often a
+missing `CreatedByModule` on `createCustomerAccount`. Fusion does not name the field in this case,
+which is what makes it slow to diagnose. Send `CreatedByModule` (integrations conventionally use
+`'HZ_WS'`) and try again.
+
+**`JBO-27014: Attribute PartyId ... is required` on `createCustomerProfile`.** The profile needs both
+`CustomerAccountId` and `PartyId`; supplying only the account id is not enough.
+
+**`HZ-120421: This party isn't valid because there is no party usage assigned`.** You built the party
+through `hubOrganizations`. Use `crmRestApi`'s `accounts` resource instead, which assigns a party
+usage as part of creation.
+
+**`HZ-120559` on a field you did send.** `OrigSystem` must name a source system registered in that
+pod. Leave it empty until the source system has been registered by an administrator.
+
+**A field you updated reads back as `null` in the response.** Expected on the credit profile service:
+its write responses contain only the fields you sent. Read back with `getActiveCustomerProfile`
+before concluding anything was cleared.
+
+**Fields are `undefined` on results from `findCustomerAccount`.** `findAttributes` restricts the
+response to exactly the attributes you listed. Drop it to get the full SDO, or add the field you need
+to the list.
+
+**A SOAP call fails and is not retried.** By design. Faults arrive as HTTP 500 but are business
+failures that will never succeed on retry, so `FusionSoapFaultError` is classified as terminal.
+Genuine transport problems (a 500 with no fault body, 502-504, network errors) still retry when
+`maxRetries` allows it.
 
 ## Requirements
 
