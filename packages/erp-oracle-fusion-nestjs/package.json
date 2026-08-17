@@ -1,6 +1,6 @@
 {
   "name": "@rytass/erp-oracle-fusion-nestjs",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "NestJS module for Oracle Fusion Cloud ERP REST/SOAP client",
   "keywords": [
     "rytass",
@@ -32,6 +32,6 @@
     "@nestjs/common": ">=10"
   },
   "dependencies": {
-    "@rytass/erp-oracle-fusion": "^0.1.0"
+    "@rytass/erp-oracle-fusion": "^0.2.0"
   }
 }
