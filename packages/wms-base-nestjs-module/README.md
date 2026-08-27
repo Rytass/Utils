@@ -3485,6 +3485,27 @@ exported `RESOLVED_MEMBER_REPO`.
 **Note:** this module does not register a custom entity with TypeORM for you —
 add it to your DataSource `entities` or `TypeOrmModule.forFeature([...])`.
 
+### Single-table inheritance
+
+Every base entity declares `@TableInheritance()`, so an override is written as a
+`@ChildEntity()` joining the same table rather than a replacement mapped
+elsewhere. `WarehouseMapEntity` was the exception until 0.4.0 — a `@ChildEntity()`
+of a parent without table inheritance has no parent metadata and fails while
+TypeORM builds its columns.
+
+Its discriminator column is declared **nullable**, unlike the others: the table
+predates the column, and a `NOT NULL` discriminator would fail `synchronize` (and
+any generated migration) on the first upgrade with existing rows. Rows written
+before 0.4.0 keep `NULL`, and stay readable because a single-table root is
+queried without a discriminator filter. They are not visible to an override —
+backfill them if you need them to be:
+
+```sql
+UPDATE warehouse_maps SET "entityName" = 'YourMapEntity' WHERE "entityName" IS NULL;
+```
+
+If you run migrations rather than `synchronize`, generate one adding the column.
+
 ### Performance Benchmarks
 
 Expected performance characteristics for production deployments:
