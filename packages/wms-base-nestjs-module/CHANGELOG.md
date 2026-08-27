@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.3.0](https://github.com/Rytass/Utils/compare/@rytass/wms-base-nestjs-module@0.2.0...@rytass/wms-base-nestjs-module@0.3.0) (2026-08-27)
+
+### Features
+
+- **wms-base-nestjs-module:** export resolved entity tokens for layered modules ([0b3fe5f](https://github.com/Rytass/Utils/commit/0b3fe5f6edf651ee55207393f820f834eaf68e5b))
+
 # [0.2.0](https://github.com/Rytass/Utils/compare/@rytass/wms-base-nestjs-module@0.1.12...@rytass/wms-base-nestjs-module@0.2.0) (2026-08-02)
 
 ### Bug Fixes
