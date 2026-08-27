@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.4.0](https://github.com/Rytass/Utils/compare/@rytass/wms-base-nestjs-module@0.3.0...@rytass/wms-base-nestjs-module@0.4.0) (2026-08-27)
+
+### Features
+
+- **wms-base-nestjs-module:** give the warehouse map entity table inheritance ([0271487](https://github.com/Rytass/Utils/commit/0271487f2fd525008f0e1218d1e650c3273bd732))
+
 # [0.3.0](https://github.com/Rytass/Utils/compare/@rytass/wms-base-nestjs-module@0.2.0...@rytass/wms-base-nestjs-module@0.3.0) (2026-08-27)
 
 ### Features
