@@ -1,9 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Injectable, Module } from '@nestjs/common';
+import { DynamicModule, Inject, Injectable, Module } from '@nestjs/common';
+import { Repository } from 'typeorm';
 import { WMSBaseModule } from '../src/wms-base.module';
 import { WMSBaseModuleOptionsFactory, WMSBaseModuleOptions } from '../src/typings/wms-base-module-options.interface';
-import { WMS_MODULE_OPTIONS } from '../src/typings/wms-base-module-providers';
+import {
+  PROVIDE_MATERIAL_ENTITY,
+  RESOLVED_MATERIAL_REPO,
+  WMS_MODULE_OPTIONS,
+} from '../src/typings/wms-base-module-providers';
 import { LocationService } from '../src/services/location.service';
 import { MaterialService } from '../src/services/material.service';
 import { OrderService } from '../src/services/order.service';
@@ -450,6 +455,91 @@ describe('WMSBaseModule', () => {
 
       expect(moduleOptions).toBeDefined();
       expect(moduleOptions.allowNegativeStock).toBe(false);
+
+      await module.close();
+    });
+  });
+
+  describe('entity override tokens', () => {
+    /**
+     * `module.get()` searches every module, so it cannot tell an exported token
+     * from an internal one. Injecting into a provider of a module that merely
+     * *imports* this one is what actually proves the token crossed the module
+     * boundary — which is the whole point of exporting them: a module layered on
+     * top has to be able to see which entity the consumer configured, or it will
+     * hard-code the built-in class and write to a different inheritance
+     * discriminator than this module reads from.
+     */
+    @Injectable()
+    class UpperLayerService {
+      constructor(
+        @Inject(PROVIDE_MATERIAL_ENTITY)
+        readonly configuredMaterialEntity: (new () => MaterialEntity) | null,
+        @Inject(RESOLVED_MATERIAL_REPO)
+        readonly materialRepo: Repository<MaterialEntity>,
+      ) {}
+    }
+
+    @Module({})
+    class UpperLayerModule {
+      static forRoot(baseModule: DynamicModule): DynamicModule {
+        return {
+          module: UpperLayerModule,
+          imports: [baseModule],
+          providers: [UpperLayerService],
+          exports: [UpperLayerService],
+        };
+      }
+    }
+
+    const bootUpperLayer = async (baseModule: DynamicModule): Promise<TestingModule> =>
+      Test.createTestingModule({
+        imports: [
+          TypeOrmModule.forRoot({
+            type: 'sqlite',
+            database: ':memory:',
+            autoLoadEntities: true,
+            synchronize: true,
+            logging: false,
+          }),
+          TypeOrmModule.forFeature([LocationEntity, MaterialEntity, StockEntity, OrderEntity, BatchEntity]),
+          UpperLayerModule.forRoot(baseModule),
+        ],
+      }).compile();
+
+    it('lets an importing module read the configured entity and its repository', async () => {
+      const module = await bootUpperLayer(WMSBaseModule.forRoot({ materialEntity: MaterialEntity }));
+      const upper = module.get(UpperLayerService);
+
+      expect(upper.configuredMaterialEntity).toBe(MaterialEntity);
+      expect(upper.materialRepo.target).toBe(MaterialEntity);
+
+      await module.close();
+    });
+
+    it('reports a null entity when the consumer configured none', async () => {
+      const module = await bootUpperLayer(WMSBaseModule.forRoot({}));
+      const upper = module.get(UpperLayerService);
+
+      expect(upper.configuredMaterialEntity).toBeNull();
+      // Still resolves, so an upper layer can inject the token unconditionally
+      // and decide on its own fallback.
+      expect(upper.materialRepo).toBeDefined();
+
+      await module.close();
+    });
+
+    it('exports the same tokens from forRootAsync', async () => {
+      const module = await bootUpperLayer(
+        WMSBaseModule.forRootAsync({
+          useFactory: async () => ({ materialEntity: MaterialEntity }),
+        }),
+      );
+
+      const upper = module.get(UpperLayerService);
+
+      expect(upper.configuredMaterialEntity).toBe(MaterialEntity);
+      expect(upper.materialRepo.target).toBe(MaterialEntity);
 
       await module.close();
     });
