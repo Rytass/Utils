@@ -3448,6 +3448,43 @@ interface WMSConfig {
 }
 ```
 
+### Exported DI tokens
+
+Every entity override is published as two tokens so a module layered on top of
+this one can stay in step with it:
+
+| Token                                                | Holds                                                              |
+|------------------------------------------------------|---------------------------------------------------------------------|
+| `WMS_MODULE_OPTIONS`                                 | The resolved `WMSBaseModuleOptions`                                |
+| `PROVIDE_<X>_ENTITY`                                 | The configured entity class, or `null` when none was given         |
+| `RESOLVED_<X>_REPO`                                  | The repository it resolves to (the built-in one when none)         |
+| `ALLOW_NEGATIVE_STOCK`                               | The resolved `allowNegativeStock` flag                             |
+
+`<X>` is `MATERIAL`, `BATCH`, `ORDER`, `STOCK`, `WAREHOUSE_MAP`, or
+`TREE_LOCATION` / `LOCATION` for the location pair.
+
+Import `WMSBaseModule` and inject the token:
+
+```typescript
+@Injectable()
+export class MyService {
+  constructor(
+    @Inject(PROVIDE_MATERIAL_ENTITY)
+    private readonly configuredMaterialEntity: (new () => MaterialEntity) | null,
+  ) {}
+}
+```
+
+Without these, `materialEntity` reaches only this module's own services: an upper
+layer cannot see which entity was configured, so it hard-codes the built-in class
+and ends up writing to a different single-table-inheritance discriminator than
+this module reads from. That is exactly the bug `@rytass/wms-module-core` hit
+before 0.3.0, and the reason `@rytass/member-base-nestjs-module` has always
+exported `RESOLVED_MEMBER_REPO`.
+
+**Note:** this module does not register a custom entity with TypeORM for you —
+add it to your DataSource `entities` or `TypeOrmModule.forFeature([...])`.
+
 ### Performance Benchmarks
 
 Expected performance characteristics for production deployments:
