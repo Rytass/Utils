@@ -14,9 +14,26 @@ import type {
   AuthenticationProvider,
   AuthProviderKind,
 } from '../../typings/authentication-provider.interface';
+import type { DirectoryListOptions, DirectoryProvider } from '../../typings/directory-provider.interface';
 
 /** A raw directory entry, as returned by the server. */
 export type LdapDirectoryEntry = Record<string, unknown>;
+
+/**
+ * `findAllUsers` options, in LDAP's dialect.
+ *
+ * Both fields are LDAP's own. `baseDN` has no counterpart in any other
+ * directory, and `filter` is an RFC 4515 expression — not the OData or SCIM
+ * expression another provider's `filter` would take, which is why
+ * `DirectoryListOptions` declares no shared filter field for them to be
+ * confused through.
+ */
+export interface LdapDirectoryListOptions extends DirectoryListOptions {
+  /** Overrides the configured search base for this call. */
+  baseDN?: string;
+  /** RFC 4515 search filter. */
+  filter?: string;
+}
 
 export interface LdapCredentials {
   account: string;
@@ -88,7 +105,9 @@ const DEFAULT_ATTRIBUTES = [
  * supplied password. Nothing is stored locally beyond the binding the gateway
  * creates.
  */
-export class LdapAuthProvider implements AuthenticationProvider<LdapCredentials> {
+export class LdapAuthProvider
+  implements AuthenticationProvider<LdapCredentials>, DirectoryProvider<LdapDirectoryListOptions, LdapDirectoryEntry>
+{
   readonly channel: string;
   readonly kind: AuthProviderKind = 'credential';
 
@@ -155,7 +174,7 @@ export class LdapAuthProvider implements AuthenticationProvider<LdapCredentials>
    * ones in another) is reconciled without pulling in the containers it should
    * be ignoring.
    */
-  async findAllUsers(options?: { baseDN?: string; filter?: string }): Promise<LdapDirectoryEntry[]> {
+  async findAllUsers(options?: LdapDirectoryListOptions): Promise<LdapDirectoryEntry[]> {
     return this.search(options?.filter ?? this.options.listFilter ?? '(objectClass=user)', undefined, options?.baseDN);
   }
 

@@ -76,6 +76,16 @@ export type {
   LinkExistingAccountStrategy,
 } from './typings/authentication-provider.interface';
 export type {
+  DirectoryEntry,
+  DirectoryIdentityAttributes,
+  DirectoryListOptions,
+  DirectoryProvider,
+  DirectoryDeltaResult,
+  DirectoryRemovedEntry,
+  DirectoryRemovalReason,
+} from './typings/directory-provider.interface';
+export { isDirectoryProvider } from './typings/directory-provider.interface';
+export type {
   CasbinPermissionCheckerParams,
   CasbinPermissionChecker,
   CasbinPermissionCheckerResult,
