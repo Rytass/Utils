@@ -16,7 +16,7 @@ import { resolve } from 'node:path';
 
 const packageRoot = resolve(__dirname, '..');
 const libPath = resolve(packageRoot, 'lib');
-const builtIndex = resolve(libPath, 'index.cjs.js');
+const builtIndex = resolve(libPath, 'index.cjs');
 
 const describeBuilt = existsSync(builtIndex) ? describe : describe.skip;
 
@@ -42,11 +42,19 @@ describeBuilt('subpath isolation', () => {
   it('should not reach the ldap entry from the package root', () => {
     const loaded = loadInIsolation([builtIndex]);
 
-    expect(loaded.some(file => file.endsWith('ldap.cjs.js'))).toBe(false);
+    expect(loaded.some(file => file.endsWith('ldap.cjs'))).toBe(false);
+  });
+
+  it('should not pull ldapts in through the entra entry', () => {
+    // Entra needs no dependency of its own — Node's fetch and the jsonwebtoken
+    // peer the package already requires — and must not drag another entry's in.
+    const loaded = loadInIsolation([resolve(libPath, 'entra.cjs')]);
+
+    expect(loaded.some(file => file.includes('/ldapts/'))).toBe(false);
   });
 
   it('should pull ldapts in once the ldap entry is imported', () => {
-    const loaded = loadInIsolation([resolve(libPath, 'ldap.cjs.js')]);
+    const loaded = loadInIsolation([resolve(libPath, 'ldap.cjs')]);
 
     expect(loaded.some(file => file.includes('/ldapts/'))).toBe(true);
   });
@@ -54,7 +62,7 @@ describeBuilt('subpath isolation', () => {
   it('should not reach the oidc provider entry from the package root', () => {
     const loaded = loadInIsolation([builtIndex]);
 
-    expect(loaded.some(file => file.endsWith('oidc-provider.cjs.js'))).toBe(false);
+    expect(loaded.some(file => file.endsWith('oidc-provider.cjs'))).toBe(false);
   });
 
   it('should not register the oidc tables when only the package root is imported', () => {
@@ -70,7 +78,7 @@ describeBuilt('subpath isolation', () => {
   });
 
   it('should register the oidc tables once the provider entry is imported', () => {
-    loadInIsolation([builtIndex, resolve(libPath, 'oidc-provider.cjs.js')]);
+    loadInIsolation([builtIndex, resolve(libPath, 'oidc-provider.cjs')]);
 
     const { getMetadataArgsStorage } = require('typeorm') as typeof import('typeorm');
     const tables = getMetadataArgsStorage().tables.map(table => table.name);
@@ -84,7 +92,7 @@ describeBuilt('subpath isolation', () => {
     Object.keys(requireFromLib.cache).forEach(key => delete requireFromLib.cache[key]);
 
     const root = requireFromLib(builtIndex) as Record<string, unknown>;
-    const graphql = requireFromLib(resolve(libPath, 'graphql.cjs.js')) as Record<string, unknown>;
+    const graphql = requireFromLib(resolve(libPath, 'graphql.cjs')) as Record<string, unknown>;
 
     expect(typeof root.MemberBaseService).toBe('function');
     expect(typeof graphql.TokenPairGraphQLDto).toBe('function');
@@ -96,7 +104,7 @@ describeBuilt('subpath isolation', () => {
     };
 
     expect(Object.keys(packageJson.exports ?? {})).toEqual(
-      expect.arrayContaining(['.', './graphql', './ldap', './oidc-provider', './package.json']),
+      expect.arrayContaining(['.', './entra', './graphql', './ldap', './oidc-provider', './package.json']),
     );
   });
 });
