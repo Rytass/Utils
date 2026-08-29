@@ -3,6 +3,93 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.10.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.9.0...@rytass/member-base-nestjs-module@0.10.0) (2026-08-29)
+
+### Features
+
+- **member-base-nestjs-module:** authenticate and read directories against microsoft entra id ([91a47fd](https://github.com/Rytass/Utils/commit/91a47fd05862feda3da5e34231c46c29d11426dd))
+- **member-base-nestjs-module:** mount login routes for redirect providers on request ([74087c4](https://github.com/Rytass/Utils/commit/74087c45be4c3fa389ec2e30ea62deda496b4202))
+- **member-base-nestjs-module:** name the directory capability as DirectoryProvider ([8302525](https://github.com/Rytass/Utils/commit/8302525e4b342158c79fe774c7a237949376d8a6))
+
+**Microsoft Entra ID, under `@rytass/member-base-nestjs-module/entra`.** Entra is two systems behind one name — OpenID Connect at `login.microsoftonline.com` for the browser, client-credentials Microsoft Graph at `graph.microsoft.com` for the server — with permissions granted separately for each. `EntraAuthProvider` composes both behind a single channel so `gateway.getProvider(channel)` answers "who is this user" and "who is in the directory", which is the mental model an `LdapAuthProvider` user already has. `EntraDirectoryProvider` is the Graph half on its own.
+
+No new runtime dependency: everything runs on Node's built-in `fetch` and the `jsonwebtoken` peer this package already requires. `@azure/msal-node` and `@microsoft/microsoft-graph-client` are not installed and not needed.
+
+Token acquisition and renewal, `@odata.nextLink` paging, `Retry-After` backoff on `429`/`5xx`, the second request groups require, and the `ConsistencyLevel: eventual` advanced-query headers are all inside the provider. `findChangedUsers()` exposes `/users/delta` for incremental reconciliation; the delta token is **returned rather than stored**, matching the statelessness rule `OidcAuthProvider` follows with the PKCE verifier, and the two `@removed` reasons (`changed`, `deleted`) are surfaced separately rather than collapsed into a boolean.
+
+**`identifierClaim` defaults to `oid` for Entra, not `sub`.** Entra's `sub` is pairwise — a different value in every application — so binding a local member to it produces a key nothing else can correlate: not a Graph query, not a second application in the same tenant, not an export. `oid` is the tenant object id, which is also what the directory half binds on, so a login and a directory sync resolve to one member.
+
+**`DirectoryProvider` gives the directory capability a name.** Reading a directory has always been part of `LdapAuthProvider`, but `AuthenticationGateway.getProvider()` returns an `AuthenticationProvider`, which does not declare `findUser` / `findAllUsers` / `toIdentity` — so the only way to reach them was `as unknown as LdapAuthProvider`. The new `isDirectoryProvider()` type guard narrows instead. Through the guard you hold the base interface and call `findAllUsers()` with no options, which is the portable listing every directory can answer; a provider-specific narrowing — LDAP's `{ baseDN, filter }`, Graph's OData `{ filter }` — requires holding that provider, because passing one means you already know which directory answered.
+
+**`redirectAuth` mounts the two routes every OIDC application was writing by hand.** `GET /:prefix/:channel/start` and `GET /:prefix/:channel/callback` hold the transaction in a short-lived httpOnly cookie, match `state`, complete the callback through the gateway, issue the token pair and redirect — with `returnTo` checked against an allowlist so the endpoint is not an open redirect. Cookies go through the same `resolve-cookie-options` helper as the rest of the package.
+
+**Group memberships are read one request per user, never through `$expand`.** `$expand` on a directory object [returns at most 20 objects and carries no `@odata.nextLink`](https://learn.microsoft.com/en-us/graph/known-issues#some-limitations-apply-to-query-parameters), so a user in more groups comes back silently truncated with no way to detect it — and a truncated group list feeding an authorization decision is worse than a slow one. The paged `/memberOf/microsoft.graph.group` cast is used on every path instead, so the same person always yields the same groups. `includeGroups: false` is the escape hatch when the application does not need them.
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** run the subpath isolation suite again ([18fd00d](https://github.com/Rytass/Utils/commit/18fd00de9d3cbda4d248914f5dd705da7e6b695c))
+
+The suite looked for `lib/index.cjs.js`, `lib/ldap.cjs.js` and `lib/oidc-provider.cjs.js`. The build has emitted `.cjs` for some time, so `existsSync` never matched and every assertion in it was silently skipped by its `describe.skip` guard. It runs now, and passes. Note it still skips silently when `lib/` is absent, so a CI job without a build step gets no signal from it.
+
+The mounted routes are covered by a real application rather than by metadata assertions. `createRedirectAuthController` applies a configurable path by subclassing a decorated base class, which works only because Nest walks the prototype chain for route handlers, for constructor injection, and for the `@IsPublic()` marker `CasbinGuard` reads — all framework behaviour. A suite that asserted the decorator metadata would restate that mechanism rather than exercise it, so the routes are booted and driven over HTTP instead.
+
+### Security
+
+**`returnTo` no longer accepts a control character, and returns only what it parsed.** `new URL()` strips ASCII tab, CR and LF before parsing, so `?returnTo=/%09/evil.test/dashboard` looked like a path to a check on the raw string, parsed as `//evil.test/dashboard`, and was returned verbatim for the browser to follow off-origin. Any allowlist holding a relative entry was affected — including the `/dashboard` this README recommends. Absolute-only allowlists were not.
+
+Two changes, because the first alone would only close the instance: every C0 control, space and DEL now rejects the candidate, **and** the value returned is the re-serialised url rather than the caller's string, so a future divergence between this parser and a browser's cannot become a bypass either. This shipped before any release, so no published version was affected.
+
+### BREAKING CHANGES
+
+None. Everything in this release is additive:
+
+- `LdapAuthProvider`, `OidcAuthProvider`, `AuthenticationGateway` and `OAuthCallbacksController` keep their signatures and their behaviour. `LdapAuthProvider` now declares `implements DirectoryProvider<LdapDirectoryListOptions>`, which it already satisfied — `findAllUsers`'s inline `{ baseDN?, filter? }` is the named `LdapDirectoryListOptions`, structurally identical.
+- No route is registered unless `redirectAuth` is supplied, so an existing application gains no endpoint. `OAuthCallbacksController` is unchanged and still serves `/auth/login/:channel` and `/auth/callbacks/:channel`. Under the default `routePrefix: 'auth'` the two coexist with one exception: all four paths are three segments and the legacy controller is registered first, so a redirect channel literally named `login` or `callbacks` is shadowed and unreachable. A warning naming the channel is logged on bootstrap, and moving `routePrefix` off `auth` avoids it.
+- Three new error codes are added — `DirectoryRequestFailedError` (125), `RedirectAuthTransactionError` (126), `RedirectAuthDeniedError` (127) — and no existing code changes.
+- `DirectoryProvider` declares `channel` and an optional `findChangedUsers`, and is generic over its entry type as a second parameter — all additive for the two implementors that ship here. `DirectoryListOptions` deliberately declares **no** `filter`: LDAP, Graph, SCIM and the Google Directory API each take a different expression language, and one shared name over four of them invites a portable call that is wrong at runtime. Each provider declares its own, and the base type carries an unused `__dialect?: never` so that TypeScript actually enforces it — an empty interface is `{}`, which is exempt from excess-property checking, and the guarantee would otherwise be decorative.
+- No schema change. No table is added or altered.
+
+### Behaviour worth knowing before you configure it
+
+All of this is new API, so none of it breaks an upgrade — but each will surprise someone who assumes the obvious default.
+
+- **`attributes.disabled` is `boolean | undefined`, and `attributes.groups` is `string[] | undefined`.** A `/users/delta` entry carries the id plus _at least_ what changed, so `accountEnabled` is often absent — and `undefined` means "this page did not say", not "enabled". A reconciliation that treats absent as `false` re-enables suspended members on any unrelated change. Merge, do not overwrite. `groups` is `[]` when memberships were requested and the user has none, and `undefined` when they were not requested at all.
+- **`EntraClientCertificate` takes `{ certificate, privateKey }`, both PEM.** The assertion is signed `PS256` with `x5t#S256` per [Microsoft's certificate credentials specification](https://learn.microsoft.com/en-us/entra/identity-platform/certificate-credentials), and the thumbprint is computed from the certificate you supply — the portal displays thumbprints in more than one hash and encoding, and pasting the wrong one yields a well-formed assertion and an `invalid_client` with nothing to debug.
+- **`redirectAuth.routePrefix` refuses an empty, whitespace-only, slash-only or dot-only value, and throws at module definition.** Those all mount `GET /:channel/start` and `GET /:channel/callback` at or above the application root, where two greedy two-segment routes shadow other paths. Surrounding slashes are trimmed, so `/sso/` and `sso` are the same mount.
+- **`ResolvedRedirectAuthOptions.routePrefix` is `string | null`.** It reports where the routes were actually mounted, and `null` when `redirectAuth` was never configured — so a consumer injecting `REDIRECT_AUTH_OPTIONS` to build a login link must null-check rather than interpolate `/null/…`.
+- **`EntraGraphClient` is exported and is therefore public API.** It exists for an ad-hoc Graph call that should share the provider's token acquisition, caching, throttling and paging; `request`, `collect`, `collectDelta`, `url` and `invalidateToken` are what a later release has to keep.
+
+### Migration
+
+**Nothing is required.** Two optional cleanups:
+
+**Replace the directory cast.** It still compiles, but the guard is now the supported spelling and it narrows correctly for every directory source:
+
+```ts
+// before
+const provider = gateway.getProvider('ldap') as unknown as LdapAuthProvider;
+
+await provider.findAllUsers();
+
+// after
+import { isDirectoryProvider } from '@rytass/member-base-nestjs-module';
+
+const provider = gateway.getProvider('ldap');
+
+if (isDirectoryProvider(provider)) {
+  await provider.findAllUsers();
+}
+```
+
+`findByDn` is LDAP-only and deliberately not part of the interface; reaching it still needs the concrete type.
+
+**Drop a hand-written OIDC callback route.** If you wrote the state cookie and callback handler the README used to show, `redirectAuth` replaces them. Two behaviours to check before switching:
+
+- The tokens follow the module-wide `cookieMode`. With `cookieMode: true` the pair is written as cookies; with it `false` the pair rides on the destination as `?accessToken=…&refreshToken=…`, as `OAuthCallbacksController` has always done.
+- `returnTo` is ignored entirely until `allowedReturnTo` lists something. An unmatched destination falls back to `successRedirect` rather than failing the login.
+
+**If you use Entra through the generic `OidcAuthProvider` today, check your `identifierClaim`.** Bindings written against Entra's `sub` are per-application and cannot be correlated with the tenant. Switching to `EntraAuthProvider` (or setting `identifierClaim: 'oid'`) changes the identifier every future login reports, so existing rows in `member_oauth_records` for that channel no longer match and each member would be provisioned or linked again. Migrate the bindings deliberately — map each stored `sub` to its `oid` while both are still known — rather than letting the change take effect on the next login.
+
 ## [0.9.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.8.1...@rytass/member-base-nestjs-module@0.9.0) (2026-08-13)
 
 ### Bug Fixes
