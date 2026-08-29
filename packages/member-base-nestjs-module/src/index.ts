@@ -126,6 +126,8 @@ export {
   RouteMissingPermissionMetadataError,
   CasbinEnforcerUnavailableError,
 } from './constants/errors/base.error';
+// Raised by the directory readers.
+export { DirectoryRequestFailedError } from './constants/errors/base.error';
 
 // Constants
 export {

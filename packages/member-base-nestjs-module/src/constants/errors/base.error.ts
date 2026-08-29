@@ -250,3 +250,37 @@ export class CasbinEnforcerUnavailableError extends ForbiddenException {
 
   code = 124;
 }
+
+/**
+ * A directory query failed at the source.
+ *
+ * A 5xx from Microsoft Graph, or a 4xx that retrying cannot fix (a revoked
+ * application permission, a missing admin consent, an expired delta token).
+ * `upstreamStatus` and `detail` carry Graph's own answer so an operator can
+ * tell a throttled tenant apart from a misconfigured app registration without
+ * turning on request logging. It is deliberately not called `status`: that name
+ * belongs to `HttpException` and means the status this exception answers with,
+ * which is not the one the directory replied.
+ *
+ * A 500 rather than a 400: nothing the caller passed is wrong, the directory
+ * is unreachable or refusing this application.
+ */
+export class DirectoryRequestFailedError extends InternalServerErrorException {
+  constructor(
+    readonly upstreamStatus: number,
+    readonly detail?: string,
+    /**
+     * How long the directory asked the caller to wait, in milliseconds, when it
+     * said so and the wait was longer than this client is willing to hold a
+     * request open. Present only on a throttle the caller has to reschedule.
+     */
+    readonly retryAfterMs?: number,
+  ) {
+    super(
+      `Directory request failed with status ${upstreamStatus}${detail ? `: ${detail}` : ''}` +
+        (retryAfterMs === undefined ? '' : ` (retry after ${Math.ceil(retryAfterMs / 1000)}s)`),
+    );
+  }
+
+  code = 125;
+}

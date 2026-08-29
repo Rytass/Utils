@@ -62,6 +62,7 @@
     "luxon": "^3.7.2"
   },
   "isolateEntries": [
+    "./entra.ts",
     "./graphql.ts",
     "./ldap.ts",
     "./oidc-provider.ts"
