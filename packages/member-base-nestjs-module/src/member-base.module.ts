@@ -19,6 +19,8 @@ import {
   REFRESH_TOKEN_EXPIRATION,
   REFRESH_TOKEN_SECRET,
   RESOLVED_MEMBER_REPO,
+  REDIRECT_AUTH_OPTIONS,
+  REDIRECT_AUTH_MOUNTED_PREFIX,
 } from './typings/member-base.tokens';
 import { APP_GUARD } from '@nestjs/core';
 import { MemberBaseModuleAsyncOptionsDTO } from './typings/member-base-module-async-options';
@@ -33,6 +35,9 @@ import { OAuthCallbacksController } from './controllers/oauth-callbacks.controll
 import { BaseMemberEntity } from './models/base-member.entity';
 import { AuthenticationGateway } from './services/authentication-gateway.service';
 import { PasswordAuthProvider } from './providers/password-auth.provider';
+import { createRedirectAuthController } from './controllers/redirect-auth.controller';
+import { DEFAULT_REDIRECT_AUTH_ROUTE_PREFIX } from './typings/redirect-auth.options';
+import type { Controller } from '@nestjs/common/interfaces';
 
 const providers = [
   ...OptionProviders,
@@ -76,9 +81,57 @@ const exportInjectable = [
   COOKIE_OPTIONS,
   CASBIN_PERMISSION_CHECKER,
   CUSTOMIZED_JWT_PAYLOAD,
+  REDIRECT_AUTH_OPTIONS,
 ];
 
 const controllers = [OAuthCallbacksController];
+
+/**
+ * Controllers for one configuration.
+ *
+ * The redirect login routes are absent unless asked for. Registering them by
+ * default would put two public endpoints on every application that imports this
+ * module, which is the mistake `OidcAdminController` made and 0.8.0 corrected.
+ */
+const resolveControllers = (routePrefix: string | null): Type<Controller>[] =>
+  routePrefix === null ? controllers : [...controllers, createRedirectAuthController(routePrefix)];
+
+/**
+ * `undefined` means "not configured"; `null` from here means "do not mount".
+ *
+ * An empty or slash-only prefix is refused rather than defaulted. It would
+ * mount `GET /:channel/start` and `GET /:channel/callback` at the application
+ * root — two greedy two-segment routes that work well enough for nobody to
+ * notice they are swallowing other paths. Defaulting silently would move the
+ * routes somewhere the application did not ask for; failing at boot names the
+ * mistake while there is still someone reading.
+ */
+const mountPrefix = (redirectAuth: boolean | { routePrefix?: string } | undefined): string | null => {
+  if (!redirectAuth) return null;
+
+  const configured = typeof redirectAuth === 'object' ? redirectAuth.routePrefix : undefined;
+
+  if (configured === undefined) return DEFAULT_REDIRECT_AUTH_ROUTE_PREFIX;
+
+  const trimmed = configured
+    .trim()
+    .replace(/^\/+|\/+$/g, '')
+    .trim();
+
+  // A dot-only segment is refused alongside the empty one: `.` and `..` are
+  // path navigation, not a mount point, and they reach the same place — routes
+  // at or above the application root — by a different spelling.
+  if (!trimmed || /^\.+$/.test(trimmed)) {
+    throw new Error(
+      `[MemberBase] redirectAuth.routePrefix ${JSON.stringify(configured)} is not a usable path segment. Empty, ` +
+        'whitespace, "/" and dot segments all mount GET /:channel/start and GET /:channel/callback at or above the ' +
+        'application root, where two greedy two-segment routes shadow other paths. Give it a path segment, or omit ' +
+        `it to use "${DEFAULT_REDIRECT_AUTH_ROUTE_PREFIX}".`,
+    );
+  }
+
+  return trimmed;
+};
 
 @Global()
 @Module({})
@@ -96,8 +149,12 @@ export class MemberBaseModule {
     return {
       module: MemberBaseModule,
       imports: [...(options?.imports ?? []), MemberBaseModelsModule],
-      providers: [...this.createAsyncProvider(options), ...providers],
-      controllers,
+      providers: [
+        { provide: REDIRECT_AUTH_MOUNTED_PREFIX, useValue: mountPrefix(options?.redirectAuth) },
+        ...this.createAsyncProvider(options),
+        ...providers,
+      ],
+      controllers: resolveControllers(mountPrefix(options?.redirectAuth)),
       exports: exportInjectable,
     };
   }
@@ -120,9 +177,10 @@ export class MemberBaseModule {
           provide: MEMBER_BASE_MODULE_OPTIONS,
           useValue: options,
         },
+        { provide: REDIRECT_AUTH_MOUNTED_PREFIX, useValue: mountPrefix(options?.redirectAuth) },
         ...providers,
       ],
-      controllers,
+      controllers: resolveControllers(mountPrefix(options?.redirectAuth)),
       exports: exportInjectable,
     };
   }

@@ -14,6 +14,7 @@ import type {
   CasbinPermissionCheckerResult,
 } from './casbin-permission';
 import type { PasswordHashOptions } from './password-hash-options';
+import type { RedirectAuthOptions } from './redirect-auth.options';
 
 export interface MemberBaseModuleOptionsDTO<
   MemberEntity extends BaseMemberEntity = BaseMemberEntity,
@@ -110,6 +111,21 @@ export interface MemberBaseModuleOptionsDTO<
    * address, which is often what a data-retention policy actually asks for.
    */
   loginLogRecordIp?: boolean;
+
+  // Redirect login routes
+  /**
+   * Mount `GET /:prefix/:channel/start` and `GET /:prefix/:channel/callback`
+   * for the `kind: 'redirect'` providers registered in `authProviders`.
+   *
+   * default: undefined — no route is registered. Whether an endpoint exists,
+   * where it is mounted and who may reach it is the host application's
+   * decision, the same call 0.8.0 made when `OidcAdminController` was
+   * withdrawn. Supplying the object (even empty) is the opt-in.
+   *
+   * `OAuth2Provider` channels are unaffected and keep using
+   * `OAuthCallbacksController`.
+   */
+  redirectAuth?: RedirectAuthOptions;
 
   // OAuth2
   oauth2Providers?: OAuth2Provider[];

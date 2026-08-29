@@ -284,3 +284,49 @@ export class DirectoryRequestFailedError extends InternalServerErrorException {
 
   code = 125;
 }
+
+/**
+ * A redirect callback arrived without a usable transaction.
+ *
+ * Covers every way the browser and the server disagree about which
+ * authorization request is being completed: no transaction cookie, a cookie
+ * that does not parse, a `state` that does not match the one that was issued,
+ * or a callback delivered to a different channel than the one it started on.
+ * All four are indistinguishable from a forged callback, so they answer with
+ * the same class, status and `code`; the message differs so a server log can
+ * tell a misrouted redirect uri from a replayed one.
+ */
+export class RedirectAuthTransactionError extends BadRequestException {
+  constructor(message?: string) {
+    super(message ?? 'Authorization transaction is missing or does not match');
+  }
+
+  code = 126;
+}
+
+/**
+ * The issuer refused the authorization request.
+ *
+ * The callback arrived carrying `error` instead of `code` — the user declined
+ * consent, the tenant blocked the sign-in, conditional access said no. Nothing
+ * is wrong with this application's configuration or with the transaction, so it
+ * is neither a 500 nor a transaction mismatch; `oauthError` carries the code the
+ * issuer sent so the host can tell `access_denied` from `login_required`.
+ *
+ * The message is a constant. Both fields arrive as query parameters on a public
+ * unauthenticated endpoint, so interpolating either into the message would
+ * reflect unbounded attacker-controlled text into the serialized response body
+ * — which is a stored XSS the moment a host application renders an API error
+ * message into an admin page, a toast or a log viewer. They stay on the
+ * instance, where the host decides what to do with them.
+ */
+export class RedirectAuthDeniedError extends BadRequestException {
+  constructor(
+    readonly oauthError: string,
+    readonly oauthErrorDescription?: string,
+  ) {
+    super('Authorization was refused by the issuer');
+  }
+
+  code = 127;
+}

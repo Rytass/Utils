@@ -22,6 +22,20 @@ export interface MemberBaseModuleAsyncOptionsDTO<
   inject?: (InjectionToken | OptionalFactoryDependency)[];
   useClass?: Type<MemberBaseModuleOptionFactoryInterface<MemberEntity, TokenPayload>>;
   useExisting?: Type<MemberBaseModuleOptionFactoryInterface<MemberEntity, TokenPayload>>;
+  /**
+   * Mount the redirect login routes.
+   *
+   * Route registration happens when the module is defined, before any factory
+   * has run, and a controller's path is fixed at decoration time — so whether
+   * the routes exist and where they are mounted cannot come out of
+   * `useFactory`. Everything else about them still does: the factory's
+   * `redirectAuth` supplies the cookie names, expirations, `successRedirect`
+   * and `allowedReturnTo`, and only its `routePrefix` is ignored in favour of
+   * the one given here.
+   *
+   * `true` mounts at the default prefix.
+   */
+  redirectAuth?: boolean | { routePrefix?: string };
 }
 
 // Non-breaking alias with community-preferred naming

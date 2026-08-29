@@ -15,6 +15,7 @@ import type {
   LinkExistingAccountStrategy,
 } from './authentication-provider.interface';
 import type { PasswordHashOptions } from './password-hash-options';
+import type { ResolvedRedirectAuthOptions } from './redirect-auth.options';
 
 // Typed injection tokens for better type safety (using Symbol with type annotations)
 export const MEMBER_BASE_MODULE_OPTIONS = Symbol('MEMBER_BASE_MODULE_OPTIONS') as symbol & {
@@ -89,6 +90,29 @@ export const FORCE_REJECT_LOGIN_ON_PASSWORD_EXPIRED = Symbol('FORCE_REJECT_LOGIN
 };
 export const CUSTOMIZED_JWT_PAYLOAD = Symbol('CUSTOMIZED_JWT_PAYLOAD') as symbol & { __type: Function };
 
+/**
+ * Redirect-login route configuration, with defaults already applied.
+ *
+ * Always provided; whether the routes exist is decided at module definition
+ * time by the presence of `redirectAuth`, not by this token.
+ */
+export const REDIRECT_AUTH_OPTIONS = Symbol('REDIRECT_AUTH_OPTIONS') as symbol & {
+  __type: ResolvedRedirectAuthOptions;
+};
+
+/**
+ * The prefix the redirect routes were actually mounted at, or null if they were
+ * not mounted.
+ *
+ * Decided when the module is defined, which is the only moment a controller's
+ * path can be set — so this, not the configured value, is the truth. It is what
+ * makes `ResolvedRedirectAuthOptions.routePrefix` honest under `forRootAsync`,
+ * where the factory's own `routePrefix` cannot take effect.
+ */
+export const REDIRECT_AUTH_MOUNTED_PREFIX = Symbol('REDIRECT_AUTH_MOUNTED_PREFIX') as symbol & {
+  __type: string | null;
+};
+
 // OAuth2 Providers
 export const OAUTH2_PROVIDERS = Symbol('OAUTH2_PROVIDERS') as symbol & { __type: OAuth2Provider[] };
 export const OAUTH2_CLIENT_DEST_URL = Symbol('OAUTH2_CLIENT_DEST_URL') as symbol & { __type: string };
@@ -139,6 +163,8 @@ export interface MemberBaseProviders {
   ACCESS_TOKEN_COOKIE_NAME: string;
   REFRESH_TOKEN_COOKIE_NAME: string;
   COOKIE_OPTIONS: CookieOptionsConfig;
+  REDIRECT_AUTH_OPTIONS: ResolvedRedirectAuthOptions;
+  REDIRECT_AUTH_MOUNTED_PREFIX: string | null;
   PROVIDE_MEMBER_ENTITY: new () => BaseMemberEntity;
   RESOLVED_MEMBER_REPO: Repository<BaseMemberEntity>;
   PASSWORD_SHOULD_INCLUDE_UPPERCASE: boolean;

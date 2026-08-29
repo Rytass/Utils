@@ -42,6 +42,8 @@ import {
   DEFAULT_CASBIN_DOMAIN_NAME,
   LOGIN_LOG_ENABLED,
   LOGIN_LOG_RECORD_IP,
+  REDIRECT_AUTH_OPTIONS,
+  REDIRECT_AUTH_MOUNTED_PREFIX,
 } from '../typings/member-base.tokens';
 import { PasswordAuthProvider } from '../providers/password-auth.provider';
 import type {
@@ -53,6 +55,7 @@ import type {
 import { Enforcer, newEnforcer, newModelFromString } from 'casbin';
 import { MemberBaseModuleOptionsDTO } from '../typings/member-base-module-options.dto';
 import type { CookieOptionsConfig } from '../utils/resolve-cookie-options';
+import { resolveRedirectAuthOptions, type ResolvedRedirectAuthOptions } from '../typings/redirect-auth.options';
 import { Provider } from '@nestjs/common';
 import { Subject, Action } from '../decorators/action.decorator';
 import { CASBIN_MODEL } from './casbin-models/rbac-with-domains';
@@ -256,6 +259,53 @@ export const OptionProviders = [
       domain: options?.cookieDomain,
     }),
     inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    // Always resolved, even when no route is registered: the defaults it
+    // inherits are the module's own cookie and token settings, and reading them
+    // through one provider is what keeps the redirect routes from drifting away
+    // from the rest of the package.
+    provide: REDIRECT_AUTH_OPTIONS,
+    useFactory: (
+      mountedPrefix: string | null,
+      accessTokenCookieName: string,
+      refreshTokenCookieName: string,
+      cookieOptions: CookieOptionsConfig,
+      accessTokenExpiration: number,
+      refreshTokenExpiration: number,
+      options?: MemberBaseModuleOptionsDTO,
+    ): ResolvedRedirectAuthOptions => {
+      if (options?.redirectAuth && mountedPrefix === null) {
+        // forRootAsync only: route registration is decided before any factory
+        // runs, so a redirectAuth block returned by the factory alone is inert.
+        // Silence would leave the application configured, type-checked and
+        // serving no routes at all.
+        console.warn(
+          '[MemberBase] redirectAuth was supplied by the options factory but the routes were not mounted. ' +
+            'MemberBaseModule.forRootAsync decides route registration before the factory runs, so pass ' +
+            "redirectAuth: true (or { routePrefix }) alongside useFactory as well. The block's other settings " +
+            'are applied, but no route exists to use them.',
+        );
+      }
+
+      return resolveRedirectAuthOptions(options?.redirectAuth, {
+        mountedPrefix,
+        accessTokenCookieName,
+        refreshTokenCookieName,
+        cookieOptions,
+        accessTokenExpiration,
+        refreshTokenExpiration,
+      });
+    },
+    inject: [
+      REDIRECT_AUTH_MOUNTED_PREFIX,
+      ACCESS_TOKEN_COOKIE_NAME,
+      REFRESH_TOKEN_COOKIE_NAME,
+      COOKIE_OPTIONS,
+      ACCESS_TOKEN_EXPIRATION,
+      REFRESH_TOKEN_EXPIRATION,
+      MEMBER_BASE_MODULE_OPTIONS,
+    ],
   },
   {
     provide: LOGIN_FAILED_AUTO_UNLOCK_SECONDS,

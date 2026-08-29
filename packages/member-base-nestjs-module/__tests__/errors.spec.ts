@@ -16,6 +16,9 @@ import {
   PasswordExpiredError,
   PasswordShouldUpdatePasswordError,
   PasswordInHistoryError,
+  DirectoryRequestFailedError,
+  RedirectAuthTransactionError,
+  RedirectAuthDeniedError,
   MissingAccessTokenError,
   InvalidAccessTokenError,
   PermissionDeniedError,
@@ -361,6 +364,87 @@ describe('Member Base Errors', () => {
       const error = new CasbinEnforcerUnavailableError();
 
       expect(error.code).toBe(124);
+    });
+  });
+
+  describe('DirectoryRequestFailedError', () => {
+    it('should be an instance of InternalServerErrorException', () => {
+      const error = new DirectoryRequestFailedError(503);
+
+      expect(error).toBeInstanceOf(InternalServerErrorException);
+      expect(error.getStatus()).toBe(500);
+    });
+
+    it('should carry the directory status separately from its own', () => {
+      const error = new DirectoryRequestFailedError(429, 'throttled');
+
+      // `status` belongs to HttpException and means the status this exception
+      // answers with, which is not the one the directory replied.
+      expect(error.upstreamStatus).toBe(429);
+      expect(error.detail).toBe('throttled');
+      expect(error.message).toBe('Directory request failed with status 429: throttled');
+    });
+
+    it('should surface a reschedule hint when the directory asked for one', () => {
+      const error = new DirectoryRequestFailedError(429, 'throttled', 300_000);
+
+      expect(error.retryAfterMs).toBe(300_000);
+      expect(error.message).toBe('Directory request failed with status 429: throttled (retry after 300s)');
+    });
+
+    it('should have code 125', () => {
+      const error = new DirectoryRequestFailedError(500);
+
+      expect(error.code).toBe(125);
+    });
+  });
+
+  describe('RedirectAuthTransactionError', () => {
+    it('should be an instance of BadRequestException', () => {
+      const error = new RedirectAuthTransactionError();
+
+      expect(error).toBeInstanceOf(BadRequestException);
+      expect(error.getStatus()).toBe(400);
+    });
+
+    it('should have correct default message', () => {
+      const error = new RedirectAuthTransactionError();
+
+      expect(error.message).toBe('Authorization transaction is missing or does not match');
+    });
+
+    it('should have code 126', () => {
+      const error = new RedirectAuthTransactionError();
+
+      expect(error.code).toBe(126);
+    });
+  });
+
+  describe('RedirectAuthDeniedError', () => {
+    it('should be an instance of BadRequestException', () => {
+      const error = new RedirectAuthDeniedError('access_denied');
+
+      expect(error).toBeInstanceOf(BadRequestException);
+      expect(error.getStatus()).toBe(400);
+    });
+
+    it('should keep the issuer text off the serialized body', () => {
+      const error = new RedirectAuthDeniedError('<img src=x onerror=alert(1)>', 'the user declined');
+
+      // Both fields are query parameters on a public unauthenticated endpoint.
+      // Reflecting either into the message is a stored XSS the moment a host
+      // renders an API error message into a page.
+      expect(error.message).toBe('Authorization was refused by the issuer');
+      expect(JSON.stringify(error.getResponse())).not.toContain('onerror');
+      // Still reachable for the host that wants to branch on it.
+      expect(error.oauthError).toBe('<img src=x onerror=alert(1)>');
+      expect(error.oauthErrorDescription).toBe('the user declined');
+    });
+
+    it('should have code 127', () => {
+      const error = new RedirectAuthDeniedError('access_denied');
+
+      expect(error.code).toBe(127);
     });
   });
 });

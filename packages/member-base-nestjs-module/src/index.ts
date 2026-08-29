@@ -50,6 +50,7 @@ export {
   DEFAULT_CASBIN_DOMAIN_NAME,
   LOGIN_LOG_ENABLED,
   LOGIN_LOG_RECORD_IP,
+  REDIRECT_AUTH_OPTIONS,
 } from './typings/member-base.tokens';
 
 // Types
@@ -86,6 +87,12 @@ export type {
 } from './typings/directory-provider.interface';
 export { isDirectoryProvider } from './typings/directory-provider.interface';
 export type {
+  RedirectAuthOptions,
+  ResolvedRedirectAuthOptions,
+  RedirectAuthDefaults,
+} from './typings/redirect-auth.options';
+export { DEFAULT_REDIRECT_AUTH_ROUTE_PREFIX, resolveRedirectAuthOptions } from './typings/redirect-auth.options';
+export type {
   CasbinPermissionCheckerParams,
   CasbinPermissionChecker,
   CasbinPermissionCheckerResult,
@@ -107,6 +114,7 @@ export * from './decorators/has-permission.decorator';
 // Helpers
 export * from './helpers/graphql-context-token-resolver';
 export { normalizeCasbinDecision } from './utils/normalize-casbin-decision';
+export { resolveReturnTo } from './utils/resolve-return-to';
 export { toInetCidr } from './utils/to-inet-cidr';
 export {
   resolveCookieOptions,
@@ -126,8 +134,21 @@ export {
   RouteMissingPermissionMetadataError,
   CasbinEnforcerUnavailableError,
 } from './constants/errors/base.error';
-// Raised by the directory readers.
-export { DirectoryRequestFailedError } from './constants/errors/base.error';
+// Raised by the directory readers and by the mounted redirect login routes.
+export {
+  DirectoryRequestFailedError,
+  RedirectAuthTransactionError,
+  RedirectAuthDeniedError,
+} from './constants/errors/base.error';
+
+// Redirect login routes (registered only when `redirectAuth` is configured).
+// The class is exported as a TYPE only: it carries a bare @Controller(), so
+// putting it in an application's own `controllers` array would mount
+// GET /:channel/start and GET /:channel/callback at the application root — two
+// greedy two-segment routes that work well enough for nobody to notice. The
+// factory is the supported way to mount it at a path.
+export { createRedirectAuthController } from './controllers/redirect-auth.controller';
+export type { RedirectAuthController } from './controllers/redirect-auth.controller';
 
 // Constants
 export {
