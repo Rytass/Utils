@@ -44,6 +44,9 @@ It is long because the package covers a lot; you are not meant to read it start 
 | Put the session in a cookie   | [Sessions and Cookies](#sessions-and-cookies)                                                                                                                   |
 | Look up an option             | [Configuration Reference](#configuration-reference)                                                                                                             |
 | Add a login source            | [Authentication Gateway](#authentication-gateway), [LDAP](#authenticating-against-an-ldap-directory), [OIDC issuer](#authenticating-against-an-oidc-issuer)     |
+| Sign in with Microsoft Entra  | [Microsoft Entra ID](#authenticating-against-microsoft-entra-id)                                                                                                |
+| Stop writing callback routes  | [Mounted Login Routes](#mounted-login-routes-for-redirect-providers)                                                                                            |
+| Reconcile against a directory | [Reading a directory through the gateway](#reading-a-directory-through-the-gateway)                                                                             |
 | Become an issuer yourself     | [Acting as an OpenID Connect Provider](#acting-as-an-openid-connect-provider)                                                                                   |
 | Upgrade an existing install   | [CHANGELOG.md](./CHANGELOG.md) — each release carries its own migration notes                                                                                   |
 | Find what something is called | [Type Aliases and Injection Tokens](#type-aliases-and-injection-tokens)                                                                                         |
@@ -586,7 +589,7 @@ An application-level provider reaches only the application's own components. The
 
 ## Deployment Topologies
 
-Five combinations cover nearly every deployment. Each is complete — the module configuration plus whatever `main.ts` needs.
+Six combinations cover nearly every deployment. Each is complete — the module configuration plus whatever `main.ts` needs. A tenant on Microsoft Entra is topology D with a directory attached, and has [its own section](#authenticating-against-microsoft-entra-id).
 
 ### Choosing one
 
@@ -598,6 +601,7 @@ Five combinations cover nearly every deployment. Each is complete — the module
 | Another system already owns identity, this app consumes it    | [D. Relying party](#d-relying-party-of-an-existing-issuer)          |
 | Other services should authenticate against **this** app       | [E. Identity provider](#e-identity-provider)                        |
 | Directory owns passwords **and** other services need identity | [F. Directory-backed issuer](#f-directory-backed-identity-provider) |
+| Microsoft 365 / Entra owns identity                           | [Microsoft Entra ID](#authenticating-against-microsoft-entra-id)    |
 
 ### A. Standalone
 
@@ -900,14 +904,15 @@ The subject is the local member id rather than the directory's identifier, so re
 
 ### `MemberBaseModule` — authentication gateway options
 
-| Option                | Type                                               | Default    | Purpose                                                                   |
-| --------------------- | -------------------------------------------------- | ---------- | ------------------------------------------------------------------------- |
-| `authProviders`       | `AuthenticationProvider[]`                         | `[]`       | Extra sources; password is always registered                              |
-| `autoProvision`       | `boolean \| (identity) => Promise<string \| null>` | `true`     | What happens when an external identity has no member                      |
-| `linkExistingAccount` | `boolean \| 'verified-only'`                       | `true`     | Whether an external identity may claim a matching local account           |
-| `syncOnAuthenticate`  | `(params) => Promise<void>`                        | —          | Write directory attributes back after resolution; nothing runs by default |
-| `oauth2Providers`     | `OAuth2Provider[]`                                 | `[]`       | Google / Facebook / custom OAuth2                                         |
-| `oauth2ClientDestUrl` | `string`                                           | `'/login'` | Where the OAuth2 callback redirects                                       |
+| Option                | Type                                               | Default    | Purpose                                                                     |
+| --------------------- | -------------------------------------------------- | ---------- | --------------------------------------------------------------------------- |
+| `authProviders`       | `AuthenticationProvider[]`                         | `[]`       | Extra sources; password is always registered                                |
+| `autoProvision`       | `boolean \| (identity) => Promise<string \| null>` | `true`     | What happens when an external identity has no member                        |
+| `linkExistingAccount` | `boolean \| 'verified-only'`                       | `true`     | Whether an external identity may claim a matching local account             |
+| `syncOnAuthenticate`  | `(params) => Promise<void>`                        | —          | Write directory attributes back after resolution; nothing runs by default   |
+| `oauth2Providers`     | `OAuth2Provider[]`                                 | `[]`       | Google / Facebook / custom OAuth2                                           |
+| `oauth2ClientDestUrl` | `string`                                           | `'/login'` | Where the OAuth2 callback redirects                                         |
+| `redirectAuth`        | `RedirectAuthOptions`                              | —          | Mount login routes for redirect providers; nothing is registered by default |
 
 `OAuth2Provider` is a union. Everything shared lives on `BaseOAuth2Provider` — `channel`, `clientId`, `clientSecret`, `redirectUri` and an optional `getState` — and each member adds only what it needs. Google and Facebook add an optional `scope`; anything else is a custom provider and has to say how to exchange a code and read an identifier back:
 
@@ -1060,6 +1065,42 @@ MemberBaseModule.forRoot({
 ```
 
 Prefer an identifier the directory cannot change (an OIDC `sub`, an Active Directory `objectGUID`) over an account name or email — the local binding is keyed on it.
+
+### Reading a directory through the gateway
+
+Some providers are also a source of truth for _who exists_, not only for _who is signing in_. `DirectoryProvider` names that second capability, and `isDirectoryProvider()` is how a caller reaches it off `getProvider()`:
+
+```ts
+import { isDirectoryProvider } from '@rytass/member-base-nestjs-module';
+
+const provider = gateway.getProvider(channel);
+
+if (isDirectoryProvider(provider)) {
+  const entries = await provider.findAllUsers();
+
+  for (const entry of entries) {
+    await gateway.resolve(provider.toIdentity(entry)); // same path a login takes
+  }
+}
+```
+
+`LdapAuthProvider` and `EntraDirectoryProvider` both implement it; `EntraAuthProvider` implements it only when a `directory` block was configured, and answers `false` here when it was not. It replaces the `as unknown as LdapAuthProvider` cast that used to be the only way to reach these methods — `getProvider()` returns an `AuthenticationProvider`, which does not declare them.
+
+The interface is generic over its list options **and** its entry type, so each provider keeps its own dialect and its own entry shape: `LdapAuthProvider.findAllUsers({ baseDN, filter })` takes an RFC 4515 filter, `EntraDirectoryProvider.findAllUsers({ filter })` an OData one. `DirectoryListOptions` itself declares **no** shared `filter` field, deliberately: LDAP, Graph, SCIM and the Google Directory API each take a different, incompatible expression language, so one shared name over four of them would let a caller write a portable `findAllUsers({ filter })` that is wrong for most directories at runtime with nothing to catch it.
+
+**`isDirectoryProvider()` narrows to the base type, so through it you can only call `findAllUsers()` with no options.** That is the whole portable surface, and it is deliberate — passing a dialect means you already know which directory answered, so hold that provider (see the LDAP and Entra examples).
+
+That is enforced, not merely intended — the base type carries an unused `__dialect?: never` so it is not the empty `{}` that TypeScript exempts from excess-property checking. **After `isDirectoryProvider()` you hold the base type and can only call `findAllUsers()` with no options**, which is the one portable listing; passing a dialect requires the concrete provider, as in the LDAP example above.
+
+Three more things the contract fixes rather than leaves to convention:
+
+- **`channel` is declared on the interface**, because bindings are keyed on `(channel, identifier)`. A directory reporting a channel no registered `AuthenticationProvider` serves writes binding rows that no login can ever match.
+- **`findChangedUsers?` is optional on the interface**, the same way `authenticate?` and `handleCallback?` are on `AuthenticationProvider`. Probe it to use incremental sync polymorphically; LDAP does not carry it, Entra does.
+- **`DirectoryIdentityAttributes` names the attribute set** every implementor maps onto (`account`, `name`, `email`, `title`, `department`, `groups`, `disabled`), so a third directory has a target shape instead of a table in this README.
+
+`findAllUsers` is fully materialised — the whole result set is in memory before the caller sees a row. That is fine for thousands and a poor fit for hundreds of thousands, where narrowing through `options` or reading incrementally is the intended answer.
+
+**Nothing here is scheduled and nothing runs on its own.** Reconciliation cadence, upsert rules, what to do about a disabled account and whether a failure aborts the run are the application's decisions — the same line `syncOnAuthenticate` draws.
 
 ### Resolving an identity to a member
 
@@ -1625,15 +1666,29 @@ Behaviour worth knowing:
 A directory is a source of truth for attributes, not only for passwords. These are plain queries — **nothing is scheduled and nothing runs unless you call it**:
 
 ```ts
-const provider = gateway.getProvider('ldap') as LdapAuthProvider;
+import { isDirectoryProvider } from '@rytass/member-base-nestjs-module';
+import { LdapAuthProvider } from '@rytass/member-base-nestjs-module/ldap';
 
-await provider.findUser('wangxx'); // by account attribute
-await provider.findAllUsers(); // everything under baseDN
-await provider.findByDn('CN=Wang,OU=Users,DC=...'); // by distinguished name
+const provider = gateway.getProvider('ldap');
 
-// Map an entry onto the identity shape the gateway consumes, so a
-// reconciliation job and a login share one attribute mapping.
-const identity = provider.toIdentity(entry);
+// Portable: works against any directory source, so it takes no dialect.
+if (isDirectoryProvider(provider)) {
+  await provider.findUser('wangxx'); // by account attribute
+  await provider.findAllUsers(); // everything the provider is configured to see
+
+  // Map an entry onto the identity shape the gateway consumes, so a
+  // reconciliation job and a login share one attribute mapping.
+  const identity = provider.toIdentity(entry);
+}
+
+// LDAP-specific: a search base, an RFC 4515 filter and findByDn are this
+// directory's dialect, not the shared contract's, so reaching them means
+// holding the concrete provider. That is the point — passing an LDAP filter
+// means you already know an LDAP directory is answering.
+if (provider instanceof LdapAuthProvider) {
+  await provider.findAllUsers({ baseDN: 'OU=Active,DC=corp,DC=local', filter: '(objectClass=user)' });
+  await provider.findByDn('CN=Wang,OU=Users,DC=...');
+}
 ```
 
 `toIdentity` surfaces `attributes.disabled`, so a reconciliation job can act on accounts that were disabled in the directory out-of-band.
@@ -1742,6 +1797,544 @@ Notes:
 - Signature algorithms are pinned to the asymmetric families. An issuer cannot downgrade to HMAC and have its own public key accepted as a shared secret.
 - Signing keys are cached and refetched on a `kid` miss, so key rotation needs no restart. A failed discovery is never cached.
 - No extra dependency: id tokens are verified with Node's built-in JWK support.
+
+## Authenticating Against Microsoft Entra ID
+
+Entra is two systems wearing one name, and the split is the thing to understand before configuring anything:
+
+| Concern      | Signing a user in                          | Reading the directory                              |
+| ------------ | ------------------------------------------ | -------------------------------------------------- |
+| Host         | `login.microsoftonline.com/{tenant}/v2.0`  | `graph.microsoft.com/v1.0`                         |
+| Protocol     | OpenID Connect authorization code + PKCE   | OAuth2 client credentials                          |
+| Credential   | client id + secret + a registered redirect | client id + secret + application permissions       |
+| Prerequisite | the redirect uri is registered             | `User.Read.All` / `Group.Read.All` + admin consent |
+
+An LDAP directory needs no such split — one bind answers both — so `EntraAuthProvider` puts them back together behind a single channel, and each half is also usable alone.
+
+Everything runs on Node's built-in `fetch` and the `jsonwebtoken` peer this package already requires. **No `@azure/msal-node`, no `@microsoft/microsoft-graph-client`, nothing new to install.**
+
+```ts
+import { EntraAuthProvider } from '@rytass/member-base-nestjs-module/entra';
+
+MemberBaseModule.forRoot({
+  authProviders: [
+    new EntraAuthProvider({
+      channel: 'entra',
+      tenantId: '11111111-2222-3333-4444-555555555555',
+      auth: {
+        clientId: process.env.ENTRA_CLIENT_ID!,
+        clientSecret: process.env.ENTRA_CLIENT_SECRET!,
+        redirectUri: 'https://app.example.com/auth/entra/callback',
+      },
+      // Omit this block to register Entra as a login source only.
+      directory: {
+        clientId: process.env.GRAPH_CLIENT_ID!,
+        clientSecret: process.env.GRAPH_CLIENT_SECRET!,
+      },
+    }),
+  ],
+});
+```
+
+The two halves may share one app registration or use two. They are configured separately because the permissions are granted separately, and because a deployment that only reads the directory has no redirect uri to register.
+
+### App registration prerequisites
+
+In **Microsoft Entra admin center → App registrations**:
+
+1. **For the login half** — under _Authentication_, add a **Web** platform and register the redirect uri exactly as configured (`https://app.example.com/auth/entra/callback`). Under _Certificates & secrets_, create a client secret.
+2. **For the directory half** — under _API permissions_, add **Application permissions** (not delegated) for Microsoft Graph: `User.Read.All`, plus `Group.Read.All` if `includeGroups` stays on. Then press **Grant admin consent**; without it every Graph call answers `403` no matter how correct the credential is.
+3. Note the **Directory (tenant) ID** and the **Application (client) ID** from _Overview_.
+
+A certificate credential replaces the secret on the directory half:
+
+```ts
+directory: {
+  clientId,
+  clientCertificate: {
+    certificate: readFileSync(certPath, 'utf8'), // PEM of the registered public certificate
+    privateKey: readFileSync(keyPath, 'utf8'), // PEM of the matching key
+  },
+}
+```
+
+The **certificate** is supplied rather than a thumbprint. The assertion needs the base64url SHA-256 of the certificate's DER encoding ([`x5t#S256`, signed `PS256`](https://learn.microsoft.com/en-us/entra/identity-platform/certificate-credentials)), the portal displays thumbprints in more than one hash and encoding, and pasting the wrong one produces a correct-looking assertion and an `invalid_client` with nothing to debug. It is computed for you.
+
+**`tenantId` must be the tenant GUID.** `common` and `organizations` are not supported: the id token's issuer differs per tenant, and this module pins issuer validation rather than trusting whatever the token declares. A verified domain name (`contoso.onmicrosoft.com`) also fails, because the discovery document declares the GUID form — pass `auth.issuer` explicitly if you need to override the derived value.
+
+### Using one half on its own
+
+The two halves are independent. Register only the composite's `auth` block and Entra is a login source with no Graph permissions at all; construct `EntraDirectoryProvider` directly and you get a reader for an application that signs users in some other way.
+
+```ts
+import { EntraDirectoryProvider } from '@rytass/member-base-nestjs-module/entra';
+
+// Directory only. Not an AuthenticationProvider — it does not go in
+// `authProviders`, and no password or token ever reaches it.
+export const directory = new EntraDirectoryProvider({
+  tenantId,
+  clientId: process.env.GRAPH_CLIENT_ID!,
+  clientSecret: process.env.GRAPH_CLIENT_SECRET!,
+  channel: 'entra', // the channel its identities are bound under
+});
+
+const entries = await directory.findAllUsers({ filter: 'accountEnabled eq true' });
+```
+
+`channel` matters even here: `gateway.resolve()` keys the local binding on `(channel, identifier)`, so a directory reporting a channel no registered `AuthenticationProvider` serves writes rows no login will ever match. Give it the same channel the login half uses.
+
+### Options reference
+
+`EntraAuthProviderOptions` — the composite:
+
+| Option             | Type                             | Default                             | Purpose                                        |
+| ------------------ | -------------------------------- | ----------------------------------- | ---------------------------------------------- |
+| `tenantId`         | `string`                         | —                                   | Directory (tenant) id. Must be the GUID        |
+| `channel`          | `string`                         | `'entra'`                           | Channel both halves answer for                 |
+| `auth`             | `EntraAuthOptions`               | —                                   | The OpenID Connect half                        |
+| `directory`        | `EntraCompositeDirectoryOptions` | —                                   | The Graph half; omit for a login-only provider |
+| `authorityBaseUrl` | `string`                         | `https://login.microsoftonline.com` | National clouds                                |
+| `graphBaseUrl`     | `string`                         | `https://graph.microsoft.com`       | National clouds                                |
+
+`auth` (`EntraAuthOptions`):
+
+| Option                     | Type                     | Default                        | Purpose                                                            |
+| -------------------------- | ------------------------ | ------------------------------ | ------------------------------------------------------------------ |
+| `clientId`                 | `string`                 | —                              | Application (client) id                                            |
+| `clientSecret`             | `string`                 | —                              | Omit for a public client using PKCE alone                          |
+| `redirectUri`              | `string`                 | —                              | Must match the registered redirect uri exactly                     |
+| `scope`                    | `string[]`               | `['openid','profile','email']` | Requested scopes                                                   |
+| `identifierClaim`          | `string`                 | `'oid'`                        | Claim the local binding is keyed on — see below for why not `sub`  |
+| `accountClaim`             | `string`                 | —                              | Claim carrying the account name, for a sAMAccountName-keyed tenant |
+| `usePKCE`                  | `boolean`                | `true`                         | RFC 7636                                                           |
+| `fetchUserinfo`            | `boolean`                | `false`                        | Merge userinfo claims into the identity                            |
+| `extraAuthorizationParams` | `Record<string, string>` | —                              | `prompt`, `login_hint`, `domain_hint`, `acr_values`…               |
+| `issuer`                   | `string`                 | derived from `tenantId`        | Override only when the derived issuer is wrong                     |
+| `internalBaseUrl`          | `string`                 | —                              | Route back-channel calls through another origin                    |
+
+`directory` (`EntraDirectoryOptions` minus what the composite supplies):
+
+| Option              | Type                                                | Default               | Purpose                                                           |
+| ------------------- | --------------------------------------------------- | --------------------- | ----------------------------------------------------------------- |
+| `clientId`          | `string`                                            | —                     | May differ from the auth half's                                   |
+| `clientSecret`      | `string`                                            | —                     | One of secret or certificate is required                          |
+| `clientCertificate` | `{ certificate: string; privateKey: string }`       | —                     | Both PEM; see below                                               |
+| `accountAttribute`  | `'userPrincipalName' \| 'onPremisesSamAccountName'` | `'userPrincipalName'` | Which attribute `attributes.account` reports                      |
+| `includeGroups`     | `boolean`                                           | `true`                | Costs one request per user; see the note under Reading the tenant |
+| `extraAttributes`   | `string[]`                                          | `[]`                  | Appended to the default `$select`                                 |
+| `maxRetries`        | `number`                                            | `3`                   | Retries on `429` and `5xx`                                        |
+| `maxRetryDelayMs`   | `number`                                            | `30000`               | Longest a request is held open waiting out a throttle             |
+
+### Why `identifierClaim` defaults to `oid`, not `sub`
+
+`OidcAuthProvider` defaults to `sub`, the only claim a generic issuer guarantees is stable. Entra is not a generic issuer: **its `sub` is pairwise.** The same person receives a different `sub` in every application, by design.
+
+That makes `sub` unusable as the key a local member is bound to. The binding still works — right up to the moment anything else has to recognise the same person:
+
+- a Graph query returns `id`, which is not the `sub` any application saw;
+- a second application in the same tenant binds the same person under a different value;
+- an export, an audit, a support request that starts from "who is this account in Entra" has nothing to join on.
+
+`oid` is the object id of the user **in this tenant**: immutable across renames, mailbox moves and UPN changes, identical in every application, and the exact value `EntraDirectoryProvider` binds on — so a login and a directory sync resolve to one member instead of two.
+
+`identifierVerified` is `true` for an `oid`-based identity. The tenant asserts it; unlike an email address there is nothing for a user to claim.
+
+### Reading the tenant
+
+The directory half is a plain reader. **Nothing is scheduled**, nothing is written back, and no upsert or deactivation policy is implied — exactly as for LDAP.
+
+```ts
+import { isDirectoryProvider } from '@rytass/member-base-nestjs-module';
+import { EntraDirectoryProvider } from '@rytass/member-base-nestjs-module/entra';
+
+const provider = gateway.getProvider('entra');
+
+// Portable: no dialect, so this works whichever directory answers.
+if (isDirectoryProvider(provider)) {
+  await provider.findUser('wang@corp.com'); // by userPrincipalName or object id
+  await provider.findAllUsers(); // the whole tenant
+
+  await gateway.resolve(provider.toIdentity(entry)); // same path a login takes
+}
+
+// Graph-specific: `$filter` is OData, which only this directory understands, so
+// passing one means holding the provider that speaks it. `EntraAuthProvider`
+// exposes its Graph half as `.directory`.
+const directory = provider instanceof EntraDirectoryProvider ? provider : entraAuthProvider.directory;
+
+await directory?.findAllUsers({ filter: 'accountEnabled eq true' });
+await directory?.findChangedUsers(storedCursor);
+```
+
+Absorbed inside the provider, so a caller never writes them:
+
+- **Access tokens** are acquired with client credentials, cached, and renewed a minute before expiry; a `401` drops the cached token and replays the request once.
+- **Paging** follows `@odata.nextLink` to the end of the collection. A caller that stopped at the first page would reconcile against a truncated directory.
+- **Throttling** honours `Retry-After` on a `429` and falls back to exponential backoff on a `5xx` that carries none. `maxRetries` (3) and `maxRetryDelayMs` (30 s) are configurable and deliberately conservative.
+- **Groups** need a second trip — Graph's `/users` does not include `memberOf`, and `$expand` is not a shortcut: on a directory object it returns [at most 20 objects with no `@odata.nextLink`](https://learn.microsoft.com/en-us/graph/known-issues#some-limitations-apply-to-query-parameters), so a user in more groups comes back **silently truncated with no way to detect it**. Memberships are therefore resolved one request per user through the paged `/memberOf/microsoft.graph.group` cast — on every path, so the same person always yields the same groups. That is genuinely expensive over a whole tenant; `includeGroups: false` is the way out when the application does not need groups, and `findChangedUsers` is the way to avoid re-reading the whole directory.
+- **Eventual consistency** — a listing with a `filter` sends `ConsistencyLevel: eventual` and `$count=true`, which several OData operators require and without which Graph answers `400`.
+
+When a Graph call cannot be recovered, the provider raises `DirectoryRequestFailedError` (code `125`, a 500). It carries `upstreamStatus` — Graph's own status, not the one this exception answers with — and `detail` from Graph's error body, so a throttled tenant can be told from a missing admin consent without turning on request logging. A throttle asking for longer than `maxRetryDelayMs` also carries `retryAfterMs`, which is the signal to reschedule rather than retry:
+
+```ts
+import { DirectoryRequestFailedError } from '@rytass/member-base-nestjs-module';
+
+try {
+  await provider.findAllUsers();
+} catch (error) {
+  if (error instanceof DirectoryRequestFailedError && error.retryAfterMs) {
+    return scheduleAgainIn(error.retryAfterMs); // your scheduler, not this module's
+  }
+
+  throw error;
+}
+```
+
+Directory roles are dropped from `attributes.groups`, and the check **fails closed**: an entry counts as a group only when it says it is one, never merely because it does not say otherwise. They arrive through the same `memberOf` collection, and letting "Global Administrator" appear where a group membership check reads would be a quiet authorization bug.
+
+### Attribute mapping
+
+Aligned with `LdapAuthProvider.toIdentity` **by meaning, not by field name**, so one `syncOnAuthenticate` handler serves both directories.
+
+| `AuthenticatedIdentity` | Graph source                  | LDAP counterpart                  |
+| ----------------------- | ----------------------------- | --------------------------------- |
+| `identifier`            | `id` (objectId / `oid`)       | `objectGUID`                      |
+| `attributes.account`    | `userPrincipalName`           | `sAMAccountName`                  |
+| `attributes.name`       | `displayName`                 | `displayName`                     |
+| `attributes.email`      | `mail` ?? `userPrincipalName` | `mail`                            |
+| `attributes.disabled`   | `accountEnabled === false`    | `userAccountControl` disabled bit |
+| `attributes.title`      | `jobTitle`                    | `title`                           |
+| `attributes.department` | `department`                  | `department`                      |
+| `attributes.groups`     | `memberOf[].displayName`      | `memberOf` DN → CN                |
+
+The login path fills in the same `account`, `name` and `email` from the id token's standard claims, alongside every raw claim. One exception: **the id token's `groups` claim is left exactly as Entra sent it** and is never mapped onto `attributes.groups`. When the optional claim is configured Entra emits group _object ids_ there, while the directory reports _display names_ — writing both under one key would make a group check silently depend on which path produced the identity.
+
+### Hybrid tenants: `onPremisesSamAccountName`
+
+A tenant synchronised from on-premises AD by Entra Connect keeps `onPremisesSamAccountName` populated. An existing system that already stores `sAMAccountName` as its account key needs that value, or every member has to be re-keyed just to adopt Entra:
+
+```ts
+directory: { clientId, clientSecret, accountAttribute: 'onPremisesSamAccountName' }
+```
+
+Three consequences worth knowing:
+
+- `findUser` switches from addressing `/users/{key}` directly to an OData `$filter`, because `onPremisesSamAccountName` is not an addressable key. That query needs the advanced query capability, which the provider sends for you.
+- A cloud-only account has no `onPremisesSamAccountName` at all, so `attributes.account` falls back to the UPN rather than being empty.
+- **The login path needs telling too.** No standard id token claim carries sAMAccountName; Entra emits it only if the app registration is configured to, under a name that configuration chooses. Left alone, a login reports the UPN while a directory sync reports sAMAccountName, and a `syncOnAuthenticate` handler writing `attributes.account` back flips the field between the two. Configure the optional claim and name it:
+
+  ```ts
+  auth: { clientId, clientSecret, redirectUri, accountClaim: 'onprem_sam_account_name' },
+  directory: { clientId, clientSecret, accountAttribute: 'onPremisesSamAccountName' },
+  ```
+
+  A warning is logged once per provider if the directory is keyed on sAMAccountName and no `accountClaim` is set.
+
+The **binding is still keyed on the object id** either way. `accountAttribute` only decides what `attributes.account` reports.
+
+### Incremental sync with `/users/delta`
+
+LDAP has no incremental read, so the shared interface is a full listing. Entra does, and pulling an entire tenant to find the three accounts disabled overnight is mostly waste:
+
+```ts
+import { isDirectoryProvider } from '@rytass/member-base-nestjs-module';
+
+const provider = gateway.getProvider('entra');
+
+// Two probes, matching how the gateway itself checks `authenticate` and
+// `handleCallback`: the first asks "is this a directory", the second asks
+// "can it answer incrementally". LDAP passes the first and not the second.
+if (isDirectoryProvider(provider) && provider.findChangedUsers) {
+  // Your application owns the schedule, the pacing and the failure handling.
+  const { entries, removed, cursor } = await provider.findChangedUsers(storedCursor);
+
+  for (const entry of entries) {
+    await gateway.resolve(provider.toIdentity(entry));
+  }
+
+  for (const { id, reason } of removed) {
+    // 'changed' = soft-deleted into the recycle bin, still restorable
+    // 'deleted' = permanently gone
+    await yourOwnPolicy(id, reason);
+  }
+
+  await persist(cursor); // <- your storage, not the provider's
+}
+```
+
+- **A delta entry is a partial record.** Graph returns the id plus _at least_ what changed, so most fields are simply absent — and `toIdentity` leaves them `undefined` rather than inventing a value. In particular `attributes.disabled` is `undefined`, not `false`, when the page did not report `accountEnabled`; a reconciliation that mirrored a `false` there would re-enable suspended members on every unrelated change. Treat absent as "unchanged", not as "cleared", and merge rather than overwrite when writing back.
+- Pass `null` on the first run: that walks the whole directory once and returns the first cursor.
+- **The cursor is returned, never stored here.** That is the same statelessness rule `OidcAuthProvider` follows with the PKCE verifier, and it is what lets the application run more than one instance — a cursor cached inside a provider would be a per-process fact about a tenant-wide position. It is called `cursor` rather than `deltaToken` because it is opaque to the caller and the shared interface has to name it for what it does, not for Graph's spelling of it.
+- The two `@removed` reasons are surfaced separately rather than collapsed into a boolean, because suspending a member and erasing a binding are different decisions and only the application can make them.
+- **The `$select` sent on the first request is encoded into every cursor derived from it.** Changing `extraAttributes` later has no effect until the stored cursor is discarded and a full sync is run again.
+
+### A reconciliation job, end to end
+
+Everything above is a query. This is the shape of the job that uses them — **yours, not this module's**: the interval, the pacing, what a disabled account means, and whether a failure aborts the run are all decisions only the application can make.
+
+```ts
+import { Injectable } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import {
+  AuthenticationGateway,
+  DirectoryRequestFailedError,
+  type DirectoryIdentityAttributes,
+} from '@rytass/member-base-nestjs-module';
+import type { EntraAuthProvider } from '@rytass/member-base-nestjs-module/entra';
+
+@Injectable()
+export class EntraReconciliation {
+  constructor(
+    private readonly gateway: AuthenticationGateway,
+    private readonly cursors: CursorStore, // your storage
+    private readonly members: MemberRepository, // your repository
+  ) {}
+
+  @Cron(CronExpression.EVERY_HOUR)
+  async run(): Promise<void> {
+    const provider = this.gateway.getProvider('entra') as EntraAuthProvider;
+    const directory = provider.directory;
+
+    if (!directory) return;
+
+    const stored = await this.cursors.get('entra');
+
+    try {
+      const { entries, removed, cursor } = await directory.findChangedUsers(stored);
+
+      for (const entry of entries) {
+        const identity = directory.toIdentity(entry);
+        const attributes = (identity.attributes ?? {}) as DirectoryIdentityAttributes;
+        const { member } = await this.gateway.resolve(identity);
+
+        // Merge, never overwrite: a delta entry reports what changed, so an
+        // absent field means "not mentioned", not "cleared".
+        await this.members.update(member.id, {
+          ...(attributes.name === undefined ? {} : { name: attributes.name }),
+          ...(attributes.disabled === undefined ? {} : { active: !attributes.disabled }),
+        });
+      }
+
+      for (const { id, reason } of removed) {
+        // Two different facts, so two different decisions — yours to make.
+        await (reason === 'deleted' ? this.members.unbind('entra', id) : this.members.suspend('entra', id));
+      }
+
+      // Only after the whole batch succeeded. Storing it earlier would skip
+      // the changes this run failed to apply.
+      await this.cursors.set('entra', cursor);
+    } catch (error) {
+      if (error instanceof DirectoryRequestFailedError && error.retryAfterMs) {
+        return; // the next scheduled run is the retry
+      }
+
+      throw error;
+    }
+  }
+}
+```
+
+Three things worth copying rather than reinventing:
+
+- **Persist the cursor last.** It marks "everything up to here is applied". Writing it before the batch succeeds silently drops whatever the failed run was carrying.
+- **Merge attribute writes.** `attributes.disabled` is `undefined` when the delta page did not report `accountEnabled`, and treating that as `false` re-enables suspended members on any unrelated change.
+- **`gateway.resolve()` is the same path a login takes**, so `autoProvision`, `linkExistingAccount` and `syncOnAuthenticate` apply here exactly as they do to an interactive sign-in. A reconciliation does not need its own copy of that policy.
+
+### The attribute shape both directories agree on
+
+`AuthenticatedIdentity.attributes` is an untyped bag — a channel may carry anything — but every directory source in this package maps onto the same keys so that one handler serves all of them. `DirectoryIdentityAttributes` writes that agreement down:
+
+```ts
+import type { DirectoryIdentityAttributes } from '@rytass/member-base-nestjs-module';
+
+MemberBaseModule.forRoot({
+  syncOnAuthenticate: async ({ identity, member, provisioned }) => {
+    const attributes = identity.attributes as DirectoryIdentityAttributes;
+
+    // Works for LDAP and for Entra, on login and on reconciliation alike.
+    await memberRepo.update(member.id, {
+      name: attributes.name,
+      department: attributes.department,
+    });
+  },
+});
+```
+
+Every field is optional, and a third directory implementation should target this shape rather than invent its own key names.
+
+### Migrating from a generic `OidcAuthProvider`
+
+If you already reach Entra through `OidcAuthProvider`, the binding identifier changes. **Do not simply swap the provider.**
+
+`OidcAuthProvider` defaults `identifierClaim` to `sub`, and Entra's `sub` is pairwise — so `member_oauth_records` holds values that only this one application ever sees. `EntraAuthProvider` binds on `oid`. Switching without migrating means every existing row stops matching, and each member is re-provisioned or re-linked on their next login.
+
+Migrate while both values are still knowable:
+
+1. Keep the existing provider running and add `oid` to the claims you record, or read each member's `oid` from Graph by their stored `userPrincipalName`.
+2. Update `member_oauth_records.channelIdentifier` from the stored `sub` to the corresponding `oid`, for that channel only.
+3. Then switch the provider.
+
+There is no shortcut: after the switch the old `sub` values cannot be resolved back to a person, because nothing outside that one application ever knew them.
+
+### Reusing the Graph client
+
+`EntraGraphClient` is exported for the case the directory provider does not cover: an ad-hoc Graph call that should share the same token acquisition, caching, throttling and paging rather than open a second credential path.
+
+```ts
+import { EntraGraphClient } from '@rytass/member-base-nestjs-module/entra';
+
+const client = new EntraGraphClient({ tenantId, clientId, clientSecret });
+
+const groups = await client.collect<{ id: string; displayName: string }>(
+  `${client.url('/v1.0/groups')}?$select=id,displayName`,
+);
+```
+
+It is deliberately public, and that makes its shape API: `request`, `collect`, `collectDelta`, `url` and `invalidateToken` are what a later release has to keep. The token itself is never exposed — only requests made through the client carry it.
+
+### National clouds
+
+`graphBaseUrl` and `authorityBaseUrl` move both halves off the commercial cloud; the client-credentials scope follows the Graph host automatically.
+
+```ts
+new EntraAuthProvider({
+  tenantId,
+  graphBaseUrl: 'https://microsoftgraph.chinacloudapi.cn',
+  authorityBaseUrl: 'https://login.partner.microsoftonline.cn',
+  auth: { ... },
+});
+```
+
+### What this deliberately does not do
+
+- **No SCIM inbound provisioning.** Entra can push users into an application over SCIM, but that runs the other way round — the tenant calls you — and it needs Entra ID P1. This module reads; the application decides when. Adding a push endpoint would mean this package owning an inbound API surface, its authentication, and the upsert policy that comes with it, all of which belong to the host.
+- **No Entra Domain Services support.** Those tenants expose a real LDAP endpoint, and `LdapAuthProvider` already speaks it.
+- **No scheduling, no upsert rules, no deactivation policy.** Same line the LDAP provider draws: how to read a directory is the provider's business, what to do with what it read is the application's.
+
+## Mounted Login Routes for Redirect Providers
+
+`OidcAuthProvider` and `EntraAuthProvider` are stateless: they hand back a `state`, a PKCE verifier and a nonce and expect them returned on the callback. That is the right split — it is what lets an application run more than one instance — but it left every application writing the same cookie and the same callback route, and getting the same three things wrong.
+
+`redirectAuth` mounts them:
+
+```ts
+MemberBaseModule.forRoot({
+  cookieMode: true,
+  authProviders: [new EntraAuthProvider({ ... })],
+  redirectAuth: {
+    routePrefix: 'auth', // GET /auth/:channel/start, GET /auth/:channel/callback
+    txCookieName: 'oidc_tx',
+    successRedirect: '/',
+    allowedReturnTo: ['https://app.example.com', 'myapp://auth'],
+  },
+});
+```
+
+**Nothing is registered unless `redirectAuth` is supplied** — supplying it, even as `{}`, is the entire opt-in. This is the same scope decision 0.8.0 made when `OidcAdminController` was withdrawn: whether an endpoint exists, where it is mounted and who may reach it belongs to the host application. `OAuthCallbacksController` is untouched and keeps serving the older `OAuth2Provider` channels at `/auth/login/:channel` and `/auth/callbacks/:channel`.
+
+The two coexist with **one exception**. All four paths are three segments and the legacy controller is registered first, so under the default prefix a channel literally named `login` or `callbacks` is shadowed — `/auth/login/start` matches `/auth/login/:channel` first and reaches the OAuth2 handler with `channel = 'start'`, so the redirect provider is unreachable and fails confusingly rather than 404ing. A warning naming the channel is logged on bootstrap; moving `routePrefix` off `auth` avoids it entirely.
+
+What the callback does, in order: match the stored `state` → `gateway.handleCallback(channel, { code, codeVerifier, nonce })` → resolve or provision the member → sign a token pair → write it → redirect.
+
+Cookies follow the module's own `resolve-cookie-options` helper, so the names, `maxAge`, `sameSite`, `path` and `domain` are the same ones every other cookie this package writes uses. Each is overridable:
+
+| Option                                             | Default                         |
+| -------------------------------------------------- | ------------------------------- |
+| `routePrefix`                                      | `'auth'`                        |
+| `txCookieName` / `txCookieMaxAge`                  | `'oidc_tx'` / `600` seconds     |
+| `successRedirect`                                  | `'/'`                           |
+| `allowedReturnTo`                                  | `[]` (so `returnTo` is ignored) |
+| `accessTokenCookieName` / `refreshTokenCookieName` | the module-level names          |
+| `cookieOptions`                                    | the module-level cookie options |
+| `accessTokenExpiration` / `refreshTokenExpiration` | the module-level expirations    |
+
+Two things about `routePrefix` a consumer will meet:
+
+`routePrefix` is refused if it is empty, whitespace, or only slashes — that would mount `GET /:channel/start` and `GET /:channel/callback` at the application root, where two greedy two-segment routes quietly swallow other paths. The module throws at definition time rather than silently relocating the routes to `auth`, which is the one prefix where the shadowing above applies. Surrounding slashes are trimmed, so `/sso/` and `sso` are the same thing.
+
+`REDIRECT_AUTH_OPTIONS` reports where the routes actually are, which is not always what was configured: under `forRootAsync` the factory's `routePrefix` cannot take effect, and in an application that never enabled `redirectAuth` there is no mount at all. So `ResolvedRedirectAuthOptions.routePrefix` is `string | null` — null-check it rather than interpolate:
+
+```ts
+import { Inject, Injectable } from '@nestjs/common';
+import { REDIRECT_AUTH_OPTIONS, type ResolvedRedirectAuthOptions } from '@rytass/member-base-nestjs-module';
+
+@Injectable()
+export class LoginLinkBuilder {
+  constructor(@Inject(REDIRECT_AUTH_OPTIONS) private readonly options: ResolvedRedirectAuthOptions) {}
+
+  start(channel: string): string | null {
+    return this.options.routePrefix === null ? null : `/${this.options.routePrefix}/${channel}/start`;
+  }
+}
+```
+
+One attribute is not simply inherited: a `SameSite=Strict` transaction cookie is **not sent** on the navigation back from the issuer, so every login would fail with a missing transaction. Only that short-lived cookie is relaxed to `Lax` (logged once); the session cookies keep whatever was configured.
+
+### `returnTo` and the allowlist
+
+`returnTo` arrives from whoever built the link, so an unchecked value turns the login endpoint into an open redirect — a phishing page reachable from a url on your own domain. Every candidate is matched against `allowedReturnTo`, and anything unmatched **falls back to `successRedirect`** rather than failing the login: an unlisted destination is a configuration gap, not a reason to strand someone who just authenticated.
+
+An entry matches by origin and path boundary:
+
+```ts
+allowedReturnTo: [
+  'https://app.example.com', // any path on that host, exact scheme and port
+  'https://admin.example.com/team', // /team and /team/* — but not /teams
+  '/dashboard', // same-origin paths under /dashboard
+  'myapp://auth', // native app custom scheme
+];
+```
+
+`//evil.example.com` and `/\evil.example.com` are rejected: both look relative and are read by browsers as absolute urls to another host. So is `https://app.example.com.evil.test`, which a naive prefix match would let through.
+
+Two properties are worth knowing because they are what make the check sound rather than merely plausible:
+
+- **Any C0 control character, space or DEL rejects the candidate outright.** `new URL()` strips tab, CR and LF _before_ parsing, so `/%09/evil.test/dashboard` looks like a path to a check on the raw string and parses as `//evil.test/dashboard`. A browser strips them too and navigates off-origin.
+- **What is returned is the re-serialised url, never the string that arrived.** Emitting only what was actually parsed and inspected is what stops the _next_ parser divergence from being a bypass, rather than closing the one instance of it that control characters happened to expose. Credentials are dropped for the same reason: `matches` compares protocol, host and path, so a `user:pw@` prefix is never inspected and is not emitted.
+- **A destination longer than 1024 characters falls back**, and so does one carrying any C0 control, space or DEL. The value is stored in the transaction cookie, and browsers silently drop a cookie over about 4 KB — so an allowlisted origin plus a few kilobytes of query string would otherwise be a one-link login denial of service ending in a puzzling 400.
+
+The custom-scheme form is what a native app needs. It starts the flow in a system browser and finishes on `myapp://auth/done`, which no cookie can follow — see the note on `cookieMode` below.
+
+### Content negotiation, and where the tokens go
+
+Both routes negotiate the same way the OIDC interaction routes do. A browser (`Accept: text/html`) is redirected; anything else — including the `*/*` that `fetch` and axios send — gets `200 { redirectTo }`, because an API client driving the flow needs the location as data.
+
+Where the tokens travel follows the module-wide `cookieMode` switch rather than inventing a third convention:
+
+- **`cookieMode: true`** — the pair is written as cookies and the browser is sent to the destination.
+- **`cookieMode: false`** — no cookie is written (the guard would never read one back) and the pair rides on the destination as `?accessToken=…&refreshToken=…`, exactly as `OAuthCallbacksController` has always done. This is what makes the native-app custom-scheme redirect work.
+
+### Mounting from `forRootAsync`
+
+A controller's path is fixed when the class is decorated, which happens before any factory has run. So the **mounting decision** is passed alongside `useFactory`, while everything else still comes out of the factory:
+
+```ts
+MemberBaseModule.forRootAsync({
+  imports: [ConfigModule],
+  inject: [ConfigService],
+  useFactory: (config: ConfigService) => ({
+    redirectAuth: {
+      successRedirect: config.get('APP_URL'),
+      allowedReturnTo: [config.get('APP_URL')],
+    },
+  }),
+  redirectAuth: { routePrefix: 'auth' }, // or simply `true`
+});
+```
+
+Only `routePrefix` is read from the outer object; the factory's own `routePrefix` is ignored.
+
+### Errors
+
+| Situation                                                                 | Exception                        | Status | `code` |
+| ------------------------------------------------------------------------- | -------------------------------- | ------ | ------ |
+| No transaction cookie, unreadable cookie, `state` mismatch, wrong channel | `RedirectAuthTransactionError`   | 400    | 126    |
+| The issuer answered `error=` on a callback whose `state` matched          | `RedirectAuthDeniedError`        | 400    | 127    |
+| The channel is not a `kind: 'redirect'` provider                          | `AuthProviderMisconfiguredError` | 500    | 113    |
+
+The `state` is checked **before** the issuer's `error` is read, which is what makes `oauthError` worth branching on: it can only ever hold a value from a callback that matched a state this application issued. RFC 6749 requires the issuer to echo `state` on an error response, so a real denial still arrives as 127; an issuer that omits it surfaces as 126 instead — a worse diagnostic, but only for an issuer already out of spec.
+
+`RedirectAuthDeniedError` carries `oauthError` and `oauthErrorDescription` on the instance, so `access_denied` can be told from `login_required`. Neither reaches the response message: both are query parameters on a public unauthenticated endpoint, and reflecting attacker-controlled text into an API error message becomes XSS the moment a host renders it into a page. The transaction cookie is cleared before the cookie is even read, so a failed attempt never leaves a reusable state behind.
 
 ## Credential Verification Without Tokens
 
