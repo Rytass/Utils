@@ -3,33 +3,6 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-## Unreleased
-
-### Features
-
-- **member-base-nestjs-module:** choose redirectAuth token delivery per destination
-
-`redirectAuth.allowedReturnTo` entries may now be objects that also say how tokens reach that destination:
-
-```ts
-allowedReturnTo: [
-  'https://app.example.com', // browser: cookies, unchanged
-  { url: 'myapp://auth', delivery: 'fragment' }, // native app: tokens in the fragment
-];
-```
-
-**Native apps could not use the routes at all before this.** A native login has to run in the system browser — the issuer needs one for MFA, password managers and conditional access — and that browser's cookie jar is a different sandbox from the app's own HTTP client. A cookie set by the callback lands somewhere the app cannot read. `cookieMode: false` put the tokens where the app could reach them, but it is module-wide: turning it off takes the cookie session away from the web clients of the same deployment, and one backend serving both a site and an app is the normal case.
-
-Delivery is bound to the allowlist entry rather than exposed as a request parameter, because a `?delivery=fragment` would let anyone put a valid token pair on an ordinary web url — which is written to browser history, to `Referer`, and to every proxy log in front of it. On the allowlist it states a fact about the deployment instead: that destination is a native app, and its urls are not recorded.
-
-The fragment carries the pair as `#accessToken=…&refreshToken=…`. A fragment is never sent to a server, so it stays out of logs, and the operating system hands a custom-scheme url to the app whole. The existing query-string form is untouched — it is what `cookieMode: false` and `OAuthCallbacksController` have always emitted, and `delivery: 'fragment'` is a second path rather than a change to the first.
-
-Failures reach a `fragment` destination the same way, as `#error=…&error_description=…` using the OAuth 2 parameter names. A browser can be shown an error page; a native app only sees the system browser stop, with nothing to end its wait on. Only the issuer's own text is passed through, reduced to the characters RFC 6749 §4.1.2.1 permits and capped in length. Browser destinations still raise the status codes they always did, and a failure before the transaction cookie can be read is always a status code — with no readable transaction there is no destination to redirect to.
-
-Two rules follow from the same reasoning: `successRedirect` is never fragment-delivered, because it is not an allowlist entry and is reached exactly when the requested destination was refused; and where several entries would admit one destination, the first decides.
-
-**Fully backward compatible.** A bare string entry is `delivery: 'cookie'`, which is what every entry did before. `resolveReturnTo` keeps its signature and return type — its `allowedReturnTo` parameter is widened, which no caller can notice — and `resolveReturnToTarget` is the new function that also reports the delivery. Module-level `cookieMode` is unchanged in meaning.
-
 # [0.10.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.9.0...@rytass/member-base-nestjs-module@0.10.0) (2026-08-29)
 
 ### Features
