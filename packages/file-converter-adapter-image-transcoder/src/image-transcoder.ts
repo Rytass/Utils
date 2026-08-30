@@ -3,7 +3,7 @@ import sharp from 'sharp';
 import { Readable } from 'stream';
 import { fileTypeFromBuffer } from 'file-type';
 import { ImageTranscoderOptions } from './typings';
-import { SupportSources } from './constants';
+import { CANONICAL_FORMAT, SupportSources } from './constants';
 import { UnsupportedSource } from './errors';
 
 sharp.cache(false);
@@ -32,7 +32,7 @@ export class ImageTranscoder implements FileConverter<ImageTranscoderOptions> {
       converter = sharp();
     }
 
-    converter.toFormat(this.options.targetFormat, this.options);
+    converter.toFormat(CANONICAL_FORMAT[this.options.targetFormat] ?? this.options.targetFormat, this.options);
 
     // Stream cannot throw when format not supported
     if (file instanceof Readable) {
