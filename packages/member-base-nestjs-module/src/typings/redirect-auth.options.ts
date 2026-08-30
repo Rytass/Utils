@@ -1,4 +1,7 @@
 import type { CookieOptionsConfig, CookieSameSite } from '../utils/resolve-cookie-options';
+import type { AllowedReturnTo } from '../utils/resolve-return-to';
+
+export type { AllowedReturnTo, ReturnToDelivery } from '../utils/resolve-return-to';
 
 /** Where the routes are mounted when nothing says otherwise. */
 export const DEFAULT_REDIRECT_AUTH_ROUTE_PREFIX = 'auth';
@@ -59,8 +62,22 @@ export interface RedirectAuthOptions {
    * custom scheme. A bare path (`/dashboard`) permits same-origin paths under
    * it. Nothing else is accepted — which is what stops the parameter from being
    * an open redirect.
+   *
+   * An entry may also be an object, which additionally says how tokens reach
+   * that destination:
+   *
+   * ```ts
+   * allowedReturnTo: [
+   *   'https://app.example.com',                     // browser: cookies
+   *   { url: 'myapp://auth', delivery: 'fragment' }, // native app: tokens in #
+   * ]
+   * ```
+   *
+   * A bare string is `delivery: 'cookie'`, which is what every entry did before
+   * the option existed. First match wins when several entries would admit the
+   * same destination.
    */
-  allowedReturnTo?: string[];
+  allowedReturnTo?: (string | AllowedReturnTo)[];
   /** default: the module-level `accessTokenCookieName`. */
   accessTokenCookieName?: string;
   /** default: the module-level `refreshTokenCookieName`. */
@@ -93,7 +110,7 @@ export interface ResolvedRedirectAuthOptions {
   txCookieName: string;
   txCookieMaxAge: number;
   successRedirect: string;
-  allowedReturnTo: readonly string[];
+  allowedReturnTo: readonly (string | AllowedReturnTo)[];
   accessTokenCookieName: string;
   refreshTokenCookieName: string;
   cookieOptions: CookieOptionsConfig;

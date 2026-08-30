@@ -18,11 +18,12 @@ import { COOKIE_MODE, REDIRECT_AUTH_OPTIONS } from '../typings/member-base.token
 import { DEFAULT_REDIRECT_AUTH_ROUTE_PREFIX } from '../typings/redirect-auth.options';
 import {
   AuthProviderMisconfiguredError,
+  ExternalIdentityNotLinkedError,
   RedirectAuthDeniedError,
   RedirectAuthTransactionError,
 } from '../constants/errors/base.error';
 import { resolveCookieOptions } from '../utils/resolve-cookie-options';
-import { resolveReturnTo } from '../utils/resolve-return-to';
+import { resolveReturnToTarget, type ReturnToTarget } from '../utils/resolve-return-to';
 import type { Request, Response } from 'express';
 import type { AuthorizationRequest } from '../typings/authentication-provider.interface';
 import type { ResolvedRedirectAuthOptions } from '../typings/redirect-auth.options';
@@ -91,6 +92,57 @@ const wantsHtml = (req: Request): boolean => {
  * Placeholder origin for parsing a same-origin destination. Never emitted.
  */
 const RELATIVE_BASE = 'https://return-to.invalid';
+
+/**
+ * Put parameters in a destination's **fragment**.
+ *
+ * A fragment is never sent to the server, so it stays out of access logs, out
+ * of `Referer`, and out of anything a reverse proxy records — and the operating
+ * system hands a custom-scheme url to a native app whole, fragment included.
+ * That is what makes it the right carrier for a native app's token pair, and
+ * why this is a separate path from the query-string form below rather than a
+ * change to it: that form is what `cookieMode: false` and
+ * `OAuthCallbacksController` have always emitted.
+ *
+ * An existing fragment is appended to rather than replaced. It is the caller's
+ * data, and discarding it to make room is not this route's decision.
+ */
+const withFragmentParams = (destination: string, params: Record<string, string>): string => {
+  const isRelative = destination.startsWith('/');
+  const encoded = new URLSearchParams(params).toString();
+
+  let url: URL;
+
+  try {
+    url = new URL(destination, isRelative ? RELATIVE_BASE : undefined);
+  } catch {
+    // Unreachable in practice — resolveReturnToTarget emits only re-serialised
+    // urls — but a misconfigured successRedirect should still redirect.
+    return `${destination}${destination.includes('#') ? '&' : '#'}${encoded}`;
+  }
+
+  const existing = url.hash.replace(/^#/, '');
+
+  url.hash = existing ? `${existing}&${encoded}` : encoded;
+
+  return isRelative ? `${url.pathname}${url.search}${url.hash}` : url.href;
+};
+
+/**
+ * The error parameter charset RFC 6749 §4.1.2.1 allows, plus a length bound.
+ *
+ * `error` and `error_description` arrive as query parameters on a public
+ * unauthenticated endpoint, and a fragment redirect writes them straight into a
+ * `Location` header. Passing them through unbounded would be the same
+ * reflection this route already refuses in its response body.
+ */
+const sanitizeOAuthError = (value: string | undefined): string | undefined => {
+  if (!value) return undefined;
+
+  const allowed = value.replace(/[^\u0020\u0021\u0023-\u005b\u005d-\u007e]/g, '');
+
+  return allowed.slice(0, 200) || undefined;
+};
 
 /**
  * Append the pair to a destination's **query string**.
@@ -220,7 +272,7 @@ export class RedirectAuthController implements OnApplicationBootstrap {
       // Checked here rather than on the callback: an unlisted destination is a
       // configuration mistake, and finding it at the start of the flow beats
       // finding it after the user has authenticated.
-      returnTo: resolveReturnTo(returnTo, this.options.allowedReturnTo, this.options.successRedirect),
+      returnTo: resolveReturnToTarget(returnTo, this.options.allowedReturnTo, this.options.successRedirect).url,
     });
 
     if (wantsHtml(req)) {
@@ -253,6 +305,39 @@ export class RedirectAuthController implements OnApplicationBootstrap {
 
     const transaction = this.readTransaction(req);
 
+    // Resolved before anything can fail, because a fragment destination needs
+    // to hear about the failure too: a native app that only ever sees the
+    // system browser stop on an error page has no signal to end its wait on.
+    const target = resolveReturnToTarget(
+      transaction.returnTo,
+      this.options.allowedReturnTo,
+      this.options.successRedirect,
+    );
+
+    try {
+      await this.completeCallback(channel, code, state, error, errorDescription, transaction, target, req, res);
+    } catch (failure) {
+      // Only a fragment destination is redirected to. A browser destination
+      // keeps the status codes a host already handles, and the fallback is not
+      // an allowlist entry — nothing has declared it a place to send anything.
+      if (target.delivery !== 'fragment') throw failure;
+
+      this.respond(req, res, withFragmentParams(target.url, this.toOAuthError(failure)));
+    }
+  }
+
+  /** The callback proper, so its failures can be routed by delivery. */
+  private async completeCallback(
+    channel: string,
+    code: string | undefined,
+    state: string | undefined,
+    error: string | undefined,
+    errorDescription: string | undefined,
+    transaction: RedirectAuthTransaction,
+    target: ReturnToTarget,
+    req: Request,
+    res: Response,
+  ): Promise<void> {
     if (transaction.channel !== channel) {
       // A callback delivered to a channel other than the one that started it is
       // either a misrouted redirect uri or a deliberate cross-channel replay.
@@ -298,16 +383,69 @@ export class RedirectAuthController implements OnApplicationBootstrap {
       refreshToken: this.memberBaseService.signRefreshToken(member),
     };
 
-    // Follows the module-wide cookieMode switch rather than inventing a third
-    // convention: with it off the guard would never read a cookie this route
-    // wrote, so the tokens travel on the destination url exactly as they do
-    // from OAuthCallbacksController.
-    if (this.cookieMode) {
-      this.setTokenCookies(req, res, tokenPair);
+    this.respond(req, res, this.deliverTokens(req, res, target, tokenPair));
+  }
+
+  /**
+   * Hand the pair to the destination, the way that destination takes it.
+   *
+   * `fragment` writes no cookie at all. A native app opens the system browser
+   * for the flow, and that browser's cookie jar is a different sandbox from the
+   * app's own HTTP client — so a cookie set here would be invisible to the app
+   * and left behind in the browser for nobody.
+   *
+   * `cookie` is unchanged: it still follows the module-wide `cookieMode`, which
+   * is the switch that decides whether the guard reads cookies at all.
+   */
+  private deliverTokens(req: Request, res: Response, target: ReturnToTarget, tokenPair: TokenPairDto): string {
+    if (target.delivery === 'fragment') {
+      return withFragmentParams(target.url, {
+        accessToken: tokenPair.accessToken,
+        refreshToken: tokenPair.refreshToken,
+      });
     }
 
-    const redirectTo = this.cookieMode ? transaction.returnTo : withTokenParams(transaction.returnTo, tokenPair);
+    if (this.cookieMode) {
+      this.setTokenCookies(req, res, tokenPair);
 
+      return target.url;
+    }
+
+    return withTokenParams(target.url, tokenPair);
+  }
+
+  /**
+   * Map a failure onto the OAuth 2 error parameters a native app can act on.
+   *
+   * Only the issuer's own text is passed through, and only after sanitising:
+   * everything else reports a code without a description rather than putting an
+   * internal message on a url.
+   */
+  private toOAuthError(failure: unknown): Record<string, string> {
+    if (failure instanceof RedirectAuthDeniedError) {
+      const description = sanitizeOAuthError(failure.oauthErrorDescription);
+
+      return {
+        error: sanitizeOAuthError(failure.oauthError) ?? 'access_denied',
+        ...(description ? { error_description: description } : {}),
+      };
+    }
+
+    if (failure instanceof RedirectAuthTransactionError) {
+      return { error: 'invalid_request', error_description: failure.message };
+    }
+
+    if (failure instanceof ExternalIdentityNotLinkedError) {
+      return { error: 'access_denied', error_description: failure.message };
+    }
+
+    this.logger.error(`Redirect callback failed: ${failure instanceof Error ? failure.message : String(failure)}`);
+
+    return { error: 'server_error' };
+  }
+
+  /** Redirect a browser, hand an api client the location as data. */
+  private respond(req: Request, res: Response, redirectTo: string): void {
     if (wantsHtml(req)) {
       res.redirect(redirectTo);
 
@@ -364,11 +502,11 @@ export class RedirectAuthController implements OnApplicationBootstrap {
       // Re-checked on the way out. The cookie is httpOnly but it is still data
       // that left this process, and trusting it would reopen the redirect the
       // start route closed.
-      returnTo: resolveReturnTo(
+      returnTo: resolveReturnToTarget(
         typeof candidate.returnTo === 'string' ? candidate.returnTo : undefined,
         this.options.allowedReturnTo,
         this.options.successRedirect,
-      ),
+      ).url,
     };
   }
 

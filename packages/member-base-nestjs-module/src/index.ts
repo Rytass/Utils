@@ -90,6 +90,8 @@ export type {
   RedirectAuthOptions,
   ResolvedRedirectAuthOptions,
   RedirectAuthDefaults,
+  AllowedReturnTo,
+  ReturnToDelivery,
 } from './typings/redirect-auth.options';
 export { DEFAULT_REDIRECT_AUTH_ROUTE_PREFIX, resolveRedirectAuthOptions } from './typings/redirect-auth.options';
 export type {
@@ -114,7 +116,8 @@ export * from './decorators/has-permission.decorator';
 // Helpers
 export * from './helpers/graphql-context-token-resolver';
 export { normalizeCasbinDecision } from './utils/normalize-casbin-decision';
-export { resolveReturnTo } from './utils/resolve-return-to';
+export { resolveReturnTo, resolveReturnToTarget } from './utils/resolve-return-to';
+export type { ReturnToTarget } from './utils/resolve-return-to';
 export { toInetCidr } from './utils/to-inet-cidr';
 export {
   resolveCookieOptions,

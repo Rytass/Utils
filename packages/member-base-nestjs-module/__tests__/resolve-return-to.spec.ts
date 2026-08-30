@@ -1,4 +1,4 @@
-import { resolveReturnTo } from '../src/utils/resolve-return-to';
+import { resolveReturnTo, resolveReturnToTarget } from '../src/utils/resolve-return-to';
 
 const FALLBACK = '/home';
 
@@ -115,6 +115,67 @@ describe('resolveReturnTo', () => {
       controls.forEach(control => {
         expect(resolveReturnTo(`/dashboard${control}x`, ['/dashboard'], FALLBACK)).toBe(FALLBACK);
       });
+    });
+  });
+
+  describe('per-destination delivery', () => {
+    const MIXED = ['https://app.example.com', { url: 'myapp://auth', delivery: 'fragment' as const }];
+
+    it('should report cookie delivery for a bare string entry', () => {
+      // The shape every entry had before the option existed.
+      expect(resolveReturnToTarget('https://app.example.com/dash', MIXED, FALLBACK)).toEqual({
+        url: 'https://app.example.com/dash',
+        delivery: 'cookie',
+      });
+    });
+
+    it('should report the delivery an object entry declares', () => {
+      expect(resolveReturnToTarget('myapp://auth/cb', MIXED, FALLBACK)).toEqual({
+        url: 'myapp://auth/cb',
+        delivery: 'fragment',
+      });
+    });
+
+    it('should default an object entry without delivery to cookie', () => {
+      expect(resolveReturnToTarget('myapp://auth/cb', [{ url: 'myapp://auth' }], FALLBACK).delivery).toBe('cookie');
+    });
+
+    it('should never deliver by fragment to the fallback', () => {
+      // The fallback is not an allowlist entry, so nothing has declared it a
+      // place tokens may be put — and it is reached precisely when the
+      // requested destination was refused.
+      expect(resolveReturnToTarget('https://evil.example.com/x', MIXED, FALLBACK)).toEqual({
+        url: FALLBACK,
+        delivery: 'cookie',
+      });
+
+      expect(resolveReturnToTarget(undefined, MIXED, FALLBACK).delivery).toBe('cookie');
+      expect(resolveReturnToTarget('/\t/evil.test', MIXED, FALLBACK).delivery).toBe('cookie');
+    });
+
+    it('should let the first matching entry decide', () => {
+      const ordered = [
+        { url: 'https://app.example.com', delivery: 'cookie' as const },
+        { url: 'https://app.example.com/native', delivery: 'fragment' as const },
+      ];
+
+      expect(resolveReturnToTarget('https://app.example.com/native/cb', ordered, FALLBACK).delivery).toBe('cookie');
+      expect(
+        resolveReturnToTarget('https://app.example.com/native/cb', [...ordered].reverse(), FALLBACK).delivery,
+      ).toBe('fragment');
+    });
+
+    it('should apply every rejection rule to object entries too', () => {
+      const native = [{ url: 'myapp://auth', delivery: 'fragment' as const }];
+
+      expect(resolveReturnToTarget('otherapp://auth/cb', native, FALLBACK).url).toBe(FALLBACK);
+      expect(resolveReturnToTarget('myapp://evil/cb', native, FALLBACK).url).toBe(FALLBACK);
+      expect(resolveReturnToTarget(`myapp://auth/${'a'.repeat(2000)}`, native, FALLBACK).url).toBe(FALLBACK);
+    });
+
+    it('should keep resolveReturnTo returning a bare string for existing callers', () => {
+      expect(resolveReturnTo('myapp://auth/cb', MIXED, FALLBACK)).toBe('myapp://auth/cb');
+      expect(typeof resolveReturnTo('https://app.example.com/x', MIXED, FALLBACK)).toBe('string');
     });
   });
 

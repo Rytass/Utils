@@ -102,7 +102,10 @@ const parseCookies = (
 const buildApp = async (
   routePrefix: string,
   cookieMode: boolean,
-  options?: { withCookieParser?: boolean },
+  options?: {
+    withCookieParser?: boolean;
+    allowedReturnTo?: (string | { url: string; delivery?: 'cookie' | 'fragment' })[];
+  },
 ): Promise<INestApplication> => {
   @Module({
     controllers: [createRedirectAuthController(routePrefix)],
@@ -111,7 +114,10 @@ const buildApp = async (
       {
         provide: REDIRECT_AUTH_OPTIONS,
         useValue: resolveRedirectAuthOptions(
-          { allowedReturnTo: ['https://app.example.com'], successRedirect: '/home' },
+          {
+            allowedReturnTo: options?.allowedReturnTo ?? ['https://app.example.com'],
+            successRedirect: '/home',
+          },
           {
             mountedPrefix: routePrefix,
             accessTokenCookieName: 'access_token',
@@ -288,5 +294,165 @@ describe('mounted redirect routes, over real HTTP', () => {
     app = await buildApp('sso', true);
 
     await request(app.getHttpServer()).get('/sso/entra/start').set('accept', 'text/html').expect(302);
+  });
+
+  describe('per-destination token delivery', () => {
+    // One deployment, two client kinds: a browser that needs a cookie session
+    // and a native app that cannot see one, because the system browser it opens
+    // for the flow keeps its cookies in a different sandbox from the app's own
+    // HTTP client.
+    const MIXED = ['https://app.example.com', { url: 'myapp://auth', delivery: 'fragment' as const }];
+
+    const startAndCallback = async (
+      agent: ReturnType<typeof request.agent>,
+      returnTo: string,
+      query: Record<string, string> = { code: 'code-1', state: 'state-1' },
+    ): Promise<request.Response> => {
+      await agent
+        .get(`/sso/entra/start?returnTo=${encodeURIComponent(returnTo)}`)
+        .set('accept', 'text/html')
+        .expect(302);
+
+      return agent.get('/sso/entra/callback').query(query).set('accept', 'text/html').expect(302);
+    };
+
+    it('should give a browser destination cookies and no tokens on the url', async () => {
+      app = await buildApp('sso', true, { allowedReturnTo: MIXED });
+
+      const response = await startAndCallback(request.agent(app.getHttpServer()), 'https://app.example.com/dash');
+      const names = (response.headers['set-cookie'] as unknown as string[]).map(v => v.split('=')[0]);
+
+      expect(names).toContain('access_token');
+      expect(names).toContain('refresh_token');
+      expect(response.headers.location).toBe('https://app.example.com/dash');
+    });
+
+    it('should give a native destination tokens in the fragment and no cookies', async () => {
+      app = await buildApp('sso', true, { allowedReturnTo: MIXED });
+
+      const response = await startAndCallback(request.agent(app.getHttpServer()), 'myapp://auth/cb');
+      const location = new URL(response.headers.location as string);
+      const fragment = new URLSearchParams(location.hash.slice(1));
+
+      expect(fragment.get('accessToken')).toBe('access-token');
+      expect(fragment.get('refreshToken')).toBe('refresh-token');
+      // Nothing on the query, where a proxy log would record it.
+      expect(location.search).toBe('');
+      // No session cookie: the app's HTTP client could never read it, and it
+      // would be left behind in the system browser for nobody.
+      const written = ((response.headers['set-cookie'] as unknown as string[]) ?? []).map(v => v.split('=')[0]);
+
+      expect(written).toEqual(['oidc_tx']);
+    });
+
+    it('should serve both destinations from the same running application', async () => {
+      app = await buildApp('sso', true, { allowedReturnTo: MIXED });
+
+      const web = await startAndCallback(request.agent(app.getHttpServer()), 'https://app.example.com/dash');
+      const native = await startAndCallback(request.agent(app.getHttpServer()), 'myapp://auth/cb');
+
+      expect((web.headers['set-cookie'] as unknown as string[]).some(c => c.startsWith('access_token='))).toBe(true);
+      expect(new URL(native.headers.location as string).hash).toContain('accessToken=');
+    });
+
+    it('should redirect a native destination back with #error rather than an error page', async () => {
+      app = await buildApp('sso', true, { allowedReturnTo: MIXED });
+
+      const agent = request.agent(app.getHttpServer());
+
+      // A native app only ever sees the system browser stop somewhere; an error
+      // page gives it no signal to end its wait on.
+      const response = await startAndCallback(agent, 'myapp://auth/cb', {
+        state: 'state-1',
+        error: 'access_denied',
+        error_description: 'the user declined consent',
+      });
+
+      const fragment = new URLSearchParams(new URL(response.headers.location as string).hash.slice(1));
+
+      expect(fragment.get('error')).toBe('access_denied');
+      expect(fragment.get('error_description')).toBe('the user declined consent');
+      expect(fragment.get('accessToken')).toBeNull();
+    });
+
+    it('should still answer a browser destination with a status code on failure', async () => {
+      app = await buildApp('sso', true, { allowedReturnTo: MIXED });
+
+      const agent = request.agent(app.getHttpServer());
+
+      await agent
+        .get('/sso/entra/start?returnTo=https%3A%2F%2Fapp.example.com%2Fdash')
+        .set('accept', 'text/html')
+        .expect(302);
+
+      await agent
+        .get('/sso/entra/callback')
+        .query({ state: 'state-1', error: 'access_denied' })
+        .set('accept', 'text/html')
+        .expect(400);
+    });
+
+    it('should sanitise the issuer error text before putting it on a url', async () => {
+      app = await buildApp('sso', true, { allowedReturnTo: MIXED });
+
+      const response = await startAndCallback(request.agent(app.getHttpServer()), 'myapp://auth/cb', {
+        state: 'state-1',
+        error: 'access_denied',
+        error_description: `bad"text\\here${'x'.repeat(500)}`,
+      });
+
+      const description = new URLSearchParams(new URL(response.headers.location as string).hash.slice(1)).get(
+        'error_description',
+      );
+
+      // RFC 6749 §4.1.2.1 excludes " and \\, and an unbounded parameter has no
+      // business in a Location header.
+      expect(description).not.toContain('"');
+      expect(description).not.toContain('\\');
+      expect((description ?? '').length).toBeLessThanOrEqual(200);
+    });
+
+    it('should stay on the fragment even when cookieMode is off', async () => {
+      // The two switches are independent: cookieMode decides what a `cookie`
+      // destination gets, and says nothing about a destination that declared
+      // its own delivery.
+      app = await buildApp('sso', false, { allowedReturnTo: MIXED });
+
+      const response = await startAndCallback(request.agent(app.getHttpServer()), 'myapp://auth/cb');
+      const location = new URL(response.headers.location as string);
+
+      expect(new URLSearchParams(location.hash.slice(1)).get('accessToken')).toBe('access-token');
+      expect(location.search).toBe('');
+    });
+
+    it('should leave a cookie destination on the query string when cookieMode is off', async () => {
+      // Unchanged behaviour for anyone who was already running this way.
+      app = await buildApp('sso', false, { allowedReturnTo: MIXED });
+
+      const response = await startAndCallback(request.agent(app.getHttpServer()), 'https://app.example.com/dash');
+      const location = new URL(response.headers.location as string);
+
+      expect(location.searchParams.get('accessToken')).toBe('access-token');
+      expect(location.hash).toBe('');
+    });
+
+    it('should never fragment-deliver to the fallback', async () => {
+      app = await buildApp('sso', true, { allowedReturnTo: MIXED });
+
+      const response = await startAndCallback(request.agent(app.getHttpServer()), 'https://evil.example.com/steal');
+
+      expect(response.headers.location).toBe('/home');
+      expect(response.headers.location).not.toContain('#');
+    });
+
+    it('should preserve a fragment the destination already carried', async () => {
+      app = await buildApp('sso', true, { allowedReturnTo: MIXED });
+
+      const response = await startAndCallback(request.agent(app.getHttpServer()), 'myapp://auth/cb#existing');
+      const hash = new URL(response.headers.location as string).hash;
+
+      expect(hash.startsWith('#existing&')).toBe(true);
+      expect(hash).toContain('accessToken=');
+    });
   });
 });

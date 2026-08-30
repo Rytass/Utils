@@ -1,4 +1,40 @@
 /**
+ * How the token pair reaches a given destination.
+ *
+ * `cookie` is the default and means "whatever the module-level `cookieMode`
+ * says" — cookies when it is on, query parameters on the destination when it is
+ * off, exactly as before this option existed.
+ *
+ * `fragment` puts the pair after a `#`, which never leaves the browser: it is
+ * not sent to the server, so it stays out of access logs and `Referer` headers,
+ * and the operating system hands a custom-scheme url to a native app whole.
+ */
+export type ReturnToDelivery = 'cookie' | 'fragment';
+
+/**
+ * An allowlist entry that also says how tokens reach it.
+ *
+ * Delivery is a property of the **destination**, never of the request. A
+ * `?delivery=` parameter would let anyone put a token pair on a web url, and a
+ * web url is written to browser history, to `Referer`, and to every reverse
+ * proxy log in front of it. Bound to the allowlist, it states a fact about the
+ * deployment instead: *this* destination is a native app, and its urls are not
+ * recorded anywhere.
+ */
+export interface AllowedReturnTo {
+  /** Matched exactly as a bare string entry is — by origin, or by path prefix. */
+  url: string;
+  /** default: 'cookie' */
+  delivery?: ReturnToDelivery;
+}
+
+/** A resolved destination and the way tokens are to reach it. */
+export interface ReturnToTarget {
+  url: string;
+  delivery: ReturnToDelivery;
+}
+
+/**
  * Base for parsing a relative candidate. Never dereferenced, never emitted —
  * it exists only so `new URL` can resolve a path into a comparable shape.
  */
@@ -101,30 +137,56 @@ const matches = (allowedEntry: string, candidate: URL, candidateIsRelative: bool
 export const resolveReturnTo = (
   /** Typed as a string, validated as unknown: it comes off the wire. */
   returnTo: string | undefined,
-  allowedReturnTo: readonly string[],
+  allowedReturnTo: readonly (string | AllowedReturnTo)[],
   fallback: string,
-): string => {
+): string => resolveReturnToTarget(returnTo, allowedReturnTo, fallback).url;
+
+/**
+ * The same resolution, plus which entry matched and therefore how tokens are
+ * delivered there.
+ *
+ * The fallback is always `cookie`. It is not an allowlist entry, so nothing has
+ * declared it safe to put a token pair on — and a destination reached because
+ * the requested one was refused is the last place to start emitting
+ * credentials.
+ *
+ * First match wins, so an entry ordered earlier decides the delivery for a
+ * destination that several entries would admit.
+ */
+export const resolveReturnToTarget = (
+  returnTo: string | undefined,
+  allowedReturnTo: readonly (string | AllowedReturnTo)[],
+  fallback: string,
+): ReturnToTarget => {
+  const fallbackTarget: ReturnToTarget = { url: fallback, delivery: 'cookie' };
+
   // Not `!returnTo`: a repeated query parameter (`?returnTo=/a&returnTo=/b`)
   // arrives from Express as an ARRAY, and every string method below would throw
   // on it — an unauthenticated 500 from a hand-written url. The type says
   // string; the wire does not have to agree, so this checks rather than trusts.
-  if (typeof returnTo !== 'string' || returnTo === '' || allowedReturnTo.length === 0) return fallback;
+  if (typeof returnTo !== 'string' || returnTo === '' || allowedReturnTo.length === 0) return fallbackTarget;
 
-  if (returnTo.length > MAX_RETURN_TO_LENGTH) return fallback;
+  if (returnTo.length > MAX_RETURN_TO_LENGTH) return fallbackTarget;
 
-  if (FORBIDDEN_CHARACTERS.test(returnTo)) return fallback;
+  if (FORBIDDEN_CHARACTERS.test(returnTo)) return fallbackTarget;
 
   const candidateIsRelative = isRelativePath(returnTo);
   const candidate = parse(returnTo, candidateIsRelative ? RELATIVE_BASE : undefined);
 
-  if (!candidate) return fallback;
+  if (!candidate) return fallbackTarget;
 
-  if (!allowedReturnTo.some(entry => matches(entry, candidate, candidateIsRelative))) return fallback;
+  const entry = allowedReturnTo.find(candidateEntry =>
+    matches(typeof candidateEntry === 'string' ? candidateEntry : candidateEntry.url, candidate, candidateIsRelative),
+  );
+
+  if (entry === undefined) return fallbackTarget;
+
+  const delivery: ReturnToDelivery = typeof entry === 'string' ? 'cookie' : (entry.delivery ?? 'cookie');
 
   if (candidateIsRelative) {
     // The placeholder base must not leak into a same-origin destination, so a
     // relative candidate is re-serialised from its parts rather than from href.
-    return `${candidate.pathname}${candidate.search}${candidate.hash}`;
+    return { url: `${candidate.pathname}${candidate.search}${candidate.hash}`, delivery };
   }
 
   // Credentials are never compared — `matches` looks at protocol, host and path
@@ -133,5 +195,5 @@ export const resolveReturnTo = (
   candidate.username = '';
   candidate.password = '';
 
-  return candidate.href;
+  return { url: candidate.href, delivery };
 };
