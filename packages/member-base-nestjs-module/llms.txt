@@ -236,6 +236,7 @@ MemberBaseModule.forRoot({
       'https://app.example.com',                      // browser: cookies (delivery defaults to 'cookie')
       { url: 'myapp://auth', delivery: 'fragment' },  // native app: tokens in the URL fragment
     ],
+    // allowedReturnTo entries: 'string' (delivery 'cookie') | { url, delivery: 'cookie' | 'fragment' }
     // accessTokenCookieName, refreshTokenCookieName, cookieOptions,
     // accessTokenExpiration, refreshTokenExpiration all default to the module-level values
   },

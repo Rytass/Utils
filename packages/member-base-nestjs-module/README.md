@@ -46,6 +46,7 @@ It is long because the package covers a lot; you are not meant to read it start 
 | Add a login source            | [Authentication Gateway](#authentication-gateway), [LDAP](#authenticating-against-an-ldap-directory), [OIDC issuer](#authenticating-against-an-oidc-issuer)     |
 | Sign in with Microsoft Entra  | [Microsoft Entra ID](#authenticating-against-microsoft-entra-id)                                                                                                |
 | Stop writing callback routes  | [Mounted Login Routes](#mounted-login-routes-for-redirect-providers)                                                                                            |
+| Log in from a native app      | [Native apps: why a cookie cannot reach them](#native-apps-why-a-cookie-cannot-reach-them)                                                                      |
 | Reconcile against a directory | [Reading a directory through the gateway](#reading-a-directory-through-the-gateway)                                                                             |
 | Become an issuer yourself     | [Acting as an OpenID Connect Provider](#acting-as-an-openid-connect-provider)                                                                                   |
 | Upgrade an existing install   | [CHANGELOG.md](./CHANGELOG.md) — each release carries its own migration notes                                                                                   |
@@ -2225,7 +2226,10 @@ MemberBaseModule.forRoot({
     routePrefix: 'auth', // GET /auth/:channel/start, GET /auth/:channel/callback
     txCookieName: 'oidc_tx',
     successRedirect: '/',
-    allowedReturnTo: ['https://app.example.com', 'myapp://auth'],
+    allowedReturnTo: [
+      'https://app.example.com', // browser: cookies
+      { url: 'myapp://auth', delivery: 'fragment' }, // native app: tokens in the fragment
+    ],
   },
 });
 ```
@@ -2238,15 +2242,15 @@ What the callback does, in order: match the stored `state` → `gateway.handleCa
 
 Cookies follow the module's own `resolve-cookie-options` helper, so the names, `maxAge`, `sameSite`, `path` and `domain` are the same ones every other cookie this package writes uses. Each is overridable:
 
-| Option                                             | Default                         |
-| -------------------------------------------------- | ------------------------------- |
-| `routePrefix`                                      | `'auth'`                        |
-| `txCookieName` / `txCookieMaxAge`                  | `'oidc_tx'` / `600` seconds     |
-| `successRedirect`                                  | `'/'`                           |
-| `allowedReturnTo`                                  | `[]` (so `returnTo` is ignored) |
-| `accessTokenCookieName` / `refreshTokenCookieName` | the module-level names          |
-| `cookieOptions`                                    | the module-level cookie options |
-| `accessTokenExpiration` / `refreshTokenExpiration` | the module-level expirations    |
+| Option                                             | Default                                                                                                                                                                                               |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `routePrefix`                                      | `'auth'`                                                                                                                                                                                              |
+| `txCookieName` / `txCookieMaxAge`                  | `'oidc_tx'` / `600` seconds                                                                                                                                                                           |
+| `successRedirect`                                  | `'/'`                                                                                                                                                                                                 |
+| `allowedReturnTo`                                  | `[]` (so `returnTo` is ignored) — a `string`, or `{ url, delivery }` to send that destination its tokens in the url fragment instead of a cookie ([why](#native-apps-why-a-cookie-cannot-reach-them)) |
+| `accessTokenCookieName` / `refreshTokenCookieName` | the module-level names                                                                                                                                                                                |
+| `cookieOptions`                                    | the module-level cookie options                                                                                                                                                                       |
+| `accessTokenExpiration` / `refreshTokenExpiration` | the module-level expirations                                                                                                                                                                          |
 
 Two things about `routePrefix` a consumer will meet:
 
@@ -2284,6 +2288,17 @@ allowedReturnTo: [
   'myapp://auth', // native app custom scheme
 ];
 ```
+
+An entry may also be an object, which additionally says **how tokens reach that destination**:
+
+```ts
+allowedReturnTo: [
+  'https://app.example.com', // delivery: 'cookie' — the default, and what a bare string means
+  { url: 'myapp://auth', delivery: 'fragment' }, // tokens after the '#', for a native app
+];
+```
+
+A native app needs the second form: a bare `'myapp://auth'` is matched perfectly well, but its tokens are delivered as cookies the app can never read. [Native apps: why a cookie cannot reach them](#native-apps-why-a-cookie-cannot-reach-them) explains why, and why delivery is configured here rather than requested.
 
 `//evil.example.com` and `/\evil.example.com` are rejected: both look relative and are read by browsers as absolute urls to another host. So is `https://app.example.com.evil.test`, which a naive prefix match would let through.
 
