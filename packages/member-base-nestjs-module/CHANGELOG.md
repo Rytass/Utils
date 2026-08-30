@@ -3,6 +3,26 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## Unreleased
+
+### Features
+
+- **member-base-nestjs-module:** authenticate to an oidc issuer with a certificate
+
+`OidcAuthProvider` accepts `clientCertificate` — a PEM certificate and its matching PEM key — and authenticates the token exchange with a `private_key_jwt` assertion ([RFC 7523](https://datatracker.ietf.org/doc/html/rfc7523#section-3)) instead of a shared secret. `EntraAuthProvider` takes one at the top level, and both halves inherit it; either may override it with its own.
+
+This closes the half that 0.10.0 left open. The Graph half has had certificate support since then; the login half had only `clientSecret`, so an Entra integration was forced to keep one expiring credential no matter what. Microsoft caps a client secret at [two years with no never-expiring option](https://learn.microsoft.com/en-us/entra/identity-platform/how-to-add-credentials) and states plainly that secrets "should not be used in production environments" — so that leftover secret is a scheduled outage, not a preference.
+
+A fresh assertion is signed per exchange with a new `jti` and a two-minute `exp`; nothing is cached, so the provider stays as stateless as it is with a secret. `aud` is the token endpoint the issuer **publishes**, never the `internalBaseUrl` a back-channel call is actually sent to — the audience is what the issuer verifies against.
+
+The signing itself is now one shared helper (`utils/client-assertion`) that the OIDC relying party and the Entra Graph client both call. Two copies of a credential format is how the two drift apart.
+
+Supplying both `clientSecret` and `clientCertificate` to the same provider throws at construction. Picking one silently would make "which credential is actually in use" a question answerable only by reading this package's source.
+
+**Certificate validation moved earlier.** A certificate is now checked when the provider is constructed rather than when it is first used, and the check is stricter: the private key must actually belong to the certificate. Every failed certificate authentication comes back from Entra as a bare `invalid_client`, and the two common causes — the certificate was never uploaded to that registration, or the two PEM files are not a pair — are indistinguishable from the outside. Only the second is knowable locally, so it is caught locally, at deploy time rather than at whatever hour someone first tries to sign in, and the message names the first as what remains. This is a behaviour change for anyone who was constructing an `EntraDirectoryProvider` with a broken certificate and relying on the failure arriving later.
+
+**Backward compatible otherwise.** `clientSecret` on its own behaves exactly as in 0.11.0 — same Basic authorization header, same body — and `clientCertificate` is a new optional field. No new runtime dependency: Node's built-in `crypto` and the `jsonwebtoken` peer this package already requires.
+
 # [0.11.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.10.0...@rytass/member-base-nestjs-module@0.11.0) (2026-08-30)
 
 ### Features

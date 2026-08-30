@@ -313,6 +313,7 @@ Two protocols behind one channel: OIDC at `login.microsoftonline.com/{tenant}/v2
 - A `Retry-After` longer than `maxRetryDelayMs` (30s) raises `DirectoryRequestFailedError` carrying `retryAfterMs` rather than retrying early.
 - Hybrid tenants also need `auth.accountClaim` naming the id token claim that carries sAMAccountName, or the login and directory paths disagree about `attributes.account` (warned once).
 - Certificate credentials: `clientCertificate: { certificate, privateKey }` (both PEM). Signed PS256 with `x5t#S256` computed from the certificate's DER.
+- `EntraAuthProvider` takes `clientCertificate` at the TOP level and both halves inherit it; either half may override. Entra caps client secrets at 24 months with no never-expiring option, so a secret-based integration has a scheduled outage — prefer the certificate.
 - `EntraGraphClient` is exported for ad-hoc Graph calls sharing the same token cache, retries and paging: `request` / `collect` / `collectDelta` / `url` / `invalidateToken`.
 - Directory failures raise `DirectoryRequestFailedError` (125) carrying `upstreamStatus`, `detail`, and `retryAfterMs` when the throttle exceeded `maxRetryDelayMs` — the signal to reschedule rather than retry.
 - Delta entries are PARTIAL: `toIdentity` leaves absent fields `undefined`, and `attributes.disabled` / `attributes.groups` are `undefined` rather than `false` / `[]` when unreported. Merge, do not overwrite.
@@ -368,6 +369,17 @@ MemberBaseModule.forRoot({
 ```
 
 Discovery runs against `${issuer}/.well-known/openid-configuration`. State validation stays with the caller, because the caller is what persisted it.
+
+Certificate client authentication (`private_key_jwt`, RFC 7523) replaces the secret:
+
+```typescript
+new OidcAuthProvider({
+  channel, issuer, clientId, redirectUri,
+  clientCertificate: { certificate: pemCert, privateKey: pemKey },  // mutually exclusive with clientSecret
+});
+```
+
+Signed PS256 with `x5t#S256` computed from the certificate — no thumbprint is ever supplied. Fresh assertion per exchange (new `jti`, 120s `exp`), nothing cached. `aud` is the token endpoint the issuer PUBLISHES, not `internalBaseUrl`. Both a secret and a certificate on one provider throws at construction; so does a certificate/key pair that does not match — the one `invalid_client` cause detectable locally.
 
 ## Provider: Becoming the Issuer
 

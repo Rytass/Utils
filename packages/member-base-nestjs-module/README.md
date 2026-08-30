@@ -1772,6 +1772,69 @@ const { member } = await gateway.handleCallback('corp-idp', {
 });
 ```
 
+### Certificate client authentication (`private_key_jwt`)
+
+A client secret is a shared password: it travels on every token exchange, it is readable wherever it is stored, and it expires. A certificate replaces it with a signature — the private key never leaves the process, and the issuer verifies it against a public certificate you uploaded once.
+
+```ts
+import { readFileSync } from 'node:fs';
+import { OidcAuthProvider } from '@rytass/member-base-nestjs-module';
+
+new OidcAuthProvider({
+  channel: 'corp-idp',
+  issuer: 'https://idp.example.com/oidc',
+  clientId,
+  clientCertificate: {
+    certificate: readFileSync(certPath, 'utf8'), // PEM of the registered public certificate
+    privateKey: readFileSync(keyPath, 'utf8'), // PEM of the matching key
+  },
+  redirectUri: 'https://app.example.com/auth/corp-idp/callback',
+});
+```
+
+`clientSecret` and `clientCertificate` are mutually exclusive, and supplying both throws at construction rather than picking one — which of the two is in use should not be a question you answer by reading this package's source.
+
+Each token exchange signs a fresh assertion ([RFC 7523](https://datatracker.ietf.org/doc/html/rfc7523#section-3)): `iss` and `sub` are the client id, `jti` is new every time, and `exp` is two minutes out. Nothing is cached, so the provider stays as stateless as it is with a secret and an application can still run more than one instance.
+
+One detail that matters when `internalBaseUrl` is set: **the assertion is addressed to the token endpoint the issuer publishes**, not to the internal address the request is actually sent to. The audience is what the issuer checks the assertion against, so a back-channel rewrite must not reach it.
+
+#### On Microsoft Entra this is close to mandatory
+
+Microsoft caps a client secret's lifetime: "[Client secret lifetime is limited to two years (24 months) or less. You can't specify a custom lifetime longer than 24 months](https://learn.microsoft.com/en-us/entra/identity-platform/how-to-add-credentials)" — there is no never-expiring option, and the same page says secrets "should **not be used** in production environments". Every secret-based Entra integration therefore has a scheduled outage built into it: on expiry day, logins simply stop.
+
+`EntraAuthProvider` takes the certificate once, at the top level, and both halves inherit it:
+
+```ts
+import { EntraAuthProvider } from '@rytass/member-base-nestjs-module/entra';
+
+new EntraAuthProvider({
+  channel: 'entra',
+  tenantId,
+  // One registered certificate, both halves. Either may override it.
+  clientCertificate: {
+    certificate: readFileSync(certPath, 'utf8'),
+    privateKey: readFileSync(keyPath, 'utf8'),
+  },
+  auth: { clientId, redirectUri: 'https://app.example.com/auth/entra/callback' },
+  directory: { clientId },
+});
+```
+
+The two halves talk to two different hosts with two sets of permissions, but nothing stops one certificate serving both — and writing the same PEM into two places is how they drift apart at the next rotation. A deployment that really does use two application registrations can still give either half its own `clientCertificate`, which wins over the inherited one.
+
+Mixing is allowed too: a certificate on one half and a secret on the other is a valid, if temporary, state while you migrate.
+
+#### When `invalid_client` is all you get back
+
+Entra answers every failed certificate authentication with a bare `invalid_client` and no reason. There are two common causes and they look identical from the outside:
+
+1. **The certificate was never uploaded to that application registration.** Nothing in this process can detect it.
+2. **The certificate and the private key are not a pair.** Both files are valid PEM, the assertion signs perfectly well, and the issuer rejects it.
+
+The second is knowable locally, so it is checked when the provider is constructed rather than on the first login — a deployment mistake should fail at deploy time, not at whatever hour someone first tries to sign in. If that check passes and you are still seeing `invalid_client`, the first cause is what remains, and the error message says so.
+
+You never supply a thumbprint. The assertion needs the base64url SHA-256 of the certificate's DER encoding (`x5t#S256`), portals display thumbprints in more than one hash and encoding, and pasting the wrong one produces a correct-looking assertion and an `invalid_client` with nothing to debug. It is computed from the certificate you pass.
+
 ### Back-channel calls on an internal address
 
 When this application runs next to the issuer — a sidecar container, a service on the same cluster — routing server-to-server calls through the public hostname leaves and re-enters the network for no reason, and often does not resolve at all.
