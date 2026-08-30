@@ -232,7 +232,10 @@ MemberBaseModule.forRoot({
                                       // empty / whitespace / '/' THROWS at boot (would mount at app root)
     txCookieName: 'oidc_tx',          // state + PKCE verifier + nonce, httpOnly, 600s
     successRedirect: '/',
-    allowedReturnTo: ['https://app.example.com', 'myapp://auth'],
+    allowedReturnTo: [
+      'https://app.example.com',                      // browser: cookies (delivery defaults to 'cookie')
+      { url: 'myapp://auth', delivery: 'fragment' },  // native app: tokens in the URL fragment
+    ],
     // accessTokenCookieName, refreshTokenCookieName, cookieOptions,
     // accessTokenExpiration, refreshTokenExpiration all default to the module-level values
   },
@@ -244,6 +247,8 @@ MemberBaseModule.forRootAsync({ useFactory, redirectAuth: { routePrefix: 'auth' 
 ```
 
 Browser (`Accept: text/html`) gets a redirect; anything else gets `200 { redirectTo }`. Tokens follow `cookieMode`: cookies when on, `?accessToken=&refreshToken=` on the destination when off (fragment-safe). `returnTo` outside `allowedReturnTo` falls back to `successRedirect`; so do non-strings, anything over 1024 chars, and any C0 control/space/DEL. What is returned is the re-serialised url with userinfo stripped, never the input string. Errors: `RedirectAuthTransactionError` (126), `RedirectAuthDeniedError` (127).
+
+Delivery is a property of the DESTINATION, never a request parameter — a `?delivery=` would let anyone put tokens on a web url, which is recorded in history, `Referer` and proxy logs. A native app cannot use cookies at all: the system browser it opens for the flow keeps its cookie jar in a different sandbox from the app's own HTTP client. `fragment` writes no cookie, puts the pair after `#` (never sent to a server), and on failure redirects back with `#error=&error_description=` using the OAuth 2 names, so the app can end its wait instead of watching an error page. The fallback (`successRedirect`) is never fragment-delivered; first matching entry wins. Browser destinations keep raising status codes.
 
 Under the default prefix a channel named `login` or `callbacks` is shadowed by `OAuthCallbacksController` and is unreachable — warned on bootstrap. `REDIRECT_AUTH_OPTIONS.routePrefix` reports where the routes were actually mounted, or `null` when they were not mounted at all — interpolating it unchecked yields `/null/...`. Only `createRedirectAuthController(prefix)` is exported as a value; the bare class is a type export, since registering it directly would mount at the app root.
 

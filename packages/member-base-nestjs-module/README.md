@@ -2295,6 +2295,67 @@ Two properties are worth knowing because they are what make the check sound rath
 
 The custom-scheme form is what a native app needs. It starts the flow in a system browser and finishes on `myapp://auth/done`, which no cookie can follow — see the note on `cookieMode` below.
 
+### Native apps: why a cookie cannot reach them
+
+A native app cannot run the login in its own HTTP client — the issuer needs a real browser for MFA, password managers and conditional access, so the app opens the system one (`ASWebAuthenticationSession` on iOS, Custom Tabs on Android) and gets control back through a custom-scheme deep link.
+
+**That browser's cookie jar is a different sandbox from the app's.** On iOS the session shares Safari's storage; the app's own requests go through its `NSHTTPCookieStorage`. A cookie the callback sets lands in the browser and is invisible to the GraphQL or HTTP client that has to use it. Nothing is misconfigured — the two stores are separate by design, and no server-side setting bridges them.
+
+Turning `cookieMode` off does put the tokens somewhere the app can read, but `cookieMode` is a module-wide switch: turning it off takes the cookie session away from the web clients of the same deployment, and one backend serving both a website and an app is the normal case.
+
+So delivery is a property of the **destination**:
+
+```ts
+redirectAuth: {
+  allowedReturnTo: [
+    'https://app.example.com', // browser: cookies, as before
+    { url: 'myapp://auth', delivery: 'fragment' }, // native app: tokens in the fragment
+  ],
+}
+```
+
+The app then starts the flow at `/auth/entra/start?returnTo=myapp%3A%2F%2Fauth%2Fcb` and reads the pair off the deep link it receives:
+
+```
+myapp://auth/cb#accessToken=eyJhbGciOi...&refreshToken=eyJhbGciOi...
+```
+
+#### Why the fragment, and not the query string
+
+A fragment is never sent to the server. It does not reach an access log, it is not in `Referer` on any subsequent request, and no reverse proxy in front of the app records it. The operating system still hands the whole url — fragment included — to the app that registered the scheme, so nothing is lost.
+
+The query-string form is still what `cookieMode: false` and `OAuthCallbacksController` emit. That is deliberate: those are existing behaviours with existing users, and `delivery: 'fragment'` is a second path rather than a change to the first.
+
+#### Why delivery is configured, not requested
+
+There is no `?delivery=fragment`. If there were, anyone could put a valid token pair on an ordinary web url — and a web url goes into browser history, into `Referer`, and into every proxy log on the way. Binding it to the allowlist makes it a statement about the deployment instead: _this_ destination is a native app, and its urls are not recorded anywhere.
+
+Two consequences follow from the same reasoning:
+
+- **The fallback is never fragment-delivered.** `successRedirect` is not an allowlist entry, so nothing has declared it a place tokens may be put — and it is reached exactly when the requested destination was refused.
+- **First match wins.** If several entries would admit a destination, the earliest decides its delivery.
+
+#### Failures come back the same way
+
+A browser can be shown an error page. A native app cannot: it only sees the system browser stop somewhere, with no signal to end its wait on, and the user has to dismiss the window by hand.
+
+So a `fragment` destination is redirected to on failure as well, carrying the OAuth 2 error parameters:
+
+```
+myapp://auth/cb#error=access_denied&error_description=the%20user%20declined%20consent
+```
+
+| Cause                                                     | `error`           |
+| --------------------------------------------------------- | ----------------- |
+| The issuer refused (declined consent, conditional access) | whatever it sent  |
+| State mismatch, wrong channel, no code                    | `invalid_request` |
+| The identity resolves to no local member                  | `access_denied`   |
+| Anything else                                             | `server_error`    |
+
+Only the issuer's own text is passed through, and only after being reduced to the characters [RFC 6749 §4.1.2.1](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1) permits and capped in length — it arrives as a query parameter on a public endpoint, and a `Location` header is no better a place for unbounded attacker text than a response body is. Everything else reports a code with no description rather than putting an internal message on a url.
+
+**Browser destinations are unaffected**: they still raise the status codes above, because a host application already handles them. A failure before the transaction cookie can be read is always a status code, whatever the destination — with no readable transaction there is no destination to redirect to.
+
 ### Content negotiation, and where the tokens go
 
 Both routes negotiate the same way the OIDC interaction routes do. A browser (`Accept: text/html`) is redirected; anything else — including the `*/*` that `fetch` and axios send — gets `200 { redirectTo }`, because an API client driving the flow needs the location as data.
