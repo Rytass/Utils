@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.12.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.11.0...@rytass/member-base-nestjs-module@0.12.0) (2026-08-30)
+
+### Features
+
+- **member-base-nestjs-module:** authenticate to an oidc issuer with a certificate ([8963741](https://github.com/Rytass/Utils/commit/896374152adfce14768af2f605f80ef4d7a6e2df))
+
 # [0.11.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.10.0...@rytass/member-base-nestjs-module@0.11.0) (2026-08-30)
 
 ### Features
