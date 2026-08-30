@@ -8,6 +8,56 @@ import type { DirectoryProvider } from '../src/typings/directory-provider.interf
 
 const TENANT = '11111111-2222-3333-4444-555555555555';
 
+/** Throwaway self-signed pair for the certificate-inheritance tests. */
+const TEST_CERTIFICATE = `-----BEGIN CERTIFICATE-----
+MIIDAzCCAeugAwIBAgIUeoL4NZ74LZIebfv8U1SuDrecVU4wDQYJKoZIhvcNAQEL
+BQAwETEPMA0GA1UEAwwGcGFpci1hMB4XDTI2MDgzMDE2MzU0M1oXDTM2MDgyNzE2
+MzU0M1owETEPMA0GA1UEAwwGcGFpci1hMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A
+MIIBCgKCAQEAqT7Hih2GBs68El7FUakwWg36StQP3HU+pGL8h7CgMTWehZbHGHwu
+Wrp/RoHYdBnwJpJ1WtPtmUFAlkV3XFxahSz+185PZkeR1N+/rvjk3yLkVBFd4orW
+S07Z382rBctSc1hzFThcDJJ31QD1c5jPRU+qYigBmwnlySNqUZ16VpMd1h5mLFh3
+eLE/pSvxp83O1Hiee/s4uRnb1QOmns+2VqMO1tVjdKlXWFQKl394+eZzbQh+frdQ
++0Qkh3UOfsPg2np+c3GV9rCo2jmsqRaXg2Qm/gp/NZcetXEcpPuYcEK1Qeex2gUq
+CHbchpeMvAqmc0LHp20zrOfRPgqk5+YHpwIDAQABo1MwUTAdBgNVHQ4EFgQUYi4K
+6bGY/fBaBM9tM+Y8zAov4zAwHwYDVR0jBBgwFoAUYi4K6bGY/fBaBM9tM+Y8zAov
+4zAwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEAn9ndYcYFC9Tk
+dRyHkmEEvbZ0k3/g9bC2wbxc7hMyv4eTD5xYNLfgeDYzQFzpNHv+V3yJUsdpc07d
+SmQwS/ZuJJTnV3dPlL/xMsVZ/QDfnBjt7Q4P4MtGm3cpXTqkdRPzqnlGga7tmkWN
+mAdQ0JIQtAwYf0iPQBG9exSIj+4tDlrbqTsMnuUQnntgdLfQZq03JTVBjJnFCGUm
+LZs9h9H3eg1InITUhV0q09WfvdIyuamNXSoWNDEF//oDAcu+tBWukfwozi1ntcdX
+ejN0r7PzvGp8rX5z4+VbsuiEBYWOcg8R7qEyCaTP09+iKx2XM3UIuitf2wdWYvqm
+Ns7QCHS8nQ==
+-----END CERTIFICATE-----`;
+
+const TEST_PRIVATE_KEY = `-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCpPseKHYYGzrwS
+XsVRqTBaDfpK1A/cdT6kYvyHsKAxNZ6FlscYfC5aun9Ggdh0GfAmknVa0+2ZQUCW
+RXdcXFqFLP7Xzk9mR5HU37+u+OTfIuRUEV3iitZLTtnfzasFy1JzWHMVOFwMknfV
+APVzmM9FT6piKAGbCeXJI2pRnXpWkx3WHmYsWHd4sT+lK/Gnzc7UeJ57+zi5GdvV
+A6aez7ZWow7W1WN0qVdYVAqXf3j55nNtCH5+t1D7RCSHdQ5+w+Daen5zcZX2sKja
+OaypFpeDZCb+Cn81lx61cRyk+5hwQrVB57HaBSoIdtyGl4y8CqZzQsenbTOs59E+
+CqTn5genAgMBAAECggEAAd3Di9nVRsLAdn1zCxYMjY3GZBzKsL2ESjX7YqC983kS
+rOLRe2GceSMN7iE+T0fs3CTItO9z3jkPd7mbIbHzH2wfkhjUAmTbKEBzmLBQk2aE
+NLE4xAAF0nypGxcxorPv/sobJH9GQHe5p0Hxed+h2iG6oAn6ko3FFuCGeh7/6voH
+If+urMTRtc9AMSPmegHVJ78pnax3u98nSh25FbAHGfMCZ9QNOfA1cJTIP+K5v16v
+o4yFHSwSARIiqm8Ejhho2atcoyoBdCQqG9KkzlFG1tIYgOfzdulhYT+JByTgcrPi
+E3OY80PcFneJrbjixffWixyWfgXQtVzivJzUWm6cqQKBgQDc/6yh0tqJht6a3UUo
+/eLYmcYHqq6t0husEIWfdDkmMmJDf8Po4FDny44aRAqDwHZdiCOGw9ZuKmXjZSHu
+c49Pc8vUus8LgMe9VDxwsunshA7hKMRPfl/oIBCsFP9QBKDyPvVADslkxCkL3QB+
+gc8Bv9UfNwtfa4fJDqStzcb2zQKBgQDEDMaGz4cHBqt05YxeT1VsyjbyM8bNXCH+
+aeX8/zTn9ngaLDc4LXPRTG8Ex2XJ3jnCZuRK3+cpWu8GlCqty4p+uRF5I2C2EOyY
+FKTOUu/MWPgWum4pJg+xlB+1JkYqpBja3cgNTkEfNsi2liCN+kXDiZnM7fYI2+ji
+3IQxZsEwQwKBgHGXBI9EhkkLxl0JACQ6op88IpoMM65qAQkmkNfNcBZe7TzObc7D
+hTIu4QJFGLZxdSVL9R6uiAelySrg71jVksJ+vTTBM+wwq/l3U32FqFCF6/P09Tn6
+tabk3Ezmmffx+RuqGnprXz5oyMQtOrTLWbAHfq6Fp1XLOkawPRqMWwi9AoGAXX3O
+KrnKpaIbn6pcDxl8Hl4sZ8IjOwmFuIKdx9GYVEooKisNxj9+rL/rbXb9ZpAQMVHJ
+6p7t6L3RoOyFkc2v5RCycXdahlh5y2iE01OfwW5oGMadBAh/kWqW2FdBPNJ2e+Ep
+ppa73XvNqazcJ3jDTiVPb/fGzaC5ZX5NmBVtaWsCgYEAvpqm1q9AgsvQ3uVmgpE8
+Ubw5E4N7E9Vh8YFdlS7kvjgkUYnSPNkZcnKjDUSirY9krEv1bPYqlfuKGPByiezI
+RbEOEHuzTMhTcntKM/o42f+ir2zto2+etXHMoOencMgbxLwfBM+9LuOQ6f1xUoiZ
+lQErIBb8Hq1mKAhDm+JrBj0=
+-----END PRIVATE KEY-----`;
+
 const ldap = (): LdapAuthProvider =>
   new LdapAuthProvider({
     url: 'ldaps://dc.corp.local',
@@ -220,5 +270,89 @@ describe('EntraAuthProvider directory capability', () => {
     expect(upn.accountAttribute).toBe('userPrincipalName');
     expect(hybrid.accountAttribute).toBe('onPremisesSamAccountName');
     expect(new EntraAuthProvider({ tenantId: TENANT, auth }).accountAttribute).toBeUndefined();
+  });
+});
+
+describe('EntraAuthProvider certificate credentials', () => {
+  const certificate = { certificate: TEST_CERTIFICATE, privateKey: TEST_PRIVATE_KEY };
+  const auth = { clientId: 'login-app', redirectUri: 'https://app.example.com/auth/entra/callback' };
+
+  const assertionParams = (provider: { directory?: EntraDirectoryProvider }): unknown =>
+    (provider.directory as unknown as { client: { credentialParams(endpoint: string): unknown } }).client;
+
+  it('should let one top-level certificate serve both halves', () => {
+    // Writing the same PEM twice is how the two halves drift apart at the next
+    // rotation, so the composite lets one entry cover both.
+    const provider = new EntraAuthProvider({
+      tenantId: TENANT,
+      clientCertificate: certificate,
+      auth,
+      directory: { clientId: 'graph-app' },
+    });
+
+    expect(provider.directory).toBeInstanceOf(EntraDirectoryProvider);
+    expect(assertionParams(provider)).toBeDefined();
+  });
+
+  it('should let each half override the inherited certificate', () => {
+    // A deployment with two application registrations needs this.
+    expect(
+      () =>
+        new EntraAuthProvider({
+          tenantId: TENANT,
+          clientCertificate: certificate,
+          auth: { ...auth, clientCertificate: { certificate: TEST_CERTIFICATE, privateKey: 'not a key' } },
+          directory: { clientId: 'graph-app' },
+        }),
+    ).toThrow(/clientCertificate\.privateKey is not a readable PEM/);
+
+    expect(
+      () =>
+        new EntraAuthProvider({
+          tenantId: TENANT,
+          clientCertificate: certificate,
+          auth,
+          directory: {
+            clientId: 'graph-app',
+            clientCertificate: { certificate: TEST_CERTIFICATE, privateKey: 'not a key' },
+          },
+        }),
+    ).toThrow(/clientCertificate\.privateKey is not a readable PEM/);
+  });
+
+  it('should still accept a secret on one half and a certificate on the other', () => {
+    // Nothing forces the two halves onto the same credential kind.
+    const provider = new EntraAuthProvider({
+      tenantId: TENANT,
+      auth: { ...auth, clientCertificate: certificate },
+      directory: { clientId: 'graph-app', clientSecret: 'graph-secret' },
+    });
+
+    expect(provider.directory).toBeInstanceOf(EntraDirectoryProvider);
+  });
+
+  it('should not inherit a certificate onto a half that declared a secret', () => {
+    // The directory half named a secret explicitly; inheriting a certificate on
+    // top of it would be the ambiguity the mutual-exclusion check exists to stop.
+    expect(
+      () =>
+        new EntraAuthProvider({
+          tenantId: TENANT,
+          clientCertificate: certificate,
+          auth,
+          directory: { clientId: 'graph-app', clientSecret: 'graph-secret' },
+        }),
+    ).toThrow(/both clientSecret and clientCertificate/);
+  });
+
+  it('should leave a secret-only composite unchanged', () => {
+    const provider = new EntraAuthProvider({
+      tenantId: TENANT,
+      auth: { ...auth, clientSecret: 'login-secret' },
+      directory: { clientId: 'graph-app', clientSecret: 'graph-secret' },
+    });
+
+    expect(provider.kind).toBe('redirect');
+    expect(provider.directory).toBeInstanceOf(EntraDirectoryProvider);
   });
 });

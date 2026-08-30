@@ -1,6 +1,5 @@
-import { createHash, randomUUID, X509Certificate } from 'node:crypto';
-import jwt from 'jsonwebtoken';
 import { AuthProviderMisconfiguredError, DirectoryRequestFailedError } from '../../constants/errors/base.error';
+import { assertUsableCertificate, clientAssertionParams, type ClientCertificate } from '../../utils/client-assertion';
 
 /** Where the tenant's token endpoint lives. Overridden for the national clouds. */
 export const DEFAULT_AUTHORITY_BASE_URL = 'https://login.microsoftonline.com';
@@ -9,21 +8,12 @@ export const DEFAULT_AUTHORITY_BASE_URL = 'https://login.microsoftonline.com';
 export const DEFAULT_GRAPH_BASE_URL = 'https://graph.microsoft.com';
 
 /**
- * A certificate credential, as an app registration stores it.
+ * A certificate credential for the Graph half.
  *
- * Both are PEM. The certificate is supplied rather than a thumbprint on
- * purpose: the assertion needs the base64url SHA-256 of the certificate's DER
- * encoding, the portal displays thumbprints in more than one hash and encoding,
- * and asking for "the thumbprint" invites pasting the wrong one — which
- * produces a correct-looking assertion and an `invalid_client` with nothing to
- * debug. It is computed here instead.
+ * An alias of the shared `ClientCertificate`, kept as a named export because it
+ * is already public API under this name.
  */
-export interface EntraClientCertificate {
-  /** PEM of the public certificate registered on the application. */
-  certificate: string;
-  /** PEM of the matching private key. */
-  privateKey: string;
-}
+export type EntraClientCertificate = ClientCertificate;
 
 export interface EntraGraphClientOptions {
   tenantId: string;
@@ -85,22 +75,6 @@ const DEFAULT_MAX_RETRY_DELAY_MS = 30_000;
 
 const stripTrailingSlash = (url: string): string => url.replace(/\/$/, '');
 
-/**
- * `x5t#S256`: base64url of the SHA-256 over the certificate's DER encoding.
- *
- * Derived from the certificate rather than taken as input, so there is no way
- * to supply the wrong hash or the wrong encoding.
- */
-const certificateToX5tS256 = (certificate: string): string => {
-  try {
-    return createHash('sha256').update(new X509Certificate(certificate).raw).digest('base64url');
-  } catch (error) {
-    throw new AuthProviderMisconfiguredError(
-      `Entra clientCertificate.certificate is not a readable PEM certificate: ${(error as Error).message}`,
-    );
-  }
-};
-
 const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
@@ -142,6 +116,16 @@ export class EntraGraphClient {
         'Entra directory access needs either clientSecret or clientCertificate; neither was supplied',
       );
     }
+
+    if (options.clientSecret && options.clientCertificate) {
+      // Picking one silently would leave "which credential is actually in use"
+      // answerable only by reading this file.
+      throw new AuthProviderMisconfiguredError(
+        'Entra directory access was given both clientSecret and clientCertificate; supply exactly one',
+      );
+    }
+
+    if (options.clientCertificate) assertUsableCertificate(options.clientCertificate);
   }
 
   get graphBaseUrl(): string {
@@ -353,47 +337,13 @@ export class EntraGraphClient {
 
   private credentialParams(tokenEndpoint: string): Record<string, string> {
     if (this.options.clientCertificate) {
-      return {
-        client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
-        client_assertion: this.signClientAssertion(tokenEndpoint, this.options.clientCertificate),
-      };
+      return clientAssertionParams({
+        clientId: this.options.clientId,
+        audience: tokenEndpoint,
+        credential: this.options.clientCertificate,
+      });
     }
 
     return { client_secret: this.options.clientSecret as string };
-  }
-
-  /**
-   * The private-key-JWT client credential (RFC 7523).
-   *
-   * `alg: PS256` and `x5t#S256` are what Microsoft's current certificate
-   * credentials specification calls for; `x5t#S256` is also what tells Entra
-   * which registered certificate to verify against, so it is not optional even
-   * though the JWT would otherwise be well formed.
-   *
-   * @see https://learn.microsoft.com/en-us/entra/identity-platform/certificate-credentials
-   */
-  private signClientAssertion(tokenEndpoint: string, certificate: EntraClientCertificate): string {
-    const now = Math.floor(Date.now() / 1000);
-
-    return jwt.sign(
-      {
-        aud: tokenEndpoint,
-        iss: this.options.clientId,
-        sub: this.options.clientId,
-        jti: randomUUID(),
-        nbf: now,
-        iat: now,
-        exp: now + 600,
-      },
-      certificate.privateKey,
-      {
-        algorithm: 'PS256',
-        header: {
-          alg: 'PS256',
-          typ: 'JWT',
-          'x5t#S256': certificateToX5tS256(certificate.certificate),
-        } as unknown as jwt.JwtHeader,
-      },
-    );
   }
 }

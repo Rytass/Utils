@@ -65,6 +65,56 @@ beforeEach(() => {
   }) as unknown as typeof fetch;
 });
 
+/** Throwaway self-signed pair for the certificate-authentication tests. */
+const TEST_CERTIFICATE = `-----BEGIN CERTIFICATE-----
+MIIDAzCCAeugAwIBAgIUeoL4NZ74LZIebfv8U1SuDrecVU4wDQYJKoZIhvcNAQEL
+BQAwETEPMA0GA1UEAwwGcGFpci1hMB4XDTI2MDgzMDE2MzU0M1oXDTM2MDgyNzE2
+MzU0M1owETEPMA0GA1UEAwwGcGFpci1hMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A
+MIIBCgKCAQEAqT7Hih2GBs68El7FUakwWg36StQP3HU+pGL8h7CgMTWehZbHGHwu
+Wrp/RoHYdBnwJpJ1WtPtmUFAlkV3XFxahSz+185PZkeR1N+/rvjk3yLkVBFd4orW
+S07Z382rBctSc1hzFThcDJJ31QD1c5jPRU+qYigBmwnlySNqUZ16VpMd1h5mLFh3
+eLE/pSvxp83O1Hiee/s4uRnb1QOmns+2VqMO1tVjdKlXWFQKl394+eZzbQh+frdQ
++0Qkh3UOfsPg2np+c3GV9rCo2jmsqRaXg2Qm/gp/NZcetXEcpPuYcEK1Qeex2gUq
+CHbchpeMvAqmc0LHp20zrOfRPgqk5+YHpwIDAQABo1MwUTAdBgNVHQ4EFgQUYi4K
+6bGY/fBaBM9tM+Y8zAov4zAwHwYDVR0jBBgwFoAUYi4K6bGY/fBaBM9tM+Y8zAov
+4zAwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEAn9ndYcYFC9Tk
+dRyHkmEEvbZ0k3/g9bC2wbxc7hMyv4eTD5xYNLfgeDYzQFzpNHv+V3yJUsdpc07d
+SmQwS/ZuJJTnV3dPlL/xMsVZ/QDfnBjt7Q4P4MtGm3cpXTqkdRPzqnlGga7tmkWN
+mAdQ0JIQtAwYf0iPQBG9exSIj+4tDlrbqTsMnuUQnntgdLfQZq03JTVBjJnFCGUm
+LZs9h9H3eg1InITUhV0q09WfvdIyuamNXSoWNDEF//oDAcu+tBWukfwozi1ntcdX
+ejN0r7PzvGp8rX5z4+VbsuiEBYWOcg8R7qEyCaTP09+iKx2XM3UIuitf2wdWYvqm
+Ns7QCHS8nQ==
+-----END CERTIFICATE-----`;
+
+const TEST_PRIVATE_KEY = `-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCpPseKHYYGzrwS
+XsVRqTBaDfpK1A/cdT6kYvyHsKAxNZ6FlscYfC5aun9Ggdh0GfAmknVa0+2ZQUCW
+RXdcXFqFLP7Xzk9mR5HU37+u+OTfIuRUEV3iitZLTtnfzasFy1JzWHMVOFwMknfV
+APVzmM9FT6piKAGbCeXJI2pRnXpWkx3WHmYsWHd4sT+lK/Gnzc7UeJ57+zi5GdvV
+A6aez7ZWow7W1WN0qVdYVAqXf3j55nNtCH5+t1D7RCSHdQ5+w+Daen5zcZX2sKja
+OaypFpeDZCb+Cn81lx61cRyk+5hwQrVB57HaBSoIdtyGl4y8CqZzQsenbTOs59E+
+CqTn5genAgMBAAECggEAAd3Di9nVRsLAdn1zCxYMjY3GZBzKsL2ESjX7YqC983kS
+rOLRe2GceSMN7iE+T0fs3CTItO9z3jkPd7mbIbHzH2wfkhjUAmTbKEBzmLBQk2aE
+NLE4xAAF0nypGxcxorPv/sobJH9GQHe5p0Hxed+h2iG6oAn6ko3FFuCGeh7/6voH
+If+urMTRtc9AMSPmegHVJ78pnax3u98nSh25FbAHGfMCZ9QNOfA1cJTIP+K5v16v
+o4yFHSwSARIiqm8Ejhho2atcoyoBdCQqG9KkzlFG1tIYgOfzdulhYT+JByTgcrPi
+E3OY80PcFneJrbjixffWixyWfgXQtVzivJzUWm6cqQKBgQDc/6yh0tqJht6a3UUo
+/eLYmcYHqq6t0husEIWfdDkmMmJDf8Po4FDny44aRAqDwHZdiCOGw9ZuKmXjZSHu
+c49Pc8vUus8LgMe9VDxwsunshA7hKMRPfl/oIBCsFP9QBKDyPvVADslkxCkL3QB+
+gc8Bv9UfNwtfa4fJDqStzcb2zQKBgQDEDMaGz4cHBqt05YxeT1VsyjbyM8bNXCH+
+aeX8/zTn9ngaLDc4LXPRTG8Ex2XJ3jnCZuRK3+cpWu8GlCqty4p+uRF5I2C2EOyY
+FKTOUu/MWPgWum4pJg+xlB+1JkYqpBja3cgNTkEfNsi2liCN+kXDiZnM7fYI2+ji
+3IQxZsEwQwKBgHGXBI9EhkkLxl0JACQ6op88IpoMM65qAQkmkNfNcBZe7TzObc7D
+hTIu4QJFGLZxdSVL9R6uiAelySrg71jVksJ+vTTBM+wwq/l3U32FqFCF6/P09Tn6
+tabk3Ezmmffx+RuqGnprXz5oyMQtOrTLWbAHfq6Fp1XLOkawPRqMWwi9AoGAXX3O
+KrnKpaIbn6pcDxl8Hl4sZ8IjOwmFuIKdx9GYVEooKisNxj9+rL/rbXb9ZpAQMVHJ
+6p7t6L3RoOyFkc2v5RCycXdahlh5y2iE01OfwW5oGMadBAh/kWqW2FdBPNJ2e+Ep
+ppa73XvNqazcJ3jDTiVPb/fGzaC5ZX5NmBVtaWsCgYEAvpqm1q9AgsvQ3uVmgpE8
+Ubw5E4N7E9Vh8YFdlS7kvjgkUYnSPNkZcnKjDUSirY9krEv1bPYqlfuKGPByiezI
+RbEOEHuzTMhTcntKM/o42f+ir2zto2+etXHMoOencMgbxLwfBM+9LuOQ6f1xUoiZ
+lQErIBb8Hq1mKAhDm+JrBj0=
+-----END PRIVATE KEY-----`;
+
 const buildProvider = (overrides?: Partial<ConstructorParameters<typeof OidcAuthProvider>[0]>): OidcAuthProvider =>
   new OidcAuthProvider({
     channel: 'corp-idp',
@@ -336,5 +386,118 @@ describe('OidcAuthProvider internal base url', () => {
     await internalProvider().handleCallback({ code: 'c' });
 
     expect(stub.calls.some(call => call.url === 'https://tokens.elsewhere.test/token')).toBe(true);
+  });
+});
+
+describe('OidcAuthProvider certificate client authentication', () => {
+  const certificate = { certificate: TEST_CERTIFICATE, privateKey: TEST_PRIVATE_KEY };
+
+  const certificateProvider = (): OidcAuthProvider =>
+    new OidcAuthProvider({
+      channel: 'corp-idp',
+      issuer: ISSUER,
+      clientId: CLIENT_ID,
+      clientCertificate: certificate,
+      redirectUri: 'https://app.example.com/auth/callback',
+    });
+
+  it('should exchange the code with a client assertion and no secret', async () => {
+    stub.tokenResponse = { access_token: 'at', id_token: issueIdToken({}) };
+
+    await certificateProvider().handleCallback({ code: 'code-1' });
+
+    const tokenCall = stub.calls.find(call => call.url.endsWith('/token'));
+    const body = new URLSearchParams(tokenCall?.init?.body as string);
+
+    expect(body.get('client_assertion_type')).toBe('urn:ietf:params:oauth:client-assertion-type:jwt-bearer');
+    expect(typeof body.get('client_assertion')).toBe('string');
+    // No shared secret anywhere: not in the body, not in an Authorization header.
+    expect(body.get('client_secret')).toBeNull();
+    expect((tokenCall?.init?.headers as Record<string, string>).authorization).toBeUndefined();
+  });
+
+  it('should address the assertion to the endpoint the issuer publishes', async () => {
+    stub.tokenResponse = { access_token: 'at', id_token: issueIdToken({}) };
+
+    // Back-channel calls go somewhere else entirely; the audience must not
+    // follow them, because it is what the issuer verifies against.
+    const provider = new OidcAuthProvider({
+      channel: 'corp-idp',
+      issuer: ISSUER,
+      internalBaseUrl: 'http://localhost:4530/oidc',
+      clientId: CLIENT_ID,
+      clientCertificate: certificate,
+      redirectUri: 'https://app.example.com/auth/callback',
+    });
+
+    await provider.handleCallback({ code: 'code-1' });
+
+    const tokenCall = stub.calls.find(call => call.url.includes('/token'));
+    const assertion = new URLSearchParams(tokenCall?.init?.body as string).get('client_assertion') ?? '';
+    const claims = JSON.parse(Buffer.from(assertion.split('.')[1], 'base64url').toString('utf8'));
+
+    expect(tokenCall?.url).toBe('http://localhost:4530/oidc/token');
+    expect(claims.aud).toBe(`${ISSUER}/token`);
+    expect(claims.iss).toBe(CLIENT_ID);
+    expect(claims.sub).toBe(CLIENT_ID);
+  });
+
+  it('should sign a fresh assertion per exchange rather than caching one', async () => {
+    stub.tokenResponse = { access_token: 'at', id_token: issueIdToken({}) };
+
+    const provider = certificateProvider();
+
+    await provider.handleCallback({ code: 'code-1' });
+    await provider.handleCallback({ code: 'code-2' });
+
+    const assertions = stub.calls
+      .filter(call => call.url.endsWith('/token'))
+      .map(call => new URLSearchParams(call.init?.body as string).get('client_assertion'));
+
+    expect(assertions).toHaveLength(2);
+    expect(assertions[0]).not.toBe(assertions[1]);
+  });
+
+  it('should refuse a secret and a certificate together', () => {
+    expect(
+      () =>
+        new OidcAuthProvider({
+          channel: 'corp-idp',
+          issuer: ISSUER,
+          clientId: CLIENT_ID,
+          clientSecret: 'sp-secret',
+          clientCertificate: certificate,
+          redirectUri: 'https://app.example.com/auth/callback',
+        }),
+    ).toThrow(/both clientSecret and clientCertificate/);
+  });
+
+  it('should refuse a mismatched pair at construction', () => {
+    expect(
+      () =>
+        new OidcAuthProvider({
+          channel: 'corp-idp',
+          issuer: ISSUER,
+          clientId: CLIENT_ID,
+          clientCertificate: { certificate: TEST_CERTIFICATE, privateKey: 'not a key' },
+          redirectUri: 'https://app.example.com/auth/callback',
+        }),
+    ).toThrow(/clientCertificate\.privateKey is not a readable PEM/);
+  });
+
+  it('should leave the secret path exactly as it was', async () => {
+    stub.tokenResponse = { access_token: 'at', id_token: issueIdToken({}) };
+
+    await buildProvider().handleCallback({ code: 'code-1' });
+
+    const tokenCall = stub.calls.find(call => call.url.endsWith('/token'));
+    const body = new URLSearchParams(tokenCall?.init?.body as string);
+
+    expect((tokenCall?.init?.headers as Record<string, string>).authorization).toBe(
+      `Basic ${Buffer.from(`${CLIENT_ID}:sp-secret`).toString('base64')}`,
+    );
+
+    expect(body.get('client_assertion')).toBeNull();
+    expect(body.get('client_assertion_type')).toBeNull();
   });
 });

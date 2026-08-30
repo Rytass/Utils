@@ -5,7 +5,7 @@ import {
   type EntraDirectoryListOptions,
   type EntraDirectoryOptions,
 } from './entra-directory.provider';
-import { DEFAULT_AUTHORITY_BASE_URL } from './entra-graph-client';
+import { DEFAULT_AUTHORITY_BASE_URL, type EntraClientCertificate } from './entra-graph-client';
 import type { EntraAccountAttribute, EntraDirectoryEntry } from './entra-attributes';
 import type {
   AuthContext,
@@ -19,7 +19,13 @@ import type { DirectoryProvider } from '../../typings/directory-provider.interfa
 /** The browser-facing half: an OpenID Connect authorization code flow. */
 export interface EntraAuthOptions {
   clientId: string;
+  /** Mutually exclusive with `clientCertificate`. */
   clientSecret?: string;
+  /**
+   * Certificate client authentication for the login half. Overrides the
+   * composite's `clientCertificate`; omit both to fall back to a secret.
+   */
+  clientCertificate?: EntraClientCertificate;
   redirectUri: string;
   /** default: ['openid', 'profile', 'email'] */
   scope?: string[];
@@ -89,6 +95,20 @@ export interface EntraAuthProviderOptions {
   authorityBaseUrl?: string;
   /** default: 'https://graph.microsoft.com'. Same reason. */
   graphBaseUrl?: string;
+  /**
+   * A certificate credential both halves inherit.
+   *
+   * The two halves authenticate to two different hosts, but nothing stops one
+   * registered certificate serving both — and writing the same PEM twice is how
+   * they drift apart at the next rotation. Either half may still override it
+   * with its own `clientCertificate`, which is what a deployment using two
+   * application registrations needs.
+   *
+   * Strongly preferred over a secret on Entra: a client secret there
+   * [cannot be given a lifetime beyond 24 months](https://learn.microsoft.com/en-us/entra/identity-platform/how-to-add-credentials),
+   * so every secret-based integration carries a scheduled outage.
+   */
+  clientCertificate?: EntraClientCertificate;
   auth: EntraAuthOptions;
   /** Omit to register Entra as an authentication source only. */
   directory?: EntraCompositeDirectoryOptions;
@@ -175,6 +195,7 @@ export class EntraAuthProvider implements AuthenticationProvider {
       internalBaseUrl: options.auth.internalBaseUrl,
       clientId: options.auth.clientId,
       clientSecret: options.auth.clientSecret,
+      clientCertificate: options.auth.clientCertificate ?? options.clientCertificate,
       redirectUri: options.auth.redirectUri,
       scope: options.auth.scope,
       usePKCE: options.auth.usePKCE,
@@ -187,6 +208,7 @@ export class EntraAuthProvider implements AuthenticationProvider {
 
     const directory = new EntraDirectoryProvider({
       ...options.directory,
+      clientCertificate: options.directory.clientCertificate ?? options.clientCertificate,
       tenantId: options.tenantId,
       graphBaseUrl: options.graphBaseUrl,
       authorityBaseUrl: options.authorityBaseUrl,

@@ -11,7 +11,11 @@ export { AuthenticationGateway, type AuthenticationResult } from './services/aut
 // Authentication Providers
 export { PasswordAuthProvider, type PasswordCredentials } from './providers/password-auth.provider';
 export { PASSWORD_CHANNEL } from './constants/password-channel';
-export { OidcAuthProvider, type OidcAuthProviderOptions } from './providers/oidc/oidc-auth.provider';
+export {
+  OidcAuthProvider,
+  type OidcAuthProviderOptions,
+  type OidcClientCertificate,
+} from './providers/oidc/oidc-auth.provider';
 export { OidcMetadataResolver, type OidcDiscoveryDocument } from './providers/oidc/oidc-discovery';
 
 // Models
@@ -117,6 +121,16 @@ export * from './decorators/has-permission.decorator';
 export * from './helpers/graphql-context-token-resolver';
 export { normalizeCasbinDecision } from './utils/normalize-casbin-decision';
 export { resolveReturnTo, resolveReturnToTarget } from './utils/resolve-return-to';
+// Shared by the OIDC relying party and the Entra Graph client, so the two
+// cannot drift on how a private_key_jwt assertion is built.
+export {
+  signClientAssertion,
+  clientAssertionParams,
+  certificateToX5tS256,
+  assertUsableCertificate,
+  CLIENT_ASSERTION_TYPE,
+  type ClientCertificate,
+} from './utils/client-assertion';
 export type { ReturnToTarget } from './utils/resolve-return-to';
 export { toInetCidr } from './utils/to-inet-cidr';
 export {

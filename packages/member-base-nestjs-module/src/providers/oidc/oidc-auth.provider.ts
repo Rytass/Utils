@@ -2,6 +2,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import { OidcMetadataResolver } from './oidc-discovery';
 import { AuthProviderMisconfiguredError, InvalidToken } from '../../constants/errors/base.error';
+import { assertUsableCertificate, clientAssertionParams, type ClientCertificate } from '../../utils/client-assertion';
 import type {
   AuthContext,
   AuthenticatedIdentity,
@@ -9,6 +10,9 @@ import type {
   AuthorizationRequest,
   AuthProviderKind,
 } from '../../typings/authentication-provider.interface';
+
+/** A PEM certificate and its matching PEM private key. */
+export type OidcClientCertificate = ClientCertificate;
 
 export interface OidcAuthProviderOptions {
   /** Channel name this provider registers under. */
@@ -35,7 +39,24 @@ export interface OidcAuthProviderOptions {
   internalBaseUrl?: string;
 
   clientId: string;
+  /**
+   * Shared-secret client authentication. Mutually exclusive with
+   * `clientCertificate`.
+   */
   clientSecret?: string;
+  /**
+   * Certificate client authentication — `private_key_jwt` (RFC 7523).
+   *
+   * Mutually exclusive with `clientSecret`. Preferred wherever the issuer
+   * supports it, and on Microsoft Entra effectively required for anything
+   * long-lived: a client secret there
+   * [cannot be given a lifetime beyond 24 months](https://learn.microsoft.com/en-us/entra/identity-platform/how-to-add-credentials),
+   * so a secret-based integration has a scheduled outage built into it.
+   *
+   * A fresh assertion is signed per token request. Nothing is cached, so the
+   * provider stays as stateless as it is with a secret.
+   */
+  clientCertificate?: OidcClientCertificate;
   redirectUri: string;
   /** default: ['openid', 'profile', 'email'] */
   scope?: string[];
@@ -105,6 +126,20 @@ export class OidcAuthProvider implements AuthenticationProvider {
   private readonly metadata: OidcMetadataResolver;
 
   constructor(private readonly options: OidcAuthProviderOptions) {
+    if (options.clientSecret && options.clientCertificate) {
+      // Choosing one silently would make "which credential is in use"
+      // answerable only by reading this file — and the two fail in different
+      // ways at the issuer.
+      throw new AuthProviderMisconfiguredError(
+        `Provider "${options.channel}" was given both clientSecret and clientCertificate; supply exactly one`,
+      );
+    }
+
+    // Checked at construction rather than at the first login: a mismatched pair
+    // is a deployment mistake, and the issuer only ever reports it as a bare
+    // invalid_client hours later.
+    if (options.clientCertificate) assertUsableCertificate(options.clientCertificate);
+
     this.channel = options.channel;
     this.metadata = new OidcMetadataResolver(options.issuer, options.internalBaseUrl);
   }
@@ -205,7 +240,18 @@ export class OidcAuthProvider implements AuthenticationProvider {
 
     const headers: Record<string, string> = { 'content-type': 'application/x-www-form-urlencoded' };
 
-    if (this.options.clientSecret) {
+    if (this.options.clientCertificate) {
+      // `aud` is the endpoint the issuer PUBLISHES, never the internal address
+      // the request is actually sent to: it is what the issuer verifies the
+      // assertion against, so a back-channel rewrite must not reach it.
+      Object.entries(
+        clientAssertionParams({
+          clientId: this.options.clientId,
+          audience: tokenEndpoint,
+          credential: this.options.clientCertificate,
+        }),
+      ).forEach(([key, value]) => body.set(key, value));
+    } else if (this.options.clientSecret) {
       const credentials = `${this.options.clientId}:${this.options.clientSecret}`;
 
       headers.authorization = `Basic ${Buffer.from(credentials).toString('base64')}`;

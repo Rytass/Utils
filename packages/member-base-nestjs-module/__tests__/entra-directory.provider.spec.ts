@@ -77,6 +77,36 @@ tZXcH1xd7U0p6tWGpkqFgUfr/KxwNOCz91SaAORg9KmucPLozSBBSvHD3xlK+ftD
 bPkrEM+hIVXQ/u9P3m7XaSs=
 -----END PRIVATE KEY-----`;
 
+/** A second, unrelated key — used to prove a mismatched pair is refused. */
+const OTHER_PRIVATE_KEY = `-----BEGIN PRIVATE KEY-----
+MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQC8GvpKGN44dJq7
+lPrMetgKhUlIZ6eFHae+WVQoFpnir5klu3H4xpDxnaC1ZOrxEFphMAd727RUNvX2
+zmfUpJ/c8fksyd2WM53pK+Mni2hAkRWp0pbJiTVSJallNVUP/g3ygsG7Oh8XlFNa
+cBdw9WHk5xE/Nt0xarWDQcb1ncXYacCQo9M6mDZAstQUKoPex59JPj1vI20GYXIW
+fbGBiayjqj92/tPz6NRxj3ftRdIlHPJaJ0yPs9aTLyGQOclQWP0wZTELPW6IXE9F
+LAhJ6u/2ohPgHfQI61wrZIzePjaim0Eyh3lElBAQiaWQ4/0NXB6n2rT6korBYoiy
+20CG5UglAgMBAAECggEAWtzJNAupJConKB9Buo5IV2SkzoXLZMC7a3Yo8ahhMx/R
+YWmXFy2LjDqxC44w8rsMfU++/bRV+iwGSe7QNuZClm6IB3uHPuu2BpD9i/eKJ04t
+4bdowPc3O3QXzFyjtzLoN9GzlSXxKOmsDc6BdD4DyJdZPGjbFejOvxWB7tkEXZF7
+GpXaULALpfP+MayVdJy7z+ptH3Qs1lx6q27pOE8BPAXc+gPAKFkPOsjnijmfdnOD
+1U2itW1FnEp00j6iDHdTEQcYlq4nRAXOU6qryAXSuX16MonB9UBuWMfWkvB1eyPs
+7VGmSqyLNkqeslZJW9OP/+84r7+BKmAvpIPT1jxuzQKBgQDtdLZyhg8z1XID7JFz
+1s1IyQmw7w+VXwYcu0ewhY1QLydHEAQtRvfz+7EnCQ7Ohyuh8JbuBGV7CIk3R2/5
+xMp2ndlV3NpKGrhrPypABPARE0V2h0QCNGQDL5hKtn1ccDiaylD8S7mrSzR0jJzJ
+WCkUzY+OUpDUej2z2Hoznm6l1wKBgQDKy6KNccbYdxx0Rso+qEljzFLAlFkw/8Yi
+SiSzfvjUumNHVEjv06yjAL96ldh3moWrhsTsrudfmLfoOYJIG8/erIkcHGeTAQ07
+qb79pN3uM6cclS+5YIOZPyiOkXAYaS98LSzommj8qgy3//nlUp2EZv3tIL1AOsKk
+keT3L81KYwKBgATzB9J/RNXZvxSh265Ebeb0ecU8VmDQqDn1FVtyjS18rh7nEI85
+CXYGavzbTXm0i45Gi37OjKbx2JpUXNsh5O5v/9WwUsR0ph9mI6VN9QsGEc6UpzA8
+k1EVruDvyNEibaucR+/aTDZrzN4ZCDOSKNkMJ8/ZnLcxDRQwkOt+g+PlAoGARr5O
+0GTWZwD2LiHbv4vZPjUy0PdvPcacCa4vq2Ypy5vRsjpWz0LaQGqsYUkQoHiJFNMI
+s0A4eoK99QbKyfjZxOYPVn0aLI/7W8rVU4pF2SivrSrl4RcoETeVIFbf8cQPypO/
+zMzAvxNbKHzlYfg19tAu2J/JJTTaXap/YzOLu90CgYAuv0rMkfYQnbkwglHeFs1Y
+OkoOFfzJ3je+gie6iPLWinPe3oDMrLFAWGFV7NpqwVuC/UWlqXUdMGw7rOqHn1vF
+e0ia5dbSg6enpKe6Rm5rZRlBxNTY7uC9Lf26t0Z9YbgoUQ4ciZxgSSiamv+JEcQ/
+M4Kz4lNuEAcQe40x13A+DQ==
+-----END PRIVATE KEY-----`;
+
 describe('EntraDirectoryProvider', () => {
   let fetchMock: FetchMock;
 
@@ -659,18 +689,46 @@ describe('EntraDirectoryProvider', () => {
       expect(typeof payload.jti).toBe('string');
     });
 
-    it('should name the option when the certificate is not readable PEM', async () => {
-      fetchMock = installFetchMock(() => ({ body: {} }));
-
+    it('should name the option when the certificate is not readable PEM', () => {
+      // Thrown at construction rather than at the first call: a broken
+      // credential is a deployment mistake, and the issuer only ever reports it
+      // as a bare invalid_client whenever someone eventually tries to log in.
       // A crypto stack trace would send the reader looking in the wrong place.
-      await expect(
-        new EntraDirectoryProvider({
-          tenantId: TENANT,
-          clientId: 'app-id',
-          clientCertificate: { certificate: 'not a certificate', privateKey: TEST_PRIVATE_KEY },
-          includeGroups: false,
-        }).findAllUsers(),
-      ).rejects.toThrow(/clientCertificate\.certificate is not a readable PEM/);
+      expect(
+        () =>
+          new EntraDirectoryProvider({
+            tenantId: TENANT,
+            clientId: 'app-id',
+            clientCertificate: { certificate: 'not a certificate', privateKey: TEST_PRIVATE_KEY },
+            includeGroups: false,
+          }),
+      ).toThrow(/clientCertificate\.certificate is not a readable PEM/);
+    });
+
+    it('should refuse a certificate and key that are not a pair', () => {
+      // Both are individually valid PEM, so nothing downstream would complain —
+      // the assertion signs fine and the issuer rejects it with no reason.
+      expect(
+        () =>
+          new EntraDirectoryProvider({
+            tenantId: TENANT,
+            clientId: 'app-id',
+            clientCertificate: { certificate: TEST_CERTIFICATE, privateKey: OTHER_PRIVATE_KEY },
+            includeGroups: false,
+          }),
+      ).toThrow(/are not a pair/);
+    });
+
+    it('should refuse both a secret and a certificate on the same half', () => {
+      expect(
+        () =>
+          new EntraDirectoryProvider({
+            tenantId: TENANT,
+            clientId: 'app-id',
+            clientSecret: 'app-secret',
+            clientCertificate: { certificate: TEST_CERTIFICATE, privateKey: TEST_PRIVATE_KEY },
+          }),
+      ).toThrow(/both clientSecret and clientCertificate/);
     });
 
     it('should target a national cloud when the base urls are overridden', async () => {
