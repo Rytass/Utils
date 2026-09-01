@@ -1985,7 +1985,7 @@ const entries = await directory.findAllUsers({ filter: 'accountEnabled eq true' 
 | `clientCertificate` | `{ certificate: string; privateKey: string }`       | —                     | Both PEM; see below                                               |
 | `accountAttribute`  | `'userPrincipalName' \| 'onPremisesSamAccountName'` | `'userPrincipalName'` | Which attribute `attributes.account` reports                      |
 | `includeGroups`     | `boolean`                                           | `true`                | Costs one request per user; see the note under Reading the tenant |
-| `extraAttributes`   | `string[]`                                          | `[]`                  | Appended to the default `$select`                                 |
+| `extraAttributes`   | `string[]`                                          | `[]`                  | Appended to the default `$select`, and passed through to `attributes` |
 | `maxRetries`        | `number`                                            | `3`                   | Retries on `429` and `5xx`                                        |
 | `maxRetryDelayMs`   | `number`                                            | `30000`               | Longest a request is held open waiting out a throttle             |
 
@@ -2072,6 +2072,54 @@ Aligned with `LdapAuthProvider.toIdentity` **by meaning, not by field name**, so
 | `attributes.groups`     | `memberOf[].displayName`      | `memberOf` DN → CN                |
 
 The login path fills in the same `account`, `name` and `email` from the id token's standard claims, alongside every raw claim. One exception: **the id token's `groups` claim is left exactly as Entra sent it** and is never mapped onto `attributes.groups`. When the optional claim is configured Entra emits group _object ids_ there, while the directory reports _display names_ — writing both under one key would make a group check silently depend on which path produced the identity.
+
+### Attributes this module does not map
+
+The table above is the whole of what gets a name of its own. Everything else a directory carries — an employee number, a cost centre, a site code, a contract end date — reaches the application **unmapped and uninterpreted**, because what any of those _mean_ is the application's business and not this module's. There is no option for an employee-number field here, and there will not be one.
+
+Both paths deliver it, by different routes.
+
+**On the login path, nothing is needed.** Every raw id token claim is already spread onto `attributes` under the name the issuer used:
+
+```ts
+syncOnAuthenticate: async (identity) => {
+  // Whatever the tenant emits, exactly as it was emitted.
+  const employeeNo = identity.attributes?.['employee_no'];
+},
+```
+
+Getting a claim _emitted_ is a tenant-side change — an optional claim, or a claims-mapping policy on the app registration — and once it is emitted this module carries it without being told about it.
+
+**On the directory path, name it in `extraAttributes`.** Each attribute listed there is added to what is requested from the directory _and_ placed on `attributes` under the directory's own name:
+
+```ts
+directory: {
+  // ...clientId and the credential
+  extraAttributes: ['employeeId', 'employeeOrgData'],
+},
+```
+
+```ts
+import { isDirectoryProvider } from '@rytass/member-base-nestjs-module';
+
+const provider = gateway.getProvider('entra');
+
+if (isDirectoryProvider(provider)) {
+  const entry = await provider.findUser('wang@corp.com');
+  const { attributes } = provider.toIdentity(entry!);
+
+  attributes?.employeeId; // 'E-00427'    — Graph's name, Graph's value
+  attributes?.employeeOrgData; // { division: 'Hardware', costCenter: '4711' }
+}
+```
+
+The same option, with the same behaviour, exists on `LdapAuthProvider`.
+
+Three rules govern the passthrough:
+
+- **Values are never coerced.** A Graph object stays an object; a multi-valued LDAP attribute stays an array. Which of those a given field is belongs to the directory's schema, and collapsing it would be this module deciding what the application's own field means.
+- **Absent is not empty.** An attribute the entry does not carry is omitted rather than set to `undefined`, so `'employeeId' in attributes` answers _was it reported_ — which is what a `/users/delta` consumer needs, since an incremental entry carries only what changed. An attribute the directory reports as `null` or `''` is kept, because cleared-upstream and never-asked-for are different facts.
+- **An extra attribute can never shadow a mapped one.** `extraAttributes: ['groups']` does not change what `attributes.groups` reports. Widening what is requested must not be able to change what an authorization check reads.
 
 ### Hybrid tenants: `onPremisesSamAccountName`
 

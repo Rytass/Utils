@@ -433,6 +433,69 @@ describe('EntraDirectoryProvider', () => {
       expect(identity.identifier).toBe('oid-1');
     });
 
+    it('should place extraAttributes on the identity, uninterpreted', () => {
+      // Asking Graph for an attribute and then dropping it made
+      // `extraAttributes` a request with no response. What the tenant's own
+      // fields mean is the application's business, so they arrive under Graph's
+      // names with Graph's values and no mapping applied.
+      const withExtras = new EntraDirectoryProvider({
+        tenantId: TENANT,
+        clientId: 'app-id',
+        clientSecret: 'app-secret',
+        extraAttributes: ['employeeId', 'employeeOrgData'],
+      });
+
+      const identity = withExtras.toIdentity({
+        id: 'oid-1',
+        userPrincipalName: 'wang@corp.com',
+        employeeId: 'E-00427',
+        employeeOrgData: { division: 'Hardware', costCenter: '4711' },
+        officeLocation: 'Taipei',
+      });
+
+      expect(identity.attributes?.employeeId).toBe('E-00427');
+      expect(identity.attributes?.employeeOrgData).toEqual({ division: 'Hardware', costCenter: '4711' });
+      // Not asked for, so not reported — even though Graph's default projection
+      // returned it.
+      expect('officeLocation' in (identity.attributes ?? {})).toBe(false);
+    });
+
+    it('should not let an extra attribute shadow a mapped one', () => {
+      // Widening `$select` must not be able to change what a group check reads.
+      const shadowing = new EntraDirectoryProvider({
+        tenantId: TENANT,
+        clientId: 'app-id',
+        clientSecret: 'app-secret',
+        extraAttributes: ['groups', 'department', 'account'],
+      });
+
+      const identity = shadowing.toIdentity({
+        id: 'oid-1',
+        department: 'R&D',
+        memberOf: [],
+        groups: ['Domain Admins'],
+        account: 'someone-else',
+        userPrincipalName: 'wang@corp.com',
+      });
+
+      expect(identity.attributes?.groups).toEqual([]);
+      expect(identity.attributes?.account).toBe('wang@corp.com');
+      expect(identity.attributes?.department).toBe('R&D');
+    });
+
+    it('should omit an extra attribute a delta entry did not carry', () => {
+      const withExtras = new EntraDirectoryProvider({
+        tenantId: TENANT,
+        clientId: 'app-id',
+        clientSecret: 'app-secret',
+        extraAttributes: ['employeeId'],
+      });
+
+      const identity = withExtras.toIdentity({ id: 'oid-1', displayName: 'Wang' });
+
+      expect('employeeId' in (identity.attributes ?? {})).toBe(false);
+    });
+
     it('should report no groups as absent, not as an empty list', () => {
       expect(provider.toIdentity({ id: 'oid-1' }).attributes?.groups).toBeUndefined();
       expect(provider.toIdentity({ id: 'oid-1', memberOf: [] }).attributes?.groups).toEqual([]);

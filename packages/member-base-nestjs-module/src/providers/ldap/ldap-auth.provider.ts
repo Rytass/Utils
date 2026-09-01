@@ -8,6 +8,7 @@ import {
   isAccountDisabled,
   normalizeAccountInput,
 } from './ldap-attributes';
+import { pickExtraAttributes } from '../../utils/pick-extra-attributes';
 import type {
   AuthContext,
   AuthenticatedIdentity,
@@ -67,7 +68,14 @@ export interface LdapAuthProviderOptions {
    * default: '(objectClass=user)'
    */
   listFilter?: string;
-  /** Extra attributes to request and expose on the identity. */
+  /**
+   * Extra attributes to request, appended to the default set.
+   *
+   * Each one is also placed on `toIdentity`'s `attributes` under the name the
+   * directory used, carrying the value the directory sent — a multi-valued
+   * attribute stays an array, and nothing is coerced or renamed. An attribute
+   * the entry does not carry is simply absent.
+   */
   extraAttributes?: string[];
   /**
    * Reject accounts flagged as disabled in userAccountControl.
@@ -220,6 +228,17 @@ export class LdapAuthProvider
       identifier,
       identifierVerified: true,
       attributes: {
+        // Spread first, so an attribute the caller named can never shadow the
+        // fields below. Those are the contract every consumer reads — an
+        // `extraAttributes: ['department']` that quietly replaced the mapped
+        // `department`, or worse `groups`, would turn a widened search into an
+        // authorization change.
+        //
+        // Values are passed through as the directory sent them, which for LDAP
+        // means a multi-valued attribute stays an array: this module has no way
+        // to know which attributes are single-valued in a given schema, and
+        // collapsing them would be deciding on the application's behalf.
+        ...pickExtraAttributes(entry, this.options.extraAttributes),
         dn: firstString(entry.dn),
         account,
         name: firstString(entry.displayName) ?? account,

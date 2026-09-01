@@ -318,6 +318,8 @@ Two protocols behind one channel: OIDC at `login.microsoftonline.com/{tenant}/v2
 - Directory failures raise `DirectoryRequestFailedError` (125) carrying `upstreamStatus`, `detail`, and `retryAfterMs` when the throttle exceeded `maxRetryDelayMs` — the signal to reschedule rather than retry.
 - Delta entries are PARTIAL: `toIdentity` leaves absent fields `undefined`, and `attributes.disabled` / `attributes.groups` are `undefined` rather than `false` / `[]` when unreported. Merge, do not overwrite.
 - `accountAttribute: 'onPremisesSamAccountName'` for hybrid tenants keyed on sAMAccountName. The binding is still keyed on the object id.
+- Organisation-specific fields (employee number, cost centre, site code) are NEVER mapped to a named field — what they mean is the application's business. Login path: every raw id token claim is already on `attributes` under the issuer's name, no option needed. Directory path: `extraAttributes: ['employeeId']` both widens the request AND places the value on `attributes.employeeId`. Same option on `LdapAuthProvider`.
+- Passthrough rules: values are uncoerced (Graph object stays an object, multi-valued LDAP attribute stays an array); an attribute the entry does not carry is OMITTED not `undefined`, so `'employeeId' in attributes` means "was it reported" (`null` / `''` are kept — cleared upstream is a fact); an extra attribute can never shadow a mapped one, so `extraAttributes: ['groups']` cannot change what an authorization check reads.
 - National clouds: `graphBaseUrl`, `authorityBaseUrl`.
 
 ```typescript

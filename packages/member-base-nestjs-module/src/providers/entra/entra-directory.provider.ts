@@ -11,6 +11,7 @@ import {
   type EntraDirectoryObjectRef,
 } from './entra-attributes';
 import { EntraGraphClient, type EntraClientCertificate } from './entra-graph-client';
+import { pickExtraAttributes } from '../../utils/pick-extra-attributes';
 import type { AuthenticatedIdentity } from '../../typings/authentication-provider.interface';
 import type {
   DirectoryDeltaResult,
@@ -29,7 +30,14 @@ export interface EntraDirectoryOptions {
   graphBaseUrl?: string;
   /** default: 'https://login.microsoftonline.com'. Same reason. */
   authorityBaseUrl?: string;
-  /** Extra attributes to `$select`, appended to the default set. */
+  /**
+   * Extra attributes to `$select`, appended to the default set.
+   *
+   * Each one is also placed on `toIdentity`'s `attributes` under the name Graph
+   * used, with the value Graph sent and no interpretation applied — this module
+   * has no opinion on what a tenant's own fields mean. An attribute the tenant
+   * has not populated is simply absent.
+   */
   extraAttributes?: string[];
   /** Fetch group memberships alongside each user. default: true */
   includeGroups?: boolean;
@@ -216,6 +224,12 @@ export class EntraDirectoryProvider implements DirectoryProvider<EntraDirectoryL
       // for a user to claim here the way an email address can be claimed.
       identifierVerified: true,
       attributes: {
+        // Spread first, so an attribute the caller named can never shadow the
+        // fields below. Those are the contract every consumer reads — a
+        // `extraAttributes: ['department']` that quietly replaced the mapped
+        // `department`, or worse `groups`, would turn a widened `$select` into
+        // an authorization change.
+        ...pickExtraAttributes(entry, this.options.extraAttributes),
         objectId: identifier,
         account,
         userPrincipalName: entry.userPrincipalName ?? undefined,

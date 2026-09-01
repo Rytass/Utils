@@ -286,6 +286,38 @@ describe('LdapAuthProvider directory queries', () => {
     });
   });
 
+  it('should place extraAttributes on the identity, uninterpreted', async () => {
+    // The option always promised to "request and expose"; only the request half
+    // was implemented. Values pass through as the directory sent them, so a
+    // multi-valued attribute stays an array — this module cannot know which
+    // attributes are single-valued in a given schema.
+    searchEntries[0].employeeID = 'E-00427';
+    searchEntries[0].proxyAddresses = ['smtp:wang@corp.com', 'smtp:wang@corp.local'];
+
+    const provider = buildProvider({ extraAttributes: ['employeeID', 'proxyAddresses', 'physicalDeliveryOfficeName'] });
+    const entry = await provider.findUser('wangxx');
+    const identity = provider.toIdentity(entry!);
+
+    expect(identity.attributes?.employeeID).toBe('E-00427');
+    expect(identity.attributes?.proxyAddresses).toEqual(['smtp:wang@corp.com', 'smtp:wang@corp.local']);
+    // Requested but not carried by the entry, so not reported.
+    expect('physicalDeliveryOfficeName' in (identity.attributes ?? {})).toBe(false);
+  });
+
+  it('should not let an extra attribute shadow a mapped one', async () => {
+    // Widening the requested attribute list must not be able to change what a
+    // group check reads.
+    searchEntries[0].groups = ['Domain Admins'];
+    searchEntries[0].account = 'someone-else';
+
+    const provider = buildProvider({ extraAttributes: ['groups', 'account'] });
+    const entry = await provider.findUser('wangxx');
+    const identity = provider.toIdentity(entry!);
+
+    expect(identity.attributes?.groups).toEqual(['Finance', 'AllStaff']);
+    expect(identity.attributes?.account).toBe('wangxx');
+  });
+
   it('should surface the disabled flag so reconciliation can act on it', async () => {
     searchEntries[0].userAccountControl = '514';
 
