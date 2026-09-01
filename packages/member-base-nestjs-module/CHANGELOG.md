@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.13.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.12.0...@rytass/member-base-nestjs-module@0.13.0) (2026-09-01)
+
+### Features
+
+- **member-base-nestjs-module:** pass extraAttributes through to the identity ([fc78ffd](https://github.com/Rytass/Utils/commit/fc78ffd658eef291f0ce15e1ca991bdb26ac7443))
+
 # [0.12.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.11.0...@rytass/member-base-nestjs-module@0.12.0) (2026-08-30)
 
 ### Features
