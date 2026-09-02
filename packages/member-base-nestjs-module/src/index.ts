@@ -107,6 +107,7 @@ export type {
   CasbinDomainResolver,
   CasbinDomainResolverParams,
 } from './typings/casbin-permission';
+export type { CasbinRuleEntity } from './typings/casbin-rule-entity';
 
 // Casbin
 export * from './guards/casbin.guard';

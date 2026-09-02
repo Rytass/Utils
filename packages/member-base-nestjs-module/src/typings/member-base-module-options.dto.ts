@@ -13,6 +13,7 @@ import type {
   CasbinPermissionCheckerParams,
   CasbinPermissionCheckerResult,
 } from './casbin-permission';
+import type { CasbinRuleEntity } from './casbin-rule-entity';
 import type { PasswordHashOptions } from './password-hash-options';
 import type { RedirectAuthOptions } from './redirect-auth.options';
 
@@ -72,6 +73,18 @@ export interface MemberBaseModuleOptionsDTO<
   superAdminRole?: string;
   defaultCasbinDomain?: string;
   casbinAdapterOptions?: TypeORMAdapterOptions;
+  /**
+   * Entity backing the Casbin policy table.
+   *
+   * default: typeorm-adapter's own `CasbinRule`, which is mapped to `casbin_rule`.
+   * Subclass it with `@Entity('another_table')` when two applications share one
+   * database and must not overwrite each other's policies — the table name is
+   * the only axis of separation that does not also require a separate schema.
+   *
+   * With `casbinAdapterOptions: { connection }` typeorm-adapter does not build
+   * its own entity list, so register this entity on that DataSource too.
+   */
+  casbinRuleEntity?: CasbinRuleEntity;
   casbinModelString?: string; // default: RBAC with domains
   casbinPermissionDecorator?: ReflectableDecorator<[string, string][]>;
   casbinPermissionChecker?: (params: CasbinPermissionCheckerParams<TokenPayload>) => CasbinPermissionCheckerResult;
