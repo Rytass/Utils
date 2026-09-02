@@ -65,6 +65,7 @@ import { MemberBaseModule } from '@rytass/member-base-nestjs-module';
       // Casbin
       enableGlobalGuard: true,
       casbinAdapterOptions: { type: 'postgres', host: 'localhost', database: 'rytass' },
+      // casbinRuleEntity: BackendCasbinRule,   // omit: CasbinRule from typeorm-adapter, table casbin_rule
     }),
   ],
 })
@@ -72,6 +73,27 @@ export class AppModule {}
 ```
 
 `MemberBaseModule.forRootAsync({ useFactory, inject })` is also available.
+
+### Casbin policy table
+
+`casbinRuleEntity` names the table Casbin policies live in. Unset, typeorm-adapter's own `CasbinRule` is used and the table is `casbin_rule` — two applications on one database then share it, and since booting means "load the authoritative rules, clear the table, write them back", each one's startup briefly empties the table the other is enforcing against.
+
+```typescript
+import { Entity } from 'typeorm';
+import { CasbinRule } from 'typeorm-adapter';
+
+@Entity('backend_casbin_rule')
+export class BackendCasbinRule extends CasbinRule {}
+
+MemberBaseModule.forRoot({
+  casbinAdapterOptions: { type: 'postgres' /* ... */ },
+  casbinRuleEntity: BackendCasbinRule,
+});
+```
+
+The entity is the row constructor and the repository target, not just a table name, so it must keep `CasbinRule`'s `ptype` and `v0`–`v5` columns — subclass it rather than redeclaring it. Extra columns of your own (`@CreateDateColumn()`, `@UpdateDateColumn()`) are supported.
+
+With `casbinAdapterOptions: { connection: dataSource }` typeorm-adapter does not assemble its own `entities` list, so register the entity on that `DataSource` yourself; otherwise boot fails inside `loadPolicy()` with TypeORM's `EntityMetadataNotFoundError`. Setting the option on an application that already has policies starts it from an empty table — the rows are not migrated. Splitting the table separates the policy *cache*, not the permissions themselves.
 
 ### Cookie behaviour
 
@@ -543,7 +565,7 @@ Note: `oidc-provider` is ESM-only and is loaded through an opaque dynamic import
 | `member_login_logs` | package root, always |
 | `member_password_histories` | package root, always |
 | `member_oauth_records` | package root, always |
-| `casbin_rule` | `casbinAdapterOptions` |
+| `casbin_rule`, or `casbinRuleEntity`'s table | `casbinAdapterOptions` |
 | `oidc_payloads`, `oidc_clients` | importing `/oidc-provider` only |
 
 Entities: `BaseMemberEntity`, `MemberLoginLogEntity`, `MemberPasswordHistoryEntity`, `MemberOAuthRecordEntity`, `OidcPayloadEntity`, `OidcClientEntity`.

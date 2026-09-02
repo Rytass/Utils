@@ -80,6 +80,9 @@ export interface MemberBaseModuleOptionsDTO<
    * Subclass it with `@Entity('another_table')` when two applications share one
    * database and must not overwrite each other's policies — the table name is
    * the only axis of separation that does not also require a separate schema.
+   *
+   * With `casbinAdapterOptions: { connection }` typeorm-adapter does not build
+   * its own entity list, so register this entity on that DataSource too.
    */
   casbinRuleEntity?: CasbinRuleEntity;
   casbinModelString?: string; // default: RBAC with domains

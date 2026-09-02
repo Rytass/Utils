@@ -309,7 +309,13 @@ MemberBaseModule.forRoot({
 
 Left unset, the adapter is constructed exactly as before and keeps using `casbin_rule`, so this changes nothing for an existing deployment. Setting it on an application that already has policies starts that application from an empty table — it does not migrate the rows.
 
-Two caveats worth stating plainly. Splitting the table separates the *cache*, not the permissions: if both applications rebuild their policies from the same upstream tables, both still end up with identical contents, and a permission missing from those upstream tables stays missing in both. And the entity is read for its table name only — the columns must remain those of `CasbinRule`, which is why subclassing is the supported route.
+Three caveats worth stating plainly.
+
+**Splitting the table separates the *cache*, not the permissions.** If both applications rebuild their policies from the same upstream tables, both still end up with identical contents, and a permission missing from those upstream tables stays missing in both.
+
+**The entity is more than a table name.** typeorm-adapter constructs every policy row from it, resolves the repository through it, and — on the branch where it opens the connection itself, where `synchronize` defaults to on — creates the table from it. So it has to keep the `ptype` and `v0`–`v5` columns the adapter reads and writes, which is exactly what subclassing `CasbinRule` guarantees. Columns of your own on top are supported; `@CreateDateColumn()` and `@UpdateDateColumn()` are the usual pair.
+
+**An existing connection needs the entity registered on it.** `casbinAdapterOptions` also accepts `{ connection: dataSource }`, and typeorm-adapter assembles an `entities` list only on the other branch, the one where it opens the connection itself. Handed a `DataSource` it takes that one's entity list as it finds it, while still resolving the repository through your class — so declare the entity on that `DataSource` yourself, and let its `synchronize` or a migration create the table. Miss it and boot fails inside `loadPolicy()` with TypeORM's `EntityMetadataNotFoundError`, which names the entity but not the option that introduced it.
 
 ## Request-Aware Authorization (casbinDomainResolver and Decision Tracing)
 
