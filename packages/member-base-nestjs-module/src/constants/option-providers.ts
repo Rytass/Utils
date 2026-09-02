@@ -66,6 +66,7 @@ import { SUPER_ADMIN_ROLE } from './super-admin-role';
 import { DEFAULT_CASBIN_DOMAIN } from './default-casbin-domain';
 import type { PasswordHashOptions } from '../typings/password-hash-options';
 import { getTypeORMAdapter } from './load-typeorm-adapter';
+import { toTypeORMAdapterConfig } from './typeorm-adapter-config';
 import type { ReflectableDecorator } from '@nestjs/core';
 import type { OAuth2Provider } from '../typings/oauth2-provider.interface';
 import type { AuthTokenPayloadBase } from '../typings/auth-token-payload';
@@ -127,7 +128,7 @@ export const OptionProviders = [
       if (!options?.casbinAdapterOptions) return null;
 
       const TypeORMAdapter = await getTypeORMAdapter();
-      const adapter = await TypeORMAdapter.newAdapter(options.casbinAdapterOptions);
+      const adapter = await TypeORMAdapter.newAdapter(options.casbinAdapterOptions, toTypeORMAdapterConfig(options));
 
       const enforcer = await newEnforcer();
 
