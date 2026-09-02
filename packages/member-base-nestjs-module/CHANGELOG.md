@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.14.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.13.0...@rytass/member-base-nestjs-module@0.14.0) (2026-09-02)
+
+### Features
+
+- **member-base-nestjs-module:** let applications name the casbin policy table ([3170201](https://github.com/Rytass/Utils/commit/31702019c05141ae4953856c9c48c5fe3d70c56f))
+
 # [0.13.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.12.0...@rytass/member-base-nestjs-module@0.13.0) (2026-09-01)
 
 ### Features
