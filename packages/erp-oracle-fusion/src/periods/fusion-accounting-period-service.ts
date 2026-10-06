@@ -46,14 +46,19 @@ interface AccountingPeriodStatusItem {
 }
 
 /**
- * `q` 以 `;` 串接條件且沒有跳脫語法，值裡帶 `;` 或引號就能多塞一個條件或改寫比較式——
- * 例如把查詢從指定的子帳模組換成另一個。這些值常來自使用者輸入，因此只放行期間名與 id
- * 實際會用到的字元。
+ * `q` 沒有跳脫語法，值會被當成查詢語法的一部分解讀：`;` 可以多塞一個條件，而 `or`、
+ * `is not null` 這類運算子只由字母與空白組成——所以空白也不能放行，否則
+ * `Sep-26 or ApplicationId is not null` 就能把查詢從指定的子帳模組擴大到全部。
+ * 這些值常來自使用者輸入，因此採白名單：id 只收數字，期間名只收不含空白的單一 token。
+ *
+ * 期間名含空白的會計行事曆因此無法使用本服務；需要時請自行以 `FusionRestClient` 查詢，
+ * 並確保值不是來自未經檢查的輸入。
  */
-const SAFE_QUERY_VALUE_PATTERN = /^[A-Za-z0-9 _./-]+$/;
+const LEDGER_ID_PATTERN = /^[0-9]+$/;
+const PERIOD_NAME_PATTERN = /^[A-Za-z0-9_./-]+$/;
 
-function assertSafeQueryValue(name: string, value: string | number): void {
-  if (!SAFE_QUERY_VALUE_PATTERN.test(String(value))) {
+function assertMatches(name: string, value: string | number, pattern: RegExp): void {
+  if (!pattern.test(String(value))) {
     throw new Error(`Invalid ${name} for an accounting period query: ${JSON.stringify(value)}`);
   }
 }
@@ -69,16 +74,16 @@ export class FusionAccountingPeriodService {
   /**
    * 查詢單一期間在指定模組的狀態；Fusion 查無此期間時回傳 `null`。
    *
-   * `ledgerId`／`periodName` 含查詢語法字元（`;`、引號、比較運算子等）時拋錯，不送出請求。
+   * `ledgerId` 必須全為數字、`periodName` 必須是不含空白的單一 token，否則拋錯且不送出請求。
    */
   async getStatus(
     query: AccountingPeriodStatusQuery,
     options?: FusionRequestOptions,
   ): Promise<AccountingPeriodStatus | null> {
-    assertSafeQueryValue('ledgerId', query.ledgerId);
-    assertSafeQueryValue('periodName', query.periodName);
+    assertMatches('ledgerId', query.ledgerId, LEDGER_ID_PATTERN);
+    assertMatches('periodName', query.periodName, PERIOD_NAME_PATTERN);
 
-    if (!Number.isInteger(query.applicationId)) {
+    if (!Number.isInteger(query.applicationId) || query.applicationId < 0) {
       throw new Error(`Invalid applicationId for an accounting period query: ${JSON.stringify(query.applicationId)}`);
     }
 

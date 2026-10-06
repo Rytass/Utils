@@ -624,6 +624,10 @@ const status = await periods.getStatus({
 status?.closingStatus; // 'O' | 'C' | 'F' | 'N' | 'P' | 'W', or null when the period is unknown
 ```
 
+`ledgerId` must be numeric and `periodName` a single token without whitespace; anything else is
+rejected before a request is sent, because Fusion's `q` filter has no escaping and would read the
+value as query syntax.
+
 `applicationId` is required. Each subledger opens and closes the same period on its own schedule,
 and a query without it returns a row from an arbitrary one. `FUSION_GL_APPLICATION_ID` (101),
 `FUSION_AR_APPLICATION_ID` (222) and `FUSION_AP_APPLICATION_ID` (200) are provided.
