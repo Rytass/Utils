@@ -6,6 +6,8 @@ export {
   FUSION_EXTRACT_ALL_FILES,
   FUSION_FINDERS,
   FUSION_JOB_OPTION_KEYS,
+  FUSION_AP_APPLICATION_ID,
+  FUSION_AR_APPLICATION_ID,
   FUSION_GL_APPLICATION_ID,
   FUSION_INVALID_REQUEST_ID,
   FUSION_RESOURCES,
@@ -230,6 +232,16 @@ export {
   type EssSchedulerTerminalState,
 } from './ess/scheduler';
 export { FusionEssSchedulerService, type EssSchedulerSubmitResult } from './ess/fusion-ess-scheduler-service';
+
+// ---------------------------------------------------------------------------
+// 會計期間狀態
+// ---------------------------------------------------------------------------
+export {
+  FusionAccountingPeriodService,
+  FUSION_PERIOD_CLOSING_STATUS,
+  type AccountingPeriodStatus,
+  type AccountingPeriodStatusQuery,
+} from './periods/fusion-accounting-period-service';
 
 // ---------------------------------------------------------------------------
 // Data extraction and UCM file operations
