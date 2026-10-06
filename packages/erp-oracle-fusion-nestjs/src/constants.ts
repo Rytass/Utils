@@ -1,4 +1,4 @@
-/** 已套上預設值的 client 設定（由 `FusionClientModule` 內部提供）。 */
+/** `forRoot(Async)` 傳入的 client 設定，原樣提供（預設值由各 client 建構時套用）。 */
 export const FUSION_CLIENT_OPTIONS = Symbol('FUSION_CLIENT_OPTIONS');
 
 /**

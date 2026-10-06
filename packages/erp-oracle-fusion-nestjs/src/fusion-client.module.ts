@@ -1,10 +1,14 @@
 import { DynamicModule, Logger, Module, Provider } from '@nestjs/common';
 import {
+  FusionAccountingPeriodService,
+  FusionAuthProvider,
   FusionCustomerAccountService,
   FusionCustomerProfileService,
+  FusionEssSchedulerService,
   FusionFbdiService,
   FusionRestClient,
   FusionSoapClient,
+  resolveFusionClientOptions,
 } from '@rytass/erp-oracle-fusion';
 import type { FusionCallLogSink, FusionClientOptions, FusionLogger } from '@rytass/erp-oracle-fusion';
 import { FUSION_CALL_LOG_SINK, FUSION_CLIENT_OPTIONS } from './constants';
@@ -49,15 +53,44 @@ function buildCallLogSinkProvider(options?: FusionCallLogSinkOptions): Provider 
 
 function buildClientProviders(disableLogger?: boolean): Provider[] {
   return [
+    // REST 與 SOAP client 共用這一個 provider，因此整個 module 只有一份 OAuth token 快取。
+    {
+      provide: FusionAuthProvider,
+      useFactory: (config: FusionClientModuleConfig): FusionAuthProvider =>
+        config.authProvider ??
+        new FusionAuthProvider(
+          resolveFusionClientOptions({
+            ...config,
+            ...(disableLogger ? {} : { logger: createNestLogger() }),
+          } as FusionClientOptions),
+        ),
+      inject: [FUSION_CLIENT_OPTIONS],
+    },
     {
       provide: FusionRestClient,
-      useFactory: (config: FusionClientModuleConfig, callLogSink: FusionCallLogSink): FusionRestClient =>
+      useFactory: (
+        config: FusionClientModuleConfig,
+        callLogSink: FusionCallLogSink,
+        authProvider: FusionAuthProvider,
+      ): FusionRestClient =>
         new FusionRestClient({
           ...config,
           callLogSink,
+          authProvider,
           ...(disableLogger ? {} : { logger: createNestLogger() }),
         } as FusionClientOptions),
-      inject: [FUSION_CLIENT_OPTIONS, FUSION_CALL_LOG_SINK],
+      inject: [FUSION_CLIENT_OPTIONS, FUSION_CALL_LOG_SINK, FusionAuthProvider],
+    },
+    {
+      provide: FusionEssSchedulerService,
+      useFactory: (client: FusionRestClient): FusionEssSchedulerService => new FusionEssSchedulerService(client),
+      inject: [FusionRestClient],
+    },
+    {
+      provide: FusionAccountingPeriodService,
+      useFactory: (client: FusionRestClient): FusionAccountingPeriodService =>
+        new FusionAccountingPeriodService(client),
+      inject: [FusionRestClient],
     },
     {
       provide: FusionFbdiService,
@@ -68,13 +101,18 @@ function buildClientProviders(disableLogger?: boolean): Provider[] {
     // 同一組觀測紀錄裡，可依 correlationId 串起一筆單據的完整整合軌跡。
     {
       provide: FusionSoapClient,
-      useFactory: (config: FusionClientModuleConfig, callLogSink: FusionCallLogSink): FusionSoapClient =>
+      useFactory: (
+        config: FusionClientModuleConfig,
+        callLogSink: FusionCallLogSink,
+        authProvider: FusionAuthProvider,
+      ): FusionSoapClient =>
         new FusionSoapClient({
           ...config,
           callLogSink,
+          authProvider,
           ...(disableLogger ? {} : { logger: createNestLogger() }),
         } as FusionClientOptions),
-      inject: [FUSION_CLIENT_OPTIONS, FUSION_CALL_LOG_SINK],
+      inject: [FUSION_CLIENT_OPTIONS, FUSION_CALL_LOG_SINK, FusionAuthProvider],
     },
     {
       provide: FusionCustomerAccountService,
@@ -91,8 +129,11 @@ function buildClientProviders(disableLogger?: boolean): Provider[] {
 
 /** `forRoot` 與 `forRootAsync` 共用的匯出清單。 */
 const EXPORTED_PROVIDERS = [
+  FusionAuthProvider,
   FusionRestClient,
   FusionFbdiService,
+  FusionEssSchedulerService,
+  FusionAccountingPeriodService,
   FusionSoapClient,
   FusionCustomerAccountService,
   FusionCustomerProfileService,
@@ -102,9 +143,10 @@ const EXPORTED_PROVIDERS = [
 /**
  * Oracle Fusion 整合的 NestJS 入口 module。
  *
- * 一次註冊即提供 REST（`FusionRestClient`／`FusionFbdiService`）與 SOAP
+ * 一次註冊即提供 REST（`FusionRestClient`／`FusionFbdiService`／`FusionEssSchedulerService`／
+ * `FusionAccountingPeriodService`）與 SOAP
  * （`FusionSoapClient`／`FusionCustomerAccountService`／`FusionCustomerProfileService`）
- * 兩條通路，共用同一份設定與觀測 sink。客戶帳戶與 AR 信用檔沒有 REST 資源，只能走 SOAP。
+ * 兩條通路，共用同一份設定、同一個 `FusionAuthProvider`（單一 token 快取）與觀測 sink。客戶帳戶與 AR 信用檔沒有 REST 資源，只能走 SOAP。
  *
  * ```ts
  * FusionClientModule.forRootAsync({
