@@ -138,8 +138,11 @@ export function buildSoapFaultError(
   const rawMessage = asText(serviceError?.['message']) ?? asText(faultNode['faultstring']) ?? 'Unknown SOAP fault';
 
   // Oracle 把可讀敘述包在 <TEXT> 裡；抽出來當主訊息，抽不到就用原字串。
+  // Receivables 等模組另帶 <NUMBER>（如 `AR-855636`），那是查 Oracle 文件與客服時的關鍵字，一併保留。
   const textMatch = /<TEXT>([\s\S]*?)<\/TEXT>/.exec(rawMessage);
-  const readable = textMatch?.[1]?.trim() || rawMessage;
+  const messageNumber = /<NUMBER>([^<]+)<\/NUMBER>/.exec(rawMessage)?.[1]?.trim();
+  const text = textMatch?.[1]?.trim();
+  const readable = text ? (messageNumber ? `${messageNumber} ${text}` : text) : rawMessage;
 
   const attributeErrors: FusionSoapAttributeError[] = [];
 

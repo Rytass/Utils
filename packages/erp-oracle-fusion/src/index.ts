@@ -73,6 +73,7 @@ export {
   normalizeParsedXml,
   parseSoapXml,
 } from './soap/soap-fault';
+export { extractMtomEnvelope, unwrapMtomSoapBody } from './soap/mtom';
 export {
   buildFindCriteria,
   buildFindControl,
