@@ -7,6 +7,8 @@ import { MemberLoginLogEntity } from '../src/models/member-login-log.entity';
 import { PasswordValidatorService } from '../src/services/password-validator.service';
 import { InvalidPasswordError, MemberBannedError, MemberNotFoundError } from '../src/constants/errors/base.error';
 import type { AuthTokenPayloadBase } from '../src/typings/auth-token-payload';
+import { asSessionService, createFakeSessionService, type FakeSessionService } from './__utils__/fake-session-service';
+import { withPrimaryReads } from './__utils__/with-primary-reads';
 
 /**
  * Covers the Phase 1 additions: verifyCredentials / findById / findByAccount
@@ -24,6 +26,7 @@ interface Harness {
   readonly service: MemberBaseService;
   readonly member: BaseMemberEntity;
   readonly loginLogRepo: { save: jest.Mock; findOne: jest.Mock };
+  readonly sessions: FakeSessionService;
 }
 
 let cachedPasswordHash: string | null = null;
@@ -55,6 +58,8 @@ const buildHarness = async (): Promise<Harness> => {
     save: jest.fn(async (entity: BaseMemberEntity) => entity),
   } as unknown as Repository<BaseMemberEntity>;
 
+  withPrimaryReads(memberRepo);
+
   const loginLogRepo = {
     findOne: jest.fn(async () => null),
     save: jest.fn(async (entity: unknown) => entity),
@@ -70,6 +75,8 @@ const buildHarness = async (): Promise<Harness> => {
     id: m.id,
     account: m.account,
   });
+
+  const sessions = createFakeSessionService();
 
   const service = new MemberBaseService(
     undefined,
@@ -92,9 +99,10 @@ const buildHarness = async (): Promise<Harness> => {
     {},
     true,
     true,
+    asSessionService(sessions),
   );
 
-  return { service, member, loginLogRepo };
+  return { service, member, loginLogRepo, sessions };
 };
 
 const decode = (token: string, secret: string): Record<string, unknown> =>
@@ -102,12 +110,14 @@ const decode = (token: string, secret: string): Record<string, unknown> =>
 
 describe('MemberBaseService.verifyCredentials', () => {
   it('should return the member without issuing tokens', async () => {
-    const { service, member } = await buildHarness();
+    const { service, member, sessions } = await buildHarness();
 
     const result = await service.verifyCredentials('member', CORRECT_PASSWORD);
 
     expect(result.id).toBe(member.id);
     expect(result).not.toHaveProperty('accessToken');
+    expect(sessions.openSession).not.toHaveBeenCalled();
+    expect(sessions.openSessionDetached).not.toHaveBeenCalled();
   });
 
   it('should reset the failure counter and write a success log like login does', async () => {
@@ -206,23 +216,22 @@ describe('authTime claim', () => {
     expect(decode(pair.refreshToken, REFRESH_TOKEN_SECRET).authTime).toBe(originalAuthTime);
   });
 
-  it('should leave authTime undefined when refreshing a legacy token that has none', async () => {
+  it('should leave authTime undefined when refreshing a token that has none', async () => {
     const { service, member } = await buildHarness();
 
-    // Legacy refresh tokens issued before this release carry no authTime; the
-    // refresh must not invent one, so downstream max_age checks fail closed.
-    const legacyToken = (await import('jsonwebtoken')).sign(
-      {
-        id: member.id,
-        account: member.account,
-        passwordChangedAt: member.passwordChangedAt.getTime(),
-      },
-      REFRESH_TOKEN_SECRET,
-      { expiresIn: 3600 },
-    );
+    // A refresh token can carry no authTime (`authTime: null` opts out of the
+    // stamp); the refresh must not invent one, so downstream max_age checks
+    // fail closed. The token is session-bound, as every refreshable token is.
+    const tokenWithoutAuthTime = service.signRefreshToken(member, undefined, { authTime: null });
+    const presented = decode(tokenWithoutAuthTime, REFRESH_TOKEN_SECRET);
 
-    const pair = await service.refreshToken(legacyToken);
+    expect(presented).not.toHaveProperty('authTime');
+    expect(presented.sid).toEqual(expect.any(String));
+    expect(presented.jti).toEqual(expect.any(String));
 
-    expect(decode(pair.accessToken, ACCESS_TOKEN_SECRET).authTime).toBeUndefined();
+    const pair = await service.refreshToken(tokenWithoutAuthTime);
+
+    expect(decode(pair.accessToken, ACCESS_TOKEN_SECRET)).not.toHaveProperty('authTime');
+    expect(decode(pair.refreshToken, REFRESH_TOKEN_SECRET)).not.toHaveProperty('authTime');
   });
 });

@@ -4,6 +4,7 @@ export * from './member-base.module';
 // Services
 export * from './services/member-base.service';
 export * from './services/member-base-admin.service';
+export * from './services/member-session.service';
 export * from './services/password-validator.service';
 export * from './services/oauth.service';
 export { AuthenticationGateway, type AuthenticationResult } from './services/authentication-gateway.service';
@@ -23,6 +24,7 @@ export { BaseMemberEntity } from './models/base-member.entity';
 export * from './models/member-login-log.entity';
 export * from './models/member-password-history.entity';
 export * from './models/member-oauth-record.entity';
+export * from './models/member-session.entity';
 export * from './models/member-external-identity.entity';
 // Both names, matching RESOLVED_MEMBER_REPO below: the alias was added without
 // withdrawing the original, and exporting only the alias made the original
@@ -34,6 +36,9 @@ export {
   CASBIN_ENFORCER,
   RESOLVED_MEMBER_REPO,
   RESOLVED_MEMBER_REPO as RESOLVED_MEMBER_REPOSITORY,
+  RESOLVED_MEMBER_SESSION_REPO,
+  RESOLVED_MEMBER_SESSION_REPO as RESOLVED_MEMBER_SESSION_REPOSITORY,
+  SESSION_ROTATION_GRACE_SECONDS,
   MEMBER_BASE_MODULE_OPTIONS,
   ACCESS_TOKEN_SECRET,
   ACCESS_TOKEN_EXPIRATION,
@@ -70,6 +75,7 @@ export type {
 export type { AuthTokenPayloadBase } from './typings/auth-token-payload';
 export type { PasswordHashOptions } from './typings/password-hash-options';
 export type { SignTokenOptions } from './typings/sign-token-options';
+export type { SessionTrackingOptions, SessionContext, SessionTokenBinding } from './typings/session-tracking-options';
 export type {
   AuthContext,
   AuthenticatedIdentity,
@@ -151,6 +157,16 @@ export {
   PermissionDeniedError,
   RouteMissingPermissionMetadataError,
   CasbinEnforcerUnavailableError,
+} from './constants/errors/base.error';
+// Why a refresh was refused for good. `SessionRejectedError` is the common
+// base: `instanceof` it to tell "sign the user out" from "try again".
+export {
+  SessionRejectedError,
+  SessionRevokedError,
+  SessionExpiredError,
+  RefreshTokenReuseDetectedError,
+  SessionNotFoundError,
+  SessionRotationConflictError,
 } from './constants/errors/base.error';
 // Raised by the directory readers and by the mounted redirect login routes.
 export {

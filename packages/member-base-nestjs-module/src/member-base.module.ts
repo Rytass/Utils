@@ -2,6 +2,7 @@ import { DynamicModule, Global, Module, Provider, Type } from '@nestjs/common';
 import { MemberBaseModelsModule } from './models/models.module';
 import { MemberBaseService } from './services/member-base.service';
 import { MemberBaseAdminService } from './services/member-base-admin.service';
+import { MemberSessionService } from './services/member-session.service';
 import { ResolvedRepoProviders } from './constants/resolved-repo-providers';
 import {
   ACCESS_TOKEN_COOKIE_NAME,
@@ -21,6 +22,7 @@ import {
   RESOLVED_MEMBER_REPO,
   REDIRECT_AUTH_OPTIONS,
   REDIRECT_AUTH_MOUNTED_PREFIX,
+  RESOLVED_MEMBER_SESSION_REPO,
 } from './typings/member-base.tokens';
 import { APP_GUARD } from '@nestjs/core';
 import { MemberBaseModuleAsyncOptionsDTO } from './typings/member-base-module-async-options';
@@ -43,6 +45,7 @@ const providers = [
   ...OptionProviders,
   ...ResolvedRepoProviders,
   PasswordValidatorService,
+  MemberSessionService,
   MemberBaseService,
   MemberBaseAdminService,
   DefaultAdminBootstrapService,
@@ -58,6 +61,7 @@ const providers = [
 const exportInjectable = [
   PasswordValidatorService,
   MemberBaseModelsModule,
+  MemberSessionService,
   MemberBaseService,
   MemberBaseAdminService,
   OAuthService,
@@ -68,6 +72,7 @@ const exportInjectable = [
   ACCESS_TOKEN_SECRET,
   ENABLE_GLOBAL_GUARD,
   RESOLVED_MEMBER_REPO,
+  RESOLVED_MEMBER_SESSION_REPO,
   // Exported so modules layered on top of member-base (an OIDC provider
   // endpoint bridging its own session with the member-base one, for instance)
   // can read the same token and cookie configuration instead of duplicating it.

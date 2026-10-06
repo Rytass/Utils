@@ -1,10 +1,12 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
 import type { CasbinAuthorizationDecision } from '../../typings/casbin-permission';
+import type { MemberSessionRevokedReason } from '../../models/member-session.entity';
 
 export class MemberNotFoundError extends BadRequestException {
   constructor() {
@@ -39,8 +41,8 @@ export class PasswordValidationError extends InternalServerErrorException {
 }
 
 export class InvalidToken extends BadRequestException {
-  constructor() {
-    super('Invalid token');
+  constructor(message = 'Invalid token') {
+    super(message);
   }
 
   code = 104;
@@ -329,4 +331,85 @@ export class RedirectAuthDeniedError extends BadRequestException {
   }
 
   code = 127;
+}
+
+/**
+ * The refresh token was well-formed and correctly signed, and the server
+ * refuses it anyway because of the state of the session behind it.
+ *
+ * This is the signal a client waits for before discarding its credentials: the
+ * answer will not change on a retry. Everything else a refresh can fail with —
+ * a database that is down, a timeout, a 5xx — is not one of these, and must be
+ * retried rather than treated as a logout.
+ *
+ * A subclass of `InvalidToken`, with its status (400), on purpose. Code written
+ * before sessions existed handles a refused refresh as `InvalidToken` — an
+ * `instanceof`, a 400 — and every refresh token issued before the upgrade is
+ * refused exactly once. That code has to keep working unchanged. What is new is
+ * the `code`, for a caller that wants to know why.
+ */
+export abstract class SessionRejectedError extends InvalidToken {}
+
+/** The session was ended on purpose: a logout, a password change, an administrator. */
+export class SessionRevokedError extends SessionRejectedError {
+  constructor(readonly reason: MemberSessionRevokedReason | null = null) {
+    super('Session revoked, please sign in again');
+  }
+
+  code = 128;
+}
+
+export class SessionExpiredError extends SessionRejectedError {
+  constructor() {
+    super('Session expired, please sign in again');
+  }
+
+  code = 129;
+}
+
+/**
+ * A refresh token that had already been rotated away was presented again,
+ * outside the grace window. Either the token was copied, or one client kept
+ * using a stale one; the two cannot be told apart, so the session is revoked
+ * and both holders have to sign in again.
+ */
+export class RefreshTokenReuseDetectedError extends SessionRejectedError {
+  constructor() {
+    super('Refresh token reuse detected, session revoked');
+  }
+
+  code = 130;
+}
+
+/**
+ * The refresh token names a session that is not there for it.
+ *
+ * Its row was purged; or it belongs to another member; or it was opened
+ * without waiting for the write — `signRefreshToken`, `issueTokenPairDetached`
+ * — and that write failed, or has not landed yet on the instance the refresh
+ * reached. A refresh token issued before sessions existed carries no `sid` at
+ * all and is refused as a plain `InvalidToken` instead, as 0.14 refused it.
+ */
+export class SessionNotFoundError extends SessionRejectedError {
+  constructor() {
+    super('Session not found, please sign in again');
+  }
+
+  code = 131;
+}
+
+/**
+ * Two requests changed the same session at the same moment, and this one could
+ * not tell what the outcome was.
+ *
+ * Not a refusal, and deliberately not an `InvalidToken`: nothing about the
+ * credential was decided, the session is still open, and the same request will
+ * very likely succeed if repeated. A client keeps its credential and retries.
+ */
+export class SessionRotationConflictError extends ConflictException {
+  constructor() {
+    super('Session was changed by a concurrent request, please retry');
+  }
+
+  code = 132;
 }

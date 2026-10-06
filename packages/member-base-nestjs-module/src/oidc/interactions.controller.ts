@@ -317,7 +317,7 @@ export class OidcInteractionsController {
       throw new BadRequestException(`Interaction is awaiting "${details.prompt.name}", not login`);
     }
 
-    const claims = this.ssoBridge.readLocalSession(req);
+    const claims = await this.ssoBridge.readActiveLocalSession(req);
 
     if (!claims) throw new UnauthorizedException('No member-base session on this request');
 

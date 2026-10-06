@@ -5,12 +5,14 @@ import { DataSource, Repository } from 'typeorm';
 import { MemberLoginLogEntity, MemberLoginLogRepo } from './member-login-log.entity';
 import { MemberPasswordHistoryEntity, MemberPasswordHistoryRepo } from './member-password-history.entity';
 import { MemberOAuthRecordEntity, MemberOAuthRecordRepo } from './member-oauth-record.entity';
+import { MemberSessionEntity, MemberSessionRepo } from './member-session.entity';
 
 const models = [
   [BaseMemberRepo, BaseMemberEntity],
   [MemberLoginLogRepo, MemberLoginLogEntity],
   [MemberPasswordHistoryRepo, MemberPasswordHistoryEntity],
   [MemberOAuthRecordRepo, MemberOAuthRecordEntity],
+  [MemberSessionRepo, MemberSessionEntity],
 ] as [symbol, typeof BaseMemberEntity][];
 
 @Module({

@@ -9,14 +9,18 @@ const ACCESS_TOKEN_SECRET = 'access-secret';
 const MEMBER = { id: 'member-1', account: 'alice' } as BaseMemberEntity;
 
 const now = (): number => Math.floor(Date.now() / 1000);
+const SESSION_ID = '0b7e3a52-2c35-4f5e-9d61-8c3f5a1e9a10';
 
 interface Harness {
   readonly bridge: OidcSsoBridge;
   readonly res: {
     cookie: jest.Mock;
     clearCookie: jest.Mock;
-    req?: { headers?: Record<string, string> };
+    req?: { headers?: Record<string, string>; ip?: string; cookies?: Record<string, string> };
   };
+  readonly issueTokenPairDetached: jest.Mock;
+  readonly revokeSessionByRefreshToken: jest.Mock;
+  readonly isSessionActive: jest.Mock;
 }
 
 const buildBridge = (options?: {
@@ -26,13 +30,20 @@ const buildBridge = (options?: {
   members?: BaseMemberEntity[];
   cookieNames?: { access: string; refresh: string };
   cookieOptions?: CookieOptionsConfig;
+  activeSessions?: string[];
 }): Harness => {
   const members = options?.members ?? [MEMBER];
 
+  const issueTokenPairDetached = jest.fn(() => ({ accessToken: 'signed-access', refreshToken: 'signed-refresh' }));
+  const revokeSessionByRefreshToken = jest.fn(async () => true);
+  const activeSessions = options?.activeSessions ?? [SESSION_ID];
+  const isSessionActive = jest.fn(async (_memberId: string, sessionId: string) => activeSessions.includes(sessionId));
+
   const memberBaseService = {
     findById: jest.fn(async (id: string) => members.find(member => member.id === id) ?? null),
-    signAccessToken: jest.fn(() => 'signed-access'),
-    signRefreshToken: jest.fn(() => 'signed-refresh'),
+    issueTokenPairDetached,
+    revokeSessionByRefreshToken,
+    isSessionActive,
   } as unknown as MemberBaseService;
 
   const bridge = new OidcSsoBridge(
@@ -50,18 +61,30 @@ const buildBridge = (options?: {
     options?.cookieOptions ?? { path: '/', sameSite: 'lax' },
   );
 
-  return { bridge, res: { cookie: jest.fn(), clearCookie: jest.fn() } };
+  return {
+    bridge,
+    res: { cookie: jest.fn(), clearCookie: jest.fn() },
+    issueTokenPairDetached,
+    revokeSessionByRefreshToken,
+    isSessionActive,
+  };
 };
 
+// Every access token this package issues names its session; the default here
+// is an open one. Pass `sid: undefined` to model a token from before sessions.
 const requestWithToken = (claims: Record<string, unknown>): { cookies: Record<string, string> } => ({
-  cookies: { access_token: sign(claims, ACCESS_TOKEN_SECRET, { expiresIn: 900 }) },
+  cookies: { access_token: sign({ sid: SESSION_ID, ...claims }, ACCESS_TOKEN_SECRET, { expiresIn: 900 }) },
 });
 
 describe('OidcSsoBridge session issuance', () => {
-  it('should set both cookies after an interactive login', () => {
-    const { bridge, res } = buildBridge();
+  it('should set both cookies after an interactive login', async () => {
+    const { bridge, res, issueTokenPairDetached } = buildBridge();
 
-    bridge.issueSession(res, MEMBER);
+    await bridge.issueSession(res, MEMBER);
+
+    // Both cookies come from one pair, so they name the same session.
+    expect(issueTokenPairDetached).toHaveBeenCalledTimes(1);
+    expect(issueTokenPairDetached).toHaveBeenCalledWith(MEMBER, { ip: undefined });
 
     expect(res.cookie).toHaveBeenCalledWith(
       'access_token',
@@ -72,10 +95,20 @@ describe('OidcSsoBridge session issuance', () => {
     expect(res.cookie).toHaveBeenCalledWith('refresh_token', 'signed-refresh', expect.objectContaining({ path: '/' }));
   });
 
-  it('should mark cookies secure only for an https issuer', () => {
+  it('should open the session with the client ip and user agent of the request', async () => {
+    const { bridge, res, issueTokenPairDetached } = buildBridge();
+
+    res.req = { ip: '203.0.113.9', headers: { 'user-agent': 'jest-agent' } };
+
+    await bridge.issueSession(res, MEMBER);
+
+    expect(issueTokenPairDetached).toHaveBeenCalledWith(MEMBER, { ip: '203.0.113.9', userAgent: 'jest-agent' });
+  });
+
+  it('should mark cookies secure only for an https issuer', async () => {
     const { bridge, res } = buildBridge({ issuer: 'http://localhost:3000/oidc' });
 
-    bridge.issueSession(res, MEMBER);
+    await bridge.issueSession(res, MEMBER);
 
     expect(res.cookie).toHaveBeenCalledWith(
       'access_token',
@@ -84,59 +117,86 @@ describe('OidcSsoBridge session issuance', () => {
     );
   });
 
-  it('should issue nothing when cookie mode is off', () => {
+  it('should issue nothing when cookie mode is off', async () => {
     // A redirect-based login cannot hand a header-bearer token to a browser.
-    const { bridge, res } = buildBridge({ cookieMode: false });
+    const { bridge, res, issueTokenPairDetached } = buildBridge({ cookieMode: false });
 
-    bridge.issueSession(res, MEMBER);
-
-    expect(res.cookie).not.toHaveBeenCalled();
-  });
-
-  it('should issue nothing when the bridge is disabled', () => {
-    const { bridge, res } = buildBridge({ ssoBridge: { enabled: false } });
-
-    bridge.issueSession(res, MEMBER);
+    await bridge.issueSession(res, MEMBER);
 
     expect(res.cookie).not.toHaveBeenCalled();
+    // No cookie to carry it, so no session is opened either.
+    expect(issueTokenPairDetached).not.toHaveBeenCalled();
   });
 
-  it('should clear both cookies on unified logout', () => {
-    const { bridge, res } = buildBridge();
+  it('should issue nothing when the bridge is disabled', async () => {
+    const { bridge, res, issueTokenPairDetached } = buildBridge({ ssoBridge: { enabled: false } });
 
-    bridge.clearSession(res);
+    await bridge.issueSession(res, MEMBER);
+
+    expect(res.cookie).not.toHaveBeenCalled();
+    expect(issueTokenPairDetached).not.toHaveBeenCalled();
+  });
+
+  it('should clear both cookies on unified logout', async () => {
+    const { bridge, res, revokeSessionByRefreshToken } = buildBridge();
+
+    await bridge.clearSession(res);
 
     expect(res.clearCookie).toHaveBeenCalledWith('access_token', { path: '/' });
     expect(res.clearCookie).toHaveBeenCalledWith('refresh_token', { path: '/' });
+    // Nothing was sent to read a refresh token from, so there is nothing to revoke.
+    expect(revokeSessionByRefreshToken).not.toHaveBeenCalled();
   });
 
-  it('should keep cookies when unified logout is disabled', () => {
-    const { bridge, res } = buildBridge({ ssoBridge: { unifiedLogout: false } });
+  it('should revoke the session of the refresh cookie before clearing it on unified logout', async () => {
+    const { bridge, res, revokeSessionByRefreshToken } = buildBridge({
+      cookieNames: { access: 'sid', refresh: 'sid_r' },
+    });
 
-    bridge.clearSession(res);
+    res.req = { cookies: { sid_r: 'presented-refresh', refresh_token: 'not-ours' } };
+
+    await bridge.clearSession(res);
+
+    expect(revokeSessionByRefreshToken).toHaveBeenCalledTimes(1);
+    expect(revokeSessionByRefreshToken).toHaveBeenCalledWith('presented-refresh', 'logout');
+    expect(res.clearCookie).toHaveBeenCalledWith('sid', { path: '/' });
+    expect(res.clearCookie).toHaveBeenCalledWith('sid_r', { path: '/' });
+
+    expect(revokeSessionByRefreshToken.mock.invocationCallOrder[0]).toBeLessThan(
+      res.clearCookie.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('should keep cookies when unified logout is disabled', async () => {
+    const { bridge, res, revokeSessionByRefreshToken } = buildBridge({ ssoBridge: { unifiedLogout: false } });
+
+    res.req = { cookies: { refresh_token: 'presented-refresh' } };
+
+    await bridge.clearSession(res);
 
     expect(res.clearCookie).not.toHaveBeenCalled();
+    expect(revokeSessionByRefreshToken).not.toHaveBeenCalled();
   });
 });
 
 describe('OidcSsoBridge cookie configuration', () => {
-  it('should write the configured names', () => {
+  it('should write the configured names', async () => {
     const { bridge, res } = buildBridge({
       cookieNames: { access: 'sid', refresh: 'sid_r' },
     });
 
-    bridge.issueSession(res, MEMBER);
+    await bridge.issueSession(res, MEMBER);
 
     expect(res.cookie).toHaveBeenCalledWith('sid', 'signed-access', expect.anything());
     expect(res.cookie).toHaveBeenCalledWith('sid_r', 'signed-refresh', expect.anything());
   });
 
-  it('should apply the configured attributes', () => {
+  it('should apply the configured attributes', async () => {
     const { bridge, res } = buildBridge({
       cookieOptions: { path: '/app', sameSite: 'strict', domain: '.example.com' },
     });
 
-    bridge.issueSession(res, MEMBER);
+    await bridge.issueSession(res, MEMBER);
 
     expect(res.cookie).toHaveBeenCalledWith(
       'access_token',
@@ -147,12 +207,12 @@ describe('OidcSsoBridge cookie configuration', () => {
 
   // A browser only removes a cookie when the path and domain match the ones it
   // was stored under; anything else just writes a second, different cookie.
-  it('should clear with exactly the path and domain it set', () => {
+  it('should clear with exactly the path and domain it set', async () => {
     const cookieOptions = { path: '/app', sameSite: 'lax' as const, domain: '.example.com' };
     const { bridge, res } = buildBridge({ cookieOptions });
 
-    bridge.issueSession(res, MEMBER);
-    bridge.clearSession(res);
+    await bridge.issueSession(res, MEMBER);
+    await bridge.clearSession(res);
 
     const [, , setOptions] = res.cookie.mock.calls[0] as [string, string, Record<string, unknown>];
     const [, clearOptions] = res.clearCookie.mock.calls[0] as [string, Record<string, unknown>];
@@ -160,18 +220,18 @@ describe('OidcSsoBridge cookie configuration', () => {
     expect(clearOptions).toEqual({ path: setOptions.path, domain: setOptions.domain });
   });
 
-  it('should clear without a domain when none was set', () => {
+  it('should clear without a domain when none was set', async () => {
     const { bridge, res } = buildBridge();
 
-    bridge.clearSession(res);
+    await bridge.clearSession(res);
 
     expect(res.clearCookie).toHaveBeenCalledWith('access_token', { path: '/' });
   });
 
-  it('should take secure from the issuer', () => {
+  it('should take secure from the issuer', async () => {
     const secure = buildBridge({ issuer: 'https://idp.example.com/oidc' });
 
-    secure.bridge.issueSession(secure.res, MEMBER);
+    await secure.bridge.issueSession(secure.res, MEMBER);
 
     expect(secure.res.cookie).toHaveBeenCalledWith(
       'access_token',
@@ -181,7 +241,7 @@ describe('OidcSsoBridge cookie configuration', () => {
 
     const insecure = buildBridge({ issuer: 'http://localhost:3000/oidc' });
 
-    insecure.bridge.issueSession(insecure.res, MEMBER);
+    await insecure.bridge.issueSession(insecure.res, MEMBER);
 
     expect(insecure.res.cookie).toHaveBeenCalledWith(
       'access_token',
@@ -194,23 +254,23 @@ describe('OidcSsoBridge cookie configuration', () => {
   // omitted, which is its default. Deriving the flag from that would drop
   // Secure from the session cookie of an https deployment, with nothing to
   // indicate it had happened.
-  it('should keep secure from the issuer even when a proxy rewrites the host to localhost', () => {
+  it('should keep secure from the issuer even when a proxy rewrites the host to localhost', async () => {
     const { bridge, res } = buildBridge({ issuer: 'https://idp.example.com/oidc' });
 
     res.req = { headers: { host: 'localhost:4123' } };
 
-    bridge.issueSession(res, MEMBER);
+    await bridge.issueSession(res, MEMBER);
 
     expect(res.cookie).toHaveBeenCalledWith('access_token', 'signed-access', expect.objectContaining({ secure: true }));
   });
 
-  it('should let an explicit cookieSecure override the issuer', () => {
+  it('should let an explicit cookieSecure override the issuer', async () => {
     const { bridge, res } = buildBridge({
       issuer: 'http://idp.internal:3000/oidc',
       cookieOptions: { path: '/', sameSite: 'lax', secure: true },
     });
 
-    bridge.issueSession(res, MEMBER);
+    await bridge.issueSession(res, MEMBER);
 
     expect(res.cookie).toHaveBeenCalledWith('access_token', 'signed-access', expect.objectContaining({ secure: true }));
   });
@@ -227,7 +287,7 @@ describe('OidcSsoBridge local session acceptance', () => {
 
   it('should read a bearer token as well as a cookie', async () => {
     const { bridge } = buildBridge();
-    const token = sign({ id: 'member-1', authTime: now() }, ACCESS_TOKEN_SECRET, { expiresIn: 900 });
+    const token = sign({ id: 'member-1', authTime: now(), sid: SESSION_ID }, ACCESS_TOKEN_SECRET, { expiresIn: 900 });
 
     const result = await bridge.resolveSkippableLogin({ headers: { authorization: `Bearer ${token}` } }, {});
 
@@ -342,5 +402,50 @@ describe('OidcSsoBridge specification constraints', () => {
     const result = await bridge.resolveSkippableLogin(requestWithToken({ id: 'member-1' }), { max_age: '' });
 
     expect(result?.member.id).toBe('member-1');
+  });
+
+  describe('OidcSsoBridge refuses an ended session', () => {
+    it('should not let an access token stand in for a login once its session has been ended', async () => {
+      const { bridge, isSessionActive } = buildBridge({ activeSessions: [] });
+
+      await expect(
+        bridge.resolveSkippableLogin(requestWithToken({ id: 'member-1', authTime: now() }), {}),
+      ).resolves.toBeNull();
+
+      expect(isSessionActive).toHaveBeenCalledWith('member-1', SESSION_ID);
+    });
+
+    it('should not let an access token without a session stand in for a login', async () => {
+      const { bridge, isSessionActive } = buildBridge();
+
+      await expect(
+        bridge.resolveSkippableLogin(requestWithToken({ id: 'member-1', authTime: now(), sid: undefined }), {}),
+      ).resolves.toBeNull();
+
+      expect(isSessionActive).not.toHaveBeenCalled();
+    });
+
+    it('should still read the claims without the session check through readLocalSession', () => {
+      const { bridge } = buildBridge({ activeSessions: [] });
+
+      expect(bridge.readLocalSession(requestWithToken({ id: 'member-1' }))).toEqual({
+        id: 'member-1',
+        authTime: undefined,
+        sid: SESSION_ID,
+      });
+    });
+
+    it('should revoke every refresh cookie of that name, not only the first', () => {
+      const { bridge, res, revokeSessionByRefreshToken } = buildBridge();
+
+      res.req = { headers: { cookie: 'refresh_token=planted; theme=dark; refresh_token="own"' } };
+
+      bridge.clearSession(res);
+
+      expect(revokeSessionByRefreshToken.mock.calls).toEqual([
+        ['planted', 'logout'],
+        ['own', 'logout'],
+      ]);
+    });
   });
 });

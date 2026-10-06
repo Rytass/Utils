@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { hash } from 'argon2';
 import { verify as verifyJWT } from 'jsonwebtoken';
 import { Repository } from 'typeorm';
@@ -14,6 +15,7 @@ import {
   PasswordValidationError,
 } from '../src/constants/errors/base.error';
 import type { AuthTokenPayloadBase } from '../src/typings/auth-token-payload';
+import { asSessionService, createFakeSessionService, type FakeSessionService } from './__utils__/fake-session-service';
 
 /**
  * Characterization tests for MemberBaseService.login().
@@ -50,6 +52,7 @@ interface BuiltService {
   readonly member: BaseMemberEntity;
   readonly memberRepo: Repository<BaseMemberEntity>;
   readonly loginLogRepo: Repository<MemberLoginLogEntity>;
+  readonly sessions: FakeSessionService;
 }
 
 // argon2 hashing dominates the runtime of this suite; hash the fixture password
@@ -103,6 +106,8 @@ const buildService = async (options: BuildOptions = {}): Promise<BuiltService> =
     account: m.account,
   });
 
+  const sessions = createFakeSessionService();
+
   const service = new MemberBaseService(
     undefined,
     memberRepo,
@@ -124,9 +129,10 @@ const buildService = async (options: BuildOptions = {}): Promise<BuiltService> =
     {},
     options.loginLogEnabled ?? true,
     options.loginLogRecordIp ?? true,
+    asSessionService(sessions),
   );
 
-  return { service, member, memberRepo, loginLogRepo };
+  return { service, member, memberRepo, loginLogRepo, sessions };
 };
 
 const decode = (token: string, secret: string): Record<string, unknown> =>
@@ -166,6 +172,8 @@ describe('MemberBaseService.login characterization', () => {
       const payload = decode(refreshToken, REFRESH_TOKEN_SECRET);
 
       expect(payload.passwordChangedAt).toBe(member.passwordChangedAt.getTime());
+      expect(payload.sid).toEqual(expect.any(String));
+      expect(payload.jti).toEqual(expect.any(String));
     });
 
     it('should propagate the domain option into both tokens', async () => {
@@ -175,6 +183,32 @@ describe('MemberBaseService.login characterization', () => {
 
       expect(decode(accessToken, ACCESS_TOKEN_SECRET).domain).toBe('tenant-a');
       expect(decode(refreshToken, REFRESH_TOKEN_SECRET).domain).toBe('tenant-a');
+    });
+
+    it('should issue the pair through issueTokenPair, on one awaited session', async () => {
+      const { service, member, sessions } = await buildService();
+      const issueTokenPair = jest.spyOn(service, 'issueTokenPair');
+
+      const { accessToken, refreshToken } = await service.login('member', CORRECT_PASSWORD, {
+        domain: 'tenant-a',
+        ip: '10.0.0.2',
+        userAgent: 'jest-agent',
+      });
+
+      const context = { domain: 'tenant-a', ip: '10.0.0.2', userAgent: 'jest-agent' };
+
+      expect(issueTokenPair).toHaveBeenCalledTimes(1);
+      expect(issueTokenPair).toHaveBeenCalledWith(member, context);
+      expect(sessions.openSession).toHaveBeenCalledTimes(1);
+      expect(sessions.openSession).toHaveBeenCalledWith(member, context);
+      expect(sessions.openSessionDetached).not.toHaveBeenCalled();
+
+      const opened = await sessions.openSession.mock.results[0].value;
+      const refreshPayload = decode(refreshToken, REFRESH_TOKEN_SECRET);
+
+      expect(decode(accessToken, ACCESS_TOKEN_SECRET).sid).toBe(opened.sessionId);
+      expect(refreshPayload.sid).toBe(opened.sessionId);
+      expect(refreshPayload.jti).toBe(opened.tokenId);
     });
 
     it('should omit password age fields when passwordAgeLimitInDays is not configured', async () => {
@@ -189,11 +223,13 @@ describe('MemberBaseService.login characterization', () => {
 
   describe('ip logging', () => {
     it('should accept a bare ip string as the third argument and store it as a /32 cidr', async () => {
-      const { service, loginLogRepo } = await buildService();
+      const { service, member, loginLogRepo } = await buildService();
+      const issueTokenPair = jest.spyOn(service, 'issueTokenPair');
 
       await service.login('member', CORRECT_PASSWORD, '10.0.0.1');
 
       expect(loginLogRepo.save).toHaveBeenCalledWith(expect.objectContaining({ ip: '10.0.0.1/32', success: true }));
+      expect(issueTokenPair).toHaveBeenCalledWith(member, { domain: undefined, ip: '10.0.0.1', userAgent: undefined });
     });
 
     it('should accept ip through the options object', async () => {
@@ -333,6 +369,60 @@ describe('MemberBaseService.login characterization', () => {
       const { service } = await buildService();
 
       await expect(service.login('ghost', CORRECT_PASSWORD)).rejects.toBeInstanceOf(MemberNotFoundError);
+    });
+  });
+
+  describe('MemberBaseService.login — the login log never fails or crashes a login', () => {
+    it('should store no address, rather than one Postgres would refuse', async () => {
+      const { service, loginLogRepo } = await buildService();
+
+      await service.login('member', CORRECT_PASSWORD, { ip: 'not-an-address' });
+
+      expect(loginLogRepo.save).toHaveBeenCalledWith(expect.objectContaining({ ip: null }));
+    });
+
+    it('should drop an IPv6 zone index', async () => {
+      const { service, loginLogRepo } = await buildService();
+
+      await service.login('member', CORRECT_PASSWORD, { ip: 'fe80::1%en0' });
+
+      expect(loginLogRepo.save).toHaveBeenCalledWith(expect.objectContaining({ ip: 'fe80::1/128' }));
+    });
+
+    it('should log a failed write instead of leaving it unhandled', async () => {
+      const { service, loginLogRepo } = await buildService();
+      const logged = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+
+      (loginLogRepo.save as jest.Mock).mockRejectedValueOnce(new Error('connection terminated'));
+
+      await expect(service.login('member', CORRECT_PASSWORD)).resolves.toBeDefined();
+      await new Promise(resolve => setImmediate(resolve));
+
+      expect(logged).toHaveBeenCalledWith(expect.stringContaining('connection terminated'));
+    });
+  });
+
+  describe('MemberBaseService.login — a failure after the credentials were verified', () => {
+    it('should still answer PasswordValidationError, and log what actually went wrong', async () => {
+      const { service, sessions } = await buildService();
+      const logged = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+
+      sessions.openSession.mockRejectedValueOnce(new Error('relation "member_sessions" does not exist'));
+
+      await expect(service.login('member', CORRECT_PASSWORD)).rejects.toBeInstanceOf(PasswordValidationError);
+      expect(logged).toHaveBeenCalledWith(expect.stringContaining('relation "member_sessions" does not exist'));
+    });
+  });
+
+  describe('MemberBaseService.login — a passwordChangedAt that arrives as a string', () => {
+    it('should still report it as an ISO timestamp alongside the password age fields', async () => {
+      const { service, member } = await buildService({ passwordAgeLimitInDays: 90 });
+
+      member.passwordChangedAt = '2024-01-01 00:00:00.000+00' as unknown as Date;
+
+      const tokenPair = await service.login('member', CORRECT_PASSWORD);
+
+      expect(tokenPair.passwordChangedAt).toBe('2024-01-01T00:00:00.000Z');
     });
   });
 });

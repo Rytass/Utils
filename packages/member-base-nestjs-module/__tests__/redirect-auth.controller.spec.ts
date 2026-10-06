@@ -66,6 +66,7 @@ const createRequest = (overrides?: {
   cookies?: Record<string, string>;
   cookieHeader?: string;
   accept?: string;
+  userAgent?: string;
 }): Request =>
   ({
     ip: '203.0.113.9',
@@ -73,6 +74,7 @@ const createRequest = (overrides?: {
     secure: true,
     cookies: overrides?.cookies,
     headers: {
+      ...(overrides?.userAgent ? { 'user-agent': overrides.userAgent } : {}),
       ...(overrides?.accept ? { accept: overrides.accept } : {}),
       ...(overrides?.cookieHeader ? { cookie: overrides.cookieHeader } : {}),
     },
@@ -104,6 +106,7 @@ interface Harness {
   };
   provider: ReturnType<typeof redirectProvider>;
   options: ResolvedRedirectAuthOptions;
+  issueTokenPair: jest.Mock;
 }
 
 const buildController = (
@@ -120,8 +123,7 @@ const buildController = (
   };
 
   const memberBaseService = {
-    signAccessToken: jest.fn(() => 'access-token'),
-    signRefreshToken: jest.fn(() => 'refresh-token'),
+    issueTokenPair: jest.fn(async () => ({ accessToken: 'access-token', refreshToken: 'refresh-token' })),
   };
 
   const options = resolveRedirectAuthOptions(
@@ -142,7 +144,7 @@ const buildController = (
     cookieMode,
   );
 
-  return { controller, gateway, provider, options };
+  return { controller, gateway, provider, options, issueTokenPair: memberBaseService.issueTokenPair };
 };
 
 describe('RedirectAuthController start', () => {
@@ -267,8 +269,26 @@ describe('RedirectAuthController callback', () => {
     }),
   });
 
+  it('should open the session with the client ip and user agent of the callback request', async () => {
+    const { controller, issueTokenPair } = buildController();
+    const res = createResponse();
+
+    await controller.callback(
+      'entra',
+      'code-1',
+      'state-1',
+      undefined,
+      undefined,
+      createRequest({ ...BROWSER, cookies: transactionCookie(), userAgent: 'jest-agent' }),
+      res as unknown as Response,
+    );
+
+    expect(issueTokenPair).toHaveBeenCalledTimes(1);
+    expect(issueTokenPair).toHaveBeenCalledWith({ id: 'member-1' }, { ip: '203.0.113.9', userAgent: 'jest-agent' });
+  });
+
   it('should complete the flow, write cookies and redirect', async () => {
-    const { controller, gateway } = buildController();
+    const { controller, gateway, issueTokenPair } = buildController();
     const res = createResponse();
 
     await controller.callback(
@@ -287,7 +307,12 @@ describe('RedirectAuthController callback', () => {
       { ip: '203.0.113.9' },
     );
 
+    // One pair, on one session; no user agent header means none is passed on.
+    expect(issueTokenPair).toHaveBeenCalledTimes(1);
+    expect(issueTokenPair).toHaveBeenCalledWith({ id: 'member-1' }, { ip: '203.0.113.9' });
+
     expect(res.cookies.map(cookie => cookie.name)).toEqual(['access_token', 'refresh_token']);
+    expect(res.cookies.map(cookie => cookie.value)).toEqual(['access-token', 'refresh-token']);
     expect(res.cookies[0].options).toMatchObject({ httpOnly: true, maxAge: 900_000 });
     expect(res.cookies[1].options).toMatchObject({ maxAge: 7_776_000_000 });
     expect(res.redirectedTo).toBe('https://app.example.com/reports');

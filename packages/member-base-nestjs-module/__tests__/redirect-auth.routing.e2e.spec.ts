@@ -46,8 +46,7 @@ const gateway = {
 };
 
 const memberBaseService = {
-  signAccessToken: jest.fn(() => 'access-token'),
-  signRefreshToken: jest.fn(() => 'refresh-token'),
+  issueTokenPair: jest.fn(async () => ({ accessToken: 'access-token', refreshToken: 'refresh-token' })),
 };
 
 /**
@@ -193,6 +192,11 @@ describe('mounted redirect routes, over real HTTP', () => {
     expect(gateway.handleCallback).toHaveBeenCalledWith(
       'entra',
       { code: 'code-1', codeVerifier: 'verifier-1', nonce: 'nonce-1' },
+      expect.objectContaining({ ip: expect.any(String) }),
+    );
+
+    expect(memberBaseService.issueTokenPair).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'member-1' }),
       expect.objectContaining({ ip: expect.any(String) }),
     );
 

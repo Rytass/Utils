@@ -55,8 +55,7 @@ interface Harness {
   readonly memberRepo: { findOne: jest.Mock };
   readonly recordRepo: { save: jest.Mock; createQueryBuilder: jest.Mock };
   readonly memberBaseService: {
-    signAccessToken: jest.Mock;
-    signRefreshToken: jest.Mock;
+    issueTokenPair: jest.Mock;
     registerWithoutPassword: jest.Mock;
   };
   readonly setBoundRecord: (record: unknown) => void;
@@ -81,8 +80,10 @@ const buildHarness = (providers: OAuth2Provider[] = [GOOGLE_PROVIDER, FACEBOOK_P
   };
 
   const memberBaseService = {
-    signAccessToken: jest.fn((member: BaseMemberEntity) => `access-${member.id}`),
-    signRefreshToken: jest.fn((member: BaseMemberEntity) => `refresh-${member.id}`),
+    issueTokenPair: jest.fn(async (member: BaseMemberEntity) => ({
+      accessToken: `access-${member.id}`,
+      refreshToken: `refresh-${member.id}`,
+    })),
     registerWithoutPassword: jest.fn(async (account: string) => [
       { id: `new-${account}`, account } as BaseMemberEntity,
       'generated-password',
@@ -228,7 +229,9 @@ describe('OAuthService identity resolution', () => {
   it('should sign tokens for an already bound external identity', async () => {
     const { service, setBoundRecord, memberBaseService, recordRepo } = buildHarness();
 
-    setBoundRecord({ member: { id: 'bound-member', account: 'user@example.com' } });
+    const boundMember = { id: 'bound-member', account: 'user@example.com' };
+
+    setBoundRecord({ member: boundMember });
 
     mockedAxios.post.mockResolvedValue({ data: { access_token: 'google-at' } });
     mockedAxios.get.mockResolvedValue({ data: { email: 'user@example.com', email_verified: true } });
@@ -237,6 +240,8 @@ describe('OAuthService identity resolution', () => {
 
     expect(result.accessToken).toBe('access-bound-member');
     expect(result.refreshToken).toBe('refresh-bound-member');
+    expect(memberBaseService.issueTokenPair).toHaveBeenCalledTimes(1);
+    expect(memberBaseService.issueTokenPair).toHaveBeenCalledWith(boundMember);
     expect(recordRepo.save).not.toHaveBeenCalled();
     expect(memberBaseService.registerWithoutPassword).not.toHaveBeenCalled();
   });
@@ -261,6 +266,13 @@ describe('OAuthService identity resolution', () => {
     });
 
     expect(result.accessToken).toBe('access-existing-member');
+    expect(result.refreshToken).toBe('refresh-existing-member');
+    expect(memberBaseService.issueTokenPair).toHaveBeenCalledTimes(1);
+    expect(memberBaseService.issueTokenPair).toHaveBeenCalledWith({
+      id: 'existing-member',
+      account: 'user@example.com',
+    });
+
     expect(memberBaseService.registerWithoutPassword).not.toHaveBeenCalled();
   });
 
@@ -283,6 +295,12 @@ describe('OAuthService identity resolution', () => {
     });
 
     expect(result.accessToken).toBe('access-new-fresh@example.com');
+    expect(result.refreshToken).toBe('refresh-new-fresh@example.com');
+    expect(memberBaseService.issueTokenPair).toHaveBeenCalledTimes(1);
+    expect(memberBaseService.issueTokenPair).toHaveBeenCalledWith({
+      id: 'new-fresh@example.com',
+      account: 'fresh@example.com',
+    });
   });
 
   it('should never pass a casbin domain when signing oauth tokens', async () => {
@@ -293,7 +311,10 @@ describe('OAuthService identity resolution', () => {
 
     await service.loginWithGoogleOAuth2Code('code');
 
-    expect(memberBaseService.signAccessToken).toHaveBeenCalledWith(expect.objectContaining({ id: expect.any(String) }));
-    expect(memberBaseService.signAccessToken.mock.calls[0]).toHaveLength(1);
+    // The domain travels in issueTokenPair's second argument; oauth logins
+    // pass the member alone.
+    expect(memberBaseService.issueTokenPair).toHaveBeenCalledTimes(1);
+    expect(memberBaseService.issueTokenPair).toHaveBeenCalledWith(expect.objectContaining({ id: expect.any(String) }));
+    expect(memberBaseService.issueTokenPair.mock.calls[0]).toHaveLength(1);
   });
 });
