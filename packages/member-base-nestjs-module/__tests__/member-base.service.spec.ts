@@ -6,6 +6,7 @@ import { BaseMemberEntity } from '../src/models/base-member.entity';
 import { PasswordValidatorService } from '../src/services/password-validator.service';
 import { MemberBannedError, InvalidToken } from '../src/constants/errors/base.error';
 import type { AuthTokenPayloadBase } from '../src/typings/auth-token-payload';
+import { asSessionService, createFakeSessionService, type FakeSessionService } from './__utils__/fake-session-service';
 
 const RESET_PASSWORD_TOKEN_SECRET = 'reset-password-secret';
 const LOGIN_FAILED_BAN_THRESHOLD = 5;
@@ -44,7 +45,7 @@ const createNoopRepo = <T>(): Repository<T> =>
 
 const buildService = (
   member: BaseMemberEntity,
-): { service: MemberBaseService; memberRepo: Repository<BaseMemberEntity> } => {
+): { service: MemberBaseService; memberRepo: Repository<BaseMemberEntity>; sessions: FakeSessionService } => {
   const memberRepo = createMemberRepo(member);
 
   const passwordValidatorService = {
@@ -56,6 +57,8 @@ const buildService = (
     id: m.id,
     account: m.account,
   });
+
+  const sessions = createFakeSessionService();
 
   const service = new MemberBaseService(
     undefined, // originalProvidedOptions
@@ -78,9 +81,10 @@ const buildService = (
     {}, // passwordHashOptions
     true, // loginLogEnabled
     true, // loginLogRecordIp
+    asSessionService(sessions), // memberSessionService
   );
 
-  return { service, memberRepo };
+  return { service, memberRepo, sessions };
 };
 
 const createBannedMember = async (): Promise<BaseMemberEntity> => {
@@ -100,7 +104,7 @@ const createBannedMember = async (): Promise<BaseMemberEntity> => {
 describe('MemberBaseService account lockout self-recovery', () => {
   it('should unlock a banned member after a successful password reset via token', async () => {
     const member = await createBannedMember();
-    const { service } = buildService(member);
+    const { service, sessions } = buildService(member);
 
     // Sanity: while banned, even the correct current password is rejected
     // before argon2 verification runs.
@@ -114,6 +118,10 @@ describe('MemberBaseService account lockout self-recovery', () => {
     // The reset must clear the login failure lock in the same save.
     expect(member.loginFailedCounter).toBe(0);
 
+    // A reset signs every existing session out.
+    expect(sessions.revokeAllSessions).toHaveBeenCalledTimes(1);
+    expect(sessions.revokeAllSessions).toHaveBeenCalledWith(member.id, { reason: 'password_changed' });
+
     // The member can now log in with the new password.
     const tokenPair = await service.login('locked-user', 'BrandNewPassw0rd!');
 
@@ -123,7 +131,7 @@ describe('MemberBaseService account lockout self-recovery', () => {
 
   it('should reject an invalid token with InvalidToken and keep the failure counter untouched', async () => {
     const member = await createBannedMember();
-    const { service } = buildService(member);
+    const { service, sessions } = buildService(member);
 
     const forgedToken = sign({ id: member.id, requestedOn: Date.now() }, 'wrong-secret', { expiresIn: 60 * 60 });
 
@@ -132,11 +140,12 @@ describe('MemberBaseService account lockout self-recovery', () => {
     );
 
     expect(member.loginFailedCounter).toBe(LOGIN_FAILED_BAN_THRESHOLD);
+    expect(sessions.revokeAllSessions).not.toHaveBeenCalled();
   });
 
   it('should reject an expired token with InvalidToken and keep the failure counter untouched', async () => {
     const member = await createBannedMember();
-    const { service } = buildService(member);
+    const { service, sessions } = buildService(member);
 
     const expiredToken = sign({ id: member.id, requestedOn: Date.now() }, RESET_PASSWORD_TOKEN_SECRET, {
       expiresIn: -10,
@@ -147,16 +156,18 @@ describe('MemberBaseService account lockout self-recovery', () => {
     );
 
     expect(member.loginFailedCounter).toBe(LOGIN_FAILED_BAN_THRESHOLD);
+    expect(sessions.revokeAllSessions).not.toHaveBeenCalled();
   });
 
   it('should reject a reused token with InvalidToken and not reset the counter again', async () => {
     const member = await createBannedMember();
-    const { service } = buildService(member);
+    const { service, sessions } = buildService(member);
 
     const token = await service.getResetPasswordToken('locked-user');
 
     await service.changePasswordWithToken(token, 'BrandNewPassw0rd!');
     expect(member.loginFailedCounter).toBe(0);
+    expect(sessions.revokeAllSessions).toHaveBeenCalledTimes(1);
 
     // Simulate the member getting locked again, then replaying the used token.
     member.loginFailedCounter = LOGIN_FAILED_BAN_THRESHOLD;
@@ -164,5 +175,6 @@ describe('MemberBaseService account lockout self-recovery', () => {
     await expect(service.changePasswordWithToken(token, 'AnotherPassw0rd!')).rejects.toBeInstanceOf(InvalidToken);
 
     expect(member.loginFailedCounter).toBe(LOGIN_FAILED_BAN_THRESHOLD);
+    expect(sessions.revokeAllSessions).toHaveBeenCalledTimes(1);
   });
 });

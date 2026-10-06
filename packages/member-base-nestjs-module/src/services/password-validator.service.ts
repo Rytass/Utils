@@ -65,12 +65,30 @@ export class PasswordValidatorService<MemberEntity extends BaseMemberEntity = Ba
   shouldUpdatePassword<T extends MemberEntity = MemberEntity>(member: T): boolean {
     if (!this.passwordAgeLimitInDays) return false;
 
-    const validBefore = DateTime.fromJSDate(member.passwordChangedAt)
-      .plus({ days: this.passwordAgeLimitInDays })
-      .endOf('day')
-      .toMillis();
+    // Declared a Date, but what arrives depends on the driver's type parsers.
+    const recorded: unknown = member.passwordChangedAt;
 
-    return validBefore < DateTime.now().toMillis();
+    const expiresAfter = (changedAt: Date): boolean =>
+      DateTime.fromJSDate(changedAt).plus({ days: this.passwordAgeLimitInDays }).endOf('day').toMillis() <
+      DateTime.now().toMillis();
+
+    // Anything that is not a string is judged exactly as it always was: a
+    // Date by its age, and what is not a date at all — null, or the Infinity
+    // node-postgres returns for a column set to 'infinity', the usual way to
+    // exempt a service account — as never expiring.
+    if (typeof recorded !== 'string') return expiresAfter(recorded as Date);
+
+    // A string is what a pg type parser registered by the application hands
+    // back. Luxon reads one as an invalid date, which compares as "not
+    // expired" — the policy would switch itself off for every member. So it is
+    // parsed, 'infinity' keeps its meaning, and a string that cannot be read
+    // counts as expired: a password whose age is unknown has not been shown to
+    // be within the limit.
+    if (/^\+?infinity$/i.test(recorded.trim())) return false;
+
+    const changedAt = new Date(recorded);
+
+    return Number.isNaN(changedAt.getTime()) ? true : expiresAfter(changedAt);
   }
 
   async validatePassword(password: string, memberId?: string): Promise<boolean> {

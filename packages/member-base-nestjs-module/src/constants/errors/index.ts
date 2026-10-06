@@ -9,6 +9,11 @@ import {
   PasswordExpiredError,
   PasswordShouldUpdatePasswordError,
   PasswordValidationError,
+  RefreshTokenReuseDetectedError,
+  SessionExpiredError,
+  SessionNotFoundError,
+  SessionRevokedError,
+  SessionRotationConflictError,
 } from './base.error';
 
 export const Errors = {
@@ -22,4 +27,9 @@ export const Errors = {
   MemberBannedError,
   PasswordExpiredError,
   PasswordShouldUpdatePasswordError,
+  SessionRevokedError,
+  SessionExpiredError,
+  RefreshTokenReuseDetectedError,
+  SessionNotFoundError,
+  SessionRotationConflictError,
 };

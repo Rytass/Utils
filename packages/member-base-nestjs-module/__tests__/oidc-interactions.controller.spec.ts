@@ -171,6 +171,9 @@ const buildHarness = (options: HarnessOptions = {}): Harness => {
     resolveSkippableLogin,
     issueSession,
     readLocalSession: jest.fn(() => options.localSession ?? null),
+    // The endpoint must ask for a session that is still open; the bridge's own
+    // spec covers what that check does.
+    readActiveLocalSession: jest.fn(async () => options.localSession ?? null),
     acceptLocalSession: options.acceptLocalSession ?? true,
   } as unknown as OidcSsoBridge;
 

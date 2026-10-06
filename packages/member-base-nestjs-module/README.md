@@ -42,6 +42,7 @@ It is long because the package covers a lot; you are not meant to read it start 
 | Seed the first administrator  | [Default Admin Bootstrap](#default-admin-bootstrap)                                                                                                             |
 | Serve GraphQL                 | [GraphQL Support](#graphql-support)                                                                                                                             |
 | Put the session in a cookie   | [Sessions and Cookies](#sessions-and-cookies)                                                                                                                   |
+| Make logout end the session   | [Login Sessions and Refresh Token Rotation](#login-sessions-and-refresh-token-rotation)                                                                         |
 | Look up an option             | [Configuration Reference](#configuration-reference)                                                                                                             |
 | Add a login source            | [Authentication Gateway](#authentication-gateway), [LDAP](#authenticating-against-an-ldap-directory), [OIDC issuer](#authenticating-against-an-oidc-issuer)     |
 | Sign in with Microsoft Entra  | [Microsoft Entra ID](#authenticating-against-microsoft-entra-id)                                                                                                |
@@ -49,7 +50,7 @@ It is long because the package covers a lot; you are not meant to read it start 
 | Log in from a native app      | [Native apps: why a cookie cannot reach them](#native-apps-why-a-cookie-cannot-reach-them)                                                                      |
 | Reconcile against a directory | [Reading a directory through the gateway](#reading-a-directory-through-the-gateway)                                                                             |
 | Become an issuer yourself     | [Acting as an OpenID Connect Provider](#acting-as-an-openid-connect-provider)                                                                                   |
-| Upgrade an existing install   | [CHANGELOG.md](./CHANGELOG.md) — each release carries its own migration notes                                                                                   |
+| Upgrade an existing install   | [CHANGELOG.md](./CHANGELOG.md) — each release carries its own migration notes; from 0.14, [Upgrading from 0.14](#upgrading-from-014)                            |
 | Find what something is called | [Type Aliases and Injection Tokens](#type-aliases-and-injection-tokens)                                                                                         |
 
 ## Installation
@@ -311,7 +312,7 @@ Left unset, the adapter is constructed exactly as before and keeps using `casbin
 
 Three caveats worth stating plainly.
 
-**Splitting the table separates the *cache*, not the permissions.** If both applications rebuild their policies from the same upstream tables, both still end up with identical contents, and a permission missing from those upstream tables stays missing in both.
+**Splitting the table separates the _cache_, not the permissions.** If both applications rebuild their policies from the same upstream tables, both still end up with identical contents, and a permission missing from those upstream tables stays missing in both.
 
 **The entity is more than a table name.** typeorm-adapter constructs every policy row from it, resolves the repository through it, and — on the branch where it opens the connection itself, where `synchronize` defaults to on — creates the table from it. So it has to keep the `ptype` and `v0`–`v5` columns the adapter reads and writes, which is exactly what subclassing `CasbinRule` guarantees. Columns of your own on top are supported; `@CreateDateColumn()` and `@UpdateDateColumn()` are the usual pair.
 
@@ -533,7 +534,7 @@ Both mirror the module's own options. `cookieMode: false` matters in particular:
 
 By default a caller presents its token in the `Authorization` header and the module writes no cookies at all. `cookieMode: true` adds the cookie as a second source.
 
-**Reading** then happens on every request, header first: `Authorization: Bearer` wins, and the cookie is consulted only if there is no header. Only the **access token** cookie is ever read. The module never reads the refresh token cookie at all — it only writes it, so that a refresh route of your own can pick it up and hand the value to `memberBaseService.refreshToken(token)`. There is no refresh endpoint in this package, and no route it provides will accept a refresh token as a session.
+**Reading** then happens on every request, header first: `Authorization: Bearer` wins, and the cookie is consulted only if there is no header. Only the **access token** cookie is ever read to authenticate a request. The refresh token cookie is written so that a refresh route of your own can pick it up and hand the value to `memberBaseService.refreshToken(token)`; the one place the module reads it back is `OidcSsoBridge.clearSession`, to [end the session](#ending-a-session) it belongs to. There is no refresh endpoint in this package, and no route it provides will accept a refresh token as a session.
 
 **Writing** is narrower than reading. The module sets cookies only where it completes a login itself, and both cookies are written together so the caller does not need an immediate refresh round trip:
 
@@ -618,6 +619,274 @@ Earlier versions of this document suggested overriding `ACCESS_TOKEN_COOKIE_NAME
 - `OidcSsoBridge` is declared in the OIDC provider module and reaches the same binding through `MemberBaseModule`'s `@Global()` export — falling back to the default names if it is absent, since it injects them `@Optional()`.
 
 An application-level provider reaches only the application's own components. The module keeps writing the default names, with no error or warning to indicate it. Use the options above.
+
+## Login Sessions and Refresh Token Rotation
+
+Every login opens a row in `member_sessions`, and every refresh token is bound to one. That row is what a logout ends. Without it a logout can only make one browser forget its token: the token itself stays a validly signed JWT for the rest of its 90 days, a copy of it keeps refreshing, and a refresh response that arrives after the logout signs the user straight back in.
+
+This is always on. There is no switch, and nothing to configure for it to work — the table has to exist, and that is all.
+
+```ts
+const { accessToken, refreshToken } = await memberBaseService.login(account, password, { ip, userAgent });
+
+// Your refresh route
+const pair = await memberBaseService.refreshToken(refreshTokenFromCookieOrBody);
+
+// Your logout route — before you clear the cookies
+await memberBaseService.revokeSessionByRefreshToken(refreshTokenFromCookieOrBody);
+```
+
+### What the tokens carry
+
+| Claim | Access token | Refresh token | Meaning                                                             |
+| ----- | ------------ | ------------- | ------------------------------------------------------------------- |
+| `sid` | yes          | yes           | The session — `member_sessions.id`                                  |
+| `jti` | no           | yes           | This token's place in the session's rotation — its `currentTokenId` |
+
+The `sid` on the access token is there for the application: it is how a "change my password but keep me signed in here" request knows which session "here" is, and how a session list marks the current one. **The guard does not look it up.** An access token is verified by signature and expiry alone, exactly as before.
+
+### Rotation, and what happens to a token used twice
+
+A refresh token works once. `refreshToken()` hands back a pair whose refresh token has a new `jti`, and the one presented stops being the session's current token in the same statement.
+
+Presenting a refresh token that has already been rotated away means one of two things — it was copied, or one client kept a stale one — and the server cannot tell which. So the session is revoked (`reuse_detected`) and both holders have to sign in again. That is the cost of noticing a stolen token at all.
+
+One exception keeps this from firing on ordinary use. Two tabs, or two requests sent together, present the same refresh token a few milliseconds apart. For `rotationGraceSeconds` (default 10) after a rotation, the token just rotated away is still accepted: it does not rotate again, it is handed a pair for the token the first request already rotated to. "The same pair" here means the same `sid` and the same current `jti` — the two responses are not byte-identical, since each is signed at its own instant.
+
+The rotation is one conditional `UPDATE … WHERE "currentTokenId" = <the token presented> AND "revokedAt" IS NULL`. Two concurrent refreshes both reach it; the database lets exactly one match. The other re-reads the row and is treated as what it has become, a request for the previous token inside the grace window. No row lock is held and no transaction is opened.
+
+Every read of `member_sessions` goes to the primary, even when TypeORM is configured with read replicas (whose default for a `SELECT` is a replica). Each decision compares a read against a write made a moment ago, and a replica a second behind would turn an ordinary refresh into a detected reuse. If the loser of a race re-reads and still finds its own token current — the two answers disagree — nothing is decided: it fails with `SessionRotationConflictError` (below) and the client retries.
+
+### Ending a session
+
+| Method                                                              | Use                                                                                                                               |
+| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `revokeSessionByRefreshToken(token, reason = 'logout')`             | Logout, from the refresh token the client sent. `false` when there was nothing to end                                             |
+| `revokeMemberSession(memberId, sessionId, reason = 'logout')`       | "Sign out that device" for a signed-in member. `false` if the session is not theirs                                               |
+| `revokeAllSessions(memberId, { reason, exceptSessionId? })`         | "Sign out everywhere", optionally sparing the current device                                                                      |
+| `revokeSession(sessionId, reason)`                                  | End any session by id. **Administrative only** — it does not check whose session it is                                            |
+| `getSessionFromRefreshToken(token)`                                 | The session row behind a refresh token, or `null`                                                                                 |
+| `isSessionActive(memberId, sessionId)`                              | Whether a session is that member's, still open, and issued under the member's current password — for the `sid` of an access token |
+| `reissueSessionTokens(memberId, sessionId, { domain?, authTime? })` | A fresh pair for a session that was kept through a password change (below)                                                        |
+| `memberSessionService.purgeExpiredSessions({ before? })`            | Delete expired and revoked rows                                                                                                   |
+
+All but the last are on `MemberBaseService`; `MemberSessionService` is exported for the rest.
+
+Only the session named is ended. A member signed in on a phone and a laptop who logs out on the phone stays signed in on the laptop.
+
+`getSessionFromRefreshToken` and `revokeSessionByRefreshToken` check the token's signature but not its expiry, so a browser that sat closed past the token's lifetime can still end its session. Do not read a non-null answer as "this token can still refresh". Neither throws for a token that is not ours, expired or names no session; both do throw if the database fails, because the session may then still be open.
+
+Use `revokeMemberSession`, not `revokeSession`, for anything a member can trigger. A session id that arrives in a request body is just a value someone sent; `revokeMemberSession` only ends it if it belongs to the member your guard authenticated, so it cannot be used to sign someone else out.
+
+Every id these methods take is checked to be a UUID before it reaches the database. Anything else is treated as a session that does not exist — `false`, `0`, `null` or `SessionNotFoundError` — rather than surfacing as a database type error.
+
+`isSessionActive` also checks the session against the member's password. Each session records the `passwordChangedAt` its tokens were issued under — the value a refresh token embeds — and `isSessionActive` requires it to equal the member's current one, by equality rather than by comparing times, so no clock difference between the application and the database matters. A session from before a password change therefore counts as ended even if revoking it failed. The one exception is the session that change was told to keep: `changePassword(..., { keepSessionId })` marks it as belonging to the new password, so it stays active without a gap. `MemberSessionService.findOpenSession` is the lower-level read that checks the row alone; use `isSessionActive` for anything a token is trusted on.
+
+A password change ends every session of the member:
+
+| Call                                                | Sessions revoked        | `revokedReason`    |
+| --------------------------------------------------- | ----------------------- | ------------------ |
+| `changePassword(id, old, new)`                      | all                     | `password_changed` |
+| `changePassword(id, old, new, { keepSessionId })`   | all but `keepSessionId` | `password_changed` |
+| `changePasswordWithToken(resetToken, new)`          | all                     | `password_changed` |
+| `memberBaseAdminService.resetMemberPassword(id, …)` | all                     | `admin`            |
+| `memberBaseAdminService.archiveMember(id)`          | all                     | `admin`            |
+
+If ending the sessions fails once the new password has been written, the change still succeeds and the failure is logged: reporting it as a failed change would have the member retry with a password that is no longer theirs. Nothing is left usable by it — every refresh token issued before the change embeds the old `passwordChangedAt` and is refused on that alone. `archiveMember` does it the other way round: it ends the sessions first, and if that fails the member is not archived. It ends them again once the member is archived, for a login that completed in between; a login that was still verifying the password at that moment can still finish afterwards. Nothing can be done with such a session while the member is archived — a refresh is refused because the member is not found, and `isSessionActive` is false — but restoring the member brings it back, so revoke the member's sessions when you restore one.
+
+Keeping a session through a password change takes one more step. `keepSessionId` marks that session as belonging to the new password, but the refresh token the device holds still embeds the old `passwordChangedAt`, and `refreshToken()` refuses it with `PasswordChangedError`, as it always has. Give the device a pair that works, in the same request:
+
+```ts
+const sessionId = accessTokenPayload.sid; // from the request that is changing the password
+
+await memberBaseService.changePassword(memberId, oldPassword, newPassword, { keepSessionId: sessionId });
+
+const pair = await memberBaseService.reissueSessionTokens(memberId, sessionId, { authTime: confirmedAt });
+// set the cookies / return the pair in this same response
+```
+
+`reissueSessionTokens` authenticates nobody, which is why it takes the member as well as the session and refuses (`SessionNotFoundError`) a session that is not that member's. Pass the member id your guard authenticated — never one read from the request body. For the same reason it does not stamp `authTime` as "now": the new pair carries no `authTime` unless you pass one, such as the moment the member confirmed the old password. Every later refresh carries that forward, so leaving it off lasts until the member signs in again: nothing that requires a known authentication time (`max_age`, a step-up check) will accept this device until then. If the same device happens to be refreshing in another tab at that instant, it fails with `SessionRotationConflictError` and can simply be retried.
+
+Only a session that the password change kept can be reissued. One from before the change that was not named as `keepSessionId` is refused with `PasswordChangedError`, even if it is still open because revoking it failed — otherwise anything holding its access token could turn it into tokens under the new password. So call `reissueSessionTokens` right after `changePassword`, as above, rather than exposing it as a route of its own.
+
+If marking the session as kept fails — the write is one more thing the database can refuse — the password change still succeeds, the session is no longer spared and goes with the others, and `reissueSessionTokens` then fails with a refusal (`PasswordChangedError`, or `SessionRevokedError`). Treat that as "the password was changed; sign in again on this device", not as a failed password change.
+
+Keeping a session has one consequence to weigh. Its access token was issued before the change and is valid until it expires; because the session stays active, that token can still do everything an active session's token can for those minutes, including starting an OIDC login where this package is the issuer. The same holds for a refresh that this device already had in flight when the password changed: if it finished its checks just before the change, it still completes, and the access token it returns lives its full lifetime, while the refresh token it returns is refused afterwards. If a password change must cut off every existing token's reach, do not keep a session: change the password and have the member sign in again.
+
+`OidcSsoBridge.clearSession(res)` — the unified logout of [session bridging](#session-bridging) — now also revokes the session behind the refresh cookie, with or without a cookie parser installed. If the browser sent more than one cookie of that name — a sibling subdomain can plant one — every one of them is revoked, not just the first. It is still synchronous: the cookies are cleared before it returns and the revocation is started without being waited for, a failure being logged. A logout route that must know the session is gone before it answers should await `revokeSessionByRefreshToken` itself.
+
+Rows are never deleted by the module. A revoked row is what lets a later reuse be recognised as reuse rather than as an unknown session, so how long to keep them is yours to decide — schedule `purgeExpiredSessions()` if you want them gone, and pass `before` to keep ended sessions around for audit first.
+
+### Telling a refusal from a failure
+
+A client must not sign the user out because a refresh failed. It must sign the user out because the server _refused_.
+
+| Error                            | Code | Status | Means                                                                                           |
+| -------------------------------- | ---- | ------ | ----------------------------------------------------------------------------------------------- |
+| `SessionRevokedError`            | 128  | 400    | Ended on purpose. `.reason` says how: `logout`, `password_changed`, `admin`, `reuse_detected`   |
+| `SessionExpiredError`            | 129  | 400    | The session's lifetime ran out                                                                  |
+| `RefreshTokenReuseDetectedError` | 130  | 400    | This request is the reuse. The session has just been revoked                                    |
+| `SessionNotFoundError`           | 131  | 400    | The token names a session that is not there for it — purged, another member's, or never written |
+| `PasswordChangedError`           | 106  | 400    | The password changed after this token was issued                                                |
+| `MemberNotFoundError`            | 100  | 400    | The member is gone                                                                              |
+| `InvalidToken`                   | 104  | 400    | Not a refresh token of ours, past its own expiry, or issued before sessions existed (no `sid`)  |
+| `SessionRotationConflictError`   | 132  | 409    | **Not a refusal.** Two requests changed the session at once; retry. Not an `InvalidToken`       |
+
+The four session errors share a base class, `SessionRejectedError`, which is itself an `InvalidToken` — status 400, `instanceof InvalidToken` true. That is deliberate: a refresh route written before sessions existed already handles a refused token as `InvalidToken`, and it keeps working untouched. The `code` is what tells them apart. Because they are all `InvalidToken`s, one check covers every refusal of the token itself; the other two rows that are decisions, a changed password and a member who is gone, are separate classes:
+
+```ts
+import { Errors } from '@rytass/member-base-nestjs-module';
+
+const REFUSALS = [Errors.InvalidToken, Errors.PasswordChangedError, Errors.MemberNotFoundError];
+
+try {
+  return await memberBaseService.refreshToken(token);
+} catch (error) {
+  if (REFUSALS.some(refusal => error instanceof refusal)) {
+    clearCookies(res); // refused for good: drop the credential
+  }
+
+  throw error;
+}
+```
+
+`SessionRejectedError` is exported too, for code that wants only the four session refusals (128–131). Every row above except the last is a decision, and it will not change on a retry. **Anything else is not a decision**: `SessionRotationConflictError`, and whatever the infrastructure throws — a database that is down, a timeout, a dropped connection. `refreshToken()` lets those through as themselves, where earlier versions reported every non-400 failure as `InvalidToken`. A client that sees one keeps its credential and tries again.
+
+Retry promptly, within `rotationGraceSeconds`. In almost every such failure the token was not consumed. The exception is a connection that drops after the rotation was written but before the response arrived: the token _was_ consumed, and the retry is now presenting the one just rotated away. Inside the grace window that is accepted and returns the current pair; after it, it is a reuse and the session is revoked. A client that backs off for longer than the window — common on mobile networks — should either keep its first retry inside it, or have `rotationGraceSeconds` raised to match.
+
+### What a logout does not do
+
+**An access token issued before the logout keeps working until it expires** — 15 minutes by default (`accessTokenExpiration`). The guard verifies access tokens without touching the database, and a logout does not change that. This is deliberate: checking the session on every request would put a query in front of every route.
+
+Two consequences worth stating to whoever asks about your security posture:
+
+- After logout, the access token that was already issued is good for up to `accessTokenExpiration` more. Shorten that option to shorten the window.
+- A refresh that was already on its way when the user logged out can still land, and the pair it carries has a valid access token. It is a dead end: its refresh token belongs to the ended session and is refused. The same holds when the user logs out and signs in as someone else — the first account's late response cannot be extended, and the second account's session is untouched by it.
+
+If a hard cut-off is required, check `isSessionActive(payload.id, payload.sid)` in a guard of your own on the routes that need it. The module does this itself in one place: an OIDC login started from a member-base session (see [Session bridging](#session-bridging)), because that would otherwise turn a 15-minute access token into a far longer-lived OIDC session.
+
+### Options
+
+```ts
+MemberBaseModule.forRoot({
+  sessionTracking: {
+    rotationGraceSeconds: 10,
+    recordUserAgent: false,
+    recordIp: false,
+    // sessionEntity: MySessionEntity,
+  },
+});
+```
+
+| Option                 | Type                            | Default               | Purpose                                                                                                        |
+| ---------------------- | ------------------------------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `rotationGraceSeconds` | `number`                        | `10`                  | How long the token just rotated away is still accepted, 0–300. `0` makes the second concurrent refresh a reuse |
+| `recordUserAgent`      | `boolean`                       | `false`               | Store the user agent the session was opened from                                                               |
+| `recordIp`             | `boolean`                       | `false`               | Store the IP the session was opened from                                                                       |
+| `sessionEntity`        | `new () => MemberSessionEntity` | `MemberSessionEntity` | A subclass to store sessions in, with `@Entity('another_table')` and any extra columns; see below              |
+
+`rotationGraceSeconds` is refused at startup outside 0–300, or if it is not a finite number. A window much longer than a few seconds stops tolerating concurrent requests and starts accepting a stolen token without anyone noticing.
+
+`sessionEntity` does not replace the base entity's registration. The module always registers `MemberSessionEntity` for `forFeature`, so with `autoLoadEntities` the `member_sessions` table is still created, alongside yours, and stays empty. To have only your table, list your entities on the DataSource yourself instead of using `autoLoadEntities`.
+
+User agent and IP are off by default because they are personal data and nothing in the module reads them. Recording the address never fails a login: an IPv6 zone index (`fe80::1%en0`) is dropped, and anything that is not an address at all is stored as `null`. Turned on, they are recorded from whatever the login was given: `login(account, password, { ip, userAgent })`, `gateway.login(channel, credentials, { ip, userAgent })`, and the request itself on the mounted redirect routes and the OIDC interaction login. `OAuthCallbacksController` passes neither.
+
+The session lives as long as its refresh token: `expiresAt` is set to now + `refreshTokenExpiration` when the session opens and again at every rotation.
+
+### The table
+
+`MemberSessionEntity` is registered by the module alongside its other entities, so `autoLoadEntities` picks it up and `synchronize` creates it. With migrations, add it yourself:
+
+| Column              | Type          | Null | Notes                                                                   |
+| ------------------- | ------------- | ---- | ----------------------------------------------------------------------- |
+| `id`                | `uuid`        | no   | Primary key. The `sid` claim                                            |
+| `memberId`          | `uuid`        | no   | Indexed. No foreign key is declared by the entity                       |
+| `createdAt`         | `timestamp`   | no   | When the login happened                                                 |
+| `lastRefreshedAt`   | `timestamptz` | no   | Last rotation; equals the login time until the first one                |
+| `expiresAt`         | `timestamptz` | no   | Indexed. Moves forward at every rotation                                |
+| `currentTokenId`    | `uuid`        | no   | The only `jti` that rotates the session                                 |
+| `previousTokenId`   | `uuid`        | yes  | The `jti` rotated away most recently                                    |
+| `previousRotatedAt` | `timestamptz` | yes  | When; the grace window is measured from here                            |
+| `revokedAt`         | `timestamptz` | yes  | Set once, never cleared                                                 |
+| `revokedReason`     | `varchar`     | yes  | `logout`, `reuse_detected`, `password_changed`, `admin` or `expired`    |
+| `passwordChangedAt` | `timestamptz` | yes  | The member's `passwordChangedAt` the session's tokens were issued under |
+| `domain`            | `varchar`     | yes  | The Casbin domain the login was issued for, if any                      |
+| `userAgent`         | `varchar`     | yes  | Only with `recordUserAgent`                                             |
+| `ip`                | `cidr`        | yes  | Only with `recordIp`. `/32` for IPv4, `/128` for IPv6                   |
+
+```sql
+CREATE TABLE "member_sessions" (
+  "id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "memberId" uuid NOT NULL,
+  "createdAt" timestamp NOT NULL DEFAULT now(),
+  "lastRefreshedAt" timestamptz NOT NULL,
+  "expiresAt" timestamptz NOT NULL,
+  "currentTokenId" uuid NOT NULL,
+  "previousTokenId" uuid,
+  "previousRotatedAt" timestamptz,
+  "revokedAt" timestamptz,
+  "revokedReason" character varying,
+  "passwordChangedAt" timestamptz,
+  "domain" character varying,
+  "userAgent" character varying,
+  "ip" cidr,
+  CONSTRAINT "PK_member_sessions" PRIMARY KEY ("id")
+);
+
+CREATE INDEX "IDX_member_sessions_memberId" ON "member_sessions" ("memberId");
+CREATE INDEX "IDX_member_sessions_expiresAt" ON "member_sessions" ("expiresAt");
+
+-- Optional. The entity declares no relation, so this is yours to add:
+-- ALTER TABLE "member_sessions"
+--   ADD CONSTRAINT "FK_member_sessions_memberId"
+--   FOREIGN KEY ("memberId") REFERENCES "members" ("id") ON DELETE CASCADE;
+```
+
+The module always supplies `id` itself, so the column default is never used; it is there for rows written by hand. `gen_random_uuid()` is built into PostgreSQL 13 and later.
+
+If your schema is managed by TypeORM migrations, generate this one with `migration:generate` rather than pasting the SQL above. TypeORM names primary keys and indexes with hashes of its own (`PK_…`, `IDX_…`) and defaults the id to `uuid_generate_v4()`; a table created by hand under the readable names above shows up as a difference in every later generated migration.
+
+### Signing tokens yourself
+
+Use `issueTokenPair` wherever you issue tokens outside of `login()` — after a verification step of your own, for instance:
+
+```ts
+const { accessToken, refreshToken } = await memberBaseService.issueTokenPair(member, { domain, ip, userAgent });
+```
+
+It opens the session, waits for the row to be written, and puts the same `sid` on both tokens. Every login path in this package ends in it.
+
+`signRefreshToken(member)` and `signAccessToken(member)` still exist and still work, with two differences to know about:
+
+- `signRefreshToken` opens a session for the token it signs, but it is synchronous, so it cannot wait for the insert. A refresh in the same process waits for it; a failed insert is logged and shows up only later, as `SessionNotFoundError` at the token's first refresh. **With more than one instance of the application**, a refresh that reaches another instance before the insert lands — a few milliseconds — also finds no session and is refused. `issueTokenPairDetached` and the OIDC bridge's `issueSession`, which uses it, share this. Where you can await, use `issueTokenPair`.
+- `signAccessToken` called on its own carries no `sid`, because it has no session to name. Pass `{ session }` — the `SessionTokenBinding` — to both if you need them to match. Without a `sid`, an access token cannot stand in for an OIDC login through [session bridging](#session-bridging): if you sign your own tokens and use the bridge, switch to `issueTokenPair`.
+
+`sid` and `jti` are reserved claim names, alongside `authTime`, `domain` and, on refresh tokens, `passwordChangedAt`. Do not return a claim of one of those names from `customizedJwtPayload`; a store or site id called `sid` is the usual collision. What happens to one depends on the token: on a refresh token the module's `sid` and `jti` always replace yours; on an access token `sid` is replaced whenever the token is issued for a session (every path in this package), your `jti` is left as it is, and an access token signed with `signAccessToken` alone keeps your `sid` — which is then read as a session id and, naming no session, simply fails every check that needs one.
+
+### Upgrading from 0.14
+
+**No call has to change.** Sessions are always on, and every existing call keeps its signature and its return shape: `login`, `refreshToken`, `gateway.login`, the OAuth and redirect routes, `signAccessToken`, `signRefreshToken`, `OidcSsoBridge.issueSession` and `clearSession`. A refused refresh is still an `InvalidToken` with status 400. A client that checks `instanceof InvalidToken` or the status handles every refusal unchanged. One that matches the `code` or the message (104, `Invalid token`) also handles the upgrade itself unchanged; the new refusals afterwards carry their own codes, 128–131, listed above.
+
+Two things happen on their own that you should know about:
+
+- **Everyone signs in again, once.** A refresh token issued by 0.14 or earlier carries no `sid`, so it is refused — with exactly what 0.14 answered any bad refresh token with: `InvalidToken`, code 104, message `Invalid token`, status 400. Whatever your client keys on, it signs the user out as it always did. Access tokens already issued keep working until they expire.
+- **The `member_sessions` table has to exist**, like every other table of this package. `synchronize` creates it; with migrations, add one (the SQL above). Nothing checks for it at startup, as nothing checks for the package's other tables. Without it every login fails: `memberBaseService.login()` with `PasswordValidationError` (500), the real cause being logged; `gateway.login()`, the OAuth callback and the redirect routes with the database error itself. The two paths that do not wait for the session row — `signRefreshToken` and the OIDC bridge's `issueSession` — appear to succeed, log the failure, and hand out a refresh token that cannot refresh.
+
+One behaviour to check in your client. `refreshToken()` has always returned a new refresh token alongside the access token; **a client now has to keep using the newest one.** A client that ignores it and goes on presenting the token it got at login is, from the server's side, replaying a rotated token: its second refresh revokes the session. If your refresh route sets both cookies, or your client stores both tokens from the response, there is nothing to do.
+
+What is worth adding when you get to it — none of it is required for the upgrade:
+
+- Call `revokeSessionByRefreshToken` in your logout route. Until you do, logout clears the browser and nothing else, exactly as before.
+- Read the `code` of a refused refresh (128–131) if you want to tell the user why, and treat 132 as "retry".
+- Use `revokeMemberSession` for any "sign out that device" feature, never `revokeSession` with an id from the request.
+- Stop treating a 500 from your refresh route as a logout. `refreshToken()` no longer reports a database failure as `InvalidToken`.
+
+If you use this package as an OIDC issuer: a member-base access token now stands in for an OIDC login only while its session is open, and an access token without a `sid` never does — one issued before the upgrade, or one your own code signs with `signAccessToken` alone. Members holding one see the issuer's login page once; code that signs its own tokens should move to `issueTokenPair`.
+
+Two kinds of setup do need a change, and only these:
+
+- **Without `autoLoadEntities`**, add `MemberSessionEntity` to your DataSource's `entities`, next to the package's other entities. Until you do, every login fails as above, except that the two non-waiting paths throw TypeORM's `EntityMetadataNotFoundError` outright instead of logging.
+- **Code that constructs or subclasses** `MemberBaseService` or `MemberBaseAdminService` — a unit test calling `new`, or a subclass calling `super(...)` — has to pass a `MemberSessionService` as the new last constructor argument. Nest supplies it everywhere else.
 
 ## Deployment Topologies
 
@@ -753,7 +1022,10 @@ The provider holds no per-attempt state, so the application decides where the PK
 ```ts
 @Controller('auth')
 export class SsoController {
-  constructor(private readonly gateway: AuthenticationGateway) {}
+  constructor(
+    private readonly gateway: AuthenticationGateway,
+    private readonly memberBaseService: MemberBaseService,
+  ) {}
 
   @IsPublic()
   @Get('login')
@@ -782,8 +1054,11 @@ export class SsoController {
       nonce: tx.nonce,
     });
 
+    const { accessToken, refreshToken } = await this.memberBaseService.issueTokenPair(member, { ip: req.ip });
+
     res.clearCookie('oidc_tx');
-    res.cookie('access_token', this.memberBaseService.signAccessToken(member), { httpOnly: true });
+    res.cookie('access_token', accessToken, { httpOnly: true });
+    res.cookie('refresh_token', refreshToken, { httpOnly: true });
     res.redirect('/');
   }
 }
@@ -1001,7 +1276,9 @@ passwordHashOptions: { memoryCost: 65536, timeCost: 3, parallelism: 4 },
 
 **Casbin naming.** Change these only when an existing policy table already uses those strings for something else. Every grouping policy keeps the name it was written with, so renaming after members hold the grouping leaves them without it — grant the new name before switching.
 
-**Login log.** `loginLogRecordIp: false` keeps recording attempts without retaining an address, which is usually what a retention policy actually asks for. Turning the log off entirely also disables `loginFailedAutoUnlockSeconds`, which reads the last failed attempt out of that table; the combination logs a warning on boot rather than leaving an account locked for reasons nobody can find.
+**Password age.** `passwordAgeLimitInDays` reads `passwordChangedAt` whether it arrives as a `Date` or, with a pg type parser of your own, as a string. A member with no `passwordChangedAt`, or one set to `infinity`, is never expired, as before. A string that cannot be read as a timestamp counts as expired rather than as never expiring.
+
+**Login log.** An address that is not one — whatever a proxy put in `req.ip` — is stored as `null`, an IPv6 zone index is dropped, and a failed write is logged rather than left to crash the process. `loginLogRecordIp: false` keeps recording attempts without retaining an address, which is usually what a retention policy actually asks for. Turning the log off entirely also disables `loginFailedAutoUnlockSeconds`, which reads the last failed attempt out of that table; the combination logs a warning on boot rather than leaving an account locked for reasons nobody can find.
 
 The address is stored as a `cidr`, so it carries the prefix length for its family — `/32` for IPv4 and `/128` for IPv6. `toInetCidr(ip)` is exported if you write your own rows into that table and need the same format.
 
@@ -1049,6 +1326,7 @@ The address is stored as a `cidr`, so it carries the prefix length for its famil
 | `member_login_logs`                           | package root, always            |
 | `member_password_histories`                   | package root, always            |
 | `member_oauth_records`                        | package root, always            |
+| `member_sessions` (and `sessionEntity`'s)     | package root, always            |
 | `casbin_rule` (or `casbinRuleEntity`'s table) | `casbinAdapterOptions`          |
 | `oidc_payloads`, `oidc_clients`               | importing `/oidc-provider` only |
 
@@ -1637,9 +1915,11 @@ An application that is both an issuer and a resource server has two session conc
 | Direction                  | Behaviour                                                                                              |
 | -------------------------- | ------------------------------------------------------------------------------------------------------ |
 | Issuer to local            | A successful interaction login also sets the member-base cookies                                       |
-| Local to issuer            | An existing member-base session satisfies the login prompt                                             |
+| Local to issuer            | An existing member-base session satisfies the login prompt, if that session is still open              |
 | Local to issuer, on demand | `POST /oidc/interaction/:uid/session` closes the prompt from a session your own login flow established |
-| Logout                     | Clears both                                                                                            |
+| Logout                     | Clears both, and revokes the member-base session behind the refresh cookie                             |
+
+"Still open" is checked against `member_sessions` through the access token's `sid`. An access token outlives a logout by up to its own lifetime, which is acceptable for ordinary requests but not here: an OIDC login started from it would yield an issuer session and relying-party tokens that live far longer, and that no member-base revocation can reach. A token without a `sid` — one issued before sessions existed — never stands in. `readLocalSession(req)` still returns the claims without this check; `readActiveLocalSession(req)` is the checked one.
 
 Two request parameters are always honoured, because ignoring them would void the relying party's own security decision:
 
@@ -2009,16 +2289,16 @@ const entries = await directory.findAllUsers({ filter: 'accountEnabled eq true' 
 
 `directory` (`EntraDirectoryOptions` minus what the composite supplies):
 
-| Option              | Type                                                | Default               | Purpose                                                           |
-| ------------------- | --------------------------------------------------- | --------------------- | ----------------------------------------------------------------- |
-| `clientId`          | `string`                                            | —                     | May differ from the auth half's                                   |
-| `clientSecret`      | `string`                                            | —                     | One of secret or certificate is required                          |
-| `clientCertificate` | `{ certificate: string; privateKey: string }`       | —                     | Both PEM; see below                                               |
-| `accountAttribute`  | `'userPrincipalName' \| 'onPremisesSamAccountName'` | `'userPrincipalName'` | Which attribute `attributes.account` reports                      |
-| `includeGroups`     | `boolean`                                           | `true`                | Costs one request per user; see the note under Reading the tenant |
+| Option              | Type                                                | Default               | Purpose                                                               |
+| ------------------- | --------------------------------------------------- | --------------------- | --------------------------------------------------------------------- |
+| `clientId`          | `string`                                            | —                     | May differ from the auth half's                                       |
+| `clientSecret`      | `string`                                            | —                     | One of secret or certificate is required                              |
+| `clientCertificate` | `{ certificate: string; privateKey: string }`       | —                     | Both PEM; see below                                                   |
+| `accountAttribute`  | `'userPrincipalName' \| 'onPremisesSamAccountName'` | `'userPrincipalName'` | Which attribute `attributes.account` reports                          |
+| `includeGroups`     | `boolean`                                           | `true`                | Costs one request per user; see the note under Reading the tenant     |
 | `extraAttributes`   | `string[]`                                          | `[]`                  | Appended to the default `$select`, and passed through to `attributes` |
-| `maxRetries`        | `number`                                            | `3`                   | Retries on `429` and `5xx`                                        |
-| `maxRetryDelayMs`   | `number`                                            | `30000`               | Longest a request is held open waiting out a throttle             |
+| `maxRetries`        | `number`                                            | `3`                   | Retries on `429` and `5xx`                                            |
+| `maxRetryDelayMs`   | `number`                                            | `30000`               | Longest a request is held open waiting out a throttle                 |
 
 ### Why `identifierClaim` defaults to `oid`, not `sub`
 
@@ -2587,7 +2867,7 @@ memberBaseService.signAccessToken(member, domain, { authTime: 1700000000 });
 memberBaseService.signAccessToken(member, domain, { authTime: null });
 ```
 
-A refresh token that carries no `authTime` — one issued before the claim existed — leaves it absent on refresh rather than inventing a value, so a check that requires a known authentication time fails closed.
+A refresh token that carries no `authTime` leaves it absent on refresh rather than inventing a value, so a check that requires a known authentication time fails closed.
 
 ## Type Aliases and Injection Tokens
 

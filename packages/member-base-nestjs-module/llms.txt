@@ -143,8 +143,20 @@ await memberBaseService.register(account, password, memberOptions?);
 await memberBaseService.registerWithoutPassword(account, memberOptions?);
 
 // Authentication — returns { accessToken, refreshToken }
-await memberBaseService.login(account, password, { ip, domain });
-await memberBaseService.refreshToken(refreshToken, { domain });
+await memberBaseService.login(account, password, { ip, domain, userAgent });
+await memberBaseService.refreshToken(refreshToken, { domain }); // rotates: the token presented stops working
+await memberBaseService.issueTokenPair(member, { domain, ip, userAgent }); // issue outside of login()
+memberBaseService.issueTokenPairDetached(member, { domain, ip, userAgent }); // same, for code that cannot await
+
+// Sessions — every login opens a row in member_sessions
+await memberBaseService.revokeSessionByRefreshToken(refreshToken); // logout; call before clearing cookies
+await memberBaseService.getSessionFromRefreshToken(refreshToken);
+await memberBaseService.revokeMemberSession(memberId, sessionId); // "sign out that device"; only the member's own
+await memberBaseService.revokeAllSessions(memberId, { reason, exceptSessionId? });
+await memberBaseService.revokeSession(sessionId, reason); // administrative only: does not check ownership
+await memberBaseService.isSessionActive(memberId, sessionId); // for the sid of an access token
+// after changePassword(..., { keepSessionId }); authTime is carried forward on every later refresh
+await memberBaseService.reissueSessionTokens(memberId, sessionId, { domain?, authTime? });
 
 // Verify without issuing tokens (returns the member)
 await memberBaseService.verifyCredentials(account, password, { ip });
@@ -154,7 +166,7 @@ await memberBaseService.findById(id);
 await memberBaseService.findByAccount(account);
 
 // Passwords
-await memberBaseService.changePassword(id, oldPassword, newPassword);
+await memberBaseService.changePassword(id, oldPassword, newPassword, { keepSessionId? }); // revokes the member's sessions
 await memberBaseService.getResetPasswordToken(account);
 await memberBaseService.changePasswordWithToken(token, newPassword);
 
@@ -162,11 +174,25 @@ await memberBaseService.changePasswordWithToken(token, newPassword);
 await memberBaseService.resetLoginFailedCounter(id);
 
 // Token signing (used by layered modules)
-memberBaseService.signAccessToken(member, domain?, { authTime });
-memberBaseService.signRefreshToken(member, domain?, { authTime });
+memberBaseService.signAccessToken(member, domain?, { authTime, session? });
+memberBaseService.signRefreshToken(member, domain?, { authTime, session? });
 ```
 
-`MemberBaseAdminService` provides `archiveMember(id)`.
+### Login sessions and refresh token rotation
+
+Always on; needs the `member_sessions` table and nothing else. Refresh tokens carry `sid` (session) and `jti` (rotation position); access tokens carry `sid`. The guard never looks a session up — access tokens stay stateless, so one issued before a logout works until it expires (`accessTokenExpiration`, 15 minutes by default).
+
+- **Rotation**: `refreshToken()` is one conditional `UPDATE` keyed on the presented `jti`; of two concurrent refreshes exactly one rotates. For `sessionTracking.rotationGraceSeconds` (default 10, allowed 0–300) the token just rotated away is still accepted and is handed the pair for the current `jti`. All session reads go to the primary, even with TypeORM read replicas configured.
+- **Reuse**: a rotated-away token presented outside that window revokes the session (`reuse_detected`).
+- **Revocation**: logout ends only the session named. `changePassword` / `changePasswordWithToken` revoke all of the member's sessions (`password_changed`; a failure to revoke is logged, not thrown — old refresh tokens are refused by `passwordChangedAt` anyway), `MemberBaseAdminService.resetMemberPassword` and `archiveMember` too (`admin`). `OidcSsoBridge.clearSession` also revokes the session behind every refresh cookie of that name; it and `issueSession` stay synchronous (the revocation is started, not awaited). Ids that are not UUIDs are treated as no session.
+- **Refusals** (all `instanceof SessionRejectedError`, which extends `InvalidToken`, so status 400 and existing `InvalidToken` handling still applies): `SessionRevokedError` 128 (`.reason`), `SessionExpiredError` 129, `RefreshTokenReuseDetectedError` 130, `SessionNotFoundError` 131 (the session is not there for this token: purged, another member's, or a background write that failed or has not landed). Plain `InvalidToken` 104 for a bad or expired JWT, and for every refresh token issued before sessions existed (no `sid`) — exactly what 0.14 returned, so existing clients sign out unchanged. `SessionRotationConflictError` 132 (409, not an `InvalidToken`) means two requests changed the session at once. That, and any other error from `refreshToken()` (a database failure), is not a refusal: keep the credential and retry within `rotationGraceSeconds`.
+- **Reserved claims**: `sid`, `jti` (plus `authTime`, `domain`, `passwordChangedAt`) — do not return them from `customizedJwtPayload`. Refresh tokens always replace `sid`/`jti`; access tokens replace `sid` only when issued for a session and never touch a custom `jti`. An access token without the module's `sid` (e.g. `signAccessToken` alone) cannot stand in for an OIDC login; use `issueTokenPair`.
+- **Keeping a session through a password change**: `changePassword(..., { keepSessionId })` marks that session as belonging to the new password (it stays active); then call `reissueSessionTokens` in the same request. A pre-change session that was not kept is refused by `reissueSessionTokens` with `PasswordChangedError`, even if revoking it failed. If marking the session as kept fails, the password change still succeeds and that device signs in again.
+- **`isSessionActive(memberId, sessionId)`**: open, the member's, and issued under the member's current `passwordChangedAt` (each session stores the value its tokens carry; compared by equality). `MemberSessionService.findOpenSession` checks the row alone.
+- **Options**: `sessionTracking: { rotationGraceSeconds, recordUserAgent, recordIp, sessionEntity }`. `MemberSessionService.purgeExpiredSessions({ before? })` deletes expired and revoked rows; the module never calls it.
+- **Upgrading from 0.14**: no call has to change — every existing signature is kept. Every refresh token issued before sessions existed is refused once — as plain `InvalidToken` (104, `Invalid token`, 400), exactly as 0.14 refused a bad token — so everyone signs in again. The `member_sessions` table must exist (`synchronize`, or a migration); without `autoLoadEntities`, add `MemberSessionEntity` to `entities`. Missing either, logins fail: `memberBaseService.login()` with `PasswordValidationError` (cause logged), the gateway, OAuth and redirect paths with the database error itself. Code that constructs or subclasses `MemberBaseService` / `MemberBaseAdminService` passes a `MemberSessionService` as the new last argument. A client must keep using the newest refresh token `refreshToken()` returns; replaying the original one revokes the session.
+
+`MemberBaseAdminService` provides `archiveMember(id)` and `resetMemberPassword(id, newPassword)`; both revoke the member's sessions.
 
 ## Decorators
 
@@ -551,7 +577,7 @@ claims: {
 }
 ```
 
-The SSO bridge (on by default, requires `cookieMode: true`) issues member-base cookies after an interaction login, lets an existing member-base session satisfy a login prompt, and clears both on logout. `prompt=login` and `max_age` are always honoured.
+The SSO bridge (on by default, requires `cookieMode: true`) issues member-base cookies after an interaction login, lets an existing member-base session satisfy a login prompt — only while that session is still open, checked through the access token's `sid` (`readActiveLocalSession`) — and clears both on logout. `prompt=login` and `max_age` are always honoured.
 
 Other provider options: `ttl`, `purgeIntervalSeconds` (expired-payload sweep; `0` disables and you drive `OidcMaintenanceService.purgeExpired()` yourself), `advanced` (merged last into the `oidc-provider` configuration).
 

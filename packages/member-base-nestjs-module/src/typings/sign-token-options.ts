@@ -1,3 +1,5 @@
+import type { SessionContext, SessionTokenBinding } from './session-tracking-options';
+
 export interface SignTokenOptions {
   /**
    * Epoch seconds of the moment the member actually proved its identity.
@@ -14,4 +16,20 @@ export interface SignTokenOptions {
    * left absent and downstream checks fail closed.
    */
   authTime?: number | null;
+
+  /**
+   * The session this token belongs to.
+   *
+   * `signAccessToken` stamps its `sid`; without it the access token simply
+   * carries none. `signRefreshToken` binds the token to it; without it a new
+   * session is opened for the token, since a refresh token that names no
+   * session cannot be refreshed.
+   */
+  session?: SessionTokenBinding;
+
+  /**
+   * Request details stored on the session `signRefreshToken` opens when no
+   * `session` is given. Ignored otherwise.
+   */
+  sessionContext?: Omit<SessionContext, 'domain'>;
 }

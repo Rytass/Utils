@@ -44,7 +44,12 @@ import {
   LOGIN_LOG_RECORD_IP,
   REDIRECT_AUTH_OPTIONS,
   REDIRECT_AUTH_MOUNTED_PREFIX,
+  PROVIDE_MEMBER_SESSION_ENTITY,
+  SESSION_ROTATION_GRACE_SECONDS,
+  SESSION_RECORD_USER_AGENT,
+  SESSION_RECORD_IP,
 } from '../typings/member-base.tokens';
+import type { MemberSessionEntity } from '../models/member-session.entity';
 import { PasswordAuthProvider } from '../providers/password-auth.provider';
 import type {
   AuthenticationProvider,
@@ -71,6 +76,14 @@ import type { ReflectableDecorator } from '@nestjs/core';
 import type { OAuth2Provider } from '../typings/oauth2-provider.interface';
 import type { AuthTokenPayloadBase } from '../typings/auth-token-payload';
 import type { CasbinDomainResolver, CasbinPermissionChecker } from '../typings/casbin-permission';
+
+/**
+ * Upper bound for `sessionTracking.rotationGraceSeconds`. Concurrent refreshes
+ * land within seconds of each other; a window longer than this stops being a
+ * tolerance for them and starts being a period in which a stolen token is
+ * accepted without anyone noticing.
+ */
+export const MAX_ROTATION_GRACE_SECONDS = 300;
 
 export const OptionProviders = [
   {
@@ -374,6 +387,47 @@ export const OptionProviders = [
   {
     provide: LOGIN_LOG_RECORD_IP,
     useFactory: (options?: MemberBaseModuleOptionsDTO): boolean => options?.loginLogRecordIp ?? true,
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: PROVIDE_MEMBER_SESSION_ENTITY,
+    useFactory: (options?: MemberBaseModuleOptionsDTO): (new () => MemberSessionEntity) | null =>
+      options?.sessionTracking?.sessionEntity ?? null,
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: SESSION_ROTATION_GRACE_SECONDS,
+    useFactory: (options?: MemberBaseModuleOptionsDTO): number => {
+      const configured = options?.sessionTracking?.rotationGraceSeconds ?? 10;
+
+      // A negative or non-numeric window would silently behave like "off" and
+      // turn every concurrent refresh into a revoked session. An unbounded one
+      // would silently do the opposite: a rotated-away token would never count
+      // as reuse, and the theft detection would be gone.
+      if (
+        typeof configured !== 'number' ||
+        !Number.isFinite(configured) ||
+        configured < 0 ||
+        configured > MAX_ROTATION_GRACE_SECONDS
+      ) {
+        throw new Error(
+          `[MemberBase] sessionTracking.rotationGraceSeconds must be a number of seconds from 0 to ` +
+            `${MAX_ROTATION_GRACE_SECONDS}, but got: ${configured}`,
+        );
+      }
+
+      return configured;
+    },
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: SESSION_RECORD_USER_AGENT,
+    useFactory: (options?: MemberBaseModuleOptionsDTO): boolean => options?.sessionTracking?.recordUserAgent ?? false,
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: SESSION_RECORD_IP,
+    useFactory: (options?: MemberBaseModuleOptionsDTO): boolean => options?.sessionTracking?.recordIp ?? false,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
 ] as Provider[];

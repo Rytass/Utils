@@ -9,6 +9,8 @@ export interface AuthContext {
   ip?: string;
   /** Casbin domain to stamp on the issued tokens, when the caller uses one. */
   domain?: string;
+  /** Stored on the session the login opens, when `sessionTracking.recordUserAgent` is on. */
+  userAgent?: string;
 }
 
 /**

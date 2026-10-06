@@ -185,10 +185,7 @@ export class OAuthService {
     const oauthRecord = await qb.getOne();
 
     if (oauthRecord) {
-      return {
-        accessToken: this.memberBaseService.signAccessToken(oauthRecord.member),
-        refreshToken: this.memberBaseService.signRefreshToken(oauthRecord.member),
-      };
+      return this.memberBaseService.issueTokenPair(oauthRecord.member);
     } else {
       const existedUnbindMember = await this.baseMemberRepo.findOne({
         where: {
@@ -203,10 +200,7 @@ export class OAuthService {
           channelIdentifier: identifier,
         });
 
-        return {
-          accessToken: this.memberBaseService.signAccessToken(existedUnbindMember),
-          refreshToken: this.memberBaseService.signRefreshToken(existedUnbindMember),
-        };
+        return this.memberBaseService.issueTokenPair(existedUnbindMember);
       }
 
       const [member] = await this.memberBaseService.registerWithoutPassword(identifier, {
@@ -219,10 +213,7 @@ export class OAuthService {
         channelIdentifier: identifier,
       });
 
-      return {
-        accessToken: this.memberBaseService.signAccessToken(member),
-        refreshToken: this.memberBaseService.signRefreshToken(member),
-      };
+      return this.memberBaseService.issueTokenPair(member);
     }
   }
 }

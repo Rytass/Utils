@@ -31,6 +31,7 @@ interface Harness {
   readonly recordRepo: { findOne: jest.Mock; save: jest.Mock };
   readonly memberRepo: { findOne: jest.Mock };
   readonly registerWithoutPassword: jest.Mock;
+  readonly issueTokenPair: jest.Mock;
 }
 
 const buildGateway = (options?: {
@@ -71,11 +72,15 @@ const buildGateway = (options?: {
     return [member, 'generated'];
   });
 
+  const issueTokenPair = jest.fn(async (member: BaseMemberEntity) => ({
+    accessToken: `access-${member.id}`,
+    refreshToken: `refresh-${member.id}`,
+  }));
+
   const memberBaseService = {
     findById: jest.fn(async (id: string) => members.get(id) ?? null),
     registerWithoutPassword,
-    signAccessToken: jest.fn((member: BaseMemberEntity) => `access-${member.id}`),
-    signRefreshToken: jest.fn((member: BaseMemberEntity) => `refresh-${member.id}`),
+    issueTokenPair,
   };
 
   const gateway = new AuthenticationGateway(
@@ -88,7 +93,7 @@ const buildGateway = (options?: {
     options?.syncOnAuthenticate ?? null,
   );
 
-  return { gateway, members, bindings, recordRepo, memberRepo, registerWithoutPassword };
+  return { gateway, members, bindings, recordRepo, memberRepo, registerWithoutPassword, issueTokenPair };
 };
 
 describe('AuthenticationGateway provider dispatch', () => {
@@ -313,12 +318,42 @@ describe('AuthenticationGateway login', () => {
       }),
     };
 
-    const { gateway } = buildGateway({ providers: [provider], seedMembers: [asMember('m-7', 'alice')] });
+    const member = asMember('m-7', 'alice');
+    const { gateway, issueTokenPair } = buildGateway({ providers: [provider], seedMembers: [member] });
 
     const pair = await gateway.login(PASSWORD_CHANNEL, { account: 'alice', password: 'x' });
 
     expect(pair.accessToken).toBe('access-m-7');
     expect(pair.refreshToken).toBe('refresh-m-7');
+    expect(issueTokenPair).toHaveBeenCalledTimes(1);
+    expect(issueTokenPair).toHaveBeenCalledWith(member, { domain: undefined, ip: undefined, userAgent: undefined });
+  });
+
+  it('should hand the request context to the session the login opens', async () => {
+    const provider: AuthenticationProvider = {
+      channel: PASSWORD_CHANNEL,
+      kind: 'credential',
+      authenticate: async (): Promise<AuthenticatedIdentity> => ({
+        channel: PASSWORD_CHANNEL,
+        identifier: 'alice',
+        memberId: 'm-7',
+      }),
+    };
+
+    const member = asMember('m-7', 'alice');
+    const { gateway, issueTokenPair } = buildGateway({ providers: [provider], seedMembers: [member] });
+
+    await gateway.login(
+      PASSWORD_CHANNEL,
+      { account: 'alice', password: 'x' },
+      { domain: 'tenant-a', ip: '10.0.0.7', userAgent: 'jest-agent' },
+    );
+
+    expect(issueTokenPair).toHaveBeenCalledWith(member, {
+      domain: 'tenant-a',
+      ip: '10.0.0.7',
+      userAgent: 'jest-agent',
+    });
   });
 });
 

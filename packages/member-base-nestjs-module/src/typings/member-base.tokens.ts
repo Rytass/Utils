@@ -16,6 +16,7 @@ import type {
 } from './authentication-provider.interface';
 import type { PasswordHashOptions } from './password-hash-options';
 import type { ResolvedRedirectAuthOptions } from './redirect-auth.options';
+import type { MemberSessionEntity } from '../models/member-session.entity';
 
 // Typed injection tokens for better type safety (using Symbol with type annotations)
 export const MEMBER_BASE_MODULE_OPTIONS = Symbol('MEMBER_BASE_MODULE_OPTIONS') as symbol & {
@@ -57,6 +58,19 @@ export const PROVIDE_MEMBER_ENTITY = Symbol('PROVIDE_MEMBER_ENTITY') as symbol &
 
 // Resolved Entity Repository Providers
 export const RESOLVED_MEMBER_REPO = Symbol('RESOLVED_MEMBER_REPO') as symbol & { __type: Repository<BaseMemberEntity> };
+
+// Sessions
+export const PROVIDE_MEMBER_SESSION_ENTITY = Symbol('PROVIDE_MEMBER_SESSION_ENTITY') as symbol & {
+  __type: (new () => MemberSessionEntity) | null;
+};
+export const RESOLVED_MEMBER_SESSION_REPO = Symbol('RESOLVED_MEMBER_SESSION_REPO') as symbol & {
+  __type: Repository<MemberSessionEntity>;
+};
+export const SESSION_ROTATION_GRACE_SECONDS = Symbol('SESSION_ROTATION_GRACE_SECONDS') as symbol & {
+  __type: number;
+};
+export const SESSION_RECORD_USER_AGENT = Symbol('SESSION_RECORD_USER_AGENT') as symbol & { __type: boolean };
+export const SESSION_RECORD_IP = Symbol('SESSION_RECORD_IP') as symbol & { __type: boolean };
 
 // Password Policy Providers
 export const PASSWORD_SHOULD_INCLUDE_UPPERCASE = Symbol('PASSWORD_SHOULD_INCLUDE_UPPERCASE') as symbol & {
@@ -190,6 +204,11 @@ export interface MemberBaseProviders {
   DEFAULT_CASBIN_DOMAIN_NAME: string;
   LOGIN_LOG_ENABLED: boolean;
   LOGIN_LOG_RECORD_IP: boolean;
+  PROVIDE_MEMBER_SESSION_ENTITY: (new () => MemberSessionEntity) | null;
+  RESOLVED_MEMBER_SESSION_REPO: Repository<MemberSessionEntity>;
+  SESSION_ROTATION_GRACE_SECONDS: number;
+  SESSION_RECORD_USER_AGENT: boolean;
+  SESSION_RECORD_IP: boolean;
 }
 
 export type MemberBaseProviderToken = keyof MemberBaseProviders;

@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { sign, verify as verifyJWT } from 'jsonwebtoken';
 import { Repository } from 'typeorm';
 import { BadRequestException } from '@nestjs/common';
@@ -7,6 +8,8 @@ import { MemberLoginLogEntity } from '../src/models/member-login-log.entity';
 import { PasswordValidatorService } from '../src/services/password-validator.service';
 import { InvalidToken, MemberNotFoundError, PasswordChangedError } from '../src/constants/errors/base.error';
 import type { AuthTokenPayloadBase } from '../src/typings/auth-token-payload';
+import { asSessionService, createFakeSessionService, type FakeSessionService } from './__utils__/fake-session-service';
+import { withPrimaryReads } from './__utils__/with-primary-reads';
 
 /**
  * Characterization tests for token signing and the refresh flow.
@@ -24,6 +27,7 @@ type WhereClause = Partial<Record<keyof BaseMemberEntity, unknown>>;
 interface BuiltService {
   readonly service: MemberBaseService;
   readonly member: BaseMemberEntity;
+  readonly sessions: FakeSessionService;
 }
 
 const matchesWhere = (member: BaseMemberEntity, where: WhereClause): boolean =>
@@ -45,6 +49,8 @@ const buildService = (overrides?: { accessTokenExpiration?: unknown }): BuiltSer
     save: jest.fn(async (entity: BaseMemberEntity) => entity),
   } as unknown as Repository<BaseMemberEntity>;
 
+  withPrimaryReads(memberRepo);
+
   const noopRepo = {
     findOne: jest.fn(async () => null),
     save: jest.fn(async (entity: unknown) => entity),
@@ -60,6 +66,8 @@ const buildService = (overrides?: { accessTokenExpiration?: unknown }): BuiltSer
     id: m.id,
     account: m.account,
   });
+
+  const sessions = createFakeSessionService();
 
   const service = new MemberBaseService(
     undefined,
@@ -82,9 +90,10 @@ const buildService = (overrides?: { accessTokenExpiration?: unknown }): BuiltSer
     {},
     true,
     true,
+    asSessionService(sessions),
   );
 
-  return { service, member };
+  return { service, member, sessions };
 };
 
 const decode = (token: string, secret: string): Record<string, unknown> =>
@@ -99,6 +108,7 @@ describe('MemberBaseService token signing characterization', () => {
     expect(payload.id).toBe(member.id);
     expect(payload.account).toBe(member.account);
     expect(payload).not.toHaveProperty('passwordChangedAt');
+    expect(payload).not.toHaveProperty('sid');
     expect(payload.exp).toEqual(expect.any(Number));
   });
 
@@ -108,6 +118,34 @@ describe('MemberBaseService token signing characterization', () => {
     const payload = decode(service.signRefreshToken(member), REFRESH_TOKEN_SECRET);
 
     expect(payload.passwordChangedAt).toBe(member.passwordChangedAt.getTime());
+    expect(payload.sid).toEqual(expect.any(String));
+    expect(payload.jti).toEqual(expect.any(String));
+  });
+
+  it('should bind a refresh token to a session through sid and jti', () => {
+    const { service, member, sessions } = buildService();
+
+    const payload = decode(service.signRefreshToken(member, 'tenant-a'), REFRESH_TOKEN_SECRET);
+    const opened = sessions.openSessionDetached.mock.results[0].value as { sessionId: string; tokenId: string };
+
+    expect(sessions.openSessionDetached).toHaveBeenCalledTimes(1);
+    expect(sessions.openSessionDetached).toHaveBeenCalledWith(member, { domain: 'tenant-a' });
+    expect(payload.sid).toBe(opened.sessionId);
+    expect(payload.jti).toBe(opened.tokenId);
+  });
+
+  it('should sign for an existing session instead of opening one when a session is supplied', () => {
+    const { service, member, sessions } = buildService();
+    const session = { sessionId: randomUUID(), tokenId: randomUUID() };
+
+    const refreshPayload = decode(service.signRefreshToken(member, undefined, { session }), REFRESH_TOKEN_SECRET);
+    const accessPayload = decode(service.signAccessToken(member, undefined, { session }), ACCESS_TOKEN_SECRET);
+
+    expect(sessions.openSessionDetached).not.toHaveBeenCalled();
+    expect(refreshPayload.sid).toBe(session.sessionId);
+    expect(refreshPayload.jti).toBe(session.tokenId);
+    expect(accessPayload.sid).toBe(session.sessionId);
+    expect(accessPayload).not.toHaveProperty('jti');
   });
 
   it('should emit a null passwordChangedAt when the member has none', () => {
@@ -118,6 +156,8 @@ describe('MemberBaseService token signing characterization', () => {
     const payload = decode(service.signRefreshToken(member), REFRESH_TOKEN_SECRET);
 
     expect(payload.passwordChangedAt).toBeNull();
+    expect(payload.sid).toEqual(expect.any(String));
+    expect(payload.jti).toEqual(expect.any(String));
   });
 
   it('should include the domain claim only when a domain is supplied', () => {
@@ -136,13 +176,33 @@ describe('MemberBaseService token signing characterization', () => {
 
 describe('MemberBaseService.refreshToken characterization', () => {
   it('should issue a fresh token pair for a valid refresh token', async () => {
-    const { service, member } = buildService();
+    const { service, member, sessions } = buildService();
 
     const refreshToken = service.signRefreshToken(member);
+    const presented = decode(refreshToken, REFRESH_TOKEN_SECRET);
     const pair = await service.refreshToken(refreshToken);
 
-    expect(decode(pair.accessToken, ACCESS_TOKEN_SECRET).id).toBe(member.id);
-    expect(decode(pair.refreshToken, REFRESH_TOKEN_SECRET).id).toBe(member.id);
+    const access = decode(pair.accessToken, ACCESS_TOKEN_SECRET);
+    const refreshed = decode(pair.refreshToken, REFRESH_TOKEN_SECRET);
+
+    expect(access.id).toBe(member.id);
+    expect(refreshed.id).toBe(member.id);
+
+    // The pair stays on the session the presented token named, with a new
+    // token id, and the refresh opens no session of its own.
+    expect(sessions.rotate).toHaveBeenCalledTimes(1);
+    expect(sessions.rotate).toHaveBeenCalledWith(
+      { sessionId: presented.sid, tokenId: presented.jti },
+      member.id,
+      expect.any(Function),
+    );
+
+    expect(access.sid).toBe(presented.sid);
+    expect(refreshed.sid).toBe(presented.sid);
+    expect(refreshed.jti).toEqual(expect.any(String));
+    expect(refreshed.jti).not.toBe(presented.jti);
+    expect(sessions.openSessionDetached).toHaveBeenCalledTimes(1);
+    expect(sessions.openSession).not.toHaveBeenCalled();
   });
 
   it('should carry the domain claim from the incoming refresh token', async () => {
@@ -177,7 +237,13 @@ describe('MemberBaseService.refreshToken characterization', () => {
     const { service, member } = buildService();
 
     const refreshToken = sign(
-      { id: 'ffffffff-ffff-ffff-ffff-ffffffffffff', account: member.account, passwordChangedAt: null },
+      {
+        id: 'ffffffff-ffff-ffff-ffff-ffffffffffff',
+        account: member.account,
+        passwordChangedAt: null,
+        sid: randomUUID(),
+        jti: randomUUID(),
+      },
       REFRESH_TOKEN_SECRET,
       { expiresIn: 3600 },
     );

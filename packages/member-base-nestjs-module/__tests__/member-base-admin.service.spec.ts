@@ -4,6 +4,7 @@ import { MemberBaseAdminService } from '../src/services/member-base-admin.servic
 import { BaseMemberEntity } from '../src/models/base-member.entity';
 import { PasswordValidatorService } from '../src/services/password-validator.service';
 import { MemberPasswordHistoryEntity } from '../src/models/member-password-history.entity';
+import { asSessionService, createFakeSessionService } from './__utils__/fake-session-service';
 
 const createMemberRepo = (member: BaseMemberEntity): Repository<BaseMemberEntity> =>
   ({
@@ -31,15 +32,22 @@ describe('MemberBaseAdminService.resetMemberPassword', () => {
       validatePassword: jest.fn(async () => true),
     } as unknown as PasswordValidatorService;
 
+    const sessions = createFakeSessionService();
+
     const service = new MemberBaseAdminService(
       createMemberRepo(member),
       passwordValidatorService,
       createHistoryRepo(),
       {},
+      asSessionService(sessions),
     );
 
     await service.resetMemberPassword(member.id, 'BrandNewPassw0rd!');
 
     expect(member.loginFailedCounter).toBe(0);
+
+    // The member did not choose this password: every session it had ends.
+    expect(sessions.revokeAllSessions).toHaveBeenCalledTimes(1);
+    expect(sessions.revokeAllSessions).toHaveBeenCalledWith(member.id, { reason: 'admin' });
   });
 });

@@ -23,6 +23,7 @@ import {
   RedirectAuthTransactionError,
 } from '../constants/errors/base.error';
 import { resolveCookieOptions } from '../utils/resolve-cookie-options';
+import { readCookie } from '../utils/read-cookie';
 import { resolveReturnToTarget, type ReturnToTarget } from '../utils/resolve-return-to';
 import type { Request, Response } from 'express';
 import type { AuthorizationRequest } from '../typings/authentication-provider.interface';
@@ -40,41 +41,6 @@ interface RedirectAuthTransaction {
 }
 
 const base64url = (input: Buffer): string => input.toString('base64url');
-
-/**
- * Read one cookie without assuming `cookie-parser` is installed.
- *
- * The rest of the package reads `req.cookies` and treats its absence as "no
- * cookie", which is fine for a token that also arrives in a header. This one
- * has no second source: without it every login fails, and failing because a
- * middleware is missing is worth not doing silently.
- */
-const readCookie = (req: Request, name: string): string | undefined => {
-  const parsed = (req as { cookies?: Record<string, string> }).cookies?.[name];
-
-  if (typeof parsed === 'string') return parsed;
-
-  const header = req.headers?.cookie;
-
-  if (typeof header !== 'string') return undefined;
-
-  const match = header
-    .split(';')
-    .map(part => part.trim())
-    .find(part => part.startsWith(`${name}=`));
-
-  if (!match) return undefined;
-
-  try {
-    return decodeURIComponent(match.slice(name.length + 1));
-  } catch {
-    // decodeURIComponent throws URIError on a malformed escape, and the header
-    // is entirely attacker-controlled — `Cookie: oidc_tx=%` would otherwise
-    // escape the handler as an unauthenticated 500 instead of the 400 that a
-    // bad transaction is supposed to produce.
-    return undefined;
-  }
-};
 
 /**
  * `*\/*` — what fetch and axios send — deliberately does not count as a request
@@ -378,10 +344,12 @@ export class RedirectAuthController implements OnApplicationBootstrap {
       { ip: req.ip },
     );
 
-    const tokenPair: TokenPairDto = {
-      accessToken: this.memberBaseService.signAccessToken(member),
-      refreshToken: this.memberBaseService.signRefreshToken(member),
-    };
+    const userAgent = req.headers['user-agent'];
+
+    const tokenPair: TokenPairDto = await this.memberBaseService.issueTokenPair(member, {
+      ip: req.ip,
+      ...(typeof userAgent === 'string' ? { userAgent } : {}),
+    });
 
     this.respond(req, res, this.deliverTokens(req, res, target, tokenPair));
   }

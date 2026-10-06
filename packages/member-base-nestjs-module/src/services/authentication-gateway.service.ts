@@ -147,10 +147,11 @@ export class AuthenticationGateway<
   async login(channel: string, credentials: unknown, context?: AuthContext): Promise<TokenPairDto> {
     const { member } = await this.authenticate(channel, credentials, context);
 
-    return {
-      accessToken: this.memberBaseService.signAccessToken(member, context?.domain),
-      refreshToken: this.memberBaseService.signRefreshToken(member, context?.domain),
-    };
+    return this.memberBaseService.issueTokenPair(member, {
+      domain: context?.domain,
+      ip: context?.ip,
+      userAgent: context?.userAgent,
+    });
   }
 
   /**

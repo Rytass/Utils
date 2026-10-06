@@ -15,6 +15,7 @@ import {
   type CookieOptionsConfig,
   type ResolvedCookieOptions,
 } from '../utils/resolve-cookie-options';
+import { readCookies } from '../utils/read-cookie';
 import { MEMBER_BASE_OIDC_OPTIONS } from './oidc.tokens';
 import type { MemberBaseOidcProviderOptions } from './oidc-provider.options';
 import type { BaseMemberEntity } from '../models/base-member.entity';
@@ -23,7 +24,12 @@ interface CookieCapableResponse {
   cookie?(name: string, value: string, options: Record<string, unknown>): unknown;
   clearCookie?(name: string, options: Record<string, unknown>): unknown;
   /** Express hangs the request off the response, which is where the host lives. */
-  req?: { headers?: Record<string, string | string[] | undefined>; hostname?: string };
+  req?: {
+    headers?: Record<string, string | string[] | undefined>;
+    hostname?: string;
+    cookies?: Record<string, string>;
+    ip?: string;
+  };
 }
 
 interface CookieCapableRequest {
@@ -34,6 +40,8 @@ interface CookieCapableRequest {
 export interface LocalSessionClaims {
   id: string;
   authTime?: number;
+  /** The member-base session the access token was issued for. */
+  sid?: string;
 }
 
 /**
@@ -112,23 +120,61 @@ export class OidcSsoBridge implements OnApplicationBootstrap {
     if (typeof response.cookie !== 'function') return;
 
     const common = this.cookieAttributes(response);
+    const userAgent = response.req?.headers?.['user-agent'];
 
-    response.cookie(this.accessTokenCookieName, this.memberBaseService.signAccessToken(member), {
+    // Synchronous on purpose: this method always was, and a caller that does
+    // not await it must still find the cookies on the response.
+    const tokenPair = this.memberBaseService.issueTokenPairDetached(member, {
+      ip: response.req?.ip,
+      ...(typeof userAgent === 'string' ? { userAgent } : {}),
+    });
+
+    response.cookie(this.accessTokenCookieName, tokenPair.accessToken, {
       ...common,
       maxAge: this.accessTokenExpiration * 1000,
     });
 
-    response.cookie(this.refreshTokenCookieName, this.memberBaseService.signRefreshToken(member), {
+    response.cookie(this.refreshTokenCookieName, tokenPair.refreshToken, {
       ...common,
       maxAge: this.refreshTokenExpiration * 1000,
     });
   }
 
+  /**
+   * End the member-base session and clear its cookies.
+   *
+   * Clearing the cookies alone only makes this browser forget the token; a copy
+   * of it, or a refresh already in flight, would carry on working. So the
+   * session behind the refresh cookie is revoked as well.
+   *
+   * Still synchronous, as it always was: the cookies are cleared before this
+   * returns, and the revocation is started but not waited for. If it fails it
+   * is logged — the browser is signed out either way. A logout route that must
+   * know the session is gone before it answers should await
+   * `memberBaseService.revokeSessionByRefreshToken()` itself.
+   */
   clearSession(res: unknown): void {
     if (!this.unifiedLogout) return;
 
     const response = res as CookieCapableResponse;
 
+    // Every refresh cookie the browser sent, not just the first: a sibling
+    // subdomain can plant a second one of the same name, and revoking only that
+    // would leave the member's own session open.
+    const refreshTokens = response.req ? readCookies(response.req, this.refreshTokenCookieName) : [];
+
+    for (const refreshToken of refreshTokens) {
+      this.memberBaseService.revokeSessionByRefreshToken(refreshToken, 'logout').catch((error: unknown) => {
+        this.logger.error(
+          `Cookies were cleared but the session could not be revoked: ${error instanceof Error ? error.message : error}`,
+        );
+      });
+    }
+
+    this.clearCookies(response);
+  }
+
+  private clearCookies(response: CookieCapableResponse): void {
     if (typeof response.clearCookie !== 'function') return;
 
     // Path and domain have to match what the cookie was set with, or the
@@ -181,7 +227,7 @@ export class OidcSsoBridge implements OnApplicationBootstrap {
 
     if (prompt.includes('login')) return null;
 
-    const claims = this.readLocalSession(req);
+    const claims = await this.readActiveLocalSession(req);
 
     if (!claims) return null;
 
@@ -203,18 +249,49 @@ export class OidcSsoBridge implements OnApplicationBootstrap {
     return member ? { member, authTime: claims.authTime } : null;
   }
 
+  /**
+   * The claims of the member-base access token on this request, verified by
+   * signature and expiry only.
+   *
+   * It does not know whether the session behind the token has since been
+   * ended. Anything that turns the answer into a longer-lived credential — an
+   * OIDC login — must use `readActiveLocalSession` instead.
+   */
   readLocalSession(req: unknown): LocalSessionClaims | null {
     const token = this.extractToken(req);
 
     if (!token) return null;
 
     try {
-      const payload = jwt.verify(token, this.accessTokenSecret) as { id?: string; authTime?: number };
+      const payload = jwt.verify(token, this.accessTokenSecret) as { id?: string; authTime?: number; sid?: string };
 
-      return typeof payload.id === 'string' ? { id: payload.id, authTime: payload.authTime } : null;
+      return typeof payload.id === 'string'
+        ? {
+            id: payload.id,
+            authTime: payload.authTime,
+            ...(typeof payload.sid === 'string' ? { sid: payload.sid } : {}),
+          }
+        : null;
     } catch {
       return null;
     }
+  }
+
+  /**
+   * `readLocalSession`, and the session it names is still open.
+   *
+   * An access token outlives a logout by up to its own lifetime; that window is
+   * accepted for ordinary requests. It is not accepted here, because an OIDC
+   * login started from it yields an issuer session and relying-party tokens
+   * that live far longer than 15 minutes and that no member-base revocation can
+   * reach. A token without a `sid` names no session and is refused.
+   */
+  async readActiveLocalSession(req: unknown): Promise<LocalSessionClaims | null> {
+    const claims = this.readLocalSession(req);
+
+    if (!claims?.sid) return null;
+
+    return (await this.memberBaseService.isSessionActive(claims.id, claims.sid)) ? claims : null;
   }
 
   private extractToken(req: unknown): string | null {
