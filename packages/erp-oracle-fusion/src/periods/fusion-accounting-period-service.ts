@@ -46,6 +46,19 @@ interface AccountingPeriodStatusItem {
 }
 
 /**
+ * `q` 以 `;` 串接條件且沒有跳脫語法，值裡帶 `;` 或引號就能多塞一個條件或改寫比較式——
+ * 例如把查詢從指定的子帳模組換成另一個。這些值常來自使用者輸入，因此只放行期間名與 id
+ * 實際會用到的字元。
+ */
+const SAFE_QUERY_VALUE_PATTERN = /^[A-Za-z0-9 _./-]+$/;
+
+function assertSafeQueryValue(name: string, value: string | number): void {
+  if (!SAFE_QUERY_VALUE_PATTERN.test(String(value))) {
+    throw new Error(`Invalid ${name} for an accounting period query: ${JSON.stringify(value)}`);
+  }
+}
+
+/**
  * 會計期間狀態查詢（`accountingPeriodStatusLOV`）。
  *
  * 查詢欄位是 `PeriodNameId` 而非 `PeriodName`——後者不存在，用了會得到一個不指名欄位的 400。
@@ -53,11 +66,22 @@ interface AccountingPeriodStatusItem {
 export class FusionAccountingPeriodService {
   constructor(private readonly client: FusionRestClient) {}
 
-  /** 查詢單一期間在指定模組的狀態；Fusion 查無此期間時回傳 `null`。 */
+  /**
+   * 查詢單一期間在指定模組的狀態；Fusion 查無此期間時回傳 `null`。
+   *
+   * `ledgerId`／`periodName` 含查詢語法字元（`;`、引號、比較運算子等）時拋錯，不送出請求。
+   */
   async getStatus(
     query: AccountingPeriodStatusQuery,
     options?: FusionRequestOptions,
   ): Promise<AccountingPeriodStatus | null> {
+    assertSafeQueryValue('ledgerId', query.ledgerId);
+    assertSafeQueryValue('periodName', query.periodName);
+
+    if (!Number.isInteger(query.applicationId)) {
+      throw new Error(`Invalid applicationId for an accounting period query: ${JSON.stringify(query.applicationId)}`);
+    }
+
     const response = await this.client.get<FusionListResponse<AccountingPeriodStatusItem>>(
       withFusionQuery(FUSION_RESOURCES.ACCOUNTING_PERIOD_STATUS_LOV, {
         q: { LedgerId: query.ledgerId, PeriodNameId: query.periodName, ApplicationId: query.applicationId },

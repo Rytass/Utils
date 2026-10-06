@@ -50,6 +50,23 @@ describe('ESS 位置參數', () => {
   });
 });
 
+describe('ESS 位置參數的防呆', () => {
+  it('erpintegrations：值含逗號時拋錯，不送出錯位的參數', () => {
+    expect(() => toErpIntegrationsParameters(new Map([[2, 'a,b']]), 4)).toThrow(/comma/);
+  });
+
+  it('erpintegrations：位置超出參數總數時拋錯', () => {
+    expect(() => toErpIntegrationsParameters(new Map([[5, 'x']]), 4)).toThrow(/outside 1\.\.4/);
+    expect(() => toErpIntegrationsParameters(new Map([[0, 'x']]), 4)).toThrow(/outside 1\.\.4/);
+  });
+
+  it('Scheduler：位置不是正整數時拋錯', () => {
+    expect(() => buildSchedulerSubmitPayload({ jobDefinitionPath: 'a/Job', arguments: new Map([[0, 'x']]) })).toThrow(
+      /positive integer/,
+    );
+  });
+});
+
 describe('extractSchedulerRequestId', () => {
   it('優先取 requestId 欄位', () => {
     expect(extractSchedulerRequestId({ requestId: 371474 })).toBe('371474');

@@ -43,8 +43,23 @@ export function toSchedulerParameters(args: EssPositionalArguments): readonly Es
 /**
  * 轉成 `erpintegrations` 的 `ESSParameters`：依位置以逗號串接，中間空位保留空字串，
  * 尾端補到 `length`（job 定義的參數總數）。
+ *
+ * 值含逗號、或位置落在 `1..length` 之外時拋錯，而不是送出一串位置已經錯開的參數。
  */
 export function toErpIntegrationsParameters(args: EssPositionalArguments, length: number): string {
+  for (const [position, value] of args) {
+    // 這個格式沒有跳脫機制：值裡的逗號會被當成分隔符，後面每個參數都錯一格，而 ESS 不會報錯。
+    if (value.includes(',')) {
+      throw new Error(
+        `ESS argument ${position} contains a comma, which the erpintegrations parameter format cannot represent`,
+      );
+    }
+
+    if (!Number.isInteger(position) || position < 1 || position > length) {
+      throw new Error(`ESS argument position ${position} is outside 1..${length}`);
+    }
+  }
+
   return Array.from({ length }, (_, index) => args.get(index + 1) ?? '').join(',');
 }
 
@@ -151,6 +166,12 @@ export interface EssSchedulerJobRequest {
 
 /** 組出 Scheduler REST 的提交 payload。 */
 export function buildSchedulerSubmitPayload(request: EssSchedulerJobRequest): Readonly<Record<string, unknown>> {
+  for (const position of request.arguments.keys()) {
+    if (!Number.isInteger(position) || position < 1) {
+      throw new Error(`ESS argument position ${position} must be a positive integer`);
+    }
+  }
+
   return {
     jobDefinitionId: `JobDefinition:/${request.jobDefinitionPath.replace(/^\/+/, '')}`,
     application: request.application ?? FUSION_ESS_DEFAULT_APPLICATION,

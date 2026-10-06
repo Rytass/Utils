@@ -57,6 +57,25 @@ describe('FusionAccountingPeriodService.getStatus', () => {
     );
   });
 
+  it.each(['Sep-26;ApplicationId=101', "Sep-26' OR 'a'='a", 'Sep-26&limit=500', ''])(
+    '期間名含查詢語法字元（%s）時拋錯且不送出請求',
+    async periodName => {
+      const fetchMock = jest.fn();
+
+      await expect(
+        buildService(fetchMock).getStatus({ ledgerId: 1, periodName, applicationId: FUSION_AR_APPLICATION_ID }),
+      ).rejects.toThrow(/Invalid periodName/);
+
+      expect(fetchMock).not.toHaveBeenCalled();
+    },
+  );
+
+  it('ledgerId 含查詢語法字元時拋錯', async () => {
+    await expect(
+      buildService(jest.fn()).getStatus({ ledgerId: '1;LedgerId=2', periodName: 'Sep-26', applicationId: 101 }),
+    ).rejects.toThrow(/Invalid ledgerId/);
+  });
+
   it('查無此期間回傳 null', async () => {
     const service = buildService(jest.fn().mockResolvedValue(jsonResponse({ items: [] })));
 
