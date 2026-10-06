@@ -217,7 +217,11 @@ describe('FusionFbdiService.downloadEssExecutionText', () => {
 
     const service = new FusionFbdiService(buildClient(fetchMock as unknown as jest.Mock));
 
-    await expect(service.downloadEssExecutionText('1')).resolves.toEqual({ text: 'LOG\nOUT', downloadFailed: false });
+    await expect(service.downloadEssExecutionText('1')).resolves.toEqual({
+      text: 'LOG\nOUT',
+      downloadFailed: false,
+      incomplete: false,
+    });
   });
 
   it('解壓後超過 maxBytes 時拋錯，而不是回傳截斷內容或壓縮位元組', async () => {
@@ -236,6 +240,41 @@ describe('FusionFbdiService.downloadEssExecutionText', () => {
     await expect(service.downloadEssLogText('1', 'log')).resolves.toHaveLength(1024 * 1024);
   });
 
+  it('開頭是 ZIP 但已截斷或損毀時拋錯，不把壓縮位元組當文字回傳', async () => {
+    const truncated = deflatedArchive('1.log', Buffer.from('some log text')).subarray(0, 40);
+    const service = new FusionFbdiService(
+      buildClient(jest.fn().mockResolvedValue(jsonResponse({ DocumentContent: truncated.toString('base64') }))),
+    );
+
+    await expect(service.downloadEssLogText('1')).rejects.toThrow(/ZIP/);
+  });
+
+  it('純文字內容即使含 ZIP 結尾簽章的位元組也照文字讀', async () => {
+    const text = Buffer.concat([Buffer.from('line 1 '), Buffer.from([0x50, 0x4b, 0x05, 0x06]), Buffer.from(' line 2')]);
+    const service = new FusionFbdiService(
+      buildClient(jest.fn().mockResolvedValue(jsonResponse({ DocumentContent: text.toString('base64') }))),
+    );
+
+    await expect(service.downloadEssLogText('1')).resolves.toBe(text.toString('utf-8'));
+  });
+
+  it('其中一份超過大小上限時標記 incomplete，不讓呼叫端誤以為內容完整', async () => {
+    const big = deflatedArchive('1.log', Buffer.alloc(1024 * 1024, 0x41));
+    const fetchMock = jest.fn(async (_url: string, init: RequestInit) =>
+      (JSON.parse(init.body as string).FileType as string) === 'log'
+        ? jsonResponse({ DocumentContent: big.toString('base64') })
+        : jsonResponse({ DocumentContent: archive('1.out', 'OUT') }),
+    );
+
+    const service = new FusionFbdiService(buildClient(fetchMock as unknown as jest.Mock));
+
+    await expect(service.downloadEssExecutionText('1', { maxBytes: 64 * 1024 })).resolves.toEqual({
+      text: 'OUT',
+      downloadFailed: false,
+      incomplete: true,
+    });
+  });
+
   it('只有一份失敗時仍回傳另一份，且不標記 downloadFailed', async () => {
     const fetchMock = jest.fn(async (_url: string, init: RequestInit) => {
       if ((JSON.parse(init.body as string).FileType as string) === 'out') throw new Error('network');
@@ -245,14 +284,27 @@ describe('FusionFbdiService.downloadEssExecutionText', () => {
 
     const service = new FusionFbdiService(buildClient(fetchMock as unknown as jest.Mock));
 
-    await expect(service.downloadEssExecutionText('1')).resolves.toEqual({ text: 'LOG', downloadFailed: false });
+    await expect(service.downloadEssExecutionText('1')).resolves.toEqual({
+      text: 'LOG',
+      downloadFailed: false,
+      incomplete: true,
+    });
   });
 
   it('兩份都取不到時標記 downloadFailed，與「內容為空」區分', async () => {
     const failing = new FusionFbdiService(buildClient(jest.fn().mockRejectedValue(new Error('network'))));
     const empty = new FusionFbdiService(buildClient(jest.fn().mockResolvedValue(jsonResponse({}))));
 
-    await expect(failing.downloadEssExecutionText('1')).resolves.toEqual({ text: null, downloadFailed: true });
-    await expect(empty.downloadEssExecutionText('1')).resolves.toEqual({ text: null, downloadFailed: false });
+    await expect(failing.downloadEssExecutionText('1')).resolves.toEqual({
+      text: null,
+      downloadFailed: true,
+      incomplete: true,
+    });
+
+    await expect(empty.downloadEssExecutionText('1')).resolves.toEqual({
+      text: null,
+      downloadFailed: false,
+      incomplete: false,
+    });
   });
 });

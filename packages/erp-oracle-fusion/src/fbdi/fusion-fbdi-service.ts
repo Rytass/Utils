@@ -26,7 +26,20 @@ interface DownloadLogResponse {
 /** Default ceiling on the decompressed size of an ESS log or output file. */
 export const DEFAULT_ESS_LOG_MAX_BYTES = 16 * 1024 * 1024;
 
-const ZIP_END_OF_CENTRAL_DIRECTORY = Buffer.from([0x50, 0x4b, 0x05, 0x06]);
+/** Local file header (`PK\x03\x04`) and, for an archive with no entries, the end record (`PK\x05\x06`). */
+const ZIP_LEADING_SIGNATURES = [Buffer.from([0x50, 0x4b, 0x03, 0x04]), Buffer.from([0x50, 0x4b, 0x05, 0x06])];
+
+/**
+ * Whether a payload claims to be a ZIP archive, judged by how it **starts**.
+ *
+ * Searching for the end-of-central-directory signature anywhere in the payload gets both cases
+ * wrong: a truncated archive has no such record and would be handed back as text, while a plain
+ * text log that happens to contain those four bytes would be parsed as an archive. A payload that
+ * starts like an archive is committed to being one — if it then fails to parse, that is an error.
+ */
+function looksLikeZip(payload: Buffer): boolean {
+  return ZIP_LEADING_SIGNATURES.some(signature => payload.subarray(0, signature.length).equals(signature));
+}
 
 export interface FbdiImportResult {
   /** 父 ESS request id，用於後續查詢狀態。 */
@@ -42,6 +55,13 @@ export interface EssExecutionText {
    * 「沒看到錯誤」與「沒看到任何東西」是兩回事。
    */
   readonly downloadFailed: boolean;
+  /**
+   * At least one of the two files could not be retrieved, so `text` may be missing content.
+   *
+   * Check this before concluding anything from the **absence** of something in `text` — an error
+   * line that would have been in the log cannot be found if the log was the file that failed.
+   */
+  readonly incomplete: boolean;
 }
 
 export interface WaitForEssOptions {
@@ -169,7 +189,7 @@ export class FusionFbdiService {
    * Decompressed content is capped at 16 MiB by default (`options.maxBytes`), enforced while
    * inflating. A log that would exceed it throws rather than being silently truncated or returned
    * as raw archive bytes — callers that only want an excerpt should set a small limit and treat
-   * the error as "too large to fetch".
+   * the error as "too large to fetch". A truncated or corrupt archive throws as well.
    */
   async downloadEssLogText(
     requestId: string,
@@ -180,9 +200,10 @@ export class FusionFbdiService {
 
     if (!raw) return null;
 
-    // Only a payload that is not an archive at all is read as plain text. Any other failure —
-    // the size limit above all — must surface instead of degrading into decoded archive bytes.
-    if (raw.lastIndexOf(ZIP_END_OF_CENTRAL_DIRECTORY) === -1) return raw.toString('utf-8');
+    // Only a payload that is not an archive at all is read as plain text. Any failure to read
+    // something that presents itself as an archive — truncation, corruption, the size limit —
+    // must surface instead of degrading into decoded archive bytes.
+    if (!looksLikeZip(raw)) return raw.toString('utf-8');
 
     return unzipFiles(raw, { maxBytes: options?.maxBytes ?? DEFAULT_ESS_LOG_MAX_BYTES })
       .map(entry => entry.content.toString('utf-8'))
@@ -194,8 +215,8 @@ export class FusionFbdiService {
    *
    * Which of the two carries the interesting part depends on the job (some report generated ids
    * in the log, others in the output), so callers that parse results usually want both. A failed
-   * download of one file does not fail the call; `downloadFailed` is set only when neither could
-   * be retrieved.
+   * download of one file does not fail the call: `incomplete` reports that either file is missing
+   * and `downloadFailed` that both are. A file over the size limit counts as failed.
    */
   async downloadEssExecutionText(
     requestId: string,
@@ -209,6 +230,10 @@ export class FusionFbdiService {
     const [log, out] = await Promise.all([download('log'), download('out')]);
     const parts = [log.text, out.text].filter((part): part is string => part !== null && part.trim() !== '');
 
-    return { text: parts.length > 0 ? parts.join('\n') : null, downloadFailed: log.failed && out.failed };
+    return {
+      text: parts.length > 0 ? parts.join('\n') : null,
+      downloadFailed: log.failed && out.failed,
+      incomplete: log.failed || out.failed,
+    };
   }
 }
