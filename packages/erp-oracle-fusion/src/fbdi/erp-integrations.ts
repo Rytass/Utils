@@ -4,6 +4,7 @@ import {
   FUSION_INVALID_REQUEST_ID,
   FUSION_RESOURCES,
 } from '../constants/resources';
+import { FusionValidationError } from '../errors/fusion-errors';
 import { withFusionQuery } from '../query/fusion-query';
 import { buildFbdiZip } from './template';
 import type { FbdiFileContent, FbdiJobOptions, FbdiTemplate } from '../typings/fbdi';
@@ -52,6 +53,10 @@ export interface ErpIntegrationsDownloadLogPayload {
  * Fusion returns HTTP 200 with `ReqstId: "-1"` when the job could not be submitted — for example
  * when the job path does not exist — so a successful HTTP status is not enough to conclude the job
  * was accepted.
+ *
+ * That rejection throws a `FusionValidationError` (never retried). A response with no `ReqstId` at
+ * all throws a plain `Error`: the job may or may not have been scheduled, so the caller has to
+ * decide whether resending is safe.
  */
 export function parseSubmittedRequestId(reqstId: string | number | undefined | null, context: string): string {
   if (reqstId === undefined || reqstId === null || reqstId === '') {
@@ -61,10 +66,15 @@ export function parseSubmittedRequestId(reqstId: string | number | undefined | n
   const requestId = String(reqstId);
 
   if (requestId === FUSION_INVALID_REQUEST_ID) {
-    throw new Error(
+    // A rejection is a definite outcome: nothing was scheduled and sending the same request again
+    // will be rejected again. It is raised as a validation error so retry policies that key off the
+    // error class treat it as terminal rather than as an unclassified failure worth retrying.
+    throw new FusionValidationError(
+      200,
       `Fusion rejected the submission (ReqstId=${FUSION_INVALID_REQUEST_ID}); ${context} was not scheduled. ` +
         'This usually means the ESS job path or definition name does not exist, or the account lacks the ' +
         'privilege to run it.',
+      { ReqstId: requestId },
     );
   }
 

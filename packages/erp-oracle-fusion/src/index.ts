@@ -6,6 +6,8 @@ export {
   FUSION_EXTRACT_ALL_FILES,
   FUSION_FINDERS,
   FUSION_JOB_OPTION_KEYS,
+  FUSION_AP_APPLICATION_ID,
+  FUSION_AR_APPLICATION_ID,
   FUSION_GL_APPLICATION_ID,
   FUSION_INVALID_REQUEST_ID,
   FUSION_RESOURCES,
@@ -73,6 +75,7 @@ export {
   normalizeParsedXml,
   parseSoapXml,
 } from './soap/soap-fault';
+export { extractMtomEnvelope, unwrapMtomSoapBody } from './soap/mtom';
 export {
   buildFindCriteria,
   buildFindControl,
@@ -170,7 +173,7 @@ export {
 // ---------------------------------------------------------------------------
 export type { FbdiCellValue, FbdiFileContent, FbdiFileTemplate, FbdiRow, FbdiTemplate, ZipEntry } from './typings/fbdi';
 export { buildFbdiCsv, buildFbdiRow, buildFbdiZip, defineFbdiFile, defineFbdiTemplate } from './fbdi/template';
-export { crc32, unzipFiles, zipFiles, zipSingleFile } from './fbdi/zip';
+export { crc32, unzipFiles, zipFiles, zipSingleFile, DEFAULT_UNZIP_MAX_BYTES, type UnzipOptions } from './fbdi/zip';
 export { formatFbdiDate, serializeCsv, truncate } from './fbdi/csv';
 export { deriveGroupId } from './fbdi/group-id';
 export {
@@ -197,7 +200,49 @@ export {
   type EssJobStatus,
   type EssJobStatusResponse,
 } from './fbdi/ess';
-export { FusionFbdiService, type FbdiImportResult, type WaitForEssOptions } from './fbdi/fusion-fbdi-service';
+export {
+  FusionFbdiService,
+  DEFAULT_ESS_LOG_MAX_BYTES,
+  type EssExecutionText,
+  type FbdiImportResult,
+  type WaitForEssOptions,
+} from './fbdi/fusion-fbdi-service';
+
+// ---------------------------------------------------------------------------
+// ESS Scheduler REST（erpintegrations 之外的另一條 job 提交與狀態查詢通道）
+// ---------------------------------------------------------------------------
+export {
+  buildSchedulerStatusPath,
+  buildSchedulerSubmitPayload,
+  classifySchedulerState,
+  extractSchedulerRequestId,
+  parseSchedulerStatusResponse,
+  toErpIntegrationsParameters,
+  toSchedulerParameters,
+  ESS_SCHEDULER_FAILURE_STATES,
+  ESS_SCHEDULER_SUCCESS_STATES,
+  ESS_SCHEDULER_WARNING_STATES,
+  FUSION_ESS_DEFAULT_APPLICATION,
+  FUSION_ESS_SCHEDULER_REQUESTS_PATH,
+  type EssPositionalArguments,
+  type EssSchedulerJobRequest,
+  type EssSchedulerParameter,
+  type EssSchedulerStatus,
+  type EssSchedulerStatusResponse,
+  type EssSchedulerSubmitResponse,
+  type EssSchedulerTerminalState,
+} from './ess/scheduler';
+export { FusionEssSchedulerService, type EssSchedulerSubmitResult } from './ess/fusion-ess-scheduler-service';
+
+// ---------------------------------------------------------------------------
+// 會計期間狀態
+// ---------------------------------------------------------------------------
+export {
+  FusionAccountingPeriodService,
+  FUSION_PERIOD_CLOSING_STATUS,
+  type AccountingPeriodStatus,
+  type AccountingPeriodStatusQuery,
+} from './periods/fusion-accounting-period-service';
 
 // ---------------------------------------------------------------------------
 // Data extraction and UCM file operations

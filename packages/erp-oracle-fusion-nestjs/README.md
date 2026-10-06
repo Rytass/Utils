@@ -54,15 +54,18 @@ import { FusionClientModule } from '@rytass/erp-oracle-fusion-nestjs';
 export class AppModule {}
 ```
 
-That one registration provides and exports five injectables:
+That one registration provides and exports these injectables:
 
-| Provider                       | Protocol | Purpose                                                     |
-| ------------------------------ | -------- | ----------------------------------------------------------- |
-| `FusionRestClient`             | REST     | `get`, `getAll`, `post`, `patch`, `delete`                  |
-| `FusionFbdiService`            | REST     | FBDI imports and ESS jobs                                   |
-| `FusionSoapClient`             | SOAP     | Generic `call()` for any Fusion SOAP service                |
-| `FusionCustomerAccountService` | SOAP     | Customer accounts — no REST resource exists for these       |
-| `FusionCustomerProfileService` | SOAP     | AR credit profiles — credit limit, credit hold, terms       |
+| Provider                        | Protocol | Purpose                                               |
+| ------------------------------- | -------- | ----------------------------------------------------- |
+| `FusionRestClient`              | REST     | `get`, `getAll`, `post`, `patch`, `delete`            |
+| `FusionFbdiService`             | REST     | FBDI imports and ESS jobs                             |
+| `FusionEssSchedulerService`     | REST     | ESS Scheduler REST: submit and poll                   |
+| `FusionAccountingPeriodService` | REST     | Period status per subledger                           |
+| `FusionAuthProvider`            | —        | The single token cache both clients share             |
+| `FusionSoapClient`              | SOAP     | Generic `call()` for any Fusion SOAP service          |
+| `FusionCustomerAccountService`  | SOAP     | Customer accounts — no REST resource exists for these |
+| `FusionCustomerProfileService`  | SOAP     | AR credit profiles — credit limit, credit hold, terms |
 
 When configuration comes from a provider, use `forRootAsync`:
 
@@ -145,7 +148,8 @@ the partial-update semantics and required fields.
 ## Sharing the Client Across Modules
 
 `forRoot` and `forRootAsync` must be called **exactly once**. Calling either twice creates two
-clients with independent OAuth token caches.
+clients with independent OAuth token caches. Within one registration the REST and SOAP clients
+share a single `FusionAuthProvider`, so there is exactly one token cache per module instance.
 
 The recommended topology is a wrapper module that assembles the client once and re-exports it, which
 keeps dependencies visible in module definitions and lets tests assemble only what they need:
@@ -201,8 +205,9 @@ FusionClientModule.forRootAsync({
 | `FUSION_CALL_LOG_SINK`      | DI token holding the bound observability sink |
 | `FusionClientModuleOptions` | Module option types                           |
 
-All of `FusionRestClient`, `FusionFbdiService`, `FusionSoapClient`, `FusionCustomerAccountService`
-and `FusionCustomerProfileService` are provided and exported by a single `forRoot(Async)` call.
+All of `FusionRestClient`, `FusionFbdiService`, `FusionEssSchedulerService`,
+`FusionAccountingPeriodService`, `FusionSoapClient`, `FusionCustomerAccountService`,
+`FusionCustomerProfileService` and `FusionAuthProvider` are provided and exported by a single `forRoot(Async)` call.
 
 For convenience this package re-exports the core symbols most applications need
 (the clients and services above, the error classes including `FusionSoapFaultError`,

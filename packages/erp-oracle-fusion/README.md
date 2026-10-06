@@ -21,6 +21,7 @@ For NestJS applications, use [`@rytass/erp-oracle-fusion-nestjs`](../erp-oracle-
 - [x] OAuth 2.0 client credentials (default) with TTL cache and early refresh
 - [x] Pre-issued JWT bearer tokens, static or refreshed per request
 - [x] HTTP Basic for test pods
+- [x] One token cache shared by the REST and SOAP clients (`authProvider`)
 - [ ] SAML 2.0 bearer assertions (obtain the token yourself and pass it as a JWT)
 
 ### REST
@@ -34,6 +35,7 @@ For NestJS applications, use [`@rytass/erp-oracle-fusion-nestjs`](../erp-oracle-
 - [x] Configurable REST namespace and API version (`fscmRestApi`, `crmRestApi`, `hcmRestApi`, ...)
 - [x] Query builder for Fusion's `q` / `finder` / pagination syntax, with the right escaping
 - [x] Constants for the resources, finders and UCM accounts the package understands
+- [x] Accounting period status per subledger (`accountingPeriodStatusLOV`)
 
 ### SOAP
 
@@ -47,6 +49,7 @@ For the business objects Fusion does not expose over REST. See [SOAP Services](#
 - [x] Faults classified as terminal, so a failed write is never resent
 - [x] ADF `FindCriteria` builder, emitted in the order the schema requires
 - [x] Generic `call()` for any other Fusion SOAP service
+- [x] MTOM (`multipart/related`) responses unwrapped transparently, faults included
 
 ### FBDI and data extraction
 
@@ -57,6 +60,7 @@ For the business objects Fusion does not expose over REST. See [SOAP Services](#
 - [x] Two-step staging via `uploadFileToUCM` + `DocumentId`
 - [x] Built-in GL Journal Import template (149 columns, verified against a live pod)
 - [x] ESS job submission, status polling and execution log retrieval
+- [x] ESS Scheduler REST as a second submission channel, with its own state vocabulary
 - [x] ZIP reading (STORED and DEFLATE) for the archives Fusion returns
 - [ ] Built-in AP / AR / FA templates (define your own through the template API)
 
@@ -184,6 +188,21 @@ to know when yours expires.
 Basic authentication is accepted by Fusion but unsuitable for production: the password travels on
 every request, cannot be rotated independently of the user, and ties the integration to a single
 named account.
+
+### Sharing One Token Cache
+
+Each client builds its own `FusionAuthProvider`, and with it its own OAuth token cache. When one
+process uses both the REST and the SOAP client against the same pod, pass them the same provider so
+the token is issued once and `invalidateToken()` has a single place to act:
+
+```ts
+const authProvider = new FusionAuthProvider(resolveFusionClientOptions(options));
+
+const rest = new FusionRestClient({ ...options, authProvider });
+const soap = new FusionSoapClient({ ...options, authProvider });
+```
+
+The NestJS module does this for you.
 
 ## Usage
 
@@ -533,6 +552,90 @@ unzipFiles(archive!).forEach(f => console.log(f.name, f.content.length));
 `waitForEss` is meant for scripts, tests and short flows. Production flows should use your own
 scheduler, since the helper occupies the calling process and cannot resume across restarts.
 
+Jobs that report their result in the output file rather than the log are common, so
+`downloadEssExecutionText()` fetches both and joins them:
+
+```ts
+const { text, downloadFailed } = await fbdi.downloadEssExecutionText(requestId);
+```
+
+`downloadFailed` is set only when neither file could be retrieved. It is distinct from an empty
+`text`: a job whose outcome you read from its log must not be judged when the log could not be
+fetched at all.
+
+### ESS Scheduler REST
+
+Fusion has a second way to submit ESS jobs, `/ess/rest/scheduler/v1/requests`. Some jobs — the
+Receivables bill, remittance and clearing programs among them — have only been verified on this
+channel. The two channels differ in more than the URL, and their formats are not interchangeable:
+
+|                | `erpintegrations` (`FusionFbdiService`)        | Scheduler REST (`FusionEssSchedulerService`)      |
+| -------------- | ---------------------------------------------- | ------------------------------------------------- |
+| Parameters     | One comma-separated positional string          | Named `submit.argumentN` entries                  |
+| Status lookup  | `ESSJobStatusRF` — only its own submissions    | `requests/{id}` — submissions from either channel |
+| Status wording | `RequestStatus`, read with `classifyEssStatus` | `state`, read with `classifySchedulerState`       |
+
+```ts
+const scheduler = new FusionEssSchedulerService(client);
+
+// Positions are 1-based and match argument1..N in the Scheduled Processes UI.
+const args: EssPositionalArguments = new Map([
+  [1, '300000002498206'],
+  [4, '2026-09-30'],
+]);
+
+const { requestId } = await scheduler.submit({
+  jobDefinitionPath: 'oracle/apps/ess/financials/receivables/.../SomeJob',
+  arguments: args,
+  product: 'AR',
+  description: 'Submitted by my-integration',
+});
+
+const status = await scheduler.getStatus(requestId); // { rawState, terminal, message }
+```
+
+`EssPositionalArguments` is a map rather than an array on purpose: ESS does not reject a parameter
+that is one position off, it silently selects no data. The same map serialises for either channel
+through `toSchedulerParameters()` and `toErpIntegrationsParameters(args, parameterCount)`.
+
+> **Note**
+> `terminal` is `'SUCCEEDED'`, `'WARNING'`, `'FAILED'` or `null` while the job is still running.
+> `WARNING` is kept apart from both success and failure — the job finished but skipped part of its
+> input, and only the job's own log says whether that matters. `classifyEssStatus`, by contrast,
+> folds `WARNING` into failure; do not feed one channel's status into the other's classifier.
+
+> **Warning**
+> Submit through the API account that will poll the request. An integration account cannot read
+> requests another user started from the UI (`ESS-02003`).
+
+Execution logs are downloaded the same way for both channels, through `FusionFbdiService`.
+
+## Accounting Periods
+
+```ts
+const periods = new FusionAccountingPeriodService(client);
+
+const status = await periods.getStatus({
+  ledgerId: '300000002498206',
+  periodName: 'Sep-26',
+  applicationId: FUSION_AR_APPLICATION_ID,
+});
+
+status?.closingStatus; // 'O' | 'C' | 'F' | 'N' | 'P' | 'W', or null when the period is unknown
+```
+
+`ledgerId` must be numeric and `periodName` a single token without whitespace; anything else is
+rejected before a request is sent, because Fusion's `q` filter has no escaping and would read the
+value as query syntax.
+
+`applicationId` is required. Each subledger opens and closes the same period on its own schedule,
+and a query without it returns a row from an arbitrary one. `FUSION_GL_APPLICATION_ID` (101),
+`FUSION_AR_APPLICATION_ID` (222) and `FUSION_AP_APPLICATION_ID` (200) are provided.
+
+Whether a status allows entry depends on the module — Receivables accepts transactions in a
+future-enterable (`F`) period while GL posting needs `O` — so the service returns the raw status
+(named in `FUSION_PERIOD_CLOSING_STATUS`) and leaves that decision to the caller.
+
 ## Data Extraction
 
 Getting data out of Fusion is a three-step flow, because output never comes back in the response:
@@ -763,6 +866,12 @@ emitted as the element repeated:
 //   <typ:customerAccount><svc:PartyId>2</svc:PartyId></typ:customerAccount>
 ```
 
+Services that answer in MTOM (`multipart/related`, the SOAP envelope inside an
+`application/xop+xml` part) need nothing extra. Several Receivables services do this even without
+attachments, for successes and faults alike; the client unwraps the envelope before parsing, so a
+fault inside a multipart HTTP 500 is still classified as a terminal fault rather than a retryable
+server error. `extractMtomEnvelope()` is exported for callers that issue requests themselves.
+
 Parameters carrying ADF shared types rather than the service's own SDO — `findCriteria` and
 `findControl` are the ones you will meet — need `contentPrefix: 'adf'`, otherwise their fields land in
 the wrong namespace and Fusion rejects the call.
@@ -838,6 +947,7 @@ below for brevity.
 | `buildSoapEnvelope`, `serializeElement`, `escapeXml`                 | Envelope construction for services not wrapped here                                                                                          |
 | `parseSoapXml`, `normalizeParsedXml`, `findSoapFaultNode`            | Response parsing (`xsi:nil` becomes `null`, values stay strings)                                                                             |
 | `classifySoapHttpError`, `buildSoapFaultError`                       | SOAP-specific classification: faults are never transient                                                                                     |
+| `extractMtomEnvelope`, `unwrapMtomSoapBody`                          | Pulls the SOAP envelope out of an MTOM response                                                                                              |
 
 ### Query and Constants
 
@@ -847,6 +957,9 @@ below for brevity.
 | `FUSION_RESOURCES`, `FUSION_FINDERS`                       | Resource and finder names the package understands     |
 | `FUSION_ERP_OPERATIONS`, `FUSION_UCM_ACCOUNTS`             | `erpintegrations` operations and bulk-import accounts |
 | `FUSION_GL_APPLICATION_ID`, `FUSION_VALUE_SET_VALUES_PATH` | Values required by specific resources                 |
+| `FUSION_AR_APPLICATION_ID`, `FUSION_AP_APPLICATION_ID`     | Subledger ids for period status queries               |
+| `FusionAccountingPeriodService`                            | `getStatus({ ledgerId, periodName, applicationId })`  |
+| `FUSION_PERIOD_CLOSING_STATUS`                             | Names for the `ClosingStatus` codes                   |
 
 
 ### Errors
@@ -870,22 +983,34 @@ below for brevity.
 
 ### FBDI Engine
 
-| Export                                                                      | Description                                                                                    |
-| --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `defineFbdiFile`, `defineFbdiTemplate`                                      | Template definition with validation                                                            |
-| `buildFbdiRow`, `buildFbdiCsv`, `buildFbdiZip`                              | Row, CSV and archive construction                                                              |
-| `buildFbdiImportPayload`                                                    | `importBulkData` payload                                                                       |
-| `serializeJobOptions`, `FUSION_JOB_OPTION_KEYS`, `FUSION_EXTRACT_ALL_FILES` | `JobOptions` construction                                                                      |
-| `FUSION_CALLBACK_DISABLED`                                                  | `#NULL`, sent when callbacks are explicitly off                                                |
-| `buildEssJobPayload`, `buildDownloadEssLogPayload`, `buildEssStatusPath`    | ESS payloads and paths                                                                         |
-| `classifyEssStatus`, `parseEssStatusResponse`                               | ESS status semantics                                                                           |
-| `ESS_IN_PROGRESS_STATUSES`, `ESS_SUCCESS_STATUSES`, `ESS_FAILURE_STATUSES`  | Status sets behind `classifyEssStatus`                                                         |
-| `parseSubmittedRequestId`, `FUSION_INVALID_REQUEST_ID`                      | Rejects the `-1` sentinel Fusion returns on a failed submission                                |
-| `FusionFbdiService`                                                         | `import`, `submitEssJob`, `getEssStatus`, `waitForEss`, `downloadEssLog`, `downloadEssLogText` |
-| `zipFiles`, `zipSingleFile`, `crc32`                                        | ZIP writing with multi-file support                                                            |
-| `unzipFiles`                                                                | ZIP reading (STORED and DEFLATE), for the archives Fusion returns                              |
-| `serializeCsv`, `formatFbdiDate`, `truncate`                                | CSV utilities                                                                                  |
-| `deriveGroupId`                                                             | Deterministic batch key                                                                        |
+| Export                                                                      | Description                                                                                                                |
+| --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `defineFbdiFile`, `defineFbdiTemplate`                                      | Template definition with validation                                                                                        |
+| `buildFbdiRow`, `buildFbdiCsv`, `buildFbdiZip`                              | Row, CSV and archive construction                                                                                          |
+| `buildFbdiImportPayload`                                                    | `importBulkData` payload                                                                                                   |
+| `serializeJobOptions`, `FUSION_JOB_OPTION_KEYS`, `FUSION_EXTRACT_ALL_FILES` | `JobOptions` construction                                                                                                  |
+| `FUSION_CALLBACK_DISABLED`                                                  | `#NULL`, sent when callbacks are explicitly off                                                                            |
+| `buildEssJobPayload`, `buildDownloadEssLogPayload`, `buildEssStatusPath`    | ESS payloads and paths                                                                                                     |
+| `classifyEssStatus`, `parseEssStatusResponse`                               | ESS status semantics                                                                                                       |
+| `ESS_IN_PROGRESS_STATUSES`, `ESS_SUCCESS_STATUSES`, `ESS_FAILURE_STATUSES`  | Status sets behind `classifyEssStatus`                                                                                     |
+| `parseSubmittedRequestId`, `FUSION_INVALID_REQUEST_ID`                      | Rejects the `-1` sentinel Fusion returns on a failed submission                                                            |
+| `FusionFbdiService`                                                         | `import`, `submitEssJob`, `getEssStatus`, `waitForEss`, `downloadEssLog`, `downloadEssLogText`, `downloadEssExecutionText` |
+| `zipFiles`, `zipSingleFile`, `crc32`                                        | ZIP writing with multi-file support                                                                                        |
+| `unzipFiles`                                                                | ZIP reading (STORED and DEFLATE), for the archives Fusion returns                                                          |
+| `serializeCsv`, `formatFbdiDate`, `truncate`                                | CSV utilities                                                                                                              |
+| `deriveGroupId`                                                             | Deterministic batch key                                                                                                    |
+
+### ESS Scheduler REST
+
+| Export                                                                                         | Description                                                      |
+| ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `FusionEssSchedulerService`                                                                    | `submit`, `getStatus`                                            |
+| `toSchedulerParameters`, `toErpIntegrationsParameters`                                         | Serialise `EssPositionalArguments` for either channel            |
+| `buildSchedulerSubmitPayload`, `buildSchedulerStatusPath`                                      | Payload and path construction                                    |
+| `extractSchedulerRequestId`                                                                    | Reads the request id from `requestId` or, failing that, `links`  |
+| `classifySchedulerState`, `parseSchedulerStatusResponse`                                       | Scheduler `state` semantics; `WARNING` is its own terminal state |
+| `ESS_SCHEDULER_SUCCESS_STATES`, `ESS_SCHEDULER_WARNING_STATES`, `ESS_SCHEDULER_FAILURE_STATES` | State sets behind `classifySchedulerState`                       |
+| `FUSION_ESS_SCHEDULER_REQUESTS_PATH`, `FUSION_ESS_DEFAULT_APPLICATION`                         | Collection path and the `FscmEss` application                    |
 
 ### Data Extraction and UCM Files
 

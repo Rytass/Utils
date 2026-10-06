@@ -1,5 +1,6 @@
 import {
   FusionFbdiService,
+  FusionValidationError,
   FusionRestClient,
   GL_JOURNAL_TEMPLATE,
   buildGlJournalContent,
@@ -92,6 +93,19 @@ describe('FusionFbdiService.import', () => {
     await expect(
       service.submitEssJob({ jobPackageName: '/p/', jobDefName: 'Missing', parameters: '' }),
     ).rejects.toThrow('was not scheduled');
+  });
+
+  it('ReqstId=-1 拋 FusionValidationError（確定失敗，不該重送）；缺 ReqstId 則是一般 Error', async () => {
+    const rejected = buildService(jest.fn().mockResolvedValue(jsonResponse({ ReqstId: '-1' })));
+    const missing = buildService(jest.fn().mockResolvedValue(jsonResponse({})));
+    const request = { jobPackageName: '/p/', jobDefName: 'Missing', parameters: '' };
+
+    await expect(rejected.submitEssJob(request)).rejects.toBeInstanceOf(FusionValidationError);
+
+    const error = await missing.submitEssJob(request).catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error).not.toBeInstanceOf(FusionValidationError);
   });
 
   it('數字型 ReqstId 也正確轉為字串', async () => {

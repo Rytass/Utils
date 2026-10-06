@@ -67,6 +67,12 @@ export const FUSION_UCM_ACCOUNTS = {
  */
 export const FUSION_GL_APPLICATION_ID = 101;
 
+/** The `ApplicationId` that identifies Receivables; its periods open and close independently of GL. */
+export const FUSION_AR_APPLICATION_ID = 222;
+
+/** The `ApplicationId` that identifies Payables. */
+export const FUSION_AP_APPLICATION_ID = 200;
+
 /** Sub-path for segment values under a value set. */
 export const FUSION_VALUE_SET_VALUES_PATH = 'child/values';
 

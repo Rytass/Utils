@@ -1,6 +1,9 @@
 import { Injectable, Module } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import {
+  FusionAccountingPeriodService,
+  FusionAuthProvider,
+  FusionEssSchedulerService,
   FusionCustomerAccountService,
   FusionCustomerProfileService,
   FusionFbdiService,
@@ -38,6 +41,26 @@ describe('FusionClientModule', () => {
     expect(moduleRef.get(FusionRestClient)).toBeInstanceOf(FusionRestClient);
     expect(moduleRef.get(FusionFbdiService)).toBeInstanceOf(FusionFbdiService);
     expect(moduleRef.get(FUSION_CALL_LOG_SINK)).toBeInstanceOf(NoopFusionCallLogSink);
+  });
+
+  it('REST 與 SOAP client 共用同一個 FusionAuthProvider（單一 token 快取）', async () => {
+    const moduleRef = await Test.createTestingModule({
+      imports: [FusionClientModule.forRoot({ config: CONFIG })],
+    }).compile();
+
+    const authProvider = moduleRef.get(FusionAuthProvider);
+
+    expect(moduleRef.get(FusionRestClient).authProvider).toBe(authProvider);
+    expect(moduleRef.get(FusionSoapClient).authProvider).toBe(authProvider);
+  });
+
+  it('提供 ESS Scheduler 與會計期間服務', async () => {
+    const moduleRef = await Test.createTestingModule({
+      imports: [FusionClientModule.forRoot({ config: CONFIG })],
+    }).compile();
+
+    expect(moduleRef.get(FusionEssSchedulerService)).toBeInstanceOf(FusionEssSchedulerService);
+    expect(moduleRef.get(FusionAccountingPeriodService)).toBeInstanceOf(FusionAccountingPeriodService);
   });
 
   it('forRootAsync 由 factory 取得設定', async () => {

@@ -77,7 +77,7 @@ export class FusionRestClient {
 
   constructor(options: FusionClientOptions) {
     this.options = resolveFusionClientOptions(options);
-    this.auth = new FusionAuthProvider(this.options);
+    this.auth = options.authProvider ?? new FusionAuthProvider(this.options);
     this.transport = new FusionHttpTransport(this.options, this.auth);
   }
 

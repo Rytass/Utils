@@ -12,10 +12,13 @@ export type {
 export {
   buildFindCriteria,
   FusionApiOperation,
+  FusionAccountingPeriodService,
   FusionApiOutcome,
   FusionAuthError,
+  FusionAuthProvider,
   FusionCustomerAccountService,
   FusionCustomerProfileService,
+  FusionEssSchedulerService,
   FusionFbdiService,
   FusionRestClient,
   FusionSoapClient,

@@ -6,6 +6,7 @@ import type { FusionCallContext, FusionOperation } from '../typings/call-log';
 import type { FusionClientOptions, ResolvedFusionClientOptions } from '../typings/client-options';
 import { buildSoapEnvelope } from './envelope';
 import type { SoapParameter } from './envelope';
+import { unwrapMtomSoapBody } from './mtom';
 import { buildSoapFaultError, classifySoapHttpError, parseSoapXml } from './soap-fault';
 
 /**
@@ -94,6 +95,9 @@ function findFirstValues(node: unknown, keys: readonly string[]): Record<string,
  * `wss11_saml_or_username_token_with_message_protection_service_policy`，名稱看起來要求
  * WS-Security 訊息加密，但 SaaS pod 實際接受 HTTP Basic over SSL，因此不需要簽章或加密，
  * 也不需要 WSDL 執行期解析。
+ *
+ * 回應若為 MTOM（`multipart/related`）會先解包成純 envelope 再解析，成功與 fault 皆然——
+ * Receivables 的 `CreditMemoService`、`StandardReceiptService` 等即以此格式回應。
  */
 export class FusionSoapClient {
   private readonly options: ResolvedFusionClientOptions;
@@ -102,7 +106,7 @@ export class FusionSoapClient {
 
   constructor(options: FusionClientOptions) {
     this.options = resolveFusionClientOptions(options);
-    this.auth = new FusionAuthProvider(this.options);
+    this.auth = options.authProvider ?? new FusionAuthProvider(this.options);
     this.transport = new FusionHttpTransport(this.options, this.auth);
   }
 
@@ -153,9 +157,12 @@ export class FusionSoapClient {
       endpoint: service.path,
       ...(options?.context ? { context: options.context } : {}),
       maxRetries: options?.maxRetries ?? 0,
-      classifyError: classifySoapHttpError,
+      // 錯誤回應同樣可能是 MTOM：不先解包的話 fault 會被埋在 multipart 裡，
+      // 進而被誤判成可重試的暫時性錯誤。
+      classifyError: (status: number, bodyText: string, desc: string): FusionRequestError =>
+        classifySoapHttpError(status, unwrapMtomSoapBody(bodyText, null), desc),
       parseResponse: async (response: Response): Promise<T> => {
-        const xml = await response.text();
+        const xml = unwrapMtomSoapBody(await response.text(), response.headers?.get?.('content-type') ?? null);
         const parsed = parseSoapXml(xml);
 
         // fault 檢查交給 inspectResult；此處僅保留原始解析結果供其判讀。
