@@ -382,6 +382,72 @@ export class TokenService {
 }
 ```
 
+### 登入工作階段、Refresh Token 輪替與登出
+
+每次登入都會在 `member_sessions` 建立一筆工作階段，refresh token 綁定其中一筆。**一律啟用、沒有開關**；唯一的前提是資料表存在（與套件其他表相同：`synchronize` 或自行 migration，欄位與 PostgreSQL 建表範例見套件 README「Login Sessions and Refresh Token Rotation」）。
+
+- refresh token 帶 `sid`（工作階段）與 `jti`（輪替位置）；access token 帶 `sid`。**Guard 不查工作階段**，access token 仍是無狀態驗證。
+- `refreshToken()` 每次都輪替：送進來的 token 隨即失效。輪替是單一條件式 `UPDATE`，兩個並行換發只有一個會輪替成功。
+- 剛被輪替掉的 token 在 `sessionTracking.rotationGraceSeconds`（預設 10 秒）內仍放行，回傳目前有效的那一組（同一個 `sid`＋`jti`），用來容許多分頁並行換發。
+- 寬限窗口外再次使用已輪替掉的 token ＝ 重複使用：整個工作階段作廢（`reuse_detected`）。
+
+```typescript
+@Injectable()
+export class AuthService {
+  constructor(private readonly memberService: MemberBaseService) {}
+
+  // 登出：清 cookie「之前」先作廢工作階段，只登出當下這一台
+  async logout(refreshToken: string): Promise<void> {
+    await this.memberService.revokeSessionByRefreshToken(refreshToken);
+  }
+
+  // 登出「某一台」裝置：只能作廢該會員自己的工作階段；不要用 revokeSession 接收前端傳來的 id
+  async logoutDevice(memberId: string, sessionId: string): Promise<boolean> {
+    return this.memberService.revokeMemberSession(memberId, sessionId);
+  }
+
+  // 登出所有裝置（可保留當下這一台）
+  async logoutEverywhere(memberId: string, currentSessionId?: string): Promise<number> {
+    return this.memberService.revokeAllSessions(memberId, { reason: 'logout', exceptSessionId: currentSessionId });
+  }
+
+  // 變更密碼會作廢該會員所有工作階段；要保留當下這一台就帶 keepSessionId，再換一組新 token 給它
+  async changePassword(memberId: string, sessionId: string, oldPassword: string, newPassword: string) {
+    await this.memberService.changePassword(memberId, oldPassword, newPassword, { keepSessionId: sessionId });
+
+    // reissue 不做任何驗證，也不會把 authTime 蓋成「現在」；知道使用者何時驗證過就自己帶入
+    return this.memberService.reissueSessionTokens(memberId, sessionId, { authTime: Math.floor(Date.now() / 1000) });
+  }
+}
+```
+
+換發失敗時要分辨「被明確拒絕」與「暫時性錯誤」：
+
+```typescript
+import { Errors } from '@rytass/member-base-nestjs-module';
+
+// 128～131 都是 InvalidToken 的子類別（400）；另外兩種也是「不會因重試而改變」的拒絕
+const REFUSALS = [Errors.InvalidToken, Errors.PasswordChangedError, Errors.MemberNotFoundError];
+
+try {
+  return await this.memberService.refreshToken(token);
+} catch (error) {
+  if (REFUSALS.some(refusal => error instanceof refusal)) clearCookies(res);
+
+  // 132 SessionRotationConflictError（409）與其他例外（資料庫斷線、逾時）都不是拒絕：
+  // 保留憑證、在寬限秒數內重試
+  throw error;
+}
+```
+
+**實作細節**：工作階段的讀取一律走主庫（即使設定了 TypeORM 讀寫分離）；`rotationGraceSeconds` 只接受 0～300；記錄 IP 不會讓登入失敗（IPv6 zone 會去除、非位址存成 null）；非 UUID 的 id 一律視為不存在的工作階段；OIDC 發行者的免登入只接受仍有效的工作階段（`readActiveLocalSession`）；密碼變更後作廢失敗只記錄、不丟錯；`archiveMember` 會先作廢再封存。`isSessionActive` 另會比對會員的 `passwordChangedAt`：每個工作階段記錄簽發當時的值，以相等比對，與時鐘無關；改密碼前的工作階段除了被 `keepSessionId` 保留的那一個以外，一律視為已結束。`sid`、`jti` 為保留的 claim 名稱，請勿由 `customizedJwtPayload` 回傳：refresh token 一律覆蓋；access token 只在為工作階段簽發時覆蓋 `sid`，自訂的 `jti` 不會被覆蓋。`keepSessionId` 會把該工作階段標記為屬於新密碼（維持有效），且只有被保留的工作階段能 `reissueSessionTokens`，其餘改密碼前的工作階段一律以 `PasswordChangedError` 拒絕。標記失敗時改密碼仍成功，該工作階段不再被保留、和其他的一起處理，接著的 `reissueSessionTokens` 會被拒，應視為「密碼已改，請重新登入」。單獨用 `signAccessToken` 簽的 access token 沒有 `sid`，不能拿來做 OIDC 免登入，請改用 `issueTokenPair`。
+
+**已知的殘餘窗口**：登出前簽出的 access token，登出後最長仍可用到它過期（`accessTokenExpiration`，預設 15 分鐘）。登出前已送出的換發若晚到，回來的那一組也只能撐到 access token 過期，它的 refresh token 屬於已作廢的工作階段，無法再換發。
+
+自行簽發 token 時改用 `issueTokenPair(member, { domain, ip, userAgent })`：它會等工作階段寫入完成，並讓兩個 token 帶同一個 `sid`。
+
+**從 0.14 升級**：不需要改任何程式，既有方法的簽章與回傳都不變。會自動發生的兩件事：所有使用者重新登入一次（舊的 refresh token 沒有 `sid`，以和 0.14 完全相同的 `InvalidToken` 拒絕：代碼 104、訊息 `Invalid token`、狀態 400，用戶端不論依什麼判斷都照舊登出）；需要有 `member_sessions` 表。用戶端必須持續使用換發回來的最新 refresh token，重送登入時那一個會被視為重複使用而作廢工作階段。需要改的只有兩種設定：沒開 `autoLoadEntities` 的專案要把 `MemberSessionEntity` 加進 DataSource 的 `entities`；自己 `new` 或繼承 `MemberBaseService`／`MemberBaseAdminService` 的程式要多傳一個 `MemberSessionService`。缺表或漏註冊時所有登入都會失敗：`login()` 回 `PasswordValidationError`（原因寫進 log），gateway、OAuth、redirect 則直接丟出資料庫錯誤。
+
 ### 解鎖帳號
 
 ```typescript
@@ -494,6 +560,15 @@ export class AppModule {}
 | `cookieDomain`           | 無（host-only）          | Domain 屬性；設 `.example.com` 才能跨子網域共用 |
 
 `httpOnly` 不可設定且永遠開啟。
+
+### 登入工作階段（`sessionTracking`）
+
+| 選項                   | 預設                  | 說明                                                                                                                |
+| ---------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `rotationGraceSeconds` | `10`                  | 剛被輪替掉的 token 仍可換發的秒數；`0` 表示並行的第二次即視為重複使用                                               |
+| `recordUserAgent`      | `false`               | 是否記錄建立工作階段時的 user agent                                                                                 |
+| `recordIp`             | `false`               | 是否記錄建立工作階段時的 IP                                                                                         |
+| `sessionEntity`        | `MemberSessionEntity` | 以 `@Entity('another_table')` 子類別另存工作階段或加欄位；開 `autoLoadEntities` 時基底的 `member_sessions` 仍會建立 |
 
 ### 密碼重設
 
@@ -793,19 +868,24 @@ interface TokenPairDto {
 
 ## Error Codes
 
-| 代碼 | 錯誤類別                            | 說明                             |
-| ---- | ----------------------------------- | -------------------------------- |
-| 100  | `MemberNotFoundError`               | 找不到會員                       |
-| 101  | `PasswordDoesNotMeetPolicyError`    | 密碼不符合策略                   |
-| 102  | `InvalidPasswordError`              | 密碼錯誤                         |
-| 103  | `PasswordValidationError`           | 密碼驗證失敗                     |
-| 104  | `InvalidToken`                      | Token 無效                       |
-| 105  | `MemberAlreadyExistedError`         | 會員已存在                       |
-| 106  | `PasswordChangedError`              | 密碼已變更                       |
-| 107  | `MemberBannedError`                 | 會員已被停權                     |
-| 108  | `PasswordExpiredError`              | 密碼已過期                       |
-| 109  | `PasswordShouldUpdatePasswordError` | 需要更新密碼                     |
-| 110  | `PasswordInHistoryError`            | 密碼在歷史記錄中（不能重複使用） |
+| 代碼 | 錯誤類別                            | 說明                                  |
+| ---- | ----------------------------------- | ------------------------------------- |
+| 100  | `MemberNotFoundError`               | 找不到會員                            |
+| 101  | `PasswordDoesNotMeetPolicyError`    | 密碼不符合策略                        |
+| 102  | `InvalidPasswordError`              | 密碼錯誤                              |
+| 103  | `PasswordValidationError`           | 密碼驗證失敗                          |
+| 104  | `InvalidToken`                      | Token 無效                            |
+| 105  | `MemberAlreadyExistedError`         | 會員已存在                            |
+| 106  | `PasswordChangedError`              | 密碼已變更                            |
+| 107  | `MemberBannedError`                 | 會員已被停權                          |
+| 108  | `PasswordExpiredError`              | 密碼已過期                            |
+| 109  | `PasswordShouldUpdatePasswordError` | 需要更新密碼                          |
+| 110  | `PasswordInHistoryError`            | 密碼在歷史記錄中（不能重複使用）      |
+| 128  | `SessionRevokedError`               | 工作階段已作廢（400）                 |
+| 129  | `SessionExpiredError`               | 工作階段已過期（400）                 |
+| 130  | `RefreshTokenReuseDetectedError`    | 偵測到重複使用（400）                 |
+| 131  | `SessionNotFoundError`              | 工作階段不存在或不屬於此 token（400） |
+| 132  | `SessionRotationConflictError`      | 並行衝突、可重試（409）               |
 
 ### Errors 物件導出
 
@@ -830,7 +910,11 @@ if (error instanceof Errors.MemberNotFoundError) {
 // - MemberBannedError
 // - PasswordExpiredError
 // - PasswordShouldUpdatePasswordError
+// - SessionRevokedError / SessionExpiredError / RefreshTokenReuseDetectedError / SessionNotFoundError
+// - SessionRotationConflictError（132，不是拒絕，可重試）
 ```
+
+128～131 共用基底類別 `SessionRejectedError`（直接從套件根匯出），它本身繼承 `InvalidToken`，所以既有以 `InvalidToken` 處理換發失敗的程式不必修改；要知道原因再看 `code`。
 
 > **注意：** `PasswordInHistoryError` 目前未包含在 `Errors` 物件中，需直接從 `./constants/errors/base.error` 導入使用。
 

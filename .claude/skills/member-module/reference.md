@@ -22,20 +22,35 @@ class MemberBaseService<T extends BaseMemberEntity = BaseMemberEntity> {
   // 認證
   login(account: string, password: string, ip?: string): Promise<TokenPairDto>;
   login(account: string, password: string, options?: LoginOptions): Promise<TokenPairDto>;
-  refreshToken(refreshToken: string, options?: RefreshOptions): Promise<TokenPairDto>;
+  refreshToken(refreshToken: string, options?: RefreshOptions): Promise<TokenPairDto>; // 每次輪替
+  issueTokenPair(member: T, options?: IssueTokenPairOptions): Promise<TokenPairDto>;
+  issueTokenPairDetached(member: T, options?: IssueTokenPairOptions): TokenPairDto; // 同步版，寫入不等待
+
+  // 登入工作階段
+  revokeSessionByRefreshToken(refreshToken: string, reason?: MemberSessionRevokedReason): Promise<boolean>;
+  getSessionFromRefreshToken(refreshToken: string): Promise<MemberSessionEntity | null>;
+  revokeSession(sessionId: string, reason: MemberSessionRevokedReason): Promise<boolean>; // 僅限管理端，不檢查擁有者
+  revokeMemberSession(memberId: string, sessionId: string, reason?: MemberSessionRevokedReason): Promise<boolean>;
+  isSessionActive(memberId: string, sessionId: string): Promise<boolean>; // 含 passwordChangedAt 比對
+  revokeAllSessions(memberId: string, options: RevokeAllSessionsOptions): Promise<number>;
+  reissueSessionTokens(
+    memberId: string,
+    sessionId: string,
+    options?: { domain?: string; authTime?: number | null },
+  ): Promise<TokenPairDto>;
 
   // 註冊
   register(account: string, password: string, options?: RegisterOptions): Promise<T>;
   registerWithoutPassword(account: string, options?: RegisterOptions): Promise<[T, string]>;
 
   // 密碼管理
-  changePassword(id: string, originPassword: string, newPassword: string): Promise<T>;
+  changePassword(id: string, originPassword: string, newPassword: string, options?: ChangePasswordOptions): Promise<T>;
   changePasswordWithToken(token: string, newPassword: string): Promise<T>;
   getResetPasswordToken(account: string): Promise<string>;
 
   // Token 簽署
-  signAccessToken(member: T, domain?: string): string;
-  signRefreshToken(member: T, domain?: string): string;
+  signAccessToken(member: T, domain?: string, options?: SignTokenOptions): string;
+  signRefreshToken(member: T, domain?: string, options?: SignTokenOptions): string; // 未帶 session 時會自動建立工作階段
 
   // 管理
   resetLoginFailedCounter(id: string): Promise<T>;
@@ -94,7 +109,7 @@ class BaseMemberEntity {
   account: string;
 
   @Column()
-  password: string;  // Argon2 hash
+  password: string; // Argon2 hash
 
   @Column()
   passwordChangedAt: Date;
@@ -165,7 +180,7 @@ class MemberPasswordHistoryEntity {
   memberId: string;
 
   @Column()
-  password: string;  // Argon2 hash
+  password: string; // Argon2 hash
 
   @CreateDateColumn()
   createdAt: Date;
@@ -181,10 +196,10 @@ class MemberOAuthRecordEntity {
   memberId: string;
 
   @PrimaryColumn()
-  channel: string;  // 'google' | 'facebook' | custom
+  channel: string; // 'google' | 'facebook' | custom
 
   @Column()
-  channelIdentifier: string;  // OAuth provider user ID
+  channelIdentifier: string; // OAuth provider user ID
 
   @ManyToOne(() => BaseMemberEntity)
   member: Relation<BaseMemberEntity>;
@@ -305,7 +320,7 @@ interface GoogleOAuth2Provider {
   clientId: string;
   clientSecret: string;
   redirectUri: string;
-  scope?: string[];  // default: ['openid', 'email']
+  scope?: string[]; // default: ['openid', 'email']
   getState?: () => string | Promise<string>;
 }
 ```
@@ -318,7 +333,7 @@ interface FacebookOAuth2Provider {
   clientId: string;
   clientSecret: string;
   redirectUri: string;
-  scope?: string[];  // default: ['public_profile', 'email']
+  scope?: string[]; // default: ['public_profile', 'email']
   getState?: () => string | Promise<string>;
 }
 ```
@@ -343,19 +358,26 @@ interface CustomOAuth2Provider {
 
 ## Errors
 
-| 類別 | HTTP | 代碼 | 訊息 |
-|------|------|------|------|
-| MemberNotFoundError | 400 | 100 | Member not found |
-| PasswordDoesNotMeetPolicyError | 400 | 101 | Password does not meet the policy |
-| InvalidPasswordError | 400 | 102 | Invalid password |
-| PasswordValidationError | 500 | 103 | Password validation error |
-| InvalidToken | 400 | 104 | Invalid token |
-| MemberAlreadyExistedError | 400 | 105 | Member already existed |
-| PasswordChangedError | 400 | 106 | Password changed, please sign in again |
-| MemberBannedError | 400 | 107 | Member banned |
-| PasswordExpiredError | 400 | 108 | Password expired |
-| PasswordShouldUpdatePasswordError | 400 | 109 | Member should update password |
-| PasswordInHistoryError | 400 | 110 | Password is in history |
+| 類別                              | HTTP | 代碼 | 訊息                                                                        |
+| --------------------------------- | ---- | ---- | --------------------------------------------------------------------------- |
+| MemberNotFoundError               | 400  | 100  | Member not found                                                            |
+| PasswordDoesNotMeetPolicyError    | 400  | 101  | Password does not meet the policy                                           |
+| InvalidPasswordError              | 400  | 102  | Invalid password                                                            |
+| PasswordValidationError           | 500  | 103  | Password validation error                                                   |
+| InvalidToken                      | 400  | 104  | Invalid token                                                               |
+| MemberAlreadyExistedError         | 400  | 105  | Member already existed                                                      |
+| PasswordChangedError              | 400  | 106  | Password changed, please sign in again                                      |
+| MemberBannedError                 | 400  | 107  | Member banned                                                               |
+| PasswordExpiredError              | 400  | 108  | Password expired                                                            |
+| PasswordShouldUpdatePasswordError | 400  | 109  | Member should update password                                               |
+| PasswordInHistoryError            | 400  | 110  | Password is in history                                                      |
+| SessionRevokedError               | 400  | 128  | Session revoked, please sign in again                                       |
+| SessionExpiredError               | 400  | 129  | Session expired, please sign in again                                       |
+| RefreshTokenReuseDetectedError    | 400  | 130  | Refresh token reuse detected, session revoked                               |
+| SessionNotFoundError              | 400  | 131  | Session not found, please sign in again（已清除、屬於他人或背景寫入未完成） |
+| SessionRotationConflictError      | 409  | 132  | Session was changed by a concurrent request, please retry                   |
+
+128～131 繼承 `SessionRejectedError`，它本身是 `InvalidToken`；132 不是拒絕，可重試。
 
 ---
 
@@ -500,9 +522,7 @@ export class AuthController {
 
   @Post('assign-role')
   @Authenticated()
-  async assignRole(
-    @Body() body: { memberId: string; role: string; domain: string },
-  ) {
+  async assignRole(@Body() body: { memberId: string; role: string; domain: string }) {
     await this.enforcer.addGroupingPolicy(body.memberId, body.role, body.domain);
     return { success: true };
   }
@@ -539,6 +559,7 @@ export class ArticleController {
 ## Dependencies
 
 **Required:**
+
 - @nestjs/common ^10
 - @nestjs/typeorm ^10
 - typeorm ^0.3
@@ -551,5 +572,6 @@ export class ArticleController {
 - luxon ^3
 
 **Optional:**
+
 - @nestjs/graphql (GraphQL support)
 - cookie-parser (Cookie mode)
