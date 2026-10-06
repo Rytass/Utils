@@ -18,6 +18,8 @@ interface OAuthTokenResponse {
 export class FusionAuthProvider {
   private accessToken: string | null = null;
   private tokenExpiresAt = 0;
+  /** 進行中的換發請求；同時到達的呼叫共用它，而不是各自打一次 token 端點。 */
+  private pendingToken: Promise<string> | null = null;
 
   constructor(private readonly options: ResolvedFusionClientOptions) {}
 
@@ -62,6 +64,22 @@ export class FusionAuthProvider {
 
     if (this.accessToken && Date.now() < this.tokenExpiresAt - refreshBufferMs) {
       return this.accessToken;
+    }
+
+    if (!this.pendingToken) {
+      this.pendingToken = this.requestAccessToken().finally(() => {
+        this.pendingToken = null;
+      });
+    }
+
+    return this.pendingToken;
+  }
+
+  private async requestAccessToken(): Promise<string> {
+    const { auth } = this.options;
+
+    if (auth.type !== 'oauth2_client_credentials') {
+      throw new Error(`getAccessToken() is only available for oauth2_client_credentials, got ${auth.type}`);
     }
 
     const basic = Buffer.from(`${auth.clientId}:${auth.clientSecret}`).toString('base64');

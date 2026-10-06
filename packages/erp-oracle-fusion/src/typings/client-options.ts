@@ -1,3 +1,4 @@
+import type { FusionAuthProvider } from '../auth/fusion-auth-provider';
 import type { FusionAuthConfig, ResolvedFusionAuthConfig } from './auth';
 import type { FusionCallLogSink, FusionHttpMethod, FusionOperation } from './call-log';
 import type { FusionLogger } from './logger';
@@ -20,6 +21,14 @@ export interface FusionClientOptions {
   /** Fusion pod 根位址，如 `https://xxx.fa.ap1.oraclecloud.com`。尾端斜線會自動去除。 */
   readonly baseUrl: string;
   readonly auth: FusionAuthConfig;
+  /**
+   * 沿用既有的 `FusionAuthProvider`，而非由 client 自行建立。
+   *
+   * 每個 client 預設各自持有一個 provider，也就各自快取一份 OAuth token。同一個 pod 同時用到
+   * REST 與 SOAP client 時，傳入同一個 provider 可讓兩者共用 token，避免重複換發；憑證輪替後
+   * 也只需要對這一個 provider 呼叫 `invalidateToken()`。`auth` 仍須提供（供設定檢查與診斷）。
+   */
+  readonly authProvider?: FusionAuthProvider;
   /** REST 命名空間，預設 `fscmRestApi`；CRM／HCM 資源可傳 `crmRestApi`／`hcmRestApi`。 */
   readonly defaultNamespace?: string;
   /** REST 版本區段，預設 `11.13.18.05`。 */

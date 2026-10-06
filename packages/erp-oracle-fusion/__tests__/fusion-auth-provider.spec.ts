@@ -33,6 +33,32 @@ describe('FusionAuthProvider', () => {
     expect(buildProvider(OAUTH_OPTIONS(tokenFetch('t', 3600))).getBaseUrl()).toBe('https://pod.example.com');
   });
 
+  it('OAuth：同時到達的呼叫共用一次換發', async () => {
+    const fetchImpl = tokenFetch('tok-1', 3600);
+    const provider = buildProvider(OAUTH_OPTIONS(fetchImpl));
+
+    const tokens = await Promise.all([provider.getAccessToken(), provider.getAccessToken(), provider.getAccessToken()]);
+
+    expect(tokens).toEqual(['tok-1', 'tok-1', 'tok-1']);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it('OAuth：換發失敗不會卡住後續呼叫', async () => {
+    const fetchImpl = jest
+      .fn()
+      .mockResolvedValueOnce({ ok: false, status: 500, text: async () => 'down' })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ access_token: 'tok-2', expires_in: 3600 }),
+      });
+
+    const provider = buildProvider(OAUTH_OPTIONS(fetchImpl));
+
+    await expect(provider.getAccessToken()).rejects.toThrow(/token failed/);
+    await expect(provider.getAccessToken()).resolves.toBe('tok-2');
+  });
+
   it('OAuth：以 Basic 憑證換發並回傳 Bearer 標頭', async () => {
     const fetchImpl = tokenFetch('tok-1', 3600);
     const provider = buildProvider(OAUTH_OPTIONS(fetchImpl));
