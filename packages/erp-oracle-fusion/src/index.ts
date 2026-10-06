@@ -173,7 +173,7 @@ export {
 // ---------------------------------------------------------------------------
 export type { FbdiCellValue, FbdiFileContent, FbdiFileTemplate, FbdiRow, FbdiTemplate, ZipEntry } from './typings/fbdi';
 export { buildFbdiCsv, buildFbdiRow, buildFbdiZip, defineFbdiFile, defineFbdiTemplate } from './fbdi/template';
-export { crc32, unzipFiles, zipFiles, zipSingleFile } from './fbdi/zip';
+export { crc32, unzipFiles, zipFiles, zipSingleFile, DEFAULT_UNZIP_MAX_BYTES, type UnzipOptions } from './fbdi/zip';
 export { formatFbdiDate, serializeCsv, truncate } from './fbdi/csv';
 export { deriveGroupId } from './fbdi/group-id';
 export {
@@ -202,6 +202,7 @@ export {
 } from './fbdi/ess';
 export {
   FusionFbdiService,
+  DEFAULT_ESS_LOG_MAX_BYTES,
   type EssExecutionText,
   type FbdiImportResult,
   type WaitForEssOptions,

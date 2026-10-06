@@ -11,6 +11,7 @@ import {
 import type { BuildImportPayloadOptions, EssJobRequest } from './erp-integrations';
 import { parseEssStatusResponse } from './ess';
 import { unzipFiles } from './zip';
+import type { UnzipOptions } from './zip';
 import type { EssJobStatus, EssJobStatusResponse } from './ess';
 import type { FbdiFileContent, FbdiTemplate } from '../typings/fbdi';
 
@@ -21,6 +22,11 @@ interface ErpIntegrationsSubmitResponse {
 interface DownloadLogResponse {
   readonly DocumentContent?: string;
 }
+
+/** Default ceiling on the decompressed size of an ESS log or output file. */
+export const DEFAULT_ESS_LOG_MAX_BYTES = 16 * 1024 * 1024;
+
+const ZIP_END_OF_CENTRAL_DIRECTORY = Buffer.from([0x50, 0x4b, 0x05, 0x06]);
 
 export interface FbdiImportResult {
   /** 父 ESS request id，用於後續查詢狀態。 */
@@ -159,23 +165,28 @@ export class FusionFbdiService {
    *
    * Concatenates every entry when the archive holds more than one. Falls back to decoding the
    * payload directly if it turns out not to be an archive.
+   *
+   * Decompressed content is capped at 16 MiB by default (`options.maxBytes`), enforced while
+   * inflating. A log that would exceed it throws rather than being silently truncated or returned
+   * as raw archive bytes — callers that only want an excerpt should set a small limit and treat
+   * the error as "too large to fetch".
    */
   async downloadEssLogText(
     requestId: string,
     fileType: 'log' | 'out' = 'log',
-    options?: FusionWriteOptions,
+    options?: FusionWriteOptions & UnzipOptions,
   ): Promise<string | null> {
     const raw = await this.downloadEssLog(requestId, fileType, options);
 
     if (!raw) return null;
 
-    try {
-      return unzipFiles(raw)
-        .map(entry => entry.content.toString('utf-8'))
-        .join('\n');
-    } catch {
-      return raw.toString('utf-8');
-    }
+    // Only a payload that is not an archive at all is read as plain text. Any other failure —
+    // the size limit above all — must surface instead of degrading into decoded archive bytes.
+    if (raw.lastIndexOf(ZIP_END_OF_CENTRAL_DIRECTORY) === -1) return raw.toString('utf-8');
+
+    return unzipFiles(raw, { maxBytes: options?.maxBytes ?? DEFAULT_ESS_LOG_MAX_BYTES })
+      .map(entry => entry.content.toString('utf-8'))
+      .join('\n');
   }
 
   /**
@@ -186,7 +197,10 @@ export class FusionFbdiService {
    * download of one file does not fail the call; `downloadFailed` is set only when neither could
    * be retrieved.
    */
-  async downloadEssExecutionText(requestId: string, options?: FusionWriteOptions): Promise<EssExecutionText> {
+  async downloadEssExecutionText(
+    requestId: string,
+    options?: FusionWriteOptions & UnzipOptions,
+  ): Promise<EssExecutionText> {
     const download = (fileType: 'log' | 'out'): Promise<{ readonly text: string | null; readonly failed: boolean }> =>
       this.downloadEssLogText(requestId, fileType, options)
         .then(text => ({ text, failed: false }))

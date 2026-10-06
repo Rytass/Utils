@@ -10,6 +10,39 @@ import {
   zipFiles,
 } from '@rytass/erp-oracle-fusion';
 import type { EssPositionalArguments } from '@rytass/erp-oracle-fusion';
+import { deflateRawSync } from 'zlib';
+
+/** 單一 DEFLATE entry 的最小 ZIP，用來製造高壓縮比的內容。 */
+function deflatedArchive(name: string, content: Buffer): Buffer {
+  const data = deflateRawSync(content);
+  const nameBytes = Buffer.from(name, 'utf-8');
+  const local = Buffer.alloc(30);
+
+  local.writeUInt32LE(0x04034b50, 0);
+  local.writeUInt16LE(8, 8);
+  local.writeUInt32LE(data.length, 18);
+  local.writeUInt32LE(content.length, 22);
+  local.writeUInt16LE(nameBytes.length, 26);
+
+  const central = Buffer.alloc(46);
+
+  central.writeUInt32LE(0x02014b50, 0);
+  central.writeUInt16LE(8, 10);
+  central.writeUInt32LE(data.length, 20);
+  central.writeUInt32LE(content.length, 24);
+  central.writeUInt16LE(nameBytes.length, 28);
+
+  const end = Buffer.alloc(22);
+  const centralOffset = local.length + nameBytes.length + data.length;
+
+  end.writeUInt32LE(0x06054b50, 0);
+  end.writeUInt16LE(1, 8);
+  end.writeUInt16LE(1, 10);
+  end.writeUInt32LE(central.length + nameBytes.length, 12);
+  end.writeUInt32LE(centralOffset, 16);
+
+  return Buffer.concat([local, nameBytes, data, central, nameBytes, end]);
+}
 
 /** ESS Scheduler REST：位置參數序列化、request id 擷取、狀態分類，以及合併的執行記錄下載。 */
 
@@ -185,6 +218,22 @@ describe('FusionFbdiService.downloadEssExecutionText', () => {
     const service = new FusionFbdiService(buildClient(fetchMock as unknown as jest.Mock));
 
     await expect(service.downloadEssExecutionText('1')).resolves.toEqual({ text: 'LOG\nOUT', downloadFailed: false });
+  });
+
+  it('解壓後超過 maxBytes 時拋錯，而不是回傳截斷內容或壓縮位元組', async () => {
+    const big = deflatedArchive('1.log', Buffer.alloc(1024 * 1024, 0x41));
+
+    expect(big.length).toBeLessThan(8 * 1024);
+
+    const service = new FusionFbdiService(
+      buildClient(jest.fn().mockResolvedValue(jsonResponse({ DocumentContent: big.toString('base64') }))),
+    );
+
+    await expect(service.downloadEssLogText('1', 'log', { maxBytes: 64 * 1024 })).rejects.toThrow(
+      /exceed the 65536-byte limit/,
+    );
+
+    await expect(service.downloadEssLogText('1', 'log')).resolves.toHaveLength(1024 * 1024);
   });
 
   it('只有一份失敗時仍回傳另一份，且不標記 downloadFailed', async () => {

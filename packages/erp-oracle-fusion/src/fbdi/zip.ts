@@ -125,6 +125,21 @@ export function zipSingleFile(fileName: string, content: Buffer, mtime: Date = n
 const COMPRESSION_STORED = 0;
 const COMPRESSION_DEFLATE = 8;
 
+/** Default ceiling on the total decompressed size `unzipFiles` will produce. */
+export const DEFAULT_UNZIP_MAX_BYTES = 256 * 1024 * 1024;
+
+export interface UnzipOptions {
+  /**
+   * Ceiling on the total decompressed size across all entries, default 256 MiB.
+   *
+   * DEFLATE can expand by three orders of magnitude, so the size of the archive says little about
+   * the memory needed to read it. The limit is enforced while inflating — an oversized entry is
+   * abandoned rather than materialised and then measured. Raise it for large data extracts; pass
+   * `Infinity` to remove it.
+   */
+  readonly maxBytes?: number;
+}
+
 /**
  * Reads a ZIP archive, returning every entry with its decompressed content.
  *
@@ -133,8 +148,13 @@ const COMPRESSION_DEFLATE = 8;
  * hands back a ZIP containing `<requestId>.log`, for example.
  *
  * Uses Node's built-in `zlib`, so the package still has no external dependencies.
+ *
+ * Throws when the decompressed content would exceed `options.maxBytes`.
  */
-export function unzipFiles(archive: Buffer): ZipEntry[] {
+export function unzipFiles(archive: Buffer, options?: UnzipOptions): ZipEntry[] {
+  const maxBytes = options?.maxBytes ?? DEFAULT_UNZIP_MAX_BYTES;
+  let remaining = maxBytes;
+
   const eocdIndex = archive.lastIndexOf(Buffer.from([0x50, 0x4b, 0x05, 0x06]));
 
   if (eocdIndex === -1) {
@@ -168,10 +188,30 @@ export function unzipFiles(archive: Buffer): ZipEntry[] {
       throw new Error(`Unsupported ZIP compression method ${compressionMethod} for entry "${name}"`);
     }
 
-    entries.push({
-      name,
-      content: compressionMethod === COMPRESSION_STORED ? Buffer.from(raw) : inflateRawSync(raw),
-    });
+    const tooLarge = (): Error =>
+      new Error(`ZIP entry "${name}" would exceed the ${maxBytes}-byte limit on decompressed content`);
+
+    let content: Buffer;
+
+    if (compressionMethod === COMPRESSION_STORED) {
+      if (raw.length > remaining) throw tooLarge();
+
+      content = Buffer.from(raw);
+    } else if (remaining === Infinity) {
+      content = inflateRawSync(raw);
+    } else {
+      try {
+        // zlib stops as soon as the output would pass the limit, so nothing oversized is allocated.
+        content = inflateRawSync(raw, { maxOutputLength: remaining });
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ERR_BUFFER_TOO_LARGE') throw tooLarge();
+
+        throw error;
+      }
+    }
+
+    remaining -= content.length;
+    entries.push({ name, content });
 
     offset += 46 + nameLength + extraLength + commentLength;
   }
