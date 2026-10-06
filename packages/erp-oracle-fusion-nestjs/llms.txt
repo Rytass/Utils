@@ -17,7 +17,9 @@ lives in the core package — see its `llms.txt`. This package only covers modul
 - `FusionClientModule.forRoot({ config, isGlobal?, callLogSink?, disableLogger? })`
 - `FusionClientModule.forRootAsync({ imports, inject, useFactory, ... })` — config resolved from
   any injectable provider
-- Provides `FusionRestClient` and `FusionFbdiService`
+- Provides `FusionRestClient`, `FusionFbdiService`, `FusionEssSchedulerService`,
+  `FusionAccountingPeriodService`, `FusionSoapClient` and the two customer services
+- Provides one `FusionAuthProvider` shared by the REST and SOAP clients (single OAuth token cache)
 - Exports `FUSION_CLIENT_OPTIONS` and `FUSION_CALL_LOG_SINK` DI tokens
 
 ### Observability Sink Binding

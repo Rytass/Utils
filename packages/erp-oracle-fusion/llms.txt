@@ -99,6 +99,23 @@ Output never returns in the response; Fusion uploads it to UCM as
 - ⚠️ `ESSJobStatusRF` only resolves requests submitted through `erpintegrations`; UI-scheduled jobs
   return an empty status even when complete
 
+### ESS Scheduler REST (`FusionEssSchedulerService`)
+Second submission channel at `/ess/rest/scheduler/v1/requests`; some jobs are only verified here.
+- `submit({ jobDefinitionPath, arguments, product?, description?, retries? })` — `retries` defaults
+  to 0; the request id is read from `requestId` or, failing that, the `links` href
+- `getStatus()` — resolves requests submitted through **either** channel, unlike `ESSJobStatusRF`
+- `classifySchedulerState()` — **`WARNING` is its own terminal state**, not failure. This is a
+  different vocabulary from `classifyEssStatus()`; never feed one channel's status to the other
+- `EssPositionalArguments` — 1-based `Map<position, value>`; `toSchedulerParameters()` and
+  `toErpIntegrationsParameters(args, count)` serialise it for each channel
+- `FusionFbdiService.downloadEssExecutionText()` — log and output joined; `downloadFailed` is true
+  only when neither could be fetched, which is not the same as empty
+
+### Accounting Periods (`FusionAccountingPeriodService`)
+- `getStatus({ ledgerId, periodName, applicationId })` — `applicationId` is required (GL 101, AR 222,
+  AP 200); without it Fusion returns a row from an arbitrary subledger. Returns `null` when unknown
+- The filter field is `PeriodNameId`, not `PeriodName`
+
 ### Built-in Template: GL Journal Import
 149-column `GL_INTERFACE` mapping taken from Oracle's official 25c FBDI template
 (`JournalImportTemplate.xlsm`) and verified end-to-end against a live Fusion pod.
@@ -106,6 +123,9 @@ Output never returns in the response; Fusion uploads it to UCM as
 Journal Import specific and must not be reused for other ESS jobs**.
 
 ## Usage Notes
+
+- Pass one `FusionAuthProvider` as `authProvider` to both clients to share a single OAuth token cache
+- `FusionSoapClient` unwraps MTOM (`multipart/related`) responses itself, faults included
 
 - `new FusionRestClient(options)` — no framework, no DI container required
 - Write calls that need retry MUST carry their own idempotency key; `importBulkData` has no native dedup
