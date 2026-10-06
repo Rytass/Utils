@@ -1,0 +1,192 @@
+import {
+  buildSchedulerSubmitPayload,
+  classifySchedulerState,
+  extractSchedulerRequestId,
+  FusionEssSchedulerService,
+  FusionFbdiService,
+  FusionRestClient,
+  toErpIntegrationsParameters,
+  toSchedulerParameters,
+  zipFiles,
+} from '@rytass/erp-oracle-fusion';
+import type { EssPositionalArguments } from '@rytass/erp-oracle-fusion';
+
+/** ESS Scheduler REST：位置參數序列化、request id 擷取、狀態分類，以及合併的執行記錄下載。 */
+
+function jsonResponse(body: unknown): Response {
+  return {
+    ok: true,
+    status: 200,
+    json: async () => body,
+    text: async () => JSON.stringify(body),
+  } as unknown as Response;
+}
+
+function buildClient(fetchMock: jest.Mock): FusionRestClient {
+  return new FusionRestClient({
+    baseUrl: 'https://pod.example.com',
+    auth: { type: 'basic', username: 'u', password: 'p' },
+    retryBaseDelayMs: 0,
+    fetchImpl: fetchMock as unknown as typeof fetch,
+  });
+}
+
+const ARGS: EssPositionalArguments = new Map([
+  [4, 'D'],
+  [1, 'A'],
+  [3, ''],
+]);
+
+describe('ESS 位置參數', () => {
+  it('Scheduler REST：依位置排序、略過空字串、名稱為 submit.argumentN', () => {
+    expect(toSchedulerParameters(ARGS)).toEqual([
+      { name: 'submit.argument1', paramType: 'STRING', value: 'A' },
+      { name: 'submit.argument4', paramType: 'STRING', value: 'D' },
+    ]);
+  });
+
+  it('erpintegrations：空位保留、尾端補到指定長度', () => {
+    expect(toErpIntegrationsParameters(ARGS, 6)).toBe('A,,,D,,');
+  });
+});
+
+describe('extractSchedulerRequestId', () => {
+  it('優先取 requestId 欄位', () => {
+    expect(extractSchedulerRequestId({ requestId: 371474 })).toBe('371474');
+  });
+
+  it('沒有 requestId 時由 links 的 /requests/{id} 取出', () => {
+    expect(
+      extractSchedulerRequestId({
+        links: [{ href: 'https://pod.example.com/ess/rest/scheduler/v1/requests/371474' }],
+      }),
+    ).toBe('371474');
+  });
+
+  it('兩者皆無回傳 null', () => {
+    expect(extractSchedulerRequestId({ links: [{ href: 'https://pod.example.com/other' }] })).toBeNull();
+    expect(extractSchedulerRequestId(null)).toBeNull();
+  });
+});
+
+describe('classifySchedulerState', () => {
+  it('WARNING 是獨立的終態，不併入失敗', () => {
+    expect(classifySchedulerState('WARNING')).toBe('WARNING');
+    expect(classifySchedulerState('succeeded')).toBe('SUCCEEDED');
+  });
+
+  it.each(['ERROR', 'CANCELLED', 'EXPIRED', 'ERROR_MANUAL_RECOVERY', 'FINISHED_WITH_ERRORS', 'VALIDATION_FAILED'])(
+    '%s 為失敗',
+    state => {
+      expect(classifySchedulerState(state)).toBe('FAILED');
+    },
+  );
+
+  it.each(['PAUSED', 'WAIT', 'RUNNING', '', 'SOMETHING_NEW'])('%s 視為進行中', state => {
+    expect(classifySchedulerState(state)).toBeNull();
+  });
+});
+
+describe('FusionEssSchedulerService', () => {
+  it('submit 送到 scheduler 路徑，retries 預設 0，回傳由 links 取出的 request id', async () => {
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValue(
+        jsonResponse({ links: [{ href: 'https://pod.example.com/ess/rest/scheduler/v1/requests/9001' }] }),
+      );
+
+    const service = new FusionEssSchedulerService(buildClient(fetchMock));
+
+    const result = await service.submit({
+      jobDefinitionPath: '/oracle/apps/ess/financials/receivables/Job',
+      arguments: ARGS,
+      product: 'AR',
+      description: 'test',
+    });
+
+    expect(result.requestId).toBe('9001');
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+
+    expect(url).toBe('https://pod.example.com/ess/rest/scheduler/v1/requests');
+    expect((init.headers as Record<string, string>)['Content-Type']).toBe('application/json');
+    expect(JSON.parse(init.body as string)).toEqual({
+      jobDefinitionId: 'JobDefinition:/oracle/apps/ess/financials/receivables/Job',
+      application: 'FscmEss',
+      product: 'AR',
+      description: 'test',
+      retries: 0,
+      requestParameters: toSchedulerParameters(ARGS),
+    });
+  });
+
+  it('回應取不到 request id 時拋錯，而不是回傳無法追蹤的結果', async () => {
+    const service = new FusionEssSchedulerService(buildClient(jest.fn().mockResolvedValue(jsonResponse({}))));
+
+    await expect(service.submit({ jobDefinitionPath: 'a/Job', arguments: new Map() })).rejects.toThrow(/no request id/);
+  });
+
+  it('getStatus 解析 state 與訊息', async () => {
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValue(jsonResponse({ state: 'ERROR', errorWarningMessage: 'bad parameter' }));
+
+    const service = new FusionEssSchedulerService(buildClient(fetchMock));
+
+    await expect(service.getStatus('9001')).resolves.toEqual({
+      rawState: 'ERROR',
+      terminal: 'FAILED',
+      message: 'bad parameter',
+    });
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      'https://pod.example.com/ess/rest/scheduler/v1/requests/9001?fields=state,errorWarningMessage',
+    );
+  });
+
+  it('buildSchedulerSubmitPayload 未指定 product／description 時不送出這兩欄', () => {
+    expect(buildSchedulerSubmitPayload({ jobDefinitionPath: 'a/Job', arguments: new Map() })).toEqual({
+      jobDefinitionId: 'JobDefinition:/a/Job',
+      application: 'FscmEss',
+      retries: 0,
+      requestParameters: [],
+    });
+  });
+});
+
+describe('FusionFbdiService.downloadEssExecutionText', () => {
+  const archive = (name: string, text: string): string =>
+    zipFiles([{ name, content: Buffer.from(text, 'utf-8') }]).toString('base64');
+
+  it('合併 log 與 out', async () => {
+    const fetchMock = jest.fn(async (_url: string, init: RequestInit) => {
+      const fileType = JSON.parse(init.body as string).FileType as string;
+
+      return jsonResponse({ DocumentContent: archive(`1.${fileType}`, fileType === 'log' ? 'LOG' : 'OUT') });
+    });
+
+    const service = new FusionFbdiService(buildClient(fetchMock as unknown as jest.Mock));
+
+    await expect(service.downloadEssExecutionText('1')).resolves.toEqual({ text: 'LOG\nOUT', downloadFailed: false });
+  });
+
+  it('只有一份失敗時仍回傳另一份，且不標記 downloadFailed', async () => {
+    const fetchMock = jest.fn(async (_url: string, init: RequestInit) => {
+      if ((JSON.parse(init.body as string).FileType as string) === 'out') throw new Error('network');
+
+      return jsonResponse({ DocumentContent: archive('1.log', 'LOG') });
+    });
+
+    const service = new FusionFbdiService(buildClient(fetchMock as unknown as jest.Mock));
+
+    await expect(service.downloadEssExecutionText('1')).resolves.toEqual({ text: 'LOG', downloadFailed: false });
+  });
+
+  it('兩份都取不到時標記 downloadFailed，與「內容為空」區分', async () => {
+    const failing = new FusionFbdiService(buildClient(jest.fn().mockRejectedValue(new Error('network'))));
+    const empty = new FusionFbdiService(buildClient(jest.fn().mockResolvedValue(jsonResponse({}))));
+
+    await expect(failing.downloadEssExecutionText('1')).resolves.toEqual({ text: null, downloadFailed: true });
+    await expect(empty.downloadEssExecutionText('1')).resolves.toEqual({ text: null, downloadFailed: false });
+  });
+});

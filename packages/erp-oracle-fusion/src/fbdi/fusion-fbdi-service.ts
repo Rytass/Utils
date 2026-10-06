@@ -27,6 +27,17 @@ export interface FbdiImportResult {
   readonly requestId: string;
 }
 
+/** 執行記錄與輸出檔合併後的文字。 */
+export interface EssExecutionText {
+  /** 兩份檔案的內容以換行相接；皆無內容時為 `null`。 */
+  readonly text: string | null;
+  /**
+   * 兩份都因錯誤而取不到（≠ 內容為空）。依執行記錄判定成敗的 job 遇到這個旗標時不可下結論——
+   * 「沒看到錯誤」與「沒看到任何東西」是兩回事。
+   */
+  readonly downloadFailed: boolean;
+}
+
 export interface WaitForEssOptions {
   /** 輪詢間隔（毫秒），預設 5000。 */
   readonly intervalMs?: number;
@@ -165,5 +176,25 @@ export class FusionFbdiService {
     } catch {
       return raw.toString('utf-8');
     }
+  }
+
+  /**
+   * Retrieves both the execution log and the output file as one text.
+   *
+   * Which of the two carries the interesting part depends on the job (some report generated ids
+   * in the log, others in the output), so callers that parse results usually want both. A failed
+   * download of one file does not fail the call; `downloadFailed` is set only when neither could
+   * be retrieved.
+   */
+  async downloadEssExecutionText(requestId: string, options?: FusionWriteOptions): Promise<EssExecutionText> {
+    const download = (fileType: 'log' | 'out'): Promise<{ readonly text: string | null; readonly failed: boolean }> =>
+      this.downloadEssLogText(requestId, fileType, options)
+        .then(text => ({ text, failed: false }))
+        .catch(() => ({ text: null, failed: true }));
+
+    const [log, out] = await Promise.all([download('log'), download('out')]);
+    const parts = [log.text, out.text].filter((part): part is string => part !== null && part.trim() !== '');
+
+    return { text: parts.length > 0 ? parts.join('\n') : null, downloadFailed: log.failed && out.failed };
   }
 }

@@ -198,7 +198,38 @@ export {
   type EssJobStatus,
   type EssJobStatusResponse,
 } from './fbdi/ess';
-export { FusionFbdiService, type FbdiImportResult, type WaitForEssOptions } from './fbdi/fusion-fbdi-service';
+export {
+  FusionFbdiService,
+  type EssExecutionText,
+  type FbdiImportResult,
+  type WaitForEssOptions,
+} from './fbdi/fusion-fbdi-service';
+
+// ---------------------------------------------------------------------------
+// ESS Scheduler REST（erpintegrations 之外的另一條 job 提交與狀態查詢通道）
+// ---------------------------------------------------------------------------
+export {
+  buildSchedulerStatusPath,
+  buildSchedulerSubmitPayload,
+  classifySchedulerState,
+  extractSchedulerRequestId,
+  parseSchedulerStatusResponse,
+  toErpIntegrationsParameters,
+  toSchedulerParameters,
+  ESS_SCHEDULER_FAILURE_STATES,
+  ESS_SCHEDULER_SUCCESS_STATES,
+  ESS_SCHEDULER_WARNING_STATES,
+  FUSION_ESS_DEFAULT_APPLICATION,
+  FUSION_ESS_SCHEDULER_REQUESTS_PATH,
+  type EssPositionalArguments,
+  type EssSchedulerJobRequest,
+  type EssSchedulerParameter,
+  type EssSchedulerStatus,
+  type EssSchedulerStatusResponse,
+  type EssSchedulerSubmitResponse,
+  type EssSchedulerTerminalState,
+} from './ess/scheduler';
+export { FusionEssSchedulerService, type EssSchedulerSubmitResult } from './ess/fusion-ess-scheduler-service';
 
 // ---------------------------------------------------------------------------
 // Data extraction and UCM file operations
