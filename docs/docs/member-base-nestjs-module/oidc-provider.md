@@ -166,4 +166,5 @@ Called on `create` and `rotateSecret`, undone by the adapter on read. The column
 - **JWKS**: omitting `jwks` generates an ephemeral key with a loud warning. Every restart invalidates issued tokens and multiple instances sign with different keys — development only.
 - **Payload sweep**: `oidc-provider` never deletes expired artefacts. A sweep runs hourly by default; set `purgeIntervalSeconds: 0` and drive `OidcMaintenanceService.purgeExpired()` from your own scheduler.
 - **Session bridging** requires `cookieMode: true`; a redirect-based login cannot hand a header-bearer token to a browser.
+- **A member-base session stands in for an OIDC login only while it is open.** The access token's `sid` is checked against `member_sessions`, so a session ended by logout, a password change or a detected token reuse cannot be turned into an issuer session; a token issued before sessions existed has no `sid` and never stands in. Logout through the bridge also revokes the member-base session.
 - PKCE is required for every client unless `requirePkce` says otherwise.

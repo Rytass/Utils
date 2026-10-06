@@ -60,6 +60,7 @@ static forRoot(options?: MemberBaseModuleOptions);
 | refreshTokenSecret                        | string                     | random            | Refresh token secret                                              |
 | refreshTokenExpiration                    | number                     | 7776000           | Seconds of refresh token expiration (90 days)                     |
 | onlyResetRefreshTokenExpirationByPassword | boolean                    | false             | Refresh token expiration only reassigned by password change       |
+| sessionTracking                           | SessionTrackingOptions     | see below         | Tune login sessions and refresh token rotation (always on)        |
 | customizedJwtPayload                      | (member) => Payload        | -                 | Customize the JWT access token payload                            |
 | cookieMode                                | boolean                    | false             | Use cookies instead of the authorization header                   |
 | accessTokenCookieName                     | string                     | `access_token`    | Access token cookie name                                          |
@@ -94,6 +95,8 @@ static forRoot(options?: MemberBaseModuleOptions);
 | defaultAdminPassword                      | string                     | generated         | Omit and a policy-compliant password is generated and logged once |
 | oauth2Providers                           | OAuth2Provider[]           | []                | Configure OAuth2 login channels                                   |
 | oauth2ClientDestUrl                       | string                     | `/login`          | Redirect target in the client after OAuth2 login                  |
+
+Every login opens a row in `member_sessions` and every refresh token is bound to one; `refreshToken()` rotates the token, a reused one revokes the session, and `revokeSessionByRefreshToken()` is what makes a logout end it on the server. This is always on. `sessionTracking` only tunes it: `rotationGraceSeconds` (default `10`, allowed `0`–`300`), `recordUserAgent` and `recordIp` (default `false`), and `sessionEntity` to store sessions in a subclass of your own (with `autoLoadEntities` the base `member_sessions` table is still created alongside it). The table definition, the errors a refresh can be refused with, and the upgrade notes are in the package README under "Login Sessions and Refresh Token Rotation".
 
 `httpOnly` is not configurable and is always on. Cookie attributes left unset are derived per request, so neither development nor production needs to set them.
 
