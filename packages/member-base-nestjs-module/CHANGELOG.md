@@ -3,6 +3,61 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.15.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.14.0...@rytass/member-base-nestjs-module@0.15.0) (2026-10-06)
+
+- feat(member-base-nestjs-module)!: track login sessions and rotate refresh tokens ([4625d50](https://github.com/Rytass/Utils/commit/4625d50251670dccf15eda3a586e8e56a3a84c7f))
+
+### BREAKING CHANGES
+
+- Login sessions are always on. No call has to change: every
+  existing method keeps its signature and return shape. Two kinds of setup do
+  need a change: without `autoLoadEntities`, add `MemberSessionEntity` to the
+  DataSource's `entities`; and code that constructs or subclasses
+  `MemberBaseService` / `MemberBaseAdminService` passes a `MemberSessionService`
+  as the new last constructor argument. Behaviour that changes:
+
+* Every user signs in again, once. A refresh token issued by 0.14 or earlier
+  has no `sid` and is refused with the same `InvalidToken` (code 104,
+  "Invalid token", status 400) that 0.14 answered any bad token with.
+* The `member_sessions` table must exist, like the package's other tables:
+  `synchronize` or a migration. The README has the columns. Without the table
+  or the entity every login fails: `MemberBaseService.login()` with
+  `PasswordValidationError` (500), the cause being logged; the gateway, OAuth
+  and redirect paths with the database error itself.
+* A refresh token works once. Clients must keep the newest refresh token
+  `refreshToken()` returns; replaying an older one outside the grace window
+  revokes the session.
+* New refusals from `refreshToken()`, all `InvalidToken` subclasses with
+  status 400: `SessionRevokedError` (128), `SessionExpiredError` (129),
+  `RefreshTokenReuseDetectedError` (130), `SessionNotFoundError` (131).
+* New `SessionRotationConflictError` (132, status 409) when two requests
+  change one session at once. It is not a refusal; retry.
+* `refreshToken()` no longer reports database and other unexpected errors as
+  `InvalidToken`; they propagate. Clients should retry them, not sign out.
+* `changePassword`, `changePasswordWithToken` and
+  `MemberBaseAdminService.resetMemberPassword` revoke the member's sessions; a
+  failure to revoke is logged, not thrown. `archiveMember` revokes them too,
+  and throws without archiving if it cannot.
+* `OidcSsoBridge.clearSession` (unified logout) now also revokes the
+  member-base session behind every refresh cookie it is sent.
+* `signRefreshToken` and `OidcSsoBridge.issueSession` now write a session row
+  each time, without waiting for it. With several instances, a refresh that
+  reaches another instance within milliseconds of the login can be refused
+  with `SessionNotFoundError`; use `issueTokenPair` where you can await.
+* As an OIDC issuer, a member-base access token stands in for an OIDC login
+  only while its session is open. A token without a `sid` — issued before the
+  upgrade, or signed with `signAccessToken` alone — never does.
+* `sid` and `jti` are reserved claims; do not return them from
+  `customizedJwtPayload`. Refresh tokens always carry the module's values, and
+  access tokens issued for a session carry its `sid`.
+* `changePassword(..., { keepSessionId })` keeps one session; follow it with
+  `reissueSessionTokens` in the same request. A session from before a password
+  change that was not kept cannot be reissued (`PasswordChangedError`).
+* The login log stores no address for a value that is not one, and logs a
+  failed write instead of leaving it unhandled.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
 # [0.14.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.13.0...@rytass/member-base-nestjs-module@0.14.0) (2026-09-02)
 
 ### Features
