@@ -146,7 +146,7 @@ export function parseSchedulerStatusResponse(response: EssSchedulerStatusRespons
 export interface EssSchedulerJobRequest {
   /**
    * job 定義的完整路徑（package + 名稱），不含 `JobDefinition:/` 前綴，如
-   * `oracle/apps/ess/financials/receivables/.../JobName`。
+   * `oracle/apps/ess/financials/receivables/.../JobName`。開頭有沒有 `/` 都可以，送出時會正規化。
    */
   readonly jobDefinitionPath: string;
   readonly arguments: EssPositionalArguments;
@@ -164,6 +164,19 @@ export interface EssSchedulerJobRequest {
   readonly retries?: number;
 }
 
+/**
+ * 組出 `jobDefinitionId`：`JobDefinition:/` 後面接**以 `/` 開頭**的絕對路徑，也就是
+ * `JobDefinition://oracle/apps/ess/...`（兩條斜線）。
+ *
+ * 只有一條斜線（`JobDefinition:/oracle/...`）時 Fusion 會把第一段吃掉、找不到 job 定義，卻回報成
+ * `403 ESS-02002 ... does not have sufficient privilege ... JobDefinition://apps/ess/...`——訊息指向
+ * 權限，而路徑裡少了 `oracle` 才是真正的線索（TEST 實測 2026-10-07：同一身分、同一 job、同樣參數，
+ * 單斜線 403、雙斜線 201）。
+ */
+export function buildSchedulerJobDefinitionId(jobDefinitionPath: string): string {
+  return `JobDefinition://${jobDefinitionPath.replace(/^\/+/, '')}`;
+}
+
 /** 組出 Scheduler REST 的提交 payload。 */
 export function buildSchedulerSubmitPayload(request: EssSchedulerJobRequest): Readonly<Record<string, unknown>> {
   for (const position of request.arguments.keys()) {
@@ -173,7 +186,7 @@ export function buildSchedulerSubmitPayload(request: EssSchedulerJobRequest): Re
   }
 
   return {
-    jobDefinitionId: `JobDefinition:/${request.jobDefinitionPath.replace(/^\/+/, '')}`,
+    jobDefinitionId: buildSchedulerJobDefinitionId(request.jobDefinitionPath),
     application: request.application ?? FUSION_ESS_DEFAULT_APPLICATION,
     ...(request.product !== undefined ? { product: request.product } : {}),
     ...(request.description !== undefined ? { description: request.description } : {}),
