@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.3.1](https://github.com/Rytass/Utils/compare/@rytass/erp-oracle-fusion@0.3.0...@rytass/erp-oracle-fusion@0.3.1) (2026-10-07)
+
+### Bug Fixes
+
+- **erp-oracle-fusion:** send ESS job definition ids as absolute paths ([4e320c3](https://github.com/Rytass/Utils/commit/4e320c3ff05bed046a66808f6c08032ffdb2a0a2))
+
 # [0.3.0](https://github.com/Rytass/Utils/compare/@rytass/erp-oracle-fusion@0.2.0...@rytass/erp-oracle-fusion@0.3.0) (2026-10-06)
 
 ### Bug Fixes
