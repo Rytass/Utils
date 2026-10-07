@@ -1,4 +1,5 @@
 import {
+  buildSchedulerJobDefinitionId,
   buildSchedulerSubmitPayload,
   classifySchedulerState,
   extractSchedulerRequestId,
@@ -161,7 +162,7 @@ describe('FusionEssSchedulerService', () => {
     expect(url).toBe('https://pod.example.com/ess/rest/scheduler/v1/requests');
     expect((init.headers as Record<string, string>)['Content-Type']).toBe('application/json');
     expect(JSON.parse(init.body as string)).toEqual({
-      jobDefinitionId: 'JobDefinition:/oracle/apps/ess/financials/receivables/Job',
+      jobDefinitionId: 'JobDefinition://oracle/apps/ess/financials/receivables/Job',
       application: 'FscmEss',
       product: 'AR',
       description: 'test',
@@ -196,12 +197,23 @@ describe('FusionEssSchedulerService', () => {
 
   it('buildSchedulerSubmitPayload 未指定 product／description 時不送出這兩欄', () => {
     expect(buildSchedulerSubmitPayload({ jobDefinitionPath: 'a/Job', arguments: new Map() })).toEqual({
-      jobDefinitionId: 'JobDefinition:/a/Job',
+      jobDefinitionId: 'JobDefinition://a/Job',
       application: 'FscmEss',
       retries: 0,
       requestParameters: [],
     });
   });
+
+  // 單斜線（JobDefinition:/oracle/...）在 Fusion 上會回 403 ESS-02002 的假性權限錯誤，見 buildSchedulerJobDefinitionId。
+  it.each(['oracle/apps/ess/x/Job', '/oracle/apps/ess/x/Job', '//oracle/apps/ess/x/Job'])(
+    'jobDefinitionId 一律是雙斜線的絕對路徑（輸入 %s）',
+    jobDefinitionPath => {
+      expect(buildSchedulerJobDefinitionId(jobDefinitionPath)).toBe('JobDefinition://oracle/apps/ess/x/Job');
+      expect(buildSchedulerSubmitPayload({ jobDefinitionPath, arguments: new Map() })['jobDefinitionId']).toBe(
+        'JobDefinition://oracle/apps/ess/x/Job',
+      );
+    },
+  );
 });
 
 describe('FusionFbdiService.downloadEssExecutionText', () => {

@@ -213,6 +213,7 @@ export {
 // ---------------------------------------------------------------------------
 export {
   buildSchedulerStatusPath,
+  buildSchedulerJobDefinitionId,
   buildSchedulerSubmitPayload,
   classifySchedulerState,
   extractSchedulerRequestId,
