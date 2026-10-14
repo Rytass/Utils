@@ -36,7 +36,14 @@ export class StockEntity {
   @Index()
   orderId: string;
 
-  @Column({ type: 'numeric' })
+  // PostgreSQL drivers return numeric as a string; keep the declared type true.
+  @Column({
+    type: 'numeric',
+    transformer: {
+      to: (value: number): number => value,
+      from: (value: string | number | null): number | null => (value === null ? null : Number(value)),
+    },
+  })
   quantity: number;
 
   @ManyToOne(() => MaterialEntity, material => material.stocks)
