@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ChildEntity, Column, Repository } from 'typeorm';
+import { ChildEntity, Column, Repository, SelectQueryBuilder } from 'typeorm';
 import { locationMock } from '../__mocks__/location.mock';
 import { CustomMaterialEntity, materialMock } from '../__mocks__/material.mock';
 import {
@@ -15,7 +15,7 @@ import {
   StockService,
   WMSBaseModule,
 } from '../src';
-import { StockQuantityNotEnoughError } from '../src/constants/errors/base.error';
+import { BatchMaterialMismatchError, StockQuantityNotEnoughError } from '../src/constants/errors/base.error';
 import { OrderEntity } from '../src/models/order.entity';
 import { OrderService } from '../src/services/order.service';
 
@@ -206,6 +206,146 @@ describe('order', () => {
         ],
       }),
     ).rejects.toThrow(StockQuantityNotEnoughError);
+  });
+
+  describe('lots', () => {
+    const receive = (id: string, quantity: number, locationId = locationMock.child1.id): Promise<OrderAEntity> =>
+      orderService.createOrder(OrderAEntity, {
+        order: { customFieldA: 'receive', customIntFieldAA: 1 },
+        batches: [{ id, key: id, locationId, materialId: materialMock.m1.id, quantity }],
+      });
+
+    const issue = (id: string, quantity: number, locationId = locationMock.child1.id): Promise<OrderAEntity> =>
+      orderService.createOrder(OrderAEntity, {
+        order: { customFieldA: 'issue', customIntFieldAA: -1 },
+        batches: [{ id, key: id, locationId, materialId: materialMock.m1.id, quantity: -quantity }],
+      });
+
+    const lotStock = (id: string): Promise<number> =>
+      stockService.find({
+        locationIds: [locationMock.child1.id],
+        materialIds: [materialMock.m1.id],
+        batchIds: [id],
+        exactLocationMatch: true,
+      });
+
+    // A lot is moved many times; each movement used to INSERT the batch again
+    // and fail on its primary key.
+    it('should move the same lot more than once', async () => {
+      await receive('LOT-A', 100);
+      await issue('LOT-A', 30);
+      await issue('LOT-A', 20);
+
+      await expect(lotStock('LOT-A')).resolves.toBe(50);
+      await expect(module.get<Repository<BatchEntity>>(RESOLVED_BATCH_REPO).count()).resolves.toBe(1);
+    });
+
+    it('should fall back to the batch id when key is omitted', async () => {
+      await orderService.createOrder(OrderAEntity, {
+        order: { customFieldA: 'receive', customIntFieldAA: 1 },
+        batches: [{ id: 'NO-KEY', locationId: locationMock.child1.id, materialId: materialMock.m1.id, quantity: 1 }],
+      });
+
+      const batch = await module.get<Repository<BatchEntity>>(RESOLVED_BATCH_REPO).findOneByOrFail({ id: 'NO-KEY' });
+
+      expect(batch.key).toBe('NO-KEY');
+    });
+
+    it('should reject reusing a batch id for another material', async () => {
+      await receive('LOT-A', 10);
+
+      await expect(
+        orderService.createOrder(OrderAEntity, {
+          order: { customFieldA: 'receive', customIntFieldAA: 1 },
+          batches: [
+            {
+              id: 'LOT-A',
+              key: 'LOT-A',
+              locationId: locationMock.child1.id,
+              materialId: materialMock.m2.id,
+              quantity: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow(BatchMaterialMismatchError);
+    });
+
+    // Each line used to be checked against stock on its own, so lines that
+    // together overdraw a location all passed.
+    it('should net lines of one order before checking stock', async () => {
+      await receive('LOT-A', 10);
+
+      await expect(
+        orderService.createOrder(OrderAEntity, {
+          order: { customFieldA: 'issue', customIntFieldAA: -1 },
+          batches: [
+            {
+              id: 'LOT-A',
+              key: 'LOT-A',
+              locationId: locationMock.child1.id,
+              materialId: materialMock.m1.id,
+              quantity: -8,
+            },
+            {
+              id: 'LOT-A',
+              key: 'LOT-A',
+              locationId: locationMock.child1.id,
+              materialId: materialMock.m1.id,
+              quantity: -8,
+            },
+          ],
+        }),
+      ).rejects.toThrow(StockQuantityNotEnoughError);
+
+      await expect(lotStock('LOT-A')).resolves.toBe(10);
+    });
+
+    // The check used to sum material x location only, so one lot could go
+    // negative while another kept the location total positive.
+    it('should not let a lot go negative under a positive location total', async () => {
+      await receive('LOT-A', 10);
+      await receive('LOT-B', 10);
+
+      await expect(issue('LOT-A', 15)).rejects.toThrow(StockQuantityNotEnoughError);
+      await expect(issue('LOT-A', 10)).resolves.toBeDefined();
+    });
+
+    it('should not check stock for inbound lines', async () => {
+      await expect(
+        orderService.canCreateStock({
+          id: 'ANY',
+          locationId: locationMock.child1.id,
+          materialId: materialMock.m1.id,
+          quantity: 5,
+        }),
+      ).resolves.toBe(true);
+    });
+  });
+
+  // PostgreSQL returns SUM(numeric) as a string; SQLite does not, so simulate
+  // it. Unconverted, "100" + -30 is "100-30", NaN >= 0 is false, and every
+  // outbound was rejected however much stock there was.
+  describe('when the driver returns numeric sums as strings', () => {
+    afterEach(() => jest.restoreAllMocks());
+
+    it('should return a number from find', async () => {
+      jest.spyOn(SelectQueryBuilder.prototype, 'getRawOne').mockResolvedValue({ quantity: '100' });
+
+      await expect(stockService.find({})).resolves.toBe(100);
+    });
+
+    it('should allow an outbound that the stock covers', async () => {
+      jest.spyOn(SelectQueryBuilder.prototype, 'getRawOne').mockResolvedValue({ quantity: '100' });
+
+      await expect(
+        orderService.canCreateStock({
+          id: 'LOT-A',
+          locationId: locationMock.child1.id,
+          materialId: materialMock.m1.id,
+          quantity: -30,
+        }),
+      ).resolves.toBe(true);
+    });
   });
 });
 
