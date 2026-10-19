@@ -1,5 +1,6 @@
+import { randomUUID } from 'node:crypto';
 import { BadRequestException, Inject, Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
-import { DeepPartial, FindOptionsWhere, QueryFailedError, Repository } from 'typeorm';
+import { DeepPartial, FindOptionsWhere, LessThan, MoreThan, QueryFailedError, Repository } from 'typeorm';
 import { hash, verify } from 'argon2';
 import { BaseMemberEntity } from '../models/base-member.entity';
 import {
@@ -114,6 +115,11 @@ interface RefreshTokenClaims {
   authTime?: number;
   sid?: string;
   jti?: string;
+}
+
+/** A login attempt counted by claimLoginAttempt, and the failure it logged with it, if it did. */
+interface ClaimedLoginAttempt {
+  readonly logId: string | null;
 }
 
 @Injectable()
@@ -475,9 +481,9 @@ export class MemberBaseService<
 
     const requestedOn = new Date();
 
-    member.resetPasswordRequestedAt = requestedOn;
+    await this.baseMemberRepo.update({ id: member.id }, { resetPasswordRequestedAt: requestedOn });
 
-    await this.baseMemberRepo.save(member);
+    member.resetPasswordRequestedAt = requestedOn;
 
     const token = jwt.sign(
       {
@@ -511,11 +517,15 @@ export class MemberBaseService<
 
     try {
       if (await verify(member.password, originPassword)) {
-        member.password = await hash(newPassword, this.passwordHashOptions);
-        member.passwordChangedAt = new Date();
-        member.shouldUpdatePassword = false;
+        const changes = {
+          password: await hash(newPassword, this.passwordHashOptions),
+          passwordChangedAt: new Date(),
+          shouldUpdatePassword: false,
+        };
 
-        await this.baseMemberRepo.save(member);
+        await this.baseMemberRepo.update({ id: member.id }, changes);
+
+        Object.assign(member, changes);
 
         await this.memberPasswordHistoryRepo.save(
           this.memberPasswordHistoryRepo.create({
@@ -611,15 +621,19 @@ export class MemberBaseService<
         throw new InvalidToken();
       }
 
-      member.password = await hash(newPassword, this.passwordHashOptions);
-      member.passwordChangedAt = new Date();
-      member.shouldUpdatePassword = false;
-      member.resetPasswordRequestedAt = null;
-      // Completing the reset-token flow proves email ownership, so clear the
-      // login failure lock to keep a self-service recovery path for banned members.
-      member.loginFailedCounter = 0;
+      const changes = {
+        password: await hash(newPassword, this.passwordHashOptions),
+        passwordChangedAt: new Date(),
+        shouldUpdatePassword: false,
+        resetPasswordRequestedAt: null,
+        // Completing the reset-token flow proves email ownership, so clear the
+        // login failure lock to keep a self-service recovery path for banned members.
+        loginFailedCounter: 0,
+      };
 
-      await this.baseMemberRepo.save(member);
+      await this.baseMemberRepo.update({ id: member.id }, changes);
+
+      Object.assign(member, changes);
 
       await this.memberPasswordHistoryRepo.save(
         this.memberPasswordHistoryRepo.create({
@@ -886,15 +900,7 @@ export class MemberBaseService<
 
     if (member.loginFailedCounter >= this.loginFailedBanThreshold) {
       if (this.loginFailedAutoUnlockSeconds) {
-        const latestFailedRecord = await this.memberLoginLogRepo.findOne({
-          order: {
-            createdAt: 'DESC',
-          },
-          where: {
-            memberId: member.id,
-            success: false,
-          },
-        });
+        const latestFailedRecord = await this.findLatestFailedLoginOnPrimary(member.id);
 
         if (
           !latestFailedRecord ||
@@ -918,25 +924,49 @@ export class MemberBaseService<
     const ip = typeof options === 'string' ? options : (options?.ip ?? undefined);
 
     try {
-      if (await verify(member.password, password)) {
+      // Taken before the password is checked, so that a burst of concurrent
+      // attempts cannot all pass the threshold check above on the same stale
+      // read and each get a guess. The attempt is counted as a failure up front
+      // and the count is cleared, or given back, once the password turns out right.
+      const claimed = await this.claimLoginAttempt(member, ip);
+
+      if (!claimed) {
+        throw new MemberBannedError();
+      }
+
+      let verified: boolean;
+
+      try {
+        verified = await verify(member.password, password);
+      } catch (err) {
+        await this.releaseLoginAttempt(member, claimed);
+
+        throw err;
+      }
+
+      if (verified) {
         if (member.shouldUpdatePassword) {
+          await this.releaseLoginAttempt(member, claimed);
+
           throw new PasswordShouldUpdatePasswordError();
         }
 
+        await this.baseMemberRepo.update({ id: member.id }, { loginFailedCounter: 0 });
+
         member.loginFailedCounter = 0;
 
-        await this.baseMemberRepo.save(member);
-
-        this.recordLoginAttempt(member.id, true, ip);
+        if (claimed.logId) {
+          this.markLoginAttemptSucceeded(member.id, claimed.logId);
+        } else {
+          this.recordLoginAttempt(member.id, true, ip);
+        }
 
         return { member: member as MemberEntity, isPasswordExpired };
       }
 
-      member.loginFailedCounter += 1;
-
-      await this.baseMemberRepo.save(member);
-
-      this.recordLoginAttempt(member.id, false, ip);
+      if (!claimed.logId) {
+        this.recordLoginAttempt(member.id, false, ip);
+      }
 
       throw new InvalidPasswordError();
     } catch (err) {
@@ -946,6 +976,119 @@ export class MemberBaseService<
     }
   }
 
+  /**
+   * The last failed attempt of a member, which auto unlock is judged by. Read
+   * from the primary: a replica a moment behind would show an older one and
+   * open the window early.
+   */
+  private async findLatestFailedLoginOnPrimary(memberId: string): Promise<MemberLoginLogEntity | null> {
+    const runner = this.baseMemberRepo.manager.connection.createQueryRunner('master');
+
+    try {
+      return await runner.manager.findOne(this.memberLoginLogRepo.target, {
+        order: { createdAt: 'DESC' },
+        where: { memberId, success: false },
+      });
+    } finally {
+      await runner.release();
+    }
+  }
+
+  /**
+   * Count one login attempt as failed, if the member may still make one.
+   *
+   * A single conditional UPDATE, so concurrent attempts are counted one by one
+   * on the primary and no more of them get through than the threshold leaves
+   * room for. A member already at the threshold only gets here once the auto
+   * unlock window has elapsed, and then the attempt is taken only if the counter
+   * is still the one that was read. Returns null when another attempt took the
+   * last one first.
+   *
+   * With auto unlock on, the failure is also logged here, in the same
+   * transaction. The window is judged by the last failure in the log, and an
+   * attempt still being checked must already count as one: logged only after
+   * its password was checked, every attempt arriving meanwhile would find the
+   * window open — one attempt per window would become one per verification,
+   * and crossing the threshold would not lock until the log caught up. Such a
+   * login therefore fails if its failure cannot be logged.
+   */
+  private async claimLoginAttempt(member: BaseMemberEntity, ip?: string): Promise<ClaimedLoginAttempt | null> {
+    const where = {
+      id: member.id,
+      loginFailedCounter:
+        member.loginFailedCounter >= this.loginFailedBanThreshold
+          ? member.loginFailedCounter
+          : LessThan(this.loginFailedBanThreshold),
+    };
+
+    const claimed =
+      this.loginFailedAutoUnlockSeconds && this.loginLogEnabled
+        ? await this.baseMemberRepo.manager.transaction(async (manager): Promise<ClaimedLoginAttempt | null> => {
+            const { affected } = await manager.increment(this.baseMemberRepo.target, where, 'loginFailedCounter', 1);
+
+            if (affected === 0) return null;
+
+            // Named here rather than read back from the insert, which not every driver reports.
+            const logId = randomUUID();
+
+            await manager.insert(this.memberLoginLogRepo.target, {
+              id: logId,
+              memberId: member.id,
+              success: false,
+              ip: this.loginLogRecordIp ? toStorableCidr(ip) : null,
+            });
+
+            return { logId };
+          })
+        : await this.baseMemberRepo
+            .increment(where, 'loginFailedCounter', 1)
+            // A driver that does not report affected rows leaves `affected` undefined;
+            // the attempt is still counted atomically, it just cannot be refused here.
+            .then(({ affected }): ClaimedLoginAttempt | null => (affected === 0 ? null : { logId: null }));
+
+    if (claimed) {
+      member.loginFailedCounter += 1;
+    }
+
+    return claimed;
+  }
+
+  /**
+   * Give back an attempt taken by claimLoginAttempt that did not turn out a
+   * wrong password, together with the failure it logged — as the attempt
+   * logged nothing before attempts were claimed.
+   */
+  private async releaseLoginAttempt(member: BaseMemberEntity, claimed: ClaimedLoginAttempt): Promise<void> {
+    const where = { id: member.id, loginFailedCounter: MoreThan(0) };
+    const { logId } = claimed;
+
+    if (logId) {
+      await this.baseMemberRepo.manager.transaction(async (manager): Promise<void> => {
+        await manager.delete(this.memberLoginLogRepo.target, { id: logId });
+        await manager.decrement(this.baseMemberRepo.target, where, 'loginFailedCounter', 1);
+      });
+    } else {
+      await this.baseMemberRepo.decrement(where, 'loginFailedCounter', 1);
+    }
+
+    member.loginFailedCounter = Math.max(member.loginFailedCounter - 1, 0);
+  }
+
+  /**
+   * Turn the failure claimLoginAttempt logged into the success it turned out
+   * to be. Not awaited, like recordLoginAttempt: the counter is already clear,
+   * so a failure left behind no longer locks anyone, and it is logged.
+   */
+  private markLoginAttemptSucceeded(memberId: string, logId: string): void {
+    Promise.resolve(this.memberLoginLogRepo.update({ id: logId }, { success: true })).catch((error: unknown): void => {
+      this.logger.error(
+        `Failed to record a login attempt of member ${memberId} as successful: ${
+          error instanceof Error ? error.message : error
+        }`,
+      );
+    });
+  }
+
   async resetLoginFailedCounter<T extends MemberEntity = MemberEntity>(id: string): Promise<T> {
     const member = await this.baseMemberRepo.findOne({ where: { id } });
 
@@ -953,9 +1096,9 @@ export class MemberBaseService<
       throw new MemberNotFoundError();
     }
 
-    member.loginFailedCounter = 0;
+    await this.baseMemberRepo.update({ id }, { loginFailedCounter: 0 });
 
-    await this.baseMemberRepo.save(member);
+    member.loginFailedCounter = 0;
 
     return member as T;
   }
