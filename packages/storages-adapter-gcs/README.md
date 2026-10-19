@@ -205,6 +205,18 @@ processLargeFile('large-video.mp4', 'videos/large-video.mp4');
 
 ### Error Handling
 
+Stream writes reject when either the upload (permission denied, network failure, missing bucket, ...) or the source
+stream fails, with the original error. When no `filename` is given, the temporary object uploaded before renaming is
+removed on a best-effort basis.
+
+```typescript
+try {
+  await storage.write(csvStream, { filename: 'exports/orders.csv', contentType: 'text/csv' });
+} catch (error) {
+  console.error('Upload failed:', error);
+}
+```
+
 ```typescript
 import { StorageError, ErrorCode } from '@rytass/storages';
 

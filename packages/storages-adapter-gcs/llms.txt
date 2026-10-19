@@ -124,6 +124,9 @@ const publicUrl = await storage.url('images/avatar.png');
 // <img src="${publicUrl}" alt="User Avatar" />
 ```
 
+Stream writes reject with the original error when the upload or the source stream fails; the temporary object used
+when no `filename` is given is removed on a best-effort basis.
+
 ### File Management
 
 ```typescript

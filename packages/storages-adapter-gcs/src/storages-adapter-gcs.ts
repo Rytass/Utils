@@ -8,7 +8,8 @@ import {
   StorageFile,
   WriteFileOptions,
 } from '@rytass/storages';
-import { Readable, PassThrough } from 'stream';
+import { Readable } from 'stream';
+import { pipeline } from 'stream/promises';
 import { v4 as uuid } from 'uuid';
 import { Bucket, Storage as GCSStorage } from '@google-cloud/storage';
 import { GCSOptions } from './typings';
@@ -78,17 +79,12 @@ export class StorageGCSService extends Storage<GCSOptions> {
         ...(options?.contentType ? { contentType: options?.contentType } : {}),
       });
 
-      stream.pipe(writeStream);
+      await pipeline(stream, writeStream);
 
-      return new Promise(resolve => {
-        writeStream.on('finish', () => {
-          resolve({ key: givenFilename });
-        });
-      });
+      return { key: givenFilename };
     }
 
     const tempFilename = uuid();
-    const uploadStream = new PassThrough();
 
     const getFilenamePromise = this.getStreamFilename(stream);
 
@@ -99,22 +95,35 @@ export class StorageGCSService extends Storage<GCSOptions> {
       ...(options?.contentType ? { contentType: options?.contentType } : {}),
     });
 
-    stream.pipe(uploadStream).pipe(writeStream);
+    const uploadPromise = pipeline(stream, writeStream);
 
-    const [[filename, mime]] = await Promise.all([
-      getFilenamePromise,
-      new Promise(resolve => {
-        writeStream.on('finish', resolve);
-      }),
-    ]);
+    try {
+      const [[filename, mime]] = await Promise.all([getFilenamePromise, uploadPromise]);
 
-    if (!options?.contentType && mime) {
-      await tempFile.setMetadata({ contentType: mime });
+      if (!options?.contentType && mime) {
+        await tempFile.setMetadata({ contentType: mime });
+      }
+
+      await tempFile.move(filename);
+
+      return { key: filename };
+    } catch (ex: unknown) {
+      // Abort an upload that may still be running (e.g. filename detection failed first) and wait for it to
+      // settle, so it cannot recreate the temp object after the cleanup below.
+      writeStream.on('error', (): void => undefined);
+      writeStream.destroy(ex instanceof Error ? ex : new Error(String(ex)));
+
+      await uploadPromise.catch((): undefined => undefined);
+
+      // Best-effort cleanup of the partially uploaded temp object; never mask the original error.
+      try {
+        await tempFile.delete({ ignoreNotFound: true });
+      } catch {
+        // ignore cleanup failure
+      }
+
+      throw ex;
     }
-
-    await tempFile.move(filename);
-
-    return { key: filename };
   }
 
   private async writeBufferFile(buffer: Buffer, options?: WriteFileOptions): Promise<StorageFile> {

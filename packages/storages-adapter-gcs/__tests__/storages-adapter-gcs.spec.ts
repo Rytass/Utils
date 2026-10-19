@@ -89,7 +89,7 @@ let writeStreamMock = jest.fn((filename: string) => (_options: Record<string, st
   return stream;
 });
 
-const deleteMock = jest.fn((filename: string) => (): void => {
+let deleteMock = jest.fn((filename: string) => (): void => {
   fakeStorage.delete(filename);
 });
 
@@ -97,7 +97,7 @@ const existsMock = jest.fn((filename: string) => (): boolean[] => {
   return [fakeStorage.has(filename)];
 });
 
-const moveMock = jest.fn((filename: string) => (newFilename: string): void => {
+let moveMock = jest.fn((filename: string) => (newFilename: string): void => {
   const buffer = fakeStorage.get(filename);
 
   if (!buffer) throw new Error(`No such object: ${BUCKET}/${filename}`);
@@ -123,6 +123,42 @@ const fileMock = jest.fn(
   }),
 );
 
+const createFailingUploadStream =
+  (_filename: string) =>
+  (_options: Record<string, string>): Writable =>
+    new Writable({
+      write(_chunk: Buffer, _encoding, done): void {
+        done(new Error('upload failed'));
+      },
+    });
+
+const createErroredSourceStream = (): Readable => {
+  const stream = new Readable({
+    read(): void {},
+  });
+
+  stream.push(sampleFileBuffer.subarray(0, 32));
+
+  setImmediate(() => {
+    stream.destroy(new Error('source failed'));
+  });
+
+  return stream;
+};
+
+const createStorage = async (): Promise<import('../src').StorageGCSService> => {
+  const { StorageGCSService } = await import('../src');
+
+  return new StorageGCSService({
+    projectId: PROJECT_ID,
+    credentials: {
+      client_email: CLIENT_EMAIL,
+      private_key: CLIENT_SECRET,
+    },
+    bucket: BUCKET,
+  });
+};
+
 describe('GCS adapter', () => {
   beforeAll(() => {
     jest.mock('@google-cloud/storage', () => ({
@@ -142,6 +178,8 @@ describe('GCS adapter', () => {
     readStreamMock.mockClear();
     writeStreamMock.mockClear();
     getSignedUrlMock.mockClear();
+    moveMock.mockClear();
+    setMetadataMock.mockClear();
 
     fakeStorage.set('saved-file', sampleFileBuffer);
   });
@@ -507,5 +545,149 @@ describe('GCS adapter', () => {
 
     expect(notFound).toBeFalsy();
     expect(exists).toBeTruthy();
+  });
+
+  describe('stream write failures', () => {
+    it('should reject when upload fails with custom filename', async () => {
+      const originWriteStreamMock = writeStreamMock;
+
+      writeStreamMock = jest.fn(createFailingUploadStream);
+
+      try {
+        const storage = await createStorage();
+
+        await expect(storage.write(createReadStream(sampleFile), { filename: 'target.png' })).rejects.toThrow(
+          'upload failed',
+        );
+
+        expect(fakeStorage.has('target.png')).toBeFalsy();
+        expect(deleteMock).not.toHaveBeenCalled();
+      } finally {
+        writeStreamMock = originWriteStreamMock;
+      }
+    });
+
+    it('should reject and remove temp file when upload fails without filename', async () => {
+      const originWriteStreamMock = writeStreamMock;
+
+      writeStreamMock = jest.fn(createFailingUploadStream);
+
+      try {
+        const storage = await createStorage();
+
+        await expect(storage.write(createReadStream(sampleFile))).rejects.toThrow('upload failed');
+
+        const [[tempFilename]] = writeStreamMock.mock.calls;
+
+        expect(tempFilename).not.toBe(sampleFileSha256);
+        expect(deleteMock).toHaveBeenCalledTimes(1);
+        expect(deleteMock).toHaveBeenCalledWith(tempFilename);
+        expect(moveMock).not.toHaveBeenCalled();
+        expect([...fakeStorage.keys()]).toEqual(['saved-file']);
+      } finally {
+        writeStreamMock = originWriteStreamMock;
+      }
+    });
+
+    it('should reject when source stream errors with custom filename', async () => {
+      const storage = await createStorage();
+
+      await expect(storage.write(createErroredSourceStream(), { filename: 'target.png' })).rejects.toThrow(
+        'source failed',
+      );
+
+      expect(fakeStorage.has('target.png')).toBeFalsy();
+    });
+
+    it('should reject and remove temp file when source stream errors without filename', async () => {
+      const storage = await createStorage();
+
+      await expect(storage.write(createErroredSourceStream())).rejects.toThrow('source failed');
+
+      const [[tempFilename]] = writeStreamMock.mock.calls;
+
+      expect(deleteMock).toHaveBeenCalledWith(tempFilename);
+      expect(moveMock).not.toHaveBeenCalled();
+      expect([...fakeStorage.keys()]).toEqual(['saved-file']);
+    });
+
+    it('should reject with original error and remove temp file when move fails', async () => {
+      const originMoveMock = moveMock;
+
+      moveMock = jest.fn((_filename: string) => (_newFilename: string): void => {
+        throw new Error('move failed');
+      });
+
+      try {
+        const storage = await createStorage();
+
+        await expect(storage.write(createReadStream(sampleFile))).rejects.toThrow('move failed');
+
+        const [[tempFilename]] = writeStreamMock.mock.calls;
+
+        expect(deleteMock).toHaveBeenCalledWith(tempFilename);
+        expect([...fakeStorage.keys()]).toEqual(['saved-file']);
+      } finally {
+        moveMock = originMoveMock;
+      }
+    });
+
+    it('should not mask original error when temp file cleanup fails', async () => {
+      const originWriteStreamMock = writeStreamMock;
+      const originDeleteMock = deleteMock;
+
+      writeStreamMock = jest.fn(createFailingUploadStream);
+      deleteMock = jest.fn((_filename: string) => (): void => {
+        throw new Error('delete failed');
+      });
+
+      try {
+        const storage = await createStorage();
+
+        await expect(storage.write(createReadStream(sampleFile))).rejects.toThrow('upload failed');
+
+        expect(deleteMock).toHaveBeenCalledTimes(1);
+      } finally {
+        writeStreamMock = originWriteStreamMock;
+        deleteMock = originDeleteMock;
+      }
+    });
+
+    it('should stop the upload before removing temp file when filename detection fails first', async () => {
+      const storage = await createStorage();
+
+      jest.spyOn(storage, 'getStreamFilename').mockRejectedValue(new Error('hash failed'));
+
+      const source = new Readable({
+        read(): void {
+          setTimeout(() => this.push(sampleFileBuffer.subarray(0, 8)), 5);
+        },
+      });
+
+      await expect(storage.write(source)).rejects.toThrow('hash failed');
+
+      const [[tempFilename]] = writeStreamMock.mock.calls;
+
+      expect(source.destroyed).toBeTruthy();
+      expect(deleteMock).toHaveBeenCalledWith(tempFilename);
+
+      // A late 'finish' would recreate the temp object; give the event loop a chance to prove it does not happen
+      await new Promise(resolve => setTimeout(resolve, 30));
+
+      expect([...fakeStorage.keys()]).toEqual(['saved-file']);
+    });
+
+    it('should keep success path unchanged without filename', async () => {
+      const storage = await createStorage();
+
+      const { key } = await storage.write(createReadStream(sampleFile));
+
+      expect(key).toBe(sampleFileSha256);
+      expect(Buffer.compare(fakeStorage.get(sampleFileSha256) as Buffer, sampleFileBuffer)).toBe(0);
+      expect(setMetadataMock).toHaveBeenCalledWith(expect.any(String));
+      expect(moveMock).toHaveBeenCalledTimes(1);
+      expect(deleteMock).not.toHaveBeenCalled();
+      expect([...fakeStorage.keys()].sort()).toEqual(['saved-file', sampleFileSha256].sort());
+    });
   });
 });
