@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.1](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-vercel-blob@0.2.0...@rytass/storages-adapter-vercel-blob@0.2.1) (2026-10-19)
+
+### Bug Fixes
+
+- **storages-adapter-vercel-blob:** reject unnamed stream writes on source errors ([8cb7d13](https://github.com/Rytass/Utils/commit/8cb7d13ba80e134375736874944b27e7ef34e685))
+
 # [0.2.0](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-vercel-blob@0.1.1...@rytass/storages-adapter-vercel-blob@0.2.0) (2026-08-02)
 
 ### Bug Fixes

@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.5.1](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-r2@0.5.0...@rytass/storages-adapter-r2@0.5.1) (2026-10-19)
+
+### Bug Fixes
+
+- **storages-adapter-r2:** settle and clean up temp uploads on stream errors ([e5fc017](https://github.com/Rytass/Utils/commit/e5fc017ba04bfdde5905fe596895786c38d5eb32))
+
 # [0.5.0](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-r2@0.4.13...@rytass/storages-adapter-r2@0.5.0) (2026-08-02)
 
 ### Bug Fixes

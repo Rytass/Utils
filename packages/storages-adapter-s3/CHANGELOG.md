@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.4.1](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-s3@0.4.0...@rytass/storages-adapter-s3@0.4.1) (2026-10-19)
+
+### Bug Fixes
+
+- **storages-adapter-s3:** settle and clean up temp uploads on stream errors ([89ecd1f](https://github.com/Rytass/Utils/commit/89ecd1f8424dff30bc0c6f2cd1deb2cd9c8e9217))
+
 # [0.4.0](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-s3@0.3.11...@rytass/storages-adapter-s3@0.4.0) (2026-08-02)
 
 ### Bug Fixes

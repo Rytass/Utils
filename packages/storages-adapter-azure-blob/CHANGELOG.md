@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.1](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-azure-blob@0.2.0...@rytass/storages-adapter-azure-blob@0.2.1) (2026-10-19)
+
+### Bug Fixes
+
+- **storages-adapter-azure-blob:** settle temp uploads on errors and wait for copy completion ([f0cd56a](https://github.com/Rytass/Utils/commit/f0cd56ad03c411c25484691102fb6c6922251a9f))
+
 # [0.2.0](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-azure-blob@0.1.10...@rytass/storages-adapter-azure-blob@0.2.0) (2026-08-02)
 
 ### Bug Fixes

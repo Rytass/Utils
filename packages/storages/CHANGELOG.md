@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.3.1](https://github.com/Rytass/Utils/compare/@rytass/storages@0.3.0...@rytass/storages@0.3.1) (2026-10-19)
+
+### Bug Fixes
+
+- **storages:** reject stream helpers when the source stream errors ([7e483a0](https://github.com/Rytass/Utils/commit/7e483a0325e7c7b55762ce921c64311eccf09ba4))
+
 # [0.3.0](https://github.com/Rytass/Utils/compare/@rytass/storages@0.2.7...@rytass/storages@0.3.0) (2026-08-02)
 
 ### Bug Fixes

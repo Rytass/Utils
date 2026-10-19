@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.3.1](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-local@0.3.0...@rytass/storages-adapter-local@0.3.1) (2026-10-19)
+
+### Bug Fixes
+
+- **storages-adapter-local:** apply converters only once per write ([949edde](https://github.com/Rytass/Utils/commit/949eddebf3f71af1456fb15088cec7c8300eb251))
+- **storages-adapter-local:** reject stream writes on write or source errors ([887e7b1](https://github.com/Rytass/Utils/commit/887e7b129bfac26dbd0fc2c09d7627bb81ad98c1))
+
 # [0.3.0](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-local@0.2.10...@rytass/storages-adapter-local@0.3.0) (2026-08-02)
 
 ### Bug Fixes

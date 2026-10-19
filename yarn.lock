@@ -8532,7 +8532,7 @@ __metadata:
   resolution: "@rytass/storages-adapter-azure-blob@workspace:packages/storages-adapter-azure-blob"
   dependencies:
     "@azure/storage-blob": "npm:^12.31.0"
-    "@rytass/storages": "npm:^0.3.0"
+    "@rytass/storages": "npm:^0.3.1"
     uuid: "npm:^13.0.0"
   languageName: unknown
   linkType: soft
@@ -8542,7 +8542,7 @@ __metadata:
   resolution: "@rytass/storages-adapter-gcs@workspace:packages/storages-adapter-gcs"
   dependencies:
     "@google-cloud/storage": "npm:^7.19.0"
-    "@rytass/storages": "npm:^0.3.0"
+    "@rytass/storages": "npm:^0.3.1"
     "@types/uuid": "npm:^11.0.0"
     uuid: "npm:^13.0.0"
   languageName: unknown
@@ -8552,7 +8552,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/storages-adapter-local@workspace:packages/storages-adapter-local"
   dependencies:
-    "@rytass/storages": "npm:^0.3.0"
+    "@rytass/storages": "npm:^0.3.1"
     "@types/uuid": "npm:^11.0.0"
     uuid: "npm:^13.0.0"
   languageName: unknown
@@ -8565,7 +8565,7 @@ __metadata:
     "@aws-sdk/client-s3": "npm:^3.996.0"
     "@aws-sdk/lib-storage": "npm:^3.996.0"
     "@aws-sdk/s3-request-presigner": "npm:^3.996.0"
-    "@rytass/storages": "npm:^0.3.0"
+    "@rytass/storages": "npm:^0.3.1"
     "@types/uuid": "npm:^11.0.0"
     uuid: "npm:^13.0.0"
   languageName: unknown
@@ -8578,7 +8578,7 @@ __metadata:
     "@aws-sdk/client-s3": "npm:^3.996.0"
     "@aws-sdk/lib-storage": "npm:^3.996.0"
     "@aws-sdk/s3-request-presigner": "npm:^3.996.0"
-    "@rytass/storages": "npm:^0.3.0"
+    "@rytass/storages": "npm:^0.3.1"
     "@types/uuid": "npm:^11.0.0"
     uuid: "npm:^13.0.0"
   languageName: unknown
@@ -8588,12 +8588,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/storages-adapter-vercel-blob@workspace:packages/storages-adapter-vercel-blob"
   dependencies:
-    "@rytass/storages": "npm:^0.3.0"
+    "@rytass/storages": "npm:^0.3.1"
     "@vercel/blob": "npm:^2.4.0"
   languageName: unknown
   linkType: soft
 
-"@rytass/storages@npm:^0.3.0, @rytass/storages@workspace:packages/storages":
+"@rytass/storages@npm:^0.3.1, @rytass/storages@workspace:packages/storages":
   version: 0.0.0-use.local
   resolution: "@rytass/storages@workspace:packages/storages"
   dependencies:

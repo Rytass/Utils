@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.4.0](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-gcs@0.3.0...@rytass/storages-adapter-gcs@0.4.0) (2026-10-19)
+
+### Bug Fixes
+
+- **storages-adapter-gcs:** reject stream writes on upload or source errors ([cf267b3](https://github.com/Rytass/Utils/commit/cf267b3c1bef1ba83a5d89ac8262bd4de225645f))
+
+### Features
+
+- **storages-adapter-gcs:** support download filename on signed urls ([a8fe84c](https://github.com/Rytass/Utils/commit/a8fe84cb99f75bbd87ce02eb07a603d92465779d))
+
 # [0.3.0](https://github.com/Rytass/Utils/compare/@rytass/storages-adapter-gcs@0.2.12...@rytass/storages-adapter-gcs@0.3.0) (2026-08-02)
 
 ### Bug Fixes
