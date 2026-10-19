@@ -322,6 +322,123 @@ describe('StorageLocalService', (): void => {
       expect(() => localStorage.read('testFolder')).toThrow();
     });
 
+    describe('streamWriteFailures', (): void => {
+      const sampleBuffer: Buffer = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+      const createErroredSourceStream = (): Readable => {
+        const stream = new Readable({
+          read(): void {},
+        });
+
+        stream.push(sampleBuffer);
+
+        setImmediate(() => {
+          stream.destroy(new Error('source failed'));
+        });
+
+        return stream;
+      };
+
+      const createSourceStream = (): Readable => Readable.from([sampleBuffer]);
+
+      const createStorage = (): LocalStorage => {
+        vol.fromJSON({ '/test/tmp': null });
+
+        return new LocalStorage({ directory: testWorkingDirectory, autoMkdir: true });
+      };
+
+      it('shouldRejectWhenWriteFailsWithCustomFilename', async (): Promise<void> => {
+        const localStorage = createStorage();
+
+        vol.reset();
+
+        await expect(localStorage.write(createSourceStream(), { filename: 'target.png' })).rejects.toThrow(/ENOENT/);
+      });
+
+      it('shouldRejectWhenWriteFailsWithoutFilename', async (): Promise<void> => {
+        const localStorage = createStorage();
+
+        vol.reset();
+
+        await expect(localStorage.write(createSourceStream())).rejects.toThrow(/ENOENT/);
+      });
+
+      it('shouldRejectWhenSourceStreamErrorsWithCustomFilename', async (): Promise<void> => {
+        const localStorage = createStorage();
+
+        await expect(localStorage.write(createErroredSourceStream(), { filename: 'target.png' })).rejects.toThrow(
+          'source failed',
+        );
+
+        expect(vol.readdirSync(testWorkingDirectory)).toEqual([]);
+      });
+
+      it('shouldKeepExistingFileWhenSourceStreamErrorsWithCustomFilename', async (): Promise<void> => {
+        const localStorage = createStorage();
+        const existingContent = Buffer.from('existing content');
+
+        vol.writeFileSync(`${testWorkingDirectory}/target.png`, existingContent);
+
+        await expect(localStorage.write(createErroredSourceStream(), { filename: 'target.png' })).rejects.toThrow(
+          'source failed',
+        );
+
+        expect(vol.readdirSync(testWorkingDirectory)).toEqual(['target.png']);
+        expect(Buffer.compare(vol.readFileSync(`${testWorkingDirectory}/target.png`) as Buffer, existingContent)).toBe(
+          0,
+        );
+      });
+
+      it('shouldReplaceExistingFileWhenWriteSucceedsWithCustomFilename', async (): Promise<void> => {
+        const localStorage = createStorage();
+
+        vol.writeFileSync(`${testWorkingDirectory}/target.png`, Buffer.from('existing content'));
+
+        const { key } = await localStorage.write(createSourceStream(), { filename: 'target.png' });
+
+        expect(key).toBe('target.png');
+        expect(vol.readdirSync(testWorkingDirectory)).toEqual(['target.png']);
+        expect(Buffer.compare(vol.readFileSync(`${testWorkingDirectory}/target.png`) as Buffer, sampleBuffer)).toBe(0);
+      });
+
+      it('shouldRejectAndRemoveTempFileWhenSourceStreamErrorsWithoutFilename', async (): Promise<void> => {
+        const localStorage = createStorage();
+
+        await expect(localStorage.write(createErroredSourceStream())).rejects.toThrow('source failed');
+
+        expect(vol.readdirSync(testWorkingDirectory)).toEqual([]);
+      });
+
+      it('shouldStopWriteAndRemoveTempFileWhenFilenameDetectionFailsFirst', async (): Promise<void> => {
+        const localStorage = createStorage();
+
+        jest.spyOn(localStorage, 'getStreamFilename').mockRejectedValue(new Error('hash failed'));
+
+        const source = new Readable({
+          read(): void {
+            setTimeout(() => this.push(sampleBuffer), 5);
+          },
+        });
+
+        await expect(localStorage.write(source)).rejects.toThrow('hash failed');
+
+        await new Promise(resolve => setTimeout(resolve, 30));
+
+        expect(source.destroyed).toBeTruthy();
+        expect(vol.readdirSync(testWorkingDirectory)).toEqual([]);
+      });
+
+      it('shouldKeepSuccessPathWithoutFilename', async (): Promise<void> => {
+        const localStorage = createStorage();
+
+        const { key } = await localStorage.write(createSourceStream());
+
+        expect(key.startsWith(createHash('sha256').update(sampleBuffer).digest('hex'))).toBeTruthy();
+        expect(vol.readdirSync(testWorkingDirectory)).toEqual([key]);
+        expect(Buffer.compare(vol.readFileSync(`${testWorkingDirectory}/${key}`) as Buffer, sampleBuffer)).toBe(0);
+      });
+    });
+
     afterEach((): void => {
       vol.reset();
     });

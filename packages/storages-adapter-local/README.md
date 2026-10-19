@@ -90,3 +90,7 @@ write file to disk
 | Parameter | Type      | Required | Description               |
 | --------- | --------- | -------- | ------------------------- |
 | file      | InputFile | true     | Buffer or Readable stream |
+
+## Error Handling
+
+Stream writes reject with the original error when the source stream or the file write fails (no more hanging or uncaught errors). Streams are always written to a temporary file and renamed into place, so a failed write never leaves a partial file at the target path or truncates an existing one; the temporary file is removed on a best-effort basis.

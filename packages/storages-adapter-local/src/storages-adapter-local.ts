@@ -13,6 +13,7 @@ import { promisify } from 'util';
 import { StorageLocalOptions, StorageLocalUsageInfo, StorageLocalHelperCommands } from './typings';
 import { resolve } from 'path';
 import { Readable } from 'stream';
+import { pipeline } from 'stream/promises';
 import { lstatSync, mkdirSync, createReadStream, createWriteStream } from 'fs';
 import { readFile, unlink, writeFile, rename } from 'fs/promises';
 import { exec as execInCb } from 'child_process';
@@ -84,38 +85,40 @@ export class LocalStorage extends Storage {
     return { key: filename };
   }
 
-  private async writeStream(stream: Readable, options?: WriteFileOptions): Promise<StorageFile> {
-    const convertedStream = await this.converterManager.convert<Readable>(stream);
-
-    if (options?.filename) {
-      const writeStream = createWriteStream(this.getFileFullPath(options.filename));
-
-      convertedStream.pipe(writeStream);
-
-      await new Promise<void>((resolve, reject) => {
-        writeStream.on('finish', resolve);
-        writeStream.on('error', reject);
-      });
-
-      return { key: options.filename };
-    }
-
+  // @dev: receives the already-converted stream from write(); converting again would apply converters twice
+  private async writeStream(convertedStream: Readable, options?: WriteFileOptions): Promise<StorageFile> {
+    // Always write to a temp file and rename afterwards, so a failed write never leaves a partial file
+    // at the target path (or truncates an existing one).
     const tempFilename = uuid();
-    const writeStream = createWriteStream(this.getFileFullPath(tempFilename));
+    const tempFilePath = this.getFileFullPath(tempFilename);
 
-    convertedStream.pipe(writeStream);
+    const writeStream = createWriteStream(tempFilePath);
+    const writePromise = pipeline(convertedStream, writeStream);
 
-    const [filename] = await this.getStreamFilename(convertedStream);
+    try {
+      // Wait for both the hash (when needed) and the write stream before renaming; either side failing rejects
+      const [filename] = await Promise.all([
+        options?.filename
+          ? options.filename
+          : this.getStreamFilename(convertedStream).then(([hashFilename]): string => hashFilename),
+        writePromise,
+      ]);
 
-    // Wait for the write stream to finish before renaming
-    await new Promise<void>((resolve, reject) => {
-      writeStream.on('finish', resolve);
-      writeStream.on('error', reject);
-    });
+      await rename(tempFilePath, this.getFileFullPath(filename));
 
-    await rename(this.getFileFullPath(tempFilename), this.getFileFullPath(filename));
+      return { key: filename };
+    } catch (ex: unknown) {
+      // Stop a write that may still be running (e.g. filename detection failed first) before removing the file
+      writeStream.on('error', (): void => undefined);
+      writeStream.destroy(ex instanceof Error ? ex : new Error(String(ex)));
 
-    return { key: filename };
+      await writePromise.catch((): undefined => undefined);
+
+      // Best-effort cleanup of the temp file; never mask the original error.
+      await unlink(tempFilePath).catch((): undefined => undefined);
+
+      throw ex;
+    }
   }
 
   private readFileBuffer(key: string): Promise<Buffer> {
