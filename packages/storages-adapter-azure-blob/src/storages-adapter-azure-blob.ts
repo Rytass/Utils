@@ -10,6 +10,7 @@ import {
 } from '@rytass/storages';
 import { v4 as uuid } from 'uuid';
 import { Readable, PassThrough } from 'stream';
+import { pipeline } from 'stream/promises';
 import {
   BlobSASPermissions,
   BlobServiceClient,
@@ -106,27 +107,49 @@ export class StorageAzureBlobService extends Storage<AzureBlobOptions> {
 
     const tempFile = this.container.getBlockBlobClient(tempFilename);
 
-    const pipedStream = stream.pipe(uploadStream);
-
-    const uploadTask = tempFile.uploadStream(pipedStream, undefined, undefined, {
+    const uploadTask = tempFile.uploadStream(uploadStream, undefined, undefined, {
       blobHTTPHeaders: {
         ...(options?.contentType ? { blobContentType: options?.contentType } : {}),
       },
     });
 
-    const [[filename, mime]] = await Promise.all([getFilenamePromise, uploadTask]);
+    try {
+      // pipeline forwards source errors into uploadStream so the upload settles instead of hanging
+      const [[filename, mime]] = await Promise.all([getFilenamePromise, pipeline(stream, uploadStream), uploadTask]);
 
-    if (!options?.contentType && mime) {
-      await tempFile.setHTTPHeaders({ blobContentType: mime });
+      if (!options?.contentType && mime) {
+        await tempFile.setHTTPHeaders({ blobContentType: mime });
+      }
+
+      const destFile = this.container.getBlockBlobClient(filename);
+
+      const copyPoller = await destFile.beginCopyFromURL(tempFile.url);
+      const copyResult = await copyPoller.pollUntilDone();
+
+      if (copyResult.copyStatus && copyResult.copyStatus !== 'success') {
+        throw new StorageError(ErrorCode.WRITE_FILE_ERROR, `Copy temp blob failed: ${copyResult.copyStatus}`);
+      }
+
+      await tempFile.delete();
+
+      return { key: filename };
+    } catch (ex: unknown) {
+      // Destroy with the error: Azure's uploader only listens for 'data'/'end'/'error', so a bare destroy()
+      // would leave it pending forever. Then wait for it so it cannot recreate the temp blob after cleanup.
+      uploadStream.on('error', (): void => undefined);
+      uploadStream.destroy(ex instanceof Error ? ex : new Error(String(ex)));
+
+      await uploadTask.catch((): undefined => undefined);
+
+      // Best-effort cleanup of the temp blob; never mask the original error.
+      try {
+        await tempFile.deleteIfExists();
+      } catch {
+        // ignore cleanup failure
+      }
+
+      throw ex;
     }
-
-    const destFile = this.container.getBlockBlobClient(filename);
-
-    await destFile.beginCopyFromURL(tempFile.url);
-
-    await tempFile.delete();
-
-    return { key: filename };
   }
 
   private async writeBufferFile(buffer: Buffer, options?: WriteFileOptions): Promise<StorageFile> {

@@ -161,6 +161,8 @@ const storage3 = new StorageAzureBlobService({
 
 ### Error Handling
 
+Stream writes reject with the original error when the upload or the source stream fails (no more hanging or uncaught errors). When no `filename` is given, the adapter waits for the server-side copy to complete and removes the temporary blob on a best-effort basis if anything fails.
+
 ```typescript
 import { StorageError, ErrorCode } from '@rytass/storages';
 
