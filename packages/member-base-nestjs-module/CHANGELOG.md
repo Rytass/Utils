@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.15.1](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.15.0...@rytass/member-base-nestjs-module@0.15.1) (2026-10-19)
+
+### Bug Fixes
+
+- **member-base-nestjs-module:** count login attempts atomically before verifying the password ([b357702](https://github.com/Rytass/Utils/commit/b3577027bc4edc69c94698640b70541bec8cde0b))
+
+### Behaviour changes
+
+Concurrent wrong passwords for one account used to be read, incremented and saved back over each other, so a burst could leave `loginFailedCounter` below `loginFailedBanThreshold` and the account unlocked, with every attempt in it checked. Each attempt is now counted with one conditional `UPDATE` before its password is checked:
+
+- A burst past the threshold is answered `MemberBannedError` without its passwords being tried — including the right one if the burst took the last attempt first.
+- With `loginFailedAutoUnlockSeconds` set, the failure is logged in the same transaction as that `UPDATE` and turned into a success if the password was right; a login fails when its failure cannot be logged. The last failure is read from the primary.
+- Member writes (the counter, password changes, resets) are `update`s of the columns they change, so entity listeners and subscribers' `beforeUpdate` / `afterUpdate` no longer run for them.
+
 # [0.15.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.14.0...@rytass/member-base-nestjs-module@0.15.0) (2026-10-06)
 
 - feat(member-base-nestjs-module)!: track login sessions and rotate refresh tokens ([4625d50](https://github.com/Rytass/Utils/commit/4625d50251670dccf15eda3a586e8e56a3a84c7f))
