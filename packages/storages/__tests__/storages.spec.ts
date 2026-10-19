@@ -143,6 +143,71 @@ describe('Storage', () => {
         stream.push(null);
       });
     });
+
+    it('should reject stream extension when source stream errored', async () => {
+      const stream = new Readable({
+        read(): void {},
+      });
+
+      const promise = storage.getExtension(stream);
+
+      stream.push(sampleFileBuffer.subarray(0, 4));
+
+      setImmediate(() => {
+        stream.destroy(new Error('source failed'));
+      });
+
+      await expect(promise).rejects.toThrow('source failed');
+    });
+
+    it('should reject stream filename when source stream errored', async () => {
+      const stream = new Readable({
+        read(): void {},
+      });
+
+      const promise = storage.getStreamFilename(stream);
+
+      stream.push(sampleFileBuffer.subarray(0, 32));
+
+      setImmediate(() => {
+        stream.destroy(new Error('source failed'));
+      });
+
+      await expect(promise).rejects.toThrow('source failed');
+    });
+
+    it('should reject stream filename when file type detection fails', async () => {
+      await jest.isolateModulesAsync(async () => {
+        jest.doMock('file-type', () => ({
+          fileTypeFromBuffer: (): Promise<never> => Promise.reject(new Error('detection failed')),
+          fileTypeFromStream: (): Promise<undefined> => Promise.resolve(undefined),
+        }));
+
+        const { Storage: IsolatedStorage } = await import('../src');
+
+        await expect(new IsolatedStorage().getStreamFilename(Readable.from([sampleFileBuffer]))).rejects.toThrow(
+          'detection failed',
+        );
+      });
+
+      jest.dontMock('file-type');
+    });
+
+    it('should reject stream filename when source stream closed prematurely', async () => {
+      const stream = new Readable({
+        read(): void {},
+      });
+
+      const promise = storage.getStreamFilename(stream);
+
+      stream.push(sampleFileBuffer.subarray(0, 32));
+
+      setImmediate(() => {
+        stream.destroy();
+      });
+
+      await expect(promise).rejects.toThrow();
+    });
   });
 
   describe('Not implement methods', () => {
