@@ -12,7 +12,16 @@ import { Readable } from 'stream';
 import { pipeline } from 'stream/promises';
 import { v4 as uuid } from 'uuid';
 import { Bucket, Storage as GCSStorage } from '@google-cloud/storage';
-import { GCSOptions } from './typings';
+import { GCSOptions, GCSUrlOptions } from './typings';
+
+const encodeRFC5987 = (value: string): string =>
+  encodeURIComponent(value).replace(/['()*]/g, (char): string => `%${char.charCodeAt(0).toString(16).toUpperCase()}`);
+
+const toAttachmentDisposition = (filename: string): string => {
+  const asciiFallback = filename.replace(/[^\x20-\x7E]/g, '_').replace(/["\\]/g, '_');
+
+  return `attachment; filename="${asciiFallback}"; filename*=UTF-8''${encodeRFC5987(filename)}`;
+};
 
 export class StorageGCSService extends Storage<GCSOptions> {
   private readonly storage: GCSStorage;
@@ -30,11 +39,16 @@ export class StorageGCSService extends Storage<GCSOptions> {
     this.bucket = this.storage.bucket(options.bucket);
   }
 
-  async url(key: string, expires = Date.now() + 1000 * 60 * 60 * 24): Promise<string> {
+  async url(key: string, expires = Date.now() + 1000 * 60 * 60 * 24, options?: GCSUrlOptions): Promise<string> {
     const file = this.bucket.file(key);
+
+    const responseDisposition =
+      options?.responseDisposition ?? (options?.filename ? toAttachmentDisposition(options.filename) : undefined);
+
     const [url] = await file.getSignedUrl({
       action: 'read',
       expires,
+      ...(responseDisposition ? { responseDisposition } : {}),
     });
 
     return url;

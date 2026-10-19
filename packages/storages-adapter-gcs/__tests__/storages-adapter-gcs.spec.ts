@@ -690,4 +690,60 @@ describe('GCS adapter', () => {
       expect([...fakeStorage.keys()].sort()).toEqual(['saved-file', sampleFileSha256].sort());
     });
   });
+
+  describe('signed url', () => {
+    it('should only send action and expires by default', async () => {
+      const originGetSignedUrlMock = getSignedUrlMock.getMockImplementation();
+      const receivedOptions: Record<string, unknown>[] = [];
+
+      getSignedUrlMock.mockImplementation((_filename: string) => (options: Record<string, string>): string[] => {
+        receivedOptions.push(options);
+
+        return [FAKE_URL];
+      });
+
+      try {
+        const storage = await createStorage();
+
+        await storage.url('saved-file', 1000);
+
+        expect(receivedOptions).toEqual([{ action: 'read', expires: 1000 }]);
+      } finally {
+        if (originGetSignedUrlMock) getSignedUrlMock.mockImplementation(originGetSignedUrlMock);
+      }
+    });
+
+    it('should convert filename to attachment response disposition', async () => {
+      const originGetSignedUrlMock = getSignedUrlMock.getMockImplementation();
+      const receivedOptions: Record<string, unknown>[] = [];
+
+      getSignedUrlMock.mockImplementation((_filename: string) => (options: Record<string, string>): string[] => {
+        receivedOptions.push(options);
+
+        return [FAKE_URL];
+      });
+
+      try {
+        const storage = await createStorage();
+
+        await storage.url('saved-file', 1000, { filename: '訂單 "匯出"(1).csv' });
+
+        expect(receivedOptions).toEqual([
+          {
+            action: 'read',
+            expires: 1000,
+            responseDisposition: `attachment; filename="__ ____(1).csv"; filename*=UTF-8''${encodeURIComponent(
+              '訂單 "匯出"',
+            )}%281%29.csv`,
+          },
+        ]);
+
+        await storage.url('saved-file', 1000, { filename: 'a.csv', responseDisposition: 'inline' });
+
+        expect(receivedOptions[1]).toEqual({ action: 'read', expires: 1000, responseDisposition: 'inline' });
+      } finally {
+        if (originGetSignedUrlMock) getSignedUrlMock.mockImplementation(originGetSignedUrlMock);
+      }
+    });
+  });
 });
