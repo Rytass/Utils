@@ -712,4 +712,57 @@ describe('Vercel Blob storage adapter (private access)', () => {
 
     expect(mockIssueSignedToken).toHaveBeenCalledTimes(2);
   });
+
+  describe('stream write failures', () => {
+    const createErroredSourceStream = (): Readable => {
+      const stream = new Readable({
+        read(): void {},
+      });
+
+      stream.push(sampleFileBuffer.subarray(0, 32));
+
+      setImmediate(() => {
+        stream.destroy(new Error('source failed'));
+      });
+
+      return stream;
+    };
+
+    it('should reject when source stream errors without filename', async () => {
+      const { StorageVercelBlobService } = await import('../src');
+
+      const service = new StorageVercelBlobService({ token: TOKEN, pathPrefix: PATH_PREFIX });
+
+      await expect(service.write(createErroredSourceStream())).rejects.toThrow('source failed');
+
+      expect(mockPut).not.toHaveBeenCalled();
+    });
+
+    it('should reject when source stream errors with custom filename', async () => {
+      const { StorageVercelBlobService } = await import('../src');
+
+      const service = new StorageVercelBlobService({ token: TOKEN, pathPrefix: PATH_PREFIX });
+
+      await expect(service.write(createErroredSourceStream(), { filename: 'target.png' })).rejects.toThrow(
+        'source failed',
+      );
+
+      expect(mockPut).not.toHaveBeenCalled();
+    });
+
+    it('should collect every chunk of a multi-chunk stream without filename', async () => {
+      const { StorageVercelBlobService } = await import('../src');
+
+      const service = new StorageVercelBlobService({ token: TOKEN, pathPrefix: PATH_PREFIX });
+
+      const chunks = Array.from({ length: Math.ceil(sampleFileBuffer.length / 7) }, (_, index) =>
+        sampleFileBuffer.subarray(index * 7, (index + 1) * 7),
+      );
+
+      const { key } = await service.write(Readable.from(chunks));
+
+      expect(key).toBe(sampleFileSha256);
+      expect(Buffer.compare(fakeStorage.get(`${PATH_PREFIX}/${key}`)?.buffer as Buffer, sampleFileBuffer)).toBe(0);
+    });
+  });
 });

@@ -18,6 +18,7 @@ import {
 import { Upload } from '@aws-sdk/lib-storage';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { PassThrough, Readable } from 'stream';
+import { pipeline } from 'stream/promises';
 import { v4 as uuid } from 'uuid';
 import { StorageS3Options } from './typings';
 
@@ -124,28 +125,47 @@ export class StorageS3Service extends Storage<StorageS3Options> {
       },
     });
 
-    stream.pipe(uploadStream);
+    const uploadPromise = upload.done();
 
-    const [[filename, mime]] = await Promise.all([getFilenamePromise, upload.done()]);
+    try {
+      // pipeline forwards source errors into uploadStream so the upload settles instead of hanging
+      const [[filename, mime]] = await Promise.all([getFilenamePromise, pipeline(stream, uploadStream), uploadPromise]);
 
-    const copyCommand = new CopyObjectCommand({
-      Bucket: this.bucket,
-      CopySource: `/${this.bucket}/${tempFilename}`,
-      Key: filename,
-      ...(mime ? { ContentType: mime } : {}),
-      ...(options?.contentType ? { ContentType: options?.contentType } : {}),
-    });
+      const copyCommand = new CopyObjectCommand({
+        Bucket: this.bucket,
+        CopySource: `/${this.bucket}/${tempFilename}`,
+        Key: filename,
+        ...(mime ? { ContentType: mime } : {}),
+        ...(options?.contentType ? { ContentType: options?.contentType } : {}),
+      });
 
-    await this.client.send(copyCommand);
+      await this.client.send(copyCommand);
 
-    const deleteCommand = new DeleteObjectCommand({
-      Bucket: this.bucket,
-      Key: tempFilename,
-    });
+      const deleteCommand = new DeleteObjectCommand({
+        Bucket: this.bucket,
+        Key: tempFilename,
+      });
 
-    await this.client.send(deleteCommand);
+      await this.client.send(deleteCommand);
 
-    return { key: filename };
+      return { key: filename };
+    } catch (ex: unknown) {
+      // Destroy with the error so the uploader settles even if the source is still healthy (e.g. filename
+      // detection failed first), then wait for it so it cannot recreate the temp object after the cleanup below.
+      uploadStream.on('error', (): void => undefined);
+      uploadStream.destroy(ex instanceof Error ? ex : new Error(String(ex)));
+
+      await uploadPromise.catch((): undefined => undefined);
+
+      // Best-effort cleanup of the temp object; never mask the original error.
+      try {
+        await this.client.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: tempFilename }));
+      } catch {
+        // ignore cleanup failure
+      }
+
+      throw ex;
+    }
   }
 
   async writeBufferFile(buffer: Buffer, options?: WriteFileOptions): Promise<StorageFile> {

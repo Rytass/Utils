@@ -97,6 +97,14 @@ console.log('1-hour URL:', customUrl);
 // Use in HTML
 const publicUrl = await storage.url('images/avatar.png');
 // <img src="${publicUrl}" alt="User Avatar" />
+
+// Download with a human-readable filename (UTF-8 safe Content-Disposition: attachment)
+const downloadUrl = await storage.url('exports/3f9c.csv', Date.now() + 1000 * 60 * 10, {
+  filename: '訂單匯出 2026-10-19.csv',
+});
+
+// Or pass a raw Content-Disposition value
+const inlineUrl = await storage.url('docs/report.pdf', undefined, { responseDisposition: 'inline' });
 ```
 
 ### File Management
@@ -204,6 +212,18 @@ processLargeFile('large-video.mp4', 'videos/large-video.mp4');
 ```
 
 ### Error Handling
+
+Stream writes reject when either the upload (permission denied, network failure, missing bucket, ...) or the source
+stream fails, with the original error. When no `filename` is given, the temporary object uploaded before renaming is
+removed on a best-effort basis.
+
+```typescript
+try {
+  await storage.write(csvStream, { filename: 'exports/orders.csv', contentType: 'text/csv' });
+} catch (error) {
+  console.error('Upload failed:', error);
+}
+```
 
 ```typescript
 import { StorageError, ErrorCode } from '@rytass/storages';
@@ -400,6 +420,15 @@ console.log('Generated URLs:', urls);
 | ------------- | -------- | -------------- | ------------------------------------- |
 | `filename`    | `string` | auto-generated | Custom filename for the uploaded file |
 | `contentType` | `string` | auto-detected  | MIME type of the file                 |
+
+### GCSUrlOptions
+
+Optional third argument of `url(key, expires?, options?)`.
+
+| Option                | Type     | Default | Description                                                            |
+| --------------------- | -------- | ------- | ---------------------------------------------------------------------- |
+| `filename`            | `string` | -       | Download filename, sent as `Content-Disposition: attachment` (UTF-8)   |
+| `responseDisposition` | `string` | -       | Raw `Content-Disposition` response header; takes precedence over above |
 
 ### ReadBufferFileOptions
 

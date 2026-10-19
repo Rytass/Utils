@@ -122,7 +122,20 @@ console.log('1-hour URL:', customUrl);
 // Use in HTML
 const publicUrl = await storage.url('images/avatar.png');
 // <img src="${publicUrl}" alt="User Avatar" />
+
+// Download with a human-readable filename (sets Content-Disposition: attachment, UTF-8 safe)
+const downloadUrl = await storage.url('exports/3f9c.csv', undefined, {
+  filename: '訂單匯出.csv',
+});
+
+// Or pass a raw Content-Disposition value
+const inlineUrl = await storage.url('docs/report.pdf', undefined, {
+  responseDisposition: 'inline',
+});
 ```
+
+Stream writes reject with the original error when the upload or the source stream fails; the temporary object used
+when no `filename` is given is removed on a best-effort basis.
 
 ### File Management
 

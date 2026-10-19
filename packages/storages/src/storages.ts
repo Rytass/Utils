@@ -1,4 +1,4 @@
-import { Readable, PassThrough } from 'stream';
+import { Readable, PassThrough, finished } from 'stream';
 import { createHash } from 'crypto';
 import { Buffer } from 'buffer';
 import { FileTypeResult, fileTypeFromBuffer, fileTypeFromStream } from 'file-type';
@@ -41,11 +41,24 @@ export class Storage<O extends Record<string, unknown> = Record<string, unknown>
       return fileTypeFromBuffer(file);
     }
 
-    const extensionStream = new PassThrough();
+    return new Promise((resolve, reject) => {
+      const extensionStream = new PassThrough();
 
-    (file as Readable).pipe(extensionStream);
+      // pipe() does not forward errors; reject on source failure instead of waiting forever
+      finished(file as Readable, { writable: false }, (error): void => {
+        if (!error) return;
 
-    return fileTypeFromStream(extensionStream);
+        reject(error);
+        extensionStream.destroy(error);
+      });
+
+      // The source may still fail after detection already resolved; keep that from becoming an uncaught 'error'
+      extensionStream.on('error', reject);
+
+      (file as Readable).pipe(extensionStream);
+
+      fileTypeFromStream(extensionStream).then(resolve, reject);
+    });
   }
 
   async getBufferFilename(buffer: Buffer): Promise<[string, string | undefined]> {
@@ -93,15 +106,18 @@ export class Storage<O extends Record<string, unknown> = Record<string, unknown>
 
             waitingTasks.push(true);
 
-            fileTypeFromBuffer(targetBuffer).then(result => {
-              waitingTasks[taskIndex] = false;
+            fileTypeFromBuffer(targetBuffer)
+              .then(result => {
+                waitingTasks[taskIndex] = false;
 
-              if (!result && !isEnd) return;
+                if (!result && !isEnd) return;
 
-              resolved = true;
+                resolved = true;
 
-              subResolve(result);
-            });
+                subResolve(result);
+              })
+              // a detection failure would otherwise be an unhandled rejection that leaves the promise pending
+              .catch(reject);
           } else {
             waitingTasks.push(false);
           }
@@ -123,6 +139,15 @@ export class Storage<O extends Record<string, unknown> = Record<string, unknown>
           resolve([`${filename}${extension?.ext ? `.${extension.ext}` : ''}`, extension?.mime ?? undefined]);
         })
         .catch(reject);
+
+      // pipe() does not forward errors, so reject when the source or an intermediate stream fails
+      // (including premature close) instead of leaving the promise pending forever.
+      finished(stream, { writable: false }, (error): void => {
+        if (error) reject(error);
+      });
+
+      hashStream.on('error', reject);
+      extensionStream.on('error', reject);
 
       stream.pipe(hashStream).pipe(extensionStream);
     });

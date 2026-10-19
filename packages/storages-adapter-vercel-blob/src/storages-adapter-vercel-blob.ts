@@ -9,7 +9,8 @@ import {
   WriteFileOptions,
 } from '@rytass/storages';
 import { BlobAccessType, put, del, head, list, issueSignedToken, presignUrl } from '@vercel/blob';
-import { Readable, PassThrough } from 'stream';
+import { Readable, Writable } from 'stream';
+import { pipeline } from 'stream/promises';
 import { StorageVercelBlobOptions } from './typings';
 
 const DEFAULT_SIGNED_URL_EXPIRES_IN = 3600;
@@ -211,23 +212,20 @@ export class StorageVercelBlobService extends Storage<StorageVercelBlobOptions> 
       return { key: givenFilename };
     }
 
-    const uploadStream = new PassThrough();
     const chunks: Buffer[] = [];
 
-    uploadStream.on('data', (chunk: Buffer) => {
-      chunks.push(chunk);
+    const collectStream = new Writable({
+      write(chunk: Buffer, _encoding, done): void {
+        chunks.push(chunk);
+
+        done();
+      },
     });
 
     const getFilenamePromise = this.getStreamFilename(stream);
 
-    stream.pipe(uploadStream);
-
-    const [filenameResult] = await Promise.all([
-      getFilenamePromise,
-      new Promise<void>(resolve => {
-        uploadStream.on('end', resolve);
-      }),
-    ]);
+    // pipeline rejects on source errors, and 'finish' fires only after every chunk was collected
+    const [filenameResult] = await Promise.all([getFilenamePromise, pipeline(stream, collectStream)]);
 
     const [filename, mime] = filenameResult;
 

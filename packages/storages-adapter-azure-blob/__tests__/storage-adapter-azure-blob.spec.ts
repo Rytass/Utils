@@ -70,6 +70,9 @@ const downloadMock = jest.fn(
     }),
 );
 
+const uploadRejectedMock = jest.fn();
+let uploadFailure: Error | null = null;
+
 let uploadStreamMock = jest.fn(
   (filename: string) =>
     (
@@ -78,10 +81,28 @@ let uploadStreamMock = jest.fn(
       _maxConcurrency?: number,
       _options?: BlockBlobUploadStreamOptions,
     ): Promise<void> =>
-      new Promise<void>(resolve => {
+      new Promise<void>((resolve, reject) => {
         let buffer = Buffer.from([]);
+        let settled = false;
+
+        const fail = (error: Error): void => {
+          if (settled) return;
+
+          settled = true;
+          uploadRejectedMock(filename);
+          reject(error);
+        };
+
+        // Like Azure's BufferScheduler: only 'data' / 'end' / 'error' are observed, a bare destroy() is not
+        stream.on('error', fail);
 
         stream.on('data', chunk => {
+          if (uploadFailure) {
+            fail(uploadFailure);
+
+            return;
+          }
+
           buffer = Buffer.concat([buffer, chunk]);
         });
 
@@ -94,8 +115,17 @@ let uploadStreamMock = jest.fn(
 );
 
 const setHTTPHeadersMock = jest.fn(() => Promise.resolve());
-const beginCopyFromURLMock = jest.fn(() => Promise.resolve());
+let copyStatus = 'success';
+const beginCopyFromURLMock = jest.fn(() =>
+  Promise.resolve({ pollUntilDone: (): Promise<{ copyStatus: string }> => Promise.resolve({ copyStatus }) }),
+);
+
 const deleteMock = jest.fn(() => Promise.resolve());
+const deleteIfExistsMock = jest.fn((filename: string): Promise<void> => {
+  fakeStorage.delete(filename);
+
+  return Promise.resolve();
+});
 
 let uploadMock = jest.fn((buffer: Buffer, _length: number, _options: BlockBlobUploadOptions) => {
   fakeStorage.set(`${createHash('sha256').update(buffer).digest('hex')}.png`, buffer);
@@ -117,6 +147,7 @@ const getBlockBlobClientMock = jest.fn((filename: string) => ({
   setHTTPHeaders: setHTTPHeadersMock,
   beginCopyFromURL: beginCopyFromURLMock,
   delete: deleteMock,
+  deleteIfExists: (): Promise<void> => deleteIfExistsMock(filename),
   upload: uploadMock,
   exists: existsMock(filename),
 }));
@@ -158,6 +189,10 @@ describe('Azure Blob adapter', () => {
     uploadStreamMock.mockClear();
     setHTTPHeadersMock.mockClear();
     beginCopyFromURLMock.mockClear();
+    deleteIfExistsMock.mockClear();
+    uploadRejectedMock.mockClear();
+    uploadFailure = null;
+    copyStatus = 'success';
     uploadMock.mockClear();
     deleteBlobMock.mockClear();
     existsMock.mockClear();
@@ -476,5 +511,100 @@ describe('Azure Blob adapter', () => {
 
     expect(notFound).toBeFalsy();
     expect(exists).toBeTruthy();
+  });
+
+  describe('stream write failures', () => {
+    const createErroredSourceStream = (): Readable => {
+      const stream = new Readable({
+        read(): void {},
+      });
+
+      stream.push(sampleFileBuffer.subarray(0, 32));
+
+      setImmediate(() => {
+        stream.destroy(new Error('source failed'));
+      });
+
+      return stream;
+    };
+
+    // A healthy source that keeps producing and never ends on its own
+    const createEndlessSourceStream = (): Readable =>
+      new Readable({
+        read(): void {
+          setTimeout(() => this.push(sampleFileBuffer.subarray(0, 8)), 5);
+        },
+      });
+
+    const deletedIfExists = (): string[] => deleteIfExistsMock.mock.calls.map(([filename]) => filename as string);
+
+    it('should reject and settle upload when source stream errors without filename', async () => {
+      const { StorageAzureBlobService } = await import('../src/storages-adapter-azure-blob');
+
+      const storage = new StorageAzureBlobService({ connectionString: CONNECTION_STRING, container: CONTAINER_NAME });
+
+      await expect(storage.write(createErroredSourceStream())).rejects.toThrow('source failed');
+
+      expect(uploadRejectedMock).toHaveBeenCalledTimes(1);
+
+      const [[tempFilename]] = uploadRejectedMock.mock.calls;
+
+      expect(deletedIfExists()).toEqual([tempFilename]);
+      expect(beginCopyFromURLMock).not.toHaveBeenCalled();
+    });
+
+    it('should reject and remove temp blob when upload fails without filename', async () => {
+      uploadFailure = new Error('upload failed');
+
+      const { StorageAzureBlobService } = await import('../src/storages-adapter-azure-blob');
+
+      const storage = new StorageAzureBlobService({ connectionString: CONNECTION_STRING, container: CONTAINER_NAME });
+
+      await expect(storage.write(createReadStream(sampleFile))).rejects.toThrow('upload failed');
+
+      const [[tempFilename]] = uploadRejectedMock.mock.calls;
+
+      expect(deletedIfExists()).toEqual([tempFilename]);
+      expect([...fakeStorage.keys()]).toEqual(['saved-file']);
+    });
+
+    it('should wait for copy and reject when copy does not succeed', async () => {
+      copyStatus = 'failed';
+
+      const { StorageAzureBlobService } = await import('../src/storages-adapter-azure-blob');
+
+      const storage = new StorageAzureBlobService({ connectionString: CONNECTION_STRING, container: CONTAINER_NAME });
+
+      await expect(storage.write(createReadStream(sampleFile))).rejects.toThrow('Copy temp blob failed: failed');
+
+      expect(deleteMock).not.toHaveBeenCalled();
+      expect(deleteIfExistsMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should settle upload and remove temp blob when filename detection fails first', async () => {
+      const { StorageAzureBlobService } = await import('../src/storages-adapter-azure-blob');
+
+      const storage = new StorageAzureBlobService({ connectionString: CONNECTION_STRING, container: CONTAINER_NAME });
+
+      jest.spyOn(storage, 'getStreamFilename').mockRejectedValue(new Error('hash failed'));
+
+      await expect(storage.write(createEndlessSourceStream())).rejects.toThrow('hash failed');
+
+      expect(uploadRejectedMock).toHaveBeenCalledTimes(1);
+
+      const [[tempFilename]] = uploadRejectedMock.mock.calls;
+
+      expect(deletedIfExists()).toEqual([tempFilename]);
+    });
+
+    it('should reject when source stream errors with custom filename', async () => {
+      const { StorageAzureBlobService } = await import('../src/storages-adapter-azure-blob');
+
+      const storage = new StorageAzureBlobService({ connectionString: CONNECTION_STRING, container: CONTAINER_NAME });
+
+      await expect(storage.write(createErroredSourceStream(), { filename: 'target.png' })).rejects.toThrow(
+        'source failed',
+      );
+    });
   });
 });

@@ -303,6 +303,8 @@ export class FileStorageService {
 
 ## Error Handling
 
+Stream writes reject with the original error when the upload or the source stream fails (no more hanging or uncaught errors). When no `filename` is given, the temporary object is removed on a best-effort basis.
+
 ```typescript
 import { StorageError, ErrorCode } from '@rytass/storages';
 

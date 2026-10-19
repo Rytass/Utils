@@ -77,9 +77,13 @@ const content = await storage.read(key, { format: 'buffer' });
 
 ## Options
 
-| Option               | Type                     | Default                             | Description                                                          |
-|----------------------|--------------------------|-------------------------------------|----------------------------------------------------------------------|
-| `token`              | `string`                 | `process.env.BLOB_READ_WRITE_TOKEN` | Vercel Blob read-write token                                         |
-| `pathPrefix`         | `string`                 | `'uploads'`                         | Path prefix for stored files                                         |
-| `access`             | `'public' \| 'private'`  | `'public'`                          | Blob access level                                                    |
-| `signedUrlExpiresIn` | `number`                 | `3600`                              | Presigned URL lifetime in seconds (private blobs only)               |
+| Option               | Type                    | Default                             | Description                                            |
+| -------------------- | ----------------------- | ----------------------------------- | ------------------------------------------------------ |
+| `token`              | `string`                | `process.env.BLOB_READ_WRITE_TOKEN` | Vercel Blob read-write token                           |
+| `pathPrefix`         | `string`                | `'uploads'`                         | Path prefix for stored files                           |
+| `access`             | `'public' \| 'private'` | `'public'`                          | Blob access level                                      |
+| `signedUrlExpiresIn` | `number`                | `3600`                              | Presigned URL lifetime in seconds (private blobs only) |
+
+## Error Handling
+
+Stream writes reject with the original error when the source stream fails (no more hanging or uncaught errors).

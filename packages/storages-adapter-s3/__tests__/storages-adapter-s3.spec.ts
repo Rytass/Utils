@@ -26,6 +26,8 @@ fakeStorage.set('saved-file', sampleFileBuffer);
 
 // Mock for @aws-sdk/lib-storage Upload
 const mockUploadDone = jest.fn();
+const mockUploadRejected = jest.fn();
+let uploadFailure: Error | null = null;
 
 class MockUpload {
   private readonly params: { Key: string; Body: Buffer | PassThrough; ContentType?: string };
@@ -50,10 +52,33 @@ class MockUpload {
     }
 
     // Handle stream
-    return new Promise(pResolve => {
+    return new Promise((pResolve, pReject) => {
       let buffer = Buffer.from([]);
 
+      let settled = false;
+
+      const fail = (error: Error): void => {
+        if (settled) return;
+
+        settled = true;
+        mockUploadRejected(Key);
+        pReject(error);
+      };
+
+      // Real lib-storage rejects when the body stream errors or is destroyed before ending
+      (Body as PassThrough).on('error', fail);
+
+      (Body as PassThrough).on('close', () => {
+        if (!(Body as PassThrough).readableEnded) fail(new Error('Body stream closed before end'));
+      });
+
       (Body as PassThrough).on('data', (chunk: Buffer) => {
+        if (uploadFailure) {
+          fail(uploadFailure);
+
+          return;
+        }
+
         buffer = Buffer.concat([buffer, chunk]);
       });
 
@@ -204,6 +229,8 @@ describe('AWS S3 storage adapter (SDK v3)', () => {
   beforeEach(() => {
     mockSend.mockClear();
     mockUploadDone.mockClear();
+    mockUploadRejected.mockClear();
+    uploadFailure = null;
     mockGetSignedUrl.mockClear();
     fakeStorage.clear();
     fakeStorage.set('saved-file', sampleFileBuffer);
@@ -536,5 +563,139 @@ describe('AWS S3 storage adapter (SDK v3)', () => {
     expect(exists).toBeTruthy();
 
     await expect(service.isExists(GENERAL_ERROR_FILE)).rejects.toThrow();
+  });
+
+  describe('stream write failures', () => {
+    const createErroredSourceStream = (): Readable => {
+      const stream = new Readable({
+        read(): void {},
+      });
+
+      stream.push(sampleFileBuffer.subarray(0, 32));
+
+      setImmediate(() => {
+        stream.destroy(new Error('source failed'));
+      });
+
+      return stream;
+    };
+
+    // A healthy source that keeps producing and never ends on its own
+    const createEndlessSourceStream = (): Readable =>
+      new Readable({
+        read(): void {
+          setTimeout(() => this.push(sampleFileBuffer.subarray(0, 8)), 5);
+        },
+      });
+
+    const deletedKeys = (): string[] =>
+      mockSend.mock.calls
+        .filter(([command]) => command.constructor.name === 'DeleteObjectCommand')
+        .map(([command]) => command.input.Key as string);
+
+    it('should reject and settle upload when source stream errors without filename', async () => {
+      const { StorageS3Service } = await import('../src');
+
+      const service = new StorageS3Service({
+        accessKey: ACCESS_KEY,
+        secretKey: SECRET_KEY,
+        region: REGION,
+        bucket: BUCKET,
+      });
+
+      await expect(service.write(createErroredSourceStream())).rejects.toThrow('source failed');
+
+      expect(mockUploadRejected).toHaveBeenCalledTimes(1);
+
+      const [[tempKey]] = mockUploadRejected.mock.calls;
+
+      expect(deletedKeys()).toEqual([tempKey]);
+      expect([...fakeStorage.keys()]).toEqual(['saved-file']);
+    });
+
+    it('should reject and remove temp object when upload fails without filename', async () => {
+      uploadFailure = new Error('upload failed');
+
+      const { StorageS3Service } = await import('../src');
+
+      const service = new StorageS3Service({
+        accessKey: ACCESS_KEY,
+        secretKey: SECRET_KEY,
+        region: REGION,
+        bucket: BUCKET,
+      });
+
+      await expect(service.write(createReadStream(sampleFile))).rejects.toThrow('upload failed');
+
+      const [[tempKey]] = mockUploadRejected.mock.calls;
+
+      expect(deletedKeys()).toEqual([tempKey]);
+      expect([...fakeStorage.keys()]).toEqual(['saved-file']);
+    });
+
+    it('should reject with original error and remove temp object when copy fails', async () => {
+      const { StorageS3Service } = await import('../src');
+
+      const service = new StorageS3Service({
+        accessKey: ACCESS_KEY,
+        secretKey: SECRET_KEY,
+        region: REGION,
+        bucket: BUCKET,
+      });
+
+      const originalImplementation = mockSend.getMockImplementation();
+
+      mockSend.mockImplementation((command: { constructor: { name: string }; input: Record<string, unknown> }) => {
+        if (command.constructor.name === 'CopyObjectCommand') return Promise.reject(new Error('copy failed'));
+
+        return originalImplementation?.(command);
+      });
+
+      try {
+        await expect(service.write(createReadStream(sampleFile))).rejects.toThrow('copy failed');
+
+        expect(deletedKeys()).toHaveLength(1);
+        expect([...fakeStorage.keys()]).toEqual(['saved-file']);
+      } finally {
+        if (originalImplementation) mockSend.mockImplementation(originalImplementation);
+      }
+    });
+
+    it('should settle upload and remove temp object when filename detection fails first', async () => {
+      const { StorageS3Service } = await import('../src');
+
+      const service = new StorageS3Service({
+        accessKey: ACCESS_KEY,
+        secretKey: SECRET_KEY,
+        region: REGION,
+        bucket: BUCKET,
+      });
+
+      jest.spyOn(service, 'getStreamFilename').mockRejectedValue(new Error('hash failed'));
+
+      await expect(service.write(createEndlessSourceStream())).rejects.toThrow('hash failed');
+
+      expect(mockUploadRejected).toHaveBeenCalledTimes(1);
+
+      const [[tempKey]] = mockUploadRejected.mock.calls;
+
+      expect(deletedKeys()).toEqual([tempKey]);
+      expect([...fakeStorage.keys()]).toEqual(['saved-file']);
+    });
+
+    it('should reject when source stream errors with custom filename', async () => {
+      const { StorageS3Service } = await import('../src');
+
+      const service = new StorageS3Service({
+        accessKey: ACCESS_KEY,
+        secretKey: SECRET_KEY,
+        region: REGION,
+        bucket: BUCKET,
+      });
+
+      await expect(service.write(createErroredSourceStream(), { filename: 'target.png' })).rejects.toThrow();
+
+      expect(fakeStorage.has('target.png')).toBeFalsy();
+    });
   });
 });
