@@ -9,6 +9,7 @@ import { InvalidPasswordError, MemberBannedError, MemberNotFoundError } from '..
 import type { AuthTokenPayloadBase } from '../src/typings/auth-token-payload';
 import { asSessionService, createFakeSessionService, type FakeSessionService } from './__utils__/fake-session-service';
 import { withPrimaryReads } from './__utils__/with-primary-reads';
+import { memberRepoWrites, readCopy } from './__utils__/member-repo-writes';
 
 /**
  * Covers the Phase 1 additions: verifyCredentials / findById / findByAccount
@@ -54,8 +55,10 @@ const buildHarness = async (): Promise<Harness> => {
   member.shouldUpdatePassword = false;
 
   const memberRepo = {
-    findOne: jest.fn(async ({ where }: { where: WhereClause }) => (matchesWhere(member, where) ? member : null)),
-    save: jest.fn(async (entity: BaseMemberEntity) => entity),
+    findOne: jest.fn(async ({ where }: { where: WhereClause }) =>
+      matchesWhere(member, where) ? readCopy(member) : null,
+    ),
+    ...memberRepoWrites(() => [member]),
   } as unknown as Repository<BaseMemberEntity>;
 
   withPrimaryReads(memberRepo);

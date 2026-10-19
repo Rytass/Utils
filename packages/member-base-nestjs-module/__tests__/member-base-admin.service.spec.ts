@@ -5,11 +5,12 @@ import { BaseMemberEntity } from '../src/models/base-member.entity';
 import { PasswordValidatorService } from '../src/services/password-validator.service';
 import { MemberPasswordHistoryEntity } from '../src/models/member-password-history.entity';
 import { asSessionService, createFakeSessionService } from './__utils__/fake-session-service';
+import { memberRepoWrites, readCopy } from './__utils__/member-repo-writes';
 
 const createMemberRepo = (member: BaseMemberEntity): Repository<BaseMemberEntity> =>
   ({
-    findOne: jest.fn(async () => member),
-    save: jest.fn(async (entity: BaseMemberEntity) => entity),
+    findOne: jest.fn(async () => readCopy(member)),
+    ...memberRepoWrites(() => [member]),
   }) as unknown as Repository<BaseMemberEntity>;
 
 const createHistoryRepo = (): Repository<MemberPasswordHistoryEntity> =>

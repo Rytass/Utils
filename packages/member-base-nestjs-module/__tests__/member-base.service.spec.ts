@@ -7,6 +7,7 @@ import { PasswordValidatorService } from '../src/services/password-validator.ser
 import { MemberBannedError, InvalidToken } from '../src/constants/errors/base.error';
 import type { AuthTokenPayloadBase } from '../src/typings/auth-token-payload';
 import { asSessionService, createFakeSessionService, type FakeSessionService } from './__utils__/fake-session-service';
+import { memberRepoWrites, readCopy } from './__utils__/member-repo-writes';
 
 const RESET_PASSWORD_TOKEN_SECRET = 'reset-password-secret';
 const LOGIN_FAILED_BAN_THRESHOLD = 5;
@@ -29,8 +30,10 @@ const matchesWhere = (member: BaseMemberEntity, where: WhereClause): boolean =>
 // service uses (by account, and by id + resetPasswordRequestedAt).
 const createMemberRepo = (member: BaseMemberEntity): Repository<BaseMemberEntity> => {
   const repo = {
-    findOne: jest.fn(async ({ where }: { where: WhereClause }) => (matchesWhere(member, where) ? member : null)),
-    save: jest.fn(async (entity: BaseMemberEntity) => entity),
+    findOne: jest.fn(async ({ where }: { where: WhereClause }) =>
+      matchesWhere(member, where) ? readCopy(member) : null,
+    ),
+    ...memberRepoWrites(() => [member]),
   };
 
   return repo as unknown as Repository<BaseMemberEntity>;

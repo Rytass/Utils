@@ -16,6 +16,7 @@ import {
 } from '../src/constants/errors/base.error';
 import type { AuthTokenPayloadBase } from '../src/typings/auth-token-payload';
 import { asSessionService, createFakeSessionService, type FakeSessionService } from './__utils__/fake-session-service';
+import { memberRepoWrites, readCopy, withLoginLogTransactions } from './__utils__/member-repo-writes';
 
 /**
  * Characterization tests for MemberBaseService.login().
@@ -42,7 +43,7 @@ interface BuildOptions {
   readonly forceRejectLoginOnPasswordExpired?: boolean;
   readonly shouldUpdatePassword?: boolean;
   readonly latestFailedLog?: MemberLoginLogEntity | null;
-  readonly onMemberSave?: (member: BaseMemberEntity) => void;
+  readonly onMemberWrite?: () => void;
   readonly loginLogEnabled?: boolean;
   readonly loginLogRecordIp?: boolean;
 }
@@ -82,12 +83,10 @@ const buildService = async (options: BuildOptions = {}): Promise<BuiltService> =
   member.shouldUpdatePassword = options.shouldUpdatePassword ?? false;
 
   const memberRepo = {
-    findOne: jest.fn(async ({ where }: { where: WhereClause }) => (matchesWhere(member, where) ? member : null)),
-    save: jest.fn(async (entity: BaseMemberEntity) => {
-      options.onMemberSave?.(entity);
-
-      return entity;
-    }),
+    findOne: jest.fn(async ({ where }: { where: WhereClause }) =>
+      matchesWhere(member, where) ? readCopy(member) : null,
+    ),
+    ...memberRepoWrites(() => [member], options.onMemberWrite),
   } as unknown as Repository<BaseMemberEntity>;
 
   const loginLogRepo = {
@@ -95,6 +94,8 @@ const buildService = async (options: BuildOptions = {}): Promise<BuiltService> =
     save: jest.fn(async (entity: Partial<MemberLoginLogEntity>) => entity),
     create: jest.fn((entity: Partial<MemberLoginLogEntity>) => entity),
   } as unknown as Repository<MemberLoginLogEntity>;
+
+  withLoginLogTransactions(memberRepo, loginLogRepo);
 
   const passwordValidatorService = {
     validatePassword: jest.fn(async () => true),
@@ -357,12 +358,23 @@ describe('MemberBaseService.login characterization', () => {
     // Any refactor must preserve this mapping.
     it('should convert a non-BadRequestException failure into PasswordValidationError', async () => {
       const { service } = await buildService({
-        onMemberSave: () => {
+        onMemberWrite: () => {
           throw new Error('database is on fire');
         },
       });
 
       await expect(service.login('member', CORRECT_PASSWORD)).rejects.toBeInstanceOf(PasswordValidationError);
+    });
+
+    it('should not count an attempt whose password could not be checked at all', async () => {
+      const { service, member } = await buildService();
+
+      member.password = 'not-an-argon2-hash';
+      member.loginFailedCounter = 2;
+
+      await expect(service.login('member', CORRECT_PASSWORD)).rejects.toBeInstanceOf(PasswordValidationError);
+
+      expect(member.loginFailedCounter).toBe(2);
     });
 
     it('should let MemberNotFoundError escape without being converted', async () => {
