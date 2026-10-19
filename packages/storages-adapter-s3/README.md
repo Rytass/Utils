@@ -157,13 +157,18 @@ const manager = new ConverterManager([
 const imageFile = readFileSync('large-image.jpg');
 const processedImage = await manager.convert<Buffer>(imageFile);
 
-const result = await storage.write(processedImage, { filename: 'processed-images/thumbnail.jpg', contentType: 'image/jpeg' });
+const result = await storage.write(processedImage, {
+  filename: 'processed-images/thumbnail.jpg',
+  contentType: 'image/jpeg',
+});
 
 console.log('Processed image uploaded:', result.key);
 console.log('Access URL:', await storage.url(result.key));
 ```
 
 ## Error Handling
+
+Stream writes reject with the original error when the upload or the source stream fails (no more hanging or uncaught errors). When no `filename` is given, the temporary object is removed on a best-effort basis.
 
 ```typescript
 import { StorageError, ErrorCode } from '@rytass/storages';
