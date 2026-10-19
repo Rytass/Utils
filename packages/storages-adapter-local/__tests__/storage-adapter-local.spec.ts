@@ -16,7 +16,7 @@ jest.doMock('fs/promises', () => {
 });
 
 // Normal static imports
-import { LocalStorage } from '../src';
+import { LocalStorage, StorageLocalOptions } from '../src';
 import { vol } from 'memfs';
 import { createHash } from 'crypto';
 import { Readable } from 'stream';
@@ -320,6 +320,67 @@ describe('StorageLocalService', (): void => {
       });
 
       expect(() => localStorage.read('testFolder')).toThrow();
+    });
+
+    describe('converters', (): void => {
+      const sourceBuffer: Buffer = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+      const expectedBuffer: Buffer = Buffer.concat([sourceBuffer, Buffer.from([0xff])]);
+
+      const createAppendingConverter = (): { convert: jest.Mock } => ({
+        // Appends one 0xff byte, so applying it twice is observable in the stored content
+        convert: jest.fn(async (file: Buffer | Readable): Promise<Buffer | Readable> => {
+          if (file instanceof Buffer) return Buffer.concat([file, Buffer.from([0xff])]);
+
+          const chunks: Buffer[] = [];
+
+          for await (const chunk of file) chunks.push(chunk as Buffer);
+
+          return Readable.from([Buffer.concat([...chunks, Buffer.from([0xff])])]);
+        }),
+      });
+
+      const createStorage = (converter: { convert: jest.Mock }): LocalStorage => {
+        vol.fromJSON({ '/test/tmp': null });
+
+        return new LocalStorage({
+          directory: testWorkingDirectory,
+          converters: [converter as unknown as NonNullable<StorageLocalOptions['converters']>[number]],
+        });
+      };
+
+      it('shouldApplyConvertersOnceWhenWriteBuffer', async (): Promise<void> => {
+        const converter = createAppendingConverter();
+        const localStorage = createStorage(converter);
+
+        const { key } = await localStorage.write(sourceBuffer);
+
+        expect(converter.convert).toHaveBeenCalledTimes(1);
+        expect(key.startsWith(createHash('sha256').update(expectedBuffer).digest('hex'))).toBeTruthy();
+        expect(Buffer.compare(vol.readFileSync(`${testWorkingDirectory}/${key}`) as Buffer, expectedBuffer)).toBe(0);
+      });
+
+      it('shouldApplyConvertersOnceWhenWriteStream', async (): Promise<void> => {
+        const converter = createAppendingConverter();
+        const localStorage = createStorage(converter);
+
+        const { key } = await localStorage.write(Readable.from([sourceBuffer]));
+
+        expect(converter.convert).toHaveBeenCalledTimes(1);
+        expect(key.startsWith(createHash('sha256').update(expectedBuffer).digest('hex'))).toBeTruthy();
+        expect(Buffer.compare(vol.readFileSync(`${testWorkingDirectory}/${key}`) as Buffer, expectedBuffer)).toBe(0);
+      });
+
+      it('shouldApplyConvertersOnceWhenWriteStreamWithCustomFilename', async (): Promise<void> => {
+        const converter = createAppendingConverter();
+        const localStorage = createStorage(converter);
+
+        await localStorage.write(Readable.from([sourceBuffer]), { filename: 'target.png' });
+
+        expect(converter.convert).toHaveBeenCalledTimes(1);
+        expect(Buffer.compare(vol.readFileSync(`${testWorkingDirectory}/target.png`) as Buffer, expectedBuffer)).toBe(
+          0,
+        );
+      });
     });
 
     describe('streamWriteFailures', (): void => {

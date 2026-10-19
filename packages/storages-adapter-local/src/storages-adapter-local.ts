@@ -73,14 +73,13 @@ export class LocalStorage extends Storage {
     }
   }
 
+  // @dev: receives the already-converted buffer from write(), so the hash matches the stored content
   private async writeBuffer(buffer: Buffer, options?: WriteFileOptions): Promise<StorageFile> {
-    const convertedBuffer = await this.converterManager.convert<Buffer>(buffer);
-
     const fileInfo = options?.filename || (await this.getBufferFilename(buffer));
 
     const filename = Array.isArray(fileInfo) ? fileInfo[0] : fileInfo;
 
-    await writeFile(this.getFileFullPath(filename), convertedBuffer);
+    await writeFile(this.getFileFullPath(filename), buffer);
 
     return { key: filename };
   }
