@@ -75,13 +75,17 @@ export class MemberBaseAdminService<MemberEntity extends BaseMemberEntity = Base
       throw new MemberNotFoundError();
     }
 
-    member.password = await hash(newPassword, this.passwordHashOptions);
-    member.passwordChangedAt = new Date();
-    // An admin-forced password reset is expected to also unlock the account,
-    // mirroring the self-service reset flow (changePasswordWithToken).
-    member.loginFailedCounter = 0;
+    const changes = {
+      password: await hash(newPassword, this.passwordHashOptions),
+      passwordChangedAt: new Date(),
+      // An admin-forced password reset is expected to also unlock the account,
+      // mirroring the self-service reset flow (changePasswordWithToken).
+      loginFailedCounter: 0,
+    };
 
-    await this.baseMemberRepo.save(member);
+    await this.baseMemberRepo.update({ id: member.id }, changes);
+
+    Object.assign(member, changes);
 
     await this.memberPasswordHistoryRepo.save(
       this.memberPasswordHistoryRepo.create({

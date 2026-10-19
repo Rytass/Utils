@@ -17,6 +17,7 @@ import { MemberPasswordHistoryEntity } from '../src/models/member-password-histo
 import { MemberOAuthRecordEntity } from '../src/models/member-oauth-record.entity';
 import type { AuthenticationProvider } from '../src/typings/authentication-provider.interface';
 import { withPrimaryReads } from './__utils__/with-primary-reads';
+import { memberRepoWrites, readCopy } from './__utils__/member-repo-writes';
 import type { CustomOAuth2Provider } from '../src/typings/oauth2-provider.interface';
 import type { MemberBaseOidcProviderOptions } from '../src/oidc/oidc-provider.options';
 import {
@@ -90,13 +91,14 @@ const createMemberRepo = (): {
         }),
       );
 
-      return found ?? null;
+      return found ? readCopy(found) : null;
     }),
     save: jest.fn(async (member: BaseMemberEntity) => {
       members.set(member.id, member);
 
       return member;
     }),
+    ...memberRepoWrites(() => members.values()),
   } as unknown as Repository<BaseMemberEntity>;
 
   return { repo, members, readModes: withPrimaryReads(repo) };
