@@ -10,6 +10,9 @@ Powerful and efficient image resizing processor based on the Sharp image process
 - [x] Buffer and Stream input support
 - [x] Configurable concurrency processing
 - [x] Prevents upscaling low-resolution images
+- [x] Auto-orients images by EXIF `Orientation` (portrait photos stay portrait)
+- [x] Keeps all frames of animated GIF / WebP
+- [x] Optional input pixel limit (`limitInputPixels`)
 - [x] Supports various image formats (JPEG, PNG, WebP, TIFF, GIF, etc.)
 
 ## Installation
@@ -82,12 +85,13 @@ const heightOnlyResizer = new ImageResizer({
 
 ### ImageResizerOptions
 
-| Property          | Type      | Required | Default | Description                       |
-| ----------------- | --------- | -------- | ------- | --------------------------------- |
-| `maxWidth`        | `number`  | No       | -       | Maximum width in pixels           |
-| `maxHeight`       | `number`  | No       | -       | Maximum height in pixels          |
-| `keepAspectRatio` | `boolean` | No       | `true`  | Whether to maintain aspect ratio  |
-| `concurrency`     | `number`  | No       | `1`     | Sharp concurrent processing count |
+| Property           | Type                | Required | Default                           | Description                                                                                                              |
+| ------------------ | ------------------- | -------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `maxWidth`         | `number`            | No       | -                                 | Maximum width in pixels                                                                                                  |
+| `maxHeight`        | `number`            | No       | -                                 | Maximum height in pixels                                                                                                 |
+| `keepAspectRatio`  | `boolean`           | No       | `true`                            | Whether to maintain aspect ratio                                                                                         |
+| `concurrency`      | `number`            | No       | `1`                               | Sharp concurrent processing count                                                                                        |
+| `limitInputPixels` | `number \| boolean` | No       | Sharp default (`0x3FFF x 0x3FFF`) | Reject inputs whose pixel count exceeds this limit (all frames combined for animated images); `false` disables the check |
 
 **Note:** At least one of `maxWidth` or `maxHeight` must be specified.
 
@@ -164,6 +168,12 @@ Supported input formats:
 - SVG
 
 Output format is automatically determined based on input format, or can be specified in subsequent processing steps.
+
+### Orientation and Animation
+
+- EXIF `Orientation` is applied to the pixels before resizing and the tag is removed from the output, so photos taken in portrait mode are still portrait after resizing.
+- Animated GIF and WebP inputs (detected by file signature, for both Buffer and Stream) keep all frames; each frame is resized to fit the target size. Other multi-page formats such as TIFF are resized using the first page only.
+- For Stream input, `convert()` reads the first few bytes to detect the format before it resolves, so start writing to the source stream before awaiting `convert()`. Errors from the source stream are emitted on the output stream.
 
 ## License
 

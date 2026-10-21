@@ -5,7 +5,7 @@ High-performance image resizing adapter based on the Sharp image processing libr
 ## Package Overview
 
 - **Package**: `@rytass/file-converter-adapter-image-resizer`
-- **Version**: 0.1.7
+- **Version**: 0.3.0
 - **Purpose**: Intelligent image resizing with Sharp integration
 - **Core Technology**: Sharp (libvips-based high-performance image processing)
 - **License**: MIT
@@ -15,6 +15,8 @@ High-performance image resizing adapter based on the Sharp image processing libr
 - **Sharp Integration**: Built on Sharp for maximum performance and memory efficiency
 - **Aspect Ratio Control**: Smart aspect ratio preservation or forced dimensions with cropping
 - **Anti-Upscaling**: Prevents upscaling of small images to maintain quality
+- **EXIF Auto-Orientation**: Applies EXIF `Orientation` before resizing and strips the tag, so portrait photos stay portrait
+- **Animation Preserving**: Animated GIF / WebP keep all frames (detected by file signature for Buffer and Stream)
 - **Dual Processing Modes**: Support for both Buffer and Stream inputs/outputs
 - **Concurrent Processing**: Configurable Sharp concurrency for optimal performance
 - **Format Agnostic**: Works with all Sharp-supported formats (JPEG, PNG, WebP, TIFF, GIF, AVIF, HEIF, SVG)
@@ -33,7 +35,7 @@ npm install @rytass/file-converter-adapter-image-resizer
 
 ### Production Dependencies
 - **`@rytass/file-converter`**: Core converter interface and pipeline management
-- **`sharp`**: ^0.33.5 - High-performance image processing library
+- **`sharp`**: ^0.35.4 - High-performance image processing library
 
 ### Development Dependencies  
 - **`@types/sharp`**: TypeScript definitions for Sharp
@@ -86,6 +88,7 @@ interface ImageResizerOptions {
   maxHeight?: number;         // Maximum height in pixels  
   keepAspectRatio?: boolean;  // Preserve aspect ratio (default: true)
   concurrency?: number;       // Sharp processing concurrency (default: 1)
+  limitInputPixels?: number | boolean; // Input pixel limit, all frames combined (default: Sharp's limit)
 }
 ```
 
@@ -97,6 +100,7 @@ interface ImageResizerOptions {
 | `maxHeight` | `number` | Conditional | - | Maximum output height in pixels |
 | `keepAspectRatio` | `boolean` | No | `true` | Maintain original aspect ratio |
 | `concurrency` | `number` | No | `1` | Sharp concurrent operations limit |
+| `limitInputPixels` | `number \| boolean` | No | Sharp default | Reject inputs exceeding this pixel count (all frames combined); `false` disables |
 
 **Important**: At least one of `maxWidth` or `maxHeight` must be specified.
 
@@ -504,7 +508,7 @@ describe('ImageResizer', () => {
 ### Input Formats (Sharp Support)
 - **JPEG** (.jpg, .jpeg) - Full support with quality preservation
 - **PNG** (.png) - Transparency preserved, optimized compression
-- **WebP** (.webp) - Modern format with excellent compression
+- **WebP** (.webp) - Modern format with excellent compression, animation preserved
 - **TIFF** (.tiff, .tif) - Professional/scientific imagery  
 - **GIF** (.gif) - Animation support, palette optimization
 - **AVIF** (.avif) - Next-generation format with superior compression
@@ -513,8 +517,9 @@ describe('ImageResizer', () => {
 
 ### Format-Specific Considerations
 - **SVG**: Rasterized to bitmap at specified dimensions
-- **Animated GIF**: Only first frame processed for resizing
-- **TIFF**: Metadata and layers preserved where possible
+- **Animated GIF / WebP**: All frames are kept and each frame is resized
+- **EXIF Orientation**: Applied to pixels before resizing; the tag is removed from output
+- **Multi-page TIFF / HEIF**: Only the first page is processed
 - **PNG**: Alpha channel transparency maintained
 - **WebP**: Animation support in newer Sharp versions
 
