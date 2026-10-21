@@ -176,7 +176,12 @@ export const createTurnkeyController = (routePrefix: string, access: TurnkeyRout
     ): Promise<TurnkeyProof | StreamableFile> {
       if (format === TurnkeyProofFormat.JSON) return proof;
 
-      const rendered = await this.printService.render(proof, { format });
+      // 渲染失敗（例如缺選用套件）時撤銷這次的列印紀錄，下次才不會被算成補印
+      const rendered = await this.printService.render(proof, { format }).catch(async (error: unknown) => {
+        await this.printService.discardPrint(proof);
+
+        throw error;
+      });
 
       response.setHeader('Content-Type', rendered.contentType);
 
