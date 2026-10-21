@@ -116,4 +116,53 @@ describe('scanInbound', () => {
 
     await rm(dataPath, { recursive: true, force: true });
   });
+
+  it('keeps a file whose archive move fails and still processes the next one', async () => {
+    const dataPath = await mkdtemp(path.join(tmpdir(), 'turnkey-inbound-'));
+    const archive = path.join(dataPath, 'archive');
+
+    await mkdir(path.join(dataPath, 'RecvTarget/A0102'), { recursive: true });
+    await mkdir(path.join(dataPath, 'RecvTarget/B0102'), { recursive: true });
+    await writeFile(path.join(dataPath, 'RecvTarget/A0102/a.xml'), await fixture('A0102'));
+    await writeFile(path.join(dataPath, 'RecvTarget/B0102/b.xml'), await fixture('B0102'));
+    // 封存目錄的 A0102 位置被一般檔案佔住：建資料夾會失敗
+    await mkdir(path.join(archive, '20261021'), { recursive: true });
+    await writeFile(path.join(archive, '20261021/A0102'), 'not a directory');
+
+    const results = await scanInbound(dataPath, archive, async () => 'APPLIED', new Date('2026-10-21T03:00:00Z'));
+
+    expect(results.map(result => [result.fileName, result.outcome])).toEqual([
+      ['a.xml', 'ERROR'],
+      ['b.xml', 'APPLIED'],
+    ]);
+
+    expect(await readdir(path.join(dataPath, 'RecvTarget/A0102'))).toEqual(['a.xml']);
+    expect(await readdir(path.join(archive, '20261021/B0102'))).toEqual(['b.xml']);
+
+    await rm(dataPath, { recursive: true, force: true });
+  });
+
+  it('treats a non-Error rejection from process as a failure and leaves the file in place', async () => {
+    const dataPath = await mkdtemp(path.join(tmpdir(), 'turnkey-inbound-'));
+    const archive = path.join(dataPath, 'archive');
+
+    await mkdir(path.join(dataPath, 'RecvTarget/A0102'), { recursive: true });
+    await writeFile(path.join(dataPath, 'RecvTarget/A0102/a.xml'), await fixture('A0102'));
+
+    const results = await scanInbound(
+      dataPath,
+      archive,
+
+      () => Promise.reject('database unavailable'),
+      new Date('2026-10-21T03:00:00Z'),
+    );
+
+    expect(results).toEqual([
+      { fileName: 'a.xml', messageType: TurnkeyMigMessageType.A0102, outcome: 'ERROR', error: 'database unavailable' },
+    ]);
+
+    expect(await readdir(path.join(dataPath, 'RecvTarget/A0102'))).toEqual(['a.xml']);
+
+    await rm(dataPath, { recursive: true, force: true });
+  });
 });

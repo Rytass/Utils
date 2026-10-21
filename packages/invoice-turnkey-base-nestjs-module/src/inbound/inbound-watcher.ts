@@ -13,6 +13,8 @@ export interface InboundScanResult {
   readonly error?: string;
 }
 
+const errorMessage = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+
 const moveFile = async (source: string, target: string): Promise<void> => {
   await fs.mkdir(path.dirname(target), { recursive: true });
 
@@ -53,8 +55,7 @@ export const scanInbound = async (
     )
   ).flat();
 
-  return files.reduce<Promise<readonly InboundScanResult[]>>(async (resultsPromise, { type, name }) => {
-    const results = await resultsPromise;
+  const handleFile = async (type: string, name: string): Promise<InboundScanResult> => {
     const source = path.join(root, type, name);
     const read = await fs.readFile(source, 'utf8').then(
       text => ({ text, error: null }),
@@ -63,7 +64,7 @@ export const scanInbound = async (
 
     // 讀不到（權限、名為 *.xml 的目錄）：留在原地回報錯誤，不擋後面的檔案
     if (read.error) {
-      return [...results, { fileName: name, messageType: type, outcome: 'ERROR' as const, error: read.error.message }];
+      return { fileName: name, messageType: type, outcome: 'ERROR', error: read.error.message };
     }
 
     const xml = read.text;
@@ -80,23 +81,41 @@ export const scanInbound = async (
     if (!message) {
       await moveFile(source, path.join(archivePath, day, 'unrecognized', name));
 
-      return [...results, { fileName: name, messageType: type, outcome: 'UNRECOGNIZED' as const }];
+      return { fileName: name, messageType: type, outcome: 'UNRECOGNIZED' };
     }
 
-    const outcome = await process(message, name).catch((error: Error) => error);
+    // 以標記結果區分成敗：process 丟出非 Error 的值也算失敗，不會被當成 outcome
+    const applied = await process(message, name).then(
+      outcome => ({ outcome, error: null }),
+      (error: unknown) => ({ outcome: null, error: errorMessage(error) }),
+    );
 
     // 套用失敗：留在原地，下一輪重試，不擋後面的檔案
-    if (outcome instanceof Error) {
-      return [
-        ...results,
-        { fileName: name, messageType: message.messageType, outcome: 'ERROR' as const, error: outcome.message },
-      ];
+    if (applied.outcome === null) {
+      return { fileName: name, messageType: message.messageType, outcome: 'ERROR', error: applied.error };
     }
+
+    const { outcome } = applied;
 
     const folder = outcome === 'UNMATCHED' ? 'unmatched' : outcome === 'IGNORED' ? 'ignored' : message.messageType;
 
     await moveFile(source, path.join(archivePath, day, folder, name));
 
-    return [...results, { fileName: name, messageType: message.messageType, outcome }];
+    return { fileName: name, messageType: message.messageType, outcome };
+  };
+
+  return files.reduce<Promise<readonly InboundScanResult[]>>(async (resultsPromise, { type, name }) => {
+    const results = await resultsPromise;
+    // 封存搬檔失敗（權限、磁碟滿）也只算這個檔的錯誤；已套用的訊息下一輪會以 DUPLICATE 再搬一次
+    const result = await handleFile(type, name).catch(
+      (error: unknown): InboundScanResult => ({
+        fileName: name,
+        messageType: type,
+        outcome: 'ERROR',
+        error: errorMessage(error),
+      }),
+    );
+
+    return [...results, result];
   }, Promise.resolve([]));
 };
