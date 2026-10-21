@@ -25,7 +25,8 @@ export const createNatsTransport: NatsTransportFactory = async ({ servers, conne
       await js.publish(subject, payload, { msgID: msgId });
     },
     close: async (): Promise<void> => {
-      await connection.drain();
+      // 斷線中 drain() 會 reject 且連線仍在背景重連；改用 close() 確實關閉，避免每次中斷殘留一條連線
+      await connection.drain().catch(() => connection.close());
     },
   };
 };
