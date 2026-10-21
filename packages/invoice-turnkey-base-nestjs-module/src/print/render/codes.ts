@@ -40,7 +40,12 @@ export const buildBarcodeBars = async (text: string): Promise<readonly boolean[]
   const bwipjs = unwrapDefault(await loadOptional('bwip-js', 'Code 39 條碼', () => import('bwip-js')));
   const [symbol] = bwipjs.raw({ bcid: 'code39', text, includetext: false });
 
-  return symbol.sbs.flatMap((units, index) => Array.from({ length: units === 3 ? 2 : 1 }, () => index % 2 === 0));
+  // raw() 對 1D 條碼回傳 sbs、對 2D 條碼回傳 pixs；Code 39 一定是前者
+  if (!symbol || !('sbs' in symbol)) throw new Error('bwip-js did not return Code 39 bar widths');
+
+  return symbol.sbs.flatMap((units: number, index: number) =>
+    Array.from({ length: units === 3 ? 2 : 1 }, () => index % 2 === 0),
+  );
 };
 
 export const buildInvoiceCodeGraphics = async (
