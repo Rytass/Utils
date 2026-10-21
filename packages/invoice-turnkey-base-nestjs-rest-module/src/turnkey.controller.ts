@@ -181,7 +181,8 @@ export const createTurnkeyController = (routePrefix: string, access: TurnkeyRout
       response.setHeader('Content-Type', rendered.contentType);
 
       return new StreamableFile(rendered.body, {
-        disposition: `inline; filename="${documentNumber}${PROOF_FILE_EXTENSIONS[format]}"`,
+        // 號碼來自路由參數，只保留英數與 -，避免引號破壞標頭
+        disposition: `inline; filename="${documentNumber.replace(/[^A-Za-z0-9-]/g, '_')}${PROOF_FILE_EXTENSIONS[format]}"`,
       });
     }
 
@@ -513,6 +514,8 @@ export const createTurnkeyController = (routePrefix: string, access: TurnkeyRout
 
       response.status(result.status);
 
+      if (result.replayed) response.setHeader('Idempotent-Replayed', 'true');
+
       return result.body;
     }
 
@@ -621,6 +624,7 @@ export const createTurnkeyController = (routePrefix: string, access: TurnkeyRout
       @Param('companyTaxId') companyTaxId: string,
       @Headers('idempotency-key') idempotencyKey: string | undefined,
       @Body() body: TurnkeyRegisterTrackBody,
+      @Res({ passthrough: true }) response: Response,
     ): Promise<TurnkeyInvoiceTrackEntity> {
       const key = requireIdempotencyKey(idempotencyKey);
 
@@ -630,6 +634,8 @@ export const createTurnkeyController = (routePrefix: string, access: TurnkeyRout
         status: 201,
         body: await this.trackService.register({ ...body, companyTaxId }),
       }));
+
+      if (result.replayed) response.setHeader('Idempotent-Replayed', 'true');
 
       return result.body;
     }
@@ -666,6 +672,7 @@ export const createTurnkeyController = (routePrefix: string, access: TurnkeyRout
       @Param('companyTaxId') companyTaxId: string,
       @Param('invoiceNumber') invoiceNumber: string,
       @Headers('idempotency-key') idempotencyKey: string | undefined,
+      @Res({ passthrough: true }) response: Response,
     ): Promise<TurnkeyInvoiceNumberEntity> {
       const key = requireIdempotencyKey(idempotencyKey);
 
@@ -676,6 +683,8 @@ export const createTurnkeyController = (routePrefix: string, access: TurnkeyRout
         {},
         async () => ({ status: 200, body: await this.trackService.abandon(companyTaxId, invoiceNumber) }),
       );
+
+      if (result.replayed) response.setHeader('Idempotent-Replayed', 'true');
 
       return result.body;
     }
