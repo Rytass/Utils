@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- B2B 交換開立（賣方 → 買方，買方須回 A0102 確認）：銷售額與稅額分開記載 -->
+<Invoice xmlns="urn:GEINV:eInvoiceMessage:A0101:4.1">
+  <Main>
+    <InvoiceNumber>__NO__</InvoiceNumber>
+    <InvoiceDate>__DATE__</InvoiceDate>
+    <InvoiceTime>__TIME__</InvoiceTime>
+    <Seller>
+      <Identifier>12345675</Identifier>
+      <Name>測試營業人股份有限公司</Name>
+      <Address>測試路一段1號</Address>
+    </Seller>
+    <Buyer>
+      <Identifier>87654322</Identifier>
+      <Name>測試買方股份有限公司</Name>
+    </Buyer>
+    <InvoiceType>07</InvoiceType>
+    <DonateMark>0</DonateMark>
+  </Main>
+  <Details>
+    <ProductItem>
+      <Description>Turnkey 驗證測試品項</Description>
+      <Quantity>1</Quantity>
+      <UnitPrice>100</UnitPrice>
+      <TaxType>1</TaxType>
+      <Amount>100</Amount>
+      <SequenceNumber>1</SequenceNumber>
+    </ProductItem>
+  </Details>
+  <Amount>
+    <SalesAmount>100</SalesAmount>
+    <TaxType>1</TaxType>
+    <TaxRate>0.05</TaxRate>
+    <TaxAmount>5</TaxAmount>
+    <TotalAmount>105</TotalAmount>
+  </Amount>
+</Invoice>

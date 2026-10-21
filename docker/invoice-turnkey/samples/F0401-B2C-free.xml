@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 存證 B2C 免稅：課稅別 3，金額放在 FreeTaxSalesAmount，稅率 0 -->
+<Invoice xmlns="urn:GEINV:eInvoiceMessage:F0401:4.1">
+  <Main>
+    <InvoiceNumber>__NO__</InvoiceNumber>
+    <InvoiceDate>__DATE__</InvoiceDate>
+    <InvoiceTime>__TIME__</InvoiceTime>
+    <Seller>
+      <Identifier>12345675</Identifier>
+      <Name>測試營業人股份有限公司</Name>
+      <Address>測試路一段1號</Address>
+    </Seller>
+    <Buyer>
+      <Identifier>0000000000</Identifier>
+      <Name>測試消費者</Name>
+    </Buyer>
+    <InvoiceType>07</InvoiceType>
+    <DonateMark>0</DonateMark>
+    <PrintMark>Y</PrintMark>
+    <RandomNumber>__RAND__</RandomNumber>
+  </Main>
+  <Details>
+    <ProductItem>
+      <Description>免稅品項</Description>
+      <Quantity>1</Quantity>
+      <UnitPrice>100</UnitPrice>
+      <TaxType>3</TaxType>
+      <Amount>100</Amount>
+      <SequenceNumber>1</SequenceNumber>
+    </ProductItem>
+  </Details>
+  <Amount>
+    <SalesAmount>0</SalesAmount>
+    <FreeTaxSalesAmount>100</FreeTaxSalesAmount>
+    <ZeroTaxSalesAmount>0</ZeroTaxSalesAmount>
+    <TaxType>3</TaxType>
+    <TaxRate>0</TaxRate>
+    <TaxAmount>0</TaxAmount>
+    <TotalAmount>100</TotalAmount>
+  </Amount>
+</Invoice>

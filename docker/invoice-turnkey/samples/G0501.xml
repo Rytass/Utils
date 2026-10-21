@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 存證作廢折讓證明單：AllowanceType 與原折讓單一致（賣方開立為 2） -->
+<CancelAllowance xmlns="urn:GEINV:eInvoiceMessage:G0501:4.1">
+  <CancelAllowanceNumber>__ALW_NO__</CancelAllowanceNumber>
+  <AllowanceType>2</AllowanceType>
+  <AllowanceDate>__REF_DATE__</AllowanceDate>
+  <BuyerId>__BUYER__</BuyerId>
+  <SellerId>12345675</SellerId>
+  <CancelDate>__DATE__</CancelDate>
+  <CancelTime>__TIME__</CancelTime>
+  <CancelReason>驗證測試作廢折讓</CancelReason>
+</CancelAllowance>

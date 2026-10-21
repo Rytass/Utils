@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 存證 B2B 零稅率：需填通關方式註記（1 非經海關、2 經海關）與零稅率原因（71–79），否則 E0228 （B2B 沒有載具，PrintMark 必須為 Y，否則 Turnkey 本機檢查 [7001] 擋下） -->
+<Invoice xmlns="urn:GEINV:eInvoiceMessage:F0401:4.1">
+  <Main>
+    <InvoiceNumber>__NO__</InvoiceNumber>
+    <InvoiceDate>__DATE__</InvoiceDate>
+    <InvoiceTime>__TIME__</InvoiceTime>
+    <Seller>
+      <Identifier>12345675</Identifier>
+      <Name>測試營業人股份有限公司</Name>
+      <Address>測試路一段1號</Address>
+    </Seller>
+    <Buyer>
+      <Identifier>87654322</Identifier>
+      <Name>測試買方股份有限公司</Name>
+    </Buyer>
+    <CustomsClearanceMark>2</CustomsClearanceMark>
+    <ZeroTaxRateReason>71</ZeroTaxRateReason>
+    <InvoiceType>07</InvoiceType>
+    <DonateMark>0</DonateMark>
+    <PrintMark>Y</PrintMark>
+    <RandomNumber>__RAND__</RandomNumber>
+  </Main>
+  <Details>
+    <ProductItem>
+      <Description>外銷貨物</Description>
+      <Quantity>1</Quantity>
+      <UnitPrice>100</UnitPrice>
+      <TaxType>2</TaxType>
+      <Amount>100</Amount>
+      <SequenceNumber>1</SequenceNumber>
+    </ProductItem>
+  </Details>
+  <Amount>
+    <SalesAmount>0</SalesAmount>
+    <FreeTaxSalesAmount>0</FreeTaxSalesAmount>
+    <ZeroTaxSalesAmount>100</ZeroTaxSalesAmount>
+    <TaxType>2</TaxType>
+    <TaxRate>0</TaxRate>
+    <TaxAmount>0</TaxAmount>
+    <TotalAmount>100</TotalAmount>
+  </Amount>
+</Invoice>

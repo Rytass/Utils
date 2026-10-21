@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SummaryResult xmlns="urn:GEINV:SummaryResult:4.1">
+  <RoutingInfo>
+    <From><PartyId>12345675</PartyId></From>
+    <FromVAC><RoutingId>PO000000</RoutingId></FromVAC>
+    <To><PartyId>00000000</PartyId></To>
+    <ToVAC><RoutingId>0</RoutingId></ToVAC>
+  </RoutingInfo>
+  <DetailList>
+    <Message>
+      <Info>
+        <Id>v41-F0401-20261020-012457022-11111111-1111-4111-8111-111111111111</Id>
+        <Size>1</Size><MessageType>F0401</MessageType><Service>S</Service><Action>B2S</Action>
+      </Info>
+      <ResultType>
+        <Total><ResultDetailType><Count>1</Count><Invoices><Invoice><ReferenceNumber>ZZ00000001</ReferenceNumber><InvoiceDate>20261020</InvoiceDate></Invoice></Invoices></ResultDetailType></Total>
+        <Good><ResultDetailType><Count>1</Count><Invoices><Invoice><ReferenceNumber>ZZ00000001</ReferenceNumber><InvoiceDate>20261020</InvoiceDate></Invoice></Invoices></ResultDetailType></Good>
+        <Failed><ResultDetailType><Count>0</Count></ResultDetailType></Failed>
+      </ResultType>
+    </Message>
+    <Message>
+      <Info>
+        <Id>v41-F0401-20261020-021329016-22222222-2222-4222-8222-222222222222</Id>
+        <Size>1</Size><MessageType>F0401</MessageType><Service>S</Service><Action>B2S</Action>
+      </Info>
+      <ResultType>
+        <Total><ResultDetailType><Count>1</Count><Invoices><Invoice><ReferenceNumber>ZZ00000002</ReferenceNumber><InvoiceDate>20261025</InvoiceDate></Invoice></Invoices></ResultDetailType></Total>
+        <Good><ResultDetailType><Count>0</Count></ResultDetailType></Good>
+        <Failed><ResultDetailType><Count>1</Count><Invoices><Invoice><ReferenceNumber>ZZ00000002</ReferenceNumber><InvoiceDate>20261025</InvoiceDate></Invoice></Invoices></ResultDetailType></Failed>
+      </ResultType>
+    </Message>
+  </DetailList>
+</SummaryResult>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 空白未使用字軌（每期結束後申報沒用到的號碼）：一個檔案只放一個字軌；明細可有多段，不連續的缺號各列一段
+     YearMonth 為期別的雙月（民國年 3 碼 + 偶數月），例如 2026 年 9–10 月 = 11510 -->
+<BranchTrackBlank xmlns="urn:GEINV:eInvoiceMessage:E0402:4.1">
+  <Main>
+    <HeadBan>12345675</HeadBan>
+    <BranchBan>12345675</BranchBan>
+    <InvoiceType>07</InvoiceType>
+    <YearMonth>__YM__</YearMonth>
+    <InvoiceTrack>__TRACK__</InvoiceTrack>
+  </Main>
+  <Details>
+__ITEMS__
+  </Details>
+</BranchTrackBlank>

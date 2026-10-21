@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 存證註銷折讓（MIG 4.1 有定義，但 Turnkey 3.2.2 核心不支援，見 README） -->
+<VoidAllowance xmlns="urn:GEINV:eInvoiceMessage:G0701:4.1">
+  <VoidAllowanceNumber>__ALW_NO__</VoidAllowanceNumber>
+  <AllowanceType>2</AllowanceType>
+  <AllowanceDate>__REF_DATE__</AllowanceDate>
+  <BuyerId>__BUYER__</BuyerId>
+  <SellerId>12345675</SellerId>
+  <VoidDate>__DATE__</VoidDate>
+  <VoidTime>__TIME__</VoidTime>
+  <VoidReason>驗證測試註銷折讓</VoidReason>
+</VoidAllowance>

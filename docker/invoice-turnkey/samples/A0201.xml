@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- B2B 交換作廢發票（賣方 → 買方，買方須回 A0202 確認） -->
+<CancelInvoice xmlns="urn:GEINV:eInvoiceMessage:A0201:4.1">
+  <CancelInvoiceNumber>__REF_NO__</CancelInvoiceNumber>
+  <InvoiceDate>__REF_DATE__</InvoiceDate>
+  <BuyerId>__BUYER__</BuyerId>
+  <SellerId>12345675</SellerId>
+  <CancelDate>__DATE__</CancelDate>
+  <CancelTime>__TIME__</CancelTime>
+  <CancelReason>驗證測試作廢</CancelReason>
+</CancelInvoice>

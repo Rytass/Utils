@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 存證 B2C 開立（手機條碼載具 3J0002，不列印）：以定價開立，銷售額含稅、稅額 0 -->
+<Invoice xmlns="urn:GEINV:eInvoiceMessage:F0401:4.1">
+  <Main>
+    <InvoiceNumber>__NO__</InvoiceNumber>
+    <InvoiceDate>__DATE__</InvoiceDate>
+    <InvoiceTime>__TIME__</InvoiceTime>
+    <Seller>
+      <Identifier>12345675</Identifier>
+      <Name>測試營業人股份有限公司</Name>
+      <Address>測試路一段1號</Address>
+    </Seller>
+    <Buyer>
+      <Identifier>0000000000</Identifier>
+      <Name>測試消費者</Name>
+    </Buyer>
+    <InvoiceType>07</InvoiceType>
+    <DonateMark>0</DonateMark>
+    <CarrierType>3J0002</CarrierType>
+    <CarrierId1>__CARRIER__</CarrierId1>
+    <CarrierId2>__CARRIER__</CarrierId2>
+    <PrintMark>N</PrintMark>
+    <RandomNumber>__RAND__</RandomNumber>
+  </Main>
+  <Details>
+    <ProductItem>
+      <Description>Turnkey 驗證測試品項</Description>
+      <Quantity>1</Quantity>
+      <UnitPrice>100</UnitPrice>
+      <TaxType>1</TaxType>
+      <Amount>100</Amount>
+      <SequenceNumber>1</SequenceNumber>
+    </ProductItem>
+  </Details>
+  <!-- 買方為非營業人：依營業稅法第 32 條以定價開立，銷售額含稅、稅額填 0 -->
+  <Amount>
+    <SalesAmount>100</SalesAmount>
+    <FreeTaxSalesAmount>0</FreeTaxSalesAmount>
+    <ZeroTaxSalesAmount>0</ZeroTaxSalesAmount>
+    <TaxType>1</TaxType>
+    <TaxRate>0.05</TaxRate>
+    <TaxAmount>0</TaxAmount>
+    <TotalAmount>100</TotalAmount>
+  </Amount>
+</Invoice>

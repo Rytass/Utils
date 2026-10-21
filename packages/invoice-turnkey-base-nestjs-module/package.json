@@ -1,0 +1,64 @@
+{
+  "name": "@rytass/invoice-turnkey-base-nestjs-module",
+  "version": "0.1.0",
+  "description": "Rytass Invoice NestJS Base Module for the MOF e-Invoice Turnkey",
+  "keywords": [
+    "rytass",
+    "invoice",
+    "turnkey",
+    "nestjs"
+  ],
+  "author": "Chia Yu Pai <fantasyatelier@gmail.com>",
+  "homepage": "https://github.com/Rytass/Utils#readme",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rytass/Utils.git"
+  },
+  "scripts": {
+    "clean": "nx clean",
+    "build": "nx build",
+    "lint": "nx lint",
+    "test": "nx test",
+    "test:watch": "nx test:watch"
+  },
+  "bugs": {
+    "url": "https://github.com/Rytass/Utils/issues"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "*",
+    "@nestjs/core": "*",
+    "@nestjs/typeorm": "*",
+    "bwip-js": "^4.11.4",
+    "fontkit": "^2.0.4",
+    "iconv-lite": "^0.7.3",
+    "pdfkit": "^0.20.2",
+    "pngjs": "^7.0.0",
+    "qrcode": "^1.5.4",
+    "typeorm": "*"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^5.10.0",
+    "luxon": "^3.7.2"
+  },
+  "peerDependenciesMeta": {
+    "bwip-js": {
+      "optional": true
+    },
+    "fontkit": {
+      "optional": true
+    },
+    "iconv-lite": {
+      "optional": true
+    },
+    "pdfkit": {
+      "optional": true
+    },
+    "pngjs": {
+      "optional": true
+    },
+    "qrcode": {
+      "optional": true
+    }
+  }
+}

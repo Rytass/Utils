@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 存證註銷發票：僅供 B2C 註銷後以原號碼重新開立；記載錯誤應作廢另開、退貨折讓應開折讓，不可用註銷（MIG 4.1 第 134 頁） -->
+<VoidInvoice xmlns="urn:GEINV:eInvoiceMessage:F0701:4.1">
+  <VoidInvoiceNumber>__REF_NO__</VoidInvoiceNumber>
+  <InvoiceDate>__REF_DATE__</InvoiceDate>
+  <BuyerId>__BUYER__</BuyerId>
+  <SellerId>12345675</SellerId>
+  <VoidDate>__DATE__</VoidDate>
+  <VoidTime>__TIME__</VoidTime>
+  <VoidReason>驗證測試註銷</VoidReason>
+</VoidInvoice>

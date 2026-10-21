@@ -1,0 +1,53 @@
+export enum TurnkeyValidationCode {
+  ITEM_SUM_MISMATCH = 'ITEM_SUM_MISMATCH',
+  TAX_AMOUNT_MISMATCH = 'TAX_AMOUNT_MISMATCH',
+  TOTAL_AMOUNT_MISMATCH = 'TOTAL_AMOUNT_MISMATCH',
+  INVALID_TAX_ID = 'INVALID_TAX_ID',
+  INVALID_CARRIER = 'INVALID_CARRIER',
+  UNKNOWN_NPO_CODE = 'UNKNOWN_NPO_CODE',
+  ALLOWANCE_EXCEEDS_INVOICE = 'ALLOWANCE_EXCEEDS_INVOICE',
+  ALLOWANCE_AMOUNT_INVALID = 'ALLOWANCE_AMOUNT_INVALID',
+  ALLOWANCE_BUYER_MISMATCH = 'ALLOWANCE_BUYER_MISMATCH',
+  INVOICE_NOT_FOUND = 'INVOICE_NOT_FOUND',
+  NUMBER_OUT_OF_TRACK = 'NUMBER_OUT_OF_TRACK',
+  NUMBER_ALREADY_REPORTED_BLANK = 'NUMBER_ALREADY_REPORTED_BLANK',
+  DATE_OUT_OF_ORDER = 'DATE_OUT_OF_ORDER',
+  ISSUE_DEADLINE_PASSED = 'ISSUE_DEADLINE_PASSED',
+  ISSUED_IN_FUTURE = 'ISSUED_IN_FUTURE',
+  ZERO_RATED_FIELDS_REQUIRED = 'ZERO_RATED_FIELDS_REQUIRED',
+  PRINT_MARK_REQUIRED = 'PRINT_MARK_REQUIRED',
+  BUYER_TAX_ID_REQUIRED = 'BUYER_TAX_ID_REQUIRED',
+  TAX_TYPE_NOT_ALLOWED = 'TAX_TYPE_NOT_ALLOWED',
+  DONATION_NOT_ALLOWED = 'DONATION_NOT_ALLOWED',
+  BUYER_NOT_EXCHANGE_READY = 'BUYER_NOT_EXCHANGE_READY',
+  NO_AVAILABLE_NUMBER = 'NO_AVAILABLE_NUMBER',
+  INVALID_STATE = 'INVALID_STATE',
+  COMPANY_NOT_REGISTERED = 'COMPANY_NOT_REGISTERED',
+  INVALID_TRACK = 'INVALID_TRACK',
+  SUBMISSION_NOT_FOUND = 'SUBMISSION_NOT_FOUND',
+  /** 同一個 externalId 已開過內容不同的發票 */
+  EXTERNAL_ID_CONFLICT = 'EXTERNAL_ID_CONFLICT',
+}
+
+export interface TurnkeyValidationIssue {
+  readonly code: TurnkeyValidationCode;
+  readonly message: string;
+  readonly field?: string;
+}
+
+/** 檢核失敗；REST 轉成 422，號碼不會用掉 */
+export class TurnkeyValidationError extends Error {
+  constructor(readonly issues: readonly TurnkeyValidationIssue[]) {
+    super(issues.map(issue => `${issue.code}: ${issue.message}`).join('; '));
+
+    this.name = 'TurnkeyValidationError';
+  }
+
+  get code(): TurnkeyValidationCode {
+    return this.issues[0].code;
+  }
+
+  get field(): string | undefined {
+    return this.issues[0].field;
+  }
+}
