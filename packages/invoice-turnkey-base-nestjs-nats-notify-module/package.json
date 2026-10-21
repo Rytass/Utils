@@ -1,0 +1,39 @@
+{
+  "name": "@rytass/invoice-turnkey-base-nestjs-nats-notify-module",
+  "version": "0.1.0",
+  "description": "Rytass Invoice NestJS NATS JetStream Notify Module for the MOF e-Invoice Turnkey",
+  "keywords": [
+    "rytass",
+    "invoice",
+    "turnkey",
+    "nestjs",
+    "nats",
+    "jetstream"
+  ],
+  "author": "Chia Yu Pai <fantasyatelier@gmail.com>",
+  "homepage": "https://github.com/Rytass/Utils#readme",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rytass/Utils.git"
+  },
+  "scripts": {
+    "clean": "nx clean",
+    "build": "nx build",
+    "lint": "nx lint",
+    "test": "nx test",
+    "test:watch": "nx test:watch"
+  },
+  "bugs": {
+    "url": "https://github.com/Rytass/Utils/issues"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "*",
+    "@nestjs/typeorm": "*",
+    "nats": "*",
+    "typeorm": "*"
+  },
+  "dependencies": {
+    "@rytass/invoice-turnkey-base-nestjs-module": "0.1.0"
+  }
+}
