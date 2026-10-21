@@ -39,7 +39,8 @@ export const createRedisTransport: RedisTransportFactory = async ({ redis }) => 
       await client.publish(channel, message);
     },
     close: async (): Promise<void> => {
-      await client.quit();
+      // 斷線重連中 QUIT 會卡到逾時並 reject，連線仍在背景重連；改用 disconnect() 停止重連
+      await client.quit().catch(() => client.disconnect());
     },
   };
 };
