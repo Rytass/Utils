@@ -20,6 +20,7 @@ import {
   TurnkeySubmissionStatus,
 } from '../typings/turnkey-enums';
 import { TurnkeyEvent, TurnkeyEvents } from '../typings/turnkey-events';
+import { TurnkeyValidationCode, TurnkeyValidationError } from '../validation/turnkey-validation-error';
 import { resolveSubmissionResult, SubmissionResult } from './resolve-submission-result';
 import { writeSubmissionFile } from './submission-writer';
 import type { TurnkeyLogReader } from './turnkey-log-reader';
@@ -34,6 +35,11 @@ const SUBMISSION_EVENT: Readonly<Record<SubmissionResult['status'], TurnkeyEvent
   [TurnkeySubmissionStatus.REJECTED]: TurnkeyEvents.SUBMISSION_REJECTED,
   [TurnkeySubmissionStatus.FAILED]: TurnkeyEvents.SUBMISSION_FAILED,
 };
+
+/** 人工判定送件時記錄的結果代碼 */
+export const MANUAL_RESULT_CODE = 'MANUAL';
+
+export type TurnkeyManualResolution = TurnkeySubmissionStatus.ACCEPTED | TurnkeySubmissionStatus.FAILED;
 
 /** SubmissionWriter 與 StatusPoller；由 TurnkeyWorkerRunner 在取得 advisory lock 的實例上定期呼叫 */
 @Injectable()
@@ -92,6 +98,52 @@ export class TurnkeySubmissionWorker {
     }, Promise.resolve(0));
 
     return written;
+  }
+
+  /**
+   * 人工判定一筆卡在 WRITTEN 的送件：Turnkey log 已清除或查不到結果，由人到 Turnkey 確認後回填。
+   * ACCEPTED 表示平台已收下；FAILED 表示沒送進平台，之後可 retry 或放棄號碼。
+   * 套用流程與自動輪詢相同（發票、號碼、折讓、收件狀態與事件），resultCode 記為 MANUAL、resultMessage 為原因。
+   */
+  async resolveManually(
+    companyTaxId: string,
+    submissionId: string,
+    status: TurnkeyManualResolution,
+    reason: string,
+  ): Promise<TurnkeySubmissionEntity> {
+    const invalid = (code: TurnkeyValidationCode, message: string, field: string): TurnkeyValidationError =>
+      new TurnkeyValidationError([{ code, message, field }]);
+
+    if (status !== TurnkeySubmissionStatus.ACCEPTED && status !== TurnkeySubmissionStatus.FAILED) {
+      throw invalid(TurnkeyValidationCode.INVALID_STATE, '人工判定只能是 ACCEPTED 或 FAILED', 'status');
+    }
+
+    const note = typeof reason === 'string' ? reason.trim() : '';
+
+    if (!note || note.length > 500) {
+      throw invalid(TurnkeyValidationCode.INVALID_STATE, '請填寫判定原因（500 字以內）', 'reason');
+    }
+
+    const submission = await this.submissionRepo.findOne({ where: { id: submissionId, companyTaxId } });
+
+    if (!submission) throw invalid(TurnkeyValidationCode.SUBMISSION_NOT_FOUND, '找不到送件紀錄', 'submissionId');
+
+    if (submission.status !== TurnkeySubmissionStatus.WRITTEN) {
+      throw invalid(TurnkeyValidationCode.INVALID_STATE, `送件狀態 ${submission.status} 不需人工判定`, 'submissionId');
+    }
+
+    const events = await this.dataSource.transaction(manager =>
+      this.applyResult(manager, submission, { status, code: MANUAL_RESULT_CODE, message: note }, null),
+    );
+
+    // applyResult 只更新仍是 WRITTEN 的列：同時被輪詢套用了結果就不覆寫
+    if (!events.length) {
+      throw invalid(TurnkeyValidationCode.INVALID_STATE, '送件已有結果，不需人工判定', 'submissionId');
+    }
+
+    this.eventService.publish(events);
+
+    return (await this.submissionRepo.findOne({ where: { id: submission.id } })) as TurnkeySubmissionEntity;
   }
 
   /** 讀 Turnkey DB 更新 WRITTEN 的 submission；回傳有結果的筆數 */
