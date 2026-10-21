@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- B2B 交換退回發票接收確認（賣方收到買方 A0301 退回後回覆）：RejectDate/RejectTime 填 A0301 上的退回日期時間 -->
+<RejectInvoiceConfirm xmlns="urn:GEINV:eInvoiceMessage:A0302:4.1">
+  <RejectInvoiceNumber>__REF_NO__</RejectInvoiceNumber>
+  <InvoiceDate>__REF_DATE__</InvoiceDate>
+  <BuyerId>__BUYER__</BuyerId>
+  <SellerId>12345675</SellerId>
+  <RejectDate>__REJ_DATE__</RejectDate>
+  <RejectTime>__REJ_TIME__</RejectTime>
+</RejectInvoiceConfirm>

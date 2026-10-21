@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 存證 B2B 開立（買方為營業人）：銷售額與稅額分開記載（營業稅法第 32 條） -->
+<Invoice xmlns="urn:GEINV:eInvoiceMessage:F0401:4.1">
+  <Main>
+    <InvoiceNumber>__NO__</InvoiceNumber>
+    <InvoiceDate>__DATE__</InvoiceDate>
+    <InvoiceTime>__TIME__</InvoiceTime>
+    <Seller>
+      <Identifier>12345675</Identifier>
+      <Name>測試營業人股份有限公司</Name>
+      <Address>測試路一段1號</Address>
+    </Seller>
+    <Buyer>
+      <Identifier>87654322</Identifier>
+      <Name>測試買方股份有限公司</Name>
+    </Buyer>
+    <InvoiceType>07</InvoiceType>
+    <DonateMark>0</DonateMark>
+    <PrintMark>Y</PrintMark>
+    <RandomNumber>__RAND__</RandomNumber>
+  </Main>
+  <Details>
+    <ProductItem>
+      <Description>Turnkey 驗證測試品項</Description>
+      <Quantity>1</Quantity>
+      <UnitPrice>100</UnitPrice>
+      <TaxType>1</TaxType>
+      <Amount>100</Amount>
+      <SequenceNumber>1</SequenceNumber>
+    </ProductItem>
+  </Details>
+  <Amount>
+    <SalesAmount>100</SalesAmount>
+    <FreeTaxSalesAmount>0</FreeTaxSalesAmount>
+    <ZeroTaxSalesAmount>0</ZeroTaxSalesAmount>
+    <TaxType>1</TaxType>
+    <TaxRate>0.05</TaxRate>
+    <TaxAmount>5</TaxAmount>
+    <TotalAmount>105</TotalAmount>
+  </Amount>
+</Invoice>

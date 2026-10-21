@@ -1,0 +1,83 @@
+# Example stack: PostgreSQL + Turnkey + NestJS app that shares Turnkey's /data volume.
+# Copy it to compose.yaml (gitignored) and supply the values listed in README.md.
+#
+#   cp compose.example.yaml compose.yaml
+#   mkdir -p secrets && printf '%s' 'CHANGE-ME' > secrets/db_password.txt
+#   # create .env (gitignored) with the variables marked ${...:?} below
+#
+# Passwords are never written in this file: the DB superuser password comes from a
+# Docker secret, the others from .env (or a secrets manager). For production, prefer
+# Docker/Kubernetes secrets over environment variables, which `docker inspect` shows.
+name: einv-turnkey
+
+services:
+  db:
+    image: postgres:16
+    # Required: without it the DB stays down after a Docker Desktop restart and
+    # Turnkey restart-loops (observed 777 restarts in a local run)
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: turnkey
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      POSTGRES_DB: einvturnkey
+      TZ: Asia/Taipei
+    secrets:
+      - db_password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U turnkey -d einvturnkey"]
+      interval: 5s
+      retries: 10
+
+  turnkey:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        TURNKEY_TARBALL: EINVTurnkey_setup_3.2.2.tar.gz
+    image: einv-turnkey:3.2.2
+    platform: linux/amd64
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    # run_stop.sh needs several seconds; leave a buffer before SIGKILL
+    stop_grace_period: 60s
+    volumes:
+      # Work directories (UpCast/Pack/SendFile/...), software certificate, logs and
+      # config all live under /data. Mount /data itself, never the install directory.
+      - turnkey-data:/data
+
+  app:
+    # Your NestJS image that uses @rytass/invoice-turnkey-base-nestjs-module
+    image: ${APP_IMAGE:?set APP_IMAGE in .env}
+    restart: unless-stopped
+    # The app must be able to write under /data (sidecar/tmp, UpCast/.../SRC, RecvTarget
+    # archive). Turnkey runs as root and creates its folders root-owned; see README
+    # section "Persistence and layout" for the UID/GID options.
+    user: "${APP_UID:-1000}:${APP_GID:-1000}"
+    depends_on:
+      db:
+        condition: service_healthy
+      turnkey:
+        condition: service_started
+    environment:
+      # The app's own database (the module's turnkey_* tables live here)
+      DATABASE_URL: postgres://app:${APP_DB_PASSWORD:?set in .env}@db:5432/app
+      # Turnkey's database through the read-only role created in README step "Database"
+      TURNKEY_DATABASE_URL: postgres://turnkey_sidecar:${TURNKEY_SIDECAR_PASSWORD:?set in .env}@db:5432/einvturnkey
+      # secretEncryptionKey for the module; losing it makes encrypted values unreadable
+      TURNKEY_SECRET_KEY: ${TURNKEY_SECRET_KEY:?set in .env}
+    volumes:
+      - turnkey-data:/data
+    # Run a single instance with background workers enabled. Any additional instance
+    # must set workers.enabled: false (see the base module README).
+
+volumes:
+  pgdata:
+  turnkey-data:
+
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt

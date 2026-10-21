@@ -1,0 +1,7 @@
+# Official Turnkey installer: licensed, never commit
+EINVTurnkey_setup_*.tar.gz
+
+# Local stack files that hold passwords, keys or machine-specific settings
+compose.yaml
+.env
+secrets/

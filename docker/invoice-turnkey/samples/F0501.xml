@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 存證作廢發票：BuyerId 填原發票買方（B2C 為 0000000000） -->
+<CancelInvoice xmlns="urn:GEINV:eInvoiceMessage:F0501:4.1">
+  <CancelInvoiceNumber>__REF_NO__</CancelInvoiceNumber>
+  <InvoiceDate>__REF_DATE__</InvoiceDate>
+  <BuyerId>__BUYER__</BuyerId>
+  <SellerId>12345675</SellerId>
+  <CancelDate>__DATE__</CancelDate>
+  <CancelTime>__TIME__</CancelTime>
+  <CancelReason>驗證測試作廢</CancelReason>
+</CancelInvoice>

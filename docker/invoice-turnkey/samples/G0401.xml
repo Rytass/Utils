@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 存證開立折讓證明單（賣方開立，AllowanceType 固定 2）：Amount 為不含稅金額、Tax 另計，皆為整數 -->
+<Allowance xmlns="urn:GEINV:eInvoiceMessage:G0401:4.1">
+  <Main>
+    <AllowanceNumber>__ALW_NO__</AllowanceNumber>
+    <AllowanceDate>__DATE__</AllowanceDate>
+    <Seller>
+      <Identifier>12345675</Identifier>
+      <Name>測試營業人股份有限公司</Name>
+      <Address>測試路一段1號</Address>
+    </Seller>
+    <Buyer>
+      <Identifier>__BUYER__</Identifier>
+      <Name>__BUYER_NAME__</Name>
+    </Buyer>
+    <AllowanceType>2</AllowanceType>
+  </Main>
+  <Details>
+    <ProductItem>
+      <OriginalInvoiceDate>__REF_DATE__</OriginalInvoiceDate>
+      <OriginalInvoiceNumber>__REF_NO__</OriginalInvoiceNumber>
+      <OriginalSequenceNumber>1</OriginalSequenceNumber>
+      <OriginalDescription>Turnkey 驗證測試品項</OriginalDescription>
+      <Quantity>1</Quantity>
+      <UnitPrice>__ALW_AMT__</UnitPrice>
+      <Amount>__ALW_AMT__</Amount>
+      <Tax>__ALW_TAX__</Tax>
+      <AllowanceSequenceNumber>1</AllowanceSequenceNumber>
+      <TaxType>1</TaxType>
+    </ProductItem>
+  </Details>
+  <Amount>
+    <TaxAmount>__ALW_TAX__</TaxAmount>
+    <TotalAmount>__ALW_AMT__</TotalAmount>
+  </Amount>
+</Allowance>
