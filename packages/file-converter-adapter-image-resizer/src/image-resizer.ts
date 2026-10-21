@@ -48,7 +48,6 @@ export class ImageResizer implements FileConverter<ImageResizerOptions> {
   constructor(
     options: ImageResizerOptions = {
       keepAspectRatio: true,
-      concurrency: 1,
     },
   ) {
     if (!options.maxHeight && !options.maxWidth)
@@ -56,7 +55,10 @@ export class ImageResizer implements FileConverter<ImageResizerOptions> {
 
     this.options = options;
 
-    sharp.concurrency(this.options.concurrency ?? 1);
+    // `sharp.concurrency` is a process-wide libvips setting, only override it when explicitly requested
+    if (this.options.concurrency !== undefined) {
+      sharp.concurrency(this.options.concurrency);
+    }
   }
 
   private getSharpOptions(header: Buffer): SharpOptions {

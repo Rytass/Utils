@@ -174,13 +174,13 @@ describe('Image Transcoder Resizer', () => {
     expect(sharp.concurrency).toHaveBeenCalledWith(4);
   });
 
-  it('should default concurrency to 1', () => {
+  it('should not change sharp concurrency when not provided', () => {
     const sharp = jest.requireMock('sharp').default;
 
     new ImageResizer({
       maxWidth: 50,
     });
 
-    expect(sharp.concurrency).toHaveBeenCalledWith(1);
+    expect(sharp.concurrency).not.toHaveBeenCalled();
   });
 });

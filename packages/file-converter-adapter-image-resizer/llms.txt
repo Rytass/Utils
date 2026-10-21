@@ -18,7 +18,7 @@ High-performance image resizing adapter based on the Sharp image processing libr
 - **EXIF Auto-Orientation**: Applies EXIF `Orientation` before resizing and strips the tag, so portrait photos stay portrait
 - **Animation Preserving**: Animated GIF / WebP keep all frames (detected by file signature for Buffer and Stream)
 - **Dual Processing Modes**: Support for both Buffer and Stream inputs/outputs
-- **Concurrent Processing**: Configurable Sharp concurrency for optimal performance
+- **Threads per Image**: Optional `concurrency` sets the process-wide `sharp.concurrency()` (libvips threads per image); unchanged when omitted
 - **Format Agnostic**: Works with all Sharp-supported formats (JPEG, PNG, WebP, TIFF, GIF, AVIF, HEIF, SVG)
 - **Memory Optimized**: Sharp caching disabled to prevent memory leaks
 - **Pipeline Compatible**: Seamlessly integrates with the file converter pipeline architecture
@@ -87,7 +87,7 @@ interface ImageResizerOptions {
   maxWidth?: number;          // Maximum width in pixels
   maxHeight?: number;         // Maximum height in pixels  
   keepAspectRatio?: boolean;  // Preserve aspect ratio (default: true)
-  concurrency?: number;       // Sharp processing concurrency (default: 1)
+  concurrency?: number;       // libvips threads per image, process-wide (default: sharp default, CPU cores)
   limitInputPixels?: number | boolean; // Input pixel limit, all frames combined (default: Sharp's limit)
 }
 ```
@@ -99,7 +99,7 @@ interface ImageResizerOptions {
 | `maxWidth` | `number` | Conditional | - | Maximum output width in pixels |
 | `maxHeight` | `number` | Conditional | - | Maximum output height in pixels |
 | `keepAspectRatio` | `boolean` | No | `true` | Maintain original aspect ratio |
-| `concurrency` | `number` | No | `1` | Sharp concurrent operations limit |
+| `concurrency` | `number` | No | Sharp default | libvips threads per image; process-wide, only set when provided |
 | `limitInputPixels` | `number \| boolean` | No | Sharp default | Reject inputs exceeding this pixel count (all frames combined); `false` disables |
 
 **Important**: At least one of `maxWidth` or `maxHeight` must be specified.
@@ -339,7 +339,7 @@ import sharp from 'sharp';
 
 // The ImageResizer automatically configures Sharp for optimal performance:
 // - Disables Sharp cache to prevent memory leaks: sharp.cache(false)
-// - Sets concurrency level: sharp.concurrency(options.concurrency ?? 1)
+// - Sets sharp.concurrency(options.concurrency) only when `concurrency` is provided (process-wide)
 // - Uses withoutEnlargement: true to prevent quality degradation
 ```
 
@@ -526,7 +526,7 @@ describe('ImageResizer', () => {
 ## Best Practices
 
 ### Configuration Guidelines
-- **Concurrency**: Start with `concurrency: 1`, increase based on CPU cores and memory
+- **Concurrency**: Omit it to keep sharp's default; set it only when you need to cap libvips threads per image for the whole process
 - **Aspect Ratio**: Use `keepAspectRatio: true` for most use cases
 - **Dimension Planning**: Consider target display contexts when setting max dimensions
 - **Performance**: Use streams for files >10MB, buffers for smaller files

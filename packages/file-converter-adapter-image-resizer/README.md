@@ -8,7 +8,7 @@ Powerful and efficient image resizing processor based on the Sharp image process
 - [x] Aspect ratio preservation support
 - [x] Forced sizing with cropping mode
 - [x] Buffer and Stream input support
-- [x] Configurable concurrency processing
+- [x] Configurable libvips thread count per image
 - [x] Prevents upscaling low-resolution images
 - [x] Auto-orients images by EXIF `Orientation` (portrait photos stay portrait)
 - [x] Keeps all frames of animated GIF / WebP
@@ -36,7 +36,7 @@ const resizer = new ImageResizer({
   maxWidth: 800,
   maxHeight: 600,
   keepAspectRatio: true, // Maintain aspect ratio
-  concurrency: 4, // Concurrent processing count
+  concurrency: 4, // libvips threads per image (process-wide sharp setting)
 });
 
 // Process Buffer
@@ -90,7 +90,7 @@ const heightOnlyResizer = new ImageResizer({
 | `maxWidth`         | `number`            | No       | -                                 | Maximum width in pixels                                                                                                  |
 | `maxHeight`        | `number`            | No       | -                                 | Maximum height in pixels                                                                                                 |
 | `keepAspectRatio`  | `boolean`           | No       | `true`                            | Whether to maintain aspect ratio                                                                                         |
-| `concurrency`      | `number`            | No       | `1`                               | Sharp concurrent processing count                                                                                        |
+| `concurrency`      | `number`            | No       | Sharp default (CPU cores)         | libvips threads per image; process-wide, only set when provided                                                          |
 | `limitInputPixels` | `number \| boolean` | No       | Sharp default (`0x3FFF x 0x3FFF`) | Reject inputs whose pixel count exceeds this limit (all frames combined for animated images); `false` disables the check |
 
 **Note:** At least one of `maxWidth` or `maxHeight` must be specified.
@@ -130,8 +130,8 @@ console.log('Processed image URL:', result.url);
 
 ## Performance Considerations
 
-- **Concurrent Processing:** Control Sharp's concurrent processing count through the `concurrency` option
-- **Memory Caching:** Sharp caching is disabled by default to prevent memory leaks
+- **Threads per Image:** `concurrency` sets `sharp.concurrency()`, the number of libvips threads used for **each** image. It is a process-wide setting shared by every sharp user in the same process, so it is only changed when provided. The number of images processed in parallel is limited by libuv's `UV_THREADPOOL_SIZE` (default 4) instead
+- **Memory Caching:** Importing this package calls `sharp.cache(false)`, which disables the libvips operation cache for the whole process to prevent memory growth
 - **Stream Processing:** Recommended for large images to reduce memory usage
 - **Upscaling Prevention:** Automatically prevents upscaling small images to maintain quality
 
