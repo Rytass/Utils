@@ -1,6 +1,6 @@
 {
   "name": "@rytass/invoice-turnkey-base-nestjs-redis-notify-module",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Rytass Invoice NestJS Redis Notify Module (Streams / Pub-Sub) for the MOF e-Invoice Turnkey",
   "keywords": [
     "rytass",
@@ -34,6 +34,6 @@
     "typeorm": "*"
   },
   "dependencies": {
-    "@rytass/invoice-turnkey-base-nestjs-module": "0.1.0"
+    "@rytass/invoice-turnkey-base-nestjs-module": "^0.1.1"
   }
 }
