@@ -65,6 +65,7 @@ describe('scanInbound', () => {
       path.join(dataPath, 'RecvTarget/A0102/b2.xml'),
       '<Invoice xmlns="urn:GEINV:eInvoiceMessage:A0101:4.1"><Details/></Invoice>',
     );
+
     await writeFile(path.join(dataPath, 'RecvTarget/A0301/c.xml'), await fixture('A0301'));
 
     const failing = await scanInbound(
@@ -93,6 +94,25 @@ describe('scanInbound', () => {
 
     expect(retried.map(result => result.outcome)).toEqual(['UNMATCHED']);
     expect(await readdir(path.join(archive, '20261021/unmatched'))).toEqual(['c.xml']);
+
+    await rm(dataPath, { recursive: true, force: true });
+  });
+
+  it('reports an unreadable entry and still processes the rest, archiving IGNORED replies apart', async () => {
+    const dataPath = await mkdtemp(path.join(tmpdir(), 'turnkey-inbound-'));
+    const archive = path.join(dataPath, 'archive');
+
+    await mkdir(path.join(dataPath, 'RecvTarget/A0102/a-dir.xml'), { recursive: true });
+    await writeFile(path.join(dataPath, 'RecvTarget/A0102/b.xml'), await fixture('A0102'));
+
+    const results = await scanInbound(dataPath, archive, async () => 'IGNORED', new Date('2026-10-21T03:00:00Z'));
+
+    expect(results.map(result => [result.fileName, result.outcome])).toEqual([
+      ['a-dir.xml', 'ERROR'],
+      ['b.xml', 'IGNORED'],
+    ]);
+
+    expect(await readdir(path.join(archive, '20261021/ignored'))).toEqual(['b.xml']);
 
     await rm(dataPath, { recursive: true, force: true });
   });

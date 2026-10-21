@@ -12,7 +12,8 @@ import { TurnkeyAllowanceStatus, TurnkeyInvoiceStatus, TurnkeyMigMessageType } f
 import { TurnkeyEvent, TurnkeyEvents } from '../typings/turnkey-events';
 import { TurnkeyInboundMessage } from './parse-inbound-message';
 
-export type TurnkeyInboundOutcome = 'APPLIED' | 'DUPLICATE' | 'UNMATCHED';
+/** IGNORED：文件存在但狀態不允許這個回覆（例如已作廢後才收到確認），封存並記警告 */
+export type TurnkeyInboundOutcome = 'APPLIED' | 'DUPLICATE' | 'UNMATCHED' | 'IGNORED';
 
 /** 我方為賣方時收到的買方回覆 */
 const SELLER_SIDE: ReadonlySet<TurnkeyMigMessageType> = new Set([
@@ -110,52 +111,55 @@ export class TurnkeyInboundService {
           ? { rejectedAt: message.occurredAt, rejectReason: message.reason }
           : {};
 
-    const applied: { readonly exists: number; readonly affected: number; readonly event: TurnkeyEvents } | null =
-      invoiceTransition
-        ? {
-            exists: await manager.count(BaseTurnkeyInvoiceEntity, {
-              where: { companyTaxId, buyerTaxId: message.buyerTaxId, invoiceNumber: message.documentNumber },
-            }),
-            affected:
-              (
-                await manager.update(
-                  BaseTurnkeyInvoiceEntity,
-                  {
-                    companyTaxId,
-                    buyerTaxId: message.buyerTaxId,
-                    invoiceNumber: message.documentNumber,
-                    status: In([...invoiceTransition.from]),
-                  },
-                  { status: invoiceTransition.to, ...extra },
-                )
-              ).affected ?? 0,
-            event: invoiceTransition.event,
-          }
-        : allowanceTransition
-          ? {
-              exists: await manager.count(TurnkeyAllowanceEntity, {
-                where: { companyTaxId, buyerTaxId: message.buyerTaxId, allowanceNumber: message.documentNumber },
-              }),
-              affected:
-                (
-                  await manager.update(
-                    TurnkeyAllowanceEntity,
-                    {
-                      companyTaxId,
-                      buyerTaxId: message.buyerTaxId,
-                      allowanceNumber: message.documentNumber,
-                      status: In([...allowanceTransition.from]),
-                    },
-                    { status: allowanceTransition.to },
-                  )
-                ).affected ?? 0,
-              event: allowanceTransition.event,
-            }
-          : null;
+    const transition = invoiceTransition ?? allowanceTransition;
 
-    if (!applied || !applied.exists) return { outcome: 'UNMATCHED', events: [] };
+    if (!transition) return { outcome: 'UNMATCHED', events: [] };
 
-    if (!applied.affected) return { outcome: 'DUPLICATE', events: [] };
+    const entity = invoiceTransition ? BaseTurnkeyInvoiceEntity : TurnkeyAllowanceEntity;
+    const where = {
+      companyTaxId,
+      buyerTaxId: message.buyerTaxId,
+      [numberField]: message.documentNumber,
+    };
+
+    const current = (await manager.findOne(entity, { where, select: { status: true } })) as {
+      readonly status: string;
+    } | null;
+
+    if (!current) return { outcome: 'UNMATCHED', events: [] };
+
+    const affected = invoiceTransition
+      ? ((
+          await manager.update(
+            BaseTurnkeyInvoiceEntity,
+            { ...where, status: In([...invoiceTransition.from]) },
+            { status: invoiceTransition.to, ...extra },
+          )
+        ).affected ?? 0)
+      : allowanceTransition
+        ? ((
+            await manager.update(
+              TurnkeyAllowanceEntity,
+              { ...where, status: In([...allowanceTransition.from]) },
+              { status: allowanceTransition.to },
+            )
+          ).affected ?? 0)
+        : 0;
+
+    if (!affected) {
+      if (current.status === transition.to) return { outcome: 'DUPLICATE', events: [] };
+
+      // 買方回覆可能比本地輪詢到 ProcessResult 還早：仍是 SUBMITTED 就留在 RecvTarget，下一輪再套用
+      if (current.status === TurnkeyInvoiceStatus.SUBMITTED) {
+        throw new Error(
+          `${message.messageType} ${message.documentNumber} arrived before the local status left SUBMITTED`,
+        );
+      }
+
+      return { outcome: 'IGNORED', events: [] };
+    }
+
+    const applied = { event: transition.event };
 
     const event = await this.eventService.append(manager, applied.event, companyTaxId, {
       [numberField]: message.documentNumber,

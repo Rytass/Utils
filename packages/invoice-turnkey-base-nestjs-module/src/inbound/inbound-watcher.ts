@@ -56,8 +56,19 @@ export const scanInbound = async (
   return files.reduce<Promise<readonly InboundScanResult[]>>(async (resultsPromise, { type, name }) => {
     const results = await resultsPromise;
     const source = path.join(root, type, name);
+    const read = await fs.readFile(source, 'utf8').then(
+      text => ({ text, error: null }),
+      (error: Error) => ({ text: '', error }),
+    );
+
+    // 讀不到（權限、名為 *.xml 的目錄）：留在原地回報錯誤，不擋後面的檔案
+    if (read.error) {
+      return [...results, { fileName: name, messageType: type, outcome: 'ERROR' as const, error: read.error.message }];
+    }
+
+    const xml = read.text;
+
     // 結構不完整的檔（例如缺 Main）解析會丟錯：歸為無法辨識，不讓單一壞檔擋住整批
-    const xml = await fs.readFile(source, 'utf8');
     const message = ((): TurnkeyInboundMessage | null => {
       try {
         return parseInboundMessage(xml);
@@ -82,7 +93,7 @@ export const scanInbound = async (
       ];
     }
 
-    const folder = outcome === 'UNMATCHED' ? 'unmatched' : message.messageType;
+    const folder = outcome === 'UNMATCHED' ? 'unmatched' : outcome === 'IGNORED' ? 'ignored' : message.messageType;
 
     await moveFile(source, path.join(archivePath, day, folder, name));
 
