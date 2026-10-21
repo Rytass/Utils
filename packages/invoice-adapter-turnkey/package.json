@@ -1,0 +1,31 @@
+{
+  "name": "@rytass/invoice-adapter-turnkey",
+  "version": "0.1.0",
+  "description": "Rytass Invoice Gateway - Turnkey",
+  "keywords": [
+    "rytass",
+    "invoice",
+    "turnkey"
+  ],
+  "author": "Chia Yu Pai <fantasyatelier@gmail.com>",
+  "homepage": "https://github.com/Rytass/Utils#readme",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rytass/Utils.git"
+  },
+  "scripts": {
+    "clean": "nx clean",
+    "build": "nx build",
+    "lint": "nx lint",
+    "test": "nx test",
+    "test:watch": "nx test:watch"
+  },
+  "bugs": {
+    "url": "https://github.com/Rytass/Utils/issues"
+  },
+  "dependencies": {
+    "@rytass/invoice": "^0.5.0",
+    "axios": "^1.16.1"
+  }
+}
