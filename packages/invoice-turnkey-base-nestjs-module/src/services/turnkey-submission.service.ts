@@ -323,6 +323,20 @@ export class TurnkeySubmissionService {
     });
   }
 
+  /** 某張發票／折讓（含其作廢）的送件紀錄，新到舊；可再以 status 篩選 */
+  listByDocument(
+    companyTaxId: string,
+    documentNumber: string,
+    status?: TurnkeySubmissionStatus,
+    limit = 100,
+  ): Promise<TurnkeySubmissionEntity[]> {
+    return this.submissionRepo.find({
+      where: { companyTaxId, documentNumber, ...(status ? { status } : {}) },
+      order: { createdAt: 'DESC' },
+      take: Math.min(Math.max(limit, 1), 500),
+    });
+  }
+
   listByStatus(companyTaxId: string, status: TurnkeySubmissionStatus, limit = 100): Promise<TurnkeySubmissionEntity[]> {
     return this.submissionRepo.find({
       where: { companyTaxId, status },
