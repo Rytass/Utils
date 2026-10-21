@@ -114,7 +114,12 @@ export class TurnkeyInvoiceTrackService {
         }),
       );
 
-      await manager.insert(TurnkeyInvoiceNumberEntity, numbers);
+      await manager.insert(TurnkeyInvoiceNumberEntity, numbers).catch((error: unknown) => {
+        // 號碼唯一鍵（統編, 號碼）：與已登錄的區間重疊；整筆交易回滾，字軌列也不會留下
+        if ((error as { code?: string }).code === '23505') throw invalidTrack('與已登錄的字軌區間重疊');
+
+        throw error;
+      });
 
       return track;
     });
