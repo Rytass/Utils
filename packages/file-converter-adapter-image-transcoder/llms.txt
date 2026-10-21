@@ -101,7 +101,7 @@ type AVIFOptions = {
 // Universal Options
 interface ImageTranscoderOptions {
   targetFormat: string;      // Target output format
-  concurrency?: number;      // Sharp processing concurrency
+  concurrency?: number;      // libvips threads per image, process-wide; only set when provided
   // Plus format-specific options based on targetFormat
 }
 ```
