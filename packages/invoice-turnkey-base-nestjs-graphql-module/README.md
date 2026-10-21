@@ -115,7 +115,7 @@ Every mutation requires an `idempotencyKey` (1 to 255 characters). A retry with 
 | Mutation | `confirmTurnkeyReceivedAllowance`     | `TurnkeyReceivedDocument`                               |
 | Mutation | `confirmTurnkeyReceivedAllowanceVoid` | `TurnkeyReceivedDocument`                               |
 
-`turnkeySubmissions` returns submissions without a platform result unless `status` is given. `turnkeyEvents` takes the `after` cursor and returns `nextCursor`. The received-document queries and reply mutations take an optional `status` or `input`, and their inputs omit `xml`. A received document never exposes the raw XML.
+`turnkeySubmissions` returns submissions without a platform result unless `status` is given. `turnkeyEvents` takes the `after` cursor and returns `nextCursor`. The received-document queries and reply mutations take an optional `status` or `input`, and their inputs omit `xml`. Reply mutations require `sellerTaxId` (the same number can come from different sellers) and accept `documentDate` (`yyyyMMdd`), which is required when the same seller sent that number more than once. A received document never exposes the raw XML.
 
 ## Proof (證明聯)
 

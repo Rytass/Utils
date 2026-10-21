@@ -423,11 +423,25 @@ export const createTurnkeyMutationResolver = (access: TurnkeyRouteAccess): Type<
       @Context() context: TurnkeyGraphQLContext,
       @Args('companyTaxId') companyTaxId: string,
       @Args('documentNumber') documentNumber: string,
+      @Args('sellerTaxId', { description: '開立這份文件的賣方統編' }) sellerTaxId: string,
+      @Args('documentDate', {
+        type: () => String,
+        nullable: true,
+        description: 'yyyyMMdd；同一賣方同一號碼有多份時必填',
+      })
+      documentDate: string | null | undefined,
       @Args('idempotencyKey') idempotencyKey: string,
       @Args('input', { type: () => TurnkeyReceivedReplyInput, nullable: true })
       input?: TurnkeyReceivedReplyInput | null,
     ): Promise<TurnkeyReceivedDocumentDto> {
-      return this.replyReceived(context, companyTaxId, documentNumber, idempotencyKey, 'confirmInvoice', input);
+      return this.replyReceived(
+        context,
+        companyTaxId,
+        { sellerTaxId, documentNumber, documentDate },
+        idempotencyKey,
+        'confirmInvoice',
+        input,
+      );
     }
 
     /** 收件（我方為買方）：退回發票，reason 必填 */
@@ -437,10 +451,24 @@ export const createTurnkeyMutationResolver = (access: TurnkeyRouteAccess): Type<
       @Context() context: TurnkeyGraphQLContext,
       @Args('companyTaxId') companyTaxId: string,
       @Args('documentNumber') documentNumber: string,
+      @Args('sellerTaxId', { description: '開立這份文件的賣方統編' }) sellerTaxId: string,
+      @Args('documentDate', {
+        type: () => String,
+        nullable: true,
+        description: 'yyyyMMdd；同一賣方同一號碼有多份時必填',
+      })
+      documentDate: string | null | undefined,
       @Args('idempotencyKey') idempotencyKey: string,
       @Args('input') input: RejectTurnkeyReceivedInvoiceInput,
     ): Promise<TurnkeyReceivedDocumentDto> {
-      return this.replyReceived(context, companyTaxId, documentNumber, idempotencyKey, 'rejectInvoice', input);
+      return this.replyReceived(
+        context,
+        companyTaxId,
+        { sellerTaxId, documentNumber, documentDate },
+        idempotencyKey,
+        'rejectInvoice',
+        input,
+      );
     }
 
     /** 收件（我方為買方）：確認發票作廢 */
@@ -450,11 +478,25 @@ export const createTurnkeyMutationResolver = (access: TurnkeyRouteAccess): Type<
       @Context() context: TurnkeyGraphQLContext,
       @Args('companyTaxId') companyTaxId: string,
       @Args('documentNumber') documentNumber: string,
+      @Args('sellerTaxId', { description: '開立這份文件的賣方統編' }) sellerTaxId: string,
+      @Args('documentDate', {
+        type: () => String,
+        nullable: true,
+        description: 'yyyyMMdd；同一賣方同一號碼有多份時必填',
+      })
+      documentDate: string | null | undefined,
       @Args('idempotencyKey') idempotencyKey: string,
       @Args('input', { type: () => TurnkeyReceivedReplyInput, nullable: true })
       input?: TurnkeyReceivedReplyInput | null,
     ): Promise<TurnkeyReceivedDocumentDto> {
-      return this.replyReceived(context, companyTaxId, documentNumber, idempotencyKey, 'confirmInvoiceVoid', input);
+      return this.replyReceived(
+        context,
+        companyTaxId,
+        { sellerTaxId, documentNumber, documentDate },
+        idempotencyKey,
+        'confirmInvoiceVoid',
+        input,
+      );
     }
 
     /** 收件（我方為買方）：確認折讓 */
@@ -464,11 +506,25 @@ export const createTurnkeyMutationResolver = (access: TurnkeyRouteAccess): Type<
       @Context() context: TurnkeyGraphQLContext,
       @Args('companyTaxId') companyTaxId: string,
       @Args('documentNumber') documentNumber: string,
+      @Args('sellerTaxId', { description: '開立這份文件的賣方統編' }) sellerTaxId: string,
+      @Args('documentDate', {
+        type: () => String,
+        nullable: true,
+        description: 'yyyyMMdd；同一賣方同一號碼有多份時必填',
+      })
+      documentDate: string | null | undefined,
       @Args('idempotencyKey') idempotencyKey: string,
       @Args('input', { type: () => TurnkeyReceivedReplyInput, nullable: true })
       input?: TurnkeyReceivedReplyInput | null,
     ): Promise<TurnkeyReceivedDocumentDto> {
-      return this.replyReceived(context, companyTaxId, documentNumber, idempotencyKey, 'confirmAllowance', input);
+      return this.replyReceived(
+        context,
+        companyTaxId,
+        { sellerTaxId, documentNumber, documentDate },
+        idempotencyKey,
+        'confirmAllowance',
+        input,
+      );
     }
 
     /** 收件（我方為買方）：確認折讓作廢 */
@@ -478,18 +534,36 @@ export const createTurnkeyMutationResolver = (access: TurnkeyRouteAccess): Type<
       @Context() context: TurnkeyGraphQLContext,
       @Args('companyTaxId') companyTaxId: string,
       @Args('documentNumber') documentNumber: string,
+      @Args('sellerTaxId', { description: '開立這份文件的賣方統編' }) sellerTaxId: string,
+      @Args('documentDate', {
+        type: () => String,
+        nullable: true,
+        description: 'yyyyMMdd；同一賣方同一號碼有多份時必填',
+      })
+      documentDate: string | null | undefined,
       @Args('idempotencyKey') idempotencyKey: string,
       @Args('input', { type: () => TurnkeyReceivedReplyInput, nullable: true })
       input?: TurnkeyReceivedReplyInput | null,
     ): Promise<TurnkeyReceivedDocumentDto> {
-      return this.replyReceived(context, companyTaxId, documentNumber, idempotencyKey, 'confirmAllowanceVoid', input);
+      return this.replyReceived(
+        context,
+        companyTaxId,
+        { sellerTaxId, documentNumber, documentDate },
+        idempotencyKey,
+        'confirmAllowanceVoid',
+        input,
+      );
     }
 
     /** 五個收件回覆 mutation 共用的流程：權限 → 冪等 key → 冪等執行 → 回傳 */
     private async replyReceived(
       context: TurnkeyGraphQLContext,
       companyTaxId: string,
-      documentNumber: string,
+      target: {
+        readonly sellerTaxId: string;
+        readonly documentNumber: string;
+        readonly documentDate: string | null | undefined;
+      },
       idempotencyKey: string,
       action: TurnkeyReplyAction,
       input: TurnkeyReceivedReplyInput | null | undefined,
@@ -497,13 +571,19 @@ export const createTurnkeyMutationResolver = (access: TurnkeyRouteAccess): Type<
       await assertCompanyAccess(access, context.req, companyTaxId);
 
       const key = requireIdempotencyKey(idempotencyKey);
-      const options = { reason: input?.reason ?? undefined, remark: input?.remark ?? undefined };
+      const { sellerTaxId, documentNumber } = target;
+      const options = {
+        sellerTaxId,
+        documentDate: target.documentDate ?? undefined,
+        reason: input?.reason ?? undefined,
+        remark: input?.remark ?? undefined,
+      };
 
       return runTurnkey(async () => {
         const result = await this.idempotencyService.run(
           companyTaxId,
           key,
-          `${action}:${documentNumber}`,
+          `${action}:${sellerTaxId}:${documentNumber}`,
           options,
           async () => ({
             status: 202,
