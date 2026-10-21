@@ -28,24 +28,26 @@ Every request is sent to `${baseUrl}/companies/${companyTaxId}/...`.
 
 ## Issuing an Invoice
 
-`orderId` is required. It is sent as `externalId` and used as the `Idempotency-Key` of the issue request, so retrying the same order is safe.
+`orderId` is required. It is sent as `externalId` and as the `Idempotency-Key` of the issue request. Calling `issue()` again with the same `orderId` and the same content returns the stored result, so it never creates a second invoice. The same `orderId` with different content fails with `EXTERNAL_ID_CONFLICT` (409).
+
+A rejected or failed submission is not resent automatically. After you fix the cause, call [`retry(invoice)`](#retry).
 
 ```typescript
 import { InvoiceCarriers, TaxType } from '@rytass/invoice-adapter-turnkey';
 
 // B2C (unit prices include tax)
 const invoice = await gateway.issue({
-  orderId: 'ORDER-20261021-0001',
+  orderId: 'ORDER-TEST-0001',
   items: [{ name: '咖啡豆', quantity: 2, unitPrice: 350, unit: '包', taxType: TaxType.TAXED }],
   carrier: InvoiceCarriers.MOBILE('/ABC+123'),
 });
 
 // B2B (unit prices exclude tax; vatNumber is sent as buyer.taxId)
 const b2bInvoice = await gateway.issue({
-  orderId: 'ORDER-20261021-0002',
+  orderId: 'ORDER-TEST-0002',
   items: [{ name: '顧問服務', quantity: 1, unitPrice: 10000, taxType: TaxType.TAXED }],
-  vatNumber: '04595257',
-  buyer: { name: 'Acme Co., Ltd.', address: '台北市信義區' },
+  vatNumber: '87654322',
+  buyer: { name: '測試營業人', address: '測試地址一號' },
   carrier: InvoiceCarriers.PRINT,
 });
 ```
@@ -67,6 +69,27 @@ const b2bInvoice = await gateway.issue({
 - `carrier.typeCode`: required for `MEMBER` and `PLATFORM` (6 characters, `[0-9A-Z]`, the carrier category number issued by the platform). Pass it as `carrier: { ...InvoiceCarriers.MEMBER, code, typeCode }`.
 - `buyer.name` / `buyer.address`, `issuedAt`, `remark` (sent as `mainRemark`).
 
+## EXCHANGE (B2B Delivery)
+
+Invoices are delivered either by storage (`STORAGE`, the default) or by exchange (`EXCHANGE`), where the buyer receives the invoice through the platform. The delivery mode is set once per gateway instance, so create a second gateway for exchange invoices:
+
+```typescript
+const exchangeGateway = new TurnkeyInvoiceGateway({
+  baseUrl: 'https://turnkey.example.com/api',
+  companyTaxId: '12345675',
+  deliveryMode: 'EXCHANGE',
+});
+```
+
+Before you issue an exchange invoice:
+
+- **The seller must be enabled for exchange.** Set `exchangeEnabled: true` on the company, with the REST company route (`PUT /{routePrefix}/companies/{companyTaxId}`), GraphQL `registerTurnkeyCompany`, or `TurnkeyCompanyService.register()`. Otherwise the issue fails with `BUYER_NOT_EXCHANGE_READY` (422). The name suggests the buyer, but the check is on the seller's flag.
+- **The buyer must be ready to receive.** Set this up on the platform side first ([Docker guide, section 8](../../docker/invoice-turnkey/README.md#8-b2b-exchange-prerequisites)).
+- **The buyer tax ID is required.** Pass `vatNumber`. Without it the issue fails with `BUYER_TAX_ID_REQUIRED` (422).
+- **`TaxType.MIXED` is not allowed** on exchange invoices (`TAX_TYPE_NOT_ALLOWED`).
+
+When the buyer rejects an exchange invoice, `invoice.turnkeyStatus` becomes `REJECTED`. Acknowledge the rejection with the REST route `POST /{routePrefix}/companies/{companyTaxId}/invoices/{invoiceNumber}/rejection/acknowledge`. This adapter does not wrap that route.
+
 ## Invoice States
 
 Turnkey statuses are mapped to `InvoiceState` as follows. The raw Turnkey status is always available as `invoice.turnkeyStatus`.
@@ -78,14 +101,14 @@ Turnkey statuses are mapped to `InvoiceState` as follows. The raw Turnkey status
 | `FAILED`                                                       | `INITED`                                                               |
 
 - `FAILED` invoices are returned by `query()` as usual. Check `turnkeyStatus` to decide whether to resubmit or give up.
-- `VOID_PENDING` maps to `VOID` as soon as the platform reports it. `voidOn` comes from `voidedAt`, which is set for this status.
+- `VOID_PENDING` maps to `VOID` as soon as the platform reports it.
 - `ALLOWANCED` is derived from the allowances. It applies while at least one allowance is not `INVALID` (`ISSUED`, `SUBMITTED`, `CONFIRMED` or `VOID_PENDING`). It returns to `ISSUED` when every allowance is voided.
 
 ## Querying
 
 ```typescript
-await gateway.query({ orderId: 'ORDER-20261021-0001' }); // GET /invoices?externalId=
-await gateway.query({ invoiceNumber: 'AB12345678' }); // GET /invoices/{invoiceNumber}
+await gateway.query({ orderId: 'ORDER-TEST-0001' }); // GET /invoices?externalId=
+await gateway.query({ invoiceNumber: 'ZZ12345678' }); // GET /invoices/{invoiceNumber}
 ```
 
 A missing invoice (404) throws `TurnkeyInvoiceError`.
@@ -119,19 +142,32 @@ const raw = await gateway.queryAllowance('AL0000001'); // raw GET /allowances/{a
 - A `FAILED` allowance throws and is not attached to the invoice.
 - `invoice.nowAmount` is reduced by each allowance and restored when it is invalidated.
 
+## Retry
+
+When a submission is rejected by the platform or fails, the invoice or allowance stays in that state until you resend it. Fix the cause first (for example, enable the buyer for exchange), then retry. The retry resends the same XML.
+
+```typescript
+const retried = await gateway.retry(invoice); // resend the latest REJECTED or FAILED submission
+const retriedAllowance = await gateway.retryAllowance(allowance);
+```
+
+- `retry()` loads the latest submission of the invoice (`GET submissions?documentNumber=...&limit=1`). If it is `REJECTED` or `FAILED`, it sends `POST submissions/{id}/retry` with the key `retry:<submissionId>`, then queries the invoice again and returns it.
+- Otherwise it throws `TurnkeyInvoiceError` with code `NOTHING_TO_RETRY` (409). This applies to any latest status other than `REJECTED` or `FAILED` (for example `WRITTEN` or `ACCEPTED`), and to an invoice that was never submitted.
+- `retryAllowance()` does the same for the allowance, and returns the parent invoice.
+
 ## Proof (證明聯)
 
 ```typescript
-const proof = await gateway.getProof('AB12345678'); // POST /invoices/{no}/proof
-const pdf = await gateway.getProof('AB12345678', 'PDF'); // Buffer, application/pdf
-const png = await gateway.getProof('AB12345678', 'PNG'); // Buffer, image/png
-const escPos = await gateway.getProof('AB12345678', 'ESC_POS'); // Buffer, application/octet-stream
-const a4 = await gateway.getProof('AB12345678', 'A4_PDF'); // Buffer, application/pdf
+const proof = await gateway.getProof('ZZ12345678'); // POST /invoices/{no}/proof
+const pdf = await gateway.getProof('ZZ12345678', 'PDF'); // Buffer, application/pdf
+const png = await gateway.getProof('ZZ12345678', 'PNG'); // Buffer, image/png
+const escPos = await gateway.getProof('ZZ12345678', 'ESC_POS'); // Buffer, application/octet-stream
+const a4 = await gateway.getProof('ZZ12345678', 'A4_PDF'); // Buffer, application/pdf
 
 const allowanceProof = await gateway.getAllowanceProof('AL0000001'); // POST /allowances/{no}/proof
 
 // retry-safe: the same key returns the same print instead of a reprint
-const sameJob = await gateway.getProof('AB12345678', 'PDF', {
+const sameJob = await gateway.getProof('ZZ12345678', 'PDF', {
   idempotencyKey: `print-${jobId}`,
   operator: 'cashier-7',
 });
@@ -139,9 +175,9 @@ const sameJob = await gateway.getProof('AB12345678', 'PDF', {
 
 - Formats are `JSON` (default), `PDF`, `PNG`, `ESC_POS` and `A4_PDF`. JSON returns the raw REST object (`TurnkeyInvoiceProofResponse` or `TurnkeyAllowanceProofResponse`). Date fields are ISO strings, the same as the other raw responses such as `queryAllowance`.
 - Binary formats are fetched with `responseType: 'arraybuffer'` and returned as a `Buffer`.
-- **Every call records a print in Turnkey, whatever the format, including JSON.** The first call is the original print. The second and later calls are reprints: `reprint` is `true` and the proof is marked 補印. Use the JSON format only when you need the data, because it still counts as a print. `printCount` in the response shows how many times the proof has been printed.
+- **Every call records a print in Turnkey, whatever the format, including JSON.** The first call is the original print. The second and later calls are reprints: `reprint` is `true` and the proof is marked 補印. Use the JSON format only when you need the data, because it still counts as a print.
 - Each call sends an `Idempotency-Key`. Pass your own `idempotencyKey` (for example a print-job id) so a retry of the same job returns the same print; without it every call gets a fresh key and counts as a new print.
-- Errors use the same `TurnkeyInvoiceError` mapping as the other methods, including for binary formats. `NOT_PRINTABLE` and `QR_KEY_MISSING` return 422, `NOT_FOUND` returns 404, `RENDERER_UNAVAILABLE` returns 501, and an unknown format returns 400.
+- Errors use the same `TurnkeyInvoiceError` mapping as the other methods, including for binary formats. `NOT_PRINTABLE` and `QR_KEY_MISSING` return 422, `NOT_FOUND` returns 404, `RENDERER_UNAVAILABLE` returns 501.
 
 ## Validation
 
@@ -165,10 +201,10 @@ try {
   if (error instanceof TurnkeyInvoiceError) {
     // error.status: 422 | 409 | 403 | 404 ...
     // error.code: e.g. 'IDEMPOTENCY_KEY_REUSED', or 'EXTERNAL_ID_CONFLICT' when the same
-    //   orderId was already issued with a different buyer, delivery mode or items
+    //   orderId was already issued with different content
     // error.issues: [{ code, message, field }] for 422 validation errors
   }
 }
 ```
 
-Network and timeout errors are rethrown as plain `Error`.
+Network and timeout errors are rethrown as plain `Error`. Missing request data that the adapter checks before sending (a carrier `typeCode`, or `zeroRatedReasonCode` when `ZERO_TAX` items are present) throws a plain `Error` without a request.
