@@ -10,6 +10,7 @@ export const TURNKEY_MEMBER_BASE_ACTIONS: Readonly<Record<TurnkeyApiAction, stri
   [TurnkeyApiAction.READ_SUBMISSION]: 'read',
   [TurnkeyApiAction.READ_EVENTS]: 'read',
   [TurnkeyApiAction.VALIDATE]: 'read',
+  [TurnkeyApiAction.READ_COMPANY]: 'read',
   [TurnkeyApiAction.ISSUE_INVOICE]: 'issue',
   [TurnkeyApiAction.VOID_INVOICE]: 'void',
   [TurnkeyApiAction.ANNUL_INVOICE]: 'annul',
@@ -23,6 +24,8 @@ export const TURNKEY_MEMBER_BASE_ACTIONS: Readonly<Record<TurnkeyApiAction, stri
   [TurnkeyApiAction.RETRY_SUBMISSION]: 'retry',
   [TurnkeyApiAction.PRINT_INVOICE]: 'print',
   [TurnkeyApiAction.PRINT_ALLOWANCE]: 'print',
+  [TurnkeyApiAction.RESOLVE_SUBMISSION]: 'resolve',
+  [TurnkeyApiAction.MANAGE_COMPANY]: 'company',
 };
 
 export interface TurnkeyMemberBaseAccessOptions {

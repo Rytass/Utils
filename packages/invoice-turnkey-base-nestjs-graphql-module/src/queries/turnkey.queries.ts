@@ -2,6 +2,7 @@ import { applyDecorators, Type } from '@nestjs/common';
 import { Args, Context, Int, Query, Resolver } from '@nestjs/graphql';
 import { GraphQLError } from 'graphql';
 import {
+  TurnkeyCompanyService,
   TurnkeyAllowanceService,
   TurnkeyEventService,
   TurnkeyInvoiceService,
@@ -11,7 +12,9 @@ import {
   TurnkeySubmissionService,
   TurnkeySubmissionStatus,
 } from '@rytass/invoice-turnkey-base-nestjs-module';
+import type { TurnkeySubmissionEntity } from '@rytass/invoice-turnkey-base-nestjs-module';
 import { TurnkeyAllowanceDto } from '../dto/turnkey-allowance.dto';
+import { TurnkeyCompanyDto } from '../dto/turnkey-company.dto';
 import { TurnkeyEventCollectionDto } from '../dto/turnkey-event.dto';
 import { TurnkeyInvoiceDto } from '../dto/turnkey-invoice.dto';
 import { TurnkeySubmissionCollectionDto } from '../dto/turnkey-submission.dto';
@@ -48,7 +51,20 @@ export const createTurnkeyQueryResolver = (access: TurnkeyRouteAccess): Type<unk
       private readonly submissionService: TurnkeySubmissionService,
       private readonly eventService: TurnkeyEventService,
       private readonly receivedService: TurnkeyReceivedDocumentService,
+      private readonly companyService: TurnkeyCompanyService,
     ) {}
+
+    /** 營業人資料；未登錄回傳 null。QR Code 金鑰不回傳，只標示 qrAesKeyConfigured */
+    @Query(() => TurnkeyCompanyDto, { nullable: true, name: 'turnkeyCompany' })
+    @route(TurnkeyApiAction.READ_COMPANY)
+    async turnkeyCompany(
+      @Context() context: TurnkeyGraphQLContext,
+      @Args('companyTaxId') companyTaxId: string,
+    ): Promise<TurnkeyCompanyDto | null> {
+      await assertCompanyAccess(access, context.req, companyTaxId);
+
+      return this.companyService.describe(companyTaxId);
+    }
 
     @Query(() => TurnkeyInvoiceDto, { nullable: true, name: 'turnkeyInvoice' })
     @route(TurnkeyApiAction.READ_INVOICE)
@@ -78,7 +94,7 @@ export const createTurnkeyQueryResolver = (access: TurnkeyRouteAccess): Type<unk
       return allowance ? toAllowanceDto(allowance) : null;
     }
 
-    /** 不帶 status 時回傳尚無平台結果的送件（同 REST 的預設） */
+    /** 不帶 status／documentNumber 時回傳尚無平台結果的送件（同 REST 的預設） */
     @Query(() => TurnkeySubmissionCollectionDto, { name: 'turnkeySubmissions' })
     @route(TurnkeyApiAction.READ_SUBMISSION)
     async turnkeySubmissions(
@@ -87,14 +103,26 @@ export const createTurnkeyQueryResolver = (access: TurnkeyRouteAccess): Type<unk
       @Args('status', { type: () => TurnkeySubmissionStatus, nullable: true })
       status?: TurnkeySubmissionStatus | null,
       @Args('limit', { type: () => Int, nullable: true }) limit?: number | null,
+      @Args('documentNumber', { type: () => String, nullable: true }) documentNumber?: string | null,
     ): Promise<TurnkeySubmissionCollectionDto> {
       await assertCompanyAccess(access, context.req, companyTaxId);
 
+      if (documentNumber && !/^[A-Za-z0-9-]{1,16}$/.test(documentNumber)) {
+        throw new GraphQLError('Invalid documentNumber', {
+          extensions: { code: 'BAD_USER_INPUT', field: 'documentNumber' },
+        });
+      }
+
       const take = limit ?? DEFAULT_LIMIT;
-      const rows =
+      const listDefault = (): Promise<TurnkeySubmissionEntity[]> =>
         !status || status === TurnkeySubmissionStatus.PENDING
-          ? await this.submissionService.listPending(companyTaxId, take)
-          : await this.submissionService.listByStatus(companyTaxId, status, take);
+          ? this.submissionService.listPending(companyTaxId, take)
+          : this.submissionService.listByStatus(companyTaxId, status, take);
+
+      // 指定單號時回傳該單號全部送件（新到舊），status 只作為額外篩選。
+      const rows = documentNumber
+        ? await this.submissionService.listByDocument(companyTaxId, documentNumber, status ?? undefined, take)
+        : await listDefault();
 
       return { items: rows.map(toSubmissionDto) };
     }

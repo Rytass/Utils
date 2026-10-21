@@ -18,6 +18,7 @@ const QUERY_ACTIONS: Readonly<Record<string, string>> = {
   turnkeyAllowancesByInvoice: 'read',
   turnkeyReceivedInvoices: 'read',
   turnkeyReceivedAllowances: 'read',
+  turnkeyCompany: 'read',
 };
 
 const MUTATION_ACTIONS: Readonly<Record<string, string>> = {
@@ -33,6 +34,9 @@ const MUTATION_ACTIONS: Readonly<Record<string, string>> = {
   reportTurnkeyBlankNumbers: 'track',
   abandonTurnkeyInvoiceNumber: 'track',
   retryTurnkeySubmission: 'retry',
+  resolveTurnkeySubmission: 'resolve',
+  registerTurnkeyCompany: 'company',
+  setTurnkeyQrAesKey: 'company',
   confirmTurnkeyReceivedInvoice: 'exchange',
   rejectTurnkeyReceivedInvoice: 'exchange',
   confirmTurnkeyReceivedInvoiceVoid: 'exchange',

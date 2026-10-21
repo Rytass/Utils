@@ -2,6 +2,9 @@ import { applyDecorators, Type } from '@nestjs/common';
 import { Args, Context, Mutation, Resolver } from '@nestjs/graphql';
 import {
   TurnkeyAllowanceProof,
+  TurnkeyCompanyService,
+  TurnkeySubmissionStatus,
+  TurnkeySubmissionWorker,
   TurnkeyAllowanceService,
   TurnkeyIdempotencyService,
   TurnkeyInvoicePrintService,
@@ -17,6 +20,7 @@ import {
 import type { TurnkeyReplyAction } from '@rytass/invoice-turnkey-base-nestjs-module';
 import { TurnkeyAllowanceDto } from '../dto/turnkey-allowance.dto';
 import { TurnkeyBlankNumberReportDto } from '../dto/turnkey-blank-number.dto';
+import { RegisterTurnkeyCompanyInput, TurnkeyCompanyDto } from '../dto/turnkey-company.dto';
 import { TurnkeyInvoiceDto } from '../dto/turnkey-invoice.dto';
 import {
   AnnulTurnkeyInvoiceInput,
@@ -66,7 +70,99 @@ export const createTurnkeyMutationResolver = (access: TurnkeyRouteAccess): Type<
       private readonly receivedService: TurnkeyReceivedDocumentService,
       private readonly idempotencyService: TurnkeyIdempotencyService,
       private readonly printService: TurnkeyInvoicePrintService,
+      private readonly companyService: TurnkeyCompanyService,
+      private readonly submissionWorker: TurnkeySubmissionWorker,
     ) {}
+
+    /** 新增或更新營業人（以統編為鍵，重送結果相同，所以不需要 idempotencyKey） */
+    @Mutation(() => TurnkeyCompanyDto, { name: 'registerTurnkeyCompany' })
+    @route(TurnkeyApiAction.MANAGE_COMPANY)
+    async registerTurnkeyCompany(
+      @Context() context: TurnkeyGraphQLContext,
+      @Args('companyTaxId') companyTaxId: string,
+      @Args('input') input: RegisterTurnkeyCompanyInput,
+    ): Promise<TurnkeyCompanyDto> {
+      await assertCompanyAccess(access, context.req, companyTaxId);
+
+      return runTurnkey(async () => {
+        await this.companyService.register({
+          taxId: companyTaxId,
+          name: input.name,
+          address: input.address ?? undefined,
+          routingId: input.routingId,
+          exchangeEnabled: input.exchangeEnabled ?? undefined,
+          certificateExpiresAt: input.certificateExpiresAt ?? undefined,
+        });
+
+        return (await this.companyService.describe(companyTaxId)) as TurnkeyCompanyDto;
+      });
+    }
+
+    /** 設定證明聯 QR Code 的 AES 金鑰（32 碼 HEX）；加密存放，之後不會再回傳 */
+    @Mutation(() => Boolean, { name: 'setTurnkeyQrAesKey' })
+    @route(TurnkeyApiAction.MANAGE_COMPANY)
+    async setTurnkeyQrAesKey(
+      @Context() context: TurnkeyGraphQLContext,
+      @Args('companyTaxId') companyTaxId: string,
+      @Args('aesKey') aesKey: string,
+    ): Promise<boolean> {
+      await assertCompanyAccess(access, context.req, companyTaxId);
+
+      return runTurnkey(async () => {
+        await this.companyService.setQrAesKey(companyTaxId, aesKey);
+
+        return true;
+      });
+    }
+
+    /** 人工判定卡在 WRITTEN 的送件（ACCEPTED 或 FAILED），reason 必填 */
+    @Mutation(() => TurnkeySubmissionDto, { name: 'resolveTurnkeySubmission' })
+    @route(TurnkeyApiAction.RESOLVE_SUBMISSION)
+    async resolveTurnkeySubmission(
+      @Context() context: TurnkeyGraphQLContext,
+      @Args('companyTaxId') companyTaxId: string,
+      @Args('submissionId') submissionId: string,
+      @Args('status', { type: () => TurnkeySubmissionStatus }) status: TurnkeySubmissionStatus,
+      @Args('reason') reason: string,
+      @Args('idempotencyKey') idempotencyKey: string,
+    ): Promise<TurnkeySubmissionDto> {
+      await assertCompanyAccess(access, context.req, companyTaxId);
+
+      const key = requireIdempotencyKey(idempotencyKey);
+
+      return runTurnkey(async () => {
+        if (!UUID_PATTERN.test(submissionId)) {
+          throw new TurnkeyValidationError([
+            { code: TurnkeyValidationCode.SUBMISSION_NOT_FOUND, message: '找不到送件紀錄', field: 'submissionId' },
+          ]);
+        }
+
+        if (status !== TurnkeySubmissionStatus.ACCEPTED && status !== TurnkeySubmissionStatus.FAILED) {
+          throw new TurnkeyValidationError([
+            {
+              code: TurnkeyValidationCode.INVALID_STATE,
+              message: '人工判定只能是 ACCEPTED 或 FAILED',
+              field: 'status',
+            },
+          ]);
+        }
+
+        const result = await this.idempotencyService.run(
+          companyTaxId,
+          key,
+          `resolveSubmission:${submissionId}`,
+          { status, reason },
+          async () => ({
+            status: 200,
+            body: toSubmissionDto(
+              await this.submissionWorker.resolveManually(companyTaxId, submissionId, status, reason),
+            ),
+          }),
+        );
+
+        return result.body;
+      });
+    }
 
     /**
      * 發票證明聯（JSON）。每次列印寫一筆 print log，第 2 次起 reprint 為 true；
