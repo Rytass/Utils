@@ -13,8 +13,25 @@ export interface TurnkeyCompanyRegisterInput {
   readonly address?: string;
   readonly routingId: string;
   readonly exchangeEnabled?: boolean;
-  readonly certificateExpiresAt?: Date;
+  /** 軟體憑證到期日；未設定時不會發 certificate.expiring 通知。可傳 Date 或 ISO 字串 */
+  readonly certificateExpiresAt?: Date | string;
 }
+
+/** 對外回傳的營業人資料：不含 QR Code 金鑰，只標示是否已設定 */
+export interface TurnkeyCompanyView {
+  readonly taxId: string;
+  readonly name: string;
+  readonly address: string | null;
+  readonly routingId: string;
+  readonly exchangeEnabled: boolean;
+  readonly certificateExpiresAt: Date | null;
+  readonly qrAesKeyConfigured: boolean;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
+}
+
+const invalidInput = (code: TurnkeyValidationCode, message: string, field: string): TurnkeyValidationError =>
+  new TurnkeyValidationError([{ code, message, field }]);
 
 @Injectable()
 export class TurnkeyCompanyService {
@@ -67,6 +84,19 @@ export class TurnkeyCompanyService {
       ]);
     }
 
+    if (typeof input.name !== 'string' || !input.name.trim()) {
+      throw invalidInput(TurnkeyValidationCode.INVALID_STATE, '請填寫營業人名稱', 'name');
+    }
+
+    // 繞送代碼（Turnkey 送方設定）最長 39 碼
+    if (typeof input.routingId !== 'string' || !input.routingId.trim() || input.routingId.length > 39) {
+      throw invalidInput(TurnkeyValidationCode.INVALID_STATE, '繞送代碼需為 1–39 碼', 'routingId');
+    }
+
+    if (input.certificateExpiresAt !== undefined && Number.isNaN(new Date(input.certificateExpiresAt).getTime())) {
+      throw invalidInput(TurnkeyValidationCode.INVALID_STATE, '憑證到期日格式錯誤', 'certificateExpiresAt');
+    }
+
     const existing = await this.companyRepo.findOne({ where: { taxId: input.taxId } });
 
     return this.companyRepo.save(
@@ -77,9 +107,31 @@ export class TurnkeyCompanyService {
         address: input.address !== undefined ? input.address : (existing?.address ?? null),
         routingId: input.routingId,
         exchangeEnabled: input.exchangeEnabled ?? existing?.exchangeEnabled ?? false,
-        certificateExpiresAt: input.certificateExpiresAt ?? existing?.certificateExpiresAt ?? null,
+        certificateExpiresAt:
+          input.certificateExpiresAt !== undefined
+            ? new Date(input.certificateExpiresAt)
+            : (existing?.certificateExpiresAt ?? null),
       }),
     );
+  }
+
+  /** 管理介面用的營業人資料；未登錄回傳 null */
+  async describe(taxId: string): Promise<TurnkeyCompanyView | null> {
+    const company = await this.findByTaxId(taxId);
+
+    if (!company) return null;
+
+    return {
+      taxId: company.taxId,
+      name: company.name,
+      address: company.address,
+      routingId: company.routingId,
+      exchangeEnabled: company.exchangeEnabled,
+      certificateExpiresAt: company.certificateExpiresAt,
+      qrAesKeyConfigured: (await this.getQrAesKey(taxId)) !== null,
+      createdAt: company.createdAt,
+      updatedAt: company.updatedAt,
+    };
   }
 
   findByTaxId(taxId: string): Promise<BaseTurnkeyCompanyEntity | null> {
