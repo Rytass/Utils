@@ -6,7 +6,6 @@ export interface TurnkeyBaseModuleOptions {
   readonly dataPath: string;
   /** Turnkey 自己的 DB：TypeORM 具名連線的名稱或 DataSource；唯讀帳號 */
   readonly turnkeyDataSource: string | DataSource;
-  readonly environment: 'TEST' | 'PRODUCTION';
   readonly workers?: {
     /** 預設 true；純 API 的實例設 false */
     readonly enabled?: boolean;

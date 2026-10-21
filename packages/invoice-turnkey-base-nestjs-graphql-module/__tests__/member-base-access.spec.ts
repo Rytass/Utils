@@ -96,7 +96,6 @@ describe('TurnkeyBaseGraphQLModule.forRootAsync', () => {
       useFactory: () => ({
         dataPath: '/data',
         turnkeyDataSource: 'turnkey',
-        environment: 'TEST',
         secretEncryptionKey: 'k',
       }),
     });

@@ -95,11 +95,6 @@ export enum TurnkeyProofFormat {
   A4_PDF = 'A4_PDF',
 }
 
-export enum TurnkeyEnvironment {
-  TEST = 'TEST',
-  PRODUCTION = 'PRODUCTION',
-}
-
 export enum TurnkeyPrintDocumentType {
   INVOICE = 'INVOICE',
   ALLOWANCE = 'ALLOWANCE',
