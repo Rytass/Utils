@@ -29,6 +29,7 @@ import {
   TurnkeyPaymentItem,
   TurnkeyProofFormat,
   TurnkeyProofRequestOptions,
+  TurnkeySubmissionResponse,
 } from './typings';
 
 /** 去掉結尾的 '/'；不用 regex，避免 /\/+$/ 在大量斜線時的多項式回溯 */
@@ -204,6 +205,61 @@ export class TurnkeyInvoiceGateway implements InvoiceGateway<
       });
 
     return invoice;
+  }
+
+  /**
+   * 重送發票（或其作廢）最近一筆 REJECTED／FAILED 的送件，回傳重新查詢後的發票。
+   * 修正平台拒收的原因（例如補上買方的交換設定）後再呼叫；最近一筆不是失敗狀態時丟出 NOTHING_TO_RETRY。
+   */
+  async retry(invoice: TurnkeyInvoice): Promise<TurnkeyInvoice> {
+    await this.retryLatestSubmission(invoice.invoiceNumber);
+
+    return this.query({ invoiceNumber: invoice.invoiceNumber });
+  }
+
+  /** 重送折讓（或其作廢）最近一筆 REJECTED／FAILED 的送件，回傳重新查詢後的發票。 */
+  async retryAllowance(allowance: TurnkeyInvoiceAllowance): Promise<TurnkeyInvoice> {
+    await this.retryLatestSubmission(allowance.allowanceNumber);
+
+    return this.query({ invoiceNumber: allowance.parentInvoice.invoiceNumber });
+  }
+
+  private async retryLatestSubmission(documentNumber: string): Promise<TurnkeySubmissionResponse> {
+    if (!documentNumber) {
+      throw new TurnkeyInvoiceError({
+        message: 'Document has no number; it was never submitted',
+        status: 409,
+        code: 'NOTHING_TO_RETRY',
+        issues: [],
+      });
+    }
+
+    const [latest] = await this.send(
+      axios.get<TurnkeySubmissionResponse[]>(
+        `${this.companyUrl}/submissions`,
+        this.requestConfig(undefined, { documentNumber, limit: '1' }),
+      ),
+    );
+
+    if (!latest || (latest.status !== 'REJECTED' && latest.status !== 'FAILED')) {
+      throw new TurnkeyInvoiceError({
+        message: latest
+          ? `Latest submission of ${documentNumber} is ${latest.status}, nothing to retry`
+          : `No submission found for ${documentNumber}`,
+        status: 409,
+        code: 'NOTHING_TO_RETRY',
+        issues: [],
+      });
+    }
+
+    // 以被重送的送件 id 當 key：回應遺失後再呼叫會回放同一次重送，不會重送兩次。
+    return this.send(
+      axios.post<TurnkeySubmissionResponse>(
+        `${this.companyUrl}/submissions/${encodeURIComponent(latest.id)}/retry`,
+        undefined,
+        this.requestConfig(`retry:${latest.id}`),
+      ),
+    );
   }
 
   /** 查詢折讓原始資料（GET /allowances/{allowanceNumber}）。 */

@@ -175,6 +175,20 @@ export interface TurnkeyAllowanceResponse {
   items: TurnkeyInvoiceItemResponse[];
 }
 
+export type TurnkeySubmissionStatus = 'PENDING' | 'WRITTEN' | 'ACCEPTED' | 'REJECTED' | 'FAILED';
+
+/** GET /submissions 與 POST /submissions/{id}/retry 的回應（僅列出 adapter 會用到的欄位） */
+export interface TurnkeySubmissionResponse {
+  id: string;
+  messageType: string;
+  documentNumber: string;
+  status: TurnkeySubmissionStatus;
+  resultCode: string | null;
+  resultMessage: string | null;
+  previousSubmissionId: string | null;
+  createdAt: string;
+}
+
 export type TurnkeyProofFormat = 'JSON' | 'PDF' | 'PNG' | 'ESC_POS' | 'A4_PDF';
 
 /** 非 JSON 格式回傳二進位檔案。 */
