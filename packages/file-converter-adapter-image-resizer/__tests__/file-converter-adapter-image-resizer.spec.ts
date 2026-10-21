@@ -81,7 +81,7 @@ describe('Image Transcoder Resizer', () => {
     // Verify sharp was called correctly - constructor is called with the buffer
     const sharp = jest.requireMock('sharp').default;
 
-    expect(sharp).toHaveBeenCalledWith(sourceBuffer);
+    expect(sharp).toHaveBeenCalledWith(sourceBuffer, { autoOrient: true, animated: false });
 
     // Verify resize was called with correct options on the instance
     const sharpInstance = sharp.mock.results[0].value;
@@ -148,6 +148,21 @@ describe('Image Transcoder Resizer', () => {
     });
   });
 
+  it('should pass limitInputPixels to sharp when provided', async () => {
+    const sourceBuffer = Buffer.from('test-image-data');
+
+    const transcoder = new ImageResizer({
+      maxWidth: 50,
+      limitInputPixels: 1000,
+    });
+
+    await transcoder.convert<Buffer>(sourceBuffer);
+
+    const sharp = jest.requireMock('sharp').default;
+
+    expect(sharp).toHaveBeenCalledWith(sourceBuffer, { autoOrient: true, animated: false, limitInputPixels: 1000 });
+  });
+
   it('should set concurrency when provided', () => {
     const sharp = jest.requireMock('sharp').default;
 
@@ -159,13 +174,13 @@ describe('Image Transcoder Resizer', () => {
     expect(sharp.concurrency).toHaveBeenCalledWith(4);
   });
 
-  it('should default concurrency to 1', () => {
+  it('should not change sharp concurrency when not provided', () => {
     const sharp = jest.requireMock('sharp').default;
 
     new ImageResizer({
       maxWidth: 50,
     });
 
-    expect(sharp.concurrency).toHaveBeenCalledWith(1);
+    expect(sharp.concurrency).not.toHaveBeenCalled();
   });
 });

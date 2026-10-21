@@ -12,7 +12,7 @@ A powerful image format conversion adapter for the Rytass file converter framewo
 - [x] Lossless and lossy compression options
 - [x] SVG input support
 - [x] Buffer and Stream processing
-- [x] Concurrency control
+- [x] Configurable libvips thread count per image
 - [x] TypeScript type safety
 
 ## Supported Formats
@@ -286,7 +286,7 @@ const transcoder = new ImageTranscoder({
   targetFormat: 'webp',
   quality: 85,
   effort: 2, // Lower effort for faster processing
-  concurrency: 4, // Process multiple images simultaneously
+  concurrency: 4, // libvips threads per image (process-wide sharp setting)
 });
 
 // Batch processing with concurrency control
@@ -622,7 +622,8 @@ class CDNImageOptimizer {
 ### Memory Management
 
 - Use streams for files larger than 50MB
-- Set appropriate concurrency limits (2-4 for CPU-intensive formats like AVIF)
+- `concurrency` sets the process-wide `sharp.concurrency()` (libvips threads per image) and is only changed when provided; the number of images processed in parallel is limited by `UV_THREADPOOL_SIZE` (default 4)
+- Importing this package calls `sharp.cache(false)`, disabling the libvips operation cache for the whole process
 - Monitor memory usage in production environments
 
 ### Format Selection

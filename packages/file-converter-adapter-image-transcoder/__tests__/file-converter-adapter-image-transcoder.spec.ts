@@ -104,14 +104,14 @@ describe('Image Transcoder Converter', () => {
     expect(sharp.concurrency).toHaveBeenCalledWith(4);
   });
 
-  it('should default concurrency to 1', () => {
+  it('should not change sharp concurrency when not provided', () => {
     const sharp = jest.requireMock('sharp').default;
 
     new ImageTranscoder({
       targetFormat: 'jpeg',
     });
 
-    expect(sharp.concurrency).toHaveBeenCalledWith(1);
+    expect(sharp.concurrency).not.toHaveBeenCalled();
   });
 
   it('should support various output formats', async () => {

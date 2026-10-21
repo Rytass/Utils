@@ -15,7 +15,10 @@ export class ImageWatermark implements FileConverter<ImageWatermarkOptions> {
   constructor(options: ImageWatermarkOptions) {
     this.options = options;
 
-    sharp.concurrency(options.concurrency ?? 1);
+    // `sharp.concurrency` is a process-wide libvips setting, only override it when explicitly requested
+    if (options.concurrency !== undefined) {
+      sharp.concurrency(options.concurrency);
+    }
   }
 
   async convert<Output extends ConvertableFile>(file: ConvertableFile): Promise<Output> {
