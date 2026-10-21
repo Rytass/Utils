@@ -56,13 +56,22 @@ export interface TurnkeyBaseRestModuleAsyncOptions extends TurnkeyBaseModuleAsyn
   readonly access?: TurnkeyRouteAccess;
 }
 
+/** 去掉前後的 '/'；不用 regex，避免 /\/+$/ 在大量斜線時的多項式回溯 */
+const trimSlashes = (value: string): string => {
+  let start = 0;
+  let end = value.length;
+
+  while (start < end && value[start] === '/') start += 1;
+
+  while (end > start && value[end - 1] === '/') end -= 1;
+
+  return value.slice(start, end);
+};
+
 export const resolveRoutePrefix = (configured: string | undefined): string => {
   if (configured === undefined) return DEFAULT_TURNKEY_ROUTE_PREFIX;
 
-  const trimmed = configured
-    .trim()
-    .replace(/^\/+|\/+$/g, '')
-    .trim();
+  const trimmed = trimSlashes(configured.trim()).trim();
 
   if (!trimmed || /^\.+$/.test(trimmed)) {
     throw new Error(
