@@ -26,6 +26,9 @@ export enum TurnkeyApiAction {
   PRINT_INVOICE = 'PRINT_INVOICE',
   PRINT_ALLOWANCE = 'PRINT_ALLOWANCE',
   READ_EVENTS = 'READ_EVENTS',
+  READ_COMPANY = 'READ_COMPANY',
+  MANAGE_COMPANY = 'MANAGE_COMPANY',
+  RESOLVE_SUBMISSION = 'RESOLVE_SUBMISSION',
 }
 
 /** 跟 routePrefix 一樣在模組定義時決定（decorator 要在 class 建立時套上） */

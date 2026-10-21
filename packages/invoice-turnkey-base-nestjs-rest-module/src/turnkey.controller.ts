@@ -9,6 +9,7 @@ import {
   NotFoundException,
   Param,
   Post,
+  Put,
   Query,
   Res,
   StreamableFile,
@@ -21,7 +22,11 @@ import type { Response } from 'express';
 import {
   BaseTurnkeyInvoiceEntity,
   TurnkeyEvent,
+  TurnkeyCompanyService,
+  TurnkeyCompanyView,
   TurnkeyEventService,
+  TurnkeyManualResolution,
+  TurnkeySubmissionWorker,
   TurnkeyIdempotencyService,
   TurnkeyInvoiceIssueInput,
   TurnkeyInvoiceService,
@@ -62,6 +67,29 @@ export interface TurnkeyReceivedReplyBody {
   readonly documentDate?: string;
   readonly reason?: string;
   readonly remark?: string;
+}
+
+/** 新增或更新營業人；QR Code 金鑰另外用 PUT qr-aes-key 設定 */
+export interface TurnkeyCompanyBody {
+  readonly name: string;
+  readonly address?: string;
+  /** Turnkey 送方設定的繞送代碼 */
+  readonly routingId: string;
+  /** 是否開立 B2B 交換發票（EXCHANGE） */
+  readonly exchangeEnabled?: boolean;
+  /** 軟體憑證到期日（ISO 8601）；未設定時不會發 certificate.expiring */
+  readonly certificateExpiresAt?: string;
+}
+
+export interface TurnkeyQrAesKeyBody {
+  /** 平台「密碼及種子管理（QRCode）」產生的 32 碼 HEX */
+  readonly aesKey: string;
+}
+
+/** 人工判定卡在 WRITTEN 的送件 */
+export interface TurnkeyResolveSubmissionBody {
+  readonly status: TurnkeyManualResolution;
+  readonly reason: string;
 }
 
 export interface TurnkeyVoidInvoiceBody {
@@ -165,7 +193,50 @@ export const createTurnkeyController = (routePrefix: string, access: TurnkeyRout
       readonly allowanceService: TurnkeyAllowanceService,
       readonly receivedService: TurnkeyReceivedDocumentService,
       readonly printService: TurnkeyInvoicePrintService,
+      readonly companyService: TurnkeyCompanyService,
+      readonly submissionWorker: TurnkeySubmissionWorker,
     ) {}
+
+    @Get()
+    @route(TurnkeyApiAction.READ_COMPANY)
+    async findCompany(@Param('companyTaxId') companyTaxId: string): Promise<TurnkeyCompanyView> {
+      const company = await this.companyService.describe(companyTaxId);
+
+      if (!company) throw new NotFoundException('Company not registered');
+
+      return company;
+    }
+
+    /** 新增或更新營業人（PUT 本身冪等，不需要 Idempotency-Key） */
+    @Put()
+    @route(TurnkeyApiAction.MANAGE_COMPANY)
+    async registerCompany(
+      @Param('companyTaxId') companyTaxId: string,
+      @Body() body: TurnkeyCompanyBody,
+    ): Promise<TurnkeyCompanyView> {
+      assertObject(body);
+
+      // 只取白名單欄位，統編以路徑為準
+      await this.companyService.register({
+        taxId: companyTaxId,
+        name: body.name,
+        address: body.address,
+        routingId: body.routingId,
+        exchangeEnabled: body.exchangeEnabled,
+        certificateExpiresAt: body.certificateExpiresAt,
+      });
+
+      return (await this.companyService.describe(companyTaxId)) as TurnkeyCompanyView;
+    }
+
+    @Put('qr-aes-key')
+    @HttpCode(204)
+    @route(TurnkeyApiAction.MANAGE_COMPANY)
+    async setQrAesKey(@Param('companyTaxId') companyTaxId: string, @Body() body: TurnkeyQrAesKeyBody): Promise<void> {
+      assertObject(body);
+
+      await this.companyService.setQrAesKey(companyTaxId, typeof body.aesKey === 'string' ? body.aesKey : '');
+    }
 
     /** JSON 直接回傳資料；其他格式回傳檔案（每次呼叫都算一次列印） */
     private async sendProof(
@@ -721,6 +792,39 @@ export const createTurnkeyController = (routePrefix: string, access: TurnkeyRout
       return result.body;
     }
 
+    /** 卡在 WRITTEN（Turnkey 查不到結果）的送件，人到 Turnkey 確認後回填 ACCEPTED 或 FAILED */
+    @Post('submissions/:submissionId/resolve')
+    @HttpCode(200)
+    @route(TurnkeyApiAction.RESOLVE_SUBMISSION)
+    async resolveSubmission(
+      @Param('companyTaxId') companyTaxId: string,
+      @Param('submissionId') submissionId: string,
+      @Headers('idempotency-key') idempotencyKey: string | undefined,
+      @Body() body: TurnkeyResolveSubmissionBody,
+      @Res({ passthrough: true }) response: Response,
+    ): Promise<TurnkeySubmissionEntity> {
+      const key = requireIdempotencyKey(idempotencyKey);
+
+      assertObject(body);
+
+      if (!/^[0-9a-f-]{36}$/i.test(submissionId)) throw new NotFoundException('Submission not found');
+
+      const result = await this.idempotencyService.run(
+        companyTaxId,
+        key,
+        `resolveSubmission:${submissionId}`,
+        { status: body.status, reason: body.reason },
+        async () => ({
+          status: 200,
+          body: await this.submissionWorker.resolveManually(companyTaxId, submissionId, body.status, body.reason),
+        }),
+      );
+
+      if (result.replayed) response.setHeader('Idempotent-Replayed', 'true');
+
+      return result.body;
+    }
+
     @Get('submissions/:submissionId')
     @route(TurnkeyApiAction.READ_SUBMISSION)
     async findSubmission(
@@ -741,17 +845,29 @@ export const createTurnkeyController = (routePrefix: string, access: TurnkeyRout
     listSubmissions(
       @Param('companyTaxId') companyTaxId: string,
       @Query('status') status: string | undefined,
+      @Query('documentNumber') documentNumber: string | undefined,
       @Query('limit') limit: string | undefined,
     ): Promise<TurnkeySubmissionEntity[]> {
       const take = parseLimit(limit);
 
-      if (!status || status === 'PENDING') return this.submissionService.listPending(companyTaxId, take);
-
-      if (!Object.values(TurnkeySubmissionStatus).includes(status as TurnkeySubmissionStatus)) {
+      if (status && !Object.values(TurnkeySubmissionStatus).includes(status as TurnkeySubmissionStatus)) {
         throw new BadRequestException('Unknown submission status');
       }
 
-      return this.submissionService.listByStatus(companyTaxId, status as TurnkeySubmissionStatus, take);
+      const knownStatus = status ? (status as TurnkeySubmissionStatus) : undefined;
+
+      // 指定單號時回傳該單號全部送件（新到舊），不再套用「預設只看未完成」的規則。
+      if (documentNumber !== undefined) {
+        if (!/^[A-Za-z0-9-]{1,16}$/.test(documentNumber)) throw new BadRequestException('Invalid documentNumber');
+
+        return this.submissionService.listByDocument(companyTaxId, documentNumber, knownStatus, take);
+      }
+
+      if (!knownStatus || knownStatus === TurnkeySubmissionStatus.PENDING) {
+        return this.submissionService.listPending(companyTaxId, take);
+      }
+
+      return this.submissionService.listByStatus(companyTaxId, knownStatus, take);
     }
 
     @Get('events')
