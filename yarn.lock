@@ -6359,6 +6359,52 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@nats-io/jetstream@npm:^3.4.0":
+  version: 3.4.0
+  resolution: "@nats-io/jetstream@npm:3.4.0"
+  dependencies:
+    "@nats-io/nats-core": "npm:3.4.0"
+  checksum: 10c0/50d6d3abbad35167c253bf555a0ba80cd74654d76d12bdcd91ef5ba37f2dc630865c9bef9f0c7e6e73d8eafd1057495d9bf4eeebabca82f32e81661c5f4627bb
+  languageName: node
+  linkType: hard
+
+"@nats-io/nats-core@npm:3.4.0":
+  version: 3.4.0
+  resolution: "@nats-io/nats-core@npm:3.4.0"
+  dependencies:
+    "@nats-io/nkeys": "npm:2.0.3"
+    "@nats-io/nuid": "npm:3.0.0"
+  checksum: 10c0/9cd00245405028d7ac734907ef0c27282e496859fdf715b319cda431f123a57727d4fda27fd03ff57d0bd1d7c5b5d031e8c5e4323b971802e2817e22110593be
+  languageName: node
+  linkType: hard
+
+"@nats-io/nkeys@npm:2.0.3":
+  version: 2.0.3
+  resolution: "@nats-io/nkeys@npm:2.0.3"
+  dependencies:
+    tweetnacl: "npm:^1.0.3"
+  checksum: 10c0/51b80313573d3378f6af57eaad2af34d2974425951fabd42abc0a1e10c5d04ce06ed26bef8c8bf6eb7803eb233d8b0c6b44ccefb1d26168ef249545879c93426
+  languageName: node
+  linkType: hard
+
+"@nats-io/nuid@npm:3.0.0":
+  version: 3.0.0
+  resolution: "@nats-io/nuid@npm:3.0.0"
+  checksum: 10c0/6e768c0966627e6a72488ab5ca3ff183ab11fa574b6fc1cf603e98b16661c3de08a7c47625a621afb29cb7f8074f3f45efd8b4d0e635bdb294ee9704a58e959e
+  languageName: node
+  linkType: hard
+
+"@nats-io/transport-node@npm:^3.4.0":
+  version: 3.4.0
+  resolution: "@nats-io/transport-node@npm:3.4.0"
+  dependencies:
+    "@nats-io/nats-core": "npm:3.4.0"
+    "@nats-io/nkeys": "npm:2.0.3"
+    "@nats-io/nuid": "npm:3.0.0"
+  checksum: 10c0/c35b678ee65ba162d72425c002a3b7155edaf3fb978ee9397e19415e79f24dd3cb933e0b569e287842812c5539904cf22a4347cf0e4935455f54396b9a7c3212
+  languageName: node
+  linkType: hard
+
 "@nestjs/common@npm:^11.1.21":
   version: 11.1.21
   resolution: "@nestjs/common@npm:11.1.21"
@@ -8372,9 +8418,10 @@ __metadata:
   dependencies:
     "@rytass/invoice-turnkey-base-nestjs-module": "npm:0.1.0"
   peerDependencies:
+    "@nats-io/jetstream": "*"
+    "@nats-io/transport-node": "*"
     "@nestjs/common": "*"
     "@nestjs/typeorm": "*"
-    nats: "*"
     typeorm: "*"
   languageName: unknown
   linkType: soft
@@ -22746,15 +22793,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nats@npm:^2.29.3":
-  version: 2.29.3
-  resolution: "nats@npm:2.29.3"
-  dependencies:
-    nkeys.js: "npm:1.1.0"
-  checksum: 10c0/9a4c09c4b562e415f28926cc7d3b609ee4a727570c398e90d5d71f1a4c08f84ebf8c6d881eb1d202d39fa071c4779bcd8764b982767135b09826f28386cc55fb
-  languageName: node
-  linkType: hard
-
 "natural-compare@npm:^1.4.0":
   version: 1.4.0
   resolution: "natural-compare@npm:1.4.0"
@@ -22787,15 +22825,6 @@ __metadata:
   version: 2.6.2
   resolution: "neo-async@npm:2.6.2"
   checksum: 10c0/c2f5a604a54a8ec5438a342e1f356dff4bc33ccccdb6dc668d94fe8e5eccfc9d2c2eea6064b0967a767ba63b33763f51ccf2cd2441b461a7322656c1f06b3f5d
-  languageName: node
-  linkType: hard
-
-"nkeys.js@npm:1.1.0":
-  version: 1.1.0
-  resolution: "nkeys.js@npm:1.1.0"
-  dependencies:
-    tweetnacl: "npm:1.0.3"
-  checksum: 10c0/44ff8d61e46d2b345351ed7844d66036a815aeca23927def6ca258e27a18a1678fe5ab161c5cf0b6e3a3993a945d422b71036986d09669b214540c8491478bef
   languageName: node
   linkType: hard
 
@@ -27283,6 +27312,8 @@ __metadata:
     "@mezzanine-ui/icons": "npm:^1.0.2"
     "@mezzanine-ui/react": "npm:^1.0.2"
     "@mezzanine-ui/system": "npm:^1.0.2"
+    "@nats-io/jetstream": "npm:^3.4.0"
+    "@nats-io/transport-node": "npm:^3.4.0"
     "@nestjs/common": "npm:^11.1.21"
     "@nestjs/config": "npm:^4.0.3"
     "@nestjs/core": "npm:^11.1.21"
@@ -27355,7 +27386,6 @@ __metadata:
     lint-staged: "npm:^16.2.7"
     lodash: "npm:^4.18.1"
     memfs: "npm:^4.56.10"
-    nats: "npm:^2.29.3"
     node-gyp: "npm:^12.2.0"
     nodemailer: "npm:^9.0.3"
     nx: "npm:22.7.7"
@@ -29656,7 +29686,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tweetnacl@npm:1.0.3":
+"tweetnacl@npm:^1.0.3":
   version: 1.0.3
   resolution: "tweetnacl@npm:1.0.3"
   checksum: 10c0/069d9df51e8ad4a89fbe6f9806c68e06c65be3c7d42f0701cc43dba5f0d6064686b238bbff206c5addef8854e3ce00c643bff59432ea2f2c639feab0ee1a93f9
