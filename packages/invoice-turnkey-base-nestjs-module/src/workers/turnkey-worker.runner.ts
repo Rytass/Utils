@@ -88,6 +88,15 @@ export class TurnkeyWorkerRunner implements OnApplicationBootstrap, OnApplicatio
         `Certificates expiring: ${result.certificateEvents.map(event => event.companyTaxId).join(', ')}`,
       );
     }
+
+    // 彙總還沒到齊時回傳 null，下一小時再試；已對帳過的日期不會重做
+    const reports = await this.reconciliationService.reconcileYesterdayIfDue();
+
+    reports
+      ?.filter(report => report.issues.length)
+      .forEach(report =>
+        this.logger.warn(`Reconciliation ${report.date} ${report.companyTaxId}: ${report.issues.length} issue(s)`),
+      );
   }
 
   async scanInbound(): Promise<void> {
@@ -99,14 +108,27 @@ export class TurnkeyWorkerRunner implements OnApplicationBootstrap, OnApplicatio
     );
 
     results
-      .filter(result => result.outcome === 'ERROR' || result.outcome === 'UNRECOGNIZED')
+      .filter(result => result.outcome === 'ERROR' || result.outcome === 'UNRECOGNIZED' || result.outcome === 'IGNORED')
       .forEach(result =>
         this.logger.warn(`Inbound ${result.fileName}: ${result.outcome}${result.error ? ` (${result.error})` : ''}`),
       );
   }
 
   private async holdLock(): Promise<boolean> {
-    if (this.lockRunner) return true;
+    if (this.lockRunner) {
+      // session lock 跟著連線：連線斷了 lock 就已釋放，必須重新搶，否則可能和另一個實例同時跑
+      const alive = await this.lockRunner.query('SELECT 1').then(
+        () => true,
+        () => false,
+      );
+
+      if (alive) return true;
+
+      this.logger.warn('Lost the worker lock connection; trying to take the lock again');
+
+      await this.lockRunner.release().catch(() => undefined);
+      this.lockRunner = null;
+    }
 
     const runner = this.dataSource.createQueryRunner();
 
