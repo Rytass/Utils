@@ -14,9 +14,12 @@ export enum TurnkeyReceivedDocumentStatus {
   REJECTION_ACKNOWLEDGED = 'REJECTION_ACKNOWLEDGED',
 }
 
-/** 我方為買方時收到的交換文件（A0101、A0201、A0302、B0101、B0201） */
+/**
+ * 我方為買方時收到的交換文件（A0101、A0201、A0302、B0101、B0201）
+ * 發票號碼只在同一賣方、同一期別內唯一，跨期會重複，所以唯一鍵包含賣方統編與文件日期
+ */
 @Entity('turnkey_received_documents')
-@Unique(['buyerTaxId', 'messageType', 'documentNumber'])
+@Unique(['buyerTaxId', 'sellerTaxId', 'messageType', 'documentNumber', 'documentDate'])
 @Index(['buyerTaxId', 'status', 'createdAt'])
 export class TurnkeyReceivedDocumentEntity {
   @PrimaryGeneratedColumn('uuid')

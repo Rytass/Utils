@@ -205,6 +205,7 @@ export class TurnkeyInboundService {
           sellerTaxId: message.sellerTaxId,
           messageType: TurnkeyMigMessageType.A0101,
           documentNumber: message.documentNumber,
+          documentDate: message.documentDate,
           status: TurnkeyReceivedDocumentStatus.REJECTED,
         },
         { status: TurnkeyReceivedDocumentStatus.REJECTION_ACKNOWLEDGED },

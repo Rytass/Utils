@@ -41,6 +41,18 @@ const REPLIES = {
 
 export type TurnkeyReplyAction = keyof typeof REPLIES;
 
+/** 回覆時指定收到的是哪一份文件：同一號碼可能來自不同賣方，跨期也可能重複 */
+export interface TurnkeyReceivedReplyOptions {
+  /** 開立這份文件的賣方統編 */
+  readonly sellerTaxId: string;
+  /** yyyyMMdd；同一賣方同一號碼有多份（跨期重複）時必填 */
+  readonly documentDate?: string;
+  readonly reason?: string;
+  readonly remark?: string;
+}
+
+const DOCUMENT_DATE_PATTERN = /^\d{8}$/;
+
 const fail = (code: TurnkeyValidationCode, message: string, field?: string): TurnkeyValidationError =>
   new TurnkeyValidationError([{ code, message, field }]);
 
@@ -72,29 +84,42 @@ export class TurnkeyReceivedDocumentService {
     action: TurnkeyReplyAction,
     buyerTaxId: string,
     documentNumber: string,
-    options: { readonly reason?: string; readonly remark?: string } = {},
+    options: TurnkeyReceivedReplyOptions,
   ): Promise<TurnkeyReceivedDocumentEntity> {
     const spec = REPLIES[action];
+    const { sellerTaxId, documentDate } = options;
+
+    if (typeof sellerTaxId !== 'string' || !sellerTaxId.trim()) {
+      throw fail(TurnkeyValidationCode.INVALID_TAX_ID, '賣方統編必填', 'sellerTaxId');
+    }
+
+    if (documentDate != null && (typeof documentDate !== 'string' || !DOCUMENT_DATE_PATTERN.test(documentDate))) {
+      throw fail(TurnkeyValidationCode.INVALID_STATE, '文件日期格式須為 yyyyMMdd', 'documentDate');
+    }
 
     if (action === 'rejectInvoice' && !options.reason?.trim()) {
       throw fail(TurnkeyValidationCode.INVALID_STATE, '退回原因必填', 'reason');
     }
 
     return this.dataSource.transaction(async manager => {
-      const received = await manager
-        .createQueryBuilder(TurnkeyReceivedDocumentEntity, 'doc')
-        .setLock('pessimistic_write')
-        .where(
-          'doc.buyerTaxId = :buyerTaxId AND doc.messageType = :messageType AND doc.documentNumber = :documentNumber',
-          {
-            buyerTaxId,
-            messageType: spec.received,
-            documentNumber,
-          },
-        )
-        .getOne();
+      const matches = await manager.find(TurnkeyReceivedDocumentEntity, {
+        where: {
+          buyerTaxId,
+          sellerTaxId,
+          messageType: spec.received,
+          documentNumber,
+          ...(documentDate != null ? { documentDate } : {}),
+        },
+        lock: { mode: 'pessimistic_write' },
+      });
 
-      if (!received) throw fail(TurnkeyValidationCode.INVOICE_NOT_FOUND, '找不到收到的文件', 'documentNumber');
+      if (!matches.length) throw fail(TurnkeyValidationCode.INVOICE_NOT_FOUND, '找不到收到的文件', 'documentNumber');
+
+      if (matches.length > 1) {
+        throw fail(TurnkeyValidationCode.INVALID_STATE, '同一號碼有多份文件，請指定 documentDate', 'documentDate');
+      }
+
+      const [received] = matches;
 
       if (received.status !== TurnkeyReceivedDocumentStatus.RECEIVED) {
         throw fail(TurnkeyValidationCode.INVALID_STATE, `已回覆過（${received.status}）`, 'documentNumber');
@@ -105,7 +130,7 @@ export class TurnkeyReceivedDocumentService {
         documentNumber,
         documentDate: parseMigDateTime(received.documentDate),
         buyerTaxId,
-        sellerTaxId: received.sellerTaxId,
+        sellerTaxId,
         repliedAt: new Date(),
         reason: options.reason,
         remark: options.remark,
