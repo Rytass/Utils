@@ -31,6 +31,15 @@ import {
   TurnkeyProofRequestOptions,
 } from './typings';
 
+/** 去掉結尾的 '/'；不用 regex，避免 /\/+$/ 在大量斜線時的多項式回溯 */
+const trimTrailingSlashes = (value: string): string => {
+  let end = value.length;
+
+  while (end > 0 && value[end - 1] === '/') end -= 1;
+
+  return value.slice(0, end);
+};
+
 export class TurnkeyInvoiceGateway implements InvoiceGateway<
   TurnkeyPaymentItem,
   TurnkeyInvoice,
@@ -45,7 +54,7 @@ export class TurnkeyInvoiceGateway implements InvoiceGateway<
   private readonly timeoutMs: number;
 
   constructor(options: TurnkeyInvoiceGatewayOptions) {
-    this.companyUrl = `${options.baseUrl.replace(/\/+$/, '')}/companies/${encodeURIComponent(options.companyTaxId)}`;
+    this.companyUrl = `${trimTrailingSlashes(options.baseUrl)}/companies/${encodeURIComponent(options.companyTaxId)}`;
     this.deliveryMode = options.deliveryMode ?? 'STORAGE';
     this.headers = options.headers ?? {};
     this.timeoutMs = options.timeoutMs ?? TURNKEY_DEFAULT_TIMEOUT_MS;
