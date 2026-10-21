@@ -70,7 +70,7 @@ const resizer = new ImageResizer({
   maxWidth: 800,
   maxHeight: 600,
   keepAspectRatio: true,
-  concurrency: 4, // Optional: parallel processing
+  concurrency: 4, // Optional: libvips threads per image (process-wide)
 });
 
 const originalImage = readFileSync('photo.jpg');
@@ -291,7 +291,7 @@ interface ImageResizerOptions {
   maxWidth?: number;      // 最大寬度（至少需設定 maxWidth 或 maxHeight 其一）
   maxHeight?: number;     // 最大高度
   keepAspectRatio?: boolean;  // 保持縱橫比（預設 true，使用 'inside' fit）
-  concurrency?: number;   // 並發數（預設 1）
+  concurrency?: number;   // 每張圖的 libvips 執行緒數（全域設定，有傳才設定）
 }
 ```
 
@@ -307,7 +307,7 @@ interface Watermark {
 
 interface ImageWatermarkOptions {
   watermarks: Watermark[];  // 浮水印陣列（支援多個浮水印）
-  concurrency?: number;     // 並發數（預設 1）
+  concurrency?: number;     // 每張圖的 libvips 執行緒數（全域設定，有傳才設定）
 }
 ```
 
@@ -508,18 +508,18 @@ const resultStream = await converter.convert<Readable>(stream);
 ```
 
 **Sharp Cache Issues**
-- Sharp automatically disables cache in all adapters with `sharp.cache(false)`
+- Importing any image adapter calls `sharp.cache(false)`, which disables the libvips operation cache for the whole process
 - No action needed
 
 **Concurrency Performance**
-- Adjust `concurrency` option based on your CPU cores
-- Default is 1 (single-threaded)
-- Try 4-8 for multi-core systems
+- `concurrency` sets `sharp.concurrency()`: libvips threads used for **each** image, a process-wide setting (last call wins)
+- Only applied when provided; otherwise sharp's default (CPU cores) is kept
+- Images processed in parallel are limited by `UV_THREADPOOL_SIZE` (default 4), not by `concurrency`
 
 ```typescript
 const resizer = new ImageResizer({
   maxWidth: 800,
-  concurrency: 8, // Adjust based on CPU cores
+  concurrency: 8, // libvips threads per image (process-wide)
 });
 ```
 
