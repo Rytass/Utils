@@ -29,13 +29,13 @@
     "@nestjs/common": "*",
     "@nestjs/core": "*",
     "@nestjs/typeorm": "*",
-    "typeorm": "*",
     "bwip-js": "^4.11.4",
     "fontkit": "^2.0.4",
     "iconv-lite": "^0.7.3",
     "pdfkit": "^0.20.2",
     "pngjs": "^7.0.0",
-    "qrcode": "^1.5.4"
+    "qrcode": "^1.5.4",
+    "typeorm": "*"
   },
   "dependencies": {
     "fast-xml-parser": "^5.10.0",
