@@ -42,13 +42,13 @@ TurnkeyNatsNotifyModule.forRootAsync({
 
 ## Options
 
-| Option              | Default   | Description                                                                 |
-| ------------------- | --------- | --------------------------------------------------------------------------- |
-| `servers`           | required  | NATS server URL(s)                                                          |
-| `subjectPrefix`     | `turnkey` | Subject prefix, see below                                                   |
-| `channel`           | `nats`    | Name of the cursor row in `turnkey_event_cursors` and of the advisory lock  |
-| `pollIntervalMs`    | `5000`    | Polling interval; a base `emit` also wakes a round immediately              |
-| `connectionOptions` | -         | Other `connect` options (`user`, `pass`, `token`, `tls`, `name`, ...)       |
+| Option              | Default   | Description                                                                |
+| ------------------- | --------- | -------------------------------------------------------------------------- |
+| `servers`           | required  | NATS server URL(s)                                                         |
+| `subjectPrefix`     | `turnkey` | Subject prefix, see below                                                  |
+| `channel`           | `nats`    | Name of the cursor row in `turnkey_event_cursors` and of the advisory lock |
+| `pollIntervalMs`    | `5000`    | Polling interval; a base `emit` also wakes a round immediately             |
+| `connectionOptions` | -         | Other `connect` options (`user`, `pass`, `token`, `tls`, `name`, ...)      |
 
 ## Subjects and payload
 
@@ -57,7 +57,13 @@ Each event is published to `${subjectPrefix}.${companyTaxId}.${type}`, for examp
 The payload is JSON:
 
 ```json
-{ "id": "42", "type": "invoice.issued", "companyTaxId": "12345678", "data": {}, "createdAt": "2026-01-01T00:00:00.000Z" }
+{
+  "id": "42",
+  "type": "invoice.issued",
+  "companyTaxId": "12345678",
+  "data": {},
+  "createdAt": "2026-01-01T00:00:00.000Z"
+}
 ```
 
 `id` is the outbox sequence number. It is also sent as the JetStream `msgID`, so JetStream deduplicates retries within its duplicate window (2 minutes by default).
