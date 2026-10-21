@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { DataSource, EntityManager, MoreThan, Repository } from 'typeorm';
 import { TurnkeyAllowanceEntity } from '../models/turnkey-allowance.entity';
 import { BaseTurnkeyCompanyEntity } from '../models/turnkey-company.entity';
 import { BaseTurnkeyInvoiceEntity } from '../models/turnkey-invoice.entity';
@@ -59,6 +59,9 @@ const toSeller = (company: BaseTurnkeyCompanyEntity): TurnkeyProofParty => ({
  */
 @Injectable()
 export class TurnkeyInvoicePrintService {
+  /** 本次呼叫新寫入的列印紀錄；渲染失敗時由 discardPrint 撤銷 */
+  private readonly createdLogs = new WeakMap<TurnkeyProof, TurnkeyPrintLogEntity>();
+
   constructor(
     @Inject(TurnkeyPrintLogRepo)
     private readonly printLogRepo: Repository<TurnkeyPrintLogEntity>,
@@ -107,9 +110,14 @@ export class TurnkeyInvoicePrintService {
       items: items.map(item => ({ description: item.description, quantity: item.quantity, unitPrice: item.unitPrice })),
     });
 
-    const log = await this.recordPrint(companyTaxId, TurnkeyPrintDocumentType.INVOICE, invoiceNumber, request);
+    const { log, created } = await this.recordPrint(
+      companyTaxId,
+      TurnkeyPrintDocumentType.INVOICE,
+      invoiceNumber,
+      request,
+    );
 
-    return {
+    return this.remember(created ? log : null, {
       documentType: 'INVOICE',
       invoiceNumber,
       issuedAt: invoice.issuedAt,
@@ -145,7 +153,7 @@ export class TurnkeyInvoicePrintService {
       printCount: log.sequence,
       reprint: log.sequence > 1,
       printedAt: log.createdAt,
-    };
+    });
   }
 
   async buildAllowanceProof(
@@ -171,9 +179,14 @@ export class TurnkeyInvoicePrintService {
     if (!invoice) throw new TurnkeyPrintError(TurnkeyPrintErrorCode.NOT_FOUND, '找不到原發票');
 
     const company = await this.findCompany(companyTaxId);
-    const log = await this.recordPrint(companyTaxId, TurnkeyPrintDocumentType.ALLOWANCE, allowanceNumber, request);
+    const { log, created } = await this.recordPrint(
+      companyTaxId,
+      TurnkeyPrintDocumentType.ALLOWANCE,
+      allowanceNumber,
+      request,
+    );
 
-    return {
+    return this.remember(created ? log : null, {
       documentType: 'ALLOWANCE',
       allowanceNumber,
       allowanceDate: allowance.allowanceDate,
@@ -199,7 +212,42 @@ export class TurnkeyInvoicePrintService {
       printCount: log.sequence,
       reprint: log.sequence > 1,
       printedAt: log.createdAt,
-    };
+    });
+  }
+
+  /**
+   * 渲染失敗（例如缺選用套件）時撤銷這次的列印紀錄，下次列印才不會被算成補印。
+   * 只撤銷本次新寫入、且仍是最新一筆的紀錄；冪等重播回傳的既有紀錄不動。
+   */
+  async discardPrint(proof: TurnkeyProof): Promise<void> {
+    const log = this.createdLogs.get(proof);
+
+    if (!log) return;
+
+    this.createdLogs.delete(proof);
+
+    await this.dataSource.transaction(async (manager: EntityManager) => {
+      await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
+        `turnkey-print:${log.companyTaxId}:${log.documentType}:${log.documentNumber}`,
+      ]);
+
+      const later = await manager.count(TurnkeyPrintLogEntity, {
+        where: {
+          companyTaxId: log.companyTaxId,
+          documentType: log.documentType,
+          documentNumber: log.documentNumber,
+          sequence: MoreThan(log.sequence),
+        },
+      });
+
+      if (!later) await manager.delete(TurnkeyPrintLogEntity, { id: log.id });
+    });
+  }
+
+  private remember<T extends TurnkeyProof>(created: TurnkeyPrintLogEntity | null, proof: T): T {
+    if (created) this.createdLogs.set(proof, created);
+
+    return proof;
   }
 
   /** JSON 直接回傳資料；其他格式交給 renderers（需要選用套件） */
@@ -249,7 +297,7 @@ export class TurnkeyInvoicePrintService {
     documentType: TurnkeyPrintDocumentType,
     documentNumber: string,
     request: TurnkeyProofRequest,
-  ): Promise<TurnkeyPrintLogEntity> {
+  ): Promise<{ readonly log: TurnkeyPrintLogEntity; readonly created: boolean }> {
     return this.dataSource.transaction(async (manager: EntityManager) => {
       await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
         `turnkey-print:${companyTaxId}:${documentType}:${documentNumber}`,
@@ -260,14 +308,14 @@ export class TurnkeyInvoicePrintService {
           where: { companyTaxId, documentType, documentNumber, idempotencyKey: request.idempotencyKey },
         });
 
-        if (replayed) return replayed;
+        if (replayed) return { log: replayed, created: false };
       }
 
       const printed = await manager.count(TurnkeyPrintLogEntity, {
         where: { companyTaxId, documentType, documentNumber },
       });
 
-      return manager.save(
+      const log = await manager.save(
         manager.create(TurnkeyPrintLogEntity, {
           companyTaxId,
           documentType,
@@ -278,6 +326,8 @@ export class TurnkeyInvoicePrintService {
           idempotencyKey: request.idempotencyKey ?? null,
         }),
       );
+
+      return { log, created: true };
     });
   }
 }
