@@ -174,10 +174,21 @@ export class TurnkeyAllowanceService {
       const isB2B = invoice.buyerTaxId !== CONSUMER_BUYER_ID;
 
       const lines = input.items.map((item, index) => {
+        const sameDescription = invoiceItems.filter(candidate => candidate.description === item.description);
+
+        // 原發票有多筆同名明細時無法判斷折哪一筆，必須指定 originalSequenceNumber
+        if (item.originalSequenceNumber == null && sameDescription.length > 1) {
+          throw fail(
+            TurnkeyValidationCode.ALLOWANCE_AMOUNT_INVALID,
+            '原發票有多筆同名明細，請指定 originalSequenceNumber',
+            `items[${index}].originalSequenceNumber`,
+          );
+        }
+
         const original =
           item.originalSequenceNumber != null
             ? invoiceItems.find(candidate => candidate.sequenceNumber === item.originalSequenceNumber)
-            : invoiceItems.find(candidate => candidate.description === item.description);
+            : sameDescription[0];
 
         if (!original) {
           throw fail(TurnkeyValidationCode.ALLOWANCE_AMOUNT_INVALID, '找不到對應的原發票明細', `items[${index}]`);
@@ -222,6 +233,35 @@ export class TurnkeyAllowanceService {
       });
 
       const previousTotal = previous.reduce((sum, allowance) => sum + allowance.totalAmount + allowance.taxAmount, 0);
+
+      // 每一筆原明細的累計折讓數量（含這次）不得超過原數量
+      const previousItems = previous.length
+        ? await manager.find(TurnkeyAllowanceItemEntity, {
+            where: { allowanceId: In(previous.map(allowance => allowance.id)) },
+          })
+        : [];
+
+      const cumulativeQuantity = (sequenceNumber: number): number =>
+        [
+          ...previousItems,
+          ...lines.map(line => ({
+            originalSequenceNumber: line.original.sequenceNumber,
+            quantity: line.item.quantity,
+          })),
+        ]
+          .filter(item => item.originalSequenceNumber === sequenceNumber)
+          .reduce((sum, item) => sum + item.quantity, 0);
+
+      lines.forEach((line, index) => {
+        if (cumulativeQuantity(line.original.sequenceNumber) > line.original.quantity) {
+          throw fail(
+            TurnkeyValidationCode.ALLOWANCE_EXCEEDS_INVOICE,
+            '同一明細的累計折讓數量超過原數量',
+            `items[${index}].quantity`,
+          );
+        }
+      });
+
       const totalAmount = lines.reduce((sum, line) => sum + line.split.amount, 0);
       const taxAmount = lines.reduce((sum, line) => sum + line.split.tax, 0);
 
