@@ -103,6 +103,10 @@ const barcodeRaster = (bars: readonly boolean[], dots: number): Raster => {
   return raster;
 };
 
+/** 品名、備註等使用者輸入可能夾帶 ESC/GS 等控制字元，送進印表機前一律移除，避免被當成指令執行 */
+// eslint-disable-next-line no-control-regex
+const stripControlCharacters = (text: string): string => text.replace(/[\u0000-\u001f\u007f-\u009f]/g, '');
+
 const textLine = (
   iconv: { encode(text: string, encoding: string): Buffer },
   text: string,
@@ -113,7 +117,10 @@ const textLine = (
   },
 ): Buffer => {
   const size = options.doubleSize ? command(GS, 0x21, 0x11) : command(GS, 0x21, 0x00);
-  const lines = wrapColumns(text, options.doubleSize ? Math.floor(options.columns / 2) : options.columns);
+  const lines = wrapColumns(
+    stripControlCharacters(text),
+    options.doubleSize ? Math.floor(options.columns / 2) : options.columns,
+  );
 
   return Buffer.concat([
     command(ESC, 0x61, ALIGN[options.align]),

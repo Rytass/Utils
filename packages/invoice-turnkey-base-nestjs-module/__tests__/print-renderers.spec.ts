@@ -37,6 +37,14 @@ describe('ESC/POS renderer', () => {
     expect(body.includes(GS_RASTER)).toBe(false);
   });
 
+  it('strips control characters from text so input cannot inject printer commands', async () => {
+    const seller = { taxId: '12345675', name: '測試\x1b\x40\x1dV營業人', address: '台北市' };
+    const body = await renderEscPos(buildInvoiceProof({ seller }), 57);
+
+    expect(body.includes(iconv.encode('測試@V營業人', 'big5'))).toBe(true);
+    expect(body.includes(Buffer.from([0x1d, 0x56, 0x41]))).toBe(false);
+  });
+
   it('renders through renderProof with the ESC_POS content type', async () => {
     const rendered = await renderProof(buildInvoiceProof(), {
       format: TurnkeyProofFormat.ESC_POS,
