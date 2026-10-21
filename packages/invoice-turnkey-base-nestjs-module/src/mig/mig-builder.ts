@@ -74,9 +74,25 @@ const compact = (node: Record<string, XmlValue>): XmlNode =>
 const party = (value: TurnkeyParty): XmlNode =>
   compact({ Identifier: value.taxId, Name: value.name, Address: value.address });
 
+/** XML 1.0 不允許的字元（TAB、LF、CR 以外的控制字元、U+FFFE/U+FFFF）；從其他系統複製來的品名常夾帶 */
+// eslint-disable-next-line no-control-regex
+const INVALID_XML_CHARACTERS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g;
+
+const sanitize = (value: XmlValue): XmlValue => {
+  if (typeof value === 'string') return value.replace(INVALID_XML_CHARACTERS, '');
+
+  if (Array.isArray(value)) return value.map(node => sanitize(node) as XmlNode);
+
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, sanitize(child)])) as XmlNode;
+  }
+
+  return value;
+};
+
 const toXml = (type: TurnkeyMigMessageType, body: XmlNode): string => {
   const root = ROOT_ELEMENT[type];
-  const xml = builder.build({ [root]: { '@_xmlns': migNamespace(type), ...body } }) as string;
+  const xml = builder.build({ [root]: { '@_xmlns': migNamespace(type), ...(sanitize(body) as XmlNode) } }) as string;
 
   return `<?xml version="1.0" encoding="UTF-8"?>\n${xml}`;
 };

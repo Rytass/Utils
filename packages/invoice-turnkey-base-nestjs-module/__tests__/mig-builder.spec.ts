@@ -55,6 +55,14 @@ describe('buildMigXml', () => {
     });
   });
 
+  it('drops characters XML 1.0 does not allow', () => {
+    const doc = b2bInvoice(TurnkeyMigMessageType.F0401);
+    const xml = buildMigXml({ ...doc, buyer: { ...doc.buyer, name: '測試\u0001買方\u000B' } });
+
+    expect(xml.includes('\u0001') || xml.includes('\u000B')).toBe(false);
+    expect(parser.parse(xml).Invoice.Main.Buyer.Name).toBe('測試買方');
+  });
+
   it('omits storage-only fields on A0101', () => {
     const xml = buildMigXml(b2bInvoice(TurnkeyMigMessageType.A0101));
     const parsed = parser.parse(xml);
