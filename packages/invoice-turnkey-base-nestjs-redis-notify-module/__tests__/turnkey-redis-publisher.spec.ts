@@ -190,7 +190,7 @@ describe('TurnkeyRedisPublisherService', () => {
 
     it('keeps the cursor at the last successful XADD and retries without duplicating earlier entries', async () => {
       const events = new FakeEventSource([makeEvent(1), makeEvent(2), makeEvent(3)]);
-      const { service, transport, lock } = setup(events);
+      const { service, transport, lock, createTransport } = setup(events);
 
       transport.failOn = '2';
       await service.tick();
@@ -198,11 +198,14 @@ describe('TurnkeyRedisPublisherService', () => {
       expect(transport.streamIds).toEqual(['1']);
       expect(events.cursor).toBe('1');
       expect(lock.held).toBe(false);
+      // 失敗後丟掉連線，下一輪重建
+      expect(transport.closed).toBe(true);
 
       transport.failOn = null;
       await service.tick();
 
       expect(transport.streamIds).toEqual(['1', '2', '3']);
+      expect(createTransport).toHaveBeenCalledTimes(2);
       expect(events.cursor).toBe('3');
     });
   });

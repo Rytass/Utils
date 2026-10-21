@@ -26,7 +26,20 @@ export class PgAdvisoryLock implements AdvisoryLock {
   ) {}
 
   async acquire(): Promise<boolean> {
-    if (this.runner) return true;
+    if (this.runner) {
+      // session lock 跟著連線：連線斷了 lock 已釋放，必須重新搶，否則可能和另一個實例同時發布
+      const alive = await this.runner.query('SELECT 1').then(
+        () => true,
+        () => false,
+      );
+
+      if (alive) return true;
+
+      const stale = this.runner;
+
+      this.runner = null;
+      await stale.release().catch(() => undefined);
+    }
 
     const runner = this.dataSource.createQueryRunner();
 

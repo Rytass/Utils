@@ -124,6 +124,12 @@ export class TurnkeyRedisPublisherService implements OnApplicationBootstrap, OnA
 
       // 出錯即釋放鎖，讓下一輪重新競選（連線壞掉時 session lock 也會一併失效）
       await this.lock.release().catch(() => undefined);
+
+      // 連線可能已永久關閉（例如重連次數用完），丟掉它讓下一輪重建
+      const broken = this.transport;
+
+      this.transport = null;
+      await broken?.close().catch(() => undefined);
     }
   }
 
@@ -133,27 +139,28 @@ export class TurnkeyRedisPublisherService implements OnApplicationBootstrap, OnA
     return this.transport;
   }
 
+  /** 從游標一批批往後送，直到沒有新事件 */
   private async drain(transport: RedisTransport): Promise<void> {
-    let cursor = await this.events.getCursor(this.channel);
-
-    for (;;) {
-      const { events } = await this.events.listAfter(cursor, BATCH_SIZE);
-
-      if (events.length === 0) return;
-
-      await this.publishInOrder(transport, events);
-
-      cursor = events[events.length - 1].id;
-
-      if (events.length < BATCH_SIZE) return;
-    }
+    await this.drainFrom(transport, await this.events.getCursor(this.channel));
   }
 
-  private async publishInOrder(transport: RedisTransport, events: readonly TurnkeyEvent[]): Promise<void> {
-    for (const event of events) {
+  private async drainFrom(transport: RedisTransport, cursor: string | null): Promise<void> {
+    const { events } = await this.events.listAfter(cursor, BATCH_SIZE);
+
+    if (events.length === 0) return;
+
+    await this.publishInOrder(transport, events);
+
+    if (events.length === BATCH_SIZE) await this.drainFrom(transport, events[events.length - 1].id);
+  }
+
+  /** 依序發布，每筆成功才前進游標 */
+  private publishInOrder(transport: RedisTransport, events: readonly TurnkeyEvent[]): Promise<void> {
+    return events.reduce<Promise<void>>(async (previous, event) => {
+      await previous;
       await this.publishOne(transport, event);
       await this.events.advanceCursor(this.channel, event.id);
-    }
+    }, Promise.resolve());
   }
 
   private async publishOne(transport: RedisTransport, event: TurnkeyEvent): Promise<void> {

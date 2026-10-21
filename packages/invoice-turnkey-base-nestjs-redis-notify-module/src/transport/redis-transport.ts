@@ -2,6 +2,8 @@ import { Logger } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import type { TurnkeyRedisNotifyOptions } from '../typings/turnkey-redis-notify.options';
 
+const DEFAULT_COMMAND_TIMEOUT_MS = 10_000;
+
 /** 發布端抽象；方便單元測試替換成假的 client */
 export interface RedisTransport {
   /** XADD；resolve 代表 Redis 已回覆寫入成功 */
@@ -15,7 +17,11 @@ export type RedisTransportFactory = (options: TurnkeyRedisNotifyOptions) => Prom
 
 export const createRedisTransport: RedisTransportFactory = async ({ redis }) => {
   const logger = new Logger('TurnkeyRedisNotify');
-  const client = typeof redis === 'string' ? new Redis(redis) : new Redis(redis);
+  // 半開連線時命令不會自己結束；逾時讓這一輪失敗、下一輪重建連線
+  const client =
+    typeof redis === 'string'
+      ? new Redis(redis, { commandTimeout: DEFAULT_COMMAND_TIMEOUT_MS })
+      : new Redis({ commandTimeout: DEFAULT_COMMAND_TIMEOUT_MS, ...redis });
 
   client.on('error', error => logger.warn(`Redis connection error: ${error.message}`));
 
