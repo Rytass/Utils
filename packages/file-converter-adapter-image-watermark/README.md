@@ -10,7 +10,7 @@ Image watermarking processor that adds watermarks to images using Sharp's gravit
 - [x] Buffer and file path input for watermarks
 - [x] Buffer and Stream input support for source images
 - [x] Multiple image format support
-- [x] Concurrency control for batch processing
+- [x] Configurable libvips thread count per image
 
 ## Installation
 
@@ -85,7 +85,7 @@ const watermarker = new ImageWatermark({
       gravity: gravity.south, // Bottom-center
     },
   ],
-  concurrency: 4, // Optional: parallel processing
+  concurrency: 4, // Optional: libvips threads per image (process-wide sharp setting)
 });
 
 const watermarkedImage = await watermarker.convert<Buffer>(originalImage);
@@ -95,17 +95,17 @@ const watermarkedImage = await watermarker.convert<Buffer>(originalImage);
 
 ### ImageWatermarkOptions
 
-| Property      | Type          | Required | Default | Description                          |
-| ------------- | ------------- | -------- | ------- | ------------------------------------ |
-| `watermarks`  | `Watermark[]` | Yes      | -       | Array of watermark configurations    |
-| `concurrency` | `number`      | No       | `1`     | Number of parallel processing threads |
+| Property      | Type          | Required | Default                   | Description                                                     |
+| ------------- | ------------- | -------- | ------------------------- | --------------------------------------------------------------- |
+| `watermarks`  | `Watermark[]` | Yes      | -                         | Array of watermark configurations                               |
+| `concurrency` | `number`      | No       | Sharp default (CPU cores) | libvips threads per image; process-wide, only set when provided |
 
 ### Watermark
 
-| Property  | Type                   | Required | Default | Description                                |
-| --------- | ---------------------- | -------- | ------- | ------------------------------------------ |
-| `image`   | `string` \| `Buffer`   | Yes      | -       | Watermark image (file path or Buffer)      |
-| `gravity` | `Gravity`              | No       | -       | Position using Sharp's gravity constants   |
+| Property  | Type                 | Required | Default | Description                              |
+| --------- | -------------------- | -------- | ------- | ---------------------------------------- |
+| `image`   | `string` \| `Buffer` | Yes      | -       | Watermark image (file path or Buffer)    |
+| `gravity` | `Gravity`            | No       | -       | Position using Sharp's gravity constants |
 
 ### Gravity Positions (from Sharp)
 
@@ -115,17 +115,17 @@ Import gravity from Sharp and use these positioning options:
 import { gravity } from 'sharp';
 ```
 
-| Position           | Gravity Constant      | Description      |
-| ------------------ | --------------------- | ---------------- |
-| Top-Left (左上)    | `gravity.northwest`   | Northwest corner |
-| Top-Center (上中)  | `gravity.north`       | Top center       |
-| Top-Right (右上)   | `gravity.northeast`   | Northeast corner |
-| Middle-Left (中左) | `gravity.west`        | Middle left      |
-| Center (中央)      | `gravity.center`      | Center           |
-| Middle-Right (中右)| `gravity.east`        | Middle right     |
-| Bottom-Left (左下) | `gravity.southwest`   | Southwest corner |
-| Bottom-Center (下中)| `gravity.south`      | Bottom center    |
-| Bottom-Right (右下)| `gravity.southeast`   | Southeast corner |
+| Position             | Gravity Constant    | Description      |
+| -------------------- | ------------------- | ---------------- |
+| Top-Left (左上)      | `gravity.northwest` | Northwest corner |
+| Top-Center (上中)    | `gravity.north`     | Top center       |
+| Top-Right (右上)     | `gravity.northeast` | Northeast corner |
+| Middle-Left (中左)   | `gravity.west`      | Middle left      |
+| Center (中央)        | `gravity.center`    | Center           |
+| Middle-Right (中右)  | `gravity.east`      | Middle right     |
+| Bottom-Left (左下)   | `gravity.southwest` | Southwest corner |
+| Bottom-Center (下中) | `gravity.south`     | Bottom center    |
+| Bottom-Right (右下)  | `gravity.southeast` | Southeast corner |
 
 ## Usage Examples
 
@@ -165,11 +165,11 @@ const watermarker = new ImageWatermark({
       gravity: gravity.southeast,
     },
   ],
-  concurrency: 4, // Process 4 images in parallel
+  concurrency: 4, // libvips threads per image
 });
 
 const watermarkedImages = await Promise.all(
-  images.map(async (imagePath) => {
+  images.map(async imagePath => {
     const image = readFileSync(imagePath);
     return await watermarker.convert<Buffer>(image);
   }),
@@ -243,7 +243,8 @@ try {
 ### Performance
 
 - Use appropriately sized watermark images to avoid excessive processing
-- Set `concurrency` option based on CPU cores for batch processing
+- `concurrency` sets the process-wide `sharp.concurrency()` (libvips threads per image) and is only changed when provided; the number of images processed in parallel is limited by `UV_THREADPOOL_SIZE` (default 4)
+- Importing this package calls `sharp.cache(false)`, disabling the libvips operation cache for the whole process
 - Use Buffer input for watermarks when processing many images (avoids repeated file reads)
 - Use streams for large source images to manage memory usage
 

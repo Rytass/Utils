@@ -18,7 +18,7 @@ Professional watermark application adapter powered by Sharp. Provides precise wa
 - **Sharp Integration**: High-performance compositing with libvips backend
 - **Pipeline Compatible**: Seamless integration with file converter ecosystem
 - **Memory Efficient**: Stream and Buffer processing with optimized memory usage
-- **Concurrent Processing**: Configurable Sharp concurrency for batch operations
+- **Threads per Image**: Optional `concurrency` sets the process-wide `sharp.concurrency()` (libvips threads per image); unchanged when omitted
 - **Type Safety**: Full TypeScript support with gravity enums and options
 
 ## Installation
@@ -82,7 +82,7 @@ interface Watermark {
 
 interface ImageWatermarkOptions {
   watermarks: Watermark[];          // Array of watermarks to apply
-  concurrency?: number;             // Sharp processing concurrency (default: 1)
+  concurrency?: number;             // libvips threads per image, process-wide (default: sharp default, CPU cores)
 }
 ```
 
@@ -92,7 +92,7 @@ interface ImageWatermarkOptions {
 |----------|------|----------|---------|-------------|
 | `image` | `string \| Buffer` | Yes | - | Watermark image source |
 | `gravity` | `Gravity` | No | `southeast` | Positioning within target image |
-| `concurrency` | `number` | No | `1` | Sharp concurrent operations limit |
+| `concurrency` | `number` | No | Sharp default | libvips threads per image; process-wide, only set when provided |
 
 ## Basic Usage
 
