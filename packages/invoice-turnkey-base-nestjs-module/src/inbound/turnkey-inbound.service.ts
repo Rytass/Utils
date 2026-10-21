@@ -114,7 +114,7 @@ export class TurnkeyInboundService {
       invoiceTransition
         ? {
             exists: await manager.count(BaseTurnkeyInvoiceEntity, {
-              where: { companyTaxId, invoiceNumber: message.documentNumber },
+              where: { companyTaxId, buyerTaxId: message.buyerTaxId, invoiceNumber: message.documentNumber },
             }),
             affected:
               (
@@ -122,6 +122,7 @@ export class TurnkeyInboundService {
                   BaseTurnkeyInvoiceEntity,
                   {
                     companyTaxId,
+                    buyerTaxId: message.buyerTaxId,
                     invoiceNumber: message.documentNumber,
                     status: In([...invoiceTransition.from]),
                   },
@@ -133,7 +134,7 @@ export class TurnkeyInboundService {
         : allowanceTransition
           ? {
               exists: await manager.count(TurnkeyAllowanceEntity, {
-                where: { companyTaxId, allowanceNumber: message.documentNumber },
+                where: { companyTaxId, buyerTaxId: message.buyerTaxId, allowanceNumber: message.documentNumber },
               }),
               affected:
                 (
@@ -141,6 +142,7 @@ export class TurnkeyInboundService {
                     TurnkeyAllowanceEntity,
                     {
                       companyTaxId,
+                      buyerTaxId: message.buyerTaxId,
                       allowanceNumber: message.documentNumber,
                       status: In([...allowanceTransition.from]),
                     },
@@ -200,8 +202,10 @@ export class TurnkeyInboundService {
         TurnkeyReceivedDocumentEntity,
         {
           buyerTaxId: message.buyerTaxId,
+          sellerTaxId: message.sellerTaxId,
           messageType: TurnkeyMigMessageType.A0101,
           documentNumber: message.documentNumber,
+          status: TurnkeyReceivedDocumentStatus.REJECTED,
         },
         { status: TurnkeyReceivedDocumentStatus.REJECTION_ACKNOWLEDGED },
       );
