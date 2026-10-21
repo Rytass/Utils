@@ -11,7 +11,7 @@ import {
 import { toAllowanceRequestBody, toIssueRequestBody, toTurnkeyAllowance, toTurnkeyInvoice } from './mappers';
 import { TurnkeyInvoice } from './turnkey-invoice';
 import { TurnkeyInvoiceAllowance } from './turnkey-allowance';
-import { toTurnkeyError } from './turnkey-invoice-error';
+import { TurnkeyInvoiceError, toTurnkeyError } from './turnkey-invoice-error';
 import {
   TurnkeyAllowanceItem,
   TurnkeyAllowanceOptions,
@@ -122,7 +122,12 @@ export class TurnkeyInvoiceGateway implements InvoiceGateway<
     );
 
     if (response.status === 'FAILED') {
-      throw new Error('Turnkey allowance failed');
+      throw new TurnkeyInvoiceError({
+        message: 'Turnkey allowance failed',
+        status: 200,
+        code: 'ALLOWANCE_FAILED',
+        issues: [],
+      });
     }
 
     // 重送相同 Idempotency-Key 時 Turnkey 會回放既有折讓（同一 allowanceNumber），不可重複掛載、重複扣減餘額。

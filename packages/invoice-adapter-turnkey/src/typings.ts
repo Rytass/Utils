@@ -142,7 +142,8 @@ export interface TurnkeyInvoiceResponse {
   externalId: string | null;
   deliveryMode: TurnkeyDeliveryMode;
   status: TurnkeyInvoiceStatus;
-  issuedAt: string | null;
+  /** Core 的 issuedAt 欄位不可為 null */
+  issuedAt: string;
   buyerTaxId: string | null;
   buyerName: string | null;
   taxType: TurnkeyTaxType;
@@ -166,7 +167,7 @@ export interface TurnkeyAllowanceResponse {
   allowanceNumber: string | null;
   invoiceNumber: string;
   status: TurnkeyAllowanceStatus;
-  allowanceDate: string | null;
+  allowanceDate: string;
   /** 未稅金額合計；折讓金額（含稅）為 totalAmount + taxAmount。 */
   taxAmount: number;
   totalAmount: number;

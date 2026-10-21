@@ -223,7 +223,7 @@ export const toTurnkeyInvoice = (response: TurnkeyInvoiceResponse): TurnkeyInvoi
   new TurnkeyInvoice({
     invoiceNumber: response.invoiceNumber ?? '',
     randomCode: response.randomNumber ?? '',
-    issuedOn: new Date(response.issuedAt ?? Date.now()),
+    issuedOn: new Date(response.issuedAt),
     issuedAmount: response.totalAmount,
     items: response.items.map(toPaymentItem),
     taxType: fromTurnkeyTaxType(response.taxType),
@@ -250,7 +250,7 @@ export const toTurnkeyAllowance = (
   return new TurnkeyInvoiceAllowance({
     allowanceNumber: response.allowanceNumber ?? '',
     allowancePrice: amount,
-    allowancedOn: new Date(response.allowanceDate ?? Date.now()),
+    allowancedOn: new Date(response.allowanceDate),
     remainingAmount: parentInvoice.nowAmount - (isBalanceReducing(response.status) ? amount : 0),
     items: response.items.map(toPaymentItem),
     parentInvoice,
