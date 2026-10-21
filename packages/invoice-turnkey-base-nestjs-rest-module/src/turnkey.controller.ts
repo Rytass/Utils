@@ -55,6 +55,15 @@ export type TurnkeyIssueInvoiceBody = Omit<TurnkeyInvoiceIssueInput, 'companyTax
   readonly issuedAt?: string;
 };
 
+/** 回覆收到的文件：同一號碼可能來自不同賣方，跨期也可能重複，所以必須指定賣方統編 */
+export interface TurnkeyReceivedReplyBody {
+  readonly sellerTaxId?: string;
+  /** yyyyMMdd；同一賣方同一號碼有多份時必填 */
+  readonly documentDate?: string;
+  readonly reason?: string;
+  readonly remark?: string;
+}
+
 export interface TurnkeyVoidInvoiceBody {
   readonly reason: string;
   readonly remark?: string;
@@ -181,16 +190,21 @@ export const createTurnkeyController = (routePrefix: string, access: TurnkeyRout
       companyTaxId: string,
       documentNumber: string,
       idempotencyKey: string | undefined,
-      body: { readonly reason?: string; readonly remark?: string } | undefined,
+      body: TurnkeyReceivedReplyBody | undefined,
       response: Response,
     ): Promise<TurnkeyReceivedDocumentEntity> {
       const key = requireIdempotencyKey(idempotencyKey);
-      const options = { reason: body?.reason, remark: body?.remark };
+      const options = {
+        sellerTaxId: body?.sellerTaxId ?? '',
+        documentDate: body?.documentDate,
+        reason: body?.reason,
+        remark: body?.remark,
+      };
 
       const result = await this.idempotencyService.run(
         companyTaxId,
         key,
-        `${action}:${documentNumber}`,
+        `${action}:${options.sellerTaxId}:${documentNumber}`,
         options,
         async () => ({
           status: 202,
@@ -533,7 +547,7 @@ export const createTurnkeyController = (routePrefix: string, access: TurnkeyRout
       @Param('companyTaxId') companyTaxId: string,
       @Param('documentNumber') documentNumber: string,
       @Headers('idempotency-key') idempotencyKey: string | undefined,
-      @Body() body: { readonly reason?: string; readonly remark?: string } | undefined,
+      @Body() body: TurnkeyReceivedReplyBody | undefined,
       @Res({ passthrough: true }) response: Response,
     ): Promise<TurnkeyReceivedDocumentEntity> {
       return this.replyReceived('confirmInvoice', companyTaxId, documentNumber, idempotencyKey, body, response);
@@ -545,7 +559,7 @@ export const createTurnkeyController = (routePrefix: string, access: TurnkeyRout
       @Param('companyTaxId') companyTaxId: string,
       @Param('documentNumber') documentNumber: string,
       @Headers('idempotency-key') idempotencyKey: string | undefined,
-      @Body() body: { readonly reason?: string; readonly remark?: string } | undefined,
+      @Body() body: TurnkeyReceivedReplyBody | undefined,
       @Res({ passthrough: true }) response: Response,
     ): Promise<TurnkeyReceivedDocumentEntity> {
       return this.replyReceived('rejectInvoice', companyTaxId, documentNumber, idempotencyKey, body, response);
@@ -557,7 +571,7 @@ export const createTurnkeyController = (routePrefix: string, access: TurnkeyRout
       @Param('companyTaxId') companyTaxId: string,
       @Param('documentNumber') documentNumber: string,
       @Headers('idempotency-key') idempotencyKey: string | undefined,
-      @Body() body: { readonly reason?: string; readonly remark?: string } | undefined,
+      @Body() body: TurnkeyReceivedReplyBody | undefined,
       @Res({ passthrough: true }) response: Response,
     ): Promise<TurnkeyReceivedDocumentEntity> {
       return this.replyReceived('confirmInvoiceVoid', companyTaxId, documentNumber, idempotencyKey, body, response);
@@ -569,7 +583,7 @@ export const createTurnkeyController = (routePrefix: string, access: TurnkeyRout
       @Param('companyTaxId') companyTaxId: string,
       @Param('documentNumber') documentNumber: string,
       @Headers('idempotency-key') idempotencyKey: string | undefined,
-      @Body() body: { readonly reason?: string; readonly remark?: string } | undefined,
+      @Body() body: TurnkeyReceivedReplyBody | undefined,
       @Res({ passthrough: true }) response: Response,
     ): Promise<TurnkeyReceivedDocumentEntity> {
       return this.replyReceived('confirmAllowance', companyTaxId, documentNumber, idempotencyKey, body, response);
@@ -581,7 +595,7 @@ export const createTurnkeyController = (routePrefix: string, access: TurnkeyRout
       @Param('companyTaxId') companyTaxId: string,
       @Param('documentNumber') documentNumber: string,
       @Headers('idempotency-key') idempotencyKey: string | undefined,
-      @Body() body: { readonly reason?: string; readonly remark?: string } | undefined,
+      @Body() body: TurnkeyReceivedReplyBody | undefined,
       @Res({ passthrough: true }) response: Response,
     ): Promise<TurnkeyReceivedDocumentEntity> {
       return this.replyReceived('confirmAllowanceVoid', companyTaxId, documentNumber, idempotencyKey, body, response);

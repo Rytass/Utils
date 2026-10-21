@@ -107,3 +107,5 @@ All routes are under `/{routePrefix}/companies/{companyTaxId}`. Every `POST` req
 | POST   | `/submissions/{submissionId}/retry`                   | Resend a `FAILED` / `REJECTED` submission with the same XML                                                                                              |
 | GET    | `/submissions?status=PENDING`                         | Submissions by status                                                                                                                                    |
 | GET    | `/events?after={cursor}&limit=`                       | Event outbox page and `nextCursor`                                                                                                                       |
+
+The received-document reply routes need `sellerTaxId` in the body: the same number can come from different sellers, and a seller's numbers repeat across periods. Pass `documentDate` (`yyyyMMdd`) as well when the same seller sent that number more than once; without it the request fails with `INVALID_STATE` on `documentDate`. The idempotency scope is the action, seller and number.
