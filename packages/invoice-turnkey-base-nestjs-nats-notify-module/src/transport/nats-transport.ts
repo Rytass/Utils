@@ -1,4 +1,5 @@
-import { connect } from 'nats';
+import { connect } from '@nats-io/transport-node';
+import { jetstream } from '@nats-io/jetstream';
 import type { TurnkeyNatsNotifyOptions } from '../typings/turnkey-nats-notify.options';
 
 /** 發布端抽象；方便單元測試替換成假的 client */
@@ -16,12 +17,12 @@ export const createNatsTransport: NatsTransportFactory = async ({ servers, conne
     servers: typeof servers === 'string' ? [servers] : [...servers],
   });
 
-  const jetstream = connection.jetstream();
+  const js = jetstream(connection);
 
   return {
     publish: async (subject, payload, msgId): Promise<void> => {
       // JetStream 以 msgID 去重（預設去重視窗 2 分鐘）；ack 才代表已落盤
-      await jetstream.publish(subject, payload, { msgID: msgId });
+      await js.publish(subject, payload, { msgID: msgId });
     },
     close: async (): Promise<void> => {
       await connection.drain();

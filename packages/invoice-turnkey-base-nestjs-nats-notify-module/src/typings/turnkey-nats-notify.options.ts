@@ -1,5 +1,5 @@
 import type { ModuleMetadata, Type } from '@nestjs/common';
-import type { ConnectionOptions } from 'nats';
+import type { NodeConnectionOptions } from '@nats-io/transport-node';
 
 export const TURNKEY_NATS_NOTIFY_OPTIONS = Symbol('TURNKEY_NATS_NOTIFY_OPTIONS');
 
@@ -12,8 +12,8 @@ export interface TurnkeyNatsNotifyOptions {
   readonly channel?: string;
   /** 輪詢間隔（毫秒），預設 5000；commit 後的 emit 會另外喚醒一輪 */
   readonly pollIntervalMs?: number;
-  /** 其他 nats.connect 選項（user / pass / token / tls / name 等） */
-  readonly connectionOptions?: Omit<ConnectionOptions, 'servers'>;
+  /** 其他 connect（@nats-io/transport-node）選項（user / pass / token / tls / name 等） */
+  readonly connectionOptions?: Omit<NodeConnectionOptions, 'servers'>;
 }
 
 export interface TurnkeyNatsNotifyModuleAsyncOptions extends Pick<ModuleMetadata, 'imports'> {

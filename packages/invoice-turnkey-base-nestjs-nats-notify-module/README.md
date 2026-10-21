@@ -7,7 +7,7 @@ Publishes the events of [`@rytass/invoice-turnkey-base-nestjs-module`](../invoic
 ## Installation
 
 ```bash
-yarn add @rytass/invoice-turnkey-base-nestjs-nats-notify-module nats @nestjs/typeorm typeorm pg
+yarn add @rytass/invoice-turnkey-base-nestjs-nats-notify-module @nats-io/transport-node @nats-io/jetstream @nestjs/typeorm typeorm pg
 ```
 
 ## Usage
@@ -48,7 +48,7 @@ TurnkeyNatsNotifyModule.forRootAsync({
 | `subjectPrefix`     | `turnkey` | Subject prefix, see below                                                   |
 | `channel`           | `nats`    | Name of the cursor row in `turnkey_event_cursors` and of the advisory lock  |
 | `pollIntervalMs`    | `5000`    | Polling interval; a base `emit` also wakes a round immediately              |
-| `connectionOptions` | -         | Other `nats.connect` options (`user`, `pass`, `token`, `tls`, `name`, ...)  |
+| `connectionOptions` | -         | Other `connect` options (`user`, `pass`, `token`, `tls`, `name`, ...)       |
 
 ## Subjects and payload
 

@@ -28,9 +28,10 @@
     "url": "https://github.com/Rytass/Utils/issues"
   },
   "peerDependencies": {
+    "@nats-io/jetstream": "*",
+    "@nats-io/transport-node": "*",
     "@nestjs/common": "*",
     "@nestjs/typeorm": "*",
-    "nats": "*",
     "typeorm": "*"
   },
   "dependencies": {
