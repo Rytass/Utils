@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.3.1](https://github.com/Rytass/Utils/compare/@rytass/file-converter-adapter-image-transcoder@0.3.0...@rytass/file-converter-adapter-image-transcoder@0.3.1) (2026-10-21)
+
+### Bug Fixes
+
+- **file-converter-adapter-image-transcoder:** only set sharp concurrency when explicitly provided ([68ce04e](https://github.com/Rytass/Utils/commit/68ce04e0b6bea162f38566bf5e59f8105d43b302))
+
 # [0.3.0](https://github.com/Rytass/Utils/compare/@rytass/file-converter-adapter-image-transcoder@0.2.0...@rytass/file-converter-adapter-image-transcoder@0.3.0) (2026-08-30)
 
 Upgrades `sharp` from 0.34 to 0.35 for [GHSA-f88m-g3jw-g9cj](https://github.com/advisories/GHSA-f88m-g3jw-g9cj) — sharp below 0.35.0 bundles a libvips carrying CVE-2026-33327, CVE-2026-33328, CVE-2026-35590 and CVE-2026-35591, and decoding untrusted images is exactly what this package is for. 0.35.4 brings libvips 8.18.6.

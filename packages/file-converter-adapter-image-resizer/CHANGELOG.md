@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.3.1](https://github.com/Rytass/Utils/compare/@rytass/file-converter-adapter-image-resizer@0.3.0...@rytass/file-converter-adapter-image-resizer@0.3.1) (2026-10-21)
+
+### Bug Fixes
+
+- **file-converter-adapter-image-resizer:** auto-orient by EXIF and keep animated GIF/WebP frames ([97f8058](https://github.com/Rytass/Utils/commit/97f8058b8b4aaebea477c7928fc8a484618f5aa8)), closes [#222](https://github.com/Rytass/Utils/issues/222)
+- **file-converter-adapter-image-resizer:** only set sharp concurrency when explicitly provided ([20ca365](https://github.com/Rytass/Utils/commit/20ca365bf49d6c0ac151251735b192eca9d2f81d))
+
 # [0.3.0](https://github.com/Rytass/Utils/compare/@rytass/file-converter-adapter-image-resizer@0.2.0...@rytass/file-converter-adapter-image-resizer@0.3.0) (2026-08-30)
 
 Upgrades `sharp` from 0.34 to 0.35 for [GHSA-f88m-g3jw-g9cj](https://github.com/advisories/GHSA-f88m-g3jw-g9cj) — sharp below 0.35.0 bundles a libvips carrying CVE-2026-33327, CVE-2026-33328, CVE-2026-35590 and CVE-2026-35591, and decoding untrusted images is exactly what this package is for. 0.35.4 brings libvips 8.18.6.
