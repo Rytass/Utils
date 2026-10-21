@@ -2,9 +2,14 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
 import { TurnkeyAllowanceEntity } from '../models/turnkey-allowance.entity';
 import { BaseTurnkeyInvoiceEntity } from '../models/turnkey-invoice.entity';
+import {
+  TurnkeyReceivedDocumentEntity,
+  TurnkeyReceivedDocumentStatus,
+} from '../models/turnkey-received-document.entity';
 import { TurnkeySubmissionEntity, TurnkeySubmissionRepo } from '../models/turnkey-submission.entity';
 import { TurnkeyEventService } from '../services/turnkey-event.service';
 import { TurnkeyInvoiceTrackService } from '../services/turnkey-invoice-track.service';
+import { findReceivedReplyTarget } from '../services/received-reply-specs';
 import type { TurnkeyBaseModuleOptions } from '../typings/turnkey-base-module-options';
 import { TURNKEY_BASE_MODULE_OPTIONS, TURNKEY_LOG_READER } from '../typings/turnkey-base-providers';
 import {
@@ -326,6 +331,25 @@ export class TurnkeySubmissionWorker {
             allowanceNumber: invoiceNumber,
           }),
         ];
+      }
+
+      case TurnkeyMigMessageType.A0102:
+      case TurnkeyMigMessageType.A0202:
+      case TurnkeyMigMessageType.A0301:
+      case TurnkeyMigMessageType.B0102:
+      case TurnkeyMigMessageType.B0202: {
+        const target = accepted ? null : findReceivedReplyTarget(submission);
+
+        // 回覆被平台退件：收件改回 RECEIVED，呼叫端可以重新回覆（例如改成退回）或 retry 這筆送件
+        if (target) {
+          await manager.update(
+            TurnkeyReceivedDocumentEntity,
+            { ...target.where, status: target.repliedStatus },
+            { status: TurnkeyReceivedDocumentStatus.RECEIVED },
+          );
+        }
+
+        return [];
       }
 
       default:

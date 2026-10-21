@@ -7,7 +7,12 @@ import { buildMigXml } from '../mig/mig-builder';
 import { TurnkeyAllowanceEntity } from '../models/turnkey-allowance.entity';
 import { TurnkeyInvoiceNumberEntity } from '../models/turnkey-invoice-number.entity';
 import { BaseTurnkeyInvoiceEntity } from '../models/turnkey-invoice.entity';
+import {
+  TurnkeyReceivedDocumentEntity,
+  TurnkeyReceivedDocumentStatus,
+} from '../models/turnkey-received-document.entity';
 import { TurnkeySubmissionEntity, TurnkeySubmissionRepo } from '../models/turnkey-submission.entity';
+import { findReceivedReplyTarget } from './received-reply-specs';
 import type { TurnkeyBaseModuleOptions } from '../typings/turnkey-base-module-options';
 import { TURNKEY_BASE_MODULE_OPTIONS } from '../typings/turnkey-base-providers';
 import {
@@ -155,6 +160,27 @@ export class TurnkeySubmissionService {
 
       if (!result.affected)
         throw fail(TurnkeyValidationCode.INVALID_STATE, '發票不是 FAILED，不能重送', 'submissionId');
+
+      return;
+    }
+
+    const replyTarget = findReceivedReplyTarget(submission);
+
+    if (replyTarget) {
+      // 回覆退件後收件已改回 RECEIVED；若期間已用別的回覆處理過，就不能再重送這一筆
+      const reclaimed = await manager.update(
+        TurnkeyReceivedDocumentEntity,
+        { ...replyTarget.where, status: TurnkeyReceivedDocumentStatus.RECEIVED },
+        { status: replyTarget.repliedStatus },
+      );
+
+      if (!reclaimed.affected) {
+        throw fail(
+          TurnkeyValidationCode.INVALID_STATE,
+          '收件已不是待回覆（RECEIVED）狀態，不能重送回覆',
+          'submissionId',
+        );
+      }
 
       return;
     }

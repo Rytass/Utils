@@ -8,38 +8,10 @@ import {
 import { TurnkeyMigMessageType } from '../typings/turnkey-enums';
 import { parseMigDateTime } from '../utils/taipei-time';
 import { TurnkeyValidationCode, TurnkeyValidationError } from '../validation/turnkey-validation-error';
+import { REPLIES, TurnkeyReplyAction } from './received-reply-specs';
 import { TurnkeySubmissionService } from './turnkey-submission.service';
 
-/** 收到的文件 → 我方回覆的訊息與回覆後的狀態 */
-const REPLIES = {
-  confirmInvoice: {
-    received: TurnkeyMigMessageType.A0101,
-    reply: TurnkeyMigMessageType.A0102,
-    status: TurnkeyReceivedDocumentStatus.CONFIRMED,
-  },
-  rejectInvoice: {
-    received: TurnkeyMigMessageType.A0101,
-    reply: TurnkeyMigMessageType.A0301,
-    status: TurnkeyReceivedDocumentStatus.REJECTED,
-  },
-  confirmInvoiceVoid: {
-    received: TurnkeyMigMessageType.A0201,
-    reply: TurnkeyMigMessageType.A0202,
-    status: TurnkeyReceivedDocumentStatus.CONFIRMED,
-  },
-  confirmAllowance: {
-    received: TurnkeyMigMessageType.B0101,
-    reply: TurnkeyMigMessageType.B0102,
-    status: TurnkeyReceivedDocumentStatus.CONFIRMED,
-  },
-  confirmAllowanceVoid: {
-    received: TurnkeyMigMessageType.B0201,
-    reply: TurnkeyMigMessageType.B0202,
-    status: TurnkeyReceivedDocumentStatus.CONFIRMED,
-  },
-} as const;
-
-export type TurnkeyReplyAction = keyof typeof REPLIES;
+export type { TurnkeyReplyAction } from './received-reply-specs';
 
 /** 回覆時指定收到的是哪一份文件：同一號碼可能來自不同賣方，跨期也可能重複 */
 export interface TurnkeyReceivedReplyOptions {
