@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RejectInvoice xmlns="urn:GEINV:eInvoiceMessage:A0301:4.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:GEINV:eInvoiceMessage:A0301:4.1 A0301.xsd">
+  <RejectInvoiceNumber>ZY00000908</RejectInvoiceNumber>
+  <InvoiceDate>20261019</InvoiceDate>
+  <BuyerId>87654322</BuyerId>
+  <SellerId>12345675</SellerId>
+  <RejectDate>20261019</RejectDate>
+  <RejectTime>18:34:41</RejectTime>
+  <RejectReason>驗證測試退回</RejectReason>
+</RejectInvoice>
