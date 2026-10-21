@@ -169,6 +169,7 @@ describe('validateInvoiceInput', () => {
     expect(codes(malformed([{ description: 'x', quantity: '2', unitPrice: 10, taxType: 'TAXABLE' }]))).toEqual([
       TurnkeyValidationCode.ITEM_SUM_MISMATCH,
     ]);
+
     expect(codes(malformed([{ description: 'x', quantity: 1, unitPrice: 10, taxType: 'MIXED' }]))).toEqual([
       TurnkeyValidationCode.ITEM_SUM_MISMATCH,
     ]);

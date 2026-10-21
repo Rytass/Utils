@@ -23,7 +23,10 @@ export interface TurnkeyIdempotentResult<T> {
   readonly replayed: boolean;
 }
 
+/** null 與缺欄位視為相同（GraphQL 的選填欄位會是 null、REST 則是缺欄位），Date 以 ISO 字串比較 */
 const stableStringify = (value: unknown): string => {
+  if (value instanceof Date) return JSON.stringify(value.toISOString());
+
   if (value === null || typeof value !== 'object') return JSON.stringify(value) ?? 'null';
 
   if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
@@ -32,7 +35,7 @@ const stableStringify = (value: unknown): string => {
 
   return `{${Object.keys(record)
     .sort()
-    .filter(key => record[key] !== undefined)
+    .filter(key => record[key] != null)
     .map(key => `${JSON.stringify(key)}:${stableStringify(record[key])}`)
     .join(',')}}`;
 };

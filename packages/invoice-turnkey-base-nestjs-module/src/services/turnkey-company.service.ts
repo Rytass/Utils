@@ -74,7 +74,7 @@ export class TurnkeyCompanyService {
         ...(existing ?? {}),
         taxId: input.taxId,
         name: input.name,
-        address: input.address ?? null,
+        address: input.address !== undefined ? input.address : (existing?.address ?? null),
         routingId: input.routingId,
         exchangeEnabled: input.exchangeEnabled ?? existing?.exchangeEnabled ?? false,
         certificateExpiresAt: input.certificateExpiresAt ?? existing?.certificateExpiresAt ?? null,

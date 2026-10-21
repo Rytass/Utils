@@ -72,6 +72,9 @@ export class TurnkeyReceivedDocumentService {
     status?: TurnkeyReceivedDocumentStatus,
     limit = 100,
   ): Promise<TurnkeyReceivedDocumentEntity[]> {
+    // 空陣列會讓 TypeORM 整個 where 消失（連 buyerTaxId 都不過濾）
+    if (!messageTypes.length) return Promise.resolve([]);
+
     return this.receivedRepo.find({
       where: messageTypes.map(messageType => ({ buyerTaxId, messageType, ...(status ? { status } : {}) })),
       order: { createdAt: 'DESC' },

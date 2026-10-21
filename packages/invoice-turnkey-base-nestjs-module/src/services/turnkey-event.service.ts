@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EventEmitter } from 'events';
 import { EntityManager, MoreThan, Repository } from 'typeorm';
 import { TurnkeyEventCursorEntity, TurnkeyEventCursorRepo } from '../models/turnkey-event-cursor.entity';
@@ -19,6 +19,7 @@ const toEvent = (entity: TurnkeyEventEntity): TurnkeyEvent => ({
 @Injectable()
 export class TurnkeyEventService {
   readonly emitter = new EventEmitter();
+  private readonly logger = new Logger(TurnkeyEventService.name);
 
   constructor(
     @Inject(TurnkeyEventRepo)
@@ -47,7 +48,14 @@ export class TurnkeyEventService {
 
   /** commit 之後才 emit；emitter 只是叫醒訊號，可靠交付靠 listAfter 游標 */
   publish(events: readonly TurnkeyEvent[]): void {
-    events.forEach(event => this.emitter.emit(event.type, event));
+    events.forEach(event => {
+      // 資料已 commit；listener 拋錯不能讓呼叫端以為操作失敗（漏掉的通知可用 listAfter 補）
+      try {
+        this.emitter.emit(event.type, event);
+      } catch (error) {
+        this.logger.error(`Listener of ${event.type} (${event.id}) failed: ${(error as Error).message}`);
+      }
+    });
   }
 
   async listAfter(
