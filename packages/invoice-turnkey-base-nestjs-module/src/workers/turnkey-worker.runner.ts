@@ -62,17 +62,24 @@ export class TurnkeyWorkerRunner implements OnApplicationBootstrap, OnApplicatio
     try {
       if (!(await this.holdLock())) return;
 
-      await this.worker.writePending();
-      await this.worker.pollWritten();
+      // 各步驟互不影響：送件卡住時收件與每日維護照跑，反之亦然
+      await this.step('write pending submissions', () => this.worker.writePending());
+      await this.step('poll written submissions', () => this.worker.pollWritten());
 
-      if (this.options.workers?.inbound !== false) await this.scanInbound();
+      if (this.options.workers?.inbound !== false) await this.step('scan inbound', () => this.scanInbound());
 
-      await this.maintain();
+      await this.step('maintenance', () => this.maintain());
     } catch (error) {
       this.logger.error(`Turnkey worker tick failed: ${(error as Error).message}`);
     } finally {
       this.running = false;
     }
+  }
+
+  private async step(label: string, run: () => Promise<unknown>): Promise<void> {
+    await run().catch((error: unknown) =>
+      this.logger.error(`Turnkey worker ${label} failed: ${error instanceof Error ? error.message : String(error)}`),
+    );
   }
 
   /** 每小時最多一次；憑證通知以台北日去重、對帳以日期去重，重啟不會重複發 */
@@ -132,13 +139,22 @@ export class TurnkeyWorkerRunner implements OnApplicationBootstrap, OnApplicatio
 
     const runner = this.dataSource.createQueryRunner();
 
-    await runner.connect();
+    // 連線或查詢失敗也要釋放，否則 DB 故障期間每一輪都會漏掉一條連線
+    const locked = await (async (): Promise<boolean> => {
+      await runner.connect();
 
-    const [row] = (await runner.query('SELECT pg_try_advisory_lock($1) AS locked', [TURNKEY_WORKER_LOCK_KEY])) as {
-      locked: boolean;
-    }[];
+      const [row] = (await runner.query('SELECT pg_try_advisory_lock($1) AS locked', [TURNKEY_WORKER_LOCK_KEY])) as {
+        locked: boolean;
+      }[];
 
-    if (!row?.locked) {
+      return row?.locked === true;
+    })().catch(async (error: unknown) => {
+      await runner.release().catch(() => undefined);
+
+      throw error;
+    });
+
+    if (!locked) {
       await runner.release();
 
       return false;
