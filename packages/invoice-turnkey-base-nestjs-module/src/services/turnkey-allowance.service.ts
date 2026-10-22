@@ -273,6 +273,15 @@ export class TurnkeyAllowanceService {
       const allowanceNumber = input.allowanceNumber ?? generateAllowanceNumber(allowanceDate);
       const isExchange = invoice.deliveryMode === TurnkeyDeliveryMode.EXCHANGE;
 
+      // B0101 與 A0101 一樣帶賣方地址；開立後才清掉地址時在此擋下
+      if (isExchange && !company.address?.trim()) {
+        throw fail(
+          TurnkeyValidationCode.SELLER_ADDRESS_REQUIRED,
+          '交換折讓需要賣方地址，請先設定營業人地址',
+          'companyTaxId',
+        );
+      }
+
       const saved = await manager.save(
         manager.create(TurnkeyAllowanceEntity, {
           id: allowanceId,

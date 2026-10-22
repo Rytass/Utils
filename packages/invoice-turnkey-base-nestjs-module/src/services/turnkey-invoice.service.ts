@@ -149,6 +149,15 @@ export class TurnkeyInvoiceService {
       throw fail(TurnkeyValidationCode.BUYER_NOT_EXCHANGE_READY, '此營業人未啟用交換發票', 'deliveryMode');
     }
 
+    // A0101 的 Seller.Address 必填，缺了 Turnkey 本機就以 7001 擋下，號碼卻已用掉
+    if (isExchange && !company.address?.trim()) {
+      throw fail(
+        TurnkeyValidationCode.SELLER_ADDRESS_REQUIRED,
+        '交換發票需要賣方地址，請先設定營業人地址',
+        'companyTaxId',
+      );
+    }
+
     const issuedAt = input.issuedAt ?? now;
     const isB2B = !!input.buyer?.taxId;
     const amounts = computeInvoiceAmounts(input.items, { isB2B, specialTaxRate: input.specialTaxRate });
