@@ -8,6 +8,7 @@ import {
   TurnkeyInvoiceIssueInput,
   TurnkeyTaxType,
   TurnkeyValidationCode,
+  validateExchangeSeller,
   validateInvoiceInput,
 } from '../src';
 
@@ -173,5 +174,20 @@ describe('validateInvoiceInput', () => {
     expect(codes(malformed([{ description: 'x', quantity: 1, unitPrice: 10, taxType: 'MIXED' }]))).toEqual([
       TurnkeyValidationCode.ITEM_SUM_MISMATCH,
     ]);
+  });
+});
+
+describe('validateExchangeSeller', () => {
+  it('requires a seller address for exchange', () => {
+    expect(validateExchangeSeller(TurnkeyDeliveryMode.EXCHANGE, { address: null })).toEqual([
+      expect.objectContaining({ code: TurnkeyValidationCode.SELLER_ADDRESS_REQUIRED, field: 'companyTaxId' }),
+    ]);
+
+    expect(validateExchangeSeller(TurnkeyDeliveryMode.EXCHANGE, { address: '   ' })).toHaveLength(1);
+    expect(validateExchangeSeller(TurnkeyDeliveryMode.EXCHANGE, { address: '測試地址' })).toEqual([]);
+  });
+
+  it('does not need an address outside exchange', () => {
+    expect(validateExchangeSeller(TurnkeyDeliveryMode.STORAGE, { address: null })).toEqual([]);
   });
 });

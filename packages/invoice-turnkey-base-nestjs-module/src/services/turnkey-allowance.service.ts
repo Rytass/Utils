@@ -17,6 +17,7 @@ import {
 import { TurnkeyItemTaxType } from '../typings/turnkey-invoice.types';
 import { roundTo, splitAllowanceAmount } from '../utils/amounts';
 import { formatMigDate } from '../utils/taipei-time';
+import { validateExchangeSeller } from '../validation/invoice-rules';
 import { TurnkeyValidationCode, TurnkeyValidationError } from '../validation/turnkey-validation-error';
 import { TurnkeySubmissionService } from './turnkey-submission.service';
 
@@ -154,6 +155,11 @@ export class TurnkeyAllowanceService {
 
       if (!invoice) throw fail(TurnkeyValidationCode.INVOICE_NOT_FOUND, '找不到原發票', 'invoiceNumber');
 
+      // 開立後才清掉地址時，B0101 一樣會被 Turnkey 以 7001 擋下
+      const sellerIssues = validateExchangeSeller(invoice.deliveryMode, company);
+
+      if (sellerIssues.length) throw new TurnkeyValidationError(sellerIssues);
+
       if (
         ![TurnkeyInvoiceStatus.ISSUED, TurnkeyInvoiceStatus.CONFIRMED].includes(invoice.status) ||
         invoice.voidedAt ||
@@ -272,15 +278,6 @@ export class TurnkeyAllowanceService {
       const allowanceId = randomUUID();
       const allowanceNumber = input.allowanceNumber ?? generateAllowanceNumber(allowanceDate);
       const isExchange = invoice.deliveryMode === TurnkeyDeliveryMode.EXCHANGE;
-
-      // B0101 與 A0101 一樣帶賣方地址；開立後才清掉地址時在此擋下
-      if (isExchange && !company.address?.trim()) {
-        throw fail(
-          TurnkeyValidationCode.SELLER_ADDRESS_REQUIRED,
-          '交換折讓需要賣方地址，請先設定營業人地址',
-          'companyTaxId',
-        );
-      }
 
       const saved = await manager.save(
         manager.create(TurnkeyAllowanceEntity, {

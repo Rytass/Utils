@@ -18,7 +18,7 @@ import {
 import { TurnkeyInvoiceDocument, TurnkeyInvoiceIssueInput } from '../typings/turnkey-invoice.types';
 import { computeInvoiceAmounts, itemAmount } from '../utils/amounts';
 import { formatMigDate, formatPeriod } from '../utils/taipei-time';
-import { validateInvoiceInput, validateInvoiceShape } from '../validation/invoice-rules';
+import { validateExchangeSeller, validateInvoiceInput, validateInvoiceShape } from '../validation/invoice-rules';
 import { TurnkeyValidationCode, TurnkeyValidationError } from '../validation/turnkey-validation-error';
 import { TurnkeyEventService } from './turnkey-event.service';
 import { TurnkeyInvoiceTrackService } from './turnkey-invoice-track.service';
@@ -149,14 +149,9 @@ export class TurnkeyInvoiceService {
       throw fail(TurnkeyValidationCode.BUYER_NOT_EXCHANGE_READY, '此營業人未啟用交換發票', 'deliveryMode');
     }
 
-    // A0101 的 Seller.Address 必填，缺了 Turnkey 本機就以 7001 擋下，號碼卻已用掉
-    if (isExchange && !company.address?.trim()) {
-      throw fail(
-        TurnkeyValidationCode.SELLER_ADDRESS_REQUIRED,
-        '交換發票需要賣方地址，請先設定營業人地址',
-        'companyTaxId',
-      );
-    }
+    const sellerIssues = validateExchangeSeller(input.deliveryMode, company);
+
+    if (sellerIssues.length) throw new TurnkeyValidationError(sellerIssues);
 
     const issuedAt = input.issuedAt ?? now;
     const isB2B = !!input.buyer?.taxId;
