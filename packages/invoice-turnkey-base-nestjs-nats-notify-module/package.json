@@ -1,6 +1,6 @@
 {
   "name": "@rytass/invoice-turnkey-base-nestjs-nats-notify-module",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Rytass Invoice NestJS NATS JetStream Notify Module for the MOF e-Invoice Turnkey",
   "keywords": [
     "rytass",
@@ -35,6 +35,6 @@
     "typeorm": "*"
   },
   "dependencies": {
-    "@rytass/invoice-turnkey-base-nestjs-module": "^0.1.1"
+    "@rytass/invoice-turnkey-base-nestjs-module": "^0.1.2"
   }
 }

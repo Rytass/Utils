@@ -1,6 +1,6 @@
 {
   "name": "@rytass/invoice-turnkey-base-nestjs-graphql-module",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Rytass Invoice NestJS GraphQL Module for the MOF e-Invoice Turnkey",
   "keywords": [
     "rytass",
@@ -45,7 +45,7 @@
     }
   },
   "dependencies": {
-    "@rytass/invoice-turnkey-base-nestjs-module": "^0.1.1"
+    "@rytass/invoice-turnkey-base-nestjs-module": "^0.1.2"
   },
   "isolateEntries": [
     "./member-base.ts"

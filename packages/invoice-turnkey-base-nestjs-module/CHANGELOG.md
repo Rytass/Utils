@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.2](https://github.com/Rytass/Utils/compare/@rytass/invoice-turnkey-base-nestjs-module@0.1.1...@rytass/invoice-turnkey-base-nestjs-module@0.1.2) (2026-10-22)
+
+### Bug Fixes
+
+- **invoice-turnkey-base-nestjs-module:** store a received A0302 as rejection acknowledged ([185dae3](https://github.com/Rytass/Utils/commit/185dae3d7700a050cf670889841d235842aa4266))
+
+### Features
+
+- **invoice-turnkey-base-nestjs-module:** raise NUMBER_OUT_OF_TRACK when abandoning an unknown number ([502e169](https://github.com/Rytass/Utils/commit/502e169d65fc3b6f3e78d6587d06163a25326d7c))
+- **invoice-turnkey-base-nestjs-module:** require a seller address for exchange invoices and allowances ([e675c34](https://github.com/Rytass/Utils/commit/e675c348931b5683ed63a4ffbad33d3e338e9601))
+
 ## 0.1.1 (2026-10-21)
 
 ### Bug Fixes
