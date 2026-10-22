@@ -91,6 +91,21 @@ const replayOrConflict = (
 const generateAllowanceNumber = (date: Date): string =>
   `${formatMigDate(date)}${String(randomInt(0, 100_000_000)).padStart(8, '0')}`;
 
+export interface TurnkeyAllowanceListFilter {
+  readonly companyTaxId: string;
+  readonly status?: TurnkeyAllowanceStatus;
+  /** 原發票號碼 */
+  readonly invoiceNumber?: string;
+  /** 1–500，預設 100 */
+  readonly limit?: number;
+  readonly offset?: number;
+}
+
+export interface TurnkeyAllowanceListResult {
+  readonly items: readonly TurnkeyAllowanceEntity[];
+  readonly total: number;
+}
+
 @Injectable()
 export class TurnkeyAllowanceService {
   constructor(
@@ -373,6 +388,20 @@ export class TurnkeyAllowanceService {
 
       return { ...allowance, voidedAt: cancelledAt, voidReason: trimmed };
     });
+  }
+
+  /** 折讓單，新到舊；同一時間以折讓單號新到舊排序，分頁才穩定。不含明細 */
+  async list(filter: TurnkeyAllowanceListFilter): Promise<TurnkeyAllowanceListResult> {
+    const { companyTaxId, status, invoiceNumber } = filter;
+
+    const [items, total] = await this.allowanceRepo.findAndCount({
+      where: { companyTaxId, ...(status ? { status } : {}), ...(invoiceNumber ? { invoiceNumber } : {}) },
+      order: { allowanceDate: 'DESC', allowanceNumber: 'DESC' },
+      take: Math.min(Math.max(filter.limit ?? 100, 1), 500),
+      skip: Math.max(filter.offset ?? 0, 0),
+    });
+
+    return { items, total };
   }
 
   /** 一張發票的所有折讓（含已作廢），依建立時間排序 */

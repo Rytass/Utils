@@ -337,6 +337,25 @@ export class TurnkeySubmissionService {
     });
   }
 
+  /** 每個單號最新的一筆送件（不分訊息類別），列表用來顯示最後結果 */
+  async latestByDocuments(
+    companyTaxId: string,
+    documentNumbers: readonly string[],
+  ): Promise<ReadonlyMap<string, TurnkeySubmissionEntity>> {
+    if (!documentNumbers.length) return new Map();
+
+    const rows = await this.submissionRepo
+      .createQueryBuilder('submission')
+      .distinctOn(['submission.documentNumber'])
+      .where('submission.companyTaxId = :companyTaxId', { companyTaxId })
+      .andWhere('submission.documentNumber IN (:...documentNumbers)', { documentNumbers })
+      .orderBy('submission.documentNumber')
+      .addOrderBy('submission.createdAt', 'DESC')
+      .getMany();
+
+    return new Map(rows.map(row => [row.documentNumber, row]));
+  }
+
   listByStatus(companyTaxId: string, status: TurnkeySubmissionStatus, limit = 100): Promise<TurnkeySubmissionEntity[]> {
     return this.submissionRepo.find({
       where: { companyTaxId, status },

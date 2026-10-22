@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { randomInt, randomUUID } from 'crypto';
-import { DataSource, EntityManager, In, Not, Repository } from 'typeorm';
+import { And, DataSource, EntityManager, In, LessThan, MoreThanOrEqual, Not, Repository } from 'typeorm';
 import { CONSUMER_BUYER_ID } from '../mig/mig-builder';
 import { BaseTurnkeyCompanyEntity, BaseTurnkeyCompanyRepo } from '../models/turnkey-company.entity';
 import { TurnkeyAllowanceEntity } from '../models/turnkey-allowance.entity';
@@ -17,11 +17,11 @@ import {
 } from '../typings/turnkey-enums';
 import { TurnkeyInvoiceDocument, TurnkeyInvoiceIssueInput } from '../typings/turnkey-invoice.types';
 import { computeInvoiceAmounts, itemAmount } from '../utils/amounts';
-import { formatMigDate, formatPeriod } from '../utils/taipei-time';
+import { formatMigDate, formatPeriod, isTurnkeyPeriod, periodStartsAt } from '../utils/taipei-time';
 import { validateInvoiceInput, validateInvoiceShape, validateSellerAddress } from '../validation/invoice-rules';
 import { TurnkeyValidationCode, TurnkeyValidationError } from '../validation/turnkey-validation-error';
 import { TurnkeyEventService } from './turnkey-event.service';
-import { TurnkeyInvoiceTrackService } from './turnkey-invoice-track.service';
+import { periodEndsAt, TurnkeyInvoiceTrackService } from './turnkey-invoice-track.service';
 import { TurnkeySubmissionService } from './turnkey-submission.service';
 
 const fail = (code: TurnkeyValidationCode, message: string, field?: string): TurnkeyValidationError =>
@@ -96,6 +96,25 @@ const isSameIssueRequest = (invoice: BaseTurnkeyInvoiceEntity, input: TurnkeyInv
     })
   );
 };
+
+export interface TurnkeyInvoiceListFilter {
+  readonly companyTaxId: string;
+  readonly status?: TurnkeyInvoiceStatus;
+  /** 民國年 3 碼＋雙數月，依開立時間（台北）判斷 */
+  readonly period?: string;
+  readonly buyerTaxId?: string;
+  readonly invoiceNumber?: string;
+  /** 1–500，預設 100 */
+  readonly limit?: number;
+  readonly offset?: number;
+}
+
+export interface TurnkeyInvoiceListResult {
+  /** 不含明細 */
+  readonly items: readonly BaseTurnkeyInvoiceEntity[];
+  /** 符合條件的總筆數 */
+  readonly total: number;
+}
 
 @Injectable()
 export class TurnkeyInvoiceService {
@@ -410,6 +429,36 @@ export class TurnkeyInvoiceService {
 
       return invoice;
     });
+  }
+
+  /** 已開立的發票，新到舊；同一時間以號碼新到舊排序，分頁才穩定 */
+  async list(filter: TurnkeyInvoiceListFilter): Promise<TurnkeyInvoiceListResult> {
+    const { companyTaxId, status, period, buyerTaxId, invoiceNumber } = filter;
+
+    if (period !== undefined && !isTurnkeyPeriod(period)) {
+      throw new TurnkeyValidationError([
+        {
+          code: TurnkeyValidationCode.INVALID_PERIOD,
+          message: '期別格式為民國年 3 碼＋雙數月，例如 11510',
+          field: 'period',
+        },
+      ]);
+    }
+
+    const [items, total] = await this.invoiceRepo.findAndCount({
+      where: {
+        companyTaxId,
+        ...(status ? { status } : {}),
+        ...(buyerTaxId ? { buyerTaxId } : {}),
+        ...(invoiceNumber ? { invoiceNumber } : {}),
+        ...(period ? { issuedAt: And(MoreThanOrEqual(periodStartsAt(period)), LessThan(periodEndsAt(period))) } : {}),
+      },
+      order: { issuedAt: 'DESC', invoiceNumber: 'DESC' },
+      take: Math.min(Math.max(filter.limit ?? 100, 1), 500),
+      skip: Math.max(filter.offset ?? 0, 0),
+    });
+
+    return { items, total };
   }
 
   findByNumber(companyTaxId: string, invoiceNumber: string): Promise<BaseTurnkeyInvoiceEntity | null> {

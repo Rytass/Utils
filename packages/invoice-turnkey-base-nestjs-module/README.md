@@ -177,6 +177,8 @@ Register the number ranges before issuing: REST `POST /{routePrefix}/companies/{
 - The module does not check alignment to 50-number booklets. Align the ranges yourself.
 - A blank-number report (E0402) is accepted only after the period has ended. Before that it fails with `INVALID_TRACK`.
 
+For list pages, `TurnkeyInvoiceTrackService.list(companyTaxId, period?)` returns each track with `trackRemaining` (that track) and `periodRemaining` (the whole period). `TurnkeyInvoiceService.list(filter)` and `TurnkeyAllowanceService.list(filter)` return `{ items, total }` without line items, newest first, paged by `limit` (1–500, default 100) and `offset`. `TurnkeySubmissionService.latestByDocuments(companyTaxId, numbers)` returns the latest submission of each document in one query.
+
 ## Turnkey database access
 
 Create a dedicated read-only role for the app. The compose example names it `turnkey_sidecar`; use the same name here and in [Docker guide, section 4.3](../../docker/invoice-turnkey/README.md#43-give-the-app-a-read-only-role). Grant column-level `SELECT` on the columns the module reads:
@@ -353,6 +355,7 @@ The module does not check the following in real time. [Docker guide, section 10.
 | `INVALID_STATE`                 | Operation not allowed in the current state, for example voiding a non-issued invoice, or retrying a submission that is not `FAILED` or `REJECTED`, or resolving to a status other than `ACCEPTED` or `FAILED`                                                          |
 | `COMPANY_NOT_REGISTERED`        | The company is not registered                                                                                                                                                                                                                                          |
 | `INVALID_TRACK`                 | Malformed period, track or range; `endNumber` before `beginNumber`; a range too large; an overlapping range; or a blank report before the period ends                                                                                                                  |
+| `INVALID_PERIOD`                | A list filter's `period` is not `YYYMM` with an even month                                                                                                                                                                                                             |
 | `SUBMISSION_NOT_FOUND`          | No submission with that id, or the id is not a UUID                                                                                                                                                                                                                    |
 | `EXTERNAL_ID_CONFLICT`          | `externalId` was already used for an invoice with different content                                                                                                                                                                                                    |
 

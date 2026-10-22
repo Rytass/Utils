@@ -25,6 +25,16 @@ export const formatPeriod = (date: Date): string => {
   return `${String(dt.year - 1911).padStart(3, '0')}${String(evenMonth).padStart(2, '0')}`;
 };
 
+/** 期別格式：民國年 3 碼＋雙數月，例如 11510 */
+export const isTurnkeyPeriod = (period: string): boolean => /^\d{3}(0[2468]|1[02])$/.test(period);
+
+/** 期別開始的時間點：單數月第一天 00:00（台北） */
+export const periodStartsAt = (period: string): Date =>
+  DateTime.fromObject(
+    { year: Number(period.slice(0, 3)) + 1911, month: Number(period.slice(3)) - 1, day: 1 },
+    { zone: ZONE },
+  ).toJSDate();
+
 /** 期別顯示文字，例如 115年09-10月 */
 export const formatPeriodLabel = (period: string): string => {
   const year = Number(period.slice(0, 3));
