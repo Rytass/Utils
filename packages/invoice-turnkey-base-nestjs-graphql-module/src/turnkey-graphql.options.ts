@@ -28,6 +28,8 @@ export enum TurnkeyApiAction {
   READ_COMPANY = 'READ_COMPANY',
   MANAGE_COMPANY = 'MANAGE_COMPANY',
   RESOLVE_SUBMISSION = 'RESOLVE_SUBMISSION',
+  /** 只有 GraphQL 有；REST 尚無列出字軌的路由 */
+  READ_INVOICE_TRACK = 'READ_INVOICE_TRACK',
 }
 
 /** 跟 REST 模組同義；複製一份而不依賴 REST 套件 */

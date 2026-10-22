@@ -19,6 +19,7 @@ export const TURNKEY_MEMBER_BASE_ACTIONS: Readonly<Record<TurnkeyApiAction, stri
   [TurnkeyApiAction.ACKNOWLEDGE_REJECTION]: 'exchange',
   [TurnkeyApiAction.REPLY_RECEIVED]: 'exchange',
   [TurnkeyApiAction.REGISTER_INVOICE_TRACK]: 'track',
+  [TurnkeyApiAction.READ_INVOICE_TRACK]: 'track',
   [TurnkeyApiAction.REPORT_BLANK_NUMBERS]: 'track',
   [TurnkeyApiAction.ABANDON_INVOICE_NUMBER]: 'track',
   [TurnkeyApiAction.RETRY_SUBMISSION]: 'retry',

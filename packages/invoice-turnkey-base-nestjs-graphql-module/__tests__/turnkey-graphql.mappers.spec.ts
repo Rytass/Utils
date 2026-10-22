@@ -4,6 +4,7 @@ import {
   TurnkeyNumberStatus,
   TurnkeyReceivedDocumentEntity,
   TurnkeyReceivedDocumentStatus,
+  TurnkeySubmissionEntity,
   TurnkeySubmissionStatus,
   TurnkeyCarrierType,
   TurnkeyDeliveryMode,
@@ -15,7 +16,10 @@ import {
 import { IssueTurnkeyInvoiceInput } from '../src/dto/turnkey-invoice.input';
 import {
   toBlankNumberReportDto,
+  allowanceCollectionId,
   eventCollectionId,
+  invoiceCollectionId,
+  toInvoiceSummaryDto,
   submissionCollectionId,
   toCompanyDto,
   toInvoiceDto,
@@ -285,5 +289,53 @@ describe('collection ids', () => {
     expect(submissionCollectionId('12345675', null, null, 500)).toBe('turnkeySubmissions:12345675:PENDING::500');
     expect(eventCollectionId('12345675', null, 0)).toBe('turnkeyEvents:12345675::1');
     expect(eventCollectionId('12345675', '42', 10)).toBe('turnkeyEvents:12345675:42:10');
+  });
+});
+
+describe('toInvoiceSummaryDto', () => {
+  const submission = (status: TurnkeySubmissionStatus): TurnkeySubmissionEntity =>
+    ({ status, resultCode: '7001', resultMessage: '賣方地址為必填' }) as unknown as TurnkeySubmissionEntity;
+
+  it('reports the error of the latest submission when it was rejected or failed', () => {
+    const dto = toInvoiceSummaryDto(invoiceEntity(), submission(TurnkeySubmissionStatus.REJECTED));
+
+    expect(dto).toMatchObject({
+      invoiceNumber: 'ZZ00000600',
+      lastSubmissionStatus: TurnkeySubmissionStatus.REJECTED,
+      lastErrorCode: '7001',
+      lastErrorMessage: '賣方地址為必填',
+    });
+
+    expect(dto).not.toHaveProperty('items');
+  });
+
+  it('clears the error once the latest submission is accepted', () => {
+    expect(toInvoiceSummaryDto(invoiceEntity(), submission(TurnkeySubmissionStatus.ACCEPTED))).toMatchObject({
+      lastSubmissionStatus: TurnkeySubmissionStatus.ACCEPTED,
+      lastErrorCode: null,
+      lastErrorMessage: null,
+    });
+
+    expect(toInvoiceSummaryDto(invoiceEntity(), undefined)).toMatchObject({
+      lastSubmissionStatus: null,
+      lastErrorCode: null,
+    });
+  });
+});
+
+describe('list collection ids', () => {
+  it('includes every applied filter, the clamped limit and the offset', () => {
+    expect(
+      invoiceCollectionId(
+        '12345675',
+        { status: 'ISSUED', period: '11510', buyerTaxId: null, invoiceNumber: null },
+        1000,
+        -5,
+      ),
+    ).toBe('turnkeyInvoices:12345675:ISSUED:11510:::500:0');
+
+    expect(allowanceCollectionId('12345675', { status: null, invoiceNumber: 'ZZ00000600' }, 20, 40)).toBe(
+      'turnkeyAllowances:12345675::ZZ00000600:20:40',
+    );
   });
 });

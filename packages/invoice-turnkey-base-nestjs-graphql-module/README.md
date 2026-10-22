@@ -69,19 +69,19 @@ TurnkeyBaseGraphQLModule.forRoot({
 
 Action mapping:
 
-| Operations                                                                                                 | member-base action |
-| ---------------------------------------------------------------------------------------------------------- | ------------------ |
-| All queries; `turnkeyCompany` included                                                                     | `read`             |
-| `registerTurnkeyCompany`, `setTurnkeyQrAesKey`                                                             | `company`          |
-| `issueTurnkeyInvoice`                                                                                      | `issue`            |
-| `voidTurnkeyInvoice`                                                                                       | `void`             |
-| `annulTurnkeyInvoice` (authorized separately from void)                                                    | `annul`            |
-| `issueTurnkeyAllowance`, `voidTurnkeyAllowance`                                                            | `allowance`        |
-| `acknowledgeTurnkeyInvoiceRejection`, the five `*ReceivedInvoice*` / `*ReceivedAllowance*` reply mutations | `exchange`         |
-| `printTurnkeyInvoiceProof`, `printTurnkeyAllowanceProof`                                                   | `print`            |
-| `registerTurnkeyInvoiceTrack`, `reportTurnkeyBlankNumbers`, `abandonTurnkeyInvoiceNumber`                  | `track`            |
-| `retryTurnkeySubmission`                                                                                   | `retry`            |
-| `resolveTurnkeySubmission`                                                                                 | `resolve`          |
+| Operations                                                                                                        | member-base action |
+| ----------------------------------------------------------------------------------------------------------------- | ------------------ |
+| All queries except `turnkeyInvoiceTracks`; `turnkeyCompany` included                                              | `read`             |
+| `registerTurnkeyCompany`, `setTurnkeyQrAesKey`                                                                    | `company`          |
+| `issueTurnkeyInvoice`                                                                                             | `issue`            |
+| `voidTurnkeyInvoice`                                                                                              | `void`             |
+| `annulTurnkeyInvoice` (authorized separately from void)                                                           | `annul`            |
+| `issueTurnkeyAllowance`, `voidTurnkeyAllowance`                                                                   | `allowance`        |
+| `acknowledgeTurnkeyInvoiceRejection`, the five `*ReceivedInvoice*` / `*ReceivedAllowance*` reply mutations        | `exchange`         |
+| `printTurnkeyInvoiceProof`, `printTurnkeyAllowanceProof`                                                          | `print`            |
+| `turnkeyInvoiceTracks`, `registerTurnkeyInvoiceTrack`, `reportTurnkeyBlankNumbers`, `abandonTurnkeyInvoiceNumber` | `track`            |
+| `retryTurnkeySubmission`                                                                                          | `retry`            |
+| `resolveTurnkeySubmission`                                                                                        | `resolve`          |
 
 Override individual actions with `actions`. `canAccessCompany` is supplied by the host. Without it, and without `allowAllCompanies`, every company is denied.
 
@@ -100,14 +100,17 @@ TurnkeyBaseGraphQLModule.forRootAsync({
 
 ## Operations
 
-The module exposes 28 operations: 8 queries and 20 mutations. Every operation takes `companyTaxId` as its first argument. Check the generated `schema.gql` for the other argument names and input types.
+The module exposes 31 operations: 11 queries and 20 mutations. Every operation takes `companyTaxId` as its first argument. Check the generated `schema.gql` for the other argument names and input types.
 
 | Kind     | Operation                             | Action                   | `idempotencyKey` |
 | -------- | ------------------------------------- | ------------------------ | ---------------- |
 | Query    | `turnkeyCompany`                      | `READ_COMPANY`           | no               |
 | Query    | `turnkeyInvoice`                      | `READ_INVOICE`           | no               |
+| Query    | `turnkeyInvoices`                     | `READ_INVOICE`           | no               |
 | Query    | `turnkeyAllowance`                    | `READ_ALLOWANCE`         | no               |
+| Query    | `turnkeyAllowances`                   | `READ_ALLOWANCE`         | no               |
 | Query    | `turnkeyAllowancesByInvoice`          | `READ_ALLOWANCE`         | no               |
+| Query    | `turnkeyInvoiceTracks`                | `READ_INVOICE_TRACK`     | no               |
 | Query    | `turnkeySubmissions`                  | `READ_SUBMISSION`        | no               |
 | Query    | `turnkeyEvents`                       | `READ_EVENTS`            | no               |
 | Query    | `turnkeyReceivedInvoices`             | `READ_RECEIVED`          | no               |
@@ -135,6 +138,18 @@ The module exposes 28 operations: 8 queries and 20 mutations. Every operation ta
 
 Two arguments are worth knowing: `resolveTurnkeySubmission(companyTaxId, submissionId, status, reason, idempotencyKey)` takes `status` as `ACCEPTED` or `FAILED` (other values fail with `INVALID_STATE`), and `printTurnkeyInvoiceProof` and `printTurnkeyAllowanceProof` take `(companyTaxId, invoiceNumber | allowanceNumber, idempotencyKey)`. The REST routes for each operation are listed in the [REST action map](../invoice-turnkey-base-nestjs-rest-module/README.md#action-map).
 
+**Lists.** `turnkeyInvoices`, `turnkeyAllowances` and `turnkeyInvoiceTracks` back list pages:
+
+- `turnkeyInvoices(companyTaxId, status?, period?, buyerTaxId?, invoiceNumber?, limit?, offset?)` returns `{ id, total, items }`. Items are `TurnkeyInvoiceSummary`, without line items, newest first.
+  - `period` (for example `11510`) matches the issue time in Taipei time.
+  - `deliveryMode` tells storage (`STORAGE`, F0401) from exchange (`EXCHANGE`, A0101).
+  - `lastSubmissionStatus` is the status of the invoice's latest submission (issue, void or annul). `lastErrorCode` and `lastErrorMessage` are set only when that submission was `REJECTED` or `FAILED`, so they clear once a retry is accepted.
+- `turnkeyAllowances(companyTaxId, status?, invoiceNumber?, limit?, offset?)` returns `TurnkeyAllowanceSummary` items in the same shape. `invoiceNumber` is the original invoice.
+- `turnkeyInvoiceTracks(companyTaxId, period?)` returns every registered track, newest period first. `remaining` counts the unused numbers of the whole period, as `registerTurnkeyInvoiceTrack` does, and `trackRemaining` counts those of that track.
+- `limit` defaults to 100 and is clamped to 1–500. `offset` defaults to 0. `total` ignores both.
+- A malformed `period` fails with `BAD_USER_INPUT`.
+- The summary types are separate from `TurnkeyInvoice` and `TurnkeyAllowance`, so a list never overwrites a cached detail. Refetch the list after a mutation that changes an invoice or allowance.
+
 **Submissions.** `turnkeySubmissions` returns `{ items }`. Without `status` it returns `PENDING` and `WRITTEN` submissions. There is no single-submission query in GraphQL. Use REST `GET submissions/:submissionId`, or read the `submission.*` events.
 
 **Events.** `turnkeyEvents` takes the `after` cursor. Its `limit` is clamped silently to 1 to 500, unlike REST, which returns `400`. See [Events](../invoice-turnkey-base-nestjs-module/README.md#events).
@@ -145,20 +160,23 @@ Two arguments are worth knowing: `resolveTurnkeySubmission(companyTaxId, submiss
 
 Every object type has `id: ID!`, so Apollo Client can normalize its cache:
 
-| Type                          | `id`                                                                  |
-| ----------------------------- | --------------------------------------------------------------------- |
-| `TurnkeyCompany`              | The tax ID                                                            |
-| `TurnkeyEvent`                | The event sequence (the same value as the `after` cursor)             |
-| `TurnkeyBlankNumberReport`    | The `submissionId` of the E0402 submission for that track             |
-| `TurnkeyBlankNumberRange`     | `<submissionId>:<begin>-<end>`                                        |
-| `TurnkeySubmissionCollection` | `turnkeySubmissions:<companyTaxId>:<status>:<documentNumber>:<limit>` |
-| `TurnkeyEventCollection`      | `turnkeyEvents:<companyTaxId>:<after>:<limit>`                        |
-| Other types                   | The entity's own `id`                                                 |
+| Type                                               | `id`                                                                                             |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `TurnkeyCompany`                                   | The tax ID                                                                                       |
+| `TurnkeyEvent`                                     | The event sequence (the same value as the `after` cursor)                                        |
+| `TurnkeyBlankNumberReport`                         | The `submissionId` of the E0402 submission for that track                                        |
+| `TurnkeyBlankNumberRange`                          | `<submissionId>:<begin>-<end>`                                                                   |
+| `TurnkeySubmissionCollection`                      | `turnkeySubmissions:<companyTaxId>:<status>:<documentNumber>:<limit>`                            |
+| `TurnkeyEventCollection`                           | `turnkeyEvents:<companyTaxId>:<after>:<limit>`                                                   |
+| `TurnkeyInvoiceCollection`                         | `turnkeyInvoices:<companyTaxId>:<status>:<period>:<buyerTaxId>:<invoiceNumber>:<limit>:<offset>` |
+| `TurnkeyAllowanceCollection`                       | `turnkeyAllowances:<companyTaxId>:<status>:<invoiceNumber>:<limit>:<offset>`                     |
+| `TurnkeyInvoiceSummary`, `TurnkeyAllowanceSummary` | The invoice's or allowance's own `id`                                                            |
+| Other types                                        | The entity's own `id`                                                                            |
 
 The collection ids are built from the effective query arguments, so the same query maps to the same cache entry and a refetch replaces it:
 
 - `<status>` is `PENDING` when you omit it and list without `documentNumber`, because that is what the query returns. With `documentNumber` and no `status`, it is empty.
-- `<limit>` is the limit the query applied, clamped to 1–500.
+- `<limit>` is the limit the query applied, clamped to 1–500. `<offset>` is never below 0.
 - Omitted arguments are empty strings.
 
 ## Idempotency

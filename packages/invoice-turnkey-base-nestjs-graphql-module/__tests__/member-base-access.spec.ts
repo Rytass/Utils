@@ -19,6 +19,9 @@ const QUERY_ACTIONS: Readonly<Record<string, string>> = {
   turnkeyReceivedInvoices: 'read',
   turnkeyReceivedAllowances: 'read',
   turnkeyCompany: 'read',
+  turnkeyInvoices: 'read',
+  turnkeyAllowances: 'read',
+  turnkeyInvoiceTracks: 'track',
 };
 
 const MUTATION_ACTIONS: Readonly<Record<string, string>> = {
@@ -63,7 +66,7 @@ describe('memberBaseAccess', () => {
     expect(publicMethods(resolver).sort()).toEqual(Object.keys(QUERY_ACTIONS).sort());
 
     Object.entries(QUERY_ACTIONS).forEach(([name, action]) => {
-      const expected = name === 'turnkeyInvoice' ? 'read-special' : action;
+      const expected = name === 'turnkeyInvoice' || name === 'turnkeyInvoices' ? 'read-special' : action;
 
       expect(actionsOf(resolver, name)).toEqual([['einvoice', expected]]);
     });

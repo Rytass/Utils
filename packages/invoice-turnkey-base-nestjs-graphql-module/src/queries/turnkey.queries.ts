@@ -2,10 +2,14 @@ import { applyDecorators, Type } from '@nestjs/common';
 import { Args, Context, Int, Query, Resolver } from '@nestjs/graphql';
 import { GraphQLError } from 'graphql';
 import {
+  isTurnkeyPeriod,
+  TurnkeyAllowanceStatus,
   TurnkeyCompanyService,
   TurnkeyAllowanceService,
   TurnkeyEventService,
   TurnkeyInvoiceService,
+  TurnkeyInvoiceStatus,
+  TurnkeyInvoiceTrackService,
   TurnkeyMigMessageType,
   TurnkeyReceivedDocumentService,
   TurnkeyReceivedDocumentStatus,
@@ -13,14 +17,20 @@ import {
   TurnkeySubmissionStatus,
 } from '@rytass/invoice-turnkey-base-nestjs-module';
 import type { TurnkeySubmissionEntity } from '@rytass/invoice-turnkey-base-nestjs-module';
-import { TurnkeyAllowanceDto } from '../dto/turnkey-allowance.dto';
+import { TurnkeyAllowanceCollectionDto, TurnkeyAllowanceDto } from '../dto/turnkey-allowance.dto';
 import { TurnkeyCompanyDto } from '../dto/turnkey-company.dto';
 import { TurnkeyEventCollectionDto } from '../dto/turnkey-event.dto';
-import { TurnkeyInvoiceDto } from '../dto/turnkey-invoice.dto';
+import { TurnkeyInvoiceCollectionDto, TurnkeyInvoiceDto } from '../dto/turnkey-invoice.dto';
+import { TurnkeyInvoiceTrackDto } from '../dto/turnkey-track.dto';
 import { TurnkeySubmissionCollectionDto } from '../dto/turnkey-submission.dto';
 import { TurnkeyReceivedDocumentDto } from '../dto/turnkey-received-document.dto';
 import {
+  allowanceCollectionId,
+  invoiceCollectionId,
   toAllowanceDto,
+  toAllowanceSummaryDto,
+  toInvoiceSummaryDto,
+  toTrackSummaryDto,
   eventCollectionId,
   submissionCollectionId,
   toCompanyDto,
@@ -29,11 +39,19 @@ import {
   toReceivedDocumentDto,
   toSubmissionDto,
 } from '../turnkey-graphql.mappers';
-import { assertCompanyAccess } from '../turnkey-graphql.helpers';
+import { assertCompanyAccess, runTurnkey } from '../turnkey-graphql.helpers';
 import { TurnkeyApiAction } from '../turnkey-graphql.options';
 import type { TurnkeyGraphQLContext, TurnkeyRouteAccess } from '../turnkey-graphql.options';
 
 const DEFAULT_LIMIT = 100;
+
+const assertPeriod = (period: string | null | undefined): void => {
+  if (period && !isTurnkeyPeriod(period)) {
+    throw new GraphQLError('period must be ROC year (3 digits) + even month, e.g. 11510', {
+      extensions: { code: 'BAD_USER_INPUT', field: 'period' },
+    });
+  }
+};
 
 /** 我方為買方時收到的發票類文件（A0101、A0201、A0302） */
 const RECEIVED_INVOICE_TYPES = [TurnkeyMigMessageType.A0101, TurnkeyMigMessageType.A0201, TurnkeyMigMessageType.A0302];
@@ -55,6 +73,7 @@ export const createTurnkeyQueryResolver = (access: TurnkeyRouteAccess): Type<unk
       private readonly eventService: TurnkeyEventService,
       private readonly receivedService: TurnkeyReceivedDocumentService,
       private readonly companyService: TurnkeyCompanyService,
+      private readonly trackService: TurnkeyInvoiceTrackService,
     ) {}
 
     /** 營業人資料；未登錄回傳 null。QR Code 金鑰不回傳，只標示 qrAesKeyConfigured */
@@ -157,6 +176,118 @@ export const createTurnkeyQueryResolver = (access: TurnkeyRouteAccess): Type<unk
         events: page.events.map(toEventDto),
         nextCursor: page.nextCursor,
       };
+    }
+
+    /** 已登錄的字軌，新期別在前。remaining 為同期別剩餘，trackRemaining 為該字軌剩餘 */
+    @Query(() => [TurnkeyInvoiceTrackDto], { name: 'turnkeyInvoiceTracks' })
+    @route(TurnkeyApiAction.READ_INVOICE_TRACK)
+    async turnkeyInvoiceTracks(
+      @Context() context: TurnkeyGraphQLContext,
+      @Args('companyTaxId') companyTaxId: string,
+      @Args('period', { type: () => String, nullable: true }) period?: string | null,
+    ): Promise<TurnkeyInvoiceTrackDto[]> {
+      await assertCompanyAccess(access, context.req, companyTaxId);
+      assertPeriod(period);
+
+      const tracks = await runTurnkey(() => this.trackService.list(companyTaxId, period ?? undefined));
+
+      return tracks.map(toTrackSummaryDto);
+    }
+
+    /** 已開立的發票，新到舊，offset 分頁；period 依開立時間（台北）判斷 */
+    @Query(() => TurnkeyInvoiceCollectionDto, { name: 'turnkeyInvoices' })
+    @route(TurnkeyApiAction.READ_INVOICE)
+    async turnkeyInvoices(
+      @Context() context: TurnkeyGraphQLContext,
+      @Args('companyTaxId') companyTaxId: string,
+      @Args('status', { type: () => TurnkeyInvoiceStatus, nullable: true }) status?: TurnkeyInvoiceStatus | null,
+      @Args('period', { type: () => String, nullable: true }) period?: string | null,
+      @Args('buyerTaxId', { type: () => String, nullable: true }) buyerTaxId?: string | null,
+      @Args('invoiceNumber', { type: () => String, nullable: true }) invoiceNumber?: string | null,
+      @Args('limit', { type: () => Int, nullable: true }) limit?: number | null,
+      @Args('offset', { type: () => Int, nullable: true }) offset?: number | null,
+    ): Promise<TurnkeyInvoiceCollectionDto> {
+      await assertCompanyAccess(access, context.req, companyTaxId);
+      assertPeriod(period);
+
+      const take = limit ?? DEFAULT_LIMIT;
+      const skip = offset ?? 0;
+
+      return runTurnkey(async () => {
+        const page = await this.invoiceService.list({
+          companyTaxId,
+          status: status ?? undefined,
+          period: period || undefined,
+          buyerTaxId: buyerTaxId || undefined,
+          invoiceNumber: invoiceNumber || undefined,
+          limit: take,
+          offset: skip,
+        });
+
+        const latest = await this.submissionService.latestByDocuments(
+          companyTaxId,
+          page.items.map(invoice => invoice.invoiceNumber),
+        );
+
+        return {
+          id: invoiceCollectionId(
+            companyTaxId,
+            {
+              status: status ?? null,
+              period: period || null,
+              buyerTaxId: buyerTaxId || null,
+              invoiceNumber: invoiceNumber || null,
+            },
+            take,
+            skip,
+          ),
+          total: page.total,
+          items: page.items.map(invoice => toInvoiceSummaryDto(invoice, latest.get(invoice.invoiceNumber))),
+        };
+      });
+    }
+
+    /** 折讓單，新到舊，offset 分頁；invoiceNumber 為原發票號碼 */
+    @Query(() => TurnkeyAllowanceCollectionDto, { name: 'turnkeyAllowances' })
+    @route(TurnkeyApiAction.READ_ALLOWANCE)
+    async turnkeyAllowances(
+      @Context() context: TurnkeyGraphQLContext,
+      @Args('companyTaxId') companyTaxId: string,
+      @Args('status', { type: () => TurnkeyAllowanceStatus, nullable: true }) status?: TurnkeyAllowanceStatus | null,
+      @Args('invoiceNumber', { type: () => String, nullable: true }) invoiceNumber?: string | null,
+      @Args('limit', { type: () => Int, nullable: true }) limit?: number | null,
+      @Args('offset', { type: () => Int, nullable: true }) offset?: number | null,
+    ): Promise<TurnkeyAllowanceCollectionDto> {
+      await assertCompanyAccess(access, context.req, companyTaxId);
+
+      const take = limit ?? DEFAULT_LIMIT;
+      const skip = offset ?? 0;
+
+      return runTurnkey(async () => {
+        const page = await this.allowanceService.list({
+          companyTaxId,
+          status: status ?? undefined,
+          invoiceNumber: invoiceNumber || undefined,
+          limit: take,
+          offset: skip,
+        });
+
+        const latest = await this.submissionService.latestByDocuments(
+          companyTaxId,
+          page.items.map(allowance => allowance.allowanceNumber),
+        );
+
+        return {
+          id: allowanceCollectionId(
+            companyTaxId,
+            { status: status ?? null, invoiceNumber: invoiceNumber || null },
+            take,
+            skip,
+          ),
+          total: page.total,
+          items: page.items.map(allowance => toAllowanceSummaryDto(allowance, latest.get(allowance.allowanceNumber))),
+        };
+      });
     }
 
     /** 某張發票底下的折讓（獨立 query，不做成 TurnkeyInvoice 欄位，因此沒有 N+1 問題） */
