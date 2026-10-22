@@ -53,6 +53,10 @@ export class TurnkeySubmissionDto {
 
 @ObjectType('TurnkeySubmissionCollection')
 export class TurnkeySubmissionCollectionDto {
+  /** 由查詢條件組成（營業人、status、documentNumber、limit），同一查詢得到同一個 id */
+  @Field(() => ID)
+  id: string;
+
   @Field(() => [TurnkeySubmissionDto])
   items: TurnkeySubmissionDto[];
 }

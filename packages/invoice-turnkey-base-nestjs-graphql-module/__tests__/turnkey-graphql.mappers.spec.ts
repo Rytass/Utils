@@ -4,6 +4,8 @@ import {
   TurnkeyNumberStatus,
   TurnkeyReceivedDocumentEntity,
   TurnkeyReceivedDocumentStatus,
+  TurnkeySubmissionEntity,
+  TurnkeySubmissionStatus,
   TurnkeyCarrierType,
   TurnkeyDeliveryMode,
   TurnkeyInvoiceStatus,
@@ -14,6 +16,12 @@ import {
 import { IssueTurnkeyInvoiceInput } from '../src/dto/turnkey-invoice.input';
 import {
   toBlankNumberReportDto,
+  allowanceCollectionId,
+  eventCollectionId,
+  invoiceCollectionId,
+  toInvoiceSummaryDto,
+  submissionCollectionId,
+  toCompanyDto,
   toInvoiceDto,
   toInvoiceIssueInput,
   toInvoiceNumberDto,
@@ -236,9 +244,98 @@ describe('received document / invoice number / blank report mappers', () => {
     });
 
     expect(dto).toEqual({
+      id: 'd1b2c3d4-0000-4000-8000-000000000004',
       track: 'ZZ',
       submissionId: 'd1b2c3d4-0000-4000-8000-000000000004',
-      ranges: [{ begin: '00000600', end: '00000602' }],
+      ranges: [{ id: 'd1b2c3d4-0000-4000-8000-000000000004:00000600-00000602', begin: '00000600', end: '00000602' }],
     });
+  });
+
+  it('uses the tax ID as the company id', () => {
+    const now = new Date('2026-10-22T00:00:00Z');
+
+    expect(
+      toCompanyDto({
+        taxId: '12345675',
+        name: '測試營業人',
+        address: null,
+        routingId: 'ROUTE-TEST',
+        exchangeEnabled: false,
+        certificateExpiresAt: null,
+        qrAesKeyConfigured: false,
+        createdAt: now,
+        updatedAt: now,
+      }),
+    ).toMatchObject({ id: '12345675', taxId: '12345675' });
+  });
+});
+
+describe('collection ids', () => {
+  it('fills in the default PENDING status when listing without a document number', () => {
+    expect(submissionCollectionId('12345675', null, null, 100)).toBe('turnkeySubmissions:12345675:PENDING::100');
+    expect(submissionCollectionId('12345675', TurnkeySubmissionStatus.PENDING, null, 100)).toBe(
+      'turnkeySubmissions:12345675:PENDING::100',
+    );
+  });
+
+  it('keeps an empty status when looking up by document number', () => {
+    expect(submissionCollectionId('12345675', null, 'AB12345678', 100)).toBe(
+      'turnkeySubmissions:12345675::AB12345678:100',
+    );
+  });
+
+  it('uses the clamped limit', () => {
+    expect(submissionCollectionId('12345675', null, null, 1000)).toBe('turnkeySubmissions:12345675:PENDING::500');
+    expect(submissionCollectionId('12345675', null, null, 500)).toBe('turnkeySubmissions:12345675:PENDING::500');
+    expect(eventCollectionId('12345675', null, 0)).toBe('turnkeyEvents:12345675::1');
+    expect(eventCollectionId('12345675', '42', 10)).toBe('turnkeyEvents:12345675:42:10');
+  });
+});
+
+describe('toInvoiceSummaryDto', () => {
+  const submission = (status: TurnkeySubmissionStatus): TurnkeySubmissionEntity =>
+    ({ status, resultCode: '7001', resultMessage: '賣方地址為必填' }) as unknown as TurnkeySubmissionEntity;
+
+  it('reports the error of the latest submission when it was rejected or failed', () => {
+    const dto = toInvoiceSummaryDto(invoiceEntity(), submission(TurnkeySubmissionStatus.REJECTED));
+
+    expect(dto).toMatchObject({
+      invoiceNumber: 'ZZ00000600',
+      lastSubmissionStatus: TurnkeySubmissionStatus.REJECTED,
+      lastErrorCode: '7001',
+      lastErrorMessage: '賣方地址為必填',
+    });
+
+    expect(dto).not.toHaveProperty('items');
+  });
+
+  it('clears the error once the latest submission is accepted', () => {
+    expect(toInvoiceSummaryDto(invoiceEntity(), submission(TurnkeySubmissionStatus.ACCEPTED))).toMatchObject({
+      lastSubmissionStatus: TurnkeySubmissionStatus.ACCEPTED,
+      lastErrorCode: null,
+      lastErrorMessage: null,
+    });
+
+    expect(toInvoiceSummaryDto(invoiceEntity(), undefined)).toMatchObject({
+      lastSubmissionStatus: null,
+      lastErrorCode: null,
+    });
+  });
+});
+
+describe('list collection ids', () => {
+  it('includes every applied filter, the clamped limit and the offset', () => {
+    expect(
+      invoiceCollectionId(
+        '12345675',
+        { status: 'ISSUED', period: '11510', buyerTaxId: null, invoiceNumber: null },
+        1000,
+        -5,
+      ),
+    ).toBe('turnkeyInvoices:12345675:ISSUED:11510:::500:0');
+
+    expect(allowanceCollectionId('12345675', { status: null, invoiceNumber: 'ZZ00000600' }, 20, 40)).toBe(
+      'turnkeyAllowances:12345675::ZZ00000600:20:40',
+    );
   });
 });

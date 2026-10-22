@@ -8,6 +8,8 @@ import {
   formatPeriodLabel,
   formatRocDate,
   isTaxIdValid,
+  isTurnkeyPeriod,
+  periodStartsAt,
   splitAllowanceAmount,
   TurnkeyTaxType,
 } from '../src';
@@ -89,5 +91,18 @@ describe('period helpers', () => {
     expect(formatRocDate(date)).toBe('1150901');
     expect(formatPeriod(date)).toBe('11510');
     expect(formatPeriodLabel('11510')).toBe('115年09-10月');
+  });
+
+  it('starts a period on the first day of its odd month in Taipei time', () => {
+    expect(periodStartsAt('11510').toISOString()).toBe('2026-08-31T16:00:00.000Z');
+    expect(periodStartsAt('11502').toISOString()).toBe('2025-12-31T16:00:00.000Z');
+  });
+
+  it.each(['11510', '11502', '11512', '09908'])('accepts period %s', period => {
+    expect(isTurnkeyPeriod(period)).toBe(true);
+  });
+
+  it.each(['11509', '11500', '11514', '1151', '115100', 'abcde'])('rejects period %s', period => {
+    expect(isTurnkeyPeriod(period)).toBe(false);
   });
 });

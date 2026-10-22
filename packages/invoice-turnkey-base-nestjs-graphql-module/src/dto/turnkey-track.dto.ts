@@ -25,6 +25,10 @@ export class TurnkeyInvoiceTrackDto {
   @Field(() => Int, { nullable: true })
   remaining: number | null;
 
+  /** 這條字軌尚未取號的數量；冪等重送舊版回應時可能為 null */
+  @Field(() => Int, { nullable: true })
+  trackRemaining: number | null;
+
   @Field()
   createdAt: Date;
 }

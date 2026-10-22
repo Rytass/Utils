@@ -17,7 +17,7 @@ import {
 import { TurnkeyItemTaxType } from '../typings/turnkey-invoice.types';
 import { roundTo, splitAllowanceAmount } from '../utils/amounts';
 import { formatMigDate } from '../utils/taipei-time';
-import { validateExchangeSeller } from '../validation/invoice-rules';
+import { validateSellerAddress } from '../validation/invoice-rules';
 import { TurnkeyValidationCode, TurnkeyValidationError } from '../validation/turnkey-validation-error';
 import { TurnkeySubmissionService } from './turnkey-submission.service';
 
@@ -91,6 +91,21 @@ const replayOrConflict = (
 const generateAllowanceNumber = (date: Date): string =>
   `${formatMigDate(date)}${String(randomInt(0, 100_000_000)).padStart(8, '0')}`;
 
+export interface TurnkeyAllowanceListFilter {
+  readonly companyTaxId: string;
+  readonly status?: TurnkeyAllowanceStatus;
+  /** 原發票號碼 */
+  readonly invoiceNumber?: string;
+  /** 1–500，預設 100 */
+  readonly limit?: number;
+  readonly offset?: number;
+}
+
+export interface TurnkeyAllowanceListResult {
+  readonly items: readonly TurnkeyAllowanceEntity[];
+  readonly total: number;
+}
+
 @Injectable()
 export class TurnkeyAllowanceService {
   constructor(
@@ -127,6 +142,11 @@ export class TurnkeyAllowanceService {
 
     if (!company) throw fail(TurnkeyValidationCode.COMPANY_NOT_REGISTERED, '營業人尚未登錄', 'companyTaxId');
 
+    // G0401 與 B0101 同樣必須帶賣方地址
+    const sellerIssues = validateSellerAddress(company);
+
+    if (sellerIssues.length) throw new TurnkeyValidationError(sellerIssues);
+
     const allowanceDate = input.allowanceDate ?? new Date();
 
     return this.dataSource.transaction(async manager => {
@@ -154,11 +174,6 @@ export class TurnkeyAllowanceService {
         .getOne();
 
       if (!invoice) throw fail(TurnkeyValidationCode.INVOICE_NOT_FOUND, '找不到原發票', 'invoiceNumber');
-
-      // 開立後才清掉地址時，B0101 一樣會被 Turnkey 以 7001 擋下
-      const sellerIssues = validateExchangeSeller(invoice.deliveryMode, company);
-
-      if (sellerIssues.length) throw new TurnkeyValidationError(sellerIssues);
 
       if (
         ![TurnkeyInvoiceStatus.ISSUED, TurnkeyInvoiceStatus.CONFIRMED].includes(invoice.status) ||
@@ -373,6 +388,20 @@ export class TurnkeyAllowanceService {
 
       return { ...allowance, voidedAt: cancelledAt, voidReason: trimmed };
     });
+  }
+
+  /** 折讓單，新到舊；同一時間以折讓單號新到舊排序，分頁才穩定。不含明細 */
+  async list(filter: TurnkeyAllowanceListFilter): Promise<TurnkeyAllowanceListResult> {
+    const { companyTaxId, status, invoiceNumber } = filter;
+
+    const [items, total] = await this.allowanceRepo.findAndCount({
+      where: { companyTaxId, ...(status ? { status } : {}), ...(invoiceNumber ? { invoiceNumber } : {}) },
+      order: { allowanceDate: 'DESC', allowanceNumber: 'DESC' },
+      take: Math.min(Math.max(filter.limit ?? 100, 1), 500),
+      skip: Math.max(filter.offset ?? 0, 0),
+    });
+
+    return { items, total };
   }
 
   /** 一張發票的所有折讓（含已作廢），依建立時間排序 */

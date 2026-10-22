@@ -8,6 +8,7 @@ import { TURNKEY_BASE_MODULE_OPTIONS } from '../typings/turnkey-base-providers';
 import { TurnkeyMigMessageType, TurnkeyNumberStatus } from '../typings/turnkey-enums';
 import { TurnkeyBlankNumberRange } from '../typings/turnkey-invoice.types';
 import { TurnkeyEvent, TurnkeyEvents } from '../typings/turnkey-events';
+import { isTurnkeyPeriod } from '../utils/taipei-time';
 import { TurnkeyValidationCode, TurnkeyValidationError } from '../validation/turnkey-validation-error';
 import { TurnkeyEventService } from './turnkey-event.service';
 import { TurnkeySubmissionService } from './turnkey-submission.service';
@@ -26,6 +27,14 @@ export interface TurnkeyAllocation {
   readonly invoiceNumber: string;
   readonly remaining: number;
   readonly events: readonly TurnkeyEvent[];
+}
+
+export interface TurnkeyTrackSummary {
+  readonly track: TurnkeyInvoiceTrackEntity;
+  /** 這條字軌尚未取號的數量 */
+  readonly trackRemaining: number;
+  /** 同期別所有字軌尚未取號的數量（與登錄字軌時回傳的 remaining 同義） */
+  readonly periodRemaining: number;
 }
 
 export interface TurnkeyBlankNumberReport {
@@ -220,7 +229,7 @@ export class TurnkeyInvoiceTrackService {
     period: string,
     now: Date = new Date(),
   ): Promise<readonly TurnkeyBlankNumberReport[]> {
-    if (!/^\d{3}(0[2468]|1[02])$/.test(period)) throw invalidTrack('期別需為民國年 3 碼＋雙數月');
+    if (!isTurnkeyPeriod(period)) throw invalidTrack('期別需為民國年 3 碼＋雙數月');
 
     if (now < periodEndsAt(period)) throw invalidTrack(`${period} 期尚未結束，不能申報空白號碼`);
 
@@ -299,6 +308,52 @@ export class TurnkeyInvoiceTrackService {
 
       return reports;
     });
+  }
+
+  /** 已登錄的字軌，新期別在前；帶 period 時只列該期 */
+  async list(companyTaxId: string, period?: string): Promise<readonly TurnkeyTrackSummary[]> {
+    if (period !== undefined && !isTurnkeyPeriod(period)) {
+      throw new TurnkeyValidationError([
+        {
+          code: TurnkeyValidationCode.INVALID_PERIOD,
+          message: '期別格式為民國年 3 碼＋雙數月，例如 11510',
+          field: 'period',
+        },
+      ]);
+    }
+
+    const tracks = await this.dataSource.getRepository(TurnkeyInvoiceTrackEntity).find({
+      where: { companyTaxId, ...(period ? { period } : {}) },
+      order: { period: 'DESC', track: 'ASC', beginNumber: 'ASC' },
+    });
+
+    if (!tracks.length) return [];
+
+    const counts = await this.numberRepo
+      .createQueryBuilder('number')
+      .select('number.trackId', 'trackId')
+      .addSelect('COUNT(*)', 'count')
+      .where('number.companyTaxId = :companyTaxId', { companyTaxId })
+      .andWhere('number.status = :status', { status: TurnkeyNumberStatus.AVAILABLE })
+      .andWhere('number.trackId IN (:...trackIds)', { trackIds: tracks.map(track => track.id) })
+      .groupBy('number.trackId')
+      .getRawMany<{ trackId: string; count: string }>();
+
+    const byTrack = new Map(counts.map(row => [row.trackId, Number(row.count)]));
+    const trackRemaining = (track: TurnkeyInvoiceTrackEntity): number => byTrack.get(track.id) ?? 0;
+    const periodRemaining = (period: string): number =>
+      tracks.filter(track => track.period === period).reduce((sum, track) => sum + trackRemaining(track), 0);
+
+    return tracks.map(track => ({
+      track,
+      trackRemaining: trackRemaining(track),
+      periodRemaining: periodRemaining(track.period),
+    }));
+  }
+
+  /** 單一字軌尚未取號的數量 */
+  trackRemaining(companyTaxId: string, trackId: string): Promise<number> {
+    return this.numberRepo.count({ where: { companyTaxId, trackId, status: TurnkeyNumberStatus.AVAILABLE } });
   }
 
   remaining(companyTaxId: string, period: string): Promise<number> {

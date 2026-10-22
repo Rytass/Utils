@@ -3,6 +3,7 @@ import {
   TurnkeyAllowanceEntity,
   TurnkeyAllowanceIssueInput,
   TurnkeyBlankNumberReport,
+  TurnkeyCompanyView,
   TurnkeyEvent,
   TurnkeyInvoiceNumberEntity,
   TurnkeyReceivedDocumentEntity,
@@ -10,23 +11,26 @@ import {
   TurnkeyInvoiceTrackEntity,
   TurnkeyItemTaxType,
   TurnkeySubmissionEntity,
+  TurnkeySubmissionStatus,
   TurnkeyTaxType,
+  TurnkeyTrackSummary,
   TurnkeyValidationCode,
   TurnkeyValidationError,
 } from '@rytass/invoice-turnkey-base-nestjs-module';
-import { TurnkeyAllowanceDto, TurnkeyAllowanceItemDto } from './dto/turnkey-allowance.dto';
+import { TurnkeyAllowanceDto, TurnkeyAllowanceItemDto, TurnkeyAllowanceSummaryDto } from './dto/turnkey-allowance.dto';
 import { TurnkeyEventDto } from './dto/turnkey-event.dto';
 import {
   IssueTurnkeyAllowanceInput,
   IssueTurnkeyInvoiceInput,
   TurnkeyInvoiceItemInput,
 } from './dto/turnkey-invoice.input';
-import { TurnkeyInvoiceDto, TurnkeyInvoiceItemDto } from './dto/turnkey-invoice.dto';
+import { TurnkeyInvoiceDto, TurnkeyInvoiceItemDto, TurnkeyInvoiceSummaryDto } from './dto/turnkey-invoice.dto';
 import { TurnkeyInvoiceTrackDto } from './dto/turnkey-track.dto';
 import { TurnkeySubmissionDto } from './dto/turnkey-submission.dto';
 import { TurnkeyReceivedDocumentDto } from './dto/turnkey-received-document.dto';
 import { TurnkeyInvoiceNumberDto } from './dto/turnkey-invoice-number.dto';
 import { TurnkeyBlankNumberReportDto } from './dto/turnkey-blank-number.dto';
+import { TurnkeyCompanyDto } from './dto/turnkey-company.dto';
 import { parseIsoDate } from './turnkey-graphql.helpers';
 
 const byNullable = <T>(value: T | null | undefined): T | undefined => value ?? undefined;
@@ -122,7 +126,11 @@ export const toAllowanceDto = (allowance: TurnkeyAllowanceEntity): TurnkeyAllowa
   updatedAt: allowance.updatedAt,
 });
 
-export const toTrackDto = (track: TurnkeyInvoiceTrackEntity, remaining: number | null): TurnkeyInvoiceTrackDto => ({
+export const toTrackDto = (
+  track: TurnkeyInvoiceTrackEntity,
+  remaining: number | null,
+  trackRemaining: number | null,
+): TurnkeyInvoiceTrackDto => ({
   id: track.id,
   companyTaxId: track.companyTaxId,
   period: track.period,
@@ -130,7 +138,71 @@ export const toTrackDto = (track: TurnkeyInvoiceTrackEntity, remaining: number |
   beginNumber: track.beginNumber,
   endNumber: track.endNumber,
   remaining,
+  trackRemaining,
   createdAt: track.createdAt,
+});
+
+export const toTrackSummaryDto = (summary: TurnkeyTrackSummary): TurnkeyInvoiceTrackDto =>
+  toTrackDto(summary.track, summary.periodRemaining, summary.trackRemaining);
+
+/** 最新一筆送件的狀態；被拒或失敗時才帶錯誤碼與訊息 */
+const lastSubmissionFields = (
+  submission: TurnkeySubmissionEntity | undefined,
+): Pick<TurnkeyInvoiceSummaryDto, 'lastSubmissionStatus' | 'lastErrorCode' | 'lastErrorMessage'> => {
+  const failed =
+    submission?.status === TurnkeySubmissionStatus.REJECTED || submission?.status === TurnkeySubmissionStatus.FAILED;
+
+  return {
+    lastSubmissionStatus: submission?.status ?? null,
+    lastErrorCode: failed ? submission.resultCode : null,
+    lastErrorMessage: failed ? submission.resultMessage : null,
+  };
+};
+
+export const toInvoiceSummaryDto = (
+  invoice: BaseTurnkeyInvoiceEntity,
+  latest: TurnkeySubmissionEntity | undefined,
+): TurnkeyInvoiceSummaryDto => ({
+  id: invoice.id,
+  companyTaxId: invoice.companyTaxId,
+  invoiceNumber: invoice.invoiceNumber,
+  externalId: invoice.externalId,
+  deliveryMode: invoice.deliveryMode,
+  status: invoice.status,
+  issuedAt: invoice.issuedAt,
+  buyerTaxId: invoice.buyerTaxId,
+  buyerName: invoice.buyerName,
+  taxType: invoice.taxType,
+  salesAmount: invoice.salesAmount,
+  taxFreeSalesAmount: invoice.taxFreeSalesAmount,
+  zeroRatedSalesAmount: invoice.zeroRatedSalesAmount,
+  taxAmount: invoice.taxAmount,
+  totalAmount: invoice.totalAmount,
+  voidedAt: invoice.voidedAt,
+  ...lastSubmissionFields(latest),
+  createdAt: invoice.createdAt,
+  updatedAt: invoice.updatedAt,
+});
+
+export const toAllowanceSummaryDto = (
+  allowance: TurnkeyAllowanceEntity,
+  latest: TurnkeySubmissionEntity | undefined,
+): TurnkeyAllowanceSummaryDto => ({
+  id: allowance.id,
+  companyTaxId: allowance.companyTaxId,
+  allowanceNumber: allowance.allowanceNumber,
+  externalId: allowance.externalId,
+  invoiceNumber: allowance.invoiceNumber,
+  deliveryMode: allowance.deliveryMode,
+  status: allowance.status,
+  allowanceDate: allowance.allowanceDate,
+  buyerTaxId: allowance.buyerTaxId,
+  totalAmount: allowance.totalAmount,
+  taxAmount: allowance.taxAmount,
+  voidedAt: allowance.voidedAt,
+  ...lastSubmissionFields(latest),
+  createdAt: allowance.createdAt,
+  updatedAt: allowance.updatedAt,
 });
 
 export const toSubmissionDto = (submission: TurnkeySubmissionEntity): TurnkeySubmissionDto => ({
@@ -249,7 +321,78 @@ export const toInvoiceNumberDto = (entry: TurnkeyInvoiceNumberEntity): TurnkeyIn
 });
 
 export const toBlankNumberReportDto = (report: TurnkeyBlankNumberReport): TurnkeyBlankNumberReportDto => ({
+  id: report.submissionId,
   track: report.track,
   submissionId: report.submissionId,
-  ranges: report.ranges.map(range => ({ begin: range.begin, end: range.end })),
+  ranges: report.ranges.map(range => ({
+    id: `${report.submissionId}:${range.begin}-${range.end}`,
+    begin: range.begin,
+    end: range.end,
+  })),
 });
+
+export const toCompanyDto = (company: TurnkeyCompanyView): TurnkeyCompanyDto => ({ ...company, id: company.taxId });
+
+/** service 實際使用的筆數（1 到 500） */
+const effectiveLimit = (limit: number): number => Math.min(Math.max(limit, 1), 500);
+
+/**
+ * 集合的 id 由正規化後的查詢條件組成：等價的查詢（省略 status 與 PENDING、超過上限的 limit）得到同一個 id，
+ * 讓 Apollo Client 把它們視為同一個快取項目。
+ */
+export const submissionCollectionId = (
+  companyTaxId: string,
+  status: TurnkeySubmissionStatus | null,
+  documentNumber: string | null,
+  limit: number,
+): string =>
+  [
+    'turnkeySubmissions',
+    companyTaxId,
+    // 指定單號時 status 只是額外篩選，省略代表全部；未指定單號時省略等同 PENDING
+    documentNumber ? (status ?? '') : (status ?? TurnkeySubmissionStatus.PENDING),
+    documentNumber ?? '',
+    effectiveLimit(limit),
+  ].join(':');
+
+export const eventCollectionId = (companyTaxId: string, after: string | null, limit: number): string =>
+  ['turnkeyEvents', companyTaxId, after ?? '', effectiveLimit(limit)].join(':');
+
+const effectiveOffset = (offset: number): number => Math.max(offset, 0);
+
+export const invoiceCollectionId = (
+  companyTaxId: string,
+  filter: {
+    readonly status: string | null;
+    readonly period: string | null;
+    readonly buyerTaxId: string | null;
+    readonly invoiceNumber: string | null;
+  },
+  limit: number,
+  offset: number,
+): string =>
+  [
+    'turnkeyInvoices',
+    companyTaxId,
+    filter.status ?? '',
+    filter.period ?? '',
+    filter.buyerTaxId ?? '',
+    filter.invoiceNumber ?? '',
+    effectiveLimit(limit),
+    effectiveOffset(offset),
+  ].join(':');
+
+export const allowanceCollectionId = (
+  companyTaxId: string,
+  filter: { readonly status: string | null; readonly invoiceNumber: string | null },
+  limit: number,
+  offset: number,
+): string =>
+  [
+    'turnkeyAllowances',
+    companyTaxId,
+    filter.status ?? '',
+    filter.invoiceNumber ?? '',
+    effectiveLimit(limit),
+    effectiveOffset(offset),
+  ].join(':');

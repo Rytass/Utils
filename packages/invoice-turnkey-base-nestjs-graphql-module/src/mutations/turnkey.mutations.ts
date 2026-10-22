@@ -1,5 +1,6 @@
 import { applyDecorators, Type } from '@nestjs/common';
 import { Args, Context, Mutation, Resolver } from '@nestjs/graphql';
+import { GraphQLError } from 'graphql';
 import {
   TurnkeyAllowanceProof,
   TurnkeyCompanyService,
@@ -39,6 +40,7 @@ import {
   toAllowanceDto,
   toAllowanceIssueInput,
   toBlankNumberReportDto,
+  toCompanyDto,
   toInvoiceDto,
   toInvoiceIssueInput,
   toInvoiceNumberDto,
@@ -94,7 +96,11 @@ export const createTurnkeyMutationResolver = (access: TurnkeyRouteAccess): Type<
           certificateExpiresAt: input.certificateExpiresAt ?? undefined,
         });
 
-        return (await this.companyService.describe(companyTaxId)) as TurnkeyCompanyDto;
+        const company = await this.companyService.describe(companyTaxId);
+
+        if (!company) throw new GraphQLError('Company not registered', { extensions: { code: 'NOT_FOUND' } });
+
+        return toCompanyDto(company);
       });
     }
 
@@ -407,8 +413,9 @@ export const createTurnkeyMutationResolver = (access: TurnkeyRouteAccess): Type<
           });
 
           const remaining = await this.trackService.remaining(companyTaxId, track.period);
+          const trackRemaining = await this.trackService.trackRemaining(companyTaxId, track.id);
 
-          return { status: 201, body: toTrackDto(track, remaining) };
+          return { status: 201, body: toTrackDto(track, remaining, trackRemaining) };
         });
 
         return result.body;
