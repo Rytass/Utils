@@ -231,7 +231,7 @@ Replies from the platform arrive in `RecvTarget/<message>/*.xml`. The inbound sc
 
 **Seller side.** Buyer replies move the invoice or allowance state: A0102 (confirm) and B0102 move `ISSUED` to `CONFIRMED`; A0301 (reject) moves `ISSUED` or `CONFIRMED` to `REJECTED`; A0202 (void confirm) and B0202 move `VOID_PENDING` to `VOIDED`. If the invoice is still `SUBMITTED` when a reply arrives, the file stays in `RecvTarget` and is applied on a later tick.
 
-**Buyer side.** Arrivals (A0101, A0201, A0302, B0101, B0201) are stored as received documents and listed by the received-document endpoints. Nothing is applied automatically. You reply with one of these operations:
+**Buyer side.** Arrivals (A0101, A0201, A0302, B0101, B0201) are stored as received documents and listed by the received-document endpoints. Nothing is applied automatically. An A0302 (the seller acknowledges our rejection) needs no reply: it is stored as `REJECTION_ACKNOWLEDGED`, and the rejected A0101 moves from `REJECTED` to `REJECTION_ACKNOWLEDGED`. You reply to the others with one of these operations:
 
 | Reply                  | REST                                                                 | GraphQL                               | Sends | Document status after an accepted reply |
 | ---------------------- | -------------------------------------------------------------------- | ------------------------------------- | ----- | --------------------------------------- |

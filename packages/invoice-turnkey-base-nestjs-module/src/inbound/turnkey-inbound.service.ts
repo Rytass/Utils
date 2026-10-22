@@ -194,6 +194,11 @@ export class TurnkeyInboundService {
         reason: message.reason,
         xml: message.xml,
         fileName,
+        // A0302 是賣方對我方退回的確認，不需再回覆，收下即結案
+        status:
+          message.messageType === TurnkeyMigMessageType.A0302
+            ? TurnkeyReceivedDocumentStatus.REJECTION_ACKNOWLEDGED
+            : TurnkeyReceivedDocumentStatus.RECEIVED,
       })
       .orIgnore()
       .returning(['id'])
