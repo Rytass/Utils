@@ -21,6 +21,7 @@ import { TurnkeySubmissionCollectionDto } from '../dto/turnkey-submission.dto';
 import { TurnkeyReceivedDocumentDto } from '../dto/turnkey-received-document.dto';
 import {
   toAllowanceDto,
+  toCompanyDto,
   toEventDto,
   toInvoiceDto,
   toReceivedDocumentDto,
@@ -63,7 +64,9 @@ export const createTurnkeyQueryResolver = (access: TurnkeyRouteAccess): Type<unk
     ): Promise<TurnkeyCompanyDto | null> {
       await assertCompanyAccess(access, context.req, companyTaxId);
 
-      return this.companyService.describe(companyTaxId);
+      const company = await this.companyService.describe(companyTaxId);
+
+      return company ? toCompanyDto(company) : null;
     }
 
     @Query(() => TurnkeyInvoiceDto, { nullable: true, name: 'turnkeyInvoice' })
@@ -124,7 +127,10 @@ export const createTurnkeyQueryResolver = (access: TurnkeyRouteAccess): Type<unk
         ? await this.submissionService.listByDocument(companyTaxId, documentNumber, status ?? undefined, take)
         : await listDefault();
 
-      return { items: rows.map(toSubmissionDto) };
+      return {
+        id: ['turnkeySubmissions', companyTaxId, status ?? '', documentNumber ?? '', take].join(':'),
+        items: rows.map(toSubmissionDto),
+      };
     }
 
     @Query(() => TurnkeyEventCollectionDto, { name: 'turnkeyEvents' })
@@ -141,9 +147,11 @@ export const createTurnkeyQueryResolver = (access: TurnkeyRouteAccess): Type<unk
         throw new GraphQLError('after must be a cursor', { extensions: { code: 'BAD_USER_INPUT', field: 'after' } });
       }
 
-      const page = await this.eventService.listAfter(after ?? null, limit ?? DEFAULT_LIMIT, companyTaxId);
+      const take = limit ?? DEFAULT_LIMIT;
+      const page = await this.eventService.listAfter(after ?? null, take, companyTaxId);
 
       return {
+        id: ['turnkeyEvents', companyTaxId, after ?? '', take].join(':'),
         events: page.events.map(toEventDto),
         nextCursor: page.nextCursor,
       };

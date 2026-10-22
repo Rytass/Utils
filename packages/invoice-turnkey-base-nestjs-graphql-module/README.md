@@ -141,6 +141,22 @@ Two arguments are worth knowing: `resolveTurnkeySubmission(companyTaxId, submiss
 
 **Received documents.** The received-document queries take `status` and `limit`. The reply mutations take `sellerTaxId` (required, because the same document number can come from different sellers) and `documentDate` (`yyyyMMdd`), which is required when the same seller sent that number more than once. See [Inbound replies](../invoice-turnkey-base-nestjs-module/README.md#inbound-replies).
 
+## Object IDs
+
+Every object type has `id: ID!`, so Apollo Client can normalize its cache:
+
+| Type                          | `id`                                                                  |
+| ----------------------------- | --------------------------------------------------------------------- |
+| `TurnkeyCompany`              | The tax ID                                                            |
+| `TurnkeyEvent`                | The event sequence (the same value as the `after` cursor)             |
+| `TurnkeyBlankNumberReport`    | The `submissionId` of the E0402 submission for that track             |
+| `TurnkeyBlankNumberRange`     | `<submissionId>:<begin>-<end>`                                        |
+| `TurnkeySubmissionCollection` | `turnkeySubmissions:<companyTaxId>:<status>:<documentNumber>:<limit>` |
+| `TurnkeyEventCollection`      | `turnkeyEvents:<companyTaxId>:<after>:<limit>`                        |
+| Other types                   | The entity's own `id`                                                 |
+
+The collection ids are built from the query arguments, so the same query maps to the same cache entry and a refetch replaces it.
+
 ## Idempotency
 
 18 mutations require an `idempotencyKey` (1 to 255 characters). The two company mutations, `registerTurnkeyCompany` and `setTurnkeyQrAesKey`, do not. The keys are shared with the REST module and scoped to the company, the key and the action.

@@ -3,6 +3,7 @@ import {
   TurnkeyAllowanceEntity,
   TurnkeyAllowanceIssueInput,
   TurnkeyBlankNumberReport,
+  TurnkeyCompanyView,
   TurnkeyEvent,
   TurnkeyInvoiceNumberEntity,
   TurnkeyReceivedDocumentEntity,
@@ -27,6 +28,7 @@ import { TurnkeySubmissionDto } from './dto/turnkey-submission.dto';
 import { TurnkeyReceivedDocumentDto } from './dto/turnkey-received-document.dto';
 import { TurnkeyInvoiceNumberDto } from './dto/turnkey-invoice-number.dto';
 import { TurnkeyBlankNumberReportDto } from './dto/turnkey-blank-number.dto';
+import { TurnkeyCompanyDto } from './dto/turnkey-company.dto';
 import { parseIsoDate } from './turnkey-graphql.helpers';
 
 const byNullable = <T>(value: T | null | undefined): T | undefined => value ?? undefined;
@@ -249,7 +251,14 @@ export const toInvoiceNumberDto = (entry: TurnkeyInvoiceNumberEntity): TurnkeyIn
 });
 
 export const toBlankNumberReportDto = (report: TurnkeyBlankNumberReport): TurnkeyBlankNumberReportDto => ({
+  id: report.submissionId,
   track: report.track,
   submissionId: report.submissionId,
-  ranges: report.ranges.map(range => ({ begin: range.begin, end: range.end })),
+  ranges: report.ranges.map(range => ({
+    id: `${report.submissionId}:${range.begin}-${range.end}`,
+    begin: range.begin,
+    end: range.end,
+  })),
 });
+
+export const toCompanyDto = (company: TurnkeyCompanyView): TurnkeyCompanyDto => ({ ...company, id: company.taxId });

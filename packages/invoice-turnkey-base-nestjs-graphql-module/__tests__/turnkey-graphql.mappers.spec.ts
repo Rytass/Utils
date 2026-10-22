@@ -14,6 +14,7 @@ import {
 import { IssueTurnkeyInvoiceInput } from '../src/dto/turnkey-invoice.input';
 import {
   toBlankNumberReportDto,
+  toCompanyDto,
   toInvoiceDto,
   toInvoiceIssueInput,
   toInvoiceNumberDto,
@@ -236,9 +237,28 @@ describe('received document / invoice number / blank report mappers', () => {
     });
 
     expect(dto).toEqual({
+      id: 'd1b2c3d4-0000-4000-8000-000000000004',
       track: 'ZZ',
       submissionId: 'd1b2c3d4-0000-4000-8000-000000000004',
-      ranges: [{ begin: '00000600', end: '00000602' }],
+      ranges: [{ id: 'd1b2c3d4-0000-4000-8000-000000000004:00000600-00000602', begin: '00000600', end: '00000602' }],
     });
+  });
+
+  it('uses the tax ID as the company id', () => {
+    const now = new Date('2026-10-22T00:00:00Z');
+
+    expect(
+      toCompanyDto({
+        taxId: '12345675',
+        name: '測試營業人',
+        address: null,
+        routingId: 'ROUTE-TEST',
+        exchangeEnabled: false,
+        certificateExpiresAt: null,
+        qrAesKeyConfigured: false,
+        createdAt: now,
+        updatedAt: now,
+      }),
+    ).toMatchObject({ id: '12345675', taxId: '12345675' });
   });
 });

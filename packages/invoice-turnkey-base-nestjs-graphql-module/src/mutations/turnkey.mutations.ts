@@ -6,6 +6,7 @@ import {
   TurnkeySubmissionStatus,
   TurnkeySubmissionWorker,
   TurnkeyAllowanceService,
+  TurnkeyCompanyView,
   TurnkeyIdempotencyService,
   TurnkeyInvoicePrintService,
   TurnkeyInvoiceProof,
@@ -39,6 +40,7 @@ import {
   toAllowanceDto,
   toAllowanceIssueInput,
   toBlankNumberReportDto,
+  toCompanyDto,
   toInvoiceDto,
   toInvoiceIssueInput,
   toInvoiceNumberDto,
@@ -94,7 +96,7 @@ export const createTurnkeyMutationResolver = (access: TurnkeyRouteAccess): Type<
           certificateExpiresAt: input.certificateExpiresAt ?? undefined,
         });
 
-        return (await this.companyService.describe(companyTaxId)) as TurnkeyCompanyDto;
+        return toCompanyDto((await this.companyService.describe(companyTaxId)) as TurnkeyCompanyView);
       });
     }
 

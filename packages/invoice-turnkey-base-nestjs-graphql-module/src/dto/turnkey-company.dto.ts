@@ -1,8 +1,12 @@
-import { Field, InputType, ObjectType } from '@nestjs/graphql';
+import { Field, ID, InputType, ObjectType } from '@nestjs/graphql';
 
 /** 營業人資料：不含 QR Code 金鑰，只標示是否已設定 */
 @ObjectType('TurnkeyCompany')
 export class TurnkeyCompanyDto {
+  /** 統編，供 Apollo Client 正規化快取 */
+  @Field(() => ID)
+  id: string;
+
   @Field()
   taxId: string;
 
