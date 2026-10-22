@@ -18,7 +18,7 @@ import {
 import { TurnkeyInvoiceDocument, TurnkeyInvoiceIssueInput } from '../typings/turnkey-invoice.types';
 import { computeInvoiceAmounts, itemAmount } from '../utils/amounts';
 import { formatMigDate, formatPeriod } from '../utils/taipei-time';
-import { validateExchangeSeller, validateInvoiceInput, validateInvoiceShape } from '../validation/invoice-rules';
+import { validateInvoiceInput, validateInvoiceShape, validateSellerAddress } from '../validation/invoice-rules';
 import { TurnkeyValidationCode, TurnkeyValidationError } from '../validation/turnkey-validation-error';
 import { TurnkeyEventService } from './turnkey-event.service';
 import { TurnkeyInvoiceTrackService } from './turnkey-invoice-track.service';
@@ -149,7 +149,7 @@ export class TurnkeyInvoiceService {
       throw fail(TurnkeyValidationCode.BUYER_NOT_EXCHANGE_READY, '此營業人未啟用交換發票', 'deliveryMode');
     }
 
-    const sellerIssues = validateExchangeSeller(input.deliveryMode, company);
+    const sellerIssues = validateSellerAddress(company);
 
     if (sellerIssues.length) throw new TurnkeyValidationError(sellerIssues);
 

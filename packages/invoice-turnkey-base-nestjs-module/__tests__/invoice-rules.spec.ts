@@ -9,6 +9,7 @@ import {
   TurnkeyTaxType,
   TurnkeyValidationCode,
   validateExchangeSeller,
+  validateSellerAddress,
   validateInvoiceInput,
 } from '../src';
 
@@ -189,5 +190,16 @@ describe('validateExchangeSeller', () => {
 
   it('does not need an address outside exchange', () => {
     expect(validateExchangeSeller(TurnkeyDeliveryMode.STORAGE, { address: null })).toEqual([]);
+  });
+});
+
+describe('validateSellerAddress', () => {
+  it('requires a seller address for storage and exchange alike', () => {
+    expect(validateSellerAddress({ address: null })).toEqual([
+      expect.objectContaining({ code: TurnkeyValidationCode.SELLER_ADDRESS_REQUIRED, field: 'companyTaxId' }),
+    ]);
+
+    expect(validateSellerAddress({ address: ' ' })).toHaveLength(1);
+    expect(validateSellerAddress({ address: '測試地址' })).toEqual([]);
   });
 });

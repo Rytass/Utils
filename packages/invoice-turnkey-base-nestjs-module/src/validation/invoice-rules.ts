@@ -231,19 +231,28 @@ export const validateInvoiceInput = (
 };
 
 /**
- * 交換發票與交換折讓（A0101、B0101）必須帶賣方地址。
+ * F0401、G0401、A0101、B0101 的 Seller.Address 都必填（MIG 4.0 出現次數為 1），存證與交換皆同。
  * 缺了 Turnkey 本機就以 7001 擋下，號碼卻已用掉，所以在取號前檢查。
+ */
+export const validateSellerAddress = (seller: {
+  readonly address: string | null;
+}): readonly TurnkeyValidationIssue[] =>
+  seller.address?.trim()
+    ? []
+    : [
+        issue(
+          TurnkeyValidationCode.SELLER_ADDRESS_REQUIRED,
+          '開立發票與折讓需要賣方地址，請先設定營業人地址',
+          'companyTaxId',
+        ),
+      ];
+
+/**
+ * @deprecated 存證（F0401、G0401）同樣需要賣方地址，請改用 validateSellerAddress。
+ * 保留舊行為：只在 EXCHANGE 檢查。
  */
 export const validateExchangeSeller = (
   deliveryMode: TurnkeyDeliveryMode,
   seller: { readonly address: string | null },
 ): readonly TurnkeyValidationIssue[] =>
-  deliveryMode === TurnkeyDeliveryMode.EXCHANGE && !seller.address?.trim()
-    ? [
-        issue(
-          TurnkeyValidationCode.SELLER_ADDRESS_REQUIRED,
-          '交換發票與折讓需要賣方地址，請先設定營業人地址',
-          'companyTaxId',
-        ),
-      ]
-    : [];
+  deliveryMode === TurnkeyDeliveryMode.EXCHANGE ? validateSellerAddress(seller) : [];
