@@ -229,7 +229,7 @@ export class TurnkeyInvoiceTrackService {
     period: string,
     now: Date = new Date(),
   ): Promise<readonly TurnkeyBlankNumberReport[]> {
-    if (!/^\d{3}(0[2468]|1[02])$/.test(period)) throw invalidTrack('期別需為民國年 3 碼＋雙數月');
+    if (!isTurnkeyPeriod(period)) throw invalidTrack('期別需為民國年 3 碼＋雙數月');
 
     if (now < periodEndsAt(period)) throw invalidTrack(`${period} 期尚未結束，不能申報空白號碼`);
 
@@ -341,15 +341,13 @@ export class TurnkeyInvoiceTrackService {
 
     const byTrack = new Map(counts.map(row => [row.trackId, Number(row.count)]));
     const trackRemaining = (track: TurnkeyInvoiceTrackEntity): number => byTrack.get(track.id) ?? 0;
-    const byPeriod = tracks.reduce<ReadonlyMap<string, number>>(
-      (sums, track) => new Map([...sums, [track.period, (sums.get(track.period) ?? 0) + trackRemaining(track)]]),
-      new Map(),
-    );
+    const periodRemaining = (period: string): number =>
+      tracks.filter(track => track.period === period).reduce((sum, track) => sum + trackRemaining(track), 0);
 
     return tracks.map(track => ({
       track,
       trackRemaining: trackRemaining(track),
-      periodRemaining: byPeriod.get(track.period) ?? 0,
+      periodRemaining: periodRemaining(track.period),
     }));
   }
 

@@ -177,7 +177,7 @@ Register the number ranges before issuing: REST `POST /{routePrefix}/companies/{
 - The module does not check alignment to 50-number booklets. Align the ranges yourself.
 - A blank-number report (E0402) is accepted only after the period has ended. Before that it fails with `INVALID_TRACK`.
 
-For list pages, `TurnkeyInvoiceTrackService.list(companyTaxId, period?)` returns each track with `trackRemaining` (that track) and `periodRemaining` (the whole period). `TurnkeyInvoiceService.list(filter)` and `TurnkeyAllowanceService.list(filter)` return `{ items, total }` without line items, newest first, paged by `limit` (1–500, default 100) and `offset`. `TurnkeySubmissionService.latestByDocuments(companyTaxId, numbers)` returns the latest submission of each document in one query.
+For list pages, `TurnkeyInvoiceTrackService.list(companyTaxId, period?)` returns each track with `trackRemaining` (that track) and `periodRemaining` (the whole period). `TurnkeyInvoiceService.list(filter)` and `TurnkeyAllowanceService.list(filter)` return `{ items, total }` without line items, newest first, paged by `limit` (1–500, default 100) and `offset`. `TurnkeySubmissionService.latestByDocuments(companyTaxId, numbers, messageTypes)` returns the latest submission of each document in one query. Pass `TURNKEY_INVOICE_MESSAGE_TYPES` or `TURNKEY_ALLOWANCE_MESSAGE_TYPES`, because an allowance number can equal an invoice number. It uses a new index on `turnkey_submissions (companyTaxId, documentNumber, createdAt)`, so generate a migration for it.
 
 ## Turnkey database access
 

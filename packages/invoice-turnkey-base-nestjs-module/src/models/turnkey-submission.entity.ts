@@ -5,6 +5,7 @@ export const TurnkeySubmissionRepo = Symbol('TurnkeySubmissionRepo');
 
 @Entity('turnkey_submissions')
 @Index(['status', 'createdAt'])
+@Index(['companyTaxId', 'documentNumber', 'createdAt'])
 export class TurnkeySubmissionEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;

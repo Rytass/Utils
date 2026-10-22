@@ -61,6 +61,24 @@ const VOID_TYPES: ReadonlySet<TurnkeyMigMessageType> = new Set([
 const fail = (code: TurnkeyValidationCode, message: string, field?: string): TurnkeyValidationError =>
   new TurnkeyValidationError([{ code, message, field }]);
 
+/** 我方發票送出的訊息：存證開立／作廢／註銷，交換開立／作廢，以及確認買方退回（A0302） */
+export const TURNKEY_INVOICE_MESSAGE_TYPES: readonly TurnkeyMigMessageType[] = [
+  TurnkeyMigMessageType.F0401,
+  TurnkeyMigMessageType.F0501,
+  TurnkeyMigMessageType.F0701,
+  TurnkeyMigMessageType.A0101,
+  TurnkeyMigMessageType.A0201,
+  TurnkeyMigMessageType.A0302,
+];
+
+/** 我方折讓送出的訊息：存證開立／作廢，交換開立／作廢 */
+export const TURNKEY_ALLOWANCE_MESSAGE_TYPES: readonly TurnkeyMigMessageType[] = [
+  TurnkeyMigMessageType.G0401,
+  TurnkeyMigMessageType.G0501,
+  TurnkeyMigMessageType.B0101,
+  TurnkeyMigMessageType.B0201,
+];
+
 @Injectable()
 export class TurnkeySubmissionService {
   private readonly logger = new Logger(TurnkeySubmissionService.name);
@@ -337,10 +355,14 @@ export class TurnkeySubmissionService {
     });
   }
 
-  /** 每個單號最新的一筆送件（不分訊息類別），列表用來顯示最後結果 */
+  /**
+   * 每個單號最新的一筆送件，列表用來顯示最後結果。折讓單號由呼叫端指定，可能與發票號碼相同，
+   * 所以要用 messageTypes 限定是發票或折讓的訊息（TURNKEY_INVOICE_MESSAGE_TYPES、TURNKEY_ALLOWANCE_MESSAGE_TYPES）
+   */
   async latestByDocuments(
     companyTaxId: string,
     documentNumbers: readonly string[],
+    messageTypes: readonly TurnkeyMigMessageType[],
   ): Promise<ReadonlyMap<string, TurnkeySubmissionEntity>> {
     if (!documentNumbers.length) return new Map();
 
@@ -349,8 +371,10 @@ export class TurnkeySubmissionService {
       .distinctOn(['submission.documentNumber'])
       .where('submission.companyTaxId = :companyTaxId', { companyTaxId })
       .andWhere('submission.documentNumber IN (:...documentNumbers)', { documentNumbers })
+      .andWhere('submission.messageType IN (:...messageTypes)', { messageTypes })
       .orderBy('submission.documentNumber')
       .addOrderBy('submission.createdAt', 'DESC')
+      .addOrderBy('submission.id', 'DESC')
       .getMany();
 
     return new Map(rows.map(row => [row.documentNumber, row]));

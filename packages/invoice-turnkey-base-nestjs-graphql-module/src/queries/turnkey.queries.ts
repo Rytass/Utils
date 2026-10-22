@@ -3,6 +3,8 @@ import { Args, Context, Int, Query, Resolver } from '@nestjs/graphql';
 import { GraphQLError } from 'graphql';
 import {
   isTurnkeyPeriod,
+  TURNKEY_ALLOWANCE_MESSAGE_TYPES,
+  TURNKEY_INVOICE_MESSAGE_TYPES,
   TurnkeyAllowanceStatus,
   TurnkeyCompanyService,
   TurnkeyAllowanceService,
@@ -189,7 +191,7 @@ export const createTurnkeyQueryResolver = (access: TurnkeyRouteAccess): Type<unk
       await assertCompanyAccess(access, context.req, companyTaxId);
       assertPeriod(period);
 
-      const tracks = await runTurnkey(() => this.trackService.list(companyTaxId, period ?? undefined));
+      const tracks = await runTurnkey(() => this.trackService.list(companyTaxId, period || undefined));
 
       return tracks.map(toTrackSummaryDto);
     }
@@ -227,6 +229,7 @@ export const createTurnkeyQueryResolver = (access: TurnkeyRouteAccess): Type<unk
         const latest = await this.submissionService.latestByDocuments(
           companyTaxId,
           page.items.map(invoice => invoice.invoiceNumber),
+          TURNKEY_INVOICE_MESSAGE_TYPES,
         );
 
         return {
@@ -275,6 +278,7 @@ export const createTurnkeyQueryResolver = (access: TurnkeyRouteAccess): Type<unk
         const latest = await this.submissionService.latestByDocuments(
           companyTaxId,
           page.items.map(allowance => allowance.allowanceNumber),
+          TURNKEY_ALLOWANCE_MESSAGE_TYPES,
         );
 
         return {
