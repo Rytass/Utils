@@ -221,6 +221,8 @@ A submission is `WRITTEN` once its XML is in `UpCast` and until Turnkey logs a r
    - Only `ACCEPTED` and `FAILED` are valid. Any other status is refused (`INVALID_STATE`). The result is recorded with result code `MANUAL`.
    - Only `WRITTEN` submissions can be resolved. A platform result that arrives later is not applied, because the row is no longer `WRITTEN`.
 4. **Retry if it failed.** A `FAILED` or `REJECTED` submission can be retried with `POST .../submissions/{submissionId}/retry`, or with `retry()` in `@rytass/invoice-adapter-turnkey`. Other statuses are refused (`INVALID_STATE`).
+   - A retry resends the stored XML unchanged. It only helps when the cause is outside the XML, for example a certificate that was not registered yet (`E0301`), a stale recipient entry in Turnkey (`E0146`), or a connection failure.
+   - When the content is wrong (a local `[7001]` schema error, a missing field), a retry fails the same way. Fix the data, issue again under a new number, then abandon the failed number (`POST .../invoice-numbers/{invoiceNumber}/abandon`) so the period-end blank report includes it.
 5. **Never edit the module's tables by hand.**
 
 Void and annul require an invoice in `ISSUED` or `CONFIRMED`, so both are refused while the invoice is still `SUBMITTED`. Blank-number reports are not blocked by a `WRITTEN` submission, so wait for the submission to resolve before reporting its number blank.
