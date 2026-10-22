@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.3](https://github.com/Rytass/Utils/compare/@rytass/invoice-turnkey-base-nestjs-module@0.1.2...@rytass/invoice-turnkey-base-nestjs-module@0.1.3) (2026-10-22)
+
+### Bug Fixes
+
+- **invoice-turnkey-base-nestjs-module:** require a seller address for storage invoices and allowances too ([baea6e9](https://github.com/Rytass/Utils/commit/baea6e990b6977f25d5387c8c5f868d70a39d5eb))
+- **invoice-turnkey-base-nestjs-module:** scope latest submissions by message type and index the lookup ([b8c3cc7](https://github.com/Rytass/Utils/commit/b8c3cc769784bfe3daa9f97a659092ffb50a8cf6))
+
+### Features
+
+- **invoice-turnkey-base-nestjs-module:** add list methods for tracks, invoices and allowances ([b65aeb3](https://github.com/Rytass/Utils/commit/b65aeb3aec4874eeba6f86e9850d6bce0b3a3970))
+
 ## [0.1.2](https://github.com/Rytass/Utils/compare/@rytass/invoice-turnkey-base-nestjs-module@0.1.1...@rytass/invoice-turnkey-base-nestjs-module@0.1.2) (2026-10-22)
 
 ### Bug Fixes

@@ -8361,7 +8361,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-turnkey-base-nestjs-graphql-module@workspace:packages/invoice-turnkey-base-nestjs-graphql-module"
   dependencies:
-    "@rytass/invoice-turnkey-base-nestjs-module": "npm:^0.1.2"
+    "@rytass/invoice-turnkey-base-nestjs-module": "npm:^0.1.3"
   peerDependencies:
     "@as-integrations/express5": "*"
     "@nestjs/common": "*"
@@ -8379,7 +8379,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rytass/invoice-turnkey-base-nestjs-module@npm:^0.1.2, @rytass/invoice-turnkey-base-nestjs-module@workspace:packages/invoice-turnkey-base-nestjs-module":
+"@rytass/invoice-turnkey-base-nestjs-module@npm:^0.1.3, @rytass/invoice-turnkey-base-nestjs-module@workspace:packages/invoice-turnkey-base-nestjs-module":
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-turnkey-base-nestjs-module@workspace:packages/invoice-turnkey-base-nestjs-module"
   dependencies:
@@ -8416,7 +8416,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-turnkey-base-nestjs-nats-notify-module@workspace:packages/invoice-turnkey-base-nestjs-nats-notify-module"
   dependencies:
-    "@rytass/invoice-turnkey-base-nestjs-module": "npm:^0.1.2"
+    "@rytass/invoice-turnkey-base-nestjs-module": "npm:^0.1.3"
   peerDependencies:
     "@nats-io/jetstream": "*"
     "@nats-io/transport-node": "*"
@@ -8430,7 +8430,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-turnkey-base-nestjs-redis-notify-module@workspace:packages/invoice-turnkey-base-nestjs-redis-notify-module"
   dependencies:
-    "@rytass/invoice-turnkey-base-nestjs-module": "npm:^0.1.2"
+    "@rytass/invoice-turnkey-base-nestjs-module": "npm:^0.1.3"
   peerDependencies:
     "@nestjs/common": "*"
     "@nestjs/typeorm": "*"
@@ -8443,7 +8443,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rytass/invoice-turnkey-base-nestjs-rest-module@workspace:packages/invoice-turnkey-base-nestjs-rest-module"
   dependencies:
-    "@rytass/invoice-turnkey-base-nestjs-module": "npm:^0.1.2"
+    "@rytass/invoice-turnkey-base-nestjs-module": "npm:^0.1.3"
   peerDependencies:
     "@nestjs/common": "*"
     "@nestjs/core": "*"
