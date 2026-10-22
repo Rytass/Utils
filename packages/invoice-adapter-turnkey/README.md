@@ -30,7 +30,7 @@ Every request is sent to `${baseUrl}/companies/${companyTaxId}/...`.
 
 `orderId` is required. It is sent as `externalId` and as the `Idempotency-Key` of the issue request. Calling `issue()` again with the same `orderId` and the same content returns the stored result, so it never creates a second invoice. The same `orderId` with different content fails with `EXTERNAL_ID_CONFLICT` (409).
 
-A rejected or failed submission is not resent automatically. After you fix the cause, call [`retry(invoice)`](#retry).
+A rejected or failed submission is not resent automatically. After you fix a cause outside the XML, call [`retry(invoice)`](#retry). A retry resends the same XML, so content errors need a new invoice instead.
 
 ```typescript
 import { InvoiceCarriers, TaxType } from '@rytass/invoice-adapter-turnkey';
@@ -144,7 +144,7 @@ const raw = await gateway.queryAllowance('AL0000001'); // raw GET /allowances/{a
 
 ## Retry
 
-When a submission is rejected by the platform or fails, the invoice or allowance stays in that state until you resend it. Fix the cause first (for example, enable the buyer for exchange), then retry. The retry resends the same XML.
+When a submission is rejected by the platform or fails, the invoice or allowance stays in that state until you resend it. The retry resends the same XML, so it only fixes causes outside the XML: register the software certificate (`E0301`), delete a stale recipient entry in Turnkey (`E0146`), or restore the connection, then retry. If the content is wrong (for example a local `[7001]` schema error), a retry fails again: issue a new invoice, and abandon the failed number through the REST or GraphQL module so the period-end blank report includes it.
 
 ```typescript
 const retried = await gateway.retry(invoice); // resend the latest REJECTED or FAILED submission
@@ -207,4 +207,4 @@ try {
 }
 ```
 
-Network and timeout errors are rethrown as plain `Error`. Missing request data that the adapter checks before sending (a carrier `typeCode`, or `zeroRatedReasonCode` when `ZERO_TAX` items are present) throws a plain `Error` without a request.
+Network and timeout errors are rethrown as plain `Error`. Input that the adapter checks before sending throws a plain `Error` and no request is made, the same as the other `@rytass/invoice-*` adapters: a missing `orderId`, empty `items`, a malformed `vatNumber`, `MIXED` on an item, a missing carrier `code` or `typeCode`, a missing `zeroRatedReasonCode` with `ZERO_TAX` items, a missing `specialTaxRate` with `SPECIAL` items, and an allowance on a mixed-tax invoice without a tax type. Check `instanceof TurnkeyInvoiceError` before reading `status` or `code`.

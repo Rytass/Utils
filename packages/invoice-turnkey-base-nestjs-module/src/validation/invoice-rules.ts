@@ -229,3 +229,21 @@ export const validateInvoiceInput = (
     ...checkDates(input, context),
   ];
 };
+
+/**
+ * 交換發票與交換折讓（A0101、B0101）必須帶賣方地址。
+ * 缺了 Turnkey 本機就以 7001 擋下，號碼卻已用掉，所以在取號前檢查。
+ */
+export const validateExchangeSeller = (
+  deliveryMode: TurnkeyDeliveryMode,
+  seller: { readonly address: string | null },
+): readonly TurnkeyValidationIssue[] =>
+  deliveryMode === TurnkeyDeliveryMode.EXCHANGE && !seller.address?.trim()
+    ? [
+        issue(
+          TurnkeyValidationCode.SELLER_ADDRESS_REQUIRED,
+          '交換發票與折讓需要賣方地址，請先設定營業人地址',
+          'companyTaxId',
+        ),
+      ]
+    : [];

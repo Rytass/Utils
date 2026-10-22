@@ -17,6 +17,7 @@ import {
 import { TurnkeyItemTaxType } from '../typings/turnkey-invoice.types';
 import { roundTo, splitAllowanceAmount } from '../utils/amounts';
 import { formatMigDate } from '../utils/taipei-time';
+import { validateExchangeSeller } from '../validation/invoice-rules';
 import { TurnkeyValidationCode, TurnkeyValidationError } from '../validation/turnkey-validation-error';
 import { TurnkeySubmissionService } from './turnkey-submission.service';
 
@@ -153,6 +154,11 @@ export class TurnkeyAllowanceService {
         .getOne();
 
       if (!invoice) throw fail(TurnkeyValidationCode.INVOICE_NOT_FOUND, '找不到原發票', 'invoiceNumber');
+
+      // 開立後才清掉地址時，B0101 一樣會被 Turnkey 以 7001 擋下
+      const sellerIssues = validateExchangeSeller(invoice.deliveryMode, company);
+
+      if (sellerIssues.length) throw new TurnkeyValidationError(sellerIssues);
 
       if (
         ![TurnkeyInvoiceStatus.ISSUED, TurnkeyInvoiceStatus.CONFIRMED].includes(invoice.status) ||

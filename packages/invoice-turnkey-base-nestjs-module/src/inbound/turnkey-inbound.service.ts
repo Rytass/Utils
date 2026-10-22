@@ -12,6 +12,12 @@ import { TurnkeyAllowanceStatus, TurnkeyInvoiceStatus, TurnkeyMigMessageType } f
 import { TurnkeyEvent, TurnkeyEvents } from '../typings/turnkey-events';
 import { TurnkeyInboundMessage } from './parse-inbound-message';
 
+/** 收到的文件的初始狀態：A0302 是賣方對我方退回的確認，不需再回覆，收下即結案 */
+export const initialReceivedStatus = (messageType: TurnkeyMigMessageType): TurnkeyReceivedDocumentStatus =>
+  messageType === TurnkeyMigMessageType.A0302
+    ? TurnkeyReceivedDocumentStatus.REJECTION_ACKNOWLEDGED
+    : TurnkeyReceivedDocumentStatus.RECEIVED;
+
 /** IGNORED：文件存在但狀態不允許這個回覆（例如已作廢後才收到確認），封存並記警告 */
 export type TurnkeyInboundOutcome = 'APPLIED' | 'DUPLICATE' | 'UNMATCHED' | 'IGNORED';
 
@@ -194,6 +200,7 @@ export class TurnkeyInboundService {
         reason: message.reason,
         xml: message.xml,
         fileName,
+        status: initialReceivedStatus(message.messageType),
       })
       .orIgnore()
       .returning(['id'])

@@ -5,7 +5,13 @@
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import path from 'path';
-import { parseInboundMessage, scanInbound, TurnkeyMigMessageType } from '../src';
+import {
+  initialReceivedStatus,
+  parseInboundMessage,
+  scanInbound,
+  TurnkeyMigMessageType,
+  TurnkeyReceivedDocumentStatus,
+} from '../src';
 
 // 驗證區 RecvTarget 實際收到的檔案
 const fixture = (type: string): Promise<string> => readFile(path.join(__dirname, 'fixtures', `${type}.xml`), 'utf8');
@@ -164,5 +170,20 @@ describe('scanInbound', () => {
     expect(await readdir(path.join(dataPath, 'RecvTarget/A0102'))).toEqual(['a.xml']);
 
     await rm(dataPath, { recursive: true, force: true });
+  });
+});
+
+describe('initialReceivedStatus', () => {
+  it('closes an A0302 on arrival and leaves the others waiting for a reply', () => {
+    expect(initialReceivedStatus(TurnkeyMigMessageType.A0302)).toBe(
+      TurnkeyReceivedDocumentStatus.REJECTION_ACKNOWLEDGED,
+    );
+
+    [
+      TurnkeyMigMessageType.A0101,
+      TurnkeyMigMessageType.A0201,
+      TurnkeyMigMessageType.B0101,
+      TurnkeyMigMessageType.B0201,
+    ].forEach(type => expect(initialReceivedStatus(type)).toBe(TurnkeyReceivedDocumentStatus.RECEIVED));
   });
 });
