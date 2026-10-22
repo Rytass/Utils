@@ -1,12 +1,12 @@
 import { applyDecorators, Type } from '@nestjs/common';
 import { Args, Context, Mutation, Resolver } from '@nestjs/graphql';
+import { GraphQLError } from 'graphql';
 import {
   TurnkeyAllowanceProof,
   TurnkeyCompanyService,
   TurnkeySubmissionStatus,
   TurnkeySubmissionWorker,
   TurnkeyAllowanceService,
-  TurnkeyCompanyView,
   TurnkeyIdempotencyService,
   TurnkeyInvoicePrintService,
   TurnkeyInvoiceProof,
@@ -96,7 +96,11 @@ export const createTurnkeyMutationResolver = (access: TurnkeyRouteAccess): Type<
           certificateExpiresAt: input.certificateExpiresAt ?? undefined,
         });
 
-        return toCompanyDto((await this.companyService.describe(companyTaxId)) as TurnkeyCompanyView);
+        const company = await this.companyService.describe(companyTaxId);
+
+        if (!company) throw new GraphQLError('Company not registered', { extensions: { code: 'NOT_FOUND' } });
+
+        return toCompanyDto(company);
       });
     }
 

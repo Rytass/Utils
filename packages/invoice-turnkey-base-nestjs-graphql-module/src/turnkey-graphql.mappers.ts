@@ -11,6 +11,7 @@ import {
   TurnkeyInvoiceTrackEntity,
   TurnkeyItemTaxType,
   TurnkeySubmissionEntity,
+  TurnkeySubmissionStatus,
   TurnkeyTaxType,
   TurnkeyValidationCode,
   TurnkeyValidationError,
@@ -262,3 +263,28 @@ export const toBlankNumberReportDto = (report: TurnkeyBlankNumberReport): Turnke
 });
 
 export const toCompanyDto = (company: TurnkeyCompanyView): TurnkeyCompanyDto => ({ ...company, id: company.taxId });
+
+/** service 實際使用的筆數（1 到 500） */
+const effectiveLimit = (limit: number): number => Math.min(Math.max(limit, 1), 500);
+
+/**
+ * 集合的 id 由正規化後的查詢條件組成：等價的查詢（省略 status 與 PENDING、超過上限的 limit）得到同一個 id，
+ * 讓 Apollo Client 把它們視為同一個快取項目。
+ */
+export const submissionCollectionId = (
+  companyTaxId: string,
+  status: TurnkeySubmissionStatus | null,
+  documentNumber: string | null,
+  limit: number,
+): string =>
+  [
+    'turnkeySubmissions',
+    companyTaxId,
+    // 指定單號時 status 只是額外篩選，省略代表全部；未指定單號時省略等同 PENDING
+    documentNumber ? (status ?? '') : (status ?? TurnkeySubmissionStatus.PENDING),
+    documentNumber ?? '',
+    effectiveLimit(limit),
+  ].join(':');
+
+export const eventCollectionId = (companyTaxId: string, after: string | null, limit: number): string =>
+  ['turnkeyEvents', companyTaxId, after ?? '', effectiveLimit(limit)].join(':');

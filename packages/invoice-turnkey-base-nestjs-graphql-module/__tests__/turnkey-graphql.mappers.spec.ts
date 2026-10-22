@@ -4,6 +4,7 @@ import {
   TurnkeyNumberStatus,
   TurnkeyReceivedDocumentEntity,
   TurnkeyReceivedDocumentStatus,
+  TurnkeySubmissionStatus,
   TurnkeyCarrierType,
   TurnkeyDeliveryMode,
   TurnkeyInvoiceStatus,
@@ -14,6 +15,8 @@ import {
 import { IssueTurnkeyInvoiceInput } from '../src/dto/turnkey-invoice.input';
 import {
   toBlankNumberReportDto,
+  eventCollectionId,
+  submissionCollectionId,
   toCompanyDto,
   toInvoiceDto,
   toInvoiceIssueInput,
@@ -260,5 +263,27 @@ describe('received document / invoice number / blank report mappers', () => {
         updatedAt: now,
       }),
     ).toMatchObject({ id: '12345675', taxId: '12345675' });
+  });
+});
+
+describe('collection ids', () => {
+  it('fills in the default PENDING status when listing without a document number', () => {
+    expect(submissionCollectionId('12345675', null, null, 100)).toBe('turnkeySubmissions:12345675:PENDING::100');
+    expect(submissionCollectionId('12345675', TurnkeySubmissionStatus.PENDING, null, 100)).toBe(
+      'turnkeySubmissions:12345675:PENDING::100',
+    );
+  });
+
+  it('keeps an empty status when looking up by document number', () => {
+    expect(submissionCollectionId('12345675', null, 'AB12345678', 100)).toBe(
+      'turnkeySubmissions:12345675::AB12345678:100',
+    );
+  });
+
+  it('uses the clamped limit', () => {
+    expect(submissionCollectionId('12345675', null, null, 1000)).toBe('turnkeySubmissions:12345675:PENDING::500');
+    expect(submissionCollectionId('12345675', null, null, 500)).toBe('turnkeySubmissions:12345675:PENDING::500');
+    expect(eventCollectionId('12345675', null, 0)).toBe('turnkeyEvents:12345675::1');
+    expect(eventCollectionId('12345675', '42', 10)).toBe('turnkeyEvents:12345675:42:10');
   });
 });

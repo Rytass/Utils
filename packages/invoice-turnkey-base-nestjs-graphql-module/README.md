@@ -155,7 +155,11 @@ Every object type has `id: ID!`, so Apollo Client can normalize its cache:
 | `TurnkeyEventCollection`      | `turnkeyEvents:<companyTaxId>:<after>:<limit>`                        |
 | Other types                   | The entity's own `id`                                                 |
 
-The collection ids are built from the query arguments, so the same query maps to the same cache entry and a refetch replaces it.
+The collection ids are built from the effective query arguments, so the same query maps to the same cache entry and a refetch replaces it:
+
+- `<status>` is `PENDING` when you omit it and list without `documentNumber`, because that is what the query returns. With `documentNumber` and no `status`, it is empty.
+- `<limit>` is the limit the query applied, clamped to 1–500.
+- Omitted arguments are empty strings.
 
 ## Idempotency
 

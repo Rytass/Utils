@@ -21,6 +21,8 @@ import { TurnkeySubmissionCollectionDto } from '../dto/turnkey-submission.dto';
 import { TurnkeyReceivedDocumentDto } from '../dto/turnkey-received-document.dto';
 import {
   toAllowanceDto,
+  eventCollectionId,
+  submissionCollectionId,
   toCompanyDto,
   toEventDto,
   toInvoiceDto,
@@ -128,7 +130,7 @@ export const createTurnkeyQueryResolver = (access: TurnkeyRouteAccess): Type<unk
         : await listDefault();
 
       return {
-        id: ['turnkeySubmissions', companyTaxId, status ?? '', documentNumber ?? '', take].join(':'),
+        id: submissionCollectionId(companyTaxId, status ?? null, documentNumber ?? null, take),
         items: rows.map(toSubmissionDto),
       };
     }
@@ -151,7 +153,7 @@ export const createTurnkeyQueryResolver = (access: TurnkeyRouteAccess): Type<unk
       const page = await this.eventService.listAfter(after ?? null, take, companyTaxId);
 
       return {
-        id: ['turnkeyEvents', companyTaxId, after ?? '', take].join(':'),
+        id: eventCollectionId(companyTaxId, after ?? null, take),
         events: page.events.map(toEventDto),
         nextCursor: page.nextCursor,
       };
