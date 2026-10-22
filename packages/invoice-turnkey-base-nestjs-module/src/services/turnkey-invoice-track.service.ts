@@ -186,6 +186,18 @@ export class TurnkeyInvoiceTrackService {
     );
 
     if (!result.affected) {
+      const exists = (await this.numberRepo.count({ where: { companyTaxId, invoiceNumber } })) > 0;
+
+      if (!exists) {
+        throw new TurnkeyValidationError([
+          {
+            code: TurnkeyValidationCode.NUMBER_OUT_OF_TRACK,
+            message: '此號碼不在營業人登錄的字軌內',
+            field: 'invoiceNumber',
+          },
+        ]);
+      }
+
       throw new TurnkeyValidationError([
         {
           code: TurnkeyValidationCode.INVALID_STATE,
