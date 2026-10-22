@@ -24,7 +24,7 @@ export enum TurnkeyValidationCode {
   DONATION_NOT_ALLOWED = 'DONATION_NOT_ALLOWED',
   /** 要求 EXCHANGE，但賣方（開立的營業人）的 exchangeEnabled 為 false。名稱沿用舊版，檢查的是賣方 */
   BUYER_NOT_EXCHANGE_READY = 'BUYER_NOT_EXCHANGE_READY',
-  /** 交換發票（A0101）與交換折讓（B0101）必須帶賣方地址；營業人資料沒有 address 時拒絕，號碼不會用掉 */
+  /** 發票與折讓（F0401、G0401、A0101、B0101）都必須帶賣方地址；營業人資料沒有 address 時拒絕，號碼不會用掉 */
   SELLER_ADDRESS_REQUIRED = 'SELLER_ADDRESS_REQUIRED',
   NO_AVAILABLE_NUMBER = 'NO_AVAILABLE_NUMBER',
   INVALID_STATE = 'INVALID_STATE',
