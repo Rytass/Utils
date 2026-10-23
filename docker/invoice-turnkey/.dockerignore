@@ -1,5 +1,7 @@
-# Keep the build context minimal: only the official installer and the entrypoint.
+# Keep the build context minimal: only the official installer, the entrypoint and setup/.
 # Secrets (.env, secrets/), compose files and samples never reach the daemon.
 *
 !EINVTurnkey_setup_*.tar.gz
 !turnkey-entrypoint.sh
+!setup/
+setup/**/__pycache__

@@ -36,7 +36,7 @@ services:
       dockerfile: Dockerfile
       args:
         TURNKEY_TARBALL: EINVTurnkey_setup_3.2.2.tar.gz
-    image: einv-turnkey:3.2.2
+    image: einv-turnkey:3.2.2-r1
     platform: linux/amd64
     restart: unless-stopped
     depends_on:
@@ -48,6 +48,19 @@ services:
       # Work directories (UpCast/Pack/SendFile/...), software certificate, logs and
       # config all live under /data. Mount /data itself, never the install directory.
       - turnkey-data:/data
+      # Automated setup (README section 5.6): uncomment to configure Turnkey at start
+      # from a config file. Put the passwords and PFX files in ./secrets/turnkey/.
+      # - ./turnkey-setup.yaml:/etc/turnkey/setup.yaml:ro
+      # - ./secrets/turnkey:/run/secrets/turnkey:ro
+    # environment:
+    #   TURNKEY_SETUP_FILE: /etc/turnkey/setup.yaml
+    #   TURNKEY_MENU_PASSWORD_FILE: /run/secrets/turnkey/menu
+    #   TURNKEY_SETUP_ENV_CHECK: warn        # required once the platform side is ready
+    # Not ready while the automated setup runs or the schedules restart
+    healthcheck:
+      test: ["CMD", "turnkey-entrypoint", "ready"]
+      interval: 10s
+      start_period: 10m
 
   app:
     # Your NestJS image that uses @rytass/invoice-turnkey-base-nestjs-module
@@ -61,7 +74,7 @@ services:
       db:
         condition: service_healthy
       turnkey:
-        condition: service_started
+        condition: service_healthy
     environment:
       # The app's own database (the module's turnkey_* tables live here)
       DATABASE_URL: postgres://app:${APP_DB_PASSWORD:?set in .env}@db:5432/app
