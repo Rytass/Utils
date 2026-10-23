@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.4](https://github.com/Rytass/Utils/compare/@rytass/invoice-turnkey-base-nestjs-module@0.1.3...@rytass/invoice-turnkey-base-nestjs-module@0.1.4) (2026-10-23)
+
+**Note:** Version bump only for package @rytass/invoice-turnkey-base-nestjs-module
+
 ## [0.1.3](https://github.com/Rytass/Utils/compare/@rytass/invoice-turnkey-base-nestjs-module@0.1.2...@rytass/invoice-turnkey-base-nestjs-module@0.1.3) (2026-10-22)
 
 ### Bug Fixes
