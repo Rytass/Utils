@@ -11,11 +11,12 @@
     "jetstream"
   ],
   "author": "Chia Yu Pai <fantasyatelier@gmail.com>",
-  "homepage": "https://github.com/Rytass/Utils#readme",
+  "homepage": "https://github.com/Rytass/Utils/tree/main/packages/invoice-turnkey-base-nestjs-nats-notify-module#readme",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Rytass/Utils.git"
+    "url": "git+https://github.com/Rytass/Utils.git",
+    "directory": "packages/invoice-turnkey-base-nestjs-nats-notify-module"
   },
   "scripts": {
     "clean": "nx clean",

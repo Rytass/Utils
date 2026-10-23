@@ -2,6 +2,8 @@
 
 `@rytass/invoice-adapter-turnkey` implements the `InvoiceGateway` interface from `@rytass/invoice` on top of the Turnkey REST module (company-scoped endpoints). It is a plain class, not a NestJS module, so it can be instantiated in any service.
 
+> Turnkey itself is not part of this package. See [Running Turnkey](https://github.com/Rytass/Utils/tree/main/packages/invoice-turnkey-base-nestjs-module#running-turnkey) in the base module and the [Turnkey Docker guide](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md) for building the image and configuring Turnkey.
+
 ## Installation
 
 ```bash
@@ -84,7 +86,7 @@ const exchangeGateway = new TurnkeyInvoiceGateway({
 Before you issue an exchange invoice:
 
 - **The seller must be enabled for exchange.** Set `exchangeEnabled: true` on the company, with the REST company route (`PUT /{routePrefix}/companies/{companyTaxId}`), GraphQL `registerTurnkeyCompany`, or `TurnkeyCompanyService.register()`. Otherwise the issue fails with `BUYER_NOT_EXCHANGE_READY` (422). The name suggests the buyer, but the check is on the seller's flag.
-- **The buyer must be ready to receive.** Set this up on the platform side first ([Docker guide, section 8](../../docker/invoice-turnkey/README.md#8-b2b-exchange-prerequisites)).
+- **The buyer must be ready to receive.** Set this up on the platform side first ([Docker guide, section 8](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md#8-b2b-exchange-prerequisites)).
 - **The buyer tax ID is required.** Pass `vatNumber`. Without it the issue fails with `BUYER_TAX_ID_REQUIRED` (422).
 - **`TaxType.MIXED` is not allowed** on exchange invoices (`TAX_TYPE_NOT_ALLOWED`).
 
