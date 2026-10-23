@@ -21,7 +21,8 @@ This directory explains how to run the Ministry of Finance (MOF) e-Invoice **Tur
 Contained here (written by us):
 
 - `Dockerfile`: builds the image from the official installer.
-- `turnkey-entrypoint.sh`: container entrypoint. Creates the default config, keeps config and work directories on the volume, and turns `docker stop` into a graceful shutdown.
+- `turnkey-entrypoint.sh`: container entrypoint. Creates the default config, keeps config and work directories on the volume, turns `docker stop` into a graceful shutdown, runs the automated setup and answers the readiness probe.
+- `setup/`: the automated setup (`turnkey_setup.py`) that drives the text-mode menu, the per-version menu spec (`setup/spec/<version>.json`) and its unit tests. See section 5.6.
 - `compose.example.yaml`: example stack with PostgreSQL, Turnkey and the NestJS app.
 - `.dockerignore` and `.gitignore`: keep the installer, secrets and local compose files out of the build context and out of git.
 - `samples/`: a `send.sh` test tool and de-identified MIG 4.1 XML templates for test-zone verification.
@@ -143,7 +144,7 @@ docker/invoice-turnkey/
   ...
 ```
 
-The build context is this directory. `.dockerignore` excludes everything except the installer and the entrypoint, so secrets and compose files never reach the Docker daemon.
+The build context is this directory. `.dockerignore` excludes everything except the installer, the entrypoint and `setup/`, so secrets and compose files never reach the Docker daemon.
 
 ### 3.2 Build
 
@@ -151,10 +152,12 @@ The build context is this directory. `.dockerignore` excludes everything except 
 cd docker/invoice-turnkey
 docker build --platform linux/amd64 \
   --build-arg TURNKEY_TARBALL=EINVTurnkey_setup_3.2.2.tar.gz \
-  -t einv-turnkey:3.2.2 .
+  -t einv-turnkey:3.2.2-r1 .
 ```
 
 Notes:
+
+- The tag is `<Turnkey version>-r<revision>`. Bump the revision (`--build-arg SETUP_REVISION=r2` and the tag) whenever `setup/` or the entrypoint changes, so a deployment can tell two images of the same Turnkey version apart. The build runs the `setup/` unit tests and fails if they fail.
 
 - The base image is `eclipse-temurin:17-jre-jammy` (OpenJDK 17). Validated with Temurin 17 and PostgreSQL 16.
 - The installer ships an empty `jre/` directory. The start scripts use the system Java only when `JAVA_HOME` is set and a `./javahome` marker file exists. The Dockerfile sets both.
@@ -196,6 +199,8 @@ The app reads Turnkey's results (message status and error codes) from the Turnke
 Never grant `SELECT` on the password columns of Turnkey's configuration tables. The module never uses `SELECT *`.
 
 ## 5. First-time configuration
+
+There are two ways to configure Turnkey: by hand in the text-mode menu (sections 5.1 to 5.5), or automatically from environment variables or a config file (section 5.6). The automated setup performs the same menu steps as section 5.2, so read 5.2 to 5.5 either way.
 
 ### 5.1 Text mode needs a TTY
 
@@ -267,6 +272,113 @@ Copying the `{CHTAE7}` string from a configuration that was set up once in the m
 - Only **software certificates (PFX)** are supported. The installer does not include the PKCS#11 reader library, and the container is not suited to IC card readers.
 - Changes to the configuration go through the menu, never by editing the Turnkey database tables directly. The table formats are not a public interface.
 
+### 5.6 Automated configuration
+
+`turnkey-entrypoint configure` drives the text-mode menu for you: database connection, execution environment, data directories, transmission accounts, certificates, senders and the four schedules, then the environment check. It does not touch the Turnkey database tables; every change goes through the menu, as a person would make it.
+
+It runs in two ways:
+
+- **At container start.** When `TURNKEY_SETUP_FILE` or `TURNKEY_SENDER_TAX_ID` is set, `start` runs `configure` before starting the schedules. If it fails, the container exits with code 1 and the schedules are not started.
+- **On demand**, for later additions, changes and removals: edit the config, then run `docker compose exec turnkey turnkey-entrypoint configure`. When something changed, the entrypoint restarts the schedules itself.
+
+#### Input: environment variables (one company)
+
+Environment variables describe a single company. Use a config file for more than one.
+
+| Variable                                                | Required | Meaning                                                  |
+| ------------------------------------------------------- | -------- | -------------------------------------------------------- |
+| `TURNKEY_ENVIRONMENT`                                   | yes      | `test` or `production`. No default, on purpose           |
+| `TURNKEY_MENU_PASSWORD(_FILE)`                          | yes      | Text-mode login password                                 |
+| `TURNKEY_MENU_USER`                                     | no       | Text-mode login account; defaults to the Turnkey default |
+| `TURNKEY_DB_HOST`, `TURNKEY_DB_NAME`, `TURNKEY_DB_USER` | yes      | Turnkey database                                         |
+| `TURNKEY_DB_PORT`                                       | no       | Default `5432`                                           |
+| `TURNKEY_DB_PASSWORD(_FILE)`                            | yes      | Turnkey database password                                |
+| `TURNKEY_SENDER_TAX_ID`                                 | yes      | Sender tax ID. Setting it enables setup at start         |
+| `TURNKEY_ROUTING_CODE`                                  | yes      | Redirect code (繞送代碼) issued by the platform          |
+| `TURNKEY_ROUTING_DESCRIPTION`                           | no       | Default: the routing code                                |
+| `TURNKEY_SENDER_DESCRIPTION`                            | no       | Default: the tax ID                                      |
+| `TURNKEY_TRANSMIT_ACCOUNT`                              | no       | Transmission account; default: the tax ID                |
+| `TURNKEY_TRANSMIT_PASSWORD(_FILE)`                      | yes      | Transmission account password                            |
+| `TURNKEY_CERT_CODE`                                     | no       | 4-character certificate code; default `0001`             |
+| `TURNKEY_CERT_PFX_FILE`                                 | yes      | PFX file (for example a mounted secret)                  |
+| `TURNKEY_CERT_PASSWORD(_FILE)`                          | yes      | PFX password                                             |
+
+For every secret, `NAME_FILE` (a path to a mounted secret file) takes precedence over `NAME`. Prefer the `_FILE` form: environment variables show in `docker inspect`.
+
+#### Input: config file (one or more companies)
+
+Set `TURNKEY_SETUP_FILE` to a YAML or JSON file. Passwords are never written in it; each one is a `passwordFile` (path) or `passwordEnv` (variable name).
+
+```yaml
+environment: test                      # test | production
+database:
+  host: db
+  port: 5432
+  name: einvturnkey
+  user: turnkey
+  passwordFile: /run/secrets/turnkey/db
+transmitAccounts:
+  - account: "12345678"
+    passwordFile: /run/secrets/turnkey/acct-12345678
+certificates:
+  - code: "0001"                       # 4 characters
+    pfxFile: /run/secrets/turnkey/12345678.pfx
+    passwordFile: /run/secrets/turnkey/cert-12345678
+senders:
+  - taxId: "12345678"
+    certificate: "0001"
+    transmitAccount: "12345678"
+    routingCode: PX000001
+    # routingDescription, description: default to routingCode and taxId
+    # storageAgent: false
+# schedules: optional; the default is the four required tasks of section 5.3
+```
+
+The PFX is copied to `/data/cert/PFX/turnkey-setup-<code>.pfx` (mode 600), and that path is what Turnkey stores.
+
+#### Convergence and drift
+
+The config is the desired state, and Turnkey is converged to it, including removals: a sender, transmission account, certificate or schedule that Turnkey has but the config does not list is deleted.
+
+Changing or removing something that already exists is a **drift**, and is refused by default: `configure` lists the differences and exits with code 2 without changing them. Review the list, then run again with `--apply-updates` (or `TURNKEY_SETUP_APPLY_UPDATES=1`) to apply them. Adding something new is not a drift and is always applied.
+
+- Before the database connection is configured (`db-config-ok` is not `true` in `/data/config/einvUserConfig.xml`), the database connection and the execution environment are set without the flag. Senders, accounts, certificates and schedules live in the database, which may be an existing one, so changing or removing them always needs the flag.
+- A different database connection stops `configure` at once (exit 2), before anything is added, so nothing is written to the database that is about to be replaced.
+- Items are removed in dependency order: unwanted senders first, then accounts and certificates are added or updated, then senders, and only then unwanted accounts and certificates.
+- When the schedules differ in any way, `--apply-updates` deletes all of them and adds them again in the config order, because the task menu depends on which tasks exist.
+- A replaced PFX is checked against its password with `openssl` first, and the previous file is restored if the menu does not save.
+
+- A sender's redirect code cannot be edited in the menu. When it changes, the sender is deleted and added again (with `--apply-updates`).
+- Passwords cannot be read back from the menu, so they are set only when the item is created and are never compared. After changing a password, run with `--reset-passwords` (or `TURNKEY_SETUP_RESET_PASSWORDS=1`) to set it again.
+- Schedule tasks are offered in a menu that changes as tasks are added. The order of section 5.3 that works on 3.2.2 is upload, unpack, downcast, then receive. Keep that order in the config.
+- The config file is checked strictly: an unknown or missing top-level section, a duplicate ID, or a sender that refers to an account or certificate not in the file is an error. Write IDs as quoted strings (`"0001"`, `"03374707"`); YAML reads unquoted leading-zero numbers as octal integers, so they are rejected.
+- Data directories are not compared with a desired value. `configure` saves each directory screen with its current values when a directory is missing, which creates it.
+
+Exit codes of `turnkey_setup.py configure`: `0` nothing changed, `10` changed (the entrypoint maps it to `0` after restarting the schedules), `2` drift refused, `1` failure.
+
+#### Environment check
+
+After converging, `configure` runs the environment check (section 5.2, step 9). `TURNKEY_SETUP_ENV_CHECK` selects what a failure does: `required` (default) fails the setup, `warn` only logs it, `off` skips it. Failed checks are retried (`TURNKEY_SETUP_ENV_CHECK_ATTEMPTS`, default 5, every `TURNKEY_SETUP_ENV_CHECK_DELAY` seconds, default 30). Use `warn` until the IP whitelist and the platform credentials are in place.
+
+#### Readiness
+
+`turnkey-entrypoint ready` exits 0 only when the schedules have been running for `TURNKEY_READY_DELAY` seconds (default 15) and no `configure` is in progress. While `configure` runs, and while the schedules restart after a change, it exits 1. Use it as the readiness probe (compose healthcheck or Kubernetes `readinessProbe`), so nothing treats the container as ready while it is being reconfigured.
+
+#### Version binding
+
+The automation reads menu screens, so it is bound to a Turnkey version. `setup/spec/<version>.json` lists, for each menu it uses, the exact items, and for each option list the allowed options. Every screen the automation reads is checked against the spec; any difference stops it with an error instead of guessing.
+
+- `configure` refuses a Turnkey version that has no spec. `TURNKEY_SETUP_ALLOW_UNVERIFIED=1` lets it run against the newest spec; the per-screen checks still apply.
+- `turnkey-entrypoint verify` walks every menu in the spec and checks it, without saving anything. Run it after building an image for a new Turnkey version (section 12), against a Turnkey whose database is configured: before that, most menus are disabled and `verify` reports them.
+- `turnkey-entrypoint verify` and `configure` need `TURNKEY_MENU_PASSWORD(_FILE)` too.
+
+Passwords are sent to the menu through its password prompts and are not echoed. The log masks any configured secret value.
+
+Other notes:
+
+- `configure` only logs in with `TURNKEY_MENU_PASSWORD`; it never changes the text-mode login password. If you change that password in the menu, update the secret too.
+- A database whose tables were already created from the official `DBSchema` script (section 4.1) is still a new setup: `Create database` is disabled in the menu then, and `configure` skips it.
+
 ## 6. Persistence and layout
 
 ### 6.1 The volume
@@ -333,8 +445,11 @@ cp compose.example.yaml compose.yaml
 mkdir -p secrets && printf '%s' 'CHANGE-ME' > secrets/db_password.txt
 # .env (gitignored) must define: APP_IMAGE, APP_DB_PASSWORD, TURNKEY_SIDECAR_PASSWORD, TURNKEY_SECRET_KEY
 docker compose up -d db turnkey
-docker compose exec turnkey turnkey-entrypoint cmd    # first-time setup, section 5
+# Manual setup (section 5.1 to 5.5):
+docker compose exec turnkey turnkey-entrypoint cmd
 docker compose restart turnkey                         # start schedules
+# or automated setup (section 5.6): set the TURNKEY_* variables or TURNKEY_SETUP_FILE
+# in compose.yaml before `up`; the schedules start once it passes
 docker compose up -d app
 ```
 
@@ -357,6 +472,32 @@ The module's background workers (writer, poller, inbound watcher, hourly mainten
 - Run exactly one Turnkey container per `/data` volume. This is how the setup was validated; running two against one volume has not been tested.
 - Use the fixed egress IP (section 2.1) for the node pool that runs the Turnkey Pod.
 - Use `fsGroup` for write access (section 6.3).
+- Use the automated setup (section 5.6) with the config file and passwords mounted from Kubernetes secrets, and `turnkey-entrypoint ready` as the readiness probe. Give the first start enough time: setup on a new database takes a few minutes, longer with environment-check retries.
+
+```yaml
+containers:
+  - name: turnkey
+    image: einv-turnkey:3.2.2-r1
+    env:
+      - { name: TURNKEY_SETUP_FILE, value: /etc/turnkey/setup.yaml }
+      - { name: TURNKEY_MENU_PASSWORD_FILE, value: /run/secrets/turnkey/menu }
+    volumeMounts:
+      - { name: turnkey-data, mountPath: /data }
+      - { name: turnkey-setup, mountPath: /etc/turnkey, readOnly: true }    # ConfigMap
+      - { name: turnkey-secrets, mountPath: /run/secrets/turnkey, readOnly: true }
+    readinessProbe:
+      exec: { command: [turnkey-entrypoint, ready] }
+      periodSeconds: 10
+    startupProbe:
+      exec: { command: [turnkey-entrypoint, ready] }
+      periodSeconds: 10
+      failureThreshold: 60          # up to 10 minutes for the first setup
+    terminationGracePeriodSeconds: 60
+```
+
+After changing the ConfigMap or secrets, run `kubectl exec <pod> -c turnkey -- turnkey-entrypoint configure` (add `--apply-updates` once you have reviewed the drift it reports). Do not use `turnkey-entrypoint ready` as a liveness probe: it fails on purpose while the schedules restart.
+
+If the app runs in the same Pod, a failing readiness probe on the Turnkey container takes the whole Pod, app included, out of its Service endpoints while `configure` or a restart runs. Either run Turnkey in its own Deployment (with a ReadWriteMany volume) and keep the readiness probe, or, in a shared Pod, use only the startup probe on the Turnkey container.
 
 ## 8. B2B exchange prerequisites
 
@@ -416,8 +557,9 @@ Observed in the test zone (for orientation, not as a guarantee):
 
 ### 10.1 Container lifecycle
 
-- `start` (default): runs the schedules. If the database is not configured yet (`db-config-ok` is not `true`), the entrypoint stays idle and does not start the schedules, so you can `exec` in and configure it.
-- `docker stop`: the entrypoint traps SIGTERM and runs `run_stop.sh`, which exits in about 5 seconds with code 0. Bash as PID 1 does not forward SIGTERM by itself, which is why the entrypoint does this. `stop_grace_period: 60s` leaves a buffer.
+- `start` (default): runs the automated setup when it is configured (section 5.6), then the schedules. If the database is not configured yet (`db-config-ok` is not `true`), the entrypoint stays idle and does not start the schedules, so you can `exec` in and configure it.
+- `configure`, `verify`, `ready`: see section 5.6. A `configure` that changes something sends SIGHUP to the entrypoint, which runs `run_stop.sh` and starts the schedules again; readiness reports not ready until they are back.
+- `docker stop`: the entrypoint traps SIGTERM and runs `run_stop.sh`, which exits in about 5 seconds with code 0. Bash as PID 1 does not forward SIGTERM by itself, which is why the entrypoint does this. In the first seconds after the schedules start, `run_stop.sh` may have no effect; the entrypoint sends it again every 10 seconds and, after `TURNKEY_STOP_TIMEOUT` seconds (default 30), sends SIGTERM to the schedule process. `stop_grace_period: 60s` leaves a buffer; keep it above that timeout.
 - Unexpected exit of the schedule process: the entrypoint exits with a non-zero code, and `restart: unless-stopped` restarts it.
 - `EINVUPGRADE/` in the install directory is deleted at every start. Automatic in-container upgrade is not supported. Upgrade by rebuilding the image (section 12).
 
@@ -527,6 +669,7 @@ Turnkey is upgraded by replacing the installer and rebuilding the image:
 2. Set `--build-arg TURNKEY_TARBALL=...` (or the compose `build.args`) to the new name.
 3. Build a new image tag, for example `einv-turnkey:<version>`. Keep the old tag for rollback.
 4. Test the new version in the test zone first: database connection, environment check, a few invoices of each type, and the four schedules.
+   If you use the automated setup, run `turnkey-entrypoint verify` against the new image first. When the version has no spec yet, run it with `--spec <previous version>`: if it passes, copy the spec to `setup/spec/<new version>.json`; if not, update the spec from the screens it reports, run `configure` against a throwaway database, and bump the image revision.
 5. Stop the old container, then start the new one on the same volume.
 6. Check the release notes for database schema changes before starting. Apply them through the official procedure; do not edit the tables by hand.
 
