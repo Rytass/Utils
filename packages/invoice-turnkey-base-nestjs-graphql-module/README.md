@@ -1,8 +1,10 @@
 # Rytass Utils - Invoice Turnkey Base NestJS GraphQL Module
 
-Code-first GraphQL resolvers for [`@rytass/invoice-turnkey-base-nestjs-module`](../invoice-turnkey-base-nestjs-module). `forRoot` registers the base module for you. Use `forFeature` when the base module is already registered elsewhere (for example by the REST module).
+Code-first GraphQL resolvers for [`@rytass/invoice-turnkey-base-nestjs-module`](https://github.com/Rytass/Utils/tree/main/packages/invoice-turnkey-base-nestjs-module). `forRoot` registers the base module for you. Use `forFeature` when the base module is already registered elsewhere (for example by the REST module).
 
-> Status: early development. Read the [base module](../invoice-turnkey-base-nestjs-module/README.md) first: company registration, track setup and the Turnkey platform prerequisites are documented there.
+> Turnkey itself is not part of this package. See [Running Turnkey](https://github.com/Rytass/Utils/tree/main/packages/invoice-turnkey-base-nestjs-module#running-turnkey) in the base module and the [Turnkey Docker guide](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md) for building the image and configuring Turnkey.
+
+> Status: early development. Read the [base module](https://github.com/Rytass/Utils/blob/main/packages/invoice-turnkey-base-nestjs-module/README.md) first: company registration, track setup and the Turnkey platform prerequisites are documented there.
 
 ## Installation
 
@@ -43,14 +45,14 @@ import { TurnkeyBaseGraphQLModule } from '@rytass/invoice-turnkey-base-nestjs-gr
 export class AppModule {}
 ```
 
-The base module options are listed in the [base module options table](../invoice-turnkey-base-nestjs-module/README.md#options).
+The base module options are listed in the [base module options table](https://github.com/Rytass/Utils/blob/main/packages/invoice-turnkey-base-nestjs-module/README.md#options).
 
 To run REST and GraphQL in the same app, register the base once with `TurnkeyBaseRestModule.forRoot(...)` and add `TurnkeyBaseGraphQLModule.forFeature({ canAccessCompany })`, or the reverse.
 
 ## Access control
 
 - `canAccessCompany(request, companyTaxId)` decides whether the caller may act for a company. Resolvers check it for every company argument. Without it, and without `allowAllCompanies: true` (single-company internal deployments only), the call is rejected.
-- `decorateRoute(action)` returns decorators applied to each resolver method, for example permission checks. The action values are the same `TurnkeyApiAction` values as in the REST module. Each operation has its own action: `annulTurnkeyInvoice` uses `ANNUL_INVOICE`, not `VOID_INVOICE`. The full list is in the [REST action map](../invoice-turnkey-base-nestjs-rest-module/README.md#action-map). Without `decorateRoute` there is no per-action check, so anyone allowed for a company can also void or annul its invoices. The module logs a warning at startup in that case.
+- `decorateRoute(action)` returns decorators applied to each resolver method, for example permission checks. The action values are the same `TurnkeyApiAction` values as in the REST module. Each operation has its own action: `annulTurnkeyInvoice` uses `ANNUL_INVOICE`, not `VOID_INVOICE`. The full list is in the [REST action map](https://github.com/Rytass/Utils/blob/main/packages/invoice-turnkey-base-nestjs-rest-module/README.md#action-map). Without `decorateRoute` there is no per-action check, so anyone allowed for a company can also void or annul its invoices. The module logs a warning at startup in that case.
 
 ## member-base access (optional)
 
@@ -136,7 +138,7 @@ The module exposes 31 operations: 11 queries and 20 mutations. Every operation t
 | Mutation | `confirmTurnkeyReceivedAllowance`     | `REPLY_RECEIVED`         | yes              |
 | Mutation | `confirmTurnkeyReceivedAllowanceVoid` | `REPLY_RECEIVED`         | yes              |
 
-Two arguments are worth knowing: `resolveTurnkeySubmission(companyTaxId, submissionId, status, reason, idempotencyKey)` takes `status` as `ACCEPTED` or `FAILED` (other values fail with `INVALID_STATE`), and `printTurnkeyInvoiceProof` and `printTurnkeyAllowanceProof` take `(companyTaxId, invoiceNumber | allowanceNumber, idempotencyKey)`. The REST routes for each operation are listed in the [REST action map](../invoice-turnkey-base-nestjs-rest-module/README.md#action-map).
+Two arguments are worth knowing: `resolveTurnkeySubmission(companyTaxId, submissionId, status, reason, idempotencyKey)` takes `status` as `ACCEPTED` or `FAILED` (other values fail with `INVALID_STATE`), and `printTurnkeyInvoiceProof` and `printTurnkeyAllowanceProof` take `(companyTaxId, invoiceNumber | allowanceNumber, idempotencyKey)`. The REST routes for each operation are listed in the [REST action map](https://github.com/Rytass/Utils/blob/main/packages/invoice-turnkey-base-nestjs-rest-module/README.md#action-map).
 
 **Lists.** `turnkeyInvoices`, `turnkeyAllowances` and `turnkeyInvoiceTracks` back list pages:
 
@@ -152,9 +154,9 @@ Two arguments are worth knowing: `resolveTurnkeySubmission(companyTaxId, submiss
 
 **Submissions.** `turnkeySubmissions` returns `{ items }`. Without `status` it returns `PENDING` and `WRITTEN` submissions. There is no single-submission query in GraphQL. Use REST `GET submissions/:submissionId`, or read the `submission.*` events.
 
-**Events.** `turnkeyEvents` takes the `after` cursor. Its `limit` is clamped silently to 1 to 500, unlike REST, which returns `400`. See [Events](../invoice-turnkey-base-nestjs-module/README.md#events).
+**Events.** `turnkeyEvents` takes the `after` cursor. Its `limit` is clamped silently to 1 to 500, unlike REST, which returns `400`. See [Events](https://github.com/Rytass/Utils/blob/main/packages/invoice-turnkey-base-nestjs-module/README.md#events).
 
-**Received documents.** The received-document queries take `status` and `limit`. The reply mutations take `sellerTaxId` (required, because the same document number can come from different sellers) and `documentDate` (`yyyyMMdd`), which is required when the same seller sent that number more than once. See [Inbound replies](../invoice-turnkey-base-nestjs-module/README.md#inbound-replies).
+**Received documents.** The received-document queries take `status` and `limit`. The reply mutations take `sellerTaxId` (required, because the same document number can come from different sellers) and `documentDate` (`yyyyMMdd`), which is required when the same seller sent that number more than once. See [Inbound replies](https://github.com/Rytass/Utils/blob/main/packages/invoice-turnkey-base-nestjs-module/README.md#inbound-replies).
 
 ## Object IDs
 
@@ -191,9 +193,9 @@ The collection ids are built from the effective query arguments, so the same que
 
 ## Proof (證明聯)
 
-`printTurnkeyInvoiceProof(companyTaxId, invoiceNumber, idempotencyKey)` and `printTurnkeyAllowanceProof(companyTaxId, allowanceNumber, idempotencyKey)` return the base module's proof data as JSON (`TurnkeyJSON` scalar). GraphQL returns JSON only. PDF, PNG, ESC/POS and A4 PDF output is available through the REST proof routes ([REST routes](../invoice-turnkey-base-nestjs-rest-module/README.md#routes)).
+`printTurnkeyInvoiceProof(companyTaxId, invoiceNumber, idempotencyKey)` and `printTurnkeyAllowanceProof(companyTaxId, allowanceNumber, idempotencyKey)` return the base module's proof data as JSON (`TurnkeyJSON` scalar). GraphQL returns JSON only. PDF, PNG, ESC/POS and A4 PDF output is available through the REST proof routes ([REST routes](https://github.com/Rytass/Utils/blob/main/packages/invoice-turnkey-base-nestjs-rest-module/README.md#routes)).
 
-- Each print is logged in `turnkey_print_logs`. Prints after the first are marked 補印 (see [Proof printing](../invoice-turnkey-base-nestjs-module/README.md#proof-printing)).
+- Each print is logged in `turnkey_print_logs`. Prints after the first are marked 補印 (see [Proof printing](https://github.com/Rytass/Utils/blob/main/packages/invoice-turnkey-base-nestjs-module/README.md#proof-printing)).
 - Use the same `idempotencyKey` for a retry, so a network retry does not create a second print. Use a new key for a deliberate reprint.
 - The company needs a QR AES key, or the call fails with `QR_KEY_MISSING`. Set it with `setTurnkeyQrAesKey(companyTaxId, aesKey)`. The value is stored encrypted and is never returned.
 - Access uses the `PRINT_INVOICE` and `PRINT_ALLOWANCE` actions. member-base maps both to `print`.
@@ -218,4 +220,4 @@ Validation failures from the base module are returned as GraphQL errors. `extens
 | `BAD_USER_INPUT`              | An argument is malformed; `extensions.field` names it                         | n/a                         |
 | Other validation codes        | Input or state rejected, for example `TAX_AMOUNT_MISMATCH` or `INVALID_STATE` | 422                         |
 
-The validation codes are listed in the [base module](../invoice-turnkey-base-nestjs-module/README.md#validation-codes).
+The validation codes are listed in the [base module](https://github.com/Rytass/Utils/blob/main/packages/invoice-turnkey-base-nestjs-module/README.md#validation-codes).

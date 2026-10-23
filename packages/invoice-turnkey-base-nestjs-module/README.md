@@ -19,16 +19,24 @@ NestJS base module for issuing Taiwan e-invoices through the MOF e-Invoice **Tur
 - [x] Daily reconciliation of `SummaryResult` files
 - [x] Proof printing: 1D barcode and QR codes; PDF, PNG, ESC/POS and A4 PDF renderers
 
+## Running Turnkey
+
+This package does not include Turnkey. Turnkey runs as its own container next to the app, built from the official MOF installer, which you download yourself (it is licensed and is not distributed here). The [Turnkey Docker guide](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md) in this repository covers it end to end:
+
+- [Build the image](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md#3-build-the-image) from `docker/invoice-turnkey/` (tag `3.2.2-r1`).
+- [Configure Turnkey automatically](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md#56-automated-configuration) from environment variables (one company) or a config file (several companies) with `turnkey-entrypoint configure`, instead of the interactive text menu.
+- [Run it on Kubernetes](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md#74-kubernetes) with the readiness probe, and [upgrade Turnkey](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md#12-upgrading-turnkey).
+
 ## Prerequisites
 
-This module does not install or configure Turnkey. Get the platform side ready before the first issue. The [Docker guide](../../docker/invoice-turnkey/README.md) describes each step:
+This module does not install or configure Turnkey. Get the platform side ready before the first issue. The [Docker guide](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md) describes each step:
 
-- Turnkey 3.2.x runs next to the app and shares its `/data` volume ([overview](../../docker/invoice-turnkey/README.md#1-overview), [volume layout](../../docker/invoice-turnkey/README.md#61-the-volume)).
-- The fixed egress IP is registered ([2.1](../../docker/invoice-turnkey/README.md#21-register-the-fixed-egress-ip)).
-- The master certificate and the software certificate are registered ([2.2](../../docker/invoice-turnkey/README.md#22-register-a-master-certificate), [2.3](../../docker/invoice-turnkey/README.md#23-create-a-software-certificate-and-register-it)).
-- Invoice tracks are allocated ([2.4](../../docker/invoice-turnkey/README.md#24-allocate-invoice-tracks)) and the pre-launch self-test passes ([2.5](../../docker/invoice-turnkey/README.md#25-pre-launch-self-test)).
-- The four Turnkey schedules exist ([5.3](../../docker/invoice-turnkey/README.md#53-schedules-four-tasks-are-required), see [Background workers](#background-workers)).
-- The app has the read-only database role ([4.3](../../docker/invoice-turnkey/README.md#43-give-the-app-a-read-only-role), see [Turnkey database access](#turnkey-database-access)).
+- Turnkey 3.2.x runs next to the app and shares its `/data` volume ([overview](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md#1-overview), [volume layout](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md#61-the-volume)).
+- The fixed egress IP is registered ([2.1](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md#21-register-the-fixed-egress-ip)).
+- The master certificate and the software certificate are registered ([2.2](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md#22-register-a-master-certificate), [2.3](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md#23-create-a-software-certificate-and-register-it)).
+- Invoice tracks are allocated ([2.4](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md#24-allocate-invoice-tracks)) and the pre-launch self-test passes ([2.5](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md#25-pre-launch-self-test)).
+- The four Turnkey schedules exist ([5.3](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md#53-schedules-four-tasks-are-required), see [Background workers](#background-workers)).
+- The app has the read-only database role ([4.3](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md#43-give-the-app-a-read-only-role), see [Turnkey database access](#turnkey-database-access)).
 - Each seller is registered in this module ([Company registration](#company-registration)).
 
 ## Installation
@@ -181,7 +189,7 @@ For list pages, `TurnkeyInvoiceTrackService.list(companyTaxId, period?)` returns
 
 ## Turnkey database access
 
-Create a dedicated read-only role for the app. The compose example names it `turnkey_sidecar`; use the same name here and in [Docker guide, section 4.3](../../docker/invoice-turnkey/README.md#43-give-the-app-a-read-only-role). Grant column-level `SELECT` on the columns the module reads:
+Create a dedicated read-only role for the app. The compose example names it `turnkey_sidecar`; use the same name here and in [Docker guide, section 4.3](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md#43-give-the-app-a-read-only-role). Grant column-level `SELECT` on the columns the module reads:
 
 ```sql
 GRANT SELECT (task, filename, status, uuid, seqno, subseqno, process_dts)
@@ -192,11 +200,11 @@ GRANT SELECT (uuid, errorcode, eventdts, message1, message2, message3, message4,
   ON turnkey_sysevent_log TO turnkey_sidecar;
 ```
 
-These grants do not cover lookups by invoice identifier. The [Docker guide, section 10.4](../../docker/invoice-turnkey/README.md#104-submissions-stuck-in-written) suggests such a lookup through this role. Use a separately approved role for it, or look up by UUID or file name.
+These grants do not cover lookups by invoice identifier. The [Docker guide, section 10.4](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md#104-submissions-stuck-in-written) suggests such a lookup through this role. Use a separately approved role for it, or look up by UUID or file name.
 
 ## Background workers
 
-Four Turnkey schedules must exist ([Docker guide, section 5.3](../../docker/invoice-turnkey/README.md#53-schedules-four-tasks-are-required)). Each runs as `PERIOD` with interval `00:01`:
+Four Turnkey schedules must exist ([Docker guide, section 5.3](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md#53-schedules-four-tasks-are-required)). Each runs as `PERIOD` with interval `00:01`:
 
 | Schedule (Turnkey menu)    | What it does                             | Without it                                                               |
 | -------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ |
@@ -216,7 +224,7 @@ Workers run only on the instance that holds the PostgreSQL session advisory lock
 A submission is `WRITTEN` once its XML is in `UpCast` and until Turnkey logs a result. When no result arrives within `workers.stalledAfterMinutes`, the module emits `submission.stalled` once for that submission. The status does not change.
 
 1. **Do not resend.** The platform may still accept the file, and a resend can issue the same invoice twice.
-2. **Check Turnkey first.** Follow [Docker guide, section 10.4](../../docker/invoice-turnkey/README.md#104-submissions-stuck-in-written): check the `UpCast`, `Pack` and `SendFile` folders and their `ERR/` directories, the logs, and the `ProcessResult` files.
+2. **Check Turnkey first.** Follow [Docker guide, section 10.4](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md#104-submissions-stuck-in-written): check the `UpCast`, `Pack` and `SendFile` folders and their `ERR/` directories, the logs, and the `ProcessResult` files.
 3. **Resolve through the API** once you know the outcome:
    - REST: `POST /{routePrefix}/companies/{companyTaxId}/submissions/{submissionId}/resolve` with `{ "status": "ACCEPTED", "reason": "..." }` or `"FAILED"`.
    - GraphQL: `resolveTurnkeySubmission(companyTaxId, submissionId, status, reason, idempotencyKey)`.
@@ -318,7 +326,7 @@ The module checks invoice input before any XML is written. A failed check throws
 | Seller      | Seller address, which F0401, G0401, A0101 and B0101 all require (`SELLER_ADDRESS_REQUIRED`)                                                                                                  |
 | Idempotency | Reused `externalId` with different content (`EXTERNAL_ID_CONFLICT`)                                                                                                                          |
 
-The module does not check the following in real time. [Docker guide, section 10.3](../../docker/invoice-turnkey/README.md#103-checks-the-issuing-system-must-do) lists the rules you must check in your issuing system:
+The module does not check the following in real time. [Docker guide, section 10.3](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md#103-checks-the-issuing-system-must-do) lists the rules you must check in your issuing system:
 
 - Whether a donation code is on the charity list, and whether a mobile barcode or carrier code exists. The module checks format only.
 - Whether a buyer tax ID belongs to a registered company. The module checks the checksum only.
@@ -359,7 +367,7 @@ The module does not check the following in real time. [Docker guide, section 10.
 | `SUBMISSION_NOT_FOUND`          | No submission with that id, or the id is not a UUID                                                                                                                                                                                                                    |
 | `EXTERNAL_ID_CONFLICT`          | `externalId` was already used for an invoice with different content                                                                                                                                                                                                    |
 
-The exception filters map these codes to HTTP statuses ([REST errors](../invoice-turnkey-base-nestjs-rest-module/README.md#errors)).
+The exception filters map these codes to HTTP statuses ([REST errors](https://github.com/Rytass/Utils/blob/main/packages/invoice-turnkey-base-nestjs-rest-module/README.md#errors)).
 
 ## Proof printing
 
@@ -405,8 +413,8 @@ Generate and run migrations in the host app. `synchronize` is a choice for the h
 
 ## Deployment notes
 
-- **Shared volume.** Turnkey and the app must see the same `/data`. The writer writes temporary files under `sidecar/tmp` and then renames them into place, so both paths must be on the same file system ([Docker guide, section 6.2](../../docker/invoice-turnkey/README.md#62-same-file-system-for-the-writer)).
-- **Permissions.** The app must be able to create and rename files in `sidecar/tmp`, `sidecar/inbound`, the `UpCast/.../SRC` directories and the `RecvTarget` archive. The module creates missing directories, but the app user still needs write access to the tree. The compose example runs the app as UID 1000 and GID 1000, but that does not make `/data` writable by itself. Check with a write test as the app user ([Docker guide, section 6.3](../../docker/invoice-turnkey/README.md#63-permissions-and-uid)).
-- **Kubernetes.** Run Turnkey and the app in the same Pod with a shared volume, or use a ReadWriteMany volume. Run exactly one Turnkey container per `/data` volume. Set `fsGroup` for write access ([Docker guide, section 7.4](../../docker/invoice-turnkey/README.md#74-kubernetes)).
-- **Workers on one instance.** See [Background workers](#background-workers) and [section 7.3](../../docker/invoice-turnkey/README.md#73-workers-run-on-one-instance) of the Docker guide.
-- **Cut-over.** Follow the [production cut-over checklist](../../docker/invoice-turnkey/README.md#13-production-cut-over) before you switch to production.
+- **Shared volume.** Turnkey and the app must see the same `/data`. The writer writes temporary files under `sidecar/tmp` and then renames them into place, so both paths must be on the same file system ([Docker guide, section 6.2](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md#62-same-file-system-for-the-writer)).
+- **Permissions.** The app must be able to create and rename files in `sidecar/tmp`, `sidecar/inbound`, the `UpCast/.../SRC` directories and the `RecvTarget` archive. The module creates missing directories, but the app user still needs write access to the tree. The compose example runs the app as UID 1000 and GID 1000, but that does not make `/data` writable by itself. Check with a write test as the app user ([Docker guide, section 6.3](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md#63-permissions-and-uid)).
+- **Kubernetes.** Run Turnkey and the app in the same Pod with a shared volume, or use a ReadWriteMany volume. Run exactly one Turnkey container per `/data` volume. Set `fsGroup` for write access ([Docker guide, section 7.4](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md#74-kubernetes)).
+- **Workers on one instance.** See [Background workers](#background-workers) and [section 7.3](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md#73-workers-run-on-one-instance) of the Docker guide.
+- **Cut-over.** Follow the [production cut-over checklist](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md#13-production-cut-over) before you switch to production.

@@ -1,6 +1,8 @@
 # Rytass Utils - Invoice Turnkey Base NestJS Redis Notify Module
 
-Publishes the events of [`@rytass/invoice-turnkey-base-nestjs-module`](../invoice-turnkey-base-nestjs-module) (the `turnkey_events` outbox) to Redis, either as Streams or as Pub/Sub messages. The module does not register Core; it only uses the `TurnkeyEventService` that `TurnkeyBaseModule` already provides, so register `TurnkeyBaseModule` (directly or through the REST module) first.
+Publishes the events of [`@rytass/invoice-turnkey-base-nestjs-module`](https://github.com/Rytass/Utils/tree/main/packages/invoice-turnkey-base-nestjs-module) (the `turnkey_events` outbox) to Redis, either as Streams or as Pub/Sub messages. The module does not register Core; it only uses the `TurnkeyEventService` that `TurnkeyBaseModule` already provides, so register `TurnkeyBaseModule` (directly or through the REST module) first.
+
+> Turnkey itself is not part of this package. See [Running Turnkey](https://github.com/Rytass/Utils/tree/main/packages/invoice-turnkey-base-nestjs-module#running-turnkey) in the base module and the [Turnkey Docker guide](https://github.com/Rytass/Utils/blob/main/docker/invoice-turnkey/README.md) for building the image and configuring Turnkey.
 
 > Status: early development (0.x).
 
