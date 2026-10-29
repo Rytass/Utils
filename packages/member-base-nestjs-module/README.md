@@ -530,6 +530,27 @@ context: createGraphQLContextTokenResolver({
 
 Both mirror the module's own options. `cookieMode: false` matters in particular: the guard ignores cookies entirely in that mode, and a resolver that kept reading them would hand your resolvers a token the guard had refused — one left over from before the mode was turned off, for instance.
 
+### Reusing checks within one operation
+
+With `fieldResolverEnhancers: ['guards']` the guard runs once per guarded field, so a list of 50 rows with six decorated fields verifies the token about 300 times for what is, almost always, the same token. `accessTokenVerificationCacheScope` lets one HTTP request or GraphQL operation verify it once. It is off by default, and only the value `'operation'` turns it on:
+
+```typescript
+MemberBaseModule.forRoot({
+  // Verify the access token on the first field and reuse the payload for the rest of the operation.
+  accessTokenVerificationCacheScope: 'operation',
+});
+```
+
+What counts as "one operation":
+
+- **HTTP**: the request.
+- **GraphQL**: the operation's context value, not `context.req`. A batched HTTP request carries several operations on one `req`, and they are verified separately — provided your server hands each operation its own context value. Apollo Server 4 and later shallow-copies the context per operation (`internalExecuteOperation` in `@apollo/server`); check yours if you batch through another driver.
+- **Subscriptions**: never reused. Their context lives as long as the connection, so a cached answer would outlast an expired token.
+- **A context value reused across operations** — a graphql-ws `context` that returns the same object for every query on a connection, say — makes those operations one scope, so later queries on it reuse earlier answers. Return a fresh object per operation if that matters to you.
+- **At most a minute**: whatever the scope, nothing is reused more than 60 seconds after it was decided, which bounds the case above.
+
+What changes when it is on: a token that expires partway through an operation no longer fails the remaining fields one by one, and `@MemberId()` / `request.payload` keep the payload the operation started with — for up to a minute after the first verification; an operation still running past that verifies again. That is deliberate and it has a consequence: within that operation the token is still accepted after its `exp`, for up to the minute above. `request.payload` itself lives on `req`, which the operations of a batched request share: a sibling operation verifying after `exp` still clears it for the others.
+
 ## Sessions and Cookies
 
 By default a caller presents its token in the `Authorization` header and the module writes no cookies at all. `cookieMode: true` adds the cookie as a second source.
