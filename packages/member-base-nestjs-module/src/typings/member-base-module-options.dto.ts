@@ -13,6 +13,7 @@ import type {
   CasbinPermissionCheckerParams,
   CasbinPermissionCheckerResult,
 } from './casbin-permission';
+import type { AuthCacheScope } from './auth-cache-scope';
 import type { CasbinRuleEntity } from './casbin-rule-entity';
 import type { PasswordHashOptions } from './password-hash-options';
 import type { RedirectAuthOptions } from './redirect-auth.options';
@@ -99,6 +100,17 @@ export interface MemberBaseModuleOptionsDTO<
   casbinPermissionDecorator?: ReflectableDecorator<[string, string][]>;
   casbinPermissionChecker?: (params: CasbinPermissionCheckerParams<TokenPayload>) => CasbinPermissionCheckerResult;
   casbinDomainResolver?: CasbinDomainResolver<TokenPayload>; // default: undefined, only affects the default checker
+  /**
+   * Verify the access token once per HTTP request or GraphQL operation and
+   * reuse the payload for the rest of it, instead of once per guarded field.
+   * A token that expires partway through an operation then no longer fails the
+   * remaining fields one by one — which also means the token is accepted past
+   * its `exp` for the rest of that operation, up to a minute. Subscriptions are
+   * verified on every call.
+   *
+   * Only `'operation'` turns it on. default: 'none'
+   */
+  accessTokenVerificationCacheScope?: AuthCacheScope;
 
   // Entities
   memberEntity?: new () => MemberEntity; // default: MemberEntity

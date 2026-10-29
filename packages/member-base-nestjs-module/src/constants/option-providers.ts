@@ -29,6 +29,7 @@ import {
   COOKIE_MODE,
   LOGIN_FAILED_AUTO_UNLOCK_SECONDS,
   ACCESS_TOKEN_COOKIE_NAME,
+  ACCESS_TOKEN_VERIFICATION_CACHE_SCOPE,
   REFRESH_TOKEN_COOKIE_NAME,
   COOKIE_OPTIONS,
   DEFAULT_ADMIN_ACCOUNT,
@@ -76,6 +77,7 @@ import type { ReflectableDecorator } from '@nestjs/core';
 import type { OAuth2Provider } from '../typings/oauth2-provider.interface';
 import type { AuthTokenPayloadBase } from '../typings/auth-token-payload';
 import type { CasbinDomainResolver, CasbinPermissionChecker } from '../typings/casbin-permission';
+import type { AuthCacheScope } from '../typings/auth-cache-scope';
 
 /**
  * Upper bound for `sessionTracking.rotationGraceSeconds`. Concurrent refreshes
@@ -254,6 +256,12 @@ export const OptionProviders = [
   {
     provide: ACCESS_TOKEN_COOKIE_NAME,
     useFactory: (options?: MemberBaseModuleOptionsDTO): string => options?.accessTokenCookieName ?? 'access_token',
+    inject: [MEMBER_BASE_MODULE_OPTIONS],
+  },
+  {
+    provide: ACCESS_TOKEN_VERIFICATION_CACHE_SCOPE,
+    useFactory: (options?: MemberBaseModuleOptionsDTO): AuthCacheScope =>
+      options?.accessTokenVerificationCacheScope ?? 'none',
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {

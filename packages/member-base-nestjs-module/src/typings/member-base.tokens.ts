@@ -7,6 +7,7 @@ import type { Repository } from 'typeorm';
 import type { BaseMemberEntity } from '../models/base-member.entity';
 import type { OAuth2Provider } from './oauth2-provider.interface';
 import type { CasbinPermissionChecker } from './casbin-permission';
+import type { AuthCacheScope } from './auth-cache-scope';
 import type { CookieOptionsConfig } from '../utils/resolve-cookie-options';
 import type {
   AuthenticationProvider,
@@ -45,6 +46,9 @@ export const LOGIN_FAILED_AUTO_UNLOCK_SECONDS = Symbol('LOGIN_FAILED_AUTO_UNLOCK
   __type: number;
 };
 export const ACCESS_TOKEN_COOKIE_NAME = Symbol('ACCESS_TOKEN_COOKIE_NAME') as symbol & { __type: string };
+export const ACCESS_TOKEN_VERIFICATION_CACHE_SCOPE = Symbol('ACCESS_TOKEN_VERIFICATION_CACHE_SCOPE') as symbol & {
+  __type: AuthCacheScope;
+};
 export const REFRESH_TOKEN_COOKIE_NAME = Symbol('REFRESH_TOKEN_COOKIE_NAME') as symbol & { __type: string };
 /**
  * Path, sameSite, secure and domain as configured, before the request is
@@ -175,6 +179,7 @@ export interface MemberBaseProviders {
   COOKIE_MODE: boolean;
   LOGIN_FAILED_AUTO_UNLOCK_SECONDS: number;
   ACCESS_TOKEN_COOKIE_NAME: string;
+  ACCESS_TOKEN_VERIFICATION_CACHE_SCOPE: AuthCacheScope;
   REFRESH_TOKEN_COOKIE_NAME: string;
   COOKIE_OPTIONS: CookieOptionsConfig;
   REDIRECT_AUTH_OPTIONS: ResolvedRedirectAuthOptions;
