@@ -532,24 +532,30 @@ Both mirror the module's own options. `cookieMode: false` matters in particular:
 
 ### Reusing checks within one operation
 
-With `fieldResolverEnhancers: ['guards']` the guard runs once per guarded field, so a list of 50 rows with six decorated fields verifies the token about 300 times for what is, almost always, the same token. `accessTokenVerificationCacheScope` lets one HTTP request or GraphQL operation verify it once. It is off by default, and only the value `'operation'` turns it on:
+With `fieldResolverEnhancers: ['guards']` the guard runs once per guarded field, so a list of 50 rows with six decorated fields verifies the token and runs the Casbin checks about 300 times for what is, almost always, the same question. Two options let one HTTP request or GraphQL operation answer it once. Both are off by default, and only the value `'operation'` turns either on:
 
 ```typescript
 MemberBaseModule.forRoot({
   // Verify the access token on the first field and reuse the payload for the rest of the operation.
   accessTokenVerificationCacheScope: 'operation',
+  // Reuse the default checker's decision for the same member, resolved domains and actions.
+  casbinPermissionCacheScope: 'operation',
 });
 ```
 
 What counts as "one operation":
 
 - **HTTP**: the request.
-- **GraphQL**: the operation's context value, not `context.req`. A batched HTTP request carries several operations on one `req`, and they are verified separately — provided your server hands each operation its own context value. Apollo Server 4 and later shallow-copies the context per operation (`internalExecuteOperation` in `@apollo/server`); check yours if you batch through another driver.
-- **Subscriptions**: never reused. Their context lives as long as the connection, so a cached answer would outlast an expired token.
+- **GraphQL**: the operation's context value, not `context.req`. A batched HTTP request carries several operations on one `req`, and they are decided separately — provided your server hands each operation its own context value. Apollo Server 4 and later shallow-copies the context per operation (`internalExecuteOperation` in `@apollo/server`); check yours if you batch through another driver.
+- **Subscriptions**: never reused. Their context lives as long as the connection, so a cached answer would outlast a revoked role or an expired token.
 - **A context value reused across operations** — a graphql-ws `context` that returns the same object for every query on a connection, say — makes those operations one scope, so later queries on it reuse earlier answers. Return a fresh object per operation if that matters to you.
 - **At most a minute**: whatever the scope, nothing is reused more than 60 seconds after it was decided, which bounds the case above.
 
-What changes when it is on: a token that expires partway through an operation no longer fails the remaining fields one by one, and `@MemberId()` / `request.payload` keep the payload the operation started with — for up to a minute after the first verification; an operation still running past that verifies again. That is deliberate and it has a consequence: within that operation the token is still accepted after its `exp`, for up to the minute above. `request.payload` itself lives on `req`, which the operations of a batched request share: a sibling operation verifying after `exp` still clears it for the others.
+What changes when they are on:
+
+- `accessTokenVerificationCacheScope`: a token that expires partway through an operation no longer fails the remaining fields one by one, and `@MemberId()` / `request.payload` keep the payload the operation started with — for up to a minute after the first verification; an operation still running past that verifies again. That is deliberate and it has a consequence: within that operation the token is still accepted after its `exp`, for up to the minute above. `request.payload` itself lives on `req`, which the operations of a batched request share: a sibling operation verifying after `exp` still clears it for the others.
+- `casbinPermissionCacheScope`: a policy changed partway through an operation — a mutation editing the caller's own role, say — is not seen by the rest of that operation. `casbinDomainResolver` is still called on every field for anyone but a super admin (who is allowed before it is consulted, as without the cache), and its result is part of the key, so rows that resolve to different domains are decided separately. What is saved is the super-admin lookup and the `enforce` calls; a resolver that queries the database still runs once per field, so cache inside it if that is your cost. `@HasPermission()` shares the same cache.
+- `casbinPermissionCacheScope` applies only to the default checker. Combining it with a custom `casbinPermissionChecker` fails at boot: a custom checker may decide on anything reachable from the context, and only it knows what a safe key would be.
 
 ## Sessions and Cookies
 
