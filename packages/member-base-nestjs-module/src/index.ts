@@ -190,6 +190,7 @@ export type { RedirectAuthController } from './controllers/redirect-auth.control
 export {
   createDefaultPermissionChecker,
   type DefaultPermissionCheckerNames,
+  type DefaultPermissionCheckerCacheOptions,
 } from './constants/default-permission-checker';
 export * from './constants/default-casbin-domain';
 export * from './constants/super-admin-role';
