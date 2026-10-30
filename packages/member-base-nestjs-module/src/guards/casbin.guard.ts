@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Inject, Injectable, Logger } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { Enforcer } from 'casbin';
 import {
   ACCESS_TOKEN_SECRET,
@@ -8,6 +8,7 @@ import {
   COOKIE_MODE,
   ENABLE_GLOBAL_GUARD,
   ACCESS_TOKEN_COOKIE_NAME,
+  ACCESS_TOKEN_VERIFICATION_CACHE_SCOPE,
 } from '../typings/member-base.tokens';
 import { type ReflectableDecorator, Reflector } from '@nestjs/core';
 import { IS_ROUTE_PUBLIC } from '../decorators/is-public.decorator';
@@ -19,6 +20,8 @@ import { getRequestFromContext } from '../utils/get-request-from-context';
 import { normalizeCasbinDecision } from '../utils/normalize-casbin-decision';
 import type { AuthTokenPayloadBase } from '../typings/auth-token-payload';
 import type { CasbinPermissionChecker } from '../typings/casbin-permission';
+import type { AuthCacheScope } from '../typings/auth-cache-scope';
+import { createScopedMemo, type ScopedMemo } from '../utils/scoped-memo';
 import {
   CasbinEnforcerUnavailableError,
   InvalidAccessTokenError,
@@ -61,6 +64,10 @@ const warnMissingPermissionMetadata = (context: ExecutionContext): void => {
 
 @Injectable()
 export class CasbinGuard implements CanActivate {
+  private readonly verificationMemo: ScopedMemo;
+
+  private readonly reusesVerification: boolean;
+
   constructor(
     @Inject(COOKIE_MODE)
     private readonly cookieMode: boolean,
@@ -76,7 +83,38 @@ export class CasbinGuard implements CanActivate {
     private readonly permissionChecker: CasbinPermissionChecker,
     @Inject(ACCESS_TOKEN_COOKIE_NAME)
     private readonly accessTokenCookieName: string,
-  ) {}
+    @Optional()
+    @Inject(ACCESS_TOKEN_VERIFICATION_CACHE_SCOPE)
+    accessTokenVerificationCacheScope: AuthCacheScope = 'none',
+  ) {
+    this.verificationMemo = createScopedMemo(accessTokenVerificationCacheScope);
+    this.reusesVerification = accessTokenVerificationCacheScope === 'operation';
+  }
+
+  private verifyAccessTokenUncached(token: string): AuthTokenPayloadBase | undefined {
+    try {
+      return jwt.verify(token, this.accessTokenSecret) as AuthTokenPayloadBase;
+    } catch (_ex) {
+      return undefined;
+    }
+  }
+
+  /**
+   * The payload the token carries, or undefined when it does not verify.
+   *
+   * With reuse on, the first field of an operation decides for the rest of it,
+   * for up to a minute.
+   * Otherwise a token expiring partway through would fail the remaining fields
+   * one at a time — and clear request.payload under @MemberId() and the service
+   * code of an operation that was authorized when it started.
+   */
+  private verifyAccessToken(context: ExecutionContext, token: string): Promise<AuthTokenPayloadBase | undefined> {
+    return this.verificationMemo(
+      context,
+      (): string => JSON.stringify(['access-token', token]),
+      async (): Promise<AuthTokenPayloadBase | undefined> => this.verifyAccessTokenUncached(token),
+    );
+  }
 
   async canActivate(
     context: ExecutionContext & {
@@ -87,17 +125,16 @@ export class CasbinGuard implements CanActivate {
     const request = await getRequestFromContext(context);
     const token = await getTokenFromContext(context, this.cookieMode, this.accessTokenCookieName);
 
-    if (token) {
-      try {
-        const payload = jwt.verify(token, this.accessTokenSecret) as AuthTokenPayloadBase;
+    const payload = token ? await this.verifyAccessToken(context, token) : undefined;
 
-        request.payload = payload;
-      } catch (_ex) {
-        request.payload = undefined;
-      }
-    } else {
-      request.payload = undefined;
-    }
+    // With reuse on, a deep copy per guard run — what jwt.verify gives each call
+    // anyway — so that code editing request.payload, nested claims included,
+    // does not edit it for every other field of the operation. The payload was
+    // decoded from JSON, so the round trip loses nothing. Off, it is used as is.
+    request.payload =
+      this.reusesVerification && typeof payload === 'object' && payload !== null
+        ? (JSON.parse(JSON.stringify(payload)) as AuthTokenPayloadBase)
+        : payload;
 
     request.enforcer = this.enforcer ?? undefined;
     request.casbinPermissionChecker = this.permissionChecker;

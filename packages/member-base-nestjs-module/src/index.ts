@@ -48,6 +48,7 @@ export {
   ONLY_RESET_REFRESH_TOKEN_EXPIRATION_BY_PASSWORD,
   COOKIE_MODE,
   ACCESS_TOKEN_COOKIE_NAME,
+  ACCESS_TOKEN_VERIFICATION_CACHE_SCOPE,
   REFRESH_TOKEN_COOKIE_NAME,
   COOKIE_OPTIONS,
   AUTH_PROVIDERS,
@@ -114,6 +115,7 @@ export type {
   CasbinDomainResolverParams,
 } from './typings/casbin-permission';
 export type { CasbinRuleEntity } from './typings/casbin-rule-entity';
+export type { AuthCacheScope } from './typings/auth-cache-scope';
 
 // Casbin
 export * from './guards/casbin.guard';
