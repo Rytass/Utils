@@ -101,6 +101,25 @@ export interface MemberBaseModuleOptionsDTO<
   casbinPermissionChecker?: (params: CasbinPermissionCheckerParams<TokenPayload>) => CasbinPermissionCheckerResult;
   casbinDomainResolver?: CasbinDomainResolver<TokenPayload>; // default: undefined, only affects the default checker
   /**
+   * Reuse the default checker's decisions within one HTTP request or GraphQL
+   * operation, so that the field resolvers of a list do not repeat the same
+   * check row after row. The key is the member, the domains the call is checked
+   * in — what casbinDomainResolver returned, or the token's domain without one —
+   * and the actions, so rows that resolve to different domains are still
+   * decided separately. Subscriptions never reuse.
+   *
+   * A policy changed partway through an operation is not seen by the rest of
+   * that operation. Nothing is reused for more than a minute. The resolver
+   * itself still runs on every call that is not short-circuited for a super
+   * admin.
+   *
+   * Only the default checker has the resolved domains to key on; combining this
+   * with `casbinPermissionChecker` fails at boot.
+   *
+   * Only `'operation'` turns it on. default: 'none'
+   */
+  casbinPermissionCacheScope?: AuthCacheScope;
+  /**
    * Verify the access token once per HTTP request or GraphQL operation and
    * reuse the payload for the rest of it, instead of once per guarded field.
    * A token that expires partway through an operation then no longer fails the

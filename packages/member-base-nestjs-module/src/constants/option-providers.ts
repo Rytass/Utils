@@ -166,13 +166,27 @@ export const OptionProviders = [
     provide: CASBIN_PERMISSION_CHECKER,
     useFactory: async (options?: MemberBaseModuleOptionsDTO): Promise<CasbinPermissionChecker> => {
       if (options?.casbinPermissionChecker) {
+        // A custom checker may decide on anything reachable from the context —
+        // the parent row, an ownership lookup — so there is no key this module
+        // could build that would be safe to reuse its answers under.
+        if (options.casbinPermissionCacheScope === 'operation') {
+          throw new Error(
+            '[MemberBase] casbinPermissionCacheScope only applies to the default permission checker. ' +
+              'Remove it, or cache inside your own casbinPermissionChecker with a key that covers everything it reads.',
+          );
+        }
+
         return options.casbinPermissionChecker as CasbinPermissionChecker;
       }
 
-      return createDefaultPermissionChecker(options?.casbinDomainResolver as CasbinDomainResolver | undefined, {
-        superAdminRole: options?.superAdminRole,
-        defaultDomain: options?.defaultCasbinDomain,
-      });
+      return createDefaultPermissionChecker(
+        options?.casbinDomainResolver as CasbinDomainResolver | undefined,
+        {
+          superAdminRole: options?.superAdminRole,
+          defaultDomain: options?.defaultCasbinDomain,
+        },
+        { cacheScope: options?.casbinPermissionCacheScope },
+      );
     },
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },

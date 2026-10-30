@@ -75,6 +75,7 @@ static forRoot(options?: MemberBaseModuleOptions);
 | casbinPermissionDecorator                 | ReflectableDecorator       | AllowActions      | Custom permission decorator                                       |
 | casbinPermissionChecker                   | (params) => result         | built-in          | Custom permission check function                                  |
 | casbinDomainResolver                      | (params) => domain         | -                 | Resolve the domain per request (default checker only)             |
+| casbinPermissionCacheScope                | 'none' \| 'operation'      | 'none'            | Reuse default-checker decisions within one request / operation    |
 | accessTokenVerificationCacheScope         | 'none' \| 'operation'      | 'none'            | Verify the access token once per request / operation              |
 | superAdminRole                            | string                     | `::SUPER_ADMIN::` | Role the default checker treats as allow-all                      |
 | defaultCasbinDomain                       | string                     | `::DEFAULT::`     | Domain that grouping is keyed to                                  |

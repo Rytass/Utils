@@ -185,4 +185,27 @@ describe('operation cache through the Nest GraphQL field-guard pipeline', () => 
     expect(harness.enforce).toHaveBeenCalledTimes(101);
     expect(harness.verify).toHaveBeenCalledTimes(1);
   });
+
+  it('gives the same answers with far fewer checks, without mixing per-row domains', async () => {
+    const off = await (await createHarness({ casbinDomainResolver: resolveDomains })).run();
+
+    jest.restoreAllMocks();
+
+    const harness = await createHarness({
+      casbinDomainResolver: resolveDomains,
+      casbinPermissionCacheScope: 'operation',
+      accessTokenVerificationCacheScope: 'operation',
+    });
+
+    const on = await harness.run();
+
+    // Rows in project b are still denied `secret` with the cache on.
+    expect(deniedPaths(on)).toEqual(deniedPaths(off));
+    expect(deniedPaths(on).every(path => path.endsWith('.secret'))).toBe(true);
+    expect(on.data).toEqual(off.data);
+
+    // rows, name, secret in project a, secret in project b.
+    expect(harness.enforce).toHaveBeenCalledTimes(4);
+    expect(harness.verify).toHaveBeenCalledTimes(1);
+  });
 });
