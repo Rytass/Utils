@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.16.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.15.1...@rytass/member-base-nestjs-module@0.16.0) (2026-10-30)
+
+### Features
+
+- **member-base-nestjs-module:** reuse default checker decisions within an operation ([ee916a5](https://github.com/Rytass/Utils/commit/ee916a5401b577dfd7f1ec643e867c4c34413836)), closes [#229](https://github.com/Rytass/Utils/issues/229)
+- **member-base-nestjs-module:** verify the access token once per operation ([ca36860](https://github.com/Rytass/Utils/commit/ca368606d8f78fb996191e5f6abb93c85bd3ef85)), closes [#229](https://github.com/Rytass/Utils/issues/229)
+
 ## [0.15.1](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.15.0...@rytass/member-base-nestjs-module@0.15.1) (2026-10-19)
 
 ### Bug Fixes
