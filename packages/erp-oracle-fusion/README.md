@@ -414,6 +414,20 @@ const { requestId } = await fbdi.import(
 The 149-column `GL_INTERFACE` mapping comes from Oracle's official 25c FBDI template
 (`JournalImportTemplate.xlsm`) and has been verified end to end against a live Fusion pod.
 
+Foreign-currency journals pass the optional header fields `conversionRateType`, `conversionDate`
+and `conversionRate` (mapped to columns 63–65 of `GL_INTERFACE`). Omit them for local-currency
+journals and the columns stay blank. With `conversionRateType: 'User'` the rate is required and
+must be positive; other types (e.g. `Corporate`, `Spot`) send type and date only, so Fusion looks
+up the rate itself.
+
+```ts
+buildGlJournalRows(
+  { sourceKey: 'voucher-2', accountingDate: '2026-06-30', currencyCode: 'USD', conversionRateType: 'User', conversionDate: '2026-06-30', conversionRate: 30.5 },
+  lines,
+  config,
+);
+```
+
 > **Note**
 > `buildJournalImportParameterList` produces the seven-position parameter string specific to Journal
 > Import. Other ESS jobs use entirely different parameter formats; do not reuse it.
