@@ -179,3 +179,88 @@ describe('Journal Import ParameterList', () => {
     ).toBe('300000001,Manual,1,2,Y,Y,Y');
   });
 });
+
+describe('GL Journal 外幣匯率欄位（63–65）', () => {
+  const foreignJournal: GlJournalInput = {
+    sourceKey: 'fx-0000-0000-0000-000000000001',
+    accountingDate: '2026-06-30',
+    currencyCode: 'USD',
+    description: 'FX probe journal',
+  };
+
+  const foreignLines: readonly GlJournalLineInput[] = [
+    { accountCode: '759000000', departmentCode: '00000', debit: 0, credit: 100 },
+    { accountCode: '759000000', departmentCode: 'AA110', debit: 100, credit: 0 },
+  ];
+
+  const toRow = (journal: GlJournalInput): string[] =>
+    buildFbdiRow(GL_INTERFACE_FILE, buildGlJournalRows(journal, foreignLines, config)[0]);
+
+  it('本幣或未提供轉換類型時，63–65 留空', () => {
+    const row = toRow({ ...foreignJournal, currencyCode: 'TWD', conversionRate: 1 });
+
+    expect(row[63]).toBe('');
+    expect(row[64]).toBe('');
+    expect(row[65]).toBe('');
+  });
+
+  it('User 類型：輸出類型、日期（轉 Fusion 格式）與匯率', () => {
+    const row = toRow({
+      ...foreignJournal,
+      conversionRateType: 'User',
+      conversionDate: '2026-06-30',
+      conversionRate: 30.5,
+    });
+
+    expect(row[63]).toBe('User');
+    expect(row[64]).toBe('2026/06/30');
+    expect(row[65]).toBe('30.5');
+    expect(row[5]).toBe('USD');
+  });
+
+  it('User 類型接受 DB decimal 的字串匯率，原樣輸出不經浮點轉換', () => {
+    const row = toRow({
+      ...foreignJournal,
+      conversionRateType: 'User',
+      conversionDate: '2026-06-30',
+      conversionRate: '30.5000000000',
+    });
+
+    expect(row[65]).toBe('30.5000000000');
+  });
+
+  it('User 比對不分大小寫，類型名稱原樣輸出', () => {
+    const row = toRow({
+      ...foreignJournal,
+      conversionRateType: ' user ',
+      conversionDate: '2026-06-30',
+      conversionRate: 30,
+    });
+
+    expect(row[63]).toBe('user');
+    expect(row[65]).toBe('30');
+  });
+
+  it('Corporate 類型只帶 type＋date，即使傳了 rate 也不輸出（由 Fusion 查表）', () => {
+    const row = toRow({
+      ...foreignJournal,
+      conversionRateType: 'Corporate',
+      conversionDate: '2026-06-30',
+      conversionRate: 30.5,
+    });
+
+    expect(row[63]).toBe('Corporate');
+    expect(row[64]).toBe('2026/06/30');
+    expect(row[65]).toBe('');
+  });
+
+  it('User 類型缺少或非正的匯率時拋錯，不靜默送出', () => {
+    const base = { ...foreignJournal, conversionRateType: 'User', conversionDate: '2026-06-30' };
+
+    expect(() => buildGlJournalRows(base, foreignLines, config)).toThrow(RangeError);
+    expect(() => buildGlJournalRows({ ...base, conversionRate: null }, foreignLines, config)).toThrow(RangeError);
+    expect(() => buildGlJournalRows({ ...base, conversionRate: 0 }, foreignLines, config)).toThrow(RangeError);
+    expect(() => buildGlJournalRows({ ...base, conversionRate: -1 }, foreignLines, config)).toThrow(RangeError);
+    expect(() => buildGlJournalRows({ ...base, conversionRate: 'abc' }, foreignLines, config)).toThrow(RangeError);
+  });
+});

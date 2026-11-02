@@ -59,6 +59,12 @@ export const GL_INTERFACE_FILE = defineFbdiFile({
     REFERENCE5: 46,
     /** Journal Entry Line Description */
     REFERENCE10: 51,
+    /** 外幣轉換類型（`User`、`Corporate`、`Spot` 等 Fusion 名稱）；本幣留空 */
+    USER_CURRENCY_CONVERSION_TYPE: 63,
+    /** 匯率日期，格式 `YYYY/MM/DD` */
+    CURRENCY_CONVERSION_DATE: 64,
+    /** 匯率（僅 `User` 類型需要） */
+    CURRENCY_CONVERSION_RATE: 65,
     /** 批次隔離鍵（NUMBER），須與 ParameterList 第 4 位一致 */
     GROUP_ID: 66,
     PERIOD_NAME: 94,
@@ -137,6 +143,18 @@ export interface GlJournalInput {
   readonly accountingDate: string;
   readonly currencyCode: string;
   readonly description?: string | null;
+  /**
+   * Fusion 轉換類型名稱（如 `User`、`Corporate`、`Spot`）。未提供＝不帶匯率欄位（本幣傳票用此方式）。
+   * 其他類型由 Fusion 依類型＋日期查匯率表，本套件不輸出 rate。
+   */
+  readonly conversionRateType?: string | null;
+  /** 匯率日期 `YYYY-MM-DD`，內部轉為 `YYYY/MM/DD`。 */
+  readonly conversionDate?: string | null;
+  /**
+   * 匯率（1 外幣 = 多少本幣）。僅在 `conversionRateType` 為 `User` 時輸出，且為必填；
+   * 數字或數字字串（如 DB decimal 回傳的 `'30.5000000000'`）皆可，數字會原樣轉為字串。
+   */
+  readonly conversionRate?: number | string | null;
 }
 
 export interface GlJournalBuildConfig {
@@ -160,6 +178,48 @@ function formatAmount(value: number): string {
 }
 
 /**
+ * 外幣匯率三欄（`USER_CURRENCY_CONVERSION_TYPE`／`CURRENCY_CONVERSION_DATE`／`CURRENCY_CONVERSION_RATE`）。
+ *
+ * 未提供轉換類型時回傳空物件，列結構與未加入匯率欄位前逐字相同。`User` 類型未給匯率、
+ * 或匯率不是正的有限數字時拋錯（寧可在拋轉前失敗，也不讓 Fusion 端以錯誤匯率入帳）。
+ */
+function buildConversionColumns(journal: GlJournalInput): FbdiRow {
+  const conversionType = journal.conversionRateType?.trim() ?? '';
+
+  if (conversionType === '') {
+    return {};
+  }
+
+  const conversionDate = journal.conversionDate ? formatFbdiDate(journal.conversionDate) : '';
+
+  if (conversionType.toLowerCase() !== 'user') {
+    return {
+      USER_CURRENCY_CONVERSION_TYPE: conversionType,
+      CURRENCY_CONVERSION_DATE: conversionDate,
+    };
+  }
+
+  const rateText =
+    journal.conversionRate === undefined || journal.conversionRate === null
+      ? ''
+      : String(journal.conversionRate).trim();
+
+  const rate = Number(rateText);
+
+  if (rateText === '' || !Number.isFinite(rate) || rate <= 0) {
+    throw new RangeError(
+      `GL journal "${journal.sourceKey}": conversionRateType "User" requires a positive conversionRate, got "${rateText}"`,
+    );
+  }
+
+  return {
+    USER_CURRENCY_CONVERSION_TYPE: conversionType,
+    CURRENCY_CONVERSION_DATE: conversionDate,
+    CURRENCY_CONVERSION_RATE: rateText,
+  };
+}
+
+/**
  * 把傳票行組成 GL_INTERFACE 的資料列（以欄位名為鍵，交由模板轉成位置對應）。
  *
  * 5 段以上的會科組合請用 `extraSegments`／`extraSegmentDefaults` 帶入；若貴環境的 COA
@@ -174,6 +234,7 @@ export function buildGlJournalRows(
   const batchName = buildBatchName(journal.sourceKey, config.batchNamePrefix);
   const description = truncate(journal.description ?? '', REFERENCE_MAX_LENGTH);
   const extraDefaults = config.extraSegmentDefaults ?? [];
+  const conversionColumns = buildConversionColumns(journal);
 
   return lines.map(line => {
     const extras = line.extraSegments ?? extraDefaults;
@@ -206,6 +267,7 @@ export function buildGlJournalRows(
       REFERENCE10: truncate(line.lineDescription ?? '', REFERENCE_MAX_LENGTH),
       GROUP_ID: config.groupId,
       PERIOD_NAME: config.periodName,
+      ...conversionColumns,
     };
   });
 }
