@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.4.0](https://github.com/Rytass/Utils/compare/@rytass/erp-oracle-fusion@0.3.1...@rytass/erp-oracle-fusion@0.4.0) (2026-11-02)
+
+### Features
+
+- **erp-oracle-fusion:** add FX conversion header fields to GL journal rows ([6e2adee](https://github.com/Rytass/Utils/commit/6e2adee663c98feaa649c96d81599f6d69f172d8))
+
 ## [0.3.1](https://github.com/Rytass/Utils/compare/@rytass/erp-oracle-fusion@0.3.0...@rytass/erp-oracle-fusion@0.3.1) (2026-10-07)
 
 ### Bug Fixes
