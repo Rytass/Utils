@@ -1,6 +1,8 @@
 import type { SessionContext, SessionTokenBinding } from './session-tracking-options';
 
 export interface SignTokenOptions {
+  /** Preserve a refresh token's absolute expiry, in epoch seconds. */
+  refreshExpiresAt?: number;
   /**
    * Epoch seconds of the moment the member actually proved its identity.
    *

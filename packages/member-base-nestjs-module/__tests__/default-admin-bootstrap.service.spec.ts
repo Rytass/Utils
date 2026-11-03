@@ -98,18 +98,14 @@ describe('DefaultAdminBootstrapService', () => {
     expect(mocks.register).not.toHaveBeenCalled();
   });
 
-  it('generates a compliant password, creates the account, logs the password once, and grants super-admin', async () => {
+  it('requires an explicit bootstrap secret and never logs or creates an inaccessible administrator', async () => {
     const { service, mocks } = buildService('root', null);
 
-    await service.onApplicationBootstrap();
-
-    expect(mocks.generateValidPassword).toHaveBeenCalled();
-    expect(mocks.register).toHaveBeenCalledWith('root', 'Gener4tedPass');
-    expect(mocks.addGroupingPolicy).toHaveBeenCalledWith(MEMBER_ID, SUPER_ADMIN_ROLE, DEFAULT_CASBIN_DOMAIN);
-
-    const passwordLogs = warnSpy.mock.calls.filter(([msg]) => typeof msg === 'string' && msg.includes('Gener4tedPass'));
-
-    expect(passwordLogs).toHaveLength(1);
+    await expect(service.onApplicationBootstrap()).rejects.toThrow('defaultAdminPassword is required');
+    expect(mocks.register).not.toHaveBeenCalled();
+    expect(mocks.generateValidPassword).not.toHaveBeenCalled();
+    expect(mocks.addGroupingPolicy).not.toHaveBeenCalled();
+    expect(warnSpy).not.toHaveBeenCalled();
   });
 
   it('uses a supplied valid password without logging it, and grants super-admin', async () => {

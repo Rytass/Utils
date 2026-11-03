@@ -383,7 +383,7 @@ export const OptionProviders = [
   {
     provide: LINK_EXISTING_ACCOUNT,
     useFactory: (options?: MemberBaseModuleOptionsDTO): LinkExistingAccountStrategy =>
-      options?.linkExistingAccount ?? true,
+      options?.linkExistingAccount ?? false,
     inject: [MEMBER_BASE_MODULE_OPTIONS],
   },
   {

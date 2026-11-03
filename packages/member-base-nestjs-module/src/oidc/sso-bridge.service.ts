@@ -231,6 +231,8 @@ export class OidcSsoBridge implements OnApplicationBootstrap {
 
     if (!claims) return null;
 
+    if (claims.authTime === undefined) return null;
+
     const maxAge = this.parseMaxAge(params.max_age);
 
     if (maxAge !== null) {

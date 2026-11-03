@@ -1,8 +1,12 @@
-import { Controller, Get, Inject, NotFoundException, Param, Query, Res } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Inject, NotFoundException, Param, Query, Res } from '@nestjs/common';
+import { createHmac, randomBytes } from 'node:crypto';
+import jwt from 'jsonwebtoken';
+import { readCookie } from '../utils/read-cookie';
 import { IsPublic } from '../decorators/is-public.decorator';
 import { OAuth2Provider } from '../typings/oauth2-provider.interface';
 import {
   ACCESS_TOKEN_EXPIRATION,
+  ACCESS_TOKEN_SECRET,
   COOKIE_MODE,
   COOKIE_OPTIONS,
   OAUTH2_CLIENT_DEST_URL,
@@ -37,7 +41,25 @@ export class OAuthCallbacksController {
     private readonly refreshTokenExpiration: number,
     @Inject(OAuthService)
     private readonly oauthService: OAuthService,
+    @Inject(ACCESS_TOKEN_SECRET)
+    private readonly transactionSecret: string = randomBytes(32).toString('hex'),
   ) {}
+
+  private get transactionKey(): Buffer {
+    // A public pre-login transaction must never verify as an access token.
+    return createHmac('sha256', this.transactionSecret).update('member-oauth-transaction:v1').digest();
+  }
+
+  private transactionOptions(res: Response): ReturnType<typeof resolveCookieOptions> {
+    const options = resolveCookieOptions(res.req, this.cookieOptions);
+
+    return { ...options, sameSite: options.sameSite === 'strict' ? 'lax' : options.sameSite };
+  }
+
+  private requireCookieMode(): void {
+    if (!this.cookieMode)
+      throw new BadRequestException('Browser OAuth login requires cookieMode; URL bearer tokens are disabled');
+  }
 
   /**
    * Write the pair as cookies.
@@ -76,9 +98,20 @@ export class OAuthCallbacksController {
       throw new NotFoundException();
     }
 
+    this.requireCookieMode();
+
+    const state = randomBytes(32).toString('base64url');
+    const transaction = jwt.sign({ state, channel }, this.transactionKey, {
+      algorithm: 'HS256',
+      audience: 'member-oauth-transaction',
+      expiresIn: 600,
+    });
+
+    res.cookie('member_oauth_tx', transaction, { ...this.transactionOptions(res), maxAge: 600_000 });
+
     switch (provider.channel) {
       case 'google': {
-        const url = await this.oauthService.getGoogleOAuthLoginUrl();
+        const url = await this.oauthService.getGoogleOAuthLoginUrl(state);
 
         res.redirect(url);
 
@@ -86,7 +119,7 @@ export class OAuthCallbacksController {
       }
 
       case 'facebook': {
-        const url = await this.oauthService.getFacebookOAuthLoginUrl();
+        const url = await this.oauthService.getFacebookOAuthLoginUrl(state);
 
         res.redirect(url);
 
@@ -94,7 +127,7 @@ export class OAuthCallbacksController {
       }
 
       default: {
-        const url = await this.oauthService.getCustomOAuthLoginUrl(channel);
+        const url = await this.oauthService.getCustomOAuthLoginUrl(channel, state);
 
         res.redirect(url);
 
@@ -111,60 +144,46 @@ export class OAuthCallbacksController {
     @Param('channel') channel: string,
     @Res() res: Response,
   ): Promise<void> {
+    this.requireCookieMode();
+
+    const transaction = res.req ? readCookie(res.req, 'member_oauth_tx') : undefined;
+
+    res.clearCookie('member_oauth_tx', this.transactionOptions(res));
+
+    try {
+      const claims = jwt.verify(transaction ?? '', this.transactionKey, {
+        algorithms: ['HS256'],
+        audience: 'member-oauth-transaction',
+      }) as { state?: string; channel?: string };
+
+      if (
+        typeof code !== 'string' ||
+        !code ||
+        typeof state !== 'string' ||
+        !state ||
+        claims.state !== state ||
+        claims.channel !== channel
+      ) {
+        throw new Error('Invalid transaction');
+      }
+    } catch {
+      throw new BadRequestException('Invalid OAuth transaction');
+    }
+
     const provider = this.providers.find(p => p.channel === channel);
 
     if (!provider) {
       throw new NotFoundException();
     }
 
-    switch (provider.channel) {
-      case 'google': {
-        const tokenPair = await this.oauthService.loginWithGoogleOAuth2Code(code, state);
+    const tokenPair =
+      provider.channel === 'google'
+        ? await this.oauthService.loginWithGoogleOAuth2Code(code, state)
+        : provider.channel === 'facebook'
+          ? await this.oauthService.loginWithFacebookOAuth2Code(code, state)
+          : await this.oauthService.loginWithCustomOAuth2Code(channel, code, state);
 
-        if (this.cookieMode) {
-          this.setTokenCookies(res, tokenPair);
-
-          res.redirect(this.clientDestUrl);
-        } else {
-          res.redirect(
-            `${this.clientDestUrl}?accessToken=${tokenPair.accessToken}&refreshToken=${tokenPair.refreshToken}${tokenPair.state ? `&state=${tokenPair.state}` : ''}`,
-          );
-        }
-
-        break;
-      }
-
-      case 'facebook': {
-        const tokenPair = await this.oauthService.loginWithFacebookOAuth2Code(code, state);
-
-        if (this.cookieMode) {
-          this.setTokenCookies(res, tokenPair);
-
-          res.redirect(this.clientDestUrl);
-        } else {
-          res.redirect(
-            `${this.clientDestUrl}?accessToken=${tokenPair.accessToken}&refreshToken=${tokenPair.refreshToken}${tokenPair.state ? `&state=${tokenPair.state}` : ''}`,
-          );
-        }
-
-        break;
-      }
-
-      default: {
-        const tokenPair = await this.oauthService.loginWithCustomOAuth2Code(channel, code, state);
-
-        if (this.cookieMode) {
-          this.setTokenCookies(res, tokenPair);
-
-          res.redirect(this.clientDestUrl);
-        } else {
-          res.redirect(
-            `${this.clientDestUrl}?accessToken=${tokenPair.accessToken}&refreshToken=${tokenPair.refreshToken}${tokenPair.state ? `&state=${tokenPair.state}` : ''}`,
-          );
-        }
-
-        break;
-      }
-    }
+    this.setTokenCookies(res, tokenPair);
+    res.redirect(this.clientDestUrl);
   }
 }

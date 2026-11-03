@@ -457,6 +457,18 @@ describe('login sessions, against a real database', () => {
   });
 
   describe('rotation', () => {
+    it('keeps an absolute expiry through successive rotations in the database', async () => {
+      const member = await harness.addMember('fixed-expiry');
+      const binding = await harness.sessions.openSession(member);
+      const cap = new Date(Date.now() + 30_000);
+      const first = await harness.sessions.rotate(binding, member.id, undefined, cap);
+      const second = await harness.sessions.rotate(first, member.id, undefined, cap);
+      const stored = await harness.sessionRepo.findOneByOrFail({ id: second.sessionId });
+
+      expect(stored.expiresAt.getTime()).toBe(cap.getTime());
+      expect(stored.currentTokenId).toBe(second.tokenId);
+    });
+
     it('should replace the token id, remember the one it replaced and extend the session', async () => {
       await harness.addMember('alice');
 

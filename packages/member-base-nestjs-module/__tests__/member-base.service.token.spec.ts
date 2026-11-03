@@ -33,7 +33,7 @@ interface BuiltService {
 const matchesWhere = (member: BaseMemberEntity, where: WhereClause): boolean =>
   Object.entries(where).every(([key, value]) => (member as unknown as Record<string, unknown>)[key] === value);
 
-const buildService = (overrides?: { accessTokenExpiration?: unknown }): BuiltService => {
+const buildService = (overrides?: { accessTokenExpiration?: unknown; fixedRefresh?: boolean }): BuiltService => {
   const member = new BaseMemberEntity();
 
   member.id = '00000000-0000-0000-0000-000000000001';
@@ -80,7 +80,7 @@ const buildService = (overrides?: { accessTokenExpiration?: unknown }): BuiltSer
     (overrides?.accessTokenExpiration ?? 60 * 15) as number,
     REFRESH_TOKEN_SECRET,
     60 * 60 * 24,
-    false,
+    overrides?.fixedRefresh ?? false,
     noopRepo as never,
     undefined,
     false,
@@ -195,6 +195,7 @@ describe('MemberBaseService.refreshToken characterization', () => {
       { sessionId: presented.sid, tokenId: presented.jti },
       member.id,
       expect.any(Function),
+      undefined,
     );
 
     expect(access.sid).toBe(presented.sid);
@@ -271,5 +272,18 @@ describe('MemberBaseService.refreshToken characterization', () => {
     );
 
     await expect(service.refreshToken(expired)).rejects.toBeInstanceOf(InvalidToken);
+  });
+});
+
+describe('absolute refresh expiry', () => {
+  it('preserves the original expiry and passes the same cap to session rotation', async () => {
+    const { service, member, sessions } = buildService({ fixedRefresh: true });
+    const pair = await service.issueTokenPair(member);
+    const original = decode(pair.refreshToken, REFRESH_TOKEN_SECRET);
+    const refreshToken = sign({ ...original, exp: Math.floor(Date.now() / 1000) + 30 }, REFRESH_TOKEN_SECRET);
+    const next = decode((await service.refreshToken(refreshToken)).refreshToken, REFRESH_TOKEN_SECRET);
+
+    expect(next.exp).toBe(decode(refreshToken, REFRESH_TOKEN_SECRET).exp);
+    expect(sessions.rotate.mock.calls[0][3]).toEqual(new Date((next.exp as number) * 1000));
   });
 });

@@ -204,8 +204,27 @@ export class OidcAuthProvider implements AuthenticationProvider {
     }
 
     const claims = await this.verifyIdToken(tokens.id_token, nonce);
-    const attributes = this.options.fetchUserinfo
-      ? { ...claims, ...(await this.fetchUserinfo(tokens.access_token)) }
+    const userinfo = this.options.fetchUserinfo ? await this.fetchUserinfo(tokens.access_token) : undefined;
+
+    if (userinfo && userinfo.sub !== claims.sub) throw new InvalidToken();
+
+    const attributes: Record<string, unknown> = userinfo
+      ? {
+          ...claims,
+          ...userinfo,
+          // UserInfo may enrich the profile, never replace the verified token's
+          // security claims or inherit verification for a different email.
+          sub: claims.sub,
+          iss: claims.iss,
+          aud: claims.aud,
+          nonce: claims.nonce,
+          email_verified:
+            userinfo.email !== undefined && userinfo.email !== claims.email
+              ? userinfo.email_verified === true
+              : userinfo.email_verified === undefined
+                ? claims.email_verified
+                : userinfo.email_verified === true,
+        }
       : claims;
 
     const identifierClaim = this.options.identifierClaim ?? 'sub';

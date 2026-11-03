@@ -202,7 +202,7 @@ export interface MemberBaseModuleOptionsDTO<
   /**
    * Whether an unbound external identity may claim an existing local member
    * whose account equals the identifier.
-   * default: true — matches the behaviour the OAuth2 flows always had.
+   * default: false — existing accounts require explicit linking.
    * Set 'verified-only' to require the provider to have verified the
    * identifier, or false to disable linking. A warning is emitted on boot and
    * on every actual takeover while linking is enabled.
@@ -219,7 +219,7 @@ export interface MemberBaseModuleOptionsDTO<
 
   // Default Admin
   defaultAdminAccount?: string; // default: undefined, if set, will auto-create this account with super-admin permissions on startup
-  defaultAdminPassword?: string; // default: undefined, if omitted (and defaultAdminAccount set), a policy-compliant random password is generated and logged once
+  defaultAdminPassword?: string; // required when creating a default admin; obtain it from a secret manager
 }
 
 // Non-breaking alias with community-preferred naming

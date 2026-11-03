@@ -65,7 +65,7 @@ describe('DefaultAdminBootstrapService — integration with real Casbin', () => 
 
     const service = new DefaultAdminBootstrapService(
       'root',
-      null, // no password -> generate a compliant one
+      'ExplicitPassw0rd!', // supplied through the deployment secret manager
       baseMemberRepo,
       enforcer,
       memberBaseService,

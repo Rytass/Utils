@@ -254,7 +254,10 @@ export class MemberBaseService<
       },
       this.refreshTokenSecret,
       {
-        expiresIn: this.validateExpiration(this.refreshTokenExpiration, 'REFRESH_TOKEN_EXPIRATION'),
+        expiresIn:
+          options?.refreshExpiresAt === undefined
+            ? this.validateExpiration(this.refreshTokenExpiration, 'REFRESH_TOKEN_EXPIRATION')
+            : Math.min(this.refreshTokenExpiration, options.refreshExpiresAt - currentEpochSeconds()),
       },
     );
   }
@@ -521,6 +524,7 @@ export class MemberBaseService<
           password: await hash(newPassword, this.passwordHashOptions),
           passwordChangedAt: new Date(),
           shouldUpdatePassword: false,
+          resetPasswordRequestedAt: null,
         };
 
         await this.baseMemberRepo.update({ id: member.id }, changes);
@@ -606,6 +610,8 @@ export class MemberBaseService<
         requestedOn: number;
       };
 
+      if (typeof id !== 'string' || !Number.isSafeInteger(requestedOn)) throw new InvalidToken();
+
       if (!(await this.passwordValidatorService.validatePassword(newPassword, id))) {
         throw new PasswordDoesNotMeetPolicyError();
       }
@@ -631,7 +637,14 @@ export class MemberBaseService<
         loginFailedCounter: 0,
       };
 
-      await this.baseMemberRepo.update({ id: member.id }, changes);
+      // Consume the same reset request we read, atomically. A concurrent reset,
+      // password change or newer reset request makes this update lose.
+      const { affected } = await this.baseMemberRepo.update(
+        { id: member.id, resetPasswordRequestedAt: new Date(requestedOn) },
+        changes,
+      );
+
+      if (affected !== 1) throw new InvalidToken();
 
       Object.assign(member, changes);
 
@@ -754,26 +767,38 @@ export class MemberBaseService<
 
     const loaded: { member?: BaseMemberEntity } = {};
 
-    const session = await this.memberSessionService.rotate({ sessionId: sid, tokenId: jti }, id, async () => {
-      const member = await this.findMemberOnPrimary({ id, account });
+    if (this.onlyResetRefreshTokenExpirationByPassword && !Number.isSafeInteger(claims.exp)) throw new InvalidToken();
 
-      if (!member) {
-        throw new MemberNotFoundError();
-      }
+    const session = await this.memberSessionService.rotate(
+      { sessionId: sid, tokenId: jti },
+      id,
+      async () => {
+        const member = await this.findMemberOnPrimary({ id, account });
 
-      if (epochMsOrNull(member.passwordChangedAt) !== passwordChangedAt) {
-        throw new PasswordChangedError();
-      }
+        if (!member) {
+          throw new MemberNotFoundError();
+        }
 
-      loaded.member = member;
-    });
+        if (epochMsOrNull(member.passwordChangedAt) !== passwordChangedAt) {
+          throw new PasswordChangedError();
+        }
+
+        loaded.member = member;
+      },
+      this.onlyResetRefreshTokenExpirationByPassword ? new Date(claims.exp * 1000) : undefined,
+    );
 
     // Carry the original authentication time forward. Re-stamping it here
     // would make every refresh look like a fresh login to anything that
     // relies on authTime (OIDC max_age / prompt=login, step-up auth).
     // Tokens issued before the claim existed resolve to null so the claim is
     // omitted rather than fabricated.
-    const signOptions: SignTokenOptions = { authTime: authTime ?? null, session };
+    const signOptions: SignTokenOptions = {
+      authTime: authTime ?? null,
+      session,
+      ...(this.onlyResetRefreshTokenExpirationByPassword ? { refreshExpiresAt: claims.exp } : {}),
+    };
+
     const resolvedDomain = options?.domain ?? domain ?? undefined;
     const member = loaded.member as MemberEntity;
 

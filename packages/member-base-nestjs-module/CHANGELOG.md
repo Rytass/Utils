@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## Unreleased
+
+### Security
+
+- Bind legacy OAuth browser callbacks to a signed, expiring transaction and random state; separate its signing key from access tokens.
+- Disable external account auto-linking by default and apply the same policy to legacy OAuth.
+- Invalidate outstanding reset links on member/admin password changes and atomically consume reset requests.
+- Correct the special-character password rule and enforce password history with custom regular expressions.
+- Preserve absolute refresh expiry when configured, verify UserInfo subjects, and preserve OIDC bridge authentication time.
+
+### Breaking changes
+
+- Web redirect login requires cookie mode; access/refresh tokens are no longer sent in URL queries. Explicit native fragment destinations remain supported.
+- Creating a default administrator requires an explicitly supplied bootstrap password; generated passwords are no longer logged.
+- External account linking defaults to false. See the README security migration section before upgrading.
+
 # [0.16.0](https://github.com/Rytass/Utils/compare/@rytass/member-base-nestjs-module@0.15.1...@rytass/member-base-nestjs-module@0.16.0) (2026-10-30)
 
 ### Features

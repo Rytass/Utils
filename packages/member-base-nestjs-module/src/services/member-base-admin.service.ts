@@ -81,6 +81,7 @@ export class MemberBaseAdminService<MemberEntity extends BaseMemberEntity = Base
       // An admin-forced password reset is expected to also unlock the account,
       // mirroring the self-service reset flow (changePasswordWithToken).
       loginFailedCounter: 0,
+      resetPasswordRequestedAt: null,
     };
 
     await this.baseMemberRepo.update({ id: member.id }, changes);

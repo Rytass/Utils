@@ -20,6 +20,8 @@ const matches = (member: BaseMemberEntity, where: Where): boolean =>
       }
     }
 
+    if (expected instanceof Date) return actual instanceof Date && +actual === +expected;
+
     return actual === expected;
   });
 

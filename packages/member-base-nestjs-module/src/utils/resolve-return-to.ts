@@ -2,8 +2,7 @@
  * How the token pair reaches a given destination.
  *
  * `cookie` is the default and means "whatever the module-level `cookieMode`
- * says" — cookies when it is on, query parameters on the destination when it is
- * off, exactly as before this option existed.
+ * says" — it requires cookieMode to be enabled for browser destinations.
  *
  * `fragment` puts the pair after a `#`, which never leaves the browser: it is
  * not sent to the server, so it stays out of access logs and `Referer` headers,
