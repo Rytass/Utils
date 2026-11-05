@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.3.0](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.2.0...@rytass/cms-base-nestjs-graphql-module@0.3.0) (2026-11-05)
+
+- fix(cms-base-nestjs-graphql-module)!: stop exposing member account on public Article.releasedBy ([00befe1](https://github.com/Rytass/Utils/commit/00befe1ce1f08fe9cbd55a6663b9b89ee839b774))
+
+### BREAKING CHANGES
+
+- Article.releasedBy now returns PublicUser { id };
+  queries selecting `account` on the public Article must drop it.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_015baQopjTUKu1F8GsAmYEsc
+
 # [0.2.0](https://github.com/Rytass/Utils/compare/@rytass/cms-base-nestjs-graphql-module@0.1.30...@rytass/cms-base-nestjs-graphql-module@0.2.0) (2026-08-02)
 
 ### Bug Fixes
