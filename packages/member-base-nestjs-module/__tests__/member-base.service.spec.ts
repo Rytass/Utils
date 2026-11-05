@@ -1,4 +1,5 @@
-import { hash } from 'argon2';
+import { hash, verify } from 'argon2';
+import { MemberBaseAdminService } from '../src/services/member-base-admin.service';
 import { sign } from 'jsonwebtoken';
 import { Repository } from 'typeorm';
 import { MemberBaseService } from '../src/services/member-base.service';
@@ -179,5 +180,66 @@ describe('MemberBaseService account lockout self-recovery', () => {
 
     expect(member.loginFailedCounter).toBe(LOGIN_FAILED_BAN_THRESHOLD);
     expect(sessions.revokeAllSessions).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('reset credential invalidation and consumption', () => {
+  it('invalidates an outstanding reset link when the member changes the password', async () => {
+    const member = await createBannedMember();
+    const { service } = buildService(member);
+    const token = await service.getResetPasswordToken(member.account);
+
+    await service.changePassword(member.id, 'OldPassw0rd!', 'NewPassw0rd!');
+    await expect(service.changePasswordWithToken(token, 'AttackerPassw0rd!')).rejects.toBeInstanceOf(InvalidToken);
+    expect(await verify(member.password, 'NewPassw0rd!')).toBe(true);
+  });
+
+  it('invalidates an outstanding reset link after an administrator resets the password', async () => {
+    const member = await createBannedMember();
+    const { service, memberRepo, sessions } = buildService(member);
+    const token = await service.getResetPasswordToken(member.account);
+    const admin = new MemberBaseAdminService(
+      memberRepo,
+      { validatePassword: async () => true } as unknown as PasswordValidatorService,
+      createNoopRepo(),
+      {},
+      asSessionService(sessions),
+    );
+
+    await admin.resetMemberPassword(member.id, 'AdminPassw0rd!');
+    await expect(service.changePasswordWithToken(token, 'AttackerPassw0rd!')).rejects.toBeInstanceOf(InvalidToken);
+    expect(await verify(member.password, 'AdminPassw0rd!')).toBe(true);
+  });
+
+  it('allows exactly one simultaneous consumer of a reset token', async () => {
+    const member = await createBannedMember();
+    const { service, memberRepo } = buildService(member);
+    const token = await service.getResetPasswordToken(member.account);
+    const find = jest.mocked(memberRepo.findOne).getMockImplementation();
+
+    if (!find) throw new Error('Missing repository implementation');
+    let arrived = 0;
+    let release: () => void = (): void => undefined;
+    const barrier = new Promise<void>(resolve => {
+      release = resolve;
+    });
+
+    jest.spyOn(memberRepo, 'findOne').mockImplementation(async options => {
+      const snapshot = await find(options);
+
+      if (++arrived === 2) release();
+      await barrier;
+
+      return snapshot;
+    });
+
+    const outcomes = await Promise.allSettled([
+      service.changePasswordWithToken(token, 'FirstPassw0rd!'),
+      service.changePasswordWithToken(token, 'SecondPassw0rd!'),
+    ]);
+
+    expect(outcomes.filter(result => result.status === 'fulfilled')).toHaveLength(1);
+    expect(outcomes.filter(result => result.status === 'rejected')).toHaveLength(1);
+    expect(member.resetPasswordRequestedAt).toBeNull();
   });
 });

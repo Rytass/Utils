@@ -501,3 +501,27 @@ describe('OidcAuthProvider certificate client authentication', () => {
     expect(body.get('client_assertion_type')).toBeNull();
   });
 });
+
+describe('UserInfo subject and verification binding', () => {
+  it.each([{}, { sub: 'another-subject' }])('rejects UserInfo without the verified subject: %p', async userinfo => {
+    stub.tokenResponse = { access_token: 'access', id_token: issueIdToken({}) };
+    stub.userinfoResponse = userinfo;
+    await expect(buildProvider({ fetchUserinfo: true }).handleCallback({ code: 'code' })).rejects.toBeInstanceOf(
+      InvalidToken,
+    );
+  });
+
+  it('does not inherit email verification when UserInfo changes the email', async () => {
+    stub.tokenResponse = {
+      access_token: 'access',
+      id_token: issueIdToken({ email: 'old@example.com', email_verified: true }),
+    };
+
+    stub.userinfoResponse = { sub: 'subject-1', email: 'new@example.com' };
+    const identity = await buildProvider({ fetchUserinfo: true, identifierClaim: 'email' }).handleCallback({
+      code: 'code',
+    });
+
+    expect(identity.identifierVerified).toBe(false);
+  });
+});

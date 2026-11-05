@@ -246,34 +246,15 @@ describe('OAuthService identity resolution', () => {
     expect(memberBaseService.registerWithoutPassword).not.toHaveBeenCalled();
   });
 
-  // This is the account takeover surface that Phase 2 exposes as the
-  // `linkExistingAccount` option: an unbound external identity silently claims
-  // a pre-existing local member whose account string happens to match.
-  it('should take over an existing local account whose account matches the identifier', async () => {
+  it('refuses to take over an existing account by default', async () => {
     const { service, memberRepo, recordRepo, memberBaseService } = buildHarness();
 
     memberRepo.findOne.mockResolvedValue({ id: 'existing-member', account: 'user@example.com' });
-
     mockedAxios.post.mockResolvedValue({ data: { access_token: 'google-at' } });
     mockedAxios.get.mockResolvedValue({ data: { email: 'user@example.com', email_verified: true } });
-
-    const result = await service.loginWithGoogleOAuth2Code('code');
-
-    expect(recordRepo.save).toHaveBeenCalledWith({
-      memberId: 'existing-member',
-      channel: 'google',
-      channelIdentifier: 'user@example.com',
-    });
-
-    expect(result.accessToken).toBe('access-existing-member');
-    expect(result.refreshToken).toBe('refresh-existing-member');
-    expect(memberBaseService.issueTokenPair).toHaveBeenCalledTimes(1);
-    expect(memberBaseService.issueTokenPair).toHaveBeenCalledWith({
-      id: 'existing-member',
-      account: 'user@example.com',
-    });
-
-    expect(memberBaseService.registerWithoutPassword).not.toHaveBeenCalled();
+    await expect(service.loginWithGoogleOAuth2Code('code')).rejects.toBeInstanceOf(BadRequestException);
+    expect(recordRepo.save).not.toHaveBeenCalled();
+    expect(memberBaseService.issueTokenPair).not.toHaveBeenCalled();
   });
 
   it('should provision a new passwordless member when nothing matches', async () => {

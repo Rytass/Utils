@@ -1,5 +1,19 @@
 # Member Base System for NestJS Projects
 
+## Security migration (unreleased)
+
+This update changes authentication defaults. Review the following before upgrading:
+
+- `linkExistingAccount` now defaults to `false` for the authentication gateway and the legacy OAuth service. Pre-link existing accounts through an authenticated account-management flow. If automatic email linking is required, explicitly select `'verified-only'` and trust only configured issuers. Legacy Google supplies a verified email; legacy Facebook and custom OAuth adapters do not supply verification evidence and therefore cannot use this mode to link an existing account. Explicit `true` remains an unsafe opt-in.
+- Browser OAuth redirects require `cookieMode: true`. Query-string access/refresh tokens have been removed. Header-mode applications must exchange credentials through their own backend API; native apps may continue using an explicitly allowlisted `delivery: 'fragment'` destination with `redirectAuth`. A browser destination in header mode fails before code exchange. Keep web cookies HttpOnly and add CSRF protection appropriate to the host application.
+- Legacy `/auth/login/:channel` now creates a signed, browser-bound transaction cookie and a random state. The callback requires its matching state/channel and server-verified ten-minute expiry. Do not construct callback links directly. The start route's generated state replaces `getState()` for these mounted routes. Direct `OAuthService` consumers still own their browser transaction validation; prefer `redirectAuth` with an OIDC provider for PKCE/nonce support.
+- Creating a new `defaultAdminAccount` requires an explicit `defaultAdminPassword` from a secret manager. Missing credentials abort startup before creating the account; no generated password is logged. Existing administrators are left alone. Rotate any passwords previously exposed in startup logs.
+- Every normal/admin password change invalidates outstanding reset links. Concurrent reset submissions can no longer both succeed.
+- `onlyResetRefreshTokenExpirationByPassword: true` now preserves the incoming refresh token's absolute expiry in both the next JWT and session rotation; it no longer silently slides on refresh. A fresh credential-based login opens a new session. Already extended credentials are not retroactively shortened.
+- Custom password format expressions now also enforce `passwordHistoryLimit`; special-character policies reject purely alphanumeric passwords. Existing passwords are checked when they are next changed, not silently replaced.
+- With `fetchUserinfo: true`, UserInfo must carry the same `sub` as the verified ID token. A changed email does not inherit another email's verification flag.
+- OIDC session bridging preserves the original authentication time. Sessions predating `authTime` must authenticate again before creating an issuer session.
+
 Members, passwords, tokens and Casbin authorization for NestJS — plus a pluggable authentication gateway and an optional OpenID Connect provider endpoint.
 
 ## What you can build with it
@@ -468,7 +482,7 @@ MemberBaseModule.forRoot({
   memberEntity: MyMemberEntity,
   casbinAdapterOptions: { type: 'postgres' /* ... */ }, // required to grant permissions
   defaultAdminAccount: 'root',
-  // defaultAdminPassword: 'Sup3rStr0ng', // optional — omit to auto-generate
+  defaultAdminPassword: process.env.ADMIN_BOOTSTRAP_PASSWORD, // required for initial creation
 });
 ```
 
@@ -476,7 +490,7 @@ Behavior:
 
 - **On first startup**, the `defaultAdminAccount` is created and bound to the well-known `SUPER_ADMIN_ROLE` grouping (in `DEFAULT_CASBIN_DOMAIN`). The built-in permission checker treats any member holding this role as allow-all — it passes every guarded action regardless of domain, without enumerating policies.
 - **Idempotent**: if the account already exists at startup, the module does nothing (safe across restarts).
-- **Password**: if `defaultAdminPassword` is omitted, a policy-compliant random password is generated and written to the log **once** (at creation). Supplied passwords are never logged; a supplied password that fails the policy aborts startup with `PasswordDoesNotMeetPolicyError`.
+- **Password**: initial creation requires `defaultAdminPassword`, supplied through a secret manager. No password is generated or logged. Missing credentials abort startup; a supplied password that fails the policy aborts with `PasswordDoesNotMeetPolicyError`.
 - **No Casbin configured**: if `casbinAdapterOptions` is not set (the enforcer is unavailable), the account is still created but the super-admin grant is skipped with a warning.
 - **Custom checker caveat**: the allow-all short-circuit lives in the module's default permission checker. If you provide your own `casbinPermissionChecker`, honor `SUPER_ADMIN_ROLE` yourself if you want the same behavior.
 
@@ -974,7 +988,7 @@ MemberBaseModule.forRoot({
 });
 ```
 
-> The bundled Facebook flow does not check an email verification flag. With the default `linkExistingAccount: true` that is an account takeover path — see [Provisioning and linking policy](#provisioning-and-linking-policy).
+> The bundled Facebook flow does not check an email verification flag. With an explicit `linkExistingAccount: true` that is an account takeover path — see [Provisioning and linking policy](#provisioning-and-linking-policy).
 
 ### C. Directory-backed (Active Directory)
 
@@ -1242,7 +1256,7 @@ The subject is the local member id rather than the directory's identifier, so re
 | --------------------- | -------------------------------------------------- | ---------- | --------------------------------------------------------------------------- |
 | `authProviders`       | `AuthenticationProvider[]`                         | `[]`       | Extra sources; password is always registered                                |
 | `autoProvision`       | `boolean \| (identity) => Promise<string \| null>` | `true`     | What happens when an external identity has no member                        |
-| `linkExistingAccount` | `boolean \| 'verified-only'`                       | `true`     | Whether an external identity may claim a matching local account             |
+| `linkExistingAccount` | `boolean \| 'verified-only'`                       | `false`    | Whether an external identity may claim a matching local account             |
 | `syncOnAuthenticate`  | `(params) => Promise<void>`                        | —          | Write directory attributes back after resolution; nothing runs by default   |
 | `oauth2Providers`     | `OAuth2Provider[]`                                 | `[]`       | Google / Facebook / custom OAuth2                                           |
 | `oauth2ClientDestUrl` | `string`                                           | `'/login'` | Where the OAuth2 callback redirects                                         |
@@ -1490,7 +1504,7 @@ MemberBaseModule.forRoot({
 });
 ```
 
-> **Account takeover warning.** With `linkExistingAccount: true` (the default, matching the behaviour the OAuth2 flows always had), any provider that does not verify its identifier lets a matching local account be claimed. The bundled Facebook flow, for instance, never checks an email verification flag. A warning is printed on boot while linking is enabled, and again on every actual takeover with the channel, identifier and member id. Set `'verified-only'` to require verification.
+> **Account takeover warning.** With `linkExistingAccount: true` (an unsafe opt-in; the default is now `false`), any provider that does not verify its identifier lets a matching local account be claimed. The bundled Facebook flow, for instance, never checks an email verification flag. A warning is printed on boot while linking is enabled, and again on every actual takeover with the channel, identifier and member id. Set `'verified-only'` to require verification.
 
 ## Acting as an OpenID Connect Provider
 
@@ -2790,7 +2804,7 @@ myapp://auth/cb#accessToken=eyJhbGciOi...&refreshToken=eyJhbGciOi...
 
 A fragment is never sent to the server. It does not reach an access log, it is not in `Referer` on any subsequent request, and no reverse proxy in front of the app records it. The operating system still hands the whole url — fragment included — to the app that registered the scheme, so nothing is lost.
 
-The query-string form is still what `cookieMode: false` and `OAuthCallbacksController` emit. That is deliberate: those are existing behaviours with existing users, and `delivery: 'fragment'` is a second path rather than a change to the first.
+Query-string bearer delivery is disabled. Web destinations require `cookieMode: true`; native destinations may explicitly opt into `delivery: 'fragment'` in the allowlist.
 
 #### Why delivery is configured, not requested
 
@@ -2829,7 +2843,7 @@ Both routes negotiate the same way the OIDC interaction routes do. A browser (`A
 Where the tokens travel follows the module-wide `cookieMode` switch rather than inventing a third convention:
 
 - **`cookieMode: true`** — the pair is written as cookies and the browser is sent to the destination.
-- **`cookieMode: false`** — no cookie is written (the guard would never read one back) and the pair rides on the destination as `?accessToken=…&refreshToken=…`, exactly as `OAuthCallbacksController` has always done. This is what makes the native-app custom-scheme redirect work.
+- **`cookieMode: false`** — browser destinations are refused. Native apps must use an explicit allowlist entry with `delivery: 'fragment'`; bearer tokens never travel in the URL query.
 
 ### Mounting from `forRootAsync`
 

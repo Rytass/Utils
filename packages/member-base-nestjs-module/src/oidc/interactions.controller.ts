@@ -199,7 +199,7 @@ export class OidcInteractionsController {
         await this.provider.interactionFinished(
           req,
           res,
-          { login: { accountId: existing.member.id } },
+          { login: { accountId: existing.member.id, ts: existing.authTime } },
           { mergeWithLastSubmission: false },
         );
 
@@ -336,7 +336,14 @@ export class OidcInteractionsController {
 
     if (!member || member.deletedAt) throw new UnauthorizedException('No member-base session on this request');
 
-    await this.completeInteraction(req, res, { login: { accountId: member.id } }, { mergeWithLastSubmission: false });
+    if (claims.authTime === undefined) throw new UnauthorizedException('reauthentication_required');
+
+    await this.completeInteraction(
+      req,
+      res,
+      { login: { accountId: member.id, ts: claims.authTime } },
+      { mergeWithLastSubmission: false },
+    );
   }
 
   @IsPublic()

@@ -249,28 +249,14 @@ describe('mounted redirect routes, over real HTTP', () => {
     await request(app.getHttpServer()).get('/api/auth/entra/start').set('accept', 'text/html').expect(302);
   });
 
-  it('should carry the tokens on the destination when cookieMode is off', async () => {
+  it('rejects browser query delivery before starting authorization when cookieMode is off', async () => {
     app = await buildApp('sso', false);
+    const response = await request(app.getHttpServer())
+      .get('/sso/entra/start?returnTo=https://app.example.com/dash')
+      .expect(500);
 
-    const agent = request.agent(app.getHttpServer());
-
-    await agent.get('/sso/entra/start?returnTo=https://app.example.com/dash').set('accept', 'text/html').expect(302);
-
-    const response = await agent
-      .get('/sso/entra/callback')
-      .query({ code: 'code-1', state: 'state-1' })
-      .set('accept', 'text/html')
-      .expect(302);
-
-    // The transaction cookie is still cleared — that has to happen on every
-    // path — but no session cookie is written, because with cookieMode off the
-    // guard would never read one back.
-    const written = (response.headers['set-cookie'] as unknown as string[]).map(value => value.split('=')[0]);
-
-    expect(written).toEqual(['oidc_tx']);
-    expect(response.headers.location).toBe(
-      'https://app.example.com/dash?accessToken=access-token&refreshToken=refresh-token',
-    );
+    expect(response.headers.location).toBeUndefined();
+    expect(response.headers['set-cookie']).toBeUndefined();
   });
 
   it('should read the transaction through cookie-parser when the host installed it', async () => {
@@ -429,15 +415,12 @@ describe('mounted redirect routes, over real HTTP', () => {
       expect(location.search).toBe('');
     });
 
-    it('should leave a cookie destination on the query string when cookieMode is off', async () => {
-      // Unchanged behaviour for anyone who was already running this way.
+    it('rejects a cookie destination when cookieMode is off, even in a mixed allowlist', async () => {
       app = await buildApp('sso', false, { allowedReturnTo: MIXED });
-
-      const response = await startAndCallback(request.agent(app.getHttpServer()), 'https://app.example.com/dash');
-      const location = new URL(response.headers.location as string);
-
-      expect(location.searchParams.get('accessToken')).toBe('access-token');
-      expect(location.hash).toBe('');
+      await request(app.getHttpServer())
+        .get('/sso/entra/start')
+        .query({ returnTo: 'https://app.example.com/dash' })
+        .expect(500);
     });
 
     it('should never fragment-deliver to the fallback', async () => {

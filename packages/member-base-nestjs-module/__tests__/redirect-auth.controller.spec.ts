@@ -528,26 +528,29 @@ describe('RedirectAuthController callback', () => {
     expect(res.body).toEqual({ redirectTo: 'https://app.example.com/reports' });
   });
 
-  it('should carry the tokens on the destination when cookieMode is off', async () => {
-    const { controller } = buildController(undefined, false);
+  it.each([
+    'https://app.example.com/reports',
+    'https://app.example.com/dash#section',
+    'https://app.example.com/dash?a=1#section',
+  ])('rejects query token delivery to %s before exchanging the code', async returnTo => {
+    const { controller, gateway } = buildController({ allowedReturnTo: ['https://app.example.com'] }, false);
     const res = createResponse();
 
-    await controller.callback(
-      'entra',
-      'code-1',
-      'state-1',
-      undefined,
-      undefined,
-      createRequest({ ...BROWSER, cookies: transactionCookie() }),
-      res as unknown as Response,
-    );
+    await expect(
+      controller.callback(
+        'entra',
+        'code-1',
+        'state-1',
+        undefined,
+        undefined,
+        createRequest({ ...BROWSER, cookies: transactionCookie({ returnTo }) }),
+        res as unknown as Response,
+      ),
+    ).rejects.toBeInstanceOf(AuthProviderMisconfiguredError);
 
-    // Same convention OAuthCallbacksController has always used: with cookieMode
-    // off, a cookie this route wrote would never be read back.
-    expect(res.cookies.map(cookie => cookie.name)).toEqual([]);
-    expect(res.redirectedTo).toBe(
-      'https://app.example.com/reports?accessToken=access-token&refreshToken=refresh-token',
-    );
+    expect(gateway.handleCallback).not.toHaveBeenCalled();
+    expect(res.cookies).toHaveLength(0);
+    expect(res.redirectedTo).toBeNull();
   });
 
   it('should answer 400, not 500, on a malformed cookie escape', async () => {
@@ -567,64 +570,6 @@ describe('RedirectAuthController callback', () => {
         createResponse() as unknown as Response,
       ),
     ).rejects.toBeInstanceOf(RedirectAuthTransactionError);
-  });
-
-  it('should put the tokens in the query when the destination carries a fragment', async () => {
-    const { controller } = buildController(
-      { allowedReturnTo: ['https://app.example.com'], successRedirect: '/' },
-      false,
-    );
-
-    const res = createResponse();
-
-    await controller.callback(
-      'entra',
-      'code-1',
-      'state-1',
-      undefined,
-      undefined,
-      createRequest({
-        ...BROWSER,
-        cookies: transactionCookie({ returnTo: 'https://app.example.com/dash#section' }),
-      }),
-      res as unknown as Response,
-    );
-
-    // Appending after a fragment buries the tokens in the hash, where they never
-    // reach the destination server and the login silently completes for nobody.
-    const destination = new URL(res.redirectedTo ?? '');
-
-    expect(destination.searchParams.get('accessToken')).toBe('access-token');
-    expect(destination.searchParams.get('refreshToken')).toBe('refresh-token');
-    expect(destination.hash).toBe('#section');
-  });
-
-  it('should keep an existing query string when adding the tokens', async () => {
-    const { controller } = buildController(
-      { allowedReturnTo: ['https://app.example.com'], successRedirect: '/' },
-      false,
-    );
-
-    const res = createResponse();
-
-    await controller.callback(
-      'entra',
-      'code-1',
-      'state-1',
-      undefined,
-      undefined,
-      createRequest({
-        ...BROWSER,
-        cookies: transactionCookie({ returnTo: 'https://app.example.com/dash?a=1#s' }),
-      }),
-      res as unknown as Response,
-    );
-
-    const destination = new URL(res.redirectedTo ?? '');
-
-    expect(destination.searchParams.get('a')).toBe('1');
-    expect(destination.searchParams.get('accessToken')).toBe('access-token');
-    expect(destination.hash).toBe('#s');
   });
 
   it('should honour overridden cookie names', async () => {

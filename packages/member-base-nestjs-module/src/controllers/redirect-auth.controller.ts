@@ -111,37 +111,6 @@ const sanitizeOAuthError = (value: string | undefined): string | undefined => {
 };
 
 /**
- * Append the pair to a destination's **query string**.
- *
- * Naive concatenation is wrong whenever the destination carries a fragment:
- * `/dash#section` + `?accessToken=…` yields `/dash#section?accessToken=…`,
- * where the tokens are inside the fragment, never leave the browser, and the
- * login silently completes with the destination receiving nothing. Parsing puts
- * them in the query and keeps the fragment where it was.
- */
-const withTokenParams = (destination: string, tokenPair: TokenPairDto): string => {
-  const isRelative = destination.startsWith('/');
-
-  let url: URL;
-
-  try {
-    url = new URL(destination, isRelative ? RELATIVE_BASE : undefined);
-  } catch {
-    // Unparseable destinations cannot occur — resolveReturnTo emits only
-    // re-serialised urls — but falling back to the raw string keeps a
-    // misconfigured successRedirect working rather than failing the login.
-    const separator = destination.includes('?') ? '&' : '?';
-
-    return `${destination}${separator}accessToken=${encodeURIComponent(tokenPair.accessToken)}&refreshToken=${encodeURIComponent(tokenPair.refreshToken)}`;
-  }
-
-  url.searchParams.set('accessToken', tokenPair.accessToken);
-  url.searchParams.set('refreshToken', tokenPair.refreshToken);
-
-  return isRelative ? `${url.pathname}${url.search}${url.hash}` : url.href;
-};
-
-/**
  * The browser half of a `kind: 'redirect'` provider, as two mounted routes.
  *
  * `OidcAuthProvider` and `EntraAuthProvider` are stateless by design: they hand
@@ -219,6 +188,14 @@ export class RedirectAuthController implements OnApplicationBootstrap {
     @Res() res: Response,
   ): Promise<void> {
     const provider = this.gateway.getProvider(channel);
+
+    const target = resolveReturnToTarget(returnTo, this.options.allowedReturnTo, this.options.successRedirect);
+
+    if (!this.cookieMode && target.delivery !== 'fragment') {
+      throw new AuthProviderMisconfiguredError(
+        'Browser redirect login requires cookieMode; use an allowlisted fragment destination for native apps',
+      );
+    }
 
     if (provider.kind !== 'redirect') {
       throw new AuthProviderMisconfiguredError(`Provider "${channel}" is not a redirect provider`);
@@ -334,6 +311,10 @@ export class RedirectAuthController implements OnApplicationBootstrap {
       throw new RedirectAuthTransactionError('Callback carried no authorization code');
     }
 
+    if (!this.cookieMode && target.delivery !== 'fragment') {
+      throw new AuthProviderMisconfiguredError('Browser redirect login requires cookieMode');
+    }
+
     const { member } = await this.gateway.handleCallback(
       channel,
       {
@@ -379,7 +360,7 @@ export class RedirectAuthController implements OnApplicationBootstrap {
       return target.url;
     }
 
-    return withTokenParams(target.url, tokenPair);
+    throw new AuthProviderMisconfiguredError('Browser redirect login requires cookieMode');
   }
 
   /**

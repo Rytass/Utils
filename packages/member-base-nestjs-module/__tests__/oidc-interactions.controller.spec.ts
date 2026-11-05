@@ -105,7 +105,7 @@ interface HarnessOptions {
   grantId?: string;
   interaction?: MemberBaseOidcProviderOptions['interaction'];
   client?: OidcClientEntity | null;
-  skippableLogin?: { member: BaseMemberEntity } | null;
+  skippableLogin?: { member: BaseMemberEntity; authTime?: number } | null;
   localSession?: { id: string; authTime?: number } | null;
   acceptLocalSession?: boolean;
   authenticate?: jest.Mock;
@@ -271,7 +271,7 @@ describe('OidcInteractionsController login prompt', () => {
 
   it('should let an existing member session stand in for the login page', async () => {
     const harness = buildHarness({
-      skippableLogin: { member: MEMBER },
+      skippableLogin: { member: MEMBER, authTime: INTERACTION_IAT - 600 },
       interaction: { loginPageUrl: '/sign-in' },
     });
 
@@ -280,7 +280,7 @@ describe('OidcInteractionsController login prompt', () => {
     expect(harness.interactionFinished).toHaveBeenCalledWith(
       expect.anything(),
       expect.anything(),
-      { login: { accountId: 'member-1' } },
+      { login: { accountId: 'member-1', ts: INTERACTION_IAT - 600 } },
       { mergeWithLastSubmission: false },
     );
 
@@ -697,7 +697,7 @@ describe('OidcInteractionsController local session endpoint', () => {
     expect(harness.interactionResult).toHaveBeenCalledWith(
       expect.anything(),
       expect.anything(),
-      { login: { accountId: 'member-1' } },
+      { login: { accountId: 'member-1', ts: INTERACTION_IAT + 5 } },
       { mergeWithLastSubmission: false },
     );
 

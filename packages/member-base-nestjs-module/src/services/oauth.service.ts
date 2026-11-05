@@ -1,4 +1,6 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Optional } from '@nestjs/common';
+import { LINK_EXISTING_ACCOUNT } from '../typings/member-base.tokens';
+import type { LinkExistingAccountStrategy } from '../typings/authentication-provider.interface';
 import axios from 'axios';
 import { OAUTH2_PROVIDERS, RESOLVED_MEMBER_REPO } from '../typings/member-base-providers';
 import {
@@ -13,6 +15,10 @@ import { Repository } from 'typeorm';
 import { MemberBaseService } from './member-base.service';
 import { BaseMemberEntity } from '../models/base-member.entity';
 
+/**
+ * Back-channel code exchange. Direct consumers must validate their own browser
+ * transaction before calling loginWith*Code; the mounted controller does so.
+ */
 @Injectable()
 export class OAuthService {
   constructor(
@@ -24,16 +30,19 @@ export class OAuthService {
     private readonly memberOAuthRecordRepo: Repository<MemberOAuthRecordEntity>,
     @Inject(MemberBaseService)
     private readonly memberBaseService: MemberBaseService,
+    @Optional()
+    @Inject(LINK_EXISTING_ACCOUNT)
+    private readonly linkExistingAccount: LinkExistingAccountStrategy = false,
   ) {}
 
-  async getGoogleOAuthLoginUrl(): Promise<string> {
+  async getGoogleOAuthLoginUrl(transactionState?: string): Promise<string> {
     const provider = this.providers.find(p => p.channel === 'google') as GoogleOAuth2Provider;
 
     if (!provider) {
       throw new BadRequestException('Google OAuth2 provider not found');
     }
 
-    const state = (await provider.getState?.()) ?? null;
+    const state = transactionState ?? (await provider.getState?.()) ?? null;
 
     const params = new URLSearchParams({
       client_id: provider.clientId,
@@ -46,14 +55,14 @@ export class OAuthService {
     return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
   }
 
-  async getFacebookOAuthLoginUrl(): Promise<string> {
+  async getFacebookOAuthLoginUrl(transactionState?: string): Promise<string> {
     const provider = this.providers.find(p => p.channel === 'facebook') as FacebookOAuth2Provider;
 
     if (!provider) {
       throw new BadRequestException('Facebook OAuth2 provider not found');
     }
 
-    const state = (await provider.getState?.()) ?? null;
+    const state = transactionState ?? (await provider.getState?.()) ?? null;
 
     const params = new URLSearchParams({
       client_id: provider.clientId,
@@ -66,14 +75,14 @@ export class OAuthService {
     return `https://www.facebook.com/v22.0/dialog/oauth?${params.toString()}`;
   }
 
-  async getCustomOAuthLoginUrl(channel: string): Promise<string> {
+  async getCustomOAuthLoginUrl(channel: string, transactionState?: string): Promise<string> {
     const provider = this.providers.find(p => p.channel === channel) as CustomOAuth2Provider;
 
     if (!provider) {
       throw new BadRequestException('OAuth2 provider not found');
     }
 
-    const state = (await provider.getState?.()) ?? null;
+    const state = transactionState ?? (await provider.getState?.()) ?? null;
 
     const params = new URLSearchParams({
       client_id: provider.clientId,
@@ -116,7 +125,7 @@ export class OAuthService {
       throw new BadRequestException('Email not verified');
     }
 
-    const tokenPair = await this.loginWithOAuthIdentifier('google', data.email.toLowerCase());
+    const tokenPair = await this.loginWithOAuthIdentifier('google', data.email.toLowerCase(), true);
 
     return {
       ...tokenPair,
@@ -173,7 +182,7 @@ export class OAuthService {
     };
   }
 
-  private async loginWithOAuthIdentifier(channel: string, identifier: string): Promise<TokenPairDto> {
+  private async loginWithOAuthIdentifier(channel: string, identifier: string, verified = false): Promise<TokenPairDto> {
     const qb = this.memberOAuthRecordRepo.createQueryBuilder('oauthRecords');
 
     qb.innerJoinAndSelect('oauthRecords.member', 'member');
@@ -194,6 +203,10 @@ export class OAuthService {
       });
 
       if (existedUnbindMember) {
+        if (!this.linkExistingAccount || (this.linkExistingAccount === 'verified-only' && !verified)) {
+          throw new BadRequestException('External identity must be explicitly linked before login');
+        }
+
         await this.memberOAuthRecordRepo.save({
           memberId: existedUnbindMember.id,
           channel,

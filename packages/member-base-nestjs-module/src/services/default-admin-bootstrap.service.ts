@@ -14,12 +14,9 @@ import {
 } from '../typings/member-base.tokens';
 import { MemberAlreadyExistedError } from '../constants/errors/base.error';
 
-const GENERATE_PASSWORD_MAX_ATTEMPTS = 20;
-
 // Seeds a default administrator on application startup when `defaultAdminAccount`
 // is configured. Idempotent: if the account already exists it does nothing. When
-// no `defaultAdminPassword` is supplied, a policy-compliant password is generated
-// and logged exactly once (at creation time).
+// no `defaultAdminPassword` is supplied, startup fails before creating the account.
 @Injectable()
 export class DefaultAdminBootstrapService implements OnApplicationBootstrap {
   constructor(
@@ -56,8 +53,13 @@ export class DefaultAdminBootstrapService implements OnApplicationBootstrap {
       return;
     }
 
-    const generated = !this.defaultAdminPassword;
-    const password = this.defaultAdminPassword ?? (await this.generateCompliantPassword());
+    if (!this.defaultAdminPassword) {
+      throw new Error(
+        'defaultAdminPassword is required to create a default administrator; supply it through a secret manager.',
+      );
+    }
+
+    const password = this.defaultAdminPassword;
 
     let member: BaseMemberEntity;
 
@@ -81,10 +83,6 @@ export class DefaultAdminBootstrapService implements OnApplicationBootstrap {
       return;
     }
 
-    if (generated) {
-      this.logger.warn(`Generated default admin password for "${account}": ${password}`);
-    }
-
     if (this.enforcer) {
       await this.enforcer.addGroupingPolicy(member.id, this.superAdminRole, this.defaultCasbinDomain);
 
@@ -94,19 +92,5 @@ export class DefaultAdminBootstrapService implements OnApplicationBootstrap {
         `Default admin account "${account}" created, but Casbin is not configured (no casbinAdapterOptions); super-admin permissions were NOT granted.`,
       );
     }
-  }
-
-  private async generateCompliantPassword(): Promise<string> {
-    for (let attempt = 0; attempt < GENERATE_PASSWORD_MAX_ATTEMPTS; attempt += 1) {
-      const candidate = this.passwordValidatorService.generateValidPassword();
-
-      if (await this.passwordValidatorService.validatePassword(candidate)) {
-        return candidate;
-      }
-    }
-
-    throw new Error(
-      'Unable to generate a policy-compliant default admin password; please set defaultAdminPassword explicitly.',
-    );
   }
 }

@@ -95,27 +95,29 @@ export class PasswordValidatorService<MemberEntity extends BaseMemberEntity = Ba
     const trimmed = password.trim();
 
     if (this.passwordPolicyRegExp) {
-      return this.passwordPolicyRegExp.test(trimmed);
-    }
+      const policy = new RegExp(this.passwordPolicyRegExp.source, this.passwordPolicyRegExp.flags.replace(/[gy]/g, ''));
 
-    if (trimmed.length < this.passwordMinLength) {
-      return false;
-    }
+      if (!policy.test(trimmed)) return false;
+    } else {
+      if (trimmed.length < this.passwordMinLength) {
+        return false;
+      }
 
-    if (this.passwordShouldIncludeUppercase && !/[A-Z]/.test(trimmed)) {
-      return false;
-    }
+      if (this.passwordShouldIncludeUppercase && !/[A-Z]/.test(trimmed)) {
+        return false;
+      }
 
-    if (this.passwordShouldIncludeLowercase && !/[a-z]/.test(trimmed)) {
-      return false;
-    }
+      if (this.passwordShouldIncludeLowercase && !/[a-z]/.test(trimmed)) {
+        return false;
+      }
 
-    if (this.passwordShouldIncludeDigit && !/[0-9]/.test(trimmed)) {
-      return false;
-    }
+      if (this.passwordShouldIncludeDigit && !/[0-9]/.test(trimmed)) {
+        return false;
+      }
 
-    if (this.passwordShouldIncludeSpecialCharacter && !/[!><.,?@#$%^&*;:'"|\\/~`()-_+={}[\]]/.test(trimmed)) {
-      return false;
+      if (this.passwordShouldIncludeSpecialCharacter && !/[!><.,?@#$%^&*;:'"|\\/~`()\-_+={}[\]]/.test(trimmed)) {
+        return false;
+      }
     }
 
     if (this.passwordHistoryLimit) {

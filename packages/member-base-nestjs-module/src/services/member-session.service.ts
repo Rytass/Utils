@@ -213,6 +213,7 @@ export class MemberSessionService {
     binding: SessionTokenBinding,
     memberId: string,
     beforeRotate?: () => Promise<void>,
+    absoluteExpiresAt?: Date,
   ): Promise<SessionTokenBinding> {
     const session = await this.loadUsable(binding.sessionId, memberId);
     const standing = this.standingOf(session, binding.tokenId);
@@ -225,7 +226,7 @@ export class MemberSessionService {
 
     const nextTokenId = randomUUID();
 
-    if (await this.replaceToken(session.id, binding.tokenId, nextTokenId)) {
+    if (await this.replaceToken(session.id, binding.tokenId, nextTokenId, absoluteExpiresAt)) {
       return { sessionId: session.id, tokenId: nextTokenId };
     }
 
@@ -391,7 +392,12 @@ export class MemberSessionService {
   }
 
   /** The conditional UPDATE every rotation goes through. True when it matched. */
-  private async replaceToken(sessionId: string, fromTokenId: string, toTokenId: string): Promise<boolean> {
+  private async replaceToken(
+    sessionId: string,
+    fromTokenId: string,
+    toTokenId: string,
+    absoluteExpiresAt?: Date,
+  ): Promise<boolean> {
     const now = new Date();
 
     const affected = affectedRows(
@@ -403,7 +409,7 @@ export class MemberSessionService {
           previousTokenId: fromTokenId,
           previousRotatedAt: now,
           lastRefreshedAt: now,
-          expiresAt: this.expiryFrom(now),
+          expiresAt: new Date(Math.min(this.expiryFrom(now).getTime(), absoluteExpiresAt?.getTime() ?? Infinity)),
         })
         .where('id = :id', { id: sessionId })
         .andWhere('currentTokenId = :tokenId', { tokenId: fromTokenId })

@@ -396,12 +396,12 @@ describe('OidcSsoBridge specification constraints', () => {
     ).resolves.toBeNull();
   });
 
-  it('should ignore an absent max_age', async () => {
+  it('requires a known authentication time even without max_age', async () => {
     const { bridge } = buildBridge();
 
     const result = await bridge.resolveSkippableLogin(requestWithToken({ id: 'member-1' }), { max_age: '' });
 
-    expect(result?.member.id).toBe('member-1');
+    expect(result).toBeNull();
   });
 
   describe('OidcSsoBridge refuses an ended session', () => {
