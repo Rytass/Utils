@@ -232,7 +232,7 @@ query Articles($page: Int, $limit: Int) {
       articleId
       title
       categories { id, name }
-      releasedBy { username }
+      releasedBy { id }  # 公開型別 PublicUser 只有 id
     }
     meta { totalCount, hasNextPage }
   }
