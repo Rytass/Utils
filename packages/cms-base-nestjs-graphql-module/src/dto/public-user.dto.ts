@@ -1,4 +1,5 @@
-import { Field, ID, ObjectType } from '@nestjs/graphql';
+import { ObjectType, PickType } from '@nestjs/graphql';
+import { UserDto } from './user.dto';
 
 /**
  * Member reference exposed on public (unauthenticated) queries.
@@ -6,7 +7,4 @@ import { Field, ID, ObjectType } from '@nestjs/graphql';
  * be readable by anonymous visitors. Backstage queries keep using `UserDto`.
  */
 @ObjectType('PublicUser')
-export class PublicUserDto {
-  @Field(() => ID)
-  id: string;
-}
+export class PublicUserDto extends PickType(UserDto, ['id'] as const, ObjectType) {}
