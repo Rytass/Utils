@@ -48,6 +48,14 @@ yarn add @rytass/cms-base-nestjs-graphql-module
 yarn add @rytass/cms-base-nestjs-module @rytass/member-base-nestjs-module
 ```
 
+### Breaking change: public `Article.releasedBy` returns `PublicUser`
+
+On public (unauthenticated) queries, `Article.releasedBy` now resolves to `PublicUser`,
+which exposes only `id`. It used to return `User` including `account`, which is often an
+e-mail address and was readable by anyone. Queries selecting `releasedBy { account }` on
+`Article` must drop `account`; `BackstageArticle.releasedBy` (authenticated) still returns
+`User` with `account`.
+
 ### Breaking change in 0.2.0: sibling `@rytass` packages are now peer dependencies
 
 `@rytass/cms-base-nestjs-module` and `@rytass/member-base-nestjs-module` moved from
@@ -151,8 +159,6 @@ query GetArticle($id: ID!, $language: String) {
     publishedAt
     releasedBy {
       id
-      username
-      email
     }
     categories {
       id
