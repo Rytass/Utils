@@ -1,7 +1,7 @@
 import { ResolveField, Resolver, Root } from '@nestjs/graphql';
 import { ArticleDto } from '../dto/article.dto';
 import { MemberDataLoader } from '../data-loaders/members.dataloader';
-import { UserDto } from '../dto/user.dto';
+import { PublicUserDto } from '../dto/public-user.dto';
 import { IsPublic } from '@rytass/member-base-nestjs-module';
 import { DEFAULT_LANGUAGE, MULTIPLE_LANGUAGE_MODE, type ArticleBaseDto } from '@rytass/cms-base-nestjs-module';
 import { CategoryDto } from '../dto/category.dto';
@@ -24,10 +24,15 @@ export class ArticleResolver {
     return article.id.split(':')[0];
   }
 
-  @ResolveField(() => UserDto, { nullable: true })
+  @ResolveField(() => PublicUserDto, { nullable: true })
   @IsPublic()
-  releasedBy(@Root() article: ArticleBaseDto): Promise<UserDto | null> | null {
-    return article.releasedBy ? this.memberDataloader.loader.load(article.releasedBy) : null;
+  async releasedBy(@Root() article: ArticleBaseDto): Promise<PublicUserDto | null> {
+    if (!article.releasedBy) return null;
+
+    const member = await this.memberDataloader.loader.load(article.releasedBy);
+
+    // Map explicitly so member columns such as `account` never leak to anonymous callers.
+    return member ? { id: member.id } : null;
   }
 
   @ResolveField(() => [CategoryDto])

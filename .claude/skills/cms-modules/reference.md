@@ -391,7 +391,7 @@ type ArticleDto {
   content: String
   tags: [String!]!
   releasedAt: DateTime
-  releasedBy: UserDto
+  releasedBy: PublicUser  # 公開查詢只回傳 { id }；BackstageArticle.releasedBy 為 User（含 account，需登入）
   categories: [CategoryDto!]!
 }
 
