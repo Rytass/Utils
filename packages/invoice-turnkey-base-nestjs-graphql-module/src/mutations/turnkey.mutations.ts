@@ -15,6 +15,7 @@ import {
   TurnkeyInvoiceTrackService,
   TurnkeyReceivedDocumentService,
   TurnkeySubmissionService,
+  TurnkeyTrackSource,
   TurnkeyValidationCode,
   TurnkeyValidationError,
 } from '@rytass/invoice-turnkey-base-nestjs-module';
@@ -418,7 +419,14 @@ export const createTurnkeyMutationResolver = (access: TurnkeyRouteAccess): Type<
           return { status: 201, body: toTrackDto(track, remaining, trackRemaining) };
         });
 
-        return result.body;
+        // 舊版存下的冪等回應沒有來源欄位：手動登錄的回應一律補成 MANUAL
+        return {
+          ...result.body,
+          source: result.body.source ?? TurnkeyTrackSource.MANUAL,
+          invoiceType: result.body.invoiceType ?? null,
+          sourceFileName: result.body.sourceFileName ?? null,
+          receivedAt: result.body.receivedAt ?? null,
+        };
       });
     }
 

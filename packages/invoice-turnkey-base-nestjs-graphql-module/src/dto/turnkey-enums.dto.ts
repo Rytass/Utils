@@ -8,6 +8,7 @@ import {
   TurnkeyMessageCategory,
   TurnkeyMigMessageType,
   TurnkeyNumberStatus,
+  TurnkeyTrackSource,
   TurnkeyReceivedDocumentStatus,
   TurnkeySubmissionStatus,
   TurnkeyTaxType,
@@ -24,3 +25,4 @@ registerEnumType(TurnkeyMigMessageType, { name: 'TurnkeyMigMessageType' });
 registerEnumType(TurnkeyMessageCategory, { name: 'TurnkeyMessageCategory' });
 registerEnumType(TurnkeyReceivedDocumentStatus, { name: 'TurnkeyReceivedDocumentStatus' });
 registerEnumType(TurnkeyNumberStatus, { name: 'TurnkeyNumberStatus' });
+registerEnumType(TurnkeyTrackSource, { name: 'TurnkeyTrackSource' });
