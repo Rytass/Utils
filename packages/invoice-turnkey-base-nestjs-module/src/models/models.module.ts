@@ -14,6 +14,7 @@ import { TurnkeyInvoiceTrackEntity, TurnkeyInvoiceTrackRepo } from './turnkey-in
 import { BaseTurnkeyInvoiceEntity, BaseTurnkeyInvoiceRepo } from './turnkey-invoice.entity';
 import { TurnkeySubmissionEntity, TurnkeySubmissionRepo } from './turnkey-submission.entity';
 import { TurnkeyPrintLogEntity, TurnkeyPrintLogRepo } from './turnkey-print-log.entity';
+import { TurnkeyAssignmentFileEntity, TurnkeyAssignmentFileRepo } from './turnkey-assignment-file.entity';
 
 export const TURNKEY_ENTITIES = [
   [BaseTurnkeyCompanyRepo, BaseTurnkeyCompanyEntity],
@@ -29,6 +30,7 @@ export const TURNKEY_ENTITIES = [
   [TurnkeyAllowanceItemRepo, TurnkeyAllowanceItemEntity],
   [TurnkeyReceivedDocumentRepo, TurnkeyReceivedDocumentEntity],
   [TurnkeyPrintLogRepo, TurnkeyPrintLogEntity],
+  [TurnkeyAssignmentFileRepo, TurnkeyAssignmentFileEntity],
 ] as const;
 
 @Module({

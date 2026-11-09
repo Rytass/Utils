@@ -3,6 +3,7 @@ import { ModuleRef } from '@nestjs/core';
 import { getDataSourceToken } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { TurnkeyInboundService } from './inbound/turnkey-inbound.service';
+import { TurnkeyAssignmentService } from './inbound/turnkey-assignment.service';
 import { TurnkeyBaseModelsModule } from './models/models.module';
 import { TurnkeyAllowanceService } from './services/turnkey-allowance.service';
 import { TurnkeyReceivedDocumentService } from './services/turnkey-received-document.service';
@@ -35,6 +36,7 @@ const SERVICES = [
   TurnkeySubmissionService,
   TurnkeyAllowanceService,
   TurnkeyInboundService,
+  TurnkeyAssignmentService,
   TurnkeyReceivedDocumentService,
   TurnkeyMaintenanceService,
   TurnkeyReconciliationService,

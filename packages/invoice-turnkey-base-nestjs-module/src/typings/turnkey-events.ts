@@ -19,6 +19,10 @@ export enum TurnkeyEvents {
   RECEIVED_ALLOWANCE_VOID_REQUESTED = 'received-allowance.void-requested',
   RECONCILIATION_COMPLETED = 'reconciliation.completed',
   INVOICE_TRACK_RUNNING_LOW = 'invoice-track.running-low',
+  /** E0501 配號檔匯入字軌（新建，或補上既有同區間手動字軌的來源） */
+  INVOICE_TRACK_IMPORTED = 'invoice-track.imported',
+  /** E0501 配號檔的區間與既有字軌部分重疊，未匯入，需要人工處理 */
+  INVOICE_TRACK_IMPORT_CONFLICT = 'invoice-track.import-conflict',
   CERTIFICATE_EXPIRING = 'certificate.expiring',
 }
 

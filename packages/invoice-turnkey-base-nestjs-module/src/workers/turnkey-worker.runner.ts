@@ -5,6 +5,8 @@ import { TURNKEY_BASE_MODULE_OPTIONS } from '../typings/turnkey-base-providers';
 import path from 'path';
 import { DEFAULT_INBOUND_ARCHIVE_DIRECTORY, scanInbound } from '../inbound/inbound-watcher';
 import { TurnkeyInboundService } from '../inbound/turnkey-inbound.service';
+import { scanAssignmentFiles } from '../inbound/assignment-file-watcher';
+import { TurnkeyAssignmentService } from '../inbound/turnkey-assignment.service';
 import { TurnkeyMaintenanceService } from '../services/turnkey-maintenance.service';
 import { TurnkeyReconciliationService } from '../services/turnkey-reconciliation.service';
 import { TurnkeySubmissionWorker } from './turnkey-submission.worker';
@@ -29,6 +31,7 @@ export class TurnkeyWorkerRunner implements OnApplicationBootstrap, OnApplicatio
     private readonly dataSource: DataSource,
     private readonly worker: TurnkeySubmissionWorker,
     private readonly inboundService: TurnkeyInboundService,
+    private readonly assignmentService: TurnkeyAssignmentService,
     private readonly maintenanceService: TurnkeyMaintenanceService,
     private readonly reconciliationService: TurnkeyReconciliationService,
   ) {}
@@ -67,6 +70,10 @@ export class TurnkeyWorkerRunner implements OnApplicationBootstrap, OnApplicatio
       await this.step('poll written submissions', () => this.worker.pollWritten());
 
       if (this.options.workers?.inbound !== false) await this.step('scan inbound', () => this.scanInbound());
+
+      if (this.options.workers?.assignmentFiles !== false) {
+        await this.step('scan assignment files', () => this.scanAssignmentFiles());
+      }
 
       await this.step('maintenance', () => this.maintain());
     } catch (error) {
@@ -119,6 +126,26 @@ export class TurnkeyWorkerRunner implements OnApplicationBootstrap, OnApplicatio
       .forEach(result =>
         this.logger.warn(`Inbound ${result.fileName}: ${result.outcome}${result.error ? ` (${result.error})` : ''}`),
       );
+  }
+
+  async scanAssignmentFiles(): Promise<void> {
+    const results = await scanAssignmentFiles(this.options.dataPath, {
+      processed: fileNames => this.assignmentService.processedFileNames(fileNames),
+      importFile: input => this.assignmentService.importFile(input),
+    });
+
+    // 對不到營業人（outcome 為 null）不記錄：同一個 Turnkey 可能服務未登錄在本系統的營業人，每輪都會再遇到
+    results
+      .filter(result => result.outcome !== null)
+      .forEach(result => {
+        const message = `Assignment file ${result.fileName}: ${result.outcome}${result.error ? ` (${result.error})` : ''}`;
+
+        if (result.outcome === 'ERROR' || result.outcome === 'CONFLICT' || result.outcome === 'INVALID') {
+          this.logger.warn(message);
+        } else {
+          this.logger.log(message);
+        }
+      });
   }
 
   private async holdLock(): Promise<boolean> {

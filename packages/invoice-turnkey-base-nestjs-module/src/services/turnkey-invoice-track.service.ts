@@ -5,7 +5,7 @@ import { TurnkeyInvoiceNumberEntity, TurnkeyInvoiceNumberRepo } from '../models/
 import { TurnkeyInvoiceTrackEntity } from '../models/turnkey-invoice-track.entity';
 import type { TurnkeyBaseModuleOptions } from '../typings/turnkey-base-module-options';
 import { TURNKEY_BASE_MODULE_OPTIONS } from '../typings/turnkey-base-providers';
-import { TurnkeyMigMessageType, TurnkeyNumberStatus } from '../typings/turnkey-enums';
+import { TurnkeyMigMessageType, TurnkeyNumberStatus, TurnkeyTrackSource } from '../typings/turnkey-enums';
 import { TurnkeyBlankNumberRange } from '../typings/turnkey-invoice.types';
 import { TurnkeyEvent, TurnkeyEvents } from '../typings/turnkey-events';
 import { isTurnkeyPeriod } from '../utils/taipei-time';
@@ -73,6 +73,87 @@ export const toBlankRanges = (numbers: readonly string[]): readonly TurnkeyBlank
 const invalidTrack = (message: string): TurnkeyValidationError =>
   new TurnkeyValidationError([{ code: TurnkeyValidationCode.INVALID_TRACK, message }]);
 
+/** 字軌欄位格式檢查；有問題時回傳原因 */
+export const trackInputProblem = (input: TurnkeyTrackRegisterInput): string | null => {
+  const fields = [input.period, input.track, input.beginNumber, input.endNumber];
+
+  if (!fields.every(field => typeof field === 'string')) return '期別、字軌、起訖號需為字串';
+
+  if (!/^\d{3}(0[2468]|1[02])$/.test(input.period)) return '期別需為民國年 3 碼＋雙數月';
+
+  if (!/^[A-Z]{2}$/.test(input.track)) return '字軌需為 2 碼大寫英文';
+
+  if (!/^\d{8}$/.test(input.beginNumber) || !/^\d{8}$/.test(input.endNumber)) return '起訖號需為 8 碼數字';
+
+  const begin = Number(input.beginNumber);
+  const end = Number(input.endNumber);
+
+  if (end < begin || end - begin >= 10000) return '起訖號範圍錯誤';
+
+  return null;
+};
+
+/** 字軌區間與已登錄的區間相同（sameRange）或重疊 */
+export class TrackOverlapError extends Error {
+  constructor(readonly sameRange: boolean) {
+    super(sameRange ? 'Track range already registered' : 'Track range overlaps a registered range');
+  }
+}
+
+export interface TurnkeyTrackInsert extends TurnkeyTrackRegisterInput {
+  readonly source: TurnkeyTrackSource;
+  readonly invoiceType?: string | null;
+  readonly sourceFileName?: string | null;
+  readonly receivedAt?: Date | null;
+}
+
+/** 在呼叫端的交易內新增字軌並展開成逐號紀錄；與既有區間相同或重疊時丟 TrackOverlapError（需在交易內，失敗會整筆回滾） */
+export const insertTrack = async (
+  manager: EntityManager,
+  input: TurnkeyTrackInsert,
+): Promise<TurnkeyInvoiceTrackEntity> => {
+  const begin = Number(input.beginNumber);
+  const end = Number(input.endNumber);
+
+  // 只取白名單欄位並用 insert：呼叫端多帶 id 也不會變成 UPDATE 改到別家的字軌
+  const track = manager.create(TurnkeyInvoiceTrackEntity, {
+    companyTaxId: input.companyTaxId,
+    period: input.period,
+    track: input.track,
+    beginNumber: input.beginNumber,
+    endNumber: input.endNumber,
+    source: input.source,
+    invoiceType: input.invoiceType ?? null,
+    sourceFileName: input.sourceFileName ?? null,
+    receivedAt: input.receivedAt ?? null,
+  });
+
+  await manager.insert(TurnkeyInvoiceTrackEntity, track).catch((error: unknown) => {
+    if ((error as { code?: string }).code === '23505') throw new TrackOverlapError(true);
+
+    throw error;
+  });
+
+  const numbers = Array.from({ length: end - begin + 1 }, (_, index) =>
+    manager.create(TurnkeyInvoiceNumberEntity, {
+      companyTaxId: input.companyTaxId,
+      trackId: track.id,
+      period: input.period,
+      invoiceNumber: `${input.track}${String(begin + index).padStart(8, '0')}`,
+      status: TurnkeyNumberStatus.AVAILABLE,
+    }),
+  );
+
+  await manager.insert(TurnkeyInvoiceNumberEntity, numbers).catch((error: unknown) => {
+    // 號碼唯一鍵（統編, 號碼）：與已登錄的區間重疊
+    if ((error as { code?: string }).code === '23505') throw new TrackOverlapError(false);
+
+    throw error;
+  });
+
+  return track;
+};
+
 @Injectable()
 export class TurnkeyInvoiceTrackService {
   constructor(
@@ -85,61 +166,31 @@ export class TurnkeyInvoiceTrackService {
     private readonly submissionService: TurnkeySubmissionService,
   ) {}
 
-  /** 登錄平台配發的字軌區間，展開成逐號紀錄 */
+  /** 手動登錄平台配發的字軌區間，展開成逐號紀錄；allowManualTrackRegistration 為 false 時拒絕 */
   async register(input: TurnkeyTrackRegisterInput): Promise<TurnkeyInvoiceTrackEntity> {
-    const fields = [input.period, input.track, input.beginNumber, input.endNumber];
-
-    if (!fields.every(field => typeof field === 'string')) throw invalidTrack('期別、字軌、起訖號需為字串');
-
-    if (!/^\d{3}(0[2468]|1[02])$/.test(input.period)) throw invalidTrack('期別需為民國年 3 碼＋雙數月');
-
-    if (!/^[A-Z]{2}$/.test(input.track)) throw invalidTrack('字軌需為 2 碼大寫英文');
-
-    if (!/^\d{8}$/.test(input.beginNumber) || !/^\d{8}$/.test(input.endNumber)) {
-      throw invalidTrack('起訖號需為 8 碼數字');
+    if (this.options.allowManualTrackRegistration === false) {
+      throw new TurnkeyValidationError([
+        {
+          code: TurnkeyValidationCode.MANUAL_TRACK_REGISTRATION_DISABLED,
+          message: '已停用手動登錄字軌，字軌只能由 E0501 配號檔匯入',
+        },
+      ]);
     }
 
-    const begin = Number(input.beginNumber);
-    const end = Number(input.endNumber);
+    const invalid = trackInputProblem(input);
 
-    if (end < begin || end - begin >= 10000) throw invalidTrack('起訖號範圍錯誤');
+    if (invalid) throw invalidTrack(invalid);
 
-    return this.dataSource.transaction(async manager => {
-      // 只取白名單欄位並用 insert：呼叫端多帶 id 也不會變成 UPDATE 改到別家的字軌
-      const track = manager.create(TurnkeyInvoiceTrackEntity, {
-        companyTaxId: input.companyTaxId,
-        period: input.period,
-        track: input.track,
-        beginNumber: input.beginNumber,
-        endNumber: input.endNumber,
-      });
-
-      await manager.insert(TurnkeyInvoiceTrackEntity, track).catch((error: unknown) => {
+    return this.dataSource.transaction(manager =>
+      insertTrack(manager, { ...input, source: TurnkeyTrackSource.MANUAL }).catch((error: unknown) => {
         // 唯一鍵（統編, 期別, 字軌, 起號）：同一區間重複登錄
-        if ((error as { code?: string }).code === '23505') throw invalidTrack('此字軌區間已登錄');
+        if (error instanceof TrackOverlapError) {
+          throw invalidTrack(error.sameRange ? '此字軌區間已登錄' : '與已登錄的字軌區間重疊');
+        }
 
         throw error;
-      });
-
-      const numbers = Array.from({ length: end - begin + 1 }, (_, index) =>
-        manager.create(TurnkeyInvoiceNumberEntity, {
-          companyTaxId: input.companyTaxId,
-          trackId: track.id,
-          period: input.period,
-          invoiceNumber: `${input.track}${String(begin + index).padStart(8, '0')}`,
-          status: TurnkeyNumberStatus.AVAILABLE,
-        }),
-      );
-
-      await manager.insert(TurnkeyInvoiceNumberEntity, numbers).catch((error: unknown) => {
-        // 號碼唯一鍵（統編, 號碼）：與已登錄的區間重疊；整筆交易回滾，字軌列也不會留下
-        if ((error as { code?: string }).code === '23505') throw invalidTrack('與已登錄的字軌區間重疊');
-
-        throw error;
-      });
-
-      return track;
-    });
+      }),
+    );
   }
 
   /**

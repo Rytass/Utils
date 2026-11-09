@@ -99,3 +99,11 @@ export enum TurnkeyPrintDocumentType {
   INVOICE = 'INVOICE',
   ALLOWANCE = 'ALLOWANCE',
 }
+
+/** 字軌的來源 */
+export enum TurnkeyTrackSource {
+  /** 呼叫 register() 手動登錄 */
+  MANUAL = 'MANUAL',
+  /** 由平台下發的 E0501 營業人電子發票配號檔匯入 */
+  ASSIGNMENT_FILE = 'ASSIGNMENT_FILE',
+}
