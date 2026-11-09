@@ -14,6 +14,7 @@ import {
   TurnkeySubmissionStatus,
   TurnkeyTaxType,
   TurnkeyTrackSummary,
+  TurnkeyTrackSource,
   TurnkeyValidationCode,
   TurnkeyValidationError,
 } from '@rytass/invoice-turnkey-base-nestjs-module';
@@ -139,6 +140,11 @@ export const toTrackDto = (
   endNumber: track.endNumber,
   remaining,
   trackRemaining,
+  // 冪等重送舊版回應時沒有來源欄位，視為手動登錄
+  source: track.source ?? TurnkeyTrackSource.MANUAL,
+  invoiceType: track.invoiceType ?? null,
+  sourceFileName: track.sourceFileName ?? null,
+  receivedAt: track.receivedAt ? new Date(track.receivedAt) : null,
   createdAt: track.createdAt,
 });
 

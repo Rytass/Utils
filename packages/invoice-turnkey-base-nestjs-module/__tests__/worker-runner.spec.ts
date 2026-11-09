@@ -9,6 +9,7 @@ import type { TurnkeyReconciliationService } from '../src/services/turnkey-recon
 import type { TurnkeyBaseModuleOptions } from '../src/typings/turnkey-base-module-options';
 import type { TurnkeySubmissionWorker } from '../src/workers/turnkey-submission.worker';
 import { TurnkeyWorkerRunner } from '../src/workers/turnkey-worker.runner';
+import type { TurnkeyAssignmentService } from '../src/inbound/turnkey-assignment.service';
 
 interface Harness {
   readonly runner: TurnkeyWorkerRunner;
@@ -60,7 +61,7 @@ const createHarness = (options: {
 
   const moduleOptions = {
     dataPath: '/nonexistent-turnkey-data',
-    workers: { inbound: false },
+    workers: { inbound: false, assignmentFiles: false },
   } as unknown as TurnkeyBaseModuleOptions;
 
   const runner = new TurnkeyWorkerRunner(
@@ -68,6 +69,7 @@ const createHarness = (options: {
     dataSource,
     worker,
     {} as TurnkeyInboundService,
+    {} as TurnkeyAssignmentService,
     maintenance,
     reconciliation,
   );

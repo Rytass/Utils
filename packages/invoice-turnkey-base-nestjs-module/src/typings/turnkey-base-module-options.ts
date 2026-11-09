@@ -15,9 +15,16 @@ export interface TurnkeyBaseModuleOptions {
     readonly inbound?: boolean;
     /** 處理完的 RecvTarget 檔搬到哪裡，預設 `<dataPath>/sidecar/inbound` */
     readonly inboundArchivePath?: string;
+    /** 是否匯入 Unpack/BAK/E0501 的配號檔建立字軌，預設 true */
+    readonly assignmentFiles?: boolean;
     /** WRITTEN 超過幾分鐘仍無結果就發出 submission.stalled（不改狀態），預設 120 */
     readonly stalledAfterMinutes?: number;
   };
+  /**
+   * 是否允許 register() 手動登錄字軌，預設 true。設 false 時字軌只能由 E0501 配號檔匯入，
+   * register() 丟出 MANUAL_TRACK_REGISTRATION_DISABLED
+   */
+  readonly allowManualTrackRegistration?: boolean;
   readonly validation?: {
     /** B2C，預設 48 */
     readonly issueDeadlineHours?: number;

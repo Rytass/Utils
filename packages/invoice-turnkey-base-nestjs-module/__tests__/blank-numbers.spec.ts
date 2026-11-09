@@ -9,6 +9,23 @@ describe('toBlankRanges', () => {
     ]);
   });
 
+  it('splits consecutive numbers at booklet boundaries (50 numbers per booklet)', () => {
+    expect(toBlankRanges(['12345648', '12345649', '12345650', '12345651', '12345652'])).toEqual([
+      { begin: '12345648', end: '12345649' },
+      { begin: '12345650', end: '12345652' },
+    ]);
+  });
+
+  it('splits a range spanning three booklets into one range per booklet', () => {
+    const numbers = Array.from({ length: 149 }, (_, index) => String(12345651 + index));
+
+    expect(toBlankRanges(numbers)).toEqual([
+      { begin: '12345651', end: '12345699' },
+      { begin: '12345700', end: '12345749' },
+      { begin: '12345750', end: '12345799' },
+    ]);
+  });
+
   it('returns no range for no numbers', () => {
     expect(toBlankRanges([])).toEqual([]);
   });
