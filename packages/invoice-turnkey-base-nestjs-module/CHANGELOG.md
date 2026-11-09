@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.5](https://github.com/Rytass/Utils/compare/@rytass/invoice-turnkey-base-nestjs-module@0.1.4...@rytass/invoice-turnkey-base-nestjs-module@0.1.5) (2026-11-09)
+
+### Bug Fixes
+
+- **invoice-turnkey-base-nestjs-module:** split blank number ranges at booklet boundaries ([a521c45](https://github.com/Rytass/Utils/commit/a521c459b6e1cda0e50871dae5061de867f03225))
+
+### Features
+
+- **invoice-turnkey-base-nestjs-module:** import E0501 assignment files as invoice tracks ([ee9906a](https://github.com/Rytass/Utils/commit/ee9906ab2aa4af687bdd574a5fb95bedc59106df))
+
 ## [0.1.4](https://github.com/Rytass/Utils/compare/@rytass/invoice-turnkey-base-nestjs-module@0.1.3...@rytass/invoice-turnkey-base-nestjs-module@0.1.4) (2026-10-23)
 
 **Note:** Version bump only for package @rytass/invoice-turnkey-base-nestjs-module

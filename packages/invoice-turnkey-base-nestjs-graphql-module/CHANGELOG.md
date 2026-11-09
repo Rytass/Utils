@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.5](https://github.com/Rytass/Utils/compare/@rytass/invoice-turnkey-base-nestjs-graphql-module@0.1.4...@rytass/invoice-turnkey-base-nestjs-graphql-module@0.1.5) (2026-11-09)
+
+### Features
+
+- **invoice-turnkey-base-nestjs-graphql-module:** expose invoice track source fields ([c819fe4](https://github.com/Rytass/Utils/commit/c819fe4593532a5a28bf4b175eade6dd8233599f))
+
 ## [0.1.4](https://github.com/Rytass/Utils/compare/@rytass/invoice-turnkey-base-nestjs-graphql-module@0.1.3...@rytass/invoice-turnkey-base-nestjs-graphql-module@0.1.4) (2026-10-23)
 
 **Note:** Version bump only for package @rytass/invoice-turnkey-base-nestjs-graphql-module
