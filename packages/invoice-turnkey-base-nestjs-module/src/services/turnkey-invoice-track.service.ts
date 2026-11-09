@@ -52,12 +52,20 @@ export const periodEndsAt = (period: string): Date =>
     .plus({ months: 1 })
     .toJSDate();
 
-/** 已排序的 8 碼號碼併成連續區間 */
+/** 每本發票 50 號（xx00–49、xx50–99） */
+const BOOKLET_SIZE = 50;
+
+const bookletOf = (number: string): number => Math.floor(Number(number) / BOOKLET_SIZE);
+
+/**
+ * 已排序的 8 碼號碼併成連續區間；區間不跨本，跨本的連續號碼拆成多段
+ * （平台對跨本的 E0402 區間回 E0613「發票號碼區間非配號區間」）
+ */
 export const toBlankRanges = (numbers: readonly string[]): readonly TurnkeyBlankNumberRange[] =>
   numbers.reduce<readonly TurnkeyBlankNumberRange[]>((ranges, number) => {
     const last = ranges[ranges.length - 1];
 
-    return last && Number(last.end) + 1 === Number(number)
+    return last && Number(last.end) + 1 === Number(number) && bookletOf(last.end) === bookletOf(number)
       ? [...ranges.slice(0, -1), { begin: last.begin, end: number }]
       : [...ranges, { begin: number, end: number }];
   }, []);
