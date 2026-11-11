@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.5.0](https://github.com/Rytass/Utils/compare/@rytass/erp-oracle-fusion@0.4.0...@rytass/erp-oracle-fusion@0.5.0) (2026-11-11)
+
+### Features
+
+- **erp-oracle-fusion:** let SOAP subtrees declare their own namespace (DFF) ([#239](https://github.com/Rytass/Utils/issues/239)) ([cc279ef](https://github.com/Rytass/Utils/commit/cc279ef13846ef58e1a601e34a5f08eadc253cdd)), closes [#237](https://github.com/Rytass/Utils/issues/237)
+
 # [0.4.0](https://github.com/Rytass/Utils/compare/@rytass/erp-oracle-fusion@0.3.1...@rytass/erp-oracle-fusion@0.4.0) (2026-11-02)
 
 ### Features

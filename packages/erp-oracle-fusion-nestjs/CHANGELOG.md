@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.4.1](https://github.com/Rytass/Utils/compare/@rytass/erp-oracle-fusion-nestjs@0.4.0...@rytass/erp-oracle-fusion-nestjs@0.4.1) (2026-11-11)
+
+**Note:** Version bump only for package @rytass/erp-oracle-fusion-nestjs
+
 # [0.4.0](https://github.com/Rytass/Utils/compare/@rytass/erp-oracle-fusion-nestjs@0.3.1...@rytass/erp-oracle-fusion-nestjs@0.4.0) (2026-11-02)
 
 **Note:** Version bump only for package @rytass/erp-oracle-fusion-nestjs
