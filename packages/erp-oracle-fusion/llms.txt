@@ -126,6 +126,8 @@ Journal Import specific and must not be reused for other ESS jobs**.
 
 - Pass one `FusionAuthProvider` as `authProvider` to both clients to share a single OAuth token cache
 - `FusionSoapClient` unwraps MTOM (`multipart/related`) responses itself, faults included
+- DFF segments sit in their own flex namespace: wrap them with `soapNamespaced(flexNamespaceUri, fields)`,
+  otherwise they serialize under `svc` and never reach the flexfield
 
 - `new FusionRestClient(options)` — no framework, no DI container required
 - Write calls that need retry MUST carry their own idempotency key; `importBulkData` has no native dedup

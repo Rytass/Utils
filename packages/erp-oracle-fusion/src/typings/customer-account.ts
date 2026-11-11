@@ -1,4 +1,4 @@
-import type { FusionSoapInput, FusionSoapOutput, FusionSoapRecord } from './soap';
+import type { FusionSoapInput, FusionSoapNestedInput, FusionSoapOutput } from './soap';
 
 /**
  * `CustomerAccount` SDO 的純量欄位載體（欄位名取自 pod 的 `CustomerAccount.xsd`）。
@@ -99,11 +99,11 @@ export interface CustomerAccountSiteFields {
 
 /** 建立／更新客戶帳戶站點的輸入。 */
 export interface CustomerAccountSiteInput extends FusionSoapInput<CustomerAccountSiteFields> {
-  readonly CustomerAccountSiteUse?: readonly FusionSoapRecord[];
-  readonly CustomerAccountContact?: readonly FusionSoapRecord[];
-  readonly OriginalSystemReference?: readonly FusionSoapRecord[];
-  readonly CustAcctSiteInformation?: FusionSoapRecord;
-  readonly CustAccountSiteGdf?: FusionSoapRecord;
+  readonly CustomerAccountSiteUse?: readonly FusionSoapNestedInput[];
+  readonly CustomerAccountContact?: readonly FusionSoapNestedInput[];
+  readonly OriginalSystemReference?: readonly FusionSoapNestedInput[];
+  readonly CustAcctSiteInformation?: FusionSoapNestedInput;
+  readonly CustAccountSiteGdf?: FusionSoapNestedInput;
 }
 
 /**
@@ -114,11 +114,11 @@ export interface CustomerAccountSiteInput extends FusionSoapInput<CustomerAccoun
  */
 export interface CustomerAccountInput extends FusionSoapInput<CustomerAccountFields> {
   readonly CustomerAccountSite?: readonly CustomerAccountSiteInput[];
-  readonly CustomerAccountContact?: readonly FusionSoapRecord[];
-  readonly CustomerAccountRelationship?: readonly FusionSoapRecord[];
-  readonly OriginalSystemReference?: readonly FusionSoapRecord[];
-  readonly CustAcctInformation?: FusionSoapRecord;
-  readonly CustAccountGdf?: FusionSoapRecord;
+  readonly CustomerAccountContact?: readonly FusionSoapNestedInput[];
+  readonly CustomerAccountRelationship?: readonly FusionSoapNestedInput[];
+  readonly OriginalSystemReference?: readonly FusionSoapNestedInput[];
+  readonly CustAcctInformation?: FusionSoapNestedInput;
+  readonly CustAccountGdf?: FusionSoapNestedInput;
 }
 
 /** Fusion 回傳的客戶帳戶站點。 */
