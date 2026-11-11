@@ -26,6 +26,7 @@ Contained here (written by us):
 - `compose.example.yaml`: example stack with PostgreSQL, Turnkey and the NestJS app.
 - `.dockerignore` and `.gitignore`: keep the installer, secrets and local compose files out of the build context and out of git.
 - `samples/`: a `send.sh` test tool and de-identified MIG 4.1 XML templates for test-zone verification.
+- `SELF-CHECK.md`: what the MOF written review of the pre-launch self-test checks, and the evidence that passed it.
 
 Not contained (you must obtain it yourself):
 
@@ -115,11 +116,13 @@ Turnkey uses a **software certificate** (PFX). IC cards are not suited to the co
 - The allocation is per period (期配). You set the quantity once; the platform then allocates each following period. Use the general-tax invoice category (`07`), which is the category used in the samples.
 - The test zone is capped at 50 books per allocation. Test invoices must use numbers that were really allocated to you.
 - Manual references: "營業人導入與操作說明" (pp. 73–79, track allocation); "電子發票專用字軌號碼取號使用說明書" (pp. 6–10, allocation screens).
-- Turnkey can also receive the allocation as an `E0501` message, which the ReceiveFile schedule downloads to `ReceiveFile/BAK/E0501`. Do not assume every allocation arrives this way. Check the platform, and register the number range in the module (invoice track registration).
+- Turnkey receives the allocation as an `E0501` message only if Turnkey is set as the receiving method for invoice-number business (`接收方式及授權` → `發票字軌號碼相關業務`) **before** you take the numbers. Numbers taken earlier never arrive. The module imports E0501 files as tracks (see [Assignment files (E0501)](../../packages/invoice-turnkey-base-nestjs-module/README.md#assignment-files-e0501)); otherwise register the range by hand (invoice track registration). The written self-test review asks how tracks are built, and manual entry needs a documented multi-person review, so prefer E0501 ([SELF-CHECK.md](SELF-CHECK.md#3-item-1-track-check-字軌檢核)).
 
 ### 2.5 Pre-launch self-test
 
 The MOF "Turnkey pre-launch self-test" (上線前自行檢測) is required before production. Step 2 of that document requires registration and master-certificate registration on both platforms, and track allocation in the test zone. See `Turnkey 上線前自行檢測作業` (Ver 4.7.1), STEP 2, p. 12.
+
+The self-test ends with a written report that the MOF reviews. [SELF-CHECK.md](SELF-CHECK.md) lists what that review checks: the template format, and the evidence for the track and duplicate-number items that are most often rejected.
 
 Manual index used in this document:
 
