@@ -890,6 +890,36 @@ Parameters carrying ADF shared types rather than the service's own SDO — `find
 `findControl` are the ones you will meet — need `contentPrefix: 'adf'`, otherwise their fields land in
 the wrong namespace and Fusion rejects the call.
 
+#### Descriptive Flexfields (DFF)
+
+DFF segments live in their own flex namespace, separate from the service namespace of the record
+that carries them. Wrap the flexfield's fields in `soapNamespaced()`: the wrapper element stays in
+the service namespace and each field moves to the flex namespace. Without it, the segments are
+emitted under `svc` and do not reach the DFF.
+
+```ts
+import { soapNamespaced } from '@rytass/erp-oracle-fusion';
+
+const CREDIT_MEMO_DFF_NS =
+  'http://xmlns.oracle.com/apps/financials/receivables/transactions/creditMemos/model/flex/CreditMemoDff/';
+
+[
+  {
+    name: 'creditMemo',
+    value: {
+      // ...other credit memo fields
+      CreditMemoFLEXVA: soapNamespaced(CREDIT_MEMO_DFF_NS, { voucherNumber: 'V-001' }),
+    },
+  },
+];
+// → <svc:CreditMemoFLEXVA>
+//     <ns1:voucherNumber xmlns:ns1="...CreditMemoDff/">V-001</ns1:voucherNumber>
+//   </svc:CreditMemoFLEXVA>
+```
+
+Take the flex namespace from the service's WSDL/XSD. `undefined` and `null` keep their usual
+meaning inside the wrapper, and nested wrappers get their own prefixes (`ns1`, `ns2`, …).
+
 ## Observability
 
 Implement `FusionCallLogSink` to persist every call:
@@ -959,6 +989,7 @@ below for brevity.
 | `FUSION_CUSTOMER_ACCOUNT_SERVICE`, `FUSION_CUSTOMER_PROFILE_SERVICE` | Service coordinates (path and the three namespaces)                                                                                          |
 | `buildFindCriteria`, `buildFindControl`                              | ADF find criteria, emitted in the order the schema requires                                                                                  |
 | `buildSoapEnvelope`, `serializeElement`, `escapeXml`                 | Envelope construction for services not wrapped here                                                                                          |
+| `soapNamespaced`, `isSoapNamespaced`                                 | Moves a field's children into another namespace (DFF segments)                                                                               |
 | `parseSoapXml`, `normalizeParsedXml`, `findSoapFaultNode`            | Response parsing (`xsi:nil` becomes `null`, values stay strings)                                                                             |
 | `classifySoapHttpError`, `buildSoapFaultError`                       | SOAP-specific classification: faults are never transient                                                                                     |
 | `extractMtomEnvelope`, `unwrapMtomSoapBody`                          | Pulls the SOAP envelope out of an MTOM response                                                                                              |
