@@ -42,7 +42,7 @@ export interface SoapNamespacedObject {
  *
  * 用途是 Fusion 的描述性彈性欄位（DFF）：以 `createCreditMemo` 為例，`CreditMemoFLEXVA`
  * 在服務 namespace，但其下的 DFF 欄位定義在 `.../model/flex/CreditMemoDff/`。掛錯
- * namespace 時 DFF 值不會寫入。
+ * namespace 時 Fusion **不報錯**、照樣建立單據，但 DFF 值被靜默丟棄（讀回為 null），很難察覺。
  *
  * ```ts
  * { CreditMemoFLEXVA: soapNamespaced(CREDIT_MEMO_DFF_NS, { voucherNumber: 'X' }) }
@@ -186,8 +186,8 @@ function serializeNode(name: string, value: SoapValue, prefix: string, context: 
  * 複合欄位的子欄位序列化，參數層與巢狀層共用。
  *
  * 一般物件：子欄位沿用 `prefix`。`soapNamespaced` 標記物件：換成新 prefix（`ns{層級}`），
- * 並在**每個直屬子欄位**上宣告 `xmlns`——這是 issue #237 在 Fusion 實測成功的形狀；
- * 宣告在包裝元素上語意相同，但尚未在 Fusion 驗證過，先不簡化。
+ * 並在**每個直屬子欄位**上宣告 `xmlns`——這是在 Fusion 測試 pod 以 `createCreditMemo` 實測
+ * 寫入並讀回成功的形狀（2026-11-12）；宣告在包裝元素上語意相同，但未經實測，先不簡化。
  */
 function serializeChildren(value: SoapObject | SoapNamespacedObject, prefix: string, namespaceDepth: number): string {
   // 必須先判斷標記，否則 `$namespace`／`fields` 會被當成一般欄位輸出。

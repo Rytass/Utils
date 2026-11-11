@@ -895,7 +895,8 @@ the wrong namespace and Fusion rejects the call.
 DFF segments live in their own flex namespace, separate from the service namespace of the record
 that carries them. Wrap the flexfield's fields in `soapNamespaced()`: the wrapper element stays in
 the service namespace and each field moves to the flex namespace. Without it, the segments are
-emitted under `svc` and do not reach the DFF.
+emitted under `svc`, and Fusion accepts the call but silently drops the values: the record is
+created and the DFF reads back as `null`.
 
 ```ts
 import { soapNamespaced } from '@rytass/erp-oracle-fusion';
