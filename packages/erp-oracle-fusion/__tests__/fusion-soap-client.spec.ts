@@ -16,7 +16,14 @@ import {
   soapNamespaced,
 } from '@rytass/erp-oracle-fusion';
 import { XMLValidator } from 'fast-xml-parser';
-import type { FusionCallLogEntry, FusionCallLogSink, FusionClientOptions } from '@rytass/erp-oracle-fusion';
+import type {
+  CustomerAccountInput,
+  CustomerProfileInput,
+  FusionCallLogEntry,
+  FusionCallLogSink,
+  FusionClientOptions,
+  SoapObject,
+} from '@rytass/erp-oracle-fusion';
 
 /**
  * `FusionSoapClient` 與其上的客戶帳戶／信用檔服務。
@@ -275,6 +282,7 @@ describe('soapNamespaced（DFF 欄位改掛 flex namespace）', () => {
     expect(xml).not.toContain('svc:voucherNumber');
     // 標記物件的內部結構不可外洩成欄位
     expect(xml).not.toContain(':fields');
+    expect(xml).not.toContain('$namespace');
     expect(XMLValidator.validate(xml)).toBe(true);
   });
 
@@ -334,6 +342,41 @@ describe('soapNamespaced（DFF 欄位改掛 flex namespace）', () => {
 
     expect(xml).toContain('<typ:param><ns1:A xmlns:ns1="urn:flex">1</ns1:A></typ:param>');
     expect(XMLValidator.validate(xml)).toBe(true);
+  });
+
+  /** DFF 值常先存進佇列或重試 payload 再送出；標記必須撐過 JSON 與 structuredClone 往返。 */
+  it('經 JSON 或 structuredClone 往返後標記仍有效', () => {
+    const original = soapNamespaced('urn:flex', { A: '1' });
+    const expected = '<svc:FLEX><ns1:A xmlns:ns1="urn:flex">1</ns1:A></svc:FLEX>';
+
+    expect(serializeElement('FLEX', JSON.parse(JSON.stringify(original)), 'svc')).toBe(expected);
+    expect(serializeElement('FLEX', structuredClone(original), 'svc')).toBe(expected);
+  });
+
+  it('強型別服務的 DFF／GDF 欄位可直接帶入 soapNamespaced', () => {
+    const profile: CustomerProfileInput = {
+      CustomerProfileFLEX: soapNamespaced('urn:flex', { A: '1' }),
+      CustomerProfileGdf: [soapNamespaced('urn:gdf', { B: '2' })],
+    };
+
+    const account: CustomerAccountInput = {
+      CustAcctInformation: soapNamespaced('urn:flex', { C: '3' }),
+    };
+
+    const xml = buildSoapEnvelope({
+      operation: 'createCustomerProfile',
+      typesNamespace: 'urn:svc/types/',
+      serviceNamespace: 'urn:svc/',
+      parameters: [
+        // 與服務層相同的轉型方式（fusion-customer-profile.service.ts）
+        { name: 'customerProfile', value: profile as SoapObject },
+        { name: 'customerAccount', value: account as SoapObject },
+      ],
+    });
+
+    expect(xml).toContain('<svc:CustomerProfileFLEX><ns1:A xmlns:ns1="urn:flex">1</ns1:A></svc:CustomerProfileFLEX>');
+    expect(xml).toContain('<svc:CustomerProfileGdf><ns1:B xmlns:ns1="urn:gdf">2</ns1:B></svc:CustomerProfileGdf>');
+    expect(xml).toContain('<svc:CustAcctInformation><ns1:C xmlns:ns1="urn:flex">3</ns1:C></svc:CustAcctInformation>');
   });
 
   it('namespace URI 為空字串時拒絕', () => {

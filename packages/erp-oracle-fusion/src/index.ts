@@ -99,6 +99,7 @@ export {
 export type {
   FusionSoapInput,
   FusionSoapOutput,
+  FusionSoapNestedInput,
   FusionSoapRecord,
   FusionSoapScalar,
   FusionSoapScalarInput,

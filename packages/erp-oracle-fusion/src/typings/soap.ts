@@ -37,9 +37,8 @@ export type FusionSoapOutput<TFields> = {
  * 序列化器會照樣輸出。DFF 欄位若定義在另一個 flex namespace，以 `soapNamespaced()` 包起來。
  */
 export interface FusionSoapRecord {
-  readonly [key: string]:
-    | FusionSoapScalarInput
-    | FusionSoapRecord
-    | SoapNamespacedObject
-    | readonly (FusionSoapRecord | SoapNamespacedObject)[];
+  readonly [key: string]: FusionSoapScalarInput | FusionSoapNestedInput | readonly FusionSoapNestedInput[];
 }
+
+/** 寫入用的巢狀欄位：一般巢狀結構，或以 `soapNamespaced()` 改掛其他 namespace 的 DFF。 */
+export type FusionSoapNestedInput = FusionSoapRecord | SoapNamespacedObject;

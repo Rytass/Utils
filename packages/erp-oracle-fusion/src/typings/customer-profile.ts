@@ -1,4 +1,4 @@
-import type { FusionSoapInput, FusionSoapOutput, FusionSoapRecord } from './soap';
+import type { FusionSoapInput, FusionSoapNestedInput, FusionSoapOutput } from './soap';
 
 /**
  * `CustomerProfile` SDO 的純量欄位載體（欄位名取自 pod 的 `CustomerProfile.xsd`）。
@@ -99,9 +99,9 @@ export interface CustomerProfileFields {
  */
 export interface CustomerProfileInput extends FusionSoapInput<CustomerProfileFields> {
   /** 彈性欄位（DFF）。 */
-  readonly CustomerProfileFLEX?: FusionSoapRecord;
+  readonly CustomerProfileFLEX?: FusionSoapNestedInput;
   /** 全球化彈性欄位（GDF），依國別而異。 */
-  readonly CustomerProfileGdf?: readonly FusionSoapRecord[];
+  readonly CustomerProfileGdf?: readonly FusionSoapNestedInput[];
 }
 
 /** Fusion 回傳的信用檔。純量欄位一律為字串或 null。 */
