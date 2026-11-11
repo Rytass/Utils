@@ -13,7 +13,9 @@ import {
   FusionTransientError,
   parseSoapXml,
   serializeElement,
+  soapNamespaced,
 } from '@rytass/erp-oracle-fusion';
+import { XMLValidator } from 'fast-xml-parser';
 import type { FusionCallLogEntry, FusionCallLogSink, FusionClientOptions } from '@rytass/erp-oracle-fusion';
 
 /**
@@ -238,6 +240,104 @@ describe('SOAP envelope 序列化', () => {
     });
 
     expect(xml).toContain('<adf:fetchSize>3</adf:fetchSize>');
+  });
+});
+
+const CREDIT_MEMO_SERVICE_NS =
+  'http://xmlns.oracle.com/apps/financials/receivables/transactions/creditMemos/creditMemoService/';
+
+const CREDIT_MEMO_DFF_NS =
+  'http://xmlns.oracle.com/apps/financials/receivables/transactions/creditMemos/model/flex/CreditMemoDff/';
+
+function buildCreditMemoEnvelope(creditMemo: Parameters<typeof serializeElement>[1]): string {
+  return buildSoapEnvelope({
+    operation: 'createCreditMemo',
+    typesNamespace: `${CREDIT_MEMO_SERVICE_NS}types/`,
+    serviceNamespace: CREDIT_MEMO_SERVICE_NS,
+    parameters: [{ name: 'creditMemo', value: creditMemo }],
+  });
+}
+
+describe('soapNamespaced（DFF 欄位改掛 flex namespace）', () => {
+  it('外層元素留在 svc，子欄位改用 flex namespace（issue #237 的形狀）', () => {
+    const xml = buildCreditMemoEnvelope({
+      TransactionNumber: 'CM-1',
+      CreditMemoFLEXVA: soapNamespaced(CREDIT_MEMO_DFF_NS, { voucherNumber: 'X' }),
+    });
+
+    expect(xml).toContain(
+      '<svc:CreditMemoFLEXVA>' +
+        `<ns1:voucherNumber xmlns:ns1="${CREDIT_MEMO_DFF_NS}">X</ns1:voucherNumber>` +
+        '</svc:CreditMemoFLEXVA>',
+    );
+
+    expect(xml).toContain('<svc:TransactionNumber>CM-1</svc:TransactionNumber>');
+    expect(xml).not.toContain('svc:voucherNumber');
+    // 標記物件的內部結構不可外洩成欄位
+    expect(xml).not.toContain(':fields');
+    expect(XMLValidator.validate(xml)).toBe(true);
+  });
+
+  it('多個子欄位各自宣告 namespace，巢狀物件與陣列沿用同一個 prefix', () => {
+    expect(
+      serializeElement(
+        'FLEX',
+        soapNamespaced('urn:flex', { A: '1', Group: { B: '2' }, Lines: [{ C: '3' }, { C: '4' }] }),
+        'svc',
+      ),
+    ).toBe(
+      '<svc:FLEX>' +
+        '<ns1:A xmlns:ns1="urn:flex">1</ns1:A>' +
+        '<ns1:Group xmlns:ns1="urn:flex"><ns1:B>2</ns1:B></ns1:Group>' +
+        '<ns1:Lines xmlns:ns1="urn:flex"><ns1:C>3</ns1:C></ns1:Lines>' +
+        '<ns1:Lines xmlns:ns1="urn:flex"><ns1:C>4</ns1:C></ns1:Lines>' +
+        '</svc:FLEX>',
+    );
+  });
+
+  it('undefined 不輸出、null 輸出 xsi:nil，語意與一般欄位相同', () => {
+    expect(serializeElement('FLEX', soapNamespaced('urn:flex', { A: undefined, B: null }), 'svc')).toBe(
+      '<svc:FLEX><ns1:B xmlns:ns1="urn:flex" xsi:nil="true"/></svc:FLEX>',
+    );
+
+    expect(serializeElement('FLEX', soapNamespaced('urn:flex', {}), 'svc')).toBe('<svc:FLEX></svc:FLEX>');
+  });
+
+  it('巢狀使用不同 namespace 時 prefix 依層級遞增', () => {
+    expect(
+      serializeElement('Outer', soapNamespaced('urn:a', { Inner: soapNamespaced('urn:b', { X: '1' }) }), 'svc'),
+    ).toBe('<svc:Outer><ns1:Inner xmlns:ns1="urn:a"><ns2:X xmlns:ns2="urn:b">1</ns2:X></ns1:Inner></svc:Outer>');
+  });
+
+  it('陣列中的每個元素都可帶各自的標記', () => {
+    expect(
+      serializeElement('FLEX', [soapNamespaced('urn:flex', { A: '1' }), soapNamespaced('urn:flex', { A: '2' })], 'svc'),
+    ).toBe(
+      '<svc:FLEX><ns1:A xmlns:ns1="urn:flex">1</ns1:A></svc:FLEX>' +
+        '<svc:FLEX><ns1:A xmlns:ns1="urn:flex">2</ns1:A></svc:FLEX>',
+    );
+  });
+
+  it('namespace URI 經過 XML 跳脫', () => {
+    expect(serializeElement('FLEX', soapNamespaced('urn:a&b"c', { A: '1' }), 'svc')).toBe(
+      '<svc:FLEX><ns1:A xmlns:ns1="urn:a&amp;b&quot;c">1</ns1:A></svc:FLEX>',
+    );
+  });
+
+  it('直接作為參數值時，參數 element 留在 typ，內容改用標記的 namespace', () => {
+    const xml = buildSoapEnvelope({
+      operation: 'op',
+      typesNamespace: 'urn:svc/types/',
+      serviceNamespace: 'urn:svc/',
+      parameters: [{ name: 'param', value: soapNamespaced('urn:flex', { A: '1' }) }],
+    });
+
+    expect(xml).toContain('<typ:param><ns1:A xmlns:ns1="urn:flex">1</ns1:A></typ:param>');
+    expect(XMLValidator.validate(xml)).toBe(true);
+  });
+
+  it('namespace URI 為空字串時拒絕', () => {
+    expect(() => soapNamespaced('', { A: '1' })).toThrow(TypeError);
   });
 });
 

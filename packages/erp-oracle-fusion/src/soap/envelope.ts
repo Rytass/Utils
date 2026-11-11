@@ -8,10 +8,62 @@
  */
 
 /** SOAP payload 可序列化的值。`undefined` 與 `null` 語意不同，詳見 `serializeElement`。 */
-export type SoapValue = string | number | boolean | null | undefined | SoapObject | readonly SoapValue[];
+export type SoapValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | SoapObject
+  | SoapNamespacedObject
+  | readonly SoapValue[];
 
 export interface SoapObject {
   readonly [key: string]: SoapValue;
+}
+
+/**
+ * 標記 key。用 `Symbol.for` 而非 class + `instanceof`：本套件同時輸出 ESM 與 CJS，
+ * 使用端混載兩份時 `instanceof` 會失效，全域註冊的 symbol 則兩邊一致；symbol key 也不會
+ * 被 `Object.entries` 列舉，不可能誤序列化成欄位。
+ */
+const SOAP_NAMESPACE_MARKER: unique symbol = Symbol.for('@rytass/erp-oracle-fusion/soap-namespaced');
+
+/** 由 `soapNamespaced()` 產生：子欄位改掛在另一個 namespace 的複合欄位。 */
+export interface SoapNamespacedObject {
+  readonly [SOAP_NAMESPACE_MARKER]: string;
+  readonly fields: SoapObject;
+}
+
+/**
+ * 讓複合欄位的**子欄位**改用另一個 namespace，元素本身仍留在父層 namespace。
+ *
+ * 用途是 Fusion 的描述性彈性欄位（DFF）：以 `createCreditMemo` 為例，`CreditMemoFLEXVA`
+ * 在服務 namespace，但其下的 DFF 欄位定義在 `.../model/flex/CreditMemoDff/`。掛錯
+ * namespace 時 DFF 值不會寫入。
+ *
+ * ```ts
+ * { CreditMemoFLEXVA: soapNamespaced(CREDIT_MEMO_DFF_NS, { voucherNumber: 'X' }) }
+ * // → <svc:CreditMemoFLEXVA>
+ * //     <ns1:voucherNumber xmlns:ns1="...CreditMemoDff/">X</ns1:voucherNumber>
+ * //   </svc:CreditMemoFLEXVA>
+ * ```
+ *
+ * namespace 宣告在每個直屬子欄位上（與 Fusion 實測成功的形狀一致）；更深的巢狀欄位沿用
+ * 同一個 prefix。巢狀使用時 prefix 依層級遞增（`ns1`、`ns2`…），不會與 `typ`／`svc`／
+ * `adf` 衝突。
+ */
+export function soapNamespaced(namespaceUri: string, fields: SoapObject): SoapNamespacedObject {
+  if (!namespaceUri) {
+    throw new TypeError('soapNamespaced() requires a non-empty namespace URI');
+  }
+
+  return { [SOAP_NAMESPACE_MARKER]: namespaceUri, fields };
+}
+
+/** 是否為 `soapNamespaced()` 產生的標記物件。 */
+export function isSoapNamespaced(value: unknown): value is SoapNamespacedObject {
+  return typeof value === 'object' && value !== null && SOAP_NAMESPACE_MARKER in value;
 }
 
 /**
@@ -87,27 +139,64 @@ function serializeScalar(value: string | number | boolean): string {
  *
  * 陣列展開為同名 element 重複出現（對應 XSD 的 `maxOccurs="unbounded"`）。
  */
-export function serializeElement(name: string, value: SoapValue, prefix: SoapNamespacePrefix): string {
+export function serializeElement(name: string, value: SoapValue, prefix: string): string {
+  return serializeNode(name, value, prefix, ROOT_CONTEXT);
+}
+
+/**
+ * 序列化時往下傳的狀態：
+ * - `attributes`：要加在本元素開頭標籤上的屬性（`soapNamespaced` 子欄位的 `xmlns:` 宣告）
+ * - `namespaceDepth`：已進入幾層 `soapNamespaced`，用來產生不重複的 prefix
+ */
+interface SerializeContext {
+  readonly attributes: string;
+  readonly namespaceDepth: number;
+}
+
+const ROOT_CONTEXT: SerializeContext = { attributes: '', namespaceDepth: 0 };
+
+function serializeNode(name: string, value: SoapValue, prefix: string, context: SerializeContext): string {
   if (value === undefined) return '';
 
   const tag = `${prefix}:${name}`;
+  const openTag = `${tag}${context.attributes}`;
 
-  if (value === null) return `<${tag} xsi:nil="true"/>`;
+  if (value === null) return `<${openTag} xsi:nil="true"/>`;
 
   if (Array.isArray(value)) {
-    return value.map(item => serializeElement(name, item, prefix)).join('');
+    return value.map(item => serializeNode(name, item, prefix, context)).join('');
+  }
+
+  // 必須在一般物件分支之前判斷，否則 `fields` 會被當成欄位輸出成 `<svc:fields>`。
+  if (isSoapNamespaced(value)) {
+    return `<${openTag}>${serializeNamespacedChildren(value, context.namespaceDepth)}</${tag}>`;
   }
 
   if (typeof value === 'object') {
+    const childContext: SerializeContext = { attributes: '', namespaceDepth: context.namespaceDepth };
     const children = Object.entries(value as SoapObject)
-      .map(([childName, childValue]) => serializeElement(childName, childValue, prefix))
+      .map(([childName, childValue]) => serializeNode(childName, childValue, prefix, childContext))
       .join('');
 
     // 全部子欄位都是 undefined 時仍輸出空 element，語意等同「這個複合欄位存在但無內容」。
-    return `<${tag}>${children}</${tag}>`;
+    return `<${openTag}>${children}</${tag}>`;
   }
 
-  return `<${tag}>${serializeScalar(value)}</${tag}>`;
+  return `<${openTag}>${serializeScalar(value)}</${tag}>`;
+}
+
+/** `soapNamespaced` 標記物件的子欄位：換新 prefix，並在每個直屬子欄位上宣告它。 */
+function serializeNamespacedChildren(value: SoapNamespacedObject, namespaceDepth: number): string {
+  const depth = namespaceDepth + 1;
+  const prefix = `ns${depth}`;
+  const context: SerializeContext = {
+    attributes: ` xmlns:${prefix}="${escapeXml(value[SOAP_NAMESPACE_MARKER])}"`,
+    namespaceDepth: depth,
+  };
+
+  return Object.entries(value.fields)
+    .map(([childName, childValue]) => serializeNode(childName, childValue, prefix, context))
+    .join('');
 }
 
 /**
@@ -131,8 +220,9 @@ function serializeParameter(parameter: SoapParameter): string {
     return value.map(item => serializeParameter({ name, value: item, contentPrefix })).join('');
   }
 
-  const children =
-    typeof value === 'object'
+  const children = isSoapNamespaced(value)
+    ? serializeNamespacedChildren(value, ROOT_CONTEXT.namespaceDepth)
+    : typeof value === 'object'
       ? Object.entries(value as SoapObject)
           .map(([childName, childValue]) => serializeElement(childName, childValue, contentPrefix))
           .join('')

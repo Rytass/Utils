@@ -1,3 +1,5 @@
+import type { SoapNamespacedObject } from '../soap/envelope';
+
 /**
  * Fusion SOAP 讀寫的共用值型別。
  *
@@ -32,8 +34,12 @@ export type FusionSoapOutput<TFields> = {
  * 尚未強型別化的巢狀結構（彈性欄位 DFF/GDF、聯絡人、關係等）。
  *
  * 這些結構每個 pod 的彈性欄位設定都不同，寫死型別反而礙事；需要時直接以物件字面量帶入，
- * 序列化器會照樣輸出。
+ * 序列化器會照樣輸出。DFF 欄位若定義在另一個 flex namespace，以 `soapNamespaced()` 包起來。
  */
 export interface FusionSoapRecord {
-  readonly [key: string]: FusionSoapScalarInput | FusionSoapRecord | readonly FusionSoapRecord[];
+  readonly [key: string]:
+    | FusionSoapScalarInput
+    | FusionSoapRecord
+    | SoapNamespacedObject
+    | readonly (FusionSoapRecord | SoapNamespacedObject)[];
 }

@@ -57,6 +57,8 @@ export { FusionHttpTransport, backoffWithJitter, type FusionTransportRequest } f
 export { FusionSoapClient, type FusionSoapCallOptions, type FusionSoapService } from './soap/fusion-soap-client';
 export {
   buildSoapEnvelope,
+  isSoapNamespaced,
+  soapNamespaced,
   escapeXml,
   serializeElement,
   ADF_TYPES_NAMESPACE,
@@ -64,6 +66,7 @@ export {
   XSI_NAMESPACE,
   type BuildSoapEnvelopeOptions,
   type SoapNamespacePrefix,
+  type SoapNamespacedObject,
   type SoapObject,
   type SoapParameter,
   type SoapValue,
