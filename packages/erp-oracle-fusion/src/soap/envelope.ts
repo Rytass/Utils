@@ -23,15 +23,17 @@ export interface SoapObject {
 }
 
 /**
- * 標記 key。用 `Symbol.for` 而非 class + `instanceof`：本套件同時輸出 ESM 與 CJS，
- * 使用端混載兩份時 `instanceof` 會失效，全域註冊的 symbol 則兩邊一致；symbol key 也不會
- * 被 `Object.entries` 列舉，不可能誤序列化成欄位。
+ * 標記 key。以 `$` 開頭的字串：XML 元素名稱不能以 `$` 開頭，因此不可能與真實欄位撞名。
+ *
+ * 不用 symbol key 或 class + `instanceof`：DFF 值常先經 JSON（佇列、重試 payload）或
+ * `structuredClone` 才送出，這兩者都會丟掉 symbol 與原型，標記消失後 `fields` 會被當成
+ * 一般欄位輸出成 `<svc:fields>`。字串 key 在往返後仍保留，ESM／CJS 混載時也一致。
  */
-const SOAP_NAMESPACE_MARKER: unique symbol = Symbol.for('@rytass/erp-oracle-fusion/soap-namespaced');
+const SOAP_NAMESPACE_MARKER = '$namespace';
 
 /** 由 `soapNamespaced()` 產生：子欄位改掛在另一個 namespace 的複合欄位。 */
 export interface SoapNamespacedObject {
-  readonly [SOAP_NAMESPACE_MARKER]: string;
+  readonly $namespace: string;
   readonly fields: SoapObject;
 }
 
@@ -58,12 +60,17 @@ export function soapNamespaced(namespaceUri: string, fields: SoapObject): SoapNa
     throw new TypeError('soapNamespaced() requires a non-empty namespace URI');
   }
 
-  return { [SOAP_NAMESPACE_MARKER]: namespaceUri, fields };
+  return { $namespace: namespaceUri, fields };
 }
 
-/** 是否為 `soapNamespaced()` 產生的標記物件。 */
+/** 是否為 `soapNamespaced()` 產生的標記物件（含經 JSON 往返後的形狀）。 */
 export function isSoapNamespaced(value: unknown): value is SoapNamespacedObject {
-  return typeof value === 'object' && value !== null && SOAP_NAMESPACE_MARKER in value;
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    typeof (value as Record<string, unknown>)[SOAP_NAMESPACE_MARKER] === 'string'
+  );
 }
 
 /**
@@ -139,7 +146,7 @@ function serializeScalar(value: string | number | boolean): string {
  *
  * 陣列展開為同名 element 重複出現（對應 XSD 的 `maxOccurs="unbounded"`）。
  */
-export function serializeElement(name: string, value: SoapValue, prefix: string): string {
+export function serializeElement(name: string, value: SoapValue, prefix: SoapNamespacePrefix): string {
   return serializeNode(name, value, prefix, ROOT_CONTEXT);
 }
 
@@ -167,34 +174,39 @@ function serializeNode(name: string, value: SoapValue, prefix: string, context: 
     return value.map(item => serializeNode(name, item, prefix, context)).join('');
   }
 
-  // 必須在一般物件分支之前判斷，否則 `fields` 會被當成欄位輸出成 `<svc:fields>`。
-  if (isSoapNamespaced(value)) {
-    return `<${openTag}>${serializeNamespacedChildren(value, context.namespaceDepth)}</${tag}>`;
-  }
-
   if (typeof value === 'object') {
-    const childContext: SerializeContext = { attributes: '', namespaceDepth: context.namespaceDepth };
-    const children = Object.entries(value as SoapObject)
-      .map(([childName, childValue]) => serializeNode(childName, childValue, prefix, childContext))
-      .join('');
-
     // 全部子欄位都是 undefined 時仍輸出空 element，語意等同「這個複合欄位存在但無內容」。
-    return `<${openTag}>${children}</${tag}>`;
+    return `<${openTag}>${serializeChildren(value as SoapObject | SoapNamespacedObject, prefix, context.namespaceDepth)}</${tag}>`;
   }
 
   return `<${openTag}>${serializeScalar(value)}</${tag}>`;
 }
 
-/** `soapNamespaced` 標記物件的子欄位：換新 prefix，並在每個直屬子欄位上宣告它。 */
-function serializeNamespacedChildren(value: SoapNamespacedObject, namespaceDepth: number): string {
-  const depth = namespaceDepth + 1;
-  const prefix = `ns${depth}`;
-  const context: SerializeContext = {
-    attributes: ` xmlns:${prefix}="${escapeXml(value[SOAP_NAMESPACE_MARKER])}"`,
-    namespaceDepth: depth,
-  };
+/**
+ * 複合欄位的子欄位序列化，參數層與巢狀層共用。
+ *
+ * 一般物件：子欄位沿用 `prefix`。`soapNamespaced` 標記物件：換成新 prefix（`ns{層級}`），
+ * 並在**每個直屬子欄位**上宣告 `xmlns`——這是 issue #237 在 Fusion 實測成功的形狀；
+ * 宣告在包裝元素上語意相同，但尚未在 Fusion 驗證過，先不簡化。
+ */
+function serializeChildren(value: SoapObject | SoapNamespacedObject, prefix: string, namespaceDepth: number): string {
+  // 必須先判斷標記，否則 `$namespace`／`fields` 會被當成一般欄位輸出。
+  if (isSoapNamespaced(value)) {
+    const depth = namespaceDepth + 1;
+    const childPrefix = `ns${depth}`;
+    const context: SerializeContext = {
+      attributes: ` xmlns:${childPrefix}="${escapeXml(value.$namespace)}"`,
+      namespaceDepth: depth,
+    };
 
-  return Object.entries(value.fields)
+    return Object.entries(value.fields)
+      .map(([childName, childValue]) => serializeNode(childName, childValue, childPrefix, context))
+      .join('');
+  }
+
+  const context: SerializeContext = { attributes: '', namespaceDepth };
+
+  return Object.entries(value)
     .map(([childName, childValue]) => serializeNode(childName, childValue, prefix, context))
     .join('');
 }
@@ -220,12 +232,9 @@ function serializeParameter(parameter: SoapParameter): string {
     return value.map(item => serializeParameter({ name, value: item, contentPrefix })).join('');
   }
 
-  const children = isSoapNamespaced(value)
-    ? serializeNamespacedChildren(value, ROOT_CONTEXT.namespaceDepth)
-    : typeof value === 'object'
-      ? Object.entries(value as SoapObject)
-          .map(([childName, childValue]) => serializeElement(childName, childValue, contentPrefix))
-          .join('')
+  const children =
+    typeof value === 'object'
+      ? serializeChildren(value as SoapObject | SoapNamespacedObject, contentPrefix, ROOT_CONTEXT.namespaceDepth)
       : serializeScalar(value as string | number | boolean);
 
   return `<typ:${name}>${children}</typ:${name}>`;
