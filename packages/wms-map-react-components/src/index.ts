@@ -3,6 +3,7 @@
 export * from './typings';
 export * from './types';
 export { WMSMapModalContent, default as WMSMapModal } from './components/modal/wms-map-modal-container';
+export { default as WMSMapPreview } from './components/preview/wms-map-preview';
 
 // 導出資料轉換工具函數
 export { transformNodeToClickInfo, transformNodesToMapData, logMapData, logNodeData } from './utils/map-data-transform';
