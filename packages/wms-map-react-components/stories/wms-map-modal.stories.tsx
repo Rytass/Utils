@@ -1,8 +1,19 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { action } from 'storybook/actions';
-import { WMSMapModalContent, WMSMapModal, ViewMode } from '../src';
+import { Button } from '@mezzanine-ui/react';
+import {
+  WMSMapModalContent,
+  WMSMapModal,
+  ViewMode,
+  transformApiDataToNodes,
+  type FlowNode,
+  type Map,
+  type WMSMapModalProps,
+  type WMSNodeClickInfo,
+} from '../src';
 import { generateStoryNodes, convertToFlowNodes } from './story-utils';
+import { generateMockImageUrl } from './mock-image-utils';
 import '@xyflow/react/dist/style.css';
 
 // Story wrapper component for managing warehouseIds state
@@ -220,5 +231,98 @@ export const DebugMode: Story = {
     initialEdges: [],
     debugMode: true,
     warehouseIds: ['DEBUG-FACILITY', 'TEST-ENVIRONMENT', 'LOG-ANALYSIS', 'MONITORING-ZONE'],
+  },
+};
+
+/** 第 n 層地圖用哪一組 mock 資料：根層為大倉，子層輪流用多邊形與簡單資料，方便看出換圖。 */
+const DATASET_BY_DEPTH = ['complex', 'polygons', 'simple'] as const;
+const SIMULATED_LATENCY_MS = 800;
+
+type FitOnLoadArgs = Omit<WMSMapModalProps, 'open' | 'onClose' | 'warehouseIds' | 'initialNodes'>;
+
+/**
+ * 模擬宿主：節點由「API」延遲載入；雙擊範圍進入子地圖、點麵包屑回上層；
+ * 儲存後把結果寫回並重新傳入 initialNodes（等同宿主重新抓資料）。
+ */
+const FitOnLoadWrapper: React.FC<FitOnLoadArgs> = args => {
+  const [open, setOpen] = useState<boolean>(true);
+  const [warehouseIds, setWarehouseIds] = useState<string[]>(['MAIN-WAREHOUSE']);
+  const [nodesByMap, setNodesByMap] = useState<Readonly<Record<string, FlowNode[]>>>({});
+  const mapKey = warehouseIds.join('/');
+  const nodes = nodesByMap[mapKey] ?? [];
+
+  useEffect(() => {
+    if (nodesByMap[mapKey]) {
+      return undefined;
+    }
+
+    const dataset = DATASET_BY_DEPTH[(warehouseIds.length - 1) % DATASET_BY_DEPTH.length];
+    const timer = setTimeout(() => {
+      setNodesByMap(prev => ({ ...prev, [mapKey]: convertToFlowNodes(generateStoryNodes(dataset)) }));
+    }, SIMULATED_LATENCY_MS);
+
+    return (): void => clearTimeout(timer);
+  }, [mapKey, nodesByMap, warehouseIds.length]);
+
+  const handleNodeDoubleClick = (info: WMSNodeClickInfo): void => {
+    action('onNodeDoubleClick')(info);
+
+    if (info.type === 'rectangleNode' || info.type === 'pathNode') {
+      setWarehouseIds(prev => [...prev, String(info.id)]);
+    }
+  };
+
+  const handleBreadcrumbClick = (warehouseId: string, index: number): void => {
+    action('onBreadcrumbClick')(warehouseId, index);
+    setWarehouseIds(prev => prev.slice(0, index + 1));
+  };
+
+  const handleSave = (mapData: Map): void => {
+    action('onSave')(mapData);
+
+    setTimeout(() => {
+      setNodesByMap(prev => ({
+        ...prev,
+        [mapKey]: convertToFlowNodes(transformApiDataToNodes(mapData, generateMockImageUrl)),
+      }));
+    }, SIMULATED_LATENCY_MS / 2);
+  };
+
+  return (
+    <>
+      <Button variant="base-primary" onClick={(): void => setOpen(true)}>
+        開啟地圖
+      </Button>
+      <WMSMapModal
+        {...args}
+        open={open}
+        onClose={(): void => setOpen(false)}
+        warehouseIds={warehouseIds}
+        initialNodes={nodes}
+        onNodeDoubleClick={handleNodeDoubleClick}
+        onBreadcrumbClick={handleBreadcrumbClick}
+        onSave={handleSave}
+      />
+    </>
+  );
+};
+
+export const FitOnLoad: Story = {
+  render: args => <FitOnLoadWrapper {...args} />,
+  args: {
+    title: '開圖自動 fit',
+    viewMode: ViewMode.EDIT,
+    colorPalette: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'],
+    fitViewOnLoad: true,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Nodes load after a delay, so the map fits on its first non-empty load. Double-click a range to enter a ' +
+          'child map (fits again), click the breadcrumb to go back. Saving feeds the result back as new ' +
+          '`initialNodes`, which must not refit.',
+      },
+    },
   },
 };
