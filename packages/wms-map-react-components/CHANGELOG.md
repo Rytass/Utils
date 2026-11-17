@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.3.0](https://github.com/Rytass/Utils/compare/@rytass/wms-map-react-components@0.2.0...@rytass/wms-map-react-components@0.3.0) (2026-11-17)
+
+### Bug Fixes
+
+- **wms-map-react-components:** keep background image at its stored size ([fd8809f](https://github.com/Rytass/Utils/commit/fd8809f5d2aa42c96f13a65a3e416b87b6a0a637))
+
+### Features
+
+- **wms-map-react-components:** add WMSMapPreview ([915c294](https://github.com/Rytass/Utils/commit/915c29484541f4988a21f3f241159c995e55aaad))
+- **wms-map-react-components:** fit the map to the viewport on load ([c7d072a](https://github.com/Rytass/Utils/commit/c7d072a52a16c344d6e1dad9f6e4b3e2002aa759))
+- **wms-map-react-components:** style highlighted and dimmed ranges ([d6f363f](https://github.com/Rytass/Utils/commit/d6f363fbbb14fb2ed0438504ad1aa97253e6dc9c))
+
 # [0.2.0](https://github.com/Rytass/Utils/compare/@rytass/wms-map-react-components@0.1.10...@rytass/wms-map-react-components@0.2.0) (2026-08-02)
 
 **Note:** Version bump only for package @rytass/wms-map-react-components
