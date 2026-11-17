@@ -21,6 +21,7 @@ import PathNode from '../nodes/path-node';
 // PathPointNode removed - using simple overlay approach
 import { useRectangleDrawing } from '../../hooks/use-rectangle-drawing';
 import { usePenDrawing } from '../../hooks/use-pen-drawing';
+import { useFitViewWhenReady } from '../../hooks/use-fit-view-when-ready';
 // PathPointsOverlay removed - using native PathNode editing instead
 import styles from './react-flow-canvas.module.scss';
 import { FolderIcon } from '../../icons';
@@ -52,6 +53,8 @@ interface ReactFlowCanvasProps {
   onNodeClick?: (event: React.MouseEvent, node: ReactFlowNode) => void;
   onNodeDoubleClick?: (event: React.MouseEvent, node: ReactFlowNode) => void;
   showBackground?: boolean;
+  /** 遞增即要求一次 fit（節點量測完成後才執行）；0 或未提供則不 fit。 */
+  fitRequestToken?: number;
 }
 
 const CustomControls: FC = () => {
@@ -123,8 +126,15 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
   onNodeClick,
   onNodeDoubleClick,
   showBackground = true,
+  fitRequestToken = 0,
 }) => {
   // console.log('🖼️ ReactFlowCanvas 接收到 showBackground:', showBackground);
+
+  useFitViewWhenReady({
+    requestToken: fitRequestToken,
+    nodeIds: nodes.map(node => node.id),
+    padding: 0.1,
+  });
 
   const {
     containerRef: rectContainerRef,

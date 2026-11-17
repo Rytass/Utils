@@ -1,6 +1,6 @@
 'use client';
 
-import React, { FC, useCallback, useEffect, useState, useRef } from 'react';
+import React, { FC, useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import {
   addEdge,
   Connection,
@@ -22,6 +22,13 @@ import {
   DEFAULT_WAREHOUSE_IDS,
 } from '../../constants';
 import { calculateImageSize, calculateStaggeredPosition } from '../../utils/node-utils';
+import {
+  getMapKey,
+  getNodeIdSignature,
+  INITIAL_MAP_FIT_STATE,
+  MapFitState,
+  resolveMapFit,
+} from '../../utils/fit-trigger';
 import { createRectangleCopy, createPathCopy, createImageCopy } from '../../utils/node-operations';
 import {
   logMapData,
@@ -54,6 +61,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
   onNameChange,
   initialNodes: propsInitialNodes = [],
   initialEdges: propsInitialEdges = [],
+  fitViewOnLoad = true,
   onUpload,
   getFilenameFQDN,
   maxFileSizeKB = 30720, // 預設 30MB
@@ -136,6 +144,28 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
 
   // 用於追蹤上一次的 initialNodes 以進行比較
   const prevInitialNodesRef = useRef<FlowNode[]>([]);
+
+  // 遞增即要求 ReactFlowCanvas fit 一次（節點量測完成後才執行）
+  const [fitRequestToken, setFitRequestToken] = useState<number>(0);
+  const mapFitStateRef = useRef<MapFitState>(INITIAL_MAP_FIT_STATE);
+  const mapKey = getMapKey(warehouseIds);
+  const initialNodeSignature = useMemo(() => getNodeIdSignature(propsInitialNodes), [propsInitialNodes]);
+  const initialNodeCount = propsInitialNodes.length;
+
+  // 只在換地圖或同一張圖第一次拿到非空節點時 fit；同圖節點增減（編輯後儲存再重抓）不 fit
+  useEffect(() => {
+    const { shouldFit, state } = resolveMapFit(mapFitStateRef.current, {
+      mapKey,
+      nodeSignature: initialNodeSignature,
+      nodeCount: initialNodeCount,
+    });
+
+    mapFitStateRef.current = state;
+
+    if (fitViewOnLoad && shouldFit) {
+      setFitRequestToken(token => token + 1);
+    }
+  }, [mapKey, initialNodeSignature, initialNodeCount, fitViewOnLoad]);
 
   // 監聽 initialNodes 變化，當接收到新資料時清空並載入
   useEffect(() => {
@@ -929,6 +959,7 @@ const WMSMapContent: FC<WMSMapContentProps> = ({
         onNodeClick={handleNodeClick}
         onNodeDoubleClick={handleNodeDoubleClick}
         showBackground={showBackground}
+        fitRequestToken={fitRequestToken}
       />
 
       <ViewModeToolbar
