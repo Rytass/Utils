@@ -254,8 +254,6 @@ const ImageNode: FC<ImageNodeProps> = ({ data, selected, id, editMode, viewMode,
           style={{
             width: `${currentSize.width}px`,
             height: `${currentSize.height}px`,
-            maxWidth: '100%',
-            maxHeight: '100%',
             opacity: opacity,
           }}
           draggable={false}

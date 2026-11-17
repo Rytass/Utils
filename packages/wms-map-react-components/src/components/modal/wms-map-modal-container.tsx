@@ -32,6 +32,7 @@ export const WMSMapModalContent = ({
   getFilenameFQDN,
   maxFileSizeKB,
   warehouseIds,
+  fitViewOnLoad = true,
 }: WMSMapContentProps): React.JSX.Element => {
   return (
     <div className={styles.content}>
@@ -58,6 +59,7 @@ export const WMSMapModalContent = ({
           getFilenameFQDN={getFilenameFQDN}
           maxFileSizeKB={maxFileSizeKB}
           warehouseIds={warehouseIds}
+          fitViewOnLoad={fitViewOnLoad}
         />
       </ReactFlowProvider>
     </div>
@@ -83,6 +85,7 @@ const WMSMapModalContainer: FC<WMSMapModalProps> = ({
   getFilenameFQDN,
   maxFileSizeKB,
   warehouseIds,
+  fitViewOnLoad = true,
 }) => {
   const [editMode, setEditMode] = useState<EditMode>(EditMode.BACKGROUND);
   const [drawingMode, setDrawingMode] = useState<DrawingMode>(DrawingMode.NONE);
@@ -163,6 +166,7 @@ const WMSMapModalContainer: FC<WMSMapModalProps> = ({
         getFilenameFQDN={getFilenameFQDN}
         maxFileSizeKB={maxFileSizeKB}
         warehouseIds={warehouseIds}
+        fitViewOnLoad={fitViewOnLoad}
       />
     </Modal>
   );

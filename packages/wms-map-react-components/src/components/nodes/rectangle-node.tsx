@@ -25,6 +25,7 @@ import { useContextMenu } from '../../hooks/use-context-menu';
 import { useTextEditing } from '../../hooks/use-text-editing';
 import { createRectangleCopy } from '../../utils/node-operations';
 import { createHoverColor } from '../../utils/color-utils';
+import { PREVIEW_DIMMED_OPACITY, PREVIEW_HIGHLIGHT_STROKE_WIDTH } from '../../utils/preview-highlight';
 import ContextMenu from '../ui/context-menu';
 import styles from './rectangle-node.module.scss';
 
@@ -33,6 +34,8 @@ interface RectangleNodeData {
   height?: number;
   color?: string;
   label?: string;
+  previewHighlighted?: boolean;
+  previewDimmed?: boolean;
 }
 
 interface RectangleNodeProps extends NodeProps {
@@ -59,6 +62,8 @@ const RectangleNode: FC<RectangleNodeProps> = ({
     height = DEFAULT_RECTANGLE_HEIGHT,
     color = DEFAULT_RECTANGLE_COLOR,
     label = DEFAULT_RECTANGLE_LABEL,
+    previewHighlighted = false,
+    previewDimmed = false,
   } = data as unknown as RectangleNodeData;
 
   const [currentSize, setCurrentSize] = useState({ width, height });
@@ -230,9 +235,12 @@ const RectangleNode: FC<RectangleNodeProps> = ({
         style={{
           width: `${currentSize.width}px`,
           height: `${currentSize.height}px`,
-          backgroundColor: `${displayColor}33`, // 20% opacity (33 in hex = 20% * 255)
-          opacity: opacity,
-          border: selected && isEditable ? '2px solid #3b82f6' : `2px solid ${displayColor}`, // 100% opacity border
+          backgroundColor: previewHighlighted ? `${displayColor}66` : `${displayColor}33`, // 高亮時 40%，其餘 20%
+          opacity: previewDimmed ? PREVIEW_DIMMED_OPACITY : opacity,
+          border:
+            selected && isEditable
+              ? '2px solid #3b82f6'
+              : `${previewHighlighted ? PREVIEW_HIGHLIGHT_STROKE_WIDTH : 2}px solid ${displayColor}`, // 100% opacity border
           borderRadius: '4px',
           display: 'flex',
           alignItems: 'center',

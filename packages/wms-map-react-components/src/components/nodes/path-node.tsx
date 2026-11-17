@@ -13,6 +13,7 @@ import { useContextMenu } from '../../hooks/use-context-menu';
 import { useTextEditing } from '../../hooks/use-text-editing';
 import { createPathCopy } from '../../utils/node-operations';
 import { createHoverColor } from '../../utils/color-utils';
+import { PREVIEW_DIMMED_OPACITY, PREVIEW_HIGHLIGHT_STROKE_WIDTH } from '../../utils/preview-highlight';
 import ContextMenu from '../ui/context-menu';
 import styles from './path-node.module.scss';
 
@@ -21,6 +22,8 @@ interface PathNodeData {
   color?: string;
   strokeWidth?: number;
   label?: string;
+  previewHighlighted?: boolean;
+  previewDimmed?: boolean;
 }
 
 interface PathNodeProps extends NodeProps {
@@ -52,6 +55,8 @@ const PathNode: FC<PathNodeProps> = ({
     color = DEFAULT_RECTANGLE_COLOR,
     strokeWidth = 2,
     label = DEFAULT_PATH_LABEL,
+    previewHighlighted = false,
+    previewDimmed = false,
   } = data as unknown as PathNodeData;
 
   // Get React Flow instance for viewport and node operations
@@ -429,7 +434,7 @@ const PathNode: FC<PathNodeProps> = ({
         style={{
           width: `${width}px`,
           height: `${height}px`,
-          opacity: opacity,
+          opacity: previewDimmed ? PREVIEW_DIMMED_OPACITY : opacity,
           border: selected && isEditable ? '2px solid #3b82f6' : 'none',
           borderRadius: '4px',
           position: 'relative',
@@ -443,9 +448,9 @@ const PathNode: FC<PathNodeProps> = ({
           <path
             d={pathString}
             stroke={displayColor}
-            strokeWidth={strokeWidth}
+            strokeWidth={previewHighlighted ? Math.max(strokeWidth, PREVIEW_HIGHLIGHT_STROKE_WIDTH) : strokeWidth}
             fill={isClosedPath ? displayColor : 'none'}
-            fillOpacity={isClosedPath ? 0.2 : 0}
+            fillOpacity={isClosedPath ? (previewHighlighted ? 0.45 : 0.2) : 0}
             strokeLinecap="round"
             strokeLinejoin="round"
           />
