@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.4.0](https://github.com/Rytass/Utils/compare/@rytass/wms-map-react-components@0.3.0...@rytass/wms-map-react-components@0.4.0) (2026-11-18)
+
+### Features
+
+- **wms-map-react-components:** legible range labels ([48460fd](https://github.com/Rytass/Utils/commit/48460fda43a460ab0f2b8368ae97a3cbd78c2252))
+
 # [0.3.0](https://github.com/Rytass/Utils/compare/@rytass/wms-map-react-components@0.2.0...@rytass/wms-map-react-components@0.3.0) (2026-11-17)
 
 ### Bug Fixes
