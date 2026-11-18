@@ -22,6 +22,9 @@ import PathNode from '../nodes/path-node';
 import { useRectangleDrawing } from '../../hooks/use-rectangle-drawing';
 import { usePenDrawing } from '../../hooks/use-pen-drawing';
 import { useFitViewWhenReady } from '../../hooks/use-fit-view-when-ready';
+import { useRangeLabelTones } from '../../hooks/use-range-label-tones';
+import { RangeLabelToneContext, ZoomCssVariable } from '../nodes/range-label';
+import { ACTIVE_OPACITY, RECTANGLE_INACTIVE_OPACITY } from '../../constants';
 // PathPointsOverlay removed - using native PathNode editing instead
 import styles from './react-flow-canvas.module.scss';
 import { FolderIcon } from '../../icons';
@@ -129,6 +132,17 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
   fitRequestToken = 0,
 }) => {
   // console.log('🖼️ ReactFlowCanvas 接收到 showBackground:', showBackground);
+
+  // 底圖隱藏時，標籤壓著的是畫布而非底圖
+  const labelToneNodes = useMemo(
+    () => (showBackground ? nodes : nodes.filter(node => node.type !== 'imageNode')),
+    [nodes, showBackground],
+  );
+
+  const labelTones = useRangeLabelTones(
+    labelToneNodes,
+    editMode === EditMode.LAYER ? ACTIVE_OPACITY : RECTANGLE_INACTIVE_OPACITY,
+  );
 
   useFitViewWhenReady({
     requestToken: fitRequestToken,
@@ -252,158 +266,161 @@ const ReactFlowCanvas: FC<ReactFlowCanvasProps> = ({
   }, []);
 
   return (
-    <div
-      ref={containerRef}
-      className={styles.reactFlowWrapper}
-      style={{
-        cursor: getCursor(),
-        position: 'relative',
-      }}
-      onWheel={handleWheel}
-    >
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onSelectionChange={onSelectionChange}
-        onPaneClick={handlePaneClick}
-        onNodeMouseEnter={onNodeMouseEnter}
-        onNodeMouseLeave={onNodeMouseLeave}
-        onNodeClick={onNodeClick}
-        onNodeDoubleClick={onNodeDoubleClick}
-        nodeTypes={nodeTypes}
-        className={styles.reactFlowCanvas}
-        style={{ background: '#F5F5F5' }}
-        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-        minZoom={0.1}
-        maxZoom={4}
-        nodesConnectable={false}
-        nodesDraggable={viewMode === ViewMode.EDIT && drawingMode === DrawingMode.NONE}
-        elementsSelectable={true}
-        selectNodesOnDrag={false}
-        panOnDrag={viewMode === ViewMode.VIEW || (viewMode === ViewMode.EDIT && drawingMode === DrawingMode.NONE)}
-        panOnScroll={false}
-        zoomOnScroll={true}
-        zoomOnDoubleClick={false}
-        nodeOrigin={[0, 0]}
-        preventScrolling={true}
+    <RangeLabelToneContext.Provider value={labelTones}>
+      <div
+        ref={containerRef}
+        className={styles.reactFlowWrapper}
+        style={{
+          cursor: getCursor(),
+          position: 'relative',
+        }}
+        onWheel={handleWheel}
       >
-        <CustomControls />
-        <Background bgColor="#F5F5F5" />
-        {nodes.length === 0 && (
-          <div className={styles.emptyState}>
-            <FolderIcon className={styles.emptyIcon} />
-            <div className={styles.emptyTitle}>目前沒有資料</div>
-            <div className={styles.emptySubText}>請上傳底圖並繪製圖層</div>
-          </div>
-        )}
-      </ReactFlow>
-      {/* Drawing preview rectangle */}
-      {previewRect && (
-        <div
-          style={{
-            position: 'absolute',
-            left: previewRect.x,
-            top: previewRect.y,
-            width: previewRect.width,
-            height: previewRect.height,
-            border: `2px dashed ${selectedColor}`,
-            backgroundColor: `${selectedColor}33`, // 20% opacity
-            pointerEvents: 'none',
-            zIndex: 1000,
-          }}
-        />
-      )}
-
-      {/* Drawing preview path and points */}
-      {drawingMode === DrawingMode.PEN && editMode === EditMode.LAYER && (
-        <svg
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            pointerEvents: 'none',
-            zIndex: 1000,
-          }}
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onSelectionChange={onSelectionChange}
+          onPaneClick={handlePaneClick}
+          onNodeMouseEnter={onNodeMouseEnter}
+          onNodeMouseLeave={onNodeMouseLeave}
+          onNodeClick={onNodeClick}
+          onNodeDoubleClick={onNodeDoubleClick}
+          nodeTypes={nodeTypes}
+          className={styles.reactFlowCanvas}
+          style={{ background: '#F5F5F5' }}
+          defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+          minZoom={0.1}
+          maxZoom={4}
+          nodesConnectable={false}
+          nodesDraggable={viewMode === ViewMode.EDIT && drawingMode === DrawingMode.NONE}
+          elementsSelectable={true}
+          selectNodesOnDrag={false}
+          panOnDrag={viewMode === ViewMode.VIEW || (viewMode === ViewMode.EDIT && drawingMode === DrawingMode.NONE)}
+          panOnScroll={false}
+          zoomOnScroll={true}
+          zoomOnDoubleClick={false}
+          nodeOrigin={[0, 0]}
+          preventScrolling={true}
         >
-          {/* Preview path */}
-          {previewPath && previewPath.length > 1 && (
-            <path
-              d={`M ${previewPath.map(p => `${p.x} ${p.y}`).join(' L ')}`}
-              stroke={selectedColor}
-              strokeWidth="2"
-              strokeDasharray="5,5"
-              fill="none"
-              fillOpacity={0}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+          <CustomControls />
+          <ZoomCssVariable />
+          <Background bgColor="#F5F5F5" />
+          {nodes.length === 0 && (
+            <div className={styles.emptyState}>
+              <FolderIcon className={styles.emptyIcon} />
+              <div className={styles.emptyTitle}>目前沒有資料</div>
+              <div className={styles.emptySubText}>請上傳底圖並繪製圖層</div>
+            </div>
           )}
+        </ReactFlow>
+        {/* Drawing preview rectangle */}
+        {previewRect && (
+          <div
+            style={{
+              position: 'absolute',
+              left: previewRect.x,
+              top: previewRect.y,
+              width: previewRect.width,
+              height: previewRect.height,
+              border: `2px dashed ${selectedColor}`,
+              backgroundColor: `${selectedColor}33`, // 20% opacity
+              pointerEvents: 'none',
+              zIndex: 1000,
+            }}
+          />
+        )}
 
-          {/* Closing line preview for paths with 3+ points */}
-          {currentPoints && currentPoints.length >= 3 && (
-            <path
-              d={`M ${currentPoints[currentPoints.length - 1].x} ${currentPoints[currentPoints.length - 1].y} L ${currentPoints[0].x} ${currentPoints[0].y}`}
-              stroke={selectedColor}
-              strokeWidth="1"
-              strokeDasharray="2,2"
-              fill="none"
-              strokeLinecap="round"
-              opacity="0.5"
-            />
-          )}
-
-          {/* First point with close indicator when closable */}
-          {firstPoint && canClose && (
-            <>
-              {/* Pulsing outer ring for first point */}
-              <circle
-                cx={firstPoint.x}
-                cy={firstPoint.y}
-                r="8"
+        {/* Drawing preview path and points */}
+        {drawingMode === DrawingMode.PEN && editMode === EditMode.LAYER && (
+          <svg
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              pointerEvents: 'none',
+              zIndex: 1000,
+            }}
+          >
+            {/* Preview path */}
+            {previewPath && previewPath.length > 1 && (
+              <path
+                d={`M ${previewPath.map(p => `${p.x} ${p.y}`).join(' L ')}`}
+                stroke={selectedColor}
+                strokeWidth="2"
+                strokeDasharray="5,5"
                 fill="none"
-                stroke="#10b981"
-                strokeWidth="2"
-                opacity="0.6"
-              >
-                <animate attributeName="r" values="6;10;6" dur="1.5s" repeatCount="indefinite" />
-                <animate attributeName="opacity" values="0.8;0.3;0.8" dur="1.5s" repeatCount="indefinite" />
-              </circle>
-              {/* Inner circle for first point */}
-              <circle
-                cx={firstPoint.x}
-                cy={firstPoint.y}
-                r="5"
-                fill="#10b981"
-                stroke="white"
-                strokeWidth="2"
-                style={{ cursor: 'default' }}
+                fillOpacity={0}
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
-            </>
-          )}
+            )}
 
-          {/* Current points */}
-          {currentPoints &&
-            currentPoints.map((point, index) => (
-              <circle
-                key={index}
-                cx={point.x}
-                cy={point.y}
-                r={index === 0 && canClose ? '0' : '4'} // Hide first point circle if we're showing the close indicator
-                fill={selectedColor}
-                stroke="white"
-                strokeWidth="2"
+            {/* Closing line preview for paths with 3+ points */}
+            {currentPoints && currentPoints.length >= 3 && (
+              <path
+                d={`M ${currentPoints[currentPoints.length - 1].x} ${currentPoints[currentPoints.length - 1].y} L ${currentPoints[0].x} ${currentPoints[0].y}`}
+                stroke={selectedColor}
+                strokeWidth="1"
+                strokeDasharray="2,2"
+                fill="none"
+                strokeLinecap="round"
+                opacity="0.5"
               />
-            ))}
-        </svg>
-      )}
+            )}
 
-      {/* Path points editing is now handled natively in PathNode */}
-    </div>
+            {/* First point with close indicator when closable */}
+            {firstPoint && canClose && (
+              <>
+                {/* Pulsing outer ring for first point */}
+                <circle
+                  cx={firstPoint.x}
+                  cy={firstPoint.y}
+                  r="8"
+                  fill="none"
+                  stroke="#10b981"
+                  strokeWidth="2"
+                  opacity="0.6"
+                >
+                  <animate attributeName="r" values="6;10;6" dur="1.5s" repeatCount="indefinite" />
+                  <animate attributeName="opacity" values="0.8;0.3;0.8" dur="1.5s" repeatCount="indefinite" />
+                </circle>
+                {/* Inner circle for first point */}
+                <circle
+                  cx={firstPoint.x}
+                  cy={firstPoint.y}
+                  r="5"
+                  fill="#10b981"
+                  stroke="white"
+                  strokeWidth="2"
+                  style={{ cursor: 'default' }}
+                />
+              </>
+            )}
+
+            {/* Current points */}
+            {currentPoints &&
+              currentPoints.map((point, index) => (
+                <circle
+                  key={index}
+                  cx={point.x}
+                  cy={point.y}
+                  r={index === 0 && canClose ? '0' : '4'} // Hide first point circle if we're showing the close indicator
+                  fill={selectedColor}
+                  stroke="white"
+                  strokeWidth="2"
+                />
+              ))}
+          </svg>
+        )}
+
+        {/* Path points editing is now handled natively in PathNode */}
+      </div>
+    </RangeLabelToneContext.Provider>
   );
 };
 

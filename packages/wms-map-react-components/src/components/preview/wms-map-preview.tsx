@@ -10,6 +10,9 @@ import PathNode from '../nodes/path-node';
 import { useFitViewWhenReady } from '../../hooks/use-fit-view-when-ready';
 import { applyPreviewHighlight } from '../../utils/preview-highlight';
 import { getNodeIdSignature } from '../../utils/fit-trigger';
+import { useRangeLabelTones } from '../../hooks/use-range-label-tones';
+import { RangeLabelToneContext, ZoomCssVariable } from '../nodes/range-label';
+import { RECTANGLE_INACTIVE_OPACITY } from '../../constants';
 
 /** 與 WMSMapModal 的檢視模式一致：VIEW 不可編輯，BACKGROUND 讓底圖全不透明。 */
 const PREVIEW_EDIT_MODE = EditMode.BACKGROUND;
@@ -145,32 +148,38 @@ const WMSMapPreviewCanvas: FC<WMSMapPreviewProps> = ({
     padding: fitPadding,
   });
 
+  const labelTones = useRangeLabelTones(nodes, RECTANGLE_INACTIVE_OPACITY);
+
   return (
-    <ReactFlow
-      nodes={nodes}
-      edges={[]}
-      nodeTypes={PREVIEW_NODE_TYPES}
-      style={{ background: '#F5F5F5' }}
-      defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-      minZoom={PREVIEW_MIN_ZOOM}
-      maxZoom={PREVIEW_MAX_ZOOM}
-      nodeOrigin={[0, 0]}
-      nodesDraggable={false}
-      nodesConnectable={false}
-      nodesFocusable={false}
-      edgesFocusable={false}
-      elementsSelectable={false}
-      selectNodesOnDrag={false}
-      deleteKeyCode={NO_NODES_DELETE_KEY}
-      selectionKeyCode={null}
-      multiSelectionKeyCode={null}
-      panOnDrag={interactive}
-      panOnScroll={false}
-      zoomOnScroll={interactive}
-      zoomOnPinch={interactive}
-      zoomOnDoubleClick={false}
-      preventScrolling={interactive}
-    />
+    <RangeLabelToneContext.Provider value={labelTones}>
+      <ReactFlow
+        nodes={nodes}
+        edges={[]}
+        nodeTypes={PREVIEW_NODE_TYPES}
+        style={{ background: '#F5F5F5' }}
+        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+        minZoom={PREVIEW_MIN_ZOOM}
+        maxZoom={PREVIEW_MAX_ZOOM}
+        nodeOrigin={[0, 0]}
+        nodesDraggable={false}
+        nodesConnectable={false}
+        nodesFocusable={false}
+        edgesFocusable={false}
+        elementsSelectable={false}
+        selectNodesOnDrag={false}
+        deleteKeyCode={NO_NODES_DELETE_KEY}
+        selectionKeyCode={null}
+        multiSelectionKeyCode={null}
+        panOnDrag={interactive}
+        panOnScroll={false}
+        zoomOnScroll={interactive}
+        zoomOnPinch={interactive}
+        zoomOnDoubleClick={false}
+        preventScrolling={interactive}
+      >
+        <ZoomCssVariable />
+      </ReactFlow>
+    </RangeLabelToneContext.Provider>
   );
 };
 
