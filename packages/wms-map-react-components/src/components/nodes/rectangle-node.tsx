@@ -27,6 +27,7 @@ import { createRectangleCopy } from '../../utils/node-operations';
 import { createHoverColor } from '../../utils/color-utils';
 import { PREVIEW_DIMMED_OPACITY, PREVIEW_HIGHLIGHT_STROKE_WIDTH } from '../../utils/preview-highlight';
 import ContextMenu from '../ui/context-menu';
+import { RangeLabel } from './range-label';
 import styles from './rectangle-node.module.scss';
 
 interface RectangleNodeData {
@@ -242,19 +243,22 @@ const RectangleNode: FC<RectangleNodeProps> = ({
               ? '2px solid #3b82f6'
               : `${previewHighlighted ? PREVIEW_HIGHLIGHT_STROKE_WIDTH : 2}px solid ${displayColor}`, // 100% opacity border
           borderRadius: '4px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'white',
-          fontSize: '12px',
-          fontWeight: 'bold',
-          textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
           position: 'relative',
           cursor: viewMode === ViewMode.VIEW ? 'pointer' : 'default',
           transition: viewMode === ViewMode.VIEW ? 'all 0.2s ease' : 'none',
         }}
         onDoubleClick={viewMode === ViewMode.EDIT ? handleDoubleClick : undefined}
         onContextMenu={viewMode === ViewMode.EDIT ? handleContextMenu : undefined}
+      />
+
+      {/* 標籤是外框的兄弟元素，範圍的 opacity 不會套到文字上 */}
+      <RangeLabel
+        id={id}
+        width={currentSize.width}
+        height={currentSize.height}
+        label={label}
+        opacity={previewDimmed ? PREVIEW_DIMMED_OPACITY : 1}
+        interactive={isEditing}
       >
         {isEditing ? (
           <input
@@ -268,19 +272,18 @@ const RectangleNode: FC<RectangleNodeProps> = ({
               background: 'transparent',
               border: 'none',
               outline: 'none',
-              color: 'white',
-              fontSize: '12px',
-              fontWeight: 'bold',
+              color: 'inherit',
+              font: 'inherit',
               textAlign: 'center',
               width: '90%',
-              textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+              textShadow: 'inherit',
             }}
             onClick={e => e.stopPropagation()}
           />
         ) : (
           <span style={{ cursor: 'default' }}>{label}</span>
         )}
-      </div>
+      </RangeLabel>
 
       {/* Context Menu - Only show in edit mode */}
       {viewMode === ViewMode.EDIT && (

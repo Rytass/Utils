@@ -15,6 +15,7 @@ import { createPathCopy } from '../../utils/node-operations';
 import { createHoverColor } from '../../utils/color-utils';
 import { PREVIEW_DIMMED_OPACITY, PREVIEW_HIGHLIGHT_STROKE_WIDTH } from '../../utils/preview-highlight';
 import ContextMenu from '../ui/context-menu';
+import { RangeLabel } from './range-label';
 import styles from './path-node.module.scss';
 
 interface PathNodeData {
@@ -534,53 +535,42 @@ const PathNode: FC<PathNodeProps> = ({
             })}
           </div>
         )}
-
-        {/* Text overlay */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            fontSize: '12px',
-            fontWeight: 'bold',
-            textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-            pointerEvents: isEditing ? 'auto' : 'none',
-            width: '90%',
-            textAlign: 'center',
-          }}
-        >
-          {isEditing ? (
-            <input
-              ref={inputRef}
-              type="text"
-              value={editingText}
-              onChange={e => setEditingText(e.target.value)}
-              onKeyDown={handleKeyDown}
-              onBlur={handleBlur}
-              className="nodrag" // Prevent dragging when editing text
-              style={{
-                background: 'transparent',
-                border: 'none',
-                outline: 'none',
-                color: 'white',
-                fontSize: '12px',
-                fontWeight: 'bold',
-                textAlign: 'center',
-                width: '90%',
-                textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
-              }}
-              onClick={e => e.stopPropagation()}
-            />
-          ) : (
-            <span style={{ cursor: 'default' }}>{label}</span>
-          )}
-        </div>
       </div>
+
+      {/* 標籤是外框的兄弟元素，範圍的 opacity 不會套到文字上 */}
+      <RangeLabel
+        id={id}
+        width={width}
+        height={height}
+        label={label}
+        opacity={previewDimmed ? PREVIEW_DIMMED_OPACITY : 1}
+        interactive={isEditing}
+      >
+        {isEditing ? (
+          <input
+            ref={inputRef}
+            type="text"
+            value={editingText}
+            onChange={e => setEditingText(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={handleBlur}
+            className="nodrag" // Prevent dragging when editing text
+            style={{
+              background: 'transparent',
+              border: 'none',
+              outline: 'none',
+              color: 'inherit',
+              font: 'inherit',
+              textAlign: 'center',
+              width: '90%',
+              textShadow: 'inherit',
+            }}
+            onClick={e => e.stopPropagation()}
+          />
+        ) : (
+          <span style={{ cursor: 'default' }}>{label}</span>
+        )}
+      </RangeLabel>
 
       {/* Context Menu - Only show in edit mode */}
       {viewMode === ViewMode.EDIT && (
