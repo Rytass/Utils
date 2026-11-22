@@ -91,13 +91,7 @@ export class PasswordValidatorService<MemberEntity extends BaseMemberEntity = Ba
     return Number.isNaN(changedAt.getTime()) ? true : expiresAfter(changedAt);
   }
 
-  async validatePassword(password: string, memberId?: string): Promise<boolean> {
-    const trimmed = password.trim();
-
-    if (this.passwordPolicyRegExp) {
-      return this.passwordPolicyRegExp.test(trimmed);
-    }
-
+  private satisfiesBuiltInPolicy(trimmed: string): boolean {
     if (trimmed.length < this.passwordMinLength) {
       return false;
     }
@@ -114,7 +108,26 @@ export class PasswordValidatorService<MemberEntity extends BaseMemberEntity = Ba
       return false;
     }
 
-    if (this.passwordShouldIncludeSpecialCharacter && !/[!><.,?@#$%^&*;:'"|\\/~`()-_+={}[\]]/.test(trimmed)) {
+    // The hyphen sits last so it is a literal. Written between ")" and "_" it
+    // was a range from U+0029 to U+005F, which covers every digit and capital
+    // letter and let any password through.
+    if (this.passwordShouldIncludeSpecialCharacter && !/[!><.,?@#$%^&*;:'"|\\/~`()_+={}[\]-]/.test(trimmed)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  async validatePassword(password: string, memberId?: string): Promise<boolean> {
+    const trimmed = password.trim();
+
+    if (this.passwordPolicyRegExp) {
+      // A custom policy replaces the built-in composition rules, but not the
+      // password history: it still has to pass the check below.
+      if (!this.passwordPolicyRegExp.test(trimmed)) {
+        return false;
+      }
+    } else if (!this.satisfiesBuiltInPolicy(trimmed)) {
       return false;
     }
 
