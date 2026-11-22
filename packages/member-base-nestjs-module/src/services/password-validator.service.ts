@@ -114,7 +114,7 @@ export class PasswordValidatorService<MemberEntity extends BaseMemberEntity = Ba
       return false;
     }
 
-    if (this.passwordShouldIncludeSpecialCharacter && !/[!><.,?@#$%^&*;:'"|\\/~`()-_+={}[\]]/.test(trimmed)) {
+    if (this.passwordShouldIncludeSpecialCharacter && !/[!><.,?@#$%^&*;:'"|\\/~`()_+={}[\]-]/.test(trimmed)) {
       return false;
     }
 
