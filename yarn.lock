@@ -8781,6 +8781,9 @@ __metadata:
     "@nestjs/graphql": "*"
     "@nestjs/typeorm": "*"
     typeorm: "*"
+  peerDependenciesMeta:
+    "@nestjs/graphql":
+      optional: true
   languageName: unknown
   linkType: soft
 
