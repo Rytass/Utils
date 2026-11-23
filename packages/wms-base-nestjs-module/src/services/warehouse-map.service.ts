@@ -2,8 +2,9 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { WarehouseMapEntity } from '../models/warehouse-map.entity';
 import { RESOLVED_WAREHOUSE_MAP_REPO } from '../typings/wms-base-module-providers';
 import { Repository } from 'typeorm';
-import { MapBackgroundInput } from '../dto/map-background.input';
-import { MapRangeInput } from '../dto/map-range-input';
+// Type-only: the DTOs carry @nestjs/graphql decorators, which is an optional peer.
+import type { MapBackgroundInput } from '../dto/map-background.input';
+import type { MapRangeInput } from '../dto/map-range-input';
 import { MapBackground, MapData, MapPolygonRange, MapRectangleRange } from '../typings/warehouse-map';
 import { MapRangeType } from '../typings/warehouse-map.enum';
 

@@ -30,6 +30,11 @@
     "@nestjs/typeorm": "*",
     "typeorm": "*"
   },
+  "peerDependenciesMeta": {
+    "@nestjs/graphql": {
+      "optional": true
+    }
+  },
   "dependencies": {
     "uuid": "^13.0.0"
   },
