@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.5.0](https://github.com/Rytass/Utils/compare/@rytass/wms-base-nestjs-module@0.4.1...@rytass/wms-base-nestjs-module@0.5.0) (2026-11-23)
+
+### Bug Fixes
+
+- **wms-base-nestjs-module:** store stocks.createdAt as timestamptz ([969683a](https://github.com/Rytass/Utils/commit/969683a4ba2b5a34cb071235bc9326331fcb9461)), closes [Rytass/WMS-Module#228](https://github.com/Rytass/WMS-Module/issues/228)
+
+### BREAKING CHANGES
+
+- `stocks.createdAt` changes from `timestamp` to `timestamptz`.
+  TypeORM applies the change as DROP COLUMN + ADD COLUMN, so `synchronize: true`
+  (or a generated migration) replaces every existing `createdAt` with the upgrade
+  time. Before upgrading, turn synchronize off and convert the column, using the
+  time zone your sessions had when they wrote the existing rows:
+  `ALTER TABLE <schema>.<prefix>stocks ALTER COLUMN "createdAt" TYPE timestamptz`
+  `USING "createdAt" AT TIME ZONE '<session time zone of past writes>';`
+  There is no universal value for that time zone. See the package README.
+
 ## [0.4.1](https://github.com/Rytass/Utils/compare/@rytass/wms-base-nestjs-module@0.4.0...@rytass/wms-base-nestjs-module@0.4.1) (2026-11-23)
 
 ### Bug Fixes
