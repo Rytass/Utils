@@ -51,6 +51,6 @@ export class StockEntity {
   @JoinColumn({ name: 'orderId', referencedColumnName: 'id' })
   order: Relation<OrderEntity>;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 }
