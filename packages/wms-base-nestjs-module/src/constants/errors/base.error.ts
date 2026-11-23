@@ -31,3 +31,11 @@ export class StockQuantityNotEnoughError extends BadRequestException {
 
   code = 200;
 }
+
+export class BatchMaterialMismatchError extends BadRequestException {
+  constructor() {
+    super('Batch belongs to a different material');
+  }
+
+  code = 201;
+}

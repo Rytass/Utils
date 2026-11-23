@@ -59,7 +59,11 @@ export class StockService {
   async find(options: StockFindDto, manager?: EntityManager): Promise<number> {
     const queryBuilder = this.getQueryBuilder(options, manager).select('SUM(stock.quantity)', 'quantity');
 
-    const quantity = await queryBuilder.getRawOne<{ quantity: number }>().then(result => result?.quantity ?? 0);
+    // PostgreSQL returns SUM(numeric) as a string, and a raw query bypasses the
+    // column transformer, so convert here or callers end up concatenating.
+    const quantity = await queryBuilder
+      .getRawOne<{ quantity: string | number | null }>()
+      .then(result => Number(result?.quantity ?? 0));
 
     return quantity;
   }
