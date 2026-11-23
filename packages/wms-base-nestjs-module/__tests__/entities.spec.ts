@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { DataSource } from 'typeorm';
+import { DataSource, getMetadataArgsStorage } from 'typeorm';
 
 import { LocationEntity } from '../src/models/location.entity';
 import { MaterialEntity } from '../src/models/material.entity';
@@ -251,6 +251,15 @@ describe('Entity Models and Relationships', () => {
   });
 
   describe('StockEntity', () => {
+    it('should store createdAt as timestamptz', () => {
+      const column = getMetadataArgsStorage().columns.find(
+        args => args.target === StockEntity && args.propertyName === 'createdAt',
+      );
+
+      expect(column?.mode).toBe('createDate');
+      expect(column?.options.type).toBe('timestamptz');
+    });
+
     it('should create stock entity with all required properties', () => {
       const stock = new StockEntity();
 

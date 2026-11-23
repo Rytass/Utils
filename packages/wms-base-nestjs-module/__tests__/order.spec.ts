@@ -1,3 +1,4 @@
+import '../__mocks__/sqlite-column-types';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ChildEntity, Column, Repository } from 'typeorm';

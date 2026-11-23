@@ -43,6 +43,32 @@ carry `@InputType()` decorators in source, but the published package ships them 
 only, and neither its JavaScript nor its declaration files import `@nestjs/graphql`. A host that
 does not use GraphQL does not need to install it.
 
+### Upgrading from 0.4.x: `stocks.createdAt` is `timestamptz`
+
+`StockEntity.createdAt` changed from `timestamp` (without time zone) to `timestamptz` on
+PostgreSQL. The old column stored wall-clock time in whatever time zone the writing session
+used, so the same instant could be stored with different values.
+
+TypeORM applies a column type change as `DROP COLUMN` followed by `ADD COLUMN`, so
+`synchronize: true` (and a migration produced by `migration:generate`) would replace every
+existing `createdAt` with the time of the upgrade. Convert the column yourself first:
+
+1. Turn `synchronize` off for the deployment that runs the upgrade.
+2. Run, with your schema, the table prefix you configured (if any), and the time zone your
+   sessions used when they wrote the existing rows:
+
+   ```sql
+   ALTER TABLE <schema>.<prefix>stocks
+     ALTER COLUMN "createdAt" TYPE timestamptz
+     USING "createdAt" AT TIME ZONE '<session time zone of past writes>';
+   ```
+
+   There is no universal value for the time zone: it is whatever `TimeZone` your
+   application's connections had (for example `Asia/Taipei`, or `UTC` if the server default
+   was never changed). Rows written from sessions in different zones cannot be told apart.
+3. Deploy the new version. TypeORM now sees no difference for this column, so you can turn
+   `synchronize` back on if you use it.
+
 ### Minimal Setup
 ```typescript
 // app.module.ts
