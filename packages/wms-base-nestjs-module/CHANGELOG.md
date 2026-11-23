@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.4.1](https://github.com/Rytass/Utils/compare/@rytass/wms-base-nestjs-module@0.4.0...@rytass/wms-base-nestjs-module@0.4.1) (2026-11-23)
+
+### Bug Fixes
+
+- **wms-base-nestjs-module:** make the @nestjs/graphql peer optional ([1ce3a6a](https://github.com/Rytass/Utils/commit/1ce3a6aa7b0eea04d75a57d90d5f04fd901e4097)), closes [Rytass/WMS-Module#229](https://github.com/Rytass/WMS-Module/issues/229)
+
 # [0.4.0](https://github.com/Rytass/Utils/compare/@rytass/wms-base-nestjs-module@0.3.0...@rytass/wms-base-nestjs-module@0.4.0) (2026-08-27)
 
 ### Features
